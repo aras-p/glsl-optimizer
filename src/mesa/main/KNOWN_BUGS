@@ -1,0 +1,20 @@
+$Id: KNOWN_BUGS,v 1.1 1999/08/19 00:55:41 jtg Exp $
+
+
+Performance issues with EXT_point_parameters & quake2
+
+
+Broken drivers: 
+
+	--> After integration of the changes in kw3, only the X and FX
+drivers are known to work.  Windows and D3D are known to be broken,
+and all others are suspected to be broken.  Please test your driver
+and update this entry when more is known.
+
+
+
+Separate specular color interpolation isn't implemented for points and
+lines.  Also, will have to add specular color add to pb.c (pixel buffer
+code).
+
+

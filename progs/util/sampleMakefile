@@ -1,0 +1,49 @@
+# $Id: sampleMakefile,v 1.1 1999/08/19 00:55:42 jtg Exp $
+
+# Sample makefile for compiling OpenGL/Mesa applications on Unix.
+# This example assumes Linux with gcc.
+
+# This makefile is in the public domain
+
+# $Log: sampleMakefile,v $
+# Revision 1.1  1999/08/19 00:55:42  jtg
+# Initial revision
+#
+# Revision 1.1  1999/02/24 05:20:45  brianp
+# Initial revision
+#
+
+
+CC = gcc
+
+CFLAGS = -c -g -ansi -pedantic -Wall
+
+INCDIRS = -I. -I../include
+
+LIBDIRS = -L../lib -L/usr/X11/lib
+
+LIBS = -lglut -lMesaGLU -lMesaGL -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm
+
+OBJECTS = main.o \
+	file1.o \
+	file2.o \
+	file3.o
+
+
+PROGRAMS = myprogram
+
+
+.c.o:
+	$(CC) $(CFLAGS) $(INCDIRS) $< -o $@
+
+
+
+default: $(PROGRAMS)
+
+
+dtenvmap: $(OBJECTS)
+	$(CC) $(OBJECTS) $(LIBDIRS) $(LIBS) -o $@
+
+
+clean:
+	rm -f *.o

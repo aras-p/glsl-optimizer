@@ -1,0 +1,6 @@
+# DO NOT DELETE
+
+GLwDrawA.o: ../include/GL/glx.h ../include/GL/gl.h ../include/GL/xmesa.h
+GLwDrawA.o: GLwDrawAP.h GLwDrawA.h
+GLwMDrawA.o: GLwDrawA.c ../include/GL/glx.h ../include/GL/gl.h
+GLwMDrawA.o: ../include/GL/xmesa.h GLwDrawAP.h GLwDrawA.h GLwMDrawAP.h

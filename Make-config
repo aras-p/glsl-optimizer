@@ -1,0 +1,1265 @@
+# $Id: Make-config,v 1.1 1999/08/19 00:55:39 jtg Exp $
+
+MAJOR=3
+MINOR=1
+VERSION=$(MAJOR).$(MINOR)
+
+# Mesa 3-D graphics library
+# 
+# Copyright (C) 1999  Brian Paul   All Rights Reserved.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+# AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+# The following variables are passed to each Makefile:
+#
+# GL_LIB      the name of the Mesa "GL" library file (usually libMesaGL.a)
+# GLU_LIB     the name of the Mesa "GLU" library file (usually libMesaGLU.a)
+# GLUT_LIB    the name of the GLUT library file (usually libglut.a)
+# CC          the C compiler (usually cc or gcc)
+# CFLAGS      flags to C compiler (usually -O)
+# MAKELIB     the script or command to make a library file
+# XLIBS       libraries needed to link X apps (at least -lX11)
+#
+# Optionally, you can add definitions for the INCDIR and LIBDIR variables
+# which specify where to find the Mesa include files and where to put the
+# Mesa libraries.  The defaults are ../include and ../lib.  This use of
+# overriding makefile macros on the command line should work with most
+# variants of make.
+#
+# To enable profiling add -DPROFILE to the CFLAGS line.  Be sure to set the
+# MESA_PROFILE environment variable to enable printing of the profile report.
+#
+# If your system supports the X Shared Memory extension add -DSHM to the
+# CFLAGS line and add -lXext to the XLIBS line.
+#
+# Some compilers complain about const parameters.  Adding -DNO_CONST to the
+# CFLAGS line should silence suth warnings.
+#
+#
+# To add a new system configuration just follow the examples below and update
+# the top-level Makefile.
+
+
+
+aix:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = -O -DAIXV3" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -lX11 -lXext -lXmu -lXi"
+
+aix-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = -O -DAIXV3" \
+	"MAKELIB = ../bin/mklib.aix" \
+	"XLIBS = -lX11 -lXext -lXmu -lXi"
+
+# Make-config additions for the Amiga 3000 UX
+# Carlyn Voss Iuzzolino   5/8/95: 
+# Modified gcc part as follows:
+# Needed to take out -pedantic because that makes gcc complain about 
+# ANSI-CC not allowing #ident in Amiga's /usr/include/*.h files.
+# Took out -O2 (unrecognized option for gcc on the Amiga).
+# Needs /usr/lib/libsocket.a file. 
+amix:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS =" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -lX11 -lsocket -lnsl "
+
+beos-r4:
+	$(MAKE) -f Makefile.BeOS-R4 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = g++" \
+	"CFLAGS = -O -DNO_CONST" \
+	"MAKELIB = ../bin/mklib.beos-r4" \
+	"XLIBS = "
+
+bsdos:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -I/usr/X11/include -O2" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/X11/lib -lX11 -lipc"
+
+bsdos4:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -I/usr/X11/include -O2 -fPIC" \
+	"MAKELIB = ../bin/mklib.bsdos4" \
+	"XLIBS = -L/usr/X11/lib -lX11 -lipc"
+
+cygnus:
+	$(MAKE) -f Makefile.cygnus $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"DLLTOOL = dlltool" \
+	"WING_DIR= /wing" \
+	"LD = ld" \
+	"CFLAGS = -I. -DWIN32 -D__WIN32__ -D_WINDOWS \
+		-O2 -funroll-loops \
+		-fexpensive-optimizations -fomit-frame-pointer -ffast-math \
+		-malign-loops=2 -malign-jumps=2 -malign-functions=2" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"WLIBS = ../lib/wing32.a -lkernel32 -luser32 -lgdi32"
+
+cygnus-linux:
+	$(MAKE) -f Makefile.cygnus $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gnuwin32gcc" \
+	"DLLTOOL = gnuwin32dlltool --as gnuwin32as" \
+	"LD = gnuwin32ld" \
+	"WING_DIR= /dos/wing" \
+	"CFLAGS = -I. -DWIN32 -D__WIN32__ -D_WINDOWS \
+		-O2 -funroll-loops \
+		-fexpensive-optimizations -fomit-frame-pointer -ffast-math \
+		-malign-loops=2 -malign-jumps=2 -malign-functions=2" \
+	"MAKELIB = ../bin/mklib.cygnus-linux" \
+	"WLIBS = ../lib/wing32.a -lkernel32 -luser32 -lgdi32"
+
+dgux:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -lX11"
+
+freebsd:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O2 -fPIC -pedantic -I/usr/X11R6/include -DSHM -DHZ=100" \
+	"MAKELIB = ../bin/mklib.freebsd" \
+	"XLIBS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11"
+
+freebsd-386:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -ffast-math -fPIC -pedantic -I/usr/X11R6/include -DSHM -DHZ=100 -DUSE_X86_ASM -DFREEBSD" \
+	"MAKELIB = ../bin/mklib.freebsd" \
+	"XLIBS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+
+gcc:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -pedantic -O2" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -lX11"
+
+hpux9:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = +O3 -Aa -D_HPUX_SOURCE -I/usr/include/X11R5 -DSHM" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11"
+
+hpux9-gcc:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R5 -DSHM" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11"
+
+hpux9-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.sl" \
+	"GLU_LIB = libGLU.sl" \
+	"GLUT_LIB = libglut.sl" \
+	"GLW_LIB = libGLw.sl" \
+	"CC = cc" \
+	"CFLAGS = +z +O3 +Olibcalls +ESlit -Aa +Onolimit -D_HPUX_SOURCE -I/usr/include/X11R5 -DSHM" \
+	"MAKELIB = ../bin/mklib.hpux" \
+	"XLIBS = -L/usr/lib/X11R5 -s -Wl,+s,-B,nonfatal,-B,immediate -lXext -lXmu -lXi -lX11"
+
+hpux9-gcc-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.sl" \
+	"GLU_LIB = libGLU.sl" \
+	"GLUT_LIB = libglut.sl" \
+	"GLW_LIB = libGLw.sl" \
+	"CC = gcc" \
+	"CFLAGS = -fPIC -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R5 -DSHM" \
+	"MAKELIB = ../bin/mklib.hpux" \
+	"XLIBS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11"
+
+hpux10:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = +O3 +DAportable -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DSHM" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11"
+
+hpux10-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL" \
+	"GLU_LIB = libGLU" \
+	"GLUT_LIB = libglut" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = +z -Ae +O2 +Onolimit +Oaggressive -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DSHM" \
+	"MAKELIB = ../bin/mklib.hpux" \
+	"XLIBS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11"
+
+hpux10-gcc:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include  -DSHM" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11"
+
+hpux10-gcc-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.sl" \
+	"GLU_LIB = libGLU.sl" \
+	"GLUT_LIB = libglut.sl" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -fPIC -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DSHM" \
+	"MAKELIB = ../bin/mklib.hpux" \
+	"XLIBS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11"
+
+
+# For IRIX 4: don't use -fullwarn because it causes too much garbage
+irix4:
+	pmake $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = -O2 -ansi -prototypes -DSHM" \
+	"MAKELIB = ../bin/mklib.ar-rcv" \
+	"XLIBS = -lXext -lXmu -lXi -lX11"
+
+# On IRIX 5.3 -sopt causes a problem in drawpixels.c so we don't use it
+irix5:
+	pmake $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = -O2 -ansi -fullwarn -DSHM -DNO_CONST" \
+	"MAKELIB = ../bin/mklib.ar-rcv" \
+	"XLIBS = -lX11 -lXext -lXmu -lXi"
+
+# On IRIX 5.2+gcc
+irix5-gcc:
+	make $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O2 -pedantic -DSHM" \
+	"MAKELIB = ../bin/mklib.ar-rcv" \
+	"XLIBS = -lX11 -lXext -lXmu -lXi"
+
+# IRIX 5 using Dynamic Shared Objects (DSO)
+irix5-dso:
+	pmake $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = cc" \
+	"CFLAGS = -O2 -ansi -fullwarn -DSHM -DNO_CONST" \
+	"MAKELIB = ../bin/mklib.irix5" \
+	"XLIBS = -rpath ../lib -lX11 -lXmu -lXi"
+
+irix6-o32:
+	pmake $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = -32 -mips2 -O2 -ansi -DSHM -DNO_CONST" \
+	"MAKELIB = ../bin/mklib.ar-rcv" \
+	"XLIBS = -lX11 -lXext -lXmu -lXi"
+
+irix6-o32-dso:
+	pmake $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = cc" \
+	"CFLAGS = -32 -mips2 -O2 -ansi -DSHM -DNO_CONST" \
+	"MAKELIB = ../bin/mklib.irix6-32" \
+	"XLIBS = -rpath ../lib -lX11 -lXext -lXmu -lXi"
+
+# For IRIX 6: -woff:
+#   1209 - controlling expression is constant
+irix6-n32:
+	pmake $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"LIBDIR = ../lib32" \
+	"CC = cc" \
+	"CFLAGS = -n32 -mips3 -O3 -ansi -woff 1209,1521" \
+	"MAKELIB = ../bin/mklib.ar-rcv" \
+	"XLIBS = -lX11 -lXext -lXmu -lXi"
+
+irix6-n32-dso:
+	pmake $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.a" \
+	"LIBDIR = ../lib32" \
+	"CC = cc" \
+	"CFLAGS = -n32 -mips3 -O3 -ansi -DSHM -woff 1185,1521" \
+	"MAKELIB = ../bin/mklib.irix6-n32" \
+	"XLIBS = -rpath ../lib32 -lX11 -lXmu -lXi -lfpe"
+
+irix6-gcc-n32-sl:
+	make $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"LIBDIR = ../lib32" \
+	"CC = gcc" \
+	"CFLAGS = -mabi=n32 -mips3 -O3 -DSHM" \
+	"MAKELIB = ../bin/mklib.irix6-n32" \
+	"XLIBS = -rpath ../lib32 -lX11 -lXmu -lXi"
+
+# For IRIX 6-64: -woff:
+#   1068 - integer conversion resulted in a change of sign
+#   1069 - integer conversion resulted in truncation
+#   1174 - variable was declared but never referenced
+#   1185 - enumerated type mixed with another type
+#   1209 - controlling expression is constant
+#   1474 - declaring a void parameter list with a typedef is nonstandard
+#   1552 - variable was set but never used
+irix6-64:
+	pmake $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"LIBDIR = ../lib64" \
+	"CC = cc" \
+	"CFLAGS = -64 -O3 -ansi -woff 1068,1069,1174,1185,1209,1474,1552 -DSHM" \
+	"MAKELIB = ../bin/mklib.ar-rcv" \
+	"XLIBS = -lX11 -lXext -lXmu -lXi"
+
+irix6-64-dso:
+	pmake $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"LIBDIR = ../lib64" \
+	"CC = cc" \
+	"CFLAGS = -64 -O3 -ansi -woff 1068,1069,1174,1185,1209,1474,1552 -DSHM" \
+	"MAKELIB = ../bin/mklib.irix6-64" \
+	"XLIBS = -rpath ../lib64 -lX11 -lXmu -lXi"
+
+# May want to try these CFLAGS for better performance under Linux and GCC:
+# -fPIC -O2 -ansi -pedantic -mieee-fp -DSHM -funroll-loops
+# -fexpensive-optimizations -fomit-frame-pointer -ffast-math
+# and  -malign-loops=2 -malign-jumps=2 -malign-functions=2 for Pentium
+
+linux:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O2 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -I/usr/X11R6/include" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE"
+
+# One Linux user reports having to use these XLIBS:
+#    -lMrm -lXmu -lXi -lXt -lXext -lXmu -lXi -lSM -lICE -lX11
+
+linux-elf:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -I/usr/X11R6/include" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE"
+
+linux-glide:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -DFX -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -L/usr/local/glide/lib -lglide2x -lm"
+
+# Linux on Intel X86: assembly language optimizations
+linux-386:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O2 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -DUSE_X86_ASM -I/usr/X11R6/include" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+
+linux-386-elf:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -DUSE_X86_ASM -I/usr/X11R6/include" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+
+linux-386-glide:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DSHM -DFX -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -L/usr/local/glide/lib -lglide2x -lm" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+
+linux-386-glide-mits:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -DFX -D_REENTRANT -DMITS -DUSE_X86_ASM -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+
+linux-386-opt-V2-glide:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -m486 -fomit-frame-pointer -pipe -ansi -pedantic -ffast-math -fexpensive-optimizations -malign-loops=2 -malign-jumps=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -DFX -DFX_V2 -DUSE_X86_ASM -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include"\
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+
+linux-386-opt-glide:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -m486 -fomit-frame-pointer -pipe -ansi -pedantic -ffast-math -fexpensive-optimizations -malign-loops=2 -malign-jumps=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -DFX -DUSE_X86_ASM -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -L/usr/local/glide/lib -lglide2x -lm" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+
+linux-3dnow:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
+	"CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -I/usr/X11R6/include" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S \
+	X86/mmx_blend.S \
+	X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
+	X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
+	X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
+	X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
+	X86/3dnow_norm_raw.S"
+
+linux-3dnow-glide:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
+	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DSHM -DFX -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include -I/usr/src/mesa-glx/src/FX/X86" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -L/usr/local/glide/lib -lglide2x -lm" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S \
+	X86/mmx_blend.S \
+	X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
+	X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
+	X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
+	X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
+	X86/3dnow_norm_raw.S \
+	FX/X86/fx_3dnow_fastpath.S"
+
+
+# Contributed by Uwe_Maurer@t-online.de
+linux-ggi:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc"  \
+	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM -DGGI -DCDECL=" \
+	"MAKELIB = ../bin/mklib.ggi" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lggi"
+
+# Contributed by Emmanuel marty core@ggi-project.org
+linux-386-ggi:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc"  \
+	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM -DUSE_X86_ASM -DGGI -DCDECL=" \
+	"MAKELIB = ../bin/mklib.ggi" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lggi" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+
+# Linux on Alpha (based on email from John Ferguson ferguson@viz.tamu.edu)
+linux-alpha:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O2 -mieee -pedantic -L/usr/X11R6/lib -D_XOPEN_SOURCE -DSHM" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/X11R6/lib -lX11"
+
+linux-alpha-elf:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -ansi -mieee -pedantic -fPIC -D_XOPEN_SOURCE -DSHM" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXi"
+
+# Not tested, but should be okay on any RedHat-based linux for PowerPC machines
+# If your linux supports shared libraries, you might want to build with the 
+# the "linux-ppc-shared" entry instead
+# You might want to change the mcpu flag appropriately for your 
+# processor (601, 603, 604, etc.), it but doesn't make much difference
+linux-ppc:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -mcpu=603 -ansi -pedantic -fsigned-char -ffast-math -funroll-loops -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE"
+
+# -O5 and -fexpensive-optimizations causes a compiler crash for Linux PPC R4
+linux-ppc-so:
+	$(MAKE) targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -mcpu=603 -ansi -pedantic -fPIC -fsigned-char -ffast-math -funroll-loops -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE"
+
+# Contributed by John Stone
+linux-386-pthread:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"CC = gcc" \
+	"CFLAGS = -O2 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R\6/include -DSHM -DUSE_X86_ASM -D_REENTRANT -DTHREADS -DPTHREADS" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread" \
+	"ASM_SOURCES = asm_386.S"
+
+# Contributed by John Gotts
+linux-386-pthread-shared:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -fPIC -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/us\r/X11R6/include -DSHM -DUSE_X86_ASM -D_REENTRANT -DTHREADS -DPTHREADS" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread" \
+	"ASM_SOURCES = asm_386.S"
+
+linux-sparc:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -pedantic -funroll-loops -O3 -DSHM" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXt -lSM -lICE -lXmu -lXi"
+
+# Replace -mv8 with -mcypress, -msupersparc or -msparclite as appropriate.
+linux-sparc5-elf:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -mv8 -O2 -ffast-math -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE"
+
+# 32-bit Sparc ELF userland, on UltraSparc
+linux-sparc-ultra:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -mv8 -O2 -mtune=ultrasparc -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE"
+
+# May want to add these CFLAGS for better performance under LynxOS and GCC:
+# -fPIC -O2 -ansi -pedantic -mieee-fp -DSHM -funroll-loops
+# -fexpensive-optimizations -fomit-frame-pointer -ffast-math
+# and  -malign-loops=2 -malign-jumps=2 -malign-functions=2 for Pentium
+
+lynxos:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O2 -ansi -pedantic -funroll-loops -ffast-math -DSHM" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/X11/lib -lXext -lXi -lXmu -lX11 -lbsd"
+
+machten-2.2:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -DTENON -D__MACHTEN__ -fstrength-reduce -m68881 -O2" \
+	"MAKELIB = ../bin/mklib.ar-rcv" \
+	"XLIBS = -L/usr/lib/X11 -lX11"
+
+machten-4.0:
+	$(MAKE) targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -DTENON -D__MACHTEN__ -fstrength-reduce -O2" \
+	"MAKELIB = ../bin/mklib.ar-rcv" \
+	"XLIBS = -L/usr/X11R5/lib -lX11"
+
+mklinux:
+	$(MAKE) targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -pedantic -O2" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -lmoto -L/usr/X11/lib -lXmu -lX11"
+
+netbsd:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -O2 -fPIC -DSHM -I/usr/X11R6/include -DHZ=100"  \
+	"MAKELIB = ../bin/mklib.netbsd" \
+	"XLIBS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11"
+
+next:	
+	$(MAKE)	$(MFLAGS) -f Makefile.X11 targets \
+	"DRIVER_SOURCES = OSmesa/osmesa.c" \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"CC = ${MYCC}" \
+	"CFLAGS = -traditional-cpp -DOPENSTEP -O4" \
+	"MAKELIB = ../bin/mklib.ar-ruv"
+
+openbsd:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = cc" \
+	"CFLAGS = -O2 -fPIC -I/usr/X11R6/include -DSHM -DHZ=100" \
+	"MAKELIB = ../bin/mklib.openbsd" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXi"
+
+openstep:	
+	$(MAKE)	$(MFLAGS) -f Makefile.X11 targets \
+	"DRIVER_SOURCES = OSmesa/osmesa.c" \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"CC = ${MYCC}" \
+	"CFLAGS = -traditional-cpp -DOPENSTEP -O4" \
+	"MAKELIB = ../bin/mklib.openstep"
+
+openstep-win32:	
+	$(MAKE)	$(MFLAGS) -f Makefile.X11 targets \
+	"DRIVER_SOURCES = OSmesa/osmesa.c" \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"CC = gcc" \
+	"CFLAGS = -DOPENSTEP -O4" \
+	"MAKELIB = ../bin/mklib.openstep"
+
+os2-x11:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB   = MesaGL.a" \
+	"GLU_LIB  = MesaGLU.a" \
+	"GLUT_LIB = glut.a" \
+	"GLW_LIB = GLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -Zmt -O3 -m486 -funroll-loops -Wall -Wno-unused -ansi -pedantic -ffast-math -DUSE_X86_ASM -D_SVID_SOURCE -D_BSD_SOURCE -I$(X11ROOT)/XFree86/include" \
+	"MAKELIB = ..\\bin\\mklib-emx.cmd " \
+	"XLIBS = -Zmt -Zcrtdll -Zexe -L$(X11ROOT)/XFree86/lib -lXt -lX11" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+
+osf1:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = -O2 -std1 -ieee_with_no_inexact -DSHM -DNO_CONST" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -lX11 -lXext -lXmu -lXi"
+
+osf1-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = cc" \
+	"CFLAGS = -O2 -std1 -ieee_with_no_inexact -DSHM -DNO_CONST" \
+	"MAKELIB = ../bin/mklib.osf1" \
+	"XLIBS = -lX11 -lXext -lXmu -lXi"
+
+pgi-cygnus:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = pgcc" \
+	"CFLAGS = -fast -cyglibs -Munix -I. -DWIN32 -D__WIN32__ -D_WINDOWS " \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -lX11"
+
+pgi-mingw32:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = pgcc" \
+	"CFLAGS = -fast -msvcrt -Munix -I. -DWIN32 -D__WIN32__ -D_WINDOWS " \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -lX11"
+
+# QNX V4 & Watcom Compiler
+qnx:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = -O" \
+	"MAKELIB = ../bin/mklib.qnx" \
+	"XLIBS = -L/usr/X11/lib -lX11"
+
+sco:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -pedantic -O2 -mieee-fp" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/X11/lib -lX11"
+
+solaris-x86:
+	$(MAKE) targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = -Xa -xO3 -xpentium -KPIC -I/usr/openwin/include -DSHM" \
+	"MAKELIB = ../bin/mklib.solaris" \
+	"XLIBS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+
+solaris-x86-gcc:
+	$(MAKE) targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -m486 -fPIC -I/usr/openwin/include -DSHM" \
+	"MAKELIB = ../bin/mklib.solaris" \
+	"XLIBS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+
+sunos4:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = acc" \
+	"CFLAGS = -O -DSHM -DSUNOS4" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -lX11 -lXext -lXmu -lXi"
+
+sunos4-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = acc" \
+	"CFLAGS = -Kpic -O -I/usr/include/X11R5 -DSHM -DSUNOS4" \
+	"MAKELIB = ld -assert pure-text -o" \
+	"XLIBS = -L/usr/lib/X11R5 -lX11 -lXext -lXmu -lXi"
+
+sunos4-gcc:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -DSHM -DSUNOS4 -I/usr/openwin/include" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+
+sunos4-gcc-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so.$(VERSION)" \
+	"GLU_LIB = libGLU.so.$(VERSION)" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -fPIC -O3 -I/usr/openwin/include -I/usr/include/X11R5 -I/usr/include/X11R5 -DSHM -DSUNOS4 -DSOLARIS_2_4_BUG" \
+	"MAKELIB = ../bin/mklib.sunos4" \
+	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+
+sunos4-gcc-x11r6-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so.$(VERSION)" \
+	"GLU_LIB = libGLU.so.$(VERSION)" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -fPIC -O3 -I/usr/X11R6.3/include -DSHM -DSUNOS4 -DSOLARIS_2_4_BUG" \
+	"MAKELIB = ../bin/mklib.sunos4" \
+	"XLIBS = -L/usr/X11R6.3/lib/X11 -lX11 -lXext -lXmu -lXi"
+
+sunos5:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = -Xa -fast -xO4 -native -I/usr/openwin/include -I/usr/dt/include -DSHM -DSOLARIS_2_4_BUG" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+
+sunos5-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = cc" \
+	"CFLAGS = -KPIC -Xa -O -I/usr/openwin/include -I/usr/dt/include -DSHM -DSOLARIS_2_4_BUG" \
+	"MAKELIB = ../bin/mklib.sunos5" \
+	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+
+sunos5-ultra:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = -Xa -fast -xO5 -xtarget=ultra -I/usr/openwin/include -I/usr/dt/include -DSHM -DSOLARIS_2_4_BUG" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+
+sunos5-ultra-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = cc" \
+	"CFLAGS = -KPIC -Xa -fast -xO5 -xtarget=ultra -I/usr/openwin/include -I/usr/dt/include -DSHM -DSOLARIS_2_4_BUG" \
+	"MAKELIB = ../bin/mklib.sunos5" \
+	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+
+sunos5-gcc:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -I/usr/openwin/include -DSHM -DSOLARIS_2_4_BUG" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+
+sunos5-gcc-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -fPIC -O3 -I/usr/openwin/include -DSHM -DSOLARIS_2_4_BUG" \
+	"MAKELIB = ../bin/mklib.sunos5" \
+	"XLIBS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+
+sunos5-x11r6-gcc-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -fPIC -O3 -DSHM -DSOLARIS_2_4_BUG" \
+	"MAKELIB = ../bin/mklib.sunos5" \
+	"XLIBS = -lSM -lICE -lX11 -lXext -lXmu -lXi -lnsl -lsocket"
+
+# Contributed by John Stone
+sunos5-pthread:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"CC = cc" \
+	"CFLAGS = -mt -Xa -fast -xO4 -native -I/usr/openwin/include -I/usr/dt/include -DSHM -DSOLARIS_2_4\_BUG -DTHREADS -DPTHREADS" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lpthread"
+
+# Contributed by John Stone
+sunos5-thread:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"CC = cc" \
+	"CFLAGS = -mt -Xa -fast -xO4 -native -I/usr/openwin/include -I/usr/dt/include -DSHM -DSOLARIS_2_4\_BUG -DTHREADS -DSOLARIS_THREADS" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lthread"
+
+# Contributed by John Stone
+sunos5-gcc-thread:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -I/usr/openwin/include -DSHM -DSOLARIS_2_4_BUG -D_REENTRANT -DTHREADS -DSOLARIS_THR\EADS" \
+      	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lthread"
+
+# Contributed by John Stone
+sunos5-gcc-pthread:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -I/usr/openwin/include -DSHM -DSOLARIS_2_4_BUG -D_REENTRANT -DTHREADS -DPTHREADS" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lpthread"
+
+# from Ron Metoyer (metoyer@iexist.flw.lucent.com)
+sunSolaris-CC:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = CC" \
+	"CFLAGS = -O -I/usr/openwin/include -DSHM -DSOLARIS_2_4_BUG" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+
+#This config doesn't work, Ultrix C compiler isn't ANSI compliant
+ultrix:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = -O -Dconst=/**/" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -lXmu -lX11 -lXi"
+
+ultrix-gcc:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -pedantic -O2" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -lXmu -lX11 -lXi"
+
+# tested on Cray C90 running UNICOS 8.0.4
+unicos:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS =" \
+	"MAKELIB = ../bin/mklib/ar-rcv" \
+	"XLIBS = -lX11 -lXext -lXmu -lXi"
+
+unixware:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = -O -I/usr/X/include -DSHM" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lsocket -lnsl"
+
+unixware-shared:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL" \
+	"GLU_LIB = libGLU" \
+	"GLUT_LIB = libglut" \
+	"GLW_LIB = libGLw" \
+	"CC = cc" \
+	"CFLAGS = -O -I/usr/X/include -KPIC,inline -DSHM" \
+	"MAKELIB = ../bin/mklib.solaris" \
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lsocket -lnsl"
+
+uwin:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"CC = gcc" \
+	"CFLAGS = -pedantic -O2 -I/usr/X11/include " \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/X11/lib -lX11"
+
+vistra:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -pedantic -O2" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -lX11 -lsocket -lnsl -lgen"
+
+
+# for debugging on IRIX 5.x systems
+# -woff 1209 = "controlling expression is constant"
+# -woff 1210 = "controlling expression is constant"
+# -woff 1506 = "implict conversion from unsigned long to smaller type"
+# -woff 1521 = "nonstandard preprocessing directive is used"
+# -woff 3496 = "bitwise operator precedence"
+irix-debug:
+	pmake $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"LIBDIR = ../lib32" \
+	"CC = cc" \
+	"CFLAGS = -g -n32 -ansi -fullwarn -DSHM -DDEBUG -woff 1209,1210,1506,1521,3496" \
+	"MAKELIB = ../bin/mklib.ar-rcv" \
+	"XLIBS = -rpath ../lib32 -lX11 -lXext -lXmu -lXi -lfpe -lXext -lXmu -lXi"
+
+DEBUG:
+	pmake $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = cc" \
+	"CFLAGS = -g -ansi -prototypes -fullwarn -DSHM -DDEBUG" \
+	"MAKELIB = ../bin/mklib.ar-rcv" \
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lfpe"
+
+# for debugging on Linux systems
+linux-debug:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -g -ansi -pedantic -Wall -DSHM -DDEBUG -DSVGA -DFX -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM_not -I/usr/include/glide -I/usr/local/glide/include" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/local/glide/lib -lglide2x -ltexus -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+
+linux-elf-debug:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -g -ansi -pedantic -Wall -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM -DFX -DDEBUG -I/usr/local/glide/include -I/usr/include/glide" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/local/glide/lib -lglide2x -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga -L/usr/local/glide/lib -lglide2x -lm" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+
+# for profiling on Linux systems
+linux-prof:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O2 -pg -ansi -pedantic -Wall -DSHM -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -I/usr/include/glide -I/usr/local/glide/include" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/local/glide/lib -lglide2x -L/usr/X11/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S \
+	X86/mmx_blend.S \
+	X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
+	X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
+	X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
+	X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
+	X86/3dnow_norm_raw.S"

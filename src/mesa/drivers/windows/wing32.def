@@ -1,0 +1,12 @@
+EXPORTS
+        WinGBitBlt@32
+        WinGCreateBitmap@12
+        WinGCreateDC@0
+        WinGCreateHalftoneBrush@12
+        WinGCreateHalftonePalette@0
+        WinGGetDIBColorTable@16
+        WinGGetDIBPointer@8
+        WinGRecommendDIBFormat@4
+        WinGSetDIBColorTable@16
+        WinGStretchBlt@40
+

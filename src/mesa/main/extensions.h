@@ -1,0 +1,56 @@
+/* $Id: extensions.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+
+/*
+ * Mesa 3-D graphics library
+ * Version:  3.1
+ * 
+ * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+
+#ifndef _EXTENSIONS_H_
+#define _EXTENSIONS_H_
+
+struct gl_context;
+struct extension;
+
+struct gl_extensions {
+   char *ext_string;
+   struct extension *ext_list;
+};
+
+#define DEFAULT_OFF    0x0
+#define DEFAULT_ON     0x1
+#define ALWAYS_ENABLED 0x2
+
+/* Return 0 on success.
+ */
+extern int gl_extensions_add( struct gl_context *ctx, int state, 
+			      const char *name, void (*notify)() );
+
+extern int gl_extensions_enable( struct gl_context *ctx, const char *name );
+extern int gl_extensions_disable( struct gl_context *ctx, const char *name );
+extern void gl_extensions_dtr( struct gl_context *ctx );
+extern void gl_extensions_ctr( struct gl_context *ctx );
+extern const char *gl_extensions_get_string( struct gl_context *ctx );
+
+#endif
+
+

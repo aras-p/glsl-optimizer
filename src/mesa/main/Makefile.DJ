@@ -1,0 +1,95 @@
+# $Id: Makefile.DJ,v 1.1 1999/08/19 00:55:41 jtg Exp $
+
+# Makefile for core library for MS-DOS using djgpp
+
+# Mesa 3-D graphics library
+# Version:  3.1
+# Copyright (C) 1995-1998  Brian Paul
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Library General Public
+# License as published by the Free Software Foundation; either
+# version 2 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Library General Public License for more details.
+#
+# You should have received a copy of the GNU Library General Public
+# License along with this library; if not, write to the Free
+# Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+# $Log: Makefile.DJ,v $
+# Revision 1.1  1999/08/19 00:55:41  jtg
+# Initial revision
+#
+# Revision 1.1  1999/01/01 14:35:09  brianp
+# Initial revision
+#
+
+
+
+##### MACROS #####
+
+VPATH = RCS
+
+INCDIR = ..\include
+LIBDIR = ..\lib
+
+# Want UniVBE (Display Doctor) Support, Scitech Software www.scitechsoft.com
+# Set -I to point to scitech include files.
+# Haven`t finished doing univbe version for djgpp
+#CFLAGS += -DUNIVBE -D__DOS__ -D__MSDOS32__ -IC:\scitech\include
+CFLAGS +=  -D__DOS__ -D__MSDOS32__
+
+CORE_SOURCES = accum.c alpha.c alphabuf.c api1.c api2.c apiext.c attrib.c \
+	bitmap.c blend.c clip.c colortab.c context.c copypix.c depth.c \
+	dlist.c drawpix.c enable.c eval.c feedback.c fog.c \
+	get.c hash.c image.c light.c lines.c logic.c masking.c matrix.c \
+	misc.c mmath.c mthreads.c pb.c pixel.c points.c pointers.c polygon.c \
+	quads.c rastpos.c readpix.c rect.c scissor.c shade.c span.c \
+	stencil.c teximage.c texobj.c texstate.c texture.c triangle.c \
+	varray.c winpos.c vb.c vbfill.c vbrender.c vbxform.c xform.c \
+	zoom.c
+
+DRIVER_SOURCES = DOS\dosmesa.c
+
+SOURCES = $(CORE_SOURCES) $(DRIVER_SOURCES)
+
+OBJECTS = $(SOURCES:.c=.o)
+
+#CFLAGS += -g
+
+##### RULES #####
+
+.c.o:
+	gcc -c -DDOSVGA -I$(INCDIR) $(CFLAGS) $<
+
+##### TARGETS #####
+
+GL_LIB = dosmesa.a
+
+default: $(LIBDIR)/$(GL_LIB)
+
+clean:
+	-del *.o
+
+MAKELIB = AR ruv
+RANLIB = ls
+
+# Make the library
+$(LIBDIR)/$(GL_LIB): $(OBJECTS)
+	$(MAKELIB) $(GL_LIB) $(OBJECTS)
+	copy $(GL_LIB) $(LIBDIR)\$(GL_LIB)
+
+include depend.dos
+#
+
+# Run 'make depend' to update the dependencies if you change what's included
+# by any source file.
+#
+dep: $(SOURCES)
+	makedep -fdepend -Y -I../include $(SOURCES)
+

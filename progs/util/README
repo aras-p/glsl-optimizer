@@ -1,0 +1,22 @@
+
+This directory is a collection of function which may be useful to
+OpenGL/Mesa programmers.
+
+
+errcheck.c	- an OpenGL error check/report function
+glutskel.c	- handy skeleton for GLUT programs
+idproj.c	- setup an identity projection
+mwmborder.c	- remove Motif window decoration/border
+winpos.c	- set absolute window raster position
+readtex.c	- load textures/mipmaps from an .rgb file
+showbuffer.[ch]	- show depth, alpha, or stencil buffer contents
+glstate.[ch]	- query/print GL state variables, for debugging, etc.
+sampleMakefile	- example Makefile for making OpenGL/Mesa apps on Unix
+dumpsate.c	- dump all OpenGL state, from Stephane Rehel
+imagesgi.cpp,.h - read SGI image files
+
+
+more to come...
+
+----------------------------------------------------------------------
+$Id: README,v 1.1 1999/08/19 00:55:42 jtg Exp $

@@ -1,0 +1,64 @@
+# $Id: Makefile.BeOS-R4,v 1.1 1999/08/19 00:55:41 jtg Exp $
+
+# Mesa 3-D graphics library
+# Version:  3.1
+# Copyright (C) 1995-1999  Brian Paul
+#
+# This file is in the public domain.
+
+
+# Makefile for sample programs for BeOS R4
+
+
+
+
+##### MACROS #####
+
+INCDIR = ../include
+LIBDIR = ../lib
+
+GL_LIBS = -L$(LIBDIR) -L/boot/home/config/lib -Xlinker -rpath $(LIBDIR) -lbe -lglut -lMesaGLU -lMesaGL $(XLIBS)
+
+LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
+
+PROGS = accum bitmap1 bitmap2 blendeq blendxor copy cursor depth eval fog \
+	font line logo olympic overlay point prim select \
+	shape sphere star stencil stretch texture tri wave
+
+
+##### RULES #####
+
+.SUFFIXES:
+.SUFFIXES: .c
+
+.c: $(LIB_DEP)
+	$(CC) -I$(INCDIR) $(CFLAGS) $< $(GL_LIBS) -o $@
+
+
+
+##### TARGETS #####
+
+default:
+	@echo "Specify a target configuration"
+
+clean:
+	-rm *.o *~
+
+realclean:
+	-rm $(PROGS)
+	-rm *.o *~
+
+targets: $(PROGS)
+
+# execute all programs
+exec: $(PROGS)
+	@for prog in $(PROGS) ;			\
+	do					\
+		echo -n "Running $$prog ..." ;	\
+		$$prog ;			\
+		echo ;				\
+	done
+
+
+include ../Make-config
+

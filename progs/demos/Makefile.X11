@@ -1,0 +1,60 @@
+# $Id: Makefile.X11,v 1.1 1999/08/19 00:55:40 jtg Exp $
+
+# Mesa 3-D graphics library
+# Version:  3.1
+# Copyright (C) 1995-1998  Brian Paul
+
+
+# Makefile for GLUT-based demo programs for Unix/X11
+
+
+##### MACROS #####
+
+INCDIR = ../include
+LIBDIR = ../lib
+
+GL_LIBS = -L$(LIBDIR) -lglut -lGLU -lGL -lm $(XLIBS)
+
+LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
+
+PROGS = bounce clearspd drawpix gamma gears glinfo glutfx isosurf \
+	morph3d multiarb osdemo paltex pointblast reflect \
+	renormal spectex stex3d tessdemo texcyl texobj trispd winpos
+
+
+##### RULES #####
+
+.SUFFIXES:
+.SUFFIXES: .c
+
+.c: $(LIB_DEP)
+	$(CC) -I$(INCDIR) $(CFLAGS) $< $(GL_LIBS) -o $@
+
+
+
+##### TARGETS #####
+
+default:
+	@echo "Specify a target configuration"
+
+clean:
+	-rm *.o *~
+
+realclean:
+	-rm $(PROGS)
+	-rm *.o *~
+
+targets: $(PROGS)
+
+# execute all programs
+exec: $(PROGS)
+	@for prog in $(PROGS) ;			\
+	do					\
+		echo -n "Running $$prog ..." ;	\
+		$$prog ;			\
+		echo ;				\
+	done
+
+
+include ../Make-config
+

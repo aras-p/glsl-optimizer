@@ -1,0 +1,43 @@
+The current NURBS implementation has no trimming facilities yet.
+
+The code is not well commented.
+
+1) Normal calculus fails for special cases of NURBS (independent
+  of the NURBS modules)
+  Those cases arise when for u or v, some control points
+  for a fixed value of that parameter form the same point.
+  Imagine a Bezier patch degenerated into a "triangle".
+
+  v ^          0,1,2        order=3
+    |            *
+    |
+    |       3*  4*  5*
+    |
+    |    6*     7*     8*
+    |
+    |
+    +------------------------> u
+
+  The calculus of du derivative at triple point (0,1 and 2) will fail.
+  As a result, the normal vector will be 0.
+  The eval2.c code has to be changed to handle the above situation.
+
+2) Adjacent NURBS surfaces ("sharing" the same control points along
+  the "joining" edge) will be sampled with the same factor.
+  This prevents the formation of "cracks".
+  When the control polygon of the "shared" edge is not the same,
+  cracks might appear.
+
+The sampling tolerance is sometimes not respected!
+A NURBS object is broken into Bezier curves/surfaces. If one of such
+Bezier objects has a local high curvature with other portions of it
+relatively flat then the high curvature part will be sampled more dense that
+its flatter regions.
+The flat regions might be tesselated into quads having sides of length
+greater than the current sampling tolernace setting.
+I believe such behaviour is acceptable, though not along the concept of
+sampling tolerance.
+
+February 20, 1996.
+
+Bogdan.  

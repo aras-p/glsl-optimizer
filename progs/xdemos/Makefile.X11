@@ -1,0 +1,58 @@
+# $Id: Makefile.X11,v 1.1 1999/08/19 00:55:43 jtg Exp $
+
+# Mesa 3-D graphics library
+# Version:  3.1
+# Copyright (C) 1995-1999  Brian Paul
+
+# Makefile for non-GLUT (X11, SVGA, etc) demo programs
+
+
+##### MACROS #####
+
+INCDIR = ../include
+LIBDIR = ../lib
+
+GL_LIBS = -L$(LIBDIR) -lglut -lGLU -lGL -lm $(XLIBS)
+
+LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
+
+PROGS = glxdemo glxpixmap offset xdemo
+
+
+
+##### RULES #####
+
+.SUFFIXES:
+.SUFFIXES: .c
+
+.c: $(LIB_DEP)
+	$(CC) -I$(INCDIR) $(CFLAGS) $< $(GL_LIBS) -o $@
+
+
+
+##### TARGETS #####
+
+default:
+	@echo "Specify a target configuration"
+
+clean:
+	-rm *.o *~
+
+realclean:
+	-rm $(PROGS)
+	-rm *.o *~
+
+targets: $(PROGS)
+
+# execute all programs
+exec: $(PROGS)
+	@for prog in $(PROGS) ;			\
+	do					\
+		echo -n "Running $$prog ..." ;	\
+		$$prog ;			\
+		echo ;				\
+	done
+
+
+include ../Make-config
+
