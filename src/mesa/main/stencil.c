@@ -1,4 +1,4 @@
-/* $Id: stencil.c,v 1.11 1999/12/04 21:23:55 brianp Exp $ */
+/* $Id: stencil.c,v 1.12 1999/12/10 16:15:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -190,13 +190,15 @@ ENDIF
 /*
  * Apply the given stencil operator to the array of stencil values.
  * Don't touch stencil[i] if mask[i] is zero.
- * Input:  n - number of pixels in the span
+ * Input:  n - size of stencil array
  *         oper - the stencil buffer operator
  *         stencil - array of stencil values
  *         mask - array [n] of flag:  1=apply operator, 0=don't apply operator
+ * Output:  stencil - modified values
  */
-static void apply_stencil_op( GLcontext *ctx, GLenum oper,
-                              GLuint n, GLstencil stencil[], GLubyte mask[] )
+static void apply_stencil_op( const GLcontext *ctx, GLenum oper,
+                              GLuint n, GLstencil stencil[],
+                              const GLubyte mask[] )
 {
    const GLstencil ref = ctx->Stencil.Ref;
    const GLstencil wrtmask = ctx->Stencil.WriteMask;
@@ -298,7 +300,7 @@ static void apply_stencil_op( GLcontext *ctx, GLenum oper,
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
                   GLstencil s = stencil[i];
-                  stencil[i] = (GLstencil) ((invmask & s) | (wrtmask & (stencil[i]+1)));
+                  stencil[i] = (GLstencil) ((invmask & s) | (wrtmask & (s+1)));
 	       }
 	    }
 	 }
@@ -315,7 +317,7 @@ static void apply_stencil_op( GLcontext *ctx, GLenum oper,
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
                   GLstencil s = stencil[i];
-                  stencil[i] = (GLstencil) ((invmask & s) | (wrtmask & (stencil[i]-1)));
+                  stencil[i] = (GLstencil) ((invmask & s) | (wrtmask & (s-1)));
 	       }
 	    }
 	 }
@@ -347,24 +349,25 @@ static void apply_stencil_op( GLcontext *ctx, GLenum oper,
 
 
 /*
- * Apply stencil test to a span of pixels before depth buffering.
- * Input:  n - number of pixels in the span
- *         x, y - coordinate of left-most pixel in the span
+ * Apply stencil test to an array of stencil values (before depth buffering).
+ * Input:  n - number of pixels in the array
+ *         stencil - array of [n] stencil values
  *         mask - array [n] of flag:  0=skip the pixel, 1=stencil the pixel
  * Output:  mask - pixels which fail the stencil test will have their
  *                 mask flag set to 0.
- * Return:  0 = all pixels failed, 1 = zero or more pixels passed.
+ *          stencil - updated stencil values (where the test passed)
+ * Return:  GL_FALSE = all pixels failed, GL_TRUE = zero or more pixels passed.
  */
-GLint gl_stencil_span( GLcontext *ctx,
-                       GLuint n, GLint x, GLint y, GLubyte mask[] )
+static GLboolean
+do_stencil_test( GLcontext *ctx, GLuint n, GLstencil stencil[],
+                 GLubyte mask[] )
 {
-   GLubyte fail[MAX_WIDTH];
-   GLint allfail = 0;
+   GLubyte fail[PB_SIZE];
+   GLboolean allfail = GL_FALSE;
    GLuint i;
    GLstencil r, s;
-   GLstencil *stencil;
 
-   stencil = STENCIL_ADDRESS( x, y );
+   ASSERT(n <= PB_SIZE);
 
    /*
     * Perform stencil test.  The results of this operation are stored
@@ -387,7 +390,7 @@ GLint gl_stencil_span( GLcontext *ctx,
 	       fail[i] = 0;
 	    }
 	 }
-	 allfail = 1;
+	 allfail = GL_TRUE;
 	 break;
       case GL_LESS:
 	 r = (GLstencil) (ctx->Stencil.Ref & ctx->Stencil.ValueMask);
@@ -518,26 +521,47 @@ GLint gl_stencil_span( GLcontext *ctx,
       apply_stencil_op( ctx, ctx->Stencil.FailFunc, n, stencil, fail );
    }
 
-   return (allfail) ? 0 : 1;
+   return !allfail;
 }
 
 
 
 
 /*
- * Apply the combination depth-buffer/stencil operator to a span of pixels.
+ * Apply stencil and depth testing to an array of pixels.
+ * Hardware or software stencil buffer acceptable.
  * Input:  n - number of pixels in the span
- *         x, y - location of leftmost pixel in span
  *         z - array [n] of z values
- * Input:  mask - array [n] of flags  (1=test this pixel, 0=skip the pixel)
- * Output:  mask - array [n] of flags (1=depth test passed, 0=failed) 
+ *         stencil - array [n] of stencil values
+ *         mask - array [n] of flags  (1=test this pixel, 0=skip the pixel)
+ * Output:  stencil - modified stencil values
+ *          mask - array [n] of flags (1=stencil and depth test passed)
+ * Return: GL_TRUE - all fragments failed the testing
+ *         GL_FALSE - one or more fragments passed the testing
+ * 
  */
-void gl_depth_stencil_span( GLcontext *ctx,
-                            GLuint n, GLint x, GLint y, const GLdepth z[],
-			    GLubyte mask[] )
+static GLboolean
+stencil_and_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                             const GLdepth z[], GLstencil stencil[],
+                             GLubyte mask[] )
 {
-   GLstencil *stencil = STENCIL_ADDRESS(x, y);
+   ASSERT(ctx->Stencil.Enabled);
+   ASSERT(n <= PB_SIZE);
 
+   /*
+    * Apply the stencil test to the fragments.
+    * failMask[i] is 1 if the stencil test failed.
+    */
+   if (do_stencil_test( ctx, n, stencil, mask ) == GL_FALSE) {
+      /* all fragments failed the stencil test, we're done. */
+      return GL_FALSE;
+   }
+
+
+   /*
+    * Some fragments passed the stencil test, apply depth test to them
+    * and apply Zpass and Zfail stencil ops.
+    */
    if (ctx->Depth.Test==GL_FALSE) {
       /*
        * No depth buffer, just apply zpass stencil function to active pixels.
@@ -582,6 +606,56 @@ void gl_depth_stencil_span( GLcontext *ctx,
          apply_stencil_op( ctx, ctx->Stencil.ZPassFunc, n, stencil, passmask );
       }
    }
+
+   return GL_TRUE;  /* one or more fragments passed both tests */
+}
+
+
+
+/*
+ * Apply stencil and depth testing to the span of pixels.
+ * Both software and hardware stencil buffers are acceptable.
+ * Input:  n - number of pixels in the span
+ *         x, y - location of leftmost pixel in span
+ *         z - array [n] of z values
+ *         mask - array [n] of flags  (1=test this pixel, 0=skip the pixel)
+ * Output:  mask - array [n] of flags (1=stencil and depth test passed)
+ * Return: GL_TRUE - all fragments failed the testing
+ *         GL_FALSE - one or more fragments passed the testing
+ * 
+ */
+GLboolean
+gl_stencil_and_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                                const GLdepth z[], GLubyte mask[] )
+{
+   GLstencil stencilRow[MAX_WIDTH];
+   GLstencil *stencil;
+   GLboolean result;
+
+   ASSERT(ctx->Stencil.Enabled);
+   ASSERT(n <= MAX_WIDTH);
+
+   /* Get initial stencil values */
+   if (ctx->Driver.WriteStencilSpan) {
+      ASSERT(ctx->Driver.ReadStencilSpan);
+      /* Get stencil values from the hardware stencil buffer */
+      (*ctx->Driver.ReadStencilSpan)(ctx, n, x, y, stencilRow);
+      stencil = stencilRow;
+   }
+   else {
+      /* software stencil buffer */
+      stencil = STENCIL_ADDRESS(x, y);
+   }
+
+   /* do all the stencil/depth testing/updating */
+   result = stencil_and_depth_test_span( ctx, n, x, y, z, stencil, mask );
+
+   if (ctx->Driver.WriteStencilSpan) {
+      /* Write updated stencil values into hardware stencil buffer */
+      (ctx->Driver.WriteStencilSpan)(ctx, n, x, y, stencil, mask );
+   }
+
+   return result;
 }
 
 
@@ -589,25 +663,23 @@ void gl_depth_stencil_span( GLcontext *ctx,
 
 /*
  * Apply the given stencil operator for each pixel in the array whose
- * mask flag is set.
+ * mask flag is set.  This is for software stencil buffers only.
  * Input:  n - number of pixels in the span
  *         x, y - array of [n] pixels
  *         operator - the stencil buffer operator
  *         mask - array [n] of flag:  1=apply operator, 0=don't apply operator
  */
-static void apply_stencil_op_to_pixels( GLcontext *ctx,
-                                        GLuint n, const GLint x[],
-				        const GLint y[],
-				        GLenum oper, GLubyte mask[] )
+static void
+apply_stencil_op_to_pixels( const GLcontext *ctx,
+                            GLuint n, const GLint x[], const GLint y[],
+                            GLenum oper, const GLubyte mask[] )
 {
+   const GLstencil ref = ctx->Stencil.Ref;
+   const GLstencil wrtmask = ctx->Stencil.WriteMask;
+   const GLstencil invmask = (GLstencil) (~ctx->Stencil.WriteMask);
    GLuint i;
-   GLstencil ref;
-   GLstencil wrtmask, invmask;
 
-   wrtmask = ctx->Stencil.WriteMask;
-   invmask = (GLstencil) (~ctx->Stencil.WriteMask);
-
-   ref = ctx->Stencil.Ref;
+   ASSERT(!ctx->Driver.WriteStencilSpan);  /* software stencil buffer only! */
 
    switch (oper) {
       case GL_KEEP:
@@ -756,6 +828,7 @@ static void apply_stencil_op_to_pixels( GLcontext *ctx,
 
 /*
  * Apply stencil test to an array of pixels before depth buffering.
+ * Used for software stencil buffer only.
  * Input:  n - number of pixels in the span
  *         x, y - array of [n] pixels to stencil
  *         mask - array [n] of flag:  0=skip the pixel, 1=stencil the pixel
@@ -763,14 +836,16 @@ static void apply_stencil_op_to_pixels( GLcontext *ctx,
  *                 mask flag set to 0.
  * Return:  0 = all pixels failed, 1 = zero or more pixels passed.
  */
-GLint gl_stencil_pixels( GLcontext *ctx,
-                         GLuint n, const GLint x[], const GLint y[],
-			 GLubyte mask[] )
+static GLboolean
+stencil_test_pixels( GLcontext *ctx, GLuint n,
+                     const GLint x[], const GLint y[], GLubyte mask[] )
 {
    GLubyte fail[PB_SIZE];
    GLstencil r, s;
    GLuint i;
-   GLint allfail = 0;
+   GLboolean allfail = GL_FALSE;
+
+   ASSERT(!ctx->Driver.WriteStencilSpan);  /* software stencil buffer only! */
 
    /*
     * Perform stencil test.  The results of this operation are stored
@@ -794,7 +869,7 @@ GLint gl_stencil_pixels( GLcontext *ctx,
 	       fail[i] = 0;
 	    }
 	 }
-	 allfail = 1;
+	 allfail = GL_TRUE;
 	 break;
       case GL_LESS:
 	 r = (GLstencil) (ctx->Stencil.Ref & ctx->Stencil.ValueMask);
@@ -927,91 +1002,154 @@ GLint gl_stencil_pixels( GLcontext *ctx,
          return 0;
    }
 
-   apply_stencil_op_to_pixels( ctx, n, x, y, ctx->Stencil.FailFunc, fail );
+   if (ctx->Stencil.FailFunc != GL_KEEP) {
+      apply_stencil_op_to_pixels( ctx, n, x, y, ctx->Stencil.FailFunc, fail );
+   }
 
-   return (allfail) ? 0 : 1;
+   return !allfail;
 }
 
 
 
 
 /*
- * Apply the combination depth-buffer/stencil operator to a span of pixels.
- * Input:  n - number of pixels in the span
- *         x, y - array of [n] pixels to stencil
+ * Apply stencil and depth testing to an array of pixels.
+ * This is used both for software and hardware stencil buffers.
+ *
+ * The comments in this function are a bit sparse but the code is
+ * almost identical to stencil_and_depth_test_span(), which is well
+ * commented.
+ * 
+ * Input:  n - number of pixels in the array
+ *         x, y - array of [n] pixel positions
  *         z - array [n] of z values
- * Input:  mask - array [n] of flags  (1=test this pixel, 0=skip the pixel)
- * Output:  mask - array [n] of flags (1=depth test passed, 0=failed) 
+ *         mask - array [n] of flags  (1=test this pixel, 0=skip the pixel)
+ * Output: mask - array [n] of flags (1=stencil and depth test passed)
+ * Return: GL_TRUE - all fragments failed the testing
+ *         GL_FALSE - one or more fragments passed the testing
  */
-void gl_depth_stencil_pixels( GLcontext *ctx,
-                              GLuint n, const GLint x[], const GLint y[],
-			      const GLdepth z[], GLubyte mask[] )
+GLboolean
+gl_stencil_and_depth_test_pixels( GLcontext *ctx,
+                                  GLuint n, const GLint x[], const GLint y[],
+                                  const GLdepth z[], GLubyte mask[] )
 {
-   if (ctx->Depth.Test==GL_FALSE) {
-      /*
-       * No depth buffer, just apply zpass stencil function to active pixels.
-       */
-      apply_stencil_op_to_pixels( ctx, n, x, y, ctx->Stencil.ZPassFunc, mask );
-   }
-   else {
-      /*
-       * Perform depth buffering, then apply zpass or zfail stencil function.
-       */
-      GLubyte passmask[PB_SIZE], failmask[PB_SIZE], oldmask[PB_SIZE];
-      GLuint i;
+   ASSERT(ctx->Stencil.Enabled);
+   ASSERT(n <= PB_SIZE);
 
-      /* save the current mask bits */
-      MEMCPY(oldmask, mask, n * sizeof(GLubyte));
+   if (ctx->Driver.WriteStencilPixels) {
+      /*** Hardware stencil buffer ***/
+      GLstencil stencil[PB_SIZE];
+      GLubyte mask[PB_SIZE];
 
-      /* apply the depth test */
-      if (ctx->Driver.DepthTestPixels)
-         (*ctx->Driver.DepthTestPixels)( ctx, n, x, y, z, mask );
+      ASSERT(ctx->Driver.ReadStencilPixels);
+      (*ctx->Driver.ReadStencilPixels)(ctx, n, x, y, stencil);
 
-      /* Set the stencil pass/fail flags according to result of depth testing.
-       * if oldmask[i] == 0 then
-       *    Don't touch the stencil value
-       * else if oldmask[i] and newmask[i] then
-       *    Depth test passed
-       * else
-       *    assert(oldmask[i] && !newmask[i])
-       *    Depth test failed
-       * endif
-       */
-      for (i=0;i<n;i++) {
-         ASSERT(mask[i] == 0 || mask[i] == 1);
-         passmask[i] = oldmask[i] & mask[i];
-         failmask[i] = oldmask[i] & (mask[i] ^ 1);
+
+      if (do_stencil_test( ctx, n, stencil, mask ) == GL_FALSE) {
+         /* all fragments failed the stencil test, we're done. */
+         return GL_FALSE;
       }
 
-      /* apply the pass and fail operations */
-      apply_stencil_op_to_pixels( ctx, n, x, y,
-                                  ctx->Stencil.ZFailFunc, failmask );
-      apply_stencil_op_to_pixels( ctx, n, x, y,
-                                  ctx->Stencil.ZPassFunc, passmask );
-   }
+      if (ctx->Depth.Test == GL_FALSE) {
+         apply_stencil_op( ctx, ctx->Stencil.ZPassFunc, n, stencil, mask );
+      }
+      else {
+         GLubyte passmask[PB_SIZE], failmask[PB_SIZE], oldmask[PB_SIZE];
+         GLuint i;
 
+         MEMCPY(oldmask, mask, n * sizeof(GLubyte));
+
+         if (ctx->Driver.DepthTestPixels)
+            (*ctx->Driver.DepthTestPixels)( ctx, n, x, y, z, mask );
+
+         for (i=0;i<n;i++) {
+            ASSERT(mask[i] == 0 || mask[i] == 1);
+            passmask[i] = oldmask[i] & mask[i];
+            failmask[i] = oldmask[i] & (mask[i] ^ 1);
+         }
+
+         if (ctx->Stencil.ZFailFunc != GL_KEEP) {
+            apply_stencil_op( ctx, ctx->Stencil.ZFailFunc, n, stencil, failmask );
+         }
+         if (ctx->Stencil.ZPassFunc != GL_KEEP) {
+            apply_stencil_op( ctx, ctx->Stencil.ZPassFunc, n, stencil, passmask );
+         }
+      }
+
+      /* Write updated stencil values into hardware stencil buffer */
+      (ctx->Driver.WriteStencilPixels)(ctx, n, x, y, stencil, mask );
+
+      return GL_TRUE;
+
+   }
+   else {
+      /*** Software stencil buffer ***/
+
+      if (stencil_test_pixels(ctx, n, x, y, mask) == GL_FALSE) {
+         /* all fragments failed the stencil test, we're done. */
+         return GL_FALSE;
+      }
+
+
+      if (ctx->Depth.Test==GL_FALSE) {
+         apply_stencil_op_to_pixels( ctx, n, x, y, ctx->Stencil.ZPassFunc, mask );
+      }
+      else {
+         GLubyte passmask[PB_SIZE], failmask[PB_SIZE], oldmask[PB_SIZE];
+         GLuint i;
+
+         MEMCPY(oldmask, mask, n * sizeof(GLubyte));
+
+         if (ctx->Driver.DepthTestPixels)
+            (*ctx->Driver.DepthTestPixels)( ctx, n, x, y, z, mask );
+
+         for (i=0;i<n;i++) {
+            ASSERT(mask[i] == 0 || mask[i] == 1);
+            passmask[i] = oldmask[i] & mask[i];
+            failmask[i] = oldmask[i] & (mask[i] ^ 1);
+         }
+
+         if (ctx->Stencil.ZFailFunc != GL_KEEP) {
+            apply_stencil_op_to_pixels( ctx, n, x, y,
+                                        ctx->Stencil.ZFailFunc, failmask );
+         }
+         if (ctx->Stencil.ZPassFunc != GL_KEEP) {
+            apply_stencil_op_to_pixels( ctx, n, x, y,
+                                        ctx->Stencil.ZPassFunc, passmask );
+         }
+      }
+
+      return GL_TRUE;  /* one or more fragments passed both tests */
+   }
 }
 
 
 
 /*
  * Return a span of stencil values from the stencil buffer.
+ * Used for glRead/CopyPixels
  * Input:  n - how many pixels
  *         x,y - location of first pixel
  * Output:  stencil - the array of stencil values
  */
 void gl_read_stencil_span( GLcontext *ctx,
-                           GLuint n, GLint x, GLint y, GLstencil stencil[] )
+                           GLint n, GLint x, GLint y, GLstencil stencil[] )
 {
+   ASSERT(n >= 0);
    if (ctx->DrawBuffer->Stencil) {
-      const GLstencil *s = STENCIL_ADDRESS( x, y );
+      if (ctx->Driver.ReadStencilSpan) {
+         (*ctx->Driver.ReadStencilSpan)( ctx, (GLuint) n, x, y, stencil );
+      }
+      else {
+         const GLstencil *s = STENCIL_ADDRESS( x, y );
 #if STENCIL_BITS == 8
-      MEMCPY( stencil, s, n * sizeof(GLstencil) );
+         MEMCPY( stencil, s, n * sizeof(GLstencil) );
 #else
-      GLuint i;
-      for (i=0;i<n;i++)
-         stencil[i] = s[i];
+         GLuint i;
+         for (i=0;i<n;i++)
+            stencil[i] = s[i];
 #endif
+      }
    }
 }
 
@@ -1019,23 +1157,46 @@ void gl_read_stencil_span( GLcontext *ctx,
 
 /*
  * Write a span of stencil values to the stencil buffer.
+ * Used for glDraw/CopyPixels
  * Input:  n - how many pixels
- *         x,y - location of first pixel
+ *         x, y - location of first pixel
  *         stencil - the array of stencil values
  */
 void gl_write_stencil_span( GLcontext *ctx,
-                            GLuint n, GLint x, GLint y,
+                            GLint n, GLint x, GLint y,
 			    const GLstencil stencil[] )
 {
+   ASSERT(n >= 0);
    if (ctx->DrawBuffer->Stencil) {
-      GLstencil *s = STENCIL_ADDRESS( x, y );
+      /* do clipping */
+      if (y < ctx->DrawBuffer->Ymin || y > ctx->DrawBuffer->Ymax)
+         return;
+      if (x < ctx->DrawBuffer->Xmin) {
+         GLint diff = ctx->DrawBuffer->Xmin - x;
+         n -= diff;
+         stencil += diff;
+         x = ctx->DrawBuffer->Xmin;
+      }
+      if (x + n > ctx->DrawBuffer->Xmax) {
+         GLint diff = x + n - ctx->DrawBuffer->Xmax;
+         n -= diff;
+      }
+
+      ASSERT( n >= 0);
+
+      if (ctx->Driver.WriteStencilSpan) {
+         (*ctx->Driver.WriteStencilSpan)( ctx, n, x, y, stencil, NULL );
+      }
+      else {
+         GLstencil *s = STENCIL_ADDRESS( x, y );
 #if STENCIL_BITS == 8
-      MEMCPY( s, stencil, n * sizeof(GLstencil) );
+         MEMCPY( s, stencil, n * sizeof(GLstencil) );
 #else
-      GLuint i;
-      for (i=0;i<n;i++)
-         s[i] = stencil[i];
+         GLuint i;
+         for (i=0;i<n;i++)
+            s[i] = stencil[i];
 #endif
+      }
    }
 }
 
@@ -1066,8 +1227,11 @@ void gl_alloc_stencil_buffer( GLcontext *ctx )
 
 
 
-
-void gl_clear_stencil_buffer( GLcontext *ctx )
+/*
+ * Clear the software (malloc'd) stencil buffer.
+ */
+static void
+clear_software_stencil_buffer( GLcontext *ctx )
 {
    if (ctx->Visual->StencilBits==0 || !ctx->DrawBuffer->Stencil) {
       /* no stencil buffer */
@@ -1080,28 +1244,28 @@ void gl_clear_stencil_buffer( GLcontext *ctx )
       if (ctx->Stencil.WriteMask != STENCIL_MAX) {
          /* must apply mask to the clear */
          GLint y;
-         for (y=ctx->DrawBuffer->Ymin; y<=ctx->DrawBuffer->Ymax; y++) {
-            GLstencil *ptr = STENCIL_ADDRESS( ctx->DrawBuffer->Xmin, y );
-            GLint x;
+         for (y = ctx->DrawBuffer->Ymin; y <= ctx->DrawBuffer->Ymax; y++) {
             const GLstencil mask = ctx->Stencil.WriteMask;
             const GLstencil invMask = ~mask;
             const GLstencil clearVal = (ctx->Stencil.Clear & mask);
-            for (x = 0; x < width; x++) {
-               ptr[x] = (ptr[x] & invMask) | clearVal;
+            GLstencil *stencil = STENCIL_ADDRESS( ctx->DrawBuffer->Xmin, y );
+            GLint i;
+            for (i = 0; i < width; i++) {
+               stencil[i] = (stencil[i] & invMask) | clearVal;
             }
          }
       }
       else {
          /* no masking */
          GLint y;
-         for (y=ctx->DrawBuffer->Ymin; y<=ctx->DrawBuffer->Ymax; y++) {
-            GLstencil *ptr = STENCIL_ADDRESS( ctx->DrawBuffer->Xmin, y );
+         for (y = ctx->DrawBuffer->Ymin; y <= ctx->DrawBuffer->Ymax; y++) {
+            GLstencil *stencil = STENCIL_ADDRESS( ctx->DrawBuffer->Xmin, y );
 #if STENCIL_BITS==8
-            MEMSET( ptr, ctx->Stencil.Clear, width * sizeof(GLstencil) );
+            MEMSET( stencil, ctx->Stencil.Clear, width * sizeof(GLstencil) );
 #else
-            GLint x;
-            for (x = 0; x < width; x++)
-               ptr[x] = ctx->Stencil.Clear;
+            GLint i;
+            for (i = 0; i < width; i++)
+               stencil[x] = ctx->Stencil.Clear;
 #endif
          }
       }
@@ -1111,28 +1275,132 @@ void gl_clear_stencil_buffer( GLcontext *ctx )
       if (ctx->Stencil.WriteMask != STENCIL_MAX) {
          /* must apply mask to the clear */
          const GLuint n = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height;
-         GLstencil *buffer = ctx->DrawBuffer->Stencil;
+         GLstencil *stencil = ctx->DrawBuffer->Stencil;
          const GLstencil mask = ctx->Stencil.WriteMask;
          const GLstencil invMask = ~mask;
          const GLstencil clearVal = (ctx->Stencil.Clear & mask);
          GLuint i;
          for (i = 0; i < n; i++) {
-            buffer[i] = (buffer[i] & invMask) | clearVal;
+            stencil[i] = (stencil[i] & invMask) | clearVal;
          }
       }
       else {
          /* clear whole buffer without masking */
          const GLuint n = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height;
-         GLstencil *buffer = ctx->DrawBuffer->Stencil;
+         GLstencil *stencil = ctx->DrawBuffer->Stencil;
 
 #if STENCIL_BITS==8
-         MEMSET(buffer, ctx->Stencil.Clear, n * sizeof(GLstencil) );
+         MEMSET(stencil, ctx->Stencil.Clear, n * sizeof(GLstencil) );
 #else
          GLuint i;
          for (i = 0; i < n; i++) {
-            buffer[i] = ctx->Stencil.Clear;
+            stencil[i] = ctx->Stencil.Clear;
          }
 #endif
       }
    }
 }
+
+
+
+/*
+ * Clear the hardware (in graphics card) stencil buffer.
+ * This is done with the Driver.WriteStencilSpan() and Driver.ReadStencilSpan()
+ * functions.
+ * Actually, if there is a hardware stencil buffer it really should have
+ * been cleared in Driver.Clear()!  However, if the hardware does not
+ * support scissored clears or masked clears (i.e. glStencilMask) then
+ * we have to use the span-based functions.
+ */
+static void
+clear_hardware_stencil_buffer( GLcontext *ctx )
+{
+   ASSERT(ctx->Driver.WriteStencilSpan);
+   ASSERT(ctx->Driver.ReadStencilSpan);
+
+   if (ctx->Scissor.Enabled) {
+      /* clear scissor region only */
+      const GLint x = ctx->DrawBuffer->Xmin;
+      const GLint width = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin + 1;
+      if (ctx->Stencil.WriteMask != STENCIL_MAX) {
+         /* must apply mask to the clear */
+         GLint y;
+         for (y = ctx->DrawBuffer->Ymin; y <= ctx->DrawBuffer->Ymax; y++) {
+            const GLstencil mask = ctx->Stencil.WriteMask;
+            const GLstencil invMask = ~mask;
+            const GLstencil clearVal = (ctx->Stencil.Clear & mask);
+            GLstencil stencil[MAX_WIDTH];
+            GLint i;
+            (*ctx->Driver.ReadStencilSpan)(ctx, x, y, width, stencil);
+            for (i = 0; i < width; i++) {
+               stencil[i] = (stencil[i] & invMask) | clearVal;
+            }
+            (*ctx->Driver.WriteStencilSpan)(ctx, x, y, width, stencil, NULL);
+         }
+      }
+      else {
+         /* no masking */
+         GLstencil stencil[MAX_WIDTH];
+         GLint y, i;
+         for (i = 0; i < width; i++) {
+            stencil[i] = ctx->Stencil.Clear;
+         }
+         for (y = ctx->DrawBuffer->Ymin; y <= ctx->DrawBuffer->Ymax; y++) {
+            (*ctx->Driver.WriteStencilSpan)(ctx, x, y, width, stencil, NULL);
+         }
+      }
+   }
+   else {
+      /* clear whole stencil buffer */
+      if (ctx->Stencil.WriteMask != STENCIL_MAX) {
+         /* must apply mask to the clear */
+         const GLstencil mask = ctx->Stencil.WriteMask;
+         const GLstencil invMask = ~mask;
+         const GLstencil clearVal = (ctx->Stencil.Clear & mask);
+         const GLint width = ctx->DrawBuffer->Width;
+         const GLint height = ctx->DrawBuffer->Height;
+         const GLint x = ctx->DrawBuffer->Xmin;
+         GLint y;
+         for (y = 0; y < height; y++) {
+            GLstencil stencil[MAX_WIDTH];
+            GLuint i;
+            (*ctx->Driver.ReadStencilSpan)(ctx, x, y, width, stencil);
+            for (i = 0; i < width; i++) {
+               stencil[i] = (stencil[i] & invMask) | clearVal;
+            }
+            (*ctx->Driver.WriteStencilSpan)(ctx, x, y, width, stencil, NULL);
+         }
+      }
+      else {
+         /* clear whole buffer without masking */
+         const GLint width = ctx->DrawBuffer->Width;
+         const GLint height = ctx->DrawBuffer->Width;
+         const GLint x = ctx->DrawBuffer->Xmin;
+         GLstencil stencil[MAX_WIDTH];
+         GLint y, i;
+         for (i = 0; i < width; i++) {
+            stencil[i] = ctx->Stencil.Clear;
+         }
+         for (y = 0; y < height; y++) {
+            (*ctx->Driver.WriteStencilSpan)(ctx, x, y, width, stencil, NULL);
+         }
+      }
+   }
+}
+
+
+
+/*
+ * Clear the stencil buffer.
+ */
+void gl_clear_stencil_buffer( GLcontext *ctx )
+{
+   if (ctx->Driver.WriteStencilSpan) {
+      ASSERT(ctx->Driver.ReadStencilSpan);
+      clear_hardware_stencil_buffer(ctx);
+   }
+   else {
+      clear_software_stencil_buffer(ctx);
+   }
+}
+

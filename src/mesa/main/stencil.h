@@ -1,4 +1,4 @@
-/* $Id: stencil.h,v 1.2 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: stencil.h,v 1.3 1999/12/10 16:15:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,33 +49,26 @@ _mesa_StencilOp( GLenum fail, GLenum zfail, GLenum zpass );
 
 
 
-extern GLint gl_stencil_span( GLcontext *ctx,
-                              GLuint n, GLint x, GLint y, GLubyte mask[] );
+extern GLboolean
+gl_stencil_and_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                                const GLdepth z[], GLubyte mask[] );
 
 
-extern void gl_depth_stencil_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-				   const GLdepth z[], GLubyte mask[] );
+extern GLboolean
+gl_stencil_and_depth_test_pixels( GLcontext *ctx, GLuint n,
+                                  const GLint x[], const GLint y[],
+                                  const GLdepth z[], GLubyte mask[] );
 
 
-extern GLint gl_stencil_pixels( GLcontext *ctx,
-                                GLuint n, const GLint x[], const GLint y[],
-			        GLubyte mask[] );
+
+extern void
+gl_read_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
+                      GLstencil stencil[] );
 
 
-extern void gl_depth_stencil_pixels( GLcontext *ctx,
-                                     GLuint n, const GLint x[],
-				     const GLint y[], const GLdepth z[],
-				     GLubyte mask[] );
-
-
-extern void gl_read_stencil_span( GLcontext *ctx,
-                                  GLuint n, GLint x, GLint y,
-				  GLstencil stencil[] );
-
-
-extern void gl_write_stencil_span( GLcontext *ctx,
-                                   GLuint n, GLint x, GLint y,
-				   const GLstencil stencil[] );
+extern void
+gl_write_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
+                       const GLstencil stencil[] );
 
 
 extern void gl_alloc_stencil_buffer( GLcontext *ctx );
