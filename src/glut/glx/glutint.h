@@ -796,7 +796,7 @@ extern void  __glutUpdateInputDeviceMask(GLUTwindow * window);
 extern void __glutDetermineMesaSwapHackSupport(void);
 
 /* private routines from glut_gameglut.c */
-extern void GLUTAPIENTRYV __glutCloseDownGameMode(void);
+extern void __glutCloseDownGameMode(void);
 
 /* private variables from glut_swap.c (BrianP) */
 extern GLint __glutFPS;

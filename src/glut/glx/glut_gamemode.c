@@ -45,7 +45,7 @@ static char *capstr[] =
 };
 #endif
 
-void __cdecl
+void
 __glutCloseDownGameMode(void)
 {
   if (__glutDisplaySettingsChanged) {
