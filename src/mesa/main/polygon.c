@@ -49,7 +49,7 @@
  * change, flushes the vertices and notifies the driver via
  * the dd_function_table::CullFace callback.
  */
-void
+void GLAPIENTRY
 _mesa_CullFace( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -85,7 +85,7 @@ _mesa_CullFace( GLenum mode )
  * flushes the vertices and notifies the driver via
  * the dd_function_table::FrontFace callback.
  */
-void
+void GLAPIENTRY
 _mesa_FrontFace( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -124,7 +124,7 @@ _mesa_FrontFace( GLenum mode )
  * gl_polygon_attrib::BackMode. On change flushes the vertices and notifies the
  * driver via the dd_function_table::PolygonMode callback.
  */
-void
+void GLAPIENTRY
 _mesa_PolygonMode( GLenum face, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -177,7 +177,7 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
 
 #if _HAVE_FULL_GL
 
-void
+void GLAPIENTRY
 _mesa_PolygonStipple( const GLubyte *pattern )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -195,7 +195,7 @@ _mesa_PolygonStipple( const GLubyte *pattern )
 
 
 
-void
+void GLAPIENTRY
 _mesa_GetPolygonStipple( GLubyte *dest )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -208,7 +208,7 @@ _mesa_GetPolygonStipple( GLubyte *dest )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_PolygonOffset( GLfloat factor, GLfloat units )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -231,7 +231,7 @@ _mesa_PolygonOffset( GLfloat factor, GLfloat units )
 
 
 
-void
+void GLAPIENTRY
 _mesa_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
 {
    GET_CURRENT_CONTEXT(ctx);

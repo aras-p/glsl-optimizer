@@ -896,66 +896,66 @@ typedef struct {
     * \name Vertex
     */
    /*@{*/
-   void (*ArrayElement)( GLint ); /* NOTE */
-   void (*Color3f)( GLfloat, GLfloat, GLfloat );
-   void (*Color3fv)( const GLfloat * );
-   void (*Color3ub)( GLubyte, GLubyte, GLubyte );
-   void (*Color3ubv)( const GLubyte * );
-   void (*Color4f)( GLfloat, GLfloat, GLfloat, GLfloat );
-   void (*Color4fv)( const GLfloat * );
-   void (*Color4ub)( GLubyte, GLubyte, GLubyte, GLubyte );
-   void (*Color4ubv)( const GLubyte * );
-   void (*EdgeFlag)( GLboolean );
-   void (*EdgeFlagv)( const GLboolean * );
-   void (*EvalCoord1f)( GLfloat );          /* NOTE */
-   void (*EvalCoord1fv)( const GLfloat * ); /* NOTE */
-   void (*EvalCoord2f)( GLfloat, GLfloat ); /* NOTE */
-   void (*EvalCoord2fv)( const GLfloat * ); /* NOTE */
-   void (*EvalPoint1)( GLint );             /* NOTE */
-   void (*EvalPoint2)( GLint, GLint );      /* NOTE */
-   void (*FogCoordfEXT)( GLfloat );
-   void (*FogCoordfvEXT)( const GLfloat * );
-   void (*Indexi)( GLint );
-   void (*Indexiv)( const GLint * );
-   void (*Materialfv)( GLenum face, GLenum pname, const GLfloat * ); /* NOTE */
-   void (*MultiTexCoord1fARB)( GLenum, GLfloat );
-   void (*MultiTexCoord1fvARB)( GLenum, const GLfloat * );
-   void (*MultiTexCoord2fARB)( GLenum, GLfloat, GLfloat );
-   void (*MultiTexCoord2fvARB)( GLenum, const GLfloat * );
-   void (*MultiTexCoord3fARB)( GLenum, GLfloat, GLfloat, GLfloat );
-   void (*MultiTexCoord3fvARB)( GLenum, const GLfloat * );
-   void (*MultiTexCoord4fARB)( GLenum, GLfloat, GLfloat, GLfloat, GLfloat );
-   void (*MultiTexCoord4fvARB)( GLenum, const GLfloat * );
-   void (*Normal3f)( GLfloat, GLfloat, GLfloat );
-   void (*Normal3fv)( const GLfloat * );
-   void (*SecondaryColor3fEXT)( GLfloat, GLfloat, GLfloat );
-   void (*SecondaryColor3fvEXT)( const GLfloat * );
-   void (*SecondaryColor3ubEXT)( GLubyte, GLubyte, GLubyte );
-   void (*SecondaryColor3ubvEXT)( const GLubyte * );
-   void (*TexCoord1f)( GLfloat );
-   void (*TexCoord1fv)( const GLfloat * );
-   void (*TexCoord2f)( GLfloat, GLfloat );
-   void (*TexCoord2fv)( const GLfloat * );
-   void (*TexCoord3f)( GLfloat, GLfloat, GLfloat );
-   void (*TexCoord3fv)( const GLfloat * );
-   void (*TexCoord4f)( GLfloat, GLfloat, GLfloat, GLfloat );
-   void (*TexCoord4fv)( const GLfloat * );
-   void (*Vertex2f)( GLfloat, GLfloat );
-   void (*Vertex2fv)( const GLfloat * );
-   void (*Vertex3f)( GLfloat, GLfloat, GLfloat );
-   void (*Vertex3fv)( const GLfloat * );
-   void (*Vertex4f)( GLfloat, GLfloat, GLfloat, GLfloat );
-   void (*Vertex4fv)( const GLfloat * );
-   void (*CallList)( GLuint );	/* NOTE */
-   void (*Begin)( GLenum );
-   void (*End)( void );
-   void (*VertexAttrib4fNV)( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w );
-   void (*VertexAttrib4fvNV)( GLuint index, const GLfloat *v );
+   void (GLAPIENTRYP ArrayElement)( GLint ); /* NOTE */
+   void (GLAPIENTRYP Color3f)( GLfloat, GLfloat, GLfloat );
+   void (GLAPIENTRYP Color3fv)( const GLfloat * );
+   void (GLAPIENTRYP Color3ub)( GLubyte, GLubyte, GLubyte );
+   void (GLAPIENTRYP Color3ubv)( const GLubyte * );
+   void (GLAPIENTRYP Color4f)( GLfloat, GLfloat, GLfloat, GLfloat );
+   void (GLAPIENTRYP Color4fv)( const GLfloat * );
+   void (GLAPIENTRYP Color4ub)( GLubyte, GLubyte, GLubyte, GLubyte );
+   void (GLAPIENTRYP Color4ubv)( const GLubyte * );
+   void (GLAPIENTRYP EdgeFlag)( GLboolean );
+   void (GLAPIENTRYP EdgeFlagv)( const GLboolean * );
+   void (GLAPIENTRYP EvalCoord1f)( GLfloat );          /* NOTE */
+   void (GLAPIENTRYP EvalCoord1fv)( const GLfloat * ); /* NOTE */
+   void (GLAPIENTRYP EvalCoord2f)( GLfloat, GLfloat ); /* NOTE */
+   void (GLAPIENTRYP EvalCoord2fv)( const GLfloat * ); /* NOTE */
+   void (GLAPIENTRYP EvalPoint1)( GLint );             /* NOTE */
+   void (GLAPIENTRYP EvalPoint2)( GLint, GLint );      /* NOTE */
+   void (GLAPIENTRYP FogCoordfEXT)( GLfloat );
+   void (GLAPIENTRYP FogCoordfvEXT)( const GLfloat * );
+   void (GLAPIENTRYP Indexi)( GLint );
+   void (GLAPIENTRYP Indexiv)( const GLint * );
+   void (GLAPIENTRYP Materialfv)( GLenum face, GLenum pname, const GLfloat * ); /* NOTE */
+   void (GLAPIENTRYP MultiTexCoord1fARB)( GLenum, GLfloat );
+   void (GLAPIENTRYP MultiTexCoord1fvARB)( GLenum, const GLfloat * );
+   void (GLAPIENTRYP MultiTexCoord2fARB)( GLenum, GLfloat, GLfloat );
+   void (GLAPIENTRYP MultiTexCoord2fvARB)( GLenum, const GLfloat * );
+   void (GLAPIENTRYP MultiTexCoord3fARB)( GLenum, GLfloat, GLfloat, GLfloat );
+   void (GLAPIENTRYP MultiTexCoord3fvARB)( GLenum, const GLfloat * );
+   void (GLAPIENTRYP MultiTexCoord4fARB)( GLenum, GLfloat, GLfloat, GLfloat, GLfloat );
+   void (GLAPIENTRYP MultiTexCoord4fvARB)( GLenum, const GLfloat * );
+   void (GLAPIENTRYP Normal3f)( GLfloat, GLfloat, GLfloat );
+   void (GLAPIENTRYP Normal3fv)( const GLfloat * );
+   void (GLAPIENTRYP SecondaryColor3fEXT)( GLfloat, GLfloat, GLfloat );
+   void (GLAPIENTRYP SecondaryColor3fvEXT)( const GLfloat * );
+   void (GLAPIENTRYP SecondaryColor3ubEXT)( GLubyte, GLubyte, GLubyte );
+   void (GLAPIENTRYP SecondaryColor3ubvEXT)( const GLubyte * );
+   void (GLAPIENTRYP TexCoord1f)( GLfloat );
+   void (GLAPIENTRYP TexCoord1fv)( const GLfloat * );
+   void (GLAPIENTRYP TexCoord2f)( GLfloat, GLfloat );
+   void (GLAPIENTRYP TexCoord2fv)( const GLfloat * );
+   void (GLAPIENTRYP TexCoord3f)( GLfloat, GLfloat, GLfloat );
+   void (GLAPIENTRYP TexCoord3fv)( const GLfloat * );
+   void (GLAPIENTRYP TexCoord4f)( GLfloat, GLfloat, GLfloat, GLfloat );
+   void (GLAPIENTRYP TexCoord4fv)( const GLfloat * );
+   void (GLAPIENTRYP Vertex2f)( GLfloat, GLfloat );
+   void (GLAPIENTRYP Vertex2fv)( const GLfloat * );
+   void (GLAPIENTRYP Vertex3f)( GLfloat, GLfloat, GLfloat );
+   void (GLAPIENTRYP Vertex3fv)( const GLfloat * );
+   void (GLAPIENTRYP Vertex4f)( GLfloat, GLfloat, GLfloat, GLfloat );
+   void (GLAPIENTRYP Vertex4fv)( const GLfloat * );
+   void (GLAPIENTRYP CallList)( GLuint );	/* NOTE */
+   void (GLAPIENTRYP Begin)( GLenum );
+   void (GLAPIENTRYP End)( void );
+   void (GLAPIENTRYP VertexAttrib4fNV)( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w );
+   void (GLAPIENTRYP VertexAttrib4fvNV)( GLuint index, const GLfloat *v );
    /*@}*/
 
    /*
     */
-   void (*Rectf)( GLfloat, GLfloat, GLfloat, GLfloat );
+   void (GLAPIENTRYP Rectf)( GLfloat, GLfloat, GLfloat, GLfloat );
 
    /**
     * \name Array
@@ -965,10 +965,10 @@ typedef struct {
     * its current size natively.
     */
    /*@{*/
-   void (*DrawArrays)( GLenum mode, GLint start, GLsizei count );
-   void (*DrawElements)( GLenum mode, GLsizei count, GLenum type,
+   void (GLAPIENTRYP DrawArrays)( GLenum mode, GLint start, GLsizei count );
+   void (GLAPIENTRYP DrawElements)( GLenum mode, GLsizei count, GLenum type,
 			 const GLvoid *indices );
-   void (*DrawRangeElements)( GLenum mode, GLuint start,
+   void (GLAPIENTRYP DrawRangeElements)( GLenum mode, GLuint start,
 			      GLuint end, GLsizei count,
 			      GLenum type, const GLvoid *indices );
    /*@}*/
@@ -984,8 +984,8 @@ typedef struct {
     * accelerated vertex formats, eventually...
     */
    /*@{*/
-   void (*EvalMesh1)( GLenum mode, GLint i1, GLint i2 );
-   void (*EvalMesh2)( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 );
+   void (GLAPIENTRYP EvalMesh1)( GLenum mode, GLint i1, GLint i2 );
+   void (GLAPIENTRYP EvalMesh2)( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 );
    /*@}*/
 
    /**

@@ -156,7 +156,7 @@ client_state( GLcontext *ctx, GLenum cap, GLboolean state )
  * Get's the current context, assures that we're outside glBegin()/glEnd() and
  * calls client_state().
  */
-void
+void GLAPIENTRY
 _mesa_EnableClientState( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -175,7 +175,7 @@ _mesa_EnableClientState( GLenum cap )
  * Get's the current context, assures that we're outside glBegin()/glEnd() and
  * calls client_state().
  */
-void
+void GLAPIENTRY
 _mesa_DisableClientState( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1009,7 +1009,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
  * Get's the current context, assures that we're outside glBegin()/glEnd() and
  * calls _mesa_set_enable().
  */
-void
+void GLAPIENTRY
 _mesa_Enable( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1029,7 +1029,7 @@ _mesa_Enable( GLenum cap )
  * Get's the current context, assures that we're outside glBegin()/glEnd() and
  * calls _mesa_set_enable().
  */
-void
+void GLAPIENTRY
 _mesa_Disable( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1056,7 +1056,7 @@ _mesa_Disable( GLenum cap )
  * For the capabilities associated with extensions verifies that those
  * extensions are effectively present before reporting.
  */
-GLboolean
+GLboolean GLAPIENTRY
 _mesa_IsEnabled( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);

@@ -41,7 +41,7 @@
 
 
 #if _HAVE_FULL_GL
-void
+void GLAPIENTRY
 _mesa_ClearIndex( GLfloat c )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -75,7 +75,7 @@ _mesa_ClearIndex( GLfloat c )
  * change, flushes the vertices and notifies the driver via the
  * dd_function_table::ClearColor callback.
  */
-void
+void GLAPIENTRY
 _mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 {
    GLfloat tmp[4];
@@ -110,7 +110,7 @@ _mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
  * etc. If the rasterization mode is set to GL_RENDER then requests the driver
  * to clear the buffers, via the dd_function_table::Clear callback.
  */ 
-void
+void GLAPIENTRY
 _mesa_Clear( GLbitfield mask )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -176,7 +176,7 @@ _mesa_Clear( GLbitfield mask )
  * __GLcontextRec::NewState and notifies the driver via the
  * dd_function_table::DrawBuffer callback.
  */
-void
+void GLAPIENTRY
 _mesa_DrawBuffer( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -327,7 +327,7 @@ _mesa_DrawBuffer( GLenum mode )
  * new pixel state in __GLcontextRec::NewState and notifies the driver via
  * dd_function_table::ReadBuffer.
  */
-void
+void GLAPIENTRY
 _mesa_ReadBuffer( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -436,7 +436,7 @@ _mesa_ReadBuffer( GLenum mode )
  * \note This function may be called from within Mesa or called by the
  * user directly (see the GL_MESA_resize_buffers extension).
  */
-void
+void GLAPIENTRY
 _mesa_ResizeBuffersMESA( void )
 {
    GLcontext *ctx = _mesa_get_current_context();
@@ -488,7 +488,7 @@ _mesa_ResizeBuffersMESA( void )
 /*
  * XXX move somewhere else someday?
  */
-void
+void GLAPIENTRY
 _mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
 {
    GLcontext *ctx = _mesa_get_current_context();
@@ -520,7 +520,7 @@ _mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
  * change flushes the vertices and notifies the driver via
  * the dd_function_table::Scissor callback.
  */
-void
+void GLAPIENTRY
 _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
 {
    GET_CURRENT_CONTEXT(ctx);

@@ -133,7 +133,7 @@ pixel_texgen_mode(const GLcontext *ctx)
  * otherwise gets the specified parameter from the current context, converting
  * it value into GLboolean.
  */
-void
+void GLAPIENTRY
 _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1676,7 +1676,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
  * otherwise gets the specified parameter from the current context, converting
  * it value into GLdouble.
  */
-void
+void GLAPIENTRY
 _mesa_GetDoublev( GLenum pname, GLdouble *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -3213,7 +3213,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
  * otherwise gets the specified parameter from the current context, converting
  * it value into GLfloat.
  */
-void
+void GLAPIENTRY
 _mesa_GetFloatv( GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -4726,7 +4726,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
  * otherwise gets the specified parameter from the current context, converting
  * it value into GLinteger.
  */
-void
+void GLAPIENTRY
 _mesa_GetIntegerv( GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6276,7 +6276,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
  * Tries to get the specified pointer via dd_function_table::GetPointerv,
  * otherwise gets the specified pointer from the current context.
  */
-void
+void GLAPIENTRY
 _mesa_GetPointerv( GLenum pname, GLvoid **params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6371,7 +6371,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
  * Tries to get the string from dd_function_table::GetString, otherwise returns
  * the hardcoded strings.
  */
-const GLubyte *
+const GLubyte * GLAPIENTRY
 _mesa_GetString( GLenum name )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6466,7 +6466,7 @@ _mesa_GetString( GLenum name )
  *
  * Returns __GLcontextRec::ErrorValue.
  */
-GLenum
+GLenum GLAPIENTRY
 _mesa_GetError( void )
 {
    GET_CURRENT_CONTEXT(ctx);

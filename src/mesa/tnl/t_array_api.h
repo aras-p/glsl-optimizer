@@ -30,12 +30,12 @@
 #include "t_context.h"
 
 
-extern void _tnl_DrawArrays(GLenum mode, GLint first, GLsizei count);
+extern void GLAPIENTRY _tnl_DrawArrays(GLenum mode, GLint first, GLsizei count);
 
-extern void _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
+extern void GLAPIENTRY _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
 			      const GLvoid *indices);
 
-extern void _tnl_DrawRangeElements(GLenum mode, GLuint start,
+extern void GLAPIENTRY _tnl_DrawRangeElements(GLenum mode, GLuint start,
 				   GLuint end, GLsizei count, GLenum type,
 				   const GLvoid *indices);
 

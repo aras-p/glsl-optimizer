@@ -35,19 +35,19 @@
 #include "mtypes.h"
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_PointSize( GLfloat size );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PointParameteriNV( GLenum pname, GLint param );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PointParameterivNV( GLenum pname, const GLint *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PointParameterfEXT( GLenum pname, GLfloat param );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params );
 
 extern void 

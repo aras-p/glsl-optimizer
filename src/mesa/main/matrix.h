@@ -35,77 +35,77 @@
 #include "mtypes.h"
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_Frustum( GLdouble left, GLdouble right,
                GLdouble bottom, GLdouble top,
                GLdouble nearval, GLdouble farval );
 
-extern void
+extern void GLAPIENTRY
 _mesa_Ortho( GLdouble left, GLdouble right,
              GLdouble bottom, GLdouble top,
              GLdouble nearval, GLdouble farval );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PushMatrix( void );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PopMatrix( void );
 
-extern void
+extern void GLAPIENTRY
 _mesa_LoadIdentity( void );
 
-extern void
+extern void GLAPIENTRY
 _mesa_LoadMatrixf( const GLfloat *m );
 
-extern void
+extern void GLAPIENTRY
 _mesa_LoadMatrixd( const GLdouble *m );
 
-extern void
+extern void GLAPIENTRY
 _mesa_MatrixMode( GLenum mode );
 
-extern void
+extern void GLAPIENTRY
 _mesa_MultMatrixf( const GLfloat *m );
 
-extern void
+extern void GLAPIENTRY
 _mesa_MultMatrixd( const GLdouble *m );
 
-extern void
+extern void GLAPIENTRY
 _mesa_Rotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z );
 
-extern void
+extern void GLAPIENTRY
 _mesa_Rotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z );
 
-extern void
+extern void GLAPIENTRY
 _mesa_Scalef( GLfloat x, GLfloat y, GLfloat z );
 
-extern void
+extern void GLAPIENTRY
 _mesa_Scaled( GLdouble x, GLdouble y, GLdouble z );
 
-extern void
+extern void GLAPIENTRY
 _mesa_Translatef( GLfloat x, GLfloat y, GLfloat z );
 
-extern void
+extern void GLAPIENTRY
 _mesa_Translated( GLdouble x, GLdouble y, GLdouble z );
 
-extern void
+extern void GLAPIENTRY
 _mesa_LoadTransposeMatrixfARB( const GLfloat *m );
 
-extern void
+extern void GLAPIENTRY
 _mesa_LoadTransposeMatrixdARB( const GLdouble *m );
 
-extern void
+extern void GLAPIENTRY
 _mesa_MultTransposeMatrixfARB( const GLfloat *m );
 
-extern void
+extern void GLAPIENTRY
 _mesa_MultTransposeMatrixdARB( const GLdouble *m );
 
-extern void
+extern void GLAPIENTRY
 _mesa_Viewport( GLint x, GLint y, GLsizei width, GLsizei height );
 
-extern void
+extern void 
 _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height );
 
-extern void
+extern void GLAPIENTRY
 _mesa_DepthRange( GLclampd nearval, GLclampd farval );
 
 

@@ -31,12 +31,12 @@
 #include "t_context.h"
 
 
-extern void _tnl_save_Begin( GLenum mode );
-extern void _tnl_Begin( GLenum mode );
+extern void GLAPIENTRY _tnl_save_Begin( GLenum mode );
+extern void GLAPIENTRY _tnl_Begin( GLenum mode );
 
-extern void _tnl_Begin( GLenum mode );
+extern void GLAPIENTRY _tnl_Begin( GLenum mode );
 
-extern void _tnl_End(void);
+extern void GLAPIENTRY _tnl_End(void);
 
 
 /* TNL-private internal functions for building higher-level operations:

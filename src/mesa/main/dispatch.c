@@ -41,7 +41,7 @@
 #include "glthread.h"
 
 
-#if !(defined(USE_X86_ASM) || defined(USE_SPARC_ASM)) || defined(__SCITECH_SNAP__)
+#if !(defined(USE_X86_ASM) || defined(USE_SPARC_ASM))
 
 #if defined(WIN32)
 #define KEYWORD1 GLAPI

@@ -1756,7 +1756,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
  * \param type pixel data type.
  * \param pixels pixel data.
  */
-void
+void GLAPIENTRY
 _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                    GLenum type, GLvoid *pixels )
 {
@@ -1895,7 +1895,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 /*
  * Called from the API.  Note that width includes the border.
  */
-void
+void GLAPIENTRY
 _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLint border, GLenum format,
                   GLenum type, const GLvoid *pixels )
@@ -1984,7 +1984,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLsizei height, GLint border,
                   GLenum format, GLenum type,
@@ -2089,7 +2089,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
  * Called by the API or display list executor.
  * Note that width and height include the border.
  */
-void
+void GLAPIENTRY
 _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLsizei height, GLsizei depth,
                   GLint border, GLenum format, GLenum type,
@@ -2170,7 +2170,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexImage3DEXT( GLenum target, GLint level, GLenum internalFormat,
                      GLsizei width, GLsizei height, GLsizei depth,
                      GLint border, GLenum format, GLenum type,
@@ -2182,7 +2182,7 @@ _mesa_TexImage3DEXT( GLenum target, GLint level, GLenum internalFormat,
 
 
 
-void
+void GLAPIENTRY
 _mesa_TexSubImage1D( GLenum target, GLint level,
                      GLint xoffset, GLsizei width,
                      GLenum format, GLenum type,
@@ -2227,7 +2227,7 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexSubImage2D( GLenum target, GLint level,
                      GLint xoffset, GLint yoffset,
                      GLsizei width, GLsizei height,
@@ -2276,7 +2276,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
 
 
 
-void
+void GLAPIENTRY
 _mesa_TexSubImage3D( GLenum target, GLint level,
                      GLint xoffset, GLint yoffset, GLint zoffset,
                      GLsizei width, GLsizei height, GLsizei depth,
@@ -2321,7 +2321,7 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
 
 
 
-void
+void GLAPIENTRY
 _mesa_CopyTexImage1D( GLenum target, GLint level,
                       GLenum internalFormat,
                       GLint x, GLint y,
@@ -2381,7 +2381,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
 
 
 
-void
+void GLAPIENTRY
 _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
                       GLint x, GLint y, GLsizei width, GLsizei height,
                       GLint border )
@@ -2441,7 +2441,7 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
 
 
 
-void
+void GLAPIENTRY
 _mesa_CopyTexSubImage1D( GLenum target, GLint level,
                          GLint xoffset, GLint x, GLint y, GLsizei width )
 {
@@ -2477,7 +2477,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
 
 
 
-void
+void GLAPIENTRY
 _mesa_CopyTexSubImage2D( GLenum target, GLint level,
                          GLint xoffset, GLint yoffset,
                          GLint x, GLint y, GLsizei width, GLsizei height )
@@ -2516,7 +2516,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
 
 
 
-void
+void GLAPIENTRY
 _mesa_CopyTexSubImage3D( GLenum target, GLint level,
                          GLint xoffset, GLint yoffset, GLint zoffset,
                          GLint x, GLint y, GLsizei width, GLsizei height )
@@ -2733,7 +2733,7 @@ compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
 
 
 
-void
+void GLAPIENTRY
 _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
                               GLenum internalFormat, GLsizei width,
                               GLint border, GLsizei imageSize,
@@ -2812,7 +2812,7 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
                               GLenum internalFormat, GLsizei width,
                               GLsizei height, GLint border, GLsizei imageSize,
@@ -2896,7 +2896,7 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
                               GLenum internalFormat, GLsizei width,
                               GLsizei height, GLsizei depth, GLint border,
@@ -2976,7 +2976,7 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
                                  GLsizei width, GLenum format,
                                  GLsizei imageSize, const GLvoid *data)
@@ -3024,7 +3024,7 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
                                  GLint yoffset, GLsizei width, GLsizei height,
                                  GLenum format, GLsizei imageSize,
@@ -3074,7 +3074,7 @@ _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
                                  GLint yoffset, GLint zoffset, GLsizei width,
                                  GLsizei height, GLsizei depth, GLenum format,
@@ -3126,7 +3126,7 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
 {
    const struct gl_texture_unit *texUnit;

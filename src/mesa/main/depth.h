@@ -37,19 +37,19 @@
 
 #if _HAVE_FULL_GL
 
-extern void
+extern void GLAPIENTRY
 _mesa_ClearDepth( GLclampd depth );
 
-extern void
+extern void GLAPIENTRY
 _mesa_DepthFunc( GLenum func );
 
-extern void
+extern void GLAPIENTRY
 _mesa_DepthMask( GLboolean flag );
 
 extern void 
 _mesa_init_depth( GLcontext * ctx );
 
-extern void
+extern void GLAPIENTRY
 _mesa_DepthBoundsEXT( GLclampd zmin, GLclampd zmax );
 
 #else

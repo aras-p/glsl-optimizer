@@ -662,7 +662,7 @@ base_histogram_format( GLenum format )
  */
 
 
-void
+void GLAPIENTRY
 _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -729,7 +729,7 @@ _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvo
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -792,7 +792,7 @@ _mesa_GetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, G
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetHistogramParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -839,7 +839,7 @@ _mesa_GetHistogramParameterfv(GLenum target, GLenum pname, GLfloat *params)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetHistogramParameteriv(GLenum target, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -886,7 +886,7 @@ _mesa_GetHistogramParameteriv(GLenum target, GLenum pname, GLint *params)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -912,7 +912,7 @@ _mesa_GetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat *params)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetMinmaxParameteriv(GLenum target, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -938,7 +938,7 @@ _mesa_GetMinmaxParameteriv(GLenum target, GLenum pname, GLint *params)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean sink)
 {
    GLuint i;
@@ -1021,7 +1021,7 @@ _mesa_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean s
 }
 
 
-void
+void GLAPIENTRY
 _mesa_Minmax(GLenum target, GLenum internalFormat, GLboolean sink)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1049,7 +1049,7 @@ _mesa_Minmax(GLenum target, GLenum internalFormat, GLboolean sink)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_ResetHistogram(GLenum target)
 {
    GLuint i;
@@ -1077,7 +1077,7 @@ _mesa_ResetHistogram(GLenum target)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_ResetMinmax(GLenum target)
 {
    GET_CURRENT_CONTEXT(ctx);

@@ -49,7 +49,7 @@
  * Execute a vertex state program.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
 {
    struct vertex_program *vprog;
@@ -81,7 +81,7 @@ _mesa_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
  * \note Not compiled into display lists.
  * \note Called from the GL API dispatcher.
  */
-GLboolean _mesa_AreProgramsResidentNV(GLsizei n, const GLuint *ids,
+GLboolean GLAPIENTRY _mesa_AreProgramsResidentNV(GLsizei n, const GLuint *ids,
                                       GLboolean *residences)
 {
    GLint i, j;
@@ -128,7 +128,7 @@ GLboolean _mesa_AreProgramsResidentNV(GLsizei n, const GLuint *ids,
  * Request that a set of programs be resident in hardware.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_RequestResidentProgramsNV(GLsizei n, const GLuint *ids)
 {
    GLint i;
@@ -166,7 +166,7 @@ _mesa_RequestResidentProgramsNV(GLsizei n, const GLuint *ids)
  * \note Not compiled into display lists.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_GetProgramParameterfvNV(GLenum target, GLuint index,
                               GLenum pname, GLfloat *params)
 {
@@ -201,7 +201,7 @@ _mesa_GetProgramParameterfvNV(GLenum target, GLuint index,
  * \note Not compiled into display lists.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_GetProgramParameterdvNV(GLenum target, GLuint index,
                               GLenum pname, GLdouble *params)
 {
@@ -236,7 +236,7 @@ _mesa_GetProgramParameterdvNV(GLenum target, GLuint index,
  * \note Not compiled into display lists.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_GetProgramivNV(GLuint id, GLenum pname, GLint *params)
 {
    struct program *prog;
@@ -273,7 +273,7 @@ _mesa_GetProgramivNV(GLuint id, GLenum pname, GLint *params)
  * \note Not compiled into display lists.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_GetProgramStringNV(GLuint id, GLenum pname, GLubyte *program)
 {
    struct program *prog;
@@ -307,7 +307,7 @@ _mesa_GetProgramStringNV(GLuint id, GLenum pname, GLubyte *program)
  * \note Not compiled into display lists.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_GetTrackMatrixivNV(GLenum target, GLuint address,
                          GLenum pname, GLint *params)
 {
@@ -349,7 +349,7 @@ _mesa_GetTrackMatrixivNV(GLenum target, GLuint address,
  * \note Not compiled into display lists.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_GetVertexAttribdvNV(GLuint index, GLenum pname, GLdouble *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -385,7 +385,7 @@ _mesa_GetVertexAttribdvNV(GLuint index, GLenum pname, GLdouble *params)
  * \note Not compiled into display lists.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_GetVertexAttribfvNV(GLuint index, GLenum pname, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -421,7 +421,7 @@ _mesa_GetVertexAttribfvNV(GLuint index, GLenum pname, GLfloat *params)
  * \note Not compiled into display lists.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_GetVertexAttribivNV(GLuint index, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -468,7 +468,7 @@ _mesa_GetVertexAttribivNV(GLuint index, GLenum pname, GLint *params)
  * \note Not compiled into display lists.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_GetVertexAttribPointervNV(GLuint index, GLenum pname, GLvoid **pointer)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -493,7 +493,7 @@ _mesa_GetVertexAttribPointervNV(GLuint index, GLenum pname, GLvoid **pointer)
  * Load/parse/compile a program.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
                     const GLubyte *program)
 {
@@ -555,7 +555,7 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
  * Set a program parameter register.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_ProgramParameter4dNV(GLenum target, GLuint index,
                            GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
@@ -568,7 +568,7 @@ _mesa_ProgramParameter4dNV(GLenum target, GLuint index,
  * Set a program parameter register.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_ProgramParameter4dvNV(GLenum target, GLuint index,
                             const GLdouble *params)
 {
@@ -582,7 +582,7 @@ _mesa_ProgramParameter4dvNV(GLenum target, GLuint index,
  * Set a program parameter register.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_ProgramParameter4fNV(GLenum target, GLuint index,
                            GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
@@ -609,7 +609,7 @@ _mesa_ProgramParameter4fNV(GLenum target, GLuint index,
  * Set a program parameter register.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_ProgramParameter4fvNV(GLenum target, GLuint index,
                             const GLfloat *params)
 {
@@ -623,7 +623,7 @@ _mesa_ProgramParameter4fvNV(GLenum target, GLuint index,
  * Set a sequence of program parameter registers.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_ProgramParameters4dvNV(GLenum target, GLuint index,
                              GLuint num, const GLdouble *params)
 {
@@ -655,7 +655,7 @@ _mesa_ProgramParameters4dvNV(GLenum target, GLuint index,
  * Set a sequence of program parameter registers.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_ProgramParameters4fvNV(GLenum target, GLuint index,
                              GLuint num, const GLfloat *params)
 {
@@ -685,7 +685,7 @@ _mesa_ProgramParameters4fvNV(GLenum target, GLuint index,
  * Setup tracking of matrices into program parameter registers.
  * \note Called from the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _mesa_TrackMatrixNV(GLenum target, GLuint address,
                     GLenum matrix, GLenum transform)
 {
@@ -743,7 +743,7 @@ _mesa_TrackMatrixNV(GLenum target, GLuint address,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
                                 GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
@@ -779,7 +779,7 @@ _mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_ProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte *name,
                                  const float v[])
 {
@@ -787,7 +787,7 @@ _mesa_ProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte *name,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_ProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte *name,
                                 GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
@@ -796,7 +796,7 @@ _mesa_ProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte *name,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_ProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte *name,
                                  const double v[])
 {
@@ -806,7 +806,7 @@ _mesa_ProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte *name,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
                                    GLfloat *params)
 {
@@ -844,7 +844,7 @@ _mesa_GetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
                                    GLdouble *params)
 {

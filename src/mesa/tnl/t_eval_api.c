@@ -51,7 +51,7 @@
  *     map(1,2)_vertex is disabled, and to purge those vertices from
  *     the vb.
  */
-void
+void GLAPIENTRY
 _tnl_exec_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -139,7 +139,7 @@ _tnl_exec_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 
 
 
-void
+void GLAPIENTRY
 _tnl_exec_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 {
    GET_CURRENT_CONTEXT(ctx);

@@ -49,7 +49,7 @@
  * size is different from one. Notifies the driver via
  * the dd_function_table::PointSize callback.
  */
-void
+void GLAPIENTRY
 _mesa_PointSize( GLfloat size )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -84,7 +84,7 @@ _mesa_PointSize( GLfloat size )
 /*
  * Added by GL_NV_point_sprite
  */
-void
+void GLAPIENTRY
 _mesa_PointParameteriNV( GLenum pname, GLint param )
 {
    const GLfloat value = (GLfloat) param;
@@ -95,7 +95,7 @@ _mesa_PointParameteriNV( GLenum pname, GLint param )
 /*
  * Added by GL_NV_point_sprite
  */
-void
+void GLAPIENTRY
 _mesa_PointParameterivNV( GLenum pname, const GLint *params )
 {
    const GLfloat value = (GLfloat) params[0];
@@ -107,7 +107,7 @@ _mesa_PointParameterivNV( GLenum pname, const GLint *params )
 /*
  * Same for both GL_EXT_point_parameters and GL_ARB_point_parameters.
  */
-void
+void GLAPIENTRY
 _mesa_PointParameterfEXT( GLenum pname, GLfloat param)
 {
    _mesa_PointParameterfvEXT(pname, &param);
@@ -118,7 +118,7 @@ _mesa_PointParameterfEXT( GLenum pname, GLfloat param)
 /*
  * Same for both GL_EXT_point_parameters and GL_ARB_point_parameters.
  */
-void
+void GLAPIENTRY
 _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);

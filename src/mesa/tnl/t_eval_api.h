@@ -33,9 +33,9 @@
 
 /* Use _mesa_save_EvalMesh{1,2} to save these to display lists.
  */
-extern void _tnl_exec_EvalMesh1( GLenum mode, GLint i1, GLint i2 );
+extern void GLAPIENTRY _tnl_exec_EvalMesh1( GLenum mode, GLint i1, GLint i2 );
 
-extern void _tnl_exec_EvalMesh2( GLenum mode, GLint i1, GLint i2,
+extern void GLAPIENTRY _tnl_exec_EvalMesh2( GLenum mode, GLint i1, GLint i2,
 				 GLint j1, GLint j2 );
 
 void _tnl_eval_init( GLcontext *ctx );

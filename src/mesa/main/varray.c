@@ -34,7 +34,7 @@
 #include "varray.h"
 
 
-void
+void GLAPIENTRY
 _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -90,7 +90,7 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -143,7 +143,7 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -210,7 +210,7 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -251,7 +251,7 @@ _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -301,7 +301,7 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
 			       GLsizei stride, const GLvoid *ptr)
 {
@@ -369,7 +369,7 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
                       const GLvoid *ptr)
 {
@@ -427,7 +427,7 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *vptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -453,7 +453,7 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *vptr)
 
 
 #if FEATURE_NV_vertex_program
-void
+void GLAPIENTRY
 _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
                             GLsizei stride, const GLvoid *ptr)
 {
@@ -519,7 +519,7 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
 
 
 #if FEATURE_ARB_vertex_program
-void
+void GLAPIENTRY
 _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
                              GLboolean normalized,
                              GLsizei stride, const GLvoid *ptr)
@@ -601,7 +601,7 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
 #endif
 
 
-void
+void GLAPIENTRY
 _mesa_VertexPointerEXT(GLint size, GLenum type, GLsizei stride,
                        GLsizei count, const GLvoid *ptr)
 {
@@ -610,7 +610,7 @@ _mesa_VertexPointerEXT(GLint size, GLenum type, GLsizei stride,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_NormalPointerEXT(GLenum type, GLsizei stride, GLsizei count,
                        const GLvoid *ptr)
 {
@@ -619,7 +619,7 @@ _mesa_NormalPointerEXT(GLenum type, GLsizei stride, GLsizei count,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_ColorPointerEXT(GLint size, GLenum type, GLsizei stride, GLsizei count,
                       const GLvoid *ptr)
 {
@@ -628,7 +628,7 @@ _mesa_ColorPointerEXT(GLint size, GLenum type, GLsizei stride, GLsizei count,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_IndexPointerEXT(GLenum type, GLsizei stride, GLsizei count,
                       const GLvoid *ptr)
 {
@@ -637,7 +637,7 @@ _mesa_IndexPointerEXT(GLenum type, GLsizei stride, GLsizei count,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexCoordPointerEXT(GLint size, GLenum type, GLsizei stride,
                          GLsizei count, const GLvoid *ptr)
 {
@@ -646,7 +646,7 @@ _mesa_TexCoordPointerEXT(GLint size, GLenum type, GLsizei stride,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_EdgeFlagPointerEXT(GLsizei stride, GLsizei count, const GLboolean *ptr)
 {
    (void) count;
@@ -654,7 +654,7 @@ _mesa_EdgeFlagPointerEXT(GLsizei stride, GLsizei count, const GLboolean *ptr)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -849,7 +849,7 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_LockArraysEXT(GLint first, GLsizei count)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -876,7 +876,7 @@ _mesa_LockArraysEXT(GLint first, GLsizei count)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_UnlockArraysEXT( void )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -897,7 +897,7 @@ _mesa_UnlockArraysEXT( void )
 
 /* GL_EXT_multi_draw_arrays */
 /* Somebody forgot to spec the first and count parameters as const! <sigh> */
-void
+void GLAPIENTRY
 _mesa_MultiDrawArraysEXT( GLenum mode, GLint *first,
                           GLsizei *count, GLsizei primcount )
 {
@@ -915,7 +915,7 @@ _mesa_MultiDrawArraysEXT( GLenum mode, GLint *first,
 
 
 /* GL_EXT_multi_draw_arrays */
-void
+void GLAPIENTRY
 _mesa_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
                             const GLvoid **indices, GLsizei primcount )
 {
@@ -939,7 +939,7 @@ _mesa_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
 
 
 /* GL_IBM_multimode_draw_arrays */
-void
+void GLAPIENTRY
 _mesa_MultiModeDrawArraysIBM( const GLenum * mode, const GLint * first,
 			      const GLsizei * count,
 			      GLsizei primcount, GLint modestride )
@@ -959,7 +959,7 @@ _mesa_MultiModeDrawArraysIBM( const GLenum * mode, const GLint * first,
 
 
 /* GL_IBM_multimode_draw_arrays */
-void
+void GLAPIENTRY
 _mesa_MultiModeDrawElementsIBM( const GLenum * mode, const GLsizei * count,
 				GLenum type, const GLvoid * const * indices,
 				GLsizei primcount, GLint modestride )
@@ -984,7 +984,7 @@ _mesa_MultiModeDrawElementsIBM( const GLenum * mode, const GLsizei * count,
 /*****                      Initialization                        *****/
 /**********************************************************************/
 
-void
+void 
 _mesa_init_varray( GLcontext * ctx )
 {
    GLuint i;

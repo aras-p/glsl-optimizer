@@ -36,29 +36,29 @@
 #include "mtypes.h"
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_ClearIndex( GLfloat c );
 
-extern void
+extern void GLAPIENTRY
 _mesa_ClearColor( GLclampf red, GLclampf green,
                   GLclampf blue, GLclampf alpha );
 
-extern void
+extern void GLAPIENTRY
 _mesa_Clear( GLbitfield mask );
 
-extern void
+extern void GLAPIENTRY
 _mesa_DrawBuffer( GLenum mode );
 
-extern void
+extern void GLAPIENTRY
 _mesa_ReadBuffer( GLenum mode );
 
-extern void
+extern void GLAPIENTRY
 _mesa_ResizeBuffersMESA( void );
 
-extern void
+extern void GLAPIENTRY
 _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height );
 
-extern void
+extern void GLAPIENTRY
 _mesa_SampleCoverageARB(GLclampf value, GLboolean invert);
 
 extern void 

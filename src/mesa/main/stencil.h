@@ -35,27 +35,27 @@
 #include "mtypes.h"
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_ClearStencil( GLint s );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_StencilMask( GLuint mask );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_StencilOp( GLenum fail, GLenum zfail, GLenum zpass );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_ActiveStencilFaceEXT(GLenum face);
 
 
-extern void
+extern void 
 _mesa_init_stencil( GLcontext * ctx );
 
 #endif

@@ -32,7 +32,7 @@
 #include "mtypes.h"
 
 
-void
+void GLAPIENTRY
 _mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
 {
    GLfloat tmp[4];
@@ -53,7 +53,7 @@ _mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
 
 /* Should really be a driver-supplied function?
  */
-void
+void GLAPIENTRY
 _mesa_Accum( GLenum op, GLfloat value )
 {
    GET_CURRENT_CONTEXT(ctx);

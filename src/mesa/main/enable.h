@@ -38,19 +38,19 @@
 extern void
 _mesa_set_enable( GLcontext* ctx, GLenum cap, GLboolean state );
 
-extern void
+extern void GLAPIENTRY
 _mesa_Disable( GLenum cap );
 
-extern void
+extern void GLAPIENTRY
 _mesa_Enable( GLenum cap );
 
-extern GLboolean
+extern GLboolean GLAPIENTRY
 _mesa_IsEnabled( GLenum cap );
 
-extern void
+extern void GLAPIENTRY
 _mesa_EnableClientState( GLenum cap );
 
-extern void
+extern void GLAPIENTRY
 _mesa_DisableClientState( GLenum cap );
 
 

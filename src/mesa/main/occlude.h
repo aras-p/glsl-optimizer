@@ -30,28 +30,28 @@
 extern void
 _mesa_init_occlude(GLcontext *ctx);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GenQueriesARB(GLsizei n, GLuint *ids);
 
-extern void
+extern void GLAPIENTRY
 _mesa_DeleteQueriesARB(GLsizei n, const GLuint *ids);
 
-extern GLboolean
+extern GLboolean GLAPIENTRY
 _mesa_IsQueryARB(GLuint id);
 
-extern void
+extern void GLAPIENTRY
 _mesa_BeginQueryARB(GLenum target, GLuint id);
 
-extern void
+extern void GLAPIENTRY
 _mesa_EndQueryARB(GLenum target);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params);
 
 

@@ -84,37 +84,37 @@ _mesa_buffer_map( GLcontext *ctx, GLenum target, GLenum access,
  * API functions
  */
 
-extern void
+extern void GLAPIENTRY
 _mesa_BindBufferARB(GLenum target, GLuint buffer);
 
-extern void
+extern void GLAPIENTRY
 _mesa_DeleteBuffersARB(GLsizei n, const GLuint * buffer);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GenBuffersARB(GLsizei n, GLuint * buffer);
 
-extern GLboolean
+extern GLboolean GLAPIENTRY
 _mesa_IsBufferARB(GLuint buffer);
 
-extern void
+extern void GLAPIENTRY
 _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size, const GLvoid * data, GLenum usage);
 
-extern void
+extern void GLAPIENTRY
 _mesa_BufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid * data);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data);
 
-extern void *
+extern void * GLAPIENTRY
 _mesa_MapBufferARB(GLenum target, GLenum access);
 
-extern GLboolean
+extern GLboolean GLAPIENTRY
 _mesa_UnmapBufferARB(GLenum target);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetBufferPointervARB(GLenum target, GLenum pname, GLvoid **params);
 
 #endif

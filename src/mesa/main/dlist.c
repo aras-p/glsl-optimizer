@@ -816,7 +816,7 @@ _mesa_alloc_opcode( GLcontext *ctx,
 /*
  * Display List compilation functions
  */
-static void save_Accum( GLenum op, GLfloat value )
+static void GLAPIENTRY save_Accum( GLenum op, GLfloat value )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -832,7 +832,7 @@ static void save_Accum( GLenum op, GLfloat value )
 }
 
 
-static void save_AlphaFunc( GLenum func, GLclampf ref )
+static void GLAPIENTRY save_AlphaFunc( GLenum func, GLclampf ref )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -848,7 +848,7 @@ static void save_AlphaFunc( GLenum func, GLclampf ref )
 }
 
 
-static void save_BindTexture( GLenum target, GLuint texture )
+static void GLAPIENTRY save_BindTexture( GLenum target, GLuint texture )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -864,7 +864,7 @@ static void save_BindTexture( GLenum target, GLuint texture )
 }
 
 
-static void save_Bitmap( GLsizei width, GLsizei height,
+static void GLAPIENTRY save_Bitmap( GLsizei width, GLsizei height,
                          GLfloat xorig, GLfloat yorig,
                          GLfloat xmove, GLfloat ymove,
                          const GLubyte *pixels )
@@ -893,7 +893,7 @@ static void save_Bitmap( GLsizei width, GLsizei height,
 }
 
 
-static void save_BlendEquation( GLenum mode )
+static void GLAPIENTRY save_BlendEquation( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -908,7 +908,7 @@ static void save_BlendEquation( GLenum mode )
 }
 
 
-static void save_BlendFunc( GLenum sfactor, GLenum dfactor )
+static void GLAPIENTRY save_BlendFunc( GLenum sfactor, GLenum dfactor )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -924,7 +924,7 @@ static void save_BlendFunc( GLenum sfactor, GLenum dfactor )
 }
 
 
-static void save_BlendFuncSeparateEXT(GLenum sfactorRGB, GLenum dfactorRGB,
+static void GLAPIENTRY save_BlendFuncSeparateEXT(GLenum sfactorRGB, GLenum dfactorRGB,
                                       GLenum sfactorA, GLenum dfactorA)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -944,7 +944,7 @@ static void save_BlendFuncSeparateEXT(GLenum sfactorRGB, GLenum dfactorRGB,
 }
 
 
-static void save_BlendColor( GLfloat red, GLfloat green,
+static void GLAPIENTRY save_BlendColor( GLfloat red, GLfloat green,
                              GLfloat blue, GLfloat alpha )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -963,7 +963,7 @@ static void save_BlendColor( GLfloat red, GLfloat green,
 }
 
 
-void _mesa_save_CallList( GLuint list )
+void GLAPIENTRY _mesa_save_CallList( GLuint list )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -980,7 +980,7 @@ void _mesa_save_CallList( GLuint list )
 }
 
 
-void _mesa_save_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
+void GLAPIENTRY _mesa_save_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
@@ -1020,7 +1020,7 @@ void _mesa_save_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
 }
 
 
-static void save_Clear( GLbitfield mask )
+static void GLAPIENTRY save_Clear( GLbitfield mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1035,7 +1035,7 @@ static void save_Clear( GLbitfield mask )
 }
 
 
-static void save_ClearAccum( GLfloat red, GLfloat green,
+static void GLAPIENTRY save_ClearAccum( GLfloat red, GLfloat green,
                              GLfloat blue, GLfloat alpha )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1054,7 +1054,7 @@ static void save_ClearAccum( GLfloat red, GLfloat green,
 }
 
 
-static void save_ClearColor( GLclampf red, GLclampf green,
+static void GLAPIENTRY save_ClearColor( GLclampf red, GLclampf green,
                              GLclampf blue, GLclampf alpha )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1073,7 +1073,7 @@ static void save_ClearColor( GLclampf red, GLclampf green,
 }
 
 
-static void save_ClearDepth( GLclampd depth )
+static void GLAPIENTRY save_ClearDepth( GLclampd depth )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1088,7 +1088,7 @@ static void save_ClearDepth( GLclampd depth )
 }
 
 
-static void save_ClearIndex( GLfloat c )
+static void GLAPIENTRY save_ClearIndex( GLfloat c )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1103,7 +1103,7 @@ static void save_ClearIndex( GLfloat c )
 }
 
 
-static void save_ClearStencil( GLint s )
+static void GLAPIENTRY save_ClearStencil( GLint s )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1118,7 +1118,7 @@ static void save_ClearStencil( GLint s )
 }
 
 
-static void save_ClipPlane( GLenum plane, const GLdouble *equ )
+static void GLAPIENTRY save_ClipPlane( GLenum plane, const GLdouble *equ )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1138,7 +1138,7 @@ static void save_ClipPlane( GLenum plane, const GLdouble *equ )
 
 
 
-static void save_ColorMask( GLboolean red, GLboolean green,
+static void GLAPIENTRY save_ColorMask( GLboolean red, GLboolean green,
                             GLboolean blue, GLboolean alpha )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1157,7 +1157,7 @@ static void save_ColorMask( GLboolean red, GLboolean green,
 }
 
 
-static void save_ColorMaterial( GLenum face, GLenum mode )
+static void GLAPIENTRY save_ColorMaterial( GLenum face, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1175,7 +1175,7 @@ static void save_ColorMaterial( GLenum face, GLenum mode )
 }
 
 
-static void save_ColorTable( GLenum target, GLenum internalFormat,
+static void GLAPIENTRY save_ColorTable( GLenum target, GLenum internalFormat,
                              GLsizei width, GLenum format, GLenum type,
                              const GLvoid *table )
 {
@@ -1214,7 +1214,7 @@ static void save_ColorTable( GLenum target, GLenum internalFormat,
 
 
 
-static void
+static void GLAPIENTRY
 save_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1243,7 +1243,7 @@ save_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 }
 
 
-static void
+static void GLAPIENTRY
 save_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1273,7 +1273,7 @@ save_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
 
 
 
-static void save_ColorSubTable( GLenum target, GLsizei start, GLsizei count,
+static void GLAPIENTRY save_ColorSubTable( GLenum target, GLsizei start, GLsizei count,
                                 GLenum format, GLenum type,
                                 const GLvoid *table)
 {
@@ -1300,7 +1300,7 @@ static void save_ColorSubTable( GLenum target, GLsizei start, GLsizei count,
 }
 
 
-static void
+static void GLAPIENTRY
 save_CopyColorSubTable(GLenum target, GLsizei start,
                        GLint x, GLint y, GLsizei width)
 {
@@ -1322,7 +1322,7 @@ save_CopyColorSubTable(GLenum target, GLsizei start,
 }
 
 
-static void
+static void GLAPIENTRY
 save_CopyColorTable(GLenum target, GLenum internalformat,
                     GLint x, GLint y, GLsizei width)
 {
@@ -1344,7 +1344,7 @@ save_CopyColorTable(GLenum target, GLenum internalformat,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width,
                          GLenum format, GLenum type, const GLvoid *filter)
 {
@@ -1372,7 +1372,7 @@ save_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ConvolutionFilter2D(GLenum target, GLenum internalFormat,
                          GLsizei width, GLsizei height, GLenum format,
                          GLenum type, const GLvoid *filter)
@@ -1402,7 +1402,7 @@ save_ConvolutionFilter2D(GLenum target, GLenum internalFormat,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ConvolutionParameteri(GLenum target, GLenum pname, GLint param)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1420,7 +1420,7 @@ save_ConvolutionParameteri(GLenum target, GLenum pname, GLint param)
 }
 
 
-static void
+static void GLAPIENTRY
 save_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1448,7 +1448,7 @@ save_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
 }
 
 
-static void
+static void GLAPIENTRY
 save_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat param)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1466,7 +1466,7 @@ save_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat param)
 }
 
 
-static void
+static void GLAPIENTRY
 save_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1494,7 +1494,7 @@ save_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 }
 
 
-static void
+static void GLAPIENTRY
 save_CopyPixels( GLint x, GLint y,
 		 GLsizei width, GLsizei height, GLenum type )
 {
@@ -1516,7 +1516,7 @@ save_CopyPixels( GLint x, GLint y,
 
 
 
-static void
+static void GLAPIENTRY
 save_CopyTexImage1D( GLenum target, GLint level, GLenum internalformat,
                      GLint x, GLint y, GLsizei width, GLint border )
 {
@@ -1540,7 +1540,7 @@ save_CopyTexImage1D( GLenum target, GLint level, GLenum internalformat,
 }
 
 
-static void
+static void GLAPIENTRY
 save_CopyTexImage2D( GLenum target, GLint level,
                      GLenum internalformat,
                      GLint x, GLint y, GLsizei width,
@@ -1568,7 +1568,7 @@ save_CopyTexImage2D( GLenum target, GLint level,
 
 
 
-static void
+static void GLAPIENTRY
 save_CopyTexSubImage1D( GLenum target, GLint level,
                         GLint xoffset, GLint x, GLint y,
                         GLsizei width )
@@ -1591,7 +1591,7 @@ save_CopyTexSubImage1D( GLenum target, GLint level,
 }
 
 
-static void
+static void GLAPIENTRY
 save_CopyTexSubImage2D( GLenum target, GLint level,
                         GLint xoffset, GLint yoffset,
                         GLint x, GLint y,
@@ -1618,7 +1618,7 @@ save_CopyTexSubImage2D( GLenum target, GLint level,
 }
 
 
-static void
+static void GLAPIENTRY
 save_CopyTexSubImage3D( GLenum target, GLint level,
                         GLint xoffset, GLint yoffset, GLint zoffset,
                         GLint x, GLint y,
@@ -1647,7 +1647,7 @@ save_CopyTexSubImage3D( GLenum target, GLint level,
 }
 
 
-static void save_CullFace( GLenum mode )
+static void GLAPIENTRY save_CullFace( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1662,7 +1662,7 @@ static void save_CullFace( GLenum mode )
 }
 
 
-static void save_DepthFunc( GLenum func )
+static void GLAPIENTRY save_DepthFunc( GLenum func )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1677,7 +1677,7 @@ static void save_DepthFunc( GLenum func )
 }
 
 
-static void save_DepthMask( GLboolean mask )
+static void GLAPIENTRY save_DepthMask( GLboolean mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1692,7 +1692,7 @@ static void save_DepthMask( GLboolean mask )
 }
 
 
-static void save_DepthRange( GLclampd nearval, GLclampd farval )
+static void GLAPIENTRY save_DepthRange( GLclampd nearval, GLclampd farval )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1708,7 +1708,7 @@ static void save_DepthRange( GLclampd nearval, GLclampd farval )
 }
 
 
-static void save_Disable( GLenum cap )
+static void GLAPIENTRY save_Disable( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1723,7 +1723,7 @@ static void save_Disable( GLenum cap )
 }
 
 
-static void save_DrawBuffer( GLenum mode )
+static void GLAPIENTRY save_DrawBuffer( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1738,7 +1738,7 @@ static void save_DrawBuffer( GLenum mode )
 }
 
 
-static void save_DrawPixels( GLsizei width, GLsizei height,
+static void GLAPIENTRY save_DrawPixels( GLsizei width, GLsizei height,
                              GLenum format, GLenum type,
                              const GLvoid *pixels )
 {
@@ -1765,7 +1765,7 @@ static void save_DrawPixels( GLsizei width, GLsizei height,
 
 
 
-static void save_Enable( GLenum cap )
+static void GLAPIENTRY save_Enable( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1781,7 +1781,7 @@ static void save_Enable( GLenum cap )
 
 
 
-void _mesa_save_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
+void GLAPIENTRY _mesa_save_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1798,7 +1798,7 @@ void _mesa_save_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 }
 
 
-void _mesa_save_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
+void GLAPIENTRY _mesa_save_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1819,7 +1819,7 @@ void _mesa_save_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 
 
 
-static void save_Fogfv( GLenum pname, const GLfloat *params )
+static void GLAPIENTRY save_Fogfv( GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1838,13 +1838,13 @@ static void save_Fogfv( GLenum pname, const GLfloat *params )
 }
 
 
-static void save_Fogf( GLenum pname, GLfloat param )
+static void GLAPIENTRY save_Fogf( GLenum pname, GLfloat param )
 {
    save_Fogfv(pname, &param);
 }
 
 
-static void save_Fogiv(GLenum pname, const GLint *params )
+static void GLAPIENTRY save_Fogiv(GLenum pname, const GLint *params )
 {
    GLfloat p[4];
    switch (pname) {
@@ -1869,13 +1869,13 @@ static void save_Fogiv(GLenum pname, const GLint *params )
 }
 
 
-static void save_Fogi(GLenum pname, GLint param )
+static void GLAPIENTRY save_Fogi(GLenum pname, GLint param )
 {
    save_Fogiv(pname, &param);
 }
 
 
-static void save_FrontFace( GLenum mode )
+static void GLAPIENTRY save_FrontFace( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1890,7 +1890,7 @@ static void save_FrontFace( GLenum mode )
 }
 
 
-static void save_Frustum( GLdouble left, GLdouble right,
+static void GLAPIENTRY save_Frustum( GLdouble left, GLdouble right,
                       GLdouble bottom, GLdouble top,
                       GLdouble nearval, GLdouble farval )
 {
@@ -1912,7 +1912,7 @@ static void save_Frustum( GLdouble left, GLdouble right,
 }
 
 
-static void save_Hint( GLenum target, GLenum mode )
+static void GLAPIENTRY save_Hint( GLenum target, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1928,7 +1928,7 @@ static void save_Hint( GLenum target, GLenum mode )
 }
 
 
-static void
+static void GLAPIENTRY
 save_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean sink)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1948,7 +1948,7 @@ save_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean si
 }
 
 
-static void save_IndexMask( GLuint mask )
+static void GLAPIENTRY save_IndexMask( GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1963,7 +1963,7 @@ static void save_IndexMask( GLuint mask )
 }
 
 
-static void save_InitNames( void )
+static void GLAPIENTRY save_InitNames( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
@@ -1974,7 +1974,7 @@ static void save_InitNames( void )
 }
 
 
-static void save_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
+static void GLAPIENTRY save_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2028,13 +2028,13 @@ static void save_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 }
 
 
-static void save_Lightf( GLenum light, GLenum pname, GLfloat params )
+static void GLAPIENTRY save_Lightf( GLenum light, GLenum pname, GLfloat params )
 {
    save_Lightfv(light, pname, &params);
 }
 
 
-static void save_Lightiv( GLenum light, GLenum pname, const GLint *params )
+static void GLAPIENTRY save_Lightiv( GLenum light, GLenum pname, const GLint *params )
 {
    GLfloat fparam[4];
    switch (pname) {
@@ -2072,13 +2072,13 @@ static void save_Lightiv( GLenum light, GLenum pname, const GLint *params )
 }
 
 
-static void save_Lighti( GLenum light, GLenum pname, GLint param )
+static void GLAPIENTRY save_Lighti( GLenum light, GLenum pname, GLint param )
 {
    save_Lightiv( light, pname, &param );
 }
 
 
-static void save_LightModelfv( GLenum pname, const GLfloat *params )
+static void GLAPIENTRY save_LightModelfv( GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2097,13 +2097,13 @@ static void save_LightModelfv( GLenum pname, const GLfloat *params )
 }
 
 
-static void save_LightModelf( GLenum pname, GLfloat param )
+static void GLAPIENTRY save_LightModelf( GLenum pname, GLfloat param )
 {
    save_LightModelfv(pname, &param);
 }
 
 
-static void save_LightModeliv( GLenum pname, const GLint *params )
+static void GLAPIENTRY save_LightModeliv( GLenum pname, const GLint *params )
 {
    GLfloat fparam[4];
    switch (pname) {
@@ -2126,13 +2126,13 @@ static void save_LightModeliv( GLenum pname, const GLint *params )
 }
 
 
-static void save_LightModeli( GLenum pname, GLint param )
+static void GLAPIENTRY save_LightModeli( GLenum pname, GLint param )
 {
    save_LightModeliv(pname, &param);
 }
 
 
-static void save_LineStipple( GLint factor, GLushort pattern )
+static void GLAPIENTRY save_LineStipple( GLint factor, GLushort pattern )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2148,7 +2148,7 @@ static void save_LineStipple( GLint factor, GLushort pattern )
 }
 
 
-static void save_LineWidth( GLfloat width )
+static void GLAPIENTRY save_LineWidth( GLfloat width )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2163,7 +2163,7 @@ static void save_LineWidth( GLfloat width )
 }
 
 
-static void save_ListBase( GLuint base )
+static void GLAPIENTRY save_ListBase( GLuint base )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2178,7 +2178,7 @@ static void save_ListBase( GLuint base )
 }
 
 
-static void save_LoadIdentity( void )
+static void GLAPIENTRY save_LoadIdentity( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
@@ -2189,7 +2189,7 @@ static void save_LoadIdentity( void )
 }
 
 
-static void save_LoadMatrixf( const GLfloat *m )
+static void GLAPIENTRY save_LoadMatrixf( const GLfloat *m )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2207,7 +2207,7 @@ static void save_LoadMatrixf( const GLfloat *m )
 }
 
 
-static void save_LoadMatrixd( const GLdouble *m )
+static void GLAPIENTRY save_LoadMatrixd( const GLdouble *m )
 {
    GLfloat f[16];
    GLint i;
@@ -2218,7 +2218,7 @@ static void save_LoadMatrixd( const GLdouble *m )
 }
 
 
-static void save_LoadName( GLuint name )
+static void GLAPIENTRY save_LoadName( GLuint name )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2233,7 +2233,7 @@ static void save_LoadName( GLuint name )
 }
 
 
-static void save_LogicOp( GLenum opcode )
+static void GLAPIENTRY save_LogicOp( GLenum opcode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2248,7 +2248,7 @@ static void save_LogicOp( GLenum opcode )
 }
 
 
-static void save_Map1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
+static void GLAPIENTRY save_Map1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
                         GLint order, const GLdouble *points)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2269,7 +2269,7 @@ static void save_Map1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
    }
 }
 
-static void save_Map1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride,
+static void GLAPIENTRY save_Map1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride,
                         GLint order, const GLfloat *points)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2291,7 +2291,7 @@ static void save_Map1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride,
 }
 
 
-static void save_Map2d( GLenum target,
+static void GLAPIENTRY save_Map2d( GLenum target,
                         GLdouble u1, GLdouble u2, GLint ustride, GLint uorder,
                         GLdouble v1, GLdouble v2, GLint vstride, GLint vorder,
                         const GLdouble *points )
@@ -2323,7 +2323,7 @@ static void save_Map2d( GLenum target,
 }
 
 
-static void save_Map2f( GLenum target,
+static void GLAPIENTRY save_Map2f( GLenum target,
                         GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
                         GLfloat v1, GLfloat v2, GLint vstride, GLint vorder,
                         const GLfloat *points )
@@ -2354,7 +2354,7 @@ static void save_Map2f( GLenum target,
 }
 
 
-static void save_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
+static void GLAPIENTRY save_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2371,13 +2371,13 @@ static void save_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
 }
 
 
-static void save_MapGrid1d( GLint un, GLdouble u1, GLdouble u2 )
+static void GLAPIENTRY save_MapGrid1d( GLint un, GLdouble u1, GLdouble u2 )
 {
    save_MapGrid1f(un, (GLfloat) u1, (GLfloat) u2);
 }
 
 
-static void save_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
+static void GLAPIENTRY save_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
                             GLint vn, GLfloat v1, GLfloat v2 )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2399,7 +2399,7 @@ static void save_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
 
 
 
-static void save_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
+static void GLAPIENTRY save_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
                             GLint vn, GLdouble v1, GLdouble v2 )
 {
    save_MapGrid2f(un, (GLfloat) u1, (GLfloat) u2,
@@ -2407,7 +2407,7 @@ static void save_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
 }
 
 
-static void save_MatrixMode( GLenum mode )
+static void GLAPIENTRY save_MatrixMode( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2422,7 +2422,7 @@ static void save_MatrixMode( GLenum mode )
 }
 
 
-static void
+static void GLAPIENTRY
 save_Minmax(GLenum target, GLenum internalFormat, GLboolean sink)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2441,7 +2441,7 @@ save_Minmax(GLenum target, GLenum internalFormat, GLboolean sink)
 }
 
 
-static void save_MultMatrixf( const GLfloat *m )
+static void GLAPIENTRY save_MultMatrixf( const GLfloat *m )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2459,7 +2459,7 @@ static void save_MultMatrixf( const GLfloat *m )
 }
 
 
-static void save_MultMatrixd( const GLdouble *m )
+static void GLAPIENTRY save_MultMatrixd( const GLdouble *m )
 {
    GLfloat f[16];
    GLint i;
@@ -2470,7 +2470,7 @@ static void save_MultMatrixd( const GLdouble *m )
 }
 
 
-static void save_NewList( GLuint list, GLenum mode )
+static void GLAPIENTRY save_NewList( GLuint list, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    /* It's an error to call this function while building a display list */
@@ -2481,7 +2481,7 @@ static void save_NewList( GLuint list, GLenum mode )
 
 
 
-static void save_Ortho( GLdouble left, GLdouble right,
+static void GLAPIENTRY save_Ortho( GLdouble left, GLdouble right,
                     GLdouble bottom, GLdouble top,
                     GLdouble nearval, GLdouble farval )
 {
@@ -2503,7 +2503,7 @@ static void save_Ortho( GLdouble left, GLdouble right,
 }
 
 
-static void
+static void GLAPIENTRY
 save_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2522,7 +2522,7 @@ save_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
 }
 
 
-static void
+static void GLAPIENTRY
 save_PixelMapuiv(GLenum map, GLint mapsize, const GLuint *values )
 {
    GLfloat fvalues[MAX_PIXEL_MAP_TABLE];
@@ -2541,7 +2541,7 @@ save_PixelMapuiv(GLenum map, GLint mapsize, const GLuint *values )
 }
 
 
-static void
+static void GLAPIENTRY
 save_PixelMapusv(GLenum map, GLint mapsize, const GLushort *values)
 {
    GLfloat fvalues[MAX_PIXEL_MAP_TABLE];
@@ -2560,7 +2560,7 @@ save_PixelMapusv(GLenum map, GLint mapsize, const GLushort *values)
 }
 
 
-static void
+static void GLAPIENTRY
 save_PixelTransferf( GLenum pname, GLfloat param )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2577,14 +2577,14 @@ save_PixelTransferf( GLenum pname, GLfloat param )
 }
 
 
-static void
+static void GLAPIENTRY
 save_PixelTransferi( GLenum pname, GLint param )
 {
    save_PixelTransferf( pname, (GLfloat) param );
 }
 
 
-static void
+static void GLAPIENTRY
 save_PixelZoom( GLfloat xfactor, GLfloat yfactor )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2601,7 +2601,7 @@ save_PixelZoom( GLfloat xfactor, GLfloat yfactor )
 }
 
 
-static void
+static void GLAPIENTRY
 save_PointParameterfvEXT( GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2620,25 +2620,25 @@ save_PointParameterfvEXT( GLenum pname, const GLfloat *params )
 }
 
 
-static void save_PointParameterfEXT( GLenum pname, GLfloat param )
+static void GLAPIENTRY save_PointParameterfEXT( GLenum pname, GLfloat param )
 {
    save_PointParameterfvEXT(pname, &param);
 }
 
-static void save_PointParameteriNV( GLenum pname, GLint param )
+static void GLAPIENTRY save_PointParameteriNV( GLenum pname, GLint param )
 {
    GLfloat p = (GLfloat) param;
    save_PointParameterfvEXT(pname, &p);
 }
 
-static void save_PointParameterivNV( GLenum pname, const GLint *param )
+static void GLAPIENTRY save_PointParameterivNV( GLenum pname, const GLint *param )
 {
    GLfloat p = (GLfloat) param[0];
    save_PointParameterfvEXT(pname, &p);
 }
 
 
-static void save_PointSize( GLfloat size )
+static void GLAPIENTRY save_PointSize( GLfloat size )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2653,7 +2653,7 @@ static void save_PointSize( GLfloat size )
 }
 
 
-static void save_PolygonMode( GLenum face, GLenum mode )
+static void GLAPIENTRY save_PolygonMode( GLenum face, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2672,7 +2672,7 @@ static void save_PolygonMode( GLenum face, GLenum mode )
 /*
  * Polygon stipple must have been upacked already!
  */
-static void save_PolygonStipple( const GLubyte *pattern )
+static void GLAPIENTRY save_PolygonStipple( const GLubyte *pattern )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2690,7 +2690,7 @@ static void save_PolygonStipple( const GLubyte *pattern )
 }
 
 
-static void save_PolygonOffset( GLfloat factor, GLfloat units )
+static void GLAPIENTRY save_PolygonOffset( GLfloat factor, GLfloat units )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2706,14 +2706,14 @@ static void save_PolygonOffset( GLfloat factor, GLfloat units )
 }
 
 
-static void save_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
+static void GLAPIENTRY save_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
 {
    GET_CURRENT_CONTEXT(ctx);
    save_PolygonOffset(factor, ctx->DepthMaxF * bias);
 }
 
 
-static void save_PopAttrib( void )
+static void GLAPIENTRY save_PopAttrib( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
@@ -2724,7 +2724,7 @@ static void save_PopAttrib( void )
 }
 
 
-static void save_PopMatrix( void )
+static void GLAPIENTRY save_PopMatrix( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
@@ -2736,7 +2736,7 @@ static void save_PopMatrix( void )
 }
 
 
-static void save_PopName( void )
+static void GLAPIENTRY save_PopName( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
@@ -2747,7 +2747,7 @@ static void save_PopName( void )
 }
 
 
-static void save_PrioritizeTextures( GLsizei num, const GLuint *textures,
+static void GLAPIENTRY save_PrioritizeTextures( GLsizei num, const GLuint *textures,
                                      const GLclampf *priorities )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2768,7 +2768,7 @@ static void save_PrioritizeTextures( GLsizei num, const GLuint *textures,
 }
 
 
-static void save_PushAttrib( GLbitfield mask )
+static void GLAPIENTRY save_PushAttrib( GLbitfield mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2784,7 +2784,7 @@ static void save_PushAttrib( GLbitfield mask )
 }
 
 
-static void save_PushMatrix( void )
+static void GLAPIENTRY save_PushMatrix( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
@@ -2795,7 +2795,7 @@ static void save_PushMatrix( void )
 }
 
 
-static void save_PushName( GLuint name )
+static void GLAPIENTRY save_PushName( GLuint name )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2810,7 +2810,7 @@ static void save_PushName( GLuint name )
 }
 
 
-static void save_RasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+static void GLAPIENTRY save_RasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2828,125 +2828,125 @@ static void save_RasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
    }
 }
 
-static void save_RasterPos2d(GLdouble x, GLdouble y)
+static void GLAPIENTRY save_RasterPos2d(GLdouble x, GLdouble y)
 {
    save_RasterPos4f((GLfloat) x, (GLfloat) y, 0.0F, 1.0F);
 }
 
-static void save_RasterPos2f(GLfloat x, GLfloat y)
+static void GLAPIENTRY save_RasterPos2f(GLfloat x, GLfloat y)
 {
    save_RasterPos4f(x, y, 0.0F, 1.0F);
 }
 
-static void save_RasterPos2i(GLint x, GLint y)
+static void GLAPIENTRY save_RasterPos2i(GLint x, GLint y)
 {
    save_RasterPos4f((GLfloat) x, (GLfloat) y, 0.0F, 1.0F);
 }
 
-static void save_RasterPos2s(GLshort x, GLshort y)
+static void GLAPIENTRY save_RasterPos2s(GLshort x, GLshort y)
 {
    save_RasterPos4f(x, y, 0.0F, 1.0F);
 }
 
-static void save_RasterPos3d(GLdouble x, GLdouble y, GLdouble z)
+static void GLAPIENTRY save_RasterPos3d(GLdouble x, GLdouble y, GLdouble z)
 {
    save_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
-static void save_RasterPos3f(GLfloat x, GLfloat y, GLfloat z)
+static void GLAPIENTRY save_RasterPos3f(GLfloat x, GLfloat y, GLfloat z)
 {
    save_RasterPos4f(x, y, z, 1.0F);
 }
 
-static void save_RasterPos3i(GLint x, GLint y, GLint z)
+static void GLAPIENTRY save_RasterPos3i(GLint x, GLint y, GLint z)
 {
    save_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
-static void save_RasterPos3s(GLshort x, GLshort y, GLshort z)
+static void GLAPIENTRY save_RasterPos3s(GLshort x, GLshort y, GLshort z)
 {
    save_RasterPos4f(x, y, z, 1.0F);
 }
 
-static void save_RasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+static void GLAPIENTRY save_RasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
    save_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
-static void save_RasterPos4i(GLint x, GLint y, GLint z, GLint w)
+static void GLAPIENTRY save_RasterPos4i(GLint x, GLint y, GLint z, GLint w)
 {
    save_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
-static void save_RasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
+static void GLAPIENTRY save_RasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
 {
    save_RasterPos4f(x, y, z, w);
 }
 
-static void save_RasterPos2dv(const GLdouble *v)
+static void GLAPIENTRY save_RasterPos2dv(const GLdouble *v)
 {
    save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
 }
 
-static void save_RasterPos2fv(const GLfloat *v)
+static void GLAPIENTRY save_RasterPos2fv(const GLfloat *v)
 {
    save_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
 }
 
-static void save_RasterPos2iv(const GLint *v)
+static void GLAPIENTRY save_RasterPos2iv(const GLint *v)
 {
    save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
 }
 
-static void save_RasterPos2sv(const GLshort *v)
+static void GLAPIENTRY save_RasterPos2sv(const GLshort *v)
 {
    save_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
 }
 
-static void save_RasterPos3dv(const GLdouble *v)
+static void GLAPIENTRY save_RasterPos3dv(const GLdouble *v)
 {
    save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
 }
 
-static void save_RasterPos3fv(const GLfloat *v)
+static void GLAPIENTRY save_RasterPos3fv(const GLfloat *v)
 {
    save_RasterPos4f(v[0], v[1], v[2], 1.0F);
 }
 
-static void save_RasterPos3iv(const GLint *v)
+static void GLAPIENTRY save_RasterPos3iv(const GLint *v)
 {
    save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
 }
 
-static void save_RasterPos3sv(const GLshort *v)
+static void GLAPIENTRY save_RasterPos3sv(const GLshort *v)
 {
    save_RasterPos4f(v[0], v[1], v[2], 1.0F);
 }
 
-static void save_RasterPos4dv(const GLdouble *v)
+static void GLAPIENTRY save_RasterPos4dv(const GLdouble *v)
 {
    save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1],
 		    (GLfloat) v[2], (GLfloat) v[3]);
 }
 
-static void save_RasterPos4fv(const GLfloat *v)
+static void GLAPIENTRY save_RasterPos4fv(const GLfloat *v)
 {
    save_RasterPos4f(v[0], v[1], v[2], v[3]);
 }
 
-static void save_RasterPos4iv(const GLint *v)
+static void GLAPIENTRY save_RasterPos4iv(const GLint *v)
 {
    save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1],
 		    (GLfloat) v[2], (GLfloat) v[3]);
 }
 
-static void save_RasterPos4sv(const GLshort *v)
+static void GLAPIENTRY save_RasterPos4sv(const GLshort *v)
 {
    save_RasterPos4f(v[0], v[1], v[2], v[3]);
 }
 
 
-static void save_PassThrough( GLfloat token )
+static void GLAPIENTRY save_PassThrough( GLfloat token )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2961,7 +2961,7 @@ static void save_PassThrough( GLfloat token )
 }
 
 
-static void save_ReadBuffer( GLenum mode )
+static void GLAPIENTRY save_ReadBuffer( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2976,7 +2976,7 @@ static void save_ReadBuffer( GLenum mode )
 }
 
 
-static void
+static void GLAPIENTRY
 save_ResetHistogram(GLenum target)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2992,7 +2992,7 @@ save_ResetHistogram(GLenum target)
 }
 
 
-static void
+static void GLAPIENTRY
 save_ResetMinmax(GLenum target)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -3008,7 +3008,7 @@ save_ResetMinmax(GLenum target)
 }
 
 
-static void save_Rotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
+static void GLAPIENTRY save_Rotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -3026,13 +3026,13 @@ static void save_Rotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
 }
 
 
-static void save_Rotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z )
+static void GLAPIENTRY save_Rotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z )
 {
    save_Rotatef((GLfloat) angle, (GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
 
-static void save_Scalef( GLfloat x, GLfloat y, GLfloat z )
+static void GLAPIENTRY save_Scalef( GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -3049,13 +3049,13 @@ static void save_Scalef( GLfloat x, GLfloat y, GLfloat z )
 }
 
 
-static void save_Scaled( GLdouble x, GLdouble y, GLdouble z )
+static void GLAPIENTRY save_Scaled( GLdouble x, GLdouble y, GLdouble z )
 {
    save_Scalef((GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
 
-static void save_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
+static void GLAPIENTRY save_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -3073,7 +3073,7 @@ static void save_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
 }
 
 
-static void save_ShadeModel( GLenum mode )
+static void GLAPIENTRY save_ShadeModel( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -3088,7 +3088,7 @@ static void save_ShadeModel( GLenum mode )
 }
 
 
-static void save_StencilFunc( GLenum func, GLint ref, GLuint mask )
+static void GLAPIENTRY save_StencilFunc( GLenum func, GLint ref, GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -3105,7 +3105,7 @@ static void save_StencilFunc( GLenum func, GLint ref, GLuint mask )
 }
 
 
-static void save_StencilMask( GLuint mask )
+static void GLAPIENTRY save_StencilMask( GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -3120,7 +3120,7 @@ static void save_StencilMask( GLuint mask )
 }
 
 
-static void save_StencilOp( GLenum fail, GLenum zfail, GLenum zpass )
+static void GLAPIENTRY save_StencilOp( GLenum fail, GLenum zfail, GLenum zpass )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -3137,7 +3137,7 @@ static void save_StencilOp( GLenum fail, GLenum zfail, GLenum zpass )
 }
 
 
-static void save_TexEnvfv( GLenum target, GLenum pname, const GLfloat *params )
+static void GLAPIENTRY save_TexEnvfv( GLenum target, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -3157,13 +3157,13 @@ static void save_TexEnvfv( GLenum target, GLenum pname, const GLfloat *params )
 }
 
 
-static void save_TexEnvf( GLenum target, GLenum pname, GLfloat param )
+static void GLAPIENTRY save_TexEnvf( GLenum target, GLenum pname, GLfloat param )
 {
    save_TexEnvfv( target, pname, &param );
 }
 
 
-static void save_TexEnvi( GLenum target, GLenum pname, GLint param )
+static void GLAPIENTRY save_TexEnvi( GLenum target, GLenum pname, GLint param )
 {
    GLfloat p[4];
    p[0] = (GLfloat) param;
@@ -3172,7 +3172,7 @@ static void save_TexEnvi( GLenum target, GLenum pname, GLint param )
 }
 
 
-static void save_TexEnviv( GLenum target, GLenum pname, const GLint *param )
+static void GLAPIENTRY save_TexEnviv( GLenum target, GLenum pname, const GLint *param )
 {
    GLfloat p[4];
    p[0] = INT_TO_FLOAT( param[0] );
@@ -3183,7 +3183,7 @@ static void save_TexEnviv( GLenum target, GLenum pname, const GLint *param )
 }
 
 
-static void save_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
+static void GLAPIENTRY save_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -3203,7 +3203,7 @@ static void save_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 }
 
 
-static void save_TexGeniv(GLenum coord, GLenum pname, const GLint *params )
+static void GLAPIENTRY save_TexGeniv(GLenum coord, GLenum pname, const GLint *params )
 {
    GLfloat p[4];
    p[0] = (GLfloat) params[0];
@@ -3214,14 +3214,14 @@ static void save_TexGeniv(GLenum coord, GLenum pname, const GLint *params )
 }
 
 
-static void save_TexGend(GLenum coord, GLenum pname, GLdouble param )
+static void GLAPIENTRY save_TexGend(GLenum coord, GLenum pname, GLdouble param )
 {
    GLfloat p = (GLfloat) param;
    save_TexGenfv( coord, pname, &p );
 }
 
 
-static void save_TexGendv(GLenum coord, GLenum pname, const GLdouble *params )
+static void GLAPIENTRY save_TexGendv(GLenum coord, GLenum pname, const GLdouble *params )
 {
    GLfloat p[4];
    p[0] = (GLfloat) params[0];
@@ -3232,19 +3232,19 @@ static void save_TexGendv(GLenum coord, GLenum pname, const GLdouble *params )
 }
 
 
-static void save_TexGenf( GLenum coord, GLenum pname, GLfloat param )
+static void GLAPIENTRY save_TexGenf( GLenum coord, GLenum pname, GLfloat param )
 {
    save_TexGenfv(coord, pname, &param);
 }
 
 
-static void save_TexGeni( GLenum coord, GLenum pname, GLint param )
+static void GLAPIENTRY save_TexGeni( GLenum coord, GLenum pname, GLint param )
 {
    save_TexGeniv( coord, pname, &param );
 }
 
 
-static void save_TexParameterfv( GLenum target,
+static void GLAPIENTRY save_TexParameterfv( GLenum target,
                              GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -3265,13 +3265,13 @@ static void save_TexParameterfv( GLenum target,
 }
 
 
-static void save_TexParameterf( GLenum target, GLenum pname, GLfloat param )
+static void GLAPIENTRY save_TexParameterf( GLenum target, GLenum pname, GLfloat param )
 {
    save_TexParameterfv(target, pname, &param);
 }
 
 
-static void save_TexParameteri( GLenum target, GLenum pname, GLint param )
+static void GLAPIENTRY save_TexParameteri( GLenum target, GLenum pname, GLint param )
 {
    GLfloat fparam[4];
    fparam[0] = (GLfloat) param;
@@ -3280,7 +3280,7 @@ static void save_TexParameteri( GLenum target, GLenum pname, GLint param )
 }
 
 
-static void save_TexParameteriv( GLenum target, GLenum pname, const GLint *params )
+static void GLAPIENTRY save_TexParameteriv( GLenum target, GLenum pname, const GLint *params )
 {
    GLfloat fparam[4];
    fparam[0] = (GLfloat) params[0];
@@ -3289,7 +3289,7 @@ static void save_TexParameteriv( GLenum target, GLenum pname, const GLint *param
 }
 
 
-static void save_TexImage1D( GLenum target,
+static void GLAPIENTRY save_TexImage1D( GLenum target,
                              GLint level, GLint components,
                              GLsizei width, GLint border,
                              GLenum format, GLenum type,
@@ -3328,7 +3328,7 @@ static void save_TexImage1D( GLenum target,
 }
 
 
-static void save_TexImage2D( GLenum target,
+static void GLAPIENTRY save_TexImage2D( GLenum target,
                              GLint level, GLint components,
                              GLsizei width, GLsizei height, GLint border,
                              GLenum format, GLenum type,
@@ -3368,7 +3368,7 @@ static void save_TexImage2D( GLenum target,
 }
 
 
-static void save_TexImage3D( GLenum target,
+static void GLAPIENTRY save_TexImage3D( GLenum target,
                              GLint level, GLint internalFormat,
                              GLsizei width, GLsizei height, GLsizei depth,
                              GLint border,
@@ -3410,7 +3410,7 @@ static void save_TexImage3D( GLenum target,
 }
 
 
-static void save_TexSubImage1D( GLenum target, GLint level, GLint xoffset,
+static void GLAPIENTRY save_TexSubImage1D( GLenum target, GLint level, GLint xoffset,
                                 GLsizei width, GLenum format, GLenum type,
                                 const GLvoid *pixels )
 {
@@ -3439,7 +3439,7 @@ static void save_TexSubImage1D( GLenum target, GLint level, GLint xoffset,
 }
 
 
-static void save_TexSubImage2D( GLenum target, GLint level,
+static void GLAPIENTRY save_TexSubImage2D( GLenum target, GLint level,
                                 GLint xoffset, GLint yoffset,
                                 GLsizei width, GLsizei height,
                                 GLenum format, GLenum type,
@@ -3472,7 +3472,7 @@ static void save_TexSubImage2D( GLenum target, GLint level,
 }
 
 
-static void save_TexSubImage3D( GLenum target, GLint level,
+static void GLAPIENTRY save_TexSubImage3D( GLenum target, GLint level,
                                 GLint xoffset, GLint yoffset,GLint zoffset,
                                 GLsizei width, GLsizei height, GLsizei depth,
                                 GLenum format, GLenum type,
@@ -3508,7 +3508,7 @@ static void save_TexSubImage3D( GLenum target, GLint level,
 }
 
 
-static void save_Translatef( GLfloat x, GLfloat y, GLfloat z )
+static void GLAPIENTRY save_Translatef( GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -3525,14 +3525,14 @@ static void save_Translatef( GLfloat x, GLfloat y, GLfloat z )
 }
 
 
-static void save_Translated( GLdouble x, GLdouble y, GLdouble z )
+static void GLAPIENTRY save_Translated( GLdouble x, GLdouble y, GLdouble z )
 {
    save_Translatef((GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
 
 
-static void save_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
+static void GLAPIENTRY save_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -3550,7 +3550,7 @@ static void save_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
 }
 
 
-static void save_WindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+static void GLAPIENTRY save_WindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -3568,119 +3568,119 @@ static void save_WindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
    }
 }
 
-static void save_WindowPos2dMESA(GLdouble x, GLdouble y)
+static void GLAPIENTRY save_WindowPos2dMESA(GLdouble x, GLdouble y)
 {
    save_WindowPos4fMESA((GLfloat) x, (GLfloat) y, 0.0F, 1.0F);
 }
 
-static void save_WindowPos2fMESA(GLfloat x, GLfloat y)
+static void GLAPIENTRY save_WindowPos2fMESA(GLfloat x, GLfloat y)
 {
    save_WindowPos4fMESA(x, y, 0.0F, 1.0F);
 }
 
-static void save_WindowPos2iMESA(GLint x, GLint y)
+static void GLAPIENTRY save_WindowPos2iMESA(GLint x, GLint y)
 {
    save_WindowPos4fMESA((GLfloat) x, (GLfloat) y, 0.0F, 1.0F);
 }
 
-static void save_WindowPos2sMESA(GLshort x, GLshort y)
+static void GLAPIENTRY save_WindowPos2sMESA(GLshort x, GLshort y)
 {
    save_WindowPos4fMESA(x, y, 0.0F, 1.0F);
 }
 
-static void save_WindowPos3dMESA(GLdouble x, GLdouble y, GLdouble z)
+static void GLAPIENTRY save_WindowPos3dMESA(GLdouble x, GLdouble y, GLdouble z)
 {
    save_WindowPos4fMESA((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
-static void save_WindowPos3fMESA(GLfloat x, GLfloat y, GLfloat z)
+static void GLAPIENTRY save_WindowPos3fMESA(GLfloat x, GLfloat y, GLfloat z)
 {
    save_WindowPos4fMESA(x, y, z, 1.0F);
 }
 
-static void save_WindowPos3iMESA(GLint x, GLint y, GLint z)
+static void GLAPIENTRY save_WindowPos3iMESA(GLint x, GLint y, GLint z)
 {
    save_WindowPos4fMESA((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
-static void save_WindowPos3sMESA(GLshort x, GLshort y, GLshort z)
+static void GLAPIENTRY save_WindowPos3sMESA(GLshort x, GLshort y, GLshort z)
 {
    save_WindowPos4fMESA(x, y, z, 1.0F);
 }
 
-static void save_WindowPos4dMESA(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+static void GLAPIENTRY save_WindowPos4dMESA(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
    save_WindowPos4fMESA((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
-static void save_WindowPos4iMESA(GLint x, GLint y, GLint z, GLint w)
+static void GLAPIENTRY save_WindowPos4iMESA(GLint x, GLint y, GLint z, GLint w)
 {
    save_WindowPos4fMESA((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
-static void save_WindowPos4sMESA(GLshort x, GLshort y, GLshort z, GLshort w)
+static void GLAPIENTRY save_WindowPos4sMESA(GLshort x, GLshort y, GLshort z, GLshort w)
 {
    save_WindowPos4fMESA(x, y, z, w);
 }
 
-static void save_WindowPos2dvMESA(const GLdouble *v)
+static void GLAPIENTRY save_WindowPos2dvMESA(const GLdouble *v)
 {
    save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
 }
 
-static void save_WindowPos2fvMESA(const GLfloat *v)
+static void GLAPIENTRY save_WindowPos2fvMESA(const GLfloat *v)
 {
    save_WindowPos4fMESA(v[0], v[1], 0.0F, 1.0F);
 }
 
-static void save_WindowPos2ivMESA(const GLint *v)
+static void GLAPIENTRY save_WindowPos2ivMESA(const GLint *v)
 {
    save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
 }
 
-static void save_WindowPos2svMESA(const GLshort *v)
+static void GLAPIENTRY save_WindowPos2svMESA(const GLshort *v)
 {
    save_WindowPos4fMESA(v[0], v[1], 0.0F, 1.0F);
 }
 
-static void save_WindowPos3dvMESA(const GLdouble *v)
+static void GLAPIENTRY save_WindowPos3dvMESA(const GLdouble *v)
 {
    save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
 }
 
-static void save_WindowPos3fvMESA(const GLfloat *v)
+static void GLAPIENTRY save_WindowPos3fvMESA(const GLfloat *v)
 {
    save_WindowPos4fMESA(v[0], v[1], v[2], 1.0F);
 }
 
-static void save_WindowPos3ivMESA(const GLint *v)
+static void GLAPIENTRY save_WindowPos3ivMESA(const GLint *v)
 {
    save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
 }
 
-static void save_WindowPos3svMESA(const GLshort *v)
+static void GLAPIENTRY save_WindowPos3svMESA(const GLshort *v)
 {
    save_WindowPos4fMESA(v[0], v[1], v[2], 1.0F);
 }
 
-static void save_WindowPos4dvMESA(const GLdouble *v)
+static void GLAPIENTRY save_WindowPos4dvMESA(const GLdouble *v)
 {
    save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1],
 			(GLfloat) v[2], (GLfloat) v[3]);
 }
 
-static void save_WindowPos4fvMESA(const GLfloat *v)
+static void GLAPIENTRY save_WindowPos4fvMESA(const GLfloat *v)
 {
    save_WindowPos4fMESA(v[0], v[1], v[2], v[3]);
 }
 
-static void save_WindowPos4ivMESA(const GLint *v)
+static void GLAPIENTRY save_WindowPos4ivMESA(const GLint *v)
 {
    save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1],
 			(GLfloat) v[2], (GLfloat) v[3]);
 }
 
-static void save_WindowPos4svMESA(const GLshort *v)
+static void GLAPIENTRY save_WindowPos4svMESA(const GLshort *v)
 {
    save_WindowPos4fMESA(v[0], v[1], v[2], v[3]);
 }
@@ -3688,7 +3688,7 @@ static void save_WindowPos4svMESA(const GLshort *v)
 
 
 /* GL_ARB_multitexture */
-static void save_ActiveTextureARB( GLenum target )
+static void GLAPIENTRY save_ActiveTextureARB( GLenum target )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -3705,7 +3705,7 @@ static void save_ActiveTextureARB( GLenum target )
 
 /* GL_ARB_transpose_matrix */
 
-static void save_LoadTransposeMatrixdARB( const GLdouble m[16] )
+static void GLAPIENTRY save_LoadTransposeMatrixdARB( const GLdouble m[16] )
 {
    GLfloat tm[16];
    _math_transposefd(tm, m);
@@ -3713,7 +3713,7 @@ static void save_LoadTransposeMatrixdARB( const GLdouble m[16] )
 }
 
 
-static void save_LoadTransposeMatrixfARB( const GLfloat m[16] )
+static void GLAPIENTRY save_LoadTransposeMatrixfARB( const GLfloat m[16] )
 {
    GLfloat tm[16];
    _math_transposef(tm, m);
@@ -3721,7 +3721,7 @@ static void save_LoadTransposeMatrixfARB( const GLfloat m[16] )
 }
 
 
-static void
+static void GLAPIENTRY
 save_MultTransposeMatrixdARB( const GLdouble m[16] )
 {
    GLfloat tm[16];
@@ -3730,7 +3730,7 @@ save_MultTransposeMatrixdARB( const GLdouble m[16] )
 }
 
 
-static void
+static void GLAPIENTRY
 save_MultTransposeMatrixfARB( const GLfloat m[16] )
 {
    GLfloat tm[16];
@@ -3739,7 +3739,7 @@ save_MultTransposeMatrixfARB( const GLfloat m[16] )
 }
 
 
-static void
+static void GLAPIENTRY
 save_PixelTexGenSGIX(GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -3756,7 +3756,7 @@ save_PixelTexGenSGIX(GLenum mode)
 
 
 /* GL_ARB_texture_compression */
-static void
+static void GLAPIENTRY
 save_CompressedTexImage1DARB(GLenum target, GLint level,
                              GLenum internalFormat, GLsizei width,
                              GLint border, GLsizei imageSize,
@@ -3800,7 +3800,7 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
 }
 
 
-static void
+static void GLAPIENTRY
 save_CompressedTexImage2DARB(GLenum target, GLint level,
                              GLenum internalFormat, GLsizei width,
                              GLsizei height, GLint border, GLsizei imageSize,
@@ -3845,7 +3845,7 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
 }
 
 
-static void
+static void GLAPIENTRY
 save_CompressedTexImage3DARB(GLenum target, GLint level,
                              GLenum internalFormat, GLsizei width,
                              GLsizei height, GLsizei depth, GLint border,
@@ -3891,7 +3891,7 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
 }
 
 
-static void
+static void GLAPIENTRY
 save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
                                 GLsizei width, GLenum format,
                                 GLsizei imageSize, const GLvoid *data)
@@ -3929,7 +3929,7 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
 }
 
 
-static void
+static void GLAPIENTRY
 save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
                                 GLint yoffset, GLsizei width, GLsizei height,
                                 GLenum format, GLsizei imageSize,
@@ -3970,7 +3970,7 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
 }
 
 
-static void
+static void GLAPIENTRY
 save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
                                 GLint yoffset, GLint zoffset, GLsizei width,
                                 GLsizei height, GLsizei depth, GLenum format,
@@ -4014,7 +4014,7 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
 
 
 /* GL_ARB_multisample */
-static void
+static void GLAPIENTRY
 save_SampleCoverageARB(GLclampf value, GLboolean invert)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -4033,7 +4033,7 @@ save_SampleCoverageARB(GLclampf value, GLboolean invert)
 
 /* GL_SGIS_pixel_texture */
 
-static void
+static void GLAPIENTRY
 save_PixelTexGenParameteriSGIS(GLenum target, GLint value)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -4050,21 +4050,21 @@ save_PixelTexGenParameteriSGIS(GLenum target, GLint value)
 }
 
 
-static void
+static void GLAPIENTRY
 save_PixelTexGenParameterfSGIS(GLenum target, GLfloat value)
 {
    save_PixelTexGenParameteriSGIS(target, (GLint) value);
 }
 
 
-static void
+static void GLAPIENTRY
 save_PixelTexGenParameterivSGIS(GLenum target, const GLint *value)
 {
    save_PixelTexGenParameteriSGIS(target, *value);
 }
 
 
-static void
+static void GLAPIENTRY
 save_PixelTexGenParameterfvSGIS(GLenum target, const GLfloat *value)
 {
    save_PixelTexGenParameteriSGIS(target, (GLint) *value);
@@ -4075,7 +4075,7 @@ save_PixelTexGenParameterfvSGIS(GLenum target, const GLfloat *value)
  * GL_NV_vertex_program
  */
 #if FEATURE_NV_vertex_program
-static void
+static void GLAPIENTRY
 save_BindProgramNV(GLenum target, GLuint id)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -4091,7 +4091,7 @@ save_BindProgramNV(GLenum target, GLuint id)
    }
 }
 
-static void
+static void GLAPIENTRY
 save_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -4112,7 +4112,7 @@ save_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramParameter4fNV(GLenum target, GLuint index,
                           GLfloat x, GLfloat y,
                           GLfloat z, GLfloat w)
@@ -4135,7 +4135,7 @@ save_ProgramParameter4fNV(GLenum target, GLuint index,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramParameter4fvNV(GLenum target, GLuint index, const GLfloat *params)
 {
    save_ProgramParameter4fNV(target, index, params[0], params[1],
@@ -4143,7 +4143,7 @@ save_ProgramParameter4fvNV(GLenum target, GLuint index, const GLfloat *params)
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramParameter4dNV(GLenum target, GLuint index,
                           GLdouble x, GLdouble y,
                           GLdouble z, GLdouble w)
@@ -4153,7 +4153,7 @@ save_ProgramParameter4dNV(GLenum target, GLuint index,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramParameter4dvNV(GLenum target, GLuint index,
                            const GLdouble *params)
 {
@@ -4163,7 +4163,7 @@ save_ProgramParameter4dvNV(GLenum target, GLuint index,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramParameters4dvNV(GLenum target, GLuint index,
                             GLuint num, const GLdouble *params)
 {
@@ -4174,7 +4174,7 @@ save_ProgramParameters4dvNV(GLenum target, GLuint index,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramParameters4fvNV(GLenum target, GLuint index,
                             GLuint num, const GLfloat *params)
 {
@@ -4185,7 +4185,7 @@ save_ProgramParameters4fvNV(GLenum target, GLuint index,
 }
 
 
-static void
+static void GLAPIENTRY
 save_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
                    const GLubyte *program)
 {
@@ -4214,7 +4214,7 @@ save_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
 }
 
 
-static void
+static void GLAPIENTRY
 save_RequestResidentProgramsNV(GLsizei num, const GLuint *ids)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -4237,7 +4237,7 @@ save_RequestResidentProgramsNV(GLsizei num, const GLuint *ids)
 }
 
 
-static void
+static void GLAPIENTRY
 save_TrackMatrixNV(GLenum target, GLuint address,
                    GLenum matrix, GLenum transform)
 {
@@ -4262,7 +4262,7 @@ save_TrackMatrixNV(GLenum target, GLuint address,
  * GL_NV_fragment_program
  */
 #if FEATURE_NV_fragment_program
-static void
+static void GLAPIENTRY
 save_ProgramLocalParameter4fARB(GLenum target, GLuint index,
                                 GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
@@ -4284,7 +4284,7 @@ save_ProgramLocalParameter4fARB(GLenum target, GLuint index,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
                                  const GLfloat *params)
 {
@@ -4306,7 +4306,7 @@ save_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramLocalParameter4dARB(GLenum target, GLuint index,
                                 GLdouble x, GLdouble y,
                                 GLdouble z, GLdouble w)
@@ -4329,7 +4329,7 @@ save_ProgramLocalParameter4dARB(GLenum target, GLuint index,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
                                  const GLdouble *params)
 {
@@ -4350,7 +4350,7 @@ save_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
    }
 }
 
-static void
+static void GLAPIENTRY
 save_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
                                GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
@@ -4380,7 +4380,7 @@ save_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte *name,
                                 const float v[])
 {
@@ -4388,7 +4388,7 @@ save_ProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte *name,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte *name,
                                GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
@@ -4397,7 +4397,7 @@ save_ProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte *name,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte *name,
                                 const double v[])
 {
@@ -4411,7 +4411,7 @@ save_ProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte *name,
 
 
 /* GL_EXT_stencil_two_side */
-static void save_ActiveStencilFaceEXT( GLenum face )
+static void GLAPIENTRY save_ActiveStencilFaceEXT( GLenum face )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -4427,7 +4427,7 @@ static void save_ActiveStencilFaceEXT( GLenum face )
 
 
 /* GL_EXT_depth_bounds_test */
-static void save_DepthBoundsEXT( GLclampd zmin, GLclampd zmax )
+static void GLAPIENTRY save_DepthBoundsEXT( GLclampd zmin, GLclampd zmax )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -4446,7 +4446,7 @@ static void save_DepthBoundsEXT( GLclampd zmin, GLclampd zmax )
 
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
 
-static void
+static void GLAPIENTRY
 save_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
                       const GLvoid *string)
 {
@@ -4475,7 +4475,7 @@ save_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramEnvParameter4fARB(GLenum target, GLuint index,
                               GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
@@ -4497,7 +4497,7 @@ save_ProgramEnvParameter4fARB(GLenum target, GLuint index,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramEnvParameter4fvARB(GLenum target, GLuint index,
                                const GLfloat *params)
 {
@@ -4506,7 +4506,7 @@ save_ProgramEnvParameter4fvARB(GLenum target, GLuint index,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramEnvParameter4dARB(GLenum target, GLuint index,
                               GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
@@ -4518,7 +4518,7 @@ save_ProgramEnvParameter4dARB(GLenum target, GLuint index,
 }
 
 
-static void
+static void GLAPIENTRY
 save_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
                                const GLdouble *params)
 {
@@ -4590,7 +4590,7 @@ islist(GLcontext *ctx, GLuint list)
  * the absolute list number, not relative to ListBase.
  * \param list - display list number
  */
-static void
+static void GLAPIENTRY
 execute_list( GLcontext *ctx, GLuint list )
 {
    Node *n;
@@ -5332,7 +5332,7 @@ execute_list( GLcontext *ctx, GLuint list )
 /*
  * Test if a display list number is valid.
  */
-GLboolean
+GLboolean GLAPIENTRY
 _mesa_IsList( GLuint list )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5345,7 +5345,7 @@ _mesa_IsList( GLuint list )
 /*
  * Delete a sequence of consecutive display lists.
  */
-void
+void GLAPIENTRY
 _mesa_DeleteLists( GLuint list, GLsizei range )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5368,7 +5368,7 @@ _mesa_DeleteLists( GLuint list, GLsizei range )
  * Return a display list number, n, such that lists n through n+range-1
  * are free.
  */
-GLuint
+GLuint GLAPIENTRY
 _mesa_GenLists(GLsizei range )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5408,7 +5408,7 @@ _mesa_GenLists(GLsizei range )
 /*
  * Begin a new display list.
  */
-void
+void GLAPIENTRY
 _mesa_NewList( GLuint list, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5456,7 +5456,7 @@ _mesa_NewList( GLuint list, GLenum mode )
  * ASSERT_OUTSIDE_BEGIN_END strong enough to really guarentee that
  * we are outside begin/end calls?
  */
-void
+void GLAPIENTRY
 _mesa_EndList( void )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5496,7 +5496,7 @@ _mesa_EndList( void )
 
 
 
-void
+void GLAPIENTRY
 _mesa_CallList( GLuint list )
 {
    GLboolean save_compile_flag;
@@ -5535,7 +5535,7 @@ _mesa_CallList( GLuint list )
 /*
  * Execute glCallLists:  call multiple display lists.
  */
-void
+void GLAPIENTRY
 _mesa_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5589,7 +5589,7 @@ _mesa_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
 /*
  * Set the offset added to list numbers in glCallLists.
  */
-void
+void GLAPIENTRY
 _mesa_ListBase( GLuint base )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5601,182 +5601,182 @@ _mesa_ListBase( GLuint base )
 
 /* Can no longer assume ctx->Exec->Func is equal to _mesa_Func.
  */
-static void exec_Finish( void )
+static void GLAPIENTRY exec_Finish( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->Finish();
 }
 
-static void exec_Flush( void )
+static void GLAPIENTRY exec_Flush( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->Flush( );
 }
 
-static void exec_GetBooleanv( GLenum pname, GLboolean *params )
+static void GLAPIENTRY exec_GetBooleanv( GLenum pname, GLboolean *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetBooleanv( pname, params );
 }
 
-static void exec_GetClipPlane( GLenum plane, GLdouble *equation )
+static void GLAPIENTRY exec_GetClipPlane( GLenum plane, GLdouble *equation )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetClipPlane( plane, equation );
 }
 
-static void exec_GetDoublev( GLenum pname, GLdouble *params )
+static void GLAPIENTRY exec_GetDoublev( GLenum pname, GLdouble *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetDoublev(  pname, params );
 }
 
-static GLenum exec_GetError( void )
+static GLenum GLAPIENTRY exec_GetError( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    return ctx->Exec->GetError( );
 }
 
-static void exec_GetFloatv( GLenum pname, GLfloat *params )
+static void GLAPIENTRY exec_GetFloatv( GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetFloatv( pname, params );
 }
 
-static void exec_GetIntegerv( GLenum pname, GLint *params )
+static void GLAPIENTRY exec_GetIntegerv( GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetIntegerv( pname, params );
 }
 
-static void exec_GetLightfv( GLenum light, GLenum pname, GLfloat *params )
+static void GLAPIENTRY exec_GetLightfv( GLenum light, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetLightfv( light, pname, params );
 }
 
-static void exec_GetLightiv( GLenum light, GLenum pname, GLint *params )
+static void GLAPIENTRY exec_GetLightiv( GLenum light, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetLightiv( light, pname, params );
 }
 
-static void exec_GetMapdv( GLenum target, GLenum query, GLdouble *v )
+static void GLAPIENTRY exec_GetMapdv( GLenum target, GLenum query, GLdouble *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetMapdv( target, query, v );
 }
 
-static void exec_GetMapfv( GLenum target, GLenum query, GLfloat *v )
+static void GLAPIENTRY exec_GetMapfv( GLenum target, GLenum query, GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetMapfv( target, query, v );
 }
 
-static void exec_GetMapiv( GLenum target, GLenum query, GLint *v )
+static void GLAPIENTRY exec_GetMapiv( GLenum target, GLenum query, GLint *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetMapiv( target, query, v );
 }
 
-static void exec_GetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
+static void GLAPIENTRY exec_GetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetMaterialfv( face, pname, params );
 }
 
-static void exec_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
+static void GLAPIENTRY exec_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetMaterialiv( face, pname, params );
 }
 
-static void exec_GetPixelMapfv( GLenum map, GLfloat *values )
+static void GLAPIENTRY exec_GetPixelMapfv( GLenum map, GLfloat *values )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetPixelMapfv( map,  values );
 }
 
-static void exec_GetPixelMapuiv( GLenum map, GLuint *values )
+static void GLAPIENTRY exec_GetPixelMapuiv( GLenum map, GLuint *values )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetPixelMapuiv( map, values );
 }
 
-static void exec_GetPixelMapusv( GLenum map, GLushort *values )
+static void GLAPIENTRY exec_GetPixelMapusv( GLenum map, GLushort *values )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetPixelMapusv( map, values );
 }
 
-static void exec_GetPolygonStipple( GLubyte *dest )
+static void GLAPIENTRY exec_GetPolygonStipple( GLubyte *dest )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetPolygonStipple( dest );
 }
 
-static const GLubyte *exec_GetString( GLenum name )
+static const GLubyte * GLAPIENTRY exec_GetString( GLenum name )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    return ctx->Exec->GetString( name );
 }
 
-static void exec_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
+static void GLAPIENTRY exec_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetTexEnvfv( target, pname, params );
 }
 
-static void exec_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
+static void GLAPIENTRY exec_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetTexEnviv( target, pname, params );
 }
 
-static void exec_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
+static void GLAPIENTRY exec_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetTexGendv( coord, pname, params );
 }
 
-static void exec_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
+static void GLAPIENTRY exec_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetTexGenfv( coord, pname, params );
 }
 
-static void exec_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
+static void GLAPIENTRY exec_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetTexGeniv( coord, pname, params );
 }
 
-static void exec_GetTexImage( GLenum target, GLint level, GLenum format,
+static void GLAPIENTRY exec_GetTexImage( GLenum target, GLint level, GLenum format,
                    GLenum type, GLvoid *pixels )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5784,7 +5784,7 @@ static void exec_GetTexImage( GLenum target, GLint level, GLenum format,
    ctx->Exec->GetTexImage( target, level, format, type, pixels );
 }
 
-static void exec_GetTexLevelParameterfv( GLenum target, GLint level,
+static void GLAPIENTRY exec_GetTexLevelParameterfv( GLenum target, GLint level,
                               GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5792,7 +5792,7 @@ static void exec_GetTexLevelParameterfv( GLenum target, GLint level,
    ctx->Exec->GetTexLevelParameterfv( target, level, pname, params );
 }
 
-static void exec_GetTexLevelParameteriv( GLenum target, GLint level,
+static void GLAPIENTRY exec_GetTexLevelParameteriv( GLenum target, GLint level,
                               GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5800,7 +5800,7 @@ static void exec_GetTexLevelParameteriv( GLenum target, GLint level,
    ctx->Exec->GetTexLevelParameteriv( target, level, pname, params );
 }
 
-static void exec_GetTexParameterfv( GLenum target, GLenum pname,
+static void GLAPIENTRY exec_GetTexParameterfv( GLenum target, GLenum pname,
 				    GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5808,35 +5808,35 @@ static void exec_GetTexParameterfv( GLenum target, GLenum pname,
    ctx->Exec->GetTexParameterfv( target, pname, params );
 }
 
-static void exec_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
+static void GLAPIENTRY exec_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetTexParameteriv( target, pname, params );
 }
 
-static GLboolean exec_IsEnabled( GLenum cap )
+static GLboolean GLAPIENTRY exec_IsEnabled( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    return ctx->Exec->IsEnabled( cap );
 }
 
-static void exec_PixelStoref( GLenum pname, GLfloat param )
+static void GLAPIENTRY exec_PixelStoref( GLenum pname, GLfloat param )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->PixelStoref( pname, param );
 }
 
-static void exec_PixelStorei( GLenum pname, GLint param )
+static void GLAPIENTRY exec_PixelStorei( GLenum pname, GLint param )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->PixelStorei( pname, param );
 }
 
-static void exec_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
+static void GLAPIENTRY exec_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
 		  GLenum format, GLenum type, GLvoid *pixels )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5844,28 +5844,28 @@ static void exec_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
    ctx->Exec->ReadPixels( x, y, width, height, format, type, pixels );
 }
 
-static GLint exec_RenderMode( GLenum mode )
+static GLint GLAPIENTRY exec_RenderMode( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    return ctx->Exec->RenderMode( mode );
 }
 
-static void exec_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
+static void GLAPIENTRY exec_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->FeedbackBuffer( size, type, buffer );
 }
 
-static void exec_SelectBuffer( GLsizei size, GLuint *buffer )
+static void GLAPIENTRY exec_SelectBuffer( GLsizei size, GLuint *buffer )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->SelectBuffer( size, buffer );
 }
 
-static GLboolean exec_AreTexturesResident(GLsizei n, const GLuint *texName,
+static GLboolean GLAPIENTRY exec_AreTexturesResident(GLsizei n, const GLuint *texName,
 					  GLboolean *residences)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5873,7 +5873,7 @@ static GLboolean exec_AreTexturesResident(GLsizei n, const GLuint *texName,
    return ctx->Exec->AreTexturesResident( n, texName, residences);
 }
 
-static void exec_ColorPointer(GLint size, GLenum type, GLsizei stride,
+static void GLAPIENTRY exec_ColorPointer(GLint size, GLenum type, GLsizei stride,
 			      const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5881,56 +5881,56 @@ static void exec_ColorPointer(GLint size, GLenum type, GLsizei stride,
    ctx->Exec->ColorPointer( size, type, stride, ptr);
 }
 
-static void exec_DeleteTextures( GLsizei n, const GLuint *texName)
+static void GLAPIENTRY exec_DeleteTextures( GLsizei n, const GLuint *texName)
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->DeleteTextures( n, texName);
 }
 
-static void exec_DisableClientState( GLenum cap )
+static void GLAPIENTRY exec_DisableClientState( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->DisableClientState( cap );
 }
 
-static void exec_EdgeFlagPointer(GLsizei stride, const GLvoid *vptr)
+static void GLAPIENTRY exec_EdgeFlagPointer(GLsizei stride, const GLvoid *vptr)
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->EdgeFlagPointer( stride, vptr);
 }
 
-static void exec_EnableClientState( GLenum cap )
+static void GLAPIENTRY exec_EnableClientState( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->EnableClientState( cap );
 }
 
-static void exec_GenTextures( GLsizei n, GLuint *texName )
+static void GLAPIENTRY exec_GenTextures( GLsizei n, GLuint *texName )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GenTextures( n, texName );
 }
 
-static void exec_GetPointerv( GLenum pname, GLvoid **params )
+static void GLAPIENTRY exec_GetPointerv( GLenum pname, GLvoid **params )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetPointerv( pname, params );
 }
 
-static void exec_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
+static void GLAPIENTRY exec_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->IndexPointer( type, stride, ptr);
 }
 
-static void exec_InterleavedArrays(GLenum format, GLsizei stride,
+static void GLAPIENTRY exec_InterleavedArrays(GLenum format, GLsizei stride,
 				   const GLvoid *pointer)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5938,35 +5938,35 @@ static void exec_InterleavedArrays(GLenum format, GLsizei stride,
    ctx->Exec->InterleavedArrays( format, stride, pointer);
 }
 
-static GLboolean exec_IsTexture( GLuint texture )
+static GLboolean GLAPIENTRY exec_IsTexture( GLuint texture )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    return ctx->Exec->IsTexture( texture );
 }
 
-static void exec_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
+static void GLAPIENTRY exec_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->NormalPointer( type, stride, ptr );
 }
 
-static void exec_PopClientAttrib(void)
+static void GLAPIENTRY exec_PopClientAttrib(void)
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->PopClientAttrib();
 }
 
-static void exec_PushClientAttrib(GLbitfield mask)
+static void GLAPIENTRY exec_PushClientAttrib(GLbitfield mask)
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->PushClientAttrib( mask);
 }
 
-static void exec_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
+static void GLAPIENTRY exec_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
 				 const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5974,7 +5974,7 @@ static void exec_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
    ctx->Exec->TexCoordPointer( size,  type,  stride, ptr);
 }
 
-static void exec_GetCompressedTexImageARB(GLenum target, GLint level,
+static void GLAPIENTRY exec_GetCompressedTexImageARB(GLenum target, GLint level,
 					  GLvoid *img)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5982,7 +5982,7 @@ static void exec_GetCompressedTexImageARB(GLenum target, GLint level,
    ctx->Exec->GetCompressedTexImageARB( target, level, img);
 }
 
-static void exec_VertexPointer(GLint size, GLenum type, GLsizei stride,
+static void GLAPIENTRY exec_VertexPointer(GLint size, GLenum type, GLsizei stride,
 			       const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5990,7 +5990,7 @@ static void exec_VertexPointer(GLint size, GLenum type, GLsizei stride,
    ctx->Exec->VertexPointer( size, type, stride, ptr);
 }
 
-static void exec_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat,
+static void GLAPIENTRY exec_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat,
 					 GLint x, GLint y, GLsizei width)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5998,7 +5998,7 @@ static void exec_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat,
    ctx->Exec->CopyConvolutionFilter1D( target, internalFormat, x, y, width);
 }
 
-static void exec_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat,
+static void GLAPIENTRY exec_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat,
 					 GLint x, GLint y, GLsizei width,
 					 GLsizei height)
 {
@@ -6008,7 +6008,7 @@ static void exec_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat,
 				       height);
 }
 
-static void exec_GetColorTable( GLenum target, GLenum format,
+static void GLAPIENTRY exec_GetColorTable( GLenum target, GLenum format,
 				GLenum type, GLvoid *data )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6016,7 +6016,7 @@ static void exec_GetColorTable( GLenum target, GLenum format,
    ctx->Exec->GetColorTable( target, format, type, data );
 }
 
-static void exec_GetColorTableParameterfv( GLenum target, GLenum pname,
+static void GLAPIENTRY exec_GetColorTableParameterfv( GLenum target, GLenum pname,
 					   GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6024,7 +6024,7 @@ static void exec_GetColorTableParameterfv( GLenum target, GLenum pname,
    ctx->Exec->GetColorTableParameterfv( target, pname, params );
 }
 
-static void exec_GetColorTableParameteriv( GLenum target, GLenum pname,
+static void GLAPIENTRY exec_GetColorTableParameteriv( GLenum target, GLenum pname,
 					   GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6032,7 +6032,7 @@ static void exec_GetColorTableParameteriv( GLenum target, GLenum pname,
    ctx->Exec->GetColorTableParameteriv( target, pname, params );
 }
 
-static void exec_GetConvolutionFilter(GLenum target, GLenum format, GLenum type,
+static void GLAPIENTRY exec_GetConvolutionFilter(GLenum target, GLenum format, GLenum type,
 				      GLvoid *image)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6040,7 +6040,7 @@ static void exec_GetConvolutionFilter(GLenum target, GLenum format, GLenum type,
    ctx->Exec->GetConvolutionFilter( target, format, type, image);
 }
 
-static void exec_GetConvolutionParameterfv(GLenum target, GLenum pname,
+static void GLAPIENTRY exec_GetConvolutionParameterfv(GLenum target, GLenum pname,
 					   GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6048,7 +6048,7 @@ static void exec_GetConvolutionParameterfv(GLenum target, GLenum pname,
    ctx->Exec->GetConvolutionParameterfv( target, pname, params);
 }
 
-static void exec_GetConvolutionParameteriv(GLenum target, GLenum pname,
+static void GLAPIENTRY exec_GetConvolutionParameteriv(GLenum target, GLenum pname,
 					   GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6056,7 +6056,7 @@ static void exec_GetConvolutionParameteriv(GLenum target, GLenum pname,
    ctx->Exec->GetConvolutionParameteriv( target, pname, params);
 }
 
-static void exec_GetHistogram(GLenum target, GLboolean reset, GLenum format,
+static void GLAPIENTRY exec_GetHistogram(GLenum target, GLboolean reset, GLenum format,
 			      GLenum type, GLvoid *values)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6064,7 +6064,7 @@ static void exec_GetHistogram(GLenum target, GLboolean reset, GLenum format,
    ctx->Exec->GetHistogram( target, reset, format, type, values);
 }
 
-static void exec_GetHistogramParameterfv(GLenum target, GLenum pname,
+static void GLAPIENTRY exec_GetHistogramParameterfv(GLenum target, GLenum pname,
 					 GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6072,7 +6072,7 @@ static void exec_GetHistogramParameterfv(GLenum target, GLenum pname,
    ctx->Exec->GetHistogramParameterfv( target, pname, params);
 }
 
-static void exec_GetHistogramParameteriv(GLenum target, GLenum pname,
+static void GLAPIENTRY exec_GetHistogramParameteriv(GLenum target, GLenum pname,
 					 GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6080,7 +6080,7 @@ static void exec_GetHistogramParameteriv(GLenum target, GLenum pname,
    ctx->Exec->GetHistogramParameteriv( target, pname, params);
 }
 
-static void exec_GetMinmax(GLenum target, GLboolean reset, GLenum format,
+static void GLAPIENTRY exec_GetMinmax(GLenum target, GLboolean reset, GLenum format,
 			   GLenum type, GLvoid *values)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6088,7 +6088,7 @@ static void exec_GetMinmax(GLenum target, GLboolean reset, GLenum format,
    ctx->Exec->GetMinmax( target, reset, format, type, values);
 }
 
-static void exec_GetMinmaxParameterfv(GLenum target, GLenum pname,
+static void GLAPIENTRY exec_GetMinmaxParameterfv(GLenum target, GLenum pname,
 				      GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6096,7 +6096,7 @@ static void exec_GetMinmaxParameterfv(GLenum target, GLenum pname,
    ctx->Exec->GetMinmaxParameterfv( target, pname, params);
 }
 
-static void exec_GetMinmaxParameteriv(GLenum target, GLenum pname,
+static void GLAPIENTRY exec_GetMinmaxParameteriv(GLenum target, GLenum pname,
 				      GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6104,7 +6104,7 @@ static void exec_GetMinmaxParameteriv(GLenum target, GLenum pname,
    ctx->Exec->GetMinmaxParameteriv( target, pname, params);
 }
 
-static void exec_GetSeparableFilter(GLenum target, GLenum format, GLenum type,
+static void GLAPIENTRY exec_GetSeparableFilter(GLenum target, GLenum format, GLenum type,
 				    GLvoid *row, GLvoid *column, GLvoid *span)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6112,7 +6112,7 @@ static void exec_GetSeparableFilter(GLenum target, GLenum format, GLenum type,
    ctx->Exec->GetSeparableFilter( target, format, type, row, column, span);
 }
 
-static void exec_SeparableFilter2D(GLenum target, GLenum internalFormat,
+static void GLAPIENTRY exec_SeparableFilter2D(GLenum target, GLenum internalFormat,
 				   GLsizei width, GLsizei height, GLenum format,
 				   GLenum type, const GLvoid *row,
 				   const GLvoid *column)
@@ -6123,21 +6123,21 @@ static void exec_SeparableFilter2D(GLenum target, GLenum internalFormat,
 				 type, row, column);
 }
 
-static void exec_GetPixelTexGenParameterivSGIS(GLenum target, GLint *value)
+static void GLAPIENTRY exec_GetPixelTexGenParameterivSGIS(GLenum target, GLint *value)
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetPixelTexGenParameterivSGIS( target, value);
 }
 
-static void exec_GetPixelTexGenParameterfvSGIS(GLenum target, GLfloat *value)
+static void GLAPIENTRY exec_GetPixelTexGenParameterfvSGIS(GLenum target, GLfloat *value)
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->GetPixelTexGenParameterfvSGIS( target, value);
 }
 
-static void exec_ColorPointerEXT(GLint size, GLenum type, GLsizei stride,
+static void GLAPIENTRY exec_ColorPointerEXT(GLint size, GLenum type, GLsizei stride,
 				 GLsizei count, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6145,7 +6145,7 @@ static void exec_ColorPointerEXT(GLint size, GLenum type, GLsizei stride,
    ctx->Exec->ColorPointerEXT( size, type, stride, count, ptr);
 }
 
-static void exec_EdgeFlagPointerEXT(GLsizei stride, GLsizei count,
+static void GLAPIENTRY exec_EdgeFlagPointerEXT(GLsizei stride, GLsizei count,
 				    const GLboolean *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6153,7 +6153,7 @@ static void exec_EdgeFlagPointerEXT(GLsizei stride, GLsizei count,
    ctx->Exec->EdgeFlagPointerEXT( stride, count, ptr);
 }
 
-static void exec_IndexPointerEXT(GLenum type, GLsizei stride, GLsizei count,
+static void GLAPIENTRY exec_IndexPointerEXT(GLenum type, GLsizei stride, GLsizei count,
                       const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6161,7 +6161,7 @@ static void exec_IndexPointerEXT(GLenum type, GLsizei stride, GLsizei count,
    ctx->Exec->IndexPointerEXT( type, stride, count, ptr);
 }
 
-static void exec_NormalPointerEXT(GLenum type, GLsizei stride, GLsizei count,
+static void GLAPIENTRY exec_NormalPointerEXT(GLenum type, GLsizei stride, GLsizei count,
                        const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6169,7 +6169,7 @@ static void exec_NormalPointerEXT(GLenum type, GLsizei stride, GLsizei count,
    ctx->Exec->NormalPointerEXT( type, stride, count, ptr);
 }
 
-static void exec_TexCoordPointerEXT(GLint size, GLenum type, GLsizei stride,
+static void GLAPIENTRY exec_TexCoordPointerEXT(GLint size, GLenum type, GLsizei stride,
 				    GLsizei count, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6177,7 +6177,7 @@ static void exec_TexCoordPointerEXT(GLint size, GLenum type, GLsizei stride,
    ctx->Exec->TexCoordPointerEXT( size, type, stride, count, ptr);
 }
 
-static void exec_VertexPointerEXT(GLint size, GLenum type, GLsizei stride,
+static void GLAPIENTRY exec_VertexPointerEXT(GLint size, GLenum type, GLsizei stride,
                        GLsizei count, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6185,21 +6185,21 @@ static void exec_VertexPointerEXT(GLint size, GLenum type, GLsizei stride,
    ctx->Exec->VertexPointerEXT( size, type, stride, count, ptr);
 }
 
-static void exec_LockArraysEXT(GLint first, GLsizei count)
+static void GLAPIENTRY exec_LockArraysEXT(GLint first, GLsizei count)
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->LockArraysEXT( first, count);
 }
 
-static void exec_UnlockArraysEXT( void )
+static void GLAPIENTRY exec_UnlockArraysEXT( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->UnlockArraysEXT( );
 }
 
-static void exec_ResizeBuffersMESA( void )
+static void GLAPIENTRY exec_ResizeBuffersMESA( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
@@ -6207,14 +6207,14 @@ static void exec_ResizeBuffersMESA( void )
 }
 
 
-static void exec_ClientActiveTextureARB( GLenum target )
+static void GLAPIENTRY exec_ClientActiveTextureARB( GLenum target )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
    ctx->Exec->ClientActiveTextureARB(target);
 }
 
-static void exec_SecondaryColorPointerEXT(GLint size, GLenum type,
+static void GLAPIENTRY exec_SecondaryColorPointerEXT(GLint size, GLenum type,
 			       GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6222,7 +6222,7 @@ static void exec_SecondaryColorPointerEXT(GLint size, GLenum type,
    ctx->Exec->SecondaryColorPointerEXT( size, type, stride, ptr);
 }
 
-static void exec_FogCoordPointerEXT(GLenum type, GLsizei stride,
+static void GLAPIENTRY exec_FogCoordPointerEXT(GLenum type, GLsizei stride,
 				    const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6231,7 +6231,7 @@ static void exec_FogCoordPointerEXT(GLenum type, GLsizei stride,
 }
 
 /* GL_EXT_multi_draw_arrays */
-static void exec_MultiDrawArraysEXT(GLenum mode, GLint *first,
+static void GLAPIENTRY exec_MultiDrawArraysEXT(GLenum mode, GLint *first,
                                     GLsizei *count, GLsizei primcount)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -6240,7 +6240,7 @@ static void exec_MultiDrawArraysEXT(GLenum mode, GLint *first,
 }
 
 /* GL_EXT_multi_draw_arrays */
-static void exec_MultiDrawElementsEXT(GLenum mode, const GLsizei *count,
+static void GLAPIENTRY exec_MultiDrawElementsEXT(GLenum mode, const GLsizei *count,
                                       GLenum type, const GLvoid **indices,
                                       GLsizei primcount)
 {
@@ -6250,7 +6250,7 @@ static void exec_MultiDrawElementsEXT(GLenum mode, const GLsizei *count,
 }
 
 /* GL_IBM_multimode_draw_arrays */
-static void exec_MultiModeDrawArraysIBM(const GLenum *mode, const GLint *first,
+static void GLAPIENTRY exec_MultiModeDrawArraysIBM(const GLenum *mode, const GLint *first,
 					const GLsizei *count, GLsizei primcount,
 					GLint modestride)
 {
@@ -6260,7 +6260,7 @@ static void exec_MultiModeDrawArraysIBM(const GLenum *mode, const GLint *first,
 }
 
 /* GL_IBM_multimode_draw_arrays */
-static void exec_MultiModeDrawElementsIBM(const GLenum *mode,
+static void GLAPIENTRY exec_MultiModeDrawElementsIBM(const GLenum *mode,
 					  const GLsizei *count,
 					  GLenum type,
 					  const GLvoid * const *indices,
@@ -6804,7 +6804,7 @@ static const char *enum_string( GLenum k )
  * Print the commands in a display list.  For debugging only.
  * TODO: many commands aren't handled yet.
  */
-static void print_list( GLcontext *ctx, GLuint list )
+static void GLAPIENTRY print_list( GLcontext *ctx, GLuint list )
 {
    Node *n;
    GLboolean done;

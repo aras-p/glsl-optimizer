@@ -32,7 +32,7 @@
 
 
 
-void
+void GLAPIENTRY
 _mesa_Hint( GLenum target, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);

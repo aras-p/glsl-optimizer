@@ -39,7 +39,7 @@
 
 
 
-void
+void GLAPIENTRY
 _mesa_ClearDepth( GLclampd depth )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -58,7 +58,7 @@ _mesa_ClearDepth( GLclampd depth )
 
 
 
-void
+void GLAPIENTRY
 _mesa_DepthFunc( GLenum func )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -94,7 +94,7 @@ _mesa_DepthFunc( GLenum func )
 
 
 
-void
+void GLAPIENTRY
 _mesa_DepthMask( GLboolean flag )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -120,7 +120,7 @@ _mesa_DepthMask( GLboolean flag )
 
 
 /* GL_EXT_depth_bounds_test */
-void
+void GLAPIENTRY
 _mesa_DepthBoundsEXT( GLclampd zmin, GLclampd zmax )
 {
    GET_CURRENT_CONTEXT(ctx);

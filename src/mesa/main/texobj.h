@@ -72,28 +72,28 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
  */
 /*@{*/
 
-extern void
+extern void GLAPIENTRY
 _mesa_GenTextures( GLsizei n, GLuint *textures );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_DeleteTextures( GLsizei n, const GLuint *textures );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_BindTexture( GLenum target, GLuint texture );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_PrioritizeTextures( GLsizei n, const GLuint *textures,
                           const GLclampf *priorities );
 
 
-extern GLboolean
+extern GLboolean GLAPIENTRY
 _mesa_AreTexturesResident( GLsizei n, const GLuint *textures,
                            GLboolean *residences );
 
-extern GLboolean
+extern GLboolean GLAPIENTRY
 _mesa_IsTexture( GLuint texture );
 
 /*@}*/

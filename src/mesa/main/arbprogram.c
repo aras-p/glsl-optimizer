@@ -44,7 +44,7 @@
 #include "nvvertprog.h"
 
 
-void
+void GLAPIENTRY
 _mesa_EnableVertexAttribArrayARB(GLuint index)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -62,7 +62,7 @@ _mesa_EnableVertexAttribArrayARB(GLuint index)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_DisableVertexAttribArrayARB(GLuint index)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -80,7 +80,7 @@ _mesa_DisableVertexAttribArrayARB(GLuint index)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params)
 {
    GLfloat fparams[4];
@@ -99,7 +99,7 @@ _mesa_GetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -143,7 +143,7 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetVertexAttribivARB(GLuint index, GLenum pname, GLint *params)
 {
    GLfloat fparams[4];
@@ -162,7 +162,7 @@ _mesa_GetVertexAttribivARB(GLuint index, GLenum pname, GLint *params)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -182,7 +182,7 @@ _mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
                        const GLvoid *string)
 {
@@ -215,7 +215,7 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_ProgramEnvParameter4dARB(GLenum target, GLuint index,
                                GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
@@ -224,7 +224,7 @@ _mesa_ProgramEnvParameter4dARB(GLenum target, GLuint index,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
                                 const GLdouble *params)
 {
@@ -234,7 +234,7 @@ _mesa_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
                                GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
@@ -264,7 +264,7 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_ProgramEnvParameter4fvARB(GLenum target, GLuint index,
                                    const GLfloat *params)
 {
@@ -273,7 +273,7 @@ _mesa_ProgramEnvParameter4fvARB(GLenum target, GLuint index,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetProgramEnvParameterdvARB(GLenum target, GLuint index,
                                   GLdouble *params)
 {
@@ -290,7 +290,7 @@ _mesa_GetProgramEnvParameterdvARB(GLenum target, GLuint index,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index, 
                                   GLfloat *params)
 {
@@ -325,7 +325,7 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
 /**
  * Note, this function is also used by the GL_NV_fragment_program extension.
  */
-void
+void GLAPIENTRY
 _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
                                  GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
@@ -367,7 +367,7 @@ _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
 /**
  * Note, this function is also used by the GL_NV_fragment_program extension.
  */
-void
+void GLAPIENTRY
 _mesa_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
                                   const GLfloat *params)
 {
@@ -379,7 +379,7 @@ _mesa_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
 /**
  * Note, this function is also used by the GL_NV_fragment_program extension.
  */
-void
+void GLAPIENTRY
 _mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
                                  GLdouble x, GLdouble y,
                                  GLdouble z, GLdouble w)
@@ -392,7 +392,7 @@ _mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
 /**
  * Note, this function is also used by the GL_NV_fragment_program extension.
  */
-void
+void GLAPIENTRY
 _mesa_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
                                   const GLdouble *params)
 {
@@ -405,7 +405,7 @@ _mesa_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
 /**
  * Note, this function is also used by the GL_NV_fragment_program extension.
  */
-void
+void GLAPIENTRY
 _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
                                     GLfloat *params)
 {
@@ -450,7 +450,7 @@ _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
 /**
  * Note, this function is also used by the GL_NV_fragment_program extension.
  */
-void
+void GLAPIENTRY
 _mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
                                     GLdouble *params)
 {
@@ -463,7 +463,7 @@ _mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
 {
    struct program *prog;
@@ -670,7 +670,7 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string)
 {
    struct program *prog;

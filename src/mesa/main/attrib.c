@@ -65,7 +65,7 @@ new_attrib_node( GLbitfield kind )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_PushAttrib(GLbitfield mask)
 {
    struct gl_attrib_node *newnode;
@@ -783,7 +783,7 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
  * We could at least check if the value to restore equals the current value
  * and then skip the Mesa call.
  */
-void
+void GLAPIENTRY
 _mesa_PopAttrib(void)
 {
    struct gl_attrib_node *attr, *next;
@@ -1138,7 +1138,7 @@ _mesa_PopAttrib(void)
 #define GL_CLIENT_UNPACK_BIT (1<<21)
 
 
-void
+void GLAPIENTRY
 _mesa_PushClientAttrib(GLbitfield mask)
 {
    struct gl_attrib_node *newnode;
@@ -1190,7 +1190,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
 
 
 
-void
+void GLAPIENTRY
 _mesa_PopClientAttrib(void)
 {
    struct gl_attrib_node *attr, *next;

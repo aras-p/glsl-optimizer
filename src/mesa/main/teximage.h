@@ -97,44 +97,44 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
 /** \name API entry point functions */
 /*@{*/
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexImage1D( GLenum target, GLint level, GLint internalformat,
                   GLsizei width, GLint border,
                   GLenum format, GLenum type, const GLvoid *pixels );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexImage2D( GLenum target, GLint level, GLint internalformat,
                   GLsizei width, GLsizei height, GLint border,
                   GLenum format, GLenum type, const GLvoid *pixels );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexImage3D( GLenum target, GLint level, GLint internalformat,
                   GLsizei width, GLsizei height, GLsizei depth, GLint border,
                   GLenum format, GLenum type, const GLvoid *pixels );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexImage3DEXT( GLenum target, GLint level, GLenum internalformat,
                      GLsizei width, GLsizei height, GLsizei depth,
                      GLint border, GLenum format, GLenum type,
                      const GLvoid *pixels );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetTexImage( GLenum target, GLint level,
                    GLenum format, GLenum type, GLvoid *pixels );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexSubImage1D( GLenum target, GLint level, GLint xoffset,
                      GLsizei width,
                      GLenum format, GLenum type,
                      const GLvoid *pixels );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexSubImage2D( GLenum target, GLint level,
                      GLint xoffset, GLint yoffset,
                      GLsizei width, GLsizei height,
@@ -142,7 +142,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
                      const GLvoid *pixels );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexSubImage3D( GLenum target, GLint level,
                      GLint xoffset, GLint yoffset, GLint zoffset,
                      GLsizei width, GLsizei height, GLsizei depth,
@@ -150,48 +150,48 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
                      const GLvoid *pixels );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_CopyTexImage1D( GLenum target, GLint level, GLenum internalformat,
                       GLint x, GLint y, GLsizei width, GLint border );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_CopyTexImage2D( GLenum target, GLint level,
                       GLenum internalformat, GLint x, GLint y,
                       GLsizei width, GLsizei height, GLint border );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_CopyTexSubImage1D( GLenum target, GLint level, GLint xoffset,
                          GLint x, GLint y, GLsizei width );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_CopyTexSubImage2D( GLenum target, GLint level,
                          GLint xoffset, GLint yoffset,
                          GLint x, GLint y, GLsizei width, GLsizei height );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_CopyTexSubImage3D( GLenum target, GLint level,
                          GLint xoffset, GLint yoffset, GLint zoffset,
                          GLint x, GLint y, GLsizei width, GLsizei height );
 
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
                               GLenum internalformat, GLsizei width,
                               GLint border, GLsizei imageSize,
                               const GLvoid *data);
 
-extern void
+extern void GLAPIENTRY
 _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
                               GLenum internalformat, GLsizei width,
                               GLsizei height, GLint border, GLsizei imageSize,
                               const GLvoid *data);
 
-extern void
+extern void GLAPIENTRY
 _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
                               GLenum internalformat, GLsizei width,
                               GLsizei height, GLsizei depth, GLint border,
@@ -202,24 +202,24 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
 #define _mesa_CompressedTexSubImage2DARB _mesa_CompressedTexSubImage2DAR
 #define _mesa_CompressedTexSubImage3DARB _mesa_CompressedTexSubImage3DAR
 #endif
-extern void
+extern void GLAPIENTRY
 _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
                                  GLsizei width, GLenum format,
                                  GLsizei imageSize, const GLvoid *data);
 
-extern void
+extern void GLAPIENTRY
 _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
                                  GLint yoffset, GLsizei width, GLsizei height,
                                  GLenum format, GLsizei imageSize,
                                  const GLvoid *data);
 
-extern void
+extern void GLAPIENTRY
 _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
                                  GLint yoffset, GLint zoffset, GLsizei width,
                                  GLsizei height, GLsizei depth, GLenum format,
                                  GLsizei imageSize, const GLvoid *data);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetCompressedTexImageARB(GLenum target, GLint lod, GLvoid *img);
 
 /*@}*/

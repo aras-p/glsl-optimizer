@@ -31,14 +31,14 @@
 
 
 
-void
+void GLAPIENTRY
 _mesa_Fogf(GLenum pname, GLfloat param)
 {
    _mesa_Fogfv(pname, &param);
 }
 
 
-void
+void GLAPIENTRY
 _mesa_Fogi(GLenum pname, GLint param )
 {
    GLfloat fparam = (GLfloat) param;
@@ -46,7 +46,7 @@ _mesa_Fogi(GLenum pname, GLint param )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_Fogiv(GLenum pname, const GLint *params )
 {
    GLfloat p[4];
@@ -73,7 +73,7 @@ _mesa_Fogiv(GLenum pname, const GLint *params )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_Fogfv( GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);

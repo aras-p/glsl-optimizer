@@ -417,7 +417,7 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
 
 
 
-void
+void GLAPIENTRY
 _mesa_Map1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride,
              GLint order, const GLfloat *points )
 {
@@ -425,7 +425,7 @@ _mesa_Map1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_Map1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
              GLint order, const GLdouble *points )
 {
@@ -516,7 +516,7 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_Map2f( GLenum target,
              GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
              GLfloat v1, GLfloat v2, GLint vstride, GLint vorder,
@@ -527,7 +527,7 @@ _mesa_Map2f( GLenum target,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_Map2d( GLenum target,
              GLdouble u1, GLdouble u2, GLint ustride, GLint uorder,
              GLdouble v1, GLdouble v2, GLint vstride, GLint vorder,
@@ -539,7 +539,7 @@ _mesa_Map2d( GLenum target,
 
 
 
-void
+void GLAPIENTRY
 _mesa_GetMapdv( GLenum target, GLenum query, GLdouble *v )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -604,7 +604,7 @@ _mesa_GetMapdv( GLenum target, GLenum query, GLdouble *v )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetMapfv( GLenum target, GLenum query, GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -669,7 +669,7 @@ _mesa_GetMapfv( GLenum target, GLenum query, GLfloat *v )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetMapiv( GLenum target, GLenum query, GLint *v )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -735,7 +735,7 @@ _mesa_GetMapiv( GLenum target, GLenum query, GLint *v )
 
 
 
-void
+void GLAPIENTRY
 _mesa_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -753,14 +753,14 @@ _mesa_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_MapGrid1d( GLint un, GLdouble u1, GLdouble u2 )
 {
    _mesa_MapGrid1f( un, (GLfloat) u1, (GLfloat) u2 );
 }
 
 
-void
+void GLAPIENTRY
 _mesa_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
                  GLint vn, GLfloat v1, GLfloat v2 )
 {
@@ -788,7 +788,7 @@ _mesa_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
                  GLint vn, GLdouble v1, GLdouble v2 )
 {

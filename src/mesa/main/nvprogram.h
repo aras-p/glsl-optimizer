@@ -30,88 +30,88 @@
 #define NVPROGRAM_H
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params);
 
-extern GLboolean
+extern GLboolean GLAPIENTRY 
 _mesa_AreProgramsResidentNV(GLsizei n, const GLuint *ids, GLboolean *residences);
 
-extern void
+extern void GLAPIENTRY
 _mesa_RequestResidentProgramsNV(GLsizei n, const GLuint *ids);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetProgramParameterfvNV(GLenum target, GLuint index, GLenum pname, GLfloat *params);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetProgramParameterdvNV(GLenum target, GLuint index, GLenum pname, GLdouble *params);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetProgramivNV(GLuint id, GLenum pname, GLint *params);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetProgramStringNV(GLuint id, GLenum pname, GLubyte *program);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetTrackMatrixivNV(GLenum target, GLuint address, GLenum pname, GLint *params);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetVertexAttribdvNV(GLuint index, GLenum pname, GLdouble *params);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetVertexAttribfvNV(GLuint index, GLenum pname, GLfloat *params);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetVertexAttribivNV(GLuint index, GLenum pname, GLint *params);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetVertexAttribPointervNV(GLuint index, GLenum pname, GLvoid **pointer);
 
-extern void
+extern void GLAPIENTRY
 _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len, const GLubyte *program);
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramParameter4dNV(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramParameter4dvNV(GLenum target, GLuint index, const GLdouble *params);
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramParameter4fNV(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramParameter4fvNV(GLenum target, GLuint index, const GLfloat *params);
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramParameters4dvNV(GLenum target, GLuint index, GLuint num, const GLdouble *params);
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramParameters4fvNV(GLenum target, GLuint index, GLuint num, const GLfloat *params);
 
-extern void
+extern void GLAPIENTRY
 _mesa_TrackMatrixNV(GLenum target, GLuint address, GLenum matrix, GLenum transform);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
                                 GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte *name,
                                  const float v[]);
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte *name,
                                 GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte *name,
                                  const double v[]);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
                                    GLfloat *params);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
                                    GLdouble *params);
 

@@ -367,7 +367,7 @@ _mesa_init_buffer_objects( GLcontext *ctx )
 /* API Functions                                                      */
 /**********************************************************************/
 
-void
+void GLAPIENTRY
 _mesa_BindBufferARB(GLenum target, GLuint buffer)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -436,7 +436,7 @@ _mesa_BindBufferARB(GLenum target, GLuint buffer)
  * \param n      Number of buffer objects to delete.
  * \param buffer Array of \c n buffer object IDs.
  */
-void
+void GLAPIENTRY
 _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -511,7 +511,7 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
  * \param n       Number of IDs to generate.
  * \param buffer  Array of \c n locations to store the IDs.
  */
-void
+void GLAPIENTRY
 _mesa_GenBuffersARB(GLsizei n, GLuint *buffer)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -560,7 +560,7 @@ _mesa_GenBuffersARB(GLsizei n, GLuint *buffer)
  * \return  \c GL_TRUE if \c id is the name of a buffer object, 
  *          \c GL_FALSE otherwise.
  */
-GLboolean
+GLboolean GLAPIENTRY
 _mesa_IsBufferARB(GLuint id)
 {
    struct gl_buffer_object * bufObj;
@@ -578,7 +578,7 @@ _mesa_IsBufferARB(GLuint id)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
                     const GLvoid * data, GLenum usage)
 {
@@ -626,7 +626,7 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_BufferSubDataARB(GLenum target, GLintptrARB offset,
                        GLsizeiptrARB size, const GLvoid * data)
 {
@@ -651,7 +651,7 @@ _mesa_BufferSubDataARB(GLenum target, GLintptrARB offset,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetBufferSubDataARB(GLenum target, GLintptrARB offset,
                           GLsizeiptrARB size, void * data)
 {
@@ -676,7 +676,7 @@ _mesa_GetBufferSubDataARB(GLenum target, GLintptrARB offset,
 }
 
 
-void *
+void * GLAPIENTRY
 _mesa_MapBufferARB(GLenum target, GLenum access)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -717,7 +717,7 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
 }
 
 
-GLboolean
+GLboolean GLAPIENTRY
 _mesa_UnmapBufferARB(GLenum target)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -747,7 +747,7 @@ _mesa_UnmapBufferARB(GLenum target)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -780,7 +780,7 @@ _mesa_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetBufferPointervARB(GLenum target, GLenum pname, GLvoid **params)
 {
    GET_CURRENT_CONTEXT(ctx);

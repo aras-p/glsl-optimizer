@@ -47,89 +47,89 @@ _mesa_print_texunit_state( GLcontext *ctx, GLuint unit );
  */
 /*@{*/
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetTexLevelParameterfv( GLenum target, GLint level,
                               GLenum pname, GLfloat *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                               GLenum pname, GLint *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexEnvf( GLenum target, GLenum pname, GLfloat param );
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param );
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexEnvi( GLenum target, GLenum pname, GLint param );
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexEnviv( GLenum target, GLenum pname, const GLint *param );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexParameterf( GLenum target, GLenum pname, GLfloat param );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexParameteri( GLenum target, GLenum pname, GLint param );
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexParameteriv( GLenum target, GLenum pname, const GLint *params );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexGend( GLenum coord, GLenum pname, GLdouble param );
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexGendv( GLenum coord, GLenum pname, const GLdouble *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexGenf( GLenum coord, GLenum pname, GLfloat param );
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexGeni( GLenum coord, GLenum pname, GLint param );
 
-extern void
+extern void GLAPIENTRY
 _mesa_TexGeniv( GLenum coord, GLenum pname, const GLint *params );
 
 
 /*
  * GL_ARB_multitexture
  */
-extern void
+extern void GLAPIENTRY
 _mesa_ActiveTextureARB( GLenum target );
 
-extern void
+extern void GLAPIENTRY
 _mesa_ClientActiveTextureARB( GLenum target );
 
 
@@ -137,37 +137,37 @@ _mesa_ClientActiveTextureARB( GLenum target );
  * Pixel Texture Extensions
  */
 
-extern void
+extern void GLAPIENTRY
 _mesa_PixelTexGenSGIX(GLenum mode);
 
-extern void
+extern void GLAPIENTRY
 _mesa_PixelTexGenParameterfSGIS(GLenum target, GLfloat value);
 
 #ifdef VMS
 #define _mesa_PixelTexGenParameterfvSGIS _mesa_PixelTexGenParameterfv
 #endif
-extern void
+extern void GLAPIENTRY
 _mesa_PixelTexGenParameterfvSGIS(GLenum target, const GLfloat *value);
 
-extern void
+extern void GLAPIENTRY
 _mesa_PixelTexGenParameteriSGIS(GLenum target, GLint value);
 
 #ifdef VMS
 #define _mesa_PixelTexGenParameterivSGIS _mesa_PixelTexGenParameteriv
 #endif
-extern void
+extern void GLAPIENTRY
 _mesa_PixelTexGenParameterivSGIS(GLenum target, const GLint *value);
 
 #ifdef VMS
 #define _mesa_GetPixelTexGenParameterfvSGIS _mesa_GetPixelTexGenParameterfv
 #endif
-extern void
+extern void GLAPIENTRY
 _mesa_GetPixelTexGenParameterfvSGIS(GLenum target, GLfloat *value);
 
 #ifdef VMS
 #define _mesa_GetPixelTexGenParameterivSGIS _mesa_GetPixelTexGenParameteriv
 #endif
-extern void
+extern void GLAPIENTRY
 _mesa_GetPixelTexGenParameterivSGIS(GLenum target, GLint *value);
 
 /*@}*/

@@ -249,10 +249,10 @@ extern void
 _mesa_record_error( GLcontext *ctx, GLenum error );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_Finish( void );
 
-extern void
+extern void GLAPIENTRY
 _mesa_Flush( void );
 
 /*@}*/

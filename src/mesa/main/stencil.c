@@ -49,7 +49,7 @@
  * flushes the vertices and notifies the driver via
  * the dd_function_table::ClearStencil callback.
  */
-void
+void GLAPIENTRY
 _mesa_ClearStencil( GLint s )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -80,7 +80,7 @@ _mesa_ClearStencil( GLint s )
  * __GLcontextRec::Stencil. On change flushes the vertices and notifies the
  * driver via the dd_function_table::StencilFunc callback.
  */
-void
+void GLAPIENTRY
 _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -133,7 +133,7 @@ _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
  * Updates gl_stencil_attrib::WriteMask. On change flushes the vertices and
  * notifies the driver via the dd_function_table::StencilMask callback.
  */
-void
+void GLAPIENTRY
 _mesa_StencilMask( GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -166,7 +166,7 @@ _mesa_StencilMask( GLuint mask )
  * __GLcontextRec::Stencil. On change flushes the vertices and notifies the
  * driver via the dd_function_table::StencilOp callback.
  */
-void
+void GLAPIENTRY
 _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -246,7 +246,7 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
 
 #if _HAVE_FULL_GL
 /* GL_EXT_stencil_two_side */
-void
+void GLAPIENTRY
 _mesa_ActiveStencilFaceEXT(GLenum face)
 {
    GET_CURRENT_CONTEXT(ctx);

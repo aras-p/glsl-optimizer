@@ -38,37 +38,38 @@
 /** \name API functions */
 /*@*/
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetPixelMapfv( GLenum map, GLfloat *values );
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetPixelMapuiv( GLenum map, GLuint *values );
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetPixelMapusv( GLenum map, GLushort *values );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PixelStoref( GLenum pname, GLfloat param );
 
-extern void
+
+extern void GLAPIENTRY
 _mesa_PixelStorei( GLenum pname, GLint param );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PixelTransferf( GLenum pname, GLfloat param );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PixelTransferi( GLenum pname, GLint param );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PixelZoom( GLfloat xfactor, GLfloat yfactor );
 
 /*@}*/

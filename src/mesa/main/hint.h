@@ -41,7 +41,7 @@
 
 #if _HAVE_FULL_GL
 
-extern void
+extern void GLAPIENTRY
 _mesa_Hint( GLenum target, GLenum mode );
 
 extern void 

@@ -34,7 +34,7 @@
 #include "math/m_matrix.h"
 
 
-void
+void GLAPIENTRY
 _mesa_ShadeModel( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -59,14 +59,14 @@ _mesa_ShadeModel( GLenum mode )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_Lightf( GLenum light, GLenum pname, GLfloat param )
 {
    _mesa_Lightfv( light, pname, &param );
 }
 
 
-void
+void GLAPIENTRY
 _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -192,14 +192,14 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_Lighti( GLenum light, GLenum pname, GLint param )
 {
    _mesa_Lightiv( light, pname, &param );
 }
 
 
-void
+void GLAPIENTRY
 _mesa_Lightiv( GLenum light, GLenum pname, const GLint *params )
 {
    GLfloat fparam[4];
@@ -241,7 +241,7 @@ _mesa_Lightiv( GLenum light, GLenum pname, const GLint *params )
 
 
 
-void
+void GLAPIENTRY
 _mesa_GetLightfv( GLenum light, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -291,7 +291,7 @@ _mesa_GetLightfv( GLenum light, GLenum pname, GLfloat *params )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetLightiv( GLenum light, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -361,7 +361,7 @@ _mesa_GetLightiv( GLenum light, GLenum pname, GLint *params )
 /**********************************************************************/
 
 
-void
+void GLAPIENTRY
 _mesa_LightModelfv( GLenum pname, const GLfloat *params )
 {
    GLenum newenum;
@@ -428,7 +428,7 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_LightModeliv( GLenum pname, const GLint *params )
 {
    GLfloat fparam[4];
@@ -453,14 +453,14 @@ _mesa_LightModeliv( GLenum pname, const GLint *params )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_LightModeli( GLenum pname, GLint param )
 {
    _mesa_LightModeliv( pname, &param );
 }
 
 
-void
+void GLAPIENTRY
 _mesa_LightModelf( GLenum pname, GLfloat param )
 {
    _mesa_LightModelfv( pname, &param );
@@ -649,7 +649,7 @@ _mesa_update_color_material( GLcontext *ctx, const GLfloat color[4] )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_ColorMaterial( GLenum face, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -687,7 +687,7 @@ _mesa_ColorMaterial( GLenum face, GLenum mode )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -733,7 +733,7 @@ _mesa_GetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);

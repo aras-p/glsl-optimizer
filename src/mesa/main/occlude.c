@@ -97,7 +97,7 @@ delete_query_object(struct occlusion_query *q)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GenQueriesARB(GLsizei n, GLuint *ids)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -131,7 +131,7 @@ _mesa_GenQueriesARB(GLsizei n, GLuint *ids)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_DeleteQueriesARB(GLsizei n, const GLuint *ids)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -161,7 +161,7 @@ _mesa_DeleteQueriesARB(GLsizei n, const GLuint *ids)
 }
 
 
-GLboolean
+GLboolean GLAPIENTRY
 _mesa_IsQueryARB(GLuint id)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -174,7 +174,7 @@ _mesa_IsQueryARB(GLuint id)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_BeginQueryARB(GLenum target, GLuint id)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -216,7 +216,7 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_EndQueryARB(GLenum target)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -245,7 +245,7 @@ _mesa_EndQueryARB(GLenum target)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -270,7 +270,7 @@ _mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -299,7 +299,7 @@ _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
 {
    GET_CURRENT_CONTEXT(ctx);

@@ -42,11 +42,11 @@
 
 #if _HAVE_FULL_GL
 
-extern void
+extern void GLAPIENTRY
 _mesa_Accum( GLenum op, GLfloat value );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha );
 
 extern void 

@@ -99,7 +99,7 @@ void _tnl_flush_vertices( GLcontext *ctx, GLuint flags )
 }
 
 
-void
+void GLAPIENTRY
 _tnl_save_Begin( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -177,7 +177,7 @@ _tnl_save_Begin( GLenum mode )
 }
 
 
-void
+void GLAPIENTRY
 _tnl_Begin( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -382,7 +382,7 @@ _tnl_end_ctx( GLcontext *ctx )
       _tnl_flush_immediate( ctx, IM );
 }
 
-void
+void GLAPIENTRY
 _tnl_End(void)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -427,13 +427,13 @@ _tnl_End(void)
    IM->Flag[count] |= VERT_BIT_COLOR0;				\
 }
 
-static void
+static void GLAPIENTRY
 _tnl_Color3f( GLfloat red, GLfloat green, GLfloat blue )
 {
    COLOR( red, green, blue, 1.0 );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_Color3ub( GLubyte red, GLubyte green, GLubyte blue )
 {
    COLOR(UBYTE_TO_FLOAT(red),
@@ -442,13 +442,13 @@ _tnl_Color3ub( GLubyte red, GLubyte green, GLubyte blue )
          1.0);
 }
 
-static void
+static void GLAPIENTRY
 _tnl_Color4f( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
 {
    COLOR( red, green, blue, alpha );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_Color4ub( GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha )
 {
    COLOR(UBYTE_TO_FLOAT(red),
@@ -457,13 +457,13 @@ _tnl_Color4ub( GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha )
          UBYTE_TO_FLOAT(alpha));
 }
 
-static void
+static void GLAPIENTRY
 _tnl_Color3fv( const GLfloat *v )
 {
    COLOR( v[0], v[1], v[2], 1.0 );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_Color3ubv( const GLubyte *v )
 {
    COLOR(UBYTE_TO_FLOAT(v[0]),
@@ -472,13 +472,13 @@ _tnl_Color3ubv( const GLubyte *v )
          1.0 );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_Color4fv( const GLfloat *v )
 {
    COLOR( v[0], v[1], v[2], v[3] );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_Color4ubv( const GLubyte *v)
 {
    COLOR(UBYTE_TO_FLOAT(v[0]),
@@ -502,13 +502,13 @@ _tnl_Color4ubv( const GLubyte *v)
    IM->Flag[count] |= VERT_BIT_COLOR1;			\
 }
 
-static void
+static void GLAPIENTRY
 _tnl_SecondaryColor3fEXT( GLfloat red, GLfloat green, GLfloat blue )
 {
    SECONDARY_COLOR( red, green, blue );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_SecondaryColor3ubEXT( GLubyte red, GLubyte green, GLubyte blue )
 {
    SECONDARY_COLOR(UBYTE_TO_FLOAT(red),
@@ -516,13 +516,13 @@ _tnl_SecondaryColor3ubEXT( GLubyte red, GLubyte green, GLubyte blue )
                    UBYTE_TO_FLOAT(blue));
 }
 
-static void
+static void GLAPIENTRY
 _tnl_SecondaryColor3fvEXT( const GLfloat *v )
 {
    SECONDARY_COLOR( v[0], v[1], v[2] );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_SecondaryColor3ubvEXT( const GLubyte *v )
 {
    SECONDARY_COLOR(UBYTE_TO_FLOAT(v[0]),
@@ -531,7 +531,7 @@ _tnl_SecondaryColor3ubvEXT( const GLubyte *v )
 }
 
 
-static void
+static void GLAPIENTRY
 _tnl_EdgeFlag( GLboolean flag )
 {
    GLuint count;
@@ -542,7 +542,7 @@ _tnl_EdgeFlag( GLboolean flag )
 }
 
 
-static void
+static void GLAPIENTRY
 _tnl_EdgeFlagv( const GLboolean *flag )
 {
    GLuint count;
@@ -553,7 +553,7 @@ _tnl_EdgeFlagv( const GLboolean *flag )
 }
 
 
-static void
+static void GLAPIENTRY
 _tnl_FogCoordfEXT( GLfloat f )
 {
    GET_IMMEDIATE;
@@ -563,7 +563,7 @@ _tnl_FogCoordfEXT( GLfloat f )
    IM->Flag[count] |= VERT_BIT_FOG;
 }
 
-static void
+static void GLAPIENTRY
 _tnl_FogCoordfvEXT( const GLfloat *v )
 {
    GET_IMMEDIATE;
@@ -574,7 +574,7 @@ _tnl_FogCoordfvEXT( const GLfloat *v )
 }
 
 
-static void
+static void GLAPIENTRY
 _tnl_Indexi( GLint c )
 {
    GLuint count;
@@ -585,7 +585,7 @@ _tnl_Indexi( GLint c )
 }
 
 
-static void
+static void GLAPIENTRY
 _tnl_Indexiv( const GLint *c )
 {
    GLuint count;
@@ -624,14 +624,14 @@ _tnl_Indexiv( const GLint *c )
 #define NORMALF NORMAL
 #endif
 
-static void
+static void GLAPIENTRY
 _tnl_Normal3f( GLfloat nx, GLfloat ny, GLfloat nz )
 {
    NORMALF(nx, ny, nz);
 }
 
 
-static void
+static void GLAPIENTRY
 _tnl_Normal3fv( const GLfloat *v )
 {
    NORMALF( v[0], v[1], v[2] );
@@ -703,51 +703,51 @@ _tnl_Normal3fv( const GLfloat *v )
 #define TEXCOORD2F TEXCOORD2
 #endif
 
-static void
+static void GLAPIENTRY
 _tnl_TexCoord1f( GLfloat s )
 {
    TEXCOORD1(s);
 }
 
 
-static void
+static void GLAPIENTRY
 _tnl_TexCoord2f( GLfloat s, GLfloat t )
 {
    TEXCOORD2F(s, t);
 }
 
 
-static void
+static void GLAPIENTRY
 _tnl_TexCoord3f( GLfloat s, GLfloat t, GLfloat r )
 {
    TEXCOORD3(s, t, r);
 }
 
-static void
+static void GLAPIENTRY
 _tnl_TexCoord4f( GLfloat s, GLfloat t, GLfloat r, GLfloat q )
 {
    TEXCOORD4(s, t, r, q)
 }
 
-static void
+static void GLAPIENTRY
 _tnl_TexCoord1fv( const GLfloat *v )
 {
    TEXCOORD1(v[0]);
 }
 
-static void
+static void GLAPIENTRY
 _tnl_TexCoord2fv( const GLfloat *v )
 {
    TEXCOORD2F(v[0], v[1]);
 }
 
-static void
+static void GLAPIENTRY
 _tnl_TexCoord3fv( const GLfloat *v )
 {
    TEXCOORD3(v[0], v[1], v[2]);
 }
 
-static void
+static void GLAPIENTRY
 _tnl_TexCoord4fv( const GLfloat *v )
 {
    TEXCOORD4(v[0], v[1], v[2], v[3]);
@@ -845,41 +845,41 @@ _tnl_TexCoord4fv( const GLfloat *v )
 
 
 
-static void
+static void GLAPIENTRY
 _tnl_Vertex2f( GLfloat x, GLfloat y )
 {
    GET_IMMEDIATE;
    VERTEX2F( IM, x, y );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_Vertex3f( GLfloat x, GLfloat y, GLfloat z )
 {
    GET_IMMEDIATE;
    VERTEX3F( IM, x, y, z );
 }
-static void
+static void GLAPIENTRY
 _tnl_Vertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
    GET_IMMEDIATE;
    VERTEX4F( IM, x, y, z, w );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_Vertex2fv( const GLfloat *v )
 {
    GET_IMMEDIATE;
    VERTEX2F( IM, v[0], v[1] );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_Vertex3fv( const GLfloat *v )
 {
    GET_IMMEDIATE;
    VERTEX3F( IM, v[0], v[1], v[2] );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_Vertex4fv( const GLfloat *v )
 {
    GET_IMMEDIATE;
@@ -978,49 +978,49 @@ _tnl_Vertex4fv( const GLfloat *v )
 #define MULTI_TEXCOORD2F MULTI_TEXCOORD2
 #endif
 
-static void
+static void GLAPIENTRY
 _tnl_MultiTexCoord1fARB(GLenum target, GLfloat s)
 {
    MULTI_TEXCOORD1( target, s );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_MultiTexCoord1fvARB(GLenum target, const GLfloat *v)
 {
    MULTI_TEXCOORD1( target, v[0] );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_MultiTexCoord2fARB(GLenum target, GLfloat s, GLfloat t)
 {
    MULTI_TEXCOORD2F( target, s, t );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_MultiTexCoord2fvARB(GLenum target, const GLfloat *v)
 {
    MULTI_TEXCOORD2F( target, v[0], v[1] );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_MultiTexCoord3fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r)
 {
    MULTI_TEXCOORD3( target, s, t, r );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_MultiTexCoord3fvARB(GLenum target, const GLfloat *v)
 {
    MULTI_TEXCOORD3( target, v[0], v[1], v[2] );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_MultiTexCoord4fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q)
 {
    MULTI_TEXCOORD4( target, s, t, r, q );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_MultiTexCoord4fvARB(GLenum target, const GLfloat *v)
 {
    MULTI_TEXCOORD4( target, v[0], v[1], v[2], v[3] );
@@ -1082,28 +1082,28 @@ _tnl_MultiTexCoord4fvARB(GLenum target, const GLfloat *v)
       _tnl_flush_immediate( NULL, IM );			\
 }
 
-static void
+static void GLAPIENTRY
 _tnl_EvalCoord1f( GLfloat u )
 {
    GET_IMMEDIATE;
    EVALCOORD1( IM, u );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_EvalCoord1fv( const GLfloat *u )
 {
    GET_IMMEDIATE;
    EVALCOORD1( IM, (GLfloat) *u );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_EvalCoord2f( GLfloat u, GLfloat v )
 {
    GET_IMMEDIATE;
    EVALCOORD2( IM, u, v );
 }
 
-static void
+static void GLAPIENTRY
 _tnl_EvalCoord2fv( const GLfloat *u )
 {
    GET_IMMEDIATE;
@@ -1111,7 +1111,7 @@ _tnl_EvalCoord2fv( const GLfloat *u )
 }
 
 
-static void
+static void GLAPIENTRY
 _tnl_EvalPoint1( GLint i )
 {
    GET_IMMEDIATE;
@@ -1119,7 +1119,7 @@ _tnl_EvalPoint1( GLint i )
 }
 
 
-static void
+static void GLAPIENTRY
 _tnl_EvalPoint2( GLint i, GLint j )
 {
    GET_IMMEDIATE;
@@ -1143,7 +1143,7 @@ _tnl_EvalPoint2( GLint i, GLint j )
 }
 
 
-static void
+static void GLAPIENTRY
 _tnl_ArrayElement( GLint i )
 {
    GET_IMMEDIATE;
@@ -1181,7 +1181,7 @@ _tnl_eval_coord2f( GLcontext *CC, GLfloat u, GLfloat v )
  * NV_vertex_program
  */
 
-static void
+static void GLAPIENTRY
 _tnl_VertexAttrib4fNV( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
    if (index < VERT_ATTRIB_MAX) {
@@ -1204,7 +1204,7 @@ _tnl_VertexAttrib4fNV( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w 
    }
 }   
 
-static void
+static void GLAPIENTRY
 _tnl_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
 {
    if (index < VERT_ATTRIB_MAX) {
@@ -1233,7 +1233,7 @@ _tnl_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
  * vertices can now participate in the same immediate as regular ones,
  * even in most display lists.  
  */
-static void
+static void GLAPIENTRY
 _tnl_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1247,7 +1247,7 @@ _tnl_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 )
    }
 }
 
-static void
+static void GLAPIENTRY
 _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);

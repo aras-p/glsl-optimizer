@@ -38,7 +38,7 @@
 
 
 
-void
+void GLAPIENTRY
 _mesa_PixelZoom( GLfloat xfactor, GLfloat yfactor )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -59,7 +59,7 @@ _mesa_PixelZoom( GLfloat xfactor, GLfloat yfactor )
 /**********************************************************************/
 
 
-void
+void GLAPIENTRY
 _mesa_PixelStorei( GLenum pname, GLint param )
 {
    /* NOTE: this call can't be compiled into the display list */
@@ -240,7 +240,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_PixelStoref( GLenum pname, GLfloat param )
 {
    _mesa_PixelStorei( pname, (GLint) param );
@@ -254,7 +254,7 @@ _mesa_PixelStoref( GLenum pname, GLfloat param )
 
 
 
-void
+void GLAPIENTRY
 _mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
 {
    GLint i;
@@ -352,7 +352,7 @@ _mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
 
 
 
-void
+void GLAPIENTRY
 _mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values )
 {
    const GLint n = MIN2(mapsize, MAX_PIXEL_MAP_TABLE);
@@ -373,7 +373,7 @@ _mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values )
 
 
 
-void
+void GLAPIENTRY
 _mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values )
 {
    const GLint n = MIN2(mapsize, MAX_PIXEL_MAP_TABLE);
@@ -394,7 +394,7 @@ _mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values )
 
 
 
-void
+void GLAPIENTRY
 _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -442,7 +442,7 @@ _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -502,7 +502,7 @@ _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetPixelMapusv( GLenum map, GLushort *values )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -576,7 +576,7 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
  * Implements glPixelTransfer[fi] whether called immediately or from a
  * display list.
  */
-void
+void GLAPIENTRY
 _mesa_PixelTransferf( GLenum pname, GLfloat param )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -770,7 +770,7 @@ _mesa_PixelTransferf( GLenum pname, GLfloat param )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_PixelTransferi( GLenum pname, GLint param )
 {
    _mesa_PixelTransferf( pname, (GLfloat) param );

@@ -155,7 +155,7 @@ set_component_sizes( struct gl_color_table *table )
 
 
 
-void
+void GLAPIENTRY
 _mesa_ColorTable( GLenum target, GLenum internalFormat,
                   GLsizei width, GLenum format, GLenum type,
                   const GLvoid *data )
@@ -439,7 +439,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
 
 
 
-void
+void GLAPIENTRY
 _mesa_ColorSubTable( GLenum target, GLsizei start,
                      GLsizei count, GLenum format, GLenum type,
                      const GLvoid *data )
@@ -637,7 +637,7 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
 
 
 /* XXX not tested */
-void
+void GLAPIENTRY
 _mesa_CopyColorTable(GLenum target, GLenum internalformat,
                      GLint x, GLint y, GLsizei width)
 {
@@ -651,7 +651,7 @@ _mesa_CopyColorTable(GLenum target, GLenum internalformat,
 
 
 /* XXX not tested */
-void
+void GLAPIENTRY
 _mesa_CopyColorSubTable(GLenum target, GLsizei start,
                         GLint x, GLint y, GLsizei width)
 {
@@ -663,7 +663,7 @@ _mesa_CopyColorSubTable(GLenum target, GLsizei start,
 
 
 
-void
+void GLAPIENTRY
 _mesa_GetColorTable( GLenum target, GLenum format,
                      GLenum type, GLvoid *data )
 {
@@ -864,7 +864,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
 
 
 
-void
+void GLAPIENTRY
 _mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -957,7 +957,7 @@ _mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 
 
 
-void
+void GLAPIENTRY
 _mesa_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
    GLfloat fparams[4];
@@ -980,7 +980,7 @@ _mesa_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
 
 
 
-void
+void GLAPIENTRY
 _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1154,7 +1154,7 @@ _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
 
 
 
-void
+void GLAPIENTRY
 _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);

@@ -117,7 +117,7 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
 /**
  * Called via the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -255,7 +255,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 /**
  * Called via the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _tnl_DrawRangeElements(GLenum mode,
 		       GLuint start, GLuint end,
 		       GLsizei count, GLenum type, const GLvoid *indices)
@@ -329,7 +329,7 @@ _tnl_DrawRangeElements(GLenum mode,
 /**
  * Called via the GL API dispatcher.
  */
-void
+void GLAPIENTRY
 _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
 		  const GLvoid *indices)
 {

@@ -603,7 +603,7 @@ _glthread_DECLARE_STATIC_MUTEX(GenTexturesLock);
  * to find a block of free texture IDs which are stored in \p texName.
  * Corresponding empty texture objects are also generated.
  */ 
-void
+void GLAPIENTRY
 _mesa_GenTextures( GLsizei n, GLuint *texName )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -655,7 +655,7 @@ _mesa_GenTextures( GLsizei n, GLuint *texName )
  * it and decrementing the reference count if so. If the texture reference
  * count is zero, delete its object.
  */
-void
+void GLAPIENTRY
 _mesa_DeleteTextures( GLsizei n, const GLuint *texName)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -744,7 +744,7 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *texName)
  * calls dd_function_table::BindTexture. Decrements the old texture reference
  * count and deletes it if it reaches zero.
  */
-void
+void GLAPIENTRY
 _mesa_BindTexture( GLenum target, GLuint texName )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -900,7 +900,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
  * Looks up each texture in the hash, clamps the corresponding priority between
  * 0.0 and 1.0, and calls dd_function_table::PrioritizeTexture.
  */
-void
+void GLAPIENTRY
 _mesa_PrioritizeTextures( GLsizei n, const GLuint *texName,
                           const GLclampf *priorities )
 {
@@ -945,7 +945,7 @@ _mesa_PrioritizeTextures( GLsizei n, const GLuint *texName,
  * Looks up each texture in the hash and calls
  * dd_function_table::IsTextureResident.
  */
-GLboolean
+GLboolean GLAPIENTRY
 _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
                           GLboolean *residences)
 {
@@ -1006,7 +1006,7 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
  *
  * Calls _mesa_HashLookup().
  */
-GLboolean
+GLboolean GLAPIENTRY
 _mesa_IsTexture( GLuint texture )
 {
    GET_CURRENT_CONTEXT(ctx);

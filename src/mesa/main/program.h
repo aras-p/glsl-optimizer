@@ -206,16 +206,16 @@ _mesa_load_state_parameters(GLcontext *ctx,
  * API functions
  */
 
-extern void
+extern void GLAPIENTRY
 _mesa_BindProgram(GLenum target, GLuint id);
 
-extern void
+extern void GLAPIENTRY
 _mesa_DeletePrograms(GLsizei n, const GLuint *ids);
 
-extern void
+extern void GLAPIENTRY
 _mesa_GenPrograms(GLsizei n, GLuint *ids);
 
-extern GLboolean
+extern GLboolean GLAPIENTRY
 _mesa_IsProgram(GLuint id);
 
 

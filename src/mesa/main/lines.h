@@ -36,13 +36,13 @@
 #include "mtypes.h"
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_LineWidth( GLfloat width );
 
-extern void
+extern void GLAPIENTRY
 _mesa_LineStipple( GLint factor, GLushort pattern );
 
-extern void 
+extern void GLAPIENTRY 
 _mesa_init_line( GLcontext * ctx );
 
 #endif

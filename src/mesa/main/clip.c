@@ -41,7 +41,7 @@
 
 
 
-void
+void GLAPIENTRY
 _mesa_ClipPlane( GLenum plane, const GLdouble *eq )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -98,7 +98,7 @@ _mesa_ClipPlane( GLenum plane, const GLdouble *eq )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetClipPlane( GLenum plane, GLdouble *equation )
 {
    GET_CURRENT_CONTEXT(ctx);

@@ -50,7 +50,7 @@
  * flushes the vertices and notifies the driver via
  * dd_function_table::BlendFunc callback.
  */
-void
+void GLAPIENTRY
 _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
 {
 
@@ -144,7 +144,7 @@ _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
  * On a change, flush the vertices and notify the driver via
  * dd_function_table::BlendFuncSeparate.
  */
-void
+void GLAPIENTRY
 _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
                             GLenum sfactorA, GLenum dfactorA )
 {
@@ -285,7 +285,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
 
 
 /* This is really an extension function! */
-void
+void GLAPIENTRY
 _mesa_BlendEquation( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -358,7 +358,7 @@ _mesa_BlendEquation( GLenum mode )
  * change, flushes the vertices and notifies the driver via
  * dd_function_table::BlendColor callback.
  */
-void
+void GLAPIENTRY
 _mesa_BlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 {
    GLfloat tmp[4];
@@ -391,7 +391,7 @@ _mesa_BlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
  * On a change, flushes the vertices and notifies the driver via
  * dd_function_table::AlphaFunc callback.
  */
-void
+void GLAPIENTRY
 _mesa_AlphaFunc( GLenum func, GLclampf ref )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -436,7 +436,7 @@ gl_colorbuffer_attrib::LogicOp.
  * On a change, flushes the vertices and notifies the driver via the
  * dd_function_table::LogicOpcode callback.
  */
-void
+void GLAPIENTRY
 _mesa_LogicOp( GLenum opcode )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -476,7 +476,7 @@ _mesa_LogicOp( GLenum opcode )
 }
 
 #if _HAVE_FULL_GL
-void
+void GLAPIENTRY
 _mesa_IndexMask( GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -508,7 +508,7 @@ _mesa_IndexMask( GLuint mask )
  * change, flushes the vertices and notifies the driver via the
  * dd_function_table::ColorMask callback.
  */
-void
+void GLAPIENTRY
 _mesa_ColorMask( GLboolean red, GLboolean green,
                  GLboolean blue, GLboolean alpha )
 {

@@ -43,16 +43,16 @@
 
 #if _HAVE_FULL_GL
 
-extern void
+extern void GLAPIENTRY
 _mesa_PushAttrib( GLbitfield mask );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PopAttrib( void );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PushClientAttrib( GLbitfield mask );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PopClientAttrib( void );
 
 extern void 

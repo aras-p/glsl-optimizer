@@ -894,7 +894,7 @@ _mesa_BindProgram(GLenum target, GLuint id)
  * \note Not compiled into display lists.
  * \note Called by both glDeleteProgramsNV and glDeleteProgramsARB.
  */
-void
+void GLAPIENTRY 
 _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
 {
    GLint i;

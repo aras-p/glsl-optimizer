@@ -54,28 +54,28 @@ extern void _mesa_feedback_vertex( GLcontext *ctx,
 extern void _mesa_update_hitflag( GLcontext *ctx, GLfloat z );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_PassThrough( GLfloat token );
 
-extern void
+extern void GLAPIENTRY
 _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer );
 
-extern void
+extern void GLAPIENTRY
 _mesa_SelectBuffer( GLsizei size, GLuint *buffer );
 
-extern void
+extern void GLAPIENTRY
 _mesa_InitNames( void );
 
-extern void
+extern void GLAPIENTRY
 _mesa_LoadName( GLuint name );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PushName( GLuint name );
 
-extern void
+extern void GLAPIENTRY
 _mesa_PopName( void );
 
-extern GLint
+extern GLint GLAPIENTRY
 _mesa_RenderMode( GLenum mode );
 
 

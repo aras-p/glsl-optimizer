@@ -27,101 +27,101 @@
 #define ARBPROGRAM_H
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_EnableVertexAttribArrayARB(GLuint index);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_DisableVertexAttribArrayARB(GLuint index);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetVertexAttribivARB(GLuint index, GLenum pname, GLint *params);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
                        const GLvoid *string);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramEnvParameter4dARB(GLenum target, GLuint index,
                                GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
                                 const GLdouble *params);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
                                GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramEnvParameter4fvARB(GLenum target, GLuint index,
                                 const GLfloat *params);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
                                  GLdouble x, GLdouble y,
                                  GLdouble z, GLdouble w);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
                                   const GLdouble *params);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
                                  GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
                                   const GLfloat *params);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetProgramEnvParameterdvARB(GLenum target, GLuint index,
                                   GLdouble *params);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index, 
                                   GLfloat *params);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
                                     GLdouble *params);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index, 
                                     GLfloat *params);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string);
 
 

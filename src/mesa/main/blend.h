@@ -36,39 +36,39 @@
 #include "mtypes.h"
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_BlendFunc( GLenum sfactor, GLenum dfactor );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
                             GLenum sfactorA, GLenum dfactorA );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_BlendEquation( GLenum mode );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_BlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_AlphaFunc( GLenum func, GLclampf ref );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_LogicOp( GLenum opcode );
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_IndexMask( GLuint mask );
 
-extern void
+extern void GLAPIENTRY
 _mesa_ColorMask( GLboolean red, GLboolean green,
                  GLboolean blue, GLboolean alpha );
 
-extern void 
+extern void  
 _mesa_init_color( GLcontext * ctx );
 
 #endif

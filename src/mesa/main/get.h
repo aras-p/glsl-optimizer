@@ -35,25 +35,25 @@
 #include "mtypes.h"
 
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetBooleanv( GLenum pname, GLboolean *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetDoublev( GLenum pname, GLdouble *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetFloatv( GLenum pname, GLfloat *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetIntegerv( GLenum pname, GLint *params );
 
-extern void
+extern void GLAPIENTRY
 _mesa_GetPointerv( GLenum pname, GLvoid **params );
 
-extern const GLubyte *
+extern const GLubyte * GLAPIENTRY
 _mesa_GetString( GLenum name );
 
-extern GLenum
+extern GLenum GLAPIENTRY
 _mesa_GetError( void );
 
 #endif

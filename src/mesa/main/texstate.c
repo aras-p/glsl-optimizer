@@ -151,7 +151,7 @@ _mesa_print_texunit_state( GLcontext *ctx, GLuint unit )
 /**********************************************************************/
 
 
-void
+void GLAPIENTRY
 _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -580,7 +580,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexEnvf( GLenum target, GLenum pname, GLfloat param )
 {
    _mesa_TexEnvfv( target, pname, &param );
@@ -588,7 +588,7 @@ _mesa_TexEnvf( GLenum target, GLenum pname, GLfloat param )
 
 
 
-void
+void GLAPIENTRY
 _mesa_TexEnvi( GLenum target, GLenum pname, GLint param )
 {
    GLfloat p[4];
@@ -598,7 +598,7 @@ _mesa_TexEnvi( GLenum target, GLenum pname, GLint param )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexEnviv( GLenum target, GLenum pname, const GLint *param )
 {
    GLfloat p[4];
@@ -616,7 +616,7 @@ _mesa_TexEnviv( GLenum target, GLenum pname, const GLint *param )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -827,7 +827,7 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1078,14 +1078,14 @@ _mesa_validate_texture_wrap_mode(GLcontext * ctx,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexParameterf( GLenum target, GLenum pname, GLfloat param )
 {
    _mesa_TexParameterfv(target, pname, &param);
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1404,7 +1404,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexParameteri( GLenum target, GLenum pname, GLint param )
 {
    GLfloat fparam[4];
@@ -1417,7 +1417,7 @@ _mesa_TexParameteri( GLenum target, GLenum pname, GLint param )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexParameteriv( GLenum target, GLenum pname, const GLint *params )
 {
    GLfloat fparam[4];
@@ -1438,7 +1438,7 @@ _mesa_TexParameteriv( GLenum target, GLenum pname, const GLint *params )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetTexLevelParameterfv( GLenum target, GLint level,
                               GLenum pname, GLfloat *params )
 {
@@ -1480,7 +1480,7 @@ tex_image_dimensions(GLcontext *ctx, GLenum target)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                               GLenum pname, GLint *params )
 {
@@ -1656,7 +1656,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
 
 
 
-void
+void GLAPIENTRY
 _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1780,7 +1780,7 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1917,7 +1917,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
 /**********************************************************************/
 
 #if FEATURE_texgen
-void
+void GLAPIENTRY
 _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2156,7 +2156,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexGeniv(GLenum coord, GLenum pname, const GLint *params )
 {
    GLfloat p[4];
@@ -2173,7 +2173,7 @@ _mesa_TexGeniv(GLenum coord, GLenum pname, const GLint *params )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexGend(GLenum coord, GLenum pname, GLdouble param )
 {
    GLfloat p = (GLfloat) param;
@@ -2181,7 +2181,7 @@ _mesa_TexGend(GLenum coord, GLenum pname, GLdouble param )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexGendv(GLenum coord, GLenum pname, const GLdouble *params )
 {
    GLfloat p[4];
@@ -2198,14 +2198,14 @@ _mesa_TexGendv(GLenum coord, GLenum pname, const GLdouble *params )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexGenf( GLenum coord, GLenum pname, GLfloat param )
 {
    _mesa_TexGenfv(coord, pname, &param);
 }
 
 
-void
+void GLAPIENTRY
 _mesa_TexGeni( GLenum coord, GLenum pname, GLint param )
 {
    _mesa_TexGeniv( coord, pname, &param );
@@ -2213,7 +2213,7 @@ _mesa_TexGeni( GLenum coord, GLenum pname, GLint param )
 
 
 
-void
+void GLAPIENTRY
 _mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2290,7 +2290,7 @@ _mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
 
 
 
-void
+void GLAPIENTRY
 _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2367,7 +2367,7 @@ _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
 
 
 
-void
+void GLAPIENTRY
 _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2468,7 +2468,7 @@ _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
 #endif
 
 /* GL_ARB_multitexture */
-void
+void GLAPIENTRY
 _mesa_ActiveTextureARB( GLenum target )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2503,7 +2503,7 @@ _mesa_ActiveTextureARB( GLenum target )
 
 
 /* GL_ARB_multitexture */
-void
+void GLAPIENTRY
 _mesa_ClientActiveTextureARB( GLenum target )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2525,7 +2525,7 @@ _mesa_ClientActiveTextureARB( GLenum target )
 /*                     Pixel Texgen Extensions                        */
 /**********************************************************************/
 
-void
+void GLAPIENTRY
 _mesa_PixelTexGenSGIX(GLenum mode)
 {
    GLenum newRgbSource, newAlphaSource;
@@ -2564,21 +2564,21 @@ _mesa_PixelTexGenSGIX(GLenum mode)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_PixelTexGenParameterfSGIS(GLenum target, GLfloat value)
 {
    _mesa_PixelTexGenParameteriSGIS(target, (GLint) value);
 }
 
 
-void
+void GLAPIENTRY
 _mesa_PixelTexGenParameterfvSGIS(GLenum target, const GLfloat *value)
 {
    _mesa_PixelTexGenParameteriSGIS(target, (GLint) *value);
 }
 
 
-void
+void GLAPIENTRY
 _mesa_PixelTexGenParameteriSGIS(GLenum target, GLint value)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2609,14 +2609,14 @@ _mesa_PixelTexGenParameteriSGIS(GLenum target, GLint value)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_PixelTexGenParameterivSGIS(GLenum target, const GLint *value)
 {
   _mesa_PixelTexGenParameteriSGIS(target, *value);
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetPixelTexGenParameterfvSGIS(GLenum target, GLfloat *value)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2634,7 +2634,7 @@ _mesa_GetPixelTexGenParameterfvSGIS(GLenum target, GLfloat *value)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetPixelTexGenParameterivSGIS(GLenum target, GLint *value)
 {
    GET_CURRENT_CONTEXT(ctx);

@@ -44,45 +44,45 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 #define UBYTE_TO_FLOAT(u) _mesa_ubyte_to_float_color_tab[(unsigned int)(u)]
 
 /** Convert GLfloat in [0.0,1.0] to GLubyte in [0,255] */
-#define FLOAT_TO_UBYTE(X)	((GLubyte) (GLint) ((X) * 255.0F))
+#define FLOAT_TO_UBYTE(X)   ((GLubyte) (GLint) ((X) * 255.0F))
 
 
 /** Convert GLbyte in [-128,127] to GLfloat in [-1.0,1.0] */
-#define BYTE_TO_FLOAT(B)	((2.0F * (B) + 1.0F) * (1.0F/255.0F))
+#define BYTE_TO_FLOAT(B)    ((2.0F * (B) + 1.0F) * (1.0F/255.0F))
 
 /** Convert GLfloat in [-1.0,1.0] to GLbyte in [-128,127] */
-#define FLOAT_TO_BYTE(X)	( (((GLint) (255.0F * (X))) - 1) / 2 )
+#define FLOAT_TO_BYTE(X)    ( (((GLint) (255.0F * (X))) - 1) / 2 )
 
 
 /** Convert GLushort in [0,65536] to GLfloat in [0.0,1.0] */
-#define USHORT_TO_FLOAT(S)	((GLfloat) (S) * (1.0F / 65535.0F))
+#define USHORT_TO_FLOAT(S)  ((GLfloat) (S) * (1.0F / 65535.0F))
 
 /** Convert GLfloat in [0.0,1.0] to GLushort in [0,65536] */
-#define FLOAT_TO_USHORT(X)	((GLushort) (GLint) ((X) * 65535.0F))
+#define FLOAT_TO_USHORT(X)  ((GLushort) (GLint) ((X) * 65535.0F))
 
 /** Convert GLshort in [-32768,32767] to GLfloat in [-1.0,1.0] */
-#define SHORT_TO_FLOAT(S)	((2.0F * (S) + 1.0F) * (1.0F/65535.0F))
+#define SHORT_TO_FLOAT(S)   ((2.0F * (S) + 1.0F) * (1.0F/65535.0F))
 
 /** Convert GLfloat in [0.0,1.0] to GLshort in [-32768,32767] */
-#define FLOAT_TO_SHORT(X)	( (((GLint) (65535.0F * (X))) - 1) / 2 )
+#define FLOAT_TO_SHORT(X)   ( (((GLint) (65535.0F * (X))) - 1) / 2 )
 
 
 /** Convert GLuint in [0,4294967295] to GLfloat in [0.0,1.0] */
-#define UINT_TO_FLOAT(U)	((GLfloat) (U) * (1.0F / 4294967295.0F))
+#define UINT_TO_FLOAT(U)    ((GLfloat) (U) * (1.0F / 4294967295.0F))
 
 /** Convert GLfloat in [0.0,1.0] to GLuint in [0,4294967295] */
-#define FLOAT_TO_UINT(X)	((GLuint) ((X) * 4294967295.0))
+#define FLOAT_TO_UINT(X)    ((GLuint) ((X) * 4294967295.0))
 
 
 /** Convert GLint in [-2147483648,2147483647] to GLfloat in [-1.0,1.0] */
-#define INT_TO_FLOAT(I)		((2.0F * (I) + 1.0F) * (1.0F/4294967294.0F))
+#define INT_TO_FLOAT(I)     ((2.0F * (I) + 1.0F) * (1.0F/4294967294.0F))
 
 /** Convert GLfloat in [-1.0,1.0] to GLint in [-2147483648,2147483647] */
 /* causes overflow:
-#define FLOAT_TO_INT(X)		( (((GLint) (4294967294.0F * (X))) - 1) / 2 )
+#define FLOAT_TO_INT(X)     ( (((GLint) (4294967294.0F * (X))) - 1) / 2 )
 */
 /* a close approximation: */
-#define FLOAT_TO_INT(X)		( (GLint) (2147483647.0 * (X)) )
+#define FLOAT_TO_INT(X)     ( (GLint) (2147483647.0 * (X)) )
 
 
 #define BYTE_TO_UBYTE(b)   ((GLubyte) ((b) < 0 ? 0 : (GLubyte) (b)))
@@ -122,13 +122,13 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 /*@{*/
 
 /** Zero */
-#define ZERO_4V( DST )	(DST)[0] = (DST)[1] = (DST)[2] = (DST)[3] = 0
+#define ZERO_4V( DST )  (DST)[0] = (DST)[1] = (DST)[2] = (DST)[3] = 0
 
 /** Test for equality */
-#define TEST_EQ_4V(a,b)  ((a)[0] == (b)[0] && 	\
-			  (a)[1] == (b)[1] &&	\
-			  (a)[2] == (b)[2] &&	\
-			  (a)[3] == (b)[3])
+#define TEST_EQ_4V(a,b)  ((a)[0] == (b)[0] &&   \
+              (a)[1] == (b)[1] &&   \
+              (a)[2] == (b)[2] &&   \
+              (a)[3] == (b)[3])
 
 /** Test for equality (unsigned bytes) */
 #if defined(__i386__)
@@ -138,149 +138,148 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 #endif
 
 /** Copy a 4-element vector */
-#define COPY_4V( DST, SRC )			\
-do {						\
-   (DST)[0] = (SRC)[0];				\
-   (DST)[1] = (SRC)[1];				\
-   (DST)[2] = (SRC)[2];				\
-   (DST)[3] = (SRC)[3];				\
+#define COPY_4V( DST, SRC )         \
+do {                                \
+   (DST)[0] = (SRC)[0];             \
+   (DST)[1] = (SRC)[1];             \
+   (DST)[2] = (SRC)[2];             \
+   (DST)[3] = (SRC)[3];             \
 } while (0)
 
 /** Copy a 4-element vector with cast */
-#define COPY_4V_CAST( DST, SRC, CAST )		\
-do {						\
-   (DST)[0] = (CAST)(SRC)[0];			\
-   (DST)[1] = (CAST)(SRC)[1];			\
-   (DST)[2] = (CAST)(SRC)[2];			\
-   (DST)[3] = (CAST)(SRC)[3];			\
+#define COPY_4V_CAST( DST, SRC, CAST )  \
+do {                                    \
+   (DST)[0] = (CAST)(SRC)[0];           \
+   (DST)[1] = (CAST)(SRC)[1];           \
+   (DST)[2] = (CAST)(SRC)[2];           \
+   (DST)[3] = (CAST)(SRC)[3];           \
 } while (0)
 
 /** Copy a 4-element unsigned byte vector */
 #if defined(__i386__)
-#define COPY_4UBV(DST, SRC)			\
-do {						\
-   *((GLuint*)(DST)) = *((GLuint*)(SRC));	\
+#define COPY_4UBV(DST, SRC)         \
+do {                                \
+   *((GLuint*)(DST)) = *((GLuint*)(SRC));   \
 } while (0)
 #else
 /* The GLuint cast might fail if DST or SRC are not dword-aligned (RISC) */
-#define COPY_4UBV(DST, SRC)			\
-do {						\
-   (DST)[0] = (SRC)[0];				\
-   (DST)[1] = (SRC)[1];				\
-   (DST)[2] = (SRC)[2];				\
-   (DST)[3] = (SRC)[3];				\
+#define COPY_4UBV(DST, SRC)         \
+do {                                \
+   (DST)[0] = (SRC)[0];             \
+   (DST)[1] = (SRC)[1];             \
+   (DST)[2] = (SRC)[2];             \
+   (DST)[3] = (SRC)[3];             \
 } while (0)
 #endif
 
-/** Copy a 4-element float vector */
-#define COPY_4FV( DST, SRC )			\
-do {						\
-   const GLfloat *_tmp = (SRC);			\
-   (DST)[0] = _tmp[0];				\
-   (DST)[1] = _tmp[1];				\
-   (DST)[2] = _tmp[2];				\
-   (DST)[3] = _tmp[3];				\
+/** Copy a 4-element float vector (Use COPY_FLOAT to avoid loading FPU) */
+#define COPY_4FV( DST, SRC )        \
+do {                                \
+   COPY_FLOAT((DST)[0], (SRC)[0]);  \
+   COPY_FLOAT((DST)[1], (SRC)[1]);  \
+   COPY_FLOAT((DST)[2], (SRC)[2]);  \
+   COPY_FLOAT((DST)[3], (SRC)[3]);  \
 } while (0)
 
 
 /** Copy \p SZ elements into a 4-element vector */
-#define COPY_SZ_4V(DST, SZ, SRC) 		\
-do {						\
-   switch (SZ) {				\
-   case 4: (DST)[3] = (SRC)[3];			\
-   case 3: (DST)[2] = (SRC)[2];			\
-   case 2: (DST)[1] = (SRC)[1];			\
-   case 1: (DST)[0] = (SRC)[0];			\
-   }  						\
+#define COPY_SZ_4V(DST, SZ, SRC)        \
+do {                        \
+   switch (SZ) {                \
+   case 4: (DST)[3] = (SRC)[3];         \
+   case 3: (DST)[2] = (SRC)[2];         \
+   case 2: (DST)[1] = (SRC)[1];         \
+   case 1: (DST)[0] = (SRC)[0];         \
+   }                        \
 } while(0)
 
 /** Copy \p SZ elements into a homegeneous (4-element) vector, giving
  * default values to the remaining */
-#define COPY_CLEAN_4V(DST, SZ, SRC) 		\
-do {						\
-      ASSIGN_4V( DST, 0, 0, 0, 1 );		\
-      COPY_SZ_4V( DST, SZ, SRC );		\
+#define COPY_CLEAN_4V(DST, SZ, SRC)         \
+do {                        \
+      ASSIGN_4V( DST, 0, 0, 0, 1 );     \
+      COPY_SZ_4V( DST, SZ, SRC );       \
 } while (0)
 
 /** Subtraction */
-#define SUB_4V( DST, SRCA, SRCB )		\
-do {						\
-      (DST)[0] = (SRCA)[0] - (SRCB)[0];		\
-      (DST)[1] = (SRCA)[1] - (SRCB)[1];		\
-      (DST)[2] = (SRCA)[2] - (SRCB)[2];		\
-      (DST)[3] = (SRCA)[3] - (SRCB)[3];		\
+#define SUB_4V( DST, SRCA, SRCB )       \
+do {                        \
+      (DST)[0] = (SRCA)[0] - (SRCB)[0];     \
+      (DST)[1] = (SRCA)[1] - (SRCB)[1];     \
+      (DST)[2] = (SRCA)[2] - (SRCB)[2];     \
+      (DST)[3] = (SRCA)[3] - (SRCB)[3];     \
 } while (0)
 
 /** Addition */
-#define ADD_4V( DST, SRCA, SRCB )		\
-do {						\
-      (DST)[0] = (SRCA)[0] + (SRCB)[0];		\
-      (DST)[1] = (SRCA)[1] + (SRCB)[1];		\
-      (DST)[2] = (SRCA)[2] + (SRCB)[2];		\
-      (DST)[3] = (SRCA)[3] + (SRCB)[3];		\
+#define ADD_4V( DST, SRCA, SRCB )       \
+do {                        \
+      (DST)[0] = (SRCA)[0] + (SRCB)[0];     \
+      (DST)[1] = (SRCA)[1] + (SRCB)[1];     \
+      (DST)[2] = (SRCA)[2] + (SRCB)[2];     \
+      (DST)[3] = (SRCA)[3] + (SRCB)[3];     \
 } while (0)
 
 /** Element-wise multiplication */
-#define SCALE_4V( DST, SRCA, SRCB )		\
-do {						\
-      (DST)[0] = (SRCA)[0] * (SRCB)[0];		\
-      (DST)[1] = (SRCA)[1] * (SRCB)[1];		\
-      (DST)[2] = (SRCA)[2] * (SRCB)[2];		\
-      (DST)[3] = (SRCA)[3] * (SRCB)[3];		\
+#define SCALE_4V( DST, SRCA, SRCB )     \
+do {                        \
+      (DST)[0] = (SRCA)[0] * (SRCB)[0];     \
+      (DST)[1] = (SRCA)[1] * (SRCB)[1];     \
+      (DST)[2] = (SRCA)[2] * (SRCB)[2];     \
+      (DST)[3] = (SRCA)[3] * (SRCB)[3];     \
 } while (0)
 
 /** In-place addition */
-#define ACC_4V( DST, SRC )			\
-do {						\
-      (DST)[0] += (SRC)[0];			\
-      (DST)[1] += (SRC)[1];			\
-      (DST)[2] += (SRC)[2];			\
-      (DST)[3] += (SRC)[3];			\
+#define ACC_4V( DST, SRC )          \
+do {                        \
+      (DST)[0] += (SRC)[0];         \
+      (DST)[1] += (SRC)[1];         \
+      (DST)[2] += (SRC)[2];         \
+      (DST)[3] += (SRC)[3];         \
 } while (0)
 
 /** Element-wise multiplication and addition */
-#define ACC_SCALE_4V( DST, SRCA, SRCB )		\
-do {						\
-      (DST)[0] += (SRCA)[0] * (SRCB)[0];	\
-      (DST)[1] += (SRCA)[1] * (SRCB)[1];	\
-      (DST)[2] += (SRCA)[2] * (SRCB)[2];	\
-      (DST)[3] += (SRCA)[3] * (SRCB)[3];	\
+#define ACC_SCALE_4V( DST, SRCA, SRCB )     \
+do {                        \
+      (DST)[0] += (SRCA)[0] * (SRCB)[0];    \
+      (DST)[1] += (SRCA)[1] * (SRCB)[1];    \
+      (DST)[2] += (SRCA)[2] * (SRCB)[2];    \
+      (DST)[3] += (SRCA)[3] * (SRCB)[3];    \
 } while (0)
 
 /** In-place scalar multiplication and addition */
-#define ACC_SCALE_SCALAR_4V( DST, S, SRCB )	\
-do {						\
-      (DST)[0] += S * (SRCB)[0];		\
-      (DST)[1] += S * (SRCB)[1];		\
-      (DST)[2] += S * (SRCB)[2];		\
-      (DST)[3] += S * (SRCB)[3];		\
+#define ACC_SCALE_SCALAR_4V( DST, S, SRCB ) \
+do {                        \
+      (DST)[0] += S * (SRCB)[0];        \
+      (DST)[1] += S * (SRCB)[1];        \
+      (DST)[2] += S * (SRCB)[2];        \
+      (DST)[3] += S * (SRCB)[3];        \
 } while (0)
 
 /** Scalar multiplication */
-#define SCALE_SCALAR_4V( DST, S, SRCB )		\
-do {						\
-      (DST)[0] = S * (SRCB)[0];			\
-      (DST)[1] = S * (SRCB)[1];			\
-      (DST)[2] = S * (SRCB)[2];			\
-      (DST)[3] = S * (SRCB)[3];			\
+#define SCALE_SCALAR_4V( DST, S, SRCB )     \
+do {                        \
+      (DST)[0] = S * (SRCB)[0];         \
+      (DST)[1] = S * (SRCB)[1];         \
+      (DST)[2] = S * (SRCB)[2];         \
+      (DST)[3] = S * (SRCB)[3];         \
 } while (0)
 
 /** In-place scalar multiplication */
-#define SELF_SCALE_SCALAR_4V( DST, S )		\
-do {						\
-      (DST)[0] *= S;				\
-      (DST)[1] *= S;				\
-      (DST)[2] *= S;				\
-      (DST)[3] *= S;				\
+#define SELF_SCALE_SCALAR_4V( DST, S )      \
+do {                        \
+      (DST)[0] *= S;                \
+      (DST)[1] *= S;                \
+      (DST)[2] *= S;                \
+      (DST)[3] *= S;                \
 } while (0)
 
 /** Assignment */
-#define ASSIGN_4V( V, V0, V1, V2, V3 ) 		\
-do { 						\
-    V[0] = V0;					\
-    V[1] = V1;					\
-    V[2] = V2;					\
-    V[3] = V3; 					\
+#define ASSIGN_4V( V, V0, V1, V2, V3 )      \
+do {                        \
+    V[0] = V0;                  \
+    V[1] = V1;                  \
+    V[2] = V2;                  \
+    V[3] = V3;                  \
 } while(0)
 
 /*@}*/
@@ -291,124 +290,124 @@ do { 						\
 /*@{*/
 
 /** Zero */
-#define ZERO_3V( DST )	(DST)[0] = (DST)[1] = (DST)[2] = 0
+#define ZERO_3V( DST )  (DST)[0] = (DST)[1] = (DST)[2] = 0
 
 /** Test for equality */
-#define TEST_EQ_3V(a,b)  ((a)[0] == (b)[0] && 	\
-			  (a)[1] == (b)[1] &&	\
-			  (a)[2] == (b)[2])
+#define TEST_EQ_3V(a,b)  ((a)[0] == (b)[0] &&   \
+              (a)[1] == (b)[1] &&   \
+              (a)[2] == (b)[2])
 
 /** Copy a 3-element vector */
-#define COPY_3V( DST, SRC )			\
-do {						\
-   (DST)[0] = (SRC)[0];				\
-   (DST)[1] = (SRC)[1];				\
-   (DST)[2] = (SRC)[2];				\
+#define COPY_3V( DST, SRC )         \
+do {                        \
+   (DST)[0] = (SRC)[0];             \
+   (DST)[1] = (SRC)[1];             \
+   (DST)[2] = (SRC)[2];             \
 } while (0)
 
 /** Copy a 3-element vector with cast */
-#define COPY_3V_CAST( DST, SRC, CAST )		\
-do {						\
-   (DST)[0] = (CAST)(SRC)[0];			\
-   (DST)[1] = (CAST)(SRC)[1];			\
-   (DST)[2] = (CAST)(SRC)[2];			\
+#define COPY_3V_CAST( DST, SRC, CAST )      \
+do {                        \
+   (DST)[0] = (CAST)(SRC)[0];           \
+   (DST)[1] = (CAST)(SRC)[1];           \
+   (DST)[2] = (CAST)(SRC)[2];           \
 } while (0)
 
 /** Copy a 3-element float vector */
-#define COPY_3FV( DST, SRC )			\
-do {						\
-   const GLfloat *_tmp = (SRC);			\
-   (DST)[0] = _tmp[0];				\
-   (DST)[1] = _tmp[1];				\
-   (DST)[2] = _tmp[2];				\
+#define COPY_3FV( DST, SRC )            \
+do {                        \
+   const GLfloat *_tmp = (SRC);         \
+   (DST)[0] = _tmp[0];              \
+   (DST)[1] = _tmp[1];              \
+   (DST)[2] = _tmp[2];              \
 } while (0)
 
 /** Subtraction */
-#define SUB_3V( DST, SRCA, SRCB )		\
-do {						\
-      (DST)[0] = (SRCA)[0] - (SRCB)[0];		\
-      (DST)[1] = (SRCA)[1] - (SRCB)[1];		\
-      (DST)[2] = (SRCA)[2] - (SRCB)[2];		\
+#define SUB_3V( DST, SRCA, SRCB )       \
+do {                        \
+      (DST)[0] = (SRCA)[0] - (SRCB)[0];     \
+      (DST)[1] = (SRCA)[1] - (SRCB)[1];     \
+      (DST)[2] = (SRCA)[2] - (SRCB)[2];     \
 } while (0)
 
 /** Addition */
-#define ADD_3V( DST, SRCA, SRCB )		\
-do {						\
-      (DST)[0] = (SRCA)[0] + (SRCB)[0];		\
-      (DST)[1] = (SRCA)[1] + (SRCB)[1];		\
-      (DST)[2] = (SRCA)[2] + (SRCB)[2];		\
+#define ADD_3V( DST, SRCA, SRCB )       \
+do {                        \
+      (DST)[0] = (SRCA)[0] + (SRCB)[0];     \
+      (DST)[1] = (SRCA)[1] + (SRCB)[1];     \
+      (DST)[2] = (SRCA)[2] + (SRCB)[2];     \
 } while (0)
 
 /** In-place scalar multiplication */
-#define SCALE_3V( DST, SRCA, SRCB )		\
-do {						\
-      (DST)[0] = (SRCA)[0] * (SRCB)[0];		\
-      (DST)[1] = (SRCA)[1] * (SRCB)[1];		\
-      (DST)[2] = (SRCA)[2] * (SRCB)[2];		\
+#define SCALE_3V( DST, SRCA, SRCB )     \
+do {                        \
+      (DST)[0] = (SRCA)[0] * (SRCB)[0];     \
+      (DST)[1] = (SRCA)[1] * (SRCB)[1];     \
+      (DST)[2] = (SRCA)[2] * (SRCB)[2];     \
 } while (0)
 
 /** In-place element-wise multiplication */
-#define SELF_SCALE_3V( DST, SRC )		\
-do {						\
-      (DST)[0] *= (SRC)[0];			\
-      (DST)[1] *= (SRC)[1];			\
-      (DST)[2] *= (SRC)[2];			\
+#define SELF_SCALE_3V( DST, SRC )       \
+do {                        \
+      (DST)[0] *= (SRC)[0];         \
+      (DST)[1] *= (SRC)[1];         \
+      (DST)[2] *= (SRC)[2];         \
 } while (0)
 
 /** In-place addition */
-#define ACC_3V( DST, SRC )			\
-do {						\
-      (DST)[0] += (SRC)[0];			\
-      (DST)[1] += (SRC)[1];			\
-      (DST)[2] += (SRC)[2];			\
+#define ACC_3V( DST, SRC )          \
+do {                        \
+      (DST)[0] += (SRC)[0];         \
+      (DST)[1] += (SRC)[1];         \
+      (DST)[2] += (SRC)[2];         \
 } while (0)
 
 /** Element-wise multiplication and addition */
-#define ACC_SCALE_3V( DST, SRCA, SRCB )		\
-do {						\
-      (DST)[0] += (SRCA)[0] * (SRCB)[0];	\
-      (DST)[1] += (SRCA)[1] * (SRCB)[1];	\
-      (DST)[2] += (SRCA)[2] * (SRCB)[2];	\
+#define ACC_SCALE_3V( DST, SRCA, SRCB )     \
+do {                        \
+      (DST)[0] += (SRCA)[0] * (SRCB)[0];    \
+      (DST)[1] += (SRCA)[1] * (SRCB)[1];    \
+      (DST)[2] += (SRCA)[2] * (SRCB)[2];    \
 } while (0)
 
 /** Scalar multiplication */
-#define SCALE_SCALAR_3V( DST, S, SRCB ) 	\
-do {						\
-      (DST)[0] = S * (SRCB)[0];			\
-      (DST)[1] = S * (SRCB)[1];			\
-      (DST)[2] = S * (SRCB)[2];			\
+#define SCALE_SCALAR_3V( DST, S, SRCB )     \
+do {                        \
+      (DST)[0] = S * (SRCB)[0];         \
+      (DST)[1] = S * (SRCB)[1];         \
+      (DST)[2] = S * (SRCB)[2];         \
 } while (0)
 
 /** In-place scalar multiplication and addition */
-#define ACC_SCALE_SCALAR_3V( DST, S, SRCB )	\
-do {						\
-      (DST)[0] += S * (SRCB)[0];		\
-      (DST)[1] += S * (SRCB)[1];		\
-      (DST)[2] += S * (SRCB)[2];		\
+#define ACC_SCALE_SCALAR_3V( DST, S, SRCB ) \
+do {                        \
+      (DST)[0] += S * (SRCB)[0];        \
+      (DST)[1] += S * (SRCB)[1];        \
+      (DST)[2] += S * (SRCB)[2];        \
 } while (0)
 
 /** In-place scalar multiplication */
-#define SELF_SCALE_SCALAR_3V( DST, S )		\
-do {						\
-      (DST)[0] *= S;				\
-      (DST)[1] *= S;				\
-      (DST)[2] *= S;				\
+#define SELF_SCALE_SCALAR_3V( DST, S )      \
+do {                        \
+      (DST)[0] *= S;                \
+      (DST)[1] *= S;                \
+      (DST)[2] *= S;                \
 } while (0)
 
 /** In-place scalar addition */
-#define ACC_SCALAR_3V( DST, S ) 		\
-do {						\
-      (DST)[0] += S;				\
-      (DST)[1] += S;				\
-      (DST)[2] += S;				\
+#define ACC_SCALAR_3V( DST, S )         \
+do {                        \
+      (DST)[0] += S;                \
+      (DST)[1] += S;                \
+      (DST)[2] += S;                \
 } while (0)
 
 /** Assignment */
-#define ASSIGN_3V( V, V0, V1, V2 )	\
-do { 				 	\
-    V[0] = V0; 				\
-    V[1] = V1; 				\
-    V[2] = V2; 				\
+#define ASSIGN_3V( V, V0, V1, V2 )  \
+do {                    \
+    V[0] = V0;              \
+    V[1] = V1;              \
+    V[2] = V2;              \
 } while(0)
 
 /*@}*/
@@ -419,91 +418,91 @@ do { 				 	\
 /*@{*/
 
 /** Zero */
-#define ZERO_2V( DST )	(DST)[0] = (DST)[1] = 0
+#define ZERO_2V( DST )  (DST)[0] = (DST)[1] = 0
 
 /** Copy a 2-element vector */
-#define COPY_2V( DST, SRC )			\
-do {						\
-   (DST)[0] = (SRC)[0];				\
-   (DST)[1] = (SRC)[1];				\
+#define COPY_2V( DST, SRC )         \
+do {                        \
+   (DST)[0] = (SRC)[0];             \
+   (DST)[1] = (SRC)[1];             \
 } while (0)
 
 /** Copy a 2-element vector with cast */
-#define COPY_2V_CAST( DST, SRC, CAST )		\
-do {						\
-   (DST)[0] = (CAST)(SRC)[0];			\
-   (DST)[1] = (CAST)(SRC)[1];			\
+#define COPY_2V_CAST( DST, SRC, CAST )      \
+do {                        \
+   (DST)[0] = (CAST)(SRC)[0];           \
+   (DST)[1] = (CAST)(SRC)[1];           \
 } while (0)
 
 /** Copy a 2-element float vector */
-#define COPY_2FV( DST, SRC )			\
-do {						\
-   const GLfloat *_tmp = (SRC);			\
-   (DST)[0] = _tmp[0];				\
-   (DST)[1] = _tmp[1];				\
+#define COPY_2FV( DST, SRC )            \
+do {                        \
+   const GLfloat *_tmp = (SRC);         \
+   (DST)[0] = _tmp[0];              \
+   (DST)[1] = _tmp[1];              \
 } while (0)
 
 /** Subtraction */
-#define SUB_2V( DST, SRCA, SRCB )		\
-do {						\
-      (DST)[0] = (SRCA)[0] - (SRCB)[0];		\
-      (DST)[1] = (SRCA)[1] - (SRCB)[1];		\
+#define SUB_2V( DST, SRCA, SRCB )       \
+do {                        \
+      (DST)[0] = (SRCA)[0] - (SRCB)[0];     \
+      (DST)[1] = (SRCA)[1] - (SRCB)[1];     \
 } while (0)
 
 /** Addition */
-#define ADD_2V( DST, SRCA, SRCB )		\
-do {						\
-      (DST)[0] = (SRCA)[0] + (SRCB)[0];		\
-      (DST)[1] = (SRCA)[1] + (SRCB)[1];		\
+#define ADD_2V( DST, SRCA, SRCB )       \
+do {                        \
+      (DST)[0] = (SRCA)[0] + (SRCB)[0];     \
+      (DST)[1] = (SRCA)[1] + (SRCB)[1];     \
 } while (0)
 
 /** In-place scalar multiplication */
-#define SCALE_2V( DST, SRCA, SRCB )		\
-do {						\
-      (DST)[0] = (SRCA)[0] * (SRCB)[0];		\
-      (DST)[1] = (SRCA)[1] * (SRCB)[1];		\
+#define SCALE_2V( DST, SRCA, SRCB )     \
+do {                        \
+      (DST)[0] = (SRCA)[0] * (SRCB)[0];     \
+      (DST)[1] = (SRCA)[1] * (SRCB)[1];     \
 } while (0)
 
 /** In-place addition */
-#define ACC_2V( DST, SRC )			\
-do {						\
-      (DST)[0] += (SRC)[0];			\
-      (DST)[1] += (SRC)[1];			\
+#define ACC_2V( DST, SRC )          \
+do {                        \
+      (DST)[0] += (SRC)[0];         \
+      (DST)[1] += (SRC)[1];         \
 } while (0)
 
 /** Element-wise multiplication and addition */
-#define ACC_SCALE_2V( DST, SRCA, SRCB )		\
-do {						\
-      (DST)[0] += (SRCA)[0] * (SRCB)[0];	\
-      (DST)[1] += (SRCA)[1] * (SRCB)[1];	\
+#define ACC_SCALE_2V( DST, SRCA, SRCB )     \
+do {                        \
+      (DST)[0] += (SRCA)[0] * (SRCB)[0];    \
+      (DST)[1] += (SRCA)[1] * (SRCB)[1];    \
 } while (0)
 
 /** Scalar multiplication */
-#define SCALE_SCALAR_2V( DST, S, SRCB ) 	\
-do {						\
-      (DST)[0] = S * (SRCB)[0];			\
-      (DST)[1] = S * (SRCB)[1];			\
+#define SCALE_SCALAR_2V( DST, S, SRCB )     \
+do {                        \
+      (DST)[0] = S * (SRCB)[0];         \
+      (DST)[1] = S * (SRCB)[1];         \
 } while (0)
 
 /** In-place scalar multiplication and addition */
-#define ACC_SCALE_SCALAR_2V( DST, S, SRCB )	\
-do {						\
-      (DST)[0] += S * (SRCB)[0];		\
-      (DST)[1] += S * (SRCB)[1];		\
+#define ACC_SCALE_SCALAR_2V( DST, S, SRCB ) \
+do {                        \
+      (DST)[0] += S * (SRCB)[0];        \
+      (DST)[1] += S * (SRCB)[1];        \
 } while (0)
 
 /** In-place scalar multiplication */
-#define SELF_SCALE_SCALAR_2V( DST, S )		\
-do {						\
-      (DST)[0] *= S;				\
-      (DST)[1] *= S;				\
+#define SELF_SCALE_SCALAR_2V( DST, S )      \
+do {                        \
+      (DST)[0] *= S;                \
+      (DST)[1] *= S;                \
 } while (0)
 
 /** In-place scalar addition */
-#define ACC_SCALAR_2V( DST, S ) 		\
-do {						\
-      (DST)[0] += S;				\
-      (DST)[1] += S;				\
+#define ACC_SCALAR_2V( DST, S )         \
+do {                        \
+      (DST)[0] += S;                \
+      (DST)[1] += S;                \
 } while (0)
 
 
@@ -514,79 +513,79 @@ do {						\
  * \note \p OUT argument is evaluated twice!
  * \note Be wary of using *coord++ as an argument to any of these macros!
  */
-#define LINTERP(T, OUT, IN)	((OUT) + (T) * ((IN) - (OUT)))
+#define LINTERP(T, OUT, IN) ((OUT) + (T) * ((IN) - (OUT)))
 
 /* Can do better with integer math
  */
-#define INTERP_UB( t, dstub, outub, inub )	\
-do {						\
-   GLfloat inf = UBYTE_TO_FLOAT( inub );	\
-   GLfloat outf = UBYTE_TO_FLOAT( outub );	\
-   GLfloat dstf = LINTERP( t, outf, inf );	\
-   UNCLAMPED_FLOAT_TO_UBYTE( dstub, dstf );	\
+#define INTERP_UB( t, dstub, outub, inub )  \
+do {                        \
+   GLfloat inf = UBYTE_TO_FLOAT( inub );    \
+   GLfloat outf = UBYTE_TO_FLOAT( outub );  \
+   GLfloat dstf = LINTERP( t, outf, inf );  \
+   UNCLAMPED_FLOAT_TO_UBYTE( dstub, dstf ); \
 } while (0)
 
-#define INTERP_CHAN( t, dstc, outc, inc )	\
-do {						\
-   GLfloat inf = CHAN_TO_FLOAT( inc );		\
-   GLfloat outf = CHAN_TO_FLOAT( outc );	\
-   GLfloat dstf = LINTERP( t, outf, inf );	\
-   UNCLAMPED_FLOAT_TO_CHAN( dstc, dstf );	\
+#define INTERP_CHAN( t, dstc, outc, inc )   \
+do {                        \
+   GLfloat inf = CHAN_TO_FLOAT( inc );      \
+   GLfloat outf = CHAN_TO_FLOAT( outc );    \
+   GLfloat dstf = LINTERP( t, outf, inf );  \
+   UNCLAMPED_FLOAT_TO_CHAN( dstc, dstf );   \
 } while (0)
 
-#define INTERP_UI( t, dstui, outui, inui )	\
+#define INTERP_UI( t, dstui, outui, inui )  \
    dstui = (GLuint) (GLint) LINTERP( (t), (GLfloat) (outui), (GLfloat) (inui) )
 
-#define INTERP_F( t, dstf, outf, inf )		\
+#define INTERP_F( t, dstf, outf, inf )      \
    dstf = LINTERP( t, outf, inf )
 
-#define INTERP_4F( t, dst, out, in )		\
-do {						\
-   dst[0] = LINTERP( (t), (out)[0], (in)[0] );	\
-   dst[1] = LINTERP( (t), (out)[1], (in)[1] );	\
-   dst[2] = LINTERP( (t), (out)[2], (in)[2] );	\
-   dst[3] = LINTERP( (t), (out)[3], (in)[3] );	\
+#define INTERP_4F( t, dst, out, in )        \
+do {                        \
+   dst[0] = LINTERP( (t), (out)[0], (in)[0] );  \
+   dst[1] = LINTERP( (t), (out)[1], (in)[1] );  \
+   dst[2] = LINTERP( (t), (out)[2], (in)[2] );  \
+   dst[3] = LINTERP( (t), (out)[3], (in)[3] );  \
 } while (0)
 
-#define INTERP_3F( t, dst, out, in )		\
-do {						\
-   dst[0] = LINTERP( (t), (out)[0], (in)[0] );	\
-   dst[1] = LINTERP( (t), (out)[1], (in)[1] );	\
-   dst[2] = LINTERP( (t), (out)[2], (in)[2] );	\
+#define INTERP_3F( t, dst, out, in )        \
+do {                        \
+   dst[0] = LINTERP( (t), (out)[0], (in)[0] );  \
+   dst[1] = LINTERP( (t), (out)[1], (in)[1] );  \
+   dst[2] = LINTERP( (t), (out)[2], (in)[2] );  \
 } while (0)
 
-#define INTERP_4CHAN( t, dst, out, in )			\
-do {							\
-   INTERP_CHAN( (t), (dst)[0], (out)[0], (in)[0] );	\
-   INTERP_CHAN( (t), (dst)[1], (out)[1], (in)[1] );	\
-   INTERP_CHAN( (t), (dst)[2], (out)[2], (in)[2] );	\
-   INTERP_CHAN( (t), (dst)[3], (out)[3], (in)[3] );	\
+#define INTERP_4CHAN( t, dst, out, in )         \
+do {                            \
+   INTERP_CHAN( (t), (dst)[0], (out)[0], (in)[0] ); \
+   INTERP_CHAN( (t), (dst)[1], (out)[1], (in)[1] ); \
+   INTERP_CHAN( (t), (dst)[2], (out)[2], (in)[2] ); \
+   INTERP_CHAN( (t), (dst)[3], (out)[3], (in)[3] ); \
 } while (0)
 
-#define INTERP_3CHAN( t, dst, out, in )			\
-do {							\
-   INTERP_CHAN( (t), (dst)[0], (out)[0], (in)[0] );	\
-   INTERP_CHAN( (t), (dst)[1], (out)[1], (in)[1] );	\
-   INTERP_CHAN( (t), (dst)[2], (out)[2], (in)[2] );	\
+#define INTERP_3CHAN( t, dst, out, in )         \
+do {                            \
+   INTERP_CHAN( (t), (dst)[0], (out)[0], (in)[0] ); \
+   INTERP_CHAN( (t), (dst)[1], (out)[1], (in)[1] ); \
+   INTERP_CHAN( (t), (dst)[2], (out)[2], (in)[2] ); \
 } while (0)
 
-#define INTERP_SZ( t, vec, to, out, in, sz )				\
-do {									\
-   switch (sz) {							\
-   case 4: vec[to][3] = LINTERP( (t), (vec)[out][3], (vec)[in][3] );	\
-   case 3: vec[to][2] = LINTERP( (t), (vec)[out][2], (vec)[in][2] );	\
-   case 2: vec[to][1] = LINTERP( (t), (vec)[out][1], (vec)[in][1] );	\
-   case 1: vec[to][0] = LINTERP( (t), (vec)[out][0], (vec)[in][0] );	\
-   }									\
+#define INTERP_SZ( t, vec, to, out, in, sz )                \
+do {                                    \
+   switch (sz) {                            \
+   case 4: vec[to][3] = LINTERP( (t), (vec)[out][3], (vec)[in][3] );    \
+   case 3: vec[to][2] = LINTERP( (t), (vec)[out][2], (vec)[in][2] );    \
+   case 2: vec[to][1] = LINTERP( (t), (vec)[out][1], (vec)[in][1] );    \
+   case 1: vec[to][0] = LINTERP( (t), (vec)[out][0], (vec)[in][0] );    \
+   }                                    \
 } while(0)
 
 
 
 /** Assign scalers to short vectors */
-#define ASSIGN_2V( V, V0, V1 )	\
-do { 				\
-    V[0] = V0; 			\
-    V[1] = V1; 			\
+#define ASSIGN_2V( V, V0, V1 )  \
+do {                \
+    V[0] = V0;          \
+    V[1] = V1;          \
 } while(0)
 
 /*@}*/
@@ -616,31 +615,31 @@ do { 				\
 
 /** Dot product of two 4-element vectors */
 #define DOT4( a, b )  ( (a)[0]*(b)[0] + (a)[1]*(b)[1] + \
-			(a)[2]*(b)[2] + (a)[3]*(b)[3] )
+            (a)[2]*(b)[2] + (a)[3]*(b)[3] )
 
 /** Dot product of two 4-element vectors */
 #define DOT4V(v,a,b,c,d) (v[0]*(a) + v[1]*(b) + v[2]*(c) + v[3]*(d))
 
 
 /** Cross product of two 3-element vectors */
-#define CROSS3(n, u, v) 			\
-do {						\
-   (n)[0] = (u)[1]*(v)[2] - (u)[2]*(v)[1]; 	\
-   (n)[1] = (u)[2]*(v)[0] - (u)[0]*(v)[2]; 	\
-   (n)[2] = (u)[0]*(v)[1] - (u)[1]*(v)[0];	\
+#define CROSS3(n, u, v)             \
+do {                        \
+   (n)[0] = (u)[1]*(v)[2] - (u)[2]*(v)[1];  \
+   (n)[1] = (u)[2]*(v)[0] - (u)[0]*(v)[2];  \
+   (n)[2] = (u)[0]*(v)[1] - (u)[1]*(v)[0];  \
 } while (0)
 
 
 /* Normalize a 3-element vector to unit length. */
-#define NORMALIZE_3FV( V )			\
-do {						\
-   GLfloat len = (GLfloat) LEN_SQUARED_3FV(V);	\
-   if (len) {					\
-      len = INV_SQRTF(len);			\
-      (V)[0] = (GLfloat) ((V)[0] * len);	\
-      (V)[1] = (GLfloat) ((V)[1] * len);	\
-      (V)[2] = (GLfloat) ((V)[2] * len);	\
-   }						\
+#define NORMALIZE_3FV( V )          \
+do {                        \
+   GLfloat len = (GLfloat) LEN_SQUARED_3FV(V);  \
+   if (len) {                   \
+      len = INV_SQRTF(len);         \
+      (V)[0] = (GLfloat) ((V)[0] * len);    \
+      (V)[1] = (GLfloat) ((V)[1] * len);    \
+      (V)[2] = (GLfloat) ((V)[2] * len);    \
+   }                        \
 } while(0)
 
 #define LEN_3FV( V ) (SQRTF((V)[0]*(V)[0]+(V)[1]*(V)[1]+(V)[2]*(V)[2]))

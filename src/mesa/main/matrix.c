@@ -61,7 +61,7 @@
  * the top matrix of the current matrix stack and sets
  * __GLcontextRec::NewState.
  */
-void
+void GLAPIENTRY
 _mesa_Frustum( GLdouble left, GLdouble right,
                GLdouble bottom, GLdouble top,
                GLdouble nearval, GLdouble farval )
@@ -103,7 +103,7 @@ _mesa_Frustum( GLdouble left, GLdouble right,
  * the top matrix of the current matrix stack and sets
  * __GLcontextRec::NewState.
  */
-void
+void GLAPIENTRY
 _mesa_Ortho( GLdouble left, GLdouble right,
              GLdouble bottom, GLdouble top,
              GLdouble nearval, GLdouble farval )
@@ -142,7 +142,7 @@ _mesa_Ortho( GLdouble left, GLdouble right,
  * __GLcontextRec::CurrentStack and gl_transform_attrib::MatrixMode with the
  * specified matrix stack.
  */
-void
+void GLAPIENTRY
 _mesa_MatrixMode( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -222,7 +222,7 @@ _mesa_MatrixMode( GLenum mode )
  * matrix in the stack. Marks __GLcontextRec::NewState with the stack dirty
  * flag.
  */
-void
+void GLAPIENTRY
 _mesa_PushMatrix( void )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -254,7 +254,7 @@ _mesa_PushMatrix( void )
  * moves the stack head down. Marks __GLcontextRec::NewState with the dirty
  * stack flag.
  */
-void
+void GLAPIENTRY
 _mesa_PopMatrix( void )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -284,7 +284,7 @@ _mesa_PopMatrix( void )
  * matrix in the current stack. Marks __GLcontextRec::NewState with the stack
  * dirty flag.
  */
-void
+void GLAPIENTRY
 _mesa_LoadIdentity( void )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -309,7 +309,7 @@ _mesa_LoadIdentity( void )
  * in the current stack and the given matrix. Marks __GLcontextRec::NewState
  * with the dirty stack flag.
  */
-void
+void GLAPIENTRY
 _mesa_LoadMatrixf( const GLfloat *m )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -339,7 +339,7 @@ _mesa_LoadMatrixf( const GLfloat *m )
  * matrix in the current stack and the given matrix. Marks
  * __GLcontextRec::NewState with the dirty stack flag.
  */
-void
+void GLAPIENTRY
 _mesa_MultMatrixf( const GLfloat *m )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -371,7 +371,7 @@ _mesa_MultMatrixf( const GLfloat *m )
  * matrix in the current stack and the given parameters. Marks
  * __GLcontextRec::NewState with the dirty stack flag.
  */
-void
+void GLAPIENTRY
 _mesa_Rotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -396,7 +396,7 @@ _mesa_Rotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
  * matrix in the current stack and the given parameters. Marks
  * __GLcontextRec::NewState with the dirty stack flag.
  */
-void
+void GLAPIENTRY
 _mesa_Scalef( GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -419,7 +419,7 @@ _mesa_Scalef( GLfloat x, GLfloat y, GLfloat z )
  * matrix in the current stack and the given parameters. Marks
  * __GLcontextRec::NewState with the dirty stack flag.
  */
-void
+void GLAPIENTRY
 _mesa_Translatef( GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -430,7 +430,7 @@ _mesa_Translatef( GLfloat x, GLfloat y, GLfloat z )
 
  
 #if _HAVE_FULL_GL
-void
+void GLAPIENTRY
 _mesa_LoadMatrixd( const GLdouble *m )
 {
    GLint i;
@@ -441,7 +441,7 @@ _mesa_LoadMatrixd( const GLdouble *m )
    _mesa_LoadMatrixf(f);
 }
 
-void
+void GLAPIENTRY
 _mesa_MultMatrixd( const GLdouble *m )
 {
    GLint i;
@@ -453,21 +453,21 @@ _mesa_MultMatrixd( const GLdouble *m )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_Rotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z )
 {
    _mesa_Rotatef((GLfloat) angle, (GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
 
-void
+void GLAPIENTRY
 _mesa_Scaled( GLdouble x, GLdouble y, GLdouble z )
 {
    _mesa_Scalef((GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
 
-void
+void GLAPIENTRY
 _mesa_Translated( GLdouble x, GLdouble y, GLdouble z )
 {
    _mesa_Translatef((GLfloat) x, (GLfloat) y, (GLfloat) z);
@@ -476,7 +476,7 @@ _mesa_Translated( GLdouble x, GLdouble y, GLdouble z )
 
 
 #if _HAVE_FULL_GL
-void
+void GLAPIENTRY
 _mesa_LoadTransposeMatrixfARB( const GLfloat *m )
 {
    GLfloat tm[16];
@@ -486,7 +486,7 @@ _mesa_LoadTransposeMatrixfARB( const GLfloat *m )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_LoadTransposeMatrixdARB( const GLdouble *m )
 {
    GLfloat tm[16];
@@ -496,7 +496,7 @@ _mesa_LoadTransposeMatrixdARB( const GLdouble *m )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_MultTransposeMatrixfARB( const GLfloat *m )
 {
    GLfloat tm[16];
@@ -506,7 +506,7 @@ _mesa_MultTransposeMatrixfARB( const GLfloat *m )
 }
 
 
-void
+void GLAPIENTRY
 _mesa_MultTransposeMatrixdARB( const GLdouble *m )
 {
    GLfloat tm[16];
@@ -528,7 +528,7 @@ _mesa_MultTransposeMatrixdARB( const GLdouble *m )
  * Flushes the vertices and calls _mesa_set_viewport() with the given
  * parameters.
  */
-void
+void GLAPIENTRY
 _mesa_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -625,7 +625,7 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
 
 
 #if _HAVE_FULL_GL
-void
+void GLAPIENTRY
 _mesa_DepthRange( GLclampd nearval, GLclampd farval )
 {
    /*
