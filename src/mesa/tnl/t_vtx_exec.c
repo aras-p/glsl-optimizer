@@ -67,7 +67,7 @@ GLboolean *_tnl_translate_edgeflag( GLcontext *ctx, const GLfloat *data,
    GLuint i;
 
    if (!ef) 
-      ef = tnl->vtx.edgeflag_tmp = MALLOC( tnl->vb.Size );
+      ef = tnl->vtx.edgeflag_tmp = (GLboolean *) MALLOC( tnl->vb.Size );
    
    for (i = 0 ; i < count ; i++, data += stride)
       ef[i] = (data[0] == 1.0);
@@ -85,7 +85,7 @@ GLboolean *_tnl_import_current_edgeflag( GLcontext *ctx,
    GLuint i;
 
    if (!ef) 
-      ef = tnl->vtx.edgeflag_tmp = MALLOC( tnl->vb.Size );
+      ef = tnl->vtx.edgeflag_tmp = (GLboolean *) MALLOC( tnl->vb.Size );
 
    for (i = 0 ; i < count ; i++)
       ef[i] = tmp;

@@ -345,7 +345,7 @@ _mesa_add_state_reference(struct program_parameter_list *paramList,
    idx = add_parameter(paramList, "Some State", NULL, STATE);
 	
    for (a=0; a<6; a++)
-      paramList->Parameters[idx].StateIndexes[a] = stateTokens[a];
+      paramList->Parameters[idx].StateIndexes[a] = (enum state_index) stateTokens[a];
 
    return idx;
 }

@@ -137,7 +137,7 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
       }
 
       if (IND & INDEX) {
-	 v->index = index[0];
+	 v->index = (GLuint) index[0];
 	 STRIDE_F(index, index_stride);
       }
 

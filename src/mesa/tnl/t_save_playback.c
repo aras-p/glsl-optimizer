@@ -179,7 +179,7 @@ void _tnl_playback_vertex_list( GLcontext *ctx, void *data )
 	  * includes operations such as glBegin or glDrawArrays.
 	  */
 	 _mesa_error( ctx, GL_INVALID_OPERATION, "displaylist recursive begin");
-	 _tnl_loopback_vertex_list( ctx, data );
+	 _tnl_loopback_vertex_list( ctx, (struct tnl_vertex_list *) data );
 	 return;
       }
       else if (tnl->LoopbackDListCassettes ||
@@ -189,7 +189,7 @@ void _tnl_playback_vertex_list( GLcontext *ctx, void *data )
 	  */
 	 _mesa_debug(ctx,
                      "tnl_playback_vertex_list: loopback dangling attr ref\n");
-	 _tnl_loopback_vertex_list( ctx, data );
+	 _tnl_loopback_vertex_list( ctx, (struct tnl_vertex_list *) data );
 	 return;
       }
       

@@ -304,7 +304,7 @@ static GLboolean run_render( GLcontext *ctx,
 
    do
    {
-      GLint i;
+      GLuint i;
 
       for (i = 0 ; i < VB->PrimitiveCount ; i++)
       {

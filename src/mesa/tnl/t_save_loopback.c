@@ -189,7 +189,8 @@ static void loopback_prim( GLcontext *ctx,
    GLint begin = prim->start;
    GLint end = begin + prim->count;
    GLfloat *data;
-   GLint j, k;
+   GLint j;
+   GLuint k;
 
    if (prim->mode & PRIM_BEGIN) {
       glBegin( prim->mode & PRIM_MODE_MASK );

@@ -160,7 +160,7 @@ build_normal_lengths( struct tnl_vertex_list *node )
    GLuint stride = node->vertex_size;
    GLuint count = node->count;
 
-   len = node->normal_lengths = MALLOC( count * sizeof(GLfloat) );
+   len = node->normal_lengths = (GLfloat *) MALLOC( count * sizeof(GLfloat) );
    if (!len)
       return;
 
@@ -177,7 +177,7 @@ build_normal_lengths( struct tnl_vertex_list *node )
 
 static struct tnl_vertex_store *alloc_vertex_store( GLcontext *ctx )
 {
-   struct tnl_vertex_store *store = MALLOC( sizeof(*store) );
+   struct tnl_vertex_store *store = MALLOC_STRUCT(tnl_vertex_store);
    store->used = 0;
    store->refcount = 1;
    return store;
@@ -185,7 +185,7 @@ static struct tnl_vertex_store *alloc_vertex_store( GLcontext *ctx )
 
 static struct tnl_primitive_store *alloc_prim_store( GLcontext *ctx )
 {
-   struct tnl_primitive_store *store = MALLOC( sizeof(*store) );
+   struct tnl_primitive_store *store = MALLOC_STRUCT(tnl_primitive_store);
    store->used = 0;
    store->refcount = 1;
    return store;
@@ -307,7 +307,7 @@ static void _save_wrap_buffers( GLcontext *ctx )
    GLint i = tnl->save.prim_count - 1;
    GLenum mode;
 
-   assert(i < tnl->save.prim_max);
+   assert(i < (GLint) tnl->save.prim_max);
    assert(i >= 0);
 
    /* Close off in-progress primitive.
@@ -337,7 +337,7 @@ static void _save_wrap_filled_vertex( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLfloat *data = tnl->save.copied.buffer;
-   int i;
+   GLuint i;
 
    /* Emit a glEnd to close off the last vertex list.
     */
@@ -467,7 +467,7 @@ static void _save_upgrade_vertex( GLcontext *ctx,
    {
       GLfloat *data = tnl->save.copied.buffer;
       GLfloat *dest = tnl->save.buffer;
-      GLint j;
+      GLuint j;
 
       /* Need to note this and fix up at runtime (or loopback):
        */
@@ -578,7 +578,7 @@ static void save_attrib_##ATTR##_##N( const GLfloat *v )	\
    TNLcontext *tnl = TNL_CONTEXT(ctx);				\
 								\
    if ((ATTR) == 0) {						\
-      int i;							\
+      GLuint i;							\
 								\
       if (N>0) tnl->save.vbptr[0] = v[0];			\
       if (N>1) tnl->save.vbptr[1] = v[1];			\
@@ -905,7 +905,7 @@ static void _save_MultiTexCoord4fv( GLenum target, const GLfloat *v )
 
 static void _save_VertexAttrib1fNV( GLuint index, GLfloat x )
 {
-   if (index >= VERT_ATTRIB_POS && index < VERT_ATTRIB_MAX)
+   if (index < VERT_ATTRIB_MAX)
       DISPATCH_ATTR1F( index, x );
    else
       enum_error(); 
@@ -913,7 +913,7 @@ static void _save_VertexAttrib1fNV( GLuint index, GLfloat x )
 
 static void _save_VertexAttrib1fvNV( GLuint index, const GLfloat *v )
 {
-   if (index >= VERT_ATTRIB_POS && index < VERT_ATTRIB_MAX)
+   if (index < VERT_ATTRIB_MAX)
       DISPATCH_ATTR1FV( index, v );
    else
       enum_error();
@@ -921,7 +921,7 @@ static void _save_VertexAttrib1fvNV( GLuint index, const GLfloat *v )
 
 static void _save_VertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y )
 {
-   if (index >= VERT_ATTRIB_POS && index < VERT_ATTRIB_MAX)
+   if (index < VERT_ATTRIB_MAX)
       DISPATCH_ATTR2F( index, x, y );
    else
       enum_error();
@@ -929,7 +929,7 @@ static void _save_VertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y )
 
 static void _save_VertexAttrib2fvNV( GLuint index, const GLfloat *v )
 {
-   if (index >= VERT_ATTRIB_POS && index < VERT_ATTRIB_MAX)
+   if (index < VERT_ATTRIB_MAX)
       DISPATCH_ATTR2FV( index, v );
    else
       enum_error();
@@ -938,7 +938,7 @@ static void _save_VertexAttrib2fvNV( GLuint index, const GLfloat *v )
 static void _save_VertexAttrib3fNV( GLuint index, GLfloat x, GLfloat y, 
 				  GLfloat z )
 {
-   if (index >= VERT_ATTRIB_POS && index < VERT_ATTRIB_MAX)
+   if (index < VERT_ATTRIB_MAX)
       DISPATCH_ATTR3F( index, x, y, z );
    else
       enum_error();
@@ -946,7 +946,7 @@ static void _save_VertexAttrib3fNV( GLuint index, GLfloat x, GLfloat y,
 
 static void _save_VertexAttrib3fvNV( GLuint index, const GLfloat *v )
 {
-   if (index >= VERT_ATTRIB_POS && index < VERT_ATTRIB_MAX)
+   if (index < VERT_ATTRIB_MAX)
       DISPATCH_ATTR3FV( index, v );
    else
       enum_error();
@@ -955,7 +955,7 @@ static void _save_VertexAttrib3fvNV( GLuint index, const GLfloat *v )
 static void _save_VertexAttrib4fNV( GLuint index, GLfloat x, GLfloat y,
 				  GLfloat z, GLfloat w )
 {
-   if (index >= VERT_ATTRIB_POS && index < VERT_ATTRIB_MAX)
+   if (index < VERT_ATTRIB_MAX)
       DISPATCH_ATTR4F( index, x, y, z, w );
    else
       enum_error();
@@ -963,7 +963,7 @@ static void _save_VertexAttrib4fNV( GLuint index, GLfloat x, GLfloat y,
 
 static void _save_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
 {
-   if (index >= VERT_ATTRIB_POS && index < VERT_ATTRIB_MAX)
+   if (index < VERT_ATTRIB_MAX)
       DISPATCH_ATTR4FV( index, v );
    else
       enum_error();
@@ -1173,7 +1173,7 @@ static GLboolean _save_NotifyBegin( GLcontext *ctx, GLenum mode )
    TNLcontext *tnl = TNL_CONTEXT(ctx); 
 
    if (1) {
-      int i = tnl->save.prim_count++;
+      GLuint i = tnl->save.prim_count++;
 
       assert(i < tnl->save.prim_max);
       tnl->save.prim[i].mode = mode | PRIM_BEGIN;
@@ -1194,14 +1194,14 @@ static void _save_End( void )
 {
    GET_CURRENT_CONTEXT( ctx ); 
    TNLcontext *tnl = TNL_CONTEXT(ctx); 
-   int i = tnl->save.prim_count - 1;
+   GLint i = tnl->save.prim_count - 1;
 
    ctx->Driver.CurrentSavePrimitive = PRIM_OUTSIDE_BEGIN_END;
    tnl->save.prim[i].mode |= PRIM_END;
    tnl->save.prim[i].count = ((tnl->save.initial_counter - tnl->save.counter) - 
 			      tnl->save.prim[i].start);
 
-   if (i == tnl->save.prim_max - 1) {
+   if (i == (GLint) tnl->save.prim_max - 1) {
       _save_compile_vertex_list( ctx );
       assert(tnl->save.copied.nr == 0);
    }
