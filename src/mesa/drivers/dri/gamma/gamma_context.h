@@ -243,7 +243,7 @@ struct gamma_context {
 
    	/* Mirrors of some DRI state
     	 */
-   	drmContext hHWContext;
+   	drm_context_t hHWContext;
    	drm_hw_lock_t *driHwLock;
    	int driFd;
 

@@ -6,7 +6,7 @@
 #include "xf86drm.h"
 
 typedef struct {
-  drmHandle regs;
+  drm_handle_t regs;
   drmSize regsSize;
   drmAddress regsMap;
   int deviceID;

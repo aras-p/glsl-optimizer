@@ -1,5 +1,5 @@
 typedef struct _gammaRegion {
-    drmHandle  handle;
+    drm_handle_t  handle;
     drmSize    size;
     drmAddress map;
 } gammaRegion, *gammaRegionPtr;

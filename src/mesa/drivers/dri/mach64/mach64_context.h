@@ -303,7 +303,7 @@ struct mach64_context {
 
    unsigned int lastStamp;		/* mirror driDrawable->lastStamp */
 
-   drmContext hHWContext;
+   drm_context_t hHWContext;
    drm_hw_lock_t *driHwLock;
    int driFd;
 

@@ -236,7 +236,7 @@ struct savage_context_t {
     /*Texture aging and DMA based aging*/
     unsigned int texAge[SAVAGE_NR_TEX_HEAPS]; 
 
-    drmContext hHWContext;
+    drm_context_t hHWContext;
     drmLock *driHwLock;
     GLuint driFd;
 

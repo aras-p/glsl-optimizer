@@ -262,7 +262,7 @@ do {	if ((STATE_MASK) & ~((FMESA)->state_dirty)) {	\
 	/* Fog state. */
 	float			Znear, Zfar;
 
-	drmContext		hHWContext;
+	drm_context_t		hHWContext;
 	drmLock			*driHwLock;
 	int			driFd;
 

@@ -36,7 +36,7 @@
 #ifndef _RADEON_H_
 #define _RADEON_H_
 
-#include "xf86drm.h"		/* drmHandle, etc */
+#include "xf86drm.h"		/* drm_handle_t, etc */
 
 #define PCI_CHIP_R200_BB                0x4242
 #define PCI_CHIP_RV250_Id               0x4964
@@ -107,14 +107,14 @@ typedef struct {
 
 
    drmSize           registerSize;     /**< \brief MMIO register map size */
-   drmHandle         registerHandle;   /**< \brief MMIO register map handle */
+   drm_handle_t         registerHandle;   /**< \brief MMIO register map handle */
 
    /**
     * \name AGP
     */
    /*@{*/
    drmSize           gartSize;          /**< \brief AGP map size */
-   drmHandle         gartMemHandle;     /**< \brief AGP map handle */
+   drm_handle_t         gartMemHandle;     /**< \brief AGP map handle */
    unsigned long     gartOffset;        /**< \brief AGP offset */
    int               gartMode;          /**< \brief AGP mode */
    int               gartFastWrite;
@@ -125,12 +125,12 @@ typedef struct {
     */
    /*@{*/
    unsigned long     ringStart;        /**< \brief Offset into AGP space */
-   drmHandle         ringHandle;       /**< \brief Handle from drmAddMap() */
+   drm_handle_t         ringHandle;       /**< \brief Handle from drmAddMap() */
    drmSize           ringMapSize;      /**< \brief Size of map */
    int               ringSize;         /**< \brief Size of ring (in MB) */
 
    unsigned long     ringReadOffset;   /**< \brief Read offset into AGP space */
-   drmHandle         ringReadPtrHandle;/**< \brief Handle from drmAddMap() */
+   drm_handle_t         ringReadPtrHandle;/**< \brief Handle from drmAddMap() */
    drmSize           ringReadMapSize;  /**< \brief Size of map */
    /*@}*/
 
@@ -139,7 +139,7 @@ typedef struct {
     */
    /*@{*/
    unsigned long     bufStart;         /**< \brief Offset into AGP space */
-   drmHandle         bufHandle;        /**< \brief Handle from drmAddMap() */
+   drm_handle_t         bufHandle;        /**< \brief Handle from drmAddMap() */
    drmSize           bufMapSize;       /**< \brief Size of map */
    int               bufSize;          /**< \brief Size of buffers (in MB) */
    int               bufNumBufs;       /**< \brief Number of buffers */
@@ -150,7 +150,7 @@ typedef struct {
     */
    /*@{*/
    unsigned long     gartTexStart;      /**< \brief Offset into AGP space */
-   drmHandle         gartTexHandle;     /**< \brief Handle from drmAddMap() */
+   drm_handle_t         gartTexHandle;     /**< \brief Handle from drmAddMap() */
    drmSize           gartTexMapSize;    /**< \brief Size of map */
    int               gartTexSize;       /**< \brief Size of AGP tex space (in MB) */
    int               log2GARTTexGran;

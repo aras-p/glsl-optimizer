@@ -41,7 +41,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 typedef struct {
-   drmHandle handle;
+   drm_handle_t handle;
    drmSize size;
    char *map;
 } i830Region, *i830RegionPtr;

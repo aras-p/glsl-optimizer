@@ -38,7 +38,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "dri_util.h"
 
 typedef struct {
-   drmHandle handle;
+   drm_handle_t handle;
    drmSize size;
    char *map;
 } i810Region, *i810RegionPtr;

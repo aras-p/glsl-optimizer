@@ -121,7 +121,7 @@ int drmVIAAllocateDMA(int fd, drmVIADMABuf *buf)
 		return -errno;
     }
     
-    if (drmMap(fd,(drmHandle)buf->index,
+    if (drmMap(fd,(drm_handle_t)buf->index,
 		buf->size,(drmAddressPtr)(&buf->address)) < 0) {
 	return -errno;
     }

@@ -88,7 +88,7 @@ typedef struct {
      * \name MMIO register data
      */
     /*@{*/
-    drmHandle     registerHandle; /**< \brief MMIO register map size */
+    drm_handle_t     registerHandle; /**< \brief MMIO register map size */
     drmSize       registerSize;   /**< \brief MMIO register map handle */
     /*@}*/
 
@@ -96,7 +96,7 @@ typedef struct {
      * \name CP in-memory status information
      */
     /*@{*/
-    drmHandle     statusHandle;   /**< \brief status map handle */
+    drm_handle_t     statusHandle;   /**< \brief status map handle */
     drmSize       statusSize;     /**< \brief status map size */
     /*@}*/
 
@@ -104,7 +104,7 @@ typedef struct {
      * \name CP AGP Texture data
      */
     /*@{*/
-    drmHandle     gartTexHandle;   /**< \brief AGP texture area map handle */
+    drm_handle_t     gartTexHandle;   /**< \brief AGP texture area map handle */
     drmSize       gartTexMapSize;  /**< \brief AGP texture area map size */
     int           log2GARTTexGran; /**< \brief AGP texture granularity in log base 2 */
     int           gartTexOffset;   /**< \brief AGP texture area offset in AGP space */

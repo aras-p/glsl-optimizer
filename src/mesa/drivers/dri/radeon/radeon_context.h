@@ -482,7 +482,7 @@ struct radeon_dri_mirror {
    __DRIscreenPrivate	*screen;	/* DRI screen */
    __DRIdrawablePrivate	*drawable;	/* DRI drawable bound to this ctx */
 
-   drmContext hwContext;
+   drm_context_t hwContext;
    drm_hw_lock_t *hwLock;
    int fd;
    int drmMinor;

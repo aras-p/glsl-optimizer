@@ -51,7 +51,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 typedef struct {
-   drmHandle handle;			/* Handle to the DRM region */
+   drm_handle_t handle;			/* Handle to the DRM region */
    drmSize size;			/* Size of the DRM region */
    drmAddress map;			/* Mapping of the DRM region */
 } radeonRegionRec, *radeonRegionPtr;

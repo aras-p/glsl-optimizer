@@ -315,7 +315,7 @@ static int MGADRIMapInit( struct DRIDriverContextRec *ctx, MGAPtr pMga )
    pMga->registers.size = MGAIOMAPSIZE;
 
    if ( drmAddMap( ctx->drmFD,
-		   (drmHandle)pMga->IOAddress,
+		   (drm_handle_t)pMga->IOAddress,
 		   pMga->registers.size,
 		   DRM_REGISTERS, DRM_READ_ONLY,
 		   &pMga->registers.handle ) < 0 ) {
@@ -718,7 +718,7 @@ static int MGAScreenInit( struct DRIDriverContextRec *ctx, MGAPtr pMga )
    /* Need to AddMap the framebuffer and mmio regions here:
     */
    if (drmAddMap( ctx->drmFD,
-		  (drmHandle)ctx->FBStart,
+		  (drm_handle_t)ctx->FBStart,
 		  ctx->FBSize,
 		  DRM_FRAME_BUFFER,
 		  0,

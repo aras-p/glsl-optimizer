@@ -169,7 +169,7 @@ struct i810_context_t {
    drm_clip_rect_t draw_rect;
    drm_clip_rect_t scissor_rect;
 
-   drmContext hHWContext;
+   drm_context_t hHWContext;
    drm_hw_lock_t *driHwLock;
    int driFd;
 

@@ -914,7 +914,7 @@ struct tdfx_context {
    __DRIscreenPrivate *driScreen;
    __DRIcontextPrivate *driContext;
    __DRIdrawablePrivate *driDrawable;
-   drmContext hHWContext;
+   drm_context_t hHWContext;
    drm_hw_lock_t *driHwLock;
    int driFd;
    tdfxScreenPrivate *fxScreen;

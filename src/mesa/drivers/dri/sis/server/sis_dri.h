@@ -35,7 +35,7 @@ typedef struct {
 #define SIS_DEPTH 2
 
 typedef struct {
-  drmHandle handle;
+  drm_handle_t handle;
   drmSize size;
   drmAddress map;
 } sisRegion, *sisRegionPtr;

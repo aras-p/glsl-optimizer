@@ -16,20 +16,20 @@
 #define I830_REG_SIZE 0x80000
 
 typedef struct _I830DRIRec {
-   drmHandle regs;
+   drm_handle_t regs;
    drmSize regsSize;
    drmAddress regsMap;
 
    drmSize backbufferSize;
-   drmHandle backbuffer;
+   drm_handle_t backbuffer;
 
    drmSize depthbufferSize;
-   drmHandle depthbuffer;
+   drm_handle_t depthbuffer;
 
-   drmHandle textures;
+   drm_handle_t textures;
    int textureSize;
 
-   drmHandle agp_buffers;
+   drm_handle_t agp_buffers;
    drmSize agp_buf_size;
 
    int deviceID;

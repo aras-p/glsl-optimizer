@@ -34,28 +34,28 @@
 #include "xf86drm.h"
 
 typedef struct {
-   drmHandle fbHandle;
+   drm_handle_t fbHandle;
 
-   drmHandle regsHandle;
+   drm_handle_t regsHandle;
    drmSize regsSize;
 
    int IsPCI;
 
-   drmHandle agpHandle;            /* Handle from drmAgpAlloc */
+   drm_handle_t agpHandle;            /* Handle from drmAgpAlloc */
    unsigned long agpOffset;
    drmSize agpSize;
    int agpMode;
 
    /* DMA descriptor ring */
    unsigned long     ringStart;        /* Offset into AGP space */
-   drmHandle         ringHandle;       /* Handle from drmAddMap */
+   drm_handle_t         ringHandle;       /* Handle from drmAddMap */
    drmSize           ringMapSize;      /* Size of map */
    int               ringSize;         /* Size of ring (in kB) */
    drmAddress        ringMap;          /* Map */
 
    /* vertex buffer data */
    unsigned long     bufferStart;      /* Offset into AGP space */
-   drmHandle         bufferHandle;     /* Handle from drmAddMap */
+   drm_handle_t         bufferHandle;     /* Handle from drmAddMap */
    drmSize           bufferMapSize;    /* Size of map */
    int               bufferSize;       /* Size of buffers (in MB) */
    drmAddress        bufferMap;        /* Map */
@@ -65,7 +65,7 @@ typedef struct {
 
    /* AGP Texture data */
    unsigned long     agpTexStart;      /* Offset into AGP space */
-   drmHandle         agpTexHandle;     /* Handle from drmAddMap */
+   drm_handle_t         agpTexHandle;     /* Handle from drmAddMap */
    drmSize           agpTexMapSize;    /* Size of map */
    int               agpTexSize;       /* Size of AGP tex space (in MB) */
    drmAddress        agpTexMap;        /* Map */
@@ -113,10 +113,10 @@ typedef struct {
    unsigned int textureSize;
    int logTextureGranularity;
 
-   drmHandle regs;
+   drm_handle_t regs;
    drmSize regsSize;
 
-   drmHandle agp;
+   drm_handle_t agp;
    drmSize agpSize;
    unsigned int agpTextureOffset;
    unsigned int agpTextureSize;

@@ -33,7 +33,7 @@
 #include "mtypes.h"
 
 typedef struct {
-   drmHandle handle;
+   drm_handle_t handle;
    drmSize size;
    char *map;
 } savageRegion, *savageRegionPtr;

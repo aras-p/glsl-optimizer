@@ -97,7 +97,7 @@ typedef void (*via_line_func)(viaContextPtr, viaVertex *, viaVertex *);
 typedef void (*via_point_func)(viaContextPtr, viaVertex *);
 
 typedef struct {
-    drmHandle handle;
+    drm_handle_t handle;
     drmSize size;
     GLuint offset;
     GLuint index;
@@ -107,7 +107,7 @@ typedef struct {
 } viaBuffer, *viaBufferPtr;
 
 typedef struct {
-    drmHandle handle;
+    drm_handle_t handle;
     drmSize size;
     GLuint offset;
     GLuint index;
@@ -288,7 +288,7 @@ struct via_context_t {
     drm_clip_rect_t drawRect;
     drm_clip_rect_t scissorRect;
 
-    drmContext hHWContext;
+    drm_context_t hHWContext;
     drm_hw_lock_t *driHwLock;
     int driFd;
 #ifndef _SOLO

@@ -810,7 +810,7 @@ static GLboolean R128DRIScreenInit(DRIDriverContext *ctx)
    /* Need to AddMap the framebuffer and mmio regions here:
     */
    if (drmAddMap( ctx->drmFD,
-		  (drmHandle)ctx->FBStart,
+		  (drm_handle_t)ctx->FBStart,
 		  ctx->FBSize,
 		  DRM_FRAME_BUFFER,
 		  0,

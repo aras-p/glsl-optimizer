@@ -261,7 +261,7 @@ struct __DRIdrawablePrivateRec {
     /**
      * Kernel drawable handle
      */
-    drmDrawable hHWDrawable;
+    drm_drawable_t hHWDrawable;
 
     /**
      * Driver's private drawable information.  
@@ -377,7 +377,7 @@ struct __DRIcontextPrivateRec {
     /**
      * Kernel context handle used to access the device lock.
      */
-    drmContext hHWContext;
+    drm_context_t hHWContext;
 
     /**
      * Device driver's private context data.  This structure is opaque.

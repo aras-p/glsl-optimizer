@@ -62,7 +62,7 @@ static const int empty_attribute_list[1] = { None };
 static PFNGLXWINDOWEXISTSPROC window_exists;
 
 typedef Bool (*PFNGLXCREATECONTEXTWITHCONFIGPROC)( __DRInativeDisplay*, int, int, void *,
-    drmContextPtr );
+    drm_context_t * );
 
 static PFNGLXCREATECONTEXTWITHCONFIGPROC create_context_with_config;
 
@@ -167,7 +167,7 @@ findConfigMode(__DRInativeDisplay *dpy, int scrn, VisualID vid,
  */
 static Bool
 fake_XF86DRICreateContextWithConfig( __DRInativeDisplay* dpy, int screen, int configID,
-				     XID* context, drmContextPtr hHWContext )
+				     XID* context, drm_context_t * hHWContext )
 {
     Visual  vis;
     
@@ -1329,7 +1329,7 @@ __driUtilCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
 {
     int directCapable;
     __DRIscreenPrivate *psp = NULL;
-    drmHandle hSAREA;
+    drm_handle_t hSAREA;
     drmAddress pSAREA;
     char *BusID;
     __GLcontextModes *modes;
@@ -1380,7 +1380,7 @@ __driUtilCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
 	err_extra = strerror( -fd );
 
 	if (fd >= 0) {
-	    drmMagic magic;
+	    drm_magic_t magic;
 
 	    err_msg = "drmGetMagic";
 	    err_extra = NULL;
@@ -1426,7 +1426,7 @@ __driUtilCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
 						&dri_version.major,
 						&dri_version.minor,
 						&dri_version.patch)) {
-			    drmHandle  hFB;
+			    drm_handle_t  hFB;
 			    int        junk;
 
 			    /*

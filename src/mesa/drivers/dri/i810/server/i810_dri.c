@@ -505,14 +505,14 @@ static int I810MemoryInit( const DRIDriverContext *ctx, I810Ptr info )
    int        depthSize   = (((ctx->shared.virtualHeight+15) & ~15) * width_bytes);
    int        l;
 
-   if (drmAddMap(ctx->drmFD, (drmHandle) info->BackBuffer.Start,
+   if (drmAddMap(ctx->drmFD, (drm_handle_t) info->BackBuffer.Start,
 		 info->BackBuffer.Size, DRM_AGP, 0,
 		 &info->backbuffer) < 0) {
      fprintf(stderr, "[drm] drmAddMap(backbuffer) failed.  Disabling DRI\n");
      return 0;
    }
    
-   if (drmAddMap(ctx->drmFD, (drmHandle) info->DepthBuffer.Start,
+   if (drmAddMap(ctx->drmFD, (drm_handle_t) info->DepthBuffer.Start,
 		 info->DepthBuffer.Size, DRM_AGP, 0,
 		 &info->depthbuffer) < 0) {
      fprintf(stderr, "[drm] drmAddMap(depthbuffer) failed.  Disabling DRI.\n");
@@ -561,13 +561,13 @@ static int I810MemoryInit( const DRIDriverContext *ctx, I810Ptr info )
      return 0;
    }
 
-   if (drmAddMap(ctx->drmFD, (drmHandle) info->BufferMem.Start,
+   if (drmAddMap(ctx->drmFD, (drm_handle_t) info->BufferMem.Start,
 		 info->BufferMem.Size, DRM_AGP, 0, &info->buffer_map) < 0) {
      fprintf(stderr, "[drm] drmAddMap(buffer_map) failed.  Disabling DRI.\n");
      return 0;
    }
 
-   if (drmAddMap(ctx->drmFD, (drmHandle) info->LpRing.mem.Start,
+   if (drmAddMap(ctx->drmFD, (drm_handle_t) info->LpRing.mem.Start,
 		 info->LpRing.mem.Size, DRM_AGP, 0, &info->ring_map) < 0) {
      fprintf(stderr, "[drm] drmAddMap(ring_map) failed.  Disabling DRI. \n");
      return 0;
@@ -601,7 +601,7 @@ static int I810MemoryInit( const DRIDriverContext *ctx, I810Ptr info )
 
    I810AllocLow(&(info->TexMem), &(info->SysMem), info->textureSize);
 
-   if (drmAddMap(ctx->drmFD, (drmHandle) info->TexMem.Start,
+   if (drmAddMap(ctx->drmFD, (drm_handle_t) info->TexMem.Start,
 		 info->TexMem.Size, DRM_AGP, 0, &info->textures) < 0) {
      fprintf(stderr,
 		 "[drm] drmAddMap(textures) failed.  Disabling DRI.\n");
@@ -726,7 +726,7 @@ static int I810ScreenInit( DRIDriverContext *ctx, I810Ptr info )
    /* Need to AddMap the framebuffer and mmio regions here:
     */
    if (drmAddMap( ctx->drmFD,
-		  (drmHandle)ctx->FBStart,
+		  (drm_handle_t)ctx->FBStart,
 		  ctx->FBSize,
 		  DRM_FRAME_BUFFER,
 #ifndef _EMBEDDED

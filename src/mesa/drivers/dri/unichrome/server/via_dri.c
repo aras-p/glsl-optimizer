@@ -131,7 +131,7 @@ static int VIADRIAgpInit(const DRIDriverContext *ctx, VIAPtr pVia)
                  "[drm] agpAddr = 0x%08lx\n",pVia->agpAddr);
 		 
     pVIADRI->agp.size = pVia->agpSize;
-    if (drmAddMap(pVia->drmFD, (drmHandle)0,
+    if (drmAddMap(pVia->drmFD, (drm_handle_t)0,
                  pVIADRI->agp.size, DRM_AGP, 0, 
                  &pVIADRI->agp.handle) < 0) {
 	xf86DrvMsg(pScreen->myNum, X_ERROR,
@@ -237,7 +237,7 @@ static int VIADRIScreenInit(DRIDriverContext * ctx)
     /* Need to AddMap the framebuffer and mmio regions here:
      */
     if (drmAddMap(ctx->drmFD,
-                  (drmHandle)ctx->FBStart,
+                  (drm_handle_t)ctx->FBStart,
                   ctx->FBSize,
                   DRM_FRAME_BUFFER,
 #ifndef _EMBEDDED

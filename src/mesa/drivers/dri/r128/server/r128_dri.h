@@ -88,11 +88,11 @@ typedef struct {
     int           log2TexGran;
 
     /* MMIO register data */
-    drmHandle     registerHandle;
+    drm_handle_t     registerHandle;
     drmSize       registerSize;
 
     /* CCE AGP Texture data */
-    drmHandle     agpTexHandle;
+    drm_handle_t     agpTexHandle;
     drmSize       agpTexMapSize;
     int           log2AGPTexGran;
     int           agpTexOffset;

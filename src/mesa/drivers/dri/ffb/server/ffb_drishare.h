@@ -19,23 +19,23 @@ typedef struct ffb_dri_state {
 	((ffb_dri_state_t *) (((char *)(SAREA)) + sizeof(drm_sarea_t)))
 
 typedef struct {
-	drmHandle	hFbcRegs;
+	drm_handle_t	hFbcRegs;
 	drmSize		sFbcRegs;
 	drmAddress	mFbcRegs;
 
-	drmHandle	hDacRegs;
+	drm_handle_t	hDacRegs;
 	drmSize		sDacRegs;
 	drmAddress	mDacRegs;
 
-	drmHandle	hSfb8r;
+	drm_handle_t	hSfb8r;
 	drmSize		sSfb8r;
 	drmAddress	mSfb8r;
 
-	drmHandle	hSfb32;
+	drm_handle_t	hSfb32;
 	drmSize		sSfb32;
 	drmAddress	mSfb32;
 
-	drmHandle	hSfb64;
+	drm_handle_t	hSfb64;
 	drmSize		sSfb64;
 	drmAddress	mSfb64;
 
