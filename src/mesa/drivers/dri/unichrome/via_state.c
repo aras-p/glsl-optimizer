@@ -1619,7 +1619,7 @@ void viaValidateState( GLcontext *ctx )
      */
 #if 0
     /* Disabling now, as the main problem was that the alpha reference
-     * value was calculated incorrectly, it's now fixed.
+     * value was calculated incorrectly, it's now fixed. */
     if (vmesa->viaScreen->deviceID == VIA_CLE266) {
        GLboolean fallback = (ctx->Color.AlphaEnabled && 
 			     ctx->Color.AlphaFunc != GL_ALWAYS &&
