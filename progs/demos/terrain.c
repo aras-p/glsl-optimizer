@@ -572,7 +572,7 @@ loadpic(void)
    if ((gluerr = gluBuild2DMipmaps(GL_TEXTURE_2D, 1, 256, 256, GL_LUMINANCE,
 				   GL_UNSIGNED_BYTE,
 				   (GLvoid *) (&terrainpic[0])))) {
-      fprintf(stderr, "GLULib%s\n", gluErrorString(gluerr));
+      fprintf(stderr, "GLULib%s\n", (char *) gluErrorString(gluerr));
       exit(-1);
    }
 

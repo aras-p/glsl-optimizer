@@ -660,7 +660,7 @@ inittextures(void)
 
       if ((gluerr = gluBuild2DMipmaps(GL_TEXTURE_2D, 4, 128, 128, GL_RGBA,
 				      GL_UNSIGNED_BYTE, (GLvoid *) (tex)))) {
-	 fprintf(stderr, "GLULib%s\n", gluErrorString(gluerr));
+	 fprintf(stderr, "GLULib%s\n", (char *) gluErrorString(gluerr));
 	 exit(-1);
       }
    }

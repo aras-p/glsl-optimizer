@@ -186,7 +186,7 @@ inittextures(void)
        (gluerr =
 	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, TEX_SKY_WIDTH, TEX_SKY_HEIGHT,
 			  GL_RGB, GL_UNSIGNED_BYTE, (GLvoid *) (tsky)))) {
-      fprintf(stderr, "GLULib%s\n", gluErrorString(gluerr));
+      fprintf(stderr, "GLULib%s\n", (char *) gluErrorString(gluerr));
       exit(-1);
    }
 
