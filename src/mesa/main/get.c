@@ -1040,7 +1040,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_CLIENT_ACTIVE_TEXTURE_ARB:
          CHECK_EXTENSION_B(ARB_multitexture, pname);
-         *params = INT_TO_BOOL(GL_TEXTURE0_ARB + ctx->Array.ActiveTexture);
+         *params = INT_TO_BOOL(GL_TEXTURE0_ARB + clientUnit);
          break;
 
       /* GL_ARB_texture_cube_map */
@@ -2579,7 +2579,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          break;
       case GL_CLIENT_ACTIVE_TEXTURE_ARB:
          CHECK_EXTENSION_D(ARB_multitexture, pname);
-         *params = (GLdouble) (GL_TEXTURE0_ARB + ctx->Array.ActiveTexture);
+         *params = (GLdouble) (GL_TEXTURE0_ARB + clientUnit);
          break;
 
       /* GL_ARB_texture_cube_map */
@@ -4118,7 +4118,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_CLIENT_ACTIVE_TEXTURE_ARB:
          CHECK_EXTENSION_F(ARB_multitexture, pname);
-         *params = (GLfloat) (GL_TEXTURE0_ARB + ctx->Array.ActiveTexture);
+         *params = (GLfloat) (GL_TEXTURE0_ARB + clientUnit);
          break;
 
       /* GL_ARB_texture_cube_map */
@@ -5630,7 +5630,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_CLIENT_ACTIVE_TEXTURE_ARB:
          CHECK_EXTENSION_I(ARB_multitexture, pname);
-         *params = GL_TEXTURE0_ARB + ctx->Array.ActiveTexture;
+         *params = GL_TEXTURE0_ARB + clientUnit;
          break;
 
       /* GL_ARB_texture_cube_map */
