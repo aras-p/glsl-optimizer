@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.41 2002/06/15 02:38:18 brianp Exp $ */
+/* $Id: t_imm_exec.c,v 1.42 2002/08/08 16:55:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -295,6 +295,7 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
       tmp->Normal.data = IM->Attrib[VERT_ATTRIB_NORMAL] + start;
       tmp->Normal.start = (GLfloat *) (IM->Attrib[VERT_ATTRIB_NORMAL] + start);
       tmp->Normal.count = count;
+      tmp->Normal.size = 3; /* just to be safe */
       VB->NormalPtr = &tmp->Normal;
       if (IM->NormalLengthPtr)
 	 VB->NormalLengthPtr = IM->NormalLengthPtr + start;
