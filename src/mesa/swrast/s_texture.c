@@ -3727,7 +3727,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 #if CHAN_TYPE == GL_FLOAT
                rgba[i][ACOMP] = ((arg0[i][ACOMP] * arg2[i][ACOMP]) + arg1[i][ACOMP]) * Amult;
 #else
-               GLuint a = (PROD(arg0[i][ACOMP], arg2[i][ACOMP])
+               GLint a = (PROD(arg0[i][ACOMP], arg2[i][ACOMP])
 			   + ((GLuint) arg1[i][ACOMP] << CHAN_BITS))
 		    >> shift;
                rgba[i][ACOMP] = (GLchan) CLAMP(a, 0, CHAN_MAX);
