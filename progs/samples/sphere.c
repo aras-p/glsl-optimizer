@@ -894,7 +894,6 @@ void Key(unsigned char key, int x, int y)
 	break;
       case 'l':
 	isLit = !isLit;
-        printf("lit %d\n", isLit);
 	ReInit();
 	break;
       case 'f':
