@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.27 2000/08/08 16:15:14 brianp Exp $ */
+/* $Id: dd.h,v 1.28 2000/08/29 23:31:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -642,17 +642,20 @@ struct dd_function_table {
     */
 
    GLboolean (*CompressedTexImage1D)( GLcontext *ctx, GLenum target,
-                                      GLint level, const GLvoid *data,
+                                      GLint level, GLsizei imageSize,
+                                      const GLvoid *data,
                                       struct gl_texture_object *texObj,
                                       struct gl_texture_image *texImage,
                                       GLboolean *retainInternalCopy);
    GLboolean (*CompressedTexImage2D)( GLcontext *ctx, GLenum target,
-                                      GLint level, const GLvoid *data,
+                                      GLint level, GLsizei imageSize,
+                                      const GLvoid *data,
                                       struct gl_texture_object *texObj,
                                       struct gl_texture_image *texImage,
                                       GLboolean *retainInternalCopy);
    GLboolean (*CompressedTexImage3D)( GLcontext *ctx, GLenum target,
-                                      GLint level, const GLvoid *data,
+                                      GLint level, GLsizei imageSize,
+                                      const GLvoid *data,
                                       struct gl_texture_object *texObj,
                                       struct gl_texture_image *texImage,
                                       GLboolean *retainInternalCopy);
@@ -698,6 +701,42 @@ struct dd_function_table {
     *      width, height, depth, border and internalFormat information.
     * Return GL_TRUE if operation completed, return GL_FALSE if core Mesa
     * should do the job.
+    */
+
+   GLint (*BaseCompressedTexFormat)(GLcontext *ctx,
+                                    GLint internalFormat);
+   /* Called to compute the base format for a specific compressed
+    * format.  Return -1 if the internalFormat is not a specific
+    * compressed format that the driver recognizes.  Note the
+    * return value differences between this function and
+    * SpecificCompressedTexFormat below.
+    */
+
+   GLint (*SpecificCompressedTexFormat)(GLcontext *ctx,
+                                        GLint internalFormat,
+                                        GLint numDimensions);
+   /* Called to turn a generic texture format into a specific
+    * texture format.  For example, if a driver implements
+    * GL_3DFX_texture_compression_FXT1, this would map
+    * GL_COMPRESSED_RGBA_ARB to GL_COMPRESSED_RGBA_FXT1_3DFX.
+    *
+    * If the driver does not know how to handle the compressed
+    * format, then just return the generic format, and Mesa will
+    * do the right thing with it.
+    */
+
+   GLboolean (*IsCompressedFormat)(GLcontext *ctx, GLint internalFormat);
+   /* Called to tell if a format is a compressed format.
+    */
+
+   GLsizei (*CompressedImageSize)(GLcontext *ctx,
+                                  GLenum internalFormat,
+                                  GLuint numDimensions,
+                                  GLuint width,
+                                  GLuint height,
+                                  GLuint depth);
+   /* Calculate the size of a compressed image, given the image's
+    * format and dimensions.
     */
 
    void (*GetCompressedTexImage)( GLcontext *ctx, GLenum target,
@@ -760,7 +799,7 @@ struct dd_function_table {
 
 
    /***
-    *** Accelerated point, line, polygon, glDrawPixels and glBitmap functions:
+    *** Accelerated point, line, polygon, quad and rect functions:
     ***/
 
    points_func   PointsFunc;

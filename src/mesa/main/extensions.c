@@ -1,8 +1,8 @@
-/* $Id: extensions.c,v 1.32 2000/06/27 21:42:13 brianp Exp $ */
+/* $Id: extensions.c,v 1.33 2000/08/29 23:31:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.4
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -51,7 +51,7 @@ struct extension {
 static struct { int enabled; const char *name; } default_extensions[] = {
    { DEFAULT_OFF,    "GL_ARB_imaging" },  /* in progress */
    { DEFAULT_ON,     "GL_ARB_multitexture" },
-   { DEFAULT_OFF,    "GL_ARB_texture_compression" },  /* in progress */
+   { DEFAULT_OFF,    "GL_ARB_texture_compression" },
    { DEFAULT_OFF,    "GL_ARB_texture_cube_map" },  /* in progress */
    { ALWAYS_ENABLED, "GL_ARB_tranpose_matrix" },
    { ALWAYS_ENABLED, "GL_EXT_abgr" },
