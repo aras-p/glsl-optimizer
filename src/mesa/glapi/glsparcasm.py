@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: glsparcasm.py,v 1.6 2001/11/19 00:40:33 brianp Exp $
+# $Id: glsparcasm.py,v 1.7 2002/01/03 16:33:59 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -40,9 +40,6 @@ import apiparser;
 def PrintHead():
 	print '/* DO NOT EDIT - This file generated automatically with glsparcasm.py script */'
 	print '#include "glapioffsets.h"'
-	print ''
-	print '#define GL_PREFIX(n) gl##n'
-	print '#define GLOBL_FN(x) .globl x'
 	print ''
 	print '/* The _glapi_Dispatch symbol addresses get relocated into the'
 	print ' * sethi/or instruction sequences below at library init time.'
@@ -111,9 +108,9 @@ def EmitFunction(name, returnType, argTypeList, argNameList, alias, offset):
 
 	# print the assembly code
 	print ''
-	print "GLOBL_FN(GL_PREFIX(%s))" % (name)
-	print '.type gl%s,#function' %(name)
-	print "GL_PREFIX(%s):" % (name)
+	print '.globl gl%s' % (name)
+	print '.type gl%s,#function' % (name)
+	print 'gl%s:' % (name)
 	print '#ifdef __sparc_v9__'
 	print '\tsethi\t%hi(0x00000000), %g2'
 	print '\tsethi\t%hi(0x00000000), %g1'
