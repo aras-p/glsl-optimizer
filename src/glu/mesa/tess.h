@@ -1,4 +1,4 @@
-/* $Id: tess.h,v 1.13 1999/10/13 19:12:47 gareth Exp $ */
+/* $Id: tess.h,v 1.14 1999/11/04 04:07:57 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,6 +39,7 @@
 #include "gluP.h"
 
 #include "tess_typedefs.h"
+#include "tess_macros.h"
 #include "tess_hash.h"
 #include "tess_heap.h"
 #if 0
@@ -84,36 +85,37 @@ extern void tess_error_callback( GLUtesselator *, GLenum );
 
 
 /*****************************************************************************
- * Debugging output:  (to be removed...)
+ * Debugging output:
  *****************************************************************************/
 #ifdef DEBUG
-extern	int	tess_debug_level;
-int vdebugstr( char *format_str, ... );
+extern	int	tess_dbg_level;
 
-#pragma message( "tess: using DEBUGP for debugging output" )
+#define DBG_LEVEL_BASE		1
+#define DBG_LEVEL_VERBOSE	10
+#define DBG_LEVEL_ENTEREXIT	20
+
 #ifdef _WIN32
-#define DEBUG_STREAM	stdout
+#define DBG_STREAM	stdout
 #else
-#define DEBUG_STREAM	stderr
+#define DBG_STREAM	stderr
 #endif
-#define DEBUGP( level, body )						\
-    do {								\
-	if ( tess_debug_level >= level ) {				\
-	    vdebugstr( "%11.11s:%-5d ", __FILE__, __LINE__, level );	\
-	    vdebugstr body;						\
-	    fflush( DEBUG_STREAM );					\
-	}								\
-    } while ( 0 )
-#define DEBUGIF( level )	do { if ( tess_debug_level >= level ) {
-#define DEBUGENDIF		} } while ( 0 )
+
+#ifdef __GNUC__
+#define MSG( level, format, args... )					\
+    if ( level <= tess_dbg_level ) {					\
+	fprintf( DBG_STREAM, "%9.9s:%d:\t ", __FILE__, __LINE__ );	\
+	fprintf( DBG_STREAM, format, ## args );				\
+	fflush( DBG_STREAM );						\
+    }
+#else
+#define MSG		tess_msg
+#endif /* __GNUC__ */
 
 #else
+#define MSG		tess_msg
+#endif /* DEBUG */
 
-#define DEBUGP( level, body )
-#define DEBUGIF( level )	while(0) {
-#define DEBUGENDIF		}
-
-#endif
+extern INLINE void tess_msg( int level, char *format, ... );
 
 #ifdef __cplusplus
 }
