@@ -220,7 +220,7 @@ void GLAPIENTRY
 _mesa_EndQueryARB(GLenum target)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct occlusion_query *q;
+   struct occlusion_query *q = NULL;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_DEPTH);
@@ -230,11 +230,12 @@ _mesa_EndQueryARB(GLenum target)
       return;
    }
 
-   q = (struct occlusion_query *)
-      _mesa_HashLookup(ctx->Occlusion.QueryObjects,
-                       ctx->Occlusion.CurrentQueryObject);
+   if (ctx->Occlusion.CurrentQueryObject)
+      q = (struct occlusion_query *)
+         _mesa_HashLookup(ctx->Occlusion.QueryObjects,
+                          ctx->Occlusion.CurrentQueryObject);
    if (!q || !q->Active) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glEndQuery with glBeginQuery");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glEndQuery with no glBeginQuery");
       return;
    }
 
@@ -282,7 +283,7 @@ _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
          _mesa_HashLookup(ctx->Occlusion.QueryObjects, id);
 
    if (!q || q->Active) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetQueryObjectivARB");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetQueryObjectivARB(id=%d)", id);
       return;
    }
 
@@ -312,7 +313,7 @@ _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
       q = (struct occlusion_query *)
          _mesa_HashLookup(ctx->Occlusion.QueryObjects, id);
    if (!q || q->Active) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetQueryObjectuivARB");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetQueryObjectuivARB(id=%d", id);
       return;
    }
 
