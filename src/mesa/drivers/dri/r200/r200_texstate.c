@@ -1026,7 +1026,7 @@ static void disable_tex( GLcontext *ctx, int unit )
 					   R200_TEX_BLEND_0_ENABLE) << unit);
       rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_BLEND_0_ENABLE; 
 	 
-      R200_STATECHANGE( rmesa, tcl );
+      R200_STATECHANGE( rmesa, vtx );
       rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_1] &= ~(7 << (unit * 3));
 	 
       if (rmesa->TclFallback & (R200_TCL_FALLBACK_TEXGEN_0<<unit)) {
