@@ -10,6 +10,10 @@
 #include <unistd.h>
 #endif
 #include <stdlib.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
+#define GL_GLEXT_LEGACY
 #include <GL/glut.h>
 
 
