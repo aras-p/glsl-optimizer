@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.26 2001/03/17 17:43:04 keithw Exp $ */
+/* $Id: mtypes.h,v 1.27 2001/03/18 08:53:49 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -775,6 +775,25 @@ typedef void (*FetchTexelFunc)( const struct gl_texture_image *texImage,
                                 GLint col, GLint row, GLint img,
                                 GLvoid *texelOut );
 
+/* Texture format record */
+struct gl_texture_format {
+   GLint IntFormat;		/* One of the MESA_FORMAT_* values */
+
+   GLubyte RedBits;		/* Bits per texel component */
+   GLubyte GreenBits;
+   GLubyte BlueBits;
+   GLubyte AlphaBits;
+   GLubyte LuminanceBits;
+   GLubyte IntensityBits;
+   GLubyte IndexBits;
+   GLubyte DepthBits;
+
+   GLint TexelBytes;
+
+   FetchTexelFunc FetchTexel1D;	/* Texel fetch function pointers */
+   FetchTexelFunc FetchTexel2D;
+   FetchTexelFunc FetchTexel3D;
+};
 
 /* Texture image record */
 struct gl_texture_image {
@@ -784,14 +803,6 @@ struct gl_texture_image {
 				 */
    GLenum Type;			/* Texel type: GL_UNSIGNED_BYTE, etc. */
    GLenum IntFormat;		/* Internal format as given by the user */
-   GLubyte RedBits;		/* Bits per texel component              */
-   GLubyte GreenBits;		/*   These are initialized by Mesa but   */
-   GLubyte BlueBits;		/*   may be reassigned by the device     */
-   GLubyte AlphaBits;		/*   driver to indicate the true texture */
-   GLubyte IntensityBits;	/*   color resolution.                   */
-   GLubyte LuminanceBits;
-   GLubyte IndexBits;
-   GLubyte DepthBits;
    GLuint Border;		/* 0 or 1 */
    GLuint Width;		/* = 2^WidthLog2 + 2*Border */
    GLuint Height;		/* = 2^HeightLog2 + 2*Border */
@@ -805,7 +816,9 @@ struct gl_texture_image {
    GLuint MaxLog2;		/* = MAX(WidthLog2, HeightLog2) */
    GLvoid *Data;		/* Image data, accessed via FetchTexel() */
 
-   FetchTexelFunc FetchTexel;	/* texel fetch function pointer */
+   const struct gl_texture_format *TexFormat;
+
+   FetchTexelFunc FetchTexel;	/* Texel fetch function pointer */
 
    GLboolean IsCompressed;	/* GL_ARB_texture_compression */
    GLuint CompressedSize;	/* GL_ARB_texture_compression */
@@ -832,6 +845,7 @@ struct gl_texture_object {
    GLfloat MaxLod;		/* max lambda, OpenGL 1.2 */
    GLint BaseLevel;		/* min mipmap level, OpenGL 1.2 */
    GLint MaxLevel;		/* max mipmap level, OpenGL 1.2 */
+   GLfloat MaxAnisotropy;	/* GL_EXT_texture_filter_anisotropic */
    GLboolean CompareFlag;	/* GL_SGIX_shadow */
    GLenum CompareOperator;	/* GL_SGIX_shadow */
    GLchan ShadowAmbient;	/* GL_SGIX_shadow_ambient */
@@ -1157,6 +1171,7 @@ struct gl_constants {
    GLint MaxCubeTextureSize;
    GLint MaxTextureLevels;
    GLuint MaxTextureUnits;
+   GLfloat MaxTextureMaxAnisotropy;	/* GL_EXT_texture_filter_anisotropic */
    GLuint MaxArrayLockSize;
    GLint SubPixelBits;
    GLfloat MinPointSize, MaxPointSize;		/* aliased */
@@ -1213,6 +1228,7 @@ struct gl_extensions {
    GLboolean EXT_texture_env_add;
    GLboolean EXT_texture_env_combine;
    GLboolean EXT_texture_env_dot3;
+   GLboolean EXT_texture_filter_anisotropic;
    GLboolean EXT_texture_object;
    GLboolean EXT_texture_lod_bias;
    GLboolean EXT_vertex_array_set;

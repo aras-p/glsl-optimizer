@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.44 2001/03/12 00:48:39 gareth Exp $ */
+/* $Id: texobj.c,v 1.45 2001/03/18 08:53:49 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -79,6 +79,7 @@ _mesa_alloc_texture_object( struct gl_shared_state *shared,
       obj->MaxLod = 1000.0;
       obj->BaseLevel = 0;
       obj->MaxLevel = 1000;
+      obj->MaxAnisotropy = 1.0;
       obj->CompareFlag = GL_FALSE;
       obj->CompareOperator = GL_TEXTURE_LEQUAL_R_SGIX;
       obj->ShadowAmbient = 0;

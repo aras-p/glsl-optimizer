@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.27 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: config.h,v 1.28 2001/03/18 08:53:49 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -124,6 +124,9 @@
 
 /* GL_ARB_texture_compression */
 #define MAX_COMPRESSED_TEXTURE_FORMATS 25
+
+/* GL_EXT_texture_filter_anisotropic */
+#define MAX_TEXTURE_MAX_ANISOTROPY 16.0
 
 
 

@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.36 2001/03/07 05:06:12 brianp Exp $ */
+/* $Id: texstate.c,v 1.37 2001/03/18 08:53:50 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -770,6 +770,19 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          /* (keithh@netcomuk.co.uk) */
          texObj->Priority = CLAMP( params[0], 0.0F, 1.0F );
          break;
+      case GL_TEXTURE_MAX_ANISOTROPY_EXT:
+         if (ctx->Extensions.EXT_texture_filter_anisotropic) {
+	    if (params[0] < 1.0) {
+	       _mesa_error(ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
+	       return;
+	    }
+            texObj->MaxAnisotropy = params[0];
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname)");
+            return;
+         }
+         break;
       case GL_TEXTURE_COMPARE_SGIX:
          if (ctx->Extensions.SGIX_shadow) {
             texObj->CompareFlag = params[0] ? GL_TRUE : GL_FALSE;
@@ -923,32 +936,32 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          *params = img->Border;
          return;
       case GL_TEXTURE_RED_SIZE:
-         *params = img->RedBits;
+         *params = img->TexFormat->RedBits;
          return;
       case GL_TEXTURE_GREEN_SIZE:
-         *params = img->GreenBits;
+         *params = img->TexFormat->GreenBits;
          return;
       case GL_TEXTURE_BLUE_SIZE:
-         *params = img->BlueBits;
+         *params = img->TexFormat->BlueBits;
          return;
       case GL_TEXTURE_ALPHA_SIZE:
-         *params = img->AlphaBits;
+         *params = img->TexFormat->AlphaBits;
          return;
       case GL_TEXTURE_INTENSITY_SIZE:
-         *params = img->IntensityBits;
+         *params = img->TexFormat->IntensityBits;
          return;
       case GL_TEXTURE_LUMINANCE_SIZE:
-         *params = img->LuminanceBits;
+         *params = img->TexFormat->LuminanceBits;
          return;
       case GL_TEXTURE_INDEX_SIZE_EXT:
-         *params = img->IndexBits;
+         *params = img->TexFormat->IndexBits;
          return;
       case GL_DEPTH_BITS:
          /* XXX this isn't in the GL_SGIX_depth_texture spec
           * but seems appropriate.
           */
          if (ctx->Extensions.SGIX_depth_texture)
-            *params = img->DepthBits;
+            *params = img->TexFormat->DepthBits;
          else
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexLevelParameter[if]v(pname)");
          return;

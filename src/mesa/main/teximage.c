@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.84 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: teximage.c,v 1.85 2001/03/18 08:53:49 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,6 +36,7 @@
 #include "mem.h"
 #include "mmath.h"
 #include "state.h"
+#include "texformat.h"
 #include "teximage.h"
 #include "texstate.h"
 #include "mtypes.h"
@@ -559,13 +560,6 @@ clear_teximage_fields(struct gl_texture_image *img)
    img->Format = 0;
    img->Type = 0;
    img->IntFormat = 0;
-   img->RedBits = 0;
-   img->GreenBits = 0;
-   img->BlueBits = 0;
-   img->AlphaBits = 0;
-   img->IntensityBits = 0;
-   img->LuminanceBits = 0;
-   img->IndexBits = 0;
    img->Border = 0;
    img->Width = 0;
    img->Height = 0;
@@ -577,9 +571,10 @@ clear_teximage_fields(struct gl_texture_image *img)
    img->HeightLog2 = 0;
    img->DepthLog2 = 0;
    img->Data = NULL;
+   img->TexFormat = &_mesa_null_texformat;
+   img->FetchTexel = NULL;
    img->IsCompressed = 0;
    img->CompressedSize = 0;
-   img->FetchTexel = NULL;
 }
 
 
@@ -1102,11 +1097,10 @@ void
 _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                    GLenum type, GLvoid *pixels )
 {
-   GET_CURRENT_CONTEXT(ctx);
    const struct gl_texture_unit *texUnit;
    const struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (level < 0 || level >= ctx->Const.MaxTextureLevels) {
@@ -1631,11 +1625,10 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
                      const GLvoid *pixels )
 {
    GLsizei postConvWidth = width;
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->NewState & _NEW_PIXEL)
@@ -1675,11 +1668,10 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
                      const GLvoid *pixels )
 {
    GLsizei postConvWidth = width, postConvHeight = height;
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->NewState & _NEW_PIXEL)
@@ -1720,11 +1712,10 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
                      GLenum format, GLenum type,
                      const GLvoid *pixels )
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->NewState & _NEW_PIXEL)
@@ -2247,7 +2238,6 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
-
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (subtexture_error_check(ctx, 1, target, level, xoffset, 0, 0,
@@ -2283,7 +2273,6 @@ _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
-
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (subtexture_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
@@ -2319,7 +2308,6 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
-
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (subtexture_error_check(ctx, 3, target, level, xoffset, yoffset, zoffset,
@@ -2353,7 +2341,6 @@ _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
    const struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
-
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (level < 0 || level >= ctx->Const.MaxTextureLevels) {

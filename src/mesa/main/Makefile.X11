@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.45 2001/02/16 18:14:41 keithw Exp $
+# $Id: Makefile.X11,v 1.46 2001/03/18 08:53:49 gareth Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -99,6 +99,7 @@ CORE_SOURCES = \
 	scissor.c \
 	state.c \
 	stencil.c \
+	texformat.c \
 	teximage.c \
 	texobj.c \
 	texstate.c \

@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.19 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: macros.h,v 1.20 2001/03/18 08:53:49 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -441,6 +441,33 @@ do {						\
    (n)[1] = (u)[2]*(v)[0] - (u)[0]*(v)[2]; 	\
    (n)[2] = (u)[0]*(v)[1] - (u)[1]*(v)[0];	\
 } while (0)
+
+
+
+/* Generic color packing macros
+ */
+
+#define PACK_COLOR_8888( a, b, c, d )					\
+   (((a) << 24) | ((b) << 16) | ((c) << 8) | (d))
+
+#define PACK_COLOR_888( a, b, c )					\
+   (((a) << 16) | ((b) << 8) | (c))
+
+#define PACK_COLOR_565( a, b, c )					\
+   ((((a) & 0xf8) << 8) | (((b) & 0xfc) << 3) | (((c) & 0xf8) >> 3))
+
+#define PACK_COLOR_1555( a, b, c, d )					\
+   ((((b) & 0xf8) << 7) | (((c) & 0xf8) << 2) | (((d) & 0xf8) >> 3) |	\
+    ((a) ? 0x8000 : 0))
+
+#define PACK_COLOR_4444( a, b, c, d )					\
+   ((((a) & 0xf0) << 8) | (((b) & 0xf0) << 4) | ((c) & 0xf0) | ((d) >> 4))
+
+#define PACK_COLOR_88( a, b )						\
+   (((a) << 8) | (b))
+
+#define PACK_COLOR_332( a, b, c )					\
+   (((a) & 0xe0) | (((b) & 0xe0) >> 3) | (((c) & 0xc0) >> 6))
 
 
 #endif

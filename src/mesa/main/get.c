@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.56 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: get.c,v 1.57 2001/03/18 08:53:49 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1253,6 +1253,17 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = INT_TO_BOOL(ctx->Array.FogCoord.Stride);
 	 break;
 
+      /* GL_EXT_texture_filter_anisotropic */
+      case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
+         if (ctx->Extensions.EXT_texture_filter_anisotropic) {
+	    *params = FLOAT_TO_BOOL(ctx->Const.MaxTextureMaxAnisotropy);
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
+            return;
+         }
+	 break;
+
       /* GL_MESA_sprite_point */
       case GL_SPRITE_POINT_MESA:
          if (ctx->Extensions.MESA_sprite_point) {
@@ -2441,6 +2452,17 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) ctx->Array.FogCoord.Stride;
 	 break;
 
+      /* GL_EXT_texture_filter_anisotropic */
+      case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
+         if (ctx->Extensions.EXT_texture_filter_anisotropic) {
+	    *params = (GLdouble) ctx->Const.MaxTextureMaxAnisotropy;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
+            return;
+         }
+	 break;
+
       /* GL_MESA_sprite_point */
       case GL_SPRITE_POINT_MESA:
          if (ctx->Extensions.MESA_sprite_point) {
@@ -3601,6 +3623,17 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 break;
       case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
 	 *params = (GLfloat) ctx->Array.FogCoord.Stride;
+	 break;
+
+      /* GL_EXT_texture_filter_anisotropic */
+      case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
+         if (ctx->Extensions.EXT_texture_filter_anisotropic) {
+	    *params = ctx->Const.MaxTextureMaxAnisotropy;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+            return;
+         }
 	 break;
 
       /* GL_MESA_sprite_point */
@@ -4811,6 +4844,17 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          }
          else {
             _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+         }
+	 break;
+
+      /* GL_EXT_texture_filter_anisotropic */
+      case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
+         if (ctx->Extensions.EXT_texture_filter_anisotropic) {
+	    *params = (GLint) ctx->Const.MaxTextureMaxAnisotropy;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+            return;
          }
 	 break;
 
