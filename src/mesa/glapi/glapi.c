@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.30 2000/01/31 22:51:44 brianp Exp $ */
+/* $Id: glapi.c,v 1.31 2000/02/02 18:50:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -302,7 +302,7 @@ static GLuint NumExtEntryPoints = 0;
  * We need assembly language in order to accomplish this.
  */
 static void *
-generate_entrypoint(GLuint offset)
+generate_entrypoint(GLuint functionOffset)
 {
 #if defined(USE_X86_ASM)
    /*
