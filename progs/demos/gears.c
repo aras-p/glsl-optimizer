@@ -1,4 +1,4 @@
-/* $Id: gears.c,v 1.2 1999/10/21 16:39:06 brianp Exp $ */
+/* $Id: gears.c,v 1.3 2000/03/28 16:59:39 rjfrank Exp $ */
 
 /*
  * 3-D gear wheels.  This program is in the public domain.
@@ -14,6 +14,9 @@
 
 /*
  * $Log: gears.c,v $
+ * Revision 1.3  2000/03/28 16:59:39  rjfrank
+ * Implemented support for the HP occlusion test extension (osmesa and X)
+ *
  * Revision 1.2  1999/10/21 16:39:06  brianp
  * added -info command line option
  *
@@ -178,12 +181,14 @@ gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 }
 
 static GLfloat view_rotx = 20.0, view_roty = 30.0, view_rotz = 0.0;
-static GLint gear1, gear2, gear3;
+static GLint gear1, gear2, gear3, gear3box;
 static GLfloat angle = 0.0;
 
 static void
 draw(void)
 {
+  GLboolean bRet = GL_TRUE;
+
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix();
@@ -206,7 +211,20 @@ draw(void)
   glPushMatrix();
   glTranslatef(-3.1, 4.2, 0.0);
   glRotatef(-2.0 * angle - 25.0, 0.0, 0.0, 1.0);
-  glCallList(gear3);
+
+#ifdef GL_HP_occlusion_test 
+  glDepthMask(GL_FALSE);
+  glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+  glEnable(GL_OCCLUSION_TEST_HP);
+  glGetBooleanv(GL_OCCLUSION_TEST_RESULT_HP,&bRet);
+  glCallList(gear3box); 
+  glGetBooleanv(GL_OCCLUSION_TEST_RESULT_HP,&bRet);
+  glDepthMask(GL_TRUE);
+  glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+  glDisable(GL_OCCLUSION_TEST_HP);
+#endif
+
+  if (bRet) glCallList(gear3);
   glPopMatrix();
 
   glPopMatrix();
@@ -305,6 +323,16 @@ init(int argc, char *argv[])
   {0.0, 0.8, 0.2, 1.0};
   static GLfloat blue[4] =
   {0.2, 0.2, 1.0, 1.0};
+  static float	cube[8][3] = {
+	{-2.35,-2.35,-0.5},
+	{ 2.35,-2.35,-0.5},
+	{ 2.35, 2.35,-0.5},
+	{-2.35, 2.35,-0.5},
+	{-2.35,-2.35, 0.5},
+	{ 2.35,-2.35, 0.5},
+	{ 2.35, 2.35, 0.5},
+	{-2.35, 2.35, 0.5},
+  };
 
   glLightfv(GL_LIGHT0, GL_POSITION, pos);
   glEnable(GL_CULL_FACE);
@@ -329,6 +357,26 @@ init(int argc, char *argv[])
   glNewList(gear3, GL_COMPILE);
   glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
   gear(1.3, 2.0, 0.5, 10, 0.7);
+  glEndList();
+
+  gear3box = glGenLists(1);
+  glNewList(gear3box, GL_COMPILE);
+  glDisable(GL_LIGHTING);
+  glBegin(GL_QUADS);
+  glVertex3fv(cube[3]); glVertex3fv(cube[2]); 
+	glVertex3fv(cube[1]); glVertex3fv(cube[0]);
+  glVertex3fv(cube[4]); glVertex3fv(cube[5]); 
+	glVertex3fv(cube[6]); glVertex3fv(cube[7]);
+  glVertex3fv(cube[0]); glVertex3fv(cube[1]); 
+	glVertex3fv(cube[5]); glVertex3fv(cube[4]);
+  glVertex3fv(cube[1]); glVertex3fv(cube[2]); 
+	glVertex3fv(cube[6]); glVertex3fv(cube[5]);
+  glVertex3fv(cube[2]); glVertex3fv(cube[3]); 
+	glVertex3fv(cube[7]); glVertex3fv(cube[6]);
+  glVertex3fv(cube[3]); glVertex3fv(cube[0]); 
+	glVertex3fv(cube[4]); glVertex3fv(cube[7]);
+  glEnd();
+  glEnable(GL_LIGHTING);
   glEndList();
 
   glEnable(GL_NORMALIZE);

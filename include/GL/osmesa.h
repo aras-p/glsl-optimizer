@@ -1,4 +1,4 @@
-/* $Id: osmesa.h,v 1.4 2000/01/18 17:29:18 brianp Exp $ */
+/* $Id: osmesa.h,v 1.5 2000/03/28 16:59:39 rjfrank Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -94,15 +94,6 @@ extern "C" {
 #define OSMESA_HEIGHT		0x21
 #define OSMESA_FORMAT		0x22
 #define OSMESA_TYPE		0x23
-
-
-/*
- * Accepted by OSMesaGetBooleanv:
- * New in version 3.3
- */
-/* This is based on the HP proposed extension */
-#define OSMESA_OCCLUSION_TEST_RESULT_HP	0x30
-
 
 
 typedef struct osmesa_context *OSMesaContext;
@@ -212,16 +203,6 @@ GLAPI void GLAPIENTRY OSMesaGetIntegerv( GLint pname, GLint *value );
 
 
 /*
- * Return a boolean value like glGetBooleanv.
- * Input:  pname -
- *                 OSMESA_OCCLUSION_TEST_RESULT_HP  return current test result
- *         value - pointer to boolean in which to return result.
- */
-GLAPI void GLAPIENTRY OSMesaGetBooleanv( GLint pname, GLboolean *value );
-
-
-
-/*
  * Return the depth buffer associated with an OSMesa context.
  * Input:  c - the OSMesa context
  * Output:  width, height - size of buffer in pixels
@@ -237,6 +218,20 @@ GLAPI GLboolean GLAPIENTRY OSMesaGetDepthBuffer( OSMesaContext c,
                                                  void **buffer );
 
 
+/*
+ * Return the color buffer associated with an OSMesa context.
+ * Input:  c - the OSMesa context
+ * Output:  width, height - size of buffer in pixels
+ *          format - buffer format (OSMESA_FORMAT)
+ *          buffer - pointer to depth buffer values
+ * Return:  GL_TRUE or GL_FALSE to indicate success or failure.
+ *
+ * New in Mesa 3.3.
+ */
+GLAPI GLboolean GLAPIENTRY OSMesaGetColorBuffer( OSMesaContext c,
+                                                 GLint *width, GLint *height,
+                                                 GLint *format,
+                                                 void **buffer );
 
 
 #if defined(__BEOS__) || defined(__QUICKDRAW__)

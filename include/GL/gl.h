@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.35 2000/03/23 16:54:50 brianp Exp $ */
+/* $Id: gl.h,v 1.36 2000/03/28 16:59:39 rjfrank Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2095,6 +2095,16 @@ GLAPI void GLAPIENTRY glUnlockArraysEXT( void );
 
 #endif /* GL_EXT_compiled_vertex_array */
 
+/*
+ * 137. GL_HP_occlusion_test
+ */
+#ifndef GL_HP_occlusion_test
+#define GL_HP_occlusion_test 1
+
+#define GL_OCCLUSION_TEST_HP                    0x8165
+#define GL_OCCLUSION_TEST_RESULT_HP             0x8166
+
+#endif /* GL_HP_occlusion_test */
 
 
 /*

@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.20 2000/03/11 23:23:26 brianp Exp $ */
+/* $Id: extensions.c,v 1.21 2000/03/28 16:59:39 rjfrank Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -130,7 +130,7 @@ static int set_extension( GLcontext *ctx, const char *name, GLint state )
    if (i == ctx->Extensions.ext_list)
       return 1;
 
-   if (i->enabled && !(i->enabled & ALWAYS_ENABLED)) {
+   if (!(i->enabled & ALWAYS_ENABLED)) {
       if (i->notify) i->notify( ctx, state );      
       i->enabled = state;
    }

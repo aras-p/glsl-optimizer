@@ -1,4 +1,4 @@
-/* $Id: enums.c,v 1.7 2000/03/07 17:54:58 brianp Exp $ */
+/* $Id: enums.c,v 1.8 2000/03/28 16:59:39 rjfrank Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -768,6 +768,9 @@ enum_elt all_enums[] =
    { "GL_ACTIVE_TEXTURE_ARB", 0x84E0 },
    { "GL_CLIENT_ACTIVE_TEXTURE_ARB", 0x84E1 },
    { "GL_MAX_TEXTURE_UNITS_ARB", 0x84E2 },
+
+   { "GL_OCCLUSION_TEST_HP", 0x8165 },
+   { "GL_OCCLUSION_TEST_RESULT_HP", 0x8166 },
 
    { "GL_TEXTURE_FILTER_CONTROL_EXT", 0x8500 },
    { "GL_TEXTUER_LOD_BIAS_EXT", 0x8501 },

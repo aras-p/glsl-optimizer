@@ -1,4 +1,4 @@
-/* $Id: osdemo.c,v 1.3 2000/03/06 23:56:21 brianp Exp $ */
+/* $Id: osdemo.c,v 1.4 2000/03/28 16:59:39 rjfrank Exp $ */
 
 /*
  * Demo of off-screen Mesa rendering
@@ -75,24 +75,26 @@ static void render_image( void )
    glutSolidCone(1.0, 2.0, 16, 1);
    glPopMatrix();
 
-#ifdef OSMESA_OCCLUSION_TEST_RESULT_HP
+#ifdef GL_HP_occlusion_test
    {
       GLboolean bRet;
-      OSMesaGetBooleanv(OSMESA_OCCLUSION_TEST_RESULT_HP,&bRet);
       glDepthMask(GL_FALSE);
       glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+      glEnable(GL_OCCLUSION_TEST_HP);
+      glGetBooleanv(GL_OCCLUSION_TEST_RESULT_HP,&bRet);
 
       glPushMatrix();
-      glTranslatef(0.75, 0.0, -1.0); 
+      glTranslatef(0.75, 0.0, -1.0);
       glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, blue_mat );
       glutSolidSphere(1.0, 20, 20);
       glPopMatrix();
 
-      OSMesaGetBooleanv(OSMESA_OCCLUSION_TEST_RESULT_HP,&bRet);
+      glGetBooleanv(GL_OCCLUSION_TEST_RESULT_HP,&bRet);
       printf("Occlusion test 1 (result should be 1): %d\n",bRet);
 
       glDepthMask(GL_TRUE);
       glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+      glDisable(GL_OCCLUSION_TEST_HP);
    }
 #endif
 
@@ -102,26 +104,28 @@ static void render_image( void )
    glutSolidSphere(1.0, 20, 20);
    glPopMatrix();
 
-#ifdef OSMESA_OCCLUSION_TEST_RESULT_HP
+#ifdef GL_HP_occlusion_test
    {
       GLboolean bRet;
 
-      OSMesaGetBooleanv(OSMESA_OCCLUSION_TEST_RESULT_HP,&bRet);
       glDepthMask(GL_FALSE);
       glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+      glEnable(GL_OCCLUSION_TEST_HP);
+      glGetBooleanv(GL_OCCLUSION_TEST_RESULT_HP,&bRet);
 
       /* draw a sphere inside the previous sphere */
       glPushMatrix();
-      glTranslatef(0.75, 0.0, -1.0); 
+      glTranslatef(0.75, 0.0, -1.0);
       glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, blue_mat );
       glutSolidSphere(0.5, 20, 20);
       glPopMatrix();
 
-      OSMesaGetBooleanv(OSMESA_OCCLUSION_TEST_RESULT_HP,&bRet);
+      glGetBooleanv(GL_OCCLUSION_TEST_RESULT_HP,&bRet);
       printf("Occlusion test 2 (result should be 0): %d\n",bRet);
 
       glDepthMask(GL_TRUE);
       glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+      glDisable(GL_OCCLUSION_TEST_HP);
    }
 #endif
 
