@@ -1,4 +1,4 @@
-/* $Id: nvfragparse.c,v 1.10 2003/02/25 20:07:43 brianp Exp $ */
+/* $Id: nvfragparse.c,v 1.11 2003/02/26 01:28:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -312,23 +312,6 @@ Peek_Token(struct parse_state *parseState, GLubyte *token)
 }
 
 
-/**
- * String equality test
- */
-static GLboolean
-StrEq(const GLubyte *a, const char *b)
-{
-   GLint i;
-   for (i = 0; a[i] && b[i] && a[i] == (GLubyte) b[i]; i++)
-      ;
-   if (a[i] == 0 && b[i] == 0)
-      return GL_TRUE;
-   else
-      return GL_FALSE;
-}
-
-
-
 /**********************************************************************/
 
 static const char *InputRegisters[MAX_NV_FRAGMENT_PROGRAM_INPUTS + 1] = {
@@ -430,9 +413,7 @@ DummyRegisterNumber(GLuint r)
 }
 
 
-
 /**********************************************************************/
-
 
 /**
  * Try to match 'pattern' as the next token after any whitespace/comments.
@@ -522,51 +503,39 @@ Parse_ScalarConstant(struct parse_state *parseState, GLfloat *number)
 static GLboolean
 Parse_VectorConstant(struct parse_state *parseState, GLfloat *vec)
 {
-   GLubyte token[100];
-
-   if (!Parse_String(parseState, "{"))
-      RETURN_ERROR1("Expected {");
+   /* "{" was already consumed */
 
    if (!Parse_ScalarConstant(parseState, vec+0))  /* X */
       return GL_FALSE;
 
-   if (!Parse_Token(parseState, token))  /* , or } */
-      return GL_FALSE;
-
-   if (token[0] == '}') {
+   if (Parse_String(parseState, "}")) {
       vec[1] = vec[2] = vec[3] = vec[0];
       return GL_TRUE;
    }
 
-   if (token[0] != ',')
+   if (!Parse_String(parseState, ","))
       RETURN_ERROR1("Expected comma in vector constant");
 
    if (!Parse_ScalarConstant(parseState, vec+1))  /* Y */
       return GL_FALSE;
 
-   if (!Parse_Token(parseState, token))  /* , or } */
-      return GL_FALSE;
-
-   if (token[0] == '}') {
+   if (Parse_String(parseState, "}")) {
       vec[2] = vec[3] = vec[1];
       return GL_TRUE;
    }
 
-   if (token[0] != ',')
+   if (!Parse_String(parseState, ","))
       RETURN_ERROR1("Expected comma in vector constant");
 
    if (!Parse_ScalarConstant(parseState, vec+2))  /* Z */
       return GL_FALSE;
 
-   if (!Parse_Token(parseState, token))  /* , or } */
-      return GL_FALSE;
-
-   if (token[0] == '}') {
+   if (Parse_String(parseState, "}")) {
       vec[3] = vec[2];
       return GL_TRUE;
    }
 
-   if (token[0] != ',')
+   if (!Parse_String(parseState, ","))
       RETURN_ERROR1("Expected comma in vector constant");
 
    if (!Parse_ScalarConstant(parseState, vec+3))  /* W */
@@ -586,10 +555,7 @@ Parse_VectorConstant(struct parse_state *parseState, GLfloat *vec)
 static GLuint
 Parse_VectorOrScalarConstant(struct parse_state *parseState, GLfloat *vec)
 {
-   GLubyte token[100];
-   if (!Peek_Token(parseState, token))
-      RETURN_ERROR;
-   if (token[0] == '{') {
+   if (Parse_String(parseState, "{")) {
       return Parse_VectorConstant(parseState, vec);
    }
    else {
@@ -658,8 +624,8 @@ Parse_TextureImageId(struct parse_state *parseState,
 
 
 /**
- * Parse a swizzle suffix like .x or .z or .wxyz or .xxyy etc and return
- * the swizzle indexes.
+ * Parse a scalar suffix like .x, .y, .z or .w or parse a swizzle suffix
+ * like .wxyz, .xxyy, etc and return the swizzle indexes.
  */
 static GLboolean
 Parse_SwizzleSuffix(const GLubyte *token, GLuint swizzle[4])
@@ -703,36 +669,28 @@ static GLboolean
 Parse_CondCodeMask(struct parse_state *parseState,
                    struct fp_dst_register *dstReg)
 {
-   GLubyte token[100];
-
-   if (!Parse_Token(parseState, token))
-      RETURN_ERROR;
-
-   if (StrEq(token, "EQ"))
+   if (Parse_String(parseState, "EQ"))
       dstReg->CondMask = COND_EQ;
-   else if (StrEq(token, "GE"))
+   else if (Parse_String(parseState, "GE"))
       dstReg->CondMask = COND_GE;
-   else if (StrEq(token, "GT"))
+   else if (Parse_String(parseState, "GT"))
       dstReg->CondMask = COND_GT;
-   else if (StrEq(token, "LE"))
+   else if (Parse_String(parseState, "LE"))
       dstReg->CondMask = COND_LE;
-   else if (StrEq(token, "LT"))
+   else if (Parse_String(parseState, "LT"))
       dstReg->CondMask = COND_LT;
-   else if (StrEq(token, "NE"))
+   else if (Parse_String(parseState, "NE"))
       dstReg->CondMask = COND_NE;
-   else if (StrEq(token, "TR"))
+   else if (Parse_String(parseState, "TR"))
       dstReg->CondMask = COND_TR;
-   else if (StrEq(token, "FL"))
+   else if (Parse_String(parseState, "FL"))
       dstReg->CondMask = COND_FL;
    else
       RETURN_ERROR1("Invalid condition code mask");
 
    /* look for optional .xyzw swizzle */
-   if (!Peek_Token(parseState, token))
-      RETURN_ERROR;
-
-   if (token[0] == '.') {
-      Parse_String(parseState, "."); /* consume '.' */
+   if (Parse_String(parseState, ".")) {
+      GLubyte token[100];
       if (!Parse_Token(parseState, token))  /* get xyzw suffix */
          RETURN_ERROR;
 
@@ -774,19 +732,16 @@ Parse_TempReg(struct parse_state *parseState, GLint *tempRegNum)
 }
 
 
+/**
+ * Parse a write-only dummy register: RC or HC.
+ */
 static GLboolean
 Parse_DummyReg(struct parse_state *parseState, GLint *regNum)
 {
-   GLubyte token[100];
-
-   /* Should be 'RC' or 'HC' */
-   if (!Parse_Token(parseState, token))
-      RETURN_ERROR;
-
-   if (_mesa_strcmp((const char *) token, "RC")) {
+   if (Parse_String(parseState, "RC")) {
        *regNum = FP_DUMMY_REG_START;
    }
-   else if (_mesa_strcmp((const char *) token, "HC")) {
+   else if (Parse_String(parseState, "HC")) {
        *regNum = FP_DUMMY_REG_START + 1;
    }
    else {
@@ -805,11 +760,8 @@ Parse_ProgramParamReg(struct parse_state *parseState, GLint *regNum)
 {
    GLubyte token[100];
 
-   if (!Parse_String(parseState, "p"))
-      RETURN_ERROR1("Expected p");
-
-   if (!Parse_String(parseState, "["))
-      RETURN_ERROR1("Expected [");
+   if (!Parse_String(parseState, "p["))
+      RETURN_ERROR1("Expected p[");
 
    if (!Parse_Token(parseState, token))
       RETURN_ERROR;
@@ -836,25 +788,21 @@ Parse_ProgramParamReg(struct parse_state *parseState, GLint *regNum)
  * Parse f[name]  - fragment input register
  */
 static GLboolean
-Parse_AttribReg(struct parse_state *parseState, GLint *tempRegNum)
+Parse_FragReg(struct parse_state *parseState, GLint *tempRegNum)
 {
    GLubyte token[100];
    GLint j;
 
-   /* Match 'f' */
-   if (!Parse_String(parseState, "f"))
-      RETURN_ERROR1("Expected f");
-
-   /* Match '[' */
-   if (!Parse_String(parseState, "["))
-      RETURN_ERROR1("Expected [");
+   /* Match 'f[' */
+   if (!Parse_String(parseState, "f["))
+      RETURN_ERROR1("Expected f[");
 
    /* get <name> and look for match */
    if (!Parse_Token(parseState, token)) {
       RETURN_ERROR;
    }
    for (j = 0; InputRegisters[j]; j++) {
-      if (StrEq(token, InputRegisters[j])) {
+      if (_mesa_strcmp((const char *) token, InputRegisters[j]) == 0) {
          *tempRegNum = FP_INPUT_REG_START + j;
          parseState->inputsRead |= (1 << j);
          break;
@@ -889,7 +837,7 @@ Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
 
    /* try to match an output register name */
    for (j = 0; OutputRegisters[j]; j++) {
-      if (StrEq(token, OutputRegisters[j])) {
+      if (_mesa_strcmp((const char *) token, OutputRegisters[j]) == 0) {
          *outputRegNum = FP_OUTPUT_REG_START + j;
          parseState->outputsWritten |= (1 << j);
          break;
@@ -937,15 +885,9 @@ Parse_MaskedDstReg(struct parse_state *parseState,
    }
 
    /* Parse optional write mask */
-   if (!Peek_Token(parseState, token))
-      RETURN_ERROR;
-
-   if (token[0] == '.') {
+   if (Parse_String(parseState, ".")) {
       /* got a mask */
       GLint k = 0;
-
-      if (!Parse_String(parseState, "."))
-         RETURN_ERROR1("Expected .");
 
       if (!Parse_Token(parseState, token))  /* get xyzw writemask */
          RETURN_ERROR;
@@ -975,9 +917,6 @@ Parse_MaskedDstReg(struct parse_state *parseState,
          RETURN_ERROR1("Bad writemask character");
       }
 
-      /* peek optional cc mask */
-      if (!Peek_Token(parseState, token))
-         RETURN_ERROR;
    }
    else {
       dstReg->WriteMask[0] = GL_TRUE;
@@ -987,11 +926,9 @@ Parse_MaskedDstReg(struct parse_state *parseState,
    }
 
    /* optional condition code mask */
-   if (token[0] == '(') {
+   if (Parse_String(parseState, "(")) {
       /* ("EQ" | "GE" | "GT" | "LE" | "LT" | "NE" | "TR" | "FL".x|y|z|w) */
       /* ("EQ" | "GE" | "GT" | "LE" | "LT" | "NE" | "TR" | "FL".[xyzw]) */
-      Parse_String(parseState, "(");
-
       if (!Parse_CondCodeMask(parseState, dstReg))
          RETURN_ERROR;
 
@@ -1054,22 +991,44 @@ Parse_VectorSrc(struct parse_state *parseState,
    if (!Peek_Token(parseState, token))
       RETURN_ERROR;
 
-   /* Src reg can be R<n>, H<n> or a named fragment attrib */
+   /* Src reg can be Rn, Hn, f[n], p[n], a named parameter, a scalar
+    * literal or vector literal.
+    */
    if (token[0] == 'R' || token[0] == 'H') {
       if (!Parse_TempReg(parseState, &srcReg->Register))
          RETURN_ERROR;
    }
    else if (token[0] == 'f') {
-      if (!Parse_AttribReg(parseState, &srcReg->Register))
+      /* XXX this might be an identier! */
+      if (!Parse_FragReg(parseState, &srcReg->Register))
          RETURN_ERROR;
    }
    else if (token[0] == 'p') {
+      /* XXX this might be an identier! */
       if (!Parse_ProgramParamReg(parseState, &srcReg->Register))
          RETURN_ERROR;
    }
    else if (IsLetter(token[0])){
-      /* XXX parse defined/declared constant or vector literal */
-
+      /* XXX named constant */
+      GLubyte ident[100];
+      if (!Parse_Identifier(parseState, ident))
+         RETURN_ERROR;
+      srcReg->Register = 0; /* XXX fix */
+   }
+   else if (IsDigit(token[0]) || token[0] == '-' || token[0] == '+'){
+      /* XXX literal scalar constant */
+      GLfloat values[4];
+      if (!Parse_ScalarConstant(parseState, values))
+         RETURN_ERROR;
+      srcReg->Register = 0; /* XXX fix */
+   }
+   else if (token[0] == '{'){
+      /* XXX literal vector constant */
+      GLfloat values[4];
+      (void) Parse_String(parseState, "{");
+      if (!Parse_VectorConstant(parseState, values))
+         RETURN_ERROR;
+      srcReg->Register = 0; /* XXX fix */
    }
    else {
       RETURN_ERROR2("Bad source register name", token);
@@ -1082,11 +1041,7 @@ Parse_VectorSrc(struct parse_state *parseState,
    srcReg->Swizzle[3] = 3;
 
    /* Look for optional swizzle suffix */
-   if (!Peek_Token(parseState, token))
-      RETURN_ERROR;
-   if (token[0] == '.') {
-      (void) Parse_String(parseState, ".");  /* consume . */
-
+   if (Parse_String(parseState, ".")) {
       if (!Parse_Token(parseState, token))
          RETURN_ERROR;
 
@@ -1110,17 +1065,15 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
    GLubyte token[100];
 
    /* check for '-' */
-   if (!Peek_Token(parseState, token))
-      RETURN_ERROR;
-   if (token[0] == '-') {
+   if (Parse_String(parseState, "-")) {
       srcReg->NegateBase = GL_TRUE;
-      (void) Parse_String(parseState, "-"); /* consume '-' */
-      if (!Peek_Token(parseState, token))
-         RETURN_ERROR;
    }
    else {
       srcReg->NegateBase = GL_FALSE;
    }
+
+   if (!Peek_Token(parseState, token))
+      RETURN_ERROR;
 
    /* Src reg can be R<n>, H<n> or a named fragment attrib */
    if (token[0] == 'R' || token[0] == 'H') {
@@ -1128,7 +1081,7 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
          RETURN_ERROR;
    }
    else if (token[0] == 'f') {
-      if (!Parse_AttribReg(parseState, &srcReg->Register))
+      if (!Parse_FragReg(parseState, &srcReg->Register))
          RETURN_ERROR;
    }
    else {
@@ -1168,11 +1121,10 @@ static GLboolean
 Parse_InstructionSequence(struct parse_state *parseState,
                           struct fp_instruction program[])
 {
-   GLubyte token[100];
-
    while (1) {
       struct fp_instruction *inst = program + parseState->numInst;
       struct instruction_pattern instMatch;
+      GLubyte token[100];
 
       /* Initialize the instruction */
       inst->SrcReg[0].Register = -1;
@@ -1180,15 +1132,8 @@ Parse_InstructionSequence(struct parse_state *parseState,
       inst->SrcReg[2].Register = -1;
       inst->DstReg.Register = -1;
 
-      /* get token */
-      if (!Parse_Token(parseState, token)) {
-         inst->Opcode = FP_OPCODE_END;
-         parseState->numInst++;
-         break;
-      }
-
       /* special instructions */
-      if (StrEq(token, "DEFINE")) {
+      if (Parse_String(parseState, "DEFINE")) {
          GLubyte id[100];
          GLfloat value[7];  /* yes, 7 to be safe */
          if (!Parse_Identifier(parseState, id))
@@ -1204,15 +1149,12 @@ Parse_InstructionSequence(struct parse_state *parseState,
          _mesa_add_symbol(&(parseState->program->SymbolTable),
                           (const char *) id, Definition, value);
       }
-      else if (StrEq(token, "DECLARE")) {
+      else if (Parse_String(parseState, "DECLARE")) {
          GLubyte id[100];
          GLfloat value[7] = {0, 0, 0, 0, 0, 0, 0};  /* yes, to be safe */
          if (!Parse_Identifier(parseState, id))
             RETURN_ERROR;
-         if (!Peek_Token(parseState, token))
-            RETURN_ERROR;
-         if (token[0] == '=') {
-            Parse_String(parseState, "=");
+         if (Parse_String(parseState, "=")) {
             if (!Parse_VectorOrScalarConstant(parseState, value))
                RETURN_ERROR;
             printf("Parsed DECLARE %s = %f %f %f %f\n", id,
@@ -1227,7 +1169,14 @@ Parse_InstructionSequence(struct parse_state *parseState,
                           (const char *) id, Declaration, value);
       }
       else {
-         /* arithmetic instruction */
+         /* general/arithmetic instruction */
+
+         /* get token */
+         if (!Parse_Token(parseState, token)) {
+            inst->Opcode = FP_OPCODE_END;
+            parseState->numInst++;
+            break;
+         }
 
          /* try to find matching instuction */
          instMatch = MatchInstruction(token);
