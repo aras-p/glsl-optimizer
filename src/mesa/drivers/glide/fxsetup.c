@@ -161,35 +161,6 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
 
    ti->baseLevelInternalFormat = tObj->Image[minl]->Format;
 
-   switch (tObj->WrapS) {
-   case GL_MIRRORED_REPEAT:
-      ti->sClamp = GR_TEXTURECLAMP_MIRROR_EXT;
-      break;
-   case GL_CLAMP_TO_EDGE: /* CLAMP discarding border */
-   case GL_CLAMP:
-      ti->sClamp = GR_TEXTURECLAMP_CLAMP;
-      break;
-   case GL_REPEAT:
-      ti->sClamp = GR_TEXTURECLAMP_WRAP;
-      break;
-   default:
-      ;				/* silence compiler warning */
-   }
-   switch (tObj->WrapT) {
-   case GL_MIRRORED_REPEAT:
-      ti->tClamp = GR_TEXTURECLAMP_MIRROR_EXT;
-      break;
-   case GL_CLAMP_TO_EDGE: /* CLAMP discarding border */
-   case GL_CLAMP:
-      ti->tClamp = GR_TEXTURECLAMP_CLAMP;
-      break;
-   case GL_REPEAT:
-      ti->tClamp = GR_TEXTURECLAMP_WRAP;
-      break;
-   default:
-      ;				/* silence compiler warning */
-   }
-
    ti->validated = GL_TRUE;
 
    ti->info.data = NULL;

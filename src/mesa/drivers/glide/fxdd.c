@@ -1422,7 +1422,6 @@ fxDDDestroyFxMesaContext(fxMesaContext fxMesa)
       FREE(fxMesa->state);
    if (fxMesa->fogTable)
       FREE(fxMesa->fogTable);
-   fxTMClose(fxMesa);
    fxFreeVB(fxMesa->glCtx);
 }
 

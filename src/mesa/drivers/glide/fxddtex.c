@@ -285,7 +285,7 @@ fxDDTexParam(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj,
       default:
 	 break;
       }
-      fxTexInvalidate(ctx, tObj);
+      fxMesa->new_state |= FX_NEW_TEXTURING;
       break;
 
    case GL_TEXTURE_WRAP_S:
@@ -666,9 +666,8 @@ fxIsTexSupported(GLenum target, GLint internalFormat,
 
 static void
 fetch_intensity8(const struct gl_texture_image *texImage,
-		 GLint i, GLint j, GLint k, GLvoid * texelOut)
+		 GLint i, GLint j, GLint k, GLchan *rgba)
 {
-   GLchan *rgba = (GLchan *) texelOut;
    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    const GLubyte *texel;
 
@@ -685,9 +684,8 @@ fetch_intensity8(const struct gl_texture_image *texImage,
 
 static void
 fetch_luminance8(const struct gl_texture_image *texImage,
-		 GLint i, GLint j, GLint k, GLvoid * texelOut)
+		 GLint i, GLint j, GLint k, GLchan *rgba)
 {
-   GLchan *rgba = (GLchan *) texelOut;
    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    const GLubyte *texel;
 
@@ -704,9 +702,8 @@ fetch_luminance8(const struct gl_texture_image *texImage,
 
 static void
 fetch_alpha8(const struct gl_texture_image *texImage,
-	     GLint i, GLint j, GLint k, GLvoid * texelOut)
+	     GLint i, GLint j, GLint k, GLchan *rgba)
 {
-   GLchan *rgba = (GLchan *) texelOut;
    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    const GLubyte *texel;
 
@@ -723,9 +720,8 @@ fetch_alpha8(const struct gl_texture_image *texImage,
 
 static void
 fetch_index8(const struct gl_texture_image *texImage,
-	     GLint i, GLint j, GLint k, GLvoid * texelOut)
+	     GLint i, GLint j, GLint k, GLchan *indexOut)
 {
-   GLchan *indexOut = (GLchan *) texelOut;
    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    const GLubyte *texel;
 
@@ -739,9 +735,8 @@ fetch_index8(const struct gl_texture_image *texImage,
 
 static void
 fetch_luminance8_alpha8(const struct gl_texture_image *texImage,
-			GLint i, GLint j, GLint k, GLvoid * texelOut)
+			GLint i, GLint j, GLint k, GLchan *rgba)
 {
-   GLchan *rgba = (GLchan *) texelOut;
    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    const GLubyte *texel;
 
@@ -758,9 +753,8 @@ fetch_luminance8_alpha8(const struct gl_texture_image *texImage,
 
 static void
 fetch_r5g6b5(const struct gl_texture_image *texImage,
-	     GLint i, GLint j, GLint k, GLvoid * texelOut)
+	     GLint i, GLint j, GLint k, GLchan *rgba)
 {
-   GLchan *rgba = (GLchan *) texelOut;
    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    const GLushort *texel;
 
@@ -777,9 +771,8 @@ fetch_r5g6b5(const struct gl_texture_image *texImage,
 
 static void
 fetch_r4g4b4a4(const struct gl_texture_image *texImage,
-	       GLint i, GLint j, GLint k, GLvoid * texelOut)
+	       GLint i, GLint j, GLint k, GLchan *rgba)
 {
-   GLchan *rgba = (GLchan *) texelOut;
    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    const GLushort *texel;
 
@@ -796,9 +789,8 @@ fetch_r4g4b4a4(const struct gl_texture_image *texImage,
 
 static void
 fetch_r5g5b5a1(const struct gl_texture_image *texImage,
-	       GLint i, GLint j, GLint k, GLvoid * texelOut)
+	       GLint i, GLint j, GLint k, GLchan *rgba)
 {
-   GLchan *rgba = (GLchan *) texelOut;
    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    const GLushort *texel;
 
@@ -815,9 +807,8 @@ fetch_r5g5b5a1(const struct gl_texture_image *texImage,
 
 static void
 fetch_a8r8g8b8(const struct gl_texture_image *texImage,
-	       GLint i, GLint j, GLint k, GLvoid * texelOut)
+	       GLint i, GLint j, GLint k, GLchan *rgba)
 {
-    GLchan *rgba = (GLchan *) texelOut;
     const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
     const GLuint *texel;
 
@@ -1167,7 +1158,7 @@ fxGlideFormat(GLint mesaFormat)
 }
 
 
-static FetchTexelFunc
+static FetchTexelFuncC
 fxFetchFunction(GLint mesaFormat)
 {
    switch (mesaFormat) {
@@ -1397,7 +1388,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    }
 
    ti->info.format = mml->glideFormat;
-   texImage->FetchTexel = fxFetchFunction(texImage->TexFormat->MesaFormat);
+   texImage->FetchTexelc = fxFetchFunction(texImage->TexFormat->MesaFormat);
 
    /* [dBorca]
     * Hack alert: unsure...
@@ -1608,7 +1599,7 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
 #endif
 
    ti->info.format = mml->glideFormat;
-   texImage->FetchTexel = fxFetchFunction(texImage->TexFormat->MesaFormat);
+   texImage->FetchTexelc = fxFetchFunction(texImage->TexFormat->MesaFormat);
 
    /* [dBorca] Hack alert:
     * what about different size/texel? other anomalies? SW rescaling?

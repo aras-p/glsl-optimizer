@@ -773,10 +773,6 @@ fxTMFreeTexture(fxMesaContext fxMesa, struct gl_texture_object *tObj)
    for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
       struct gl_texture_image *texImage = tObj->Image[i];
       if (texImage) {
-         if (texImage->Data) {
-            MESA_PBUFFER_FREE(texImage->Data);
-            texImage->Data = NULL;
-         }
          if (texImage->DriverData) {
             FREE(texImage->DriverData);
             texImage->DriverData = NULL;

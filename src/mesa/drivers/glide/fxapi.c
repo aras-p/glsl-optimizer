@@ -784,13 +784,21 @@ fxMesaDestroyContext(fxMesaContext fxMesa)
 
    glbTotNumCtx--;
 
+   /* [dBorca]
+    * close the hardware first, so we can debug
+    * atexit problems (memory leaks, etc).
+    * NB: fxDDDestroyFxMesaContext must be called
+    * before _mesa_destroy_context; which must be
+    * called before fxTMClose!
+    */
+   grSstWinClose(fxMesa->glideContext);
+   fxCloseHardware();
+
    fxDDDestroyFxMesaContext(fxMesa);
    _mesa_destroy_visual(fxMesa->glVis);
    _mesa_destroy_context(fxMesa->glCtx);
    _mesa_destroy_framebuffer(fxMesa->glBuffer);
-
-   grSstWinClose(fxMesa->glideContext);
-   fxCloseHardware();
+   fxTMClose(fxMesa);
 
    FREE(fxMesa);
 
