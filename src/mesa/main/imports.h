@@ -198,14 +198,14 @@ static INLINE GLfloat LOG2(GLfloat x)
  */
 static INLINE GLfloat LOG2(GLfloat val)
 {
-   GLint *exp_ptr = (GLint *) &val;
-   GLint x = *exp_ptr;
-   const GLint log_2 = ((x >> 23) & 255) - 128;
-   x &= ~(255 << 23);
-   x += 127 << 23;
-   *exp_ptr = x;
-   val = ((-1.0f/3) * val + 2) * val - 2.0f/3;
-   return val + log_2;
+   fi_type num;
+   GLint log_2;
+   num.f = val;
+   log_2 = ((num.i >> 23) & 255) - 128;
+   num.i &= ~(255 << 23);
+   num.i += 127 << 23;
+   num.f = ((-1.0f/3) * num.f + 2) * num.f - 2.0f/3;
+   return num.f + log_2;
 }
 #elif defined(XFree86LOADER) && defined(IN_MODULE)
 #define LOG2(x) ((GLfloat) (xf86log(x) * 1.442695))
