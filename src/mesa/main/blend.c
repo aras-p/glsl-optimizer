@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.2 1999/08/19 15:48:01 brianp Exp $ */
+/* $Id: blend.c,v 1.3 1999/09/30 11:18:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -203,6 +203,11 @@ gl_BlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB, GLenum dfactorRGB,
 
    ctx->Color.BlendFunc = NULL;
    ctx->NewState |= NEW_RASTER_OPS;
+
+   if (ctx->Driver.BlendFuncSeparate) {
+      (*ctx->Driver.BlendFuncSeparate)( ctx, sfactorRGB, dfactorRGB,
+					sfactorA, dfactorA );
+   }
 }
 
 
@@ -243,6 +248,9 @@ void gl_BlendEquation( GLcontext *ctx, GLenum mode )
 
    ctx->Color.BlendFunc = NULL;
    ctx->NewState |= NEW_RASTER_OPS;
+   
+   if (ctx->Driver.BlendEquation)
+      ctx->Driver.BlendEquation( ctx, mode );
 }
 
 

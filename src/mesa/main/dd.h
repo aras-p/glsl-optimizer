@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.2 1999/09/18 20:41:22 keithw Exp $ */
+/* $Id: dd.h,v 1.3 1999/09/30 11:18:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -563,6 +563,23 @@ struct dd_function_table {
     */
 
 
+   GLboolean (*IsTextureResident)( GLcontext *ctx, 
+				   struct gl_texture_object *t );
+   /*
+    * Allows the driver to implement the AreTexturesResident tests without
+    * knowing about Mesa's internal hash tables for textures.
+    */
+
+   void (*PrioritizeTexture)( GLcontext *ctx, 
+			      struct gl_texture_object *t,
+			      GLclampf priority );
+   /*
+    * Notify driver of priority change for a texture.
+    */
+
+
+
+
    /***
     *** NEW in Mesa 3.x
     ***/
@@ -616,7 +633,11 @@ struct dd_function_table {
     * the driver's UpdateState() function must do.
     */
    void (*AlphaFunc)(GLcontext *ctx, GLenum func, GLclampf ref);
+   void (*BlendEquation)(GLcontext *ctx, GLenum mode);
    void (*BlendFunc)(GLcontext *ctx, GLenum sfactor, GLenum dfactor);
+   void (*BlendFuncSeparate)( GLcontext *ctx, GLenum sfactorRGB, 
+			      GLenum dfactorRGB, GLenum sfactorA,
+			      GLenum dfactorA );
    void (*ClearDepth)(GLcontext *ctx, GLclampd d);
    void (*CullFace)(GLcontext *ctx, GLenum mode);
    void (*FrontFace)(GLcontext *ctx, GLenum mode);
@@ -626,6 +647,9 @@ struct dd_function_table {
    void (*Enable)(GLcontext* ctx, GLenum cap, GLboolean state);
    void (*Fogfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);
    void (*Hint)(GLcontext *ctx, GLenum target, GLenum mode);
+   void (*Lightfv)(GLcontext *ctx, GLenum light,
+		   GLenum pname, const GLfloat *params, GLint nparams );
+   void (*LightModelfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);
    void (*PolygonMode)(GLcontext *ctx, GLenum face, GLenum mode);
    void (*Scissor)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
    void (*ShadeModel)(GLcontext *ctx, GLenum mode);

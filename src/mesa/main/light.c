@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.2 1999/09/18 20:41:23 keithw Exp $ */
+/* $Id: light.c,v 1.3 1999/09/30 11:18:22 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -168,6 +168,9 @@ void gl_Lightfv( GLcontext *ctx,
          break;
    }
 
+   if (ctx->Driver.Lightfv)
+      ctx->Driver.Lightfv( ctx, light, pname, params, nparams );
+
    ctx->NewState |= NEW_LIGHTING;
 }
 
@@ -328,6 +331,10 @@ void gl_LightModelfv( GLcontext *ctx, GLenum pname, const GLfloat *params )
          gl_error( ctx, GL_INVALID_ENUM, "glLightModel" );
          break;
    }
+
+   if (ctx->Driver.LightModelfv) 
+      ctx->Driver.LightModelfv( ctx, pname, params );
+
    ctx->NewState |= NEW_LIGHTING;
 }
 

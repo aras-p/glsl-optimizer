@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: texobj.c,v 1.2 1999/09/30 11:18:22 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -507,6 +507,9 @@ void gl_PrioritizeTextures( GLcontext *ctx,
             HashLookup(ctx->Shared->TexObjects, texName[i]);
          if (t) {
             t->Priority = CLAMP( priorities[i], 0.0F, 1.0F );
+
+	    if (ctx->Driver.PrioritizeTexture)
+	       ctx->Driver.PrioritizeTexture( ctx, t, t->Priority );
          }
       }
    }
@@ -515,7 +518,7 @@ void gl_PrioritizeTextures( GLcontext *ctx,
 
 
 /*
- * Execute glAreTexturesResident
+ * Execute glAreTexturesResident 
  */
 GLboolean gl_AreTexturesResident( GLcontext *ctx, GLsizei n,
                                   const GLuint *texName,
@@ -541,8 +544,10 @@ GLboolean gl_AreTexturesResident( GLcontext *ctx, GLsizei n,
       t = (struct gl_texture_object *)
          HashLookup(ctx->Shared->TexObjects, texName[i]);
       if (t) {
-         /* we consider all valid texture objects to be resident */
-         residences[i] = GL_TRUE;
+	 if (ctx->Driver.IsTextureResident)
+	    residences[i] = ctx->Driver.IsTextureResident( ctx, t );
+	 else 
+	    residences[i] = GL_TRUE;
       }
       else {
          gl_error( ctx, GL_INVALID_VALUE, "glAreTexturesResident(textures)" );
