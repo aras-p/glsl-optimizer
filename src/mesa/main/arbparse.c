@@ -52,6 +52,7 @@
  *    - things from Michal's email
  *       + overflow on atoi
  *       + not-overflowing floats (don't use parse_integer..)
+ *       + test for 0 on matrix rows, or give a default value to parse_integer()
  *
  *       + fix multiple cases in switches, that might change 
  *          (these are things that are #defined to the same value, but occur 
@@ -69,8 +70,6 @@
  *    -----------------------------------------------------
  *    - Add in cases for vp attribs
  *       + VERTEX_ATTRIB_MATRIXINDEX -- ??
- *       + VERTEX_ATTRIB_GENERIC
- *          * Test for input alias error --> bleh!
  *
  *    - ARRAY_INDEX_RELATIVE
  *    - grep for XXX
@@ -2721,6 +2720,8 @@ struct var_cache
    GLuint attrib_binding;       /* For type vt_attrib, see nvfragprog.h for values */
    GLuint attrib_binding_idx;   /* The index into the attrib register file corresponding
                                  * to the state in attrib_binding                  */
+   GLuint attrib_is_generic;    /* If the attrib was specified through a generic
+                                 * vertex attrib                                   */
    GLuint temp_binding;         /* The index of the temp register we are to use    */
    GLuint output_binding;       /* For type vt_output, see nvfragprog.h for values */
    GLuint output_binding_idx;   /* This is the index into the result register file
@@ -2747,6 +2748,7 @@ var_cache_create (struct var_cache **va)
       (**va).name = NULL;
       (**va).type = vt_none;
       (**va).attrib_binding = -1;
+      (**va).attrib_is_generic = 0;
       (**va).temp_binding = -1;
       (**va).output_binding = -1;
       (**va).output_binding_idx = -1;
@@ -3009,6 +3011,30 @@ parse_color_type (GLcontext * ctx, GLubyte ** inst, struct arb_program *Program,
    *color = *(*inst)++ != COLOR_PRIMARY;
    return 0;
 }
+
+/**
+ * Get an integer corresponding to a generic vertex attribute.
+ *
+ * \return 0 on sucess, 1 on error
+ */
+static GLuint
+parse_generic_attrib_num(GLcontext *ctx, GLubyte ** inst, 
+                       struct arb_program *Program, GLuint *attrib)
+{
+   *attrib = parse_integer(inst, Program);
+
+   if ((*attrib < 0) || (*attrib > MAX_VERTEX_PROGRAM_ATTRIBS))
+   {
+      _mesa_set_program_error (ctx, Program->Position,
+                               "Invalid generic vertex attribute index");
+      _mesa_error (ctx, GL_INVALID_OPERATION, "Invalid generic vertex attribute index");
+
+      return 1;
+   }
+
+   return 0;
+}
+
 
 /**
  * \param coord The texture unit index
@@ -3491,6 +3517,47 @@ parse_program_single_item (GLcontext * ctx, GLubyte ** inst,
    return 0;
 }
 
+/**
+ * For ARB_vertex_program, programs are not allowed to use both an explicit
+ * vertex attribute and a generic vertex attribute corresponding to the same
+ * state. See section 2.14.3.1 of the GL_ARB_vertex_program spec. 
+ *
+ * This will walk our var_cache and make sure that nobody does anything fishy.
+ *
+ * \return 0 on sucess, 1 on error
+ */
+static GLuint
+generic_attrib_check(struct var_cache *vc_head)
+{
+   int a;
+   struct var_cache *curr;
+   GLubyte explicit[MAX_VERTEX_PROGRAM_ATTRIBS], 
+           generic[MAX_VERTEX_PROGRAM_ATTRIBS];
+			  
+   for (a=0; a<MAX_VERTEX_PROGRAM_ATTRIBS; a++) {
+      explicit[a] = 0;
+      generic[a] = 0;		
+   }	
+   
+   curr = vc_head;
+   while (curr) {
+      if (curr->type == vt_attrib) {
+         if (curr->attrib_is_generic)
+            generic[ curr->attrib_binding_idx ] = 1;
+         else
+            explicit[ curr->attrib_binding_idx ] = 1;			
+      }
+		
+      curr = curr->next;	
+   }
+			  
+   for (a=0; a<MAX_VERTEX_PROGRAM_ATTRIBS; a++) {
+      if ((explicit[a]) && (generic[a]))	
+         return 1;		
+   }	
+
+   return 0;	
+}
 
 /**
  * This will handle the binding side of an ATTRIB var declaration
@@ -3504,12 +3571,13 @@ parse_program_single_item (GLcontext * ctx, GLubyte ** inst,
 static GLuint
 parse_attrib_binding (GLcontext * ctx, GLubyte ** inst,
                       struct arb_program *Program, GLuint * binding,
-                      GLuint * binding_idx)
+                      GLuint * binding_idx, GLuint *is_generic)
 {
    GLuint texcoord;	
    GLint coord;
    GLint err = 0;
 
+   *is_generic = 0;
    if (Program->type == GL_FRAGMENT_PROGRAM_ARB) {
       switch (*(*inst)++) {
          case FRAGMENT_ATTRIB_COLOR:
@@ -3597,8 +3665,42 @@ parse_attrib_binding (GLcontext * ctx, GLubyte ** inst,
             parse_integer (inst, Program);
             break;
 
-            /* XXX: */
          case VERTEX_ATTRIB_GENERIC:
+            {
+               GLuint attrib;
+
+               if (!parse_generic_attrib_num(ctx, inst, Program, &attrib)) {
+                  *is_generic = 1;                   
+                  switch (attrib) {
+                     case 0:
+                        *binding = VERT_ATTRIB_POS;
+                        break;
+                     case 1:
+                        *binding = VERT_ATTRIB_WEIGHT;
+                        break;
+                     case 2:
+                        *binding = VERT_ATTRIB_NORMAL;
+                        break;
+                     case 3:
+                        *binding = VERT_ATTRIB_COLOR0;
+                        break;
+                     case 4:
+                        *binding = VERT_ATTRIB_COLOR1;
+                        break;
+                     case 5:
+                        *binding = VERT_ATTRIB_FOG;
+                        break;
+                     case 6:
+                        break;
+                     case 7:
+                        break;
+                     default:
+                        *binding = VERT_ATTRIB_TEX0 + (attrib-8);
+                        break;
+                  }
+                  *binding_idx = attrib;
+               }
+            }
             break;
 
          default:
@@ -3753,8 +3855,16 @@ parse_attrib (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
    {
       if (parse_attrib_binding
           (ctx, inst, Program, &attrib_var->attrib_binding,
-           &attrib_var->attrib_binding_idx))
+           &attrib_var->attrib_binding_idx, &attrib_var->attrib_is_generic))
          return 1;
+      if (generic_attrib_check(*vc_head)) {
+         _mesa_set_program_error (ctx, Program->Position, 
+   "Cannot use both a generic vertex attribute and a specific attribute of the same type");
+         _mesa_error (ctx, GL_INVALID_OPERATION, 
+   "Cannot use both a generic vertex attribute and a specific attribute of the same type");
+         return 1;				
+      }
+
    }
 
    Program->Base.NumAttributes++;
@@ -4477,16 +4587,34 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
                struct arb_program *Program, GLint * File, GLint * Index)
 {
    struct var_cache *src;
-   GLuint binding_state, binding_idx, found, offset;
+   GLuint binding_state, binding_idx, is_generic, found, offset;
 
    /* And the binding for the src */
    switch (*(*inst)++) {
       case REGISTER_ATTRIB:
          if (parse_attrib_binding
-             (ctx, inst, Program, &binding_state, &binding_idx))
+             (ctx, inst, Program, &binding_state, &binding_idx, &is_generic))
             return 1;
          *File = PROGRAM_INPUT;
          *Index = binding_idx;
+
+         /* We need to insert a dummy variable into the var_cache so we can 
+          * catch generic vertex attrib aliasing errors 
+          */
+         var_cache_create(&src);
+         src->type = vt_attrib;
+         src->name = (GLubyte *)_mesa_strdup("Dummy Attrib Variable");
+         src->attrib_binding     = binding_state;
+         src->attrib_binding_idx = binding_idx;
+         src->attrib_is_generic  = is_generic;
+         var_cache_append(vc_head, src);
+         if (generic_attrib_check(*vc_head)) {
+            _mesa_set_program_error (ctx, Program->Position, 
+   "Cannot use both a generic vertex attribute and a specific attribute of the same type");
+            _mesa_error (ctx, GL_INVALID_OPERATION, 
+   "Cannot use both a generic vertex attribute and a specific attribute of the same type");
+            return 1;				
+         }
          break;
 
       case REGISTER_PARAM:
