@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.33 2000/04/19 01:44:01 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.34 2000/06/08 22:50:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1138,7 +1138,7 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
       }
       if (!drawBuffer) {
          /* drawable must be a new window! */
-         drawBuffer = XMesaCreateWindowBuffer2( xmctx->xm_visual, draw, ctx );
+         drawBuffer = XMesaCreateWindowBuffer2( xmctx->xm_visual, draw, (XMesaContext) ctx );
          if (!drawBuffer) {
             /* Out of memory, or context/drawable depth mismatch */
             return False;
@@ -1155,7 +1155,7 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
       }
       if (!readBuffer) {
          /* drawable must be a new window! */
-         readBuffer = XMesaCreateWindowBuffer2( xmctx->xm_visual, read, ctx );
+         readBuffer = XMesaCreateWindowBuffer2( xmctx->xm_visual, read, (XMesaContext) ctx );
          if (!readBuffer) {
             /* Out of memory, or context/drawable depth mismatch */
             return False;
@@ -1223,7 +1223,6 @@ Fake_glXCreateGLXPixmap( Display *dpy, XVisualInfo *visinfo, Pixmap pixmap )
 
 
 #ifdef GLX_MESA_pixmap_colormap
-
 static GLXPixmap
 Fake_glXCreateGLXPixmapMESA( Display *dpy, XVisualInfo *visinfo,
                              Pixmap pixmap, Colormap cmap )
@@ -1246,7 +1245,6 @@ Fake_glXCreateGLXPixmapMESA( Display *dpy, XVisualInfo *visinfo,
    }
    return b->frontbuffer;
 }
-
 #endif
 
 
@@ -1261,6 +1259,7 @@ Fake_glXDestroyGLXPixmap( Display *dpy, GLXPixmap pixmap )
       fprintf( stderr, "Mesa: glXDestroyGLXPixmap: invalid pixmap\n");
    }
 }
+
 
 
 static void
@@ -1332,6 +1331,8 @@ Fake_glXSwapBuffers( Display *dpy, GLXDrawable drawable )
 }
 
 
+
+#ifdef GLX_MESA_copy_sub_buffer
 static void
 Fake_glXCopySubBufferMESA( Display *dpy, GLXDrawable drawable,
                            int x, int y, int width, int height )
@@ -1344,6 +1345,7 @@ Fake_glXCopySubBufferMESA( Display *dpy, GLXDrawable drawable,
       fprintf(stderr, "Mesa Warning: glXCopySubBufferMESA: invalid drawable\n");
    }
 }
+#endif
 
 
 
@@ -1775,6 +1777,7 @@ Fake_glXGetSelectedEvent( Display *dpy, GLXDrawable drawable,
 
 
 
+#ifdef GLX_MESA_release_buffers
 /*
  * Release the depth, stencil, accum buffers attached to a GLXDrawable
  * (a window or pixmap) prior to destroying the GLXDrawable.
@@ -1789,16 +1792,18 @@ Fake_glXReleaseBuffersMESA( Display *dpy, GLXDrawable d )
    }
    return False;
 }
+#endif
 
 
-/*
- * GLX_MESA_set_3dfx_mode
- */
+
+#ifdef GLX_MESA_set_3dfx_mode
 static GLboolean
 Fake_glXSet3DfxModeMESA( GLint mode )
 {
    return XMesaSetFXmode( mode );
 }
+#endif
+
 
 
 /*
@@ -1858,17 +1863,17 @@ struct _glxapi_table *_mesa_GetGLXDispatchTable(void)
    glx.WaitGL = Fake_glXWaitGL;
    glx.WaitX = Fake_glXWaitX;
 
-#ifdef _GLXAPI_VERSION_1_1
+#ifdef GLX_VERSION_1_1
    glx.GetClientString = Fake_glXGetClientString;
    glx.QueryExtensionsString = Fake_glXQueryExtensionsString;
    glx.QueryServerString = Fake_glXQueryServerString;
 #endif
 
-#ifdef _GLXAPI_VERSION_1_2
+#ifdef GLX_VERSION_1_2
    /*glx.GetCurrentDisplay = Fake_glXGetCurrentDisplay;*/
 #endif
 
-#ifdef _GLXAPI_VERSION_1_3
+#ifdef GLX_VERSION_1_3
    glx.ChooseFBConfig = Fake_glXChooseFBConfig;
    glx.CreateNewContext = Fake_glXCreateNewContext;
    glx.CreatePbuffer = Fake_glXCreatePbuffer;
@@ -1888,24 +1893,24 @@ struct _glxapi_table *_mesa_GetGLXDispatchTable(void)
    glx.SelectEvent = Fake_glXSelectEvent;
 #endif
 
-#ifdef _GLXAPI_SGI_video_sync
+#ifdef GLX_SGI_video_sync
    glx.GetVideoSyncSGI = Fake_glXGetVideoSyncSGI;
    glx.WaitVideoSyncSGI = Fake_glXWaitVideoSyncSGI;
 #endif
 
-#ifdef _GLXAPI_MESA_copy_sub_buffer
+#ifdef GLX_MESA_copy_sub_buffer
    glx.CopySubBufferMESA = Fake_glXCopySubBufferMESA;
 #endif
 
-#ifdef _GLXAPI_MESA_release_buffers
+#ifdef GLX_MESA_release_buffers
    glx.ReleaseBuffersMESA = Fake_glXReleaseBuffersMESA;
 #endif
 
-#ifdef _GLXAPI_MESA_pixmap_colormap
+#ifdef GLX_MESA_pixmap_colormap
    glx.CreateGLXPixmapMESA = Fake_glXCreateGLXPixmapMESA;
 #endif
 
-#ifdef _GLXAPI_MESA_set_3dfx_mode
+#ifdef GLX_MESA_set_3dfx_mode
    glx.Set3DfxModeMESA = Fake_glXSet3DfxModeMESA;
 #endif
 

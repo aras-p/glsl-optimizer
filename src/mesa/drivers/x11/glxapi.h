@@ -1,10 +1,10 @@
-/* $Id: glxapi.h,v 1.5 2000/04/10 21:13:19 brianp Exp $ */
+/* $Id: glxapi.h,v 1.6 2000/06/08 22:50:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,19 +29,9 @@
 #define _glxapi_h_
 
 
+#define GLX_GLXEXT_LEGACY
+#define GL_GLEXT_PROTOTYPES
 #include "GL/glx.h"
-
-
-#define _GLXAPI_VERSION_1_1  1
-#define _GLXAPI_VERSION_1_2  1
-#define _GLXAPI_VERSION_1_3  1
-
-#define _GLXAPI_EXT_import_context  1
-#define _GLXAPI_SGI_video_sync  1
-#define _GLXAPI_MESA_copy_sub_buffer  1
-#define _GLXAPI_MESA_release_buffers  1
-#define _GLXAPI_MESA_pixmap_colormap  1
-#define _GLXAPI_MESA_set_3dfx_mode  1
 
 
 /*
@@ -73,17 +63,17 @@ struct _glxapi_table {
    void (*WaitGL)(void);
    void (*WaitX)(void);
 
-#ifdef _GLXAPI_VERSION_1_1
+#ifdef GLX_VERSION_1_1
    const char *(*GetClientString)(Display *dpy, int name);
    const char *(*QueryExtensionsString)(Display *dpy, int screen);
    const char *(*QueryServerString)(Display *dpy, int screen, int name);
 #endif
 
-#ifdef _GLXAPI_VERSION_1_2
+#ifdef GLX_VERSION_1_2
    /*Display *(*GetCurrentDisplay)(void);*/
 #endif
 
-#ifdef _GLXAPI_VERSION_1_3
+#ifdef GLX_VERSION_1_3
    GLXFBConfig *(*ChooseFBConfig)(Display *dpy, int screen, const int *attribList, int *nitems);
    GLXContext (*CreateNewContext)(Display *dpy, GLXFBConfig config, int renderType, GLXContext shareList, Bool direct);
    GLXPbuffer (*CreatePbuffer)(Display *dpy, GLXFBConfig config, const int *attribList);
@@ -103,7 +93,7 @@ struct _glxapi_table {
    void (*SelectEvent)(Display *dpy, GLXDrawable drawable, unsigned long mask);
 #endif
 
-#ifdef _GLXAPI_EXT_import_context
+#ifdef GLX_EXT_import_context
    void (*FreeContextEXT)(Display *dpy, GLXContext context);
    GLXContextID (*GetContextIDEXT)(const GLXContext context);
    Display *(*GetCurrentDisplayEXT)(void);
@@ -111,7 +101,7 @@ struct _glxapi_table {
    int (*QueryContextInfoEXT)(Display *dpy, GLXContext context, int attribute,int *value);
 #endif
 
-#ifdef _GLXAPI_SGI_video_sync
+#ifdef GLX_SGI_video_sync
    int (*GetVideoSyncSGI)(unsigned int *count);
    int (*WaitVideoSyncSGI)(int divisor, int remainder, unsigned int *count);
 #endif
@@ -120,19 +110,19 @@ struct _glxapi_table {
     * XXX thesa Mesa-specific functions might not belong here
     */
 
-#ifdef _GLXAPI_MESA_copy_sub_buffer
+#ifdef GLX_MESA_copy_sub_buffer
    void (*CopySubBufferMESA)(Display *dpy, GLXDrawable drawable, int x, int y, int width, int height);
 #endif
 
-#ifdef _GLXAPI_MESA_release_buffers
+#ifdef GLX_MESA_release_buffers
    Bool (*ReleaseBuffersMESA)(Display *dpy, Window w);
 #endif
 
-#ifdef _GLXAPI_MESA_pixmap_colormap
+#ifdef GLX_MESA_pixmap_colormap
    GLXPixmap (*CreateGLXPixmapMESA)(Display *dpy, XVisualInfo *visinfo, Pixmap pixmap, Colormap cmap);
 #endif
 
-#ifdef _GLXAPI_MESA_set_3dfx_mode
+#ifdef GLX_MESA_set_3dfx_mode
    GLboolean (*Set3DfxModeMESA)(GLint mode);
 #endif
 
