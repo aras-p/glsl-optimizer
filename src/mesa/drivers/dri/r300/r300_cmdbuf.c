@@ -554,13 +554,19 @@ void r300InitCmdBuf(r300ContextPtr r300)
 
 	/* Initialize command buffer */
 	size = 256 * driQueryOptioni(&r300->radeon.optionCache, "command_buffer_size");
-	if (size < 2*r300->hw.max_state_size)
-		size = 2*r300->hw.max_state_size;
+	if (size < 2*r300->hw.max_state_size){
+		size = 2*r300->hw.max_state_size+65535;
+		}
 
-	if (RADEON_DEBUG & DEBUG_IOCTL)
+	if (1 || RADEON_DEBUG & DEBUG_IOCTL){
+		fprintf(stderr, "sizeof(drm_r300_cmd_header_t)=%d\n",
+			sizeof(drm_r300_cmd_header_t));
+		fprintf(stderr, "sizeof(drm_radeon_cmd_buffer_t)=%d\n",
+			sizeof(drm_radeon_cmd_buffer_t));
 		fprintf(stderr,
 			"Allocating %d bytes command buffer (max state is %d bytes)\n",
 			size*4, r300->hw.max_state_size*4);
+		}
 
 	r300->cmdbuf.size = size;
 	r300->cmdbuf.cmd_buf = (uint32_t*)CALLOC(size*4);

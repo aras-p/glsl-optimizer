@@ -740,7 +740,7 @@ static void r300StencilFunc(GLcontext * ctx, GLenum func,
 			   ValueMask[0] << R300_RB3D_ZS2_STENCIL_MASK_SHIFT));
 	GLuint flag;
 
-	R200_STATECHANGE(rmesa, zs);
+	R300_STATECHANGE(rmesa, zs);
 
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] &= ~(
 		(R300_ZS_MASK << R300_RB3D_ZS1_FRONT_FUNC_SHIFT)
@@ -759,7 +759,7 @@ static void r300StencilMask(GLcontext * ctx, GLuint mask)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
-	R200_STATECHANGE(rmesa, zs);
+	R300_STATECHANGE(rmesa, zs);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2]  &= ~(R300_ZS_MASK << R300_RB3D_ZS2_STENCIL_WRITE_MASK_SHIFT);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] |= ctx->Stencil.WriteMask[0] << R300_RB3D_ZS2_STENCIL_WRITE_MASK_SHIFT;
 }
@@ -770,7 +770,7 @@ static void r300StencilOp(GLcontext * ctx, GLenum fail,
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
-	R200_STATECHANGE(rmesa, zs);
+	R300_STATECHANGE(rmesa, zs);
 		/* It is easier to mask what's left.. */
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] &= (R300_ZS_MASK << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
 
@@ -789,7 +789,7 @@ static void r300ClearStencil(GLcontext * ctx, GLint s)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
 	/* Not sure whether this is correct.. */
-	R200_STATECHANGE(rmesa, zs);
+	R300_STATECHANGE(rmesa, zs);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] =
 	    ((GLuint) ctx->Stencil.Clear |
 	     (0xff << R200_STENCIL_MASK_SHIFT) |
@@ -839,7 +839,7 @@ static void r300Viewport(GLcontext * ctx, GLint x, GLint y,
 	 * setting below.  Could apply deltas to rescue pipelined viewport
 	 * values, or keep the originals hanging around.
 	 */
-	R200_FIREVERTICES(R200_CONTEXT(ctx));
+	R300_FIREVERTICES(R300_CONTEXT(ctx));
 	r300UpdateWindow(ctx);
 }
 
