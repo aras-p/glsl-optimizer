@@ -183,7 +183,7 @@ static GLuint fxGetTexSetConfiguration(GLcontext *ctx,
   GLuint envmode=0;
   GLuint ifmt=0;
 
-  if((ctx->Light.ShadeModel==GL_SMOOTH) ||
+  if((ctx->Light.ShadeModel==GL_SMOOTH) || 1 ||
      (ctx->Point.SmoothFlag) ||
      (ctx->Line.SmoothFlag) ||
      (ctx->Polygon.SmoothFlag))
@@ -191,10 +191,12 @@ static GLuint fxGetTexSetConfiguration(GLcontext *ctx,
   else
     unitsmode|=FX_UM_ALPHA_CONSTANT;
 
-  if(ctx->Light.ShadeModel==GL_SMOOTH)
+  if(ctx->Light.ShadeModel==GL_SMOOTH || 1)
     unitsmode|=FX_UM_COLOR_ITERATED;
   else
     unitsmode|=FX_UM_COLOR_CONSTANT;
+
+
 
   /* 
      OpenGL Feeds Texture 0 into Texture 1
@@ -476,8 +478,8 @@ static void fxSetupTextureSingleTMU_NoLock(GLcontext *ctx, GLuint textureset)
   else
     unitsmode=fxGetTexSetConfiguration(ctx,NULL,tObj);
 
-  if(fxMesa->lastUnitsMode==unitsmode)
-    return;
+/*    if(fxMesa->lastUnitsMode==unitsmode) */
+/*      return; */
 
   fxMesa->lastUnitsMode=unitsmode;
 
@@ -555,9 +557,8 @@ static void fxSetupTextureSingleTMU_NoLock(GLcontext *ctx, GLuint textureset)
 			       FXTRUE);
     ctx->Driver.MultipassFunc = fxMultipassBlend;
 #else
-#ifndef FX_SILENT
-    /*fprintf(stderr,"fx Driver: GL_BLEND not yet supported\n");*/
-#endif
+    if (MESA_VERBOSE&VERBOSE_DRIVER)
+      fprintf(stderr,"fx Driver: GL_BLEND not yet supported\n");
 #endif    
     break;
   case GL_REPLACE:
@@ -588,9 +589,9 @@ static void fxSetupTextureSingleTMU_NoLock(GLcontext *ctx, GLuint textureset)
 			       FXFALSE);
     break;
   default:
-#ifndef FX_SILENT
-    fprintf(stderr,"fx Driver: %x Texture.EnvMode not yet supported\n",ctx->Texture.Unit[textureset].EnvMode);
-#endif
+    if (MESA_VERBOSE&VERBOSE_DRIVER)
+      fprintf(stderr, "fx Driver: %x Texture.EnvMode not yet supported\n",
+	      ctx->Texture.Unit[textureset].EnvMode);
     break;
   }
 
@@ -764,8 +765,8 @@ static void fxSetupTextureDoubleTMU_NoLock(GLcontext *ctx)
 
   unitsmode=fxGetTexSetConfiguration(ctx,tObj0,tObj1);
 
-  if(fxMesa->lastUnitsMode==unitsmode)
-    return;
+/*    if(fxMesa->lastUnitsMode==unitsmode) */
+/*      return; */
 
   fxMesa->lastUnitsMode=unitsmode;
 
@@ -1030,7 +1031,7 @@ static void fxSetupTextureNone_NoLock(GLcontext *ctx)
      fprintf(stderr,"fxmesa: fxSetupTextureNone(...)\n");
   }
 
-  if((ctx->Light.ShadeModel==GL_SMOOTH) ||
+  if((ctx->Light.ShadeModel==GL_SMOOTH) || 1 ||
      (ctx->Point.SmoothFlag) ||
      (ctx->Line.SmoothFlag) ||
      (ctx->Polygon.SmoothFlag))
@@ -1038,7 +1039,7 @@ static void fxSetupTextureNone_NoLock(GLcontext *ctx)
   else
     locala=GR_COMBINE_LOCAL_CONSTANT;
   
-  if(ctx->Light.ShadeModel==GL_SMOOTH)
+  if(ctx->Light.ShadeModel==GL_SMOOTH || 1)
     localc=GR_COMBINE_LOCAL_ITERATED;
   else
     localc=GR_COMBINE_LOCAL_CONSTANT;
