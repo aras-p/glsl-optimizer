@@ -1103,6 +1103,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
     drmVersionPtr version;
     drm_handle_t  hFB;
     int        junk;
+    drm_magic_t magic;
 
     err_msg = "XF86DRIOpenConnection";
     err_extra = NULL;
@@ -1116,8 +1117,6 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
     err_extra = strerror( -fd );
 
     if (fd < 0) goto done;
-
-    drm_magic_t magic;
 
     err_msg = "drmGetMagic";
     err_extra = NULL;
@@ -2053,6 +2052,7 @@ glXCreateContext( Display *dpy, XVisualInfo *vis,
    else
       sharePriv = NULL;
   
+   ctx->driContext.mode = vis->visual->mode;
    ctx->driContext.private = dpy->driScreen.createNewContext(dpy, vis->visual->mode,
            GLX_WINDOW_BIT, sharePriv, &ctx->driContext);
 
