@@ -48,6 +48,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_tcl.h"
 
 
+#define R200_TXFORMAT_A8        R200_TXFORMAT_I8
+#define R200_TXFORMAT_L8        R200_TXFORMAT_I8
 #define R200_TXFORMAT_AL88      R200_TXFORMAT_AI88
 #define R200_TXFORMAT_YCBCR     R200_TXFORMAT_YVYU422
 #define R200_TXFORMAT_YCBCR_REV R200_TXFORMAT_VYUY422
@@ -75,9 +77,9 @@ tx_table[] =
    _ALPHA(ARGB4444),
    _ALPHA(ARGB1555),
    _ALPHA(AL88),
-   _INVALID(A8),
-   _INVALID(L8),
-   _COLOR(I8),
+   _ALPHA(A8),
+   _COLOR(L8),
+   _ALPHA(I8),
    _INVALID(CI8),
    _YUV(YCBCR),
    _YUV(YCBCR_REV),
@@ -427,8 +429,10 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    GLuint color_combine, alpha_combine;
-   GLuint color_scale = rmesa->hw.pix[unit].cmd[PIX_PP_TXCBLEND2];
-   GLuint alpha_scale = rmesa->hw.pix[unit].cmd[PIX_PP_TXABLEND2];
+   GLuint color_scale = rmesa->hw.pix[unit].cmd[PIX_PP_TXCBLEND2] &
+      ~(R200_TXC_SCALE_MASK);
+   GLuint alpha_scale = rmesa->hw.pix[unit].cmd[PIX_PP_TXABLEND2] &
+      ~(R200_TXA_DOT_ALPHA | R200_TXA_SCALE_MASK);
 
    /* texUnit->_Current can be NULL if and only if the texture unit is
     * not actually enabled.
@@ -592,7 +596,6 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
 	  * 1.3) does.
 	  */
 	 RGBshift = 0;
-	 Ashift = 0;
 	 /* FALLTHROUGH */
 
       case GL_DOT3_RGB:
@@ -604,9 +607,6 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
 	  * the -0.5 in the DOT3 spec do.  The post-scale is then set
 	  * normally.
 	  */
-
-	 RGBshift++;
-	 Ashift = RGBshift;
 
 	 color_combine = (R200_TXC_ARG_C_ZERO |
 			  R200_TXC_OP_DOT3 |
@@ -709,16 +709,15 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
 	 return GL_FALSE;
       }
 
-      if ( (texUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGB_EXT)
-	   || (texUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGB) ) {
+      if ( (texUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGBA_EXT)
+	   || (texUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGBA) ) {
 	 alpha_scale |= R200_TXA_DOT_ALPHA;
+	 Ashift = RGBshift;
       }
 
       /* Step 3:
        * Apply the scale factor.
        */
-      color_scale &= ~R200_TXC_SCALE_MASK;
-      alpha_scale &= ~R200_TXA_SCALE_MASK;
       color_scale |= (RGBshift << R200_TXC_SCALE_SHIFT);
       alpha_scale |= (Ashift   << R200_TXA_SCALE_SHIFT);
 

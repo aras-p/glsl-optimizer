@@ -383,7 +383,7 @@ r200ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_ALPHA12:
    case GL_ALPHA16:
    case GL_COMPRESSED_ALPHA:
-      return &_mesa_texformat_al88;
+      return &_mesa_texformat_a8;
 
    case 1:
    case GL_LUMINANCE:
@@ -392,7 +392,7 @@ r200ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
    case GL_COMPRESSED_LUMINANCE:
-      return &_mesa_texformat_al88;
+      return &_mesa_texformat_l8;
 
    case 2:
    case GL_LUMINANCE_ALPHA:
@@ -411,11 +411,7 @@ r200ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_INTENSITY12:
    case GL_INTENSITY16:
    case GL_COMPRESSED_INTENSITY:
-      /* At the moment, glean & conform both fail using the i8 internal
-       * format.
-       */
-      return &_mesa_texformat_al88;
-/*       return &_mesa_texformat_i8; */
+       return &_mesa_texformat_i8;
 
    case GL_YCBCR_MESA:
       if (type == GL_UNSIGNED_SHORT_8_8_APPLE ||
