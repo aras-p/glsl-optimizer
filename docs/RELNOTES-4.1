@@ -101,39 +101,15 @@ DOS			needs updating
 
 
 
-Porting Information
--------------------
-
-When moving from Mesa 4.0.x to Mesa 4.1 there are a number of things
-you may have to update.
-
-1. _mesa_create_context() changes.  This function now takes a pointer to
-   a __GLimports object.  The __GLimports structure contains function
-   pointers to system functions like fprintf(), malloc(), etc.
-   The _mesa_init_default_imports() function can be used to initialize
-   a __GLimports object.  Most device drivers (like the DRI drivers)
-   should use this.
-
-2. more to come...
-
-
-
 XXX Things To Do Yet XXXX
 -------------------------
 
 Verify x86 code for normal transformation works with new 4-element normal
 vector arrays.  Pretty sure the SSE code is wrong.
 
-Finish up NV_vertex_program support for evaluators.  Vertex arrays seem
-to work as of 4/21/2002.
-
 Allow multiple points to be rendered into one sw_span.
 
 improve point/line rendering speed.
-
-_tnl_end() has flushing forced on.
-
-readpixels from stencil/z should respect ctx->ReadBuffer
 
 glVertexAttrib*NV(index>15) should cause an error.
 
@@ -229,7 +205,14 @@ are some things to change:
      should be no confusion between current read or draw buffer anymore.
 
 
+4. _mesa_create_context() changes.  This function now takes a pointer to
+   a __GLimports object.  The __GLimports structure contains function
+   pointers to system functions like fprintf(), malloc(), etc.
+   The _mesa_init_default_imports() function can be used to initialize
+   a __GLimports object.  Most device drivers (like the DRI drivers)
+   should use this.
+
 
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-4.1,v 1.13 2002/07/09 01:28:03 brianp Exp $
+$Id: RELNOTES-4.1,v 1.14 2002/08/01 15:16:46 brianp Exp $
