@@ -147,7 +147,7 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
    if (flag & VERT_BIT_EDGEFLAG)
       ctx->Current.EdgeFlag = IM->EdgeFlag[count];
 
-   if ((flag & VERT_BIT_COLOR0) & ctx->Light.ColorMaterialEnabled) {
+   if ((flag & VERT_BIT_COLOR0) && ctx->Light.ColorMaterialEnabled) {
       _mesa_update_color_material(ctx,
                                   ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
       TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange( ctx );
