@@ -16,17 +16,17 @@ LIBDIR = [-.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(FBIND=1)
 
 CORE_SOURCES = accum.c alpha.c alphabuf.c attrib.c \
-bitmap.c blend.c clip.c colortab.c context.c copypix.c depth.c \
+bitmap.c blend.c buffers.c clip.c colortab.c context.c copypix.c depth.c \
 dispatch.c \
 dlist.c drawpix.c enable.c eval.c feedback.c fog.c \
-get.c hash.c image.c imaging.c light.c lines.c logic.c masking.c matrix.c \
+get.c hash.c hint.c image.c imaging.c light.c lines.c logic.c masking.c matrix.c \
 mem.c glapi.c glapinoop.c \
-glmisc.c mmath.c mthreads.c pb.c pixel.c points.c polygon.c \
+mmath.c mthreads.c pb.c pixel.c points.c polygon.c \
 quads.c rastpos.c readpix.c rect.c scissor.c shade.c span.c \
 stencil.c teximage.c texobj.c texstate.c texture.c translate.c triangle.c \
 varray.c winpos.c vb.c vbcull.c vbfill.c vbrender.c vbxform.c xform.c \
 zoom.c bbox.c cva.c vector.c vbindirect.c config.c enums.c extensions.c \
-pipeline.c stages.c vertices.c [.x86]x86.c
+pipeline.c stages.c state.c vertices.c [.x86]x86.c
 
 DRIVER_SOURCES = [.x]glxapi.c [.x]fakeglx.c [.x]xfonts.c \
 [.x]xmesa1.c [.x]xmesa2.c [.x]xmesa3.c [.x]xmesa4.c \
@@ -40,13 +40,13 @@ ASM_SOURCES =
 
 OBJECTS =\
 accum.obj,alpha.obj,alphabuf.obj,attrib.obj,\
-bitmap.obj,blend.obj,clip.obj,colortab.obj,context.obj,copypix.obj,depth.obj,\
+bitmap.obj,blend.obj,buffers.obj,clip.obj,colortab.obj,context.obj,copypix.obj,depth.obj,\
 dlist.obj,drawpix.obj,enable.obj,eval.obj,feedback.obj,fog.obj
 
 
-OBJECTS3=get.obj,hash.obj,image.obj,light.obj,lines.obj,logic.obj,masking.obj,\
+OBJECTS3=get.obj,hash.obj,hint.obj,image.obj,light.obj,lines.obj,logic.obj,masking.obj,\
 matrix.obj,glapi.obj,glapinoop.obj,dispatch.obj,imaging.obj,mem.obj,\
-glmisc.obj,mmath.obj,mthreads.obj,pb.obj,pixel.obj,points.obj
+mmath.obj,mthreads.obj,pb.obj,pixel.obj,points.obj
 
 OBJECTS7=polygon.obj,\
 quads.obj,rastpos.obj,readpix.obj,rect.obj,scissor.obj,shade.obj,span.obj
@@ -56,7 +56,7 @@ OBJECTS4=stencil.obj,teximage.obj,texobj.obj,texstate.obj,texture.obj,translate.
 triangle.obj,varray.obj,winpos.obj,vb.obj,vbcull.obj,vbfill.obj,vbrender.obj
 
 OBJECTS6=vbxform.obj,xform.obj,zoom.obj,bbox.obj,cva.obj,vector.obj,vbindirect.obj,\
-	config.obj,enums.obj,extensions.obj,pipeline.obj,stages.obj,\
+	config.obj,enums.obj,extensions.obj,pipeline.obj,stages.obj,state.obj\
 	vertices.obj,[.x86]x86.obj
 
 OBJECTS2=[.x]glxapi.obj,[.x]fakeglx.obj,[.x]xfonts.obj,\
