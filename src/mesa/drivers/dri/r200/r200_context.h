@@ -731,6 +731,8 @@ struct dfn_lists {
    struct dynfn MultiTexCoord2fvARB;
    struct dynfn MultiTexCoord1fARB;
    struct dynfn MultiTexCoord1fvARB;
+   struct dynfn FogCoordfEXT;
+   struct dynfn FogCoordfvEXT;
 };
 
 struct dfn_generators {
@@ -764,6 +766,8 @@ struct dfn_generators {
    struct dynfn *(*MultiTexCoord2fvARB)( GLcontext *, const int * );
    struct dynfn *(*MultiTexCoord1fARB)( GLcontext *, const int * );
    struct dynfn *(*MultiTexCoord1fvARB)( GLcontext *, const int * );
+   struct dynfn *(*FogCoordfEXT)( GLcontext *, const int * );
+   struct dynfn *(*FogCoordfvEXT)( GLcontext *, const int * );
 };
 
 
@@ -797,6 +801,7 @@ struct r200_vbinfo {
 
    GLfloat *normalptr;
    GLfloat *floatcolorptr;
+   GLfloat *fogptr;
    r200_color_t *colorptr;
    GLfloat *floatspecptr;
    r200_color_t *specptr;

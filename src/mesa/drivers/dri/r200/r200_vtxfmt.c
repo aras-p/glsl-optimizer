@@ -100,6 +100,8 @@ static void count_funcs( r200ContextPtr rmesa )
    count_func( "MultiTexCoord2fvARB", &rmesa->vb.dfn_cache.MultiTexCoord2fvARB );
    count_func( "MultiTexCoord1fARB", &rmesa->vb.dfn_cache.MultiTexCoord1fARB );
    count_func( "MultiTexCoord1fvARB", &rmesa->vb.dfn_cache.MultiTexCoord1fvARB );
+/*   count_func( "FogCoordfEXT", &rmesa->vb.dfn_cache.FogCoordfEXT );
+   count_func( "FogCoordfvEXT", &rmesa->vb.dfn_cache.FogCoordfvEXT );*/
 }
 
 
@@ -117,6 +119,10 @@ void r200_copy_to_current( GLcontext *ctx )
       ctx->Current.Attrib[VERT_ATTRIB_NORMAL][0] = rmesa->vb.normalptr[0];
       ctx->Current.Attrib[VERT_ATTRIB_NORMAL][1] = rmesa->vb.normalptr[1];
       ctx->Current.Attrib[VERT_ATTRIB_NORMAL][2] = rmesa->vb.normalptr[2];
+   }
+
+   if (rmesa->vb.vtxfmt_0 & R200_VTX_DISCRETE_FOG) {
+      ctx->Current.Attrib[VERT_ATTRIB_FOG][0] = rmesa->vb.fogptr[0];
    }
 
    switch( VTX_COLOR(rmesa->vb.vtxfmt_0, 0) ) {
@@ -474,6 +480,11 @@ void VFMT_FALLBACK( const char *caller )
 	 offset += 3;
       }
 
+      if (ind0 & R200_VTX_DISCRETE_FOG) {
+	 GL_CALL(FogCoordfvEXT)( &tmp[i][offset] ); 
+	 offset++;
+      }
+
       if (VTX_COLOR(ind0, 0) == R200_VTX_PK_RGBA) {
 	 GL_CALL(Color4ubv)( (GLubyte *)&tmp[i][offset] ); 
 	 offset++;
@@ -504,7 +515,10 @@ void VFMT_FALLBACK( const char *caller )
    /* Replay current vertex
     */
    if (ind0 & R200_VTX_N0) 
-       GL_CALL(Normal3fv)( rmesa->vb.normalptr );
+      GL_CALL(Normal3fv)( rmesa->vb.normalptr );
+   if (ind0 & R200_VTX_DISCRETE_FOG) {
+      GL_CALL(FogCoordfvEXT)( rmesa->vb.fogptr ); 
+   }
 
    if (VTX_COLOR(ind0, 0) == R200_VTX_PK_RGBA) {
       GL_CALL(Color4ub)( rmesa->vb.colorptr->red,
@@ -672,6 +686,10 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
       }
    }
 
+   if ( ctx->Fog.FogCoordinateSource == GL_FOG_COORD ) {
+      ind0 |= R200_VTX_DISCRETE_FOG;
+   }
+
    for ( i = 0 ; i < ctx->Const.MaxTextureUnits ; i++ ) {
       count[i] = 0;
 
@@ -711,6 +729,7 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
    rmesa->vb.normalptr = ctx->Current.Attrib[VERT_ATTRIB_NORMAL];
    rmesa->vb.colorptr = NULL;
    rmesa->vb.floatcolorptr = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
+   rmesa->vb.fogptr = ctx->Current.Attrib[VERT_ATTRIB_FOG];
    rmesa->vb.specptr = NULL;
    rmesa->vb.floatspecptr = ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
    rmesa->vb.texcoordptr[0] = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
@@ -731,6 +750,12 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
       rmesa->vb.normalptr[0] = ctx->Current.Attrib[VERT_ATTRIB_NORMAL][0];
       rmesa->vb.normalptr[1] = ctx->Current.Attrib[VERT_ATTRIB_NORMAL][1];
       rmesa->vb.normalptr[2] = ctx->Current.Attrib[VERT_ATTRIB_NORMAL][2];
+   }
+
+   if (ind0 & R200_VTX_DISCRETE_FOG) {
+      rmesa->vb.fogptr = &rmesa->vb.vertex[rmesa->vb.vertex_size].f;
+      rmesa->vb.vertex_size += 1;
+      rmesa->vb.fogptr[0] = ctx->Current.Attrib[VERT_ATTRIB_FOG][0];
    }
 
    if (VTX_COLOR(ind0, 0) == R200_VTX_PK_RGBA) {
@@ -1060,8 +1085,6 @@ void r200VtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
 
    /* Not active in supported states; just keep ctx->Current uptodate:
     */
-   vfmt->FogCoordfvEXT = _mesa_noop_FogCoordfvEXT;
-   vfmt->FogCoordfEXT = _mesa_noop_FogCoordfEXT;
    vfmt->EdgeFlag = _mesa_noop_EdgeFlag;
    vfmt->EdgeFlagv = _mesa_noop_EdgeFlagv;
    vfmt->Indexf = _mesa_noop_Indexf;
@@ -1094,7 +1117,9 @@ void r200VtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
    vfmt->VertexAttrib3fvNV = r200_fallback_VertexAttrib3fvNV;
    vfmt->VertexAttrib4fNV  = r200_fallback_VertexAttrib4fNV;
    vfmt->VertexAttrib4fvNV = r200_fallback_VertexAttrib4fvNV;
-
+   vfmt->FogCoordfEXT = r200_fallback_FogCoordfEXT;
+   vfmt->FogCoordfvEXT = r200_fallback_FogCoordfvEXT;
+   
    (void)r200_fallback_vtxfmt;
 
    TNL_CONTEXT(ctx)->Driver.NotifyBegin = r200NotifyBegin;
@@ -1133,6 +1158,8 @@ void r200VtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
    make_empty_list( &rmesa->vb.dfn_cache.MultiTexCoord2fvARB );
    make_empty_list( &rmesa->vb.dfn_cache.MultiTexCoord1fARB );
    make_empty_list( &rmesa->vb.dfn_cache.MultiTexCoord1fvARB );
+/*   make_empty_list( &rmesa->vb.dfn_cache.FogCoordfEXT );
+   make_empty_list( &rmesa->vb.dfn_cache.FogCoordfvEXT );*/
 
    r200InitCodegen( &rmesa->vb.codegen, useCodegen );
 }
@@ -1192,5 +1219,7 @@ void r200VtxfmtDestroy( GLcontext *ctx )
    free_funcs( &rmesa->vb.dfn_cache.MultiTexCoord2fvARB );
    free_funcs( &rmesa->vb.dfn_cache.MultiTexCoord1fARB );
    free_funcs( &rmesa->vb.dfn_cache.MultiTexCoord1fvARB );
+/*   free_funcs( &rmesa->vb.dfn_cache.FogCoordfEXT );
+   free_funcs( &rmesa->vb.dfn_cache.FogCoordfvEXT );*/
 }
 

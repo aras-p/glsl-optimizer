@@ -131,6 +131,7 @@ static const char * const card_extensions[] =
     "GL_ARB_vertex_buffer_object",
     "GL_EXT_blend_minmax",
     "GL_EXT_blend_subtract",
+    "GL_EXT_fog_coord",
     "GL_EXT_secondary_color",
     "GL_EXT_stencil_wrap",
     "GL_EXT_texture_edge_clamp",
@@ -252,6 +253,9 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    rmesa = (r200ContextPtr) CALLOC( sizeof(*rmesa) );
    if ( !rmesa )
       return GL_FALSE;
+      
+   /* init exp fog table data */
+   r200InitStaticFogData();
 
    /* Parse configuration files.
     * Do this here so that initialMaxAnisotropy is set before we create

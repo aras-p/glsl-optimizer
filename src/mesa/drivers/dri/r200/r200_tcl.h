@@ -47,6 +47,10 @@ extern void r200EmitPrimitive( GLcontext *ctx, GLuint first, GLuint last,
 				 GLuint flags );
 
 extern void r200TclFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
+
+extern void r200InitStaticFogData( void );
+
+extern float r200ComputeFogBlendFactor( GLcontext *ctx, GLfloat fogcoord );
 					      
 #define R200_TCL_FALLBACK_RASTER            0x1 /* rasterization */
 #define R200_TCL_FALLBACK_UNFILLED          0x2 /* unfilled tris */

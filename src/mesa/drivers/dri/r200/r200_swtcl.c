@@ -172,7 +172,12 @@ static void r200SetVertexFormat( GLcontext *ctx )
       }
    }
 
-
+   if ( (rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] & R200_FOG_USE_MASK)
+      != R200_FOG_USE_SPEC_ALPHA ) {
+      R200_STATECHANGE( rmesa, ctx );
+      rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] &= ~R200_FOG_USE_MASK;
+      rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] |= R200_FOG_USE_SPEC_ALPHA;
+   }
 
    if ( rmesa->tnl_index != index ||
 	(rmesa->hw.vtx.cmd[VTX_VTXFMT_0] != fmt_0) ||

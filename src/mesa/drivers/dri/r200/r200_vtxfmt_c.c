@@ -42,6 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vtxfmt.h"
 
 #include "r200_vtxfmt.h"
+#include "r200_tcl.h"
 
 /* Fallback versions of all the entrypoints for situations where
  * codegen isn't available.  This is still a lot faster than the
@@ -512,6 +513,27 @@ static void r200_Normal3fv( const GLfloat *v )
 }
 
 
+/* FogCoord
+ */
+static void r200_FogCoordfEXT( GLfloat f )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   GLfloat *dest = rmesa->vb.fogptr;
+   dest[0] = r200ComputeFogBlendFactor( ctx, f );
+/*   ctx->Current.Attrib[VERT_ATTRIB_FOG][0] = f;*/
+}
+
+static void r200_FogCoordfvEXT( const GLfloat *v )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   GLfloat *dest = rmesa->vb.fogptr;
+   dest[0] = r200ComputeFogBlendFactor( ctx, v[0] );
+/*   ctx->Current.Attrib[VERT_ATTRIB_FOG][0] = v[0];*/
+}
+
+
 /* TexCoord
  */
 
@@ -778,7 +800,8 @@ static void choose_##FN ARGS1						\
  */
 #define MASK_XYZW  (R200_VTX_W0|R200_VTX_Z0)
 #define MASK_NORM  (MASK_XYZW|R200_VTX_N0)
-#define MASK_COLOR (MASK_NORM |(R200_VTX_COLOR_MASK<<R200_VTX_COLOR_0_SHIFT))
+#define MASK_FOG   (MASK_NORM |R200_VTX_DISCRETE_FOG)
+#define MASK_COLOR (MASK_FOG |(R200_VTX_COLOR_MASK<<R200_VTX_COLOR_0_SHIFT))
 #define MASK_SPEC  (MASK_COLOR|(R200_VTX_COLOR_MASK<<R200_VTX_COLOR_1_SHIFT))
 
 /* VTXFMT_1
@@ -871,6 +894,10 @@ CHOOSE(Vertex2f, p2f, ~0, ~0,
 CHOOSE(Vertex2fv, pfv, ~0, ~0, 
        (const GLfloat *v), (v))
 
+CHOOSE(FogCoordfEXT, p1f, MASK_FOG, ~0, 
+       (GLfloat f), (f))
+CHOOSE(FogCoordfvEXT, pfv, MASK_FOG, ~0, 
+       (const GLfloat *f), (f))
 
 
 
@@ -901,6 +928,8 @@ void r200VtxfmtInitChoosers( GLvertexformat *vfmt )
    vfmt->Vertex2fv = choose_Vertex2fv;
    vfmt->Vertex3f = choose_Vertex3f;
    vfmt->Vertex3fv = choose_Vertex3fv;
+/*   vfmt->FogCoordfEXT = choose_FogCoordfEXT;
+   vfmt->FogCoordfvEXT = choose_FogCoordfvEXT;*/
 
    /* TODO: restore ubyte colors to vtxfmt.
     */
@@ -943,6 +972,8 @@ void r200InitCodegen( struct dfn_generators *gen, GLboolean useCodegen )
    gen->MultiTexCoord2fvARB = codegen_noop;
    gen->MultiTexCoord1fARB = codegen_noop;
    gen->MultiTexCoord1fvARB = codegen_noop;
+/*   gen->FogCoordfEXT = codegen_noop;
+   gen->FogCoordfvEXT = codegen_noop;*/
 
    gen->Vertex2f = codegen_noop;
    gen->Vertex2fv = codegen_noop;
