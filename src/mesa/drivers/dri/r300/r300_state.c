@@ -269,9 +269,9 @@ void r300ResetHwState(r300ContextPtr r300)
 			r300PackFloat32(-v[MAT_SY]);
 		r300->hw.vpt.cmd[R300_VPT_YOFFSET] =
 			r300PackFloat32(-v[MAT_TY] + yoffset);
-		r300->hw.vpt.cmd[R300_VPT_YSCALE] =
+		r300->hw.vpt.cmd[R300_VPT_ZSCALE] =
 			r300PackFloat32(v[MAT_SZ]);
-		r300->hw.vpt.cmd[R300_VPT_YOFFSET] =
+		r300->hw.vpt.cmd[R300_VPT_ZOFFSET] =
 			r300PackFloat32(v[MAT_TZ]);
 	}
 
