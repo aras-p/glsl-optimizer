@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.38 2002/02/13 00:53:20 keithw Exp $ */
+/* $Id: t_context.h,v 1.39 2002/04/04 18:25:40 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -96,8 +96,8 @@
 
 /* Flags for IM->TexCoordSize.  Enough flags for 16 units.
  */
-#define TEX_0_SIZE_3          0x1
-#define TEX_0_SIZE_4          0x10001
+#define TEX_0_SIZE_3          (unsigned)0x1
+#define TEX_0_SIZE_4          (unsigned)0x10001
 #define TEX_SIZE_3(unit)      (TEX_0_SIZE_3 << (unit))
 #define TEX_SIZE_4(unit)      (TEX_0_SIZE_4 << (unit))
 

@@ -1,4 +1,4 @@
-/* $Id: t_vb_program.c,v 1.10 2002/01/22 14:35:17 brianp Exp $ */
+/* $Id: t_vb_program.c,v 1.11 2002/04/04 18:25:40 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -150,7 +150,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    struct vertex_buffer *VB = &tnl->vb;
    struct vp_machine *machine = &(ctx->VertexProgram.Machine);
    struct vp_program *program = ctx->VertexProgram.Current;
-   GLint i;
+   GLuint i;
 
    _mesa_init_tracked_matrices(ctx);
    _mesa_init_vp_registers(ctx);  /* init temp and result regs */
