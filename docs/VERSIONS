@@ -1322,6 +1322,9 @@ Mesa Version History
 	- DirectFB driver (Claudio Ciccani)
     Changes:
 	- added -stereo option for glxgears demo (Jacek Rosik)
+	- updated the PBuffer demo code in xdemos/ directory
+	- glDeleteTextures/Programs/Buffers() now makes the object ID
+	  available for immediate re-use
     Bug fixes:
 	- some functions didn't support PBO functionality
 	- glGetTexImage didn't convert color index images to RGBA as required

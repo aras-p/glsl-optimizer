@@ -40,6 +40,28 @@ extended with a PRINT instruction.
 
 
 
+glDeleteTextures(), glDeletePrograms() and glDeleteBuffers() Changed
+--------------------------------------------------------------------
+
+To match the behaviour of other OpenGL implementations, glDeleteTextures,
+glDeletePrograms and glDeleteBuffers have been modified so that:
+
+  * The named texture/program/buffer ID is immediately freed for re-use.
+
+  * The actual texture object, program or buffers isn't really deleted until
+    it is no longer bound in any rendering context (the reference count
+    is zero).
+
+Previously, the texture/program/buffer ID wasn't freed until the object
+was really deleted.
+
+Note that textures, programs and buffers can be shared by several rendering
+contexts so they can't be deleted until they're unbound in _all_ contexts.
+
+
+
+
+
 To Do before release
 --------------------
  Fix dinoshade bug
@@ -47,6 +69,12 @@ To Do before release
  Increase MAX_DRAWBUFFERS
  driver hooks for BeginQuery/EndQuery
 
+
+
+Miscellaneous
+-------------
+
+The main/get.c file is now generated with a Python script.
 
 
 
@@ -66,4 +94,4 @@ D3D			needs updating
 
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-6.3,v 3.7 2005/01/03 15:55:51 brianp Exp $
+$Id: RELNOTES-6.3,v 3.8 2005/01/20 04:03:37 brianp Exp $
