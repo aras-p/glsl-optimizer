@@ -327,8 +327,14 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.ovf.cmd[R300_OVF_FMT_0] = 0x00000003;
 	r300->hw.ovf.cmd[R300_OVF_FMT_1] = 0x00000000;
 
-	r300->hw.unk20B0.cmd[1] = 0x0000040A;
-	r300->hw.unk20B0.cmd[2] = 0x00000008;
+	r300->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
+				| R300_VPORT_X_OFFSET_ENA
+				| R300_VPORT_Y_SCALE_ENA
+				| R300_VPORT_Y_OFFSET_ENA
+				| R300_VPORT_Z_SCALE_ENA
+				| R300_VPORT_Z_OFFSET_ENA
+				| R300_VTX_W0_FMT;
+	r300->hw.vte.cmd[2] = 0x00000008;
 
 	r300->hw.unk2134.cmd[1] = 0x00FFFFFF;
 	r300->hw.unk2134.cmd[2] = 0x00000000;

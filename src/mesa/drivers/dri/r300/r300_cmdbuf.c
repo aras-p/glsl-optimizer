@@ -284,8 +284,8 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.unk2080.cmd[0] = cmducs(0x2080, 1);
 	ALLOC_STATE( ovf, always, R300_OVF_CMDSIZE, "ovf", 0 );
 		r300->hw.ovf.cmd[R300_OVF_CMD_0] = cmducs(R300_VAP_OUTPUT_VTX_FMT_0, 2);
-	ALLOC_STATE( unk20B0, always, 3, "unk20B0", 0 );
-		r300->hw.unk20B0.cmd[0] = cmducs(0x20B0, 2);
+	ALLOC_STATE( vte, always, 3, "vte", 0 );
+		r300->hw.vte.cmd[0] = cmducs(R300_SE_VTE_CNTL, 2);
 	ALLOC_STATE( unk2134, always, 3, "unk2134", 0 );
 		r300->hw.unk2134.cmd[0] = cmducs(0x2134, 2);
 	ALLOC_STATE( unk2140, always, 2, "unk2140", 0 );
@@ -415,7 +415,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.vpt);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk2080);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.ovf);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk20B0);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.vte);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk2134);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk2140);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.vir[0]);

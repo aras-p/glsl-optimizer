@@ -246,7 +246,7 @@ struct r300_hw_state {
 	struct r300_state_atom vpt;	/* viewport (1D98) */
 	struct r300_state_atom unk2080;	/* (2080) */
 	struct r300_state_atom ovf;	/* output vertex format (2090) */
-	struct r300_state_atom unk20B0;	/* (20B0) */
+	struct r300_state_atom vte;	/* (20B0) */
 	struct r300_state_atom unk2134;	/* (2134) */
 	struct r300_state_atom unk2140;	/* (2140) */
 	struct r300_state_atom vir[2];	/* vap input route (2150/21E0) */

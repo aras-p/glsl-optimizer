@@ -245,10 +245,14 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
    reg_start(0x4f18,0);
 	e32(0x00000003);
 	
-   r300EmitState(rmesa);
+   rmesa->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
+				| R300_VPORT_X_OFFSET_ENA
+				| R300_VPORT_Y_SCALE_ENA
+				| R300_VPORT_Y_OFFSET_ENA
+				| R300_VTX_W0_FMT;
+   R300_STATECHANGE(rmesa, vte);
    
-   reg_start(0x20b0,0);
-	e32(0x0000043f);
+   r300EmitState(rmesa);
    
    FLAT_COLOR_PIPELINE.vertex_shader.matrix[0].length=16;
    memcpy(FLAT_COLOR_PIPELINE.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
@@ -318,7 +322,7 @@ static void upload_vertex_buffer(r300ContextPtr rmesa,
 	array[idx].ncomponents=v->size; \
 	array[idx].offset=rsp->gartTextures.handle+offset; \
 	array[idx].reg=r; \
-	offset+=v->size*4*VB->Count+16; \
+	offset+=v->size*4*VB->Count; \
 	idx++; \
 	}
 	
@@ -386,9 +390,6 @@ static GLboolean r300_run_vb_flat_render(GLcontext *ctx,
    
    r300EmitState(rmesa);
    
-   reg_start(0x20b0,0);
-	e32(0x0000043f);
- 
    FLAT_COLOR_PIPELINE.vertex_shader.matrix[0].length=16;
    memcpy(FLAT_COLOR_PIPELINE.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
 
@@ -398,13 +399,8 @@ static GLboolean r300_run_vb_flat_render(GLcontext *ctx,
    FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[2]=1.0;
    FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[3]=0.0;
 
-   FLAT_COLOR_PIPELINE.vap_input_route_1[0]=0xf688f688;
-   
    program_pipeline(PASS_PREFIX &FLAT_COLOR_PIPELINE);
       
-   reg_start(R300_RE_OCCLUSION_CNTL, 0);
-	     e32(R300_OCCLUSION_ON);
-	     
    set_quad0(PASS_PREFIX 1.0,1.0,1.0,1.0);
    set_init21(PASS_PREFIX 0.0,1.0);
    
@@ -533,10 +529,8 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    reg_start(0x4f18,0);
 	e32(0x00000003);
 	
-   r300EmitState(rmesa);
    
-   reg_start(0x20b0,0);
-	e32(0x0000043f);
+   r300EmitState(rmesa);
    
    SINGLE_TEXTURE_PIPELINE.vertex_shader.matrix[0].length=16;
    memcpy(SINGLE_TEXTURE_PIPELINE.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
@@ -671,7 +665,7 @@ static GLboolean r300_run_render(GLcontext *ctx,
         if(ctx->Texture.Unit[0].Enabled)
         	return r300_run_tex_render(ctx, stage);
 		else
-        	return r300_run_vb_flat_render(ctx, stage);
+        	return r300_run_flat_render(ctx, stage);
    #else
 	return GL_TRUE;
    #endif
