@@ -1,4 +1,4 @@
-/* $Id: m_trans_tmp.h,v 1.5 2001/03/12 02:02:36 gareth Exp $ */
+/* $Id: m_trans_tmp.h,v 1.6 2001/08/07 22:16:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,7 +53,7 @@ static void DEST_4F( GLfloat (*t)[4],
 	 if (SZ >= 1) t[i][0] = TRX_4F(f, 0);
 	 if (SZ >= 2) t[i][1] = TRX_4F(f, 1);
 	 if (SZ >= 3) t[i][2] = TRX_4F(f, 2);
-	 if (SZ == 4) t[i][3] = TRX_4F(f, 3);
+	 if (SZ == 4) t[i][3] = TRX_4F(f, 3); else t[i][3] = 1.0;
       }
    }
 }
