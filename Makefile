@@ -111,9 +111,9 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-DIRECTORY = Mesa-6.1
-LIB_NAME = MesaLib-6.1
-DEMO_NAME = MesaDemos-6.1
+DIRECTORY = Mesa-6.2
+LIB_NAME = MesaLib-6.2
+DEMO_NAME = MesaDemos-6.2
 
 LIB_FILES =	\
 	$(DIRECTORY)/Makefile*						\
@@ -121,6 +121,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/mms-config.					\
 	$(DIRECTORY)/Mesa.dsw						\
 	$(DIRECTORY)/bin/mklib						\
+	$(DIRECTORY)/bin/installmesa					\
 	$(DIRECTORY)/configs/[a-z]*					\
 	$(DIRECTORY)/docs/*.html					\
 	$(DIRECTORY)/docs/COPYING					\
