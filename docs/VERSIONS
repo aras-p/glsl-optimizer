@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.57 2001/05/24 14:49:14 brianp Exp $
+$Id: VERSIONS,v 1.58 2001/06/08 15:47:48 brianp Exp $
 
 
 Mesa Version History
@@ -862,5 +862,6 @@ Mesa Version History
 	- fixed a few color index mode conformance failures; all pass now
 	- now appling antialiasing coverage to alpha after texturing
 	- colors weren't getting clamped to [0,1] before color table lookup
+	- fixed RISC alignment errors caused by COPY_4UBV macro
     Changes:
 	- SGI's Sample Implementation (SI) 1.3 GLU library replaces Mesa GLU
