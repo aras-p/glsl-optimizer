@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.16 2001/07/23 16:08:19 brianp Exp $ */
+/* $Id: s_span.c,v 1.17 2001/08/14 14:08:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -859,7 +859,7 @@ _mesa_write_texture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
       write_all = GL_FALSE;
    }
 
-   /* Texture with alpha test*/
+   /* Texture with alpha test */
    if (ctx->Color.AlphaEnabled) {
       /* Texturing without alpha is done after depth-testing which
          gives a potential speed-up. */
@@ -1015,7 +1015,7 @@ _mesa_write_multitexture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
       write_all = GL_FALSE;
    }
 
-   /* Texture with alpha test*/
+   /* Texture with alpha test */
    if (ctx->Color.AlphaEnabled) {
       /* Texturing without alpha is done after depth-testing which
        * gives a potential speed-up.

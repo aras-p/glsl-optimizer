@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.37 2001/08/07 22:05:11 brianp Exp $ */
+/* $Id: s_texture.c,v 1.38 2001/08/14 14:08:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -910,8 +910,7 @@ opt_sample_rgba_2d( GLcontext *ctx, GLuint texUnit,
    const GLint colMask = img->Width - 1;
    const GLint rowMask = img->Height - 1;
    const GLint shift = img->WidthLog2;
-   GLuint k;
-   GLchan (*ptr_rgba)[4] = rgba;
+   GLuint i;
    (void) u;
    (void) lambda;
    ASSERT(tObj->WrapS==GL_REPEAT);
@@ -919,12 +918,12 @@ opt_sample_rgba_2d( GLcontext *ctx, GLuint texUnit,
    ASSERT(img->Border==0);
    ASSERT(img->Format==GL_RGBA);
 
-   for (k=0; k<n; k++, ptr_rgba ++) {
-      GLint i = IFLOOR(s[k] * width) & colMask;
-      GLint j = IFLOOR(t[k] * height) & rowMask;
-      GLint pos = (j << shift) | i;
-      GLchan *texel = ((GLchan *) img->Data) + (pos << 2);    /* pos*4 */
-      COPY_CHAN4 (ptr_rgba, texel);
+   for (i = 0; i < n; i++) {
+      const GLint col = IFLOOR(s[i] * width) & colMask;
+      const GLint row = IFLOOR(t[i] * height) & rowMask;
+      const GLint pos = (row << shift) | col;
+      const GLchan *texel = ((GLchan *) img->Data) + (pos << 2);    /* pos*4 */
+      COPY_CHAN4(rgba[i], texel);
    }
 }
 

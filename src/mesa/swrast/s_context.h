@@ -1,4 +1,4 @@
-/* $Id: s_context.h,v 1.11 2001/07/13 20:07:37 brianp Exp $ */
+/* $Id: s_context.h,v 1.12 2001/08/14 14:08:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -195,8 +195,8 @@ _swrast_validate_derived( GLcontext *ctx );
  * These should probably go elsewhere at some point.
  */
 #if CHAN_TYPE == GL_FLOAT
-#define ChanToFixed(X)  FloatToFixed(X)
-#define FixedToChan(X)  FixedToFloat(X)
+#define ChanToFixed(X)  (X)
+#define FixedToChan(X)  (X)
 #else
 #define ChanToFixed(X)  IntToFixed(X)
 #define FixedToChan(X)  FixedToInt(X)
