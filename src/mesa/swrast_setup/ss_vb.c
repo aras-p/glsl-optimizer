@@ -92,6 +92,10 @@ static SetupFunc setup_func[MAX_SETUPFUNC];
 #define TAG(x) x##_multitex_color_spec_index_eye_fog
 #include "ss_vbtmp.h"
 
+#define IND (COLOR|INDEX|TEX0)
+#define TAG(x) x##_selection_feedback
+#include "ss_vbtmp.h"
+
 
 
 void 
@@ -138,6 +142,8 @@ _swsetup_vb_init( GLcontext *ctx )
 
    setup_func[TEX0|EYE]       = rs_tex0_color_eye;
    setup_func[TEX0|COLOR|EYE] = rs_tex0_color_eye;
+
+   setup_func[COLOR|INDEX|TEX0] = rs_selection_feedback;
 }
 
 
@@ -147,27 +153,31 @@ _swsetup_choose_rastersetup_func(GLcontext *ctx)
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
    int funcindex;
 
-   if (ctx->Visual.RGBAflag) {
-      funcindex = COLOR;
+   if (ctx->RenderMode == GL_RENDER) {
+      if (ctx->Visual.RGBAflag) {
+         funcindex = COLOR;
 
-      if (ctx->Texture._ReallyEnabled & ~0xf) 
-	 funcindex |= MULTITEX;
-      else if (ctx->Texture._ReallyEnabled & 0xf) 
-	 funcindex |= TEX0;
+         if (ctx->Texture._ReallyEnabled & ~0xf) 
+            funcindex |= MULTITEX;
+         else if (ctx->Texture._ReallyEnabled & 0xf) 
+            funcindex |= TEX0;
 
-      if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ||
-	  ctx->Fog.ColorSumEnabled)
-	 funcindex |= SPEC;
+         if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ||
+             ctx->Fog.ColorSumEnabled)
+            funcindex |= SPEC;
 
-      if (ctx->Point._Attenuated)
-	 funcindex |= EYE;
+         if (ctx->Point._Attenuated)
+            funcindex |= EYE;
+      }
+      else {
+         funcindex = INDEX;
+      }
    }
-   else
-      funcindex = INDEX;
+   else {
+      /* feedback or section */
+      funcindex = (COLOR | INDEX | TEX0);
+   }
 
-   if (ctx->RenderMode != GL_RENDER)
-      funcindex = (INDEX|COLOR|MULTITEX);
-  
    swsetup->RasterSetup = setup_func[funcindex];
 }
 
