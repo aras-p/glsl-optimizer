@@ -62,7 +62,7 @@ buffer_object_get_target( GLcontext *ctx, GLenum target, const char * str )
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "gl%s(target)", str);
-         break;
+         return NULL;
    }
 
    if (bufObj->Name == 0)
