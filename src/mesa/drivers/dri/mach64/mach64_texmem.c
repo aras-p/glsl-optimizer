@@ -395,7 +395,7 @@ static void mach64UploadAGPSubImage( mach64ContextPtr mmesa,
    if ( ( level < 0 ) || ( level > mmesa->glCtx->Const.MaxTextureLevels ) )
      return;
 
-   image = t->tObj->Image[level];
+   image = t->tObj->Image[0][level];
    if ( !image )
       return;
 
@@ -460,7 +460,7 @@ static void mach64UploadLocalSubImage( mach64ContextPtr mmesa,
    if ( ( level < 0 ) || ( level > mmesa->glCtx->Const.MaxTextureLevels ) )
       return;
 
-   image = t->tObj->Image[level];
+   image = t->tObj->Image[0][level];
    if ( !image )
       return;
 

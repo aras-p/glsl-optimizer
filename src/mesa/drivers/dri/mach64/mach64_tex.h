@@ -59,8 +59,7 @@ extern void mach64EmitTexStateLocked( mach64ContextPtr mmesa,
 				      mach64TexObjPtr t0,
 				      mach64TexObjPtr t1 );
 
-extern void mach64DDInitTextureFuncs( GLcontext *ctx );
-
+extern void mach64InitTextureFuncs( struct dd_function_table *functions );
 
 /* ================================================================
  * Color conversion macros:

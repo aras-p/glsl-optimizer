@@ -59,7 +59,7 @@ static void mach64DDGetBufferSize( GLframebuffer *buffer,
 static const GLubyte *mach64DDGetString( GLcontext *ctx, GLenum name )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
-   static GLubyte buffer[128];
+   static char buffer[128];
    unsigned   offset;
    const char * card_name = "Mach64 [Rage Pro]";
    GLuint agp_mode = mmesa->mach64Screen->IsPCI ? 0 :
@@ -123,12 +123,12 @@ static void mach64DDFinish( GLcontext *ctx )
 
 /* Initialize the driver's misc functions.
  */
-void mach64DDInitDriverFuncs( GLcontext *ctx )
+void mach64InitDriverFuncs( struct dd_function_table *functions )
 {
-   ctx->Driver.GetBufferSize	= mach64DDGetBufferSize;
-   ctx->Driver.ResizeBuffers    = _swrast_alloc_buffers;
-   ctx->Driver.GetString	= mach64DDGetString;
-   ctx->Driver.Finish		= mach64DDFinish;
-   ctx->Driver.Flush		= mach64DDFlush;
-   ctx->Driver.Error		= NULL;
+   functions->GetBufferSize	= mach64DDGetBufferSize;
+   functions->ResizeBuffers    = _swrast_alloc_buffers;
+   functions->GetString	= mach64DDGetString;
+   functions->Finish		= mach64DDFinish;
+   functions->Flush		= mach64DDFlush;
+
 }

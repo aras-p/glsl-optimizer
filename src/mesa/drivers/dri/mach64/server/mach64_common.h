@@ -121,11 +121,11 @@ typedef struct {
 } drmMach64Blit;
 
 typedef struct {
-   enum {
-      MACH64_PARAM_FRAMES_QUEUED = 0x01,
-      MACH64_PARAM_IRQ_NR = 0x02
-   } param;
+   int param;
    int *value;
 } drmMach64GetParam;
+
+#define MACH64_PARAM_FRAMES_QUEUED 1
+#define MACH64_PARAM_IRQ_NR       2
 
 #endif /* __MACH64_COMMON_H__ */

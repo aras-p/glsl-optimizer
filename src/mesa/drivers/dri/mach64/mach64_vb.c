@@ -622,7 +622,7 @@ void mach64InitVB( GLcontext *ctx )
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    GLuint size = TNL_CONTEXT(ctx)->vb.Size;
 
-   mmesa->verts = (char *)ALIGN_MALLOC(size * 4 * 16, 32);
+   mmesa->verts = (GLubyte *)ALIGN_MALLOC(size * 4 * 16, 32);
 
    {
       static int firsttime = 1;

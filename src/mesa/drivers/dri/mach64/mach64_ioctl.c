@@ -905,7 +905,7 @@ void mach64UploadHwStateLocked( mach64ContextPtr mmesa )
    DMAADVANCE();
 }
 
-void mach64DDInitIoctlFuncs( GLcontext *ctx )
+void mach64InitIoctlFuncs( struct dd_function_table *functions )
 {
-    ctx->Driver.Clear = mach64DDClear;
+    functions->Clear = mach64DDClear;
 }

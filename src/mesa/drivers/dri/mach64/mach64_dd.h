@@ -33,7 +33,7 @@
 
 #ifdef GLX_DIRECT_RENDERING
 
-extern void mach64DDInitDriverFuncs( GLcontext *ctx );
+extern void mach64InitDriverFuncs( struct dd_function_table *functions );
 
 #endif
 #endif

@@ -213,28 +213,6 @@ static void do_import( struct vertex_buffer *VB,
 		    count);
 }
 
-#ifndef IMPORT_QUALIFIER
-#define IMPORT_QUALIFIER static
-#endif
-
-IMPORT_QUALIFIER void TAG(import_float_colors)( GLcontext *ctx )
-{
-   LOCALVARS
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   struct gl_client_array *to = GET_UBYTE_COLOR_STORE();
-   do_import( VB, to, VB->ColorPtr[0] );
-   VB->ColorPtr[0] = to;
-}
-
-IMPORT_QUALIFIER void TAG(import_float_spec_colors)( GLcontext *ctx )
-{
-   LOCALVARS
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   struct gl_client_array *to = GET_UBYTE_SPEC_COLOR_STORE();
-   do_import( VB, to, VB->SecondaryColorPtr[0] );
-   VB->SecondaryColorPtr[0] = to;
-}
-
 /* Interpolate the elements of the VB not included in typical hardware
  * vertices.  
  *
@@ -298,7 +276,6 @@ INTERP_QUALIFIER void TAG(copy_pv_extras)( GLcontext *ctx,
 
 
 #undef INTERP_QUALIFIER
-#undef IMPORT_QUALIFIER
 #undef GET_COLOR
 
 #undef IND

@@ -90,9 +90,7 @@ extern void mach64PerformanceBoxesLocked( mach64ContextPtr mmesa );
 #endif
 extern void mach64WaitForIdleLocked( mach64ContextPtr mmesa );
 
-
-extern void mach64DDInitIoctlFuncs( GLcontext *ctx );
-
+extern void mach64InitIoctlFuncs( struct dd_function_table *functions );
 
 /* ================================================================
  * Helper macros:

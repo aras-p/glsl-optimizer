@@ -40,26 +40,54 @@
 #include "utils.h"
 #include "vblank.h"
 
+#ifndef _SOLO
 #include "glxextensions.h"
+#endif
+
+/* Mach64 configuration
+ */
+#include "xmlpool.h"
+
+const char __driConfigOptions[] =
+DRI_CONF_BEGIN
+    DRI_CONF_SECTION_PERFORMANCE
+        DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+    DRI_CONF_SECTION_END
+#if ENABLE_PERF_BOXES
+    DRI_CONF_SECTION_DEBUG
+        DRI_CONF_PERFORMANCE_BOXES(false)
+    DRI_CONF_SECTION_END
+#endif
+DRI_CONF_END;
+#if ENABLE_PERF_BOXES
+static const GLuint __driNConfigOptions = 2;
+#else
+static const GLuint __driNConfigOptions = 1;
+#endif
+
 
 /* Create the device specific screen private data struct.
  */
 static mach64ScreenRec *
-mach64CreateScreen( __DRIscreenPrivate *driScreen )
+mach64CreateScreen( __DRIscreenPrivate *sPriv )
 {
-   mach64ScreenRec *mach64Screen;
-   ATIDRIPtr serverInfo = (ATIDRIPtr)driScreen->pDevPriv;
+   mach64ScreenPtr mach64Screen;
+   ATIDRIPtr serverInfo = (ATIDRIPtr)sPriv->pDevPriv;
 
    if ( MACH64_DEBUG & DEBUG_VERBOSE_DRI ) 
       fprintf( stderr, "%s\n", __FUNCTION__ );
 
-   if ( ! driCheckDriDdxDrmVersions( driScreen, "Mach64", 4, 0, 6, 4, 1, 0 ) )
+   if ( ! driCheckDriDdxDrmVersions( sPriv, "Mach64", 4, 0, 6, 4, 1, 0 ) )
       return NULL;
 
    /* Allocate the private area */
-   mach64Screen = (mach64ScreenRec *) CALLOC( sizeof(*mach64Screen) );
+   mach64Screen = (mach64ScreenPtr) CALLOC( sizeof(*mach64Screen) );
    if ( !mach64Screen ) return NULL;
-   
+
+   /* parse information in __driConfigOptions */
+   driParseOptionInfo (&mach64Screen->optionCache,
+		       __driConfigOptions, __driNConfigOptions);
+
    mach64Screen->IsPCI = serverInfo->IsPCI;
 
    {
@@ -69,7 +97,7 @@ mach64CreateScreen( __DRIscreenPrivate *driScreen )
       gp.param = MACH64_PARAM_IRQ_NR;
       gp.value = &mach64Screen->irq;
 
-      ret = drmCommandWriteRead( driScreen->fd, DRM_MACH64_GETPARAM,
+      ret = drmCommandWriteRead( sPriv->fd, DRM_MACH64_GETPARAM,
 				    &gp, sizeof(gp));
       if (ret) {
          fprintf(stderr, "DRM_MACH64_GETPARAM (MACH64_PARAM_IRQ_NR): %d\n", ret);
@@ -80,7 +108,7 @@ mach64CreateScreen( __DRIscreenPrivate *driScreen )
 
    mach64Screen->mmio.handle = serverInfo->regs;
    mach64Screen->mmio.size   = serverInfo->regsSize;
-   if ( drmMap( driScreen->fd,
+   if ( drmMap( sPriv->fd,
 		mach64Screen->mmio.handle,
 		mach64Screen->mmio.size,
 		(drmAddressPtr)&mach64Screen->mmio.map ) != 0 ) {
@@ -88,7 +116,7 @@ mach64CreateScreen( __DRIscreenPrivate *driScreen )
       return NULL;
    }
 
-   mach64Screen->buffers = drmMapBufs( driScreen->fd );
+   mach64Screen->buffers = drmMapBufs( sPriv->fd );
    if ( !mach64Screen->buffers ) {
       drmUnmap( (drmAddress)mach64Screen->mmio.map,
 		mach64Screen->mmio.size );
@@ -99,7 +127,7 @@ mach64CreateScreen( __DRIscreenPrivate *driScreen )
    if ( !mach64Screen->IsPCI ) {
       mach64Screen->agpTextures.handle = serverInfo->agp;
       mach64Screen->agpTextures.size   = serverInfo->agpSize;
-      if ( drmMap( driScreen->fd,
+      if ( drmMap( sPriv->fd,
 		   mach64Screen->agpTextures.handle,
 		   mach64Screen->agpTextures.size,
 		   (drmAddressPtr)&mach64Screen->agpTextures.map ) ) {
@@ -149,8 +177,24 @@ mach64CreateScreen( __DRIscreenPrivate *driScreen )
       mach64Screen->logTexGranularity[MACH64_AGP_HEAP] = serverInfo->logAgpTextureGranularity;
    }
 
-   mach64Screen->driScreen = driScreen;
+   mach64Screen->driScreen = sPriv;
+#ifndef _SOLO
+   if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
+      PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+          (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
+      void * const psc = sPriv->psc->screenConfigs;
 
+      if ( glx_enable_extension != NULL ) {
+	 if ( mach64Screen->irq != 0 ) {
+	    (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+	    (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+	    (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
+	 }
+
+	 (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+      }
+   }
+#endif
    return mach64Screen;
 }
 
@@ -263,7 +307,7 @@ mach64InitDriver( __DRIscreenPrivate *driScreen )
    return GL_TRUE;
 }
 
-
+#ifndef _SOLO
 /* This function is called by libGL.so as soon as libGL.so is loaded.
  * This is where we register new extension functions with the dispatcher.
  */
@@ -273,7 +317,7 @@ void __driRegisterExtensions( void )
 
    if ( driCompareGLXAPIVersion( 20030317 ) >= 0 ) {
       glx_enable_extension = (PFNGLXENABLEEXTENSIONPROC)
-	  glXGetProcAddress( "__glXEnableExtension" );
+	  glXGetProcAddress( (const GLubyte *) "__glXEnableExtension" );
 
       if ( glx_enable_extension != NULL ) {
 	 glx_enable_extension( "GLX_SGI_swap_control", GL_FALSE );
@@ -282,7 +326,7 @@ void __driRegisterExtensions( void )
       }
    }
 }
-
+#endif
 
 static struct __DriverAPIRec mach64API = {
    .InitDriver      = mach64InitDriver,
@@ -309,6 +353,7 @@ static struct __DriverAPIRec mach64API = {
  * The __driCreateScreen name is the symbol that libGL.so fetches.
  * Return:  pointer to a __DRIscreenPrivate.
  */
+#ifndef _SOLO 
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
 {
@@ -316,3 +361,12 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &mach64API);
    return (void *) psp;
 }
+#else
+void *__driCreateScreen(struct DRIDriverRec *driver,
+                        struct DRIDriverContextRec *driverContext)
+{
+   __DRIscreenPrivate *psp;
+   psp = __driUtilCreateScreen(driver, driverContext, &mach64API);
+   return (void *) psp;
+}
+#endif

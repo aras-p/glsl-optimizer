@@ -74,7 +74,7 @@ static void TAG(emit)( GLcontext *ctx,
 #endif
 #endif
 #if DO_SPEC
-   GLubyte (*spec)[4];
+   GLfloat (*spec)[4];
    GLuint spec_stride;
 #endif
 #if DO_FOG
@@ -82,7 +82,7 @@ static void TAG(emit)( GLcontext *ctx,
    GLuint fog_stride;
 #endif
 #if DO_RGBA
-   GLubyte (*col)[4];
+   GLfloat (*col)[4];
    GLuint col_stride;
 #endif
    GLfloat (*coord)[4];
@@ -123,7 +123,7 @@ static void TAG(emit)( GLcontext *ctx,
 #endif
 
 #if DO_SPEC
-   spec = (GLubyte (*)[4])VB->SecondaryColorPtr[0]->data;
+   spec = VB->SecondaryColorPtr[0]->data;
    spec_stride = VB->SecondaryColorPtr[0]->stride;
 #endif
 
@@ -154,14 +154,14 @@ static void TAG(emit)( GLcontext *ctx,
 	 tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 + start * tc0_stride);
 #endif
 #if DO_SPEC
-	 STRIDE_4UB(spec, start * spec_stride);
+	 STRIDE_4F(spec, start * spec_stride);
 #endif
 #if DO_FOG
 	 /*  STRIDE_F(fog, start * fog_stride); */
 	 fog =  (GLfloat (*)[4])((GLubyte *)fog + start * fog_stride);
 #endif
 #if DO_RGBA
-	 STRIDE_4UB(col, start * col_stride);
+	 STRIDE_4F(col, start * col_stride);
 #endif
 	 coord =  (GLfloat (*)[4])((GLubyte *)coord + start * coord_stride);
    }
@@ -248,7 +248,7 @@ static void TAG(emit)( GLcontext *ctx,
 	 ((GLubyte *)p)[0] = spec[0][2];			/* VERTEX_?_SPEC_B */
 	 ((GLubyte *)p)[1] = spec[0][1];			/* VERTEX_?_SPEC_G */
 	 ((GLubyte *)p)[2] = spec[0][0];			/* VERTEX_?_SPEC_R */
-	 STRIDE_4UB(spec, spec_stride);
+	 STRIDE_4F(spec, spec_stride);
 #endif
 #if DO_FOG
 	 ((GLubyte *)p)[3] = fog[0][0] * 255.0;			/* VERTEX_?_SPEC_A */
@@ -273,7 +273,7 @@ static void TAG(emit)( GLcontext *ctx,
 	 *((GLubyte *)p)++ = col[0][1];				/* VERTEX_?_G */
 	 *((GLubyte *)p)++ = col[0][0];				/* VERTEX_?_R */
 	 *((GLubyte *)p)++ = col[0][3];				/* VERTEX_?_A */
-	 STRIDE_4UB(col, col_stride);
+	 STRIDE_4F(col, col_stride);
 #else
 	 p++;
 #endif

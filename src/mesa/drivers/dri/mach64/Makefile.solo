@@ -36,7 +36,6 @@ DRIVER_SOURCES = \
 		mach64_vb.c \
 		mach64_dd.c \
 		mach64_lock.c \
-		mach64_native_vb.c \
 		../../common/driverfuncs.c \
                 ../common/mm.c \
                 ../common/utils.c \

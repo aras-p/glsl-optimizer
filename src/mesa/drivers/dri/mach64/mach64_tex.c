@@ -580,26 +580,26 @@ static GLboolean mach64DDIsTextureResident( GLcontext *ctx,
 }
 
 
-void mach64DDInitTextureFuncs( GLcontext *ctx )
+void mach64InitTextureFuncs( struct dd_function_table *functions )
 {
-   ctx->Driver.TexEnv			= mach64DDTexEnv;
-   ctx->Driver.ChooseTextureFormat	= mach64ChooseTextureFormat;
-   ctx->Driver.TexImage1D		= mach64TexImage1D;
-   ctx->Driver.TexSubImage1D		= mach64TexSubImage1D;
-   ctx->Driver.TexImage2D		= mach64TexImage2D;
-   ctx->Driver.TexSubImage2D		= mach64TexSubImage2D;
-   ctx->Driver.TexImage3D               = _mesa_store_teximage3d;
-   ctx->Driver.TexSubImage3D            = _mesa_store_texsubimage3d;
-   ctx->Driver.CopyTexImage1D           = _swrast_copy_teximage1d;
-   ctx->Driver.CopyTexImage2D           = _swrast_copy_teximage2d;
-   ctx->Driver.CopyTexSubImage1D        = _swrast_copy_texsubimage1d;
-   ctx->Driver.CopyTexSubImage2D        = _swrast_copy_texsubimage2d;
-   ctx->Driver.CopyTexSubImage3D        = _swrast_copy_texsubimage3d;
-   ctx->Driver.TexParameter		= mach64DDTexParameter;
-   ctx->Driver.BindTexture		= mach64DDBindTexture;
-   ctx->Driver.DeleteTexture		= mach64DDDeleteTexture;
-   ctx->Driver.UpdateTexturePalette	= NULL;
-   ctx->Driver.ActiveTexture		= NULL;
-   ctx->Driver.IsTextureResident	= mach64DDIsTextureResident;
-   ctx->Driver.PrioritizeTexture	= NULL;
+   functions->TexEnv			= mach64DDTexEnv;
+   functions->ChooseTextureFormat	= mach64ChooseTextureFormat;
+   functions->TexImage1D		= mach64TexImage1D;
+   functions->TexSubImage1D		= mach64TexSubImage1D;
+   functions->TexImage2D		= mach64TexImage2D;
+   functions->TexSubImage2D		= mach64TexSubImage2D;
+   functions->TexImage3D               = _mesa_store_teximage3d;
+   functions->TexSubImage3D            = _mesa_store_texsubimage3d;
+   functions->CopyTexImage1D           = _swrast_copy_teximage1d;
+   functions->CopyTexImage2D           = _swrast_copy_teximage2d;
+   functions->CopyTexSubImage1D        = _swrast_copy_texsubimage1d;
+   functions->CopyTexSubImage2D        = _swrast_copy_texsubimage2d;
+   functions->CopyTexSubImage3D        = _swrast_copy_texsubimage3d;
+   functions->TexParameter		= mach64DDTexParameter;
+   functions->BindTexture		= mach64DDBindTexture;
+   functions->DeleteTexture		= mach64DDDeleteTexture;
+   functions->UpdateTexturePalette	= NULL;
+   functions->ActiveTexture		= NULL;
+   functions->IsTextureResident	= mach64DDIsTextureResident;
+   functions->PrioritizeTexture	= NULL;
 }

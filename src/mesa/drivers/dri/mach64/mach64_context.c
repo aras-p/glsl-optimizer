@@ -139,6 +139,10 @@ GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
 
    mach64Screen = mmesa->mach64Screen = (mach64ScreenPtr)driScreen->private;
 
+   /* Parse configuration files */
+   driParseConfigFiles (&mmesa->optionCache, &mach64Screen->optionCache,
+                        mach64Screen->driScreen->myNum, "mach64");
+
    mmesa->sarea = (ATISAREAPrivPtr)((char *)driScreen->pSAREA +
 				    sizeof(XF86DRISAREARec));
 
@@ -210,13 +214,11 @@ GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
    _swrast_allow_vertex_fog( ctx, GL_TRUE );
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
+
    mach64InitVB( ctx );
    mach64InitTriFuncs( ctx );
-   mach64DDInitDriverFuncs( ctx );
-   mach64DDInitIoctlFuncs( ctx );
    mach64DDInitStateFuncs( ctx );
    mach64DDInitSpanFuncs( ctx );
-   mach64DDInitTextureFuncs( ctx );
    mach64DDInitState( mmesa );
 
    mmesa->do_irqs = (mmesa->mach64Screen->irq && !getenv("MACH64_NO_IRQS"));

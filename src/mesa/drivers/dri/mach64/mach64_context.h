@@ -238,7 +238,7 @@ struct mach64_context {
    GLuint vertex_stride_shift;
    GLuint vertex_format;
    GLuint num_verts;
-   char *verts;		
+   GLubyte *verts;		
 
    CARD32 Color;			/* Current draw color */
    CARD32 ClearColor;			/* Color used to clear color buffer */
