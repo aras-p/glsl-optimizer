@@ -573,7 +573,6 @@ viaDestroyContext(__DRIcontextPrivate *driContextPriv)
 	FreeBuffer(vmesa);
         /* free the Mesa context */
 	_mesa_destroy_context(vmesa->glCtx);
-	vmesa->glCtx->DriverCtx = NULL;
         FREE(vmesa);
     }
     
