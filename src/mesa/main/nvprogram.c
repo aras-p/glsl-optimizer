@@ -1,4 +1,4 @@
-/* $Id: nvprogram.c,v 1.2 2003/02/10 20:31:11 alanh Exp $ */
+/* $Id: nvprogram.c,v 1.3 2003/02/16 23:07:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -43,6 +43,86 @@
 #include "nvvertparse.h"
 #include "nvvertprog.h"
 #include "nvprogram.h"
+
+
+/**
+ * Symbol table entry.
+ * Used for named program parameters.
+ */
+struct symbol
+{
+   const char *Name;
+   enum symbol_type Type;
+   GLfloat Value[4];
+   GLuint Register;
+   struct symbol *Next;
+};
+
+
+
+void
+_mesa_add_symbol(struct symbol_table *symbolTable,
+                 const char *name, enum symbol_type type, const GLfloat *value)
+{
+   struct symbol *s = MALLOC_STRUCT(symbol);
+   if (s) {
+      s->Name = _mesa_strdup(name);
+      s->Type = type;
+      s->Value[0] = value[0];
+      s->Value[1] = value[1];
+      s->Value[2] = value[2];
+      s->Value[3] = value[3];
+      s->Next = symbolTable->Head;
+      symbolTable->Head = s;
+   }
+}
+
+
+GLboolean
+_mesa_lookup_symbol(const struct symbol_table *symbolTable,
+                    const char *name, GLfloat *value)
+{
+   const struct symbol *s;
+   for (s = symbolTable->Head; s; s = s->Next) {
+      if (_mesa_strcmp(s->Name, name) == 0) {
+         value[0] = s->Value[0];
+         value[1] = s->Value[1];
+         value[2] = s->Value[2];
+         value[3] = s->Value[3];
+         return GL_TRUE;
+      }
+   }
+   printf("lookup %s failed\n", name);
+   return GL_FALSE;
+}
+
+
+static GLint
+_mesa_lookup_program_register(const struct symbol_table *symbolTable,
+                              GLsizei len, const GLubyte *name)
+{
+   const struct symbol *s;
+   for (s = symbolTable->Head; s; s = s->Next) {
+      if (_mesa_strcmp(s->Name, (const char *) name) == 0 &&
+          _mesa_strlen(s->Name) == len) {
+         return s->Register;
+      }
+   }
+   return -1;
+}
+
+
+void
+_mesa_assign_program_registers(struct symbol_table *symbolTable)
+{
+   struct symbol *s;
+   GLuint reg = 0;
+   for (s = symbolTable->Head; s; s = s->Next) {
+      if (s->Type == Declaration) {
+         s->Register = reg++;
+      }
+   }
+}
 
 
 
@@ -984,20 +1064,13 @@ _mesa_TrackMatrixNV(GLenum target, GLuint address,
 }
 
 
-static GLfloat *
-lookup_program_parameter(struct fragment_program *fprog,
-                         GLsizei len, const GLubyte *name)
-{
-   return NULL;
-}
-
-
 void
 glProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
                             GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
    struct program *prog;
-   GLfloat *p;
+   struct fragment_program *fragProg;
+   GLint reg;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -1012,16 +1085,17 @@ glProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
       return;
    }
 
-   p = lookup_program_parameter((struct fragment_program *) prog, len, name);
-   if (!p) {
+   fragProg = (struct fragment_program *) prog;
+   reg = _mesa_lookup_program_register(&(fragProg->SymbolTable), len, name);
+   if (reg < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glProgramNamedParameterNV");
       return;
    }
 
-   p[0] = x;
-   p[1] = y;
-   p[2] = z;
-   p[3] = w;
+   fragProg->LocalParams[reg][0] = x;
+   fragProg->LocalParams[reg][1] = y;
+   fragProg->LocalParams[reg][2] = z;
+   fragProg->LocalParams[reg][3] = w;
 }
 
 
@@ -1056,7 +1130,8 @@ glGetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
                                GLfloat *params)
 {
    struct program *prog;
-   const GLfloat *p;
+   struct fragment_program *fragProg;
+   GLint reg;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -1071,16 +1146,17 @@ glGetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
       return;
    }
 
-   p = lookup_program_parameter((struct fragment_program *) prog, len, name);
-   if (!p) {
+   fragProg = (struct fragment_program *) prog;
+   reg = _mesa_lookup_program_register(&(fragProg->SymbolTable), len, name);
+   if (reg < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramNamedParameterNV");
       return;
    }
 
-   params[0] = p[0];
-   params[1] = p[1];
-   params[2] = p[2];
-   params[3] = p[3];
+   params[0] = fragProg->LocalParams[reg][0];
+   params[1] = fragProg->LocalParams[reg][1];
+   params[2] = fragProg->LocalParams[reg][2];
+   params[3] = fragProg->LocalParams[reg][3];
 }
 
 
