@@ -352,7 +352,7 @@ static void dtr( struct tnl_pipeline_stage *stage )
 const struct tnl_pipeline_stage _tnl_lighting_stage =
 {
    "lighting",			/* name */
-   _NEW_LIGHT,			/* recheck */
+   _NEW_LIGHT|_NEW_PROGRAM,			/* recheck */
    _NEW_LIGHT|_NEW_MODELVIEW,	/* recalc -- modelview dependency
 				 * otherwise not captured by inputs
 				 * (which may be _TNL_BIT_POS) */

@@ -111,10 +111,10 @@ static void free_point_data( struct tnl_pipeline_stage *stage )
 const struct tnl_pipeline_stage _tnl_point_attenuation_stage =
 {
    "point size attenuation",	/* name */
-   _NEW_POINT,			/* build_state_change */
-   _NEW_POINT,			/* run_state_change */
+   _NEW_POINT|_NEW_PROGRAM,	/* check_state */
+   _NEW_POINT,			/* run_state */
    GL_FALSE,			/* active */
-   _TNL_BIT_POS,			/* inputs */
+   _TNL_BIT_POS,		/* inputs */
    _TNL_BIT_POS,		/* outputs */
    0,				/* changed_inputs (temporary value) */
    NULL,			/* stage private data */

@@ -678,7 +678,7 @@ static void free_texgen_data( struct tnl_pipeline_stage *stage )
 const struct tnl_pipeline_stage _tnl_texgen_stage =
 {
    "texgen",			/* name */
-   _NEW_TEXTURE,		/* when to call check() */
+   _NEW_TEXTURE|_NEW_PROGRAM,	/* when to call check() */
    _NEW_TEXTURE,		/* when to invalidate stored data */
    GL_FALSE,			/* active? */
    0,				/* inputs */

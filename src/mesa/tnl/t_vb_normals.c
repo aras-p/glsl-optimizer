@@ -179,6 +179,7 @@ static void free_normal_data( struct tnl_pipeline_stage *stage )
 
 #define _TNL_NEW_NORMAL_TRANSFORM        (_NEW_MODELVIEW| \
 					  _NEW_TRANSFORM| \
+					  _NEW_PROGRAM| \
                                           _MESA_NEW_NEED_NORMALS| \
                                           _MESA_NEW_NEED_EYE_COORDS)
 

@@ -137,7 +137,7 @@ static void free_texmat_data( struct tnl_pipeline_stage *stage )
 const struct tnl_pipeline_stage _tnl_texture_transform_stage =
 {
    "texture transform",			/* name */
-   _NEW_TEXTURE|_NEW_TEXTURE_MATRIX,	/* check_state */
+   _NEW_TEXTURE|_NEW_TEXTURE_MATRIX|_NEW_PROGRAM,	/* check_state */
    _NEW_TEXTURE|_NEW_TEXTURE_MATRIX,	/* run_state */
    GL_FALSE,				/* active? */
    0,					/* inputs */

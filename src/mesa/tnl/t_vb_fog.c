@@ -241,7 +241,7 @@ static void free_fog_data( struct tnl_pipeline_stage *stage )
 const struct tnl_pipeline_stage _tnl_fog_coordinate_stage =
 {
    "build fog coordinates",	/* name */
-   _NEW_FOG,			/* check_state */
+   _NEW_FOG|_NEW_PROGRAM,	/* check_state */
    _NEW_FOG,			/* run_state */
    GL_FALSE,			/* active? */
    0,				/* inputs */
