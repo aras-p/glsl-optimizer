@@ -1,4 +1,4 @@
-/* $Id: readpix.c,v 1.2 2000/03/23 19:47:25 brianp Exp $ */
+/* $Id: readpix.c,v 1.3 2000/03/31 01:01:31 brianp Exp $ */
 
 /*
  * glReadPixels and glCopyPixels test
@@ -8,6 +8,9 @@
 
 /*
  * $Log: readpix.c,v $
+ * Revision 1.3  2000/03/31 01:01:31  brianp
+ * tweaks to allow different read formats/types
+ *
  * Revision 1.2  2000/03/23 19:47:25  brianp
  * added benchmarking
  *
@@ -39,6 +42,19 @@ static GLboolean DrawFront = GL_FALSE;
 static GLboolean ScaleAndBias = GL_FALSE;
 static GLboolean Benchmark = GL_FALSE;
 static GLubyte *TempImage = NULL;
+
+#if 1
+#define ReadFormat ImgFormat
+#define ReadType GL_UNSIGNED_BYTE
+#endif
+#if 0
+static GLenum ReadFormat = GL_RGBA;
+static GLenum ReadType = GL_UNSIGNED_BYTE;
+#endif
+#if 0
+static GLenum ReadFormat = GL_RGB;
+static GLenum ReadType = GL_UNSIGNED_SHORT_5_6_5;
+#endif
 
 
 static void
@@ -110,7 +126,7 @@ Display( void )
       printf("Benchmarking...\n");
       do {
          glReadPixels(APosX, APosY, ImgWidth, ImgHeight,
-                      ImgFormat, GL_UNSIGNED_BYTE, TempImage);
+                      ReadFormat, ReadType, TempImage);
          reads++;
          endTime = glutGet(GLUT_ELAPSED_TIME);
       } while (endTime - startTime < 4000);   /* 4 seconds */
@@ -122,12 +138,12 @@ Display( void )
    }
    else {
       glReadPixels(APosX, APosY, ImgWidth, ImgHeight,
-                   ImgFormat, GL_UNSIGNED_BYTE, TempImage);
+                   ReadFormat, ReadType, TempImage);
    }
    glRasterPos2i(BPosX, BPosY);
    glDisable(GL_DITHER);
    SetupPixelTransfer(GL_FALSE);
-   glDrawPixels(ImgWidth, ImgHeight, ImgFormat, GL_UNSIGNED_BYTE, TempImage);
+   glDrawPixels(ImgWidth, ImgHeight, ReadFormat, ReadType, TempImage);
 
    /* do copypixels */
    glRasterPos2i(CPosX, 5);
