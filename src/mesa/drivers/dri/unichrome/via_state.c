@@ -204,8 +204,6 @@ void viaEmitState(viaContextPtr vmesa)
 	    nDummyValue = (HC_SubA_HTXSMD << 24) | 0;
 	 }
 
-	 /* Clear cache flag never set:
-	  */
 	 if (vmesa->clearTexCache) {
 	    vmesa->clearTexCache = 0;
 	    OUT_RING( nDummyValue | HC_HTXCHCLR_MASK );
