@@ -108,7 +108,7 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
    else
       FX_smallLodLog2(ti->info) = FX_largeLodLog2(ti->info);
 
-   fxTexGetFormat(tObj->Image[minl]->TexFormat->IntFormat, &(ti->info.format),
+   fxTexGetFormat(tObj->Image[minl]->TexFormat->BaseFormat, &(ti->info.format),
 		  &(ti->baseLevelInternalFormat));
 
    switch (tObj->WrapS) {

@@ -1233,6 +1233,8 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       /* Apply pixel transfer ops and convert image format to something
        * simple (format = simpleFormat, type = CHAN_TYPE).
        */
+#if 000
+      /** XXX THIS HAS TO BE REWRITTEN! **/
       _mesa_transfer_teximage(ctx, 2,	/* dimensions */
                               simpleFormat,     /* base int format */
 			      simpleFormat,	/* dest format */
@@ -1242,7 +1244,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 			      width * comps,	/* dstRowStride */
 			      0,	/* dstImageStride */
 			      format, type, pixels, packing /* src info */ );
-
+#endif
       if (mml->width != width || mml->height != height) {
          /* Upscale image to accomodate Glide's image aspect limitations. */
          const struct gl_texture_format *texFormat
@@ -1350,6 +1352,8 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
       /* Apply pixel transfer ops and convert image format to something
        * simple (format = simpleFormat, type = CHAN_TYPE).
        */
+#if 0
+      /* XXX this has to be rewritten! */
       _mesa_transfer_teximage(ctx, 2,	/* dimensions */
 			      simpleFormat,	/* base int format */
 			      simpleFormat,	/* dest format */
@@ -1359,6 +1363,7 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
 			      width * comps,	/* dstRowStride */
 			      0,	/* dstImageStride */
 			      format, type, pixels, packing /* src info */ );
+#endif
 
       if (texImage->Width != mml->width || texImage->Height != mml->height) {
          /* Upscale image to accomodate Glide's image aspect limitations. */
