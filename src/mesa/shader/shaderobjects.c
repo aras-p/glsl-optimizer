@@ -1177,6 +1177,8 @@ _mesa_init_shaderobjects (GLcontext *ctx)
 {
 	ctx->ShaderObjects.current_program = NULL;
 
+#if 0  /* disable for now */
 	_mesa_init_shaderobjects_3dlabs (ctx);
+#endif
 }
 
