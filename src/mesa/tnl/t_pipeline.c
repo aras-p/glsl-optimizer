@@ -127,6 +127,9 @@ void _tnl_run_pipeline( GLcontext *ctx )
    unsigned short __tmp;
 #endif
 
+   if (!tnl->vb.Count)
+      return;
+
    pipe->run_state_changes = 0;
    pipe->run_input_changes = 0;
 

@@ -29,11 +29,13 @@
 #include "api_arrayelt.h"
 #include "glheader.h"
 #include "imports.h"
+#include "context.h"
 #include "macros.h"
 #include "mtypes.h"
 #include "dlist.h"
 #include "light.h"
 #include "vtxfmt.h"
+#include "nvfragprog.h"
 
 #include "t_context.h"
 #include "t_array_api.h"
@@ -153,6 +155,30 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
 					 tnl->pipeline.build_state_trigger);
 
    tnl->vtx.eval.new_state |= new_state;
+
+   /* Calculate tnl->render_inputs:
+    */
+   if (ctx->Visual.rgbMode) {
+      tnl->render_inputs = (_TNL_BIT_POS|
+			    _TNL_BIT_COLOR0|
+			    (ctx->Texture._EnabledUnits << _TNL_ATTRIB_TEX0));
+
+      if (NEED_SECONDARY_COLOR(ctx))
+	 tnl->render_inputs |= _TNL_BIT_COLOR1;
+   }
+   else {
+      tnl->render_inputs |= (_TNL_BIT_POS|_TNL_BIT_INDEX);
+   }
+    
+   if (ctx->Fog.Enabled)
+      tnl->render_inputs |= _TNL_BIT_FOG;
+
+   if (ctx->Polygon.FrontMode != GL_FILL || 
+       ctx->Polygon.BackMode != GL_FILL)
+      tnl->render_inputs |= _TNL_BIT_EDGEFLAG;
+
+   if (ctx->RenderMode == GL_FEEDBACK)
+      tnl->render_inputs |= _TNL_BIT_TEX0;
 }
 
 

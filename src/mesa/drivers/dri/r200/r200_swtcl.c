@@ -662,23 +662,7 @@ static GLboolean r200_run_render( GLcontext *ctx,
 static void r200_check_render( GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage )
 {
-   GLuint inputs = _TNL_BIT_POS | _TNL_BIT_COLOR0;
-
-   if (ctx->RenderMode == GL_RENDER) {
-      if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
-	 inputs |= _TNL_BIT_COLOR1;
-
-      if (ctx->Texture.Unit[0]._ReallyEnabled)
-	 inputs |= _TNL_BIT_TEX0;
-
-      if (ctx->Texture.Unit[1]._ReallyEnabled)
-	 inputs |= _TNL_BIT_TEX1;
-
-      if (ctx->Fog.Enabled)
-	 inputs |= _TNL_BIT_FOG;
-   }
-
-   stage->inputs = inputs;
+   stage->inputs = TNL_CONTEXT(ctx)->render_inputs;
 }
 
 

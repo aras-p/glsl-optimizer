@@ -175,7 +175,8 @@ void _tnl_playback_vertex_list( GLcontext *ctx, void *data )
 
    FLUSH_CURRENT(ctx, 0);
 
-   if (node->prim_count) {
+   if (node->prim_count &&
+       node->count) {
 
       if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END &&
 	       (node->prim[0].mode & PRIM_BEGIN)) {

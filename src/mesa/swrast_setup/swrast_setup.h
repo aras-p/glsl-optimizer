@@ -38,6 +38,8 @@
 #ifndef SWRAST_SETUP_H
 #define SWRAST_SETUP_H
 
+#include "swrast/swrast.h"
+
 extern GLboolean
 _swsetup_CreateContext( GLcontext *ctx );
 
@@ -49,5 +51,11 @@ _swsetup_InvalidateState( GLcontext *ctx, GLuint new_state );
 
 extern void
 _swsetup_Wakeup( GLcontext *ctx );
+
+/* Helper function to translate a hardware vertex (as understood by
+ * the tnl/t_vertex.c code) to a swrast vertex.
+ */
+extern void 
+_swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest );
 
 #endif

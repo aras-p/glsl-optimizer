@@ -221,22 +221,7 @@ static GLboolean i830_run_render( GLcontext *ctx,
 static void i830_check_render( GLcontext *ctx, 
 			       struct tnl_pipeline_stage *stage )
 {
-   GLuint inputs = VERT_BIT_POS | VERT_BIT_COLOR0;
-   if (ctx->RenderMode == GL_RENDER) {
-      if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
-	 inputs |= VERT_BIT_COLOR1;
-
-      if (ctx->Texture.Unit[0]._ReallyEnabled)
-	 inputs |= VERT_BIT_TEX0;
-
-      if (ctx->Texture.Unit[1]._ReallyEnabled)
-	 inputs |= VERT_BIT_TEX1;
-
-      if (ctx->Fog.Enabled)
-	 inputs |= VERT_BIT_FOG;
-   }
-
-   stage->inputs = inputs;
+   stage->inputs = TNL_CONTEXT(ctx)->render_inputs;
 }
 
 static void dtr( struct tnl_pipeline_stage *stage )

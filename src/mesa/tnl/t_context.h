@@ -160,6 +160,7 @@ enum {
 #define _TNL_BIT_TEX(u)  (1 << (_TNL_ATTRIB_TEX0 + (u)))
 
 
+
 #define _TNL_BITS_MAT_ANY  (_TNL_BIT_MAT_FRONT_AMBIENT   | 	\
 			    _TNL_BIT_MAT_BACK_AMBIENT    | 	\
 			    _TNL_BIT_MAT_FRONT_DIFFUSE   | 	\
@@ -456,6 +457,7 @@ struct tnl_pipeline_stage {
 				 * call to 'run'.
 				 */
 
+
    /* Private data for the pipeline stage:
     */
    void *privatePtr;
@@ -494,6 +496,22 @@ struct tnl_pipeline {
 };
 
 
+struct tnl_clipspace_attr {
+   int attrib;
+   int vertoffset;
+   int vertattrsize;
+   GLfloat *inputptr;
+   int inputstride;
+
+   void (*insert)( const struct tnl_clipspace_attr *a, 
+		   char *v, const GLfloat *input );
+
+   void (*extract)( const struct tnl_clipspace_attr *a, 
+		    GLfloat *output, const char *v );
+
+   const GLfloat *vp;
+};
+
 
 
 typedef void (*points_func)( GLcontext *ctx, GLuint first, GLuint last );
@@ -511,6 +529,26 @@ typedef void (*copy_pv_func)( GLcontext *ctx, GLuint dst, GLuint src );
 typedef void (*setup_func)( GLcontext *ctx,
 			    GLuint start, GLuint end,
 			    GLuint new_inputs);
+
+
+
+
+struct tnl_clipspace {
+   GLboolean need_extras;
+   
+   GLuint new_inputs;
+
+   GLubyte *vertex_buf;
+   GLuint vertex_size;
+   GLuint max_vertex_size;
+
+   struct tnl_clipspace_attr attr[_TNL_ATTRIB_MAX];
+   GLuint attr_count;
+
+   void (*emit)( GLcontext *ctx, GLuint start, GLuint end, void *dest );
+   interp_func interp;
+   copy_pv_func copy_pv;
+};
 
 
 struct tnl_device_driver {
@@ -643,12 +681,21 @@ typedef struct {
    struct tnl_vertex_arrays array_inputs;
 
 
+   /* Clipspace/ndc/window vertex managment:
+    */
+   struct tnl_clipspace clipspace;
+
+
    /* Probably need a better configuration mechanism:
     */
    GLboolean NeedNdcCoords;
    GLboolean LoopbackDListCassettes;
    GLboolean CalcDListNormalLengths;
    GLboolean IsolateMaterials;
+
+   /* 
+    */
+   GLuint render_inputs;
 
 
    GLvertexformat exec_vtxfmt;

@@ -77,6 +77,8 @@ static GLboolean run_normal_stage( GLcontext *ctx,
    }
 
    VB->NormalPtr = &store->normal;
+   VB->AttribPtr[_TNL_ATTRIB_NORMAL] = VB->NormalPtr;
+
    VB->NormalLengthPtr = 0;	/* no longer valid */
    return GL_TRUE;
 }

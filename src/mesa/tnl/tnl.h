@@ -74,4 +74,5 @@ _tnl_need_dlist_norm_lengths( GLcontext *ctx, GLboolean flag );
 extern void
 _tnl_isolate_materials( GLcontext *ctx, GLboolean flag );
 
+
 #endif

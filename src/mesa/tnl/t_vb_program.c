@@ -170,8 +170,17 @@ static GLboolean run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    VB->SecondaryColorPtr[1] = &store->attribs[VERT_RESULT_BFC1];
    VB->FogCoordPtr = &store->attribs[VERT_RESULT_FOGC];
    VB->PointSizePtr = &store->attribs[VERT_RESULT_PSIZ];
-   for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
-      VB->TexCoordPtr[i] = &store->attribs[VERT_RESULT_TEX0 + i];
+
+   VB->AttribPtr[VERT_ATTRIB_COLOR0] = VB->ColorPtr[0];
+   VB->AttribPtr[VERT_ATTRIB_COLOR1] = VB->SecondaryColorPtr[0];
+   VB->AttribPtr[VERT_ATTRIB_FOG] = VB->FogCoordPtr;
+
+   for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+      VB->AttribPtr[VERT_ATTRIB_TEX0+i] = VB->TexCoordPtr[i] = 
+	 &store->attribs[VERT_RESULT_TEX0 + i];
+   }
+
+
 
    /* Cliptest and perspective divide.  Clip functions must clear
     * the clipmask.

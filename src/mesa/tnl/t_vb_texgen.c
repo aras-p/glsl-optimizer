@@ -524,7 +524,8 @@ static GLboolean run_texgen_stage( GLcontext *ctx,
 	 if (stage->changed_inputs & (_TNL_BIT_POS | _TNL_BIT_NORMAL | _TNL_BIT_TEX(i)))
 	    store->TexgenFunc[i]( ctx, store, i );
 
-	 VB->TexCoordPtr[i] = &store->texcoord[i];
+	 VB->AttribPtr[VERT_ATTRIB_TEX0+i] = 
+	    VB->TexCoordPtr[i] = &store->texcoord[i];
       }
 
    return GL_TRUE;

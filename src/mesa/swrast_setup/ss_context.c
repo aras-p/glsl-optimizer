@@ -28,6 +28,7 @@
 
 #include "glheader.h"
 #include "imports.h"
+#include "colormac.h"
 #include "ss_context.h"
 #include "ss_triangle.h"
 #include "ss_vb.h"
@@ -35,6 +36,7 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
+#include "tnl/t_vertex.h"
 
 
 #define _SWSETUP_NEW_VERTS (_NEW_RENDERMODE|	\
@@ -164,3 +166,41 @@ _swsetup_Wakeup( GLcontext *ctx )
    _tnl_need_projected_coords( ctx, GL_TRUE );
    _swsetup_InvalidateState( ctx, ~0 );
 }
+
+
+
+
+
+/* Populate a swrast SWvertex from an attrib-style vertex.
+ */
+void 
+_swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest )
+{
+   GLfloat tmp[4];
+   GLint i;
+
+   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_POS, dest->win );
+
+   for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
+      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_TEX0+i, dest->texcoord[i] );
+	  
+   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR0, tmp );
+   UNCLAMPED_FLOAT_TO_RGBA_CHAN( dest->color, tmp );
+
+   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR1, tmp );
+   UNCLAMPED_FLOAT_TO_RGB_CHAN( dest->specular, tmp );
+
+   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_FOG, tmp );
+   dest->fog = tmp[0];
+
+   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_INDEX, tmp );
+   dest->index = (GLuint) tmp[0];
+
+/*
+  Need to check how pointsize is related to vertex program attributes:
+
+   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_POINTSIZE, tmp );
+   dest->pointSize = tmp[0];
+*/
+}
+

@@ -342,38 +342,7 @@ static GLboolean run_render( GLcontext *ctx,
  */
 static void check_render( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 {
-   GLuint inputs = _TNL_BIT_POS;
-   GLuint i;
-
-   if (ctx->Visual.rgbMode) {
-      inputs |= _TNL_BIT_COLOR0;
-
-      if (NEED_SECONDARY_COLOR(ctx))
-	 inputs |= _TNL_BIT_COLOR1;
-
-      if (ctx->Texture._EnabledCoordUnits) {
-	 for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
-	    if (ctx->Texture._EnabledCoordUnits & (1 << i))
-	       inputs |= _TNL_BIT_TEX(i);
-	 }
-      }
-   }
-   else {
-      inputs |= _TNL_BIT_INDEX;
-   }
-
-   /* How do drivers turn this off?
-    */
-   if (ctx->Fog.Enabled)
-      inputs |= _TNL_BIT_FOG;
-
-   if (ctx->Polygon.FrontMode != GL_FILL || ctx->Polygon.BackMode != GL_FILL)
-      inputs |= _TNL_BIT_EDGEFLAG;
-
-   if (ctx->RenderMode==GL_FEEDBACK)
-      inputs |= _TNL_BITS_TEX_ANY;
-
-   stage->inputs = inputs;
+   stage->inputs = TNL_CONTEXT(ctx)->render_inputs;
 }
 
 

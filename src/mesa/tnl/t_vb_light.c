@@ -217,6 +217,10 @@ static GLboolean run_lighting( GLcontext *ctx,
     */
    store->light_func_tab[idx]( ctx, VB, stage, input );
 
+   VB->AttribPtr[_TNL_ATTRIB_COLOR0] = VB->ColorPtr[0];
+   VB->AttribPtr[_TNL_ATTRIB_COLOR1] = VB->SecondaryColorPtr[0];
+   VB->AttribPtr[_TNL_ATTRIB_INDEX] = VB->IndexPtr[0];
+
    return GL_TRUE;
 }
 

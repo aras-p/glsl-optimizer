@@ -1871,7 +1871,7 @@ struct matrix_stack
 /**
  * \name Bits to indicate what state has changed.  
  *
- * 6 unused flags.
+ * 4 unused flags.
  */
 /*@{*/
 #define _NEW_MODELVIEW		0x1        /**< __GLcontextRec::ModelView */

@@ -32,11 +32,15 @@
  * and manipulate them directly.  
  */
 
+
+/* It will probably be necessary to allow drivers to specify new
+ * emit-styles to cover all the wierd and wacky things out there.
+ */
 enum tnl_attr_format {
-   EMIT_1F = 1,
-   EMIT_2F = 2,
-   EMIT_3F = 3,
-   EMIT_4F = 4,
+   EMIT_1F,
+   EMIT_2F,
+   EMIT_3F,
+   EMIT_4F,
    EMIT_2F_VIEWPORT,		/* do viewport transform and emit */
    EMIT_3F_VIEWPORT,		/* do viewport transform and emit */
    EMIT_4F_VIEWPORT,		/* do viewport transform and emit */
@@ -46,22 +50,19 @@ enum tnl_attr_format {
    EMIT_3UB_3F_RGB,		/* for specular color */
    EMIT_4UB_4F_BGRA,		/* for color */
    EMIT_4UB_4F_RGBA,		/* for color */
-   EMIT_NOP_1F,
-   EMIT_NOP_1UB,
+   EMIT_4CHAN_4F_RGBA,		/* for swrast color */
+   EMIT_1F_PAD_4F,		/* for swrast texcoords */
+   EMIT_2F_PAD_4F,		/* for swrast texcoords */
+   EMIT_3F_PAD_4F,		/* for swrast texcoords */
+   EMIT_MAX
 };
 
 struct tnl_attr_map {
-   GLuint attr;			/* VERT_ATTRIB_ enum */
+   GLuint attrib;			/* _TNL_ATTRIB_ enum */
    enum tnl_attr_format format;
 };
    
 
-/* Emit hardware vertices to a given buffer:
- */
-extern void _tnl_emit( GLcontext *ctx,
-		       GLuint start, GLuint end,
-		       void *dest,
-		       GLuint stride );
 
 /* Interpolate between two vertices to produce a third:
  */
@@ -72,21 +73,47 @@ extern void _tnl_interp( GLcontext *ctx,
 
 /* Copy colors from one vertex to another:
  */
-extern void _tnl_copy_colors(  GLcontext *ctx, GLuint edst, GLuint esrc );
+extern void _tnl_copy_pv(  GLcontext *ctx, GLuint edst, GLuint esrc );
 
 
 /* Extract a named attribute from a hardware vertex.  Will have to
  * reverse any viewport transformation, swizzling or other conversions
  * which may have been applied:
  */
-extern void _tnl_get_attr( GLcontext *ctx, void *vertex, GLenum attrib,
+extern void _tnl_get_attr( GLcontext *ctx, const void *vertex, GLenum attrib,
 			   GLfloat *dest );
 
-/* Populate a swrast SWvertex from an attrib-style vertex.
- */
-extern void _tnl_translate( GLcontext *ctx, const void *vertex, 
-			    SWvertex *dest );
+extern void *_tnl_get_vertex( GLcontext *ctx, GLuint nr );
 
+
+/*
+ */
+extern GLuint _tnl_install_attrs( GLcontext *ctx,
+				  const struct tnl_attr_map *map,
+				  GLuint nr, const GLfloat *vp );
+
+
+
+
+extern void _tnl_free_vertices( GLcontext *ctx );
+
+extern void _tnl_init_vertices( GLcontext *ctx, 
+				GLuint vb_size,
+				GLuint max_vertex_size );
+
+extern void *_tnl_emit_vertices_to_buffer( GLcontext *ctx,
+					   GLuint start,
+					   GLuint count,
+					   void *dest );
+
+extern void _tnl_build_vertices( GLcontext *ctx,
+				 GLuint start,
+				 GLuint count,
+				 GLuint newinputs );
+
+extern void _tnl_invalidate_vertices( GLcontext *ctx, GLuint newinputs );
+
+extern void _tnl_invalidate_vertex_state( GLcontext *ctx, GLuint new_state );
 
 
 #endif

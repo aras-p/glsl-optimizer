@@ -185,6 +185,8 @@ static GLboolean run_fog_stage( GLcontext *ctx,
    }
 
    make_win_fog_coords( ctx, VB->FogCoordPtr, input );
+
+   VB->AttribPtr[_TNL_ATTRIB_FOG] = VB->FogCoordPtr;
    return GL_TRUE;
 }
 
