@@ -437,7 +437,7 @@ void viaEmitDrawingRectangle(viaContextPtr vmesa)
 }
 
 
-static void viaCalcViewport(GLcontext *ctx)
+void viaCalcViewport(GLcontext *ctx)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     const GLfloat *v = ctx->Viewport._WindowMap.m;

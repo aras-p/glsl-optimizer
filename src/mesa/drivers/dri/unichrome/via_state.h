@@ -29,6 +29,7 @@
 
 extern void viaInitState(GLcontext *ctx);
 extern void viaInitStateFuncs(GLcontext *ctx);
+extern void viaCalcViewport(GLcontext *ctx);
 extern void viaPrintDirty(const char *msg, GLuint state);
 extern void viaChooseTextureState(GLcontext *ctx);
 extern void viaChooseColorState(GLcontext *ctx);

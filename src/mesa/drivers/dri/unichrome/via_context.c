@@ -909,7 +909,7 @@ void viaXMesaWindowMoved(viaContextPtr vmesa)
 	    vmesa->drawXoffSaam = 0;
     }
     
-    vmesa->glCtx->Driver.Viewport(vmesa->glCtx,0 ,0 ,0 ,0);
+    viaCalcViewport(vmesa->glCtx);
 }
 
 GLboolean
