@@ -1435,7 +1435,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	cur_reg = 0;
 	r300->hw.rr.cmd[R300_RR_ROUTE_0] = 0;
 
-	if (r300->current_vp != NULL && ctx->VertexProgram._Enabled)
+	if (VERTPROG_ACTIVE(ctx))
 		vap_outputs = r300->current_vp->outputs;
 	else
 		vap_outputs = r300->state.render_inputs;
@@ -1693,7 +1693,7 @@ void r300SetupVertexShader(r300ContextPtr rmesa)
 	   0x400 area might have something to do with pixel shaders as it appears right after pfs programming.
 	   0x406 is set to { 0.0, 0.0, 1.0, 0.0 } most of the time but should change with smooth points and in other rare cases. */
 	//setup_vertex_shader_fragment(rmesa, 0x406, &unk4);
-	if(rmesa->current_vp != NULL && ctx->VertexProgram._Enabled){
+	if(VERTPROG_ACTIVE(ctx)){
 		r300SetupVertexProgram(rmesa);
 		return ;
 	}

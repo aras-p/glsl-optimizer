@@ -254,7 +254,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 			exit(-1); \
 		} \
 		\
-		if (rmesa->current_vp == NULL) \
+		if (VERTPROG_ACTIVE(ctx) == GL_FALSE) \
 			rmesa->state.aos[nr-1].aos_reg = aa_vap_reg++; \
 		rmesa->state.aos[nr-1].aos_format = f; \
 		if (immd) { \
@@ -272,7 +272,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 		} \
 }
 
-	if (rmesa->current_vp != NULL && ctx->VertexProgram._Enabled) {
+	if (VERTPROG_ACTIVE(ctx)) {
 		if (rmesa->current_vp->inputs[VERT_ATTRIB_POS] != -1) {
 			inputs |= _TNL_BIT_POS;
 			rmesa->state.aos[nr++].aos_reg = rmesa->current_vp->inputs[VERT_ATTRIB_POS];
@@ -497,7 +497,7 @@ drm_radeon_cmd_header_t *cmd = NULL;
 #endif
 
 	/* Stage 3: VAP output */
-	if (rmesa->current_vp != NULL && ctx->VertexProgram._Enabled)
+	if (VERTPROG_ACTIVE(ctx))
 		outputs = rmesa->current_vp->outputs;
 	else
 		outputs = inputs;

@@ -759,7 +759,7 @@ static void r300_check_tcl_render(GLcontext *ctx, struct tnl_pipeline_stage *sta
 		stage->active = GL_FALSE;
 		return;
 	}
-	if((r300->current_vp != NULL) && ctx->VertexProgram._Enabled) {
+	if(VERTPROG_ACTIVE(ctx)) {
 		stage->active = GL_TRUE;
 		stage->inputs = ctx->VertexProgram.Current->InputsRead;
 	} else {

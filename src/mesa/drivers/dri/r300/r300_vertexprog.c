@@ -357,8 +357,10 @@ void vp_dump_inputs(struct r300_vertex_program *vp, char *caller)
 {
 	int i;
 	
-	if(vp == NULL)
+	if(vp == NULL){
+		fprintf(stderr, "vp null in call to %s from %s\n", __FUNCTION__, caller);
 		return ;
+	}
 	
 	fprintf(stderr, "%s:<", caller);
 	for(i=0; i < VERT_ATTRIB_MAX; i++)
@@ -398,6 +400,18 @@ static unsigned long t_src(struct r300_vertex_program *vp, struct vp_src_registe
 				t_swizzle(src->Swizzle[1]),
 				t_swizzle(src->Swizzle[2]),
 				t_swizzle(src->Swizzle[3]),
+				t_src_class(src->File),
+				src->Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+}
+
+static unsigned long t_src_scalar(struct r300_vertex_program *vp, struct vp_src_register *src)
+{
+			
+	return MAKE_VSF_SOURCE(t_src_index(vp, src),
+				t_swizzle(src->Swizzle[0]),
+				t_swizzle(src->Swizzle[0]),
+				t_swizzle(src->Swizzle[0]),
+				t_swizzle(src->Swizzle[0]),
 				t_src_class(src->File),
 				src->Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 }
@@ -461,6 +475,7 @@ static void translate_program(struct r300_vertex_program *vp)
 	VERTEX_SHADER_INSTRUCTION t2rs[1024];
 	VERTEX_SHADER_INSTRUCTION *o_inst;
 	unsigned long operands;
+	int are_srcs_scalar;
 	/* Initial value should be last tmp reg that hw supports.
 	   Strangely enough r300 doesnt mind even though these would be out of range.
 	   Smart enough to realize that it doesnt need it? */
@@ -498,6 +513,8 @@ static void translate_program(struct r300_vertex_program *vp)
 	for(vpi=mesa_vp->Instructions; vpi->Opcode != VP_OPCODE_END; vpi++, o_inst++){
 		
 		operands=op_operands(vpi->Opcode);
+		are_srcs_scalar=operands & SCALAR_FLAG;
+		operands &= ~SCALAR_FLAG;
 		
 		for(i=0; i < operands; i++)
 			src[i]=vpi->SrcReg[i];
@@ -771,30 +788,57 @@ static void translate_program(struct r300_vertex_program *vp)
 	
 		o_inst->op=MAKE_VSF_OP(t_opcode(vpi->Opcode), vpi->DstReg.Index,
 				t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
-
-		switch(operands){
-			case 1:
-				o_inst->src1=t_src(vp, &src[0]);
-				o_inst->src2=0;
-				o_inst->src3=0;
-			break;
+		
+		if(are_srcs_scalar){
+			switch(operands){
+				case 1:
+					o_inst->src1=t_src_scalar(vp, &src[0]);
+					o_inst->src2=0;
+					o_inst->src3=0;
+				break;
+				
+				case 2:
+					o_inst->src1=t_src_scalar(vp, &src[0]);
+					o_inst->src2=t_src_scalar(vp, &src[1]);
+					o_inst->src3=0;
+				break;
+				
+				case 3:
+					o_inst->src1=t_src_scalar(vp, &src[0]);
+					o_inst->src2=t_src_scalar(vp, &src[1]);
+					o_inst->src3=t_src_scalar(vp, &src[2]);
+				break;
+				
+				default:
+					fprintf(stderr, "scalars and op RCC not handled yet");
+					exit(-1);
+				break;
+			}
+		}else{
+			switch(operands){
+				case 1:
+					o_inst->src1=t_src(vp, &src[0]);
+					o_inst->src2=0;
+					o_inst->src3=0;
+				break;
 			
-			case 2:
-				o_inst->src1=t_src(vp, &src[0]);
-				o_inst->src2=t_src(vp, &src[1]);
-				o_inst->src3=0;
-			break;
+				case 2:
+					o_inst->src1=t_src(vp, &src[0]);
+					o_inst->src2=t_src(vp, &src[1]);
+					o_inst->src3=0;
+				break;
 			
-			case 3:
-				o_inst->src1=t_src(vp, &src[0]);
-				o_inst->src2=t_src(vp, &src[1]);
-				o_inst->src3=t_src(vp, &src[2]);
-			break;
+				case 3:
+					o_inst->src1=t_src(vp, &src[0]);
+					o_inst->src2=t_src(vp, &src[1]);
+					o_inst->src3=t_src(vp, &src[2]);
+				break;
 			
-			default:
-				fprintf(stderr, "scalars and op RCC not handled yet");
-				exit(-1);
-			break;
+				default:
+					fprintf(stderr, "scalars and op RCC not handled yet");
+					exit(-1);
+				break;
+			}
 		}
 		next: ;
 #if 0				
@@ -890,13 +934,14 @@ static void r300ProgramStringNotify(GLcontext *ctx, GLenum target,
 				struct program *prog)
 {
 	struct r300_vertex_program *vp=(void *)prog;
-#if 0			
+#if 0
 	fprintf(stderr, "r300ProgramStringNotify\n");
 #endif
 		
 	switch(target) {
 	case GL_VERTEX_PROGRAM_ARB:
 		vp->translated=GL_FALSE;
+	break;
 	case GL_FRAGMENT_PROGRAM_ARB:
 		return ;
 		break;
