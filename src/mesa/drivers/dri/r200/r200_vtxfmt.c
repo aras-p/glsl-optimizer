@@ -820,9 +820,6 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
    if (R200_DEBUG & DEBUG_VFMT)
       fprintf(stderr, "%s -- success\n", __FUNCTION__);
 
-   fprintf( stderr, "[%s:%u] vertex size = %u\n", __func__, __LINE__,
-	    rmesa->vb.vertex_size );
-
    return GL_TRUE;
 }
 
