@@ -66,7 +66,7 @@ static void r200WaitForIdle( r200ContextPtr rmesa );
  */
 static void r200BackUpAndEmitLostStateLocked( r200ContextPtr rmesa )
 {
-   GLuint nr_released_bufs, saved_cmd_used;
+   GLuint nr_released_bufs;
    struct r200_store saved_store;
 
    if (rmesa->backup_store.cmd_used == 0)
@@ -81,9 +81,7 @@ static void r200BackUpAndEmitLostStateLocked( r200ContextPtr rmesa )
    saved_store = rmesa->store;
    rmesa->dma.nr_released_bufs = 0;
    rmesa->store = rmesa->backup_store;
-   saved_cmd_used = rmesa->backup_store.cmd_used;
    r200FlushCmdBufLocked( rmesa, __FUNCTION__ );
-   rmesa->backup_store.cmd_used = saved_cmd_used;
    rmesa->dma.nr_released_bufs = nr_released_bufs;
    rmesa->store = saved_store;
 }
@@ -597,7 +595,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	 return;
    }
 
-   R200_FIREVERTICES( rmesa ); 
+   r200Flush( ctx );
 
    if ( mask & DD_FRONT_LEFT_BIT ) {
       flags |= RADEON_FRONT;

@@ -112,6 +112,9 @@ static void r200SaveHwState( r200ContextPtr rmesa )
    struct r200_state_atom *atom;
    char * dest = rmesa->backup_store.cmd_buf;
 
+   if (R200_DEBUG & DEBUG_STATE)
+      fprintf(stderr, "%s\n", __FUNCTION__);
+
    rmesa->backup_store.cmd_used = 0;
 
    foreach( atom, &rmesa->hw.atomlist ) {
@@ -120,10 +123,14 @@ static void r200SaveHwState( r200ContextPtr rmesa )
 	 memcpy( dest, atom->cmd, size);
 	 dest += size;
 	 rmesa->backup_store.cmd_used += size;
+	 if (R200_DEBUG & DEBUG_STATE)
+	    print_state_atom( atom );
       }
    }
 
    assert( rmesa->backup_store.cmd_used <= R200_CMD_BUF_SZ );
+   if (R200_DEBUG & DEBUG_STATE)
+      fprintf(stderr, "Returning to r200EmitState\n");
 }
 
 void r200EmitState( r200ContextPtr rmesa )
