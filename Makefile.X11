@@ -1,9 +1,9 @@
-# $Id: Makefile.X11,v 1.62 2002/05/05 16:00:06 brianp Exp $
+# $Id: Makefile.X11,v 1.63 2002/09/03 18:14:08 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
 # 
-# Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+# Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -350,7 +350,6 @@ LIB_FILES =	\
 	$(DIRECTORY)/configure						\
 	$(DIRECTORY)/configure.in					\
 	$(DIRECTORY)/install-sh						\
-	$(DIRECTORY)/ltconfig						\
 	$(DIRECTORY)/ltmain.sh						\
 	$(DIRECTORY)/missing						\
 	$(DIRECTORY)/mkinstalldirs					\
@@ -432,7 +431,8 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/windml/tornado/*.cdf				\
 	$(DIRECTORY)/src/windml/man3/*.3				\
 	$(DIRECTORY)/src/windml/man3/*.html				\
-	$(DIRECTORY)/src/DOS/*.[ch]					\
+	$(DIRECTORY)/src/DOS/*.[chS]					\
+	$(DIRECTORY)/src/DOS/vesa/*.[ch]				\
 	$(DIRECTORY)/src/BeOS/*.cpp					\
 	$(DIRECTORY)/src/FX/Makefile.am					\
 	$(DIRECTORY)/src/FX/Makefile.in					\
