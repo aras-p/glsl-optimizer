@@ -585,10 +585,16 @@ static void r128RenderStart( GLcontext *ctx )
       EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_3F_VIEWPORT, 0, 12 );
 
    rmesa->coloroffset = offset;
+#if MESA_LITTLE_ENDIAN 
    EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA,
       R128_CCE_VC_FRMT_DIFFUSE_ARGB, 4 );
+#else
+   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_ARGB,
+      R128_CCE_VC_FRMT_DIFFUSE_ARGB, 4 );
+#endif
 
    if ( index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG) ) {
+#if MESA_LITTLE_ENDIAN
       if ( index & _TNL_BIT_COLOR1) {
 	 rmesa->specoffset = offset;
 	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB,
@@ -601,6 +607,20 @@ static void r128RenderStart( GLcontext *ctx )
 		    1 );
       else
 	 EMIT_PAD( 1 );
+#else
+      if (index & _TNL_BIT_FOG)
+	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, R128_CCE_VC_FRMT_SPEC_FRGB,
+		    1 );
+      else
+	 EMIT_PAD( 1 );
+
+      if ( index & _TNL_BIT_COLOR1) {
+	 rmesa->specoffset = offset;
+	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB,
+	    R128_CCE_VC_FRMT_SPEC_FRGB, 3 );
+      } else 
+	 EMIT_PAD( 3 );
+#endif
    }
 
    if ( index & _TNL_BIT_TEX(rmesa->tmu_source[0]) ) {
