@@ -1,4 +1,4 @@
-/* $Id: texformat.c,v 1.4 2001/03/27 19:18:02 gareth Exp $ */
+/* $Id: texformat.c,v 1.5 2001/03/27 20:26:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -91,7 +91,7 @@ const struct gl_texture_format _mesa_texformat_rgba = {
 };
 
 const struct gl_texture_format _mesa_texformat_rgb = {
-   MESA_FORMAT_RGBA,			/* IntFormat */
+   MESA_FORMAT_RGB,			/* IntFormat */
    GL_RGB,				/* BaseFormat */
    CHAN_TYPE,				/* BaseType */
    CHAN_BITS,				/* RedBits */
