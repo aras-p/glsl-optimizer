@@ -159,7 +159,7 @@ static void viaSetTexImages(viaContextPtr vmesa,
 {
     GLuint texFormat;
     viaTextureObjectPtr t = (viaTextureObjectPtr)tObj->DriverData;
-    const struct gl_texture_image *baseImage = tObj->Image[tObj->BaseLevel];
+    const struct gl_texture_image *baseImage = tObj->Image[0][tObj->BaseLevel];
     GLint firstLevel, lastLevel, numLevels;
     GLint log2Width, log2Height, log2Pitch;
     GLint (*texSize)[12][12];
@@ -240,13 +240,13 @@ static void viaSetTexImages(viaContextPtr vmesa,
 	t->lastLevel = firstLevel + 9;
     }
 
-    log2Width = tObj->Image[firstLevel]->WidthLog2;
-    log2Height = tObj->Image[firstLevel]->HeightLog2;
-    log2Pitch = logbase2(tObj->Image[firstLevel]->Width * baseImage->TexFormat->TexelBytes);
+    log2Width = tObj->Image[0][firstLevel]->WidthLog2;
+    log2Height = tObj->Image[0][firstLevel]->HeightLog2;
+    log2Pitch = logbase2(tObj->Image[0][firstLevel]->Width * baseImage->TexFormat->TexelBytes);
     
     
     for (i = 0; i < numLevels; i++) {
-    	t->image[i].image = tObj->Image[i];
+    	t->image[i].image = tObj->Image[0][i];
     	t->image[i].internalFormat = baseImage->Format; 
     }
 
@@ -539,7 +539,7 @@ static void viaUpdateTexEnv(GLcontext *ctx, GLuint unit)
 {
     const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
     const struct gl_texture_object *tObj = texUnit->_Current;
-    const GLuint format = tObj->Image[tObj->BaseLevel]->Format;
+    const GLuint format = tObj->Image[0][tObj->BaseLevel]->Format;
     GLuint color_combine, alpha_combine;
 #ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__); 
@@ -676,7 +676,7 @@ static void viaUpdateTexUnit(GLcontext *ctx, GLuint unit)
             }
         }
 
-        if (tObj->Image[tObj->BaseLevel]->Border > 0) {
+        if (tObj->Image[0][tObj->BaseLevel]->Border > 0) {
             FALLBACK(vmesa, VIA_FALLBACK_TEXTURE, GL_TRUE);
             return;
         }
@@ -693,8 +693,8 @@ static void viaUpdateTexUnit(GLcontext *ctx, GLuint unit)
         /* Update texture environment if texture object image format or
          * texture environment state has changed.
          */
-        if (tObj->Image[tObj->BaseLevel]->Format != vmesa->TexEnvImageFmt[unit]) {
-            vmesa->TexEnvImageFmt[unit] = tObj->Image[tObj->BaseLevel]->Format;
+        if (tObj->Image[0][tObj->BaseLevel]->Format != vmesa->TexEnvImageFmt[unit]) {
+            vmesa->TexEnvImageFmt[unit] = tObj->Image[0][tObj->BaseLevel]->Format;
             viaUpdateTexEnv(ctx, unit);
         }
     }

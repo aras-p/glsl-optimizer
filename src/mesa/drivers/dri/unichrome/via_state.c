@@ -88,13 +88,17 @@ static void viaAlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
     vmesa = vmesa;
 }
 
-static void viaBlendEquation(GLcontext *ctx, GLenum mode)
+static void viaBlendEquationSeparate(GLcontext *ctx, GLenum rgbMode, GLenum aMode)
 {
 #ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
 #endif
+
+    /* GL_EXT_blend_equation_separate not supported */
+    ASSERT(rgbMode == aMode);
+
     /* Can only do GL_ADD equation in hardware */
-    FALLBACK(VIA_CONTEXT(ctx), VIA_FALLBACK_BLEND_EQ, mode != GL_FUNC_ADD_EXT);
+    FALLBACK(VIA_CONTEXT(ctx), VIA_FALLBACK_BLEND_EQ, rgbMode != GL_FUNC_ADD_EXT);
 
     /* BlendEquation sets ColorLogicOpEnabled in an unexpected
      * manner.
@@ -522,7 +526,7 @@ void viaChooseTextureState(GLcontext *ctx)
 
         if (texUnit0->_ReallyEnabled) {
             struct gl_texture_object *texObj = texUnit0->_Current;
-            struct gl_texture_image *texImage = texObj->Image[0];            
+            struct gl_texture_image *texImage = texObj->Image[0][0];
             GLint r, g, b, a;
 #ifdef DEBUG
 	    if (VIA_DEBUG) fprintf(stderr, "texUnit0->_ReallyEnabled\n");    
@@ -3079,7 +3083,7 @@ void viaChooseTextureState(GLcontext *ctx)
 
         if (texUnit1->_ReallyEnabled) {
             struct gl_texture_object *texObj = texUnit1->_Current;
-            struct gl_texture_image *texImage = texObj->Image[0];
+            struct gl_texture_image *texImage = texObj->Image[0][0];
             GLint r, g, b, a;
 
             if (texImage->Border) {
@@ -6334,7 +6338,7 @@ void viaInitStateFuncs(GLcontext *ctx)
     /* API callbacks
      */
     ctx->Driver.AlphaFunc = viaAlphaFunc;
-    ctx->Driver.BlendEquation = viaBlendEquation;
+    ctx->Driver.BlendEquationSeparate = viaBlendEquationSeparate;
     //ctx->Driver.BlendFunc = viaBlendFunc;
     ctx->Driver.BlendFuncSeparate = viaBlendFuncSeparate;
     ctx->Driver.ClearColor = viaClearColor;
