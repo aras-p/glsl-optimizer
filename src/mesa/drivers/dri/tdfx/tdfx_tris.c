@@ -216,7 +216,7 @@ static void tdfx_print_vertex( GLcontext *ctx, const tdfxVertex *v )
 {
    tdfxContextPtr imesa = TDFX_CONTEXT( ctx );
 
-   fprintf(stderr, "vertex at %p\n", v);
+   fprintf(stderr, "vertex at %p\n", (void *)v);
 
    if (imesa->vertexFormat == TDFX_LAYOUT_TINY) {
       fprintf(stderr, "x %f y %f z %f\n", v->v.x, v->v.y, v->v.z);

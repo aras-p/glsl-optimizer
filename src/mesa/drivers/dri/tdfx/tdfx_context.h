@@ -868,11 +868,6 @@ struct tdfx_context {
 
    struct tdfx_glide	Glide;
 
-
-   /* Temporaries for translating away float colors:
-    */
-   struct gl_client_array UbyteColor;
-
    /* Fallback rasterization functions 
     */
    tdfx_point_func draw_point;

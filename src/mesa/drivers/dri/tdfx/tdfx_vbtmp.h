@@ -9,7 +9,7 @@ static void TAG(emit)( GLcontext *ctx,
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLfloat (*tc0)[4], (*tc1)[4];
-   GLubyte (*col)[4];
+   GLfloat (*col)[4];
    GLuint tc0_stride, tc1_stride, col_stride;
    GLuint tc0_size, tc1_size;
    GLfloat (*proj)[4] = VB->NdcPtr->data; 
@@ -43,13 +43,11 @@ static void TAG(emit)( GLcontext *ctx,
    }
    
    if (IND & TDFX_RGBA_BIT) {
-      if (VB->ColorPtr[0]->Type != GL_UNSIGNED_BYTE)
-	 import_float_colors( ctx );
-      col = VB->ColorPtr[0]->Ptr;
-      col_stride = VB->ColorPtr[0]->StrideB;
+      col = VB->ColorPtr[0]->data;
+      col_stride = VB->ColorPtr[0]->stride;
    }
 
-   if (VB->importable_data) {
+   {
       /* May have nonstandard strides:
        */
       if (start) {
@@ -59,7 +57,7 @@ static void TAG(emit)( GLcontext *ctx,
 	 if (IND & TDFX_TEX1_BIT) 
 	    tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 + start * tc1_stride);
 	 if (IND & TDFX_RGBA_BIT) 
-	    STRIDE_4UB(col, start * col_stride);
+	    STRIDE_4F(col, start * col_stride);
       }
 
       for (i=start; i < end; i++, v = (tdfxVertex *)((GLubyte *)v + stride)) {
@@ -77,17 +75,12 @@ static void TAG(emit)( GLcontext *ctx,
 	    proj =  (GLfloat (*)[4])((GLubyte *)proj +  proj_stride);
 	 }
 	 if (IND & TDFX_RGBA_BIT) {
-#if 0
-	    *(GLuint *)&v->v.color = *(GLuint *)col;
-#else
-	    GLubyte *b = (GLubyte *) &v->v.color;
-	    b[0] = col[0][2];
-	    b[1] = col[0][1];
-	    b[2] = col[0][0];
-	    b[3] = col[0][3];
-
-#endif
-	    STRIDE_4UB(col, col_stride);
+	    GLubyte *b = (GLubyte *)&v[4];
+	    UNCLAMPED_FLOAT_TO_UBYTE(b[0], col[0][2]);
+	    UNCLAMPED_FLOAT_TO_UBYTE(b[1], col[0][1]);
+	    UNCLAMPED_FLOAT_TO_UBYTE(b[2], col[0][0]);
+	    UNCLAMPED_FLOAT_TO_UBYTE(b[3], col[0][3]);
+	    STRIDE_4F(col, col_stride);
 	 }
 	 if (IND & TDFX_TEX0_BIT) {
 	    GLfloat w = v->v.rhw;
@@ -121,60 +114,6 @@ static void TAG(emit)( GLcontext *ctx,
 	 } 
       }
    }
-   else {
-      for (i=start; i < end; i++, v = (tdfxVertex *)((GLubyte *)v + stride)) {
-	 if (IND & TDFX_XYZ_BIT) {
-	    if (mask[i] == 0) {
-	       v->v.x   = s[0]  * proj[i][0] + s[12];	
-	       v->v.y   = s[5]  * proj[i][1] + s[13];	
-	       v->v.z   = s[10] * proj[i][2] + s[14];	
-	       v->v.rhw = proj[i][3];	
-	    } else {
-	       v->v.rhw = 1.0;
-	    }
-	 }
-	 if (IND & TDFX_RGBA_BIT) {
-#if 0
-	    *(GLuint *)&v->v.color = *(GLuint *)&col[i];
-#else
-	    GLubyte *b = (GLubyte *) &v->v.color;
-	    b[0] = col[i][2];
-	    b[1] = col[i][1];
-	    b[2] = col[i][0];
-	    b[3] = col[i][3];
-
-#endif
-	 }
-	 if (IND & TDFX_TEX0_BIT) {
-	    GLfloat w = v->v.rhw;
-	    if (IND & TDFX_PTEX_BIT) {
-	       v->pv.tu0 = tc0[i][0] * u0scale * w;
-	       v->pv.tv0 = tc0[i][1] * v0scale * w;
-	       v->pv.tq0 = w;
-	       if (tc0_size == 4) 
-		  v->pv.tq0 = tc0[i][3] * w;
-	    } 
-	    else {
-	       v->v.tu0 = tc0[i][0] * u0scale * w;
-               v->v.tv0 = tc0[i][1] * v0scale * w;
-	    }
-	 }
-	 if (IND & TDFX_TEX1_BIT) {
-	    GLfloat w = v->v.rhw;
-	    if (IND & TDFX_PTEX_BIT) {
-	       v->pv.tu1 = tc1[i][0] * u1scale * w;
-	       v->pv.tv1 = tc1[i][1] * v1scale * w;
-	       v->pv.tq1 = w;
-	       if (tc1_size == 4) 
-		  v->pv.tq1 = tc1[i][3] * w;
-	    } 
-	    else {
-	       v->v.tu1 = tc1[i][0] * u1scale * w;
-	       v->v.tv1 = tc1[i][1] * v1scale * w;
-	    }
-	 }
-      }
-   }
 }
 #else 
 #if (IND & TDFX_XYZ_BIT)
@@ -183,7 +122,7 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   GLubyte (*col)[4];
+   GLfloat (*col)[4];
    GLuint col_stride;
    GLfloat (*proj)[4] = VB->NdcPtr->data; 
    GLuint proj_stride = VB->NdcPtr->stride;
@@ -198,20 +137,17 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
    ASSERT(fxMesa->SetupIndex == (TDFX_XYZ_BIT|TDFX_RGBA_BIT));
    ASSERT(stride == 16);
 
-   if (VB->ColorPtr[0]->Type != GL_UNSIGNED_BYTE)
-      import_float_colors( ctx );
-
-   col = (GLubyte (*)[4])VB->ColorPtr[0]->Ptr;
-   col_stride = VB->ColorPtr[0]->StrideB;
+   col = VB->ColorPtr[0]->data;
+   col_stride = VB->ColorPtr[0]->stride;
    ASSERT(VB->ColorPtr[0]->Type == GL_UNSIGNED_BYTE);
 
    /* Pack what's left into a 4-dword vertex.  Color is in a different
     * place, and there is no 'w' coordinate.  
     */
-   if (VB->importable_data) {
+   {
       if (start) {
 	 proj =  (GLfloat (*)[4])((GLubyte *)proj + start * proj_stride);
-	 STRIDE_4UB(col, start * col_stride);
+	 STRIDE_4F(col, start * col_stride);
       }
 
       for (i=start; i < end; i++, v+=4) {
@@ -223,27 +159,11 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 	 proj =  (GLfloat (*)[4])((GLubyte *)proj +  proj_stride);
 	 {
 	    GLubyte *b = (GLubyte *)&v[3];
-	    b[0] = col[0][2];
-	    b[1] = col[0][1];
-	    b[2] = col[0][0];
-	    b[3] = col[0][3];
-	    STRIDE_4UB(col, col_stride);
-	 }
-      }
-   }
-   else {
-      for (i=start; i < end; i++, v+=4) {
-	 if (mask[i] == 0) {
-	    v[0]   = s[0]  * proj[i][0] + s[12];	
-	    v[1]   = s[5]  * proj[i][1] + s[13];	
-	    v[2]   = s[10] * proj[i][2] + s[14];	
-	 }
-	 {
-	    GLubyte *b = (GLubyte *)&v[3];
-	    b[0] = col[i][2];
-	    b[1] = col[i][1];
-	    b[2] = col[i][0];
-	    b[3] = col[i][3];
+	    UNCLAMPED_FLOAT_TO_UBYTE(b[0], col[0][2]);
+	    UNCLAMPED_FLOAT_TO_UBYTE(b[1], col[0][1]);
+	    UNCLAMPED_FLOAT_TO_UBYTE(b[2], col[0][0]);
+	    UNCLAMPED_FLOAT_TO_UBYTE(b[3], col[0][3]);
+	    STRIDE_4F(col, col_stride);
 	 }
       }
    }
@@ -254,19 +174,16 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   GLubyte (*col)[4];
+   GLfloat (*col)[4];
    GLuint col_stride;
    GLfloat *v = (GLfloat *)dest;
    int i;
 
-   if (VB->ColorPtr[0]->Type != GL_UNSIGNED_BYTE)
-      import_float_colors( ctx );
-
-   col = VB->ColorPtr[0]->Ptr;
-   col_stride = VB->ColorPtr[0]->StrideB;
+   col = VB->ColorPtr[0]->data;
+   col_stride = VB->ColorPtr[0]->stride;
 
    if (start)
-      STRIDE_4UB(col, col_stride * start);
+      STRIDE_4F(col, col_stride * start);
 
    /* Need to figure out where color is:
     */
@@ -277,11 +194,11 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 
    for (i=start; i < end; i++, STRIDE_F(v, stride)) {
       GLubyte *b = (GLubyte *)v;
-      b[0] = col[0][2];
-      b[1] = col[0][1];
-      b[2] = col[0][0];
-      b[3] = col[0][3];
-      STRIDE_4UB( col, col_stride );
+      UNCLAMPED_FLOAT_TO_UBYTE(b[0], col[0][2]);
+      UNCLAMPED_FLOAT_TO_UBYTE(b[1], col[0][1]);
+      UNCLAMPED_FLOAT_TO_UBYTE(b[2], col[0][0]);
+      UNCLAMPED_FLOAT_TO_UBYTE(b[3], col[0][3]);
+      STRIDE_4F(col, col_stride);
    }
 }
 #endif

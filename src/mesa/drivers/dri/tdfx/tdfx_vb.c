@@ -72,40 +72,9 @@ static struct {
 } setup_tab[TDFX_MAX_SETUP];
 
 
-static void import_float_colors( GLcontext *ctx )
-{
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   struct gl_client_array *from = VB->ColorPtr[0];
-   struct gl_client_array *to = &TDFX_CONTEXT(ctx)->UbyteColor;
-   GLuint count = VB->Count;
-
-   if (!to->Ptr) {
-      to->Ptr = ALIGN_MALLOC( VB->Size * 4 * sizeof(GLubyte), 32 );
-      to->Type = GL_UNSIGNED_BYTE;
-   }
-
-   /* No need to transform the same value 3000 times.
-    */
-   if (!from->StrideB) {
-      to->StrideB = 0;
-      count = 1;
-   }
-   else
-      to->StrideB = 4 * sizeof(GLubyte);
-   
-   _math_trans_4ub( (GLubyte (*)[4]) to->Ptr,
-		    from->Ptr,
-		    from->StrideB,
-		    from->Type,
-		    from->Size,
-		    0,
-		    count);
-
-   VB->ColorPtr[0] = to;
-}
 
 
-#define GET_COLOR(ptr, idx) (((GLchan (*)[4])((ptr)->Ptr))[idx])
+#define GET_COLOR(ptr, idx) ((ptr)->data[idx])
 
 
 static void interp_extras( GLcontext *ctx,
@@ -270,7 +239,7 @@ void tdfxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
    if (!newinputs)
       return;
 
-   if (newinputs & VERT_BIT_CLIP) {
+   if (newinputs & VERT_BIT_POS) {
       setup_tab[fxMesa->SetupIndex].emit( ctx, start, count, v, stride );   
    } else {
       GLuint ind = 0;
@@ -356,10 +325,4 @@ void tdfxFreeVB( GLcontext *ctx )
       ALIGN_FREE(fxMesa->verts);
       fxMesa->verts = 0;
    }
-
-   if (fxMesa->UbyteColor.Ptr) {
-      ALIGN_FREE(fxMesa->UbyteColor.Ptr);
-      fxMesa->UbyteColor.Ptr = 0;
-   }
-
 }
