@@ -57,9 +57,11 @@ include ../Makefile.template
 
 #INCLUDES += -I../radeon/server
 
-$(SYMLINKS):
+server:
 	mkdir -p server
-	for i in $(SYMLINKS) ; do rm -f $$i && test -f ../radeon/$$i && ln -s ../../radeon/$$i $$i ; done
+
+$(SYMLINKS): server
+	@[ -e $@ ] || ln -sf ../../radeon/$@ server/
 
 symlinks: $(SYMLINKS)
 
