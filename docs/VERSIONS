@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.84 2002/03/23 02:38:10 brianp Exp $
+$Id: VERSIONS,v 1.85 2002/03/23 16:35:40 brianp Exp $
 
 
 Mesa Version History
@@ -956,10 +956,12 @@ Mesa Version History
 4.1  Month, ??, 2002
     New:
 	- GL_NV_vertex_program extension
+	- GL_NV_vertex_program1_1 extension
 	- GL_ARB_window_pos extension
 	- GL_ARB_depth_texture extension
 	- GL_ARB_shadow extension
 	- GL_ARB_shadow_ambient extension
+	- GL_EXT_shadow_funcs extension
 	- massive overhaul/simplification of software rasterizer module,
 	  many contributions from Klaus Niederkrueger
 	- faster software texturing in some cases (i.e. trilinear filtering)
