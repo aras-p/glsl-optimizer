@@ -307,7 +307,6 @@ static void _save_wrap_buffers( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLint i = tnl->save.prim_count - 1;
    GLenum mode;
-   GLuint count;
 
    assert(i < (GLint) tnl->save.prim_max);
    assert(i >= 0);
@@ -316,9 +315,7 @@ static void _save_wrap_buffers( GLcontext *ctx )
     */
    tnl->save.prim[i].count = ((tnl->save.initial_counter - tnl->save.counter) - 
 			     tnl->save.prim[i].start);
-   count = tnl->save.prim[i].count;
-   mode = tnl->save.prim[i].mode;
-
+   mode = tnl->save.prim[i].mode & ~(PRIM_BEGIN|PRIM_END);
    
    /* store the copied vertices, and allocate a new list.
     */
@@ -326,19 +323,10 @@ static void _save_wrap_buffers( GLcontext *ctx )
 
    /* Restart interrupted primitive
     */
-   if (!(mode & PRIM_END)) {
-
-      if (count == tnl->save.copied.nr) 
-	 tnl->save.prim[0].mode = mode;
-      else
-	 tnl->save.prim[0].mode = mode & ~PRIM_BEGIN;
-
-      tnl->save.prim[0].start = 0;
-      tnl->save.prim[0].count = 0;
-      tnl->save.prim_count = 1;
-   }
-   else
-      tnl->save.prim_count = 0;
+   tnl->save.prim[0].mode = mode;
+   tnl->save.prim[0].start = 0;
+   tnl->save.prim[0].count = 0;
+   tnl->save.prim_count = 1;
 }
 
 
