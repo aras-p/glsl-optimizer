@@ -486,7 +486,7 @@ fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj,
 
       /*texmemsize = (int)grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH, &(ti->info));*/
       ti->tm[FX_TMU1] = fxTMAddObj(fxMesa, tObj, FX_TMU1, texmemsize);
-      fxMesa->stats.memTexUpload += texmemsize; /* ZZZ: required? */
+      fxMesa->stats.memTexUpload += texmemsize;
 
       for (i = FX_largeLodValue(ti->info), l = ti->minLevel;
 	   i <= FX_smallLodValue(ti->info); i++, l++) {
@@ -550,6 +550,7 @@ fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
    assert(mml->width > 0);
    assert(mml->height > 0);
    assert(mml->glideFormat > 0);
+   assert(ti->isInTM);
 
    if (!ti->validated) {
       fprintf(stderr, "fxTMReloadMipMapLevel: INTERNAL ERROR: not validated\n");
@@ -558,17 +559,8 @@ fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
    }
 
    tmu = (int) ti->whichTMU;
-#if 0
-   /* [dBorca]
-    * We get here by (see Tex[Sub]Image2D), thus we are in TMU.
-    * Also, we just set the correct TMU above. fxTMMoveInTM will
-    * bail early, so don't bother...
-    */
-   fxTMMoveInTM(fxMesa, tObj, tmu);
-#else
    fxMesa->stats.reqTexUpload++;
    fxMesa->stats.texUpload++;
-#endif
 
    lodlevel =  ti->info.largeLodLog2 - (level - ti->minLevel);
 

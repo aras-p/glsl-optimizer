@@ -100,7 +100,6 @@
 
 #define HW_WRITE_CLIPLOOP()						\
     do {								\
-	/* [dBorca] Hack alert: */					\
 	/* remember, we need to flip the scissor, too */		\
 	/* is it better to do it inside fxDDScissor? */			\
 	const int minx = fxMesa->clipMinX;				\
@@ -110,7 +109,6 @@
 
 #define HW_READ_CLIPLOOP()						\
     do {								\
-	/* [dBorca] Hack alert: */					\
 	/* remember, we need to flip the scissor, too */		\
 	/* is it better to do it inside fxDDScissor? */			\
 	const int minx = fxMesa->clipMinX;				\

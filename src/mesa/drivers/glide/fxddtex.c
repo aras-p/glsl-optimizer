@@ -615,21 +615,8 @@ fxDDTexUseGlbPalette(GLcontext * ctx, GLboolean state)
       fprintf(stderr, "fxDDTexUseGlbPalette(%d)\n", state);
    }
 
-   if (state) {
-      fxMesa->haveGlobalPaletteTexture = 1;
-   }
-   else {
-      fxMesa->haveGlobalPaletteTexture = 0;
-
-      /* [dBorca] tis beyond my comprehension */
-      if ((ctx->Texture.Unit[0]._Current == ctx->Texture.Unit[0].Current2D) &&
-	  (ctx->Texture.Unit[0]._Current != NULL)) {
-	 struct gl_texture_object *tObj = ctx->Texture.Unit[0]._Current;
-         if (!tObj->DriverData)
-           tObj->DriverData = fxAllocTexObjData(fxMesa);
-	 fxTexInvalidate(ctx, tObj);
-      }
-   }
+   fxMesa->haveGlobalPaletteTexture = state;
+   fxMesa->new_state |= FX_NEW_TEXTURING;
 }
 
 
@@ -1539,17 +1526,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    ti->info.format = mml->glideFormat;
    texImage->FetchTexelc = fxFetchFunction(texImage->TexFormat->MesaFormat);
 
-   /* [dBorca]
-    * Hack alert: unsure...
-    */
-   if (0 && ti->validated && ti->isInTM) {
-      /*fprintf(stderr, "reloadmipmaplevels\n"); */
-      fxTMReloadMipMapLevel(fxMesa, texObj, level);
-   }
-   else {
-      /*fprintf(stderr, "invalidate2\n"); */
-      fxTexInvalidate(ctx, texObj);
-   }
+   fxTexInvalidate(ctx, texObj);
 }
 
 
@@ -1781,17 +1758,7 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
       assert(!texImage->IsCompressed);
    }
 
-   /* [dBorca]
-    * Hack alert: unsure...
-    */
-   if (0 && ti->validated && ti->isInTM) {
-      /*fprintf(stderr, "reloadmipmaplevels\n"); */
-      fxTMReloadMipMapLevel(fxMesa, texObj, level);
-   }
-   else {
-      /*fprintf(stderr, "invalidate2\n"); */
-      fxTexInvalidate(ctx, texObj);
-   }
+   fxTexInvalidate(ctx, texObj);
 }
 
 
@@ -1829,7 +1796,7 @@ fxDDCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
                                          mml->width,
                               (GLubyte*) texImage->Data);
 
-   rows = height / 4; /* [dBorca] hardcoded 4, but works for FXT1/DXTC */
+   rows = height / 4; /* hardcoded 4, but works for FXT1/DXTC */
 
    for (i = 0; i < rows; i++) {
       MEMCPY(dest, data, srcRowStride);
@@ -1905,9 +1872,7 @@ fxDDTestProxyTexImage (GLcontext *ctx, GLenum target,
                        GLint width, GLint height,
                        GLint depth, GLint border)
 {
- /* [dBorca]
-  * TODO - maybe through fxTexValidate()
-  */
+ /* XXX todo - maybe through fxTexValidate() */
  return _mesa_test_proxy_teximage(ctx, target,
                                   level, internalFormat,
                                   format, type,

@@ -76,9 +76,7 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
                                          const GLvoid *srcImage, GLvoid *dstImage );
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    /* [dBorca]
-    * Ooooooook! Here's a(nother) long story.
-    * We get here because we need to handle a texture larger
-    * than hardware can support. Two cases:
+    * Fake textures larger than HW supports:
     * 1) we have mipmaps. Then we just push up to the first supported
     *    LOD. A possible drawback is that Mesa will ignore the skipped
     *    LODs on further texture handling.
@@ -88,13 +86,6 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
     *    once in TexImage2D to accomodate aspect ratio, and now we
     *    are rescaling again. The thing is, in TexImage2D we don't
     *    know whether we'll hit 1) or 2) by the time of validation.
-    * NB: we could handle mml->[wh]Scale nicely, using (biased) shifts.
-    *
-    * Which brings me to another issue. How can we handle NPOT textures?
-    * - rescaling NPOT to the next bigger POT (mml->[wh]Scale can't shift)
-    * - upping the max LOD to the next power-of-two, in fxTexGetInfo; then
-    *   choosing non-power-of-two values for ti->[st]Scale... Anyhow, we
-    *   still need to align mipmaps correctly in texture memory!
     */
    if ((tObj->MinFilter == GL_NEAREST) || (tObj->MinFilter == GL_LINEAR)) {
       /* no mipmaps! */
@@ -155,7 +146,7 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
    else
       FX_smallLodLog2(ti->info) = FX_largeLodLog2(ti->info);
 
-   /* this is necessary because of fxDDCompressedTexImage2D */
+   /* [dBorca] this is necessary because of fxDDCompressedTexImage2D */
    if (ti->padded) {
       struct gl_texture_image *texImage = tObj->Image[0][minl];
       tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
@@ -351,9 +342,7 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
       fprintf(stderr, "fxSetupSingleTMU_NoLock(%p (%d))\n", (void *)tObj, tObj->Name);
    }
 
-#if 1 /* [dBorca] Good... bad... I'm the guy with the gun! */
    ti->lastTimeUsed = fxMesa->texBindNumber;
-#endif
 
    /* Make sure we're not loaded incorrectly */
    if (ti->isInTM) {
@@ -654,10 +643,9 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
             colorComb.Factor   = GR_COMBINE_FACTOR_TEXTURE_ALPHA;
             colorComb.Other    = GR_COMBINE_OTHER_CONSTANT;
          } else {
-            /* [dBorca] Hack alert:
-             * only Voodoo^2 can GL_BLEND (GR_COMBINE_FACTOR_TEXTURE_RGB)
-             * These settings assume that the TexEnv color is black
-             * and incoming fragment color is white.
+            /* Only Voodoo^2 can GL_BLEND (GR_COMBINE_FACTOR_TEXTURE_RGB)
+             * These settings assume that the TexEnv color is black and
+             * incoming fragment color is white.
              */
             colorComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
             colorComb.Factor   = GR_COMBINE_FACTOR_ONE;
@@ -1781,7 +1769,7 @@ fxDDStencilOp (GLcontext *ctx, GLenum sfail, GLenum zfail, GLenum zpass)
    }
 }
 
-static void
+void
 fxSetupStencil (GLcontext * ctx)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);

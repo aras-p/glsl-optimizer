@@ -32,8 +32,7 @@
  */
 
 /* fxsetup.c - 3Dfx VooDoo rendering mode setup functions */
-/* [dBorca] Hack alert:
- * this code belongs to fxsetup.c, but I didn't want to clutter
+/* This code belongs to fxsetup.c, but I didn't want to clutter
  * the original code with Napalm specifics, in order to keep things
  * clear -- especially for backward compatibility. I should have
  * put it into another .c file, but I didn't want to export so many
@@ -379,9 +378,7 @@ fxSetupTextureEnvNapalm_NoLock(GLcontext * ctx, GLuint textureset, GLuint tmu, G
       break;
     /* COMBINE_EXT */
     case GL_COMBINE_EXT:
-      /* [dBorca] Hack alert:
-       * INCOMPLETE!!!
-       */
+      /* XXX todo - INCOMPLETE!!! */
       if (TDFX_DEBUG & (VERBOSE_DRIVER | VERBOSE_TEXTURE)) {
 #if 1
          fprintf(stderr, "COMBINE_EXT: %s + %s\n",
@@ -1024,10 +1021,7 @@ fxSelectSingleTMUSrcNapalm_NoLock(fxMesaContext fxMesa, GLint tmu, FxBool LODble
    }
 
    if (LODblend) {
-      /* [dBorca] Hack alert:
-       * TODO: GR_CMBX_LOD_FRAC
-       */
-
+      /* XXX todo - GR_CMBX_LOD_FRAC? */
       fxMesa->tmuSrc = FX_TMU_SPLIT;
    }
    else {

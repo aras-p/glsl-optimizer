@@ -714,6 +714,7 @@ void fxSetupColorMask (GLcontext * ctx);
 void fxSetupBlend (GLcontext *ctx);
 void fxSetupDepthTest (GLcontext *ctx);
 void fxSetupTexture (GLcontext *ctx);
+void fxSetupStencil (GLcontext *ctx);
 
 /* Flags for software fallback cases */
 #define FX_FALLBACK_TEXTURE_MAP		0x0001

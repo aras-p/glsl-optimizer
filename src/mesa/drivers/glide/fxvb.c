@@ -695,10 +695,6 @@ void fxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
    } else {
       GLuint ind = 0;
 
-      /* [dBorca] masked by VERT_BIT_POS ?!?
-      if (newinputs & VERT_BIT_POINT_SIZE)
-	 ind |= SETUP_PSIZ;*/
-
       if (newinputs & VERT_BIT_COLOR0)
 	 ind |= SETUP_RGBA;
       

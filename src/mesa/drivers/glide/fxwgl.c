@@ -348,7 +348,7 @@ wglCreateContext(HDC hdc)
      SetForegroundWindow(hWnd);
      Sleep(100); /* a hack for win95 */
      if (env_check("MESA_GLX_FX", 'w') && !(GetWindowLong (hWnd, GWL_STYLE) & WS_POPUP)) {
-	/* [dBorca] Hack alert: unfinished business! */
+	/* XXX todo - windowed modes */
         error = !(ctx = fxMesaCreateContext((GLuint) hWnd, GR_RESOLUTION_NONE, GR_REFRESH_NONE, pix[curPFD - 1].mesaAttr));
      } else {
         GetClientRect(hWnd, &cliRect);
@@ -629,7 +629,7 @@ wglGetProcAddress(LPCSTR lpszProc)
    int i;
    PROC p = (PROC) _glapi_get_proc_address((const char *) lpszProc);
 
-   /* [dBorca] we can't do BlendColor */
+   /* we can't BlendColor. work around buggy applications */
    if (p && strcmp(lpszProc, "glBlendColor") && strcmp(lpszProc, "glBlendColorEXT"))
       return p;
 
@@ -860,8 +860,7 @@ wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR * ppfd)
       if (!(pfd.dwFlags & PFD_DOUBLEBUFFER_DONTCARE)
 	  && ((pfd.dwFlags & PFD_DOUBLEBUFFER) !=
 	      (pix[i].pfd.dwFlags & PFD_DOUBLEBUFFER))) continue;
-#if 1 /* [dBorca] Hack alert: Doom3 fails here!
-       */
+#if 1 /* Doom3 fails here! */
       if (!(pfd.dwFlags & PFD_STEREO_DONTCARE)
 	  && ((pfd.dwFlags & PFD_STEREO) !=
 	      (pix[i].pfd.dwFlags & PFD_STEREO))) continue;
@@ -873,7 +872,7 @@ wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR * ppfd)
       if (pfd.cAlphaBits > 0 && pix[i].pfd.cAlphaBits == 0)
 	 continue;		/* need alpha buffer */
 
-#if 0 /* [dBorca] regression bug? */
+#if 0 /* regression bug? */
       if (pfd.cStencilBits > 0 && pix[i].pfd.cStencilBits == 0)
 	 continue;		/* need stencil buffer */
 #endif

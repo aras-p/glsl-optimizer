@@ -210,7 +210,7 @@ FX_grSstQueryHardware(GrHwConfiguration * config)
          config->SSTs[i].type = GR_SSTTYPE_VOODOO;
       }
 
-      grGet(GR_MEMORY_FB, 4, &result); /* ZZZ: differs after grSstWinOpen */
+      grGet(GR_MEMORY_FB, 4, &result);
       config->SSTs[i].fbRam = result / (1024 * 1024);
 
       grGet(GR_NUM_TMU, 4, &result);
@@ -220,7 +220,7 @@ FX_grSstQueryHardware(GrHwConfiguration * config)
       config->SSTs[i].fbiRev = result;
 
       for (j = 0; j < config->SSTs[i].nTexelfx; j++) {
-	 grGet(GR_MEMORY_TMU, 4, &result); /* ZZZ: differs after grSstWinOpen */
+	 grGet(GR_MEMORY_TMU, 4, &result);
 	 config->SSTs[i].tmuConfig[j].tmuRam = result / (1024 * 1024);
 	 grGet(GR_REVISION_TMU, 4, &result);
 	 config->SSTs[i].tmuConfig[j].tmuRev = result;
