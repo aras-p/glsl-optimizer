@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.6 1999/10/13 18:42:50 brianp Exp $ */
+/* $Id: image.c,v 1.7 1999/10/19 20:31:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -537,6 +537,9 @@ GLboolean gl_image_error_test( GLcontext *ctx, const struct gl_image *image,
       gl_error( ctx, GL_INVALID_VALUE, msg );
       return GL_TRUE;
    }
+   else if (!gl_is_legal_format_and_type(image->Format, image->Type)) {
+      return GL_TRUE;
+   }
    else {
       return GL_FALSE;
    }
@@ -565,6 +568,15 @@ unpack_depth_image( GLcontext *ctx, GLenum type, GLint width, GLint height,
    GLushort *sDst;
    GLuint *iDst;
    GLint i, j;
+   GLboolean errorType;
+
+   errorType = type != GL_BYTE &&
+               type != GL_UNSIGNED_BYTE &&
+               type != GL_SHORT &&
+               type != GL_UNSIGNED_SHORT &&
+               type != GL_INT &&
+               type != GL_UNSIGNED_INT &&
+               type != GL_FLOAT;
 
    image = alloc_image();
    if (image) {
@@ -573,6 +585,10 @@ unpack_depth_image( GLcontext *ctx, GLenum type, GLint width, GLint height,
       image->Depth = 1;
       image->Components = 1;
       image->Format = GL_DEPTH_COMPONENT;
+      if (errorType) {
+         image->Type = type;
+         image->Data = NULL;
+      }
       if (type==GL_UNSIGNED_SHORT) {
          image->Type = GL_UNSIGNED_SHORT;
          image->Data = MALLOC( width * height * sizeof(GLushort));
@@ -592,6 +608,9 @@ unpack_depth_image( GLcontext *ctx, GLenum type, GLint width, GLint height,
    else {
       return NULL;
    }
+
+   if (errorType)
+      return image;
 
    fDst = (GLfloat *) image->Data;
    sDst = (GLushort *) image->Data;
@@ -700,8 +719,18 @@ unpack_stencil_image( GLcontext *ctx, GLenum type, GLint width, GLint height,
    struct gl_image *image;
    GLubyte *dst;
    GLint i, j;
+   GLboolean errorType;
 
    assert(sizeof(GLstencil) == sizeof(GLubyte));
+
+   errorType = type != GL_BYTE &&
+               type != GL_UNSIGNED_BYTE &&
+               type != GL_SHORT &&
+               type != GL_UNSIGNED_SHORT &&
+               type != GL_INT &&
+               type != GL_UNSIGNED_INT &&
+               type != GL_FLOAT &&
+               type != GL_BITMAP;
 
    image = alloc_image();
    if (image) {
@@ -710,8 +739,14 @@ unpack_stencil_image( GLcontext *ctx, GLenum type, GLint width, GLint height,
       image->Depth = 1;
       image->Components = 1;
       image->Format = GL_STENCIL_INDEX;
-      image->Type = GL_UNSIGNED_BYTE;
-      image->Data = MALLOC( width * height * sizeof(GLubyte));
+      if (errorType) {
+         image->Type = type;
+         image->Data = NULL;
+      }
+      else {
+         image->Type = GL_UNSIGNED_BYTE;
+         image->Data = MALLOC( width * height * sizeof(GLubyte));
+      }
       image->RefCount = 0;
       if (!image->Data)
          return image;
@@ -719,6 +754,9 @@ unpack_stencil_image( GLcontext *ctx, GLenum type, GLint width, GLint height,
    else {
       return NULL;
    }
+
+   if (errorType)
+      return image; /* error will be generated later */
 
    dst = (GLubyte *) image->Data;
 
