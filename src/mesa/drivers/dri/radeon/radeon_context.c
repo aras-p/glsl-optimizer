@@ -448,7 +448,6 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    }
    (*rmesa->get_ust)( & rmesa->swap_ust );
 
-   if (rmesa->sarea->tiling_enabled != 0) fprintf(stderr, "color tiling enabled!\n");
 
 #if DO_DEBUG
    RADEON_DEBUG = driParseDebugString( getenv( "RADEON_DEBUG" ),
