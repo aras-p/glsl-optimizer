@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.10 2000/03/21 01:03:40 brianp Exp $ */
+/* $Id: colortab.c,v 1.11 2000/04/11 15:07:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -119,7 +119,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_texture_object *texObj;
-   struct gl_color_table *palette;
+   struct gl_color_table *table;
    GLboolean proxy = GL_FALSE;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glColorTable");
@@ -127,41 +127,50 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
    switch (target) {
       case GL_TEXTURE_1D:
          texObj = texUnit->CurrentD[1];
-         palette = &texObj->Palette;
+         table = &texObj->Palette;
          break;
       case GL_TEXTURE_2D:
          texObj = texUnit->CurrentD[2];
-         palette = &texObj->Palette;
+         table = &texObj->Palette;
          break;
       case GL_TEXTURE_3D:
          texObj = texUnit->CurrentD[3];
-         palette = &texObj->Palette;
+         table = &texObj->Palette;
          break;
       case GL_PROXY_TEXTURE_1D:
          texObj = ctx->Texture.Proxy1D;
-         palette = &texObj->Palette;
+         table = &texObj->Palette;
          proxy = GL_TRUE;
          break;
       case GL_PROXY_TEXTURE_2D:
          texObj = ctx->Texture.Proxy2D;
-         palette = &texObj->Palette;
+         table = &texObj->Palette;
          proxy = GL_TRUE;
          break;
       case GL_PROXY_TEXTURE_3D:
          texObj = ctx->Texture.Proxy3D;
-         palette = &texObj->Palette;
+         table = &texObj->Palette;
          proxy = GL_TRUE;
          break;
       case GL_SHARED_TEXTURE_PALETTE_EXT:
          texObj = NULL;
-         palette = &ctx->Texture.Palette;
+         table = &ctx->Texture.Palette;
+         break;
+      case GL_POST_COLOR_MATRIX_COLOR_TABLE:
+         texObj = NULL;
+         table = &ctx->PostColorMatrixColorTable;
+         break;
+      case GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE:
+         texObj = NULL;
+         table = &ctx->ProxyPostColorMatrixColorTable;
+         proxy = GL_TRUE;
          break;
       default:
          gl_error(ctx, GL_INVALID_ENUM, "glColorTable(target)");
          return;
    }
 
-   assert(palette);
+   assert(table);
 
    if (!_mesa_is_legal_format_and_type(format, type)) {
       gl_error(ctx, GL_INVALID_ENUM, "glColorTable(format or type)");
@@ -169,26 +178,30 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
    }
 
    if (decode_internal_format(internalFormat) < 0) {
-      gl_error( ctx, GL_INVALID_ENUM, "glColorTable(internalFormat)" );
+      gl_error(ctx, GL_INVALID_ENUM, "glColorTable(internalFormat)");
       return;
    }
 
    if (width < 1 || width > MAX_TEXTURE_PALETTE_SIZE || !power_of_two(width)) {
-      gl_error(ctx, GL_INVALID_VALUE, "glColorTable(width)");
+      if (width > MAX_TEXTURE_PALETTE_SIZE)
+         gl_error(ctx, GL_TABLE_TOO_LARGE, "glColorTable(width)");
+      else
+         gl_error(ctx, GL_INVALID_VALUE, "glColorTable(width)");
       if (proxy) {
-         palette->Size = 0;
-         palette->IntFormat = (GLenum) 0;
-         palette->Format = (GLenum) 0;
+         table->Size = 0;
+         table->IntFormat = (GLenum) 0;
+         table->Format = (GLenum) 0;
       }
       return;
    }
 
-   palette->Size = width;
-   palette->IntFormat = internalFormat;
-   palette->Format = (GLenum) decode_internal_format(internalFormat);
+
+   table->Size = width;
+   table->IntFormat = internalFormat;
+   table->Format = (GLenum) decode_internal_format(internalFormat);
    if (!proxy) {
-      _mesa_unpack_ubyte_color_span(ctx, width, palette->Format,
-                                    palette->Table,  /* dest */
+      _mesa_unpack_ubyte_color_span(ctx, width, table->Format,
+                                    table->Table,  /* dest */
                                     format, type, table,
                                     &ctx->Unpack, GL_FALSE);
    }

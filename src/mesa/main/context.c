@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.57 2000/04/10 15:52:25 brianp Exp $ */
+/* $Id: context.c,v 1.58 2000/04/11 15:07:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1135,6 +1135,17 @@ static void init_attrib_groups( GLcontext *ctx )
    ctx->Pixel.PostColorMatrixBlueScale = 1.0;
    ctx->Pixel.PostColorMatrixAlphaBias = 0.0;
    ctx->Pixel.PostColorMatrixAlphaScale = 1.0;
+   ctx->Pixel.ColorTableScale[0] = 1.0F;
+   ctx->Pixel.ColorTableScale[1] = 1.0F;
+   ctx->Pixel.ColorTableScale[2] = 1.0F;
+   ctx->Pixel.ColorTableScale[3] = 1.0F;
+   ctx->Pixel.ColorTableBias[0] = 0.0F;
+   ctx->Pixel.ColorTableBias[1] = 0.0F;
+   ctx->Pixel.ColorTableBias[2] = 0.0F;
+   ctx->Pixel.ColorTableBias[3] = 0.0F;
+   ctx->Pixel.ColorTableEnabled = GL_FALSE;
+   ctx->Pixel.PostConvolutionColorTableEnabled = GL_FALSE;
+   ctx->Pixel.PostColorMatrixColorTableEnabled = GL_FALSE;
 
    /* Point group */
    ctx->Point.SmoothFlag = GL_FALSE;
