@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.37 2000/04/07 16:45:26 brianp Exp $ */
+/* $Id: dlist.c,v 1.38 2000/05/18 18:11:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2851,7 +2851,7 @@ static void save_TexImage2D( GLenum target,
 
 
 static void save_TexImage3D( GLenum target,
-                             GLint level, GLint components,
+                             GLint level, GLint internalFormat,
                              GLsizei width, GLsizei height, GLsizei depth,
                              GLint border,
                              GLenum format, GLenum type,
@@ -2860,7 +2860,7 @@ static void save_TexImage3D( GLenum target,
    GET_CURRENT_CONTEXT(ctx);
    if (target == GL_PROXY_TEXTURE_3D) {
       /* don't compile, execute immediately */
-      (*ctx->Exec->TexImage3D)( target, level, components, width,
+      (*ctx->Exec->TexImage3D)( target, level, internalFormat, width,
                                height, depth, border, format, type, pixels );
    }
    else {
@@ -2872,7 +2872,7 @@ static void save_TexImage3D( GLenum target,
       if (n) {
          n[1].e = target;
          n[2].i = level;
-         n[3].i = components;
+         n[3].i = internalFormat;
          n[4].i = (GLint) width;
          n[5].i = (GLint) height;
          n[6].i = (GLint) depth; 
@@ -2885,7 +2885,7 @@ static void save_TexImage3D( GLenum target,
          FREE(image);
       }
       if (ctx->ExecuteFlag) {
-         (*ctx->Exec->TexImage3D)( target, level, components, width,
+         (*ctx->Exec->TexImage3D)( target, level, internalFormat, width,
                                 height, depth, border, format, type, pixels );
       }
    }
