@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.56 2001/05/31 19:25:25 brianp Exp $ */
+/* $Id: osmesa.c,v 1.57 2001/06/14 18:30:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1831,7 +1831,7 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
       swdd->ReadRGBAPixels = read_rgba_pixels3;
    }
    else {
-      /* 4 bytes / pixel in frame buffer */
+      /* 4 GLchan / pixel in frame buffer */
       swdd->WriteRGBSpan = write_rgb_span;
       swdd->WriteRGBAPixels = write_rgba_pixels;
       swdd->WriteMonoRGBASpan = write_monocolor_span;
