@@ -78,6 +78,42 @@ static const savageTileInfo tileInfo_s3d_s4[5] = {
     {32, 16,  8, 2, 4, 8, {0xc0, 0x80}}, /* 32-bit */
 };
 
+/** \brief Template for subtile uploads.
+ * \param h   height in pixels
+ * \param w   width in bytes
+ */
+#define SUBTILE_FUNC(w,h)					\
+static __inline GLubyte *savageUploadSubtile_##w##x##h		\
+(GLubyte *dest, GLubyte *src, GLuint srcStride)			\
+{								\
+    GLuint y;							\
+    for (y = 0; y < h; ++y) {					\
+	memcpy (dest, src, w);					\
+	src += srcStride;					\
+	dest += w;						\
+    }								\
+    return dest;						\
+}
+
+SUBTILE_FUNC(2, 8) /* 4 bits per pixel, 4 pixels wide */
+SUBTILE_FUNC(4, 8)
+SUBTILE_FUNC(8, 8)
+SUBTILE_FUNC(16, 8)
+SUBTILE_FUNC(32, 8) /* 4 bytes per pixel, 8 pixels wide */
+
+/** \brief Table of subtile upload functions
+ *
+ * Indexed by the binary logarithm of the width in bytes.
+ */
+static GLubyte *(*savageSubtileTab[]) (GLubyte *, GLubyte *, GLuint) = {
+    NULL,
+    savageUploadSubtile_2x8,
+    savageUploadSubtile_4x8,
+    savageUploadSubtile_8x8,
+    savageUploadSubtile_16x8,
+    savageUploadSubtile_32x8
+};
+
 /** \brief Upload a complete tile from src (srcStride) to dest
  *
  * \param tileInfo     Pointer to tiling information
@@ -102,16 +138,15 @@ static void savageUploadTile (const savageTileInfo *tileInfo,
 			      GLubyte *src, GLuint srcStride, GLubyte *dest) {
     GLuint subStride = tileInfo->subWidth * bpp;
     GLubyte *srcSRow = src, *srcSTile = src;
-    GLuint sx, sy, y;
+    GLubyte *(*subtileFunc) (GLubyte *, GLubyte *, GLuint) =
+	savageSubtileTab[(tileInfo->subWidth == 4 ? 2 : 3) + 
+			 ((bpp == 1) ? 0 : (bpp == 2) ? 1 : 2)];
+    GLuint sx, sy;
     for (sy = 0; sy < hInSub; ++sy) {
 	srcSTile = srcSRow;
 	for (sx = 0; sx < wInSub; ++sx) {
 	    src = srcSTile;
-	    for (y = 0; y < tileInfo->subHeight; ++y) {
-		memcpy (dest, src, subStride);
-		src += srcStride;
-		dest += subStride;
-	    }
+	    dest = subtileFunc (dest, src, srcStride);
 	    srcSTile += subStride;
 	}
 	srcSRow += srcStride * tileInfo->subHeight;
