@@ -31,7 +31,6 @@
 #include "light.h"
 #include "macros.h"
 #include "imports.h"
-#include "mmath.h"
 #include "mtypes.h"
 #include "simple_list.h"
 #include "vtxfmt.h"

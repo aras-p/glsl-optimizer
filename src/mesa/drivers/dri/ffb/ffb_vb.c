@@ -28,7 +28,6 @@
 #include "ffb_xmesa.h"
 #include "ffb_context.h"
 #include "ffb_vb.h"
-#include "mmath.h"
 #include "imports.h"
 #include "tnl/t_context.h"
 #include "swrast_setup/swrast_setup.h"
