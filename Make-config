@@ -1,13 +1,13 @@
-# $Id: Make-config,v 1.47 2001/07/13 20:08:42 brianp Exp $
+# $Id: Make-config,v 1.48 2001/09/01 20:26:51 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=5
-MESA_TINY=0
+MESA_TINY=1
 VERSION=$(MESA_MAJOR).$(MESA_MINOR)
 
 # Mesa 3-D graphics library
 # 
-# Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+# Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -832,7 +832,7 @@ linux-osmesa16:
 	"OSMESA16_LIB = libOSMesa16.so" \
 	"CC = gcc" \
 	"CPLUSPLUS = g++" \
-	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DCHAN_BITS=16" \
+	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DCHAN_BITS=16 -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -lm -lpthread" \
@@ -844,7 +844,7 @@ linux-osmesa32:
 	"OSMESA16_LIB = libOSMesa32.so" \
 	"CC = gcc" \
 	"CPLUSPLUS = g++" \
-	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DCHAN_BITS=32" \
+	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DCHAN_BITS=32 -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -lm -lpthread" \
