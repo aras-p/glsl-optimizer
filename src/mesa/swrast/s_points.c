@@ -1,4 +1,4 @@
-/* $Id: s_points.c,v 1.7 2000/11/19 23:10:26 brianp Exp $ */
+/* $Id: s_points.c,v 1.8 2000/12/08 00:18:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -482,6 +482,7 @@ antialiased_rgba_point( GLcontext *ctx, const SWvertex *vert )
 
 /* Definition of the functions for GL_EXT_point_parameters */
 
+#if 000
 /* Calculates the distance attenuation formula of a vector of points in
  * eye space coordinates 
  */
@@ -492,9 +493,7 @@ static GLfloat attenuation_distance(const GLcontext *ctx, const GLfloat *pos)
 		  dist * (ctx->Point.Params[1] +
 			  dist * ctx->Point.Params[2]));
 }
-
-
-
+#endif
 
 
 /*
@@ -504,20 +503,17 @@ static void
 dist_atten_general_ci_point( GLcontext *ctx, const SWvertex *vert )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
-   const GLfloat psize = ctx->Point._Size;
-   GLfloat dist = attenuation_distance( ctx, vert->eye );
    GLint x0, x1, y0, y1;
    GLint ix, iy;
    GLint isize, radius;
    GLint x = (GLint)  vert->win[0];
    GLint y = (GLint)  vert->win[1];
    GLint z = (GLint) (vert->win[2]);
-   GLfloat dsize = psize * dist;
 
    GLfixed fog = FloatToFixed( vert->fog );
 
-   if (dsize >= ctx->Point.Threshold) {
-      isize = (GLint) (MIN2(dsize, ctx->Point.MaxSize) + 0.5F);
+   if (vert->pointSize >= ctx->Point.Threshold) {
+      isize = (GLint) (MIN2(vert->pointSize, ctx->Point.MaxSize) + 0.5F);
    }
    else {
       isize = (GLint) (MAX2(ctx->Point.Threshold, ctx->Point.MinSize) + 0.5F);
@@ -556,26 +552,23 @@ static void
 dist_atten_general_rgba_point( GLcontext *ctx, const SWvertex *vert )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
-   const GLfloat psize = ctx->Point._Size;
-   GLfloat dist = attenuation_distance( ctx, vert->eye );
    GLint x0, x1, y0, y1;
    GLint ix, iy;
    GLint isize, radius;
    GLint x = (GLint)  vert->win[0];
    GLint y = (GLint)  vert->win[1];
    GLint z = (GLint) (vert->win[2]);
-   GLfloat dsize=psize*dist;
    GLchan alpha;
    GLfixed fog = FloatToFixed( vert->fog );
 
-   if (dsize >= ctx->Point.Threshold) {
-      isize = (GLint) (MIN2(dsize,ctx->Point.MaxSize)+0.5F);
+   if (vert->pointSize >= ctx->Point.Threshold) {
+      isize = (GLint) (MIN2(vert->pointSize, ctx->Point.MaxSize) + 0.5F);
       alpha = vert->color[3];
    }
    else {
-      isize = (GLint) (MAX2(ctx->Point.Threshold,ctx->Point.MinSize)+0.5F);
-      dsize /= ctx->Point.Threshold;
-      alpha = (GLint) (vert->color[3]* (dsize*dsize));
+      GLfloat dsize = vert->pointSize / ctx->Point.Threshold;
+      isize = (GLint) (MAX2(ctx->Point.Threshold, ctx->Point.MinSize) + 0.5F);
+      alpha = (GLint) (vert->color[3] * (dsize * dsize));
    }
    radius = isize >> 1;
 
@@ -616,9 +609,6 @@ dist_atten_textured_rgba_point( GLcontext *ctx, const SWvertex *vert )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct pixel_buffer *PB = swrast->PB;
-   const GLfloat psize = ctx->Point._Size;
-   GLfloat dist = attenuation_distance( ctx, vert->eye );
-
    const GLint x = (GLint)  vert->win[0];
    const GLint y = (GLint)  vert->win[1];
    const GLint z = (GLint) (vert->win[2]);
@@ -629,18 +619,17 @@ dist_atten_textured_rgba_point( GLcontext *ctx, const SWvertex *vert )
    GLint x0, x1, y0, y1;
    GLint ix, iy, alpha, u;
    GLint isize, radius;
-   GLfloat dsize = psize*dist;
 
    GLfixed fog = FloatToFixed( vert->fog );
 
    /* compute point size and alpha */
-   if (dsize >= ctx->Point.Threshold) {
-      isize = (GLint) (MIN2(dsize, ctx->Point.MaxSize) + 0.5F);
+   if (vert->pointSize >= ctx->Point.Threshold) {
+      isize = (GLint) (MIN2(vert->pointSize, ctx->Point.MaxSize) + 0.5F);
       alpha = vert->color[3];
    }
    else {
+      GLfloat dsize = vert->pointSize / ctx->Point.Threshold;
       isize = (GLint) (MAX2(ctx->Point.Threshold, ctx->Point.MinSize) + 0.5F);
-      dsize /= ctx->Point.Threshold;
       alpha = (GLint) (vert->color[3] * (dsize * dsize));
    }
    if (isize < 1) {
@@ -709,28 +698,25 @@ dist_atten_antialiased_rgba_point( GLcontext *ctx, const SWvertex *vert )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct pixel_buffer *PB = swrast->PB;
-   const GLfloat psize = ctx->Point._Size;
-   GLfloat dist = attenuation_distance( ctx, vert->eye );
 
    if (ctx->Texture._ReallyEnabled) {
-      GLfloat radius, rmin, rmax, rmin2, rmax2, cscale, alphaf;
+      GLfloat radius, rmin, rmax, rmin2, rmax2, cscale, alphaAtten;
       GLint xmin, ymin, xmax, ymax;
       GLint x, y, z;
       GLint red, green, blue, alpha;
       GLfloat texcoord[MAX_TEXTURE_UNITS][4];
-      GLfloat dsize = psize * dist;
       GLint u;
 
       GLfixed fog = FloatToFixed( vert->fog );
 
-      if (dsize >= ctx->Point.Threshold) {
-	 radius = MIN2(dsize, ctx->Point.MaxSize) * 0.5F;
-	 alphaf = 1.0F;
+      if (vert->pointSize >= ctx->Point.Threshold) {
+	 radius = MIN2(vert->pointSize, ctx->Point.MaxSize) * 0.5F;
+	 alphaAtten = 1.0F;
       }
       else {
+	 GLfloat dsize = vert->pointSize / ctx->Point.Threshold;
 	 radius = (MAX2(ctx->Point.Threshold, ctx->Point.MinSize) * 0.5F);
-	 dsize /= ctx->Point.Threshold;
-	 alphaf = (dsize*dsize);
+	 alphaAtten = dsize * dsize;
       }
       rmin = radius - 0.7071F;  /* 0.7071 = sqrt(2)/2 */
       rmax = radius + 0.7071F;
@@ -776,7 +762,7 @@ dist_atten_antialiased_rgba_point( GLcontext *ctx, const SWvertex *vert )
 		  /* coverage is in [0,256] */
 		  alpha = (alpha * coverage) >> 8;
 	       }
-	       alpha = (GLint) (alpha * alphaf);
+	       alpha = (GLint) (alpha * alphaAtten);
 	       if (swrast->_MultiTextureEnabled) {
 		  PB_WRITE_MULTITEX_PIXEL( PB, x, y, z, fog,
 					   red, green, blue, alpha,
@@ -796,21 +782,20 @@ dist_atten_antialiased_rgba_point( GLcontext *ctx, const SWvertex *vert )
    }
    else {
       /* Not texture mapped */
-      GLfloat radius, rmin, rmax, rmin2, rmax2, cscale, alphaf;
+      GLfloat radius, rmin, rmax, rmin2, rmax2, cscale, alphaAtten;
       GLint xmin, ymin, xmax, ymax;
       GLint x, y, z;
       GLfixed fog;
       GLint red, green, blue, alpha;
-      GLfloat dsize = psize * dist;
 
-      if (dsize >= ctx->Point.Threshold) {
-	 radius = MIN2(dsize, ctx->Point.MaxSize) * 0.5F;
-	 alphaf = 1.0F;
+      if (vert->pointSize >= ctx->Point.Threshold) {
+	 radius = MIN2(vert->pointSize, ctx->Point.MaxSize) * 0.5F;
+	 alphaAtten = 1.0F;
       }
       else {
+	 GLfloat dsize = vert->pointSize / ctx->Point.Threshold;
 	 radius = (MAX2(ctx->Point.Threshold, ctx->Point.MinSize) * 0.5F);
-	 dsize /= ctx->Point.Threshold;
-	 alphaf = dsize * dsize;
+	 alphaAtten = dsize * dsize;
       }
       rmin = radius - 0.7071F;  /* 0.7071 = sqrt(2)/2 */
       rmax = radius + 0.7071F;
@@ -842,7 +827,7 @@ dist_atten_antialiased_rgba_point( GLcontext *ctx, const SWvertex *vert )
 		  /* coverage is in [0,256] */
 		  alpha = (alpha * coverage) >> 8;
 	       }
-	       alpha = (GLint) (alpha * alphaf);
+	       alpha = (GLint) (alpha * alphaAtten);
 	       PB_WRITE_RGBA_PIXEL(PB, x, y, z, fog, 
 				   red, green, blue, alpha);
 	    }
@@ -851,6 +836,7 @@ dist_atten_antialiased_rgba_point( GLcontext *ctx, const SWvertex *vert )
       PB_CHECK_FLUSH(ctx,PB);
    }
 }
+
 
 
 #ifdef DEBUG
@@ -932,7 +918,7 @@ _swrast_choose_point( GLcontext *ctx )
                swrast->Point = general_ci_point;
          }
       } 
-      else if(ctx->Point.SmoothFlag && rgbmode) {
+      else if (ctx->Point.SmoothFlag && rgbmode) {
          swrast->Point = dist_atten_antialiased_rgba_point;
       }
       else if (ctx->Texture._ReallyEnabled) {

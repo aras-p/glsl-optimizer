@@ -1,5 +1,5 @@
 
-/* $Id: t_context.h,v 1.5 2000/11/24 15:22:00 keithw Exp $ */
+/* $Id: t_context.h,v 1.6 2000/12/08 00:18:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -109,6 +109,7 @@
 #define VERT_EVAL_P2         0x8000000  /*  */
 #define VERT_SPEC_RGB        0x10000000	
 #define VERT_FOG_COORD       0x20000000	
+#define VERT_POINT_SIZE      0x40000000
 
 #define VERT_EYE             VERT_BEGIN /* reuse */
 #define VERT_WIN             VERT_END   /* reuse */
@@ -353,6 +354,7 @@ typedef struct vertex_buffer
    GLvector4f Eye;
    GLvector4f Clip;
    GLvector4f Win;
+   GLvector1f PointSize;
    GLvector4ub BColor;		/* not used in cva vb's */
    GLvector1ui BIndex;		/* not used in cva vb's */
    GLvector4ub BSecondary;	/* not used in cva vb's */
@@ -446,7 +448,7 @@ typedef GLuint (*clip_poly_func)( struct vertex_buffer *VB,
 #define PIPE_OP_RAST_SETUP_1    0x200
 #define PIPE_OP_RENDER          0x400
 #define PIPE_OP_CVA_PREPARE     0x800
-
+#define PIPE_OP_POINT_SIZE     0x1000
 
 
 struct gl_pipeline_stage {

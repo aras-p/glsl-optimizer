@@ -56,12 +56,12 @@
  */
 typedef struct {
    GLfloat win[4];
-   GLfloat eye[4];		/* for GL_EXT_point_param only */
    GLfloat texcoord[MAX_TEXTURE_UNITS][4];
    GLchan color[4];
    GLchan specular[4];
    GLfloat fog;
    GLuint index;
+   GLfloat pointSize;
 } SWvertex;
 
 

@@ -38,6 +38,7 @@ static void TAG(rs)(struct vertex_buffer *VB, GLuint start, GLuint end)
    GLubyte (*spec)[4];
    GLuint *index;
    GLfloat *fog;
+   GLfloat *pointSize;
    GLuint sz[MAX_TEXTURE_UNITS];
    GLuint szeye;
    int i;
@@ -79,6 +80,7 @@ static void TAG(rs)(struct vertex_buffer *VB, GLuint start, GLuint end)
    color = VB->Color[0]->data;
    spec = VB->SecondaryColor[0]->data;
    index = VB->Index[0]->data;
+   pointSize = VB->PointSize.data;
 
    v = &(SWSETUP_VB(VB)->verts[start]);
 
@@ -86,9 +88,10 @@ static void TAG(rs)(struct vertex_buffer *VB, GLuint start, GLuint end)
       if (VB->ClipMask[i] == 0) {
 	 COPY_4FV( v->win, win[i] );
 	 
+#if 0
 	 if (IND & EYE) 
 	    COPY_4FV( v->eye, eye[i] );
-
+#endif
 	 if (IND & TEX0) 
 	    COPY_CLEAN_4V( v->texcoord[0], sz[0], tc[0][i] );
 
@@ -110,6 +113,9 @@ static void TAG(rs)(struct vertex_buffer *VB, GLuint start, GLuint end)
 
 	 if (IND & INDEX)
 	    v->index = index[i]; 
+
+         if (IND & POINT)
+            v->pointSize = pointSize[i];
       }
    }
 }

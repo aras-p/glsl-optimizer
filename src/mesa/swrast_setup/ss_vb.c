@@ -53,7 +53,7 @@ typedef void (*SetupFunc)( struct vertex_buffer *VB,
 #define MULTITEX      0x8
 #define SPEC          0x10
 #define FOG           0x20
-#define EYE           0x40
+#define POINT         0x40
 #define MAX_SETUPFUNC 0x80
 
 static SetupFunc setup_func[MAX_SETUPFUNC];
@@ -87,12 +87,12 @@ static SetupFunc setup_func[MAX_SETUPFUNC];
 #define TAG(x) x##_multitex_color_spec_fog
 #include "ss_vbtmp.h"
 
-#define IND (TEX0|COLOR|EYE)
-#define TAG(x) x##_tex0_color_eye
+#define IND (TEX0|COLOR|POINT)
+#define TAG(x) x##_tex0_color_point
 #include "ss_vbtmp.h"
 
-#define IND (MULTITEX|COLOR|SPEC|INDEX|EYE|FOG)
-#define TAG(x) x##_multitex_color_spec_index_eye_fog
+#define IND (MULTITEX|COLOR|SPEC|INDEX|POINT|FOG)
+#define TAG(x) x##_multitex_color_spec_index_point_fog
 #include "ss_vbtmp.h"
 
 #define IND (COLOR|INDEX|TEX0)
@@ -108,7 +108,7 @@ _swsetup_vb_init( GLcontext *ctx )
    (void) ctx;
 
    for (i = 0 ; i < Elements(setup_func) ; i++)
-      setup_func[i] = rs_multitex_color_spec_index_eye_fog;
+      setup_func[i] = rs_multitex_color_spec_index_point_fog;
 
    /* Some specialized cases:
     */
@@ -143,8 +143,8 @@ _swsetup_vb_init( GLcontext *ctx )
    setup_func[MULTITEX|SPEC|FOG]        = rs_multitex_color_spec_fog;
    setup_func[MULTITEX|COLOR|SPEC|FOG]  = rs_multitex_color_spec_fog;
 
-   setup_func[TEX0|EYE]       = rs_tex0_color_eye;
-   setup_func[TEX0|COLOR|EYE] = rs_tex0_color_eye;
+   setup_func[TEX0|POINT]       = rs_tex0_color_point;
+   setup_func[TEX0|COLOR|POINT] = rs_tex0_color_point;
 
    setup_func[COLOR|INDEX|TEX0] = rs_selection_feedback;
 }
@@ -174,7 +174,7 @@ _swsetup_choose_rastersetup_func(GLcontext *ctx)
       }
 
       if (ctx->Point._Attenuated)
-	 funcindex |= EYE;
+         funcindex |= POINT;
 
       if (ctx->Fog.Enabled)
 	 funcindex |= FOG;
