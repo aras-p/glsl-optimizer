@@ -2691,6 +2691,8 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
    /* Record the position in the program string for debugging */
    fp->StringPos = Program->Position;
 
+   fp->Data = NULL;
+
    /* OP_ALU_INST or OP_TEX_INST */
    instClass = *(*inst)++;
 
@@ -3112,6 +3114,8 @@ parse_vp_instruction (GLcontext * ctx, GLubyte ** inst,
 
    /* Record the position in the program string for debugging */
    vp->StringPos = Program->Position;
+
+   vp->Data = NULL;
 
    vp->SrcReg[0].RelAddr = vp->SrcReg[1].RelAddr = vp->SrcReg[2].RelAddr = 0;
 
@@ -3706,6 +3710,7 @@ parse_arb_program (GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
 	 Program->Position = parse_position (&inst);
       */
       Program->FPInstructions[Program->Base.NumInstructions].StringPos = Program->Position;
+      Program->FPInstructions[Program->Base.NumInstructions].Data = NULL;
    }
    else {
       Program->VPInstructions =
@@ -3718,6 +3723,7 @@ parse_arb_program (GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
 	 Program->Position = parse_position (&inst);
       */
       Program->VPInstructions[Program->Base.NumInstructions].StringPos = Program->Position;
+      Program->VPInstructions[Program->Base.NumInstructions].Data = NULL;
    }
 
    /* increment Program->Base.NumInstructions */
