@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.39 2000/07/31 13:57:40 brianp Exp $
+$Id: VERSIONS,v 1.40 2000/08/31 23:04:03 brianp Exp $
 
 
 Mesa Version History
@@ -749,12 +749,8 @@ Mesa Version History
 
 
 3.4  Month ??, 2000
-    New:
-	- 
-    Bug Fixes:
-	- widgets-mesa/src/*.c files were missing from 3.3 distro
-    Changes:
-	- 
+    XXX copy from 3.4's VERSION file
+
 
 
 3.5  Month ??, 2000
@@ -762,6 +758,6 @@ Mesa Version History
 	- internals of Mesa divided into modular pieces (Keith Whitwell)
 	- support for hardware T&L for DRI
     Bug Fixes:
-	- 
+	- fbiRev and tmuRev were unitialized when using Glide3
     Changes:
 	- 
