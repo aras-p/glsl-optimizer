@@ -40,8 +40,8 @@
 #include "texformat.h"
 #include "teximage.h"
 #include "texstate.h"
+#include "texstore.h"
 
-#include "newstore.h"
 
 
 /* Texel fetch routines for all supported formats
