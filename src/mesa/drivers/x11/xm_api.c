@@ -175,7 +175,7 @@ static int host_byte_order( void )
  * Error handling.
  */
 #ifndef XFree86Server
-static int mesaXErrorFlag = 0;
+static volatile int mesaXErrorFlag = 0;
 
 static int mesaHandleXError( XMesaDisplay *dpy, XErrorEvent *event )
 {
