@@ -78,7 +78,7 @@ GL_PREFIX(fn, fn_alt):					\
 ALIGNTEXT16;						\
 GLOBL_FN(GL_PREFIX(fn, fn_alt));			\
 GL_PREFIX(fn, fn_alt):					\
-	MOV_L(CONTENT(GLNAME(_glapi_DispatchTSD)), EAX) ;	\
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX) ;	\
 	JMP(GL_OFFSET(off))
 #endif
 
@@ -108,8 +108,8 @@ GLNAME(get_dispatch):
 EXTERN GLNAME(_glapi_get_dispatch)
 #endif
 
-		ALIGNTEXT16 ; GLOBL gl_dispatch_functions_start
-gl_dispatch_functions_start:
+		ALIGNTEXT16 ; GLOBL GLNAME(gl_dispatch_functions_start)
+GLNAME(gl_dispatch_functions_start):
 
 	GL_STUB(NewList, _gloffset_NewList, NewList@8)
 	GL_STUB(EndList, _gloffset_EndList, EndList@0)

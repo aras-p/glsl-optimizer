@@ -108,7 +108,7 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		print 'ALIGNTEXT16;\t\t\t\t\t\t\\'
 		print 'GLOBL_FN(GL_PREFIX(fn, fn_alt));\t\t\t\\'
 		print 'GL_PREFIX(fn, fn_alt):\t\t\t\t\t\\'
-		print '\tMOV_L(CONTENT(GLNAME(_glapi_DispatchTSD)), EAX) ;\t\\'
+		print '\tMOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX) ;\t\\'
 		print '\tJMP(GL_OFFSET(off))'
 		print '#endif'
 		print ''
@@ -138,8 +138,8 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		print 'EXTERN GLNAME(_glapi_get_dispatch)'
 		print '#endif'
 		print ''
-		print '\t\tALIGNTEXT16 ; GLOBL gl_dispatch_functions_start'
-		print 'gl_dispatch_functions_start:'
+		print '\t\tALIGNTEXT16 ; GLOBL GLNAME(gl_dispatch_functions_start)'
+		print 'GLNAME(gl_dispatch_functions_start):'
 		print ''
 		return
 
