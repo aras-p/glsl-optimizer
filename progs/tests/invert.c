@@ -56,6 +56,9 @@ PFNGLWINDOWPOS2IPROC win_pos_2i = NULL;
 
 static void Display( void )
 {
+   GLint err;
+
+
    glClearColor(0.2, 0.2, 0.8, 0);
    glClear( GL_COLOR_BUFFER_BIT );
 
@@ -67,11 +70,23 @@ static void Display( void )
    glDrawPixels( img_width, img_height, img_format, GL_UNSIGNED_BYTE, image );
 
    glPixelStorei( GL_PACK_INVERT_MESA, GL_FALSE );
+   err = glGetError();
+   if ( err != GL_NO_ERROR ) {
+      printf( "Setting PACK_INVERT_MESA to false generated an error (0x%04x).\n",
+	      err );
+   }
+
    glReadPixels( 5, 5, img_width, img_height, img_format, GL_UNSIGNED_BYTE, temp_image );
    (*win_pos_2i)( 5 + 1 * (10 + img_width), 5 );
    glDrawPixels( img_width, img_height, img_format, GL_UNSIGNED_BYTE, temp_image );
 
    glPixelStorei( GL_PACK_INVERT_MESA, GL_TRUE );
+   err = glGetError();
+   if ( err != GL_NO_ERROR ) {
+      printf( "Setting PACK_INVERT_MESA to true generated an error (0x%04x).\n",
+	      err );
+   }
+
    glReadPixels( 5, 5, img_width, img_height, img_format, GL_UNSIGNED_BYTE, temp_image );
    (*win_pos_2i)( 5 + 2 * (10 + img_width), 5 );
    glDrawPixels( img_width, img_height, img_format, GL_UNSIGNED_BYTE, temp_image );
