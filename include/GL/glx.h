@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.8 1999/11/23 19:54:53 brianp Exp $ */
+/* $Id: glx.h,v 1.9 1999/11/24 17:04:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -123,6 +123,7 @@ extern "C" {
 #define GLX_FBCONFIG_ID			?
 #define GLX_VISUAL_ID			?
 #define GLX_WINDOW_BIT			?
+#define GLX_PIXMAP_BIT			?
 #define GLX_PBUFFER_BIT			?
 #define GLX_AUX_BUFFERS_BIT		?
 #define GLX_FRONT_LEFT_BUFFER_BIT	?
@@ -145,6 +146,7 @@ extern "C" {
 #define GLX_STATIC_GRAY			0x8007
 #define GLX_TRANSPARENT_INDEX		0x8009
 #define GLX_COLOR_INDEX_TYPE		?
+#define GLX_COLOR_INDEX_BIT		?
 #define GLX_SCREEN			?
 #define GLX_PBUFFER_CLOBBER_MASK	?
 #define GLX_DAMAGED			?
