@@ -106,7 +106,7 @@
 #define deref(reg,pos) swizzle(reg, pos, pos, pos, pos)
 
 
-static __inline int is_swizzled( int reg )
+static INLINE int is_swizzled( int reg )
 {
    return ((reg & UREG_XYZW_CHANNEL_MASK) != 
 	   (UREG(0,0) & UREG_XYZW_CHANNEL_MASK));
@@ -115,7 +115,7 @@ static __inline int is_swizzled( int reg )
 
 /* One neat thing about the UREG representation:  
  */
-static __inline int swizzle( int reg, int x, int y, int z, int w )
+static INLINE int swizzle( int reg, int x, int y, int z, int w )
 {
    return ((reg & ~UREG_XYZW_CHANNEL_MASK) |
 	   CHANNEL_SRC( GET_CHANNEL_SRC( reg, x ), 0 ) |
@@ -126,7 +126,7 @@ static __inline int swizzle( int reg, int x, int y, int z, int w )
 
 /* Another neat thing about the UREG representation:  
  */
-static __inline int negate( int reg, int x, int y, int z, int w )
+static INLINE int negate( int reg, int x, int y, int z, int w )
 {
    return reg ^ (((x&1)<<UREG_CHANNEL_X_NEGATE_SHIFT)|
 		 ((y&1)<<UREG_CHANNEL_Y_NEGATE_SHIFT)|
@@ -475,6 +475,17 @@ static void upload_program( const struct fragment_program *p )
       
       for (i = 0; i < nr; i++) 
 	 src[i] = src_vector( &inst->SrcReg[i] );
+
+      /* Print the original program instruction string */
+      {
+         const char *s = (const char *) p->Base.String + inst->StringPos;
+         printf("   /* ");
+         while (*s != ';') {
+            putchar(*s);
+            s++;
+         }
+         printf("; */\n");
+      }
 
       switch (inst->Opcode) {
       case FP_OPCODE_ABS: 
