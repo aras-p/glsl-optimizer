@@ -2270,6 +2270,8 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
    (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
                                  ctx->Pixel.DriverReadBuffer );
 
+   /* XXX TODO we have to apply pixel transfer ops here! */
+
    dst = image;
    stride = width * 4 * sizeof(GLubyte);
    for (i = 0; i < height; i++) {
@@ -2305,13 +2307,22 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
        || !(*ctx->Driver.CopyTexImage1D)(ctx, target, level,
                          internalFormat, x, y, width, border))
    {
+      struct gl_pixelstore_attrib unpackSave;
+
+      /* get image from framebuffer */
       GLubyte *image  = read_color_image( ctx, x, y, width, 1 );
       if (!image) {
          gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D" );
          return;
       }
+
+      /* call glTexImage1D to redefine the texture */
+      unpackSave = ctx->Unpack;
+      ctx->Unpack = _mesa_native_packing;
       (*ctx->Exec->TexImage1D)( target, level, internalFormat, width,
                                 border, GL_RGBA, GL_UNSIGNED_BYTE, image );
+      ctx->Unpack = unpackSave;
+
       FREE(image);
    }
 }
@@ -2335,62 +2346,25 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
        || !(*ctx->Driver.CopyTexImage2D)(ctx, target, level,
                          internalFormat, x, y, width, height, border))
    {
+      struct gl_pixelstore_attrib unpackSave;
+
+      /* get image from framebuffer */
       GLubyte *image  = read_color_image( ctx, x, y, width, height );
       if (!image) {
          gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D" );
          return;
       }
+
+      /* call glTexImage2D to redefine the texture */
+      unpackSave = ctx->Unpack;
+      ctx->Unpack = _mesa_native_packing;
       (ctx->Exec->TexImage2D)( target, level, internalFormat, width,
                       height, border, GL_RGBA, GL_UNSIGNED_BYTE, image );
+      ctx->Unpack = unpackSave;
+
       FREE(image);
    }
 }
-
-
-
-/*
- * Do the work of glCopyTexSubImage[123]D.
- */
-static void
-copy_tex_sub_image( GLcontext *ctx, struct gl_texture_image *dest,
-                    GLint width, GLint height,
-                    GLint srcx, GLint srcy,
-                    GLint dstx, GLint dsty, GLint dstz )
-{
-   GLint i;
-   GLint format, components, rectarea;
-   GLint texwidth, texheight, zoffset;
-
-   /* dst[xyz] may be negative if we have a texture border! */
-   dstx += dest->Border;
-   dsty += dest->Border;
-   dstz += dest->Border;
-   texwidth = dest->Width;
-   texheight = dest->Height;
-   rectarea = texwidth * texheight;
-   zoffset = dstz * rectarea; 
-   format = dest->Format;
-   components = components_in_intformat( format );
-
-   /* Select buffer to read from */
-   (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
-                                 ctx->Pixel.DriverReadBuffer );
-
-   for (i = 0;i < height; i++) {
-      GLubyte rgba[MAX_WIDTH][4];
-      GLubyte *dst;
-      gl_read_rgba_span( ctx, ctx->ReadBuffer, width, srcx, srcy + i, rgba );
-      dst = dest->Data + ( zoffset + (dsty+i) * texwidth + dstx) * components;
-      _mesa_unpack_ubyte_color_span(ctx, width, format, dst,
-                                    GL_RGBA, GL_UNSIGNED_BYTE, rgba,
-                                    &_mesa_native_packing, GL_TRUE);
-   }
-
-   /* Read from draw buffer (the default) */
-   (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
-                                 ctx->Color.DriverDrawBuffer );
-}
-
 
 
 
@@ -2411,19 +2385,28 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
                                             xoffset, x, y, width)) {
       struct gl_texture_unit *texUnit;
       struct gl_texture_image *teximage;
+      struct gl_pixelstore_attrib unpackSave;
+      GLubyte *image;
+
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       teximage = texUnit->CurrentD[1]->Image[level];
       assert(teximage);
-      if (teximage->Data) {
-         copy_tex_sub_image(ctx, teximage, width, 1, x, y, xoffset, 0, 0);
-         /* tell driver about the change */
-         /* XXX this is obsolete */
-         if (ctx->Driver.TexImage) {
-            (*ctx->Driver.TexImage)( ctx, GL_TEXTURE_1D,
-                                     texUnit->CurrentD[1],
-                                     level, teximage->IntFormat, teximage );
-         }
+
+      /* get image from frame buffer */
+      image = read_color_image(ctx, x, y, width, 1);
+      if (!image) {
+         gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D" );
+         return;
       }
+      
+      /* now call glTexSubImage1D to do the real work */
+      unpackSave = ctx->Unpack;
+      ctx->Unpack = _mesa_native_packing;
+      _mesa_TexSubImage1D(target, level, xoffset, width,
+                          GL_RGBA, GL_UNSIGNED_BYTE, image);
+      ctx->Unpack = unpackSave;
+
+      FREE(image);
    }
 }
 
@@ -2447,20 +2430,28 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
                                 xoffset, yoffset, x, y, width, height )) {
       struct gl_texture_unit *texUnit;
       struct gl_texture_image *teximage;
+      struct gl_pixelstore_attrib unpackSave;
+      GLubyte *image;
+
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       teximage = texUnit->CurrentD[2]->Image[level];
       assert(teximage);
-      if (teximage->Data) {
-         copy_tex_sub_image(ctx, teximage, width, height,
-                            x, y, xoffset, yoffset, 0);
-         /* tell driver about the change */
-         /* XXX this is obsolete */
-         if (ctx->Driver.TexImage) {
-            (*ctx->Driver.TexImage)( ctx, GL_TEXTURE_2D,
-                                     texUnit->CurrentD[2],
-                                     level, teximage->IntFormat, teximage );
-	 }
+
+      /* get image from frame buffer */
+      image = read_color_image(ctx, x, y, width, height);
+      if (!image) {
+         gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D" );
+         return;
       }
+
+      /* now call glTexSubImage2D to do the real work */
+      unpackSave = ctx->Unpack;
+      ctx->Unpack = _mesa_native_packing;
+      _mesa_TexSubImage2D(target, level, xoffset, yoffset, width, height,
+                          GL_RGBA, GL_UNSIGNED_BYTE, image);
+      ctx->Unpack = unpackSave;
+      
+      FREE(image);
    }
 }
 
@@ -2484,20 +2475,28 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
                      xoffset, yoffset, zoffset, x, y, width, height )) {
       struct gl_texture_unit *texUnit;
       struct gl_texture_image *teximage;
+      struct gl_pixelstore_attrib unpackSave;
+      GLubyte *image;
+
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       teximage = texUnit->CurrentD[3]->Image[level];
       assert(teximage);
-      if (teximage->Data) {
-         copy_tex_sub_image(ctx, teximage, width, height, 
-                            x, y, xoffset, yoffset, zoffset);
-         /* tell driver about the change */
-         /* XXX this is obsolete */
-         if (ctx->Driver.TexImage) {
-            (*ctx->Driver.TexImage)( ctx, GL_TEXTURE_3D,
-                                     texUnit->CurrentD[3],
-                                     level, teximage->IntFormat, teximage );
-         }
+
+      /* get image from frame buffer */
+      image = read_color_image(ctx, x, y, width, height);
+      if (!image) {
+         gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D" );
+         return;
       }
+
+      /* now call glTexSubImage2D to do the real work */
+      unpackSave = ctx->Unpack;
+      ctx->Unpack = _mesa_native_packing;
+      _mesa_TexSubImage3D(target, level, xoffset, yoffset, zoffset,
+                          width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, image);
+      ctx->Unpack = unpackSave;
+      
+      FREE(image);
    }
 }
 
