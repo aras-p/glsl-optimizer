@@ -1,5 +1,5 @@
 
-/* $Id: t_context.h,v 1.1 2000/11/16 21:05:42 keithw Exp $ */
+/* $Id: t_context.h,v 1.2 2000/11/20 13:39:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -621,7 +621,7 @@ extern struct immediate *_mesa_CurrentInput;
 #define GET_IMMEDIATE struct immediate *IM = _mesa_CurrentInput
 #define SET_IMMEDIATE(ctx, im)			\
 do {						\
-   TNL_CURRENT_IM(ctx) = im;			\
+   ctx->swtnl_im = (void *)im;			\
    _mesa_CurrentInput = im;			\
 } while (0)
 #endif
