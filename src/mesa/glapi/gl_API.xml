@@ -3806,6 +3806,7 @@
     <function name="MapBuffer" alias="MapBufferARB">
         <param name="target" type="GLenum"/>
         <param name="access" type="GLenum"/>
+        <return type="GLvoid *"/>
     </function>
 
     <function name="UnmapBuffer" alias="UnmapBufferARB">
