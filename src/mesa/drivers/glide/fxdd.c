@@ -1,4 +1,4 @@
-/* $Id: fxdd.c,v 1.93 2002/10/29 15:03:16 brianp Exp $ */
+/* $Id: fxdd.c,v 1.94 2002/11/04 20:29:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,6 +45,7 @@
 #include "fxdrv.h"
 #include "enums.h"
 #include "extensions.h"
+#include "mmath.h"
 #include "texstore.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -698,7 +699,7 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
 
    fxMesa->unitsState.alphaTestEnabled = GL_FALSE;
    fxMesa->unitsState.alphaTestFunc = GR_CMP_ALWAYS;
-   fxMesa->unitsState.alphaTestRefValue = 0;
+   fxMesa->unitsState.alphaTestRefValue = 0.0;
 
    fxMesa->unitsState.blendEnabled = GL_FALSE;
    fxMesa->unitsState.blendSrcFuncRGB = GR_BLEND_ONE;

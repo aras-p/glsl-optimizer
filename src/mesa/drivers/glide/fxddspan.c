@@ -1,4 +1,4 @@
-/* $Id: fxddspan.c,v 1.21 2002/10/11 17:41:05 brianp Exp $ */
+/* $Id: fxddspan.c,v 1.22 2002/11/04 20:29:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -542,7 +542,7 @@ fxDDSetBuffer(GLcontext * ctx, GLframebuffer * buffer, GLuint bufferBit)
    (void) buffer;
 
    if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxDDSetBuffer(%x)\n", (int) mode);
+      fprintf(stderr, "fxmesa: fxDDSetBuffer(%x)\n", (int) bufferBit);
    }
 
    if (bufferBit == FRONT_LEFT_BIT) {

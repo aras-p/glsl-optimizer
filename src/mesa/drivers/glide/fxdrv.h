@@ -1,4 +1,4 @@
-/* $Id: fxdrv.h,v 1.54 2002/10/24 23:57:23 brianp Exp $ */
+/* $Id: fxdrv.h,v 1.55 2002/11/04 20:29:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -503,7 +503,7 @@ extern void fxDDTexPalette(GLcontext *, struct gl_texture_object *);
 extern void fxDDTexUseGlbPalette(GLcontext *, GLboolean);
 
 extern void fxDDEnable(GLcontext *, GLenum, GLboolean);
-extern void fxDDAlphaFunc(GLcontext *, GLenum, GLchan);
+extern void fxDDAlphaFunc(GLcontext *, GLenum, GLfloat);
 extern void fxDDBlendFunc(GLcontext *, GLenum, GLenum);
 extern void fxDDDepthMask(GLcontext *, GLboolean);
 extern void fxDDDepthFunc(GLcontext *, GLenum);

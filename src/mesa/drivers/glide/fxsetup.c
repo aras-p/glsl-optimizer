@@ -1,4 +1,4 @@
-/* $Id: fxsetup.c,v 1.37 2002/06/15 03:03:10 brianp Exp $ */
+/* $Id: fxsetup.c,v 1.38 2002/11/04 20:29:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1173,7 +1173,7 @@ fxSetupBlend(GLcontext * ctx)
 /************************************************************************/
 
 void
-fxDDAlphaFunc(GLcontext * ctx, GLenum func, GLchan ref)
+fxDDAlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
 {
    fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
    tfxUnitsState *us = &fxMesa->unitsState;
@@ -1229,8 +1229,9 @@ fxSetupAlphaTest(GLcontext * ctx)
    tfxUnitsState *us = &fxMesa->unitsState;
 
    if (us->alphaTestEnabled) {
+      GrAlpha_t ref = (GLint) (us->alphaTestRefValue * 255.0);
       FX_grAlphaTestFunction(us->alphaTestFunc);
-      FX_grAlphaTestReferenceValue(us->alphaTestRefValue);
+      FX_grAlphaTestReferenceValue(ref);
    }
    else
       FX_grAlphaTestFunction(GR_CMP_ALWAYS);
