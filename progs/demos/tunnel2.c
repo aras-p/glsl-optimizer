@@ -20,7 +20,7 @@
 
 #include <GL/glut.h>
 #include "readtex.c"
-#include "tunneldat.c"
+#include "tunneldat.h"
 
 #ifdef FX
 #endif
@@ -48,19 +48,6 @@ static GLint Frames = 0;
 #ifndef M_PI
 #define M_PI 3.1415926535
 #endif
-
-extern int striplength_skin_13[];
-extern float stripdata_skin_13[];
-
-extern int striplength_skin_12[];
-extern float stripdata_skin_12[];
-
-extern int striplength_skin_11[];
-extern float stripdata_skin_11[];
-
-extern int striplength_skin_9[];
-extern float stripdata_skin_9[];
-
 
 static float obs[3] = { 1000.0, 0.0, 2.0 };
 static float dir[3];
@@ -117,7 +104,7 @@ inittextures(void)
 }
 
 static void
-drawobjs(int *l, float *f)
+drawobjs(const int *l, const float *f)
 {
    int mend, j;
 
@@ -547,8 +534,6 @@ main(int ac, char **av)
 {
    fprintf(stderr,
 	   "Tunnel2 V1.0\nWritten by David Bucciarelli (tech.hmw@plus.it)\n");
-   fprintf(stderr,
-	   "You need TWO Voodoo Graphics boards in order to run this demo !\n");
 
    glutInitWindowPosition(0, 0);
    glutInitWindowSize(WIDTHC0, HEIGHTC0);

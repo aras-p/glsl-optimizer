@@ -17,7 +17,7 @@
 
 #include <GL/glut.h>
 #include "readtex.c"
-#include "tunneldat.c"
+#include "tunneldat.h"
 
 #ifdef XMESA
 #include "GL/xmesa.h"
@@ -29,6 +29,7 @@ static int HEIGHT = 480;
 
 static GLint T0 = 0;
 static GLint Frames = 0;
+static GLint NiceFog = 1;
 
 #define NUMBLOC 5
 
@@ -36,6 +37,7 @@ static GLint Frames = 0;
 #define M_PI 3.1415926535
 #endif
 
+/*
 extern int striplength_skin_13[];
 extern float stripdata_skin_13[];
 
@@ -47,7 +49,7 @@ extern float stripdata_skin_11[];
 
 extern int striplength_skin_9[];
 extern float stripdata_skin_9[];
-
+*/
 
 static int win = 0;
 
@@ -104,7 +106,7 @@ inittextures(void)
 }
 
 static void
-drawobjs(int *l, float *f)
+drawobjs(const int *l, const float *f)
 {
    int mend, j;
 
@@ -241,6 +243,10 @@ key(unsigned char k, int x, int y)
       inittextures();
       fprintf(stderr, "Done.\n");
       break;
+   case 'n':
+      NiceFog = !NiceFog;
+      printf("NiceFog %d\n", NiceFog);
+      break;
    }
    glutPostRedisplay();
 }
@@ -355,6 +361,11 @@ draw(void)
    static char frbuf[80] = "";
    int i;
    float base, offset;
+
+   if (NiceFog)
+      glHint(GL_FOG_HINT, GL_NICEST);
+   else
+      glHint(GL_FOG_HINT, GL_DONT_CARE);
 
    dojoy();
 
