@@ -56,16 +56,16 @@
  * Selecting the <b>Main page</b> link will display a summary of the module
  * (this page).
  *
- * Selecting <b>Compound List</b> will list all C structures.
+ * Selecting <b>Data Structures</b> will list all C structures.
  *
  * Selecting the <b>File List</b> link will list all the source files in
  * the module.
  * Selecting a filename will show a list of all functions defined in that file.
  *
- * Selecting the <b>Compound Members</b> link will display a list of all
+ * Selecting the <b>Data Fields</b> link will display a list of all
  * documented structure members.
  *
- * Selecting the <b>File Members</b> link will display a list
+ * Selecting the <b>Globals</b> link will display a list
  * of all functions, structures, global variables and macros in the module.
  *
  */
