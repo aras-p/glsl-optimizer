@@ -121,7 +121,7 @@ get_register_pointer( GLcontext *ctx,
          src = ctx->FragmentProgram.Parameters[source->Index];
          break;
       case PROGRAM_NAMED_PARAM:
-         ASSERT(source->Index < program->Parameters->NumParameters);
+         ASSERT(source->Index < (GLint) program->Parameters->NumParameters);
          src = program->Parameters->Parameters[source->Index].Values;
          break;
       case PROGRAM_STATE_VAR:

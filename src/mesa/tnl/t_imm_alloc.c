@@ -59,14 +59,14 @@ real_alloc_immediate( GLcontext *ctx )
    /* Only allocate space for vertex positions right now.  Color, texcoord,
     * etc storage will be allocated as needed.
     */
-   immed->Attrib[VERT_ATTRIB_POS] = _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
+   immed->Attrib[VERT_ATTRIB_POS] = (GLfloat (*)[4]) _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
 
    /* Enable this to allocate all attribute arrays up front */
    if (0)
    {
       int i;
       for (i = 1; i < VERT_ATTRIB_MAX; i++) {
-         immed->Attrib[i] = _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
+         immed->Attrib[i] = (GLfloat (*)[4]) _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
       }
    }
 

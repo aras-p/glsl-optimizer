@@ -619,7 +619,7 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
    ASSERT(IM->Attrib[VERT_ATTRIB_POS]);
    for (attr = 1; attr < VERT_ATTRIB_MAX; attr++) {
       if ((translate & (1 << attr)) && !IM->Attrib[attr]) {
-         IM->Attrib[attr] = _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
+         IM->Attrib[attr] = (GLfloat (*)[4]) _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
          if (!IM->Attrib[attr]) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "vertex processing2");
             return;

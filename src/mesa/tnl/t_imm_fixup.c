@@ -155,7 +155,7 @@ copy_from_current( GLcontext *ctx, struct immediate *IM,
    for (attrib = 0, attribBit = 1; attrib < 16; attrib++, attribBit <<= 1) {
       if (copyMask & attribBit) {
          if (!IM->Attrib[attrib]) {
-            IM->Attrib[attrib] = _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
+            IM->Attrib[attrib] = (GLfloat (*)[4]) _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
             if (!IM->Attrib[attrib]) {
                _mesa_error(ctx, GL_OUT_OF_MEMORY, "vertex processing3");
                return;
@@ -229,7 +229,7 @@ _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
          const GLuint attrBit = 1 << attr;
          if (fixup & attrBit) {
             if (!IM->Attrib[attr]) {
-               IM->Attrib[attr] = _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
+               IM->Attrib[attr] = (GLfloat (*)[4]) _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
                if (!IM->Attrib[attr]) {
                   _mesa_error(ctx, GL_OUT_OF_MEMORY, "vertex processing");
                   return;
@@ -409,7 +409,7 @@ _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
       /* Allocate attribute arrays in the destination immediate struct */
       for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
          if ((copy & (1 << attr)) && !next->Attrib[attr]) {
-            next->Attrib[attr] = _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
+            next->Attrib[attr] = (GLfloat (*)[4]) _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
             if (!next->Attrib[attr]) {
                _mesa_error(ctx, GL_OUT_OF_MEMORY, "vertex processing");
                return;
@@ -546,7 +546,7 @@ _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
          const GLuint attrBit = 1 << attr;
          if (fixup & attrBit) {
             if (!IM->Attrib[attr]) {
-               IM->Attrib[attr] = _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
+               IM->Attrib[attr] = (GLfloat (*)[4]) _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
                if (!IM->Attrib[attr]) {
                   _mesa_error(ctx, GL_OUT_OF_MEMORY, "vertex processing");
                }

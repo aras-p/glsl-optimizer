@@ -46,7 +46,7 @@ static void do_import( struct vertex_buffer *VB,
    GLuint count = VB->Count;
 
    if (!to->Ptr) {
-      to->Ptr = ALIGN_MALLOC( VB->Size * 4 * sizeof(GLchan), 32 );
+      to->Ptr = (GLubyte *) ALIGN_MALLOC( VB->Size * 4 * sizeof(GLchan), 32 );
       to->Type = CHAN_TYPE;
    }
 

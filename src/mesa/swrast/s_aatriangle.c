@@ -31,6 +31,7 @@
 #include "glheader.h"
 #include "context.h"
 #include "colormac.h"
+#include "context.h"
 #include "macros.h"
 #include "imports.h"
 #include "s_aatriangle.h"

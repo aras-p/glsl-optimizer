@@ -226,7 +226,7 @@ _mesa_buffer_data( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
 
    new_data = _mesa_realloc( bufObj->Data, bufObj->Size, size );
    if ( new_data != NULL ) {
-      bufObj->Data = new_data;
+      bufObj->Data = (GLubyte *) new_data;
       bufObj->Size = size;
       bufObj->Usage = usage;
 

@@ -673,10 +673,10 @@ _glapi_add_entrypoint(const char *funcName, GLuint offset)
             if (ExtEntryTable[i].Offset == offset) {
                return GL_TRUE;  /* offsets match */
             }
-            else if (ExtEntryTable[i].Offset == ~0
+            else if (ExtEntryTable[i].Offset == (GLuint) ~0
                      && offset < DISPATCH_TABLE_SIZE) {
                /* need to patch-up the dispatch code */
-               if (offset != ~0) {
+               if (offset != (GLuint) ~0) {
                   fill_in_entrypoint_offset(ExtEntryTable[i].Address, offset);
                   ExtEntryTable[i].Offset = offset;
                }

@@ -423,7 +423,7 @@ _mesa_make_extension_string( GLcontext *ctx )
          extStrLen += _mesa_strlen(default_extensions[i].name) + 1;
       }
    }
-   s = _mesa_malloc(extStrLen);
+   s = (GLubyte *) _mesa_malloc(extStrLen);
 
    /* second, build the extension string */
    extStrLen = 0;

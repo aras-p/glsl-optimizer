@@ -48,7 +48,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 0;
-   cl->Ptr = (void *) ctx->Current.Attrib[VERT_ATTRIB_NORMAL];
+   cl->Ptr = (GLubyte *) ctx->Current.Attrib[VERT_ATTRIB_NORMAL];
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
 #if FEATURE_ARB_vertex_buffer_object
@@ -60,7 +60,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 0;
-   cl->Ptr = (void *) ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
+   cl->Ptr = (GLubyte *) ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
 #if FEATURE_ARB_vertex_buffer_object
@@ -72,7 +72,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 0;
-   cl->Ptr = (void *) ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
+   cl->Ptr = (GLubyte *) ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
 #if FEATURE_ARB_vertex_buffer_object
@@ -84,7 +84,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 0;
-   cl->Ptr = (void *) &ctx->Current.Attrib[VERT_ATTRIB_FOG];
+   cl->Ptr = (GLubyte *) &ctx->Current.Attrib[VERT_ATTRIB_FOG];
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
 #if FEATURE_ARB_vertex_buffer_object
@@ -96,7 +96,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Type = GL_UNSIGNED_INT;
    cl->Stride = 0;
    cl->StrideB = 0;
-   cl->Ptr = (void *) &ctx->Current.Index;
+   cl->Ptr = (GLubyte *) &ctx->Current.Index;
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
 #if FEATURE_ARB_vertex_buffer_object
@@ -109,7 +109,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
       cl->Type = GL_FLOAT;
       cl->Stride = 0;
       cl->StrideB = 0;
-      cl->Ptr = (void *) ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i];
+      cl->Ptr = (GLubyte *) ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i];
       cl->Enabled = 1;
       cl->Flags = CA_CLIENT_DATA;	/* hack */
 #if FEATURE_ARB_vertex_buffer_object
@@ -122,7 +122,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Type = GL_UNSIGNED_BYTE;
    cl->Stride = 0;
    cl->StrideB = 0;
-   cl->Ptr = (void *) &ctx->Current.EdgeFlag;
+   cl->Ptr = (GLubyte *) &ctx->Current.EdgeFlag;
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
 #if FEATURE_ARB_vertex_buffer_object
@@ -135,7 +135,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
       cl->Type = GL_FLOAT;
       cl->Stride = 0;
       cl->StrideB = 0;
-      cl->Ptr = (void *) ctx->Current.Attrib[i];
+      cl->Ptr = (GLubyte *) ctx->Current.Attrib[i];
       cl->Enabled = 1;
       cl->Flags = CA_CLIENT_DATA; /* hack */
 #if FEATURE_ARB_vertex_buffer_object
@@ -160,7 +160,7 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 4 * sizeof(GLfloat);
-   cl->Ptr = MALLOC( cl->StrideB * size );
+   cl->Ptr = (GLubyte *) MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;
 #if FEATURE_ARB_vertex_buffer_object
@@ -172,7 +172,7 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 3 * sizeof(GLfloat);
-   cl->Ptr = MALLOC( cl->StrideB * size );
+   cl->Ptr = (GLubyte *) MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;
 #if FEATURE_ARB_vertex_buffer_object
@@ -184,7 +184,7 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 4 * sizeof(GLfloat);
-   cl->Ptr = MALLOC( cl->StrideB * size );
+   cl->Ptr = (GLubyte *) MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;
 #if FEATURE_ARB_vertex_buffer_object
@@ -196,7 +196,7 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 4 * sizeof(GLfloat);
-   cl->Ptr = MALLOC( cl->StrideB * size );
+   cl->Ptr = (GLubyte *) MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;
 #if FEATURE_ARB_vertex_buffer_object
@@ -208,7 +208,7 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = sizeof(GLfloat);
-   cl->Ptr = MALLOC( cl->StrideB * size );
+   cl->Ptr = (GLubyte *) MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;
 #if FEATURE_ARB_vertex_buffer_object
@@ -220,7 +220,7 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Type = GL_UNSIGNED_INT;
    cl->Stride = 0;
    cl->StrideB = sizeof(GLuint);
-   cl->Ptr = MALLOC( cl->StrideB * size );
+   cl->Ptr = (GLubyte *) MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;
 #if FEATURE_ARB_vertex_buffer_object
@@ -233,7 +233,7 @@ static void _ac_cache_init( GLcontext *ctx )
       cl->Type = GL_FLOAT;
       cl->Stride = 0;
       cl->StrideB = 4 * sizeof(GLfloat);
-      cl->Ptr = MALLOC( cl->StrideB * size );
+      cl->Ptr = (GLubyte *) MALLOC( cl->StrideB * size );
       cl->Enabled = 1;
       cl->Flags = 0;
 #if FEATURE_ARB_vertex_buffer_object
@@ -246,7 +246,7 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Type = GL_UNSIGNED_BYTE;
    cl->Stride = 0;
    cl->StrideB = sizeof(GLubyte);
-   cl->Ptr = MALLOC( cl->StrideB * size );
+   cl->Ptr = (GLubyte *) MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;
 #if FEATURE_ARB_vertex_buffer_object
@@ -259,7 +259,7 @@ static void _ac_cache_init( GLcontext *ctx )
       cl->Type = GL_FLOAT;
       cl->Stride = 0;
       cl->StrideB = 4 * sizeof(GLfloat);
-      cl->Ptr = MALLOC( cl->StrideB * size );
+      cl->Ptr = (GLubyte *) MALLOC( cl->StrideB * size );
       cl->Enabled = 1;
       cl->Flags = 0;
 #if FEATURE_ARB_vertex_buffer_object

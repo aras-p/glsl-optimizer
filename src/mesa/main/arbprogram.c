@@ -196,7 +196,8 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
          _mesa_error(ctx, GL_INVALID_ENUM, "glProgramStringARB(format)");
          return;
       }
-      _mesa_parse_arb_vertex_program(ctx, target, string, len, prog);
+      _mesa_parse_arb_vertex_program(ctx, target, (const GLubyte *) string,
+                                     len, prog);
    }
    else if (target == GL_FRAGMENT_PROGRAM_ARB
             && ctx->Extensions.ARB_fragment_program) {
@@ -205,7 +206,8 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
          _mesa_error(ctx, GL_INVALID_ENUM, "glProgramStringARB(format)");
          return;
       }
-      _mesa_parse_arb_fragment_program(ctx, target, string, len, prog);
+      _mesa_parse_arb_fragment_program(ctx, target, (const GLubyte *) string,
+                                       len, prog);
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glProgramStringARB(target)");

@@ -69,7 +69,7 @@ static void import_color_material( GLcontext *ctx,
    GLuint count = VB->Count;
 
    if (!to->Ptr) {
-      to->Ptr = ALIGN_MALLOC( VB->Size * 4 * sizeof(GLfloat), 32 );
+      to->Ptr = (GLubyte *) ALIGN_MALLOC( VB->Size * 4 * sizeof(GLfloat), 32 );
       to->Type = GL_FLOAT;
    }
 
@@ -248,7 +248,7 @@ static GLboolean run_validate_lighting( GLcontext *ctx,
 
 static void alloc_4chan( struct gl_client_array *a, GLuint sz )
 {
-   a->Ptr = ALIGN_MALLOC( sz * sizeof(GLchan) * 4, 32 );
+   a->Ptr = (GLubyte *) ALIGN_MALLOC( sz * sizeof(GLchan) * 4, 32 );
    a->Size = 4;
    a->Type = CHAN_TYPE;
    a->Stride = 0;

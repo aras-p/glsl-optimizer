@@ -4219,8 +4219,7 @@ save_RequestResidentProgramsNV(GLsizei num, const GLuint *ids)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   GLuint *idCopy;
-   idCopy = _mesa_malloc(num * sizeof(GLuint));
+   GLuint *idCopy = (GLuint *) _mesa_malloc(num * sizeof(GLuint));
    if (!idCopy) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glRequestResidentProgramsNV");
       return;
@@ -4357,9 +4356,7 @@ save_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   GLubyte *nameCopy;
-
-   nameCopy = _mesa_malloc(len);
+   GLubyte *nameCopy = (GLubyte *) _mesa_malloc(len);
    if (!nameCopy) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramNamedParameter4fNV");
       return;
@@ -5251,10 +5248,12 @@ execute_list( GLcontext *ctx, GLuint list )
             }
             break;
          case OPCODE_REQUEST_RESIDENT_PROGRAMS_NV:
-            (*ctx->Exec->RequestResidentProgramsNV)(n[1].ui, n[2].data);
+            (*ctx->Exec->RequestResidentProgramsNV)(n[1].ui,
+                                                    (GLuint *) n[2].data);
             break;
          case OPCODE_LOAD_PROGRAM_NV:
-            (*ctx->Exec->LoadProgramNV)(n[1].e, n[2].ui, n[3].i, n[4].data);
+            (*ctx->Exec->LoadProgramNV)(n[1].e, n[2].ui, n[3].i,
+                                        (const GLubyte *) n[4].data);
             break;
          case OPCODE_PROGRAM_PARAMETER4F_NV:
             (*ctx->Exec->ProgramParameter4fNV)(n[1].e, n[2].ui, n[3].f,
@@ -5271,7 +5270,8 @@ execute_list( GLcontext *ctx, GLuint list )
                                                      n[4].f, n[5].f, n[6].f);
             break;
          case OPCODE_PROGRAM_NAMED_PARAMETER_NV:
-            (*ctx->Exec->ProgramNamedParameter4fNV)(n[1].ui, n[2].i, n[3].data,
+            (*ctx->Exec->ProgramNamedParameter4fNV)(n[1].ui, n[2].i,
+                                               (const GLubyte *) n[3].data,
                                                n[4].f, n[5].f, n[6].f, n[7].f);
             break;
 #endif

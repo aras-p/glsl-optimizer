@@ -507,7 +507,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
    /* Allocate vertex attribute storage now */
    for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
       if ((req & (1 << attr)) && !store->Attrib[attr]) {
-         store->Attrib[attr] = _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
+         store->Attrib[attr] = (GLfloat (*)[4]) _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
          if (!store->Attrib[attr]) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "evaluator processing");
             return;

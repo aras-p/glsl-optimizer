@@ -260,9 +260,10 @@ add_parameter(struct program_parameter_list *paramList,
 {
    const GLuint n = paramList->NumParameters;
 
-   paramList->Parameters = _mesa_realloc(paramList->Parameters,
-                                   n * sizeof(struct program_parameter),
-                                   (n + 1) * sizeof(struct program_parameter));
+   paramList->Parameters = (struct program_parameter *)
+      _mesa_realloc(paramList->Parameters,
+                    n * sizeof(struct program_parameter),
+                    (n + 1) * sizeof(struct program_parameter));
    if (!paramList->Parameters) {
       /* out of memory */
       paramList->NumParameters = 0;
@@ -1011,7 +1012,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
 #endif
 
    /* make null-terminated copy of registerName */
-   len = MIN2(len, sizeof(reg) - 1);
+   len = MIN2((unsigned int) len, sizeof(reg) - 1);
    _mesa_memcpy(reg, registerName, len);
    reg[len] = 0;
 
