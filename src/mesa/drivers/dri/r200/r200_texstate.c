@@ -279,7 +279,7 @@ static void r200SetTexImages( r200ContextPtr rmesa,
       t->pp_txformat_x |= R200_TEXCOORD_VOLUME;
    }
    else if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
-      ASSERT(log2Width == log2height);
+      ASSERT(log2Width == log2Height);
       t->pp_txformat |= ((log2Width << R200_TXFORMAT_F5_WIDTH_SHIFT) |
                          (log2Height << R200_TXFORMAT_F5_HEIGHT_SHIFT) |
                          (R200_TXFORMAT_CUBIC_MAP_ENABLE));
@@ -828,7 +828,7 @@ static void import_tex_obj_state( r200ContextPtr rmesa,
    if (texobj->base.tObj->Target == GL_TEXTURE_CUBE_MAP) {
       GLuint *cube_cmd = R200_DB_STATE( cube[unit] );
       GLuint bytesPerFace = texobj->base.totalSize / 6;
-      ASSERT(texobj->totalSize % 6 == 0);
+      ASSERT(texobj->base.totalSize % 6 == 0);
       cube_cmd[CUBE_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
       cube_cmd[CUBE_PP_CUBIC_OFFSET_F1] = texobj->pp_txoffset + 1 * bytesPerFace;
       cube_cmd[CUBE_PP_CUBIC_OFFSET_F2] = texobj->pp_txoffset + 2 * bytesPerFace;

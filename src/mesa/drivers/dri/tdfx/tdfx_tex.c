@@ -212,7 +212,7 @@ tdfxTexGetInfo(const GLcontext *ctx, int w, int h,
     /* Hardware only allows a maximum aspect ratio of 8x1, so handle
        |ar| > 3 by scaling the image and using an 8x1 aspect ratio */
     if (ar >= 0) {
-        ASSERT(width >= height);
+        ASSERT(w >= h);
         lod = logw;
         if (ar <= GR_ASPECT_LOG2_8x1) {
             t = 256 >> ar;
@@ -225,7 +225,7 @@ tdfxTexGetInfo(const GLcontext *ctx, int w, int h,
         }
     }
     else {
-        ASSERT(width < height);
+        ASSERT(w < h);
         lod = logh;
         if (ar >= GR_ASPECT_LOG2_1x8) {
             s = 256 >> -ar;
@@ -595,7 +595,7 @@ convertPalette(FxU32 data[256], const struct gl_color_table *table)
     FxU32 r, g, b, a;
     GLint i;
 
-    ASSERT(table->TableType == GL_UNSIGNED_BYTE);
+    ASSERT(table->Type == GL_UNSIGNED_BYTE);
 
     switch (table->Format) {
     case GL_INTENSITY:
