@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.29 2001/05/17 09:32:17 keithw Exp $ */
+/* $Id: s_triangle.c,v 1.30 2001/06/26 15:33:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -359,7 +359,7 @@ affine_span(GLcontext *ctx, struct triangle_span *span,
         tr = tex00[RCOMP];	\
         tg = tex00[GCOMP];	\
         tb = tex00[BCOMP];	\
-        ta = 0xff
+        ta = CHAN_MAX
 
 #define LINEAR_RGB							\
 	tr = (ti * (si * tex00[0] + sf * tex01[0]) +			\
@@ -368,7 +368,7 @@ affine_span(GLcontext *ctx, struct triangle_span *span,
               tf * (si * tex10[1] + sf * tex11[1])) >> 2 * FIXED_SHIFT;	\
 	tb = (ti * (si * tex00[2] + sf * tex01[2]) +			\
               tf * (si * tex10[2] + sf * tex11[2])) >> 2 * FIXED_SHIFT;	\
-	ta = 0xff
+	ta = CHAN_MAX
 
 #define NEAREST_RGBA		\
         tr = tex00[RCOMP];	\
@@ -393,20 +393,20 @@ affine_span(GLcontext *ctx, struct triangle_span *span,
         dest[ACOMP] = span->alpha * (ta + 1) >> (FIXED_SHIFT + 8)
 
 #define DECAL								\
-	dest[RCOMP] = ((0xff - ta) * span->red				\
+	dest[RCOMP] = ((CHAN_MAX - ta) * span->red			\
            + ((ta + 1) * tr << FIXED_SHIFT)) >> (FIXED_SHIFT + 8);	\
-	dest[GCOMP] = ((0xff - ta) * span->green			\
+	dest[GCOMP] = ((CHAN_MAX - ta) * span->green			\
            + ((ta + 1) * tg << FIXED_SHIFT)) >> (FIXED_SHIFT + 8);	\
-	dest[BCOMP] = ((0xff - ta) * span->blue				\
+	dest[BCOMP] = ((CHAN_MAX - ta) * span->blue			\
            + ((ta + 1) * tb << FIXED_SHIFT)) >> (FIXED_SHIFT + 8);	\
 	dest[ACOMP] = FixedToInt(span->alpha)
 
 #define BLEND								\
-        dest[RCOMP] = ((0xff - tr) * span->red				\
+        dest[RCOMP] = ((CHAN_MAX - tr) * span->red			\
            + (tr + 1) * info->er) >> (FIXED_SHIFT + 8);			\
-        dest[GCOMP] = ((0xff - tg) * span->green			\
+        dest[GCOMP] = ((CHAN_MAX - tg) * span->green			\
            + (tg + 1) * info->eg) >> (FIXED_SHIFT + 8);			\
-        dest[BCOMP] = ((0xff - tb) * span->blue				\
+        dest[BCOMP] = ((CHAN_MAX - tb) * span->blue			\
            + (tb + 1) * info->eb) >> (FIXED_SHIFT + 8);			\
         dest[ACOMP] = span->alpha * (ta + 1) >> (FIXED_SHIFT + 8)
 
@@ -431,8 +431,9 @@ affine_span(GLcontext *ctx, struct triangle_span *span,
 
 #define NEAREST_RGBA_REPLACE  *(GLint *)dest = *(GLint *)tex00
 
-#define SPAN1(DO_TEX,COMP)						\
+#define SPAN_NEAREST(DO_TEX,COMP)					\
 	for (i = 0; i < span->count; i++) {				\
+           /* Isn't it necessary to use FixedFloor below?? */		\
            GLint s = FixedToInt(span->intTex[0]) & info->smask;		\
            GLint t = FixedToInt(span->intTex[1]) & info->tmask;		\
            GLint pos = (t << info->twidth_log2) + s;			\
@@ -451,14 +452,15 @@ affine_span(GLcontext *ctx, struct triangle_span *span,
            dest += 4;							\
 	}
 
-#define SPAN2(DO_TEX,COMP)						\
+#define SPAN_LINEAR(DO_TEX,COMP)					\
 	for (i = 0; i < span->count; i++) {				\
+           /* Isn't it necessary to use FixedFloor below?? */		\
            GLint s = FixedToInt(span->intTex[0]) & info->smask;		\
            GLint t = FixedToInt(span->intTex[1]) & info->tmask;		\
-           GLint sf = span->intTex[0] & FIXED_FRAC_MASK;		\
-           GLint tf = span->intTex[1] & FIXED_FRAC_MASK;		\
-           GLint si = FIXED_FRAC_MASK - sf;				\
-           GLint ti = FIXED_FRAC_MASK - tf;				\
+           GLfixed sf = span->intTex[0] & FIXED_FRAC_MASK;		\
+           GLfixed tf = span->intTex[1] & FIXED_FRAC_MASK;		\
+           GLfixed si = FIXED_FRAC_MASK - sf;				\
+           GLfixed ti = FIXED_FRAC_MASK - tf;				\
            GLint pos = (t << info->twidth_log2) + s;			\
            const GLchan *tex00 = info->texture + COMP * pos;		\
            const GLchan *tex10 = tex00 + info->tbytesline;		\
@@ -505,17 +507,17 @@ affine_span(GLcontext *ctx, struct triangle_span *span,
       case GL_RGB:
          switch (info->envmode) {
          case GL_MODULATE:
-            SPAN1(NEAREST_RGB;MODULATE,3);
+            SPAN_NEAREST(NEAREST_RGB;MODULATE,3);
             break;
          case GL_DECAL:
          case GL_REPLACE:
-            SPAN1(NEAREST_RGB_REPLACE,3);
+            SPAN_NEAREST(NEAREST_RGB_REPLACE,3);
             break;
          case GL_BLEND:
-            SPAN1(NEAREST_RGB;BLEND,3);
+            SPAN_NEAREST(NEAREST_RGB;BLEND,3);
             break;
          case GL_ADD:
-            SPAN1(NEAREST_RGB;ADD,3);
+            SPAN_NEAREST(NEAREST_RGB;ADD,3);
             break;
          default:
             abort();
@@ -524,19 +526,19 @@ affine_span(GLcontext *ctx, struct triangle_span *span,
       case GL_RGBA:
          switch(info->envmode) {
          case GL_MODULATE:
-            SPAN1(NEAREST_RGBA;MODULATE,4);
+            SPAN_NEAREST(NEAREST_RGBA;MODULATE,4);
             break;
          case GL_DECAL:
-            SPAN1(NEAREST_RGBA;DECAL,4);
+            SPAN_NEAREST(NEAREST_RGBA;DECAL,4);
             break;
          case GL_BLEND:
-            SPAN1(NEAREST_RGBA;BLEND,4);
+            SPAN_NEAREST(NEAREST_RGBA;BLEND,4);
             break;
          case GL_ADD:
-            SPAN1(NEAREST_RGBA;ADD,4);
+            SPAN_NEAREST(NEAREST_RGBA;ADD,4);
             break;
          case GL_REPLACE:
-            SPAN1(NEAREST_RGBA_REPLACE,4);
+            SPAN_NEAREST(NEAREST_RGBA_REPLACE,4);
             break;
          default:
             abort();
@@ -552,17 +554,17 @@ affine_span(GLcontext *ctx, struct triangle_span *span,
       case GL_RGB:
          switch (info->envmode) {
          case GL_MODULATE:
-            SPAN2(LINEAR_RGB;MODULATE,3);
+            SPAN_LINEAR(LINEAR_RGB;MODULATE,3);
             break;
          case GL_DECAL:
          case GL_REPLACE:
-            SPAN2(LINEAR_RGB;REPLACE,3);
+            SPAN_LINEAR(LINEAR_RGB;REPLACE,3);
             break;
          case GL_BLEND:
-            SPAN2(LINEAR_RGB;BLEND,3);
+            SPAN_LINEAR(LINEAR_RGB;BLEND,3);
             break;
          case GL_ADD:
-            SPAN2(LINEAR_RGB;ADD,3);
+            SPAN_LINEAR(LINEAR_RGB;ADD,3);
             break;
          default:
             abort();
@@ -571,19 +573,19 @@ affine_span(GLcontext *ctx, struct triangle_span *span,
       case GL_RGBA:
          switch (info->envmode) {
          case GL_MODULATE:
-            SPAN2(LINEAR_RGBA;MODULATE,4);
+            SPAN_LINEAR(LINEAR_RGBA;MODULATE,4);
             break;
          case GL_DECAL:
-            SPAN2(LINEAR_RGBA;DECAL,4);
+            SPAN_LINEAR(LINEAR_RGBA;DECAL,4);
             break;
          case GL_BLEND:
-            SPAN2(LINEAR_RGBA;BLEND,4);
+            SPAN_LINEAR(LINEAR_RGBA;BLEND,4);
             break;
          case GL_ADD:
-            SPAN2(LINEAR_RGBA;ADD,4);
+            SPAN_LINEAR(LINEAR_RGBA;ADD,4);
             break;
          case GL_REPLACE:
-            SPAN2(LINEAR_RGBA;REPLACE,4);
+            SPAN_LINEAR(LINEAR_RGBA;REPLACE,4);
             break;
          default:
             abort();
@@ -594,8 +596,8 @@ affine_span(GLcontext *ctx, struct triangle_span *span,
    _mesa_write_rgba_span(ctx, span->count, span->x, span->y,
                          zspan, fogspan, rgba, NULL, GL_POLYGON);
 
-#undef SPAN1
-#undef SPAN2
+#undef SPAN_NEAREST
+#undef SPAN_LINEAR
 #undef FixedToDepth
 }
 
@@ -675,31 +677,236 @@ static void affine_textured_triangle( GLcontext *ctx,
 }
 
 
-#if 0 /* XXX disabled because of texcoord interpolation errors */
+struct persp_info
+{
+   GLenum filter;
+   GLenum format;
+   GLenum envmode;
+   GLint smask, tmask;
+   GLint twidth_log2;
+   const GLchan *texture;
+   GLchan er, eg, eb, ea;
+   GLint tbytesline, tsize;
+   GLint fixedToDepthShift;
+};
+
+static void
+fast_persp_span(GLcontext *ctx, struct triangle_span *span,
+		struct persp_info *info)
+{
+   GLint tr, tg, tb, ta;
+
+  /* Instead of defining a function for each mode, a test is done
+   * between the outer and inner loops. This is to reduce code size
+   * and complexity. Observe that an optimizing compiler kills
+   * unused variables (for instance tf,sf,ti,si in case of GL_NEAREST).
+   */
+
+#define SPAN_NEAREST(DO_TEX,COMP)					\
+	for (i = 0; i < span->count; i++) {				\
+           GLdouble invQ = tex_coord[2] ?				\
+                                 (1.0 / tex_coord[2]) : 1.0;            \
+           GLfloat s_tmp = tex_coord[0] * invQ;				\
+           GLfloat t_tmp = tex_coord[1] * invQ;				\
+           GLint s = IFLOOR(s_tmp) & info->smask;	        	\
+           GLint t = IFLOOR(t_tmp) & info->tmask;	        	\
+           GLint pos = (t << info->twidth_log2) + s;			\
+           const GLchan *tex00 = info->texture + COMP * pos;		\
+	   zspan[i] = FixedToDepth(span->z);				\
+	   fogspan[i] = span->fog;					\
+           DO_TEX;							\
+	   span->fog += span->fogStep;					\
+	   span->z += span->zStep;					\
+           span->red += span->redStep;					\
+	   span->green += span->greenStep;				\
+           span->blue += span->blueStep;				\
+	   span->alpha += span->alphaStep;				\
+	   tex_coord[0] += tex_step[0];					\
+	   tex_coord[1] += tex_step[1];					\
+	   tex_coord[2] += tex_step[2];					\
+           dest += 4;							\
+	}
+
+#define SPAN_LINEAR(DO_TEX,COMP)					\
+	for (i = 0; i < span->count; i++) {				\
+           GLdouble invQ = tex_coord[2] ?				\
+                                 (1.0 / tex_coord[2]) : 1.0;            \
+           GLfloat s_tmp = tex_coord[0] * invQ - 0.5F;			\
+           GLfloat t_tmp = tex_coord[1] * invQ - 0.5F;			\
+           GLfixed s_fix = FloatToFixed(s_tmp);				\
+           GLfixed t_fix = FloatToFixed(t_tmp);		        	\
+           GLint s = FixedToInt(FixedFloor(s_fix)) & info->smask;	\
+           GLint t = FixedToInt(FixedFloor(t_fix)) & info->tmask;	\
+           GLfixed sf = s_fix & FIXED_FRAC_MASK;		\
+           GLfixed tf = t_fix & FIXED_FRAC_MASK;		\
+           GLfixed si = FIXED_FRAC_MASK - sf;				\
+           GLfixed ti = FIXED_FRAC_MASK - tf;				\
+           GLint pos = (t << info->twidth_log2) + s;			\
+           const GLchan *tex00 = info->texture + COMP * pos;		\
+           const GLchan *tex10 = tex00 + info->tbytesline;		\
+           const GLchan *tex01 = tex00 + COMP;				\
+           const GLchan *tex11 = tex10 + COMP;				\
+           (void) ti;							\
+           (void) si;							\
+           if (t == info->tmask) {					\
+              tex10 -= info->tsize;					\
+              tex11 -= info->tsize;					\
+           }								\
+           if (s == info->smask) {					\
+              tex01 -= info->tbytesline;				\
+              tex11 -= info->tbytesline;				\
+           }								\
+	   zspan[i] = FixedToDepth(span->z);				\
+	   fogspan[i] = span->fog;					\
+           DO_TEX;							\
+	   span->fog += span->fogStep;					\
+	   span->z += span->zStep;					\
+           span->red   += span->redStep;				\
+	   span->green += span->greenStep;				\
+           span->blue  += span->blueStep;				\
+	   span->alpha += span->alphaStep;				\
+	   tex_coord[0] += tex_step[0];					\
+	   tex_coord[1] += tex_step[1];					\
+	   tex_coord[2] += tex_step[2];					\
+           dest += 4;							\
+	}
+
+#define FixedToDepth(F)  ((F) >> fixedToDepthShift)
+
+   GLuint i;
+   GLdepth zspan[MAX_WIDTH];
+   GLfloat tex_coord[3], tex_step[3];
+   GLfloat fogspan[MAX_WIDTH];
+   GLchan rgba[MAX_WIDTH][4];
+   GLchan *dest = rgba[0];
+   const GLint fixedToDepthShift = info->fixedToDepthShift;
+
+   tex_coord[0] = span->tex[0][0]  * (info->smask + 1),
+     tex_step[0] = span->texStep[0][0] * (info->smask + 1);
+   tex_coord[1] = span->tex[0][1] * (info->tmask + 1),
+     tex_step[1] = span->texStep[0][1] * (info->tmask + 1);
+   /* span->tex[0][2] only if 3D-texturing, here only 2D */
+   tex_coord[2] = span->tex[0][3],
+     tex_step[2] = span->texStep[0][3];
+
+   switch (info->filter) {
+   case GL_NEAREST:
+      switch (info->format) {
+      case GL_RGB:
+         switch (info->envmode) {
+         case GL_MODULATE:
+            SPAN_NEAREST(NEAREST_RGB;MODULATE,3);
+            break;
+         case GL_DECAL:
+         case GL_REPLACE:
+            SPAN_NEAREST(NEAREST_RGB_REPLACE,3);
+            break;
+         case GL_BLEND:
+            SPAN_NEAREST(NEAREST_RGB;BLEND,3);
+            break;
+         case GL_ADD:
+            SPAN_NEAREST(NEAREST_RGB;ADD,3);
+            break;
+         default:
+            abort();
+         }
+         break;
+      case GL_RGBA:
+         switch(info->envmode) {
+         case GL_MODULATE:
+            SPAN_NEAREST(NEAREST_RGBA;MODULATE,4);
+            break;
+         case GL_DECAL:
+            SPAN_NEAREST(NEAREST_RGBA;DECAL,4);
+            break;
+         case GL_BLEND:
+            SPAN_NEAREST(NEAREST_RGBA;BLEND,4);
+            break;
+         case GL_ADD:
+            SPAN_NEAREST(NEAREST_RGBA;ADD,4);
+            break;
+         case GL_REPLACE:
+            SPAN_NEAREST(NEAREST_RGBA_REPLACE,4);
+            break;
+         default:
+            abort();
+         }
+         break;
+      }
+      break;
+
+   case GL_LINEAR:
+      switch (info->format) {
+      case GL_RGB:
+         switch (info->envmode) {
+         case GL_MODULATE:
+            SPAN_LINEAR(LINEAR_RGB;MODULATE,3);
+            break;
+         case GL_DECAL:
+         case GL_REPLACE:
+            SPAN_LINEAR(LINEAR_RGB;REPLACE,3);
+            break;
+         case GL_BLEND:
+            SPAN_LINEAR(LINEAR_RGB;BLEND,3);
+            break;
+         case GL_ADD:
+            SPAN_LINEAR(LINEAR_RGB;ADD,3);
+            break;
+         default:
+            abort();
+         }
+         break;
+      case GL_RGBA:
+         switch (info->envmode) {
+         case GL_MODULATE:
+            SPAN_LINEAR(LINEAR_RGBA;MODULATE,4);
+            break;
+         case GL_DECAL:
+            SPAN_LINEAR(LINEAR_RGBA;DECAL,4);
+            break;
+         case GL_BLEND:
+            SPAN_LINEAR(LINEAR_RGBA;BLEND,4);
+            break;
+         case GL_ADD:
+            SPAN_LINEAR(LINEAR_RGBA;ADD,4);
+            break;
+         case GL_REPLACE:
+            SPAN_LINEAR(LINEAR_RGBA;REPLACE,4);
+            break;
+         default:
+            abort();
+         }
+         break;
+      }
+      break;
+   }
+   /* This does not seem to be necessary, but I don't know !! */
+   /* span->tex[0][0] = tex_coord[0] / (info->smask + 1),
+      span->tex[0][1] = tex_coord[1] / (info->tmask + 1),*/
+   /* span->tex[0][2] only if 3D-texturing, here only 2D */
+   /* span->tex[0][3] = tex_coord[2]; */
+   
+   _mesa_write_rgba_span(ctx, span->count, span->x, span->y,
+                         zspan, fogspan, rgba, NULL, GL_POLYGON);
+
+
+#undef SPAN_NEAREST
+#undef SPAN_LINEAR
+#undef FixedToDepth
+}
+
+
 /*
  * Render an perspective corrected RGB/RGBA textured triangle.
  * The Q (aka V in Mesa) coordinate must be zero such that the divide
  * by interpolated Q/W comes out right.
  *
- * This function only renders textured triangles that use GL_NEAREST.
- * Perspective correction works right.
- *
- * This function written by Klaus Niederkrueger <klaus@math.leidenuniv.nl>
- * Send all questions and bug reports to him.
  */
-static void near_persp_textured_triangle(GLcontext *ctx,
-					 const SWvertex *v0,
-					 const SWvertex *v1,
-					 const SWvertex *v2 )
+static void persp_textured_triangle( GLcontext *ctx,
+				     const SWvertex *v0,
+				     const SWvertex *v1,
+				     const SWvertex *v2 )
 {
-/* The BIAS value is used to shift negative values into positive values.
- * Without this, negative texture values don't GL_REPEAT correctly at just
- * below zero, because (int)-0.5 = 0 = (int)0.5. We're not going to worry
- * about texture coords less than -BIAS. This could be fixed by using
- * FLOORF etc. instead, but this is slower...
- */
-#define BIAS 4096.0F
-
 #define INTERP_Z 1
 #define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
@@ -707,896 +914,59 @@ static void near_persp_textured_triangle(GLcontext *ctx,
 #define INTERP_ALPHA 1
 #define INTERP_TEX 1
 
-#define SETUP_CODE							\
+#define SETUP_CODE
+   struct persp_info info;
    struct gl_texture_unit *unit = ctx->Texture.Unit+0;			\
    struct gl_texture_object *obj = unit->Current2D;			\
-   const GLint b = obj->BaseLevel;					\
-   const GLfloat twidth = (GLfloat) obj->Image[b]->Width;	      	\
-   const GLfloat theight = (GLfloat) obj->Image[b]->Height;		\
-   const GLint twidth_log2 = obj->Image[b]->WidthLog2;			\
-   const GLchan *texture = (const GLchan *) obj->Image[b]->Data;	\
-   const GLint smask = (obj->Image[b]->Width - 1);                      \
-   const GLint tmask = (obj->Image[b]->Height - 1);                     \
-   const GLint format = obj->Image[b]->Format;                          \
-   const GLint envmode = unit->EnvMode;                                 \
-   GLfloat sscale, tscale;                                              \
-   GLfixed er, eg, eb, ea;                                              \
-   GLint tr, tg, tb, ta;                                                \
-   if (!texture) {							\
+   GLint b = obj->BaseLevel;						\
+   info.fixedToDepthShift = ctx->Visual.depthBits <= 16 ? FIXED_SHIFT : 0;\
+   info.texture = (const GLchan *) obj->Image[b]->Data;			\
+   info.twidth_log2 = obj->Image[b]->WidthLog2;				\
+   info.smask = obj->Image[b]->Width - 1;				\
+   info.tmask = obj->Image[b]->Height - 1;				\
+   info.format = obj->Image[b]->Format;					\
+   info.filter = obj->MinFilter;					\
+   info.envmode = unit->EnvMode;					\
+									\
+   if (info.envmode == GL_BLEND) {					\
+      /* potential off-by-one error here? (1.0f -> 2048 -> 0) */	\
+      info.er = FloatToFixed(unit->EnvColor[RCOMP]);			\
+      info.eg = FloatToFixed(unit->EnvColor[GCOMP]);			\
+      info.eb = FloatToFixed(unit->EnvColor[BCOMP]);			\
+      info.ea = FloatToFixed(unit->EnvColor[ACOMP]);			\
+   }									\
+   if (!info.texture) {							\
       /* this shouldn't happen */					\
       return;								\
    }									\
-   if (envmode == GL_BLEND || envmode == GL_ADD) {                      \
-      er = FloatToFixed(unit->EnvColor[RCOMP]);                         \
-      eg = FloatToFixed(unit->EnvColor[GCOMP]);                         \
-      eb = FloatToFixed(unit->EnvColor[BCOMP]);                         \
-      ea = FloatToFixed(unit->EnvColor[ACOMP]);                         \
-   }                                                                    \
-   sscale = twidth;                                                     \
-   tscale = theight;                                                    \
-
-
-#define OLD_SPAN(DO_TEX,COMP)                         \
-   for (i=0;i<n;i++) {                                \
-      GLfloat invQ = 1.0f / vv;                       \
-      GLint s = (int)(SS * invQ + BIAS) & smask;      \
-      GLint t = (int)(TT * invQ + BIAS) & tmask;      \
-      GLint pos = COMP * ((t << twidth_log2) + s);    \
-      const GLchan *tex00 = texture + pos;            \
-      zspan[i] = FixedToDepth(span.z);                   \
-      fogspan[i] = span.fog;                              \
-      DO_TEX;                                         \
-      span.fog += span.fogStep;                                 \
-      span.z += span.zStep;                                   \
-      span.red += span.redStep;                                   \
-      span.green += span.greenStep;                                   \
-      span.blue += span.blueStep;                                   \
-      span.alpha += span.alphaStep;                                   \
-      SS += dSdx;                                     \
-      TT += dTdx;                                     \
-      vv += dvdx;                                     \
-      dest += 4;                                      \
-   }
-
-#define X_Y_TEX_COORD(X, Y) ((((int)(X) & tmask) << twidth_log2) + ((int)(Y) & smask))
-#define Y_X_TEX_COORD(X, Y) ((((int)(Y) & tmask) << twidth_log2) + ((int)(X) & smask))
-
-#define SPAN1(DO_TEX, COMP, TEX_COORD) {                          \
-   GLfloat x_max = CEILF(x_tex);                                  \
-   GLfloat y_max = y_tex + (x_max - x_tex) * dy_dx;               \
-   GLint j, x_m = (int)x_max;                                     \
-   GLint pos;                                                     \
-   if ((int)y_max != (int)y_tex) {                                \
-      GLfloat x_mid = x_tex + (CEILF(y_tex)-y_tex) * dx_dy;       \
-      j = (nominator + vv * x_mid)/(denominator - dvdx*x_mid);    \
-      pos = COMP * TEX_COORD(x_tex, y_tex);                       \
-      DRAW_LINE (DO_TEX);                                         \
-      y_tex = y_max;                                              \
-   }                                                              \
-   nominator += vv * x_max;                                       \
-   denominator -= dvdx * x_max;                                   \
-   j = nominator / denominator;                                   \
-   pos = COMP * TEX_COORD(x_tex, y_tex);                          \
-   DRAW_LINE (DO_TEX);                                            \
-   while (i<n)  {                                                 \
-      y_tex = y_max;                                              \
-      y_max += dy_dx;                                             \
-      if ((int)y_max != (int)y_tex) {                             \
-         GLfloat x_mid = (CEILF(y_tex)-y_tex) * dx_dy;            \
-         j = (nominator + vv * x_mid)/(denominator - dvdx*x_mid); \
-         pos = COMP * TEX_COORD(x_m, y_tex);                      \
-         DRAW_LINE (DO_TEX);                                      \
-         y_tex = y_max;                                           \
-      }                                                           \
-      nominator += vv;                                            \
-      denominator -= dvdx;                                        \
-      j = nominator/denominator;                                  \
-      pos = COMP * TEX_COORD(x_m, y_tex);                         \
-      DRAW_LINE (DO_TEX);                                         \
-      x_m ++;                                                     \
-   }                                                              \
-}
-
-#define SPAN2(DO_TEX, COMP, TEX_COORD)  {			\
-   GLfloat x_max = CEILF (x_tex);				\
-   GLfloat y_max = y_tex + (x_max - x_tex) * dy_dx;		\
-   GLint j, x_m = (int) x_max;					\
-   GLint pos;							\
-   if ((int)y_max != (int)y_tex) {				\
-      GLfloat x_mid = x_tex + (FLOORF(y_tex)-y_tex) * dx_dy;	\
-      j = (nominator + vv * x_mid)/(denominator - dvdx*x_mid);	\
-      pos = COMP * TEX_COORD(x_tex, y_tex);			\
-      DRAW_LINE (DO_TEX);					\
-      y_tex = y_max;						\
-   }								\
-   nominator += vv * x_max;					\
-   denominator -= dvdx * x_max;					\
-   j = nominator / denominator;					\
-   pos = COMP * TEX_COORD(x_tex, y_tex);			\
-   DRAW_LINE (DO_TEX);						\
-   while (i<n)  {						\
-      y_tex = y_max;						\
-      y_max += dy_dx;						\
-      if ((int)y_max != (int)y_tex) {				\
-         GLfloat x_mid = (FLOORF(y_tex)-y_tex) * dx_dy;		\
-         j = (nominator + vv * x_mid)/(denominator - dvdx*x_mid);\
-         pos = COMP * TEX_COORD(x_m, y_tex);			\
-         DRAW_LINE (DO_TEX);					\
-         y_tex = y_max;						\
-      }								\
-      nominator += vv;						\
-      denominator -= dvdx;					\
-      j = nominator/denominator;				\
-      pos = COMP * TEX_COORD(x_m, y_tex);			\
-      DRAW_LINE (DO_TEX);					\
-      x_m ++;							\
-   }								\
-}
-
-#define SPAN3(DO_TEX, COMP, TEX_COORD) {				\
-   GLfloat x_min = FLOORF (x_tex);					\
-   GLfloat y_min = y_tex + (x_min - x_tex) * dy_dx;			\
-   GLint j, x_m = (int)x_min;						\
-   GLint pos;								\
-   if ((int)y_min != (int)y_tex) {					\
-      GLfloat x_mid = x_tex + (CEILF(y_tex)-y_tex) * dx_dy;		\
-      j = (nominator + vv * x_mid)/(denominator - dvdx*x_mid);		\
-      pos = COMP * TEX_COORD(x_m, y_tex);				\
-      DRAW_LINE (DO_TEX);						\
-      y_tex = y_min;							\
-   }									\
-   nominator += vv*x_min;						\
-   denominator -= dvdx*x_min;						\
-   j = nominator / denominator;						\
-   pos = COMP * TEX_COORD(x_m, y_tex);					\
-   DRAW_LINE (DO_TEX);							\
-   while (i<n) {							\
-      x_m --;								\
-      y_tex = y_min;							\
-      y_min -= dy_dx;							\
-      if ((int)y_min != (int)y_tex) {					\
-         GLfloat x_mid = (CEILF(y_tex)-y_tex) * dx_dy;			\
-         j = (nominator + vv * x_mid)/(denominator - dvdx*x_mid);	\
-         pos = COMP * TEX_COORD(x_m, y_tex);				\
-         DRAW_LINE (DO_TEX);						\
-         y_tex = y_min;							\
-      }									\
-      nominator -= vv;							\
-      denominator += dvdx;						\
-      j = nominator/denominator;					\
-      pos = COMP * TEX_COORD(x_m, y_tex);				\
-      DRAW_LINE (DO_TEX);						\
-   }									\
-}
-
-#define SPAN4(DO_TEX, COMP, TEX_COORD)					\
-{									\
-   GLfloat x_min = FLOORF(x_tex);					\
-   GLint x_m = (int)x_min;						\
-   GLfloat y_min = y_tex + (x_min - x_tex) * dy_dx;			\
-   GLint j;								\
-   GLint pos;								\
-   if ((int)y_min != (int)y_tex) {					\
-      GLfloat x_mid = x_tex + (FLOORF(y_tex)-y_tex) * dx_dy;		\
-      j = (nominator + vv * x_mid)/(denominator - dvdx*x_mid);		\
-      pos = COMP * TEX_COORD(x_m, y_tex);				\
-      DRAW_LINE (DO_TEX);						\
-      y_tex = y_min;							\
-   }									\
-   nominator += vv * x_min;						\
-   denominator -= dvdx * x_min;						\
-   j = nominator / denominator;						\
-   pos = COMP * TEX_COORD(x_m, y_tex);					\
-   DRAW_LINE (DO_TEX);							\
-   while (i<n)  {							\
-      x_m --;								\
-      y_tex = y_min;							\
-      y_min -= dy_dx;							\
-      if ((int)y_min != (int)y_tex) {					\
-         GLfloat x_mid = (FLOORF(y_tex)-y_tex) * dx_dy;			\
-         j = (nominator + vv * x_mid)/(denominator - dvdx*x_mid);	\
-         pos = COMP * TEX_COORD(x_m, (y_tex));				\
-         DRAW_LINE (DO_TEX);						\
-         y_tex = y_min;							\
-      }									\
-      nominator -= vv;							\
-      denominator += dvdx;						\
-      j = nominator/denominator;					\
-      pos = COMP * TEX_COORD(x_m, y_tex);				\
-      DRAW_LINE (DO_TEX);						\
-   }									\
-}
-
-#define DRAW_LINE(DO_TEX)		\
-   {					\
-      GLchan *tex00 = texture + pos;	\
-      if (j>n || j<-100000)		\
-         j = n;				\
-      while (i<j) {			\
-         zspan[i] = FixedToDepth(span.z);	\
-         fogspan[i] = span.fog;             \
-         DO_TEX;			\
-         span.fog += span.fogStep;                \
-         span.z += span.zStep;			\
-         span.red += span.redStep;			\
-         span.green += span.greenStep;			\
-         span.blue += span.blueStep;			\
-         span.alpha += span.alphaStep;			\
-         dest += 4;			\
-         i++;				\
-      }					\
-   }
-
-#define INNER_LOOP( LEFT, RIGHT, Y )					\
-   {									\
-      GLint i = 0;							\
-      const GLint n = RIGHT-LEFT;					\
-      GLdepth zspan[MAX_WIDTH];						\
-      GLfloat fogspan[MAX_WIDTH];					\
-      GLchan rgba[MAX_WIDTH][4];					\
-      (void)uu; /* please GCC */					\
-      if (n > 0) {							\
-         GLchan *dest = rgba[0];					\
-         GLfloat SS = ss * sscale;					\
-         GLfloat TT = tt * tscale;					\
-         GLfloat dSdx = dsdx * sscale;					\
-         GLfloat dTdx = dtdx * tscale;					\
-         GLfloat x_tex;					                \
-         GLfloat y_tex;					                \
-         GLfloat dx_tex;	                                        \
-         GLfloat dy_tex;	                                        \
-         if (n<5) /* When line very short, setup-time > speed-gain. */	\
-            goto old_span;  /* So: take old method */			\
-         x_tex = SS / vv,					        \
-            y_tex = TT / vv;					        \
-         dx_tex = (SS + n * dSdx) / (vv + n * dvdx) - x_tex,	        \
-            dy_tex = (TT + n * dTdx) / (vv + n * dvdx) - y_tex;	        \
-	 /* Choose between walking over texture or over pixelline: */	\
-	 /* If there are few texels, walk over texture otherwise   */	\
-	 /* walk over pixelarray. The quotient on the right side   */	\
-	 /* should give the timeratio needed to draw one texel in  */	\
-	 /* comparison to one pixel. Depends on CPU.	 	   */	\
-         if (dx_tex*dx_tex + dy_tex*dy_tex < (n*n)/16) {		\
-            x_tex += BIAS;						\
-            y_tex += BIAS;						\
-            if (dx_tex*dx_tex > dy_tex*dy_tex) {			\
-	    /* if (FABSF(dx_tex) > FABSF(dy_tex)) */			\
-               GLfloat nominator = - SS - vv * BIAS;			\
-               GLfloat denominator = dvdx * BIAS + dSdx;		\
-               GLfloat dy_dx;						\
-               GLfloat dx_dy;						\
-               if (dy_tex != 0.0f) {					\
-                  dy_dx = dy_tex / dx_tex;                              \
-                  dx_dy = 1.0f/dy_dx;					\
-               }                                                        \
-               else                                                     \
-                  dy_dx = 0.0f;                                         \
-               if (dx_tex > 0.0f) {					\
-                  if (dy_tex > 0.0f) {					\
-                     switch (format) {					\
-                     case GL_RGB:					\
-                        switch (envmode) {				\
-                        case GL_MODULATE:				\
-                           SPAN1(NEAREST_RGB;MODULATE,3, Y_X_TEX_COORD);\
-                           break;					\
-                        case GL_DECAL:					\
-                        case GL_REPLACE:				\
-                           SPAN1(NEAREST_RGB_REPLACE,3, Y_X_TEX_COORD);	\
-                           break;					\
-                        case GL_BLEND:					\
-                           SPAN1(NEAREST_RGB;BLEND,3, Y_X_TEX_COORD);	\
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN1(NEAREST_RGB;ADD,3, Y_X_TEX_COORD);     \
-		           break;                                       \
-                        default: /* unexpected env mode */		\
-                           abort();					\
-                        }						\
-                        break;						\
-                     case GL_RGBA:					\
-                        switch(envmode) {				\
-                        case GL_MODULATE:				\
-                           SPAN1(NEAREST_RGBA;MODULATE,4, Y_X_TEX_COORD);\
-                           break;					\
-                        case GL_DECAL:					\
-                           SPAN1(NEAREST_RGBA;DECAL,4, Y_X_TEX_COORD);	\
-                           break;					\
-                        case GL_BLEND:					\
-                           SPAN1(NEAREST_RGBA;BLEND,4, Y_X_TEX_COORD);	\
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN1(NEAREST_RGBA;ADD,4, Y_X_TEX_COORD);    \
-		           break;                                       \
-                        case GL_REPLACE:				\
-                           SPAN1(NEAREST_RGBA_REPLACE,4, Y_X_TEX_COORD);\
-                           break;					\
-                        default: /* unexpected env mode */		\
-                           abort();					\
-                        }						\
-                        break;						\
-                     }							\
-                  }							\
-                  else {  /* dy_tex <= 0.0f */				\
-                     switch (format) {					\
-                     case GL_RGB:					\
-                        switch (envmode) {				\
-                        case GL_MODULATE:				\
-                           SPAN2(NEAREST_RGB;MODULATE,3, Y_X_TEX_COORD);\
-                           break;					\
-                        case GL_DECAL:					\
-                        case GL_REPLACE:				\
-                           SPAN2(NEAREST_RGB_REPLACE,3, Y_X_TEX_COORD);	\
-                           break;					\
-                        case GL_BLEND:					\
-                           SPAN2(NEAREST_RGB;BLEND,3, Y_X_TEX_COORD);	\
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN2(NEAREST_RGB;ADD,3, Y_X_TEX_COORD);     \
-		           break;                                       \
-                        default: /* unexpected env mode */		\
-                           abort();					\
-                        }						\
-                        break;						\
-                     case GL_RGBA:					\
-                        switch(envmode) {				\
-                        case GL_MODULATE:				\
-                           SPAN2(NEAREST_RGBA;MODULATE,4, Y_X_TEX_COORD);\
-                           break;					\
-                        case GL_DECAL:					\
-                           SPAN2(NEAREST_RGBA;DECAL,4, Y_X_TEX_COORD);	\
-                           break;					\
-                        case GL_BLEND:					\
-                           SPAN2(NEAREST_RGBA;BLEND,4, Y_X_TEX_COORD);	\
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN2(NEAREST_RGBA;ADD,4, Y_X_TEX_COORD);    \
-		           break;                                       \
-                        case GL_REPLACE:				\
-                           SPAN2(NEAREST_RGBA_REPLACE,4, Y_X_TEX_COORD);\
-                           break;					\
-                        default: /* unexpected env mode */		\
-                           abort();					\
-                        }						\
-                        break;						\
-                     }							\
-                  }							\
-               }							\
-               else { /* dx_tex < 0.0f */				\
-                  if (dy_tex > 0.0f) {					\
-                     switch (format) {					\
-                     case GL_RGB:					\
-                        switch (envmode) {				\
-                        case GL_MODULATE:				\
-                           SPAN3(NEAREST_RGB;MODULATE,3, Y_X_TEX_COORD);\
-                           break;					\
-                        case GL_DECAL:					\
-                        case GL_REPLACE:				\
-                           SPAN3(NEAREST_RGB_REPLACE,3, Y_X_TEX_COORD);	\
-                           break;					\
-                        case GL_BLEND:					\
-                           SPAN3(NEAREST_RGB;BLEND,3, Y_X_TEX_COORD);	\
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN3(NEAREST_RGB;ADD,3, Y_X_TEX_COORD);     \
-		           break;                                       \
-                        default: /* unexpected env mode */		\
-                           abort();					\
-                        }						\
-                        break;						\
-                     case GL_RGBA:					\
-                        switch(envmode) {				\
-                        case GL_MODULATE:				\
-                           SPAN3(NEAREST_RGBA;MODULATE,4, Y_X_TEX_COORD);\
-                           break;					\
-                        case GL_DECAL:					\
-                           SPAN3(NEAREST_RGBA;DECAL,4, Y_X_TEX_COORD);	\
-                           break;					\
-                          case GL_BLEND:				\
-                           SPAN3(NEAREST_RGBA;BLEND,4, Y_X_TEX_COORD);	\
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN3(NEAREST_RGBA;ADD,4, Y_X_TEX_COORD);    \
-		           break;                                       \
-                        case GL_REPLACE:				\
-                           SPAN3(NEAREST_RGBA_REPLACE,4, Y_X_TEX_COORD);\
-                           break;					\
-                        default: /* unexpected env mode */		\
-                           abort();					\
-                        }						\
-                        break;						\
-                     }							\
-                  }							\
-                  else {  /* dy_tex <= 0.0f */				\
-                     switch (format) {					\
-                     case GL_RGB:					\
-                        switch (envmode) {				\
-                        case GL_MODULATE:				\
-                           SPAN4(NEAREST_RGB;MODULATE,3, Y_X_TEX_COORD);\
-                           break;					\
-                          case GL_DECAL:				\
-                        case GL_REPLACE:				\
-                           SPAN4(NEAREST_RGB_REPLACE,3, Y_X_TEX_COORD);	\
-                           break;					\
-                        case GL_BLEND:					\
-                           SPAN4(NEAREST_RGB;BLEND,3, Y_X_TEX_COORD);	\
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN4(NEAREST_RGB;ADD,3, Y_X_TEX_COORD);     \
-		           break;                                       \
-                        default:					\
-                           abort();					\
-                        }						\
-                        break;						\
-                     case GL_RGBA:					\
-                        switch(envmode) {				\
-                            case GL_MODULATE:				\
-                           SPAN4(NEAREST_RGBA;MODULATE,4, Y_X_TEX_COORD);\
-                           break;					\
-                        case GL_DECAL:					\
-                           SPAN4(NEAREST_RGBA;DECAL,4, Y_X_TEX_COORD);	\
-                           break;					\
-                        case GL_BLEND:					\
-                           SPAN4(NEAREST_RGBA;BLEND,4, Y_X_TEX_COORD);	\
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN4(NEAREST_RGBA;ADD,4, Y_X_TEX_COORD);    \
-		           break;                                       \
-                        case GL_REPLACE:				\
-                           SPAN4(NEAREST_RGBA_REPLACE,4, Y_X_TEX_COORD);\
-                           break;					\
-                        default: /* unexpected env mode */		\
-                           abort();					\
-                        }						\
-                        break;						\
-                     }							\
-                  }							\
-               }							\
-            }								\
-            else {  /* FABSF(dx_tex) > FABSF(dy_tex) */		        \
-               GLfloat swap;						\
-               GLfloat dy_dx;						\
-               GLfloat dx_dy;						\
-               GLfloat nominator, denominator;				\
-               if (dx_tex == 0.0f /* &&  dy_tex == 0.0f*/)		\
-                  goto old_span; /* case so special, that use old */    \
-               /* swap some x-values and y-values */			\
-               SS = TT;							\
-               dSdx = dTdx;						\
-               swap = x_tex, x_tex = y_tex, y_tex = swap;		\
-               swap = dx_tex, dx_tex = dy_tex, dy_tex = swap;		\
-               nominator = - SS - vv * BIAS;				\
-               denominator = dvdx * BIAS + dSdx;			\
-               if (dy_tex != 0.0f) {					\
-                  dy_dx = dy_tex / dx_tex;                              \
-                  dx_dy = 1.0f/dy_dx;					\
-               }                                                        \
-               else                                                     \
-                  dy_dx = 0.0f;                                         \
-               if (dx_tex > 0.0f) {					\
-                  if (dy_tex > 0.0f) {					\
-		     switch (format) {					\
-		     case GL_RGB:					\
-			switch (envmode) {				\
-			case GL_MODULATE:				\
-                           SPAN1(NEAREST_RGB;MODULATE,3, X_Y_TEX_COORD);\
-			   break;					\
-                        case GL_DECAL:					\
-                        case GL_REPLACE:                       		\
-                           SPAN1(NEAREST_RGB_REPLACE,3, X_Y_TEX_COORD);	\
-                           break;					\
-                        case GL_BLEND:					\
-                           SPAN1(NEAREST_RGB;BLEND,3, X_Y_TEX_COORD);	\
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN1(NEAREST_RGB;ADD,3, X_Y_TEX_COORD);     \
-		           break;                                       \
-                        default: /* unexpected env mode */		\
-                           abort();					\
-                        }						\
-                        break;						\
-                     case GL_RGBA:					\
-                        switch(envmode) {				\
-                        case GL_MODULATE:				\
-                           SPAN1(NEAREST_RGBA;MODULATE,4, X_Y_TEX_COORD);\
-                           break;					\
-                        case GL_DECAL:					\
-                           SPAN1(NEAREST_RGBA;DECAL,4, X_Y_TEX_COORD);  \
-                           break;					\
-                        case GL_BLEND:					\
-                           SPAN1(NEAREST_RGBA;BLEND,4, X_Y_TEX_COORD);  \
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN1(NEAREST_RGBA;ADD,4, X_Y_TEX_COORD);    \
-		           break;                                       \
-                        case GL_REPLACE:				\
-                           SPAN1(NEAREST_RGBA_REPLACE,4, X_Y_TEX_COORD);\
-                           break;					\
-                        default:					\
-                           abort();					\
-                        }						\
-                        break;						\
-                     }							\
-                  }							\
-                  else { /* dy_tex <= 0.0f */				\
-                     switch (format) {					\
-                     case GL_RGB:					\
-                        switch (envmode) {				\
-                        case GL_MODULATE:				\
-                           SPAN2(NEAREST_RGB;MODULATE,3, X_Y_TEX_COORD);\
-                           break;					\
-                          case GL_DECAL:				\
-                        case GL_REPLACE:				\
-                           SPAN2(NEAREST_RGB_REPLACE,3, X_Y_TEX_COORD);	\
-                           break;					\
-                        case GL_BLEND:					\
-                           SPAN2(NEAREST_RGB;BLEND,3, X_Y_TEX_COORD);	\
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN2(NEAREST_RGB;ADD,3, X_Y_TEX_COORD);     \
-		           break;                                       \
-                        default:					\
-                           abort();					\
-                            }						\
-                        break;						\
-                     case GL_RGBA:					\
-                        switch(envmode) {				\
-                        case GL_MODULATE:				\
-                           SPAN2(NEAREST_RGBA;MODULATE,4, X_Y_TEX_COORD);\
-                           break;					\
-                        case GL_DECAL:					\
-                           SPAN2(NEAREST_RGBA;DECAL,4, X_Y_TEX_COORD);	\
-                           break;					\
-                        case GL_BLEND:				        \
-                           SPAN2(NEAREST_RGBA;BLEND,4, X_Y_TEX_COORD);	\
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN2(NEAREST_RGBA;ADD,4, X_Y_TEX_COORD);    \
-		           break;                                       \
-                        case GL_REPLACE:				\
-                           SPAN2(NEAREST_RGBA_REPLACE,4, X_Y_TEX_COORD);\
-                           break;					\
-                        default:					\
-                           abort();					\
-                        }						\
-                        break;						\
-                     }							\
-                  }							\
-               }							\
-               else { /* dx_tex < 0.0f */				\
-                  if (dy_tex > 0.0f) {					\
-                     switch (format) {					\
-                     case GL_RGB:					\
-                        switch (envmode) {				\
-                        case GL_MODULATE:				\
-                           SPAN3(NEAREST_RGB;MODULATE,3, X_Y_TEX_COORD);\
-                           break;					\
-                        case GL_DECAL:				\
-                        case GL_REPLACE:				\
-                           SPAN3(NEAREST_RGB_REPLACE,3, X_Y_TEX_COORD);	\
-                           break;					\
-                        case GL_BLEND:					\
-                           SPAN3(NEAREST_RGB;BLEND,3, X_Y_TEX_COORD);	\
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN3(NEAREST_RGB;ADD,3, X_Y_TEX_COORD);     \
-		           break;                                       \
-                        default:					\
-                           abort();					\
-                        }						\
-                        break;						\
-                     case GL_RGBA:					\
-                        switch(envmode) {				\
-                           case GL_MODULATE:				\
-                           SPAN3(NEAREST_RGBA;MODULATE,4, X_Y_TEX_COORD);\
-                           break;					\
-                        case GL_DECAL:					\
-                           SPAN3(NEAREST_RGBA;DECAL,4, X_Y_TEX_COORD);	\
-                           break;					\
-                        case GL_BLEND:					\
-                           SPAN3(NEAREST_RGBA;BLEND,4, X_Y_TEX_COORD);	\
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN3(NEAREST_RGBA;ADD,4, X_Y_TEX_COORD);    \
-		           break;                                       \
-                        case GL_REPLACE:				\
-                           SPAN3(NEAREST_RGBA_REPLACE,4, X_Y_TEX_COORD);\
-                           break;					\
-                        default:					\
-                           abort();					\
-                        }						\
-                        break;						\
-                     }							\
-                  }							\
-                  else { /* dy_tex <= 0.0f */				\
-                     switch (format) {					\
-                     case GL_RGB:					\
-                        switch (envmode) {				\
-                        case GL_MODULATE:				\
-                           SPAN4(NEAREST_RGB;MODULATE,3, X_Y_TEX_COORD);\
-                           break;					\
-                          case GL_DECAL:				\
-                        case GL_REPLACE:				\
-                           SPAN4(NEAREST_RGB_REPLACE,3, X_Y_TEX_COORD);	\
-                           break;					\
-                        case GL_BLEND:					\
-                           SPAN4(NEAREST_RGB;BLEND,3, X_Y_TEX_COORD);	\
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN4(NEAREST_RGB;ADD,3, X_Y_TEX_COORD);     \
-		           break;                                       \
-                        default:					\
-                           abort();					\
-                            }						\
-                        break;						\
-                     case GL_RGBA:					\
-                        switch(envmode) {                      		\
-                        case GL_MODULATE:				\
-                           SPAN4(NEAREST_RGBA;MODULATE,4, X_Y_TEX_COORD);\
-                           break;					\
-                        case GL_DECAL:					\
-                           SPAN4(NEAREST_RGBA;DECAL,4, X_Y_TEX_COORD);	\
-                           break;					\
-                        case GL_BLEND:				        \
-                           SPAN4(NEAREST_RGBA;BLEND,4, X_Y_TEX_COORD);	\
-                           break;					\
-		        case GL_ADD:                                    \
-		           SPAN4(NEAREST_RGBA;ADD,4, X_Y_TEX_COORD);    \
-		           break;                                       \
-                        case GL_REPLACE:				\
-                           SPAN4(NEAREST_RGBA_REPLACE,4, X_Y_TEX_COORD);\
-                           break;					\
-                        default:					\
-                           abort();					\
-                        }						\
-                        break;						\
-                     }							\
-                  }							\
-               }							\
-            }								\
-         }								\
-         else {                                                		\
-            old_span:                                                   \
-            switch (format) {                                  		\
-            case GL_RGB:						\
-               switch (envmode) {                              		\
-               case GL_MODULATE:					\
-                  OLD_SPAN(NEAREST_RGB;MODULATE,3);			\
-                  break;						\
-               case GL_DECAL:						\
-               case GL_REPLACE:						\
-                  OLD_SPAN(NEAREST_RGB_REPLACE,3);			\
-                  break;						\
-               case GL_BLEND:						\
-                  OLD_SPAN(NEAREST_RGB;BLEND,3);			\
-                  break;						\
-	       case GL_ADD:                                             \
-		  OLD_SPAN(NEAREST_RGB;ADD,3);                          \
-		  break;                                                \
-               default:							\
-                  abort();						\
-               }							\
-               break;							\
-            case GL_RGBA:						\
-               switch(envmode) {                               		\
-               case GL_MODULATE:					\
-                  OLD_SPAN(NEAREST_RGBA;MODULATE,4);			\
-                  break;						\
-               case GL_DECAL:						\
-                  OLD_SPAN(NEAREST_RGBA;DECAL,4);			\
-                  break;						\
-               case GL_BLEND:						\
-                  OLD_SPAN(NEAREST_RGBA;BLEND,4);			\
-                  break;						\
-	       case GL_ADD:                                             \
-		  OLD_SPAN(NEAREST_RGBA;ADD,4);                         \
-		  break;                                                \
-               case GL_REPLACE:						\
-                  OLD_SPAN(NEAREST_RGBA_REPLACE,4);			\
-                  break;						\
-               default:							\
-                  abort();						\
-               }							\
-               break;							\
-            }								\
-         }								\
-         _mesa_write_rgba_span( ctx, n, LEFT, Y, zspan,			\
-                             fogspan, rgba, NULL, GL_POLYGON);		\
-         span.red = span.green = span.blue = span.alpha = 0;		\
-      }									\
-   }									\
-
-#include "s_tritemp.h"
-#undef OLD_SPAN
-#undef SPAN1
-#undef SPAN2
-#undef SPAN3
-#undef SPAN4
-#undef X_Y_TEX_COORD
-#undef Y_X_TEX_COORD
-#undef DRAW_LINE
-#undef BIAS
-}
-#endif
-
-
-#if 0 /* XXX disabled because of texcoord interpolation errors */
-/*
- * Render an perspective corrected RGB/RGBA textured triangle.
- * The Q (aka V in Mesa) coordinate must be zero such that the divide
- * by interpolated Q/W comes out right.
- *
- * This function written by Klaus Niederkrueger <klaus@math.leidenuniv.nl>
- * Send all questions and bug reports to him.
- */
-static void lin_persp_textured_triangle( GLcontext *ctx,
-					 const SWvertex *v0,
-					 const SWvertex *v1,
-					 const SWvertex *v2 )
-{
-#define INTERP_Z 1
-#define INTERP_FOG 1
-#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
-#define INTERP_RGB 1
-#define INTERP_ALPHA 1
-#define INTERP_TEX 1
-
-#define SETUP_CODE							\
-   struct gl_texture_unit *unit = ctx->Texture.Unit+0;			\
-   struct gl_texture_object *obj = unit->Current2D;			\
-   const GLint b = obj->BaseLevel;					\
-   const GLfloat twidth = (GLfloat) obj->Image[b]->Width;	        \
-   const GLfloat theight = (GLfloat) obj->Image[b]->Height;		\
-   const GLint twidth_log2 = obj->Image[b]->WidthLog2;			\
-   GLchan *texture = obj->Image[b]->Data;				\
-   const GLint smask = (obj->Image[b]->Width - 1);                      \
-   const GLint tmask = (obj->Image[b]->Height - 1);                     \
-   const GLint format = obj->Image[b]->Format;                          \
-   const GLint envmode = unit->EnvMode;                                 \
-   GLfloat sscale, tscale;                                              \
-   GLint comp, tbytesline, tsize;                                       \
-   GLfixed er, eg, eb, ea;                                              \
-   GLint tr, tg, tb, ta;                                                \
-   if (!texture) {							\
-      return;								\
-   }									\
-   if (envmode == GL_BLEND || envmode == GL_ADD) {                      \
-      er = FloatToFixed(unit->EnvColor[RCOMP]);                         \
-      eg = FloatToFixed(unit->EnvColor[GCOMP]);                         \
-      eb = FloatToFixed(unit->EnvColor[BCOMP]);                         \
-      ea = FloatToFixed(unit->EnvColor[ACOMP]);                         \
-   }                                                                    \
-   switch (format) {                                                    \
+									\
+   switch (info.format) {						\
    case GL_ALPHA:							\
    case GL_LUMINANCE:							\
    case GL_INTENSITY:							\
-      comp = 1;                                                         \
-      break;                                                            \
+      info.tbytesline = obj->Image[b]->Width;				\
+      break;								\
    case GL_LUMINANCE_ALPHA:						\
-      comp = 2;                                                         \
-      break;                                                            \
+      info.tbytesline = obj->Image[b]->Width * 2;			\
+      break;								\
    case GL_RGB:								\
-      comp = 3;                                                         \
-      break;                                                            \
+      info.tbytesline = obj->Image[b]->Width * 3;			\
+      break;								\
    case GL_RGBA:							\
-      comp = 4;                                                         \
-      break;                                                            \
+      info.tbytesline = obj->Image[b]->Width * 4;			\
+      break;								\
    default:								\
-      _mesa_problem(NULL, "Bad texture format in lin_persp_texture_triangle"); \
-      return;                                                           \
-   }                                                                    \
-   sscale = FIXED_SCALE * twidth;                                       \
-   tscale = FIXED_SCALE * theight;                                      \
-   tbytesline = obj->Image[b]->Width * comp;                            \
-   tsize = theight * tbytesline;
+      _mesa_problem(NULL, "Bad texture format in affine_texture_triangle");\
+      return;								\
+   }									\
+   info.tsize = obj->Image[b]->Height * info.tbytesline;
 
-
-#define SPAN(DO_TEX,COMP)					\
-        for (i=0;i<n;i++) {					\
-           GLfloat invQ = 1.0f / vv;				\
-           GLfixed span.intTex[0] = (int)(SS * invQ);		\
-           GLfixed span.intTex[1] = (int)(TT * invQ);		\
-	   GLint s = FixedToInt(span.intTex[0]) & smask;	\
-	   GLint t = FixedToInt(span.intTex[1]) & tmask;	\
-           GLint sf = span.intTex[0] & FIXED_FRAC_MASK;		\
-           GLint tf = span.intTex[1] & FIXED_FRAC_MASK;		\
-           GLint si = FIXED_FRAC_MASK - sf;			\
-           GLint ti = FIXED_FRAC_MASK - tf;			\
-           GLint pos = COMP * ((t << twidth_log2) + s);		\
-           GLchan *tex00 = texture + pos;			\
-           GLchan *tex10 = tex00 + tbytesline;			\
-           GLchan *tex01 = tex00 + COMP;			\
-           GLchan *tex11 = tex10 + COMP;			\
-           if (t == tmask) {					\
-              tex10 -= tsize;					\
-              tex11 -= tsize;					\
-           }							\
-           if (s == smask) {					\
-              tex01 -= tbytesline;				\
-              tex11 -= tbytesline;				\
-           }							\
-	   zspan[i] = FixedToDepth(span.z);			\
-	   fogspan[i] = span.fog;				\
-           DO_TEX;						\
-	   span.fog += span.fogStep;				\
-	   span.z += span.zStep;				\
-           span.red += span.redStep;				\
-	   span.green += span.greenStep;			\
-           span.blue += span.blueStep;				\
-	   span.alpha += span.alphaStep;			\
-           SS += dSdx;						\
-           TT += dTdx;						\
-	   vv += dvdx;						\
-           dest += 4;						\
-	}
-
-#define INNER_LOOP( LEFT, RIGHT, Y )			\
-   {							\
-      GLint i;						\
-      const GLint n = RIGHT-LEFT;			\
-      GLdepth zspan[MAX_WIDTH];				\
-      GLfloat fogspan[MAX_WIDTH];			\
-      GLchan rgba[MAX_WIDTH][4];			\
-      (void) uu; /* please GCC */			\
-      if (n > 0) {					\
-         GLfloat SS = ss * sscale;			\
-         GLfloat TT = tt * tscale;			\
-         GLfloat dSdx = dsdx * sscale;			\
-         GLfloat dTdx = dtdx * tscale;			\
-         GLchan *dest = rgba[0];			\
-         SS -= 0.5f * FIXED_SCALE * vv;			\
-         TT -= 0.5f * FIXED_SCALE * vv;			\
-         switch (format) {				\
-         case GL_RGB:					\
-            switch (envmode) {				\
-            case GL_MODULATE:				\
-               SPAN(LINEAR_RGB;MODULATE,3);		\
-               break;					\
-            case GL_DECAL:				\
-            case GL_REPLACE:				\
-               SPAN(LINEAR_RGB;REPLACE,3);		\
-               break;					\
-            case GL_BLEND:				\
-               SPAN(LINEAR_RGB;BLEND,3);		\
-               break;					\
-            case GL_ADD:                                \
-	       SPAN(LINEAR_RGB;ADD,3);                  \
-	       break;                                   \
-            default:					\
-               abort();					\
-            }						\
-            break;					\
-         case GL_RGBA:					\
-            switch (envmode) {				\
-            case GL_MODULATE:				\
-               SPAN(LINEAR_RGBA;MODULATE,4);		\
-               break;					\
-            case GL_DECAL:				\
-               SPAN(LINEAR_RGBA;DECAL,4);		\
-               break;					\
-            case GL_BLEND:				\
-               SPAN(LINEAR_RGBA;BLEND,4);		\
-               break;					\
-            case GL_REPLACE:				\
-               SPAN(LINEAR_RGBA;REPLACE,4);		\
-               break;					\
-            case GL_ADD:                                \
-               SPAN(LINEAR_RGBA;ADD,4);                 \
-               break;                                   \
-            default: /* unexpected env mode */		\
-               abort();					\
-            }						\
-         }						\
-         _mesa_write_rgba_span(ctx, n, LEFT, Y, zspan,	\
-                               fogspan, rgba, NULL,     \
-                               GL_POLYGON);	        \
-      }							\
-   }
+#define RENDER_SPAN( span )		\
+   fast_persp_span(ctx, &span, &info);
 
 #include "s_tritemp.h"
-#undef SPAN
-}
-#endif
 
+}
 
 /*
  * Generate arrays of fragment colors, z, fog, texcoords, etc from a
@@ -2348,6 +1718,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 		  }
 	       }
 	       else {
+		 /* GL_MODULATE seems also not to work !! */
                   if (ctx->Texture.Unit[0].EnvMode==GL_ADD) {
                      USE(general_textured_triangle);
                   }
@@ -2357,15 +1728,13 @@ _swrast_choose_triangle( GLcontext *ctx )
 	       }
 	    }
 	    else {
-#if 00 /* XXX these function have problems with texture coord interpolation */
-	       if (filter==GL_NEAREST) {
-                  USE(near_persp_textured_triangle);
+	      /* GL_MODULATE seems also not to work !! */
+	       if (ctx->Texture.Unit[0].EnvMode==GL_ADD) {
+		  USE(general_textured_triangle);
 	       }
 	       else {
-                  USE(lin_persp_textured_triangle);
+		  USE(persp_textured_triangle);
 	       }
-#endif
-               USE(general_textured_triangle);
 	    }
 	 }
          else {
