@@ -1,4 +1,4 @@
-/* $Id: gl_mangle.h,v 1.8 2001/11/09 22:00:53 brianp Exp $ */
+/* $Id: gl_mangle.h,v 1.9 2001/12/13 19:15:58 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -557,6 +557,7 @@
 #define glFogCoordPointerEXT mglFogCoordPointerEXT 
 #define glFogCoorddEXT mglFogCoorddEXT 
 #define glFogCoordfvEXT mglFogCoordfvEXT 
+#define glFogCoorddvEXT mglFogCoorddvEXT 
 #define glFogCoordfEXT mglFogCoordfEXT 
 #define glLightEnviSGIX mglLightEnviSGIX 
 #define glGetFragmentMaterialivSGIX mglGetFragmentMaterialivSGIX 
@@ -616,6 +617,9 @@
 #define glGetPixelTexGenParameterfvSGIS mglGetPixelTexGenParameterfvSGIS 
 #define glPixelTexGenParameteriSGIS mglPixelTexGenParameteriSGIS 
 #define glPixelTexGenParameterfSGIS mglPixelTexGenParameterfSGIS 
+#define glPixelTexGenParameterivSGIS mglPixelTexGenParameterivSGIS 
+#define glPixelTexGenParameterfvSGIS mglPixelTexGenParameterfvSGIS 
+#define glPixelTexGenSGIX mglPixelTexGenSGIX
 #define glGetColorTableParameterivSGI mglGetColorTableParameterivSGI 
 #define glGetColorTableParameterfvSGI mglGetColorTableParameterfvSGI 
 #define glGetColorTableSGI mglGetColorTableSGI 
@@ -686,11 +690,19 @@
 #define glLoadTransposeMatrixf mglLoadTransposeMatrixf 
 #define glLoadTransposeMatrixd mglLoadTransposeMatrixd 
 #define glGetCompressedTexImage mglGetCompressedTexImage
+#define glGetCompressedTexImageARB mglGetCompressedTexImageARB
 #define glCompressedTexSubImage3D mglCompressedTexSubImage3D
 #define glCompressedTexSubImage2D mglCompressedTexSubImage2D
 #define glCompressedTexSubImage1D mglCompressedTexSubImage1D
 #define glCompressedTexImage3D mglCompressedTexImage3D
 #define glCompressedTexImage2D mglCompressedTexImage2D
+#define glCompressedTexImage1D mglCompressedTexImage1D
+#define glCompressedTexSubImage3DARB mglCompressedTexSubImage3DARB
+#define glCompressedTexSubImage2DARB mglCompressedTexSubImage2DARB
+#define glCompressedTexSubImage1DARB mglCompressedTexSubImage1DARB
+#define glCompressedTexImage3DARB mglCompressedTexImage3DARB
+#define glCompressedTexImage2DARB mglCompressedTexImage2DARB
+#define glCompressedTexImage1DARB mglCompressedTexImage1DARB
 #define glMultiTexCoord1d mglMultiTexCoord1d
 #define glMultiTexCoord1dv mglMultiTexCoord1dv
 #define glMultiTexCoord1f mglMultiTexCoord1f
