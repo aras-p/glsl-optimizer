@@ -1,9 +1,9 @@
-# $Id: Makefile.X11,v 1.71 2002/12/19 15:18:22 brianp Exp $
+# $Id: Makefile.X11,v 1.72 2003/02/08 16:23:44 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
 # 
-# Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+# Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -328,6 +328,13 @@ realclean: clean
 	cd book        && $(MAKE) -f Makefile.X11 realclean || true
 	cd samples     && $(MAKE) -f Makefile.X11 realclean || true
 
+# Remove everything not in CVS
+cvsclean: realclean
+	-rm -f acinclude.m4 aclocal.m4
+	-rm -f conf.h conf.h.in config.guess config.log config.status
+	-rm -f config.sub configure
+	-rm -f install-sh libtool ltmain.sh Makefile.in
+	-rm -f missing mkinstalldirs stamp-h stamp-h.in
 
 DIRECTORY = Mesa-5.1
 LIB_NAME = MesaLib-5.1
