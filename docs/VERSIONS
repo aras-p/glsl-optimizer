@@ -1194,5 +1194,6 @@ Mesa Version History
 	  clamping issue
 	- updated suno5-gcc configs
 	- glColor3 functions sometimes resulted in undefined alpha values
-
-
+	- fixed FP divide by zero error seen on VMS with xlockmore, others
+	- fixed program debug problem (bug 873011)
+	- building on AIX with gcc works now
