@@ -1,4 +1,4 @@
-/* $Id: reflect.c,v 1.2 2000/04/12 01:08:30 brianp Exp $ */
+/* $Id: reflect.c,v 1.3 2000/06/15 14:25:48 brianp Exp $ */
 
 /*
  * Demo of a reflective, texture-mapped surface with OpenGL.
@@ -356,6 +356,7 @@ static void idle( void )
 
 int main( int argc, char *argv[] )
 {
+   glutInit(&argc, argv);
    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STENCIL);
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( Width, Height );
