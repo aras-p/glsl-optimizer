@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.36 2001/03/12 02:24:53 gareth Exp $
+# $Id: Make-config,v 1.37 2001/03/17 00:27:04 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=5
@@ -148,6 +148,7 @@ cygnus:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"DLLTOOL = dlltool" \
 	"WING_DIR= /wing" \
 	"LD = ld" \
@@ -155,6 +156,7 @@ cygnus:
 		-O2 -funroll-loops \
 		-fexpensive-optimizations -fomit-frame-pointer -ffast-math \
 		-malign-loops=2 -malign-jumps=2 -malign-functions=2" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"WLIBS = ../lib/wing32.a -lkernel32 -luser32 -lgdi32"
 
@@ -184,7 +186,9 @@ dgux:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lX11 -lm"
 
@@ -196,7 +200,9 @@ freebsd:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O2 -fPIC -pedantic -I/usr/X11R6/include -DUSE_XSHM -DHZ=100" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.freebsd" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
@@ -208,7 +214,9 @@ freebsd-386:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -ffast-math -fPIC -pedantic -I/usr/X11R6/include -DUSE_XSHM -DHZ=100 -DUSE_X86_ASM -DFREEBSD" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.freebsd" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
@@ -225,7 +233,9 @@ gcc:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -pedantic -O2" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lX11 -lm"
 
@@ -249,7 +259,9 @@ hpux9-gcc:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R5 -DUSE_XSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11 -lm"
 
@@ -273,7 +285,9 @@ hpux9-gcc-sl:
 	"GLW_LIB = libGLw.sl" \
 	"OSMESA_LIB = libOSMesa.sl" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -fPIC -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R5 -DUSE_XSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.hpux" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11 -lm"
 
@@ -309,7 +323,9 @@ hpux10-gcc:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include  -DUSE_XSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
@@ -321,7 +337,9 @@ hpux10-gcc-sl:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -fPIC -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.hpux" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
@@ -361,7 +379,9 @@ irix5-gcc:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O2 -pedantic -DUSE_XSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lm"
 
@@ -439,7 +459,9 @@ irix6-gcc-n32-sl:
 	"OSMESA_LIB = libOSMesa.so" \
 	"LIBDIR = ../lib32" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -mabi=n32 -mips3 -O3 -DUSE_XSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.irix6-n32" \
 	"APP_LIB_DEPS = -rpath ../lib32 -lX11 -lXmu -lXi -lm"
 
@@ -485,7 +507,9 @@ linux:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -500,7 +524,9 @@ linux-static:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -funroll-loops -ansi -pedantic -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lm -lpthread"
 
@@ -512,7 +538,9 @@ linux-trace:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -DMESA_TRACE -I/usr/X11R6/include" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -590,7 +618,9 @@ linux-ggi:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc"  \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DGGI -DCDECL=" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ggi" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lggi -lm"
 
@@ -603,7 +633,9 @@ linux-386-ggi:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc"  \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DUSE_X86_ASM -DGGI -DCDECL=" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ggi" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lggi -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
@@ -620,7 +652,9 @@ linux-glide:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DFX -DPTHREADS -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -L/usr/local/glide/lib -lglide2x" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -635,7 +669,9 @@ linux-386-glide:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_XSHM -DFX -DPTHREADS -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -655,7 +691,9 @@ linux-386-opt-glide:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -m486 -fomit-frame-pointer -pipe -ansi -pedantic -ffast-math -fexpensive-optimizations -malign-loops=2 -malign-jumps=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DFX -DUSE_X86_ASM -DPTHREADS -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -675,7 +713,9 @@ linux-386-opt-V2-glide:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -m486 -fomit-frame-pointer -pipe -ansi -pedantic -ffast-math -fexpensive-optimizations -malign-loops=2 -malign-jumps=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DFX -DFX_V2 -DUSE_X86_ASM -DPTHREAD -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include"\
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -727,7 +767,9 @@ linux-alpha:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -mcpu=ev5 -ansi -mieee -pedantic -fPIC -D_XOPEN_SOURCE -DSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -742,7 +784,9 @@ linux-alpha-static:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -mcpu=ev5 -ansi -mieee -pedantic -L/usr/X11R6/lib -D_XOPEN_SOURCE -DSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lm"
 
@@ -754,7 +798,9 @@ linux-ppc:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -mcpu=603 -ansi -pedantic -fPIC -fsigned-char -ffast-math -funroll-loops -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -769,7 +815,9 @@ linux-ppc-static:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -mcpu=603 -ansi -pedantic -fsigned-char -ffast-math -funroll-loops -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lm"
 
@@ -781,7 +829,9 @@ linux-sparc-static:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -pedantic -funroll-loops -O3 -DUSE_XSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXt -lXmu -lXi -lm"
 
@@ -794,7 +844,9 @@ linux-sparc5:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -mv8 -O2 -ffast-math -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -810,7 +862,9 @@ linux-sparc-ultra:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -mv8 -O2 -mtune=ultrasparc -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -829,7 +883,9 @@ lynxos:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O2 -ansi -pedantic -funroll-loops -ffast-math -DUSE_XSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11/lib -lXext -lXi -lXmu -lX11 -lbsd -lm"
 
@@ -841,7 +897,9 @@ machten-2.2:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -DTENON -D__MACHTEN__ -fstrength-reduce -m68881 -O2" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
 	"APP_LIB_DEPS = -L/usr/lib/X11 -lX11 -lm"
 
@@ -853,7 +911,9 @@ machten-4.0:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -DTENON -D__MACHTEN__ -fstrength-reduce -O2" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
 	"APP_LIB_DEPS = -L/usr/X11R5/lib -lX11 -lm"
 
@@ -865,7 +925,9 @@ mklinux:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -pedantic -O2" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lmoto -L/usr/X11/lib -lXmu -lX11 -lm"
 
@@ -877,7 +939,9 @@ netbsd:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O2 -fPIC -DUSE_XSHM -I/usr/X11R6/include -DHZ=100"  \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.netbsd" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
@@ -919,7 +983,9 @@ openstep-win32:
 	"GLU_LIB = libGLU.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -DOPENSTEP -O4" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.openstep"
 
 os2-x11:
@@ -930,7 +996,9 @@ os2-x11:
 	"GLW_LIB = GLw.a" \
 	"OSMESA_LIB = OSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -Zmt -O3 -m486 -funroll-loops -Wall -Wno-unused -ansi -pedantic -ffast-math -DUSE_X86_ASM -D_SVID_SOURCE -D_BSD_SOURCE -I$(X11ROOT)/XFree86/include" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ..\\bin\\mklib-emx.cmd " \
 	"APP_LIB_DEPS = -Zmt -Zcrtdll -Zexe -L$(X11ROOT)/XFree86/lib -lXt -lX11 -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
@@ -971,7 +1039,9 @@ pgi-cygnus:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = pgcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -fast -cyglibs -Munix -I. -DWIN32 -D__WIN32__ -D_WINDOWS " \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lX11 -lm"
 
@@ -983,7 +1053,9 @@ pgi-mingw32:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = pgcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -fast -msvcrt -Munix -I. -DWIN32 -D__WIN32__ -D_WINDOWS " \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lX11 -lm"
 
@@ -1008,7 +1080,9 @@ sco:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -pedantic -O2 -mieee-fp" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11/lib -lX11 -lm"
 
@@ -1020,7 +1094,9 @@ sco5:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -pedantic -O2 -mieee-fp" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lXm -lXt -lX11 -lXmu -lXext -lsocket -lx -lm"
 
@@ -1044,7 +1120,9 @@ solaris-x86-gcc:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -m486 -fPIC -I/usr/openwin/include -DUSE_XSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.solaris" \
 	"APP_LIB_DEPS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
@@ -1080,7 +1158,9 @@ sunos4-gcc:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -DUSE_XSHM -DSUNOS4 -I/usr/openwin/include" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
@@ -1092,7 +1172,9 @@ sunos4-gcc-sl:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -fPIC -O3 -I/usr/openwin/include -I/usr/include/X11R5 -I/usr/include/X11R5 -DUSE_XSHM -DSUNOS4 -DSOLARIS_2_4_BUG" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.sunos4" \
 	"APP_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
@@ -1104,7 +1186,9 @@ sunos4-gcc-x11r6-sl:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -fPIC -O3 -I/usr/X11R6.3/include -DUSE_XSHM -DSUNOS4 -DSOLARIS_2_4_BUG" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.sunos4" \
 	"APP_LIB_DEPS = -L/usr/X11R6.3/lib/X11 -lX11 -lXext -lXmu -lXi -lm"
 
@@ -1164,7 +1248,9 @@ sunos5-gcc:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -I/usr/openwin/include -DUSE_XSHM -DSOLARIS_2_4_BUG" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
@@ -1176,7 +1262,9 @@ sunos5-gcc-sl:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -fPIC -O3 -I/usr/openwin/include -DUSE_XSHM -DSOLARIS_2_4_BUG" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.sunos5" \
 	"APP_LIB_DEPS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
@@ -1188,7 +1276,9 @@ sunos5-x11r6-gcc-sl:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -fPIC -O3 -DUSE_XSHM -DSOLARIS_2_4_BUG" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.sunos5" \
 	"APP_LIB_DEPS = -lSM -lICE -lX11 -lXext -lXmu -lXi -lnsl -lsocket -lm"
 
@@ -1221,7 +1311,9 @@ sunos5-gcc-thread:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -I/usr/openwin/include -DUSE_XSHM -DSOLARIS_2_4_BUG -D_REENTRANT -DSOLARIS_THREADS" \
+	"CCFLAGS = $(CFLAGS)" \
       	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lthread -lm"
 
@@ -1232,7 +1324,9 @@ sunos5-gcc-pthread:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -I/usr/openwin/include -DUSE_XSHM -DSOLARIS_2_4_BUG -D_REENTRANT -DPTHREADS" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lpthread -lm"
 
@@ -1270,7 +1364,9 @@ ultrix-gcc:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -pedantic -O2" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lXmu -lX11 -lXi -lm"
 
@@ -1317,7 +1413,9 @@ uwin:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -pedantic -O2 -I/usr/X11/include " \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11/lib -lX11 -lm"
 
@@ -1329,7 +1427,9 @@ vistra:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -pedantic -O2" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lX11 -lsocket -lnsl -lgen -lm"
 
@@ -1374,7 +1474,9 @@ linux-debug:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
-	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DSVGA -I/usr/include/glide -DFX" \
+	"CPLUSPLUS = g++" \
+	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DSVGA -I/usr/include/glide -DFX -DMESA_TRACE" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -lvga -L/usr/local/glide/lib -lglide2x" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -1389,7 +1491,9 @@ linux-static-debug:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -DUSE_XSHM -DDEBUG -DMESA_DEBUG -DSVGA -DFX -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/include/glide -I/usr/local/glide/include" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide2x -ltexus -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lvga -lm" \
 
@@ -1432,7 +1536,9 @@ linux-glide-debug:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DFX -DDEBUG -I/usr/local/glide/include -I/usr/include/glide" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide2x -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lvga -lm -lpthread"
 
@@ -1445,7 +1551,9 @@ linux-prof:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -Wall -O2 -pg -ansi -pedantic -ffast-math -DUSE_XSHM -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
@@ -1474,7 +1582,9 @@ linux-glide-prof:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O2 -pg -ansi -pedantic -Wall -DUSE_XSHM -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM -I/usr/include/glide -I/usr/local/glide/include" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide2x -L/usr/X11/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
