@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.7 2001/02/19 20:01:42 brianp Exp $ */
+/* $Id: texstore.c,v 1.8 2001/02/21 16:02:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -196,9 +196,9 @@ fetch_2d_texel(const struct gl_texture_image *img,
       {
          const GLchan *src = (GLchan *) img->Data + (img->Width * j + i) * 2;
          GLchan *rgba = (GLchan *) texel;
-         rgba[RCOMP] = 0;
-         rgba[GCOMP] = 0;
-         rgba[BCOMP] = 0;
+         rgba[RCOMP] = src[0];
+         rgba[GCOMP] = src[0];
+         rgba[BCOMP] = src[0];
          rgba[ACOMP] = src[1];
          return;
       }
