@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.12 1999/10/11 17:48:53 gareth Exp $ */
+/* $Id: tess.c,v 1.13 1999/10/11 17:53:09 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,9 @@
 
 /*
  * $Log: tess.c,v $
+ * Revision 1.13  1999/10/11 17:53:09  gareth
+ * Renamed GLUtesselator user data pointer to avoid confusion.
+ *
  * Revision 1.12  1999/10/11 17:48:53  gareth
  * Correctly initialized GLUtesselator user data pointer.
  *
@@ -135,7 +138,7 @@ GLUtesselator* GLAPIENTRY gluNewTess( void )
     tobj->grid = NULL;
 #endif
     tobj->cvc_lists = NULL;
-    tobj->user_data = NULL;
+    tobj->data = NULL;
     tobj->label = 0;
 
     tobj->error = GLU_NO_ERROR;
@@ -623,7 +626,7 @@ void tess_error_callback( GLUtesselator *tobj, GLenum errnum )
 
     if ( tobj->callbacks.errorData != NULL )
     {
-	( tobj->callbacks.errorData )( errnum, tobj->user_data );
+	( tobj->callbacks.errorData )( errnum, tobj->data );
     }
     else if ( tobj->callbacks.error != NULL )
     {
