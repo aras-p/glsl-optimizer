@@ -23,9 +23,15 @@
  * This is a port of the infamous "gears" demo to straight GLX (i.e. no GLUT)
  * Port by Brian Paul  23 March 2001
  *
- * Command line options:
- *    -info      print GL implementation information
+ * Modified by Ian Romanick <idr@us.ibm.com> 09 April 2003 to support
+ * GLX_{MESA,SGI}_swap_control and GLX_OML_sync_control.
  *
+ * Command line options:
+ *    -display       Name of the display to use.
+ *    -info          print GL implementation information
+ *    -swap N        Attempt to set the swap interval to 1/N second
+ *    -forcegetrate  Get the display refresh rate even if the required GLX
+ *                   extension is not supported.
  */
 
 
@@ -35,11 +41,31 @@
 #include <string.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
+#ifndef __VMS
+/*# include <stdint.h>*/
+#endif
+# define GLX_GLXEXT_PROTOTYPES
 #include <GL/gl.h>
 #include <GL/glx.h>
 
+#ifndef GLX_MESA_swap_control
+typedef GLint ( * PFNGLXSWAPINTERVALMESAPROC) (unsigned interval);
+typedef GLint ( * PFNGLXGETSWAPINTERVALMESAPROC) ( void );
+#endif
+
+#if !defined( GLX_OML_sync_control ) && defined( _STDINT_H )
+#define GLX_OML_sync_control 1
+typedef Bool ( * PFNGLXGETMSCRATEOMLPROC) (Display *dpy, GLXDrawable drawable, int32_t *numerator, int32_t *denominator);
+#endif
+
+#ifndef GLX_MESA_swap_frame_usage
+#define GLX_MESA_swap_frame_usage 1
+typedef int ( * PFNGLXGETFRAMEUSAGEMESAPROC) (Display *dpy, GLXDrawable drawable, float * usage );
+#endif
 
 #define BENCHMARK
+
+PFNGLXGETFRAMEUSAGEMESAPROC get_frame_usage = NULL;
 
 #ifdef BENCHMARK
 
@@ -47,6 +73,8 @@
 
 #include <sys/time.h>
 #include <unistd.h>
+
+#define NUL '\0'
 
 /* return current time (in seconds) */
 static int
@@ -84,6 +112,16 @@ static GLfloat view_rotx = 20.0, view_roty = 30.0, view_rotz = 0.0;
 static GLint gear1, gear2, gear3;
 static GLfloat angle = 0.0;
 
+static GLboolean has_OML_sync_control = GL_FALSE;
+static GLboolean has_SGI_swap_control = GL_FALSE;
+static GLboolean has_MESA_swap_control = GL_FALSE;
+static GLboolean has_MESA_swap_frame_usage = GL_FALSE;
+
+static char ** extension_table = NULL;
+static unsigned num_extensions;
+
+static GLboolean use_ztrick = GL_FALSE;
+static GLfloat   aspect;
 
 /*
  *
@@ -227,7 +265,65 @@ gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 static void
 draw(void)
 {
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   if ( use_ztrick ) {
+      static GLboolean flip = GL_FALSE;
+      static const GLfloat vert[4][3] = {
+	 { -1, -1, -0.999 },
+	 {  1, -1, -0.999 },
+	 {  1,  1, -0.999 },
+	 { -1,  1, -0.999 }
+      };
+      static const GLfloat col[4][3] = {
+	 { 1.0, 0.6, 0.0 },
+	 { 1.0, 0.6, 0.0 },
+	 { 0.0, 0.0, 0.0 },
+	 { 0.0, 0.0, 0.0 },
+      };
+      
+      if ( flip ) {
+	 glDepthRange(0, 0.5);
+	 glDepthFunc(GL_LEQUAL);
+      }
+      else {
+	 glDepthRange(1.0, 0.4999);
+	 glDepthFunc(GL_GEQUAL);
+      }
+
+      flip = !flip;
+
+      /* The famous Quake "Z trick" only works when the whole screen is
+       * re-drawn each frame.
+       */
+
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glOrtho(-1, 1, -1, 1, -1, 1);
+      glDisable(GL_LIGHTING);
+      glShadeModel(GL_SMOOTH);
+
+      glEnable( GL_VERTEX_ARRAY );
+      glEnable( GL_COLOR_ARRAY );
+      glVertexPointer( 3, GL_FLOAT, 0, vert );
+      glColorPointer( 3, GL_FLOAT, 0, col );
+      glDrawArrays( GL_POLYGON, 0, 4 );
+      glDisable( GL_COLOR_ARRAY );
+      glDisable( GL_VERTEX_ARRAY );
+
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glFrustum(-1.0, 1.0, -aspect, aspect, 5.0, 60.0);
+
+      glEnable(GL_LIGHTING);
+
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      glTranslatef(0.0, 0.0, -40.0);
+   }
+   else {
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   }
 
    glPushMatrix();
    glRotatef(view_rotx, 1.0, 0.0, 0.0);
@@ -260,12 +356,14 @@ draw(void)
 static void
 reshape(int width, int height)
 {
-   GLfloat h = (GLfloat) height / (GLfloat) width;
+   aspect = (GLfloat) height / (GLfloat) width;
 
+   
    glViewport(0, 0, (GLint) width, (GLint) height);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   glFrustum(-1.0, 1.0, -h, h, 5.0, 60.0);
+
+   glFrustum(-1.0, 1.0, -aspect, aspect, 5.0, 60.0);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
    glTranslatef(0.0, 0.0, -40.0);
@@ -382,6 +480,8 @@ make_window( Display *dpy, const char *name,
 static void
 event_loop(Display *dpy, Window win)
 {
+   float  frame_usage = 0.0;
+
    while (1) {
       while (XPending(dpy) > 0) {
          XEvent event;
@@ -426,6 +526,13 @@ event_loop(Display *dpy, Window win)
       angle += 2.0;
 
       draw();
+      if ( get_frame_usage != NULL ) {
+	 GLfloat   temp;
+	 
+	 (*get_frame_usage)( dpy, win, & temp );
+	 frame_usage += temp;
+      }
+
       glXSwapBuffers(dpy, win);
 
       /* calc framerate */
@@ -442,13 +549,149 @@ event_loop(Display *dpy, Window win)
          if (t - t0 >= 5.0) {
             GLfloat seconds = t - t0;
             GLfloat fps = frames / seconds;
-            printf("%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds,
-                   fps);
+	    if ( get_frame_usage != NULL ) {
+	       printf("%d frames in %3.1f seconds = %6.3f FPS (%3.1f%% usage)\n",
+		      frames, seconds, fps,
+		      (frame_usage * 100.0) / (float) frames );
+	    }
+	    else {
+	       printf("%d frames in %3.1f seconds = %6.3f FPS\n",
+		      frames, seconds, fps);
+	    }
+
             t0 = t;
             frames = 0;
+	    frame_usage = 0.0;
          }
       }
    }
+}
+
+
+/**
+ * Display the refresh rate of the display using the GLX_OML_sync_control
+ * extension.
+ */
+
+static void
+show_refresh_rate( Display * dpy )
+{
+#ifdef GLX_OML_sync_control
+   PFNGLXGETMSCRATEOMLPROC  get_msc_rate;
+   int32_t  n;
+   int32_t  d;
+
+   get_msc_rate = (PFNGLXGETMSCRATEOMLPROC) glXGetProcAddressARB( (const GLubyte *) "glXGetMscRateOML" );
+   if ( get_msc_rate != NULL ) {
+      (*get_msc_rate)( dpy, glXGetCurrentDrawable(), &n, &d );
+      printf( "refresh rate: %.1fHz\n", (float) n / d );
+      return;
+   }
+#endif
+   printf( "glXGetMscRateOML not supported.\n" );
+}
+
+
+/**
+ * Fill in the table of extension strings from a supplied extensions string
+ * (as returned by glXQueryExtensionsString).
+ *
+ * \param string   String of GLX extensions.
+ * \sa is_extension_supported
+ */
+
+static void
+make_extension_table( const char * string )
+{
+   char ** string_tab;
+   unsigned  num_strings;
+   unsigned  base;
+   unsigned  idx;
+   unsigned  i;
+      
+   /* Count the number of spaces in the string.  That gives a base-line
+    * figure for the number of extension in the string.
+    */
+   
+   num_strings = 1;
+   for ( i = 0 ; string[i] != NUL ; i++ ) {
+      if ( string[i] == ' ' ) {
+	 num_strings++;
+      }
+   }
+   
+   string_tab = (char **) malloc( sizeof( char * ) * num_strings );
+   if ( string_tab == NULL ) {
+      return;
+   }
+
+   base = 0;
+   idx = 0;
+
+   while ( string[ base ] != NUL ) {
+      /* Determine the length of the next extension string.
+       */
+
+      for ( i = 0 
+	    ; (string[ base + i ] != NUL) && (string[ base + i ] != ' ')
+	    ; i++ ) {
+	 /* empty */ ;
+      }
+
+      if ( i > 0 ) {
+	 /* If the string was non-zero length, add it to the table.  We
+	  * can get zero length strings if there is a space at the end of
+	  * the string or if there are two (or more) spaces next to each
+	  * other in the string.
+	  */
+
+	 string_tab[ idx ] = malloc( sizeof( char ) * (i + 1) );
+	 if ( string_tab[ idx ] == NULL ) {
+	    return;
+	 }
+
+	 (void) memcpy( string_tab[ idx ], & string[ base ], i );
+	 string_tab[ idx ][i] = NUL;
+	 idx++;
+      }
+
+
+      /* Skip to the start of the next extension string.
+       */
+
+      for ( base += i
+	    ; (string[ base ] == ' ') && (string[ base ] != NUL) 
+	    ; base++ ) {
+	 /* empty */ ;
+      }
+   }
+
+   extension_table = string_tab;
+   num_extensions = idx;
+}
+
+    
+/**
+ * Determine of an extension is supported.  The extension string table
+ * must have already be initialized by calling \c make_extension_table.
+ * 
+ * \praram ext  Extension to be tested.
+ * \return GL_TRUE of the extension is supported, GL_FALSE otherwise.
+ * \sa make_extension_table
+ */
+
+static GLboolean
+is_extension_supported( const char * ext )
+{
+   unsigned   i;
+   
+   for ( i = 0 ; i < num_extensions ; i++ ) {
+      if ( strcmp( ext, extension_table[i] ) == 0 ) {
+	 return GL_TRUE;
+      }
+   }
+   
+   return GL_FALSE;
 }
 
 
@@ -459,16 +702,48 @@ main(int argc, char *argv[])
    Window win;
    GLXContext ctx;
    char *dpyName = ":0";
+   int swap_interval = 1;
+   GLboolean do_swap_interval = GL_FALSE;
+   GLboolean force_get_rate = GL_FALSE;
    GLboolean printInfo = GL_FALSE;
    int i;
+   PFNGLXSWAPINTERVALMESAPROC set_swap_interval = NULL;
+   PFNGLXGETSWAPINTERVALMESAPROC get_swap_interval = NULL;
+
 
    for (i = 1; i < argc; i++) {
-      if (strcmp(argv[i], "-display") == 0) {
+      if (strcmp(argv[i], "-display") == 0 && i + 1 < argc) {
          dpyName = argv[i+1];
          i++;
       }
       else if (strcmp(argv[i], "-info") == 0) {
          printInfo = GL_TRUE;
+      }
+      else if (strcmp(argv[i], "-swap") == 0 && i + 1 < argc) {
+	 swap_interval = atoi( argv[i+1] );
+	 do_swap_interval = GL_TRUE;
+	 i++;
+      }
+      else if (strcmp(argv[i], "-forcegetrate") == 0) {
+	 /* This option was put in because some DRI drivers don't support the
+	  * full GLX_OML_sync_control extension, but they do support
+	  * glXGetMscRateOML.
+	  */
+	 force_get_rate = GL_TRUE;
+      }
+      else if (strcmp(argv[i], "-ztrick") == 0) {
+	 use_ztrick = GL_TRUE;
+      }
+      else if (strcmp(argv[i], "-help") == 0) {
+         printf("Usage:\n");
+         printf("  gears [options]\n");
+         printf("Options:\n");
+         printf("  -help                   Print this information\n");
+         printf("  -display displayName    Specify X display\n");
+         printf("  -info                   Display GL information\n");
+         printf("  -swap N                 Swap no more than once per N vertical refreshes\n");
+         printf("  -forcegetrate           Try to use glXGetMscRateOML function\n");
+         return 0;
       }
    }
 
@@ -482,11 +757,59 @@ main(int argc, char *argv[])
    XMapWindow(dpy, win);
    glXMakeCurrent(dpy, win, ctx);
 
+   make_extension_table( (char *) glXQueryExtensionsString(dpy,DefaultScreen(dpy)) );
+   has_OML_sync_control = is_extension_supported( "GLX_OML_sync_control" );
+   has_SGI_swap_control = is_extension_supported( "GLX_SGI_swap_control" );
+   has_MESA_swap_control = is_extension_supported( "GLX_MESA_swap_control" );
+   has_MESA_swap_frame_usage = is_extension_supported( "GLX_MESA_swap_frame_usage" );
+
+   if ( has_MESA_swap_control ) {
+      set_swap_interval = (PFNGLXSWAPINTERVALMESAPROC) glXGetProcAddressARB( (const GLubyte *) "glXSwapIntervalMESA" );
+      get_swap_interval = (PFNGLXGETSWAPINTERVALMESAPROC) glXGetProcAddressARB( (const GLubyte *) "glXGetSwapIntervalMESA" );
+   }
+   else if ( has_SGI_swap_control ) {
+      set_swap_interval = (PFNGLXSWAPINTERVALMESAPROC) glXGetProcAddressARB( (const GLubyte *) "glXSwapIntervalSGI" );
+   }
+
+
+   if ( has_MESA_swap_frame_usage ) {
+      get_frame_usage = (PFNGLXGETFRAMEUSAGEMESAPROC)  glXGetProcAddressARB( (const GLubyte *) "glXGetFrameUsageMESA" );
+   }
+      
+
    if (printInfo) {
       printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
       printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
       printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
       printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
+      if ( has_OML_sync_control || force_get_rate ) {
+	 show_refresh_rate( dpy );
+      }
+
+      if ( get_swap_interval != NULL ) {
+	 printf("Default swap interval = %d\n", (*get_swap_interval)() );
+      }
+   }
+
+   if ( do_swap_interval ) {
+      if ( set_swap_interval != NULL ) {
+	 if ( ((swap_interval == 0) && !has_MESA_swap_control)
+	      || (swap_interval < 0) ) {
+	    printf( "Swap interval must be non-negative or greater than zero "
+		    "if GLX_MESA_swap_control is not supported.\n" );
+	 }
+	 else {
+	    (*set_swap_interval)( swap_interval );
+	 }
+
+	 if ( printInfo && (get_swap_interval != NULL) ) {
+	    printf("Current swap interval = %d\n", (*get_swap_interval)() );
+	 }
+      }
+      else {
+	 printf("Unable to set swap-interval.  Neither GLX_SGI_swap_control "
+		"nor GLX_MESA_swap_control are supported.\n" );
+      }
    }
 
    init();
