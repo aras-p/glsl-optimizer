@@ -718,7 +718,7 @@ extern void __glutOpenXConnection(char *display);
 #else
 extern void __glutOpenWin32Connection(char *display);
 #endif
-#if OLD_VMS
+#ifdef OLD_VMS
 extern void __glutInitTime(struct timeval6 *beginning);
 #else
 extern void __glutInitTime(struct timeval *beginning);
