@@ -503,7 +503,7 @@ extern void fxDDDepthFunc(GLcontext *, GLenum);
 
 extern void fxDDRegisterVB( struct vertex_buffer *VB );
 extern void fxDDUnregisterVB( struct vertex_buffer *VB );
-extern void fxDDResizeVB( struct tfxMesaVertexBuffer *fvb, GLuint size );
+extern void fxDDResizeVB( struct vertex_buffer *VB, GLuint size );
 
 extern void fxDDCheckMergeAndRender( GLcontext *ctx, 
 				     struct gl_pipeline_stage *d );
