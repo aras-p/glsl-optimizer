@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.31 2001/12/04 13:04:29 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.32 2001/12/13 10:49:04 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -229,7 +229,7 @@ static void fixup_compiled_primitives( GLcontext *ctx, struct immediate *IM )
        * set copystart because it might skip materials?
        */
       ASSERT(IM->Start == IM->CopyStart);
-      if (i > IM->CopyStart) {
+      if (i > IM->CopyStart || !(IM->Flag[IM->Start] & VERT_BEGIN)) {
 	 IM->Primitive[IM->CopyStart] = GL_POLYGON+1;
 	 IM->PrimitiveLength[IM->CopyStart] = i - IM->CopyStart;
 	 if (IM->Flag[i] & VERT_END_VB) {
