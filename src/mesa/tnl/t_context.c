@@ -1,10 +1,10 @@
-/* $Id: t_context.c,v 1.30 2002/10/29 20:29:01 brianp Exp $ */
+/* $Id: t_context.c,v 1.31 2003/02/04 14:40:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -212,6 +212,11 @@ _tnl_wakeup_save_exec( GLcontext *ctx )
 }
 
 
+/**
+ * Drivers call this function to tell the TCL module whether or not
+ * it wants Normalized Device Coords (NDC) computed.  I.e. whether
+ * we should "Divide-by-W".  Software renders will want that.
+ */
 void
 _tnl_need_projected_coords( GLcontext *ctx, GLboolean mode )
 {
