@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.4 2000/11/14 17:40:16 brianp Exp $ */
+/* $Id: s_span.c,v 1.5 2000/12/12 00:27:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -58,18 +58,19 @@
 static void stipple_polygon_span( GLcontext *ctx,
                                   GLuint n, GLint x, GLint y, GLubyte mask[] )
 {
-   register GLuint i, m, stipple, highbit=0x80000000;
+   const GLuint highbit = 0x80000000;
+   GLuint i, m, stipple;
 
    stipple = ctx->PolygonStipple[y % 32];
    m = highbit >> (GLuint) (x % 32);
 
-   for (i=0;i<n;i++) {
-      if ((m & stipple)==0) {
-	 mask[i] = 0;
+   for (i = 0; i < n; i++) {
+      if ((m & stipple) == 0) {
+         mask[i] = 0;
       }
       m = m >> 1;
-      if (m==0) {
-	 m = 0x80000000;
+      if (m == 0) {
+         m = highbit;
       }
    }
 }
@@ -78,41 +79,43 @@ static void stipple_polygon_span( GLcontext *ctx,
 
 /*
  * Clip a pixel span to the current buffer/window boundaries.
- * Return:  0 = all pixels clipped
- *          1 = at least one pixel is visible
+ * Return:  'n' such that pixel 'n', 'n+1' etc. are clipped,
+ *           as a special case:
+ *           0 = all pixels clipped
  */
 static GLuint clip_span( GLcontext *ctx,
                          GLint n, GLint x, GLint y, GLubyte mask[] )
 {
-   GLint i;
-
    /* Clip to top and bottom */
    if (y < 0 || y >= ctx->DrawBuffer->Height) {
       return 0;
    }
 
-   /* Clip to left and right */
-   if (x >= 0 && x + n <= ctx->DrawBuffer->Width) {
-      /* no clipping needed */
-      return 1;
-   }
-   else if (x + n <= 0) {
-      /* completely off left side */
-      return 0;
-   }
-   else if (x >= ctx->DrawBuffer->Width) {
-      /* completely off right side */
-      return 0;
-   }
-   else {
-      /* clip-test each pixel, this could be done better */
-      for (i=0;i<n;i++) {
-         if (x + i < 0 || x + i >= ctx->DrawBuffer->Width) {
-            mask[i] = 0;
-         }
+   /* Clip to the left */
+   if (x < 0) {
+      if (x + n <= 0) {
+         /* completely off left side */
+         return 0;
       }
-      return 1;
+      else {
+         /* partially off left side */
+         MEMSET(mask, 0, -x); 
+      }
    }
+
+   /* Clip to right */
+   if (x + n > ctx->DrawBuffer->Width) {
+      if (x >= ctx->DrawBuffer->Width) {
+         /* completely off right side */
+         return 0;
+      }
+      else {
+         /* partially off right side */
+         return ctx->DrawBuffer->Width - x;
+      }
+   }
+
+   return n;
 }
 
 
@@ -189,7 +192,7 @@ void gl_write_index_span( GLcontext *ctx,
    MEMSET(mask, 1, n);
 
    if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
-      if (clip_span(ctx,n,x,y,mask)==0) {
+      if ((n = clip_span(ctx,n,x,y,mask)) == 0) {
 	 return;
       }
    }
@@ -204,17 +207,10 @@ void gl_write_index_span( GLcontext *ctx,
       index = indexIn;
    }
 
-   /* Per-pixel fog */
-   if (ctx->Fog.Enabled) {
-      if (fog && !swrast->_PreferPixelFog)
-	 _mesa_fog_ci_pixels( ctx, n, fog, index );
-      else
-	 _mesa_depth_fog_ci_pixels( ctx, n, z, index );
-   }
 
    /* Do the scissor test */
    if (ctx->Scissor.Enabled) {
-      if (gl_scissor_span( ctx, n, x, y, mask )==0) {
+      if (gl_scissor_span( ctx, n, x, y, mask ) == 0) {
 	 return;
       }
    }
@@ -232,11 +228,20 @@ void gl_write_index_span( GLcontext *ctx,
    }
    else if (ctx->Depth.Test) {
       /* regular depth testing */
-      if (_mesa_depth_test_span( ctx, n, x, y, z, mask )==0)  return;
+      if (_mesa_depth_test_span( ctx, n, x, y, z, mask ) == 0)
+         return;
    }
 
    /* if we get here, something passed the depth test */
    ctx->OcclusionResult = GL_TRUE;
+
+   /* Per-pixel fog */
+   if (ctx->Fog.Enabled) {
+      if (fog && !swrast->_PreferPixelFog)
+         _mesa_fog_ci_pixels( ctx, n, fog, index );
+      else
+         _mesa_depth_fog_ci_pixels( ctx, n, z, index );
+   }
 
    if (swrast->_RasterMask & MULTI_DRAW_BIT) {
       /* draw to zero or two or more buffers */
@@ -277,14 +282,14 @@ void gl_write_monoindex_span( GLcontext *ctx,
    MEMSET(mask, 1, n);
 
    if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
-      if (clip_span( ctx, n, x, y, mask)==0) {
+      if ((n = clip_span( ctx, n, x, y, mask)) == 0) {
 	 return;
       }
    }
 
    /* Do the scissor test */
    if (ctx->Scissor.Enabled) {
-      if (gl_scissor_span( ctx, n, x, y, mask )==0) {
+      if (gl_scissor_span( ctx, n, x, y, mask ) == 0) {
 	 return;
       }
    }
@@ -302,7 +307,8 @@ void gl_write_monoindex_span( GLcontext *ctx,
    }
    else if (ctx->Depth.Test) {
       /* regular depth testing */
-      if (_mesa_depth_test_span( ctx, n, x, y, z, mask )==0)  return;
+      if (_mesa_depth_test_span( ctx, n, x, y, z, mask ) == 0)
+         return;
    }
 
    /* if we get here, something passed the depth test */
@@ -318,7 +324,7 @@ void gl_write_monoindex_span( GLcontext *ctx,
        || ctx->Color.IndexMask != 0xffffffff) {
       /* different index per pixel */
       GLuint indexes[MAX_WIDTH];
-      for (i=0;i<n;i++) {
+      for (i = 0; i < n; i++) {
 	 indexes[i] = index;
       }
 
@@ -358,7 +364,7 @@ void gl_write_monoindex_span( GLcontext *ctx,
       if (swrast->_RasterMask & MULTI_DRAW_BIT) {
          /* draw to zero or two or more buffers */
          GLuint indexes[MAX_WIDTH];
-         for (i=0;i<n;i++)
+         for (i = 0; i < n; i++)
             indexes[i] = index;
          multi_write_index_span( ctx, n, x, y, indexes, mask );
       }
@@ -458,10 +464,11 @@ void gl_write_rgba_span( GLcontext *ctx,
    MEMSET(mask, 1, n);
 
    if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
-      if (clip_span( ctx,n,x,y,mask)==0) {
-	 return;
+      if ((n = clip_span( ctx,n,x,y,mask)) == 0) {
+         return;
       }
-      write_all = GL_FALSE;
+      if (mask[0] == 0)
+         write_all = GL_FALSE;
    }
 
    if ((primitive==GL_BITMAP && (swrast->_RasterMask & modBits))
@@ -474,17 +481,9 @@ void gl_write_rgba_span( GLcontext *ctx,
       rgba = rgbaIn;
    }
 
-   /* Per-pixel fog */
-   if (ctx->Fog.Enabled) {
-      if (fog && !swrast->_PreferPixelFog) 
-	 _mesa_fog_rgba_pixels( ctx, n, fog, rgba );
-      else
-	 _mesa_depth_fog_rgba_pixels( ctx, n, z, rgba );
-   }
-
    /* Do the scissor test */
    if (ctx->Scissor.Enabled) {
-      if (gl_scissor_span( ctx, n, x, y, mask )==0) {
+      if (gl_scissor_span( ctx, n, x, y, mask ) == 0) {
 	 return;
       }
       write_all = GL_FALSE;
@@ -498,7 +497,7 @@ void gl_write_rgba_span( GLcontext *ctx,
 
    /* Do the alpha test */
    if (ctx->Color.AlphaEnabled) {
-      if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4]) rgba, mask )==0) {
+      if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4]) rgba, mask ) == 0) {
 	 return;
       }
       write_all = GL_FALSE;
@@ -514,16 +513,24 @@ void gl_write_rgba_span( GLcontext *ctx,
    else if (ctx->Depth.Test) {
       /* regular depth testing */
       GLuint m = _mesa_depth_test_span( ctx, n, x, y, z, mask );
-      if (m==0) {
+      if (m == 0) {
          return;
       }
-      if (m<n) {
+      if (m < n) {
          write_all = GL_FALSE;
       }
    }
 
    /* if we get here, something passed the depth test */
    ctx->OcclusionResult = GL_TRUE;
+
+   /* Per-pixel fog */
+   if (ctx->Fog.Enabled) {
+      if (fog && !swrast->_PreferPixelFog) 
+	 _mesa_fog_rgba_pixels( ctx, n, fog, rgba );
+      else
+	 _mesa_depth_fog_rgba_pixels( ctx, n, z, rgba );
+   }
 
    if (swrast->_RasterMask & MULTI_DRAW_BIT) {
       multi_write_rgba_span( ctx, n, x, y, (const GLchan (*)[4]) rgba, mask );
@@ -558,7 +565,6 @@ void gl_write_rgba_span( GLcontext *ctx,
                                  (const GLchan (*)[4]) rgba, 
                                  write_all ? Null : mask );
       }
-
    }
 }
 
@@ -592,15 +598,16 @@ void gl_write_monocolor_span( GLcontext *ctx,
    MEMSET(mask, 1, n);
 
    if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
-      if (clip_span( ctx,n,x,y,mask)==0) {
+      if ((n = clip_span( ctx,n,x,y,mask)) == 0) {
 	 return;
       }
-      write_all = GL_FALSE;
+      if (mask[0] == 0)
+         write_all = GL_FALSE;
    }
 
    /* Do the scissor test */
    if (ctx->Scissor.Enabled) {
-      if (gl_scissor_span( ctx, n, x, y, mask )==0) {
+      if (gl_scissor_span( ctx, n, x, y, mask ) == 0) {
 	 return;
       }
       write_all = GL_FALSE;
@@ -614,10 +621,10 @@ void gl_write_monocolor_span( GLcontext *ctx,
 
    /* Do the alpha test */
    if (ctx->Color.AlphaEnabled) {
-      for (i=0;i<n;i++) {
+      for (i = 0; i < n; i++) {
          rgba[i][ACOMP] = color[ACOMP];
       }
-      if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4])rgba, mask )==0) {
+      if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4])rgba, mask ) == 0) {
 	 return;
       }
       write_all = GL_FALSE;
@@ -633,10 +640,10 @@ void gl_write_monocolor_span( GLcontext *ctx,
    else if (ctx->Depth.Test) {
       /* regular depth testing */
       GLuint m = _mesa_depth_test_span( ctx, n, x, y, z, mask );
-      if (m==0) {
+      if (m == 0) {
          return;
       }
-      if (m<n) {
+      if (m < n) {
          write_all = GL_FALSE;
       }
    }
@@ -652,7 +659,7 @@ void gl_write_monocolor_span( GLcontext *ctx,
    if (ctx->Color.ColorLogicOpEnabled || colorMask != 0xffffffff ||
        (swrast->_RasterMask & (BLEND_BIT | FOG_BIT))) {
       /* assign same color to each pixel */
-      for (i=0;i<n;i++) {
+      for (i = 0; i < n; i++) {
 	 if (mask[i]) {
             COPY_CHAN4(rgba[i], color);
 	 }
@@ -704,7 +711,7 @@ void gl_write_monocolor_span( GLcontext *ctx,
       ASSERT(!ctx->Color.ColorLogicOpEnabled);
 
       if (swrast->_RasterMask & MULTI_DRAW_BIT) {
-         for (i=0;i<n;i++) {
+         for (i = 0; i < n; i++) {
             if (mask[i]) {
                COPY_CHAN4(rgba[i], color);
             }
@@ -731,7 +738,7 @@ void gl_write_monocolor_span( GLcontext *ctx,
 static void add_colors(GLuint n, GLchan rgba[][4], CONST GLchan specular[][4] )
 {
    GLuint i;
-   for (i=0; i<n; i++) {
+   for (i = 0; i < n; i++) {
       GLint r = rgba[i][RCOMP] + specular[i][RCOMP];
       GLint g = rgba[i][GCOMP] + specular[i][GCOMP];
       GLint b = rgba[i][BCOMP] + specular[i][BCOMP];
@@ -775,10 +782,11 @@ void gl_write_texture_span( GLcontext *ctx,
    MEMSET(mask, 1, n);
 
    if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
-      if (clip_span(ctx, n, x, y, mask)==0) {
+      if ((n=clip_span(ctx, n, x, y, mask)) == 0) {
 	 return;
       }
-      write_all = GL_FALSE;
+      if (mask[0] == 0)
+	write_all = GL_FALSE;
    }
 
 
@@ -791,27 +799,9 @@ void gl_write_texture_span( GLcontext *ctx,
       rgba = rgbaIn;
    }
 
-   /* Texture */
-   ASSERT(ctx->Texture._ReallyEnabled);
-   gl_texture_pixels( ctx, 0, n, s, t, u, lambda, rgba, rgba );
-
-   /* Add base and specular colors */
-   if (spec && 
-       (ctx->Fog.ColorSumEnabled ||
-	(ctx->Light.Enabled && ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)))
-      add_colors( n, rgba, spec );   /* rgba = rgba + spec */
-
-   /* Per-pixel fog */
-   if (ctx->Fog.Enabled) {
-      if (fog && !swrast->_PreferPixelFog)
-	 _mesa_fog_rgba_pixels( ctx, n, fog, rgba );
-      else
-	 _mesa_depth_fog_rgba_pixels( ctx, n, z, rgba );
-   }
-
    /* Do the scissor test */
    if (ctx->Scissor.Enabled) {
-      if (gl_scissor_span( ctx, n, x, y, mask )==0) {
+      if (gl_scissor_span( ctx, n, x, y, mask ) == 0) {
 	 return;
       }
       write_all = GL_FALSE;
@@ -822,11 +812,17 @@ void gl_write_texture_span( GLcontext *ctx,
       stipple_polygon_span( ctx, n, x, y, mask );
       write_all = GL_FALSE;
    }
-
-   /* Do the alpha test */
+   
+   /* Texture with alpha test*/
    if (ctx->Color.AlphaEnabled) {
-      if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4]) rgba, mask )==0) {
-	 return;
+      /* Texturing without alpha is done after depth-testing which
+         gives a potential speed-up. */
+      ASSERT(ctx->Texture._ReallyEnabled);
+      gl_texture_pixels( ctx, 0, n, s, t, u, lambda, rgba, rgba );
+     
+      /* Do the alpha test */
+      if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4]) rgba, mask ) == 0) {
+         return;
       }
       write_all = GL_FALSE;
    }
@@ -841,16 +837,36 @@ void gl_write_texture_span( GLcontext *ctx,
    else if (ctx->Depth.Test) {
       /* regular depth testing */
       GLuint m = _mesa_depth_test_span( ctx, n, x, y, z, mask );
-      if (m==0) {
+      if (m == 0) {
          return;
       }
-      if (m<n) {
+      if (m < n) {
          write_all = GL_FALSE;
       }
    }
 
    /* if we get here, something passed the depth test */
    ctx->OcclusionResult = GL_TRUE;
+
+   /* Texture without alpha test */
+   if (! ctx->Color.AlphaEnabled) {
+      ASSERT(ctx->Texture._ReallyEnabled);
+      gl_texture_pixels( ctx, 0, n, s, t, u, lambda, rgba, rgba );
+   }
+
+   /* Add base and specular colors */
+   if (spec && 
+       (ctx->Fog.ColorSumEnabled ||
+	(ctx->Light.Enabled && ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)))
+     add_colors( n, rgba, spec );   /* rgba = rgba + spec */
+
+   /* Per-pixel fog */
+   if (ctx->Fog.Enabled) {
+      if (fog && !swrast->_PreferPixelFog)
+	 _mesa_fog_rgba_pixels( ctx, n, fog, rgba );
+      else
+	 _mesa_depth_fog_rgba_pixels( ctx, n, z, rgba );
+   }
 
    if (swrast->_RasterMask & MULTI_DRAW_BIT) {
       multi_write_rgba_span( ctx, n, x, y, (const GLchan (*)[4]) rgba, mask );
@@ -910,10 +926,11 @@ gl_write_multitexture_span( GLcontext *ctx,
    MEMSET(mask, 1, n);
 
    if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
-      if (clip_span(ctx, n, x, y, mask)==0) {
+      if ((n=clip_span(ctx, n, x, y, mask)) == 0) {
 	 return;
       }
-      write_all = GL_FALSE;
+      if (mask[0] == 0)
+	write_all = GL_FALSE;
    }
 
 
@@ -927,10 +944,64 @@ gl_write_multitexture_span( GLcontext *ctx,
       rgba = rgbaIn;
    }
 
-   /* Texture */
-   ASSERT(ctx->Texture._ReallyEnabled);
-   for (i = 0; i < texUnits; i++)
-      gl_texture_pixels( ctx, i, n, s[i], t[i], u[i], lambda[i], rgbaIn, rgba );
+   /* Do the scissor test */
+   if (ctx->Scissor.Enabled) {
+      if (gl_scissor_span( ctx, n, x, y, mask ) == 0) {
+	 return;
+      }
+      write_all = GL_FALSE;
+   }
+
+   /* Polygon Stippling */
+   if (ctx->Polygon.StippleFlag && primitive==GL_POLYGON) {
+      stipple_polygon_span( ctx, n, x, y, mask );
+      write_all = GL_FALSE;
+   }
+
+   /* Texture with alpha test*/
+   if (ctx->Color.AlphaEnabled) {
+      /* Texturing without alpha is done after depth-testing which
+       * gives a potential speed-up.
+       */
+      ASSERT(ctx->Texture._ReallyEnabled);
+      for (i = 0; i < texUnits; i++)
+         gl_texture_pixels( ctx, i, n, s[i], t[i], u[i], lambda[i], rgbaIn, rgba );
+     
+      /* Do the alpha test */
+      if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4])rgba, mask ) == 0) {
+         return;
+      }
+      write_all = GL_FALSE;
+   }
+
+   if (ctx->Stencil.Enabled) {
+      /* first stencil test */
+      if (_mesa_stencil_and_ztest_span(ctx, n, x, y, z, mask) == GL_FALSE) {
+	 return;
+      }
+      write_all = GL_FALSE;
+   }
+   else if (ctx->Depth.Test) {
+      /* regular depth testing */
+      GLuint m = _mesa_depth_test_span( ctx, n, x, y, z, mask );
+      if (m == 0) {
+         return;
+      }
+      if (m < n) {
+         write_all = GL_FALSE;
+      }
+   }
+
+   /* if we get here, something passed the depth test */
+   ctx->OcclusionResult = GL_TRUE;
+
+   /* Texture without alpha test */
+   if (! ctx->Color.AlphaEnabled) {
+      ASSERT(ctx->Texture._ReallyEnabled);
+      for (i = 0; i < texUnits; i++)
+         gl_texture_pixels( ctx, i, n, s[i], t[i], u[i],
+                            lambda[i], rgbaIn, rgba );
+   }
 
    /* Add base and specular colors */
    if (spec && 
@@ -946,49 +1017,6 @@ gl_write_multitexture_span( GLcontext *ctx,
       else
 	 _mesa_depth_fog_rgba_pixels( ctx, n, z, rgba );
    }
-
-   /* Do the scissor test */
-   if (ctx->Scissor.Enabled) {
-      if (gl_scissor_span( ctx, n, x, y, mask )==0) {
-	 return;
-      }
-      write_all = GL_FALSE;
-   }
-
-   /* Polygon Stippling */
-   if (ctx->Polygon.StippleFlag && primitive==GL_POLYGON) {
-      stipple_polygon_span( ctx, n, x, y, mask );
-      write_all = GL_FALSE;
-   }
-
-   /* Do the alpha test */
-   if (ctx->Color.AlphaEnabled) {
-      if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4])rgba, mask )==0) {
-	 return;
-      }
-      write_all = GL_FALSE;
-   }
-
-   if (ctx->Stencil.Enabled) {
-      /* first stencil test */
-      if (_mesa_stencil_and_ztest_span(ctx, n, x, y, z, mask) == GL_FALSE) {
-	 return;
-      }
-      write_all = GL_FALSE;
-   }
-   else if (ctx->Depth.Test) {
-      /* regular depth testing */
-      GLuint m = _mesa_depth_test_span( ctx, n, x, y, z, mask );
-      if (m==0) {
-         return;
-      }
-      if (m<n) {
-         write_all = GL_FALSE;
-      }
-   }
-
-   /* if we get here, something passed the depth test */
-   ctx->OcclusionResult = GL_TRUE;
 
    if (swrast->_RasterMask & MULTI_DRAW_BIT) {
       multi_write_rgba_span( ctx, n, x, y, (const GLchan (*)[4]) rgba, mask );
@@ -1011,7 +1039,8 @@ gl_write_multitexture_span( GLcontext *ctx,
          _mesa_mask_rgba_span( ctx, n, x, y, rgba );
       }
 
-      (*ctx->Driver.WriteRGBASpan)( ctx, n, x, y, (const GLchan (*)[4])rgba, write_all ? Null : mask );
+      (*ctx->Driver.WriteRGBASpan)( ctx, n, x, y, (const GLchan (*)[4])rgba,
+                                    write_all ? Null : mask );
       if (swrast->_RasterMask & ALPHABUF_BIT) {
          _mesa_write_alpha_span( ctx, n, x, y, (const GLchan (*)[4])rgba,
                                  write_all ? Null : mask );
