@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  5.1
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,6 +35,7 @@
 
 #include <GL/gl.h>
 #include <GL/glx.h>
+#include <X11/keysym.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -51,6 +51,8 @@ static Window Win[2];  /* Win[0] = source,  Win[1] = dest */
 static GLint Width[2], Height[2];
 
 static GLfloat Angle = 0.0;
+
+static GLboolean DrawFront = GL_FALSE;
 
 
 
@@ -104,6 +106,15 @@ Redraw(void)
 
    Angle += 1.0;
 
+   if (DrawFront) {
+      glDrawBuffer(GL_FRONT);
+      glReadBuffer(GL_FRONT);
+   }
+   else {
+      glDrawBuffer(GL_BACK);
+      glReadBuffer(GL_BACK);
+   }
+
    glViewport(0, 0, Width[0], Height[0]);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
@@ -126,7 +137,10 @@ Redraw(void)
    glEnd();
    glPopMatrix();
 
-   glXSwapBuffers(Dpy, Win[0]);
+   if (DrawFront)
+      glFinish();
+   else
+      glXSwapBuffers(Dpy, Win[0]);
 
 
    /* copy image from window 0 to window 1 */
@@ -146,13 +160,16 @@ Redraw(void)
    glRasterPos2f(-1, -1);
 
    /* copy the image between windows */
-   glDrawBuffer(GL_FRONT);
    glCopyPixels(0, 0, Width[0], Height[0], GL_COLOR);
-   glDrawBuffer(GL_BACK);
 
    glPopMatrix();
    glMatrixMode(GL_MODELVIEW);
    glPopMatrix();
+
+   if (DrawFront)
+      glFinish();
+   else
+      glXSwapBuffers(Dpy, Win[1]);
 }
 
 
@@ -192,7 +209,22 @@ EventLoop(void)
                Resize(event.xany.window, event.xconfigure.width, event.xconfigure.height);
                break;
             case KeyPress:
-               return;
+               {
+                  char buf[100];
+                  KeySym keySym;
+                  XComposeStatus stat;
+                  XLookupString(&event.xkey, buf, sizeof(buf), &keySym, &stat);
+                  if (keySym == XK_Escape) {
+                        /* exit */
+                        return;
+                  }
+                  else if (buf[0] == 'f') {
+                     DrawFront = !DrawFront;
+                     printf("Drawing to %s buffer\n",
+                            DrawFront ? "GL_FRONT" : "GL_BACK");
+                  }
+               }
+               break;
             default:
                /*no-op*/ ;
          }
@@ -243,6 +275,8 @@ Init(void)
    Win[1] = CreateWindow(Dpy, ScrNum, visinfo,
                          350, 0, 300, 300, "dest window");
 
+   printf("Press Esc to exit\n");
+   printf("Press 'f' to toggle front/back buffer drawing\n");
 }
 
 
