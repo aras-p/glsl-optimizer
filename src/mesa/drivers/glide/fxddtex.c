@@ -1233,7 +1233,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    mml->width = width * mml->wScale;
    mml->height = height * mml->hScale;
 
-#if 0 && FX_COMPRESS_S3TC_AS_FXT1_HACK
+#if FX_COMPRESS_S3TC_AS_FXT1_HACK
    /* [koolsmoky] substitute FXT1 for DXTn and Legacy S3TC */
    /* [dBorca] we should update texture's attribute, then,
     * because if the application asks us to decompress, we
@@ -1255,16 +1255,6 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
      case GL_RGBA4_S3TC:
        internalFormat = GL_COMPRESSED_RGBA_FXT1_3DFX;
      }
-   }
-#endif
-#if 0 && FX_COMPRESS_DXT5_AS_DXT3_HACK
-   /* [dBorca] either VSA is stupid at DXT5, 
-    * or our compression tool is broken. See
-    * above for caveats.
-    */
-   if ((texImage->IsCompressed) &&
-       (internalFormat == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT)) {
-       internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
    }
 #endif
 

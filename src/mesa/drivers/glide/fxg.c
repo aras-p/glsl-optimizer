@@ -38,7 +38,7 @@
 #include <stdarg.h>
 #include <assert.h>
 
-#define DEBUG_TRAP_internal
+#define FX_TRAP_GLIDE_internal
 #include "fxg.h"
 
 
@@ -46,7 +46,7 @@
 /****************************************************************************\
 * logging                                                                    *
 \****************************************************************************/
-#if DEBUG_TRAP
+#if FX_TRAP_GLIDE
 #define TRAP_LOG trp_printf
 #ifdef __GNUC__
 __attribute__ ((format(printf, 1, 2)))
@@ -66,17 +66,17 @@ int trp_printf (const char *format, ...)
  va_end(arg);
  return n;
 }
-#else  /* DEBUG_TRAP */
+#else  /* FX_TRAP_GLIDE */
 #ifdef __GNUC__
 #define TRAP_LOG(format, ...) do {} while (0)
 #else  /* __GNUC__ */
 #define TRAP_LOG              0 && (unsigned long)
 #endif /* __GNUC__ */
-#endif /* DEBUG_TRAP */
+#endif /* FX_TRAP_GLIDE */
 
 
 
-#if DEBUG_TRAP
+#if FX_TRAP_GLIDE
 /****************************************************************************\
 * helpers                                                                    *
 \****************************************************************************/
@@ -2242,15 +2242,15 @@ void FX_CALL fake_grTexNCCTableExt (GrChipID_t   tmu,
 \****************************************************************************/
 void tdfx_hook_glide (struct tdfx_glide *Glide)
 {
-#if DEBUG_TRAP
+#if FX_TRAP_GLIDE
 #define GET_EXT_ADDR(name) *(GrProc *)&real_##name = grGetProcAddress(#name), Glide->name = trap_##name
 #define GET_EXT_FAKE(name) GET_EXT_ADDR(name); if (real_##name == NULL) real_##name = fake_##name
 #define GET_EXT_NULL(name) GET_EXT_ADDR(name); if (real_##name == NULL) Glide->name = NULL
-#else  /* DEBUG_TRAP */
+#else  /* FX_TRAP_GLIDE */
 #define GET_EXT_ADDR(name) *(GrProc *)&Glide->name = grGetProcAddress(#name)
 #define GET_EXT_FAKE(name) GET_EXT_ADDR(name); if (Glide->name == NULL) Glide->name = fake_##name
 #define GET_EXT_NULL(name) GET_EXT_ADDR(name)
-#endif /* DEBUG_TRAP */
+#endif /* FX_TRAP_GLIDE */
 
  /*
  ** glide extensions

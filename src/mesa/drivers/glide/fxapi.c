@@ -386,14 +386,7 @@ fxMesaCreateContext(GLuint win,
                       Glide->txMipQuantize &&
                       Glide->txPalToNcc && !getenv("MESA_FX_IGNORE_TEXUS2");
 
- /*
-  * Pixel tables are used during pixel read-back
-  * Either initialize them for RGB or BGR order;
-  * However, 32bit capable cards have the right order.
-  * As a consequence, 32bit read-back is not swizzled!
-  * Also determine if we need vertex snapping.
-  */
- /* number of SLI units and AA Samples per chip */
+ /* Determine if we need vertex swapping, RGB order and SLI/AA */
  sliaa = 0;
  switch (fxMesa->type) {
         case GR_SSTTYPE_VOODOO:
@@ -408,6 +401,7 @@ fxMesaCreateContext(GLuint win,
              break;
         case GR_SSTTYPE_Voodoo4:
         case GR_SSTTYPE_Voodoo5:
+             /* number of SLI units and AA Samples per chip */
              if ((str = Glide->grGetRegistryOrEnvironmentStringExt("SSTH3_SLI_AA_CONFIGURATION")) != NULL) {
                 sliaa = atoi(str);
              }

@@ -37,9 +37,11 @@
 #include <glide.h>
 #include <g3ext.h>
 
-#define DEBUG_TRAP 0
+#ifndef FX_TRAP_GLIDE
+#define FX_TRAP_GLIDE 0
+#endif
 
-#if DEBUG_TRAP
+#if FX_TRAP_GLIDE
 /*
 ** rendering functions
 */
@@ -171,7 +173,7 @@ void FX_CALL trap_guFogGenerateExp (GrFog_t *fogtable, float density);
 void FX_CALL trap_guFogGenerateExp2 (GrFog_t *fogtable, float density);
 void FX_CALL trap_guFogGenerateLinear (GrFog_t *fogtable, float nearZ, float farZ);
 
-#ifndef DEBUG_TRAP_internal
+#ifndef FX_TRAP_GLIDE_internal
 /*
 ** rendering functions
 */
@@ -302,8 +304,8 @@ void FX_CALL trap_guFogGenerateLinear (GrFog_t *fogtable, float nearZ, float far
 #define guFogGenerateExp                trap_guFogGenerateExp
 #define guFogGenerateExp2               trap_guFogGenerateExp2
 #define guFogGenerateLinear             trap_guFogGenerateLinear
-#endif /* DEBUG_TRAP_internal */
-#endif /* DEBUG_TRAP */
+#endif /* FX_TRAP_GLIDE_internal */
+#endif /* FX_TRAP_GLIDE */
 
 
 

@@ -730,4 +730,8 @@ extern int TDFX_DEBUG;
 #define TDFX_DEBUG		0
 #endif
 
+/* dirty hacks */
+#define FX_RESCALE_BIG_TEXURES_HACK   1
+#define FX_COMPRESS_S3TC_AS_FXT1_HACK 0
+
 #endif

@@ -1362,7 +1362,7 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
         textureLevels++;
     } while ((textureSize >>= 0x1) & 0x7ff);
     ctx->Const.MaxTextureLevels = textureLevels;
-#if 1||FX_RESCALE_BIG_TEXURES
+#if FX_RESCALE_BIG_TEXURES_HACK
     fxMesa->textureMaxLod = textureLevels - 1;
     if ((env = getenv("MESA_FX_MAXLOD")) != NULL) {
        int maxLevels = atoi(env) + 1;

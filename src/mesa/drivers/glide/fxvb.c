@@ -481,9 +481,8 @@ void fxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
       if (newinputs & VERT_BIT_COLOR0)
 	 ind |= SETUP_RGBA;
       
-      if (newinputs & VERT_BIT_COLOR1) {
+      if (newinputs & VERT_BIT_COLOR1)
 	 ind |= SETUP_SPEC;
-      }
 
       if (newinputs & VERT_BIT_TEX0) 
 	 ind |= SETUP_TMU0;
