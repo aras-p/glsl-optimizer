@@ -13,14 +13,6 @@
 #include <math.h>
 #include <GL/glut.h>
 
-/* XXX temporary hack */
-#ifndef GL_PIXEL_PACK_BUFFER_EXT
-#define GL_PIXEL_PACK_BUFFER_EXT                        0x88EB
-#define GL_PIXEL_UNPACK_BUFFER_EXT                      0x88EC
-#define GL_PIXEL_PACK_BUFFER_BINDING_EXT                0x88ED
-#define GL_PIXEL_UNPACK_BUFFER_BINDING_EXT              0x88EF
-#endif
-
 #include "../util/readtex.c"  /* a hack, I know */
 
 #define IMAGE_FILE "../images/girl.rgb"
@@ -100,7 +92,7 @@ Display( void )
    PrintString("f = toggle front/back  s = toggle scale/bias  b = benchmark");
 
    glRasterPos2i(5, ImgHeight+40);
-   PrintString("GL_ARB_pixel_buffer_object test");
+   PrintString("GL_EXT_pixel_buffer_object test");
 
    /* draw original image */
    glRasterPos2i(APosX, 5);
