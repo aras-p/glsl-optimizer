@@ -230,6 +230,11 @@ struct intel_context
    __DRIscreenPrivate *driScreen;
    intelScreenPrivate *intelScreen; 
    drmI830Sarea *sarea; 
+
+   /**
+    * Configuration cache
+    */
+   driOptionCache optionCache;
 };
 
 

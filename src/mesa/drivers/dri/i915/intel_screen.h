@@ -30,7 +30,7 @@
 
 #include <sys/time.h>
 #include "dri_util.h"
-
+#include "xmlconfig.h"
 
 typedef struct {
    drm_handle_t handle;
@@ -76,6 +76,11 @@ typedef struct
 
    int irq_active;
    int allow_batchbuffer;
+
+   /**
+    * Configuration cache with default values for all contexts 
+    */
+   driOptionCache optionCache;
 } intelScreenPrivate;
 
 

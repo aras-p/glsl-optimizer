@@ -643,6 +643,22 @@ i830ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_COMPRESSED_RGBA_FXT1_3DFX:
      return &_mesa_texformat_rgba_fxt1;
 
+   case GL_RGB_S3TC:
+   case GL_RGB4_S3TC:
+   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+     return &_mesa_texformat_rgb_dxt1;
+
+   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+     return &_mesa_texformat_rgba_dxt1;
+
+   case GL_RGBA_S3TC:
+   case GL_RGBA4_S3TC:
+   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+     return &_mesa_texformat_rgba_dxt3;
+
+   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+      return &_mesa_texformat_rgba_dxt5;
+
    default:
       fprintf(stderr, "unexpected texture format in %s\n", __FUNCTION__);
       return NULL;

@@ -125,6 +125,25 @@ static GLboolean i830SetTexImages( i830ContextPtr i830,
      textureFormat = MAPSURF_COMPRESSED | MT_COMPRESS_FXT1;
      break;
 
+   case MESA_FORMAT_RGBA_DXT1:
+   case MESA_FORMAT_RGB_DXT1:
+     /* 
+      * DXTn pitches are Width/4 * blocksize in bytes 
+      * for DXT1: blocksize=8 so Width/4*8 = Width * 2 
+      * for DXT3/5: blocksize=16 so Width/4*16 = Width * 4
+      */
+     t->intel.texelBytes = 2;
+     textureFormat = (MAPSURF_COMPRESSED | MT_COMPRESS_DXT1);
+     break;
+   case MESA_FORMAT_RGBA_DXT3:
+     t->intel.texelBytes = 4;
+     textureFormat = (MAPSURF_COMPRESSED | MT_COMPRESS_DXT2_3);
+     break;
+   case MESA_FORMAT_RGBA_DXT5:
+     t->intel.texelBytes = 4;
+     textureFormat = (MAPSURF_COMPRESSED | MT_COMPRESS_DXT4_5);
+     break;
+
    default:
       fprintf(stderr, "%s: bad image format\n", __FUNCTION__);
       abort();

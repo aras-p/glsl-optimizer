@@ -159,6 +159,12 @@ DRI_CONF_OPT_BEGIN(no_neg_lod_bias,bool,def) \
         DRI_CONF_DESC(de,"Verbiete negativen Textur-LOD-Bias") \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_FORCE_S3TC_ENABLE(def) \
+DRI_CONF_OPT_BEGIN(force_s3tc_enable,bool,def) \
+        DRI_CONF_DESC(en,"enable s3tc even if software support is not available") \
+        DRI_CONF_DESC(de,"Benutze s3tc auch ohne Softwareunterstuetzung") \
+DRI_CONF_OPT_END
+
 #define DRI_CONF_COLOR_REDUCTION_ROUND 0
 #define DRI_CONF_COLOR_REDUCTION_DITHER 1
 #define DRI_CONF_COLOR_REDUCTION(def) \

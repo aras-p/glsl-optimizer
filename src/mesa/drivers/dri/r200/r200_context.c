@@ -62,7 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_vtxfmt.h"
 #include "r200_maos.h"
 
-#define DRIVER_DATE	"20040929"
+#define DRIVER_DATE	"20041007"
 
 #include "vblank.h"
 #include "utils.h"
@@ -401,6 +401,14 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    _math_matrix_set_identity( &rmesa->tmpmat );
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
+   if (rmesa->glCtx->Mesa_DXTn) {
+      _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
+      _mesa_enable_extension( ctx, "GL_S3_s3tc" );
+   }
+   else if (driQueryOptionb (&rmesa->optionCache, "force_s3tc_enable")) {
+      _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
+   }
+
    if (rmesa->r200Screen->drmSupportsCubeMaps)
       _mesa_enable_extension( ctx, "GL_ARB_texture_cube_map" );
    if (rmesa->r200Screen->drmSupportsBlendColor) {

@@ -53,6 +53,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R200_TXFORMAT_AL88      R200_TXFORMAT_AI88
 #define R200_TXFORMAT_YCBCR     R200_TXFORMAT_YVYU422
 #define R200_TXFORMAT_YCBCR_REV R200_TXFORMAT_VYUY422
+#define R200_TXFORMAT_RGB_DXT1  R200_TXFORMAT_DXT1
+#define R200_TXFORMAT_RGBA_DXT1 R200_TXFORMAT_DXT1
+#define R200_TXFORMAT_RGBA_DXT3 R200_TXFORMAT_DXT23
+#define R200_TXFORMAT_RGBA_DXT5 R200_TXFORMAT_DXT45
 
 #define _COLOR(f) \
     [ MESA_FORMAT_ ## f ] = { R200_TXFORMAT_ ## f, 0 }
@@ -66,7 +70,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     [ MESA_FORMAT_ ## f ] = { R200_TXFORMAT_ ## f, R200_YUV_TO_RGB }
 #define _INVALID(f) \
     [ MESA_FORMAT_ ## f ] = { 0xffffffff, 0 }
-#define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_YCBCR_REV) \
+#define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_RGBA_DXT5) \
 			     && (tx_table[f].format != 0xffffffff) )
 
 static const struct {
@@ -93,6 +97,12 @@ tx_table[] =
    _INVALID(CI8),
    _YUV(YCBCR),
    _YUV(YCBCR_REV),
+   _INVALID(RGB_FXT1),
+   _INVALID(RGBA_FXT1),
+   _COLOR(RGB_DXT1),
+   _ALPHA(RGBA_DXT1),
+   _ALPHA(RGBA_DXT3),
+   _ALPHA(RGBA_DXT5),
 };
 
 #undef _COLOR
@@ -165,7 +175,24 @@ static void r200SetTexImages( r200ContextPtr rmesa,
 
       /* find image size in bytes */
       if (texImage->IsCompressed) {
-         size = texImage->CompressedSize;
+      /* need to calculate the size AFTER padding even though the texture is
+         submitted without padding.
+         Only handle pot textures currently - don't know if npot is even possible,
+         size calculation would certainly need (trivial) adjustments.
+         Align (and later pad) to 32byte, not sure what that 64byte blit width is
+         good for? */
+         if ((t->pp_txformat & R200_TXFORMAT_FORMAT_MASK) == R200_TXFORMAT_DXT1) {
+            /* RGB_DXT1/RGBA_DXT1, 8 bytes per block */
+            if ((texImage->Width + 3) < 8) /* width one block */
+               size = texImage->CompressedSize * 4;
+            else if ((texImage->Width + 3) < 16)
+               size = texImage->CompressedSize * 2;
+            else size = texImage->CompressedSize;
+         }
+         else /* DXT3/5, 16 bytes per block */
+            if ((texImage->Width + 3) < 8)
+               size = texImage->CompressedSize * 2;
+            else size = texImage->CompressedSize;
       }
       else if (tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
          size = ((texImage->Width * texImage->TexFormat->TexelBytes + 63)

@@ -73,7 +73,7 @@ int I830_DEBUG = (0);
  * Mesa's Driver Functions
  ***************************************/
 
-#define DRIVER_DATE                     "20040506"
+#define DRIVER_DATE                     "20041007"
 
 
 static const GLubyte *i830DDGetString( GLcontext *ctx, GLenum name )
@@ -371,6 +371,14 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
    _math_matrix_ctr (&imesa->ViewportMatrix);
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
+
+   if (imesa->glCtx->Mesa_DXTn) {
+     _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
+     _mesa_enable_extension( ctx, "GL_S3_s3tc" );
+   }
+   else if (driQueryOptionb (&imesa->optionCache, "force_s3tc_enable")) {
+     _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
+   }
 
    _mesa_enable_extension( ctx, "GL_3DFX_texture_compression_FXT1" );
 

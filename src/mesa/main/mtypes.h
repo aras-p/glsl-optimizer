@@ -2455,6 +2455,9 @@ struct __GLcontextRec {
    /** Dither disable via MESA_NO_DITHER env var */
    GLboolean NoDither;
 
+   /** software compression/decompression supported or not */
+   GLboolean Mesa_DXTn;
+
    /** Core tnl module support */
    struct gl_tnl_module TnlModule;
 

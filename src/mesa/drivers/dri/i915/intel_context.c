@@ -72,7 +72,7 @@ int prevLockLine;
  * Mesa's Driver Functions
  ***************************************/
 
-#define DRIVER_DATE                     "20040919"
+#define DRIVER_DATE                     "20041007"
 
 const GLubyte *intelGetString( GLcontext *ctx, GLenum name )
 {
@@ -353,6 +353,14 @@ GLboolean intelInitContext( intelContextPtr intel,
    _math_matrix_ctr (&intel->ViewportMatrix);
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
+
+   if (intel->ctx.Mesa_DXTn) {
+     _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
+     _mesa_enable_extension( ctx, "GL_S3_s3tc" );
+   }
+   else if (driQueryOptionb (&intelScreen->optionCache, "force_s3tc_enable")) {
+     _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
+   }
 
 /*    driInitTextureObjects( ctx, & intel->swapped, */
 /* 			  DRI_TEXMGR_DO_TEXTURE_1D | */

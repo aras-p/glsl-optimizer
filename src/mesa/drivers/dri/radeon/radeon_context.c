@@ -62,7 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_vtxfmt.h"
 #include "radeon_maos.h"
 
-#define DRIVER_DATE	"20040929"
+#define DRIVER_DATE	"20041007"
 
 #include "vblank.h"
 #include "utils.h"
@@ -397,6 +397,13 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    _math_matrix_set_identity( &rmesa->tmpmat );
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
+   if (rmesa->glCtx->Mesa_DXTn) {
+      _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
+      _mesa_enable_extension( ctx, "GL_S3_s3tc" );
+   }
+   else if (driQueryOptionb (&rmesa->optionCache, "force_s3tc_enable")) {
+      _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
+   }
 
    if (rmesa->dri.drmMinor >= 9)
       _mesa_enable_extension( ctx, "GL_NV_texture_rectangle");

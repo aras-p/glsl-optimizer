@@ -382,6 +382,22 @@ radeonChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
       else
          return &_mesa_texformat_ycbcr_rev;
 
+   case GL_RGB_S3TC:
+   case GL_RGB4_S3TC:
+   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+      return &_mesa_texformat_rgb_dxt1;
+
+   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+      return &_mesa_texformat_rgba_dxt1;
+
+   case GL_RGBA_S3TC:
+   case GL_RGBA4_S3TC:
+   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+      return &_mesa_texformat_rgba_dxt3;
+
+   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+      return &_mesa_texformat_rgba_dxt5;
+
    default:
       _mesa_problem(ctx, "unexpected texture format in %s", __FUNCTION__);
       return NULL;
@@ -544,7 +560,94 @@ static void radeonTexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
    t->dirty_images[face] |= (1 << level);
 }
 
+static void radeonCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
+                              GLint internalFormat,
+                              GLint width, GLint height, GLint border,
+                              GLsizei imageSize, const GLvoid *data,
+                              struct gl_texture_object *texObj,
+                              struct gl_texture_image *texImage )
+{
+   driTextureObject * t = (driTextureObject *) texObj->DriverData;
+   GLuint face;
 
+   /* which cube face or ordinary 2D image */
+   switch (target) {
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+      face = (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+      ASSERT(face < 6);
+      break;
+   default:
+      face = 0;
+   }
+
+   if ( t != NULL ) {
+      driSwapOutTextureObject( t );
+   }
+   else {
+      t = (driTextureObject *) radeonAllocTexObj( texObj );
+      if (!t) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
+         return;
+      }
+   }
+
+   /* Note, this will call ChooseTextureFormat */
+   _mesa_store_compressed_teximage2d(ctx, target, level, internalFormat, width,
+                                 height, border, imageSize, data, texObj, texImage);
+
+   t->dirty_images[face] |= (1 << level);
+}
+
+
+static void radeonCompressedTexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
+                                 GLint xoffset, GLint yoffset,
+                                 GLsizei width, GLsizei height,
+                                 GLenum format,
+                                 GLsizei imageSize, const GLvoid *data,
+                                 struct gl_texture_object *texObj,
+                                 struct gl_texture_image *texImage )
+{
+   driTextureObject * t = (driTextureObject *) texObj->DriverData;
+   GLuint face;
+
+
+   /* which cube face or ordinary 2D image */
+   switch (target) {
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+      face = (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+      ASSERT(face < 6);
+      break;
+   default:
+      face = 0;
+   }
+
+   assert( t ); /* this _should_ be true */
+   if ( t ) {
+      driSwapOutTextureObject( t );
+   }
+   else {
+      t = (driTextureObject *) radeonAllocTexObj( texObj );
+      if (!t) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage2D");
+         return;
+      }
+   }
+
+   _mesa_store_compressed_texsubimage2d(ctx, target, level, xoffset, yoffset, width,
+                                 height, format, imageSize, data, texObj, texImage);
+
+   t->dirty_images[face] |= (1 << level);
+}
 
 #define SCALED_FLOAT_TO_BYTE( x, scale ) \
 		(((GLuint)((255.0F / scale) * (x))) / 2)
@@ -755,6 +858,9 @@ void radeonInitTextureFuncs( struct dd_function_table *functions )
    functions->TexEnv			= radeonTexEnv;
    functions->TexParameter		= radeonTexParameter;
    functions->TexGen			= radeonTexGen;
+
+   functions->CompressedTexImage2D	= radeonCompressedTexImage2D;
+   functions->CompressedTexSubImage2D	= radeonCompressedTexSubImage2D;
 
    driInitTextureFormats();
 }

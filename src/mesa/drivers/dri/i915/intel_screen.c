@@ -30,6 +30,7 @@
 #include "matrix.h"
 #include "simple_list.h"
 #include "utils.h"
+#include "xmlpool.h"
 
 
 #include "intel_screen.h"
@@ -43,8 +44,13 @@
 
 #include "i830_dri.h"
 
-const char __driConfigOptions[] = { 0 };
-const GLuint __driNConfigOptions = 0;
+const char __driConfigOptions[] =
+DRI_CONF_BEGIN
+    DRI_CONF_SECTION_PERFORMANCE
+       DRI_CONF_FORCE_S3TC_ENABLE(false)
+    DRI_CONF_SECTION_END
+DRI_CONF_END;
+const GLuint __driNConfigOptions = 1;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
@@ -78,6 +84,9 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
       fprintf(stderr,"\nERROR!  Allocating private area failed\n");
       return GL_FALSE;
    }
+   /* parse information in __driConfigOptions */
+   driParseOptionInfo (&intelScreen->optionCache,
+		       __driConfigOptions, __driNConfigOptions);
 
    intelScreen->driScrnPriv = sPriv;
    sPriv->private = (void *)intelScreen;

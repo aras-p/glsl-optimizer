@@ -257,10 +257,21 @@ static void uploadSubImage( radeonContextPtr rmesa, radeonTexObjPtr t,
       tex.height = imageHeight;
    }
    else {
-      tex.width = imageWidth; /* compressed */
-      tex.height = imageHeight;
-      if (tex.height < 4)
-         tex.height = 4;
+      /* In case of for instance 8x8 texture (2x2 dxt blocks), padding after the first two blocks is
+         needed (only with dxt1 since 2 dxt3/dxt5 blocks already use 32 Byte). */
+      /* set tex.height to 1/4 since 1 "macropixel" (dxt-block) has 4 real pixels. Needed
+         so the kernel module reads the right amount of data. */
+      tex.height = (imageHeight + 3) / 4;
+      tex.width = (imageWidth + 3) / 4;
+      switch (t->pp_txformat & RADEON_TXFORMAT_FORMAT_MASK) {
+      case RADEON_TXFORMAT_DXT1:
+         tex.width *= 8;
+         break;
+      case RADEON_TXFORMAT_DXT23:
+      case RADEON_TXFORMAT_DXT45:
+         tex.width *= 16;
+         break;
+      }
    }
    tex.image = &tmp;
 

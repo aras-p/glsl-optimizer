@@ -420,6 +420,22 @@ r200ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
       else
          return &_mesa_texformat_ycbcr_rev;
 
+   case GL_RGB_S3TC:
+   case GL_RGB4_S3TC:
+   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+      return &_mesa_texformat_rgb_dxt1;
+
+   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+      return &_mesa_texformat_rgba_dxt1;
+
+   case GL_RGBA_S3TC:
+   case GL_RGBA4_S3TC:
+   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+      return &_mesa_texformat_rgba_dxt3;
+
+   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+      return &_mesa_texformat_rgba_dxt5;
+
    default:
       _mesa_problem(ctx,
          "unexpected internalFormat 0x%x in r200ChooseTextureFormat",
@@ -705,6 +721,116 @@ static void r200TexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
    _mesa_store_texsubimage2d(ctx, target, level, xoffset, yoffset, width,
 			     height, format, type, pixels, packing, texObj,
 			     texImage);
+
+   t->dirty_images[face] |= (1 << level);
+}
+
+
+static void r200CompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
+                              GLint internalFormat,
+                              GLint width, GLint height, GLint border,
+                              GLsizei imageSize, const GLvoid *data,
+                              struct gl_texture_object *texObj,
+                              struct gl_texture_image *texImage )
+{
+   driTextureObject * t = (driTextureObject *) texObj->DriverData;
+   GLuint face;
+
+   /* which cube face or ordinary 2D image */
+   switch (target) {
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+      face = (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+      ASSERT(face < 6);
+      break;
+   default:
+      face = 0;
+   }
+
+   if ( t != NULL ) {
+      driSwapOutTextureObject( t );
+   }
+   else {
+      t = (driTextureObject *) r200AllocTexObj( texObj );
+      if (!t) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
+         return;
+      }
+   }
+
+   texImage->IsClientData = GL_FALSE;
+/* can't call this, different parameters. Would never evaluate to true anyway currently
+   if (r200ValidateClientStorage( ctx, target, 
+				  internalFormat,
+				  width, height,
+				  format, type, pixels,
+				  packing, texObj, texImage)) {
+      if (R200_DEBUG & DEBUG_TEXTURE)
+	 fprintf(stderr, "%s: Using client storage\n", __FUNCTION__);
+   }
+   else */{
+      if (R200_DEBUG & DEBUG_TEXTURE)
+	 fprintf(stderr, "%s: Using normal storage\n", __FUNCTION__);
+
+      /* Normal path: copy (to cached memory) and eventually upload
+       * via another copy to GART memory and then a blit...  Could
+       * eliminate one copy by going straight to (permanent) GART.
+       *
+       * Note, this will call r200ChooseTextureFormat.
+       */
+      _mesa_store_compressed_teximage2d(ctx, target, level, internalFormat, width,
+                                 height, border, imageSize, data, texObj, texImage);
+
+      t->dirty_images[face] |= (1 << level);
+   }
+}
+
+
+static void r200CompressedTexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
+                                 GLint xoffset, GLint yoffset,
+                                 GLsizei width, GLsizei height,
+                                 GLenum format,
+                                 GLsizei imageSize, const GLvoid *data,
+                                 struct gl_texture_object *texObj,
+                                 struct gl_texture_image *texImage )
+{
+   driTextureObject * t = (driTextureObject *) texObj->DriverData;
+   GLuint face;
+
+
+   /* which cube face or ordinary 2D image */
+   switch (target) {
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+      face = (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+      ASSERT(face < 6);
+      break;
+   default:
+      face = 0;
+   }
+
+   assert( t ); /* this _should_ be true */
+   if ( t ) {
+      driSwapOutTextureObject( t );
+   }
+   else {
+      t = (driTextureObject *) r200AllocTexObj( texObj );
+      if (!t) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage2D");
+         return;
+      }
+   }
+
+   _mesa_store_compressed_texsubimage2d(ctx, target, level, xoffset, yoffset, width,
+                            height, format, imageSize, data, texObj, texImage);
 
    t->dirty_images[face] |= (1 << level);
 }
@@ -1035,6 +1161,9 @@ void r200InitTextureFuncs( struct dd_function_table *functions )
    functions->TexEnv			= r200TexEnv;
    functions->TexParameter		= r200TexParameter;
    functions->TexGen			= r200TexGen;
+
+   functions->CompressedTexImage2D	= r200CompressedTexImage2D;
+   functions->CompressedTexSubImage2D	= r200CompressedTexSubImage2D;
 
    driInitTextureFormats();
 
