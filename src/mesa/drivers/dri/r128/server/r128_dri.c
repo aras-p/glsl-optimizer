@@ -43,7 +43,8 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <linux/pci_ids.h>
+// Fix this to use kernel pci_ids.h when all of these IDs make it into the kernel 
+#include "pci_ids.h"
 
 #include "driver.h"
 #include "drm.h"

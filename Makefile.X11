@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.80 2003/08/22 20:11:43 brianp Exp $
+# $Id: Makefile.X11,v 1.81 2003/08/24 04:44:23 jonsmirl Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -234,6 +234,14 @@ linux-solo:
 	if [ -d src/glx/mini ] ; then touch src/glx/mini/depend  ; fi
 	if [ -d src/glu/mini ] ; then touch src/glu/mini/depend  ; fi
 	if [ -d src/glut/mini ] ; then touch src/glut/mini/depend  ; fi
+	if [ -d src/mesa/drivers/dri/r200 ] ; then touch src/mesa/drivers/dri/r200/depend ; fi
+	if [ -d src/mesa/drivers/dri/r128 ] ; then touch src/mesa/drivers/dri/r128/depend ; fi
+	if [ -d src/mesa/drivers/dri/radeon ] ; then touch src/mesa/drivers/dri/radeon/depend ; fi
+	if [ -d src/mesa/drivers/dri/mga ] ; then touch src/mesa/drivers/dri/mga/depend ; fi
+	if [ -d src/mesa/drivers/dri/fb ] ; then touch src/mesa/drivers/dri/fb/depend ; fi
+	if [ -d src/glut/mini ] ; then touch src/glut/mini/depend ; fi
+	if [ -d progs/miniglx ] ; then touch progs/miniglx/depend ; fi
+	if [ -d progs/tests ] ; then touch progs/tests/depend ; fi
 	if [ -d src/mesa      ] ; then cd src/mesa      ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src/mesa/drivers/dri/r200 ] ; then cd src/mesa/drivers/dri/r200     ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src/mesa/drivers/dri/r128 ] ; then cd src/mesa/drivers/dri/r128     ; $(MAKE) -f Makefile.X11 $@ ; fi
