@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.25 2001/07/26 16:04:10 brianp Exp $ */
+/* $Id: t_imm_dlist.c,v 1.26 2001/07/27 19:09:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -561,9 +561,9 @@ static void loopback_compiled_cassette( GLcontext *ctx, struct immediate *IM )
    GLuint p, length, prim = 0;
    
    if (orflag & VERT_OBJ_234)
-      vertex = (void (*)(const GLfloat *)) glVertex4fv;
+      vertex = (void (GLAPIENTRY *)(const GLfloat *)) glVertex4fv;
    else
-      vertex = (void (*)(const GLfloat *)) glVertex3fv;
+      vertex = (void (GLAPIENTRY *)(const GLfloat *)) glVertex3fv;
    
    if (orflag & VERT_TEX_ANY) {
       for (j = 0 ; j < ctx->Const.MaxTextureUnits ; j++) {
