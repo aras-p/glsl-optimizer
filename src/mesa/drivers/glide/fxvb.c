@@ -68,13 +68,11 @@ static void copy_pv2( GLcontext *ctx, GLuint edst, GLuint esrc )
    *(GLuint *)&dst->pspec = *(GLuint *)&src->pspec;
 }
 
-typedef void (*emit_func)( GLcontext *, GLuint, GLuint, void * );
-
 static struct {
-   emit_func	        emit;
-   tnl_copy_pv_func		copy_pv;
-   tnl_interp_func		interp;
-   GLboolean           (*check_tex_sizes)( GLcontext *ctx );
+   void               (*emit)( GLcontext *, GLuint, GLuint, void * );
+   tnl_copy_pv_func	copy_pv;
+   tnl_interp_func	interp;
+   GLboolean          (*check_tex_sizes)( GLcontext *ctx );
    GLuint               vertex_format;
 } setup_tab[MAX_SETUP];
 
@@ -216,6 +214,93 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
 #define TAG(x) x##_2wgpt0t1a
 #include "fxvbtmp.h"
 
+/* fog { */
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_FOGC)
+#define TAG(x) x##_wgf
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_FOGC)
+#define TAG(x) x##_wgt0f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_TMU1|SETUP_FOGC)
+#define TAG(x) x##_wgt0t1f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_PTEX|SETUP_FOGC)
+#define TAG(x) x##_wgpt0f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_TMU1|\
+             SETUP_PTEX|SETUP_FOGC)
+#define TAG(x) x##_wgpt0t1f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_wgaf
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_wgt0af
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_TMU1|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_wgt0t1af
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_PTEX|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_wgpt0af
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_TMU1|\
+             SETUP_PTEX|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_wgpt0t1af
+#include "fxvbtmp.h"
+
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_FOGC)
+#define TAG(x) x##_2wgf
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_FOGC)
+#define TAG(x) x##_2wgt0f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_TMU1|SETUP_FOGC)
+#define TAG(x) x##_2wgt0t1f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_PTEX|SETUP_FOGC)
+#define TAG(x) x##_2wgpt0f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_TMU1|\
+             SETUP_PTEX|SETUP_FOGC)
+#define TAG(x) x##_2wgpt0t1f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_2wgaf
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_2wgt0af
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_TMU1|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_2wgt0t1af
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_PTEX|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_2wgpt0af
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_TMU1|\
+             SETUP_PTEX|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_2wgpt0t1af
+#include "fxvbtmp.h"
+/* fog } */
+
 
 /* Snapping for voodoo-1
  */
@@ -312,6 +397,101 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
 #define TAG(x) x##_2wsgpt0t1a
 #include "fxvbtmp.h"
 
+/* fog { */
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_FOGC)
+#define TAG(x) x##_wsgf
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|SETUP_FOGC)
+#define TAG(x) x##_wsgt0f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|\
+             SETUP_TMU1|SETUP_FOGC)
+#define TAG(x) x##_wsgt0t1f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|\
+             SETUP_PTEX|SETUP_FOGC)
+#define TAG(x) x##_wsgpt0f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|\
+	     SETUP_TMU1|SETUP_PTEX|SETUP_FOGC)
+#define TAG(x) x##_wsgpt0t1f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_wsgaf
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_wsgt0af
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|\
+             SETUP_TMU1|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_wsgt0t1af
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|\
+             SETUP_PTEX|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_wsgpt0af
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|\
+	     SETUP_TMU1|SETUP_PTEX|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_wsgpt0t1af
+#include "fxvbtmp.h"
+
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_FOGC)
+#define TAG(x) x##_2wsgf
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_FOGC)
+#define TAG(x) x##_2wsgt0f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|\
+             SETUP_TMU1|SETUP_FOGC)
+#define TAG(x) x##_2wsgt0t1f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|\
+             SETUP_PTEX|SETUP_FOGC)
+#define TAG(x) x##_2wsgpt0f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|\
+	     SETUP_TMU1|SETUP_PTEX|SETUP_FOGC)
+#define TAG(x) x##_2wsgpt0t1f
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_2wsgaf
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_2wsgt0af
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|\
+             SETUP_TMU1|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_2wsgt0t1af
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|\
+             SETUP_PTEX|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_2wsgpt0af
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|\
+	     SETUP_TMU1|SETUP_PTEX|SETUP_PSIZ|SETUP_FOGC)
+#define TAG(x) x##_2wsgpt0t1af
+#include "fxvbtmp.h"
+/* fog } */
+
 
 /* Vertex repair (multipass rendering)
  */
@@ -380,6 +560,26 @@ static void init_setup_tab( void )
     init_2wgt0t1a();
     init_2wgpt0a();
     init_2wgpt0t1a();
+   init_wgf();
+   init_wgt0f();
+   init_wgt0t1f();
+   init_wgpt0f();
+   init_wgpt0t1f();
+   init_wgaf();
+   init_wgt0af();
+   init_wgt0t1af();
+   init_wgpt0af();
+   init_wgpt0t1af();
+    init_2wgf();
+    init_2wgt0f();
+    init_2wgt0t1f();
+    init_2wgpt0f();
+    init_2wgpt0t1f();
+    init_2wgaf();
+    init_2wgt0af();
+    init_2wgt0t1af();
+    init_2wgpt0af();
+    init_2wgpt0t1af();
 
    init_wsg();
    init_wsgt0();
@@ -401,6 +601,26 @@ static void init_setup_tab( void )
     init_2wsgt0t1a();
     init_2wsgpt0a();
     init_2wsgpt0t1a();
+   init_wsgf();
+   init_wsgt0f();
+   init_wsgt0t1f();
+   init_wsgpt0f();
+   init_wsgpt0t1f();
+   init_wsgaf();
+   init_wsgt0af();
+   init_wsgt0t1af();
+   init_wsgpt0af();
+   init_wsgpt0t1af();
+    init_2wsgf();
+    init_2wsgt0f();
+    init_2wsgt0t1f();
+    init_2wsgpt0f();
+    init_2wsgpt0t1f();
+    init_2wsgaf();
+    init_2wsgt0af();
+    init_2wsgt0t1af();
+    init_2wsgpt0af();
+    init_2wsgpt0t1af();
 
    init_g();
    init_t0();
@@ -417,7 +637,7 @@ static void init_setup_tab( void )
 
 void fxPrintSetupFlags(char *msg, GLuint flags )
 {
-   fprintf(stderr, "%s(%x): %s%s%s%s%s%s%s\n",
+   fprintf(stderr, "%s(%x): %s%s%s%s%s%s%s%s\n",
 	   msg,
 	   (int)flags,
 	   (flags & SETUP_XYZW)     ? " xyzw," : "", 
@@ -426,7 +646,8 @@ void fxPrintSetupFlags(char *msg, GLuint flags )
 	   (flags & SETUP_TMU0)     ? " tex-0," : "",
 	   (flags & SETUP_TMU1)     ? " tex-1," : "",
 	   (flags & SETUP_PSIZ)     ? " psiz," : "",
-	   (flags & SETUP_SPEC)     ? " spec," : "");
+	   (flags & SETUP_SPEC)     ? " spec," : "",
+	   (flags & SETUP_FOGC)     ? " fog," : "");
 }
 
 
@@ -484,6 +705,9 @@ void fxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
       if (newinputs & VERT_BIT_COLOR1)
 	 ind |= SETUP_SPEC;
 
+      if (newinputs & VERT_BIT_FOG)
+	 ind |= SETUP_FOGC;
+
       if (newinputs & VERT_BIT_TEX0) 
 	 ind |= SETUP_TMU0;
 
@@ -532,6 +756,10 @@ void fxChooseVertexState( GLcontext *ctx )
 
    if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
       ind |= SETUP_SPEC;
+   }
+
+   if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) {
+      ind |= SETUP_FOGC;
    }
 
    fxMesa->SetupIndex = ind;

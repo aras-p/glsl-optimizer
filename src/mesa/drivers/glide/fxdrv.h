@@ -104,7 +104,8 @@
 #define SETUP_PTEX 0x20
 #define SETUP_PSIZ 0x40
 #define SETUP_SPEC 0x80
-#define MAX_SETUP  0x100
+#define SETUP_FOGC 0x100
+#define MAX_SETUP  0x200
 
 
 #define FX_NUM_TMU 2
@@ -322,7 +323,8 @@ typedef struct
    GrAlphaBlendFnc_t blendDstFuncRGB;
    GrAlphaBlendFnc_t blendSrcFuncAlpha;
    GrAlphaBlendFnc_t blendDstFuncAlpha;
-   GrAlphaBlendOp_t blendEq;
+   GrAlphaBlendOp_t blendEqRGB;
+   GrAlphaBlendOp_t blendEqAlpha;
 
    /* Depth test */
 
@@ -727,6 +729,9 @@ void fxSetupTexture (GLcontext *ctx);
 extern GLuint fx_check_IsInHardware(GLcontext *ctx);
 
 /* run-time debugging */
+#ifndef FX_DEBUG
+#define FX_DEBUG 0
+#endif
 #if FX_DEBUG
 extern int TDFX_DEBUG;
 #else

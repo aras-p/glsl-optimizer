@@ -1250,7 +1250,7 @@ static const struct tnl_pipeline_stage *fx_pipeline[] = {
    &_tnl_vertex_transform_stage,	/* TODO: Add the fastpath here */
    &_tnl_normal_transform_stage,
    &_tnl_lighting_stage,
-   /*&_tnl_fog_coordinate_stage,*/	/* TODO: Omit fog stage ZZZ ZZZ ZZZ */
+   &_tnl_fog_coordinate_stage,
    &_tnl_texgen_stage,
    &_tnl_texture_transform_stage,
    &_tnl_point_attenuation_stage,
@@ -1293,7 +1293,8 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    fxMesa->unitsState.blendDstFuncRGB = GR_BLEND_ZERO;
    fxMesa->unitsState.blendSrcFuncAlpha = GR_BLEND_ONE;
    fxMesa->unitsState.blendDstFuncAlpha = GR_BLEND_ZERO;
-   fxMesa->unitsState.blendEq = GR_BLEND_OP_ADD;
+   fxMesa->unitsState.blendEqRGB = GR_BLEND_OP_ADD;
+   fxMesa->unitsState.blendEqAlpha = GR_BLEND_OP_ADD;
 
    fxMesa->unitsState.depthTestEnabled = GL_FALSE;
    fxMesa->unitsState.depthMask = GL_TRUE;
@@ -1482,12 +1483,14 @@ fxDDInitExtensions(GLcontext * ctx)
     * 3) since NCC is not an OpenGL standard (as opposed to FXT1/DXTC), we
     *    can't use precompressed textures!
     */
-   _mesa_enable_extension(ctx, "GL_ARB_texture_compression");
    if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
+      _mesa_enable_extension(ctx, "GL_ARB_texture_compression");
       _mesa_enable_extension(ctx, "GL_3DFX_texture_compression_FXT1");
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
       _mesa_enable_extension(ctx, "GL_S3_s3tc");
       _mesa_enable_extension(ctx, "GL_NV_blend_square");
+   } else if (fxMesa->HaveTexus2) {
+      _mesa_enable_extension(ctx, "GL_ARB_texture_compression");
    }
 
    if (fxMesa->HaveCmbExt) {
@@ -1496,10 +1499,15 @@ fxDDInitExtensions(GLcontext * ctx)
 
    if (fxMesa->HavePixExt) {
       _mesa_enable_extension(ctx, "GL_EXT_blend_subtract");
+      _mesa_enable_extension(ctx, "GL_EXT_blend_equation_separate");
    }
 
    if (fxMesa->HaveMirExt) {
       _mesa_enable_extension(ctx, "GL_ARB_texture_mirrored_repeat");
+   }
+
+   if (fxMesa->type >= GR_SSTTYPE_Voodoo2) {
+      _mesa_enable_extension(ctx, "GL_EXT_fog_coord");
    }
 
    /* core-level extensions */
@@ -1545,10 +1553,13 @@ fx_check_IsInHardware(GLcontext * ctx)
    }
 
    if (ctx->Color.BlendEnabled) {
-      if (ctx->Color.BlendEquationRGB != GL_FUNC_ADD) {
+      if ((ctx->Color.BlendEquationRGB != GL_FUNC_ADD) ||
+          (ctx->Color.BlendEquationA != GL_FUNC_ADD)) {
          if (!fxMesa->HavePixExt ||
              ((ctx->Color.BlendEquationRGB != GL_FUNC_SUBTRACT) &&
-              (ctx->Color.BlendEquationRGB != GL_FUNC_REVERSE_SUBTRACT))) {
+              (ctx->Color.BlendEquationRGB != GL_FUNC_REVERSE_SUBTRACT)) ||
+             ((ctx->Color.BlendEquationA != GL_FUNC_SUBTRACT) &&
+              (ctx->Color.BlendEquationA != GL_FUNC_REVERSE_SUBTRACT))) {
             return FX_FALLBACK_BLEND;
          }
       }

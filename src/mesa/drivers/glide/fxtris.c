@@ -238,17 +238,6 @@ static void fx_print_vertex( GLcontext *ctx, const GrVertex *v )
  * rendering.  These functions are only used when mixed-mode rendering
  * is occurring.
  */
-static void fx_draw_quad( fxMesaContext fxMesa,
-			  GrVertex *v0,
-			  GrVertex *v1,
-			  GrVertex *v2,
-			  GrVertex *v3 )
-{
-   BEGIN_CLIP_LOOP();
-   QUAD( v0, v1, v2, v3 );
-   END_CLIP_LOOP();
-}
-
 static void fx_draw_triangle( fxMesaContext fxMesa,
 				GrVertex *v0,
 				GrVertex *v1,
@@ -404,10 +393,10 @@ static void fx_draw_point_wide_aa ( fxMesaContext fxMesa,
 #define FX_MAX_TRIFUNC     0x20
 
 static struct {
-   tnl_points_func	        points;
-   tnl_line_func		line;
+   tnl_points_func	points;
+   tnl_line_func	line;
    tnl_triangle_func	triangle;
-   tnl_quad_func		quad;
+   tnl_quad_func	quad;
 } rast_tab[FX_MAX_TRIFUNC];
 
 #define DO_FALLBACK (IND & FX_FALLBACK_BIT)
@@ -422,7 +411,7 @@ static struct {
 #define DO_FULL_QUAD 1
 
 #define HAVE_RGBA   1
-#define HAVE_SPEC   1 /* [dBorca] investigate overhead !!! */
+#define HAVE_SPEC   1
 #define HAVE_HW_FLATSHADE 0
 #define HAVE_BACK_COLORS  0
 #define VERTEX GrVertex
@@ -1027,7 +1016,16 @@ static void (*fx_render_tab_verts[GL_POLYGON+2])(GLcontext *,
    grDrawTriangle( VERT(v0), VERT(v1), VERT(v2) )
 
 #define RENDER_QUAD( v0, v1, v2, v3 ) \
-   fx_draw_quad( fxMesa, VERT(v0), VERT(v1), VERT(v2), VERT(v3) )
+   do {	\
+      GrVertex *_v_[4];	\
+      _v_[0] = VERT(v3);\
+      _v_[1] = VERT(v0);\
+      _v_[2] = VERT(v1);\
+      _v_[3] = VERT(v2);\
+      grDrawVertexArray(GR_TRIANGLE_FAN, 4, _v_);\
+      /*grDrawTriangle( VERT(v0), VERT(v1), VERT(v3) );*/\
+      /*grDrawTriangle( VERT(v1), VERT(v2), VERT(v3) );*/\
+   } while (0)
 
 #define INIT(x) fxRenderPrimitive( ctx, x )
 

@@ -45,7 +45,7 @@
 #include "drivers/common/driverfuncs.h"
 
 #ifndef TDFX_DEBUG
-int TDFX_DEBUG = (0 
+int TDFX_DEBUG = (0
 /*		  | VERBOSE_VARRAY */
 /*		  | VERBOSE_TEXTURE */
 /*		  | VERBOSE_IMMEDIATE */

@@ -48,6 +48,8 @@ static void TAG(emit)( GLcontext *ctx,
    GLuint proj_stride = VB->NdcPtr->stride;
    GLfloat (*psize)[4];
    GLuint psize_stride;
+   GLfloat (*fog)[4];
+   GLuint fog_stride;
    GrVertex *v = (GrVertex *)dest;
    GLfloat u0scale,v0scale,u1scale,v1scale;
    const GLubyte *mask = VB->ClipMask;
@@ -88,6 +90,11 @@ static void TAG(emit)( GLcontext *ctx,
       spec_stride = VB->SecondaryColorPtr[0]->stride;
    }
 
+   if (IND & SETUP_FOGC) {
+      fog = VB->FogCoordPtr->data;
+      fog_stride = VB->FogCoordPtr->stride;
+   }
+
    if (start) {
       proj =  (GLfloat (*)[4])((GLubyte *)proj + start * proj_stride);
       if (IND & SETUP_PSIZ)
@@ -100,6 +107,8 @@ static void TAG(emit)( GLcontext *ctx,
 	 STRIDE_4F(col, start * col_stride);
       if (IND & SETUP_SPEC)
 	 STRIDE_4F(spec, start * spec_stride);
+      if (IND & SETUP_FOGC)
+	 fog =  (GLfloat (*)[4])((GLubyte *)fog + start * fog_stride);
    }
 
    for (i=start; i < end; i++, v++) {
@@ -151,6 +160,10 @@ static void TAG(emit)( GLcontext *ctx,
 	 UNCLAMPED_FLOAT_TO_UBYTE(v->pspec[1], spec[0][1]);
 	 UNCLAMPED_FLOAT_TO_UBYTE(v->pspec[0], spec[0][2]);
 	 STRIDE_4F(spec, spec_stride);
+      }
+      if (IND & SETUP_FOGC) {
+         v->fog = CLAMP(fog[0][0], 0.0f, 1.0f);
+	 fog =  (GLfloat (*)[4])((GLubyte *)fog + fog_stride);
       }
       if (IND & SETUP_TMU0) {
 	 GLfloat w = v->oow;
@@ -249,6 +262,10 @@ static void TAG(interp)( GLcontext *ctx,
       INTERP_UB( t, dst->pspec[0], out->pspec[0], in->pspec[0] );
       INTERP_UB( t, dst->pspec[1], out->pspec[1], in->pspec[1] );
       INTERP_UB( t, dst->pspec[2], out->pspec[2], in->pspec[2] );
+   }
+
+   if (IND & SETUP_FOGC) {
+      INTERP_F( t, dst->fog, out->fog, in->fog );
    }
 
    if (IND & SETUP_TMU0) {

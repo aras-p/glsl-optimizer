@@ -42,7 +42,9 @@
 
 #include "fxdrv.h"
 #include "enums.h"
+#include "tnl.h"
 #include "tnl/t_context.h"
+#include "swrast.h"
 
 static void
 fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
@@ -1514,7 +1516,6 @@ fxDDBlendEquationSeparate(GLcontext * ctx, GLenum modeRGB, GLenum modeA)
  tfxUnitsState *us = &fxMesa->unitsState;
  GrAlphaBlendOp_t q;
 
- assert( modeRGB == modeA );
  switch (modeRGB) {
         case GL_FUNC_ADD:
              q = GR_BLEND_OP_ADD;
@@ -1526,11 +1527,28 @@ fxDDBlendEquationSeparate(GLcontext * ctx, GLenum modeRGB, GLenum modeA)
              q = GR_BLEND_OP_REVSUB;
              break;
         default:
-             return;
+             q = us->blendEqRGB;
+ }
+ if (q != us->blendEqRGB) {
+    us->blendEqRGB = q;
+    fxMesa->new_state |= FX_NEW_BLEND;
  }
 
- if ((q != us->blendEq) && fxMesa->HavePixExt) {
-    us->blendEq = q;
+ switch (modeA) {
+        case GL_FUNC_ADD:
+             q = GR_BLEND_OP_ADD;
+             break;
+        case GL_FUNC_SUBTRACT:
+             q = GR_BLEND_OP_SUB;
+             break;
+        case GL_FUNC_REVERSE_SUBTRACT:
+             q = GR_BLEND_OP_REVSUB;
+             break;
+        default:
+             q = us->blendEqAlpha;
+ }
+ if (q != us->blendEqAlpha) {
+    us->blendEqAlpha = q;
     fxMesa->new_state |= FX_NEW_BLEND;
  }
 }
@@ -1544,9 +1562,9 @@ fxSetupBlend(GLcontext * ctx)
  if (fxMesa->HavePixExt) {
     if (us->blendEnabled) {
        fxMesa->Glide.grAlphaBlendFunctionExt(us->blendSrcFuncRGB, us->blendDstFuncRGB,
-                                             us->blendEq,
+                                             us->blendEqRGB,
                                              us->blendSrcFuncAlpha, us->blendDstFuncAlpha,
-                                             us->blendEq);
+                                             us->blendEqAlpha);
     } else {
        fxMesa->Glide.grAlphaBlendFunctionExt(GR_BLEND_ONE, GR_BLEND_ZERO,
                                              GR_BLEND_OP_ADD,
@@ -1840,7 +1858,15 @@ fxSetupFog(GLcontext * ctx)
       }
 
       grFogTable(fxMesa->fogTable);
-      grFogMode(GR_FOG_WITH_TABLE_ON_Q);
+      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) {
+         grVertexLayout(GR_PARAM_FOG_EXT, GR_VERTEX_FOG_OFFSET << 2,
+                                          GR_PARAM_ENABLE);
+         grFogMode(GR_FOG_WITH_TABLE_ON_FOGCOORD_EXT);
+      } else {
+         grVertexLayout(GR_PARAM_FOG_EXT, GR_VERTEX_FOG_OFFSET << 2,
+                                          GR_PARAM_DISABLE);
+         grFogMode(GR_FOG_WITH_TABLE_ON_Q);
+      }
    }
    else {
       grFogMode(GR_FOG_DISABLE);
@@ -1851,6 +1877,25 @@ void
 fxDDFogfv(GLcontext * ctx, GLenum pname, const GLfloat * params)
 {
    FX_CONTEXT(ctx)->new_state |= FX_NEW_FOG;
+   switch (pname) {
+      case GL_FOG_COORDINATE_SOURCE_EXT: {
+         GLenum p = (GLenum)*params;
+         if (p == GL_FOG_COORDINATE_EXT) {
+            _swrast_allow_vertex_fog(ctx, GL_TRUE);
+            _swrast_allow_pixel_fog(ctx, GL_FALSE);
+            _tnl_allow_vertex_fog( ctx, GL_TRUE);
+            _tnl_allow_pixel_fog( ctx, GL_FALSE);
+         } else {
+            _swrast_allow_vertex_fog(ctx, GL_FALSE);
+            _swrast_allow_pixel_fog(ctx, GL_TRUE);
+            _tnl_allow_vertex_fog( ctx, GL_FALSE);
+            _tnl_allow_pixel_fog( ctx, GL_TRUE);
+         }
+         break;
+      }
+      default:
+         ;
+   }
 }
 
 /************************************************************************/
