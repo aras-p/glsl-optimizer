@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.20 2000/10/28 20:41:14 brianp Exp $ */
+/* $Id: light.c,v 1.21 2000/10/29 19:02:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -844,7 +844,7 @@ _mesa_ColorMaterial( GLenum face, GLenum mode )
    }
 
    if (ctx->Light.ColorMaterialEnabled)
-      gl_update_color_material( ctx, ctx->Current.ByteColor );
+      gl_update_color_material( ctx, ctx->Current.Color );
 }
 
 

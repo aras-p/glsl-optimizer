@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.97 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: context.c,v 1.98 2000/10/29 19:02:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -695,7 +695,7 @@ init_fallback_arrays( GLcontext *ctx )
    cl->Type = GL_UNSIGNED_BYTE;
    cl->Stride = 0;
    cl->StrideB = 0;
-   cl->Ptr = (void *) ctx->Current.ByteColor;
+   cl->Ptr = (void *) ctx->Current.Color;
    cl->Enabled = 1;
 
    cl = &ctx->Fallback.SecondaryColor;
@@ -884,7 +884,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Color.MultiDrawBuffer = GL_FALSE;
 
    /* Current group */
-   ASSIGN_4V( ctx->Current.ByteColor, CHAN_MAX, CHAN_MAX, CHAN_MAX, CHAN_MAX );
+   ASSIGN_4V( ctx->Current.Color, CHAN_MAX, CHAN_MAX, CHAN_MAX, CHAN_MAX );
    ctx->Current.Index = 1;
    for (i=0; i<MAX_TEXTURE_UNITS; i++)
       ASSIGN_4V( ctx->Current.Texcoord[i], 0.0, 0.0, 0.0, 1.0 );

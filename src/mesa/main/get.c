@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.37 2000/10/28 20:41:14 brianp Exp $ */
+/* $Id: get.c,v 1.38 2000/10/29 19:02:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -228,10 +228,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ENUM_TO_BOOL(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-         params[0] = INT_TO_BOOL(ctx->Current.ByteColor[0]);
-         params[1] = INT_TO_BOOL(ctx->Current.ByteColor[1]);
-         params[2] = INT_TO_BOOL(ctx->Current.ByteColor[2]);
-         params[3] = INT_TO_BOOL(ctx->Current.ByteColor[3]);
+         params[0] = INT_TO_BOOL(ctx->Current.Color[0]);
+         params[1] = INT_TO_BOOL(ctx->Current.Color[1]);
+         params[2] = INT_TO_BOOL(ctx->Current.Color[2]);
+         params[3] = INT_TO_BOOL(ctx->Current.Color[3]);
          break;
       case GL_CURRENT_INDEX:
          *params = INT_TO_BOOL(ctx->Current.Index);
@@ -1419,10 +1419,10 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = ENUM_TO_DOUBLE(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-         params[0] = CHAN_TO_FLOAT(ctx->Current.ByteColor[0]);
-         params[1] = CHAN_TO_FLOAT(ctx->Current.ByteColor[1]);
-         params[2] = CHAN_TO_FLOAT(ctx->Current.ByteColor[2]);
-         params[3] = CHAN_TO_FLOAT(ctx->Current.ByteColor[3]);
+         params[0] = CHAN_TO_FLOAT(ctx->Current.Color[0]);
+         params[1] = CHAN_TO_FLOAT(ctx->Current.Color[1]);
+         params[2] = CHAN_TO_FLOAT(ctx->Current.Color[2]);
+         params[3] = CHAN_TO_FLOAT(ctx->Current.Color[3]);
          break;
       case GL_CURRENT_INDEX:
          *params = (GLdouble) ctx->Current.Index;
@@ -2611,10 +2611,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = ENUM_TO_FLOAT(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-         params[0] = CHAN_TO_FLOAT(ctx->Current.ByteColor[0]);
-         params[1] = CHAN_TO_FLOAT(ctx->Current.ByteColor[1]);
-         params[2] = CHAN_TO_FLOAT(ctx->Current.ByteColor[2]);
-         params[3] = CHAN_TO_FLOAT(ctx->Current.ByteColor[3]);
+         params[0] = CHAN_TO_FLOAT(ctx->Current.Color[0]);
+         params[1] = CHAN_TO_FLOAT(ctx->Current.Color[1]);
+         params[2] = CHAN_TO_FLOAT(ctx->Current.Color[2]);
+         params[3] = CHAN_TO_FLOAT(ctx->Current.Color[3]);
          break;
       case GL_CURRENT_INDEX:
          *params = (GLfloat) ctx->Current.Index;
@@ -3779,10 +3779,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Polygon.CullFaceMode;
          break;
       case GL_CURRENT_COLOR:
-         params[0] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.ByteColor[0] ) );
-         params[1] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.ByteColor[1] ) );
-         params[2] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.ByteColor[2] ) );
-         params[3] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.ByteColor[3] ) );
+         params[0] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.Color[0] ) );
+         params[1] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.Color[1] ) );
+         params[2] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.Color[2] ) );
+         params[3] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.Color[3] ) );
          break;
       case GL_CURRENT_INDEX:
          *params = (GLint) ctx->Current.Index;

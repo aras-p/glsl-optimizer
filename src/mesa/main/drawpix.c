@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.41 2000/10/29 18:12:15 brianp Exp $ */
+/* $Id: drawpix.c,v 1.42 2000/10/29 19:02:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -917,10 +917,10 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       if (ctx->Current.RasterPosValid) {
          GLfloat color[4];
 	 GLfloat texcoord[4], invq;
-         color[0] = CHAN_TO_FLOAT(ctx->Current.ByteColor[0]);
-         color[1] = CHAN_TO_FLOAT(ctx->Current.ByteColor[1]);
-         color[2] = CHAN_TO_FLOAT(ctx->Current.ByteColor[2]);
-         color[3] = CHAN_TO_FLOAT(ctx->Current.ByteColor[3]);
+         color[0] = CHAN_TO_FLOAT(ctx->Current.Color[0]);
+         color[1] = CHAN_TO_FLOAT(ctx->Current.Color[1]);
+         color[2] = CHAN_TO_FLOAT(ctx->Current.Color[2]);
+         color[3] = CHAN_TO_FLOAT(ctx->Current.Color[3]);
          invq = 1.0F / ctx->Current.Texcoord[0][3];
          texcoord[0] = ctx->Current.Texcoord[0][0] * invq;
          texcoord[1] = ctx->Current.Texcoord[0][1] * invq;
