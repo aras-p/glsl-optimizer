@@ -8,8 +8,6 @@ include $(TOP)/configs/current
 DEFINES += -DGLX_DIRECT_RENDERING 
 
 C_SOURCES = \
-	dri_util.c \
-	glcontextmodes.c \
 	xf86drm.c \
 	xf86drmHash.c \
 	xf86drmRandom.c \

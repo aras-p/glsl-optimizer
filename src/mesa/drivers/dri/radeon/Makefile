@@ -14,7 +14,9 @@ COMMON_SOURCES = \
 	../common/utils.c \
 	../common/texmem.c \
 	../common/vblank.c \
-	../common/xmlconfig.c
+	../common/xmlconfig.c \
+	../common/dri_util.c \
+	../common/glcontextmodes.c
 
 DRIVER_SOURCES = \
 	radeon_context.c \

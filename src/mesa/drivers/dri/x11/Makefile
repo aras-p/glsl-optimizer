@@ -7,7 +7,7 @@ LIBNAME = x11_dri.so
 
 DRIVER_SOURCES = x11_dri.c \
 		 $(TOP)/src/mesa/drivers/common/driverfuncs.c \
-		 ../dri_client/dri_util.c \
+		 ../common/dri_util.c \
 		 ../../x11/xm_api.c \
 		 ../../x11/xm_dd.c \
 		 ../../x11/xm_line.c \
