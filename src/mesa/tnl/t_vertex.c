@@ -1127,6 +1127,7 @@ static void choose_emit_func( GLcontext *ctx, GLuint count, GLubyte *dest)
 		  a[0].emit == insert_4f_viewport_4)
 	    vtx->emit = emit_viewport4_bgra4_st2;
       }
+      break;
    case 4:
       if (a[2].emit == insert_2f_2 &&
 	  a[3].emit == insert_2f_2) {
