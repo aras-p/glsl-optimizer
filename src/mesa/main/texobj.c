@@ -1021,9 +1021,18 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
 GLboolean GLAPIENTRY
 _mesa_IsTexture( GLuint texture )
 {
+   struct gl_texture_object *t;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
-   return texture > 0 && _mesa_HashLookup(ctx->Shared->TexObjects, texture);
+
+   if (!t)
+      return GL_FALSE;
+
+   t = (struct gl_texture_object *)
+      _mesa_HashLookup(ctx->Shared->TexObjects, texture);
+
+   /* IsTexture is true only after object has been bound once. */
+   return t && t->Target;
 }
 
 /*@}*/
