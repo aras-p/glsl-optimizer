@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.81 2002/04/09 16:56:50 keithw Exp $ */
+/* $Id: state.c,v 1.82 2002/05/27 17:03:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -484,6 +484,12 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->TrackMatrixNV = _mesa_TrackMatrixNV;
    exec->VertexAttribPointerNV = _mesa_VertexAttribPointerNV;
 
+   /* 262. GL_NV_point_sprite */
+#if 0
+   exec->PointParameteriNV = _mesa_PointParameteriNV;
+   exec->PointParameterivNV = _mesa_PointParameterivNV;
+#endif
+
    /* ARB 1. GL_ARB_multitexture */
    exec->ActiveTextureARB = _mesa_ActiveTextureARB;
    exec->ClientActiveTextureARB = _mesa_ClientActiveTextureARB;
@@ -509,23 +515,6 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    /* ARB 14. GL_ARB_point_parameters */
    /* reuse EXT_point_parameters functions */
 
-   /* ARB 25. GL_ARB_window_pos */
-   exec->WindowPos2dARB = _mesa_WindowPos2dARB;
-   exec->WindowPos2dvARB = _mesa_WindowPos2dvARB;
-   exec->WindowPos2fARB = _mesa_WindowPos2fARB;
-   exec->WindowPos2fvARB = _mesa_WindowPos2fvARB;
-   exec->WindowPos2iARB = _mesa_WindowPos2iARB;
-   exec->WindowPos2ivARB = _mesa_WindowPos2ivARB;
-   exec->WindowPos2sARB = _mesa_WindowPos2sARB;
-   exec->WindowPos2svARB = _mesa_WindowPos2svARB;
-   exec->WindowPos3dARB = _mesa_WindowPos3dARB;
-   exec->WindowPos3dvARB = _mesa_WindowPos3dvARB;
-   exec->WindowPos3fARB = _mesa_WindowPos3fARB;
-   exec->WindowPos3fvARB = _mesa_WindowPos3fvARB;
-   exec->WindowPos3iARB = _mesa_WindowPos3iARB;
-   exec->WindowPos3ivARB = _mesa_WindowPos3ivARB;
-   exec->WindowPos3sARB = _mesa_WindowPos3sARB;
-   exec->WindowPos3svARB = _mesa_WindowPos3svARB;
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.86 2002/04/09 16:56:50 keithw Exp $ */
+/* $Id: dlist.c,v 1.87 2002/05/27 17:03:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2517,6 +2517,18 @@ static void save_PointParameterfEXT( GLenum pname, GLfloat param )
    save_PointParameterfvEXT(pname, &param);
 }
 
+static void save_PointParameteriEXT( GLenum pname, GLint param )
+{
+   GLfloat p = (GLfloat) param;
+   save_PointParameterfvEXT(pname, &p);
+}
+
+static void save_PointParameterivEXT( GLenum pname, const GLint *param )
+{
+   GLfloat p = (GLfloat) param[0];
+   save_PointParameterfvEXT(pname, &p);
+}
+
 
 static void save_PointSize( GLfloat size )
 {
@@ -4858,7 +4870,7 @@ execute_list( GLcontext *ctx, GLuint list )
             (*ctx->Exec->SampleCoverageARB)(n[1].f, n[2].b);
             break;
 	 case OPCODE_WINDOW_POS_ARB: /* GL_ARB_window_pos */
-            (*ctx->Exec->WindowPos3fARB)( n[1].f, n[2].f, n[3].f );
+            (*ctx->Exec->WindowPos3fMESA)( n[1].f, n[2].f, n[3].f );
 	    break;
          case OPCODE_BIND_PROGRAM_NV: /* GL_NV_vertex_program */
             (*ctx->Exec->BindProgramNV)( n[1].e, n[2].ui );
@@ -6199,6 +6211,12 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->TrackMatrixNV = save_TrackMatrixNV;
    table->VertexAttribPointerNV = _mesa_VertexAttribPointerNV;
 
+   /* 262. GL_NV_point_sprite */
+#if 0
+   table->PointParameteriNV = save_PointParameteriNV;
+   table->PointParameterivNV = save_PointParameterivNV;
+#endif
+
    /* ARB 1. GL_ARB_multitexture */
    table->ActiveTextureARB = save_ActiveTextureARB;
    table->ClientActiveTextureARB = exec_ClientActiveTextureARB;
@@ -6225,22 +6243,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    /* re-use EXT_point_parameters functions */
 
    /* ARB 25. GL_ARB_window_pos */
-   table->WindowPos2dARB = save_WindowPos2dARB;
-   table->WindowPos2dvARB = save_WindowPos2dvARB;
-   table->WindowPos2fARB = save_WindowPos2fARB;
-   table->WindowPos2fvARB = save_WindowPos2fvARB;
-   table->WindowPos2iARB = save_WindowPos2iARB;
-   table->WindowPos2ivARB = save_WindowPos2ivARB;
-   table->WindowPos2sARB = save_WindowPos2sARB;
-   table->WindowPos2svARB = save_WindowPos2svARB;
-   table->WindowPos3dARB = save_WindowPos3dARB;
-   table->WindowPos3dvARB = save_WindowPos3dvARB;
-   table->WindowPos3fARB = save_WindowPos3fARB;
-   table->WindowPos3fvARB = save_WindowPos3fvARB;
-   table->WindowPos3iARB = save_WindowPos3iARB;
-   table->WindowPos3ivARB = save_WindowPos3ivARB;
-   table->WindowPos3sARB = save_WindowPos3sARB;
-   table->WindowPos3svARB = save_WindowPos3svARB;
+   /* re-use MESA_window_pos functions */
 }
 
 
