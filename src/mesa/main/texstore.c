@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.32 2001/07/16 15:54:23 brianp Exp $ */
+/* $Id: texstore.c,v 1.33 2001/07/23 16:07:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -651,18 +651,22 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
-   /* unpack image, apply transfer ops and store in texImage->Data */
-   _mesa_transfer_teximage(ctx, 1, _mesa_base_tex_format(ctx, internalFormat),
-                           texImage->TexFormat, texImage->Data,
-                           width, 1, 1, 0, 0, 0,
-                           0, /* dstRowStride */
-                           0, /* dstImageStride */
-                           format, type, pixels, packing);
+   if (pixels) {
+      /* unpack image, apply transfer ops and store in texImage->Data */
+      _mesa_transfer_teximage(ctx, 1,
+                              _mesa_base_tex_format(ctx, internalFormat),
+                              texImage->TexFormat, texImage->Data,
+                              width, 1, 1, 0, 0, 0,
+                              0, /* dstRowStride */
+                              0, /* dstImageStride */
+                              format, type, pixels, packing);
 
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                            texObj);
+      /* GL_SGIS_generate_mipmap */
+      if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+         _mesa_generate_mipmap(ctx,
+                               &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
+                               texObj);
+      }
    }
 }
 
@@ -720,18 +724,22 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
-   /* unpack image, apply transfer ops and store in texImage->Data */
-   _mesa_transfer_teximage(ctx, 2, _mesa_base_tex_format(ctx, internalFormat),
-                           texImage->TexFormat, texImage->Data,
-                           width, height, 1, 0, 0, 0,
-                           texImage->Width * texelBytes,
-                           0, /* dstImageStride */
-                           format, type, pixels, packing);
+   if (pixels) {
+      /* unpack image, apply transfer ops and store in texImage->Data */
+      _mesa_transfer_teximage(ctx, 2,
+                              _mesa_base_tex_format(ctx, internalFormat),
+                              texImage->TexFormat, texImage->Data,
+                              width, height, 1, 0, 0, 0,
+                              texImage->Width * texelBytes,
+                              0, /* dstImageStride */
+                              format, type, pixels, packing);
 
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                            texObj);
+      /* GL_SGIS_generate_mipmap */
+      if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+         _mesa_generate_mipmap(ctx,
+                               &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
+                               texObj);
+      }
    }
 }
 
@@ -782,18 +790,22 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
-   /* unpack image, apply transfer ops and store in texImage->Data */
-   _mesa_transfer_teximage(ctx, 3, _mesa_base_tex_format(ctx, internalFormat),
-                           texImage->TexFormat, texImage->Data,
-                           width, height, depth, 0, 0, 0,
-                           texImage->Width * texelBytes,
-                           texImage->Width * texImage->Height * texelBytes,
-                           format, type, pixels, packing);
+   if (pixels) {
+      /* unpack image, apply transfer ops and store in texImage->Data */
+      _mesa_transfer_teximage(ctx, 3,
+                              _mesa_base_tex_format(ctx, internalFormat),
+                              texImage->TexFormat, texImage->Data,
+                              width, height, depth, 0, 0, 0,
+                              texImage->Width * texelBytes,
+                              texImage->Width * texImage->Height * texelBytes,
+                              format, type, pixels, packing);
 
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                            texObj);
+      /* GL_SGIS_generate_mipmap */
+      if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+         _mesa_generate_mipmap(ctx,
+                               &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
+                               texObj);
+      }
    }
 }
 
