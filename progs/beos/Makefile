@@ -1,42 +1,31 @@
-# $Id: Makefile,v 1.2 1999/09/17 00:55:21 brianp Exp $
+# progs/beos/Makefile
+
+TOP = ../..
+include $(TOP)/configs/current
 
 # Makefile for BeOS demos
 
 # Written by Brian Paul
 # This file is in the public domain.
+#
+# Modified by Philippe Houdoin
 
+LDFLAGS += -soname=_APP_ $(APP_LIB_DEPS)
 
-
-CC = g++
-
-# Use Mesa:
-CFLAGS = -I../include -c -g
-LFLAGS = -L../lib  -Xlinker -rpath ../lib -lbe -lGL
-
-# Use BeOS OpenGL:
-#CFLAGS = -I/boot/develop/headers/be/opengl -c -g
-#LFLAGS = -L../lib  -Xlinker -rpath ../lib -lbe -lGL
-
-
-PROGRAMS = demo sample
-
-default: $(PROGRAMS)
-
+default: demo sample GLInfo
 
 clean:
-	rm -f demo sample
+	rm -f demo sample GLInfo
 	rm -f *.o
 
-
 demo: demo.o
-	$(CC) demo.o $(LFLAGS) -o $@
-
-demo.o: demo.cpp
-	$(CC) $(CFLAGS) demo.cpp
-
+	$(LD) demo.o $(LDFLAGS) -o $@
 
 sample: sample.o
-	$(CC) sample.o $(LFLAGS) -o $@
+	$(LD) sample.o $(LDFLAGS) -o $@
 
-sample.o: sample.cpp
-	$(CC) $(CFLAGS) sample.cpp
+GTLInfo: GLInfo.o
+	$(LD) GLInfo.o $(LDFLAGS) -o $@
+
+.cpp.o:
+	$(CC) -c $< $(CFLAGS) -o $@

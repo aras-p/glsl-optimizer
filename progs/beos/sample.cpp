@@ -92,8 +92,10 @@ void SampleGLView::AttachedToWindow(void)
 
 void SampleGLView::FrameResized(float newWidth, float newHeight) 
 {
+   BGLView::FrameResized(newWidth, newHeight);
+
    LockGL();
-   BGLView::FrameResized(width, height);
+
    width = newWidth;
    height = newHeight;
    
