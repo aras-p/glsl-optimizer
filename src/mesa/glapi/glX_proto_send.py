@@ -148,19 +148,19 @@ read_reply( Display *dpy, size_t size, void * dest, GLboolean reply_is_always_ar
     
     (void) _XReply(dpy, (xReply *) & reply, 0, False);
     if (size != 0) {
-	if ((reply.length > 0) || reply_is_always_array) {
-	    const GLint bytes = (reply_is_always_array) 
-	      ? (4 * reply.length) : (reply.size * size);
-	    const GLint extra = 4 - (bytes & 3);
+        if ((reply.length > 0) || reply_is_always_array) {
+            const GLint bytes = (reply_is_always_array) 
+              ? (4 * reply.length) : (reply.size * size);
+            const GLint extra = 4 - (bytes & 3);
 
-	    _XRead(dpy, dest, bytes);
-	    if ( extra < 4 ) {
-		_XEatData(dpy, extra);
-	    }
-	}
-	else {
-	    (void) memcpy( dest, &(reply.pad3), size);
-	}
+            _XRead(dpy, dest, bytes);
+            if ( extra < 4 ) {
+                _XEatData(dpy, extra);
+            }
+        }
+        else {
+            (void) memcpy( dest, &(reply.pad3), size);
+        }
     }
 
     return reply.retval;

@@ -81,8 +81,8 @@ extern INTERNAL PURE FASTCALL GLint __glConvolutionParameteriv_size(GLenum);
 extern INTERNAL PURE FASTCALL GLint __glPointParameterfvEXT_size(GLenum);
 extern INTERNAL PURE FASTCALL GLint __glPointParameterivNV_size(GLenum);
 
-#  undef INTERNAL
 #  undef PURE
 #  undef FASTCALL
+#  undef INTERNAL
 
 #endif /* !defined( _INDIRECT_SIZE_H_ ) */

@@ -132,6 +132,7 @@ __glLightModelfv_size( GLenum e )
         case GL_LIGHT_MODEL_LOCAL_VIEWER:
         case GL_LIGHT_MODEL_TWO_SIDE:
         case GL_LIGHT_MODEL_COLOR_CONTROL:
+/*      case GL_LIGHT_MODEL_COLOR_CONTROL_EXT:*/
             return 1;
         case GL_LIGHT_MODEL_AMBIENT:
             return 4;
