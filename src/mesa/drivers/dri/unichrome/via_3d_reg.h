@@ -907,6 +907,15 @@
 #define HC_HTXnTB_TBC_T         0x00200000
 #define HC_HTXnTB_TB_S          0x00400000
 #define HC_HTXnTB_TB_T          0x00800000
+
+/* The "S" in FLS? means the S texture coordinate, and a "T" means the T
+ * texture coordinage.  The "e" in FL?e means the magnification ("enlarge")
+ * mode, and the "s" in FL?s means the minification ("shrink") mode.
+ *
+ * The "D" in FLD? means the intermipmap level mode.  That means that the
+ * GL_*_MIPMAP_LINEAR modes get FLDs_Linear, and the GL_*_MIPMAP_NEAREST modes
+ * get FLDs_Nearest.
+ */
 #define HC_HTXnFLSe_Nearest     0x00000000
 #define HC_HTXnFLSe_Linear      0x00002000
 #define HC_HTXnFLSe_NonLinear   0x00004000
@@ -933,6 +942,7 @@
 #define HC_HTXnFLDs_ConstLOD    0x00000005
 #define HC_HTXnFLDs_Ani         0x00000006
 #define HC_HTXnFLDs_AniDither   0x00000007
+
 /* HC_SubA_HTXnMPMD        0x0079
  */
 #define HC_HTXnMPMD_SMASK       0x00070000
@@ -958,20 +968,20 @@
  */
 #define HC_HTXnFM_MASK          0x00ff0000
 #define HC_HTXnLoc_MASK         0x00000003
-#define HC_HTXnFM_INDEX         0x00000000
-#define HC_HTXnFM_Intensity     0x00080000
-#define HC_HTXnFM_Lum           0x00100000
-#define HC_HTXnFM_Alpha         0x00180000
-#define HC_HTXnFM_DX            0x00280000
-#define HC_HTXnFM_ARGB16        0x00880000
-#define HC_HTXnFM_ARGB32        0x00980000
-#define HC_HTXnFM_ABGR16        0x00a80000
-#define HC_HTXnFM_ABGR32        0x00b80000
-#define HC_HTXnFM_RGBA16        0x00c80000
-#define HC_HTXnFM_RGBA32        0x00d80000
-#define HC_HTXnFM_BGRA16        0x00e80000
-#define HC_HTXnFM_BGRA32        0x00f80000
-#define HC_HTXnFM_BUMPMAP       0x00380000
+#define HC_HTXnFM_INDEX         0x00000000 /*  0 << 19 */
+#define HC_HTXnFM_Intensity     0x00080000 /*  1 << 19 */
+#define HC_HTXnFM_Lum           0x00100000 /*  2 << 19 */
+#define HC_HTXnFM_Alpha         0x00180000 /*  3 << 19 */
+#define HC_HTXnFM_DX            0x00280000 /*  5 << 19 */
+#define HC_HTXnFM_BUMPMAP       0x00380000 /*  7 << 19 */
+#define HC_HTXnFM_ARGB16        0x00880000 /* 17 << 19 */
+#define HC_HTXnFM_ARGB32        0x00980000 /* 19 << 19 */
+#define HC_HTXnFM_ABGR16        0x00a80000 /* 21 << 19 */
+#define HC_HTXnFM_ABGR32        0x00b80000 /* 23 << 19 */
+#define HC_HTXnFM_RGBA16        0x00c80000 /* 25 << 19 */
+#define HC_HTXnFM_RGBA32        0x00d80000 /* 27 << 19 */
+#define HC_HTXnFM_BGRA16        0x00e80000 /* 29 << 19 */
+#define HC_HTXnFM_BGRA32        0x00f80000 /* 31 << 19 */
 #define HC_HTXnFM_Index1        (HC_HTXnFM_INDEX     | 0x00000000)
 #define HC_HTXnFM_Index2        (HC_HTXnFM_INDEX     | 0x00010000)
 #define HC_HTXnFM_Index4        (HC_HTXnFM_INDEX     | 0x00020000)
@@ -1104,6 +1114,8 @@
 #define HC_HTXnTBLAop_MASK      0x00000380
 #define HC_HTXnTBLAbias_MASK    0x00000078
 #define HC_HTXnTBLAshift_MASK   0x00000003
+#define HC_HTXnTBLDOT3          0x00800000
+#define HC_HTXnTBLDOT4          0x00c00000
 #define HC_HTXnTBLCop_Add       0x00000000
 #define HC_HTXnTBLCop_Sub       0x00080000
 #define HC_HTXnTBLCop_Min       0x00100000
@@ -1126,8 +1138,6 @@
 #define HC_HTXnTBLCshift_No     0x00001000
 #define HC_HTXnTBLCshift_DotP   0x00001800
 /*=* John Sheng [2003.7.18] texture combine *=*/
-#define HC_HTXnTBLDOT3   0x00080000
-#define HC_HTXnTBLDOT4   0x000C0000
 
 #define HC_HTXnTBLAop_Add       0x00000000
 #define HC_HTXnTBLAop_Sub       0x00000080
@@ -1143,7 +1153,7 @@
 #define HC_HTXnTBLAshift_1      0x00000000
 #define HC_HTXnTBLAshift_2      0x00000001
 #define HC_HTXnTBLAshift_No     0x00000002
-/* #define HC_HTXnTBLAshift_DotP   0x00000003 */
+#define HC_HTXnTBLAshift_DotP   0x00000003
 /* HC_SubA_HTXnTBLMPFog    0x0082
  */
 #define HC_HTXnTBLMPfog_MASK    0x00e00000
