@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.133 2001/04/25 18:21:05 brianp Exp $ */
+/* $Id: context.c,v 1.134 2001/04/27 21:17:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -361,7 +361,7 @@ _mesa_initialize_framebuffer( GLframebuffer *buffer,
       assert(visual->alphaBits > 0);
    }
 
-   buffer->Visual = *visual;  /* XXX copy instead? */
+   buffer->Visual = *visual;
    buffer->UseSoftwareDepthBuffer = softwareDepth;
    buffer->UseSoftwareStencilBuffer = softwareStencil;
    buffer->UseSoftwareAccumBuffer = softwareAccum;
@@ -376,28 +376,48 @@ void
 _mesa_destroy_framebuffer( GLframebuffer *buffer )
 {
    if (buffer) {
-      if (buffer->DepthBuffer) {
-         FREE( buffer->DepthBuffer );
-      }
-      if (buffer->Accum) {
-         FREE( buffer->Accum );
-      }
-      if (buffer->Stencil) {
-         FREE( buffer->Stencil );
-      }
-      if (buffer->FrontLeftAlpha) {
-         FREE( buffer->FrontLeftAlpha );
-      }
-      if (buffer->BackLeftAlpha) {
-         FREE( buffer->BackLeftAlpha );
-      }
-      if (buffer->FrontRightAlpha) {
-         FREE( buffer->FrontRightAlpha );
-      }
-      if (buffer->BackRightAlpha) {
-         FREE( buffer->BackRightAlpha );
-      }
+      _mesa_free_framebuffer_data(buffer);
       FREE(buffer);
+   }
+}
+
+
+/*
+ * Free the data hanging off of <buffer>, but not <buffer> itself.
+ */
+void
+_mesa_free_framebuffer_data( GLframebuffer *buffer )
+{
+   if (!buffer)
+      return;
+
+   if (buffer->DepthBuffer) {
+      FREE( buffer->DepthBuffer );
+      buffer->DepthBuffer = NULL;
+   }
+   if (buffer->Accum) {
+      FREE( buffer->Accum );
+      buffer->Accum = NULL;
+   }
+   if (buffer->Stencil) {
+      FREE( buffer->Stencil );
+      buffer->Stencil = NULL;
+   }
+   if (buffer->FrontLeftAlpha) {
+      FREE( buffer->FrontLeftAlpha );
+      buffer->FrontLeftAlpha = NULL;
+   }
+   if (buffer->BackLeftAlpha) {
+      FREE( buffer->BackLeftAlpha );
+      buffer->BackLeftAlpha = NULL;
+   }
+   if (buffer->FrontRightAlpha) {
+      FREE( buffer->FrontRightAlpha );
+      buffer->FrontRightAlpha = NULL;
+   }
+   if (buffer->BackRightAlpha) {
+      FREE( buffer->BackRightAlpha );
+      buffer->BackRightAlpha = NULL;
    }
 }
 

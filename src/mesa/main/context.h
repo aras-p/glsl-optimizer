@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.25 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: context.h,v 1.26 2001/04/27 21:17:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -116,6 +116,9 @@ _mesa_initialize_framebuffer( GLframebuffer *fb,
                               GLboolean softwareStencil,
                               GLboolean softwareAccum,
                               GLboolean softwareAlpha );
+
+extern void
+_mesa_free_framebuffer_data( GLframebuffer *buffer );
 
 extern void
 _mesa_destroy_framebuffer( GLframebuffer *buffer );
