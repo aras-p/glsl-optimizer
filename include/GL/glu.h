@@ -250,10 +250,10 @@ typedef struct GLUquadric GLUquadric;
 typedef struct GLUtesselator GLUtesselator;
 #endif
 
-typedef struct GLUnurbs GLUnurbsObj;
-typedef struct GLUquadric GLUquadricObj;
-typedef struct GLUtesselator GLUtesselatorObj;
-typedef struct GLUtesselator GLUtriangulatorObj;
+typedef GLUnurbs GLUnurbsObj;
+typedef GLUquadric GLUquadricObj;
+typedef GLUtesselator GLUtesselatorObj;
+typedef GLUtesselator GLUtriangulatorObj;
 
 #define GLU_TESS_MAX_COORD 1.0e150
 
