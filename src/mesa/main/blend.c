@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.11 2000/02/02 22:08:26 brianp Exp $ */
+/* $Id: blend.c,v 1.12 2000/02/21 14:50:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -286,26 +286,27 @@ blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
 
    for (i=0;i<n;i++) {
       if (mask[i]) {
-         GLint t = rgba[i][ACOMP];  /* t in [0,255] */
+         const GLint t = rgba[i][ACOMP];  /* t in [0,255] */
          if (t == 0) {
+            /* 0% alpha */
             rgba[i][RCOMP] = dest[i][RCOMP];
             rgba[i][GCOMP] = dest[i][GCOMP];
             rgba[i][BCOMP] = dest[i][BCOMP];
             rgba[i][ACOMP] = dest[i][ACOMP];
          }
-         else if (t == 255) {
-            /* no-op */
+         else if (t == CHAN_MAX) {
+            /* 100% alpha, no-op */
          }
          else {
-            GLint s = 255 - t;
-            GLint r = (rgba[i][RCOMP] * t + dest[i][RCOMP] * s) >> 8;
-            GLint g = (rgba[i][GCOMP] * t + dest[i][GCOMP] * s) >> 8;
-            GLint b = (rgba[i][BCOMP] * t + dest[i][BCOMP] * s) >> 8;
-            GLint a = (rgba[i][ACOMP] * t + dest[i][ACOMP] * s) >> 8;
-            ASSERT(r <= 255);
-            ASSERT(g <= 255);
-            ASSERT(b <= 255);
-            ASSERT(a <= 255);
+            const GLint s = CHAN_MAX - t;
+            const GLint r = (rgba[i][RCOMP] * t + dest[i][RCOMP] * s) >> 8;
+            const GLint g = (rgba[i][GCOMP] * t + dest[i][GCOMP] * s) >> 8;
+            const GLint b = (rgba[i][BCOMP] * t + dest[i][BCOMP] * s) >> 8;
+            const GLint a = (rgba[i][ACOMP] * t + dest[i][ACOMP] * s) >> 8;
+            ASSERT(r <= CHAN_MAX);
+            ASSERT(g <= CHAN_MAX);
+            ASSERT(b <= CHAN_MAX);
+            ASSERT(a <= CHAN_MAX);
             rgba[i][RCOMP] = (GLubyte) r;
             rgba[i][GCOMP] = (GLubyte) g;
             rgba[i][BCOMP] = (GLubyte) b;
@@ -336,10 +337,10 @@ blend_add( GLcontext *ctx, GLuint n, const GLubyte mask[],
          GLint g = rgba[i][GCOMP] + dest[i][GCOMP];
          GLint b = rgba[i][BCOMP] + dest[i][BCOMP];
          GLint a = rgba[i][ACOMP] + dest[i][ACOMP];
-         rgba[i][RCOMP] = (GLubyte) MIN2( r, 255 );
-         rgba[i][GCOMP] = (GLubyte) MIN2( g, 255 );
-         rgba[i][BCOMP] = (GLubyte) MIN2( b, 255 );
-         rgba[i][ACOMP] = (GLubyte) MIN2( a, 255 );
+         rgba[i][RCOMP] = (GLubyte) MIN2( r, CHAN_MAX );
+         rgba[i][GCOMP] = (GLubyte) MIN2( g, CHAN_MAX );
+         rgba[i][BCOMP] = (GLubyte) MIN2( b, CHAN_MAX );
+         rgba[i][ACOMP] = (GLubyte) MIN2( a, CHAN_MAX );
       }
    }
 }
@@ -429,10 +430,10 @@ static void _BLENDAPI
 blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
                GLubyte rgba[][4], CONST GLubyte dest[][4] )
 {
-   GLfloat rscale = 1.0F / 255.0F;
-   GLfloat gscale = 1.0F / 255.0F;
-   GLfloat bscale = 1.0F / 255.0F;
-   GLfloat ascale = 1.0F / 255.0F;
+   GLfloat rscale = 1.0F / CHAN_MAXF;
+   GLfloat gscale = 1.0F / CHAN_MAXF;
+   GLfloat bscale = 1.0F / CHAN_MAXF;
+   GLfloat ascale = 1.0F / CHAN_MAXF;
    GLuint i;
 
    for (i=0;i<n;i++) {
@@ -486,7 +487,7 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
                sR = sG = sB = 1.0F - (GLfloat) Ad * ascale;
                break;
             case GL_SRC_ALPHA_SATURATE:
-               if (As < 1.0F - (GLfloat) Ad * ascale) {
+               if (As < CHAN_MAX - Ad) {
                   sR = sG = sB = (GLfloat) As * ascale;
                }
                else {
@@ -705,10 +706,10 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
          }
 
          /* final clamping */
-         rgba[i][RCOMP] = (GLubyte) (GLint) CLAMP( r, 0.0F, 255.0F );
-         rgba[i][GCOMP] = (GLubyte) (GLint) CLAMP( g, 0.0F, 255.0F );
-         rgba[i][BCOMP] = (GLubyte) (GLint) CLAMP( b, 0.0F, 255.0F );
-         rgba[i][ACOMP] = (GLubyte) (GLint) CLAMP( a, 0.0F, 255.0F );
+         rgba[i][RCOMP] = (GLubyte) (GLint) CLAMP( r, 0.0F, CHAN_MAXF );
+         rgba[i][GCOMP] = (GLubyte) (GLint) CLAMP( g, 0.0F, CHAN_MAXF );
+         rgba[i][BCOMP] = (GLubyte) (GLint) CLAMP( b, 0.0F, CHAN_MAXF );
+         rgba[i][ACOMP] = (GLubyte) (GLint) CLAMP( a, 0.0F, CHAN_MAXF );
       }
    }
 }
