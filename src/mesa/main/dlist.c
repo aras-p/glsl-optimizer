@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.41 2000/05/24 15:04:45 brianp Exp $ */
+/* $Id: dlist.c,v 1.42 2000/06/06 17:03:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -245,6 +245,13 @@ typedef enum {
         /* GL_SGIX/SGIS_pixel_texture */
         OPCODE_PIXEL_TEXGEN_SGIX,
         OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS,
+        /* GL_ARB_texture_compression */
+        OPCODE_COMPRESSED_TEX_IMAGE_1D,
+        OPCODE_COMPRESSED_TEX_IMAGE_2D,
+        OPCODE_COMPRESSED_TEX_IMAGE_3D,
+        OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D,
+        OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D,
+        OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D,
 	/* The following three are meta instructions */
 	OPCODE_ERROR,	        /* raise compiled-in error */
 	OPCODE_VERTEX_CASSETTE,	/* render prebuilt vertex buffer */
@@ -417,6 +424,30 @@ void gl_destroy_list( GLcontext *ctx, GLuint list )
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_TEX_SUB_IMAGE3D:
+            FREE(n[11].data);
+            n += InstSize[n[0].opcode];
+            break;
+         case OPCODE_COMPRESSED_TEX_IMAGE_1D:
+            FREE(n[7].data);
+            n += InstSize[n[0].opcode];
+            break;
+         case OPCODE_COMPRESSED_TEX_IMAGE_2D:
+            FREE(n[8].data);
+            n += InstSize[n[0].opcode];
+            break;
+         case OPCODE_COMPRESSED_TEX_IMAGE_3D:
+            FREE(n[9].data);
+            n += InstSize[n[0].opcode];
+            break;
+         case OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D:
+            FREE(n[7].data);
+            n += InstSize[n[0].opcode];
+            break;
+         case OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D:
+            FREE(n[9].data);
+            n += InstSize[n[0].opcode];
+            break;
+         case OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D:
             FREE(n[11].data);
             n += InstSize[n[0].opcode];
             break;
@@ -628,7 +659,14 @@ void gl_init_lists( void )
       InstSize[OPCODE_END_OF_LIST] = 1;
       /* GL_SGIX/SGIS_pixel_texture */
       InstSize[OPCODE_PIXEL_TEXGEN_SGIX] = 2;
-      InstSize[OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS] = 3,
+      InstSize[OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS] = 3;
+      /* GL_ARB_texture_compression */
+      InstSize[OPCODE_COMPRESSED_TEX_IMAGE_1D] = 8;
+      InstSize[OPCODE_COMPRESSED_TEX_IMAGE_2D] = 9;
+      InstSize[OPCODE_COMPRESSED_TEX_IMAGE_3D] = 10;
+      InstSize[OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D] = 8;
+      InstSize[OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D] = 10;
+      InstSize[OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D] = 12;
       /* GL_ARB_multitexture */
       InstSize[OPCODE_ACTIVE_TEXTURE] = 2;
       InstSize[OPCODE_CLIENT_ACTIVE_TEXTURE] = 2;
@@ -3611,28 +3649,136 @@ static void save_PixelTexGenSGIX(GLenum mode)
 /* GL_ARB_texture_compression */
 static void
 save_CompressedTexImage1DARB(GLenum target, GLint level,
-                             GLenum internalformat, GLsizei width,
+                             GLenum internalFormat, GLsizei width,
                              GLint border, GLsizei imageSize,
                              const GLvoid *data)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   if (target == GL_PROXY_TEXTURE_1D) {
+      /* don't compile, execute immediately */
+      (*ctx->Exec->CompressedTexImage1DARB)(target, level, internalFormat,
+                                            width, border, imageSize, data);
+   }
+   else {
+      Node *n;
+      GLvoid *image;
+      FLUSH_VB(ctx, "dlist");
+      /* make copy of image */
+      image = MALLOC(imageSize);
+      if (!image) {
+         gl_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage1DARB");
+         return;
+      }
+      MEMCPY(image, data, imageSize);
+      n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_IMAGE_1D, 8 );
+      if (n) {
+         n[1].e = target;
+         n[2].i = level;
+         n[3].e = internalFormat;
+         n[4].i = (GLint) width;
+         n[5].i = border;
+         n[6].i = imageSize;
+         n[7].data = image;
+      }
+      else if (image) {
+         FREE(image);
+      }
+      if (ctx->ExecuteFlag) {
+         (*ctx->Exec->CompressedTexImage1DARB)(target, level, internalFormat,
+                                               width, border, imageSize, data);
+      }
+   }
 }
 
 
 static void
 save_CompressedTexImage2DARB(GLenum target, GLint level,
-                             GLenum internalformat, GLsizei width,
+                             GLenum internalFormat, GLsizei width,
                              GLsizei height, GLint border, GLsizei imageSize,
                              const GLvoid *data)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   if (target == GL_PROXY_TEXTURE_2D) {
+      /* don't compile, execute immediately */
+      (*ctx->Exec->CompressedTexImage2DARB)(target, level, internalFormat,
+                                       width, height, border, imageSize, data);
+   }
+   else {
+      Node *n;
+      GLvoid *image;
+      FLUSH_VB(ctx, "dlist");
+      /* make copy of image */
+      image = MALLOC(imageSize);
+      if (!image) {
+         gl_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2DARB");
+         return;
+      }
+      MEMCPY(image, data, imageSize);
+      n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_IMAGE_2D, 9 );
+      if (n) {
+         n[1].e = target;
+         n[2].i = level;
+         n[3].e = internalFormat;
+         n[4].i = (GLint) width;
+         n[5].i = (GLint) height;
+         n[6].i = border;
+         n[7].i = imageSize;
+         n[8].data = image;
+      }
+      else if (image) {
+         FREE(image);
+      }
+      if (ctx->ExecuteFlag) {
+         (*ctx->Exec->CompressedTexImage2DARB)(target, level, internalFormat,
+                                      width, height, border, imageSize, data);
+      }
+   }
 }
 
 
 static void
 save_CompressedTexImage3DARB(GLenum target, GLint level,
-                             GLenum internalformat, GLsizei width,
+                             GLenum internalFormat, GLsizei width,
                              GLsizei height, GLsizei depth, GLint border,
                              GLsizei imageSize, const GLvoid *data)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   if (target == GL_PROXY_TEXTURE_3D) {
+      /* don't compile, execute immediately */
+      (*ctx->Exec->CompressedTexImage3DARB)(target, level, internalFormat,
+                                width, height, depth, border, imageSize, data);
+   }
+   else {
+      Node *n;
+      GLvoid *image;
+      FLUSH_VB(ctx, "dlist");
+      /* make copy of image */
+      image = MALLOC(imageSize);
+      if (!image) {
+         gl_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage3DARB");
+         return;
+      }
+      MEMCPY(image, data, imageSize);
+      n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_IMAGE_3D, 10 );
+      if (n) {
+         n[1].e = target;
+         n[2].i = level;
+         n[3].e = internalFormat;
+         n[4].i = (GLint) width;
+         n[5].i = (GLint) height;
+         n[6].i = (GLint) depth;
+         n[7].i = border;
+         n[8].i = imageSize;
+         n[9].data = image;
+      }
+      else if (image) {
+         FREE(image);
+      }
+      if (ctx->ExecuteFlag) {
+         (*ctx->Exec->CompressedTexImage3DARB)(target, level, internalFormat,
+                                width, height, depth, border, imageSize, data);
+      }
+   }
 }
 
 
@@ -3641,6 +3787,36 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
                                 GLsizei width, GLenum format,
                                 GLsizei imageSize, const GLvoid *data)
 {
+   Node *n;
+   GLvoid *image;
+
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VB(ctx, "dlist");
+
+   /* make copy of image */
+   image = MALLOC(imageSize);
+   if (!image) {
+      gl_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage1DARB");
+      return;
+   }
+   MEMCPY(image, data, imageSize);
+   n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D, 8 );
+   if (n) {
+      n[1].e = target;
+      n[2].i = level;
+      n[3].i = xoffset;
+      n[4].i = (GLint) width;
+      n[5].e = format;
+      n[6].i = imageSize;
+      n[7].data = image;
+   }
+   else if (image) {
+      FREE(image);
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->CompressedTexSubImage1DARB)(target, level, xoffset,
+                                               width, format, imageSize, data);
+   }
 }
 
 
@@ -3650,6 +3826,38 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
                                 GLenum format, GLsizei imageSize,
                                 const GLvoid *data)
 {
+   Node *n;
+   GLvoid *image;
+
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VB(ctx, "dlist");
+
+   /* make copy of image */
+   image = MALLOC(imageSize);
+   if (!image) {
+      gl_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage2DARB");
+      return;
+   }
+   MEMCPY(image, data, imageSize);
+   n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D, 10 );
+   if (n) {
+      n[1].e = target;
+      n[2].i = level;
+      n[3].i = xoffset;
+      n[4].i = yoffset;
+      n[5].i = (GLint) width;
+      n[6].i = (GLint) height;
+      n[7].e = format;
+      n[8].i = imageSize;
+      n[9].data = image;
+   }
+   else if (image) {
+      FREE(image);
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->CompressedTexSubImage2DARB)(target, level, xoffset, yoffset,
+                                       width, height, format, imageSize, data);
+   }
 }
 
 
@@ -3659,6 +3867,40 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
                                 GLsizei height, GLsizei depth, GLenum format,
                                 GLsizei imageSize, const GLvoid *data)
 {
+   Node *n;
+   GLvoid *image;
+
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VB(ctx, "dlist");
+
+   /* make copy of image */
+   image = MALLOC(imageSize);
+   if (!image) {
+      gl_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage3DARB");
+      return;
+   }
+   MEMCPY(image, data, imageSize);
+   n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D, 12 );
+   if (n) {
+      n[1].e = target;
+      n[2].i = level;
+      n[3].i = xoffset;
+      n[4].i = yoffset;
+      n[5].i = zoffset;
+      n[6].i = (GLint) width;
+      n[7].i = (GLint) height;
+      n[8].i = (GLint) depth;
+      n[9].e = format;
+      n[10].i = imageSize;
+      n[11].data = image;
+   }
+   else if (image) {
+      FREE(image);
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->CompressedTexSubImage3DARB)(target, level, xoffset, yoffset,
+                       zoffset, width, height, depth, format, imageSize, data);
+   }
 }
 
 
@@ -4432,6 +4674,31 @@ static void execute_list( GLcontext *ctx, GLuint list )
             break;
          case OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS:  /* GL_SGIS_pixel_texture */
             (*ctx->Exec->PixelTexGenParameteriSGIS)( n[1].e, n[2].i );
+            break;
+         case OPCODE_COMPRESSED_TEX_IMAGE_1D: /* GL_ARB_texture_compression */
+            (*ctx->Exec->CompressedTexImage1DARB)(n[1].e, n[2].i, n[3].e,
+                                            n[4].i, n[5].i, n[6].i, n[7].data);
+            break;
+         case OPCODE_COMPRESSED_TEX_IMAGE_2D: /* GL_ARB_texture_compression */
+            (*ctx->Exec->CompressedTexImage2DARB)(n[1].e, n[2].i, n[3].e,
+                                    n[4].i, n[5].i, n[6].i, n[7].i, n[8].data);
+            break;
+         case OPCODE_COMPRESSED_TEX_IMAGE_3D: /* GL_ARB_texture_compression */
+            (*ctx->Exec->CompressedTexImage3DARB)(n[1].e, n[2].i, n[3].e,
+                            n[4].i, n[5].i, n[6].i, n[7].i, n[8].i, n[9].data);
+            break;
+         case OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D: /* GL_ARB_texture_compress */
+            (*ctx->Exec->CompressedTexSubImage1DARB)(n[1].e, n[2].i, n[3].i,
+                                            n[4].i, n[5].e, n[6].i, n[7].data);
+            break;
+         case OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D: /* GL_ARB_texture_compress */
+            (*ctx->Exec->CompressedTexSubImage2DARB)(n[1].e, n[2].i, n[3].i,
+                            n[4].i, n[5].i, n[6].i, n[7].e, n[8].i, n[9].data);
+            break;
+         case OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D: /* GL_ARB_texture_compress */
+            (*ctx->Exec->CompressedTexSubImage3DARB)(n[1].e, n[2].i, n[3].i,
+                                        n[4].i, n[5].i, n[6].i, n[7].i, n[8].i,
+                                        n[9].e, n[10].i, n[11].data);
             break;
 	 case OPCODE_CONTINUE:
 	    n = (Node *) n[1].next;

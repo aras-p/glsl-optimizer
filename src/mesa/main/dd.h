@@ -667,6 +667,47 @@ struct dd_function_table {
     * should do the job.
     */
 
+   GLboolean (*CompressedTexSubImage1D)( GLcontext *ctx, GLenum target,
+                                         GLint level, GLint xoffset,
+                                         GLsizei width, GLenum format,
+                                         GLsizei imageSize, const GLvoid *data,
+                                         struct gl_texture_object *texObj,
+                                         struct gl_texture_image *texImage );
+   GLboolean (*CompressedTexSubImage2D)( GLcontext *ctx, GLenum target,
+                                         GLint level, GLint xoffset,
+                                         GLint yoffset, GLsizei width,
+                                         GLint height, GLenum format,
+                                         GLsizei imageSize, const GLvoid *data,
+                                         struct gl_texture_object *texObj,
+                                         struct gl_texture_image *texImage );
+   GLboolean (*CompressedTexSubImage3D)( GLcontext *ctx, GLenum target,
+                                         GLint level, GLint xoffset,
+                                         GLint yoffset, GLint zoffset,
+                                         GLsizei width, GLint height,
+                                         GLint depth, GLenum format,
+                                         GLsizei imageSize, const GLvoid *data,
+                                         struct gl_texture_object *texObj,
+                                         struct gl_texture_image *texImage );
+   /* Called by glCompressedTexSubImage1/2/3D.
+    * Arguments:
+    *   <target>, <level>, <x/z/zoffset>, <width>, <height>, <depth>,
+    *      <imageSize>, and <data> are user specified.
+    *   <texObj> is the target texture object.
+    *   <texImage> is the target texture image.  It will have the texture
+    *      width, height, depth, border and internalFormat information.
+    * Return GL_TRUE if operation completed, return GL_FALSE if core Mesa
+    * should do the job.
+    */
+
+   void (*GetCompressedTexImage)( GLcontext *ctx, GLenum target,
+                                  GLint lod, void *image,
+                                  const struct gl_texture_object *texObj,
+                                  struct gl_texture_image *texImage );
+   /* Called by glGetCompressedTexImageARB.
+    * <target>, <lod>, <image> are specified by user.
+    * <texObj> is the source texture object.
+    * <texImage> is the source texture image.
+    */
 
    void (*TexEnv)( GLcontext *ctx, GLenum target, GLenum pname,
                    const GLfloat *param );

@@ -1125,11 +1125,13 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
       }
    }
 
-   if (!_mesa_is_legal_format_and_type(format, type)) {
-      char message[100];
-      sprintf(message, "glTexSubImage%dD(format or type)", dimensions);
-      gl_error(ctx, GL_INVALID_ENUM, message);
-      return GL_TRUE;
+   if (!is_compressed_format(destTex->IntFormat)) {
+      if (!_mesa_is_legal_format_and_type(format, type)) {
+         char message[100];
+         sprintf(message, "glTexSubImage%dD(format or type)", dimensions);
+         gl_error(ctx, GL_INVALID_ENUM, message);
+         return GL_TRUE;
+      }
    }
 
    return GL_FALSE;
@@ -1810,19 +1812,45 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
    switch (target) {
       case GL_TEXTURE_1D:
          texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentD[1];
+         texImage = texObj->Image[level];
          break;
       case GL_TEXTURE_2D:
          texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentD[2];
+         texImage = texObj->Image[level];
+         break;
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
+         texImage = texObj->Image[level];
+         break;
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
+         texImage = texObj->NegX[level];
+         break;
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
+         texImage = texObj->PosY[level];
+         break;
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
+         texImage = texObj->NegY[level];
+         break;
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
+         texImage = texObj->PosZ[level];
+         break;
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
+         texImage = texObj->NegZ[level];
          break;
       case GL_TEXTURE_3D:
          texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentD[3];
+         texImage = texObj->Image[level];
          break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetTexImage(target)" );
          return;
    }
 
-   texImage = texObj->Image[level];
    if (!texImage) {
       /* invalid mipmap level */
       return;
@@ -2581,7 +2609,10 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCompressedTexImage2DARB");
 
-   if (target == GL_TEXTURE_2D) {
+   if (target==GL_TEXTURE_2D ||
+       (ctx->Extensions.HaveTextureCubeMap &&
+        target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
+        target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)) {
       struct gl_texture_unit *texUnit;
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
@@ -2678,7 +2709,7 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCompressedTexImage3DARB");
 
-   if (target == GL_TEXTURE_1D) {
+   if (target == GL_TEXTURE_3D) {
       struct gl_texture_unit *texUnit;
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
@@ -2771,6 +2802,35 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
                                  GLsizei width, GLenum format,
                                  GLsizei imageSize, const GLvoid *data)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_texture_unit *texUnit;
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
+   GLboolean success = GL_FALSE;
+
+   if (subtexture_error_check(ctx, 1, target, level, xoffset, 0, 0,
+                              width, 1, 1, format, GL_NONE)) {
+      return;   /* error was detected */
+   }
+
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texImage = texObj->Image[level];
+   assert(texImage);
+
+   if (width == 0 || !data)
+      return;  /* no-op, not an error */
+
+   if (ctx->Driver.CompressedTexSubImage1D) {
+      success = (*ctx->Driver.CompressedTexSubImage1D)(ctx, target, level,
+                   xoffset, width, format, imageSize, data, texObj, texImage);
+   }
+   if (!success) {
+      /* XXX what else can we do? */
+      gl_problem(ctx, "glCompressedTexSubImage1DARB failed!");
+      return;
+   }
+
 }
 
 
@@ -2780,6 +2840,35 @@ _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
                                  GLenum format, GLsizei imageSize,
                                  const GLvoid *data)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_texture_unit *texUnit;
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
+   GLboolean success = GL_FALSE;
+
+   if (subtexture_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
+                              width, height, 1, format, GL_NONE)) {
+      return;   /* error was detected */
+   }
+
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texImage = texObj->Image[level];
+   assert(texImage);
+
+   if (width == 0 || height == 0 || !data)
+      return;  /* no-op, not an error */
+
+   if (ctx->Driver.CompressedTexSubImage2D) {
+      success = (*ctx->Driver.CompressedTexSubImage2D)(ctx, target, level,
+                                       xoffset, yoffset, width, height, format,
+                                       imageSize, data, texObj, texImage);
+   }
+   if (!success) {
+      /* XXX what else can we do? */
+      gl_problem(ctx, "glCompressedTexSubImage2DARB failed!");
+      return;
+   }
 }
 
 
@@ -2789,10 +2878,113 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
                                  GLsizei height, GLsizei depth, GLenum format,
                                  GLsizei imageSize, const GLvoid *data)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_texture_unit *texUnit;
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
+   GLboolean success = GL_FALSE;
+
+   if (subtexture_error_check(ctx, 3, target, level, xoffset, yoffset, zoffset,
+                              width, height, depth, format, GL_NONE)) {
+      return;   /* error was detected */
+   }
+
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texImage = texObj->Image[level];
+   assert(texImage);
+
+   if (width == 0 || height == 0 || depth == 0 || !data)
+      return;  /* no-op, not an error */
+
+   if (ctx->Driver.CompressedTexSubImage3D) {
+      success = (*ctx->Driver.CompressedTexSubImage3D)(ctx, target, level,
+                               xoffset, yoffset, zoffset, width, height, depth,
+                               format, imageSize, data, texObj, texImage);
+   }
+   if (!success) {
+      /* XXX what else can we do? */
+      gl_problem(ctx, "glCompressedTexSubImage3DARB failed!");
+      return;
+   }
 }
 
 
 void
-_mesa_GetCompressedTexImageARB(GLenum target, GLint lod, GLvoid *img)
+_mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   const struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetCompressedTexImageARB");
+
+   if (level < 0 || level >= ctx->Const.MaxTextureLevels) {
+      gl_error( ctx, GL_INVALID_VALUE, "glGetCompressedTexImageARB(level)" );
+      return;
+   }
+
+   switch (target) {
+      case GL_TEXTURE_1D:
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentD[1];
+         texImage = texObj->Image[level];
+         break;
+      case GL_TEXTURE_2D:
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentD[2];
+         texImage = texObj->Image[level];
+         break;
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
+         texImage = texObj->Image[level];
+         break;
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
+         texImage = texObj->NegX[level];
+         break;
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
+         texImage = texObj->PosY[level];
+         break;
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
+         texImage = texObj->NegY[level];
+         break;
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
+         texImage = texObj->PosZ[level];
+         break;
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
+         texImage = texObj->NegZ[level];
+         break;
+      case GL_TEXTURE_3D:
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentD[3];
+         texImage = texObj->Image[level];
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glGetCompressedTexImageARB(target)");
+         return;
+   }
+
+   if (!texImage) {
+      /* invalid mipmap level */
+      gl_error(ctx, GL_INVALID_VALUE, "glGetCompressedTexImageARB(level)");
+      return;
+   }
+
+   if (!texImage->IsCompressed) {
+      gl_error(ctx, GL_INVALID_OPERATION, "glGetCompressedTexImageARB");
+      return;
+   }
+
+   if (!img)
+      return;
+
+   if (ctx->Driver.GetCompressedTexImage) {
+      (*ctx->Driver.GetCompressedTexImage)(ctx, target, level, img, texObj,
+                                           texImage);
+   }
+   else {
+      gl_problem(ctx, "Driver doesn't implement GetCompressedTexImage");
+   }
 }
