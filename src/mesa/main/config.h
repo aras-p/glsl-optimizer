@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.3 2000/01/13 00:34:45 brianp Exp $ */
+/* $Id: config.h,v 1.4 2000/01/24 20:54:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -173,14 +173,11 @@
  * this number, though things may go better for you if you choose a
  * value of 12n + 3.  
  */
-
 #define VB_START  3
 
-#if defined(FX) && !defined(MITS)
-#  define VB_MAX 72 + VB_START  /* better performance */
-#else
-#  define VB_MAX 480 + VB_START
-#endif
+#define VB_MAX (216 + VB_START)
+
+
 
 /*
  * Actual vertex buffer size.
