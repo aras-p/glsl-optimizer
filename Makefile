@@ -48,6 +48,7 @@ darwin-static \
 freebsd \
 hpux10 \
 hpux10-gcc \
+hpux10-static \
 hpux11-32-static \
 hpux11-32-static-nothreads \
 hpux11-64-static \
