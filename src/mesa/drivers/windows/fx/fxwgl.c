@@ -55,7 +55,7 @@ extern "C"
 #include "glheader.h"
 #include "glapi.h"
 #include "imports.h"
-#include "fxdrv.h"
+#include "../../glide/fxdrv.h"
 
 #define MAX_MESA_ATTRS  20
 
