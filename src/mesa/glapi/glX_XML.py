@@ -120,6 +120,7 @@ class glXEnumFunction:
 		if self.sig == None:
 			self.sig = ""
 			for i in self.count:
+				self.count[i].sort()
 				for e in self.count[i]:
 					self.sig += "%04x,%u," % (e, i)
 	

@@ -1,4 +1,4 @@
-/* DO NOT EDIT - This file generated automatically by glX_proto_send.py (from Mesa) script */
+/* DO NOT EDIT - This file generated automatically by glX_proto_size.py (from Mesa) script */
 
 /*
  * (C) Copyright IBM Corporation 2004
@@ -166,14 +166,25 @@ __glTexParameterfv_size( GLenum e )
         case GL_TEXTURE_WRAP_S:
         case GL_TEXTURE_WRAP_T:
         case GL_TEXTURE_PRIORITY:
-        case GL_TEXTURE_RESIDENT:
         case GL_TEXTURE_WRAP_R:
+        case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
+/*      case GL_SHADOW_AMBIENT_SGIX:*/
         case GL_TEXTURE_MIN_LOD:
         case GL_TEXTURE_MAX_LOD:
         case GL_TEXTURE_BASE_LEVEL:
         case GL_TEXTURE_MAX_LEVEL:
+        case GL_TEXTURE_CLIPMAP_FRAME_SGIX:
+        case GL_TEXTURE_LOD_BIAS_S_SGIX:
+        case GL_TEXTURE_LOD_BIAS_T_SGIX:
+        case GL_TEXTURE_LOD_BIAS_R_SGIX:
         case GL_GENERATE_MIPMAP:
 /*      case GL_GENERATE_MIPMAP_SGIS:*/
+        case GL_TEXTURE_COMPARE_SGIX:
+        case GL_TEXTURE_COMPARE_OPERATOR_SGIX:
+        case GL_TEXTURE_MAX_CLAMP_S_SGIX:
+        case GL_TEXTURE_MAX_CLAMP_T_SGIX:
+        case GL_TEXTURE_MAX_CLAMP_R_SGIX:
+        case GL_TEXTURE_MAX_ANISOTROPY_EXT:
         case GL_TEXTURE_LOD_BIAS:
 /*      case GL_TEXTURE_LOD_BIAS_EXT:*/
         case GL_DEPTH_TEXTURE_MODE:
@@ -182,17 +193,6 @@ __glTexParameterfv_size( GLenum e )
 /*      case GL_TEXTURE_COMPARE_MODE_ARB:*/
         case GL_TEXTURE_COMPARE_FUNC:
 /*      case GL_TEXTURE_COMPARE_FUNC_ARB:*/
-        case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
-/*      case GL_SHADOW_AMBIENT_SGIX:*/
-        case GL_TEXTURE_COMPARE_SGIX:
-        case GL_TEXTURE_COMPARE_OPERATOR_SGIX:
-        case GL_TEXTURE_LOD_BIAS_S_SGIX:
-        case GL_TEXTURE_LOD_BIAS_T_SGIX:
-        case GL_TEXTURE_LOD_BIAS_R_SGIX:
-        case GL_TEXTURE_MAX_ANISOTROPY_EXT:
-        case GL_TEXTURE_MAX_CLAMP_S_SGIX:
-        case GL_TEXTURE_MAX_CLAMP_T_SGIX:
-        case GL_TEXTURE_MAX_CLAMP_R_SGIX:
         case GL_TEXTURE_UNSIGNED_REMAP_MODE_NV:
             return 1;
         case GL_TEXTURE_CLIPMAP_CENTER_SGIX:
@@ -214,27 +214,28 @@ __glTexEnvfv_size( GLenum e )
     switch( e ) {
         case GL_ALPHA_SCALE:
         case GL_TEXTURE_ENV_MODE:
+        case GL_TEXTURE_LOD_BIAS:
         case GL_COMBINE_RGB:
         case GL_COMBINE_ALPHA:
+        case GL_RGB_SCALE:
         case GL_SOURCE0_RGB:
         case GL_SOURCE1_RGB:
         case GL_SOURCE2_RGB:
+        case GL_SOURCE3_RGB_NV:
         case GL_SOURCE0_ALPHA:
         case GL_SOURCE1_ALPHA:
         case GL_SOURCE2_ALPHA:
+        case GL_SOURCE3_ALPHA_NV:
         case GL_OPERAND0_RGB:
         case GL_OPERAND1_RGB:
         case GL_OPERAND2_RGB:
+        case GL_OPERAND3_RGB_NV:
         case GL_OPERAND0_ALPHA:
         case GL_OPERAND1_ALPHA:
         case GL_OPERAND2_ALPHA:
-        case GL_RGB_SCALE:
-        case GL_TEXTURE_LOD_BIAS:
-        case GL_COORD_REPLACE_ARB:
-        case GL_SOURCE3_RGB_NV:
-        case GL_SOURCE3_ALPHA_NV:
-        case GL_OPERAND3_RGB_NV:
         case GL_OPERAND3_ALPHA_NV:
+        case GL_COORD_REPLACE_ARB:
+/*      case GL_COORD_REPLACE_NV:*/
             return 1;
         case GL_TEXTURE_ENV_COLOR:
             return 4;
@@ -321,11 +322,15 @@ INTERNAL PURE FASTCALL GLint
 __glConvolutionParameterfv_size( GLenum e )
 {
     switch( e ) {
-        case GL_CONVOLUTION_BORDER_MODE_EXT:
+        case GL_CONVOLUTION_BORDER_MODE:
+/*      case GL_CONVOLUTION_BORDER_MODE_EXT:*/
             return 1;
-        case GL_CONVOLUTION_BORDER_COLOR_HP:
-        case GL_CONVOLUTION_FILTER_SCALE_EXT:
-        case GL_CONVOLUTION_FILTER_BIAS_EXT:
+        case GL_CONVOLUTION_FILTER_SCALE:
+/*      case GL_CONVOLUTION_FILTER_SCALE_EXT:*/
+        case GL_CONVOLUTION_FILTER_BIAS:
+/*      case GL_CONVOLUTION_FILTER_BIAS_EXT:*/
+        case GL_CONVOLUTION_BORDER_COLOR:
+/*      case GL_CONVOLUTION_BORDER_COLOR_HP:*/
             return 4;
         default: return 0;
     }
@@ -348,6 +353,7 @@ __glPointParameterfvEXT_size( GLenum e )
 /*      case GL_POINT_FADE_THRESHOLD_SIZE_EXT:*/
 /*      case GL_POINT_FADE_THRESHOLD_SIZE_SGIS:*/
         case GL_POINT_SPRITE_R_MODE_NV:
+        case GL_POINT_SPRITE_COORD_ORIGIN:
             return 1;
         case GL_POINT_DISTANCE_ATTENUATION:
 /*      case GL_POINT_DISTANCE_ATTENUATION_ARB:*/

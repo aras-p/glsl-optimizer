@@ -1,4 +1,4 @@
-/* DO NOT EDIT - This file generated automatically by glX_proto_send.py (from Mesa) script */
+/* DO NOT EDIT - This file generated automatically by glX_proto_size.py (from Mesa) script */
 
 /*
  * (C) Copyright IBM Corporation 2004

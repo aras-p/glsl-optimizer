@@ -55,7 +55,7 @@
 The various attributes for param and glx have the meanings listed below.
 When adding new functions, please annote them correct.  In most cases this
 will just mean adding a '<glx ignore="true"/>' tag.
-    
+
 param:
      name - name of the parameter
      type - fully qualified type (e.g., with "const", etc.)
@@ -375,6 +375,8 @@ glx:
     <enum name="ALPHA_SCALE"                   count="1"  value="0x0D1C">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="ALPHA_BIAS"                               value="0x0D1D"/>
     <enum name="DEPTH_SCALE"                              value="0x0D1E"/>
@@ -488,13 +490,27 @@ glx:
     <enum name="FEEDBACK_BUFFER_TYPE"                     value="0x0DF2"/>
     <enum name="SELECTION_BUFFER_POINTER"                 value="0x0DF3"/>
     <enum name="SELECTION_BUFFER_SIZE"                    value="0x0DF4"/>
-    <enum name="TEXTURE_WIDTH"                            value="0x1000"/>
-    <enum name="TEXTURE_HEIGHT"                           value="0x1001"/>
-    <enum name="TEXTURE_BORDER"                           value="0x1005"/>
-    <enum name="TEXTURE_COMPONENTS"                       value="0x1003"/>
+    <enum name="TEXTURE_WIDTH"                 count="1"  value="0x1000">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_HEIGHT"                count="1"  value="0x1001">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_BORDER"                count="1"  value="0x1005">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_COMPONENTS"            count="1"  value="0x1003">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
     <enum name="TEXTURE_BORDER_COLOR"          count="4"  value="0x1004">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="DONT_CARE"                                value="0x1100"/>
     <enum name="FASTEST"                                  value="0x1101"/>
@@ -504,46 +520,72 @@ glx:
         <size name="Materialiv"/>
         <size name="Lightfv"/>
         <size name="Lightiv"/>
+        <size name="GetMaterialfv" mode="get"/>
+        <size name="GetMaterialiv" mode="get"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
     </enum>
     <enum name="DIFFUSE"                       count="4"  value="0x1201">
         <size name="Materialfv"/>
         <size name="Materialiv"/>
         <size name="Lightfv"/>
         <size name="Lightiv"/>
+        <size name="GetMaterialfv" mode="get"/>
+        <size name="GetMaterialiv" mode="get"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
     </enum>
     <enum name="SPECULAR"                      count="4"  value="0x1202">
         <size name="Materialfv"/>
         <size name="Materialiv"/>
         <size name="Lightfv"/>
         <size name="Lightiv"/>
+        <size name="GetMaterialfv" mode="get"/>
+        <size name="GetMaterialiv" mode="get"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
     </enum>
     <enum name="POSITION"                      count="4"  value="0x1203">
         <size name="Lightfv"/>
         <size name="Lightiv"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
     </enum>
     <enum name="SPOT_DIRECTION"                count="3"  value="0x1204">
         <size name="Lightfv"/>
         <size name="Lightiv"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
     </enum>
     <enum name="SPOT_EXPONENT"                 count="1"  value="0x1205">
         <size name="Lightfv"/>
         <size name="Lightiv"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
     </enum>
     <enum name="SPOT_CUTOFF"                   count="1"  value="0x1206">
         <size name="Lightfv"/>
         <size name="Lightiv"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
     </enum>
     <enum name="CONSTANT_ATTENUATION"          count="1"  value="0x1207">
         <size name="Lightfv"/>
         <size name="Lightiv"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
     </enum>
     <enum name="LINEAR_ATTENUATION"            count="1"  value="0x1208">
         <size name="Lightfv"/>
         <size name="Lightiv"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
     </enum>
     <enum name="QUADRATIC_ATTENUATION"         count="1"  value="0x1209">
         <size name="Lightfv"/>
         <size name="Lightiv"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
     </enum>
     <enum name="COMPILE"                                  value="0x1300"/>
     <enum name="COMPILE_AND_EXECUTE"                      value="0x1301"/>
@@ -596,18 +638,26 @@ glx:
     <enum name="EMISSION"                      count="4"  value="0x1600">
         <size name="Materialfv"/>
         <size name="Materialiv"/>
+        <size name="GetMaterialfv" mode="get"/>
+        <size name="GetMaterialiv" mode="get"/>
     </enum>
     <enum name="SHININESS"                     count="1"  value="0x1601">
         <size name="Materialfv"/>
         <size name="Materialiv"/>
+        <size name="GetMaterialfv" mode="get"/>
+        <size name="GetMaterialiv" mode="get"/>
     </enum>
     <enum name="AMBIENT_AND_DIFFUSE"           count="4"  value="0x1602">
         <size name="Materialfv"/>
         <size name="Materialiv"/>
+        <size name="GetMaterialfv" mode="get"/>
+        <size name="GetMaterialiv" mode="get"/>
     </enum>
     <enum name="COLOR_INDEXES"                 count="3"  value="0x1603">
         <size name="Materialfv"/>
         <size name="Materialiv"/>
+        <size name="GetMaterialfv" mode="get"/>
+        <size name="GetMaterialiv" mode="get"/>
     </enum>
     <enum name="MODELVIEW"                                value="0x1700"/>
     <enum name="PROJECTION"                               value="0x1701"/>
@@ -652,10 +702,14 @@ glx:
     <enum name="TEXTURE_ENV_MODE"              count="1"  value="0x2200">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="TEXTURE_ENV_COLOR"             count="4"  value="0x2201">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="TEXTURE_ENV"                              value="0x2300"/>
     <enum name="EYE_LINEAR"                               value="0x2400"/>
@@ -665,16 +719,25 @@ glx:
         <size name="TexGendv"/>
         <size name="TexGenfv"/>
         <size name="TexGeniv"/>
+        <size name="GetTexGendv" mode="get"/>
+        <size name="GetTexGenfv" mode="get"/>
+        <size name="GetTexGeniv" mode="get"/>
     </enum>
     <enum name="OBJECT_PLANE"                  count="4"  value="0x2501">
         <size name="TexGendv"/>
         <size name="TexGenfv"/>
         <size name="TexGeniv"/>
+        <size name="GetTexGendv" mode="get"/>
+        <size name="GetTexGenfv" mode="get"/>
+        <size name="GetTexGeniv" mode="get"/>
     </enum>
-    <enum name="EYE_PLANE"                    count="4"   value="0x2502">
+    <enum name="EYE_PLANE"                     count="4"  value="0x2502">
         <size name="TexGendv"/>
         <size name="TexGenfv"/>
         <size name="TexGeniv"/>
+        <size name="GetTexGendv" mode="get"/>
+        <size name="GetTexGenfv" mode="get"/>
+        <size name="GetTexGeniv" mode="get"/>
     </enum>
     <enum name="NEAREST"                                  value="0x2600"/>
     <enum name="LINEAR"                                   value="0x2601"/>
@@ -685,18 +748,26 @@ glx:
     <enum name="TEXTURE_MAG_FILTER"            count="1"  value="0x2800">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_MIN_FILTER"            count="1"  value="0x2801">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_WRAP_S"                count="1"  value="0x2802">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_WRAP_T"                count="1"  value="0x2803">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="CLAMP"                                    value="0x2900"/>
     <enum name="REPEAT"                                   value="0x2901"/>
@@ -2659,21 +2730,41 @@ glx:
     <enum name="RGB10_A2"                                 value="0x8059"/>
     <enum name="RGBA12"                                   value="0x805A"/>
     <enum name="RGBA16"                                   value="0x805B"/>
-    <enum name="TEXTURE_RED_SIZE"                         value="0x805C"/>
-    <enum name="TEXTURE_GREEN_SIZE"                       value="0x805D"/>
-    <enum name="TEXTURE_BLUE_SIZE"                        value="0x805E"/>
-    <enum name="TEXTURE_ALPHA_SIZE"                       value="0x805F"/>
-    <enum name="TEXTURE_LUMINANCE_SIZE"                   value="0x8060"/>
-    <enum name="TEXTURE_INTENSITY_SIZE"                   value="0x8061"/>
+    <enum name="TEXTURE_RED_SIZE"              count="1"  value="0x805C">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_GREEN_SIZE"            count="1"  value="0x805D">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_BLUE_SIZE"             count="1"  value="0x805E">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_ALPHA_SIZE"            count="1"  value="0x805F">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_LUMINANCE_SIZE"        count="1"  value="0x8060">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_INTENSITY_SIZE"        count="1"  value="0x8061">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
     <enum name="PROXY_TEXTURE_1D"                         value="0x8063"/>
     <enum name="PROXY_TEXTURE_2D"                         value="0x8064"/>
     <enum name="TEXTURE_PRIORITY"              count="1"  value="0x8066">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_RESIDENT"              count="1"  value="0x8067">
-        <size name="TexParameterfv"/>
-        <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_BINDING_1D"                       value="0x8068"/>
     <enum name="TEXTURE_BINDING_2D"                       value="0x8069"/>
@@ -2948,10 +3039,15 @@ glx:
     <enum name="UNPACK_IMAGE_HEIGHT"                      value="0x806E"/>
     <enum name="TEXTURE_3D"                               value="0x806F"/>
     <enum name="PROXY_TEXTURE_3D"                         value="0x8070"/>
-    <enum name="TEXTURE_DEPTH"                            value="0x8071"/>
+    <enum name="TEXTURE_DEPTH"                 count="1"  value="0x8071">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
     <enum name="TEXTURE_WRAP_R"                count="1"  value="0x8072">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="MAX_3D_TEXTURE_SIZE"                      value="0x8073"/>
     <enum name="UNSIGNED_BYTE_2_3_3_REV"                  value="0x8362"/>
@@ -2969,18 +3065,26 @@ glx:
     <enum name="TEXTURE_MIN_LOD"               count="1"  value="0x813A">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_MAX_LOD"               count="1"  value="0x813B">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_BASE_LEVEL"            count="1"  value="0x813C">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_MAX_LEVEL"             count="1"  value="0x813D">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="LIGHT_MODEL_COLOR_CONTROL"     count="1"  value="0x81F8">
         <size name="LightModelfv"/>
@@ -2996,7 +3100,105 @@ glx:
     <enum name="ALIASED_LINE_WIDTH_RANGE"                 value="0x846E"/>
 
     <!-- These enums are actually part of the ARB_imaging subset. -->
-    
+
+    <enum name="CONVOLUTION_BORDER_MODE"       count="1"  value="0x8013">
+        <size name="ConvolutionParameterfv"/>
+        <size name="ConvolutionParameteriv"/>
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
+    </enum>
+    <enum name="CONVOLUTION_BORDER_COLOR"      count="4"  value="0x8154">
+        <size name="ConvolutionParameterfv"/>
+        <size name="ConvolutionParameteriv"/>
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
+    </enum>
+    <enum name="CONVOLUTION_FILTER_SCALE"      count="4"  value="0x8014">
+        <size name="ConvolutionParameterfv"/>
+        <size name="ConvolutionParameteriv"/>
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
+    </enum>
+    <enum name="CONVOLUTION_FILTER_BIAS"       count="4"  value="0x8015">
+        <size name="ConvolutionParameterfv"/>
+        <size name="ConvolutionParameteriv"/>
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
+    </enum>
+    <enum name="REDUCE"                                   value="0x8016"/>
+    <enum name="CONVOLUTION_FORMAT"            count="1"  value="0x8017">
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
+    </enum>
+    <enum name="CONVOLUTION_WIDTH"             count="1"  value="0x8018">
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
+    </enum>
+    <enum name="CONVOLUTION_HEIGHT"            count="1"  value="0x8019">
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
+    </enum>
+    <enum name="MAX_CONVOLUTION_WIDTH"         count="1"  value="0x801A">
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
+    </enum>
+    <enum name="MAX_CONVOLUTION_HEIGHT"        count="1"  value="0x801B">
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_RED_SCALE"    count="1"  value="0x801C"/>
+    <enum name="POST_CONVOLUTION_GREEN_SCALE"  count="1"  value="0x801D"/>
+    <enum name="POST_CONVOLUTION_BLUE_SCALE"   count="1"  value="0x801E"/>
+    <enum name="POST_CONVOLUTION_ALPHA_SCALE"  count="1"  value="0x801F"/>
+    <enum name="POST_CONVOLUTION_RED_BIAS"     count="1"  value="0x8020"/>
+    <enum name="POST_CONVOLUTION_GREEN_BIAS"   count="1"  value="0x8021"/>
+    <enum name="POST_CONVOLUTION_BLUE_BIAS"    count="1"  value="0x8022"/>
+    <enum name="POST_CONVOLUTION_ALPHA_BIAS"   count="1"  value="0x8023"/>
+
+    <enum name="HISTOGRAM"                                value="0x8024"/>
+    <enum name="PROXY_HISTOGRAM"                          value="0x8025"/>
+    <enum name="HISTOGRAM_WIDTH"               count="1"  value="0x8026">
+        <size name="GetHistogramParameterfv" mode="get"/>
+        <size name="GetHistogramParameteriv" mode="get"/>
+    </enum>
+    <enum name="HISTOGRAM_FORMAT"              count="1"  value="0x8027">
+        <size name="GetHistogramParameterfv" mode="get"/>
+        <size name="GetHistogramParameteriv" mode="get"/>
+    </enum>
+    <enum name="HISTOGRAM_RED_SIZE"            count="1"  value="0x8028">
+        <size name="GetHistogramParameterfv" mode="get"/>
+        <size name="GetHistogramParameteriv" mode="get"/>
+    </enum>
+    <enum name="HISTOGRAM_GREEN_SIZE"          count="1"  value="0x8029">
+        <size name="GetHistogramParameterfv" mode="get"/>
+        <size name="GetHistogramParameteriv" mode="get"/>
+    </enum>
+    <enum name="HISTOGRAM_BLUE_SIZE"           count="1"  value="0x802A">
+        <size name="GetHistogramParameterfv" mode="get"/>
+        <size name="GetHistogramParameteriv" mode="get"/>
+    </enum>
+    <enum name="HISTOGRAM_ALPHA_SIZE"          count="1"  value="0x802B">
+        <size name="GetHistogramParameterfv" mode="get"/>
+        <size name="GetHistogramParameteriv" mode="get"/>
+    </enum>
+    <enum name="HISTOGRAM_LUMINANCE_SIZE"      count="1"  value="0x802C">
+        <size name="GetHistogramParameterfv" mode="get"/>
+        <size name="GetHistogramParameteriv" mode="get"/>
+    </enum>
+    <enum name="HISTOGRAM_SINK"                count="1"  value="0x802D">
+        <size name="GetHistogramParameterfv" mode="get"/>
+        <size name="GetHistogramParameteriv" mode="get"/>
+    </enum>
+    <enum name="MINMAX"                                   value="0x802E"/>
+    <enum name="MINMAX_FORMAT"                 count="1"  value="0x802F">
+        <size name="GetMinmaxParameterfv" mode="get"/>
+        <size name="GetMinmaxParameteriv" mode="get"/>
+    </enum>
+    <enum name="MINMAX_SINK"                   count="1"  value="0x8030">
+        <size name="GetMinmaxParameterfv" mode="get"/>
+        <size name="GetMinmaxParameteriv" mode="get"/>
+    </enum>
+
     <enum name="COLOR_TABLE_SCALE"             count="4"  value="0x80D6">
         <size name="ColorTableParameterfv"/>
         <size name="ColorTableParameteriv"/>
@@ -3430,8 +3632,14 @@ glx:
     <enum name="COMPRESSED_RGB"                           value="0x84ED"/>
     <enum name="COMPRESSED_RGBA"                          value="0x84EE"/>
     <enum name="TEXTURE_COMPRESSION_HINT"                 value="0x84EF"/>
-    <enum name="TEXTURE_COMPRESSED_IMAGE_SIZE"            value="0x86A0"/>
-    <enum name="TEXTURE_COMPRESSED"                       value="0x86A1"/>
+    <enum name="TEXTURE_COMPRESSED_IMAGE_SIZE" count="1"  value="0x86A0">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_COMPRESSED"            count="1"  value="0x86A1">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
     <enum name="NUM_COMPRESSED_TEXTURE_FORMATS"           value="0x86A2"/>
     <enum name="COMPRESSED_TEXTURE_FORMATS"               value="0x86A3"/>
     <enum name="CLAMP_TO_BORDER"                          value="0x812D"/>
@@ -3440,62 +3648,92 @@ glx:
     <enum name="COMBINE_RGB"                   count="1"  value="0x8571">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="COMBINE_ALPHA"                 count="1"  value="0x8572">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="SOURCE0_RGB"                   count="1"  value="0x8580">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="SOURCE1_RGB"                   count="1"  value="0x8581">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="SOURCE2_RGB"                   count="1"  value="0x8582">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="SOURCE0_ALPHA"                 count="1"  value="0x8588">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="SOURCE1_ALPHA"                 count="1"  value="0x8589">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="SOURCE2_ALPHA"                 count="1"  value="0x858A">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="OPERAND0_RGB"                  count="1"  value="0x8590">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="OPERAND1_RGB"                  count="1"  value="0x8591">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="OPERAND2_RGB"                  count="1"  value="0x8592">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="OPERAND0_ALPHA"                count="1"  value="0x8598">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="OPERAND1_ALPHA"                count="1"  value="0x8599">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="OPERAND2_ALPHA"                count="1"  value="0x859A">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="RGB_SCALE"                     count="1"  value="0x8573">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="ADD_SIGNED"                               value="0x8574"/>
     <enum name="INTERPOLATE"                              value="0x8575"/>
@@ -3815,6 +4053,8 @@ glx:
     <enum name="GENERATE_MIPMAP"               count="1"  value="0x8191">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="GENERATE_MIPMAP_HINT"                     value="0x8192"/>
     <enum name="DEPTH_COMPONENT16"                        value="0x81A5"/>
@@ -3843,21 +4083,34 @@ glx:
         <size name="TexEnviv"/>
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="INCR_WRAP"                                value="0x8507"/>
     <enum name="DECR_WRAP"                                value="0x8508"/>
-    <enum name="TEXTURE_DEPTH_SIZE"                       value="0x884A"/>
+    <enum name="TEXTURE_DEPTH_SIZE"            count="1"  value="0x884A">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
     <enum name="DEPTH_TEXTURE_MODE"            count="1"  value="0x884B">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_COMPARE_MODE"          count="1"  value="0x884C">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_COMPARE_FUNC"          count="1"  value="0x884D">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="COMPARE_R_TO_TEXTURE"                     value="0x884E"/>
 
@@ -4256,6 +4509,11 @@ glx:
     <!-- XXX this section is very much incomplete!!! -->
     <!-- These function offsets may change too!!! -->
 
+    <enum name="POINT_SPRITE_COORD_ORIGIN"     count="1"  value="0x8CA0">
+        <size name="PointParameterfvEXT"/>
+        <size name="PointParameterivNV"/>
+    </enum>
+
     <function name="StencilFuncSeparate" offset="796">
         <param name="face" type="GLenum"/>
         <param name="func" type="GLenum"/>
@@ -4608,8 +4866,14 @@ glx:
     <enum name="COMPRESSED_RGB_ARB"                       value="0x84ED"/>
     <enum name="COMPRESSED_RGBA_ARB"                      value="0x84EE"/>
     <enum name="TEXTURE_COMPRESSION_HINT_ARB"             value="0x84EF"/>
-    <enum name="TEXTURE_COMPRESSED_IMAGE_SIZE_ARB"        value="0x86A0"/>
-    <enum name="TEXTURE_COMPRESSED_ARB"                   value="0x86A1"/>
+    <enum name="TEXTURE_COMPRESSED_IMAGE_SIZE_ARB" count="1" value="0x86A0">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_COMPRESSED_ARB"        count="1"  value="0x86A1">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
     <enum name="NUM_TEXTURE_COMPRESSED_FORMATS_ARB"       value="0x86A2"/>
     <enum name="TEXTURE_COMPRESSED_FORMATS_ARB"           value="0x86A3"/>
 
@@ -4908,10 +5172,15 @@ glx:
     <enum name="DEPTH_COMPONENT16_ARB"                    value="0x81A5"/>
     <enum name="DEPTH_COMPONENT24_ARB"                    value="0x81A6"/>
     <enum name="DEPTH_COMPONENT32_ARB"                    value="0x81A7"/>
-    <enum name="TEXTURE_DEPTH_SIZE_ARB"                   value="0x884A"/>
+    <enum name="TEXTURE_DEPTH_SIZE_ARB"        count="1"  value="0x884A">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
     <enum name="DEPTH_TEXTURE_MODE_ARB"        count="1"  value="0x884B">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
 </category>
 
@@ -4919,10 +5188,14 @@ glx:
     <enum name="TEXTURE_COMPARE_MODE_ARB"      count="1"  value="0x884C">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_COMPARE_FUNC_ARB"      count="1"  value="0x884D">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="COMPARE_R_TO_TEXTURE_ARB"                 value="0x884E"/>
 </category>
@@ -4931,6 +5204,8 @@ glx:
     <enum name="TEXTURE_COMPARE_FAIL_VALUE_ARB" count="1" value="0x80BF">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
 </category>
 
@@ -6067,6 +6342,8 @@ glx:
     <enum name="COORD_REPLACE_ARB"             count="1"  value="0x8862">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
 </category>
 
@@ -6166,12 +6443,30 @@ glx:
     <enum name="RGB10_A2_EXT"                             value="0x8059"/>
     <enum name="RGBA12_EXT"                               value="0x805A"/>
     <enum name="RGBA16_EXT"                               value="0x805B"/>
-    <enum name="TEXTURE_RED_SIZE_EXT"                     value="0x805C"/>
-    <enum name="TEXTURE_GREEN_SIZE_EXT"                   value="0x805D"/>
-    <enum name="TEXTURE_BLUE_SIZE_EXT"                    value="0x805E"/>
-    <enum name="TEXTURE_ALPHA_SIZE_EXT"                   value="0x805F"/>
-    <enum name="TEXTURE_LUMINANCE_SIZE_EXT"               value="0x8060"/>
-    <enum name="TEXTURE_INTENSITY_SIZE_EXT"               value="0x8061"/>
+    <enum name="TEXTURE_RED_SIZE_EXT"          count="1"  value="0x805C">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_GREEN_SIZE_EXT"        count="1"  value="0x805D">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_BLUE_SIZE_EXT"         count="1"  value="0x805E">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_ALPHA_SIZE_EXT"        count="1"  value="0x805F">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_LUMINANCE_SIZE_EXT"    count="1"  value="0x8060">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_INTENSITY_SIZE_EXT"    count="1"  value="0x8061">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
     <enum name="REPLACE_EXT"                              value="0x8062"/>
     <enum name="PROXY_TEXTURE_1D_EXT"                     value="0x8063"/>
     <enum name="PROXY_TEXTURE_2D_EXT"                     value="0x8064"/>
@@ -6308,6 +6603,51 @@ glx:
 </category>
 
 <category name="GL_EXT_histogram" number="11">
+    <enum name="HISTOGRAM_EXT"                            value="0x8024"/>
+    <enum name="PROXY_HISTOGRAM_EXT"                      value="0x8025"/>
+    <enum name="HISTOGRAM_WIDTH_EXT"           count="1"  value="0x8026">
+        <size name="GetHistogramParameterfvEXT" mode="get"/>
+        <size name="GetHistogramParameterivEXT" mode="get"/>
+    </enum>
+    <enum name="HISTOGRAM_FORMAT_EXT"          count="1"  value="0x8027">
+        <size name="GetHistogramParameterfvEXT" mode="get"/>
+        <size name="GetHistogramParameterivEXT" mode="get"/>
+    </enum>
+    <enum name="HISTOGRAM_RED_SIZE_EXT"        count="1"  value="0x8028">
+        <size name="GetHistogramParameterfvEXT" mode="get"/>
+        <size name="GetHistogramParameterivEXT" mode="get"/>
+    </enum>
+    <enum name="HISTOGRAM_GREEN_SIZE_EXT"      count="1"  value="0x8029">
+        <size name="GetHistogramParameterfvEXT" mode="get"/>
+        <size name="GetHistogramParameterivEXT" mode="get"/>
+    </enum>
+    <enum name="HISTOGRAM_BLUE_SIZE_EXT"       count="1"  value="0x802A">
+        <size name="GetHistogramParameterfvEXT" mode="get"/>
+        <size name="GetHistogramParameterivEXT" mode="get"/>
+    </enum>
+    <enum name="HISTOGRAM_ALPHA_SIZE_EXT"      count="1"  value="0x802B">
+        <size name="GetHistogramParameterfvEXT" mode="get"/>
+        <size name="GetHistogramParameterivEXT" mode="get"/>
+    </enum>
+    <enum name="HISTOGRAM_LUMINANCE_SIZE_EXT"  count="1"  value="0x802C">
+        <size name="GetHistogramParameterfvEXT" mode="get"/>
+        <size name="GetHistogramParameterivEXT" mode="get"/>
+    </enum>
+    <enum name="HISTOGRAM_SINK_EXT"            count="1"  value="0x802D">
+        <size name="GetHistogramParameterfvEXT" mode="get"/>
+        <size name="GetHistogramParameterivEXT" mode="get"/>
+    </enum>
+    <enum name="MINMAX_EXT"                               value="0x802E"/>
+    <enum name="MINMAX_FORMAT_EXT"             count="1"  value="0x802F">
+        <size name="GetMinmaxParameterfvEXT" mode="get"/>
+        <size name="GetMinmaxParameterivEXT" mode="get"/>
+    </enum>
+    <enum name="MINMAX_SINK_EXT"               count="1"  value="0x8030">
+        <size name="GetMinmaxParameterfvEXT" mode="get"/>
+        <size name="GetMinmaxParameterivEXT" mode="get"/>
+    </enum>
+    <enum name="TABLE_TOO_LARGE_EXT"                      value="0x8031"/>
+
     <function name="GetHistogramEXT" offset="417">
         <param name="target" type="GLenum"/>
         <param name="reset" type="GLboolean"/>
@@ -6377,23 +6717,60 @@ glx:
 </category>
 
 <category name="GL_EXT_convolution" number="12">
-    <enum name="CONVOLUTION_BORDER_MODE_EXT"    count="1" value="0x8013">
+    <enum name="CONVOLUTION_BORDER_MODE_EXT"   count="1"  value="0x8013">
         <size name="ConvolutionParameterfv"/>
         <size name="ConvolutionParameteriv"/>
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
     </enum>
     <!-- FIXME: Should this be in a section for HP_convolution_border_modes? -->
-    <enum name="CONVOLUTION_BORDER_COLOR_HP"    count="4" value="0x8154">
+    <enum name="CONVOLUTION_BORDER_COLOR_HP"   count="4"  value="0x8154">
         <size name="ConvolutionParameterfv"/>
         <size name="ConvolutionParameteriv"/>
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
     </enum>
-    <enum name="CONVOLUTION_FILTER_SCALE_EXT"   count="4" value="0x8014">
+    <enum name="CONVOLUTION_FILTER_SCALE_EXT"  count="4"  value="0x8014">
         <size name="ConvolutionParameterfv"/>
         <size name="ConvolutionParameteriv"/>
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
     </enum>
-    <enum name="CONVOLUTION_FILTER_BIAS_EXT"    count="4" value="0x8015">
+    <enum name="CONVOLUTION_FILTER_BIAS_EXT"   count="4"  value="0x8015">
         <size name="ConvolutionParameterfv"/>
         <size name="ConvolutionParameteriv"/>
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
     </enum>
+    <enum name="REDUCE_EXT"                               value="0x8016"/>
+    <enum name="CONVOLUTION_FORMAT_EXT"        count="1"  value="0x8017">
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
+    </enum>
+    <enum name="CONVOLUTION_WIDTH_EXT"         count="1"  value="0x8018">
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
+    </enum>
+    <enum name="CONVOLUTION_HEIGHT_EXT"        count="1"  value="0x8019">
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
+    </enum>
+    <enum name="MAX_CONVOLUTION_WIDTH_EXT"     count="1"  value="0x801A">
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
+    </enum>
+    <enum name="MAX_CONVOLUTION_HEIGHT_EXT"    count="1"  value="0x801B">
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_RED_SCALE_EXT" count="1" value="0x801C"/>
+    <enum name="POST_CONVOLUTION_GREEN_SCALE_EXT" count="1" value="0x801D"/>
+    <enum name="POST_CONVOLUTION_BLUE_SCALE_EXT" count="1" value="0x801E"/>
+    <enum name="POST_CONVOLUTION_ALPHA_SCALE_EXT" count="1" value="0x801F"/>
+    <enum name="POST_CONVOLUTION_RED_BIAS_EXT" count="1"  value="0x8020"/>
+    <enum name="POST_CONVOLUTION_GREEN_BIAS_EXT" count="1" value="0x8021"/>
+    <enum name="POST_CONVOLUTION_BLUE_BIAS_EXT" count="1" value="0x8022"/>
+    <enum name="POST_CONVOLUTION_ALPHA_BIAS_EXT" count="1" value="0x8023"/>
 
     <function name="ConvolutionFilter1DEXT" alias="ConvolutionFilter1D">
         <param name="target" type="GLenum"/>
@@ -6460,21 +6837,21 @@ glx:
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
         <param name="image" type="GLvoid *" output="true"/>
-        <glx sop="1" handcode="true" ignore="true"/>
+        <glx vendorpriv="1" handcode="true" ignore="true"/>
     </function>
 
     <function name="GetConvolutionParameterfvEXT" offset="424">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true"/>
-        <glx sop="2" ignore="true"/>
+        <glx vendorpriv="2" ignore="true"/>
     </function>
 
     <function name="GetConvolutionParameterivEXT" offset="425">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>
-        <glx sop="3" ignore="true"/>
+        <glx vendorpriv="3" ignore="true"/>
     </function>
 
     <function name="GetSeparableFilterEXT" offset="426">
@@ -6484,7 +6861,7 @@ glx:
         <param name="row" type="GLvoid *" output="true"/>
         <param name="column" type="GLvoid *" output="true"/>
         <param name="span" type="GLvoid *" output="true"/>
-        <glx sop="4" handcode="true" ignore="true"/>
+        <glx vendorpriv="4" handcode="true" ignore="true"/>
     </function>
 
     <function name="SeparableFilter2DEXT" alias="SeparableFilter2D">
@@ -6784,6 +7161,8 @@ glx:
     <enum name="GENERATE_MIPMAP_SGIS"          count="1"  value="0x8191">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="GENERATE_MIPMAP_HINT_SGIS"                value="0x8192"/>
 </category>
@@ -6793,15 +7172,26 @@ glx:
     <enum name="TEXTURE_CLIPMAP_CENTER_SGIX"   count="2"  value="0x8171">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
-    <enum name="TEXTURE_CLIPMAP_FRAME_SGIX"               value="0x8172"/>
+    <enum name="TEXTURE_CLIPMAP_FRAME_SGIX"    count="1"  value="0x8172">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
+    </enum>
     <enum name="TEXTURE_CLIPMAP_OFFSET_SGIX"   count="2"  value="0x8173">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_CLIPMAP_VIRTUAL_DEPTH_SGIX" count="3" value="0x8174">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_CLIPMAP_LOD_OFFSET_SGIX"          value="0x8175"/>
     <enum name="TEXTURE_CLIPMAP_DEPTH_SGIX"               value="0x8176"/>
@@ -6816,10 +7206,14 @@ glx:
     <enum name="TEXTURE_COMPARE_SGIX"          count="1"  value="0x819A">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_COMPARE_OPERATOR_SGIX" count="1"  value="0x819B">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_LEQUAL_R_SGIX"                    value="0x819C"/>
     <enum name="TEXTURE_GEQUAL_R_SGIX"                    value="0x819D"/>
@@ -6932,10 +7326,14 @@ glx:
     <enum name="POST_TEXTURE_FILTER_BIAS_SGIX"  count="4" value="0x8179">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="POST_TEXTURE_FILTER_SCALE_SGIX" count="4" value="0x817A">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="POST_TEXTURE_FILTER_BIAS_RANGE_SGIX"      value="0x817B"/>
     <enum name="POST_TEXTURE_FILTER_SCALE_RANGE_SGIX"     value="0x817C"/>
@@ -7072,6 +7470,43 @@ glx:
 </category>
 
 <category name="GL_EXT_paletted_texture" number="78">
+    <enum name="COLOR_TABLE_FORMAT_EXT"        count="1"  value="0x80D8">
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_WIDTH_EXT"         count="1"  value="0x80D9">
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_RED_SIZE_EXT"      count="1"  value="0x80DA">
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_GREEN_SIZE_EXT"    count="1"  value="0x80DB">
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_BLUE_SIZE_EXT"     count="1"  value="0x80DC">
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_ALPHA_SIZE_EXT"    count="1"  value="0x80DD">
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_LUMINANCE_SIZE_EXT" count="1" value="0x80DE">
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
+    </enum>
+    <enum name="COLOR_TABLE_INTENSITY_SIZE_EXT" count="1" value="0x80DF">
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_INDEX_SIZE_EXT"        count="1"  value="0x80ED">
+        <size name="GetTexLevelParameterfv" mode="get"/>
+        <size name="GetTexLevelParameteriv" mode="get"/>
+    </enum>
+
     <function name="ColorTableEXT" alias="ColorTable">
         <param name="target" type="GLenum"/>
         <param name="internalFormat" type="GLenum"/>
@@ -7152,17 +7587,23 @@ glx:
 <!-- Extension number 83 is a GLX extension. -->
 
 <category name="GL_SGIX_texture_lod_bias" number="84">
-    <enum name="TEXTURE_LOD_BIAS_S_SGIX"      count="1"  value="0x818E">
+    <enum name="TEXTURE_LOD_BIAS_S_SGIX"       count="1"  value="0x818E">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
-    <enum name="TEXTURE_LOD_BIAS_T_SGIX"      count="1"  value="0x818F">
+    <enum name="TEXTURE_LOD_BIAS_T_SGIX"       count="1"  value="0x818F">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
-    <enum name="TEXTURE_LOD_BIAS_R_SGIX"      count="1"  value="0x8190">
+    <enum name="TEXTURE_LOD_BIAS_R_SGIX"       count="1"  value="0x8190">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
 </category>
 
@@ -8226,6 +8667,8 @@ glx:
     <enum name="TEXTURE_LOD_BIAS_EXT"          count="1"  value="0x8501">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
 </category>
 
@@ -8233,6 +8676,8 @@ glx:
     <enum name="TEXTURE_MAX_ANISOTROPY_EXT"    count="1"  value="0x84FE">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="MAX_TEXTURE_MAX_ANISOTROPY_EXT"           value="0x84FF"/>
 </category>
@@ -8389,18 +8834,26 @@ glx:
     <enum name="SOURCE3_RGB_NV"                count="1"  value="0x8583">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="SOURCE3_ALPHA_NV"              count="1"  value="0x858B">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="OPERAND3_RGB_NV"               count="1"  value="0x8593">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
     <enum name="OPERAND3_ALPHA_NV"             count="1"  value="0x859B">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
     </enum>
 </category>
 
@@ -9342,14 +9795,20 @@ glx:
     <enum name="TEXTURE_MAX_CLAMP_S_SGIX"      count="1"  value="0x8369">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_MAX_CLAMP_T_SGIX"      count="1"  value="0x836A">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
     <enum name="TEXTURE_MAX_CLAMP_R_SGIX"      count="1"  value="0x836B">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
 </category>
 
@@ -9521,7 +9980,14 @@ glx:
         <size name="PointParameterivNV"/>
     </enum>
 
-    <enum name="POINT_SPRITE_R_MODE_NV"        count="1"  value="0x8863        ">
+    <enum name="POINT_SPRITE_NV"                          value="0x8861"/>
+    <enum name="COORD_REPLACE_NV"              count="1"  value="0x8862">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
+    </enum>
+    <enum name="POINT_SPRITE_R_MODE_NV"        count="1"  value="0x8863">
         <size name="PointParameterfvEXT"/>
         <size name="PointParameterivNV"/>
     </enum>
@@ -9619,6 +10085,8 @@ glx:
     <enum name="TEXTURE_UNSIGNED_REMAP_MODE_NV" count="1" value="0x888F">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
 </category>
 
