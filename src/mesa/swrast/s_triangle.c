@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.26 2001/05/14 16:23:04 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.27 2001/05/15 21:30:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -92,7 +92,7 @@ static void flat_ci_triangle( GLcontext *ctx,
       span.fog += span.fogStep;						\
    }									\
    _mesa_write_monoindex_span(ctx, span.count, span.x, span.y,		\
-	                      zSpan, fogSpan, v0->index, GL_POLYGON );
+	                      zSpan, fogSpan, v0->index, NULL, GL_POLYGON );
 
 #include "s_tritemp.h"
 }
@@ -125,7 +125,7 @@ static void smooth_ci_triangle( GLcontext *ctx,
       span.fog += span.fogStep;						\
    }									\
    _mesa_write_index_span(ctx, span.count, span.x, span.y,		\
-                          zSpan, fogSpan, indexSpan, GL_POLYGON);
+                          zSpan, fogSpan, indexSpan, NULL, GL_POLYGON);
 
 #include "s_tritemp.h"
 }
@@ -154,8 +154,8 @@ static void flat_rgba_triangle( GLcontext *ctx,
       fogSpan[i] = span.fog;						\
       span.fog += span.fogStep;						\
    }									\
-   _mesa_write_monocolor_span(ctx, span.count, span.x, span.y,		\
-                              zSpan, fogSpan, v2->color, GL_POLYGON );
+   _mesa_write_monocolor_span(ctx, span.count, span.x, span.y, zSpan,	\
+                              fogSpan, v2->color, NULL, GL_POLYGON );
 
 #include "s_tritemp.h"
 
@@ -201,7 +201,7 @@ static void smooth_rgba_triangle( GLcontext *ctx,
    }								\
    _mesa_write_rgba_span(ctx, span.count, span.x, span.y,	\
                          (CONST GLdepth *) zSpan,		\
-                         fogSpan, rgbaSpan, GL_POLYGON);
+                         fogSpan, rgbaSpan, NULL, GL_POLYGON);
 
 #include "s_tritemp.h"
 
@@ -592,7 +592,7 @@ affine_span(GLcontext *ctx, struct triangle_span *span,
       break;
    }
    _mesa_write_rgba_span(ctx, span->count, span->x, span->y,
-                         zspan, fogspan, rgba, GL_POLYGON);
+                         zspan, fogspan, rgba, NULL, GL_POLYGON);
 
 #undef SPAN1
 #undef SPAN2
@@ -1400,8 +1400,8 @@ static void near_persp_textured_triangle(GLcontext *ctx,
             }								\
          }								\
          _mesa_write_rgba_span( ctx, n, LEFT, Y, zspan,			\
-                             fogspan, rgba, GL_POLYGON);		\
-         span.red = span.green = span.blue = span.alpha = 0;					\
+                             fogspan, rgba, NULL, GL_POLYGON);		\
+         span.red = span.green = span.blue = span.alpha = 0;		\
       }									\
    }									\
 
@@ -1586,9 +1586,9 @@ static void lin_persp_textured_triangle( GLcontext *ctx,
                abort();					\
             }						\
          }						\
-         _mesa_write_rgba_span( ctx, n, LEFT, Y, zspan,	\
-                             fogspan,                   \
-                             rgba, GL_POLYGON );	\
+         _mesa_write_rgba_span(ctx, n, LEFT, Y, zspan,	\
+                               fogspan, rgba, NULL,     \
+                               GL_POLYGON);	        \
       }							\
    }
 
@@ -1807,7 +1807,7 @@ rasterize_span(GLcontext *ctx, const struct triangle_span *span)
                                           (const GLfloat (*)[MAX_WIDTH]) mrTex,
                                           (GLfloat (*)[MAX_WIDTH]) mLambda,
                                           rgba, (CONST GLchan (*)[4]) spec,
-                                          GL_POLYGON );
+                                          NULL, GL_POLYGON );
          }
          else {
             _mesa_write_multitexture_span(ctx, span->count, span->x, span->y,
@@ -1816,7 +1816,7 @@ rasterize_span(GLcontext *ctx, const struct triangle_span *span)
                                           (const GLfloat (*)[MAX_WIDTH]) mtTex,
                                           (const GLfloat (*)[MAX_WIDTH]) mrTex,
                                           (GLfloat (*)[MAX_WIDTH]) mLambda,
-                                          rgba, NULL, GL_POLYGON);
+                                          rgba, NULL, NULL, GL_POLYGON);
          }
       }
       else {
@@ -1825,12 +1825,12 @@ rasterize_span(GLcontext *ctx, const struct triangle_span *span)
             _mesa_write_texture_span(ctx, span->count, span->x, span->y,
                                      z, fogPtr, sTex, tTex, rTex, lambda,
                                      rgba, (CONST GLchan (*)[4]) spec,
-                                     GL_POLYGON);
+                                     NULL, GL_POLYGON);
          }
          else {
             _mesa_write_texture_span(ctx, span->count, span->x, span->y,
                                      z, fogPtr, sTex, tTex, rTex, lambda,
-                                     rgba, NULL, GL_POLYGON);
+                                     rgba, NULL, NULL, GL_POLYGON);
          }
       }
    }
@@ -1910,7 +1910,7 @@ static void general_textured_triangle( GLcontext *ctx,
    }									\
    _mesa_write_texture_span(ctx, span.count, span.x, span.y,		\
                             zSpan, fogSpan, sSpan, tSpan, uSpan,	\
-                            NULL, rgbaSpan, NULL, GL_POLYGON );
+                            NULL, rgbaSpan, NULL, NULL, GL_POLYGON );
 
 #include "s_tritemp.h"
 }

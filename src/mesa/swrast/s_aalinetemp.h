@@ -1,4 +1,4 @@
-/* $Id: s_aalinetemp.h,v 1.9 2001/05/10 17:41:41 brianp Exp $ */
+/* $Id: s_aalinetemp.h,v 1.10 2001/05/15 21:30:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,8 +42,11 @@ NAME(plot)(GLcontext *ctx, const struct LineInfo *line,
    const GLfloat coverage = compute_coveragef(line, ix, iy);
    GLdepth z;
    GLfloat fog;
+#ifdef DO_RGBA
    GLchan red, green, blue, alpha;
-   GLint frac, indx, index;
+#else
+   GLint index;
+#endif
    GLchan specRed, specGreen, specBlue;
    GLfloat tex[MAX_TEXTURE_UNITS][4], lambda[MAX_TEXTURE_UNITS];
 
@@ -68,20 +71,11 @@ NAME(plot)(GLcontext *ctx, const struct LineInfo *line,
    red   = solve_plane_chan(fx, fy, line->rPlane);
    green = solve_plane_chan(fx, fy, line->gPlane);
    blue  = solve_plane_chan(fx, fy, line->bPlane);
-   alpha = (GLchan) (solve_plane_chan(fx, fy, line->aPlane) * coverage);;
-#else
-   (void) red;
-   (void) green;
-   (void) blue;
-   (void) alpha;
+   alpha = solve_plane_chan(fx, fy, line->aPlane);
 #endif
 #ifdef DO_INDEX
-   frac = (GLint) (15.0 * coverage);
-   indx = (GLint) solve_plane(fx, fy, line->iPlane);
-   index = (indx & ~0xf) | frac;
+   index = (GLint) solve_plane(fx, fy, line->iPlane);
 #else
-   (void) frac;
-   (void) indx;
    (void) index;
 #endif
 #ifdef DO_SPEC
@@ -123,6 +117,8 @@ NAME(plot)(GLcontext *ctx, const struct LineInfo *line,
 #endif
 
 
+   PB_COVERAGE(pb, coverage);
+
 #if defined(DO_MULTITEX)
 #if defined(DO_SPEC)
    PB_WRITE_MULTITEX_SPEC_PIXEL(pb, ix, iy, z, fog, red, green, blue, alpha,
@@ -139,6 +135,7 @@ NAME(plot)(GLcontext *ctx, const struct LineInfo *line,
    PB_WRITE_CI_PIXEL(pb, ix, iy, z, fog, index);
 #endif
 
+   pb->haveCoverage = GL_TRUE;
    PB_CHECK_FLUSH(ctx, pb);
 }
 

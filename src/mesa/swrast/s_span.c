@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.13 2001/05/03 22:13:32 brianp Exp $ */
+/* $Id: s_span.c,v 1.14 2001/05/15 21:30:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,12 +51,12 @@
 
 
 
-
 /*
  * Apply the current polygon stipple pattern to a span of pixels.
  */
-static void stipple_polygon_span( GLcontext *ctx,
-                                  GLuint n, GLint x, GLint y, GLubyte mask[] )
+static void
+stipple_polygon_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                      GLubyte mask[] )
 {
    const GLuint highbit = 0x80000000;
    GLuint i, m, stipple;
@@ -83,8 +83,8 @@ static void stipple_polygon_span( GLcontext *ctx,
  *           as a special case:
  *           0 = all pixels clipped
  */
-static GLuint clip_span( GLcontext *ctx,
-                         GLint n, GLint x, GLint y, GLubyte mask[] )
+static GLuint
+clip_span( GLcontext *ctx, GLint n, GLint x, GLint y, GLubyte mask[] )
 {
    /* Clip to top and bottom */
    if (y < 0 || y >= ctx->DrawBuffer->Height) {
@@ -123,9 +123,9 @@ static GLuint clip_span( GLcontext *ctx,
 /*
  * Draw to more than one color buffer (or none).
  */
-static void multi_write_index_span( GLcontext *ctx, GLuint n,
-                                    GLint x, GLint y, const GLuint indexes[],
-                                    const GLubyte mask[] )
+static void
+multi_write_index_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                        const GLuint indexes[], const GLubyte mask[] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint bufferBit;
@@ -178,10 +178,11 @@ static void multi_write_index_span( GLcontext *ctx, GLuint n,
  *         index - array of [n] color indexes
  *         primitive - either GL_POINT, GL_LINE, GL_POLYGON, or GL_BITMAP
  */
-void _mesa_write_index_span( GLcontext *ctx,
-                          GLuint n, GLint x, GLint y, const GLdepth z[],
-			  const GLfloat fog[],
-			  GLuint indexIn[], GLenum primitive )
+void
+_mesa_write_index_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                        const GLdepth z[], const GLfloat fog[],
+                        GLuint indexIn[], const GLint coverage[],
+                        GLenum primitive )
 {
    const GLuint modBits = FOG_BIT | BLEND_BIT | MASKING_BIT | LOGIC_OP_BIT;
    GLubyte mask[MAX_WIDTH];
@@ -244,6 +245,15 @@ void _mesa_write_index_span( GLcontext *ctx,
          _mesa_depth_fog_ci_pixels( ctx, n, z, index );
    }
 
+   /* Antialias coverage application */
+   if (coverage) {
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         ASSERT(coverage[i] < 16);
+         index[i] = (index[i] & ~0xf) | coverage[i];
+      }
+   }
+
    if (swrast->_RasterMask & MULTI_DRAW_BIT) {
       /* draw to zero or two or more buffers */
       multi_write_index_span( ctx, n, x, y, index, mask );
@@ -269,11 +279,11 @@ void _mesa_write_index_span( GLcontext *ctx,
 
 
 
-void _mesa_write_monoindex_span( GLcontext *ctx,
-                              GLuint n, GLint x, GLint y,
-			      const GLdepth z[],
-			      const GLfloat fog[],
-			      GLuint index, GLenum primitive )
+void
+_mesa_write_monoindex_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                            const GLdepth z[], const GLfloat fog[],
+                            GLuint index, const GLint coverage[],
+                            GLenum primitive )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLubyte mask[MAX_WIDTH];
@@ -322,7 +332,8 @@ void _mesa_write_monoindex_span( GLcontext *ctx,
 
    if (ctx->Fog.Enabled
        || ctx->Color.IndexLogicOpEnabled
-       || ctx->Color.IndexMask != 0xffffffff) {
+       || ctx->Color.IndexMask != 0xffffffff
+       || coverage) {
       /* different index per pixel */
       GLuint indexes[MAX_WIDTH];
       for (i = 0; i < n; i++) {
@@ -334,6 +345,15 @@ void _mesa_write_monoindex_span( GLcontext *ctx,
  	    _mesa_fog_ci_pixels( ctx, n, fog, indexes );
  	 else
  	    _mesa_depth_fog_ci_pixels( ctx, n, z, indexes );
+      }
+
+      /* Antialias coverage application */
+      if (coverage) {
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            ASSERT(coverage[i] < 16);
+            indexes[i] = (indexes[i] & ~0xf) | coverage[i];
+         }
       }
 
       if (swrast->_RasterMask & MULTI_DRAW_BIT) {
@@ -377,9 +397,9 @@ void _mesa_write_monoindex_span( GLcontext *ctx,
 /*
  * Draw to more than one RGBA color buffer (or none).
  */
-static void multi_write_rgba_span( GLcontext *ctx, GLuint n,
-                                   GLint x, GLint y, CONST GLchan rgba[][4],
-                                   const GLubyte mask[] )
+static void
+multi_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                       CONST GLchan rgba[][4], const GLubyte mask[] )
 {
    const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
    GLuint bufferBit;
@@ -442,11 +462,11 @@ static void multi_write_rgba_span( GLcontext *ctx, GLuint n,
 
 
 
-void _mesa_write_rgba_span( GLcontext *ctx,
-                         GLuint n, GLint x, GLint y, const GLdepth z[],
-			 const GLfloat *fog,
-                         GLchan rgbaIn[][4],
-                         GLenum primitive )
+void
+_mesa_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                       const GLdepth z[], const GLfloat fog[],
+                       GLchan rgbaIn[][4], const GLfloat coverage[],
+                       GLenum primitive )
 {
    const GLuint modBits = FOG_BIT | BLEND_BIT | MASKING_BIT |
                           LOGIC_OP_BIT | TEXTURE_BIT;
@@ -530,6 +550,14 @@ void _mesa_write_rgba_span( GLcontext *ctx,
 	 _mesa_depth_fog_rgba_pixels( ctx, n, z, rgba );
    }
 
+   /* Antialias coverage application */
+   if (coverage) {
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         rgba[i][ACOMP] = (GLchan) (rgba[i][ACOMP] * coverage[i]);
+      }
+   }
+
    if (swrast->_RasterMask & MULTI_DRAW_BIT) {
       multi_write_rgba_span( ctx, n, x, y, (const GLchan (*)[4]) rgba, mask );
    }
@@ -578,11 +606,11 @@ void _mesa_write_rgba_span( GLcontext *ctx,
  *         r, g, b, a - the color of the pixels
  *         primitive - either GL_POINT, GL_LINE, GL_POLYGON or GL_BITMAP.
  */
-void _mesa_write_monocolor_span( GLcontext *ctx,
-                              GLuint n, GLint x, GLint y, const GLdepth z[],
-			      const GLfloat fog[],
-			      const GLchan color[4],
-                              GLenum primitive )
+void
+_mesa_write_monocolor_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                            const GLdepth z[], const GLfloat fog[],
+                            const GLchan color[4], const GLfloat coverage[],
+                            GLenum primitive )
 {
    const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
    GLuint i;
@@ -656,7 +684,7 @@ void _mesa_write_monocolor_span( GLcontext *ctx,
    }
 
    if (ctx->Color.ColorLogicOpEnabled || colorMask != 0xffffffff ||
-       (swrast->_RasterMask & (BLEND_BIT | FOG_BIT))) {
+       (swrast->_RasterMask & (BLEND_BIT | FOG_BIT)) || coverage) {
       /* assign same color to each pixel */
       for (i = 0; i < n; i++) {
 	 if (mask[i]) {
@@ -670,6 +698,14 @@ void _mesa_write_monocolor_span( GLcontext *ctx,
 	    _mesa_fog_rgba_pixels( ctx, n, fog, rgba );
 	 else
 	    _mesa_depth_fog_rgba_pixels( ctx, n, z, rgba );
+      }
+
+      /* Antialias coverage application */
+      if (coverage) {
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            rgba[i][ACOMP] = (GLchan) (rgba[i][ACOMP] * coverage[i]);
+         }
       }
 
       if (swrast->_RasterMask & MULTI_DRAW_BIT) {
@@ -734,7 +770,8 @@ void _mesa_write_monocolor_span( GLcontext *ctx,
  * Add specular color to base color.  This is used only when
  * GL_LIGHT_MODEL_COLOR_CONTROL = GL_SEPARATE_SPECULAR_COLOR.
  */
-static void add_colors(GLuint n, GLchan rgba[][4], CONST GLchan specular[][4] )
+static void
+add_colors(GLuint n, GLchan rgba[][4], CONST GLchan specular[][4] )
 {
    GLuint i;
    for (i = 0; i < n; i++) {
@@ -761,13 +798,13 @@ static void add_colors(GLuint n, GLchan rgba[][4], CONST GLchan specular[][4] )
  *         rgba - array of [n] color components
  *         primitive - either GL_POINT, GL_LINE, GL_POLYGON or GL_BITMAP.
  */
-void _mesa_write_texture_span( GLcontext *ctx,
-                            GLuint n, GLint x, GLint y, const GLdepth z[],
-			    const GLfloat fog[],
-			    const GLfloat s[], const GLfloat t[],
-                            const GLfloat u[], GLfloat lambda[],
-			    GLchan rgbaIn[][4], CONST GLchan spec[][4],
-			    GLenum primitive )
+void
+_mesa_write_texture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                          const GLdepth z[], const GLfloat fog[],
+                          const GLfloat s[], const GLfloat t[],
+                          const GLfloat u[], GLfloat lambda[],
+                          GLchan rgbaIn[][4], CONST GLchan spec[][4],
+                          const GLfloat coverage[], GLenum primitive )
 {
    const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
    GLubyte mask[MAX_WIDTH];
@@ -859,8 +896,9 @@ void _mesa_write_texture_span( GLcontext *ctx,
    /* Add base and specular colors */
    if (spec &&
        (ctx->Fog.ColorSumEnabled ||
-	(ctx->Light.Enabled && ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)))
-     add_colors( n, rgba, spec );   /* rgba = rgba + spec */
+	(ctx->Light.Enabled &&
+         ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)))
+      add_colors( n, rgba, spec );   /* rgba = rgba + spec */
 
    /* Per-pixel fog */
    if (ctx->Fog.Enabled) {
@@ -868,6 +906,14 @@ void _mesa_write_texture_span( GLcontext *ctx,
 	 _mesa_fog_rgba_pixels( ctx, n, fog, rgba );
       else
 	 _mesa_depth_fog_rgba_pixels( ctx, n, z, rgba );
+   }
+
+   /* Antialias coverage application */
+   if (coverage) {
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         rgba[i][ACOMP] = (GLchan) (rgba[i][ACOMP] * coverage[i]);
+      }
    }
 
    if (swrast->_RasterMask & MULTI_DRAW_BIT) {
@@ -903,17 +949,16 @@ void _mesa_write_texture_span( GLcontext *ctx,
  * As above but perform multiple stages of texture application.
  */
 void
-_mesa_write_multitexture_span( GLcontext *ctx,
-                            GLuint n, GLint x, GLint y,
-                            const GLdepth z[],
-			    const GLfloat fog[],
-                            CONST GLfloat s[MAX_TEXTURE_UNITS][MAX_WIDTH],
-                            CONST GLfloat t[MAX_TEXTURE_UNITS][MAX_WIDTH],
-                            CONST GLfloat u[MAX_TEXTURE_UNITS][MAX_WIDTH],
-                            GLfloat lambda[][MAX_WIDTH],
-                            GLchan rgbaIn[MAX_TEXTURE_UNITS][4],
-                            CONST GLchan spec[MAX_TEXTURE_UNITS][4],
-                            GLenum primitive )
+_mesa_write_multitexture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                               const GLdepth z[], const GLfloat fog[],
+                               CONST GLfloat s[MAX_TEXTURE_UNITS][MAX_WIDTH],
+                               CONST GLfloat t[MAX_TEXTURE_UNITS][MAX_WIDTH],
+                               CONST GLfloat u[MAX_TEXTURE_UNITS][MAX_WIDTH],
+                               GLfloat lambda[][MAX_WIDTH],
+                               GLchan rgbaIn[MAX_TEXTURE_UNITS][4],
+                               CONST GLchan spec[MAX_TEXTURE_UNITS][4],
+                               const GLfloat coverage[],
+                               GLenum primitive )
 {
    GLubyte mask[MAX_WIDTH];
    GLboolean write_all = GL_TRUE;
@@ -1022,6 +1067,14 @@ _mesa_write_multitexture_span( GLcontext *ctx,
 	 _mesa_depth_fog_rgba_pixels( ctx, n, z, rgba );
    }
 
+   /* Antialias coverage application */
+   if (coverage) {
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         rgba[i][ACOMP] = (GLchan) (rgba[i][ACOMP] * coverage[i]);
+      }
+   }
+
    if (swrast->_RasterMask & MULTI_DRAW_BIT) {
       multi_write_rgba_span( ctx, n, x, y, (const GLchan (*)[4]) rgba, mask );
    }
@@ -1058,9 +1111,9 @@ _mesa_write_multitexture_span( GLcontext *ctx,
  * Read RGBA pixels from frame buffer.  Clipping will be done to prevent
  * reading ouside the buffer's boundaries.
  */
-void _mesa_read_rgba_span( GLcontext *ctx, GLframebuffer *buffer,
-                        GLuint n, GLint x, GLint y,
-                        GLchan rgba[][4] )
+void
+_mesa_read_rgba_span( GLcontext *ctx, GLframebuffer *buffer,
+                      GLuint n, GLint x, GLint y, GLchan rgba[][4] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    if (y < 0 || y >= buffer->Height
@@ -1112,8 +1165,9 @@ void _mesa_read_rgba_span( GLcontext *ctx, GLframebuffer *buffer,
  * Read CI pixels from frame buffer.  Clipping will be done to prevent
  * reading ouside the buffer's boundaries.
  */
-void _mesa_read_index_span( GLcontext *ctx, GLframebuffer *buffer,
-                         GLuint n, GLint x, GLint y, GLuint indx[] )
+void
+_mesa_read_index_span( GLcontext *ctx, GLframebuffer *buffer,
+                       GLuint n, GLint x, GLint y, GLuint indx[] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    if (y < 0 || y >= buffer->Height

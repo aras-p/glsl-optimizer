@@ -1,4 +1,4 @@
-/* $Id: s_span.h,v 1.5 2001/05/03 22:13:32 brianp Exp $ */
+/* $Id: s_span.h,v 1.6 2001/05/15 21:30:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,9 +25,6 @@
  */
 
 
-
-
-
 #ifndef S_SPAN_H
 #define S_SPAN_H
 
@@ -36,64 +33,62 @@
 #include "swrast.h"
 
 
-extern void _mesa_write_index_span( GLcontext *ctx,
-                                 GLuint n, GLint x, GLint y, const GLdepth z[],
-				 const GLfloat fog[],
-				 GLuint index[], GLenum primitive );
-
-
-extern void _mesa_write_monoindex_span( GLcontext *ctx,
-                                     GLuint n, GLint x, GLint y,
-                                     const GLdepth z[],
-				     const GLfloat fog[],
-				     GLuint index, GLenum primitive );
-
-
-extern void _mesa_write_rgba_span( GLcontext *ctx,
-                                GLuint n, GLint x, GLint y, const GLdepth z[],
-				const GLfloat fog[],
-                                GLchan rgba[][4], GLenum primitive );
-
-
-extern void _mesa_write_monocolor_span( GLcontext *ctx,
-                                     GLuint n, GLint x, GLint y,
-                                     const GLdepth z[],
-				     const GLfloat fog[],
-				     const GLchan color[4],
-                                     GLenum primitive );
-
-
-extern void _mesa_write_texture_span( GLcontext *ctx,
-                                   GLuint n, GLint x, GLint y,
-                                   const GLdepth z[],
-				   const GLfloat fog[],
-				   const GLfloat s[], const GLfloat t[],
-                                   const GLfloat u[], GLfloat lambda[],
-				   GLchan rgba[][4], CONST GLchan spec[][4],
-                                   GLenum primitive );
+extern void
+_mesa_write_index_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                        const GLdepth z[], const GLfloat fog[],
+                        GLuint index[], const GLint coverage[],
+                        GLenum primitive );
 
 
 extern void
-_mesa_write_multitexture_span( GLcontext *ctx,
-                            GLuint n, GLint x, GLint y,
-                            const GLdepth z[],
-			    const GLfloat fog[],
-                            CONST GLfloat s[MAX_TEXTURE_UNITS][MAX_WIDTH],
-                            CONST GLfloat t[MAX_TEXTURE_UNITS][MAX_WIDTH],
-                            CONST GLfloat u[MAX_TEXTURE_UNITS][MAX_WIDTH],
-                            GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH],
-                            GLchan rgba[][4],
-                            CONST GLchan spec[][4],
+_mesa_write_monoindex_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                            const GLdepth z[], const GLfloat fog[],
+                            GLuint index, const GLint coverage[],
                             GLenum primitive );
 
 
-extern void _mesa_read_rgba_span( GLcontext *ctx, GLframebuffer *buffer,
-                               GLuint n, GLint x, GLint y,
-                               GLchan rgba[][4] );
+extern void
+_mesa_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                       const GLdepth z[], const GLfloat fog[],
+                       GLchan rgba[][4], const GLfloat coverage[],
+                       GLenum primitive );
 
 
-extern void _mesa_read_index_span( GLcontext *ctx, GLframebuffer *buffer,
-                                GLuint n, GLint x, GLint y, GLuint indx[] );
+extern void
+_mesa_write_monocolor_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                            const GLdepth z[], const GLfloat fog[],
+                            const GLchan color[4], const GLfloat coverage[],
+                            GLenum primitive );
+
+
+extern void
+_mesa_write_texture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                          const GLdepth z[], const GLfloat fog[],
+                          const GLfloat s[], const GLfloat t[],
+                          const GLfloat u[], GLfloat lambda[],
+                          GLchan rgba[][4], CONST GLchan spec[][4],
+                          const GLfloat coverage[], GLenum primitive );
+
+
+extern void
+_mesa_write_multitexture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                               const GLdepth z[], const GLfloat fog[],
+                               CONST GLfloat s[MAX_TEXTURE_UNITS][MAX_WIDTH],
+                               CONST GLfloat t[MAX_TEXTURE_UNITS][MAX_WIDTH],
+                               CONST GLfloat u[MAX_TEXTURE_UNITS][MAX_WIDTH],
+                               GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH],
+                               GLchan rgba[][4], CONST GLchan spec[][4],
+                               const GLfloat coverage[],  GLenum primitive );
+
+
+extern void
+_mesa_read_rgba_span( GLcontext *ctx, GLframebuffer *buffer,
+                      GLuint n, GLint x, GLint y, GLchan rgba[][4] );
+
+
+extern void
+_mesa_read_index_span( GLcontext *ctx, GLframebuffer *buffer,
+                       GLuint n, GLint x, GLint y, GLuint indx[] );
 
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.17 2001/04/20 19:21:41 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.18 2001/05/15 21:30:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -513,10 +513,12 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
                               type, source, &ctx->Unpack,
                               ctx->_ImageTransferState);
       if (zoom) {
-         _mesa_write_zoomed_index_span(ctx, drawWidth, x, y, zspan, 0, indexes, desty);
+         _mesa_write_zoomed_index_span(ctx, drawWidth, x, y, zspan, 0,
+                                       indexes, desty);
       }
       else {
-         _mesa_write_index_span(ctx, drawWidth, x, y, zspan, 0, indexes, GL_BITMAP);
+         _mesa_write_index_span(ctx, drawWidth, x, y, zspan, 0, indexes,
+                                NULL, GL_BITMAP);
       }
    }
 }
@@ -638,7 +640,8 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          GLint i;
          for (i = 0; i < width; i++)
             zspan[i] = zptr[i];
-         _mesa_write_rgba_span( ctx, width, x, y, zspan, 0, rgba, GL_BITMAP );
+         _mesa_write_rgba_span(ctx, width, x, y, zspan, 0, rgba,
+                               NULL, GL_BITMAP);
       }
    }
    else if (type==GL_UNSIGNED_INT && ctx->Visual.depthBits == 32
@@ -649,7 +652,8 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          const GLuint *zptr = (const GLuint *)
             _mesa_image_address(&ctx->Unpack, pixels, width, height,
                                 GL_DEPTH_COMPONENT, type, 0, row, 0);
-         _mesa_write_rgba_span( ctx, width, x, y, zptr, 0, rgba, GL_BITMAP );
+         _mesa_write_rgba_span(ctx, width, x, y, zptr, 0, rgba,
+                               NULL, GL_BITMAP);
       }
    }
    else {
@@ -674,20 +678,21 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          if (ctx->Visual.rgbMode) {
             if (zoom) {
                _mesa_write_zoomed_rgba_span(ctx, width, x, y, zspan, 0,
-                                         (const GLchan (*)[4]) rgba, desty);
+                                            (const GLchan (*)[4]) rgba, desty);
             }
             else {
-               _mesa_write_rgba_span(ctx, width, x, y, zspan, 0, rgba, GL_BITMAP);
+               _mesa_write_rgba_span(ctx, width, x, y, zspan, 0,
+                                     rgba, NULL, GL_BITMAP);
             }
          }
          else {
             if (zoom) {
                _mesa_write_zoomed_index_span(ctx, width, x, y, zspan, 0,
-                                          ispan, GL_BITMAP);
+                                             ispan, GL_BITMAP);
             }
             else {
                _mesa_write_index_span(ctx, width, x, y, zspan, 0,
-				   ispan, GL_BITMAP);
+                                      ispan, NULL, GL_BITMAP);
             }
          }
 
@@ -832,16 +837,16 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
          }
 
          if (quickDraw) {
-            (*swrast->Driver.WriteRGBASpan)( ctx, width, x, y,
-                                          (CONST GLchan (*)[4]) rgba, NULL);
+            (*swrast->Driver.WriteRGBASpan)(ctx, width, x, y,
+                                            (CONST GLchan (*)[4]) rgba, NULL);
          }
          else if (zoom) {
-            _mesa_write_zoomed_rgba_span( ctx, width, x, y, zspan, 0,
-				       (CONST GLchan (*)[4]) rgba, desty );
+            _mesa_write_zoomed_rgba_span(ctx, width, x, y, zspan, 0,
+                                         (CONST GLchan (*)[4]) rgba, desty);
          }
          else {
-            _mesa_write_rgba_span( ctx, (GLuint) width, x, y, zspan, 0,
-				rgba, GL_BITMAP);
+            _mesa_write_rgba_span(ctx, (GLuint) width, x, y, zspan, 0,
+                                  rgba, NULL, GL_BITMAP);
          }
       }
    }

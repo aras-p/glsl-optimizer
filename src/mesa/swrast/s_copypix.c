@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.16 2001/03/19 02:25:36 keithw Exp $ */
+/* $Id: s_copypix.c,v 1.17 2001/05/15 21:30:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -286,7 +286,8 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 				    (const GLchan (*)[4])rgba, desty);
       }
       else {
-         _mesa_write_rgba_span( ctx, width, destx, dy, zspan, 0, rgba, GL_BITMAP );
+         _mesa_write_rgba_span( ctx, width, destx, dy, zspan, 0, rgba,
+                                NULL, GL_BITMAP );
       }
    }
 
@@ -531,7 +532,8 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 				    (const GLchan (*)[4])rgba, desty);
       }
       else {
-         _mesa_write_rgba_span( ctx, width, destx, dy, zspan, 0, rgba, GL_BITMAP );
+         _mesa_write_rgba_span( ctx, width, destx, dy, zspan, 0, rgba,
+                                NULL, GL_BITMAP );
       }
    }
 
@@ -641,10 +643,12 @@ static void copy_ci_pixels( GLcontext *ctx,
       }
 
       if (zoom) {
-         _mesa_write_zoomed_index_span( ctx, width, destx, dy, zspan, 0, indexes, desty );
+         _mesa_write_zoomed_index_span(ctx, width, destx, dy, zspan, 0,
+                                       indexes, desty );
       }
       else {
-         _mesa_write_index_span(ctx, width, destx, dy, zspan, 0, indexes, GL_BITMAP);
+         _mesa_write_index_span(ctx, width, destx, dy, zspan, 0, indexes,
+                                NULL, GL_BITMAP);
       }
    }
 
@@ -751,17 +755,17 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
          }
          else {
             _mesa_write_rgba_span( ctx, width, destx, dy, zspan, 0,
-				rgba, GL_BITMAP);
+                                   rgba, NULL, GL_BITMAP);
          }
       }
       else {
          if (zoom) {
             _mesa_write_zoomed_index_span( ctx, width, destx, dy,
-                                        zspan, 0, indexes, desty );
+                                           zspan, 0, indexes, desty );
          }
          else {
             _mesa_write_index_span( ctx, width, destx, dy,
-                                 zspan, 0, indexes, GL_BITMAP );
+                                    zspan, 0, indexes, NULL, GL_BITMAP );
          }
       }
    }

@@ -1,4 +1,4 @@
-/* $Id: s_pointtemp.h,v 1.6 2001/05/09 17:31:46 brianp Exp $ */
+/* $Id: s_pointtemp.h,v 1.7 2001/05/15 21:30:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -184,7 +184,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       const GLfloat rmax = radius + 0.7071F;
       const GLfloat rmin2 = MAX2(0.0, rmin * rmin);
       const GLfloat rmax2 = rmax * rmax;
-      const GLfloat cscale = 256.0F / (rmax2 - rmin2);
+      const GLfloat cscale = 1.0F / (rmax2 - rmin2);
       const GLint xmin = (GLint) (vert->win[0] - radius);
       const GLint xmax = (GLint) (vert->win[0] + radius);
       const GLint ymin = (GLint) (vert->win[1] - radius);
@@ -225,15 +225,14 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
                alpha = vert->color[3];
 #endif
                if (dist2 >= rmin2) {
-                  GLint coverage = (GLint) (256.0F - (dist2 - rmin2) * cscale);
-#if FLAGS & RGBA
-		  /* coverage is in [0,256] */
-		  alpha = (alpha * coverage) >> 8;
-#else
-                  /* 4 fractional index bits */
-                  index = (index & ~0xf) | (coverage >> 4);  /* XXX verify */
-#endif
+                  /* compute partial coverage */
+                  PB_COVERAGE(PB, 1.0F - (dist2 - rmin2) * cscale);
 	       }
+               else {
+                  /* full coverage */
+                  PB_COVERAGE(PB, 1.0F);
+               }
+
 #endif /* SMOOTH */
 
 #if ((FLAGS & (ATTENUATE | RGBA)) == (ATTENUATE | RGBA))
@@ -273,6 +272,11 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #endif
 	 }
       }
+
+#if FLAGS & SMOOTH
+      PB->haveCoverage = GL_TRUE;
+#endif
+
       PB_CHECK_FLUSH(ctx,PB);
    }
 
