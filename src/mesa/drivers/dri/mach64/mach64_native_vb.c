@@ -206,13 +206,15 @@ INTERP_QUALIFIER void TAG(interp_extras)( GLcontext *ctx,
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
    if (VB->ColorPtr[1]) {
-      INTERP_4CHAN( t,
+      assert(VB->ColorPtr[1]->stride == 4 * sizeof(GLfloat));
+      
+      INTERP_4F( t,
 		    GET_COLOR(VB->ColorPtr[1], dst),
 		    GET_COLOR(VB->ColorPtr[1], out),
 		    GET_COLOR(VB->ColorPtr[1], in) );
 
       if (VB->SecondaryColorPtr[1]) {
-	 INTERP_3CHAN( t,
+	 INTERP_3F( t,
 		       GET_COLOR(VB->SecondaryColorPtr[1], dst),
 		       GET_COLOR(VB->SecondaryColorPtr[1], out),
 		       GET_COLOR(VB->SecondaryColorPtr[1], in) );
@@ -233,12 +235,12 @@ INTERP_QUALIFIER void TAG(copy_pv_extras)( GLcontext *ctx,
       struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
    if (VB->ColorPtr[1]) {
-      COPY_CHAN4( GET_COLOR(VB->ColorPtr[1], dst), 
-		  GET_COLOR(VB->ColorPtr[1], src) );
+      COPY_4FV( GET_COLOR(VB->ColorPtr[1], dst), 
+		GET_COLOR(VB->ColorPtr[1], src) );
 
       if (VB->SecondaryColorPtr[1]) {
-	 COPY_CHAN4( GET_COLOR(VB->SecondaryColorPtr[1], dst), 
-		     GET_COLOR(VB->SecondaryColorPtr[1], src) );
+	 COPY_4FV( GET_COLOR(VB->SecondaryColorPtr[1], dst), 
+		   GET_COLOR(VB->SecondaryColorPtr[1], src) );
       }
    }
 
