@@ -791,6 +791,7 @@ int savageUploadTexImages( savageContextPtr imesa, savageTextureObjectPtr t )
    savageUpdateTexLRU( imesa, t );
 
    if (t->dirty_images) {
+      LOCK_HARDWARE(imesa);
       savageFlushVerticesLocked (imesa);
       savageDmaFinish (imesa);
       if (SAVAGE_DEBUG & DEBUG_VERBOSE_LRU)
@@ -799,6 +800,7 @@ int savageUploadTexImages( savageContextPtr imesa, savageTextureObjectPtr t )
       for (i = t->min_level ; i <= t->max_level ; i++)
 	 if (t->dirty_images & (1<<i)) 
 	    savageUploadTexLevel( t, i );
+      UNLOCK_HARDWARE(imesa);
    }
 
 

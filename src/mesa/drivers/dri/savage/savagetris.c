@@ -673,13 +673,13 @@ static void savageRasterPrimitive( GLcontext *ctx, GLuint prim )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
 
-   FLUSH_BATCH(imesa);
-
    /* Update culling */
-   if (imesa->raster_primitive != prim)
-      imesa->dirty |= SAVAGE_UPLOAD_CTX;
+   if (imesa->raster_primitive != prim) {
+      imesa->raster_primitive = prim;
+      imesa->new_state |= SAVAGE_NEW_CULL;
+      savageDDUpdateHwState (ctx);
+   }
 
-   imesa->raster_primitive = prim;
 #if 0
    if (ctx->Polygon.StippleFlag && mmesa->haveHwStipple)
    {

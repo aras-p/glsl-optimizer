@@ -66,6 +66,7 @@ typedef struct savage_texture_object_t *savageTextureObjectPtr;
 /* for savagectx.new_state - manage GL->driver state changes
  */
 #define SAVAGE_NEW_TEXTURE 0x1
+#define SAVAGE_NEW_CULL    0x2
 
 
 /*define the max numer of vertex in vertex buf*/

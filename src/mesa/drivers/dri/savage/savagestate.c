@@ -791,6 +791,7 @@ static void savageDDCullFaceFrontFace(GLcontext *ctx, GLenum unused)
             break;
     }
     imesa->LcsCullMode = cullMode;    
+    imesa->new_state |= SAVAGE_NEW_CULL;
 }
 #endif /* end #if HW_CULL */
 
@@ -1210,6 +1211,7 @@ static void savageDDEnable_s4(GLcontext *ctx, GLenum cap, GLboolean state)
             else
             {
 		imesa->LcsCullMode = BCM_None;
+		imesa->new_state |= SAVAGE_NEW_CULL;
             }
 #endif
             break;
@@ -1326,25 +1328,17 @@ static void savageDDEnable_s3d(GLcontext *ctx, GLenum cap, GLboolean state)
 void savageDDUpdateHwState( GLcontext *ctx )
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-   
-    /*FLUSH_BATCH(imesa);*/
 
-    if(imesa->driDrawable)
-    {
-        LOCK_HARDWARE(imesa);
-    }
-    
-    if (imesa->new_state & SAVAGE_NEW_TEXTURE) {
-	savageUpdateTextureState( ctx );
-    }
-    if((imesa->dirty!=0)|| (imesa->new_state!=0))  
-    {
-        savageEmitHwStateLocked(imesa);
-        imesa->new_state = 0;
-    }
-    if(imesa->driDrawable)
-    {
-        UNLOCK_HARDWARE(imesa);
+    if (imesa->new_state) {
+	FLUSH_BATCH(imesa);
+
+	if (imesa->new_state & SAVAGE_NEW_TEXTURE) {
+	    savageUpdateTextureState( ctx );
+	}
+	if ((imesa->new_state & SAVAGE_NEW_CULL)) {
+	    savageUpdateCull(ctx);
+	}
+	imesa->new_state = 0;
     }
 }
 
@@ -1584,7 +1578,6 @@ void savageEmitHwStateLocked( savageContextPtr imesa )
 
     if (imesa->dirty & ~SAVAGE_UPLOAD_CLIPRECTS)
     {
-        savageUpdateCull(imesa->glCtx);
         if (imesa->dirty & (SAVAGE_UPLOAD_CTX | SAVAGE_UPLOAD_TEX0  | \
                             SAVAGE_UPLOAD_TEX1 | SAVAGE_UPLOAD_BUFFERS))
         {
@@ -1833,7 +1826,7 @@ void savageDDRenderStart(GLcontext *ctx)
         /* set scissor to the first clip box*/
         savageDDScissor(ctx,pbox->x1,pbox->y1,pbox->x2,pbox->y2);
 
-        savageDDUpdateHwState(ctx); /* update to hardware register*/
+        /*savageDDUpdateHwState(ctx);*/ /* update to hardware register*/
     }
     else /* need not render at all*/
     {
@@ -1855,8 +1848,6 @@ void savageDDRenderEnd(GLcontext *ctx)
 
 static void savageDDInvalidateState( GLcontext *ctx, GLuint new_state )
 {
-   FLUSH_BATCH(SAVAGE_CONTEXT(ctx));
-
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
    _ac_InvalidateState( ctx, new_state );
