@@ -786,7 +786,7 @@ static void viaPolygonStipple( GLcontext *ctx, const GLubyte *mask )
 
     /* Fallback for the CLE266 case as it doesn't seem to work */
     if (vmesa->viaScreen->deviceID == VIA_CLE266) {
-   	FALLBACK( vmesa, VIA_FALLBACK_STIPPLE, GL_TRUE);
+   	FALLBACK( vmesa, VIA_FALLBACK_STIPPLE, ctx->Polygon.StippleFlag);
     } else {
     	for (i=0;i<128;i++) 
        	    s[i] = mask[i];
