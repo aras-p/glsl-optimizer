@@ -1,4 +1,4 @@
-/* $Id: vtxfmt_tmp.h,v 1.8 2001/12/14 02:55:08 brianp Exp $ */
+/* $Id: vtxfmt_tmp.h,v 1.9 2002/10/08 23:57:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -394,13 +394,13 @@ static void TAG(EvalMesh2)( GLenum mode, GLint i1, GLint i2,
 static void TAG(VertexAttrib4fNV)( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
    PRE_LOOPBACK( VertexAttrib4fNV );
-   glVertexAttrib4fNV( index, x, y, z, w );
+   _glapi->Dispatch->VertexAttrib4fNV( index, x, y, z, w );
 }
 
 static void TAG(VertexAttrib4fvNV)( GLuint index, const GLfloat *v )
 {
    PRE_LOOPBACK( VertexAttrib4fNV );
-   glVertexAttrib4fvNV( index, v );
+   _glapi_Dispatch->VertexAttrib4fvNV( index, v );
 }
 
 
