@@ -556,7 +556,7 @@ static void inline fire_EB(PREFIX unsigned long addr, int vertex_count, int type
 	}
 #endif
 	check_space(6);
-
+	
 	start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, 0);
 	e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count<<16) | type);
 
@@ -564,6 +564,7 @@ static void inline fire_EB(PREFIX unsigned long addr, int vertex_count, int type
 	e32(R300_EB_UNK1 | (magic_1 << 16) | R300_EB_UNK2);
 	e32(addr);
 	e32(((vertex_count+1) / 2) + magic_1); /* This still fails once in a while */
+	
 }
 
 static void r300_render_vb_primitive(r300ContextPtr rmesa,
@@ -588,6 +589,7 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 	unsigned long elt_count;
 
 	WARN_ONCE("Rendering with elts\n");
+	r300EmitAOS(rmesa, rmesa->state.aos_count, 0);
 #if 1
 	start_index32_packet(num_verts, type);
 	for(i=0; i < num_verts; i++)
@@ -598,8 +600,10 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 	emit_elts(ctx, rmesa->state.Elts+start, num_verts, elt_count, get_align(elt_count));
 	fire_EB(PASS_PREFIX rsp->gartTextures.handle/*rmesa->state.elt_ao.aos_offset*/, elt_count, type);
 #endif
-   }else
+   }else{
+	   r300EmitAOS(rmesa, rmesa->state.aos_count, start);
 	   fire_AOS(PASS_PREFIX num_verts, type);
+   }
 }
 
 static GLboolean r300_run_vb_render(GLcontext *ctx,
@@ -639,10 +643,7 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 		GLuint prim = VB->Primitive[i].mode;
 		GLuint start = VB->Primitive[i].start;
 		GLuint length = VB->Primitive[i].count;
-		if(rmesa->state.Elts)
-			r300EmitAOS(rmesa, rmesa->state.aos_count, 0);
-		else
-			r300EmitAOS(rmesa, rmesa->state.aos_count, start);
+		
 		r300_render_vb_primitive(rmesa, ctx, start, start + length, prim);
 	}
 
