@@ -1215,8 +1215,20 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
                 fd,
                 (get_ver != NULL) ? (*get_ver)() : 20040602,
                 (__GLcontextModes **) &dpy->driver_modes);
-    }
 
+	/* fill in dummy visual ids */
+	{
+	  __GLcontextModes *temp;
+	  temp = (__GLcontextModes *)dpy->driver_modes;
+	  i = 1;
+	  while (temp)
+	  {
+	    temp->visualID = i++;
+	    temp=temp->next;
+	  }
+	}
+    }
+    
 done:
     if ( psp == NULL ) {
         if ( pSAREA != MAP_FAILED ) {
@@ -1631,50 +1643,102 @@ XGetVisualInfo( Display *dpy, long vinfo_mask, XVisualInfo *vinfo_template, int 
    const __GLcontextModes *mode;
    XVisualInfo *results;
    Visual *visResults;
-   int i, n;
+   int i, n=0;
 
-   ASSERT(vinfo_mask == VisualScreenMask);
+   //   ASSERT(vinfo_mask == VisualScreenMask);
    ASSERT(vinfo_template.screen == 0);
 
-   n = 0;
-   for ( mode = dpy->driver_modes ; mode != NULL ; mode = mode->next )
-       n++;
+   if (vinfo_mask == VisualIDMask)
+   {
+     for ( mode = dpy->driver_modes ; mode != NULL ; mode= mode->next )
+       if (mode->visualID == vinfo_template->visualid)
+	 n=1;
 
-   results = (XVisualInfo *)calloc(1, n * sizeof(XVisualInfo));
-   if (!results) {
-      *nitens_return = 0;
-      return NULL;
-   }
+     if (n==0)
+       return NULL;
+     
+     results = (XVisualInfo *)calloc(1, n * sizeof(XVisualInfo));
+     if (!results) {
+       *nitens_return = 0;
+       return NULL;
+     }
+     
+     visResults = (Visual *)calloc(1, n * sizeof(Visual));
+     if (!results) {
+       free(results);
+       *nitens_return = 0;
+       return NULL;
+     }
 
-   visResults = (Visual *)calloc(1, n * sizeof(Visual));
-   if (!results) {
-      free(results);
-      *nitens_return = 0;
-      return NULL;
-   }
-
-   for ( mode = dpy->driver_modes, i = 0 ; mode != NULL ; mode = mode->next, i++ ) {
-      visResults[i].mode = mode;
-      visResults[i].visInfo = results + i;
-      visResults[i].dpy = dpy;
-
-      if (dpy->driverContext.bpp == 32)
-	 visResults[i].pixelFormat = PF_B8G8R8A8; /* XXX: FIX ME */
-      else
-	 visResults[i].pixelFormat = PF_B5G6R5; /* XXX: FIX ME */
-
-      results[i].visual = visResults + i;
-      results[i].visualid = i;
+     for ( mode = dpy->driver_modes ; mode != NULL ; mode= mode->next )
+       if (mode->visualID == vinfo_template->visualid)
+       {
+	 visResults[0].mode=mode;
+	 visResults[0].visInfo = results;
+	 visResults[0].dpy = dpy;
+	 if (dpy->driverContext.bpp == 32)
+	   visResults[0].pixelFormat = PF_B8G8R8A8; /* XXX: FIX ME */
+	 else
+	   visResults[0].pixelFormat = PF_B5G6R5; /* XXX: FIX ME */
+       
+	 results[0].visual = visResults;
+	 results[0].visualid = mode->visualID;
 #if defined(__cplusplus) || defined(c_plusplus)
-      results[i].c_class = TrueColor;
+	 results[0].c_class = TrueColor;
 #else
-      results[i].class = TrueColor;
+	 results[0].class = TrueColor;
 #endif
-      results[i].depth = mode->redBits +
-                         mode->redBits +
-                         mode->redBits +
-                         mode->redBits;
-      results[i].bits_per_rgb = dpy->driverContext.bpp;
+	 results[0].depth = mode->redBits +
+	   mode->redBits +
+	   mode->redBits +
+	   mode->redBits;
+	 results[0].bits_per_rgb = dpy->driverContext.bpp;
+	 
+       }
+     
+   }
+   else // if (vinfo_mask == VisualScreenMask)
+   {
+     n = 0;
+     for ( mode = dpy->driver_modes ; mode != NULL ; mode = mode->next )
+       n++;
+     
+     results = (XVisualInfo *)calloc(1, n * sizeof(XVisualInfo));
+     if (!results) {
+       *nitens_return = 0;
+       return NULL;
+     }
+     
+     visResults = (Visual *)calloc(1, n * sizeof(Visual));
+     if (!results) {
+       free(results);
+       *nitens_return = 0;
+       return NULL;
+     }
+     
+     for ( mode = dpy->driver_modes, i = 0 ; mode != NULL ; mode = mode->next, i++ ) {
+       visResults[i].mode = mode;
+       visResults[i].visInfo = results + i;
+       visResults[i].dpy = dpy;
+       
+       if (dpy->driverContext.bpp == 32)
+	 visResults[i].pixelFormat = PF_B8G8R8A8; /* XXX: FIX ME */
+       else
+	 visResults[i].pixelFormat = PF_B5G6R5; /* XXX: FIX ME */
+       
+       results[i].visual = visResults + i;
+       results[i].visualid = mode->visualID;
+#if defined(__cplusplus) || defined(c_plusplus)
+       results[i].c_class = TrueColor;
+#else
+       results[i].class = TrueColor;
+#endif
+       results[i].depth = mode->redBits +
+	 mode->redBits +
+	 mode->redBits +
+	 mode->redBits;
+       results[i].bits_per_rgb = dpy->driverContext.bpp;
+     }
    }
    *nitens_return = n;
    return results;

@@ -52,14 +52,20 @@ extern "C" {
  * 
  * It can have the values #True or #False.
  */
+#ifndef MINIGLX_NO_XTYPES
 typedef int Bool;
+#endif
+typedef int MINI_Bool;
 
 /**
  * \brief Color map.
  *
  * Alias for private ::MiniGLXColormapRec structure.
  */
+typedef struct MiniGLXColormapRec *MINI_Colormap;
+#ifndef MINIGLX_NO_XTYPES
 typedef struct MiniGLXColormapRec *Colormap;
+#endif
 
 /**
  * \brief Window attributes.
@@ -67,7 +73,7 @@ typedef struct MiniGLXColormapRec *Colormap;
 typedef struct MiniGLXSetWindowAttributesRec {
    int background_pixel; /**< \brief background pixel */
    int border_pixel;     /**< \brief border pixel value */
-   Colormap colormap;    /**< \brief color map to be associated with window */
+   MINI_Colormap colormap;    /**< \brief color map to be associated with window */
    int event_mask;       /**< \brief set of events that should be saved */
 } XSetWindowAttributes;
 
@@ -85,10 +91,13 @@ typedef struct MiniGLXVisualRec Visual;
  *
  * \sa \ref datatypes.
  */
-typedef unsigned int VisualID;
+#ifndef MINIGLX_NO_XTYPES
+typedef unsigned long VisualID;
+#endif
+typedef unsigned long MINI_VisualID;
 typedef struct MiniGLXXVisualInfoRec {
    Visual *visual;	/**< \brief pointer to the GLX Visual */
-   VisualID visualid;	/**< \brief visual ID */
+   MINI_VisualID visualid;	/**< \brief visual ID */
    int screen;		/**< \brief screen number */
    int depth;		/**< \brief bit depth */
 #if defined(__cplusplus) || defined(c_plusplus)
@@ -115,7 +124,10 @@ typedef struct MiniGLXFBConfigRec {
  *
  * \sa \ref datatypes.
  */
+#ifndef MINIGLX_NO_XTYPES
 typedef struct MiniGLXDisplayRec   Display;
+#endif
+typedef struct MiniGLXDisplayRec   MINI_Display;
 
 /**
  * \brief Window handle.
@@ -124,7 +136,10 @@ typedef struct MiniGLXDisplayRec   Display;
  *
  * \sa \ref datatypes.
  */
+#ifndef MINIGLX_NO_XTYPES
 typedef struct MiniGLXWindowRec   *Window;
+#endif
+typedef struct MiniGLXWindowRec   *MINI_Window;
 
 /**
  * \brief Drawable.
@@ -136,7 +151,10 @@ typedef struct MiniGLXWindowRec   *Window;
  *
  * \sa \ref datatypes.
  */
+#ifndef MINIGLX_NO_XTYPES
 typedef struct MiniGLXWindowRec   *Drawable;
+#endif
+typedef struct MiniGLXWindowRec   *MINI_Drawable;
 
 /**
  * \brief GLX drawable.
@@ -174,9 +192,9 @@ typedef struct MiniGLXContextRec  *GLXContext;
 typedef struct {
 	int type;
 	unsigned long serial;	/* # of last request processed by server */
-	Bool send_event;	/* true if this came from a SendEvent request */
-	Display *display;	/* Display the event was read from */
-	Window window;
+	MINI_Bool send_event;	/* true if this came from a SendEvent request */
+	MINI_Display *display;	/* Display the event was read from */
+	MINI_Window window;
 	int x, y;
 	int width, height;
 	int count;		/* if non-zero, at least this many more */
@@ -185,53 +203,53 @@ typedef struct {
 typedef struct {
 	int type;
 	unsigned long serial;	/* # of last request processed by server */
-	Bool send_event;	/* true if this came from a SendEvent request */
-	Display *display;	/* Display the event was read from */
-	Window parent;		/* parent of the window */
-	Window window;		/* window id of window created */
+	MINI_Bool send_event;	/* true if this came from a SendEvent request */
+	MINI_Display *display;	/* Display the event was read from */
+	MINI_Window parent;		/* parent of the window */
+        MINI_Window window;		/* window id of window created */
 	int x, y;		/* window location */
 	int width, height;	/* size of window */
 	int border_width;	/* border width */
-	Bool override_redirect;	/* creation should be overridden */
+	MINI_Bool override_redirect;	/* creation should be overridden */
 } XCreateWindowEvent;
 
 typedef struct {
 	int type;
 	unsigned long serial;	/* # of last request processed by server */
-	Bool send_event;	/* true if this came from a SendEvent request */
-	Display *display;	/* Display the event was read from */
-	Window event;
-	Window window;
+	MINI_Bool send_event;	/* true if this came from a SendEvent request */
+	MINI_Display *display;	/* Display the event was read from */
+	MINI_Window event;
+	MINI_Window window;
 } XDestroyWindowEvent;
 
 typedef struct {
 	int type;
 	unsigned long serial;	/* # of last request processed by server */
-	Bool send_event;	/* true if this came from a SendEvent request */
-	Display *display;	/* Display the event was read from */
-	Window event;
-	Window window;
-	Bool from_configure;
+	MINI_Bool send_event;	/* true if this came from a SendEvent request */
+	MINI_Display *display;	/* Display the event was read from */
+	MINI_Window event;
+	MINI_Window window;
+	MINI_Bool from_configure;
 } XUnmapEvent;
 
 typedef struct {
 	int type;
 	unsigned long serial;	/* # of last request processed by server */
-	Bool send_event;	/* true if this came from a SendEvent request */
-	Display *display;	/* Display the event was read from */
-	Window event;
-	Window window;
-	Bool override_redirect;	/* boolean, is override set... */
+	MINI_Bool send_event;	/* true if this came from a SendEvent request */
+	MINI_Display *display;	/* Display the event was read from */
+	MINI_Window event;
+	MINI_Window window;
+	MINI_Bool override_redirect;	/* boolean, is override set... */
 } XMapEvent;
 
 
 typedef struct {
 	int type;
 	unsigned long serial;	/* # of last request processed by server */
-	Bool send_event;	/* true if this came from a SendEvent request */
-	Display *display;	/* Display the event was read from */
-	Window parent;
-	Window window;
+	MINI_Bool send_event;	/* true if this came from a SendEvent request */
+	MINI_Display *display;	/* Display the event was read from */
+	MINI_Window parent;
+	MINI_Window window;
 } XMapRequestEvent;
 
 typedef union _XEvent {
@@ -263,6 +281,7 @@ typedef union _XEvent {
 #define CWColormap           (1L<<13)
 #define PseudoColor          3
 #define TrueColor            4
+#define VisualIDMask     0x1
 #define VisualScreenMask     0x2
 #define Expose		     12
 #define CreateNotify	     16
@@ -318,11 +337,11 @@ typedef union _XEvent {
 /**
  * \name Server-specific functions
  */
-extern Display *
+extern MINI_Display *
 __miniglx_StartServer( const char *display_name );
 
 extern int
-__miniglx_Select( Display *dpy, int maxfd,
+__miniglx_Select( MINI_Display *dpy, int maxfd,
 		  fd_set *rfds, fd_set *wfds, fd_set *xfds,
 		  struct timeval *tv );
 
@@ -331,25 +350,25 @@ __miniglx_Select( Display *dpy, int maxfd,
  * \name Simulated Xlib functions
  */
 /*@{*/
-extern Display *
+extern MINI_Display *
 XOpenDisplay( const char *dpy_name );
 
 
 extern void
-XCloseDisplay( Display *display );
+XCloseDisplay( MINI_Display *display );
 
-extern Window
-XCreateWindow( Display *display, Window parent, int x, int y,
+extern MINI_Window
+XCreateWindow( MINI_Display *display, MINI_Window parent, int x, int y,
                unsigned int width, unsigned int height,
                unsigned int border_width, int depth, unsigned int winclass,
                Visual *visual, unsigned long valuemask,
                XSetWindowAttributes *attributes );
 
 extern int 
-XNextEvent(Display *display, XEvent *event_return);
+XNextEvent(MINI_Display *display, XEvent *event_return);
 
-extern Bool 
-XCheckMaskEvent( Display *dpy, long event_mask, XEvent *event_return );
+extern MINI_Bool 
+XCheckMaskEvent( MINI_Display *dpy, long event_mask, XEvent *event_return );
 
 /**
  * \brief Return the root window.
@@ -365,27 +384,27 @@ XCheckMaskEvent( Display *dpy, long event_mask, XEvent *event_return );
 #define DefaultScreen(dpy)  0
 
 extern void
-XDestroyWindow( Display *display, Window w );
+XDestroyWindow( MINI_Display *display, MINI_Window w );
 
 extern void
-XMapWindow( Display *display, Window w );
+XMapWindow( MINI_Display *display, MINI_Window w );
 
 /* Should clients have access to this?
  */
 extern void
-XUnmapWindow( Display *display, Window w );
+XUnmapWindow( MINI_Display *display, MINI_Window w );
 
-extern Colormap
-XCreateColormap( Display *display, Window w, Visual *visual, int alloc );
+extern MINI_Colormap
+XCreateColormap( MINI_Display *display, MINI_Window w, Visual *visual, int alloc );
 
 extern void
-XFreeColormap( Display *display, Colormap cmap );
+XFreeColormap( MINI_Display *display, MINI_Colormap cmap );
 
 extern void
 XFree( void *data );
 
 extern XVisualInfo *
-XGetVisualInfo( Display *display, long vinfo_mask,
+XGetVisualInfo( MINI_Display *display, long vinfo_mask,
                 XVisualInfo *vinfo_template, int *nitems_return );
 /*@}*/
 
@@ -396,23 +415,23 @@ XGetVisualInfo( Display *display, long vinfo_mask,
  */
 /*@{*/
 extern XVisualInfo*
-glXChooseVisual( Display *dpy, int screen, int *attribList );
+glXChooseVisual( MINI_Display *dpy, int screen, int *attribList );
 
 extern int
-glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value );
+glXGetConfig( MINI_Display *dpy, XVisualInfo *vis, int attrib, int *value );
 
 extern GLXContext
-glXCreateContext( Display *dpy, XVisualInfo *vis,
-                  GLXContext shareList, Bool direct );
+glXCreateContext( MINI_Display *dpy, XVisualInfo *vis,
+                  GLXContext shareList, MINI_Bool direct );
 
 extern void
-glXDestroyContext( Display *dpy, GLXContext ctx );
+glXDestroyContext( MINI_Display *dpy, GLXContext ctx );
 
-extern Bool
-glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx);
+extern MINI_Bool
+glXMakeCurrent( MINI_Display *dpy, GLXDrawable drawable, GLXContext ctx);
 
 extern void
-glXSwapBuffers( Display *dpy, GLXDrawable drawable );
+glXSwapBuffers( MINI_Display *dpy, GLXDrawable drawable );
 
 extern GLXContext
 glXGetCurrentContext( void );
@@ -423,22 +442,22 @@ glXGetCurrentDrawable( void );
 extern void 
 (*glXGetProcAddress(const GLubyte *procname))( void );
 
-extern Bool
-glXQueryVersion( Display *dpy, int *major, int *minor );
+extern MINI_Bool
+glXQueryVersion( MINI_Display *dpy, int *major, int *minor );
 
 /* Added in MiniGLX 1.1 */
 extern GLXPbuffer
-glXCreatePbuffer( Display *dpy, GLXFBConfig config, const int *attribList );
+glXCreatePbuffer( MINI_Display *dpy, GLXFBConfig config, const int *attribList );
 
 extern void
-glXDestroyPbuffer( Display *dpy, GLXPbuffer pbuf );
+glXDestroyPbuffer( MINI_Display *dpy, GLXPbuffer pbuf );
 
 extern GLXFBConfig *
-glXChooseFBConfig( Display *dpy, int screen, const int *attribList,
+glXChooseFBConfig( MINI_Display *dpy, int screen, const int *attribList,
                    int *nitems );
 
 extern XVisualInfo *
-glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config );
+glXGetVisualFromFBConfig( MINI_Display *dpy, GLXFBConfig config );
 
 extern void *glXAllocateMemoryMESA(Display *dpy, int scrn,
 				   size_t size, float readFreq,
