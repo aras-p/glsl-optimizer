@@ -1,4 +1,4 @@
-/* $Id: m_xform.c,v 1.14 2001/05/23 14:27:03 brianp Exp $ */
+/* $Id: m_xform.c,v 1.15 2002/04/09 14:58:04 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -220,6 +220,5 @@ _math_init( void )
 {
    _math_init_transformation();
    _math_init_translate();
-   _math_init_vertices();
    _math_init_eval();
 }

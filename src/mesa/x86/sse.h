@@ -1,4 +1,4 @@
-/* $Id: sse.h,v 1.1 2001/03/29 06:46:16 gareth Exp $ */
+/* $Id: sse.h,v 1.2 2002/04/09 14:58:03 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,5 @@
 #include "math/m_xform.h"
 
 void _mesa_init_sse_transform_asm( void );
-void _mesa_init_sse_vertex_asm( void );
 
 #endif

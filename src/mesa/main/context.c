@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.158 2002/03/29 17:27:59 brianp Exp $ */
+/* $Id: context.c,v 1.159 2002/04/09 14:58:03 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,7 +55,6 @@
 #include "vpstate.h"
 #include "vtxfmt.h"
 #include "math/m_translate.h"
-#include "math/m_vertices.h"
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
 #include "math/mathmod.h"

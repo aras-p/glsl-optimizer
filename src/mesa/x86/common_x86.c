@@ -1,4 +1,4 @@
-/* $Id: common_x86.c,v 1.16 2001/06/06 18:12:35 brianp Exp $ */
+/* $Id: common_x86.c,v 1.17 2002/04/09 14:58:03 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -273,26 +273,3 @@ void _mesa_init_all_x86_transform_asm( void )
 #endif
 }
 
-/* Note: the above function must be called before this one, so that
- * _mesa_x86_cpu_features gets correctly initialized.
- */
-void _mesa_init_all_x86_vertex_asm( void )
-{
-#ifdef USE_X86_ASM
-   if ( _mesa_x86_cpu_features ) {
-      _mesa_init_x86_vertex_asm();
-   }
-
-#ifdef USE_3DNOW_ASM
-   if ( cpu_has_3dnow && getenv( "MESA_NO_3DNOW" ) == 0 ) {
-      _mesa_init_3dnow_vertex_asm();
-   }
-#endif
-
-#ifdef USE_SSE_ASM
-   if ( cpu_has_xmm && getenv( "MESA_NO_SSE" ) == 0 ) {
-      _mesa_init_sse_vertex_asm();
-   }
-#endif
-#endif
-}

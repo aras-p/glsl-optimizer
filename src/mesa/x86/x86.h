@@ -1,4 +1,4 @@
-/* $Id: x86.h,v 1.4 2001/03/28 20:44:44 gareth Exp $ */
+/* $Id: x86.h,v 1.5 2002/04/09 14:58:03 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,6 +32,5 @@
 #define __X86_H__
 
 extern void _mesa_init_x86_transform_asm( void );
-extern void _mesa_init_x86_vertex_asm( void );
 
 #endif

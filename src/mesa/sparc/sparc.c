@@ -1,4 +1,4 @@
-/* $Id: sparc.c,v 1.5 2001/06/06 22:55:28 davem69 Exp $ */
+/* $Id: sparc.c,v 1.6 2002/04/09 14:58:03 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,6 @@
 
 
 #include "context.h"
-#include "math/m_vertices.h"
 #include "math/m_xform.h"
 #include "tnl/t_context.h"
 #include "sparc.h"

@@ -1,4 +1,4 @@
-/* $Id: sse.c,v 1.2 2001/03/30 14:44:43 gareth Exp $ */
+/* $Id: sse.c,v 1.3 2002/04/09 14:58:03 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,6 @@
 
 #include "glheader.h"
 #include "context.h"
-#include "math/m_vertices.h"
 #include "math/m_xform.h"
 #include "tnl/t_context.h"
 
@@ -118,19 +117,3 @@ void _mesa_init_sse_transform_asm( void )
 #endif
 }
 
-void _mesa_init_sse_vertex_asm( void )
-{
-#ifdef USE_SSE_ASM
-   _mesa_xform_points3_v16_general = _mesa_v16_sse_general_xform;
-#if 0
-   /* GH: These are broken.  I'm fixing them now.
-    */
-   _mesa_project_v16 = _mesa_sse_project_vertices;
-   _mesa_project_clipped_v16 = _mesa_sse_project_clipped_vertices;
-#endif
-
-#ifdef DEBUG_NOT
-   _math_test_all_vertex_functions( "SSE" );
-#endif
-#endif
-}

@@ -1,4 +1,4 @@
-/* $Id: m_norm_tmp.h,v 1.10 2002/01/05 20:51:12 brianp Exp $ */
+/* $Id: m_norm_tmp.h,v 1.11 2002/04/09 14:58:04 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,7 +33,6 @@
  */
 
 #include <math.h>
-#include "m_vertices.h"
 
 
 /*
