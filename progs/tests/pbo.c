@@ -103,6 +103,7 @@ Display( void )
    /*** Draw from the DrawPBO */
    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_EXT, DrawPBO);
    glDrawPixels(ImgWidth, ImgHeight, ImgFormat, GL_UNSIGNED_BYTE, 0);
+   glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_EXT, 0);
 
    /* do readpixels, drawpixels */
    glRasterPos2i(BPosX, 5);
@@ -138,6 +139,7 @@ Display( void )
    /*** draw from the Temp PBO */
    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_EXT, TempPBO);
    glDrawPixels(ImgWidth, ImgHeight, ReadFormat, ReadType, 0);
+   glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_EXT, 0);
 
    /* do copypixels */
    glRasterPos2i(CPosX, 5);
