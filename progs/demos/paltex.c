@@ -1,4 +1,4 @@
-/* $Id: paltex.c,v 1.6 2000/10/05 07:17:43 joukj Exp $ */
+/* $Id: paltex.c,v 1.7 2002/01/16 00:48:43 kschultz Exp $ */
 
 /*
  * Paletted texture demo.  Written by Brian Paul.
@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #define GL_GLEXT_LEGACY
 #include <GL/glut.h>
 

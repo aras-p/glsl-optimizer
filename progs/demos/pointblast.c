@@ -13,6 +13,9 @@
 
 /*
  * $Log: pointblast.c,v $
+ * Revision 1.3  2002/01/16 00:48:43  kschultz
+ * Demo updates for Windows (Robert Bergkvist)
+ *
  * Revision 1.2  2000/06/27 17:04:43  brianp
  * fixed compiler warnings
  *
@@ -38,6 +41,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>       /* for cos(), sin(), and sqrt() */
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #define GL_GLEXT_LEGACY
 #include <GL/glut.h>
 

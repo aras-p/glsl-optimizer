@@ -11,7 +11,7 @@
 #include <math.h>
 #include <time.h>
 
-#ifdef WIN32
+#if defined (WIN32)|| defined(_WIN32)
 #include <windows.h>
 #include <mmsystem.h>
 #endif

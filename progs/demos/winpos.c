@@ -1,4 +1,4 @@
-/* $Id: winpos.c,v 1.3 2000/12/24 22:53:54 pesco Exp $ */
+/* $Id: winpos.c,v 1.4 2002/01/16 00:48:43 kschultz Exp $ */
 
 /*
  * Example of how to use the GL_MESA_window_pos extension.
@@ -8,6 +8,9 @@
 
 /*
  * $Log: winpos.c,v $
+ * Revision 1.4  2002/01/16 00:48:43  kschultz
+ * Demo updates for Windows (Robert Bergkvist)
+ *
  * Revision 1.3  2000/12/24 22:53:54  pesco
  * * demos/Makefile.am (INCLUDES): Added -I$(top_srcdir)/util.
  * * demos/Makefile.X11, demos/Makefile.BeOS-R4, demos/Makefile.cygnus:
@@ -59,6 +62,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #define GL_GLEXT_LEGACY
 #include "GL/glut.h"
 

@@ -11,15 +11,20 @@
 #include <math.h>
 #include <time.h>
 #include <GL/glut.h>
+#ifndef M_PI
+#define M_PI 3.14159265
+#endif
 
 #include "particles.h"
 extern "C" {
-#include "image.h"
+#include "readtex.h"
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #include <mmsystem.h>
+#include "particles.cxx"
+#include "readtex.c"
 #endif
 
 #ifdef XMESA
@@ -297,20 +302,21 @@ static void key(unsigned char key, int x, int y)
 
 static void inittextures(void)
 {
-  IMAGE *img;
+  GLubyte *img;
+  GLint width,height;
+  GLenum format;
   GLenum gluerr;
 
   glGenTextures(1,&groundid);
   glBindTexture(GL_TEXTURE_2D,groundid);
 
-  if(!(img=ImageLoad("s128.rgb"))) {
-    fprintf(stderr,"Error reading a texture.\n");
-    exit(-1);
+  if(!(img=LoadRGBImage("../images/s128.rgb",&width,&height,&format))){
+  	fprintf(stderr,"Error reading a texture.\n");
+  	exit(-1);
   }
-
   glPixelStorei(GL_UNPACK_ALIGNMENT,4);
-  if((gluerr=(GLenum)gluBuild2DMipmaps(GL_TEXTURE_2D, 3, img->sizeX, img->sizeY, GL_RGB,
-			       GL_UNSIGNED_BYTE, (GLvoid *)(img->data)))) {
+  if((gluerr=(GLenum)gluBuild2DMipmaps(GL_TEXTURE_2D, 3, width, height,GL_RGB,
+			       GL_UNSIGNED_BYTE, (GLvoid *)(img)))) {
     fprintf(stderr,"GLULib%s\n",gluErrorString(gluerr));
     exit(-1);
   }
