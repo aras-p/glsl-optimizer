@@ -1,4 +1,4 @@
-/* $Id: t_vb_program.c,v 1.2 2001/12/15 02:13:32 brianp Exp $ */
+/* $Id: t_vb_program.c,v 1.3 2001/12/15 21:31:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -783,18 +783,21 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
       _mesa_exec_program(ctx, program);
 
       printf("Output %d: %f, %f, %f, %f\n", i,
-             machine->Registers[VP_OUTPUT_REG_START + 0][0],
-             machine->Registers[VP_OUTPUT_REG_START + 0][1],
-             machine->Registers[VP_OUTPUT_REG_START + 0][2],
-             machine->Registers[VP_OUTPUT_REG_START + 0][3]);
+             machine->Registers[VP_OUT_HPOS][0],
+             machine->Registers[VP_OUT_HPOS][1],
+             machine->Registers[VP_OUT_HPOS][2],
+             machine->Registers[VP_OUT_HPOS][3]);
       printf("   color: %f, %f, %f, %f\n",
-             machine->Registers[VP_OUTPUT_REG_START + 1][0],
-             machine->Registers[VP_OUTPUT_REG_START + 1][1],
-             machine->Registers[VP_OUTPUT_REG_START + 1][2],
-             machine->Registers[VP_OUTPUT_REG_START + 1][3]);
+             machine->Registers[VP_OUT_COL0][0],
+             machine->Registers[VP_OUT_COL0][1],
+             machine->Registers[VP_OUT_COL0][2],
+             machine->Registers[VP_OUT_COL0][3]);
 
       /* store the attribute output registers into the VB arrays */
       COPY_4V(clip[i], machine->Registers[VP_OUT_HPOS]);
+      clip[i][0] /= clip[i][3];
+      clip[i][1] /= clip[i][3];
+      clip[i][2] /= clip[i][3];
       COPY_4V(color0[i], machine->Registers[VP_OUT_COL0]);
       COPY_4V(color1[i], machine->Registers[VP_OUT_COL1]);
       COPY_4V(bfcolor0[i], machine->Registers[VP_OUT_BFC0]);
