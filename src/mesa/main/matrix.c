@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.31 2001/02/05 18:48:52 brianp Exp $ */
+/* $Id: matrix.c,v 1.32 2001/02/13 23:51:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -123,7 +123,7 @@ _mesa_Ortho( GLdouble left, GLdouble right,
        bottom == top ||
        nearval == farval)
    {
-      gl_error( ctx,  GL_INVALID_VALUE, "gl_Ortho" );
+      gl_error( ctx,  GL_INVALID_VALUE, "glOrtho" );
       return;
    }
 

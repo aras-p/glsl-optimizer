@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.40 2001/01/23 23:39:36 brianp Exp $ */
+/* $Id: enable.c,v 1.41 2001/02/13 23:51:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -239,7 +239,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
    case GL_HISTOGRAM:
       if (!ctx->Extensions.EXT_histogram) {
-	 gl_error(ctx, GL_INVALID_ENUM, "enable GL_HISTOGRAM");
+	 gl_error(ctx, GL_INVALID_ENUM, "glEnable(GL_HISTOGRAM)");
 	 return;
       }
       if (ctx->Pixel.HistogramEnabled == state)

@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.6 2001/01/29 20:47:39 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.7 2001/02/13 23:51:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -227,6 +227,7 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
       if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1)
 	 tnl->ReplayHardBeginEnd = 1;
       if (!tnl->ReplayHardBeginEnd) {
+         /* XXX is this really an OpenGL error or an implementation problem? */
 	 gl_error(ctx, GL_INVALID_OPERATION, "hard replay");
 	 return;
       }
