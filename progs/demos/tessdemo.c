@@ -1,4 +1,4 @@
-/* $Id: tessdemo.c,v 1.10 2001/03/21 02:44:36 gareth Exp $ */
+/* $Id: tessdemo.c,v 1.11 2001/03/21 02:47:32 gareth Exp $ */
 
 /*
  * A demo of the GLU polygon tesselation functions written by Bogdan Sikorski.
@@ -479,6 +479,8 @@ static void reshape( GLsizei w, GLsizei h )
    set_screen_wh( w, h );
 }
 
+#endif
+
 
 static void usage( void )
 {
@@ -486,8 +488,6 @@ static void usage( void )
    printf( "Press middle mouse button when done.\n" );
    printf( "Select tesselate from the pop-up menu.\n" );
 }
-
-#endif
 
 
 int main( int argc, char **argv )
@@ -506,12 +506,16 @@ int main( int argc, char **argv )
    glutInitWindowSize( 400, 400 );
    glutCreateWindow( argv[0] );
 
+   /* GH: Bit of a hack...
+    */
+#ifdef GLU_VERSION_1_2
    myinit();
 
    glutDisplayFunc( display );
    glutReshapeFunc( reshape );
 
    glutMainLoop();
+#endif
 
    return 0;
 }
