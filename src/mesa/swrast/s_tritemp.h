@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.17 2001/05/16 20:27:12 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.18 2001/06/12 14:18:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,6 +95,8 @@
    const SWvertex *vMin, *vMid, *vMax;  /* Y(vMin)<=Y(vMid)<=Y(vMax) */
    float bf = SWRAST_CONTEXT(ctx)->_backface_sign;
    GLboolean tiny;
+   const GLint snapMask = ~((FIXED_ONE / 16) - 1);  /* for x/y coord snapping */
+   GLfixed vMin_fx, vMin_fy, vMid_fx, vMid_fy, vMax_fx, vMax_fy;
 
    struct triangle_span span;
 
@@ -102,34 +104,56 @@
    (void) fixedToDepthShift;
 #endif
 
-   /* find the order of the 3 vertices along the Y axis */
+   /* Compute fixed point x,y coords w/ half-pixel offsets and snapping.
+    * And find the order of the 3 vertices along the Y axis.
+    */
    {
-      GLfloat y0 = v0->win[1];
-      GLfloat y1 = v1->win[1];
-      GLfloat y2 = v2->win[1];
+      const GLfixed fy0 = FloatToFixed(v0->win[1] + 0.5F) & snapMask;
+      const GLfixed fy1 = FloatToFixed(v1->win[1] + 0.5F) & snapMask;
+      const GLfixed fy2 = FloatToFixed(v2->win[1] + 0.5F) & snapMask;
 
-      if (y0<=y1) {
-	 if (y1<=y2) {
-	    vMin = v0;   vMid = v1;   vMax = v2;   /* y0<=y1<=y2 */
+      if (fy0 <= fy1) {
+	 if (fy1 <= fy2) {
+            /* y0 <= y1 <= y2 */
+	    vMin = v0;   vMid = v1;   vMax = v2;
+            vMin_fy = fy0;  vMid_fy = fy1;  vMax_fy = fy2;
 	 }
-	 else if (y2<=y0) {
-	    vMin = v2;   vMid = v0;   vMax = v1;   /* y2<=y0<=y1 */
+	 else if (fy2 <= fy0) {
+            /* y2 <= y0 <= y1 */
+	    vMin = v2;   vMid = v0;   vMax = v1;
+            vMin_fy = fy2;  vMid_fy = fy0;  vMax_fy = fy1;
 	 }
 	 else {
-	    vMin = v0;   vMid = v2;   vMax = v1;  bf = -bf; /* y0<=y2<=y1 */
+            /* y0 <= y2 <= y1 */
+	    vMin = v0;   vMid = v2;   vMax = v1;
+            vMin_fy = fy0;  vMid_fy = fy2;  vMax_fy = fy1;
+            bf = -bf;
 	 }
       }
       else {
-	 if (y0<=y2) {
-	    vMin = v1;   vMid = v0;   vMax = v2;  bf = -bf; /* y1<=y0<=y2 */
+	 if (fy0 <= fy2) {
+            /* y1 <= y0 <= y2 */
+	    vMin = v1;   vMid = v0;   vMax = v2;
+            vMin_fy = fy1;  vMid_fy = fy0;  vMax_fy = fy2;
+            bf = -bf;
 	 }
-	 else if (y2<=y1) {
-	    vMin = v2;   vMid = v1;   vMax = v0;  bf = -bf; /* y2<=y1<=y0 */
+	 else if (fy2 <= fy1) {
+            /* y2 <= y1 <= y0 */
+	    vMin = v2;   vMid = v1;   vMax = v0;
+            vMin_fy = fy2;  vMid_fy = fy1;  vMax_fy = fy0;
+            bf = -bf;
 	 }
 	 else {
-	    vMin = v1;   vMid = v2;   vMax = v0;   /* y1<=y2<=y0 */
+            /* y1 <= y2 <= y0 */
+	    vMin = v1;   vMid = v2;   vMax = v0;
+            vMin_fy = fy1;  vMid_fy = fy2;  vMax_fy = fy0;
 	 }
       }
+
+      /* fixed point X coords */
+      vMin_fx = FloatToFixed(vMin->win[0] + 0.5F) & snapMask;
+      vMid_fx = FloatToFixed(vMid->win[0] + 0.5F) & snapMask;
+      vMax_fx = FloatToFixed(vMax->win[0] + 0.5F) & snapMask;
    }
 
    /* vertex/edge relationship */
@@ -137,15 +161,15 @@
    eTop.v0 = vMid;   eTop.v1 = vMax;
    eBot.v0 = vMin;   eBot.v1 = vMid;
 
-   /* compute deltas for each edge:  vertex[v1] - vertex[v0] */
-   eMaj.dx = vMax->win[0] - vMin->win[0];
-   eMaj.dy = vMax->win[1] - vMin->win[1];
-   eTop.dx = vMax->win[0] - vMid->win[0];
-   eTop.dy = vMax->win[1] - vMid->win[1];
-   eBot.dx = vMid->win[0] - vMin->win[0];
-   eBot.dy = vMid->win[1] - vMin->win[1];
+   /* compute deltas for each edge:  vertex[upper] - vertex[lower] */
+   eMaj.dx = FixedToFloat(vMax_fx - vMin_fx);
+   eMaj.dy = FixedToFloat(vMax_fy - vMin_fy);
+   eTop.dx = FixedToFloat(vMax_fx - vMid_fx);
+   eTop.dy = FixedToFloat(vMax_fy - vMid_fy);
+   eBot.dx = FixedToFloat(vMid_fx - vMin_fx);
+   eBot.dy = FixedToFloat(vMid_fy - vMin_fy);
 
-   /* compute oneOverArea */
+   /* compute area, oneOverArea and perform backface culling */
    {
       const GLfloat area = eMaj.dx * eBot.dy - eBot.dx * eMaj.dy;
 
@@ -156,12 +180,16 @@
       if (area == 0.0F)
          return;
 
+      /* This may not be needed anymore.  Let's see if anyone reports a problem. */
+#if 0
       /* check for very tiny triangle */
-      if (area * area < (0.05F * 0.05F)) { /* square to ensure positive value */
-         oneOverArea = 1.0F / 0.05F;  /* a close-enough value */
+      if (area * area < (0.001F * 0.001F)) { /* square to ensure positive value */
+         oneOverArea = 1.0F / 0.001F;  /* a close-enough value */
          tiny = GL_TRUE;
       }
-      else {
+      else
+#endif
+      {
          oneOverArea = 1.0F / area;
          tiny = GL_FALSE;
       }
@@ -173,13 +201,6 @@
 
    /* Edge setup.  For a triangle strip these could be reused... */
    {
-      /* fixed point Y coordinates */
-      GLfixed vMin_fx = FloatToFixed(vMin->win[0] + 0.5F);
-      GLfixed vMin_fy = FloatToFixed(vMin->win[1] - 0.5F);
-      GLfixed vMid_fx = FloatToFixed(vMid->win[0] + 0.5F);
-      GLfixed vMid_fy = FloatToFixed(vMid->win[1] - 0.5F);
-      GLfixed vMax_fy = FloatToFixed(vMax->win[1] - 0.5F);
-
       eMaj.fsy = FixedCeil(vMin_fy);
       eMaj.lines = FixedToInt(FixedCeil(vMax_fy - eMaj.fsy));
       if (eMaj.lines > 0) {
