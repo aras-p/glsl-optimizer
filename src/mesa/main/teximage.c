@@ -2798,6 +2798,9 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
    if (!is_compressed_format(ctx, internalFormat))
       return GL_INVALID_ENUM;
 
+   if (_mesa_base_tex_format(ctx, internalFormat) < 0)
+      return GL_INVALID_ENUM;
+
    if (border != 0)
       return GL_INVALID_VALUE;
 
