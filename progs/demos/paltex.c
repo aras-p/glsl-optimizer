@@ -1,13 +1,17 @@
-/* $Id: paltex.c,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: paltex.c,v 1.2 1999/11/02 15:09:04 brianp Exp $ */
 
 /*
- * Paletted texture demo.  Written by Brian Paul.  This file in public domain.
+ * Paletted texture demo.  Written by Brian Paul.
+ * This program is in the public domain.
  */
 
 /*
  * $Log: paltex.c,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
+ * Revision 1.2  1999/11/02 15:09:04  brianp
+ * new texture image, cleaned-up code
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
+ * Imported sources
  *
  * Revision 3.1  1999/03/28 18:20:49  brianp
  * minor clean-up
@@ -42,10 +46,10 @@ static void Display( void )
    glRotatef(Rot, 0, 0, 1);
 
    glBegin(GL_POLYGON);
-   glTexCoord2f(0, 1);  glVertex2f(-1, -1);
-   glTexCoord2f(1, 1);  glVertex2f( 1, -1);
-   glTexCoord2f(1, 0);  glVertex2f( 1,  1);
-   glTexCoord2f(0, 0);  glVertex2f(-1,  1);
+   glTexCoord2f(0, 1);  glVertex2f(-1, -0.5);
+   glTexCoord2f(1, 1);  glVertex2f( 1, -0.5);
+   glTexCoord2f(1, 0);  glVertex2f( 1,  0.5);
+   glTexCoord2f(0, 0);  glVertex2f(-1,  0.5);
    glEnd();
 
    glPopMatrix();
@@ -62,7 +66,7 @@ static void Reshape( int width, int height )
    glFrustum( -1.0, 1.0, -1.0, 1.0, 5.0, 25.0 );
    glMatrixMode( GL_MODELVIEW );
    glLoadIdentity();
-   glTranslatef( 0.0, 0.0, -15.0 );
+   glTranslatef( 0.0, 0.0, -7.0 );
 }
 
 
@@ -79,37 +83,20 @@ static void Key( unsigned char key, int x, int y )
 }
 
 
-static void SpecialKey( int key, int x, int y )
-{
-   (void) x;
-   (void) y;
-   switch (key) {
-      case GLUT_KEY_UP:
-         break;
-      case GLUT_KEY_DOWN:
-         break;
-      case GLUT_KEY_LEFT:
-         break;
-      case GLUT_KEY_RIGHT:
-         break;
-   }
-   glutPostRedisplay();
-}
-
-
 static void Init( void )
 {
-   GLubyte texture[8][8] = {  /* PT = Paletted Texture! */
-      {  0,   0,   0,   0,   0,   0,   0,   0},
-      {  0, 100, 100, 100,   0, 180, 180, 180},
-      {  0, 100,   0, 100,   0,   0, 180,   0},
-      {  0, 100,   0, 100,   0,   0, 180,   0},
-      {  0, 100, 100, 100,   0,   0, 180,   0},
-      {  0, 100,   0,   0,   0,   0, 180,   0},
-      {  0, 100,   0,   0,   0,   0, 180,   0},
-      {  0, 100, 255,   0,   0,   0, 180, 250},
-   };
-
+#define HEIGHT 8
+#define WIDTH 32
+   static char texture[HEIGHT][WIDTH] = {
+         "                                ",
+         "    MMM    EEEE   SSS    AAA    ",
+         "   M M M  E      S   S  A   A   ",
+         "   M M M  EEEE    SS    A   A   ",
+         "   M M M  E         SS  AAAAA   ",
+         "   M   M  E      S   S  A   A   ",
+         "   M   M   EEEE   SSS   A   A   ",
+         "                                "
+      };
    GLubyte table[256][4];
    int i;
 
@@ -118,17 +105,31 @@ static void Init( void )
       exit(0);
    }
 
-   /* put some wacky colors into the texture palette */
-   for (i=0;i<256;i++) {
-      table[i][0] = i;
-      table[i][1] = 0;
-      table[i][2] = 127 + i / 2;
-      table[i][3] = 255;
-   }
+   /* load the color table for each texel-index */
+   table[' '][0] = 50;
+   table[' '][1] = 50;
+   table[' '][2] = 50;
+   table[' '][3] = 50;
+   table['M'][0] = 255;
+   table['M'][1] = 0;
+   table['M'][2] = 0;
+   table['M'][3] = 0;
+   table['E'][0] = 0;
+   table['E'][1] = 255;
+   table['E'][2] = 0;
+   table['E'][3] = 0;
+   table['S'][0] = 40;
+   table['S'][1] = 40;
+   table['S'][2] = 255;
+   table['S'][3] = 0;
+   table['A'][0] = 255;
+   table['A'][1] = 255;
+   table['A'][2] = 0;
+   table['A'][3] = 0;
 
 #ifdef GL_EXT_paletted_texture
 
-#if defined(GL_EXT_shared_texture_palette) && defined(SHARED_PALETTE)
+#if defined(GL_EXT_shared_texture_palette) && defined(USE_SHARED_PALETTE)
    printf("Using shared palette\n");
    glColorTableEXT(GL_SHARED_TEXTURE_PALETTE_EXT,    /* target */
                    GL_RGBA,          /* internal format */
@@ -149,7 +150,7 @@ static void Init( void )
    glTexImage2D(GL_TEXTURE_2D,       /* target */
                 0,                   /* level */
                 GL_COLOR_INDEX8_EXT, /* internal format */
-                8, 8,                /* width, height */
+                WIDTH, HEIGHT,       /* width, height */
                 0,                   /* border */
                 GL_COLOR_INDEX,      /* texture format */
                 GL_UNSIGNED_BYTE,    /* texture type */
@@ -177,7 +178,6 @@ int main( int argc, char *argv[] )
 
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
-   glutSpecialFunc( SpecialKey );
    glutDisplayFunc( Display );
    glutIdleFunc( Idle );
 
