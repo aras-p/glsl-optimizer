@@ -1,4 +1,4 @@
-/* $Id: texutil.c,v 1.1 2000/03/24 20:54:21 brianp Exp $ */
+/* $Id: texutil.c,v 1.2 2000/03/27 18:56:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,7 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "context.h"
 #include "image.h"
 #include "mem.h"
 #include "texutil.h"
@@ -534,4 +535,286 @@ _mesa_convert_teximage(MesaIntTexFormat dstFormat,
          return GL_FALSE;
    }
    return GL_TRUE;
+}
+
+
+/*
+ * Used to convert 16-bit texels into GLubyte color components.
+ */
+static GLubyte R5G6B5toRed[0xffff];
+static GLubyte R5G6B5toGreen[0xffff];
+static GLubyte R5G6B5toBlue[0xffff];
+
+static GLubyte A4R4G4B4toRed[0xffff];
+static GLubyte A4R4G4B4toGreen[0xffff];
+static GLubyte A4R4G4B4toBlue[0xffff];
+static GLubyte A4R4G4B4toAlpha[0xffff];
+
+static GLubyte A1R5G5B5toRed[0xffff];
+static GLubyte A1R5G5B5toGreen[0xffff];
+static GLubyte A1R5G5B5toBlue[0xffff];
+static GLubyte A1R5G5B5toAlpha[0xffff];
+
+static void
+generate_lookup_tables(void)
+{
+   GLint i;
+   for (i = 0; i <= 0xffff; i++) {
+      GLint r = (i >> 8) & 0xf8;
+      GLint g = (i >> 3) & 0xfc;
+      GLint b = (i << 3) & 0xf8;
+      r = r * 255 / 0xf8;
+      g = g * 255 / 0xfc;
+      b = b * 255 / 0xf8;
+      R5G6B5toRed[i]   = r;
+      R5G6B5toGreen[i] = g;
+      R5G6B5toBlue[i]  = b;
+   }
+
+   for (i = 0; i <= 0xffff; i++) {
+      GLint r = (i >>  8) & 0xf;
+      GLint g = (i >>  4) & 0xf;
+      GLint b = (i      ) & 0xf;
+      GLint a = (i >> 12) & 0xf;
+      r = r * 255 / 0xf;
+      g = g * 255 / 0xf;
+      b = b * 255 / 0xf;
+      a = a * 255 / 0xf;
+      A4R4G4B4toRed[i]   = r;
+      A4R4G4B4toGreen[i] = g;
+      A4R4G4B4toBlue[i]  = b;
+      A4R4G4B4toAlpha[i] = b;
+   }
+
+   for (i = 0; i <= 0xffff; i++) {
+      GLint r = (i >> 10) & 0xf8;
+      GLint g = (i >>  5) & 0xf8;
+      GLint b = (i      ) & 0xf8;
+      GLint a = (i >> 15) & 0x1;
+      r = r * 255 / 0xf8;
+      g = g * 255 / 0xf8;
+      b = b * 255 / 0xf8;
+      a = a * 255;
+      A1R5G5B5toRed[i]   = r;
+      A1R5G5B5toGreen[i] = g;
+      A1R5G5B5toBlue[i]  = b;
+      A1R5G5B5toAlpha[i] = b;
+   }
+}
+
+
+
+/*
+ * Convert a texture image from an internal format to one of Mesa's
+ * core internal formats.  This is likely to be used by glGetTexImage
+ * and for fetching texture images when falling back to software rendering.
+ *
+ * Notes:
+ *   This function will do power of two image down-scaling to accomodate
+ *   drivers with limited texture image aspect ratios.
+ *   The implicit dest data type is GL_UNSIGNED_BYTE.
+ */
+void
+_mesa_unconvert_teximage(MesaIntTexFormat srcFormat,
+                         GLint srcWidth, GLint srcHeight,
+                         const GLvoid *srcImage,
+                         GLsizei dstWidth, GLsizei dstHeight,
+                         GLenum dstFormat, GLubyte *dstImage)
+{
+   static GLboolean firstCall = GL_TRUE;
+   const GLint wScale = srcWidth / dstWidth;   /* must be power of two */
+   const GLint hScale = srcHeight / dstHeight; /* must be power of two */
+   ASSERT(srcWidth >= dstWidth);
+   ASSERT(srcHeight >= dstHeight);
+   ASSERT(dstImage);
+   ASSERT(srcImage);
+
+   if (firstCall) {
+      generate_lookup_tables();
+      firstCall = GL_FALSE;
+   }
+
+   switch (srcFormat) {
+      case MESA_I8:
+      case MESA_L8:
+      case MESA_A8:
+      case MESA_C8:
+#ifdef DEBUG
+         if (srcFormat == MESA_I8) {
+            ASSERT(dstFormat == GL_INTENSITY);
+         }
+         else if (srcFormat == MESA_L8) {
+            ASSERT(dstFormat == GL_LUMINANCE);
+         }
+         else if (srcFormat == MESA_A8) {
+            ASSERT(dstFormat == GL_ALPHA);
+         }
+         else if (srcFormat == MESA_C8) {
+            ASSERT(dstFormat == GL_COLOR_INDEX);
+         }
+#endif
+         if (wScale == 1 && hScale == 1) {
+            /* easy! */
+            MEMCPY(dstImage, srcImage, dstWidth * dstHeight * sizeof(GLubyte));
+         }
+         else {
+            /* rescale */
+            const GLubyte *src8 = (const GLubyte *) srcImage;
+            GLint row, col;
+            for (row = 0; row < dstHeight; row++) {
+               GLint srcRow = row * hScale;
+               for (col = 0; col < dstWidth; col++) {
+                  GLint srcCol = col * wScale;
+                  *dstImage++ = src8[srcRow * srcWidth + srcCol];
+               }
+            }
+         }
+         break;
+      case MESA_L8_A8:
+         ASSERT(dstFormat == GL_LUMINANCE_ALPHA);
+         if (wScale == 1 && hScale == 1) {
+            GLint i, n = dstWidth * dstHeight;
+            const GLushort *texel = (const GLushort *) srcImage;
+            for (i = 0; i < n; i++) {
+               const GLushort tex = *texel++;
+               *dstImage++ = (tex >> 8);   /* luminance */
+               *dstImage++ = (tex & 0xff); /* alpha */
+            }
+         }
+         else {
+            /* rescale */
+            const GLushort *src16 = (const GLushort *) srcImage;
+            GLint row, col;
+            for (row = 0; row < dstHeight; row++) {
+               GLint srcRow = row * hScale;
+               for (col = 0; col < dstWidth; col++) {
+                  GLint srcCol = col * wScale;
+                  const GLushort tex = src16[srcRow * srcWidth + srcCol];
+                  *dstImage++ = (tex >> 8);   /* luminance */
+                  *dstImage++ = (tex & 0xff); /* alpha */
+               }
+            }
+         }
+         break;
+      case MESA_R5_G6_B5:
+         ASSERT(dstFormat == GL_RGB);
+         if (wScale == 1 && hScale == 1) {
+            GLint i, n = dstWidth * dstHeight;
+            const GLushort *texel = (const GLushort *) srcImage;
+            for (i = 0; i < n; i++) {
+               const GLushort tex = *texel++;
+               *dstImage++ = R5G6B5toRed[tex];
+               *dstImage++ = R5G6B5toGreen[tex];
+               *dstImage++ = R5G6B5toBlue[tex];
+            }
+         }
+         else {
+            /* rescale */
+            const GLushort *src16 = (const GLushort *) srcImage;
+            GLint row, col;
+            for (row = 0; row < dstHeight; row++) {
+               GLint srcRow = row * hScale;
+               for (col = 0; col < dstWidth; col++) {
+                  GLint srcCol = col * wScale;
+                  const GLushort tex = src16[srcRow * srcWidth + srcCol];
+                  *dstImage++ = R5G6B5toRed[tex];
+                  *dstImage++ = R5G6B5toGreen[tex];
+                  *dstImage++ = R5G6B5toBlue[tex];
+               }
+            }
+         }
+         break;
+      case MESA_A4_R4_G4_B4:
+         ASSERT(dstFormat == GL_RGBA);
+         if (wScale == 1 && hScale == 1) {
+            GLint i, n = dstWidth * dstHeight;
+            const GLushort *texel = (const GLushort *) srcImage;
+            for (i = 0; i < n; i++) {
+               const GLushort tex = *texel++;
+               *dstImage++ = A4R4G4B4toRed[tex];
+               *dstImage++ = A4R4G4B4toGreen[tex];
+               *dstImage++ = A4R4G4B4toBlue[tex];
+               *dstImage++ = A4R4G4B4toAlpha[tex];
+            }
+         }
+         else {
+            /* rescale */
+            const GLushort *src16 = (const GLushort *) srcImage;
+            GLint row, col;
+            for (row = 0; row < dstHeight; row++) {
+               GLint srcRow = row * hScale;
+               for (col = 0; col < dstWidth; col++) {
+                  GLint srcCol = col * wScale;
+                  const GLushort tex = src16[srcRow * srcWidth + srcCol];
+                  *dstImage++ = A4R4G4B4toRed[tex];
+                  *dstImage++ = A4R4G4B4toGreen[tex];
+                  *dstImage++ = A4R4G4B4toBlue[tex];
+                  *dstImage++ = A4R4G4B4toAlpha[tex];
+               }
+            }
+         }
+         break;
+      case MESA_A1_R5_G5_B5:
+         ASSERT(dstFormat == GL_RGBA);
+         if (wScale == 1 && hScale == 1) {
+            GLint i, n = dstWidth * dstHeight;
+            const GLushort *texel = (const GLushort *) srcImage;
+            for (i = 0; i < n; i++) {
+               const GLushort tex = *texel++;
+               *dstImage++ = A1R5G5B5toRed[tex];
+               *dstImage++ = A1R5G5B5toGreen[tex];
+               *dstImage++ = A1R5G5B5toBlue[tex];
+               *dstImage++ = A1R5G5B5toAlpha[tex];
+            }
+         }
+         else {
+            /* rescale */
+            const GLushort *src16 = (const GLushort *) srcImage;
+            GLint row, col;
+            for (row = 0; row < dstHeight; row++) {
+               GLint srcRow = row * hScale;
+               for (col = 0; col < dstWidth; col++) {
+                  GLint srcCol = col * wScale;
+                  const GLushort tex = src16[srcRow * srcWidth + srcCol];
+                  *dstImage++ = A1R5G5B5toRed[tex];
+                  *dstImage++ = A1R5G5B5toGreen[tex];
+                  *dstImage++ = A1R5G5B5toBlue[tex];
+                  *dstImage++ = A1R5G5B5toAlpha[tex];
+               }
+            }
+         }
+         break;
+      case MESA_A8_R8_G8_B8:
+         ASSERT(dstFormat == GL_RGBA);
+         if (wScale == 1 && hScale == 1) {
+            GLint i, n = dstWidth * dstHeight;
+            const GLushort *texel = (const GLushort *) srcImage;
+            for (i = 0; i < n; i++) {
+               const GLuint tex = *texel++;
+               *dstImage++ = (tex >> 16) & 0xff; /* R */
+               *dstImage++ = (tex >>  8) & 0xff; /* G */
+               *dstImage++ = (tex      ) & 0xff; /* B */
+               *dstImage++ = (tex >> 24) & 0xff; /* A */
+            }
+         }
+         else {
+            /* rescale */
+            const GLushort *src16 = (const GLushort *) srcImage;
+            GLint row, col;
+            for (row = 0; row < dstHeight; row++) {
+               GLint srcRow = row * hScale;
+               for (col = 0; col < dstWidth; col++) {
+                  GLint srcCol = col * wScale;
+                  const GLuint tex = src16[srcRow * srcWidth + srcCol];
+                  *dstImage++ = (tex >> 16) & 0xff; /* R */
+                  *dstImage++ = (tex >>  8) & 0xff; /* G */
+                  *dstImage++ = (tex      ) & 0xff; /* B */
+                  *dstImage++ = (tex >> 24) & 0xff; /* A */
+               }
+            }
+         }
+         break;
+      default:
+         gl_problem(NULL, "bad srcFormat in _mesa_uncovert_teximage()");
+   }
 }
