@@ -327,7 +327,7 @@ typedef struct {
 
 
 
-#define F(i) 1 /* can be used to obtain an oblong metric: 0.30 / 0.59 / 0.11 */
+#define F(i) (GLfloat)1 /* can be used to obtain an oblong metric: 0.30 / 0.59 / 0.11 */
 #define SAFECDOT 1 /* for paranoids */
 
 #define MAKEIVEC(NV, NC, IV, B, V0, V1)  \
@@ -526,7 +526,7 @@ fxt1_choose (GLfloat vec[][MAX_COMP], GLint nv,
 
    for (j = 0; j < nv; j++) {
       for (i = 0; i < nc; i++) {
-         vec[j][i] = ((nv - 1 - j) * input[minCol][i] + j * input[maxCol][i] + (nv - 1) / 2) / (nv - 1);
+         vec[j][i] = ((nv - 1 - j) * input[minCol][i] + j * input[maxCol][i] + (nv - 1) / 2) / (GLfloat)(nv - 1);
       }
    }
 #endif
