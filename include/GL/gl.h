@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -37,8 +37,6 @@
  * included. 
  */
 #if !defined(__SCITECH_SNAP__)
-
-#include <stddef.h>     /* to get ptrdiff_t, used below */
 
 #if defined(__BEOS__)
 #include <stdlib.h>     /* to get some BeOS-isms */
