@@ -1,4 +1,4 @@
-/* $Id: t_vb_fog.c,v 1.3 2001/02/06 04:06:36 keithw Exp $ */
+/* $Id: t_vb_fog.c,v 1.4 2001/02/27 21:58:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -104,8 +104,10 @@ static void make_win_fog_coords( GLcontext *ctx, GLvector1f *out,
          d = 1.0F;
       else
          d = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
-      for ( i = 0 ; i < n ; i++, STRIDE_F(v, stride)) 
-	 data[i] = (end - ABSF(*v)) * d;
+      for ( i = 0 ; i < n ; i++, STRIDE_F(v, stride)) {
+         GLfloat f = (end - ABSF(*v)) * d;
+	 data[i] = CLAMP(f, 0.0F, 1.0F);
+      }
       break;
    case GL_EXP:
       d = ctx->Fog.Density;
