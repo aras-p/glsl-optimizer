@@ -6,7 +6,7 @@
 /I "./libnurbs/nurbtess"
 /D "WIN32"  /D "_DEBUG"  /D "_WINDOWS"  /D "_MBCS" 
 /D "_USRDLL" /D "GLU_EXPORTS" /D "BUILD_GL32" /D "LIBRARYBUILD" 
-/Fo"Debug/" /GZ 
+/Fo"Debug/" /Fd"Debug/" /GZ 
 libnurbs/interface/bezierEval.cc 
 libnurbs/interface/bezierPatch.cc 
 libnurbs/interface/bezierPatchMesh.cc 
