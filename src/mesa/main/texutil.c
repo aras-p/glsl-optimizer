@@ -1,4 +1,4 @@
-/* $Id: texutil.c,v 1.23 2001/04/20 19:21:41 brianp Exp $ */
+/* $Id: texutil.c,v 1.24 2001/05/02 21:02:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -861,20 +861,21 @@ _mesa_convert_texsubimage3d( GLint mesaFormat,
  * all aspect ratios).  This can be made a lot faster, but I don't
  * really care enough...
  */
-void _mesa_rescale_teximage2d( const struct gl_texture_format *texFormat,
+void _mesa_rescale_teximage2d( GLuint bytesPerPixel, GLuint dstRowStride,
 			       GLint srcWidth, GLint srcHeight,
 			       GLint dstWidth, GLint dstHeight,
 			       const GLvoid *srcImage, GLvoid *dstImage )
 {
    GLint row, col;
 
-#define INNER_LOOP( HOP, WOP )						\
+#define INNER_LOOP( TYPE, HOP, WOP )					\
    for ( row = 0 ; row < dstHeight ; row++ ) {				\
       GLint srcRow = row HOP hScale;					\
       for ( col = 0 ; col < dstWidth ; col++ ) {			\
 	 GLint srcCol = col WOP wScale;					\
-	 *dst++ = src[srcRow * srcWidth + srcCol];			\
+	 dst[col] = src[srcRow * srcWidth + srcCol];			\
       }									\
+      dst = (TYPE *) ((GLubyte *) dst + dstRowStride);			\
    }									\
 
 #define RESCALE_IMAGE( TYPE )						\
@@ -886,27 +887,27 @@ do {									\
       const GLint hScale = dstHeight / srcHeight;			\
       if ( srcWidth <= dstWidth ) {					\
 	 const GLint wScale = dstWidth / srcWidth;			\
-	 INNER_LOOP( /, / );						\
+	 INNER_LOOP( TYPE, /, / );					\
       }									\
       else {								\
 	 const GLint wScale = srcWidth / dstWidth;			\
-	 INNER_LOOP( /, * );						\
+	 INNER_LOOP( TYPE, /, * );					\
       }									\
    }									\
    else {								\
       const GLint hScale = srcHeight / dstHeight;			\
       if ( srcWidth <= dstWidth ) {					\
 	 const GLint wScale = dstWidth / srcWidth;			\
-	 INNER_LOOP( *, / );						\
+	 INNER_LOOP( TYPE, *, / );					\
       }									\
       else {								\
 	 const GLint wScale = srcWidth / dstWidth;			\
-	 INNER_LOOP( *, * );						\
+	 INNER_LOOP( TYPE, *, * );					\
       }									\
    }									\
 } while (0)
 
-   switch ( texFormat->TexelBytes ) {
+   switch ( bytesPerPixel ) {
    case 4:
       RESCALE_IMAGE( GLuint );
       break;
@@ -918,5 +919,7 @@ do {									\
    case 1:
       RESCALE_IMAGE( GLubyte );
       break;
+   default:
+      _mesa_problem(NULL,"unexpected bytes/pixel in _mesa_rescale_teximage2d");
    }
 }

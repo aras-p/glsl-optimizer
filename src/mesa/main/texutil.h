@@ -1,4 +1,4 @@
-/* $Id: texutil.h,v 1.9 2001/03/18 08:53:50 gareth Exp $ */
+/* $Id: texutil.h,v 1.10 2001/05/02 21:02:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -64,9 +64,10 @@ _mesa_convert_texsubimage3d( GLint mesaFormat,
  * all aspect ratios).  FIXME: Make this a subimage update as well...
  */
 extern void
-_mesa_rescale_teximage2d( const struct gl_texture_format *texFormat,
+_mesa_rescale_teximage2d( GLuint bytesPerPixel, GLuint dstRowStride,
 			  GLint srcWidth, GLint srcHeight,
 			  GLint dstWidth, GLint dstHeight,
 			  const GLvoid *srcImage, GLvoid *dstImage );
+
 
 #endif
