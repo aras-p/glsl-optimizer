@@ -4128,7 +4128,7 @@ save_PixelTexGenParameterfvSGIS(GLenum target, const GLfloat *value)
 /*
  * GL_NV_vertex_program
  */
-#if FEATURE_NV_vertex_program
+#if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
 static void GLAPIENTRY
 save_BindProgramNV(GLenum target, GLuint id)
 {
@@ -4144,7 +4144,9 @@ save_BindProgramNV(GLenum target, GLuint id)
       (*ctx->Exec->BindProgramNV)( target, id );
    }
 }
+#endif /* FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program */
 
+#if FEATURE_NV_vertex_program
 static void GLAPIENTRY
 save_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
 {
@@ -5874,10 +5876,12 @@ execute_list( GLcontext *ctx, GLuint list )
 	 case OPCODE_WINDOW_POS_ARB: /* GL_ARB_window_pos */
             (*ctx->Exec->WindowPos3fMESA)( n[1].f, n[2].f, n[3].f );
 	    break;
-#if FEATURE_NV_vertex_program
+#if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
          case OPCODE_BIND_PROGRAM_NV: /* GL_NV_vertex_program */
             (*ctx->Exec->BindProgramNV)( n[1].e, n[2].ui );
             break;
+#endif
+#if FEATURE_NV_vertex_program
          case OPCODE_EXECUTE_PROGRAM_NV:
             {
                GLfloat v[4];
@@ -7448,7 +7452,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->EnableVertexAttribArrayARB = _mesa_EnableVertexAttribArrayARB;
    table->DisableVertexAttribArrayARB = _mesa_DisableVertexAttribArrayARB;
    table->ProgramStringARB = save_ProgramStringARB;
-   table->BindProgramNV = _mesa_BindProgram;
+   table->BindProgramNV = save_BindProgramNV;
    table->DeleteProgramsNV = _mesa_DeletePrograms;
    table->GenProgramsNV = _mesa_GenPrograms;
    table->IsProgramNV = _mesa_IsProgram;
