@@ -644,9 +644,8 @@ fxMesaCreateContext(GLuint win,
                       fxMesa->snapVertices ? "" : "no ");
    }
 
-  sprintf(fxMesa->rendererString, "Mesa %s v0.61 %s%s%s",
+  sprintf(fxMesa->rendererString, "Mesa %s v0.61 %s%s",
           grGetString(GR_RENDERER),
-          getenv("MESA_3DFX_STRING") ? "3dfx " : "",
           grGetString(GR_HARDWARE),
           ((fxMesa->type < GR_SSTTYPE_Voodoo4) && (voodoo->numChips > 1)) ? " SLI" : "");
 

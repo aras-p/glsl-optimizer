@@ -1802,6 +1802,14 @@ fxSetupFog(GLcontext * ctx)
 	 case GL_LINEAR:
 	    guFogGenerateLinear(fxMesa->fogTable, ctx->Fog.Start,
 				ctx->Fog.End);
+	    if (fxMesa->fogTable[0] > 63) {
+	       /* [dBorca] Hack alert:
+	        * As per Glide3 Programming Guide:
+	        * The difference between consecutive fog values
+	        * must be less than 64.
+	        */
+	       fxMesa->fogTable[0] = 63;
+	    }
 	    break;
 	 case GL_EXP:
 	    guFogGenerateExp(fxMesa->fogTable, ctx->Fog.Density);

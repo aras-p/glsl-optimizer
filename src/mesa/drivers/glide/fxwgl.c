@@ -477,12 +477,117 @@ wglSetDeviceGammaRamp3DFX (HDC hdc, LPVOID arrays)
  return TRUE;
 }
 
+typedef void *HPBUFFERARB;
+
+/* WGL_ARB_pixel_format */
+GLAPI BOOL GLAPIENTRY
+wglGetPixelFormatAttribivARB (HDC hdc,
+			      int iPixelFormat,
+			      int iLayerPlane,
+			      UINT nAttributes,
+			      const int *piAttributes,
+			      int *piValues)
+{
+  SetLastError(0);
+  return(FALSE);
+}
+
+GLAPI BOOL GLAPIENTRY
+wglGetPixelFormatAttribfvARB (HDC hdc,
+			      int iPixelFormat,
+			      int iLayerPlane,
+			      UINT nAttributes,
+			      const int *piAttributes,
+			      FLOAT *pfValues)
+{
+  SetLastError(0);
+  return(FALSE);
+}
+
+GLAPI BOOL GLAPIENTRY
+wglChoosePixelFormatARB (HDC hdc,
+			 const int *piAttribIList,
+			 const FLOAT *pfAttribFList,
+			 UINT nMaxFormats,
+			 int *piFormats,
+			 UINT *nNumFormats)
+{
+  SetLastError(0);
+  return(FALSE);
+}
+
+/* WGL_ARB_render_texture */
+GLAPI BOOL GLAPIENTRY
+wglBindTexImageARB (HPBUFFERARB hPbuffer, int iBuffer)
+{
+  SetLastError(0);
+  return(FALSE);
+}
+
+GLAPI BOOL GLAPIENTRY
+wglReleaseTexImageARB (HPBUFFERARB hPbuffer, int iBuffer)
+{
+  SetLastError(0);
+  return(FALSE);
+}
+
+GLAPI BOOL GLAPIENTRY
+wglSetPbufferAttribARB (HPBUFFERARB hPbuffer,
+			const int *piAttribList)
+{
+  SetLastError(0);
+  return(FALSE);
+}
+
+/* WGL_ARB_pbuffer */
+GLAPI HPBUFFERARB GLAPIENTRY
+wglCreatePbufferARB (HDC hDC,
+		     int iPixelFormat,
+		     int iWidth,
+		     int iHeight,
+		     const int *piAttribList)
+{
+  SetLastError(0);
+  return NULL;
+}
+
+GLAPI HDC GLAPIENTRY
+wglGetPbufferDCARB (HPBUFFERARB hPbuffer)
+{
+  SetLastError(0);
+  return NULL;
+}
+
+GLAPI int GLAPIENTRY
+wglReleasePbufferDCARB (HPBUFFERARB hPbuffer, HDC hDC)
+{
+  SetLastError(0);
+  return -1;
+}
+
+GLAPI BOOL GLAPIENTRY
+wglDestroyPbufferARB (HPBUFFERARB hPbuffer)
+{
+  SetLastError(0);
+  return(FALSE);
+}
+
+GLAPI BOOL GLAPIENTRY
+wglQueryPbufferARB (HPBUFFERARB hPbuffer,
+		    int iAttribute,
+		    int *piValue)
+{
+  SetLastError(0);
+  return(FALSE);
+}
+
 GLAPI const char * GLAPIENTRY
 wglGetExtensionsStringEXT (void)
 {
  return "WGL_3DFX_gamma_control "
         "WGL_EXT_swap_control "
-        "WGL_EXT_extensions_string WGL_ARB_extensions_string";
+        "WGL_EXT_extensions_string WGL_ARB_extensions_string"
+        /*WGL_ARB_pixel_format WGL_ARB_render_texture WGL_ARB_pbuffer*/;
 }
 
 GLAPI const char * GLAPIENTRY
@@ -495,12 +600,26 @@ static struct {
        const char *name;
        PROC func;
 } wgl_ext[] = {
-       {"wglGetExtensionsStringARB", wglGetExtensionsStringARB},
-       {"wglGetExtensionsStringEXT", wglGetExtensionsStringEXT},
-       {"wglSwapIntervalEXT",        wglSwapIntervalEXT},
-       {"wglGetSwapIntervalEXT",     wglGetSwapIntervalEXT},
-       {"wglGetDeviceGammaRamp3DFX", wglGetDeviceGammaRamp3DFX},
-       {"wglSetDeviceGammaRamp3DFX", wglSetDeviceGammaRamp3DFX},
+       {"wglGetExtensionsStringARB",    wglGetExtensionsStringARB},
+       {"wglGetExtensionsStringEXT",    wglGetExtensionsStringEXT},
+       {"wglSwapIntervalEXT",           wglSwapIntervalEXT},
+       {"wglGetSwapIntervalEXT",        wglGetSwapIntervalEXT},
+       {"wglGetDeviceGammaRamp3DFX",    wglGetDeviceGammaRamp3DFX},
+       {"wglSetDeviceGammaRamp3DFX",    wglSetDeviceGammaRamp3DFX},
+       /* WGL_ARB_pixel_format */
+       {"wglGetPixelFormatAttribivARB", wglGetPixelFormatAttribivARB},
+       {"wglGetPixelFormatAttribfvARB", wglGetPixelFormatAttribfvARB},
+       {"wglChoosePixelFormatARB",      wglChoosePixelFormatARB},
+       /* WGL_ARB_render_texture */
+       {"wglBindTexImageARB",           wglBindTexImageARB},
+       {"wglReleaseTexImageARB",        wglReleaseTexImageARB},
+       {"wglSetPbufferAttribARB",       wglSetPbufferAttribARB},
+       /* WGL_ARB_pbuffer */
+       {"wglCreatePbufferARB",          wglCreatePbufferARB},
+       {"wglGetPbufferDCARB",           wglGetPbufferDCARB},
+       {"wglReleasePbufferDCARB",       wglReleasePbufferDCARB},
+       {"wglDestroyPbufferARB",         wglDestroyPbufferARB},
+       {"wglQueryPbufferARB",           wglQueryPbufferARB},
        {NULL, NULL}
 };
 
@@ -510,7 +629,7 @@ wglGetProcAddress(LPCSTR lpszProc)
    int i;
    PROC p = (PROC) _glapi_get_proc_address((const char *) lpszProc);
 
-   /* [dBorca] we can't do BlendColor... yet */
+   /* [dBorca] we can't do BlendColor */
    if (p && strcmp(lpszProc, "glBlendColor") && strcmp(lpszProc, "glBlendColorEXT"))
       return p;
 
