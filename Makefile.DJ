@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP samples makefile v1.4 for Mesa
+# DOS/DJGPP makefile v1.4 for Mesa
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
@@ -33,51 +33,76 @@
 #    Environment variables:
 #	CPU		optimize for the given processor.
 #			default = k6
-#	GLIDE		path to Glide3 SDK library files; used with FX.
-#			default = $(TOP)/lib/glide3
+#	GLU=[mesa|sgi]	specify GLU directory; can be `sgi' (requires GNU/C++)
+#			or `mesa'.
+#			default = mesa
+#	GLIDE		path to Glide3 SDK include files; used with FX.
+#			default = $(TOP)/include/glide3
 #	FX=1		build for 3dfx Glide3. Note that this disables
 #			compilation of most DMesa code and requires fxMesa.
 #			As a consequence, you'll need the DJGPP Glide3
 #			library to build any application.
 #			default = no
-#	DXE=1		use DXE modules (see README.DJ for details).
+#	MATROX=1	build for Matrox Millennium I (MGA2064W) cards.
+#			This is experimental and not intensively tested.
+#			default = no
+#	HAVE_X86=1	optimize for i386.
+#			default = no
+#	HAVE_MMX=1	allow MMX specializations, provided your assembler
+#			supports MMX instruction set. However, the true CPU
+#			capabilities are checked at run-time to avoid crashes.
+#			default = no
+#	HAVE_SSE=1	(see HAVE_MMX)
+#			default = no
+#	HAVE_3DNOW=1	(see HAVE_MMX)
 #			default = no
 #
 #    Targets:
-#	<file.exe>	build a specific file
+#	all:		build everything
+#	libgl:		build GL
+#	libglu:		build GLU
+#	libglut:	build GLUT
+#	clean:		remove object files
+#	realclean:	remove all generated files
 #
 
 
 
-.PHONY : all
-.SUFFIXES : .c .o .exe
+.PHONY : all libgl libglu libglut clean realclean
 
-TOP = ../..
 CPU ?= k6
-GLIDE ?= $(TOP)/lib/glide3
 
-CC = gcc
+GLU ?= mesa
+
 CFLAGS = -Wall -W -pedantic
 CFLAGS += -O2 -ffast-math -mcpu=$(CPU)
-CFLAGS += -I$(TOP)/include -I../util
 
-LD = gxx
-LDFLAGS = -s -L$(TOP)/lib
+export CFLAGS
 
-ifeq ($(DXE),1)
-LDLIBS += -liglut -liglu -ligl
+ifeq ($(wildcard $(addsuffix /rm.exe,$(subst ;, ,$(PATH)))),)
+UNLINK = del $(subst /,\,$(1))
 else
-LDLIBS = -lglut -lglu -lgl
-ifeq ($(FX),1)
-LDFLAGS += -L$(GLIDE)
-LDLIBS += -lglid3
-endif
+UNLINK = $(RM) $(1)
 endif
 
-.c.o:
-	$(CC) -o $@ $(CFLAGS) -c $<
-.o.exe:
-	$(LD) -o $@ $(LDFLAGS) $< $(LDLIBS)
+all: libgl libglu libglut
 
-all:
-	$(error Must specify <filename.exe> to build)
+libgl: lib
+	$(MAKE) -f Makefile.DJ -C src/mesa
+libglu: lib
+	$(MAKE) -f Makefile.DJ -C src/glu/$(GLU)
+libglut: lib
+	$(MAKE) -f Makefile.DJ -C src/glut/dos
+
+lib:
+	mkdir lib
+
+clean:
+	$(MAKE) -f Makefile.DJ clean -C src/mesa
+	$(MAKE) -f Makefile.DJ clean -C src/glu/mesa
+	$(MAKE) -f Makefile.DJ clean -C src/glu/sgi
+	$(MAKE) -f Makefile.DJ clean -C src/glut/dos
+
+realclean: clean
+	-$(call UNLINK,lib/*.a)
+	-$(call UNLINK,lib/*.dxe)

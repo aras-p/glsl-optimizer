@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.3 for Mesa
+ * DOS/DJGPP device driver v1.4 for Mesa
  *
  *  Copyright (c) 2003 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -37,15 +37,16 @@
 #include "extensions.h"
 #include "macros.h"
 #include "matrix.h"
-#include "mmath.h"
+#include "mtypes.h"
 #include "texformat.h"
+#include "teximage.h"
 #include "texstore.h"
+#include "imports.h"
 #include "array_cache/acache.h"
 #include "swrast/s_context.h"
 #include "swrast/s_depth.h"
 #include "swrast/s_lines.h"
 #include "swrast/s_triangle.h"
-#include "swrast/s_trispan.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
@@ -57,7 +58,7 @@
 #include "mga/mga.h"
 #endif /* MATROX */
 #else  /* FX */
-#include "../FX/fxdrv.h"
+#include "../glide/fxdrv.h"
 #endif /* FX */
 
 #include "GL/dmesa.h"
@@ -568,17 +569,15 @@ static void read_depth_pixels (GLcontext *ctx, GLuint n,
 /*
  * NON-depth-buffered flat triangle.
  */
-static void tri_rgb_flat (GLcontext *ctx,
-                          const SWvertex *v0,
-                          const SWvertex *v1,
-                          const SWvertex *v2)
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint _b_ = dmesa->Buffer->height - 1;
 #ifndef MATROX
- GLuint _w_ = dmesa->Buffer->width;
 
-#define SETUP_CODE GLuint rgb = vl_mixrgb(v2->color);
+#define NAME tri_rgb_flat
+
+#define SETUP_CODE \
+ const DMesaContext dmesa = (DMesaContext)ctx; \
+ GLuint _b_ = dmesa->Buffer->height - 1; \
+ GLuint _w_ = dmesa->Buffer->width; \
+ GLuint rgb = vl_mixrgb(v2->color);
 
 #define RENDER_SPAN(span) \
  GLuint i, offset = FLIP2(span.y)*_w_ + span.x;	\
@@ -587,7 +586,16 @@ static void tri_rgb_flat (GLcontext *ctx,
  }
 
 #include "swrast/s_tritemp.h"
+
 #else  /* MATROX */
+
+static void tri_rgb_flat (GLcontext *ctx,
+                          const SWvertex *v0,
+                          const SWvertex *v1,
+                          const SWvertex *v2)
+{
+ const DMesaContext dmesa = (DMesaContext)ctx;
+ GLuint _b_ = dmesa->Buffer->height - 1;
  MGAvertex m0, m1, m2;
  m0.win[0] = v0->win[0];
  m0.win[1] = FLIP2(v0->win[1]);
@@ -597,27 +605,26 @@ static void tri_rgb_flat (GLcontext *ctx,
  m2.win[1] = FLIP2(v2->win[1]);
  *(unsigned long *)m2.color = *(unsigned long *)v2->color;
  mga_draw_tri_rgb_flat((int)SWRAST_CONTEXT(ctx)->_backface_sign, &m0, &m1, &m2);
-#endif /* MATROX */
 }
+#endif /* MATROX */
 
 
 
 /*
  * Z-less flat triangle.
  */
-static void tri_rgb_flat_zless (GLcontext *ctx,
-                                const SWvertex *v0,
-                                const SWvertex *v1,
-                                const SWvertex *v2)
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint _b_ = dmesa->Buffer->height - 1;
 #ifndef MATROX
- GLuint _w_ = dmesa->Buffer->width;
+
+#define NAME tri_rgb_flat_zless
 
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
-#define SETUP_CODE GLuint rgb = vl_mixrgb(v2->color);
+
+#define SETUP_CODE \
+ const DMesaContext dmesa = (DMesaContext)ctx; \
+ GLuint _b_ = dmesa->Buffer->height - 1; \
+ GLuint _w_ = dmesa->Buffer->width; \
+ GLuint rgb = vl_mixrgb(v2->color);
 
 #define RENDER_SPAN(span) \
  GLuint i, offset = FLIP2(span.y)*_w_ + span.x;	\
@@ -631,7 +638,16 @@ static void tri_rgb_flat_zless (GLcontext *ctx,
  }
 
 #include "swrast/s_tritemp.h"
+
 #else  /* MATROX */
+
+static void tri_rgb_flat_zless (GLcontext *ctx,
+                                const SWvertex *v0,
+                                const SWvertex *v1,
+                                const SWvertex *v2)
+{
+ const DMesaContext dmesa = (DMesaContext)ctx;
+ GLuint _b_ = dmesa->Buffer->height - 1;
  MGAvertex m0, m1, m2;
  m0.win[0] = v0->win[0];
  m0.win[1] = FLIP2(v0->win[1]);
@@ -644,25 +660,25 @@ static void tri_rgb_flat_zless (GLcontext *ctx,
  m2.win[2] = v2->win[2];
  *(unsigned long *)m2.color = *(unsigned long *)v2->color;
  mga_draw_tri_rgb_flat_zless((int)SWRAST_CONTEXT(ctx)->_backface_sign, &m0, &m1, &m2);
-#endif /* MATROX */
 }
+#endif /* MATROX */
 
 
 
 /*
  * NON-depth-buffered iterated triangle.
  */
-static void tri_rgb_iter (GLcontext *ctx,
-                          const SWvertex *v0,
-                          const SWvertex *v1,
-                          const SWvertex *v2)
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint _b_ = dmesa->Buffer->height - 1;
 #ifndef MATROX
- GLuint _w_ = dmesa->Buffer->width;
+
+#define NAME tri_rgb_iter
 
 #define INTERP_RGB 1
+
+#define SETUP_CODE \
+ const DMesaContext dmesa = (DMesaContext)ctx; \
+ GLuint _b_ = dmesa->Buffer->height - 1; \
+ GLuint _w_ = dmesa->Buffer->width;
+
 #define RENDER_SPAN(span) \
  GLuint i, offset = FLIP2(span.y)*_w_ + span.x;				\
  for (i = 0; i < span.end; i++, offset++) {				\
@@ -673,7 +689,16 @@ static void tri_rgb_iter (GLcontext *ctx,
  }
 
 #include "swrast/s_tritemp.h"
+
 #else  /* MATROX */
+
+static void tri_rgb_iter (GLcontext *ctx,
+                          const SWvertex *v0,
+                          const SWvertex *v1,
+                          const SWvertex *v2)
+{
+ const DMesaContext dmesa = (DMesaContext)ctx;
+ GLuint _b_ = dmesa->Buffer->height - 1;
  MGAvertex m0, m1, m2;
  m0.win[0] = v0->win[0];
  m0.win[1] = FLIP2(v0->win[1]);
@@ -685,27 +710,26 @@ static void tri_rgb_iter (GLcontext *ctx,
  *(unsigned long *)m1.color = *(unsigned long *)v1->color;
  *(unsigned long *)m2.color = *(unsigned long *)v2->color;
  mga_draw_tri_rgb_iter((int)SWRAST_CONTEXT(ctx)->_backface_sign, &m0, &m1, &m2);
-#endif /* MATROX */
 }
+#endif /* MATROX */
 
 
 
 /*
  * Z-less iterated triangle.
  */
-static void tri_rgb_iter_zless (GLcontext *ctx,
-                                const SWvertex *v0,
-                                const SWvertex *v1,
-                                const SWvertex *v2)
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint _b_ = dmesa->Buffer->height - 1;
 #ifndef MATROX
- GLuint _w_ = dmesa->Buffer->width;
+
+#define NAME tri_rgb_iter_zless
 
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
+
+#define SETUP_CODE \
+ const DMesaContext dmesa = (DMesaContext)ctx; \
+ GLuint _b_ = dmesa->Buffer->height - 1; \
+ GLuint _w_ = dmesa->Buffer->width;
 
 #define RENDER_SPAN(span) \
  GLuint i, offset = FLIP2(span.y)*_w_ + span.x;				\
@@ -722,7 +746,16 @@ static void tri_rgb_iter_zless (GLcontext *ctx,
  }
 
 #include "swrast/s_tritemp.h"
+
 #else  /* MATROX */
+
+static void tri_rgb_iter_zless (GLcontext *ctx,
+                                const SWvertex *v0,
+                                const SWvertex *v1,
+                                const SWvertex *v2)
+{
+ const DMesaContext dmesa = (DMesaContext)ctx;
+ GLuint _b_ = dmesa->Buffer->height - 1;
  MGAvertex m0, m1, m2;
  m0.win[0] = v0->win[0];
  m0.win[1] = FLIP2(v0->win[1]);
@@ -737,8 +770,8 @@ static void tri_rgb_iter_zless (GLcontext *ctx,
  *(unsigned long *)m1.color = *(unsigned long *)v1->color;
  *(unsigned long *)m2.color = *(unsigned long *)v2->color;
  mga_draw_tri_rgb_iter_zless((int)SWRAST_CONTEXT(ctx)->_backface_sign, &m0, &m1, &m2);
-#endif /* MATROX */
 }
+#endif /* MATROX */
 
 
 
@@ -826,48 +859,58 @@ static __inline void matrox_line_clip_hack (GLcontext *ctx, int _b_, MGAvertex *
 /*
  * NON-depth-buffered flat line.
  */
+#ifndef MATROX
+
+#define NAME line_rgb_flat
+
+#define INTERP_XY 1
+#define CLIP_HACK 1
+
+#define SETUP_CODE \
+ const DMesaContext dmesa = (DMesaContext)ctx; \
+ GLuint _b_ = dmesa->Buffer->height - 1; \
+ GLuint _w_ = dmesa->Buffer->width; \
+ GLuint rgb = vl_mixrgb(vert1->color);
+
+#define PLOT(X,Y) vl_putpixel(FLIP2(Y) * _w_ + X, rgb);
+
+#include "swrast/s_linetemp.h"
+
+#else  /* MATROX */
+
 static void line_rgb_flat (GLcontext *ctx,
                            const SWvertex *vert0,
                            const SWvertex *vert1)
 {
  const DMesaContext dmesa = (DMesaContext)ctx;
  GLuint _b_ = dmesa->Buffer->height - 1;
-#ifndef MATROX
- GLuint _w_ = dmesa->Buffer->width;
- GLuint rgb = vl_mixrgb(vert1->color);
-
-#define INTERP_XY 1
-#define CLIP_HACK 1
-#define PLOT(X,Y) vl_putpixel(FLIP2(Y) * _w_ + X, rgb);
-
-#include "swrast/s_linetemp.h"
-#else
  MGAvertex m0, m1;
  matrox_line_clip_hack(ctx, _b_, &m0, vert0, &m1, vert1);
  *(unsigned long *)m1.color = *(unsigned long *)vert1->color;
  mga_draw_line_rgb_flat(&m0, &m1);
-#endif
 }
+#endif /* MATROX */
 
 
 
 /*
  * Z-less flat line.
  */
-static void line_rgb_flat_zless (GLcontext *ctx,
-                                 const SWvertex *vert0,
-                                 const SWvertex *vert1)
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint _b_ = dmesa->Buffer->height - 1;
 #ifndef MATROX
- GLuint _w_ = dmesa->Buffer->width;
- GLuint rgb = vl_mixrgb(vert1->color);
+
+#define NAME line_rgb_flat_zless
 
 #define INTERP_XY 1
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define CLIP_HACK 1
+
+#define SETUP_CODE \
+ const DMesaContext dmesa = (DMesaContext)ctx; \
+ GLuint _b_ = dmesa->Buffer->height - 1; \
+ GLuint _w_ = dmesa->Buffer->width; \
+ GLuint rgb = vl_mixrgb(vert1->color);
+
 #define PLOT(X,Y) \
  if (Z < *zPtr) {				\
     *zPtr = Z;					\
@@ -875,15 +918,23 @@ static void line_rgb_flat_zless (GLcontext *ctx,
  }
 
 #include "swrast/s_linetemp.h"
-#else
+
+#else  /* MATROX */
+
+static void line_rgb_flat_zless (GLcontext *ctx,
+                                 const SWvertex *vert0,
+                                 const SWvertex *vert1)
+{
+ const DMesaContext dmesa = (DMesaContext)ctx;
+ GLuint _b_ = dmesa->Buffer->height - 1;
  MGAvertex m0, m1;
  matrox_line_clip_hack(ctx, _b_, &m0, vert0, &m1, vert1);
  m0.win[2] = vert0->win[2];
  m1.win[2] = vert1->win[2];
  *(unsigned long *)m1.color = *(unsigned long *)vert1->color;
  mga_draw_line_rgb_flat_zless(&m0, &m1);
-#endif
 }
+#endif /* MATROX */
 
 
 

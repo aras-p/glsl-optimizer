@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.3 for Mesa  --  MGA2064W HW mapping
+ * DOS/DJGPP device driver v1.4 for Mesa  --  MGA2064W HW mapping
  *
  *  Copyright (c) 2003 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -248,7 +248,7 @@ int mga_hw_init (unsigned long *vram, int *interleave, char *name)
     dirty = FALSE;
  } else {
     if (__djgpp_nearptr_enable() == 0)
-       return NULL;
+       return 0;
 
     dirty = TRUE;
  }
@@ -298,7 +298,7 @@ int mga_hw_init (unsigned long *vram, int *interleave, char *name)
  }
 
  if (!linear_base || !io_mem_base[0])
-    return NULL;
+    return 0;
 
  /* deal with the memory mapping crap */
  io_mem_size[0] = 0x4000;
@@ -307,7 +307,7 @@ int mga_hw_init (unsigned long *vram, int *interleave, char *name)
      if (io_mem_base[i]) {
         if (_create_mmap(&mgaptr.io_mem_map[i], io_mem_base[i], io_mem_size[i])) {
 	   mga_hw_fini();
-	   return NULL;
+	   return 0;
 	}
      }
  }
@@ -316,7 +316,7 @@ int mga_hw_init (unsigned long *vram, int *interleave, char *name)
 
  if (_create_mmap(&mgaptr.linear_map, linear_base, linear_size)) {
     mga_hw_fini();
-    return NULL;
+    return 0;
  }
 
  /* fill in user data */

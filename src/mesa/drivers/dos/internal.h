@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.3 for Mesa
+ * DOS/DJGPP device driver v1.4 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -34,7 +34,7 @@
 #ifndef INTERNAL_H_included
 #define INTERNAL_H_included
 
-#include "../mmath.h"
+#include "../main/mtypes.h"
 
 /*
  * general purpose defines, etc.

@@ -1,4 +1,4 @@
-			Mesa 5.0.1 DOS/DJGPP Port v1.3
+			Mesa 5.0.1 DOS/DJGPP Port v1.4
 			~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -32,9 +32,9 @@ Available options:
      Environment variables:
 	CPU		optimize for the given processor.
 			default = k6
-	GLU=[src|si]	specify GLU directory; can be `src' (src-glu = Mesa)
-			or `si' (si-glu = SGI's GLU -- requires GNU/C++).
-			default = src
+	GLU=[mesa|sgi]	specify GLU directory; can be `sgi' (requires GNU/C++)
+			or `mesa'.
+			default = mesa
 	GLIDE		path to Glide3 SDK include files; used with FX.
 			default = $(TOP)/include/glide3
 	FX=1		build for 3dfx Glide3. Note that this disables
@@ -67,11 +67,11 @@ Available options:
 
 
 Tested on:
-	CPU:		K6-2 (CXT) @500(412.5) MHz
-	Mainboard:	ViA Apollo VP2/97 w/ 128 MB SDRAM
-	Video card:	PowerColor EvilKing3 (Voodoo3 3000 PCI) w/ 16 MB SDRAM
+	CPU:		AMD Duron @800 MHz
+	Mainboard:	EP-8KTA3 w/ 128 MB SDRAM
+	Video card:	Voodoo5 5500 AGP w/ 64 MB SDRAM
 	DJGPP:		djdev 2.04 + gcc v3.2.2 + make v3.79.1
-	OS:		DOS and Win9x
+	OS:		DOS and Win98SE
 
 
 
@@ -97,19 +97,17 @@ FAQ:
    Q) `make' complains about DXE3 or something, yet it builds the libraries.
    A) DXE3 refers to the DJGPP dynamic modules. You'll need either the latest
       DJGPP distro, or download the separate package from my web page. Read the
-      DXE3 documentation on how to use them. Hint: build your export object
-      file; then link it with your application. For example:
-	dxe3res -o dxe3tbl.c gl.dxe glu.dxe glut.dxe
-	gcc -o dxe3tbl.o -c dxe3tbl.c
-	gcc -o OUT.exe dxe3tbl.o IN.c -liglut -liglu -ligl -ldl
+      DXE3 documentation on how to use them.
+   A) When compiling for Glide (FX=1), make sure `glid3.dxe' can be found in
+      LD_LIBRARY_PATH (or top `lib' directory).
 
 2. Using Mesa for DJGPP
 
    Q) DMesa is so SLOOOW! The Win32 OpenGL performs so much better...
-   A) Is that a question? If you have a Voodoo3/Banshee card, you're lucky (the
-      Glide port is on my web page). If you have a Matrox Millennium I card,
-      you just MIGHT be lucky... If you haven't, sorry; everything is done in
-      software. Suggestions?
+   A) Is that a question? If you have a 3dfx Voodoo Banshee or higher card,
+      you're lucky (check http://sourceforge.net/projects/glide for the DJGPP
+      port). If you have a Matrox Millennium I card, you just MIGHT be lucky...
+      If you haven't, sorry; everything is done in software. Suggestions?
 
    Q) I tried to set refresh rate w/ DMesa, but without success.
    A) Refresh rate control works only for VESA 3.0. If you were compiling for
@@ -214,6 +212,9 @@ v1.3 (mar-2003)
 	* better fxMesa integration
 	* revamped GLUT
 	* switched to DXE3
+
+v1.4 (jun-2003)
+	* accomodated makefiles with the new sourcetree
 
 
 

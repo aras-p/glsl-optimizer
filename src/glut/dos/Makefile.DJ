@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP glut makefile v1.3 for Mesa
+# DOS/DJGPP glut makefile v1.4 for Mesa
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
@@ -45,13 +45,15 @@
 
 .PHONY: all clean
 
-TOP = ..
+TOP = ../../..
 GLIDE ?= $(TOP)/include/glide3
-MKGLUT ?= $(TOP)/src-glut
+MKGLUT ?= $(TOP)/src/glut/glx
 LIBDIR = $(TOP)/lib
 GLUT_LIB = libglut.a
 GLUT_DXE = glut.dxe
 GLUT_IMP = libiglut.a
+
+export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH);$(LIBDIR)
 
 CC = gcc
 CFLAGS += -I- -I$(TOP)/include -I. -I$(MKGLUT) -IPC_HW
@@ -123,7 +125,7 @@ $(LIBDIR)/$(GLUT_DXE) $(LIBDIR)/$(GLUT_IMP): $(OBJECTS)
 ifeq ($(HAVEDXE3),)
 	$(warning Missing DXE3 package... Skipping $(GLUT_DXE))
 else
-	-dxe3gen -o $(LIBDIR)/$(GLUT_DXE) -I $(LIBDIR)/$(GLUT_IMP) -D "MesaGLUT DJGPP" -E _glut -P gl.dxe -P glu.dxe -U $(OBJECTS)
+	-dxe3gen -o $(LIBDIR)/$(GLUT_DXE) -Y $(LIBDIR)/$(GLUT_IMP) -D "MesaGLUT DJGPP" -E _glut -P gl.dxe -P glu.dxe -U $(OBJECTS)
 endif
 
 clean:

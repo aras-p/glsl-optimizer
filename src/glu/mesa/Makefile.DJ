@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP glu makefile v1.3 for Mesa
+# DOS/DJGPP glu makefile v1.4 for Mesa
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
@@ -42,11 +42,13 @@
 
 .PHONY: all clean
 
-TOP = ..
+TOP = ../../..
 LIBDIR = $(TOP)/lib
 GLU_LIB = libglu.a
 GLU_DXE = glu.dxe
 GLU_IMP = libiglu.a
+
+export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH);$(LIBDIR)
 
 CC = gcc
 CFLAGS += -I$(TOP)/include
@@ -91,7 +93,7 @@ $(LIBDIR)/$(GLU_DXE) $(LIBDIR)/$(GLU_IMP): $(OBJECTS)
 ifeq ($(HAVEDXE3),)
 	$(warning Missing DXE3 package... Skipping $(GLU_DXE))
 else
-	-dxe3gen -o $(LIBDIR)/$(GLU_DXE) -I $(LIBDIR)/$(GLU_IMP) -D "MesaGLU DJGPP" -E _glu -P gl.dxe -U $(OBJECTS)
+	-dxe3gen -o $(LIBDIR)/$(GLU_DXE) -Y $(LIBDIR)/$(GLU_IMP) -D "MesaGLU DJGPP" -E _glu -P gl.dxe -U $(OBJECTS)
 endif
 
 clean:

@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.3 for Mesa
+ * DOS/DJGPP device driver v1.4 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -140,8 +140,8 @@ void _remove_selector (int *segment)
 int _can_mmx (void)
 {
 #ifdef USE_MMX_ASM
- extern int _mesa_identify_x86_cpu_features (void);
- return (_mesa_identify_x86_cpu_features() & 0x00800000);
+ extern int _mesa_x86_cpu_features;
+ return (_mesa_x86_cpu_features & 0x00800000);
 #else
  return 0;
 #endif
