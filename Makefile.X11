@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.91 2003/10/10 17:58:38 brianp Exp $
+# $Id: Makefile.X11,v 1.92 2003/10/16 19:25:24 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -355,14 +355,9 @@ LIB_FILES =	\
 	$(DIRECTORY)/docs/RELNOTES*					\
 	$(DIRECTORY)/docs/VERSIONS					\
 	$(DIRECTORY)/docs/*.spec					\
-	$(DIRECTORY)/bin/README						\
 	$(DIRECTORY)/bin/mklib*						\
 	$(DIRECTORY)/descrip.mms					\
-	$(DIRECTORY)/mms-config						\
-	$(DIRECTORY)/xlib.opt						\
 	$(DIRECTORY)/include/GL/internal/glcore.h			\
-	$(DIRECTORY)/include/GL/Makefile.in				\
-	$(DIRECTORY)/include/GL/Makefile.am				\
 	$(DIRECTORY)/include/GL/dmesa.h					\
 	$(DIRECTORY)/include/GL/amesa.h					\
 	$(DIRECTORY)/include/GL/fxmesa.h				\
@@ -385,135 +380,75 @@ LIB_FILES =	\
 	$(DIRECTORY)/include/GL/xmesa.h					\
 	$(DIRECTORY)/include/GL/xmesa_x.h				\
 	$(DIRECTORY)/include/GL/xmesa_xf86.h				\
-	$(DIRECTORY)/include/GLView.h					\
-	$(DIRECTORY)/include/Makefile.in				\
-	$(DIRECTORY)/include/Makefile.am				\
 	$(DIRECTORY)/src/mesa/Makefile*					\
-	$(DIRECTORY)/src/mesa/descrip.mms					\
-	$(DIRECTORY)/src/mesa/mesa.conf						\
-	$(DIRECTORY)/src/mesa/*.def						\
-	$(DIRECTORY)/src/mesa/depend						\
-	$(DIRECTORY)/src/mesa/*.[chS]						\
-	$(DIRECTORY)/src/mesa/array_cache/*.[ch]				\
-	$(DIRECTORY)/src/mesa/array_cache/Makefile*				\
-	$(DIRECTORY)/src/mesa/math/*.[ch]					\
-	$(DIRECTORY)/src/mesa/math/Makefile*					\
-	$(DIRECTORY)/src/mesa/swrast/*.[ch]					\
-	$(DIRECTORY)/src/mesa/swrast/Makefile*					\
-	$(DIRECTORY)/src/mesa/swrast_setup/*.[ch]				\
-	$(DIRECTORY)/src/mesa/swrast_setup/Makefile*				\
-	$(DIRECTORY)/src/mesa/tnl/*.[ch]					\
-	$(DIRECTORY)/src/mesa/tnl/Makefile*					\
-	$(DIRECTORY)/src/mesa/tnl_dd/*.[ch]					\
-	$(DIRECTORY)/src/mesa/tnl_dd/imm/*.[ch]					\
-	$(DIRECTORY)/src/mesa/tnl_dd/imm/NOTES.imm				\
-	$(DIRECTORY)/src/mesa/drivers/windml/*.[ch]				\
-	$(DIRECTORY)/src/mesa/drivers/windml/tornado/*.c			\
-	$(DIRECTORY)/src/mesa/drivers/windml/tornado/*.cdf			\
-	$(DIRECTORY)/src/mesa/drivers/windml/man3/*.3				\
-	$(DIRECTORY)/src/mesa/drivers/windml/man3/*.html			\
-	$(DIRECTORY)/src/mesa/drivers/dos/*.[chS]				\
-	$(DIRECTORY)/src/mesa/drivers/dos/mga/*.[ch]				\
-	$(DIRECTORY)/src/mesa/drivers/beos/*.cpp				\
-	$(DIRECTORY)/src/mesa/drivers/glide/Makefile.am				\
-	$(DIRECTORY)/src/mesa/drivers/glide/Makefile.in				\
-	$(DIRECTORY)/src/mesa/drivers/glide/*.[ch]				\
-	$(DIRECTORY)/src/mesa/drivers/glide/*.def				\
-	$(DIRECTORY)/src/mesa/drivers/glide/X86/Makefile.am			\
-	$(DIRECTORY)/src/mesa/drivers/glide/X86/Makefile.in			\
-	$(DIRECTORY)/src/mesa/drivers/glide/X86/*.[Shc]				\
-	$(DIRECTORY)/src/mesa/drivers/ggi/Makefile.am				\
-	$(DIRECTORY)/src/mesa/drivers/ggi/Makefile.in				\
-	$(DIRECTORY)/src/mesa/drivers/ggi/*.[ch]				\
-	$(DIRECTORY)/src/mesa/drivers/ggi/ggimesa.conf.in			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/default/*.c				\
-	$(DIRECTORY)/src/mesa/drivers/ggi/default/Makefile.am			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/default/Makefile.in			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/default/genkgi.conf.in		\
-	$(DIRECTORY)/src/mesa/drivers/ggi/display/*.c				\
-	$(DIRECTORY)/src/mesa/drivers/ggi/display/Makefile.am			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/display/Makefile.in			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/display/fbdev.conf.in			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/include/Makefile.am			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/include/Makefile.in			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/include/ggi/Makefile.am		\
-	$(DIRECTORY)/src/mesa/drivers/ggi/include/ggi/Makefile.in		\
-	$(DIRECTORY)/src/mesa/drivers/ggi/include/ggi/mesa/Makefile.am		\
-	$(DIRECTORY)/src/mesa/drivers/ggi/include/ggi/mesa/Makefile.in		\
-	$(DIRECTORY)/src/mesa/drivers/ggi/include/ggi/mesa/*.h			\
-	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.am			\
-	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.in			\
-	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.win			\
-	$(DIRECTORY)/src/mesa/drivers/osmesa/osmesa.def				\
-	$(DIRECTORY)/src/mesa/drivers/osmesa/*.[ch]				\
-	$(DIRECTORY)/src/mesa/sparc/*.[chS]					\
-	$(DIRECTORY)/src/mesa/sparc/Makefile.am					\
-	$(DIRECTORY)/src/mesa/sparc/Makefile.in					\
-	$(DIRECTORY)/src/mesa/drivers/svga/Makefile.am				\
-	$(DIRECTORY)/src/mesa/drivers/svga/Makefile.in				\
-	$(DIRECTORY)/src/mesa/drivers/svga/*.[ch]				\
-	$(DIRECTORY)/src/mesa/drivers/windows/*.[ch]				\
-	$(DIRECTORY)/src/mesa/drivers/windows/*.def				\
-	$(DIRECTORY)/src/mesa/drivers/x11/Makefile.am				\
-	$(DIRECTORY)/src/mesa/drivers/x11/Makefile.in				\
-	$(DIRECTORY)/src/mesa/drivers/x11/*.[ch]				\
-	$(DIRECTORY)/src/mesa/x86/*.[ch]					\
-	$(DIRECTORY)/src/mesa/x86/Makefile.am					\
-	$(DIRECTORY)/src/mesa/x86/Makefile.in					\
-	$(DIRECTORY)/src/mesa/x86/*.S						\
-	$(DIRECTORY)/src/glu/sgi/Makefile.am					\
-	$(DIRECTORY)/src/glu/sgi/Makefile.in					\
-	$(DIRECTORY)/src/glu/sgi/Makefile.X11					\
-	$(DIRECTORY)/src/glu/sgi/Makefile.win					\
-	$(DIRECTORY)/src/glu/sgi/Makefile.DJ					\
-	$(DIRECTORY)/src/glu/sgi/glu.def					\
-	$(DIRECTORY)/src/glu/sgi/dummy.cc					\
-	$(DIRECTORY)/src/glu/sgi/descrip.mms					\
-	$(DIRECTORY)/src/glu/sgi/mesaglu.opt					\
-	$(DIRECTORY)/src/glu/sgi/include/gluos.h				\
-	$(DIRECTORY)/src/glu/sgi/include/Makefile.am				\
-	$(DIRECTORY)/src/glu/sgi/include/Makefile.in				\
-	$(DIRECTORY)/src/glu/sgi/libnurbs/Makefile.am				\
-	$(DIRECTORY)/src/glu/sgi/libnurbs/Makefile.in				\
-	$(DIRECTORY)/src/glu/sgi/libnurbs/interface/*.h				\
-	$(DIRECTORY)/src/glu/sgi/libnurbs/interface/*.cc			\
-	$(DIRECTORY)/src/glu/sgi/libnurbs/interface/Makefile.am			\
-	$(DIRECTORY)/src/glu/sgi/libnurbs/interface/Makefile.in			\
-	$(DIRECTORY)/src/glu/sgi/libnurbs/internals/*.h				\
-	$(DIRECTORY)/src/glu/sgi/libnurbs/internals/*.cc			\
-	$(DIRECTORY)/src/glu/sgi/libnurbs/internals/Makefile.am			\
-	$(DIRECTORY)/src/glu/sgi/libnurbs/internals/Makefile.in			\
-	$(DIRECTORY)/src/glu/sgi/libnurbs/nurbtess/*.h				\
-	$(DIRECTORY)/src/glu/sgi/libnurbs/nurbtess/*.cc				\
-	$(DIRECTORY)/src/glu/sgi/libnurbs/nurbtess/Makefile.am			\
-	$(DIRECTORY)/src/glu/sgi/libnurbs/nurbtess/Makefile.in			\
-	$(DIRECTORY)/src/glu/sgi/libtess/README					\
-	$(DIRECTORY)/src/glu/sgi/libtess/alg-outline				\
-	$(DIRECTORY)/src/glu/sgi/libtess/*.[ch]					\
-	$(DIRECTORY)/src/glu/sgi/libtess/libtess_la_SOURCES			\
-	$(DIRECTORY)/src/glu/sgi/libtess/Makefile.am				\
-	$(DIRECTORY)/src/glu/sgi/libtess/Makefile.in				\
-	$(DIRECTORY)/src/glu/sgi/libutil/*.[ch]					\
-	$(DIRECTORY)/src/glu/sgi/libutil/libutil_la_SOURCES			\
-	$(DIRECTORY)/src/glu/sgi/libutil/Makefile.am				\
-	$(DIRECTORY)/src/glu/sgi/libutil/Makefile.in				\
-	$(DIRECTORY)/src/glu/mesa/README[12]					\
-	$(DIRECTORY)/src/glu/mesa/Makefile*					\
-	$(DIRECTORY)/src/glu/mesa/descrip.mms					\
-	$(DIRECTORY)/src/glu/mesa/mms_depend					\
-	$(DIRECTORY)/src/glu/mesa/*.def						\
-	$(DIRECTORY)/src/glu/mesa/depend					\
-	$(DIRECTORY)/src/glu/mesa/*.[ch]					\
-	$(DIRECTORY)/src/glw/*.[ch]						\
-	$(DIRECTORY)/src/glw/Makefile*						\
-	$(DIRECTORY)/src/glw/README						\
-	$(DIRECTORY)/progs/util/README						\
-	$(DIRECTORY)/progs/util/Makefile.am					\
-	$(DIRECTORY)/progs/util/Makefile.in					\
-	$(DIRECTORY)/progs/util/*.[ch]						\
-	$(DIRECTORY)/progs/util/sampleMakefile					\
-	$(DIRECTORY)/vms/analyze_map.com					\
-	$(DIRECTORY)/vms/xlib.opt						\
+	$(DIRECTORY)/src/mesa/descrip.mms				\
+	$(DIRECTORY)/src/mesa/depend					\
+	$(DIRECTORY)/src/mesa/main/*.[chS]				\
+	$(DIRECTORY)/src/mesa/glapi/*.[chS]				\
+	$(DIRECTORY)/src/mesa/array_cache/*.[ch]			\
+	$(DIRECTORY)/src/mesa/math/*.[ch]				\
+	$(DIRECTORY)/src/mesa/swrast/*.[ch]				\
+	$(DIRECTORY)/src/mesa/swrast_setup/*.[ch]			\
+	$(DIRECTORY)/src/mesa/tnl/*.[ch]				\
+	$(DIRECTORY)/src/mesa/tnl_dd/*.[ch]				\
+	$(DIRECTORY)/src/mesa/tnl_dd/imm/*.[ch]				\
+	$(DIRECTORY)/src/mesa/tnl_dd/imm/NOTES.imm			\
+	$(DIRECTORY)/src/mesa/drivers/common/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/dos/*.[chS]			\
+	$(DIRECTORY)/src/mesa/drivers/dos/mga/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/beos/*.cpp			\
+	$(DIRECTORY)/src/mesa/drivers/glide/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/glide/*.def			\
+	$(DIRECTORY)/src/mesa/drivers/ggi/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/ggi/ggimesa.conf.in		\
+	$(DIRECTORY)/src/mesa/drivers/ggi/default/*.c			\
+	$(DIRECTORY)/src/mesa/drivers/ggi/default/genkgi.conf.in	\
+	$(DIRECTORY)/src/mesa/drivers/ggi/display/*.c			\
+	$(DIRECTORY)/src/mesa/drivers/ggi/display/fbdev.conf.in		\
+	$(DIRECTORY)/src/mesa/drivers/ggi/include/ggi/mesa/*.h		\
+	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.win		\
+	$(DIRECTORY)/src/mesa/drivers/osmesa/osmesa.def			\
+	$(DIRECTORY)/src/mesa/drivers/osmesa/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/svga/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/windows/*/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/windows/*/*.def			\
+	$(DIRECTORY)/src/mesa/drivers/x11/*.[ch]			\
+	$(DIRECTORY)/src/mesa/sparc/*.[chS]				\
+	$(DIRECTORY)/src/mesa/x86/*.[ch]				\
+	$(DIRECTORY)/src/mesa/x86/*.S					\
+	$(DIRECTORY)/src/glu/sgi/Makefile.X11				\
+	$(DIRECTORY)/src/glu/sgi/Makefile.win				\
+	$(DIRECTORY)/src/glu/sgi/Makefile.DJ				\
+	$(DIRECTORY)/src/glu/sgi/glu.def				\
+	$(DIRECTORY)/src/glu/sgi/dummy.cc				\
+	$(DIRECTORY)/src/glu/sgi/descrip.mms				\
+	$(DIRECTORY)/src/glu/sgi/mesaglu.opt				\
+	$(DIRECTORY)/src/glu/sgi/include/gluos.h			\
+	$(DIRECTORY)/src/glu/sgi/libnurbs/interface/*.h			\
+	$(DIRECTORY)/src/glu/sgi/libnurbs/interface/*.cc		\
+	$(DIRECTORY)/src/glu/sgi/libnurbs/internals/*.h			\
+	$(DIRECTORY)/src/glu/sgi/libnurbs/internals/*.cc		\
+	$(DIRECTORY)/src/glu/sgi/libnurbs/nurbtess/*.h			\
+	$(DIRECTORY)/src/glu/sgi/libnurbs/nurbtess/*.cc			\
+	$(DIRECTORY)/src/glu/sgi/libtess/README				\
+	$(DIRECTORY)/src/glu/sgi/libtess/alg-outline			\
+	$(DIRECTORY)/src/glu/sgi/libtess/*.[ch]				\
+	$(DIRECTORY)/src/glu/sgi/libutil/*.[ch]				\
+	$(DIRECTORY)/src/glu/mesa/README[12]				\
+	$(DIRECTORY)/src/glu/mesa/Makefile*				\
+	$(DIRECTORY)/src/glu/mesa/descrip.mms				\
+	$(DIRECTORY)/src/glu/mesa/mms_depend				\
+	$(DIRECTORY)/src/glu/mesa/*.def					\
+	$(DIRECTORY)/src/glu/mesa/depend				\
+	$(DIRECTORY)/src/glu/mesa/*.[ch]				\
+	$(DIRECTORY)/src/glw/*.[ch]					\
+	$(DIRECTORY)/src/glw/Makefile*					\
+	$(DIRECTORY)/src/glw/README					\
+	$(DIRECTORY)/progs/util/README					\
+	$(DIRECTORY)/progs/util/*.[ch]					\
+	$(DIRECTORY)/progs/util/sampleMakefile				\
+	$(DIRECTORY)/vms/analyze_map.com				\
+	$(DIRECTORY)/vms/xlib.opt					\
 	$(DIRECTORY)/vms/xlib_share.opt
 
 
@@ -526,9 +461,9 @@ DEMO_FILES =	\
 	$(DIRECTORY)/src/glut/glx/descrip.mms		\
 	$(DIRECTORY)/src/glut/glx/mms_depend		\
 	$(DIRECTORY)/src/glut/glx/*.[ch]		\
-	$(DIRECTORY)/src/glut/glx.dos/*.[ch]		\
-	$(DIRECTORY)/src/glut/glx.dos/Makefile.DJ	\
-	$(DIRECTORY)/src/glut/glx.dos/PC_HW/*.[chS]	\
+	$(DIRECTORY)/src/glut/dos/*.[ch]		\
+	$(DIRECTORY)/src/glut/dos/Makefile.DJ		\
+	$(DIRECTORY)/src/glut/dos/PC_HW/*.[chS]		\
 	$(DIRECTORY)/progs/images/*			\
 	$(DIRECTORY)/progs/demos/Makefile*		\
 	$(DIRECTORY)/progs/demos/descrip.mms		\
