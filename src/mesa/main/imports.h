@@ -227,6 +227,7 @@ extern void _ext_mesa_free_pixelbuffer( void *pb );
     defined(__AMD64__) || \
     defined(ia64) || defined(__ia64__) || \
     defined(__hppa__) || defined(hpux) || \
+    defined(__mips) || defined(_MIPS_ARCH) || \
     (defined(__alpha__) && (defined(__IEEE_FLOAT) || !defined(VMS)))
 #define USE_IEEE
 #define IEEE_ONE 0x3f800000
