@@ -1,4 +1,4 @@
-/* $Id: ss_vb.c,v 1.15 2002/01/06 20:39:03 brianp Exp $ */
+/* $Id: ss_vb.c,v 1.16 2002/06/06 16:19:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -386,9 +386,9 @@ _swsetup_choose_rastersetup_func(GLcontext *ctx)
       if (ctx->Visual.rgbMode) {
          funcindex = COLOR;
 
-         if (ctx->Texture._ReallyEnabled & ~0xf)
+         if (ctx->Texture._ReallyEnabled & ~TEXTURE0_ANY)
             funcindex |= MULTITEX;
-         else if (ctx->Texture._ReallyEnabled & 0xf)
+         else if (ctx->Texture._ReallyEnabled & TEXTURE0_ANY)
             funcindex |= TEX0;
 
          if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
