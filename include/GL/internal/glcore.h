@@ -373,8 +373,13 @@ typedef struct __GLimportsRec {
     /* Drawing surface management */
     __GLdrawablePrivate *(*getDrawablePrivate)(__GLcontext *gc);
 
+#if 0
+   /* At some point, this field got removed from the XFree86 glcore.h file.
+    * we're removing it here to prevent interop problems. (Brian)
+    */
     /* Pointer to the window system context */
     void *wscx;
+#endif
 
     /* Operating system dependent data goes here */
     void *other;
