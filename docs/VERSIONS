@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.95 2002/08/17 00:23:19 brianp Exp $
+$Id: VERSIONS,v 1.96 2002/09/19 16:34:55 brianp Exp $
 
 
 Mesa Version History
@@ -997,6 +997,7 @@ Mesa Version History
 	- GL_NV_point_sprite extension
 	- GL_NV_texture_rectangle extension
 	- GL_EXT_multi_draw_arrays extension
+	- GL_EXT_stencil_two_side extension
 	- massive overhaul/simplification of software rasterizer module,
 	  many contributions from Klaus Niederkrueger
 	- faster software texturing in some cases (i.e. trilinear filtering)
@@ -1014,5 +1015,6 @@ Mesa Version History
 	- fixed divide by zero error in NURBS tessellator (Jon Perry)
 	- fixed GL_LINEAR fog bug by adding clamping
 	- fixed FP exceptions found using Alpha CPU
+	- 3dfx/glide driver render-to-window feature was broken
     Changes:
 	- New spec file and Python code to generate some GL dispatch files
