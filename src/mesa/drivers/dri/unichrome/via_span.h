@@ -26,5 +26,7 @@
 #define _VIA_SPAN_H
 
 extern void viaInitSpanFuncs(GLcontext *ctx);
+extern void viaSpanRenderStart( GLcontext *ctx );
+extern void viaSpanRenderFinish( GLcontext *ctx );
 
 #endif

@@ -163,7 +163,7 @@ static void via_emit_state(viaContextPtr vmesa)
       ADVANCE_RING();
    }
     
-   if (ctx->Line.StippleFlag) {
+   if (0 && ctx->Line.StippleFlag) {
       BEGIN_RING(2);
       OUT_RING( ((HC_SubA_HLP << 24) | ctx->Line.StipplePattern) );           
       OUT_RING( ((HC_SubA_HLPRF << 24) | ctx->Line.StippleFactor) );                  
@@ -1345,7 +1345,7 @@ static void viaChooseLineState(GLcontext *ctx)
         }
     }
 
-    if (ctx->Line.StippleFlag) {
+    if (0 && ctx->Line.StippleFlag) {
         vmesa->regEnable |= HC_HenLP_MASK;
         vmesa->regHLP = ctx->Line.StipplePattern;
         vmesa->regHLPRF = ctx->Line.StippleFactor;
@@ -1513,18 +1513,6 @@ void viaValidateState( GLcontext *ctx )
     struct gl_texture_unit *texUnit1 = &ctx->Texture.Unit[1];
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
 
-#if 0
-    if (!(vmesa->newState & (_NEW_COLOR |
-			     _NEW_TEXTURE |
-			     _NEW_DEPTH |
-			     _NEW_FOG |
-			     _NEW_LIGHT |
-			     _NEW_LINE |
-			     _NEW_POLYGON |
-			     _NEW_POLYGONSTIPPLE |
-			     _NEW_STENCIL)))
-        return;
-#endif
 
     if (texUnit0->_ReallyEnabled || texUnit1->_ReallyEnabled || ctx->Fog.Enabled) {
 	vmesa->regCmdB |= HC_HVPMSK_Cs;

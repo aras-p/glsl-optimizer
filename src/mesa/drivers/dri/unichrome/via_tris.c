@@ -411,7 +411,9 @@ via_fallback_tri(viaContextPtr vmesa,
     via_translate_vertex(ctx, v0, &v[0]);
     via_translate_vertex(ctx, v1, &v[1]);
     via_translate_vertex(ctx, v2, &v[2]);
+    viaSpanRenderStart( ctx );
     _swrast_Triangle(ctx, &v[0], &v[1], &v[2]);
+    viaSpanRenderFinish( ctx );
 }
 
 
@@ -424,7 +426,9 @@ via_fallback_line(viaContextPtr vmesa,
     SWvertex v[2];
     via_translate_vertex(ctx, v0, &v[0]);
     via_translate_vertex(ctx, v1, &v[1]);
+    viaSpanRenderStart( ctx );
     _swrast_Line(ctx, &v[0], &v[1]);
+    viaSpanRenderFinish( ctx );
 }
 
 
@@ -435,7 +439,9 @@ via_fallback_point(viaContextPtr vmesa,
     GLcontext *ctx = vmesa->glCtx;
     SWvertex v[1];
     via_translate_vertex(ctx, v0, &v[0]);
+    viaSpanRenderStart( ctx );
     _swrast_Point(ctx, &v[0]);
+    viaSpanRenderFinish( ctx );
 }
 
 /**********************************************************************/
@@ -540,10 +546,11 @@ static void viaFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
                               _DD_NEW_TRI_STIPPLE |             \
                               _NEW_POLYGONSTIPPLE)
 
+/* Via does support line stipple in hardware, and it is partially
+ * working in the older versions of this driver:
+ */
+#define LINE_FALLBACK (DD_LINE_STIPPLE)
 #define POINT_FALLBACK (0)
-/*#define LINE_FALLBACK (DD_LINE_STIPPLE)
-*/
-#define LINE_FALLBACK (0)
 #define TRI_FALLBACK (0)
 #define ANY_FALLBACK_FLAGS (POINT_FALLBACK|LINE_FALLBACK|TRI_FALLBACK)
 #define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET|DD_TRI_UNFILLED)

@@ -251,17 +251,16 @@ static void viaSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
 
 /* Move locking out to get reasonable span performance.
  */
-static void viaSpanRenderStart( GLcontext *ctx )
+void viaSpanRenderStart( GLcontext *ctx )
 {
    viaContextPtr vmesa = VIA_CONTEXT(ctx);     
    VIA_FINISH_PRIM(vmesa);
    LOCK_HARDWARE(vmesa);
    viaFlushPrimsLocked(vmesa);
    WAIT_IDLE(vmesa);
-    
 }
 
-static void viaSpanRenderFinish( GLcontext *ctx )
+void viaSpanRenderFinish( GLcontext *ctx )
 {
    viaContextPtr vmesa = VIA_CONTEXT(ctx);
    _swrast_flush( ctx );

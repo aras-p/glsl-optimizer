@@ -522,7 +522,6 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     vmesa->glBuffer = NULL;
 
     vmesa->texHeap = mmInit(0, viaScreen->textureSize);
-    vmesa->stippleInHw = 1;
     vmesa->renderIndex = ~0;
 
     make_empty_list(&vmesa->TexObjList);
