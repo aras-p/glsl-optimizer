@@ -1,4 +1,4 @@
-/* $Id: histogram.c,v 1.3 2000/12/10 19:23:19 brianp Exp $ */
+/* $Id: histogram.c,v 1.4 2000/12/13 23:13:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,7 +38,7 @@
 
 
 /*
- * XXX need to handle packed datatypes!
+ * XXX the packed pixel formats haven't been tested.
  */
 static void
 pack_histogram( GLcontext *ctx,
@@ -187,164 +187,356 @@ pack_histogram( GLcontext *ctx,
             }
          }
          break;
+      case GL_UNSIGNED_BYTE_3_3_2:
+         if (format == GL_RGB) {
+            GLubyte *dst = (GLubyte *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][RCOMP] & 0x7) << 5)
+                      | ((rgba[i][GCOMP] & 0x7) << 2)
+                      | ((rgba[i][BCOMP] & 0x3)     );
+            }
+         }
+         else {
+            GLubyte *dst = (GLubyte *) destination;
+            GLuint i;
+            ASSERT(format == GL_BGR);
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][BCOMP] & 0x7) << 5)
+                      | ((rgba[i][GCOMP] & 0x7) << 2)
+                      | ((rgba[i][RCOMP] & 0x3)     );
+            }
+         }
+         break;
+      case GL_UNSIGNED_BYTE_2_3_3_REV:
+         if (format == GL_RGB) {
+            GLubyte *dst = (GLubyte *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][RCOMP] & 0x3) << 6)
+                      | ((rgba[i][GCOMP] & 0x7) << 3)
+                      | ((rgba[i][BCOMP] & 0x7)     );
+            }
+         }
+         else {
+            GLubyte *dst = (GLubyte *) destination;
+            GLuint i;
+            ASSERT(format == GL_BGR);
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][BCOMP] & 0x3) << 6)
+                      | ((rgba[i][GCOMP] & 0x7) << 3)
+                      | ((rgba[i][RCOMP] & 0x7)     );
+            }
+         }
+         break;
+      case GL_UNSIGNED_SHORT_5_6_5:
+         if (format == GL_RGB) {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][RCOMP] & 0x1f) << 11)
+                      | ((rgba[i][GCOMP] & 0x3f) <<  5)
+                      | ((rgba[i][BCOMP] & 0x1f)      );
+            }
+         }
+         else {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            ASSERT(format == GL_BGR);
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][BCOMP] & 0x1f) << 11)
+                      | ((rgba[i][GCOMP] & 0x3f) <<  5)
+                      | ((rgba[i][RCOMP] & 0x1f)      );
+            }
+         }
+         break;
+      case GL_UNSIGNED_SHORT_5_6_5_REV:
+         if (format == GL_RGB) {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][BCOMP] & 0x1f) << 11)
+                      | ((rgba[i][GCOMP] & 0x3f) <<  5)
+                      | ((rgba[i][RCOMP] & 0x1f)      );
+            }
+         }
+         else {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            ASSERT(format == GL_BGR);
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][RCOMP] & 0x1f) << 11)
+                      | ((rgba[i][GCOMP] & 0x3f) <<  5)
+                      | ((rgba[i][BCOMP] & 0x1f)      );
+            }
+         }
+         break;
+      case GL_UNSIGNED_SHORT_4_4_4_4:
+         if (format == GL_RGBA) {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][RCOMP] & 0xf) << 12)
+                      | ((rgba[i][GCOMP] & 0xf) <<  8)
+                      | ((rgba[i][BCOMP] & 0xf) <<  4)
+                      | ((rgba[i][ACOMP] & 0xf)      );
+            }
+         }
+         else if (format == GL_BGRA) {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][BCOMP] & 0xf) << 12)
+                      | ((rgba[i][GCOMP] & 0xf) <<  8)
+                      | ((rgba[i][RCOMP] & 0xf) <<  4)
+                      | ((rgba[i][ACOMP] & 0xf)      );
+            }
+         }
+         else {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            ASSERT(format == GL_ABGR_EXT);
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][ACOMP] & 0xf) << 12)
+                      | ((rgba[i][BCOMP] & 0xf) <<  8)
+                      | ((rgba[i][GCOMP] & 0xf) <<  4)
+                      | ((rgba[i][RCOMP] & 0xf)      );
+            }
+         }
+         break;
+      case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+         if (format == GL_RGBA) {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][ACOMP] & 0xf) << 12)
+                      | ((rgba[i][BCOMP] & 0xf) <<  8)
+                      | ((rgba[i][GCOMP] & 0xf) <<  4)
+                      | ((rgba[i][RCOMP] & 0xf)      );
+            }
+         }
+         else if (format == GL_BGRA) {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][ACOMP] & 0xf) << 12)
+                      | ((rgba[i][RCOMP] & 0xf) <<  8)
+                      | ((rgba[i][GCOMP] & 0xf) <<  4)
+                      | ((rgba[i][BCOMP] & 0xf)      );
+            }
+         }
+         else {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            ASSERT(format == GL_ABGR_EXT);
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][RCOMP] & 0xf) << 12)
+                      | ((rgba[i][GCOMP] & 0xf) <<  8)
+                      | ((rgba[i][BCOMP] & 0xf) <<  4)
+                      | ((rgba[i][ACOMP] & 0xf)      );
+            }
+         }
+         break;
+      case GL_UNSIGNED_SHORT_5_5_5_1:
+         if (format == GL_RGBA) {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][RCOMP] & 0x1f) << 11)
+                      | ((rgba[i][GCOMP] & 0x1f) <<  6)
+                      | ((rgba[i][BCOMP] & 0x1f) <<  1)
+                      | ((rgba[i][ACOMP] & 0x1)       );
+            }
+         }
+         else if (format == GL_BGRA) {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][BCOMP] & 0x1f) << 11)
+                      | ((rgba[i][GCOMP] & 0x1f) <<  6)
+                      | ((rgba[i][RCOMP] & 0x1f) <<  1)
+                      | ((rgba[i][ACOMP] & 0x1)       );
+            }
+         }
+         else {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            ASSERT(format == GL_ABGR_EXT);
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][ACOMP] & 0x1f) << 11)
+                      | ((rgba[i][BCOMP] & 0x1f) <<  6)
+                      | ((rgba[i][GCOMP] & 0x1f) <<  1)
+                      | ((rgba[i][RCOMP] & 0x1)       );
+            }
+         }
+         break;
+      case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+         if (format == GL_RGBA) {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][ACOMP] & 0x1f) << 11)
+                      | ((rgba[i][BCOMP] & 0x1f) <<  6)
+                      | ((rgba[i][GCOMP] & 0x1f) <<  1)
+                      | ((rgba[i][RCOMP] & 0x1)       );
+            }
+         }
+         else if (format == GL_BGRA) {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][ACOMP] & 0x1f) << 11)
+                      | ((rgba[i][RCOMP] & 0x1f) <<  6)
+                      | ((rgba[i][GCOMP] & 0x1f) <<  1)
+                      | ((rgba[i][BCOMP] & 0x1)       );
+            }
+         }
+         else {
+            GLushort *dst = (GLushort *) destination;
+            GLuint i;
+            ASSERT(format == GL_ABGR_EXT);
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][RCOMP] & 0x1f) << 11)
+                      | ((rgba[i][GCOMP] & 0x1f) <<  6)
+                      | ((rgba[i][BCOMP] & 0x1f) <<  1)
+                      | ((rgba[i][ACOMP] & 0x1)       );
+            }
+         }
+         break;
+      case GL_UNSIGNED_INT_8_8_8_8:
+         if (format == GL_RGBA) {
+            GLuint *dst = (GLuint *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][RCOMP] & 0xff) << 24)
+                      | ((rgba[i][GCOMP] & 0xff) << 16)
+                      | ((rgba[i][BCOMP] & 0xff) <<  8)
+                      | ((rgba[i][ACOMP] & 0xff)      );
+            }
+         }
+         else if (format == GL_BGRA) {
+            GLuint *dst = (GLuint *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][BCOMP] & 0xff) << 24)
+                      | ((rgba[i][GCOMP] & 0xff) << 16)
+                      | ((rgba[i][RCOMP] & 0xff) <<  8)
+                      | ((rgba[i][ACOMP] & 0xff)      );
+            }
+         }
+         else {
+            GLuint *dst = (GLuint *) destination;
+            GLuint i;
+            ASSERT(format == GL_ABGR_EXT);
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][ACOMP] & 0xff) << 24)
+                      | ((rgba[i][BCOMP] & 0xff) << 16)
+                      | ((rgba[i][GCOMP] & 0xff) <<  8)
+                      | ((rgba[i][RCOMP] & 0xff)      );
+            }
+         }
+         break;
+      case GL_UNSIGNED_INT_8_8_8_8_REV:
+         if (format == GL_RGBA) {
+            GLuint *dst = (GLuint *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][ACOMP] & 0xff) << 24)
+                      | ((rgba[i][BCOMP] & 0xff) << 16)
+                      | ((rgba[i][GCOMP] & 0xff) <<  8)
+                      | ((rgba[i][RCOMP] & 0xff)      );
+            }
+         }
+         else if (format == GL_BGRA) {
+            GLuint *dst = (GLuint *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][ACOMP] & 0xff) << 24)
+                      | ((rgba[i][RCOMP] & 0xff) << 16)
+                      | ((rgba[i][GCOMP] & 0xff) <<  8)
+                      | ((rgba[i][BCOMP] & 0xff)      );
+            }
+         }
+         else {
+            GLuint *dst = (GLuint *) destination;
+            GLuint i;
+            ASSERT(format == GL_ABGR_EXT);
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][RCOMP] & 0xff) << 24)
+                      | ((rgba[i][GCOMP] & 0xff) << 16)
+                      | ((rgba[i][BCOMP] & 0xff) <<  8)
+                      | ((rgba[i][ACOMP] & 0xff)      );
+            }
+         }
+         break;
+      case GL_UNSIGNED_INT_10_10_10_2:
+         if (format == GL_RGBA) {
+            GLuint *dst = (GLuint *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][RCOMP] & 0x3ff) << 22)
+                      | ((rgba[i][GCOMP] & 0x3ff) << 12)
+                      | ((rgba[i][BCOMP] & 0x3ff) <<  2)
+                      | ((rgba[i][ACOMP] & 0x3)        );
+            }
+         }
+         else if (format == GL_BGRA) {
+            GLuint *dst = (GLuint *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][BCOMP] & 0x3ff) << 22)
+                      | ((rgba[i][GCOMP] & 0x3ff) << 12)
+                      | ((rgba[i][RCOMP] & 0x3ff) <<  2)
+                      | ((rgba[i][ACOMP] & 0x3)        );
+            }
+         }
+         else {
+            GLuint *dst = (GLuint *) destination;
+            GLuint i;
+            ASSERT(format == GL_ABGR_EXT);
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][ACOMP] & 0x3ff) << 22)
+                      | ((rgba[i][BCOMP] & 0x3ff) << 12)
+                      | ((rgba[i][GCOMP] & 0x3ff) <<  2)
+                      | ((rgba[i][RCOMP] & 0x3)        );
+            }
+         }
+         break;
+      case GL_UNSIGNED_INT_2_10_10_10_REV:
+         if (format == GL_RGBA) {
+            GLuint *dst = (GLuint *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][ACOMP] & 0x3ff) << 22)
+                      | ((rgba[i][BCOMP] & 0x3ff) << 12)
+                      | ((rgba[i][GCOMP] & 0x3ff) <<  2)
+                      | ((rgba[i][RCOMP] & 0x3)        );
+            }
+         }
+         else if (format == GL_BGRA) {
+            GLuint *dst = (GLuint *) destination;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][ACOMP] & 0x3ff) << 22)
+                      | ((rgba[i][RCOMP] & 0x3ff) << 12)
+                      | ((rgba[i][GCOMP] & 0x3ff) <<  2)
+                      | ((rgba[i][BCOMP] & 0x3)        );
+            }
+         }
+         else {
+            GLuint *dst = (GLuint *) destination;
+            GLuint i;
+            ASSERT(format == GL_ABGR_EXT);
+            for (i = 0; i < n; i++) {
+               dst[i] = ((rgba[i][RCOMP] & 0x3ff) << 22)
+                      | ((rgba[i][GCOMP] & 0x3ff) << 12)
+                      | ((rgba[i][BCOMP] & 0x3ff) <<  2)
+                      | ((rgba[i][ACOMP] & 0x3)        );
+            }
+         }
+         break;
       default:
          gl_problem(ctx, "Bad type in pack_histogram");
-   }
-
-#undef PACK_MACRO
-}
-
-
-
-/*
- * XXX need to handle packed datatypes!
- */
-static void
-pack_minmax( GLcontext *ctx, CONST GLfloat minmax[2][4],
-             GLenum format, GLenum type, GLvoid *destination,
-             const struct gl_pixelstore_attrib *packing )
-{
-   const GLint comps = _mesa_components_in_format(format);
-   GLuint luminance[2];
-
-   if (format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA) {
-      luminance[0] = minmax[0][RCOMP] + minmax[0][GCOMP] + minmax[0][BCOMP];
-      luminance[1] = minmax[1][RCOMP] + minmax[1][GCOMP] + minmax[1][BCOMP];
-   }
-
-#define PACK_MACRO(TYPE, CONVERSION)				\
-   {								\
-      GLuint i;							\
-      switch (format) {						\
-         case GL_RED:						\
-            for (i=0;i<2;i++)					\
-               dst[i] = CONVERSION (minmax[i][RCOMP]);		\
-            break;						\
-         case GL_GREEN:						\
-            for (i=0;i<2;i++)					\
-               dst[i] = CONVERSION (minmax[i][GCOMP]);		\
-            break;						\
-         case GL_BLUE:						\
-            for (i=0;i<2;i++)					\
-               dst[i] = CONVERSION (minmax[i][BCOMP]);		\
-            break;						\
-         case GL_ALPHA:						\
-            for (i=0;i<2;i++)					\
-               dst[i] = CONVERSION (minmax[i][ACOMP]);		\
-            break;						\
-         case GL_LUMINANCE:					\
-            for (i=0;i<2;i++)					\
-               dst[i] = CONVERSION (luminance[i]);		\
-            break;						\
-         case GL_LUMINANCE_ALPHA:				\
-            for (i=0;i<2;i++) {					\
-               dst[i*2+0] = CONVERSION (luminance[i]);		\
-               dst[i*2+1] = CONVERSION (minmax[i][ACOMP]);	\
-            }							\
-            break;						\
-         case GL_RGB:						\
-            for (i=0;i<2;i++) {					\
-               dst[i*3+0] = CONVERSION (minmax[i][RCOMP]);	\
-               dst[i*3+1] = CONVERSION (minmax[i][GCOMP]);	\
-               dst[i*3+2] = CONVERSION (minmax[i][BCOMP]);	\
-            }							\
-            break;						\
-         case GL_RGBA:						\
-            for (i=0;i<2;i++) {					\
-               dst[i*4+0] = CONVERSION (minmax[i][RCOMP]);	\
-               dst[i*4+1] = CONVERSION (minmax[i][GCOMP]);	\
-               dst[i*4+2] = CONVERSION (minmax[i][BCOMP]);	\
-               dst[i*4+3] = CONVERSION (minmax[i][ACOMP]);	\
-            }							\
-            break;						\
-         case GL_BGR:						\
-            for (i=0;i<2;i++) {					\
-               dst[i*3+0] = CONVERSION (minmax[i][BCOMP]);	\
-               dst[i*3+1] = CONVERSION (minmax[i][GCOMP]);	\
-               dst[i*3+2] = CONVERSION (minmax[i][RCOMP]);	\
-            }							\
-            break;						\
-         case GL_BGRA:						\
-            for (i=0;i<2;i++) {					\
-               dst[i*4+0] = CONVERSION (minmax[i][BCOMP]);	\
-               dst[i*4+1] = CONVERSION (minmax[i][GCOMP]);	\
-               dst[i*4+2] = CONVERSION (minmax[i][RCOMP]);	\
-               dst[i*4+3] = CONVERSION (minmax[i][ACOMP]);	\
-            }							\
-            break;						\
-         case GL_ABGR_EXT:					\
-            for (i=0;i<2;i++) {					\
-               dst[i*4+0] = CONVERSION (minmax[i][ACOMP]);	\
-               dst[i*4+1] = CONVERSION (minmax[i][BCOMP]);	\
-               dst[i*4+2] = CONVERSION (minmax[i][GCOMP]);	\
-               dst[i*4+3] = CONVERSION (minmax[i][RCOMP]);	\
-            }							\
-            break;						\
-         default:						\
-            gl_problem(ctx, "bad format in pack_minmax");	\
-      }								\
-   }
-
-   switch (type) {
-      case GL_UNSIGNED_BYTE:
-         {
-            GLubyte *dst = (GLubyte *) destination;
-            PACK_MACRO(GLubyte, FLOAT_TO_UBYTE);
-         }
-         break;
-      case GL_BYTE:
-         {
-            GLbyte *dst = (GLbyte *) destination;
-            PACK_MACRO(GLbyte, FLOAT_TO_BYTE);
-         }
-         break;
-      case GL_UNSIGNED_SHORT:
-         {
-            GLushort *dst = (GLushort *) destination;
-            PACK_MACRO(GLushort, FLOAT_TO_USHORT);
-            if (packing->SwapBytes) {
-               _mesa_swap2(dst, 2 * comps);
-            }
-         }
-         break;
-      case GL_SHORT:
-         {
-            GLshort *dst = (GLshort *) destination;
-            PACK_MACRO(GLshort, FLOAT_TO_SHORT);
-            if (packing->SwapBytes) {
-               _mesa_swap2((GLushort *) dst, 2 * comps);
-            }
-         }
-         break;
-      case GL_UNSIGNED_INT:
-         {
-            GLuint *dst = (GLuint *) destination;
-            PACK_MACRO(GLuint, FLOAT_TO_UINT);
-            if (packing->SwapBytes) {
-               _mesa_swap4(dst, 2 * comps);
-            }
-         }
-         break;
-      case GL_INT:
-         {
-            GLint *dst = (GLint *) destination;
-            PACK_MACRO(GLint, FLOAT_TO_INT);
-            if (packing->SwapBytes) {
-               _mesa_swap4((GLuint *) dst, 2 * comps);
-            }
-         }
-         break;
-      case GL_FLOAT:
-         {
-            GLfloat *dst = (GLfloat *) destination;
-            PACK_MACRO(GLfloat, (GLfloat));
-            if (packing->SwapBytes) {
-               _mesa_swap4((GLuint *) dst, 2 * comps);
-            }
-         }
-         break;
-      default:
-         gl_problem(ctx, "Bad type in pack_minmax");
    }
 
 #undef PACK_MACRO
@@ -438,8 +630,8 @@ _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvo
       minmax[1][GCOMP] = CLAMP(ctx->MinMax.Max[GCOMP], 0.0F, 1.0F);
       minmax[1][BCOMP] = CLAMP(ctx->MinMax.Max[BCOMP], 0.0F, 1.0F);
       minmax[1][ACOMP] = CLAMP(ctx->MinMax.Max[ACOMP], 0.0F, 1.0F);
-      pack_minmax(ctx, (CONST GLfloat (*)[4]) minmax,
-                  format, type, values, &ctx->Pack);
+      _mesa_pack_float_rgba_span(ctx, 2, (CONST GLfloat (*)[4]) minmax,
+                                 format, type, values, &ctx->Pack, 0);
    }
 
    if (reset) {
