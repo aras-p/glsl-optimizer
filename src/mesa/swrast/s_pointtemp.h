@@ -1,4 +1,4 @@
-/* $Id: s_pointtemp.h,v 1.8 2001/05/17 09:32:17 keithw Exp $ */
+/* $Id: s_pointtemp.h,v 1.9 2001/07/19 16:12:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -67,14 +67,14 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    const GLint z = (GLint) (vert->win[2]);
 
 #if FLAGS & RGBA
-   const GLint red   = vert->color[0];
-   const GLint green = vert->color[1];
-   const GLint blue  = vert->color[2];
-   GLint alpha = vert->color[3];
+   const GLchan red   = vert->color[0];
+   const GLchan green = vert->color[1];
+   const GLchan blue  = vert->color[2];
+   GLchan alpha = vert->color[3];
 #if FLAGS & SPECULAR
-   const GLint sRed   = vert->specular[0];
-   const GLint sGreen = vert->specular[1];
-   const GLint sBlue  = vert->specular[2];
+   const GLchan sRed   = vert->specular[0];
+   const GLchan sGreen = vert->specular[1];
+   const GLchan sBlue  = vert->specular[2];
 #endif
 #else
    GLint index = vert->index;
@@ -236,7 +236,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #endif /* SMOOTH */
 
 #if ((FLAGS & (ATTENUATE | RGBA)) == (ATTENUATE | RGBA))
-	       alpha = (GLint) (alpha * alphaAtten);
+	       alpha = (GLchan) (alpha * alphaAtten);
 #endif
 
 #if FLAGS & SPECULAR
