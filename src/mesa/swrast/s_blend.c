@@ -1,4 +1,4 @@
-/* $Id: s_blend.c,v 1.1 2000/10/31 18:00:04 keithw Exp $ */
+/* $Id: s_blend.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,15 +32,19 @@
 
 #include "s_alphabuf.h"
 #include "s_blend.h"
+#include "s_context.h"
 #include "s_pb.h"
 #include "s_span.h"
 
 
-#ifdef USE_MMX_ASM
+#if defined(USE_MMX_ASM)
+#include "X86/mmx.h"
+#include "X86/common_x86_asm.h"
 #define _BLENDAPI _ASMAPI
 #else
 #define _BLENDAPI
 #endif
+
 
 /*
  * Common transparency blending mode.
@@ -547,17 +551,13 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
 
 
 
-#if defined(USE_MMX_ASM)
-#include "X86/mmx.h"
-#include "X86/common_x86_asm.h"
-#endif
 
 
 /*
  * Analyze current blending parameters to pick fastest blending function.
  * Result: the ctx->Color.BlendFunc pointer is updated.
  */
-static void set_blend_function( GLcontext *ctx )
+void _swrast_choose_blend_func( GLcontext *ctx )
 {
    const GLenum eq = ctx->Color.BlendEquation;
    const GLenum srcRGB = ctx->Color.BlendSrcRGB;
@@ -565,40 +565,38 @@ static void set_blend_function( GLcontext *ctx )
    const GLenum srcA = ctx->Color.BlendSrcA;
    const GLenum dstA = ctx->Color.BlendDstA;
 
-#if defined(USE_MMX_ASM)
-   /* Hmm.  A table here would have 12^4 == way too many entries.
-    * Provide a hook for MMX instead.
-    */
-   if ( cpu_has_mmx ) {
-      gl_mmx_set_blend_function( ctx );
-   }
-   else
-#endif
    if (srcRGB != srcA || dstRGB != dstA) {
-      ctx->Color.BlendFunc = blend_general;
+      SWRAST_CONTEXT(ctx)->BlendFunc = blend_general;
    }
    else if (eq==GL_FUNC_ADD_EXT && srcRGB==GL_SRC_ALPHA
-       && dstRGB==GL_ONE_MINUS_SRC_ALPHA) {
-      ctx->Color.BlendFunc = blend_transparency;
+	    && dstRGB==GL_ONE_MINUS_SRC_ALPHA) 
+   {
+#if defined(USE_MMX_ASM)
+      if ( cpu_has_mmx ) {
+	 SWRAST_CONTEXT(ctx)->BlendFunc = gl_mmx_blend_transparency;
+      }
+      else
+#endif
+	 SWRAST_CONTEXT(ctx)->BlendFunc = blend_transparency;
    }
    else if (eq==GL_FUNC_ADD_EXT && srcRGB==GL_ONE && dstRGB==GL_ONE) {
-      ctx->Color.BlendFunc = blend_add;
+      SWRAST_CONTEXT(ctx)->BlendFunc = blend_add;
    }
    else if (((eq==GL_FUNC_ADD_EXT || eq==GL_FUNC_REVERSE_SUBTRACT_EXT)
-             && (srcRGB==GL_ZERO && dstRGB==GL_SRC_COLOR))
-            ||
-            ((eq==GL_FUNC_ADD_EXT || eq==GL_FUNC_SUBTRACT_EXT)
-             && (srcRGB==GL_DST_COLOR && dstRGB==GL_ZERO))) {
-      ctx->Color.BlendFunc = blend_modulate;
+	     && (srcRGB==GL_ZERO && dstRGB==GL_SRC_COLOR))
+	    ||
+	    ((eq==GL_FUNC_ADD_EXT || eq==GL_FUNC_SUBTRACT_EXT)
+	     && (srcRGB==GL_DST_COLOR && dstRGB==GL_ZERO))) {
+      SWRAST_CONTEXT(ctx)->BlendFunc = blend_modulate;
    }
    else if (eq==GL_MIN_EXT) {
-      ctx->Color.BlendFunc = blend_min;
+      SWRAST_CONTEXT(ctx)->BlendFunc = blend_min;
    }
    else if (eq==GL_MAX_EXT) {
-      ctx->Color.BlendFunc = blend_max;
+      SWRAST_CONTEXT(ctx)->BlendFunc = blend_max;
    }
    else {
-      ctx->Color.BlendFunc = blend_general;
+      SWRAST_CONTEXT(ctx)->BlendFunc = blend_general;
    }
 }
 
@@ -626,10 +624,8 @@ _mesa_blend_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
    /* Read span of current frame buffer pixels */
    gl_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
 
-   if (!ctx->Color.BlendFunc)
-      set_blend_function(ctx);
-
-   (*ctx->Color.BlendFunc)( ctx, n, mask, rgba, (const GLchan (*)[4])dest );
+   SWRAST_CONTEXT(ctx)->BlendFunc( ctx, n, mask, rgba, 
+				   (const GLchan (*)[4])dest );
 }
 
 
@@ -646,6 +642,7 @@ _mesa_blend_pixels( GLcontext *ctx,
                     GLuint n, const GLint x[], const GLint y[],
                     GLchan rgba[][4], const GLubyte mask[] )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLchan dest[PB_SIZE][4];
 
    /* Check if device driver can do the work */
@@ -656,12 +653,11 @@ _mesa_blend_pixels( GLcontext *ctx,
 
    /* Read pixels from current color buffer */
    (*ctx->Driver.ReadRGBAPixels)( ctx, n, x, y, dest, mask );
-   if (ctx->RasterMask & ALPHABUF_BIT) {
+   if (swrast->_RasterMask & ALPHABUF_BIT) {
       _mesa_read_alpha_pixels( ctx, n, x, y, dest, mask );
    }
 
-   if (!ctx->Color.BlendFunc)
-      set_blend_function(ctx);
-
-   (*ctx->Color.BlendFunc)( ctx, n, mask, rgba, (const GLchan (*)[4])dest );
+   swrast->BlendFunc( ctx, n, mask, rgba, (const GLchan (*)[4])dest );
 }
+
+

@@ -1,12 +1,82 @@
+/*
+ * Mesa 3-D graphics library
+ * Version:  3.5
+ * 
+ * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *    Keith Whitwell <keithw@valinux.com>
+ */
+
 #ifndef SWRAST_H
 #define SWRAST_H
 
 #include "types.h"
 
-/* These are the functions exported from swrast.  (more to come)
+/* The software rasterizer now uses this format for vertices.  Thus a
+ * 'RasterSetup' stage or other translation is required between the
+ * tnl module and the swrast rasterization functions.  This serves to
+ * isolate the swrast module from the internals of the tnl module, and
+ * improve its usefulness as a fallback mechanism for hardware
+ * drivers.
+ *
+ * Full software drivers:
+ *   - Register the rastersetup and triangle functions from 
+ *     utils/software_helper.
+ *   - On statechange, update the rasterization pointers in that module.
+ * 
+ * Rasterization hardware drivers:
+ *   - Keep native rastersetup.
+ *   - Implement native twoside,offset and unfilled triangle setup.
+ *   - Implement a translator from native vertices to swrast vertices.
+ *   - On partial fallback (mix of accelerated and unaccelerated
+ *   prims), call a pass-through function which translates native
+ *   vertices to SWvertices and calls the appropriate swrast function.
+ *   - On total fallback (vertex format insufficient for state or all
+ *     primitives unaccelerated), hook in swrast_setup instead. 
+ */
+typedef struct {
+   GLfloat win[4];
+   GLfloat eye[4];		/* for GL_EXT_point_param only */
+   GLfloat texcoord[MAX_TEXTURE_UNITS][4];
+   GLchan color[4];
+   GLchan specular[4];
+   GLfloat fog;
+   GLuint index;
+} SWvertex;
+
+
+
+
+/* These are the public-access functions exported from swrast.  
  */
 void
 _swrast_alloc_buffers( GLcontext *ctx );
+
+GLboolean
+_swrast_CreateContext( GLcontext *ctx );
+
+void
+_swrast_DestroyContext( GLcontext *ctx );
+
+
 
 
 void 
@@ -47,62 +117,35 @@ _swrast_Accum( GLcontext *ctx, GLenum op,
 	       GLfloat value, GLint xpos, GLint ypos, 
 	       GLint width, GLint height );
 
-void 
-_swrast_set_line_function( GLcontext *ctx );
+/* Get a pointer to the stipple counter.
+ */
+GLuint *
+_swrast_get_stipple_counter_ref( GLcontext *ctx );
 
-void 
-_swrast_set_point_function( GLcontext *ctx );
 
-void 
-_swrast_set_triangle_function( GLcontext *ctx );
+/* These will always render the correct point/line/triangle for the
+ * current state.
+ */
+void
+_swrast_Point( GLcontext *ctx, SWvertex *v );
 
-void 
-_swrast_set_quad_function( GLcontext *ctx );
+void
+_swrast_Line( GLcontext *ctx, SWvertex *v0, SWvertex *v1 );
+
+void
+_swrast_Triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1, SWvertex *v2 );
+
+void
+_swrast_Quad( GLcontext *ctx, SWvertex *v0, SWvertex *v1, SWvertex *v2, 
+	      SWvertex *v3);
 
 void 
 _swrast_flush( GLcontext *ctx );
 
-GLboolean
-_swrast_create_context( GLcontext *ctx );
 
-void
-_swrast_destroy_context( GLcontext *ctx );
-
-
-/* Replace:
+/* Tell the software rasterizer about core state changes.
  */
 void
-_swrast_set_texture_sampler( struct gl_texture_object *t );
-
-
-
-#define _SWRAST_NEW_TRIANGLE (_NEW_RENDERMODE|		\
-                              _NEW_POLYGON|		\
-                              _NEW_DEPTH|		\
-                              _NEW_STENCIL|		\
-                              _NEW_COLOR|		\
-                              _NEW_TEXTURE|		\
-                              _NEW_HINT|		\
-                              _SWRAST_NEW_RASTERMASK|	\
-                              _NEW_LIGHT|		\
-                              _NEW_FOG)
-
-#define _SWRAST_NEW_LINE (_NEW_RENDERMODE|	\
-                          _NEW_LINE|		\
-                          _NEW_TEXTURE|		\
-                          _NEW_LIGHT|		\
-                          _NEW_FOG|		\
-                          _NEW_DEPTH)
-
-#define _SWRAST_NEW_POINT (_NEW_RENDERMODE |	\
-			   _NEW_POINT |		\
-			   _NEW_TEXTURE |	\
-			   _NEW_LIGHT |		\
-			   _NEW_FOG)
-
-
-
-
-
+_swrast_InvalidateState( GLcontext *ctx, GLuint new_state );
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.1 2000/10/31 18:00:04 keithw Exp $ */
+/* $Id: s_span.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,6 +39,7 @@
 #include "s_alpha.h"
 #include "s_alphabuf.h"
 #include "s_blend.h"
+#include "s_context.h"
 #include "s_depth.h"
 #include "s_fog.h"
 #include "s_logic.h"
@@ -182,18 +183,19 @@ void gl_write_index_span( GLcontext *ctx,
    GLubyte mask[MAX_WIDTH];
    GLuint indexBackup[MAX_WIDTH];
    GLuint *index;  /* points to indexIn or indexBackup */
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    /* init mask to 1's (all pixels are to be written) */
    MEMSET(mask, 1, n);
 
-   if ((ctx->RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
+   if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
       if (clip_span(ctx,n,x,y,mask)==0) {
 	 return;
       }
    }
 
-   if ((primitive==GL_BITMAP && (ctx->RasterMask & modBits))
-       || (ctx->RasterMask & MULTI_DRAW_BIT)) {
+   if ((primitive==GL_BITMAP && (swrast->_RasterMask & modBits))
+       || (swrast->_RasterMask & MULTI_DRAW_BIT)) {
       /* Make copy of color indexes */
       MEMCPY( indexBackup, indexIn, n * sizeof(GLuint) );
       index = indexBackup;
@@ -236,7 +238,7 @@ void gl_write_index_span( GLcontext *ctx,
    /* if we get here, something passed the depth test */
    ctx->OcclusionResult = GL_TRUE;
 
-   if (ctx->RasterMask & MULTI_DRAW_BIT) {
+   if (swrast->_RasterMask & MULTI_DRAW_BIT) {
       /* draw to zero or two or more buffers */
       multi_write_index_span( ctx, n, x, y, index, mask );
    }
@@ -267,13 +269,14 @@ void gl_write_monoindex_span( GLcontext *ctx,
 			      const GLfixed fog[],
 			      GLuint index, GLenum primitive )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLubyte mask[MAX_WIDTH];
    GLuint i;
 
    /* init mask to 1's (all pixels are to be written) */
    MEMSET(mask, 1, n);
 
-   if ((ctx->RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
+   if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
       if (clip_span( ctx, n, x, y, mask)==0) {
 	 return;
       }
@@ -330,7 +333,7 @@ void gl_write_monoindex_span( GLcontext *ctx,
 	 _mesa_logicop_ci_span( ctx, n, x, y, indexes, mask );
       }
 
-      if (ctx->RasterMask & MULTI_DRAW_BIT) {
+      if (swrast->_RasterMask & MULTI_DRAW_BIT) {
          /* draw to zero or two or more buffers */
          multi_write_index_span( ctx, n, x, y, indexes, mask );
       }
@@ -352,7 +355,7 @@ void gl_write_monoindex_span( GLcontext *ctx,
       /* same color index for all pixels */
       ASSERT(!ctx->Color.IndexLogicOpEnabled);
       ASSERT(ctx->Color.IndexMask == 0xffffffff);
-      if (ctx->RasterMask & MULTI_DRAW_BIT) {
+      if (swrast->_RasterMask & MULTI_DRAW_BIT) {
          /* draw to zero or two or more buffers */
          GLuint indexes[MAX_WIDTH];
          for (i=0;i<n;i++)
@@ -377,6 +380,7 @@ static void multi_write_rgba_span( GLcontext *ctx, GLuint n,
 {
    const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
    GLuint bufferBit;
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    if (ctx->Color.DrawBuffer == GL_NONE)
       return;
@@ -422,7 +426,7 @@ static void multi_write_rgba_span( GLcontext *ctx, GLuint n,
 
          (*ctx->Driver.WriteRGBASpan)( ctx, n, x, y, 
 				       (const GLchan (*)[4]) rgbaTmp, mask );
-         if (ctx->RasterMask & ALPHABUF_BIT) {
+         if (swrast->_RasterMask & ALPHABUF_BIT) {
             _mesa_write_alpha_span( ctx, n, x, y, 
                                     (const GLchan (*)[4])rgbaTmp, mask );
          }
@@ -448,19 +452,20 @@ void gl_write_rgba_span( GLcontext *ctx,
    GLchan rgbaBackup[MAX_WIDTH][4];
    GLchan (*rgba)[4];
    const GLubyte *Null = 0;
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    /* init mask to 1's (all pixels are to be written) */
    MEMSET(mask, 1, n);
 
-   if ((ctx->RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
+   if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
       if (clip_span( ctx,n,x,y,mask)==0) {
 	 return;
       }
       write_all = GL_FALSE;
    }
 
-   if ((primitive==GL_BITMAP && (ctx->RasterMask & modBits))
-       || (ctx->RasterMask & MULTI_DRAW_BIT)) {
+   if ((primitive==GL_BITMAP && (swrast->_RasterMask & modBits))
+       || (swrast->_RasterMask & MULTI_DRAW_BIT)) {
       /* must make a copy of the colors since they may be modified */
       MEMCPY( rgbaBackup, rgbaIn, 4 * n * sizeof(GLchan) );
       rgba = rgbaBackup;
@@ -520,7 +525,7 @@ void gl_write_rgba_span( GLcontext *ctx,
    /* if we get here, something passed the depth test */
    ctx->OcclusionResult = GL_TRUE;
 
-   if (ctx->RasterMask & MULTI_DRAW_BIT) {
+   if (swrast->_RasterMask & MULTI_DRAW_BIT) {
       multi_write_rgba_span( ctx, n, x, y, (const GLchan (*)[4]) rgba, mask );
    }
    else {
@@ -548,7 +553,7 @@ void gl_write_rgba_span( GLcontext *ctx,
 				    (const GLchan (*)[4]) rgba, 
 				    write_all ? Null : mask );
 
-      if (ctx->RasterMask & ALPHABUF_BIT) {
+      if (swrast->_RasterMask & ALPHABUF_BIT) {
          _mesa_write_alpha_span( ctx, n, x, y, 
                                  (const GLchan (*)[4]) rgba, 
                                  write_all ? Null : mask );
@@ -581,11 +586,12 @@ void gl_write_monocolor_span( GLcontext *ctx,
    GLboolean write_all = GL_TRUE;
    GLchan rgba[MAX_WIDTH][4];
    const GLubyte *Null = 0;
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    /* init mask to 1's (all pixels are to be written) */
    MEMSET(mask, 1, n);
 
-   if ((ctx->RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
+   if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
       if (clip_span( ctx,n,x,y,mask)==0) {
 	 return;
       }
@@ -644,7 +650,7 @@ void gl_write_monocolor_span( GLcontext *ctx,
    }
 
    if (ctx->Color.ColorLogicOpEnabled || colorMask != 0xffffffff ||
-       (ctx->RasterMask & (BLEND_BIT | FOG_BIT))) {
+       (swrast->_RasterMask & (BLEND_BIT | FOG_BIT))) {
       /* assign same color to each pixel */
       for (i=0;i<n;i++) {
 	 if (mask[i]) {
@@ -660,7 +666,7 @@ void gl_write_monocolor_span( GLcontext *ctx,
 	    _mesa_depth_fog_rgba_pixels( ctx, n, z, rgba );
       }
 
-      if (ctx->RasterMask & MULTI_DRAW_BIT) {
+      if (swrast->_RasterMask & MULTI_DRAW_BIT) {
          multi_write_rgba_span( ctx, n, x, y,
                                 (const GLchan (*)[4]) rgba, mask );
       }
@@ -685,7 +691,7 @@ void gl_write_monocolor_span( GLcontext *ctx,
          (*ctx->Driver.WriteRGBASpan)( ctx, n, x, y, 
 				       (const GLchan (*)[4]) rgba, 
 				       write_all ? Null : mask );
-         if (ctx->RasterMask & ALPHABUF_BIT) {
+         if (swrast->_RasterMask & ALPHABUF_BIT) {
             _mesa_write_alpha_span( ctx, n, x, y, 
                                     (const GLchan (*)[4]) rgba, 
                                     write_all ? Null : mask );
@@ -697,7 +703,7 @@ void gl_write_monocolor_span( GLcontext *ctx,
       ASSERT(!ctx->Color.BlendEnabled);
       ASSERT(!ctx->Color.ColorLogicOpEnabled);
 
-      if (ctx->RasterMask & MULTI_DRAW_BIT) {
+      if (swrast->_RasterMask & MULTI_DRAW_BIT) {
          for (i=0;i<n;i++) {
             if (mask[i]) {
                COPY_CHAN4(rgba[i], color);
@@ -708,7 +714,7 @@ void gl_write_monocolor_span( GLcontext *ctx,
       }
       else {
          (*ctx->Driver.WriteMonoRGBASpan)( ctx, n, x, y, mask );
-         if (ctx->RasterMask & ALPHABUF_BIT) {
+         if (swrast->_RasterMask & ALPHABUF_BIT) {
             _mesa_write_mono_alpha_span( ctx, n, x, y, (GLchan) color[ACOMP],
                                          write_all ? Null : mask );
          }
@@ -763,11 +769,12 @@ void gl_write_texture_span( GLcontext *ctx,
    GLchan rgbaBackup[MAX_WIDTH][4];
    GLchan (*rgba)[4];   /* points to either rgbaIn or rgbaBackup */
    const GLubyte *Null = 0;
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    /* init mask to 1's (all pixels are to be written) */
    MEMSET(mask, 1, n);
 
-   if ((ctx->RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
+   if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
       if (clip_span(ctx, n, x, y, mask)==0) {
 	 return;
       }
@@ -775,7 +782,7 @@ void gl_write_texture_span( GLcontext *ctx,
    }
 
 
-   if (primitive==GL_BITMAP || (ctx->RasterMask & MULTI_DRAW_BIT)) {
+   if (primitive==GL_BITMAP || (swrast->_RasterMask & MULTI_DRAW_BIT)) {
       /* must make a copy of the colors since they may be modified */
       MEMCPY(rgbaBackup, rgbaIn, 4 * n * sizeof(GLchan));
       rgba = rgbaBackup;
@@ -785,7 +792,7 @@ void gl_write_texture_span( GLcontext *ctx,
    }
 
    /* Texture */
-   ASSERT(ctx->Texture.ReallyEnabled);
+   ASSERT(ctx->Texture._ReallyEnabled);
    gl_texture_pixels( ctx, 0, n, s, t, u, lambda, rgba, rgba );
 
    /* Add base and specular colors */
@@ -844,7 +851,7 @@ void gl_write_texture_span( GLcontext *ctx,
    /* if we get here, something passed the depth test */
    ctx->OcclusionResult = GL_TRUE;
 
-   if (ctx->RasterMask & MULTI_DRAW_BIT) {
+   if (swrast->_RasterMask & MULTI_DRAW_BIT) {
       multi_write_rgba_span( ctx, n, x, y, (const GLchan (*)[4]) rgba, mask );
    }
    else {
@@ -864,7 +871,7 @@ void gl_write_texture_span( GLcontext *ctx,
 
       (*ctx->Driver.WriteRGBASpan)( ctx, n, x, y, (const GLchan (*)[4])rgba,
 				    write_all ? Null : mask );
-      if (ctx->RasterMask & ALPHABUF_BIT) {
+      if (swrast->_RasterMask & ALPHABUF_BIT) {
          _mesa_write_alpha_span( ctx, n, x, y, (const GLchan (*)[4]) rgba, 
                                  write_all ? Null : mask );
       }
@@ -896,11 +903,12 @@ gl_write_multitexture_span( GLcontext *ctx,
    GLuint i;
    const GLubyte *Null = 0;
    const GLuint texUnits = ctx->Const.MaxTextureUnits;
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    /* init mask to 1's (all pixels are to be written) */
    MEMSET(mask, 1, n);
 
-   if ((ctx->RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
+   if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
       if (clip_span(ctx, n, x, y, mask)==0) {
 	 return;
       }
@@ -908,7 +916,7 @@ gl_write_multitexture_span( GLcontext *ctx,
    }
 
 
-   if (primitive==GL_BITMAP || (ctx->RasterMask & MULTI_DRAW_BIT)
+   if (primitive==GL_BITMAP || (swrast->_RasterMask & MULTI_DRAW_BIT)
                             || texUnits > 1) {
       /* must make a copy of the colors since they may be modified */
       MEMCPY(rgbaBackup, rgbaIn, 4 * n * sizeof(GLchan));
@@ -919,7 +927,7 @@ gl_write_multitexture_span( GLcontext *ctx,
    }
 
    /* Texture */
-   ASSERT(ctx->Texture.ReallyEnabled);
+   ASSERT(ctx->Texture._ReallyEnabled);
    for (i = 0; i < texUnits; i++)
       gl_texture_pixels( ctx, i, n, s[i], t[i], u[i], lambda[i], rgbaIn, rgba );
 
@@ -979,7 +987,7 @@ gl_write_multitexture_span( GLcontext *ctx,
    /* if we get here, something passed the depth test */
    ctx->OcclusionResult = GL_TRUE;
 
-   if (ctx->RasterMask & MULTI_DRAW_BIT) {
+   if (swrast->_RasterMask & MULTI_DRAW_BIT) {
       multi_write_rgba_span( ctx, n, x, y, (const GLchan (*)[4]) rgba, mask );
    }
    else {
@@ -1001,7 +1009,7 @@ gl_write_multitexture_span( GLcontext *ctx,
       }
 
       (*ctx->Driver.WriteRGBASpan)( ctx, n, x, y, (const GLchan (*)[4])rgba, write_all ? Null : mask );
-      if (ctx->RasterMask & ALPHABUF_BIT) {
+      if (swrast->_RasterMask & ALPHABUF_BIT) {
          _mesa_write_alpha_span( ctx, n, x, y, (const GLchan (*)[4])rgba,
                                  write_all ? Null : mask );
       }

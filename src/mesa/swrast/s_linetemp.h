@@ -1,4 +1,4 @@
-/* $Id: s_linetemp.h,v 1.1 2000/10/31 18:00:04 keithw Exp $ */
+/* $Id: s_linetemp.h,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -73,13 +73,12 @@
  */
 
 
-/*void line( GLcontext *ctx, GLuint vert0, GLuint vert1, GLuint pvert )*/
+/*void line( GLcontext *ctx, SWvertex *vert0, SWvertex *vert1 )*/
 {
-   const struct vertex_buffer *VB = ctx->VB;
-   GLint x0 = (GLint) VB->Win.data[vert0][0];
-   GLint x1 = (GLint) VB->Win.data[vert1][0];
-   GLint y0 = (GLint) VB->Win.data[vert0][1];
-   GLint y1 = (GLint) VB->Win.data[vert1][1];
+   GLint x0 = (GLint) vert0->win[0];
+   GLint x1 = (GLint) vert1->win[0];
+   GLint y0 = (GLint) vert0->win[1];
+   GLint y1 = (GLint) vert1->win[1];
    GLint dx, dy;
 #ifdef INTERP_XY
    GLint xstep, ystep;
@@ -90,46 +89,46 @@
    const GLint fixedToDepthShift = depthBits <= 16 ? FIXED_SHIFT : 0;
 #  define FixedToDepth(F)  ((F) >> fixedToDepthShift)
 #  ifdef DEPTH_TYPE
-     GLint zPtrXstep, zPtrYstep;
-     DEPTH_TYPE *zPtr;
+   GLint zPtrXstep, zPtrYstep;
+   DEPTH_TYPE *zPtr;
 #  endif
-   GLfixed fog0 = FloatToFixed(VB->FogCoordPtr->data[vert0]);
-   GLfixed dfog = FloatToFixed(VB->FogCoordPtr->data[vert1]) - fog0;   
+   GLfixed fog0 = FloatToFixed(vert0->fog);
+   GLfixed dfog = FloatToFixed(vert1->fog) - fog0;   
 #endif
 #ifdef INTERP_RGB
-   GLfixed r0 = IntToFixed(VB->ColorPtr->data[vert0][0]);
-   GLfixed dr = IntToFixed(VB->ColorPtr->data[vert1][0]) - r0;
-   GLfixed g0 = IntToFixed(VB->ColorPtr->data[vert0][1]);
-   GLfixed dg = IntToFixed(VB->ColorPtr->data[vert1][1]) - g0;
-   GLfixed b0 = IntToFixed(VB->ColorPtr->data[vert0][2]);
-   GLfixed db = IntToFixed(VB->ColorPtr->data[vert1][2]) - b0;
+   GLfixed r0 = IntToFixed(vert0->color[0]);
+   GLfixed dr = IntToFixed(vert1->color[0]) - r0;
+   GLfixed g0 = IntToFixed(vert0->color[1]);
+   GLfixed dg = IntToFixed(vert1->color[1]) - g0;
+   GLfixed b0 = IntToFixed(vert0->color[2]);
+   GLfixed db = IntToFixed(vert1->color[2]) - b0;
 #endif
 #ifdef INTERP_SPEC
-   GLfixed sr0 = VB->SecondaryColorPtr->data ? IntToFixed(VB->SecondaryColorPtr->data[vert0][0]) : 0;
-   GLfixed dsr = VB->SecondaryColorPtr->data ? IntToFixed(VB->SecondaryColorPtr->data[vert1][0]) - sr0 : 0;
-   GLfixed sg0 = VB->SecondaryColorPtr->data ? IntToFixed(VB->SecondaryColorPtr->data[vert0][1]) : 0;
-   GLfixed dsg = VB->SecondaryColorPtr->data ? IntToFixed(VB->SecondaryColorPtr->data[vert1][1]) - sg0 : 0;
-   GLfixed sb0 = VB->SecondaryColorPtr->data ? IntToFixed(VB->SecondaryColorPtr->data[vert0][2]) : 0;
-   GLfixed dsb = VB->SecondaryColorPtr->data ? IntToFixed(VB->SecondaryColorPtr->data[vert1][2]) - sb0 : 0;
+   GLfixed sr0 = IntToFixed(vert0->specular[0]);
+   GLfixed dsr = IntToFixed(vert1->specular[0]) - sr0;
+   GLfixed sg0 = IntToFixed(vert0->specular[1]);
+   GLfixed dsg = IntToFixed(vert1->specular[1]) - sg0;
+   GLfixed sb0 = IntToFixed(vert0->specular[2]);
+   GLfixed dsb = IntToFixed(vert1->specular[2]) - sb0;
 #endif
 #ifdef INTERP_ALPHA
-   GLfixed a0 = IntToFixed(VB->ColorPtr->data[vert0][3]);
-   GLfixed da = IntToFixed(VB->ColorPtr->data[vert1][3]) - a0;
+   GLfixed a0 = IntToFixed(vert0->color[3]);
+   GLfixed da = IntToFixed(vert1->color[3]) - a0;
 #endif
 #ifdef INTERP_INDEX
-   GLint i0 = VB->IndexPtr->data[vert0] << 8;
-   GLint di = (GLint) (VB->IndexPtr->data[vert1] << 8) - i0;
+   GLint i0 = vert0->index << 8;
+   GLint di = (GLint) (vert1->index << 8) - i0;
 #endif
 #ifdef INTERP_TEX
-   const GLfloat invw0 = VB->Win.data[vert0][3];
-   const GLfloat invw1 = VB->Win.data[vert1][3];
+   const GLfloat invw0 = vert0->win[3];
+   const GLfloat invw1 = vert1->win[3];
    GLfloat tex[4];
    GLfloat dtex[4];
    GLfloat fragTexcoord[4];
 #endif
 #ifdef INTERP_MULTITEX
-   const GLfloat invw0 = VB->Win.data[vert0][3];
-   const GLfloat invw1 = VB->Win.data[vert1][3];
+   const GLfloat invw0 = vert0->win[3];
+   const GLfloat invw1 = vert1->win[3];
    GLfloat tex[MAX_TEXTURE_UNITS][4];
    GLfloat dtex[MAX_TEXTURE_UNITS][4];
    GLfloat fragTexcoord[MAX_TEXTURE_UNITS][4];
@@ -137,6 +136,9 @@
 #ifdef PIXEL_ADDRESS
    PIXEL_TYPE *pixelPtr;
    GLint pixelXstep, pixelYstep;
+#endif
+#ifdef STIPPLE
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
 #endif
 #ifdef WIDE
    /* for wide lines, draw all X in [x+min, x+max] or Y in [y+min, y+max] */
@@ -147,66 +149,30 @@
 #endif
 #ifdef INTERP_TEX
    {
-      tex[0]  = invw0 * VB->TexCoordPtr[0]->data[vert0][0];
-      dtex[0] = invw1 * VB->TexCoordPtr[0]->data[vert1][0] - tex[0];
-      if (VB->TexCoordPtr[0]->size > 1) {
-         tex[1]  = invw0 * VB->TexCoordPtr[0]->data[vert0][1];
-         dtex[1] = invw1 * VB->TexCoordPtr[0]->data[vert1][1] - tex[1];
-      }
-      else {
-         tex[1]  = 0.0;
-         dtex[1] = 0.0;
-      }
-      if (VB->TexCoordPtr[0]->size > 2) {
-         tex[2]  = invw0 * VB->TexCoordPtr[0]->data[vert0][2];
-         dtex[2] = invw1 * VB->TexCoordPtr[0]->data[vert1][2] - tex[2];
-      }
-      else {
-         tex[2]  = 0.0;
-         dtex[2] = 0.0;
-      }
-      if (VB->TexCoordPtr[0]->size > 3) {
-         tex[3]  = invw0 * VB->TexCoordPtr[0]->data[vert0][3];
-         dtex[3] = invw1 * VB->TexCoordPtr[0]->data[vert1][3] - tex[3];
-      }
-      else {
-         tex[3]  = invw0;
-         dtex[3] = invw1 - invw0;
-      }
+      tex[0]  = invw0 * vert0->texcoord[0][0];
+      dtex[0] = invw1 * vert1->texcoord[0][0] - tex[0];
+      tex[1]  = invw0 * vert0->texcoord[0][1];
+      dtex[1] = invw1 * vert1->texcoord[0][1] - tex[1];
+      tex[2]  = invw0 * vert0->texcoord[0][2];
+      dtex[2] = invw1 * vert1->texcoord[0][2] - tex[2];
+      tex[3]  = invw0 * vert0->texcoord[0][3];
+      dtex[3] = invw1 * vert1->texcoord[0][3] - tex[3];
    }
 #endif
 #ifdef INTERP_MULTITEX
    {
       GLuint u;
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-         if (ctx->Texture.Unit[u].ReallyEnabled) {
-            tex[u][0]  = invw0 * VB->TexCoordPtr[u]->data[vert0][0];
-            dtex[u][0] = invw1 * VB->TexCoordPtr[u]->data[vert1][0] - tex[u][0];
-            if (VB->TexCoordPtr[u]->size > 1) {
-               tex[u][1]  = invw0 * VB->TexCoordPtr[u]->data[vert0][1];
-               dtex[u][1] = invw1 * VB->TexCoordPtr[u]->data[vert1][1] - tex[u][1];
-            }
-            else {
-               tex[u][1]  = 0.0;
-               dtex[u][1] = 0.0;
-            }
-            if (VB->TexCoordPtr[u]->size > 2) {
-               tex[u][2]  = invw0 * VB->TexCoordPtr[u]->data[vert0][2];
-               dtex[u][2] = invw1 * VB->TexCoordPtr[u]->data[vert1][2] - tex[u][2];
-            }
-            else {
-               tex[u][2]  = 0.0;
-               dtex[u][2] = 0.0;
-            }
-            if (VB->TexCoordPtr[u]->size > 3) {
-               tex[u][3]  = invw0 * VB->TexCoordPtr[u]->data[vert0][3];
-               dtex[u][3] = invw1 * VB->TexCoordPtr[u]->data[vert1][3] - tex[u][3];
-            }
-            else {
-               tex[u][3]  = invw0;
-               dtex[u][3] = invw1 - invw0;
-            }
-         }
+         if (ctx->Texture.Unit[u]._ReallyEnabled) {
+            tex[u][0]  = invw0 * vert0->texcoord[u][0];
+            dtex[u][0] = invw1 * vert1->texcoord[u][0] - tex[u][0];
+	    tex[u][1]  = invw0 * vert0->texcoord[u][1];
+	    dtex[u][1] = invw1 * vert1->texcoord[u][1] - tex[u][1];
+	    tex[u][2]  = invw0 * vert0->texcoord[u][2];
+	    dtex[u][2] = invw1 * vert1->texcoord[u][2] - tex[u][2];
+	    tex[u][3]  = invw0 * vert0->texcoord[u][3];
+	    dtex[u][3] = invw1 * vert1->texcoord[u][3] - tex[u][3];
+	 }
       }
    }
 #endif
@@ -255,12 +221,12 @@
      zPtr = (DEPTH_TYPE *) _mesa_zbuffer_address(ctx, x0, y0);
 #  endif
    if (depthBits <= 16) {
-      z0 = FloatToFixed(VB->Win.data[vert0][2] + ctx->LineZoffset);
-      z1 = FloatToFixed(VB->Win.data[vert1][2] + ctx->LineZoffset);
+      z0 = FloatToFixed(vert0->win[2]);
+      z1 = FloatToFixed(vert1->win[2]);
    }
    else {
-      z0 = (int) VB->Win.data[vert0][2] + ctx->LineZoffset;
-      z1 = (int) VB->Win.data[vert1][2] + ctx->LineZoffset;
+      z0 = (int) vert0->win[2];
+      z1 = (int) vert1->win[2];
    }
 #endif
 #ifdef PIXEL_ADDRESS
@@ -359,7 +325,7 @@
          const GLfloat invDx = 1.0F / (GLfloat) dx;
          GLuint u;
          for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-            if (ctx->Texture.Unit[u].ReallyEnabled) {
+            if (ctx->Texture.Unit[u]._ReallyEnabled) {
                dtex[u][0] *= invDx;
                dtex[u][1] *= invDx;
                dtex[u][2] *= invDx;
@@ -372,7 +338,7 @@
       for (i=0;i<dx;i++) {
 #ifdef STIPPLE
          GLushort m;
-         m = 1 << ((ctx->StippleCounter/ctx->Line.StippleFactor) & 0xf);
+         m = 1 << ((swrast->StippleCounter/ctx->Line.StippleFactor) & 0xf);
          if (ctx->Line.StipplePattern & m) {
 #endif
 #ifdef INTERP_Z
@@ -393,7 +359,7 @@
             {
                GLuint u;
                for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-                  if (ctx->Texture.Unit[u].ReallyEnabled) {
+                  if (ctx->Texture.Unit[u]._ReallyEnabled) {
                      const GLfloat invQ = 1.0F / tex[u][3];
                      fragTexcoord[u][0] = tex[u][0] * invQ;
                      fragTexcoord[u][1] = tex[u][1] * invQ;
@@ -420,7 +386,7 @@
 #endif /*WIDE*/
 #ifdef STIPPLE
         }
-	ctx->StippleCounter++;
+	swrast->StippleCounter++;
 #endif
 #ifdef INTERP_XY
          x0 += xstep;
@@ -458,7 +424,7 @@
          {
             GLuint u;
             for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-               if (ctx->Texture.Unit[u].ReallyEnabled) {
+               if (ctx->Texture.Unit[u]._ReallyEnabled) {
                   tex[u][0] += dtex[u][0];
                   tex[u][1] += dtex[u][1];
                   tex[u][2] += dtex[u][2];
@@ -528,7 +494,7 @@
          const GLfloat invDy = 1.0F / (GLfloat) dy;
          GLuint u;
          for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-            if (ctx->Texture.Unit[u].ReallyEnabled) {
+            if (ctx->Texture.Unit[u]._ReallyEnabled) {
                dtex[u][0] *= invDy;
                dtex[u][1] *= invDy;
                dtex[u][2] *= invDy;
@@ -541,7 +507,7 @@
       for (i=0;i<dy;i++) {
 #ifdef STIPPLE
          GLushort m;
-         m = 1 << ((ctx->StippleCounter/ctx->Line.StippleFactor) & 0xf);
+         m = 1 << ((swrast->StippleCounter/ctx->Line.StippleFactor) & 0xf);
          if (ctx->Line.StipplePattern & m) {
 #endif
 #ifdef INTERP_Z
@@ -562,7 +528,7 @@
             {
                GLuint u;
                for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-                  if (ctx->Texture.Unit[u].ReallyEnabled) {
+                  if (ctx->Texture.Unit[u]._ReallyEnabled) {
                      const GLfloat invQ = 1.0F / tex[u][3];
                      fragTexcoord[u][0] = tex[u][0] * invQ;
                      fragTexcoord[u][1] = tex[u][1] * invQ;
@@ -589,7 +555,7 @@
 #endif /*WIDE*/
 #ifdef STIPPLE
         }
-	ctx->StippleCounter++;
+	swrast->StippleCounter++;
 #endif
 #ifdef INTERP_XY
          y0 += ystep;
@@ -627,7 +593,7 @@
          {
             GLuint u;
             for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-               if (ctx->Texture.Unit[u].ReallyEnabled) {
+               if (ctx->Texture.Unit[u]._ReallyEnabled) {
                   tex[u][0] += dtex[u][0];
                   tex[u][1] += dtex[u][1];
                   tex[u][2] += dtex[u][2];

@@ -1,4 +1,4 @@
-/* $Id: s_zoom.c,v 1.1 2000/10/31 18:00:05 keithw Exp $ */
+/* $Id: s_zoom.c,v 1.2 2000/11/05 18:24:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,6 +27,7 @@
 #include "glheader.h"
 #include "macros.h"
 
+#include "s_context.h"
 #include "s_span.h"
 #include "s_stencil.h"
 #include "s_zoom.h"

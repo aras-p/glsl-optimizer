@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.1 2000/10/31 18:00:04 keithw Exp $ */
+/* $Id: s_aatritemp.h,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,11 +44,10 @@
 
 /*void triangle( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv )*/
 {
-   const struct vertex_buffer *VB = ctx->VB;
-   const GLfloat *p0 = VB->Win.data[v0];
-   const GLfloat *p1 = VB->Win.data[v1];
-   const GLfloat *p2 = VB->Win.data[v2];
-   GLint vMin, vMid, vMax;
+   const GLfloat *p0 = v0->win;
+   const GLfloat *p1 = v1->win;
+   const GLfloat *p2 = v2->win;
+   SWvertex *vMin, *vMid, *vMax;
    GLint iyMin, iyMax;
    GLfloat yMin, yMax;
    GLboolean ltor;
@@ -87,13 +86,13 @@
    GLfloat u[MAX_TEXTURE_UNITS][MAX_WIDTH];
    GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH];
 #endif
-   GLfloat bf = ctx->backface_sign;
+   GLfloat bf = ctx->_backface_sign;
 
    /* determine bottom to top order of vertices */
    {
-      GLfloat y0 = VB->Win.data[v0][1];
-      GLfloat y1 = VB->Win.data[v1][1];
-      GLfloat y2 = VB->Win.data[v2][1];
+      GLfloat y0 = v0->win[1];
+      GLfloat y1 = v1->win[1];
+      GLfloat y2 = v2->win[1];
       if (y0 <= y1) {
 	 if (y1 <= y2) {
 	    vMin = v0;   vMid = v1;   vMax = v2;   /* y0<=y1<=y2 */
@@ -118,12 +117,12 @@
       }
    }
 
-   majDx = VB->Win.data[vMax][0] - VB->Win.data[vMin][0];
-   majDy = VB->Win.data[vMax][1] - VB->Win.data[vMin][1];
+   majDx = vMax->win[0] - vMin->win[0];
+   majDy = vMax->win[1] - vMin->win[1];
 
    {
-      const GLfloat botDx = VB->Win.data[vMid][0] - VB->Win.data[vMin][0];
-      const GLfloat botDy = VB->Win.data[vMid][1] - VB->Win.data[vMin][1];
+      const GLfloat botDx = vMid->win[0] - vMin->win[0];
+      const GLfloat botDy = vMid->win[1] - vMin->win[1];
       const GLfloat area = majDx * botDy - botDx * majDy;
       ltor = (GLboolean) (area < 0.0F);
       /* Do backface culling */
@@ -139,64 +138,60 @@
 #ifdef DO_Z
    compute_plane(p0, p1, p2, p0[2], p1[2], p2[2], zPlane);
    compute_plane(p0, p1, p2, 
-		 VB->FogCoordPtr->data[v0], 
-		 VB->FogCoordPtr->data[v1], 
-		 VB->FogCoordPtr->data[v2], 
+		 v0->fog, 
+		 v1->fog, 
+		 v2->fog, 
 		 fogPlane);
 #endif
 #ifdef DO_RGBA
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
-      GLchan (*rgba)[4] = VB->ColorPtr->data;
-      compute_plane(p0, p1, p2, rgba[v0][0], rgba[v1][0], rgba[v2][0], rPlane);
-      compute_plane(p0, p1, p2, rgba[v0][1], rgba[v1][1], rgba[v2][1], gPlane);
-      compute_plane(p0, p1, p2, rgba[v0][2], rgba[v1][2], rgba[v2][2], bPlane);
-      compute_plane(p0, p1, p2, rgba[v0][3], rgba[v1][3], rgba[v2][3], aPlane);
+      compute_plane(p0, p1, p2, v0->color[0], v1->color[0], v2->color[0], rPlane);
+      compute_plane(p0, p1, p2, v0->color[1], v1->color[1], v2->color[1], gPlane);
+      compute_plane(p0, p1, p2, v0->color[2], v1->color[2], v2->color[2], bPlane);
+      compute_plane(p0, p1, p2, v0->color[3], v1->color[3], v2->color[3], aPlane);
    }
    else {
-      constant_plane(VB->ColorPtr->data[pv][RCOMP], rPlane);
-      constant_plane(VB->ColorPtr->data[pv][GCOMP], gPlane);
-      constant_plane(VB->ColorPtr->data[pv][BCOMP], bPlane);
-      constant_plane(VB->ColorPtr->data[pv][ACOMP], aPlane);
+      constant_plane(v0->color[RCOMP], rPlane);
+      constant_plane(v0->color[GCOMP], gPlane);
+      constant_plane(v0->color[BCOMP], bPlane);
+      constant_plane(v0->color[ACOMP], aPlane);
    }
 #endif
 #ifdef DO_INDEX
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
-      compute_plane(p0, p1, p2, VB->IndexPtr->data[v0],
-                    VB->IndexPtr->data[v1], VB->IndexPtr->data[v2], iPlane);
+      compute_plane(p0, p1, p2, v0->index,
+                    v1->index, v2->index, iPlane);
    }
    else {
-      constant_plane(VB->IndexPtr->data[pv], iPlane);
+      constant_plane(v0->index, iPlane);
    }
 #endif
 #ifdef DO_SPEC
    {
-      GLchan (*spec)[4] = VB->SecondaryColorPtr->data;
-      compute_plane(p0, p1, p2, spec[v0][0], spec[v1][0], spec[v2][0],srPlane);
-      compute_plane(p0, p1, p2, spec[v0][1], spec[v1][1], spec[v2][1],sgPlane);
-      compute_plane(p0, p1, p2, spec[v0][2], spec[v1][2], spec[v2][2],sbPlane);
+      compute_plane(p0, p1, p2, v0->specular[0], v1->specular[0], v2->specular[0],srPlane);
+      compute_plane(p0, p1, p2, v0->specular[1], v1->specular[1], v2->specular[1],sgPlane);
+      compute_plane(p0, p1, p2, v0->specular[2], v1->specular[2], v2->specular[2],sbPlane);
    }
 #endif
 #ifdef DO_TEX
    {
-      const struct gl_texture_object *obj = ctx->Texture.Unit[0].Current;
+      const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;
       const struct gl_texture_image *texImage = obj->Image[obj->BaseLevel];
-      const GLint tSize = 3;
-      const GLfloat invW0 = VB->Win.data[v0][3];
-      const GLfloat invW1 = VB->Win.data[v1][3];
-      const GLfloat invW2 = VB->Win.data[v2][3];
-      GLfloat (*texCoord)[4] = VB->TexCoordPtr[0]->data;
-      const GLfloat s0 = texCoord[v0][0] * invW0;
-      const GLfloat s1 = texCoord[v1][0] * invW1;
-      const GLfloat s2 = texCoord[v2][0] * invW2;
-      const GLfloat t0 = (tSize > 1) ? texCoord[v0][1] * invW0 : 0.0F;
-      const GLfloat t1 = (tSize > 1) ? texCoord[v1][1] * invW1 : 0.0F;
-      const GLfloat t2 = (tSize > 1) ? texCoord[v2][1] * invW2 : 0.0F;
-      const GLfloat r0 = (tSize > 2) ? texCoord[v0][2] * invW0 : 0.0F;
-      const GLfloat r1 = (tSize > 2) ? texCoord[v1][2] * invW1 : 0.0F;
-      const GLfloat r2 = (tSize > 2) ? texCoord[v2][2] * invW2 : 0.0F;
-      const GLfloat q0 = (tSize > 3) ? texCoord[v0][3] * invW0 : invW0;
-      const GLfloat q1 = (tSize > 3) ? texCoord[v1][3] * invW1 : invW1;
-      const GLfloat q2 = (tSize > 3) ? texCoord[v2][3] * invW2 : invW2;
+      const GLfloat invW0 = v0->win[3];
+      const GLfloat invW1 = v1->win[3];
+      const GLfloat invW2 = v2->win[3];
+      const GLfloat s0 = v0->texcoord[0][0] * invW0;
+      const GLfloat s1 = v1->texcoord[0][0] * invW1;
+      const GLfloat s2 = v2->texcoord[0][0] * invW2;
+      const GLfloat t0 = v0->texcoord[0][1] * invW0;
+      const GLfloat t1 = v1->texcoord[0][1] * invW1;
+      const GLfloat t2 = v2->texcoord[0][1] * invW2;
+      const GLfloat r0 = v0->texcoord[0][2] * invW0;
+      const GLfloat r1 = v1->texcoord[0][2] * invW1;
+      const GLfloat r2 = v2->texcoord[0][2] * invW2;
+      const GLfloat q0 = v0->texcoord[0][3] * invW0;
+      const GLfloat q1 = v1->texcoord[0][3] * invW1;
+      const GLfloat q2 = v2->texcoord[0][3] * invW2;
       compute_plane(p0, p1, p2, s0, s1, s2, sPlane);
       compute_plane(p0, p1, p2, t0, t1, t2, tPlane);
       compute_plane(p0, p1, p2, r0, r1, r2, uPlane);
@@ -208,26 +203,24 @@
    {
       GLuint u;
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-         if (ctx->Texture.Unit[u].ReallyEnabled) {
-            const struct gl_texture_object *obj = ctx->Texture.Unit[u].Current;
+         if (ctx->Texture.Unit[u]._ReallyEnabled) {
+            const struct gl_texture_object *obj = ctx->Texture.Unit[u]._Current;
             const struct gl_texture_image *texImage = obj->Image[obj->BaseLevel];
-            const GLint tSize = VB->TexCoordPtr[u]->size;
-            const GLfloat invW0 = VB->Win.data[v0][3];
-            const GLfloat invW1 = VB->Win.data[v1][3];
-            const GLfloat invW2 = VB->Win.data[v2][3];
-            GLfloat (*texCoord)[4] = VB->TexCoordPtr[u]->data;
-            const GLfloat s0 = texCoord[v0][0] * invW0;
-            const GLfloat s1 = texCoord[v1][0] * invW1;
-            const GLfloat s2 = texCoord[v2][0] * invW2;
-            const GLfloat t0 = (tSize > 1) ? texCoord[v0][1] * invW0 : 0.0F;
-            const GLfloat t1 = (tSize > 1) ? texCoord[v1][1] * invW1 : 0.0F;
-            const GLfloat t2 = (tSize > 1) ? texCoord[v2][1] * invW2 : 0.0F;
-            const GLfloat r0 = (tSize > 2) ? texCoord[v0][2] * invW0 : 0.0F;
-            const GLfloat r1 = (tSize > 2) ? texCoord[v1][2] * invW1 : 0.0F;
-            const GLfloat r2 = (tSize > 2) ? texCoord[v2][2] * invW2 : 0.0F;
-            const GLfloat q0 = (tSize > 3) ? texCoord[v0][3] * invW0 : invW0;
-            const GLfloat q1 = (tSize > 3) ? texCoord[v1][3] * invW1 : invW1;
-            const GLfloat q2 = (tSize > 3) ? texCoord[v2][3] * invW2 : invW2;
+            const GLfloat invW0 = v0->win[3];
+            const GLfloat invW1 = v1->win[3];
+            const GLfloat invW2 = v2->win[3];
+            const GLfloat s0 = v0->texcoord[u][0] * invW0;
+            const GLfloat s1 = v1->texcoord[u][0] * invW1;
+            const GLfloat s2 = v2->texcoord[u][0] * invW2;
+            const GLfloat t0 = v0->texcoord[u][1] * invW0;
+            const GLfloat t1 = v1->texcoord[u][1] * invW1;
+            const GLfloat t2 = v2->texcoord[u][1] * invW2;
+            const GLfloat r0 = v0->texcoord[u][2] * invW0;
+            const GLfloat r1 = v1->texcoord[u][2] * invW1;
+            const GLfloat r2 = v2->texcoord[u][2] * invW2;
+            const GLfloat q0 = v0->texcoord[u][3] * invW0;
+            const GLfloat q1 = v1->texcoord[u][3] * invW1;
+            const GLfloat q2 = v2->texcoord[u][3] * invW2;
             compute_plane(p0, p1, p2, s0, s1, s2, sPlane[u]);
             compute_plane(p0, p1, p2, t0, t1, t2, tPlane[u]);
             compute_plane(p0, p1, p2, r0, r1, r2, uPlane[u]);
@@ -239,19 +232,19 @@
    }
 #endif
 
-   yMin = VB->Win.data[vMin][1];
-   yMax = VB->Win.data[vMax][1];
+   yMin = vMin->win[1];
+   yMax = vMax->win[1];
    iyMin = (int) yMin;
    iyMax = (int) yMax + 1;
 
    if (ltor) {
       /* scan left to right */
-      const float *pMin = VB->Win.data[vMin];
-      const float *pMid = VB->Win.data[vMid];
-      const float *pMax = VB->Win.data[vMax];
+      const float *pMin = vMin->win;
+      const float *pMid = vMid->win;
+      const float *pMax = vMax->win;
       const float dxdy = majDx / majDy;
       const float xAdj = dxdy < 0.0F ? -dxdy : 0.0F;
-      float x = VB->Win.data[vMin][0] - (yMin - iyMin) * dxdy;
+      float x = vMin->win[0] - (yMin - iyMin) * dxdy;
       int iy;
       for (iy = iyMin; iy < iyMax; iy++, x += dxdy) {
          GLint ix, startX = (GLint) (x - xAdj);
@@ -304,7 +297,7 @@
             {
                GLuint unit;
                for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
-                  if (ctx->Texture.Unit[unit].ReallyEnabled) {
+                  if (ctx->Texture.Unit[unit]._ReallyEnabled) {
                      GLfloat invQ = solve_plane_recip(ix, iy, vPlane[unit]);
                      s[unit][count] = solve_plane(ix, iy, sPlane[unit]) * invQ;
                      t[unit][count] = solve_plane(ix, iy, tPlane[unit]) * invQ;
@@ -356,12 +349,12 @@
    }
    else {
       /* scan right to left */
-      const GLfloat *pMin = VB->Win.data[vMin];
-      const GLfloat *pMid = VB->Win.data[vMid];
-      const GLfloat *pMax = VB->Win.data[vMax];
+      const GLfloat *pMin = vMin->win;
+      const GLfloat *pMid = vMid->win;
+      const GLfloat *pMax = vMax->win;
       const GLfloat dxdy = majDx / majDy;
       const GLfloat xAdj = dxdy > 0 ? dxdy : 0.0F;
-      GLfloat x = VB->Win.data[vMin][0] - (yMin - iyMin) * dxdy;
+      GLfloat x = vMin->win[0] - (yMin - iyMin) * dxdy;
       GLint iy;
       for (iy = iyMin; iy < iyMax; iy++, x += dxdy) {
          GLint ix, left, startX = (GLint) (x + xAdj);
@@ -414,7 +407,7 @@
             {
                GLuint unit;
                for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
-                  if (ctx->Texture.Unit[unit].ReallyEnabled) {
+                  if (ctx->Texture.Unit[unit]._ReallyEnabled) {
                      GLfloat invQ = solve_plane_recip(ix, iy, vPlane[unit]);
                      s[unit][ix] = solve_plane(ix, iy, sPlane[unit]) * invQ;
                      t[unit][ix] = solve_plane(ix, iy, tPlane[unit]) * invQ;
@@ -436,7 +429,7 @@
          {
             GLuint unit;
             for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
-               if (ctx->Texture.Unit[unit].ReallyEnabled) {
+               if (ctx->Texture.Unit[unit]._ReallyEnabled) {
                   GLint j;
                   for (j = 0; j < n; j++) {
                      s[unit][j] = s[unit][j + left];

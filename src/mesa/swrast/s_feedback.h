@@ -1,10 +1,10 @@
-/* $Id: s_blend.h,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_feedback.h,v 1.1 2000/11/05 18:24:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  3.3
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,27 +25,23 @@
  */
 
 
-#ifndef S_BLEND_H
-#define S_BLEND_H
+#ifndef S_FEEDBACK_H
+#define S_FEEDBACK_H
 
 
 #include "types.h"
 #include "swrast.h"
 
 
+extern void gl_feedback_point( GLcontext *ctx, SWvertex *v );
+extern void gl_feedback_line( GLcontext *ctx, SWvertex *v1, SWvertex *v2 );
+extern void gl_feedback_triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1,
+				  SWvertex *v2 );
 
-extern void
-_mesa_blend_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                  GLchan rgba[][4], const GLubyte mask[] );
-
-
-extern void
-_mesa_blend_pixels( GLcontext *ctx,
-                    GLuint n, const GLint x[], const GLint y[],
-                    GLchan rgba[][4], const GLubyte mask[] );
-
-extern void
-_swrast_choose_blend_func( GLcontext *ctx );
-
+extern void gl_select_point( GLcontext *ctx, SWvertex *v );
+extern void gl_select_line( GLcontext *ctx, SWvertex *v1, SWvertex *v2 );
+extern void gl_select_triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1,
+				SWvertex *v2 );
 
 #endif
+

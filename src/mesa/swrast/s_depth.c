@@ -1,4 +1,4 @@
-/* $Id: s_depth.c,v 1.1 2000/10/31 18:00:04 keithw Exp $ */
+/* $Id: s_depth.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,6 +31,7 @@
 #include "mem.h"
 
 #include "s_depth.h"
+#include "s_context.h"
 #include "s_pb.h"
 
 

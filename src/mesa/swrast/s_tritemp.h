@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.1 2000/10/31 18:00:04 keithw Exp $ */
+/* $Id: s_tritemp.h,v 1.2 2000/11/05 18:24:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -73,10 +73,10 @@
  */
 
 
-/*void triangle( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv )*/
+/*void triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1, SWvertex *v2 )*/
 {
    typedef struct {
-        GLint v0, v1;   /* Y(v0) < Y(v1) */
+        SWvertex *v0, *v1;   /* Y(v0) < Y(v1) */
 	GLfloat dx;	/* X(v1) - X(v0) */
 	GLfloat dy;	/* Y(v1) - Y(v0) */
 	GLfixed fdxdy;	/* dx/dy in fixed-point */
@@ -93,17 +93,16 @@
    const GLfloat maxDepth = ctx->Visual.DepthMaxF;
 #define FixedToDepth(F)  ((F) >> fixedToDepthShift)
 #endif
-   const struct vertex_buffer *VB = ctx->VB;
    EdgeT eMaj, eTop, eBot;
    GLfloat oneOverArea;
-   int vMin, vMid, vMax;       /* vertex indexes:  Y(vMin)<=Y(vMid)<=Y(vMax) */
-   float bf = ctx->backface_sign;
+   SWvertex *vMin, *vMid, *vMax;  /* Y(vMin)<=Y(vMid)<=Y(vMax) */
+   float bf = ctx->_backface_sign;
 
    /* find the order of the 3 vertices along the Y axis */
    {
-      GLfloat y0 = VB->Win.data[v0][1];
-      GLfloat y1 = VB->Win.data[v1][1];
-      GLfloat y2 = VB->Win.data[v2][1];
+      GLfloat y0 = v0->win[1];
+      GLfloat y1 = v1->win[1];
+      GLfloat y2 = v2->win[1];
 
       if (y0<=y1) {
 	 if (y1<=y2) {
@@ -135,12 +134,12 @@
    eBot.v0 = vMin;   eBot.v1 = vMid;
 
    /* compute deltas for each edge:  vertex[v1] - vertex[v0] */
-   eMaj.dx = VB->Win.data[vMax][0] - VB->Win.data[vMin][0];
-   eMaj.dy = VB->Win.data[vMax][1] - VB->Win.data[vMin][1];
-   eTop.dx = VB->Win.data[vMax][0] - VB->Win.data[vMid][0];
-   eTop.dy = VB->Win.data[vMax][1] - VB->Win.data[vMid][1];
-   eBot.dx = VB->Win.data[vMid][0] - VB->Win.data[vMin][0];
-   eBot.dy = VB->Win.data[vMid][1] - VB->Win.data[vMin][1];
+   eMaj.dx = vMax->win[0] - vMin->win[0];
+   eMaj.dy = vMax->win[1] - vMin->win[1];
+   eTop.dx = vMax->win[0] - vMid->win[0];
+   eTop.dy = vMax->win[1] - vMid->win[1];
+   eBot.dx = vMid->win[0] - vMin->win[0];
+   eBot.dy = vMid->win[1] - vMin->win[1];
 
    /* compute oneOverArea */
    {
@@ -167,11 +166,11 @@
    /* Edge setup.  For a triangle strip these could be reused... */
    {
       /* fixed point Y coordinates */
-      GLfixed vMin_fx = FloatToFixed(VB->Win.data[vMin][0] + 0.5F);
-      GLfixed vMin_fy = FloatToFixed(VB->Win.data[vMin][1] - 0.5F);
-      GLfixed vMid_fx = FloatToFixed(VB->Win.data[vMid][0] + 0.5F);
-      GLfixed vMid_fy = FloatToFixed(VB->Win.data[vMid][1] - 0.5F);
-      GLfixed vMax_fy = FloatToFixed(VB->Win.data[vMax][1] - 0.5F);
+      GLfixed vMin_fx = FloatToFixed(vMin->win[0] + 0.5F);
+      GLfixed vMin_fy = FloatToFixed(vMin->win[1] - 0.5F);
+      GLfixed vMid_fx = FloatToFixed(vMid->win[0] + 0.5F);
+      GLfixed vMid_fy = FloatToFixed(vMid->win[1] - 0.5F);
+      GLfixed vMax_fy = FloatToFixed(vMax->win[1] - 0.5F);
 
       eMaj.fsy = FixedCeil(vMin_fy);
       eMaj.lines = FixedToInt(vMax_fy + FIXED_ONE - FIXED_EPSILON - eMaj.fsy);
@@ -293,8 +292,8 @@
 #ifdef INTERP_Z
       {
          GLfloat eMaj_dz, eBot_dz;
-         eMaj_dz = VB->Win.data[vMax][2] - VB->Win.data[vMin][2];
-         eBot_dz = VB->Win.data[vMid][2] - VB->Win.data[vMin][2];
+         eMaj_dz = vMax->win[2] - vMin->win[2];
+         eBot_dz = vMid->win[2] - vMin->win[2];
          dzdx = oneOverArea * (eMaj_dz * eBot.dy - eMaj.dy * eBot_dz);
          if (dzdx > maxDepth || dzdx < -maxDepth) {
             /* probably a sliver triangle */
@@ -311,8 +310,8 @@
       }
       {
          GLfloat eMaj_dfog, eBot_dfog;
-         eMaj_dfog = (VB->FogCoordPtr->data[vMax] - VB->FogCoordPtr->data[vMin]) * 256;
-         eBot_dfog = (VB->FogCoordPtr->data[vMid] - VB->FogCoordPtr->data[vMin]) * 256;
+         eMaj_dfog = (vMax->fog - vMin->fog) * 256;
+         eBot_dfog = (vMid->fog - vMin->fog) * 256;
          dfogdx = oneOverArea * (eMaj_dfog * eBot.dy - eMaj.dy * eBot_dfog);
          fdfogdx = SignedFloatToFixed(dfogdx);
          dfogdy = oneOverArea * (eMaj.dx * eBot_dfog - eMaj_dfog * eBot.dx);
@@ -321,30 +320,30 @@
 #ifdef INTERP_RGB
       {
          GLfloat eMaj_dr, eBot_dr;
-         eMaj_dr = (GLint) VB->ColorPtr->data[vMax][0]
-                 - (GLint) VB->ColorPtr->data[vMin][0];
-         eBot_dr = (GLint) VB->ColorPtr->data[vMid][0]
-                 - (GLint) VB->ColorPtr->data[vMin][0];
+         eMaj_dr = (GLint) vMax->color[0]
+                 - (GLint) vMin->color[0];
+         eBot_dr = (GLint) vMid->color[0]
+                 - (GLint) vMin->color[0];
          drdx = oneOverArea * (eMaj_dr * eBot.dy - eMaj.dy * eBot_dr);
          fdrdx = SignedFloatToFixed(drdx);
          drdy = oneOverArea * (eMaj.dx * eBot_dr - eMaj_dr * eBot.dx);
       }
       {
          GLfloat eMaj_dg, eBot_dg;
-         eMaj_dg = (GLint) VB->ColorPtr->data[vMax][1]
-                 - (GLint) VB->ColorPtr->data[vMin][1];
-	 eBot_dg = (GLint) VB->ColorPtr->data[vMid][1]
-                 - (GLint) VB->ColorPtr->data[vMin][1];
+         eMaj_dg = (GLint) vMax->color[1]
+                 - (GLint) vMin->color[1];
+	 eBot_dg = (GLint) vMid->color[1]
+                 - (GLint) vMin->color[1];
          dgdx = oneOverArea * (eMaj_dg * eBot.dy - eMaj.dy * eBot_dg);
          fdgdx = SignedFloatToFixed(dgdx);
          dgdy = oneOverArea * (eMaj.dx * eBot_dg - eMaj_dg * eBot.dx);
       }
       {
          GLfloat eMaj_db, eBot_db;
-         eMaj_db = (GLint) VB->ColorPtr->data[vMax][2]
-                 - (GLint) VB->ColorPtr->data[vMin][2];
-         eBot_db = (GLint) VB->ColorPtr->data[vMid][2]
-                 - (GLint) VB->ColorPtr->data[vMin][2];
+         eMaj_db = (GLint) vMax->color[2]
+                 - (GLint) vMin->color[2];
+         eBot_db = (GLint) vMid->color[2]
+                 - (GLint) vMin->color[2];
          dbdx = oneOverArea * (eMaj_db * eBot.dy - eMaj.dy * eBot_db);
          fdbdx = SignedFloatToFixed(dbdx);
 	 dbdy = oneOverArea * (eMaj.dx * eBot_db - eMaj_db * eBot.dx);
@@ -353,30 +352,30 @@
 #ifdef INTERP_SPEC
       {
          GLfloat eMaj_dsr, eBot_dsr;
-         eMaj_dsr = (GLint) VB->SecondaryColorPtr->data[vMax][0]
-                  - (GLint) VB->SecondaryColorPtr->data[vMin][0];
-         eBot_dsr = (GLint) VB->SecondaryColorPtr->data[vMid][0]
-                  - (GLint) VB->SecondaryColorPtr->data[vMin][0];
+         eMaj_dsr = (GLint) vMax->specular[0]
+                  - (GLint) vMin->specular[0];
+         eBot_dsr = (GLint) vMid->specular[0]
+                  - (GLint) vMin->specular[0];
          dsrdx = oneOverArea * (eMaj_dsr * eBot.dy - eMaj.dy * eBot_dsr);
          fdsrdx = SignedFloatToFixed(dsrdx);
          dsrdy = oneOverArea * (eMaj.dx * eBot_dsr - eMaj_dsr * eBot.dx);
       }
       {
          GLfloat eMaj_dsg, eBot_dsg;
-         eMaj_dsg = (GLint) VB->SecondaryColorPtr->data[vMax][1]
-                  - (GLint) VB->SecondaryColorPtr->data[vMin][1];
-	 eBot_dsg = (GLint) VB->SecondaryColorPtr->data[vMid][1]
-                  - (GLint) VB->SecondaryColorPtr->data[vMin][1];
+         eMaj_dsg = (GLint) vMax->specular[1]
+                  - (GLint) vMin->specular[1];
+	 eBot_dsg = (GLint) vMid->specular[1]
+                  - (GLint) vMin->specular[1];
          dsgdx = oneOverArea * (eMaj_dsg * eBot.dy - eMaj.dy * eBot_dsg);
          fdsgdx = SignedFloatToFixed(dsgdx);
          dsgdy = oneOverArea * (eMaj.dx * eBot_dsg - eMaj_dsg * eBot.dx);
       }
       {
          GLfloat eMaj_dsb, eBot_dsb;
-         eMaj_dsb = (GLint) VB->SecondaryColorPtr->data[vMax][2]
-                  - (GLint) VB->SecondaryColorPtr->data[vMin][2];
-         eBot_dsb = (GLint) VB->SecondaryColorPtr->data[vMid][2]
-                  - (GLint) VB->SecondaryColorPtr->data[vMin][2];
+         eMaj_dsb = (GLint) vMax->specular[2]
+                  - (GLint) vMin->specular[2];
+         eBot_dsb = (GLint) vMid->specular[2]
+                  - (GLint) vMin->specular[2];
          dsbdx = oneOverArea * (eMaj_dsb * eBot.dy - eMaj.dy * eBot_dsb);
          fdsbdx = SignedFloatToFixed(dsbdx);
 	 dsbdy = oneOverArea * (eMaj.dx * eBot_dsb - eMaj_dsb * eBot.dx);
@@ -385,10 +384,10 @@
 #ifdef INTERP_ALPHA
       {
          GLfloat eMaj_da, eBot_da;
-         eMaj_da = (GLint) VB->ColorPtr->data[vMax][3]
-                 - (GLint) VB->ColorPtr->data[vMin][3];
-         eBot_da = (GLint) VB->ColorPtr->data[vMid][3]
-                 - (GLint) VB->ColorPtr->data[vMin][3];
+         eMaj_da = (GLint) vMax->color[3]
+                 - (GLint) vMin->color[3];
+         eBot_da = (GLint) vMid->color[3]
+                 - (GLint) vMin->color[3];
          dadx = oneOverArea * (eMaj_da * eBot.dy - eMaj.dy * eBot_da);
          fdadx = SignedFloatToFixed(dadx);
          dady = oneOverArea * (eMaj.dx * eBot_da - eMaj_da * eBot.dx);
@@ -397,10 +396,10 @@
 #ifdef INTERP_INDEX
       {
          GLfloat eMaj_di, eBot_di;
-         eMaj_di = (GLint) VB->IndexPtr->data[vMax]
-                 - (GLint) VB->IndexPtr->data[vMin];
-         eBot_di = (GLint) VB->IndexPtr->data[vMid]
-                 - (GLint) VB->IndexPtr->data[vMin];
+         eMaj_di = (GLint) vMax->index
+                 - (GLint) vMin->index;
+         eBot_di = (GLint) vMid->index
+                 - (GLint) vMin->index;
          didx = oneOverArea * (eMaj_di * eBot.dy - eMaj.dy * eBot_di);
          fdidx = SignedFloatToFixed(didx);
          didy = oneOverArea * (eMaj.dx * eBot_di - eMaj_di * eBot.dx);
@@ -409,150 +408,94 @@
 #ifdef INTERP_INT_TEX
       {
          GLfloat eMaj_ds, eBot_ds;
-         eMaj_ds = (VB->TexCoordPtr[0]->data[vMax][0]
-                  - VB->TexCoordPtr[0]->data[vMin][0]) * S_SCALE;
-         eBot_ds = (VB->TexCoordPtr[0]->data[vMid][0]
-                  - VB->TexCoordPtr[0]->data[vMin][0]) * S_SCALE;
+         eMaj_ds = (vMax->texcoord[0][0] - vMin->texcoord[0][0]) * S_SCALE;
+         eBot_ds = (vMid->texcoord[0][0] - vMin->texcoord[0][0]) * S_SCALE;
          dsdx = oneOverArea * (eMaj_ds * eBot.dy - eMaj.dy * eBot_ds);
          fdsdx = SignedFloatToFixed(dsdx);
          dsdy = oneOverArea * (eMaj.dx * eBot_ds - eMaj_ds * eBot.dx);
       }
-      if (VB->TexCoordPtr[0]->size > 1) {
+      {
          GLfloat eMaj_dt, eBot_dt;
-         eMaj_dt = (VB->TexCoordPtr[0]->data[vMax][1]
-                  - VB->TexCoordPtr[0]->data[vMin][1]) * T_SCALE;
-         eBot_dt = (VB->TexCoordPtr[0]->data[vMid][1]
-                  - VB->TexCoordPtr[0]->data[vMin][1]) * T_SCALE;
+         eMaj_dt = (vMax->texcoord[0][1] - vMin->texcoord[0][1]) * T_SCALE;
+         eBot_dt = (vMid->texcoord[0][1] - vMin->texcoord[0][1]) * T_SCALE;
          dtdx = oneOverArea * (eMaj_dt * eBot.dy - eMaj.dy * eBot_dt);
          fdtdx = SignedFloatToFixed(dtdx);
          dtdy = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
-      }
-      else {
-         dtdx = 0;
-         fdtdx = SignedFloatToFixed(dtdx);
-         dtdy = 0;
       }
 
 #endif
 #ifdef INTERP_TEX
       {
-         GLfloat wMax = VB->Win.data[vMax][3];
-         GLfloat wMin = VB->Win.data[vMin][3];
-         GLfloat wMid = VB->Win.data[vMid][3];
+         GLfloat wMax = vMax->win[3];
+         GLfloat wMin = vMin->win[3];
+         GLfloat wMid = vMid->win[3];
          GLfloat eMaj_ds, eBot_ds;
          GLfloat eMaj_dt, eBot_dt;
          GLfloat eMaj_du, eBot_du;
          GLfloat eMaj_dv, eBot_dv;
 
-         eMaj_ds = VB->TexCoordPtr[0]->data[vMax][0] * wMax
-                 - VB->TexCoordPtr[0]->data[vMin][0] * wMin;
-         eBot_ds = VB->TexCoordPtr[0]->data[vMid][0] * wMid
-                 - VB->TexCoordPtr[0]->data[vMin][0] * wMin;
+         eMaj_ds = vMax->texcoord[0][0] * wMax - vMin->texcoord[0][0] * wMin;
+         eBot_ds = vMid->texcoord[0][0] * wMid - vMin->texcoord[0][0] * wMin;
          dsdx = oneOverArea * (eMaj_ds * eBot.dy - eMaj.dy * eBot_ds);
          dsdy = oneOverArea * (eMaj.dx * eBot_ds - eMaj_ds * eBot.dx);
 
 
-	 if (VB->TexCoordPtr[0]->size > 1) {
-	    eMaj_dt = VB->TexCoordPtr[0]->data[vMax][1] * wMax
-                    - VB->TexCoordPtr[0]->data[vMin][1] * wMin;
-	    eBot_dt = VB->TexCoordPtr[0]->data[vMid][1] * wMid
-                    - VB->TexCoordPtr[0]->data[vMin][1] * wMin;
-	    dtdx = oneOverArea * (eMaj_dt * eBot.dy - eMaj.dy * eBot_dt);
-	    dtdy = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
-	 }
-         else {
-	    dtdx = 0;
-	    dtdy = 0; 
-	 }
+	 eMaj_dt = vMax->texcoord[0][1] * wMax - vMin->texcoord[0][1] * wMin;
+	 eBot_dt = vMid->texcoord[0][1] * wMid - vMin->texcoord[0][1] * wMin;
+	 dtdx = oneOverArea * (eMaj_dt * eBot.dy - eMaj.dy * eBot_dt);
+	 dtdy = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
+	 
+	 eMaj_du = vMax->texcoord[0][2] * wMax - vMin->texcoord[0][2] * wMin;
+	 eBot_du = vMid->texcoord[0][2] * wMid - vMin->texcoord[0][2] * wMin;
+	 dudx = oneOverArea * (eMaj_du * eBot.dy - eMaj.dy * eBot_du);
+	 dudy = oneOverArea * (eMaj.dx * eBot_du - eMaj_du * eBot.dx);
 
-	 if (VB->TexCoordPtr[0]->size > 2) {
-	    eMaj_du = VB->TexCoordPtr[0]->data[vMax][2] * wMax
-                    - VB->TexCoordPtr[0]->data[vMin][2] * wMin;
-	    eBot_du = VB->TexCoordPtr[0]->data[vMid][2] * wMid
-                    - VB->TexCoordPtr[0]->data[vMin][2] * wMin;
-	    dudx = oneOverArea * (eMaj_du * eBot.dy - eMaj.dy * eBot_du);
-	    dudy = oneOverArea * (eMaj.dx * eBot_du - eMaj_du * eBot.dx);
-	 }
-         else {
-	    dudx = 0;
-	    dudy = 0;
-	 }
 
-	 if (VB->TexCoordPtr[0]->size > 3) {
-	    eMaj_dv = VB->TexCoordPtr[0]->data[vMax][3] * wMax
-                    - VB->TexCoordPtr[0]->data[vMin][3] * wMin;
-	    eBot_dv = VB->TexCoordPtr[0]->data[vMid][3] * wMid
-                    - VB->TexCoordPtr[0]->data[vMin][3] * wMin;
-	    dvdx = oneOverArea * (eMaj_dv * eBot.dy - eMaj.dy * eBot_dv);
-	    dvdy = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
-	 }
-         else {
-	    eMaj_dv = wMax - wMin;
-	    eBot_dv = wMid - wMin;
-	    dvdx = oneOverArea * (eMaj_dv * eBot.dy - eMaj.dy * eBot_dv);
-	    dvdy = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
-	 }
+	 eMaj_dv = vMax->texcoord[0][3] * wMax - vMin->texcoord[0][3] * wMin;
+	 eBot_dv = vMid->texcoord[0][3] * wMid - vMin->texcoord[0][3] * wMin;
+	 dvdx = oneOverArea * (eMaj_dv * eBot.dy - eMaj.dy * eBot_dv);
+	 dvdy = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
       }
 #endif
 #ifdef INTERP_MULTITEX
       {
-         GLfloat wMax = VB->Win.data[vMax][3];
-         GLfloat wMin = VB->Win.data[vMin][3];
-         GLfloat wMid = VB->Win.data[vMid][3];
+         GLfloat wMax = vMax->win[3];
+         GLfloat wMin = vMin->win[3];
+         GLfloat wMid = vMid->win[3];
          GLuint u;
          for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-            if (ctx->Texture.Unit[u].ReallyEnabled) {
+            if (ctx->Texture.Unit[u]._ReallyEnabled) {
                GLfloat eMaj_ds, eBot_ds;
                GLfloat eMaj_dt, eBot_dt;
                GLfloat eMaj_du, eBot_du;
                GLfloat eMaj_dv, eBot_dv;
-               eMaj_ds = VB->TexCoordPtr[u]->data[vMax][0] * wMax
-                       - VB->TexCoordPtr[u]->data[vMin][0] * wMin;
-               eBot_ds = VB->TexCoordPtr[u]->data[vMid][0] * wMid
-                       - VB->TexCoordPtr[u]->data[vMin][0] * wMin;
+               eMaj_ds = vMax->texcoord[u][0] * wMax
+                       - vMin->texcoord[u][0] * wMin;
+               eBot_ds = vMid->texcoord[u][0] * wMid
+                       - vMin->texcoord[u][0] * wMin;
                dsdx[u] = oneOverArea * (eMaj_ds * eBot.dy - eMaj.dy * eBot_ds);
                dsdy[u] = oneOverArea * (eMaj.dx * eBot_ds - eMaj_ds * eBot.dx);
 
-               if (VB->TexCoordPtr[u]->size > 1) {
-                  eMaj_dt = VB->TexCoordPtr[u]->data[vMax][1] * wMax
-                          - VB->TexCoordPtr[u]->data[vMin][1] * wMin;
-                  eBot_dt = VB->TexCoordPtr[u]->data[vMid][1] * wMid
-                          - VB->TexCoordPtr[u]->data[vMin][1] * wMin;
-                  dtdx[u] = oneOverArea * (eMaj_dt * eBot.dy - eMaj.dy * eBot_dt);
-                  dtdy[u] = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
-               }
-               else {
-                  dtdx[u] = 0.0;
-                  dtdy[u] = 0.0;
-               }
-
-               if (VB->TexCoordPtr[u]->size > 2) {
-                  eMaj_du = VB->TexCoordPtr[u]->data[vMax][2] * wMax
-                          - VB->TexCoordPtr[u]->data[vMin][2] * wMin;
-                  eBot_du = VB->TexCoordPtr[u]->data[vMid][2] * wMid
-                          - VB->TexCoordPtr[u]->data[vMin][2] * wMin;
-                  dudx[u] = oneOverArea * (eMaj_du * eBot.dy - eMaj.dy * eBot_du);
-                  dudy[u] = oneOverArea * (eMaj.dx * eBot_du - eMaj_du * eBot.dx);
-               }
-               else {
-                  dudx[u] = 0.0;
-                  dudy[u] = 0.0;
-               }
-
-               if (VB->TexCoordPtr[u]->size > 3) {
-                  eMaj_dv = VB->TexCoordPtr[u]->data[vMax][3] * wMax
-                          - VB->TexCoordPtr[u]->data[vMin][3] * wMin;
-                  eBot_dv = VB->TexCoordPtr[u]->data[vMid][3] * wMid
-                          - VB->TexCoordPtr[u]->data[vMin][3] * wMin;
-                  dvdx[u] = oneOverArea * (eMaj_dv * eBot.dy - eMaj.dy * eBot_dv);
-                  dvdy[u] = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
-               }
-               else {
-                  eMaj_dv = wMax - wMin;
-                  eBot_dv = wMid - wMin;
-                  dvdx[u] = oneOverArea * (eMaj_dv * eBot.dy - eMaj.dy * eBot_dv);
-                  dvdy[u] = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
-               }
+	       eMaj_dt = vMax->texcoord[u][1] * wMax
+		  - vMin->texcoord[u][1] * wMin;
+	       eBot_dt = vMid->texcoord[u][1] * wMid
+		  - vMin->texcoord[u][1] * wMin;
+	       dtdx[u] = oneOverArea * (eMaj_dt * eBot.dy - eMaj.dy * eBot_dt);
+	       dtdy[u] = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
+	       
+	       eMaj_du = vMax->texcoord[u][2] * wMax
+		  - vMin->texcoord[u][2] * wMin;
+	       eBot_du = vMid->texcoord[u][2] * wMid
+		  - vMin->texcoord[u][2] * wMin;
+	       dudx[u] = oneOverArea * (eMaj_du * eBot.dy - eMaj.dy * eBot_du);
+	       dudy[u] = oneOverArea * (eMaj.dx * eBot_du - eMaj_du * eBot.dx);
+	       
+	       eMaj_dv = vMax->texcoord[u][3] * wMax
+		  - vMin->texcoord[u][3] * wMin;
+	       eBot_dv = vMid->texcoord[u][3] * wMid
+		  - vMin->texcoord[u][3] * wMin;
+	       dvdx[u] = oneOverArea * (eMaj_dv * eBot.dy - eMaj.dy * eBot_dv);
+	       dvdy[u] = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
             }
          }
       }
@@ -707,7 +650,7 @@
             }
 
             if (setupLeft && eLeft->lines > 0) {
-               GLint vLower;
+               SWvertex *vLower;
                GLfixed fsx = eLeft->fsx;
                fx = FixedCeil(fsx);
                fError = fx - fsx - FIXED_ONE;
@@ -749,7 +692,7 @@
 
 #ifdef INTERP_Z
                {
-                  GLfloat z0 = VB->Win.data[vLower][2] + ctx->PolygonZoffset;
+                  GLfloat z0 = vLower->win[2];
                   if (depthBits <= 16) {
                      /* interpolate fixed-pt values */
                      GLfloat tmp = (z0 * FIXED_SCALE +
@@ -770,95 +713,71 @@
                   dZRowOuter = (ctx->DrawBuffer->Width + idxOuter) * sizeof(DEPTH_TYPE);
 #  endif
                }
-               ffog = FloatToFixed(VB->FogCoordPtr->data[vLower]) * 256 + dfogdx * adjx + dfogdy * adjy + FIXED_HALF;
+               ffog = FloatToFixed(vLower->fog) * 256 + dfogdx * adjx + dfogdy * adjy + FIXED_HALF;
                fdfogOuter = SignedFloatToFixed(dfogdy + dxOuter * dfogdx);
 #endif
 #ifdef INTERP_RGB
-               fr = (GLfixed)(IntToFixed(VB->ColorPtr->data[vLower][0])
+               fr = (GLfixed)(IntToFixed(vLower->color[0])
                               + drdx * adjx + drdy * adjy) + FIXED_HALF;
                fdrOuter = SignedFloatToFixed(drdy + dxOuter * drdx);
 
-               fg = (GLfixed)(IntToFixed(VB->ColorPtr->data[vLower][1])
+               fg = (GLfixed)(IntToFixed(vLower->color[1])
                               + dgdx * adjx + dgdy * adjy) + FIXED_HALF;
                fdgOuter = SignedFloatToFixed(dgdy + dxOuter * dgdx);
 
-               fb = (GLfixed)(IntToFixed(VB->ColorPtr->data[vLower][2])
+               fb = (GLfixed)(IntToFixed(vLower->color[2])
                               + dbdx * adjx + dbdy * adjy) + FIXED_HALF;
                fdbOuter = SignedFloatToFixed(dbdy + dxOuter * dbdx);
 #endif
 #ifdef INTERP_SPEC
-               fsr = (GLfixed)(IntToFixed(VB->SecondaryColorPtr->data[vLower][0])
+               fsr = (GLfixed)(IntToFixed(vLower->specular[0])
                                + dsrdx * adjx + dsrdy * adjy) + FIXED_HALF;
                fdsrOuter = SignedFloatToFixed(dsrdy + dxOuter * dsrdx);
 
-               fsg = (GLfixed)(IntToFixed(VB->SecondaryColorPtr->data[vLower][1])
+               fsg = (GLfixed)(IntToFixed(vLower->specular[1])
                                + dsgdx * adjx + dsgdy * adjy) + FIXED_HALF;
                fdsgOuter = SignedFloatToFixed(dsgdy + dxOuter * dsgdx);
 
-               fsb = (GLfixed)(IntToFixed(VB->SecondaryColorPtr->data[vLower][2])
+               fsb = (GLfixed)(IntToFixed(vLower->specular[2])
                                + dsbdx * adjx + dsbdy * adjy) + FIXED_HALF;
                fdsbOuter = SignedFloatToFixed(dsbdy + dxOuter * dsbdx);
 #endif
 #ifdef INTERP_ALPHA
-               fa = (GLfixed)(IntToFixed(VB->ColorPtr->data[vLower][3])
+               fa = (GLfixed)(IntToFixed(vLower->color[3])
                               + dadx * adjx + dady * adjy) + FIXED_HALF;
                fdaOuter = SignedFloatToFixed(dady + dxOuter * dadx);
 #endif
 #ifdef INTERP_INDEX
-               fi = (GLfixed)(VB->IndexPtr->data[vLower] * FIXED_SCALE
+               fi = (GLfixed)(vLower->index * FIXED_SCALE
                               + didx * adjx + didy * adjy) + FIXED_HALF;
                fdiOuter = SignedFloatToFixed(didy + dxOuter * didx);
 #endif
 #ifdef INTERP_INT_TEX
                {
                   GLfloat s0, t0;
-                  s0 = VB->TexCoordPtr[0]->data[vLower][0] * S_SCALE;
+                  s0 = vLower->texcoord[0][0] * S_SCALE;
                   fs = (GLfixed)(s0 * FIXED_SCALE + dsdx * adjx + dsdy * adjy) + FIXED_HALF;
                   fdsOuter = SignedFloatToFixed(dsdy + dxOuter * dsdx);
 
-		  if (VB->TexCoordPtr[0]->size > 1)
-		  {
-		     t0 = VB->TexCoordPtr[0]->data[vLower][1] * T_SCALE;
-		     ft = (GLfixed)(t0 * FIXED_SCALE + dtdx * adjx + dtdy * adjy) + FIXED_HALF;
-		     fdtOuter = SignedFloatToFixed(dtdy + dxOuter * dtdx);
-		  } 
-		  else
-		  {
-		     t0 = 0;
-		     ft = (GLfixed) FIXED_HALF;
-		     fdtOuter = SignedFloatToFixed(0);
-		  }
+		  t0 = vLower->texcoord[0][1] * T_SCALE;
+		  ft = (GLfixed)(t0 * FIXED_SCALE + dtdx * adjx + dtdy * adjy) + FIXED_HALF;
+		  fdtOuter = SignedFloatToFixed(dtdy + dxOuter * dtdx);
 	       }
 #endif
 #ifdef INTERP_TEX
                {
-                  GLfloat invW = VB->Win.data[vLower][3];
+                  GLfloat invW = vLower->win[3];
                   GLfloat s0, t0, u0, v0;
-                  s0 = VB->TexCoordPtr[0]->data[vLower][0] * invW;
+                  s0 = vLower->texcoord[0][0] * invW;
                   sLeft = s0 + (dsdx * adjx + dsdy * adjy) * (1.0F/FIXED_SCALE);
                   dsOuter = dsdy + dxOuter * dsdx;
-		  if (VB->TexCoordPtr[0]->size > 1) {		  
-		     t0 = VB->TexCoordPtr[0]->data[vLower][1] * invW;
-		     tLeft = t0 + (dtdx * adjx + dtdy * adjy) * (1.0F/FIXED_SCALE);
-		     dtOuter = dtdy + dxOuter * dtdx;
-		  }
-                  else {
-		     tLeft = dtOuter = 0.0;
-		  }
-		  if (VB->TexCoordPtr[0]->size > 2) {		  
-		     u0 = VB->TexCoordPtr[0]->data[vLower][2] * invW;
-		     uLeft = u0 + (dudx * adjx + dudy * adjy) * (1.0F/FIXED_SCALE);
-		     duOuter = dudy + dxOuter * dudx;
-		  }
-                  else {
-		     uLeft = duOuter = 0.0;
-		  }
-		  if (VB->TexCoordPtr[0]->size > 3) {		  
-		     v0 = VB->TexCoordPtr[0]->data[vLower][3] * invW;
-		  }
-                  else {
-		     v0 = invW;
-		  }
+		  t0 = vLower->texcoord[0][1] * invW;
+		  tLeft = t0 + (dtdx * adjx + dtdy * adjy) * (1.0F/FIXED_SCALE);
+		  dtOuter = dtdy + dxOuter * dtdx;
+		  u0 = vLower->texcoord[0][2] * invW;
+		  uLeft = u0 + (dudx * adjx + dudy * adjy) * (1.0F/FIXED_SCALE);
+		  duOuter = dudy + dxOuter * dudx;
+		  v0 = vLower->texcoord[0][3] * invW;
 		  vLeft = v0 + (dvdx * adjx + dvdy * adjy) * (1.0F/FIXED_SCALE);
 		  dvOuter = dvdy + dxOuter * dvdx;
                }
@@ -867,34 +786,19 @@
                {
                   GLuint u;
                   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-                     if (ctx->Texture.Unit[u].ReallyEnabled) {
-                        GLfloat invW = VB->Win.data[vLower][3];
+                     if (ctx->Texture.Unit[u]._ReallyEnabled) {
+                        GLfloat invW = vLower->win[3];
                         GLfloat s0, t0, u0, v0;
-                        s0 = VB->TexCoordPtr[u]->data[vLower][0] * invW;
+                        s0 = vLower->texcoord[u][0] * invW;
                         sLeft[u] = s0 + (dsdx[u] * adjx + dsdy[u] * adjy) * (1.0F/FIXED_SCALE);
                         dsOuter[u] = dsdy[u] + dxOuter * dsdx[u];
-                        if (VB->TexCoordPtr[u]->size > 1) {
-                           t0 = VB->TexCoordPtr[u]->data[vLower][1] * invW;
-                           tLeft[u] = t0 + (dtdx[u] * adjx + dtdy[u] * adjy) * (1.0F/FIXED_SCALE);
-                           dtOuter[u] = dtdy[u] + dxOuter * dtdx[u];
-                        }
-                        else {
-                           tLeft[u] = dtOuter[u] = 0.0;
-                        }
-                        if (VB->TexCoordPtr[u]->size > 2) {
-                           u0 = VB->TexCoordPtr[u]->data[vLower][2] * invW;
-                           uLeft[u] = u0 + (dudx[u] * adjx + dudy[u] * adjy) * (1.0F/FIXED_SCALE);
-                           duOuter[u] = dudy[u] + dxOuter * dudx[u];
-                        }
-                        else {
-                           uLeft[u] = duOuter[u] = 0.0;
-                        }
-                        if (VB->TexCoordPtr[u]->size > 3) {
-                           v0 = VB->TexCoordPtr[u]->data[vLower][3] * invW;
-                        }
-                        else {
-                           v0 =  invW;
-                        }
+			t0 = vLower->texcoord[u][1] * invW;
+			tLeft[u] = t0 + (dtdx[u] * adjx + dtdy[u] * adjy) * (1.0F/FIXED_SCALE);
+			dtOuter[u] = dtdy[u] + dxOuter * dtdx[u];
+			u0 = vLower->texcoord[u][2] * invW;
+			uLeft[u] = u0 + (dudx[u] * adjx + dudy[u] * adjy) * (1.0F/FIXED_SCALE);
+			duOuter[u] = dudy[u] + dxOuter * dudx[u];
+			v0 = vLower->texcoord[u][3] * invW;
                         vLeft[u] = v0 + (dvdx[u] * adjx + dvdy[u] * adjy) * (1.0F/FIXED_SCALE);
                         dvOuter[u] = dvdy[u] + dxOuter * dvdx[u];
                      }
@@ -956,7 +860,7 @@
             {
                GLuint u;
                for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-                  if (ctx->Texture.Unit[u].ReallyEnabled) {
+                  if (ctx->Texture.Unit[u]._ReallyEnabled) {
                      dsInner[u] = dsOuter[u] + dsdx[u];
                      dtInner[u] = dtOuter[u] + dtdx[u];
                      duInner[u] = duOuter[u] + dudx[u];
@@ -1001,7 +905,7 @@
                {
                   GLuint u;
                   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-                     if (ctx->Texture.Unit[u].ReallyEnabled) {
+                     if (ctx->Texture.Unit[u]._ReallyEnabled) {
                         ss[u] = sLeft[u];
                         tt[u] = tLeft[u];
                         uu[u] = uLeft[u];
@@ -1103,7 +1007,7 @@
                   {
                      GLuint u;
                      for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-                        if (ctx->Texture.Unit[u].ReallyEnabled) {
+                        if (ctx->Texture.Unit[u]._ReallyEnabled) {
                            sLeft[u] += dsOuter[u];
                            tLeft[u] += dtOuter[u];
                            uLeft[u] += duOuter[u];
@@ -1149,7 +1053,7 @@
                   {
                      GLuint u;
                      for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-                        if (ctx->Texture.Unit[u].ReallyEnabled) {
+                        if (ctx->Texture.Unit[u]._ReallyEnabled) {
                            sLeft[u] += dsInner[u];
                            tLeft[u] += dtInner[u];
                            uLeft[u] += duInner[u];

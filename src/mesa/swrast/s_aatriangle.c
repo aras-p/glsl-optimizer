@@ -1,4 +1,4 @@
-/* $Id: s_aatriangle.c,v 1.1 2000/10/31 18:00:04 keithw Exp $ */
+/* $Id: s_aatriangle.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,6 +31,7 @@
 
 
 #include "s_aatriangle.h"
+#include "s_context.h"
 #include "s_span.h"
 
 
@@ -297,7 +298,10 @@ compute_coveragei(const GLfloat v0[3], const GLfloat v1[3],
 
 
 static void
-rgba_aa_tri(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv)
+rgba_aa_tri(GLcontext *ctx,
+	    SWvertex *v0,
+	    SWvertex *v1,
+	    SWvertex *v2)
 {
 #define DO_Z
 #define DO_RGBA
@@ -306,7 +310,10 @@ rgba_aa_tri(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv)
 
 
 static void
-index_aa_tri(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv)
+index_aa_tri(GLcontext *ctx,
+	     SWvertex *v0,
+	     SWvertex *v1,
+	     SWvertex *v2)
 {
 #define DO_Z
 #define DO_INDEX
@@ -334,7 +341,10 @@ compute_lambda(const GLfloat sPlane[4], const GLfloat tPlane[4],
 
 
 static void
-tex_aa_tri(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv)
+tex_aa_tri(GLcontext *ctx,
+	   SWvertex *v0,
+	   SWvertex *v1,
+	   SWvertex *v2)
 {
 #define DO_Z
 #define DO_RGBA
@@ -344,7 +354,10 @@ tex_aa_tri(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv)
 
 
 static void
-spec_tex_aa_tri(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv)
+spec_tex_aa_tri(GLcontext *ctx,
+		SWvertex *v0,
+		SWvertex *v1,
+		SWvertex *v2)
 {
 #define DO_Z
 #define DO_RGBA
@@ -355,7 +368,10 @@ spec_tex_aa_tri(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv)
 
 
 static void
-multitex_aa_tri(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv)
+multitex_aa_tri(GLcontext *ctx,
+		SWvertex *v0,
+		SWvertex *v1,
+		SWvertex *v2)
 {
 #define DO_Z
 #define DO_RGBA
@@ -364,7 +380,10 @@ multitex_aa_tri(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv)
 }
 
 static void
-spec_multitex_aa_tri(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv)
+spec_multitex_aa_tri(GLcontext *ctx,
+		     SWvertex *v0,
+		     SWvertex *v1,
+		     SWvertex *v2)
 {
 #define DO_Z
 #define DO_RGBA
@@ -382,32 +401,34 @@ void
 _mesa_set_aa_triangle_function(GLcontext *ctx)
 {
    ASSERT(ctx->Polygon.SmoothFlag);
-   if (ctx->Texture.ReallyEnabled) {
+
+   if (ctx->Texture._ReallyEnabled) {
       if (ctx->Light.Enabled &&
-          ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR) {
-         if (ctx->Texture.MultiTextureEnabled) {
-            ctx->Driver.TriangleFunc = spec_multitex_aa_tri;
+          (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ||
+	   ctx->Fog.ColorSumEnabled)) {
+         if (ctx->Texture._MultiTextureEnabled) {
+            SWRAST_CONTEXT(ctx)->Triangle = spec_multitex_aa_tri;
          }
          else {
-            ctx->Driver.TriangleFunc = spec_tex_aa_tri;
+            SWRAST_CONTEXT(ctx)->Triangle = spec_tex_aa_tri;
          }
       }
       else {
-         if (ctx->Texture.MultiTextureEnabled) {
-            ctx->Driver.TriangleFunc = multitex_aa_tri;
+         if (ctx->Texture._MultiTextureEnabled) {
+            SWRAST_CONTEXT(ctx)->Triangle = multitex_aa_tri;
          }
          else {
-            ctx->Driver.TriangleFunc = tex_aa_tri;
+            SWRAST_CONTEXT(ctx)->Triangle = tex_aa_tri;
          }
       }
    }
    else {
       if (ctx->Visual.RGBAflag) {
-         ctx->Driver.TriangleFunc = rgba_aa_tri;
+         SWRAST_CONTEXT(ctx)->Triangle = rgba_aa_tri;
       }
       else {
-         ctx->Driver.TriangleFunc = index_aa_tri;
+         SWRAST_CONTEXT(ctx)->Triangle = index_aa_tri;
       }
    }
-   ASSERT(ctx->Driver.TriangleFunc);
+   ASSERT(SWRAST_CONTEXT(ctx)->Triangle);
 }

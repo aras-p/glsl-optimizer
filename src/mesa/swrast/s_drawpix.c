@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.1 2000/10/31 18:00:04 keithw Exp $ */
+/* $Id: s_drawpix.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,7 @@
 #include "mmath.h"
 #include "pixel.h"
 
+#include "s_context.h"
 #include "s_pixeltex.h"
 #include "s_span.h"
 #include "s_stencil.h"
@@ -110,8 +111,8 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
       return GL_TRUE;      /* no-op */
    }
 
-   if ((ctx->RasterMask&(~(SCISSOR_BIT|WINCLIP_BIT)))==0
-       && ctx->Texture.ReallyEnabled == 0
+   if ((SWRAST_CONTEXT(ctx)->_RasterMask&(~(SCISSOR_BIT|WINCLIP_BIT)))==0
+       && ctx->Texture._ReallyEnabled == 0
        && unpack->Alignment == 1
        && !unpack->SwapBytes
        && !unpack->LsbFirst) {
@@ -204,7 +205,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
        */
 
       if (format == GL_RGBA && type == CHAN_TYPE
-          && ctx->ImageTransferState==0) {
+          && ctx->_ImageTransferState==0) {
          if (ctx->Visual.RGBAflag) {
             GLchan *src = (GLchan *) pixels
                + (skipRows * rowLength + skipPixels) * 4;
@@ -242,7 +243,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          return GL_TRUE;
       }
       else if (format == GL_RGB && type == CHAN_TYPE
-               && ctx->ImageTransferState == 0) {
+               && ctx->_ImageTransferState == 0) {
          if (ctx->Visual.RGBAflag) {
             GLchan *src = (GLchan *) pixels
                + (skipRows * rowLength + skipPixels) * 3;
@@ -279,7 +280,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          return GL_TRUE;
       }
       else if (format == GL_LUMINANCE && type == CHAN_TYPE
-               && ctx->ImageTransferState==0) {
+               && ctx->_ImageTransferState==0) {
          if (ctx->Visual.RGBAflag) {
             GLchan *src = (GLchan *) pixels
                + (skipRows * rowLength + skipPixels);
@@ -338,7 +339,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          return GL_TRUE;
       }
       else if (format == GL_LUMINANCE_ALPHA && type == CHAN_TYPE
-               && ctx->ImageTransferState == 0) {
+               && ctx->_ImageTransferState == 0) {
          if (ctx->Visual.RGBAflag) {
             GLchan *src = (GLchan *) pixels
                + (skipRows * rowLength + skipPixels)*2;
@@ -448,7 +449,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                return GL_TRUE;
             }
          }
-         else if (ctx->ImageTransferState==0) {
+         else if (ctx->_ImageTransferState==0) {
             /* write CI data to CI frame buffer */
             GLint row;
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
@@ -512,7 +513,7 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
                     pixels, width, height, GL_COLOR_INDEX, type, 0, row, 0);
       _mesa_unpack_index_span(ctx, drawWidth, GL_UNSIGNED_INT, indexes,
                               type, source, &ctx->Unpack,
-                              ctx->ImageTransferState);
+                              ctx->_ImageTransferState);
       if (zoom) {
          gl_write_zoomed_index_span(ctx, drawWidth, x, y, zspan, 0, indexes, desty);
       }
@@ -559,8 +560,8 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
                     pixels, width, height, GL_COLOR_INDEX, type, 0, row, 0);
       _mesa_unpack_index_span(ctx, drawWidth, destType, values,
                               type, source, &ctx->Unpack,
-                              ctx->ImageTransferState);
-      if (ctx->ImageTransferState & IMAGE_SHIFT_OFFSET_BIT) {
+                              ctx->_ImageTransferState);
+      if (ctx->_ImageTransferState & IMAGE_SHIFT_OFFSET_BIT) {
          _mesa_shift_and_offset_stencil( ctx, drawWidth, values );
       }
       if (ctx->Pixel.MapStencilFlag) {
@@ -658,7 +659,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          const GLvoid *src = _mesa_image_address(&ctx->Unpack,
                 pixels, width, height, GL_DEPTH_COMPONENT, type, 0, row, 0);
          _mesa_unpack_depth_span( ctx, drawWidth, zspan, type, src,
-                                  &ctx->Unpack, ctx->ImageTransferState );
+                                  &ctx->Unpack, ctx->_ImageTransferState );
          if (ctx->Visual.RGBAflag) {
             if (zoom) {
                gl_write_zoomed_rgba_span(ctx, width, x, y, zspan, 0,
@@ -698,7 +699,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    GLdepth zspan[MAX_WIDTH];
    GLboolean quickDraw;
    GLfloat *convImage = NULL;
-   GLuint transferOps = ctx->ImageTransferState;
+   GLuint transferOps = ctx->_ImageTransferState;
 
    if (!_mesa_is_legal_format_and_type(format, type)) {
       gl_error(ctx, GL_INVALID_ENUM, "glDrawPixels(format or type)");
@@ -720,7 +721,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    }
 
 
-   if (ctx->RasterMask == 0 && !zoom && x >= 0 && y >= 0
+   if (SWRAST_CONTEXT(ctx)->_RasterMask == 0 && !zoom && x >= 0 && y >= 0
        && x + width <= ctx->DrawBuffer->Width
        && y + height <= ctx->DrawBuffer->Height) {
       quickDraw = GL_TRUE;
@@ -799,7 +800,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
              (ctx->Pixel.HistogramEnabled && ctx->Histogram.Sink))
             continue;
 
-         if (ctx->Texture.ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
+         if (ctx->Texture._ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
             GLfloat s[MAX_WIDTH], t[MAX_WIDTH], r[MAX_WIDTH], q[MAX_WIDTH];
             GLchan primary_rgba[MAX_WIDTH][4];
             GLuint unit;
@@ -808,7 +809,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
             MEMCPY(primary_rgba, rgba, 4 * width * sizeof(GLchan));
 
             for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
-               if (ctx->Texture.Unit[unit].ReallyEnabled) {
+               if (ctx->Texture.Unit[unit]._ReallyEnabled) {
                   _mesa_pixeltexgen(ctx, width, (const GLchan (*)[4]) rgba,
                                     s, t, r, q);
                   gl_texture_pixels(ctx, unit, width, s, t, r, NULL,
@@ -851,6 +852,9 @@ _swrast_DrawPixels( GLcontext *ctx,
 		    const GLvoid *pixels )
 {
    (void) unpack;
+
+   if (SWRAST_CONTEXT(ctx)->NewState)
+      _swrast_validate_derived( ctx );
 
    switch (format) {
    case GL_STENCIL_INDEX:

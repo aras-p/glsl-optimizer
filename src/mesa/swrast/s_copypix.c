@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.2 2000/10/31 23:11:06 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.3 2000/11/05 18:24:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,7 @@
 #include "mmath.h"
 #include "pixel.h"
 
+#include "s_context.h"
 #include "s_depth.h"
 #include "s_imaging.h"
 #include "s_pixeltex.h"
@@ -81,7 +82,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    GLboolean changeBuffer;
    GLchan *saveReadAlpha;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
-   const GLuint transferOps = ctx->ImageTransferState;
+   const GLuint transferOps = ctx->_ImageTransferState;
    GLfloat *dest, *tmpImage, *convImage;
 
    if (ctx->Depth.Test || ctx->Fog.Enabled) {
@@ -94,7 +95,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
    }
 
-   if (ctx->RasterMask == 0
+   if (SWRAST_CONTEXT(ctx)->_RasterMask == 0
        && !zoom
        && destx >= 0
        && destx + width <= ctx->DrawBuffer->Width) {
@@ -231,7 +232,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          rgba[i][ACOMP] = (GLchan) CLAMP(a, 0, CHAN_MAX);
       }
 
-      if (ctx->Texture.ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
+      if (ctx->Texture._ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
          GLfloat s[MAX_WIDTH], t[MAX_WIDTH], r[MAX_WIDTH], q[MAX_WIDTH];
          GLchan primary_rgba[MAX_WIDTH][4];
          GLuint unit;
@@ -284,7 +285,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    GLchan *saveReadAlpha;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
-   const GLuint transferOps = ctx->ImageTransferState;
+   const GLuint transferOps = ctx->_ImageTransferState;
 
    if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
       copy_conv_rgba_pixels(ctx, srcx, srcy, width, height, destx, desty);
@@ -316,7 +317,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
    }
 
-   if (ctx->RasterMask == 0
+   if (SWRAST_CONTEXT(ctx)->_RasterMask == 0
        && !zoom
        && destx >= 0
        && destx + width <= ctx->DrawBuffer->Width) {
@@ -461,7 +462,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          }
       }
 
-      if (ctx->Texture.ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
+      if (ctx->Texture._ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
          GLfloat s[MAX_WIDTH], t[MAX_WIDTH], r[MAX_WIDTH], q[MAX_WIDTH];
          GLchan primary_rgba[MAX_WIDTH][4];
          GLuint unit;
@@ -817,6 +818,9 @@ _swrast_CopyPixels( GLcontext *ctx,
 		    GLint destx, GLint desty,
 		    GLenum type )
 {
+   if (SWRAST_CONTEXT(ctx)->NewState)
+      _swrast_validate_derived( ctx );
+
    if (type == GL_COLOR && ctx->Visual.RGBAflag) {
       copy_rgba_pixels( ctx, srcx, srcy, width, height, destx, desty );
    }

@@ -1,4 +1,4 @@
-/* $Id: s_accum.c,v 1.1 2000/10/31 18:00:04 keithw Exp $ */
+/* $Id: s_accum.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,7 @@
 #include "mem.h"
 
 #include "s_accum.h"
+#include "s_context.h"
 #include "s_masking.h"
 #include "s_span.h"
 
@@ -119,6 +120,116 @@ static void rescale_accum( GLcontext *ctx )
 
 
 
+
+
+
+/*
+ * Clear the accumulation Buffer.
+ */
+void
+_mesa_clear_accum_buffer( GLcontext *ctx )
+{
+   GLuint buffersize;
+   GLfloat acc_scale;
+
+   if (ctx->Visual.AccumRedBits==0) {
+      /* No accumulation buffer! */
+      return;
+   }
+
+   if (sizeof(GLaccum)==1) {
+      acc_scale = 127.0;
+   }
+   else if (sizeof(GLaccum)==2) {
+      acc_scale = 32767.0;
+   }
+   else {
+      /* sizeof(GLaccum) > 2 (Cray) */
+      acc_scale = (float) SHRT_MAX;
+   }
+
+   /* number of pixels */
+   buffersize = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height;
+
+   if (!ctx->DrawBuffer->Accum) {
+      /* try to alloc accumulation buffer */
+      ctx->DrawBuffer->Accum = (GLaccum *)
+	                   MALLOC( buffersize * 4 * sizeof(GLaccum) );
+   }
+
+   if (ctx->DrawBuffer->Accum) {
+      if (ctx->Scissor.Enabled) {
+	 /* Limit clear to scissor box */
+	 GLaccum r, g, b, a;
+	 GLint i, j;
+         GLint width, height;
+         GLaccum *row;
+	 r = (GLaccum) (ctx->Accum.ClearColor[0] * acc_scale);
+	 g = (GLaccum) (ctx->Accum.ClearColor[1] * acc_scale);
+	 b = (GLaccum) (ctx->Accum.ClearColor[2] * acc_scale);
+	 a = (GLaccum) (ctx->Accum.ClearColor[3] * acc_scale);
+         /* size of region to clear */
+         width = 4 * (ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin);
+         height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin;
+         /* ptr to first element to clear */
+         row = ctx->DrawBuffer->Accum
+               + 4 * (ctx->DrawBuffer->Ymin * ctx->DrawBuffer->Width
+                      + ctx->DrawBuffer->Xmin);
+         for (j=0;j<height;j++) {
+            for (i=0;i<width;i+=4) {
+               row[i+0] = r;
+               row[i+1] = g;
+               row[i+2] = b;
+               row[i+3] = a;
+	    }
+            row += 4 * ctx->DrawBuffer->Width;
+	 }
+      }
+      else {
+	 /* clear whole buffer */
+	 if (ctx->Accum.ClearColor[0]==0.0 &&
+	     ctx->Accum.ClearColor[1]==0.0 &&
+	     ctx->Accum.ClearColor[2]==0.0 &&
+	     ctx->Accum.ClearColor[3]==0.0) {
+	    /* Black */
+	    BZERO( ctx->DrawBuffer->Accum, buffersize * 4 * sizeof(GLaccum) );
+	 }
+	 else {
+	    /* Not black */
+	    GLaccum *acc, r, g, b, a;
+	    GLuint i;
+
+	    acc = ctx->DrawBuffer->Accum;
+	    r = (GLaccum) (ctx->Accum.ClearColor[0] * acc_scale);
+	    g = (GLaccum) (ctx->Accum.ClearColor[1] * acc_scale);
+	    b = (GLaccum) (ctx->Accum.ClearColor[2] * acc_scale);
+	    a = (GLaccum) (ctx->Accum.ClearColor[3] * acc_scale);
+	    for (i=0;i<buffersize;i++) {
+	       *acc++ = r;
+	       *acc++ = g;
+	       *acc++ = b;
+	       *acc++ = a;
+	    }
+	 }
+      }
+
+      /* update optimized accum state vars */
+      if (ctx->Accum.ClearColor[0] == 0.0 && ctx->Accum.ClearColor[1] == 0.0 &&
+          ctx->Accum.ClearColor[2] == 0.0 && ctx->Accum.ClearColor[3] == 0.0) {
+#ifdef USE_OPTIMIZED_ACCUM
+         ctx->IntegerAccumMode = GL_TRUE;
+#else
+         ctx->IntegerAccumMode = GL_FALSE;
+#endif
+         ctx->IntegerAccumScaler = 0.0;  /* denotes empty accum buffer */
+      }
+      else {
+         ctx->IntegerAccumMode = GL_FALSE;
+      }
+   }
+}
+
+
 void
 _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
 	       GLint xpos, GLint ypos, 
@@ -133,8 +244,13 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
    const GLfloat fChanMax = (1 << (sizeof(GLchan) * 8)) - 1;
    
 
+   if (SWRAST_CONTEXT(ctx)->NewState)
+      _swrast_validate_derived( ctx );
+
    if (!ctx->DrawBuffer->Accum) {
-      _mesa_warning(ctx, "Calling glAccum() without an accumulation buffer (low memory?)");
+      _mesa_warning(ctx, 
+		    "Calling glAccum() without an accumulation "
+		    "buffer (low memory?)");
       return;
    }
 
@@ -387,113 +503,5 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
 
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glAccum" );
-   }
-}
-
-
-
-/*
- * Clear the accumulation Buffer.
- */
-void
-_mesa_clear_accum_buffer( GLcontext *ctx )
-{
-   GLuint buffersize;
-   GLfloat acc_scale;
-
-   if (ctx->Visual.AccumRedBits==0) {
-      /* No accumulation buffer! */
-      return;
-   }
-
-   if (sizeof(GLaccum)==1) {
-      acc_scale = 127.0;
-   }
-   else if (sizeof(GLaccum)==2) {
-      acc_scale = 32767.0;
-   }
-   else {
-      /* sizeof(GLaccum) > 2 (Cray) */
-      acc_scale = (float) SHRT_MAX;
-   }
-
-   /* number of pixels */
-   buffersize = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height;
-
-   if (!ctx->DrawBuffer->Accum) {
-      /* try to alloc accumulation buffer */
-      ctx->DrawBuffer->Accum = (GLaccum *)
-	                   MALLOC( buffersize * 4 * sizeof(GLaccum) );
-   }
-
-   if (ctx->DrawBuffer->Accum) {
-      if (ctx->Scissor.Enabled) {
-	 /* Limit clear to scissor box */
-	 GLaccum r, g, b, a;
-	 GLint i, j;
-         GLint width, height;
-         GLaccum *row;
-	 r = (GLaccum) (ctx->Accum.ClearColor[0] * acc_scale);
-	 g = (GLaccum) (ctx->Accum.ClearColor[1] * acc_scale);
-	 b = (GLaccum) (ctx->Accum.ClearColor[2] * acc_scale);
-	 a = (GLaccum) (ctx->Accum.ClearColor[3] * acc_scale);
-         /* size of region to clear */
-         width = 4 * (ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin);
-         height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin;
-         /* ptr to first element to clear */
-         row = ctx->DrawBuffer->Accum
-               + 4 * (ctx->DrawBuffer->Ymin * ctx->DrawBuffer->Width
-                      + ctx->DrawBuffer->Xmin);
-         for (j=0;j<height;j++) {
-            for (i=0;i<width;i+=4) {
-               row[i+0] = r;
-               row[i+1] = g;
-               row[i+2] = b;
-               row[i+3] = a;
-	    }
-            row += 4 * ctx->DrawBuffer->Width;
-	 }
-      }
-      else {
-	 /* clear whole buffer */
-	 if (ctx->Accum.ClearColor[0]==0.0 &&
-	     ctx->Accum.ClearColor[1]==0.0 &&
-	     ctx->Accum.ClearColor[2]==0.0 &&
-	     ctx->Accum.ClearColor[3]==0.0) {
-	    /* Black */
-	    BZERO( ctx->DrawBuffer->Accum, buffersize * 4 * sizeof(GLaccum) );
-	 }
-	 else {
-	    /* Not black */
-	    GLaccum *acc, r, g, b, a;
-	    GLuint i;
-
-	    acc = ctx->DrawBuffer->Accum;
-	    r = (GLaccum) (ctx->Accum.ClearColor[0] * acc_scale);
-	    g = (GLaccum) (ctx->Accum.ClearColor[1] * acc_scale);
-	    b = (GLaccum) (ctx->Accum.ClearColor[2] * acc_scale);
-	    a = (GLaccum) (ctx->Accum.ClearColor[3] * acc_scale);
-	    for (i=0;i<buffersize;i++) {
-	       *acc++ = r;
-	       *acc++ = g;
-	       *acc++ = b;
-	       *acc++ = a;
-	    }
-	 }
-      }
-
-      /* update optimized accum state vars */
-      if (ctx->Accum.ClearColor[0] == 0.0 && ctx->Accum.ClearColor[1] == 0.0 &&
-          ctx->Accum.ClearColor[2] == 0.0 && ctx->Accum.ClearColor[3] == 0.0) {
-#ifdef USE_OPTIMIZED_ACCUM
-         ctx->IntegerAccumMode = GL_TRUE;
-#else
-         ctx->IntegerAccumMode = GL_FALSE;
-#endif
-         ctx->IntegerAccumScaler = 0.0;  /* denotes empty accum buffer */
-      }
-      else {
-         ctx->IntegerAccumMode = GL_FALSE;
-      }
    }
 }

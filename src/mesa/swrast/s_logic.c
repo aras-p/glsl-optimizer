@@ -1,4 +1,4 @@
-/* $Id: s_logic.c,v 1.1 2000/10/31 18:00:04 keithw Exp $ */
+/* $Id: s_logic.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,7 @@
 #include "macros.h"
 
 #include "s_alphabuf.h"
+#include "s_context.h"
 #include "s_logic.h"
 #include "s_pb.h"
 #include "s_span.h"
@@ -353,7 +354,7 @@ _mesa_logicop_rgba_pixels( GLcontext *ctx,
 {
    GLchan dest[PB_SIZE][4];
    (*ctx->Driver.ReadRGBAPixels)( ctx, n, x, y, dest, mask );
-   if (ctx->RasterMask & ALPHABUF_BIT) {
+   if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
       _mesa_read_alpha_pixels( ctx, n, x, y, dest, mask );
    }
    rgba_logicop( ctx, n, mask, (GLuint *) rgba, (const GLuint *) dest );

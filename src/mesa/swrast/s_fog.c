@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.1 2000/10/31 18:00:04 keithw Exp $ */
+/* $Id: s_fog.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,6 +31,7 @@
 #include "macros.h"
 #include "mmath.h"
 
+#include "s_context.h"
 #include "s_fog.h"
 
 
@@ -105,8 +106,8 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
    GLfloat d = ctx->ProjectionMatrix.m[14];
    GLuint i;
 
-   GLfloat tz = ctx->Viewport.WindowMap.m[MAT_TZ];
-   GLfloat szInv = 1.0F / ctx->Viewport.WindowMap.m[MAT_SZ];
+   GLfloat tz = ctx->Viewport._WindowMap.m[MAT_TZ];
+   GLfloat szInv = 1.0F / ctx->Viewport._WindowMap.m[MAT_SZ];
 
    switch (ctx->Fog.Mode) {
       case GL_LINEAR:
