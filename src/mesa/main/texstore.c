@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.51 2003/01/28 00:10:41 brianp Exp $ */
+/* $Id: texstore.c,v 1.52 2003/02/06 13:50:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -194,6 +194,7 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
           texDestFormat == GL_ALPHA ||
           texDestFormat == GL_RGB ||
           texDestFormat == GL_RGBA ||
+          texDestFormat == GL_COLOR_INDEX ||
           texDestFormat == GL_DEPTH_COMPONENT);
    ASSERT(texDestAddr);
    ASSERT(srcWidth >= 1);
