@@ -61,7 +61,7 @@ static void r128SetTexImages( r128ContextPtr rmesa,
    assert(baseImage);
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API )
-      fprintf( stderr, "%s( %p )\n", __FUNCTION__, tObj );
+      fprintf( stderr, "%s( %p )\n", __FUNCTION__, (void *) tObj );
 
    switch (baseImage->TexFormat->MesaFormat) {
    case MESA_FORMAT_ARGB8888:
@@ -204,7 +204,7 @@ static GLboolean r128UpdateTextureEnv( GLcontext *ctx, int unit )
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "%s( %p, %d )\n",
-	       __FUNCTION__, ctx, unit );
+	       __FUNCTION__, (void *) ctx, (void *) unit );
    }
 
    if ( unit == 0 ) {

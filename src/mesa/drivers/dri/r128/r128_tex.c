@@ -147,7 +147,7 @@ static r128TexObjPtr r128AllocTexObj( struct gl_texture_object *texObj )
    r128TexObjPtr t;
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
-      fprintf( stderr, "%s( %p )\n", __FUNCTION__, texObj );
+      fprintf( stderr, "%s( %p )\n", __FUNCTION__, (void *) texObj );
    }
 
    t = (r128TexObjPtr) CALLOC_STRUCT( r128_tex_obj );
@@ -557,7 +557,7 @@ static void r128BindTexture( GLcontext *ctx, GLenum target,
 			       struct gl_texture_object *tObj )
 {
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
-      fprintf( stderr, "%s( %p ) unit=%d\n", __FUNCTION__, tObj,
+      fprintf( stderr, "%s( %p ) unit=%d\n", __FUNCTION__, (void *) tObj,
 	       ctx->Texture.CurrentUnit );
    }
 

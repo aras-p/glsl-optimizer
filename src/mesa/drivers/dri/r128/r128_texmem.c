@@ -245,7 +245,7 @@ void r128UploadTexImages( r128ContextPtr rmesa, r128TexObjPtr t )
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "%s( %p, %p )\n",
-	       __FUNCTION__, rmesa->glCtx, t );
+	       __FUNCTION__, (void *) rmesa->glCtx, (void *) t );
    }
 
    assert(t);
