@@ -36,6 +36,10 @@
 #include "texstore.h"
 
 
+static struct gl_frame_buffer_object DummyFramebuffer;
+static struct gl_render_buffer_object DummyRenderbuffer;
+
+
 #define IS_CUBE_FACE(TARGET) \
    ((TARGET) >= GL_TEXTURE_CUBE_MAP_POSITIVE_X && \
     (TARGET) <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z)
@@ -49,7 +53,7 @@ lookup_renderbuffer(GLcontext *ctx, GLuint id)
 {
    struct gl_render_buffer_object *rb;
 
-   if (!id == 0)
+   if (id == 0)
       return NULL;
 
    rb = (struct gl_render_buffer_object *)
@@ -66,7 +70,7 @@ lookup_framebuffer(GLcontext *ctx, GLuint id)
 {
    struct gl_frame_buffer_object *fb;
 
-   if (!id == 0)
+   if (id == 0)
       return NULL;
 
    fb = (struct gl_frame_buffer_object *)
@@ -203,7 +207,7 @@ set_renderbuffer_attachment(GLcontext *ctx,
 }
 
 
-GLboolean
+GLboolean GLAPIENTRY
 _mesa_IsRenderbufferEXT(GLuint renderbuffer)
 {
    struct gl_render_buffer_object *rb;
@@ -216,7 +220,7 @@ _mesa_IsRenderbufferEXT(GLuint renderbuffer)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
 {
    struct gl_render_buffer_object *newRb, *oldRb;
@@ -232,6 +236,10 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
 
    if (renderbuffer) {
       newRb = lookup_renderbuffer(ctx, renderbuffer);
+      if (newRb == &DummyRenderbuffer) {
+         /* ID was reserved, but no real renderbuffer object made yet */
+         newRb = NULL;
+      }
       if (!newRb) {
 	 /* create new renderbuffer object */
 	 newRb = new_renderbuffer(ctx, renderbuffer);
@@ -239,6 +247,7 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindRenderbufferEXT");
 	    return;
 	 }
+         _mesa_HashInsert(ctx->Shared->RenderBuffers, renderbuffer, newRb);
       }
       newRb->RefCount++;
    }
@@ -254,11 +263,13 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
       }
    }
 
+   ASSERT(newRb != &DummyRenderbuffer);
+
    ctx->CurrentRenderbuffer = newRb;
 }
 
 
-void
+void GLAPIENTRY
 _mesa_DeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers)
 {
    GLint i;
@@ -274,12 +285,14 @@ _mesa_DeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers)
 	    /* remove from hash table immediately, to free the ID */
 	    _mesa_HashRemove(ctx->Shared->RenderBuffers, renderbuffers[i]);
 
-	    /* But the object will not be freed until it's no longer bound in
-	     * any context.
-	     */
-	    rb->RefCount--;
-	    if (rb->RefCount == 0) {
-	       _mesa_free(rb); /* XXX call device driver function */
+            if (rb != &DummyRenderbuffer) {
+               /* But the object will not be freed until it's no longer
+                * bound in any context.
+                */
+               rb->RefCount--;
+               if (rb->RefCount == 0) {
+                  _mesa_free(rb); /* XXX call device driver function */
+               }
 	    }
 	 }
       }
@@ -287,7 +300,7 @@ _mesa_DeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -307,17 +320,11 @@ _mesa_GenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers)
    first = _mesa_HashFindFreeKeyBlock(ctx->Shared->RenderBuffers, n);
 
    for (i = 0; i < n; i++) {
-      struct gl_render_buffer_object *rb;
       GLuint name = first + i;
-      rb = new_renderbuffer(ctx, name);
-      if (!rb) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenRenderbuffersEXT");
-         return;
-      }
 
-      /* insert into hash table */
+      /* insert dummy placeholder into hash table */
       _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
-      _mesa_HashInsert(ctx->Shared->RenderBuffers, name, rb);
+      _mesa_HashInsert(ctx->Shared->RenderBuffers, name, &DummyRenderbuffer);
       _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
       renderbuffers[i] = name;
@@ -398,7 +405,7 @@ base_internal_format(GLcontext *ctx, GLenum internalFormat)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
                              GLsizei width, GLsizei height)
 {
@@ -452,7 +459,7 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -489,7 +496,7 @@ _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
 }
 
 
-GLboolean
+GLboolean GLAPIENTRY
 _mesa_IsFramebufferEXT(GLuint framebuffer)
 {
    struct gl_frame_buffer_object *fb;
@@ -502,7 +509,7 @@ _mesa_IsFramebufferEXT(GLuint framebuffer)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 {
    struct gl_frame_buffer_object *newFb, *oldFb;
@@ -518,6 +525,9 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 
    if (framebuffer) {
       newFb = lookup_framebuffer(ctx, framebuffer);
+      if (newFb == &DummyFramebuffer) {
+         newFb = NULL;
+      }
       if (!newFb) {
 	 /* create new framebuffer object */
 	 newFb = new_framebuffer(ctx, framebuffer);
@@ -525,6 +535,7 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindFramebufferEXT");
 	    return;
 	 }
+         _mesa_HashInsert(ctx->Shared->FrameBuffers, framebuffer, newFb);
       }
       newFb->RefCount++;
    }
@@ -540,11 +551,13 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
       }
    }
 
+   ASSERT(newFb != &DummyFramebuffer);
+
    ctx->CurrentFramebuffer = newFb;
 }
 
 
-void
+void GLAPIENTRY
 _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
 {
    GLint i;
@@ -560,12 +573,14 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
 	    /* remove from hash table immediately, to free the ID */
 	    _mesa_HashRemove(ctx->Shared->FrameBuffers, framebuffers[i]);
 
-	    /* But the object will not be freed until it's no longer bound in
-	     * any context.
-	     */
-	    fb->RefCount--;
-	    if (fb->RefCount == 0) {
-	       _mesa_free(fb); /* XXX call device driver function */
+            if (fb != &DummyFramebuffer) {
+               /* But the object will not be freed until it's no longer
+                * bound in any context.
+                */
+               fb->RefCount--;
+               if (fb->RefCount == 0) {
+                  _mesa_free(fb); /* XXX call device driver function */
+               }
 	    }
 	 }
       }
@@ -573,7 +588,7 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
 }
 
 
-void
+void GLAPIENTRY
 _mesa_GenFramebuffersEXT(GLsizei n, GLuint *framebuffers)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -593,17 +608,11 @@ _mesa_GenFramebuffersEXT(GLsizei n, GLuint *framebuffers)
    first = _mesa_HashFindFreeKeyBlock(ctx->Shared->FrameBuffers, n);
 
    for (i = 0; i < n; i++) {
-      struct gl_frame_buffer_object *fb;
       GLuint name = first + i;
-      fb = new_framebuffer(ctx, name);
-      if (!fb) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenFramebuffersEXT");
-         return;
-      }
 
       /* insert into hash table */
       _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
-      _mesa_HashInsert(ctx->Shared->FrameBuffers, name, fb);
+      _mesa_HashInsert(ctx->Shared->FrameBuffers, name, &DummyFramebuffer);
       _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
       framebuffers[i] = name;
@@ -612,7 +621,7 @@ _mesa_GenFramebuffersEXT(GLsizei n, GLuint *framebuffers)
 
 
 
-GLenum
+GLenum GLAPIENTRY
 _mesa_CheckFramebufferStatusEXT(GLenum target)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -688,7 +697,7 @@ error_check_framebuffer_texture(GLcontext *ctx, GLuint dims,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_FramebufferTexture1DEXT(GLenum target, GLenum attachment,
                               GLenum textarget, GLuint texture, GLint level)
 {
@@ -733,7 +742,7 @@ _mesa_FramebufferTexture1DEXT(GLenum target, GLenum attachment,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
                               GLenum textarget, GLuint texture, GLint level)
 {
@@ -783,7 +792,7 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
 }
 
 
-void
+void GLAPIENTRY
 _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
                               GLenum textarget, GLuint texture,
                               GLint level, GLint zoffset)
@@ -832,13 +841,11 @@ _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
 }
 
 
-
-void
+void GLAPIENTRY
 _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
                                  GLenum renderbufferTarget,
                                  GLuint renderbuffer)
 {
-   struct gl_render_buffer_object *rb;
    struct gl_render_buffer_attachment *att;
    GET_CURRENT_CONTEXT(ctx);
 
@@ -861,18 +868,6 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
       return;
    }
 
-   if (renderbuffer) {
-      rb = lookup_renderbuffer(ctx, renderbuffer);
-      if (!rb) {
-	 _mesa_error(ctx, GL_INVALID_VALUE,
-		     "glFramebufferRenderbufferEXT(renderbuffer)");
-	 return;
-      }
-   }
-   else {
-      rb = NULL; /* default renderbuffer */
-   }
-
    att = get_attachment(ctx, attachment);
    if (att == NULL) {
       _mesa_error(ctx, GL_INVALID_ENUM,
@@ -880,13 +875,23 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
       return;
    }
 
-   remove_attachment(ctx, att);
-   set_renderbuffer_attachment(ctx, att, rb);
+   if (renderbuffer) {
+      struct gl_render_buffer_object *rb;
+      rb = lookup_renderbuffer(ctx, renderbuffer);
+      if (!rb) {
+	 _mesa_error(ctx, GL_INVALID_VALUE,
+		     "glFramebufferRenderbufferEXT(renderbuffer)");
+	 return;
+      }
+      set_renderbuffer_attachment(ctx, att, rb);
+   }
+   else {
+      remove_attachment(ctx, att);
+   }
 }
 
 
-
-void
+void GLAPIENTRY
 _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
                                              GLenum pname, GLint *params)
 {
@@ -965,8 +970,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
 }
 
 
-
-void
+void GLAPIENTRY
 _mesa_GenerateMipmapEXT(GLenum target)
 {
    struct gl_texture_unit *texUnit;
