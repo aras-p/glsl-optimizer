@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.7 2000/11/05 18:26:12 keithw Exp $ */
+/* $Id: xm_tri.c,v 1.8 2000/11/06 17:28:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1450,84 +1450,6 @@ static void flat_LOOKUP8_triangle( GLcontext *ctx,
 }
 
 
-
-#if 0
-/*
- * This function is called if we're about to render triangles into an
- * X window/pixmap.  It sets the polygon stipple pattern if enabled.
- */
-static void setup_x_polygon_options( GLcontext *ctx )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   int fill_type;
-
-   if (ctx->Polygon.StippleFlag) {
-      if (xmesa->xm_buffer->stipple_pixmap == 0) {
-         /* Allocate polygon stippling stuff once for this context. */
-         XMesaBuffer b = xmesa->xm_buffer;
-         b->stipple_pixmap = XMesaCreatePixmap( xmesa->display,
-						b->buffer, 32, 32, 1 );
-#ifdef XFree86Server
-	 b->stipple_gc = CreateScratchGC(xmesa->display, 1);
-#else
-         b->stipple_gc = XCreateGC(xmesa->display, b->stipple_pixmap, 0, NULL);
-#endif
-	 XMesaSetFunction(xmesa->display, b->stipple_gc, GXcopy);
-	 XMesaSetForeground(xmesa->display, b->stipple_gc, 1);
-	 XMesaSetBackground(xmesa->display, b->stipple_gc, 0);
-      }
-
-      /*
-       * NOTE: We don't handle the following here!
-       *    GL_UNPACK_SWAP_BYTES
-       *    GL_UNPACK_LSB_FIRST
-       */
-      /* Copy Mesa stipple pattern to an XImage then to Pixmap */
-      {
-         XMesaImage *stipple_ximage;
-         GLuint stipple[32];
-         int i;
-         int shift = xmesa->xm_buffer->height % 32;
-         for (i=0;i<32;i++) {
-            stipple[31-i] = ctx->PolygonStipple[(i+shift) % 32];
-         }
-#ifdef XFree86Server
-         stipple_ximage = XMesaCreateImage(1, 32, 32, (char *)stipple);
-#else
-         stipple_ximage = XCreateImage( xmesa->display,
-                                        xmesa->xm_visual->visinfo->visual,
-                                        1, ZPixmap, 0,
-                                        (char *)stipple,
-                                        32, 32, 8, 0 );
-         stipple_ximage->byte_order = LSBFirst;
-         stipple_ximage->bitmap_bit_order = LSBFirst;
-         stipple_ximage->bitmap_unit = 32;
-#endif
-         XMesaPutImage( xmesa->display,
-			(XMesaDrawable)xmesa->xm_buffer->stipple_pixmap,
-			xmesa->xm_buffer->stipple_gc,
-			stipple_ximage, 0, 0, 0, 0, 32, 32 );
-         stipple_ximage->data = NULL;
-         XMesaDestroyImage( stipple_ximage );
-      }
-
-      XMesaSetStipple( xmesa->display, xmesa->xm_buffer->gc1,
-		       xmesa->xm_buffer->stipple_pixmap );
-      XMesaSetStipple( xmesa->display, xmesa->xm_buffer->gc2,
-		       xmesa->xm_buffer->stipple_pixmap );
-      fill_type = FillStippled;
-   }
-   else {
-      fill_type = FillSolid;
-   }
-
-   XMesaSetFillStyle( xmesa->display, xmesa->xm_buffer->gc1, fill_type );
-   XMesaSetFillStyle( xmesa->display, xmesa->xm_buffer->gc2, fill_type );
-}
-#endif
-
-
-
 #ifdef DEBUG
 void
 _xmesa_print_triangle_func( swrast_tri_func triFunc )
@@ -1627,8 +1549,9 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
 
    (void) kernel1;
 
-   if (ctx->Polygon.SmoothFlag)     return (swrast_tri_func)NULL;
-   if (ctx->Texture._ReallyEnabled)  return (swrast_tri_func)NULL;
+   if (ctx->RenderMode != GL_RENDER)  return (swrast_tri_func) NULL;
+   if (ctx->Polygon.SmoothFlag)       return (swrast_tri_func) NULL;
+   if (ctx->Texture._ReallyEnabled)   return (swrast_tri_func) NULL;
 
    if (xmesa->xm_buffer->buffer==XIMAGE) {
       if (   ctx->Light.ShadeModel==GL_SMOOTH
@@ -1759,20 +1682,7 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
    }
    else {
       /* draw to pixmap */
-#if 0
-      /* XXX have to disable this because X's rasterization rules
-       * don't match software Mesa's.  This causes a buffer invariance
-       * test failure in the conformance tests.
-       * In the future, we might provide a config option to enable this.
-       */
-      if (ctx->Light.ShadeModel==GL_FLAT && ctx->_RasterMask==0) {
-         if (ctx->Color.DitherFlag && depth < 24)
-            return (swrast_tri_func)NULL;
-         setup_x_polygon_options( ctx );
-         return flat_pixmap_triangle;
-      }
-#endif
-      return (swrast_tri_func)NULL;
+      return (swrast_tri_func) NULL;
    }
 }
 

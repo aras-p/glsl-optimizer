@@ -1,4 +1,4 @@
-/* $Id: xm_line.c,v 1.7 2000/11/06 15:52:48 brianp Exp $ */
+/* $Id: xm_line.c,v 1.8 2000/11/06 17:28:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,7 +95,8 @@ void xmesa_choose_point( GLcontext *ctx )
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   if (ctx->Point.Size == 1.0F && !ctx->Point.SmoothFlag 
+   if (ctx->RenderMode == GL_RENDER
+       && ctx->Point.Size == 1.0F && !ctx->Point.SmoothFlag 
        && swrast->_RasterMask == 0
        && !ctx->Texture._ReallyEnabled
        && xmesa->xm_buffer->buffer != XIMAGE) {
@@ -571,89 +572,6 @@ static void flat_HPCR_z_line( GLcontext *ctx,
 }
 
 
-#if 0
-/*
- * Examine ctx->Line attributes and set xmesa->xm_buffer->gc1
- * and xmesa->xm_buffer->gc2 appropriately.
- */
-static void setup_x_line_options( GLcontext *ctx )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   int i, state, state0, new_state, len, offs;
-   int tbit;
-   char *dptr;
-   int n_segments = 0;
-   char dashes[20];
-   int line_width, line_style;
-
-   /*** Line Stipple ***/
-   if (ctx->Line.StippleFlag) {
-      const int pattern = ctx->Line.StipplePattern;
-
-      dptr = dashes;
-      state0 = state = ((pattern & 1) != 0);
-
-      /* Decompose the pattern */
-      for (i=1,tbit=2,len=1;i<16;++i,tbit=(tbit<<1))
-	{
-	  new_state = ((tbit & pattern) != 0);
-	  if (state != new_state)
-	    {
-	      *dptr++ = ctx->Line.StippleFactor * len;
-	      len = 1;
-	      state = new_state;
-	    }
-	  else
-	    ++len;
-	}
-      *dptr = ctx->Line.StippleFactor * len;
-      n_segments = 1 + (dptr - dashes);
-
-      /* ensure an even no. of segments, or X may toggle on/off for consecutive patterns */
-      /* if (n_segments & 1)  dashes [n_segments++] = 0;  value of 0 not allowed in dash list */
-
-      /* Handle case where line style starts OFF */
-      if (state0 == 0)
-        offs = dashes[0];
-      else
-        offs = 0;
-
-#if 0
-fprintf (stderr, "input pattern: 0x%04x, offset %d, %d segments:", pattern, offs, n_segments);
-for (i = 0;  i < n_segments;  i++)
-fprintf (stderr, " %d", dashes[i]);
-fprintf (stderr, "\n");
-#endif
-
-      XMesaSetDashes( xmesa->display, xmesa->xm_buffer->gc1,
-		      offs, dashes, n_segments );
-      XMesaSetDashes( xmesa->display, xmesa->xm_buffer->gc2,
-		      offs, dashes, n_segments );
-
-      line_style = LineOnOffDash;
-   }
-   else {
-      line_style = LineSolid;
-   }
-
-   /*** Line Width ***/
-   line_width = (int) (ctx->Line.Width+0.5F);
-   if (line_width < 2) {
-      /* Use fast lines when possible */
-      line_width = 0;
-   }
-
-   /*** Set GC attributes ***/
-   XMesaSetLineAttributes( xmesa->display, xmesa->xm_buffer->gc1,
-			   line_width, line_style, CapButt, JoinBevel);
-   XMesaSetLineAttributes( xmesa->display, xmesa->xm_buffer->gc2,
-			   line_width, line_style, CapButt, JoinBevel);
-   XMesaSetFillStyle( xmesa->display, xmesa->xm_buffer->gc1, FillSolid );
-   XMesaSetFillStyle( xmesa->display, xmesa->xm_buffer->gc2, FillSolid );
-}
-#endif
-
- 
 static swrast_line_func get_line_func( GLcontext *ctx )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
@@ -663,11 +581,11 @@ static swrast_line_func get_line_func( GLcontext *ctx )
    (void) DitherValues;  /* silence unused var warning */
    (void) kernel1;  /* silence unused var warning */
 
-   if (ctx->Line.SmoothFlag)              return (swrast_line_func)NULL;
-   if (ctx->Texture._ReallyEnabled)        return (swrast_line_func)NULL;
-   if (ctx->Light.ShadeModel!=GL_FLAT)    return (swrast_line_func)NULL;
-   /* X line stippling doesn't match OpenGL stippling */
-   if (ctx->Line.StippleFlag==GL_TRUE)    return (swrast_line_func)NULL;
+   if (ctx->RenderMode != GL_RENDER)      return (swrast_line_func) NULL;
+   if (ctx->Line.SmoothFlag)              return (swrast_line_func) NULL;
+   if (ctx->Texture._ReallyEnabled)       return (swrast_line_func) NULL;
+   if (ctx->Light.ShadeModel != GL_FLAT)  return (swrast_line_func) NULL;
+   if (ctx->Line.StippleFlag)             return (swrast_line_func) NULL;
 
    if (xmesa->xm_buffer->buffer==XIMAGE
        && swrast->_RasterMask==DEPTH_BIT
@@ -689,9 +607,9 @@ static swrast_line_func get_line_func( GLcontext *ctx )
          case PF_DITHER_5R6G5B:
             return flat_DITHER_5R6G5B_z_line;
          case PF_DITHER:
-            return (depth==8) ? flat_DITHER8_z_line : (swrast_line_func)NULL;
+            return (depth==8) ? flat_DITHER8_z_line : (swrast_line_func) NULL;
          case PF_LOOKUP:
-            return (depth==8) ? flat_LOOKUP8_z_line : (swrast_line_func)NULL;
+            return (depth==8) ? flat_LOOKUP8_z_line : (swrast_line_func) NULL;
          case PF_HPCR:
             return flat_HPCR_z_line;
          default:
@@ -715,26 +633,17 @@ static swrast_line_func get_line_func( GLcontext *ctx )
          case PF_DITHER_5R6G5B:
             return flat_DITHER_5R6G5B_line;
          case PF_DITHER:
-            return (depth==8) ? flat_DITHER8_line : (swrast_line_func)NULL;
+            return (depth==8) ? flat_DITHER8_line : (swrast_line_func) NULL;
          case PF_LOOKUP:
-            return (depth==8) ? flat_LOOKUP8_line : (swrast_line_func)NULL;
+            return (depth==8) ? flat_LOOKUP8_line : (swrast_line_func) NULL;
          case PF_HPCR:
             return flat_HPCR_line;
 	 default:
 	    return (swrast_line_func)NULL;
       }
    }
-#if 0
-   /* XXX have to disable this because X's rasterization rules don't match
-    * software Mesa's.  This causes the linehv.c conformance test to fail.
-    * In the future, we might provide a config option to enable this.
-    */
-   if (xmesa->xm_buffer->buffer!=XIMAGE && ctx->_RasterMask==0) {
-      setup_x_line_options( ctx );
-      return flat_pixmap_line;
-   }
-#endif
-   return (swrast_line_func)NULL;
+
+   return (swrast_line_func) NULL;
 }
 
 /* Override for the swrast line-selection function.  Try to use one
@@ -750,11 +659,23 @@ void xmesa_choose_line( GLcontext *ctx )
 }
 
 
-#define XMESA_NEW_POINT  (_NEW_POINT|_SWRAST_NEW_RASTERMASK)
-#define XMESA_NEW_LINE   (_NEW_LINE|_NEW_TEXTURE|_NEW_LIGHT|\
-                          _NEW_DEPTH|_SWRAST_NEW_RASTERMASK)
-#define XMESA_NEW_TRIANGLE (_NEW_POLYGON|_NEW_TEXTURE|_NEW_LIGHT|\
-                            _SWRAST_NEW_RASTERMASK|_NEW_DEPTH)
+#define XMESA_NEW_POINT  (_NEW_POINT | \
+                          _NEW_RENDERMODE | \
+                          _SWRAST_NEW_RASTERMASK)
+
+#define XMESA_NEW_LINE   (_NEW_LINE | \
+                          _NEW_TEXTURE | \
+                          _NEW_LIGHT | \
+                          _NEW_DEPTH | \
+                          _NEW_RENDERMODE | \
+                          _SWRAST_NEW_RASTERMASK)
+
+#define XMESA_NEW_TRIANGLE (_NEW_POLYGON | \
+                            _NEW_TEXTURE | \
+                            _NEW_LIGHT | \
+                            _NEW_DEPTH | \
+                            _NEW_RENDERMODE | \
+                            _SWRAST_NEW_RASTERMASK)
 
 
 /* Extend the software rasterizer with our line/point/triangle 
