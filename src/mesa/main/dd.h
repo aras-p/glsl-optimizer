@@ -511,6 +511,11 @@ struct dd_function_table {
     */
    struct gl_texture_image * (*NewTextureImage)( GLcontext *ctx );
 
+   /** 
+    * Called to free tImage->Data.
+    */
+   void (*FreeTexImageData)( GLcontext *ctx, struct gl_texture_image *tImage );
+
    /**
     * Called by glAreTextureResident().
     */

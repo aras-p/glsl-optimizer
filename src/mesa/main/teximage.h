@@ -47,7 +47,12 @@ _mesa_new_texture_image( GLcontext *ctx );
 
 
 extern void
-_mesa_delete_texture_image( struct gl_texture_image *teximage );
+_mesa_delete_texture_image( GLcontext *ctx, struct gl_texture_image *teximage );
+
+
+extern void
+_mesa_free_texture_image_data( GLcontext *ctx, 
+			       struct gl_texture_image *texImage );
 
 
 extern void

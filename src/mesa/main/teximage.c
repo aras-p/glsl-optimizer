@@ -571,21 +571,39 @@ _mesa_new_texture_image( GLcontext *ctx )
 
 
 /**
+ * Free texture image data.
+ *
+ * \param teximage texture image.
+ *
+ * Free the texture image data if it's not marked as client data.
+ */
+void
+_mesa_free_texture_image_data( GLcontext *ctx, struct gl_texture_image *texImage )
+{
+   if (texImage->Data && !texImage->IsClientData) {
+      /* free the old texture data */
+      MESA_PBUFFER_FREE(texImage->Data);
+   }
+
+   texImage->Data = NULL;
+}
+
+
+/**
  * Free texture image.
  *
  * \param teximage texture image.
  *
- * Free the texture image structure and the associated image data if it's not
- * marked as client data.
+ * Free the texture image structure and the associated image data.
  */
 void
-_mesa_delete_texture_image( struct gl_texture_image *teximage )
+_mesa_delete_texture_image( GLcontext *ctx, struct gl_texture_image *texImage )
 {
-   if (teximage->Data && !teximage->IsClientData) {
-      MESA_PBUFFER_FREE( teximage->Data );
-      teximage->Data = NULL;
+   if (texImage->Data) {
+      ctx->Driver.FreeTexImageData( ctx, texImage );
    }
-   FREE( teximage );
+   ASSERT(texImage->Data == NULL);
+   FREE( texImage );
 }
 
 
@@ -2024,11 +2042,10 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
          return;
       }
-      else if (texImage->Data && !texImage->IsClientData) {
-         /* free the old texture data */
-         MESA_PBUFFER_FREE(texImage->Data);
+      else if (texImage->Data) {
+	 ctx->Driver.FreeTexImageData( ctx, texImage );
       }
-      texImage->Data = NULL;
+      ASSERT(texImage->Data == NULL);
       clear_teximage_fields(texImage); /* not really needed, but helpful */
       _mesa_init_teximage_fields(ctx, target, texImage,
                                  postConvWidth, 1, 1,
@@ -2124,11 +2141,10 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
          return;
       }
-      else if (texImage->Data && !texImage->IsClientData) {
-         /* free the old texture data */
-         MESA_PBUFFER_FREE(texImage->Data);
+      else if (texImage->Data) {
+	 ctx->Driver.FreeTexImageData( ctx, texImage );
       }
-      texImage->Data = NULL;
+      ASSERT(texImage->Data == NULL);
       clear_teximage_fields(texImage); /* not really needed, but helpful */
       _mesa_init_teximage_fields(ctx, target, texImage,
                                  postConvWidth, postConvHeight, 1,
@@ -2220,10 +2236,10 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
          return;
       }
-      else if (texImage->Data && !texImage->IsClientData) {
-         MESA_PBUFFER_FREE(texImage->Data);
+      else if (texImage->Data) {
+	 ctx->Driver.FreeTexImageData( ctx, texImage );
       }
-      texImage->Data = NULL;
+      ASSERT(texImage->Data == NULL);
       clear_teximage_fields(texImage); /* not really needed, but helpful */
       _mesa_init_teximage_fields(ctx, target, texImage,
                                  width, height, depth,
@@ -2460,11 +2476,10 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
       return;
    }
-   else if (texImage->Data && !texImage->IsClientData) {
-      /* free the old texture data */
-      MESA_PBUFFER_FREE(texImage->Data);
+   else if (texImage->Data) {
+      ctx->Driver.FreeTexImageData( ctx, texImage );
    }
-   texImage->Data = NULL;
+   ASSERT(texImage->Data == NULL);
 
    clear_teximage_fields(texImage); /* not really needed, but helpful */
    _mesa_init_teximage_fields(ctx, target, texImage, postConvWidth, 1, 1,
@@ -2523,11 +2538,10 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
       return;
    }
-   else if (texImage->Data && !texImage->IsClientData) {
-      /* free the old texture data */
-      MESA_PBUFFER_FREE(texImage->Data);
+   else if (texImage->Data) {
+      ctx->Driver.FreeTexImageData( ctx, texImage );
    }
-   texImage->Data = NULL;
+   ASSERT(texImage->Data == NULL);
 
    clear_teximage_fields(texImage); /* not really needed, but helpful */
    _mesa_init_teximage_fields(ctx, target, texImage,
@@ -2873,10 +2887,10 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage1D");
          return;
       }
-      else if (texImage->Data && !texImage->IsClientData) {
-         MESA_PBUFFER_FREE(texImage->Data);
+      else if (texImage->Data) {
+	 ctx->Driver.FreeTexImageData( ctx, texImage );
       }
-      texImage->Data = NULL;
+      ASSERT(texImage->Data == NULL);
 
       _mesa_init_teximage_fields(ctx, target, texImage, width, 1, 1,
                                  border, internalFormat);
@@ -2956,10 +2970,10 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
          return;
       }
-      else if (texImage->Data && !texImage->IsClientData) {
-         MESA_PBUFFER_FREE(texImage->Data);
+      else if (texImage->Data) {
+	 ctx->Driver.FreeTexImageData( ctx, texImage );
       }
-      texImage->Data = NULL;
+      ASSERT(texImage->Data == NULL);
 
       _mesa_init_teximage_fields(ctx, target, texImage, width, height, 1,
                                  border, internalFormat);
@@ -3038,10 +3052,10 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage3D");
          return;
       }
-      else if (texImage->Data && !texImage->IsClientData) {
-         MESA_PBUFFER_FREE(texImage->Data);
+      else if (texImage->Data) {
+	 ctx->Driver.FreeTexImageData( ctx, texImage );
       }
-      texImage->Data = NULL;
+      ASSERT(texImage->Data == NULL);
 
       _mesa_init_teximage_fields(ctx, target, texImage, width, height, depth,
                                  border, internalFormat);
