@@ -1,4 +1,4 @@
-/* $Id: multipal.c,v 1.1 2000/11/18 17:12:33 brianp Exp $ */
+/* $Id: multipal.c,v 1.2 2002/01/16 01:03:25 kschultz Exp $ */
 
 /*
  * GL_ARB_multitexture demo
@@ -12,6 +12,9 @@
 
 /*
  * $Log: multipal.c,v $
+ * Revision 1.2  2002/01/16 01:03:25  kschultz
+ * get tests working on windows (Robert Bergkvist)
+ *
  * Revision 1.1  2000/11/18 17:12:33  brianp
  * test texture palettes with multitexture
  *
@@ -52,6 +55,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
+#define GL_GLEXT_LEGACY
 #include <GL/glut.h>
 
 #include "../util/readtex.c"   /* I know, this is a hack. */

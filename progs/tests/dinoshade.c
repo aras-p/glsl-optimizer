@@ -38,6 +38,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>       /* for cos(), sin(), and sqrt() */
+#ifdef _WIN32
+#include <windows.h>
+#endif
+#define GL_GLEXT_LEGACY
 #include <GL/glut.h>    /* OpenGL Utility Toolkit header */
 
 /* Some <math.h> files do not define M_PI... */
