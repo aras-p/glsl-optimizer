@@ -20,36 +20,65 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP glut makefile v1.0 for Mesa 4.0
+# DOS/DJGPP glut makefile v1.1 for Mesa 4.0
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
 #  Web   : http://www.geocities.com/dborca
 
 
+#
+#  Available options:
+#
+#    Environment variables:
+#	CFLAGS
+#
+#	GLIDE		absolute path to Glide SDK; used with FX.
+#			default = $(TOP)/include/glide3
+#	FX=1		build for 3dfx Glide3; use it if you have the glide
+#			SDK (designed for your platform), and, of course, a
+#			3dfx card... Note that this disables compilation of
+#			actual DMesa code, as Glide does all the stuff!
+#			default = no
+#	MARK		absolute path to original GLUT.
+#			default = $(TOP)/src-glut
+#
+#    Targets:
+#	all:		build GLUT
+#	clean:		remove object files
+#
+
+
+
 .PHONY: all clean
 
 TOP = ..
-CC = gcc
-CFLAGS = -I$(TOP)/include -Wall -W -Wno-unused -mcpu=$(CPU) -ffast-math -O2
-AR = ar
-ARFLAGS = ruv
+GLIDE ?= $(TOP)/include/glide3
+MARK ?= $(TOP)/src-glut
 LIBDIR = $(TOP)/lib
-
-ifeq ($(wildcard $(DJDIR)/lib/dxe2.ld),)
-DXE2GEN =
-else
-DXE2GEN = $(wildcard $(addsuffix /dxe2gen.exe,$(subst ;, ,$(PATH))))
-endif
-
 GLUT_LIB = libglut.a
 GLUT_DXE = glut.dxe
 GLUT_IMP = libiglut.a
 
+CC = gcc
+CFLAGS += -I$(TOP)/include -I$(MARK)
+ifdef FX
+CFLAGS += -D__DOS__ -I$(GLIDE) -DFX -DFX_GLIDE3 -DFXMESA_USE_ARGB
+endif
+
+AR = ar
+ARFLAGS = ru
+
+ifneq ($(wildcard $(DJDIR)/lib/dxe2.ld),)
+DXE2GEN = $(wildcard $(addsuffix /dxe2gen.exe,$(subst ;, ,$(PATH))))
+endif
+
+RM = del
+
 CORE_SOURCES = \
+	bitmap.c \
 	callback.c \
 	color.c \
-	font.c \
 	globals.c \
 	init.c \
 	menu.c \
@@ -66,16 +95,25 @@ PC_HW_SOURCES = \
 	PC_HW/pc_timer.c \
 	PC_HW/pc_irq.S
 
-SOURCES = $(CORE_SOURCES) $(PC_HW_SOURCES)
+MARK_SOURCES = \
+	$(MARK)/glut_8x13.c \
+	$(MARK)/glut_9x15.c \
+	$(MARK)/glut_hel10.c \
+	$(MARK)/glut_hel12.c \
+	$(MARK)/glut_hel18.c \
+	$(MARK)/glut_tr10.c \
+	$(MARK)/glut_tr24.c
+
+SOURCES = $(CORE_SOURCES) $(PC_HW_SOURCES) $(MARK_SOURCES)
 
 OBJECTS = $(addsuffix .o,$(basename $(SOURCES)))
 
 .c.o:
-	gcc -o $@ -c $(CFLAGS) $<
+	$(CC) -o $@ -c $(CFLAGS) $<
 .S.o:
-	gcc -o $@ -c $(CFLAGS) $<
+	$(CC) -o $@ -c $(CFLAGS) $<
 .s.o:
-	gcc -o $@ -c $(CFLAGS) $(<:.s=.S)
+	$(CC) -o $@ -c $(CFLAGS) -x assembler-with-cpp $<
 
 all: $(LIBDIR)/$(GLUT_LIB) $(LIBDIR)/$(GLUT_DXE) $(LIBDIR)/$(GLUT_IMP)
 
@@ -87,28 +125,12 @@ ifeq ($(DXE2GEN),)
 	$(warning Missing DXE2GEN and/or DXE2.LD! You must have DXE2GEN)
 	$(warning somewhere in PATH, and DXE2.LD in DJGPP/LIB directory.)
 else
-	dxe2gen -o $(LIBDIR)/$(GLUT_DXE) -I $(LIBDIR)/$(GLUT_IMP) $(OBJECTS) -D "Mesa DOS GLUT" -U
+	-dxe2gen -o $(LIBDIR)/$(GLUT_DXE) -I $(LIBDIR)/$(GLUT_IMP) $(OBJECTS) -E djgpp_ -E glut -D "Mesa DJGPP GLUT" -U
 endif
 
 clean:
-	-$(RM) *.o
-	-$(RM) PC_HW\*.o
+	-$(RM) $(subst /,\,*.o)
+	-$(RM) $(subst /,\,PC_HW/*.o)
+	-$(RM) $(subst /,\,$(MARK)/*.o)
 
-callback.o: callback.c ../include/GL/glut.h internal.h PC_HW/pc_hw.h
-color.o: color.c ../include/GL/glut.h
-font.o: font.c ../include/GL/glut.h
-globals.o: globals.c ../include/GL/glut.h internal.h PC_HW/pc_hw.h
-init.o: init.c ../include/GL/glut.h internal.h PC_HW/pc_hw.h
-menu.o: menu.c ../include/GL/glut.h
-models.o: models.c ../include/GL/glut.h
-overlay.o: overlay.c ../include/GL/glut.h
-state.o: state.c ../include/GL/glut.h internal.h PC_HW/pc_hw.h
-teapot.o: teapot.c ../include/GL/glut.h
-window.o: window.c ../include/GL/glut.h ../include/GL/dmesa.h internal.h \
-  PC_HW/pc_hw.h
-
-PC_HW/pc_hw.o: PC_HW/pc_hw.c PC_HW/pc_hw.h
-PC_HW/pc_keyb.o: PC_HW/pc_keyb.c PC_HW/pc_hw.h
-PC_HW/pc_mouse.o: PC_HW/pc_mouse.c PC_HW/pc_hw.h
-PC_HW/pc_timer.o: PC_HW/pc_timer.c PC_HW/pc_hw.h
-PC_HW/pc_irq.o: PC_HW/pc_irq.S
+-include depend

@@ -20,31 +20,67 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP core makefile v1.0 for Mesa 4.0
+# DOS/DJGPP core makefile v1.1 for Mesa 4.0
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
 #  Web   : http://www.geocities.com/dborca
 
 
+#
+#  Available options:
+#
+#    Environment variables:
+#	CFLAGS
+#
+#	GLIDE		absolute path to Glide SDK; used with FX.
+#			default = $(TOP)/include/glide3
+#	FX=1		build for 3dfx Glide3; use it if you have the glide
+#			SDK (designed for your platform), and, of course, a
+#			3dfx card... Note that this disables compilation of
+#			actual DMesa code, as Glide does all the stuff!
+#			default = no
+#	HAVE_X86=1	optimize for i386.
+#			default = no
+#	HAVE_MMX=1	MMX instructions; use only if you assembler/compiler
+#			supports MMX instruction set; backwards compatibility
+#			with older processors is still preserved.
+#			default = no
+#	HAVE_SSE=1	(see HAVE_MMX)
+#			default = no
+#	HAVE_3DNOW=1	(see HAVE_MMX)
+#			default = no
+#
+#    Targets:
+#	all:		build GL
+#	clean:		remove object files
+#
+
+
+
 .PHONY: all clean
 
 TOP = ..
-CC = gcc
-CFLAGS = -I$(TOP)/include -I. -Wall -W -Wno-unused -mcpu=$(CPU) -ffast-math -O2
-AR = ar
-ARFLAGS = ruv
+GLIDE ?= $(TOP)/include/glide3
 LIBDIR = $(TOP)/lib
-
-ifeq ($(wildcard $(DJDIR)/lib/dxe2.ld),)
-DXE2GEN =
-else
-DXE2GEN = $(wildcard $(addsuffix /dxe2gen.exe,$(subst ;, ,$(PATH))))
-endif
-
 GL_LIB = libgl.a
 GL_DXE = gl.dxe
 GL_IMP = libigl.a
+
+CC = gcc
+CFLAGS += -I$(TOP)/include -I.
+ifdef FX
+CFLAGS += -D__DOS__ -I$(GLIDE) -DFX -DFX_GLIDE3 -DFXMESA_USE_ARGB
+endif
+
+AR = ar
+ARFLAGS = ru
+
+ifneq ($(wildcard $(DJDIR)/lib/dxe2.ld),)
+DXE2GEN = $(wildcard $(addsuffix /dxe2gen.exe,$(subst ;, ,$(PATH))))
+endif
+
+RM = del
 
 CORE_SOURCES = \
 	swrast_setup/ss_context.c \
@@ -60,6 +96,7 @@ CORE_SOURCES = \
 	buffers.c \
 	clip.c \
 	colortab.c \
+	config.c \
 	context.c \
 	convolve.c \
 	debug.c \
@@ -175,7 +212,8 @@ X86_SOURCES = \
 	X86/x86_vertex.S \
 	X86/x86_cliptest.S
 
-MMX_SOURCES =
+MMX_SOURCES = \
+	X86/mmx_blend.S
 
 SSE_SOURCES = \
 	X86/sse.c \
@@ -185,7 +223,7 @@ SSE_SOURCES = \
 	X86/sse_vertex.S \
 	X86/sse_normal.S
 
-D3NOW_SOURCES = \
+K3D_SOURCES = \
 	X86/3dnow.c \
 	X86/3dnow_xform2.S \
 	X86/3dnow_xform3.S \
@@ -203,7 +241,7 @@ CFLAGS += -DUSE_SSE_ASM
 HAVE_X86 = 1
 endif
 ifdef HAVE_3DNOW
-X86_SOURCES += $(D3NOW_SOURCES)
+X86_SOURCES += $(K3D_SOURCES)
 CFLAGS += -DUSE_3DNOW_ASM
 HAVE_X86 = 1
 endif
@@ -213,16 +251,36 @@ else
 X86_SOURCES =
 endif
 
-DRIVER_SOURCES = DOS/dmesa.c DOS/video.c DOS/dpmi.c
+ifndef FX
+DRIVER_SOURCES = \
+	DOS/dmesa.c \
+	DOS/video.c \
+	DOS/virtual.S \
+	DOS/vesa/vesa.c \
+	DOS/dpmi.c
+else
+DRIVER_SOURCES = \
+	FX/fxapi.c \
+	FX/fxdd.c \
+	FX/fxddspan.c \
+	FX/fxddtex.c \
+	FX/fxsetup.c \
+	FX/fxtexman.c \
+	FX/fxtris.c \
+	FX/fxvb.c \
+	FX/fxglidew.c
+endif
 
 SOURCES = $(CORE_SOURCES) $(X86_SOURCES) $(DRIVER_SOURCES)
 
 OBJECTS = $(addsuffix .o,$(basename $(SOURCES)))
 
 .c.o:
-	gcc -o $@ -c $(CFLAGS) $<
+	$(CC) -o $@ -c $(CFLAGS) $<
 .S.o:
-	gcc -o $@ -c $(CFLAGS) $<
+	$(CC) -o $@ -c $(CFLAGS) $<
+.s.o:
+	$(CC) -o $@ -c $(CFLAGS) -x assembler-with-cpp $<
 
 all: $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GL_DXE) $(LIBDIR)/$(GL_IMP)
 
@@ -234,24 +292,19 @@ ifeq ($(DXE2GEN),)
 	$(warning Missing DXE2GEN and/or DXE2.LD! You must have DXE2GEN)
 	$(warning somewhere in PATH, and DXE2.LD in DJGPP/LIB directory.)
 else
-	dxe2gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) $(OBJECTS) -D "Mesa DOS GL" -U
+	-dxe2gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) $(OBJECTS) -E djgpp_ -E gl -E DMesa -E fxMesa -D "Mesa DJGPP GL" -U
 endif
 
 clean:
-	-$(RM) *.o
-ifdef HAVE_X86
-	-$(RM) X86\*.o
-endif
-	-$(RM) DOS\*.o
+	-$(RM) $(subst /,\,*.o)
+	-$(RM) $(subst /,\,array_cache/*.o)
+	-$(RM) $(subst /,\,math/*.o)
+	-$(RM) $(subst /,\,swrast/*.o)
+	-$(RM) $(subst /,\,swrast_setup/*.o)
+	-$(RM) $(subst /,\,tnl/*.o)
+	-$(RM) $(subst /,\,X86/*.o)
+	-$(RM) $(subst /,\,DOS/*.o)
+	-$(RM) $(subst /,\,DOS/vesa/*.o)
+	-$(RM) $(subst /,\,FX/*.o)
 
-include depend
-
-DOS/dmesa.o: DOS/dmesa.c glheader.h ../include/GL/gl.h context.h glapi.h \
-  mtypes.h config.h glapitable.h glthread.h math/m_matrix.h dd.h macros.h \
-  ../include/GL/dmesa.h extensions.h matrix.h mmath.h texformat.h \
-  texstore.h array_cache/acache.h swrast/s_context.h swrast/swrast.h \
-  swrast/s_depth.h swrast/s_lines.h swrast/s_triangle.h swrast/s_trispan.h \
-  swrast_setup/swrast_setup.h tnl/tnl.h tnl/t_context.h math/m_vector.h \
-  math/m_xform.h tnl/t_pipeline.h DOS/video.h swrast/s_tritemp.h
-DOS/dpmi.o: DOS/dpmi.c DOS/dpmiint.h
-DOS/video.o: DOS/video.c DOS/video.h DOS/dpmiint.h
+-include depend

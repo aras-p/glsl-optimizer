@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v1.0 for DOS/DJGPP
+ * PC/HW routine collection v1.1 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -201,7 +201,7 @@ static unsigned char numlock_table[10] =
 /* kb_wait_for_write_ready:
  *  Wait for the keyboard controller to set the ready-for-write bit.
  */
-static __inline__ int kb_wait_for_write_ready (void)
+static __inline int kb_wait_for_write_ready (void)
 {
  int timeout = 4096;
 
@@ -215,7 +215,7 @@ static __inline__ int kb_wait_for_write_ready (void)
 /* kb_wait_for_read_ready:
  *  Wait for the keyboard controller to set the ready-for-read bit.
  */
-static __inline__ int kb_wait_for_read_ready (void)
+static __inline int kb_wait_for_read_ready (void)
 {
  int timeout = 16384;
 
@@ -229,7 +229,7 @@ static __inline__ int kb_wait_for_read_ready (void)
 /* kb_send_data:
  *  Sends a byte to the keyboard controller. Returns 1 if all OK.
  */
-static __inline__ int kb_send_data (unsigned char data)
+static __inline int kb_send_data (unsigned char data)
 {
  int resends = 4;
  int timeout, temp;
@@ -357,9 +357,9 @@ static void handle_code (int scancode, int keycode)
  in_a_terrupt--;
 } ENDOFUNC(handle_code)
 
-static __inline__ void satisfy (void)
+static __inline void satisfy (void)
 {
- __asm__("\n\
+ __asm("\n\
 		inb	$0x61, %%al	\n\
 		movb	%%al, %%ah	\n\
 		orb	$0x80, %%al	\n\
@@ -404,7 +404,7 @@ static int keyboard ()
        only SIGINT (but not Ctrl-Break)
        calls the destructors and will safely clean up
     */
-    __asm__("\n\
+    __asm("\n\
 		movb	$0x79, %%al		\n\
 		call	___djgpp_hw_exception	\n\
     ":::"%eax", "%ebx", "%ecx", "%edx", "%esi", "%edi", "memory");

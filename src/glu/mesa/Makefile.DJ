@@ -20,31 +20,45 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP glu makefile v1.0 for Mesa 4.0
+# DOS/DJGPP glu makefile v1.1 for Mesa 4.0
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
 #  Web   : http://www.geocities.com/dborca
 
 
+#
+#  Available options:
+#
+#    Environment variables:
+#	CFLAGS
+#
+#    Targets:
+#	all:		build GLU
+#	clean:		remove object files
+#
+
+
+
 .PHONY: all clean
 
 TOP = ..
-CC = gcc
-CFLAGS = -I$(TOP)/include -Wall -W -Wno-unused -mcpu=$(CPU) -ffast-math -O2
-AR = ar
-ARFLAGS = ruv
 LIBDIR = $(TOP)/lib
-
-ifeq ($(wildcard $(DJDIR)/lib/dxe2.ld),)
-DXE2GEN =
-else
-DXE2GEN = $(wildcard $(addsuffix /dxe2gen.exe,$(subst ;, ,$(PATH))))
-endif
-
 GLU_LIB = libglu.a
 GLU_DXE = glu.dxe
 GLU_IMP = libiglu.a
+
+CC = gcc
+CFLAGS += -I$(TOP)/include
+
+AR = ar
+ARFLAGS = ru
+
+ifneq ($(wildcard $(DJDIR)/lib/dxe2.ld),)
+DXE2GEN = $(wildcard $(addsuffix /dxe2gen.exe,$(subst ;, ,$(PATH))))
+endif
+
+RM = del
 
 CORE_SOURCES = \
 	glu.c \
@@ -64,7 +78,7 @@ SOURCES = $(CORE_SOURCES)
 OBJECTS = $(SOURCES:.c=.o)
 
 .c.o:
-	gcc -o $@ -c $(CFLAGS) $<
+	$(CC) -o $@ -c $(CFLAGS) $<
 
 all: $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLU_DXE) $(LIBDIR)/$(GLU_IMP)
 
@@ -76,10 +90,10 @@ ifeq ($(DXE2GEN),)
 	$(warning Missing DXE2GEN and/or DXE2.LD! You must have DXE2GEN)
 	$(warning somewhere in PATH, and DXE2.LD in DJGPP/LIB directory.)
 else
-	dxe2gen -o $(LIBDIR)/$(GLU_DXE) -I $(LIBDIR)/$(GLU_IMP) $(OBJECTS) -D "Mesa DOS GLU" -U
+	-dxe2gen -o $(LIBDIR)/$(GLU_DXE) -I $(LIBDIR)/$(GLU_IMP) $(OBJECTS) -E djgpp_ -E glu -D "Mesa DJGPP GLU" -U
 endif
 
 clean:
-	-$(RM) *.o
+	-$(RM) $(subst /,\,*.o)
 
-include depend
+-include depend

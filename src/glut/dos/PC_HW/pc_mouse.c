@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v1.0 for DOS/DJGPP
+ * PC/HW routine collection v1.1 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -17,7 +17,7 @@
 
 #define CLEAR_MICKEYS() \
         do { \
-            __asm__ __volatile__ ("movw $0xb, %%ax; int $0x33":::"%eax", "%ecx", "%edx"); \
+            __asm __volatile ("movw $0xb, %%ax; int $0x33":::"%eax", "%ecx", "%edx"); \
             ox = oy = 0; \
         } while (0)
 
@@ -71,7 +71,7 @@ void pc_remove_mouse (void)
 {
  if (mouse_callback) {
     pc_clexit(pc_remove_mouse);
-    __asm__("\n\
+    __asm("\n\
 		movl	%%edx, %%ecx	\n\
 		shrl	$16, %%ecx	\n\
 		movw	$0x0304, %%ax	\n\
@@ -97,7 +97,7 @@ int pc_install_mouse (void)
  }
 
  /* reset mouse and get status */
- __asm__("\n\
+ __asm("\n\
 		xorl	%%eax, %%eax	\n\
 		int	$0x33		\n\
 		andl	%%ebx, %%eax	\n\
@@ -133,7 +133,7 @@ int pc_install_mouse (void)
  }
 
  /* try to hook a call-back */
- __asm__("\n\
+ __asm("\n\
 		pushl	%%ds		\n\
 		pushl	%%es		\n\
 		movw	$0x0303, %%ax	\n\
@@ -225,7 +225,7 @@ void pc_unscare_mouse (void)
  /* not implemented */
 }
 
-__asm__("\n\
+__asm("\n\
 		.balign	4				\n\
 		.global	_mouse_wrapper			\n\
 _mouse_wrapper:						\n\

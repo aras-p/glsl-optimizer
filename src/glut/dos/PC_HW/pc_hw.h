@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v1.0 for DOS/DJGPP
+ * PC/HW routine collection v1.1 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -45,8 +45,8 @@ void *pc_malloc (size_t size);
 /*
  * IRQ
  */
-#define ENABLE()  __asm__ __volatile__ ("sti")
-#define DISABLE() __asm__ __volatile__ ("cli")
+#define ENABLE()  __asm __volatile ("sti")
+#define DISABLE() __asm __volatile ("cli")
 
 extern int pc_install_irq (int i, int (*handler) ());
 extern int pc_remove_irq (int i);

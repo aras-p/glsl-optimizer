@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.0 for Mesa 4.0
+ * DOS/DJGPP device driver v1.1 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -34,6 +34,12 @@
 #include <dpmi.h>
 
 #include "dpmiint.h"
+
+
+
+#ifndef MAX
+#define MAX(x, y) (((x)<(y))?(y):(x))
+#endif
 
 
 

@@ -31,22 +31,13 @@
  */
 
 
-#ifndef VIDEO_H_included
-#define VIDEO_H_included
+#ifndef VESA_H_included
+#define VESA_H_included
 
-int vl_video_init (int width, int height, int bpp, int refresh);
-void vl_video_exit (void);
+#include "../videoint.h"
 
-void *vl_sync_buffer (void *buffer, int x, int y, int width, int height);
 
-extern void (*vl_clear) (void *buffer, int bytes, int color);
-void vl_rect (void *buffer, int x, int y, int width, int height, int color);
 
-void (*vl_flip) (void *buffer, int stride, int height);
-
-extern int (*vl_mixrgba) (const unsigned char rgba[]);
-extern int (*vl_mixrgb) (const unsigned char rgb[]);
-extern void (*vl_putpixel) (void *buffer, int offset, int color);
-extern void (*vl_getrgba) (void *buffer, int offset, unsigned char rgba[4]);
+extern vl_driver VESA;
 
 #endif

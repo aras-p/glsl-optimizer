@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.0 for Mesa 4.0
+ * DOS/DJGPP device driver v1.1 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -33,14 +33,6 @@
 
 #ifndef DPMIINT_H_included
 #define DPMIINT_H_included
-
-#ifndef NULL
-#define NULL 0
-#endif
-
-#ifndef MAX
-#define MAX(x, y) (((x)<(y))?(y):(x))
-#endif
 
 int _create_selector (int *segment, unsigned long base, int size);
 void _remove_selector (int *segment);
