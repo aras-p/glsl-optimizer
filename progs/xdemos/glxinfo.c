@@ -1,4 +1,4 @@
-/* $Id: glxinfo.c,v 1.2 2000/01/27 16:43:56 brianp Exp $ */
+/* $Id: glxinfo.c,v 1.3 2000/01/27 16:53:55 brianp Exp $ */
 
 /*
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
@@ -264,7 +264,6 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
    attribs->colormapSize = vInfo->colormap_size;
    attribs->bitsPerRGB = vInfo->bits_per_rgb;
 
-   attribs->transparent = 0;
    glXGetConfig(dpy, vInfo, GLX_USE_GL, &attribs->supportsGL);
    glXGetConfig(dpy, vInfo, GLX_BUFFER_SIZE, &attribs->bufferSize);
    glXGetConfig(dpy, vInfo, GLX_LEVEL, &attribs->level);
@@ -283,6 +282,10 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
    glXGetConfig(dpy, vInfo, GLX_ACCUM_BLUE_SIZE, &attribs->accumBlueSize);
    glXGetConfig(dpy, vInfo, GLX_ACCUM_ALPHA_SIZE, &attribs->accumAlphaSize);
 
+   /* transparent pixel value not implemented yet */
+   attribs->transparent = 0;
+
+   /* multisample tests not implemented yet */
    attribs->numSamples = 0;
    attribs->numMultisample = 0;
 }
