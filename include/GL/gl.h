@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.72 2002/10/17 19:39:31 kschultz Exp $ */
+/* $Id: gl.h,v 1.73 2003/01/14 04:50:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2644,6 +2644,69 @@ GLAPI void GLAPIENTRY glTracePointerRangeMESA( const GLvoid* first, const GLvoid
 #define GL_UNSIGNED_SHORT_8_8_REV_APPLE		0x85BB
 
 #endif /* GL_APPLE_ycbcr_422 */
+
+
+
+#ifndef GL_NV_fragment_program
+#define GL_NV_fragment_program 1
+
+#define GL_FRAGMENT_PROGRAM_NV                      0x8870
+#define GL_MAX_TEXTURE_COORDS_NV                    0x8871
+#define GL_MAX_TEXTURE_IMAGE_UNITS_NV               0x8872
+#define GL_FRAGMENT_PROGRAM_BINDING_NV              0x8873
+#define GL_PROGRAM_ERROR_STRING_NV                  0x8874
+#define GL_MAX_FRAGMENT_PROGRAM_LOCAL_PARAMETERS_NV 0x8868
+
+
+extern void
+glProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
+                            GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+
+extern void
+glProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte *name,
+                            GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+
+extern void
+glProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte *name,
+                             const float v[]);
+
+extern void
+glProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte *name,
+                             const double v[]);
+
+extern void
+glGetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
+                               GLfloat *params);
+
+extern void
+glGetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
+                               GLdouble *params);
+
+extern void
+glProgramLocalParameter4dARB(GLenum target, GLuint index,
+                             GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+
+extern void
+glProgramLocalParameter4dvARB(GLenum target, GLuint index,
+                              const GLdouble *params);
+
+extern void
+glProgramLocalParameter4fARB(GLenum target, GLuint index,
+                             GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+
+extern void
+glProgramLocalParameter4fvARB(GLenum target, GLuint index,
+                              const GLfloat *params);
+
+extern void
+glGetProgramLocalParameterdvARB(GLenum target, GLuint index, GLdouble *params);
+
+extern void
+glGetProgramLocalParameterfvARB(GLenum target, GLuint index, GLfloat *params);
+
+
+#endif /* GL_NV_fragment_program */
+
 
 
 
