@@ -1,10 +1,10 @@
-/* $Id: glheader.h,v 1.3 1999/11/12 18:23:47 brianp Exp $ */
+/* $Id: glheader.h,v 1.4 2000/02/12 15:55:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,13 +47,14 @@
 #else
 #include <assert.h>
 #include <ctype.h>
-#include <float.h>
 #include <math.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #endif
+#include <float.h>
+
 
 #ifdef HAVE_CONFIG_H
 #include "conf.h"
