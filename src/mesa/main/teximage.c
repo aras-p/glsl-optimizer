@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.119 2002/10/10 14:12:09 brianp Exp $ */
+/* $Id: teximage.c,v 1.120 2002/10/17 22:26:06 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1162,12 +1162,12 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
          return GL_TRUE;
       }
       /* size must be multiple of 4 or equal to whole texture size */
-      if ((width & 3) && width != texImage->Width) {
+      if ((width & 3) && (GLuint) width != texImage->Width) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glTexSubImage%D(width)", dimensions);
          return GL_TRUE;
       }         
-      if ((height & 3) && height != texImage->Height) {
+      if ((height & 3) && (GLuint) height != texImage->Height) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glTexSubImage%D(width)", dimensions);
          return GL_TRUE;
@@ -1411,12 +1411,12 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
          return GL_TRUE;
       }
       /* size must be multiple of 4 */
-      if ((width & 3) != 0 && width != teximage->Width) {
+      if ((width & 3) != 0 && (GLuint) width != teximage->Width) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glCopyTexSubImage%D(width)", dimensions);
          return GL_TRUE;
       }         
-      if ((height & 3) != 0 && height != teximage->Height) {
+      if ((height & 3) != 0 && (GLuint) height != teximage->Height) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glCopyTexSubImage%D(height)", dimensions);
          return GL_TRUE;
@@ -2741,13 +2741,13 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
    texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
    assert(texImage);
 
-   if (format != texImage->IntFormat) {
+   if ((GLint) format != texImage->IntFormat) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCompressedTexSubImage1D(format)");
       return;
    }
 
-   if ((width == 1 || width == 2) && width != texImage->Width) {
+   if ((width == 1 || width == 2) && (GLuint) width != texImage->Width) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glCompressedTexSubImage1D(width)");
       return;
    }
@@ -2790,14 +2790,14 @@ _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
    texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
    assert(texImage);
 
-   if (format != texImage->IntFormat) {
+   if ((GLint) format != texImage->IntFormat) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCompressedTexSubImage2D(format)");
       return;
    }
 
-   if (((width == 1 || width == 2) && width != texImage->Width) ||
-       ((height == 1 || height == 2) && height != texImage->Height)) {
+   if (((width == 1 || width == 2) && (GLuint) width != texImage->Width) ||
+       ((height == 1 || height == 2) && (GLuint) height != texImage->Height)) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glCompressedTexSubImage2D(size)");
       return;
    }
@@ -2840,15 +2840,15 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
    texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
    assert(texImage);
 
-   if (format != texImage->IntFormat) {
+   if ((GLint) format != texImage->IntFormat) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCompressedTexSubImage3D(format)");
       return;
    }
 
-   if (((width == 1 || width == 2) && width != texImage->Width) ||
-       ((height == 1 || height == 2) && height != texImage->Height) ||
-       ((depth == 1 || depth == 2) && depth != texImage->Depth)) {
+   if (((width == 1 || width == 2) && (GLuint) width != texImage->Width) ||
+       ((height == 1 || height == 2) && (GLuint) height != texImage->Height) ||
+       ((depth == 1 || depth == 2) && (GLuint) depth != texImage->Depth)) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glCompressedTexSubImage3D(size)");
       return;
    }

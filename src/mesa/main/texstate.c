@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.80 2002/10/04 19:10:08 brianp Exp $ */
+/* $Id: texstate.c,v 1.81 2002/10/17 22:26:06 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -554,7 +554,7 @@ _mesa_TexEnviv( GLenum target, GLenum pname, const GLint *param )
       p[3] = INT_TO_FLOAT( param[3] );
    }
    else {
-      p[0] = (GLint) param[0];
+      p[0] = (GLfloat) param[0];
       p[1] = p[2] = p[3] = 0;  /* init to zero, just to be safe */
    }
    _mesa_TexEnvfv( target, pname, p );

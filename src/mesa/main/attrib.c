@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.73 2002/10/11 21:42:08 brianp Exp $ */
+/* $Id: attrib.c,v 1.74 2002/10/17 22:26:06 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -421,8 +421,8 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
    for (i=0;i<MAX_CLIP_PLANES;i++) {
       const GLuint mask = 1 << i;
       if ((ctx->Transform.ClipPlanesEnabled & mask) != (enable->ClipPlanes & mask))
-         _mesa_set_enable(ctx, (GLenum) (GL_CLIP_PLANE0 + i),
-                          (enable->ClipPlanes & mask) ? GL_TRUE : GL_FALSE);
+	  _mesa_set_enable(ctx, (GLenum) (GL_CLIP_PLANE0 + i),
+			   (GLboolean) ((enable->ClipPlanes & mask) ? GL_TRUE : GL_FALSE));
    }
 
    TEST_AND_UPDATE(ctx->Light.ColorMaterialEnabled, enable->ColorMaterial,
