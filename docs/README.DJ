@@ -266,6 +266,7 @@ v1.7 (???-2005)
 	+ enabled OpenGL 2.0 support
 	+ added support for sw texture compression
 	* minor rework
+	* `glutTimerFunc' now works with heavy callbacks
 
 
 
