@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v0.2 for DOS/DJGPP
+ * PC/HW routine collection v0.4 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -29,7 +29,7 @@ static void *mouse_stack;
 static long mouse_callback;
 static __dpmi_regs mouse_regs;
 
-volatile int pc_mouse_x, pc_mouse_y, pc_mouse_b;
+static volatile int pc_mouse_x, pc_mouse_y, pc_mouse_b;
 
 static int minx = 0;
 static int maxx = 319;
@@ -203,6 +203,13 @@ void pc_mouse_speed (int xspeed, int yspeed)
  sy = MAX(1, yspeed);
 
  ENABLE();
+}
+
+int pc_query_mouse (int *x, int *y)
+{
+ *x = pc_mouse_x;
+ *y = pc_mouse_y;
+ return pc_mouse_b;
 }
 
 void pc_show_mouse (void)

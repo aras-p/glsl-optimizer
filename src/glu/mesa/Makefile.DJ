@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP glu makefile v0.1 for Mesa 4.0
+# DOS/DJGPP glu makefile v0.4 for Mesa 4.0
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
@@ -36,7 +36,15 @@ AR = ar
 ARFLAGS = ruv
 LIBDIR = $(TOP)/lib
 
+ifeq ($(wildcard $(DJDIR)/lib/dxe2.ld),)
+DXE2GEN =
+else
+DXE2GEN = $(wildcard $(addsuffix /dxe2gen.exe,$(subst ;, ,$(PATH))))
+endif
+
 GLU_LIB = libglu.a
+GLU_DXE = glu.dxe
+GLU_IMP = libiglu.a
 
 CORE_SOURCES = \
 	glu.c \
@@ -58,10 +66,18 @@ OBJECTS = $(SOURCES:.c=.o)
 .c.o:
 	gcc -o $@ -c $(CFLAGS) $<
 
-all: $(LIBDIR)/$(GLU_LIB)
+all: $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLU_DXE) $(LIBDIR)/$(GLU_IMP)
 
 $(LIBDIR)/$(GLU_LIB): $(OBJECTS)
 	$(AR) $(ARFLAGS) $(LIBDIR)/$(GLU_LIB) $(OBJECTS)
+
+$(LIBDIR)/$(GLU_DXE) $(LIBDIR)/$(GLU_IMP): $(OBJECTS)
+ifeq ($(DXE2GEN),)
+	@echo Missing DXE2GEN and/or DXE2.LD! You must have DXE2GEN
+	@echo somewhere in PATH, and DXE2.LD in DJGPP/LIB directory.
+else
+	dxe2gen -o $(LIBDIR)/$(GLU_DXE) -I $(LIBDIR)/$(GLU_IMP) $(OBJECTS) -D "Glu" -U
+endif
 
 clean:
 	-$(RM) *.o

@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v0.3 for Mesa 4.0
+ * DOS/DJGPP device driver v0.4 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -42,7 +42,7 @@ void *vl_sync_buffer (void *buffer, int x, int y, int width, int height);
 extern void (*vl_clear) (void *buffer, int len, int color);
 void vl_rect (void *buffer, int x, int y, int width, int height, int color);
 
-void *(*vl_flip) (void *buffer, int width, int height);
+void (*vl_flip) (void *buffer, int width, int height);
 
 extern int (*vl_mixrgba) (const unsigned char rgba[]);
 extern int (*vl_mixrgb) (const unsigned char rgb[]);

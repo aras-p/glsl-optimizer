@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v0.1 for DOS/DJGPP
+ * PC/HW routine collection v0.4 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -32,7 +32,7 @@ static volatile struct {
 static volatile int key_enhanced, key_pause_loop, key_shifts;
 static int leds_ok = TRUE;
 static int in_a_terrupt = FALSE;
-volatile char pc_key[KEY_MAX];
+static volatile char pc_key[KEY_MAX];
 
 
 
@@ -400,6 +400,10 @@ static int keyboard ()
  }
 
  if (((temp==0x4F)||(temp==0x53))&&(key_shifts&KB_CTRL_FLAG)&&(key_shifts&KB_ALT_FLAG)) {
+    /* Hack alert:
+       only SIGINT (but not Ctrl-Break)
+       calls the destructors and will safely clean up
+    */
     __asm__("\n\
 		movb	$0x79, %%al		\n\
 		call	___djgpp_hw_exception	\n\
@@ -434,6 +438,11 @@ int pc_readkey (void)
  } else {
     return 0;
  }
+}
+
+int pc_keydown (int code)
+{
+ return pc_key[code];
 }
 
 void pc_remove_keyb (void)

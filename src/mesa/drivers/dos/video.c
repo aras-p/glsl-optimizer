@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v0.3 for Mesa 4.0
+ * DOS/DJGPP device driver v0.4 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -180,9 +180,9 @@ void vl_rect (void *buffer, int x, int y, int width, int height, int color)
 /*
  * virtual dumping:
  */
-void *(*vl_flip) (void *buffer, int width, int height);
+void (*vl_flip) (void *buffer, int width, int height);
 
-extern void *b_dump_virtual (void *buffer, int width, int height);
+extern void b_dump_virtual (void *buffer, int width, int height);
 __asm__("\n\
 		.text				\n\
 		.balign	4			\n\
@@ -242,7 +242,7 @@ _b_dump_virtual:				\n\
 		popl	%esi			\n\
 		popl	%ebx			\n\
 		ret");
-extern void *l_dump_virtual (void *buffer, int width, int height);
+extern void l_dump_virtual (void *buffer, int width, int height);
 __asm__("\n\
 		.text				\n\
 		.balign	4			\n\

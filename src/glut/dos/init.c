@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v0.2 for Mesa 4.0
+ * DOS/DJGPP glut driver v0.4 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -27,30 +27,13 @@
  */
 
 
-#include <signal.h>
 #include "GL/glut.h"
 #include "internal.h"
-
-
-static void *old_sig_int  = NULL;
-
-
-static void signal_handler (int num)
-{
- signal(SIGINT, old_sig_int);
-
- raise(num);
-}
 
 
 void APIENTRY glutInit (int *argcp, char **argv)
 {
  glutGet(GLUT_ELAPSED_TIME);
- /* Hack alert:
-    only SIGINT (but not Ctrl-Break)
-    calls the destructors and will safely clean up
- */
- old_sig_int = signal(SIGINT, signal_handler);
 }
 
 
@@ -133,34 +116,42 @@ void APIENTRY glutMainLoop (void)
           }
        }
 
-       if (g_mouse && motion_func && ((pc_mouse_x != old_mouse_x) || (pc_mouse_y != old_mouse_y))) {
-          idle        = GL_FALSE;
-          old_mouse_x = pc_mouse_x;
-          old_mouse_y = pc_mouse_y;
-
-          motion_func(old_mouse_x, old_mouse_y);
-       }
-
-       if (g_mouse && mouse_func && (pc_mouse_b != old_mouse_b)) {
-          int new_mouse_b = pc_mouse_b;
-
-          if ((old_mouse_b & 1) && !(new_mouse_b & 1))
-             mouse_func(GLUT_LEFT_BUTTON, GLUT_UP,   pc_mouse_x, pc_mouse_y);
-          else if (!(old_mouse_b & 1) && (new_mouse_b & 1))
-             mouse_func(GLUT_LEFT_BUTTON, GLUT_DOWN, pc_mouse_x, pc_mouse_y);
-
-          if ((old_mouse_b & 2) && !(new_mouse_b & 2))
-             mouse_func(GLUT_RIGHT_BUTTON, GLUT_UP,   pc_mouse_x, pc_mouse_y);
-          else if (!(old_mouse_b & 2) && (new_mouse_b & 2))
-             mouse_func(GLUT_RIGHT_BUTTON, GLUT_DOWN, pc_mouse_x, pc_mouse_y);
-
-          if ((old_mouse_b & 4) && !(new_mouse_b & 4))
-             mouse_func(GLUT_MIDDLE_BUTTON, GLUT_UP,   pc_mouse_x, pc_mouse_y);
-          else if (!(old_mouse_b & 3) && (new_mouse_b & 4))
-             mouse_func(GLUT_MIDDLE_BUTTON, GLUT_DOWN, pc_mouse_x, pc_mouse_y);
-
-          idle        = GL_FALSE;
-          old_mouse_b = new_mouse_b;
+       if (g_mouse) {
+          int mouse_x;
+          int mouse_y;
+          int mouse_b;
+       
+          mouse_b = pc_query_mouse(&mouse_x, &mouse_y);
+          
+          if (motion_func && ((mouse_x != old_mouse_x) || (mouse_y != old_mouse_y))) {
+             idle        = GL_FALSE;
+             old_mouse_x = mouse_x;
+             old_mouse_y = mouse_y;
+   
+             motion_func(old_mouse_x, old_mouse_y);
+          }
+   
+          if (mouse_func && (mouse_b != old_mouse_b)) {
+             int new_mouse_b = mouse_b;
+   
+             if ((old_mouse_b & 1) && !(new_mouse_b & 1))
+                mouse_func(GLUT_LEFT_BUTTON, GLUT_UP,   mouse_x, mouse_y);
+             else if (!(old_mouse_b & 1) && (new_mouse_b & 1))
+                mouse_func(GLUT_LEFT_BUTTON, GLUT_DOWN, mouse_x, mouse_y);
+   
+             if ((old_mouse_b & 2) && !(new_mouse_b & 2))
+                mouse_func(GLUT_RIGHT_BUTTON, GLUT_UP,   mouse_x, mouse_y);
+             else if (!(old_mouse_b & 2) && (new_mouse_b & 2))
+                mouse_func(GLUT_RIGHT_BUTTON, GLUT_DOWN, mouse_x, mouse_y);
+   
+             if ((old_mouse_b & 4) && !(new_mouse_b & 4))
+                mouse_func(GLUT_MIDDLE_BUTTON, GLUT_UP,   mouse_x, mouse_y);
+             else if (!(old_mouse_b & 3) && (new_mouse_b & 4))
+                mouse_func(GLUT_MIDDLE_BUTTON, GLUT_DOWN, mouse_x, mouse_y);
+   
+             idle        = GL_FALSE;
+             old_mouse_b = new_mouse_b;
+          }
        }
 
        if (idle && idle_func)
