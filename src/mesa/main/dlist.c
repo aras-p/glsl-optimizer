@@ -4639,6 +4639,7 @@ static void save_Attr1f( GLenum attr, GLfloat x )
       n[2].f = x;
    }
 
+   ASSERT(attr < VERT_ATTRIB_MAX);
    ctx->ListState.ActiveAttribSize[attr] = 1;
    ASSIGN_4V( ctx->ListState.CurrentAttrib[attr], x, 0, 0, 1);
 
@@ -4659,6 +4660,7 @@ static void save_Attr2f( GLenum attr, GLfloat x, GLfloat y )
       n[3].f = y;
    }
 
+   ASSERT(attr < VERT_ATTRIB_MAX);
    ctx->ListState.ActiveAttribSize[attr] = 2;
    ASSIGN_4V( ctx->ListState.CurrentAttrib[attr], x, y, 0, 1);
 
@@ -4680,6 +4682,7 @@ static void save_Attr3f( GLenum attr, GLfloat x, GLfloat y, GLfloat z )
       n[4].f = z;
    }
 
+   ASSERT(attr < VERT_ATTRIB_MAX);
    ctx->ListState.ActiveAttribSize[attr] = 3;
    ASSIGN_4V( ctx->ListState.CurrentAttrib[attr], x, y, z, 1);
 
@@ -4703,6 +4706,7 @@ static void save_Attr4f( GLenum attr, GLfloat x, GLfloat y, GLfloat z,
       n[5].f = w;
    }
 
+   ASSERT(attr < VERT_ATTRIB_MAX);
    ctx->ListState.ActiveAttribSize[attr] = 4;
    ASSIGN_4V( ctx->ListState.CurrentAttrib[attr], x, y, z, w);
 
