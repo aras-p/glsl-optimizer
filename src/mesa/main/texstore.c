@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.14 2001/03/18 14:05:32 gareth Exp $ */
+/* $Id: texstore.c,v 1.15 2001/03/18 14:06:25 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,6 +44,7 @@
 #include "image.h"
 #include "macros.h"
 #include "mem.h"
+#include "texformat.h"
 #include "teximage.h"
 #include "texstore.h"
 #include "swrast/s_depth.h"  /* XXX this is kind of a cheat */
