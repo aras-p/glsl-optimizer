@@ -48,11 +48,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #define R300_FIREVERTICES( r300 )			\
 do {							\
-   /* \
-   if ( (r300)->store.cmd_used || (r300)->dma.flush ) {	\
-      radeonFlush( (r300)->radeon.glCtx );		\
+    \
+   if ( (r300)->cmdbuf.count_used || (r300)->dma.flush ) {	\
+      r300Flush( (r300)->radeon.glCtx );		\
    }							\
-   */ \
+    \
 } while (0)
 
 	
