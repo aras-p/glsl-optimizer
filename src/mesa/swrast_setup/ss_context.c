@@ -1,4 +1,4 @@
-/* $Id: ss_context.c,v 1.15 2001/07/17 19:39:32 keithw Exp $ */
+/* $Id: ss_context.c,v 1.16 2002/08/08 00:41:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,7 +59,7 @@ _swsetup_CreateContext( GLcontext *ctx )
    if (!swsetup)
       return GL_FALSE;
 
-   swsetup->verts = (SWvertex *) ALIGN_MALLOC( sizeof(SWvertex) * tnl->vb.Size,
+   swsetup->verts = (SWvertex *) ALIGN_CALLOC( sizeof(SWvertex) * tnl->vb.Size,
 					       32);
    if (!swsetup->verts) {
       FREE(swsetup);
