@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1107,12 +1107,18 @@ OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
       return GL_FALSE;
    }
 
-   osmesa_update_state( &ctx->mesa, 0 );
-   _mesa_make_current( &ctx->mesa, ctx->gl_buffer );
-
+   /* Need to set these before calling _mesa_make_current() since the first
+    * time the context is bound, _mesa_make_current() will call our
+    * get_buffer_size() function to initialize the viewport.  These are the
+    * values returned by get_buffer_size():
+    */
    ctx->buffer = buffer;
    ctx->width = width;
    ctx->height = height;
+
+   osmesa_update_state( &ctx->mesa, 0 );
+   _mesa_make_current( &ctx->mesa, ctx->gl_buffer );
+
    if (ctx->userRowLength)
       ctx->rowlength = ctx->userRowLength;
    else
@@ -1120,17 +1126,8 @@ OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
 
    compute_row_addresses( ctx );
 
-   /* init viewport */
-   if (ctx->mesa.Viewport.Width == 0) {
-      /* initialize viewport and scissor box to buffer size */
-      _mesa_Viewport( 0, 0, width, height );
-      ctx->mesa.Scissor.Width = width;
-      ctx->mesa.Scissor.Height = height;
-   }
-   else {
-      /* this will make ensure we recognize the new buffer size */
-      _mesa_ResizeBuffersMESA();
-   }
+   /* this will make ensure we recognize the new buffer size */
+   _mesa_ResizeBuffersMESA();
 
    /* Added by Gerk Huisma: */
    _tnl_MakeCurrent( &ctx->mesa, ctx->mesa.DrawBuffer,
