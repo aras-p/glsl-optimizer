@@ -168,7 +168,9 @@ static GLfloat default_vector[4]={0.0, 0.0, 0.0, 1.0};
 			} \
 	}
 
-static void r300_render_flat_primitive(r300ContextPtr rmesa, 
+/* Immediate implementation - vertex data is sent via command stream */
+
+static void r300_render_immediate_primitive(r300ContextPtr rmesa, 
 	GLcontext *ctx,
 	int start,
 	int end,
@@ -182,10 +184,19 @@ static void r300_render_flat_primitive(r300ContextPtr rmesa,
        	
    type=r300_get_primitive_type(rmesa, ctx, start, end, prim);
 		
+   		#if 0
+		fprintf(stderr,"ObjPtr: size=%d stride=%d\n", 
+			VB->ObjPtr->size, VB->ObjPtr->stride);
+		fprintf(stderr,"ColorPtr[0]: size=%d stride=%d\n", 
+			VB->ColorPtr[0]->size, VB->ColorPtr[0]->stride);
+		fprintf(stderr,"TexCoordPtr[0]: size=%d stride=%d\n", 
+			VB->TexCoordPtr[0]->size, VB->TexCoordPtr[0]->stride);
+		#endif
+   
    if(type<0)return;
 
 
-   start_immediate_packet(end-start, type, 8);
+   start_immediate_packet(end-start, type, 8+4*rmesa->state.texture.tc_count);
 
 	for(i=start;i<end;i++){
 		#if 0
@@ -208,9 +219,15 @@ static void r300_render_flat_primitive(r300ContextPtr rmesa,
 		
 		/* color components */
 		output_vector(VB->ColorPtr[0], i);
+		
+		/* texture coordinates */
+		for(k=0;k < ctx->Const.MaxTextureUnits;k++)
+			if(ctx->Texture.Unit[k].Enabled)
+				output_vector(VB->TexCoordPtr[k], i);
 		}
 
 }
+
 
 static void assign_pipeline(r300ContextPtr rmesa, R300_PIPELINE *p)
 {
@@ -231,21 +248,29 @@ static void assign_pipeline(r300ContextPtr rmesa, R300_PIPELINE *p)
 
 }
 
-static GLboolean r300_run_flat_render(GLcontext *ctx,
+static GLboolean r300_run_immediate_render(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
    r300ContextPtr rmesa = R300_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
+   /* Only do 2d textures */
+   struct gl_texture_object *to=ctx->Texture.Unit[0].Current2D;
+   r300TexObjPtr t=to->DriverData;
    LOCAL_VARS
 	
+   
+   /* Update texture state - needs to be done only when actually changed..
+      All the time for now.. */
    /* Flush state - make sure command buffer is nice and large */
    r300Flush(ctx);
-	
+
+
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
+     
    /* needed before starting 3d operation .. */
    reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
@@ -253,19 +278,26 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
    reg_start(0x4f18,0);
 	e32(0x00000003);
 	
+   
    rmesa->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
 				| R300_VPORT_X_OFFSET_ENA
 				| R300_VPORT_Y_SCALE_ENA
 				| R300_VPORT_Y_OFFSET_ENA
 				| R300_VTX_W0_FMT;
    R300_STATECHANGE(rmesa, vte);
-
-  // r300_setup_routing(rmesa, ctx, GL_TRUE);
-  // r300_setup_textures(rmesa, ctx);
-      
-   r300EmitState(rmesa);
    
-   assign_pipeline(rmesa, &FLAT_COLOR_PIPELINE);
+   r300EmitState(rmesa);
+      
+   /* Magic register - note it is right after 20b0 */
+
+   if(rmesa->state.texture.tc_count>0){
+   	reg_start(0x20b4,0);
+		e32(0x0000000c);
+   
+	   assign_pipeline(rmesa, &SINGLE_TEXTURE_PIPELINE);
+	} else {
+	   assign_pipeline(rmesa, &FLAT_COLOR_PIPELINE);
+	}
    
    rmesa->state.vertex_shader.matrix[0].length=16;
    memcpy(rmesa->state.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
@@ -275,30 +307,33 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
    rmesa->state.vertex_shader.unknown2.body.f[1]=0.0;
    rmesa->state.vertex_shader.unknown2.body.f[2]=1.0;
    rmesa->state.vertex_shader.unknown2.body.f[3]=0.0;
+	
    
    r300EmitVertexShader(rmesa);
    r300EmitPixelShader(rmesa);
-         
-   /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */   
+   
+   /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
    r300EmitLOAD_VBPNTR(rmesa, 0);
    
    for(i=0; i < VB->PrimitiveCount; i++){
        GLuint prim = VB->Primitive[i].mode;
        GLuint start = VB->Primitive[i].start;
        GLuint length = VB->Primitive[i].count;
-	r300_render_flat_primitive(rmesa, ctx, start, start + length, prim);
+	r300_render_immediate_primitive(rmesa, ctx, start, start + length, prim);
    	}
 	
-   /* This sequence is required after any 3d drawing packet
+    /* This sequence is required after any 3d drawing packet
       I suspect it work arounds a bug (or deficiency) in hardware */
+  
    reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
    
    reg_start(0x4f18,0);
 	e32(0x00000003);
-      
+         
    return GL_FALSE;
 }
+
 
 /* vertex buffer implementation */
 
@@ -449,152 +484,6 @@ static GLboolean r300_run_vb_flat_render(GLcontext *ctx,
    return GL_FALSE;
 }
 
-/* Textures... */
-
-/* Immediate implementation - vertex data is sent via command stream */
-
-static void r300_render_tex_primitive(r300ContextPtr rmesa, 
-	GLcontext *ctx,
-	int start,
-	int end,
-	int prim)
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   GLuint i;
-   int k, type;
-   LOCAL_VARS
-       	
-   type=r300_get_primitive_type(rmesa, ctx, start, end, prim);
-		
-   		#if 0
-		fprintf(stderr,"ObjPtr: size=%d stride=%d\n", 
-			VB->ObjPtr->size, VB->ObjPtr->stride);
-		fprintf(stderr,"ColorPtr[0]: size=%d stride=%d\n", 
-			VB->ColorPtr[0]->size, VB->ColorPtr[0]->stride);
-		fprintf(stderr,"TexCoordPtr[0]: size=%d stride=%d\n", 
-			VB->TexCoordPtr[0]->size, VB->TexCoordPtr[0]->stride);
-		#endif
-   
-   if(type<0)return;
-
-
-   start_immediate_packet(end-start, type, 12);
-
-	for(i=start;i<end;i++){
-		#if 0
-		fprintf(stderr, "* (%f %f %f %f) (%f %f %f %f)\n", 
-			VEC_ELT(VB->ObjPtr, GLfloat, i)[0],
-			VEC_ELT(VB->ObjPtr, GLfloat, i)[1],
-			VEC_ELT(VB->ObjPtr, GLfloat, i)[2],
-			VEC_ELT(VB->ObjPtr, GLfloat, i)[3],
-			
-			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[0],
-			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[1],
-			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[2],
-			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[3]
-			);
-		#endif
-		
-		
-		/* coordinates */
-		output_vector(VB->ObjPtr, i);
-		
-		/* color components */
-		output_vector(VB->ColorPtr[0], i);
-		
-		/* texture coordinates */
-		output_vector(VB->TexCoordPtr[0], i);
-		}
-
-}
-
-static GLboolean r300_run_tex_render(GLcontext *ctx,
-				 struct tnl_pipeline_stage *stage)
-{
-   r300ContextPtr rmesa = R300_CONTEXT(ctx);
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   GLuint i;
-   /* Only do 2d textures */
-   struct gl_texture_object *to=ctx->Texture.Unit[0].Current2D;
-   r300TexObjPtr t=to->DriverData;
-   LOCAL_VARS
-	
-   
-   /* Update texture state - needs to be done only when actually changed..
-      All the time for now.. */
-   /* Flush state - make sure command buffer is nice and large */
-   r300Flush(ctx);
-
-
-	if (RADEON_DEBUG == DEBUG_PRIMS)
-		fprintf(stderr, "%s\n", __FUNCTION__);
-
-     
-   /* needed before starting 3d operation .. */
-   reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
-	e32(0x0000000a);
-   
-   reg_start(0x4f18,0);
-	e32(0x00000003);
-	
-   
-   rmesa->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
-				| R300_VPORT_X_OFFSET_ENA
-				| R300_VPORT_Y_SCALE_ENA
-				| R300_VPORT_Y_OFFSET_ENA
-				| R300_VTX_W0_FMT;
-   R300_STATECHANGE(rmesa, vte);
-   
-   r300EmitState(rmesa);
-//   r300Flush(ctx);
-      
-   assign_pipeline(rmesa, &SINGLE_TEXTURE_PIPELINE);
-   
-   rmesa->state.vertex_shader.matrix[0].length=16;
-   memcpy(rmesa->state.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
-
-   rmesa->state.vertex_shader.unknown2.length=4;
-   rmesa->state.vertex_shader.unknown2.body.f[0]=0.0;
-   rmesa->state.vertex_shader.unknown2.body.f[1]=0.0;
-   rmesa->state.vertex_shader.unknown2.body.f[2]=1.0;
-   rmesa->state.vertex_shader.unknown2.body.f[3]=0.0;
-	
-   /* Magic register - note it is right after 20b0 */
-   
-   reg_start(0x20b4,0);
-	e32(0x0000000c);
-   
-//   program_pipeline(PASS_PREFIX &SINGLE_TEXTURE_PIPELINE);
-   
-   r300EmitVertexShader(rmesa);
-   r300EmitPixelShader(rmesa);
-   
-   /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
-   r300EmitLOAD_VBPNTR(rmesa, 0);
-   
-   for(i=0; i < VB->PrimitiveCount; i++){
-       GLuint prim = VB->Primitive[i].mode;
-       GLuint start = VB->Primitive[i].start;
-       GLuint length = VB->Primitive[i].count;
-	r300_render_tex_primitive(rmesa, ctx, start, start + length, prim);
-   	}
-	
-    /* This sequence is required after any 3d drawing packet
-      I suspect it work arounds a bug (or deficiency) in hardware */
-  
-   reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
-	e32(0x0000000a);
-   
-   reg_start(0x4f18,0);
-	e32(0x00000003);
-         
-   fprintf(stderr, "\n");
-   //exit(-1);
-   return GL_FALSE;
-}
-
 
 /**
  * Called by the pipeline manager to render a batch of primitives.
@@ -615,11 +504,8 @@ static GLboolean r300_run_render(GLcontext *ctx,
 
 		
    #if 1
-   	/* Just switch between pipelines.. We could possibly do better.. (?) */
-        if(ctx->Texture.Unit[0].Enabled)
-        	return r300_run_tex_render(ctx, stage);
-		else
-        	return r300_run_flat_render(ctx, stage);
+	
+        return r300_run_immediate_render(ctx, stage);
    #else
 	return GL_TRUE;
    #endif
