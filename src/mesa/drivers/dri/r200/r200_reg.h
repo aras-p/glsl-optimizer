@@ -1307,6 +1307,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R200_PP_TXABLEND_7                0x2f78
 #define R200_PP_TXABLEND2_7               0x2f7c
 /* gap */
+#define R200_RB3D_BLENDCOLOR               0x3218 /* ARGB 8888 */
 #define R200_RB3D_ABLENDCNTL               0x321C /* see BLENDCTL */
 #define R200_RB3D_CBLENDCNTL               0x3220 /* see BLENDCTL */
 
