@@ -263,17 +263,6 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #endif
 
 
-/*
- * Provide a reasonable replacement for __FUNCTION__ when using
- * non-GNU C compilers. Watcom C/C++ 11.0 and later provide this also.
- */
-#if !defined(__GNUC__) && !(defined(__WATCOMC__) && (__WATCOMC__ >= 1100))
-#define STRINGIZE(x) #x
-#define STRINGIZE_EVAL(x) STRINGIZE(x)
-#define __FUNCTION__ STRINGIZE_EVAL(__FILE__) ", line " STRINGIZE_EVAL(__LINE__)
-#endif
-
-
 /* Some compilers don't like some of Mesa's const usage */
 #ifdef NO_CONST
 #  define CONST
