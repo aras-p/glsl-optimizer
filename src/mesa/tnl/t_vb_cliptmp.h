@@ -1,4 +1,4 @@
-/* $Id: t_vb_cliptmp.h,v 1.2 2000/12/27 19:57:37 keithw Exp $ */
+/* $Id: t_vb_cliptmp.h,v 1.3 2000/12/27 21:49:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -132,19 +132,11 @@ static GLuint TAG(userclip_polygon)( GLcontext *ctx,
 		   */
 		  GLfloat t = dp / (dp - dpPrev);
 		  newvert = interp( ctx, t, idx, idxPrev, GL_TRUE );
-/*  		  fprintf(stderr,"Goint out: in: %d/%d out: %d/%d new: %d/%d\n", */
-/*  			  idxPrev, VB->EdgeFlagPtr->data[idxPrev], */
-/*  			  idx, VB->EdgeFlagPtr->data[idx], */
-/*  			  newvert, VB->EdgeFlagPtr->data[newvert]); */
 	       } else {
 		  /* Coming back in.
 		   */
 		  GLfloat t = dpPrev / (dpPrev - dp);
 		  newvert = interp( ctx, t, idxPrev, idx, GL_FALSE );
-/*  		  fprintf(stderr,"coming in: in: %d/%d out: %d/%d new: %d/%d\n", */
-/*  			  idx, VB->EdgeFlagPtr->data[idx], */
-/*  			  idxPrev, VB->EdgeFlagPtr->data[idxPrev], */
-/*  			  newvert, VB->EdgeFlagPtr->data[newvert]); */
 	       }
 	       clipmask[newvert] = 0;
 	       outlist[outcount++] = newvert;
@@ -172,10 +164,6 @@ static GLuint TAG(userclip_polygon)( GLcontext *ctx,
       for (i = 0 ; i < n ; i++) 
 	 vlist[i] = inlist[i];
    }
-
-/*     fprintf(stderr, "%s: finally:\n", __FUNCTION__); */
-/*     for (i = 0 ; i < n ; i++)  */
-/*        fprintf(stderr, "%d: %d\n", vlist[i], VB->EdgeFlagPtr->data[vlist[i]]); */
 
    return n;
 }

@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.2 2000/12/26 07:41:32 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.3 2000/12/27 21:49:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -187,8 +187,6 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
    TNLvertexcassette *node = (TNLvertexcassette *)data;
    struct immediate *IM = node->IM;
 
-/*     FLUSH_VERTICES( ctx, 0 ); */
-
    if (ctx->NewState)
       gl_update_state(ctx);
 
@@ -214,7 +212,12 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
       fprintf(stderr, "Run cassette %d, rows %d..%d, beginstate %x ",
 	      IM->id,
 	      IM->Start, IM->Count, IM->BeginState);
-/*        _tnl_print_vert_flags("orflag", IM->OrFlag); */
+      _tnl_print_vert_flags("orflag", IM->OrFlag);
+   }
+
+   if (IM->Count == IM->Start) {
+      _tnl_run_empty_cassette( ctx, IM );
+      return;
    }
 
    if (IM->SavedBeginState) {
@@ -225,7 +228,6 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
 	 return;
       }
    }
-
 
 
    /* Lazy optimization of the cassette.

@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.1 2000/12/26 05:09:32 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.2 2000/12/27 21:49:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -358,14 +358,10 @@ static void exec_elt_cassette( GLcontext *ctx, struct immediate *IM )
 /* Called for cassettes where CopyStart == Count -- no need to run the
  * pipeline.
  */
-static void exec_empty_cassette( GLcontext *ctx, struct immediate *IM )
+void _tnl_run_empty_cassette( GLcontext *ctx, struct immediate *IM )
 {
    GLuint start = IM->CopyStart;
 
-   if (IM->OrFlag & VERT_ELT) 
-      _tnl_translate_array_elts( ctx, IM, start, start ); 
-
-   _tnl_fixup_input( ctx, IM );	/* shouldn't be needed? (demos/fire) */
    copy_to_current( ctx, IM, IM->OrFlag ); 
 
    if (IM->OrFlag & VERT_MATERIAL) 
@@ -428,7 +424,11 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
    _tnl_get_exec_copy_verts( ctx, IM );
    
    if (IM->CopyStart == IM->Count) {
-      exec_empty_cassette( ctx, IM );
+      if (IM->OrFlag & VERT_ELT) 
+	 _tnl_translate_array_elts( ctx, IM, IM->CopyStart, IM->CopyStart ); 
+
+      _tnl_fixup_input( ctx, IM );	/* shouldn't be needed? (demos/fire) */
+      _tnl_run_empty_cassette( ctx, IM );
    }
    else if ((IM->OrFlag & VERT_DATA) == VERT_ELT && 
 	    ctx->Array.LockCount &&
