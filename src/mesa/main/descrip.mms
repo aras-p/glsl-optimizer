@@ -2,11 +2,11 @@
 # contributed by Jouk Jansen  joukj@hrem.stm.tudelft.nl
 # Last revision : 18 August 2004
 
-first
+.first
 	define gl [---.include.gl]
 	define math [-.math]
 
-include [---]mms-config.
+.include [---]mms-config.
 
 ##### MACROS #####
 
