@@ -50,7 +50,7 @@ extern "C" {
  *   7. Brian Paul, 7 Apr 2000
  *      Minor clean-ups, temporary token values for GL_SGIS_pixel_texture
  *   8. Brian Paul, 15 Apr 2000
- *      Added GL_EXT_texture_cube_map, misc clean-up.
+ *      Added GL_EXT_texture_cube_map, adding some missing tokens values.
  */
 #define GL_GLEXT_VERSION_EXT 8
 
@@ -1032,7 +1032,7 @@ typedef void (APIENTRY * PFNGLREADINSTRUMENTSSGIXPROC) (GLint marker);
 typedef void (APIENTRY * PFNGLSTARTINSTRUMENTSSGIXPROC) (void);
 typedef void (APIENTRY * PFNGLSTOPINSTRUMENTSSGIXPROC) (GLint marker);
 
-#endif
+#endif /* GL_SGIX_instruments */
 
 
 
@@ -1261,7 +1261,7 @@ GLAPI void APIENTRY glCopyColorSubTableEXT(GLenum target, GLsizei start, GLint x
 typedef void (APIENTRY * PFNGLCOLORSUBTABLEEXTPROC) (GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const void *data);
 typedef void (APIENTRY * PFNGLCOPYCOLORSUBTABLEEXTPROC) (GLenum target, GLsizei start, GLint x, GLint y, GLsizei width);
 
-#endif
+#endif /* GL_EXT_color_subtable */
 
 
 
@@ -1910,7 +1910,7 @@ GLAPI void APIENTRY glGetPixelTransformParameterfvEXT(GLenum target, GLenum pnam
 #define GL_PIXEL_TRANSFORM_COLOR_TABLE_EXT		?
 #define GL_PROXY_PIXEL_TRANSFORM_COLOR_TABLE_EXT	?
 
-#endif
+#endif /* GL_EXT_pixel_transform_color_table */
 
 
 
@@ -2676,7 +2676,7 @@ typedef void (APIENTRY * PFNGLVERTEXWEIGHTFEXTPROC) (GLfloat weight);
 typedef void (APIENTRY * PFNGLVERTEXWEIGHTFVEXTPROC) (const GLfloat *weight);
 typedef void (APIENTRY * PFNGLVERTEXWEIGHTPOINTEREXTPROC) (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
 
-#endif
+#endif /* GL_EXT_vertex_weighting */
 
 
 
@@ -2689,7 +2689,7 @@ typedef void (APIENTRY * PFNGLVERTEXWEIGHTPOINTEREXTPROC) (GLint size, GLenum ty
 #define GL_MAX_SHININESS_NV			0x8507
 #define GL_MAX_SPOT_EXPONENT_NV			0x8508
 
-#endif
+#endif /* GL_NV_light_max_exponent */
 
 
 
@@ -2699,7 +2699,11 @@ typedef void (APIENTRY * PFNGLVERTEXWEIGHTPOINTEREXTPROC) (GLint size, GLenum ty
 #ifndef GL_NV_vertex_array_range
 #define GL_NV_vertex_array_range 1
 
-/* TOKENS? */
+#define GL_VERTEX_ARRAY_RANGE_NV		0x851D
+#define GL_VERTEX_ARRAY_RANGE_LENGTH_NV		0x851E
+#define GL_VERTEX_ARRAY_RANGE_VALID_NV		0x851F
+#define GL_MAX_VERTEX_ARRAY_RANGE_ELEMENT_NV	0x8520
+#define GL_VERTEX_ARRAY_RANGE_POINTER_NV	0x8521
 
 GLAPI void APIENTRY glFlushVertexArrayRangeNV(void);
 GLAPI void APIENTRY glVertexArrayRangeNV(GLsizei size, const GLvoid * pointer);
@@ -2707,7 +2711,7 @@ GLAPI void APIENTRY glVertexArrayRangeNV(GLsizei size, const GLvoid * pointer);
 typedef void (APIENTRY * PFNGLFLUSHVERTEXARRAYRANGENVPROC) (void);
 typedef void (APIENTRY * PFNGLVERTEXARRAYRANGENV) (GLsizei size, const GLvoid * pointer);
 
-#endif
+#endif /* GL_NV_vertex_array_range */
 
 
 
@@ -2717,7 +2721,57 @@ typedef void (APIENTRY * PFNGLVERTEXARRAYRANGENV) (GLsizei size, const GLvoid * 
 #ifndef GL_NV_register_combiners
 #define GL_NV_register_combiners 1
 
-/* TOKENS? */
+#define GL_REGISTER_COMBINERS_NV		0x8522
+#define GL_COMBINER0_NV				0x8550
+#define GL_COMBINER1_NV				0x8551
+#define GL_COMBINER2_NV				0x8552
+#define GL_COMBINER3_NV				0x8553
+#define GL_COMBINER4_NV				0x8554
+#define GL_COMBINER5_NV				0x8555
+#define GL_COMBINER6_NV				0x8556
+#define GL_COMBINER7_NV				0x8557
+#define GL_VARIABLE_A_NV			0x8523
+#define GL_VARIABLE_B_NV			0x8524
+#define GL_VARIABLE_C_NV			0x8525
+#define GL_VARIABLE_D_NV			0x8526
+#define GL_VARIABLE_E_NV			0x8527
+#define GL_VARIABLE_F_NV			0x8528
+#define GL_VARIABLE_G_NV			0x8529
+#define GL_CONSTANT_COLOR0_NV			0x852A
+#define GL_CONSTANT_COLOR1_NV			0x852B
+#define GL_PRIMARY_COLOR_NV			0x852C
+#define GL_SECONDARY_COLOR_NV			0x852D
+#define GL_SPARE0_NV				0x852E
+#define GL_SPARE1_NV				0x852F
+#define GL_UNSIGNED_IDENTITY_NV			0x8536
+#define GL_UNSIGNED_INVERT_NV			0x8537
+#define GL_EXPAND_NORMAL_NV			0x8538
+#define GL_EXPAND_NEGATE_NV			0x8539
+#define GL_HALF_BIAS_NORMAL_NV			0x853A
+#define GL_HALF_BIAS_NEGATE_NV			0x853B
+#define GL_SIGNED_IDENTITY_NV			0x853C
+#define GL_SIGNED_NEGATE_NV			0x853D
+#define GL_E_TIMES_F_NV				0x8531
+#define GL_SPARE0_PLUS_SECONDARY_COLOR_NV	0x8532
+#define GL_SCALE_BY_TWO_NV			0x853E
+#define GL_SCALE_BY_FOUR_NV			0x853F
+#define GL_SCALE_BY_ONE_HALF_NV			0x8540
+#define GL_BIAS_BY_NEGATIVE_ONE_HALF_NV		0x8541
+#define GL_DISCARD_NV				0x8530
+#define GL_COMBINER_INPUT_NV			0x8542
+#define GL_COMBINER_MAPPING_NV			0x8543
+#define GL_COMBINER_COMPONENT_USAGE_NV		0x8544
+#define GL_COMBINER_AB_DOT_PRODUCT_NV		0x8545
+#define GL_COMBINER_CD_DOT_PRODUCT_NV		0x8546
+#define GL_COMBINER_MUX_SUM_NV			0x8547
+#define GL_COMBINER_SCALE_NV			0x8548
+#define GL_COMBINER_BIAS_NV			0x8549
+#define GL_COMBINER_AB_OUTPUT_NV		0x854A
+#define GL_COMBINER_CD_OUTPUT_NV		0x854B
+#define GL_COMBINER_SUM_OUTPUT_NV		0x854C
+#define GL_NUM_GENERAL_COMBINERS_NV		0x854E
+#define GL_COLOR_SUM_CLAMP_NV			0x854F
+#define GL_MAX_GENERAL_COMBINERS_NV		0x854D
 
 #ifdef VMS
 /*VMS only allows externals of maximal 31 characters! */
