@@ -1133,7 +1133,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
             /* try user-defined identifiers */
             const GLfloat *value = _mesa_lookup_parameter_value(
                        ctx->FragmentProgram.Current->Parameters, -1, reg);
-            if (reg) {
+            if (value) {
                COPY_4V(v, value);
             }
             else {
