@@ -12,6 +12,8 @@ PROGS = antialias \
 	cva \
 	dinoshade \
 	fogcoord \
+	fptest1 \
+	fptexture \
 	getprocaddress \
 	manytex \
 	multipal \
@@ -20,6 +22,7 @@ PROGS = antialias \
 	sharedtex \
 	stencilwrap \
 	texline \
+	texrect \
 	texwrap \
 	vptest1 \
 	vptest2 \
@@ -35,6 +38,9 @@ PROGS = antialias \
 
 .c:
 	$(CC) $(CFLAGS) $< $(LIBS) -o $@
+
+.c.o:
+	$(CC) -c -I. -I../include $(CFLAGS) $< -o $@
 
 
 ##### TARGETS #####
@@ -52,3 +58,19 @@ getprocaddress: getprocaddress.c getproclist.h
 getproclist.h: ../bin/APIspec getprocaddress.c getprocaddress.py
 	python getprocaddress.py > getproclist.h
 
+
+texrect: texrect.o readtex.o
+	$(CC) texrect.o readtex.o $(LIBS) -o $@
+
+texrect.o: texrect.c readtex.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+readtex.o: readtex.c
+	$(CC) -c $(CFLAGS) $< -o $@
+
+
+readtex.h: ../util/readtex.h
+	ln -s ../util/readtex.h .
+
+readtex.c: ../util/readtex.c
+	ln -s ../util/readtex.c .
