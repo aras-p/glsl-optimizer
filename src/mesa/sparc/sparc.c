@@ -1,10 +1,10 @@
-/* $Id: sparc.c,v 1.6 2002/04/09 14:58:03 keithw Exp $ */
+/* $Id: sparc.c,v 1.7 2002/04/17 19:08:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.0.3
  * 
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -111,9 +111,13 @@ void _mesa_init_all_sparc_transform_asm(void)
    ASSIGN_XFORM_GROUP(sparc, 3)
    ASSIGN_XFORM_GROUP(sparc, 4)
 
+#if 0
+   /* Disabled for now.  See Mesa bug report # 544665.  Evidently these
+    * functions are using SPARC registers that shouldn't be touched.
+    */
    _mesa_clip_tab[4] = _mesa_sparc_cliptest_points4;
    _mesa_clip_np_tab[4] = _mesa_sparc_cliptest_points4_np;
-
+#endif
    _mesa_normal_tab[NORM_TRANSFORM | NORM_NORMALIZE] =
 	   _mesa_sparc_transform_normalize_normals;
    _mesa_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_NORMALIZE] =
