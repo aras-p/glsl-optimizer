@@ -395,11 +395,11 @@ static void fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_obje
 static void fxSelectSingleTMUSrc_NoLock(fxMesaContext fxMesa, GLint tmu, 
 					FxBool LODblend)
 {
-   if (MESA_VERBOSE&VERBOSE_DRIVER) {
-      fprintf(stderr,"fxmesa: fxSelectSingleTMUSrc(%d,%d)\n",tmu,LODblend);
-   }
+  if (MESA_VERBOSE&VERBOSE_DRIVER) {
+    fprintf(stderr,"fxmesa: fxSelectSingleTMUSrc(%d,%d)\n",tmu,LODblend);
+  }
 
-  if(LODblend) {
+  if (LODblend) {
     FX_grTexCombine_NoLock(GR_TMU0,
 			   GR_COMBINE_FUNCTION_BLEND,
 			   GR_COMBINE_FACTOR_ONE_MINUS_LOD_FRACTION,
@@ -412,32 +412,36 @@ static void fxSelectSingleTMUSrc_NoLock(fxMesaContext fxMesa, GLint tmu,
 			   GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
 			   FXFALSE,FXFALSE);
     fxMesa->tmuSrc=FX_TMU_SPLIT;
-  } else {
+  }
+  else {
     if (tmu!=FX_TMU1) {
       FX_grTexCombine_NoLock(GR_TMU0,
 			     GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
 			     GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
 			     FXFALSE,FXFALSE);
-      FX_grTexCombine_NoLock(GR_TMU1,
-			     GR_COMBINE_FUNCTION_ZERO, GR_COMBINE_FACTOR_NONE,
-			     GR_COMBINE_FUNCTION_ZERO, GR_COMBINE_FACTOR_NONE,
-			     FXFALSE,FXFALSE);
+      if (fxMesa->haveTwoTMUs) {
+        FX_grTexCombine_NoLock(GR_TMU1,
+                               GR_COMBINE_FUNCTION_ZERO, GR_COMBINE_FACTOR_NONE,
+                               GR_COMBINE_FUNCTION_ZERO, GR_COMBINE_FACTOR_NONE,
+                               FXFALSE,FXFALSE);
+      }
       fxMesa->tmuSrc=FX_TMU0;
-    } else {
+    }
+    else {
       FX_grTexCombine_NoLock(GR_TMU1,
 			     GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
 			     GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
 			     FXFALSE,FXFALSE);
-    
+
       /* GR_COMBINE_FUNCTION_SCALE_OTHER doesn't work ?!? */
-    
+
       FX_grTexCombine_NoLock(GR_TMU0,
 			     GR_COMBINE_FUNCTION_BLEND,
 			     GR_COMBINE_FACTOR_ONE,
 			     GR_COMBINE_FUNCTION_BLEND,
 			     GR_COMBINE_FACTOR_ONE,
 			     FXFALSE,FXFALSE);
-    
+
       fxMesa->tmuSrc=FX_TMU1;
     }
   }
