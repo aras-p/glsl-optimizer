@@ -74,6 +74,7 @@ read_index_pixels( GLcontext *ctx,
 
    _swrast_use_read_buffer(ctx);
 
+   /* XXX: width should never be > MAX_WIDTH since we did clipping earlier */
    readWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
 
    /* process image row by row */
@@ -95,6 +96,9 @@ read_index_pixels( GLcontext *ctx,
 
 
 
+/**
+ * Read pixels for format=GL_DEPTH_COMPONENT.
+ */
 static void
 read_depth_pixels( GLcontext *ctx,
                    GLint x, GLint y,
@@ -112,6 +116,7 @@ read_depth_pixels( GLcontext *ctx,
       return;
    }
 
+   /* XXX: width should never be > MAX_WIDTH since we did clipping earlier */
    readWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
 
    if (type != GL_BYTE &&
@@ -170,7 +175,9 @@ read_depth_pixels( GLcontext *ctx,
 }
 
 
-
+/**
+ * Read pixels for format=GL_STENCIL_INDEX.
+ */
 static void
 read_stencil_pixels( GLcontext *ctx,
                      GLint x, GLint y,
@@ -192,6 +199,7 @@ read_stencil_pixels( GLcontext *ctx,
       return;
    }
 
+   /* XXX: width should never be > MAX_WIDTH since we did clipping earlier */
    readWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
 
    if (ctx->Visual.stencilBits <= 0) {
@@ -216,7 +224,7 @@ read_stencil_pixels( GLcontext *ctx,
 
 
 
-/*
+/**
  * Optimized glReadPixels for particular pixel formats:
  *   GL_UNSIGNED_BYTE, GL_RGBA
  * when pixel scaling, biasing and mapping are disabled.
@@ -251,28 +259,6 @@ read_fast_rgba_pixels( GLcontext *ctx,
          rowLength = packing->RowLength;
       else
          rowLength = width;
-
-      /* horizontal clipping */
-      if (srcX < 0) {
-         skipPixels -= srcX;
-         readWidth += srcX;
-         srcX = 0;
-      }
-      if (srcX + readWidth > (GLint) ctx->ReadBuffer->Width)
-         readWidth -= (srcX + readWidth - (GLint) ctx->ReadBuffer->Width);
-      if (readWidth <= 0)
-         return GL_TRUE;
-
-      /* vertical clipping */
-      if (srcY < 0) {
-         skipRows -= srcY;
-         readHeight += srcY;
-         srcY = 0;
-      }
-      if (srcY + readHeight > (GLint) ctx->ReadBuffer->Height)
-         readHeight -= (srcY + readHeight - (GLint) ctx->ReadBuffer->Height);
-      if (readHeight <= 0)
-         return GL_TRUE;
 
       /*
        * Ready to read!
@@ -342,6 +328,7 @@ read_rgba_pixels( GLcontext *ctx,
       return; /* done! */
    }
 
+   /* XXX: width should never be > MAX_WIDTH since we did clipping earlier */
    readWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
 
    /* do error checking on pixel type, format was already checked by caller */
@@ -494,7 +481,10 @@ read_rgba_pixels( GLcontext *ctx,
 }
 
 
-
+/**
+ * Software fallback routine for ctx->Driver.ReadPixels().
+ * We wind up using the swrast->ReadSpan() routines to do the job.
+ */
 void
 _swrast_ReadPixels( GLcontext *ctx,
 		    GLint x, GLint y, GLsizei width, GLsizei height,
@@ -503,14 +493,24 @@ _swrast_ReadPixels( GLcontext *ctx,
 		    GLvoid *pixels )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   struct gl_pixelstore_attrib clippedPacking;
 
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-   if (packing->BufferObj->Name) {
+   /* Do all needed clipping here, so that we can forget about it later */
+   clippedPacking = *packing;
+   if (!_mesa_clip_readpixels(ctx, &x, &y, &width, &height,
+                              &clippedPacking.SkipPixels,
+                              &clippedPacking.SkipRows)) {
+      /* The ReadPixels region is totally outside the window bounds */
+      return;
+   }
+
+   if (clippedPacking.BufferObj->Name) {
       /* pack into PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(packing, width, height, 1,
+      if (!_mesa_validate_pbo_access(&clippedPacking, width, height, 1,
                                      format, type, pixels)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glReadPixels(invalid PBO access)");
@@ -518,7 +518,7 @@ _swrast_ReadPixels( GLcontext *ctx,
       }
       buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
                                               GL_WRITE_ONLY_ARB,
-                                              packing->BufferObj);
+                                              clippedPacking.BufferObj);
       if (!buf) {
          /* buffer is already mapped - that's an error */
          _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(PBO is mapped)");
@@ -531,13 +531,16 @@ _swrast_ReadPixels( GLcontext *ctx,
 
    switch (format) {
       case GL_COLOR_INDEX:
-         read_index_pixels(ctx, x, y, width, height, type, pixels, packing);
+         read_index_pixels(ctx, x, y, width, height, type, pixels,
+                           &clippedPacking);
 	 break;
       case GL_STENCIL_INDEX:
-	 read_stencil_pixels(ctx, x,y, width,height, type, pixels, packing);
+	 read_stencil_pixels(ctx, x,y, width,height, type, pixels,
+                             &clippedPacking);
          break;
       case GL_DEPTH_COMPONENT:
-	 read_depth_pixels(ctx, x, y, width, height, type, pixels, packing);
+	 read_depth_pixels(ctx, x, y, width, height, type, pixels,
+                           &clippedPacking);
 	 break;
       case GL_RED:
       case GL_GREEN:
@@ -551,7 +554,7 @@ _swrast_ReadPixels( GLcontext *ctx,
       case GL_BGRA:
       case GL_ABGR_EXT:
          read_rgba_pixels(ctx, x, y, width, height,
-                          format, type, pixels, packing);
+                          format, type, pixels, &clippedPacking);
 	 break;
       default:
 	 _mesa_error( ctx, GL_INVALID_ENUM, "glReadPixels(format)" );
@@ -560,9 +563,9 @@ _swrast_ReadPixels( GLcontext *ctx,
 
    RENDER_FINISH(swrast, ctx);
 
-   if (packing->BufferObj->Name) {
+   if (clippedPacking.BufferObj->Name) {
       /* done with PBO so unmap it now */
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                              packing->BufferObj);
+                              clippedPacking.BufferObj);
    }
 }
