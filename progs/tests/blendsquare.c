@@ -25,7 +25,7 @@
 /**
  * \file blendsquare.c
  * 
- * Simple test of GL_NV_blend_square functionality.  Three squares are drawn
+ * Simple test of GL_NV_blend_square functionality.  Four squares are drawn
  * with different blending modes, but all should be rendered with the same
  * final color.
  *
@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include <GL/glut.h>
 
-static int Width = 300;
+static int Width = 400;
 static int Height = 200;
 static const GLfloat Near = 5.0, Far = 25.0;
 
@@ -47,7 +47,8 @@ static void Display( void )
    glClear( GL_COLOR_BUFFER_BIT );
 
    glPushMatrix();
-   glTranslatef(-3.0, 0, 0);
+
+   glTranslatef(-4.5, 0, 0);
    glBlendFunc( GL_ONE, GL_ZERO );
    glBegin(GL_QUADS);
    glColor3f( 0.5 * 0.5, 0.5 * 0.5, 0.5 * 0.5 );
@@ -57,8 +58,9 @@ static void Display( void )
    glVertex2f(-1,  1);
    glEnd();
 
+
    glTranslatef(3.0, 0, 0);
-   glBlendFunc( GL_SRC_COLOR, GL_ZERO );
+   glBlendFunc( GL_ONE, GL_ZERO );
    glBegin(GL_QUADS);
    glColor3f( 0.5, 0.5, 0.5 );
    glVertex2f(-1, -1);
@@ -66,6 +68,25 @@ static void Display( void )
    glVertex2f( 1,  1);
    glVertex2f(-1,  1);
    glEnd();
+
+   glBlendFunc( GL_DST_COLOR, GL_ZERO );
+   glBegin(GL_QUADS);
+   glVertex2f(-1, -1);
+   glVertex2f( 1, -1);
+   glVertex2f( 1,  1);
+   glVertex2f(-1,  1);
+   glEnd();
+
+
+   glTranslatef(3.0, 0, 0);
+   glBlendFunc( GL_SRC_COLOR, GL_ZERO );
+   glBegin(GL_QUADS);
+   glVertex2f(-1, -1);
+   glVertex2f( 1, -1);
+   glVertex2f( 1,  1);
+   glVertex2f(-1,  1);
+   glEnd();
+
 
    glTranslatef(3.0, 0, 0);
    glBlendFunc( GL_ONE, GL_ZERO );
@@ -120,7 +141,8 @@ static void Key( unsigned char key, int x, int y )
 
 static void Init( void )
 {
-   const char * const ver_string = (const char * const) glGetString( GL_VERSION );
+   const char * const ver_string = (const char * const)
+       glGetString( GL_VERSION );
    const double version = strtod( ver_string, NULL );
 
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
@@ -131,7 +153,10 @@ static void Init( void )
       exit(1);
    }
 
-   printf("All 3 squares should be the same color.\n");
+   printf("\nAll 4 squares should be the same color.  The two on the left are drawn\n"
+	  "without NV_blend_square functionality, and the two on the right are drawn\n"
+	  "with NV_blend_square functionality.  If the two on the left are dark, but\n"
+	  "the two on the right are not, then NV_blend_square is broken.\n");
    glEnable( GL_BLEND );
    glBlendEquation( GL_FUNC_ADD );
 }
