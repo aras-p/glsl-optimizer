@@ -1,0 +1,115 @@
+<HTML>
+
+<TITLE>License / Cppyright Information</TITLE>
+
+<BODY text="#000000" bgcolor="#55bbff" link="#111188">
+
+<H1>License / Copyright Information</H1>
+
+<p>
+The Mesa distribution consists of several components.  Different copyrights
+and licenses apply to different components.  For example, GLUT is copyrighted
+by Mark Kilgard, some demo programs are copyrighted by SGI, some of the Mesa
+device drivers are copyrighted by their authors.  See below for a list of
+Mesa's components and the copyright/license for each.
+</p>
+<p>
+The core Mesa library is licensed according to the terms of the XFree86
+copyright (an MIT-style license).  This allows integration with the
+XFree86/DRI project.  Unless otherwise stated, the Mesa source code and
+documentation is licensed as follows:
+</p>
+
+<pre>
+Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+</pre>
+
+
+<H1>Attention, Contributors</H1>
+
+<p>
+When contributing to the Mesa project you must agree to relinquish your
+work to the holder of the copyright for the particular component you're
+contributing to.  That is, you can't put your own copyright on the code,
+unless it's a modular piece that can be omitted from Mesa (like a new
+device driver).  If for example, you contribute a bug fix to Mesa's
+texture mapping code, your code will become a part of the body of work
+which is copyrighted by Brian Paul and licensed by the above terms.
+</p>
+
+<pre>
+Mesa Component Licenses:
+
+Component       Files                 Primary Author      License
+----------------------------------------------------------------------------
+core Mesa code  src/*.[ch]            Brian Paul          Mesa
+                include/GL/gl.h
+
+GLX driver      src/X/*               Brian Paul          Mesa
+                include/GL/glx.h
+                include/GL/xmesa.h
+
+OS/Mesa driver  src/OSmesa/*          Brian Paul          Mesa
+                include/GL/osmesa.h
+
+3Dfx driver     src/FX/*              David Bucciarelli   Mesa
+                include/GL/fxmesa.h
+
+BeOS R4 driver  src/BeOS/*            Brian Paul          Mesa
+
+MGL driver      src/MGL/*             SciTech, Inc        SciTech copyright
+                include/GL/mglmesa.h
+
+Windows driver  src/Windows/*         Li Wei              copyright by Li Wei
+                include/GL/wmesa.h
+
+SVGA driver     src/SVGA/*            Brian Paul          GNU-LGPL
+                include/GL/svgamesa.h
+
+DOS driver      src/DOS/*             Charlie Wallace     GNU-LGPL
+                include/GL/dosmesa.h
+
+GGI driver      src/GGI/*             Uwe Maurer          GNU-LGPL
+                include/GL/ggimesa.h
+
+S3 driver       src/S3/*              S3, Inc.            S3 copyright
+
+GLUT            src-glut/*            Mark Kilgard        Mark's copyright
+                include/GL/*glut*.h
+
+GLU library     src-glu/*             Brian Paul          GNU-LGPL
+
+SI GLU library  si-glu/*              SGI                 SGI Free B
+                include/GL/glu.h
+
+Ext registry    include/GL/glext.h    SGI                 SGI Free B
+                include/GL/glxext.h
+
+demo programs   demos/*               various             see source files
+
+X demos         xdemos/*              Brian Paul          see source files
+
+SGI demos       samples/*             SGI                 SGI copyright
+
+RedBook demos   book/*                SGI                 SGI copyright
+</pre>
+
+</body>
+</html>

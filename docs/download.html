@@ -1,0 +1,106 @@
+<HTML>
+
+<TITLE>Getting Mesa</TITLE>
+
+<BODY text="#000000" bgcolor="#55bbff" link="#111188">
+
+<H1>Downloading / Unpacking</H1>
+
+<p>
+Mesa can be downloaded from the
+<a href="http://www.sourceforge.net/projects/mesa3d" target="_parent">
+SourceForge download area</A>.
+</p>
+
+<p>
+Since version 2.3, Mesa is distributed in two pieces:  main library code
+and demos.  If you're upgrading from a previous version of Mesa or you're not
+interested in the demos you can just download the core Mesa archive file.
+</p>
+
+<p>
+Mesa is available in at least three archive formats:
+</p>
+
+<pre>
+1. GNU zip/tar
+
+	Download MesaLib-X.Y.tar.gz and optionally MesaDemos-X.Y.tar.gz
+	Unpack with:
+		gzcat MesaLib-X.Y.tar.gz | tar xf -
+		gzcat MesaDemos-X.Y.tar.gz | tar xf -
+	or
+		gunzip MesaLib-X.Y.tar.gz ; tar xf MesaLib-X.Y.tar
+		gunzip MesaDemos-X.Y.tar.gz ; tar xf MesaLib-X.Y.tar
+	or
+		tar zxf MesaLib-X.Y.tar.gz
+		tar zxf MesaDemos-X.Y.tar.gz
+
+	If you don't have gzcat try zcat instead.
+
+2. Unix compressed/tar
+
+	Download MesaLib-X.Y.tar.Z and optionally MesaDemos-X.Y.tar.Z
+	Unpack with:
+		zcat MesaLib-X.Y.tar.Z | tar xf -
+		zcat MesaDemos-X.Y.tar.Z | tar xf -
+
+3. ZIP format
+
+	Download MesaLib-X.Y.zip and optionally MesaDemos-X.Y.zip
+	Unpack with:
+		unzip MesaLib-X.Y.zip
+		unzip MesaDemos-X.Y.zip
+</pre>
+
+<p>
+After unpacking you'll have these directories (and more):
+</p>
+<pre>
+Makefile.X11	- "old" top-level Makefile for X11-based systems
+Make-config	- system configurations used by the Makefile.X11
+configure	- the GNU autoconf script
+bin/		- shell scripts for making shared libraries, etc
+include/	- GL header (include) files
+lib/		- client libraries, created during installation
+src/		- source code for the main libGL library
+si-glu/		- SGI Sample Implementation of libGLU
+src-glu/	- old source code for libGLU (obsolete)
+docs/		- documentation
+util/		- handly utility functions
+widgets-mesa/	- Mesa widgets for Xt/Motif (obsolete)
+widgets-sgi/	- SGI OpenGL widgets for Xt/Motif
+
+and if you downloaded and unpacked the demos:
+
+src-glut/	- source code for GLUT toolkit
+demos/		- GLUT demos
+xdemos/		- X11 and SVGA demo programs
+samples/	- sample OpenGL programs from SGI
+book/		- example programs from the OpenGL Programming Guide,
+		  converted to GLUT by Mark Kilgard, from GLUT distribution.
+images/		- image files
+
+</pre>
+
+<p>
+Proceed to <a href="install.html">compilation and installation
+instructions</a>.
+</p>
+
+<H1>GLUT</H1>
+
+<p>
+Mesa 2.5 and later includes Mark Kilgard's GLUT library (GL Utility Toolkit).
+GLUT is built automatically on systems which support it.
+</p>
+<p>
+The GLUT tests, demos, examples, etc are not included, just the main library.
+To obtain the latest complete release of GLUT please visit the
+<a href="http://www.opengl.org/developers/documentation/glut/index.html"
+target ="_parent">GLUT homepage</a>
+</p>
+
+
+</BODY>
+</HTML>

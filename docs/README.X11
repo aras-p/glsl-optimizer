@@ -250,15 +250,9 @@ HPCR glClear(GL_COLOR_BUFFER_BIT) dithering
    to HP systems with the HPCR (Color Recovery) system.
 
 
-Extensions:
-   The following OpenGL GLX extensions are currently implemented:
-
-      GLX_EXT_visual_info - GLX visual and transparent pixel extension
-      GLX_EXT_visual_rating - GLX visual caveats
-
-   For detailed information about the extensions see www.opengl.org
-
-   There are four Mesa-specific GL/GLX extensions at this time.
+Extensions
+==========
+   There are three Mesa-specific GLX extensions at this time.
 
    GLX_MESA_pixmap_colormap 
 
@@ -317,4 +311,4 @@ Summary of X-related environment variables:
 
 
 ----------------------------------------------------------------------
-$Id: README.X11,v 3.9 2002/10/29 23:42:48 brianp Exp $
+$Id: README.X11,v 3.10 2003/03/08 17:38:57 brianp Exp $

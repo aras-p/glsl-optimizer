@@ -1,0 +1,230 @@
+<HTML>
+
+<TITLE>Development Notes</TITLE>
+
+<BODY text="#000000" bgcolor="#55bbff" link="#111188">
+
+<H1>Development Notes</H1>
+
+
+<H2>Adding Extentions</H2>
+
+<p>
+To add a new GL extension to Mesa you have to do the following.
+<pre>
+   If glext.h doesn't define the extension, edit include/GL/gl.h and add:
+	- new enum tokens
+	- new API function entry points
+	- #define GL_EXT_the_extension_name 1
+
+   If adding a new API function (call it glNewFunctionEXT):
+	- insert glNewFunctionEXT()into src/apiext.h
+	- edit src/types.h and add NewFunction to the gl_api_table struct
+	- implement gl_NewFunction() in the appropriate src file
+	- hook gl_NewFunction() into pointers.c
+	- add display list support in dlist.c for save_NewFunction()
+	- add glNewFunctionEXT to gl_GetProcAddress() in extensions.c or
+	  in the device driver's GetProcAddress() function if appropriate
+</pre>
+<p>
+If adding new GL state be sure to update get.c and enable.c
+</p>
+<p>
+In general, look for an extension similar to the new one that's already
+implemented in Mesa and follow it by example.
+</p>
+
+
+
+<H2>Coding Style</H2>
+
+<p>
+Mesa's code style has changed over the years.  Here's the latest.
+</p>
+
+<p>
+Comment your code!  It's extremely important that open-source code be
+well documented.  Also, strive to write clean, easily understandable code.
+</p>
+
+<p>
+3-space indentation
+</p>
+
+<p>
+If you use tabs, set them to 8 columns
+</p>
+
+<p>
+Brace example:
+</p>
+<pre>
+	if (condition) {
+	   foo;
+	}
+	else {
+	   bar;
+	}
+</pre>
+
+<p>
+Here's the GNU indent command which will best approximate my preferred style:
+</p>
+<pre>
+	indent -br -i3 -npcs infile.c -o outfile.c
+</pre>
+
+
+<p>
+Local variable name example:  localVarName (no underscores)
+</p>
+
+<p>
+Constants and macros are ALL_UPPERCASE, with _ between words
+</p>
+
+<p>
+Global vars not allowed.
+</p>
+
+<p>
+Function name examples:
+</p>
+<pre>
+	glFooBar()       - a public GL entry point (in dispatch.c)
+	_mesa_FooBar()   - the internal immediate mode function
+	save_FooBar()    - retained mode (display list) function in dlist.c
+	foo_bar()        - a static (private) function
+	_mesa_foo_bar()  - an internal non-static Mesa function
+</pre>
+
+
+<H2>Writing a Device Driver</H2>
+
+<p>
+XXX to do
+</p>
+
+
+
+<H2>Making a New Mesa Release</H2>
+
+<p>
+These are the instructions for making a new Mesa release.
+</p>
+
+<p>
+Prerequisites (later versions may work):
+</p>
+<ul>
+<li>	autoconf 2.50
+<li>	automake 1.4-p2
+<li>	libtool 1.4
+</ul>
+
+<p>
+Be sure to do a "cvs update -d ." in the Mesa directory to
+get all the latest files.
+</p>
+
+<p>
+Update the version strings in src/get.c and src/X/fakeglx.c to return
+the new Mesa version number.
+</p>
+
+<p>
+Create/edit the docs/RELNOTES-X-Y file to document what's new in the release.
+Edit the docs/VERSIONS file too.
+Update the docs/IAFA-PACKAGE file.
+</p>
+
+<p>
+Edit Make-config and change the MESA_MAJOR and/or MESA_MINOR versions.
+</p>
+
+<p>
+Edit the GNU configure stuff to change versions numbers as needed:
+Update the version string (second argument) in the line
+"AM_INIT_AUTOMAKE(Mesa, 3.3)" in the configure.in file.
+</p>
+
+<p>
+Remove the leading `dnl' from the line "dnl AM_MAINTAINER_MODE".
+</p>
+
+<p>
+Verify the version numbers near the top of configure.in
+</p>
+
+<p>
+Run "fixam -f" to disable automatic dependency tracking.
+</p>
+
+<p>
+Run the bootstrap script to generate the configure script.
+</p>
+
+<p>
+Edit Makefile.X11 and verify DIRECTORY is set correctly.  The Mesa
+sources must be in that directory (or there must be a symbolic link).
+</p>
+
+<p>
+Edit Makefile.X11 and verify that LIB_NAME and DEMO_NAME are correct.
+If it's a beta release, be sure the bump up the beta release number.
+</p>
+
+<p>
+cp Makefile.X11 to Makefile so that the old-style Mesa makefiles
+still work.  ./configure will overwrite it if that's what the user runs.
+</p>
+
+<p>
+Make a symbolic link from $(DIRECTORY) to Mesa.  For example,
+ln -s Mesa Mesa-3.3    This is needed in order to make a correct
+tar file in the next step.
+</p>
+
+<p>
+Make the distribution files.  From inside the Mesa directory:
+<pre>
+	make -f Makefile.X11 lib_tar
+	make -f Makefile.X11 demo_tar
+	make -f Makefile.X11 lib_zip
+	make -f Makefile.X11 demo_zip
+</pre>
+
+<p>
+Copy the distribution files to a temporary directory, unpack them,
+compile everything, and run some demos to be sure everything works.
+</p>
+
+<p>
+Upload the *.tar.gz and *.zip files to ftp.mesa3d.org
+</p>
+
+<p>
+Update the web site.  CJ Beyer (cj@styx.phy.vanderbilt.edu) can
+help with this and uploading to the ftp site.
+</p>
+
+<p>
+Make the announcement to the SourceForge.net sites:  mesa3d-dev@lists.sf.net,
+mesa3d-users@lists.sf.net and mesa3d-announce@lists.sf.net
+</p>
+
+
+<H2>Autoconf info</H2>
+
+<p>
+In order to run the bootstrap script you'll need:
+<p>
+<pre>
+autoconf 2.50
+automake 1.4-p5
+libtool 1.4
+</pre>
+
+
+</body>
+</html>

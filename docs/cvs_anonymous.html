@@ -1,0 +1,37 @@
+<HTML>
+
+<TITLE>Anonymous CVS</TITLE>
+
+<BODY text="#000000" bgcolor="#55bbff" link="#111188">
+
+<H1>Anonymous CVS</H1>
+
+<p>
+Anonymous, public, read-only access to the code in CVS is
+available. Here are the basic instructions for Unix systems:
+</p>
+
+<ol>
+	<li>Install CVS client software on your computer. Version 1.9.28 is known to work.
+	</li><li>Login as an anonymous user: <code>cvs -d:pserver:anonymous@cvs.mesa3d.sourceforge.net:/cvsroot/mesa3d
+	login</code>
+	</li><li>Just hit return at the <code>CVS password:</code> prompt.
+	</li><li>Then checkout mesa: <code>cvs -z3 -d:pserver:anonymous@cvs.mesa3d.sourceforge.net:/cvsroot/mesa3d
+	co Mesa</code>
+</li></ol>
+
+<p>To update your Mesa CVS source to the latest CVS source:
+
+</p><ol>
+	<li><code>cd Mesa</code>
+	</li><li><code>cvs -z3 -d:pserver:anonymous@cvs.mesa3d.sourceforge.net:/cvsroot/mesa3d
+	update</code>
+</li></ol>
+
+<p>You can browse the Mesa source code in CVS
+<a href="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/mesa3d/">here.
+</a>
+</p>
+
+</body>
+</html>

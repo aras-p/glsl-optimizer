@@ -1,0 +1,295 @@
+<HTML>
+
+<TITLE>Compilation and Installation</TITLE>
+
+<BODY text="#000000" bgcolor="#55bbff" link="#111188">
+
+<H1>Compilation and Installation for Unix/X11</H1>
+
+<p>
+If you're not using a variant of Unix with X11, see the
+<a href="systems.html">Supported Systems and Drivers</a> section
+for instructions.
+</p>
+
+<p>
+There are two methods for building Mesa on Unix/X11 systems:
+</p>
+
+<dl>
+<dt><a href="#new">NEW-STYLE</a><dt>
+<dd>
+Basically, type "./configure" followed by "make"
+This <em>should</em> work on most Unix-like operating systems.
+Unfortunately, autoconf/automake seems to seldom work reliably on non-Linux
+systems.  For that reason, the old-style make system is still supported
+(and is the preferred method of the Mesa developers).
+</dd>
+<br>
+<dt><a href="#old">OLD-STYLE</a><dt>
+<dd>
+Simply type <code>make</code> and you'll see a list of supported
+system configurations.  Pick one and type <code>make</code> <em>config</em>.
+More details below.
+</dd>
+</dl>
+
+<p>
+<B>NOTE</b>: The GLUT library and demonstrations programs are in the
+MesaDemos-x.y.z.tar.gz file.  If you don't have GLUT or you want to
+run some demos, download the MesaDemos package too.
+</p>
+
+<p>
+In either case, building Mesa entails the following:
+<p>
+<ul>
+<li>Compiling libGL, the OpenGL-replacement library.
+<li>Compiling libGLU, the OpenGL Utility library.
+<li>Compiling libglut, the GLUT library (if you downloaded the Mesa demos
+package)
+<li>Compiling the demonstration programs in the directories:
+<code>demos, xdemos, samples</code> and <code>book</code>
+(if you downloaded the Mesa demos package.)
+</ul>
+
+
+<a name="new">
+<H2>NEW-STYLE compilation and installation</H2>
+
+<pre>
+0) If you've downloaded Mesa via CVS there will not be a "configure"
+   script.  You'll have to run the "bootstrap" script first.  This script
+   may not work on any OS other than Linux.  You'll need these programs
+   to run the bootstrap script:
+
+	autoconf 2.50
+	automake 1.4-p2
+	libtool 1.4
+
+
+1) Run the configure script
+
+	./configure [options]
+
+For Linux, it is recommended that you use:
+	./configure --prefix=/usr
+So that the headers and libs are located according to the Linux/OpenGL
+standard spec at http://oss.sgi.com/projects/ogl-sample/ABI/
+
+Possible options are:
+
+--prefix=DIR
+	The toplevel directory of the hierachy in which Mesa
+	will be installed (DIR/include,DIR/lib etc.).
+	The default is "/usr/local".
+
+--sysconfdir=DIR
+	The directory where Mesa configuration files
+	will be stored.	The default is "$prefix/etc".
+	You may want to overwrite the default with --sysconfdir=/etc.
+
+--enable-static
+	Enable building of static libraries.
+	Static libraries are NOT built by default.
+	
+--disable-shared
+	Disable building of shared libraries.
+	Shared libraries are built by default.
+
+--with-pic
+--without-pic
+	In normal operation, libtool will build shared libraries from
+	PIC objects and static archives from non-PIC objects, except where one
+	or the other is not provided by the target host.  By specifying
+	--with-pic you are asking libtool to build static archives from
+	PIC objects, and similarly by specifying --without-pic you are asking
+	libtool to build shared	libraries from non-PIC objects.
+	libtool will only honour this flag where it will produce a
+	working library, otherwise it reverts to the default.
+	
+--enable-debug
+	Enable debugging messages (disabled by default).
+	
+--enable-profile
+	Enable profiling (disabled by default).
+	
+--disable-optimize
+	Disable extra optimizations (enabled by default,
+	i.e., optimize for maximum performance).
+	
+--enable-warn
+	Enable extended compiler warnings (disabled by default).
+	
+--enable-x86[=ARG]
+--disable-x86
+	Enable/disable x86 assembler support to speed up Mesa
+	(autodetected by default). You may set `on' or `off'.
+	
+--enable-3dnow[=ARG]
+--disable-3dnow
+	Enable/disable 3Dnow support to speed up Mesa
+	(autodetected by default). You may set `on' or `off'.
+	
+--enable-mmx[=ARG]
+--disable-mmx
+	Enable/disable MMX support to speed up Mesa
+	(autodetected by default). You may set `on' or `off'.
+	
+--enable-sse[=ARG]
+--disable-sse
+	Enable/disable SSE support to speed up Mesa
+	(autodetected by default). You may set `on' or `off'.
+	If you have a PentiumIII and want to use SSE make sure you have the
+	PIII Linux kernel-patch installed or things will fail!
+	You can get the patch from http://www.redhat.com/~dledford/linux_kernel.html
+	
+--with-glide[=DIR]
+--without-glide
+	Enable/disable support for Glide (disabled by default).
+	DIR is the installation directory of Glide.
+	If Glide cannot be found, the driver won't be built.
+	
+--with-glut[=DIR]
+--without-glut
+	Don't/use already-installed GLUT (autodetected by default).
+	DIR is the installation directory of Glut.
+	If GLUT cannot be found, the version shipped with Mesa will be built.
+	
+--with-ggi[=DIR]
+--without-ggi
+	Enable/disable support for GGI (autodetected by default).
+	DIR is the installation directory of GGI.
+	If GGI cannot be found, the driver won't be built.
+
+--disable-ggi-fbdev
+	Don't build the GGI fbdev target (autodetected by default).
+	
+--disable-ggi-genkgi
+	Don't build the GGI generic KGI driver (autodetected by default).
+	
+--disable-ggi-savage4
+	Don't build the GGI Savage4 KGI driver (autodetected by default).
+	
+--disable-osmesa
+	Disable OSmesa (offscreen rendering) support (enabled by default).
+
+--with-svga[=DIR]
+--without-svga
+	Enable/disable support for SVGALib (autodetected by default).
+	DIR is the installation directory of SVGALib.
+	If SVGALib cannot be found, the driver won't be built.
+
+--x-includes=DIR
+	Search for the X include files in DIR.
+	
+--x-libraries=DIR
+	Search for the X library files in DIR.
+
+User specific compiler options can be set using the shell variable
+CFLAGS. For instance,
+	CFLAGS="-g -O2" ./configure
+(on some systems: env CFLAGS="-g -O2" ./configure)
+sets the compiler flags to "-g -O2".
+
+For more options run "./configure --help" and read INSTALL.GNU.
+
+2) To build the Mesa libraries run:
+
+	make
+
+When finished, libGL.so will be in src/.libs/, libGLU.so will be in
+si-glu/.libs/, etc.
+
+Optionally, you can strip the libraries using
+
+	make strip
+	
+Now make sure that you have the permissions to install Mesa in the 
+specified directories, for example, by becoming super user ("su")
+Then run:
+
+	make install
+
+Mesa is now installed.
+Please don't move the installed files but rerun all installation
+steps if you want to use other directories.
+
+
+3) To test whether Mesa works properly you might want to run the Mesa demos:
+
+	make check
+	
+Builds all demos.
+
+	make exec
+
+Builds and executes all demos.	
+</pre>
+
+
+<a name="old">
+<H2>OLD-STYLE compilation and installation</H2>
+
+<p>
+This procedure usually works when <code>./configure ; make</code> fails.
+</p>
+
+<p>
+<b>Note</b>: If you tried <code>./configure ; make</code> but it failed,
+first copy the top-level <code>Makefile.X11</code> file over
+<code>Makefile</code>.
+</p>
+
+<p>
+First, just type <code>make</code> alone.
+You'll see a list of supported system configurations.
+Choose one and type <code>make</code> <em>config</em>.
+The Mesa libraries and demo programs will be compiled.
+</p>
+
+<H3>Header and library files</H3>
+
+<p>
+The standard location for the OpenGL header files on Unix-type systems is
+in <code>/usr/include/GL/</code>.
+The standard location for the libraries is <code>/usr/lib/</code>.
+For more information see, the
+<a href="http://oss.sgi.com/projects/ogl-sample/ABI/" target="_parent">
+Linux/OpenGL ABI specification</a>.
+</p>
+
+<p>
+If you'd like Mesa to co-exist with another implementation of OpenGL that's
+already installed, you'll have to choose different directories, like
+<code>/usr/local/include/GL/</code> and <code>/usr/local/lib/</code>.
+</p>
+
+<p>
+To install the Mesa headers, do this:
+<pre>
+	cp -r include/GL /usr/include
+</pre>
+
+<p>
+To install the Mesa libraries, do this:
+</p>
+<pre>
+	cp -pd lib/* /usr/lib
+
+	(The -pd options preserve symbolic links)
+</pre>
+
+<H3>LD_LIBRARY_PATH</H3>
+
+<p>
+On Linux and similar operating systems the <code>LD_LIBRARY_PATH</code>
+environment variable can be used to indicate a list of directories to
+search for shared libraries.
+If you don't install Mesa in <code>/usr/lib/</code> you may have to
+set the <code>LD_LIBRARY_PATH</code> variable in order to use the Mesa
+libraries.
+</p>
+
+</body>
+</html>

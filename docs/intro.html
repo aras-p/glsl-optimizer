@@ -1,0 +1,255 @@
+<HTML>
+
+<TITLE>Mesa Introduction</TITLE>
+
+<BODY text="#000000" bgcolor="#55bbff">
+
+<H1>Introduction</H1>
+
+<p>
+Mesa is a 3-D graphics library with an API which is very similar to
+that of <a href="http://www.opengl.org/" target="_parent">OpenGL</a>.*
+To the extent that Mesa utilizes the OpenGL command syntax or state
+machine, it is being used with authorization from <a
+href="http://www.sgi.com/" target="_parent">Silicon Graphics,
+Inc.</a>(SGI). However, the author does not possess an OpenGL license
+from SGI, and makes no claim that Mesa is in any way a compatible
+replacement for OpenGL or associated with SGI. Those who want a
+licensed implementation of OpenGL should contact a licensed
+vendor.
+</p>
+
+<p>
+Please do not refer to the library as <em>MesaGL</em> (for legal
+reasons). It's just <em>Mesa</em> or <em>The Mesa 3-D graphics
+library</em>. <br>
+</p>
+
+<p>
+* OpenGL is a trademark of <a href="http://www.sgi.com/"
+target="_parent">Silicon Graphics Incorporated</a>.
+</p>
+
+
+<H1>Project History</H1>
+
+<p>
+The Mesa project was founded by me, Brian Paul.  Here's a short history
+of the project.
+</p>
+
+<p>
+August, 1993: I begin working on Mesa in my spare time.  The project
+has no name at that point.  I was simply interested in writing a simple
+3D graphics library that used the then-new OpenGL API.  I was partially
+inspired by the <em>VOGL</em> library which emulated a subset of IRIS GL.
+I had been programming with IRIS GL since 1991.
+</p>
+
+<p>
+November 1994: I contact SGI to ask permission to distribute my OpenGL-like
+graphics library on the internet.  SGI was generally receptive to the
+idea and after negotiations with SGI's legal department, I get permission
+to release it.
+</p>
+
+<p>
+February 1995: Mesa 1.0 is released on the internet.  I expected that
+a few people would be interested in it, but not thousands.
+I was soon receiving patches, new features and thank-you notes on a
+daily basis.  That encouraged me to continue working on Mesa.  The
+name Mesa just popped into my head one day.  SGI had asked me not to use
+the terms <em>"Open"</em> or <em>"GL"</em> in the project name and I didn't
+want to make up a new acronym.  Later, I heard of the Mesa programming
+language and the Mesa spreadsheet for NeXTStep.
+</p>
+
+<p>
+In the early days, OpenGL wasn't available on too many systems.
+It even took a while for SGI to support it across their product line.
+Mesa filled a big hole during that time.
+For a lot of people, Mesa was their first introduction to OpenGL.
+I think SGI recognized that Mesa actually helped to promote
+the OpenGL API, so they didn't feel threatened by the project.
+</p>
+
+
+<p>
+1995-1996: I continue working on Mesa both during my spare time and during
+my work hours at the Space Science and Engineering Center at the University
+of Wisconsin in Madison.  My supervisor, Bill Hibbard, lets me do this because
+Mesa is now being using for the <a href="http://www.ssec.wisc.edu/%7Ebillh/vis.html" target="_parent">Vis5D</a> project.
+</p><p>
+October 1996: Mesa 2.0 is released.  It implementes the OpenGL 1.1 specification.
+</p>
+
+<p>
+March 1997: Mesa 2.2 is released.  It supports the new 3dfx Voodoo graphics
+card via the Glide library.  It's the first really popular hardware OpenGL
+implementation for Linux.
+</p>
+
+<p>
+September 1998: Mesa 3.0 is released.  It's the first publicly-available
+implementation of the OpenGL 1.2 API.
+</p>
+
+<p>
+March 1999: I attend my first OpenGL ARB meeting.  I contribute to the
+development of several official OpenGL extensions over the years.
+</p>
+
+<p>
+September 1999: I'm hired by Precision Insight, Inc.  Mesa is a key
+component of 3D hardware acceleration in the new DRI project for XFree86.
+Drivers for 3dfx, 3dLabs, Intel, Matrox and ATI hardware soon follow.
+</p>
+
+<p>
+October 2001: Mesa 4.0 is released.
+It implements the OpenGL 1.3 specification.
+</p>
+
+
+<p>
+November 2001: I cofound <a href="http://www.tungstengraphics.com" target="_parent">
+Tungsten Graphics, Inc.</a> with Keith Whitwell, Jens Owen, David Dawes and
+Frank LaMonica.
+I continue to develop Mesa as part of my resposibilities with Tungsten
+Graphics and as a spare-time project.
+</p>
+
+<p>
+November 2002: Mesa 5.0 is released.
+It implements the OpenGL 1.4 specification.
+</p>
+
+<p>
+Ongoing: Mesa is used as the core of many hardware OpenGL drivers for XFree86
+within the
+<A href="http://dri.sourceforge.net/" target="_parent">DRI project</A>.
+I continue to enhance Mesa with new extensions and features.
+</p>
+
+
+
+<H1>Major Versions</H1>
+
+<p>
+This is a summary of the major versions of Mesa.  Note that Mesa's major
+version number tracks OpenGL's minor version number.
+</p>
+
+
+<H2>Version 5.x features</H2>
+<p>
+Version 5.x of Mesa implements the OpenGL 1.4 API with the following
+extensions incorporated as standard features:
+</p>
+<ul>
+<li>GL_ARB_depth_texture
+<li>GL_ARB_shadow
+<li>GL_ARB_texture_env_crossbar
+<li>GL_ARB_texture_mirror_repeat
+<li>GL_ARB_window_pos
+<li>GL_EXT_blend_color
+<li>GL_EXT_blend_func_separate
+<li>GL_EXT_blend_logic_op
+<li>GL_EXT_blend_minmax
+<li>GL_EXT_blend_subtract
+<li>GL_EXT_fog_coord
+<li>GL_EXT_multi_draw_arrays
+<li>GL_EXT_point_parameters
+<li>GL_EXT_secondary_color
+<li>GL_EXT_stencil_wrap
+<li>GL_SGIS_generate_mipmap
+</ul>
+
+
+<H2>Version 4.x features</H2>
+
+<p>
+Version 4.x of Mesa implements the OpenGL 1.3 API with the following
+extensions incorporated as standard features:
+</p>
+
+<ul>
+<li>GL_ARB_multisample
+<li>GL_ARB_multitexture
+<li>GL_ARB_texture_border_clamp
+<li>GL_ARB_texture_compression
+<li>GL_ARB_texture_cube_map
+<li>GL_ARB_texture_env_add
+<li>GL_ARB_texture_env_combine
+<li>GL_ARB_texture_env_dot3
+<li>GL_ARB_transpose_matrix
+</ul>
+
+<H2>Version 3.x features</H2>
+
+<p>
+Version 3.x of Mesa implements the OpenGL 1.2 API with the following
+features:
+</p>
+<ul>
+<li>BGR, BGRA and packed pixel formats
+<li>New texture border clamp mode
+<li>glDrawRangeElements()
+<li>standard 3-D texturing
+<li>advanced MIPMAP control
+<li>separate specular color interpolation
+</ul>
+
+
+<H2>Version 2.x features</H2>
+<p>
+Version 2.x of Mesa implements the OpenGL 1.1 API with the following
+features.
+</p>
+<ul>
+<li>Texture mapping:
+	<ul>
+	<li>glAreTexturesResident
+	<li>glBindTexture
+	<li>glCopyTexImage1D
+	<li>glCopyTexImage2D
+	<li>glCopyTexSubImage1D
+	<li>glCopyTexSubImage2D
+	<li>glDeleteTextures
+	<li>glGenTextures
+	<li>glIsTexture
+	<li>glPrioritizeTextures
+	<li>glTexSubImage1D
+	<li>glTexSubImage2D
+	</ul>
+<li>Vertex Arrays:
+	<ul>
+	<li>glArrayElement
+	<li>glColorPointer
+	<li>glDrawElements
+	<li>glEdgeFlagPointer
+	<li>glIndexPointer
+	<li>glInterleavedArrays
+	<li>glNormalPointer
+	<li>glTexCoordPointer
+	<li>glVertexPointer
+	</ul>
+<li>Client state management:
+	<ul>
+	<li>glDisableClientState
+	<li>glEnableClientState
+	<li>glPopClientAttrib
+	<li>glPushClientAttrib
+	</ul>
+<li>Misc:
+	<ul>
+	<li>glGetPointer
+	<li>glIndexub
+	<li>glIndexubv
+	<li>glPolygonOffset
+	</ul>
+</ul>
+
+
+</body>
+</html>

@@ -1,0 +1,74 @@
+<HTML>
+
+<TITLE>Off-screen Rendering</TITLE>
+
+<BODY text="#000000" bgcolor="#55bbff" link="#111188">
+
+<H1>Off-screen Rendering</H1>
+
+
+<p>
+Mesa 1.2.4 introduced off-screen rendering, a facility for generating
+3-D imagery without having to open a window on your display.  Mesa's
+simple off-screen rendering interface is completely operating system
+and window system independent so programs which use off-screen
+rendering should be very portable.  This feature effectively
+enables you to use Mesa as an off-line, batch-oriented renderer.
+</p>
+<p>
+The "OSMesa" API provides 3 functions for making off-screen
+renderings: OSMesaCreateContext(), OSMesaMakeCurrent(), and
+OSMesaDestroyContext().  See the Mesa/include/GL/osmesa.h header for
+more information.  See the demos/osdemo.c file for an example program.
+There is no facility for writing images to files.  That's up to you.
+</p>
+<p>
+If you want to generate large images (larger than 1280x1024) you'll
+have to edit the src/config.h file to change MAX_WIDTH and MAX_HEIGHT
+then recompile Mesa.  Image size should only be limited by available
+memory.
+</p>
+
+
+<H2>Deep color channels</H2>
+
+<p>
+   For some applications 8-bit color channels don't have sufficient
+   accuracy (film and IBR, for example).  If you're in this situation
+   you'll be happy to know that Mesa supports 16-bit and 32-bit color
+   channels through the OSMesa interface.  When using 16-bit channels,
+   channels are GLushorts and pixels occupy 8 bytes.  When using 32-bit
+   channels, channels are GLfloats and pixels occupy 16 bytes.
+</p>
+<p>
+   To build Mesa/OSMesa with 16-bit color channels:
+<pre>
+      cd Mesa-4.x/src
+      make -f Makefile.X11 clean
+      make -f Makefile.OSMesa16 linux-osmesa16
+</pre>
+
+   For 32-bit channels:
+<pre>
+      cd Mesa-4.x/src
+      make -f Makefile.X11 clean
+      make -f Makefile.OSMesa16 linux-osmesa32
+</pre>
+
+<p>
+If you're not using Linux, you can easily edit Make-config and add
+an appropriate configuration.
+</p>
+<p>
+The Mesa/tests/osdemo16.c file (available via CVS) demonstrates how
+to use this feature.
+</p>
+<p>
+BE WARNED: 16 and 32-bit channel support has not been exhaustively
+tested and there may be some bugs.  However, a number of people have
+been using this feature successfully so it can't be too broken.
+</p>
+
+
+</BODY>
+</HTML>

@@ -1,0 +1,330 @@
+<html>
+
+<head><title>Mesa FAQ</title></head>
+
+<BODY text="#000000" bgcolor="#55bbff" link="#111188">
+
+
+<center>
+<h1>Mesa Frequently Asked Questions</h1>
+Last updated: 7 March 2003
+</center>
+
+<br>
+<br>
+<h2>Index</h2>
+<a href="#part1">1. High-level Questions and Answers</a>
+<br>
+<a href="#part2">2. Compilation and Installation Problems</a>
+<br>
+<a href="#part3">3. Runtime / Rendering Problems</a>
+<br>
+<a href="#part4">4. Developer Questions</a>
+<br>
+<br>
+<br>
+
+
+
+<a name="part1">
+</a><h1><a name="part1">1. High-level Questions and Answers</a></h1>
+
+<h2><a name="part1">1.1 What is Mesa?</a></h2>
+<p>
+<a name="part1">Mesa is an open-source implementation of the OpenGL specification.
+OpenGL is a high-level programming library for interactive 3D graphics.
+See the </a><a href="http://www.opengl.org/">OpenGL website</a> for more
+information.
+</p>
+<p>
+Mesa 5.0.x supports the OpenGL 1.4 specification.
+</p>
+
+
+<h2>1.2 Does Mesa support/use graphics hardware?</h2>
+<p>
+Yes.  Specifically, Mesa serves as the OpenGL core for the XFree86/DRI
+OpenGL drivers.  See the <a href="http://dri.sf.net/">DRI website</a> for
+more information.
+</p>
+<p>
+There have been other hardware drivers for Mesa over the years (such as
+the 3Dfx Glide/Voodoo driver, an old S3 driver, etc) but the DRI drivers
+are the modern ones.
+</p>
+
+<h2>1.3 What purpose does (software) Mesa serve today?</h2>
+<p>
+Commercial, hardware-accelerated OpenGL implementations are available for
+many operating systems today.
+Still, Mesa serves at least these purposes:
+</p>
+<ul>
+<li>Mesa is used as the core of the XFree86/DRI hardware drivers.
+</li><li>Mesa is quite portable and allows OpenGL to be used on systems that have
+    no other OpenGL solution.
+</li><li>Software rendering with Mesa serves as a reference for validating the
+    hardware drivers.
+</li><li>A software implementation of OpenGL is useful for experimentation, such
+    as testing new rendering techniques.
+</li><li>Mesa can render images with deep color channels: 16-bit integer and 32-bit
+    floating point color channels are supported.
+    This capability is only now appearing in hardware.
+</li><li>Mesa's internal limits (max lights, clip planes, texture size, etc) can be
+    changed for special needs (hardware limits are hard to overcome).
+</li></ul>
+
+<h2>1.4 How do I upgrade my DRI installation to use a new Mesa release?</h2>
+<p>
+You don't!  The Mesa source code lives inside the XFree86/DRI source tree
+and gets compiled into the individual DRI driver modules.
+If you try to install Mesa over an XFree86/DRI installation, you'll lose
+hardware rendering (because Mesa's libGL.so is different than the XFree86
+libGL.so).
+</p>
+<p>
+The DRI developers will incorporate the latest release of Mesa into the
+DRI drivers when the time is right.
+</p>
+
+<h2>1.5 Are there other open-source implementations of OpenGL?</h2>
+<p>
+Yes, SGI's <a href="http://oss.sgi.com/projects/ogl-sample/index.html">
+OpenGL Sample Implemenation (SI)</a> is available.
+The SI was written during the time that OpenGL was originally designed.
+Unfortunately, development of the SI has stagnated.
+Mesa is much more up to date with modern features and extensions.
+</p>
+<p>
+<a href="http://www.dsbox.com/minigl.html">miniGL</a> is a subset of OpenGL
+for PalmOS devices.
+
+<a href="http://fabrice.bellard.free.fr/TinyGL/">TinyGL</a> is another
+subset of OpenGL.
+</p>
+<p>
+There may be others but Mesa is the most popular and feature-complete.
+</p>
+
+<br>
+<br>
+
+
+<a name="part2">
+</a><h1><a name="part2">2. Compilation and Installation Problems</a></h1>
+
+
+<h2><a name="part2">2.1 What's the easiest way to install Mesa?</a></h2>
+<p>
+<a name="part2">If you're using a Linux-based system, your distro CD most likely already
+has Mesa packages (like RPM or DEB) which you can easily install.
+</a></p>
+
+
+<h2><a name="part2">2.2 Running <code>configure; make</code> Doesn't Work</a></h2>
+<p>
+<a name="part2">Unfortunately, the GNU autoconf/automake/libtool system doesn't seem to work
+too well on non GNU/Linux systems, even after installing gmake, gcc, etc.
+For that reason, Mesa's <b>old-style</b> makefile system is still included.
+The old-style system uses good old traditional Makefiles.  Try the following:
+</a></p><pre><a name="part2">  cd Mesa-x.y.z
+  cp Makefile.X11 Makefile
+  make
+</a></pre>
+<a name="part2">You'll see a list of system configurations from which to choose.
+For example:
+</a><pre><a name="part2">  make linux-x86
+</a></pre>
+<p>
+<a name="part2">If you're experienced with GNU autoconf/automake/libtool and think you can help
+with maintence, contact the Mesa developers.
+FYI, the Mesa developers generally don't use the autoconf/automake system.
+We're especially annoyed with the fact that a +5000-line script (libtool)
+is needed to make shared libraries (ugh).
+</a></p>
+
+<h2><a name="part2">2.3 Mesa still doesn't compile</a></h2>
+<p>
+<a name="part2">If the old-style Makefile system doesn't work either, make sure you have
+the most recent version of Mesa.
+Otherwise, file a bug report or post to the Mesa3d-users mailing list.
+Give as much info as possible when describing your problem.
+</a></p>
+
+
+<h2><a name="part2">2.4 I get undefined symbols such as bgnpolygon, v3f, etc...</a></h2>
+<p>
+<a name="part2">You're application is written in IRIS GL, not OpenGL.
+IRIS GL was the predecessor to OpenGL and is a different thing (almost)
+entirely.
+Mesa's not the solution.
+</a></p>
+
+
+<h2><a name="part2">2.5 Where is the GLUT library?</a></h2>
+<p>
+<a name="part2">GLUT (OpenGL Utility Toolkit) is in the separate MesaDemos-x.y.z.tar.gz file.
+If you don't already have GLUT installed, you should grab the MesaDemos
+package and unpack it before compiling Mesa.
+</a></p>
+
+
+
+<h2><a name="part2">2.6 What's the proper place for the libraries and headers?</a></h2>
+<p>
+<a name="part2">On Linux-based systems you'll want to follow the
+</a><a href="http://oss.sgi.com/projects/ogl-sample/ABI/index.html">Linux ABI</a>
+standard.
+Basically you'll want the following:
+</p>
+<ul>
+<li>/usr/include/GL/gl.h - the main OpenGL header
+</li><li>/usr/include/GL/glu.h - the OpenGL GLU (utility) header
+</li><li>/usr/include/GL/glx.h - the OpenGL GLX header
+</li><li>/usr/include/GL/glext.h - the OpenGL extensions header
+</li><li>/usr/include/GL/glxext.h - the OpenGL GLX extensions header
+</li><li>/usr/include/GL/osmesa.h - the Mesa off-screen rendering header
+</li><li>/usr/lib/libGL.so - a symlink to libGL.so.1
+</li><li>/usr/lib/libGL.so.1 - a symlink to libGL.so.1.xyz
+</li><li>/usr/lib/libGL.so.xyz - the actual OpenGL/Mesa library.  xyz denotes the
+Mesa version number.
+</li><li>/usr/lib/libGLU.so - a symlink to libGLU.so.1
+</li><li>/usr/lib/libGLU.so.1 - a symlink to libGLU.so.1.3.xyz
+</li><li>/usr/lib/libGLU.so.xyz - the OpenGL Utility library.  xyz denotes the Mesa
+version number.
+</li></ul>
+<p>
+After installing XFree86 and the DRI drivers, some of these files
+may be symlinks into the /usr/X11R6/ tree.
+</p>
+<p>
+The old-style Makefile system doesn't install the Mesa libraries; it's
+up to you to copy them (and the headers) to the right place.
+</p>
+<p>
+The GLUT header and library should go in the same directories.
+</p>
+<br>
+<br>
+
+
+<a name="part3">
+</a><h1><a name="part3">3. Runtime / Rendering Problems</a></h1>
+
+<h2><a name="part3">3.1 Rendering is slow / why isn't my graphics hardware being used?</a></h2>
+<p>
+<a name="part3">Stand-alone Mesa (downloaded as MesaLib-x.y.z.tar.gz) doesn't have any
+support for hardware acceleration (with the exception of the 3DFX Voodoo
+driver).
+</a></p>
+<p>
+<a name="part3">What you really want is a DRI or NVIDIA (or another vendor's OpenGL) driver
+for your particular hardware.
+</a></p>
+<p>
+<a name="part3">You can run the <code>glxinfo</code> program to learn about your OpenGL
+library.
+Look for the GL_VENDOR and GL_RENDERER values.
+That will identify who's OpenGL library you're using and what sort of
+hardware it has detected.
+</a></p>
+<p>
+<a name="part3">If your DRI-based driver isn't working, go to the
+</a><a href="http://dri.sf.net/">DRI website</a> for trouble-shooting information.
+</p>
+
+
+<h2>3.2 I'm seeing errors in depth (Z) buffering.  Why?</h2>
+<p>
+Make sure the ratio of the far to near clipping planes isn't too great.
+Look
+<a href="http://www.sgi.com/software/opengl/advanced97/notes/node18.html">
+here</a> for details.
+</p>
+<p>
+Mesa uses a 16-bit depth buffer by default which is smaller and faster
+to clear than a 32-bit buffer but not as accurate.
+If you need a deeper you can modify the parameters to
+<code> glXChooseVisual</code> in your code.
+</p>
+
+
+<h2>3.3 Why Isn't depth buffering working at all?</h2>
+<p>
+Be sure you're requesting a depth buffered-visual.  If you set the MESA_DEBUG
+environment variable it will warn you about trying to enable depth testing
+when you don't have a depth buffer.
+</p>
+<p>Specifically, make sure <code>glutInitDisplayMode</code> is being called
+with <code>GLUT_DEPTH</code> or <code>glXChooseVisual</code> is being
+called with a non-zero value for GLX_DEPTH_SIZE.
+</p>
+<p>This discussion applies to stencil buffers, accumulation buffers and
+alpha channels too.
+</p>
+
+
+<h2>3.4 Why does glGetString() always return NULL?</h2>
+<p>
+Be sure you have an active/current OpenGL rendering context before
+calling glGetString.
+</p>
+
+
+<h2>3.5 GL_POINTS and GL_LINES don't touch the right pixels</h2>
+<p>
+If you're trying to draw a filled region by using GL_POINTS or GL_LINES
+and seeing holes or gaps it's because of a float-to-int rounding problem.
+But this is not a bug.
+See Appendix H of the OpenGL Programming Guide - "OpenGL Correctness Tips".
+Basically, applying a translation of (0.375, 0.375, 0.0) to your coordinates
+will fix the problem.
+</p>
+
+<br>
+<br>
+
+
+<a name="part4">
+</a><h1><a name="part4">4. Developer Questions</a></h1>
+
+<h2><a name="part4">4.1 How can I contribute?</a></h2>
+<p>
+<a name="part4">First, join the Mesa3d-dev mailing list.  That's where Mesa development
+is discussed.
+</a></p>
+<p>
+<a name="part4">The </a><a href="http://www.opengl.org/developers/documentation/specs.html">
+OpenGL Specification</a> is the bible for OpenGL implemention work.
+You should read it.
+</p>
+<p>Most of the Mesa development work involves implementing new OpenGL
+extensions, writing hardware drivers (for the DRI), and code optimization.
+</p>
+
+<h2>4.2 How do I write a new device driver?</h2>
+<p>
+Unfortunately, writing a device driver isn't easy.
+It requires detailed understanding of OpenGL, the Mesa code, and your
+target hardware/operating system.
+3D graphics are not simple.
+</p>
+<p>
+The best way to get started is to use an existing driver as your starting
+point.
+For a software driver, the X11 and OSMesa drivers are good examples.
+For a hardware driver, the Radeon and R200 DRI drivers are good examples.
+</p>
+<p>The DRI website has more information about writing hardware drivers.
+The process isn't well document because the Mesa driver interface changes
+over time, and we seldome have spare time for writing documentation.
+That being said, many people have managed to figure out the process.
+</p>
+<p>
+Joining the appropriate mailing lists and asking questions (and searching
+the archives) is a good way to get information.
+</p>
+
+
+</body>
+</html>
