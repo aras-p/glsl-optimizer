@@ -120,7 +120,7 @@
 #define MAX_TEXTURE_COORD_UNITS 8
 #define MAX_TEXTURE_IMAGE_UNITS 8
 
-/* Maximum viewport/image size: */
+/* Maximum viewport/image size (must accomodate all texture sizes too): */
 #define MAX_WIDTH 2048
 #define MAX_HEIGHT 2048
 
