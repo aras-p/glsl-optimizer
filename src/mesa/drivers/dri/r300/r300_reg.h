@@ -640,14 +640,14 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #	define R300_TX_FORMAT_ZERO	4
 #	define R300_TX_FORMAT_ONE	5
 
-#	define R300_TX_FORMAT_R_SHIFT	18
+#	define R300_TX_FORMAT_B_SHIFT	18
 #	define R300_TX_FORMAT_G_SHIFT	15
-#	define R300_TX_FORMAT_B_SHIFT	12
+#	define R300_TX_FORMAT_R_SHIFT	12
 #	define R300_TX_FORMAT_A_SHIFT	9
-#	define R300_EASY_TX_FORMAT(R, G, B, A, FMT)	(\
-	  ((R300_TX_FORMAT_##R)<<R300_TX_FORMAT_R_SHIFT) \
+#	define R300_EASY_TX_FORMAT(B, G, R, A, FMT)	(\
+	  ((R300_TX_FORMAT_##B)<<R300_TX_FORMAT_B_SHIFT) \
 	| ((R300_TX_FORMAT_##G)<<R300_TX_FORMAT_G_SHIFT) \
-	| ((R300_TX_FORMAT_##B)<<R300_TX_FORMAT_B_SHIFT) \
+	| ((R300_TX_FORMAT_##R)<<R300_TX_FORMAT_R_SHIFT) \
 	| ((R300_TX_FORMAT_##A)<<R300_TX_FORMAT_A_SHIFT) \
 	| (R300_TX_FORMAT_##FMT) \
 	  )
