@@ -1,9 +1,9 @@
-/* $Id: mipmap.c,v 1.4 1999/12/12 17:24:18 brianp Exp $ */
+/* $Id: mipmap.c,v 1.5 2000/02/28 14:51:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
- * Copyright (C) 1995-1999  Brian Paul
+ * Version:  3.3
+ * Copyright (C) 1995-2000  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -18,62 +18,6 @@
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-
-/*
- * $Log: mipmap.c,v $
- * Revision 1.4  1999/12/12 17:24:18  brianp
- * removed unneeded code in gluBuild1DMipmaps()
- *
- * Revision 1.3  1999/11/09 06:16:59  brianp
- * replace GLint with GLsizei in a gluScaleImage, gluBuild1/2DMipmaps()
- *
- * Revision 1.2  1999/09/14 00:30:28  brianp
- * fixed pixel packing/unpacking code in gluBuild2DMipmaps()
- *
- * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
- * Imported sources
- *
- * Revision 1.13  1999/03/05 17:49:06  brianp
- * added support for GL_EXT_abgr (devernay@istar.fr)
- *
- * Revision 1.12  1999/01/03 03:23:15  brianp
- * now using GLAPIENTRY and GLCALLBACK keywords (Ted Jump)
- *
- * Revision 1.11  1998/09/18 02:44:03  brianp
- * further changes to gluScaleImage() per Randy Frank
- *
- * Revision 1.10  1998/09/17 03:20:26  brianp
- * fixed another bug in gluScaleImage() per Sven Panne
- *
- * Revision 1.9  1998/07/31 03:06:20  brianp
- * tweaked the gluScaleImage() function per Randy Frank
- *
- * Revision 1.8  1998/07/08 01:02:53  brianp
- * if gluBuildxDMipmaps() width or height <= 0 return GLU_INVALID_VALUE
- *
- * Revision 1.7  1998/07/01 00:18:02  brianp
- * if gluBuildxDMipmaps() width or height <= 0 just return 0
- *
- * Revision 1.6  1998/06/01 01:06:41  brianp
- * small update for Next/OpenStep from Alexander Mai
- *
- * Revision 1.5  1997/07/24 01:28:44  brianp
- * changed precompiled header symbol from PCH to PC_HEADER
- *
- * Revision 1.4  1997/06/23 00:22:56  brianp
- * added dummy() call to work around an MSVC 4.1 bug
- *
- * Revision 1.3  1997/05/28 02:29:38  brianp
- * added support for precompiled headers (PCH), inserted APIENTRY keyword
- *
- * Revision 1.2  1997/05/24 13:32:25  brianp
- * undef EPSILON in case it's already defined
- *
- * Revision 1.1  1996/09/27 01:19:39  brianp
- * Initial revision
- *
  */
 
 
@@ -141,9 +85,11 @@ GLint GLAPIENTRY gluScaleImage( GLenum format,
 	 components = 2;
 	 break;
       case GL_RGB:
+      case GL_BGR:
 	 components = 3;
 	 break;
       case GL_RGBA:
+      case GL_BGRA:
 #ifdef GL_EXT_abgr
       case GL_ABGR_EXT:
 #endif
