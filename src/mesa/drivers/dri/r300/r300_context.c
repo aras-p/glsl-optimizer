@@ -100,15 +100,13 @@ static const char *const card_extensions[] = {
 	NULL
 };
 
-#if 0
-extern const struct tnl_pipeline_stage _r300_render_stage;
-extern const struct tnl_pipeline_stage _r300_tcl_stage;
+extern struct tnl_pipeline_stage _r300_render_stage;
 
 static const struct tnl_pipeline_stage *r300_pipeline[] = {
 
 	/* Try and go straight to t&l
 	 */
-	&_r300_tcl_stage,
+//	&_r300_tcl_stage,
 
 	/* Catch any t&l fallbacks
 	 */
@@ -136,7 +134,7 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 	&_tnl_render_stage,	/* FALLBACK  */
 	0,
 };
-#endif
+
 
 /* Create the device specific rendering context.
  */
@@ -217,13 +215,10 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	_swsetup_CreateContext(ctx);
 	_ae_create_context(ctx);
 
-#if 0
 	/* Install the customized pipeline:
 	 */
 	_tnl_destroy_pipeline(ctx);
-	_tnl_install_pipeline(ctx, r200_pipeline);
-	ctx->Driver.FlushVertices = r200FlushVertices;
-#endif
+	_tnl_install_pipeline(ctx, r300_pipeline);
 
 	/* Try and keep materials and vertices separate:
 	 */
@@ -245,7 +240,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	/* plug in a few more device driver functions */
 	/* XXX these should really go right after _mesa_init_driver_functions() */
 	r200InitPixelFuncs(ctx);
-	r200InitTnlFuncs(ctx);
 	r200InitSwtcl(ctx);
 #endif
 	TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;

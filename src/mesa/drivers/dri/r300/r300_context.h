@@ -126,6 +126,10 @@ struct r300_state_atom {
 #define R300_PS_POINTSIZE	1
 #define R300_PS_CMDSIZE		2
 
+#define R300_CUL_CMD_0		0
+#define R300_CUL_CULL		1
+#define R300_CUL_CMDSIZE	2
+
 #define R300_RC_CMD_0		0
 #define R300_RC_CNTL_0		1
 #define R300_RC_CNTL_1		2
@@ -247,6 +251,7 @@ struct r300_hw_state {
 	struct r300_state_atom unk4288; /* (4288) */
 	struct r300_state_atom unk42A0; /* (42A0) */
 	struct r300_state_atom unk42B4; /* (42B4) */
+	struct r300_state_atom cul;	/* cull cntl (42B8) */
 	struct r300_state_atom unk42C0; /* (42C0) */
 	struct r300_state_atom rc;	/* rs control (4300) */
 	struct r300_state_atom ri;	/* rs interpolators (4310) */

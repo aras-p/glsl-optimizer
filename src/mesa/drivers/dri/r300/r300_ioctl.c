@@ -171,7 +171,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	R300_STATECHANGE(r300, zc);
 	if (flags & CLEARBUFFER_DEPTH) {
 		r300->hw.zc.cmd[R300_ZC_CNTL_0] = 0x6; // test and write
-		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_RB3D_Z_TEST_ALWAYS;
+		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_ALWAYS;
 /*
 		R300_STATECHANGE(r300, zb);
 		r300->hw.zb.cmd[R300_ZB_OFFSET] =

@@ -59,20 +59,154 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 /**
+ * Update our tracked culling state based on Mesa's state.
+ */
+static void r300UpdateCulling(GLcontext* ctx)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	uint32_t val = 0;
+
+	R300_STATECHANGE(r300, cul);
+	if (ctx->Polygon.CullFlag) {
+		if (ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
+			val = R300_CULL_FRONT|R300_CULL_BACK;
+		else if (ctx->Polygon.CullFaceMode == GL_FRONT)
+			val = R300_CULL_FRONT;
+		else
+			val = R300_CULL_BACK;
+
+		if (ctx->Polygon.FrontFace == GL_CW)
+			val |= R300_FRONT_FACE_CW;
+		else
+			val |= R300_FRONT_FACE_CCW;
+	}
+
+	r300->hw.cul.cmd[R300_CUL_CULL] = val;
+}
+
+
+/**
  * Handle glEnable()/glDisable().
+ *
+ * \note Mesa already filters redundant calls to glEnable/glDisable.
  */
 static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 {
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	uint32_t newval;
+
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s( %s = %s )\n", __FUNCTION__,
 			_mesa_lookup_enum_by_nr(cap),
 			state ? "GL_TRUE" : "GL_FALSE");
 
 	switch (cap) {
+	case GL_DEPTH_TEST:
+		R300_STATECHANGE(r300, zc);
+
+		if (state) {
+			if (ctx->Depth.Mask)
+				newval = R300_RB3D_Z_TEST_AND_WRITE;
+			else
+				newval = R300_RB3D_Z_TEST;
+		} else
+			newval = 0;
+
+		r300->hw.zc.cmd[R300_ZC_CNTL_0] = newval;
+		break;
+
+	case GL_CULL_FACE:
+		r300UpdateCulling(ctx);
+		break;
+
 	default:
 		radeonEnable(ctx, cap, state);
 		return;
 	}
+}
+
+
+/**
+ * Change the culling mode.
+ *
+ * \note Mesa already filters redundant calls to this function.
+ */
+static void r300CullFace(GLcontext* ctx, GLenum mode)
+{
+	(void)mode;
+
+	r300UpdateCulling(ctx);
+}
+
+
+/**
+ * Change the polygon orientation.
+ *
+ * \note Mesa already filters redundant calls to this function.
+ */
+static void r300FrontFace(GLcontext* ctx, GLenum mode)
+{
+	(void)mode;
+
+	r300UpdateCulling(ctx);
+}
+
+
+/**
+ * Change the depth testing function.
+ *
+ * \note Mesa already filters redundant calls to this function.
+ */
+static void r300DepthFunc(GLcontext* ctx, GLenum func)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+
+	R300_STATECHANGE(r300, zc);
+
+	switch(func) {
+	case GL_NEVER:
+		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_NEVER;
+		break;
+	case GL_LESS:
+		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_LESS;
+		break;
+	case GL_EQUAL:
+		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_EQUAL;
+		break;
+	case GL_LEQUAL:
+		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_LEQUAL;
+		break;
+	case GL_GREATER:
+		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_GREATER;
+		break;
+	case GL_NOTEQUAL:
+		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_NEQUAL;
+		break;
+	case GL_GEQUAL:
+		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_GEQUAL;
+		break;
+	case GL_ALWAYS:
+		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_ALWAYS;
+		break;
+	}
+}
+
+
+/**
+ * Enable/Disable depth writing.
+ *
+ * \note Mesa already filters redundant calls to this function.
+ */
+static void r300DepthMask(GLcontext* ctx, GLboolean mask)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+
+	if (!ctx->Depth.Test)
+		return;
+
+	R300_STATECHANGE(r300, zc);
+	r300->hw.zc.cmd[R300_ZC_CNTL_0] = mask
+		? R300_RB3D_Z_TEST_AND_WRITE : R300_RB3D_Z_TEST;
 }
 
 
@@ -141,11 +275,17 @@ void r300ResetHwState(r300ContextPtr r300)
 			r300PackFloat32(v[MAT_TZ]);
 	}
 
-	r300->hw.cmk.cmd[R300_CMK_COLORMASK] =
-		(ctx->Color.ColorMask[BCOMP] ? R300_COLORMASK0_B : 0) |
-		(ctx->Color.ColorMask[GCOMP] ? R300_COLORMASK0_G : 0) |
-		(ctx->Color.ColorMask[RCOMP] ? R300_COLORMASK0_R : 0) |
-		(ctx->Color.ColorMask[ACOMP] ? R300_COLORMASK0_A : 0);
+	r300ColorMask(ctx,
+		ctx->Color.ColorMask[RCOMP],
+		ctx->Color.ColorMask[GCOMP],
+		ctx->Color.ColorMask[BCOMP],
+		ctx->Color.ColorMask[ACOMP]);
+
+	r300Enable(ctx, GL_DEPTH_TEST, ctx->Depth.Test);
+	r300DepthMask(ctx, ctx->Depth.Mask);
+	r300DepthFunc(ctx, ctx->Depth.Func);
+
+	r300UpdateCulling(ctx);
 
 //BEGIN: TODO
 	r300->hw.unk2080.cmd[1] = 0x0030045A;
@@ -233,7 +373,6 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk42A0.cmd[1] = 0x00000000;
 
 	r300->hw.unk42B4.cmd[1] = 0x00000000;
-	r300->hw.unk42B4.cmd[2] = 0x00000000;
 
 	r300->hw.unk42C0.cmd[1] = 0x4B7FFFFF;
 	r300->hw.unk42C0.cmd[2] = 0x00000000;
@@ -312,9 +451,6 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk4E88.cmd[1] = 0;
 
-	r300->hw.zc.cmd[R300_ZC_CNTL_0] = 0;
-	r300->hw.zc.cmd[R300_ZC_CNTL_1] = 0;
-
 	r300->hw.unk4F08.cmd[1] = 0x00FFFF00;
 
 	r300->hw.unk4F10.cmd[1] = 0x00000002; // depthbuffer format?
@@ -383,5 +519,9 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	functions->UpdateState = r300InvalidateState;
 	functions->Enable = r300Enable;
 	functions->ColorMask = r300ColorMask;
+	functions->DepthFunc = r300DepthFunc;
+	functions->DepthMask = r300DepthMask;
+	functions->CullFace = r300CullFace;
+	functions->FrontFace = r300FrontFace;
 }
 

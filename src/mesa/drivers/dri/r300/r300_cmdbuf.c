@@ -50,6 +50,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_cmdbuf.h"
 
 
+// Set this to 1 for extremely verbose debugging of command buffers
+#define DEBUG_CMDBUF		0
+
+
 /**
  * Send the current command buffer via ioctl to the hardware.
  */
@@ -69,7 +73,7 @@ int r300FlushCmdBuf(r300ContextPtr r300, const char* caller)
 		fprintf(stderr, "%s from %s - %i cliprects\n",
 			__FUNCTION__, caller, r300->radeon.numClipRects);
 
-		if (RADEON_DEBUG & DEBUG_VERBOSE)
+		if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_VERBOSE)
 			for (i = start; i < r300->cmdbuf.count_used; ++i)
 				fprintf(stderr, "%d: %08x\n", i,
 					r300->cmdbuf.cmd_buf[i]);
@@ -140,7 +144,7 @@ static __inline__ void r300DoEmitState(r300ContextPtr r300, GLboolean dirty)
 
 	dest = r300->cmdbuf.cmd_buf + r300->cmdbuf.count_used;
 
-	if (RADEON_DEBUG & DEBUG_STATE) {
+	if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
 		foreach(atom, &r300->hw.atomlist) {
 			if ((atom->dirty || r300->hw.all_dirty) == dirty) {
 				int dwords = (*atom->check)(r300, atom);
@@ -324,8 +328,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.unk4288.cmd[0] = cmducs(0x4288, 5);
 	ALLOC_STATE( unk42A0, always, 2, "unk42A0", 0 );
 		r300->hw.unk42A0.cmd[0] = cmducs(0x42A0, 1);
-	ALLOC_STATE( unk42B4, always, 3, "unk42B4", 0 );
-		r300->hw.unk42B4.cmd[0] = cmducs(0x42B4, 2);
+	ALLOC_STATE( unk42B4, always, 2, "unk42B4", 0 );
+		r300->hw.unk42B4.cmd[0] = cmducs(0x42B4, 1);
+	ALLOC_STATE( cul, always, R300_CUL_CMDSIZE, "cul", 0 );
+		r300->hw.cul.cmd[R300_CUL_CMD_0] = cmducs(R300_RE_CULL_CNTL, 1);
 	ALLOC_STATE( unk42C0, always, 3, "unk42C0", 0 );
 		r300->hw.unk42C0.cmd[0] = cmducs(0x42C0, 2);
 	ALLOC_STATE( rc, always, R300_RC_CMDSIZE, "rc", 0 );
@@ -428,6 +434,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4288);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk42A0);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk42B4);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.cul);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk42C0);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.rc);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.ri);

@@ -1,0 +1,189 @@
+/**************************************************************************
+
+Copyright (C) 2004 Nicolai Haehnle.
+
+All Rights Reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+on the rights to use, copy, modify, merge, publish, distribute, sub
+license, and/or sell copies of the Software, and to permit persons to whom
+the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice (including the next
+paragraph) shall be included in all copies or substantial portions of the
+Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
+ATI, VA LINUX SYSTEMS AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+**************************************************************************/
+
+/*
+ * Authors:
+ *   Nicolai Haehnle <prefect_@gmx.net>
+ */
+
+#include "glheader.h"
+#include "state.h"
+#include "imports.h"
+#include "enums.h"
+#include "macros.h"
+#include "context.h"
+#include "dd.h"
+#include "simple_list.h"
+
+#include "api_arrayelt.h"
+#include "swrast/swrast.h"
+#include "swrast_setup/swrast_setup.h"
+#include "array_cache/acache.h"
+#include "tnl/tnl.h"
+
+#include "radeon_ioctl.h"
+#include "radeon_state.h"
+#include "r300_context.h"
+#include "r300_ioctl.h"
+#include "r300_state.h"
+#include "r300_reg.h"
+#include "r300_program.h"
+
+
+/**********************************************************************
+*                     Hardware rasterization
+*
+* When we fell back to software TCL, we still try to use the
+* rasterization hardware for rendering.
+**********************************************************************/
+
+
+/**
+ * Called by the pipeline manager to render a batch of primitives.
+ * We can return true to pass on to the next stage (i.e. software
+ * rasterization) or false to indicate that the pipeline has finished
+ * after we render something.
+ */
+static GLboolean r300_run_render(GLcontext *ctx,
+				 struct tnl_pipeline_stage *stage)
+{
+	if (RADEON_DEBUG == DEBUG_PRIMS)
+		fprintf(stderr, "%s\n", __FUNCTION__);
+
+	return GL_TRUE;
+
+#if 0
+   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   GLuint i;
+
+   /* Don't handle clipping or indexed vertices or vertex manipulations.
+    */
+   if (mmesa->RenderIndex != 0 ||
+       !mga_validate_render( ctx, VB )) {
+      return GL_TRUE;
+   }
+
+   tnl->Driver.Render.Start( ctx );
+   mmesa->SetupNewInputs = ~0;
+
+   for (i = 0 ; i < VB->PrimitiveCount ; i++)
+   {
+      GLuint prim = VB->Primitive[i].mode;
+      GLuint start = VB->Primitive[i].start;
+      GLuint length = VB->Primitive[i].count;
+
+      if (!length)
+	 continue;
+
+      mga_render_tab_verts[prim & PRIM_MODE_MASK]( ctx, start, start + length,
+						   prim);
+   }
+
+   tnl->Driver.Render.Finish( ctx );
+
+   return GL_FALSE;		/* finished the pipe */
+#endif
+}
+
+
+/**
+ * Called by the pipeline manager once before rendering.
+ * We check the GL state here to
+ *  a) decide whether we can do the current state in hardware and
+ *  b) update hardware registers
+ */
+#define FALLBACK_IF(expr) \
+do {										\
+	if (expr) {								\
+		if (RADEON_DEBUG & DEBUG_FALLBACKS)				\
+			fprintf(stderr, "%s: fallback:%s\n",			\
+				__FUNCTION__, #expr);				\
+		stage->active = GL_FALSE;					\
+		return;								\
+	}									\
+} while(0)
+
+static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	int i;
+
+	if (RADEON_DEBUG & DEBUG_STATE)
+		fprintf(stderr, "%s\n", __FUNCTION__);
+
+	/* We only support rendering in hardware for now */
+	if (ctx->RenderMode != GL_RENDER) {
+		stage->active = GL_FALSE;
+		return;
+	}
+
+	// I failed to figure out how dither works in hardware,
+	// let's just ignore it for now
+	//FALLBACK_IF(ctx->Color.DitherFlag);
+
+	/* I'm almost certain I forgot something here */
+	FALLBACK_IF(ctx->Color.AlphaEnabled); // GL_ALPHA_TEST
+	FALLBACK_IF(ctx->Color.BlendEnabled); // GL_BLEND
+	FALLBACK_IF(ctx->Fog.Enabled); // GL_FOG
+	FALLBACK_IF(ctx->Line.SmoothFlag); // GL_LINE_SMOOTH
+	FALLBACK_IF(ctx->Line.StippleFlag); // GL_LINE_STIPPLE
+	FALLBACK_IF(ctx->Point.SmoothFlag); // GL_POINT_SMOOTH
+	if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite)
+		FALLBACK_IF(ctx->Point.PointSprite); // GL_POINT_SPRITE_NV
+	FALLBACK_IF(ctx->Polygon.OffsetPoint); // GL_POLYGON_OFFSET_POINT
+	FALLBACK_IF(ctx->Polygon.OffsetLine); // GL_POLYGON_OFFSET_LINE
+	FALLBACK_IF(ctx->Polygon.OffsetFill); // GL_POLYGON_OFFSET_FILL
+	FALLBACK_IF(ctx->Polygon.SmoothFlag); // GL_POLYGON_SMOOTH
+	FALLBACK_IF(ctx->Polygon.StippleFlag); // GL_POLYGON_STIPPLE
+	FALLBACK_IF(ctx->Stencil.Enabled); // GL_STENCIL_TEST
+	FALLBACK_IF(ctx->Multisample.Enabled); // GL_MULTISAMPLE_ARB
+
+	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
+		FALLBACK_IF(ctx->Texture.Unit[i].Enabled);
+
+	stage->active = GL_FALSE;
+}
+
+
+static void dtr(struct tnl_pipeline_stage *stage)
+{
+	(void)stage;
+}
+
+const struct tnl_pipeline_stage _r300_render_stage = {
+	"r300 hw rasterize",
+	_NEW_ALL,		/* re-check (always re-check for now) */
+	0,			/* re-run (always runs) */
+	GL_TRUE,		/* active */
+	0, 0,			/* inputs (set in check_render), outputs */
+	0, 0,			/* changed_inputs, private */
+	dtr,			/* destructor */
+	r300_check_render,	/* check */
+	r300_run_render		/* run */
+};

@@ -30,6 +30,7 @@ DRIVER_SOURCES = \
 		 r300_ioctl.c \
 		 r300_cmdbuf.c \
 		 r300_state.c \
+		 r300_render.c \
 		 \
 		 r200_context.c \
 		 r200_ioctl.c \
