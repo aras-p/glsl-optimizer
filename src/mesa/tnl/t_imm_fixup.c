@@ -1,5 +1,3 @@
-/* $Id: t_imm_fixup.c,v 1.42 2003/03/31 18:19:57 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -53,8 +51,12 @@
 #include "t_pipeline.h"
 
 
+/*
+ * Indexed by primitive type (GL_POINTS=0, GL_LINES=1, GL_LINE_LOOP=2, etc)
+ */
 static const GLuint increment[GL_POLYGON+2] = { 1,2,1,1,3,1,1,4,2,1,1 };
 static const GLuint intro[GL_POLYGON+2]     = { 0,0,2,2,0,2,2,0,2,2,0 };
+
 
 void
 _tnl_fixup_4f( GLfloat data[][4], const GLuint flag[],
@@ -65,25 +67,6 @@ _tnl_fixup_4f( GLfloat data[][4], const GLuint flag[],
    for (;;) {
       if ((flag[++i] & match) == 0) {
 	 COPY_4FV(data[i], data[i-1]);
-	 if (flag[i] & VERT_BIT_END_VB) break;
-      }
-   }
-}
-
-void
-_tnl_fixup_3f( GLfloat data[][3], const GLuint flag[],
-               GLuint start, GLuint match )
-{
-   GLuint i = start;
-
-   for (;;) {
-      if ((flag[++i] & match) == 0) {
-/*  	 _mesa_debug(NULL, "_tnl_fixup_3f copy to %p values %f %f %f\n", */
-/*  		 data[i],  */
-/*  		 data[i-1][0], */
-/*  		 data[i-1][1], */
-/*  		 data[i-1][2]); */
-	 COPY_3V(data[i], data[i-1]);
 	 if (flag[i] & VERT_BIT_END_VB) break;
       }
    }
@@ -104,20 +87,6 @@ _tnl_fixup_1ui( GLuint *data, GLuint flag[], GLuint start, GLuint match )
    flag[i] |= match;
 }
 
-
-void
-_tnl_fixup_1f( GLfloat *data, GLuint flag[], GLuint start, GLuint match )
-{
-   GLuint i = start;
-
-   for (;;) {
-      if ((flag[++i] & match) == 0) {
-	 data[i] = data[i-1];
-	 if (flag[i] & VERT_BIT_END_VB) break;
-      }
-   }
-   flag[i] |= match;
-}
 
 void
 _tnl_fixup_1ub( GLubyte *data, GLuint flag[], GLuint start, GLuint match)
@@ -145,21 +114,6 @@ fixup_first_4f( GLfloat data[][4], const GLuint flag[], GLuint match,
       COPY_4FV(data[i], dflt);
 }
 
-#if 0
-static void
-fixup_first_3f( GLfloat data[][3], const GLuint flag[], GLuint match,
-		GLuint start, const GLfloat *dflt )
-{
-   GLuint i = start-1;
-   match |= VERT_BIT_END_VB;
-
-/*     _mesa_debug(NULL, "fixup_first_3f default: %f %f %f start: %d\n", */
-/*  	   dflt[0], dflt[1], dflt[2], start);  */
-
-   while ((flag[++i]&match) == 0)
-      COPY_3FV(data[i], dflt);
-}
-#endif
 
 static void
 fixup_first_1ui( GLuint data[], const GLuint flag[], GLuint match,
@@ -172,18 +126,6 @@ fixup_first_1ui( GLuint data[], const GLuint flag[], GLuint match,
       data[i] = dflt;
 }
 
-#if 00
-static void
-fixup_first_1f( GLfloat data[], const GLuint flag[], GLuint match,
-		GLuint start, GLfloat dflt )
-{
-   GLuint i = start-1;
-   match |= VERT_BIT_END_VB;
-
-   while ((flag[++i]&match) == 0)
-      data[i] = dflt;
-}
-#endif
 
 static void
 fixup_first_1ub( GLubyte data[], const GLuint flag[], GLuint match,
@@ -196,12 +138,14 @@ fixup_first_1ub( GLubyte data[], const GLuint flag[], GLuint match,
       data[i] = dflt;
 }
 
-/*
+
+/**
  * Copy vertex attributes from the ctx->Current group into the immediate
  * struct at the given position according to copyMask.
  */
-static void copy_from_current( GLcontext *ctx, struct immediate *IM, 
-                               GLuint pos, GLuint copyMask )
+static void
+copy_from_current( GLcontext *ctx, struct immediate *IM, 
+                   GLuint pos, GLuint copyMask )
 {
    GLuint attrib, attribBit;
 
@@ -229,7 +173,19 @@ static void copy_from_current( GLcontext *ctx, struct immediate *IM,
 }
 
 
-void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
+/**
+ * Fill in missing vertex attributes in the incoming immediate structure.
+ * For example, suppose the following calls are made:
+ * glBegin()
+ * glColor(c1)
+ * glVertex(v1)
+ * glVertex(v2)
+ * glEnd()
+ * The v2 vertex should get color c1 since glColor wasn't called for v2.
+ * This function will make c2 be c1.  Same story for all vertex attribs.
+ */
+void
+_tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint start = IM->CopyStart;
@@ -258,6 +214,7 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
 
    if (fixup) {
       const GLuint copy = fixup & ~IM->Flag[start];
+      GLuint attr;
 
       /* Equivalent to a lazy copy-from-current when setting up the
        * immediate.
@@ -268,62 +225,36 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
       if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
   	 _tnl_print_vert_flags("fixup", fixup); 
 
-      /* XXX replace these conditionals with a loop over the 16
-       * vertex attributes.
-       */
+      for (attr = 1; attr < VERT_ATTRIB_MAX; attr++) { /* skip 0 (POS) */
+         const GLuint attrBit = 1 << attr;
+         if (fixup & attrBit) {
+            if (!IM->Attrib[attr]) {
+               IM->Attrib[attr] = _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
+               if (!IM->Attrib[attr]) {
+                  _mesa_error(ctx, GL_OUT_OF_MEMORY, "vertex processing");
+                  return;
+               }
+            }
 
-      if (fixup & VERT_BITS_TEX_ANY) {
-	 GLuint i;
-	 for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
-	    if ((fixup & VERT_BIT_TEX(i))) {
-	       if (orflag & VERT_BIT_TEX(i))
-		  _tnl_fixup_4f( IM->Attrib[VERT_ATTRIB_TEX0 + i], IM->Flag,
-                                 start, VERT_BIT_TEX(i) );
-	       else
-		  fixup_first_4f( IM->Attrib[VERT_ATTRIB_TEX0 + i], IM->Flag,
-                                  VERT_BIT_END_VB, start,
-				  IM->Attrib[VERT_ATTRIB_TEX0 + i][start]);
-	    }
-	 }
-      }
-   
-      if (fixup & VERT_BIT_COLOR0) {
-	 if (orflag & VERT_BIT_COLOR0)
-	    _tnl_fixup_4f( IM->Attrib[VERT_ATTRIB_COLOR0], IM->Flag, start,
-                           VERT_BIT_COLOR0 );
-	 /* No need for else case as the drivers understand stride
-	  * zero here.  (TODO - propogate this)
-	  */
-      }
-      
-      if (fixup & VERT_BIT_COLOR1) {
-	 if (orflag & VERT_BIT_COLOR1)
-	    _tnl_fixup_4f( IM->Attrib[VERT_ATTRIB_COLOR1], IM->Flag, start, 
-			   VERT_BIT_COLOR1 );
-	 else
-	    fixup_first_4f( IM->Attrib[VERT_ATTRIB_COLOR1], IM->Flag,
-                            VERT_BIT_END_VB, start,
-			    IM->Attrib[VERT_ATTRIB_COLOR1][start] );
-      }
-      
-      if (fixup & VERT_BIT_FOG) {
-	 if (orflag & VERT_BIT_FOG)
-	    _tnl_fixup_4f( IM->Attrib[VERT_ATTRIB_FOG], IM->Flag,
-                           start, VERT_BIT_FOG );
-	 else
-	    fixup_first_4f( IM->Attrib[VERT_ATTRIB_FOG], IM->Flag,
-                            VERT_BIT_END_VB,
-                            start, IM->Attrib[VERT_ATTRIB_FOG][start] );
-      }
-
-      if (fixup & VERT_BIT_NORMAL) {
-	 if (orflag & VERT_BIT_NORMAL)
-	    _tnl_fixup_4f( IM->Attrib[VERT_ATTRIB_NORMAL], IM->Flag, start,
-                           VERT_BIT_NORMAL );
-	 else
-	    fixup_first_4f( IM->Attrib[VERT_ATTRIB_NORMAL], IM->Flag,
-                            VERT_BIT_END_VB, start,
-			    IM->Attrib[VERT_ATTRIB_NORMAL][start] );
+            if (attr == VERT_BIT_COLOR0) {
+               /* special case, darn - try to remove someday */
+               if (orflag & VERT_BIT_COLOR0) {
+                  _tnl_fixup_4f( IM->Attrib[VERT_ATTRIB_COLOR0], IM->Flag,
+                                 start, VERT_BIT_COLOR0 );
+               }
+               /* No need for else case as the drivers understand stride
+                * zero here.  (TODO - propogate this)
+                */
+            }
+            else {
+               /* general case */
+               if (orflag & attrBit)
+                  _tnl_fixup_4f( IM->Attrib[attr], IM->Flag, start, attrBit );
+               else
+                  fixup_first_4f( IM->Attrib[attr], IM->Flag, VERT_BIT_END_VB,
+                                  start, IM->Attrib[attr][start] );
+            }
+         }
       }
 
       if (fixup & VERT_BIT_EDGEFLAG) {
@@ -406,7 +337,8 @@ static GLboolean is_fan_like[GL_POLYGON+1] = {
 };
 
 
-/* Copy the untransformed data from the shared vertices of a primitive
+/**
+ * Copy the untransformed data from the shared vertices of a primitive
  * that wraps over two immediate structs.  This is done prior to
  * set_immediate so that prev and next may point to the same
  * structure.  In general it's difficult to avoid this copy on long
@@ -415,7 +347,8 @@ static GLboolean is_fan_like[GL_POLYGON+1] = {
  * Have to be careful with the transitions between display list
  * replay, compile and normal execute modes.
  */
-void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
+void
+_tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct immediate *prev = tnl->ExecCopySource;
@@ -558,12 +491,14 @@ void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
 
 
 
-/* Revive a compiled immediate struct - propogate new 'Current'
+/**
+ * Revive a compiled immediate struct - propogate new 'Current'
  * values.  Often this is redundant because the current values were
  * known and fixed up at compile time (or in the first execution of
  * the cassette).
  */
-void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
+void
+_tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint fixup;
@@ -604,15 +539,11 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 /*     _tnl_print_vert_flags("fixup compiled", fixup); */
 
    if (fixup) {
-
-      /* XXX try to replace this code with a loop over the 16 vertex
-       * attributes.
-       */
-
-#if 0
       GLuint attr;
-      for (attr = 1; attr < VERT_ATTRIB_MAX; attr++) {
-         if (fixup & (1 << attr)) {
+
+      for (attr = 1; attr < VERT_ATTRIB_MAX; attr++) { /* skip 0 (POS) */
+         const GLuint attrBit = 1 << attr;
+         if (fixup & attrBit) {
             if (attr == VERT_ATTRIB_COLOR0) {
                /* special case, darn */
                if (IM->CopyOrFlag & VERT_BIT_COLOR0)
@@ -624,47 +555,10 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
             }
             else {
                fixup_first_4f(IM->Attrib[attr], IM->Flag,
-                              1 << attr, start, ctx->Current.Attrib[attr] );
+                              attrBit, start, ctx->Current.Attrib[attr] );
             }
          }
       }
-
-#else
-      if (fixup & VERT_BIT_NORMAL) {
-	 fixup_first_4f(IM->Attrib[VERT_ATTRIB_NORMAL], IM->Flag,
-                        VERT_BIT_NORMAL, start,
-			ctx->Current.Attrib[VERT_ATTRIB_NORMAL] );
-      }
-
-      if (fixup & VERT_BIT_COLOR0) {
-	 if (IM->CopyOrFlag & VERT_BIT_COLOR0)
-	    fixup_first_4f(IM->Attrib[VERT_ATTRIB_COLOR0], IM->Flag,
-                           VERT_BIT_COLOR0, start,
-			   ctx->Current.Attrib[VERT_ATTRIB_COLOR0] );
-	 else
-	    fixup &= ~VERT_BIT_COLOR0;
-      }
-
-      if (fixup & VERT_BIT_COLOR1)
-	 fixup_first_4f(IM->Attrib[VERT_ATTRIB_COLOR1], IM->Flag,
-                        VERT_BIT_COLOR1, start,
-			ctx->Current.Attrib[VERT_ATTRIB_COLOR1] );
-
-      if (fixup & VERT_BIT_FOG)
-	 fixup_first_4f( IM->Attrib[VERT_ATTRIB_FOG], IM->Flag,
-                         VERT_BIT_FOG, start,
-                         ctx->Current.Attrib[VERT_ATTRIB_FOG] );
-
-      if (fixup & VERT_BITS_TEX_ANY) {
-	 GLuint i;
-	 for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
-	    if (fixup & VERT_BIT_TEX(i))
-	       fixup_first_4f( IM->Attrib[VERT_ATTRIB_TEX0 + i], IM->Flag,
-                               VERT_BIT_TEX(i), start,
-			       ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i] );
-	 }
-      }
-#endif
 
       if (fixup & VERT_BIT_EDGEFLAG)
 	 fixup_first_1ub(IM->EdgeFlag, IM->Flag, VERT_BIT_EDGEFLAG, start,
@@ -701,20 +595,22 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 
 
 
-static void copy_none( TNLcontext *tnl, GLuint start, GLuint count, GLuint ovf)
+static void
+copy_none( TNLcontext *tnl, GLuint start, GLuint count, GLuint ovf)
 {
    (void) (start && ovf && tnl && count);
 }
 
-static void copy_last( TNLcontext *tnl, GLuint start, GLuint count, GLuint ovf)
+static void
+copy_last( TNLcontext *tnl, GLuint start, GLuint count, GLuint ovf)
 {
    (void) start; (void) ovf;
    tnl->ExecCopyCount = 1;
    tnl->ExecCopyElts[2] = count-1;
 }
 
-static void copy_first_and_last( TNLcontext *tnl, GLuint start, GLuint count,
-				 GLuint ovf)
+static void
+copy_first_and_last( TNLcontext *tnl, GLuint start, GLuint count, GLuint ovf)
 {
    (void) ovf;
    tnl->ExecCopyCount = 2;
@@ -722,8 +618,8 @@ static void copy_first_and_last( TNLcontext *tnl, GLuint start, GLuint count,
    tnl->ExecCopyElts[2] = count-1;
 }
 
-static void copy_last_two( TNLcontext *tnl, GLuint start, GLuint count,
-			   GLuint ovf )
+static void
+copy_last_three( TNLcontext *tnl, GLuint start, GLuint count, GLuint ovf )
 {
    (void) start;
    tnl->ExecCopyCount = 2+ovf;
@@ -732,8 +628,8 @@ static void copy_last_two( TNLcontext *tnl, GLuint start, GLuint count,
    tnl->ExecCopyElts[2] = count-1;
 }
 
-static void copy_overflow( TNLcontext *tnl, GLuint start, GLuint count,
-			   GLuint ovf )
+static void
+copy_overflow( TNLcontext *tnl, GLuint start, GLuint count, GLuint ovf )
 {
    (void) start;
    tnl->ExecCopyCount = ovf;
@@ -748,24 +644,23 @@ typedef void (*copy_func)( TNLcontext *tnl, GLuint start, GLuint count,
 
 static copy_func copy_tab[GL_POLYGON+2] =
 {
-   copy_none,
-   copy_overflow,
-   copy_first_and_last,
-   copy_last,
-   copy_overflow,
-   copy_last_two,
-   copy_first_and_last,
-   copy_overflow,
-   copy_last_two,
-   copy_first_and_last,
+   copy_none,            /* GL_POINTS */
+   copy_overflow,        /* GL_LINES */
+   copy_first_and_last,  /* GL_LINE_LOOP */
+   copy_last,            /* GL_LINE_STRIP */
+   copy_overflow,        /* GL_TRIANGLES */
+   copy_last_three,      /* GL_TRIANGLE_STRIP */
+   copy_first_and_last,  /* GL_TRIANGLE_FAN */
+   copy_overflow,        /* GL_QUADS */
+   copy_last_three,      /* GL_QUAD_STRIP */
+   copy_first_and_last,  /* GL_POLYGON */
    copy_none
 };
 
 
 
-
-
-/* Figure out what vertices need to be copied next time.
+/**
+ * Figure out what vertices need to be copied next time.
  */
 void
 _tnl_get_exec_copy_verts( GLcontext *ctx, struct immediate *IM )
@@ -790,7 +685,8 @@ _tnl_get_exec_copy_verts( GLcontext *ctx, struct immediate *IM )
       tnl->ExecCopyCount = 0;
       tnl->ExecCopyTexSize = 0;
       tnl->ExecParity = 0;
-   } else {
+   }
+   else {
       /* Remember this immediate as the one to copy from.
        */
       tnl->ExecCopySource = IM; IM->ref_count++;
@@ -812,7 +708,8 @@ _tnl_get_exec_copy_verts( GLcontext *ctx, struct immediate *IM )
 }
 
 
-/* Recalculate ExecCopyElts, ExecParity, etc.  
+/**
+ * Recalculate ExecCopyElts, ExecParity, etc.  
  */
 void 
 _tnl_get_purged_copy_verts( GLcontext *ctx, struct immediate *IM ) 
@@ -844,7 +741,7 @@ _tnl_get_purged_copy_verts( GLcontext *ctx, struct immediate *IM )
 }
 
 
-/*
+/**
  * Called via the VB->import_data function pointer.
  */
 void
@@ -880,4 +777,3 @@ _tnl_upgrade_current_data( GLcontext *ctx, GLuint required, GLuint flags )
       VB->importable_data &= ~VERT_BIT_COLOR0;
    }
 }
- 
