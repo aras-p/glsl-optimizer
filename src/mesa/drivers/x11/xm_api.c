@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.5 2000/10/31 18:09:46 keithw Exp $ */
+/* $Id: xm_api.c,v 1.6 2000/11/05 18:26:12 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,6 +77,7 @@
 #endif
 #include "macros.h"
 #include "swrast/swrast.h"
+#include "swrast_setup/swrast_setup.h"
 
 #ifndef GLX_NONE_EXT
 #define GLX_NONE_EXT 0x8000
@@ -1616,6 +1617,7 @@ void XMesaDestroyVisual( XMesaVisual v )
 XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
    XMesaContext c;
+   GLcontext *ctx;
    GLboolean direct = GL_TRUE; /* XXXX */
    /* NOT_DONE: should this be GL_FALSE??? */
    static GLboolean firstTime = GL_TRUE;
@@ -1630,7 +1632,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       return NULL;
    }
 
-   c->gl_ctx = _mesa_create_context( v->gl_visual,
+   ctx = c->gl_ctx = _mesa_create_context( v->gl_visual,
                       share_list ? share_list->gl_ctx : (GLcontext *) NULL,
                       (void *) c, direct );
    if (!c->gl_ctx) {
@@ -1638,9 +1640,9 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       return NULL;
    }
 
-   gl_extensions_enable(c->gl_ctx, "GL_HP_occlusion_test");
-   gl_extensions_enable(c->gl_ctx, "GL_ARB_texture_cube_map");
-   gl_extensions_enable(c->gl_ctx, "GL_EXT_texture_env_combine");
+   gl_extensions_enable(ctx, "GL_HP_occlusion_test");
+   gl_extensions_enable(ctx, "GL_ARB_texture_cube_map");
+   gl_extensions_enable(ctx, "GL_EXT_texture_env_combine");
 
    if (CHECK_BYTE_ORDER(v)) {
       c->swapbytes = GL_FALSE;
@@ -1654,30 +1656,32 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    c->display = v->display;
    c->pixelformat = v->dithered_pf;      /* Dithering is enabled by default */
 
-   c->gl_ctx->Driver.UpdateState = xmesa_update_state;
-
-   /* These flags cover all the tests made in UpdateState, plus what
-    * the software rasterizer needs to choose line,point and triangle
-    * functions.
-    */
-   c->gl_ctx->Driver.UpdateStateNotify = (_NEW_POINT|
-					  _NEW_TEXTURE|
-					  _NEW_LINE|
-					  _NEW_LIGHT|
-					  _NEW_DEPTH|
-					  _NEW_POLYGON|
-					  _NEW_TEXTURE|
-					  _SWRAST_NEW_RASTERMASK|
-					  _SWRAST_NEW_TRIANGLE|
-					  _SWRAST_NEW_LINE|
-					  _SWRAST_NEW_POINT);
+   ctx->Driver.UpdateState = xmesa_update_state;
+   ctx->Driver.UpdateStateNotify = ~0;
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
    c->driContextPriv = driContextPriv;
 #endif
 
-   /* Run the config file */
-   _mesa_context_initialize( c->gl_ctx );
+   /* Set up some constant pointers:
+    */
+   xmesa_init_pointers( ctx );
+
+   if (ctx->VB) 
+      _swsetup_RegisterVB( ctx->VB );
+
+
+   /* Initialize the software rasterizer and helper modules.
+    */
+   _swrast_CreateContext( ctx );
+   _swsetup_CreateContext( ctx );
+
+   xmesa_register_swrast_functions( ctx );
+
+   /* Run the config file 
+    */
+   _mesa_context_initialize( ctx );
+
 
    return c;
 }
@@ -1691,8 +1695,11 @@ void XMesaDestroyContext( XMesaContext c )
    if (c->xm_buffer && c->xm_buffer->FXctx)
       fxMesaDestroyContext(c->xm_buffer->FXctx);
 #endif
-   if (c->gl_ctx)
+   if (c->gl_ctx) {
+      _swsetup_DestroyContext( c->gl_ctx );
+      _swrast_DestroyContext( c->gl_ctx );
       _mesa_destroy_context( c->gl_ctx );
+   }
 
    /* Disassociate old buffer with this context */
    if (c->xm_buffer)

@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.2 2000/09/08 21:44:57 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.3 2000/11/05 18:26:12 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,7 +36,8 @@
 #include "types.h"
 #include "xmesaP.h"
 #include "extensions.h"
-
+#include "swrast/swrast.h"
+#include "swrast_setup/swrast_setup.h"
 
 /*
  * Return the size (width,height of the current color buffer.
@@ -142,40 +143,6 @@ flush( GLcontext *ctx )
 }
 
 
-#if 0
-static GLboolean
-set_buffer( GLcontext *ctx, GLenum mode )
-{
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   if (mode == GL_FRONT_LEFT) {
-      /* read/write front buffer */
-      xmesa->xm_buffer->buffer = xmesa->xm_buffer->frontbuffer;
-      ctx->NewState |= NEW_RASTER_OPS;
-      gl_update_state(ctx);
-      return GL_TRUE;
-   }
-   else if (mode==GL_BACK_LEFT && xmesa->xm_buffer->db_state) {
-      /* read/write back buffer */
-      if (xmesa->xm_buffer->backpixmap) {
-         xmesa->xm_buffer->buffer =
-	     (XMesaDrawable)xmesa->xm_buffer->backpixmap;
-      }
-      else if (xmesa->xm_buffer->backimage) {
-         xmesa->xm_buffer->buffer = None;
-      }
-      else {
-         /* just in case there wasn't enough memory for back buffer */
-         xmesa->xm_buffer->buffer = xmesa->xm_buffer->frontbuffer;
-      }
-      ctx->NewState |= NEW_RASTER_OPS;
-      gl_update_state(ctx);
-      return GL_TRUE;
-   }
-   else {
-      return GL_FALSE;
-   }
-}
-#endif
 
 
 static GLboolean
@@ -823,7 +790,7 @@ clear_buffers( GLcontext *ctx, GLbitfield mask,
 
 
 
-#ifndef XFree86Server
+#if 0
 /*
  * This function implements glDrawPixels() with an XPutImage call when
  * drawing to the front buffer (X Window drawable).
@@ -922,27 +889,59 @@ enable( GLcontext *ctx, GLenum pname, GLboolean state )
 }
 
 
-
-/*
- * Initialize all the DD.* function pointers depending on the color
- * buffer configuration.  This is mainly called by XMesaMakeCurrent.
- */
-void
-xmesa_update_state( GLcontext *ctx )
+void xmesa_update_state( GLcontext *ctx )
 {
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   /*int depth=GET_VISUAL_DEPTH(xmesa->xm_visual);*/
+   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 
-   (void) DitherValues;  /* silenced unused var warning */
-#ifndef XFree86Server
-   (void) drawpixels_8R8G8B;
-#endif
-
-   /*
-    * Always the same:
+   /* Propogate statechange information to swrast and swrast_setup
+    * modules.  The X11 driver has no internal GL-dependent state.
     */
+   _swrast_InvalidateState( ctx, ctx->NewState );
+   _swsetup_InvalidateState( ctx, ctx->NewState );
+
+
+   /* setup pointers to front and back buffer clear functions */
+   xmesa->xm_buffer->front_clear_func = clear_front_pixmap;
+   if (xmesa->xm_buffer->backpixmap != XIMAGE) {
+      xmesa->xm_buffer->back_clear_func = clear_back_pixmap;
+   }
+   else if (sizeof(GLushort)!=2 || sizeof(GLuint)!=4) {
+      xmesa->xm_buffer->back_clear_func = clear_nbit_ximage;
+   }
+   else switch (xmesa->xm_visual->BitsPerPixel) {
+   case 8:
+      if (xmesa->xm_visual->hpcr_clear_flag) {
+	 xmesa->xm_buffer->back_clear_func = clear_HPCR_ximage;
+      }
+      else {
+	 xmesa->xm_buffer->back_clear_func = clear_8bit_ximage;
+      }
+      break;
+   case 16:
+      xmesa->xm_buffer->back_clear_func = clear_16bit_ximage;
+      break;
+   case 24:
+      xmesa->xm_buffer->back_clear_func = clear_24bit_ximage;
+      break;
+   case 32:
+      xmesa->xm_buffer->back_clear_func = clear_32bit_ximage;
+      break;
+   default:
+      xmesa->xm_buffer->back_clear_func = clear_nbit_ximage;
+      break;
+   }
+
+   xmesa_update_span_funcs(ctx); 
+}
+
+
+
+/* Setup pointers and other driver state that is constant for the life
+ * of a context.
+ */
+void xmesa_init_pointers( GLcontext *ctx )
+{
    ctx->Driver.GetString = get_string;
-   ctx->Driver.UpdateState = xmesa_update_state;
    ctx->Driver.GetBufferSize = get_buffer_size;
    ctx->Driver.Flush = flush;
    ctx->Driver.Finish = finish;
@@ -962,48 +961,13 @@ xmesa_update_state( GLcontext *ctx )
    ctx->Driver.ColorMask = color_mask;
    ctx->Driver.Enable = enable;
 
-   ctx->Driver.PointsFunc = xmesa_get_points_func( ctx );
-   ctx->Driver.LineFunc = xmesa_get_line_func( ctx );
-   ctx->Driver.TriangleFunc = xmesa_get_triangle_func( ctx );
+   ctx->Driver.PointsFunc = _swsetup_Points;
+   ctx->Driver.LineFunc = _swsetup_Line;
+   ctx->Driver.TriangleFunc = _swsetup_Triangle;
+   ctx->Driver.QuadFunc = _swsetup_Quad;
+   ctx->Driver.RasterSetup = _swsetup_RasterSetup;
+   ctx->Driver.RegisterVB = _swsetup_RegisterVB;
+   ctx->Driver.UnregisterVB = _swsetup_UnregisterVB;
 
-/*     ctx->Driver.TriangleCaps = DD_TRI_CULL; */
-
-   /* setup pointers to front and back buffer clear functions */
-   /* XXX this bit of code could be moved to a one-time init */
-   xmesa->xm_buffer->front_clear_func = clear_front_pixmap;
-   if (xmesa->xm_buffer->backpixmap != XIMAGE) {
-      /* back buffer is a pixmap */
-      xmesa->xm_buffer->back_clear_func = clear_back_pixmap;
-   }
-   else if (sizeof(GLushort)!=2 || sizeof(GLuint)!=4) {
-      /* Do this on Crays */
-      xmesa->xm_buffer->back_clear_func = clear_nbit_ximage;
-   }
-   else {
-      /* Do this on most machines */
-      switch (xmesa->xm_visual->BitsPerPixel) {
-         case 8:
-	    if (xmesa->xm_visual->hpcr_clear_flag) {
-               xmesa->xm_buffer->back_clear_func = clear_HPCR_ximage;
-            }
-            else {
-               xmesa->xm_buffer->back_clear_func = clear_8bit_ximage;
-            }
-            break;
-         case 16:
-            xmesa->xm_buffer->back_clear_func = clear_16bit_ximage;
-            break;
-         case 24:
-            xmesa->xm_buffer->back_clear_func = clear_24bit_ximage;
-            break;
-         case 32:
-            xmesa->xm_buffer->back_clear_func = clear_32bit_ximage;
-            break;
-         default:
-            xmesa->xm_buffer->back_clear_func = clear_nbit_ximage;
-            break;
-      }
-   }
-
-   xmesa_update_span_funcs(ctx);
+   (void) DitherValues;  /* silenced unused var warning */
 }

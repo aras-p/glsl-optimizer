@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.13 2000/09/26 20:54:13 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.14 2000/11/05 18:26:12 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -522,15 +522,20 @@ xmesa_color_to_pixel( XMesaContext xmesa,
 
 extern void xmesa_alloc_back_buffer( XMesaBuffer b );
 
+extern void xmesa_init_pointers( GLcontext *ctx );
 extern void xmesa_update_state( GLcontext *ctx );
 
-extern points_func xmesa_get_points_func( GLcontext *ctx );
-
-extern line_func xmesa_get_line_func( GLcontext *ctx );
-
-extern triangle_func xmesa_get_triangle_func( GLcontext *ctx );
-
 extern void xmesa_update_span_funcs( GLcontext *ctx );
+
+/* Plugged into the software rasterizer.  Try to use internal
+ * swrast-style point, line and triangle functions.
+ */
+extern void xmesa_choose_point( GLcontext *ctx );
+extern void xmesa_choose_line( GLcontext *ctx );
+extern void xmesa_choose_triangle( GLcontext *ctx );
+
+
+extern void xmesa_register_swrast_functions( GLcontext *ctx );
 
 
 
