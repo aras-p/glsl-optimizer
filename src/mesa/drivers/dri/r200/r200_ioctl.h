@@ -106,10 +106,10 @@ extern void r200WaitForIdleLocked( r200ContextPtr rmesa );
 extern void r200WaitForVBlank( r200ContextPtr rmesa );
 extern void r200InitIoctlFuncs( struct dd_function_table *functions );
 
-extern void *r200AllocateMemoryMESA( GLsizei size, GLfloat readfreq,
+extern void *r200AllocateMemoryMESA( Display *dpy, int scrn, GLsizei size, GLfloat readfreq,
 				   GLfloat writefreq, GLfloat priority );
-extern void r200FreeMemoryMESA( GLvoid *pointer );
-extern GLuint r200GetMemoryOffsetMESA( const GLvoid *pointer );
+extern void r200FreeMemoryMESA( Display *dpy, int scrn, GLvoid *pointer );
+extern GLuint r200GetMemoryOffsetMESA( Display *dpy, int scrn, const GLvoid *pointer );
 extern GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
 				   GLint size );
 
