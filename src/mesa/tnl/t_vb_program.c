@@ -1,4 +1,4 @@
-/* $Id: t_vb_program.c,v 1.3 2001/12/15 21:31:28 brianp Exp $ */
+/* $Id: t_vb_program.c,v 1.4 2001/12/15 22:31:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -626,8 +626,6 @@ void _tnl_vprog_vtxfmt_init( GLcontext *ctx )
 {
    GLvertexformat *vfmt = &(TNL_CONTEXT(ctx)->vtxfmt);
 
-   printf("%s()\n", __FUNCTION__);
-
    /* All begin/end operations are handled by this vertex format:
     */
    vfmt->ArrayElement = _vp_ArrayElement;
@@ -699,12 +697,15 @@ void _tnl_vprog_vtxfmt_init( GLcontext *ctx )
 
 
 struct vp_stage_data {
-   GLvector4f clipCoords;             /* resulting vertex positions */
+   GLvector4f clipCoords;             /* post-modelview/projection coords */
+   GLvector4f ndcCoords;              /* normalized device coords */
    struct gl_client_array color0[2];  /* front and back */
    struct gl_client_array color1[2];  /* front and back */
    GLvector4f texCoord[MAX_TEXTURE_UNITS];
    GLvector1f fogCoord;
    GLvector1f pointSize;
+   GLubyte *clipmask;
+   GLubyte ormask, andmask;
 };
 
 
@@ -718,32 +719,20 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    struct vertex_buffer *VB = &tnl->vb;
    struct vp_machine *machine = &(ctx->VertexProgram.Machine);
    struct vp_program *program;
-   GLfloat (*clip)[4];
-   GLfloat (*color0)[4], (*color1)[4];
-   GLfloat (*bfcolor0)[4], (*bfcolor1)[4];
-   GLfloat *fog, *pointSize;
-   GLfloat (*texture0)[4];
-   GLfloat (*texture1)[4];
-   GLfloat (*texture2)[4];
-   GLfloat (*texture3)[4];
    GLint i;
 
    /* convenience pointers */
-   store->clipCoords.size = 4;
-   clip = (GLfloat (*)[4]) store->clipCoords.data;
-   color0 = (GLfloat (*)[4]) store->color0[0].Ptr;
-   color1 = (GLfloat (*)[4]) store->color1[0].Ptr;
-   bfcolor0 = (GLfloat (*)[4]) store->color0[1].Ptr;
-   bfcolor1 = (GLfloat (*)[4]) store->color1[1].Ptr;
-   fog = (GLfloat *) store->fogCoord.data;
-   pointSize = (GLfloat *) store->pointSize.data;
-   texture0 = (GLfloat (*)[4]) store->texCoord[0].data;
-   texture1 = (GLfloat (*)[4]) store->texCoord[1].data;
-   texture2 = (GLfloat (*)[4]) store->texCoord[2].data;
-   texture3 = (GLfloat (*)[4]) store->texCoord[3].data;
-
-
-   printf("In %s()\n", __FUNCTION__);
+   GLfloat (*clip)[4] = (GLfloat (*)[4]) store->clipCoords.data;
+   GLfloat (*color0)[4] = (GLfloat (*)[4]) store->color0[0].Ptr;
+   GLfloat (*color1)[4] = (GLfloat (*)[4]) store->color1[0].Ptr;
+   GLfloat (*bfcolor0)[4] = (GLfloat (*)[4]) store->color0[1].Ptr;
+   GLfloat (*bfcolor1)[4] = (GLfloat (*)[4]) store->color1[1].Ptr;
+   GLfloat *fog = (GLfloat *) store->fogCoord.data;
+   GLfloat *pointSize = (GLfloat *) store->pointSize.data;
+   GLfloat (*texture0)[4] = (GLfloat (*)[4]) store->texCoord[0].data;
+   GLfloat (*texture1)[4] = (GLfloat (*)[4]) store->texCoord[1].data;
+   GLfloat (*texture2)[4] = (GLfloat (*)[4]) store->texCoord[2].data;
+   GLfloat (*texture3)[4] = (GLfloat (*)[4]) store->texCoord[3].data;
 
    program = (struct vp_program *) _mesa_HashLookup(ctx->VertexProgram.HashTable, ctx->VertexProgram.Binding);
    assert(program);
@@ -754,6 +743,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    for (i = 0; i < VB->Count; i++) {
       GLuint attr;
 
+#if 0
       printf("Input  %d: %f, %f, %f, %f\n", i,
              VB->AttribPtr[0]->data[i][0],
              VB->AttribPtr[0]->data[i][1],
@@ -769,7 +759,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
              VB->AttribPtr[2]->data[i][1],
              VB->AttribPtr[2]->data[i][2],
              VB->AttribPtr[2]->data[i][3]);
-
+#endif
 
       /* load the input attribute registers */
       for (attr = 0; attr < 16; attr++) {
@@ -782,6 +772,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
       /* execute the program */
       _mesa_exec_program(ctx, program);
 
+#if 0
       printf("Output %d: %f, %f, %f, %f\n", i,
              machine->Registers[VP_OUT_HPOS][0],
              machine->Registers[VP_OUT_HPOS][1],
@@ -792,12 +783,10 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
              machine->Registers[VP_OUT_COL0][1],
              machine->Registers[VP_OUT_COL0][2],
              machine->Registers[VP_OUT_COL0][3]);
+#endif
 
       /* store the attribute output registers into the VB arrays */
       COPY_4V(clip[i], machine->Registers[VP_OUT_HPOS]);
-      clip[i][0] /= clip[i][3];
-      clip[i][1] /= clip[i][3];
-      clip[i][2] /= clip[i][3];
       COPY_4V(color0[i], machine->Registers[VP_OUT_COL0]);
       COPY_4V(color1[i], machine->Registers[VP_OUT_COL1]);
       COPY_4V(bfcolor0[i], machine->Registers[VP_OUT_BFC0]);
@@ -810,11 +799,13 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
       COPY_4V(texture3[i], machine->Registers[VP_OUT_TEX0]);
    }
 
+   VB->ClipPtr = &store->clipCoords;
+   VB->ClipPtr->size = 4;
+   VB->ClipPtr->count = VB->Count;
    VB->ColorPtr[0] = &store->color0[0];
    VB->ColorPtr[1] = &store->color0[1];
    VB->SecondaryColorPtr[0] = &store->color1[0];
    VB->SecondaryColorPtr[1] = &store->color1[1];
-   VB->ProjectedClipPtr = &store->clipCoords;
    VB->FogCoordPtr = &store->fogCoord;
    VB->PointSizePtr = &store->pointSize;
    VB->TexCoordPtr[0] = &store->texCoord[0];
@@ -822,41 +813,45 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    VB->TexCoordPtr[2] = &store->texCoord[2];
    VB->TexCoordPtr[3] = &store->texCoord[3];
 
-#if 000
-
-   GLvector4f *input = ctx->_NeedEyeCoords ? VB->EyePtr : VB->ObjPtr;
-   GLuint ind;
-
-/*     _tnl_print_vert_flags( __FUNCTION__, stage->changed_inputs ); */
-
-   /* Make sure we can talk about elements 0..2 in the vector we are
-    * lighting.
+   /* Cliptest and perspective divide.  Clip functions must clear
+    * the clipmask.
     */
-   if (stage->changed_inputs & (VERT_EYE|VERT_OBJ_BIT)) {
-      if (input->size <= 2) {
-	 if (input->flags & VEC_NOT_WRITEABLE) {
-	    ASSERT(VB->importable_data & VERT_OBJ_BIT);
+   store->ormask = 0;
+   store->andmask = CLIP_ALL_BITS;
 
-	    VB->import_data( ctx, VERT_OBJ_BIT, VEC_NOT_WRITEABLE );
-	    input = ctx->_NeedEyeCoords ? VB->EyePtr : VB->ObjPtr;
+   if (tnl->NeedProjCoords) {
+      VB->ProjectedClipPtr =
+         _mesa_clip_tab[VB->ClipPtr->size]( VB->ClipPtr,
+                                            &store->ndcCoords,
+                                            store->clipmask,
+                                            &store->ormask,
+                                            &store->andmask );
 
-	    ASSERT((input->flags & VEC_NOT_WRITEABLE) == 0);
-	 }
-
-	 _mesa_vector4f_clean_elem(input, VB->Count, 2);
-      }
+   }
+   else {
+      VB->ProjectedClipPtr = 0;
+      _mesa_clip_np_tab[VB->ClipPtr->size]( VB->ClipPtr,
+                                            0,
+                                            store->clipmask,
+                                            &store->ormask,
+                                            &store->andmask );
    }
 
-   if (VB->Flag)
-      ind = LIGHT_FLAGS;
-   else
-      ind = 0;
+   if (store->andmask)  /* All vertices are outside the frustum */
+      return GL_FALSE;
 
-   /* The individual functions know about replaying side-effects
-    * vs. full re-execution. 
+
+   /* This is where we'd do clip testing against the user-defined
+    * clipping planes, but they're not supported by vertex programs.
     */
-   store->light_func_tab[ind]( ctx, VB, stage, input );
-#endif
+
+   VB->ClipOrMask = store->ormask;
+   VB->ClipMask = store->clipmask;
+
+   /* XXXX what's this?
+   if (VB->ClipPtr == VB->ObjPtr && (VB->importable_data & VERT_OBJ_BIT))
+      VB->importable_data |= VERT_CLIP;
+   */
 
    return GL_TRUE;
 }
@@ -953,6 +948,7 @@ static GLboolean run_init_vp( GLcontext *ctx,
 
    /* The output of a vertex program is: */
    _mesa_vector4f_alloc( &store->clipCoords, 0, size, 32 );
+   _mesa_vector4f_alloc( &store->ndcCoords, 0, size, 32 );
    alloc_4float( &store->color0[0], size );
    alloc_4float( &store->color0[1], size );
    alloc_4float( &store->color1[0], size );
@@ -961,6 +957,7 @@ static GLboolean run_init_vp( GLcontext *ctx,
       _mesa_vector4f_alloc( &store->texCoord[i], 0, VB->Size, 32 );
    _mesa_vector1f_alloc( &store->fogCoord, 0, size, 32 );
    _mesa_vector1f_alloc( &store->pointSize, 0, size, 32 );
+   store->clipmask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte)*size, 32 );
 
 
    /* Now validate the stage derived data...
@@ -1004,6 +1001,7 @@ static void dtr( struct gl_pipeline_stage *stage )
    if (store) {
       GLuint i;
       _mesa_vector4f_free( &store->clipCoords );
+      _mesa_vector4f_free( &store->ndcCoords );
       ALIGN_FREE( store->color0[0].Ptr );
       ALIGN_FREE( store->color0[1].Ptr );
       ALIGN_FREE( store->color1[0].Ptr );
@@ -1013,6 +1011,7 @@ static void dtr( struct gl_pipeline_stage *stage )
             _mesa_vector4f_free( &store->texCoord[i] );
       _mesa_vector1f_free( &store->fogCoord );
       _mesa_vector1f_free( &store->pointSize );
+      ALIGN_FREE( store->clipmask );
 
       FREE( store );
       stage->privatePtr = 0;
