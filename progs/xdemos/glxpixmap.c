@@ -1,4 +1,4 @@
-/* $Id: glxpixmap.c,v 1.1 1999/08/19 00:55:43 jtg Exp $ */
+/* $Id: glxpixmap.c,v 1.2 2000/07/11 16:05:29 brianp Exp $ */
 
 
 /*
@@ -9,16 +9,11 @@
  */
 
 
-/*
- * $Id: glxpixmap.c,v 1.1 1999/08/19 00:55:43 jtg Exp $
- */
-
-
 #include <GL/gl.h>
 #include <GL/glx.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 
 
 static GLXContext ctx;
@@ -30,11 +25,17 @@ static GC gc;
 static Window make_rgb_window( Display *dpy,
 				  unsigned int width, unsigned int height )
 {
-   int attrib[] = { GLX_RGBA,
-		    GLX_RED_SIZE, 1,
-		    GLX_GREEN_SIZE, 1,
-		    GLX_BLUE_SIZE, 1,
-		    None };
+   const int sbAttrib[] = { GLX_RGBA,
+                            GLX_RED_SIZE, 1,
+                            GLX_GREEN_SIZE, 1,
+                            GLX_BLUE_SIZE, 1,
+                            None };
+   const int dbAttrib[] = { GLX_RGBA,
+                            GLX_RED_SIZE, 1,
+                            GLX_GREEN_SIZE, 1,
+                            GLX_BLUE_SIZE, 1,
+                            GLX_DOUBLEBUFFER,
+                            None };
    int scrnum;
    XSetWindowAttributes attr;
    unsigned long mask;
@@ -44,10 +45,13 @@ static Window make_rgb_window( Display *dpy,
    scrnum = DefaultScreen( dpy );
    root = RootWindow( dpy, scrnum );
 
-   visinfo = glXChooseVisual( dpy, scrnum, attrib );
+   visinfo = glXChooseVisual( dpy, scrnum, (int *) sbAttrib );
    if (!visinfo) {
-      printf("Error: couldn't get an RGB, Double-buffered visual\n");
-      exit(1);
+      visinfo = glXChooseVisual( dpy, scrnum, (int *) dbAttrib );
+      if (!visinfo) {
+         printf("Error: couldn't get an RGB visual\n");
+         exit(1);
+      }
    }
 
    /* window attributes */
@@ -65,20 +69,33 @@ static Window make_rgb_window( Display *dpy,
    /* make an X GC so we can do XCopyArea later */
    gc = XCreateGC( dpy, win, 0, NULL );
 
-   ctx = glXCreateContext( dpy, visinfo, NULL, True );
+   /* need indirect context */
+   ctx = glXCreateContext( dpy, visinfo, NULL, False );
+   if (!ctx) {
+      printf("Error: glXCreateContext failed\n");
+      exit(-1);
+   }
+
+   printf("Direct rendering: %s\n", glXIsDirect(dpy, ctx) ? "Yes" : "No");
 
    return win;
 }
 
 
 static GLXPixmap make_pixmap( Display *dpy, Window win,
-			       unsigned int width, unsigned int height )
+			       unsigned int width, unsigned int height,
+                               Pixmap *pixmap)
 {
    Pixmap pm;
    GLXPixmap glxpm;
    XWindowAttributes attr;
 
    pm = XCreatePixmap( dpy, win, width, height, visinfo->depth );
+   if (!pm) {
+      printf("Error: XCreatePixmap failed\n");
+      exit(-1);
+   }
+
    XGetWindowAttributes( dpy, win, &attr );
 
    /*
@@ -89,11 +106,24 @@ static GLXPixmap make_pixmap( Display *dpy, Window win,
     *   into any kind of visual, not just TrueColor or DirectColor.
     */
 #ifdef GLX_MESA_pixmap_colormap
-   glxpm = glXCreateGLXPixmapMESA( dpy, visinfo, pm, attr.colormap );
+   if (strstr(glXQueryExtensionsString(dpy, 0), "GLX_MESA_pixmap_colormap")) {
+      /* stand-alone Mesa, specify the colormap */
+      glxpm = glXCreateGLXPixmapMESA( dpy, visinfo, pm, attr.colormap );
+   }
+   else {
+      glxpm = glXCreateGLXPixmap( dpy, visinfo, pm );
+   }
 #else
    /* This will work with Mesa too if the visual is TrueColor or DirectColor */
    glxpm = glXCreateGLXPixmap( dpy, visinfo, pm );
 #endif
+
+   if (!glxpm) {
+      printf("Error: GLXCreateGLXPixmap failed\n");
+      exit(-1);
+   }
+
+   *pixmap = pm;
 
    return glxpm;
 }
@@ -128,18 +158,16 @@ int main( int argc, char *argv[] )
 {
    Display *dpy;
    Window win;
-   GLXPixmap pm;
+   Pixmap pm;
+   GLXPixmap glxpm;
 
    dpy = XOpenDisplay(NULL);
 
    win = make_rgb_window( dpy, 300, 300 );
-   pm = make_pixmap( dpy, win, 300, 300 );
+   glxpm = make_pixmap( dpy, win, 300, 300, &pm );
 
-#ifdef JUNK
-   glXMakeCurrent( dpy, win, ctx );  /*to make sure ctx is properly initialized*/
-#endif
-
-   glXMakeCurrent( dpy, pm, ctx );
+   glXMakeCurrent( dpy, glxpm, ctx );
+   printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
 
    /* Render an image into the pixmap */
    glShadeModel( GL_FLAT );
@@ -150,8 +178,6 @@ int main( int argc, char *argv[] )
    glColor3f( 0.0, 1.0, 1.0 );
    glRectf( -0.75, -0.75, 0.75, 0.75 );
    glFlush();
-
-   /* when a redraw is needed we'll just copy the pixmap image to the window */
 
    XMapWindow( dpy, win );
 
