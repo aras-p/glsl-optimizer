@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.41 2000/02/03 15:33:29 brianp Exp $ */
+/* $Id: context.c,v 1.42 2000/02/03 19:40:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -734,12 +734,23 @@ static void init_attrib_groups( GLcontext *ctx )
 
    assert(ctx);
 
-   /* Constants, may be overriden by device driver */
+   /* Constants, may be overriden by device drivers */
    ctx->Const.MaxTextureLevels = MAX_TEXTURE_LEVELS;
    ctx->Const.MaxTextureSize = 1 << (MAX_TEXTURE_LEVELS - 1);
    ctx->Const.MaxTextureUnits = MAX_TEXTURE_UNITS;
    ctx->Const.MaxArrayLockSize = MAX_ARRAY_LOCK_SIZE;
-   ctx->Const.SubPixelBits = 4;
+   ctx->Const.SubPixelBits = SUB_PIXEL_BITS;
+   ctx->Const.MinPointSize = MIN_POINT_SIZE;
+   ctx->Const.MaxPointSize = MAX_POINT_SIZE;
+   ctx->Const.MinPointSizeAA = MIN_POINT_SIZE;
+   ctx->Const.MaxPointSizeAA = MAX_POINT_SIZE;
+   ctx->Const.PointSizeGranularity = POINT_SIZE_GRANULARITY;
+   ctx->Const.MinLineWidth = MIN_LINE_WIDTH;
+   ctx->Const.MaxLineWidth = MAX_LINE_WIDTH;
+   ctx->Const.MinLineWidthAA = MIN_LINE_WIDTH;
+   ctx->Const.MaxLineWidthAA = MAX_LINE_WIDTH;
+   ctx->Const.LineWidthGranularity = LINE_WIDTH_GRANULARITY;
+   ctx->Const.NumAuxBuffers = NUM_AUX_BUFFERS;
 
    /* Modelview matrix */
    gl_matrix_ctr( &ctx->ModelView );
