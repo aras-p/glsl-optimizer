@@ -617,6 +617,13 @@ static void intelUploadTexImage( intelContextPtr intel,
       GLubyte *src = (GLubyte *)image->Data;
       GLuint j;
 
+      if (INTEL_DEBUG & DEBUG_TEXTURE)
+	 fprintf(stderr, 
+		 "Upload image %dx%dx%d offset %xm row_len %x "
+		 "pitch %x depth_pitch %x\n",
+		 image->Width, image->Height, image->Depth, offset,
+		 row_len, t->Pitch, t->depth_pitch);
+
       switch(image->IntFormat)
 	{
 	case GL_COMPRESSED_RGB_FXT1_3DFX:
