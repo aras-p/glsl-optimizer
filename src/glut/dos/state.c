@@ -1,35 +1,31 @@
 /*
- * Mesa 3-D graphics library
- * Version:  3.4
- * Copyright (C) 1995-1998  Brian Paul
+ * DOS/DJGPP Mesa Utility Toolkit
+ * Version:  1.0
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Library General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * Copyright (C) 2005  Daniel Borca   All Rights Reserved.
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Library General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-/*
- * DOS/DJGPP glut driver v1.5 for Mesa
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  *
- *  Copyright (C) 2002 - Daniel Borca
- *  Email : dborca@yahoo.com
- *  Web   : http://www.geocities.com/dborca
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * DANIEL BORCA BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
 #include <stdio.h>
 
-#include "glutint.h"
+#include "internal.h"
 
 
 #define FREQUENCY 100 /* set this to zero to use the default timer */
@@ -58,35 +54,35 @@ glutGet (GLenum type)
 {
    switch (type) {
       case GLUT_WINDOW_X:
-         return g_curwin->xpos;
+         return _glut_current->xpos;
       case GLUT_WINDOW_Y:
-         return g_curwin->ypos;
+         return _glut_current->ypos;
       case GLUT_WINDOW_WIDTH:
-         return g_curwin->width;
+         return _glut_current->width;
       case GLUT_WINDOW_HEIGHT:
-         return g_curwin->height;
+         return _glut_current->height;
       case GLUT_WINDOW_STENCIL_SIZE:
-         return g_stencil;
+         return _glut_visual.stencil;
       case GLUT_WINDOW_DEPTH_SIZE:
-         return g_depth;
+         return _glut_visual.depth;
       case GLUT_WINDOW_RGBA:
-         return !(g_display_mode & GLUT_INDEX);
+         return !(_glut_default.mode & GLUT_INDEX);
       case GLUT_WINDOW_COLORMAP_SIZE:
-         return (g_display_mode & GLUT_INDEX) ? (256 - RESERVED_COLORS) : 0;
+         return (_glut_default.mode & GLUT_INDEX) ? (256 - RESERVED_COLORS) : 0;
       case GLUT_SCREEN_WIDTH:
-         return g_screen_w;
+         return _glut_visual.geometry[0];
       case GLUT_SCREEN_HEIGHT:
-         return g_screen_h;
+         return _glut_visual.geometry[1];
       case GLUT_INIT_WINDOW_X:
-         return g_init_x;
+         return _glut_default.x;
       case GLUT_INIT_WINDOW_Y:
-         return g_init_y;
+         return _glut_default.y;
       case GLUT_INIT_WINDOW_WIDTH:
-         return g_init_w;
+         return _glut_default.width;
       case GLUT_INIT_WINDOW_HEIGHT:
-         return g_init_h;
+         return _glut_default.height;
       case GLUT_INIT_DISPLAY_MODE:
-         return g_display_mode;
+         return _glut_default.mode;
       case GLUT_ELAPSED_TIME:
 #if FREQUENCY
          if (!timer_installed) {
@@ -121,9 +117,9 @@ glutDeviceGet (GLenum type)
       case GLUT_HAS_KEYBOARD:
          return GL_TRUE;
       case GLUT_HAS_MOUSE:
-         return (g_mouse != 0);
+         return (_glut_mouse != 0);
       case GLUT_NUM_MOUSE_BUTTONS:
-         return g_mouse;
+         return _glut_mouse;
       case GLUT_HAS_SPACEBALL:
       case GLUT_HAS_DIAL_AND_BUTTON_BOX:
       case GLUT_HAS_TABLET:
@@ -161,10 +157,17 @@ glutGetModifiers (void)
 }
 
 
+void APIENTRY
+glutReportErrors (void)
+{
+   /* reports all the OpenGL errors that happened till now */
+}
+
+
 /* GAME MODE
  * Hack alert: incomplete... what is GameMode, anyway?
  */
-GLint g_game;
+static GLint game;
 static GLboolean game_possible;
 static GLboolean game_active;
 static GLuint game_width;
@@ -189,7 +192,7 @@ glutGameModeGet (GLenum mode)
       case GLUT_GAME_MODE_ACTIVE:
          return game_active;
       case GLUT_GAME_MODE_POSSIBLE:
-         return game_possible && !g_curwin;
+         return game_possible && !_glut_current;
       case GLUT_GAME_MODE_WIDTH:
          return game_active ? (int)game_width : -1;
       case GLUT_GAME_MODE_HEIGHT:
@@ -208,16 +211,16 @@ int APIENTRY
 glutEnterGameMode (void)
 {
    if (glutGameModeGet(GLUT_GAME_MODE_POSSIBLE)) {
-      g_bpp = game_bpp;
-      g_refresh = game_refresh;
+      _glut_visual.bpp = game_bpp;
+      _glut_visual.refresh = game_refresh;
 
       glutInitWindowSize(game_width, game_height);
 
-      if ((g_game = glutCreateWindow("<game>")) > 0) {
+      if ((game = glutCreateWindow("<game>")) > 0) {
          game_active = GL_TRUE;
       }
 
-      return g_game;
+      return game;
    } else {
       return 0;
    }
@@ -230,6 +233,6 @@ glutLeaveGameMode (void)
    if (glutGameModeGet(GLUT_GAME_MODE_ACTIVE)) {
       game_active = GL_FALSE;
 
-      glutDestroyWindow(g_game);
+      glutDestroyWindow(game);
    }
 }

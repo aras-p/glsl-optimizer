@@ -1,40 +1,33 @@
 /*
- * Mesa 3-D graphics library
- * Version:  3.4
- * Copyright (C) 1995-1998  Brian Paul
+ * DOS/DJGPP Mesa Utility Toolkit
+ * Version:  1.0
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Library General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * Copyright (C) 2005  Daniel Borca   All Rights Reserved.
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Library General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-/*
- * DOS/DJGPP glut driver v1.4 for Mesa
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  *
- *  Copyright (C) 2002 - Daniel Borca
- *  Email : dborca@yahoo.com
- *  Web   : http://www.geocities.com/dborca
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * DANIEL BORCA BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
-#include "glutint.h"
-#include "glutbitmap.h"
-#include "glutstroke.h"
+#include "internal.h"
 
 
-#ifdef GLUT_IMPORT_LIB
-extern StrokeFontRec glutStrokeRoman, glutStrokeMonoRoman;
-extern BitmapFontRec glutBitmap8By13, glutBitmap9By15, glutBitmapTimesRoman10, glutBitmapTimesRoman24, glutBitmapHelvetica10, glutBitmapHelvetica12, glutBitmapHelvetica18;
+extern GLUTStrokeFont glutStrokeRoman, glutStrokeMonoRoman;
+extern GLUTBitmapFont glutBitmap8By13, glutBitmap9By15, glutBitmapTimesRoman10, glutBitmapTimesRoman24, glutBitmapHelvetica10, glutBitmapHelvetica12, glutBitmapHelvetica18;
 
 /* To get around the fact that DJGPP DXEs only allow functions
    to be exported and no data addresses (as Unix DSOs support), the
@@ -42,7 +35,7 @@ extern BitmapFontRec glutBitmap8By13, glutBitmap9By15, glutBitmapTimesRoman10, g
    through a case statement to get mapped to the actual data structure
    address. */
 void *
-__glutFont (void *font)
+_glut_font (void *font)
 {
    switch ((int)font) {
       case (int)GLUT_STROKE_ROMAN:
@@ -63,9 +56,19 @@ __glutFont (void *font)
          return &glutBitmapHelvetica12;
       case (int)GLUT_BITMAP_HELVETICA_18:
          return &glutBitmapHelvetica18;
-      default: /* NOTREACHED */
-         __glutFatalError("bad font!");
+      default:
+         if ((font == &glutStrokeRoman) ||
+             (font == &glutStrokeMonoRoman) ||
+             (font == &glutBitmap9By15) ||
+             (font == &glutBitmap8By13) ||
+             (font == &glutBitmapTimesRoman10) ||
+             (font == &glutBitmapTimesRoman24) ||
+             (font == &glutBitmapHelvetica10) ||
+             (font == &glutBitmapHelvetica12) ||
+             (font == &glutBitmapHelvetica18)) {
+            return font;
+         }
+         _glut_fatal("bad font!");
          return NULL;
    }
 }
-#endif

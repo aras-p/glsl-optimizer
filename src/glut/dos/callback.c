@@ -1,106 +1,103 @@
 /*
- * Mesa 3-D graphics library
- * Version:  3.4
- * Copyright (C) 1995-1998  Brian Paul
+ * DOS/DJGPP Mesa Utility Toolkit
+ * Version:  1.0
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Library General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * Copyright (C) 2005  Daniel Borca   All Rights Reserved.
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Library General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * DANIEL BORCA BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/*
- * DOS/DJGPP glut driver v1.6 for Mesa
- *
- *  Copyright (C) 2002 - Daniel Borca
- *  Email : dborca@yahoo.com
- *  Web   : http://www.geocities.com/dborca
- */
+ 
+#include "internal.h"
 
 
-#include "glutint.h"
+GLUTSShotCB _glut_timer_cb[MAX_TIMER_CB];
 
-
-GLUTSShotCB g_sscb[MAX_SSHOT_CB];
-
-GLUTidleCB g_idle_func = NULL;
+GLUTidleCB _glut_idle_func = NULL;
 
 
 void APIENTRY
 glutDisplayFunc (GLUTdisplayCB func)
 {
-   g_curwin->display = func;
+   _glut_current->display = func;
 }
 
 
 void APIENTRY
 glutReshapeFunc (GLUTreshapeCB func)
 {
-   g_curwin->reshape = func;
+   _glut_current->reshape = func;
 }
 
 
 void APIENTRY
 glutKeyboardFunc (GLUTkeyboardCB func)
 {
-   g_curwin->keyboard = func;
+   _glut_current->keyboard = func;
 }
 
 
 void APIENTRY
 glutMouseFunc (GLUTmouseCB func)
 {
-   g_curwin->mouse = func;
+   _glut_current->mouse = func;
 }
 
 
 void APIENTRY
 glutMotionFunc (GLUTmotionCB func)
 {
-   g_curwin->motion = func;
+   _glut_current->motion = func;
 }
 
 
 void APIENTRY
 glutPassiveMotionFunc (GLUTpassiveCB func)
 {
-   g_curwin->passive = func;
+   _glut_current->passive = func;
 }
 
 
 void APIENTRY
 glutEntryFunc (GLUTentryCB func)
 {
-   g_curwin->entry = func;
+   _glut_current->entry = func;
 }
 
 
 void APIENTRY
 glutVisibilityFunc (GLUTvisibilityCB func)
 {
-   g_curwin->visibility = func;
+   _glut_current->visibility = func;
 }
 
 
 void APIENTRY
 glutWindowStatusFunc (GLUTwindowStatusCB func)
 {
+   _glut_current->windowStatus = func;
 }
 
 
 void APIENTRY
 glutIdleFunc (GLUTidleCB func)
 {
-   g_idle_func = func;
+   _glut_idle_func = func;
 }
 
 
@@ -110,8 +107,8 @@ glutTimerFunc (unsigned int millis, GLUTtimerCB func, int value)
    int i;
 
    if (millis > 0) {
-      for (i = 0; i < MAX_SSHOT_CB; i++) {
-         GLUTSShotCB *cb = &g_sscb[i];
+      for (i = 0; i < MAX_TIMER_CB; i++) {
+         GLUTSShotCB *cb = &_glut_timer_cb[i];
          if (cb->func == NULL) {
             cb->value = value;
             cb->func = func;
@@ -126,53 +123,82 @@ glutTimerFunc (unsigned int millis, GLUTtimerCB func, int value)
 void APIENTRY
 glutSpecialFunc (GLUTspecialCB func)
 {
-   g_curwin->special = func;
+   _glut_current->special = func;
 }
 
 
 void APIENTRY
 glutSpaceballMotionFunc (GLUTspaceMotionCB func)
 {
+   _glut_current->spaceMotion = func;
 }
 
 
 void APIENTRY
 glutSpaceballRotateFunc (GLUTspaceRotateCB func)
 {
+   _glut_current->spaceRotate = func;
 }
 
 
 void APIENTRY
 glutSpaceballButtonFunc (GLUTspaceButtonCB func)
 {
+   _glut_current->spaceButton = func;
 }
 
 
 void APIENTRY
 glutDialsFunc (GLUTdialsCB func)
 {
+   _glut_current->dials = func;
 }
 
 
 void APIENTRY
 glutButtonBoxFunc (GLUTbuttonBoxCB func)
 {
+   _glut_current->buttonBox = func;
 }
 
 
 void APIENTRY
 glutTabletMotionFunc (GLUTtabletMotionCB func)
 {
+   _glut_current->tabletMotion = func;
 }
 
 
 void APIENTRY
 glutTabletButtonFunc (GLUTtabletButtonCB func)
 {
+   _glut_current->tabletButton = func;
 }
 
 
 void APIENTRY
 glutJoystickFunc (GLUTjoystickCB func, int interval)
 {
+   _glut_current->joystick = func;
+}
+
+
+void APIENTRY
+glutKeyboardUpFunc (GLUTkeyboardCB func)
+{
+   _glut_current->keyboardUp = func;
+}
+
+
+void APIENTRY
+glutSpecialUpFunc (GLUTspecialCB func)
+{
+   _glut_current->specialUp = func;
+}
+
+
+void APIENTRY
+glutMouseWheelFunc (GLUTmouseWheelCB func)
+{
+   _glut_current->mouseWheel = func;
 }

@@ -1,43 +1,38 @@
 /*
- * Mesa 3-D graphics library
- * Version:  4.1
- * Copyright (C) 1995-1998  Brian Paul
+ * DOS/DJGPP Mesa Utility Toolkit
+ * Version:  1.0
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Library General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * Copyright (C) 2005  Daniel Borca   All Rights Reserved.
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Library General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-/*
- * DOS/DJGPP glut driver v1.4 for Mesa
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  *
- *  Copyright (C) 2002 - Daniel Borca
- *  Email : dborca@users.sourceforge.net
- *  Web   : http://www.geocities.com/dborca
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * DANIEL BORCA BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
 #include <stdio.h>
 
-#include "glutint.h"
-#include "GL/dmesa.h"
+#include "internal.h"
 
 
-GLUTwindow *g_curwin;
 static GLuint swaptime, swapcount;
 
 static DMesaVisual visual = NULL;
-GLUTwindow *g_windows[MAX_WINDOWS];
+
+GLUTwindow *_glut_current, *_glut_windows[MAX_WINDOWS];
 
 
 static void
@@ -55,11 +50,21 @@ clean (void)
 }
 
 
+static GLUTwindow *
+_glut_window (int win)
+{
+   if (win > 0 && --win < MAX_WINDOWS) {
+      return _glut_windows[win];
+   }
+   return NULL;
+}
+
+
 int APIENTRY
 glutCreateWindow (const char *title)
 {
    int i;
-   int m8width = (g_init_w + 7) & ~7;
+   int m8width = (_glut_default.width + 7) & ~7;
 
    /* We set the Visual once. This will be our desktop (graphic mode).
     * We should do this in the `glutInit' code, but we don't have any idea
@@ -67,15 +72,18 @@ glutCreateWindow (const char *title)
     * window, we have a slight idea about resolution.
     */
    if (!visual) {
-      if ((visual=DMesaCreateVisual(g_init_x + m8width, g_init_y + g_init_h, g_bpp, g_refresh,
-                                    g_display_mode & GLUT_DOUBLE,
-                                    !(g_display_mode & GLUT_INDEX),
-                                    (g_display_mode & GLUT_ALPHA  ) ? g_alpha   : 0,
-                                    (g_display_mode & GLUT_DEPTH  ) ? g_depth   : 0,
-                                    (g_display_mode & GLUT_STENCIL) ? g_stencil : 0,
-                                    (g_display_mode & GLUT_ACCUM  ) ? g_accum   : 0))==NULL) {
+      if ((visual=DMesaCreateVisual(_glut_default.x + m8width, _glut_default.y + _glut_default.height, _glut_visual.bpp, _glut_visual.refresh,
+                                    _glut_default.mode & GLUT_DOUBLE,
+                                    !(_glut_default.mode & GLUT_INDEX),
+                                    (_glut_default.mode & GLUT_ALPHA  ) ? _glut_visual.alpha   : 0,
+                                    (_glut_default.mode & GLUT_DEPTH  ) ? _glut_visual.depth   : 0,
+                                    (_glut_default.mode & GLUT_STENCIL) ? _glut_visual.stencil : 0,
+                                    (_glut_default.mode & GLUT_ACCUM  ) ? _glut_visual.accum   : 0))==NULL) {
          return 0;
       }
+
+      DMesaGetIntegerv(DMESA_GET_SCREEN_SIZE, _glut_visual.geometry);
+      DMesaGetIntegerv(DMESA_GET_DRIVER_CAPS, &_glut_visual.flags);
 
       /* Also hook stdio/stderr once */
       pc_open_stdout();
@@ -87,7 +95,7 @@ glutCreateWindow (const char *title)
     * Each window has its own rendering Context and its own Buffer.
     */
    for (i=0; i<MAX_WINDOWS; i++) {
-      if (g_windows[i] == NULL) {
+      if (_glut_windows[i] == NULL) {
          DMesaContext c;
          DMesaBuffer b;
          GLUTwindow *w;
@@ -105,7 +113,7 @@ glutCreateWindow (const char *title)
          /* Allocate the Buffer (displayable area).
           * We have to specify buffer size and position (inside the desktop).
           */
-         if ((b = DMesaCreateBuffer(visual, g_init_x, g_init_y, m8width, g_init_h)) == NULL) {
+         if ((b = DMesaCreateBuffer(visual, _glut_default.x, _glut_default.y, m8width, _glut_default.height)) == NULL) {
             DMesaDestroyContext(c);
             free(w);
             return 0;
@@ -119,13 +127,13 @@ glutCreateWindow (const char *title)
             return 0;
          }
 
-         g_curwin = g_windows[i] = w;
+         _glut_current = _glut_windows[i] = w;
 
          w->num = ++i;
-         w->xpos = g_init_x;
-         w->ypos = g_init_y;
+         w->xpos = _glut_default.x;
+         w->ypos = _glut_default.y;
          w->width = m8width;
-         w->height = g_init_h;
+         w->height = _glut_default.height;
          w->context = c;
          w->buffer = b;
 
@@ -147,13 +155,16 @@ glutCreateSubWindow (int win, int x, int y, int width, int height)
 void APIENTRY
 glutDestroyWindow (int win)
 {
-   if (g_windows[--win]) {
-      GLUTwindow *w = g_windows[win];
+   GLUTwindow *w = _glut_window(win);
+   if (w != NULL) {
+      if (w->destroy) {
+         w->destroy();
+      }
       DMesaMakeCurrent(NULL, NULL);
       DMesaDestroyBuffer(w->buffer);
       DMesaDestroyContext(w->context);
       free(w);
-      g_windows[win] = NULL;
+      _glut_windows[win - 1] = NULL;
    }
 }
 
@@ -161,27 +172,27 @@ glutDestroyWindow (int win)
 void APIENTRY
 glutPostRedisplay (void)
 {
-   g_curwin->redisplay = GL_TRUE;
+   _glut_current->redisplay = GL_TRUE;
 }
 
 
 void APIENTRY
 glutSwapBuffers (void)
 {
-   if (g_curwin->show_mouse) {
+   if (_glut_current->show_mouse) {
       /* XXX scare mouse */
-      DMesaSwapBuffers(g_curwin->buffer);
+      DMesaSwapBuffers(_glut_current->buffer);
       /* XXX unscare mouse */
    } else {
-      DMesaSwapBuffers(g_curwin->buffer);
+      DMesaSwapBuffers(_glut_current->buffer);
    }
 
-   if (g_fps) {
+   if (_glut_fps) {
       GLint t = glutGet(GLUT_ELAPSED_TIME);
       swapcount++;
       if (swaptime == 0)
          swaptime = t;
-      else if (t - swaptime > g_fps) {
+      else if (t - swaptime > _glut_fps) {
          double time = 0.001 * (t - swaptime);
          double fps = (double)swapcount / time;
          fprintf(stderr, "GLUT: %d frames in %.2f seconds = %.2f FPS\n", swapcount, time, fps);
@@ -195,15 +206,18 @@ glutSwapBuffers (void)
 int APIENTRY
 glutGetWindow (void)
 {
-   return g_curwin->num;
+   return _glut_current->num;
 }
 
 
 void APIENTRY
 glutSetWindow (int win)
 {
-   g_curwin = g_windows[win - 1];
-   DMesaMakeCurrent(g_curwin->context, g_curwin->buffer);
+   GLUTwindow *w = _glut_window(win);
+   if (w != NULL) {
+      _glut_current = w;
+      DMesaMakeCurrent(_glut_current->context, _glut_current->buffer);
+   }
 }
 
 
@@ -223,8 +237,8 @@ void APIENTRY
 glutPositionWindow (int x, int y)
 {
    if (DMesaMoveBuffer(x, y)) {
-      g_curwin->xpos = x;
-      g_curwin->ypos = y;
+      _glut_current->xpos = x;
+      _glut_current->ypos = y;
    }
 }
 
@@ -233,10 +247,10 @@ void APIENTRY
 glutReshapeWindow (int width, int height)
 { 
    if (DMesaResizeBuffer(width, height)) {
-      g_curwin->width = width;
-      g_curwin->height = height;
-      if (g_curwin->reshape) {
-         g_curwin->reshape(width, height);
+      _glut_current->width = width;
+      _glut_current->height = height;
+      if (_glut_current->reshape) {
+         _glut_current->reshape(width, height);
       } else {
          glViewport(0, 0, width, height);
       }
@@ -277,4 +291,35 @@ glutShowWindow (void)
 void APIENTRY
 glutHideWindow (void)
 {
+}
+
+
+void APIENTRY
+glutCloseFunc (GLUTdestroyCB destroy)
+{
+   _glut_current->destroy = destroy;
+}
+
+
+void APIENTRY
+glutPostWindowRedisplay (int win)
+{
+   GLUTwindow *w = _glut_window(win);
+   if (w != NULL) {
+      w->redisplay = GL_TRUE;
+   }
+}
+
+
+void * APIENTRY
+glutGetWindowData (void)
+{
+   return _glut_current->data;
+}
+
+
+void APIENTRY
+glutSetWindowData (void *data)
+{
+   _glut_current->data = data;
 }

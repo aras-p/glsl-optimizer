@@ -1,34 +1,29 @@
 /*
- * Mesa 3-D graphics library
- * Version:  3.4
- * Copyright (C) 1995-1998  Brian Paul
+ * DOS/DJGPP Mesa Utility Toolkit
+ * Version:  1.0
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Library General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * Copyright (C) 2005  Daniel Borca   All Rights Reserved.
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Library General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * DANIEL BORCA BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/*
- * DOS/DJGPP glut driver v1.3 for Mesa
- *
- *  Copyright (C) 2002 - Daniel Borca
- *  Email : dborca@yahoo.com
- *  Web   : http://www.geocities.com/dborca
- */
-
-
-#include "glutint.h"
-#include "GL/dmesa.h"
+ 
+#include "internal.h"
 
 
 #define CLAMP(i) ((i) > 1.0F ? 1.0F : ((i) < 0.0F ? 0.0F : (i)))
@@ -37,7 +32,7 @@
 void APIENTRY
 glutSetColor (int ndx, GLfloat red, GLfloat green, GLfloat blue)
 {
-   if (g_display_mode & GLUT_INDEX) {
+   if (_glut_default.mode & GLUT_INDEX) {
       if ((ndx >= 0) && (ndx < (256 - RESERVED_COLORS))) {
          DMesaSetCI(ndx, CLAMP(red), CLAMP(green), CLAMP(blue));
       }
