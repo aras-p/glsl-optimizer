@@ -57,12 +57,13 @@ SOURCES =accum.c \
 	state.c \
 	stencil.c \
 	texcompress.c \
+	texcompress_fxt1.c \
+	texcompress_s3tc.c \
 	texformat.c \
 	teximage.c \
 	texobj.c \
 	texstate.c \
 	texstore.c \
-	texutil.c \
 	varray.c \
 	vtxfmt.c
 
@@ -107,12 +108,13 @@ rastpos.obj,\
 state.obj,\
 stencil.obj,\
 texcompress.obj,\
+texcompress_fxt1.obj,\
+texcompress_s3tc.obj,\
 texformat.obj,\
 teximage.obj,\
 texobj.obj,\
 texstate.obj,\
 texstore.obj,\
-texutil.obj,\
 varray.obj,\
 vtxfmt.obj
 
@@ -171,11 +173,12 @@ rastpos.obj : rastpos.c
 state.obj : state.c
 stencil.obj : stencil.c
 texcompress.obj : texcompress.c
+texcompress_fxt1.obj : texcompress_fxt1.c
+texcompress_s3tc.obj : texcompress_s3tc.c
 texformat.obj : texformat.c
 teximage.obj : teximage.c
 texobj.obj : texobj.c
 texstate.obj : texstate.c
 texstore.obj : texstore.c
-texutil.obj : texutil.c
 varray.obj : varray.c
 vtxfmt.obj : vtxfmt.c

@@ -99,12 +99,13 @@ MESA_CORE_SRCS = \
 	state.c \
 	stencil.c \
 	texcompress.c \
+	texcompress_fxt1.c \
+	texcompress_s3tc.c \
 	texformat.c \
 	teximage.c \
 	texobj.c \
 	texstate.c \
 	texstore.c \
-	texutil.c \
 	varray.c \
 	vpexec.c \
 	vpparse.c \

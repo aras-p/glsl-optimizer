@@ -58,12 +58,13 @@ CORE_SRCS = \
 	state.c \
 	stencil.c \
 	texcompress.c \
+	texcompress_fxt1.c \
+	texcompress_s3tc.c \
 	teximage.c \
 	texformat.c \
 	texobj.c \
 	texstate.c \
 	texstore.c \
-	texutil.c \
 	varray.c \
 	vtxfmt.c \
 #	X86\x86.c \
