@@ -461,7 +461,7 @@ fxReadDepthSpan_Z16(GLcontext * ctx,
    GLuint i;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
+      fprintf(stderr, "fxReadDepthSpan_Z16(...)\n");
    }
 
    grLfbReadRegion(GR_BUFFER_AUXBUFFER, x, bottom - y, n, 1, 0, depth16);
@@ -480,7 +480,7 @@ fxReadDepthSpan_Z24(GLcontext * ctx,
    GLuint i;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
+      fprintf(stderr, "fxReadDepthSpan_Z24(...)\n");
    }
 
    grLfbReadRegion(GR_BUFFER_AUXBUFFER, x, bottom - y, n, 1, 0, depth);
@@ -512,7 +512,7 @@ fxReadStencilSpan(GLcontext * ctx,
    GLuint i;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
+      fprintf(stderr, "fxReadStencilSpan(...)\n");
    }
 
    grLfbReadRegion(GR_BUFFER_AUXBUFFER, x, bottom - y, n, 1, 0, zs32);
@@ -554,7 +554,7 @@ fxDDSetBuffer(GLcontext * ctx, GLframebuffer * buffer, GLuint bufferBit)
    (void) buffer;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(%x)\n", __FUNCTION__, (int)bufferBit);
+      fprintf(stderr, "fxDDSetBuffer(%x)\n", (int)bufferBit);
    }
 
    if (bufferBit == FRONT_LEFT_BIT) {

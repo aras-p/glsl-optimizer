@@ -115,7 +115,7 @@ fxTMNewRangeNode(fxMesaContext fxMesa, FxU32 start, FxU32 end)
    }
    else {
       if (!(result = MALLOC(sizeof(MemRange)))) {
-	 fprintf(stderr, "%s: ERROR: out of memory!\n", __FUNCTION__);
+	 fprintf(stderr, "fxTMNewRangeNode: ERROR: out of memory!\n");
 	 fxCloseHardware();
 	 exit(-1);
       }
@@ -225,11 +225,11 @@ fxTMFindStartAddr(fxMesaContext fxMesa, GLint tmu, int size)
       }
       /* No free space. Discard oldest */
       if (TDFX_DEBUG & VERBOSE_TEXTURE) {
-	 fprintf(stderr, "%s: No free space. Discard oldest\n", __FUNCTION__);
+	 fprintf(stderr, "fxTMFindStartAddr: No free space. Discard oldest\n");
       }
       obj = fxTMFindOldestObject(fxMesa, tmu);
       if (!obj) {
-	 fprintf(stderr, "%s: ERROR: No space for texture\n", __FUNCTION__);
+	 fprintf(stderr, "fxTMFindStartAddr: ERROR: No space for texture\n");
 	 return -1;
       }
       fxTMMoveOutTM(fxMesa, obj);
@@ -397,13 +397,13 @@ fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj,
    int texmemsize;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(%d)\n", __FUNCTION__, tObj->Name);
+      fprintf(stderr, "fxTMMoveInTM_NoLock(%d)\n", tObj->Name);
    }
 
    fxMesa->stats.reqTexUpload++;
 
    if (!ti->validated) {
-      fprintf(stderr, "%s: INTERNAL ERROR: not validated\n", __FUNCTION__);
+      fprintf(stderr, "fxTMMoveInTM_NoLock: INTERNAL ERROR: not validated\n");
       fxCloseHardware();
       exit(-1);
    }
@@ -421,8 +421,8 @@ fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj,
    }
 
    if (TDFX_DEBUG & (VERBOSE_DRIVER | VERBOSE_TEXTURE)) {
-      fprintf(stderr, "%s: downloading %p (%d) in texture memory in %d\n",
-	              __FUNCTION__, (void *)tObj, tObj->Name, where);
+      fprintf(stderr, "fxTMMoveInTM_NoLock: downloading %p (%d) in texture memory in %d\n",
+	              (void *)tObj, tObj->Name, where);
    }
 
    ti->whichTMU = (FxU32) where;
@@ -511,7 +511,7 @@ fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj,
       }
       break;
    default:
-      fprintf(stderr, "%s: INTERNAL ERROR: wrong tmu (%d)\n", __FUNCTION__, where);
+      fprintf(stderr, "fxTMMoveInTM_NoLock: INTERNAL ERROR: wrong tmu (%d)\n", where);
       fxCloseHardware();
       exit(-1);
    }
@@ -552,7 +552,7 @@ fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
    assert(mml->glideFormat > 0);
 
    if (!ti->validated) {
-      fprintf(stderr, "%s: INTERNAL ERROR: not validated\n", __FUNCTION__);
+      fprintf(stderr, "fxTMReloadMipMapLevel: INTERNAL ERROR: not validated\n");
       fxCloseHardware();
       exit(-1);
    }
@@ -619,7 +619,7 @@ fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
       break;
 
    default:
-      fprintf(stderr, "%s: INTERNAL ERROR: wrong tmu (%d)\n", __FUNCTION__, tmu);
+      fprintf(stderr, "fxTMReloadMipMapLevel: INTERNAL ERROR: wrong tmu (%d)\n", tmu);
       fxCloseHardware();
       exit(-1);
    }
@@ -640,7 +640,7 @@ fxTMReloadSubMipMapLevel(fxMesaContext fxMesa,
    assert(mml);
 
    if (!ti->validated) {
-      fprintf(stderr, "%s: INTERNAL ERROR: not validated\n", __FUNCTION__);
+      fprintf(stderr, "fxTMReloadSubMipMapLevel: INTERNAL ERROR: not validated\n");
       fxCloseHardware();
       exit(-1);
    }
@@ -714,7 +714,7 @@ fxTMReloadSubMipMapLevel(fxMesaContext fxMesa,
 					 yoffset, yoffset + height - 1);
       break;
    default:
-      fprintf(stderr, "%s: INTERNAL ERROR: wrong tmu (%d)\n", __FUNCTION__, tmu);
+      fprintf(stderr, "fxTMReloadSubMipMapLevel: INTERNAL ERROR: wrong tmu (%d)\n", tmu);
       fxCloseHardware();
       exit(-1);
    }
@@ -726,7 +726,7 @@ fxTMMoveOutTM(fxMesaContext fxMesa, struct gl_texture_object *tObj)
    tfxTexInfo *ti = fxTMGetTexInfo(tObj);
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(%p (%d))\n", __FUNCTION__, (void *)tObj, tObj->Name);
+      fprintf(stderr, "fxTMMoveOutTM(%p (%d))\n", (void *)tObj, tObj->Name);
    }
 
    if (!ti->isInTM)
@@ -743,7 +743,7 @@ fxTMMoveOutTM(fxMesaContext fxMesa, struct gl_texture_object *tObj)
       fxTMRemoveRange(fxMesa, FX_TMU1, ti->tm[FX_TMU1]);
       break;
    default:
-      fprintf(stderr, "%s: INTERNAL ERROR: bad TMU (%ld)\n", __FUNCTION__, ti->whichTMU);
+      fprintf(stderr, "fxTMMoveOutTM: INTERNAL ERROR: bad TMU (%ld)\n", ti->whichTMU);
       fxCloseHardware();
       exit(-1);
    }
@@ -759,7 +759,7 @@ fxTMFreeTexture(fxMesaContext fxMesa, struct gl_texture_object *tObj)
    int i;
 
    if (TDFX_DEBUG & VERBOSE_TEXTURE) {
-      fprintf(stderr, "%s(%p (%d))\n", __FUNCTION__, (void *)tObj, tObj->Name);
+      fprintf(stderr, "fxTMFreeTexture(%p (%d))\n", (void *)tObj, tObj->Name);
    }
 
    fxTMMoveOutTM(fxMesa, tObj);

@@ -113,7 +113,7 @@ fxDDBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
       fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
       if (TDFX_DEBUG & VERBOSE_DRIVER) {
-         fprintf(stderr, "%s(...)\n", __FUNCTION__);
+         fprintf(stderr, "fxDDBufferSize(...)\n");
       }
 
       *width = fxMesa->width;
@@ -130,8 +130,8 @@ fxDDClearColor(GLcontext * ctx, const GLfloat color[4])
    GLubyte col[4];
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(%f, %f, %f, %f)\n", __FUNCTION__,
-	      color[0], color[1], color[2], color[3]);
+      fprintf(stderr, "fxDDClearColor(%f, %f, %f, %f)\n",
+	              color[0], color[1], color[2], color[3]);
    }
 
    CLAMPED_FLOAT_TO_UBYTE(col[0], color[0]);
@@ -146,8 +146,8 @@ fxDDClearColor(GLcontext * ctx, const GLfloat color[4])
 
 /* Clear the color and/or depth buffers */
 static void fxDDClear( GLcontext *ctx,
-			 GLbitfield mask, GLboolean all,
-			 GLint x, GLint y, GLint width, GLint height )
+			GLbitfield mask, GLboolean all,
+			GLint x, GLint y, GLint width, GLint height )
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GLbitfield softwareMask = mask & (DD_ACCUM_BIT);
@@ -162,8 +162,8 @@ static void fxDDClear( GLcontext *ctx,
     */
 
    if ( TDFX_DEBUG & MESA_VERBOSE ) {
-      fprintf( stderr, "%s( %d, %d, %d, %d )\n",
-	       __FUNCTION__, (int) x, (int) y, (int) width, (int) height );
+      fprintf( stderr, "fxDDClear( %d, %d, %d, %d )\n",
+	               (int) x, (int) y, (int) width, (int) height );
    }
 
    /* Need this check to respond to glScissor and clipping updates */
@@ -429,7 +429,7 @@ fxDDSetDrawBuffer(GLcontext * ctx, GLenum mode)
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(%x)\n", __FUNCTION__, (int)mode);
+      fprintf(stderr, "fxDDSetDrawBuffer(%x)\n", (int)mode);
    }
 
    if (mode == GL_FRONT_LEFT) {
@@ -1218,7 +1218,7 @@ fxDDGetString(GLcontext * ctx, GLenum name)
  switch (name) {
         case GL_RENDERER:
              return (GLubyte *)fxMesa->rendererString;
-#if 0 /* hack to advertise vanilla extension names */
+#if __WIN32__ /* hack to advertise vanilla extension names */
         case GL_EXTENSIONS:
              if (ctx->Extensions.String == NULL) {
                 GLubyte *ext = _mesa_make_extension_string(ctx);
@@ -1226,9 +1226,16 @@ fxDDGetString(GLcontext * ctx, GLenum name)
                    ctx->Extensions.String = _mesa_malloc(strlen((char *)ext) + 256);
                    if (ctx->Extensions.String != NULL) {
                       strcpy((char *)ctx->Extensions.String, (char *)ext);
-#if 0 /* put any additional extension names here */
+                      /* put any additional extension names here */
+#if 0
                       strcat((char *)ctx->Extensions.String, " 3DFX_set_global_palette");
 #endif
+#if __WIN32__
+                      strcat((char *)ctx->Extensions.String, " WGL_3DFX_gamma_control");
+                      strcat((char *)ctx->Extensions.String, " WGL_EXT_swap_control");
+                      strcat((char *)ctx->Extensions.String, " WGL_EXT_extensions_string WGL_ARB_extensions_string");
+#endif
+                      /* put any additional extension names here */
                       _mesa_free(ext);
                    } else {
                       ctx->Extensions.String = ext;
@@ -1249,7 +1256,7 @@ static const struct tnl_pipeline_stage *fx_pipeline[] = {
    /*&_tnl_fog_coordinate_stage,*/	/* TODO: Omit fog stage ZZZ ZZZ ZZZ */
    &_tnl_texgen_stage,
    &_tnl_texture_transform_stage,
-   /*&_tnl_point_attenuation_stage,*/	/* TODO: For AA primitives ZZZ ZZZ ZZZ */
+   &_tnl_point_attenuation_stage,
    &_tnl_render_stage,
    0,
 };
@@ -1453,12 +1460,14 @@ fxDDInitExtensions(GLcontext * ctx)
     *    to stash the NCC decompression table into the mipmap data and adjust
     *    CompressedSize accordingly!
     */
-   _mesa_enable_extension(ctx, "GL_ARB_texture_compression");
+   if (fxMesa->HaveTexus2) {
+      _mesa_enable_extension(ctx, "GL_ARB_texture_compression");
 
-   if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
-      _mesa_enable_extension(ctx, "GL_3DFX_texture_compression_FXT1");
-      _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
-      _mesa_enable_extension(ctx, "GL_S3_s3tc");
+      if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
+         _mesa_enable_extension(ctx, "GL_3DFX_texture_compression_FXT1");
+         _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
+         _mesa_enable_extension(ctx, "GL_S3_s3tc");
+      }
    }
 
    if (fxMesa->HaveCmbExt) {
@@ -1502,12 +1511,9 @@ fx_check_IsInHardware(GLcontext * ctx)
 
    if (ctx->Color.BlendEnabled) {
       if (ctx->Color.BlendEquation != GL_FUNC_ADD_EXT) {
-         if (fxMesa->HavePixExt) {
-            if ((ctx->Color.BlendEquation != GL_FUNC_SUBTRACT_EXT) &&
-                (ctx->Color.BlendEquation != GL_FUNC_REVERSE_SUBTRACT_EXT)) {
-               return FX_FALLBACK_BLEND;
-            }
-         } else {
+         if (!fxMesa->HavePixExt ||
+             ((ctx->Color.BlendEquation != GL_FUNC_SUBTRACT_EXT) &&
+              (ctx->Color.BlendEquation != GL_FUNC_REVERSE_SUBTRACT_EXT))) {
             return FX_FALLBACK_BLEND;
          }
       }
@@ -1521,12 +1527,9 @@ fx_check_IsInHardware(GLcontext * ctx)
       return FX_FALLBACK_SPECULAR;
    }
 
-   if ((ctx->Color.ColorMask[RCOMP] != ctx->Color.ColorMask[GCOMP])
-       ||
-       (ctx->Color.ColorMask[GCOMP] != ctx->Color.ColorMask[BCOMP])
-       ||
-       (ctx->Color.ColorMask[BCOMP] != ctx->Color.ColorMask[ACOMP])
-      ) {
+   if ((fxMesa->colDepth == 16) &&
+       ((ctx->Color.ColorMask[RCOMP] != ctx->Color.ColorMask[GCOMP]) ||
+        (ctx->Color.ColorMask[GCOMP] != ctx->Color.ColorMask[BCOMP]))) {
       return FX_FALLBACK_COLORMASK;
    }
 
@@ -1562,7 +1565,7 @@ fx_check_IsInHardware(GLcontext * ctx)
       }
 
       if (TDFX_DEBUG & (VERBOSE_DRIVER | VERBOSE_TEXTURE))
-	 fprintf(stderr, "%s: envmode is %s/%s\n", __FUNCTION__,
+	 fprintf(stderr, "fx_check_IsInHardware: envmode is %s/%s\n",
 		 _mesa_lookup_enum_by_nr(ctx->Texture.Unit[0].EnvMode),
 		 _mesa_lookup_enum_by_nr(ctx->Texture.Unit[1].EnvMode));
 
@@ -1583,7 +1586,7 @@ fx_check_IsInHardware(GLcontext * ctx)
 	     (ctx->Texture.Unit[0].EnvMode != GL_MODULATE) &&
 	     (ctx->Texture.Unit[0].EnvMode != GL_REPLACE)) {	/* q2, seems ok... */
 	    if (TDFX_DEBUG & VERBOSE_DRIVER)
-	       fprintf(stderr, "%s: unsupported multitex env mode\n", __FUNCTION__);
+	       fprintf(stderr, "fx_check_IsInHardware: unsupported multitex env mode\n");
 	    return FX_FALLBACK_TEXTURE_MULTI;
 	 }
       }
@@ -1634,7 +1637,7 @@ fxSetupDDPointers(GLcontext * ctx)
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s()\n", __FUNCTION__);
+      fprintf(stderr, "fxSetupDDPointers()\n");
    }
 
    ctx->Driver.UpdateState = fxDDUpdateDDPointers;

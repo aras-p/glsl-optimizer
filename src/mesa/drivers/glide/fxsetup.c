@@ -52,13 +52,13 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
 
    if (ti->validated) {
       if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	 fprintf(stderr, "%s: validated=GL_TRUE\n", __FUNCTION__);
+	 fprintf(stderr, "fxTexValidate(NOP)\n");
       }
       return;
    }
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(%p (%d))\n", __FUNCTION__, (void *)tObj, tObj->Name);
+      fprintf(stderr, "fxTexValidate(%p (%d))\n", (void *)tObj, tObj->Name);
    }
 
    ti->tObj = tObj;
@@ -271,7 +271,7 @@ fxGetTexSetConfiguration(GLcontext * ctx,
    unitsmode |= (ifmt | envmode);
 
    if (TDFX_DEBUG & (VERBOSE_DRIVER | VERBOSE_TEXTURE))
-      fxPrintUnitsMode(__FUNCTION__, unitsmode);
+      fxPrintUnitsMode("fxGetTexSetConfiguration", unitsmode);
 
    return unitsmode;
 }
@@ -289,7 +289,7 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
    int tmu;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(%p (%d))\n", __FUNCTION__, (void *)tObj, tObj->Name);
+      fprintf(stderr, "fxSetupSingleTMU_NoLock(%p (%d))\n", (void *)tObj, tObj->Name);
    }
 
 #if 1 /* [dBorca] Good... bad... I'm the guy with the gun! */
@@ -331,7 +331,7 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
       if ((ti->info.format == GR_TEXFMT_P_8)
 	  && (!fxMesa->haveGlobalPaletteTexture)) {
 	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	    fprintf(stderr, "%s: uploading texture palette\n", __FUNCTION__);
+	    fprintf(stderr, "fxSetupSingleTMU_NoLock: uploading texture palette\n");
 	 }
 	 grTexDownloadTable(ti->paltype, &(ti->palette));
       }
@@ -339,7 +339,7 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
       if ((ti->info.format == GR_TEXFMT_AYIQ_8422) ||
           (ti->info.format == GR_TEXFMT_YIQ_422)) {
 	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	    fprintf(stderr, "%s: uploading NCC table\n", __FUNCTION__);
+	    fprintf(stderr, "fxSetupSingleTMU_NoLock: uploading NCC table\n");
 	 }
 	 grTexDownloadTable(GR_TEXTABLE_NCC0, &(ti->palette));
       }
@@ -367,7 +367,7 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
       if ((ti->info.format == GR_TEXFMT_P_8)
 	  && (!fxMesa->haveGlobalPaletteTexture)) {
 	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	    fprintf(stderr, "%s: uploading texture palette\n", __FUNCTION__);
+	    fprintf(stderr, "fxSetupSingleTMU_NoLock: uploading texture palette\n");
 	 }
 	 fxMesa->Glide.grTexDownloadTableExt(tmu, ti->paltype, &(ti->palette));
       }
@@ -375,7 +375,7 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
       if ((ti->info.format == GR_TEXFMT_AYIQ_8422) ||
           (ti->info.format == GR_TEXFMT_YIQ_422)) {
 	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	    fprintf(stderr, "%s: uploading NCC table\n", __FUNCTION__);
+	    fprintf(stderr, "fxSetupSingleTMU_NoLock: uploading NCC table\n");
 	 }
 	 fxMesa->Glide.grTexDownloadTableExt(tmu, GR_TEXTABLE_NCC0, &(ti->palette));
       }
@@ -386,7 +386,7 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
        * texture memory, so perhaps it's not a good idea.  
        */
       if (ti->LODblend && (TDFX_DEBUG & VERBOSE_DRIVER)) {
-	 fprintf(stderr, "%s: not blending texture - only one tmu\n", __FUNCTION__);
+	 fprintf(stderr, "fxSetupSingleTMU_NoLock: not blending texture - only one tmu\n");
       }
 
       grTexClampMode(tmu, ti->sClamp, ti->tClamp);
@@ -403,7 +403,7 @@ fxSelectSingleTMUSrc_NoLock(fxMesaContext fxMesa, GLint tmu, FxBool LODblend)
    struct tdfx_texcombine tex0, tex1;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(%d, %d)\n", __FUNCTION__, tmu, LODblend);
+      fprintf(stderr, "fxSelectSingleTMUSrc_NoLock(%d, %d)\n", tmu, LODblend);
    }
 
    tex0.InvertRGB     = FXFALSE;
@@ -488,7 +488,7 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
    int tmu;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
+      fprintf(stderr, "fxSetupTextureSingleTMU_NoLock(%d)\n", textureset);
    }
 
    ti = fxTMGetTexInfo(tObj);
@@ -530,7 +530,7 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
       localc = GR_COMBINE_LOCAL_CONSTANT;
 
    if (TDFX_DEBUG & (VERBOSE_DRIVER | VERBOSE_TEXTURE))
-      fprintf(stderr, "%s: envmode is %s\n", __FUNCTION__,
+      fprintf(stderr, "fxSetupTextureSingleTMU_NoLock: envmode is %s\n",
 	      _mesa_lookup_enum_by_nr(ctx->Texture.Unit[textureset].EnvMode));
 
    alphaComb.Local    = locala;
@@ -602,10 +602,10 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
       }
 
       grConstantColorValue(
-         ((GLuint)((ctx->Texture.Unit[textureset].EnvColor[0] * 255.0f))      ) |
-         ((GLuint)((ctx->Texture.Unit[textureset].EnvColor[1] * 255.0f)) <<  8) |
-         ((GLuint)((ctx->Texture.Unit[textureset].EnvColor[2] * 255.0f)) << 16) |
-         ((GLuint)((ctx->Texture.Unit[textureset].EnvColor[3] * 255.0f)) << 24));
+         (((GLuint)(ctx->Texture.Unit[textureset].EnvColor[0] * 255.0f))      ) |
+         (((GLuint)(ctx->Texture.Unit[textureset].EnvColor[1] * 255.0f)) <<  8) |
+         (((GLuint)(ctx->Texture.Unit[textureset].EnvColor[2] * 255.0f)) << 16) |
+         (((GLuint)(ctx->Texture.Unit[textureset].EnvColor[3] * 255.0f)) << 24));
       break;
    case GL_REPLACE:
       if ((ifmt == GL_RGB) || (ifmt == GL_LUMINANCE)) {
@@ -665,7 +665,7 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
       break;
    default:
       if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	 fprintf(stderr, "%s: %x Texture.EnvMode not yet supported\n", __FUNCTION__,
+	 fprintf(stderr, "fxSetupTextureSingleTMU_NoLock: %x Texture.EnvMode not yet supported\n",
 		 ctx->Texture.Unit[textureset].EnvMode);
       }
       return;
@@ -714,7 +714,7 @@ fxSetupDoubleTMU_NoLock(fxMesaContext fxMesa,
    int tmu0 = 0, tmu1 = 1;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
+      fprintf(stderr, "fxSetupDoubleTMU_NoLock(...)\n");
    }
 
    /* We shouldn't need to do this. There is something wrong with
@@ -811,13 +811,13 @@ fxSetupDoubleTMU_NoLock(fxMesaContext fxMesa,
       /* pointcast */
       if (ti1->info.format == GR_TEXFMT_P_8) {
 	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	    fprintf(stderr, "%s: uploading texture palette for TMU1\n", __FUNCTION__);
+	    fprintf(stderr, "fxSetupDoubleTMU_NoLock: uploading texture palette for TMU1\n");
 	 }
 	 fxMesa->Glide.grTexDownloadTableExt(ti1->whichTMU, ti1->paltype, &(ti1->palette));
       }
       if (ti0->info.format == GR_TEXFMT_P_8) {
 	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	    fprintf(stderr, "%s: uploading texture palette for TMU0\n", __FUNCTION__);
+	    fprintf(stderr, "fxSetupDoubleTMU_NoLock: uploading texture palette for TMU0\n");
 	 }
 	 fxMesa->Glide.grTexDownloadTableExt(ti0->whichTMU, ti0->paltype, &(ti0->palette));
       }
@@ -827,14 +827,14 @@ fxSetupDoubleTMU_NoLock(fxMesaContext fxMesa,
    if ((ti1->info.format == GR_TEXFMT_AYIQ_8422) ||
        (ti1->info.format == GR_TEXFMT_YIQ_422)) {
       if (TDFX_DEBUG & VERBOSE_DRIVER) {
-         fprintf(stderr, "%s: uploading NCC0 table for TMU1\n", __FUNCTION__);
+         fprintf(stderr, "fxSetupDoubleTMU_NoLock: uploading NCC0 table for TMU1\n");
       }
       fxMesa->Glide.grTexDownloadTableExt(ti1->whichTMU, GR_TEXTABLE_NCC0, &(ti1->palette));
    }
    if ((ti0->info.format == GR_TEXFMT_AYIQ_8422) ||
        (ti0->info.format == GR_TEXFMT_YIQ_422)) {
       if (TDFX_DEBUG & VERBOSE_DRIVER) {
-         fprintf(stderr, "%s: uploading NCC0 table for TMU0\n", __FUNCTION__);
+         fprintf(stderr, "fxSetupDoubleTMU_NoLock: uploading NCC0 table for TMU0\n");
       }
       fxMesa->Glide.grTexDownloadTableExt(ti0->whichTMU, GR_TEXTABLE_NCC0, &(ti0->palette));
    }
@@ -874,7 +874,7 @@ fxSetupTextureDoubleTMU_NoLock(GLcontext * ctx)
    int tmu0 = 0, tmu1 = 1;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
+      fprintf(stderr, "fxSetupTextureDoubleTMU_NoLock(...)\n");
    }
 
    ti0 = fxTMGetTexInfo(tObj0);
@@ -910,7 +910,7 @@ fxSetupTextureDoubleTMU_NoLock(GLcontext * ctx)
 
 
    if (TDFX_DEBUG & (VERBOSE_DRIVER | VERBOSE_TEXTURE))
-      fprintf(stderr, "%s: envmode is %s/%s\n", __FUNCTION__,
+      fprintf(stderr, "fxSetupTextureDoubleTMU_NoLock: envmode is %s/%s\n",
 	      _mesa_lookup_enum_by_nr(ctx->Texture.Unit[0].EnvMode),
 	      _mesa_lookup_enum_by_nr(ctx->Texture.Unit[1].EnvMode));
 
@@ -1088,7 +1088,7 @@ fxSetupTextureDoubleTMU_NoLock(GLcontext * ctx)
 	 break;
       }
    default:
-      fprintf(stderr, "%s: Unexpected dual texture mode encountered\n", __FUNCTION__);
+      fprintf(stderr, "fxSetupTextureDoubleTMU_NoLock: Unexpected dual texture mode encountered\n");
       return;
    }
 
@@ -1127,7 +1127,7 @@ fxSetupTextureNone_NoLock(GLcontext * ctx)
    GrCombineLocal_t localc, locala;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
+      fprintf(stderr, "fxSetupTextureNone_NoLock(...)\n");
    }
 
    if ((ctx->Light.ShadeModel == GL_SMOOTH) || 1 ||
@@ -1169,7 +1169,7 @@ fxSetupTexture_NoLock(GLcontext * ctx)
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
+      fprintf(stderr, "fxSetupTexture_NoLock(...)\n");
    }
 
    if (fxMesa->HaveCmbExt) {
@@ -1855,7 +1855,7 @@ fxSetupCull(GLcontext * ctx)
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GrCullMode_t mode = GR_CULL_DISABLE;
 
-   if (ctx->Polygon.CullFlag) {
+   if (ctx->Polygon.CullFlag && (fxMesa->raster_primitive == GL_TRIANGLES)) {
       switch (ctx->Polygon.CullFaceMode) {
       case GL_BACK:
 	 if (ctx->Polygon.FrontFace == GL_CCW)
@@ -1878,9 +1878,6 @@ fxSetupCull(GLcontext * ctx)
       }
    }
 
-   /* KW: don't need to check raster_primitive here as we don't
-    * attempt to draw lines or points with triangles.
-    */
    if (fxMesa->cullMode != mode) {
       fxMesa->cullMode = mode;
       grCullMode(mode);
@@ -1899,7 +1896,7 @@ fxDDEnable(GLcontext * ctx, GLenum cap, GLboolean state)
    tfxUnitsState *us = &fxMesa->unitsState;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(%s)\n", state ? __FUNCTION__ : "fxDDDisable",
+      fprintf(stderr, "%s(%s)\n", state ? "fxDDEnable" : "fxDDDisable",
 	      _mesa_lookup_enum_by_nr(cap));
    }
 
@@ -2005,7 +2002,7 @@ fxSetupFXUnits(GLcontext * ctx)
    GLuint newstate = fxMesa->new_state;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER)
-      fx_print_state_flags(__FUNCTION__, newstate);
+      fx_print_state_flags("fxSetupFXUnits", newstate);
 
    if (newstate) {
       if (newstate & FX_NEW_TEXTURING)

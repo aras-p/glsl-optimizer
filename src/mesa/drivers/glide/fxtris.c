@@ -31,6 +31,7 @@
 
 #ifdef FX
 
+#include "imports.h"
 #include "mtypes.h"
 #include "macros.h"
 #include "colormac.h"
@@ -76,8 +77,14 @@ do {						\
       fxMesa->draw_tri( fxMesa, a, b, d );	\
       fxMesa->draw_tri( fxMesa, b, c, d );	\
    } else {					\
-      grDrawTriangle( a, b, d );	\
-      grDrawTriangle( b, c, d );	\
+      GrVertex *_v_[4];				\
+      _v_[0] = d;				\
+      _v_[1] = a;				\
+      _v_[2] = b;				\
+      _v_[3] = c;				\
+      grDrawVertexArray(GR_TRIANGLE_FAN, 4, _v_);\
+      /*grDrawTriangle( a, b, d );*/		\
+      /*grDrawTriangle( b, c, d );*/		\
    }						\
 } while (0)
 
@@ -158,7 +165,7 @@ fx_translate_vertex( GLcontext *ctx, const GrVertex *src, SWvertex *dst)
 	 dst->texcoord[ts1][3] = 1.0;
    }
 
-   dst->pointSize = ctx->Point._Size;
+   dst->pointSize = src->psize;
 }
 
 
@@ -207,7 +214,7 @@ fx_fallback_point( fxMesaContext fxMesa,
 
 static void fx_print_vertex( GLcontext *ctx, const GrVertex *v )
 {
- fprintf(stderr, "%s:\n", __FUNCTION__);
+ fprintf(stderr, "fx_print_vertex:\n");
 
  fprintf(stderr, "\tvertex at %p\n", (void *) v);
 
@@ -265,11 +272,87 @@ static void fx_draw_point( fxMesaContext fxMesa,
    END_CLIP_LOOP();
 }
 
+#ifndef M_2PI
+#define M_2PI 6.28318530717958647692528676655901
+#endif
+#define __GL_COSF cos
+#define __GL_SINF sin
+static void fx_draw_point_wide ( fxMesaContext fxMesa,
+			         GrVertex *v0 )
+{
+ GLint i, n;
+ GLfloat ang, radius, oon;
+ GrVertex vtxB, vtxC;
+ GrVertex *_v_[3];
+
+ _v_[0] = v0;
+ _v_[1] = &vtxB;
+ _v_[2] = &vtxC;
+
+ radius = v0->psize / 2.;
+ n = IROUND(v0->psize * 2); /* radius x 4 */
+ if (n < 4) n = 4;
+ oon = 1.0 / (GLfloat)n;
+
+ /* CLIP_LOOP ?!? */
+ /* point coverage? */
+ /* we don't care about culling here (see fxSetupCull) */
+
+ vtxB = *v0;
+ vtxC = *v0;
+
+ vtxB.x += radius;
+ ang = M_2PI * oon;
+ vtxC.x += radius * __GL_COSF(ang);
+ vtxC.y += radius * __GL_SINF(ang);
+ grDrawVertexArray(GR_TRIANGLE_FAN, 3, _v_);
+ for (i = 2; i <= n; i++) {
+     ang = M_2PI * i * oon;
+     vtxC.x = v0->x + radius * __GL_COSF(ang);
+     vtxC.y = v0->y + radius * __GL_SINF(ang);
+     grDrawVertexArray(GR_TRIANGLE_FAN_CONTINUE, 1, &_v_[2]);
+ }
+}
+
+static void fx_draw_point_wide_aa ( fxMesaContext fxMesa,
+			            GrVertex *v0 )
+{
+ GLint i, n;
+ GLfloat ang, radius, oon;
+ GrVertex vtxB, vtxC;
+
+ radius = v0->psize / 2.;
+ n = IROUND(v0->psize * 2); /* radius x 4 */
+ if (n < 4) n = 4;
+ oon = 1.0 / (GLfloat)n;
+
+ /* CLIP_LOOP ?!? */
+ /* point coverage? */
+ /* we don't care about culling here (see fxSetupCull) */
+
+ vtxB = *v0;
+ vtxC = *v0;
+
+ vtxB.x += radius;
+ for (i = 1; i <= n; i++) {
+     ang = M_2PI * i * oon;
+     vtxC.x = v0->x + radius * __GL_COSF(ang);
+     vtxC.y = v0->y + radius * __GL_SINF(ang);
+     grAADrawTriangle( v0, &vtxB, &vtxC, FXFALSE, FXTRUE, FXFALSE);
+     /*grDrawTriangle( v0, &vtxB, &vtxC);*/
+     vtxB.x = vtxC.x;
+     vtxB.y = vtxC.y;
+ }
+}
+#undef __GLCOSF
+#undef __GLSINF
+#undef M_2PI
+
 #undef DO_FALLBACK
 
 
 #define FX_UNFILLED_BIT    0x1
-#define FX_OFFSET_BIT	     0x2
+#define FX_OFFSET_BIT	   0x2
 #define FX_TWOSIDE_BIT     0x4
 #define FX_FLAT_BIT        0x8
 #define FX_FALLBACK_BIT    0x10
@@ -306,15 +389,15 @@ static struct {
 #define VERT_X(_v) _v->x
 #define VERT_Y(_v) _v->y
 #define VERT_Z(_v) _v->ooz
-#define AREA_IS_CCW( a ) (a < 0)
+#define AREA_IS_CCW( a ) IS_NEGATIVE(a) /*(a < 0)*/
 #define GET_VERTEX(e) (fxMesa->verts + e)
 
-#define VERT_SET_RGBA( dst, f )                   \
+#define VERT_SET_RGBA( dst, f )			\
 do {						\
-   dst->pargb[2] = f[0] * 255.;	\
-   dst->pargb[1] = f[1] * 255.;	\
-   dst->pargb[0] = f[2] * 255.;	\
-   dst->pargb[3] = f[3] * 255.;	\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst->pargb[2], f[0]);\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst->pargb[1], f[1]);\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst->pargb[0], f[2]);\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst->pargb[3], f[3]);\
 } while (0)
 
 #define VERT_COPY_RGBA( v0, v1 ) 		\
@@ -328,9 +411,9 @@ do {						\
    *(GLuint *)&v[idx]->pargb = *(GLuint *)&color[idx]
 
 
-#define LOCAL_VARS(n)					\
-   fxMesaContext fxMesa = FX_CONTEXT(ctx);		\
-   GLubyte color[n][4];					\
+#define LOCAL_VARS(n)				\
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);	\
+   GLubyte color[n][4];				\
    (void) color;
 
 
@@ -344,7 +427,7 @@ do {						\
 #define RENDER_PRIMITIVE fxMesa->render_primitive
 #define IND FX_FALLBACK_BIT
 #define TAG(x) x
-#include "../../tnl_dd/t_dd_unfilled.h"
+#include "tnl_dd/t_dd_unfilled.h"
 #undef IND
 
 /***********************************************************************
@@ -353,136 +436,136 @@ do {						\
 
 #define IND (0)
 #define TAG(x) x
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT)
 #define TAG(x) x##_offset
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT)
 #define TAG(x) x##_twoside
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT)
 #define TAG(x) x##_twoside_offset
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_UNFILLED_BIT)
 #define TAG(x) x##_unfilled
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT|FX_UNFILLED_BIT)
 #define TAG(x) x##_offset_unfilled
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_UNFILLED_BIT)
 #define TAG(x) x##_twoside_unfilled
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT|FX_UNFILLED_BIT)
 #define TAG(x) x##_twoside_offset_unfilled
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_FALLBACK_BIT)
 #define TAG(x) x##_fallback
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT|FX_FALLBACK_BIT)
 #define TAG(x) x##_offset_fallback
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_FALLBACK_BIT)
 #define TAG(x) x##_twoside_fallback
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT|FX_FALLBACK_BIT)
 #define TAG(x) x##_twoside_offset_fallback
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_UNFILLED_BIT|FX_FALLBACK_BIT)
 #define TAG(x) x##_unfilled_fallback
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT|FX_UNFILLED_BIT|FX_FALLBACK_BIT)
 #define TAG(x) x##_offset_unfilled_fallback
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_UNFILLED_BIT|FX_FALLBACK_BIT)
 #define TAG(x) x##_twoside_unfilled_fallback
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT|FX_UNFILLED_BIT| \
 	     FX_FALLBACK_BIT)
 #define TAG(x) x##_twoside_offset_unfilled_fallback
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 
 /* Fx doesn't support provoking-vertex flat-shading?
  */
 #define IND (FX_FLAT_BIT)
 #define TAG(x) x##_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_offset_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_offset_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_UNFILLED_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_unfilled_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT|FX_UNFILLED_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_offset_unfilled_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_UNFILLED_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_unfilled_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT|FX_UNFILLED_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_offset_unfilled_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_fallback_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT|FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_offset_fallback_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_fallback_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT|FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_offset_fallback_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_UNFILLED_BIT|FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_unfilled_fallback_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT|FX_UNFILLED_BIT|FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_offset_unfilled_fallback_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_UNFILLED_BIT|FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_unfilled_fallback_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT|FX_UNFILLED_BIT| \
 	     FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_offset_unfilled_fallback_flat
-#include "../../tnl_dd/t_dd_tritmp.h"
+#include "tnl_dd/t_dd_tritmp.h"
 
 
 static void init_rast_tab( void )
@@ -768,8 +851,14 @@ static void fx_render_vb_quads( GLcontext *ctx,
 
    for (i = start ; i < count-3 ; i += 4 ) {
 #define VERT(x) (fxVB + (x))
-      grDrawTriangle( VERT(i),   VERT(i+1), VERT(i+3) );
-      grDrawTriangle( VERT(i+1), VERT(i+2), VERT(i+3) );
+      GrVertex *_v_[4];
+      _v_[0] = VERT(i+3);
+      _v_[1] = VERT(i+0);
+      _v_[2] = VERT(i+1);
+      _v_[3] = VERT(i+2);
+      grDrawVertexArray(GR_TRIANGLE_FAN, 4, _v_);
+      /*grDrawTriangle( VERT(i),   VERT(i+1), VERT(i+3) );*/
+      /*grDrawTriangle( VERT(i+1), VERT(i+2), VERT(i+3) );*/
 #undef VERT
    }
 }
@@ -881,7 +970,7 @@ static void (*fx_render_tab_verts[GL_POLYGON+2])(GLcontext *,
 #undef TAG
 #define TAG(x) fx_##x##_elts
 #define ELT(x) elt[x]
-#include "../../tnl_dd/t_dd_rendertmp.h"
+#include "tnl_dd/t_dd_rendertmp.h"
 
 /* Verts, no clipping.
  */
@@ -889,7 +978,7 @@ static void (*fx_render_tab_verts[GL_POLYGON+2])(GLcontext *,
 #undef TAG
 #define TAG(x) fx_##x##_verts
 #define ELT(x) x
-/*#include "../../tnl_dd/t_dd_rendertmp.h"*/ /* we have fx_render_vb_* now */
+/*#include "tnl_dd/t_dd_rendertmp.h"*/ /* we have fx_render_vb_* now */
 
 
 
@@ -1012,6 +1101,21 @@ void fxDDChooseRenderState(GLcontext *ctx)
    }
 
    fxMesa->render_index = index;
+
+   /* [dBorca] Hack alert: more a trick than a real plug-in!!!
+    * FX_FALLBACK_BIT is for total rasterization fallbacks; since
+    * this is not the case, we don't alter "fxMesa->render_index".
+    * But we still need to go through "rast_tab", to make sure
+    * "POINT" calls "fxMesa->draw_point" instead of "grDrawPoint"
+    */
+   if (flags & (DD_POINT_SIZE | DD_POINT_ATTEN)) {
+      if (flags & DD_POINT_SMOOTH) {
+         fxMesa->draw_point = fx_draw_point_wide_aa;
+      } else {
+         fxMesa->draw_point = fx_draw_point_wide;
+      }
+      tnl->Driver.Render.Points = rast_tab[FX_FALLBACK_BIT].points;
+   }
 }
 
 

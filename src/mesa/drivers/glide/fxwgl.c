@@ -26,6 +26,8 @@
  *    David Bucciarelli
  *    Brian Paul
  *    Keith Whitwell
+ *    Hiroshi Morii
+ *    Daniel Borca
  */
 
 /* fxwgl.c - Microsoft wgl functions emulation for
@@ -400,13 +402,82 @@ wglGetCurrentDC(VOID)
    return (NULL);
 }
 
+GLAPI BOOL GLAPIENTRY
+wglSwapIntervalEXT (int interval)
+{
+ if (ctx == NULL) {
+    return FALSE;
+ }
+ if (interval < 0) {
+    interval = 0;
+ } else if (interval > 3) {
+    interval = 3;
+ }
+ ctx->swapInterval = interval;
+ return TRUE;
+}
+
+GLAPI int GLAPIENTRY
+wglGetSwapIntervalEXT (void)
+{
+ return (ctx == NULL) ? -1 : ctx->swapInterval;
+}
+
+GLAPI BOOL GLAPIENTRY
+wglGetDeviceGammaRampEXT (unsigned char *r, unsigned char *g, unsigned char *b)
+{
+ return TRUE;
+}
+
+GLAPI BOOL GLAPIENTRY
+wglSetDeviceGammaRampEXT (const unsigned char *r, const unsigned char *g, const unsigned char *b)
+{
+ return TRUE;
+}
+
+GLAPI const char * GLAPIENTRY
+wglGetExtensionsStringEXT (void)
+{
+ return "WGL_3DFX_gamma_control "
+        "WGL_EXT_swap_control "
+        "WGL_EXT_extensions_string WGL_ARB_extensions_string";
+}
+
+GLAPI const char * GLAPIENTRY
+wglGetExtensionsStringARB (HDC hdc)
+{
+ return wglGetExtensionsStringEXT();
+}
+
+static struct {
+       const char *name;
+       PROC func;
+} wgl_ext[] = {
+       {"wglGetExtensionsStringARB", wglGetExtensionsStringARB},
+       {"wglGetExtensionsStringEXT", wglGetExtensionsStringEXT},
+       {"wglSwapIntervalEXT",        wglSwapIntervalEXT},
+       {"wglGetSwapIntervalEXT",     wglGetSwapIntervalEXT},
+       {"wglGetDeviceGammaRampEXT",  wglGetDeviceGammaRampEXT},
+       {"wglGetDeviceGammaRamp3DFX", wglGetDeviceGammaRampEXT},
+       {"wglSetDeviceGammaRampEXT",  wglSetDeviceGammaRampEXT},
+       {"wglSetDeviceGammaRamp3DFX", wglSetDeviceGammaRampEXT},
+       {NULL, NULL}
+};
+
 GLAPI PROC GLAPIENTRY
 wglGetProcAddress(LPCSTR lpszProc)
 { 
+   int i;
    PROC p = (PROC) _glapi_get_proc_address((const char *) lpszProc);
-  
+
    if (p)
       return p;
+
+   for (i = 0; wgl_ext[i].name; i++) {
+       if (!strcmp(lpszProc, wgl_ext[i].name)) {
+          return wgl_ext[i].func;
+       }
+   }
 
    SetLastError(0);
    return (NULL);
@@ -610,6 +681,13 @@ wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR * ppfd)
   fprintf(pix_file, "dwDamageMask    = %d\n",ppfd->dwDamageMask);
   }
   fclose(pix_file);
+#endif
+
+#if 1 || QUAKE2
+  if (ppfd->cColorBits == 24 && ppfd->cDepthBits == 32) {
+     ppfd->cColorBits = 16;
+     ppfd->cDepthBits = 16;
+  }
 #endif
 
    qt_valid_pix = qt_pix;

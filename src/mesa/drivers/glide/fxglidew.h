@@ -78,7 +78,6 @@ typedef struct {
                FxBool HaveCmbExt;	/* COMBINE */
                FxBool HaveMirExt;	/* TEXMIRROR */
                FxBool HaveTexUma;	/* TEXUMA */
-               FxBool HaveTexus2;	/* Texus 2 - FXT1 */
         }
         SSTs[MAX_NUM_SST];	/* configuration for each board */
         struct tdfx_glide Glide;
@@ -120,7 +119,8 @@ typedef struct {
         unsigned char pargb[4];	/* B, G, R, A [0..255] */
         GrTmuVertex tmuvtx[GLIDE_NUM_TMU];
         float fog;		/* fog coordinate */
-        long pad[16 - 12];	/* ensure 64b structure */
+        float psize;		/* point size */
+        long pad[16 - 13];	/* ensure 64b structure */
 } GrVertex;
 
 #define GR_VERTEX_X_OFFSET              0

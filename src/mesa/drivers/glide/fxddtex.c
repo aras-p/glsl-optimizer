@@ -105,7 +105,7 @@ fxAllocTexObjData(fxMesaContext fxMesa)
    tfxTexInfo *ti;
 
    if (!(ti = CALLOC(sizeof(tfxTexInfo)))) {
-      fprintf(stderr, "%s: ERROR: out of memory !\n", __FUNCTION__);
+      fprintf(stderr, "fxAllocTexObjData: ERROR: out of memory !\n");
       fxCloseHardware();
       exit(-1);
    }
@@ -137,8 +137,7 @@ fxDDTexBind(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj)
    tfxTexInfo *ti;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(%d, %x)\n", __FUNCTION__, tObj->Name,
-	      (GLuint) tObj->DriverData);
+      fprintf(stderr, "fxDDTexBind(%d, %x)\n", tObj->Name, (GLuint)tObj->DriverData);
    }
 
    if (target != GL_TEXTURE_2D)
@@ -164,9 +163,9 @@ fxDDTexEnv(GLcontext * ctx, GLenum target, GLenum pname,
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
       if (param)
-	 fprintf(stderr, "%s(%x, %x)\n", __FUNCTION__, pname, (GLint) (*param));
+	 fprintf(stderr, "fxDDTexEnv(%x, %x)\n", pname, (GLint) (*param));
       else
-	 fprintf(stderr, "%s(%x)\n", __FUNCTION__, pname);
+	 fprintf(stderr, "fxDDTexEnv(%x)\n", pname);
    }
 
    /* apply any lod biasing right now */
@@ -340,7 +339,7 @@ fxDDTexDel(GLcontext * ctx, struct gl_texture_object *tObj)
    tfxTexInfo *ti = fxTMGetTexInfo(tObj);
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(%d, %p)\n", __FUNCTION__, tObj->Name, (void *) ti);
+      fprintf(stderr, "fxDDTexDel(%d, %p)\n", tObj->Name, (void *) ti);
    }
 
    if (!ti)
@@ -442,7 +441,7 @@ fxDDTexPalette(GLcontext * ctx, struct gl_texture_object *tObj)
       /* per-texture palette */
       tfxTexInfo *ti;
       if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	 fprintf(stderr, "%s(%d, %x)\n", __FUNCTION__,
+	 fprintf(stderr, "fxDDTexPalette(%d, %x)\n",
 		 tObj->Name, (GLuint) tObj->DriverData);
       }
       if (!tObj->DriverData)
@@ -454,10 +453,12 @@ fxDDTexPalette(GLcontext * ctx, struct gl_texture_object *tObj)
    else {
       /* global texture palette */
       if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	 fprintf(stderr, "%s(global)\n", __FUNCTION__);
+	 fprintf(stderr, "fxDDTexPalette(global)\n");
       }
       fxMesa->glbPalType = convertPalette(fxMesa, fxMesa->glbPalette.data, &ctx->Texture.Palette);
       fxMesa->new_state |= FX_NEW_TEXTURING;
+
+      grTexDownloadTable(fxMesa->glbPalType, &(fxMesa->glbPalette));
    }
 }
 
@@ -468,13 +469,11 @@ fxDDTexUseGlbPalette(GLcontext * ctx, GLboolean state)
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(%d)\n", __FUNCTION__, state);
+      fprintf(stderr, "fxDDTexUseGlbPalette(%d)\n", state);
    }
 
    if (state) {
       fxMesa->haveGlobalPaletteTexture = 1;
-
-      grTexDownloadTable(fxMesa->glbPalType, &(fxMesa->glbPalette));
    }
    else {
       fxMesa->haveGlobalPaletteTexture = 0;
@@ -619,8 +618,10 @@ fxIsTexSupported(GLenum target, GLint internalFormat,
    if (target != GL_TEXTURE_2D)
       return GL_FALSE;
 
+#if 0
    if (!fxTexGetInfo(image->Width, image->Height, NULL, NULL, NULL, NULL, NULL, NULL))
        return GL_FALSE;
+#endif
 
    if (image->Border > 0)
       return GL_FALSE;
@@ -979,6 +980,59 @@ fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    }
 
    switch (internalFormat) {
+   case GL_COMPRESSED_RGB:
+#if 0 && FX_TC_NAPALM /* [koolsmoky] */
+     if (ctx->Extensions.TDFX_texture_compression_FXT1) {
+       return &_mesa_texformat_rgb_fxt1;
+     } else if (ctx->Extensions.EXT_texture_compression_s3tc) {
+       return &_mesa_texformat_rgb_dxt1;
+     }
+#endif
+     /* intentional fall through */
+   case 3:
+   case GL_RGB:
+     if ( srcFormat == GL_RGB && srcType == GL_UNSIGNED_SHORT_5_6_5 ) {
+       return &_mesa_texformat_rgb565;
+     }
+     /* intentional fall through */
+   case GL_RGB8:
+   case GL_RGB10:
+   case GL_RGB12:
+   case GL_RGB16:
+      return (allow32bpt) ? &_mesa_texformat_argb8888
+                          : &_mesa_texformat_rgb565;
+   case GL_RGBA2:
+   case GL_RGBA4:
+      return &_mesa_texformat_argb4444;
+   case GL_COMPRESSED_RGBA:
+#if 0 && FX_TC_NAPALM /* [koolsmoky] */
+     if (ctx->Extensions.TDFX_texture_compression_FXT1) {
+       return &_mesa_texformat_rgba_fxt1;
+     } else if (ctx->Extensions.EXT_texture_compression_s3tc) {
+       return &_mesa_texformat_rgba_dxt3;
+     }
+#endif
+     /* intentional fall through */
+   case 4:
+   case GL_RGBA:
+     if ( srcFormat == GL_BGRA ) {
+       if ( srcType == GL_UNSIGNED_INT_8_8_8_8_REV ) {
+         return &_mesa_texformat_argb8888;
+       }
+       else if ( srcType == GL_UNSIGNED_SHORT_4_4_4_4_REV ) {
+         return &_mesa_texformat_argb4444;
+       }
+       else if ( srcType == GL_UNSIGNED_SHORT_1_5_5_5_REV ) {
+         return &_mesa_texformat_argb1555;
+       }
+     }
+     /* intentional fall through */
+   case GL_RGBA8:
+   case GL_RGB10_A2:
+   case GL_RGBA12:
+   case GL_RGBA16:
+      return (allow32bpt) ? &_mesa_texformat_argb8888
+                          : &_mesa_texformat_argb4444;
    case GL_INTENSITY:
    case GL_INTENSITY4:
    case GL_INTENSITY8:
@@ -1023,46 +1077,10 @@ fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGB4:
    case GL_RGB5:
       return &_mesa_texformat_rgb565;
-   case 3:
-   case GL_RGB:
-   case GL_COMPRESSED_RGB:
-     if ( srcFormat == GL_RGB && srcType == GL_UNSIGNED_SHORT_5_6_5 ) {
-       return &_mesa_texformat_rgb565;
-     }
-     /* intentional fall through */
-   case GL_RGB8:
-   case GL_RGB10:
-   case GL_RGB12:
-   case GL_RGB16:
-      return (allow32bpt) ? &_mesa_texformat_argb8888
-                          : &_mesa_texformat_rgb565;
-   case GL_RGBA2:
-   case GL_RGBA4:
-      return &_mesa_texformat_argb4444;
-   case 4:
-   case GL_RGBA:
-   case GL_COMPRESSED_RGBA:
-     if ( srcFormat == GL_BGRA ) {
-       if ( srcType == GL_UNSIGNED_INT_8_8_8_8_REV ) {
-         return &_mesa_texformat_argb8888;
-       }
-       else if ( srcType == GL_UNSIGNED_SHORT_4_4_4_4_REV ) {
-         return &_mesa_texformat_argb4444;
-       }
-       else if ( srcType == GL_UNSIGNED_SHORT_1_5_5_5_REV ) {
-         return &_mesa_texformat_argb1555;
-       }
-     }
-     /* intentional fall through */
-   case GL_RGBA8:
-   case GL_RGB10_A2:
-   case GL_RGBA12:
-   case GL_RGBA16:
-      return (allow32bpt) ? &_mesa_texformat_argb8888
-                          : &_mesa_texformat_argb4444;
    case GL_RGB5_A1:
       return &_mesa_texformat_argb1555;
    /* GL_EXT_texture_compression_s3tc */
+   /* GL_S3_s3tc */
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
    case GL_RGB_S3TC:
    case GL_RGB4_S3TC:
@@ -1212,6 +1230,40 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    mml->width = width * mml->wScale;
    mml->height = height * mml->hScale;
 
+#if 0 && FX_COMPRESS_S3TC_AS_FXT1_HACK
+   /* [koolsmoky] substitute FXT1 for DXTn and Legacy S3TC */
+   /* [dborca] we should update texture's attribute, then,
+    * because if the application asks us to decompress, we
+    * have to know the REAL format! Also, DXT3/5 might not
+    * be correct, since it would mess with "compressedSize".
+    * Ditto for GL_RGBA[4]_S3TC, which is always mapped to DXT3.
+    */
+   if (texImage->IsCompressed) {
+     switch (internalFormat) {
+     case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+     case GL_RGB_S3TC:
+     case GL_RGB4_S3TC:
+       internalFormat = GL_COMPRESSED_RGB_FXT1_3DFX;
+       break;
+     case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+     case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+     case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+     case GL_RGBA_S3TC:
+     case GL_RGBA4_S3TC:
+       internalFormat = GL_COMPRESSED_RGBA_FXT1_3DFX;
+     }
+   }
+#endif
+#if 1 || FX_COMPRESS_DXT5_AS_DXT3_HACK
+   /* [dborca] either VSA is stupid at DXT5, 
+    * or our compression tool is broken. See
+    * above for caveats.
+    */
+   if ((texImage->IsCompressed) &&
+       (internalFormat == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT)) {
+       internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+   }
+#endif
 
    /* choose the texture format */
    assert(ctx->Driver.ChooseTextureFormat);
@@ -1278,14 +1330,14 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       _mesa_transfer_teximage(ctx, 2, texImage->Format,
                               _final_texImage_TexFormat,
                               tempImage,
-                              width, height, 1, 0, 0, 0,
-                              width * texelBytes,
+                              width, height, 1, 0, 0, 0, /* src */
+                              width * texelBytes, /* dstRowStride */
                               0, /* dstImageStride */
                               format, type, pixels, packing);
       _mesa_rescale_teximage2d(texelBytes,
                                mml->width * texelBytes, /* dst stride */
-                               width, height,
-                               mml->width, mml->height,
+                               width, height, /* src */
+                               mml->width, mml->height, /* dst */
                                tempImage /*src*/, _final_texImage_Data /*dst*/ );
       FREE(tempImage);
    }
@@ -1295,7 +1347,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       _mesa_transfer_teximage(ctx, 2, texImage->Format,
                               _final_texImage_TexFormat, _final_texImage_Data,
                               width, height, 1, 0, 0, 0,
-                              texImage->Width * texelBytes,
+                              mml->width * texelBytes,
                               0, /* dstImageStride */
                               format, type, pixels, packing);
    }

@@ -102,7 +102,8 @@
 #define SETUP_SNAP 0x8
 #define SETUP_XYZW 0x10
 #define SETUP_PTEX 0x20
-#define MAX_SETUP  0x40
+#define SETUP_PSIZ 0x40
+#define MAX_SETUP  0x80
 
 
 #define FX_NUM_TMU 2

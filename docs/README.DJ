@@ -68,9 +68,9 @@ Available options:
 
 Tested on:
 	CPU:		AMD Athlon XP 1800+
-	Mainboard:	EP-8KTA3 w/ 128 MB SDRAM
-	Video card:	Voodoo5 5500 AGP w/ 64 MB SDRAM
-	DJGPP:		djdev 2.04 + gcc v3.2.2 + make v3.80
+	Mainboard:	GA-7VTXE w/ 256 MB DDRAM
+	Video card:	Voodoo5 6000 AGP w/ 128 MB SDRAM
+	DJGPP:		djdev 2.04 + gcc v3.3.2 + make v3.80
 	OS:		DOS and Win98SE
 
 
@@ -209,7 +209,7 @@ v1.3 (mar-2003)
 	* revamped GLUT
 	* switched to DXE3
 
-v1.4 (nov-2003)
+v1.4 (dec-2003)
 	+ enabled GLUT fonts with DXE
 	+ truly added multi-window support in GLUT (for Adrian Woodward)
 	* accomodated makefiles with the new sourcetree

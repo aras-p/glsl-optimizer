@@ -158,7 +158,7 @@ gl3DfxSetPaletteEXT(GLuint * pal)
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
       int i;
 
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
+      fprintf(stderr, "gl3DfxSetPaletteEXT(...)\n");
 
       for (i = 0; i < 256; i++) {
 	 fprintf(stderr, "\t%x\n", pal[i]);
@@ -245,7 +245,7 @@ fxMesaCreateContext(GLuint win,
  GLboolean useBGR;
 
  if (TDFX_DEBUG & VERBOSE_DRIVER) {
-    fprintf(stderr, "%s(...)\n", __FUNCTION__);
+    fprintf(stderr, "fxMesaCreateContext(...)\n");
  }
 
  /* Okay, first process the user flags */
@@ -288,15 +288,15 @@ fxMesaCreateContext(GLuint win,
                    }
 	           break;
               default:
-                   fprintf(stderr, "%s: ERROR: wrong parameter (%d) passed\n", __FUNCTION__, attribList[i]);
+                   fprintf(stderr, "fxMesaCreateContext: ERROR: wrong parameter (%d) passed\n", attribList[i]);
 	           return NULL;
        }
        i++;
  }
 
  if (!fxQueryHardware()) {
-    fprintf(stderr, "%s: ERROR: no Voodoo hardware!\n", __FUNCTION__);
-    return NULL;
+    str = "no Voodoo hardware!";
+    goto errorhandler;
  }
 
  grSstSelect(glbCurrentBoard);
@@ -324,9 +324,11 @@ fxMesaCreateContext(GLuint win,
  fxMesa->HaveCmbExt = voodoo->HaveCmbExt;
  fxMesa->HaveMirExt = voodoo->HaveMirExt;
  fxMesa->HaveTexUma = voodoo->HaveTexUma;
- fxMesa->HaveTexus2 = voodoo->HaveTexus2;
  fxMesa->Glide = glbHWConfig.Glide;
  Glide = &fxMesa->Glide;
+ fxMesa->HaveTexus2 = Glide->txImgQuantize &&
+                      Glide->txMipQuantize &&
+                      Glide->txPalToNcc;
 
  /*
   * Pixel tables are used during pixel read-back
@@ -689,7 +691,7 @@ errorhandler:
     FREE(fxMesa);
  }
 
- fprintf(stderr, "%s: ERROR: %s\n", __FUNCTION__, str);
+ fprintf(stderr, "fxMesaCreateContext: ERROR: %s\n", str);
  return NULL;
 }
 
@@ -712,7 +714,7 @@ void GLAPIENTRY
 fxMesaDestroyContext(fxMesaContext fxMesa)
 {
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
+      fprintf(stderr, "fxMesaDestroyContext(...)\n");
    }
 
    if (!fxMesa)
@@ -776,7 +778,7 @@ fxMesaMakeCurrent(fxMesaContext fxMesa)
       fxMesaCurrentCtx = NULL;
 
       if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	 fprintf(stderr, "%s(NULL)\n", __FUNCTION__);
+	 fprintf(stderr, "fxMesaMakeCurrent(NULL)\n");
       }
 
       return;
@@ -786,14 +788,14 @@ fxMesaMakeCurrent(fxMesaContext fxMesa)
    if (fxMesaCurrentCtx == fxMesa
        && fxMesaCurrentCtx->glCtx == _mesa_get_current_context()) {
       if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	 fprintf(stderr, "%s(fxMesaCurrentCtx==fxMesa)\n", __FUNCTION__);
+	 fprintf(stderr, "fxMesaMakeCurrent(NOP)\n");
       }
 
       return;
    }
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
+      fprintf(stderr, "fxMesaMakeCurrent(...)\n");
    }
 
    if (fxMesaCurrentCtx)
@@ -821,7 +823,7 @@ void GLAPIENTRY
 fxMesaSwapBuffers(void)
 {
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s()\n", __FUNCTION__);
+      fprintf(stderr, "fxMesaSwapBuffers()\n");
    }
 
    if (fxMesaCurrentCtx) {
@@ -855,7 +857,7 @@ fxMesaSwapBuffers(void)
 GLboolean GLAPIENTRY fxQueryHardware (void)
 {
  if (TDFX_DEBUG & VERBOSE_DRIVER) {
-    fprintf(stderr, "%s()\n", __FUNCTION__);
+    fprintf(stderr, "fxQueryHardware()\n");
  }
 
  if (!glbGlideInitialized) {

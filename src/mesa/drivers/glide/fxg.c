@@ -34,17 +34,12 @@
 #ifdef FX
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <assert.h>
 
 #define DEBUG_TRAP_internal
 #include "fxg.h"
-
-/* texus.h */
-FX_ENTRY void FX_CALL txImgQuantize (char *dst, char *src, int w, int h, FxU32 format, FxU32 dither);
-FX_ENTRY void FX_CALL txMipQuantize (TxMip *pxMip, TxMip *txMip, int fmt, FxU32 d, FxU32 comp);
-FX_ENTRY void FX_CALL txPalToNcc (GuNccTable *ncc_table, const FxU32 *pal);
-/* texus.h */
 
 
 
@@ -851,6 +846,13 @@ void (FX_CALL *real_grConstantColorValueExt) (GrChipID_t tmu, GrColor_t value);
 void (FX_CALL *real_grColorMaskExt) (FxBool r, FxBool g, FxBool b, FxBool a);
 void (FX_CALL *real_grAlphaBlendFunctionExt) (GrAlphaBlendFnc_t rgb_sf, GrAlphaBlendFnc_t rgb_df, GrAlphaBlendOp_t rgb_op, GrAlphaBlendFnc_t alpha_sf, GrAlphaBlendFnc_t alpha_df, GrAlphaBlendOp_t alpha_op);
 void (FX_CALL *real_grTBufferWriteMaskExt) (FxU32 tmask);
+
+/*
+** texus
+*/
+void (FX_CALL *real_txImgQuantize) (char *dst, char *src, int w, int h, FxU32 format, FxU32 dither);
+void (FX_CALL *real_txMipQuantize) (TxMip *pxMip, TxMip *txMip, int fmt, FxU32 d, FxU32 comp);
+void (FX_CALL *real_txPalToNcc) (GuNccTable *ncc_table, const FxU32 *pal);
 
 
 
@@ -2167,7 +2169,8 @@ void FX_CALL trap_txImgQuantize (char  *dst,
 {
 #define FN_NAME "txImgQuantize"
  TRAP_LOG("%s(%p, %p, %d, %d, %s, %s)\n", FN_NAME, dst, src, w, h, TRP_TEXFMT(format), TRP_TXDITHER(dither));
- txImgQuantize(dst, src, w, h, format, dither);
+ assert(real_txImgQuantize);
+ (*real_txImgQuantize)(dst, src, w, h, format, dither);
 #undef FN_NAME
 }
 
@@ -2179,7 +2182,8 @@ void FX_CALL trap_txMipQuantize (TxMip *pxMip,
 {
 #define FN_NAME "txMipQuantize"
  TRAP_LOG("%s(%p, %p, %s, %s, %s)\n", FN_NAME, (void *)pxMip, (void *)txMip, TRP_TEXFMT(fmt), TRP_TXDITHER(d), TRP_TXCOMPRESS(comp));
- txMipQuantize(pxMip, txMip, fmt, d, comp);
+ assert(real_txMipQuantize);
+ (*real_txMipQuantize)(pxMip, txMip, fmt, d, comp);
 #undef FN_NAME
 }
 
@@ -2188,7 +2192,8 @@ void FX_CALL trap_txPalToNcc (GuNccTable *ncc_table,
 {
 #define FN_NAME "txPalToNcc"
  TRAP_LOG("%s(%p, %p)\n", FN_NAME, (void *)ncc_table, (void *)pal);
- txPalToNcc(ncc_table, pal);
+ assert(real_txPalToNcc);
+ (*real_txPalToNcc)(ncc_table, pal);
 #undef FN_NAME
 }
 #endif
@@ -2196,8 +2201,13 @@ void FX_CALL trap_txPalToNcc (GuNccTable *ncc_table,
 
 
 /****************************************************************************\
-* housekeeping (fake pointers)
+* housekeeping (fake pointers)                                               *
 \****************************************************************************/
+char *FX_CALL fake_grGetRegistryOrEnvironmentStringExt (char *theEntry)
+{
+ return getenv(theEntry);
+}
+
 void FX_CALL fake_grTexDownloadTableExt (GrChipID_t   tmu,
                                          GrTexTable_t type,
                                          void         *data)
@@ -2223,24 +2233,22 @@ void FX_CALL fake_grTexNCCTableExt (GrChipID_t   tmu,
 
 
 /****************************************************************************\
-* interface
+* interface                                                                  *
 \****************************************************************************/
 void tdfx_hook_glide (struct tdfx_glide *Glide)
 {
 #if DEBUG_TRAP
 #define GET_EXT_ADDR(name) *(GrProc *)&real_##name = grGetProcAddress(#name), Glide->name = trap_##name
 #define GET_EXT_FAKE(name) GET_EXT_ADDR(name); if (real_##name == NULL) real_##name = fake_##name
-#define GET_TXS_ADDR(name) Glide->name = trap_##name
 #else  /* DEBUG_TRAP */
 #define GET_EXT_ADDR(name) *(GrProc *)&Glide->name = grGetProcAddress(#name)
 #define GET_EXT_FAKE(name) GET_EXT_ADDR(name); if (Glide->name == NULL) Glide->name = fake_##name
-#define GET_TXS_ADDR(name) Glide->name = name
 #endif /* DEBUG_TRAP */
 
  /*
  ** glide extensions
  */
- GET_EXT_ADDR(grGetRegistryOrEnvironmentStringExt);
+ GET_EXT_FAKE(grGetRegistryOrEnvironmentStringExt);
  GET_EXT_ADDR(grGetGammaTableExt);
  GET_EXT_ADDR(grChromaRangeModeExt);
  GET_EXT_ADDR(grChromaRangeExt);
@@ -2273,9 +2281,9 @@ void tdfx_hook_glide (struct tdfx_glide *Glide)
  /*
  ** texus
  */
- GET_TXS_ADDR(txImgQuantize);
- GET_TXS_ADDR(txMipQuantize);
- GET_TXS_ADDR(txPalToNcc);
+ GET_EXT_ADDR(txImgQuantize);
+ GET_EXT_ADDR(txMipQuantize);
+ GET_EXT_ADDR(txPalToNcc);
 
 #undef GET_EXT_ADDR
 }

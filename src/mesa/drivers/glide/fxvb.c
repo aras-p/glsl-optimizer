@@ -112,7 +112,7 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
 		   GET_COLOR(VB->ColorPtr[1], src) );
 #if 1 /* [dBorca] GL_EXT_separate_specular_color */
 	 if (VB->SecondaryColorPtr[1]) {
-	    COPY_4FV( GET_COLOR(VB->SecondaryColorPtr[1], dst),
+	    COPY_3FV( GET_COLOR(VB->SecondaryColorPtr[1], dst),
 		      GET_COLOR(VB->SecondaryColorPtr[1], src) );
 	 }
 #endif
@@ -143,6 +143,27 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
 #define TAG(x) x##_wgpt0t1
 #include "fxvbtmp.h"
 
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_PSIZ)
+#define TAG(x) x##_wga
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_PSIZ)
+#define TAG(x) x##_wgt0a
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_TMU1|SETUP_PSIZ)
+#define TAG(x) x##_wgt0t1a
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_PTEX|SETUP_PSIZ)
+#define TAG(x) x##_wgpt0a
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_TMU1|\
+             SETUP_PTEX|SETUP_PSIZ)
+#define TAG(x) x##_wgpt0t1a
+#include "fxvbtmp.h"
+
 
 /* Snapping for voodoo-1
  */
@@ -167,6 +188,29 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
 #define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|\
 	     SETUP_TMU1|SETUP_PTEX)
 #define TAG(x) x##_wsgpt0t1
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_PSIZ)
+#define TAG(x) x##_wsga
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|SETUP_PSIZ)
+#define TAG(x) x##_wsgt0a
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|\
+             SETUP_TMU1|SETUP_PSIZ)
+#define TAG(x) x##_wsgt0t1a
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|\
+             SETUP_PTEX|SETUP_PSIZ)
+#define TAG(x) x##_wsgpt0a
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|\
+	     SETUP_TMU1|SETUP_PTEX|SETUP_PSIZ)
+#define TAG(x) x##_wsgpt0t1a
 #include "fxvbtmp.h"
 
 
@@ -201,12 +245,22 @@ static void init_setup_tab( void )
    init_wgt0t1();
    init_wgpt0();
    init_wgpt0t1();
+   init_wga();
+   init_wgt0a();
+   init_wgt0t1a();
+   init_wgpt0a();
+   init_wgpt0t1a();
 
    init_wsg();
    init_wsgt0();
    init_wsgt0t1();
    init_wsgpt0();
    init_wsgpt0t1();
+   init_wsga();
+   init_wsgt0a();
+   init_wsgt0t1a();
+   init_wsgpt0a();
+   init_wsgpt0t1a();
 
    init_g();
    init_t0();
@@ -273,6 +327,10 @@ void fxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
    } else {
       GLuint ind = 0;
 
+      /* [dBorca] masked by VERT_BIT_POS ?!?
+      if (newinputs & VERT_BIT_POINT_SIZE)
+	 ind |= SETUP_PSIZ;*/
+
       if (newinputs & VERT_BIT_COLOR0)
 	 ind |= SETUP_RGBA;
       
@@ -319,7 +377,11 @@ void fxChooseVertexState( GLcontext *ctx )
    else if (ctx->Texture._EnabledUnits & 0x1) {
       ind |= SETUP_TMU0;
    }
-   
+
+   if (ctx->_TriangleCaps & (DD_POINT_SIZE|DD_POINT_ATTEN)) {
+      ind |= SETUP_PSIZ;
+   }
+
    fxMesa->SetupIndex = ind;
 
    if (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED)) {

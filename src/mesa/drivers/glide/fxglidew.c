@@ -55,7 +55,7 @@ FX_grGetInteger_NoLock(FxU32 pname)
  }
 
  if (TDFX_DEBUG & VERBOSE_DRIVER) {
-    fprintf(stderr, "%s: wrong parameter (%lx)\n", __FUNCTION__, pname);
+    fprintf(stderr, "FX_grGetInteger_NoLock: wrong parameter (%lx)\n", pname);
  }
  return -1;
 }
@@ -232,7 +232,6 @@ FX_grSstQueryHardware(GrHwConfiguration * config)
       config->SSTs[i].HaveCmbExt = (strstr(extension, " COMBINE ") != NULL);
       config->SSTs[i].HaveMirExt = (strstr(extension, " TEXMIRROR ") != NULL);
       config->SSTs[i].HaveTexUma = (strstr(extension, " TEXUMA ") != NULL);
-      config->SSTs[i].HaveTexus2 = GL_FALSE;
 
       /* number of Voodoo chips */
       grGet(GR_NUM_FB, 4, (void *) &numFB);

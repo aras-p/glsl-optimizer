@@ -172,7 +172,8 @@ fxSetupTextureEnvNapalm_NoLock(GLcontext * ctx, GLuint textureset, GLuint tmu, G
    struct gl_texture_object *tObj = texUnit->Current2D;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
+      fprintf(stderr, "fxSetupTextureEnvNapalm_NoLock(unit %u, TMU %u, iterated %d)\n",
+                      textureset, tmu, iterated);
    }
 
    ti = fxTMGetTexInfo(tObj);
@@ -289,10 +290,10 @@ fxSetupTextureEnvNapalm_NoLock(GLcontext * ctx, GLuint textureset, GLuint tmu, G
       }
 
       fxMesa->Glide.grConstantColorValueExt(tmu,
-         ((GLuint)((envColor[0] * 255.0f))      ) |
-         ((GLuint)((envColor[1] * 255.0f)) <<  8) |
-         ((GLuint)((envColor[2] * 255.0f)) << 16) |
-         ((GLuint)((envColor[3] * 255.0f)) << 24));
+         (((GLuint)(envColor[0] * 255.0f))      ) |
+         (((GLuint)(envColor[1] * 255.0f)) <<  8) |
+         (((GLuint)(envColor[2] * 255.0f)) << 16) |
+         (((GLuint)(envColor[3] * 255.0f)) << 24));
       break;
    case GL_REPLACE:
       if (ifmt == GL_LUMINANCE || ifmt == GL_RGB) {
@@ -439,10 +440,10 @@ fxSetupTextureEnvNapalm_NoLock(GLcontext * ctx, GLuint textureset, GLuint tmu, G
       }
 
       fxMesa->Glide.grConstantColorValueExt(tmu,
-         ((GLuint)((envColor[0] * 255.0f))      ) |
-         ((GLuint)((envColor[1] * 255.0f)) <<  8) |
-         ((GLuint)((envColor[2] * 255.0f)) << 16) |
-         ((GLuint)((envColor[3] * 255.0f)) << 24));
+         (((GLuint)(envColor[0] * 255.0f))      ) |
+         (((GLuint)(envColor[1] * 255.0f)) <<  8) |
+         (((GLuint)(envColor[2] * 255.0f)) << 16) |
+         (((GLuint)(envColor[3] * 255.0f)) << 24));
       break;
 #if 0
         {
@@ -841,7 +842,7 @@ fxSetupTextureEnvNapalm_NoLock(GLcontext * ctx, GLuint textureset, GLuint tmu, G
 #endif
    default:
       if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	 fprintf(stderr, "%s: %x Texture.EnvMode not yet supported\n", __FUNCTION__,
+	 fprintf(stderr, "fxSetupTextureEnvNapalm_NoLock: %x Texture.EnvMode not yet supported\n",
 		 texUnit->EnvMode);
       }
       return;
@@ -901,7 +902,7 @@ static void
 fxSelectSingleTMUSrcNapalm_NoLock(fxMesaContext fxMesa, GLint tmu, FxBool LODblend)
 {
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(%d, %d)\n", __FUNCTION__, tmu, LODblend);
+      fprintf(stderr, "fxSelectSingleTMUSrcNapalm_NoLock(%d, %d)\n", tmu, LODblend);
    }
 
    if (LODblend) {
@@ -989,7 +990,7 @@ fxSetupTextureSingleTMUNapalm_NoLock(GLcontext * ctx, GLuint textureset)
    int tmu;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(%d)\n", __FUNCTION__, textureset);
+      fprintf(stderr, "fxSetupTextureSingleTMUNapalm_NoLock(%d)\n", textureset);
    }
 
    ti = fxTMGetTexInfo(tObj);
@@ -1019,7 +1020,7 @@ fxSetupTextureSingleTMUNapalm_NoLock(GLcontext * ctx, GLuint textureset)
    FX_grHints_NoLock(GR_HINT_STWHINT, 0);
 
    if (TDFX_DEBUG & (VERBOSE_DRIVER | VERBOSE_TEXTURE))
-      fprintf(stderr, "%s: envmode is %s\n", __FUNCTION__,
+      fprintf(stderr, "fxSetupTextureSingleTMUNapalm_NoLock: envmode is %s\n",
 	      _mesa_lookup_enum_by_nr(ctx->Texture.Unit[textureset].EnvMode));
 
    /* [dBorca] Hack alert:
@@ -1042,7 +1043,7 @@ fxSetupTextureDoubleTMUNapalm_NoLock(GLcontext * ctx)
    int tmu0 = 0, tmu1 = 1;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
+      fprintf(stderr, "fxSetupTextureDoubleTMUNapalm_NoLock(...)\n");
    }
 
    ti0 = fxTMGetTexInfo(tObj0);
@@ -1064,7 +1065,7 @@ fxSetupTextureDoubleTMUNapalm_NoLock(GLcontext * ctx)
    FX_grHints_NoLock(GR_HINT_STWHINT, fxMesa->stw_hint_state);
 
    if (TDFX_DEBUG & (VERBOSE_DRIVER | VERBOSE_TEXTURE))
-      fprintf(stderr, "%s: envmode is %s/%s\n", __FUNCTION__,
+      fprintf(stderr, "fxSetupTextureDoubleTMUNapalm_NoLock: envmode is %s/%s\n",
 	      _mesa_lookup_enum_by_nr(ctx->Texture.Unit[0].EnvMode),
 	      _mesa_lookup_enum_by_nr(ctx->Texture.Unit[1].EnvMode));
 
@@ -1091,7 +1092,7 @@ fxSetupTextureNoneNapalm_NoLock(GLcontext * ctx)
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
+      fprintf(stderr, "fxSetupTextureNoneNapalm_NoLock(...)\n");
    }
 
    /* the combiner formula is: (A + B) * C + D

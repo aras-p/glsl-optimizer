@@ -46,12 +46,18 @@ static void TAG(emit)( GLcontext *ctx,
    GLuint tc0_size, tc1_size;
    GLfloat (*proj)[4] = VB->NdcPtr->data; 
    GLuint proj_stride = VB->NdcPtr->stride;
+   GLfloat (*psize)[4];
+   GLuint psize_stride;
    GrVertex *v = (GrVertex *)dest;
    GLfloat u0scale,v0scale,u1scale,v1scale;
    const GLubyte *mask = VB->ClipMask;
    const GLfloat *const s = ctx->Viewport._WindowMap.m;
    int i;
 
+   if (IND & SETUP_PSIZ) {
+      psize = VB->PointSizePtr->data;
+      psize_stride = VB->PointSizePtr->stride;
+   }
 
    if (IND & SETUP_TMU0) {
       tc0 = VB->TexCoordPtr[tmu0_source]->data;
@@ -78,6 +84,9 @@ static void TAG(emit)( GLcontext *ctx,
 
    if (start) {
       proj =  (GLfloat (*)[4])((GLubyte *)proj + start * proj_stride);
+      if (IND & SETUP_PSIZ) {
+         psize =  (GLfloat (*)[4])((GLubyte *)psize + start * psize_stride);
+      }
       if (IND & SETUP_TMU0)
 	 tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 + start * tc0_stride);
       if (IND & SETUP_TMU1) 
@@ -87,6 +96,11 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    for (i=start; i < end; i++, v++) {
+      if (IND & SETUP_PSIZ) {
+         v->psize = psize[0][0];
+         psize =  (GLfloat (*)[4])((GLubyte *)psize +  psize_stride);
+      }
+   
       if (IND & SETUP_XYZW) {
          if (mask[i] == 0) {
 	    /* unclipped */
@@ -115,10 +129,10 @@ static void TAG(emit)( GLcontext *ctx,
 	 proj =  (GLfloat (*)[4])((GLubyte *)proj +  proj_stride);
       }
       if (IND & SETUP_RGBA) {
-	 v->pargb[2] = col[0][0] * 255.;
-	 v->pargb[1] = col[0][1] * 255.;
-	 v->pargb[0] = col[0][2] * 255.;
-	 v->pargb[3] = col[0][3] * 255.;
+         UNCLAMPED_FLOAT_TO_UBYTE(v->pargb[2], col[0][0]);
+         UNCLAMPED_FLOAT_TO_UBYTE(v->pargb[1], col[0][1]);
+         UNCLAMPED_FLOAT_TO_UBYTE(v->pargb[0], col[0][2]);
+         UNCLAMPED_FLOAT_TO_UBYTE(v->pargb[3], col[0][3]);
 	 STRIDE_4F(col, col_stride);
       }
       if (IND & SETUP_TMU0) {
