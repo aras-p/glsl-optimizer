@@ -366,6 +366,7 @@ NAME(read_index_pixels)( const GLcontext *ctx,
 
 
 #undef NAME
+#undef SPAN_VARS
 #undef INIT_PIXEL_PTR
 #undef INC_PIXEL_PTR
 #undef STORE_RGB_PIXEL
