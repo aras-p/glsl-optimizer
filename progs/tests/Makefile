@@ -10,7 +10,10 @@ CFLAGS = -g -I../include
 LIBS = -L../lib -lglut -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXext -lm
 
 PROGS = cva \
+	dinoshade \
 	manytex \
+	multipal \
+	projtex \
 	sharedtex \
 	texline
 
