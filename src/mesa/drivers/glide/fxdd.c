@@ -446,8 +446,13 @@ static GLboolean fxDDDrawBitMap(GLcontext *ctx, GLint px, GLint py,
   {
     const GLint winX = fxMesa->x_offset;
     const GLint winY = fxMesa->y_offset + fxMesa->height - 1;
+    /* The dest stride depends on the hardware and whether we're drawing
+     * to the front or back buffer.  This compile-time test seems to do
+     * the job for now.
+     */
 #ifdef XF86DRI
-    const GLint dstStride = fxMesa->screen_width;
+    const GLint dstStride = (fxMesa->glCtx->Color.DrawBuffer == GL_FRONT)
+                          ? (fxMesa->screen_width) : (info.strideInBytes / 2);
 #else
     const GLint dstStride = info.strideInBytes / 2; /* stride in GLushorts */
 #endif
