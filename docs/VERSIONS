@@ -1203,3 +1203,15 @@ Mesa Version History
 	- glDeleteProgramsARB failed for ARB fragment programs (bug 876160)
 	- glDrawRangeElements tried to modify potentially read-only storage
 	- updated files for building on Windows
+
+
+6.1  Month day, 2004
+    New:
+	- glXUseRotatedXFont() utility (see xdemos/xuserotfont.c)
+	- internal driver interface changes related to texture object
+	  allocation, vertex/fragment programs, BlendEquationSeparate, etc.
+    Changes:
+	- 
+    Bug fixes:
+	- everything in 6.0.1 plus TBD
+
