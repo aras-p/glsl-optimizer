@@ -269,13 +269,13 @@ printhelp(void)
    printstring(GLUT_BITMAP_HELVETICA_18, "Help");
 
    glRasterPos2i(60, 390);
-   printstring(GLUT_BITMAP_HELVETICA_12, "h - Togle Help");
+   printstring(GLUT_BITMAP_HELVETICA_12, "h - Toggle Help");
    glRasterPos2i(60, 370);
-   printstring(GLUT_BITMAP_HELVETICA_12, "f - Togle Fog");
+   printstring(GLUT_BITMAP_HELVETICA_12, "f - Toggle Fog");
    glRasterPos2i(60, 350);
-   printstring(GLUT_BITMAP_HELVETICA_12, "b - Togle Back face culling");
+   printstring(GLUT_BITMAP_HELVETICA_12, "b - Toggle Back face culling");
    glRasterPos2i(60, 330);
-   printstring(GLUT_BITMAP_HELVETICA_12, "p - Togle Wire frame");
+   printstring(GLUT_BITMAP_HELVETICA_12, "p - Toggle Wire frame");
    glRasterPos2i(60, 310);
    printstring(GLUT_BITMAP_HELVETICA_12, "Arrow Keys - Rotate");
    glRasterPos2i(60, 290);
@@ -286,7 +286,7 @@ printhelp(void)
    glRasterPos2i(60, 250);
    if (joyavailable)
       printstring(GLUT_BITMAP_HELVETICA_12,
-		  "j - Togle jostick control (Joystick control available)");
+		  "j - Toggle jostick control (Joystick control available)");
    else
       printstring(GLUT_BITMAP_HELVETICA_12,
 		  "(No Joystick control available)");
@@ -300,11 +300,11 @@ printhelp(void)
 
    glRasterPos2i(60, 190);
    printstring(GLUT_BITMAP_HELVETICA_12,
-	       "1 - Togle the plane texture map window");
+	       "1 - Toggle the plane texture map window");
 
    glRasterPos2i(60, 170);
    printstring(GLUT_BITMAP_HELVETICA_12,
-	       "2 - Togle the sphere texture map window");
+	       "2 - Toggle the sphere texture map window");
 }
 
 static GLboolean

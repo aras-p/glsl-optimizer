@@ -250,13 +250,13 @@ static void printhelp(void)
   printstring(GLUT_BITMAP_TIMES_ROMAN_24,"Help");
 
   glRasterPos2i(60,390);
-  printstring(GLUT_BITMAP_TIMES_ROMAN_24,"h - Togle Help");
+  printstring(GLUT_BITMAP_TIMES_ROMAN_24,"h - Toggle Help");
   glRasterPos2i(60,360);
-  printstring(GLUT_BITMAP_TIMES_ROMAN_24,"t - Togle Textures");
+  printstring(GLUT_BITMAP_TIMES_ROMAN_24,"t - Toggle Textures");
   glRasterPos2i(60,330);
-  printstring(GLUT_BITMAP_TIMES_ROMAN_24,"f - Togle Fog");
+  printstring(GLUT_BITMAP_TIMES_ROMAN_24,"f - Toggle Fog");
   glRasterPos2i(60,300);
-  printstring(GLUT_BITMAP_TIMES_ROMAN_24,"b - Togle Back face culling");
+  printstring(GLUT_BITMAP_TIMES_ROMAN_24,"b - Toggle Back face culling");
   glRasterPos2i(60,270);
   printstring(GLUT_BITMAP_TIMES_ROMAN_24,"Arrow Keys - Rotate");
   glRasterPos2i(60,240);
@@ -266,7 +266,7 @@ static void printhelp(void)
 
   glRasterPos2i(60,180);
   if(joyavailable)
-    printstring(GLUT_BITMAP_TIMES_ROMAN_24,"j - Togle jostick control (Joystick control available)");
+    printstring(GLUT_BITMAP_TIMES_ROMAN_24,"j - Toggle jostick control (Joystick control available)");
   else
     printstring(GLUT_BITMAP_TIMES_ROMAN_24,"(No Joystick control available)");
 }
