@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.50 2000/09/07 15:38:49 brianp Exp $ */
+/* $Id: teximage.c,v 1.51 2000/09/28 18:30:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1507,7 +1507,14 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
  */
 static GLint
 get_specific_compressed_tex_format(GLcontext *ctx,
-                                   GLint ifmt, GLint numDimensions)
+                                   GLint ifmt, GLint numDimensions,
+                                   GLint     *levelp,
+                                   GLsizei   *widthp,
+                                   GLsizei   *heightp,
+                                   GLsizei   *depthp,
+                                   GLint     *borderp,
+                                   GLenum    *formatp,
+                                   GLenum    *typep)
 {
    char message[100];
    GLint internalFormat = ifmt;
@@ -1516,22 +1523,14 @@ get_specific_compressed_tex_format(GLcontext *ctx,
        && ctx->Driver.SpecificCompressedTexFormat) {
       /*
        * First, ask the driver for the specific format.
+       * We do this for all formats, since we may want to
+       * fake one compressed format for another.
        */
-      switch (internalFormat) {
-         case GL_COMPRESSED_ALPHA_ARB:
-         case GL_COMPRESSED_LUMINANCE_ARB:
-         case GL_COMPRESSED_LUMINANCE_ALPHA_ARB:
-         case GL_COMPRESSED_INTENSITY_ARB:
-         case GL_COMPRESSED_RGB_ARB:
-         case GL_COMPRESSED_RGBA_ARB:
-            internalFormat = (*ctx->Driver.SpecificCompressedTexFormat)
-                                         (ctx, internalFormat, numDimensions);
-            /* XXX shouldn't we return now? */
-            break;
-         default:
-            /* silence compiler warnings */
-            ;
-      }
+       internalFormat = (*ctx->Driver.SpecificCompressedTexFormat)
+                               (ctx, internalFormat, numDimensions,
+                                levelp,
+                                widthp, heightp, depthp,
+                                borderp, formatp, typep);
    }
 
    /*
@@ -1597,7 +1596,6 @@ get_specific_compressed_tex_format(GLcontext *ctx,
 }
 
 
-
 /*
  * Called from the API.  Note that width includes the border.
  */
@@ -1619,7 +1617,10 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       struct gl_texture_image *texImage;
       GLint ifmt;
 
-      ifmt = get_specific_compressed_tex_format(ctx, internalFormat, 1);
+      ifmt = get_specific_compressed_tex_format(ctx, internalFormat, 1,
+                                                &level,
+                                                &width, 0, 0,
+                                                &border, &format, &type);
       if (ifmt < 0) {
          /*
           * The error here is that we were sent a generic compressed
@@ -1752,7 +1753,10 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       struct gl_texture_image *texImage;
       GLint ifmt;
 
-      ifmt = get_specific_compressed_tex_format(ctx, internalFormat, 2);
+      ifmt = get_specific_compressed_tex_format(ctx, internalFormat, 2,
+                                                &level,
+                                                &width, &height, 0,
+                                                &border, &format, &type);
       if (ifmt < 0) {
          /*
           * The error here is that we were sent a generic compressed
@@ -1894,7 +1898,10 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       struct gl_texture_image *texImage;
       GLint ifmt;
 
-      ifmt = get_specific_compressed_tex_format(ctx, internalFormat, 3);
+      ifmt = get_specific_compressed_tex_format(ctx, internalFormat, 3,
+                                                &level,
+                                                &width, &height, &depth,
+                                                &border, &format, &type);
       if (ifmt < 0) {
          /*
           * The error here is that we were sent a generic compressed
