@@ -47,7 +47,7 @@ static void _tnl_import_vertex( GLcontext *ctx,
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
-   GLubyte *data;
+   const GLubyte *data;
 
    tmp = _ac_import_vertex(ctx,
 			   GL_FLOAT,
@@ -80,7 +80,7 @@ static void _tnl_import_normal( GLcontext *ctx,
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
-   GLubyte *data;
+   const GLubyte *data;
 
    tmp = _ac_import_normal(ctx, GL_FLOAT,
 			   stride ? 3*sizeof(GLfloat) : 0, writeable,
@@ -148,7 +148,7 @@ static void _tnl_import_fogcoord( GLcontext *ctx,
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
-   GLubyte *data;
+   const GLubyte *data;
 
    tmp = _ac_import_fogcoord(ctx, GL_FLOAT,
 			     stride ? sizeof(GLfloat) : 0, writeable,
@@ -176,7 +176,7 @@ static void _tnl_import_index( GLcontext *ctx,
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
-   GLubyte *data;
+   const GLubyte *data;
 
    tmp = _ac_import_index(ctx, GL_UNSIGNED_INT,
 			  stride ? sizeof(GLuint) : 0, writeable,
@@ -206,7 +206,7 @@ static void _tnl_import_texcoord( GLcontext *ctx,
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
-   GLubyte *data;
+   const GLubyte *data;
 
    tmp = _ac_import_texcoord(ctx, unit, GL_FLOAT,
 			     stride ? 4 * sizeof(GLfloat) : 0,
@@ -238,7 +238,7 @@ static void _tnl_import_edgeflag( GLcontext *ctx,
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
-   GLubyte *data;
+   const GLubyte *data;
 
    tmp = _ac_import_edgeflag(ctx, GL_UNSIGNED_BYTE,
 			     stride ? sizeof(GLubyte) : 0,
@@ -270,7 +270,7 @@ static void _tnl_import_attrib( GLcontext *ctx,
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
-   GLubyte *data;
+   const GLubyte *data;
 
    tmp = _ac_import_attrib(ctx, index, GL_FLOAT,
                            stride ? 4 * sizeof(GLfloat) : 0,

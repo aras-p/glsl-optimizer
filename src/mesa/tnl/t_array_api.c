@@ -268,7 +268,11 @@ _tnl_DrawRangeElements(GLenum mode,
 
    if (ctx->Array.ElementArrayBufferObj->Name) {
       /* use indices in the buffer object */
-      ASSERT(ctx->Array.ElementArrayBufferObj->Data);
+      if (!ctx->Array.ElementArrayBufferObj->Data) {
+         _mesa_warning(ctx,
+                       "DrawRangeElements with empty vertex elements buffer!");
+         return;
+      }
       indices = (GLuint *) ctx->Array.ElementArrayBufferObj->Data;
    }
 
@@ -341,7 +345,10 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
 
    if (ctx->Array.ElementArrayBufferObj->Name) {
       /* use indices in the buffer object */
-      ASSERT(ctx->Array.ElementArrayBufferObj->Data);
+      if (!ctx->Array.ElementArrayBufferObj->Data) {
+         _mesa_warning(ctx, "DrawElements with empty vertex elements buffer!");
+         return;
+      }
       indices = (const GLvoid *) ctx->Array.ElementArrayBufferObj->Data;
    }
 

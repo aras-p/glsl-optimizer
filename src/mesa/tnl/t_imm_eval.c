@@ -119,7 +119,7 @@ static void eval1_4f_ca( struct gl_client_array *dest,
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
-   GLubyte *destData = ADD_POINTERS(dest->Ptr, dest->BufferObj->Data);
+   const GLubyte *destData = ADD_POINTERS(dest->Ptr, dest->BufferObj->Data);
    GLfloat (*to)[4] = (GLfloat (*)[4]) destData;
    GLuint i;
 
@@ -258,7 +258,7 @@ static void eval2_4f_ca( struct gl_client_array *dest,
    const GLfloat du = map->du;
    const GLfloat v1 = map->v1;
    const GLfloat dv = map->dv;
-   GLubyte *destData = ADD_POINTERS(dest->Ptr, dest->BufferObj->Data);
+   const GLubyte *destData = ADD_POINTERS(dest->Ptr, dest->BufferObj->Data);
    GLfloat (*to)[4] = (GLfloat (*)[4]) destData;
    GLuint i;
 
@@ -542,7 +542,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       GLuint generated = 0;
 
       if (copycount) {
-         GLubyte *destData = ADD_POINTERS(tmp->Color.Ptr, tmp->Color.BufferObj->Data);
+         const GLubyte *destData = ADD_POINTERS(tmp->Color.Ptr, tmp->Color.BufferObj->Data);
          copy_4f_stride( store->Attrib[VERT_ATTRIB_COLOR0] + IM->CopyStart, 
                          (GLfloat *) destData,
                          tmp->Color.StrideB,

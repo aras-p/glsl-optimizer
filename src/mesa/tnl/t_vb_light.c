@@ -323,13 +323,13 @@ static void dtr( struct gl_pipeline_stage *stage )
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
 
    if (store) {
-      ALIGN_FREE( store->LitColor[0].Ptr );
-      ALIGN_FREE( store->LitColor[1].Ptr );
-      ALIGN_FREE( store->LitSecondary[0].Ptr );
-      ALIGN_FREE( store->LitSecondary[1].Ptr );
+      ALIGN_FREE( (void *) store->LitColor[0].Ptr );
+      ALIGN_FREE( (void *) store->LitColor[1].Ptr );
+      ALIGN_FREE( (void *) store->LitSecondary[0].Ptr );
+      ALIGN_FREE( (void *) store->LitSecondary[1].Ptr );
 
       if (store->FloatColor.Ptr)
-	 ALIGN_FREE( store->FloatColor.Ptr );
+	 ALIGN_FREE( (void *) store->FloatColor.Ptr );
 
       _mesa_vector1ui_free( &store->LitIndex[0] );
       _mesa_vector1ui_free( &store->LitIndex[1] );

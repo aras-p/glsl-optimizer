@@ -1289,13 +1289,15 @@ struct gl_client_array {
    GLenum Type;
    GLsizei Stride;		/**< user-specified stride */
    GLsizei StrideB;		/**< actual stride in bytes */
-   GLubyte *Ptr;
-   GLuint Flags;
+   const GLubyte *Ptr;
    GLuint Enabled;		/**< one of the _NEW_ARRAY_ bits */
    GLboolean Normalized;        /**< GL_ARB_vertex_program */
 
    /**< GL_ARB_vertex_buffer_object */
    struct gl_buffer_object *BufferObj;
+   GLuint _MaxElement;
+
+   GLuint Flags;
 };
 
 

@@ -83,10 +83,10 @@ _swsetup_DestroyContext( GLcontext *ctx )
 	 ALIGN_FREE(swsetup->verts);
 
       if (swsetup->ChanSecondaryColor.Ptr) 
-	 ALIGN_FREE(swsetup->ChanSecondaryColor.Ptr);
+	 ALIGN_FREE((void *) swsetup->ChanSecondaryColor.Ptr);
 
       if (swsetup->ChanColor.Ptr) 
-	 ALIGN_FREE(swsetup->ChanColor.Ptr);
+	 ALIGN_FREE((void *) swsetup->ChanColor.Ptr);
 
       FREE(swsetup);
       ctx->swsetup_context = 0;
