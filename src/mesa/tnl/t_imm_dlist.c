@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.35 2002/01/05 20:51:13 brianp Exp $ */
+/* $Id: t_imm_dlist.c,v 1.36 2002/01/15 18:27:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,7 +29,6 @@
 
 
 #include "glheader.h"
-#include "api_compat.h"
 #include "context.h"
 #include "dlist.h"
 #include "debug.h"
@@ -619,10 +618,10 @@ static void loopback_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 	    glColor4fv( IM->Attrib[VERT_ATTRIB_COLOR0][i] );
 
 	 if (flags[i] & VERT_COLOR1_BIT)
-	    _compat_SecondaryColor3fvEXT( IM->Attrib[VERT_ATTRIB_COLOR1][i] );
+	    _glapi_Dispatch->SecondaryColor3fvEXT( IM->Attrib[VERT_ATTRIB_COLOR1][i] );
 
 	 if (flags[i] & VERT_FOG_BIT)
-	    _compat_FogCoordfEXT( IM->Attrib[VERT_ATTRIB_FOG][i][0] );
+	    _glapi_Dispatch->FogCoordfEXT( IM->Attrib[VERT_ATTRIB_FOG][i][0] );
 
 	 if (flags[i] & VERT_INDEX_BIT)
 	    glIndexi( IM->Index[i] );
