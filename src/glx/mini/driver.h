@@ -66,6 +66,7 @@ typedef struct DRIDriverContextRec {
    int chipset;
    int bpp; 
    int cpp;  
+   int agpmode;
    
    unsigned long FBStart;   /**< \brief physical address of the framebuffer */
    unsigned long MMIOStart; /**< \brief physical address of the MMIO region */

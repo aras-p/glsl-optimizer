@@ -793,6 +793,7 @@ static int __read_config_file( Display *dpy )
    dpy->driverContext.bpp = 32;
    dpy->driverContext.cpp = 4;
    dpy->rotateMode = 0;
+   dpy->driverContext.agpmode = 1;
 
    fname = getenv("MINIGLX_CONF");
    if (!fname) fname = "/etc/miniglx.conf";
@@ -857,6 +858,10 @@ static int __read_config_file( Display *dpy )
 	 if (sscanf(val, "%d", &dpy->driverContext.bpp) != 1)
 	    fprintf(stderr, "malformed bpp: %s\n", opt);
 	 dpy->driverContext.cpp = dpy->driverContext.bpp / 8;
+      }
+      else if (strcmp(opt, "agpmode") == 0) {
+         if (sscanf(val, "%d", &dpy->driverContext.agpmode) != 1)
+            fprintf(stderr, "malformed agpmode: %s\n", opt);
       }
    }
 
