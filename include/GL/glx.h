@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.14 2000/03/03 15:35:51 brianp Exp $ */
+/* $Id: glx.h,v 1.15 2000/03/06 12:59:24 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,8 +30,20 @@
 #define GLX_H
 
 
+#ifdef __VMS
+# ifdef __cplusplus
+/* VMS Xlib.h gives problems with C++.
+ * this avoids a bunch of trivial warnings */
+#pragma message disable nosimpint
+#endif
+#endif
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#ifdef __VMS
+# ifdef __cplusplus
+#pragma message enable nosimpint
+#endif
+#endif
 #include "GL/gl.h"
 #ifdef MESA
 #include "GL/xmesa.h"
