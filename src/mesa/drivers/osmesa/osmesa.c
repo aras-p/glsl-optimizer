@@ -1,10 +1,10 @@
-/* $Id: osmesa.c,v 1.72 2001/12/17 04:56:29 brianp Exp $ */
+/* $Id: osmesa.c,v 1.73 2002/01/30 16:53:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1996,7 +1996,13 @@ static const GLubyte *get_string( GLcontext *ctx, GLenum name )
    (void) ctx;
    switch (name) {
       case GL_RENDERER:
+#if CHAN_BITS == 32
+         return (const GLubyte *) "Mesa OffScreen32";
+#elif CHAN_BITS == 16
+         return (const GLubyte *) "Mesa OffScreen16";
+#else
          return (const GLubyte *) "Mesa OffScreen";
+#endif
       default:
          return NULL;
    }
