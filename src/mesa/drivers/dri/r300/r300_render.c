@@ -277,6 +277,8 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
 	
    reg_start(0x20b0,0);
 	e32(0x0000043f);
+   
+   memcpy(FLAT_COLOR_PIPELINE.vertex_shader.parameters.body.f, ctx->_ModelProjectMatrix.m, 16*4);
  
    program_pipeline(PASS_PREFIX &FLAT_COLOR_PIPELINE);
 
