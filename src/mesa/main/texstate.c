@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.88 2002/12/05 04:51:57 brianp Exp $ */
+/* $Id: texstate.c,v 1.89 2002/12/18 15:01:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1308,7 +1308,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             }
             else {
                _mesa_error(ctx, GL_INVALID_ENUM,
-                           "glTexParameter(bad GL_TEXTURE_COMPARE_MODE_ARB)");
+                           "glTexParameter(bad GL_TEXTURE_COMPARE_MODE_ARB: 0x%x)", mode);
                return;
             }
          }
