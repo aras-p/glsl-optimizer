@@ -540,7 +540,7 @@ _mesa_float_to_half(float val)
    const int flt_m = flt & 0x7fffff;
    const int flt_e = (flt >> 23) & 0xff;
    const int flt_s = (flt >> 31) & 0x1;
-   int s, e, m;
+   int s, e, m = 0;
    GLhalfNV result;
    
    /* sign bit */
@@ -549,17 +549,17 @@ _mesa_float_to_half(float val)
    /* handle special cases */
    if ((flt_e == 0) && (flt_m == 0)) {
       /* zero */
-      m = 0;
+      /* m = 0; - already set */
       e = 0;
    }
    else if ((flt_e == 0) && (flt_m != 0)) {
       /* denorm -- denorm float maps to 0 half */
-      m = 0;
+      /* m = 0; - already set */
       e = 0;
    }
    else if ((flt_e == 0xff) && (flt_m == 0)) {
       /* infinity */
-      m = 0;
+      /* m = 0; - already set */
       e = 31;
    }
    else if ((flt_e == 0xff) && (flt_m != 0)) {
@@ -572,7 +572,7 @@ _mesa_float_to_half(float val)
       const int new_exp = flt_e - 127;
       if (new_exp < -24) {
          /* this maps to 0 */
-         m = 0;
+         /* m = 0; - already set */
          e = 0;
       }
       else if (new_exp < -14) {
@@ -583,7 +583,7 @@ _mesa_float_to_half(float val)
             case 0:
                _mesa_warning(NULL,
                    "float_to_half: logical error in denorm creation!\n");
-               m = 0;
+               /* m = 0; - already set */
                break;
             case 1: m = 512 + (flt_m >> 14); break;
             case 2: m = 256 + (flt_m >> 15); break;
@@ -599,7 +599,7 @@ _mesa_float_to_half(float val)
       }
       else if (new_exp > 15) {
          /* map this value to infinity */
-         m = 0;
+         /* m = 0; - already set */
          e = 31;
       }
       else {
