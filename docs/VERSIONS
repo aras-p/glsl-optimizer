@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.49 2001/02/20 17:05:04 brianp Exp $
+$Id: VERSIONS,v 1.50 2001/02/20 17:08:55 brianp Exp $
 
 
 Mesa Version History
@@ -807,6 +807,8 @@ Mesa Version History
     New:
 	- internals of Mesa divided into modular pieces (Keith Whitwell)
 	- support for hardware T&L for DRI
+	- 100% OpenGL 1.2 conformance (passes all conformance tests)
+	- new AA line algorithm
 	- GL_EXT_convolution extension
 	- GL_ARB_imaging subset
 	- OSMesaCreateContextExt() function
@@ -815,14 +817,16 @@ Mesa Version History
 	- libOSMesa.so now created, contains the OSMesa driver interface
 	- GL_EXT_fog_coord extension (Keith Whitwell)
 	- GL_EXT_secondary_color extension (Keith Whitwell)
+	- GL_ARB_texture_env_add extension (same as GL_EXT_texture_env_add)
 	- GL_SGIX_depth_texture extension
 	- GL_SGIX_shadow and GL_SGIX_shadow_ambient extensions
 	- demos/shadowtex.c demo of GL_SGIX_depth_texture and GL_SGIX_shadow
+	- OSMesaCreateContextExt() function
+	- libOSMesa.so library, contains the OSMesa driver interface
 	- GL/glxext.h header file for GLX extensions
-	- Improved precision in glReadPixels, improves conformance for 16bpp
 	- somewhat faster software texturing, fogging, depth testing
 	- all color-index conformance tests now pass (only 8bpp tested)
     Bug Fixes:
 	- fbiRev and tmuRev were unitialized when using Glide3
     Changes:
-	- 
+	- ?? SGI SI GLU ??
