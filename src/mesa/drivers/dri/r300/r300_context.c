@@ -275,8 +275,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 
 	tcl_mode = driQueryOptioni(&r300->radeon.optionCache, "tcl_mode");
-	if (1 ||
-	    driQueryOptionb(&r300->radeon.optionCache, "no_rast")) {
+	if (driQueryOptionb(&r300->radeon.optionCache, "no_rast")) {
 		fprintf(stderr, "disabling 3D acceleration\n");
 		FALLBACK(&r300->radeon, RADEON_FALLBACK_DISABLE, 1);
 	}
