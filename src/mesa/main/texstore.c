@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.43 2002/10/18 17:41:45 brianp Exp $ */
+/* $Id: texstore.c,v 1.44 2002/10/18 18:03:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1897,34 +1897,14 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
    const struct gl_texture_format *convertFormat;
    const GLubyte *srcData;
    GLubyte *dstData;
-   GLint level;
-   GLint maxLevels = 0;
+   GLint level, maxLevels;
 
    ASSERT(texObj);
    srcImage = texObj->Image[texObj->BaseLevel];
    ASSERT(srcImage);
 
-   switch (texObj->Target) {
-   case GL_TEXTURE_1D:
-      maxLevels = ctx->Const.MaxTextureLevels;
-      break;
-   case GL_TEXTURE_2D:
-      maxLevels = ctx->Const.MaxTextureLevels;
-      break;
-   case GL_TEXTURE_3D:
-      maxLevels = ctx->Const.Max3DTextureLevels;
-      break;
-   case GL_TEXTURE_CUBE_MAP_ARB:
-      maxLevels = ctx->Const.MaxCubeTextureLevels;
-      break;
-   case GL_TEXTURE_RECTANGLE_NV:
-      maxLevels = 1;
-      break;
-   default:
-      _mesa_problem(ctx,
-                    "Bad texture object dimension in _mesa_generate_mipmaps");
-      return;
-   }
+   maxLevels = _mesa_max_texture_levels(ctx, texObj->Target);
+   ASSERT(maxLevels > 0);  /* bad target */
 
    /* Find convertFormat - the format that do_row() will process */
    if (srcImage->IsCompressed) {

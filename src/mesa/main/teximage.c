@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.121 2002/10/18 13:24:08 brianp Exp $ */
+/* $Id: teximage.c,v 1.122 2002/10/18 18:03:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -579,6 +579,41 @@ _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
       default:
          _mesa_problem(ctx, "bad target in _mesa_select_tex_image()");
          return NULL;
+   }
+}
+
+
+/*
+ * Return the maximum number of allows mipmap levels for the given
+ * texture target.
+ */
+GLint
+_mesa_max_texture_levels(GLcontext *ctx, GLenum target)
+{
+   switch (target) {
+   case GL_TEXTURE_1D:
+   case GL_PROXY_TEXTURE_1D:
+   case GL_TEXTURE_2D:
+   case GL_PROXY_TEXTURE_2D:
+      return ctx->Const.MaxTextureLevels;
+   case GL_TEXTURE_3D:
+   case GL_PROXY_TEXTURE_3D:
+      return ctx->Const.Max3DTextureLevels;
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+      return ctx->Const.MaxCubeTextureLevels;
+      break;
+   case GL_TEXTURE_RECTANGLE_NV:
+   case GL_PROXY_TEXTURE_RECTANGLE_NV:
+      return 1;
+      break;
+   default:
+      return 0; /* bad target */
    }
 }
 
@@ -1455,20 +1490,8 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
-   if (target == GL_TEXTURE_1D || target == GL_TEXTURE_2D) {
-      maxLevels = ctx->Const.MaxTextureLevels;
-   }
-   else if (target == GL_TEXTURE_3D) {
-      maxLevels = ctx->Const.Max3DTextureLevels;
-   }
-   else if (target == GL_TEXTURE_RECTANGLE_NV) {
-      maxLevels = 1;
-   }
-   else {
-      maxLevels = ctx->Const.MaxCubeTextureLevels;
-   }
-
-   ASSERT(maxLevels > 0);
+   maxLevels = _mesa_max_texture_levels(ctx, target);
+   ASSERT(maxLevels > 0);  /* 0 indicates bad target, caught above */
 
    if (level < 0 || level >= maxLevels) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glGetTexImage(level)" );
@@ -2887,17 +2910,8 @@ _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
       return;
    }
 
-   if (target == GL_TEXTURE_1D || target == GL_TEXTURE_2D) {
-      maxLevels = ctx->Const.MaxTextureLevels;
-   }
-   else if (target == GL_TEXTURE_3D) {
-      maxLevels = ctx->Const.Max3DTextureLevels;
-   }
-   else {
-      maxLevels = ctx->Const.MaxCubeTextureLevels;
-   }
-
-   ASSERT(maxLevels > 0);
+   maxLevels = _mesa_max_texture_levels(ctx, target);
+   ASSERT(maxLevels > 0); /* 0 indicates bad target, caught above */
 
    if (level < 0 || level >= maxLevels) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetCompressedTexImageARB(level)");

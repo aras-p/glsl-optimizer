@@ -1,4 +1,4 @@
-/* $Id: teximage.h,v 1.21 2002/06/15 03:03:09 brianp Exp $ */
+/* $Id: teximage.h,v 1.22 2002/10/18 18:03:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -69,6 +69,9 @@ extern struct gl_texture_image *
 _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
                        GLenum target, GLint level);
 
+
+extern GLint
+_mesa_max_texture_levels(GLcontext *ctx, GLenum target);
 
 
 /*** API entry point functions ***/
