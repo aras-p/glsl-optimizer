@@ -1,10 +1,10 @@
-/* $Id: dispatch.c,v 1.6 1999/12/10 20:01:06 brianp Exp $ */
+/* $Id: dispatch.c,v 1.7 2000/01/07 07:16:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -420,7 +420,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->Vertex4sv = _mesa_Vertex4sv;
    exec->Viewport = _mesa_Viewport;
 
-#ifdef _GLAPI_VERSION_1_1
+   /* 1.1 */
    exec->AreTexturesResident = _mesa_AreTexturesResident;
    exec->ArrayElement = _mesa_ArrayElement;
    exec->BindTexture = _mesa_BindTexture;
@@ -450,17 +450,15 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->TexSubImage1D = _mesa_TexSubImage1D;
    exec->TexSubImage2D = _mesa_TexSubImage2D;
    exec->VertexPointer = _mesa_VertexPointer;
-#endif
 
-#ifdef _GLAPI_VERSION_1_2
+   /* 1.2 */
    exec->CopyTexSubImage3D = _mesa_CopyTexSubImage3D;
    exec->DrawRangeElements = _mesa_DrawRangeElements;
    exec->TexImage3D = _mesa_TexImage3D;
    exec->TexSubImage3D = _mesa_TexSubImage3D;
-#endif
+
 
    /* OpenGL 1.2  GL_ARB_imaging */
-#ifdef _GLAPI_ARB_imaging
    exec->BlendColor = _mesa_BlendColor;
    exec->BlendEquation = _mesa_BlendEquation;
    exec->ColorSubTable = _mesa_ColorSubTable;
@@ -495,39 +493,32 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->ResetHistogram = _mesa_ResetHistogram;
    exec->ResetMinmax = _mesa_ResetMinmax;
    exec->SeparableFilter2D = _mesa_SeparableFilter2D;
-#endif
 
-#ifdef _GLAPI_EXT_paletted_texture
+   /* GL_EXT_paletted_texture */
    exec->ColorTableEXT = _mesa_ColorTableEXT;
    exec->ColorSubTableEXT = _mesa_ColorSubTableEXT;
    exec->GetColorTableEXT = _mesa_GetColorTableEXT;
    exec->GetColorTableParameterfvEXT = _mesa_GetColorTableParameterfvEXT;
    exec->GetColorTableParameterivEXT = _mesa_GetColorTableParameterivEXT;
-#endif
 
-#ifdef _GLAPI_EXT_compiled_vertex_array
+   /* GL_EXT_compiled_vertex_array */
    exec->LockArraysEXT = _mesa_LockArraysEXT;
    exec->UnlockArraysEXT = _mesa_UnlockArraysEXT;
-#endif
 
-#ifdef _GLAPI_EXT_point_parameters
+   /* GL_EXT_point_parameters */
    exec->PointParameterfEXT = _mesa_PointParameterfEXT;
    exec->PointParameterfvEXT = _mesa_PointParameterfvEXT;
-#endif
 
-#ifdef _GLAPI_EXT_polygon_offset
+   /* GL_EXT_polygon_offset */
    exec->PolygonOffsetEXT = _mesa_PolygonOffsetEXT;
-#endif
 
-#ifdef _GLAPI_EXT_blend_minmax
+   /* GL_EXT_blend_minmax */
    exec->BlendEquationEXT = _mesa_BlendEquationEXT;
-#endif
 
-#ifdef _GLAPI_EXT_blend_color
+   /* GL_EXT_blend_color */
    exec->BlendColorEXT = _mesa_BlendColorEXT;
-#endif
 
-#ifdef _GLAPI_ARB_multitexture
+   /* GL_ARB_multitexture */
    exec->ActiveTextureARB = _mesa_ActiveTextureARB;
    exec->ClientActiveTextureARB = _mesa_ClientActiveTextureARB;
    exec->MultiTexCoord1dARB = _mesa_MultiTexCoord1dARB;
@@ -562,26 +553,20 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->MultiTexCoord4ivARB = _mesa_MultiTexCoord4ivARB;
    exec->MultiTexCoord4sARB = _mesa_MultiTexCoord4sARB;
    exec->MultiTexCoord4svARB = _mesa_MultiTexCoord4svARB;
-#endif
 
-#ifdef _GLAPI_INGR_blend_func_separate
+   /* GL_INGR_blend_func_separate */
    exec->BlendFuncSeparateINGR = _mesa_BlendFuncSeparateINGR;
-#endif
 
-#ifdef _GLAPI_MESA_window_pos
+   /* GL_MESA_window_pos */
    exec->WindowPos4fMESA = _mesa_WindowPos4fMESA;
-#endif
 
-#ifdef _GLAPI_MESA_resize_buffers
+   /* GL_MESA_resize_buffers */
    exec->ResizeBuffersMESA = _mesa_ResizeBuffersMESA;
-#endif
 
-#ifdef _GLAPI_ARB_transpose_matrix
+   /* GL_ARB_transpose_matrix */
    exec->LoadTransposeMatrixdARB = _mesa_LoadTransposeMatrixdARB;
    exec->LoadTransposeMatrixfARB = _mesa_LoadTransposeMatrixfARB;
    exec->MultTransposeMatrixdARB = _mesa_MultTransposeMatrixdARB;
    exec->MultTransposeMatrixfARB = _mesa_MultTransposeMatrixfARB;
-#endif
-
 }
 
