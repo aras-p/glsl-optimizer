@@ -12,6 +12,7 @@ SOURCES = antialias.c \
    arbfpspec.c \
 	arbfptest1.c \
    arbfptexture.c \
+   arbfptrig.c \
 	arbvptest1.c \
 	arbvptest3.c \
 	arbvptorus.c \
@@ -29,6 +30,7 @@ SOURCES = antialias.c \
 	seccolor.c \
 	sharedtex.c \
 	stencilwrap.c \
+	tex1d.c \
 	texline.c \
 	texrect.c \
 	texwrap.c \
