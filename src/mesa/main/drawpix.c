@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.25 2000/06/30 22:09:47 brianp Exp $ */
+/* $Id: drawpix.c,v 1.26 2000/06/30 22:19:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -654,7 +654,8 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
                   pixels, width, height, format, type, 0, row, 0);
          _mesa_unpack_ubyte_color_span(ctx, width, GL_RGBA, (void*) rgba,
                    format, type, source, unpack, GL_TRUE);
-         if (ctx->Pixel.MinMaxEnabled && ctx->MinMax.Sink)
+         if ((ctx->Pixel.MinMaxEnabled && ctx->MinMax.Sink) ||
+             (ctx->Pixel.HistogramEnabled && ctx->Histogram.Sink))
             continue;
 
          if (ctx->Texture.ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
