@@ -760,7 +760,7 @@ static void savageRenderStart( GLcontext *ctx )
    /* EMIT_ATTR's must be in order as they tell t_vertex.c how to
     * build up a hardware vertex.
     */
-   if (index & _TNL_BITS_TEX_ANY) {
+   if ((index & _TNL_BITS_TEX_ANY) || !(ctx->_TriangleCaps & DD_FLATSHADE)) {
       EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, SAVAGE_HW_NO_W );
    }
    else {
@@ -797,9 +797,12 @@ static void savageRenderStart( GLcontext *ctx )
    }
 
    /* Only need to change the vertex emit code if there has been a
-    * statechange to a new hardware vertex format:
+    * statechange to a new hardware vertex format and also when the
+    * vertex format is set for the first time. This is indicated by
+    * imesa->vertex_size == 0.
     */
-   if (drawCmd != (imesa->DrawPrimitiveCmd & SAVAGE_HW_SKIPFLAGS)) {
+   if (drawCmd != (imesa->DrawPrimitiveCmd & SAVAGE_HW_SKIPFLAGS) ||
+       imesa->vertex_size == 0) {
       imesa->vertex_size = 
 	 _tnl_install_attrs( ctx, 
 			     imesa->vertex_attrs, 
