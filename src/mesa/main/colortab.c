@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.5 1999/11/11 17:50:04 brianp Exp $ */
+/* $Id: colortab.c,v 1.6 1999/11/11 17:53:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -220,7 +220,7 @@ _mesa_ColorSubTableEXT( GLenum target, GLsizei start,
    GLint comps;
    GLubyte *dest;
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glColorSubTable");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glColorSubTableEXT");
 
    switch (target) {
       case GL_TEXTURE_1D:
