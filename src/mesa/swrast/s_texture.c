@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_texture.c,v 1.3 2000/12/08 00:09:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2529,7 +2529,7 @@ void gl_texture_pixels( GLcontext *ctx, GLuint texUnit, GLuint n,
    if (ctx->Texture._ReallyEnabled & mask) {
       const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
 
-      if (textureUnit->_Current) {
+      if (textureUnit->_Current) {   /* XXX need this? */
          GLchan texel[PB_SIZE][4];
 
 	 if (textureUnit->LodBias != 0.0F) {

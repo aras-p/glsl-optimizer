@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.5 2000/11/21 23:17:36 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.6 2000/12/08 00:09:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -439,7 +439,6 @@
          dsdx = oneOverArea * (eMaj_ds * eBot.dy - eMaj.dy * eBot_ds);
          dsdy = oneOverArea * (eMaj.dx * eBot_ds - eMaj_ds * eBot.dx);
 
-
 	 eMaj_dt = vMax->texcoord[0][1] * wMax - vMin->texcoord[0][1] * wMin;
 	 eBot_dt = vMid->texcoord[0][1] * wMid - vMin->texcoord[0][1] * wMin;
 	 dtdx = oneOverArea * (eMaj_dt * eBot.dy - eMaj.dy * eBot_dt);
@@ -477,23 +476,23 @@
                dsdy[u] = oneOverArea * (eMaj.dx * eBot_ds - eMaj_ds * eBot.dx);
 
 	       eMaj_dt = vMax->texcoord[u][1] * wMax
-		  - vMin->texcoord[u][1] * wMin;
+		       - vMin->texcoord[u][1] * wMin;
 	       eBot_dt = vMid->texcoord[u][1] * wMid
-		  - vMin->texcoord[u][1] * wMin;
+		       - vMin->texcoord[u][1] * wMin;
 	       dtdx[u] = oneOverArea * (eMaj_dt * eBot.dy - eMaj.dy * eBot_dt);
 	       dtdy[u] = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
 	       
 	       eMaj_du = vMax->texcoord[u][2] * wMax
-		  - vMin->texcoord[u][2] * wMin;
+                       - vMin->texcoord[u][2] * wMin;
 	       eBot_du = vMid->texcoord[u][2] * wMid
-		  - vMin->texcoord[u][2] * wMin;
+                       - vMin->texcoord[u][2] * wMin;
 	       dudx[u] = oneOverArea * (eMaj_du * eBot.dy - eMaj.dy * eBot_du);
 	       dudy[u] = oneOverArea * (eMaj.dx * eBot_du - eMaj_du * eBot.dx);
 	       
 	       eMaj_dv = vMax->texcoord[u][3] * wMax
-		  - vMin->texcoord[u][3] * wMin;
+                       - vMin->texcoord[u][3] * wMin;
 	       eBot_dv = vMid->texcoord[u][3] * wMid
-		  - vMin->texcoord[u][3] * wMin;
+                       - vMin->texcoord[u][3] * wMin;
 	       dvdx[u] = oneOverArea * (eMaj_dv * eBot.dy - eMaj.dy * eBot_dv);
 	       dvdy[u] = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
             }
