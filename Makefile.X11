@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.97 2003/12/10 02:44:38 brianp Exp $
+# $Id: Makefile.X11,v 1.98 2003/12/12 15:32:25 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -74,7 +74,7 @@ default:
 	@echo "  make linux-osmesa16        for 16-bit/channel OSMesa"
 	@echo "  make linux-osmesa16-static for 16-bit/channel OSMesa, make static libs"
 	@echo "  make linux-osmesa32        for 32-bit/channel OSMesa"
-	@echo "  make linux-solo            for Linux standalone with dri drivers"
+	@echo "  make linux-solo            for Linux standalone with DRI drivers"
 	@echo "  make linux-icc             for Linux with the Intel C/C++ compiler"
 	@echo "  make lynxos                for LynxOS systems with GCC"
 	@echo "  make mklinux               for Linux on Power Macintosh"
@@ -92,6 +92,7 @@ default:
 	@echo "  make sunos5                for Suns with SunOS 5.x"
 	@echo "  make sunos5-smp            for Suns with SunOS 5.x, SMP optimization"
 	@echo "  make sunos5-gcc            for Suns with SunOS 5.x and GCC"
+	@echo "  make sunos5-gcc-debug      for Suns with SunOS 5.x and GCC"
 	@echo "  make ultrix-gcc            for DEC systems with Ultrix and GCC"
 	@echo "  make unixware              for PCs running UnixWare"
 	@echo "  make unixware-shared       for PCs running UnixWare, shared libs"
@@ -104,6 +105,7 @@ default:
 # have a C++ compiler and those that don't for the SI-GLU library.
 
 aix aix-sl darwin freebsd freebsd-386 gcc-sl \
+cygnus cygnus-linux:
 hpux9 hpux9-sl hpux9-gcc hpux9-gcc-sl \
 hpux10 hpux10-sl hpux10-gcc hpux10-gcc-sl \
 linux linux-debug \
@@ -115,102 +117,215 @@ linux-sparc linux-sparc5 linux-sparc-ultra \
 mklinux netbsd osf1 openbsd qnx \
 solaris-x86 solaris-x86-gcc \
 sunos4 sunos4-sl sunos4-gcc sunos4-gcc-sl sunos4-gcc-x11r6-sl \
-sunos5 sunos5-smp sunos5-gcc \
+sunos5 sunos5-smp sunos5-gcc sunos5-gcc-debug \
 ultrix-gcc unixware:
 	-mkdir lib
-	if [ -d src/mesa     ] ; then touch src/mesa/depend     ; fi
-	if [ -d src/glu/sgi  ] ; then touch src/glu/sgi/depend  ; fi
-	if [ -d src/glut/glx ] ; then touch src/glut/glx/depend ; fi
-	if [ -d src/glw      ] ; then touch src/glw/depend      ; fi
-	if [ -d src/mesa      ] ; then cd src/mesa      ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glu/sgi   ] ; then cd src/glu/sgi   ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glut/glx  ] ; then cd src/glut/glx  ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/demos   ] ; then cd progs/demos   ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/xdemos  ] ; then cd progs/xdemos  ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/samples ] ; then cd progs/samples ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/redbook ] ; then cd progs/redbook ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glw       ] ; then cd src/glw       ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d src/mesa ] ; then \
+		cd src/mesa ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d src/glu/sgi ] ; then \
+		cd src/glu/sgi ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d src/glut/glx ] ; then \
+		cd src/glut/glx ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d src/glw ] ; then \
+		cd src/glw ; \
+		touch src/glw/depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/demos ] ; then \
+		cd progs/demos ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/xdemos ] ; then \
+		cd progs/xdemos ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/samples ] ; then \
+		cd progs/samples ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/redbook ] ; then \
+		cd progs/redbook ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+
 
 gcc-mesa-sl:
 	if [ -d src ] ; then cd src  ; $(MAKE) -f Makefile.X11 $@ ; fi
 
+
 irix6-o32 irix6-o32-dso irix6-n32 irix6-n32-dso irix6-gcc-n32-sl:
 	-mkdir lib32
-	if [ -d src/mesa      ] ; then touch src/mesa/depend      ; fi
-	if [ -d src/glu/sgi   ] ; then touch src/glu/sgi/depend   ; fi
-	if [ -d src/glut/glx ] ; then touch src/glut/glx/depend ; fi
-	if [ -d src/glw ] ; then touch src/glw/depend ; fi
-	if [ -d src/mesa      ] ; then cd src/mesa      ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glu/sgi   ] ; then cd src/glu/sgi   ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glut/glx ] ; then cd src/glut/glx ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/demos    ] ; then cd progs/demos    ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/xdemos   ] ; then cd progs/xdemos   ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/samples  ] ; then cd progs/samples  ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/redbook     ] ; then cd progs/redbook     ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glw ] ; then cd src/glw; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d src/mesa ] ; then \
+		cd src/mesa ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d src/glu/sgi ] ; then \
+		cd src/glu/sgi ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d src/glut/glx ] ; then \
+		cd src/glut/glx ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d src/glw ] ; then \
+		cd src/glw ; \
+		touch src/glw/depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/demos ] ; then \
+		cd progs/demos ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/xdemos ] ; then \
+		cd progs/xdemos ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/samples ] ; then \
+		cd progs/samples ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/redbook ] ; then \
+		cd progs/redbook ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
 
 irix6-64 irix6-64-dso:
 	-mkdir lib64
-	if [ -d src/mesa     ] ; then touch src/mesa/depend     ; fi
-	if [ -d src/glu/sgi  ] ; then touch src/glu/sgi/depend  ; fi
-	if [ -d src/glut/glx ] ; then touch src/glut/glx/depend ; fi
-	if [ -d src/glw      ] ; then touch src/glw/depend      ; fi
-	if [ -d src/mesa      ] ; then cd src/mesa      ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glu/sgi   ] ; then cd src/glu/sgi   ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glut/glx  ] ; then cd src/glut/glx  ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/demos   ] ; then cd progs/demos   ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/xdemos  ] ; then cd progs/xdemos  ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/samples ] ; then cd progs/samples ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/redbook ] ; then cd progs/redbook ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glw ] ; then cd src/glw; $(MAKE) -f Makefile.X11 $@ ; fi
-
+	if [ -d src/mesa ] ; then \
+		cd src/mesa ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d src/glu/sgi ] ; then \
+		cd src/glu/sgi ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d src/glut/glx ] ; then \
+		cd src/glut/glx ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d src/glw ] ; then \
+		cd src/glw ; \
+		touch src/glw/depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/demos ] ; then \
+		cd progs/demos ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/xdemos ] ; then \
+		cd progs/xdemos ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/samples ] ; then \
+		cd progs/samples ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/redbook ] ; then \
+		cd progs/redbook ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
 
 beos-r4:
 	-mkdir lib
-	-rm src/mesa/depend
-	touch src/mesa/depend
-	-rm src/glu/sgi/depend
-	touch src/glu/sgi/depend
-	if [ -d src/mesa      ] ; then cd src/mesa      ; $(MAKE) -f Makefile.BeOS-R4 $@ ; fi
-	if [ -d src/glu/sgi   ] ; then cd src/glu/sgi   ; $(MAKE) -f Makefile.BeOS-R4 $@ ; fi
-	if [ -d src/glut/beos ] ; then cd src/glut/beos ; $(MAKE) -f Makefile.BeOS-R4 $@ ; fi
-	if [ -d src/glut/beos ] ; then cp src/glut/beos/obj*/libglut.so lib  ; fi
-	if [ -d progs/beos    ] ; then cd progs/beos    ; $(MAKE)                        ; fi
-	if [ -d progs/demos   ] ; then cd progs/demos   ; $(MAKE) -f Makefile.BeOS-R4 $@ ; fi
-	if [ -d progs/samples ] ; then cd progs/samples ; $(MAKE) -f Makefile.BeOS-R4 $@ ; fi
-	if [ -d progs/redbook ] ; then cd progs/redbook ; $(MAKE) -f Makefile.BeOS-R4 $@ ; fi
+	if [ -d src/mesa ] ; then \
+		cd src/mesa ; \
+		-rm depend ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.BeOS-R4 $@ ; \
+	fi
+	if [ -d src/glu/sgi ] ; then \
+		cd src/glu/sgi ; \
+		-rm depend ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.BeOS-R4 $@ ; \
+	fi
+	if [ -d src/glut/beos ] ; then \
+		cd src/glut/beos ; \
+		$(MAKE) -f Makefile.BeOS-R4 $@ ; \
+		cp obj*/libglut.so ../../../lib ; \
+	fi
+	if [ -d progs/beos ] ; then \
+		cd progs/beos ; \
+		$(MAKE) ; \
+	fi
+	if [ -d progs/demos ] ; then \
+		cd progs/demos ; \
+		$(MAKE) -f Makefile.BeOS-R4 $@ ; \
+	fi
+	if [ -d progs/samples ] ; then \
+		cd progs/samples ; \
+		$(MAKE) -f Makefile.BeOS-R4 $@ ; \
+	fi
+	if [ -d progs/redbook ] ; then \
+		cd progs/redbook ; \
+		$(MAKE) -f Makefile.BeOS-R4 $@ ; \
+	fi
 
-cygnus cygnus-linux:
-	-mkdir lib
-	touch src/depend
-	touch src-glu/depend
-	if [ -d src/mesa     ] ; then cd src/mesa     ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glu/sgi  ] ; then cd src/glu/sgi  ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glut/glx ] ; then cd src/glut/glx ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/demos  ] ; then cd progs/demos  ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/xdemos ] ; then cd progs/xdemos ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glw      ] ; then cd src/glw      ; $(MAKE) -f Makefile.X11 $@ ; fi
 
 openstep:
 	-mkdir lib
 	cd src/mesa    ; $(MAKE) -f Makefile.X11 "MYCC=${CC}" $@
 	cd src/glu/sgi ; $(MAKE) -f Makefile.X11 "MYCC=${CC}" $@
 
+
 linux-ggi linux-x86-ggi:
 	-mkdir lib
-	touch src/depend
-	touch src/glu/sgi/depend
-	if [ -d src/glut/glx    ] ; then touch src/glut/glx/depend ; fi
-	if [ -d src/glw         ] ; then touch src/glw/depend ; fi
-	if [ -d src/mesa        ] ; then cd src            ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glu/sgi     ] ; then cd src/glu/sgi    ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glut/glx    ] ; then cd src/glut/glx   ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d ggi/demos       ] ; then cd ggi/demos      ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/demos     ] ; then cd progs/demos    ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/xdemos    ] ; then cd progs/xdemos   ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/samples   ] ; then cd progs/samples  ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/redbook   ] ; then cd progs/redbook  ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glw ] ; then cd src/glw; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d src/mesa ] ; then \
+		cd src/mesa ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d src/glu/sgi ] ; then \
+		cd src/glu/sgi ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d src/glut/glx ] ; then \
+		cd src/glut/glx ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d src/glw ] ; then \
+		cd src/glw ; \
+		touch src/glw/depend ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/demos ] ; then \
+		cd progs/demos ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/xdemos ] ; then \
+		cd progs/xdemos ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/samples ] ; then \
+		cd progs/samples ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/redbook ] ; then \
+		cd progs/redbook ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+	if [ -d progs/ggi ] ; then \
+		cd progs/ggi ; \
+		$(MAKE) -f Makefile.X11 $@ ; \
+	fi
+
 
 # if you change GGI_DEST please change it in ggimesa.conf, too.
 DESTDIR=/usr/local
@@ -225,52 +340,67 @@ linux-ggi-install linux-x86-ggi-install:
 #	echo ".include $(DESTDIR)/etc/ggi/ggimesa.conf" >> $(DESTDIR)/etc/ggi/libggi.conf ; \
 #	fi
 
+
 linux-osmesa16 linux-osmesa16-static linux-osmesa32:
 	-mkdir lib
-	if [ -d src/mesa ] ; then touch src/mesa/depend ; fi
-	if [ -d src/mesa ] ; then cd src/mesa ; $(MAKE) -f Makefile.OSMesa16 $@ ; fi
+	if [ -d src/mesa ] ; then \
+		cd src/mesa ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.OSMesa16 $@ ; \
+	fi
 
+
+# Stand-alone DRI hardware drivers
 linux-solo:
 	-mkdir lib
-	if [ -d src/mesa     ] ; then touch src/mesa/depend     ; fi
-	if [ -d src/glx/mini ] ; then touch src/glx/mini/depend  ; fi
-	if [ -d src/glu/mini ] ; then touch src/glu/mini/depend  ; fi
-	if [ -d src/glut/mini ] ; then touch src/glut/mini/depend  ; fi
-	if [ -d src/mesa/drivers/dri/r200 ] ; then touch src/mesa/drivers/dri/r200/depend ; fi
-	if [ -d src/mesa/drivers/dri/r128 ] ; then touch src/mesa/drivers/dri/r128/depend ; fi
-	if [ -d src/mesa/drivers/dri/radeon ] ; then touch src/mesa/drivers/dri/radeon/depend ; fi
-	if [ -d src/mesa/drivers/dri/mga ] ; then touch src/mesa/drivers/dri/mga/depend ; fi
-	if [ -d src/mesa/drivers/dri/i810 ] ; then touch src/mesa/drivers/dri/i810/depend ; fi
-	if [ -d src/mesa/drivers/dri/i830 ] ; then touch src/mesa/drivers/dri/i830/depend ; fi
-	if [ -d src/mesa/drivers/dri/sis ] ; then touch src/mesa/drivers/dri/sis/depend ; fi
-	if [ -d src/mesa/drivers/dri/gamma ] ; then touch src/mesa/drivers/dri/gamma/depend ; fi
-	if [ -d src/mesa/drivers/dri/tdfx ] ; then touch src/mesa/drivers/dri/tdfx/depend ; fi
-	if [ -d src/mesa/drivers/dri/fb ] ; then touch src/mesa/drivers/dri/fb/depend ; fi
-	if [ -d src/glut/mini ] ; then touch src/glut/mini/depend ; fi
-	if [ -d progs/miniglx ] ; then touch progs/miniglx/depend ; fi
-	if [ -d progs/tests ] ; then touch progs/tests/depend ; fi
-	if [ -d src/mesa      ] ; then cd src/mesa      ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/mesa/drivers/dri/r200 ] ; then cd src/mesa/drivers/dri/r200     ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/mesa/drivers/dri/r128 ] ; then cd src/mesa/drivers/dri/r128     ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/mesa/drivers/dri/radeon ] ; then cd src/mesa/drivers/dri/radeon ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/mesa/drivers/dri/mga ] ; then cd src/mesa/drivers/dri/mga       ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/mesa/drivers/dri/i810 ] ; then cd src/mesa/drivers/dri/i810       ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/mesa/drivers/dri/i830 ] ; then cd src/mesa/drivers/dri/i830       ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/mesa/drivers/dri/sis ] ; then cd src/mesa/drivers/dri/sis       ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/mesa/drivers/dri/gamma ] ; then cd src/mesa/drivers/dri/gamma       ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/mesa/drivers/dri/tdfx ] ; then cd src/mesa/drivers/dri/tdfx       ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/mesa/drivers/dri/fb ] ; then cd src/mesa/drivers/dri/fb         ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glx/mini  ] ; then cd src/glx/mini  ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glu/mini  ] ; then cd src/glu/mini  ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glut/mini ] ; then cd src/glut/mini ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/miniglx ] ; then cd progs/miniglx ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/tests   ] ; then cd progs/tests   ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/demos   ] ; then cd progs/demos   ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/xdemos  ] ; then cd progs/xdemos  ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/samples ] ; then cd progs/samples ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/redbook ] ; then cd progs/redbook ; $(MAKE) -f Makefile.X11 $@ ; fi
+	cd src/mesa                    ; touch depend ; $(MAKE) -f Makefile.solo $@
+	cd src/mesa/drivers/dri/r200   ; touch depend ; $(MAKE) -f Makefile.solo $@
+	cd src/mesa/drivers/dri/radeon ; touch depend ; $(MAKE) -f Makefile.solo $@
+	cd src/mesa/drivers/dri/r128   ; touch depend ; $(MAKE) -f Makefile.solo $@
+	cd src/mesa/drivers/dri/mga    ; touch depend ; $(MAKE) -f Makefile.solo $@
+	cd src/mesa/drivers/dri/i810   ; touch depend ; $(MAKE) -f Makefile.solo $@
+	cd src/mesa/drivers/dri/i830   ; touch depend ; $(MAKE) -f Makefile.solo $@
+	cd src/mesa/drivers/dri/sis    ; touch depend ; $(MAKE) -f Makefile.solo $@
+	cd src/mesa/drivers/dri/gamma  ; touch depend ; $(MAKE) -f Makefile.solo $@
+#	cd src/mesa/drivers/dri/tdfx   ; touch depend ; $(MAKE) -f Makefile.solo $@
+	cd src/mesa/drivers/dri/fb     ; touch depend ; $(MAKE) -f Makefile.solo $@
+	cd src/glx/mini                ; touch depend ; $(MAKE) -f Makefile.solo $@
+	if [ -d src/glu/sgi ] ; then \
+		cd src/glu/sgi ; \
+		touch depend ; \
+		ln -s Makefile.X11 Makefile.solo ; \
+		$(MAKE) -f Makefile.solo $@ ; \
+	fi
+	if [ -d src/glut/mini ] ; then \
+		cd src/glut/mini ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.solo $@ ; \
+	fi
+	if [ -d progs/miniglx ] ; then \
+		cd progs/miniglx ; \
+		touch depend ; \
+		$(MAKE) -f Makefile.solo $@ ; \
+	fi
+#	if [ -d progs/demos ] ; then \
+#		cd progs/demos ; \
+#		$(MAKE) -f Makefile.X11 $@ ; \
+#	fi
+#	if [ -d progs/xdemos ] ; then \
+#		cd progs/xdemos ; \
+#		$(MAKE) -f Makefile.X11 $@ ; \
+#	fi
+#	if [ -d progs/samples ] ; then \
+#		cd progs/samples ; \
+#		$(MAKE) -f Makefile.X11 $@ ; \
+#	fi
+#	if [ -d progs/redbook ] ; then \
+#		cd progs/redbook ; \
+#		$(MAKE) -f Makefile.X11 $@ ; \
+#	fi
+
 
 # Remove .o files, emacs backup files, etc.
+# XXX this should be cleaned up
 clean:
 	if ! [ -f src/mesa/depend      ] ; then touch src/mesa/depend      ; fi
 	if ! [ -f src/mesa/drivers/dri/r200/depend ];   then touch src/mesa/drivers/dri/r200/depend;   fi
@@ -321,6 +451,7 @@ clean:
 	if [ -f progs/tests/depend   ] ; then rm -f progs/tests/depend   ; fi
 	if [ -f progs/miniglx/depend ] ; then rm -f progs/miniglx/depend ; fi
 
+
 # Remove everything that can be remade
 realclean: clean
 	-rm -fr lib lib32 lib64
@@ -328,6 +459,7 @@ realclean: clean
 	cd progs/xdemos      && $(MAKE) -f Makefile.X11 realclean || true
 	cd progs/redbook     && $(MAKE) -f Makefile.X11 realclean || true
 	cd progs/samples     && $(MAKE) -f Makefile.X11 realclean || true
+
 
 # Remove everything not in CVS
 cvsclean: realclean
@@ -408,7 +540,8 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/drivers/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/dos/*.[chS]			\
 	$(DIRECTORY)/src/mesa/drivers/dos/mga/*.[ch]			\
-	$(DIRECTORY)/src/mesa/drivers/fbdev/glfbdev.c                   \
+	$(DIRECTORY)/src/mesa/drivers/dri/common/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/fbdev/glfbdev.c			\
 	$(DIRECTORY)/src/mesa/drivers/glide/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/glide/*.def			\
 	$(DIRECTORY)/src/mesa/drivers/ggi/*.[ch]			\

@@ -20,6 +20,7 @@ VERSION=$(MESA_MAJOR).$(MESA_MINOR)
 # GLU_LIB        the name of the Mesa "GLU" library file (usually libGLU.so)
 # GLUT_LIB       the name of the GLUT library file (usually libglut.so)
 # GLW_LIB        the name of the GLw widget library file (usually libGLw.so)
+# OSMESA_LIB     the name of the OSMesa library file (usually libOSMesa.so)
 # CC             the C compiler (usually cc or gcc)
 # CXX            the C++ compiler (usuall c++ or g++ or CC)
 # CFLAGS         options for C compiler (like -O)
@@ -438,7 +439,7 @@ linux-x86:
 	"CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include" \
 	"CXXFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
@@ -457,7 +458,7 @@ linux-x86-sse:
 	"CFLAGS = -mcpu=pentium4 -mfpmath=sse -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include" \
 	"CXXFLAGS = -mcpu=pentium4 -mfpmath=sse -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
@@ -473,7 +474,7 @@ linux-icc:
 	"CC = icc" \
 	"CXX = g++" \
 	"CFLAGS = -O3 -tpp6 -axK -KPIC -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
@@ -492,7 +493,7 @@ linux-ggi:
 	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DGGI -DCDECL=" \
 	"CXXFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DCDECL=" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -ggi -lX11 -lXext -lm -lm -lpthread" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -ggi -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm"
@@ -510,11 +511,25 @@ linux-x86-ggi:
 	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DUSE_X86_ASM -DGGI -DCDECL=" \
 	"CXXFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DCDECL=" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -ggi -lX11 -lXext -lm -lm -lpthread" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -ggi -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES = $(X86_SOURCES)"
+
+linux-glfbdev:
+	$(MAKE) $(MFLAGS) -f Makefile.glfbdev targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
+	"CC = gcc"  \
+	"CXX = g++" \
+	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_GLFBDEV_DRIVER" \
+	"CXXFLAGS = -O3 -fPIC" \
+	"GL_LIB_DEPS = -lm -lpthread" \
+	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
+	"APP_LIB_DEPS = -lm"
 
 linux-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -676,7 +691,7 @@ linux-sparc-ultra:
 # 16-bit/channel Mesa using OSMesa driver
 linux-osmesa16:
 	$(MAKE) $(MFLAGS) -f Makefile.OSMesa16 targets \
-	"OSMESA16_LIB = libOSMesa16.so" \
+	"OSMESA_LIB = libOSMesa16.so" \
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include -DCHAN_BITS=16 -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
@@ -687,7 +702,7 @@ linux-osmesa16:
 
 linux-osmesa16-static:
 	$(MAKE) $(MFLAGS) -f Makefile.OSMesa16 targets \
-	"OSMESA16_LIB = libOSMesa16.a" \
+	"OSMESA_LIB = libOSMesa16.a" \
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include -DCHAN_BITS=16 -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
@@ -700,7 +715,8 @@ linux-osmesa16-static:
 # 32-bit/channel Mesa using OSMesa driver
 linux-osmesa32:
 	$(MAKE) $(MFLAGS) -f Makefile.OSMesa16 targets \
-	"OSMESA16_LIB = libOSMesa32.so" \
+	"OSMESA_LIB = libOSMesa32.so" \
+	"OSMESA_LIB_NAME = OSMesa32" \
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O3 -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DCHAN_BITS=32 -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
@@ -712,20 +728,18 @@ linux-osmesa32:
 # standalone Mesa -- embedded
 # change -g to -O3 for non-debug
 linux-solo:
-	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
-	"SOLO = true" \
-	"LIBMESA = mesa.a" \
+	$(MAKE) $(MFLAGS) -f Makefile.solo targets \
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -g -std=c99 -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
-	"CXXFLAGS = -g -std=c99 -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
+	"CXXFLAGS = -g -Wall -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -lm -lpthread -lexpat" \
-	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm  -Wl,-rpath,$(TOP)/lib" \
-	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lm  -Wl,-rpath,$(TOP)/lib" \
-	"APP_LIB_DEPS = -L$(TOP)/lib -lglut -lGLU -lGL -lm  -lpthread -Wl,-rpath,$(TOP)/lib" 
+	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lm" \
+	"APP_LIB_DEPS = -L$(TOP)/lib -lglut -lGLU -lGL -lm -lpthread" 
 
 # May want to add these CFLAGS for better performance under LynxOS and GCC:
 # -fPIC -O2 -ansi -pedantic -mieee-fp -DUSE_XSHM -funroll-loops
@@ -819,7 +833,7 @@ osf1:
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = cc" \
 	"CFLAGS = -O0 -std1 -ieee_with_no_inexact -DUSE_XSHM" \
-	"GL_LIB_DEPS = -lX11 -lXext -lm -lm -lpthread" \
+	"GL_LIB_DEPS = -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lm"
@@ -985,6 +999,24 @@ sunos5-gcc:
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/openwin/lib -lXt -lX11" \
 	"APP_LIB_DEPS = -lX11 -lglut -lGLU -lGL -lm"
 
+sunos5-gcc-debug:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
+	"CC = gcc" \
+	"CXX = g++" \
+	"CFLAGS = -g -I/usr/openwin/include -DUSE_XSHM" \
+	"CXXFLAGS = -g -I/usr/openwin/include" \
+	"GLUT_CFLAGS = -fexceptions -DSOLARIS_2_4_BUG" \
+	"GL_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm" \
+	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lm" \
+	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/openwin/lib -lXt -lX11" \
+	"APP_LIB_DEPS = -lX11 -lglut -lGLU -lGL -lm"
+
 ultrix-gcc:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.a" \
@@ -1074,7 +1106,7 @@ linux-x86-debug:
 	"CFLAGS = -O2 -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include -DDEBUG -DMESA_DEBUG" \
 	"CXXFLAGS = -O2 -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DDEBUG" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
