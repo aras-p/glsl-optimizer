@@ -171,6 +171,107 @@ set_component_sizes( struct gl_color_table *table )
 
 
 
+/**
+ * Update/replace all or part of a color table.  Helper function
+ * used by _mesa_ColorTable() and _mesa_ColorSubTable().
+ * The table->Table buffer should already be allocated.
+ * \param start - first entry to update
+ * \param count - number of entries to update
+ * \param format - format of user-provided table data
+ * \param type - datatype of user-provided table data
+ * \param data - user-provided table data
+ * \param [rgba]Scale - RGBA scale factors
+ * \param [rgba]Bias - RGBA bias factors
+ */
+static void
+store_colortable_entries(GLcontext *ctx, struct gl_color_table *table,
+			 GLsizei start, GLsizei count,
+			 GLenum format, GLenum type, const GLvoid *data,
+			 GLfloat rScale, GLfloat rBias,
+			 GLfloat gScale, GLfloat gBias,
+			 GLfloat bScale, GLfloat bBias,
+			 GLfloat aScale, GLfloat aBias)
+{
+   if (table->Type == GL_FLOAT) {
+      /* convert user-provided data to GLfloat values */
+      GLfloat tempTab[MAX_COLOR_TABLE_SIZE * 4];
+      GLfloat *tableF;
+      GLint i;
+
+      _mesa_unpack_float_color_span(ctx,
+				    count,          /* number of pixels */
+				    table->Format,  /* dest format */
+                                    tempTab,        /* dest address */
+                                    format, type, data, /* src data */
+				    &ctx->Unpack,
+                                    0,              /* transfer ops */
+				    GL_FALSE);      /* clamping */
+
+      tableF = (GLfloat *) table->Table;
+
+      switch (table->Format) {
+         case GL_INTENSITY:
+            for (i = 0; i < count; i++) {
+               GLuint j = start + i;
+               tableF[j] = CLAMP(tempTab[i] * rScale + rBias, 0.0F, 1.0F);
+            }
+            break;
+         case GL_LUMINANCE:
+            for (i = 0; i < count; i++) {
+               GLuint j = start + i;
+               tableF[j] = CLAMP(tempTab[i] * rScale + rBias, 0.0F, 1.0F);
+            }
+            break;
+         case GL_ALPHA:
+            for (i = 0; i < count; i++) {
+               GLuint j = start + i;
+               tableF[j] = CLAMP(tempTab[i] * aScale + aBias, 0.0F, 1.0F);
+            }
+            break;
+         case GL_LUMINANCE_ALPHA:
+            for (i = 0; i < count; i++) {
+               GLuint j = start + i;
+               tableF[j*2+0] = CLAMP(tempTab[i*2+0] * rScale + rBias, 0.0F, 1.0F);
+               tableF[j*2+1] = CLAMP(tempTab[i*2+1] * aScale + aBias, 0.0F, 1.0F);
+            }
+            break;
+         case GL_RGB:
+            for (i = 0; i < count; i++) {
+               GLuint j = start + i;
+               tableF[j*3+0] = CLAMP(tempTab[i*3+0] * rScale + rBias, 0.0F, 1.0F);
+               tableF[j*3+1] = CLAMP(tempTab[i*3+1] * gScale + gBias, 0.0F, 1.0F);
+               tableF[j*3+2] = CLAMP(tempTab[i*3+2] * bScale + bBias, 0.0F, 1.0F);
+            }
+            break;
+         case GL_RGBA:
+            for (i = 0; i < count; i++) {
+               GLuint j = start + i;
+               tableF[j*4+0] = CLAMP(tempTab[i*4+0] * rScale + rBias, 0.0F, 1.0F);
+               tableF[j*4+1] = CLAMP(tempTab[i*4+1] * gScale + gBias, 0.0F, 1.0F);
+               tableF[j*4+2] = CLAMP(tempTab[i*4+2] * bScale + bBias, 0.0F, 1.0F);
+               tableF[j*4+3] = CLAMP(tempTab[i*4+3] * aScale + aBias, 0.0F, 1.0F);
+            }
+            break;
+         default:
+            _mesa_problem(ctx, "Bad format in store_colortable_entries");
+            return;
+         }
+   }
+   else {
+      /* non-float (GLchan) */
+      const GLint comps = _mesa_components_in_format(table->Format);
+      GLchan *dest = (GLchan *) table->Table + start * comps;
+      _mesa_unpack_chan_color_span(ctx, count,         /* number of entries */
+				   table->Format,      /* dest format */
+				   dest,               /* dest address */
+                                   format, type, data, /* src data */
+				   &ctx->Unpack,
+				   0);                 /* transfer ops */
+   }
+}
+
+
+
 void GLAPIENTRY
 _mesa_ColorTable( GLenum target, GLenum internalFormat,
                   GLsizei width, GLenum format, GLenum type,
@@ -365,82 +466,30 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          FREE(table->Table);
          table->Table = NULL;
       }
+
       if (width > 0) {
          if (tableType == GL_FLOAT) {
-            GLfloat tempTab[MAX_COLOR_TABLE_SIZE * 4];
-            GLfloat *tableF;
-            GLint i;
-
-            _mesa_unpack_float_color_span(ctx, width, table->Format,
-                                          tempTab,  /* dest */
-                                          format, type, data, &ctx->Unpack,
-                                          0, GL_FALSE);
-
 	    table->Type = GL_FLOAT;
-            table->Table = MALLOC(comps * width * sizeof(GLfloat));
-            if (!table->Table) {
-               _mesa_error(ctx, GL_OUT_OF_MEMORY, "glColorTable");
-               return;
-            }
-
-            tableF = (GLfloat *) table->Table;
-
-            switch (table->Format) {
-               case GL_INTENSITY:
-                  for (i = 0; i < width; i++) {
-                     tableF[i] = CLAMP(tempTab[i] * rScale + rBias, 0.0F, 1.0F);
-                  }
-                  break;
-               case GL_LUMINANCE:
-                  for (i = 0; i < width; i++) {
-                     tableF[i] = CLAMP(tempTab[i] * rScale + rBias, 0.0F, 1.0F);
-                  }
-                  break;
-               case GL_ALPHA:
-                  for (i = 0; i < width; i++) {
-                     tableF[i] = CLAMP(tempTab[i] * aScale + aBias, 0.0F, 1.0F);
-                  }
-                  break;
-               case GL_LUMINANCE_ALPHA:
-                  for (i = 0; i < width; i++) {
-                     tableF[i*2+0] = CLAMP(tempTab[i*2+0] * rScale + rBias, 0.0F, 1.0F);
-                     tableF[i*2+1] = CLAMP(tempTab[i*2+1] * aScale + aBias, 0.0F, 1.0F);
-                  }
-                  break;
-               case GL_RGB:
-                  for (i = 0; i < width; i++) {
-                     tableF[i*3+0] = CLAMP(tempTab[i*3+0] * rScale + rBias, 0.0F, 1.0F);
-                     tableF[i*3+1] = CLAMP(tempTab[i*3+1] * gScale + gBias, 0.0F, 1.0F);
-                     tableF[i*3+2] = CLAMP(tempTab[i*3+2] * bScale + bBias, 0.0F, 1.0F);
-                  }
-                  break;
-               case GL_RGBA:
-                  for (i = 0; i < width; i++) {
-                     tableF[i*4+0] = CLAMP(tempTab[i*4+0] * rScale + rBias, 0.0F, 1.0F);
-                     tableF[i*4+1] = CLAMP(tempTab[i*4+1] * gScale + gBias, 0.0F, 1.0F);
-                     tableF[i*4+2] = CLAMP(tempTab[i*4+2] * bScale + bBias, 0.0F, 1.0F);
-                     tableF[i*4+3] = CLAMP(tempTab[i*4+3] * aScale + aBias, 0.0F, 1.0F);
-                  }
-                  break;
-               default:
-                  _mesa_problem(ctx, "Bad format in _mesa_ColorTable");
-                  return;
-            }
-         }
-         else {
-            /* store GLchan table */
+	    table->Table = MALLOC(comps * width * sizeof(GLfloat));
+	 }
+	 else {
 	    table->Type = CHAN_TYPE;
             table->Table = MALLOC(comps * width * sizeof(GLchan));
-            if (!table->Table) {
-               _mesa_error(ctx, GL_OUT_OF_MEMORY, "glColorTable");
-               return;
-            }
-            _mesa_unpack_chan_color_span(ctx, width, table->Format,
-                                         (GLchan *) table->Table,  /* dest */
-                                         format, type, data,
-                                         &ctx->Unpack, 0);
-         } /* type==GL_FLOAT */
-      } /* width > 0 */
+	 }
+
+	 if (!table->Table) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glColorTable");
+	    return;
+	 }
+
+	 store_colortable_entries(ctx, table,
+				  0, width,  /* start, count */
+				  format, type, data,
+				  rScale, rBias,
+				  gScale, gBias,
+				  bScale, bBias,
+				  aScale, aBias);
+      }
    } /* proxy */
 
    if (texObj || target == GL_SHARED_TEXTURE_PALETTE_EXT) {
@@ -572,73 +621,12 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
       return;
    }
 
-   if (table->Type != GL_FLOAT) {
-      GLchan *dest = (GLchan *) table->Table + start * comps * sizeof(GLchan);
-      _mesa_unpack_chan_color_span(ctx, count, table->Format, dest,
-                                   format, type, data, &ctx->Unpack, 0);
-   }
-   else {
-      GLfloat tempTab[MAX_COLOR_TABLE_SIZE * 4];
-      GLfloat *tableF;
-      GLint i;
-
-      ASSERT(table->Type == GL_FLOAT);
-
-      _mesa_unpack_float_color_span(ctx, count, table->Format,
-                                    tempTab,  /* dest */
-                                    format, type, data, &ctx->Unpack,
-                                    0, GL_FALSE);
-
-      tableF = (GLfloat *) table->Table;
-
-      switch (table->Format) {
-         case GL_INTENSITY:
-            for (i = 0; i < count; i++) {
-               GLuint j = start + i;
-               tableF[j] = CLAMP(tempTab[i] * rScale + rBias, 0.0F, 1.0F);
-            }
-            break;
-         case GL_LUMINANCE:
-            for (i = 0; i < count; i++) {
-               GLuint j = start + i;
-               tableF[j] = CLAMP(tempTab[i] * rScale + rBias, 0.0F, 1.0F);
-            }
-            break;
-         case GL_ALPHA:
-            for (i = 0; i < count; i++) {
-               GLuint j = start + i;
-               tableF[j] = CLAMP(tempTab[i] * aScale + aBias, 0.0F, 1.0F);
-            }
-            break;
-         case GL_LUMINANCE_ALPHA:
-            for (i = 0; i < count; i++) {
-               GLuint j = start + i;
-               tableF[j*2+0] = CLAMP(tempTab[i*2+0] * rScale + rBias, 0.0F, 1.0F);
-               tableF[j*2+1] = CLAMP(tempTab[i*2+1] * aScale + aBias, 0.0F, 1.0F);
-            }
-            break;
-         case GL_RGB:
-            for (i = 0; i < count; i++) {
-               GLuint j = start + i;
-               tableF[j*3+0] = CLAMP(tempTab[i*3+0] * rScale + rBias, 0.0F, 1.0F);
-               tableF[j*3+1] = CLAMP(tempTab[i*3+1] * gScale + gBias, 0.0F, 1.0F);
-               tableF[j*3+2] = CLAMP(tempTab[i*3+2] * bScale + bBias, 0.0F, 1.0F);
-            }
-            break;
-         case GL_RGBA:
-            for (i = 0; i < count; i++) {
-               GLuint j = start + i;
-               tableF[j*4+0] = CLAMP(tempTab[i*4+0] * rScale + rBias, 0.0F, 1.0F);
-               tableF[j*4+1] = CLAMP(tempTab[i*4+1] * gScale + gBias, 0.0F, 1.0F);
-               tableF[j*4+2] = CLAMP(tempTab[i*4+2] * bScale + bBias, 0.0F, 1.0F);
-               tableF[j*4+3] = CLAMP(tempTab[i*4+3] * aScale + aBias, 0.0F, 1.0F);
-            }
-            break;
-         default:
-            _mesa_problem(ctx, "Bad format in _mesa_ColorSubTable");
-            return;
-         }
-   }
+   store_colortable_entries(ctx, table, start, count,
+			    format, type, data,
+			    rScale, rBias,
+			    gScale, gBias,
+			    bScale, bBias,
+			    aScale, aBias);
 
    if (texObj || target == GL_SHARED_TEXTURE_PALETTE_EXT) {
       /* per-texture object palette */
