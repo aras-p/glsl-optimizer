@@ -36,6 +36,15 @@
 #include "texstore.h"
 
 
+/**
+ * Notes:
+ *
+ * None of the GL_EXT_framebuffer_object functions are compiled into
+ * display lists.
+ */
+
+
+
 /*
  * When glGenRender/FramebuffersEXT() is called we insert pointers to
  * these placeholder objects into the hash table.
@@ -118,6 +127,10 @@ new_framebuffer(GLcontext *ctx, GLuint name)
 }
 
 
+/**
+ * Given a GL_*_ATTACHMENTn token, return a pointer to the corresponding
+ * gl_render_buffer_attachment object.
+ */
 static struct gl_render_buffer_attachment *
 get_attachment(GLcontext *ctx, GLenum attachment)
 {
@@ -155,6 +168,10 @@ get_attachment(GLcontext *ctx, GLenum attachment)
 }
 
 
+/**
+ * Remove any texture or renderbuffer attached to the given attachment
+ * point.  Update reference counts, etc.
+ */
 static void
 remove_attachment(GLcontext *ctx, struct gl_render_buffer_attachment *att)
 {
@@ -181,6 +198,10 @@ remove_attachment(GLcontext *ctx, struct gl_render_buffer_attachment *att)
 }
 
 
+/**
+ * Bind a texture object to an attachment point.
+ * The previous binding, if any, will be removed first.
+ */
 static void
 set_texture_attachment(GLcontext *ctx,
 		     struct gl_render_buffer_attachment *att,
@@ -203,10 +224,14 @@ set_texture_attachment(GLcontext *ctx,
 }
 
 
+/**
+ * Bind a renderbuffer to an attachment point.
+ * The previous binding, if any, will be removed first.
+ */
 static void
 set_renderbuffer_attachment(GLcontext *ctx,
-			  struct gl_render_buffer_attachment *att,
-			  struct gl_render_buffer_object *rb)
+                            struct gl_render_buffer_attachment *att,
+                            struct gl_render_buffer_object *rb)
 {
    remove_attachment(ctx, att);
    att->Type = GL_RENDERBUFFER_EXT;
@@ -543,6 +568,12 @@ _mesa_GenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers)
 }
 
 
+/**
+ * Given an internal format token for a render buffer, return the
+ * corresponding base format.
+ * \return one of GL_RGB, GL_RGBA, GL_STENCIL_INDEX, GL_DEPTH_COMPONENT
+ *  or zero if error.
+ */
 static GLenum
 base_internal_format(GLcontext *ctx, GLenum internalFormat)
 {
@@ -576,6 +607,7 @@ base_internal_format(GLcontext *ctx, GLenum internalFormat)
    case GL_DEPTH_COMPONENT24_SGIX:
    case GL_DEPTH_COMPONENT32_SGIX:
       return GL_DEPTH_COMPONENT;
+   /* XXX add floating point formats eventually */
    default:
       return 0;
    }
@@ -986,6 +1018,7 @@ _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
    }
 
    if (texture) {
+      const GLint maxSize = 1 << (ctx->Const.Max3DTextureLevels - 1);
       struct gl_texture_object *texObj = (struct gl_texture_object *)
 	 _mesa_HashLookup(ctx->Shared->TexObjects, texture);
       if (!texObj) {
@@ -998,7 +1031,7 @@ _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
 		     "glFramebufferTexture3DEXT(texture target)");
 	 return;
       }
-      if (zoffset >= texObj->Image[0][level]->Depth) {
+      if (zoffset < 0 || zoffset >= maxSize) {
 	 _mesa_error(ctx, GL_INVALID_VALUE,
 		     "glFramebufferTexture3DEXT(zoffset)");
 	 return;
