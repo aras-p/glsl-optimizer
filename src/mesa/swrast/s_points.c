@@ -1,4 +1,4 @@
-/* $Id: s_points.c,v 1.10 2001/01/03 22:17:16 brianp Exp $ */
+/* $Id: s_points.c,v 1.11 2001/01/04 15:32:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,14 +57,6 @@
 
 
 /*
- * RGBA points with size == 1.0
- */
-#define FLAGS (RGBA)
-#define NAME size1_rgba_point
-#include "s_pointtemp.h"
-
-
-/*
  * General CI points.
  */
 #define FLAGS (INDEX | LARGE)
@@ -73,34 +65,10 @@
 
 
 /*
- * General RGBA points.
+ * Antialiased CI points.
  */
-#define FLAGS (RGBA | LARGE)
-#define NAME general_rgba_point
-#include "s_pointtemp.h"
-
-
-/*
- * Textured RGBA points.
- */
-#define FLAGS (RGBA | LARGE | TEXTURE)
-#define NAME textured_rgba_point
-#include "s_pointtemp.h"
-
-
-/*
- * Multitextured RGBA points.
- */
-#define FLAGS (RGBA | LARGE | TEXTURE | SPECULAR)
-#define NAME multitextured_rgba_point
-#include "s_pointtemp.h"
-
-
-/*
- * Antialiased points with or without texture mapping.
- */
-#define FLAGS (RGBA | SMOOTH | TEXTURE)
-#define NAME antialiased_rgba_point
+#define FLAGS (INDEX | SMOOTH)
+#define NAME antialiased_ci_point
 #include "s_pointtemp.h"
 
 
@@ -113,6 +81,46 @@
 
 
 /*
+ * RGBA points with size == 1.0
+ */
+#define FLAGS (RGBA)
+#define NAME size1_rgba_point
+#include "s_pointtemp.h"
+
+
+/*
+ * General RGBA points.
+ */
+#define FLAGS (RGBA | LARGE)
+#define NAME general_rgba_point
+#include "s_pointtemp.h"
+
+
+/*
+ * Antialiased RGBA points.
+ */
+#define FLAGS (RGBA | SMOOTH)
+#define NAME antialiased_rgba_point
+#include "s_pointtemp.h"
+
+
+/*
+ * Textured RGBA points.
+ */
+#define FLAGS (RGBA | LARGE | TEXTURE | SPECULAR)
+#define NAME textured_rgba_point
+#include "s_pointtemp.h"
+
+
+/*
+ * Antialiased points with texture mapping.
+ */
+#define FLAGS (RGBA | SMOOTH | TEXTURE | SPECULAR)
+#define NAME antialiased_tex_rgba_point
+#include "s_pointtemp.h"
+
+
+/*
  * Distance attenuated, general RGBA points.
  */
 #define FLAGS (RGBA | ATTENUATE)
@@ -121,15 +129,15 @@
 
 
 /*
- * Distance attenuated, Textured RGBA points.
+ * Distance attenuated, textured RGBA points.
  */
-#define FLAGS (RGBA | ATTENUATE | TEXTURE)
+#define FLAGS (RGBA | ATTENUATE | TEXTURE | SPECULAR)
 #define NAME atten_textured_rgba_point
 #include "s_pointtemp.h"
 
 
 /*
- * Distance attenuated, Antialiased points with or without texture mapping.
+ * Distance attenuated, antialiased points with or without texture mapping.
  */
 #define FLAGS (RGBA | ATTENUATE | TEXTURE | SMOOTH)
 #define NAME atten_antialiased_rgba_point
@@ -178,7 +186,7 @@ void
 _swrast_choose_point( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLboolean rgbmode = ctx->Visual.RGBAflag;
+   GLboolean rgbMode = ctx->Visual.RGBAflag;
 
    if (ctx->RenderMode==GL_RENDER) {
       if (ctx->Point.SpriteMode) {
@@ -188,48 +196,64 @@ _swrast_choose_point( GLcontext *ctx )
          else
             USE(sprite_point);
       }
-      else if (!ctx->Point._Attenuated) {
-         if (ctx->Point.SmoothFlag && rgbmode) {
-            USE(antialiased_rgba_point);
-         }
-         else if (ctx->Texture._ReallyEnabled) {
-            if (swrast->_MultiTextureEnabled ||
-                ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR ||
-		ctx->Fog.ColorSumEnabled) {
-	       USE(multitextured_rgba_point);
+      else if (ctx->Point.SmoothFlag) {
+         /* Smooth points */
+         if (rgbMode) {
+            if (ctx->Point._Attenuated) {
+               USE(atten_antialiased_rgba_point);
+            }
+            else if (ctx->Texture._ReallyEnabled) {
+               USE(antialiased_tex_rgba_point);
             }
             else {
-               USE(textured_rgba_point);
+               USE(antialiased_rgba_point);
             }
          }
-         else if (ctx->Point._Size == 1.0) {
-            /* size=1, any raster ops */
-            if (rgbmode)
-               USE(size1_rgba_point);
-            else
-               USE(size1_ci_point);
+         else {
+            USE(antialiased_ci_point);
+         }
+      }
+      else if (ctx->Point._Attenuated) {
+         if (rgbMode) {
+            if (ctx->Texture._ReallyEnabled) {
+               if (ctx->Point.SmoothFlag) {
+                  USE(atten_antialiased_rgba_point);
+               }
+               else {
+                  USE(atten_textured_rgba_point);
+               }
+            }
+            else {
+               USE(atten_general_rgba_point);
+            }
          }
          else {
-	    /* every other kind of point rendering */
-            if (rgbmode)
-               USE(general_rgba_point);
-            else
-               USE(general_ci_point);
-         }
-      } 
-      else if (ctx->Point.SmoothFlag && rgbmode) {
-         USE(atten_antialiased_rgba_point);
-      }
-      else if (ctx->Texture._ReallyEnabled) {
-         USE(atten_textured_rgba_point);
-      } 
-      else {
-         /* every other kind of point rendering */
-         if (rgbmode)
-            USE(atten_general_rgba_point);
-         else
+            /* ci, atten */
             USE(atten_general_ci_point);
-     }
+         }
+      }
+      else if (ctx->Texture._ReallyEnabled && rgbMode) {
+         /* textured */
+         USE(textured_rgba_point);
+      }
+      else if (ctx->Point.Size != 1.0) {
+         /* large points */
+         if (rgbMode) {
+            USE(general_rgba_point);
+         }
+         else {
+            USE(general_ci_point);
+         }
+      }
+      else {
+         /* single pixel points */
+         if (rgbMode) {
+            USE(size1_rgba_point);
+         }
+         else {
+            USE(size1_ci_point);
+         }
+      }
    }
    else if (ctx->RenderMode==GL_FEEDBACK) {
       USE(gl_feedback_point);
