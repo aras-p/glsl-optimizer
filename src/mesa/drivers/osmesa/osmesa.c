@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.27 2000/11/05 23:21:12 brianp Exp $ */
+/* $Id: osmesa.c,v 1.28 2000/11/06 17:28:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1417,8 +1417,9 @@ osmesa_choose_line_function( GLcontext *ctx )
    OSMesaContext osmesa = (OSMesaContext) ctx;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
+   if (ctx->RenderMode != GL_RENDER)      return NULL;
    if (ctx->Line.SmoothFlag)              return NULL;
-   if (ctx->Texture._ReallyEnabled)        return NULL;
+   if (ctx->Texture._ReallyEnabled)       return NULL;
    if (ctx->Light.ShadeModel!=GL_FLAT)    return NULL;
 
    if (ctx->Line.Width==1.0F
@@ -1606,9 +1607,10 @@ osmesa_choose_triangle_function( GLcontext *ctx )
    if ((osmesa->format==OSMESA_RGB)||(osmesa->format==OSMESA_BGR)) 
       return (swrast_tri_func)NULL;
 
-   if (ctx->Polygon.SmoothFlag)     return (swrast_tri_func)NULL;
-   if (ctx->Polygon.StippleFlag)    return (swrast_tri_func)NULL;
-   if (ctx->Texture._ReallyEnabled)  return (swrast_tri_func)NULL;
+   if (ctx->RenderMode != GL_RENDER)  return (swrast_tri_func) NULL;
+   if (ctx->Polygon.SmoothFlag)       return (swrast_tri_func) NULL;
+   if (ctx->Polygon.StippleFlag)      return (swrast_tri_func) NULL;
+   if (ctx->Texture._ReallyEnabled)   return (swrast_tri_func) NULL;
 
    if (swrast->_RasterMask==DEPTH_BIT
        && ctx->Depth.Func==GL_LESS
@@ -1648,10 +1650,19 @@ static void osmesa_choose_line( GLcontext *ctx )
 }
 
 
-#define OSMESA_NEW_LINE   (_NEW_LINE|_NEW_TEXTURE|_NEW_LIGHT|\
-                          _NEW_DEPTH|_SWRAST_NEW_RASTERMASK)
-#define OSMESA_NEW_TRIANGLE (_NEW_POLYGON|_NEW_TEXTURE|_NEW_LIGHT|\
-                            _SWRAST_NEW_RASTERMASK|_NEW_DEPTH)
+#define OSMESA_NEW_LINE   (_NEW_LINE | \
+                           _NEW_TEXTURE | \
+                           _NEW_LIGHT | \
+                           _NEW_DEPTH | \
+                           _NEW_RENDERMODE | \
+                           _SWRAST_NEW_RASTERMASK) 
+
+#define OSMESA_NEW_TRIANGLE (_NEW_POLYGON | \
+                             _NEW_TEXTURE | \
+                             _NEW_LIGHT | \
+                             _NEW_DEPTH | \
+                             _NEW_RENDERMODE | \
+                             _SWRAST_NEW_RASTERMASK)
 
 
 /* Extend the software rasterizer with our line and triangle 
