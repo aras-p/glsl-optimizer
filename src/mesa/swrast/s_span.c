@@ -1,8 +1,8 @@
-/* $Id: s_span.c,v 1.52 2002/11/09 21:28:41 brianp Exp $ */
+/* $Id: s_span.c,v 1.53 2002/11/26 03:00:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  5.0.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -1060,7 +1060,11 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span)
             color[ACOMP] = FixedToChan(span->alpha);
             (*swrast->Driver.WriteMonoRGBASpan)(ctx, span->end, span->x,
                                                 span->y, color, span->array->mask);
-            /* XXX software alpha buffer writes! */
+            if (swrast->_RasterMask & ALPHABUF_BIT) {
+               _mesa_write_mono_alpha_span(ctx, span->end, span->x, span->y,
+                      color[ACOMP],
+                      span->writeAll ? ((const GLubyte *) NULL) : span->array->mask);
+            }
          }
          else {
             /* each pixel is a different color */
