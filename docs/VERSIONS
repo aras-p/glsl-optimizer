@@ -1189,6 +1189,7 @@ Mesa Version History
 6.0  January ??, 2004
     New:
 	- full OpenGL 1.5 support
+	- updated GL/glext.h file to version 21
     Bug fixes:
 	- fixed bug in UNCLAMPED_FLOAT_TO_UBYTE macro; solves a color
 	  clamping issue
@@ -1197,3 +1198,4 @@ Mesa Version History
 	- fixed FP divide by zero error seen on VMS with xlockmore, others
 	- fixed program debug problem (bug 873011)
 	- building on AIX with gcc works now
+	- glDeleteProgramsARB failed for ARB fragment programs (bug 876160)
