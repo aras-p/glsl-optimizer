@@ -11,11 +11,6 @@ PROGS = accum bitmap1 bitmap2 blendeq blendxor copy cursor depth eval fog \
 	font line logo nurb olympic overlay point prim quad select \
 	shape sphere star stencil stretch texture tri wave
 
-ifeq ($(CONFIG_NAME), beos)
-	LIB_DEP = $(APP_LIB_DEPS)
-else
-	PROGS += oglinfo
-endif
 
 ##### RULES #####
 
