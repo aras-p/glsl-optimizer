@@ -1,4 +1,4 @@
-/* $Id: multiarb.c,v 1.9 2001/06/13 14:33:16 brianp Exp $ */
+/* $Id: multiarb.c,v 1.10 2001/06/20 19:12:30 brianp Exp $ */
 
 /*
  * GL_ARB_multitexture demo
@@ -12,6 +12,9 @@
 
 /*
  * $Log: multiarb.c,v $
+ * Revision 1.10  2001/06/20 19:12:30  brianp
+ * also print GL_MAX_TEXTURE_SIZE
+ *
  * Revision 1.9  2001/06/13 14:33:16  brianp
  * moved glTexEnvi calls to better logical locations
  *
@@ -278,7 +281,7 @@ static void SpecialKey( int key, int x, int y )
 static void Init( int argc, char *argv[] )
 {
    GLuint texObj[2];
-   GLint units;
+   GLint units, size;
 
    const char *exten = (const char *) glGetString(GL_EXTENSIONS);
    if (!strstr(exten, "GL_ARB_multitexture")) {
@@ -288,6 +291,9 @@ static void Init( int argc, char *argv[] )
 
    glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &units);
    printf("%d texture units supported\n", units);
+
+   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size);
+   printf("%d x %d max texture size\n", size, size);
 
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
