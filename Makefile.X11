@@ -1,9 +1,9 @@
-# $Id: Makefile.X11,v 1.15 2000/01/05 06:33:17 brianp Exp $
+# $Id: Makefile.X11,v 1.16 2000/01/08 11:14:01 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
 # 
-# Copyright (C) 1999  Brian Paul   All Rights Reserved.
+# Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -368,7 +368,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/include/GL/Makefile.in	\
 	$(DIRECTORY)/include/GL/Makefile.am	\
 	$(DIRECTORY)/include/GL/dosmesa.h	\
-	$(DIRECTORY)/include/GL/foomesa.h	\
+	$(DIRECTORY)/include/GL/amesa.h		\
 	$(DIRECTORY)/include/GL/fxmesa.h	\
 	$(DIRECTORY)/include/GL/ggimesa.h	\
 	$(DIRECTORY)/include/GL/gl.h		\
