@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.67 2000/05/23 20:10:49 brianp Exp $ */
+/* $Id: context.c,v 1.68 2000/05/23 23:23:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1410,6 +1410,16 @@ _mesa_initialize_context( GLcontext *ctx,
       FREE(ctx);
       return GL_FALSE;
    }
+
+   /* register the most recent extension functions with libGL */
+   _glapi_add_entrypoint("glTbufferMask3DFX", 553);
+   _glapi_add_entrypoint("glCompressedTexImage3DARB", 554);
+   _glapi_add_entrypoint("glCompressedTexImage2DARB", 555);
+   _glapi_add_entrypoint("glCompressedTexImage1DARB", 556);
+   _glapi_add_entrypoint("glCompressedTexSubImage3DARB", 557);
+   _glapi_add_entrypoint("glCompressedTexSubImage2DARB", 558);
+   _glapi_add_entrypoint("glCompressedTexSubImage1DARB", 559);
+   _glapi_add_entrypoint("glGetCompressedTexImageARB", 560);
 
    /* setup API dispatch tables */
    ctx->Exec = (struct _glapi_table *) CALLOC(_glapi_get_dispatch_table_size() * sizeof(void *));
