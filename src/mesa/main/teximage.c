@@ -338,7 +338,7 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
  * Return new gl_texture_image struct with all fields initialized to zero.
  */
 struct gl_texture_image *
-gl_alloc_texture_image( void )
+_mesa_alloc_texture_image( void )
 {
    return CALLOC_STRUCT(gl_texture_image);
 }
@@ -380,7 +380,7 @@ init_texture_image( struct gl_texture_image *img,
 
 
 void
-gl_free_texture_image( struct gl_texture_image *teximage )
+_mesa_free_texture_image( struct gl_texture_image *teximage )
 {
    if (teximage->Data) {
       FREE( teximage->Data );
@@ -1033,7 +1033,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       texImage = texObj->Image[level];
 
       if (!texImage) {
-         texImage = gl_alloc_texture_image();
+         texImage = _mesa_alloc_texture_image();
          texObj->Image[level] = texImage;
          if (!texImage) {
             gl_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
@@ -1141,7 +1141,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       texImage = texObj->Image[level];
 
       if (!texImage) {
-         texImage = gl_alloc_texture_image();
+         texImage = _mesa_alloc_texture_image();
          texObj->Image[level] = texImage;
          if (!texImage) {
             gl_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
@@ -1263,7 +1263,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       texImage = texObj->Image[level];
 
       if (!texImage) {
-         texImage = gl_alloc_texture_image();
+         texImage = _mesa_alloc_texture_image();
          texObj->Image[level] = texImage;
          if (!texImage) {
             gl_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
@@ -1364,9 +1364,9 @@ _mesa_TexImage3DEXT( GLenum target, GLint level, GLenum internalFormat,
  * Fetch a texture image from the device driver.
  * Store the results in the given texture object at the given mipmap level.
  */
-static void
-get_teximage_from_driver( GLcontext *ctx, GLenum target, GLint level,
-                          const struct gl_texture_object *texObj )
+void
+_mesa_get_teximage_from_driver( GLcontext *ctx, GLenum target, GLint level,
+                                const struct gl_texture_object *texObj )
 {
    GLvoid *image;
    GLenum imgFormat, imgType;
@@ -1503,7 +1503,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 
    if (!texImage->Data) {
       /* try to get the texture image from the device driver */
-      get_teximage_from_driver(ctx, target, level, texObj);
+      _mesa_get_teximage_from_driver(ctx, target, level, texObj);
       discardImage = GL_TRUE;
    }
    else {
@@ -1643,7 +1643,7 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
       const GLint xoffsetb = xoffset + texImage->Border;
       GLboolean retain = GL_TRUE;
       if (!texImage->Data) {
-         get_teximage_from_driver( ctx, target, level, texObj );
+         _mesa_get_teximage_from_driver( ctx, target, level, texObj );
          if (!texImage->Data) {
             make_null_texture(texImage);
          }
@@ -1730,7 +1730,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
       GLboolean retain = GL_TRUE;
 
       if (!texImage->Data) {
-         get_teximage_from_driver( ctx, target, level, texObj );
+         _mesa_get_teximage_from_driver( ctx, target, level, texObj );
          if (!texImage->Data) {
             make_null_texture(texImage);
          }
