@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.7 2000/03/03 17:47:39 brianp Exp $ */
+/* $Id: config.h,v 1.8 2000/03/16 07:36:33 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -177,7 +177,7 @@
  * VB_MAX vertices.  (This only happens when mixed primitives are
  * sharing the vb).  
  */
-#define VB_MAX_CLIPPED_VERTS (2 * (6 + MAX_CLIP_PLANES))
+#define VB_MAX_CLIPPED_VERTS ((2 * (6 + MAX_CLIP_PLANES))+1)
 #define VB_SIZE  (VB_MAX + VB_MAX_CLIPPED_VERTS)
 
 
