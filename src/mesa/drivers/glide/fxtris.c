@@ -293,12 +293,15 @@ static void fx_draw_point_wide ( fxMesaContext fxMesa,
  GrVertex vtxB, vtxC;
  GrVertex *_v_[3];
 
+ const GLcontext *ctx = fxMesa->glCtx;
+ const GLfloat psize = (ctx->_TriangleCaps & DD_POINT_ATTEN) ? v0->psize : ctx->Point.Size;
+
  _v_[0] = v0;
  _v_[1] = &vtxB;
  _v_[2] = &vtxC;
 
- radius = v0->psize / 2.;
- n = IROUND(v0->psize * 2); /* radius x 4 */
+ radius = psize / 2.;
+ n = IROUND(psize * 2); /* radius x 4 */
  if (n < 4) n = 4;
  oon = 1.0 / (GLfloat)n;
 
@@ -322,6 +325,37 @@ static void fx_draw_point_wide ( fxMesaContext fxMesa,
  }
 }
 
+static void fx_render_pw_verts( GLcontext *ctx,
+				GLuint start,
+				GLuint count,
+				GLuint flags )
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GrVertex *fxVB = fxMesa->verts;
+   (void) flags;
+
+   fxRenderPrimitive( ctx, GL_POINTS );
+
+   for ( ; start < count ; start++)
+      fx_draw_point_wide(fxMesa, fxVB + start);
+}
+
+static void fx_render_pw_elts ( GLcontext *ctx,
+				GLuint start,
+				GLuint count,
+				GLuint flags )
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GrVertex *fxVB = fxMesa->verts;
+   const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;
+   (void) flags;
+
+   fxRenderPrimitive( ctx, GL_POINTS );
+
+   for ( ; start < count ; start++)
+      fx_draw_point_wide(fxMesa, fxVB + elt[start]);
+}
+
 static void fx_draw_point_wide_aa ( fxMesaContext fxMesa,
 			            GrVertex *v0 )
 {
@@ -329,8 +363,11 @@ static void fx_draw_point_wide_aa ( fxMesaContext fxMesa,
  GLfloat ang, radius, oon;
  GrVertex vtxB, vtxC;
 
- radius = v0->psize / 2.;
- n = IROUND(v0->psize * 2); /* radius x 4 */
+ const GLcontext *ctx = fxMesa->glCtx;
+ const GLfloat psize = (ctx->_TriangleCaps & DD_POINT_ATTEN) ? v0->psize : ctx->Point.Size;
+
+ radius = psize / 2.;
+ n = IROUND(psize * 2); /* radius x 4 */
  if (n < 4) n = 4;
  oon = 1.0 / (GLfloat)n;
 
@@ -1143,19 +1180,28 @@ void fxDDChooseRenderState(GLcontext *ctx)
 
    fxMesa->render_index = index;
 
-   /* [dBorca] Hack alert: more a trick than a real plug-in!!!
-    * FX_FALLBACK_BIT is for total rasterization fallbacks; since
-    * this is not the case, we don't alter "fxMesa->render_index".
-    * But we still need to go through "rast_tab", to make sure
-    * "POINT" calls "fxMesa->draw_point" instead of "grDrawPoint"
-    */
+   /* [dBorca] Hack alert: more a trick than a real plug-in!!! */
    if (flags & (DD_POINT_SIZE | DD_POINT_ATTEN)) {
+      /* We need to set the point primitive to go through "rast_tab",
+       * to make sure "POINT" calls "fxMesa->draw_point" instead of
+       * "grDrawPoint". We can achieve this by using FX_FALLBACK_BIT
+       * (not really a total rasterization fallback, so we don't alter
+       * "fxMesa->render_index"). If we get here with DD_POINT_SMOOTH,
+       * we're done, cos we've already set _tnl_render_tab_{verts|elts}
+       * above. Otherwise, the T&L engine can optimize point rendering
+       * by using fx_render_tab_{verts|elts} hence the extra work.
+       */
       if (flags & DD_POINT_SMOOTH) {
          fxMesa->draw_point = fx_draw_point_wide_aa;
       } else {
          fxMesa->draw_point = fx_draw_point_wide;
+         fx_render_tab_verts[0] = fx_render_pw_verts;
+         fx_render_tab_elts[0] = fx_render_pw_elts;
       }
       tnl->Driver.Render.Points = rast_tab[FX_FALLBACK_BIT].points;
+   } else {
+      fx_render_tab_verts[0] = fx_render_vb_points;
+      fx_render_tab_elts[0] = fx_render_points_elts;
    }
 }
 

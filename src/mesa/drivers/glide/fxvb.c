@@ -526,7 +526,7 @@ void fxChooseVertexState( GLcontext *ctx )
       ind |= SETUP_TMU0;
    }
 
-   if (ctx->_TriangleCaps & (DD_POINT_SIZE|DD_POINT_ATTEN)) {
+   if (ctx->_TriangleCaps & DD_POINT_ATTEN) {
       ind |= SETUP_PSIZ;
    }
 
