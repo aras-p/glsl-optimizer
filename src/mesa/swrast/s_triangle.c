@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.20 2001/03/19 02:25:36 keithw Exp $ */
+/* $Id: s_triangle.c,v 1.21 2001/03/22 04:54:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2250,11 +2250,24 @@ void _swrast_add_spec_terms_triangle( GLcontext *ctx,
 
 
 
-#if 0
-# define dputs(s) puts(s)
+#ifdef DEBUG
+
+/* record the current triangle function name */
+static const char *triFuncName = NULL;
+
+#define USE(triFunc)                   \
+do {                                   \
+    triFuncName = #triFunc;            \
+    /*printf("%s\n", triFuncName);*/   \
+    swrast->Triangle = triFunc;        \
+} while (0)
+
 #else
-# define dputs(s)
+
+#define USE(triFunc)  swrast->Triangle = triFunc;
+
 #endif
+
 
 
 
@@ -2273,13 +2286,10 @@ _swrast_choose_triangle( GLcontext *ctx )
 
    if (ctx->Polygon.CullFlag && 
        ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK) {
-      dputs("nodraw_triangle");
-      swrast->Triangle = nodraw_triangle;
+      USE(nodraw_triangle);
       return;
    }
 
-      
-   
    if (ctx->RenderMode==GL_RENDER) {
 
       if (ctx->Polygon.SmoothFlag) {
@@ -2300,74 +2310,68 @@ _swrast_choose_triangle( GLcontext *ctx )
               ctx->Color.ColorMask[3] == 0)
              ||
              (!rgbmode && ctx->Color.IndexMask == 0)) {
-            dputs("occlusion_test_triangle");
-            swrast->Triangle = occlusion_zless_triangle;
+            USE(occlusion_zless_triangle);
             return;
          }
       }
 
       if (ctx->Texture._ReallyEnabled) {
          /* Ugh, we do a _lot_ of tests to pick the best textured tri func */
-	 GLint format, filter;
-	 const struct gl_texture_object *current2Dtex = ctx->Texture.Unit[0].Current2D;
-         const struct gl_texture_image *image;
+	 const struct gl_texture_object *texObj2D;
+         const struct gl_texture_image *texImg;
+         GLenum minFilter, magFilter, envMode, format;
+         texObj2D = ctx->Texture.Unit[0].Current2D;
+         texImg = texObj2D ? texObj2D->Image[texObj2D->BaseLevel] : NULL;
+         format = texImg ? texImg->Format : (GLenum) 0;
+         minFilter = texObj2D ? texObj2D->MinFilter : (GLenum) 0;
+         magFilter = texObj2D ? texObj2D->MagFilter : (GLenum) 0;
+         envMode = ctx->Texture.Unit[0].EnvMode;
+
          /* First see if we can used an optimized 2-D texture function */
          if (ctx->Texture._ReallyEnabled==TEXTURE0_2D
-             && current2Dtex->WrapS==GL_REPEAT
-	     && current2Dtex->WrapT==GL_REPEAT
-             && ((image = current2Dtex->Image[current2Dtex->BaseLevel]) != 0)  /* correct! */
-             && image->Border==0
-             && ((format = image->Format)==GL_RGB || format==GL_RGBA)
-             && image->Type == CHAN_TYPE
-	     && (filter = current2Dtex->MinFilter)==current2Dtex->MagFilter
-	     /* ==> current2Dtex->MinFilter != GL_XXX_MIPMAP_XXX */
-	     && ctx->Light.Model.ColorControl==GL_SINGLE_COLOR
-	     && ctx->Texture.Unit[0].EnvMode!=GL_COMBINE_EXT) {
-
+             && texObj2D->WrapS==GL_REPEAT
+	     && texObj2D->WrapT==GL_REPEAT
+             && texImg->Border==0
+             && (format == GL_RGB || format == GL_RGBA)
+             && texImg->Type == CHAN_TYPE
+	     && minFilter == magFilter
+	     && ctx->Light.Model.ColorControl == GL_SINGLE_COLOR
+	     && ctx->Texture.Unit[0].EnvMode != GL_COMBINE_EXT) {
 	    if (ctx->Hint.PerspectiveCorrection==GL_FASTEST) {
-
-	       if (filter==GL_NEAREST
-		   && format==GL_RGB
-		   && (ctx->Texture.Unit[0].EnvMode==GL_REPLACE
-		       || ctx->Texture.Unit[0].EnvMode==GL_DECAL)
-		   && ((swrast->_RasterMask==DEPTH_BIT
-			&& ctx->Depth.Func==GL_LESS
-			&& ctx->Depth.Mask==GL_TRUE)
-		       || swrast->_RasterMask==0)
-		   && ctx->Polygon.StippleFlag==GL_FALSE) {
-
+	       if (minFilter == GL_NEAREST
+		   && format == GL_RGB
+		   && (envMode == GL_REPLACE || envMode == GL_DECAL)
+		   && ((swrast->_RasterMask == DEPTH_BIT
+			&& ctx->Depth.Func == GL_LESS
+			&& ctx->Depth.Mask == GL_TRUE)
+		       || swrast->_RasterMask == 0)
+		   && ctx->Polygon.StippleFlag == GL_FALSE) {
 		  if (swrast->_RasterMask==DEPTH_BIT) {
-		     swrast->Triangle = simple_z_textured_triangle;
-		     dputs("simple_z_textured_triangle");
+		     USE(simple_z_textured_triangle);
 		  }
 		  else {
-		     swrast->Triangle = simple_textured_triangle;
-		     dputs("simple_textured_triangle");
+		     USE(simple_textured_triangle);
 		  }
 	       }
 	       else {
                   if (ctx->Texture.Unit[0].EnvMode==GL_ADD) {
-                     swrast->Triangle = general_textured_triangle;
-                     dputs("general_textured_triangle");
+                     USE(general_textured_triangle);
                   }
                   else {
-                     swrast->Triangle = affine_textured_triangle;
-                     dputs("affine_textured_triangle");
+                     USE(affine_textured_triangle);
                   }
 	       }
 	    }
 	    else {
 #if 00 /* XXX these function have problems with texture coord interpolation */
 	       if (filter==GL_NEAREST) {
-		 swrast->Triangle = near_persp_textured_triangle;
-		 dputs("near_persp_textured_triangle");
+                  USE(near_persp_textured_triangle);
 	       }
 	       else {
-		 swrast->Triangle = lin_persp_textured_triangle;
-		 dputs("lin_persp_textured_triangle");
+                  USE(lin_persp_textured_triangle);
 	       }
 #endif
-               swrast->Triangle = general_textured_triangle;
+               USE(general_textured_triangle);
 	    }
 	 }
          else {
@@ -2380,62 +2384,54 @@ _swrast_choose_triangle( GLcontext *ctx )
             else
                needLambda = GL_FALSE;
             if (swrast->_MultiTextureEnabled) {
-               swrast->Triangle = lambda_multitextured_triangle;
-	       dputs("lambda_multitextured_triangle");
+               USE(lambda_multitextured_triangle);
             }
             else if (ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) {
                /* separate specular color interpolation */
                if (needLambda) {
-                  swrast->Triangle = lambda_textured_spec_triangle;
-		  dputs("lambda_textured_spec_triangle");
+                  USE(lambda_textured_spec_triangle);
 	       }
                else {
-                  swrast->Triangle = general_textured_spec_triangle;
-		  dputs("general_textured_spec_triangle");
+                  USE(general_textured_spec_triangle);
 	       }
             }
             else {
                if (needLambda) {
-		  swrast->Triangle = lambda_textured_triangle;
-		  dputs("lambda_textured_triangle");
+		  USE(lambda_textured_triangle);
 	       }
                else {
-                  swrast->Triangle = general_textured_triangle;
-		  dputs("general_textured_triangle");
+                  USE(general_textured_triangle);
 	       }
             }
          }
       }
       else {
+         ASSERT(!ctx->Texture._ReallyEnabled);
 	 if (ctx->Light.ShadeModel==GL_SMOOTH) {
 	    /* smooth shaded, no texturing, stippled or some raster ops */
             if (rgbmode) {
-	       dputs("smooth_rgba_triangle");
-	       swrast->Triangle = smooth_rgba_triangle;
+	       USE(smooth_rgba_triangle);
             }
             else {
-               dputs("smooth_ci_triangle");
-               swrast->Triangle = smooth_ci_triangle;
+               USE(smooth_ci_triangle);
             }
 	 }
 	 else {
 	    /* flat shaded, no texturing, stippled or some raster ops */
             if (rgbmode) {
-	       dputs("flat_rgba_triangle");
-	       swrast->Triangle = flat_rgba_triangle;
+	       USE(flat_rgba_triangle);
             }
             else {
-               dputs("flat_ci_triangle");
-               swrast->Triangle = flat_ci_triangle;
+               USE(flat_ci_triangle);
             }
 	 }
       }
    }
    else if (ctx->RenderMode==GL_FEEDBACK) {
-      swrast->Triangle = _mesa_feedback_triangle;
+      USE(_mesa_feedback_triangle);
    }
    else {
       /* GL_SELECT mode */
-      swrast->Triangle = _mesa_select_triangle;
+      USE(_mesa_select_triangle);
    }
 }
