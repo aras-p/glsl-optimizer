@@ -1,4 +1,4 @@
-/* $Id: s_points.c,v 1.18 2002/05/27 17:04:53 brianp Exp $ */
+/* $Id: s_points.c,v 1.19 2002/06/15 03:03:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -215,7 +215,7 @@ _swrast_choose_point( GLcontext *ctx )
             if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled) {
                USE(atten_antialiased_rgba_point);
             }
-            else if (ctx->Texture._ReallyEnabled) {
+            else if (ctx->Texture._EnabledUnits) {
                USE(antialiased_tex_rgba_point);
             }
             else {
@@ -228,7 +228,7 @@ _swrast_choose_point( GLcontext *ctx )
       }
       else if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled) {
          if (rgbMode) {
-            if (ctx->Texture._ReallyEnabled) {
+            if (ctx->Texture._EnabledUnits) {
                if (ctx->Point.SmoothFlag) {
                   USE(atten_antialiased_rgba_point);
                }
@@ -245,7 +245,7 @@ _swrast_choose_point( GLcontext *ctx )
             USE(atten_general_ci_point);
          }
       }
-      else if (ctx->Texture._ReallyEnabled && rgbMode) {
+      else if (ctx->Texture._EnabledUnits && rgbMode) {
          /* textured */
          USE(textured_rgba_point);
       }

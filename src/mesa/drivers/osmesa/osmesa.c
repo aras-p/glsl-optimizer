@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.81 2002/06/15 02:38:17 brianp Exp $ */
+/* $Id: osmesa.c,v 1.82 2002/06/15 03:03:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1802,7 +1802,7 @@ osmesa_choose_line_function( GLcontext *ctx )
    if (CHAN_BITS != 8)                    return NULL;
    if (ctx->RenderMode != GL_RENDER)      return NULL;
    if (ctx->Line.SmoothFlag)              return NULL;
-   if (ctx->Texture._ReallyEnabled)       return NULL;
+   if (ctx->Texture._EnabledUnits)        return NULL;
    if (ctx->Light.ShadeModel != GL_FLAT)  return NULL;
    if (ctx->Line.Width != 1.0F)           return NULL;
    if (ctx->Line.StippleFlag)             return NULL;
@@ -1956,7 +1956,7 @@ osmesa_choose_triangle_function( GLcontext *ctx )
    if (ctx->RenderMode != GL_RENDER)    return (swrast_tri_func) NULL;
    if (ctx->Polygon.SmoothFlag)         return (swrast_tri_func) NULL;
    if (ctx->Polygon.StippleFlag)        return (swrast_tri_func) NULL;
-   if (ctx->Texture._ReallyEnabled)     return (swrast_tri_func) NULL;
+   if (ctx->Texture._EnabledUnits)      return (swrast_tri_func) NULL;
    if (osmesa->format != OSMESA_RGBA &&
        osmesa->format != OSMESA_BGRA &&
        osmesa->format != OSMESA_ARGB)   return (swrast_tri_func) NULL;

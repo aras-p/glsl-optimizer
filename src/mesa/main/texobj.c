@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.54 2002/06/15 02:38:16 brianp Exp $ */
+/* $Id: texobj.c,v 1.55 2002/06/15 03:03:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,17 +49,23 @@
  * table.
  * Input:  shared - the shared GL state structure to contain the texture object
  *         name - integer name for the texture object
- *         dimensions - either 1, 2, 3 or 6 (cube map)
+ *         target - either GL_TEXTURE_1D, GL_TEXTURE_2D, GL_TEXTURE_3D,
+ *                  GL_TEXTURE_CUBE_MAP_ARB or GL_TEXTURE_RECTANGLE_NV
  *                      zero is ok for the sake of GenTextures()
  * Return:  pointer to new texture object
  */
 struct gl_texture_object *
 _mesa_alloc_texture_object( struct gl_shared_state *shared,
-			    GLuint name, GLuint dimensions )
+			    GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
 
-   ASSERT(dimensions <= 3 || dimensions == 6);
+   ASSERT(target == 0 ||
+          target == GL_TEXTURE_1D ||
+          target == GL_TEXTURE_2D ||
+          target == GL_TEXTURE_3D ||
+          target == GL_TEXTURE_CUBE_MAP_ARB ||
+          target == GL_TEXTURE_RECTANGLE_NV);
 
    obj = CALLOC_STRUCT(gl_texture_object);
 
@@ -68,12 +74,20 @@ _mesa_alloc_texture_object( struct gl_shared_state *shared,
       _glthread_INIT_MUTEX(obj->Mutex);
       obj->RefCount = 1;
       obj->Name = name;
-      obj->Dimensions = dimensions;
+      obj->Target = target;
       obj->Priority = 1.0F;
-      obj->WrapS = GL_REPEAT;
-      obj->WrapT = GL_REPEAT;
-      obj->WrapR = GL_REPEAT;
-      obj->MinFilter = GL_NEAREST_MIPMAP_LINEAR;
+      if (target == GL_TEXTURE_RECTANGLE_NV) {
+         obj->WrapS = GL_CLAMP_TO_EDGE;
+         obj->WrapT = GL_CLAMP_TO_EDGE;
+         obj->WrapR = GL_CLAMP_TO_EDGE;
+         obj->MinFilter = GL_LINEAR;
+      }
+      else {
+         obj->WrapS = GL_REPEAT;
+         obj->WrapT = GL_REPEAT;
+         obj->WrapR = GL_REPEAT;
+         obj->MinFilter = GL_NEAREST_MIPMAP_LINEAR;
+      }
       obj->MagFilter = GL_LINEAR;
       obj->MinLod = -1000.0;
       obj->MaxLod = 1000.0;
@@ -196,24 +210,32 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
    }
 
    /* Compute _MaxLevel */
-   if (t->Dimensions == 1) {
+   if (t->Target == GL_TEXTURE_1D) {
       maxLog2 = t->Image[baseLevel]->WidthLog2;
       maxLevels = ctx->Const.MaxTextureLevels;
    }
-   else if (t->Dimensions == 2 || t->Dimensions == 6) {
+   else if (t->Target == GL_TEXTURE_2D) {
       maxLog2 = MAX2(t->Image[baseLevel]->WidthLog2,
                      t->Image[baseLevel]->HeightLog2);
-      maxLevels = (t->Dimensions == 2) ?
-         ctx->Const.MaxTextureLevels : ctx->Const.MaxCubeTextureLevels;
+      maxLevels = ctx->Const.MaxTextureLevels;
    }
-   else if (t->Dimensions == 3) {
+   else if (t->Target == GL_TEXTURE_3D) {
       GLint max = MAX2(t->Image[baseLevel]->WidthLog2,
                        t->Image[baseLevel]->HeightLog2);
       maxLog2 = MAX2(max, (GLint)(t->Image[baseLevel]->DepthLog2));
       maxLevels = ctx->Const.Max3DTextureLevels;
    }
+   else if (t->Target == GL_TEXTURE_CUBE_MAP_ARB) {
+      maxLog2 = MAX2(t->Image[baseLevel]->WidthLog2,
+                     t->Image[baseLevel]->HeightLog2);
+      maxLevels = ctx->Const.MaxCubeTextureLevels;
+   }
+   else if (t->Target == GL_TEXTURE_RECTANGLE_NV) {
+      maxLog2 = 0;  /* not applicable */
+      maxLevels = 1;  /* no mipmapping */
+   }
    else {
-      _mesa_problem(ctx, "Bad t->Dimension in _mesa_test_texobj_completeness");
+      _mesa_problem(ctx, "Bad t->Target in _mesa_test_texobj_completeness");
       return;
    }
 
@@ -226,7 +248,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
    /* Compute _MaxLambda = q - b (see the 1.2 spec) used during mipmapping */
    t->_MaxLambda = (GLfloat) (t->_MaxLevel - t->BaseLevel);
 
-   if (t->Dimensions == 6) {
+   if (t->Target == GL_TEXTURE_CUBE_MAP_ARB) {
       /* make sure that all six cube map level 0 images are the same size */
       const GLuint w = t->Image[baseLevel]->Width2;
       const GLuint h = t->Image[baseLevel]->Height2;
@@ -282,7 +304,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       }
 
       /* Test things which depend on number of texture image dimensions */
-      if (t->Dimensions == 1) {
+      if (t->Target == GL_TEXTURE_1D) {
          /* Test 1-D mipmaps */
          GLuint width = t->Image[baseLevel]->Width2;
          for (i = baseLevel + 1; i < maxLevels; i++) {
@@ -306,7 +328,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
             }
          }
       }
-      else if (t->Dimensions == 2) {
+      else if (t->Target == GL_TEXTURE_2D) {
          /* Test 2-D mipmaps */
          GLuint width = t->Image[baseLevel]->Width2;
          GLuint height = t->Image[baseLevel]->Height2;
@@ -339,7 +361,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
             }
          }
       }
-      else if (t->Dimensions == 3) {
+      else if (t->Target == GL_TEXTURE_3D) {
          /* Test 3-D mipmaps */
          GLuint width = t->Image[baseLevel]->Width2;
          GLuint height = t->Image[baseLevel]->Height2;
@@ -386,7 +408,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
             }
          }
       }
-      else if (t->Dimensions == 6) {
+      else if (t->Target == GL_TEXTURE_CUBE_MAP_ARB) {
          /* make sure 6 cube faces are consistant */
          GLuint width = t->Image[baseLevel]->Width2;
          GLuint height = t->Image[baseLevel]->Height2;
@@ -428,8 +450,12 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
             }
          }
       }
+      else if (t->Target == GL_TEXTURE_RECTANGLE_NV) {
+         /* XXX special checking? */
+
+      }
       else {
-         /* Dimensions = ??? */
+         /* Target = ??? */
          _mesa_problem(ctx, "Bug in gl_test_texture_object_completeness\n");
       }
    }
@@ -473,8 +499,8 @@ _mesa_GenTextures( GLsizei n, GLuint *texName )
    /* Allocate new, empty texture objects */
    for (i=0;i<n;i++) {
       GLuint name = first + i;
-      GLuint dims = 0;
-      (void) _mesa_alloc_texture_object( ctx->Shared, name, dims);
+      GLenum target = 0;
+      (void) _mesa_alloc_texture_object( ctx->Shared, name, target);
    }
 
    _glthread_UNLOCK_MUTEX(GenTexturesLock);
@@ -561,7 +587,6 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *oldTexObj;
    struct gl_texture_object *newTexObj = 0;
-   GLuint targetDim;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
@@ -570,24 +595,28 @@ _mesa_BindTexture( GLenum target, GLuint texName )
 
    switch (target) {
       case GL_TEXTURE_1D:
-         targetDim = 1;
          oldTexObj = texUnit->Current1D;
          break;
       case GL_TEXTURE_2D:
-         targetDim = 2;
          oldTexObj = texUnit->Current2D;
          break;
       case GL_TEXTURE_3D:
-         targetDim = 3;
          oldTexObj = texUnit->Current3D;
          break;
       case GL_TEXTURE_CUBE_MAP_ARB:
-         if (ctx->Extensions.ARB_texture_cube_map) {
-            targetDim = 6;
-            oldTexObj = texUnit->CurrentCubeMap;
-            break;
+         if (!ctx->Extensions.ARB_texture_cube_map) {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glBindTexture(target)" );
+            return;
          }
-         /* fallthrough */
+         oldTexObj = texUnit->CurrentCubeMap;
+         break;
+      case GL_TEXTURE_RECTANGLE_NV:
+         if (!ctx->Extensions.NV_texture_rectangle) {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glBindTexture(target)" );
+            return;
+         }
+         oldTexObj = texUnit->CurrentRect;
+         break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glBindTexture(target)" );
          return;
@@ -614,6 +643,9 @@ _mesa_BindTexture( GLenum target, GLuint texName )
          case GL_TEXTURE_CUBE_MAP_ARB:
             newTexObj = ctx->Shared->DefaultCubeMap;
             break;
+         case GL_TEXTURE_RECTANGLE_NV:
+            newTexObj = ctx->Shared->DefaultRect;
+            break;
          default:
             ; /* Bad targets are caught above */
       }
@@ -624,23 +656,30 @@ _mesa_BindTexture( GLenum target, GLuint texName )
       newTexObj = (struct gl_texture_object *) _mesa_HashLookup(hash, texName);
       if (newTexObj) {
          /* error checking */
-         if (newTexObj->Dimensions > 0 && newTexObj->Dimensions != targetDim) {
+         if (newTexObj->Target != 0 && newTexObj->Target != target) {
             /* the named texture object's dimensions don't match the target */
             _mesa_error( ctx, GL_INVALID_OPERATION,
                          "glBindTexture(wrong dimensionality)" );
             return;
          }
+         if (newTexObj->Target == 0 && target == GL_TEXTURE_RECTANGLE_NV) {
+            /* have to init wrap and filter state here - kind of klunky */
+            newTexObj->WrapS = GL_CLAMP_TO_EDGE;
+            newTexObj->WrapT = GL_CLAMP_TO_EDGE;
+            newTexObj->WrapR = GL_CLAMP_TO_EDGE;
+            newTexObj->MinFilter = GL_LINEAR;
+         }
       }
       else {
          /* if this is a new texture id, allocate a texture object now */
 	 newTexObj = _mesa_alloc_texture_object( ctx->Shared, texName,
-						 targetDim);
+						 target);
          if (!newTexObj) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindTexture");
             return;
          }
       }
-      newTexObj->Dimensions = targetDim;
+      newTexObj->Target = target;
    }
 
    newTexObj->RefCount++;
@@ -662,8 +701,12 @@ _mesa_BindTexture( GLenum target, GLuint texName )
       case GL_TEXTURE_CUBE_MAP_ARB:
          texUnit->CurrentCubeMap = newTexObj;
          break;
+      case GL_TEXTURE_RECTANGLE_NV:
+         texUnit->CurrentRect = newTexObj;
+         break;
       default:
          _mesa_problem(ctx, "bad target in BindTexture");
+         return;
    }
 
    /* Pass BindTexture call to device driver */

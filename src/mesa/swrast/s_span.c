@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.43 2002/06/15 02:38:17 brianp Exp $ */
+/* $Id: s_span.c,v 1.44 2002/06/15 03:03:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -345,7 +345,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
    ASSERT(span->interpMask & SPAN_TEXTURE);
    ASSERT(!(span->arrayMask & SPAN_TEXTURE));
 
-   if (ctx->Texture._ReallyEnabled & ~TEXTURE0_ANY) {
+   if (ctx->Texture._EnabledUnits > 1) {
       /* multitexture */
       GLuint u;
       span->arrayMask |= SPAN_TEXTURE;
@@ -355,8 +355,8 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
             const struct gl_texture_image *img = obj->Image[obj->BaseLevel];
             GLboolean needLambda = (obj->MinFilter != obj->MagFilter);
             if (needLambda) {
-               const GLfloat texW = (GLfloat) img->Width;
-               const GLfloat texH = (GLfloat) img->Height;
+               const GLfloat texW = (GLfloat) img->WidthScale;
+               const GLfloat texH = (GLfloat) img->HeightScale;
                const GLfloat dsdx = span->texStepX[u][0];
                const GLfloat dsdy = span->texStepY[u][0];
                const GLfloat dtdx = span->texStepX[u][1];
@@ -432,8 +432,8 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
       span->arrayMask |= SPAN_TEXTURE;
       if (needLambda) {
          /* just texture unit 0, with lambda */
-         const GLfloat texW = (GLfloat) img->Width;
-         const GLfloat texH = (GLfloat) img->Height;
+         const GLfloat texW = (GLfloat) img->WidthScale;
+         const GLfloat texH = (GLfloat) img->HeightScale;
          const GLfloat dsdx = span->texStepX[0][0];
          const GLfloat dsdy = span->texStepY[0][0];
          const GLfloat dtdx = span->texStepX[0][1];
@@ -1137,7 +1137,7 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span)
 	  span->primitive == GL_POLYGON  ||  span->primitive == GL_BITMAP);
    ASSERT(span->end <= MAX_WIDTH);
    ASSERT((span->interpMask & span->arrayMask) == 0);
-   ASSERT(ctx->Texture._ReallyEnabled);
+   ASSERT(ctx->Texture._EnabledUnits);
 
    /*
    printf("%s()  interp 0x%x  array 0x%x\n", __FUNCTION__, span->interpMask, span->arrayMask);

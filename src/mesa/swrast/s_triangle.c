@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.58 2002/04/19 14:05:50 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.59 2002/06/15 03:03:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -124,7 +124,7 @@ static void flat_rgba_triangle( GLcontext *ctx,
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 
 #define SETUP_CODE				\
-   ASSERT(!ctx->Texture._ReallyEnabled);	\
+   ASSERT(ctx->Texture._EnabledUnits == 0);	\
    ASSERT(ctx->Light.ShadeModel==GL_FLAT);	\
    span->interpMask |= SPAN_RGBA;		\
    span->red = ChanToFixed(v2->color[0]);	\
@@ -161,7 +161,7 @@ static void smooth_rgba_triangle( GLcontext *ctx,
 #define SETUP_CODE				\
    {						\
       /* texturing must be off */		\
-      ASSERT(!ctx->Texture._ReallyEnabled);	\
+      ASSERT(ctx->Texture._EnabledUnits == 0);	\
       ASSERT(ctx->Light.ShadeModel==GL_SMOOTH);	\
    }
 
@@ -1116,7 +1116,7 @@ _swrast_choose_triangle( GLcontext *ctx )
          }
       }
 
-      if (ctx->Texture._ReallyEnabled) {
+      if (ctx->Texture._EnabledUnits) {
          /* Ugh, we do a _lot_ of tests to pick the best textured tri func */
 	 const struct gl_texture_object *texObj2D;
          const struct gl_texture_image *texImg;
@@ -1130,7 +1130,8 @@ _swrast_choose_triangle( GLcontext *ctx )
          envMode = ctx->Texture.Unit[0].EnvMode;
 
          /* First see if we can used an optimized 2-D texture function */
-         if (ctx->Texture._ReallyEnabled==TEXTURE0_2D
+         if (ctx->Texture._EnabledUnits == 1
+             && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
              && texObj2D->WrapS==GL_REPEAT
 	     && texObj2D->WrapT==GL_REPEAT
              && texImg->Border==0
@@ -1172,7 +1173,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 	 }
          else {
             /* general case textured triangles */
-            if (ctx->Texture._ReallyEnabled > TEXTURE0_ANY) {
+            if (ctx->Texture._EnabledUnits > 1) {
                USE(multitextured_triangle);
             }
             else {
@@ -1181,7 +1182,7 @@ _swrast_choose_triangle( GLcontext *ctx )
          }
       }
       else {
-         ASSERT(!ctx->Texture._ReallyEnabled);
+         ASSERT(!ctx->Texture._EnabledUnits);
 	 if (ctx->Light.ShadeModel==GL_SMOOTH) {
 	    /* smooth shaded, no texturing, stippled or some raster ops */
             if (rgbmode) {

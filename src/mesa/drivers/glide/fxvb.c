@@ -1,4 +1,4 @@
-/* $Id: fxvb.c,v 1.13 2002/06/15 02:38:16 brianp Exp $ */
+/* $Id: fxvb.c,v 1.14 2002/06/15 03:03:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -342,8 +342,8 @@ void fxChooseVertexState( GLcontext *ctx )
    fxMesa->tmu_source[0] = 0;
    fxMesa->tmu_source[1] = 1;
 
-   if (ctx->Texture._ReallyEnabled & TEXTURE1_ANY) {
-      if (ctx->Texture._ReallyEnabled & TEXTURE0_ANY) {
+   if (ctx->Texture._EnabledUnits & 0x2) {
+      if (ctx->Texture._EnabledUnits & 0x1) {
 	 ind |= SETUP_TMU1|SETUP_TMU0;
       }
       else {
@@ -352,7 +352,7 @@ void fxChooseVertexState( GLcontext *ctx )
 	 ind |= SETUP_TMU0;
       }
    }
-   else if (ctx->Texture._ReallyEnabled & TEXTURE0_ANY) {
+   else if (ctx->Texture._EnabledUnits & 0x1) {
       ind |= SETUP_TMU0;
    }
    

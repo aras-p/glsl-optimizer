@@ -421,7 +421,7 @@ extern points_func choose_points_function( GLcontext* ctx )
 {
    STARTPROFILE
    if (ctx->Point.Size==1.0 && !ctx->Point.SmoothFlag && ctx->_RasterMask==0
-       && !ctx->Texture._ReallyEnabled  && ctx->Visual->RGBAflag) {
+       && ctx->Texture._EnabledUnits == 0 && ctx->Visual->RGBAflag) {
    ENDPROFILE(choose_points_function)
       return fast_rgb_points;
    }
@@ -479,7 +479,7 @@ static line_func choose_line_function( GLcontext* ctx )
 	STARTPROFILE
    if (ctx->Line.Width==1.0 && !ctx->Line.SmoothFlag && !ctx->Line.StippleFlag
        && ctx->Light.ShadeModel==GL_FLAT && ctx->_RasterMask==0
-       && !ctx->Texture._ReallyEnabled && Current->rgb_flag) {
+       && ctx->Texture._EnabledUnits == 0 && Current->rgb_flag) {
    ENDPROFILE(choose_line_function)
       return fast_flat_rgb_line;
    }
@@ -590,7 +590,7 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
 {
    if (ctx->Polygon.SmoothFlag)     return NULL;
    if (ctx->Polygon.StippleFlag)    return NULL;
-   if (ctx->Texture._ReallyEnabled)  return NULL;
+   if (ctx->Texture._EnabledUnits)  return NULL;
 
    if (ctx->_RasterMask==DEPTH_BIT
        && ctx->Depth.Func==GL_LESS
@@ -661,7 +661,7 @@ static polygon_func choose_polygon_function( GLcontext* ctx )
    STARTPROFILE
    if (!ctx->Polygon.SmoothFlag && !ctx->Polygon.StippleFlag
        && ctx->Light.ShadeModel==GL_FLAT && ctx->_RasterMask==0
-       && !ctx->Texture._ReallyEnabled && Current->rgb_flag==GL_TRUE) {
+       && ctx->Texture._EnabledUnits == 0 && Current->rgb_flag==GL_TRUE) {
       ENDPROFILE(choose_polygon_function)
       return fast_flat_rgb_polygon;
    }

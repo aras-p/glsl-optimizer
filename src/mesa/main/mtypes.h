@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.79 2002/06/15 02:38:16 brianp Exp $ */
+/* $Id: mtypes.h,v 1.80 2002/06/15 03:03:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -726,52 +726,25 @@ struct gl_stencil_attrib {
 #define R_BIT 4
 #define Q_BIT 8
 
-#define NUM_TEXTURE_TARGETS 4 /* 1D, 2D, 3D and CUBE */
+/* Texture.Unit[]._ReallyEnabled flags: */
+#define TEXTURE_1D_BIT   0x01
+#define TEXTURE_2D_BIT   0x02
+#define TEXTURE_3D_BIT   0x04
+#define TEXTURE_CUBE_BIT 0x08
+#define TEXTURE_RECT_BIT 0x10
 
-/* Texture Enabled flags */
-#define TEXTURE0_1D   0x1     /* Texture unit 0 (default) */
-#define TEXTURE0_2D   0x2
-#define TEXTURE0_3D   0x4
-#define TEXTURE0_CUBE 0x8
-#define TEXTURE0_ANY  (TEXTURE0_1D | TEXTURE0_2D | TEXTURE0_3D | TEXTURE0_CUBE)
-#define TEXTURE1_1D   (TEXTURE0_1D << 4)    /* Texture unit 1 */
-#define TEXTURE1_2D   (TEXTURE0_2D << 4)
-#define TEXTURE1_3D   (TEXTURE0_3D << 4)
-#define TEXTURE1_CUBE (TEXTURE0_CUBE << 4)
-#define TEXTURE1_ANY  (TEXTURE1_1D | TEXTURE1_2D | TEXTURE1_3D | TEXTURE1_CUBE)
-#define TEXTURE2_1D   (TEXTURE0_1D << 8)    /* Texture unit 2 */
-#define TEXTURE2_2D   (TEXTURE0_2D << 8)
-#define TEXTURE2_3D   (TEXTURE0_3D << 8)
-#define TEXTURE2_CUBE (TEXTURE0_CUBE << 8)
-#define TEXTURE2_ANY  (TEXTURE2_1D | TEXTURE2_2D | TEXTURE2_3D | TEXTURE2_CUBE)
-#define TEXTURE3_1D   (TEXTURE0_1D << 12)    /* Texture unit 3 */
-#define TEXTURE3_2D   (TEXTURE0_2D << 12)
-#define TEXTURE3_3D   (TEXTURE0_3D << 12)
-#define TEXTURE3_CUBE (TEXTURE0_CUBE << 12)
-#define TEXTURE3_ANY  (TEXTURE3_1D | TEXTURE3_2D | TEXTURE3_3D | TEXTURE3_CUBE)
-#define TEXTURE4_1D   (TEXTURE0_1D << 16)    /* Texture unit 4 */
-#define TEXTURE4_2D   (TEXTURE0_2D << 16)
-#define TEXTURE4_3D   (TEXTURE0_3D << 16)
-#define TEXTURE4_CUBE (TEXTURE0_CUBE << 16)
-#define TEXTURE5_ANY  (TEXTURE3_1D | TEXTURE3_2D | TEXTURE3_3D | TEXTURE3_CUBE)
-#define TEXTURE5_1D   (TEXTURE0_1D << 20)    /* Texture unit 5 */
-#define TEXTURE5_2D   (TEXTURE0_2D << 20)
-#define TEXTURE5_3D   (TEXTURE0_3D << 20)
-#define TEXTURE5_CUBE (TEXTURE0_CUBE << 20)
-#define TEXTURE5_ANY  (TEXTURE3_1D | TEXTURE3_2D | TEXTURE3_3D | TEXTURE3_CUBE)
-#define TEXTURE6_1D   (TEXTURE0_1D << 24)    /* Texture unit 6 */
-#define TEXTURE6_2D   (TEXTURE0_2D << 24)
-#define TEXTURE6_3D   (TEXTURE0_3D << 24)
-#define TEXTURE6_CUBE (TEXTURE0_CUBE << 24)
-#define TEXTURE6_ANY  (TEXTURE3_1D | TEXTURE3_2D | TEXTURE3_3D | TEXTURE3_CUBE)
-#define TEXTURE7_1D   (TEXTURE0_1D << 28)    /* Texture unit 7 */
-#define TEXTURE7_2D   (TEXTURE0_2D << 28)
-#define TEXTURE7_3D   (TEXTURE0_3D << 28)
-#define TEXTURE7_CUBE (TEXTURE0_CUBE << 28)
-#define TEXTURE7_ANY  (TEXTURE3_1D | TEXTURE3_2D | TEXTURE3_3D | TEXTURE3_CUBE)
+#define NUM_TEXTURE_TARGETS 5   /* 1D, 2D, 3D, CUBE and RECT */
 
-/* Bitmap versions of the GL_ constants.
- */
+/* Texture Enabled flags - XXX these are obsolete!!! */
+#define TEXTURE0_1D    TEXTURE_1D_BIT
+#define TEXTURE0_2D    TEXTURE_2D_BIT
+#define TEXTURE0_3D    TEXTURE_3D_BIT
+#define TEXTURE0_CUBE  TEXTURE_CUBE_BIT
+#define TEXTURE0_RECT  TEXTURE_RECT_BIT
+#define TEXTURE0_ANY   0x1F
+
+
+/* Bitmap versions of the GL_ constants. */
 #define TEXGEN_SPHERE_MAP        0x1
 #define TEXGEN_OBJ_LINEAR        0x2
 #define TEXGEN_EYE_LINEAR        0x4
@@ -788,8 +761,7 @@ struct gl_stencil_attrib {
 
 
 
-/* A selection of state flags to make driver and module's lives easier.
- */
+/* A selection of state flags to make driver and module's lives easier. */
 #define ENABLE_TEXGEN0        0x1
 #define ENABLE_TEXGEN1        0x2
 #define ENABLE_TEXGEN2        0x4
@@ -846,6 +818,7 @@ struct gl_texture_format {
    FetchTexelFunc FetchTexel3D;
 };
 
+
 /* Texture image record */
 struct gl_texture_image {
    GLenum Format;		/* GL_ALPHA, GL_LUMINANCE, GL_LUMINANCE_ALPHA,
@@ -864,6 +837,9 @@ struct gl_texture_image {
    GLuint HeightLog2;		/* = log2(Height2) */
    GLuint DepthLog2;		/* = log2(Depth2) */
    GLuint MaxLog2;		/* = MAX(WidthLog2, HeightLog2) */
+   GLfloat WidthScale;		/* used for mipmap lod computation */
+   GLfloat HeightScale;		/* used for mipmap lod computation */
+   GLfloat DepthScale;		/* used for mipmap lod computation */
    GLvoid *Data;		/* Image data, accessed via FetchTexel() */
 
    const struct gl_texture_format *TexFormat;
@@ -883,7 +859,7 @@ struct gl_texture_object {
    _glthread_Mutex Mutex;	/* for thread safety */
    GLint RefCount;		/* reference count */
    GLuint Name;			/* an unsigned integer */
-   GLuint Dimensions;		/* 1 or 2 or 3 or 6 (cube map) */
+   GLenum Target;               /* GL_TEXTURE_1D, GL_TEXTURE_2D, etc. */
    GLfloat Priority;		/* in [0,1] */
    GLfloat BorderValues[4];     /* unclamped */
    GLchan BorderColor[4];       /* clamped, as GLchan */
@@ -928,13 +904,10 @@ struct gl_texture_object {
 };
 
 
-
-/*
- * Texture units are new with the multitexture extension.
- */
+/* Texture unit record */
 struct gl_texture_unit {
-   GLuint Enabled;              /* bitmask of TEXTURE0_1D, _2D, _3D, _CUBE */
-   GLuint _ReallyEnabled;       /* 0 or one of TEXTURE0_1D, _2D, _3D, _CUBE */
+   GLuint Enabled;              /* bitmask of TEXTURE_*_BIT flags */
+   GLuint _ReallyEnabled;       /* 0 or exactly one of TEXTURE_*_BIT flags */
 
    GLenum EnvMode;              /* GL_MODULATE, GL_DECAL, GL_BLEND, etc. */
    GLfloat EnvColor[4];
@@ -972,6 +945,7 @@ struct gl_texture_unit {
    struct gl_texture_object *Current2D;
    struct gl_texture_object *Current3D;
    struct gl_texture_object *CurrentCubeMap; /* GL_ARB_texture_cube_map */
+   struct gl_texture_object *CurrentRect;    /* GL_NV_texture_rectangle */
 
    struct gl_texture_object *_Current; /* Points to really enabled tex obj */
 
@@ -979,13 +953,17 @@ struct gl_texture_unit {
    struct gl_texture_object Saved2D;
    struct gl_texture_object Saved3D;
    struct gl_texture_object SavedCubeMap;
+   struct gl_texture_object SavedRect;
 };
 
 
+/* The texture attribute group */
 struct gl_texture_attrib {
    /* multitexture */
    GLuint CurrentUnit;	          /* Active texture unit */
 
+   GLuint _EnabledUnits;        /* one bit set for each really-enabled unit */
+   /* XXX this field will go away, use _EnabledUnits instead! */
    GLuint _ReallyEnabled;     /* enables for all texture units: */
                              /* = (Unit[0]._ReallyEnabled << 0) | */
                              /*   (Unit[1]._ReallyEnabled << 4) | */
@@ -1001,6 +979,7 @@ struct gl_texture_attrib {
    struct gl_texture_object *Proxy2D;
    struct gl_texture_object *Proxy3D;
    struct gl_texture_object *ProxyCubeMap;
+   struct gl_texture_object *ProxyRect;
 
    /* GL_EXT_shared_texture_palette */
    GLboolean SharedPalette;
@@ -1297,6 +1276,7 @@ struct gl_shared_state {
    struct gl_texture_object *Default2D;
    struct gl_texture_object *Default3D;
    struct gl_texture_object *DefaultCubeMap;
+   struct gl_texture_object *DefaultRect;
 
    /* GL_NV_vertex_program */
    struct _mesa_HashTable *VertexPrograms;
@@ -1350,7 +1330,8 @@ struct gl_frame_buffer {
 struct gl_constants {
    GLint MaxTextureLevels;
    GLint Max3DTextureLevels;
-   GLint MaxCubeTextureLevels;
+   GLint MaxCubeTextureLevels;          /* GL_ARB_texture_cube_map */
+   GLint MaxTextureRectSize;            /* GL_NV_texture_rectangle */
    GLuint MaxTextureUnits;
    GLfloat MaxTextureMaxAnisotropy;	/* GL_EXT_texture_filter_anisotropic */
    GLfloat MaxTextureLodBias;           /* GL_EXT_texture_lod_bias */
@@ -1432,6 +1413,7 @@ struct gl_extensions {
    GLboolean MESA_sprite_point;
    GLboolean NV_blend_square;
    GLboolean NV_point_sprite;
+   GLboolean NV_texture_rectangle;
    GLboolean NV_texgen_reflection;
    GLboolean NV_vertex_program;
    GLboolean NV_vertex_program1_1;

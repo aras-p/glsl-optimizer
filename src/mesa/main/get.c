@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.81 2002/06/15 02:38:15 brianp Exp $ */
+/* $Id: get.c,v 1.82 2002/06/15 03:03:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1441,6 +1441,20 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = 0;
          break;
 
+      /* GL_NV_texture_rectangle */
+      case GL_TEXTURE_RECTANGLE_NV:
+         CHECK_EXTENSION_B(NV_texture_rectangle);
+         *params = _mesa_IsEnabled(GL_TEXTURE_RECTANGLE_NV);
+         break;
+      case GL_TEXTURE_BINDING_RECTANGLE_NV:
+         CHECK_EXTENSION_B(NV_texture_rectangle);
+         *params = INT_TO_BOOL(textureUnit->CurrentRect->Name);
+         break;
+      case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
+         CHECK_EXTENSION_B(NV_texture_rectangle);
+         *params = INT_TO_BOOL(ctx->Const.MaxTextureRectSize);
+         break;
+
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
    }
@@ -2677,6 +2691,20 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       /* GL_NV_vertex_program */
          /* XXX to do */
 
+      /* GL_NV_texture_rectangle */
+      case GL_TEXTURE_RECTANGLE_NV:
+         CHECK_EXTENSION_D(NV_texture_rectangle);
+         *params = (GLdouble) _mesa_IsEnabled(GL_TEXTURE_RECTANGLE_NV);
+         break;
+      case GL_TEXTURE_BINDING_RECTANGLE_NV:
+         CHECK_EXTENSION_D(NV_texture_rectangle);
+         *params = (GLdouble) textureUnit->CurrentRect->Name;
+         break;
+      case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
+         CHECK_EXTENSION_D(NV_texture_rectangle);
+         *params = (GLdouble) ctx->Const.MaxTextureRectSize;
+         break;
+
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
    }
@@ -3895,6 +3923,20 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 
       /* GL_NV_vertex_program */
          /* XXX to do */
+
+      /* GL_NV_texture_rectangle */
+      case GL_TEXTURE_RECTANGLE_NV:
+         CHECK_EXTENSION_F(NV_texture_rectangle);
+         *params = (GLfloat) _mesa_IsEnabled(GL_TEXTURE_RECTANGLE_NV);
+         break;
+      case GL_TEXTURE_BINDING_RECTANGLE_NV:
+         CHECK_EXTENSION_F(NV_texture_rectangle);
+         *params = (GLfloat) textureUnit->CurrentRect->Name;
+         break;
+      case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
+         CHECK_EXTENSION_F(NV_texture_rectangle);
+         *params = (GLfloat) ctx->Const.MaxTextureRectSize;
+         break;
 
       default:
          GET_FLOAT_ERROR;
@@ -5152,6 +5194,20 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
       /* GL_NV_vertex_program */
          /* XXX to do */
+
+      /* GL_NV_texture_rectangle */
+      case GL_TEXTURE_RECTANGLE_NV:
+         CHECK_EXTENSION_I(NV_texture_rectangle);
+         *params = (GLint) _mesa_IsEnabled(GL_TEXTURE_RECTANGLE_NV);
+         break;
+      case GL_TEXTURE_BINDING_RECTANGLE_NV:
+         CHECK_EXTENSION_I(NV_texture_rectangle);
+         *params = (GLint) textureUnit->CurrentRect->Name;
+         break;
+      case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
+         CHECK_EXTENSION_I(NV_texture_rectangle);
+         *params = (GLint) ctx->Const.MaxTextureRectSize;
+         break;
 
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );

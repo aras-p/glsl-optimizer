@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.74 2002/05/27 17:04:53 brianp Exp $ */
+/* $Id: extensions.c,v 1.75 2002/06/15 03:03:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -114,6 +114,7 @@ static struct {
    { ON,  "GL_MESA_window_pos",                F(MESA_window_pos) },
    { OFF, "GL_NV_blend_square",                F(NV_blend_square) },
    { OFF, "GL_NV_point_sprite",                F(NV_point_sprite) },
+   { OFF, "GL_NV_texture_rectangle",           F(NV_texture_rectangle) },
    { ON,  "GL_NV_texgen_reflection",           F(NV_texgen_reflection) },
    { OFF, "GL_NV_vertex_program",              F(NV_vertex_program) },
    { OFF, "GL_NV_vertex_program1_1",           F(NV_vertex_program1_1) },
@@ -178,6 +179,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_MESA_resize_buffers",
       "GL_NV_blend_square",
       "GL_NV_point_sprite",
+      "GL_NV_texture_rectangle",
       "GL_NV_texgen_reflection",
       "GL_NV_vertex_program",
       "GL_NV_vertex_program1_1",

@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.34 2002/06/15 02:38:17 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.35 2002/06/15 03:03:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -116,7 +116,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
       _mesa_span_default_fog(ctx, span);
 
    if ((SWRAST_CONTEXT(ctx)->_RasterMask & ~CLIP_BIT) == 0
-       && ctx->Texture._ReallyEnabled == 0
+       && ctx->Texture._EnabledUnits == 0
        && unpack->Alignment == 1
        && !unpack->SwapBytes
        && !unpack->LsbFirst) {
@@ -817,7 +817,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
              (ctx->Pixel.HistogramEnabled && ctx->Histogram.Sink))
             continue;
 
-         if (ctx->Pixel.PixelTextureEnabled && ctx->Texture._ReallyEnabled) {
+         if (ctx->Pixel.PixelTextureEnabled && ctx->Texture._EnabledUnits) {
             span->end = width;
             _swrast_pixel_texture(ctx, span);
          }

@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.30 2002/06/15 02:38:17 brianp Exp $ */
+/* $Id: wmesa.c,v 1.31 2002/06/15 03:03:10 brianp Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -3201,7 +3201,7 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
     int depth = wmesa->cColorBits;
 
     if (ctx->Polygon.SmoothFlag)     return NULL;
-    if (ctx->Texture._ReallyEnabled)  return NULL;
+    if (ctx->Texture._EnabledUnits)  return NULL;
     if (!wmesa->db_flag) return NULL;
     if (ctx->swrast->_RasterMask & MULTI_DRAW_BIT) return NULL;
 

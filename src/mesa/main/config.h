@@ -1,10 +1,10 @@
-/* $Id: config.h,v 1.39 2002/06/15 02:38:15 brianp Exp $ */
+/* $Id: config.h,v 1.40 2002/06/15 03:03:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -109,8 +109,11 @@
 /* Number of 3D texture mipmap levels */
 #define MAX_3D_TEXTURE_LEVELS 8
 
-/* Number of cube texture mipmap levels */
+/* Number of cube texture mipmap levels - GL_ARB_texture_cube_map */
 #define MAX_CUBE_TEXTURE_LEVELS 12
+
+/* Maximum rectangular texture size - GL_NV_texture_rectangle */
+#define MAX_TEXTURE_RECT_SIZE 2048
 
 /* Number of texture units - GL_ARB_multitexture */
 #define MAX_TEXTURE_UNITS 8

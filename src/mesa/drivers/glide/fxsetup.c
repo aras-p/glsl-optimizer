@@ -1,4 +1,4 @@
-/* $Id: fxsetup.c,v 1.36 2001/09/23 16:50:01 brianp Exp $ */
+/* $Id: fxsetup.c,v 1.37 2002/06/15 03:03:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1002,39 +1002,25 @@ static void
 fxSetupTexture_NoLock(GLcontext * ctx)
 {
    fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
-   GLuint tex2Denabled;
 
    if (MESA_VERBOSE & VERBOSE_DRIVER) {
       fprintf(stderr, "fxmesa: fxSetupTexture(...)\n");
    }
 
-   /* Texture Combine, Color Combine and Alpha Combine.
-    */
-   tex2Denabled = (ctx->Texture._ReallyEnabled & TEXTURE0_2D);
-
-   if (fxMesa->haveTwoTMUs)
-      tex2Denabled |= (ctx->Texture._ReallyEnabled & TEXTURE1_2D);
-
-   switch (tex2Denabled) {
-   case TEXTURE0_2D:
+   /* Texture Combine, Color Combine and Alpha Combine. */
+   if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT &&
+       ctx->Texture.Unit[1]._ReallyEnabled == TEXTURE_2D_BIT &&
+       fxMesa->haveTwoTMUs) {
+      fxSetupTextureDoubleTMU_NoLock(ctx);
+   }
+   else if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT) {
       fxSetupTextureSingleTMU_NoLock(ctx, 0);
-      break;
-   case TEXTURE1_2D:
+   }
+   else if (ctx->Texture.Unit[1]._ReallyEnabled == TEXTURE_2D_BIT) {
       fxSetupTextureSingleTMU_NoLock(ctx, 1);
-      break;
-   case (TEXTURE0_2D | TEXTURE1_2D):
-      if (fxMesa->haveTwoTMUs)
-	 fxSetupTextureDoubleTMU_NoLock(ctx);
-      else {
-	 if (MESA_VERBOSE & VERBOSE_DRIVER)
-	    fprintf(stderr, "fxmesa: enabling fake multitexture\n");
-
-	 fxSetupTextureSingleTMU_NoLock(ctx, 0);
-      }
-      break;
-   default:
+   }
+   else {
       fxSetupTextureNone_NoLock(ctx);
-      break;
    }
 }
 

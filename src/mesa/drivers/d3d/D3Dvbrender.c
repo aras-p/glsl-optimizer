@@ -1511,7 +1511,7 @@ static void SetRenderStates( GLcontext *ctx )
    /*================================================*/
    /* Check too see if there are new TEXTURE states. */
    /*================================================*/
-   if ( ctx->Texture._ReallyEnabled )
+   if ( ctx->Texture._EnabledUnits )
    {
       switch( ctx->Texture.Set[ctx->Texture.CurrentSet].EnvMode )
       {
@@ -1871,9 +1871,9 @@ static void DebugRenderStates( GLcontext *ctx, BOOL bForce )
    /*================================================*/
    /* Check too see if there are new TEXTURE states. */
    /*================================================*/
-   if ( texture != ctx->Texture._ReallyEnabled )
+   if ( texture != ctx->Texture._EnabledUnits )
    {
-	texture = ctx->Texture._ReallyEnabled;
+	texture = ctx->Texture._EnabledUnits;
 	DPF(( 0, "\tTexture\t\t%s", (texture) ? "ENABLED" : "--------" ));
    }	
 

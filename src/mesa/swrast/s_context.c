@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.34 2002/06/15 02:38:17 brianp Exp $ */
+/* $Id: s_context.c,v 1.35 2002/06/15 03:03:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,7 +60,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
       const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
       if (colorMask != 0xffffffff)        RasterMask |= MASKING_BIT;
       if (ctx->Color.ColorLogicOpEnabled) RasterMask |= LOGIC_OP_BIT;
-      if (ctx->Texture._ReallyEnabled)     RasterMask |= TEXTURE_BIT;
+      if (ctx->Texture._EnabledUnits)     RasterMask |= TEXTURE_BIT;
    }
    else {
       if (ctx->Color.IndexMask != 0xffffffff) RasterMask |= MASKING_BIT;
@@ -220,7 +220,7 @@ _swrast_validate_triangle( GLcontext *ctx,
    swrast->choose_triangle( ctx );
 
    if ((ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) &&
-       !ctx->Texture._ReallyEnabled) {
+       ctx->Texture._EnabledUnits == 0) {
       swrast->SpecTriangle = swrast->Triangle;
       swrast->Triangle = _swrast_add_spec_terms_triangle;
    }
@@ -237,7 +237,7 @@ _swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
    swrast->choose_line( ctx );
 
    if ((ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) &&
-       !ctx->Texture._ReallyEnabled) {
+       ctx->Texture._EnabledUnits == 0) {
       swrast->SpecLine = swrast->Line;
       swrast->Line = _swrast_add_spec_terms_line;
    }
@@ -255,7 +255,7 @@ _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
    swrast->choose_point( ctx );
 
    if ((ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) &&
-       !ctx->Texture._ReallyEnabled) {
+       ctx->Texture._EnabledUnits == 0) {
       swrast->SpecPoint = swrast->Point;
       swrast->Point = _swrast_add_spec_terms_point;
    }

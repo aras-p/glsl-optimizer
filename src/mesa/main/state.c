@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.84 2002/06/06 16:31:24 brianp Exp $ */
+/* $Id: state.c,v 1.85 2002/06/15 03:03:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -763,9 +763,10 @@ update_texture_matrices( GLcontext *ctx )
 static void
 update_texture_state( GLcontext *ctx )
 {
-   GLuint i;
+   GLuint unit;
 
-   ctx->Texture._ReallyEnabled = 0;
+   ctx->Texture._ReallyEnabled = 0;  /* XXX obsolete */
+   ctx->Texture._EnabledUnits = 0;
    ctx->Texture._GenFlags = 0;
    ctx->_NeedNormals &= ~NEED_NORMALS_TEXGEN;
    ctx->_NeedEyeCoords &= ~NEED_EYE_TEXGEN;
@@ -774,8 +775,8 @@ update_texture_state( GLcontext *ctx )
 
    /* Update texture unit state.
     */
-   for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
-      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+   for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
+      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
       texUnit->_ReallyEnabled = 0;
       texUnit->_GenFlags = 0;
@@ -783,49 +784,60 @@ update_texture_state( GLcontext *ctx )
       if (!texUnit->Enabled)
 	 continue;
 
-      /* Find the texture of highest dimensionality that is enabled
-       * and complete.  We'll use it for texturing.
+      /* Look for the highest-priority texture target that's enabled and
+       * complete.  That's the one we'll use for texturing.
        */
-      if (texUnit->Enabled & TEXTURE0_CUBE) {
+      if (texUnit->Enabled & TEXTURE_CUBE_BIT) {
          struct gl_texture_object *texObj = texUnit->CurrentCubeMap;
          if (!texObj->Complete) {
             _mesa_test_texobj_completeness(ctx, texObj);
          }
          if (texObj->Complete) {
-            texUnit->_ReallyEnabled = TEXTURE0_CUBE;
+            texUnit->_ReallyEnabled = TEXTURE_CUBE_BIT;
             texUnit->_Current = texObj;
          }
       }
 
-      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE0_3D)) {
+      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE_3D_BIT)) {
          struct gl_texture_object *texObj = texUnit->Current3D;
          if (!texObj->Complete) {
             _mesa_test_texobj_completeness(ctx, texObj);
          }
          if (texObj->Complete) {
-            texUnit->_ReallyEnabled = TEXTURE0_3D;
+            texUnit->_ReallyEnabled = TEXTURE_3D_BIT;
             texUnit->_Current = texObj;
          }
       }
 
-      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE0_2D)) {
+      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE_RECT_BIT)) {
+         struct gl_texture_object *texObj = texUnit->CurrentRect;
+         if (!texObj->Complete) {
+            _mesa_test_texobj_completeness(ctx, texObj);
+         }
+         if (texObj->Complete) {
+            texUnit->_ReallyEnabled = TEXTURE_RECT_BIT;
+            texUnit->_Current = texObj;
+         }
+      }
+
+      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE_2D_BIT)) {
          struct gl_texture_object *texObj = texUnit->Current2D;
          if (!texObj->Complete) {
             _mesa_test_texobj_completeness(ctx, texObj);
          }
          if (texObj->Complete) {
-            texUnit->_ReallyEnabled = TEXTURE0_2D;
+            texUnit->_ReallyEnabled = TEXTURE_2D_BIT;
             texUnit->_Current = texObj;
          }
       }
 
-      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE0_1D)) {
+      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE_1D_BIT)) {
          struct gl_texture_object *texObj = texUnit->Current1D;
          if (!texObj->Complete) {
             _mesa_test_texobj_completeness(ctx, texObj);
          }
          if (texObj->Complete) {
-            texUnit->_ReallyEnabled = TEXTURE0_1D;
+            texUnit->_ReallyEnabled = TEXTURE_1D_BIT;
             texUnit->_Current = texObj;
          }
       }
@@ -835,9 +847,14 @@ update_texture_state( GLcontext *ctx )
 	 continue;
       }
 
+      /* Texture._ReallyEnabled records the enable state for all units in
+       * one word.
+       */
       {
-	 GLuint flag = texUnit->_ReallyEnabled << (i * NUM_TEXTURE_TARGETS);
-	 ctx->Texture._ReallyEnabled |= flag;
+         GLuint flag = texUnit->_ReallyEnabled << (unit * NUM_TEXTURE_TARGETS);
+	 ctx->Texture._ReallyEnabled |= flag;  /* XXX obsolete field! */
+         if (texUnit->_ReallyEnabled)
+            ctx->Texture._EnabledUnits |= (1 << unit);
       }
 
       if (texUnit->TexGenEnabled) {
@@ -854,12 +871,12 @@ update_texture_state( GLcontext *ctx )
 	    texUnit->_GenFlags |= texUnit->_GenBitR;
 	 }
 
-	 ctx->Texture._TexGenEnabled |= ENABLE_TEXGEN(i);
+	 ctx->Texture._TexGenEnabled |= ENABLE_TEXGEN(unit);
 	 ctx->Texture._GenFlags |= texUnit->_GenFlags;
       }
 
-      if (ctx->TextureMatrixStack[i].Top->type != MATRIX_IDENTITY)
-	 ctx->Texture._TexMatEnabled |= ENABLE_TEXMAT(i);
+      if (ctx->TextureMatrixStack[unit].Top->type != MATRIX_IDENTITY)
+	 ctx->Texture._TexMatEnabled |= ENABLE_TEXMAT(unit);
    }
 
    if (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS) {

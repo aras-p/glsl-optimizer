@@ -1,4 +1,4 @@
-/* $Id: s_pointtemp.h,v 1.16 2002/05/27 17:04:53 brianp Exp $ */
+/* $Id: s_pointtemp.h,v 1.17 2002/06/15 03:03:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -284,7 +284,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    ASSERT(span->end > 0);
 
 #if FLAGS & (TEXTURE | SPRITE)
-   if (ctx->Texture._ReallyEnabled)
+   if (ctx->Texture._EnabledUnits)
       _mesa_write_texture_span(ctx, span);
    else
       _mesa_write_rgba_span(ctx, span);

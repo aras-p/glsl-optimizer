@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.37 2002/04/19 14:05:50 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.38 2002/06/15 03:03:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -257,7 +257,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          span->color.rgba[i][ACOMP] = (GLchan) CLAMP(a, 0, CHAN_MAX);
       }
 
-      if (ctx->Pixel.PixelTextureEnabled && ctx->Texture._ReallyEnabled) {
+      if (ctx->Pixel.PixelTextureEnabled && ctx->Texture._EnabledUnits) {
          span->end = width;
          _swrast_pixel_texture(ctx, span);
       }
@@ -500,7 +500,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          UNDEFARRAY(rgbaFloat);  /* mac 32k limitation */
       }
 
-      if (ctx->Pixel.PixelTextureEnabled && ctx->Texture._ReallyEnabled) {
+      if (ctx->Pixel.PixelTextureEnabled && ctx->Texture._EnabledUnits) {
          span->end = width;
          _swrast_pixel_texture(ctx, span);
       }

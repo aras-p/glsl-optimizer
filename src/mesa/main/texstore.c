@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.36 2002/04/04 16:59:05 brianp Exp $ */
+/* $Id: texstore.c,v 1.37 2002/06/15 03:03:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1617,6 +1617,7 @@ _mesa_generate_mipmap(GLcontext *ctx,
                                   GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,
                                   GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,
                                   0 };
+   const GLenum targetsRect[] = { GL_TEXTURE_RECTANGLE_NV, 0 };
    const GLenum *targets;
    GLint level;
    GLint maxLevels = 0;
@@ -1624,22 +1625,26 @@ _mesa_generate_mipmap(GLcontext *ctx,
    ASSERT(texObj);
    ASSERT(texObj->Image[texObj->BaseLevel]);
 
-   switch (texObj->Dimensions) {
-   case 1:
+   switch (texObj->Target) {
+   case GL_TEXTURE_1D:
       targets = targets1D;
       maxLevels = ctx->Const.MaxTextureLevels;
       break;
-   case 2:
+   case GL_TEXTURE_2D:
       targets = targets2D;
       maxLevels = ctx->Const.MaxTextureLevels;
       break;
-   case 3:
+   case GL_TEXTURE_3D:
       targets = targets3D;
       maxLevels = ctx->Const.Max3DTextureLevels;
       break;
-   case 6:
+   case GL_TEXTURE_CUBE_MAP_ARB:
       targets = targetsCube;
       maxLevels = ctx->Const.MaxCubeTextureLevels;
+      break;
+   case GL_TEXTURE_RECTANGLE_NV:
+      targets = targetsRect;
+      maxLevels = 1;
       break;
    default:
       _mesa_problem(ctx,
@@ -1711,7 +1716,7 @@ _mesa_generate_mipmap(GLcontext *ctx,
             MESA_PBUFFER_FREE(dstImage->Data);
 
          /* initialize new image */
-         _mesa_init_teximage_fields(ctx, dstImage, dstWidth, dstHeight,
+         _mesa_init_teximage_fields(ctx, t, dstImage, dstWidth, dstHeight,
                                     dstDepth, border, srcImage->Format);
          dstImage->DriverData = NULL;
          dstImage->TexFormat = srcImage->TexFormat;
@@ -1732,22 +1737,25 @@ _mesa_generate_mipmap(GLcontext *ctx,
          /*
           * We use simple 2x2 averaging to compute the next mipmap level.
           */
-         switch (texObj->Dimensions) {
-         case 1:
+         switch (texObj->Target) {
+         case GL_TEXTURE_1D:
             make_1d_mipmap(srcImage->TexFormat, border,
                srcWidth, (const GLubyte *) srcImage->Data,
                dstWidth, (GLubyte *) dstImage->Data);
             break;
-         case 2:
-         case 6:
+         case GL_TEXTURE_2D:
+         case GL_TEXTURE_CUBE_MAP_ARB:
             make_2d_mipmap(srcImage->TexFormat, border,
                srcWidth, srcHeight, (const GLubyte *) srcImage->Data,
                dstWidth, dstHeight, (GLubyte *) dstImage->Data);
             break;
-         case 3:
+         case GL_TEXTURE_3D:
             make_3d_mipmap(srcImage->TexFormat, border,
                srcWidth, srcHeight, srcDepth, (const GLubyte *) srcImage->Data,
                dstWidth, dstHeight, dstDepth, (GLubyte *) dstImage->Data);
+            break;
+         case GL_TEXTURE_RECTANGLE_NV:
+            /* no mipmaps, do nothing */
             break;
          default:
             _mesa_problem(ctx, "bad dimensions in _mesa_generate_mipmaps");
