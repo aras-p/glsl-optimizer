@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.115 2002/11/09 20:41:13 brianp Exp $
+$Id: VERSIONS,v 1.116 2002/11/09 21:29:08 brianp Exp $
 
 
 Mesa Version History
@@ -1077,3 +1077,4 @@ Mesa Version History
 	  glMultiDrawArrays and glMultiDrawElements were missing
 	- glGet*(GL_ACTIVE_STENCIL_FACE_EXT) was broken
 	- Pentium 4 Mobile was mistakenly identified as having 3DNow!
+	- fixed one-bit error in point/line fragment Z calculation
