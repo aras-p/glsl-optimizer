@@ -41,6 +41,7 @@ class PrintGlxSizeStubs_c(glX_XML.GlxProto):
 		self.license = license.bsd_license_template % ( "(C) Copyright IBM Corporation 2004", "IBM")
 		self.aliases = []
 		self.glx_enum_sigs = {}
+		self.name = "glX_proto_size.py (from Mesa)"
 
 	def printRealHeader(self):
 		print ''
@@ -95,6 +96,7 @@ class PrintGlxSizeStubs_h(glX_XML.GlxProto):
 		self.license = license.bsd_license_template % ( "(C) Copyright IBM Corporation 2004", "IBM")
 		self.aliases = []
 		self.glx_enum_sigs = {}
+		self.name = "glX_proto_size.py (from Mesa)"
 
 	def printRealHeader(self):
 		print """
