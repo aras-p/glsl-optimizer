@@ -1249,6 +1249,7 @@ Mesa Version History
 	  (Justin Novosad of Discreet) (see config.h file)
 	- support for AUX buffers in software GLX driver
 	- updated glext.h to version 23
+	- new MESA_GLX_FORCE_ALPHA environment variable for x11 driver
     Changes:
 	- fragment fog interpolation is perspective corrected now
 	- new glTexImage code, much cleaner, may be a bit faster
