@@ -6380,7 +6380,7 @@ _mesa_GetString( GLenum name )
    static const char *version_1_2 = "1.2 Mesa " MESA_VERSION_STRING;
    static const char *version_1_3 = "1.3 Mesa " MESA_VERSION_STRING;
    static const char *version_1_4 = "1.4 Mesa " MESA_VERSION_STRING;
-   static const char *version_1_5 = "1.5 Mesa " MESA_VERSION_STRING;
+   static const char *version_1_5 = "1.4 Mesa " MESA_VERSION_STRING;
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 

@@ -44,7 +44,7 @@
 #define OPENGL_VERSION_STRING "1.4"
 
 /* To make version comparison easy */
-#define OPENGL_VERSION(a,b) (((a) << 16) + ((b) << 8) + (c))
+#define OPENGL_VERSION(a,b) (((a) << 16) + ((b) << 8) + (0))
 #define OPENGL_VERSION_CODE OPENGL_VERSION(OPENGL_MAJOR, OPENGL_MINOR)
 
 
