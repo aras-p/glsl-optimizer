@@ -2319,6 +2319,12 @@ struct __GLcontextRec {
    GLfloat MRD;		/**< minimum resolvable difference in Z values */
    /*@}*/
 
+   /** \name Color clamping (tentative part of GL_ARB_color_clamp_control) */
+   /*@{*/
+   GLboolean ClampFragmentColors;
+   GLboolean ClampVertexColors;
+   /*@}*/
+
    /** Should 3Dfx Glide driver catch signals? */
    GLboolean CatchSignals;
 

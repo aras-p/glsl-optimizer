@@ -972,8 +972,7 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLuint transferOps,
    if (transferOps & IMAGE_MIN_MAX_BIT) {
       _mesa_update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba);
    }
-
-#if CHAN_TYPE != GL_FLOAT
+   /* clamping to [0,1] */
    if (transferOps & IMAGE_CLAMP_BIT) {
       GLuint i;
       for (i = 0; i < n; i++) {
@@ -983,7 +982,6 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLuint transferOps,
          rgba[i][ACOMP] = CLAMP(rgba[i][ACOMP], 0.0F, 1.0F);
       }
    }
-#endif
 }
 
 
@@ -1026,17 +1024,18 @@ _mesa_pack_rgba_span_float( GLcontext *ctx,
       rgba = (const GLfloat (*)[4]) rgbaIn;
    }
 
-   /* XXX clamp rgba to [0,1]? */
-
    if (dstFormat == GL_LUMINANCE || dstFormat == GL_LUMINANCE_ALPHA) {
       /* compute luminance values */
-      for (i = 0; i < n; i++) {
-         GLfloat sum = rgba[i][RCOMP] + rgba[i][GCOMP] + rgba[i][BCOMP];
-#if CHAN_TYPE == GL_FLOAT
-         luminance[i] = sum;
-#else
-         luminance[i] = CLAMP(sum, 0.0F, 1.0F);
-#endif
+      if (ctx->ClampFragmentColors) {
+         for (i = 0; i < n; i++) {
+            GLfloat sum = rgba[i][RCOMP] + rgba[i][GCOMP] + rgba[i][BCOMP];
+            luminance[i] = CLAMP(sum, 0.0F, 1.0F);
+         }
+      }
+      else {
+         for (i = 0; i < n; i++) {
+            luminance[i] = rgba[i][RCOMP] + rgba[i][GCOMP] + rgba[i][BCOMP];
+         }
       }
    }
 
@@ -2942,6 +2941,7 @@ _mesa_unpack_color_span_chan( GLcontext *ctx,
                             srcPacking->SwapBytes);
       }
 
+      /* Need to clamp if returning GLubytes or GLushorts */
 #if CHAN_TYPE != GL_FLOAT
       transferOps |= IMAGE_CLAMP_BIT;
 #endif
@@ -3069,7 +3069,7 @@ _mesa_unpack_color_span_float( GLcontext *ctx,
                                GLenum srcFormat, GLenum srcType,
                                const GLvoid *source,
                                const struct gl_pixelstore_attrib *srcPacking,
-                               GLuint transferOps, GLboolean clamp )
+                               GLuint transferOps )
 {
    ASSERT(dstFormat == GL_ALPHA ||
           dstFormat == GL_LUMINANCE ||
@@ -3168,12 +3168,6 @@ _mesa_unpack_color_span_float( GLcontext *ctx,
          extract_float_rgba(n, rgba, srcFormat, srcType, source,
                             srcPacking->SwapBytes);
       }
-
-#if CHAN_TYPE != GL_FLOAT
-      if (clamp) {
-         transferOps |= IMAGE_CLAMP_BIT;
-      }
-#endif
 
       if (transferOps) {
          _mesa_apply_rgba_transfer_ops(ctx, transferOps, n, rgba);

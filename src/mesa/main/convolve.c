@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -146,7 +146,7 @@ _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, G
    _mesa_unpack_color_span_float(ctx, width, GL_RGBA,
                                  ctx->Convolution1D.Filter,
                                  format, type, image, &ctx->Unpack,
-                                 0, GL_FALSE);
+                                 0); /* transferOps */
 
    /* apply scale and bias */
    {
@@ -229,7 +229,7 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
       GLfloat *dst = ctx->Convolution2D.Filter + i * width * 4;
       _mesa_unpack_color_span_float(ctx, width, GL_RGBA, dst,
                                     format, type, src, &ctx->Unpack,
-                                    0, GL_FALSE);
+                                    0); /* transferOps */
    }
 
    /* apply scale and bias */
@@ -810,7 +810,7 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
    _mesa_unpack_color_span_float(ctx, width, GL_RGBA,
                                  ctx->Separable2D.Filter,
                                  format, type, row, &ctx->Unpack,
-                                 0, GL_FALSE);
+                                 0);  /* transferOps */
 
    /* apply scale and bias */
    {
@@ -837,7 +837,7 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
    _mesa_unpack_color_span_float(ctx, width, GL_RGBA,
                                  &ctx->Separable2D.Filter[colStart],
                                  format, type, column, &ctx->Unpack,
-                                 0, GL_FALSE);
+                                 0); /* transferOps */
 
    /* apply scale and bias */
    {

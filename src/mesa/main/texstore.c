@@ -360,9 +360,8 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
                                               srcAddr, srcWidth, srcHeight,
                                               srcFormat, srcType, img, row, 0);
                _mesa_unpack_color_span_float(ctx, srcWidth, GL_RGBA, dstf,
-                         srcFormat, srcType, src, srcPacking,
-                         transferOps & IMAGE_PRE_CONVOLUTION_BITS,
-                         GL_TRUE);
+                 srcFormat, srcType, src, srcPacking,
+                 (transferOps & IMAGE_PRE_CONVOLUTION_BITS) | IMAGE_CLAMP_BIT);
                dstf += srcWidth * 4;
             }
 

@@ -110,10 +110,10 @@ _mesa_pack_rgba_span_float( GLcontext *ctx,
 
 extern void
 _mesa_pack_rgba_span_chan( GLcontext *ctx,
-                      GLuint n, CONST GLchan rgba[][4],
-                      GLenum dstFormat, GLenum dstType, GLvoid *dstAddr,
-                      const struct gl_pixelstore_attrib *dstPacking,
-                      GLuint transferOps );
+                           GLuint n, CONST GLchan rgba[][4],
+                           GLenum dstFormat, GLenum dstType, GLvoid *dstAddr,
+                           const struct gl_pixelstore_attrib *dstPacking,
+                           GLuint transferOps );
 
 
 extern void
@@ -131,7 +131,7 @@ _mesa_unpack_color_span_float( GLcontext *ctx,
                                GLenum srcFormat, GLenum srcType,
                                const GLvoid *source,
                                const struct gl_pixelstore_attrib *srcPacking,
-                               GLuint transferOps, GLboolean clamp );
+                               GLuint transferOps );
 
 
 extern void

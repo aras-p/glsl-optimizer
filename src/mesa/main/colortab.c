@@ -204,8 +204,7 @@ store_colortable_entries(GLcontext *ctx, struct gl_color_table *table,
                                     tempTab,        /* dest address */
                                     format, type, data, /* src data */
 				    &ctx->Unpack,
-                                    0,              /* transfer ops */
-				    GL_FALSE);      /* clamping */
+                                    IMAGE_CLAMP_BIT); /* transfer ops */
 
       tableF = (GLfloat *) table->Table;
 
