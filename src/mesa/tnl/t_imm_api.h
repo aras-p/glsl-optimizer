@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.h,v 1.4 2001/12/14 02:51:44 brianp Exp $ */
+/* $Id: t_imm_api.h,v 1.5 2002/04/09 16:56:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,6 +33,7 @@
 
 
 extern void _tnl_save_Begin( GLenum mode );
+extern void _tnl_Begin( GLenum mode );
 
 extern void _tnl_Begin( GLenum mode );
 

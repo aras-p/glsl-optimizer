@@ -1,4 +1,4 @@
-/* $Id: vtxfmt.c,v 1.10 2001/12/15 02:14:43 brianp Exp $ */
+/* $Id: vtxfmt.c,v 1.11 2002/04/09 16:56:50 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,14 +50,6 @@
 {									\
    GET_CURRENT_CONTEXT(ctx);						\
    struct gl_tnl_module *tnl = &(ctx->TnlModule);			\
-   const GLuint new_state = ctx->NewState;				\
-									\
-   if ( new_state )							\
-      _mesa_update_state( ctx );					\
-									\
-   /* Validate the current tnl module. */				\
-   if ( new_state & ctx->Driver.NeedValidate )				\
-      ctx->Driver.ValidateTnlModule( ctx, new_state );			\
 									\
    ASSERT( tnl->Current );						\
    ASSERT( tnl->SwapCount < NUM_VERTEX_FORMAT_ENTRIES );		\
@@ -149,6 +141,7 @@ static void install_vtxfmt( struct _glapi_table *tab, GLvertexformat *vfmt )
 void _mesa_init_exec_vtxfmt( GLcontext *ctx )
 {
    install_vtxfmt( ctx->Exec, &neutral_vtxfmt );
+   ctx->TnlModule.SwapCount = 0;
 }
 
 

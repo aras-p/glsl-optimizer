@@ -1,4 +1,4 @@
-/* $Id: api_noop.c,v 1.9 2001/12/14 02:50:01 brianp Exp $ */
+/* $Id: api_noop.c,v 1.10 2002/04/09 16:56:50 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -249,7 +249,7 @@ void _mesa_noop_MultiTexCoord1fARB( GLenum target, GLfloat a )
    }
 }
 
-void _mesa_noop_MultiTexCoord1fvARB( GLenum target, GLfloat *v )
+void _mesa_noop_MultiTexCoord1fvARB( GLenum target, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint unit = target - GL_TEXTURE0_ARB;
@@ -283,7 +283,7 @@ void _mesa_noop_MultiTexCoord2fARB( GLenum target, GLfloat a, GLfloat b )
    }
 }
 
-void _mesa_noop_MultiTexCoord2fvARB( GLenum target, GLfloat *v )
+void _mesa_noop_MultiTexCoord2fvARB( GLenum target, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint unit = target - GL_TEXTURE0_ARB;
@@ -317,7 +317,7 @@ void _mesa_noop_MultiTexCoord3fARB( GLenum target, GLfloat a, GLfloat b, GLfloat
    }
 }
 
-void _mesa_noop_MultiTexCoord3fvARB( GLenum target, GLfloat *v )
+void _mesa_noop_MultiTexCoord3fvARB( GLenum target, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint unit = target - GL_TEXTURE0_ARB;
@@ -352,7 +352,7 @@ void _mesa_noop_MultiTexCoord4fARB( GLenum target, GLfloat a, GLfloat b,
    }
 }
 
-void _mesa_noop_MultiTexCoord4fvARB( GLenum target, GLfloat *v )
+void _mesa_noop_MultiTexCoord4fvARB( GLenum target, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint unit = target - GL_TEXTURE0_ARB;
@@ -419,7 +419,7 @@ void _mesa_noop_TexCoord1f( GLfloat a )
    dest[3] = 1;
 }
 
-void _mesa_noop_TexCoord1fv( GLfloat *v )
+void _mesa_noop_TexCoord1fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
@@ -439,7 +439,7 @@ void _mesa_noop_TexCoord2f( GLfloat a, GLfloat b )
    dest[3] = 1;
 }
 
-void _mesa_noop_TexCoord2fv( GLfloat *v )
+void _mesa_noop_TexCoord2fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
@@ -459,7 +459,7 @@ void _mesa_noop_TexCoord3f( GLfloat a, GLfloat b, GLfloat c )
    dest[3] = 1;
 }
 
-void _mesa_noop_TexCoord3fv( GLfloat *v )
+void _mesa_noop_TexCoord3fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
@@ -479,7 +479,7 @@ void _mesa_noop_TexCoord4f( GLfloat a, GLfloat b, GLfloat c, GLfloat d )
    COPY_FLOAT(dest[3], d);
 }
 
-void _mesa_noop_TexCoord4fv( GLfloat *v )
+void _mesa_noop_TexCoord4fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
@@ -488,6 +488,40 @@ void _mesa_noop_TexCoord4fv( GLfloat *v )
    COPY_FLOAT(dest[2], v[2]);
    COPY_FLOAT(dest[3], v[3]);
 }
+
+/* Useful outside begin/end?
+ */
+void _mesa_noop_Vertex2fv( const GLfloat *v )
+{
+   (void) v;
+}
+
+void _mesa_noop_Vertex3fv( const GLfloat *v )
+{
+   (void) v;
+}
+
+void _mesa_noop_Vertex4fv( const GLfloat *v )
+{
+   (void) v;
+}
+
+void _mesa_noop_Vertex2f( GLfloat a, GLfloat b )
+{
+   (void) a; (void) b;
+}
+
+void _mesa_noop_Vertex3f( GLfloat a, GLfloat b, GLfloat c )
+{
+   (void) a; (void) b; (void) c;
+}
+
+void _mesa_noop_Vertex4f( GLfloat a, GLfloat b, GLfloat c, GLfloat d )
+{
+   (void) a; (void) b; (void) c; (void) d;
+}
+
+
 
 void _mesa_noop_VertexAttrib4fNV( GLuint index, GLfloat x,
                                   GLfloat y, GLfloat z, GLfloat w )

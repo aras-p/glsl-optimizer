@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.159 2002/04/09 14:58:03 keithw Exp $ */
+/* $Id: context.c,v 1.160 2002/04/09 16:56:50 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -70,22 +70,11 @@
 #endif
 
 #ifndef MESA_VERBOSE
-int MESA_VERBOSE = 0
-/*                 | VERBOSE_PIPELINE */
-/*                 | VERBOSE_IMMEDIATE */
-/*                 | VERBOSE_VARRAY */
-/*                 | VERBOSE_TEXTURE */
-/*                 | VERBOSE_API */
-/*                 | VERBOSE_DRIVER */
-/*                 | VERBOSE_STATE */
-/*                 | VERBOSE_DISPLAY_LIST */
-;
+int MESA_VERBOSE = 0;
 #endif
 
 #ifndef MESA_DEBUG_FLAGS
-int MESA_DEBUG_FLAGS = 0
-/*                 | DEBUG_ALWAYS_FLUSH */
-;
+int MESA_DEBUG_FLAGS = 0;
 #endif
 
 
@@ -1434,6 +1423,44 @@ alloc_proxy_textures( GLcontext *ctx )
 }
 
 
+static void add_debug_flags( const char *debug )
+{
+#ifdef MESA_DEBUG
+   if (strstr(debug, "varray")) 
+      MESA_VERBOSE |= VERBOSE_VARRAY;
+
+   if (strstr(debug, "tex")) 
+      MESA_VERBOSE |= VERBOSE_TEXTURE;
+
+   if (strstr(debug, "imm")) 
+      MESA_VERBOSE |= VERBOSE_IMMEDIATE;
+
+   if (strstr(debug, "pipe")) 
+      MESA_VERBOSE |= VERBOSE_PIPELINE;
+
+   if (strstr(debug, "driver")) 
+      MESA_VERBOSE |= VERBOSE_DRIVER;
+
+   if (strstr(debug, "state")) 
+      MESA_VERBOSE |= VERBOSE_STATE;
+
+   if (strstr(debug, "api")) 
+      MESA_VERBOSE |= VERBOSE_API;
+
+   if (strstr(debug, "list")) 
+      MESA_VERBOSE |= VERBOSE_DISPLAY_LIST;
+
+   if (strstr(debug, "lighting")) 
+      MESA_VERBOSE |= VERBOSE_LIGHTING;
+   
+   /* Debug flag:
+    */
+   if (strstr(debug, "flush")) 
+      MESA_DEBUG_FLAGS |= DEBUG_ALWAYS_FLUSH;
+#endif
+}
+
+
 /*
  * Initialize a GLcontext struct.  This includes allocating all the
  * other structs and arrays which hang off of the context by pointers.
@@ -1596,6 +1623,13 @@ _mesa_initialize_context( GLcontext *ctx,
 #endif
    trInitDispatch(ctx->TraceDispatch);
 #endif
+
+
+   if (getenv("MESA_DEBUG"))
+      add_debug_flags(getenv("MESA_DEBUG"));
+
+   if (getenv("MESA_VERBOSE"))
+      add_debug_flags(getenv("MESA_VERBOSE"));
 
    return GL_TRUE;
 }

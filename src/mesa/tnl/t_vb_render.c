@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.28 2002/02/13 00:53:20 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.29 2002/04/09 16:56:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,6 +42,7 @@
 
 #include "glheader.h"
 #include "context.h"
+#include "enums.h"
 #include "macros.h"
 #include "mem.h"
 #include "mtypes.h"
@@ -324,6 +325,12 @@ static GLboolean run_render( GLcontext *ctx,
 	 length= VB->PrimitiveLength[i];
 	 ASSERT(length || (flags & PRIM_LAST));
 	 ASSERT((flags & PRIM_MODE_MASK) <= GL_POLYGON+1);
+
+	 if (MESA_VERBOSE & VERBOSE_PRIMS)
+	    fprintf(stderr, "MESA prim %s %d..%d\n", 
+		    _mesa_lookup_enum_by_nr(flags & PRIM_MODE_MASK), 
+		    i, i+length);
+
 	 if (length)
 	    tab[flags & PRIM_MODE_MASK]( ctx, i, i + length, flags );
       }

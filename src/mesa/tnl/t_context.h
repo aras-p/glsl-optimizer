@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.39 2002/04/04 18:25:40 kschultz Exp $ */
+/* $Id: t_context.h,v 1.40 2002/04/09 16:56:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -387,9 +387,13 @@ struct tnl_device_driver {
     */
 
    void (*NotifyMaterialChange)(GLcontext *ctx);
-   /* Alert tnl-aware drivers of changes to material, especially in
-    * exec_empty_cassette, which doesn't otherwise reach the driver.
-    * --> Need to be able to disable exec_empty_cassette???
+   /* Alert tnl-aware drivers of changes to material.
+    */
+
+   GLboolean (*NotifyBegin)(GLcontext *ctx, GLenum p);
+   /* Allow drivers to hook in optimized begin/end engines.
+    * Return value:  GL_TRUE - driver handled the begin
+    *                GL_FALSE - driver didn't handle the begin
     */
 
    /***
@@ -539,6 +543,7 @@ typedef struct {
    /* Functions to be plugged into dispatch when tnl is active.
     */
    GLvertexformat vtxfmt;
+   GLvertexformat save_vtxfmt;
 
 } TNLcontext;
 

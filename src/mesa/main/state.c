@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.80 2002/04/02 16:15:17 brianp Exp $ */
+/* $Id: state.c,v 1.81 2002/04/09 16:56:50 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -910,7 +910,7 @@ void _mesa_update_state( GLcontext *ctx )
    const GLuint oldneedeyecoords = ctx->_NeedEyeCoords;
 
    if (MESA_VERBOSE & VERBOSE_STATE)
-      _mesa_print_state("", new_state);
+      _mesa_print_state("_mesa_update_state", new_state);
 
    if (new_state & _NEW_MODELVIEW)
       _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );

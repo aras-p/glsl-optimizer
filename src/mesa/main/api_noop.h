@@ -1,4 +1,4 @@
-/* $Id: api_noop.h,v 1.4 2001/12/14 02:50:01 brianp Exp $ */
+/* $Id: api_noop.h,v 1.5 2002/04/09 16:56:50 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,22 +75,22 @@ extern void _mesa_noop_Color3fv( const GLfloat *v );
 
 extern void _mesa_noop_MultiTexCoord1fARB( GLenum target, GLfloat a );
 
-extern void _mesa_noop_MultiTexCoord1fvARB( GLenum target, GLfloat *v );
+extern void _mesa_noop_MultiTexCoord1fvARB( GLenum target, const GLfloat *v );
 
 extern void _mesa_noop_MultiTexCoord2fARB( GLenum target, GLfloat a,
 					   GLfloat b );
 
-extern void _mesa_noop_MultiTexCoord2fvARB( GLenum target, GLfloat *v );
+extern void _mesa_noop_MultiTexCoord2fvARB( GLenum target, const GLfloat *v );
 
 extern void _mesa_noop_MultiTexCoord3fARB( GLenum target, GLfloat a,
 					GLfloat b, GLfloat c);
 
-extern void _mesa_noop_MultiTexCoord3fvARB( GLenum target, GLfloat *v );
+extern void _mesa_noop_MultiTexCoord3fvARB( GLenum target, const GLfloat *v );
 
 extern void _mesa_noop_MultiTexCoord4fARB( GLenum target, GLfloat a,
 					GLfloat b, GLfloat c, GLfloat d );
 
-extern void _mesa_noop_MultiTexCoord4fvARB( GLenum target, GLfloat *v );
+extern void _mesa_noop_MultiTexCoord4fvARB( GLenum target, const GLfloat *v );
 
 extern void _mesa_noop_SecondaryColor3ubEXT( GLubyte a, GLubyte b, GLubyte c );
 
@@ -102,19 +102,31 @@ extern void _mesa_noop_SecondaryColor3fvEXT( const GLfloat *v );
 
 extern void _mesa_noop_TexCoord1f( GLfloat a );
 
-extern void _mesa_noop_TexCoord1fv( GLfloat *v );
+extern void _mesa_noop_TexCoord1fv( const GLfloat *v );
 
 extern void _mesa_noop_TexCoord2f( GLfloat a, GLfloat b );
 
-extern void _mesa_noop_TexCoord2fv( GLfloat *v );
+extern void _mesa_noop_TexCoord2fv( const GLfloat *v );
 
 extern void _mesa_noop_TexCoord3f( GLfloat a, GLfloat b, GLfloat c );
 
-extern void _mesa_noop_TexCoord3fv( GLfloat *v );
+extern void _mesa_noop_TexCoord3fv( const GLfloat *v );
 
 extern void _mesa_noop_TexCoord4f( GLfloat a, GLfloat b, GLfloat c, GLfloat d );
 
-extern void _mesa_noop_TexCoord4fv( GLfloat *v );
+extern void _mesa_noop_TexCoord4fv( const GLfloat *v );
+
+extern void _mesa_noop_Vertex2fv( const GLfloat *v );
+
+extern void _mesa_noop_Vertex3fv( const GLfloat *v );
+
+extern void _mesa_noop_Vertex4fv( const GLfloat *v );
+
+extern void _mesa_noop_Vertex2f( GLfloat a, GLfloat b );
+
+extern void _mesa_noop_Vertex3f( GLfloat a, GLfloat b, GLfloat c );
+
+extern void _mesa_noop_Vertex4f( GLfloat a, GLfloat b, GLfloat c, GLfloat d );
 
 extern void _mesa_noop_VertexAttrib4fNV( GLuint index, GLfloat x,
                                          GLfloat y, GLfloat z, GLfloat w );
