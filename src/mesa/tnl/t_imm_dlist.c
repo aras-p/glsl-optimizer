@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.15 2001/04/30 21:08:52 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.16 2001/05/03 16:49:27 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -145,12 +145,12 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
       im->ref_count--;		 /* remove CURRENT_IM reference */
       ASSERT(im->ref_count > 0); /* it is compiled into a display list */
       SET_IMMEDIATE( ctx, new_im );
-      _tnl_reset_input( ctx, IMM_MAX_COPIED_VERTS,
-			new_beginstate, node->SavedBeginState );
+      _tnl_reset_compile_input( ctx, IMM_MAX_COPIED_VERTS,
+				new_beginstate, node->SavedBeginState );
    } else {
       /* Still some room in the current immediate.
        */
-      _tnl_reset_input( ctx, im->Count+1+IMM_MAX_COPIED_VERTS,
+      _tnl_reset_compile_input( ctx, im->Count+1+IMM_MAX_COPIED_VERTS,
 			new_beginstate, node->SavedBeginState);
    }
 }
@@ -299,7 +299,7 @@ _tnl_EndList( GLcontext *ctx )
    SET_IMMEDIATE( ctx, IM );
    IM->ref_count++;
 
-   _tnl_reset_input( ctx, IMM_MAX_COPIED_VERTS, 0, 0 );
+   _tnl_reset_exec_input( ctx, IMM_MAX_COPIED_VERTS, 0, 0 );
 }
 
 

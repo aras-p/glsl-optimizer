@@ -1,4 +1,4 @@
-/* $Id: t_dd_vbtmp.h,v 1.13 2001/04/29 08:41:09 keithw Exp $ */
+/* $Id: t_dd_vbtmp.h,v 1.14 2001/05/03 16:49:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -518,6 +518,7 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 #endif /* emit */
 
 #if (DO_XYZW) && (DO_RGBA)
+
 
 #if (HAVE_PTEX_VERTICES)
 static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )

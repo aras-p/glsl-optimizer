@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.h,v 1.4 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_imm_exec.h,v 1.5 2001/05/03 16:49:27 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,10 +52,15 @@ extern void _tnl_imm_init( GLcontext *ctx );
 
 extern void _tnl_imm_destroy( GLcontext *ctx );
 
-extern void _tnl_reset_input( GLcontext *ctx,
-			      GLuint start,
-			      GLuint beginstate,
-			      GLuint savedbeginstate );
+extern void _tnl_reset_exec_input( GLcontext *ctx,
+				   GLuint start,
+				   GLuint beginstate,
+				   GLuint savedbeginstate );
+
+extern void _tnl_reset_compile_input( GLcontext *ctx,
+				      GLuint start,
+				      GLuint beginstate,
+				      GLuint savedbeginstate );
 
 extern void _tnl_compute_orflag( struct immediate *IM );
 extern void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM );

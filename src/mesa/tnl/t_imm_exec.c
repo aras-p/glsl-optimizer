@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.20 2001/05/01 13:15:28 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.21 2001/05/03 16:49:27 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,12 +57,11 @@
 
 
 
-void _tnl_reset_input( GLcontext *ctx,
-		       GLuint start,
-		       GLuint beginstate,
-		       GLuint savedbeginstate )
+static void reset_input( GLcontext *ctx,
+			 GLuint start,
+			 GLuint beginstate,
+			 GLuint savedbeginstate )
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct immediate *IM = TNL_CURRENT_IM(ctx);
 
    /* Clear the dirty part of the flag array.
@@ -70,23 +69,12 @@ void _tnl_reset_input( GLcontext *ctx,
    if (start < IM->Count+2)
       MEMSET(IM->Flag + start, 0, sizeof(GLuint) * (IM->Count+2-start));
 
-   IM->Start = IM->Count = start;
-   IM->CopyStart = IM->Start - tnl->ExecCopyCount;
-   IM->Primitive[IM->CopyStart] = ctx->Driver.CurrentExecPrimitive;
-   if (tnl->ExecParity)
-      IM->Primitive[IM->CopyStart] |= PRIM_PARITY;
-
-   if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1) {
-      ASSERT(tnl->ExecCopyTexSize == 0);
-      ASSERT(tnl->ExecCopyCount == 0);
-      ASSERT(IM->CopyStart == IM->Start);
-   }
-
-   IM->LastPrimitive = IM->CopyStart;
+   IM->Start = start;
+   IM->Count = start;
+   IM->LastMaterial = start;
    IM->BeginState = beginstate;
    IM->SavedBeginState = savedbeginstate;
    IM->TexSize = 0;
-   IM->LastMaterial = IM->Start;
    IM->MaterialOrMask = 0;
 
    if (IM->MaterialMask) 
@@ -96,6 +84,39 @@ void _tnl_reset_input( GLcontext *ctx,
    IM->ArrayEltIncr = ctx->Array.Vertex.Enabled ? 1 : 0;
    IM->ArrayEltFlush = !ctx->Array.LockCount;
 }
+  
+void _tnl_reset_exec_input( GLcontext *ctx,
+			    GLuint start,
+			    GLuint beginstate,
+			    GLuint savedbeginstate )
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct immediate *IM = TNL_CURRENT_IM(ctx);
+
+   reset_input( ctx, start, beginstate, savedbeginstate );
+
+   IM->CopyStart = start - tnl->ExecCopyCount;
+   IM->Primitive[IM->CopyStart] = ctx->Driver.CurrentExecPrimitive;
+   if (tnl->ExecParity)
+      IM->Primitive[IM->CopyStart] |= PRIM_PARITY;
+
+   IM->LastPrimitive = IM->CopyStart;
+}
+
+
+void _tnl_reset_compile_input( GLcontext *ctx,
+			    GLuint start,
+			    GLuint beginstate,
+			    GLuint savedbeginstate )
+{
+   struct immediate *IM = TNL_CURRENT_IM(ctx);
+
+   reset_input( ctx, start, beginstate, savedbeginstate );
+   IM->CopyStart = start;
+   IM->LastPrimitive = IM->Start;
+}
+  
+
 
 
 
@@ -462,8 +483,8 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
 
       IM->ref_count++;
 	 
-      _tnl_reset_input( ctx, IMM_MAX_COPIED_VERTS, 
-			begin_state, saved_begin_state );
+      _tnl_reset_exec_input( ctx, IMM_MAX_COPIED_VERTS, 
+			     begin_state, saved_begin_state );
    }
 
    if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1)
@@ -522,7 +543,7 @@ void _tnl_imm_init( GLcontext *ctx )
 
    /* Install the first immediate.  Intially outside begin/end.
     */
-   _tnl_reset_input( ctx, IMM_MAX_COPIED_VERTS, 0, 0 );
+   _tnl_reset_exec_input( ctx, IMM_MAX_COPIED_VERTS, 0, 0 );
    tnl->ReplayHardBeginEnd = 0;
 
    _tnl_imm_vtxfmt_init( ctx );
