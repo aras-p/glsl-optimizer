@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.18 2001/03/19 02:25:37 keithw Exp $ */
+/* $Id: t_context.h,v 1.19 2001/04/09 14:47:34 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -194,6 +194,7 @@ struct immediate
    GLuint *MaterialMask;
    GLuint LastMaterial;
    GLuint MaterialOrMask;
+   GLuint MaterialAndMask;
 
    GLfloat (*TexCoord[MAX_TEXTURE_UNITS])[4];
 

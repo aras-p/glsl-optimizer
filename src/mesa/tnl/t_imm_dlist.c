@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.11 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_imm_dlist.c,v 1.12 2001/04/09 14:47:34 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,6 +59,7 @@ typedef struct {
    GLuint LastPrimitive;
    GLuint LastMaterial;
    GLuint MaterialOrMask;
+   GLuint MaterialAndMask;
 } TNLvertexcassette;
 
 static void execute_compiled_cassette( GLcontext *ctx, void *data );
@@ -124,6 +125,7 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
    node->LastPrimitive = im->LastPrimitive;
    node->LastMaterial = im->LastMaterial;
    node->MaterialOrMask = im->MaterialOrMask;
+   node->MaterialAndMask = im->MaterialAndMask;
 
    if (ctx->ExecuteFlag) {
       execute_compiled_cassette( ctx, (void *)node );
@@ -182,6 +184,7 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
    IM->LastPrimitive = node->LastPrimitive;
    IM->LastMaterial = node->LastMaterial;
    IM->MaterialOrMask = node->MaterialOrMask;
+   IM->MaterialAndMask = node->MaterialAndMask;
 
    if ((MESA_VERBOSE & VERBOSE_DISPLAY_LIST) &&
        (MESA_VERBOSE & VERBOSE_IMMEDIATE))
@@ -251,6 +254,7 @@ print_compiled_cassette( GLcontext *ctx, void *data )
    IM->LastPrimitive = node->LastPrimitive;
    IM->LastMaterial = node->LastMaterial;
    IM->MaterialOrMask = node->MaterialOrMask;
+   IM->MaterialAndMask = node->MaterialAndMask;
 
    _tnl_print_cassette( node->IM );
 }

@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.9 2001/03/19 02:25:37 keithw Exp $ */
+/* $Id: t_imm_api.c,v 1.10 2001/04/09 14:47:34 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,7 +76,8 @@ _tnl_begin( GLcontext *ctx, GLenum p )
    GLuint inflags, state;
 
    if (MESA_VERBOSE&VERBOSE_API)
-      fprintf(stderr, "glBegin(IM %d) %s\n", IM->id, _mesa_lookup_enum_by_nr(p));
+      fprintf(stderr, "glBegin(IM %d) %s\n", IM->id, 
+	      _mesa_lookup_enum_by_nr(p));
 
    if (ctx->NewState)
       _mesa_update_state(ctx);
@@ -272,27 +273,6 @@ _tnl_save_Begin( GLenum mode )
 }
 
 
-
-
-/* Note the continuation of a partially completed primitive.  For
- * driver t&l fallbacks between begin/end primitives.  Has basically
- * the same effects as a primitive wrapping onto a second immediate
- * struct.
- *
- * ==> Can actually call this from _tnl_wakeup_exec, taking mode from
- *     ctx->Driver.CurrentExecPrimitive.
- */
-#if 0
-void _tnl_fallback_begin( GLcontext *ctx, GLenum mode )
-{
-   struct immediate *IM = TNL_CURRENT_IM(ctx);
-   ASSERT( IM->Count == IM->Start );
-   ASSERT( IM->Flag[IM->Start] == 0 );
-   ASSERT( mode < GL_POLYGON+1 );
-   _tnl_begin( ctx, mode );
-   IM->Primitive[IM->Start] &= ~PRIM_BEGIN;
-}
-#endif
 
 
 /* Both streams now outside begin/end.
@@ -1231,16 +1211,18 @@ _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
 	 IM->Material = (GLmaterial (*)[2]) MALLOC( sizeof(GLmaterial) *
 						    IMM_SIZE * 2 );
 	 IM->MaterialMask = (GLuint *) MALLOC( sizeof(GLuint) * IMM_SIZE );
+	 IM->MaterialMask[IM->LastMaterial] = 0;
       }
       else if (IM->MaterialOrMask & ~bitmask) {
 	 _mesa_copy_material_pairs( IM->Material[count],
-				 IM->Material[IM->LastMaterial],
-				 IM->MaterialOrMask & ~bitmask );
+				    IM->Material[IM->LastMaterial],
+				    IM->MaterialOrMask & ~bitmask );
       }
 
       IM->Flag[count] |= VERT_MATERIAL;
-      IM->LastMaterial = count;
       IM->MaterialMask[count] = 0;
+      IM->MaterialAndMask &= IM->MaterialMask[IM->LastMaterial];
+      IM->LastMaterial = count;
    }
 
    IM->MaterialOrMask |= bitmask;

@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.9 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_imm_fixup.c,v 1.10 2001/04/09 14:47:34 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,7 @@
 #include "enums.h"
 #include "dlist.h"
 #include "colormac.h"
+#include "light.h"
 #include "macros.h"
 #include "mem.h"
 #include "mmath.h"
@@ -243,7 +244,9 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
        * immediate.
        */
       if (ctx->ExecuteFlag && copy) {
-/*  	 _tnl_print_vert_flags("copy from current", copy); */
+
+	 if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
+	    _tnl_print_vert_flags("copy from current", copy); 
 
 	 if (copy & VERT_NORM) {
 	    COPY_3V( IM->Normal[start], ctx->Current.Normal );
@@ -275,7 +278,7 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
       }
 
       if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
-/*  	 _tnl_print_vert_flags("fixup", fixup); */
+  	 _tnl_print_vert_flags("fixup", fixup); 
 
       if (fixup & VERT_TEX_ANY) {
 	 GLuint i;
@@ -289,59 +292,81 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
 	    }
 	 }
       }
-   }
+   
 
-   if (fixup & VERT_EDGE) {
-      if (orflag & VERT_EDGE)
-	 fixup_1ub( IM->EdgeFlag, IM->Flag, start, VERT_EDGE );
-      else
-	 fixup_first_1ub( IM->EdgeFlag, IM->Flag, VERT_END_VB, start,
-			  IM->EdgeFlag[start] );
-   }
+      if (fixup & VERT_EDGE) {
+	 if (orflag & VERT_EDGE)
+	    fixup_1ub( IM->EdgeFlag, IM->Flag, start, VERT_EDGE );
+	 else
+	    fixup_first_1ub( IM->EdgeFlag, IM->Flag, VERT_END_VB, start,
+			     IM->EdgeFlag[start] );
+      }
 
-   if (fixup & VERT_INDEX) {
-      if (orflag & VERT_INDEX)
-	 fixup_1ui( IM->Index, IM->Flag, start, VERT_INDEX );
-      else
-	 fixup_first_1ui( IM->Index, IM->Flag, VERT_END_VB, start, IM->Index[start] );
-   }
+      if (fixup & VERT_INDEX) {
+	 if (orflag & VERT_INDEX)
+	    fixup_1ui( IM->Index, IM->Flag, start, VERT_INDEX );
+	 else
+	    fixup_first_1ui( IM->Index, IM->Flag, VERT_END_VB, start, 
+			     IM->Index[start] );
+      }
 
-   if (fixup & VERT_RGBA) {
-      if (orflag & VERT_RGBA)
-	 fixup_4chan( IM->Color, IM->Flag, start, VERT_RGBA );
-      else
-	 fixup_first_4chan( IM->Color, IM->Flag, VERT_END_VB, start, IM->Color[start] );
-   }
+      if (fixup & VERT_RGBA) {
+	 if (orflag & VERT_RGBA)
+	    fixup_4chan( IM->Color, IM->Flag, start, VERT_RGBA );
+	 else
+	    fixup_first_4chan( IM->Color, IM->Flag, VERT_END_VB, start, 
+			       IM->Color[start] );
+      }
+      
+      if (fixup & VERT_SPEC_RGB) {
+	 if (orflag & VERT_SPEC_RGB)
+	    fixup_4chan( IM->SecondaryColor, IM->Flag, start, VERT_SPEC_RGB );
+	 else
+	    fixup_first_4chan( IM->SecondaryColor, IM->Flag, VERT_END_VB, start,
+			       IM->SecondaryColor[start] );
+      }
+      
+      if (fixup & VERT_FOG_COORD) {
+	 if (orflag & VERT_FOG_COORD)
+	    fixup_1f( IM->FogCoord, IM->Flag, start, VERT_FOG_COORD );
+	 else
+	    fixup_first_1f( IM->FogCoord, IM->Flag, VERT_END_VB, start,
+			    IM->FogCoord[start] );
+      }
 
-   if (fixup & VERT_SPEC_RGB) {
-      if (orflag & VERT_SPEC_RGB)
-	 fixup_4chan( IM->SecondaryColor, IM->Flag, start, VERT_SPEC_RGB );
-      else
-	 fixup_first_4chan( IM->SecondaryColor, IM->Flag, VERT_END_VB, start,
-                            IM->SecondaryColor[start] );
+      if (fixup & VERT_NORM) {
+	 if (orflag & VERT_NORM)
+	    fixup_3f( IM->Normal, IM->Flag, start, VERT_NORM );
+	 else
+	    fixup_first_3f( IM->Normal, IM->Flag, VERT_END_VB, start,
+			    IM->Normal[start] );
+      }
    }
-
-   if (fixup & VERT_FOG_COORD) {
-      if (orflag & VERT_FOG_COORD)
-	 fixup_1f( IM->FogCoord, IM->Flag, start, VERT_FOG_COORD );
-      else
-	 fixup_first_1f( IM->FogCoord, IM->Flag, VERT_END_VB, start,
-			 IM->FogCoord[start] );
-   }
-
-   if (fixup & VERT_NORM) {
-      if (orflag & VERT_NORM)
-	 fixup_3f( IM->Normal, IM->Flag, start, VERT_NORM );
-      else
-	 fixup_first_3f( IM->Normal, IM->Flag, VERT_END_VB, start,
-			 IM->Normal[start] );
-   }
-
+      
    /* Prune possible half-filled slot.
     */
    IM->Flag[IM->LastData+1] &= ~VERT_END_VB;
    IM->Flag[IM->Count] |= VERT_END_VB;
 
+
+   /* Materials:
+    */
+   if (IM->MaterialOrMask & ~IM->MaterialAndMask) {
+      GLuint vulnerable = IM->MaterialOrMask;
+      GLuint i = IM->Start;
+
+      do {
+	 while (!(IM->Flag[i] & VERT_MATERIAL))
+	    i++;
+
+	 vulnerable &= ~IM->MaterialMask[i];
+	 _mesa_copy_material_pairs( IM->Material[i],
+				    ctx->Light.Material,
+				    vulnerable );
+
+
+      } while (vulnerable);
+   }
 }
 
 
@@ -357,7 +382,7 @@ static void copy_material( struct immediate *next,
       next->MaterialMask = (GLuint *) MALLOC( sizeof(GLuint) * IMM_SIZE );
    }
 
-   next->MaterialMask[dst] = prev->MaterialMask[src];
+   next->MaterialMask[dst] = prev->MaterialOrMask;
    MEMCPY(next->Material[dst], prev->Material[src], 2*sizeof(GLmaterial));
 }
 
@@ -538,6 +563,24 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
       }
    }
 
+   /* Materials:
+    */
+   if (IM->MaterialOrMask & ~IM->MaterialAndMask) {
+      GLuint vulnerable = IM->MaterialOrMask;
+      GLuint i = IM->Start;
+
+      do {
+	 while (!(IM->Flag[i] & VERT_MATERIAL))
+	    i++;
+
+	 vulnerable &= ~IM->MaterialMask[i];
+	 _mesa_copy_material_pairs( IM->Material[i],
+				    ctx->Light.Material,
+				    vulnerable );
+
+
+      } while (vulnerable);
+   }
 
    /* Can potentially overwrite primitive details - need to save the
     * first slot:
