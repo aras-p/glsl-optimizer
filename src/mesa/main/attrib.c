@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.48 2001/04/11 23:22:20 brianp Exp $ */
+/* $Id: attrib.c,v 1.49 2001/04/17 21:25:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -602,7 +602,8 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
          _mesa_TexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
                        GL_TEXTURE_LOD_BIAS_EXT, unit->LodBias);
       }
-      if (ctx->Extensions.EXT_texture_env_combine) {
+      if (ctx->Extensions.EXT_texture_env_combine ||
+          ctx->Extensions.ARB_texture_env_combine) {
          _mesa_TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT,
                        unit->CombineModeRGB);
          _mesa_TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_EXT,

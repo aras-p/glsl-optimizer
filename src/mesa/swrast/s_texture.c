@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.23 2001/04/12 15:18:07 brianp Exp $ */
+/* $Id: s_texture.c,v 1.24 2001/04/17 21:25:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,6 +50,10 @@
 /* XXX this is temporary, until GL/glext.h is updated. */
 #ifndef GL_CLAMP_TO_BORDER_ARB
 #define GL_CLAMP_TO_BORDER_ARB 0x812D
+#endif
+
+#ifndef GL_SUBTRACT_ARB
+#define GL_SUBTRACT_ARB 0x84E7
 #endif
 
 
@@ -1763,7 +1767,8 @@ texture_combine(const GLcontext *ctx,
    const GLuint RGBshift = textureUnit->CombineScaleShiftRGB;
    const GLuint Ashift   = textureUnit->CombineScaleShiftA;
 
-   ASSERT(ctx->Extensions.EXT_texture_env_combine);
+   ASSERT(ctx->Extensions.EXT_texture_env_combine ||
+          ctx->Extensions.ARB_texture_env_combine);
 
    /*
     * Do operand setup for up to 3 operands.  Loop over the terms.
@@ -1968,6 +1973,20 @@ texture_combine(const GLcontext *ctx,
             }
          }
          break;
+      case GL_SUBTRACT_ARB:
+         {
+            const GLchan (*arg0)[4] = (const GLchan (*)[4]) argRGB[0];
+            const GLchan (*arg1)[4] = (const GLchan (*)[4]) argRGB[1];
+            for (i = 0; i < n; i++) {
+               GLint r = ((GLint) arg0[i][RCOMP] - (GLint) arg1[i][RCOMP]) << RGBshift;
+               GLint g = ((GLint) arg0[i][GCOMP] - (GLint) arg1[i][GCOMP]) << RGBshift;
+               GLint b = ((GLint) arg0[i][BCOMP] - (GLint) arg1[i][BCOMP]) << RGBshift;
+               rgba[i][RCOMP] = (GLchan) CLAMP(r, 0, CHAN_MAX);
+               rgba[i][GCOMP] = (GLchan) CLAMP(g, 0, CHAN_MAX);
+               rgba[i][BCOMP] = (GLchan) CLAMP(b, 0, CHAN_MAX);
+            }
+         }
+         break;
       case GL_DOT3_RGB_EXT:
       case GL_DOT3_RGBA_EXT:
       case GL_DOT3_RGB_ARB:
@@ -2059,6 +2078,17 @@ texture_combine(const GLcontext *ctx,
             }
          }
          break;
+      case GL_SUBTRACT_ARB:
+         {
+            const GLchan (*arg0)[4] = (const GLchan (*)[4]) argRGB[0];
+            const GLchan (*arg1)[4] = (const GLchan (*)[4]) argRGB[1];
+            for (i = 0; i < n; i++) {
+               GLint a = ((GLint) arg0[i][ACOMP] - (GLint) arg1[i][ACOMP]) << RGBshift;
+               rgba[i][ACOMP] = (GLchan) CLAMP(a, 0, CHAN_MAX);
+            }
+         }
+         break;
+
       default:
          _mesa_problem(NULL, "invalid combine mode");
    }
