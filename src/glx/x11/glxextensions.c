@@ -237,8 +237,6 @@ static const struct extension_info known_gl_extensions[] = {
 };
 
 
-#define __GL_EXT_BYTES   ((__NUM_GL_EXTS + 7) / 8)
-
 /* global bit-fields of available extensions and their characteristics */
 static unsigned char client_glx_support[8];
 static unsigned char client_glx_only[8];
@@ -494,6 +492,24 @@ __glXExtensionBitIsEnabled( __GLXscreenConfigs *psc, unsigned bit )
 
 
 /**
+ * Check if a certain extension is enabled in a given context.
+ *
+ */
+GLboolean
+__glExtensionBitIsEnabled( const __GLXcontext * gc, unsigned bit )
+{
+   GLboolean enabled = GL_FALSE;
+
+   if ( gc != NULL ) {
+      enabled = EXT_ENABLED( bit, gc->gl_extension_bits );
+   }
+
+   return enabled;
+}
+
+
+
+/**
  * Convert a bit-field to a string of supported extensions.
  */
 static char *
@@ -680,6 +696,7 @@ __glXCalculateUsableGLExtensions( __GLXcontext * gc,
 
    gc->extensions = (unsigned char *) 
      __glXGetStringFromTable( known_gl_extensions, usable );
+   (void) memcpy( gc->gl_extension_bits, usable, sizeof( usable ) );
 }
 
 

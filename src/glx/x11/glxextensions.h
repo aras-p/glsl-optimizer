@@ -216,15 +216,24 @@ enum {
    GL_SUN_multi_draw_arrays_bit = GL_EXT_multi_draw_arrays_bit
 };
 
-extern GLboolean __glXExtensionBitIsEnabled( __GLXscreenConfigs *psc, unsigned bit );
+#define __GL_EXT_BYTES   ((__NUM_GL_EXTS + 7) / 8)
+
+struct __GLXscreenConfigsRec;
+struct __GLXcontextRec;
+
+extern GLboolean __glXExtensionBitIsEnabled( struct __GLXscreenConfigsRec *psc, unsigned bit );
 extern const char * __glXGetClientExtensions( void );
-extern void __glXCalculateUsableExtensions( __GLXscreenConfigs *psc,
+extern void __glXCalculateUsableExtensions( struct __GLXscreenConfigsRec *psc,
     GLboolean display_is_direct_capable, int server_minor_version );
-extern void __glXScrEnableExtension( __GLXscreenConfigs *psc, const char * name );
-extern void __glXCalculateUsableGLExtensions( __GLXcontext * gc,
+extern void __glXScrEnableExtension( struct __GLXscreenConfigsRec *psc, const char * name );
+extern void __glXCalculateUsableGLExtensions( struct __GLXcontextRec * gc,
     const char * server_string, int major_version, int minor_version );
 extern void __glXGetGLVersion( int * major_version, int * minor_version );
 extern char * __glXGetClientGLExtensionString( void );
+
+extern GLboolean __glExtensionBitIsEnabled( const struct __GLXcontextRec * gc, 
+    unsigned bit );
+
 
 /* Source-level backwards compatibility with old drivers. They won't
  * find the respective functions, though. 

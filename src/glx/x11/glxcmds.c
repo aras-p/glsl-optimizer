@@ -375,8 +375,6 @@ GLXContext AllocateGLXContext( Display *dpy )
     state->storePack.alignment = 4;
     state->storeUnpack.alignment = 4;
 
-    __glXInitVertexArrayState(gc);
-
     gc->attributes.stackPointer = &gc->attributes.stack[0];
 
     /*

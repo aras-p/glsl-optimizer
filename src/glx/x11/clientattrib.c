@@ -36,77 +36,34 @@
 
 #include <assert.h>
 #include "glxclient.h"
+#include "indirect_vertex_array.h"
 
 /*****************************************************************************/
 
-void __indirect_glEnableClientState(GLenum array)
+static void
+do_enable_disable(GLenum array, GLboolean val )
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
+    unsigned index = 0;
 
-    switch (array) {
-	case GL_COLOR_ARRAY:
-	    ENABLE_ARRAY(state, color);
-	    break;
-	case GL_EDGE_FLAG_ARRAY:
-	    ENABLE_ARRAY(state, edgeFlag);
-	    break;
-	case GL_INDEX_ARRAY:
-	    ENABLE_ARRAY(state, index);
-	    break;
-	case GL_NORMAL_ARRAY:
-	    ENABLE_ARRAY(state, normal);
-	    break;
-	case GL_TEXTURE_COORD_ARRAY:
-	    ENABLE_TEXARRAY(state, state->vertArray.activeTexture);
-	    break;
-	case GL_VERTEX_ARRAY:
-	    ENABLE_ARRAY(state, vertex);
-	    break;
-	case GL_SECONDARY_COLOR_ARRAY:
-	    ENABLE_ARRAY(state, secondaryColor);
-	    break;
-	case GL_FOG_COORD_ARRAY:
-	    ENABLE_ARRAY(state, fogCoord);
-	    break;
-	default:
-	    __glXSetError(gc, GL_INVALID_ENUM);
+    if ( array == GL_TEXTURE_COORD_ARRAY ) {
+	index = __glXGetActiveTextureUnit( state );
     }
+
+    if ( ! __glXSetArrayEnable( state, array, index, val ) ) {
+	__glXSetError(gc, GL_INVALID_ENUM);
+    }
+}
+
+void __indirect_glEnableClientState(GLenum array)
+{
+    do_enable_disable( array, GL_TRUE );
 }
 
 void __indirect_glDisableClientState(GLenum array)
 {
-    __GLXcontext *gc = __glXGetCurrentContext();
-    __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
-
-    switch (array) {
-	case GL_COLOR_ARRAY:
-	    DISABLE_ARRAY(state, color);
-	    break;
-	case GL_EDGE_FLAG_ARRAY:
-	    DISABLE_ARRAY(state, edgeFlag);
-	    break;
-	case GL_INDEX_ARRAY:
-	    DISABLE_ARRAY(state, index);
-	    break;
-	case GL_NORMAL_ARRAY:
-	    DISABLE_ARRAY(state, normal);
-	    break;
-	case GL_TEXTURE_COORD_ARRAY:
-	    DISABLE_TEXARRAY(state, state->vertArray.activeTexture);
-	    break;
-	case GL_VERTEX_ARRAY:
-	    DISABLE_ARRAY(state, vertex);
-	    break;
-	case GL_SECONDARY_COLOR_ARRAY:
-	    DISABLE_ARRAY(state, secondaryColor);
-	    break;
-	case GL_FOG_COORD_ARRAY:
-	    DISABLE_ARRAY(state, fogCoord);
-	    break;
-	default:
-	    __glXSetError(gc, GL_INVALID_ENUM);
-    }
+    do_enable_disable( array, GL_FALSE );
 }
 
 /************************************************************************/
@@ -129,7 +86,7 @@ void __indirect_glPushClientAttrib(GLuint mask)
 	    sp->storeUnpack = state->storeUnpack;
 	}
 	if (mask & GL_CLIENT_VERTEX_ARRAY_BIT) {
-	    sp->vertArray = state->vertArray;
+	    __glXPushArrayState( state );
 	}
     } else {
 	__glXSetError(gc, GL_STACK_OVERFLOW);
@@ -156,7 +113,7 @@ void __indirect_glPopClientAttrib(void)
 	    state->storeUnpack = sp->storeUnpack;
 	}
 	if (mask & GL_CLIENT_VERTEX_ARRAY_BIT) {
-	    state->vertArray = sp->vertArray;
+	    __glXPopArrayState( state );
 	}
 
 	sp->mask = 0;
@@ -181,5 +138,3 @@ void __glFreeAttributeState(__GLXcontext *gc)
 	}
     }
 }
-
-

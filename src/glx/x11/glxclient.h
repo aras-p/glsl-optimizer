@@ -59,6 +59,7 @@
 #include "GL/glxproto.h"
 #include "GL/internal/glcore.h"
 #include "glapitable.h"
+#include "glxextensions.h"
 #ifdef XTHREADS
 #include "Xthreads.h"
 #endif
@@ -220,110 +221,29 @@ typedef struct __GLXattributeRecDEPRECATED {
 	__GLXvertArrayStateDEPRECATED vertArray;
 } __GLXattributeDEPRECATED;
 
-typedef struct __GLXvertexArrayPointerStateRec {
-    void (*proc)(const void *);
-    void (*mtex_proc)(GLenum, const void *);
-    const GLubyte *ptr;
-    GLsizei skip;
-    GLint size;
-    GLenum type;
-    GLsizei stride;
-} __GLXvertexArrayPointerState;
-
-/**
- * Define which entries of \c __GLXvertArrayState::arrays match which
- * vertex arrays in the client-state vector.  These are only the one-of
- * arrays.  See the \c __GLXvertArrayState::arrays documentation for more
- * details.
- * 
- * \sa __GLXvertArrayState
- */
-enum {
-    edgeFlag_ARRAY,       /**< \c GL_EDGE_FLAG_ARRAY */
-    index_ARRAY,          /**< \c GL_INDEX_ARRAY */
-    fogCoord_ARRAY,       /**< \c GL_FOG_COORD_ARRAY */
-    secondaryColor_ARRAY, /**< \c GL_SECONDARY_COLOR_ARRAY */
-    color_ARRAY,          /**< \c GL_COLOR_ARRAY */
-    normal_ARRAY,         /**< \c GL_NORMAL_ARRAY */
-       
-    /**
-     * \c GL_VERTEX_ARRAY \b must be last!  All of the code for emitting arrays
-     * and array elements is written based on the assumption that the vertex
-     * array is last.
-     */
-    vertex_ARRAY,
-
-    __GLX_MAX_ARRAYS      /**< Place holder entry. */
-};
-
-#define ENABLE_ARRAY(state,a) \
-    do { (state)->vertArray.enables |=  (1U << (a ## _ARRAY)); } while( 0 )
-#define DISABLE_ARRAY(state,a) \
-    do { (state)->vertArray.enables &= ~(1U << (a ## _ARRAY)); } while( 0 )
-#define IS_ARRAY_ENABLED_BY_INDEX(state, i) \
-    (((state)->vertArray.enables & (1U << (i))) != 0)
-#define IS_ARRAY_ENABLED(state, a) \
-    IS_ARRAY_ENABLED_BY_INDEX(state, a ## _ARRAY)
-
-#define ENABLE_TEXARRAY(state,a) \
-    do { (state)->vertArray.texture_enables |=  (1U << a); } while( 0 )
-#define DISABLE_TEXARRAY(state,a) \
-    do { (state)->vertArray.texture_enables &= ~(1U << a); } while( 0 )
-#define IS_TEXARRAY_ENABLED(state, a) \
-    (((state)->vertArray.texture_enables & (1U << a)) != 0)
-
-/**
- * Client-side vertex array state.
- */
-typedef struct __GLXvertArrayStateRec {
-    /**
-     * Which client-side arrays are enabled?  These are the flag bits for
-     * all of the non-texture coordinate arrays.
-     */
-    GLuint enables;
-
-    /**
-     * Which of the texture coordinate arrays are enabled?
-     */
-    GLuint texture_enables;
-
-    /**
-     * State for "one-of" arrays.  These are the arrays, such as
-     * GL_COLOR_ARRAY or GL_FOG_COORD_ARRAY for which there is only one
-     * array.  There are also "many-of" arrays, such as
-     * GL_TEXTURE_COORD_ARRAY.
-     */
-    __GLXvertexArrayPointerState arrays[__GLX_MAX_ARRAYS];
-
-    __GLXvertexArrayPointerState texCoord[__GLX_MAX_TEXTURE_UNITS];
-
-    GLint maxElementsVertices;
-    GLint maxElementsIndices;
-    GLint activeTexture;
-} __GLXvertArrayState;
 
 typedef struct __GLXattributeRec {
-	GLuint mask;
+    GLuint mask;
 
-	/*
-	** Pixel storage state.  Most of the pixel store mode state is kept
-	** here and used by the client code to manage the packing and
-	** unpacking of data sent to/received from the server.
-	*/
-	__GLXpixelStoreMode storePack, storeUnpack;
+    /**
+     * Pixel storage state.  Most of the pixel store mode state is kept
+     * here and used by the client code to manage the packing and
+     * unpacking of data sent to/received from the server.
+     */
+    __GLXpixelStoreMode storePack, storeUnpack;
 
-	/*
-	** Vertex Array storage state.  The vertex array component
-	** state is stored here and is used to manage the packing of
-	** DrawArrays data sent to the server.
-	*/
-	__GLXvertArrayState vertArray;
-
-	/**
-	 * Is EXT_vertex_array / GL 1.1 DrawArrays protocol specifically
-	 * disabled?
-	 */
-	GLboolean NoDrawArraysProtocol;
+    /**
+     * Is EXT_vertex_array / GL 1.1 DrawArrays protocol specifically
+     * disabled?
+     */
+    GLboolean NoDrawArraysProtocol;
+    
+    /**
+     * Vertex Array storage state.  The vertex array component
+     * state is stored here and is used to manage the packing of
+     * DrawArrays data sent to the server.
+     */
+    struct array_state_vector * array_state;
 } __GLXattribute;
 
 typedef struct __GLXattributeMachineRec {
@@ -529,7 +449,7 @@ struct __GLXcontextRec {
     * drivers should NEVER use this data or even care that it exists.
     */
    void * client_state_private;
-   
+
    /**
     * Stored value for \c glXQueryContext attribute \c GLX_RENDER_TYPE.
     */
@@ -546,6 +466,8 @@ struct __GLXcontextRec {
    int server_major;        /**< Major version number. */
    int server_minor;        /**< Minor version number. */
     /*@}*/
+
+    char gl_extension_bits[ __GL_EXT_BYTES ];
 };
 
 #define __glXSetError(gc,code) \
