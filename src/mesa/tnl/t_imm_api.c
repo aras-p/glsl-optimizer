@@ -1129,6 +1129,8 @@ _tnl_EvalPoint2( GLint i, GLint j )
 
 /* Need to use the default array-elt outside begin/end for strict
  * conformance.
+ * XXX If ctx->Const.CheckArrayBounds is true, we need to test i against
+ * ctx->Array._MaxElement
  */
 #define ARRAY_ELT( IM, i )			\
 {						\

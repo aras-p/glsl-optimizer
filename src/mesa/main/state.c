@@ -60,6 +60,7 @@
 #include "imports.h"
 #include "light.h"
 #include "lines.h"
+#include "macros.h"
 #include "matrix.h"
 #if FEATURE_ARB_occlusion_query
 #include "occlude.h"
@@ -752,6 +753,110 @@ update_program( GLcontext *ctx )
 }
 
 
+/**
+ * Update state dependent on vertex arrays.
+ */
+static void
+update_arrays( GLcontext *ctx )
+{
+   GLuint i, min;
+
+   /* find min of _MaxElement values for all enabled arrays */
+
+   /* 0 */
+   if (ctx->VertexProgram.Enabled
+       && ctx->Array.VertexAttrib[VERT_ATTRIB_POS].Enabled) {
+      min = ctx->Array.VertexAttrib[VERT_ATTRIB_POS]._MaxElement;
+   }
+   else if (ctx->Array.Vertex.Enabled) {
+      min = ctx->Array.Vertex._MaxElement;
+   }
+   else {
+      /* can't draw anything without vertex positions! */
+      min = 0;
+   }
+
+   /* 1 */
+   if (ctx->VertexProgram.Enabled
+       && ctx->Array.VertexAttrib[VERT_ATTRIB_WEIGHT].Enabled) {
+      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_WEIGHT]._MaxElement);
+   }
+   /* no conventional vertex weight array */
+
+   /* 2 */
+   if (ctx->VertexProgram.Enabled
+       && ctx->Array.VertexAttrib[VERT_ATTRIB_NORMAL].Enabled) {
+      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_NORMAL]._MaxElement);
+   }
+   else if (ctx->Array.Normal.Enabled) {
+      min = MIN2(min, ctx->Array.Normal._MaxElement);
+   }
+
+   /* 3 */
+   if (ctx->VertexProgram.Enabled
+       && ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR0].Enabled) {
+      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR0]._MaxElement);
+   }
+   else if (ctx->Array.Color.Enabled) {
+      min = MIN2(min, ctx->Array.Color._MaxElement);
+   }
+
+   /* 4 */
+   if (ctx->VertexProgram.Enabled
+       && ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR1].Enabled) {
+      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR1]._MaxElement);
+   }
+   else if (ctx->Array.SecondaryColor.Enabled) {
+      min = MIN2(min, ctx->Array.SecondaryColor._MaxElement);
+   }
+
+   /* 5 */
+   if (ctx->VertexProgram.Enabled
+       && ctx->Array.VertexAttrib[VERT_ATTRIB_FOG].Enabled) {
+      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_FOG]._MaxElement);
+   }
+   else if (ctx->Array.FogCoord.Enabled) {
+      min = MIN2(min, ctx->Array.FogCoord._MaxElement);
+   }
+
+   /* 6 */
+   if (ctx->VertexProgram.Enabled
+       && ctx->Array.VertexAttrib[VERT_ATTRIB_SIX].Enabled) {
+      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_SIX]._MaxElement);
+   }
+
+   /* 7 */
+   if (ctx->VertexProgram.Enabled
+       && ctx->Array.VertexAttrib[VERT_ATTRIB_SEVEN].Enabled) {
+      min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_SEVEN]._MaxElement);
+   }
+
+   /* 8..15 */
+   for (i = VERT_ATTRIB_TEX0; i < VERT_ATTRIB_MAX; i++) {
+      if (ctx->VertexProgram.Enabled
+          && ctx->Array.VertexAttrib[i].Enabled) {
+         min = MIN2(min, ctx->Array.VertexAttrib[i]._MaxElement);
+      }
+      else if (i - VERT_ATTRIB_TEX0 < ctx->Const.MaxTextureCoordUnits
+               && ctx->Array.TexCoord[i - VERT_ATTRIB_TEX0].Enabled) {
+         min = MIN2(min, ctx->Array.TexCoord[i - VERT_ATTRIB_TEX0]._MaxElement);
+      }
+   }
+
+   if (ctx->Array.Index.Enabled) {
+      min = MIN2(min, ctx->Array.Index._MaxElement);
+   }
+
+   if (ctx->Array.EdgeFlag.Enabled) {
+      min = MIN2(min, ctx->Array.EdgeFlag._MaxElement);
+   }
+
+   /* _MaxElement is one past the last legal array element */
+   ctx->Array._MaxElement = min;
+}
+
+
+
 /*
  * If __GLcontextRec::NewState is non-zero then this function \b must be called
  * before rendering any primitive.  Basically, function pointers and
@@ -792,6 +897,9 @@ void _mesa_update_state( GLcontext *ctx )
 
    if (new_state & _NEW_PROGRAM)
       update_program( ctx );
+
+   if (new_state & _NEW_ARRAY)
+      update_arrays( ctx );
 
    /* ctx->_NeedEyeCoords is now up to date.
     *

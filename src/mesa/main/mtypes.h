@@ -1329,6 +1329,7 @@ struct gl_array_attrib {
    struct gl_buffer_object *ArrayBufferObj;
    struct gl_buffer_object *ElementArrayBufferObj;
 #endif
+   GLuint _MaxElement;          /* Min of all enabled array's maxes */
 };
 
 
@@ -1720,6 +1721,8 @@ struct gl_constants
    /* vertex or fragment program */
    GLuint MaxProgramMatrices;
    GLuint MaxProgramMatrixStackDepth;
+   /* vertex array / buffer object bounds checking */
+   GLboolean CheckArrayBounds;
 };
 
 

@@ -1062,6 +1062,15 @@ _mesa_init_constants( GLcontext *ctx )
    ctx->Const.MaxProgramMatrices = MAX_PROGRAM_MATRICES;
    ctx->Const.MaxProgramMatrixStackDepth = MAX_PROGRAM_MATRIX_STACK_DEPTH;
 
+   /* If we're running in the X server, do bounds checking to prevent
+    * segfaults and server crashes!
+    */
+#if defined(XFree86LOADER) && defined(IN_MODULE)
+   ctx->Const.CheckArrayBounds = GL_TRUE;
+#else
+   ctx->Const.CheckArrayBounds = GL_FALSE;
+#endif
+
    ASSERT(ctx->Const.MaxTextureUnits == MAX2(ctx->Const.MaxTextureImageUnits, ctx->Const.MaxTextureCoordUnits));
 }
 

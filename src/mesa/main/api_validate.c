@@ -26,7 +26,6 @@
 #include "glheader.h"
 #include "api_validate.h"
 #include "context.h"
-#include "image.h"  /* for _mesa_sizeof_type() */
 #include "imports.h"
 #include "mtypes.h"
 #include "state.h"
@@ -46,7 +45,7 @@ _mesa_validate_DrawElements(GLcontext *ctx,
    }
 
    if (mode > GL_POLYGON) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
+      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawElements(mode)" );
       return GL_FALSE;
    }
 
@@ -59,13 +58,38 @@ _mesa_validate_DrawElements(GLcontext *ctx,
    }
 
    if (ctx->NewState)
-      _mesa_update_state( ctx );
+      _mesa_update_state(ctx);
 
-   if (ctx->Array.Vertex.Enabled
-       || (ctx->VertexProgram.Enabled && ctx->Array.VertexAttrib[0].Enabled))
-      return GL_TRUE;
-   else
+   /* Always need vertex positions */
+   if (!ctx->Array.Vertex.Enabled
+       && !(ctx->VertexProgram.Enabled && ctx->Array.VertexAttrib[0].Enabled))
       return GL_FALSE;
+
+   if (ctx->Const.CheckArrayBounds) {
+      /* find max array index */
+      GLuint max = 0;
+      GLint i;
+      if (type == GL_UNSIGNED_INT) {
+         for (i = 0; i < count; i++)
+            if (((GLuint *) indices)[i] > max)
+               max = ((GLuint *) indices)[i];
+      }
+      else if (type == GL_UNSIGNED_SHORT) {
+         for (i = 0; i < count; i++)
+            if (((GLushort *) indices)[i] > max)
+               max = ((GLushort *) indices)[i];
+      }
+      else {
+         ASSERT(type == GL_UNSIGNED_BYTE);
+         for (i = 0; i < count; i++)
+            if (((GLubyte *) indices)[i] > max)
+               max = ((GLubyte *) indices)[i];
+      }
+      if (max >= ctx->Array._MaxElement) {
+         /* the max element is out of bounds of one or more enabled arrays */
+         return GL_FALSE;
+      }
+   }
 
    return GL_TRUE;
 }
@@ -81,12 +105,12 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
 
    if (count <= 0) {
       if (count < 0)
-	 _mesa_error(ctx, GL_INVALID_VALUE, "glDrawElements(count)" );
+	 _mesa_error(ctx, GL_INVALID_VALUE, "glDrawRangeElements(count)" );
       return GL_FALSE;
    }
 
    if (mode > GL_POLYGON) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
+      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawRangeElements(mode)" );
       return GL_FALSE;
    }
 
@@ -98,39 +122,46 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
    if (type != GL_UNSIGNED_INT &&
        type != GL_UNSIGNED_BYTE &&
        type != GL_UNSIGNED_SHORT) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawElements(type)" );
+      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawRangeElements(type)" );
       return GL_FALSE;
    }
 
    if (ctx->NewState)
-      _mesa_update_state( ctx );
+      _mesa_update_state(ctx);
 
-   if (ctx->Array.Vertex.Enabled
-       || (ctx->VertexProgram.Enabled && ctx->Array.VertexAttrib[0].Enabled))
-      return GL_TRUE;
-   else
+   /* Always need vertex positions */
+   if (!ctx->Array.Vertex.Enabled
+       && !(ctx->VertexProgram.Enabled && ctx->Array.VertexAttrib[0].Enabled))
       return GL_FALSE;
-}
 
+   if (ctx->Const.CheckArrayBounds) {
+      /* Find max array index.
+       * We don't trust the user's start and end values.
+       */
+      GLuint max = 0;
+      GLint i;
+      if (type == GL_UNSIGNED_INT) {
+         for (i = 0; i < count; i++)
+            if (((GLuint *) indices)[i] > max)
+               max = ((GLuint *) indices)[i];
+      }
+      else if (type == GL_UNSIGNED_SHORT) {
+         for (i = 0; i < count; i++)
+            if (((GLushort *) indices)[i] > max)
+               max = ((GLushort *) indices)[i];
+      }
+      else {
+         ASSERT(type == GL_UNSIGNED_BYTE);
+         for (i = 0; i < count; i++)
+            if (((GLubyte *) indices)[i] > max)
+               max = ((GLubyte *) indices)[i];
+      }
+      if (max >= ctx->Array._MaxElement) {
+         /* the max element is out of bounds of one or more enabled arrays */
+         return GL_FALSE;
+      }
+   }
 
-/**
- * Helper routine for validating vertex array data to be sure the given
- * element lies within the legal range (i.e. vertex buffer object).
- */
-static INLINE GLboolean
-validate(GLcontext *ctx, GLint attribArray,
-         const struct gl_client_array *array, GLint element)
-{
-   if (ctx->VertexProgram.Enabled
-       && attribArray >= 0
-       && ctx->Array.VertexAttrib[attribArray].Enabled) {
-      if (element >= ctx->Array.VertexAttrib[attribArray]._MaxElement)
-         return GL_FALSE;
-   }
-   else if (array && array->Enabled) {
-      if (element >= array->_MaxElement)
-         return GL_FALSE;
-   }
    return GL_TRUE;
 }
 
@@ -143,7 +174,6 @@ GLboolean
 _mesa_validate_DrawArrays(GLcontext *ctx,
 			  GLenum mode, GLint start, GLsizei count)
 {
-   GLint i;
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
    if (count < 0) {
@@ -157,59 +187,17 @@ _mesa_validate_DrawArrays(GLcontext *ctx,
    }
 
    if (ctx->NewState)
-      _mesa_update_state( ctx );
+      _mesa_update_state(ctx);
 
-   /* Either the conventional vertex position array, or the 0th
-    * generic vertex attribute array is required to be enabled.
-    */
-   if (ctx->VertexProgram.Enabled
-       && ctx->Array.VertexAttrib[VERT_ATTRIB_POS].Enabled) {
-      if (start + count >= ctx->Array.VertexAttrib[VERT_ATTRIB_POS]._MaxElement)
+   /* Always need vertex positions */
+   if (!ctx->Array.Vertex.Enabled
+       && !(ctx->VertexProgram.Enabled && ctx->Array.VertexAttrib[0].Enabled))
+      return GL_FALSE;
+
+   if (ctx->Const.CheckArrayBounds) {
+      if (start + count > ctx->Array._MaxElement)
          return GL_FALSE;
    }
-   else if (ctx->Array.Vertex.Enabled) {
-      if (start + count >= ctx->Array.Vertex._MaxElement)
-         return GL_FALSE;
-   }
-   else {
-      /* no vertex position array! */
-      return GL_FALSE;
-   }
-
-   /*
-    * OK, now check all the other enabled arrays to be sure the elements
-    * are in bounds.
-    */
-   if (!validate(ctx, VERT_ATTRIB_WEIGHT, NULL, start + count))
-      return GL_FALSE;
-
-   if (!validate(ctx, VERT_ATTRIB_NORMAL, &ctx->Array.Normal, start + count))
-      return GL_FALSE;
-
-   if (!validate(ctx, VERT_ATTRIB_COLOR0, &ctx->Array.Color, start + count))
-      return GL_FALSE;
-
-   if (!validate(ctx, VERT_ATTRIB_COLOR1, &ctx->Array.SecondaryColor, start + count))
-      return GL_FALSE;
-
-   if (!validate(ctx, VERT_ATTRIB_FOG, &ctx->Array.FogCoord, start + count))
-      return GL_FALSE;
-
-   if (!validate(ctx, VERT_ATTRIB_SIX, NULL, start + count))
-      return GL_FALSE;
-
-   if (!validate(ctx, VERT_ATTRIB_SEVEN, &ctx->Array.FogCoord, start + count))
-      return GL_FALSE;
-
-   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
-      if (!validate(ctx, VERT_ATTRIB_TEX0 + i, &ctx->Array.TexCoord[i], start + count))
-         return GL_FALSE;
-
-   if (!validate(ctx, -1, &ctx->Array.Index, start + count))
-      return GL_FALSE;
-
-   if (!validate(ctx, -1, &ctx->Array.EdgeFlag, start + count))
-      return GL_FALSE;
 
    return GL_TRUE;
 }
