@@ -1,4 +1,4 @@
-/* $Id: fxtris.c,v 1.18 2001/11/06 16:01:19 brianp Exp $ */
+/* $Id: fxtris.c,v 1.19 2002/08/21 02:56:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -331,7 +331,7 @@ do {						\
 do {						\
    color[idx][0] = v[idx]->r;			\
    color[idx][1] = v[idx]->g;			\
-   color[idx][1] = v[idx]->b;			\
+   color[idx][2] = v[idx]->b;			\
    color[idx][3] = v[idx]->a;			\
 } while (0)
 
