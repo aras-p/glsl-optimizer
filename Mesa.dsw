@@ -66,6 +66,21 @@ Package=<4>
 
 ###############################################################################
 
+Project: "osmesa"=".\SRC\MESA\DRIVERS\WINDOWS\osmesa\osmesa.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gdi
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "swrast"=".\src\mesa\drivers\windows\swrast\swrast.dsp" - Package Owner=<4>
 
 Package=<5>
