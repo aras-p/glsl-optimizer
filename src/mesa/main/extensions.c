@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.3 1999/09/11 11:48:11 brianp Exp $ */
+/* $Id: extensions.c,v 1.4 1999/09/16 16:47:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -203,8 +203,7 @@ const char *gl_extensions_get_string( GLcontext *ctx )
  * NOTE: this function could be optimized to binary search a sorted
  * list of function names.
  * Also, this function does not yet do per-context function searches.
- * But since the client must also call glGetString(GL_EXTENSIONS) to
- * test for the extension this isn't a big deal.
+ * Not applicable to Mesa at this time.
  */
 GLfunction gl_GetProcAddress( GLcontext *ctx, const GLubyte *procName )
 {
@@ -213,8 +212,9 @@ GLfunction gl_GetProcAddress( GLcontext *ctx, const GLubyte *procName )
       GLfunction address;
    };
    static struct proc procTable[] = {
+#ifdef GL_EXT_get_proc_address
       { "glGetProcAddressEXT", (GLfunction) glGetProcAddressEXT },  /* me! */
-
+#endif
       /* OpenGL 1.1 functions */
       { "glEnableClientState", (GLfunction) glEnableClientState },
       { "glDisableClientState", (GLfunction) glDisableClientState },
@@ -377,7 +377,7 @@ GLfunction gl_GetProcAddress( GLcontext *ctx, const GLubyte *procName )
 
    for (i = 0; procTable[i].address; i++) {
       if (strcmp((const char *) procName, procTable[i].name) == 0)
-	 return procTable[i].address;
+         return procTable[i].address;
    }
 
    return NULL;
