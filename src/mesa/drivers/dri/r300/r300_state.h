@@ -43,6 +43,19 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 		r300->hw.is_dirty = GL_TRUE;		\
 	} while(0)
 
+/* Fire the buffered vertices no matter what.
+   TODO: This has not been implemented yet
+ */
+#define R300_FIREVERTICES( r300 )			\
+do {							\
+   /* \
+   if ( (r300)->store.cmd_used || (r300)->dma.flush ) {	\
+      radeonFlush( (r300)->radeon.glCtx );		\
+   }							\
+   */ \
+} while (0)
+
+	
 extern void r300ResetHwState(r300ContextPtr r300);
 
 extern void r300InitState(r300ContextPtr r300);

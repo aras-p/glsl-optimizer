@@ -308,7 +308,13 @@ struct r300_cmdbuf {
 /**
  * State cache
  */
+ 
+struct r300_depthbuffer_state {
+	GLfloat scale;
+};
+
 struct r300_state {
+	struct r300_depthbuffer_state depth;
 };
 
 
@@ -321,6 +327,11 @@ struct r300_context {
 	struct r300_hw_state hw;
 	struct r300_cmdbuf cmdbuf;
 	struct r300_state state;
+	
+	/* Vertex buffers */
+	int elt_count;  /* size of the buffer for vertices */
+	int attrib_count; /* size of the buffer for vertex attributes.. Somehow it can be different ? */
+	
 };
 
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))

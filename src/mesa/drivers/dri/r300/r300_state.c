@@ -225,6 +225,58 @@ static void r300ColorMask(GLcontext* ctx,
 	}
 }
 
+/* =============================================================
+ * Window position and viewport transformation
+ */
+
+/*
+ * To correctly position primitives:
+ */
+#define SUBPIXEL_X 0.125
+#define SUBPIXEL_Y 0.125
+
+void r300UpdateWindow(GLcontext * ctx)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	__DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
+	GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
+	GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
+	const GLfloat *v = ctx->Viewport._WindowMap.m;
+
+	GLfloat sx = v[MAT_SX];
+	GLfloat tx = v[MAT_TX] + xoffset + SUBPIXEL_X;
+	GLfloat sy = -v[MAT_SY];
+	GLfloat ty = (-v[MAT_TY]) + yoffset + SUBPIXEL_Y;
+	GLfloat sz = v[MAT_SZ] * rmesa->state.depth.scale;
+	GLfloat tz = v[MAT_TZ] * rmesa->state.depth.scale;
+
+	R300_FIREVERTICES(rmesa);
+	R300_STATECHANGE(rmesa, vpt);
+
+	rmesa->hw.vpt.cmd[R300_VPT_XSCALE]  = r300PackFloat32(sx);
+	rmesa->hw.vpt.cmd[R300_VPT_XOFFSET] = r300PackFloat32(tx);
+	rmesa->hw.vpt.cmd[R300_VPT_YSCALE]  = r300PackFloat32(sy);
+	rmesa->hw.vpt.cmd[R300_VPT_YOFFSET] = r300PackFloat32(ty);
+	rmesa->hw.vpt.cmd[R300_VPT_ZSCALE]  = r300PackFloat32(sz);
+	rmesa->hw.vpt.cmd[R300_VPT_ZOFFSET] = r300PackFloat32(tz);
+}
+
+static void r300Viewport(GLcontext * ctx, GLint x, GLint y,
+			 GLsizei width, GLsizei height)
+{
+	/* Don't pipeline viewport changes, conflict with window offset
+	 * setting below.  Could apply deltas to rescue pipelined viewport
+	 * values, or keep the originals hanging around.
+	 */
+	R200_FIREVERTICES(R200_CONTEXT(ctx));
+	r300UpdateWindow(ctx);
+}
+
+static void r300DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
+{
+	r300UpdateWindow(ctx);
+}
+
 
 /**
  * Called by Mesa after an internal state update.
@@ -255,26 +307,8 @@ void r300ResetHwState(r300ContextPtr r300)
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	{
-		__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
-		GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
-		GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
-		const GLfloat *v = ctx->Viewport._WindowMap.m;
-
-		r300->hw.vpt.cmd[R300_VPT_XSCALE] =
-			r300PackFloat32(v[MAT_SX]);
-		r300->hw.vpt.cmd[R300_VPT_XOFFSET] =
-			r300PackFloat32(v[MAT_TX] + xoffset);
-		r300->hw.vpt.cmd[R300_VPT_YSCALE] =
-			r300PackFloat32(-v[MAT_SY]);
-		r300->hw.vpt.cmd[R300_VPT_YOFFSET] =
-			r300PackFloat32(-v[MAT_TY] + yoffset);
-		r300->hw.vpt.cmd[R300_VPT_ZSCALE] =
-			r300PackFloat32(v[MAT_SZ]);
-		r300->hw.vpt.cmd[R300_VPT_ZOFFSET] =
-			r300PackFloat32(v[MAT_TZ]);
-	}
-
+	r300UpdateWindow(ctx);
+	
 	r300ColorMask(ctx,
 		ctx->Color.ColorMask[RCOMP],
 		ctx->Color.ColorMask[GCOMP],
@@ -504,9 +538,12 @@ void r300ResetHwState(r300ContextPtr r300)
 void r300InitState(r300ContextPtr r300)
 {
 	radeonInitState(&r300->radeon);
+	
+	r300->state.depth.scale = 1.0 / (GLfloat) 0xffff;
 
 	r300ResetHwState(r300);
 }
+
 
 
 /**
@@ -523,5 +560,9 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	functions->DepthMask = r300DepthMask;
 	functions->CullFace = r300CullFace;
 	functions->FrontFace = r300FrontFace;
+
+	/* Viewport related */
+	functions->Viewport = r300Viewport;
+	functions->DepthRange = r300DepthRange;
 }
 
