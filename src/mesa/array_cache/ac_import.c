@@ -1,4 +1,4 @@
-/* $Id: ac_import.c,v 1.18 2002/04/21 20:37:04 brianp Exp $ */
+/* $Id: ac_import.c,v 1.19 2002/04/21 21:03:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,7 +74,8 @@ static void reset_texcoord( GLcontext *ctx, GLuint unit )
 static void reset_vertex( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
-   ASSERT(ctx->Array.Vertex.Enabled);
+   ASSERT(ctx->Array.Vertex.Enabled
+          || (ctx->VertexProgram.Enabled && ctx->Array.VertexAttrib[0].Enabled));
    ac->Raw.Vertex = ctx->Array.Vertex;
    STRIDE_ARRAY(ac->Raw.Vertex, ac->start);
    ac->IsCached.Vertex = GL_FALSE;
@@ -195,33 +196,30 @@ static void reset_attrib( GLcontext *ctx, GLuint index )
       STRIDE_ARRAY(ac->Raw.Attrib[index], ac->start);
    }
    else if (ctx->Array._Enabled & (1 << index)) {
-      /* use conventional vertex array */
-      switch (index) {
-         case VERT_ATTRIB_POS:
-            ac->Raw.Attrib[index] = ctx->Array.Vertex;
-            break;
-         case VERT_ATTRIB_NORMAL:
-            ac->Raw.Attrib[index] = ctx->Array.Normal;
-            break;
-         case VERT_ATTRIB_COLOR0:
-            ac->Raw.Attrib[index] = ctx->Array.Color;
-            break;
-         case VERT_ATTRIB_COLOR1:
-            ac->Raw.Attrib[index] = ctx->Array.SecondaryColor;
-            break;
-         case VERT_ATTRIB_FOG:
-            ac->Raw.Attrib[index] = ctx->Array.FogCoord;
-            break;
-         default:
-            if (index >= VERT_ATTRIB_TEX0 && index <= VERT_ATTRIB_TEX7) {
-               GLuint unit = index - VERT_ATTRIB_TEX0;
-               ac->Raw.Attrib[index] = ctx->Array.TexCoord[unit];
-            }
-            else {
-               /* missing conventional array (vertex weight, for example) */
-               fallback = GL_TRUE;
-            }
-            break;
+      /* use conventional vertex array if possible */
+      if (index == VERT_ATTRIB_POS) {
+         ac->Raw.Attrib[index] = ctx->Array.Vertex;
+      }
+      else if (index == VERT_ATTRIB_NORMAL) {
+         ac->Raw.Attrib[index] = ctx->Array.Normal;
+      }
+      else if (index == VERT_ATTRIB_COLOR0) {
+         ac->Raw.Attrib[index] = ctx->Array.Color;
+      }
+      else if (index == VERT_ATTRIB_COLOR1) {
+         ac->Raw.Attrib[index] = ctx->Array.SecondaryColor;
+      }
+      else if (index == VERT_ATTRIB_FOG) {
+         ac->Raw.Attrib[index] = ctx->Array.FogCoord;
+      }
+      else if (index >= VERT_ATTRIB_TEX0 && index <= VERT_ATTRIB_TEX7) {
+         GLuint unit = index - VERT_ATTRIB_TEX0;
+         ASSERT(unit < MAX_TEXTURE_UNITS);
+         ac->Raw.Attrib[index] = ctx->Array.TexCoord[unit];
+      }
+      else {
+         /* missing conventional array (vertex weight, for example) */
+         fallback = GL_TRUE;
       }
       if (!fallback)
          STRIDE_ARRAY(ac->Raw.Attrib[index], ac->start);
