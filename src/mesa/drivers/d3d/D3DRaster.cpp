@@ -211,4 +211,3 @@ extern "C" void SetStateHAL( PMESAD3DSHARED pShared, DWORD dwType, DWORD dwState
 
 
 
-

@@ -82,4 +82,3 @@ extern D3DTLVERTEX   D3DTLVertices[(VB_MAX*6)];
 
 #endif
 
-

@@ -248,4 +248,3 @@ void AlphaBlendTableHAL( PMESAD3DHAL pHAL )
   }
 }
 
-

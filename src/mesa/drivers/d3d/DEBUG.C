@@ -141,4 +141,3 @@ void	DebugPixelFormat( char *pszSurfaceName, DDPIXELFORMAT *pddpf )
 
 
 
-

@@ -574,4 +574,3 @@ static int	ConvertCharacter( char *c, int cIndex,  PD3DFONTMETRICS pfntMetrics )
 #undef BRIGHT
 #undef RIGHT
 #undef ALL
-

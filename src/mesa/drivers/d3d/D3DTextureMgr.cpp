@@ -945,4 +945,3 @@ HRESULT CALLBACK EnumPFHook( LPDDPIXELFORMAT lpDDPixFmt, LPVOID lpContext )
 }
 
 
-

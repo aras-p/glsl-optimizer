@@ -636,4 +636,3 @@ char *ErrorStringD3D( HRESULT hr )
 
    return &errorString[0];
 } 
-

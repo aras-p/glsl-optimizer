@@ -1,4 +1,4 @@
-/* $Id: x86.c,v 1.2 1999/10/19 18:37:07 keithw Exp $ */
+/* $Id: x86.c,v 1.3 1999/11/12 04:57:23 kendallb Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -40,14 +40,14 @@
 #include "xform.h"
 #include "x86.h"
 
-extern void gl_v16_x86_cliptest_points4(GLfloat *first_vert,
+extern void _ASMAPI gl_v16_x86_cliptest_points4(GLfloat *first_vert,
 					GLfloat *last_vert,
 					GLubyte *or_mask,
 					GLubyte *and_mask,
 					GLubyte *clip_mask );
 
   
-extern void gl_v16_x86_general_xform(GLfloat *dest,
+extern void _ASMAPI gl_v16_x86_general_xform(GLfloat *dest,
 				     const GLfloat *m,
 				     const GLfloat *src,
 				     GLuint src_stride,
@@ -62,13 +62,13 @@ extern void gl_v16_x86_general_xform(GLfloat *dest,
 			const GLubyte flag
 
 #define DECLARE_XFORM_GROUP(pfx, vsize, masked) \
- extern void gl_##pfx##_transform_points##vsize##_general_##masked(XFORM_ARGS); 	\
- extern void gl_##pfx##_transform_points##vsize##_identity_##masked(XFORM_ARGS); 	\
- extern void gl_##pfx##_transform_points##vsize##_3d_no_rot_##masked(XFORM_ARGS); 	\
- extern void gl_##pfx##_transform_points##vsize##_perspective_##masked(XFORM_ARGS); 	\
- extern void gl_##pfx##_transform_points##vsize##_2d_##masked(XFORM_ARGS); 		\
- extern void gl_##pfx##_transform_points##vsize##_2d_no_rot_##masked(XFORM_ARGS); 	\
- extern void gl_##pfx##_transform_points##vsize##_3d_##masked(XFORM_ARGS);
+ extern void _ASMAPI gl_##pfx##_transform_points##vsize##_general_##masked(XFORM_ARGS);     \
+ extern void _ASMAPI gl_##pfx##_transform_points##vsize##_identity_##masked(XFORM_ARGS);    \
+ extern void _ASMAPI gl_##pfx##_transform_points##vsize##_3d_no_rot_##masked(XFORM_ARGS);   \
+ extern void _ASMAPI gl_##pfx##_transform_points##vsize##_perspective_##masked(XFORM_ARGS);     \
+ extern void _ASMAPI gl_##pfx##_transform_points##vsize##_2d_##masked(XFORM_ARGS);      \
+ extern void _ASMAPI gl_##pfx##_transform_points##vsize##_2d_no_rot_##masked(XFORM_ARGS);   \
+ extern void _ASMAPI gl_##pfx##_transform_points##vsize##_3d_##masked(XFORM_ARGS);
 
 #define ASSIGN_XFORM_GROUP( pfx, cma, vsize, masked ) 		\
  gl_transform_tab[cma][vsize][MATRIX_GENERAL] 			\
@@ -96,7 +96,7 @@ void gl_init_x86_asm_transforms( void )
    DECLARE_XFORM_GROUP( x86, 3, masked )
    DECLARE_XFORM_GROUP( x86, 4, masked )
 
-   extern GLvector4f *gl_x86_cliptest_points4( GLvector4f *clip_vec, 
+   extern GLvector4f  * _ASMAPI gl_x86_cliptest_points4( GLvector4f *clip_vec, 
                                                GLvector4f *proj_vec, 
                                                GLubyte clipMask[],
                                                GLubyte *orMask, 

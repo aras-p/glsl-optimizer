@@ -2147,4 +2147,3 @@ static void DebugRenderStates( GLcontext *ctx, BOOL bForce )
 	}
    }	
 }
-

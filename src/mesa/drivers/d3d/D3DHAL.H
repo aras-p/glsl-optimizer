@@ -66,4 +66,3 @@ extern char	*errorMsg;
 
 #endif
 
-

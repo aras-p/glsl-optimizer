@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.14 1999/11/11 01:22:28 brianp Exp $ */
+/* $Id: varray.c,v 1.15 1999/11/12 04:57:05 kendallb Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -799,7 +799,7 @@ _mesa_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indice
       return;
    }
 
-   if (mode < 0 || mode > GL_POLYGON) {
+   if (mode > GL_POLYGON) {
       gl_error( ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
       return;
    }

@@ -397,4 +397,3 @@ void RPixelsRGBA( const GLcontext* ctx, GLuint n, const GLint x[], const GLint y
    /* Giver back. */
    UnlockHAL( pContext->pShared, TRUE );
 }
-

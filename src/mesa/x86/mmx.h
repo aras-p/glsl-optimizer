@@ -31,9 +31,9 @@
 #define ASM_MMX_H
 
 
-extern void
+extern void _ASMAPI
 gl_mmx_blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
-                           GLubyte rgba[][4], const GLubyte dest[][4] );
+						   GLubyte rgba[][4], const GLubyte dest[][4] );
 
 
 void gl_mmx_set_blend_function( GLcontext *ctx )
