@@ -1,4 +1,4 @@
-# $Id: Makefile.BeOS-R4,v 1.11 2000/06/27 15:56:46 brianp Exp $
+# $Id: Makefile.BeOS-R4,v 1.12 2000/06/27 16:54:18 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -21,13 +21,16 @@ PROGS = bounce \
 	clearspd \
 	cubemap \
 	drawpix \
+	fire \
 	gamma \
 	gears \
 	geartrain \
 	glinfo \
 	gloss \
+	gltestperf \
 	glutfx \
 	isosurf \
+	ipers \
 	lodbias \
 	morph3d \
 	multiarb \
@@ -36,17 +39,22 @@ PROGS = bounce \
 	paltex \
 	pixeltex \
 	pointblast \
+	ray \
 	readpix \
 	reflect \
 	renormal \
 	spectex \
 	stex3d \
+	teapot \
+	terrain \
 	tessdemo \
 	texcyl \
 	texdown \
 	texenv \
 	texobj \
 	trispd \
+	tunnel \
+	tunnel2 \
 	winpos
 
 
