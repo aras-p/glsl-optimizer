@@ -30,18 +30,6 @@
 extern void viaInitState(GLcontext *ctx);
 extern void viaInitStateFuncs(GLcontext *ctx);
 extern void viaCalcViewport(GLcontext *ctx);
-extern void viaPrintDirty(const char *msg, GLuint state);
-extern void viaChooseTextureState(GLcontext *ctx);
-extern void viaChooseColorState(GLcontext *ctx);
-extern void viaChooseDepthState(GLcontext *ctx);
-extern void viaChoosePolygonState(GLcontext *ctx);
-extern void viaChoosePoint(GLcontext *ctx);
-extern void viaChooseLine(GLcontext *ctx);
-extern void viaChooseTriangle(GLcontext *ctx);
-extern void viaChooseFogState(GLcontext *ctx);
-extern void viaChooseStencilState(GLcontext *ctx);
-extern void viaChooseLightState(GLcontext *ctx);
-extern void viaChooseLineState(GLcontext *ctx);
 
 extern void viaFallback(viaContextPtr vmesa, GLuint bit, GLboolean mode);
 #define FALLBACK(vmesa, bit, mode) viaFallback(vmesa, bit, mode)

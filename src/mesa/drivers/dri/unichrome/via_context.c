@@ -352,7 +352,6 @@ InitVertexBuffer(viaContextPtr vmesa)
     vmesa->dmaLow = DMA_OFFSET;
     vmesa->dmaHigh = VIA_DMA_BUFSIZ;
     vmesa->dmaAddr = (unsigned char *)vmesa->dma;
-    vmesa->dmaLastPrim = vmesa->dmaLow;
 }
 
 static void
@@ -415,14 +414,14 @@ viaCreateContext(const __GLcontextModes *mesaVis,
        vmesa->hasDepth = GL_TRUE;
        vmesa->depthBits = mesaVis->depthBits;
        vmesa->have_hw_stencil = GL_FALSE;
-       vmesa->depth_scale = 1.0/0xffff;
+       vmesa->depth_max = (GLfloat)0xffff;
        vmesa->depth_clear_mask = 0xf << 28;
        vmesa->ClearDepth = 0xffff;
        break;
     case 24:
        vmesa->hasDepth = GL_TRUE;
        vmesa->depthBits = mesaVis->depthBits;
-       vmesa->depth_scale = 1.0/0xffffff;
+       vmesa->depth_max = (GLfloat) 0xffffff;
        vmesa->depth_clear_mask = 0xe << 28;
        vmesa->ClearDepth = 0xffffff00;
 
@@ -438,7 +437,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
        vmesa->depthBits = mesaVis->depthBits;
        assert(!mesaVis->haveStencilBuffer);
        vmesa->have_hw_stencil = GL_FALSE;
-       vmesa->depth_scale = 1.0/0xffffffff;
+       vmesa->depth_max = (GLfloat)0xffffffff;
        vmesa->depth_clear_mask = 0;
        vmesa->ClearDepth = 0xffffffff;
        vmesa->depth_clear_mask = 0xf << 28;
@@ -470,7 +469,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
 
     ctx = vmesa->glCtx;
     
-    ctx->Const.MaxTextureLevels = 11;    
+    ctx->Const.MaxTextureLevels = 10;    
     ctx->Const.MaxTextureUnits = 2;
     ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
     ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
@@ -528,8 +527,6 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     vmesa->texHeap = mmInit(0, viaScreen->textureSize);
     vmesa->stippleInHw = 1;
     vmesa->renderIndex = ~0;
-    vmesa->dirty = VIA_UPLOAD_ALL;
-    vmesa->uploadCliprects = GL_TRUE;
     vmesa->needUploadAllState = 1;
 
     make_empty_list(&vmesa->TexObjList);
@@ -665,8 +662,12 @@ void viaXMesaSetFrontClipRects(viaContextPtr vmesa)
     vmesa->drawW = dPriv->w;
     vmesa->drawH = dPriv->h;
 
-    viaEmitDrawingRectangle(vmesa);
-    vmesa->uploadCliprects = GL_TRUE;
+    {
+       GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
+       vmesa->drawXoff = (GLuint)(((vmesa->drawX * bytePerPixel) & 0x1f) / bytePerPixel);  
+    }
+
+    viaCalcViewport(vmesa->glCtx);
 }
 
 void viaXMesaSetBackClipRects(viaContextPtr vmesa)
@@ -683,14 +684,16 @@ void viaXMesaSetBackClipRects(viaContextPtr vmesa)
    vmesa->drawY = dPriv->y;
    vmesa->drawW = dPriv->w;
    vmesa->drawH = dPriv->h;
-   viaEmitDrawingRectangle(vmesa);
-   vmesa->uploadCliprects = GL_TRUE;
+
+
+   vmesa->drawXoff = 0; 
+
+    viaCalcViewport(vmesa->glCtx);
 }
 
 void viaXMesaWindowMoved(viaContextPtr vmesa)
 {
-    GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
-    
+
     switch (vmesa->glCtx->Color._DrawDestMask[0]) {
     case DD_FRONT_LEFT_BIT: 
         viaXMesaSetFrontClipRects(vmesa);
@@ -703,23 +706,6 @@ void viaXMesaWindowMoved(viaContextPtr vmesa)
         break;
     }
 
-    vmesa->viaScreen->fbOffset = 0;
-
-    {
-	GLuint pitch, offset;
-	pitch = vmesa->front.pitch;
-	offset = vmesa->viaScreen->fbOffset + (vmesa->drawY * pitch + vmesa->drawX * bytePerPixel);
-	assert(vmesa->viaScreen->fbOffset % bytePerPixel == 0);
-	assert(pitch % bytePerPixel == 0);
-
-	/* KW: I don't know what this was, but it was giving incorrect
-	 * results for backbuffer rendering:
-	 */
-/*  	vmesa->drawXoff = (GLuint)(((vmesa->drawX * bytePerPixel) & 0x1f) / bytePerPixel);  */
-	vmesa->drawXoff = 0;
-    }
-    
-    viaCalcViewport(vmesa->glCtx);
 }
 
 GLboolean
@@ -796,7 +782,6 @@ void viaGetLock(viaContextPtr vmesa, GLuint flags)
     DRI_VALIDATE_DRAWABLE_INFO( sPriv, dPriv );
 
     if (sarea->ctxOwner != me) {
-        vmesa->uploadCliprects = GL_TRUE;
         sarea->ctxOwner = me;
 	vmesa->needUploadAllState = 1;
     }

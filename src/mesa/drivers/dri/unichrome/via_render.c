@@ -96,7 +96,7 @@ static void VERT_FALLBACK(GLcontext *ctx,
 /*
 #define INIT(prim)                                                          \
     do {                                                                    \
-        VIA_STATECHANGE(vmesa, 0);                                          \
+        VIA_FIREVERTICES(vmesa);                                          \
         viaRasterPrimitive(ctx, reducedPrim[prim], prim);                   \
     } while (0)
 */
@@ -104,7 +104,7 @@ static void VERT_FALLBACK(GLcontext *ctx,
     do {                                                                    \
         viaRasterPrimitive(ctx, reducedPrim[prim], prim);                   \
     } while (0)
-#define NEW_PRIMITIVE()  VIA_STATECHANGE(vmesa, 0)
+#define NEW_PRIMITIVE()  VIA_FIREVERTICES(vmesa)
 #define NEW_BUFFER()  VIA_FIREVERTICES(vmesa)
 #define GET_CURRENT_VB_MAX_VERTS() \
     (((int)vmesa->dmaHigh - (int)vmesa->dmaLow) / (vmesa->vertexSize * 4))
@@ -445,16 +445,7 @@ static GLboolean via_run_render(GLcontext *ctx,
     }
     while (tnl->Driver.Render.Multipass && tnl->Driver.Render.Multipass(ctx, ++pass));
     tnl->Driver.Render.Finish(ctx);
-    
-    /*=* DBG - flush : if hw idel *=*/
-    /*{
-        GLuint volatile *pnEnginStatus = vmesa->regEngineStatus;
-	GLuint nStatus;
-        nStatus = *pnEnginStatus;
-	if ((nStatus & 0xFFFEFFFF) == 0x00020000)
-	    viaFlushPrims(vmesa);
-    }*/
-    
+        
     /*=* DBG viewperf7.0 : fix command buffer overflow *=*/
     if (vmesa->dmaLow > (VIA_DMA_BUFSIZ / 2))
 	viaFlushPrims(vmesa);

@@ -32,8 +32,6 @@ void viaEmitPrim(viaContextPtr vmesa);
 void viaFlushPrims(viaContextPtr vmesa);
 void viaFlushPrimsLocked(viaContextPtr vmesa);
 
-void viaDmaFinish(viaContextPtr vmesa);
-void viaRegetLockQuiescent(viaContextPtr vmesa);
 void viaInitIoctlFuncs(GLcontext *ctx);
 void viaCopyBuffer(const __DRIdrawablePrivate *dpriv);
 void viaPageFlip(const __DRIdrawablePrivate *dpriv);
@@ -48,17 +46,9 @@ void viaDoSwapPBuffers(viaContextPtr vmesa);
 int flush_agp(viaContextPtr vmesa, drm_via_flush_agp_t* agpCmd); 
 int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf); 
 
-#define VIA_STATECHANGE(vmesa, flag)                            \
-    do {                                                        \
-        if (vmesa->dmaLow != vmesa->dmaLastPrim)                \
-            viaFlushPrims(vmesa);                               \
-        vmesa->dirty |= flag;                                   \
-    } while (0)                                                 \
-
-
 #define VIA_FIREVERTICES(vmesa)                                 \
     do {                                                        \
-        if (vmesa->dmaLow) {                                    \
+        if (vmesa->dmaLow != DMA_OFFSET) {                      \
             viaFlushPrims(vmesa);                               \
         }                                                       \
     } while (0)

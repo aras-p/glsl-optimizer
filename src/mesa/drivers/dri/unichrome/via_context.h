@@ -52,22 +52,6 @@ typedef struct via_texture_object_t *viaTextureObjectPtr;
 #define VIA_FALLBACK_BLEND_FUNC        	0x400
 #define VIA_FALLBACK_USER_DISABLE      	0x800
 
-#define VIA_UPLOAD_NONE		  	0x0000
-#define VIA_UPLOAD_ALPHATEST		0x0001
-#define VIA_UPLOAD_BLEND	  	0x0002
-#define VIA_UPLOAD_FOG 		  	0x0004
-#define VIA_UPLOAD_MASK_ROP		0x0008
-#define VIA_UPLOAD_LINESTIPPLE		0x0010
-#define VIA_UPLOAD_POLYGONSTIPPLE	0x0020
-#define VIA_UPLOAD_DEPTH		0x0040
-#define VIA_UPLOAD_TEXTURE		0x0080
-#define VIA_UPLOAD_STENCIL		0x0100
-#define VIA_UPLOAD_CLIPPING		0x0200
-#define VIA_UPLOAD_DESTBUFFER		0x0400
-#define VIA_UPLOAD_DEPTHBUFFER		0x0800
-#define VIA_UPLOAD_ENABLE		0x0800
-#define VIA_UPLOAD_ALL 		  	0x1000
-  		
 #define VIA_DMA_BUFSIZ                  500000
 
 /* Use the templated vertex formats:
@@ -119,7 +103,7 @@ struct via_context_t {
    GLuint ClearDepth;
    GLuint depth_clear_mask;
    GLuint stencil_clear_mask;
-   GLfloat depth_scale;
+   GLfloat depth_max;
 
     GLuint    *dma;
     viaRegion tex;
@@ -162,8 +146,6 @@ struct via_context_t {
     GLuint dmaLastPrim;
     GLboolean useAgp;
    
-    GLboolean uploadCliprects;
-
     GLuint needUploadAllState;
     GLuint primitiveRendered;
     
@@ -403,12 +385,6 @@ extern hash_element hash_table[HASH_TABLE_SIZE][HASH_TABLE_DEPTH];
 	    break;                                                        	\
     } while (1)
 	
-#define LOCK_HARDWARE_QUIESCENT(vmesa)          \
-    do {                                        \
-        LOCK_HARDWARE(vmesa);                   \
-        viaRegetLockQuiescent(vmesa);           \
-    } while (0)
-
 
 #ifdef DEBUG
 extern GLuint VIA_DEBUG;
@@ -422,7 +398,6 @@ extern void viaLock(viaContextPtr vmesa, GLuint flags);
 extern void viaUnLock(viaContextPtr vmesa, GLuint flags);
 extern void viaEmitHwStateLocked(viaContextPtr vmesa);
 extern void viaEmitScissorValues(viaContextPtr vmesa, int box_nr, int emit);
-extern void viaEmitDrawingRectangle(viaContextPtr vmesa);
 extern void viaXMesaSetBackClipRects(viaContextPtr vmesa);
 extern void viaXMesaSetFrontClipRects(viaContextPtr vmesa);
 extern void viaReAllocateBuffers(GLframebuffer *drawbuffer);
@@ -431,8 +406,8 @@ extern void viaXMesaWindowMoved(viaContextPtr vmesa);
 extern void viaTexCombineState(viaContextPtr vmesa,
     const struct gl_tex_env_combine_state * combine, unsigned unit );
 
-#define SUBPIXEL_X -.5
-#define SUBPIXEL_Y -.5
+#define SUBPIXEL_X 0
+#define SUBPIXEL_Y 0
 
 /* TODO XXX _SOLO temp defines to make code compilable */
 #ifndef GLX_PBUFFER_BIT

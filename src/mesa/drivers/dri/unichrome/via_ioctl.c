@@ -195,7 +195,6 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
       }		
 
       UNLOCK_HARDWARE(vmesa);
-      vmesa->uploadCliprects = GL_TRUE;
    }
    
    if (mask)
@@ -251,7 +250,6 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
       }
    }
    UNLOCK_HARDWARE(vmesa);
-   vmesa->uploadCliprects = GL_TRUE;
 
    vmesa->swap_count++;
    (*vmesa->get_ust)( & ust );
@@ -349,7 +347,6 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
     }
     
     UNLOCK_HARDWARE(vmesa);
-    vmesa->uploadCliprects = GL_TRUE;
 
     vmesa->swap_count++;
     (void) (*vmesa->get_ust)( &vmesa->swap_ust );
@@ -378,22 +375,6 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
     }
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);        
 
-}
-
-/* This waits for *everybody* to finish rendering -- overkill.
- */
-void viaDmaFinish(viaContextPtr vmesa)
-{
-    if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);        
-    VIA_FIREVERTICES(vmesa);
-    LOCK_HARDWARE(vmesa);
-    UNLOCK_HARDWARE(vmesa);
-    if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);    
-}
-
-void viaRegetLockQuiescent(viaContextPtr vmesa)
-{
-    drmUnlock(vmesa->driFd, vmesa->hHWContext);
 }
 
 static int intersect_rect(drm_clip_rect_t *out,
@@ -479,15 +460,11 @@ void viaFlushPrimsLocked(viaContextPtr vmesa)
       sysCmd.size = 0;
    }
    else if (nbox > VIA_NR_SAREA_CLIPRECTS) {
-      vmesa->uploadCliprects = GL_TRUE;
+      /* XXX: not handled ? */
    }
 
-   if (!nbox || !vmesa->uploadCliprects) {
-      if (nbox == 1)
-	 sarea->nbox = 0;
-      else
-	 sarea->nbox = nbox;
-
+   if (!nbox) {
+      sarea->nbox = 0;
       sysCmd.discard = 1;
       flush_sys(vmesa, &sysCmd);
    }
@@ -546,7 +523,6 @@ void viaFlushPrimsLocked(viaContextPtr vmesa)
    vmesa->dmaLow = DMA_OFFSET;
    vmesa->dmaAddr = (unsigned char *)vmesa->dma;
    vmesa->dmaHigh = VIA_DMA_BUFSIZ;
-   vmesa->dmaLastPrim = DMA_OFFSET;
 }
 
 void viaFlushPrims(viaContextPtr vmesa)
@@ -763,7 +739,11 @@ void viaFillDepthBuffer(viaContextPtr vmesa, GLuint pixel, GLuint mask)
        fprintf(stderr, "Fill Depth offset = %08x, pixel %x, mask %x\n", offset, pixel, mask);
     nDestBase = offset;
     nDestPitch = vmesa->depth.pitch;
-    offsetX = vmesa->drawXoff;
+    
+    /* KW: bogus offset? */
+/*     offsetX = vmesa->drawXoff; */
+    offsetX = 0;
+
     nDestWidth = (vmesa->depth.pitch / vmesa->depth.bpp * 8) - offsetX;
     nDestHeight = vmesa->driDrawable->h;
 
@@ -906,7 +886,9 @@ int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf)
 	}
 	else {
 	    *vb++ = ((HC_SubA_HClipTB << 24) | (0x0 << 12) | vmesa->driDrawable->h);
-	    *vb++ = ((HC_SubA_HClipLR << 24) | (vmesa->drawXoff << 12) | (vmesa->driDrawable->w + vmesa->drawXoff));
+	    /* KW: drawXoff known zero */
+/* 	    *vb++ = ((HC_SubA_HClipLR << 24) | (vmesa->drawXoff << 12) | (vmesa->driDrawable->w + vmesa->drawXoff)); */
+ 	    *vb++ = ((HC_SubA_HClipLR << 24) | vmesa->driDrawable->w); 
 	}
 	
 	/*=* John Sheng [2003.6.16] fix pci path *=*/

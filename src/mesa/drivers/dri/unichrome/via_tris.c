@@ -1194,7 +1194,6 @@ static void emit_all_state(viaContextPtr vmesa)
     
     vmesa->dmaLow += (i << 2);
 
-    vmesa->dirty = 0;
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
 }
 

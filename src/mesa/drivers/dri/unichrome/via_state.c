@@ -82,12 +82,6 @@ static __inline__ GLuint viaPackColor(GLuint format,
    }
 }
 
-static void viaAlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    vmesa = vmesa;
-}
-
 static void viaBlendEquationSeparate(GLcontext *ctx, GLenum rgbMode, GLenum aMode)
 {
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
@@ -112,16 +106,9 @@ static void viaBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     GLboolean fallback = GL_FALSE;
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
+
     switch (ctx->Color.BlendSrcRGB) {
-    case GL_ZERO:                break;
-    case GL_SRC_ALPHA:           break;
-    case GL_ONE:                 break;
-    case GL_DST_COLOR:           break;
-    case GL_ONE_MINUS_DST_COLOR: break;
-    case GL_ONE_MINUS_SRC_ALPHA: break;
-    case GL_DST_ALPHA:           break;
-    case GL_ONE_MINUS_DST_ALPHA: break;
-    case GL_SRC_ALPHA_SATURATE:  /*a |= SDM_SRC_SRC_ALPHA; break;*/
+    case GL_SRC_ALPHA_SATURATE:  
     case GL_CONSTANT_COLOR:
     case GL_ONE_MINUS_CONSTANT_COLOR:
     case GL_CONSTANT_ALPHA:
@@ -129,18 +116,10 @@ static void viaBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
         fallback = GL_TRUE;
         break;
     default:
-        return;
+        break;
     }
 
     switch (ctx->Color.BlendDstRGB) {
-    case GL_SRC_ALPHA:           break;
-    case GL_ONE_MINUS_SRC_ALPHA: break;
-    case GL_ZERO:                break;
-    case GL_ONE:                 break;
-    case GL_SRC_COLOR:           break;
-    case GL_ONE_MINUS_SRC_COLOR: break;
-    case GL_DST_ALPHA:           break;
-    case GL_ONE_MINUS_DST_ALPHA: break;
     case GL_CONSTANT_COLOR:
     case GL_ONE_MINUS_CONSTANT_COLOR:
     case GL_CONSTANT_ALPHA:
@@ -148,7 +127,7 @@ static void viaBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
         fallback = GL_TRUE;
         break;
     default:
-        return;
+        break;
     }
 
     FALLBACK(vmesa, VIA_FALLBACK_BLEND_FUNC, fallback);
@@ -169,23 +148,6 @@ static void viaBlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB,
 }
 
 
-static void viaDepthFunc(GLcontext *ctx, GLenum func)
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    vmesa = vmesa;
-}
-
-static void viaDepthMask(GLcontext *ctx, GLboolean flag)
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    vmesa = vmesa;    
-}
-
-static void viaPolygonStipple(GLcontext *ctx, const GLubyte *mask)
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    vmesa = vmesa;    
-}
 
 
 /* =============================================================
@@ -203,7 +165,6 @@ static void viaScissor(GLcontext *ctx, GLint x, GLint y,
 
     if (ctx->Scissor.Enabled) {
         VIA_FIREVERTICES(vmesa); /* don't pipeline cliprect changes */
-        vmesa->uploadCliprects = GL_TRUE;
     }
 
     vmesa->scissorRect.x1 = x;
@@ -214,21 +175,12 @@ static void viaScissor(GLcontext *ctx, GLint x, GLint y,
 }
 
 
-static void viaLogicOp(GLcontext *ctx, GLenum opcode)
-{
-    if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-    if (VIA_DEBUG) fprintf(stderr, "opcode = %x\n", opcode);
-    if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
-}
 
 /* Fallback to swrast for select and feedback.
  */
 static void viaRenderMode(GLcontext *ctx, GLenum mode)
 {
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-    FALLBACK(vmesa, VIA_FALLBACK_RENDERMODE, (mode != GL_RENDER));
-    if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
+    FALLBACK(VIA_CONTEXT(ctx), VIA_FALLBACK_RENDERMODE, (mode != GL_RENDER));
 }
 
 
@@ -238,7 +190,6 @@ static void viaDrawBuffer(GLcontext *ctx, GLenum mode)
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
     if (mode == GL_FRONT) {
         VIA_FIREVERTICES(vmesa);
-        VIA_STATECHANGE(vmesa, VIA_UPLOAD_BUFFERS);
         vmesa->drawMap = (char *)vmesa->driScreen->pFB;
         vmesa->readMap = (char *)vmesa->driScreen->pFB;
 	vmesa->drawPitch = vmesa->front.pitch;
@@ -249,7 +200,6 @@ static void viaDrawBuffer(GLcontext *ctx, GLenum mode)
     }
     else if (mode == GL_BACK) {
         VIA_FIREVERTICES(vmesa);
-        VIA_STATECHANGE(vmesa, VIA_UPLOAD_BUFFERS);
         vmesa->drawMap = vmesa->back.map;
         vmesa->readMap = vmesa->back.map;
 	vmesa->drawPitch = vmesa->back.pitch;
@@ -276,119 +226,19 @@ static void viaClearColor(GLcontext *ctx, const GLfloat color[4])
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     GLubyte pcolor[4];
-    pcolor[0] = (GLubyte) (255 * color[0]);
-    pcolor[1] = (GLubyte) (255 * color[1]);
-    pcolor[2] = (GLubyte) (255 * color[2]);
-    pcolor[3] = (GLubyte) (255 * color[3]);
+    CLAMPED_FLOAT_TO_UBYTE(pcolor[0], color[0]);
+    CLAMPED_FLOAT_TO_UBYTE(pcolor[1], color[1]);
+    CLAMPED_FLOAT_TO_UBYTE(pcolor[2], color[2]);
+    CLAMPED_FLOAT_TO_UBYTE(pcolor[3], color[3]);
     vmesa->ClearColor = viaPackColor(vmesa->viaScreen->bitsPerPixel,
                                      pcolor[0], pcolor[1],
                                      pcolor[2], pcolor[3]);
 	
 }
 
-/* =============================================================
- * Culling - the via isn't quite as clean here as the rest of
- *           its interfaces, but it's not bad.
- */
-static void viaCullFaceFrontFace(GLcontext *ctx, GLenum unused)
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    vmesa = vmesa;    
-}
-
-static void viaLineWidth(GLcontext *ctx, GLfloat widthf)
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    vmesa = vmesa;    
-}
-
-static void viaPointSize(GLcontext *ctx, GLfloat sz)
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    vmesa = vmesa;    
-}
-
-
-/* =============================================================
- * Color masks
- */
-static void viaColorMask(GLcontext *ctx,
-                         GLboolean r, GLboolean g,
-                         GLboolean b, GLboolean a)
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    vmesa = vmesa;    
-}
-
-/* Seperate specular not fully implemented on the via.
- */
-static void viaLightModelfv(GLcontext *ctx, GLenum pname,
-                            const GLfloat *param)
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    vmesa = vmesa;    
-}
-
-
-/* In Mesa 3.5 we can reliably do native flatshading.
- */
-static void viaShadeModel(GLcontext *ctx, GLenum mode)
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    vmesa = vmesa;    
-}
-
-/* =============================================================
- * Fog
- */
-static void viaFogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    vmesa = vmesa;    
-}
 
 /* =============================================================
  */
-static void viaEnable(GLcontext *ctx, GLenum cap, GLboolean state)
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    vmesa = vmesa;    
-}
-
-/* =============================================================
- */
-void viaEmitDrawingRectangle(viaContextPtr vmesa)
-{
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
-    viaScreenPrivate *viaScreen = vmesa->viaScreen;
-    int x0 = vmesa->drawX;
-    int y0 = vmesa->drawY;
-    int x1 = x0 + dPriv->w;
-    int y1 = y0 + dPriv->h;
-/*    GLuint dr2, dr3, dr4;
-*/
-
-    /* Coordinate origin of the window - may be offscreen.
-     */
-/*   dr4 = vmesa->BufferSetup[VIA_DESTREG_DR4] = ((y0 << 16) |
-                                                  (((unsigned)x0) & 0xFFFF));
-*/                                
-
-    /* Clip to screen.
-     */
-    if (x0 < 0) x0 = 0;
-    if (y0 < 0) y0 = 0;
-    if (x1 > viaScreen->width - 1) x1 = viaScreen->width - 1;
-    if (y1 > viaScreen->height - 1) y1 = viaScreen->height - 1;
-
-    /* Onscreen drawing rectangle.
-     */
-/*   dr2 = vmesa->BufferSetup[VIA_DESTREG_DR2] = ((y0 << 16) | x0);
-    dr3 = vmesa->BufferSetup[VIA_DESTREG_DR3] = (((y1 + 1) << 16) | (x1 + 1));
-*/  
-
-    vmesa->dirty |= VIA_UPLOAD_BUFFERS;
-}
 
 
 void viaCalcViewport(GLcontext *ctx)
@@ -397,15 +247,14 @@ void viaCalcViewport(GLcontext *ctx)
     const GLfloat *v = ctx->Viewport._WindowMap.m;
     GLfloat *m = vmesa->ViewportMatrix.m;
     
-    /* See also via_translate_vertex.  SUBPIXEL adjustments can be done
-     * via state vars, too.
+    /* See also via_translate_vertex.
      */
-    m[MAT_SX] =  v[MAT_SX];
-    m[MAT_TX] =  v[MAT_TX] + vmesa->drawXoff;
+    m[MAT_SX] =   v[MAT_SX];
+    m[MAT_TX] =   v[MAT_TX] + SUBPIXEL_X + vmesa->drawXoff;
     m[MAT_SY] = - v[MAT_SY];
-    m[MAT_TY] = - v[MAT_TY] + vmesa->driDrawable->h;
-    m[MAT_SZ] =  v[MAT_SZ] * vmesa->depth_scale;
-    m[MAT_TZ] =  v[MAT_TZ] * vmesa->depth_scale;
+    m[MAT_TY] = - v[MAT_TY] + vmesa->driDrawable->h + SUBPIXEL_Y;
+    m[MAT_SZ] =   v[MAT_SZ] * (1.0 / vmesa->depth_max);
+    m[MAT_TZ] =   v[MAT_TZ] * (1.0 / vmesa->depth_max);
 }
 
 static void viaViewport(GLcontext *ctx,
@@ -423,19 +272,6 @@ static void viaDepthRange(GLcontext *ctx,
     viaCalcViewport(ctx);
 }
 
-void viaPrintDirty(const char *msg, GLuint state)
-{
-    if (VIA_DEBUG)
-	fprintf(stderr, "%s (0x%x): %s%s%s%s\n",
-            msg,
-            (unsigned int) state,
-            (state & VIA_UPLOAD_TEX0)   ? "upload-tex0, " : "",
-            (state & VIA_UPLOAD_TEX1)   ? "upload-tex1, " : "",
-            (state & VIA_UPLOAD_CTX)    ? "upload-ctx, " : "",
-            (state & VIA_UPLOAD_BUFFERS)    ? "upload-bufs, " : ""
-            );
-}
-
 
 void viaInitState(GLcontext *ctx)
 {
@@ -447,12 +283,6 @@ void viaInitState(GLcontext *ctx)
 
    /* Mesa should do this for us:
     */
-   ctx->Driver.AlphaFunc( ctx, 
-			  ctx->Color.AlphaFunc,
-			  ctx->Color.AlphaRef);
-
-/*    ctx->Driver.BlendColor( ctx, */
-/* 			   ctx->Color.BlendColor ); */
 
    ctx->Driver.BlendEquationSeparate( ctx, 
 				      ctx->Color.BlendEquationRGB,
@@ -464,65 +294,8 @@ void viaInitState(GLcontext *ctx)
 				  ctx->Color.BlendSrcA,
 				  ctx->Color.BlendDstA);
 
-   ctx->Driver.ColorMask( ctx, 
-			  ctx->Color.ColorMask[RCOMP],
-			  ctx->Color.ColorMask[GCOMP],
-			  ctx->Color.ColorMask[BCOMP],
-			  ctx->Color.ColorMask[ACOMP]);
-
-   ctx->Driver.CullFace( ctx, ctx->Polygon.CullFaceMode );
-   ctx->Driver.DepthFunc( ctx, ctx->Depth.Func );
-   ctx->Driver.DepthMask( ctx, ctx->Depth.Mask );
-
-   ctx->Driver.Enable( ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled );
-   ctx->Driver.Enable( ctx, GL_BLEND, ctx->Color.BlendEnabled );
-   ctx->Driver.Enable( ctx, GL_COLOR_LOGIC_OP, ctx->Color.ColorLogicOpEnabled );
-   ctx->Driver.Enable( ctx, GL_COLOR_SUM, ctx->Fog.ColorSumEnabled );
-   ctx->Driver.Enable( ctx, GL_CULL_FACE, ctx->Polygon.CullFlag );
-   ctx->Driver.Enable( ctx, GL_DEPTH_TEST, ctx->Depth.Test );
-   ctx->Driver.Enable( ctx, GL_DITHER, ctx->Color.DitherFlag );
-   ctx->Driver.Enable( ctx, GL_FOG, ctx->Fog.Enabled );
-   ctx->Driver.Enable( ctx, GL_LIGHTING, ctx->Light.Enabled );
-   ctx->Driver.Enable( ctx, GL_LINE_SMOOTH, ctx->Line.SmoothFlag );
-   ctx->Driver.Enable( ctx, GL_POLYGON_STIPPLE, ctx->Polygon.StippleFlag );
-   ctx->Driver.Enable( ctx, GL_SCISSOR_TEST, ctx->Scissor.Enabled );
-   ctx->Driver.Enable( ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled );
-   ctx->Driver.Enable( ctx, GL_TEXTURE_1D, GL_FALSE );
-   ctx->Driver.Enable( ctx, GL_TEXTURE_2D, GL_FALSE );
-   ctx->Driver.Enable( ctx, GL_TEXTURE_RECTANGLE_NV, GL_FALSE );
-   ctx->Driver.Enable( ctx, GL_TEXTURE_3D, GL_FALSE );
-   ctx->Driver.Enable( ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE );
-
-   ctx->Driver.Fogfv( ctx, GL_FOG_COLOR, ctx->Fog.Color );
-   ctx->Driver.Fogfv( ctx, GL_FOG_MODE, 0 );
-   ctx->Driver.Fogfv( ctx, GL_FOG_DENSITY, &ctx->Fog.Density );
-   ctx->Driver.Fogfv( ctx, GL_FOG_START, &ctx->Fog.Start );
-   ctx->Driver.Fogfv( ctx, GL_FOG_END, &ctx->Fog.End );
-
-   ctx->Driver.FrontFace( ctx, ctx->Polygon.FrontFace );
-
-   {
-      GLfloat f = (GLfloat)ctx->Light.Model.ColorControl;
-      ctx->Driver.LightModelfv( ctx, GL_LIGHT_MODEL_COLOR_CONTROL, &f );
-   }
-
-   ctx->Driver.LineWidth( ctx, ctx->Line.Width );
-   ctx->Driver.LogicOpcode( ctx, ctx->Color.LogicOp );
-   ctx->Driver.PointSize( ctx, ctx->Point.Size );
-   ctx->Driver.PolygonStipple( ctx, (const GLubyte *)ctx->PolygonStipple );
    ctx->Driver.Scissor( ctx, ctx->Scissor.X, ctx->Scissor.Y,
 			ctx->Scissor.Width, ctx->Scissor.Height );
-   ctx->Driver.ShadeModel( ctx, ctx->Light.ShadeModel );
-/*    ctx->Driver.StencilFunc( ctx,  */
-/* 			    ctx->Stencil.Function[0], */
-/* 			    ctx->Stencil.Ref[0], */
-/* 			    ctx->Stencil.ValueMask[0] ); */
-/*    ctx->Driver.StencilMask( ctx, ctx->Stencil.WriteMask[0] ); */
-/*    ctx->Driver.StencilOp( ctx,  */
-/* 			  ctx->Stencil.FailFunc[0], */
-/* 			  ctx->Stencil.ZFailFunc[0], */
-/* 			  ctx->Stencil.ZPassFunc[0]); */
-
 
    ctx->Driver.DrawBuffer( ctx, ctx->Color.DrawBuffer[0] );
 }
@@ -566,7 +339,7 @@ get_wrap_mode( GLenum sWrap, GLenum tWrap )
 }
 
 
-void viaChooseTextureState(GLcontext *ctx) 
+static void viaChooseTextureState(GLcontext *ctx) 
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     struct gl_texture_unit *texUnit0 = &ctx->Texture.Unit[0];
@@ -719,7 +492,6 @@ void viaChooseTextureState(GLcontext *ctx)
 
 	    viaTexCombineState( vmesa, texUnit1->_CurrentCombine, 1 );
         }
-        vmesa->dirty |= VIA_UPLOAD_TEXTURE;
 	
 	if (VIA_DEBUG) {
 	    fprintf( stderr, "Csat_0 / Cop_0 = 0x%08x / 0x%08x\n",
@@ -740,13 +512,12 @@ void viaChooseTextureState(GLcontext *ctx)
 	else	    
     	    vmesa->regCmdB &= (~(HC_HVPMSK_S | HC_HVPMSK_T | HC_HVPMSK_W));
         vmesa->regEnable &= (~(HC_HenTXMP_MASK | HC_HenTXCH_MASK | HC_HenTXPP_MASK));
-        vmesa->dirty |= VIA_UPLOAD_ENABLE;
     }
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
     
 }
 
-void viaChooseColorState(GLcontext *ctx) 
+static void viaChooseColorState(GLcontext *ctx) 
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     GLenum s = ctx->Color.BlendSrcRGB;
@@ -998,22 +769,18 @@ void viaChooseColorState(GLcontext *ctx)
         if (vmesa->viaScreen->bitsPerPixel <= 16)
             vmesa->regEnable &= ~HC_HenDT_MASK;
 
-        vmesa->dirty |= (VIA_UPLOAD_BLEND | VIA_UPLOAD_ENABLE);
     }
     else {
         vmesa->regEnable &= (~HC_HenABL_MASK);
-        vmesa->dirty |= VIA_UPLOAD_ENABLE;
     }
 
     if (ctx->Color.AlphaEnabled) {
         vmesa->regEnable |= HC_HenAT_MASK;
         vmesa->regHATMD = (((GLchan)ctx->Color.AlphaRef) & 0xFF) |
             ((ctx->Color.AlphaFunc - GL_NEVER) << 8);
-        vmesa->dirty |= (VIA_UPLOAD_ALPHATEST | VIA_UPLOAD_ENABLE);
     }
     else {
         vmesa->regEnable &= (~HC_HenAT_MASK);
-        vmesa->dirty |= VIA_UPLOAD_ENABLE;
     }
 
     if (ctx->Color.DitherFlag && (vmesa->viaScreen->bitsPerPixel < 32)) {
@@ -1023,7 +790,6 @@ void viaChooseColorState(GLcontext *ctx)
         else {
             vmesa->regEnable |= HC_HenDT_MASK;
         }
-        vmesa->dirty |= VIA_UPLOAD_ENABLE;
     }
 
     if (ctx->Color.ColorLogicOpEnabled) 
@@ -1033,17 +799,15 @@ void viaChooseColorState(GLcontext *ctx)
 
     vmesa->regHFBBMSKL = (*(GLuint *)&ctx->Color.ColorMask[0]) & 0xFFFFFF;
     vmesa->regHROP |= ((*(GLuint *)&ctx->Color.ColorMask[0]) >> 24) & 0xFF;
-    vmesa->dirty |= VIA_UPLOAD_MASK_ROP;
 
     if ((GLuint)((GLuint *)&ctx->Color.ColorMask[0]) & 0xFF000000)
         vmesa->regEnable |= HC_HenAW_MASK;
     else
         vmesa->regEnable &= (~HC_HenAW_MASK);
-    vmesa->dirty |= VIA_UPLOAD_ENABLE;  
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
 }
 
-void viaChooseFogState(GLcontext *ctx) 
+static void viaChooseFogState(GLcontext *ctx) 
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
 
@@ -1063,7 +827,6 @@ void viaChooseFogState(GLcontext *ctx)
         a = (GLubyte)(ctx->Fog.Color[3] * 255.0F);
         vmesa->regHFogCL = (r << 16) | (g << 8) | b;
         vmesa->regHFogCH = a;
-        vmesa->dirty |= (VIA_UPLOAD_FOG | VIA_UPLOAD_ENABLE);
     }
     else {
         if (!ctx->Texture._EnabledUnits) {
@@ -1071,11 +834,10 @@ void viaChooseFogState(GLcontext *ctx)
     	    vmesa->regCmdB &= ~ HC_HVPMSK_Cs;
 	}	    
         vmesa->regEnable &= ~HC_HenFOG_MASK;
-        vmesa->dirty |= VIA_UPLOAD_ENABLE;
     }
 }
 
-void viaChooseDepthState(GLcontext *ctx) 
+static void viaChooseDepthState(GLcontext *ctx) 
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     if (ctx->Depth.Test) {
@@ -1086,7 +848,6 @@ void viaChooseDepthState(GLcontext *ctx)
         else
             vmesa->regEnable &= (~HC_HenZW_MASK);
 	vmesa->regHZWTMD = (ctx->Depth.Func - GL_NEVER) << 16;
-        vmesa->dirty |= (VIA_UPLOAD_DEPTH | VIA_UPLOAD_ENABLE);
 	
     }
     else {
@@ -1102,12 +863,10 @@ void viaChooseDepthState(GLcontext *ctx)
         else
             vmesa->regEnable &= (~HC_HenZW_MASK);*/
 	vmesa->regEnable &= (~HC_HenZW_MASK);
-
-        vmesa->dirty |= VIA_UPLOAD_ENABLE;                  
     }
 }
 
-void viaChooseLightState(GLcontext *ctx) 
+static void viaChooseLightState(GLcontext *ctx) 
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
 
@@ -1121,7 +880,7 @@ void viaChooseLightState(GLcontext *ctx)
     }
 }
 
-void viaChooseLineState(GLcontext *ctx) 
+static void viaChooseLineState(GLcontext *ctx) 
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
 
@@ -1138,15 +897,13 @@ void viaChooseLineState(GLcontext *ctx)
         vmesa->regEnable |= HC_HenLP_MASK;
         vmesa->regHLP = ctx->Line.StipplePattern;
         vmesa->regHLPRF = ctx->Line.StippleFactor;
-        vmesa->dirty |= VIA_UPLOAD_LINESTIPPLE;
     }
     else {
         vmesa->regEnable &= ~HC_HenLP_MASK;
     }
-    vmesa->dirty |= VIA_UPLOAD_ENABLE;
 }
 
-void viaChoosePolygonState(GLcontext *ctx) 
+static void viaChoosePolygonState(GLcontext *ctx) 
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
 
@@ -1161,7 +918,6 @@ void viaChoosePolygonState(GLcontext *ctx)
 
     if (ctx->Polygon.StippleFlag) {
         vmesa->regEnable |= HC_HenSP_MASK;
-        vmesa->dirty |= VIA_UPLOAD_POLYGONSTIPPLE;
     }
     else {
         vmesa->regEnable &= ~HC_HenSP_MASK;
@@ -1173,10 +929,9 @@ void viaChoosePolygonState(GLcontext *ctx)
     else {
         vmesa->regEnable &= ~HC_HenFBCull_MASK;
     }
-    vmesa->dirty |= VIA_UPLOAD_ENABLE;
 }
 
-void viaChooseStencilState(GLcontext *ctx) 
+static void viaChooseStencilState(GLcontext *ctx) 
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
@@ -1255,27 +1010,16 @@ void viaChooseStencilState(GLcontext *ctx)
             break;
         }
         vmesa->regHSTMD = temp;
-
-        vmesa->dirty |= (VIA_UPLOAD_STENCIL | VIA_UPLOAD_STENCIL);
     }
     else {
         vmesa->regEnable &= ~HC_HenST_MASK;
-        vmesa->dirty |= VIA_UPLOAD_ENABLE;
     }
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
 }
 
-void viaChoosePoint(GLcontext *ctx) 
-{
-    ctx = ctx;
-}
 
-void viaChooseLine(GLcontext *ctx) 
-{
-    ctx = ctx;
-}
 
-void viaChooseTriangle(GLcontext *ctx) 
+static void viaChooseTriangle(GLcontext *ctx) 
 {       
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     if (VIA_DEBUG) {
@@ -1327,8 +1071,7 @@ static void viaChooseState(GLcontext *ctx, GLuint newState)
                       _NEW_STENCIL)))
         return;
 
-    vmesa->dirty = 0;
-    vmesa->newState = newState;
+    vmesa->newState |= newState;
 
     if (texUnit0->_ReallyEnabled || texUnit1->_ReallyEnabled || ctx->Fog.Enabled) {
 	vmesa->regCmdB |= HC_HVPMSK_Cs;
@@ -1383,28 +1126,14 @@ void viaInitStateFuncs(GLcontext *ctx)
 
     /* API callbacks
      */
-    ctx->Driver.AlphaFunc = viaAlphaFunc;
     ctx->Driver.BlendEquationSeparate = viaBlendEquationSeparate;
     ctx->Driver.BlendFuncSeparate = viaBlendFuncSeparate;
     ctx->Driver.ClearColor = viaClearColor;
-    ctx->Driver.ColorMask = viaColorMask;
-    ctx->Driver.CullFace = viaCullFaceFrontFace;
-    ctx->Driver.DepthFunc = viaDepthFunc;
-    ctx->Driver.DepthMask = viaDepthMask;
     ctx->Driver.DrawBuffer = viaDrawBuffer;
-    ctx->Driver.Enable = viaEnable;
-    ctx->Driver.Fogfv = viaFogfv;
-    ctx->Driver.FrontFace = viaCullFaceFrontFace;
-    ctx->Driver.LineWidth = viaLineWidth;
-    ctx->Driver.LogicOpcode = viaLogicOp;
-    ctx->Driver.PolygonStipple = viaPolygonStipple;
     ctx->Driver.RenderMode = viaRenderMode;
     ctx->Driver.Scissor = viaScissor;
-    ctx->Driver.ShadeModel = viaShadeModel;
     ctx->Driver.DepthRange = viaDepthRange;
     ctx->Driver.Viewport = viaViewport;
-    ctx->Driver.PointSize = viaPointSize;
-    ctx->Driver.LightModelfv = viaLightModelfv;
 
     /* Pixel path fallbacks.
      */

@@ -90,10 +90,11 @@ static struct {
 #define HAVE_TEX3_VERTICES  0
 #define HAVE_PTEX_VERTICES  0
 
-#define UNVIEWPORT_VARS  GLfloat h = VIA_CONTEXT(ctx)->driDrawable->h
+#define UNVIEWPORT_VARS  GLfloat h = VIA_CONTEXT(ctx)->driDrawable->h, \
+                                 depth_max = VIA_CONTEXT(ctx)->depth_max;
 #define UNVIEWPORT_X(x)  x - SUBPIXEL_X
 #define UNVIEWPORT_Y(y)  - y + h + SUBPIXEL_Y
-#define UNVIEWPORT_Z(z)  z * (float)0xffffffff
+#define UNVIEWPORT_Z(z)  z * (float)depth_max
 
 #define PTEX_FALLBACK() FALLBACK(VIA_CONTEXT(ctx), VIA_FALLBACK_TEXTURE, 1)
 

@@ -63,12 +63,10 @@ void viaDestroyTexObj(viaContextPtr vmesa, viaTextureObjectPtr t)
     if (vmesa) {
         if (vmesa->CurrentTexObj[0] == t) {
             vmesa->CurrentTexObj[0] = 0;
-            vmesa->dirty &= ~VIA_UPLOAD_TEX0;
         }
 
         if (vmesa->CurrentTexObj[1] == t) {
             vmesa->CurrentTexObj[1] = 0;
-            vmesa->dirty &= ~VIA_UPLOAD_TEX1;
         }
     }
 
@@ -431,10 +429,10 @@ void viaUploadTexImages(viaContextPtr vmesa, viaTextureObjectPtr t)
         /*t->bufAddr = (char *)((GLuint)vmesa->driScreen->pFB + t->texMem.offset);*/
 
         if (t == vmesa->CurrentTexObj[0])
-            VIA_STATECHANGE(vmesa, VIA_UPLOAD_TEX0);
+            VIA_FIREVERTICES(vmesa);
 
         if (t == vmesa->CurrentTexObj[1])
-            VIA_STATECHANGE(vmesa, VIA_UPLOAD_TEX1);
+            VIA_FIREVERTICES(vmesa);
 
         viaUpdateTexLRU(vmesa, t);
 	

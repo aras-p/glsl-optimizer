@@ -233,12 +233,6 @@ static void viaSetTexImages(viaContextPtr vmesa,
 
     numLevels = lastLevel - firstLevel + 1;
     
-    /*=* [DBG] fgfs : fix mipmap level 11 over hw limitations and result in segmentation fault *=*/
-    if(numLevels > 10) {
-	numLevels = 10;
-	t->lastLevel = firstLevel + 9;
-    }
-
     log2Width = tObj->Image[0][firstLevel]->WidthLog2;
     log2Height = tObj->Image[0][firstLevel]->HeightLog2;
     log2Pitch = logbase2(tObj->Image[0][firstLevel]->Width * baseImage->TexFormat->TexelBytes);
@@ -270,7 +264,8 @@ static void viaSetTexImages(viaContextPtr vmesa,
     t->totalSize = (*texSize)[log2Height][log2Width];
     t->texMem.size = t->totalSize;
     t->maxLevel = i - 1;
-    t->dirty = VIA_UPLOAD_TEX0 | VIA_UPLOAD_TEX1;
+/*     t->dirty = VIA_UPLOAD_TEX0 | VIA_UPLOAD_TEX1; */
+
     if (VIA_DEBUG) {
 	fprintf(stderr, "log2Width = %d\n", log2Width);  
 	fprintf(stderr, "log2Height = %d\n", log2Height);    
@@ -672,7 +667,7 @@ static void viaUpdateTexUnit(GLcontext *ctx, GLuint unit)
          * time.
          */
         if (vmesa->CurrentTexObj[unit] != t) {
-            VIA_STATECHANGE(vmesa, (VIA_UPLOAD_TEX0 << unit));
+            VIA_FIREVERTICES(vmesa);
             vmesa->CurrentTexObj[unit] = t;
             viaUpdateTexLRU(vmesa, t); /* done too often */
         }
@@ -688,8 +683,7 @@ static void viaUpdateTexUnit(GLcontext *ctx, GLuint unit)
     else {
         vmesa->CurrentTexObj[unit] = 0;
         vmesa->TexEnvImageFmt[unit] = 0;
-        vmesa->dirty &= ~(VIA_UPLOAD_TEX0 << unit);
-        VIA_STATECHANGE(vmesa, VIA_UPLOAD_CTX);
+        VIA_FIREVERTICES(vmesa);
     }
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
 }
