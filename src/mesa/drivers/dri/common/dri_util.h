@@ -54,10 +54,17 @@
 #define CAPI  /* XXX this should be globally defined somewhere */
 
 #include <inttypes.h>
-#include "glxclient.h"           /* for GLXDrawable */
-#include "drm.h"             /* for drm_clip_rect_t */
-#include "drm_sarea.h"               /* for XF86DRISAREAPtr */
-#include "GL/internal/glcore.h"  /* for __GLcontextModes */
+#ifdef DRI_NEW_INTERFACE_ONLY
+# include <GL/gl.h>
+#else
+# include "glxclient.h"
+#endif /* DRI_NEW_INTERFACE_ONLY */
+#include "drm.h"
+#include "drm_sarea.h"
+#include "GL/internal/glcore.h"
+#include "GL/internal/dri_interface.h"
+
+#define GLX_BAD_CONTEXT                    5
 
 /* This is a temporary relic.  Once all drivers are converted to support
  * the new interface, it can go away.

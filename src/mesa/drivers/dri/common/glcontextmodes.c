@@ -31,20 +31,26 @@
  * \author Ian Romanick <idr@us.ibm.com>
  */
 
-#include <X11/X.h>
-#include <GL/glx.h>
-#include "GL/glxint.h"
+#ifdef DRI_NEW_INTERFACE_ONLY
+# include <stdlib.h>
+# include <GL/gl.h>
+# include "dri_interface.h"
+#else
+# include <X11/X.h>
+# include <GL/glx.h>
+# include "GL/glxint.h"
 
-#ifdef XFree86Server
-# include "GL/glx_ansic.h"
+# ifdef XFree86Server
+#  include "GL/glx_ansic.h"
 extern void * __glXMalloc( size_t size );
 extern void __glXFree( void * ptr );
-# define Xmalloc __glXMalloc
-# define Xfree   __glXFree
-#else
-# include <X11/Xlibint.h>
-# define __glXMemset  memset
-#endif /* XFree86Server */
+#  define Xmalloc __glXMalloc
+#  define Xfree   __glXFree
+# else
+#  include <X11/Xlibint.h>
+#  define __glXMemset  memset
+# endif /* XFree86Server */
+#endif  /* DRI_NEW_INTERFACE_ONLY */
 
 #include "glcontextmodes.h"
 
@@ -169,7 +175,6 @@ _gl_copy_visual_to_context_mode( __GLcontextModes * mode,
 
     mode->swapMethod = GLX_SWAP_UNDEFINED_OML;
 }
-#endif /* DRI_NEW_INTERFACE_ONLY */
 
 
 /**
@@ -310,6 +315,7 @@ _gl_get_context_mode_data(const __GLcontextModes *mode, int attribute,
 	return GLX_BAD_ATTRIBUTE;
     }
 }
+#endif /* DRI_NEW_INTERFACE_ONLY */
 
 
 /**
