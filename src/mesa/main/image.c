@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.40 2000/09/12 21:10:25 brianp Exp $ */
+/* $Id: image.c,v 1.41 2000/09/14 23:13:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,6 +63,11 @@ const struct gl_pixelstore_attrib _mesa_native_packing = {
 
 /*
  * Flip the 8 bits in each byte of the given array.
+ *
+ * XXX try this trick to flip bytes someday:
+ *  v = ((v & 0x55555555) << 1) | ((v >> 1) & 0x55555555);
+ *  v = ((v & 0x33333333) << 2) | ((v >> 2) & 0x33333333);
+ *  v = ((v & 0x0f0f0f0f) << 4) | ((v >> 4) & 0x0f0f0f0f);
  */
 static void
 flip_bytes( GLubyte *p, GLuint n )
@@ -70,7 +75,7 @@ flip_bytes( GLubyte *p, GLuint n )
    register GLuint i, a, b;
 
    for (i=0;i<n;i++) {
-      b = (GLuint) p[i];
+      b = (GLuint) p[i];        /* words are often faster than bytes */
       a = ((b & 0x01) << 7) |
 	  ((b & 0x02) << 5) |
 	  ((b & 0x04) << 3) |

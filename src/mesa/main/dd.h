@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.31 2000/09/08 21:44:55 brianp Exp $ */
+/* $Id: dd.h,v 1.32 2000/09/14 23:13:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -856,8 +856,11 @@ struct dd_function_table {
 
    void (*RegisterVB)( struct vertex_buffer *VB );
    void (*UnregisterVB)( struct vertex_buffer *VB );
-   /* Do any processing (eg allocate memory) required to set up a new
-    * vertex_buffer.  
+   /* When Mesa creates a new vertex buffer it calls Driver.RegisterVB()
+    * so the device driver can allocate its own vertex buffer data and
+    * hook it to the VB->driver_data pointer.
+    * When Mesa destroys a vertex buffer it calls Driver.UnegisterVB()
+    * so the driver can deallocate its own data attached to VB->driver_data.
     */
 
 
