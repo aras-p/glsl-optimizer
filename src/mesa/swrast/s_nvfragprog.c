@@ -1215,9 +1215,9 @@ execute_program( GLcontext *ctx,
                const GLuint *rawBits = (const GLuint *) a;
                fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
                result[0] = (((rawBits[0] >>  0) & 0xff) - 128) / 127.0F;
-               result[0] = (((rawBits[0] >>  8) & 0xff) - 128) / 127.0F;
-               result[0] = (((rawBits[0] >> 16) & 0xff) - 128) / 127.0F;
-               result[0] = (((rawBits[0] >> 24) & 0xff) - 128) / 127.0F;
+               result[1] = (((rawBits[0] >>  8) & 0xff) - 128) / 127.0F;
+               result[2] = (((rawBits[0] >> 16) & 0xff) - 128) / 127.0F;
+               result[3] = (((rawBits[0] >> 24) & 0xff) - 128) / 127.0F;
                store_vector4( inst, machine, result );
             }
             break;
@@ -1227,9 +1227,9 @@ execute_program( GLcontext *ctx,
                const GLuint *rawBits = (const GLuint *) a;
                fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
                result[0] = ((rawBits[0] >>  0) & 0xff) / 255.0F;
-               result[0] = ((rawBits[0] >>  8) & 0xff) / 255.0F;
-               result[0] = ((rawBits[0] >> 16) & 0xff) / 255.0F;
-               result[0] = ((rawBits[0] >> 24) & 0xff) / 255.0F;
+               result[1] = ((rawBits[0] >>  8) & 0xff) / 255.0F;
+               result[2] = ((rawBits[0] >> 16) & 0xff) / 255.0F;
+               result[3] = ((rawBits[0] >> 24) & 0xff) / 255.0F;
                store_vector4( inst, machine, result );
             }
             break;
