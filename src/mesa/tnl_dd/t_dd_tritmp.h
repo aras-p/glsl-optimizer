@@ -49,7 +49,8 @@
  * VERT_X(v): Alias for vertex x value.
  * VERT_Y(v): Alias for vertex y value.
  * VERT_Z(v): Alias for vertex z value.
- * DEPTH_SCALE: Scale for offset.
+ * DEPTH_SCALE: Scale for constant offset.
+ * REVERSE_DEPTH: Viewport depth range reversed.
  *
  * VERTEX: Hardware vertex type.
  * GET_VERTEX(n): Retreive vertex with index n.
@@ -106,6 +107,10 @@
 #ifndef INSANE_VERTICES
 #define VERT_SET_Z(v,val) VERT_Z(v) = val
 #define VERT_Z_ADD(v,val) VERT_Z(v) += val
+#endif
+
+#ifndef REVERSE_DEPTH
+#define REVERSE_DEPTH 0
 #endif
 
 /* disable twostencil for un-aware drivers */
@@ -269,7 +274,7 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	    if ( bc < 0.0f ) bc = -bc;
 	    offset += MAX2( ac, bc ) * ctx->Polygon.OffsetFactor;
 	 }
-	 offset *= ctx->MRD;
+	 offset *= REVERSE_DEPTH ? -ctx->MRD : ctx->MRD;
       }
    }
 
@@ -545,7 +550,7 @@ static void TAG(quad)( GLcontext *ctx,
 	    if ( bc < 0.0f ) bc = -bc;
 	    offset += MAX2( ac, bc ) * ctx->Polygon.OffsetFactor;
 	 }
-	 offset *= ctx->MRD;
+	 offset *= REVERSE_DEPTH ? -ctx->MRD : ctx->MRD;
       }
    }
 

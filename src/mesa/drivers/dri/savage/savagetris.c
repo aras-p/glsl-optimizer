@@ -388,6 +388,7 @@ static struct {
 #define TAB rast_tab
 
 #define DEPTH_SCALE imesa->depth_scale
+#define REVERSE_DEPTH 1
 #define UNFILLED_TRI unfilled_tri
 #define UNFILLED_QUAD unfilled_quad
 #define VERT_X(_v) _v->v.x
