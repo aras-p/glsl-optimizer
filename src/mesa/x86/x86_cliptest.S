@@ -1,4 +1,4 @@
-/* $Id: x86_cliptest.S,v 1.8 2001/05/21 16:33:41 gareth Exp $ */
+/* $Id: x86_cliptest.S,v 1.9 2002/03/07 21:40:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,23 +24,38 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/*
+ * NOTE: Avoid using spaces in between '(' ')' and arguments, especially
+ * with macros like CONST, LLBL that expand to CONCAT(...).  Putting spaces
+ * in there will break the build on some platforms.
+ */
+
 #include "matypes.h"
 #include "clip_args.h"
 
-#define SRC(i)		REGOFF(i * 4, ESI)
-#define DST(i)		REGOFF(i * 4, EDI)
-#define MAT(i)		REGOFF(i * 4, EDX)
+#define SRC0		REGOFF(0, ESI)
+#define SRC1		REGOFF(4, ESI)
+#define SRC2		REGOFF(8, ESI)
+#define SRC3		REGOFF(12, ESI)
+#define DST0		REGOFF(0, EDI)
+#define DST1		REGOFF(4, EDI)
+#define DST2		REGOFF(8, EDI)
+#define DST3		REGOFF(12, EDI)
+#define MAT0		REGOFF(0, EDX)
+#define MAT1		REGOFF(4, EDX)
+#define MAT2		REGOFF(8, EDX)
+#define MAT3		REGOFF(12, EDX)
 
 
 /*
  * Table for clip test.
  *
- * 	bit6 = SRC(3) < 0
- * 	bit5 = SRC(2) < 0
+ * 	bit6 = SRC3 < 0
+ * 	bit5 = SRC2 < 0
  * 	bit4 = abs(S(2)) > abs(S(3))
- * 	bit3 = SRC(1) < 0
+ * 	bit3 = SRC1 < 0
  * 	bit2 = abs(S(1)) > abs(S(3))
- * 	bit1 = SRC(0) < 0
+ * 	bit1 = SRC0 < 0
  * 	bit0 = abs(S(0)) > abs(S(3))
  */
 
@@ -100,18 +115,18 @@ GLNAME( _mesa_x86_cliptest_points4 ):
 
 #ifdef ELFPIC
 	/* store pointer to clip_table on stack */
-	CALL( LLBL( ctp4_get_eip ) )
+	CALL( LLBL(ctp4_get_eip) )
 	ADD_L( CONST(_GLOBAL_OFFSET_TABLE_), EBX )
 	MOV_L( REGOFF(clip_table@GOT, EBX), EBX )
 	PUSH_L( EBX )
-	JMP( LLBL( ctp4_clip_table_ready ) )
+	JMP( LLBL(ctp4_clip_table_ready) )
 
-LLBL( ctp4_get_eip ):
+LLBL(ctp4_get_eip):
 	/* store eip in ebx */
 	MOV_L( REGIND(ESP), EBX )
 	RET
 
-LLBL( ctp4_clip_table_ready ):
+LLBL(ctp4_clip_table_ready):
 #endif
 
 	MOV_L( ARG_SOURCE, ESI )
@@ -141,16 +156,16 @@ LLBL( ctp4_clip_table_ready ):
 	MOV_B( REGIND(EBX), AL )
 	MOV_B( REGIND(EBP), AH )
 
-	JZ( LLBL( ctp4_finish ) )
+	JZ( LLBL(ctp4_finish) )
 
 ALIGNTEXT16
-LLBL( ctp4_top ):
+LLBL(ctp4_top):
 
 	FLD1				/* F3 */
-	FDIV_S( SRC(3) )		/* GH: don't care about div-by-zero */
+	FDIV_S( SRC3 )		/* GH: don't care about div-by-zero */
 
-	MOV_L( SRC(3), EBP )
-	MOV_L( SRC(2), EBX )
+	MOV_L( SRC3, EBP )
+	MOV_L( SRC2, EBX )
 
 	XOR_L( ECX, ECX )
 	ADD_L( EBP, EBP )	/* ebp = abs(S(3))*2 ; carry = sign of S(3) */
@@ -162,7 +177,7 @@ LLBL( ctp4_top ):
 	CMP_L( EBX, EBP )	/* carry = abs(S(2))*2 > abs(S(3))*2 */
 
 	ADC_L( ECX, ECX )
-	MOV_L( SRC(1), EBX )
+	MOV_L( SRC1, EBX )
 
 	ADD_L( EBX, EBX )	/* ebx = abs(S(1))*2 ; carry = sign of S(1) */
 
@@ -170,7 +185,7 @@ LLBL( ctp4_top ):
 	CMP_L( EBX, EBP )	/* carry = abs(S(1))*2 > abs(S(3))*2 */
 
 	ADC_L( ECX, ECX )
-	MOV_L( SRC(0), EBX )
+	MOV_L( SRC0, EBX )
 
 	ADD_L( EBX, EBX )	/* ebx = abs(S(0))*2 ; carry = sign of S(0) */
 
@@ -193,37 +208,37 @@ LLBL( ctp4_top ):
 	TEST_B( CL, CL )
 	MOV_B( CL, REGIND(EDX) )
 
-	JZ( LLBL( ctp4_proj ) )
+	JZ( LLBL(ctp4_proj) )
 
-LLBL( ctp4_noproj ):
+LLBL(ctp4_noproj):
 
 	FSTP( ST(0) )			/* */
 
-	MOV_L( CONST(0), DST(0) )
-	MOV_L( CONST(0), DST(1) )
-	MOV_L( CONST(0), DST(2) )
-	MOV_L( CONST(0x3f800000), DST(3) )
+	MOV_L( CONST(0), DST0 )
+	MOV_L( CONST(0), DST1 )
+	MOV_L( CONST(0), DST2 )
+	MOV_L( CONST(0x3f800000), DST3 )
 
-	JMP( LLBL( ctp4_next ) )
+	JMP( LLBL(ctp4_next) )
 
-LLBL( ctp4_proj ):
+LLBL(ctp4_proj):
 
-	FLD_S( SRC(0) )			/* F0 F3 */
-	FMUL2( ST(1), ST(0) )
+	FLD_S( SRC0 )			/* F0 F3 */
+	FMUL2( ST(1), ST0 )
 
-	FLD_S( SRC(1) )			/* F1 F0 F3 */
-	FMUL2( ST(2), ST(0) )
+	FLD_S( SRC1 )			/* F1 F0 F3 */
+	FMUL2( ST(2), ST0 )
 
-	FLD_S( SRC(2) )			/* F2 F1 F0 F3 */
-	FMUL2( ST(3), ST(0) )
+	FLD_S( SRC2 )			/* F2 F1 F0 F3 */
+	FMUL2( ST(3), ST0 )
 
 	FXCH( ST(2) )			/* F0 F1 F2 F3 */
-	FSTP_S( DST(0) )		/* F1 F2 F3 */
-	FSTP_S( DST(1) )		/* F2 F3 */
-	FSTP_S( DST(2) )		/* F3 */
-	FSTP_S( DST(3) )		/* */
+	FSTP_S( DST0 )		/* F1 F2 F3 */
+	FSTP_S( DST1 )		/* F2 F3 */
+	FSTP_S( DST2 )		/* F3 */
+	FSTP_S( DST3 )		/* */
 
-LLBL( ctp4_next ):
+LLBL(ctp4_next):
 
 	INC_L( EDX )
 	ADD_L( CONST(16), EDI )
@@ -231,7 +246,7 @@ LLBL( ctp4_next ):
 	ADD_L( ARG_SOURCE, ESI )
 	CMP_L( EDX, ARG_CLIP )
 
-	JNZ( LLBL( ctp4_top ) )
+	JNZ( LLBL(ctp4_top) )
 
 	MOV_L( ARG_OR, ECX )
 	MOV_L( ARG_AND, EDX )
@@ -239,7 +254,7 @@ LLBL( ctp4_next ):
 	MOV_B( AL, REGIND(ECX) )
 	MOV_B( AH, REGIND(EDX) )
 
-LLBL( ctp4_finish ):
+LLBL(ctp4_finish):
 
 	MOV_L( ARG_DEST, EAX )
 #ifdef ELFPIC
@@ -274,18 +289,18 @@ GLNAME( _mesa_x86_cliptest_points4_np ):
 
 #ifdef ELFPIC
 	/* store pointer to clip_table on stack */
-	CALL( LLBL( ctp4_np_get_eip ) )
+	CALL( LLBL(ctp4_np_get_eip) )
 	ADD_L( CONST(_GLOBAL_OFFSET_TABLE_), EBX )
 	MOV_L( REGOFF(clip_table@GOT, EBX), EBX )
 	PUSH_L( EBX )
-	JMP( LLBL( ctp4_np_clip_table_ready ) )
+	JMP( LLBL(ctp4_np_clip_table_ready) )
 
-LLBL( ctp4_np_get_eip ):
+LLBL(ctp4_np_get_eip):
 	/* store eip in ebx */
 	MOV_L( REGIND(ESP), EBX )
 	RET
 
-LLBL( ctp4_np_clip_table_ready ):
+LLBL(ctp4_np_clip_table_ready):
 #endif
 
 	MOV_L( ARG_SOURCE, ESI )
@@ -309,13 +324,13 @@ LLBL( ctp4_np_clip_table_ready ):
 	MOV_B( REGIND(EBX), AL )
 	MOV_B( REGIND(EBP), AH )
 
-	JZ( LLBL( ctp4_np_finish ) )
+	JZ( LLBL(ctp4_np_finish) )
 
 ALIGNTEXT16
-LLBL( ctp4_np_top ):
+LLBL(ctp4_np_top):
 
-	MOV_L( SRC(3), EBP )
-	MOV_L( SRC(2), EBX )
+	MOV_L( SRC3, EBP )
+	MOV_L( SRC2, EBX )
 
 	XOR_L( ECX, ECX )
 	ADD_L( EBP, EBP )	/* ebp = abs(S(3))*2 ; carry = sign of S(3) */
@@ -327,7 +342,7 @@ LLBL( ctp4_np_top ):
 	CMP_L( EBX, EBP )	/* carry = abs(S(2))*2 > abs(S(3))*2 */
 
 	ADC_L( ECX, ECX )
-	MOV_L( SRC(1), EBX )
+	MOV_L( SRC1, EBX )
 
 	ADD_L( EBX, EBX )	/* ebx = abs(S(1))*2 ; carry = sign of S(1) */
 
@@ -335,7 +350,7 @@ LLBL( ctp4_np_top ):
 	CMP_L( EBX, EBP )	/* carry = abs(S(1))*2 > abs(S(3))*2 */
 
 	ADC_L( ECX, ECX )
-	MOV_L( SRC(0), EBX )
+	MOV_L( SRC0, EBX )
 
 	ADD_L( EBX, EBX )	/* ebx = abs(S(0))*2 ; carry = sign of S(0) */
 
@@ -364,7 +379,7 @@ LLBL( ctp4_np_top ):
 	ADD_L( ARG_DEST, ESI )
 	CMP_L( EDX, EDI )
 
-	JNZ( LLBL( ctp4_np_top ) )
+	JNZ( LLBL(ctp4_np_top) )
 
 	MOV_L( ARG_OR, ECX )
 	MOV_L( ARG_AND, EDX )
@@ -372,7 +387,7 @@ LLBL( ctp4_np_top ):
 	MOV_B( AL, REGIND(ECX) )
 	MOV_B( AH, REGIND(EDX) )
 
-LLBL( ctp4_np_finish ):
+LLBL(ctp4_np_finish):
 
 	MOV_L( ARG_SOURCE, EAX )
 #ifdef ELFPIC

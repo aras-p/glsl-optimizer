@@ -1,4 +1,4 @@
-/* $Id: assyntax.h,v 1.17 2002/01/04 14:35:46 brianp Exp $ */
+/* $Id: assyntax.h,v 1.18 2002/03/07 21:40:08 brianp Exp $ */
 
 #ifndef __ASSYNTAX_H__
 #define __ASSYNTAX_H__
@@ -68,6 +68,11 @@
  */
 
 #if !(defined(NASM_ASSEMBLER) || defined(MASM_ASSEMBLER))
+
+/* Default to ATT_ASSEMBLER when SVR4 or SYSV are defined */
+#if (defined(SVR4) || defined(SYSV)) && !defined(GNU_ASSEMBLER)
+#define ATT_ASSEMBLER
+#endif
 
 #if !defined(ATT_ASSEMBLER) && !defined(GNU_ASSEMBLER) && !defined(ACK_ASSEMBLER)
 #define GNU_ASSEMBLER
@@ -200,6 +205,11 @@
 #define _STX6		%st(6)
 #define _STX7		%st(7)
 #define ST(x)		CONCAT(_STX,x)
+#ifdef GNU_ASSEMBLER
+#define ST0		%st(0)
+#else
+#define ST0		%st
+#endif
 /* MMX Registers */
 #define MM0		%mm0
 #define MM1		%mm1
@@ -858,6 +868,7 @@
 #if defined(NASM_ASSEMBLER)
 
 #define ST(n)		st ## n
+#define ST0		st0
 
 #define TBYTE_PTR	tword
 #define QWORD_PTR	qword

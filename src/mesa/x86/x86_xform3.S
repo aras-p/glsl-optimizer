@@ -1,4 +1,4 @@
-/* $Id: x86_xform3.S,v 1.1 2001/03/29 06:46:27 gareth Exp $ */
+/* $Id: x86_xform3.S,v 1.2 2002/03/07 21:40:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,6 +24,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/*
+ * NOTE: Avoid using spaces in between '(' ')' and arguments, especially
+ * with macros like CONST, LLBL that expand to CONCAT(...).  Putting spaces
+ * in there will break the build on some platforms.
+ */
+
 #include "matypes.h"
 #include "xform_args.h"
 
@@ -32,9 +38,30 @@
 #define FP_ONE		1065353216
 #define FP_ZERO		0
 
-#define SRC(i)		REGOFF(i * 4, ESI)
-#define DST(i)		REGOFF(i * 4, EDI)
-#define MAT(i)		REGOFF(i * 4, EDX)
+#define SRC0		REGOFF(0, ESI)
+#define SRC1		REGOFF(4, ESI)
+#define SRC2		REGOFF(8, ESI)
+#define SRC3		REGOFF(12, ESI)
+#define DST0		REGOFF(0, EDI)
+#define DST1		REGOFF(4, EDI)
+#define DST2		REGOFF(8, EDI)
+#define DST3		REGOFF(12, EDI)
+#define MAT0		REGOFF(0, EDX)
+#define MAT1		REGOFF(4, EDX)
+#define MAT2		REGOFF(8, EDX)
+#define MAT3		REGOFF(12, EDX)
+#define MAT4		REGOFF(16, EDX)
+#define MAT5		REGOFF(20, EDX)
+#define MAT6		REGOFF(24, EDX)
+#define MAT7		REGOFF(28, EDX)
+#define MAT8		REGOFF(32, EDX)
+#define MAT9		REGOFF(36, EDX)
+#define MAT10		REGOFF(40, EDX)
+#define MAT11		REGOFF(44, EDX)
+#define MAT12		REGOFF(48, EDX)
+#define MAT13		REGOFF(52, EDX)
+#define MAT14		REGOFF(56, EDX)
+#define MAT15		REGOFF(60, EDX)
 
 
 ALIGNTEXT16
@@ -52,7 +79,7 @@ GLNAME( _mesa_x86_transform_points3_general ):
 	MOV_L( REGOFF(V4F_COUNT, ESI), ECX )
 
 	TEST_L( ECX, ECX )
-	JZ( LLBL( x86_p3_gr_done ) )
+	JZ( LLBL(x86_p3_gr_done) )
 
 	MOV_L( REGOFF(V4F_STRIDE, ESI), EAX )
 	OR_L( CONST(VEC_SIZE_4), REGOFF(V4F_FLAGS, EDI) )
@@ -67,73 +94,73 @@ GLNAME( _mesa_x86_transform_points3_general ):
 	ADD_L( EDI, ECX )
 
 ALIGNTEXT16
-LLBL( x86_p3_gr_loop ):
+LLBL(x86_p3_gr_loop):
 
-	FLD_S( SRC(0) )			/* F4 */
-	FMUL_S( MAT(0) )
-	FLD_S( SRC(0) )			/* F5 F4 */
-	FMUL_S( MAT(1) )
-	FLD_S( SRC(0) )			/* F6 F5 F4 */
-	FMUL_S( MAT(2) )
-	FLD_S( SRC(0) )			/* F7 F6 F5 F4 */
-	FMUL_S( MAT(3) )
+	FLD_S( SRC0 )			/* F4 */
+	FMUL_S( MAT0 )
+	FLD_S( SRC0 )			/* F5 F4 */
+	FMUL_S( MAT1 )
+	FLD_S( SRC0 )			/* F6 F5 F4 */
+	FMUL_S( MAT2 )
+	FLD_S( SRC0 )			/* F7 F6 F5 F4 */
+	FMUL_S( MAT3 )
 
-	FLD_S( SRC(1) )			/* F0 F7 F6 F5 F4 */
-	FMUL_S( MAT(4) )
-	FLD_S( SRC(1) )			/* F1 F0 F7 F6 F5 F4 */
-	FMUL_S( MAT(5) )
-	FLD_S( SRC(1) )			/* F2 F1 F0 F7 F6 F5 F4 */
-	FMUL_S( MAT(6) )
-	FLD_S( SRC(1) )			/* F3 F2 F1 F0 F7 F6 F5 F4 */
-	FMUL_S( MAT(7) )
-
-	FXCH( ST(3) )			/* F0 F2 F1 F3 F7 F6 F5 F4 */
-	FADDP( ST(0), ST(7) )		/* F2 F1 F3 F7 F6 F5 F4 */
-	FXCH( ST(1) )			/* F1 F2 F3 F7 F6 F5 F4 */
-	FADDP( ST(0), ST(5) )		/* F2 F3 F7 F6 F5 F4 */
-	FADDP( ST(0), ST(3) )		/* F3 F7 F6 F5 F4 */
-	FADDP( ST(0), ST(1) )		/* F7 F6 F5 F4 */
-
-	FLD_S( SRC(2) )			/* F0 F7 F6 F5 F4 */
-	FMUL_S( MAT(8) )
-	FLD_S( SRC(2) )			/* F1 F0 F7 F6 F5 F4 */
-	FMUL_S( MAT(9) )
-	FLD_S( SRC(2) )			/* F2 F1 F0 F7 F6 F5 F4 */
-	FMUL_S( MAT(10) )
-	FLD_S( SRC(2) )			/* F3 F2 F1 F0 F7 F6 F5 F4 */
-	FMUL_S( MAT(11) )
+	FLD_S( SRC1 )			/* F0 F7 F6 F5 F4 */
+	FMUL_S( MAT4 )
+	FLD_S( SRC1 )			/* F1 F0 F7 F6 F5 F4 */
+	FMUL_S( MAT5 )
+	FLD_S( SRC1 )			/* F2 F1 F0 F7 F6 F5 F4 */
+	FMUL_S( MAT6 )
+	FLD_S( SRC1 )			/* F3 F2 F1 F0 F7 F6 F5 F4 */
+	FMUL_S( MAT7 )
 
 	FXCH( ST(3) )			/* F0 F2 F1 F3 F7 F6 F5 F4 */
-	FADDP( ST(0), ST(7) )		/* F2 F1 F3 F7 F6 F5 F4 */
+	FADDP( ST0, ST(7) )		/* F2 F1 F3 F7 F6 F5 F4 */
 	FXCH( ST(1) )			/* F1 F2 F3 F7 F6 F5 F4 */
-	FADDP( ST(0), ST(5) )		/* F2 F3 F7 F6 F5 F4 */
-	FADDP( ST(0), ST(3) )		/* F3 F7 F6 F5 F4 */
-	FADDP( ST(0), ST(1) )		/* F7 F6 F5 F4 */
+	FADDP( ST0, ST(5) )		/* F2 F3 F7 F6 F5 F4 */
+	FADDP( ST0, ST(3) )		/* F3 F7 F6 F5 F4 */
+	FADDP( ST0, ST(1) )		/* F7 F6 F5 F4 */
+
+	FLD_S( SRC2 )			/* F0 F7 F6 F5 F4 */
+	FMUL_S( MAT8 )
+	FLD_S( SRC2 )			/* F1 F0 F7 F6 F5 F4 */
+	FMUL_S( MAT9 )
+	FLD_S( SRC2 )			/* F2 F1 F0 F7 F6 F5 F4 */
+	FMUL_S( MAT10 )
+	FLD_S( SRC2 )			/* F3 F2 F1 F0 F7 F6 F5 F4 */
+	FMUL_S( MAT11 )
+
+	FXCH( ST(3) )			/* F0 F2 F1 F3 F7 F6 F5 F4 */
+	FADDP( ST0, ST(7) )		/* F2 F1 F3 F7 F6 F5 F4 */
+	FXCH( ST(1) )			/* F1 F2 F3 F7 F6 F5 F4 */
+	FADDP( ST0, ST(5) )		/* F2 F3 F7 F6 F5 F4 */
+	FADDP( ST0, ST(3) )		/* F3 F7 F6 F5 F4 */
+	FADDP( ST0, ST(1) )		/* F7 F6 F5 F4 */
 
 	FXCH( ST(3) )			/* F4 F6 F5 F7 */
-	FADD_S( MAT(12) )
+	FADD_S( MAT12 )
 	FXCH( ST(2) )			/* F5 F6 F4 F7 */
-	FADD_S( MAT(13) )
+	FADD_S( MAT13 )
 	FXCH( ST(1) )			/* F6 F5 F4 F7 */
-	FADD_S( MAT(14) )
+	FADD_S( MAT14 )
 	FXCH( ST(3) )			/* F7 F5 F4 F6 */
-	FADD_S( MAT(15) )
+	FADD_S( MAT15 )
 
 	FXCH( ST(2) )			/* F4 F5 F7 F6 */
-	FSTP_S( DST(0) )		/* F5 F7 F6 */
-	FSTP_S( DST(1) )		/* F7 F6 */
+	FSTP_S( DST0 )		/* F5 F7 F6 */
+	FSTP_S( DST1 )		/* F7 F6 */
 	FXCH( ST(1) )			/* F6 F7 */
-	FSTP_S( DST(2) )		/* F7 */
-	FSTP_S( DST(3) )		/* */
+	FSTP_S( DST2 )		/* F7 */
+	FSTP_S( DST3 )		/* */
 
-LLBL( x86_p3_gr_skip ):
+LLBL(x86_p3_gr_skip):
 
 	ADD_L( CONST(16), EDI )
 	ADD_L( EAX, ESI )
 	CMP_L( ECX, EDI )
-	JNE( LLBL( x86_p3_gr_loop ) )
+	JNE( LLBL(x86_p3_gr_loop) )
 
-LLBL( x86_p3_gr_done ):
+LLBL(x86_p3_gr_done):
 
 	POP_L( EDI )
 	POP_L( ESI )
@@ -159,7 +186,7 @@ GLNAME( _mesa_x86_transform_points3_perspective ):
 	MOV_L( REGOFF(V4F_COUNT, ESI), ECX )
 
 	TEST_L( ECX, ECX )
-	JZ( LLBL( x86_p3_pr_done ) )
+	JZ( LLBL(x86_p3_pr_done) )
 
 	MOV_L( REGOFF(V4F_STRIDE, ESI), EAX )
 	OR_L( CONST(VEC_SIZE_4), REGOFF(V4F_FLAGS, EDI) )
@@ -174,45 +201,45 @@ GLNAME( _mesa_x86_transform_points3_perspective ):
 	ADD_L( EDI, ECX )
 
 ALIGNTEXT16
-LLBL( x86_p3_pr_loop ):
+LLBL(x86_p3_pr_loop):
 
-	FLD_S( SRC(0) )			/* F4 */
-	FMUL_S( MAT(0) )
+	FLD_S( SRC0 )			/* F4 */
+	FMUL_S( MAT0 )
 
-	FLD_S( SRC(1) )			/* F5 F4 */
-	FMUL_S( MAT(5) )
+	FLD_S( SRC1 )			/* F5 F4 */
+	FMUL_S( MAT5 )
 
-	FLD_S( SRC(2) )			/* F0 F5 F4 */
-	FMUL_S( MAT(8) )
-	FLD_S( SRC(2) )			/* F1 F0 F5 F4 */
-	FMUL_S( MAT(9) )
-	FLD_S( SRC(2) )			/* F2 F1 F0 F5 F4 */
-	FMUL_S( MAT(10) )
+	FLD_S( SRC2 )			/* F0 F5 F4 */
+	FMUL_S( MAT8 )
+	FLD_S( SRC2 )			/* F1 F0 F5 F4 */
+	FMUL_S( MAT9 )
+	FLD_S( SRC2 )			/* F2 F1 F0 F5 F4 */
+	FMUL_S( MAT10 )
 
 	FXCH( ST(2) )			/* F0 F1 F2 F5 F4 */
-	FADDP( ST(0), ST(4) )		/* F1 F2 F5 F4 */
-	FADDP( ST(0), ST(2) )		/* F2 F5 F4 */
-	FLD_S( MAT(14) )		/* F6 F2 F5 F4 */
+	FADDP( ST0, ST(4) )		/* F1 F2 F5 F4 */
+	FADDP( ST0, ST(2) )		/* F2 F5 F4 */
+	FLD_S( MAT14 )		/* F6 F2 F5 F4 */
 	FXCH( ST(1) )			/* F2 F6 F5 F4 */
-	FADDP( ST(0), ST(1) )		/* F6 F5 F4 */
+	FADDP( ST0, ST(1) )		/* F6 F5 F4 */
 
-	MOV_L( SRC(2), EBX )
+	MOV_L( SRC2, EBX )
 	XOR_L( CONST(-2147483648), EBX )/* change sign */
 
 	FXCH( ST(2) )			/* F4 F5 F6 */
-	FSTP_S( DST(0) )		/* F5 F6 */
-	FSTP_S( DST(1) )		/* F6 */
-	FSTP_S( DST(2) )		/* */
-	MOV_L( EBX, DST(3) )
+	FSTP_S( DST0 )		/* F5 F6 */
+	FSTP_S( DST1 )		/* F6 */
+	FSTP_S( DST2 )		/* */
+	MOV_L( EBX, DST3 )
 
-LLBL( x86_p3_pr_skip ):
+LLBL(x86_p3_pr_skip):
 
 	ADD_L( CONST(16), EDI )
 	ADD_L( EAX, ESI )
 	CMP_L( ECX, EDI )
-	JNE( LLBL( x86_p3_pr_loop ) )
+	JNE( LLBL(x86_p3_pr_loop) )
 
-LLBL( x86_p3_pr_done ):
+LLBL(x86_p3_pr_done):
 
 	POP_L( EBX )
 	POP_L( EDI )
@@ -238,7 +265,7 @@ GLNAME( _mesa_x86_transform_points3_3d ):
 	MOV_L( REGOFF(V4F_COUNT, ESI), ECX )
 
 	TEST_L( ECX, ECX )
-	JZ( LLBL( x86_p3_3dr_done ) )
+	JZ( LLBL(x86_p3_3dr_done) )
 
 	MOV_L( REGOFF(V4F_STRIDE, ESI), EAX )
 	OR_L( CONST(VEC_SIZE_3), REGOFF(V4F_FLAGS, EDI) )
@@ -253,60 +280,60 @@ GLNAME( _mesa_x86_transform_points3_3d ):
 	ADD_L( EDI, ECX )
 
 ALIGNTEXT16
-LLBL( x86_p3_3dr_loop ):
+LLBL(x86_p3_3dr_loop):
 
-	FLD_S( SRC(0) )			/* F4 */
-	FMUL_S( MAT(0) )
-	FLD_S( SRC(0) )			/* F5 F4 */
-	FMUL_S( MAT(1) )
-	FLD_S( SRC(0) )			/* F6 F5 F4 */
-	FMUL_S( MAT(2) )
+	FLD_S( SRC0 )			/* F4 */
+	FMUL_S( MAT0 )
+	FLD_S( SRC0 )			/* F5 F4 */
+	FMUL_S( MAT1 )
+	FLD_S( SRC0 )			/* F6 F5 F4 */
+	FMUL_S( MAT2 )
 
-	FLD_S( SRC(1) )			/* F0 F6 F5 F4 */
-	FMUL_S( MAT(4) )
-	FLD_S( SRC(1) )			/* F1 F0 F6 F5 F4 */
-	FMUL_S( MAT(5) )
-	FLD_S( SRC(1) )			/* F2 F1 F0 F6 F5 F4 */
-	FMUL_S( MAT(6) )
-
-	FXCH( ST(2) )			/* F0 F1 F2 F6 F5 F4 */
-	FADDP( ST(0), ST(5) )		/* F1 F2 F6 F5 F4 */
-	FADDP( ST(0), ST(3) )		/* F2 F6 F5 F4 */
-	FADDP( ST(0), ST(1) )		/* F6 F5 F4 */
-
-	FLD_S( SRC(2) )			/* F0 F6 F5 F4 */
-	FMUL_S( MAT(8) )
-	FLD_S( SRC(2) )			/* F1 F0 F6 F5 F4 */
-	FMUL_S( MAT(9) )
-	FLD_S( SRC(2) )			/* F2 F1 F0 F6 F5 F4 */
-	FMUL_S( MAT(10) )
+	FLD_S( SRC1 )			/* F0 F6 F5 F4 */
+	FMUL_S( MAT4 )
+	FLD_S( SRC1 )			/* F1 F0 F6 F5 F4 */
+	FMUL_S( MAT5 )
+	FLD_S( SRC1 )			/* F2 F1 F0 F6 F5 F4 */
+	FMUL_S( MAT6 )
 
 	FXCH( ST(2) )			/* F0 F1 F2 F6 F5 F4 */
-	FADDP( ST(0), ST(5) )		/* F1 F2 F6 F5 F4 */
-	FADDP( ST(0), ST(3) )		/* F2 F6 F5 F4 */
-	FADDP( ST(0), ST(1) )		/* F6 F5 F4 */
+	FADDP( ST0, ST(5) )		/* F1 F2 F6 F5 F4 */
+	FADDP( ST0, ST(3) )		/* F2 F6 F5 F4 */
+	FADDP( ST0, ST(1) )		/* F6 F5 F4 */
+
+	FLD_S( SRC2 )			/* F0 F6 F5 F4 */
+	FMUL_S( MAT8 )
+	FLD_S( SRC2 )			/* F1 F0 F6 F5 F4 */
+	FMUL_S( MAT9 )
+	FLD_S( SRC2 )			/* F2 F1 F0 F6 F5 F4 */
+	FMUL_S( MAT10 )
+
+	FXCH( ST(2) )			/* F0 F1 F2 F6 F5 F4 */
+	FADDP( ST0, ST(5) )		/* F1 F2 F6 F5 F4 */
+	FADDP( ST0, ST(3) )		/* F2 F6 F5 F4 */
+	FADDP( ST0, ST(1) )		/* F6 F5 F4 */
 
 	FXCH( ST(2) )			/* F4 F5 F6 */
-	FADD_S( MAT(12) )
+	FADD_S( MAT12 )
 	FXCH( ST(1) )			/* F5 F4 F6 */
-	FADD_S( MAT(13) )
+	FADD_S( MAT13 )
 	FXCH( ST(2) )			/* F6 F4 F5 */
-	FADD_S( MAT(14) )
+	FADD_S( MAT14 )
 
 	FXCH( ST(1) )			/* F4 F6 F5 */
-	FSTP_S( DST(0)   )		/* F6 F5 */
+	FSTP_S( DST0   )		/* F6 F5 */
 	FXCH( ST(1) )			/* F5 F6 */
-	FSTP_S( DST(1)   )		/* F6 */
-	FSTP_S( DST(2)   )		/* */
+	FSTP_S( DST1   )		/* F6 */
+	FSTP_S( DST2   )		/* */
 
-LLBL( x86_p3_3dr_skip ):
+LLBL(x86_p3_3dr_skip):
 
 	ADD_L( CONST(16), EDI )
 	ADD_L( EAX, ESI )
 	CMP_L( ECX, EDI )
-	JNE( LLBL( x86_p3_3dr_loop ) )
+	JNE( LLBL(x86_p3_3dr_loop) )
 
-LLBL( x86_p3_3dr_done ):
+LLBL(x86_p3_3dr_done):
 
 	POP_L( EDI )
 	POP_L( ESI )
@@ -332,7 +359,7 @@ GLNAME( _mesa_x86_transform_points3_3d_no_rot ):
 	MOV_L( REGOFF(V4F_COUNT, ESI), ECX )
 
 	TEST_L( ECX, ECX )
-	JZ( LLBL( x86_p3_3dnrr_done ) )
+	JZ( LLBL(x86_p3_3dnrr_done) )
 
 	MOV_L( REGOFF(V4F_STRIDE, ESI), EAX )
 	OR_L( CONST(VEC_SIZE_3), REGOFF(V4F_FLAGS, EDI) )
@@ -347,38 +374,38 @@ GLNAME( _mesa_x86_transform_points3_3d_no_rot ):
 	ADD_L( EDI, ECX )
 
 ALIGNTEXT16
-LLBL( x86_p3_3dnrr_loop ):
+LLBL(x86_p3_3dnrr_loop):
 
-	FLD_S( SRC(0) )			/* F4 */
-	FMUL_S( MAT(0) )
+	FLD_S( SRC0 )			/* F4 */
+	FMUL_S( MAT0 )
 
-	FLD_S( SRC(1) )			/* F1 F4 */
-	FMUL_S( MAT(5) )
+	FLD_S( SRC1 )			/* F1 F4 */
+	FMUL_S( MAT5 )
 
-	FLD_S( SRC(2) )			/* F2 F1 F4 */
-	FMUL_S( MAT(10) )
+	FLD_S( SRC2 )			/* F2 F1 F4 */
+	FMUL_S( MAT10 )
 
 	FXCH( ST(2) )			/* F4 F1 F2 */
-	FADD_S( MAT(12) )
-	FLD_S( MAT(13) )		/* F5 F4 F1 F2 */
+	FADD_S( MAT12 )
+	FLD_S( MAT13 )		/* F5 F4 F1 F2 */
 	FXCH( ST(2) )			/* F1 F4 F5 F2 */
-	FADDP( ST(0), ST(2) )		/* F4 F5 F2 */
-	FLD_S( MAT(14) )		/* F6 F4 F5 F2 */
+	FADDP( ST0, ST(2) )		/* F4 F5 F2 */
+	FLD_S( MAT14 )		/* F6 F4 F5 F2 */
 	FXCH( ST(3) )			/* F2 F4 F5 F6 */
-	FADDP( ST(0), ST(3) )		/* F4 F5 F6 */
+	FADDP( ST0, ST(3) )		/* F4 F5 F6 */
 
-	FSTP_S( DST(0)   )		/* F5 F6 */
-	FSTP_S( DST(1)   )		/* F6 */
-	FSTP_S( DST(2)   )		/* */
+	FSTP_S( DST0   )		/* F5 F6 */
+	FSTP_S( DST1   )		/* F6 */
+	FSTP_S( DST2   )		/* */
 
-LLBL( x86_p3_3dnrr_skip ):
+LLBL(x86_p3_3dnrr_skip):
 
 	ADD_L( CONST(16), EDI )
 	ADD_L( EAX, ESI )
 	CMP_L( ECX, EDI )
-	JNE( LLBL( x86_p3_3dnrr_loop ) )
+	JNE( LLBL(x86_p3_3dnrr_loop) )
 
-LLBL( x86_p3_3dnrr_done ):
+LLBL(x86_p3_3dnrr_done):
 
 	POP_L( EDI )
 	POP_L( ESI )
@@ -404,7 +431,7 @@ GLNAME( _mesa_x86_transform_points3_2d ):
 	MOV_L( REGOFF(V4F_COUNT, ESI), ECX )
 
 	TEST_L( ECX, ECX )
-	JZ( LLBL( x86_p3_2dr_done ) )
+	JZ( LLBL(x86_p3_2dr_done) )
 
 	MOV_L( REGOFF(V4F_STRIDE, ESI), EAX )
 	OR_L( CONST(VEC_SIZE_3), REGOFF(V4F_FLAGS, EDI) )
@@ -419,42 +446,42 @@ GLNAME( _mesa_x86_transform_points3_2d ):
 	ADD_L( EDI, ECX )
 
 ALIGNTEXT16
-LLBL( x86_p3_2dr_loop ):
+LLBL(x86_p3_2dr_loop):
 
-	FLD_S( SRC(0) )			/* F4 */
-	FMUL_S( MAT(0) )
-	FLD_S( SRC(0) )			/* F5 F4 */
-	FMUL_S( MAT(1) )
+	FLD_S( SRC0 )			/* F4 */
+	FMUL_S( MAT0 )
+	FLD_S( SRC0 )			/* F5 F4 */
+	FMUL_S( MAT1 )
 
-	FLD_S( SRC(1) )			/* F0 F5 F4 */
-	FMUL_S( MAT(4) )
-	FLD_S( SRC(1) )			/* F1 F0 F5 F4 */
-	FMUL_S( MAT(5) )
+	FLD_S( SRC1 )			/* F0 F5 F4 */
+	FMUL_S( MAT4 )
+	FLD_S( SRC1 )			/* F1 F0 F5 F4 */
+	FMUL_S( MAT5 )
 
 	FXCH( ST(1) )			/* F0 F1 F5 F4 */
-	FADDP( ST(0), ST(3) )		/* F1 F5 F4 */
-	FADDP( ST(0), ST(1) )		/* F5 F4 */
+	FADDP( ST0, ST(3) )		/* F1 F5 F4 */
+	FADDP( ST0, ST(1) )		/* F5 F4 */
 
 	FXCH( ST(1) )			/* F4 F5 */
-	FADD_S( MAT(12) )
+	FADD_S( MAT12 )
 	FXCH( ST(1) )			/* F5 F4 */
-	FADD_S( MAT(13) )
+	FADD_S( MAT13 )
 
-	MOV_L( SRC(2), EBX )
+	MOV_L( SRC2, EBX )
 
 	FXCH( ST(1) )			/* F4 F5 */
-	FSTP_S( DST(0)   )		/* F5 */
-	FSTP_S( DST(1)   )		/* */
-	MOV_L( EBX, DST(2) )
+	FSTP_S( DST0   )		/* F5 */
+	FSTP_S( DST1   )		/* */
+	MOV_L( EBX, DST2 )
 
-LLBL( x86_p3_2dr_skip ):
+LLBL(x86_p3_2dr_skip):
 
 	ADD_L( CONST(16), EDI )
 	ADD_L( EAX, ESI )
 	CMP_L( ECX, EDI )
-	JNE( LLBL( x86_p3_2dr_loop ) )
+	JNE( LLBL(x86_p3_2dr_loop) )
 
-LLBL( x86_p3_2dr_done ):
+LLBL(x86_p3_2dr_done):
 
 	POP_L( EBX )
 	POP_L( EDI )
@@ -481,7 +508,7 @@ GLNAME( _mesa_x86_transform_points3_2d_no_rot ):
 	MOV_L( REGOFF(V4F_COUNT, ESI), ECX )
 
 	TEST_L( ECX, ECX )
-	JZ( LLBL( x86_p3_2dnrr_done ) )
+	JZ( LLBL(x86_p3_2dnrr_done) )
 
 	MOV_L( REGOFF(V4F_STRIDE, ESI), EAX )
 	OR_L( CONST(VEC_SIZE_3), REGOFF(V4F_FLAGS, EDI) )
@@ -496,35 +523,35 @@ GLNAME( _mesa_x86_transform_points3_2d_no_rot ):
 	ADD_L( EDI, ECX )
 
 ALIGNTEXT16
-LLBL( x86_p3_2dnrr_loop ):
+LLBL(x86_p3_2dnrr_loop):
 
-	FLD_S( SRC(0) )			/* F4 */
-	FMUL_S( MAT(0) )
+	FLD_S( SRC0 )			/* F4 */
+	FMUL_S( MAT0 )
 
-	FLD_S( SRC(1) )			/* F1 F4 */
-	FMUL_S( MAT(5) )
+	FLD_S( SRC1 )			/* F1 F4 */
+	FMUL_S( MAT5 )
 
 	FXCH( ST(1) )			/* F4 F1 */
-	FADD_S( MAT(12) )
-	FLD_S( MAT(13) )		/* F5 F4 F1 */
+	FADD_S( MAT12 )
+	FLD_S( MAT13 )		/* F5 F4 F1 */
 
 	FXCH( ST(2) )			/* F1 F4 F5 */
-	FADDP( ST(0), ST(2) )		/* F4 F5 */
+	FADDP( ST0, ST(2) )		/* F4 F5 */
 
-	MOV_L( SRC(2), EBX )
+	MOV_L( SRC2, EBX )
 
-	FSTP_S( DST(0) )		/* F5 */
-	FSTP_S( DST(1) )		/* */
-	MOV_L( EBX, DST(2) )
+	FSTP_S( DST0 )		/* F5 */
+	FSTP_S( DST1 )		/* */
+	MOV_L( EBX, DST2 )
 
-LLBL( x86_p3_2dnrr_skip ):
+LLBL(x86_p3_2dnrr_skip):
 
 	ADD_L( CONST(16), EDI )
 	ADD_L( EAX, ESI )
 	CMP_L( ECX, EDI )
-	JNE( LLBL( x86_p3_2dnrr_loop ) )
+	JNE( LLBL(x86_p3_2dnrr_loop) )
 
-LLBL( x86_p3_2dnrr_done ):
+LLBL(x86_p3_2dnrr_done):
 
 	POP_L( EBX )
 	POP_L( EDI )
@@ -552,7 +579,7 @@ GLNAME(_mesa_x86_transform_points3_identity ):
 	MOV_L( REGOFF(V4F_COUNT, ESI), ECX )
 
 	TEST_L( ECX, ECX )
-	JZ( LLBL( x86_p3_ir_done ) )
+	JZ( LLBL(x86_p3_ir_done) )
 
 	MOV_L( REGOFF(V4F_STRIDE, ESI), EAX )
 	OR_L( CONST(VEC_SIZE_3), REGOFF(V4F_FLAGS, EDI) )
@@ -567,37 +594,37 @@ GLNAME(_mesa_x86_transform_points3_identity ):
 	ADD_L( EDI, ECX )
 
 	CMP_L( ESI, EDI )
-	JE( LLBL( x86_p3_ir_done ) )
+	JE( LLBL(x86_p3_ir_done) )
 
 ALIGNTEXT16
-LLBL( x86_p3_ir_loop ):
+LLBL(x86_p3_ir_loop):
 
 #if 1
-	MOV_L( SRC(0), EBX )
-	MOV_L( SRC(1), EBP )
-	MOV_L( SRC(2), EDX )
+	MOV_L( SRC0, EBX )
+	MOV_L( SRC1, EBP )
+	MOV_L( SRC2, EDX )
 
-	MOV_L( EBX, DST(0) )
-	MOV_L( EBP, DST(1) )
-	MOV_L( EDX, DST(2) )
+	MOV_L( EBX, DST0 )
+	MOV_L( EBP, DST1 )
+	MOV_L( EDX, DST2 )
 #else
-	FLD_S( SRC(0) )
-	FLD_S( SRC(1) )
-	FLD_S( SRC(2) )
+	FLD_S( SRC0 )
+	FLD_S( SRC1 )
+	FLD_S( SRC2 )
 
-	FSTP_S( DST(2) )
-	FSTP_S( DST(1) )
-	FSTP_S( DST(0) )
+	FSTP_S( DST2 )
+	FSTP_S( DST1 )
+	FSTP_S( DST0 )
 #endif
 
-LLBL( x86_p3_ir_skip ):
+LLBL(x86_p3_ir_skip):
 
 	ADD_L( CONST(16), EDI )
 	ADD_L( EAX, ESI )
 	CMP_L( ECX, EDI )
-	JNE( LLBL( x86_p3_ir_loop ) )
+	JNE( LLBL(x86_p3_ir_loop) )
 
-LLBL( x86_p3_ir_done ):
+LLBL(x86_p3_ir_done):
 
 	POP_L( EBP )
 	POP_L( EBX )
