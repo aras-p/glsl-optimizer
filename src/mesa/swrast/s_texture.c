@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.26 2001/04/19 22:40:45 brianp Exp $ */
+/* $Id: s_texture.c,v 1.27 2001/04/23 18:06:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1792,14 +1792,16 @@ texture_combine(const GLcontext *ctx,
          case GL_CONSTANT_EXT:
             {
                GLchan (*c)[4] = ccolor[j];
-               GLchan red, green, blue;
+               GLchan red, green, blue, alpha;
                UNCLAMPED_FLOAT_TO_CHAN(red,   textureUnit->EnvColor[0]);
                UNCLAMPED_FLOAT_TO_CHAN(green, textureUnit->EnvColor[1]);
                UNCLAMPED_FLOAT_TO_CHAN(blue,  textureUnit->EnvColor[2]);
+               UNCLAMPED_FLOAT_TO_CHAN(alpha, textureUnit->EnvColor[3]);
                for (i = 0; i < n; i++) {
                   c[i][RCOMP] = red;
                   c[i][GCOMP] = green;
                   c[i][BCOMP] = blue;
+                  c[i][ACOMP] = alpha;
                }
                argRGB[j] = (const GLchan (*)[4]) ccolor[j];
             }
@@ -1812,6 +1814,7 @@ texture_combine(const GLcontext *ctx,
          const GLchan (*src)[4] = argRGB[j];
          GLchan (*dst)[4] = ccolor[j];
 
+         /* point to new arg[j] storage */
          argRGB[j] = (const GLchan (*)[4]) ccolor[j];
 
          if (textureUnit->CombineOperandRGB[j] == GL_ONE_MINUS_SRC_COLOR) {
@@ -1822,7 +1825,6 @@ texture_combine(const GLcontext *ctx,
             }
          }
          else if (textureUnit->CombineOperandRGB[j] == GL_SRC_ALPHA) {
-            src = (const GLchan (*)[4]) argA[j];
             for (i = 0; i < n; i++) {
                dst[i][RCOMP] = src[i][ACOMP];
                dst[i][GCOMP] = src[i][ACOMP];
@@ -1831,7 +1833,6 @@ texture_combine(const GLcontext *ctx,
          }
          else {
             ASSERT(textureUnit->CombineOperandRGB[j] ==GL_ONE_MINUS_SRC_ALPHA);
-            src = (const GLchan (*)[4]) argA[j];
             for (i = 0; i < n; i++) {
                dst[i][RCOMP] = CHAN_MAX - src[i][ACOMP];
                dst[i][GCOMP] = CHAN_MAX - src[i][ACOMP];
