@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.16 2001/01/24 04:56:20 brianp Exp $ */
+/* $Id: mtypes.h,v 1.17 2001/01/29 20:47:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -498,9 +498,9 @@ struct gl_light_attrib {
 };
 
 
+#define LIGHT_SPOT         0x1
+#define LIGHT_LOCAL_VIEWER 0x2
 #define LIGHT_POSITIONAL   0x4
-#define LIGHT_SPOT         0x10
-#define LIGHT_LOCAL_VIEWER 0x20
 
 #define LIGHT_NEED_VERTICES (LIGHT_POSITIONAL|LIGHT_LOCAL_VIEWER)
 

@@ -1,4 +1,4 @@
-/* $Id: t_vb_cliptmp.h,v 1.7 2001/01/17 02:49:39 keithw Exp $ */
+/* $Id: t_vb_cliptmp.h,v 1.8 2001/01/29 20:47:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,7 +37,7 @@ do {									\
       GLfloat dpPrev = CLIP_DOTPROD(idxPrev, A, B, C, D );		\
       GLuint outcount = 0;						\
       GLuint i;								\
-    									\
+									\
       inlist[n] = inlist[0]; /* prevent rotation of vertices */		\
       for (i = 1; i <= n; i++) {					\
 	 GLuint idx = inlist[i];					\
@@ -58,13 +58,13 @@ do {									\
 		* know dp != dpPrev from DIFFERENT_SIGNS, above.	\
 		*/							\
 	       GLfloat t = dp / (dp - dpPrev);				\
-               LINTERP_SZ( t, coord, newvert, idx, idxPrev, SIZE );	\
+               LINTERP_4F( t, coord, newvert, idx, idxPrev, SIZE );	\
       	       interp( ctx, t, newvert, idx, idxPrev, GL_TRUE );	\
-	    } else {				\
+	    } else {							\
 	       /* Coming back in.					\
 		*/							\
 	       GLfloat t = dpPrev / (dpPrev - dp);			\
-               LINTERP_SZ( t, coord, newvert, idxPrev, idx, SIZE );	\
+               LINTERP_4F( t, coord, newvert, idxPrev, idx, SIZE );	\
 	       interp( ctx, t, newvert, idxPrev, idx, GL_FALSE );	\
 	    }								\
 	 }								\
@@ -98,13 +98,13 @@ do {								\
 	 if (NEGATIVE(dpJ)) {					\
 	    GLfloat t = dpI / (dpI - dpJ);			\
             VB->ClipMask[jj] |= PLANE;				\
-            LINTERP_SZ( t, coord, newvert, ii, jj, SIZE );	\
+            LINTERP_4F( t, coord, newvert, ii, jj, SIZE );	\
 	    interp( ctx, t, newvert, ii, jj, GL_FALSE );	\
             jj = newvert;					\
 	 } else {						\
   	    GLfloat t = dpJ / (dpJ - dpI);			\
             VB->ClipMask[ii] |= PLANE;				\
-            LINTERP_SZ( t, coord, newvert, jj, ii, SIZE );	\
+            LINTERP_4F( t, coord, newvert, jj, ii, SIZE );	\
 	    interp( ctx, t, newvert, jj, ii, GL_FALSE );	\
             ii = newvert;					\
 	 }							\
@@ -115,50 +115,15 @@ do {								\
 } while (0)
 
 
-static void TAG(build_proj_verts)( GLcontext *ctx )
-{
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-
-   /* Project if necessary.
-    */
-   if (VB->ProjectedClipPtr) {
-      GLfloat (*coord)[4] = VB->ClipPtr->data;
-      GLfloat (*proj)[4] = VB->ProjectedClipPtr->data;
-      GLuint last = VB->LastClipped;
-      GLuint i;
-
-      for (i = VB->FirstClipped; i < last; i++) {
-	 if (VB->ClipMask[i] == 0) {
-	    if (SIZE == 4 && W(i) != 0.0F) {
-	       GLfloat wInv = 1.0F / W(i);
-	       proj[i][0] = X(i) * wInv;
-	       proj[i][1] = Y(i) * wInv;
-	       proj[i][2] = Z(i) * wInv;
-	       proj[i][3] = wInv;
-	    } else {
-	       proj[i][0] = X(i);
-	       proj[i][1] = Y(i);
-	       proj[i][2] = Z(i);
-	       proj[i][3] = W(i);
-	    }
-	 }
-      }
-   }
-
-   ctx->Driver.BuildProjectedVertices(ctx, 
-				      VB->FirstClipped, 
-				      VB->LastClipped,
-				      ~0);
-}
 
 /* Clip a line against the viewport and user clip planes.
  */
-static void TAG(clip_line)( GLcontext *ctx,
-			    GLuint i, GLuint j,
-			    GLubyte mask )
+static __inline void TAG(clip_line)( GLcontext *ctx,
+				     GLuint i, GLuint j,
+				     GLubyte mask )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   interp_func interp = (interp_func) VB->interpfunc;
+   interp_func interp = ctx->Driver.RenderInterp;
    GLfloat (*coord)[4] = VB->ClipPtr->data;
    GLuint ii = i, jj = j, p;
 
@@ -186,31 +151,29 @@ static void TAG(clip_line)( GLcontext *ctx,
    }
 
    if ((ctx->_TriangleCaps & DD_FLATSHADE) && j != jj)
-      VB->copypvfunc( ctx, jj, j );
+      ctx->Driver.RenderCopyPV( ctx, jj, j );
 
-   TAG(build_proj_verts)( ctx );
-
-   /* Render the new line.
-    */
-   ctx->Driver.LineFunc( ctx, ii, jj );
-
+   ctx->Driver.RenderClippedLine( ctx, ii, jj );
 }
 
 
-/* Clip a triangle or quad against the viewport and user clip planes.
+/* Clip a triangle against the viewport and user clip planes.
  */
-static void TAG(clip_polygon)( GLcontext *ctx, 
-			       GLuint n, GLuint vlist[], 
-			       GLubyte mask )
+static __inline void TAG(clip_tri)( GLcontext *ctx, 
+			   GLuint v0, GLuint v1, GLuint v2,
+			   GLubyte mask )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   interp_func interp = (interp_func) VB->interpfunc;
+   interp_func interp = ctx->Driver.RenderInterp;
    GLfloat (*coord)[4] = VB->ClipPtr->data;
-   GLuint pv = vlist[0];
-   GLuint vlist2[MAX_CLIPPED_VERTICES];
-   GLuint *inlist = vlist, *outlist = vlist2;
+   GLuint pv = v0;
+   GLuint vlist[2][MAX_CLIPPED_VERTICES];
+   GLuint *inlist = vlist[0], *outlist = vlist[1];
    GLuint p;
    GLubyte *clipmask = VB->ClipMask;
+   GLuint n = 3;
+
+   ASSIGN_3V(inlist, v0, v1, v2 );
 
    VB->LastClipped = VB->FirstClipped;
 
@@ -238,25 +201,64 @@ static void TAG(clip_polygon)( GLcontext *ctx,
    if (ctx->_TriangleCaps & DD_FLATSHADE) {
       if (pv != inlist[0]) {
 	 ASSERT( inlist[0] >= VB->FirstClipped );
-	 VB->copypvfunc( ctx, inlist[0], pv );
+	 ctx->Driver.RenderCopyPV( ctx, inlist[0], pv );
       }
    }
 
-   TAG(build_proj_verts)( ctx );
-
-   /* Render the new vertices as an unclipped polygon. 
-    */
-   {
-      GLuint *tmp = VB->Elts;
-      VB->Elts = inlist;
-      ctx->Driver.RenderTabElts[GL_POLYGON]( ctx, 0, n, PRIM_BEGIN|PRIM_END );
-      VB->Elts = tmp;
-   }
+   ctx->Driver.RenderClippedPolygon( ctx, inlist, n );
 }
 
 
+/* Clip a quad against the viewport and user clip planes.
+ */
+static __inline void TAG(clip_quad)( GLcontext *ctx, 
+				     GLuint v0, GLuint v1, GLuint v2, GLuint v3,
+				     GLubyte mask )
+{
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   interp_func interp = ctx->Driver.RenderInterp;
+   GLfloat (*coord)[4] = VB->ClipPtr->data;
+   GLuint pv = v0;
+   GLuint vlist[2][MAX_CLIPPED_VERTICES];
+   GLuint *inlist = vlist[0], *outlist = vlist[1];
+   GLuint p;
+   GLubyte *clipmask = VB->ClipMask;
+   GLuint n = 4;
 
+   ASSIGN_4V(inlist, v0, v1, v2, v3 );
 
+   VB->LastClipped = VB->FirstClipped;
+
+   if (mask & 0x3f) {
+      POLY_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
+      POLY_CLIP( CLIP_LEFT_BIT,    1,  0,  0, 1 );
+      POLY_CLIP( CLIP_TOP_BIT,     0, -1,  0, 1 );
+      POLY_CLIP( CLIP_BOTTOM_BIT,  0,  1,  0, 1 );
+      POLY_CLIP( CLIP_FAR_BIT,     0,  0, -1, 1 );
+      POLY_CLIP( CLIP_NEAR_BIT,    0,  0,  1, 1 );
+   }
+
+   if (mask & CLIP_USER_BIT) {
+      for (p=0;p<MAX_CLIP_PLANES;p++) {
+	 if (ctx->Transform.ClipEnabled[p]) {
+	    GLfloat a = ctx->Transform._ClipUserPlane[p][0];
+	    GLfloat b = ctx->Transform._ClipUserPlane[p][1];
+	    GLfloat c = ctx->Transform._ClipUserPlane[p][2];
+	    GLfloat d = ctx->Transform._ClipUserPlane[p][3];
+	    POLY_CLIP( CLIP_USER_BIT, a, b, c, d );
+	 }
+      }
+   }
+
+   if (ctx->_TriangleCaps & DD_FLATSHADE) {
+      if (pv != inlist[0]) {
+	 ASSERT( inlist[0] >= VB->FirstClipped );
+	 ctx->Driver.RenderCopyPV( ctx, inlist[0], pv );
+      }
+   }
+
+   ctx->Driver.RenderClippedPolygon( ctx, inlist, n );
+}
 
 #undef W
 #undef Z

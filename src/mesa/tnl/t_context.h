@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.12 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: t_context.h,v 1.13 2001/01/29 20:47:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -234,12 +234,6 @@ struct vertex_arrays
 
 typedef struct gl_material GLmaterial;
 
-typedef void (*interp_func)( GLcontext *ctx,
-			     GLfloat t, GLuint dst, GLuint in, GLuint out,
-			     GLboolean force_boundary );
-
-typedef void (*copy_pv_func)( GLcontext *ctx, GLuint dst, GLuint src );
-
 /* Contains the current state of a running pipeline.
  */
 typedef struct vertex_buffer
@@ -299,8 +293,6 @@ typedef struct vertex_buffer
     */
 
    GLuint LastClipped;
-   interp_func interpfunc;
-   copy_pv_func copypvfunc;
    /* Private data from _tnl_render_stage that has no business being
     * in this struct.  
     */

@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.41 2001/01/24 00:04:58 brianp Exp $ */
+/* $Id: osmesa.c,v 1.42 2001/01/29 20:47:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1775,7 +1775,13 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.SetDrawBuffer = set_draw_buffer;
    ctx->Driver.SetReadBuffer = set_read_buffer;
 
+   ctx->Driver.Accum = _swrast_Accum;
+   ctx->Driver.Bitmap = _swrast_Bitmap;
    ctx->Driver.Clear = clear;
+   ctx->Driver.CopyPixels = _swrast_CopyPixels;
+   ctx->Driver.DrawPixels = _swrast_DrawPixels;
+   ctx->Driver.ReadPixels = _swrast_ReadPixels;
+   ctx->Driver.ResizeBuffersMESA = _swrast_alloc_buffers;
 
    ctx->Driver.GetBufferSize = buffer_size;
 
@@ -1787,6 +1793,10 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.RenderPrimitive = _swsetup_RenderPrimitive;
    ctx->Driver.RenderStart = _swsetup_RenderStart;
    ctx->Driver.RenderFinish = _swsetup_RenderFinish;
+   ctx->Driver.RenderInterp = _swsetup_RenderInterp;
+   ctx->Driver.RenderCopyPV = _swsetup_RenderCopyPV;
+   ctx->Driver.RenderClippedLine = _swsetup_RenderClippedLine;
+   ctx->Driver.RenderClippedPolygon = _swsetup_RenderClippedPolygon;
 
    /* RGB(A) span/pixel functions */
    if (osmesa->format == OSMESA_RGB) {

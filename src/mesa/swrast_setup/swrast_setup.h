@@ -69,4 +69,22 @@ _swsetup_RenderStart( GLcontext *ctx );
 extern void
 _swsetup_RenderFinish( GLcontext *ctx );
 
+extern void 
+_swsetup_RenderProjectInterpVerts( GLcontext *ctx );
+
+extern void 
+_swsetup_RenderInterp( GLcontext *ctx, GLfloat t, 
+		       GLuint dst, GLuint out, GLuint in,
+		       GLboolean force_boundary );
+extern void 
+_swsetup_RenderCopyPV( GLcontext *ctx, GLuint dst, GLuint src );
+
+extern void 
+_swsetup_RenderClippedPolygon( GLcontext *ctx, const GLuint *elts, GLuint n );
+
+extern void 
+_swsetup_RenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj );
+
+
+
 #endif

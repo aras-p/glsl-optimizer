@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.5 2001/01/08 21:56:00 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.6 2001/01/29 20:47:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -156,6 +156,9 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
 
 
 
+#if 0
+/* Drivers to turn this on?
+ */
 static void calc_normal_lengths( GLfloat *dest,
 				 CONST GLfloat (*data)[3],
 				 GLuint *flags,
@@ -177,7 +180,7 @@ static void calc_normal_lengths( GLfloat *dest,
 
    flags[0] = tmpflag;
 }
-
+#endif
 
 
 static void 

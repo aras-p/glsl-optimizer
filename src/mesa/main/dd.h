@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.48 2001/01/24 00:04:58 brianp Exp $ */
+/* $Id: dd.h,v 1.49 2001/01/29 20:47:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -137,6 +137,12 @@ typedef void (*quad_func)( GLcontext *ctx, GLuint v1, GLuint v2,
 typedef void (*render_func)( GLcontext *ctx, GLuint start, GLuint count, 
 			     GLuint flags );
 
+typedef void (*interp_func)( GLcontext *ctx,
+			     GLfloat t, GLuint dst, GLuint in, GLuint out,
+			     GLboolean force_boundary );
+
+typedef void (*copy_pv_func)( GLcontext *ctx, GLuint dst, GLuint src );
+
 
 /*
  * Device Driver function table.
@@ -161,13 +167,11 @@ struct dd_function_table {
     * LineFunc, or TriangleFunc).
     */
 
-   GLbitfield (*Clear)( GLcontext *ctx, GLbitfield mask, GLboolean all,
-                        GLint x, GLint y, GLint width, GLint height );
+   void (*Clear)( GLcontext *ctx, GLbitfield mask, GLboolean all,
+		  GLint x, GLint y, GLint width, GLint height );
    /* Clear the color/depth/stencil/accum buffer(s).
     * 'mask' is a bitmask of the DD_*_BIT values defined above that indicates
-    * which buffers need to be cleared.  The driver should clear those
-    * buffers then return a new bitmask indicating which buffers should be
-    * cleared by software Mesa.
+    * which buffers need to be cleared. 
     * If 'all' is true then the clear the whole buffer, else clear only the
     * region defined by (x,y,width,height).
     * This function must obey the glColorMask, glIndexMask and glStencilMask
@@ -395,8 +399,8 @@ struct dd_function_table {
    /***
     *** For hardware accumulation buffer:
     ***/
-   GLboolean (*Accum)( GLcontext *ctx, GLenum op, GLfloat value,
-                       GLint xpos, GLint ypos, GLint width, GLint height );
+   void (*Accum)( GLcontext *ctx, GLenum op, GLfloat value,
+		  GLint xpos, GLint ypos, GLint width, GLint height );
    /* Execute glAccum command within the given scissor region.
     */
 
@@ -405,48 +409,44 @@ struct dd_function_table {
     *** glDraw/Read/CopyPixels and glBitmap functions:
     ***/
 
-   GLboolean (*DrawPixels)( GLcontext *ctx,
-                            GLint x, GLint y, GLsizei width, GLsizei height,
-                            GLenum format, GLenum type,
-                            const struct gl_pixelstore_attrib *unpack,
-                            const GLvoid *pixels );
+   void (*DrawPixels)( GLcontext *ctx,
+		       GLint x, GLint y, GLsizei width, GLsizei height,
+		       GLenum format, GLenum type,
+		       const struct gl_pixelstore_attrib *unpack,
+		       const GLvoid *pixels );
    /* This is called by glDrawPixels.
     * 'unpack' describes how to unpack the source image data.
-    * Return GL_TRUE if the driver succeeds, return GL_FALSE if core Mesa
-    * must do the job.
     */
 
-   GLboolean (*ReadPixels)( GLcontext *ctx,
-                            GLint x, GLint y, GLsizei width, GLsizei height,
-                            GLenum format, GLenum type,
-                            const struct gl_pixelstore_attrib *unpack,
-                            GLvoid *dest );
+   void (*ReadPixels)( GLcontext *ctx,
+		       GLint x, GLint y, GLsizei width, GLsizei height,
+		       GLenum format, GLenum type,
+		       const struct gl_pixelstore_attrib *unpack,
+		       GLvoid *dest );
    /* Called by glReadPixels.
-    * Return GL_TRUE if operation completed, else return GL_FALSE.
-    * This function must respect all glPixelTransfer settings.
     */
 
-   GLboolean (*CopyPixels)( GLcontext *ctx,
+   void (*CopyPixels)( GLcontext *ctx,
                             GLint srcx, GLint srcy,
                             GLsizei width, GLsizei height,
                             GLint dstx, GLint dsty, GLenum type );
-   /* Do a glCopyPixels.  Return GL_TRUE if operation completed, else
-    * return GL_FALSE.  This function must respect all rasterization
+   /* Do a glCopyPixels.  This function must respect all rasterization
     * state, glPixelTransfer, glPixelZoom, etc.
     */
 
-   GLboolean (*Bitmap)( GLcontext *ctx,
-                        GLint x, GLint y, GLsizei width, GLsizei height,
-                        const struct gl_pixelstore_attrib *unpack,
-                        const GLubyte *bitmap );
+   void (*Bitmap)( GLcontext *ctx,
+		   GLint x, GLint y, GLsizei width, GLsizei height,
+		   const struct gl_pixelstore_attrib *unpack,
+		   const GLubyte *bitmap );
    /* This is called by glBitmap.  Works the same as DrawPixels, above.
     */
+
+   void (*ResizeBuffersMESA)( GLcontext *ctx );
 
 
    /***
     *** Texture image functions:
     ***/
-
    GLboolean (*TexImage1D)( GLcontext *ctx, GLenum target, GLint level,
                             GLenum format, GLenum type, const GLvoid *pixels,
                             const struct gl_pixelstore_attrib *packing,
@@ -701,6 +701,10 @@ struct dd_function_table {
    /* Called by glBindTexture().
     */
 
+   void (*CreateTexture)( GLcontext *ctx, struct gl_texture_object *tObj );
+   /* Called when a texture object is created.
+    */
+
    void (*DeleteTexture)( GLcontext *ctx, struct gl_texture_object *tObj );
    /* Called when a texture object is about to be deallocated.  Driver
     * should free anything attached to the DriverData pointers.
@@ -836,6 +840,13 @@ struct dd_function_table {
     * modes accepted by glBegin().
     */
 
+   interp_func RenderInterp;
+   copy_pv_func RenderCopyPV;
+   void (*RenderClippedPolygon)( GLcontext *ctx, const GLuint *elts, GLuint n );
+   void (*RenderClippedLine)( GLcontext *ctx, GLuint v0, GLuint v1 );
+   /* Functions to interpolate between prebuilt vertices, copy flat-shade
+    * provoking color, and to render clipped primitives.
+    */
 
    /***
     *** Parameters for _tnl_render_stage

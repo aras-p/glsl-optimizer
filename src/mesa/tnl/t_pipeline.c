@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.c,v 1.10 2001/01/17 02:49:39 keithw Exp $ */
+/* $Id: t_pipeline.c,v 1.11 2001/01/29 20:47:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,32 +77,42 @@ void _tnl_destroy_pipeline( GLcontext *ctx )
    tnl->pipeline.nr_stages = 0;
 }
 
-
-
+/* TODO: merge validate with run.
+ */
 void _tnl_validate_pipeline( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct gl_pipeline *pipe = &tnl->pipeline;
-   struct gl_pipeline_stage *stage = pipe->stages;
+   struct gl_pipeline_stage *s = pipe->stages;
    GLuint newstate = pipe->build_state_changes;
    GLuint generated = 0;
    GLuint i;
+   GLuint changed_inputs = 0;
 
    pipe->inputs = 0;
    pipe->build_state_changes = 0;
 
-   for (i = 0 ; i < pipe->nr_stages ; i++) {
-      if (stage[i].check_state & newstate) {
-	 stage[i].check(ctx, &stage[i]);
+   for (i = pipe->nr_stages+1 ; --i ; s++) {
+
+      s->changed_inputs |= s->inputs & changed_inputs;
+      
+      if (s->check_state & newstate) {      
+	 if (s->active) {
+	    GLuint old_outputs = s->outputs;
+	    s->check(ctx, s);
+	    if (!s->active)
+	       changed_inputs |= old_outputs;
+	 }
+	 else 
+	    s->check(ctx, s);
       }
 
-      if (stage[i].active) {
-	 pipe->inputs |= stage[i].inputs & ~generated;
-	 generated |= stage[i].outputs;
+      if (s->active) {
+	 pipe->inputs |= s->inputs & ~generated;
+	 generated |= s->outputs;
       } 
    }
 }
-
 
 
 
@@ -110,7 +120,7 @@ void _tnl_run_pipeline( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct gl_pipeline *pipe = &tnl->pipeline;
-   struct gl_pipeline_stage *stage = pipe->stages;
+   struct gl_pipeline_stage *s = pipe->stages;
    GLuint changed_state = pipe->run_state_changes;
    GLuint changed_inputs = pipe->run_input_changes;
    GLboolean running = GL_TRUE;
@@ -129,21 +139,21 @@ void _tnl_run_pipeline( GLcontext *ctx )
     * Even inactive stages have their state and inputs examined to try
     * to keep cached data alive over state-changes. 
     */
-   for (i = 0 ; i < pipe->nr_stages ; i++) {
-      
-      stage[i].changed_inputs |= stage[i].inputs & changed_inputs;
+   for (i = pipe->nr_stages+1 ; --i ; s++) {
+      s->changed_inputs |= s->inputs & changed_inputs;
 
-      if (stage[i].run_state & changed_state) {
-	 stage[i].changed_inputs = stage[i].inputs;
+      if (s->run_state & changed_state) {
+/*  	 changed_inputs |= s->check(ctx, s); */
+	 s->changed_inputs = s->inputs;
       }
 
-      if (stage[i].active) {
-	 if (stage[i].changed_inputs) 
-	    changed_inputs |= stage[i].outputs;
-
+      if (s->active) {
 	 if (running) {
-	    running = stage[i].run( ctx, &stage[i] );
-	    stage[i].changed_inputs = 0;
+	    if (s->changed_inputs) 
+	       changed_inputs |= s->outputs;
+
+/*  	    fprintf(stderr, "run %s\n", s->name); */
+	    running = s->run( ctx, s );
 	 }
       }
    }

@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.24 2001/01/24 00:04:58 brianp Exp $ */
+/* $Id: buffers.c,v 1.25 2001/01/29 20:47:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,7 +41,6 @@
 #include "stencil.h"
 #include "state.h"
 #include "mtypes.h"
-#include "swrast/swrast.h"
 #endif
 
 
@@ -126,25 +125,8 @@ _mesa_Clear( GLbitfield mask )
       }
 
       ASSERT(ctx->Driver.Clear);
-      newMask = (*ctx->Driver.Clear)( ctx, ddMask, !ctx->Scissor.Enabled,
-                                      x, y, width, height );
-
-#ifdef DEBUG
-      {
-         GLbitfield legalBits = DD_FRONT_LEFT_BIT |
-                                DD_FRONT_RIGHT_BIT |
-                                DD_BACK_LEFT_BIT |
-                                DD_BACK_RIGHT_BIT |
-                                DD_DEPTH_BIT |
-                                DD_STENCIL_BIT |
-                                DD_ACCUM_BIT;
-         assert((newMask & (~legalBits)) == 0);
-      }
-#endif
-
-      if (newMask)
-	 _swrast_Clear( ctx, newMask, !ctx->Scissor.Enabled,
-			x, y, width, height );
+      ctx->Driver.Clear( ctx, ddMask, !ctx->Scissor.Enabled,
+			 x, y, width, height );
    }
 }
 
@@ -387,5 +369,5 @@ _mesa_ResizeBuffersMESA( void )
    ctx->DrawBuffer->Width = buf_width;
    ctx->DrawBuffer->Height = buf_height;
 
-   _swrast_alloc_buffers( ctx );
+   ctx->Driver.ResizeBuffersMESA( ctx );
 }

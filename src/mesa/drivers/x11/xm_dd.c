@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.11 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.12 2001/01/29 20:47:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -755,15 +755,23 @@ clear_buffers( GLcontext *ctx, GLbitfield mask,
    if (mask & DD_FRONT_LEFT_BIT) {
       ASSERT(xmesa->xm_buffer->front_clear_func);
       (*xmesa->xm_buffer->front_clear_func)( ctx, all, x, y, width, height );
+      mask &= ~DD_FRONT_LEFT_BIT;
    }
    if (mask & DD_BACK_LEFT_BIT) {
       ASSERT(xmesa->xm_buffer->back_clear_func);
       (*xmesa->xm_buffer->back_clear_func)( ctx, all, x, y, width, height );
+      mask &= ~DD_BACK_LEFT_BIT;
    }
-   return mask & (~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT));
+   if (mask)
+      _swrast_Clear( ctx, mask, all, x, y, width, height );
 }
 
 
+static void
+resize_buffers( GLcontext *ctx )
+{
+   _swrast_alloc_buffers( ctx );
+}
 
 #if 0
 /*
@@ -922,8 +930,11 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.GetBufferSize = get_buffer_size;
    ctx->Driver.Flush = flush;
    ctx->Driver.Finish = finish;
-
+ 
+   /* Hooks for t_vb_render.c:
+    */
    ctx->Driver.RenderStart = _swsetup_RenderStart;
+   ctx->Driver.RenderFinish = _swsetup_RenderFinish;
    ctx->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
    ctx->Driver.RenderPrimitive = _swsetup_RenderPrimitive;
    ctx->Driver.PointsFunc = _swsetup_Points;
@@ -931,15 +942,28 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.TriangleFunc = _swsetup_Triangle;
    ctx->Driver.QuadFunc = _swsetup_Quad;
    ctx->Driver.ResetLineStipple = _swrast_ResetLineStipple;
-   ctx->Driver.RenderFinish = _swsetup_RenderFinish;
+   ctx->Driver.RenderInterp = _swsetup_RenderInterp;
+   ctx->Driver.RenderCopyPV = _swsetup_RenderCopyPV;
+   ctx->Driver.RenderClippedLine = _swsetup_RenderClippedLine;
+   ctx->Driver.RenderClippedPolygon = _swsetup_RenderClippedPolygon;
+   
+   /* Software rasterizer pixel paths:
+    */
+   ctx->Driver.Accum = _swrast_Accum;
+   ctx->Driver.Bitmap = _swrast_Bitmap;
+   ctx->Driver.Clear = clear_buffers;
+   ctx->Driver.ResizeBuffersMESA = resize_buffers;
+   ctx->Driver.CopyPixels = _swrast_CopyPixels;
+   ctx->Driver.DrawPixels = _swrast_DrawPixels;
+   ctx->Driver.ReadPixels = _swrast_ReadPixels;
 
-
+   
+   /* 
+    */
    ctx->Driver.SetDrawBuffer = set_draw_buffer;
    ctx->Driver.SetReadBuffer = set_read_buffer;
-
    ctx->Driver.ClearIndex = clear_index;
    ctx->Driver.ClearColor = clear_color;
-   ctx->Driver.Clear = clear_buffers;
    ctx->Driver.IndexMask = index_mask;
    ctx->Driver.ColorMask = color_mask;
    ctx->Driver.Enable = enable;

@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.37 2000/12/26 05:09:29 keithw Exp $ */
+/* $Id: texobj.c,v 1.38 2001/01/29 20:47:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,8 +54,8 @@
  * Return:  pointer to new texture object
  */
 struct gl_texture_object *
-_mesa_alloc_texture_object( struct gl_shared_state *shared, GLuint name,
-                            GLuint dimensions)
+_mesa_alloc_texture_object( struct gl_shared_state *shared, 
+			    GLuint name, GLuint dimensions )
 {
    struct gl_texture_object *obj;
 
@@ -177,7 +177,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
                                 struct gl_texture_object *t )
 {
    const GLint baseLevel = t->BaseLevel;
-   GLint maxLog2;
+   GLint maxLog2 = 0;
 
    t->Complete = GL_TRUE;  /* be optimistic */
 
@@ -446,7 +446,7 @@ _mesa_GenTextures( GLsizei n, GLuint *texName )
    for (i=0;i<n;i++) {
       GLuint name = first + i;
       GLuint dims = 0;
-      (void) _mesa_alloc_texture_object(ctx->Shared, name, dims);
+      (void) _mesa_alloc_texture_object( ctx->Shared, name, dims);
    }
 
    _glthread_UNLOCK_MUTEX(GenTexturesLock);
@@ -522,7 +522,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    GLuint unit = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *oldTexObj;
-   struct gl_texture_object *newTexObj;
+   struct gl_texture_object *newTexObj = 0;
    GLuint targetDim;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -594,7 +594,8 @@ _mesa_BindTexture( GLenum target, GLuint texName )
       }
       else {
          /* if this is a new texture id, allocate a texture object now */
-	 newTexObj = _mesa_alloc_texture_object(ctx->Shared, texName, targetDim);
+	 newTexObj = _mesa_alloc_texture_object( ctx->Shared, texName,
+						 targetDim);
          if (!newTexObj) {
             gl_error(ctx, GL_OUT_OF_MEMORY, "glBindTexture");
             return;

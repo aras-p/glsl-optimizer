@@ -145,8 +145,8 @@ static void fxDDClearColor(GLcontext *ctx, const GLchan color[4])
 
 
 /* Clear the color and/or depth buffers */
-static GLbitfield fxDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
-                            GLint x, GLint y, GLint width, GLint height )
+static void fxDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
+		      GLint x, GLint y, GLint width, GLint height )
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
@@ -255,7 +255,10 @@ static GLbitfield fxDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
       ;
   }
 
-  return softwareMask;
+  /* Clear any remaining buffers:
+   */
+  if (softwareMask) 
+     _swrast_Clear( ctx, softwareMask, all, x, y, width, height );
 }
 
 
@@ -313,10 +316,10 @@ static void fxDDSetReadBuffer(GLcontext *ctx, GLframebuffer *buffer,
 
 
 
-static GLboolean fxDDDrawBitmap(GLcontext *ctx, GLint px, GLint py,
-                                GLsizei width, GLsizei height,
-                                const struct gl_pixelstore_attrib *unpack,
-                                const GLubyte *bitmap)
+static void fxDDDrawBitmap(GLcontext *ctx, GLint px, GLint py,
+			   GLsizei width, GLsizei height,
+			   const struct gl_pixelstore_attrib *unpack,
+			   const GLubyte *bitmap)
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   GrLfbInfo_t info;
@@ -334,8 +337,11 @@ static GLboolean fxDDDrawBitmap(GLcontext *ctx, GLint px, GLint py,
       ctx->Scissor.Enabled ||
       (  ctx->DrawBuffer->UseSoftwareAlphaBuffers &&
          ctx->Color.ColorMask[ACOMP]) ||
-      ctx->Color.MultiDrawBuffer)
-    return GL_FALSE;
+      ctx->Color.MultiDrawBuffer) 
+  {
+     _swrast_Bitmap( ctx, px, py, width, height, unpack, bitmap );
+     return;
+  }
 
 
   if (ctx->Scissor.Enabled) {
@@ -374,7 +380,7 @@ static GLboolean fxDDDrawBitmap(GLcontext *ctx, GLint px, GLint py,
     }
 
     if (width <= 0 || height <= 0)
-      return GL_TRUE;  /* totally scissored away */
+       return;
   }
   else {
     finalUnpack = unpack;
@@ -408,7 +414,7 @@ static GLboolean fxDDDrawBitmap(GLcontext *ctx, GLint px, GLint py,
 #ifndef FX_SILENT
     fprintf(stderr,"fx Driver: error locking the linear frame buffer\n");
 #endif
-    return GL_TRUE;
+    return;
   }
 
   {
@@ -472,121 +478,121 @@ static GLboolean fxDDDrawBitmap(GLcontext *ctx, GLint px, GLint py,
   }
 
   FX_grLfbUnlock(GR_LFB_WRITE_ONLY,fxMesa->currentFB);
-  return GL_TRUE;
 }
 
 
-static GLboolean fxDDReadPixels( GLcontext *ctx, GLint x, GLint y,
-                                 GLsizei width, GLsizei height,
-                                 GLenum format, GLenum type,
-                                 const struct gl_pixelstore_attrib *packing,
-                                 GLvoid *dstImage )
+static void fxDDReadPixels( GLcontext *ctx, GLint x, GLint y,
+			    GLsizei width, GLsizei height,
+			    GLenum format, GLenum type,
+			    const struct gl_pixelstore_attrib *packing,
+			    GLvoid *dstImage )
 {
-  if (ctx->_ImageTransferState) {
-    return GL_FALSE;  /* can't do this */
-  }
-  else {
-    fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
-    GrLfbInfo_t info;
-    GLboolean result = GL_FALSE;
+   if (ctx->_ImageTransferState) {
+      _swrast_ReadPixels( ctx, x, y, width, height, format, type,
+			  packing, dstImage );
+      return;  
+   }
+   else {
+      fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
+      GrLfbInfo_t info;
 
-    BEGIN_BOARD_LOCK();
-    if (grLfbLock(GR_LFB_READ_ONLY,
-                  fxMesa->currentFB,
-                  GR_LFBWRITEMODE_ANY,
-                  GR_ORIGIN_UPPER_LEFT,
-                  FXFALSE,
-                  &info)) {
-      const GLint winX = 0;
-      const GLint winY = fxMesa->height - 1;
-      const GLint srcStride = info.strideInBytes / 2; /* stride in GLushorts */
-      const GLushort *src = (const GLushort *) info.lfbPtr
-                          + (winY - y) * srcStride + (winX + x);
-      GLubyte *dst = (GLubyte *) _mesa_image_address(packing, dstImage,
-                                         width, height, format, type, 0, 0, 0);
-      GLint dstStride = _mesa_image_row_stride(packing, width, format, type);
+      BEGIN_BOARD_LOCK();
+      if (grLfbLock(GR_LFB_READ_ONLY,
+		    fxMesa->currentFB,
+		    GR_LFBWRITEMODE_ANY,
+		    GR_ORIGIN_UPPER_LEFT,
+		    FXFALSE,
+		    &info)) {
+	 const GLint winX = 0;
+	 const GLint winY = fxMesa->height - 1;
+	 const GLint srcStride = info.strideInBytes / 2; /* stride in GLushorts */
+	 const GLushort *src = (const GLushort *) info.lfbPtr
+	    + (winY - y) * srcStride + (winX + x);
+	 GLubyte *dst = (GLubyte *) _mesa_image_address(packing, dstImage,
+							width, height, format, type, 0, 0, 0);
+	 GLint dstStride = _mesa_image_row_stride(packing, width, format, type);
 
-      if (format == GL_RGB && type == GL_UNSIGNED_BYTE) {
-        /* convert 5R6G5B into 8R8G8B */
-        GLint row, col;
-        const GLint halfWidth = width >> 1;
-        const GLint extraPixel = (width & 1);
-        for (row = 0; row < height; row++) {
-          GLubyte *d = dst;
-          for (col = 0; col < halfWidth; col++) {
-            const GLuint pixel = ((const GLuint *) src)[col];
-            const GLint pixel0 = pixel & 0xffff;
-            const GLint pixel1 = pixel >> 16;
-            *d++ = FX_PixelToR[pixel0];
-            *d++ = FX_PixelToG[pixel0];
-            *d++ = FX_PixelToB[pixel0];
-            *d++ = FX_PixelToR[pixel1];
-            *d++ = FX_PixelToG[pixel1];
-            *d++ = FX_PixelToB[pixel1];
-          }
-          if (extraPixel) {
-            GLushort pixel = src[width-1];
-            *d++ = FX_PixelToR[pixel];
-            *d++ = FX_PixelToG[pixel];
-            *d++ = FX_PixelToB[pixel];
-          }
-          dst += dstStride;
-          src -= srcStride;
-        }
-        result = GL_TRUE;
-      }
-      else if (format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
-        /* convert 5R6G5B into 8R8G8B8A */
-        GLint row, col;
-        const GLint halfWidth = width >> 1;
-        const GLint extraPixel = (width & 1);
-        for (row = 0; row < height; row++) {
-          GLubyte *d = dst;
-          for (col = 0; col < halfWidth; col++) {
-            const GLuint pixel = ((const GLuint *) src)[col];
-            const GLint pixel0 = pixel & 0xffff;
-            const GLint pixel1 = pixel >> 16;
-            *d++ = FX_PixelToR[pixel0];
-            *d++ = FX_PixelToG[pixel0];
-            *d++ = FX_PixelToB[pixel0];
-            *d++ = 255;
-            *d++ = FX_PixelToR[pixel1];
-            *d++ = FX_PixelToG[pixel1];
-            *d++ = FX_PixelToB[pixel1];
-            *d++ = 255;
-          }
-          if (extraPixel) {
-            const GLushort pixel = src[width-1];
-            *d++ = FX_PixelToR[pixel];
-            *d++ = FX_PixelToG[pixel];
-            *d++ = FX_PixelToB[pixel];
-            *d++ = 255;
-          }
-          dst += dstStride;
-          src -= srcStride;
-        }
-        result = GL_TRUE;
-      }
-      else if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5) {
-        /* directly memcpy 5R6G5B pixels into client's buffer */
-        const GLint widthInBytes = width * 2;
-        GLint row;
-        for (row = 0; row < height; row++) {
-          MEMCPY(dst, src, widthInBytes);
-          dst += dstStride;
-          src -= srcStride;
-        }
-        result = GL_TRUE;
-      }
-      else {
-        result = GL_FALSE;
-      }
+	 if (format == GL_RGB && type == GL_UNSIGNED_BYTE) {
+	    /* convert 5R6G5B into 8R8G8B */
+	    GLint row, col;
+	    const GLint halfWidth = width >> 1;
+	    const GLint extraPixel = (width & 1);
+	    for (row = 0; row < height; row++) {
+	       GLubyte *d = dst;
+	       for (col = 0; col < halfWidth; col++) {
+		  const GLuint pixel = ((const GLuint *) src)[col];
+		  const GLint pixel0 = pixel & 0xffff;
+		  const GLint pixel1 = pixel >> 16;
+		  *d++ = FX_PixelToR[pixel0];
+		  *d++ = FX_PixelToG[pixel0];
+		  *d++ = FX_PixelToB[pixel0];
+		  *d++ = FX_PixelToR[pixel1];
+		  *d++ = FX_PixelToG[pixel1];
+		  *d++ = FX_PixelToB[pixel1];
+	       }
+	       if (extraPixel) {
+		  GLushort pixel = src[width-1];
+		  *d++ = FX_PixelToR[pixel];
+		  *d++ = FX_PixelToG[pixel];
+		  *d++ = FX_PixelToB[pixel];
+	       }
+	       dst += dstStride;
+	       src -= srcStride;
+	    }
+	 }
+	 else if (format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
+	    /* convert 5R6G5B into 8R8G8B8A */
+	    GLint row, col;
+	    const GLint halfWidth = width >> 1;
+	    const GLint extraPixel = (width & 1);
+	    for (row = 0; row < height; row++) {
+	       GLubyte *d = dst;
+	       for (col = 0; col < halfWidth; col++) {
+		  const GLuint pixel = ((const GLuint *) src)[col];
+		  const GLint pixel0 = pixel & 0xffff;
+		  const GLint pixel1 = pixel >> 16;
+		  *d++ = FX_PixelToR[pixel0];
+		  *d++ = FX_PixelToG[pixel0];
+		  *d++ = FX_PixelToB[pixel0];
+		  *d++ = 255;
+		  *d++ = FX_PixelToR[pixel1];
+		  *d++ = FX_PixelToG[pixel1];
+		  *d++ = FX_PixelToB[pixel1];
+		  *d++ = 255;
+	       }
+	       if (extraPixel) {
+		  const GLushort pixel = src[width-1];
+		  *d++ = FX_PixelToR[pixel];
+		  *d++ = FX_PixelToG[pixel];
+		  *d++ = FX_PixelToB[pixel];
+		  *d++ = 255;
+	       }
+	       dst += dstStride;
+	       src -= srcStride;
+	    }
+	 }
+	 else if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5) {
+	    /* directly memcpy 5R6G5B pixels into client's buffer */
+	    const GLint widthInBytes = width * 2;
+	    GLint row;
+	    for (row = 0; row < height; row++) {
+	       MEMCPY(dst, src, widthInBytes);
+	       dst += dstStride;
+	       src -= srcStride;
+	    }
+	 }
+	 else {
+	    grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
+	    END_BOARD_LOCK();
+	    _swrast_ReadPixels( ctx, x, y, width, height, format, type,
+				packing, dstImage );
+	    return;
+	 }
 
-      grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
-    }
-    END_BOARD_LOCK();
-    return result;
-  }
+	 grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
+      }
+      END_BOARD_LOCK();
+   }
 }
 
 
@@ -1022,100 +1028,109 @@ static void fxDDUpdateDDPointers(GLcontext *ctx, GLuint new_state)
 
 static void fxDDRenderPrimitive( GLcontext *ctx, GLenum mode )
 {
-  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
+   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
 
-  if (!fxMesa->is_in_hardware) {
-     _swsetup_RenderPrimitive( ctx, mode );
-  } 
-  else {
-     fxMesa->render_prim = mode;
-  }   
+   if (!fxMesa->is_in_hardware) {
+      _swsetup_RenderPrimitive( ctx, mode );
+   } 
+   else {
+      fxMesa->render_prim = mode;
+   }   
 }
 
 
 static void fxDDRenderStart( GLcontext *ctx )
 {
-  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
+   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
 
-  if (!fxMesa->is_in_hardware) {
-     _swsetup_RenderStart( ctx );
-  } 
-  else if (fxMesa->new_state) {
-     fxSetupFXUnits( ctx );
-  }
+   _swsetup_RenderStart( ctx );
+
+   if (fxMesa->new_state) {
+      fxSetupFXUnits( ctx );
+   }
 }
 
 static void fxDDRenderFinish( GLcontext *ctx )
 {
-  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
+   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
 
-  if (!fxMesa->is_in_hardware) {
-     _swsetup_RenderFinish( ctx );
-  } 
+   if (!fxMesa->is_in_hardware) {
+      _swsetup_RenderFinish( ctx );
+   } 
 }
 
 
 
 void fxSetupDDPointers(GLcontext *ctx)
 {
-  if (MESA_VERBOSE&VERBOSE_DRIVER) {
-    fprintf(stderr,"fxmesa: fxSetupDDPointers()\n");
-  }
+   if (MESA_VERBOSE&VERBOSE_DRIVER) {
+      fprintf(stderr,"fxmesa: fxSetupDDPointers()\n");
+   }
 
-  ctx->Driver.UpdateState=fxDDUpdateDDPointers;
+   ctx->Driver.UpdateState=fxDDUpdateDDPointers;
 
-  ctx->Driver.WriteDepthSpan=fxDDWriteDepthSpan;
-  ctx->Driver.WriteDepthPixels=fxDDWriteDepthPixels;
-  ctx->Driver.ReadDepthSpan=fxDDReadDepthSpan;
-  ctx->Driver.ReadDepthPixels=fxDDReadDepthPixels;
+   ctx->Driver.WriteDepthSpan=fxDDWriteDepthSpan;
+   ctx->Driver.WriteDepthPixels=fxDDWriteDepthPixels;
+   ctx->Driver.ReadDepthSpan=fxDDReadDepthSpan;
+   ctx->Driver.ReadDepthPixels=fxDDReadDepthPixels;
 
-  ctx->Driver.GetString=fxDDGetString;
+   ctx->Driver.GetString=fxDDGetString;
 
-  ctx->Driver.ClearIndex=NULL;
-  ctx->Driver.ClearColor=fxDDClearColor;
-  ctx->Driver.Clear=fxDDClear;
+   ctx->Driver.ClearIndex=NULL;
+   ctx->Driver.ClearColor=fxDDClearColor;
+   ctx->Driver.Clear=fxDDClear;
 
-  ctx->Driver.SetDrawBuffer=fxDDSetDrawBuffer;
-  ctx->Driver.SetReadBuffer=fxDDSetReadBuffer;
-  ctx->Driver.GetBufferSize=fxDDBufferSize;
+   ctx->Driver.SetDrawBuffer=fxDDSetDrawBuffer;
+   ctx->Driver.SetReadBuffer=fxDDSetReadBuffer;
+   ctx->Driver.GetBufferSize=fxDDBufferSize;
 
-  ctx->Driver.Bitmap=fxDDDrawBitmap;
-  ctx->Driver.DrawPixels=NULL;
-  ctx->Driver.ReadPixels=fxDDReadPixels;
+   ctx->Driver.Accum = _swrast_Accum;
+   ctx->Driver.Bitmap = fxDDDrawBitmap;
+   ctx->Driver.CopyPixels = _swrast_CopyPixels;
+   ctx->Driver.DrawPixels = _swrast_DrawPixels;
+   ctx->Driver.ReadPixels = fxDDReadPixels;
+   ctx->Driver.ResizeBuffersMESA = _swrast_alloc_buffers;
 
-  ctx->Driver.Finish=fxDDFinish;
-  ctx->Driver.Flush=NULL;
+   ctx->Driver.Finish=fxDDFinish;
+   ctx->Driver.Flush=NULL;
 
-  ctx->Driver.RenderStart=fxDDRenderStart;
-  ctx->Driver.RenderFinish=fxDDRenderFinish;
-  ctx->Driver.ResetLineStipple=_swrast_ResetLineStipple;
-  ctx->Driver.RenderPrimitive=fxDDRenderPrimitive;
+   ctx->Driver.RenderStart=fxDDRenderStart;
+   ctx->Driver.RenderFinish=fxDDRenderFinish;
+   ctx->Driver.ResetLineStipple=_swrast_ResetLineStipple;
+   ctx->Driver.RenderPrimitive=fxDDRenderPrimitive;
 
-  ctx->Driver.TexImage2D = fxDDTexImage2D;
-  ctx->Driver.TexSubImage2D = fxDDTexSubImage2D;
-  ctx->Driver.GetTexImage = fxDDGetTexImage;
-  ctx->Driver.TexEnv=fxDDTexEnv;
-  ctx->Driver.TexParameter=fxDDTexParam;
-  ctx->Driver.BindTexture=fxDDTexBind;
-  ctx->Driver.DeleteTexture=fxDDTexDel;
-  ctx->Driver.UpdateTexturePalette=fxDDTexPalette;
+   /* Install the oldstyle interp functions:
+    */
+   ctx->Driver.RenderInterp = _swsetup_RenderInterp;
+   ctx->Driver.RenderCopyPV = _swsetup_RenderCopyPV;
+   ctx->Driver.RenderClippedLine = _swsetup_RenderClippedLine;
+   ctx->Driver.RenderClippedPolygon = _swsetup_RenderClippedPolygon;
 
-  ctx->Driver.AlphaFunc=fxDDAlphaFunc;
-  ctx->Driver.BlendFunc=fxDDBlendFunc;
-  ctx->Driver.DepthFunc=fxDDDepthFunc;
-  ctx->Driver.DepthMask=fxDDDepthMask;
-  ctx->Driver.ColorMask=fxDDColorMask;
-  ctx->Driver.Fogfv=fxDDFogfv;
-  ctx->Driver.Scissor=fxDDScissor;
-  ctx->Driver.FrontFace=fxDDFrontFace;
-  ctx->Driver.CullFace=fxDDCullFace;
-  ctx->Driver.ShadeModel=fxDDShadeModel;
-  ctx->Driver.Enable=fxDDEnable;
+   ctx->Driver.TexImage2D = fxDDTexImage2D;
+   ctx->Driver.TexSubImage2D = fxDDTexSubImage2D;
+   ctx->Driver.GetTexImage = fxDDGetTexImage;
+   ctx->Driver.TexEnv=fxDDTexEnv;
+   ctx->Driver.TexParameter=fxDDTexParam;
+   ctx->Driver.BindTexture=fxDDTexBind;
+   ctx->Driver.DeleteTexture=fxDDTexDel;
+   ctx->Driver.UpdateTexturePalette=fxDDTexPalette;
+
+   ctx->Driver.AlphaFunc=fxDDAlphaFunc;
+   ctx->Driver.BlendFunc=fxDDBlendFunc;
+   ctx->Driver.DepthFunc=fxDDDepthFunc;
+   ctx->Driver.DepthMask=fxDDDepthMask;
+   ctx->Driver.ColorMask=fxDDColorMask;
+   ctx->Driver.Fogfv=fxDDFogfv;
+   ctx->Driver.Scissor=fxDDScissor;
+   ctx->Driver.FrontFace=fxDDFrontFace;
+   ctx->Driver.CullFace=fxDDCullFace;
+   ctx->Driver.ShadeModel=fxDDShadeModel;
+   ctx->Driver.Enable=fxDDEnable;
 
   
 
-  fxSetupDDSpanPointers(ctx);
-  fxDDUpdateDDPointers(ctx,~0);
+   fxSetupDDSpanPointers(ctx);
+   fxDDUpdateDDPointers(ctx,~0);
 }
 
 

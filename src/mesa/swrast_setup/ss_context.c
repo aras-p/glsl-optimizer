@@ -1,4 +1,4 @@
-/* $Id: ss_context.c,v 1.8 2001/01/16 05:29:43 keithw Exp $ */
+/* $Id: ss_context.c,v 1.9 2001/01/29 20:47:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,6 +32,7 @@
 #include "ss_context.h"
 #include "ss_triangle.h"
 #include "ss_vb.h"
+#include "ss_interp.h"
 #include "swrast_setup.h"
 #include "tnl/t_context.h"
 
@@ -107,6 +108,7 @@ _swsetup_CreateContext( GLcontext *ctx )
 
    swsetup->NewState = ~0;
    _swsetup_vb_init( ctx );
+   _swsetup_interp_init( ctx );
    _swsetup_trifuncs_init( ctx );
 
    return GL_TRUE;
@@ -134,6 +136,7 @@ void
 _swsetup_RenderStart( GLcontext *ctx )
 { 
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);   
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLuint new_state = swsetup->NewState;
 
    if (new_state & _SWSETUP_NEW_RENDERINDEX) {
@@ -145,6 +148,11 @@ _swsetup_RenderStart( GLcontext *ctx )
    }
 
    swsetup->NewState = 0;
+
+   if (VB->ClipMask && VB->importable_data) 
+      VB->import_data( ctx,
+		       VB->importable_data,
+		       VEC_NOT_WRITEABLE|VEC_BAD_STRIDE);
 }
 
 void
@@ -156,6 +164,26 @@ _swsetup_RenderFinish( GLcontext *ctx )
 void
 _swsetup_InvalidateState( GLcontext *ctx, GLuint new_state )
 {
-   SWSETUP_CONTEXT(ctx)->NewState |= new_state;
+   SScontext *swsetup = SWSETUP_CONTEXT(ctx);   
+   swsetup->NewState |= new_state;
+
+   if (new_state & _SWSETUP_NEW_INTERP) {
+      swsetup->RenderInterp = _swsetup_validate_interp;
+      swsetup->RenderCopyPV = _swsetup_validate_copypv;
+   }
+}
+
+void 
+_swsetup_RenderInterp( GLcontext *ctx, GLfloat t, 
+		       GLuint dst, GLuint out, GLuint in,
+		       GLboolean force_boundary ) 
+{
+   SWSETUP_CONTEXT(ctx)->RenderInterp( ctx, t, dst, out, in, force_boundary );
+}
+
+void 
+_swsetup_RenderCopyPV( GLcontext *ctx, GLuint dst, GLuint src ) 
+{
+   SWSETUP_CONTEXT(ctx)->RenderCopyPV( ctx, dst, src );
 }
 

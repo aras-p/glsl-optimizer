@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.47 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: drawpix.c,v 1.48 2001/01/29 20:47:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,7 +38,6 @@
 #include "mmath.h"
 #include "state.h"
 #include "mtypes.h"
-#include "swrast/swrast.h"
 #endif
 
 
@@ -72,15 +71,8 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
 
       /* see if device driver can do the drawpix */
       RENDER_START(ctx);
-
-      if (ctx->Driver.DrawPixels
-          && (*ctx->Driver.DrawPixels)(ctx, x, y, width, height, format, type,
-                                       &ctx->Unpack, pixels)) {
-         /* finished */
-      } else
-	 _swrast_DrawPixels( ctx, x, y, width, height, format, type,
-			     &ctx->Unpack, pixels );
-
+      ctx->Driver.DrawPixels(ctx, x, y, width, height, format, type,
+			     &ctx->Unpack, pixels);
       RENDER_FINISH(ctx);
    }
    else if (ctx->RenderMode==GL_FEEDBACK) {

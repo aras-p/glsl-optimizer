@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.11 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: t_vb_render.c,v 1.12 2001/01/29 20:47:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,7 +51,6 @@
 
 #include "glheader.h"
 #include "context.h"
-#include "colormac.h"
 #include "macros.h"
 #include "mem.h"
 #include "mtypes.h"
@@ -75,296 +74,6 @@ typedef void (*clip_poly_func)( GLcontext *ctx,
 
 
 
-struct render_stage_data {
-
-   /* Clipping functions for current state.
-    */
-   interp_func interp;		/* Clip interpolation function */
-   copy_pv_func copypv;		/* Flatshade fixup function */
-   GLuint _ClipInputs;		/* Inputs referenced by interpfunc */
-};
-
-#define RENDER_STAGE_DATA(stage) ((struct render_stage_data *)stage->private)
-
-				  
-/**********************************************************************/
-/*           Interpolate between pairs of vertices                    */
-/**********************************************************************/
-
-
-#define LINTERP_SZ( t, vec, to, a, b, sz )			\
-do {								\
-   switch (sz) {						\
-   case 4: vec[to][3] = LINTERP( t, vec[a][3], vec[b][3] );	\
-   case 3: vec[to][2] = LINTERP( t, vec[a][2], vec[b][2] );	\
-   case 2: vec[to][1] = LINTERP( t, vec[a][1], vec[b][1] );	\
-   case 1: vec[to][0] = LINTERP( t, vec[a][0], vec[b][0] );	\
-   }								\
-} while(0)
-
-
-#if 1
-
-#define LINTERP_RGBA(nr, t, out, a, b) {	\
-   int i;					\
-   for (i = 0; i < nr; i++) {			\
-      GLfloat fa = CHAN_TO_FLOAT(a[i]);		\
-      GLfloat fb = CHAN_TO_FLOAT(b[i]);		\
-      GLfloat fo = LINTERP(t, fa, fb);		\
-      CLAMPED_FLOAT_TO_CHAN(out[i], fo);	\
-   }						\
-}
-
-#else
-
-#define LINTERP_RGBA(nr, t, out, a, b) {			\
-   int n;							\
-   const GLuint ti = FloatToInt(t*256.0F);			\
-   const GLubyte *Ib = (const GLubyte *)&a[0];			\
-   const GLubyte *Jb = (const GLubyte *)&b[0];			\
-   GLubyte *Ob = (GLubyte *)&out[0];				\
-								\
-   for (n = 0 ; n < nr ; n++)					\
-      Ob[n] = (GLubyte) (Ib[n] + ((ti * (Jb[n] - Ib[n]))/256));	\
-}
-
-#endif
-
-
-
-
-#define INTERP_RGBA    0x1
-#define INTERP_TEX     0x2
-#define INTERP_INDEX   0x4
-#define INTERP_SPEC    0x8
-#define INTERP_FOG     0x10
-#define INTERP_EDGE    0x20
-#define MAX_INTERP     0x40
-
-static interp_func interp_tab[MAX_INTERP];
-static copy_pv_func copy_tab[MAX_INTERP];
-
-
-#define IND (0)
-#define NAME interp_none
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_FOG)
-#define NAME interp_FOG
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_TEX)
-#define NAME interp_TEX
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_FOG|INTERP_TEX)
-#define NAME interp_FOG_TEX
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_EDGE)
-#define NAME interp_EDGE
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_FOG|INTERP_EDGE)
-#define NAME interp_FOG_EDGE
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_TEX|INTERP_EDGE)
-#define NAME interp_TEX_EDGE
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_FOG|INTERP_TEX|INTERP_EDGE)
-#define NAME interp_FOG_TEX_EDGE
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA)
-#define NAME interp_RGBA
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA|INTERP_SPEC)
-#define NAME interp_RGBA_SPEC
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA|INTERP_FOG)
-#define NAME interp_RGBA_FOG
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA|INTERP_SPEC|INTERP_FOG)
-#define NAME interp_RGBA_SPEC_FOG
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA|INTERP_TEX)
-#define NAME interp_RGBA_TEX
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA|INTERP_SPEC|INTERP_TEX)
-#define NAME interp_RGBA_SPEC_TEX
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA|INTERP_FOG|INTERP_TEX)
-#define NAME interp_RGBA_FOG_TEX
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA|INTERP_SPEC|INTERP_FOG|INTERP_TEX)
-#define NAME interp_RGBA_SPEC_FOG_TEX
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_INDEX)
-#define NAME interp_INDEX
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_FOG|INTERP_INDEX)
-#define NAME interp_FOG_INDEX
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_TEX|INTERP_INDEX)
-#define NAME interp_TEX_INDEX
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_FOG|INTERP_TEX|INTERP_INDEX)
-#define NAME interp_FOG_TEX_INDEX
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA|INTERP_EDGE)
-#define NAME interp_RGBA_EDGE
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA|INTERP_SPEC|INTERP_EDGE)
-#define NAME interp_RGBA_SPEC_EDGE
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA|INTERP_FOG|INTERP_EDGE)
-#define NAME interp_RGBA_FOG_EDGE
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA|INTERP_SPEC|INTERP_FOG|INTERP_EDGE)
-#define NAME interp_RGBA_SPEC_FOG_EDGE
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA|INTERP_TEX|INTERP_EDGE)
-#define NAME interp_RGBA_TEX_EDGE
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA|INTERP_SPEC|INTERP_TEX|INTERP_EDGE)
-#define NAME interp_RGBA_SPEC_TEX_EDGE
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA|INTERP_FOG|INTERP_TEX|INTERP_EDGE)
-#define NAME interp_RGBA_FOG_TEX_EDGE
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_RGBA|INTERP_SPEC|INTERP_FOG|INTERP_TEX|INTERP_EDGE)
-#define NAME interp_RGBA_SPEC_FOG_TEX_EDGE
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_INDEX|INTERP_EDGE)
-#define NAME interp_INDEX_EDGE
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_FOG|INTERP_INDEX|INTERP_EDGE)
-#define NAME interp_FOG_INDEX_EDGE
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_TEX|INTERP_INDEX|INTERP_EDGE)
-#define NAME interp_TEX_INDEX_EDGE
-#include "t_vb_interptmp.h"
-
-#define IND (INTERP_FOG|INTERP_TEX|INTERP_INDEX|INTERP_EDGE)
-#define NAME interp_FOG_TEX_INDEX_EDGE
-#include "t_vb_interptmp.h"
-
-
-#define IND (INTERP_RGBA)
-#define NAME copy_RGBA
-#include "t_vb_flattmp.h"
-
-#define IND (INTERP_RGBA|INTERP_SPEC)
-#define NAME copy_RGBA_SPEC
-#include "t_vb_flattmp.h"
-
-#define IND (INTERP_INDEX)
-#define NAME copy_INDEX
-#include "t_vb_flattmp.h"
-
-
-
-
-static void interp_invalid( GLcontext *ctx,
-			    GLfloat t, 
-			    GLuint dst, GLuint in, GLuint out,
-			    GLboolean boundary )
-{
-   (void)(ctx && t && in && out && boundary);
-   fprintf(stderr, "Invalid interpolation function in t_vbrender.c\n");
-}
-
-static void copy_invalid( GLcontext *ctx, GLuint dst, GLuint src )
-{
-   (void)(ctx && dst && src);
-   fprintf(stderr, "Invalid copy function in t_vbrender.c\n");
-}
-
-
-static void interp_init( void )
-{
-   GLuint i;
-
-   /* Use the maximal function as the default.  I don't believe any of
-    * the non-implemented combinations are reachable, but this gives
-    * some safety from crashes.
-    */
-   for (i = 0 ; i < Elements(interp_tab) ; i++) {
-      interp_tab[i] = interp_invalid;
-      copy_tab[i] = copy_invalid;
-   }
-
-   interp_tab[0] = interp_none;
-   interp_tab[INTERP_FOG] = interp_FOG;
-   interp_tab[INTERP_TEX] = interp_TEX;
-   interp_tab[INTERP_FOG|INTERP_TEX] = interp_FOG_TEX;
-   interp_tab[INTERP_EDGE] = interp_EDGE;
-   interp_tab[INTERP_FOG|INTERP_EDGE] = interp_FOG_EDGE;
-   interp_tab[INTERP_TEX|INTERP_EDGE] = interp_TEX_EDGE;
-   interp_tab[INTERP_FOG|INTERP_TEX|INTERP_EDGE] = interp_FOG_TEX_EDGE;
-
-   interp_tab[INTERP_RGBA] = interp_RGBA;
-   interp_tab[INTERP_RGBA|INTERP_SPEC] = interp_RGBA_SPEC;
-   interp_tab[INTERP_RGBA|INTERP_FOG] = interp_RGBA_FOG;
-   interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_FOG] = interp_RGBA_SPEC_FOG;
-   interp_tab[INTERP_RGBA|INTERP_TEX] = interp_RGBA_TEX;
-   interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_TEX] = interp_RGBA_SPEC_TEX;
-   interp_tab[INTERP_RGBA|INTERP_FOG|INTERP_TEX] = interp_RGBA_FOG_TEX;
-   interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_FOG|INTERP_TEX] = 
-      interp_RGBA_SPEC_FOG_TEX;
-   interp_tab[INTERP_INDEX] = interp_INDEX;
-   interp_tab[INTERP_FOG|INTERP_INDEX] = interp_FOG_INDEX;
-   interp_tab[INTERP_TEX|INTERP_INDEX] = interp_TEX_INDEX;
-   interp_tab[INTERP_FOG|INTERP_TEX|INTERP_INDEX] = interp_FOG_TEX_INDEX;
-   interp_tab[INTERP_RGBA|INTERP_EDGE] = interp_RGBA_EDGE;
-   interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_EDGE] = interp_RGBA_SPEC_EDGE;
-   interp_tab[INTERP_RGBA|INTERP_FOG|INTERP_EDGE] = interp_RGBA_FOG_EDGE;
-   interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_FOG|INTERP_EDGE] = 
-      interp_RGBA_SPEC_FOG_EDGE;
-   interp_tab[INTERP_RGBA|INTERP_TEX|INTERP_EDGE] = interp_RGBA_TEX_EDGE;
-   interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_TEX|INTERP_EDGE] = 
-      interp_RGBA_SPEC_TEX_EDGE;
-   interp_tab[INTERP_RGBA|INTERP_FOG|INTERP_TEX|INTERP_EDGE] = 
-      interp_RGBA_FOG_TEX_EDGE;
-   interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_FOG|INTERP_TEX|INTERP_EDGE] = 
-      interp_RGBA_SPEC_FOG_TEX_EDGE;
-   interp_tab[INTERP_INDEX|INTERP_EDGE] = interp_INDEX_EDGE;
-   interp_tab[INTERP_FOG|INTERP_INDEX|INTERP_EDGE] = interp_FOG_INDEX_EDGE;
-   interp_tab[INTERP_TEX|INTERP_INDEX|INTERP_EDGE] = interp_TEX_INDEX_EDGE;
-   interp_tab[INTERP_FOG|INTERP_TEX|INTERP_INDEX|INTERP_EDGE] = 
-      interp_FOG_TEX_INDEX_EDGE;
-
-
-   copy_tab[INTERP_RGBA] = copy_RGBA;
-   copy_tab[INTERP_RGBA|INTERP_SPEC] = copy_RGBA_SPEC;
-   copy_tab[INTERP_INDEX] = copy_INDEX;
-
-}
-
 
 /**********************************************************************/
 /*                        Clip single primitives                      */
@@ -382,6 +91,28 @@ static void interp_init( void )
  */
 #endif
 
+#define LINTERP_SZ( t, vec, to, a, b, sz )			\
+do {								\
+   switch (sz) {						\
+   case 2: vec[to][2] = 0.0;					\
+   case 3: vec[to][3] = 1.0;					\
+   }      							\
+   switch (sz) {						\
+   case 4: vec[to][3] = LINTERP( t, vec[a][3], vec[b][3] );	\
+   case 3: vec[to][2] = LINTERP( t, vec[a][2], vec[b][2] );	\
+   case 2: vec[to][1] = LINTERP( t, vec[a][1], vec[b][1] );	\
+           vec[to][0] = LINTERP( t, vec[a][0], vec[b][0] );	\
+   }								\
+} while(0)
+
+#define LINTERP_4F( t, vec, to, a, b, sz )		\
+do {							\
+   vec[to][3] = LINTERP( t, vec[a][3], vec[b][3] );	\
+   vec[to][2] = LINTERP( t, vec[a][2], vec[b][2] );	\
+   vec[to][1] = LINTERP( t, vec[a][1], vec[b][1] );	\
+   vec[to][0] = LINTERP( t, vec[a][0], vec[b][0] );	\
+} while (0)
+
 #define W(i) coord[i][3]
 #define Z(i) coord[i][2]
 #define Y(i) coord[i][1]
@@ -390,37 +121,6 @@ static void interp_init( void )
 #define TAG(x) x##_4
 #include "t_vb_cliptmp.h"
 
-#define W(i) 1.0
-#define Z(i) coord[i][2]
-#define Y(i) coord[i][1]
-#define X(i) coord[i][0]
-#define SIZE 3
-#define TAG(x) x##_3
-#include "t_vb_cliptmp.h"
-
-#define W(i) 1.0
-#define Z(i) 0.0
-#define Y(i) coord[i][1]
-#define X(i) coord[i][0]
-#define SIZE 2
-#define TAG(x) x##_2
-#include "t_vb_cliptmp.h"
-
-static clip_poly_func clip_poly_tab[5] = {
-   0,
-   0,
-   clip_polygon_2,
-   clip_polygon_3,
-   clip_polygon_4
-};
-
-static clip_line_func clip_line_tab[5] = {
-   0,
-   0,
-   clip_line_2,
-   clip_line_3,
-   clip_line_4
-};
 
 
 /**********************************************************************/
@@ -444,7 +144,7 @@ do {						\
    if (!ormask)					\
       LineFunc( ctx, v1, v2 );			\
    else if (!(c1 & c2 & 0x3f))			\
-      clip_line_tab[sz]( ctx, v1, v2, ormask );	\
+      clip_line_4( ctx, v1, v2, ormask );	\
 } while (0)
 
 #define RENDER_TRI( v1, v2, v3 )			\
@@ -453,11 +153,8 @@ do {							\
    GLubyte ormask = c1|c2|c3;				\
    if (!ormask)						\
       TriangleFunc( ctx, v1, v2, v3 );			\
-   else if (!(c1 & c2 & c3 & 0x3f)) {			\
-      GLuint vlist[MAX_CLIPPED_VERTICES];		\
-      ASSIGN_3V(vlist, v3, v1, v2 );			\
-      clip_poly_tab[sz]( ctx, 3, vlist, ormask );	\
-   }							\
+   else if (!(c1 & c2 & c3 & 0x3f)) 			\
+      clip_tri_4( ctx, v1, v2, v3, ormask );    	\
 } while (0)
 
 #define RENDER_QUAD( v1, v2, v3, v4 )			\
@@ -467,11 +164,8 @@ do {							\
    GLubyte ormask = c1|c2|c3|c4;			\
    if (!ormask)						\
       QuadFunc( ctx, v1, v2, v3, v4 );			\
-   else if (!(c1 & c2 & c3 & c4 & 0x3f)) {		\
-      GLuint vlist[MAX_CLIPPED_VERTICES];		\
-      ASSIGN_4V(vlist, v4, v1, v2, v3 );		\
-      clip_poly_tab[sz]( ctx, 4, vlist, ormask );	\
-   }							\
+   else if (!(c1 & c2 & c3 & c4 & 0x3f)) 		\
+      clip_quad_4( ctx, v1, v2, v3, v4, ormask );	\
 } while (0)
 
 
@@ -483,12 +177,13 @@ do {							\
     const line_func LineFunc = ctx->Driver.LineFunc;			\
     const triangle_func TriangleFunc = ctx->Driver.TriangleFunc;	\
     const quad_func QuadFunc = ctx->Driver.QuadFunc;			\
+    const GLboolean stipple = ctx->Line.StippleFlag;			\
     (void) (LineFunc && TriangleFunc && QuadFunc);			\
-    (void) elt; (void) mask; (void) sz;
+    (void) elt; (void) mask; (void) sz; (void) stipple;
 
 #define TAG(x) clip_##x##_verts
 #define INIT(x) ctx->Driver.RenderPrimitive( ctx, x )
-#define RESET_STIPPLE ctx->Driver.ResetLineStipple( ctx )
+#define RESET_STIPPLE if (stipple) ctx->Driver.ResetLineStipple( ctx )
 #define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE;
 #define PRESERVE_VB_DEFS
 #include "t_vb_rendertmp.h"
@@ -503,6 +198,40 @@ do {							\
 #define TAG(x) clip_##x##_elts
 #include "t_vb_rendertmp.h"
 
+/* TODO: do this for all primitives, verts and elts:
+ */
+static void clip_elt_triangles( GLcontext *ctx,
+				GLuint start,
+				GLuint count,
+				GLuint flags )
+{
+   GLuint j;
+   GLuint last = count-2;
+   render_func render_tris = ctx->Driver.RenderTabElts[GL_TRIANGLES];
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   const GLuint * const elt = VB->Elts;
+   GLubyte *mask = VB->ClipMask;
+   (void) flags;
+   
+   ctx->Driver.RenderPrimitive( ctx, GL_TRIANGLES );
+
+   for (j=start; j < last; j+=3 ) {
+      GLubyte c1 = mask[elt[j]];
+      GLubyte c2 = mask[elt[j+1]];
+      GLubyte c3 = mask[elt[j+2]];
+      GLubyte ormask = c1|c2|c3;
+      if (ormask) {
+	 if (start < j) 
+	    render_tris( ctx, start, j, 0 );
+	 if (!(c1&c2&c3&0x3f)) 
+	    clip_tri_4( ctx, elt[j], elt[j+1], elt[j+2], ormask );
+	 start = j+3;
+      }
+   }
+
+   if (start < j) 
+      render_tris( ctx, start, j, 0 );
+}
 
 /**********************************************************************/
 /*                  Render whole begin/end objects                    */
@@ -570,28 +299,20 @@ static GLboolean run_render( GLcontext *ctx,
    render_func *tab;
    GLint pass = 0;
 
-   VB->interpfunc = RENDER_STAGE_DATA(stage)->interp;
-   VB->copypvfunc = RENDER_STAGE_DATA(stage)->copypv;
-
    /* Allow the drivers to lock before projected verts are built so
     * that window coordinates are guarenteed not to change before
     * rendering.
     */
    ctx->Driver.RenderStart( ctx );
-   
+   ctx->Driver.BuildProjectedVertices( ctx, 0, VB->Count, new_inputs );
+
    if (VB->ClipOrMask) {
       tab = VB->Elts ? clip_render_tab_elts : clip_render_tab_verts;
-
-      if (new_inputs & VB->importable_data) 
-	 VB->import_data( ctx,
-			  new_inputs & VB->importable_data,
-			  VEC_NOT_WRITEABLE|VEC_BAD_STRIDE);
+      clip_render_tab_elts[GL_TRIANGLES] = clip_elt_triangles;
    }
    else {
       tab = VB->Elts ? ctx->Driver.RenderTabElts : ctx->Driver.RenderTabVerts;
    } 
-
-   ctx->Driver.BuildProjectedVertices( ctx, 0, VB->Count, new_inputs );
 
    do
    {
@@ -623,30 +344,21 @@ static GLboolean run_render( GLcontext *ctx,
 
 
 /* Quite a bit of work involved in finding out the inputs for the
- * render stage.  This function also identifies which vertex
- * interpolation function to use, as these are essentially the same
- * question.
+ * render stage.  
  */
 static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
 {
-   struct render_stage_data *store = RENDER_STAGE_DATA(stage);
-   GLuint interp = 0;
-   GLuint copy = 0;
    GLuint inputs = VERT_CLIP;
    GLuint i;
 
    if (ctx->Visual.rgbMode) {
-      interp |= INTERP_RGBA;
       inputs |= VERT_RGBA;
 
       if (ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) {
-         interp |= INTERP_SPEC;
 	 inputs |= VERT_SPEC_RGB;
       }
 
       if (ctx->Texture._ReallyEnabled) {
-	 interp |= INTERP_TEX;
-
 	 for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
 	    if (ctx->Texture.Unit[i]._ReallyEnabled)
 	       inputs |= VERT_TEX(i);
@@ -655,7 +367,6 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
    }
    else 
    {
-      interp |= INTERP_INDEX;
       inputs |= VERT_INDEX;
    }
 
@@ -665,63 +376,25 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
    /* How do drivers turn this off?
     */
    if (ctx->Fog.Enabled) {
-      interp |= INTERP_FOG;
       inputs |= VERT_FOG_COORD;
    }
 
    if (ctx->_TriangleCaps & DD_TRI_UNFILLED) {
       inputs |= VERT_EDGE;
-      interp |= INTERP_EDGE;
    }
 
    if (ctx->RenderMode==GL_FEEDBACK) {
-      interp |= INTERP_TEX;
       inputs |= VERT_TEX_ANY;
    }
 
-   if (ctx->_TriangleCaps & DD_FLATSHADE) {
-      copy = interp & (INTERP_RGBA|INTERP_SPEC|INTERP_INDEX);
-      interp &= ~copy;
-   }
-
-   store->copypv = copy_tab[copy];
-   store->interp = interp_tab[interp];
    stage->inputs = inputs;
 }
 
-
-/* Called the first time stage->check() is invoked.
- */
-static void alloc_render_data( GLcontext *ctx, 
-				 struct gl_pipeline_stage *stage )
-{
-   struct render_stage_data *store;
-   static GLboolean first_time = 1;
-
-   if (first_time) {
-      interp_init();
-      first_time = 0;
-   }
-
-   stage->private = MALLOC(sizeof(*store));
-   if (!stage->private)
-      return;
-
-   /* Now do the check.
-    */
-   stage->check = check_render;
-   stage->check( ctx, stage );
-}
 
 
 
 static void dtr( struct gl_pipeline_stage *stage )
 {
-   struct render_stage_data *store = RENDER_STAGE_DATA(stage);
-   if (store) {
-      FREE( store );
-      stage->private = 0;
-   }
 }
 
 
@@ -742,6 +415,6 @@ const struct gl_pipeline_stage _tnl_render_stage =
    0, 0,			/* inputs (set in check_render), outputs */
    0, 0,			/* changed_inputs, private */
    dtr,				/* destructor */
-   alloc_render_data,		/* check - initially set to alloc data */
+   check_render,		/* check */
    run_render			/* run */
 };

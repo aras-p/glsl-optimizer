@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.28 2001/01/24 00:04:58 brianp Exp $ */
+/* $Id: texstate.c,v 1.29 2001/01/29 20:47:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,7 +41,6 @@
 #include "mtypes.h"
 #include "math/m_xform.h"
 #include "math/m_matrix.h"
-#include "swrast/swrast.h"
 #endif
 
 

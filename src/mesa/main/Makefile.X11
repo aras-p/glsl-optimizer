@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.40 2001/01/24 00:04:58 brianp Exp $
+# $Id: Makefile.X11,v 1.41 2001/01/29 20:47:39 keithw Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -21,6 +21,32 @@ LIBDIR = ../lib
 
 
 CORE_SOURCES = \
+	tnl/t_array_api.c \
+	tnl/t_array_import.c \
+	tnl/t_context.c \
+	tnl/t_eval_api.c \
+	tnl/t_imm_alloc.c \
+	tnl/t_imm_api.c \
+	tnl/t_imm_debug.c \
+	tnl/t_imm_dlist.c \
+	tnl/t_imm_elt.c \
+	tnl/t_imm_eval.c \
+	tnl/t_imm_exec.c \
+	tnl/t_imm_fixup.c \
+	tnl/t_pipeline.c \
+	tnl/t_vb_fog.c \
+	tnl/t_vb_light.c \
+	tnl/t_vb_material.c \
+	tnl/t_vb_normals.c \
+	tnl/t_vb_points.c \
+	tnl/t_vb_render.c \
+	tnl/t_vb_texgen.c \
+	tnl/t_vb_texmat.c \
+	tnl/t_vb_vertex.c \
+	swrast_setup/ss_context.c \
+	swrast_setup/ss_triangle.c \
+	swrast_setup/ss_vb.c \
+	swrast_setup/ss_interp.c \
 	api_loopback.c \
 	api_noop.c \
 	api_validate.c \
@@ -86,6 +112,15 @@ CORE_SOURCES = \
 	X86/common_x86.c \
 	X86/3dnow.c \
 	X86/katmai.c \
+	math/m_debug_xform.c \
+	math/m_eval.c \
+	math/m_matrix.c \
+	math/m_translate.c \
+	math/m_vector.c \
+	math/m_vertices.c \
+	math/m_xform.c \
+	array_cache/ac_context.c \
+	array_cache/ac_import.c \
 	swrast/s_aaline.c \
 	swrast/s_aatriangle.c \
 	swrast/s_accum.c \
@@ -114,41 +149,7 @@ CORE_SOURCES = \
 	swrast/s_stencil.c \
 	swrast/s_texture.c \
 	swrast/s_triangle.c \
-	swrast/s_zoom.c \
-	swrast_setup/ss_context.c \
-	swrast_setup/ss_triangle.c \
-	swrast_setup/ss_vb.c \
-	math/m_debug_xform.c \
-	math/m_eval.c \
-	math/m_matrix.c \
-	math/m_translate.c \
-	math/m_vector.c \
-	math/m_vertices.c \
-	math/m_xform.c \
-	array_cache/ac_context.c \
-	array_cache/ac_import.c \
-	tnl/t_array_api.c \
-	tnl/t_array_import.c \
-	tnl/t_context.c \
-	tnl/t_eval_api.c \
-	tnl/t_imm_alloc.c \
-	tnl/t_imm_api.c \
-	tnl/t_imm_debug.c \
-	tnl/t_imm_dlist.c \
-	tnl/t_imm_elt.c \
-	tnl/t_imm_eval.c \
-	tnl/t_imm_exec.c \
-	tnl/t_imm_fixup.c \
-	tnl/t_pipeline.c \
-	tnl/t_vb_fog.c \
-	tnl/t_vb_light.c \
-	tnl/t_vb_material.c \
-	tnl/t_vb_normals.c \
-	tnl/t_vb_points.c \
-	tnl/t_vb_render.c \
-	tnl/t_vb_texgen.c \
-	tnl/t_vb_texmat.c \
-	tnl/t_vb_vertex.c
+	swrast/s_zoom.c 
 
 
 DRIVER_SOURCES = \

@@ -1,4 +1,4 @@
-/* $Id: t_vb_texgen.c,v 1.1 2000/12/26 05:09:33 keithw Exp $ */
+/* $Id: t_vb_texgen.c,v 1.2 2001/01/29 20:47:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -372,6 +372,7 @@ static void texgen( GLcontext *ctx,
    GLuint count = VB->Count;
    GLfloat (*f)[3] = store->tmp_f;
    GLfloat *m = store->tmp_m;
+	 GLuint holes = 0;
 
 
    if (texUnit->_GenFlags & TEXGEN_NEED_M) {
@@ -380,25 +381,33 @@ static void texgen( GLcontext *ctx,
       build_f_tab[in->size]( (GLfloat *)store->tmp_f, 3, normal, eye ); 
    }
 
-   if (in != out) {
+   if (!in) {
+      ASSERT(0);
+      in = out;
+      in->count = VB->Count;
+
+      out->size = store->TexgenSize[unit];
+      out->flags |= texUnit->TexGenEnabled;
+      out->count = VB->Count;
+      holes = store->TexgenHoles[unit];
+   }
+   else {
       GLuint copy = (all_bits[in->size] & ~texUnit->TexGenEnabled);
       if (copy)
 	 gl_copy_tab[0][copy](out, in, 0);
+
+      out->size = MAX2(in->size, store->TexgenSize[unit]);
+      out->flags |= (in->flags & VEC_SIZE_FLAGS) | texUnit->TexGenEnabled;
+      out->count = in->count;
+      
+      holes = ~all_bits[in->size] & store->TexgenHoles[unit];
    }
 
-   if (store->TexgenHoles[unit])
-   {
-      GLuint holes = (~all_bits[in->size] & store->TexgenHoles[unit]);
-      if (holes) {
-	 if (holes & VEC_DIRTY_2) gl_vector4f_clean_elem(out, count, 2);
-	 if (holes & VEC_DIRTY_1) gl_vector4f_clean_elem(out, count, 1);
-	 if (holes & VEC_DIRTY_0) gl_vector4f_clean_elem(out, count, 0);
-      }
+   if (holes) {
+      if (holes & VEC_DIRTY_2) gl_vector4f_clean_elem(out, count, 2);
+      if (holes & VEC_DIRTY_1) gl_vector4f_clean_elem(out, count, 1);
+      if (holes & VEC_DIRTY_0) gl_vector4f_clean_elem(out, count, 0);
    }
-
-   out->size = MAX2(in->size, store->TexgenSize[unit]);
-   out->flags |= (in->flags & VEC_SIZE_FLAGS) | texUnit->TexGenEnabled;
-   out->count = in->count;
 
    if (texUnit->TexGenEnabled & S_BIT) {
       GLuint i;
@@ -414,7 +423,7 @@ static void texgen( GLcontext *ctx,
 					texUnit->EyePlaneS, 0);
 	 break;
       case GL_SPHERE_MAP: 
-	 for (indata=in->start,i=0 ; i<count ; i++, STRIDE_F(indata,in->stride))
+	 for (indata=in->start,i=0 ; i<count ;i++, STRIDE_F(indata,in->stride))
 	    texcoord[i][0] = indata[0] * m[i] + 0.5F;
 	 break;
       case GL_REFLECTION_MAP_NV: 
@@ -604,8 +613,8 @@ static void check_texgen( GLcontext *ctx, struct gl_pipeline_stage *stage )
 	    /* Need the original input in case it contains a Q coord:
 	     * (sigh)
 	     */
-	    if ((ctx->Texture.Unit[i]._ReallyEnabled|Q_BIT) &
-		~ctx->Texture.Unit[i].TexGenEnabled)
+/*  	    if ((ctx->Texture.Unit[i]._ReallyEnabled|Q_BIT) & */
+/*  		~ctx->Texture.Unit[i].TexGenEnabled) */
 	       inputs |= VERT_TEX(i);
 
 	    /* Something for Feedback? */

@@ -53,6 +53,13 @@ typedef struct {
 
    void (*Points)( GLcontext *ctx, GLuint first, GLuint last );
 
+   void (*RenderCopyPV)( GLcontext *ctx, GLuint dst, GLuint src );
+
+   void (*RenderInterp)( GLcontext *ctx, GLfloat t, 
+			 GLuint dst, GLuint out, GLuint in,
+			 GLboolean force_boundary );
+
+
    SWvertex *verts;
    GLenum render_prim;
 

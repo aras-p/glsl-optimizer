@@ -49,7 +49,10 @@ static void TAG(rs)(GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
    const GLfloat tz = m[14];
    GLuint maxtex = 0;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+   if (!newinputs) {
+      fprintf(stderr, "no new inputs\n");
+      return;
+   }
 
    /* TODO:  Get import_client_data to pad vectors out to 4 cleanly.
     */
