@@ -204,7 +204,8 @@ void i810PageFlip( const __DRIdrawablePrivate *dPriv )
   LOCK_HARDWARE( imesa );
   
   if (dPriv->pClipRects) {
-     imesa->sarea->boxes[0] = dPriv->pClipRects[0];
+     memcpy(&(imesa->sarea->boxes[0]), &(dPriv->pClipRects[0]),
+            sizeof(drm_clip_rect_t));
      imesa->sarea->nbox = 1;
   }
   ret = drmCommandNone(imesa->driFd, DRM_I810_FLIP);
