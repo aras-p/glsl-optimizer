@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.100 2000/10/30 16:32:43 brianp Exp $ */
+/* $Id: context.c,v 1.101 2000/10/30 18:50:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -904,9 +904,10 @@ init_attrib_groups( GLcontext *ctx )
                         VERT_SPEC_RGB |
                         VERT_FOG_COORD |
                         VERT_EDGE |
-                        VERT_TEX0_1 |
-                        VERT_TEX1_1 |
-                        VERT_TEX2_1 | /* XXX fix for MAX_TEXTURE_UNITS > 3 */
+                        VERT_TEX0_12 |
+                        VERT_TEX1_12 |
+                        VERT_TEX2_12 |
+                        VERT_TEX3_12 |
                         VERT_MATERIAL);
 
    init_fallback_arrays( ctx );

@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.28 2000/10/30 16:30:56 keithw Exp $ */
+/* $Id: varray.c,v 1.29 2000/10/30 18:50:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -408,7 +408,7 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr
 
    ctx->Array.TexCoordFunc[texUnit] = gl_trans_4f_tab[size][TYPE_IDX(type)];
    ctx->Array.TexCoordEltFunc[texUnit] = gl_trans_elt_4f_tab[size][TYPE_IDX(type)];
-   ctx->Array.NewArrayState |= PIPE_TEX(texUnit);
+   ctx->Array.NewArrayState |= VERT_TEX_ANY(texUnit);
    ctx->NewState |= _NEW_ARRAY;
 }
 
@@ -1349,7 +1349,7 @@ void gl_update_client_state( GLcontext *ctx )
    };
    static const GLuint tc_flags[5] = {
       0, 
-      VERT_TEX0_1,
+      VERT_TEX0_12, 
       VERT_TEX0_12, 
       VERT_TEX0_123, 
       VERT_TEX0_1234
