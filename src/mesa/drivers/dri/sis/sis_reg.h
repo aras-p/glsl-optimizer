@@ -228,40 +228,40 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * REG_3D_ParsingSet -- Define Parsing Mask (89F4h-89F7h)
  */
-#define MASK_VertexDWSize		0xF0000000
-#define MASK_VertexDataFormat		0x0FFF0000
-#define MASK_PsVertex_HAS_RHW		0x08000000
-#define MASK_PsVertex_HAS_NORMALXYZ	0x04000000
-#define MASK_PsVertex_HAS_DIFFUSE	0x02000000
-#define MASK_PsVertex_HAS_SPECULAR	0x01000000
-#define MASK_PsUVSet			0x00FF0000
-#define MASK_PsVertex_HAS_1SetUV	0x00800000
-#define MASK_PsVertex_HAS_2SetUV	0x00C00000
-#define MASK_PsVertex_HAS_3SetUV	0x00E00000
-#define MASK_PsVertex_HAS_UVSet1	0x00800000
-#define MASK_PsVertex_HAS_UVSet2	0x00400000
-#define MASK_PsVertex_HAS_UVSet3	0x00200000
-#define MASK_PsCullDirection_CCW	0x00008000
-#define MASK_PsShadingMode		0x00007000
+#define MASK_VertexDWSize			0xf0000000
+#define MASK_VertexDataFormat			0x0fff0000
+#define MASK_PsVertex_HAS_RHW			0x08000000
+#define MASK_PsVertex_HAS_NORMALXYZ		0x04000000
+#define MASK_PsVertex_HAS_DIFFUSE		0x02000000
+#define MASK_PsVertex_HAS_SPECULAR		0x01000000
+#define MASK_PsUVSet				0x00ff0000
+#define MASK_PsVertex_HAS_1SetUV		0x00800000
+#define MASK_PsVertex_HAS_2SetUV		0x00c00000
+#define MASK_PsVertex_HAS_3SetUV		0x00e00000
+#define MASK_PsVertex_HAS_UVSet1		0x00800000
+#define MASK_PsVertex_HAS_UVSet2		0x00400000
+#define MASK_PsVertex_HAS_UVSet3		0x00200000
+#define MASK_PsCullDirection_CCW		0x00008000
+#define MASK_PsShadingMode			0x00007000
 /* XXX Shading modes just a guess, but seem to work*/
-#define MASK_PsShadingFlatA		0x00001000
-#define MASK_PsShadingFlatB		0x00002000
-#define MASK_PsShadingFlatC		0x00003000
-#define MASK_PsShadingSmooth		0x00004000
-#define MASK_PsTextureFrom              0x000003F0
-#define MASK_PsTexture0FromA            0x00000000
-#define MASK_PsTexture1FromA            0x00000000
-#define MASK_PsTexture1FromB            0x00000040
-#define MASK_PsBumpTextureFromA                 0x00000000
-#define MASK_PsBumpTextureFromB                 0x00000010
-#define MASK_PsBumpTextureFromC                 0x00000020
-#define MASK_PsDataType                                 0x0000000F
-#define MASK_PsPointList                                0x00000000
-#define MASK_PsLineList                                 0x00000004
-#define MASK_PsLineStrip                                0x00000005
-#define MASK_PsTriangleList                             0x00000008
-#define MASK_PsTriangleStrip                            0x00000009
-#define MASK_PsTriangleFan                              0x0000000A
+#define MASK_PsShadingFlatA			0x00001000
+#define MASK_PsShadingFlatB			0x00002000
+#define MASK_PsShadingFlatC			0x00003000
+#define MASK_PsShadingSmooth			0x00004000
+#define MASK_PsTextureFrom			0x000003f0
+#define MASK_PsTexture0FromA			0x00000000
+#define MASK_PsTexture1FromA			0x00000000
+#define MASK_PsTexture1FromB			0x00000040
+#define MASK_PsBumpTextureFromA			0x00000000
+#define MASK_PsBumpTextureFromB			0x00000010
+#define MASK_PsBumpTextureFromC			0x00000020
+#define MASK_PsDataType				0x0000000f
+#define MASK_PsPointList			0x00000000
+#define MASK_PsLineList				0x00000004
+#define MASK_PsLineStrip			0x00000005
+#define MASK_PsTriangleList			0x00000008
+#define MASK_PsTriangleStrip			0x00000009
+#define MASK_PsTriangleFan			0x0000000a
 
 /*
  * REG_3D_PrimitiveSet -- Define Fire Primitive Mask (89F8h-89FBh)
