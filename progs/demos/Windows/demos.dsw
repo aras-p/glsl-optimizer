@@ -3,6 +3,138 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
+Project: "all"=".\all.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name bounce
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name clearspd
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name cubemap
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name drawpix
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name fire
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name gears
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name geartrain
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name glinfo
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name gloss
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name gltestperf
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name glutfx
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ipers
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name isosurf
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lodbias
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name morph3d
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name multiarb
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name occlude
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name osdemo
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name paltex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pixeltex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pointblast
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name rain
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ray
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name readpix
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name reflect
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name renormal
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name shadowtex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name spectex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name stex3d
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name teapot
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name terrain
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name tessdemo
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name texcyl
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name texdown
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name texenv
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name texobj
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name trispd
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name tunnel
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name tunnel2
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name winpos
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "bounce"=".\bounce.dsp" - Package Owner=<4>
 
 Package=<5>
