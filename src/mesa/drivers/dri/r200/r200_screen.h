@@ -64,6 +64,7 @@ typedef struct {
    int AGPMode;
    unsigned int irq;			/* IRQ number (0 means none) */
 
+   unsigned int fbLocation;
    unsigned int frontOffset;
    unsigned int frontPitch;
    unsigned int backOffset;

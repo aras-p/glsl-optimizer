@@ -319,7 +319,7 @@ static CARD32 r200GetLastFrame(r200ContextPtr rmesa)
    CARD32 frame;
 
    gp.param = RADEON_PARAM_LAST_FRAME;
-   gp.value = &frame;
+   gp.value = (int *)&frame;
    ret = drmCommandWriteRead( rmesa->dri.fd, DRM_RADEON_GETPARAM,
 			      &gp, sizeof(gp) );
    if ( ret ) {
@@ -403,7 +403,7 @@ void r200CopyBuffer( const __DRIdrawablePrivate *dPriv )
    r200ContextPtr rmesa;
    GLint nbox, i, ret;
    GLboolean   missed_target;
-   uint64_t     ust;
+   int64_t     ust;
 
    assert(dPriv);
    assert(dPriv->driContextPriv);
@@ -534,7 +534,8 @@ void r200PageFlip( const __DRIdrawablePrivate *dPriv )
    }
 
    R200_STATECHANGE( rmesa, ctx );
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = rmesa->state.color.drawOffset;
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = rmesa->state.color.drawOffset
+					   + rmesa->r200Screen->fbLocation;
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH]  = rmesa->state.color.drawPitch;
 }
 
@@ -615,7 +616,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       int clear;
 
       gp.param = RADEON_PARAM_LAST_CLEAR;
-      gp.value = &clear;
+      gp.value = (int *)&clear;
       ret = drmCommandWriteRead( rmesa->dri.fd,
 		      DRM_RADEON_GETPARAM, &gp, sizeof(gp) );
 

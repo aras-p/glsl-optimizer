@@ -215,7 +215,8 @@ r200TryReadPixels( GLcontext *ctx,
    {
       __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
       int nbox = dPriv->numClipRects;
-      int src_offset = rmesa->state.color.drawOffset;
+      int src_offset = rmesa->state.color.drawOffset
+		     + rmesa->r200Screen->fbLocation;
       int src_pitch = rmesa->state.color.drawPitch * rmesa->r200Screen->cpp;
       int dst_offset = r200GartOffsetFromVirtual( rmesa, pixels );
       int dst_pitch = pitch * rmesa->r200Screen->cpp;
@@ -288,7 +289,7 @@ static void do_draw_pix( GLcontext *ctx,
 			 GLint x, GLint y, GLsizei width, GLsizei height,
 			 GLint pitch,
 			 const void *pixels,
-			 GLuint dest, GLuint planemask)
+			 GLuint planemask)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
@@ -354,7 +355,7 @@ static void do_draw_pix( GLcontext *ctx,
 		    blit_format,
 		    src_pitch, src_offset,
 		    rmesa->state.color.drawPitch * rmesa->r200Screen->cpp,
-		    rmesa->state.color.drawOffset,
+		    rmesa->state.color.drawOffset + rmesa->r200Screen->fbLocation,
 		    bx - x, by - y,
 		    bx, by,
 		    bw, bh );
@@ -377,7 +378,7 @@ r200TryDrawPixels( GLcontext *ctx,
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLint pitch = unpack->RowLength ? unpack->RowLength : width;
-   GLuint dest, planemask;
+   GLuint planemask;
    GLuint cpp = rmesa->r200Screen->cpp;
    GLint size = width * pitch * cpp;
 
@@ -388,8 +389,6 @@ r200TryDrawPixels( GLcontext *ctx,
    case GL_RGB:
    case GL_RGBA:
    case GL_BGRA:
-      dest = rmesa->state.color.drawOffset;
-
       planemask = r200PackColor(cpp,
 				ctx->Color.ColorMask[RCOMP],
 				ctx->Color.ColorMask[GCOMP],
@@ -428,8 +427,7 @@ r200TryDrawPixels( GLcontext *ctx,
 
    if ( r200IsGartMemory(rmesa, pixels, size) )
    {
-      do_draw_pix( ctx, x, y, width, height, pitch, pixels,
-		   dest, planemask );
+      do_draw_pix( ctx, x, y, width, height, pitch, pixels, planemask );
       return GL_TRUE;
    }
    else if (0)

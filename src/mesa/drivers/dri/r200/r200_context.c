@@ -68,10 +68,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 int R200_DEBUG = (0);
 #endif
 
+
 /* R200 configuration
  */
 #include "xmlpool.h"
-
 
 const char __driConfigOptions[] =
 DRI_CONF_BEGIN
@@ -246,7 +246,7 @@ static const struct dri_debug_control debug_control[] =
 
 
 static int
-get_ust_nop( uint64_t * ust )
+get_ust_nop( int64_t * ust )
 {
    *ust = 1;
    return 0;
@@ -264,7 +264,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    r200ContextPtr rmesa;
    GLcontext *ctx, *shareCtx;
    int i;
-   int tcl_mode, fthrottle_mode, preferred_bpt;
+   int tcl_mode, fthrottle_mode;
 
    assert(glVisual);
    assert(driContextPriv);
@@ -299,6 +299,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    /* Parse configuration files */
    driParseConfigFiles (&rmesa->optionCache, &screen->optionCache,
 			screen->driScreen->myNum, "r200");
+
    rmesa->r200Screen = screen;
    rmesa->sarea = (RADEONSAREAPrivPtr)((GLubyte *)sPriv->pSAREA +
 				       screen->sarea_priv_offset);

@@ -1623,8 +1623,9 @@ static void r200DrawBuffer( GLcontext *ctx, GLenum mode )
    _swrast_DrawBuffer(ctx, mode);
 
    R200_STATECHANGE( rmesa, ctx );
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = (rmesa->state.color.drawOffset &
-					    R200_COLOROFFSET_MASK);
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((rmesa->state.color.drawOffset +
+					       rmesa->r200Screen->fbLocation)
+					      & R200_COLOROFFSET_MASK);
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = rmesa->state.color.drawPitch;
 }
 
@@ -1719,8 +1720,10 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
       R200_STATECHANGE(rmesa, ctx );
       if ( state ) {
 	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  R200_DITHER_ENABLE;
+	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~rmesa->state.color.roundEnable;
       } else {
 	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~R200_DITHER_ENABLE;
+	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  rmesa->state.color.roundEnable;
       }
       break;
 

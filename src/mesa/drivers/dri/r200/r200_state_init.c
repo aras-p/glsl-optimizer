@@ -52,6 +52,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_swtcl.h"
 #include "r200_vtxfmt.h"
 
+#include "xmlpool.h"
+
 /* =============================================================
  * State initialization
  */
@@ -363,7 +365,7 @@ void r200InitState( r200ContextPtr rmesa )
 					    R200_DST_BLEND_GL_ZERO );
 
    rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHOFFSET] =
-      rmesa->r200Screen->depthOffset;
+      rmesa->r200Screen->depthOffset + rmesa->r200Screen->fbLocation;
 
    rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHPITCH] = 
       ((rmesa->r200Screen->depthPitch &
@@ -382,10 +384,28 @@ void r200InitState( r200ContextPtr rmesa )
  				     | R200_TEX_BLEND_0_ENABLE);
 
    rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = color_fmt;
-   rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  R200_DITHER_ENABLE;
+   switch ( driQueryOptioni( &rmesa->optionCache, "dither_mode" ) ) {
+   case DRI_CONF_DITHER_XERRORDIFFRESET:
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= R200_DITHER_INIT;
+      break;
+   case DRI_CONF_DITHER_ORDERED:
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= R200_SCALE_DITHER_ENABLE;
+      break;
+   }
+   if ( driQueryOptioni( &rmesa->optionCache, "round_mode" ) ==
+	DRI_CONF_ROUND_ROUND )
+      rmesa->state.color.roundEnable = R200_ROUND_ENABLE;
+   else
+      rmesa->state.color.roundEnable = 0;
+   if ( driQueryOptioni (&rmesa->optionCache, "color_reduction" ) ==
+	DRI_CONF_COLOR_REDUCTION_DITHER )
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= R200_DITHER_ENABLE;
+   else
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= rmesa->state.color.roundEnable;
 
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = (rmesa->state.color.drawOffset &
-					      R200_COLOROFFSET_MASK);
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((rmesa->state.color.drawOffset +
+					       rmesa->r200Screen->fbLocation)
+					      & R200_COLOROFFSET_MASK);
 
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = ((rmesa->state.color.drawPitch &
 					      R200_COLORPITCH_MASK) |
@@ -470,7 +490,8 @@ void r200InitState( r200ContextPtr rmesa )
          ((i << R200_TXFORMAT_ST_ROUTE_SHIFT) |  /* <-- note i */
           (2 << R200_TXFORMAT_WIDTH_SHIFT) |
           (2 << R200_TXFORMAT_HEIGHT_SHIFT));
-      rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET] = 0;
+      rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET] =
+	  rmesa->r200Screen->texOffset[RADEON_CARD_HEAP];
       rmesa->hw.tex[i].cmd[TEX_PP_BORDER_COLOR] = 0;
       rmesa->hw.tex[i].cmd[TEX_PP_TXFORMAT_X] =
          (/* R200_TEXCOORD_PROJ | */

@@ -96,6 +96,7 @@ typedef void (*r200_point_func)( r200ContextPtr,
 struct r200_colorbuffer_state {
    GLuint clear;
    GLint drawOffset, drawPitch;
+   int roundEnable;
 };
 
 
