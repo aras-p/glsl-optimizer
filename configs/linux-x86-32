@@ -1,0 +1,13 @@
+# To build Linux x86 32-bit in an x86-64 environment
+
+include $(TOP)/configs/linux-x86
+
+CONFIG_NAME = linux-x86-32
+
+
+# Other than -m32, these are the same as in linux-x86, which we included above.
+
+CFLAGS = -m32 -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include
+
+CXXFLAGS = -m32 -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE
+

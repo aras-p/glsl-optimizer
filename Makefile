@@ -105,6 +105,7 @@ linux-ultrasparc \
 linux-tcc \
 linux-x86 \
 linux-x86-debug \
+linux-x86-32 \
 linux-x86-64 \
 linux-x86-64-static \
 linux-x86-glide \
