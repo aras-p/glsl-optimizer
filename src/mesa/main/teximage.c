@@ -1,8 +1,8 @@
-/* $Id: teximage.c,v 1.45 2000/09/02 17:52:21 brianp Exp $ */
+/* $Id: teximage.c,v 1.46 2000/09/05 15:40:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -538,7 +538,7 @@ _mesa_compressed_image_size(GLcontext *ctx,
  * texture object.
  */
 struct gl_texture_object *
-_mesa_select_tex_object(GLcontext *ctx, struct gl_texture_unit *texUnit,
+_mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
                         GLenum target)
 {
    switch (target) {
@@ -870,11 +870,11 @@ fill_texture_image( GLcontext *ctx, GLuint dimensions,
          for (img = 0; img < srcDepth; img++) {
             GLubyte *destRow = dest;
             for (row = 0; row < srcHeight; row++) {
-               const GLvoid *srcAddr = _mesa_image_address(srcPacking,
+               const GLvoid *srcRow = _mesa_image_address(srcPacking,
                                               srcAddr, srcWidth, srcHeight,
                                               srcFormat, srcType, img, row, 0);
                _mesa_unpack_ubyte_color_span(ctx, srcWidth, texFormat, destRow,
-                                       srcFormat, srcType, srcAddr, srcPacking,
+                                       srcFormat, srcType, srcRow, srcPacking,
                                        ctx->ImageTransferState);
                destRow += dstRowStride;
             }
@@ -2064,6 +2064,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                    GLenum type, GLvoid *pixels )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const struct gl_texture_unit *texUnit;
    const struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLboolean discardImage;
@@ -2088,46 +2089,12 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
    if (!pixels)
       return;
 
-   switch (target) {
-      case GL_TEXTURE_1D:
-         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentD[1];
-         texImage = texObj->Image[level];
-         break;
-      case GL_TEXTURE_2D:
-         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentD[2];
-         texImage = texObj->Image[level];
-         break;
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
-         texImage = texObj->Image[level];
-         break;
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
-         texImage = texObj->NegX[level];
-         break;
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
-         texImage = texObj->PosY[level];
-         break;
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
-         texImage = texObj->NegY[level];
-         break;
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
-         texImage = texObj->PosZ[level];
-         break;
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentCubeMap;
-         texImage = texObj->NegZ[level];
-         break;
-      case GL_TEXTURE_3D:
-         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentD[3];
-         texImage = texObj->Image[level];
-         break;
-      default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetTexImage(target)" );
-         return;
+   texUnit = &(ctx->Texture.Unit[ctx->Texture.CurrentUnit]);
+   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+   if (!texObj || !texImage) {
+      gl_error(ctx, GL_INVALID_ENUM, "glGetTexImage(target)");
+      return;
    }
 
    if (!texImage) {
