@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.12 1999/10/10 12:39:16 brianp Exp $ */
+/* $Id: context.c,v 1.13 1999/10/10 12:49:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -113,7 +113,7 @@
  */
 void *gl_alloc(size_t bytes)
 {
-   return GL_ALLOC(bytes);
+   return malloc(bytes);
 }
 
 /*
