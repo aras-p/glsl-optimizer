@@ -11,18 +11,34 @@ Introduction
 ------------
 
 Mesa uses an even/odd version number scheme like the Linux kernel.
-Odd numbered versions (such as 4.1) designate new developmental releases.
 Even numbered versions (such as 4.0) designate stable releases.
+Odd numbered versions (such as 4.1) designate new developmental releases.
 
 
 New Features in Mesa 4.1
 ------------------------
 
-<to be determined>
+GL_ARB_window_pos
 
+    This is the ARB-approved version of GL_MESA_window_pos
 
+GL_ARB_depth_texture
+
+    This is the ARB-approved version of GL_SGIX_depth_texture.
+    It allows depth (Z buffer) data to be stored in textures.
+    This is used by GL_ARB_shadow
+
+GL_ARB_shadow
+
+    Shadow mapping with depth textures.
+    This is the ARB-approved version of GL_SGIX_shadow.
+
+GL_ARB_shadow_ambient
+
+    Allows one to specify the luminance of shadowed pixels.
+    This is the ARB-approved version of GL_SGIX_shadow_ambient.
 
 
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-4.1,v 1.1 2001/10/22 22:57:23 brianp Exp $
+$Id: RELNOTES-4.1,v 1.2 2001/12/14 03:14:49 brianp Exp $
