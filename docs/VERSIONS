@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.77 2001/12/19 01:29:58 brianp Exp $
+$Id: VERSIONS,v 1.78 2002/01/09 00:14:13 brianp Exp $
 
 
 Mesa Version History
@@ -935,8 +935,7 @@ Mesa Version History
 	- GL_ARB_depth_texture extension
 	- GL_ARB_shadow extension
 	- GL_ARB_shadow_ambient extension
-	- GL_NV_vertex_program
     Bug fixes:
-	- 
+	- GL_BLEND with non-black texture env color wasn't always correct
     Changes:
 	- New spec file and Python code to generate some GL dispatch files
