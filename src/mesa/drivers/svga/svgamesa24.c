@@ -1,4 +1,4 @@
-/* $Id: svgamesa24.c,v 1.9 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: svgamesa24.c,v 1.10 2001/02/06 00:03:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,7 @@
 
 #include "svgapix.h"
 #include "svgamesa24.h"
+#include "swrast/swrast.h"
 
 
 #if 0
@@ -86,8 +87,8 @@ void __clear_color24( GLcontext *ctx, const GLchan color[4] )
 /*   SVGAMesa->clear_truecolor = red<<16 | green<<8 | blue; */
 }
 
-GLbitfield __clear24( GLcontext *ctx, GLbitfield mask, GLboolean all,
-                      GLint x, GLint y, GLint width, GLint height )
+void __clear24( GLcontext *ctx, GLbitfield mask, GLboolean all,
+                GLint x, GLint y, GLint width, GLint height )
 {
    int i,j;
    
@@ -110,6 +111,7 @@ GLbitfield __clear24( GLcontext *ctx, GLbitfield mask, GLboolean all,
                                    SVGAMesa->clear_blue);
          SVGABuffer.DrawBuffer = tmp;
       }	
+      mask &= ~DD_FRONT_LEFT_BIT;
    }
    if (mask & DD_BACK_LEFT_BIT) {
       if (all) {
@@ -130,8 +132,11 @@ GLbitfield __clear24( GLcontext *ctx, GLbitfield mask, GLboolean all,
                                    SVGAMesa->clear_blue);
          SVGABuffer.DrawBuffer = tmp;
       }	
+      mask &= ~DD_BACK_LEFT_BIT;
    }
-   return mask & (~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT));
+
+   if (mask)
+      _swrast_Clear( ctx, mask, all, x, y, width, height );
 }
 
 void __write_rgba_span24( const GLcontext *ctx, GLuint n, GLint x, GLint y,

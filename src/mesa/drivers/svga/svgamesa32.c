@@ -1,4 +1,4 @@
-/* $Id: svgamesa32.c,v 1.9 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: svgamesa32.c,v 1.10 2001/02/06 00:03:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,8 @@
 
 #include "svgapix.h"
 #include "svgamesa32.h"
+#include "swrast/swrast.h"
+
 
 #if 0
 /* this doesn't compile with GCC on RedHat 6.1 */
@@ -79,8 +81,8 @@ void __clear_color32( GLcontext *ctx, const GLchan color[4] )
    SVGAMesa->clear_truecolor = (color[0] << 16) | (color[1] << 8) | color[2];
 }
 
-GLbitfield __clear32( GLcontext *ctx, GLbitfield mask, GLboolean all,
-                        GLint x, GLint y, GLint width, GLint height )
+void __clear32( GLcontext *ctx, GLbitfield mask, GLboolean all,
+                GLint x, GLint y, GLint width, GLint height )
 {
    int i,j;
    
@@ -98,6 +100,7 @@ GLbitfield __clear32( GLcontext *ctx, GLbitfield mask, GLboolean all,
                __svga_drawpixel32(i,j,SVGAMesa->clear_truecolor);
          SVGABuffer.DrawBuffer = tmp;
       }
+      mask &= ~DD_FRONT_LEFT_BIT;
    }
    if (mask & DD_BACK_LEFT_BIT) {
       if (all) {
@@ -113,8 +116,11 @@ GLbitfield __clear32( GLcontext *ctx, GLbitfield mask, GLboolean all,
                __svga_drawpixel32(i,j,SVGAMesa->clear_truecolor);
          SVGABuffer.DrawBuffer = tmp;
       }
+      mask &= ~DD_BACK_LEFT_BIT;
    }
-   return mask & (~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT));
+
+   if (mask)
+      _swrast_Clear( ctx, mask, all, x, y, width, height );
 }
 
 void __write_rgba_span32( const GLcontext *ctx, GLuint n, GLint x, GLint y,

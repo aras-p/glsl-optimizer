@@ -1,4 +1,4 @@
-/* $Id: svgamesa8.h,v 1.3 2000/11/14 17:40:14 brianp Exp $ */
+/* $Id: svgamesa8.h,v 1.4 2001/02/06 00:03:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,7 @@
 #define SVGA_MESA_8_H
 
 extern void __clear_index8( GLcontext *ctx, GLuint index );
-extern GLbitfield __clear8( GLcontext *ctx, GLbitfield mask, GLboolean all, GLint x, GLint y, GLint width, GLint height );
+extern void __clear8( GLcontext *ctx, GLbitfield mask, GLboolean all, GLint x, GLint y, GLint width, GLint height );
 extern void __write_ci32_span8( const GLcontext *ctx, GLuint n, GLint x, GLint y, const GLuint index[], const GLubyte mask[] );
 extern void __write_ci8_span8( const GLcontext *ctx, GLuint n, GLint x, GLint y, const GLubyte index[], const GLubyte mask[] );
 extern void __write_mono_ci_span8( const GLcontext *ctx, GLuint n, GLint x, GLint y, GLuint colorIndex, const GLubyte mask[] );

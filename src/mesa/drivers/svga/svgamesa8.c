@@ -1,4 +1,4 @@
-/* $Id: svgamesa8.c,v 1.7 2000/11/14 17:40:14 brianp Exp $ */
+/* $Id: svgamesa8.c,v 1.8 2001/02/06 00:03:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,6 +36,8 @@
 
 #include "svgapix.h"
 #include "svgamesa8.h"
+#include "swrast/swrast.h"
+
 
 static void __svga_drawpixel8(int x, int y, unsigned long c)
 {
@@ -58,8 +60,8 @@ void __clear_index8( GLcontext *ctx, GLuint index )
    SVGAMesa->clear_index = index;
 }
 
-GLbitfield __clear8( GLcontext *ctx, GLbitfield mask, GLboolean all,
-                     GLint x, GLint y, GLint width, GLint height )
+void __clear8( GLcontext *ctx, GLbitfield mask, GLboolean all,
+               GLint x, GLint y, GLint width, GLint height )
 {
    int i,j;
    
@@ -75,6 +77,7 @@ GLbitfield __clear8( GLcontext *ctx, GLbitfield mask, GLboolean all,
                __svga_drawpixel8(i,j,SVGAMesa->clear_index);
          SVGABuffer.DrawBuffer = tmp;
       }
+      mask &= ~DD_FRONT_LEFT_BIT;
    }
    if (mask & DD_BACK_LEFT_BIT) {
       if (all) { 
@@ -88,8 +91,11 @@ GLbitfield __clear8( GLcontext *ctx, GLbitfield mask, GLboolean all,
                __svga_drawpixel8(i,j,SVGAMesa->clear_index);
          SVGABuffer.DrawBuffer = tmp;
       }
+      mask &= ~DD_BACK_LEFT_BIT;
    }
-   return mask & (~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT));
+
+   if (mask)
+      _swrast_Clear( ctx, mask, all, x, y, width, height );
 }
 
 void __write_ci32_span8( const GLcontext *ctx, GLuint n, GLint x, GLint y,

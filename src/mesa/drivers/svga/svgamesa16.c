@@ -1,4 +1,4 @@
-/* $Id: svgamesa16.c,v 1.8 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: svgamesa16.c,v 1.9 2001/02/06 00:03:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,7 @@
 
 #include "svgapix.h"
 #include "svgamesa16.h"
+#include "swrast/swrast.h"
 
 
 static void __svga_drawpixel16(int x, int y, unsigned long c)
@@ -64,8 +65,8 @@ void __clear_color16( GLcontext *ctx, const GLchan color[4] )
 /*    SVGAMesa->clear_hicolor=(red)<<11 | (green)<<5 | (blue); */
 }   
 
-GLbitfield __clear16( GLcontext *ctx, GLbitfield mask, GLboolean all,
-                      GLint x, GLint y, GLint width, GLint height )
+void __clear16( GLcontext *ctx, GLbitfield mask, GLboolean all,
+                GLint x, GLint y, GLint width, GLint height )
 {
    int i,j;
 
@@ -83,7 +84,8 @@ GLbitfield __clear16( GLcontext *ctx, GLbitfield mask, GLboolean all,
                __svga_drawpixel16(i,j,SVGAMesa->clear_hicolor);
          SVGABuffer.DrawBuffer = tmp;
       }
-   }    
+      mask &= ~DD_FRONT_LEFT_BIT;
+   }
    if (mask & DD_BACK_LEFT_BIT) {
       if (all) {
          GLshort *shortBuffer=(void *)SVGABuffer.BackBuffer;
@@ -98,8 +100,11 @@ GLbitfield __clear16( GLcontext *ctx, GLbitfield mask, GLboolean all,
                __svga_drawpixel16(i,j,SVGAMesa->clear_hicolor);
          SVGABuffer.DrawBuffer = tmp;
       }
-   }    
-   return mask & (~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT));
+      mask &= ~DD_BACK_LEFT_BIT;
+   }
+
+   if (mask)
+      _swrast_Clear( ctx, mask, all, x, y, width, height );
 }
 
 void __write_rgba_span16( const GLcontext *ctx, GLuint n, GLint x, GLint y,

@@ -1,4 +1,4 @@
-/* $Id: svgamesa32.h,v 1.4 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: svgamesa32.h,v 1.5 2001/02/06 00:03:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,7 @@
 #define SVGA_MESA_32_H
 
 extern void __clear_color32( GLcontext *ctx, const GLchan color[4] );
-extern GLbitfield __clear32( GLcontext *ctx, GLbitfield mask, GLboolean all, GLint x, GLint y, GLint width, GLint height );
+extern void __clear32( GLcontext *ctx, GLbitfield mask, GLboolean all, GLint x, GLint y, GLint width, GLint height );
 extern void __write_rgba_span32( const GLcontext *ctx, GLuint n, GLint x, GLint y, const GLubyte rgba[][4], const GLubyte mask[] );
 extern void __write_mono_rgba_span32( const GLcontext *ctx, GLuint n, GLint x, GLint y, const GLchan color[4], const GLubyte mask[]);
 extern void __read_rgba_span32( const GLcontext *ctx, GLuint n, GLint x, GLint y, GLubyte rgba[][4] );

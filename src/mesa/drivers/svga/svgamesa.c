@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.12 2001/01/23 23:39:36 brianp Exp $ */
+/* $Id: svgamesa.c,v 1.13 2001/02/06 00:03:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,6 +46,7 @@
 #include "extensions.h"
 #include "matrix.h"
 #include "mtypes.h"
+#include "swrast/swrast.h"
 #endif
 
 #include "svgapix.h"
@@ -284,6 +285,14 @@ static void svgamesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.GetBufferSize = get_buffer_size;
    ctx->Driver.SetDrawBuffer = set_draw_buffer;
    ctx->Driver.SetReadBuffer = set_read_buffer;
+
+   /* Software rasterizer pixel paths:
+    */
+   ctx->Driver.Accum = _swrast_Accum;
+   ctx->Driver.Bitmap = _swrast_Bitmap;
+   ctx->Driver.CopyPixels = _swrast_CopyPixels;
+   ctx->Driver.DrawPixels = _swrast_DrawPixels;
+   ctx->Driver.ReadPixels = _swrast_ReadPixels;
 
    ctx->Driver.PointsFunc = NULL;
    ctx->Driver.LineFunc = NULL;
