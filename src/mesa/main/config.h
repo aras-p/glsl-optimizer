@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.10 2000/04/08 18:57:45 brianp Exp $ */
+/* $Id: config.h,v 1.11 2000/04/12 00:27:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -96,8 +96,8 @@
 #define MAX_LINE_WIDTH 10.0
 #define LINE_WIDTH_GRANULARITY 0.1
 
-/* Max texture palette size */
-#define MAX_TEXTURE_PALETTE_SIZE 256
+/* Max texture palette / color table size */
+#define MAX_COLOR_TABLE_SIZE 256
 
 /* Number of texture levels */
 #define MAX_TEXTURE_LEVELS 12

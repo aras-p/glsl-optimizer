@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.12 2000/04/11 20:54:49 brianp Exp $ */
+/* $Id: colortab.c,v 1.13 2000/04/12 00:27:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,82 +33,73 @@
 #include "context.h"
 #include "image.h"
 #include "macros.h"
+#include "mmath.h"
+#include "span.h"
+#include "teximage.h"
 #endif
 
 
 
 /*
- * Return GL_TRUE if k is a power of two, else return GL_FALSE.
+ * Examine table's format and set the component sizes accordingly.
  */
-static GLboolean
-power_of_two( GLint k )
+static void
+set_component_sizes( struct gl_color_table *table )
 {
-   GLint i, m = 1;
-   for (i=0; i<32; i++) {
-      if (k == m)
-         return GL_TRUE;
-      m = m << 1;
-   }
-   return GL_FALSE;
-}
-
-
-static GLint
-decode_internal_format( GLint format )
-{
-   switch (format) {
+   switch (table->Format) {
       case GL_ALPHA:
-      case GL_ALPHA4:
-      case GL_ALPHA8:
-      case GL_ALPHA12:
-      case GL_ALPHA16:
-         return GL_ALPHA;
-      case 1:
+         table->RedSize = 0;
+         table->GreenSize = 0;
+         table->BlueSize = 0;
+         table->AlphaSize = 8;
+         table->IntensitySize = 0;
+         table->LuminanceSize = 0;
+         break;
       case GL_LUMINANCE:
-      case GL_LUMINANCE4:
-      case GL_LUMINANCE8:
-      case GL_LUMINANCE12:
-      case GL_LUMINANCE16:
-         return GL_LUMINANCE;
-      case 2:
+         table->RedSize = 0;
+         table->GreenSize = 0;
+         table->BlueSize = 0;
+         table->AlphaSize = 0;
+         table->IntensitySize = 0;
+         table->LuminanceSize = 8;
+         break;
       case GL_LUMINANCE_ALPHA:
-      case GL_LUMINANCE4_ALPHA4:
-      case GL_LUMINANCE6_ALPHA2:
-      case GL_LUMINANCE8_ALPHA8:
-      case GL_LUMINANCE12_ALPHA4:
-      case GL_LUMINANCE12_ALPHA12:
-      case GL_LUMINANCE16_ALPHA16:
-         return GL_LUMINANCE_ALPHA;
+         table->RedSize = 0;
+         table->GreenSize = 0;
+         table->BlueSize = 0;
+         table->AlphaSize = 8;
+         table->IntensitySize = 0;
+         table->LuminanceSize = 8;
+         break;
       case GL_INTENSITY:
-      case GL_INTENSITY4:
-      case GL_INTENSITY8:
-      case GL_INTENSITY12:
-      case GL_INTENSITY16:
-         return GL_INTENSITY;
-      case 3:
+         table->RedSize = 0;
+         table->GreenSize = 0;
+         table->BlueSize = 0;
+         table->AlphaSize = 0;
+         table->IntensitySize = 8;
+         table->LuminanceSize = 0;
+         break;
       case GL_RGB:
-      case GL_R3_G3_B2:
-      case GL_RGB4:
-      case GL_RGB5:
-      case GL_RGB8:
-      case GL_RGB10:
-      case GL_RGB12:
-      case GL_RGB16:
-         return GL_RGB;
-      case 4:
+         table->RedSize = 8;
+         table->GreenSize = 8;
+         table->BlueSize = 8;
+         table->AlphaSize = 0;
+         table->IntensitySize = 0;
+         table->LuminanceSize = 0;
+         break;
       case GL_RGBA:
-      case GL_RGBA2:
-      case GL_RGBA4:
-      case GL_RGB5_A1:
-      case GL_RGBA8:
-      case GL_RGB10_A2:
-      case GL_RGBA12:
-      case GL_RGBA16:
-         return GL_RGBA;
+         table->RedSize = 8;
+         table->GreenSize = 8;
+         table->BlueSize = 8;
+         table->AlphaSize = 8;
+         table->IntensitySize = 0;
+         table->LuminanceSize = 0;
+         break;
       default:
-         return -1;  /* error */
+         gl_problem(NULL, "unexpected format in set_component_sizes");
    }
 }
+
 
 
 void 
@@ -118,9 +109,12 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   struct gl_texture_object *texObj;
-   struct gl_color_table *table;
+   struct gl_texture_object *texObj = NULL;
+   struct gl_color_table *table = NULL;
    GLboolean proxy = GL_FALSE;
+   GLint baseFormat;
+   GLfloat rScale = 1.0, gScale = 1.0, bScale = 1.0, aScale = 1.0;
+   GLfloat rBias  = 0.0, gBias  = 0.0, bBias  = 0.0, aBias  = 0.0;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glColorTable");
 
@@ -153,15 +147,50 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          proxy = GL_TRUE;
          break;
       case GL_SHARED_TEXTURE_PALETTE_EXT:
-         texObj = NULL;
          table = &ctx->Texture.Palette;
          break;
+      case GL_COLOR_TABLE:
+         table = &ctx->ColorTable;
+         rScale = ctx->Pixel.ColorTableScale[0];
+         gScale = ctx->Pixel.ColorTableScale[1];
+         bScale = ctx->Pixel.ColorTableScale[2];
+         aScale = ctx->Pixel.ColorTableScale[3];
+         rBias = ctx->Pixel.ColorTableBias[0];
+         gBias = ctx->Pixel.ColorTableBias[1];
+         bBias = ctx->Pixel.ColorTableBias[2];
+         aBias = ctx->Pixel.ColorTableBias[3];
+         break;
+      case GL_PROXY_COLOR_TABLE:
+         table = &ctx->ProxyColorTable;
+         proxy = GL_TRUE;
+         break;
+      case GL_POST_CONVOLUTION_COLOR_TABLE:
+         table = &ctx->PostConvolutionColorTable;
+         rScale = ctx->Pixel.PCCTscale[0];
+         gScale = ctx->Pixel.PCCTscale[1];
+         bScale = ctx->Pixel.PCCTscale[2];
+         aScale = ctx->Pixel.PCCTscale[3];
+         rBias = ctx->Pixel.PCCTbias[0];
+         gBias = ctx->Pixel.PCCTbias[1];
+         bBias = ctx->Pixel.PCCTbias[2];
+         aBias = ctx->Pixel.PCCTbias[3];
+         break;
+      case GL_PROXY_POST_CONVOLUTION_COLOR_TABLE:
+         table = &ctx->ProxyPostConvolutionColorTable;
+         proxy = GL_TRUE;
+         break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE:
-         texObj = NULL;
          table = &ctx->PostColorMatrixColorTable;
+         rScale = ctx->Pixel.PCMCTscale[0];
+         gScale = ctx->Pixel.PCMCTscale[1];
+         bScale = ctx->Pixel.PCMCTscale[2];
+         aScale = ctx->Pixel.PCMCTscale[3];
+         rBias = ctx->Pixel.PCMCTbias[0];
+         gBias = ctx->Pixel.PCMCTbias[1];
+         bBias = ctx->Pixel.PCMCTbias[2];
+         aBias = ctx->Pixel.PCMCTbias[3];
          break;
       case GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE:
-         texObj = NULL;
          table = &ctx->ProxyPostColorMatrixColorTable;
          proxy = GL_TRUE;
          break;
@@ -177,13 +206,15 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
       return;
    }
 
-   if (decode_internal_format(internalFormat) < 0) {
+   baseFormat = _mesa_base_tex_format(internalFormat);
+   if (baseFormat < 0 || baseFormat == GL_COLOR_INDEX) {
       gl_error(ctx, GL_INVALID_ENUM, "glColorTable(internalFormat)");
       return;
    }
 
-   if (width < 1 || width > MAX_TEXTURE_PALETTE_SIZE || !power_of_two(width)) {
-      if (width > MAX_TEXTURE_PALETTE_SIZE)
+   if (width < 1 || width > MAX_COLOR_TABLE_SIZE
+       || _mesa_bitcount(width) != 1) {
+      if (width > MAX_COLOR_TABLE_SIZE)
          gl_error(ctx, GL_TABLE_TOO_LARGE, "glColorTable(width)");
       else
          gl_error(ctx, GL_INVALID_VALUE, "glColorTable(width)");
@@ -198,25 +229,28 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
 
    table->Size = width;
    table->IntFormat = internalFormat;
-   table->Format = (GLenum) decode_internal_format(internalFormat);
+   table->Format = (GLenum) baseFormat;
+   set_component_sizes(table);
+
    if (!proxy) {
       _mesa_unpack_ubyte_color_span(ctx, width, table->Format,
                                     table->Table,  /* dest */
                                     format, type, data,
-                                    &ctx->Unpack, GL_FALSE);
+                                    &ctx->Unpack, GL_TRUE);
+      if (rScale != 1.0 || gScale != 1.0 || bScale != 1.0 || aScale != 1.0 ||
+          rBias != 0.0 || gBias != 0.0 || bBias != 0.0 || aBias != 0.0) {
+         /* XXX apply scale and bias */
+
+      }
    }
-   if (texObj) {
-      /* per-texture object palette */
+
+   if (texObj || target == GL_SHARED_TEXTURE_PALETTE_EXT) {
+      /* texture object palette, texObj==NULL means the shared palette */
       if (ctx->Driver.UpdateTexturePalette) {
          (*ctx->Driver.UpdateTexturePalette)( ctx, texObj );
       }
    }
-   else {
-      /* shared texture palette */
-      if (ctx->Driver.UpdateTexturePalette) {
-         (*ctx->Driver.UpdateTexturePalette)( ctx, NULL );
-      }
-   }
+
 }
 
 
@@ -224,12 +258,12 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
 void
 _mesa_ColorSubTable( GLenum target, GLsizei start,
                      GLsizei count, GLenum format, GLenum type,
-                     const GLvoid *table )
+                     const GLvoid *data )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   struct gl_texture_object *texObj;
-   struct gl_color_table *palette;
+   struct gl_texture_object *texObj = NULL;
+   struct gl_color_table *table = NULL;
    GLint comps;
    GLubyte *dest;
 
@@ -238,26 +272,34 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
    switch (target) {
       case GL_TEXTURE_1D:
          texObj = texUnit->CurrentD[1];
-         palette = &texObj->Palette;
+         table = &texObj->Palette;
          break;
       case GL_TEXTURE_2D:
          texObj = texUnit->CurrentD[2];
-         palette = &texObj->Palette;
+         table = &texObj->Palette;
          break;
       case GL_TEXTURE_3D:
          texObj = texUnit->CurrentD[3];
-         palette = &texObj->Palette;
+         table = &texObj->Palette;
          break;
       case GL_SHARED_TEXTURE_PALETTE_EXT:
-         texObj = NULL;
-         palette = &ctx->Texture.Palette;
+         table = &ctx->Texture.Palette;
+         break;
+      case GL_COLOR_TABLE:
+         table = &ctx->ColorTable;
+         break;
+      case GL_POST_CONVOLUTION_COLOR_TABLE:
+         table = &ctx->PostConvolutionColorTable;
+         break;
+      case GL_POST_COLOR_MATRIX_COLOR_TABLE:
+         table = &ctx->PostColorMatrixColorTable;
          break;
       default:
          gl_error(ctx, GL_INVALID_ENUM, "glColorSubTable(target)");
          return;
    }
 
-   assert(palette);
+   assert(table);
 
    if (!_mesa_is_legal_format_and_type(format, type)) {
       gl_error(ctx, GL_INVALID_ENUM, "glColorSubTable(format or type)");
@@ -269,126 +311,274 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
       return;
    }
 
-   comps = _mesa_components_in_format(format);
-   assert(comps > 0);  /* error should be caught sooner */
+   comps = _mesa_components_in_format(table->Format);
+   assert(comps > 0);  /* error should have been caught sooner */
 
-   if (start + count > palette->Size) {
+   if (start + count > table->Size) {
       gl_error(ctx, GL_INVALID_VALUE, "glColorSubTable(count)");
       return;
    }
-   dest = palette->Table + start * comps * sizeof(GLubyte);
-   _mesa_unpack_ubyte_color_span(ctx, count, palette->Format, dest,
-                                 format, type, table,
-                                 &ctx->Unpack, GL_FALSE);
 
-   if (texObj) {
+   dest = table->Table + start * comps * sizeof(GLubyte);
+   _mesa_unpack_ubyte_color_span(ctx, count, table->Format, dest,
+                                 format, type, data,
+                                 &ctx->Unpack, GL_TRUE);
+
+   if (texObj || target == GL_SHARED_TEXTURE_PALETTE_EXT) {
       /* per-texture object palette */
       if (ctx->Driver.UpdateTexturePalette) {
          (*ctx->Driver.UpdateTexturePalette)( ctx, texObj );
-      }
-   }
-   else {
-      /* shared texture palette */
-      if (ctx->Driver.UpdateTexturePalette) {
-         (*ctx->Driver.UpdateTexturePalette)( ctx, NULL );
       }
    }
 }
 
 
 
+/* XXX not tested */
+void
+_mesa_CopyColorTable(GLenum target, GLenum internalformat,
+                     GLint x, GLint y, GLsizei width)
+{
+   GLubyte data[MAX_WIDTH][4];
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyColorTable");
+
+   /* Select buffer to read from */
+   (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+                                 ctx->Pixel.DriverReadBuffer );
+
+   if (width > MAX_WIDTH)
+      width = MAX_WIDTH;
+
+   /* read the data from framebuffer */
+   gl_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
+
+   /* Restore reading from draw buffer (the default) */
+   (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
+                                 ctx->Color.DriverDrawBuffer );
+
+   _mesa_ColorTable(target, internalformat, width,
+                    GL_RGBA, GL_UNSIGNED_BYTE, data);
+}
+
+
+
+/* XXX not tested */
+void
+_mesa_CopyColorSubTable(GLenum target, GLsizei start,
+                        GLint x, GLint y, GLsizei width)
+{
+   GLubyte data[MAX_WIDTH][4];
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyColorSubTable");
+
+   /* Select buffer to read from */
+   (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+                                 ctx->Pixel.DriverReadBuffer );
+
+   if (width > MAX_WIDTH)
+      width = MAX_WIDTH;
+
+   /* read the data from framebuffer */
+   gl_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
+
+   /* Restore reading from draw buffer (the default) */
+   (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
+                                 ctx->Color.DriverDrawBuffer );
+
+   _mesa_ColorSubTable(target, start, width, GL_RGBA, GL_UNSIGNED_BYTE, data);
+}
+
+
+
 void
 _mesa_GetColorTable( GLenum target, GLenum format,
-                     GLenum type, GLvoid *table )
+                     GLenum type, GLvoid *data )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   struct gl_color_table *palette;
-   GLubyte rgba[MAX_TEXTURE_PALETTE_SIZE][4];
+   struct gl_color_table *table = NULL;
+   GLubyte rgba[MAX_COLOR_TABLE_SIZE][4];
    GLint i;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetColorTable");
 
    switch (target) {
       case GL_TEXTURE_1D:
-         palette = &texUnit->CurrentD[1]->Palette;
+         table = &texUnit->CurrentD[1]->Palette;
          break;
       case GL_TEXTURE_2D:
-         palette = &texUnit->CurrentD[2]->Palette;
+         table = &texUnit->CurrentD[2]->Palette;
          break;
       case GL_TEXTURE_3D:
-         palette = &texUnit->CurrentD[3]->Palette;
+         table = &texUnit->CurrentD[3]->Palette;
          break;
       case GL_SHARED_TEXTURE_PALETTE_EXT:
-         palette = &ctx->Texture.Palette;
+         table = &ctx->Texture.Palette;
+         break;
+      case GL_COLOR_TABLE:
+         table = &ctx->ColorTable;
+         break;
+      case GL_POST_CONVOLUTION_COLOR_TABLE:
+         table = &ctx->PostConvolutionColorTable;
+         break;
+      case GL_POST_COLOR_MATRIX_COLOR_TABLE:
+         table = &ctx->PostColorMatrixColorTable;
          break;
       default:
          gl_error(ctx, GL_INVALID_ENUM, "glGetColorTable(target)");
          return;
    }
 
-   assert(palette);
+   assert(table);
 
-   switch (palette->Format) {
+   switch (table->Format) {
       case GL_ALPHA:
-         for (i = 0; i < palette->Size; i++) {
+         for (i = 0; i < table->Size; i++) {
             rgba[i][RCOMP] = 0;
             rgba[i][GCOMP] = 0;
             rgba[i][BCOMP] = 0;
-            rgba[i][ACOMP] = palette->Table[i];
+            rgba[i][ACOMP] = table->Table[i];
          }
          break;
       case GL_LUMINANCE:
-         for (i = 0; i < palette->Size; i++) {
-            rgba[i][RCOMP] = palette->Table[i];
-            rgba[i][GCOMP] = palette->Table[i];
-            rgba[i][BCOMP] = palette->Table[i];
+         for (i = 0; i < table->Size; i++) {
+            rgba[i][RCOMP] = table->Table[i];
+            rgba[i][GCOMP] = table->Table[i];
+            rgba[i][BCOMP] = table->Table[i];
             rgba[i][ACOMP] = 255;
          }
          break;
       case GL_LUMINANCE_ALPHA:
-         for (i = 0; i < palette->Size; i++) {
-            rgba[i][RCOMP] = palette->Table[i*2+0];
-            rgba[i][GCOMP] = palette->Table[i*2+0];
-            rgba[i][BCOMP] = palette->Table[i*2+0];
-            rgba[i][ACOMP] = palette->Table[i*2+1];
+         for (i = 0; i < table->Size; i++) {
+            rgba[i][RCOMP] = table->Table[i*2+0];
+            rgba[i][GCOMP] = table->Table[i*2+0];
+            rgba[i][BCOMP] = table->Table[i*2+0];
+            rgba[i][ACOMP] = table->Table[i*2+1];
          }
          break;
       case GL_INTENSITY:
-         for (i = 0; i < palette->Size; i++) {
-            rgba[i][RCOMP] = palette->Table[i];
-            rgba[i][GCOMP] = palette->Table[i];
-            rgba[i][BCOMP] = palette->Table[i];
+         for (i = 0; i < table->Size; i++) {
+            rgba[i][RCOMP] = table->Table[i];
+            rgba[i][GCOMP] = table->Table[i];
+            rgba[i][BCOMP] = table->Table[i];
             rgba[i][ACOMP] = 255;
          }
          break;
       case GL_RGB:
-         for (i = 0; i < palette->Size; i++) {
-            rgba[i][RCOMP] = palette->Table[i*3+0];
-            rgba[i][GCOMP] = palette->Table[i*3+1];
-            rgba[i][BCOMP] = palette->Table[i*3+2];
+         for (i = 0; i < table->Size; i++) {
+            rgba[i][RCOMP] = table->Table[i*3+0];
+            rgba[i][GCOMP] = table->Table[i*3+1];
+            rgba[i][BCOMP] = table->Table[i*3+2];
             rgba[i][ACOMP] = 255;
          }
          break;
       case GL_RGBA:
-         for (i = 0; i < palette->Size; i++) {
-            rgba[i][RCOMP] = palette->Table[i*4+0];
-            rgba[i][GCOMP] = palette->Table[i*4+1];
-            rgba[i][BCOMP] = palette->Table[i*4+2];
-            rgba[i][ACOMP] = palette->Table[i*4+3];
+         for (i = 0; i < table->Size; i++) {
+            rgba[i][RCOMP] = table->Table[i*4+0];
+            rgba[i][GCOMP] = table->Table[i*4+1];
+            rgba[i][BCOMP] = table->Table[i*4+2];
+            rgba[i][ACOMP] = table->Table[i*4+3];
          }
          break;
       default:
-         gl_problem(ctx, "bad palette format in glGetColorTable");
+         gl_problem(ctx, "bad table format in glGetColorTable");
          return;
    }
 
-   _mesa_pack_rgba_span(ctx, palette->Size, (const GLubyte (*)[]) rgba,
-                        format, type, table, &ctx->Pack, GL_FALSE);
+   _mesa_pack_rgba_span(ctx, table->Size, (const GLubyte (*)[]) rgba,
+                        format, type, data, &ctx->Pack, GL_FALSE);
+}
 
-   (void) format;
-   (void) type;
-   (void) table;
+
+
+void
+_mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx, "glColorTableParameterfv");
+
+   switch (target) {
+      case GL_COLOR_TABLE_SGI:
+         if (pname == GL_COLOR_TABLE_SCALE_SGI) {
+            ctx->Pixel.ColorTableScale[0] = params[0];
+            ctx->Pixel.ColorTableScale[1] = params[1];
+            ctx->Pixel.ColorTableScale[2] = params[2];
+            ctx->Pixel.ColorTableScale[3] = params[3];
+         }
+         else if (pname == GL_COLOR_TABLE_BIAS_SGI) {
+            ctx->Pixel.ColorTableBias[0] = params[0];
+            ctx->Pixel.ColorTableBias[1] = params[1];
+            ctx->Pixel.ColorTableBias[2] = params[2];
+            ctx->Pixel.ColorTableBias[3] = params[3];
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glColorTableParameterfv(pname)");
+            return;
+         }
+         break;
+      case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
+         if (pname == GL_COLOR_TABLE_SCALE_SGI) {
+            ctx->Pixel.PCCTscale[0] = params[0];
+            ctx->Pixel.PCCTscale[1] = params[1];
+            ctx->Pixel.PCCTscale[2] = params[2];
+            ctx->Pixel.PCCTscale[3] = params[3];
+         }
+         else if (pname == GL_COLOR_TABLE_BIAS_SGI) {
+            ctx->Pixel.PCCTbias[0] = params[0];
+            ctx->Pixel.PCCTbias[1] = params[1];
+            ctx->Pixel.PCCTbias[2] = params[2];
+            ctx->Pixel.PCCTbias[3] = params[3];
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glColorTableParameterfv(pname)");
+            return;
+         }
+         break;
+      case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
+         if (pname == GL_COLOR_TABLE_SCALE_SGI) {
+            ctx->Pixel.PCMCTscale[0] = params[0];
+            ctx->Pixel.PCMCTscale[1] = params[1];
+            ctx->Pixel.PCMCTscale[2] = params[2];
+            ctx->Pixel.PCMCTscale[3] = params[3];
+         }
+         else if (pname == GL_COLOR_TABLE_BIAS_SGI) {
+            ctx->Pixel.PCMCTbias[0] = params[0];
+            ctx->Pixel.PCMCTbias[1] = params[1];
+            ctx->Pixel.PCMCTbias[2] = params[2];
+            ctx->Pixel.PCMCTbias[3] = params[3];
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glColorTableParameterfv(pname)");
+            return;
+         }
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glColorTableParameter(target)");
+         return;
+   }
+}
+
+
+
+void
+_mesa_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
+{
+   GLfloat fparams[4];
+   if (pname == GL_COLOR_TABLE_SGI ||
+       pname == GL_POST_CONVOLUTION_COLOR_TABLE_SGI ||
+       pname == GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI) {
+      /* four values */
+      fparams[0] = (GLfloat) params[0];
+      fparams[1] = (GLfloat) params[1];
+      fparams[2] = (GLfloat) params[2];
+      fparams[3] = (GLfloat) params[3];
+   }
+   else {
+      /* one values */
+      fparams[0] = (GLfloat) params[0];
+   }
+   _mesa_ColorTableParameterfv(target, pname, fparams);
 }
 
 
@@ -396,9 +586,130 @@ _mesa_GetColorTable( GLenum target, GLenum format,
 void
 _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
 {
-   GLint iparams[10];
-   _mesa_GetColorTableParameteriv( target, pname, iparams );
-   *params = (GLfloat) iparams[0];
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   struct gl_color_table *table = NULL;
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetColorTableParameterfv");
+
+   switch (target) {
+      case GL_TEXTURE_1D:
+         table = &texUnit->CurrentD[1]->Palette;
+         break;
+      case GL_TEXTURE_2D:
+         table = &texUnit->CurrentD[2]->Palette;
+         break;
+      case GL_TEXTURE_3D:
+         table = &texUnit->CurrentD[3]->Palette;
+         break;
+      case GL_PROXY_TEXTURE_1D:
+         table = &ctx->Texture.Proxy1D->Palette;
+         break;
+      case GL_PROXY_TEXTURE_2D:
+         table = &ctx->Texture.Proxy2D->Palette;
+         break;
+      case GL_PROXY_TEXTURE_3D:
+         table = &ctx->Texture.Proxy3D->Palette;
+         break;
+      case GL_SHARED_TEXTURE_PALETTE_EXT:
+         table = &ctx->Texture.Palette;
+         break;
+      case GL_COLOR_TABLE:
+         table = &ctx->ColorTable;
+         if (pname == GL_COLOR_TABLE_SCALE_SGI) {
+            params[0] = ctx->Pixel.ColorTableScale[0];
+            params[1] = ctx->Pixel.ColorTableScale[1];
+            params[2] = ctx->Pixel.ColorTableScale[2];
+            params[3] = ctx->Pixel.ColorTableScale[3];
+            return;
+         }
+         else if (pname == GL_COLOR_TABLE_BIAS_SGI) {
+            params[0] = ctx->Pixel.ColorTableBias[0];
+            params[1] = ctx->Pixel.ColorTableBias[1];
+            params[2] = ctx->Pixel.ColorTableBias[2];
+            params[3] = ctx->Pixel.ColorTableBias[3];
+            return;
+         }
+         break;
+      case GL_PROXY_COLOR_TABLE:
+         table = &ctx->ProxyColorTable;
+         break;
+      case GL_POST_CONVOLUTION_COLOR_TABLE:
+         table = &ctx->PostConvolutionColorTable;
+         if (pname == GL_COLOR_TABLE_SCALE_SGI) {
+            params[0] = ctx->Pixel.PCCTscale[0];
+            params[1] = ctx->Pixel.PCCTscale[1];
+            params[2] = ctx->Pixel.PCCTscale[2];
+            params[3] = ctx->Pixel.PCCTscale[3];
+            return;
+         }
+         else if (pname == GL_COLOR_TABLE_BIAS_SGI) {
+            params[0] = ctx->Pixel.PCCTbias[0];
+            params[1] = ctx->Pixel.PCCTbias[1];
+            params[2] = ctx->Pixel.PCCTbias[2];
+            params[3] = ctx->Pixel.PCCTbias[3];
+            return;
+         }
+         break;
+      case GL_PROXY_POST_CONVOLUTION_COLOR_TABLE:
+         table = &ctx->ProxyPostConvolutionColorTable;
+         break;
+      case GL_POST_COLOR_MATRIX_COLOR_TABLE:
+         table = &ctx->PostColorMatrixColorTable;
+         if (pname == GL_COLOR_TABLE_SCALE_SGI) {
+            params[0] = ctx->Pixel.PCMCTscale[0];
+            params[1] = ctx->Pixel.PCMCTscale[1];
+            params[2] = ctx->Pixel.PCMCTscale[2];
+            params[3] = ctx->Pixel.PCMCTscale[3];
+            return;
+         }
+         else if (pname == GL_COLOR_TABLE_BIAS_SGI) {
+            params[0] = ctx->Pixel.PCMCTbias[0];
+            params[1] = ctx->Pixel.PCMCTbias[1];
+            params[2] = ctx->Pixel.PCMCTbias[2];
+            params[3] = ctx->Pixel.PCMCTbias[3];
+            return;
+         }
+         break;
+      case GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE:
+         table = &ctx->ProxyPostColorMatrixColorTable;
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameterfv(target)");
+         return;
+   }
+
+   assert(table);
+
+   switch (pname) {
+      case GL_COLOR_TABLE_FORMAT:
+         *params = table->IntFormat;
+         break;
+      case GL_COLOR_TABLE_WIDTH:
+         *params = table->Size;
+         break;
+      case GL_COLOR_TABLE_RED_SIZE:
+         *params = table->RedSize;
+         break;
+      case GL_COLOR_TABLE_GREEN_SIZE:
+         *params = table->GreenSize;
+         break;
+      case GL_COLOR_TABLE_BLUE_SIZE:
+         *params = table->BlueSize;
+         break;
+      case GL_COLOR_TABLE_ALPHA_SIZE:
+         *params = table->AlphaSize;
+         break;
+      case GL_COLOR_TABLE_LUMINANCE_SIZE:
+         *params = table->LuminanceSize;
+         break;
+      case GL_COLOR_TABLE_INTENSITY_SIZE:
+         *params = table->IntensitySize;
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameterfv(pname)" );
+         return;
+   }
 }
 
 
@@ -408,66 +719,126 @@ _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   struct gl_color_table *palette;
+   struct gl_color_table *table = NULL;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetColorTableParameter");
+   ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetColorTableParameteriv");
 
    switch (target) {
       case GL_TEXTURE_1D:
-         palette = &texUnit->CurrentD[1]->Palette;
+         table = &texUnit->CurrentD[1]->Palette;
          break;
       case GL_TEXTURE_2D:
-         palette = &texUnit->CurrentD[2]->Palette;
+         table = &texUnit->CurrentD[2]->Palette;
          break;
       case GL_TEXTURE_3D:
-         palette = &texUnit->CurrentD[3]->Palette;
+         table = &texUnit->CurrentD[3]->Palette;
          break;
       case GL_PROXY_TEXTURE_1D:
-         palette = &ctx->Texture.Proxy1D->Palette;
+         table = &ctx->Texture.Proxy1D->Palette;
          break;
       case GL_PROXY_TEXTURE_2D:
-         palette = &ctx->Texture.Proxy2D->Palette;
+         table = &ctx->Texture.Proxy2D->Palette;
          break;
       case GL_PROXY_TEXTURE_3D:
-         palette = &ctx->Texture.Proxy3D->Palette;
+         table = &ctx->Texture.Proxy3D->Palette;
          break;
       case GL_SHARED_TEXTURE_PALETTE_EXT:
-         palette = &ctx->Texture.Palette;
+         table = &ctx->Texture.Palette;
+         break;
+      case GL_COLOR_TABLE:
+         table = &ctx->ColorTable;
+         if (pname == GL_COLOR_TABLE_SCALE_SGI) {
+            params[0] = (GLint) ctx->Pixel.ColorTableScale[0];
+            params[1] = (GLint) ctx->Pixel.ColorTableScale[1];
+            params[2] = (GLint) ctx->Pixel.ColorTableScale[2];
+            params[3] = (GLint) ctx->Pixel.ColorTableScale[3];
+            return;
+         }
+         else if (pname == GL_COLOR_TABLE_BIAS_SGI) {
+            params[0] = (GLint) ctx->Pixel.ColorTableBias[0];
+            params[1] = (GLint) ctx->Pixel.ColorTableBias[1];
+            params[2] = (GLint) ctx->Pixel.ColorTableBias[2];
+            params[3] = (GLint) ctx->Pixel.ColorTableBias[3];
+            return;
+         }
+         break;
+      case GL_PROXY_COLOR_TABLE:
+         table = &ctx->ProxyColorTable;
+         break;
+      case GL_POST_CONVOLUTION_COLOR_TABLE:
+         table = &ctx->PostConvolutionColorTable;
+         if (pname == GL_COLOR_TABLE_SCALE_SGI) {
+            params[0] = (GLint) ctx->Pixel.PCCTscale[0];
+            params[1] = (GLint) ctx->Pixel.PCCTscale[1];
+            params[2] = (GLint) ctx->Pixel.PCCTscale[2];
+            params[3] = (GLint) ctx->Pixel.PCCTscale[3];
+            return;
+         }
+         else if (pname == GL_COLOR_TABLE_BIAS_SGI) {
+            params[0] = (GLint) ctx->Pixel.PCCTbias[0];
+            params[1] = (GLint) ctx->Pixel.PCCTbias[1];
+            params[2] = (GLint) ctx->Pixel.PCCTbias[2];
+            params[3] = (GLint) ctx->Pixel.PCCTbias[3];
+            return;
+         }
+         break;
+      case GL_PROXY_POST_CONVOLUTION_COLOR_TABLE:
+         table = &ctx->ProxyPostConvolutionColorTable;
+         break;
+      case GL_POST_COLOR_MATRIX_COLOR_TABLE:
+         table = &ctx->PostColorMatrixColorTable;
+         if (pname == GL_COLOR_TABLE_SCALE_SGI) {
+            params[0] = (GLint) ctx->Pixel.PCMCTscale[0];
+            params[1] = (GLint) ctx->Pixel.PCMCTscale[1];
+            params[2] = (GLint) ctx->Pixel.PCMCTscale[2];
+            params[3] = (GLint) ctx->Pixel.PCMCTscale[3];
+            return;
+         }
+         else if (pname == GL_COLOR_TABLE_BIAS_SGI) {
+            params[0] = (GLint) ctx->Pixel.PCMCTbias[0];
+            params[1] = (GLint) ctx->Pixel.PCMCTbias[1];
+            params[2] = (GLint) ctx->Pixel.PCMCTbias[2];
+            params[3] = (GLint) ctx->Pixel.PCMCTbias[3];
+            return;
+         }
+         break;
+      case GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE:
+         table = &ctx->ProxyPostColorMatrixColorTable;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameter(target)");
+         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameteriv(target)");
          return;
    }
+
+   assert(table);
 
    switch (pname) {
       case GL_COLOR_TABLE_FORMAT:
-         *params = palette->IntFormat;
+         *params = table->IntFormat;
          break;
       case GL_COLOR_TABLE_WIDTH:
-         *params = palette->Size;
+         *params = table->Size;
          break;
       case GL_COLOR_TABLE_RED_SIZE:
-         *params = 8;
+         *params = table->RedSize;
          break;
       case GL_COLOR_TABLE_GREEN_SIZE:
-         *params = 8;
+         *params = table->GreenSize;
          break;
       case GL_COLOR_TABLE_BLUE_SIZE:
-         *params = 8;
+         *params = table->BlueSize;
          break;
       case GL_COLOR_TABLE_ALPHA_SIZE:
-         *params = 8;
+         *params = table->AlphaSize;
          break;
       case GL_COLOR_TABLE_LUMINANCE_SIZE:
-         *params = 8;
+         *params = table->LuminanceSize;
          break;
       case GL_COLOR_TABLE_INTENSITY_SIZE:
-         *params = 8;
+         *params = table->IntensitySize;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameter" );
+         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameteriv(pname)" );
          return;
    }
 }
-
-

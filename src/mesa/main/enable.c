@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.14 2000/04/07 16:27:26 brianp Exp $ */
+/* $Id: enable.c,v 1.15 2000/04/12 00:27:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -477,6 +477,17 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          ctx->Pixel.PixelTextureEnabled = state;
          break;
 
+      /* GL_SGI_color_table */
+      case GL_COLOR_TABLE_SGI:
+         ctx->Pixel.ColorTableEnabled = state;
+         break;
+      case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
+         ctx->Pixel.PostConvolutionColorTableEnabled = state;
+         break;
+      case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
+         ctx->Pixel.PostColorMatrixColorTableEnabled = state;
+         break;
+
       default:
 	 if (state) {
 	    gl_error( ctx, GL_INVALID_ENUM, "glEnable" );
@@ -684,12 +695,18 @@ _mesa_IsEnabled( GLenum cap )
       /* GL_SGIS_pixel_texture */
       case GL_PIXEL_TEXTURE_SGIS:
          return ctx->Pixel.PixelTextureEnabled;
-         break;
 
       /* GL_SGIX_pixel_texture */
       case GL_PIXEL_TEX_GEN_SGIX:
          return ctx->Pixel.PixelTextureEnabled;
-         break;
+
+      /* GL_SGI_color_table */
+      case GL_COLOR_TABLE_SGI:
+         return ctx->Pixel.ColorTableEnabled;
+      case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
+         return ctx->Pixel.PostConvolutionColorTableEnabled;
+      case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
+         return ctx->Pixel.PostColorMatrixColorTableEnabled;
 
       default:
 	 gl_error( ctx, GL_INVALID_ENUM, "glIsEnabled" );

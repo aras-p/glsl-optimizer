@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.58 2000/04/11 15:07:48 brianp Exp $ */
+/* $Id: context.c,v 1.59 2000/04/12 00:27:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -787,6 +787,12 @@ static void init_color_table( struct gl_color_table *p )
    p->Size = 1;
    p->IntFormat = GL_RGBA;
    p->Format = GL_RGBA;
+   p->RedSize = 8;
+   p->GreenSize = 8;
+   p->BlueSize = 8;
+   p->AlphaSize = 8;
+   p->IntensitySize = 0;
+   p->LuminanceSize = 0;
 }
 
 
@@ -1309,6 +1315,23 @@ static void init_attrib_groups( GLcontext *ctx )
    ctx->AttribStackDepth = 0;
    ctx->ClientAttribStackDepth = 0;
 
+   /* Display list */
+   ctx->CallDepth = 0;
+   ctx->ExecuteFlag = GL_TRUE;
+   ctx->CompileFlag = GL_FALSE;
+   ctx->CurrentListPtr = NULL;
+   ctx->CurrentBlock = NULL;
+   ctx->CurrentListNum = 0;
+   ctx->CurrentPos = 0;
+
+   /* Color tables */
+   init_color_table(&ctx->ColorTable);
+   init_color_table(&ctx->ProxyColorTable);
+   init_color_table(&ctx->PostConvolutionColorTable);
+   init_color_table(&ctx->ProxyPostConvolutionColorTable);
+   init_color_table(&ctx->PostColorMatrixColorTable);
+   init_color_table(&ctx->ProxyPostColorMatrixColorTable);
+
    /* Miscellaneous */
    ctx->NewState = NEW_ALL;
    ctx->RenderMode = GL_RENDER;
@@ -1319,15 +1342,6 @@ static void init_attrib_groups( GLcontext *ctx )
    ctx->NeedEyeCoords = GL_FALSE;
    ctx->NeedEyeNormals = GL_FALSE;
    ctx->vb_proj_matrix = &ctx->ModelProjectMatrix;
-
-   /* Display list */
-   ctx->CallDepth = 0;
-   ctx->ExecuteFlag = GL_TRUE;
-   ctx->CompileFlag = GL_FALSE;
-   ctx->CurrentListPtr = NULL;
-   ctx->CurrentBlock = NULL;
-   ctx->CurrentListNum = 0;
-   ctx->CurrentPos = 0;
 
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
 

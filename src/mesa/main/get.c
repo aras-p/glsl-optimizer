@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.20 2000/04/10 15:52:25 brianp Exp $ */
+/* $Id: get.c,v 1.21 2000/04/12 00:27:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1114,6 +1114,17 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixAlphaBias);
          break;
 
+      /* GL_SGI_color_table (also in 1.2 imaging */
+      case GL_COLOR_TABLE_SGI:
+         *params = ctx->Pixel.ColorTableEnabled;
+         break;
+      case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
+         *params = ctx->Pixel.PostConvolutionColorTableEnabled;
+         break;
+      case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
+         *params = ctx->Pixel.PostColorMatrixColorTableEnabled;
+         break;
+
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
    }
@@ -2156,6 +2167,17 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Pixel.PostColorMatrixAlphaBias;
          break;
 
+      /* GL_SGI_color_table (also in 1.2 imaging */
+      case GL_COLOR_TABLE_SGI:
+         *params = (GLdouble) ctx->Pixel.ColorTableEnabled;
+         break;
+      case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
+         *params = (GLdouble) ctx->Pixel.PostConvolutionColorTableEnabled;
+         break;
+      case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixColorTableEnabled;
+         break;
+
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
    }
@@ -3173,6 +3195,17 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_POST_COLOR_MATRIX_ALPHA_BIAS_SGI:
          *params = ctx->Pixel.PostColorMatrixAlphaBias;
+         break;
+
+      /* GL_SGI_color_table (also in 1.2 imaging */
+      case GL_COLOR_TABLE_SGI:
+         *params = (GLfloat) ctx->Pixel.ColorTableEnabled;
+         break;
+      case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
+         *params = (GLfloat) ctx->Pixel.PostConvolutionColorTableEnabled;
+         break;
+      case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
+         *params = (GLfloat) ctx->Pixel.PostColorMatrixColorTableEnabled;
          break;
 
       default:
@@ -4215,6 +4248,17 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_POST_COLOR_MATRIX_ALPHA_BIAS_SGI:
          *params = (GLint) ctx->Pixel.PostColorMatrixAlphaBias;
+         break;
+
+      /* GL_SGI_color_table (also in 1.2 imaging */
+      case GL_COLOR_TABLE_SGI:
+         *params = (GLint) ctx->Pixel.ColorTableEnabled;
+         break;
+      case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
+         *params = (GLint) ctx->Pixel.PostConvolutionColorTableEnabled;
+         break;
+      case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
+         *params = (GLint) ctx->Pixel.PostColorMatrixColorTableEnabled;
          break;
 
       default:
