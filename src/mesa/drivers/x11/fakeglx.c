@@ -1,5 +1,3 @@
-/* $Id: fakeglx.c,v 1.82 2003/04/01 17:28:10 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -50,6 +48,7 @@
 #include "macros.h"
 #include "imports.h"
 #include "mtypes.h"
+#include "version.h"
 #include "xfonts.h"
 #include "xmesaP.h"
 
@@ -65,7 +64,7 @@
 #define SERVER_MINOR_VERSION 4
 
 /* This is appended onto the glXGetClient/ServerString version strings. */
-#define MESA_GLX_VERSION "Mesa 5.1"
+#define MESA_GLX_VERSION "Mesa " MESA_VERSION_STRING
 
 /* Who implemented this GLX? */
 #define VENDOR "Brian Paul"

@@ -33,8 +33,8 @@
 #include "macros.h"
 #include "mtypes.h"
 #include "texcompress.h"
+#include "version.h"
 #include "math/m_matrix.h"
-
 
 
 #define FLOAT_TO_BOOL(X)	( (X)==0.0F ? GL_FALSE : GL_TRUE )
@@ -6158,9 +6158,9 @@ _mesa_GetString( GLenum name )
    GET_CURRENT_CONTEXT(ctx);
    static const char *vendor = "Brian Paul";
    static const char *renderer = "Mesa";
-   static const char *version_1_2 = "1.2 Mesa 5.1";
-   static const char *version_1_3 = "1.3 Mesa 5.1";
-   static const char *version_1_4 = "1.4 Mesa 5.1";
+   static const char *version_1_2 = "1.2 Mesa " MESA_VERSION_STRING;
+   static const char *version_1_3 = "1.3 Mesa " MESA_VERSION_STRING;
+   static const char *version_1_4 = "1.4 Mesa " MESA_VERSION_STRING;
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
