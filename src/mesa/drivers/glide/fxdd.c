@@ -180,13 +180,16 @@ static GLbitfield fxDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
   const FxU16 clearD = (FxU16) (ctx->Depth.Clear * 0xffff);
   GLbitfield softwareMask = mask & (DD_STENCIL_BIT | DD_ACCUM_BIT);
 
+  /* we can't clear stencil or accum buffers */
+  mask &= ~(DD_STENCIL_BIT | DD_ACCUM_BIT);
+
   if (MESA_VERBOSE & VERBOSE_DRIVER) {
     fprintf(stderr,"fxmesa: fxDDClear(%d,%d,%d,%d)\n", (int) x, (int) y,
             (int) width, (int) height);
   }
 
   if (colorMask != 0xffffffff) {
-    /* do color buffer clears in software */
+    /* do masked color buffer clears in software */
     softwareMask |= (mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT));
     mask &= ~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT);
   }
