@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.36 2002/11/25 13:55:31 keithw Exp $ */
+/* $Id: t_imm_api.c,v 1.37 2002/11/25 20:27:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -128,7 +128,7 @@ _tnl_save_Begin( GLenum mode )
 #endif
 
    if (IM->Count > IMM_MAXDATA-8) {
-      _tnl_flush_immediate( IM );
+      _tnl_flush_immediate( ctx, IM );
       IM = TNL_CURRENT_IM(ctx);
    }
 
@@ -202,7 +202,7 @@ _tnl_Begin( GLenum mode )
    {
       struct immediate *IM = TNL_CURRENT_IM(ctx);
       if (IM->Count > IMM_MAXDATA-8) {
-	 _tnl_flush_immediate( IM );
+	 _tnl_flush_immediate( ctx, IM );
 	 IM = TNL_CURRENT_IM(ctx);
       }
    }
