@@ -436,12 +436,13 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    tcl_mode = driQueryOptioni(&rmesa->optionCache, "tcl_mode");
    if (driQueryOptionb(&rmesa->optionCache, "no_rast")) {
       fprintf(stderr, "disabling 3D acceleration\n");
-      FALLBACK(rmesa, R200_FALLBACK_DISABLE, 1); 
+      FALLBACK(rmesa, R200_FALLBACK_DISABLE, 1);
    }
    else if (tcl_mode == DRI_CONF_TCL_SW || getenv("R200_NO_TCL") ||
 	    !(rmesa->r200Screen->chipset & R200_CHIPSET_TCL)) {
+      rmesa->r200Screen->chipset &= ~R200_CHIPSET_TCL;
       fprintf(stderr, "disabling TCL support\n");
-      TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, 1); 
+      TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, 1);
    }
    if (rmesa->r200Screen->chipset & R200_CHIPSET_TCL) {
       if (tcl_mode >= DRI_CONF_TCL_VTXFMT && !getenv("R200_NO_VTXFMT")) {
