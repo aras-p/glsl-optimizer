@@ -577,6 +577,7 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
    LOCAL_VARS
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
+   int i;
    
    type=r300_get_primitive_type(rmesa, ctx, prim);
    num_verts=r300_get_num_verts(rmesa, ctx, end-start, prim);
@@ -587,11 +588,16 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 	unsigned long elt_count;
 	
 	WARN_ONCE("Rendering with elts\n");
-	
+#if 1	
+	start_index32_packet(num_verts, type);
+	for(i=0; i < num_verts; i++)
+		e32(rmesa->state.Elts[start+i]); /* start ? */
+#else	
 	elt_count=get_num_elts(num_verts);
 	//emit_elts(ctx, rmesa->state.Elts, VB->Count, get_num_elts(VB->Count));
 	emit_elts(ctx, rmesa->state.Elts+start, num_verts, elt_count, get_align(elt_count));
 	fire_EB(PASS_PREFIX rsp->gartTextures.handle/*rmesa->state.elt_ao.aos_offset*/, elt_count, type);
+#endif	
    }else
 	   fire_AOS(PASS_PREFIX num_verts, type);
 }
