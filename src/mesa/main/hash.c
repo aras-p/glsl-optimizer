@@ -1,4 +1,4 @@
-/* $Id: hash.c,v 1.4 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: hash.c,v 1.5 2000/01/04 08:14:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -229,7 +229,7 @@ void HashPrint(const struct HashTable *table)
  * Find a block of 'numKeys' adjacent unused hash keys.
  * Input:  table - the hash table
  *         numKeys - number of keys needed
- * Return:  startint key of free block or 0 if failure
+ * Return:  starting key of free block or 0 if failure
  */
 GLuint HashFindFreeKeyBlock(const struct HashTable *table, GLuint numKeys)
 {
@@ -241,9 +241,9 @@ GLuint HashFindFreeKeyBlock(const struct HashTable *table, GLuint numKeys)
    else {
       /* the slow solution */
       GLuint freeCount = 0;
-      GLuint freeStart = 0;
+      GLuint freeStart = 1;
       GLuint key;
-      for (key=0; key!=maxKey; key++) {
+      for (key=1; key!=maxKey; key++) {
 	 if (HashLookup(table, key)) {
 	    /* darn, this key is already in use */
 	    freeCount = 0;
