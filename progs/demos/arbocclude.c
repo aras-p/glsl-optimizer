@@ -115,6 +115,7 @@ static void Display( void )
    glScalef(0.3, 0.3, 1.0);
    glRotatef(-90.0 * Xpos, 0, 0, 1);
 
+#if defined(GL_ARB_occlusion_query)
 #if TEST_DISPLAY_LISTS
    glNewList(10, GL_COMPILE);
    glBeginQueryARB(GL_SAMPLES_PASSED_ARB, OccQuery);
@@ -152,6 +153,7 @@ static void Display( void )
    /* turn off occlusion testing */
    glColorMask(1, 1, 1, 1);
    glDepthMask(GL_TRUE);
+#endif /* GL_ARB_occlusion_query */
 
    /* draw the orange rect, so we can see what's going on */
    glColor3f(0.8, 0.5, 0);
@@ -173,6 +175,7 @@ static void Display( void )
    glLoadIdentity();
 
    glColor3f(1, 1, 1);
+#if defined(GL_ARB_occlusion_query)
    sprintf(s, " %4d Fragments Visible", passed);
    glRasterPos3f(-0.50, -0.7, 0);
    PrintString(s);
@@ -180,6 +183,10 @@ static void Display( void )
       glRasterPos3f(-0.25, -0.8, 0);
       PrintString("Fully Occluded");
    }
+#else
+   glRasterPos3f(-0.25, -0.8, 0);
+   PrintString("GL_ARB_occlusion_query not available at compile time");
+#endif /* GL_ARB_occlusion_query */
 
    glutSwapBuffers();
 }
@@ -238,17 +245,21 @@ static void Init( void )
       exit(-1);
    }
 
+#if defined(GL_ARB_occlusion_query)
    glGetQueryivARB(GL_SAMPLES_PASSED_ARB, GL_QUERY_COUNTER_BITS_ARB, &bits);
    if (!bits) {
       printf("Hmmm, GL_QUERY_COUNTER_BITS_ARB is zero!\n");
       exit(-1);
    }
+#endif /* GL_ARB_occlusion_query */
 
    glGetIntegerv(GL_DEPTH_BITS, &bits);
    printf("Depthbits: %d\n", bits);
 
+#if defined(GL_ARB_occlusion_query)
    glGenQueriesARB(1, &OccQuery);
    assert(OccQuery > 0);
+#endif /* GL_ARB_occlusion_query */
 
    glEnable(GL_DEPTH_TEST);
 }

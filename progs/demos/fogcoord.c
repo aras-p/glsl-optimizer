@@ -23,6 +23,10 @@
 
 #define DEPTH 15.0f
 
+#if !defined(GLAPIENTRYP)
+#    define GLAPIENTRYP *
+#endif
+
 typedef void (GLAPIENTRYP GLFOGCOORDFEXTPROC) (GLfloat f);
 typedef void (GLAPIENTRYP GLFOGCOORDPOINTEREXTPROC) (GLenum, GLsizei, const GLvoid *);
 
