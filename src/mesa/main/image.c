@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.59 2001/04/04 23:22:38 brianp Exp $ */
+/* $Id: image.c,v 1.60 2001/05/15 21:21:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3180,7 +3180,7 @@ _mesa_pack_index_span( const GLcontext *ctx, GLuint n,
          GLbyte *dst = (GLbyte *) dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            dst[i] = (GLbyte) indexes[i];
+            dst[i] = (GLbyte) source[i];
          }
       }
       break;
@@ -3189,7 +3189,7 @@ _mesa_pack_index_span( const GLcontext *ctx, GLuint n,
          GLushort *dst = (GLushort *) dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            dst[i] = (GLushort) indexes[i];
+            dst[i] = (GLushort) source[i];
          }
          if (dstPacking->SwapBytes) {
             _mesa_swap2( (GLushort *) dst, n );
@@ -3201,7 +3201,7 @@ _mesa_pack_index_span( const GLcontext *ctx, GLuint n,
          GLshort *dst = (GLshort *) dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            dst[i] = (GLshort) indexes[i];
+            dst[i] = (GLshort) source[i];
          }
          if (dstPacking->SwapBytes) {
             _mesa_swap2( (GLushort *) dst, n );
@@ -3213,7 +3213,7 @@ _mesa_pack_index_span( const GLcontext *ctx, GLuint n,
          GLuint *dst = (GLuint *) dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            dst[i] = (GLuint) indexes[i];
+            dst[i] = (GLuint) source[i];
          }
          if (dstPacking->SwapBytes) {
             _mesa_swap4( (GLuint *) dst, n );
@@ -3225,7 +3225,7 @@ _mesa_pack_index_span( const GLcontext *ctx, GLuint n,
          GLint *dst = (GLint *) dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            dst[i] = (GLint) indexes[i];
+            dst[i] = (GLint) source[i];
          }
          if (dstPacking->SwapBytes) {
             _mesa_swap4( (GLuint *) dst, n );
@@ -3237,7 +3237,7 @@ _mesa_pack_index_span( const GLcontext *ctx, GLuint n,
          GLfloat *dst = (GLfloat *) dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            dst[i] = (GLfloat) indexes[i];
+            dst[i] = (GLfloat) source[i];
          }
          if (dstPacking->SwapBytes) {
             _mesa_swap4( (GLuint *) dst, n );
