@@ -1,15 +1,17 @@
-$Id: KNOWN_BUGS,v 1.1 1999/08/19 00:55:41 jtg Exp $
+$Id: KNOWN_BUGS,v 1.2 2000/02/06 17:04:56 brianp Exp $
 
 
 Performance issues with EXT_point_parameters & quake2
 
 
-Broken drivers: 
 
-	--> After integration of the changes in kw3, only the X and FX
-drivers are known to work.  Windows and D3D are known to be broken,
-and all others are suspected to be broken.  Please test your driver
-and update this entry when more is known.
+Using glPolygonMode() where the front and back modes aren't the
+same causes poor performance on 3Dfx.
+
+
+
+Broken drivers: some of the Mesa device drivers (such as BeOS, D3D,
+etc) haven't been updated for Mesa 3.3's device driver changes.
 
 
 
@@ -17,4 +19,15 @@ Separate specular color interpolation isn't implemented for points and
 lines.  Also, will have to add specular color add to pb.c (pixel buffer
 code).
 
+
+
+Joe Bronkema reported a bug when drawing a series of long GL_LINE_STRIP
+primitives.  Putting a glFlush() between the primitives is a work-around.
+
+
+
+glDrawRangeElements() should use vertex array locking to improve performance
+but trying to do so causes a rendering error.  Reported by Scott McMillan.
+Fixed by disabling locking in glDrawRangeElements (varray.c) but that's
+really just hiding a bug in array locking.
 
