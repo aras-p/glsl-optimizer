@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.10 1999/10/03 00:56:07 gareth Exp $ */
+/* $Id: tess.c,v 1.11 1999/10/11 17:26:48 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,11 @@
 
 /*
  * $Log: tess.c,v $
+ * Revision 1.11  1999/10/11 17:26:48  gareth
+ * Updated debugging output.  I'm going to change it all to something
+ * much more like the GLX project.  This was a set of macros left over
+ * from a research project I'd done, and I like the GLX logging more.
+ *
  * Revision 1.10  1999/10/03 00:56:07  gareth
  * Added tessellation winding rule support.  Misc bug fixes.
  *
@@ -96,7 +101,7 @@ GLUtesselator* GLAPIENTRY gluNewTess( void )
 {
     GLUtesselator *tobj;
 
-    DEBUGP( 3, ( "-> gluNewTess()\n" ) );
+    DEBUGP( 15, ( "-> gluNewTess()\n" ) );
 
     if ( ( tobj = (GLUtesselator *)
 	   malloc( sizeof(GLUtesselator) ) ) == NULL )
@@ -132,7 +137,7 @@ GLUtesselator* GLAPIENTRY gluNewTess( void )
 
     tobj->error = GLU_NO_ERROR;
 
-    DEBUGP( 3, ( "<- gluNewTess() tobj:%p\n", tobj ) );
+    DEBUGP( 15, ( "<- gluNewTess() tobj:%p\n", tobj ) );
     return tobj;
 }
 
@@ -142,7 +147,7 @@ GLUtesselator* GLAPIENTRY gluNewTess( void )
  *****************************************************************************/
 void GLAPIENTRY gluDeleteTess( GLUtesselator *tobj )
 {
-    DEBUGP( 3, ( "-> gluDeleteTess( tobj:%p )\n", tobj ) );
+    DEBUGP( 15, ( "-> gluDeleteTess( tobj:%p )\n", tobj ) );
 
     if ( tobj->error == GLU_NO_ERROR && ( tobj->contour_count > 0 ) )
     {
@@ -155,7 +160,7 @@ void GLAPIENTRY gluDeleteTess( GLUtesselator *tobj )
     tess_cleanup( tobj );
     free( tobj );
 
-    DEBUGP( 3, ( "<- gluDeleteTess()\n" ) );
+    DEBUGP( 15, ( "<- gluDeleteTess()\n" ) );
 }
 
 
@@ -164,7 +169,7 @@ void GLAPIENTRY gluDeleteTess( GLUtesselator *tobj )
  *****************************************************************************/
 void GLAPIENTRY gluTessBeginPolygon( GLUtesselator *tobj, void *polygon_data )
 {
-    DEBUGP( 3, ( "-> gluTessBeginPolygon( tobj:%p data:%p )\n", tobj, polygon_data ) );
+    DEBUGP( 15, ( "-> gluTessBeginPolygon( tobj:%p data:%p )\n", tobj, polygon_data ) );
 
     tobj->error = GLU_NO_ERROR;
 
@@ -179,7 +184,7 @@ void GLAPIENTRY gluTessBeginPolygon( GLUtesselator *tobj, void *polygon_data )
 
     tobj->user_data = polygon_data;
 
-    DEBUGP( 3, ( "<- gluTessBeginPolygon( tobj:%p data:%p )\n", tobj, polygon_data ) );
+    DEBUGP( 15, ( "<- gluTessBeginPolygon( tobj:%p data:%p )\n", tobj, polygon_data ) );
 }
 
 
@@ -188,7 +193,7 @@ void GLAPIENTRY gluTessBeginPolygon( GLUtesselator *tobj, void *polygon_data )
  *****************************************************************************/
 void GLAPIENTRY gluTessBeginContour( GLUtesselator *tobj )
 {
-    DEBUGP( 3, ( "  -> gluTessBeginContour( tobj:%p )\n", tobj ) );
+    DEBUGP( 15, ( "  -> gluTessBeginContour( tobj:%p )\n", tobj ) );
     TESS_CHECK_ERRORS( tobj );
 
     if ( tobj->current_contour != NULL )
@@ -227,7 +232,7 @@ void GLAPIENTRY gluTessBeginContour( GLUtesselator *tobj )
     tobj->current_contour->rotx = tobj->current_contour->roty = 0.0;
 
  cleanup:
-    DEBUGP( 3, ( "  <- gluTessBeginContour( tobj:%p )\n", tobj ) );
+    DEBUGP( 15, ( "  <- gluTessBeginContour( tobj:%p )\n", tobj ) );
     return;
 }
 
@@ -241,7 +246,7 @@ void GLAPIENTRY gluTessVertex( GLUtesselator *tobj, GLdouble coords[3],
     tess_contour_t		*current = tobj->current_contour;
     tess_vertex_t		*last_vertex;
 
-    DEBUGP( 3, ( "    -> gluTessVertex( tobj:%p coords:(%.2f,%.2f,%.2f) )\n", tobj, coords[0], coords[1], coords[2] ) );
+    DEBUGP( 15, ( "    -> gluTessVertex( tobj:%p coords:(%.2f,%.2f,%.2f) )\n", tobj, coords[0], coords[1], coords[2] ) );
     TESS_CHECK_ERRORS( tobj );
 
     if ( current == NULL )
@@ -276,7 +281,7 @@ void GLAPIENTRY gluTessVertex( GLUtesselator *tobj, GLdouble coords[3],
 	last_vertex->coords[Y] = coords[Y];
 	last_vertex->coords[Z] = coords[Z];
 
-	last_vertex->angle = 0.0;
+	last_vertex->side = 0.0;
 	last_vertex->label = 0;
 	last_vertex->mark = 0;
 
@@ -304,7 +309,7 @@ void GLAPIENTRY gluTessVertex( GLUtesselator *tobj, GLdouble coords[3],
 	vertex->coords[Y] = coords[Y];
 	vertex->coords[Z] = coords[Z];
 
-	vertex->angle = 0.0;
+	vertex->side = 0.0;
 	vertex->label = 0;
 	vertex->mark = 0;
 
@@ -318,7 +323,7 @@ void GLAPIENTRY gluTessVertex( GLUtesselator *tobj, GLdouble coords[3],
     }
 
  cleanup:
-    DEBUGP( 3, ( "    <- gluTessVertex( tobj:%p )\n", tobj ) );
+    DEBUGP( 15, ( "    <- gluTessVertex( tobj:%p )\n", tobj ) );
     return;
 }
 
@@ -328,7 +333,7 @@ void GLAPIENTRY gluTessVertex( GLUtesselator *tobj, GLdouble coords[3],
  *****************************************************************************/
 void GLAPIENTRY gluTessEndContour( GLUtesselator *tobj )
 {
-    DEBUGP( 3, ( "  -> gluTessEndContour( tobj:%p )\n", tobj ) );
+    DEBUGP( 15, ( "  -> gluTessEndContour( tobj:%p )\n", tobj ) );
     TESS_CHECK_ERRORS( tobj );
 
     if ( tobj->current_contour == NULL )
@@ -349,7 +354,7 @@ void GLAPIENTRY gluTessEndContour( GLUtesselator *tobj )
     }
 
  cleanup:
-    DEBUGP( 3, ( "  <- gluTessEndContour( tobj:%p )\n", tobj ) );
+    DEBUGP( 15, ( "  <- gluTessEndContour( tobj:%p )\n", tobj ) );
     return;
 }
 
@@ -359,7 +364,7 @@ void GLAPIENTRY gluTessEndContour( GLUtesselator *tobj )
  *****************************************************************************/
 void GLAPIENTRY gluTessEndPolygon( GLUtesselator *tobj )
 {
-    DEBUGP( 3, ( "-> gluTessEndPolygon( tobj:%p )\n", tobj ) );
+    DEBUGP( 15, ( "-> gluTessEndPolygon( tobj:%p )\n", tobj ) );
     TESS_CHECK_ERRORS( tobj );
 
     if ( tobj->current_contour != NULL )
@@ -419,7 +424,7 @@ void GLAPIENTRY gluTessEndPolygon( GLUtesselator *tobj )
 
  cleanup:
     delete_all_contours( tobj );
-    DEBUGP( 3, ( "<- gluTessEndPolygon( tobj:%p )\n", tobj ) );
+    DEBUGP( 15, ( "<- gluTessEndPolygon( tobj:%p )\n", tobj ) );
 }
 
 
@@ -507,6 +512,7 @@ void GLAPIENTRY gluTessProperty( GLUtesselator *tobj, GLenum which,
 	break;
 
     case GLU_TESS_TOLERANCE:
+	DEBUGP( 15, ( "   gluTessProperty( tobj:%p ) tolerance: %0.9f\n", tobj, value ) );
 	tobj->tolerance = value;
 	break;
 
@@ -515,7 +521,7 @@ void GLAPIENTRY gluTessProperty( GLUtesselator *tobj, GLenum which,
 	break;
 
     default:
-	DEBUGP( 0, ( "  gluTessProperty( tobj:%p which:%d ) invalid enum\n", tobj, which ) );
+	DEBUGP( 0, ( "   gluTessProperty( tobj:%p which:%d ) invalid enum\n", tobj, which ) );
 	tobj->error = GLU_INVALID_ENUM;
 	break;
     }
@@ -545,7 +551,7 @@ void GLAPIENTRY gluGetTessProperty( GLUtesselator *tobj, GLenum which,
 	break;
 
     default:
-	DEBUGP( 0, ( "  gluGetTessProperty( tobj:%p which:%d ) invalid enum\n", tobj, which ) );
+	DEBUGP( 0, ( "   gluGetTessProperty( tobj:%p which:%d ) invalid enum\n", tobj, which ) );
 	tobj->error = GLU_INVALID_ENUM;
 	break;
     }
@@ -560,7 +566,7 @@ void GLAPIENTRY gluGetTessProperty( GLUtesselator *tobj, GLenum which,
 void GLAPIENTRY gluTessNormal( GLUtesselator *tobj, GLdouble x,
 			       GLdouble y, GLdouble z )
 {
-    DEBUGP( 3, ( "  gluTessNormal( tobj:%p n:(%.2f,%.2f,%.2f)\n", tobj, x, y, z ) );
+    DEBUGP( 15, ( "   gluTessNormal( tobj:%p n:(%.2f,%.2f,%.2f) )\n", tobj, x, y, z ) );
 
     tobj->plane.normal[X] = x;
     tobj->plane.normal[Y] = y;
@@ -658,7 +664,7 @@ static void init_callbacks( tess_callbacks_t *callbacks )
  *****************************************************************************/
 static void tess_cleanup( GLUtesselator *tobj )
 {
-    DEBUGP( 3, ( "  -> tess_cleanup( tobj:%p )\n", tobj ) );
+    DEBUGP( 15, ( "  -> tess_cleanup( tobj:%p )\n", tobj ) );
 
     if ( tobj->current_contour != NULL )
     {
@@ -670,7 +676,7 @@ static void tess_cleanup( GLUtesselator *tobj )
 	delete_all_contours( tobj );
     }
 
-    DEBUGP( 3, ( "  <- tess_cleanup( tobj:%p )\n", tobj ) );
+    DEBUGP( 15, ( "  <- tess_cleanup( tobj:%p )\n", tobj ) );
 }
 
 
@@ -686,11 +692,11 @@ static void inspect_current_contour( GLUtesselator *tobj )
     tess_contour_t *current = tobj->current_contour;
     GLdouble origin[3] = { 0.0, 0.0, 0.0 };
 
-    DEBUGP( 3, ( "    -> inspect_current_contour( tobj:%p )\n", tobj ) );
+    DEBUGP( 15, ( "    -> inspect_current_contour( tobj:%p )\n", tobj ) );
 
     if ( current->vertex_count < 3 )
     {
-	DEBUGP( 3, ( "         count %d < 3, deleting\n", current->vertex_count ) );
+	DEBUGP( 15, ( "         count %d < 3, deleting\n", current->vertex_count ) );
 	delete_current_contour( tobj );
 	return;
     }
@@ -710,7 +716,7 @@ static void inspect_current_contour( GLUtesselator *tobj )
     }
     else
     {
-	DEBUGP( 3, ( "         normal: (%.2f,%.2f,%.2f)\n", tobj->plane.normal[X], tobj->plane.normal[Y], tobj->plane.normal[Z] ) );
+	DEBUGP( 15, ( "         normal: (%.2f,%.2f,%.2f)\n", tobj->plane.normal[X], tobj->plane.normal[Y], tobj->plane.normal[Z] ) );
     }
 
     project_current_contour( tobj );
@@ -719,7 +725,7 @@ static void inspect_current_contour( GLUtesselator *tobj )
 	return;
     }
 
-    DEBUGP( 3, ( "    <- inspect_current_contour( tobj:%p )\n", tobj ) );
+    DEBUGP( 15, ( "    <- inspect_current_contour( tobj:%p )\n", tobj ) );
 }
 
 /*****************************************************************************
@@ -731,7 +737,7 @@ static GLenum find_normal( GLUtesselator *tobj )
     tess_vertex_t	*va, *vb, *vc;
     GLdouble		a[3], b[3], c[3];
 
-    DEBUGP( 3, ( "      -> find_normal( tobj:%p )\n", tobj ) );
+    DEBUGP( 15, ( "      -> find_normal( tobj:%p )\n", tobj ) );
 
     if ( contour == NULL ) { return GLU_ERROR; }
 
@@ -766,7 +772,7 @@ static GLenum find_normal( GLUtesselator *tobj )
 
 	    contour->plane.dist = - DOT3( contour->plane.normal, va->coords );
 
-	    DEBUGP( 3, ( "      <- find_normal( tobj:%p ) n: (%.2f,%.2f,%.2f)\n", tobj, contour->plane.normal[X], contour->plane.normal[Y], contour->plane.normal[Z] ) );
+	    DEBUGP( 15, ( "      <- find_normal( tobj:%p ) n: (%.2f,%.2f,%.2f)\n", tobj, contour->plane.normal[X], contour->plane.normal[Y], contour->plane.normal[Z] ) );
 	    return GLU_NO_ERROR;
 	}
     }
@@ -791,7 +797,7 @@ static void project_current_contour( GLUtesselator *tobj )
     GLdouble		dot, rotx, roty;
     GLuint		i;
 
-    DEBUGP( 3, ( "      -> project_current_contour( tobj:%p )\n", tobj ) );
+    DEBUGP( 15, ( "      -> project_current_contour( tobj:%p )\n", tobj ) );
 
     if ( current == NULL ) { return; }
 
@@ -853,7 +859,7 @@ static void project_current_contour( GLUtesselator *tobj )
 	current->area = -area;
     }
 
-    DEBUGP( 3, ( "      <- project_current_contour( tobj:%p )\n", tobj ) );
+    DEBUGP( 15, ( "      <- project_current_contour( tobj:%p )\n", tobj ) );
 }
 
 /*****************************************************************************
@@ -933,7 +939,7 @@ static void delete_current_contour( GLUtesselator *tobj )
 {
     tess_contour_t	*current = tobj->current_contour;
     tess_vertex_t	*vertex, *next;
-    GLuint			i;
+    GLuint		i;
 
     if ( current == NULL ) { return; }
 
@@ -997,14 +1003,14 @@ static void delete_all_contours( GLUtesselator *tobj )
 /*****************************************************************************
  * Debugging output
  *****************************************************************************/
-int	tess_debug_level = -1;
+int	tess_debug_level = 1;
 
 int vdebugstr( char *format_str, ... )
 {
     va_list ap;
     va_start( ap, format_str );
 
-    vfprintf( stderr, format_str, ap );
+    vfprintf( DEBUG_STREAM, format_str, ap );
     va_end( ap );
     return 0;
 }
