@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.29 2001/06/15 14:18:46 brianp Exp $ */
+/* $Id: texstore.c,v 1.30 2001/07/13 16:38:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1419,6 +1419,8 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
    GLint bytesPerSrcImage, bytesPerDstImage;
    GLint bytesPerSrcRow, bytesPerDstRow;
    GLint srcImageOffset, srcRowOffset;
+
+   (void) srcDepthNB; /* silence warnings */
 
    /* Need two temporary row buffers */
    tmpRowA = MALLOC(srcWidth * bpt);
