@@ -257,6 +257,7 @@ static const char * const card_extensions[] =
    "GL_EXT_texture_env_dot3",
    "GL_EXT_texture_lod_bias",
    "GL_EXT_secondary_color",
+   "GL_EXT_fog_coord",
    "GL_NV_blend_square",
    NULL
 };
