@@ -686,39 +686,60 @@ parse_integer (GLubyte ** inst, struct arb_program *Program)
 }
 
 /**
+  Accumulate this string of digits, and return them as 
+  a large integer represented in floating point (for range).
+  If scale is not NULL, also accumulates a power-of-ten
+  integer scale factor that represents the number of digits 
+  in the string.
+*/
+static GLdouble
+parse_float_string(GLubyte ** inst, struct arb_program *Program, GLdouble *scale)
+{
+   GLdouble value = 0.0;
+   GLdouble oscale = 1.0;
+
+   if (**inst == 0) { /* this string of digits is empty-- do nothing */
+      (*inst)++;
+   }
+   else { /* nonempty string-- parse out the digits */
+      while (isdigit(**inst)) {
+         GLubyte digit = *((*inst)++);
+         value = value * 10.0 + (GLint) (digit - '0');
+         oscale *= 10.0;
+      }
+      assert(**inst == 0); /* integer string should end with 0 */
+      (*inst)++; /* skip over terminating 0 */
+      Program->Position = parse_position(inst); /* skip position (from integer) */
+   }
+   if (scale)
+      *scale = oscale;
+   return value;
+}
+
+/**
+  Parse an unsigned floating-point number from this stream of tokenized
+  characters.  Example floating-point formats supported:
+     12.34
+     12
+     0.34
+     .34
+     12.34e-4
  */
 static GLfloat
 parse_float (GLubyte ** inst, struct arb_program *Program)
 {
-   GLint tmp[5], denom;
-   GLuint leading_zeros =0;
-   GLfloat value = 0;
+   GLint exponent;
+   GLdouble whole, fraction, fracScale = 1.0;
 
-   tmp[1] = parse_integer (inst, Program);   /* This is the integer portion of the number */
+   whole = parse_float_string(inst, Program, 0);
+   fraction = parse_float_string(inst, Program, &fracScale);
+   
+   /* Parse signed exponent */
+   exponent = parse_integer(inst, Program);   /* This is the exponent */
 
-   /* Now we grab the fractional portion of the number (the digits after
-	* the .). We can have leading 0's here, which parse_integer will ignore,
-	* so we'll check for those first
-	*/
-   while ((**inst == '0') && ( *(*inst+1) != 0))
-   {
-	  leading_zeros++;
-	  (*inst)++;
-   }
-   tmp[2] = parse_integer (inst, Program);   /* This is the fractional portion of the number */
-   tmp[3] = parse_sign (inst);               /* This is the sign of the exponent */
-   tmp[4] = parse_integer (inst, Program);   /* This is the exponent */
-
-   value = (GLfloat) tmp[1];
-   denom = 1;
-   while (denom < tmp[2])
-      denom *= 10;
-   denom *= (GLint) _mesa_pow( 10, leading_zeros );
-   value += (GLfloat) tmp[2] / (GLfloat) denom;
-
-   value *= (GLfloat) _mesa_pow (10, (GLfloat) tmp[3] * (GLfloat) tmp[4]);
-
-   return value;
+   /* Assemble parts of floating-point number: */
+   return (GLfloat) ((whole + fraction / fracScale) *
+                     _mesa_pow(10.0, (GLfloat) exponent));
 }
 
 
