@@ -242,34 +242,27 @@
 #define BCOMP 2
 #define ACOMP 3
 
-#ifndef _HAVE_FULL_GL
-#define _HAVE_FULL_GL 1
-#endif
 
 /*
  * Enable/disable features (blocks of code) by setting FEATURE_xyz to 0 or 1.
  */
-#if _HAVE_FULL_GL
-#define FEATURE_NV_vertex_program 1
-#define FEATURE_NV_fragment_program 1
-#define FEATURE_ARB_vertex_buffer_object 1
-#define FEATURE_ARB_vertex_program 1
-#define FEATURE_ARB_fragment_program 1
-#define FEATURE_ARB_occlusion_query 1
-#define FEATURE_ARB_vertex_buffer_object 1
-#define FEATURE_MESA_program_debug 1
-#define FEATURE_NV_fence 1
-#define FEATURE_userclip 1
-#define FEATURE_texgen 1
-#define FEATURE_windowpos 1
-#endif
-
-/*@}*/
-
-
 #ifndef _HAVE_FULL_GL
 #define _HAVE_FULL_GL 1
 #endif
+
+#define FEATURE_ARB_vertex_buffer_object  _HAVE_FULL_GL
+#define FEATURE_ARB_vertex_program  _HAVE_FULL_GL
+#define FEATURE_ARB_fragment_program  _HAVE_FULL_GL
+#define FEATURE_ARB_occlusion_query  _HAVE_FULL_GL
+#define FEATURE_MESA_program_debug  _HAVE_FULL_GL
+#define FEATURE_NV_fence  _HAVE_FULL_GL
+#define FEATURE_NV_fragment_program  _HAVE_FULL_GL
+#define FEATURE_NV_vertex_program  _HAVE_FULL_GL
+#define FEATURE_userclip  _HAVE_FULL_GL
+#define FEATURE_texgen  _HAVE_FULL_GL
+#define FEATURE_windowpos  _HAVE_FULL_GL
+
+/*@}*/
 
 
 #endif /* CONFIG_H */
