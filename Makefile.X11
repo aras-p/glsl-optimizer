@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.51 2001/08/20 16:16:36 brianp Exp $
+# $Id: Makefile.X11,v 1.52 2001/09/10 19:28:22 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -430,6 +430,8 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/windml/tornado/*.c				\
 	$(DIRECTORY)/src/windml/tornado/*.cdf				\
 	$(DIRECTORY)/src/windml/torVars.sample				\
+	$(DIRECTORY)/src/windml/man3/*.3				\
+	$(DIRECTORY)/src/windml/man3/*.html				\
 	$(DIRECTORY)/src/BeOS/*.cpp					\
 	$(DIRECTORY)/src/FX/Makefile.am					\
 	$(DIRECTORY)/src/FX/Makefile.in					\
