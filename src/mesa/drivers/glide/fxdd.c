@@ -482,6 +482,7 @@ fxDDDrawBitmap2 (GLcontext *ctx, GLint px, GLint py,
    /* make sure the pixelpipe is configured correctly */
    fxSetupFXUnits(ctx);
 
+   /* FIXME! _RasterMask & CLIP_BIT gets set if we're out of Viewport, also! */
    if (ctx->Scissor.Enabled) {
       /* This is a bit tricky, but by carefully adjusting the px, py,
        * width, height, skipPixels and skipRows values we can do
@@ -542,7 +543,7 @@ fxDDDrawBitmap2 (GLcontext *ctx, GLint px, GLint py,
 		  fxMesa->currentFB,
 		  mode,
 		  GR_ORIGIN_LOWER_LEFT, FXTRUE, &info)) {
-      _swrast_Bitmap(ctx, px, py, width, height, unpack, bitmap);
+      _swrast_Bitmap(ctx, px, py, width, height, finalUnpack, bitmap);
       return;
    }
 
@@ -646,6 +647,7 @@ fxDDDrawBitmap4 (GLcontext *ctx, GLint px, GLint py,
    /* make sure the pixelpipe is configured correctly */
    fxSetupFXUnits(ctx);
 
+   /* FIXME! _RasterMask & CLIP_BIT gets set if we're out of Viewport, also! */
    if (ctx->Scissor.Enabled) {
       /* This is a bit tricky, but by carefully adjusting the px, py,
        * width, height, skipPixels and skipRows values we can do
@@ -700,7 +702,7 @@ fxDDDrawBitmap4 (GLcontext *ctx, GLint px, GLint py,
 		  fxMesa->currentFB,
 		  GR_LFBWRITEMODE_8888,
 		  GR_ORIGIN_LOWER_LEFT, FXTRUE, &info)) {
-      _swrast_Bitmap(ctx, px, py, width, height, unpack, bitmap);
+      _swrast_Bitmap(ctx, px, py, width, height, finalUnpack, bitmap);
       return;
    }
 
@@ -1091,11 +1093,280 @@ fxDDReadPixels8888 (GLcontext * ctx,
 }
 
 
-/* [dBorca] Hack alert:
- * not finished!!!
- * revise fallback tests and fix scissor; implement new formats
- * also write its siblings: 565 and 1555
- */
+void
+fxDDDrawPixels555 (GLcontext * ctx, GLint x, GLint y,
+                   GLsizei width, GLsizei height,
+                   GLenum format, GLenum type,
+                   const struct gl_pixelstore_attrib *unpack,
+                   const GLvoid * pixels)
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GrLfbInfo_t info;
+   const struct gl_pixelstore_attrib *finalUnpack;
+   struct gl_pixelstore_attrib scissoredUnpack;
+
+   if (ctx->Pixel.ZoomX != 1.0F ||
+       ctx->Pixel.ZoomY != 1.0F ||
+       (ctx->_ImageTransferState & (IMAGE_SCALE_BIAS_BIT|
+				    IMAGE_MAP_COLOR_BIT)) ||
+       (swrast->_RasterMask & (ALPHATEST_BIT |
+			      /*BLEND_BIT |*/   /* blending ok, through pixpipe */
+			      DEPTH_BIT |       /* could be done with RGB:DEPTH */
+			      FOG_BIT |         /* could be done with RGB:DEPTH */
+			      LOGIC_OP_BIT |
+			      /*CLIP_BIT |*/    /* clipping ok, below */
+			      STENCIL_BIT |
+			      MASKING_BIT |
+			      ALPHABUF_BIT |
+			      MULTI_DRAW_BIT |
+			      OCCLUSION_BIT |   /* nope! at least not yet */
+			      TEXTURE_BIT |
+			      FRAGPROG_BIT)) ||
+       fxMesa->fallback)
+   {
+      _swrast_DrawPixels( ctx, x, y, width, height, format, type, 
+			  unpack, pixels );
+      return; 
+   }
+
+   /* make sure the pixelpipe is configured correctly */
+   fxSetupFXUnits(ctx);
+
+   /* FIXME! _RasterMask & CLIP_BIT gets set if we're out of Viewport, also! */
+   if (ctx->Scissor.Enabled) {
+      /* This is a bit tricky, but by carefully adjusting the px, py,
+       * width, height, skipPixels and skipRows values we can do
+       * scissoring without special code in the rendering loop.
+       */
+
+      /* we'll construct a new pixelstore struct */
+      finalUnpack = &scissoredUnpack;
+      scissoredUnpack = *unpack;
+      if (scissoredUnpack.RowLength == 0)
+	 scissoredUnpack.RowLength = width;
+
+      /* clip left */
+      if (x < ctx->Scissor.X) {
+	 scissoredUnpack.SkipPixels += (ctx->Scissor.X - x);
+	 width -= (ctx->Scissor.X - x);
+	 x = ctx->Scissor.X;
+      }
+      /* clip right */
+      if (x + width >= ctx->Scissor.X + ctx->Scissor.Width) {
+	 width -= (x + width - (ctx->Scissor.X + ctx->Scissor.Width));
+      }
+      /* clip bottom */
+      if (y < ctx->Scissor.Y) {
+	 scissoredUnpack.SkipRows += (ctx->Scissor.Y - y);
+	 height -= (ctx->Scissor.Y - y);
+	 y = ctx->Scissor.Y;
+      }
+      /* clip top */
+      if (y + height >= ctx->Scissor.Y + ctx->Scissor.Height) {
+	 height -= (y + height - (ctx->Scissor.Y + ctx->Scissor.Height));
+      }
+
+      if (width <= 0 || height <= 0)
+	 return;
+   }
+   else {
+      finalUnpack = unpack;
+   }
+
+   info.size = sizeof(info);
+   if (!grLfbLock(GR_LFB_WRITE_ONLY,
+                  fxMesa->currentFB,
+                  GR_LFBWRITEMODE_1555,
+                  GR_ORIGIN_LOWER_LEFT, FXTRUE, &info)) {
+      _swrast_DrawPixels(ctx, x, y, width, height, format, type, finalUnpack, pixels);
+      return;
+   }
+
+   {
+      const GLint winX = 0;
+      const GLint winY = 0;
+
+      const GLint dstStride = info.strideInBytes / 2;	/* stride in GLushorts */
+      GLushort *dst = (GLushort *) info.lfbPtr + (winY + y) * dstStride + (winX + x);
+
+      if (format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
+         GLint row;
+         for (row = 0; row < height; row++) {
+	     GLubyte *src = (GLubyte *) _mesa_image_address(finalUnpack, pixels,
+							width, height, format,
+							type, 0, row, 0);
+	     GLint col;
+	     for (col = 0; col < width; col++) {
+                 dst[col] = TDFXPACKCOLOR1555(src[2], src[1], src[0], src[3]);
+                 src += 4;
+             }
+             dst += dstStride;
+         }
+      }
+      else if (format == GL_RGB && type == GL_UNSIGNED_BYTE) {
+         GLint row;
+         for (row = 0; row < height; row++) {
+	     GLubyte *src = (GLubyte *) _mesa_image_address(finalUnpack, pixels,
+							width, height, format,
+							type, 0, row, 0);
+	     GLint col;
+	     for (col = 0; col < width; col++) {
+                 dst[col] = TDFXPACKCOLOR1555(src[2], src[1], src[0], 255);
+                 src += 3;
+             }
+             dst += dstStride;
+         }
+      }
+      else {
+         grLfbUnlock(GR_LFB_WRITE_ONLY, fxMesa->currentFB);
+         _swrast_DrawPixels(ctx, x, y, width, height, format, type, finalUnpack, pixels);
+         return;
+      }
+
+   }
+
+   grLfbUnlock(GR_LFB_WRITE_ONLY, fxMesa->currentFB);
+}
+
+
+void
+fxDDDrawPixels565 (GLcontext * ctx, GLint x, GLint y,
+                   GLsizei width, GLsizei height,
+                   GLenum format, GLenum type,
+                   const struct gl_pixelstore_attrib *unpack,
+                   const GLvoid * pixels)
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GrLfbInfo_t info;
+   const struct gl_pixelstore_attrib *finalUnpack;
+   struct gl_pixelstore_attrib scissoredUnpack;
+
+   if (ctx->Pixel.ZoomX != 1.0F ||
+       ctx->Pixel.ZoomY != 1.0F ||
+       (ctx->_ImageTransferState & (IMAGE_SCALE_BIAS_BIT|
+				    IMAGE_MAP_COLOR_BIT)) ||
+       (swrast->_RasterMask & (ALPHATEST_BIT |
+			      /*BLEND_BIT |*/   /* blending ok, through pixpipe */
+			      DEPTH_BIT |       /* could be done with RGB:DEPTH */
+			      FOG_BIT |         /* could be done with RGB:DEPTH */
+			      LOGIC_OP_BIT |
+			      /*CLIP_BIT |*/    /* clipping ok, below */
+			      STENCIL_BIT |
+			      MASKING_BIT |
+			      ALPHABUF_BIT |
+			      MULTI_DRAW_BIT |
+			      OCCLUSION_BIT |   /* nope! at least not yet */
+			      TEXTURE_BIT |
+			      FRAGPROG_BIT)) ||
+       fxMesa->fallback)
+   {
+      _swrast_DrawPixels( ctx, x, y, width, height, format, type, 
+			  unpack, pixels );
+      return; 
+   }
+
+   /* make sure the pixelpipe is configured correctly */
+   fxSetupFXUnits(ctx);
+
+   /* FIXME! _RasterMask & CLIP_BIT gets set if we're out of Viewport, also! */
+   if (ctx->Scissor.Enabled) {
+      /* This is a bit tricky, but by carefully adjusting the px, py,
+       * width, height, skipPixels and skipRows values we can do
+       * scissoring without special code in the rendering loop.
+       */
+
+      /* we'll construct a new pixelstore struct */
+      finalUnpack = &scissoredUnpack;
+      scissoredUnpack = *unpack;
+      if (scissoredUnpack.RowLength == 0)
+	 scissoredUnpack.RowLength = width;
+
+      /* clip left */
+      if (x < ctx->Scissor.X) {
+	 scissoredUnpack.SkipPixels += (ctx->Scissor.X - x);
+	 width -= (ctx->Scissor.X - x);
+	 x = ctx->Scissor.X;
+      }
+      /* clip right */
+      if (x + width >= ctx->Scissor.X + ctx->Scissor.Width) {
+	 width -= (x + width - (ctx->Scissor.X + ctx->Scissor.Width));
+      }
+      /* clip bottom */
+      if (y < ctx->Scissor.Y) {
+	 scissoredUnpack.SkipRows += (ctx->Scissor.Y - y);
+	 height -= (ctx->Scissor.Y - y);
+	 y = ctx->Scissor.Y;
+      }
+      /* clip top */
+      if (y + height >= ctx->Scissor.Y + ctx->Scissor.Height) {
+	 height -= (y + height - (ctx->Scissor.Y + ctx->Scissor.Height));
+      }
+
+      if (width <= 0 || height <= 0)
+	 return;
+   }
+   else {
+      finalUnpack = unpack;
+   }
+
+   info.size = sizeof(info);
+   if (!grLfbLock(GR_LFB_WRITE_ONLY,
+                  fxMesa->currentFB,
+                  GR_LFBWRITEMODE_565,
+                  GR_ORIGIN_LOWER_LEFT, FXTRUE, &info)) {
+      _swrast_DrawPixels(ctx, x, y, width, height, format, type, finalUnpack, pixels);
+      return;
+   }
+
+   {
+      const GLint winX = 0;
+      const GLint winY = 0;
+
+      const GLint dstStride = info.strideInBytes / 2;	/* stride in GLushorts */
+      GLushort *dst = (GLushort *) info.lfbPtr + (winY + y) * dstStride + (winX + x);
+
+      if (format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
+         GLint row;
+         for (row = 0; row < height; row++) {
+	     GLubyte *src = (GLubyte *) _mesa_image_address(finalUnpack, pixels,
+							width, height, format,
+							type, 0, row, 0);
+	     GLint col;
+	     for (col = 0; col < width; col++) {
+                 dst[col] = TDFXPACKCOLOR565(src[2], src[1], src[0]);
+                 src += 4;
+             }
+             dst += dstStride;
+         }
+      }
+      else if (format == GL_RGB && type == GL_UNSIGNED_BYTE) {
+         GLint row;
+         for (row = 0; row < height; row++) {
+	     GLubyte *src = (GLubyte *) _mesa_image_address(finalUnpack, pixels,
+							width, height, format,
+							type, 0, row, 0);
+	     GLint col;
+	     for (col = 0; col < width; col++) {
+                 dst[col] = TDFXPACKCOLOR565(src[2], src[1], src[0]);
+                 src += 3;
+             }
+             dst += dstStride;
+         }
+      }
+      else {
+         grLfbUnlock(GR_LFB_WRITE_ONLY, fxMesa->currentFB);
+         _swrast_DrawPixels(ctx, x, y, width, height, format, type, finalUnpack, pixels);
+         return;
+      }
+
+   }
+
+   grLfbUnlock(GR_LFB_WRITE_ONLY, fxMesa->currentFB);
+}
+
+
 void
 fxDDDrawPixels8888 (GLcontext * ctx, GLint x, GLint y,
                     GLsizei width, GLsizei height,
@@ -1104,24 +1375,28 @@ fxDDDrawPixels8888 (GLcontext * ctx, GLint x, GLint y,
                     const GLvoid * pixels)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GrLfbInfo_t info;
+   const struct gl_pixelstore_attrib *finalUnpack;
+   struct gl_pixelstore_attrib scissoredUnpack;
 
    if (ctx->Pixel.ZoomX != 1.0F ||
        ctx->Pixel.ZoomY != 1.0F ||
        (ctx->_ImageTransferState & (IMAGE_SCALE_BIAS_BIT|
 				    IMAGE_MAP_COLOR_BIT)) ||
-       /*ctx->Color.AlphaEnabled ||*/
-       ctx->Depth.Test ||
-       ctx->Fog.Enabled ||
-       ctx->Scissor.Enabled ||
-       ctx->Stencil.Enabled ||
-       /*!ctx->Color.ColorMask[0] ||
-       !ctx->Color.ColorMask[1] ||
-       !ctx->Color.ColorMask[2] ||
-       !ctx->Color.ColorMask[3] ||*/
-       ctx->Color.ColorLogicOpEnabled ||
-       ctx->Texture._EnabledUnits ||
-       ctx->Depth.OcclusionTest ||
+       (swrast->_RasterMask & (/*ALPHATEST_BIT |*/
+			      /*BLEND_BIT |*/   /* blending ok, through pixpipe */
+			      DEPTH_BIT |       /* could be done with RGB:DEPTH */
+			      FOG_BIT |         /* could be done with RGB:DEPTH */
+			      LOGIC_OP_BIT |
+			      /*CLIP_BIT |*/    /* clipping ok, below */
+			      STENCIL_BIT |
+			      /*MASKING_BIT |*/ /* masking ok, we're in 32bpp */
+			      /*ALPHABUF_BIT |*//* alpha ok, we're in 32bpp */
+			      MULTI_DRAW_BIT |
+			      OCCLUSION_BIT |   /* nope! at least not yet */
+			      TEXTURE_BIT |
+			      FRAGPROG_BIT)) ||
        fxMesa->fallback)
    {
       _swrast_DrawPixels( ctx, x, y, width, height, format, type, 
@@ -1129,29 +1404,56 @@ fxDDDrawPixels8888 (GLcontext * ctx, GLint x, GLint y,
       return; 
    }
 
-   /* lock early to make sure cliprects are right */
-   BEGIN_BOARD_LOCK();
-
    /* make sure the pixelpipe is configured correctly */
    fxSetupFXUnits(ctx);
 
-   /* look for clipmasks, giveup if region obscured */
-#if 0
-   if (ctx->Color.DrawBuffer == GL_FRONT) {
-      if (!inClipRects_Region(fxMesa, scrX, scrY, width, height)) {
-         END_BOARD_LOCK(fxMesa);
-         _swrast_DrawPixels(ctx, x, y, width, height, format, type, unpack, pixels);
-         return;
+   /* FIXME! _RasterMask & CLIP_BIT gets set if we're out of Viewport, also! */
+   if (ctx->Scissor.Enabled) {
+      /* This is a bit tricky, but by carefully adjusting the px, py,
+       * width, height, skipPixels and skipRows values we can do
+       * scissoring without special code in the rendering loop.
+       */
+
+      /* we'll construct a new pixelstore struct */
+      finalUnpack = &scissoredUnpack;
+      scissoredUnpack = *unpack;
+      if (scissoredUnpack.RowLength == 0)
+	 scissoredUnpack.RowLength = width;
+
+      /* clip left */
+      if (x < ctx->Scissor.X) {
+	 scissoredUnpack.SkipPixels += (ctx->Scissor.X - x);
+	 width -= (ctx->Scissor.X - x);
+	 x = ctx->Scissor.X;
       }
+      /* clip right */
+      if (x + width >= ctx->Scissor.X + ctx->Scissor.Width) {
+	 width -= (x + width - (ctx->Scissor.X + ctx->Scissor.Width));
+      }
+      /* clip bottom */
+      if (y < ctx->Scissor.Y) {
+	 scissoredUnpack.SkipRows += (ctx->Scissor.Y - y);
+	 height -= (ctx->Scissor.Y - y);
+	 y = ctx->Scissor.Y;
+      }
+      /* clip top */
+      if (y + height >= ctx->Scissor.Y + ctx->Scissor.Height) {
+	 height -= (y + height - (ctx->Scissor.Y + ctx->Scissor.Height));
+      }
+
+      if (width <= 0 || height <= 0)
+	 return;
    }
-#endif
+   else {
+      finalUnpack = unpack;
+   }
 
    info.size = sizeof(info);
    if (!grLfbLock(GR_LFB_WRITE_ONLY,
                   fxMesa->currentFB,
                   GR_LFBWRITEMODE_8888,
                   GR_ORIGIN_LOWER_LEFT, FXTRUE, &info)) {
-      _swrast_DrawPixels(ctx, x, y, width, height, format, type, unpack, pixels);
+      _swrast_DrawPixels(ctx, x, y, width, height, format, type, finalUnpack, pixels);
       return;
    }
 
@@ -1161,32 +1463,42 @@ fxDDDrawPixels8888 (GLcontext * ctx, GLint x, GLint y,
 
       const GLint dstStride = info.strideInBytes / 4;	/* stride in GLuints */
       GLuint *dst = (GLuint *) info.lfbPtr + (winY + y) * dstStride + (winX + x);
-      const GLubyte *src = (GLubyte *)_mesa_image_address(unpack, pixels,
-							width, height, format,
-							type, 0, 0, 0);
-      const GLint srcStride = _mesa_image_row_stride(unpack, width, format, type);
 
       if (format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
          /* directly memcpy 8A8R8G8B pixels to screen */
          const GLint widthInBytes = width * 4;
          GLint row;
          for (row = 0; row < height; row++) {
+	     GLubyte *src = (GLubyte *) _mesa_image_address(finalUnpack, pixels,
+							width, height, format,
+							type, 0, row, 0);
              MEMCPY(dst, src, widthInBytes);
              dst += dstStride;
-             src += srcStride;
+         }
+      }
+      else if (format == GL_RGB && type == GL_UNSIGNED_BYTE) {
+         GLint row;
+         for (row = 0; row < height; row++) {
+	     GLubyte *src = (GLubyte *) _mesa_image_address(finalUnpack, pixels,
+							width, height, format,
+							type, 0, row, 0);
+	     GLint col;
+	     for (col = 0; col < width; col++) {
+                 dst[col] = TDFXPACKCOLOR8888(src[2], src[1], src[0], 255);
+                 src += 3;
+             }
+             dst += dstStride;
          }
       }
       else {
          grLfbUnlock(GR_LFB_WRITE_ONLY, fxMesa->currentFB);
-         END_BOARD_LOCK();
-         _swrast_DrawPixels(ctx, x, y, width, height, format, type, unpack, pixels);
+         _swrast_DrawPixels(ctx, x, y, width, height, format, type, finalUnpack, pixels);
          return;
       }
 
    }
 
    grLfbUnlock(GR_LFB_WRITE_ONLY, fxMesa->currentFB);
-   END_BOARD_LOCK();
 }
 
 
@@ -1326,17 +1638,8 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
       return 0;
    }
 
-   /* [dBorca] Hack alert:
-    * Unlike the rest of the Voodoo family, the Rush
-    * doesn't support ZBUFFER with WBUFFER-like depth functions!
-    * I guess we could use WBUFFER, which is better, but we can't
-    * because the depth span functions would need to translate
-    * depth values to 4.12 floating point...
-    */
    if (fxMesa->haveZBuffer) {
-      grDepthBufferMode((fxMesa->type == GR_SSTTYPE_SST96)
-                        ? GR_DEPTHBUFFER_WBUFFER
-                        : GR_DEPTHBUFFER_ZBUFFER);
+      grDepthBufferMode(GR_DEPTHBUFFER_ZBUFFER);
    }
 
    if (!fxMesa->bgrOrder) {
@@ -1728,10 +2031,12 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.GetBufferSize = fxDDBufferSize;
    switch (fxMesa->colDepth) {
       case 15:
+         ctx->Driver.DrawPixels = fxDDDrawPixels555;
          ctx->Driver.ReadPixels = fxDDReadPixels555;
          ctx->Driver.Bitmap = fxDDDrawBitmap2;
          break;
       case 16:
+         ctx->Driver.DrawPixels = fxDDDrawPixels565;
          ctx->Driver.ReadPixels = fxDDReadPixels565;
          ctx->Driver.Bitmap = fxDDDrawBitmap2;
          break;
