@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.36 2000/03/28 16:59:39 rjfrank Exp $ */
+/* $Id: gl.h,v 1.37 2000/05/04 14:12:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -141,7 +141,6 @@ extern "C" {
 
 #define GL_VERSION_1_1   1
 #define GL_VERSION_1_2   1
-#define GL_HAS_GLEXT     1
 
 
 
@@ -2075,7 +2074,7 @@ GLAPI void GLAPIENTRY glGetColorTableParameterivEXT( GLenum target, GLenum pname
 #ifndef GL_EXT_clip_volume_hint
 #define GL_EXT_clip_volume_hint 1
 
-#define GL_CLIP_VOLUME_CLIPPING_HINT_EXT	0x80F
+#define GL_CLIP_VOLUME_CLIPPING_HINT_EXT	0x80F0
 
 #endif /* GL_EXT_clip_volume_hint */
 
