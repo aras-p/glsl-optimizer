@@ -153,8 +153,6 @@ generic_%u_byte( GLint rop, const void * ptr )
 
 
 	def common_emit_one_arg(self, p, offset, pc, indent, adjust):
-		if p.is_output: return
-
 		t = p.p_type
 		if p.is_array():
 			src_ptr = p.name
@@ -165,23 +163,16 @@ generic_%u_byte( GLint rop, const void * ptr )
 			% (indent, pc, offset + adjust, src_ptr, p.size_string() )
 
 	def common_emit_args(self, f, pc, indent, adjust, skip_vla):
-		# First emit all of the fixed-length 8-byte (i.e., GLdouble)
-		# parameters.
-
 		offset = 0
 
 		if skip_vla:
-			r = [0, 1]
+			r = 1
 		else:
-			r = [0, 1, 2]
+			r = 2
 
-		for order in r:
-			for p in f:
-				if p.is_output or p.order != order: continue
-
-				self.common_emit_one_arg(p, offset, pc, indent, adjust)
-				offset += p.size()
-
+		for p in f.parameterIterator(1, r):
+			self.common_emit_one_arg(p, offset, pc, indent, adjust)
+			offset += p.size()
 
 		return offset
 
@@ -274,7 +265,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 		# of data, and the protocol for this functions is very
 		# regular.  Since they are so regular and there are so many
 		# of them, special case them with generic functions.  On
-		# x86, this save about 26KB in the libGL.so binary.
+		# x86, this saves about 26KB in the libGL.so binary.
 
 		if f.variable_length_parameter() == None and len(f.fn_parameters) == 1:
 			p = f.fn_parameters[0]

@@ -252,14 +252,17 @@ class glParameter( glItem ):
 class glParameterIterator:
 	"""Class to iterate over a list of glParameters.
 	
-	Objects of this class are returned by the __iter__ method of the
-	glFunction class.  They are used to iterate over the list of
+	Objects of this class are returned by the parameterIterator method of
+	the glFunction class.  They are used to iterate over the list of
 	parameters to the function."""
 
 	def __init__(self, data):
 		self.data = data
 		self.index = 0
-		
+
+	def __iter__(self):
+		return self
+
 	def next(self):
 		if self.index == len( self.data ):
 			raise StopIteration
@@ -295,7 +298,7 @@ class glFunction( glItem ):
 		return
 
 
-	def __iter__(self):
+	def parameterIterator(self):
 		return glParameterIterator(self.fn_parameters)
 
 
@@ -325,7 +328,7 @@ class glFunction( glItem ):
 	def get_parameter_string(self):
 		arg_string = ""
 		comma = ""
-		for p in self:
+		for p in glFunction.parameterIterator(self):
 			arg_string = arg_string + comma + p.p_type_string + " " + p.name
 			comma = ", "
 

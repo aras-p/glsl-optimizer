@@ -263,6 +263,42 @@ class glXParameter(gl_XML.glParameter):
 		gl_XML.glParameter.__init__(self, context, name, attrs);
 
 
+class glXParameterIterator:
+	"""Class to iterate over a list of glXParameters.
+
+	Objects of this class are returned by the parameterIterator method of
+	the glXFunction class.  They are used to iterate over the list of
+	parameters to the function."""
+
+	def __init__(self, data, skip_output, max_order):
+		self.data = data
+		self.index = 0
+		self.order = 0
+		self.skip_output = skip_output
+		self.max_order = max_order
+
+	def __iter__(self):
+		return self
+
+	def next(self):
+		if len( self.data ) == 0:
+			raise StopIteration
+
+		while 1:
+			if self.index == len( self.data ):
+				if self.order == self.max_order:
+					raise StopIteration
+				else:
+					self.order += 1
+					self.index = 0
+
+			i = self.index
+			self.index += 1
+
+			if self.data[i].order == self.order and not (self.data[i].is_output and self.skip_output):
+				return self.data[i]
+
+
 class glXFunction(gl_XML.glFunction):
 	glx_rop = 0
 	glx_sop = 0
@@ -293,6 +329,11 @@ class glXFunction(gl_XML.glFunction):
 		gl_XML.glFunction.__init__(self, context, name, attrs)
 		return
 
+
+	def parameterIterator(self, skip_output, max_order):
+		return glXParameterIterator(self.fn_parameters, skip_output, max_order)
+
+		
 	def startElement(self, name, attrs):
 		"""Process elements within a function that are specific to GLX."""
 
@@ -360,7 +401,7 @@ class glXFunction(gl_XML.glFunction):
 	def command_payload_length(self):
 		size = 0
 		size_string = ""
-		for p in self:
+		for p in gl_XML.glFunction.parameterIterator(self):
 			if p.is_output: continue
 			temp = p.size_string()
 			try:
@@ -382,6 +423,16 @@ class glXFunction(gl_XML.glFunction):
 
 
 	def opcode_real_value(self):
+		"""Get the true numeric value of the GLX opcode
+		
+		Behaves similarly to opcode_value, except for
+		X_GLXVendorPrivate and X_GLXVendorPrivateWithReply commands.
+		In these cases the value for the GLX opcode field (i.e.,
+		16 for X_GLXVendorPrivate or 17 for
+		X_GLXVendorPrivateWithReply) is returned.  For other 'single'
+		commands, the opcode for the command (e.g., 101 for
+		X_GLsop_NewList) is returned."""
+
 		if self.glx_vendorpriv != 0:
 			if self.needs_reply():
 				return 17
@@ -391,6 +442,8 @@ class glXFunction(gl_XML.glFunction):
 			return self.opcode_value()
 
 	def opcode_value(self):
+		"""Get the unique protocol opcode for the glXFunction"""
+
 		if self.glx_rop != 0:
 			return self.glx_rop
 		elif self.glx_sop != 0:
@@ -401,12 +454,20 @@ class glXFunction(gl_XML.glFunction):
 			return -1
 	
 	def opcode_rop_basename(self):
+		"""Return either the name to be used for GLX protocol enum.
+		
+		Returns either the name of the function or the name of the
+		name of the equivalent vector (e.g., glVertex3fv for
+		glVertex3f) function."""
+
 		if self.vectorequiv == None:
 			return self.name
 		else:
 			return self.vectorequiv
 
 	def opcode_name(self):
+		"""Get the unique protocol enum name for the glXFunction"""
+
 		if self.glx_rop != 0:
 			return "X_GLrop_%s" % (self.opcode_rop_basename())
 		elif self.glx_sop != 0:
@@ -417,6 +478,15 @@ class glXFunction(gl_XML.glFunction):
 			return "ERROR"
 
 	def opcode_real_name(self):
+		"""Get the true protocol enum name for the GLX opcode
+		
+		Behaves similarly to opcode_name, except for
+		X_GLXVendorPrivate and X_GLXVendorPrivateWithReply commands.
+		In these cases the string 'X_GLXVendorPrivate' or
+		'X_GLXVendorPrivateWithReply' is returned.  For other
+		single or render commands 'X_GLsop' or 'X_GLrop' plus the
+		name of the function returned."""
+
 		if self.glx_vendorpriv != 0:
 			if self.needs_reply():
 				return "X_GLXVendorPrivateWithReply"

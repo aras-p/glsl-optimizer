@@ -48,7 +48,7 @@ class PrintGlOffsets(gl_XML.FilterGLAPISpecBase):
 		t_string = ""
 		comma = ""
 
-		for p in f:
+		for p in f.parameterIterator():
 			cast = ""
 
 			if p.is_pointer:

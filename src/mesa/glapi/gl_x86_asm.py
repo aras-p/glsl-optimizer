@@ -45,7 +45,7 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 
 	def get_stack_size(self, f):
 		size = 0
-		for p in f:
+		for p in f.parameterIterator():
 			t = p.p_type
 
 			if p.is_array() or t.size != 8:
