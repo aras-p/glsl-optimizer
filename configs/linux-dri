@@ -9,9 +9,9 @@ CONFIG_NAME = linux-dri
 CC = gcc
 CXX = g++
 
-CFLAGS = -Wmissing-prototypes -g -std=c99  -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DPTHREADS -D_GNU_SOURCE -I/usr/X11R6/include -I/usr/X11R6/include/X11/extensions
+CFLAGS = -DDRI_NEW_INTERFACE_ONLY -Wmissing-prototypes -g -std=c99  -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DPTHREADS -D_GNU_SOURCE -I/usr/X11R6/include -I/usr/X11R6/include/X11/extensions
 
-CXXFLAGS = -Wall -g -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE 
+CXXFLAGS = -DDRI_NEW_INTERFACE_ONLY -Wall -g -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE 
 
 
 
