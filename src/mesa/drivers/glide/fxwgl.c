@@ -290,6 +290,14 @@ __wglMonitor(HWND hwnd, UINT message, UINT wParam, LONG lParam)
    return (ret);
 }
 
+static void wgl_error (long error)
+{
+#define WGL_INVALID_PIXELFORMAT ERROR_INVALID_PIXEL_FORMAT
+ SetLastError(0xC0000000 /* error severity */
+             |0x00070000 /* error facility (who we are) */
+             |error);
+}
+
 GLAPI BOOL GLAPIENTRY
 wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
 {
@@ -314,7 +322,7 @@ wglCreateContext(HDC hdc)
    }
 
    if (curPFD == 0) {
-      SetLastError(0);
+      wgl_error(WGL_INVALID_PIXELFORMAT);
       return (NULL);
    }
 

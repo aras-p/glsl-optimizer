@@ -217,6 +217,7 @@ clean:
 	-$(call UNLINK,swrast_setup/*.o)
 	-$(call UNLINK,tnl/*.o)
 	-$(call UNLINK,x86/*.o)
+	-$(call UNLINK,drivers/common/*.o)
 	-$(call UNLINK,drivers/windows/gdi/*.o)
 	-$(call UNLINK,drivers/glide/*.o)
 	-$(call UNLINK,drivers/glide/*.res)

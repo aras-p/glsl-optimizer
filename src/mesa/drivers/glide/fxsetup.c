@@ -537,7 +537,7 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
    GLuint unitsmode;
    GLint ifmt;
    tfxTexInfo *ti;
-   struct gl_texture_object *tObj = ctx->Texture.Unit[textureset].Current2D;
+   struct gl_texture_object *tObj = ctx->Texture.Unit[textureset]._Current;
    int tmu;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
@@ -921,8 +921,8 @@ fxSetupTextureDoubleTMU_NoLock(GLcontext * ctx)
    struct tdfx_texcombine tex0, tex1;
    GrCombineLocal_t localc, locala;
    tfxTexInfo *ti0, *ti1;
-   struct gl_texture_object *tObj0 = ctx->Texture.Unit[1].Current2D;
-   struct gl_texture_object *tObj1 = ctx->Texture.Unit[0].Current2D;
+   struct gl_texture_object *tObj0 = ctx->Texture.Unit[1]._Current;
+   struct gl_texture_object *tObj1 = ctx->Texture.Unit[0]._Current;
    GLuint envmode, ifmt, unitsmode;
    int tmu0 = 0, tmu1 = 1;
 
@@ -1269,15 +1269,15 @@ fxSetupTexture_NoLock(GLcontext * ctx)
 
    if (fxMesa->HaveCmbExt) {
       /* Texture Combine, Color Combine and Alpha Combine. */
-      if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT &&
-          ctx->Texture.Unit[1]._ReallyEnabled == TEXTURE_2D_BIT &&
+      if ((ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) &&
+          (ctx->Texture.Unit[1]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) &&
           fxMesa->haveTwoTMUs) {
          fxSetupTextureDoubleTMUNapalm_NoLock(ctx);
       }
-      else if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT) {
+      else if (ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) {
          fxSetupTextureSingleTMUNapalm_NoLock(ctx, 0);
       }
-      else if (ctx->Texture.Unit[1]._ReallyEnabled == TEXTURE_2D_BIT) {
+      else if (ctx->Texture.Unit[1]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) {
          fxSetupTextureSingleTMUNapalm_NoLock(ctx, 1);
       }
       else {
@@ -1285,15 +1285,15 @@ fxSetupTexture_NoLock(GLcontext * ctx)
       }
    } else {
       /* Texture Combine, Color Combine and Alpha Combine. */
-      if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT &&
-          ctx->Texture.Unit[1]._ReallyEnabled == TEXTURE_2D_BIT &&
+      if ((ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) &&
+          (ctx->Texture.Unit[1]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) &&
           fxMesa->haveTwoTMUs) {
          fxSetupTextureDoubleTMU_NoLock(ctx);
       }
-      else if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT) {
+      else if (ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) {
          fxSetupTextureSingleTMU_NoLock(ctx, 0);
       }
-      else if (ctx->Texture.Unit[1]._ReallyEnabled == TEXTURE_2D_BIT) {
+      else if (ctx->Texture.Unit[1]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) {
          fxSetupTextureSingleTMU_NoLock(ctx, 1);
       }
       else {
@@ -2039,6 +2039,7 @@ fxDDEnable(GLcontext * ctx, GLenum cap, GLboolean state)
    case GL_LINE_STIPPLE:
    case GL_POINT_SMOOTH:
    case GL_POLYGON_SMOOTH:
+   case GL_TEXTURE_1D:
    case GL_TEXTURE_2D:
       fxMesa->new_state |= FX_NEW_TEXTURING;
       break;

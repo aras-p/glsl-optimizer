@@ -1299,7 +1299,7 @@ static void fxRenderFinish( GLcontext *ctx )
 /**********************************************************************/
 
 static char *fallbackStrings[] = {
-   "1D/3D Texture map",
+   "3D/Rect/Cube Texture map",
    "glDrawBuffer(GL_FRONT_AND_BACK)",
    "Separate specular color",
    "glEnable/Disable(GL_STENCIL_TEST)",

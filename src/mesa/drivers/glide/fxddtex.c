@@ -141,7 +141,7 @@ fxDDTexBind(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj)
       fprintf(stderr, "fxDDTexBind(%d, %x)\n", tObj->Name, (GLuint)tObj->DriverData);
    }
 
-   if (target != GL_TEXTURE_2D)
+   if ((target != GL_TEXTURE_1D) && (target != GL_TEXTURE_2D))
       return;
 
    if (!tObj->DriverData) {
@@ -196,7 +196,7 @@ fxDDTexParam(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj,
                       _mesa_lookup_enum_by_nr(param));
    }
 
-   if (target != GL_TEXTURE_2D)
+   if ((target != GL_TEXTURE_1D) && (target != GL_TEXTURE_2D))
       return;
 
    if (!tObj->DriverData)
@@ -477,6 +477,9 @@ fxDDTexPalette(GLcontext * ctx, struct gl_texture_object *tObj)
 	 fprintf(stderr, "fxDDTexPalette(%d, %x)\n",
 		 tObj->Name, (GLuint) tObj->DriverData);
       }
+      /* This might be a proxy texture. */
+      if (!tObj->Palette.Table)
+         return; 
       if (!tObj->DriverData)
          tObj->DriverData = fxAllocTexObjData(fxMesa);
       ti = fxTMGetTexInfo(tObj);
@@ -511,6 +514,7 @@ fxDDTexUseGlbPalette(GLcontext * ctx, GLboolean state)
    else {
       fxMesa->haveGlobalPaletteTexture = 0;
 
+      /* [dBorca] tis beyond my comprehension */
       if ((ctx->Texture.Unit[0]._Current == ctx->Texture.Unit[0].Current2D) &&
 	  (ctx->Texture.Unit[0]._Current != NULL)) {
 	 struct gl_texture_object *tObj = ctx->Texture.Unit[0]._Current;
@@ -635,7 +639,7 @@ static GLboolean
 fxIsTexSupported(GLenum target, GLint internalFormat,
 		 const struct gl_texture_image *image)
 {
-   if (target != GL_TEXTURE_2D)
+   if ((target != GL_TEXTURE_1D) && (target != GL_TEXTURE_2D))
       return GL_FALSE;
 
 #if 0
@@ -1227,6 +1231,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
          return;
       }
    }
+   ti = fxTMGetTexInfo(texObj);
 
    if (!texImage->DriverData) {
       texImage->DriverData = CALLOC(sizeof(tfxMipMapLevel));
@@ -1235,8 +1240,6 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
          return;
       }
    }
-   ti = fxTMGetTexInfo(texObj);
-
    mml = FX_MIPMAP_DATA(texImage);
 
    fxTexGetInfo(width, height, NULL, NULL, NULL, NULL,
@@ -1530,6 +1533,7 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
          return;
       }
    }
+   ti = fxTMGetTexInfo(texObj);
 
    if (!texImage->DriverData) {
       texImage->DriverData = CALLOC(sizeof(tfxMipMapLevel));
@@ -1538,7 +1542,6 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
          return;
       }
    }
-   ti = fxTMGetTexInfo(texObj);
    mml = FX_MIPMAP_DATA(texImage);
 
    fxTexGetInfo(width, height, NULL, NULL, NULL, NULL,
@@ -1668,6 +1671,41 @@ fxDDCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
       fxTMReloadMipMapLevel(fxMesa, texObj, level);
    else
       fxTexInvalidate(ctx, texObj);
+}
+
+
+void
+fxDDTexImage1D (GLcontext *ctx, GLenum target, GLint level,
+	        GLint internalFormat, GLint width, GLint border,
+	        GLenum format, GLenum type, const GLvoid *pixels,
+	        const struct gl_pixelstore_attrib *packing,
+	        struct gl_texture_object *texObj,
+	        struct gl_texture_image *texImage)
+{
+ fxDDTexImage2D(ctx, target, level,
+	        internalFormat, width, 1, border,
+	        format, type, pixels,
+	        packing,
+	        texObj,
+	        texImage);
+}
+
+
+GLboolean
+fxDDTestProxyTexImage (GLcontext *ctx, GLenum target,
+                       GLint level, GLint internalFormat,
+                       GLenum format, GLenum type,
+                       GLint width, GLint height,
+                       GLint depth, GLint border)
+{
+ /* [dBorca]
+  * TODO - maybe through fxTexValidate()
+  */
+ return _mesa_test_proxy_teximage(ctx, target,
+                                  level, internalFormat,
+                                  format, type,
+                                  width, height,
+                                  depth, border);
 }
 
 

@@ -249,6 +249,7 @@ TNL_SOURCES =\
 	tnl\t_vtx_exec.c 
 
 DRIVER_SOURCES =\
+	drivers\common\driverfuncs.c\
 	drivers\glide\fxapi.c\
 	drivers\glide\fxdd.c\
 	drivers\glide\fxddspan.c\
@@ -423,6 +424,7 @@ clean::
 	$(RM) swrast_setup\*.obj
 	$(RM) tnl\*.obj
 	$(RM) x86\*.obj
+	$(RM) drivers\common\*.obj
 	$(RM) drivers\glide\*.obj
         $(RM) drivers\glide\*.res
         $(RM) $(LIBDIR)\*.pdb

@@ -169,7 +169,7 @@ fxSetupTextureEnvNapalm_NoLock(GLcontext * ctx, GLuint textureset, GLuint tmu, G
    GrCombineLocal_t localc, locala; /* fragmentColor/Alpha */
    GLint ifmt;
    tfxTexInfo *ti;
-   struct gl_texture_object *tObj = texUnit->Current2D;
+   struct gl_texture_object *tObj = texUnit->_Current;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
       fprintf(stderr, "fxSetupTextureEnvNapalm_NoLock(unit %u, TMU %u, iterated %d)\n",
@@ -1106,7 +1106,7 @@ fxSetupTextureSingleTMUNapalm_NoLock(GLcontext * ctx, GLuint textureset)
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GLuint unitsmode;
    tfxTexInfo *ti;
-   struct gl_texture_object *tObj = ctx->Texture.Unit[textureset].Current2D;
+   struct gl_texture_object *tObj = ctx->Texture.Unit[textureset]._Current;
    int tmu;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
@@ -1158,8 +1158,8 @@ fxSetupTextureDoubleTMUNapalm_NoLock(GLcontext * ctx)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxTexInfo *ti0, *ti1;
-   struct gl_texture_object *tObj0 = ctx->Texture.Unit[1].Current2D;
-   struct gl_texture_object *tObj1 = ctx->Texture.Unit[0].Current2D;
+   struct gl_texture_object *tObj0 = ctx->Texture.Unit[1]._Current;
+   struct gl_texture_object *tObj1 = ctx->Texture.Unit[0]._Current;
    GLuint unitsmode;
    int tmu0 = 0, tmu1 = 1;
 
