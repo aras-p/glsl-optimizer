@@ -1,4 +1,4 @@
-/* $Id: isosurf.c,v 1.4 1999/10/21 16:39:06 brianp Exp $ */
+/* $Id: isosurf.c,v 1.5 2000/03/30 17:58:56 keithw Exp $ */
 
 /*
  * Display an isosurface of 3-D wind speed volume.  
@@ -27,6 +27,9 @@
 
 /*
  * $Log: isosurf.c,v $
+ * Revision 1.5  2000/03/30 17:58:56  keithw
+ * Added stipple mode
+ *
  * Revision 1.4  1999/10/21 16:39:06  brianp
  * added -info command line option
  *
@@ -87,6 +90,9 @@
 #define NO_FOG              0x400000
 #define QUIT                0x800000
 #define DISPLAYLIST         0x1000000
+#define GLINFO              0x2000000
+#define STIPPLE             0x4000000
+#define NO_STIPPLE          0x8000000
 
 #define LIGHT_MASK  (LIT|UNLIT)
 #define TEXTURE_MASK (TEXTURE|NO_TEXTURE)
@@ -99,6 +105,7 @@
 #define CLIP_MASK (USER_CLIP|NO_USER_CLIP)
 #define SHADE_MASK (SHADE_SMOOTH|SHADE_FLAT)
 #define FOG_MASK (FOG|NO_FOG)
+#define STIPPLE_MASK (STIPPLE|NO_STIPPLE)
 
 #define MAXVERTS 10000
 static float data[MAXVERTS][6];
@@ -117,6 +124,20 @@ static GLdouble plane[4] = {1.0, 0.0, -1.0, 0.0};
 static GLuint surf1;
 
 static GLboolean PrintInfo = GL_FALSE;
+
+
+static GLubyte halftone[] = {
+   0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA, 0xAA,
+   0x55, 0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
+   0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA, 0xAA,
+   0x55, 0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
+   0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA, 0xAA,
+   0x55, 0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
+   0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA, 0xAA,
+   0x55, 0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
+   0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA, 0xAA,
+   0x55, 0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
+   0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55};
 
 /* forward decl */
 int BuildList( int mode );
@@ -535,6 +556,8 @@ static void InitMaterials(void)
     glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, front_mat_shininess);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_mat_specular);
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, front_mat_diffuse);
+
+    glPolygonStipple (halftone);
 }
 
 
@@ -551,6 +574,13 @@ static void ModeMenu(int m)
 
    if (m==QUIT) 
       exit(0);
+
+   if (m==GLINFO) {
+      printf("GL_VERSION: %s\n", (char *) glGetString(GL_VERSION));
+      printf("GL_EXTENSIONS: %s\n", (char *) glGetString(GL_EXTENSIONS));
+      printf("GL_RENDERER: %s\n", (char *) glGetString(GL_RENDERER));
+      return;
+   }
 
    if (CHANGED(state, m, FILTER_MASK)) {
       if (m & LINEAR_FILTER) {
@@ -615,6 +645,19 @@ static void ModeMenu(int m)
       }
    }
 
+   if (CHANGED(state, m, STIPPLE_MASK)) {
+      if (m & STIPPLE) 
+      {
+	 glEnable(GL_POLYGON_STIPPLE);
+	 printf("STIPPLE enable\n");
+      } 
+      else 
+      {
+	 glDisable(GL_POLYGON_STIPPLE);
+	 printf("STIPPLE disable\n");
+      }
+   }
+
 #ifdef GL_EXT_vertex_array
    if (CHANGED(state, m, (COMPILED_MASK|RENDER_STYLE_MASK|PRIMITIVE_MASK))) 
    {
@@ -631,10 +674,12 @@ static void ModeMenu(int m)
 			     &compressed_data[0][3]);
       }
 #ifdef GL_EXT_compiled_vertex_array
-      if (m & COMPILED) {
-	 glLockArraysEXT( 0, numuniq );
-      } else {
-	 glUnlockArraysEXT();
+      if (allowed & COMPILED) {
+	 if (m & COMPILED) {
+	    glLockArraysEXT( 0, numuniq );
+	 } else {
+	    glUnlockArraysEXT();
+	 }
       }
 #endif
    }
@@ -657,7 +702,7 @@ static void Init(int argc, char *argv[])
 {
    GLfloat fogColor[4] = {0.5,1.0,0.5,1.0};
 
-   glClearColor(0.0, 0.0, 0.0, 0.0);
+   glClearColor(0.0, 0.0, 1.0, 0.0);
    glEnable( GL_DEPTH_TEST );
    glEnable( GL_VERTEX_ARRAY_EXT );
    glEnable( GL_NORMAL_ARRAY_EXT );
@@ -674,7 +719,7 @@ static void Init(int argc, char *argv[])
 
    set_matrix();
 
-   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 
    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
@@ -706,6 +751,7 @@ static void Init(int argc, char *argv[])
 	    NO_USER_CLIP|
 	    NO_MATERIALS|
 	    NO_FOG|
+	    NO_STIPPLE|
 	    GLVERTEX);
 
    if (PrintInfo) {
@@ -738,6 +784,9 @@ static void Key( unsigned char key, int x, int y )
    case 's':
       ModeMenu((state ^ SHADE_MASK) & SHADE_MASK);
       break;
+   case 't':
+      ModeMenu((state ^ STIPPLE_MASK) & STIPPLE_MASK);
+      break;
    case 'l':
       ModeMenu((state ^ LIGHT_MASK) & LIGHT_MASK);
       break;
@@ -746,6 +795,13 @@ static void Key( unsigned char key, int x, int y )
       break;
    case 'c':
       ModeMenu((state ^ CLIP_MASK) & CLIP_MASK);
+      break;
+   case 'v':
+      if (allowed&COMPILED)
+	 ModeMenu(COMPILED|DRAW_ARRAYS|TRIANGLES);
+      break;
+   case 'V':
+      ModeMenu(IMMEDIATE|GLVERTEX|STRIPS);
       break;
    case 'b':
       Benchmark(5.0, 0);
@@ -878,6 +934,8 @@ int main(int argc, char **argv)
    ModeMenu(arg_mode);
    
    glutCreateMenu(ModeMenu);
+   glutAddMenuEntry("GL info",               GLINFO);   
+   glutAddMenuEntry("", 0);   
    glutAddMenuEntry("Lit",                   LIT|NO_TEXTURE|NO_REFLECT);
    glutAddMenuEntry("Unlit",                 UNLIT|NO_TEXTURE|NO_REFLECT);
 /*    glutAddMenuEntry("Textured", TEXTURE); */
@@ -888,6 +946,9 @@ int main(int argc, char **argv)
    glutAddMenuEntry("", 0);   
    glutAddMenuEntry("Fog",                   FOG);
    glutAddMenuEntry("No Fog",                NO_FOG);
+   glutAddMenuEntry("", 0);   
+   glutAddMenuEntry("Stipple",               STIPPLE);
+   glutAddMenuEntry("No Stipple",            NO_STIPPLE);
    glutAddMenuEntry("", 0);   
    glutAddMenuEntry("Point Filtered",        POINT_FILTER);
    glutAddMenuEntry("Linear Filtered",       LINEAR_FILTER);
@@ -928,6 +989,7 @@ int main(int argc, char **argv)
    glutKeyboardFunc(Key);
    glutSpecialFunc(SpecialKey);
    glutDisplayFunc(Display);
+
    glutMainLoop();
    return 0;
 }
