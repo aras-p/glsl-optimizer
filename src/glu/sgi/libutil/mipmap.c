@@ -1409,6 +1409,9 @@ static void scale_internal_ubyte(GLint components, GLint widthin,
     highy_float = convy_float;
 
     for (i = 0; i < heightout; i++) {
+        /* Clamp here to be sure we don't read beyond input buffer. */
+        if (highy_int >= heightin)
+            highy_int = heightin - 1;
 	lowx_int = 0;
 	lowx_float = 0;
 	highx_int = convx_int;
@@ -1450,7 +1453,7 @@ static void scale_internal_ubyte(GLint components, GLint widthin,
 			totals[k] += (GLubyte)(*(temp_index)) * percent;
 		}
 
-		/* calculate the value for pixels in the last row */	        
+		/* calculate the value for pixels in the last row */
 		y_percent = highy_float;
 		percent = y_percent * (1-lowx_float);
 		temp = (const char *)datain + xindex + highy_int * ysize;
@@ -1623,6 +1626,9 @@ static void scale_internal_byte(GLint components, GLint widthin,
     highy_float = convy_float;
 
     for (i = 0; i < heightout; i++) {
+        /* Clamp here to be sure we don't read beyond input buffer. */
+        if (highy_int >= heightin)
+            highy_int = heightin - 1;
 	lowx_int = 0;
 	lowx_float = 0;
 	highx_int = convx_int;
@@ -1838,6 +1844,9 @@ static void scale_internal_ushort(GLint components, GLint widthin,
     highy_float = convy_float;
 
     for (i = 0; i < heightout; i++) {
+        /* Clamp here to be sure we don't read beyond input buffer. */
+        if (highy_int >= heightin)
+            highy_int = heightin - 1;
 	lowx_int = 0;
 	lowx_float = 0;
 	highx_int = convx_int;
@@ -2117,6 +2126,9 @@ static void scale_internal_short(GLint components, GLint widthin,
     highy_float = convy_float;
 
     for (i = 0; i < heightout; i++) {
+        /* Clamp here to be sure we don't read beyond input buffer. */
+        if (highy_int >= heightin)
+            highy_int = heightin - 1;
 	lowx_int = 0;
 	lowx_float = 0;
 	highx_int = convx_int;
@@ -2406,6 +2418,9 @@ static void scale_internal_uint(GLint components, GLint widthin,
     highy_float = convy_float;
 
     for (i = 0; i < heightout; i++) {
+        /* Clamp here to be sure we don't read beyond input buffer. */
+        if (highy_int >= heightin)
+            highy_int = heightin - 1;
 	lowx_int = 0;
 	lowx_float = 0;
 	highx_int = convx_int;
@@ -2692,6 +2707,9 @@ static void scale_internal_int(GLint components, GLint widthin,
     highy_float = convy_float;
 
     for (i = 0; i < heightout; i++) {
+        /* Clamp here to be sure we don't read beyond input buffer. */
+        if (highy_int >= heightin)
+            highy_int = heightin - 1;
 	lowx_int = 0;
 	lowx_float = 0;
 	highx_int = convx_int;
@@ -2985,6 +3003,9 @@ static void scale_internal_float(GLint components, GLint widthin,
     highy_float = convy_float;
 
     for (i = 0; i < heightout; i++) {
+        /* Clamp here to be sure we don't read beyond input buffer. */
+        if (highy_int >= heightin)
+            highy_int = heightin - 1;
 	lowx_int = 0;
 	lowx_float = 0;
 	highx_int = convx_int;
