@@ -266,7 +266,7 @@ static void flush_last_swtcl_prim( r200ContextPtr rmesa  )
    if (R200_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   rmesa->dma.flush = 0;
+   rmesa->dma.flush = NULL;
 
    if (rmesa->dma.current.buf) {
       struct r200_dma_region *current = &rmesa->dma.current;

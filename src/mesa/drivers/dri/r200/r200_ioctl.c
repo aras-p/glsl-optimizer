@@ -288,7 +288,7 @@ void r200ReleaseDmaRegion( r200ContextPtr rmesa,
       rmesa->dma.nr_released_bufs++;
    }
 
-   region->buf = 0;
+   region->buf = NULL;
    region->start = 0;
 }
 

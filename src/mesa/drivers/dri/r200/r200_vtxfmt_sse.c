@@ -131,7 +131,7 @@ static struct dynfn *r200_makeSSENormal3f( GLcontext *ctx, const int * key )
 static struct dynfn *r200_makeSSEColor3fv( GLcontext *ctx, const int * key )
 {
    if (VTX_COLOR(key[0],0) != R200_VTX_FP_RGB) 
-      return 0;
+      return NULL;
    else
    {
       r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -144,7 +144,7 @@ static struct dynfn *r200_makeSSEColor3fv( GLcontext *ctx, const int * key )
 static struct dynfn *r200_makeSSEColor3f( GLcontext *ctx, const int * key )
 {
    if (VTX_COLOR(key[0],0) != R200_VTX_FP_RGB) 
-      return 0;
+      return NULL;
    else
    {
       r200ContextPtr rmesa = R200_CONTEXT(ctx);

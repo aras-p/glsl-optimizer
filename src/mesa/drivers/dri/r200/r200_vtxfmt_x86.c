@@ -305,14 +305,14 @@ struct dynfn *r200_makeX86Color4ub( GLcontext *ctx, const int *key )
       return dfn;
    }
    else
-      return 0;
+      return NULL;
 }
 
 
 struct dynfn *r200_makeX86Color3fv( GLcontext *ctx, const int *key )
 {
    if (VTX_COLOR(key[0],0) != R200_VTX_FP_RGB) 
-      return 0;
+      return NULL;
    else
    {
       r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -325,7 +325,7 @@ struct dynfn *r200_makeX86Color3fv( GLcontext *ctx, const int *key )
 struct dynfn *r200_makeX86Color3f( GLcontext *ctx, const int *key )
 {
    if (VTX_COLOR(key[0],0) != R200_VTX_FP_RGB) 
-      return 0;
+      return NULL;
    else
    {
       r200ContextPtr rmesa = R200_CONTEXT(ctx);

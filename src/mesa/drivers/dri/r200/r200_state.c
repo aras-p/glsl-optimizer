@@ -1918,7 +1918,7 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
       R200_STATECHANGE(rmesa, ctx );
       if ( state ) {
 	 rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_FOG_ENABLE;
-	 r200Fogfv( ctx, GL_FOG_MODE, 0 );
+	 r200Fogfv( ctx, GL_FOG_MODE, NULL );
       } else {
 	 rmesa->hw.ctx.cmd[CTX_PP_CNTL] &= ~R200_FOG_ENABLE;
 	 R200_STATECHANGE(rmesa, tcl);

@@ -742,8 +742,8 @@ void r200InitState( r200ContextPtr rmesa )
       ctx->Driver.Lightfv( ctx, p, GL_AMBIENT, l->Ambient );
       ctx->Driver.Lightfv( ctx, p, GL_DIFFUSE, l->Diffuse );
       ctx->Driver.Lightfv( ctx, p, GL_SPECULAR, l->Specular );
-      ctx->Driver.Lightfv( ctx, p, GL_POSITION, 0 );
-      ctx->Driver.Lightfv( ctx, p, GL_SPOT_DIRECTION, 0 );
+      ctx->Driver.Lightfv( ctx, p, GL_POSITION, NULL );
+      ctx->Driver.Lightfv( ctx, p, GL_SPOT_DIRECTION, NULL );
       ctx->Driver.Lightfv( ctx, p, GL_SPOT_EXPONENT, &l->SpotExponent );
       ctx->Driver.Lightfv( ctx, p, GL_SPOT_CUTOFF, &l->SpotCutoff );
       ctx->Driver.Lightfv( ctx, p, GL_CONSTANT_ATTENUATION,
@@ -764,12 +764,12 @@ void r200InitState( r200ContextPtr rmesa )
       ctx->Driver.ClipPlane( ctx, GL_CLIP_PLANE0 + i, NULL );
    }
 
-   ctx->Driver.Fogfv( ctx, GL_FOG_MODE, 0 );
+   ctx->Driver.Fogfv( ctx, GL_FOG_MODE, NULL );
    ctx->Driver.Fogfv( ctx, GL_FOG_DENSITY, &ctx->Fog.Density );
    ctx->Driver.Fogfv( ctx, GL_FOG_START, &ctx->Fog.Start );
    ctx->Driver.Fogfv( ctx, GL_FOG_END, &ctx->Fog.End );
    ctx->Driver.Fogfv( ctx, GL_FOG_COLOR, ctx->Fog.Color );
-   ctx->Driver.Fogfv( ctx, GL_FOG_COORDINATE_SOURCE_EXT, 0 );
+   ctx->Driver.Fogfv( ctx, GL_FOG_COORDINATE_SOURCE_EXT, NULL );
    
    rmesa->hw.grd.cmd[GRD_VERT_GUARD_CLIP_ADJ] = IEEE_ONE;
    rmesa->hw.grd.cmd[GRD_VERT_GUARD_DISCARD_ADJ] = IEEE_ONE;

@@ -182,7 +182,7 @@ static const struct tnl_pipeline_stage *r200_pipeline[] = {
     */
 /*    &_r200_render_stage,  */ /* FIXME: bugs with ut2003 */
    &_tnl_render_stage,		/* FALLBACK:  */
-   0,
+   NULL,
 };
 
 
@@ -561,7 +561,7 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
 
       if (rmesa->state.scissor.pClipRects) {
 	 FREE(rmesa->state.scissor.pClipRects);
-	 rmesa->state.scissor.pClipRects = 0;
+	 rmesa->state.scissor.pClipRects = NULL;
       }
 
       if ( release_texture_heaps ) {
@@ -648,7 +648,7 @@ r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
    } else {
       if (R200_DEBUG & DEBUG_DRI)
 	 fprintf(stderr, "%s ctx is null\n", __FUNCTION__);
-      _mesa_make_current( 0, 0 );
+      _mesa_make_current( NULL, NULL );
    }
 
    if (R200_DEBUG & DEBUG_DRI)

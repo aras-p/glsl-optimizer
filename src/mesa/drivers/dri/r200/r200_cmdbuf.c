@@ -231,7 +231,7 @@ void r200FlushElts( r200ContextPtr rmesa )
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    assert( rmesa->dma.flush == r200FlushElts );
-   rmesa->dma.flush = 0;
+   rmesa->dma.flush = NULL;
 
    /* Cope with odd number of elts:
     */

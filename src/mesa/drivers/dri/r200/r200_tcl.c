@@ -484,7 +484,7 @@ const struct tnl_pipeline_stage _r200_tcl_stage =
    0,				/* re-run (always runs) */
    GL_TRUE,			/* active */
    0, 0,			/* inputs (set in check_render), outputs */
-   0, 0,			/* changed_inputs, private */
+   0, NULL,			/* changed_inputs, private */
    dtr,				/* destructor */
    r200_init_tcl_render,	/* check - initially set to alloc data */
    r200_run_tcl_render	/* run */
@@ -540,7 +540,7 @@ static void transition_to_hwtnl( GLcontext *ctx )
    if ( rmesa->dma.flush )			
       rmesa->dma.flush( rmesa );	
 
-   rmesa->dma.flush = 0;
+   rmesa->dma.flush = NULL;
    
    if (rmesa->swtcl.indexed_verts.buf) 
       r200ReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, 

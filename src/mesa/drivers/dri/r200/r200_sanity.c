@@ -623,7 +623,7 @@ static struct reg *lookup_reg( struct reg *tab, int reg )
    }
 
    fprintf(stderr, "*** unknown reg 0x%x\n", reg);
-   return 0;
+   return NULL;
 }
 
 
@@ -931,7 +931,7 @@ static char *primname[0x10] = {
    "TRIANGLE_FAN",
    "TRIANGLE_STRIP",
    "RECT_LIST",
-   0,
+   NULL,
    "3VRT_POINTS",
    "3VRT_LINES",
    "POINT_SPRITES",
