@@ -51,6 +51,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "imports.h"
 #include "colormac.h"
 
+#include "xmlpool.h"
+
 #define TEX_0	1
 #define TEX_1	2
 
@@ -174,80 +176,93 @@ r128ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
                          GLenum format, GLenum type )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   const GLboolean do32bpt =
+       ( rmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_32 );
+   const GLboolean force16bpt =
+       ( rmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FORCE_16 );
    (void) format;
    (void) type;
 
    switch ( internalFormat ) {
+   /* non-sized formats with alpha */
+   case GL_INTENSITY:
+   case GL_COMPRESSED_INTENSITY:
    case GL_ALPHA:
-   case GL_ALPHA4:
-   case GL_ALPHA8:
-   case GL_ALPHA12:
-   case GL_ALPHA16:
    case GL_COMPRESSED_ALPHA:
    case 2:
    case GL_LUMINANCE_ALPHA:
+   case GL_COMPRESSED_LUMINANCE_ALPHA:
+   case 4:
+   case GL_RGBA:
+   case GL_COMPRESSED_RGBA:
+      if (do32bpt)
+         return &_mesa_texformat_argb8888;
+      else
+         return &_mesa_texformat_argb4444;
+
+   /* 16-bit formats with alpha */
+   case GL_INTENSITY4:
+   case GL_ALPHA4:
    case GL_LUMINANCE4_ALPHA4:
+   case GL_RGBA2:
+   case GL_RGBA4:
+      return &_mesa_texformat_argb4444;
+
+   /* 32-bit formats with alpha */
+   case GL_INTENSITY8:
+   case GL_INTENSITY12:
+   case GL_INTENSITY16:
+   case GL_ALPHA8:
+   case GL_ALPHA12:
+   case GL_ALPHA16:
    case GL_LUMINANCE6_ALPHA2:
    case GL_LUMINANCE8_ALPHA8:
    case GL_LUMINANCE12_ALPHA4:
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
-   case GL_COMPRESSED_LUMINANCE_ALPHA:
-   case 4:
-   case GL_RGBA:
-   case GL_COMPRESSED_RGBA:
-   case GL_RGBA2:
    case GL_RGB5_A1:
    case GL_RGBA8:
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
-      if (rmesa->r128Screen->cpp == 4)
+      if (!force16bpt)
          return &_mesa_texformat_argb8888;
       else
          return &_mesa_texformat_argb4444;
-   case GL_RGBA4:
-         return &_mesa_texformat_argb4444;
 
+   /* non-sized formats without alpha */
+   case 1:
+   case GL_LUMINANCE:
+   case GL_COMPRESSED_LUMINANCE:
    case 3:
    case GL_RGB:
    case GL_COMPRESSED_RGB:
+      if (do32bpt)
+         return &_mesa_texformat_argb8888;
+      else
+         return &_mesa_texformat_rgb565;
+
+   /* 16-bit formats without alpha */
+   case GL_LUMINANCE4:
    case GL_R3_G3_B2:
    case GL_RGB4:
    case GL_RGB5:
+      return &_mesa_texformat_rgb565;
+
+   /* 32-bit formats without alpha */
+   case GL_LUMINANCE8:
+   case GL_LUMINANCE12:
+   case GL_LUMINANCE16:
    case GL_RGB8:
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      if (rmesa->r128Screen->cpp == 4)
+      if (!force16bpt)
          return &_mesa_texformat_argb8888;
       else
          return &_mesa_texformat_rgb565;
 
-   case 1:
-   case GL_LUMINANCE:
-   case GL_LUMINANCE4:
-   case GL_LUMINANCE8:
-   case GL_LUMINANCE12:
-   case GL_LUMINANCE16:
-   case GL_COMPRESSED_LUMINANCE:
-      if (rmesa->r128Screen->cpp == 4)
-         return &_mesa_texformat_argb8888; /* inefficient but accurate */
-      else
-         return &_mesa_texformat_rgb565;
-
-   case GL_INTENSITY4:
-      return &_mesa_texformat_argb4444;
-   case GL_INTENSITY:
-   case GL_INTENSITY8:
-   case GL_INTENSITY12:
-   case GL_INTENSITY16:
-   case GL_COMPRESSED_INTENSITY:
-      if (rmesa->r128Screen->cpp == 4)
-         return &_mesa_texformat_argb8888; /* inefficient but accurate */
-      else
-         return &_mesa_texformat_argb4444;
-
+   /* color-indexed formats */
    case GL_COLOR_INDEX:
    case GL_COLOR_INDEX1_EXT:
    case GL_COLOR_INDEX2_EXT:

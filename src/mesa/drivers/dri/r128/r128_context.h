@@ -160,6 +160,8 @@ struct r128_context {
    driTextureObject      swapped;
 
    r128TexObjPtr CurrentTexObj[2];
+
+   int texture_depth;
  
    /* Fallback rasterization functions 
     */

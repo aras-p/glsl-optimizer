@@ -66,19 +66,22 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 const char __driConfigOptions[] =
 DRI_CONF_BEGIN
+    DRI_CONF_SECTION_PERFORMANCE
+        DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+    DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_QUALITY
+        DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
+    DRI_CONF_SECTION_END
 #if ENABLE_PERF_BOXES
     DRI_CONF_SECTION_DEBUG
         DRI_CONF_PERFORMANCE_BOXES(false)
     DRI_CONF_SECTION_END
 #endif
-    DRI_CONF_SECTION_PERFORMANCE
-        DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
-    DRI_CONF_SECTION_END
 DRI_CONF_END;
 #if ENABLE_PERF_BOXES
-const GLuint __driNConfigOptions = 2;
+const GLuint __driNConfigOptions = 3;
 #else
-const GLuint __driNConfigOptions = 1;
+const GLuint __driNConfigOptions = 2;
 #endif
 
 #ifndef R128_DEBUG
@@ -176,6 +179,11 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
       driSetTextureSwapCounterLocation( rmesa->texture_heaps[i],
 					& rmesa->c_textureSwaps );
    }
+   rmesa->texture_depth = driQueryOptioni (&rmesa->optionCache,
+					   "texture_depth");
+   if (rmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
+      rmesa->texture_depth = ( r128scrn->cpp == 4 ) ?
+	 DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
 
 
    rmesa->RenderIndex = -1;		/* Impossible value */
