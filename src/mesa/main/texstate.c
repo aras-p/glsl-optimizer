@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.82 2002/10/21 15:52:34 brianp Exp $ */
+/* $Id: texstate.c,v 1.83 2002/10/23 14:53:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -114,6 +114,8 @@ _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
                                 src->Texture.Unit[i].Current3D);
       _mesa_copy_texture_object(dst->Texture.Unit[i].CurrentCubeMap,
                                 src->Texture.Unit[i].CurrentCubeMap);
+      _mesa_copy_texture_object(dst->Texture.Unit[i].CurrentRect,
+                                src->Texture.Unit[i].CurrentRect);
    }
 }
 
