@@ -16,8 +16,8 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_SE_VPORT_ZSCALE                0x1DA8
 #define R300_SE_VPORT_ZOFFSET               0x1DAC
 
-#define R300_SE_ZBIAS_FACTOR                0x1DB0
-#define R300_SE_ZBIAS_CONSTANT              0x1DB4
+#define R300_SE_ZBIAS_FACTOR                0x1DB0	/* guess */
+#define R300_SE_ZBIAS_CONSTANT              0x1DB4	/* guess */
 
 /* This register is written directly and also starts data section in many 3d CP_PACKET3's */
 #define R300_VAP_VF_CNTL	0x2084
