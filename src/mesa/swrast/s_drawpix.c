@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -24,6 +24,7 @@
 
 
 #include "glheader.h"
+#include "bufferobj.h"
 #include "context.h"
 #include "convolve.h"
 #include "image.h"
@@ -931,10 +932,25 @@ _swrast_DrawPixels( GLcontext *ctx,
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-   pixels = _swrast_validate_pbo_access(unpack, width, height, 1,
-                                        format, type, (GLvoid *) pixels);
-   if (!pixels)
-      return;
+   if (unpack->BufferObj->Name) {
+      /* unpack from PBO */
+      GLubyte *buf;
+      if (!_mesa_validate_pbo_access(unpack, width, height, 1,
+                                     format, type, pixels)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glDrawPixels(invalid PBO access)");
+         return;
+      }
+      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
+                                              GL_READ_ONLY_ARB,
+                                              unpack->BufferObj);
+      if (!buf) {
+         /* buffer is already mapped - that's an error */
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawPixels(PBO is mapped)");
+         return;
+      }
+      pixels = ADD_POINTERS(buf, pixels);
+   }
 
    RENDER_START(swrast,ctx);
 
@@ -966,9 +982,16 @@ _swrast_DrawPixels( GLcontext *ctx,
       break;
    default:
       _mesa_error( ctx, GL_INVALID_ENUM, "glDrawPixels(format)" );
+      /* don't return yet, clean-up */
    }
 
    RENDER_FINISH(swrast,ctx);
+
+   if (unpack->BufferObj->Name) {
+      /* done with PBO so unmap it now */
+      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
+                              unpack->BufferObj);
+   }
 }
 
 

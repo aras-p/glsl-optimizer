@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -24,6 +24,7 @@
 
 
 #include "glheader.h"
+#include "bufferobj.h"
 #include "colormac.h"
 #include "convolve.h"
 #include "context.h"
@@ -507,15 +508,27 @@ _swrast_ReadPixels( GLcontext *ctx,
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-   pixels = _swrast_validate_pbo_access(pack, width, height, 1,
-                                        format, type, (GLvoid *) pixels);
-
-   if (!pixels) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glReadPixels(pixels)" );
-      return;
+   if (pack->BufferObj->Name) {
+      /* pack into PBO */
+      GLubyte *buf;
+      if (!_mesa_validate_pbo_access(pack, width, height, 1,
+                                     format, type, pixels)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glReadPixels(invalid PBO access)");
+         return;
+      }
+      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
+                                              GL_WRITE_ONLY_ARB,
+                                              pack->BufferObj);
+      if (!buf) {
+         /* buffer is already mapped - that's an error */
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(PBO is mapped)");
+         return;
+      }
+      pixels = ADD_POINTERS(buf, pixels);
    }
 
-   RENDER_START(swrast,ctx);
+   RENDER_START(swrast, ctx);
 
    switch (format) {
       case GL_COLOR_INDEX:
@@ -543,7 +556,14 @@ _swrast_ReadPixels( GLcontext *ctx,
 	 break;
       default:
 	 _mesa_error( ctx, GL_INVALID_ENUM, "glReadPixels(format)" );
+         /* don't return yet, clean-up */
    }
 
-   RENDER_FINISH(swrast,ctx);
+   RENDER_FINISH(swrast, ctx);
+
+   if (pack->BufferObj->Name) {
+      /* done with PBO so unmap it now */
+      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
+                              pack->BufferObj);
+   }
 }
