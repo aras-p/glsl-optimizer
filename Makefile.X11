@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.114 2004/03/02 17:28:56 brianp Exp $
+# $Id: Makefile.X11,v 1.115 2004/03/18 16:02:27 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  6.1
@@ -34,12 +34,17 @@ SHELL = /bin/sh
 default:
 	@echo "Type one of the following:"
 	@echo "  make aix                   for AIX systems with xlc"
+	@echo "  make aix-nothreads         for AIX systems with xlc, no threads"
+	@echo "  make aix64                 for AIX systems with xlc, 64-bit"
+	@echo "  make aix64-nothreads       for AIX systems with xlc, 64-bit, no threads"
 	@echo "  make aix-sl                for AIX systems, make shared libs"
 	@echo "  make aix-gcc               for AIX sytems with gcc"
 	@echo "  make beos-r4               for BeOS R4"
 	@echo "  make cygnus                for Win95/NT using Cygnus-Win32"
 	@echo "  make cygnus-linux          for Win95/NT using Cygnus-Win32 under Linux"
 	@echo "  make darwin                for Darwin - Mac OS X"
+	@echo "  make darwin-static         for Darwin - Mac OS X, static libs"
+	@echo "  make darwin-static-nothreads for Darwin - Mac OS X, static libs, no threads"
 	@echo "  make freebsd               for FreeBSD systems with GCC"
 	@echo "  make freebsd-386           for FreeBSD systems with GCC, w/ Intel assembly"
 	@echo "  make gcc-sl                for a generic system with GCC for shared libs"
@@ -51,23 +56,37 @@ default:
 	@echo "  make hpux10-sl             for HP systems with HPUX 10.x and 11.x, shared libs"
 	@echo "  make hpux10-gcc            for HP systems with HPUX 10.x w/ GCC"
 	@echo "  make hpux10-gcc-sl         for HP systems with HPUX 10.x w/ GCC, shared libs"
+	@echo "  make hpux11-32             for HP systems with HPUX 11.x, static libs"
+	@echo "  make hpux11-32-nothreads   for HP systems with HPUX 11.x, static libs, no threads"
+	@echo "  make hpux11-64             for HP systems with HPUX 11.x, 64-bit static libs"
+	@echo "  make hpux11-64-nothreads   for HP systems with HPUX 11.x, 64-bit static libs, no threads"
+	@echo "  make hpux11-ia64           for HP IA64 systems with HPUX 11.x, 64-bit static libs"
+	@echo "  make hpux11-ia64-nothreads for HP IA64 systems with HPUX 11.x, 64-bit static libs, no threads"
 	@echo "  make irix6-o32             for SGI systems with IRIX 6.x, make o32-bit libs"
 	@echo "  make irix6-o32-dso         for SGI systems with IRIX 6.x, make o32-bit DSOs"
 	@echo "  make irix6-n32             for SGI systems with IRIX 6.x, make n32-bit libs"
+	@echo "  make irix6-n32-nothreads   for SGI systems with IRIX 6.x, make n32-bit libs, no threads"
 	@echo "  make irix6-n32-dso         for SGI systems with IRIX 6.x, make n32-bit DSOs"
 	@echo "  make irix6-gcc-n32-sl      for SGI systems with IRIX 6.x, GCC, make n32 DSOs"
 	@echo "  make irix6-64              for SGI systems with IRIX 6.x, make 64-bit libs"
+	@echo "  make irix6-64-nothreads    for SGI systems with IRIX 6.x, make 64-bit libs, no threads"
 	@echo "  make irix6-64-dso          for SGI systems with IRIX 6.x, make 64-bit DSOs"
 
 	@echo "  make linux                 for Linux"
-	@echo "  make linux-static          for Linux, make static libs"
+	@echo "  make linux-static          for Linux, static libs"
 	@echo "  make linux-x86             for Linux with x86 optimizations"
+	@echo "  make linux-x86-static      for Linux with x86 optimizations, static libs"
+	@echo "  make linux-x86-static-nothreads  for Linux with x86 optimizations, static, no threads"
+	@echo "  make linux-x86-64-static   for Linux with x86_64 optimizations, static libs"
+	@echo "  make linux-x86-64-static-nothreads   for Linux with x86_64 optimizations, static libs, no threads"
 	@echo "  make linux-ggi             for Linux with libggi driver"
 	@echo "  make linux-x86-ggi         for Linux with libggi driver and x86 optimizations"
 	@echo "  make linux-glide           for Linux with 3Dfx Glide driver"
 	@echo "  make linux-x86-glide       for Linux with 3Dfx Glide driver and x86 opts"
 	@echo "  make linux-alpha           for Linux with Alpha optimizations"
 	@echo "  make linux-alpha-static    for Linux with Alpha opts, make static libs"
+	@echo "  make linux-ia64-ecc-static for Linux with IA64 opts, Intel compiler, static libs"
+	@echo "  make linux-ia64-ecc-static-nothreads for Linux with IA64 opts, Intel compiler, static, no threads"
 	@echo "  make linux-ppc             for Linux with PowerPC opts"
 	@echo "  make linux-ppc-static      for Linux with PowerPC opts, make static libs"
 	@echo "  make linux-sparc           for Linux with Sparc optimzations"
@@ -78,12 +97,17 @@ default:
 	@echo "  make linux-osmesa32        for 32-bit/channel OSMesa"
 	@echo "  make linux-solo            for Linux standalone with DRI drivers"
 	@echo "  make linux-icc             for Linux with the Intel C/C++ compiler"
+	@echo "  make linux-icc-static      for Linux with the Intel C/C++ compiler, static libs"
+	@echo "  make linux-icc-static-nothreads  for Linux with the Intel C/C++ compiler, static, no threads"
+	@echo "  make linux-ia64-ecc-static for Linux IA64 with the Intel C/C++ compiler, static libs"
+	@echo "  make linux-ia64-ecc-static-nothreads  for Linux IA64 with the Intel C/C++ compiler, static, no threads"
 	@echo "  make lynxos                for LynxOS systems with GCC"
 	@echo "  make mklinux               for Linux on Power Macintosh"
 	@echo "  make netbsd                for NetBSD 1.0 systems with GCC"
 	@echo "  make openbsd               for OpenBSD systems"
 	@echo "  make openstep              for OpenStep/MacOSX Server systems"
 	@echo "  make osf1                  for DEC Alpha systems with OSF/1"
+	@echo "  make osf1-nothreads        for DEC Alpha systems with OSF/1, no threads"
 	@echo "  make qnx                   for QNX V4 systems with Watcom compiler"
 	@echo "  make solaris-x86           for PCs with Solaris"
 	@echo "  make solaris-x86-gcc       for PCs with Solaris using GCC"
@@ -95,6 +119,10 @@ default:
 	@echo "  make sunos5-smp            for Suns with SunOS 5.x, SMP optimization"
 	@echo "  make sunos5-gcc            for Suns with SunOS 5.x and GCC"
 	@echo "  make sunos5-gcc-debug      for Suns with SunOS 5.x and GCC"
+	@echo "  make sunos5-v8             for Suns with SunOS 5.x, 32-bit V8 no threads"
+	@echo "  make sunos5-v8-pthread     for Suns with SunOS 5.x, 32-bit V8 with threads"
+	@echo "  make sunos5-v9             for Suns with SunOS 5.x, 64-bit V8 no threads"
+	@echo "  make sunos5-v9-pthread     for Suns with SunOS 5.x, 64-bit V8 with threads"
 	@echo "  make ultrix-gcc            for DEC systems with Ultrix and GCC"
 	@echo "  make unixware              for PCs running UnixWare"
 	@echo "  make unixware-shared       for PCs running UnixWare, shared libs"
@@ -106,20 +134,28 @@ default:
 # XXX we may have to split up this group of targets into those that
 # have a C++ compiler and those that don't for the SI-GLU library.
 
-aix aix-sl aix-gcc darwin freebsd freebsd-386 gcc-sl \
+aix aix-nothreads aix-sl aix-gcc darwin freebsd freebsd-386 gcc-sl \
+darwin-static darwin-static-nothreads \
 cygnus cygnus-linux \
 hpux9 hpux9-sl hpux9-gcc hpux9-gcc-sl \
 hpux10 hpux10-sl hpux10-gcc hpux10-gcc-sl \
+hpux11-32 hpux11-32-nothreads \
+irix6-o32 irix6-o32-nothreads \
 linux linux-debug linux-static \
-linux-x86 linux-x86-sse linux-icc linux-x86-static linux-x86-debug \
+linux-x86 linux-x86-sse \
+linux-x86-static linux-x86-debug linux-x86-static-nothreads \
+linux-icc linux-icc-static linux-icc-static-nothreads \
+linux-ia64-ecc-static linux-ia64-ecc-static-nothreads \
+linux-x86-64-static linux-x86-64-static-nothreads \
 linux-glide linux-x86-glide linux-glide-debug \
 linux-alpha-static linux-alpha \
 linux-ppc-static linux-ppc \
 linux-sparc linux-sparc5 linux-sparc-ultra \
-mklinux netbsd osf1 openbsd qnx \
+mklinux netbsd osf1 osf1-nothreads openbsd qnx \
 solaris-x86 solaris-x86-gcc \
 sunos4 sunos4-sl sunos4-gcc sunos4-gcc-sl sunos4-gcc-x11r6-sl \
 sunos5 sunos5-smp sunos5-gcc sunos5-gcc-debug \
+sunos5-v8 sunos5-v8-pthread \
 ultrix-gcc unixware:
 	-mkdir lib
 	if [ -d src/mesa ] ; then \
@@ -164,7 +200,7 @@ gcc-mesa-sl:
 	if [ -d src ] ; then cd src  ; $(MAKE) -f Makefile.X11 $@ ; fi
 
 
-irix6-o32 irix6-o32-dso irix6-n32 irix6-n32-dso irix6-gcc-n32-sl:
+irix6-n32 irix6-n32-nothreads irix6-n32-dso irix6-gcc-n32-sl:
 	-mkdir lib32
 	if [ -d src/mesa ] ; then \
 		cd src/mesa ; \
@@ -203,7 +239,9 @@ irix6-o32 irix6-o32-dso irix6-n32 irix6-n32-dso irix6-gcc-n32-sl:
 		$(MAKE) -f Makefile.X11 $@ ; \
 	fi
 
-irix6-64 irix6-64-dso:
+aix-64 aix-64-nothreads hpux11-64 hpux11-64-nothreads irix6-64 \
+irix6-64-nothreads  irix6-64-dso hpux11-ia64 hpux11-ia64-nothreads \
+sunos5-v9 sunos5-v9-pthread:
 	-mkdir lib64
 	if [ -d src/mesa ] ; then \
 		cd src/mesa ; \
