@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.73 2000/06/27 22:10:00 brianp Exp $ */
+/* $Id: context.c,v 1.74 2000/06/27 23:38:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -780,10 +780,11 @@ init_attrib_groups( GLcontext *ctx )
    }
 
    /* Texture matrix */
-   for (i=0; i<MAX_TEXTURE_UNITS; i++) {
+   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
       gl_matrix_ctr( &ctx->TextureMatrix[i] );
       ctx->TextureStackDepth[i] = 0;
       for (j = 0; j < MAX_TEXTURE_STACK_DEPTH - 1; j++) {
+         gl_matrix_ctr( &ctx->TextureStack[i][j] );
          ctx->TextureStack[i][j].inv = 0;
       }
    }
