@@ -234,7 +234,7 @@ _mesa_EndQueryARB(GLenum target)
       _mesa_HashLookup(ctx->Occlusion.QueryObjects,
                        ctx->Occlusion.CurrentQueryObject);
    if (!q || !q->Active) {
-      _mesa_problem(ctx, "bad query object in glEndQueryARB");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glEndQuery with glBeginQuery");
       return;
    }
 
