@@ -161,13 +161,13 @@ static void choose_normals(void)
 static void ffb_choose_Normal3f(GLfloat x, GLfloat y, GLfloat z)
 {
 	choose_normals();
-	glNormal3f(x, y, z);
+	GL_CALL(Normal3f)(x, y, z);
 }
 
 static void ffb_choose_Normal3fv(const GLfloat *v)
 {
 	choose_normals();
-	glNormal3fv(v);
+	GL_CALL(Normal3fv)(v);
 }
 
 /* Vertex functions: */
@@ -267,13 +267,13 @@ static void ffb_do_fallback(GLcontext *ctx)
 	 * correctly:
 	 */
 	if (fmesa->imm.prim != PRIM_OUTSIDE_BEGIN_END )
-		glBegin(fmesa->imm.prim);
+		GL_CALL(Begin)(fmesa->imm.prim);
 
 	if (ctx->Light.Enabled) {
-		glColor4fv(ctx->Current.Color);	/* Catch ColorMaterial */
-		glNormal3fv(current->normal);
+		GL_CALL(Color4fv)(ctx->Current.Color);	/* Catch ColorMaterial */
+		GL_CALL(Normal3fv)(current->normal);
 	} else {
-		glColor4fv(current->color);
+		GL_CALL(Color4fv)(current->color);
 	}
 }
 
