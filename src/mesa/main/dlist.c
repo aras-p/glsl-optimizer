@@ -4265,10 +4265,10 @@ save_ProgramLocalParameter4dARB(GLenum target, GLuint index,
    if (n) {
       n[1].e = target;
       n[2].ui = index;
-      n[3].f = x;
-      n[4].f = y;
-      n[5].f = z;
-      n[6].f = w;
+      n[3].f = (GLfloat) x;
+      n[4].f = (GLfloat) y;
+      n[5].f = (GLfloat) z;
+      n[6].f = (GLfloat) w;
    }
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->ProgramLocalParameter4dARB)(target, index, x, y, z, w);
@@ -4287,10 +4287,10 @@ save_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
    if (n) {
       n[1].e = target;
       n[2].ui = index;
-      n[3].f = params[0];
-      n[4].f = params[1];
-      n[5].f = params[2];
-      n[6].f = params[3];
+      n[3].f = (GLfloat) params[0];
+      n[4].f = (GLfloat) params[1];
+      n[5].f = (GLfloat) params[2];
+      n[6].f = (GLfloat) params[3];
    }
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->ProgramLocalParameter4dvARB)(target, index, params);
@@ -4383,8 +4383,8 @@ static void save_DepthBoundsEXT( GLclampd zmin, GLclampd zmax )
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_ACTIVE_STENCIL_FACE_EXT, 2 );
    if (n) {
-      n[1].f = zmin;
-      n[2].f = zmax;
+      n[1].f = (GLfloat) zmin;
+      n[2].f = (GLfloat) zmax;
    }
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->DepthBoundsEXT)( zmin, zmax );

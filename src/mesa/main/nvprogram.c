@@ -1101,7 +1101,7 @@ _mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
 {
    struct program *prog;
    struct fragment_program *fragProg;
-   GLint i;
+   GLuint i;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -1167,7 +1167,7 @@ _mesa_GetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
 {
    struct program *prog;
    struct fragment_program *fragProg;
-   GLint i;
+   GLuint i;
    GET_CURRENT_CONTEXT(ctx);
 
    if (!ctx->_CurrentProgram)

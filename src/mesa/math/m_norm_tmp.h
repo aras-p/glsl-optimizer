@@ -323,9 +323,9 @@ TAG(normalize_normals)( const GLmatrix *mat,
 	 GLdouble len = x * x + y * y + z * z;
 	 if (len > 1e-50) {
 	    len = INV_SQRTF(len);
-	    out[i][0] = x * len;
-	    out[i][1] = y * len;
-	    out[i][2] = z * len;
+	    out[i][0] = (GLfloat)(x * len);
+	    out[i][1] = (GLfloat)(y * len);
+	    out[i][2] = (GLfloat)(z * len);
 	 }
 	 else {
 	    out[i][0] = x;

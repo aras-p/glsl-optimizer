@@ -204,7 +204,7 @@ lookup_parameter(struct parse_state *parseState, const char *name)
 static const GLint
 lookup_parameter_index(struct parse_state *parseState, const char *name)
 {
-   GLint i;
+   GLuint i;
    for (i = 0; i < parseState->numParameters; i++) {
       if (_mesa_strcmp(parseState->parameters[i].Name, name) == 0)
          return i;

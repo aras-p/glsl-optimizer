@@ -489,7 +489,7 @@ _mesa_inv_sqrtf(float n)
 #elif defined(XFree86LOADER) && defined(IN_MODULE)
         return 1.0F / xf86sqrt(n);
 #else
-        return 1.0F / sqrt(n);
+        return (float) (1.0 / sqrt(n));
 #endif
 }
 

@@ -191,7 +191,7 @@ _mesa_MatrixMode( GLenum mode )
    case GL_MATRIX7_ARB:
       if (ctx->Extensions.ARB_vertex_program ||
           ctx->Extensions.ARB_fragment_program) {
-         const GLint m = mode - GL_MATRIX0_ARB;
+         const GLuint m = mode - GL_MATRIX0_ARB;
          if (m > ctx->Const.MaxProgramMatrices) {
             _mesa_error(ctx, GL_INVALID_ENUM,
                         "glMatrixMode(GL_MATRIX%d_ARB)", m);

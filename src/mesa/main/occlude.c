@@ -116,7 +116,7 @@ _mesa_GenQueriesARB(GLsizei n, GLuint *ids)
 
    first = _mesa_HashFindFreeKeyBlock(ctx->Occlusion.QueryObjects, n);
    if (first) {
-      GLuint i;
+      GLsizei i;
       for (i = 0; i < n; i++) {
          struct occlusion_query *q = new_query_object(GL_SAMPLES_PASSED_ARB,
                                                       first + i);

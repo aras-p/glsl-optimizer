@@ -610,7 +610,7 @@ execute_program( GLcontext *ctx,
             {
                GLfloat a[4], result[4];
                fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
-               result[0] = result[1] = result[2] = result[3] = _mesa_cos(a[0]);
+               result[0] = result[1] = result[2] = result[3] = (GLfloat)_mesa_cos(a[0]);
                store_vector4( inst, machine, result );
             }
             break;
@@ -755,7 +755,7 @@ execute_program( GLcontext *ctx,
                   a[1] = 0.0F;
                result[0] = 1.0F;
                result[1] = a[0];
-               result[2] = (a[0] > 0.0) ? _mesa_pow(2.0, a[3]) : 0.0F;
+               result[2] = (a[0] > 0.0F) ? (GLfloat)_mesa_pow(2.0, a[3]) : 0.0F;
                result[3] = 1.0F;
                store_vector4( inst, machine, result );
             }
@@ -903,7 +903,7 @@ execute_program( GLcontext *ctx,
                fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
                fetch_vector1( ctx, &inst->SrcReg[1], machine, program, b );
                result[0] = result[1] = result[2] = result[3]
-                  = _mesa_pow(a[0], b[0]);
+                  = (GLfloat)_mesa_pow(a[0], b[0]);
                store_vector4( inst, machine, result );
             }
             break;
@@ -997,7 +997,8 @@ execute_program( GLcontext *ctx,
             {
                GLfloat a[4], result[4];
                fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
-               result[0] = result[1] = result[2] = result[3] = _mesa_sin(a[0]);
+               result[0] = result[1] = result[2] = 
+		       result[3] = (GLfloat)_mesa_sin(a[0]);
                store_vector4( inst, machine, result );
             }
             break;
@@ -1184,8 +1185,8 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
    /* Load input registers */
    if (inputsRead & (1 << FRAG_ATTRIB_WPOS)) {
       GLfloat *wpos = machine->Inputs[FRAG_ATTRIB_WPOS];
-      wpos[0] = span->x + col;
-      wpos[1] = span->y;
+      wpos[0] = (GLfloat) span->x + col;
+      wpos[1] = (GLfloat) span->y;
       wpos[2] = (GLfloat) span->array->z[col] / ctx->DepthMaxF;
       wpos[3] = span->w + col * span->dwdx;
    }

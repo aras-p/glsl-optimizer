@@ -392,11 +392,25 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
       else {
          ASSERT (ctx->Light.ShadeModel == GL_FLAT);
          span.interpMask |= SPAN_FLAT;
-         span.drdx = span.drdy = span.redStep   = 0;
-         span.dgdx = span.dgdy = span.greenStep = 0;
-         span.dbdx = span.dbdy = span.blueStep  = 0;
+         span.drdx = span.drdy = 0.0F;
+         span.dgdx = span.dgdy = 0.0F;
+         span.dbdx = span.dbdy = 0.0F;
+#    if CHAN_TYPE == GL_FLOAT
+	 span.redStep   = 0.0F;
+	 span.greenStep = 0.0F;
+	 span.blueStep  = 0.0F;
+#    else
+	 span.redStep   = 0;
+	 span.greenStep = 0;
+	 span.blueStep  = 0;
+#    endif /* GL_FLOAT */
 #  ifdef INTERP_ALPHA
-         span.dadx = span.dady = span.alphaStep = 0;
+         span.dadx = span.dady = 0.0F;
+#    if CHAN_TYPE == GL_FLOAT
+	 span.alphaStep = 0.0F;
+#    else
+	 span.alphaStep = 0;
+#    endif /* GL_FLOAT */
 #  endif
       }
 #endif /* INTERP_RGB */
@@ -426,9 +440,18 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #  endif
       }
       else {
-         span.dsrdx = span.dsrdy = span.specRedStep   = 0;
-         span.dsgdx = span.dsgdy = span.specGreenStep = 0;
-         span.dsbdx = span.dsbdy = span.specBlueStep  = 0;
+         span.dsrdx = span.dsrdy = 0.0F;
+         span.dsgdx = span.dsgdy = 0.0F;
+         span.dsbdx = span.dsbdy = 0.0F;
+#  if CHAN_TYPE == GL_FLOAT
+	 span.specRedStep   = 0.0F;
+	 span.specGreenStep = 0.0F;
+	 span.specBlueStep  = 0.0F;
+#  else
+	 span.specRedStep   = 0;
+	 span.specGreenStep = 0;
+	 span.specBlueStep  = 0;
+#  endif
       }
 #endif /* INTERP_SPEC */
 #ifdef INTERP_INDEX
@@ -721,9 +744,9 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   fdgOuter = span.dgdy + dxOuter * span.dgdx;
                   fdbOuter = span.dbdy + dxOuter * span.dbdx;
 #  else
-                  rLeft = (ChanToFixed(vLower->color[RCOMP]) + span.drdx * adjx + span.drdy * adjy) + FIXED_HALF;
-                  gLeft = (ChanToFixed(vLower->color[GCOMP]) + span.dgdx * adjx + span.dgdy * adjy) + FIXED_HALF;
-                  bLeft = (ChanToFixed(vLower->color[BCOMP]) + span.dbdx * adjx + span.dbdy * adjy) + FIXED_HALF;
+                  rLeft = (GLint)(ChanToFixed(vLower->color[RCOMP]) + span.drdx * adjx + span.drdy * adjy) + FIXED_HALF;
+                  gLeft = (GLint)(ChanToFixed(vLower->color[GCOMP]) + span.dgdx * adjx + span.dgdy * adjy) + FIXED_HALF;
+                  bLeft = (GLint)(ChanToFixed(vLower->color[BCOMP]) + span.dbdx * adjx + span.dbdy * adjy) + FIXED_HALF;
                   fdrOuter = SignedFloatToFixed(span.drdy + dxOuter * span.drdx);
                   fdgOuter = SignedFloatToFixed(span.dgdy + dxOuter * span.dgdx);
                   fdbOuter = SignedFloatToFixed(span.dbdy + dxOuter * span.dbdx);
@@ -733,7 +756,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   aLeft = vLower->color[ACOMP] + (span.dadx * adjx + span.dady * adjy) * (1.0F / FIXED_SCALE);
                   fdaOuter = span.dady + dxOuter * span.dadx;
 #    else
-                  aLeft = (ChanToFixed(vLower->color[ACOMP]) + span.dadx * adjx + span.dady * adjy) + FIXED_HALF;
+                  aLeft = (GLint)(ChanToFixed(vLower->color[ACOMP]) + span.dadx * adjx + span.dady * adjy) + FIXED_HALF;
                   fdaOuter = SignedFloatToFixed(span.dady + dxOuter * span.dadx);
 #    endif
 #  endif

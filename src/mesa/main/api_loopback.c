@@ -1642,31 +1642,31 @@ loopback_VertexAttribs4ubvNV(GLuint index, GLsizei n, const GLubyte *v)
 static void
 loopback_VertexAttrib4bvARB(GLuint index, const GLbyte * v)
 {
-   ATTRIB(index, v[0], v[1], v[2], v[3]);
+   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void
 loopback_VertexAttrib4ivARB(GLuint index, const GLint * v)
 {
-   ATTRIB(index, v[0], v[1], v[2], v[3]);
+   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void
 loopback_VertexAttrib4ubvARB(GLuint index, const GLubyte * v)
 {
-   ATTRIB(index, v[0], v[1], v[2], v[3]);
+   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void
 loopback_VertexAttrib4usvARB(GLuint index, const GLushort * v)
 {
-   ATTRIB(index, v[0], v[1], v[2], v[3]);
+   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void
 loopback_VertexAttrib4uivARB(GLuint index, const GLuint * v)
 {
-   ATTRIB(index, v[0], v[1], v[2], v[3]);
+   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void

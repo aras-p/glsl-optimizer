@@ -146,16 +146,16 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
 
    switch (pname) {
       case GL_VERTEX_ATTRIB_ARRAY_ENABLED_ARB:
-         params[0] = ctx->Array.VertexAttrib[index].Enabled;
+         params[0] = (GLfloat) ctx->Array.VertexAttrib[index].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_SIZE_ARB:
-         params[0] = ctx->Array.VertexAttrib[index].Size;
+         params[0] = (GLfloat) ctx->Array.VertexAttrib[index].Size;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_STRIDE_ARB:
-         params[0] = ctx->Array.VertexAttrib[index].Stride;
+         params[0] = (GLfloat) ctx->Array.VertexAttrib[index].Stride;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_TYPE_ARB:
-         params[0] = ctx->Array.VertexAttrib[index].Type;
+         params[0] = (GLfloat) ctx->Array.VertexAttrib[index].Type;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_NORMALIZED_ARB:
          params[0] = ctx->Array.VertexAttrib[index].Normalized;
@@ -181,10 +181,10 @@ _mesa_GetVertexAttribivARB(GLuint index, GLenum pname, GLint *params)
    _mesa_GetVertexAttribfvARB(index, pname, fparams);
    if (ctx->ErrorValue == GL_NO_ERROR) {
       if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
-         COPY_4V(params, fparams);  /* float to int */
+         COPY_4V_CAST(params, fparams, GLint);  /* float to int */
       }
       else {
-         params[0] = fparams[0];
+         params[0] = (GLint) fparams[0];
       }
    }
 }
@@ -245,7 +245,8 @@ void
 _mesa_ProgramEnvParameter4dARB(GLenum target, GLuint index,
                                GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-   _mesa_ProgramEnvParameter4fARB(target, index, x, y, z, w);
+   _mesa_ProgramEnvParameter4fARB(target, index, (GLfloat) x, (GLfloat) y, 
+		                  (GLfloat) z, (GLfloat) w);
 }
 
 
@@ -253,8 +254,9 @@ void
 _mesa_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
                                 const GLdouble *params)
 {
-   _mesa_ProgramEnvParameter4fARB(target, index, params[0], params[1],
-                                  params[2], params[3]);
+   _mesa_ProgramEnvParameter4fARB(target, index, (GLfloat) params[0], 
+	                          (GLfloat) params[1], (GLfloat) params[2], 
+				  (GLfloat) params[3]);
 }
 
 
@@ -821,7 +823,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
          if (reg[0] == 'R') {
             /* Temp register */
             GLint i = _mesa_atoi(reg + 1);
-            if (i >= ctx->Const.MaxVertexProgramTemps) {
+            if (i >= (GLint)ctx->Const.MaxVertexProgramTemps) {
                _mesa_error(ctx, GL_INVALID_VALUE,
                            "glGetProgramRegisterfvMESA(registerName)");
                return;
@@ -830,7 +832,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
          }
          else if (reg[0] == 'v' && reg[1] == '[') {
             /* Vertex Input attribute */
-            GLint i;
+            GLuint i;
             for (i = 0; i < ctx->Const.MaxVertexProgramAttribs; i++) {
                const char *name = _mesa_nv_vertex_input_register_name(i);
                char number[10];
@@ -885,7 +887,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
          if (reg[0] == 'R') {
             /* Temp register */
             GLint i = _mesa_atoi(reg + 1);
-            if (i >= ctx->Const.MaxFragmentProgramTemps) {
+            if (i >= (GLint)ctx->Const.MaxFragmentProgramTemps) {
                _mesa_error(ctx, GL_INVALID_VALUE,
                            "glGetProgramRegisterfvMESA(registerName)");
                return;
@@ -894,7 +896,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
          }
          else if (reg[0] == 'f' && reg[1] == '[') {
             /* Fragment input attribute */
-            GLint i;
+            GLuint i;
             for (i = 0; i < ctx->Const.MaxFragmentProgramAttribs; i++) {
                const char *name = _mesa_nv_fragment_input_register_name(i);
                if (_mesa_strncmp(reg + 2, name, 4) == 0) {

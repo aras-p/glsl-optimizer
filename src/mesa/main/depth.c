@@ -137,8 +137,8 @@ _mesa_DepthBoundsEXT( GLclampd zmin, GLclampd zmax )
       return;
 
    FLUSH_VERTICES(ctx, _NEW_DEPTH);
-   ctx->Depth.BoundsMin = zmin;
-   ctx->Depth.BoundsMax = zmax;
+   ctx->Depth.BoundsMin = (GLfloat) zmin;
+   ctx->Depth.BoundsMax = (GLfloat) zmax;
 }
 
 

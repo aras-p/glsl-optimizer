@@ -123,13 +123,11 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
 /*****                    Rasterization                           *****/
 /**********************************************************************/
 
-
 /* Simple color index line (no stipple, width=1, no Z, no fog, no tex)*/
 #define NAME simple_ci_line
 #define INTERP_INDEX
 #define RENDER_SPAN(span) _swrast_write_index_span(ctx, &span)
 #include "s_linetemp.h"
-
 
 /* Simple RGBA index line (no stipple, width=1, no Z, no fog, no tex)*/
 #define NAME simple_rgba_line
@@ -146,10 +144,10 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
 #define RENDER_SPAN(span)					\
    if (ctx->Line.StippleFlag) {					\
       span.arrayMask |= SPAN_MASK;				\
-      compute_stipple_mask(ctx, span.end, span.array->mask);	\
+      compute_stipple_mask(ctx, span.end, span.array->mask);    \
    }								\
    if (ctx->Line.Width > 1.0) {					\
-      draw_wide_line(ctx, &span, dx > dy);			\
+      draw_wide_line(ctx, &span, (GLboolean)(dx > dy));		\
    }								\
    else {							\
       _swrast_write_index_span(ctx, &span);			\
@@ -168,7 +166,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       compute_stipple_mask(ctx, span.end, span.array->mask);	\
    }								\
    if (ctx->Line.Width > 1.0) {					\
-      draw_wide_line(ctx, &span, dx > dy);			\
+      draw_wide_line(ctx, &span, (GLboolean)(dx > dy));		\
    }								\
    else {							\
       _swrast_write_rgba_span(ctx, &span);			\
@@ -188,7 +186,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       compute_stipple_mask(ctx, span.end, span.array->mask);	\
    }								\
    if (ctx->Line.Width > 1.0) {					\
-      draw_wide_line(ctx, &span, dx > dy);			\
+      draw_wide_line(ctx, &span, (GLboolean)(dx > dy));		\
    }								\
    else {							\
       _swrast_write_texture_span(ctx, &span);			\
@@ -209,7 +207,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       compute_stipple_mask(ctx, span.end, span.array->mask);	\
    }								\
    if (ctx->Line.Width > 1.0) {					\
-      draw_wide_line(ctx, &span, dx > dy);			\
+      draw_wide_line(ctx, &span, (GLboolean)(dx > dy));		\
    }								\
    else {							\
       _swrast_write_texture_span(ctx, &span);			\

@@ -5528,7 +5528,7 @@ parse_tree_fold_bindings(parse_state * s, parse_tree_node * ptn)
    eat_children = 0;
    bind_row = 0;
    bind_nrows = 1;
-   bind_vals[0] = bind_vals[1] = bind_vals[2] = bind_vals[3];
+   bind_vals[0] = bind_vals[1] = bind_vals[2] = bind_vals[3] = 0.0f;
    switch (ptn->prod_applied) {
       /* vertex */
    case 121:
@@ -6123,7 +6123,7 @@ parse_tree_fold_bindings(parse_state * s, parse_tree_node * ptn)
 
 #define FOLD_FLOAT_CONSTANT(float_ptr, bind_vals_idx, sign) \
 		if (float_ptr->tok == 49) /* GLfloat */ {\
-			bind_vals[bind_vals_idx] = sign * s->floats.data[float_ptr->tok_attr];\
+			bind_vals[bind_vals_idx] = sign * (GLfloat) s->floats.data[float_ptr->tok_attr];\
 		}\
 		else /* GLint */ {\
 			bind_vals[bind_vals_idx] = sign * s->ints.data[float_ptr->tok_attr];\
@@ -6131,9 +6131,9 @@ parse_tree_fold_bindings(parse_state * s, parse_tree_node * ptn)
 
 #define FOLD_SIGNED_FLOAT_CONSTANT(sf_ptr, bind_vals_idx) \
 		{\
-			GLfloat __mul = 1.;\
+			GLfloat __mul = 1.0F;\
 			if (sf_ptr->children[0]->prod_applied == 282) \
-				__mul = -1.;\
+				__mul = -1.0F;\
 			FOLD_FLOAT_CONSTANT(sf_ptr->children[1], bind_vals_idx, __mul);\
 		}
 

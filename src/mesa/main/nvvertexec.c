@@ -689,7 +689,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
             {
                GLfloat t[4];
                fetch_vector1( &inst->SrcReg[0], state, t );
-               t[0] = t[1] = t[2] = t[3] = _mesa_pow(2.0, t[0]);
+               t[0] = t[1] = t[2] = t[3] = (GLfloat)_mesa_pow(2.0, t[0]);
                store_vector4( &inst->DstReg, state, t );
             }
             break;
@@ -706,7 +706,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
                GLfloat t[4], u[4];
                fetch_vector1( &inst->SrcReg[0], state, t );
                fetch_vector1( &inst->SrcReg[1], state, u );
-               t[0] = t[1] = t[2] = t[3] = _mesa_pow(t[0], u[0]);
+               t[0] = t[1] = t[2] = t[3] = (GLfloat)_mesa_pow(t[0], u[0]);
                store_vector4( &inst->DstReg, state, t );
             }
             break;
