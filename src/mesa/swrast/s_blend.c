@@ -1,4 +1,4 @@
-/* $Id: s_blend.c,v 1.4 2001/03/03 21:11:33 brianp Exp $ */
+/* $Id: s_blend.c,v 1.5 2001/03/08 15:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -98,12 +98,20 @@ blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
             const GLint b = DIV255(rgba[i][BCOMP] * t + dest[i][BCOMP] * s);
             const GLint a = DIV255(rgba[i][ACOMP] * t + dest[i][ACOMP] * s);
 #undef DIV255
-#else
-            const GLint s = CHAN_MAX - t;
-            const GLint r = (rgba[i][RCOMP] * t + dest[i][RCOMP] * s) / CHAN_MAX;
-            const GLint g = (rgba[i][GCOMP] * t + dest[i][GCOMP] * s) / CHAN_MAX;
-            const GLint b = (rgba[i][BCOMP] * t + dest[i][BCOMP] * s) / CHAN_MAX;
-            const GLint a = (rgba[i][ACOMP] * t + dest[i][ACOMP] * s) / CHAN_MAX;
+#elif CHAN_BITS == 16
+            const GLfloat tt = (GLfloat) t / CHAN_MAXF;
+            const GLfloat s = 1.0 - tt;
+            const GLint r = (GLint) (rgba[i][RCOMP] * tt + dest[i][RCOMP] * s);
+            const GLint g = (GLint) (rgba[i][GCOMP] * tt + dest[i][GCOMP] * s);
+            const GLint b = (GLint) (rgba[i][BCOMP] * tt + dest[i][BCOMP] * s);
+            const GLint a = (GLint) (rgba[i][ACOMP] * tt + dest[i][ACOMP] * s);
+#else /* CHAN_BITS == 32 */
+            const GLfloat tt = (GLfloat) t / CHAN_MAXF;
+            const GLfloat s = 1.0 - tt;
+            const GLfloat r = rgba[i][RCOMP] * tt + dest[i][RCOMP] * s;
+            const GLfloat g = rgba[i][GCOMP] * tt + dest[i][GCOMP] * s;
+            const GLfloat b = rgba[i][BCOMP] * tt + dest[i][BCOMP] * s;
+            const GLfloat a = rgba[i][ACOMP] * tt + dest[i][ACOMP] * s;
 #endif
 #endif
             ASSERT(r <= CHAN_MAX);
@@ -625,7 +633,7 @@ _mesa_blend_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
    _mesa_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
 
    SWRAST_CONTEXT(ctx)->BlendFunc( ctx, n, mask, rgba, 
-				   (const GLchan (*)[4])dest );
+				   (const GLchan (*)[4]) dest );
 }
 
 

@@ -39,7 +39,7 @@ static void TAG(rs)(GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
    GLfloat *fog;
    GLfloat *pointSize;
    GLuint tsz[MAX_TEXTURE_UNITS];
-   int i;
+   GLuint i;
    GLfloat *m = ctx->Viewport._WindowMap.m;
    const GLfloat sx = m[0];
    const GLfloat sy = m[5];
@@ -118,10 +118,10 @@ static void TAG(rs)(GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
 	 }
 
 	 if (IND & COLOR)
-	    COPY_4UBV(v->color, color[i]);
+	    COPY_CHAN4(v->color, color[i]);
 	 
 	 if (IND & SPEC) 
-	    COPY_4UBV(v->specular, spec[i]);
+	    COPY_CHAN4(v->specular, spec[i]);
 
 	 if (IND & FOG)
 	    v->fog = fog[i]; 

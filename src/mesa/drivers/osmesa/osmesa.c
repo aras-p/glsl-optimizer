@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.48 2001/03/03 20:33:29 brianp Exp $ */
+/* $Id: osmesa.c,v 1.49 2001/03/08 15:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -145,10 +145,10 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
    }
    else if (format==OSMESA_RGBA) {
       indexBits = 0;
-      redBits = 8;
-      greenBits = 8;
-      blueBits = 8;
-      alphaBits = 8;
+      redBits = CHAN_BITS;
+      greenBits = CHAN_BITS;
+      blueBits = CHAN_BITS;
+      alphaBits = CHAN_BITS;
       rind = 0;
       gind = 1;
       bind = 2;
@@ -169,10 +169,10 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
    }
    else if (format==OSMESA_BGRA) {
       indexBits = 0;
-      redBits = 8;
-      greenBits = 8;
-      blueBits = 8;
-      alphaBits = 8;
+      redBits = CHAN_BITS;
+      greenBits = CHAN_BITS;
+      blueBits = CHAN_BITS;
+      alphaBits = CHAN_BITS;
       rind = 2;
       gind = 1;
       bind = 0;
@@ -193,10 +193,10 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
    }
    else if (format==OSMESA_ARGB) {
       indexBits = 0;
-      redBits = 8;
-      greenBits = 8;
-      blueBits = 8;
-      alphaBits = 8;
+      redBits = CHAN_BITS;
+      greenBits = CHAN_BITS;
+      blueBits = CHAN_BITS;
+      alphaBits = CHAN_BITS;
       rind = 1;
       gind = 2;
       bind = 3;
@@ -217,9 +217,9 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
    }
    else if (format==OSMESA_RGB) {
       indexBits = 0;
-      redBits = 8;
-      greenBits = 8;
-      blueBits = 8;
+      redBits = CHAN_BITS;
+      greenBits = CHAN_BITS;
+      blueBits = CHAN_BITS;
       alphaBits = 0;
       bshift = 0;
       gshift = 8;
@@ -233,9 +233,9 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
    }
    else if (format==OSMESA_BGR) {
       indexBits = 0;
-      redBits = 8;
-      greenBits = 8;
-      blueBits = 8;
+      redBits = CHAN_BITS;
+      greenBits = CHAN_BITS;
+      blueBits = CHAN_BITS;
       alphaBits = 0;
       bshift = 0;
       gshift = 8;
@@ -506,7 +506,7 @@ void GLAPIENTRY OSMesaGetIntegerv( GLint pname, GLint *value )
          *value = ctx->format;
          return;
       case OSMESA_TYPE:
-         *value = GL_UNSIGNED_BYTE;
+         *value = CHAN_TYPE;
          return;
       case OSMESA_ROW_LENGTH:
          *value = ctx->rowlength;
@@ -611,10 +611,10 @@ do {				\
 } while (0)
 
 
-#define UNPACK_RED(P)      ( ((GLchan *) &(P))[osmesa->rInd] )
-#define UNPACK_GREEN(P)    ( ((GLchan *) &(P))[osmesa->gInd] )
-#define UNPACK_BLUE(P)     ( ((GLchan *) &(P))[osmesa->bInd] )
-#define UNPACK_ALPHA(P)    ( ((GLchan *) &(P))[osmesa->aInd] )
+#define UNPACK_RED(P)      ( (P)[osmesa->rInd] )
+#define UNPACK_GREEN(P)    ( (P)[osmesa->gInd] )
+#define UNPACK_BLUE(P)     ( (P)[osmesa->bInd] )
+#define UNPACK_ALPHA(P)    ( (P)[osmesa->aInd] )
 
 
 #define PIXELADDR1(X,Y)  (osmesa->rowaddr[Y] + (X))

@@ -1,4 +1,4 @@
-/* $Id: m_debug_xform.c,v 1.3 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: m_debug_xform.c,v 1.4 2001/03/08 15:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -136,7 +136,7 @@ static void ref_transform( GLvector4f *dst,
                            const GLubyte *clipmask,
                            const GLubyte flag )
 {
-   int i;
+   GLuint i;
    GLfloat *s = (GLfloat *)src->start;
    GLfloat (*d)[4] = (GLfloat (*)[4])dst->start;
    const GLfloat *m = mat->m;

@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.46 2001/02/17 00:17:31 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.47 2001/03/08 15:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2206,7 +2206,7 @@ struct _glxapi_table *_mesa_GetGLXDispatchTable(void)
 
    /* be sure our dispatch table size <= libGL's table */
    {
-      int size = sizeof(struct _glxapi_table) / sizeof(void *);
+      GLuint size = sizeof(struct _glxapi_table) / sizeof(void *);
       (void) size;
       assert(_glxapi_get_dispatch_table_size() >= size);
    }

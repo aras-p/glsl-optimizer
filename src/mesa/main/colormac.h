@@ -1,4 +1,4 @@
-/* $Id: colormac.h,v 1.7 2001/03/07 03:20:38 brianp Exp $ */
+/* $Id: colormac.h,v 1.8 2001/03/08 15:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -70,7 +70,7 @@
 #define INT_TO_CHAN(i)    ((i) < 0 ? 0 : (GLchan) ((i) >> 15))
 #define UINT_TO_CHAN(i)   ((GLchan) ((i) >> 16))
 
-#define CHAN_TO_FLOAT(c)  ((GLfloat) ((c) * (1.0 / CHAN_MAXF) + 0.5F))
+#define CHAN_TO_FLOAT(c)  ((GLfloat) ((c) * (1.0 / CHAN_MAXF)))
 
 #define CLAMPED_FLOAT_TO_CHAN(c, f) \
    c = ((GLchan) IROUND((f) * CHAN_MAXF))

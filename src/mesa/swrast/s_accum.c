@@ -1,4 +1,4 @@
-/* $Id: s_accum.c,v 1.6 2001/03/07 05:06:12 brianp Exp $ */
+/* $Id: s_accum.c,v 1.7 2001/03/08 15:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -476,7 +476,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
                if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
                    && ctx->Color.ColorMask[ACOMP]) {
                   _mesa_write_alpha_span(ctx, width, xpos, ypos,
-                                         (CONST GLubyte (*)[4]) rgba, NULL);
+                                         (CONST GLchan (*)[4]) rgba, NULL);
                }
                ypos++;
             }
@@ -508,7 +508,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
                if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
                    && ctx->Color.ColorMask[ACOMP]) {
                   _mesa_write_alpha_span(ctx, width, xpos, ypos,
-                                         (CONST GLubyte (*)[4]) rgba, NULL);
+                                         (CONST GLchan (*)[4]) rgba, NULL);
                }
                ypos++;
             }

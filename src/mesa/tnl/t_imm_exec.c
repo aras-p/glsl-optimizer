@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.14 2001/03/03 20:33:31 brianp Exp $ */
+/* $Id: t_imm_exec.c,v 1.15 2001/03/08 15:23:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,7 @@
 
 
 #include "glheader.h"
+#include "colormac.h"
 #include "context.h"
 #include "enums.h"
 #include "dlist.h"
@@ -104,7 +105,7 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
       ctx->Current.EdgeFlag = IM->EdgeFlag[count];
 
    if (flag & VERT_RGBA) {
-      COPY_4UBV(ctx->Current.Color, IM->Color[count]);
+      COPY_CHAN4(ctx->Current.Color, IM->Color[count]);
       if (ctx->Light.ColorMaterialEnabled) {
 	 _mesa_update_color_material( ctx, ctx->Current.Color );
 	 _mesa_validate_all_lighting_tables( ctx );
@@ -112,7 +113,7 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
    }
 
    if (flag & VERT_SPEC_RGB)
-      COPY_4UBV(ctx->Current.SecondaryColor, IM->SecondaryColor[count]);
+      COPY_CHAN4(ctx->Current.SecondaryColor, IM->SecondaryColor[count]);
 
    if (flag & VERT_FOG_COORD)
       ctx->Current.FogCoord = IM->FogCoord[count];

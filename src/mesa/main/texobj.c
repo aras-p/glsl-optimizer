@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.42 2001/03/03 20:33:28 brianp Exp $ */
+/* $Id: texobj.c,v 1.43 2001/03/08 15:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -214,8 +214,8 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
 
    if (t->Dimensions == 6) {
       /* make sure that all six cube map level 0 images are the same size */
-      const GLint w = t->Image[baseLevel]->Width2;
-      const GLint h = t->Image[baseLevel]->Height2;
+      const GLuint w = t->Image[baseLevel]->Width2;
+      const GLuint h = t->Image[baseLevel]->Height2;
       if (!t->NegX[baseLevel] ||
           t->NegX[baseLevel]->Width2 != w ||
           t->NegX[baseLevel]->Height2 != h ||

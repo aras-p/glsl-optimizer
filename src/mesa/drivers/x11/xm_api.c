@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.17 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: xm_api.c,v 1.18 2001/03/08 15:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2237,7 +2237,8 @@ GLboolean XMesaSetFXmode( GLint mode )
 static void FXgetImage( XMesaBuffer b )
 {
    static unsigned short pixbuf[MAX_WIDTH];
-   int x, y;
+   GLuint x, y;
+   int xpos, ypos;
    XMesaWindow root;
    unsigned int bw, depth, width, height;
    XMesaContext xmesa = (XMesaContext) b->xm_context->gl_ctx->DriverCtx;
@@ -2252,7 +2253,7 @@ static void FXgetImage( XMesaBuffer b )
    depth = b->frontbuffer->depth;
 #else
    XGetGeometry( xmesa->xm_visual->display, b->frontbuffer,
-                 &root, &x, &y, &width, &height, &bw, &depth);
+                 &root, &xpos, &ypos, &width, &height, &bw, &depth);
 #endif
    if (b->width != width || b->height != height) {
       b->width = MIN2((int)width, xmesa->xm_buffer->FXctx->width);

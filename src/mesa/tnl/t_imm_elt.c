@@ -1,4 +1,4 @@
-/* $Id: t_imm_elt.c,v 1.4 2001/02/20 18:28:52 keithw Exp $ */
+/* $Id: t_imm_elt.c,v 1.5 2001/03/08 15:23:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -705,7 +705,7 @@ static void _tnl_trans_elt_4f(GLfloat (*to)[4],
 					
 }
 
-static void _tnl_trans_elt_4chan(GLubyte (*to)[4],
+static void _tnl_trans_elt_4chan(GLchan (*to)[4],
                                const struct gl_client_array *from,
                                GLuint *flags,
                                GLuint *elts,

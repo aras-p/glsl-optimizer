@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.15 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.16 2001/03/08 15:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -413,7 +413,7 @@ static void affine_textured_triangle( GLcontext *ctx,
       return;                                                           \
    }                                                                    \
    tbytesline = obj->Image[b]->Width * comp;                            \
-   tsize = theight * tbytesline;
+   tsize = obj->Image[b]->Height * tbytesline;
 
 
   /* Instead of defining a function for each mode, a test is done 

@@ -139,8 +139,8 @@ static void _swsetup_render_point_tri( GLcontext *ctx,
    }
 }
 
-#define SS_COLOR(a,b) COPY_4UBV(a,b)
-#define SS_SPEC(a,b) COPY_4UBV(a,b)
+#define SS_COLOR(a,b) COPY_CHAN4(a,b)
+#define SS_SPEC(a,b) COPY_CHAN4(a,b)
 #define SS_IND(a,b) (a = b)
 
 #define IND (0)

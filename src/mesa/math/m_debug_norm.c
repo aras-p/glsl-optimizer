@@ -1,4 +1,4 @@
-/* $Id: m_debug_norm.c,v 1.3 2001/03/03 20:57:00 brianp Exp $ */
+/* $Id: m_debug_norm.c,v 1.4 2001/03/08 15:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -124,7 +124,7 @@ static void ref_norm_transform_rescale( const GLmatrix *mat,
 					const GLubyte mask[],
 					GLvector3f *dest )
 {
-   int i;
+   GLuint i;
    const GLfloat *s = in->start;
    const GLfloat *m = mat->inv;
    GLfloat (*out)[3] = (GLfloat (*)[3])dest->start;
@@ -149,7 +149,7 @@ static void ref_norm_transform_normalize( const GLmatrix *mat,
 					  const GLubyte mask[],
 					  GLvector3f *dest )
 {
-   int i;
+   GLuint i;
    const GLfloat *s = in->start;
    const GLfloat *m = mat->inv;
    GLfloat (*out)[3] = (GLfloat (*)[3])dest->start;

@@ -26,6 +26,7 @@
  */
 
 #include "glheader.h"
+#include "colormac.h"
 #include "macros.h"
 
 #include "swrast/swrast.h"
@@ -201,7 +202,7 @@ rs_invalid( GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
 void 
 _swsetup_vb_init( GLcontext *ctx )
 {
-   int i;
+   GLuint i;
    (void) ctx;
 
    for (i = 0 ; i < Elements(setup_func) ; i++)

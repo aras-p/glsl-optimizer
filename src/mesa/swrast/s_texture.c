@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.14 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: s_texture.c,v 1.15 2001/03/08 15:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,7 +76,7 @@
       if (wrapMode == GL_CLAMP_TO_EDGE) {				\
          if (I0 < 0)							\
             I0 = 0;							\
-         if (I1 >= SIZE)						\
+         if (I1 >= (GLint) SIZE)					\
             I1 = SIZE - 1;						\
       }									\
    }									\
@@ -2441,10 +2441,10 @@ sample_depth_texture(const GLcontext *ctx,
             j1 += texImage->Border;
          }
          else {
-            if (i0 < 0 || i0 >= width)   useBorderTexel |= I0BIT;
-            if (i1 < 0 || i1 >= width)   useBorderTexel |= I1BIT;
-            if (j0 < 0 || j0 >= height)  useBorderTexel |= J0BIT;
-            if (j1 < 0 || j1 >= height)  useBorderTexel |= J1BIT;
+            if (i0 < 0 || i0 >= (GLint) width)   useBorderTexel |= I0BIT;
+            if (i1 < 0 || i1 >= (GLint) width)   useBorderTexel |= I1BIT;
+            if (j0 < 0 || j0 >= (GLint) height)  useBorderTexel |= J0BIT;
+            if (j1 < 0 || j1 >= (GLint) height)  useBorderTexel |= J1BIT;
          }
 
          /* get four depth samples from the texture */

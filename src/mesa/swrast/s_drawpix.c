@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.12 2001/03/07 05:06:12 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.13 2001/03/08 15:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -268,7 +268,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                GLint row;
                for (row=0; row<drawHeight; row++) {
                   _mesa_write_zoomed_rgb_span(ctx, drawWidth, destX, destY,
-                                        zSpan, 0, (GLchan (*)[3]) src, zoomY0);
+                                  zSpan, 0, (CONST GLchan (*)[3]) src, zoomY0);
                   src += rowLength * 3;
                   destY++;
                }
