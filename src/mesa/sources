@@ -147,7 +147,8 @@ SHADER_SOURCES = \
 	shader/nvvertexec.c \
 	shader/nvvertparse.c \
 	shader/program.c \
-	shader/shaderobjects.c
+	shader/shaderobjects.c \
+	shader/shaderobjects_3dlabs.c 
 
 ASM_C_SOURCES =	\
 	x86/common_x86.c \
