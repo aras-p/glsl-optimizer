@@ -248,6 +248,7 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
 
       gp.param = MGA_PARAM_IRQ_NR;
       gp.value = &mgaScreen->irq;
+      mgaScreen->irq = 0;
 
       ret = drmCommandWriteRead( sPriv->fd, DRM_MGA_GETPARAM,
 				    &gp, sizeof(gp));
