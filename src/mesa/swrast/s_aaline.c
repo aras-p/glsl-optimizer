@@ -1,4 +1,4 @@
-/* $Id: s_aaline.c,v 1.6 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: s_aaline.c,v 1.7 2001/03/28 21:37:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -234,8 +234,8 @@ make_sample_table(GLint xSamples, GLint ySamples, GLfloat samples[][2])
          else {
             j = i++;
          }
-         samples[j][0] = x * dx;
-         samples[j][1] = y * dy;
+         samples[j][0] = x * dx + 0.5 * dx;
+         samples[j][1] = y * dy + 0.5 * dy;
       }
    }
 }
