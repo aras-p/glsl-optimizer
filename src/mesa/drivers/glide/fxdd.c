@@ -462,22 +462,19 @@ fxDDDrawBitmap2 (GLcontext *ctx, GLint px, GLint py,
    struct gl_pixelstore_attrib scissoredUnpack;
 
    /* check if there's any raster operations enabled which we can't handle */
-   if ((swrast->_RasterMask & (ALPHATEST_BIT |
+   if (swrast->_RasterMask & (ALPHATEST_BIT |
 			      /*BLEND_BIT |*/   /* blending ok, through pixpipe */
 			      DEPTH_BIT |       /* could be done with RGB:DEPTH */
 			      FOG_BIT |         /* could be done with RGB:DEPTH */
 			      LOGIC_OP_BIT |
 			      /*CLIP_BIT |*/    /* clipping ok, below */
 			      STENCIL_BIT |
-			      /*MASKING_BIT |*/ /* masking ok, test follows */
+			      MASKING_BIT |
 			      ALPHABUF_BIT |    /* nope! see 565 span kludge */
 			      MULTI_DRAW_BIT |
 			      OCCLUSION_BIT |   /* nope! at least not yet */
 			      TEXTURE_BIT |
-			      FRAGPROG_BIT))
-       ||
-       ((swrast->_RasterMask & MASKING_BIT) /*&& (ctx->Visual.greenBits != 8)*/ && (ctx->Visual.greenBits != 5))
-      ) {
+			      FRAGPROG_BIT)) {
       _swrast_Bitmap(ctx, px, py, width, height, unpack, bitmap);
       return;
    }
@@ -544,14 +541,14 @@ fxDDDrawBitmap2 (GLcontext *ctx, GLint px, GLint py,
    if (!grLfbLock(GR_LFB_WRITE_ONLY,
 		  fxMesa->currentFB,
 		  mode,
-		  GR_ORIGIN_UPPER_LEFT, FXTRUE, &info)) {
+		  GR_ORIGIN_LOWER_LEFT, FXTRUE, &info)) {
       _swrast_Bitmap(ctx, px, py, width, height, unpack, bitmap);
       return;
    }
 
    {
       const GLint winX = 0;
-      const GLint winY = fxMesa->height - 1;
+      const GLint winY = 0;
       /* The dest stride depends on the hardware and whether we're drawing
        * to the front or back buffer.  This compile-time test seems to do
        * the job for now.
@@ -561,7 +558,7 @@ fxDDDrawBitmap2 (GLcontext *ctx, GLint px, GLint py,
       GLint row;
       /* compute dest address of bottom-left pixel in bitmap */
       GLushort *dst = (GLushort *) info.lfbPtr
-	 + (winY - py) * dstStride + (winX + px);
+	 + (winY + py) * dstStride + (winX + px);
 
       for (row = 0; row < height; row++) {
 	 const GLubyte *src =
@@ -607,7 +604,7 @@ fxDDDrawBitmap2 (GLcontext *ctx, GLint px, GLint py,
 	    if (mask != 128)
 	       src++;
 	 }
-	 dst -= dstStride;
+	 dst += dstStride;
       }
    }
 
@@ -702,14 +699,14 @@ fxDDDrawBitmap4 (GLcontext *ctx, GLint px, GLint py,
    if (!grLfbLock(GR_LFB_WRITE_ONLY,
 		  fxMesa->currentFB,
 		  GR_LFBWRITEMODE_8888,
-		  GR_ORIGIN_UPPER_LEFT, FXTRUE, &info)) {
+		  GR_ORIGIN_LOWER_LEFT, FXTRUE, &info)) {
       _swrast_Bitmap(ctx, px, py, width, height, unpack, bitmap);
       return;
    }
 
    {
       const GLint winX = 0;
-      const GLint winY = fxMesa->height - 1;
+      const GLint winY = 0;
       /* The dest stride depends on the hardware and whether we're drawing
        * to the front or back buffer.  This compile-time test seems to do
        * the job for now.
@@ -719,7 +716,7 @@ fxDDDrawBitmap4 (GLcontext *ctx, GLint px, GLint py,
       GLint row;
       /* compute dest address of bottom-left pixel in bitmap */
       GLuint *dst = (GLuint *) info.lfbPtr
-	 + (winY - py) * dstStride + (winX + px);
+	 + (winY + py) * dstStride + (winX + px);
 
       for (row = 0; row < height; row++) {
 	 const GLubyte *src =
@@ -765,7 +762,7 @@ fxDDDrawBitmap4 (GLcontext *ctx, GLint px, GLint py,
 	    if (mask != 128)
 	       src++;
 	 }
-	 dst -= dstStride;
+	 dst += dstStride;
       }
    }
 
@@ -1153,17 +1150,17 @@ fxDDDrawPixels8888 (GLcontext * ctx, GLint x, GLint y,
    if (!grLfbLock(GR_LFB_WRITE_ONLY,
                   fxMesa->currentFB,
                   GR_LFBWRITEMODE_8888,
-                  GR_ORIGIN_UPPER_LEFT, FXTRUE, &info)) {
+                  GR_ORIGIN_LOWER_LEFT, FXTRUE, &info)) {
       _swrast_DrawPixels(ctx, x, y, width, height, format, type, unpack, pixels);
       return;
    }
 
    {
       const GLint winX = 0;
-      const GLint winY = fxMesa->height - 1;
+      const GLint winY = 0;
 
       const GLint dstStride = info.strideInBytes / 4;	/* stride in GLuints */
-      GLuint *dst = (GLuint *) info.lfbPtr + (winY - y) * dstStride + (winX + x);
+      GLuint *dst = (GLuint *) info.lfbPtr + (winY + y) * dstStride + (winX + x);
       const GLubyte *src = (GLubyte *)_mesa_image_address(unpack, pixels,
 							width, height, format,
 							type, 0, 0, 0);
@@ -1175,7 +1172,7 @@ fxDDDrawPixels8888 (GLcontext * ctx, GLint x, GLint y,
          GLint row;
          for (row = 0; row < height; row++) {
              MEMCPY(dst, src, widthInBytes);
-             dst -= dstStride;
+             dst += dstStride;
              src += srcStride;
          }
       }
@@ -1730,19 +1727,19 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.DrawBuffer = fxDDSetDrawBuffer;
    ctx->Driver.GetBufferSize = fxDDBufferSize;
    switch (fxMesa->colDepth) {
-          case 15:
-               ctx->Driver.ReadPixels = fxDDReadPixels555;
-               ctx->Driver.Bitmap = fxDDDrawBitmap2;
-               break;
-          case 16:
-               ctx->Driver.ReadPixels = fxDDReadPixels565;
-               ctx->Driver.Bitmap = fxDDDrawBitmap2;
-               break;
-          case 32:
-               ctx->Driver.DrawPixels = fxDDDrawPixels8888;
-               ctx->Driver.ReadPixels = fxDDReadPixels8888;
-               ctx->Driver.Bitmap = fxDDDrawBitmap4;
-               break;
+      case 15:
+         ctx->Driver.ReadPixels = fxDDReadPixels555;
+         ctx->Driver.Bitmap = fxDDDrawBitmap2;
+         break;
+      case 16:
+         ctx->Driver.ReadPixels = fxDDReadPixels565;
+         ctx->Driver.Bitmap = fxDDDrawBitmap2;
+         break;
+      case 32:
+         ctx->Driver.DrawPixels = fxDDDrawPixels8888;
+         ctx->Driver.ReadPixels = fxDDReadPixels8888;
+         ctx->Driver.Bitmap = fxDDDrawBitmap4;
+         break;
    }
    ctx->Driver.Finish = fxDDFinish;
    ctx->Driver.Flush = NULL;
