@@ -1,4 +1,4 @@
-/* $Id: fxdrv.h,v 1.60 2003/10/09 15:12:21 dborca Exp $ */
+/* $Id: fxdrv.h,v 1.61 2003/10/14 14:56:45 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -590,6 +590,7 @@ extern void fxDDTexParam(GLcontext *, GLenum, struct gl_texture_object *,
 			 GLenum, const GLfloat *);
 extern void fxDDTexBind(GLcontext *, GLenum, struct gl_texture_object *);
 extern void fxDDTexDel(GLcontext *, struct gl_texture_object *);
+extern GLboolean fxDDIsTextureResident(GLcontext *, struct gl_texture_object *);
 extern void fxDDTexPalette(GLcontext *, struct gl_texture_object *);
 extern void fxDDTexUseGlbPalette(GLcontext *, GLboolean);
 

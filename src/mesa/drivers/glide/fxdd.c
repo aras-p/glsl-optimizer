@@ -2,7 +2,7 @@
  * fxDDReadPixels888 does not convert 8A8R8G8B into 5R5G5B
  */
 
-/* $Id: fxdd.c,v 1.102 2003/10/13 11:14:58 dborca Exp $ */
+/* $Id: fxdd.c,v 1.103 2003/10/14 14:56:45 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1383,6 +1383,7 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.TexParameter = fxDDTexParam;
    ctx->Driver.BindTexture = fxDDTexBind;
    ctx->Driver.DeleteTexture = fxDDTexDel;
+   ctx->Driver.IsTextureResident = fxDDIsTextureResident;
    ctx->Driver.UpdateTexturePalette = fxDDTexPalette;
    ctx->Driver.AlphaFunc = fxDDAlphaFunc;
    ctx->Driver.BlendFunc = fxDDBlendFunc;

@@ -1,4 +1,4 @@
-/* $Id: fxddtex.c,v 1.50 2003/10/13 11:14:58 dborca Exp $ */
+/* $Id: fxddtex.c,v 1.51 2003/10/14 14:56:45 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -352,6 +352,16 @@ fxDDTexDel(GLcontext * ctx, struct gl_texture_object *tObj)
 
    FREE(ti);
    tObj->DriverData = NULL;
+}
+
+/*
+ * Return true if texture is resident, false otherwise.
+ */
+GLboolean
+fxDDIsTextureResident(GLcontext *ctx, struct gl_texture_object *tObj)
+{
+ tfxTexInfo *ti = fxTMGetTexInfo(tObj);
+ return (ti && ti->isInTM);
 }
 
 

@@ -3,6 +3,24 @@
 
 
 
+Mesa-5.1 release notes:
+-----------------------
+
+1) Glide2 support has been ceased; in order to keep Voodoo Graphics, Voodoo2
+   and Voodoo Rush compatibility, please visit the Glide SourceForge and help
+   us to fix Glide3 for those cards.
+2) The non-DRI Linux build is currently broken. Any help will be appreciated.
+3) Glide3 can be found at http://sourceforge.net/projects/glide/
+
+Known supported HW: Voodoo Banshee, Voodoo3, Voodoo4, Voodoo5 5500
+Known supported OS: DOS (DJGPP), Windows9x/2k (MinGW/MSVC), Linux+DRI
+
+Comments, notes, flames:
+Daniel Borca <dborca@users.sourceforge.net>
+Hiroshi Morii <koolsmoky@users.sourceforge.net>
+
+
+
 Info for Mesa 4.1
 -----------------
 
