@@ -424,13 +424,13 @@ wglGetSwapIntervalEXT (void)
 }
 
 GLAPI BOOL GLAPIENTRY
-wglGetDeviceGammaRampEXT (unsigned char *r, unsigned char *g, unsigned char *b)
+wglGetDeviceGammaRamp3DFX (HDC hdc, LPVOID arrays)
 {
  return TRUE;
 }
 
 GLAPI BOOL GLAPIENTRY
-wglSetDeviceGammaRampEXT (const unsigned char *r, const unsigned char *g, const unsigned char *b)
+wglSetDeviceGammaRamp3DFX (HDC hdc, LPVOID arrays)
 {
  return TRUE;
 }
@@ -457,10 +457,8 @@ static struct {
        {"wglGetExtensionsStringEXT", wglGetExtensionsStringEXT},
        {"wglSwapIntervalEXT",        wglSwapIntervalEXT},
        {"wglGetSwapIntervalEXT",     wglGetSwapIntervalEXT},
-       {"wglGetDeviceGammaRampEXT",  wglGetDeviceGammaRampEXT},
-       {"wglGetDeviceGammaRamp3DFX", wglGetDeviceGammaRampEXT},
-       {"wglSetDeviceGammaRampEXT",  wglSetDeviceGammaRampEXT},
-       {"wglSetDeviceGammaRamp3DFX", wglSetDeviceGammaRampEXT},
+       {"wglGetDeviceGammaRamp3DFX", wglGetDeviceGammaRamp3DFX},
+       {"wglSetDeviceGammaRamp3DFX", wglSetDeviceGammaRamp3DFX},
        {NULL, NULL}
 };
 
