@@ -1,4 +1,4 @@
-/* $Id: glxinfo.c,v 1.9 2000/05/07 18:07:23 brianp Exp $ */
+/* $Id: glxinfo.c,v 1.10 2000/05/08 14:53:57 brianp Exp $ */
 
 /*
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
@@ -197,7 +197,7 @@ print_screen_info(Display *dpy, int scrnum)
       const char *gluVersion = (const char *) gluGetString(GLU_VERSION);
       const char *gluExtensions = (const char *) gluGetString(GLU_EXTENSIONS);
       printf("display: %s  screen:%d\n", DisplayString(dpy), scrnum);
-      printf("Direct: %d\n", glXIsDirect(dpy, ctx));
+      printf("direct rendering: %s\n", glXIsDirect(dpy, ctx) ? "Yes" : "No");
       printf("server glx vendor string: %s\n", serverVendor);
       printf("server glx version string: %s\n", serverVersion);
       printf("server glx extensions:\n");
@@ -519,9 +519,9 @@ main(int argc, char *argv[])
 
    numScreens = ScreenCount(dpy);
    for (scrnum = 0; scrnum < numScreens; scrnum++) {
-      print_screen_info(dpy, 0);
+      print_screen_info(dpy, scrnum);
       printf("\n");
-      print_visual_info(dpy, 0, mode);
+      print_visual_info(dpy, scrnum, mode);
       if (scrnum + 1 < numScreens)
          printf("\n\n");
    }
