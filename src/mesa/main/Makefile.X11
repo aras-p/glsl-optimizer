@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.50 2001/03/29 03:41:40 gareth Exp $
+# $Id: Makefile.X11,v 1.51 2001/03/29 06:46:15 gareth Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -108,7 +108,7 @@ CORE_SOURCES = \
 	X86/x86.c \
 	X86/common_x86.c \
 	X86/3dnow.c \
-	X86/katmai.c \
+	X86/sse.c \
 	math/m_debug_norm.c \
 	math/m_debug_vertex.c \
 	math/m_debug_xform.c \
@@ -280,7 +280,7 @@ X86/common_x86.o: X86/common_x86.c
 X86/common_x86_asm.o: X86/common_x86_asm.S X86/matypes.h
 X86/3dnow.o: X86/3dnow.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X86/katmai.o: X86/katmai.c
+X86/sse.o: X86/sse.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 X86/matypes.h: mtypes.h tnl/t_context.h X86/gen_matypes.c
 	$(CC) -I. -I$(INCDIR) $(CFLAGS) X86/gen_matypes.c -o X86/gen_matypes

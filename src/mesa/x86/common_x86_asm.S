@@ -1,4 +1,4 @@
-/* $Id: common_x86_asm.S,v 1.6 2001/03/28 20:44:43 gareth Exp $ */
+/* $Id: common_x86_asm.S,v 1.7 2001/03/29 06:46:16 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -58,8 +58,8 @@
 GLNAME( found_intel ):	STRING( "Genuine Intel processor found\n\0" )
 GLNAME( found_amd ):	STRING( "Authentic AMD processor found\n\0" )
 
-#ifdef USE_KATMAI_ASM
-GLNAME( katmai_test_dummy ):
+#ifdef USE_SSE_ASM
+GLNAME( sse_test_dummy ):
 	D_LONG 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000
 #endif
 
@@ -157,15 +157,15 @@ LLBL ( cpuid_done ):
 	RET
 
 
-#ifdef USE_KATMAI_ASM
+#ifdef USE_SSE_ASM
 /* Execute an SSE instruction to see if the operating system correctly
  * supports SSE.  A signal handler for SIGILL should have been set
  * before calling this function, otherwise this could kill the client
  * application.
  */
 ALIGNTEXT4
-GLOBL GLNAME( _mesa_test_os_katmai_support )
-GLNAME( _mesa_test_os_katmai_support ):
+GLOBL GLNAME( _mesa_test_os_sse_support )
+GLNAME( _mesa_test_os_sse_support ):
 
 	XORPS	( XMM0, XMM0 )
 
@@ -178,8 +178,8 @@ GLNAME( _mesa_test_os_katmai_support ):
  * otherwise this could kill the client application.
  */
 ALIGNTEXT4
-GLOBL GLNAME( _mesa_test_os_katmai_exception_support )
-GLNAME( _mesa_test_os_katmai_exception_support ):
+GLOBL GLNAME( _mesa_test_os_sse_exception_support )
+GLNAME( _mesa_test_os_sse_exception_support ):
 
 	PUSH_L	( EBP )
 	MOV_L	( ESP, EBP )
@@ -196,7 +196,7 @@ GLNAME( _mesa_test_os_katmai_exception_support ):
 	LDMXCSR	( REGOFF( -8, EBP ) )
 
 	XORPS	( XMM0, XMM0 )
-	MOVUPS	( GLNAME( katmai_test_dummy ), XMM1 )
+	MOVUPS	( GLNAME( sse_test_dummy ), XMM1 )
 
 	DIVPS	( XMM0, XMM1 )
 

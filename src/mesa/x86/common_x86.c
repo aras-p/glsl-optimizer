@@ -1,4 +1,4 @@
-/* $Id: common_x86.c,v 1.14 2001/03/28 20:44:43 gareth Exp $ */
+/* $Id: common_x86.c,v 1.15 2001/03/29 06:46:16 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,7 +35,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#if defined(USE_KATMAI_ASM) && defined(__linux__)
+#if defined(USE_SSE_ASM) && defined(__linux__)
 #include <signal.h>
 #endif
 
@@ -67,7 +67,7 @@ static void message( const char *msg )
    }
 }
 
-#if defined(USE_KATMAI_ASM)
+#if defined(USE_SSE_ASM)
 /*
  * We must verify that the Streaming SIMD Extensions are truly supported
  * on this processor before we go ahead and hook out the optimized code.
@@ -84,8 +84,8 @@ static void message( const char *msg )
  * not good.
  */
 
-extern void _mesa_test_os_katmai_support( void );
-extern void _mesa_test_os_katmai_exception_support( void );
+extern void _mesa_test_os_sse_support( void );
+extern void _mesa_test_os_sse_exception_support( void );
 
 #if defined(__linux__) && defined(_POSIX_SOURCE)
 static void sigill_handler( int signal, struct sigcontext sc )
@@ -135,7 +135,7 @@ static void sigfpe_handler( int signal, struct sigcontext sc )
  *
  * GH: Isn't this just awful?
  */
-static void check_os_katmai_support( void )
+static void check_os_sse_support( void )
 {
 #if defined(__linux__)
 #if defined(_POSIX_SOURCE)
@@ -159,7 +159,7 @@ static void check_os_katmai_support( void )
    if ( cpu_has_xmm ) {
       message( "Testing OS support for SSE... " );
 
-      _mesa_test_os_katmai_support();
+      _mesa_test_os_sse_support();
 
       if ( cpu_has_xmm ) {
 	 message( "yes.\n" );
@@ -184,7 +184,7 @@ static void check_os_katmai_support( void )
    if ( cpu_has_xmm ) {
       message( "Testing OS support for SSE unmasked exceptions... " );
 
-      _mesa_test_os_katmai_exception_support();
+      _mesa_test_os_sse_exception_support();
 
       if ( cpu_has_xmm ) {
 	 message( "yes.\n" );
@@ -220,7 +220,7 @@ static void check_os_katmai_support( void )
 #endif /* __linux__ */
 }
 
-#endif /* USE_KATMAI_ASM */
+#endif /* USE_SSE_ASM */
 
 
 void _mesa_init_all_x86_transform_asm( void )
@@ -257,14 +257,14 @@ void _mesa_init_all_x86_transform_asm( void )
    }
 #endif
 
-#ifdef USE_KATMAI_ASM
-   if ( cpu_has_xmm && getenv( "MESA_FORCE_KATMAI" ) == 0 ) {
-      check_os_katmai_support();
+#ifdef USE_SSE_ASM
+   if ( cpu_has_xmm && getenv( "MESA_FORCE_SSE" ) == 0 ) {
+      check_os_sse_support();
    }
    if ( cpu_has_xmm ) {
-      if ( getenv( "MESA_NO_KATMAI" ) == 0 ) {
-         message( "Katmai cpu detected.\n" );
-         _mesa_init_katmai_transform_asm();
+      if ( getenv( "MESA_NO_SSE" ) == 0 ) {
+         message( "SSE cpu detected.\n" );
+         _mesa_init_sse_transform_asm();
       } else {
          _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
       }
@@ -289,9 +289,9 @@ void _mesa_init_all_x86_vertex_asm( void )
    }
 #endif
 
-#ifdef USE_KATMAI_ASM
-   if ( cpu_has_xmm && getenv( "MESA_NO_KATMAI" ) == 0 ) {
-      _mesa_init_katmai_vertex_asm();
+#ifdef USE_SSE_ASM
+   if ( cpu_has_xmm && getenv( "MESA_NO_SSE" ) == 0 ) {
+      _mesa_init_sse_vertex_asm();
    }
 #endif
 #endif

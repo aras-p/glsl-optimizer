@@ -1,4 +1,4 @@
-/* $Id: common_x86_asm.h,v 1.8 2001/03/29 06:46:16 gareth Exp $ */
+/* $Id: sse.h,v 1.1 2001/03/29 06:46:16 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,41 +25,16 @@
  */
 
 /*
- * Check CPU capabilities & initialize optimized funtions for this particular
- * processor.
- *
- * Written by Holger Waechtler <holger@akaflieg.extern.tu-berlin.de>
- * Changed by Andre Werthmann <wertmann@cs.uni-potsdam.de> for using the
- * new Katmai functions
- *
- * Reimplemented by Gareth Hughes <gareth@valinux.com> in a more
- * future-proof manner, based on code in the Linux kernel.
+ * PentiumIII-SIMD (SSE) optimizations contributed by
+ * Andre Werthmann <wertmann@cs.uni-potsdam.de>
  */
 
-#ifndef __COMMON_X86_ASM_H__
-#define __COMMON_X86_ASM_H__
+#ifndef __SSE_H__
+#define __SSE_H__
 
-/* Do not reference mtypes.h from this file.
- */
-#include "common_x86_features.h"
+#include "math/m_xform.h"
 
-#ifdef HAVE_CONFIG_H
-#include "conf.h"
-#endif
-
-#ifdef USE_X86_ASM
-#include "x86.h"
-#ifdef USE_3DNOW_ASM
-#include "3dnow.h"
-#endif
-#ifdef USE_SSE_ASM
-#include "sse.h"
-#endif
-#endif
-
-extern int _mesa_x86_cpu_features;
-
-extern void _mesa_init_all_x86_transform_asm( void );
-extern void _mesa_init_all_x86_vertex_asm( void );
+void _mesa_init_sse_transform_asm( void );
+void _mesa_init_sse_vertex_asm( void );
 
 #endif

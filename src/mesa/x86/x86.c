@@ -1,4 +1,4 @@
-/* $Id: x86.c,v 1.19 2001/03/28 20:44:44 gareth Exp $ */
+/* $Id: x86.c,v 1.20 2001/03/29 06:46:27 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,40 +50,37 @@
 			const GLubyte flag
 
 
-#define DECLARE_XFORM_GROUP( pfx, sz, masked ) \
-extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_general_##masked( XFORM_ARGS );	\
-extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_identity_##masked( XFORM_ARGS );	\
-extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_3d_no_rot_##masked( XFORM_ARGS );	\
-extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_perspective_##masked( XFORM_ARGS );	\
-extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_2d_##masked( XFORM_ARGS );		\
-extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_2d_no_rot_##masked( XFORM_ARGS );	\
-extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_3d_##masked( XFORM_ARGS );
+#define DECLARE_XFORM_GROUP( pfx, sz ) \
+extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_general( XFORM_ARGS );		\
+extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_identity( XFORM_ARGS );	\
+extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_3d_no_rot( XFORM_ARGS );	\
+extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_perspective( XFORM_ARGS );	\
+extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_2d( XFORM_ARGS );		\
+extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_2d_no_rot( XFORM_ARGS );	\
+extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_3d( XFORM_ARGS );
 
 
-#define ASSIGN_XFORM_GROUP( pfx, cma, sz, masked )			\
-   _mesa_transform_tab[cma][sz][MATRIX_GENERAL] =			\
-      _mesa_##pfx##_transform_points##sz##_general_##masked;		\
-   _mesa_transform_tab[cma][sz][MATRIX_IDENTITY] =			\
-      _mesa_##pfx##_transform_points##sz##_identity_##masked;		\
-   _mesa_transform_tab[cma][sz][MATRIX_3D_NO_ROT] =			\
-      _mesa_##pfx##_transform_points##sz##_3d_no_rot_##masked;		\
-   _mesa_transform_tab[cma][sz][MATRIX_PERSPECTIVE] =			\
-      _mesa_##pfx##_transform_points##sz##_perspective_##masked;	\
-   _mesa_transform_tab[cma][sz][MATRIX_2D] =				\
-      _mesa_##pfx##_transform_points##sz##_2d_##masked;			\
-   _mesa_transform_tab[cma][sz][MATRIX_2D_NO_ROT] =			\
-      _mesa_##pfx##_transform_points##sz##_2d_no_rot_##masked;		\
-   _mesa_transform_tab[cma][sz][MATRIX_3D] =				\
-      _mesa_##pfx##_transform_points##sz##_3d_##masked;
+#define ASSIGN_XFORM_GROUP( pfx, sz )					\
+   _mesa_transform_tab[0][sz][MATRIX_GENERAL] =				\
+      _mesa_##pfx##_transform_points##sz##_general;			\
+   _mesa_transform_tab[0][sz][MATRIX_IDENTITY] =			\
+      _mesa_##pfx##_transform_points##sz##_identity;			\
+   _mesa_transform_tab[0][sz][MATRIX_3D_NO_ROT] =			\
+      _mesa_##pfx##_transform_points##sz##_3d_no_rot;			\
+   _mesa_transform_tab[0][sz][MATRIX_PERSPECTIVE] =			\
+      _mesa_##pfx##_transform_points##sz##_perspective;			\
+   _mesa_transform_tab[0][sz][MATRIX_2D] =				\
+      _mesa_##pfx##_transform_points##sz##_2d;				\
+   _mesa_transform_tab[0][sz][MATRIX_2D_NO_ROT] =			\
+      _mesa_##pfx##_transform_points##sz##_2d_no_rot;			\
+   _mesa_transform_tab[0][sz][MATRIX_3D] =				\
+      _mesa_##pfx##_transform_points##sz##_3d;
 
 
 #ifdef USE_X86_ASM
-DECLARE_XFORM_GROUP( x86, 2, raw )
-DECLARE_XFORM_GROUP( x86, 3, raw )
-DECLARE_XFORM_GROUP( x86, 4, raw )
-DECLARE_XFORM_GROUP( x86, 2, masked )
-DECLARE_XFORM_GROUP( x86, 3, masked )
-DECLARE_XFORM_GROUP( x86, 4, masked )
+DECLARE_XFORM_GROUP( x86, 2 )
+DECLARE_XFORM_GROUP( x86, 3 )
+DECLARE_XFORM_GROUP( x86, 4 )
 
 
 extern GLvector4f * _ASMAPI
@@ -119,13 +116,9 @@ _mesa_v16_x86_general_xform( GLfloat *dest,
 void _mesa_init_x86_transform_asm( void )
 {
 #ifdef USE_X86_ASM
-   ASSIGN_XFORM_GROUP( x86, 0, 2, raw );
-   ASSIGN_XFORM_GROUP( x86, 0, 3, raw );
-   ASSIGN_XFORM_GROUP( x86, 0, 4, raw );
-
-/*     ASSIGN_XFORM_GROUP( x86, CULL_MASK_ACTIVE, 2, masked ); */
-/*     ASSIGN_XFORM_GROUP( x86, CULL_MASK_ACTIVE, 3, masked ); */
-/*     ASSIGN_XFORM_GROUP( x86, CULL_MASK_ACTIVE, 4, masked ); */
+   ASSIGN_XFORM_GROUP( x86, 2 );
+   ASSIGN_XFORM_GROUP( x86, 3 );
+   ASSIGN_XFORM_GROUP( x86, 4 );
 
    /* XXX this function has been found to cause FP overflow exceptions */
    _mesa_clip_tab[4] = _mesa_x86_cliptest_points4;

@@ -1,4 +1,4 @@
-/* $Id: m_debug_xform.c,v 1.6 2001/03/12 02:02:36 gareth Exp $ */
+/* $Id: m_debug_xform.c,v 1.7 2001/03/29 06:46:27 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -159,8 +159,8 @@ static GLfloat s[TEST_COUNT][4] ALIGN16;
 static GLfloat d[TEST_COUNT][4] ALIGN16;
 static GLfloat r[TEST_COUNT][4] ALIGN16;
 
-static int test_transform_function( transform_func func, int psize, int mtype,
-                                    int masked, long *cycles )
+static int test_transform_function( transform_func func, int psize,
+				    int mtype, long *cycles )
 {
    GLvector4f source[1], dest[1], ref[1];
    GLmatrix mat[1];
@@ -238,28 +238,15 @@ static int test_transform_function( transform_func func, int psize, int mtype,
    ref_transform( ref, mat, source, NULL, 0 );
 
    if ( mesa_profile ) {
-      if ( masked ) {
-         BEGIN_RACE( *cycles );
-         func( dest, mat->m, source, mask, 1 );
-         END_RACE( *cycles );
-      } else {
-         BEGIN_RACE( *cycles );
-         func( dest, mat->m, source, NULL, 0 );
-         END_RACE( *cycles );
-     }
+      BEGIN_RACE( *cycles );
+      func( dest, mat->m, source, NULL, 0 );
+      END_RACE( *cycles );
    }
    else {
-      if ( masked ) {
-         func( dest, mat->m, source, mask, 1 );
-      } else {
-         func( dest, mat->m, source, NULL, 0 );
-      }
+      func( dest, mat->m, source, NULL, 0 );
    }
 
    for ( i = 0 ; i < TEST_COUNT ; i++ ) {
-      if ( masked && (mask[i] & 1) )
-         continue;
-
       for ( j = 0 ; j < 4 ; j++ ) {
          if ( significand_match( d[i][j], r[i][j] ) < REQUIRED_PRECISION ) {
             printf( "-----------------------------\n" );
@@ -287,7 +274,7 @@ static int test_transform_function( transform_func func, int psize, int mtype,
 
 void _math_test_all_transform_functions( char *description )
 {
-   int masked, psize, mtype;
+   int psize, mtype;
    long benchmark_tab[2][4][7];
    static int first_time = 1;
 
@@ -306,47 +293,41 @@ void _math_test_all_transform_functions( char *description )
    }
 #endif
 
-   for ( masked = 0 ; masked <= 1 ; masked++ ) {
-      int cma = masked ? 1 : 0;
-      char *cmastring = masked ? "CULL_MASK_ACTIVE" : "0";
-
 #ifdef RUN_DEBUG_BENCHMARK
-      if ( mesa_profile ) {
-         printf( "\n culling: %s \n", masked ? "CULL_MASK_ACTIVE" : "0" );
-         for ( psize = 1 ; psize <= 4 ; psize++ ) {
-            printf( " p%d\t", psize );
-         }
-         printf( "\n--------------------------------------------------------\n" );
+   if ( mesa_profile ) {
+      printf( "\n" );
+      for ( psize = 1 ; psize <= 4 ; psize++ ) {
+	 printf( " p%d\t", psize );
       }
+      printf( "\n--------------------------------------------------------\n" );
+   }
 #endif
 
-      for ( mtype = 0 ; mtype < 7 ; mtype++ ) {
-         for ( psize = 1 ; psize <= 4 ; psize++ ) {
-            transform_func func = _mesa_transform_tab[cma][psize][mtypes[mtype]];
-            long *cycles = &(benchmark_tab[cma][psize-1][mtype]);
+   for ( mtype = 0 ; mtype < 7 ; mtype++ ) {
+      for ( psize = 1 ; psize <= 4 ; psize++ ) {
+	 transform_func func = _mesa_transform_tab[0][psize][mtypes[mtype]];
+	 long *cycles = &(benchmark_tab[0][psize-1][mtype]);
 
-            if ( test_transform_function( func, psize, mtype,
-					  masked, cycles ) == 0 ) {
-               char buf[100];
-               sprintf( buf, "_mesa_transform_tab[%s][%d][%s] failed test (%s)",
-                        cmastring, psize, mstrings[mtype], description );
-               _mesa_problem( NULL, buf );
-            }
+	 if ( test_transform_function( func, psize, mtype, cycles ) == 0 ) {
+	    char buf[100];
+	    sprintf( buf, "_mesa_transform_tab[0][%d][%s] failed test (%s)",
+		     psize, mstrings[mtype], description );
+	    _mesa_problem( NULL, buf );
+	 }
 #ifdef RUN_DEBUG_BENCHMARK
-            if ( mesa_profile )
-               printf( " %li\t", benchmark_tab[cma][psize-1][mtype] );
-#endif
-         }
-#ifdef RUN_DEBUG_BENCHMARK
-         if ( mesa_profile )
-            printf( " | [%s]\n", mstrings[mtype] );
+	 if ( mesa_profile )
+	    printf( " %li\t", benchmark_tab[0][psize-1][mtype] );
 #endif
       }
 #ifdef RUN_DEBUG_BENCHMARK
       if ( mesa_profile )
-         printf( "\n" );
+	 printf( " | [%s]\n", mstrings[mtype] );
 #endif
    }
+#ifdef RUN_DEBUG_BENCHMARK
+   if ( mesa_profile )
+      printf( "\n" );
+#endif
 }
 
 
