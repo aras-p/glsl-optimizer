@@ -507,23 +507,23 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->PointParameterfvEXT = __indirect_glPointParameterfvARB;
 
     /* ARB 15. GL_ARB_window_pos */
-    glAPI->WindowPos2dMESA = __indirect_glWindowPos2dARB;
-    glAPI->WindowPos2iMESA = __indirect_glWindowPos2iARB;
-    glAPI->WindowPos2fMESA = __indirect_glWindowPos2fARB;
-    glAPI->WindowPos2iMESA = __indirect_glWindowPos2iARB;
-    glAPI->WindowPos2sMESA = __indirect_glWindowPos2sARB;
-    glAPI->WindowPos2dvMESA = __indirect_glWindowPos2dvARB;
-    glAPI->WindowPos2fvMESA = __indirect_glWindowPos2fvARB;
-    glAPI->WindowPos2ivMESA = __indirect_glWindowPos2ivARB;
-    glAPI->WindowPos2svMESA = __indirect_glWindowPos2svARB;
-    glAPI->WindowPos3dMESA = __indirect_glWindowPos3dARB;
-    glAPI->WindowPos3fMESA = __indirect_glWindowPos3fARB;
-    glAPI->WindowPos3iMESA = __indirect_glWindowPos3iARB;
-    glAPI->WindowPos3sMESA = __indirect_glWindowPos3sARB;
-    glAPI->WindowPos3dvMESA = __indirect_glWindowPos3dvARB;
-    glAPI->WindowPos3fvMESA = __indirect_glWindowPos3fvARB;
-    glAPI->WindowPos3ivMESA = __indirect_glWindowPos3ivARB;
-    glAPI->WindowPos3svMESA = __indirect_glWindowPos3svARB;
+    glAPI->WindowPos2dMESA = __indirect_glWindowPos2dMESA;
+    glAPI->WindowPos2iMESA = __indirect_glWindowPos2iMESA;
+    glAPI->WindowPos2fMESA = __indirect_glWindowPos2fMESA;
+    glAPI->WindowPos2iMESA = __indirect_glWindowPos2iMESA;
+    glAPI->WindowPos2sMESA = __indirect_glWindowPos2sMESA;
+    glAPI->WindowPos2dvMESA = __indirect_glWindowPos2dvMESA;
+    glAPI->WindowPos2fvMESA = __indirect_glWindowPos2fvMESA;
+    glAPI->WindowPos2ivMESA = __indirect_glWindowPos2ivMESA;
+    glAPI->WindowPos2svMESA = __indirect_glWindowPos2svMESA;
+    glAPI->WindowPos3dMESA = __indirect_glWindowPos3dMESA;
+    glAPI->WindowPos3fMESA = __indirect_glWindowPos3fMESA;
+    glAPI->WindowPos3iMESA = __indirect_glWindowPos3iMESA;
+    glAPI->WindowPos3sMESA = __indirect_glWindowPos3sMESA;
+    glAPI->WindowPos3dvMESA = __indirect_glWindowPos3dvMESA;
+    glAPI->WindowPos3fvMESA = __indirect_glWindowPos3fvMESA;
+    glAPI->WindowPos3ivMESA = __indirect_glWindowPos3ivMESA;
+    glAPI->WindowPos3svMESA = __indirect_glWindowPos3svMESA;
 
     /* 25. GL_SGIS_multisample */
     glAPI->SampleMaskSGIS = __indirect_glSampleMaskSGIS;

@@ -407,7 +407,7 @@ glxvendr_enum1_4(MultiTexCoord4d,  X_GLrop_MultiTexCoord4dvARB, GLdouble, ARB)
 glxvendr_enum1_V(PointParameterf, X_GLrop_PointParameterf, GLfloat, ARB)
 glxproto_enum1_V(PointParameteri, X_GLrop_PointParameteri, GLint)
 
-glxvendr_3(WindowPos3f, X_GLrop_WindowPos3fARB, GLfloat, ARB)
+glxvendr_3(WindowPos3f, X_GLrop_WindowPos3fARB, GLfloat, MESA)
 
 glxproto_1s(ActiveStencilFaceEXT, X_GLrop_ActiveStencilFaceEXT, GLenum)
 
@@ -549,20 +549,20 @@ void __indirect_glClientActiveTextureARB(GLenum texture);
 
 void __indirect_glSampleCoverageARB( GLfloat value, GLboolean invert );
 
-void __indirect_glWindowPos2dARB(GLdouble x, GLdouble y);
-void __indirect_glWindowPos2iARB(GLint x, GLint y);
-void __indirect_glWindowPos2fARB(GLfloat x, GLfloat y);
-void __indirect_glWindowPos2sARB(GLshort x, GLshort y);
-void __indirect_glWindowPos2dvARB(const GLdouble * p);
-void __indirect_glWindowPos2fvARB(const GLfloat * p);
-void __indirect_glWindowPos2ivARB(const GLint * p);
-void __indirect_glWindowPos2svARB(const GLshort * p);
-void __indirect_glWindowPos3dARB(GLdouble x, GLdouble y, GLdouble z);
-void __indirect_glWindowPos3iARB(GLint x, GLint y, GLint z);
-void __indirect_glWindowPos3sARB(GLshort x, GLshort y, GLshort z);
-void __indirect_glWindowPos3dvARB(const GLdouble * p);
-void __indirect_glWindowPos3ivARB(const GLint * p);
-void __indirect_glWindowPos3svARB(const GLshort * p);
+void __indirect_glWindowPos2dMESA(GLdouble x, GLdouble y);
+void __indirect_glWindowPos2iMESA(GLint x, GLint y);
+void __indirect_glWindowPos2fMESA(GLfloat x, GLfloat y);
+void __indirect_glWindowPos2sMESA(GLshort x, GLshort y);
+void __indirect_glWindowPos2dvMESA(const GLdouble * p);
+void __indirect_glWindowPos2fvMESA(const GLfloat * p);
+void __indirect_glWindowPos2ivMESA(const GLint * p);
+void __indirect_glWindowPos2svMESA(const GLshort * p);
+void __indirect_glWindowPos3dMESA(GLdouble x, GLdouble y, GLdouble z);
+void __indirect_glWindowPos3iMESA(GLint x, GLint y, GLint z);
+void __indirect_glWindowPos3sMESA(GLshort x, GLshort y, GLshort z);
+void __indirect_glWindowPos3dvMESA(const GLdouble * p);
+void __indirect_glWindowPos3ivMESA(const GLint * p);
+void __indirect_glWindowPos3svMESA(const GLshort * p);
 
 void __indirect_glMultiDrawArraysEXT(GLenum mode, GLint *first, GLsizei *count, GLsizei primcount);
 void __indirect_glMultiDrawElementsEXT(GLenum mode, const GLsizei *count, GLenum type, const GLvoid ** indices, GLsizei primcount);
