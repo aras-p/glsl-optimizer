@@ -37,23 +37,27 @@ memory.
    accuracy (film and IBR, for example).  If you're in this situation
    you'll be happy to know that Mesa supports 16-bit and 32-bit color
    channels through the OSMesa interface.  When using 16-bit channels,
-   channels are GLushorts and pixels occupy 8 bytes.  When using 32-bit
-   channels, channels are GLfloats and pixels occupy 16 bytes.
+   channels are GLushorts and RGBA pixels occupy 8 bytes.  When using 32-bit
+   channels, channels are GLfloats and RGBA pixels occupy 16 bytes.
 </p>
 <p>
    To build Mesa/OSMesa with 16-bit color channels:
 <pre>
-      cd Mesa-4.x/src
+      cd Mesa-5.x/src
       make -f Makefile.X11 clean
       make -f Makefile.OSMesa16 linux-osmesa16
 </pre>
 
    For 32-bit channels:
 <pre>
-      cd Mesa-4.x/src
+      cd Mesa-5.x/src
       make -f Makefile.X11 clean
       make -f Makefile.OSMesa16 linux-osmesa32
 </pre>
+
+<p>
+You'll wind up with a library named libOSMesa16.so or libOSMesa32.so.
+</p>
 
 <p>
 If you're not using Linux, you can easily edit Make-config and add
