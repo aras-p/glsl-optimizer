@@ -57,6 +57,48 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_reg.h"
 #include "r300_program.h"
 
+static void r300AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	int pp_misc = rmesa->hw.at.cmd[R300_AT_ALPHA_TEST];
+	GLubyte refByte;
+
+	CLAMPED_FLOAT_TO_UBYTE(refByte, ref);
+
+	R300_STATECHANGE(rmesa, at);
+
+	pp_misc &= ~(R300_ALPHA_TEST_OP_MASK | R300_REF_ALPHA_MASK);
+	pp_misc |= (refByte & R300_REF_ALPHA_MASK);
+
+	switch (func) {
+	case GL_NEVER:
+		pp_misc |= R300_ALPHA_TEST_FAIL;
+		break;
+	case GL_LESS:
+		pp_misc |= R300_ALPHA_TEST_LESS;
+		break;
+	case GL_EQUAL:
+		pp_misc |= R300_ALPHA_TEST_EQUAL;
+		break;
+	case GL_LEQUAL:
+		pp_misc |= R300_ALPHA_TEST_LEQUAL;
+		break;
+	case GL_GREATER:
+		pp_misc |= R300_ALPHA_TEST_GREATER;
+		break;
+	case GL_NOTEQUAL:
+		pp_misc |= R300_ALPHA_TEST_NEQUAL;
+		break;
+	case GL_GEQUAL:
+		pp_misc |= R300_ALPHA_TEST_GEQUAL;
+		break;
+	case GL_ALWAYS:
+		pp_misc |= R300_ALPHA_TEST_PASS;
+		break;
+	}
+
+	rmesa->hw.at.cmd[R300_AT_ALPHA_TEST] = pp_misc;
+}
 
 /**
  * Update our tracked culling state based on Mesa's state.
@@ -223,6 +265,18 @@ static void r300ColorMask(GLcontext* ctx,
 		R300_STATECHANGE(r300, cmk);
 		r300->hw.cmk.cmd[R300_CMK_COLORMASK] = mask;
 	}
+}
+
+/* =============================================================
+ * Point state
+ */
+static void r300PointSize(GLcontext * ctx, GLfloat size)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	
+	/* This might need fixing later */
+	R300_STATECHANGE(r300, vps);
+	r300->hw.vps.cmd[R300_VPS_POINTSIZE] = r300PackFloat32(1.0);
 }
 
 /* =============================================================
@@ -589,6 +643,7 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	radeonInitStateFuncs(functions);
 
 	functions->UpdateState = r300InvalidateState;
+	functions->AlphaFunc = r300AlphaFunc;
 	functions->Enable = r300Enable;
 	functions->ColorMask = r300ColorMask;
 	functions->DepthFunc = r300DepthFunc;
@@ -599,5 +654,6 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	/* Viewport related */
 	functions->Viewport = r300Viewport;
 	functions->DepthRange = r300DepthRange;
+	functions->PointSize = r300PointSize;
 }
 

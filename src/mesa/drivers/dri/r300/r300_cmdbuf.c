@@ -49,6 +49,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_reg.h"
 #include "r300_reg.h"
 #include "r300_cmdbuf.h"
+#include "r300_emit.h"
 
 
 // Set this to 1 for extremely verbose debugging of command buffers
@@ -213,6 +214,7 @@ void r300EmitState(r300ContextPtr r300)
 	r300->hw.all_dirty = GL_FALSE;
 }
 
+#if 0
 
 static __inline__ uint32_t cmducs(int reg, int count)
 {
@@ -237,6 +239,7 @@ static __inline__ uint32_t cmdvpu(int addr, int count)
 
 	return cmd.u;
 }
+#endif
 
 #define CHECK( NM, COUNT )				\
 static int check_##NM( r300ContextPtr r300, 		\
@@ -607,4 +610,145 @@ void r300EmitWait(r300ContextPtr rmesa, GLuint flags)
 		cmd[0].wait.cmd_type = RADEON_CMD_WAIT;
 		cmd[0].wait.flags = flags;
 	}
+}
+
+void r300EmitLOAD_VBPNTR(r300ContextPtr rmesa, int start)
+{
+int i, a, count;
+GLuint dw;
+LOCAL_VARS
+
+count=rmesa->state.aos_count;
+
+a=1+(count>>1)*3+(count & 1)*2;
+start_packet3(RADEON_CP_PACKET3_3D_LOAD_VBPNTR, a-1);
+e32(count);
+for(i=0;i+1<count;i+=2){
+	e32(  (rmesa->state.aos[i].element_size << 0) 
+	     |(rmesa->state.aos[i].stride << 8)
+	     |(rmesa->state.aos[i+1].element_size << 16)
+	     |(rmesa->state.aos[i+1].stride << 24)
+	    );
+	e32(rmesa->state.aos[i].offset+start*4*rmesa->state.aos[i].stride);
+	e32(rmesa->state.aos[i+1].offset+start*4*rmesa->state.aos[i+1].stride);
+	}
+if(count & 1){
+	e32(  (rmesa->state.aos[count-1].element_size << 0) 
+	     |(rmesa->state.aos[count-1].stride << 8)
+	    );
+	e32(rmesa->state.aos[count-1].offset+start*4*rmesa->state.aos[count-1].stride);	
+	}
+
+/* delay ? */
+#if 0
+e32(RADEON_CP_PACKET2);
+e32(RADEON_CP_PACKET2);
+#endif
+}
+
+void static inline upload_vertex_shader_fragment(PREFIX int dest, struct r300_vertex_shader_fragment *vsf)
+{
+int i;
+LOCAL_VARS
+
+if(vsf->length==0)return;
+
+if(vsf->length & 0x3){
+	fprintf(stderr,"VERTEX_SHADER_FRAGMENT must have length divisible by 4\n");
+	exit(-1);
+	}
+
+vsf_start_fragment(dest, vsf->length);
+for(i=0;i<vsf->length;i++)
+	e32(vsf->body.d[i]);
+
+}
+
+void r300EmitVertexShader(r300ContextPtr rmesa)
+{
+LOCAL_VARS
+
+upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_PROGRAM, &(rmesa->state.vertex_shader.program));
+
+upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_MATRIX0, &(rmesa->state.vertex_shader.matrix[0]));
+upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_MATRIX1, &(rmesa->state.vertex_shader.matrix[0]));
+upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_MATRIX2, &(rmesa->state.vertex_shader.matrix[0]));
+
+upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_VECTOR0, &(rmesa->state.vertex_shader.vector[0]));
+upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_VECTOR1, &(rmesa->state.vertex_shader.vector[1]));
+
+upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_UNKNOWN1, &(rmesa->state.vertex_shader.unknown1));
+upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_UNKNOWN2, &(rmesa->state.vertex_shader.unknown2));
+
+reg_start(R300_VAP_PVS_CNTL_1, 2);
+e32(      (rmesa->state.vertex_shader.program_start << R300_PVS_CNTL_1_PROGRAM_START_SHIFT)
+ 	| (rmesa->state.vertex_shader.unknown_ptr1 << R300_PVS_CNTL_1_UNKNOWN_SHIFT)
+ 	| (rmesa->state.vertex_shader.program_end << R300_PVS_CNTL_1_PROGRAM_END_SHIFT)
+    );
+e32(      (rmesa->state.vertex_shader.param_offset << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT)
+ 	| (rmesa->state.vertex_shader.param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT)
+    );
+e32( (rmesa->state.vertex_shader.unknown_ptr2 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT)
+   | (rmesa->state.vertex_shader.unknown_ptr3 << 0));
+
+reg_start(R300_VAP_PVS_WAITIDLE,0);
+	e32(0x00000000);
+}
+
+void r300EmitPixelShader(r300ContextPtr rmesa)
+{
+int i,k;
+LOCAL_VARS
+
+if(rmesa->state.pixel_shader.program.tex.length>0){
+	reg_start(R300_PFS_TEXI_0, rmesa->state.pixel_shader.program.tex.length-1);
+	for(i=0;i<rmesa->state.pixel_shader.program.tex.length;i++)
+		e32(rmesa->state.pixel_shader.program.tex.inst[i]);
+	}
+
+if(rmesa->state.pixel_shader.program.alu.length>0){
+	#define OUTPUT_FIELD(reg, field)  \
+		reg_start(reg,rmesa->state.pixel_shader.program.alu.length-1); \
+		for(i=0;i<rmesa->state.pixel_shader.program.alu.length;i++) \
+			e32(rmesa->state.pixel_shader.program.alu.inst[i].field);
+	
+	OUTPUT_FIELD(R300_PFS_INSTR0_0, inst0);
+	OUTPUT_FIELD(R300_PFS_INSTR1_0, inst1);
+	OUTPUT_FIELD(R300_PFS_INSTR2_0, inst2);
+	OUTPUT_FIELD(R300_PFS_INSTR3_0, inst3);
+	#undef OUTPUT_FIELD
+	}
+
+reg_start(R300_PFS_NODE_0, 3);
+for(i=0;i<4;i++){
+	e32(  (rmesa->state.pixel_shader.program.node[i].alu_offset << R300_PFS_NODE_ALU_OFFSET_SHIFT)
+	    | (rmesa->state.pixel_shader.program.node[i].alu_end  << R300_PFS_NODE_ALU_END_SHIFT)
+	    | (rmesa->state.pixel_shader.program.node[i].tex_offset << R300_PFS_NODE_TEX_OFFSET_SHIFT)
+	    | (rmesa->state.pixel_shader.program.node[i].tex_end  << R300_PFS_NODE_TEX_END_SHIFT)
+	    | ( (i==3) ? R300_PFS_NODE_LAST_NODE : 0)
+	    );
+	}
+
+reg_start(R300_PFS_CNTL_0, 2);
+	/*  PFS_CNTL_0 */
+e32((rmesa->state.pixel_shader.program.active_nodes-1) | (rmesa->state.pixel_shader.program.first_node_has_tex<<3));
+	/* PFS_CNTL_1 */
+e32(rmesa->state.pixel_shader.program.temp_register_count);
+	/* PFS_CNTL_2 */
+e32( 	  (rmesa->state.pixel_shader.program.alu_offset << R300_PFS_CNTL_ALU_OFFSET_SHIFT)
+	| (rmesa->state.pixel_shader.program.alu_end << R300_PFS_CNTL_ALU_END_SHIFT)
+	| (rmesa->state.pixel_shader.program.tex_offset << R300_PFS_CNTL_TEX_OFFSET_SHIFT)
+	| (rmesa->state.pixel_shader.program.tex_end << R300_PFS_CNTL_TEX_END_SHIFT) 
+   );
+	
+if(rmesa->state.pixel_shader.param_length>0){
+	reg_start(R300_PFS_PARAM_0_X, rmesa->state.pixel_shader.param_length*4-1);
+	for(i=0;i<rmesa->state.pixel_shader.param_length;i++){
+		efloat(rmesa->state.pixel_shader.param[i].x);
+		efloat(rmesa->state.pixel_shader.param[i].y);
+		efloat(rmesa->state.pixel_shader.param[i].z);
+		efloat(rmesa->state.pixel_shader.param[i].w);
+		}
+	}
+	
 }

@@ -54,9 +54,16 @@ typedef struct r300_context *r300ContextPtr;
 #include "radeon_lock.h"
 #include "mm.h"
 
+
 typedef GLuint uint32_t;
 typedef GLubyte uint8_t;
 
+  /* We should probably change types within vertex_shader 
+      and pixel_shader structure later on */
+#define CARD32 GLuint
+#include "vertex_shader.h"
+#include "pixel_shader.h"
+#undef CARD32
 
 static __inline__ uint32_t r300PackFloat32(float fl)
 {
@@ -373,7 +380,6 @@ struct r300_hw_state {
 	struct r300_state_atom vof;     /* VAP output format register 0x4000 */
 	struct r300_state_atom gb_enable; /* (4008) */
 	struct r300_state_atom gb_misc; /* Multisampling position shifts ? (4010) */
-	struct r300_state_atom txe;	/* tex enable (4104) */
 	struct r300_state_atom unk4200; /* (4200) */
 	struct r300_state_atom unk4214; /* (4214) */
 	struct r300_state_atom ps;	/* pointsize (421C) */
@@ -432,6 +438,7 @@ struct r300_hw_state {
 		struct r300_state_atom unknown4;
 		struct r300_state_atom unknown5;		
 		} tex;
+	struct r300_state_atom txe;	/* tex enable (4104) */
 };
 
 
@@ -458,9 +465,151 @@ struct r300_depthbuffer_state {
 	GLfloat scale;
 };
 
+struct r300_vap_reg_state {
+	   /* input register assigments */
+	   int i_coords;
+	   int i_color[2];
+	   int i_tex[R300_MAX_TEXTURE_UNITS];
+	};
+
+/* Vertex shader state */
+
+/* 64 appears to be the maximum */
+#define VSF_MAX_FRAGMENT_LENGTH 64
+
+
+struct r300_vertex_shader_fragment {
+	int length;
+	union {
+		GLuint d[VSF_MAX_FRAGMENT_LENGTH];  
+		float f[VSF_MAX_FRAGMENT_LENGTH];
+		VERTEX_SHADER_INSTRUCTION i[VSF_MAX_FRAGMENT_LENGTH/4];
+		} body;
+	};
+
+#define VSF_DEST_PROGRAM	0x0
+#define VSF_DEST_MATRIX0	0x200
+#define VSF_DEST_MATRIX1	0x204
+#define VSF_DEST_MATRIX2	0x208
+#define VSF_DEST_VECTOR0	0x20c
+#define VSF_DEST_VECTOR1	0x20d
+#define VSF_DEST_UNKNOWN1	0x400
+#define VSF_DEST_UNKNOWN2	0x406
+
+struct r300_vertex_shader_state {
+	struct r300_vertex_shader_fragment program;
+
+	/* a bit of a waste - each uses only a subset of allocated space..
+	    but easier to program */
+	struct r300_vertex_shader_fragment matrix[3];
+	struct r300_vertex_shader_fragment vector[2];
+		
+	struct r300_vertex_shader_fragment unknown1;
+	struct r300_vertex_shader_fragment unknown2;
+		
+	int program_start;
+	int unknown_ptr1;  /* pointer within program space */
+	int program_end;
+		
+	int param_offset;
+	int param_count;
+		
+	int unknown_ptr2;  /* pointer within program space */
+	int unknown_ptr3;  /* pointer within program space */
+	};
+
+/* 64 appears to be the maximum */
+#define PSF_MAX_PROGRAM_LENGTH 64
+
+struct r300_pixel_shader_program {
+	struct {
+		int length;
+		GLuint inst[PSF_MAX_PROGRAM_LENGTH];
+		} tex;
+	
+	/* ALU intructions (logic and integer) */
+	struct {
+		int length;
+		struct {
+			GLuint inst0;
+			GLuint inst1;
+			GLuint inst2;
+			GLuint inst3;
+			} inst[PSF_MAX_PROGRAM_LENGTH];
+		} alu;
+	
+	/* node information */
+	/* nodes are used to synchronize ALU and TEX streams */
+	/* There could be up to 4 nodes each consisting of
+	   a number of TEX instructions followed by some ALU
+	   instructions */
+	/* the last node of a program should always be node3 */
+	struct {
+		int tex_offset;
+		int tex_end;		
+		int alu_offset;
+		int alu_end;
+		} node[4];
+		
+	int active_nodes;	/* must be between 1 and 4, inclusive */
+	int first_node_has_tex;  /* other nodes always have it */
+	
+	int temp_register_count;  /* magic value goes into PFS_CNTL_1 */
+	
+	/* entire program */
+	int tex_offset;
+	int tex_end;
+	int alu_offset;
+	int alu_end;
+	
+	};
+	
+	#define MAX_PIXEL_SHADER_PARAMS 32
+struct r300_pixel_shader_state {
+	struct r300_pixel_shader_program program;
+	
+	/* parameters */		
+	int param_length;  /* to limit the number of unnecessary writes */
+	struct {
+		float x;
+		float y;
+		float z;
+		float w;
+		} param[MAX_PIXEL_SHADER_PARAMS];
+	};
+	
+/* 8 is somewhat bogus... it is probably something like 24 */
+#define R300_MAX_AOS_ARRAYS		8
+
+struct r300_aos_rec {
+	GLuint offset;
+	int element_size; /* in dwords */
+	int stride;       /* distance between elements, in dwords */
+	
+	#define AOS_FORMAT_FLOAT	1
+	#define AOS_FORMAT_UBYTE	2
+	#define AOS_FORMAT_FLOAT_COLOR	3
+	int format;	
+	
+	int ncomponents; /* number of components - between 1 and 4, inclusive */
+
+ 	 /* just guesses */
+	#define REG_COORDS	0
+	#define REG_COLOR0	1
+	#define REG_TEX0	2
+	int reg; /* which register they are assigned to. */
+			
+	};
+
 struct r300_state {
 	struct r300_depthbuffer_state depth;
 	struct r300_texture_state texture;
+	struct r300_vap_reg_state vap_reg;
+	struct r300_vertex_shader_state vertex_shader;
+	struct r300_pixel_shader_state pixel_shader;
+	struct r300_aos_rec aos[R300_MAX_AOS_ARRAYS];
+	int aos_count;
+	
 };
 
 

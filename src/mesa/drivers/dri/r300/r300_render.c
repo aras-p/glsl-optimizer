@@ -138,7 +138,191 @@ static int r300_get_primitive_type(r300ContextPtr rmesa,
    return type;
 }
 
+/* This function compiles GL context into state registers that 
+   describe data routing inside of R300 pipeline.
+   
+   In particular, it programs input_route, output_vtx_fmt, texture
+   unit configuration and gb_output_vtx_fmt
+   
+   This function encompasses setup_AOS() from r300_lib.c
+*/
 
+
+
+static void inline r300_setup_routing(r300ContextPtr r300, GLcontext *ctx, GLboolean immediate)
+{
+int i, count=0,reg=0;
+GLuint dw, mask;
+TNLcontext *tnl = TNL_CONTEXT(ctx);
+struct vertex_buffer *VB = &tnl->vb;
+
+
+/* Stage 1 - input to VAP */
+
+/* Assign register number automatically, retaining it in rmesa->state.reg */
+
+   /* Note: immediate vertex data includes all coordinates.
+     To save bandwidth use either VBUF or state-based vertex generation */
+   
+#define CONFIGURE_AOS(v, o, r, f) \
+	{\
+	if(immediate){ \
+		r300->state.aos[count].element_size=4; \
+		r300->state.aos[count].stride=4; \
+		r300->state.aos[count].ncomponents=4; \
+		} else { \
+		r300->state.aos[count].element_size=v->size; \
+		r300->state.aos[count].stride=v->size; \
+		r300->state.aos[count].ncomponents=v->size; \
+		} \
+	r300->state.aos[count].offset=o; \
+	r300->state.aos[count].reg=reg; \
+	r300->state.aos[count].format=(f); \
+	r300->state.vap_reg.r=reg; \
+	count++; \
+	reg++; \
+	}
+
+	/* All offsets are 0 - for use by immediate mode. 
+	   Should change later to handle vertex buffers */
+CONFIGURE_AOS(VB->ObjPtr, 0, i_coords, AOS_FORMAT_FLOAT);
+CONFIGURE_AOS(VB->ColorPtr[0], 0, i_color[0], AOS_FORMAT_FLOAT_COLOR);
+for(i=0;i < ctx->Const.MaxTextureUnits;i++)
+	if(ctx->Texture.Unit[i].Enabled)
+		CONFIGURE_AOS(VB->TexCoordPtr[i], 0, i_tex[i], AOS_FORMAT_FLOAT);
+		
+r300->state.aos_count=count;
+
+if(count>R300_MAX_AOS_ARRAYS){
+	fprintf(stderr, "Aieee ! AOS array count exceeded !\n");
+	exit(-1);
+	}
+		
+/* Implement AOS */
+
+
+/* setup INPUT_ROUTE */
+
+R300_STATECHANGE(r300, vir[0]);
+for(i=0;i+1<count;i+=2){
+	dw=(r300->state.aos[i].ncomponents-1) 
+	   | ((r300->state.aos[i].reg)<<8)
+	   | (r300->state.aos[i].format<<14)
+	   | (((r300->state.aos[i+1].ncomponents-1) 
+	   | ((r300->state.aos[i+1].reg)<<8)
+	   | (r300->state.aos[i+1].format<<14))<<16);
+	   
+	if(i+2==count){
+		dw|=(1<<(13+16));
+		}
+	r300->hw.vir[0].cmd[R300_VIR_CNTL_0+(i>>1)]=dw;
+	}
+if(count & 1){
+	dw=(r300->state.aos[count-1].ncomponents-1)
+	   | (r300->state.aos[count-1].format<<14)
+	   | ((r300->state.aos[count-1].reg)<<8)
+	   | (1<<13);
+	r300->hw.vir[0].cmd[R300_VIR_CNTL_0+(count>>1)]=dw;
+	}
+/* Set the rest of INPUT_ROUTE_0 to 0 */
+for(i=((count+1)>>1); i<8; i++)r300->hw.vir[0].cmd[R300_VIR_CNTL_0+i]=(0x0);
+
+/* Mesa assumes that all missing components are from (0, 0, 0, 1) */
+#define ALL_COMPONENTS ((R300_INPUT_ROUTE_SELECT_X<<R300_INPUT_ROUTE_X_SHIFT) \
+	| (R300_INPUT_ROUTE_SELECT_Y<<R300_INPUT_ROUTE_Y_SHIFT) \
+	| (R300_INPUT_ROUTE_SELECT_Z<<R300_INPUT_ROUTE_Z_SHIFT) \
+	| (R300_INPUT_ROUTE_SELECT_W<<R300_INPUT_ROUTE_W_SHIFT))
+
+#define ALL_DEFAULT ((R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_X_SHIFT) \
+	| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Y_SHIFT) \
+	| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Z_SHIFT) \
+	| (R300_INPUT_ROUTE_SELECT_ONE<<R300_INPUT_ROUTE_W_SHIFT))
+
+R300_STATECHANGE(r300, vir[1]);
+	
+for(i=0;i+1<count;i+=2){
+	/* do i first.. */
+	mask=(1<<(r300->state.aos[i].ncomponents*3))-1;
+	dw=(ALL_COMPONENTS & mask)
+	 | (ALL_DEFAULT & ~mask)
+	 | R300_INPUT_ROUTE_ENABLE;
+	 
+	/* i+1 */
+	mask=(1<<(r300->state.aos[i+1].ncomponents*3))-1;
+	dw|=( 
+	   (ALL_COMPONENTS & mask)
+	 | (ALL_DEFAULT & ~mask)
+	 | R300_INPUT_ROUTE_ENABLE
+	    )<<16;
+
+	r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(i>>1)]=dw;
+	}
+if(count & 1){
+	mask=(1<<(r300->state.aos[count-1].ncomponents*3))-1;
+	dw=(ALL_COMPONENTS & mask)
+	 | (ALL_DEFAULT & ~mask)
+	 | R300_INPUT_ROUTE_ENABLE;
+	r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(count>>1)]=dw;
+	}
+/* Set the rest of INPUT_ROUTE_1 to 0 */
+for(i=((count+1)>>1); i<8; i++)r300->hw.vir[1].cmd[R300_VIR_CNTL_0+i]=(0x0);
+
+/* Set up input_cntl */
+
+R300_STATECHANGE(r300, vic);
+r300->hw.vic.cmd[R300_VIC_CNTL_0]=0x5555;  /* Hard coded value, no idea what it means */
+
+r300->hw.vic.cmd[R300_VIC_CNTL_1]=R300_INPUT_CNTL_POS
+				| R300_INPUT_CNTL_COLOR;
+
+for(i=0;i < ctx->Const.MaxTextureUnits;i++)
+	if(ctx->Texture.Unit[i].Enabled)
+		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=(R300_INPUT_CNTL_TC0<<i);
+
+/* Stage 3: VAP output */
+R300_STATECHANGE(r300, vof);
+r300->hw.vof.cmd[R300_VOF_CNTL_0]=R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT
+				| R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
+
+r300->hw.vof.cmd[R300_VOF_CNTL_1]=0;
+for(i=0;i < ctx->Const.MaxTextureUnits;i++)
+	if(ctx->Texture.Unit[i].Enabled)
+		r300->hw.vof.cmd[R300_VOF_CNTL_1]|=(4<<(3*i));
+}
+
+static inline void r300_setup_textures(r300ContextPtr r300, GLcontext *ctx)
+{
+int i;
+struct r300_tex_obj *t;
+
+R300_STATECHANGE(r300, txe);
+R300_STATECHANGE(r300, tex.filter);
+R300_STATECHANGE(r300, tex.unknown1);
+R300_STATECHANGE(r300, tex.size);
+R300_STATECHANGE(r300, tex.format);
+R300_STATECHANGE(r300, tex.offset);
+R300_STATECHANGE(r300, tex.unknown4);
+R300_STATECHANGE(r300, tex.unknown5);
+
+r300->hw.txe.cmd[R300_TXE_ENABLE]=0x0;
+
+for(i=0;i<R300_MAX_TEXTURE_UNITS;i++){
+	if((t=r300->state.texture.unit[i].texobj)!=NULL){
+		r300->hw.txe.cmd[R300_TXE_ENABLE]|=(1<<i);
+		
+		r300->hw.tex.filter.cmd[R300_TEX_CMD_0+i]=t->filter;
+		r300->hw.tex.unknown1.cmd[R300_TEX_CMD_0+i]=t->pitch;
+		r300->hw.tex.size.cmd[R300_TEX_CMD_0+i]=t->size;
+		r300->hw.tex.format.cmd[R300_TEX_CMD_0+i]=t->format;
+		r300->hw.tex.offset.cmd[R300_TEX_CMD_0+i]=r300->radeon.radeonScreen->fbLocation+t->offset;
+		r300->hw.tex.unknown4.cmd[R300_TEX_CMD_0+i]=0x0;
+		r300->hw.tex.unknown5.cmd[R300_TEX_CMD_0+i]=0x0;
+		
+		/* We don't know how to set this yet */
+		r300->hw.tex.format.cmd[R300_TEX_CMD_0+i]=0x88a0c;
+		}
+	}
+}
 
 /* Immediate implementation - vertex data is sent via command stream */
 
@@ -199,6 +383,25 @@ static void r300_render_flat_primitive(r300ContextPtr rmesa,
 
 }
 
+static void assign_pipeline(r300ContextPtr rmesa, R300_PIPELINE *p)
+{
+   /* Watch out ! This is buggy .. but will do for now */
+   
+   /* At least one sanity check is in order */
+   if(sizeof(rmesa->state.vertex_shader) != sizeof(p->vertex_shader)){
+   	fprintf(stderr, "Aieee ! vertex_shader sizes don't match.\n");
+	exit(-1);
+   	}
+   if(sizeof(rmesa->state.pixel_shader) != sizeof(p->pixel_shader)){
+   	fprintf(stderr, "Aieee ! vertex_shader sizes don't match.\n");
+	exit(-1);
+   	}
+   
+   memcpy(&rmesa->state.vertex_shader, &(p->vertex_shader), sizeof(rmesa->state.vertex_shader));
+   memcpy(&rmesa->state.pixel_shader, &(p->pixel_shader), sizeof(rmesa->state.pixel_shader));
+
+}
+
 static GLboolean r300_run_flat_render(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
@@ -206,7 +409,6 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
-   AOS_DATA vb_arrays[2];
    LOCAL_VARS
 	
    /* Flush state - make sure command buffer is nice and large */
@@ -215,27 +417,6 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-   /* setup array of structures data */
-
-   /* Note: immediate vertex data includes all coordinates.
-     To save bandwidth use either VBUF or state-based vertex generation */
-    /* xyz */
-   vb_arrays[0].element_size=4;
-   vb_arrays[0].stride=4;
-   vb_arrays[0].offset=0; /* Not used */
-   vb_arrays[0].format=AOS_FORMAT_FLOAT;
-   vb_arrays[0].ncomponents=4;
-   vb_arrays[0].reg=REG_COORDS;
-
-    /* color */
-   vb_arrays[1].element_size=4;
-   vb_arrays[1].stride=4;
-   vb_arrays[1].offset=0; /* Not used */
-   vb_arrays[1].format=AOS_FORMAT_FLOAT_COLOR;
-   vb_arrays[1].ncomponents=4;
-   vb_arrays[1].reg=REG_COLOR0;
-
-   
    /* needed before starting 3d operation .. */
    reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
@@ -249,22 +430,28 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
 				| R300_VPORT_Y_OFFSET_ENA
 				| R300_VTX_W0_FMT;
    R300_STATECHANGE(rmesa, vte);
-   
+
+   r300_setup_routing(rmesa, ctx, GL_TRUE);
+   r300_setup_textures(rmesa, ctx);
+      
    r300EmitState(rmesa);
    
-   FLAT_COLOR_PIPELINE.vertex_shader.matrix[0].length=16;
-   memcpy(FLAT_COLOR_PIPELINE.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
+   assign_pipeline(rmesa, &FLAT_COLOR_PIPELINE);
+   
+   rmesa->state.vertex_shader.matrix[0].length=16;
+   memcpy(rmesa->state.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
 
-   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.length=4;
-   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[0]=0.0;
-   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[1]=0.0;
-   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[2]=1.0;
-   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[3]=0.0;
+   rmesa->state.vertex_shader.unknown2.length=4;
+   rmesa->state.vertex_shader.unknown2.body.f[0]=0.0;
+   rmesa->state.vertex_shader.unknown2.body.f[1]=0.0;
+   rmesa->state.vertex_shader.unknown2.body.f[2]=1.0;
+   rmesa->state.vertex_shader.unknown2.body.f[3]=0.0;
    
-   program_pipeline(PASS_PREFIX &FLAT_COLOR_PIPELINE);
-   
-   /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
-   setup_AOS(PASS_PREFIX vb_arrays, 2);
+   r300EmitVertexShader(rmesa);
+   r300EmitPixelShader(rmesa);
+         
+   /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */   
+   r300EmitLOAD_VBPNTR(rmesa, 0);
    
    for(i=0; i < VB->PrimitiveCount; i++){
        GLuint prim = VB->Primitive[i].mode;
@@ -288,8 +475,6 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
 
 /* We use the start part of GART texture buffer for vertices */
 
-/* 8 is somewhat bogus... it is probably something like 24 */
-#define R300_MAX_AOS_ARRAYS		8
 
 static void upload_vertex_buffer(r300ContextPtr rmesa, 
 	GLcontext *ctx, AOS_DATA *array, int *n_arrays)
@@ -390,6 +575,8 @@ static GLboolean r300_run_vb_flat_render(GLcontext *ctx,
    
    reg_start(0x4f18,0);
 	e32(0x00000003);
+   
+   r300_setup_routing(rmesa, ctx, GL_FALSE);
    
    r300EmitState(rmesa);
    
@@ -507,7 +694,6 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
-   AOS_DATA vb_arrays[3];
    /* Only do 2d textures */
    struct gl_texture_object *to=ctx->Texture.Unit[0].Current2D;
    r300TexObjPtr t=to->DriverData;
@@ -518,6 +704,10 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
       All the time for now.. */
    r300UpdateTextureState(ctx);
    
+   r300_setup_routing(rmesa, ctx, GL_TRUE);
+   r300_setup_textures(rmesa, ctx);
+   exit(-1);
+      
    /* Flush state - make sure command buffer is nice and large */
    r300Flush(ctx);
    
@@ -527,34 +717,6 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
 
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
-
-   /* setup array of structures data */
-
-   /* Note: immediate vertex data includes all coordinates.
-     To save bandwidth use either VBUF or state-based vertex generation */
-    /* xyzw */
-   vb_arrays[0].element_size=4;
-   vb_arrays[0].stride=4;
-   vb_arrays[0].offset=0; /* Not used */
-   vb_arrays[0].format=AOS_FORMAT_FLOAT;
-   vb_arrays[0].ncomponents=4;
-   vb_arrays[0].reg=REG_COORDS;
-
-    /* color */
-   vb_arrays[1].element_size=4;
-   vb_arrays[1].stride=4;
-   vb_arrays[1].offset=0; /* Not used */
-   vb_arrays[1].format=AOS_FORMAT_FLOAT_COLOR;
-   vb_arrays[1].ncomponents=4;
-   vb_arrays[1].reg=REG_COLOR0;
-
-    /* texture coordinates */
-   vb_arrays[2].element_size=4;
-   vb_arrays[2].stride=4;
-   vb_arrays[2].offset=0; /* Not used */
-   vb_arrays[2].format=AOS_FORMAT_FLOAT;
-   vb_arrays[2].ncomponents=4;
-   vb_arrays[2].reg=REG_TEX0;
 
      
    /* needed before starting 3d operation .. */
@@ -598,11 +760,6 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    SINGLE_TEXTURE_PIPELINE.texture_unit[0].filter=t->filter;
    
    
-   /* Upload texture, a hack, really  we can do a lot better */
-   #if 0
-   memcpy(rsp->gartTextures.map, to->Image[0][0]->Data, to->Image[0][0]->RowStride*to->Image[0][0]->Height*4);
-   #endif
-
    /* Program RS unit. This needs to be moved into R300 pipeline */   
 reg_start(R300_RS_CNTL_0,1);
 	/* R300_RS_CNTL_0(4300) */
@@ -642,7 +799,7 @@ reg_start(R300_RS_INTERP_0,7);
    program_pipeline(PASS_PREFIX &SINGLE_TEXTURE_PIPELINE);
          
    /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
-   setup_AOS(PASS_PREFIX vb_arrays, 3);
+   r300EmitLOAD_VBPNTR(rmesa, 0);
    
    for(i=0; i < VB->PrimitiveCount; i++){
        GLuint prim = VB->Primitive[i].mode;
@@ -683,6 +840,7 @@ static GLboolean r300_run_render(GLcontext *ctx,
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
+		
    #if 1
    	/* Just switch between pipelines.. We could possibly do better.. (?) */
         if(ctx->Texture.Unit[0].Enabled)
@@ -765,7 +923,9 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	//FALLBACK_IF(ctx->Color.DitherFlag);
 
 	/* I'm almost certain I forgot something here */
+	#if 0 /* This should work now.. */
 	FALLBACK_IF(ctx->Color.AlphaEnabled); // GL_ALPHA_TEST
+	#endif
 	FALLBACK_IF(ctx->Color.BlendEnabled); // GL_BLEND
 	FALLBACK_IF(ctx->Fog.Enabled); // GL_FOG
 	FALLBACK_IF(ctx->Line.SmoothFlag); // GL_LINE_SMOOTH
