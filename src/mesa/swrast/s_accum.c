@@ -1,4 +1,4 @@
-/* $Id: s_accum.c,v 1.15 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: s_accum.c,v 1.16 2002/03/19 16:47:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,13 +74,13 @@ _mesa_alloc_accum_buffer( GLframebuffer *buffer )
    GLint n;
 
    if (buffer->Accum) {
-      FREE( buffer->Accum );
+      MESA_PBUFFER_FREE( buffer->Accum );
       buffer->Accum = NULL;
    }
 
    /* allocate accumulation buffer if not already present */
    n = buffer->Width * buffer->Height * 4 * sizeof(GLaccum);
-   buffer->Accum = (GLaccum *) MALLOC( n );
+   buffer->Accum = (GLaccum *) MESA_PBUFFER_ALLOC( n );
    if (!buffer->Accum) {
       /* unable to setup accumulation buffer */
       _mesa_error( NULL, GL_OUT_OF_MEMORY, "glAccum" );

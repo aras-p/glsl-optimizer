@@ -1,4 +1,4 @@
-/* $Id: s_alphabuf.c,v 1.9 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: s_alphabuf.c,v 1.10 2002/03/19 16:47:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,9 +57,9 @@ _mesa_alloc_alpha_buffers( GLframebuffer *buffer )
    ASSERT(buffer->UseSoftwareAlphaBuffers);
 
    if (buffer->FrontLeftAlpha) {
-      FREE( buffer->FrontLeftAlpha );
+      MESA_PBUFFER_FREE( buffer->FrontLeftAlpha );
    }
-   buffer->FrontLeftAlpha = (GLchan *) MALLOC( bytes );
+   buffer->FrontLeftAlpha = (GLchan *) MESA_PBUFFER_ALLOC( bytes );
    if (!buffer->FrontLeftAlpha) {
       /* out of memory */
       _mesa_error( NULL, GL_OUT_OF_MEMORY,
@@ -68,9 +68,9 @@ _mesa_alloc_alpha_buffers( GLframebuffer *buffer )
 
    if (buffer->Visual.doubleBufferMode) {
       if (buffer->BackLeftAlpha) {
-         FREE( buffer->BackLeftAlpha );
+         MESA_PBUFFER_FREE( buffer->BackLeftAlpha );
       }
-      buffer->BackLeftAlpha = (GLchan *) MALLOC( bytes );
+      buffer->BackLeftAlpha = (GLchan *) MESA_PBUFFER_ALLOC( bytes );
       if (!buffer->BackLeftAlpha) {
          /* out of memory */
          _mesa_error( NULL, GL_OUT_OF_MEMORY,
@@ -80,9 +80,9 @@ _mesa_alloc_alpha_buffers( GLframebuffer *buffer )
 
    if (buffer->Visual.stereoMode) {
       if (buffer->FrontRightAlpha) {
-         FREE( buffer->FrontRightAlpha );
+         MESA_PBUFFER_FREE( buffer->FrontRightAlpha );
       }
-      buffer->FrontRightAlpha = (GLchan *) MALLOC( bytes );
+      buffer->FrontRightAlpha = (GLchan *) MESA_PBUFFER_ALLOC( bytes );
       if (!buffer->FrontRightAlpha) {
          /* out of memory */
          _mesa_error( NULL, GL_OUT_OF_MEMORY,
@@ -91,9 +91,9 @@ _mesa_alloc_alpha_buffers( GLframebuffer *buffer )
 
       if (buffer->Visual.doubleBufferMode) {
          if (buffer->BackRightAlpha) {
-            FREE( buffer->BackRightAlpha );
+            MESA_PBUFFER_FREE( buffer->BackRightAlpha );
          }
-         buffer->BackRightAlpha = (GLchan *) MALLOC( bytes );
+         buffer->BackRightAlpha = (GLchan *) MESA_PBUFFER_ALLOC( bytes );
          if (!buffer->BackRightAlpha) {
             /* out of memory */
             _mesa_error( NULL, GL_OUT_OF_MEMORY,

@@ -1,10 +1,10 @@
-/* $Id: texstore.c,v 1.34 2001/09/19 20:30:44 kschultz Exp $ */
+/* $Id: texstore.c,v 1.35 2002/03/19 16:47:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.0.2
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -645,7 +645,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
    }
 
    /* allocate memory */
-   texImage->Data = MALLOC(sizeInBytes);
+   texImage->Data = MESA_PBUFFER_ALLOC(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
       return;
@@ -718,7 +718,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    }
 
    /* allocate memory */
-   texImage->Data = MALLOC(sizeInBytes);
+   texImage->Data = MESA_PBUFFER_ALLOC(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
       return;
@@ -784,7 +784,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
    }
 
    /* allocate memory */
-   texImage->Data = MALLOC(sizeInBytes);
+   texImage->Data = MESA_PBUFFER_ALLOC(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
       return;
@@ -1705,7 +1705,7 @@ _mesa_generate_mipmap(GLcontext *ctx,
 
          /* Free old image data */
          if (dstImage->Data)
-            FREE(dstImage->Data);
+            MESA_PBUFFER_FREE(dstImage->Data);
 
          /* initialize new image */
          _mesa_init_teximage_fields(ctx, dstImage, dstWidth, dstHeight,
@@ -1719,7 +1719,7 @@ _mesa_generate_mipmap(GLcontext *ctx,
          ASSERT(dstWidth * dstHeight * dstDepth * bytesPerTexel > 0);
 
          /* alloc new image buffer */
-         dstImage->Data = MALLOC(dstWidth * dstHeight * dstDepth
+         dstImage->Data = MESA_PBUFFER_ALLOC(dstWidth * dstHeight * dstDepth
                                  * bytesPerTexel);
          if (!dstImage->Data) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");

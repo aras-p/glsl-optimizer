@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.156 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: context.c,v 1.157 2002/03/19 16:47:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -398,31 +398,31 @@ _mesa_free_framebuffer_data( GLframebuffer *buffer )
       return;
 
    if (buffer->DepthBuffer) {
-      FREE( buffer->DepthBuffer );
+      MESA_PBUFFER_FREE( buffer->DepthBuffer );
       buffer->DepthBuffer = NULL;
    }
    if (buffer->Accum) {
-      FREE( buffer->Accum );
+      MESA_PBUFFER_FREE( buffer->Accum );
       buffer->Accum = NULL;
    }
    if (buffer->Stencil) {
-      FREE( buffer->Stencil );
+      MESA_PBUFFER_FREE( buffer->Stencil );
       buffer->Stencil = NULL;
    }
    if (buffer->FrontLeftAlpha) {
-      FREE( buffer->FrontLeftAlpha );
+      MESA_PBUFFER_FREE( buffer->FrontLeftAlpha );
       buffer->FrontLeftAlpha = NULL;
    }
    if (buffer->BackLeftAlpha) {
-      FREE( buffer->BackLeftAlpha );
+      MESA_PBUFFER_FREE( buffer->BackLeftAlpha );
       buffer->BackLeftAlpha = NULL;
    }
    if (buffer->FrontRightAlpha) {
-      FREE( buffer->FrontRightAlpha );
+      MESA_PBUFFER_FREE( buffer->FrontRightAlpha );
       buffer->FrontRightAlpha = NULL;
    }
    if (buffer->BackRightAlpha) {
-      FREE( buffer->BackRightAlpha );
+      MESA_PBUFFER_FREE( buffer->BackRightAlpha );
       buffer->BackRightAlpha = NULL;
    }
 }

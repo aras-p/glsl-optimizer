@@ -1,10 +1,10 @@
-/* $Id: teximage.c,v 1.106 2001/11/18 22:48:13 brianp Exp $ */
+/* $Id: teximage.c,v 1.107 2002/03/19 16:47:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.0.2
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -382,7 +382,7 @@ void
 _mesa_free_texture_image( struct gl_texture_image *teximage )
 {
    if (teximage->Data) {
-      FREE( teximage->Data );
+      MESA_PBUFFER_FREE( teximage->Data );
       teximage->Data = NULL;
    }
    FREE( teximage );
@@ -1350,7 +1350,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       }
       else if (texImage->Data) {
          /* free the old texture data */
-         FREE(texImage->Data);
+         MESA_PBUFFER_FREE(texImage->Data);
          texImage->Data = NULL;
       }
       clear_teximage_fields(texImage); /* not really needed, but helpful */
@@ -1475,7 +1475,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       }
       else if (texImage->Data) {
          /* free the old texture data */
-         FREE(texImage->Data);
+         MESA_PBUFFER_FREE(texImage->Data);
          texImage->Data = NULL;
       }
       clear_teximage_fields(texImage); /* not really needed, but helpful */
@@ -1596,7 +1596,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
          }
       }
       else if (texImage->Data) {
-         FREE(texImage->Data);
+         MESA_PBUFFER_FREE(texImage->Data);
          texImage->Data = NULL;
       }
       clear_teximage_fields(texImage); /* not really needed, but helpful */
@@ -1866,7 +1866,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
    }
    else if (texImage->Data) {
       /* free the old texture data */
-      FREE(texImage->Data);
+      MESA_PBUFFER_FREE(texImage->Data);
       texImage->Data = NULL;
    }
 
@@ -1930,7 +1930,7 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
    }
    else if (texImage->Data) {
       /* free the old texture data */
-      FREE(texImage->Data);
+      MESA_PBUFFER_FREE(texImage->Data);
       texImage->Data = NULL;
    }
 
@@ -2115,7 +2115,7 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
          }
       }
       else if (texImage->Data) {
-         FREE(texImage->Data);
+         MESA_PBUFFER_FREE(texImage->Data);
          texImage->Data = NULL;
       }
 
@@ -2214,7 +2214,7 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
          }
       }
       else if (texImage->Data) {
-         FREE(texImage->Data);
+         MESA_PBUFFER_FREE(texImage->Data);
          texImage->Data = NULL;
       }
 
@@ -2312,7 +2312,7 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
          }
       }
       else if (texImage->Data) {
-         FREE(texImage->Data);
+         MESA_PBUFFER_FREE(texImage->Data);
          texImage->Data = NULL;
       }
 
