@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.99 2000/10/30 13:32:00 keithw Exp $ */
+/* $Id: context.c,v 1.100 2000/10/30 16:32:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1341,7 +1341,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->StippleCounter = 0;
    ctx->NeedNormals = GL_FALSE;
    ctx->DoViewportMapping = GL_TRUE;
-   ctx->ImageTransferState = UPDATE_IMAGE_TRANSFER_STATE;
+   ctx->ImageTransferState = 0;
 
    ctx->NeedEyeCoords = GL_FALSE;
    ctx->NeedEyeNormals = GL_FALSE;

@@ -1,4 +1,4 @@
-/* $Id: fog.h,v 1.7 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: fog.h,v 1.8 2000/10/30 16:32:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -72,7 +72,7 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
 
 extern void
 _mesa_depth_fog_rgba_pixels( const GLcontext *ctx,
-			     GLuint n, const GLdepth z[], GLubyte rgba[][4] );
+			     GLuint n, const GLdepth z[], GLchan rgba[][4] );
 
 extern void
 _mesa_depth_fog_ci_pixels( const GLcontext *ctx,

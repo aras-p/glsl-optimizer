@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.17 2000/10/30 13:32:01 keithw Exp $ */
+/* $Id: pixel.c,v 1.18 2000/10/30 16:32:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -632,7 +632,6 @@ _mesa_PixelTransferf( GLenum pname, GLfloat param )
    }
 
    /* signal to recompute the bitmask */
-   ctx->ImageTransferState = UPDATE_IMAGE_TRANSFER_STATE;
    ctx->NewState |= _NEW_PIXEL;
 }
 
@@ -1063,10 +1062,10 @@ _mesa_map_ci8_to_rgba( const GLcontext *ctx, GLuint n, const GLubyte index[],
    GLuint gmask = ctx->Pixel.MapItoGsize - 1;
    GLuint bmask = ctx->Pixel.MapItoBsize - 1;
    GLuint amask = ctx->Pixel.MapItoAsize - 1;
-   const GLfloat *rMap = ctx->Pixel.MapItoR8;
-   const GLfloat *gMap = ctx->Pixel.MapItoG8;
-   const GLfloat *bMap = ctx->Pixel.MapItoB8;
-   const GLfloat *aMap = ctx->Pixel.MapItoA8;
+   const GLfloat *rMap = ctx->Pixel.MapItoR;
+   const GLfloat *gMap = ctx->Pixel.MapItoG;
+   const GLfloat *bMap = ctx->Pixel.MapItoB;
+   const GLfloat *aMap = ctx->Pixel.MapItoA;
    GLuint i;
    for (i=0;i<n;i++) {
       rgba[i][RCOMP] = FLOAT_TO_CHAN(rMap[index[i] & rmask]);

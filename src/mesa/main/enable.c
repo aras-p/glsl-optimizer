@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.29 2000/10/30 13:32:00 keithw Exp $ */
+/* $Id: enable.c,v 1.30 2000/10/30 16:32:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -516,17 +516,14 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_COLOR_TABLE_SGI:
          /* XXX check for extension */
          ctx->Pixel.ColorTableEnabled = state;
-         ctx->ImageTransferState = UPDATE_IMAGE_TRANSFER_STATE;
 	 ctx->NewState |= _NEW_PIXEL;
          break;
       case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
          ctx->Pixel.PostConvolutionColorTableEnabled = state;
-         ctx->ImageTransferState = UPDATE_IMAGE_TRANSFER_STATE;
 	 ctx->NewState |= _NEW_PIXEL;
          break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
          ctx->Pixel.PostColorMatrixColorTableEnabled = state;
-         ctx->ImageTransferState = UPDATE_IMAGE_TRANSFER_STATE;
 	 ctx->NewState |= _NEW_PIXEL;
          break;
 
@@ -534,17 +531,14 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_CONVOLUTION_1D:
          /* XXX check for extension */
          ctx->Pixel.Convolution1DEnabled = state;
-         ctx->ImageTransferState = UPDATE_IMAGE_TRANSFER_STATE;
 	 ctx->NewState |= _NEW_PIXEL;
          break;
       case GL_CONVOLUTION_2D:
          ctx->Pixel.Convolution2DEnabled = state;
-         ctx->ImageTransferState = UPDATE_IMAGE_TRANSFER_STATE;
 	 ctx->NewState |= _NEW_PIXEL;
          break;
       case GL_SEPARABLE_2D:
          ctx->Pixel.Separable2DEnabled = state;
-         ctx->ImageTransferState = UPDATE_IMAGE_TRANSFER_STATE;
 	 ctx->NewState |= _NEW_PIXEL;
          break;
 

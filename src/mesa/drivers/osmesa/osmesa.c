@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.23 2000/10/29 18:23:28 brianp Exp $ */
+/* $Id: osmesa.c,v 1.24 2000/10/30 16:32:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -621,7 +621,7 @@ static void clear_index( GLcontext *ctx, GLuint index )
 
 
 static void clear_color( GLcontext *ctx,
-                         GLubyte r, GLubyte g, GLubyte b, GLubyte a )
+                         GLchan r, GLchan g, GLchan b, GLchan a )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    osmesa->clearpixel = PACK_RGBA( r, g, b, a );
@@ -735,7 +735,7 @@ static void set_index( GLcontext *ctx, GLuint index )
 
 
 static void set_color( GLcontext *ctx,
-                       GLubyte r, GLubyte g, GLubyte b, GLubyte a )
+                       GLchan r, GLchan g, GLchan b, GLchan a )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    osmesa->pixel = PACK_RGBA( r, g, b, a );
@@ -758,7 +758,7 @@ static void buffer_size( GLcontext *ctx, GLuint *width, GLuint *height )
 /* Write RGBA pixels to an RGBA (or permuted) buffer. */
 static void write_rgba_span( const GLcontext *ctx,
                              GLuint n, GLint x, GLint y,
-                             CONST GLubyte rgba[][4], const GLubyte mask[] )
+                             CONST GLchan rgba[][4], const GLubyte mask[] )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    GLuint *ptr4 = PIXELADDR4( x, y );
@@ -785,7 +785,7 @@ static void write_rgba_span( const GLcontext *ctx,
 /* Write RGBA pixels to an RGBA buffer.  This is the fastest span-writer. */
 static void write_rgba_span_rgba( const GLcontext *ctx,
                                   GLuint n, GLint x, GLint y,
-                                  CONST GLubyte rgba[][4],
+                                  CONST GLchan rgba[][4],
                                   const GLubyte mask[] )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
@@ -808,7 +808,7 @@ static void write_rgba_span_rgba( const GLcontext *ctx,
 /* Write RGB pixels to an RGBA (or permuted) buffer. */
 static void write_rgb_span( const GLcontext *ctx,
                             GLuint n, GLint x, GLint y,
-                            CONST GLubyte rgb[][3], const GLubyte mask[] )
+                            CONST GLchan rgb[][3], const GLubyte mask[] )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    GLuint *ptr4 = PIXELADDR4( x, y );
@@ -851,7 +851,7 @@ static void write_monocolor_span( const GLcontext *ctx,
 
 static void write_rgba_pixels( const GLcontext *ctx,
                                GLuint n, const GLint x[], const GLint y[],
-                               CONST GLubyte rgba[][4], const GLubyte mask[] )
+                               CONST GLchan rgba[][4], const GLubyte mask[] )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    GLuint i;
@@ -885,7 +885,7 @@ static void write_monocolor_pixels( const GLcontext *ctx,
 
 
 static void read_rgba_span( const GLcontext *ctx, GLuint n, GLint x, GLint y,
-                             GLubyte rgba[][4] )
+                             GLchan rgba[][4] )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    GLuint i;
@@ -903,17 +903,17 @@ static void read_rgba_span( const GLcontext *ctx, GLuint n, GLint x, GLint y,
 /* Read RGBA pixels from an RGBA buffer */
 static void read_rgba_span_rgba( const GLcontext *ctx,
                                  GLuint n, GLint x, GLint y,
-                                 GLubyte rgba[][4] )
+                                 GLchan rgba[][4] )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    GLuint *ptr4 = PIXELADDR4(x,y);
-   MEMCPY( rgba, ptr4, n * 4 * sizeof(GLubyte) );
+   MEMCPY( rgba, ptr4, n * 4 * sizeof(GLchan) );
 }
 
 
 static void read_rgba_pixels( const GLcontext *ctx,
                                GLuint n, const GLint x[], const GLint y[],
-			       GLubyte rgba[][4], const GLubyte mask[] )
+			       GLchan rgba[][4], const GLubyte mask[] )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    GLuint i;
@@ -936,7 +936,7 @@ static void read_rgba_pixels( const GLcontext *ctx,
 /* Write RGBA pixels to an RGB or BGR buffer. */
 static void write_rgba_span3( const GLcontext *ctx,
                               GLuint n, GLint x, GLint y,
-                              CONST GLubyte rgba[][4], const GLubyte mask[] )
+                              CONST GLchan rgba[][4], const GLubyte mask[] )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    GLubyte *ptr3 = PIXELADDR3( x, y);
@@ -965,7 +965,7 @@ static void write_rgba_span3( const GLcontext *ctx,
 /* Write RGB pixels to an RGB or BGR buffer. */
 static void write_rgb_span3( const GLcontext *ctx,
                              GLuint n, GLint x, GLint y,
-                             CONST GLubyte rgb[][3], const GLubyte mask[] )
+                             CONST GLchan rgb[][3], const GLubyte mask[] )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    GLubyte *ptr3 = PIXELADDR3( x, y);
@@ -1017,7 +1017,7 @@ static void write_monocolor_span3( const GLcontext *ctx,
 
 static void write_rgba_pixels3( const GLcontext *ctx,
                                 GLuint n, const GLint x[], const GLint y[],
-                                CONST GLubyte rgba[][4], const GLubyte mask[] )
+                                CONST GLchan rgba[][4], const GLubyte mask[] )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    GLuint i;
@@ -1058,7 +1058,7 @@ static void write_monocolor_pixels3( const GLcontext *ctx,
 
 static void read_rgba_span3( const GLcontext *ctx,
                              GLuint n, GLint x, GLint y,
-                             GLubyte rgba[][4] )
+                             GLchan rgba[][4] )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    GLuint i;
@@ -1076,7 +1076,7 @@ static void read_rgba_span3( const GLcontext *ctx,
 
 static void read_rgba_pixels3( const GLcontext *ctx,
                                GLuint n, const GLint x[], const GLint y[],
-			       GLubyte rgba[][4], const GLubyte mask[] )
+			       GLchan rgba[][4], const GLubyte mask[] )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    GLuint i;

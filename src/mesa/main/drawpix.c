@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.42 2000/10/29 19:02:23 brianp Exp $ */
+/* $Id: drawpix.c,v 1.43 2000/10/30 16:32:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -865,9 +865,6 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       if (ctx->NewState) {
          gl_update_state(ctx);
       }
-
-      if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
-         _mesa_update_image_transfer_state(ctx);
 
       x = (GLint) (ctx->Current.RasterPos[0] + 0.5F);
       y = (GLint) (ctx->Current.RasterPos[1] + 0.5F);

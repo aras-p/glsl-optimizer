@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.37 2000/10/30 13:32:01 keithw Exp $ */
+/* $Id: state.c,v 1.38 2000/10/30 16:32:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -826,6 +826,9 @@ void gl_update_state( GLcontext *ctx )
 
    if (MESA_VERBOSE & VERBOSE_STATE)
       gl_print_state("", ctx->NewState);
+
+   if (ctx->NewState & _NEW_PIXEL)
+      _mesa_update_image_transfer_state(ctx);
 
    if (ctx->NewState & _NEW_ARRAY)
       gl_update_client_state( ctx );

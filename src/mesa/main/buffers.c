@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.16 2000/10/30 13:31:59 keithw Exp $ */
+/* $Id: buffers.c,v 1.17 2000/10/30 16:32:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -175,7 +175,7 @@ clear_color_buffer(GLcontext *ctx)
       ASSERT(ctx->Color.IndexMask == ~0);
       if (ctx->Visual.IndexBits == 8) {
          /* 8-bit clear */
-         GLchan span[MAX_WIDTH];
+         GLubyte span[MAX_WIDTH];
          GLint i;
          MEMSET(span, ctx->Color.ClearIndex, width);
          for (i = 0; i < height; i++) {

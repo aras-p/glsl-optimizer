@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.22 2000/10/30 13:31:59 keithw Exp $ */
+/* $Id: blend.c,v 1.23 2000/10/30 16:32:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -370,19 +370,23 @@ blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
             const GLint b = (rgba[i][BCOMP] * t + dest[i][BCOMP] * s) / 255;
             const GLint a = (rgba[i][ACOMP] * t + dest[i][ACOMP] * s) / 255;
 #else
+#if CHAN_BITS == 8
             /* This satisfies Glean and should be reasonably fast */
             /* Contributed by Nathan Hand */
-#if CHAN_BITS == 8
 #define DIV255(X)  (((X) << 8) + (X) + 256) >> 16
-#else
-XXX todo
-#endif
             const GLint s = CHAN_MAX - t;
             const GLint r = DIV255(rgba[i][RCOMP] * t + dest[i][RCOMP] * s);
             const GLint g = DIV255(rgba[i][GCOMP] * t + dest[i][GCOMP] * s);
             const GLint b = DIV255(rgba[i][BCOMP] * t + dest[i][BCOMP] * s);
             const GLint a = DIV255(rgba[i][ACOMP] * t + dest[i][ACOMP] * s);
 #undef DIV255
+#else
+            const GLint s = CHAN_MAX - t;
+            const GLint r = (rgba[i][RCOMP] * t + dest[i][RCOMP] * s) / CHAN_MAX;
+            const GLint g = (rgba[i][GCOMP] * t + dest[i][GCOMP] * s) / CHAN_MAX;
+            const GLint b = (rgba[i][BCOMP] * t + dest[i][BCOMP] * s) / CHAN_MAX;
+            const GLint a = (rgba[i][ACOMP] * t + dest[i][ACOMP] * s) / CHAN_MAX;
+#endif
 #endif
             ASSERT(r <= CHAN_MAX);
             ASSERT(g <= CHAN_MAX);
@@ -926,7 +930,7 @@ _mesa_blend_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
 void
 _mesa_blend_pixels( GLcontext *ctx,
                     GLuint n, const GLint x[], const GLint y[],
-                    GLchan rgba[][4], const GLchan mask[] )
+                    GLchan rgba[][4], const GLubyte mask[] )
 {
    GLchan dest[PB_SIZE][4];
 

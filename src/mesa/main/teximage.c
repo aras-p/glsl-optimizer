@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.56 2000/10/30 13:32:01 keithw Exp $ */
+/* $Id: teximage.c,v 1.57 2000/10/30 16:32:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -924,9 +924,8 @@ make_texture_image( GLcontext *ctx, GLuint dimensions,
    const GLint components = components_in_intformat(internalFormat);
    GLint convWidth = width, convHeight = height;
 
-   if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE) {
-      _mesa_update_image_transfer_state(ctx);
-   }
+   if (ctx->NewState & _NEW_PIXEL)
+      gl_update_state(ctx);
 
    if (ctx->ImageTransferState & IMAGE_CONVOLUTION_BIT) {
       adjust_texture_size_for_convolution(ctx, dimensions,
@@ -1659,8 +1658,8 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       /* setup the teximage struct's fields */
       init_texture_image(ctx, texImage, postConvWidth, 1, 1, border, internalFormat);
 
-      if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
-         _mesa_update_image_transfer_state(ctx);
+      if (ctx->NewState & _NEW_PIXEL)
+         gl_update_state(ctx);
 
       /* process the texture image */
       if (pixels) {
@@ -1798,8 +1797,8 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       init_texture_image(ctx, texImage, postConvWidth, postConvHeight,
                          1, border, internalFormat);
 
-      if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
-         _mesa_update_image_transfer_state(ctx);
+      if (ctx->NewState & _NEW_PIXEL)
+         gl_update_state(ctx);
 
       /* process the texture image */
       if (pixels) {
@@ -1941,8 +1940,8 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       init_texture_image(ctx, texImage, width, height, depth,
                          border, internalFormat);
 
-      if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
-         _mesa_update_image_transfer_state(ctx);
+      if (ctx->NewState & _NEW_PIXEL)
+         gl_update_state(ctx);
 
       /* process the texture image */
       if (pixels) {
@@ -2228,8 +2227,8 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       GLint depth = texImage->Depth;
       GLint img, row;
 
-      if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
-         _mesa_update_image_transfer_state(ctx);
+      if (ctx->NewState & _NEW_PIXEL)
+         gl_update_state(ctx);
 
       if (ctx->ImageTransferState & IMAGE_CONVOLUTION_BIT) {
          /* convert texture image to GL_RGBA, GL_FLOAT */
@@ -2420,8 +2419,8 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
    if (width == 0 || !pixels)
       return;  /* no-op, not an error */
 
-   if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
-      _mesa_update_image_transfer_state(ctx);
+   if (ctx->NewState & _NEW_PIXEL)
+      gl_update_state(ctx);
 
    if (!ctx->ImageTransferState && ctx->Driver.TexSubImage1D) {
       success = (*ctx->Driver.TexSubImage1D)( ctx, target, level, xoffset,
@@ -2491,8 +2490,8 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
    if (width == 0 || height == 0 || !pixels)
       return;  /* no-op, not an error */
 
-   if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
-      _mesa_update_image_transfer_state(ctx);
+   if (ctx->NewState & _NEW_PIXEL)
+      gl_update_state(ctx);
 
    if (!ctx->ImageTransferState && ctx->Driver.TexSubImage2D) {
       success = (*ctx->Driver.TexSubImage2D)( ctx, target, level, xoffset,
@@ -2574,8 +2573,8 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
    if (width == 0 || height == 0 || height == 0 || !pixels)
       return;  /* no-op, not an error */
 
-   if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
-      _mesa_update_image_transfer_state(ctx);
+   if (ctx->NewState & _NEW_PIXEL)
+      gl_update_state(ctx);
 
    if (!ctx->ImageTransferState && ctx->Driver.TexSubImage3D) {
       success = (*ctx->Driver.TexSubImage3D)( ctx, target, level, xoffset,
@@ -2672,8 +2671,8 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
                                width, 1, border))
       return;
 
-   if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
-      _mesa_update_image_transfer_state(ctx);
+   if (ctx->NewState & _NEW_PIXEL)
+      gl_update_state(ctx);
 
    if (ctx->ImageTransferState || !ctx->Driver.CopyTexImage1D 
        || !(*ctx->Driver.CopyTexImage1D)(ctx, target, level,
@@ -2712,8 +2711,8 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
                                width, height, border))
       return;
 
-   if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
-      _mesa_update_image_transfer_state(ctx);
+   if (ctx->NewState & _NEW_PIXEL)
+      gl_update_state(ctx);
 
    if (ctx->ImageTransferState || !ctx->Driver.CopyTexImage2D
        || !(*ctx->Driver.CopyTexImage2D)(ctx, target, level,
@@ -2751,8 +2750,8 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
                                    xoffset, 0, 0, width, 1))
       return;
 
-   if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
-      _mesa_update_image_transfer_state(ctx);
+   if (ctx->NewState & _NEW_PIXEL)
+      gl_update_state(ctx);
 
    if (ctx->ImageTransferState || !ctx->Driver.CopyTexSubImage1D
        || !(*ctx->Driver.CopyTexSubImage1D)(ctx, target, level,
@@ -2798,8 +2797,8 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
                                    xoffset, yoffset, 0, width, height))
       return;
 
-   if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
-      _mesa_update_image_transfer_state(ctx);
+   if (ctx->NewState & _NEW_PIXEL)
+      gl_update_state(ctx);
 
    if (ctx->ImageTransferState || !ctx->Driver.CopyTexSubImage2D
        || !(*ctx->Driver.CopyTexSubImage2D)(ctx, target, level,
@@ -2845,8 +2844,8 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
                     xoffset, yoffset, zoffset, width, height))
       return;
 
-   if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
-      _mesa_update_image_transfer_state(ctx);
+   if (ctx->NewState & _NEW_PIXEL)
+      gl_update_state(ctx);
 
    if (ctx->ImageTransferState || !ctx->Driver.CopyTexSubImage3D
        || !(*ctx->Driver.CopyTexSubImage3D)(ctx, target, level,
