@@ -1,4 +1,4 @@
-/* $Id: glu.c,v 1.16 1999/10/27 09:47:41 brianp Exp $ */
+/* $Id: glu.c,v 1.17 1999/11/19 21:23:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: glu.c,v $
+ * Revision 1.17  1999/11/19 21:23:37  brianp
+ * replace encounteed with encountered
+ *
  * Revision 1.16  1999/10/27 09:47:41  brianp
  * disabled gluGetProcAddressEXT
  *
@@ -304,7 +307,7 @@ const GLubyte* GLAPIENTRY gluErrorString( GLenum errorCode )
       "unconnected trim curves",
       "unknown knot error",
       "negative vertex count encountered",
-      "negative byte-stride encounteed",
+      "negative byte-stride encountered",
       "unknown type descriptor",
       "null control array or knot vector",
       "duplicate point on pwlcurve"
