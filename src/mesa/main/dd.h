@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.3 1999/09/30 11:18:21 keithw Exp $ */
+/* $Id: dd.h,v 1.4 1999/10/21 12:46:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,10 +63,10 @@ struct gl_pipeline_stage;
  * The optional functions provide ways to take advantage of special hardware
  * or optimized algorithms.
  *
- * The function pointers in the dd_function_table struct are first
- * initialized in the "MakeCurrent" function.  The "MakeCurrent" function
- * is a little different in each device driver.  See the X/Mesa, GLX, or
- * OS/Mesa drivers for examples.
+ * The function pointers in the dd_function_table struct should first be
+ * initialized in the driver's "MakeCurrent" function.  The "MakeCurrent"
+ * function is a little different in each device driver.  See the X/Mesa,
+ * GLX, or OS/Mesa drivers for examples.
  *
  * Later, Mesa may call the dd_function_table's UpdateState() function.
  * This function should initialize the dd_function_table's pointers again.
@@ -81,7 +81,8 @@ struct gl_pipeline_stage;
  * for an example.
  *
  * For more information about writing a device driver see the ddsample.c
- * file and other device drivers (xmesa[123].c, osmesa.c, etc) for examples.
+ * file and other device drivers (X/xmesa[1234].c, OSMesa/osmesa.c, etc)
+ * for examples.
  *
  *
  * Look below in the dd_function_table struct definition for descriptions
@@ -132,8 +133,8 @@ struct dd_function_table {
    const char * (*RendererString)(void);
    /*
     * Return a string which uniquely identifies this device driver.
-    * The string should contain no whitespace.  Examples: "X11" "OffScreen"
-    * "MSWindows" "SVGA".
+    * The string should contain no whitespace.  Examples: "X11", "OffScreen",
+    * "MSWindows", "SVGA".
     * NOTE: This function will be obsolete in favor of GetString in the future!
     */
 
@@ -147,14 +148,14 @@ struct dd_function_table {
    void (*ClearIndex)( GLcontext *ctx, GLuint index );
    /*
     * Called whenever glClearIndex() is called.  Set the index for clearing
-    * the color buffer.
+    * the color buffer when in color index mode.
     */
 
    void (*ClearColor)( GLcontext *ctx, GLubyte red, GLubyte green,
                                         GLubyte blue, GLubyte alpha );
    /*
     * Called whenever glClearColor() is called.  Set the color for clearing
-    * the color buffer.
+    * the color buffer when in RGBA mode.
     */
 
    GLbitfield (*Clear)( GLcontext *ctx, GLbitfield mask, GLboolean all,
@@ -169,12 +170,14 @@ struct dd_function_table {
    void (*Index)( GLcontext *ctx, GLuint index );
    /*
     * Sets current color index for drawing flat-shaded primitives.
+    * This index should also be used in the "mono" drawing functions.
     */
 
    void (*Color)( GLcontext *ctx,
                   GLubyte red, GLubyte green, GLubyte glue, GLubyte alpha );
    /*
     * Sets current color for drawing flat-shaded primitives.
+    * This color should also be used in the "mono" drawing functions.
     */
 
    GLboolean (*SetBuffer)( GLcontext *ctx, GLenum buffer );
@@ -197,8 +200,7 @@ struct dd_function_table {
     *    GL_NONE - disable buffer write in device driver.
     */
 
-   void (*GetBufferSize)( GLcontext *ctx,
-                          GLuint *width, GLuint *height );
+   void (*GetBufferSize)( GLcontext *ctx, GLuint *width, GLuint *height );
    /*
     * Returns the width and height of the current color buffer.
     */
@@ -216,11 +218,14 @@ struct dd_function_table {
                          CONST GLubyte rgb[][3], const GLubyte mask[] );
    /* Write a horizontal run of RGB[A] pixels.  The later version is only
     * used to accelerate GL_RGB, GL_UNSIGNED_BYTE glDrawPixels() calls.
+    * If mask is NULL, draw all pixels.
+    * If mask is not null, only draw pixel [i] when mask [i] is true.
     */
 
    void (*WriteMonoRGBASpan)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
                               const GLubyte mask[] );
-   /* Write a horizontal run of mono-RGBA pixels.
+   /* Write a horizontal run of RGBA pixels all with the color last
+    * specified by the Color function.
     */
 
    void (*WriteRGBAPixels)( const GLcontext *ctx,
@@ -239,12 +244,15 @@ struct dd_function_table {
                           const GLuint index[], const GLubyte mask[] );
    void (*WriteCI8Span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
                          const GLubyte index[], const GLubyte mask[] );
-   /* Write a horizontal run of CI pixels.  32 or 8bpp.
+   /* Write a horizontal run of CI pixels.  One function is for 32bpp
+    * indexes and the other for 8bpp pixels (the common case).  You mus
+    * implement both for color index mode.
     */
 
    void (*WriteMonoCISpan)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
                             const GLubyte mask[] );
-   /* Write a horizontal run of mono-CI pixels.
+   /* Write a horizontal run of color index pixels using the color index
+    * last specified by the Index() function.
     */
 
    void (*WriteCI32Pixels)( const GLcontext *ctx,
@@ -257,8 +265,8 @@ struct dd_function_table {
    void (*WriteMonoCIPixels)( const GLcontext *ctx,
                               GLuint n, const GLint x[], const GLint y[],
                               const GLubyte mask[] );
-   /*
-    * Write a random array of mono-CI pixels.
+   /* Write a random array of color index pixels using the color index
+    * last specified by the Index() function.
     */
 
 
@@ -310,12 +318,12 @@ struct dd_function_table {
 
    void (*Finish)( GLcontext *ctx );
    /*
-    * Called whenever glFinish() is called.
+    * This is called whenever glFinish() is called.
     */
 
    void (*Flush)( GLcontext *ctx );
    /*
-    * Called whenever glFlush() is called.
+    * This is called whenever glFlush() is called.
     */
 
    GLboolean (*IndexMask)( GLcontext *ctx, GLuint mask );
@@ -418,16 +426,17 @@ struct dd_function_table {
                             GLenum format, GLenum type,
                             const struct gl_pixelstore_attrib *unpack,
                             const GLvoid *pixels );
-   /* Device driver hook for optimized glDrawPixels.  'unpack' describes how
-    * to unpack the source image data.
+   /* This is called by glDrawPixels.
+    * 'unpack' describes how to unpack the source image data.
+    * Return GL_TRUE if the driver succeeds, return GL_FALSE if core Mesa
+    * must do the job.
     */
 
    GLboolean (*Bitmap)( GLcontext *ctx,
                         GLint x, GLint y, GLsizei width, GLsizei height,
                         const struct gl_pixelstore_attrib *unpack,
                         const GLubyte *bitmap );
-   /* Device driver hook for optimized glBitmap.  'unpack' describes how
-    * to unpack the source image data.
+   /* This is called by glBitmap.  Works the same as DrawPixels, above.
     */
 
    void (*RenderStart)( GLcontext *ctx );
