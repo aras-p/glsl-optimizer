@@ -1,4 +1,4 @@
-/* $Id: mipmap.c,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: mipmap.c,v 1.2 1999/09/14 00:30:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,8 +23,11 @@
 
 /*
  * $Log: mipmap.c,v $
- * Revision 1.1  1999/08/19 00:55:42  jtg
- * Initial revision
+ * Revision 1.2  1999/09/14 00:30:28  brianp
+ * fixed pixel packing/unpacking code in gluBuild2DMipmaps()
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
+ * Imported sources
  *
  * Revision 1.13  1999/03/05 17:49:06  brianp
  * added support for GL_EXT_abgr (devernay@istar.fr)
@@ -715,6 +718,10 @@ GLint GLAPIENTRY gluBuild2DMipmaps( GLenum target, GLint components,
    void *image, *newimage;
    GLint neww, newh, level, bpp;
    int error;
+   GLboolean done;
+   GLint retval = 0;
+   GLint unpackrowlength, unpackalignment, unpackskiprows, unpackskippixels;
+   GLint packrowlength, packalignment, packskiprows, packskippixels;
 
    if (width < 1 || height < 1)
       return GLU_INVALID_VALUE;
@@ -736,6 +743,24 @@ GLint GLAPIENTRY gluBuild2DMipmaps( GLenum target, GLint components,
       return GLU_INVALID_ENUM;
    }
 
+   /* Get current glPixelStore values */
+   glGetIntegerv( GL_UNPACK_ROW_LENGTH, &unpackrowlength );
+   glGetIntegerv( GL_UNPACK_ALIGNMENT, &unpackalignment );
+   glGetIntegerv( GL_UNPACK_SKIP_ROWS, &unpackskiprows );
+   glGetIntegerv( GL_UNPACK_SKIP_PIXELS, &unpackskippixels );
+   glGetIntegerv( GL_PACK_ROW_LENGTH, &packrowlength );
+   glGetIntegerv( GL_PACK_ALIGNMENT, &packalignment );
+   glGetIntegerv( GL_PACK_SKIP_ROWS, &packskiprows );
+   glGetIntegerv( GL_PACK_SKIP_PIXELS, &packskippixels );
+
+   /* set pixel packing */
+   glPixelStorei( GL_PACK_ROW_LENGTH, 0 );
+   glPixelStorei( GL_PACK_ALIGNMENT, 1 );
+   glPixelStorei( GL_PACK_SKIP_ROWS, 0 );
+   glPixelStorei( GL_PACK_SKIP_PIXELS, 0 );
+
+   done = GL_FALSE;
+
    if (w!=width || h!=height) {
       /* must rescale image to get "top" mipmap texture image */
       image = malloc( (w+4) * h * bpp );
@@ -745,7 +770,8 @@ GLint GLAPIENTRY gluBuild2DMipmaps( GLenum target, GLint components,
       error = gluScaleImage( format, width, height, type, data,
 			     w, h, type, image );
       if (error) {
-	 return error;
+         retval = error;
+         done = GL_TRUE;
       }
    }
    else {
@@ -753,7 +779,15 @@ GLint GLAPIENTRY gluBuild2DMipmaps( GLenum target, GLint components,
    }
 
    level = 0;
-   while (1) {
+   while (!done) {
+      if (image != data) {
+         /* set pixel unpacking */
+         glPixelStorei( GL_UNPACK_ROW_LENGTH, 0 );
+         glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+         glPixelStorei( GL_UNPACK_SKIP_ROWS, 0 );
+         glPixelStorei( GL_UNPACK_SKIP_PIXELS, 0 );
+      }
+
       glTexImage2D( target, level, components, w, h, 0, format, type, image );
 
       if (w==1 && h==1)  break;
@@ -768,7 +802,8 @@ GLint GLAPIENTRY gluBuild2DMipmaps( GLenum target, GLint components,
       error =  gluScaleImage( format, w, h, type, image,
 			      neww, newh, type, newimage );
       if (error) {
-	 return error;
+         retval = error;
+         done = GL_TRUE;
       }
 
       if (image!=data) {
@@ -785,6 +820,16 @@ GLint GLAPIENTRY gluBuild2DMipmaps( GLenum target, GLint components,
       free( image );
    }
 
-   return 0;
+   /* Restore original glPixelStore state */
+   glPixelStorei( GL_UNPACK_ROW_LENGTH, unpackrowlength );
+   glPixelStorei( GL_UNPACK_ALIGNMENT, unpackalignment );
+   glPixelStorei( GL_UNPACK_SKIP_ROWS, unpackskiprows );
+   glPixelStorei( GL_UNPACK_SKIP_PIXELS, unpackskippixels );
+   glPixelStorei( GL_PACK_ROW_LENGTH, packrowlength );
+   glPixelStorei( GL_PACK_ALIGNMENT, packalignment );
+   glPixelStorei( GL_PACK_SKIP_ROWS, packskiprows );
+   glPixelStorei( GL_PACK_SKIP_PIXELS, packskippixels );
+
+   return retval;
 }
 
