@@ -52,6 +52,9 @@
 #define SWIZZLE_ONE  5		/* keep these values together: KW */
 
 
+extern struct program _mesa_DummyProgram;
+
+
 /*
  * Internal functions
  */

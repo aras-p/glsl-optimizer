@@ -49,7 +49,7 @@
 /* A pointer to this dummy program is put into the hash table when
  * glGenPrograms is called.
  */
-static struct program DummyProgram;
+struct program _mesa_DummyProgram;
 
 
 /**
@@ -938,7 +938,7 @@ _mesa_BindProgram(GLenum target, GLuint id)
    else {
       /* Bind user program */
       prog = (struct program *) _mesa_HashLookup(ctx->Shared->Programs, id);
-      if (!prog || prog == &DummyProgram) {
+      if (!prog || prog == &_mesa_DummyProgram) {
          /* allocate a new program now */
          prog = ctx->Driver.NewProgram(ctx, target, id);
          if (!prog) {
@@ -995,7 +995,7 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
       if (ids[i] != 0) {
          struct program *prog = (struct program *)
             _mesa_HashLookup(ctx->Shared->Programs, ids[i]);
-         if (prog == &DummyProgram) {
+         if (prog == &_mesa_DummyProgram) {
             _mesa_HashRemove(ctx->Shared->Programs, ids[i]);
          }
          else if (prog) {
@@ -1060,7 +1060,7 @@ _mesa_GenPrograms(GLsizei n, GLuint *ids)
 
    /* Insert pointer to dummy program as placeholder */
    for (i = 0; i < (GLuint) n; i++) {
-      _mesa_HashInsert(ctx->Shared->Programs, first + i, &DummyProgram);
+      _mesa_HashInsert(ctx->Shared->Programs, first + i, &_mesa_DummyProgram);
    }
 
    /* Return the program names */
