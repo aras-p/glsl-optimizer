@@ -1,4 +1,4 @@
-/* $Id: common_x86.c,v 1.22 2003/02/04 02:22:51 brianp Exp $ */
+/* $Id: common_x86.c,v 1.23 2003/10/14 23:47:22 kendallb Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,14 +52,12 @@ int _mesa_x86_cpu_features = 0;
 
 /* No reason for this to be public.
  */
-extern int	_mesa_identify_x86_cpu_features(void);
-
-extern GLuint	_mesa_x86_has_cpuid(void);
-extern void	_mesa_x86_cpuid(GLuint op, GLuint *reg_eax, GLuint *reg_ebx, GLuint *reg_ecx, GLuint *reg_edx);
-extern GLuint	_mesa_x86_cpuid_eax(GLuint op);
-extern GLuint	_mesa_x86_cpuid_ebx(GLuint op);
-extern GLuint	_mesa_x86_cpuid_ecx(GLuint op);
-extern GLuint	_mesa_x86_cpuid_edx(GLuint op);
+extern GLuint	_ASMAPI _mesa_x86_has_cpuid(void);
+extern void	    _ASMAPI _mesa_x86_cpuid(GLuint op, GLuint *reg_eax, GLuint *reg_ebx, GLuint *reg_ecx, GLuint *reg_edx);
+extern GLuint	_ASMAPI _mesa_x86_cpuid_eax(GLuint op);
+extern GLuint	_ASMAPI _mesa_x86_cpuid_ebx(GLuint op);
+extern GLuint	_ASMAPI _mesa_x86_cpuid_ecx(GLuint op);
+extern GLuint	_ASMAPI _mesa_x86_cpuid_edx(GLuint op);
 
 static void message( const char *msg )
 {

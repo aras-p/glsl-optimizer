@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: glx86asm.py,v 1.6 2002/06/11 01:26:58 brianp Exp $
+# $Id: glx86asm.py,v 1.7 2003/10/14 23:47:21 kendallb Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -58,6 +58,7 @@ def PrintHead():
 	print '#define GLOBL_FN(x) GLOBL x'
 	print '#endif'
 	print ''
+	print 'SEG_TEXT'
 	print ''
 	print 'EXTERN GLNAME(_glapi_Dispatch)'
 	print ''
