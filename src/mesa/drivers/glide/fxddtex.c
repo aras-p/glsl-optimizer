@@ -43,9 +43,6 @@
  */
 
 
-/* fxddtex.c - 3Dfx VooDoo Texture mapping functions */
-
-
 #ifdef HAVE_CONFIG_H
 #include "conf.h"
 #endif
@@ -127,13 +124,8 @@ static tfxTexInfo *fxAllocTexObjData(fxMesaContext fxMesa)
   ti->sClamp=GR_TEXTURECLAMP_WRAP;
   ti->tClamp=GR_TEXTURECLAMP_WRAP;
 
-  if(fxMesa->haveTwoTMUs) {
-    ti->mmMode=GR_MIPMAP_NEAREST;
-    ti->LODblend=FXTRUE;
-  } else {
-    ti->mmMode=GR_MIPMAP_NEAREST_DITHER;
-    ti->LODblend=FXFALSE;
-  }
+  ti->mmMode=GR_MIPMAP_NEAREST;
+  ti->LODblend=FXFALSE;
 
   for(i=0;i<MAX_TEXTURE_LEVELS;i++) {
     ti->mipmapLevel[i].used=GL_FALSE;

@@ -256,10 +256,10 @@ typedef struct {
 
 #define FX_UM_E_IFMT                0x00fff000
 
-#define FX_UM_COLOR_ITERATED        0x00100000
-#define FX_UM_COLOR_CONSTANT        0x00200000
-#define FX_UM_ALPHA_ITERATED        0x00400000
-#define FX_UM_ALPHA_CONSTANT        0x00800000
+#define FX_UM_COLOR_ITERATED        0x01000000
+#define FX_UM_COLOR_CONSTANT        0x02000000
+#define FX_UM_ALPHA_ITERATED        0x04000000
+#define FX_UM_ALPHA_CONSTANT        0x08000000
 
 typedef void (*tfxRenderVBFunc)(GLcontext *);
 
@@ -471,7 +471,6 @@ struct tfxMesaContext {
   GLuint texBindNumber;
   GLint tmuSrc;
   GLuint lastUnitsMode;
-  GLuint texStart[FX_NUM_TMU];
   GLuint freeTexMem[FX_NUM_TMU];
   MemRange *tmPool;
   MemRange *tmFree[FX_NUM_TMU];
@@ -621,6 +620,7 @@ extern void fxTMInit(fxMesaContext ctx);
 extern void fxTMClose(fxMesaContext ctx);
 extern void fxTMMoveInTM(fxMesaContext, struct gl_texture_object *, GLint);
 extern void fxTMMoveOutTM(fxMesaContext, struct gl_texture_object *);
+#define fxTMMoveOutTM_NoLock fxTMMoveOutTM
 extern void fxTMFreeTexture(fxMesaContext, struct gl_texture_object *);
 extern void fxTMReloadMipMapLevel(fxMesaContext, struct gl_texture_object *, GLint);
 extern void fxTMReloadSubMipMapLevel(fxMesaContext, struct gl_texture_object *,
@@ -670,9 +670,6 @@ extern void fxSetScissorValues(GLcontext *ctx);
 extern void fxTMMoveInTM_NoLock(fxMesaContext fxMesa, 
 				struct gl_texture_object *tObj, 
 				GLint where);
-extern void fxSetupTexture_NoLock(GLcontext *ctx);
-extern void fxSetupTexture(GLcontext *ctx);
-
 extern void fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder);
 
 #endif

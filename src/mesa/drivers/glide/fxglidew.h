@@ -223,23 +223,23 @@ typedef struct
 
 typedef struct
 {
-  float x, y;         /* X and Y in screen space */
-  float ooz;          /* 65535/Z (used for Z-buffering) */
-  float oow;          /* 1/W (used for W-buffering, texturing) */
-  float r, g, b, a;   /* R, G, B, A [0..255.0] */
-  float z;            /* Z is ignored */
+  float x, y, z;                /* X, Y, and Z of scrn space -- Z is ignored */
+  float r, g, b;                /* R, G, B, ([0..255.0]) */
+  float ooz;                    /* 65535/Z (used for Z-buffering) */
+  float a;                      /* Alpha [0..255.0] */
+  float oow;                    /* 1/W (used for W-buffering, texturing) */
   GrTmuVertex  tmuvtx[GLIDE_NUM_TMU];
 } GrVertex;
 
 #define GR_VERTEX_X_OFFSET              0
 #define GR_VERTEX_Y_OFFSET              1
-#define GR_VERTEX_OOZ_OFFSET            2
-#define GR_VERTEX_OOW_OFFSET            3
-#define GR_VERTEX_R_OFFSET              4
-#define GR_VERTEX_G_OFFSET              5
-#define GR_VERTEX_B_OFFSET              6
+#define GR_VERTEX_Z_OFFSET              2
+#define GR_VERTEX_R_OFFSET              3
+#define GR_VERTEX_G_OFFSET              4
+#define GR_VERTEX_B_OFFSET              5
+#define GR_VERTEX_OOZ_OFFSET            6
 #define GR_VERTEX_A_OFFSET              7
-#define GR_VERTEX_Z_OFFSET              8
+#define GR_VERTEX_OOW_OFFSET            8
 #define GR_VERTEX_SOW_TMU0_OFFSET       9
 #define GR_VERTEX_TOW_TMU0_OFFSET       10
 #define GR_VERTEX_OOW_TMU0_OFFSET       11
@@ -473,7 +473,6 @@ typedef struct
 #else
 	#define FX_setupGrVertexLayout()		do {} while (0)
 #endif
-
 /*
  * grSstControl stuff
  */

@@ -403,10 +403,16 @@ static GLboolean fxDDDrawBitMap(GLcontext *ctx, GLint px, GLint py,
   g=(GLint)(ctx->Current.RasterColor[1]*255.0f);
   b=(GLint)(ctx->Current.RasterColor[2]*255.0f);
   a=(GLint)(ctx->Current.RasterColor[3]*255.0f);
-  color=(FxU16)
-    ( ((FxU16)0xf8 & b) <<(11-3))  |
-    ( ((FxU16)0xfc & g) <<(5-3+1)) |
-    ( ((FxU16)0xf8 & r) >> 3);
+  if (fxMesa->bgrOrder)
+    color=(FxU16)
+      ( ((FxU16)0xf8 & b) <<(11-3))  |
+      ( ((FxU16)0xfc & g) <<(5-3+1)) |
+      ( ((FxU16)0xf8 & r) >> 3);
+  else
+    color=(FxU16)
+      ( ((FxU16)0xf8 & r) <<(11-3))  |
+      ( ((FxU16)0xfc & g) <<(5-3+1)) |
+      ( ((FxU16)0xf8 & b) >> 3);
 
   stride=info.strideInBytes>>1;
 

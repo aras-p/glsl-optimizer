@@ -59,10 +59,11 @@ static GLuint fxGetTexSetConfiguration(GLcontext *ctx,
 				struct gl_texture_object *tObj0,
 				struct gl_texture_object *tObj1);
 static void fxSetupTextureSingleTMU_NoLock(GLcontext *ctx, GLuint textureset);
-static void fxSetupTextureSingleTMU(GLcontext *ctx, GLuint textureset);
 static void fxSetupDoubleTMU_NoLock(fxMesaContext fxMesa, 
 			     struct gl_texture_object *tObj0,
 			     struct gl_texture_object *tObj1);
+static void fxSetupTexture_NoLock(GLcontext *ctx);
+static void fxSetupTexture(GLcontext *ctx);
 static void fxSetupBlend(GLcontext *ctx);
 static void fxSetupDepthTest(GLcontext *ctx);
 static void fxFogTableGenerate(GLcontext *ctx);
@@ -70,6 +71,7 @@ static void fxSetupFog(GLcontext *ctx, GLboolean forceTableRebuild);
 static void fxSetupScissor(GLcontext *ctx);
 static void fxSetupCull(GLcontext *ctx);
 static void gl_print_fx_state_flags( const char *msg, GLuint flags);
+static GLboolean fxMultipassBlend(struct vertex_buffer *, GLuint);
 static GLboolean fxMultipassTexture( struct vertex_buffer *, GLuint );
 
 static void fxTexValidate(GLcontext *ctx, struct gl_texture_object *tObj)
@@ -118,6 +120,8 @@ static void fxTexValidate(GLcontext *ctx, struct gl_texture_object *tObj)
   case GL_REPEAT:
     ti->sClamp=0;
     break;
+  default:
+    ;  /* silence compiler warning */
   }
   switch (tObj->WrapT) {
   case GL_CLAMP_TO_EDGE:
@@ -128,6 +132,8 @@ static void fxTexValidate(GLcontext *ctx, struct gl_texture_object *tObj)
   case GL_REPEAT:
     ti->tClamp=0;
     break;
+  default:
+    ;  /* silence compiler warning */
   }
 
   ti->validated=GL_TRUE;
@@ -192,6 +198,10 @@ static GLuint fxGetTexSetConfiguration(GLcontext *ctx,
   else
     unitsmode|=FX_UM_COLOR_CONSTANT;
 
+  /* 
+     OpenGL Feeds Texture 0 into Texture 1
+     Glide Feeds Texture 1 into Texture 0
+  */
   if(tObj0) {
     tfxTexInfo *ti0=fxTMGetTexInfo(tObj0);
 
@@ -289,7 +299,7 @@ static GLuint fxGetTexSetConfiguration(GLcontext *ctx,
 
   unitsmode|=(ifmt | envmode);
 
-  if (MESA_VERBOSE & (VERBOSE_DRIVER|VERBOSE_TEXTURE))
+  if (MESA_VERBOSE & (VERBOSE_DRIVER|VERBOSE_TEXTURE)) 
      fxPrintUnitsMode("unitsmode", unitsmode);
 
   return unitsmode;
@@ -304,7 +314,20 @@ static GLuint fxGetTexSetConfiguration(GLcontext *ctx,
 static void fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
 {
   tfxTexInfo *ti=fxTMGetTexInfo(tObj);
+  int tmu;
 
+  /* Make sure we're not loaded incorrectly */
+  if (ti->isInTM) {
+    if (ti->LODblend) {
+      if (ti->whichTMU!=FX_TMU_SPLIT)
+	fxTMMoveOutTM(fxMesa, tObj);
+    } else {
+      if (ti->whichTMU==FX_TMU_SPLIT)
+	fxTMMoveOutTM(fxMesa, tObj);
+    }
+  }
+
+  /* Make sure we're loaded correctly */
   if (!ti->isInTM) {
     if (ti->LODblend)
       fxTMMoveInTM_NoLock(fxMesa,tObj,FX_TMU_SPLIT);
@@ -312,10 +335,11 @@ static void fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_obje
       if (fxMesa->haveTwoTMUs) {
 	if (fxMesa->freeTexMem[FX_TMU0] >
 	    FX_grTexTextureMemRequired_NoLock(GR_MIPMAPLEVELMASK_BOTH,
-					      &(ti->info)))
-	  fxTMMoveInTM_NoLock(fxMesa,tObj,FX_TMU0);
-	else
-	  fxTMMoveInTM_NoLock(fxMesa,tObj,FX_TMU1);
+					      &(ti->info))) {
+	  fxTMMoveInTM_NoLock(fxMesa,tObj, FX_TMU0);
+	} else {
+	  fxTMMoveInTM_NoLock(fxMesa,tObj, FX_TMU1);
+	}
       } else
 	fxTMMoveInTM_NoLock(fxMesa,tObj,FX_TMU0);
     }
@@ -342,11 +366,14 @@ static void fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_obje
     FX_grTexSource_NoLock(GR_TMU1,ti->tm[FX_TMU1]->startAddr,
 			  GR_MIPMAPLEVELMASK_EVEN,&(ti->info));
   } else {
+    if (ti->whichTMU==FX_TMU_BOTH) tmu=FX_TMU0;
+    else tmu=ti->whichTMU;
+
     if((ti->info.format==GR_TEXFMT_P_8) && (!fxMesa->haveGlobalPaletteTexture)) {
        if (MESA_VERBOSE&VERBOSE_DRIVER) {
 	  fprintf(stderr,"fxmesa: uploading texture palette\n");
        }
-      FX_grTexDownloadTable_NoLock(ti->whichTMU,GR_TEXTABLE_PALETTE,&(ti->palette));
+      FX_grTexDownloadTable_NoLock(tmu, GR_TEXTABLE_PALETTE, &(ti->palette));
     }
 
     /* KW: The alternative is to do the download to the other tmu.  If
@@ -356,23 +383,17 @@ static void fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_obje
     if (ti->LODblend && (MESA_VERBOSE&VERBOSE_DRIVER))
        fprintf(stderr, "fxmesa: not blending texture - only on one tmu\n");
 
-    FX_grTexClampMode_NoLock(ti->whichTMU,ti->sClamp,ti->tClamp);
-    FX_grTexFilterMode_NoLock(ti->whichTMU,ti->minFilt,ti->maxFilt);
-    FX_grTexMipMapMode_NoLock(ti->whichTMU,ti->mmMode,FXFALSE);
+    FX_grTexClampMode_NoLock(tmu, ti->sClamp, ti->tClamp);
+    FX_grTexFilterMode_NoLock(tmu, ti->minFilt, ti->maxFilt);
+    FX_grTexMipMapMode_NoLock(tmu, ti->mmMode, FXFALSE);
 
-    FX_grTexSource_NoLock(ti->whichTMU,
-			  ti->tm[ti->whichTMU]->startAddr,
-			  GR_MIPMAPLEVELMASK_BOTH,&(ti->info));
+    FX_grTexSource_NoLock(tmu, ti->tm[tmu]->startAddr,
+			  GR_MIPMAPLEVELMASK_BOTH, &(ti->info));
   }
 }
 
-static void fxSetupSingleTMU(fxMesaContext fxMesa, struct gl_texture_object *tObj) {
-  BEGIN_BOARD_LOCK();
-  fxSetupSingleTMU_NoLock(fxMesa, tObj);
-  END_BOARD_LOCK();
-}
-
-static void fxSelectSingleTMUSrc_NoLock(fxMesaContext fxMesa, GLint tmu, FxBool LODblend)
+static void fxSelectSingleTMUSrc_NoLock(fxMesaContext fxMesa, GLint tmu, 
+					FxBool LODblend)
 {
    if (MESA_VERBOSE&VERBOSE_DRIVER) {
       fprintf(stderr,"fxmesa: fxSelectSingleTMUSrc(%d,%d)\n",tmu,LODblend);
@@ -390,15 +411,17 @@ static void fxSelectSingleTMUSrc_NoLock(fxMesaContext fxMesa, GLint tmu, FxBool 
 			   GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
 			   GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
 			   FXFALSE,FXFALSE);
-
     fxMesa->tmuSrc=FX_TMU_SPLIT;
   } else {
-    if(tmu==FX_TMU0) {
+    if (tmu!=FX_TMU1) {
       FX_grTexCombine_NoLock(GR_TMU0,
 			     GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
 			     GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
 			     FXFALSE,FXFALSE);
-      
+      FX_grTexCombine_NoLock(GR_TMU1,
+			     GR_COMBINE_FUNCTION_ZERO, GR_COMBINE_FACTOR_NONE,
+			     GR_COMBINE_FUNCTION_ZERO, GR_COMBINE_FACTOR_NONE,
+			     FXFALSE,FXFALSE);
       fxMesa->tmuSrc=FX_TMU0;
     } else {
       FX_grTexCombine_NoLock(GR_TMU1,
@@ -409,8 +432,10 @@ static void fxSelectSingleTMUSrc_NoLock(fxMesaContext fxMesa, GLint tmu, FxBool 
       /* GR_COMBINE_FUNCTION_SCALE_OTHER doesn't work ?!? */
     
       FX_grTexCombine_NoLock(GR_TMU0,
-			     GR_COMBINE_FUNCTION_BLEND,GR_COMBINE_FACTOR_ONE,
-			     GR_COMBINE_FUNCTION_BLEND,GR_COMBINE_FACTOR_ONE,
+			     GR_COMBINE_FUNCTION_BLEND,
+			     GR_COMBINE_FACTOR_ONE,
+			     GR_COMBINE_FUNCTION_BLEND,
+			     GR_COMBINE_FACTOR_ONE,
 			     FXFALSE,FXFALSE);
     
       fxMesa->tmuSrc=FX_TMU1;
@@ -426,6 +451,7 @@ static void fxSetupTextureSingleTMU_NoLock(GLcontext *ctx, GLuint textureset)
   GLint ifmt;
   tfxTexInfo *ti;
   struct gl_texture_object *tObj=ctx->Texture.Unit[textureset].CurrentD[2];
+  int tmu;
 
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
      fprintf(stderr,"fxmesa: fxSetupTextureSingleTMU(...) Start\n");
@@ -437,8 +463,10 @@ static void fxSetupTextureSingleTMU_NoLock(GLcontext *ctx, GLuint textureset)
 
   fxSetupSingleTMU_NoLock(fxMesa,tObj);
 
-  if(fxMesa->tmuSrc!=ti->whichTMU)
-    fxSelectSingleTMUSrc_NoLock(fxMesa,ti->whichTMU,ti->LODblend);
+  if (ti->whichTMU==FX_TMU_BOTH) tmu=FX_TMU0;
+  else tmu=ti->whichTMU;
+  if (fxMesa->tmuSrc!=tmu)
+    fxSelectSingleTMUSrc_NoLock(fxMesa, tmu, ti->LODblend);
 
   if(textureset==0 || !fxMesa->haveTwoTMUs)
     unitsmode=fxGetTexSetConfiguration(ctx,tObj,NULL);
@@ -504,10 +532,30 @@ static void fxSetupTextureSingleTMU_NoLock(GLcontext *ctx, GLuint textureset)
 			       FXFALSE);
     break;
   case GL_BLEND:
+#if 0
+    FX_grAlphaCombine_NoLock(GR_COMBINE_FUNCTION_SCALE_OTHER,
+			     GR_COMBINE_FACTOR_LOCAL,
+			     locala,
+			     GR_COMBINE_OTHER_TEXTURE,
+			     FXFALSE);
+    if (ifmt==GL_ALPHA)
+      FX_grColorCombine_NoLock(GR_COMBINE_FUNCTION_LOCAL,
+			       GR_COMBINE_FACTOR_NONE,
+			       localc,
+			       GR_COMBINE_OTHER_NONE,
+			       FXFALSE);
+    else
+      FX_grColorCombine_NoLock(GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL,
+			       GR_COMBINE_FACTOR_LOCAL,
+			       localc,
+			       GR_COMBINE_OTHER_TEXTURE,
+			       FXTRUE);
+    ctx->Driver.MultipassFunc = fxMultipassBlend;
+#else
 #ifndef FX_SILENT
     fprintf(stderr,"fx Driver: GL_BLEND not yet supported\n");
 #endif
-    /* TO DO (I think that the Voodoo Graphics isn't able to support GL_BLEND) */
+#endif    
     break;
   case GL_REPLACE:
     if((ifmt==GL_RGB) || (ifmt==GL_LUMINANCE))
@@ -570,87 +618,87 @@ static void fxSetupDoubleTMU_NoLock(fxMesaContext fxMesa,
   tfxTexInfo *ti0=fxTMGetTexInfo(tObj0);
   tfxTexInfo *ti1=fxTMGetTexInfo(tObj1);
   GLuint tstate=0;
+  int tmu0=0, tmu1=1;
 
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
      fprintf(stderr,"fxmesa: fxSetupDoubleTMU(...)\n");
   }
 
-  if(ti0->isInTM) {
-    if(ti0->whichTMU==FX_TMU0)
-      tstate|=T0_IN_TMU0;
-    else if(ti0->whichTMU==FX_TMU1)
-      tstate|=T0_IN_TMU1;
-    else {
-      fxTMMoveOutTM(fxMesa,tObj0);
-      tstate|=T0_NOT_IN_TMU;
-    }
-  } else
-    tstate|=T0_NOT_IN_TMU;
+  /* We shouldn't need to do this. There is something wrong with
+     mutlitexturing when the TMUs are swapped. So, we're forcing
+     them to always be loaded correctly. !!! */
+  if (ti0->whichTMU==FX_TMU1)
+    fxTMMoveOutTM_NoLock(fxMesa, tObj0);
+  if (ti1->whichTMU==FX_TMU0)
+    fxTMMoveOutTM_NoLock(fxMesa, tObj1);
 
-  if(ti1->isInTM) {
-    if(ti1->whichTMU==FX_TMU0)
-      tstate|=T1_IN_TMU0;
-    else if(ti1->whichTMU==FX_TMU1)
-      tstate|=T1_IN_TMU1;
-    else {
-      fxTMMoveOutTM(fxMesa,tObj1);
-      tstate|=T1_NOT_IN_TMU;
+  if (ti0->isInTM) {
+    switch (ti0->whichTMU) {
+    case FX_TMU0:
+      tstate|=T0_IN_TMU0;
+      break;
+    case FX_TMU1:
+      tstate|=T0_IN_TMU1;
+      break;
+    case FX_TMU_BOTH:
+      tstate|=T0_IN_TMU0|T0_IN_TMU1;
+      break;
+    case FX_TMU_SPLIT:
+      tstate|=T0_NOT_IN_TMU;
+      break;
     }
-  } else
-    tstate|=T1_NOT_IN_TMU;
+  } else tstate|=T0_NOT_IN_TMU;
+
+  if (ti1->isInTM) {
+    switch (ti1->whichTMU) {
+    case FX_TMU0:
+      tstate|=T1_IN_TMU0;
+      break;
+    case FX_TMU1:
+      tstate|=T1_IN_TMU1;
+      break;
+    case FX_TMU_BOTH:
+      tstate|=T1_IN_TMU0|T1_IN_TMU1;
+      break;
+    case FX_TMU_SPLIT:
+      tstate|=T1_NOT_IN_TMU;
+      break;
+    }
+  } else tstate|=T1_NOT_IN_TMU;
 
   ti0->lastTimeUsed=fxMesa->texBindNumber;
   ti1->lastTimeUsed=fxMesa->texBindNumber;
 
-  /* Move texture maps in TMUs */ 
+  /* Move texture maps into TMUs */ 
 
-  switch(tstate) {
-  case (T0_IN_TMU0 | T1_IN_TMU0):
-    fxTMMoveOutTM(fxMesa,tObj1);
-
-    fxTMMoveInTM_NoLock(fxMesa,tObj1,FX_TMU1);
-    break;
-
-  case (T0_IN_TMU1 | T1_IN_TMU1):
-    fxTMMoveOutTM(fxMesa,tObj0);
-
-    fxTMMoveInTM_NoLock(fxMesa,tObj0,FX_TMU0);
-    break;
-
-  case (T0_NOT_IN_TMU | T1_NOT_IN_TMU):
-    fxTMMoveInTM_NoLock(fxMesa,tObj0,FX_TMU0);
-    fxTMMoveInTM_NoLock(fxMesa,tObj1,FX_TMU1);
-    break;
-
-    /*** T0/T1 ***/
-
-  case (T0_NOT_IN_TMU | T1_IN_TMU0):
-    fxTMMoveInTM_NoLock(fxMesa,tObj0,FX_TMU1);
-    break;
-
-  case (T0_NOT_IN_TMU | T1_IN_TMU1):
-    fxTMMoveInTM_NoLock(fxMesa,tObj0,FX_TMU0);
-    break;
-
-  case (T0_IN_TMU0 | T1_NOT_IN_TMU):
-    fxTMMoveInTM_NoLock(fxMesa,tObj1,FX_TMU1);
-    break;
-
-  case (T0_IN_TMU1 | T1_NOT_IN_TMU):
-    fxTMMoveInTM_NoLock(fxMesa,tObj1,FX_TMU0);
-    break;
-
-    /*** Best Case ***/
-
-  case (T0_IN_TMU1 | T1_IN_TMU0):
-  case (T0_IN_TMU0 | T1_IN_TMU1):
-    break;
-
-  default:
-    fprintf(stderr,"fx Driver: internal error in fxSetupDoubleTMU()\n");
-    fxCloseHardware();
-    exit(-1);
-    break;
+  if (!(((tstate&T0_IN_TMU0) && (tstate&T1_IN_TMU1)) ||
+	((tstate&T0_IN_TMU1) && (tstate&T1_IN_TMU0)))) {
+    if (tObj0==tObj1) fxTMMoveInTM_NoLock(fxMesa, tObj1, FX_TMU_BOTH);
+    else {
+      /* Find the minimal way to correct the situation */
+      if ((tstate&T0_IN_TMU0) || (tstate&T1_IN_TMU1)) {
+	/* We have one in the standard order, setup the other */
+	if (tstate&T0_IN_TMU0) { /* T0 is in TMU0, put T1 in TMU1 */
+	  fxTMMoveInTM_NoLock(fxMesa, tObj1, FX_TMU1);
+	} else {
+	  fxTMMoveInTM_NoLock(fxMesa, tObj0, FX_TMU0);
+	}
+	/* tmu0 and tmu1 are setup */
+      } else if ((tstate&T0_IN_TMU1) || (tstate&T1_IN_TMU0)) {
+	/* we have one in the reverse order, setup the other */
+	if (tstate&T1_IN_TMU0) { /* T1 is in TMU0, put T0 in TMU1 */
+	  fxTMMoveInTM_NoLock(fxMesa, tObj0, FX_TMU1);
+	} else {
+	  fxTMMoveInTM_NoLock(fxMesa, tObj1, FX_TMU0);
+	}
+	tmu0=1;
+	tmu1=0;
+      } else { /* Nothing is loaded */
+	fxTMMoveInTM_NoLock(fxMesa, tObj0, FX_TMU0);
+	fxTMMoveInTM_NoLock(fxMesa, tObj1, FX_TMU1);
+	/* tmu0 and tmu1 are setup */
+      }
+    }
   }
 
   if (!fxMesa->haveGlobalPaletteTexture) {
@@ -658,30 +706,28 @@ static void fxSetupDoubleTMU_NoLock(fxMesaContext fxMesa,
        if (MESA_VERBOSE&VERBOSE_DRIVER) {
 	  fprintf(stderr,"fxmesa: uploading texture palette TMU0\n");
        }
-       FX_grTexDownloadTable_NoLock(ti0->whichTMU,GR_TEXTABLE_PALETTE,&(ti0->palette));
+       FX_grTexDownloadTable_NoLock(tmu0, GR_TEXTABLE_PALETTE, &(ti0->palette));
     }
 
     if (ti1->info.format==GR_TEXFMT_P_8) {
        if (MESA_VERBOSE&VERBOSE_DRIVER) {
 	  fprintf(stderr,"fxmesa: uploading texture palette TMU1\n");
        }
-       FX_grTexDownloadTable_NoLock(ti1->whichTMU, GR_TEXTABLE_PALETTE,&(ti1->palette));
+       FX_grTexDownloadTable_NoLock(tmu1, GR_TEXTABLE_PALETTE, &(ti1->palette));
     }
   }
 
-  FX_grTexSource_NoLock(ti0->whichTMU,
-			ti0->tm[ti0->whichTMU]->startAddr,
-			GR_MIPMAPLEVELMASK_BOTH,&(ti0->info));
-  FX_grTexClampMode_NoLock(ti0->whichTMU,ti0->sClamp,ti0->tClamp);
-  FX_grTexFilterMode_NoLock(ti0->whichTMU,ti0->minFilt,ti0->maxFilt);
-  FX_grTexMipMapMode_NoLock(ti0->whichTMU,ti0->mmMode,FXFALSE);
+  FX_grTexSource_NoLock(tmu0, ti0->tm[tmu0]->startAddr, 
+			GR_MIPMAPLEVELMASK_BOTH, &(ti0->info));
+  FX_grTexClampMode_NoLock(tmu0, ti0->sClamp, ti0->tClamp);
+  FX_grTexFilterMode_NoLock(tmu0, ti0->minFilt, ti0->maxFilt);
+  FX_grTexMipMapMode_NoLock(tmu0, ti0->mmMode, FXFALSE);
 
-  FX_grTexSource_NoLock(ti1->whichTMU,
-			ti1->tm[ti1->whichTMU]->startAddr,
-			GR_MIPMAPLEVELMASK_BOTH,&(ti1->info));
-  FX_grTexClampMode_NoLock(ti1->whichTMU,ti1->sClamp,ti1->tClamp);
-  FX_grTexFilterMode_NoLock(ti1->whichTMU,ti1->minFilt,ti1->maxFilt);
-  FX_grTexMipMapMode_NoLock(ti1->whichTMU,ti1->mmMode,FXFALSE);
+  FX_grTexSource_NoLock(tmu1, ti1->tm[tmu1]->startAddr,
+			GR_MIPMAPLEVELMASK_BOTH, &(ti1->info));
+  FX_grTexClampMode_NoLock(tmu1, ti1->sClamp, ti1->tClamp);
+  FX_grTexFilterMode_NoLock(tmu1, ti1->minFilt, ti1->maxFilt);
+  FX_grTexMipMapMode_NoLock(tmu1, ti1->mmMode, FXFALSE);
 
 #undef T0_NOT_IN_TMU
 #undef T1_NOT_IN_TMU
@@ -699,6 +745,7 @@ static void fxSetupTextureDoubleTMU_NoLock(GLcontext *ctx)
   struct gl_texture_object *tObj0=ctx->Texture.Unit[0].CurrentD[2];
   struct gl_texture_object *tObj1=ctx->Texture.Unit[1].CurrentD[2];
   GLuint envmode,ifmt,unitsmode;
+  int tmu0=0, tmu1=1;
 
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
      fprintf(stderr,"fxmesa: fxSetupTextureDoubleTMU(...) Start\n");
@@ -742,6 +789,10 @@ static void fxSetupTextureDoubleTMU_NoLock(GLcontext *ctx)
 	     gl_lookup_enum_by_nr(ctx->Texture.Unit[1].EnvMode));
 
 
+  if ((ti0->whichTMU==FX_TMU1) || (ti1->whichTMU==FX_TMU0)) {
+    tmu0=1;
+    tmu1=0;
+  }
   fxMesa->tmuSrc=FX_TMU_BOTH;
   switch(envmode) {
   case (FX_UM_E0_MODULATE | FX_UM_E1_MODULATE):
@@ -749,14 +800,14 @@ static void fxSetupTextureDoubleTMU_NoLock(GLcontext *ctx)
       GLboolean isalpha[FX_NUM_TMU];
 
       if(ti0->baseLevelInternalFormat==GL_ALPHA)
-	isalpha[ti0->whichTMU]=GL_TRUE;
+	isalpha[tmu0]=GL_TRUE;
       else
-	isalpha[ti0->whichTMU]=GL_FALSE;
+	isalpha[tmu0]=GL_FALSE;
 
       if(ti1->baseLevelInternalFormat==GL_ALPHA)
-	isalpha[ti1->whichTMU]=GL_TRUE;
+	isalpha[tmu1]=GL_TRUE;
       else
-	isalpha[ti1->whichTMU]=GL_FALSE;
+	isalpha[tmu1]=GL_FALSE;
 	
       if(isalpha[FX_TMU1])
 	FX_grTexCombine_NoLock(GR_TMU1,
@@ -802,7 +853,7 @@ static void fxSetupTextureDoubleTMU_NoLock(GLcontext *ctx)
       break;
     }
   case (FX_UM_E0_REPLACE | FX_UM_E1_BLEND): /* Only for GLQuake */
-    if(ti1->whichTMU==FX_TMU1) {
+    if (tmu1==FX_TMU1) {
       FX_grTexCombine_NoLock(GR_TMU1,
 			     GR_COMBINE_FUNCTION_LOCAL,
 			     GR_COMBINE_FACTOR_NONE,
@@ -845,7 +896,7 @@ static void fxSetupTextureDoubleTMU_NoLock(GLcontext *ctx)
 			     FXFALSE);
     break;
   case (FX_UM_E0_REPLACE | FX_UM_E1_MODULATE): /* Quake 2 and 3 */
-    if(ti1->whichTMU==FX_TMU1) {
+    if (tmu1==FX_TMU1) {
       FX_grTexCombine_NoLock(GR_TMU1,
 			     GR_COMBINE_FUNCTION_LOCAL,
 			     GR_COMBINE_FACTOR_NONE,
@@ -903,14 +954,14 @@ static void fxSetupTextureDoubleTMU_NoLock(GLcontext *ctx)
       GLboolean isalpha[FX_NUM_TMU];
 
       if(ti0->baseLevelInternalFormat==GL_ALPHA)
-	isalpha[ti0->whichTMU]=GL_TRUE;
+	isalpha[tmu0]=GL_TRUE;
       else
-	isalpha[ti0->whichTMU]=GL_FALSE;
+	isalpha[tmu0]=GL_FALSE;
 
       if(ti1->baseLevelInternalFormat==GL_ALPHA)
-	isalpha[ti1->whichTMU]=GL_TRUE;
+	isalpha[tmu1]=GL_TRUE;
       else
-	isalpha[ti1->whichTMU]=GL_FALSE;
+	isalpha[tmu1]=GL_FALSE;
 	
       if(isalpha[FX_TMU1])
 	FX_grTexCombine_NoLock(GR_TMU1,
@@ -955,7 +1006,9 @@ static void fxSetupTextureDoubleTMU_NoLock(GLcontext *ctx)
 			       FXFALSE);
       break;
     }
-    
+  default:
+    fprintf(stderr, "Unexpected dual texture mode encountered\n");
+    break;
   }
 
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
@@ -1006,7 +1059,7 @@ static void fxSetupTextureNone_NoLock(GLcontext *ctx)
 /************************** Texture Mode SetUp **************************/
 /************************************************************************/
 
-void fxSetupTexture_NoLock(GLcontext *ctx)
+static void fxSetupTexture_NoLock(GLcontext *ctx)
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   GLuint tex2Denabled;
@@ -1050,7 +1103,7 @@ void fxSetupTexture_NoLock(GLcontext *ctx)
   }
 }
 
-void fxSetupTexture(GLcontext *ctx) {
+static void fxSetupTexture(GLcontext *ctx) {
   BEGIN_BOARD_LOCK();
   fxSetupTexture_NoLock(ctx);
   END_BOARD_LOCK();
@@ -1150,11 +1203,15 @@ void fxDDBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
     adfact=GR_BLEND_ZERO;
     break;
   case GL_DST_ALPHA:
-    dfact=GR_BLEND_DST_ALPHA;
+    /* dfact=GR_BLEND_DST_ALPHA; */
+    /* We can't do DST_ALPHA */
+    dfact=GR_BLEND_ONE;
     adfact=GR_BLEND_ZERO;
     break;
   case GL_ONE_MINUS_DST_ALPHA:
-    dfact=GR_BLEND_ONE_MINUS_DST_ALPHA;
+    /* dfact=GR_BLEND_ONE_MINUS_DST_ALPHA; */
+    /* We can't do DST_ALPHA */
+    dfact=GR_BLEND_ZERO;
     adfact=GR_BLEND_ZERO;
     break;
   case GL_SRC_ALPHA_SATURATE:
@@ -1584,6 +1641,57 @@ void fxDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
   }    
 }
 
+#if 0
+/*
+  Multipass to do GL_BLEND texture functions
+  Cf*(1-Ct) has already been written to the buffer during the first pass
+  Cc*Ct gets written during the second pass (in this function)
+  Everything gets reset in the third call (in this function)
+*/
+static GLboolean fxMultipassBlend(struct vertex_buffer *VB, GLuint pass)
+{
+  GLcontext *ctx = VB->ctx;
+  fxMesaContext fxMesa = FX_CONTEXT(ctx);
+
+  switch (pass) {
+  case 1:
+    /* Add Cc*Ct */
+    fxMesa->restoreUnitsState=fxMesa->unitsState;
+    if (ctx->Depth.Mask) {
+      /* We don't want to check or change the depth buffers */
+      switch (ctx->Depth.Func) {
+      case GL_NEVER:
+      case GL_ALWAYS:
+	break;
+      default:
+	fxDDDepthFunc(ctx, GL_EQUAL);
+	break;
+      }
+      fxDDDepthMask(ctx, FALSE);
+    }
+    /* Enable Cc*Ct mode */
+    /* ??? Set the Constant Color ??? */
+    fxDDEnable(ctx, GL_BLEND, GL_TRUE);
+    fxDDBlendFunc(ctx, ???, ???);
+    fxSetupTextureSingleTMU(ctx, ???);
+    fxSetupBlend(ctx);
+    fxSetupDepthTest(ctx);
+    break;
+
+  case 2:
+    /* Reset everything back to normal */
+    fxMesa->unitsState = fxMesa->restoreUnitsState;
+    fxMesa->setupdone &= ???;
+    fxSetupTextureSingleTMU(ctx, ???);
+    fxSetupBlend(ctx);
+    fxSetupDepthTest(ctx);
+    break;
+  }
+
+  return pass==1;
+}
+#endif
+
 /************************************************************************/
 /******************** Fake Multitexture Support *************************/
 /************************************************************************/
@@ -1693,7 +1801,7 @@ void fxSetupFXUnits( GLcontext *ctx )
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   GLuint newstate = fxMesa->new_state;
 
-  if (MESA_VERBOSE&VERBOSE_DRIVER) 
+  if (MESA_VERBOSE&VERBOSE_DRIVER)
      gl_print_fx_state_flags("fxmesa: fxSetupFXUnits", newstate);
 
   if (newstate) {
