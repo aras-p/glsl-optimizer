@@ -111,7 +111,6 @@ RASTER_SOURCES = [.swrast]s_aatriangle.c \
 [.swrast]s_pb.c \
 [.swrast]s_pixeltex.c \
 [.swrast]s_points.c \
-[.swrast]s_quads.c \
 [.swrast]s_readpix.c \
 [.swrast]s_scissor.c \
 [.swrast]s_span.c \
@@ -141,13 +140,15 @@ TNL_SOURCES=[.tnl]t_array_api.c \
 [.tnl]t_pipeline.c \
 [.tnl]t_vb_fog.c \
 [.tnl]t_vb_light.c \
-[.tnl]t_vb_material.c \
 [.tnl]t_vb_normals.c \
 [.tnl]t_vb_points.c \
 [.tnl]t_vb_render.c \
 [.tnl]t_vb_texgen.c \
 [.tnl]t_vb_texmat.c \
 [.tnl]t_vb_vertex.c
+
+TNLDD_SOURCES=[.tnl_dd]t_dd.c \
+[.tnl_dd]t_dd_vb.c
 
 MATH_SOURCES=[.math]m_debug_xform.c \
 [.math]m_debug_norm.c \
@@ -260,8 +261,7 @@ OBJECTS8=[.swrast]s_drawpix.obj,\
 [.swrast]s_masking.obj,\
 [.swrast]s_pb.obj,\
 [.swrast]s_pixeltex.obj,\
-[.swrast]s_points.obj,\
-[.swrast]s_quads.obj
+[.swrast]s_points.obj
 
 OBJECTS9=[.swrast]s_readpix.obj,\
 [.swrast]s_aaline.obj,\
@@ -294,7 +294,6 @@ OBJECTS12=[.tnl]t_imm_fixup.obj,\
 [.tnl]t_pipeline.obj,\
 [.tnl]t_vb_fog.obj,\
 [.tnl]t_vb_light.obj,\
-[.tnl]t_vb_material.obj,\
 [.tnl]t_vb_normals.obj,\
 [.tnl]t_vb_points.obj,\
 [.tnl]t_vb_render.obj,\
@@ -464,8 +463,6 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_pixeltex.obj [.swrast]s_pixeltex.c
 [.swrast]s_points.obj : [.swrast]s_points.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_points.obj [.swrast]s_points.c
-[.swrast]s_quads.obj : [.swrast]s_quads.c
-	$(CC) $(CFLAGS) /obj=[.swrast]s_quads.obj [.swrast]s_quads.c
 [.swrast]s_readpix.obj : [.swrast]s_readpix.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_readpix.obj [.swrast]s_readpix.c
 [.swrast]s_scissor.obj : [.swrast]s_scissor.c
@@ -518,8 +515,6 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_fog.obj [.tnl]t_vb_fog.c
 [.tnl]t_vb_light.obj : [.tnl]t_vb_light.c
 	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_light.obj [.tnl]t_vb_light.c
-[.tnl]t_vb_material.obj : [.tnl]t_vb_material.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_material.obj [.tnl]t_vb_material.c
 [.tnl]t_vb_normals.obj : [.tnl]t_vb_normals.c
 	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_normals.obj [.tnl]t_vb_normals.c
 [.tnl]t_vb_points.obj : [.tnl]t_vb_points.c
@@ -556,3 +551,7 @@ imports.obj : imports.c
 [.array_cache]ac_import.obj : [.array_cache]ac_import.c
 	$(CC) $(CFLAGS) /obj=[.array_cache]ac_import.obj \
 	[.array_cache]ac_import.c
+[.tnl_dd]t_dd.obj : [.tnl_dd]t_dd.c
+	$(CC) $(CFLAGS) /obj=[.tnl_dd]t_dd.obj [.tnl_dd]t_dd.c
+[.tnl_dd]t_dd_vb.obj : [.tnl_dd]t_dd_vb.c
+	$(CC) $(CFLAGS) /obj=[.tnl_dd]t_dd_vb.obj [.tnl_dd]t_dd_vb.c
