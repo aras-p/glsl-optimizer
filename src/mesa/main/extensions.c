@@ -156,7 +156,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 {
    ctx->Extensions.ARB_depth_texture = GL_TRUE;
 #if FEATURE_ARB_fragment_program
-   ctx->Extensions.ARB_fragment_program = GL_TRUE;
+   /*ctx->Extensions.ARB_fragment_program = GL_TRUE;*/
 #endif
    ctx->Extensions.ARB_imaging = GL_TRUE;
    ctx->Extensions.ARB_multitexture = GL_TRUE;
@@ -174,6 +174,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
 #if FEATURE_ARB_vertex_program
    /*ctx->Extensions.ARB_vertex_program = GL_TRUE;*/
+#endif
+#if FEATURE_ARB_vertex_buffer_object
+   ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
 #endif
    ctx->Extensions.ATI_texture_env_combine3 = GL_TRUE;
    ctx->Extensions.ATI_texture_mirror_once = GL_TRUE;
