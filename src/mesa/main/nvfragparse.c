@@ -1,4 +1,4 @@
-/* $Id: nvfragparse.c,v 1.9 2003/02/25 19:30:27 brianp Exp $ */
+/* $Id: nvfragparse.c,v 1.10 2003/02/25 20:07:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1012,29 +1012,47 @@ Parse_MaskedDstReg(struct parse_state *parseState,
 }
 
 
+/**
+ * Parse a vector source (register, constant, etc):
+ *   <vectorSrc>    ::= <absVectorSrc>
+ *                    | <baseVectorSrc>
+ *   <absVectorSrc> ::= <negate> "|" <baseVectorSrc> "|"
+ */
 static GLboolean
-Parse_SwizzleSrcReg(struct parse_state *parseState,
-                    struct fp_src_register *srcReg)
+Parse_VectorSrc(struct parse_state *parseState,
+                struct fp_src_register *srcReg)
 {
+   GLfloat sign = 1.0F;
    GLubyte token[100];
 
-   /* XXX need to parse absolute value and another negation ***/
-   srcReg->NegateBase = GL_FALSE;
-   srcReg->Abs = GL_FALSE;
-   srcReg->NegateAbs = GL_FALSE;
+   /*
+    * First, take care of +/- and absolute value stuff.
+    */
+   if (Parse_String(parseState, "-"))
+      sign = -1.0F;
+   else if (Parse_String(parseState, "+"))
+      sign = +1.0F;
 
-   /* check for '-' */
-   if (!Peek_Token(parseState, token))
-      RETURN_ERROR;
-   if (token[0] == '-') {
-      (void) Parse_String(parseState, "-");
-      srcReg->NegateBase = GL_TRUE;
-      if (!Peek_Token(parseState, token))
-         RETURN_ERROR;
+   if (Parse_String(parseState, "|")) {
+      srcReg->Abs = GL_TRUE;
+      srcReg->NegateAbs = (sign < 0.0F) ? GL_TRUE : GL_FALSE;
+
+      if (Parse_String(parseState, "-"))
+         srcReg->NegateBase = GL_TRUE;
+      else if (Parse_String(parseState, "+"))
+         srcReg->NegateBase = GL_FALSE;
+      else
+         srcReg->NegateBase = GL_FALSE;
    }
    else {
-      srcReg->NegateBase = GL_FALSE;
+      srcReg->Abs = GL_FALSE;
+      srcReg->NegateAbs = GL_FALSE;
+      srcReg->NegateBase = (sign < 0.0F) ? GL_TRUE : GL_FALSE;
    }
+
+   /* This should be the real src vector/register name */
+   if (!Peek_Token(parseState, token))
+      RETURN_ERROR;
 
    /* Src reg can be R<n>, H<n> or a named fragment attrib */
    if (token[0] == 'R' || token[0] == 'H') {
@@ -1049,8 +1067,11 @@ Parse_SwizzleSrcReg(struct parse_state *parseState,
       if (!Parse_ProgramParamReg(parseState, &srcReg->Register))
          RETURN_ERROR;
    }
+   else if (IsLetter(token[0])){
+      /* XXX parse defined/declared constant or vector literal */
+
+   }
    else {
-      /* Also parse defined/declared constant or vector literal */
       RETURN_ERROR2("Bad source register name", token);
    }
 
@@ -1071,6 +1092,11 @@ Parse_SwizzleSrcReg(struct parse_state *parseState,
 
       if (!Parse_SwizzleSuffix(token, srcReg->Swizzle))
          RETURN_ERROR1("Bad swizzle suffix");
+   }
+
+   /* Finish absolute value */
+   if (srcReg->Abs && !Parse_String(parseState, "|")) {
+      RETURN_ERROR1("Expected |");
    }
 
    return GL_TRUE;
@@ -1157,7 +1183,6 @@ Parse_InstructionSequence(struct parse_state *parseState,
       /* get token */
       if (!Parse_Token(parseState, token)) {
          inst->Opcode = FP_OPCODE_END;
-         printf("END OF PROGRAM %d\n", parseState->numInst);
          parseState->numInst++;
          break;
       }
@@ -1234,27 +1259,27 @@ Parse_InstructionSequence(struct parse_state *parseState,
          }
 
          if (instMatch.inputs == INPUT_1V) {
-            if (!Parse_SwizzleSrcReg(parseState, &inst->SrcReg[0]))
+            if (!Parse_VectorSrc(parseState, &inst->SrcReg[0]))
                RETURN_ERROR;
          }
          else if (instMatch.inputs == INPUT_2V) {
-            if (!Parse_SwizzleSrcReg(parseState, &inst->SrcReg[0]))
+            if (!Parse_VectorSrc(parseState, &inst->SrcReg[0]))
                RETURN_ERROR;
             if (!Parse_String(parseState, ","))
                RETURN_ERROR1("Expected ,");
-            if (!Parse_SwizzleSrcReg(parseState, &inst->SrcReg[1]))
+            if (!Parse_VectorSrc(parseState, &inst->SrcReg[1]))
                RETURN_ERROR;
          }
          else if (instMatch.inputs == INPUT_3V) {
-            if (!Parse_SwizzleSrcReg(parseState, &inst->SrcReg[1]))
+            if (!Parse_VectorSrc(parseState, &inst->SrcReg[1]))
                RETURN_ERROR;
             if (!Parse_String(parseState, ","))
                RETURN_ERROR1("Expected ,");
-            if (!Parse_SwizzleSrcReg(parseState, &inst->SrcReg[1]))
+            if (!Parse_VectorSrc(parseState, &inst->SrcReg[1]))
                RETURN_ERROR;
             if (!Parse_String(parseState, ","))
                RETURN_ERROR1("Expected ,");
-            if (!Parse_SwizzleSrcReg(parseState, &inst->SrcReg[1]))
+            if (!Parse_VectorSrc(parseState, &inst->SrcReg[1]))
                RETURN_ERROR;
          }
          else if (instMatch.inputs == INPUT_1S) {
@@ -1273,7 +1298,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
             /* XXX to-do */
          }
          else if (instMatch.inputs == INPUT_1V_T) {
-            if (!Parse_SwizzleSrcReg(parseState, &inst->SrcReg[0]))
+            if (!Parse_VectorSrc(parseState, &inst->SrcReg[0]))
                RETURN_ERROR;
             if (!Parse_String(parseState, ","))
                RETURN_ERROR1("Expected ,");
@@ -1282,15 +1307,15 @@ Parse_InstructionSequence(struct parse_state *parseState,
                RETURN_ERROR;
          }
          else if (instMatch.inputs == INPUT_3V_T) {
-            if (!Parse_SwizzleSrcReg(parseState, &inst->SrcReg[0]))
+            if (!Parse_VectorSrc(parseState, &inst->SrcReg[0]))
                RETURN_ERROR;
             if (!Parse_String(parseState, ","))
                RETURN_ERROR1("Expected ,");
-            if (!Parse_SwizzleSrcReg(parseState, &inst->SrcReg[1]))
+            if (!Parse_VectorSrc(parseState, &inst->SrcReg[1]))
                RETURN_ERROR;
             if (!Parse_String(parseState, ","))
                RETURN_ERROR1("Expected ,");
-            if (!Parse_SwizzleSrcReg(parseState, &inst->SrcReg[2]))
+            if (!Parse_VectorSrc(parseState, &inst->SrcReg[2]))
                RETURN_ERROR;
             if (!Parse_String(parseState, ","))
                RETURN_ERROR1("Expected ,");
@@ -1407,9 +1432,9 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
       _mesa_assign_program_registers(&(program->SymbolTable));
 
 #ifdef DEBUG
-      _mesa_printf("--- glLoadProgramNV result ---\n");
+      _mesa_printf("--- glLoadProgramNV(%d) result ---\n", program->Base.Id);
       _mesa_print_nv_fragment_program(program);
-      _mesa_printf("------------------------------\n");
+      _mesa_printf("----------------------------------\n");
 #endif
    }
    else {
