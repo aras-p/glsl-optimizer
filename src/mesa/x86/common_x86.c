@@ -1,4 +1,4 @@
-/* $Id: common_x86.c,v 1.15 2001/03/29 06:46:16 gareth Exp $ */
+/* $Id: common_x86.c,v 1.16 2001/06/06 18:12:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -87,7 +87,7 @@ static void message( const char *msg )
 extern void _mesa_test_os_sse_support( void );
 extern void _mesa_test_os_sse_exception_support( void );
 
-#if defined(__linux__) && defined(_POSIX_SOURCE)
+#if defined(__linux__) && defined(_POSIX_SOURCE) && defined(X86_FXSR_MAGIC)
 static void sigill_handler( int signal, struct sigcontext sc )
 {
    message( "SIGILL, " );
@@ -125,7 +125,7 @@ static void sigfpe_handler( int signal, struct sigcontext sc )
       _mesa_problem( NULL, "SSE enabling test failed badly!" );
    }
 }
-#endif /* __linux__ && _POSIX_SOURCE */
+#endif /* __linux__ && _POSIX_SOURCE && X86_FXSR_MAGIC */
 
 /* If we're running on a processor that can do SSE, let's see if we
  * are allowed to or not.  This will catch 2.4.0 or later kernels that
@@ -138,7 +138,7 @@ static void sigfpe_handler( int signal, struct sigcontext sc )
 static void check_os_sse_support( void )
 {
 #if defined(__linux__)
-#if defined(_POSIX_SOURCE)
+#if defined(_POSIX_SOURCE) && defined(X86_FXSR_MAGIC)
    struct sigaction saved_sigill;
    struct sigaction saved_sigfpe;
 
@@ -212,7 +212,7 @@ static void check_os_sse_support( void )
     */
    message( "Cannot test OS support for SSE, disabling to be safe.\n" );
    _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
-#endif /* _POSIX_SOURCE */
+#endif /* _POSIX_SOURCE && X86_FXSR_MAGIC */
 #else
    /* Do nothing on non-Linux platforms for now.
     */
