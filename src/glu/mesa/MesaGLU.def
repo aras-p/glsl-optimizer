@@ -47,15 +47,10 @@ EXPORTS
     gluNewTess
     gluDeleteTess
     gluTessBeginPolygon
-    gluTessBeginContour
     gluTessVertex
-    gluTessEndContour
-    gluTessEndPolygon
-    gluTessProperty
     gluTessNormal
     gluTessCallback
     gluGetTessProperty
-    gluBeginPolygon
     gluNextContour
     gluEndPolygon
     gluGetString
