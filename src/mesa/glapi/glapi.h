@@ -1,4 +1,4 @@
-/* $Id: glapi.h,v 1.3 1999/11/25 18:17:14 brianp Exp $ */
+/* $Id: glapi.h,v 1.4 1999/11/27 21:30:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,6 @@
 
 
 #include "GL/gl.h"
-
 #include "glapitable.h"
 
 
@@ -42,11 +41,15 @@ extern struct _glapi_table *
 _glapi_get_dispatch(void);
 
 
+extern GLuint
+_glapi_get_dispatch_table_size(void);
+
+
 extern const char *
 _glapi_get_version(void);
 
 
-extern const char *
+extern const char **
 _glapi_get_extensions(void);
 
 
@@ -54,12 +57,12 @@ extern void
 _glapi_check_table(const struct _glapi_table *table);
 
 
-extern GLint
-_glapi_alloc_entrypoint(const char *funcName);
+extern GLboolean
+_glapi_add_entrypoint(const char *funcName, GLuint offset);
 
 
 extern GLint
-_glapi_get_entrypoint(const char *funcName);
+_glapi_get_proc_offset(const char *funcName);
 
 
 extern const GLvoid *
