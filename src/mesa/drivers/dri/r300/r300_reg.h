@@ -70,6 +70,19 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_7_COMP_CNT_SHIFT 21
 /* END */
 
+#define R300_SE_VTE_CNTL                  0x20b0
+#	define     R300_VPORT_X_SCALE_ENA                0x00000001
+#	define     R300_VPORT_X_OFFSET_ENA               0x00000002
+#	define     R300_VPORT_Y_SCALE_ENA                0x00000004
+#	define     R300_VPORT_Y_OFFSET_ENA               0x00000008
+#	define     R300_VPORT_Z_SCALE_ENA                0x00000010
+#	define     R300_VPORT_Z_OFFSET_ENA               0x00000020
+#	define     R300_VTX_XY_FMT                       0x00000100
+#	define     R300_VTX_Z_FMT                        0x00000200
+#	define     R300_VTX_W0_FMT                       0x00000400
+#	define     R300_VTX_W0_NORMALIZE                 0x00000800
+#	define     R300_VTX_ST_DENORMALIZED              0x00001000
+
 /* BEGIN: Vertex data assembly - lots of uncertainties */
 /* gap */
 /* Where do we get our vertex data?
