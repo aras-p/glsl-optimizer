@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.21 2001/05/03 16:49:27 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.22 2001/05/09 13:53:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -554,7 +554,8 @@ void _tnl_imm_destroy( GLcontext *ctx )
 {
    if (TNL_CURRENT_IM(ctx)) {
       TNL_CURRENT_IM(ctx)->ref_count--;
-      _tnl_free_immediate( TNL_CURRENT_IM(ctx) );
+      if (TNL_CURRENT_IM(ctx)->ref_count == 0)
+	 _tnl_free_immediate( TNL_CURRENT_IM(ctx) );
       SET_IMMEDIATE(ctx, 0);
    }
 }
