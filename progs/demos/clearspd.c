@@ -1,4 +1,4 @@
-/* $Id: clearspd.c,v 1.4 2002/04/22 16:03:37 brianp Exp $ */
+/* $Id: clearspd.c,v 1.5 2002/10/31 12:38:32 keithw Exp $ */
 
 /*
  * Simple GLUT program to measure glClear() and glutSwapBuffers() speed.
@@ -61,6 +61,12 @@ static void Display( void )
       glutSwapBuffers();
    }
 
+   /* NOTE: If clearspd doesn't map it's window immediately on
+    * starting, swaps will be istantaneous, so this will send Loops
+    * towards infinity.  When a window is finally mapped, it may be
+    * minutes before the first call to glutSwapBuffers, making it look
+    * like there's a driver bug.
+    */
    if (t1-t0 < MinPeriod) {
       /* Next time do more clears to get longer elapsed time */
       Loops *= 2;
