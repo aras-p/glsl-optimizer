@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -255,7 +255,7 @@ _mesa_PixelStoref( GLenum pname, GLfloat param )
 
 
 void
-_mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
+_mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
 {
    GLint i;
    GET_CURRENT_CONTEXT(ctx);
@@ -353,7 +353,7 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
 
 
 void
-_mesa_PixelMapuiv(GLenum map, GLint mapsize, const GLuint *values )
+_mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values )
 {
    const GLint n = MIN2(mapsize, MAX_PIXEL_MAP_TABLE);
    GLfloat fvalues[MAX_PIXEL_MAP_TABLE];
@@ -374,7 +374,7 @@ _mesa_PixelMapuiv(GLenum map, GLint mapsize, const GLuint *values )
 
 
 void
-_mesa_PixelMapusv(GLenum map, GLint mapsize, const GLushort *values )
+_mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values )
 {
    const GLint n = MIN2(mapsize, MAX_PIXEL_MAP_TABLE);
    GLfloat fvalues[MAX_PIXEL_MAP_TABLE];

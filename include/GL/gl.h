@@ -1197,11 +1197,11 @@ GLAPI void GLAPIENTRY glPixelStorei( GLenum pname, GLint param );
 GLAPI void GLAPIENTRY glPixelTransferf( GLenum pname, GLfloat param );
 GLAPI void GLAPIENTRY glPixelTransferi( GLenum pname, GLint param );
 
-GLAPI void GLAPIENTRY glPixelMapfv( GLenum map, GLint mapsize,
+GLAPI void GLAPIENTRY glPixelMapfv( GLenum map, GLsizei mapsize,
                                     const GLfloat *values );
-GLAPI void GLAPIENTRY glPixelMapuiv( GLenum map, GLint mapsize,
+GLAPI void GLAPIENTRY glPixelMapuiv( GLenum map, GLsizei mapsize,
                                      const GLuint *values );
-GLAPI void GLAPIENTRY glPixelMapusv( GLenum map, GLint mapsize,
+GLAPI void GLAPIENTRY glPixelMapusv( GLenum map, GLsizei mapsize,
                                      const GLushort *values );
 
 GLAPI void GLAPIENTRY glGetPixelMapfv( GLenum map, GLfloat *values );
