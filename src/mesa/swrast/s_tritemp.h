@@ -1,10 +1,10 @@
-/* $Id: s_tritemp.h,v 1.40 2002/10/17 15:26:39 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.41 2002/11/13 16:51:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -88,10 +88,13 @@
 #define INTERP_FLOAT_SPEC
 #endif
 
-#endif
+#endif /* CHAN_TYPE == GL_FLOAT */
 
 
-/*void triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1, SWvertex *v2 )*/
+
+static void NAME(GLcontext *ctx, const SWvertex *v0,
+                                 const SWvertex *v1,
+                                 const SWvertex *v2 )
 {
    typedef struct {
         const SWvertex *v0, *v1;   /* Y(v0) < Y(v1) */
@@ -1404,3 +1407,4 @@
 #undef FixedToDepth
 
 #undef DO_OCCLUSION_TEST
+#undef NAME

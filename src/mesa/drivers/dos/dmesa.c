@@ -274,43 +274,34 @@ static void read_rgba_pixels (const GLcontext *ctx,
 /*
  * flat, NON-depth-buffered, triangle.
  */
-static void tri_rgb_flat (GLcontext *ctx,
-                          const SWvertex *v0,
-                          const SWvertex *v1,
-                          const SWvertex *v2)
-{
- const DMesaContext c = (DMesaContext)ctx->DriverCtx;
- void *b = c->Buffer->the_window;
+#define NAME tri_rgb_flat
+#define SETUP_CODE						\
+ GLuint rgb = vl_mixrgb(v2->color);				\
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;		\
+ void *b = c->Buffer->the_window;				\
  GLuint w = c->Buffer->width, h = c->Buffer->height;
-
-#define SETUP_CODE GLuint rgb = vl_mixrgb(v2->color);
 
 #define RENDER_SPAN(span)					\
  GLuint i, offset = FLIP2(span.y)*w + span.x;			\
  for (i = 0; i < span.end; i++, offset++) {			\
      vl_putpixel(b, offset, rgb);				\
  }
-
 #include "swrast/s_tritemp.h"
-}
+
 
 
 
 /*
  * flat, depth-buffered, triangle.
  */
-static void tri_rgb_flat_z (GLcontext *ctx,
-                            const SWvertex *v0,
-                            const SWvertex *v1,
-                            const SWvertex *v2)
-{
- const DMesaContext c = (DMesaContext)ctx->DriverCtx;
- void *b = c->Buffer->the_window;
- GLuint w = c->Buffer->width, h = c->Buffer->height;
-
+#define NAME tri_rgb_flat_z
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
-#define SETUP_CODE GLuint rgb = vl_mixrgb(v2->color);
+#define SETUP_CODE 						\
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;		\
+ void *b = c->Buffer->the_window;				\
+ GLuint w = c->Buffer->width, h = c->Buffer->height;		\
+ GLuint rgb = vl_mixrgb(v2->color);
 
 #define RENDER_SPAN(span)					\
  GLuint i, offset = FLIP2(span.y)*w + span.x;			\
@@ -322,25 +313,20 @@ static void tri_rgb_flat_z (GLcontext *ctx,
      }								\
      span.z += span.zStep;					\
  }
-
 #include "swrast/s_tritemp.h"
-}
+
 
 
 
 /*
  * smooth, NON-depth-buffered, triangle.
  */
-static void tri_rgb_smooth (GLcontext *ctx,
-                            const SWvertex *v0,
-                            const SWvertex *v1,
-                            const SWvertex *v2)
-{
- const DMesaContext c = (DMesaContext)ctx->DriverCtx;
- void *b = c->Buffer->the_window;
- GLuint w = c->Buffer->width, h = c->Buffer->height;
-
+#define NAME tri_rgb_smooth
 #define INTERP_RGB 1
+#define SETUP_CODE						\
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;		\
+ void *b = c->Buffer->the_window;				\
+ GLuint w = c->Buffer->width, h = c->Buffer->height;
 #define RENDER_SPAN(span)					\
  GLuint i, offset = FLIP2(span.y)*w + span.x;			\
  for (i = 0; i < span.end; i++, offset++) {			\
@@ -353,28 +339,21 @@ static void tri_rgb_smooth (GLcontext *ctx,
      span.green += span.greenStep;				\
      span.blue += span.blueStep;				\
  }
-
 #include "swrast/s_tritemp.h"
-}
 
 
 
 /*
  * smooth, depth-buffered, triangle.
  */
-static void tri_rgb_smooth_z (GLcontext *ctx,
-                              const SWvertex *v0,
-                              const SWvertex *v1,
-                              const SWvertex *v2)
-{
- const DMesaContext c = (DMesaContext)ctx->DriverCtx;
- void *b = c->Buffer->the_window;
- GLuint w = c->Buffer->width, h = c->Buffer->height;
-
+#define NAME tri_rgb_smooth_z
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
-
+#define SETUP_CODE						\
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;		\
+ void *b = c->Buffer->the_window;				\
+ GLuint w = c->Buffer->width, h = c->Buffer->height;
 #define RENDER_SPAN(span)					\
  GLuint i, offset = FLIP2(span.y)*w + span.x;			\
  for (i = 0; i < span.end; i++, offset++) {			\
@@ -392,9 +371,8 @@ static void tri_rgb_smooth_z (GLcontext *ctx,
      span.blue += span.blueStep;				\
      span.z += span.zStep;					\
  }
-
 #include "swrast/s_tritemp.h"
-}
+
 
 
 
