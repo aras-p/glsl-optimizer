@@ -17,7 +17,9 @@ Even numbered versions (such as 6.0) designate stable releases.
 Mesa version 6.0 signifies two things:
 
   1. A stabilization of the 5.1 development release
-  2. Implementation of the OpenGL 1.5 specification
+  2. Implementation of the OpenGL 1.5 specification.  When you query
+     glGetString(GL_VERSION) "1.5" will be returned (as long as the
+     driver supports all the required features).
 
 
 Note that the Mesa major version number is incremented with the OpenGL
@@ -81,4 +83,4 @@ See the VERSIONS file for more details about bug fixes, etc. in Mesa 6.0.
 
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-6.0,v 1.1 2003/12/21 04:06:31 brianp Exp $
+$Id: RELNOTES-6.0,v 1.2 2004/01/07 14:51:30 brianp Exp $

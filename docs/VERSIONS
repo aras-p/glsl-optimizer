@@ -1190,7 +1190,9 @@ Mesa Version History
     New:
 	- full OpenGL 1.5 support
     Bug fixes:
-	- fixed bug UNCLAMPED_FLOAT_TO_UBYTE macro; solves a color clamping issue
+	- fixed bug in UNCLAMPED_FLOAT_TO_UBYTE macro; solves a color
+	  clamping issue
 	- updated suno5-gcc configs
+	- glColor3 functions sometimes resulted in undefined alpha values
 
 
