@@ -344,7 +344,7 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
    LOCALVARS
       struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLfloat (*col)[4];
-   GLuint col_stride;
+   GLuint col_stride, col_size;
    GLfloat (*coord)[4] = VB->NdcPtr->data;
    GLuint coord_stride = VB->NdcPtr->stride;
    GLfloat *v = (GLfloat *)dest;
@@ -358,6 +358,7 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 
    col = VB->ColorPtr[0]->data;
    col_stride = VB->ColorPtr[0]->stride;
+   col_size = VB->ColorPtr[0]->size;
 
 /*     fprintf(stderr, "%s(small) importable %x\n",  */
 /*  	   __FUNCTION__, VB->importable_data); */
