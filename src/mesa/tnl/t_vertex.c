@@ -732,7 +732,7 @@ static void extract_1ub_1f( const struct tnl_clipspace_attr *a, GLfloat *out, co
 }
 
 
-const static struct {
+static const struct {
    const char *name;
    tnl_extract_func extract;
    tnl_insert_func insert[4];
