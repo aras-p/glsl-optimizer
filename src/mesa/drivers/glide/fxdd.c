@@ -114,7 +114,7 @@ fxDDGetBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
       fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
       if (TDFX_DEBUG & VERBOSE_DRIVER) {
-         fprintf(stderr, "fxDDBufferSize(...)\n");
+         fprintf(stderr, "fxDDGetBufferSize(...)\n");
       }
 
       *width = fxMesa->width;
@@ -122,12 +122,14 @@ fxDDGetBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
    }
 }
 
+
 static void
 fxDDViewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
    /* poll for window size change and realloc software Z/stencil/etc if needed */
    _mesa_ResizeBuffersMESA();
 }
+
 
 /* Implements glClearColor() */
 static void
