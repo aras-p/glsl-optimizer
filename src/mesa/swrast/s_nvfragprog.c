@@ -1,4 +1,4 @@
-/* $Id: s_nvfragprog.c,v 1.14 2003/04/08 02:27:18 brianp Exp $ */
+/* $Id: s_nvfragprog.c,v 1.15 2003/04/11 01:20:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1107,7 +1107,7 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
    /* Load program local parameters */
    for (j = 0; j < MAX_NV_FRAGMENT_PROGRAM_PARAMS; j++) {
       COPY_4V(machine->Registers[FP_PROG_REG_START + j],
-              program->LocalParams[j]);
+              program->Base.LocalParams[j]);
    }
 
    /* Load input registers */

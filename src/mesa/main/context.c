@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.197 2003/04/01 22:20:42 brianp Exp $ */
+/* $Id: context.c,v 1.198 2003/04/11 01:20:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -965,6 +965,15 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Const.MaxConvolutionHeight = MAX_CONVOLUTION_HEIGHT;
    ctx->Const.MaxClipPlanes = MAX_CLIP_PLANES;
    ctx->Const.MaxLights = MAX_LIGHTS;
+#if FEATURE_ARB_vertex_program
+   ctx->Const.MaxVertexProgramParams = MAX_NV_VERTEX_PROGRAM_PARAMS;
+   ctx->Const.MaxVertexProgramInstructions = MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS;
+#endif
+#if FEATURE_ARB_fragment_program
+   ctx->Const.MaxFragmentProgramParams = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
+   ctx->Const.MaxFragmentProgramInstructions = MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS;
+#endif
+
 
    /* Initialize matrix stacks */
    init_matrix_stack(&ctx->ModelviewMatrixStack, MAX_MODELVIEW_STACK_DEPTH,

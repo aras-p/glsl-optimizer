@@ -1,10 +1,8 @@
-/* $Id: extensions.c,v 1.89 2003/03/29 17:01:01 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,6 +50,7 @@ static struct {
    int flag_offset;
 } default_extensions[] = {
    { OFF, "GL_ARB_depth_texture",              F(ARB_depth_texture) },
+   { OFF, "GL_ARB_fragment_program",           F(ARB_fragment_program) },
    { OFF, "GL_ARB_imaging",                    F(ARB_imaging) },
    { OFF, "GL_ARB_multisample",                F(ARB_multisample) },
    { OFF, "GL_ARB_multitexture",               F(ARB_multitexture) },
@@ -68,6 +67,7 @@ static struct {
    { OFF, "GL_ARB_texture_mirrored_repeat",    F(ARB_texture_mirrored_repeat)},
    { ON,  "GL_ARB_transpose_matrix",           0 },
    { OFF, "GL_ARB_vertex_buffer_object",       F(ARB_vertex_buffer_object) },
+   { OFF, "GL_ARB_vertex_program",             F(ARB_vertex_program) },
    { ON,  "GL_ARB_window_pos",                 F(ARB_window_pos) },
    { OFF, "GL_ATI_texture_mirror_once",        F(ATI_texture_mirror_once)},
    { OFF, "GL_ATI_texture_env_combine3",       F(ATI_texture_env_combine3)},

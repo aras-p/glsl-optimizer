@@ -1236,8 +1236,15 @@ struct program
    GLuint Id;
    GLubyte *String;    /* Null-terminated program text */
    GLenum Target;
+   GLenum Format;      /* String encoding format */
    GLint RefCount;
    GLboolean Resident;
+   GLfloat LocalParams[MAX_NV_FRAGMENT_PROGRAM_PARAMS][4];
+   GLuint NumInstructions;  /* GL_ARB_vertex/fragment_program */
+   GLuint NumTemporaries;
+   GLuint NumParameters;
+   GLuint NumAttributes;
+   GLuint NumAddressRegs;
 };
 
 
@@ -1260,7 +1267,6 @@ struct fragment_program
    GLuint InputsRead;     /* Bitmask of which input regs are read */
    GLuint OutputsWritten; /* Bitmask of which output regs are written to */
    GLuint TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /* TEXTURE_x_INDEX bitmask */
-   GLfloat LocalParams[MAX_NV_FRAGMENT_PROGRAM_PARAMS][4];
    GLuint NumParameters;
    struct program_parameter *Parameters; /* array [NumParameters] */
 };
@@ -1391,6 +1397,12 @@ struct gl_constants {
    GLuint MaxConvolutionHeight;
    GLuint MaxClipPlanes;
    GLuint MaxLights;
+   /* GL_ARB_vertex_program */
+   GLuint MaxVertexProgramParams;
+   GLuint MaxVertexProgramInstructions;
+   /* GL_ARB_fragment_program */
+   GLuint MaxFragmentProgramParams;
+   GLuint MaxFragmentProgramInstructions;
 };
 
 
@@ -1405,6 +1417,7 @@ struct gl_extensions {
     * Not every extension needs to have such a flag, but it's encouraged.
     */
    GLboolean ARB_depth_texture;
+   GLboolean ARB_fragment_program;
    GLboolean ARB_imaging;
    GLboolean ARB_multisample;
    GLboolean ARB_multitexture;
@@ -1417,6 +1430,7 @@ struct gl_extensions {
    GLboolean ARB_texture_env_dot3;
    GLboolean ARB_texture_mirrored_repeat;
    GLboolean ARB_vertex_buffer_object;
+   GLboolean ARB_vertex_program;
    GLboolean ARB_window_pos;
    GLboolean ATI_texture_mirror_once;
    GLboolean ATI_texture_env_combine3;

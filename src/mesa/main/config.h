@@ -228,4 +228,9 @@
 
 #define FEATURE_ARB_vertex_buffer_object 1
 
+#define FEATURE_ARB_vertex_program 1
+
+#define FEATURE_ARB_fragment_program 1
+
+
 #endif /* CONFIG_H */

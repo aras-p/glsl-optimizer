@@ -1085,7 +1085,7 @@ void
 _mesa_ProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte *name,
                                  const float v[])
 {
-   glProgramNamedParameter4fNV(id, len, name, v[0], v[1], v[2], v[3]);
+   _mesa_ProgramNamedParameter4fNV(id, len, name, v[0], v[1], v[2], v[3]);
 }
 
 
@@ -1093,8 +1093,8 @@ void
 _mesa_ProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte *name,
                                 GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-   glProgramNamedParameter4fNV(id, len, name, (GLfloat)x, (GLfloat)y, 
-		   			      (GLfloat)z, (GLfloat)w);
+   _mesa_ProgramNamedParameter4fNV(id, len, name, (GLfloat)x, (GLfloat)y, 
+                                   (GLfloat)z, (GLfloat)w);
 }
 
 
@@ -1102,8 +1102,9 @@ void
 _mesa_ProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte *name,
                                  const double v[])
 {
-   glProgramNamedParameter4fNV(id, len, name, (GLfloat)v[0], (GLfloat)v[1], 
-		   			      (GLfloat)v[2], (GLfloat)v[3]);
+   _mesa_ProgramNamedParameter4fNV(id, len, name,
+                                   (GLfloat)v[0], (GLfloat)v[1],
+                                   (GLfloat)v[2], (GLfloat)v[3]);
 }
 
 
@@ -1151,11 +1152,12 @@ _mesa_GetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
                                    GLdouble *params)
 {
    GLfloat floatParams[4];
-   glGetProgramNamedParameterfvNV(id, len, name, floatParams);
+   _mesa_GetProgramNamedParameterfvNV(id, len, name, floatParams);
    COPY_4V(params, floatParams);
 }
 
 
+/* XXX move into arbprogram.c */
 void
 _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
                                  GLfloat x, GLfloat y, GLfloat z, GLfloat w)
@@ -1173,10 +1175,10 @@ _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameterARB");
          return;
       }
-      fprog->LocalParams[index][0] = x;
-      fprog->LocalParams[index][1] = y;
-      fprog->LocalParams[index][2] = z;
-      fprog->LocalParams[index][3] = w;
+      fprog->Base.LocalParams[index][0] = x;
+      fprog->Base.LocalParams[index][1] = y;
+      fprog->Base.LocalParams[index][2] = z;
+      fprog->Base.LocalParams[index][3] = w;
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glProgramLocalParameterARB");
@@ -1185,35 +1187,39 @@ _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
 }
 
 
+/* XXX move into arbprogram.c */
 void
 _mesa_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
                                   const GLfloat *params)
 {
-   glProgramLocalParameter4fARB(target, index, params[0], params[1],
-                                params[2], params[3]);
+   _mesa_ProgramLocalParameter4fARB(target, index, params[0], params[1],
+                                    params[2], params[3]);
 }
 
 
+/* XXX move into arbprogram.c */
 void
 _mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
                                  GLdouble x, GLdouble y,
                                  GLdouble z, GLdouble w)
 {
-   glProgramLocalParameter4fARB(target, index, (GLfloat)x, (GLfloat)y, 
-		   			       (GLfloat)z, (GLfloat)w);
+   _mesa_ProgramLocalParameter4fARB(target, index, (GLfloat)x, (GLfloat)y, 
+                                    (GLfloat)z, (GLfloat)w);
 }
 
 
+/* XXX move into arbprogram.c */
 void
 _mesa_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
                                   const GLdouble *params)
 {
-   glProgramLocalParameter4fARB(target, index, (GLfloat)params[0], 
-		   		(GLfloat)params[1], (GLfloat)params[2],
-				(GLfloat)params[3]);
+   _mesa_ProgramLocalParameter4fARB(target, index, (GLfloat)params[0], 
+                                    (GLfloat)params[1], (GLfloat)params[2],
+                                    (GLfloat)params[3]);
 }
 
 
+/* XXX move into arbprogram.c */
 void
 _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
                                     GLfloat *params)
@@ -1231,10 +1237,10 @@ _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
          _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramLocalParameterARB");
          return;
       }
-      params[0] = fprog->LocalParams[index][0];
-      params[1] = fprog->LocalParams[index][1];
-      params[2] = fprog->LocalParams[index][2];
-      params[3] = fprog->LocalParams[index][3];
+      params[0] = fprog->Base.LocalParams[index][0];
+      params[1] = fprog->Base.LocalParams[index][1];
+      params[2] = fprog->Base.LocalParams[index][2];
+      params[3] = fprog->Base.LocalParams[index][3];
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramLocalParameterARB");
@@ -1243,11 +1249,12 @@ _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
 }
 
 
+/* XXX move into arbprogram.c */
 void
 _mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
                                     GLdouble *params)
 {
    GLfloat floatParams[4];
-   glGetProgramLocalParameterfvARB(target, index, floatParams);
+   _mesa_GetProgramLocalParameterfvARB(target, index, floatParams);
    COPY_4V(params, floatParams);
 }
