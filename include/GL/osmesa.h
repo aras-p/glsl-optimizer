@@ -1,10 +1,10 @@
-/* $Id: osmesa.h,v 1.3 2000/01/15 06:12:18 rjfrank Exp $ */
+/* $Id: osmesa.h,v 1.4 2000/01/18 17:29:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,10 +50,8 @@
  */
 
 
-
 #ifndef OSMESA_H
 #define OSMESA_H
-
 
 
 #ifdef __cplusplus
@@ -62,7 +60,6 @@ extern "C" {
 
 
 #include "GL/gl.h"
-
 
 
 #define OSMESA_MAJOR_VERSION 3
@@ -98,6 +95,7 @@ extern "C" {
 #define OSMESA_FORMAT		0x22
 #define OSMESA_TYPE		0x23
 
+
 /*
  * Accepted by OSMesaGetBooleanv:
  * New in version 3.3
@@ -126,7 +124,7 @@ typedef struct osmesa_context *OSMesaContext;
  * Return:  an OSMesaContext or 0 if error
  */
 GLAPI OSMesaContext GLAPIENTRY OSMesaCreateContext( GLenum format,
-                                          OSMesaContext sharelist );
+                                                    OSMesaContext sharelist );
 
 
 
@@ -168,8 +166,8 @@ GLAPI void GLAPIENTRY OSMesaDestroyContext( OSMesaContext ctx );
  *          width>internal limit or height>internal limit.
  */
 GLAPI GLboolean GLAPIENTRY OSMesaMakeCurrent( OSMesaContext ctx,
-                                    void *buffer, GLenum type,
-                                    GLsizei width, GLsizei height );
+                                              void *buffer, GLenum type,
+                                              GLsizei width, GLsizei height );
 
 
 
@@ -199,7 +197,7 @@ GLAPI void GLAPIENTRY OSMesaPixelStore( GLint pname, GLint value );
 
 
 /*
- * Return context info.  This is like glGetIntegerv.
+ * Return an integer value like glGetIntegerv.
  * Input:  pname -
  *                 OSMESA_WIDTH  return current image width
  *                 OSMESA_HEIGHT  return current image height
@@ -211,13 +209,17 @@ GLAPI void GLAPIENTRY OSMesaPixelStore( GLint pname, GLint value );
  */
 GLAPI void GLAPIENTRY OSMesaGetIntegerv( GLint pname, GLint *value );
 
+
+
 /*
- * Return context info.  This is like glGetBooleanv.
+ * Return a boolean value like glGetBooleanv.
  * Input:  pname -
  *                 OSMESA_OCCLUSION_TEST_RESULT_HP  return current test result
  *         value - pointer to boolean in which to return result.
  */
 GLAPI void GLAPIENTRY OSMesaGetBooleanv( GLint pname, GLboolean *value );
+
+
 
 /*
  * Return the depth buffer associated with an OSMesa context.
@@ -230,8 +232,9 @@ GLAPI void GLAPIENTRY OSMesaGetBooleanv( GLint pname, GLboolean *value );
  * New in Mesa 2.4.
  */
 GLAPI GLboolean GLAPIENTRY OSMesaGetDepthBuffer( OSMesaContext c,
-                                       GLint *width, GLint *height,
-                                       GLint *bytesPerValue, void **buffer );
+                                                 GLint *width, GLint *height,
+                                                 GLint *bytesPerValue,
+                                                 void **buffer );
 
 
 
