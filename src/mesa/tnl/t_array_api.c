@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.15 2001/05/11 15:53:06 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.16 2001/08/02 19:58:07 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -313,8 +313,6 @@ _tnl_DrawRangeElements(GLenum mode,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint *ui_indices;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
-
    /* Check arguments, etc.
     */
    if (!_mesa_validate_DrawRangeElements( ctx, mode, start, end, count,
@@ -328,7 +326,12 @@ _tnl_DrawRangeElements(GLenum mode,
 					       count, type, indices );
 
 
-   if (ctx->Array.LockCount) {
+   if (ctx->CompileFlag) {
+      /* Can't do anything when compiling:
+       */
+      fallback_drawelements( ctx, mode, count, ui_indices );
+   }
+   else if (ctx->Array.LockCount) {
       /* Are the arrays already locked?  If so we currently have to look
        * at the whole locked range.
        */
@@ -388,7 +391,12 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
    ui_indices = (GLuint *)_ac_import_elements( ctx, GL_UNSIGNED_INT,
 					       count, type, indices );
 
-   if (ctx->Array.LockCount) {
+   if (ctx->CompileFlag) {
+      /* Can't do anything when compiling:
+       */
+      fallback_drawelements( ctx, mode, count, ui_indices );
+   }
+   else if (ctx->Array.LockCount) {
       _tnl_draw_range_elements( ctx, mode,
 				ctx->Array.LockFirst,
 				ctx->Array.LockCount,
