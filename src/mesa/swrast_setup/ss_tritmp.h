@@ -36,6 +36,9 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    GLfloat offset;
    GLenum mode = GL_FILL;
    GLuint facing = 0;
+   GLchan saved_color[3][4];
+   GLchan saved_spec[3][4];
+   GLuint saved_index[3];
 
    v[0] = &verts[e0];
    v[1] = &verts[e1];
@@ -63,17 +66,32 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	    if (IND & SS_TWOSIDE_BIT) {
 	       if (IND & SS_RGBA_BIT) {
 		  GLfloat (*vbcolor)[4] = VB->ColorPtr[1]->data;
+
+		  COPY_CHAN4(saved_color[0], v[0]->color);
+		  COPY_CHAN4(saved_color[1], v[1]->color);
+		  COPY_CHAN4(saved_color[2], v[2]->color);
+
 		  SS_COLOR(v[0]->color, vbcolor[e0]);
 		  SS_COLOR(v[1]->color, vbcolor[e1]);
 		  SS_COLOR(v[2]->color, vbcolor[e2]);
+
 		  if (VB->SecondaryColorPtr[1]) {
 		     GLfloat (*vbspec)[4] = VB->SecondaryColorPtr[1]->data;
+
+		     COPY_CHAN4(saved_spec[0], v[0]->specular);
+		     COPY_CHAN4(saved_spec[1], v[1]->specular);
+		     COPY_CHAN4(saved_spec[2], v[2]->specular);
+
 		     SS_SPEC(v[0]->specular, vbspec[e0]);
 		     SS_SPEC(v[1]->specular, vbspec[e1]);
 		     SS_SPEC(v[2]->specular, vbspec[e2]);
 		  }
 	       } else {
 		  GLfloat *vbindex = (GLfloat *)VB->IndexPtr[1]->data;
+		  saved_index[0] = v[0]->index;
+		  saved_index[1] = v[1]->index;
+		  saved_index[2] = v[2]->index;
+		  
 		  SS_IND(v[0]->index, (GLuint) vbindex[e0]);
 		  SS_IND(v[1]->index, (GLuint) vbindex[e1]);
 		  SS_IND(v[2]->index, (GLuint) vbindex[e2]);
@@ -137,21 +155,18 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    if (IND & SS_TWOSIDE_BIT) {
       if (facing == 1) {
 	 if (IND & SS_RGBA_BIT) {
-	    GLfloat (*vbcolor)[4] = VB->ColorPtr[0]->data;
-	    SS_COLOR(v[0]->color, vbcolor[e0]);
-	    SS_COLOR(v[1]->color, vbcolor[e1]);
-	    SS_COLOR(v[2]->color, vbcolor[e2]);
-	    if (VB->SecondaryColorPtr[0]) {
-	       GLfloat (*vbspec)[4] = VB->SecondaryColorPtr[0]->data;
-	       SS_SPEC(v[0]->specular, vbspec[e0]);
-	       SS_SPEC(v[1]->specular, vbspec[e1]);
-	       SS_SPEC(v[2]->specular, vbspec[e2]);
+	    COPY_CHAN4(v[0]->color, saved_color[0]);
+	    COPY_CHAN4(v[1]->color, saved_color[1]);
+	    COPY_CHAN4(v[2]->color, saved_color[2]);
+	    if (VB->SecondaryColorPtr[1]) {
+	       COPY_CHAN4(v[0]->specular, saved_spec[0]);
+	       COPY_CHAN4(v[1]->specular, saved_spec[1]);
+	       COPY_CHAN4(v[2]->specular, saved_spec[2]);
 	    }
 	 } else {
-	    GLfloat *vbindex = (GLfloat *)VB->IndexPtr[0]->data;
-	    SS_IND(v[0]->index, (GLuint) vbindex[e0]);
-	    SS_IND(v[1]->index, (GLuint) vbindex[e1]);
-	    SS_IND(v[2]->index, (GLuint) vbindex[e2]);
+	    v[0]->index = saved_index[0];
+	    v[1]->index = saved_index[1];
+	    v[2]->index = saved_index[2];
 	 }
       }
    }
