@@ -1,4 +1,4 @@
-/* $Id: xmesa.h,v 1.7 2000/04/05 22:09:58 brianp Exp $ */
+/* $Id: xmesa.h,v 1.8 2000/05/02 02:30:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -79,9 +79,6 @@ extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "xmesa_x.h"
-#ifdef GLX_DIRECT_RENDERING
-#include "dri_mesa.h"
-#endif
 #endif
 #include "GL/gl.h"
 
@@ -116,18 +113,6 @@ typedef struct xmesa_context *XMesaContext;
 typedef struct xmesa_visual *XMesaVisual;
 
 typedef struct xmesa_buffer *XMesaBuffer;
-
-#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
-/*
- * Initialize the XMesa driver.
- */
-extern GLboolean XMesaInitDriver( __DRIscreenPrivate *driScrnPriv );
-
-/*
- * Reset the XMesa driver when the X server resets.
- */
-extern void XMesaResetDriver( __DRIscreenPrivate *driScrnPriv );
-#endif
 
 
 
@@ -187,11 +172,7 @@ extern void XMesaDestroyVisual( XMesaVisual v );
  * Return:  an XMesaContext or NULL if error.
  */
 extern XMesaContext XMesaCreateContext( XMesaVisual v,
-					XMesaContext share_list
-#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
-					, __DRIcontextPrivate *driContextPriv
-#endif
-				      );
+					XMesaContext share_list );
 
 
 /*
@@ -203,12 +184,7 @@ extern void XMesaDestroyContext( XMesaContext c );
 /*
  * Create an XMesaBuffer from an X window.
  */
-extern XMesaBuffer XMesaCreateWindowBuffer( XMesaVisual v,
-					    XMesaWindow w
-#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
-					    , __DRIdrawablePrivate *driDrawPriv
-#endif
-					  );
+extern XMesaBuffer XMesaCreateWindowBuffer( XMesaVisual v, XMesaWindow w );
 
 
 /*
@@ -216,11 +192,7 @@ extern XMesaBuffer XMesaCreateWindowBuffer( XMesaVisual v,
  */
 extern XMesaBuffer XMesaCreatePixmapBuffer( XMesaVisual v,
 					    XMesaPixmap p,
-					    XMesaColormap cmap
-#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
-					    , __DRIdrawablePrivate *driDrawPriv
-#endif
-					  );
+					    XMesaColormap cmap );
 
 
 /*
