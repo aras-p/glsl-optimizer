@@ -144,6 +144,7 @@ MAIN_SOURCES = \
 	main/pixel.c \
 	main/points.c \
 	main/polygon.c \
+	main/program.c \
 	main/rastpos.c \
 	main/state.c \
 	main/stencil.c \
