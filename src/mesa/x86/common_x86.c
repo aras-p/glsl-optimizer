@@ -29,6 +29,8 @@
  *   processor.
  *
  *  Written by Holger Waechtler <holger@akaflieg.extern.tu-berlin.de>
+ *  Changed by Andre Werthmann <wertmann@cs.uni-potsdam.de> for using the
+ *  new Katmai functions
  */
 
 #include <stdlib.h>
@@ -40,6 +42,7 @@ int gl_x86_cpu_features = 0;
 
 void gl_init_all_x86_asm (void)
 {
+
 #ifdef USE_X86_ASM
    gl_x86_cpu_features = gl_identify_x86_cpu_features ();
    gl_x86_cpu_features |= GL_CPU_AnyX86;
@@ -52,7 +55,7 @@ void gl_init_all_x86_asm (void)
    }
 
    if (gl_x86_cpu_features) {
-      gl_init_x86_asm_transforms ();
+     gl_init_x86_asm_transforms ();
    }
 
 #ifdef USE_MMX_ASM
@@ -66,7 +69,6 @@ void gl_init_all_x86_asm (void)
    }
 #endif
 
-
 #ifdef USE_3DNOW_ASM
    if (gl_x86_cpu_features & GL_CPU_3Dnow) {
       char *s = getenv( "MESA_NO_3DNOW" );
@@ -75,6 +77,19 @@ void gl_init_all_x86_asm (void)
          gl_init_3dnow_asm_transforms ();
       } else {
          gl_x86_cpu_features &= (~GL_CPU_3Dnow); 
+      }
+   }
+#endif
+
+
+#ifdef USE_KATMAI_ASM
+   if (gl_x86_cpu_features & GL_CPU_Katmai) {
+      char *s = getenv( "MESA_NO_KATMAI" );
+      if (s == NULL) {
+         fprintf (stderr, "Katmai cpu detected.\n");
+         gl_init_katmai_asm_transforms ();
+      } else {
+         gl_x86_cpu_features &= (~GL_CPU_Katmai); 
       }
    }
 #endif

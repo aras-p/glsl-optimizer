@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.8 1999/11/16 15:49:12 brianp Exp $
+# $Id: Makefile.X11,v 1.9 1999/11/18 09:20:51 wertmann Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -93,7 +93,8 @@ CORE_SOURCES = \
 	zoom.c \
 	X86/x86.c \
 	X86/common_x86.c \
-	X86/3dnow.c
+	X86/3dnow.c \
+	X86/katmai.c
 
 DRIVER_SOURCES = \
 	X/glxapi.c \
@@ -206,7 +207,8 @@ X86/common_x86.o: X86/common_x86.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 X86/3dnow.o: X86/3dnow.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-
+X86/katmai.o: X86/katmai.c
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 
 ##### TARGETS #####
 

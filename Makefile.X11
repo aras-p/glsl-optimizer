@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.12 1999/11/04 03:57:28 gareth Exp $
+# $Id: Makefile.X11,v 1.13 1999/11/18 09:20:51 wertmann Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.1
@@ -82,6 +82,8 @@ default:
 	@echo "  make linux-386-opt-V2-glide  for Linux with 3Dfx Voodoo2 for GLQuake"
 	@echo "  make linux-3dnow          for Linux on AMD w/ 3DNow!"
 	@echo "  make linux-3dnow-glide    for Linux on AMD w/ 3DNow! for Glide"
+	@echo "  make linux-katmai         for Linux on PentiumIII w/ SSE"
+	@echo "  make linux-katmai-glide   for Linux on PentiumIII w/ SSE for Glide"
 	@echo "  make linux-386-pthread    for Linux w/ Intel assembly and linuxthreads"
 	@echo "  make linux-386-pthread-shared  for Linux w/ Intel assembly and linuxthreads"
 	@echo "  make linux-386-pthread-shared-glide  for Linux w/ Intel assembly, linuxthreads, and 3Dfx Glide driver"
@@ -145,6 +147,7 @@ linux-glide linux-386-glide linux-386-opt-glide \
 linux-386-opt-V2-glide \
 linux-386 linux-386-elf \
 linux-3dnow linux-3dnow-glide \
+linux-katmai linux-katmai-glide \
 linux-alpha linux-alpha-elf \
 linux-ppc linux-ppc-so \
 linux-386-pthread linux-386-pthread-shared linux-386-pthread-shared-glide \
