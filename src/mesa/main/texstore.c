@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.22 2001/04/04 21:54:21 brianp Exp $ */
+/* $Id: texstore.c,v 1.23 2001/04/04 22:41:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -453,7 +453,6 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
       makeTemp = GL_FALSE;
    }
 
-
    if (makeTemp) {
       GLint postConvWidth = srcWidth, postConvHeight = srcHeight;
       GLenum tmpFormat;
@@ -468,7 +467,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
 
       tmpFormat = _mesa_base_tex_format(ctx, dstFormat->IntFormat);
       tmpComps = _mesa_components_in_format(tmpFormat);
-      tmpTexelSize = tmpComps * sizeof(CHAN_TYPE);
+      tmpTexelSize = tmpComps * sizeof(GLchan);
       tmpRowStride = postConvWidth * tmpTexelSize;
       tmpImageStride = postConvWidth * postConvHeight * tmpTexelSize;
       tmpImage = (GLubyte *) MALLOC(postConvWidth * postConvHeight *
