@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.17 2001/05/14 09:00:51 keithw Exp $ */
+/* $Id: t_imm_fixup.c,v 1.18 2001/05/14 16:34:24 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -367,8 +367,8 @@ static void copy_material( struct immediate *next,
 static GLboolean is_fan_like[GL_POLYGON+1] = {
    GL_FALSE,
    GL_FALSE,
-   GL_FALSE,
    GL_TRUE,			/* line loop */
+   GL_FALSE,
    GL_FALSE,
    GL_FALSE,
    GL_TRUE,			/* tri fan */
@@ -643,9 +643,11 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 	 if (tnl->ExecParity)
 	    IM->Primitive[IM->CopyStart] |= PRIM_PARITY;
 
-         /* one of these should be true, else we'll be in an infinite loop */
-         assert(IM->PrimitiveLength[IM->Start] > 0 ||
+         /* one of these should be true, else we'll be in an infinite loop 
+	  */
+         ASSERT(IM->PrimitiveLength[IM->Start] > 0 ||
                 IM->Flag[IM->Start] & (VERT_END|VERT_END_VB));
+
 	 for (i = IM->Start ; i <= IM->Count ; i += IM->PrimitiveLength[i])
 	    if (IM->Flag[i] & (VERT_END|VERT_END_VB)) {
 	       IM->PrimitiveLength[IM->CopyStart] = i - IM->CopyStart;
@@ -666,11 +668,6 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
    else
       ctx->Driver.CurrentExecPrimitive =
 	 IM->Primitive[IM->LastPrimitive] & PRIM_MODE_MASK;
-
-/*     fprintf(stderr, "setting cep %x in %s\n",  */
-/*  	   ctx->Driver.CurrentExecPrimitive, __FUNCTION__); */
-/*     fprintf(stderr, "%s lastprim %d: %x\n", __FUNCTION__,  */
-/*  	   IM->LastPrimitive, IM->Primitive[IM->LastPrimitive]); */
 }
 
 
