@@ -51,7 +51,7 @@ struct _glapi_table;
 
 typedef void (*_glapi_warning_func)(void *ctx, const char *str, ...);
 
-typedef void (*_glapi_proc)(); /* generic function pointer */
+typedef void (*_glapi_proc)(void); /* generic function pointer */
 
 
 extern void *_glapi_Context;
