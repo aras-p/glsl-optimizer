@@ -373,7 +373,8 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 	}
 	
 	/* FIXME: Use separate buffers */
-	ctx->lfb[1] = ctx->lfb[0];
+	ctx->lfb[1] = malloc(ctx->stride * ctx->height);
+	ctx->bufsize = (ctx->stride * ctx->height);
 	
 	ctx->gl_ctx->Visual = ctx->gl_vis;
 	ctx->gl_ctx->Pixel.ReadBuffer = 
@@ -424,13 +425,12 @@ GGIMesaContext GGIMesaGetCurrentContext(void)
  */
 void GGIMesaSwapBuffers(void)
 {
+	gl_ggiDEBUG("GGIMesaSwapBuffers\n");
 	FLUSH_VB(GGIMesa->gl_ctx, "swap buffers");
+	gl_ggiFlush(GGIMesa->gl_ctx);
 	if (GGIMesa->gl_vis->DBflag)
 	{
-		void *buftemp;
-		buftemp = GGIMesa->lfb[0];
-		GGIMesa->lfb[0] = GGIMesa->lfb[1];
-		GGIMesa->lfb[1] = buftemp;
+		memcpy(GGIMesa->lfb[0], GGIMesa->lfb[1], GGIMesa->bufsize);
 	}
 }
 
