@@ -34,11 +34,6 @@ import sys, re
 class glItem:
 	"""Generic class on which all other API entity types are based."""
 
-	name = ""
-	category = ""
-	context = None
-	tag_name = ""
-
 	def __init__(self, tag_name, name, context):
 		self.name = name
 		self.category = context.get_category_define()
@@ -49,6 +44,13 @@ class glItem:
 		return
 	
 	def startElement(self, name, attrs):
+		"""Generic startElement handler.
+		
+		The startElement handler is called for all elements except
+		the one that starts the object.  For a foo element, the
+		XML "<foo><bar/></foo>" would cause the startElement handler
+		to be called once, but the endElement handler would be called
+		twice."""
 		return
 
 	def endElement(self, name):
@@ -62,7 +64,11 @@ class glItem:
 		
 		This fails if a tag can contain another tag with the same
 		name.  The XML "<foo><foo/><bar/></foo>" would fail.  The
-		object would end before the bar tag was processed."""
+		object would end before the bar tag was processed.
+		
+		The endElement handler is called for every end element
+		associated with an object, even the element that started the
+		object.  See the description of startElement an example."""
 
 		if name == self.tag_name:
 			return 1
@@ -70,8 +76,15 @@ class glItem:
 			return 0
 		return
 
+	def get_category_define(self):
+		return self.category
+
 
 class glEnum( glItem ):
+	"""Subclass of glItem for representing GL enumerants.
+	
+	This class is not complete, and is not really used yet."""
+
 	def __init__(self, context, name, attrs):
 		self.value = int(attrs.get('value', "0x0000"), 0)
 		self.functions = {}
@@ -89,6 +102,8 @@ class glEnum( glItem ):
 
 
 class glType( glItem ):
+	"""Subclass of glItem for representing GL types."""
+
 	def __init__(self, context, name, attrs):
 		self.size = int(attrs.get('size', "0"))
 
@@ -96,10 +111,10 @@ class glType( glItem ):
 		glItem.__init__(self, name, type_name, context)
 
 
-class glParameter:
+class glParameter( glItem ):
+	"""Parameter of a glFunction."""
 	p_type = None
 	p_type_string = ""
-	p_name = None
 	p_count = 0
 	p_count_parameters = None
 	counter = None
@@ -107,34 +122,49 @@ class glParameter:
 	is_counter = 0
 	is_pointer = 0
 
-	def __init__(self, t, ts, n, c, p, is_output):
-		self.counter = None
+	def __init__(self, context, name, attrs):
+		p_name = attrs.get('name', None)
+		self.p_type_string = attrs.get('type', None)
+		self.p_count_parameters = attrs.get('variable_param', None)
 
+		self.p_type = context.context.find_type(self.p_type_string)
+		if self.p_type == None:
+			raise RuntimeError("Unknown type '%s' in function '%s'." % (self.p_type_string, context.name))
+
+
+		# The count tag can be either a numeric string or the name of
+		# a variable.  If it is the name of a variable, the int(c)
+		# statement will throw an exception, and the except block will
+		# take over.
+
+		c = attrs.get('count', "0")
 		try: 
 			self.p_count = int(c)
+			self.counter = None
 		except Exception,e:
 			self.p_count = 0
 			self.counter = c
 
-		if is_output == "true":
+		if attrs.get('counter', "false") == "true":
+			self.is_counter = 1
+		else:
+			self.is_counter = 0
+
+		if attrs.get('output', "false") == "true":
 			self.is_output = 1
 		else:
 			self.is_output = 0
 
-		if self.p_count > 0 or self.counter != None or p != None :
+		if self.p_count > 0 or self.counter != None or self.p_count_parameters != None :
 			has_count = 1
 		else:
 			has_count = 0
 
-		self.p_type = t
-		self.p_type_string = ts
-		self.p_name = n
-		self.p_count_parameters = p
-		
+
 		# If there is a * anywhere in the parameter's type, then it
 		# is a pointer.
 
-		if re.compile("[*]").search(ts):
+		if re.compile("[*]").search(self.p_type_string):
 			# We could do some other validation here.  For
 			# example, an output parameter should not be const,
 			# but every non-output parameter should.
@@ -149,11 +179,27 @@ class glParameter:
 				raise RuntimeError("Non-pointer type has count or is output.")
 			self.is_pointer = 0;
 
+		glItem.__init__(self, name, p_name, context)
+		return
+
+
 	def is_variable_length_array(self):
+		"""Determine if a parameter is a variable length array.
+		
+		A parameter is considered to be a variable length array if
+		its size depends on the value of another parameter that is
+		an enumerant.  The params parameter to glTexEnviv is an
+		example of a variable length array parameter.  Arrays whose
+		size depends on a count variable, such as the lists parameter
+		to glCallLists, are not variable length arrays in this
+		sense."""
+
 		return self.p_count_parameters != None
+
 
 	def is_array(self):
 		return self.is_pointer
+
 
 	def count_string(self):
 		"""Return a string representing the number of items
@@ -175,6 +221,7 @@ class glParameter:
 		else:
 			return "1"
 
+
 	def size(self):
 		if self.is_variable_length_array():
 			return 0
@@ -183,7 +230,14 @@ class glParameter:
 		else:
 			return self.p_type.size * self.p_count
 
+
 class glParameterIterator:
+	"""Class to iterate over a list of glParameters.
+	
+	Objects of this class are returned by the __iter__ method of the
+	glFunction class.  They are used to iterate over the list of
+	parameters to the function."""
+
 	def __init__(self, data):
 		self.data = data
 		self.index = 0
@@ -194,6 +248,7 @@ class glParameterIterator:
 		i = self.index
 		self.index += 1
 		return self.data[i]
+
 
 class glFunction( glItem ):
 	real_name = ""
@@ -228,42 +283,32 @@ class glFunction( glItem ):
 
 	def startElement(self, name, attrs):
 		if name == "param":
-			p_name = attrs.get('name', None)
-			p_type = attrs.get('type', None)
-			p_count = attrs.get('count', "0")
-			p_param = attrs.get('variable_param', None)
-			is_output = attrs.get('output', "false")
-			is_counter = attrs.get('counter', "false")
-
-			t = self.context.find_type(p_type)
-			if t == None:
-				raise RuntimeError("Unknown type '%s' in function '%s'." % (p_type, self.name)) 
-
 			try:
-				p = glParameter(t, p_type, p_name, p_count, p_param, is_output)
+				glParameter(self, name, attrs)
 			except RuntimeError:
 				print "Error with parameter '%s' in function '%s'." \
-					% (p_name, self.name)
+					% (attrs.get('name','(unknown)'), self.name)
 				raise
-
-			if is_counter == "true": p.is_counter = 1
-
-			self.add_parameter(p)
 		elif name == "return":
 			self.set_return_type(attrs.get('type', None))
 
 
-	def add_parameter(self, p):
+	def append(self, tag_name, p):
+		if tag_name != "param":
+			raise RuntimeError("Trying to append '%s' to parameter list of function '%s'." % (tag_name, self.name))
+
 		self.fn_parameters.append(p)
+
 
 	def set_return_type(self, t):
 		self.fn_return_type = t
+
 
 	def get_parameter_string(self):
 		arg_string = ""
 		comma = ""
 		for p in self:
-			arg_string = arg_string + comma + p.p_type_string + " " + p.p_name
+			arg_string = arg_string + comma + p.p_type_string + " " + p.name
 			comma = ", "
 
 		if arg_string == "":
@@ -304,6 +349,7 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 		self.xref = {}
 		self.factory = glItemFactory()
 
+
 	def find_type(self,type_name):
 		for t in self.types:
 			if re.compile(t).search(type_name):
@@ -311,9 +357,11 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 		print "Unable to find base type matching \"%s\"." % (type_name)
 		return None
 
+
 	def find_function(self,function_name):
 		index = self.xref[function_name]
 		return self.functions[index]
+
 
 	def printFunctions(self):
 		keys = self.functions.keys()
@@ -336,7 +384,10 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 
 		return
 
+
 	def printHeader(self):
+		"""Print the header associated with all files and call the printRealHeader method."""
+
 		print '/* DO NOT EDIT - This file generated automatically by %s script */' \
 			% (self.name)
 		print ''
@@ -347,12 +398,17 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 		self.printRealHeader();
 		return
 
+
 	def printFooter(self):
+		"""Print the header associated with all files and call the printRealFooter method."""
+
 		self.printFunctions()
 		self.printRealFooter()
 
 
 	def get_category_define(self):
+		"""Convert the category name to the #define that would be found in glext.h"""
+
 		if re.compile("[1-9][0-9]*[.][0-9]+").match(self.current_category):
 			s = self.current_category
 			return "GL_VERSION_" + s.replace(".", "_")
@@ -382,6 +438,21 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 
 
 	def startElement(self, name, attrs):
+		"""Start a new element in the XML stream.
+		
+		Starts a new element.  There are three types of elements that
+		are specially handled by this function.  When a "category"
+		element is encountered, the name of the category is saved.
+		If an element is encountered and no API object is
+		in-progress, a new object is created using the API factory.
+		Any future elements, until that API object is closed, are
+		passed to the current objects startElement method.
+	
+		This paradigm was chosen becuase it allows subclasses of the
+		basic API types (i.e., glFunction, glEnum, etc.) to handle
+		additional XML data, GLX protocol information,  that the base
+		classes do not know about."""
+
 		if self.current_object != None:
 			self.current_object.startElement(name, attrs)
 		elif name == "category":
@@ -390,17 +461,33 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 			self.current_object = self.factory.create(self, name, attrs)
 		return
 
+
 	def endElement(self, name):
 		if self.current_object != None:
 			if self.current_object.endElement(name):
 				self.current_object = None
 		return
 
+
 	def printFunction(self,offset):
+		"""Print a single function.
+
+		In the base class, this function is empty.  All derived
+		classes should over-ride this function."""
 		return
     
+
 	def printRealHeader(self):
+		"""Print the "real" header for the created file.
+
+		In the base class, this function is empty.  All derived
+		classes should over-ride this function."""
 		return
 
+
 	def printRealFooter(self):
+		"""Print the "real" footer for the created file.
+
+		In the base class, this function is empty.  All derived
+		classes should over-ride this function."""
 		return

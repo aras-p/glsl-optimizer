@@ -62,8 +62,8 @@ class PrintGlOffsets(gl_XML.FilterGLAPISpecBase):
 				t = "%d"
 
 			t_string = t_string + comma + t
-			p_string = p_string + comma + p.p_name
-			o_string = o_string + comma + cast + p.p_name
+			p_string = p_string + comma + p.name
+			o_string = o_string + comma + cast + p.name
 			comma = ", "
 
 
