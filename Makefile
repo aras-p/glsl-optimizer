@@ -249,6 +249,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/glw/*.[ch]					\
 	$(DIRECTORY)/src/glw/Makefile*					\
 	$(DIRECTORY)/src/glw/README					\
+	$(DIRECTORY)/src/glw/depend					\
 	$(DIRECTORY)/progs/Makefile					\
 	$(DIRECTORY)/progs/util/README					\
 	$(DIRECTORY)/progs/util/*.[ch]					\
