@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.22 2001/03/28 20:40:52 gareth Exp $ */
+/* $Id: s_triangle.c,v 1.23 2001/03/28 21:31:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,6 +37,7 @@
 #include "macros.h"
 #include "mem.h"
 #include "mmath.h"
+#include "texformat.h"
 #include "teximage.h"
 #include "texstate.h"
 
@@ -2319,10 +2320,11 @@ _swrast_choose_triangle( GLcontext *ctx )
          /* Ugh, we do a _lot_ of tests to pick the best textured tri func */
 	 const struct gl_texture_object *texObj2D;
          const struct gl_texture_image *texImg;
-         GLenum minFilter, magFilter, envMode, format;
+         GLenum minFilter, magFilter, envMode;
+         GLint format;
          texObj2D = ctx->Texture.Unit[0].Current2D;
          texImg = texObj2D ? texObj2D->Image[texObj2D->BaseLevel] : NULL;
-         format = texImg ? texImg->Format : (GLenum) 0;
+         format = texImg ? texImg->TexFormat->MesaFormat : -1;
          minFilter = texObj2D ? texObj2D->MinFilter : (GLenum) 0;
          magFilter = texObj2D ? texObj2D->MagFilter : (GLenum) 0;
          envMode = ctx->Texture.Unit[0].EnvMode;
@@ -2332,8 +2334,7 @@ _swrast_choose_triangle( GLcontext *ctx )
              && texObj2D->WrapS==GL_REPEAT
 	     && texObj2D->WrapT==GL_REPEAT
              && texImg->Border==0
-             && (format == GL_RGB || format == GL_RGBA)
-             && texImg->TexFormat->Type == CHAN_TYPE
+             && (format == MESA_FORMAT_RGB || format == MESA_FORMAT_RGBA)
 	     && minFilter == magFilter
 	     && ctx->Light.Model.ColorControl == GL_SINGLE_COLOR
 	     && ctx->Texture.Unit[0].EnvMode != GL_COMBINE_EXT) {
