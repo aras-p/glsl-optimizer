@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.13 2001/02/16 18:14:41 keithw Exp $ */
+/* $Id: s_context.c,v 1.14 2001/02/16 18:56:46 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -152,19 +152,27 @@ _swrast_update_hint( GLcontext *ctx )
 			       swrast->AllowPixelFog));
 }
 
-#define _SWRAST_NEW_TRIANGLE (_NEW_RENDERMODE|			\
+#define _SWRAST_NEW_DERIVED (_SWRAST_NEW_RASTERMASK |	\
+			     _NEW_TEXTURE |		\
+			     _NEW_HINT |		\
+			     _NEW_POLYGON )
+
+/* State referenced by _swrast_choose_triangle, _swrast_choose_line.
+ */
+#define _SWRAST_NEW_TRIANGLE (_SWRAST_NEW_DERIVED |		\
+			      _NEW_RENDERMODE|			\
                               _NEW_POLYGON|			\
                               _NEW_DEPTH|			\
                               _NEW_STENCIL|			\
                               _NEW_COLOR|			\
                               _NEW_TEXTURE|			\
-                              _NEW_HINT|			\
                               _SWRAST_NEW_RASTERMASK|		\
                               _NEW_LIGHT|			\
                               _NEW_FOG |			\
 			      _DD_NEW_SEPERATE_SPECULAR)
 
-#define _SWRAST_NEW_LINE (_NEW_RENDERMODE|		\
+#define _SWRAST_NEW_LINE (_SWRAST_NEW_DERIVED |		\
+			  _NEW_RENDERMODE|		\
                           _NEW_LINE|			\
                           _NEW_TEXTURE|			\
                           _NEW_LIGHT|			\
@@ -172,7 +180,8 @@ _swrast_update_hint( GLcontext *ctx )
                           _NEW_DEPTH |			\
                           _DD_NEW_SEPERATE_SPECULAR)
 
-#define _SWRAST_NEW_POINT (_NEW_RENDERMODE |		\
+#define _SWRAST_NEW_POINT (_SWRAST_NEW_DERIVED |	\
+			   _NEW_RENDERMODE |		\
 			   _NEW_POINT |			\
 			   _NEW_TEXTURE |		\
 			   _NEW_LIGHT |			\
