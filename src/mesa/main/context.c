@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.80 2000/08/21 14:22:24 brianp Exp $ */
+/* $Id: context.c,v 1.81 2000/08/29 18:57:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1376,7 +1376,8 @@ alloc_proxy_textures( GLcontext *ctx )
 
 
 /*
- * Initialize a GLcontext struct.
+ * Initialize a GLcontext struct.  This includes allocating all the
+ * other structs and arrays which hang off of the context by pointers.
  */
 GLboolean
 _mesa_initialize_context( GLcontext *ctx,
@@ -1399,7 +1400,6 @@ _mesa_initialize_context( GLcontext *ctx,
 
    ctx->VB = gl_vb_create_for_immediate( ctx );
    if (!ctx->VB) {
-      FREE( ctx );
       return GL_FALSE;
    }
    ctx->input = ctx->VB->IM;
@@ -1407,7 +1407,6 @@ _mesa_initialize_context( GLcontext *ctx,
    ctx->PB = gl_alloc_pb();
    if (!ctx->PB) {
       ALIGN_FREE( ctx->VB );
-      FREE( ctx );
       return GL_FALSE;
    }
 
@@ -1421,7 +1420,6 @@ _mesa_initialize_context( GLcontext *ctx,
       if (!ctx->Shared) {
          ALIGN_FREE( ctx->VB );
          FREE( ctx->PB );
-         FREE( ctx );
          return GL_FALSE;
       }
    }
@@ -1453,7 +1451,6 @@ _mesa_initialize_context( GLcontext *ctx,
       free_shared_state(ctx, ctx->Shared);
       ALIGN_FREE( ctx->VB );
       FREE( ctx->PB );
-      FREE( ctx );
       return GL_FALSE;
    }
 
@@ -1484,7 +1481,6 @@ _mesa_initialize_context( GLcontext *ctx,
       FREE( ctx->PB );
       if (ctx->Exec)
          FREE( ctx->Exec );
-      FREE( ctx );
    }
    _mesa_init_exec_table(ctx->Exec, dispatchSize);
    _mesa_init_dlist_table(ctx->Save, dispatchSize);
