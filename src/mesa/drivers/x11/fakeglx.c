@@ -2079,16 +2079,16 @@ Fake_glXQueryDrawable( Display *dpy, GLXDrawable draw, int attribute,
 
    switch (attribute) {
       case GLX_WIDTH:
-         *value = xmbuf->width;
+         *value = xmbuf->mesa_buffer.Width;
          break;
       case GLX_HEIGHT:
-         *value = xmbuf->height;
+         *value = xmbuf->mesa_buffer.Height;
          break;
       case GLX_PRESERVED_CONTENTS:
          *value = True;
          break;
       case GLX_LARGEST_PBUFFER:
-         *value = xmbuf->width * xmbuf->height;
+         *value = xmbuf->mesa_buffer.Width * xmbuf->mesa_buffer.Height;
          break;
       case GLX_FBCONFIG_ID:
          *value = xmbuf->xm_visual->visinfo->visualid;
@@ -2439,13 +2439,13 @@ Fake_glXQueryGLXPbufferSGIX(Display *dpy, GLXPbufferSGIX pbuf, int attribute, un
          *value = True;
          break;
       case GLX_LARGEST_PBUFFER_SGIX:
-         *value = xmbuf->width * xmbuf->height;
+         *value = xmbuf->mesa_buffer.Width * xmbuf->mesa_buffer.Height;
          break;
       case GLX_WIDTH_SGIX:
-         *value = xmbuf->width;
+         *value = xmbuf->mesa_buffer.Width;
          break;
       case GLX_HEIGHT_SGIX:
-         *value = xmbuf->height;
+         *value = xmbuf->mesa_buffer.Height;
          break;
       case GLX_EVENT_MASK_SGIX:
          *value = 0;  /* XXX might be wrong */

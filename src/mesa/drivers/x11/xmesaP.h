@@ -192,8 +192,6 @@ struct xmesa_buffer {
 
    XMesaImage *rowimage;	/* Used for optimized span writing */
 
-   GLuint width, height;	/* size of buffer */
-
    GLint bottom;		/* used for FLIP macro below */
    GLubyte *ximage_origin1;	/* used for PIXELADDR1 macro */
    GLint ximage_width1;

@@ -285,13 +285,13 @@ clear_front_pixmap( GLcontext *ctx, GLboolean all,
       XMesaFillRectangle( xmesa->display, xmesa->xm_draw_buffer->frontbuffer,
                           xmesa->xm_draw_buffer->cleargc,
                           0, 0,
-                          xmesa->xm_draw_buffer->width+1,
-                          xmesa->xm_draw_buffer->height+1 );
+                          xmesa->xm_draw_buffer->mesa_buffer.Width + 1,
+                          xmesa->xm_draw_buffer->mesa_buffer.Height + 1 );
    }
    else {
       XMesaFillRectangle( xmesa->display, xmesa->xm_draw_buffer->frontbuffer,
                           xmesa->xm_draw_buffer->cleargc,
-                          x, xmesa->xm_draw_buffer->height - y - height,
+                          x, xmesa->xm_draw_buffer->mesa_buffer.Height - y - height,
                           width, height );
    }
 }
@@ -306,13 +306,13 @@ clear_back_pixmap( GLcontext *ctx, GLboolean all,
       XMesaFillRectangle( xmesa->display, xmesa->xm_draw_buffer->backpixmap,
                           xmesa->xm_draw_buffer->cleargc,
                           0, 0,
-                          xmesa->xm_draw_buffer->width+1,
-                          xmesa->xm_draw_buffer->height+1 );
+                          xmesa->xm_draw_buffer->mesa_buffer.Width + 1,
+                          xmesa->xm_draw_buffer->mesa_buffer.Height + 1 );
    }
    else {
       XMesaFillRectangle( xmesa->display, xmesa->xm_draw_buffer->backpixmap,
                           xmesa->xm_draw_buffer->cleargc,
-                          x, xmesa->xm_draw_buffer->height - y - height,
+                          x, xmesa->xm_draw_buffer->mesa_buffer.Height - y - height,
                           width, height );
    }
 }
@@ -410,20 +410,20 @@ clear_16bit_ximage( GLcontext *ctx, GLboolean all,
       if ((pixel & 0xff) == ((pixel >> 8) & 0xff)) {
          /* low and high bytes are equal so use memset() */
          n = xmesa->xm_draw_buffer->backimage->bytes_per_line
-            * xmesa->xm_draw_buffer->height;
+            * xmesa->xm_draw_buffer->mesa_buffer.Height;
          MEMSET( ptr4, pixel & 0xff, n );
       }
       else {
          pixel = pixel | (pixel<<16);
          n = xmesa->xm_draw_buffer->backimage->bytes_per_line
-            * xmesa->xm_draw_buffer->height / 4;
+            * xmesa->xm_draw_buffer->mesa_buffer.Height / 4;
          do {
             *ptr4++ = pixel;
                n--;
          } while (n!=0);
 
          if ((xmesa->xm_draw_buffer->backimage->bytes_per_line *
-              xmesa->xm_draw_buffer->height) & 0x2)
+              xmesa->xm_draw_buffer->mesa_buffer.Height) & 0x2)
             *(GLushort *)ptr4 = pixel & 0xffff;
       }
    }
@@ -461,8 +461,8 @@ clear_24bit_ximage( GLcontext *ctx, GLboolean all,
    if (all) {
       if (r==g && g==b) {
          /* same value for all three components (gray) */
-         const GLint w3 = xmesa->xm_draw_buffer->width * 3;
-         const GLint h = xmesa->xm_draw_buffer->height;
+         const GLint w3 = xmesa->xm_draw_buffer->mesa_buffer.Width * 3;
+         const GLint h = xmesa->xm_draw_buffer->mesa_buffer.Height;
          GLint i;
          for (i = 0; i < h; i++) {
             bgr_t *ptr3 = PIXELADDR3(xmesa->xm_draw_buffer, 0, i);
@@ -471,8 +471,8 @@ clear_24bit_ximage( GLcontext *ctx, GLboolean all,
       }
       else {
          /* the usual case */
-         const GLint w = xmesa->xm_draw_buffer->width;
-         const GLint h = xmesa->xm_draw_buffer->height;
+         const GLint w = xmesa->xm_draw_buffer->mesa_buffer.Width;
+         const GLint h = xmesa->xm_draw_buffer->mesa_buffer.Height;
          GLint i, j;
          for (i = 0; i < h; i++) {
             bgr_t *ptr3 = PIXELADDR3(xmesa->xm_draw_buffer, 0, i);
@@ -665,7 +665,8 @@ clear_32bit_ximage( GLcontext *ctx, GLboolean all,
             | ((pixel << 24) & 0xff000000);
    }
    if (all) {
-      register GLint n = xmesa->xm_draw_buffer->width * xmesa->xm_draw_buffer->height;
+      register GLint n = xmesa->xm_draw_buffer->mesa_buffer.Width
+         * xmesa->xm_draw_buffer->mesa_buffer.Height;
       register GLuint *ptr4 = (GLuint *) xmesa->xm_draw_buffer->backimage->data;
       if (pixel==0) {
          MEMSET( ptr4, pixel, 4*n );
@@ -695,24 +696,16 @@ clear_nbit_ximage( GLcontext *ctx, GLboolean all,
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_draw_buffer->backimage;
-   if (all) {
-      register int i, j;
-      width = xmesa->xm_draw_buffer->width;
-      height = xmesa->xm_draw_buffer->height;
-      for (j=0;j<height;j++) {
-         for (i=0;i<width;i++) {
-            XMesaPutPixel( img, i, j, xmesa->clearpixel );
-         }
-      }
-   }
-   else {
-      /* TODO: optimize this */
-      register int i, j;
-      y = FLIP(xmesa->xm_draw_buffer, y);
-      for (j=0;j<height;j++) {
-         for (i=0;i<width;i++) {
-            XMesaPutPixel( img, x+i, y-j, xmesa->clearpixel );
-         }
+   register int i, j;
+
+   /* We can ignore 'all' here - x, y, width, height are always right */
+   (void) all;
+
+   /* TODO: optimize this */
+   y = FLIP(xmesa->xm_draw_buffer, y);
+   for (j = 0; j < height; j++) {
+      for (i = 0; i < width; i++) {
+         XMesaPutPixel(img, x+i, y-j, xmesa->clearpixel);
       }
    }
 }
@@ -755,6 +748,7 @@ clear_buffers( GLcontext *ctx, GLbitfield mask,
  * When we detect that the user has resized the window this function will
  * get called.  Here we'll reallocate the back buffer, depth buffer,
  * stencil buffer etc. to match the new window size.
+ * The buffer->Width and buffer->Height values will indicate the new size.
  */
 void
 xmesa_resize_buffers( GLframebuffer *buffer )
@@ -766,8 +760,6 @@ xmesa_resize_buffers( GLframebuffer *buffer )
     */
    XMesaBuffer xmBuffer = (XMesaBuffer) buffer;
 
-   xmBuffer->width = buffer->Width;
-   xmBuffer->height = buffer->Height;
    xmesa_alloc_back_buffer( xmBuffer );
 
    /* Needed by FLIP macro */
@@ -1214,8 +1206,9 @@ choose_tex_format( GLcontext *ctx, GLint internalFormat,
  * Initialize the device driver function table with the functions
  * we implement in this driver.
  */
-void xmesa_init_driver_functions( XMesaVisual xmvisual,
-                                  struct dd_function_table *driver )
+void
+xmesa_init_driver_functions( XMesaVisual xmvisual,
+                             struct dd_function_table *driver )
 {
    driver->GetString = get_string;
    driver->UpdateState = xmesa_update_state;
@@ -1230,7 +1223,7 @@ void xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->Clear = clear_buffers;
    driver->ResizeBuffers = xmesa_resize_buffers;
 #ifndef XFree86Server
-   driver->CopyPixels = /*_swrast_CopyPixels;*/xmesa_CopyPixels;
+   driver->CopyPixels = xmesa_CopyPixels;
    if (xmvisual->undithered_pf == PF_8R8G8B &&
        xmvisual->dithered_pf == PF_8R8G8B) {
       driver->DrawPixels = xmesa_DrawPixels_8R8G8B;

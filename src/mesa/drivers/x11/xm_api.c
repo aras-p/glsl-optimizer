@@ -221,28 +221,6 @@ static int check_for_xshm( XMesaDisplay *display )
 
 
 /*
- * Return the width and height of the given drawable.
- */
-static void get_drawable_size( XMesaDisplay *dpy, XMesaDrawable d,
-                               unsigned int *width, unsigned int *height)
-{
-#ifdef XFree86Server
-    (void) dpy;
-    *width = d->width;
-    *height = d->height;
-#else
-   Window root;
-   int x, y;
-   unsigned int bw, depth;
-
-   _glthread_LOCK_MUTEX(_xmesa_lock);
-   XGetGeometry( dpy, d, &root, &x, &y, width, height, &bw, &depth );
-   _glthread_UNLOCK_MUTEX(_xmesa_lock);
-#endif
-}
-
-
-/*
  * Apply gamma correction to an intensity value in [0..max].  Return the
  * new intensity value.
  */
@@ -476,11 +454,16 @@ static GLboolean alloc_shm_back_buffer( XMesaBuffer b )
    GC gc;
    int (*old_handler)( XMesaDisplay *, XErrorEvent * );
 
-   b->backimage = XShmCreateImage( b->xm_visual->display,
-                                   b->xm_visual->visinfo->visual,
-                                   b->xm_visual->visinfo->depth,
-				   ZPixmap, NULL, &b->shminfo,
-				   b->width, b->height );
+   if (b->mesa_buffer.Width == 0 || b->mesa_buffer.Height == 0) {
+      /* this will be true the first time we're called on 'b' */
+      return GL_FALSE;
+   }
+
+   b->backimage = XShmCreateImage(b->xm_visual->display,
+                                  b->xm_visual->visinfo->visual,
+                                  b->xm_visual->visinfo->depth,
+                                  ZPixmap, NULL, &b->shminfo,
+                                  b->mesa_buffer.Width, b->mesa_buffer.Height);
    if (b->backimage == NULL) {
       _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (XShmCreateImage), disabling.");
       b->shm = 0;
@@ -614,7 +597,9 @@ void xmesa_alloc_back_buffer( XMesaBuffer b )
                                       b->xm_visual->visinfo->visual,
                                       GET_VISUAL_DEPTH(b->xm_visual),
 				      ZPixmap, 0,   /* format, offset */
-				      NULL, b->width, b->height,
+				      NULL,
+                                      b->mesa_buffer.Width,
+                                      b->mesa_buffer.Height,
 				      8, 0 );  /* pad, bytes_per_line */
 #endif
 	 if (!b->backimage) {
@@ -638,7 +623,8 @@ void xmesa_alloc_back_buffer( XMesaBuffer b )
       }
       /* Allocate new back pixmap */
       b->backpixmap = XMesaCreatePixmap( b->xm_visual->display, b->frontbuffer,
-					 b->width, b->height,
+					 b->mesa_buffer.Width,
+                                         b->mesa_buffer.Height,
 					 GET_VISUAL_DEPTH(b->xm_visual) );
       b->backimage = NULL;
       /* update other references to backpixmap */
@@ -1248,12 +1234,6 @@ static GLboolean initialize_visual_and_buffer( int client,
    if (b && window) {
       /* Do window-specific initializations */
 
-      /* Window dimensions */
-      unsigned int w, h;
-      get_drawable_size( v->display, window, &w, &h );
-      b->width = w;
-      b->height = h;
-
       b->frontbuffer = window;
 
       /* Setup for single/double buffering */
@@ -1847,8 +1827,14 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
 
        /* [dBorca] we should take an envvar for `fxMesaSelectCurrentBoard'!!! */
        hw = fxMesaSelectCurrentBoard(0);
+
+       /* if these fail, there's a new bug somewhere */
+       ASSERT(b->mesa_buffer.Width > 0);
+       ASSERT(b->mesa_buffer.Height > 0);
+
        if ((hw == GR_SSTTYPE_VOODOO) || (hw == GR_SSTTYPE_Voodoo2)) {
-         b->FXctx = fxMesaCreateBestContext(0, b->width, b->height, attribs);
+         b->FXctx = fxMesaCreateBestContext(0, b->mesa_buffer.Width,
+                                            b->mesa_buffer.Height, attribs);
          if ((v->undithered_pf!=PF_Index) && (b->backimage)) {
 	   b->FXisHackUsable = b->FXctx ? GL_TRUE : GL_FALSE;
 	   if (b->FXctx && (fxEnvVar[0]=='w' || fxEnvVar[0]=='W')) {
@@ -1865,7 +1851,8 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
 	   b->FXctx = fxMesaCreateContext(w, GR_RESOLUTION_NONE,
 					  GR_REFRESH_75Hz, attribs);
          else
-	   b->FXctx = fxMesaCreateBestContext(0, b->width, b->height, attribs);
+	   b->FXctx = fxMesaCreateBestContext(0, b->mesa_buffer.Width,
+                                              b->mesa_buffer.Height, attribs);
          b->FXisHackUsable = GL_FALSE;
          b->FXwindowHack = GL_FALSE;
        }
@@ -2105,13 +2092,6 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
       _mesa_make_current2(&(c->mesa),
                           &drawBuffer->mesa_buffer,
                           &readBuffer->mesa_buffer);
-
-      if (c->mesa.Viewport.Width == 0) {
-	 /* initialize viewport to window size */
-	 _mesa_Viewport( 0, 0, drawBuffer->width, drawBuffer->height );
-	 c->mesa.Scissor.Width = drawBuffer->width;
-	 c->mesa.Scissor.Height = drawBuffer->height;
-      }
 
       if (c->xm_visual->mesa_visual.rgbMode) {
          /*
@@ -2386,7 +2366,8 @@ void XMesaSwapBuffers( XMesaBuffer b )
 	    XShmPutImage( b->xm_visual->display, b->frontbuffer,
 			  b->swapgc,
 			  b->backimage, 0, 0,
-			  0, 0, b->width, b->height, False );
+			  0, 0, b->mesa_buffer.Width, b->mesa_buffer.Height,
+                          False );
             /*_glthread_UNLOCK_MUTEX(_xmesa_lock);*/
 	 }
 	 else
@@ -2396,7 +2377,7 @@ void XMesaSwapBuffers( XMesaBuffer b )
             XMesaPutImage( b->xm_visual->display, b->frontbuffer,
 			   b->swapgc,
 			   b->backimage, 0, 0,
-			   0, 0, b->width, b->height );
+			   0, 0, b->mesa_buffer.Width, b->mesa_buffer.Height );
             /*_glthread_UNLOCK_MUTEX(_xmesa_lock);*/
          }
       }
@@ -2407,7 +2388,7 @@ void XMesaSwapBuffers( XMesaBuffer b )
 			b->backpixmap,   /* source drawable */
 			b->frontbuffer,  /* dest. drawable */
 			b->swapgc,
-			0, 0, b->width, b->height,  /* source region */
+			0, 0, b->mesa_buffer.Width, b->mesa_buffer.Height,
 			0, 0                 /* dest region */
 		      );
          /*_glthread_UNLOCK_MUTEX(_xmesa_lock);*/
@@ -2434,7 +2415,7 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
       _mesa_notifySwapBuffers(ctx);
 
    if (b->db_state) {
-      int yTop = b->height - y - height;
+      int yTop = b->mesa_buffer.Height - y - height;
 #ifdef FX
       if (b->FXctx) {
          fxMesaSwapBuffers();
