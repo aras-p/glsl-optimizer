@@ -1,4 +1,4 @@
-/* $Id: fxdrv.h,v 1.55 2002/11/04 20:29:04 brianp Exp $ */
+/* $Id: fxdrv.h,v 1.56 2003/01/08 21:32:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -244,7 +244,7 @@ typedef struct
 
    GLboolean alphaTestEnabled;
    GrCmpFnc_t alphaTestFunc;
-   GrAlpha_t alphaTestRefValue;
+   GLfloat alphaTestRefValue;
 
    /* Blend function */
 

@@ -1,4 +1,4 @@
-/* $Id: fxdd.c,v 1.94 2002/11/04 20:29:04 brianp Exp $ */
+/* $Id: fxdd.c,v 1.95 2003/01/08 21:32:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -142,7 +142,7 @@ fxDDClearColor(GLcontext * ctx, const GLfloat color[4])
    CLAMPED_FLOAT_TO_UBYTE(col[3], color[3]);
 
    fxMesa->clearC = FXCOLOR4(col);
-   fxMesa->clearA = color[3];
+   fxMesa->clearA = col[3];
 }
 
 
