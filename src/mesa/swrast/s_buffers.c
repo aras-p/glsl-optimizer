@@ -1,8 +1,8 @@
-/* $Id: s_buffers.c,v 1.15 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: s_buffers.c,v 1.16 2002/11/13 16:46:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -68,7 +68,7 @@ clear_color_buffer_with_masking( GLcontext *ctx )
          }
          _mesa_mask_rgba_array( ctx, width, x, y + i, rgba );
          (*swrast->Driver.WriteRGBASpan)( ctx, width, x, y + i,
-				       (CONST GLchan (*)[4]) rgba, NULL );
+                                          (CONST GLchan (*)[4]) rgba, NULL );
       }
    }
    else {
@@ -104,7 +104,6 @@ clear_color_buffer(GLcontext *ctx)
    if (ctx->Visual.rgbMode) {
       /* RGBA mode */
       GLchan clearColor[4];
-      GLchan span[MAX_WIDTH][4];
       GLint i;
 
       CLAMPED_FLOAT_TO_CHAN(clearColor[RCOMP], ctx->Color.ClearColor[0]);
@@ -113,38 +112,22 @@ clear_color_buffer(GLcontext *ctx)
       CLAMPED_FLOAT_TO_CHAN(clearColor[ACOMP], ctx->Color.ClearColor[3]);
 
       ASSERT(*((GLuint *) &ctx->Color.ColorMask) == 0xffffffff);
+      ASSERT(swrast->Driver.WriteRGBASpan);
 
-      for (i = 0; i < width; i++) {
-         COPY_CHAN4(span[i], clearColor);
-      }
       for (i = 0; i < height; i++) {
-         (*swrast->Driver.WriteRGBASpan)( ctx, width, x, y + i,
-                                       (CONST GLchan (*)[4]) span, NULL );
+         (*swrast->Driver.WriteMonoRGBASpan)( ctx, width, x, y + i,
+                                              clearColor, NULL );
       }
    }
    else {
       /* Color index mode */
+      GLint i;
       ASSERT((ctx->Color.IndexMask & ((1 << ctx->Visual.indexBits) - 1))
              == (GLuint) ((1 << ctx->Visual.indexBits) - 1));
-      if (ctx->Visual.indexBits == 8) {
-         /* 8-bit clear */
-         GLubyte span[MAX_WIDTH];
-         GLint i;
-         MEMSET(span, ctx->Color.ClearIndex, width);
-         for (i = 0; i < height; i++) {
-            (*swrast->Driver.WriteCI8Span)( ctx, width, x, y + i, span, NULL );
-         }
-      }
-      else {
-         /* non 8-bit clear */
-         GLuint span[MAX_WIDTH];
-         GLint i;
-         for (i = 0; i < width; i++) {
-            span[i] = ctx->Color.ClearIndex;
-         }
-         for (i = 0; i < height; i++) {
-            (*swrast->Driver.WriteCI32Span)( ctx, width, x, y + i, span, NULL );
-         }
+      ASSERT(swrast->Driver.WriteMonoCISpan);
+      for (i = 0; i < height; i++) {
+         (*swrast->Driver.WriteMonoCISpan)( ctx, width, x, y + i,
+                                            ctx->Color.ClearIndex, NULL);
       }
    }
 }
