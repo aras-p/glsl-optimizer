@@ -1,4 +1,4 @@
-/* $Id: s_linetemp.h,v 1.4 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: s_linetemp.h,v 1.5 2001/02/07 18:36:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -349,10 +349,11 @@
 #endif
 #ifdef INTERP_TEX
             {
-               const GLfloat invQ = 1.0F / tex[3];
+               const GLfloat invQ = tex[3] ? (1.0F / tex[3]) : 1.0F;
                fragTexcoord[0] = tex[0] * invQ;
                fragTexcoord[1] = tex[1] * invQ;
                fragTexcoord[2] = tex[2] * invQ;
+               fragTexcoord[3] = tex[3];
             }
 #endif
 #ifdef INTERP_MULTITEX
@@ -364,6 +365,7 @@
                      fragTexcoord[u][0] = tex[u][0] * invQ;
                      fragTexcoord[u][1] = tex[u][1] * invQ;
                      fragTexcoord[u][2] = tex[u][2] * invQ;
+                     fragTexcoord[u][3] = tex[u][3];
                   }
                }
             }
@@ -518,10 +520,11 @@
 #endif
 #ifdef INTERP_TEX
             {
-               const GLfloat invQ = 1.0F / tex[3];
+               const GLfloat invQ = tex[3] ? (1.0F / tex[3]) : 1.0F;
                fragTexcoord[0] = tex[0] * invQ;
                fragTexcoord[1] = tex[1] * invQ;
                fragTexcoord[2] = tex[2] * invQ;
+               fragTexcoord[3] = tex[3];
             }
 #endif
 #ifdef INTERP_MULTITEX
@@ -533,6 +536,7 @@
                      fragTexcoord[u][0] = tex[u][0] * invQ;
                      fragTexcoord[u][1] = tex[u][1] * invQ;
                      fragTexcoord[u][2] = tex[u][2] * invQ;
+                     fragTexcoord[u][3] = tex[u][3];
                   }
                }
             }
