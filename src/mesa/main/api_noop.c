@@ -595,12 +595,12 @@ void GLAPIENTRY _mesa_noop_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2
       ASSERT_OUTSIDE_BEGIN_END(ctx);
    }
 
-   _glapi_Dispatch->Begin( GL_QUADS );
-   _glapi_Dispatch->Vertex2f( x1, y1 );
-   _glapi_Dispatch->Vertex2f( x2, y1 );
-   _glapi_Dispatch->Vertex2f( x2, y2 );
-   _glapi_Dispatch->Vertex2f( x1, y2 );
-   _glapi_Dispatch->End();
+   GL_CALL(Begin)( GL_QUADS );
+   GL_CALL(Vertex2f)( x1, y1 );
+   GL_CALL(Vertex2f)( x2, y1 );
+   GL_CALL(Vertex2f)( x2, y2 );
+   GL_CALL(Vertex2f)( x1, y2 );
+   GL_CALL(End)();
 }
 
 
@@ -616,10 +616,10 @@ void GLAPIENTRY _mesa_noop_DrawArrays(GLenum mode, GLint start, GLsizei count)
    if (!_mesa_validate_DrawArrays( ctx, mode, start, count ))
       return;
 
-   _glapi_Dispatch->Begin(mode);
+   GL_CALL(Begin)(mode);
    for (i = 0; i < count; i++)
-      _glapi_Dispatch->ArrayElement(start + i);
-   _glapi_Dispatch->End();
+       GL_CALL(ArrayElement)(start + i);
+   GL_CALL(End)();
 }
 
 
@@ -632,27 +632,27 @@ void GLAPIENTRY _mesa_noop_DrawElements(GLenum mode, GLsizei count, GLenum type,
    if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices ))
       return;
 
-   _glapi_Dispatch->Begin(mode);
+   GL_CALL(Begin)(mode);
 
    switch (type) {
    case GL_UNSIGNED_BYTE:
       for (i = 0 ; i < count ; i++)
-	 _glapi_Dispatch->ArrayElement( ((GLubyte *)indices)[i] );
+	  GL_CALL(ArrayElement)( ((GLubyte *)indices)[i] );
       break;
    case GL_UNSIGNED_SHORT:
       for (i = 0 ; i < count ; i++)
-	 _glapi_Dispatch->ArrayElement( ((GLushort *)indices)[i] );
+	  GL_CALL(ArrayElement)( ((GLushort *)indices)[i] );
       break;
    case GL_UNSIGNED_INT:
       for (i = 0 ; i < count ; i++)
-	 _glapi_Dispatch->ArrayElement( ((GLuint *)indices)[i] );
+	  GL_CALL(ArrayElement)( ((GLuint *)indices)[i] );
       break;
    default:
       _mesa_error( ctx, GL_INVALID_ENUM, "glDrawElements(type)" );
       break;
    }
 
-   _glapi_Dispatch->End();
+   GL_CALL(End)();
 }
 
 void GLAPIENTRY _mesa_noop_DrawRangeElements(GLenum mode,
@@ -665,7 +665,7 @@ void GLAPIENTRY _mesa_noop_DrawRangeElements(GLenum mode,
    if (_mesa_validate_DrawRangeElements( ctx, mode,
 					 start, end,
 					 count, type, indices ))
-      _glapi_Dispatch->DrawElements( mode, count, type, indices );
+       GL_CALL(DrawElements)( mode, count, type, indices );
 }
 
 /*
@@ -710,11 +710,11 @@ void GLAPIENTRY _mesa_noop_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
    du = ctx->Eval.MapGrid1du;
    u = ctx->Eval.MapGrid1u1 + i1 * du;
 
-   _glapi_Dispatch->Begin( prim );
+   GL_CALL(Begin)( prim );
    for (i=i1;i<=i2;i++,u+=du) {
-      _glapi_Dispatch->EvalCoord1f( u );
+      GL_CALL(EvalCoord1f)( u );
    }
-   _glapi_Dispatch->End();
+   GL_CALL(End)();
 }
 
 
@@ -749,38 +749,38 @@ void GLAPIENTRY _mesa_noop_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1,
 
    switch (mode) {
    case GL_POINT:
-      _glapi_Dispatch->Begin( GL_POINTS );
+      GL_CALL(Begin)( GL_POINTS );
       for (v=v1,j=j1;j<=j2;j++,v+=dv) {
 	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
-	    _glapi_Dispatch->EvalCoord2f(u, v );
+	    GL_CALL(EvalCoord2f)(u, v );
 	 }
       }
-      _glapi_Dispatch->End();
+      GL_CALL(End)();
       break;
    case GL_LINE:
       for (v=v1,j=j1;j<=j2;j++,v+=dv) {
-	 _glapi_Dispatch->Begin( GL_LINE_STRIP );
+	 GL_CALL(Begin)( GL_LINE_STRIP );
 	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
-	    _glapi_Dispatch->EvalCoord2f(u, v );
+	    GL_CALL(EvalCoord2f)(u, v );
 	 }
-	 _glapi_Dispatch->End();
+	 GL_CALL(End)();
       }
       for (u=u1,i=i1;i<=i2;i++,u+=du) {
-	 _glapi_Dispatch->Begin( GL_LINE_STRIP );
+	 GL_CALL(Begin)( GL_LINE_STRIP );
 	 for (v=v1,j=j1;j<=j2;j++,v+=dv) {
-	    _glapi_Dispatch->EvalCoord2f(u, v );
+	    GL_CALL(EvalCoord2f)(u, v );
 	 }
-	 _glapi_Dispatch->End();
+	 GL_CALL(End)();
       }
       break;
    case GL_FILL:
       for (v=v1,j=j1;j<j2;j++,v+=dv) {
-	 _glapi_Dispatch->Begin( GL_TRIANGLE_STRIP );
+	 GL_CALL(Begin)( GL_TRIANGLE_STRIP );
 	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
-	    _glapi_Dispatch->EvalCoord2f(u, v );
-	    _glapi_Dispatch->EvalCoord2f(u, v+dv );
+	    GL_CALL(EvalCoord2f)(u, v );
+	    GL_CALL(EvalCoord2f)(u, v+dv );
 	 }
-	 _glapi_Dispatch->End();
+	 GL_CALL(End)();
       }
       break;
    default:

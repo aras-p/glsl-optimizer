@@ -417,7 +417,7 @@ static void VFMT_FALLBACK( const char *caller )
 
       if (ind & RADEON_CP_VC_FRMT_PKSPEC) {
 	 radeon_color_t *spec = (radeon_color_t *)&tmp[i][offset];
-	 _glapi_Dispatch->SecondaryColor3ubEXT( spec->red, spec->green, spec->blue );
+	 GL_CALL(SecondaryColor3ubEXT)( spec->red, spec->green, spec->blue );
 	 offset++;
       }
 
@@ -453,7 +453,7 @@ static void VFMT_FALLBACK( const char *caller )
    }
 
    if (ind & RADEON_CP_VC_FRMT_PKSPEC) 
-      _glapi_Dispatch->SecondaryColor3ubEXT( rmesa->vb.specptr->red, rmesa->vb.specptr->green, rmesa->vb.specptr->blue ); 
+       GL_CALL(SecondaryColor3ubEXT)( rmesa->vb.specptr->red, rmesa->vb.specptr->green, rmesa->vb.specptr->blue ); 
 
    if (ind & RADEON_CP_VC_FRMT_ST0) 
       glTexCoord2fv( rmesa->vb.texcoordptr[0] );

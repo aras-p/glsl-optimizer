@@ -140,42 +140,42 @@ static array_func NormalFuncs[8] = {
 /* Wrapper functions in case glSecondaryColor*EXT doesn't exist */
 static void GLAPIENTRY SecondaryColor3bvEXT(const GLbyte *c)
 {
-   _glapi_Dispatch->SecondaryColor3bvEXT(c);
+   GL_CALL(SecondaryColor3bvEXT)(c);
 }
 
 static void GLAPIENTRY SecondaryColor3ubvEXT(const GLubyte *c)
 {
-   _glapi_Dispatch->SecondaryColor3ubvEXT(c);
+   GL_CALL(SecondaryColor3ubvEXT)(c);
 }
 
 static void GLAPIENTRY SecondaryColor3svEXT(const GLshort *c)
 {
-   _glapi_Dispatch->SecondaryColor3svEXT(c);
+   GL_CALL(SecondaryColor3svEXT)(c);
 }
 
 static void GLAPIENTRY SecondaryColor3usvEXT(const GLushort *c)
 {
-   _glapi_Dispatch->SecondaryColor3usvEXT(c);
+   GL_CALL(SecondaryColor3usvEXT)(c);
 }
 
 static void GLAPIENTRY SecondaryColor3ivEXT(const GLint *c)
 {
-   _glapi_Dispatch->SecondaryColor3ivEXT(c);
+   GL_CALL(SecondaryColor3ivEXT)(c);
 }
 
 static void GLAPIENTRY SecondaryColor3uivEXT(const GLuint *c)
 {
-   _glapi_Dispatch->SecondaryColor3uivEXT(c);
+   GL_CALL(SecondaryColor3uivEXT)(c);
 }
 
 static void GLAPIENTRY SecondaryColor3fvEXT(const GLfloat *c)
 {
-   _glapi_Dispatch->SecondaryColor3fvEXT(c);
+   GL_CALL(SecondaryColor3fvEXT)(c);
 }
 
 static void GLAPIENTRY SecondaryColor3dvEXT(const GLdouble *c)
 {
-   _glapi_Dispatch->SecondaryColor3dvEXT(c);
+   GL_CALL(SecondaryColor3dvEXT)(c);
 }
 
 static array_func SecondaryColorFuncs[8] = {
@@ -193,12 +193,12 @@ static array_func SecondaryColorFuncs[8] = {
 /* Again, wrapper functions in case glSecondaryColor*EXT doesn't exist */
 static void GLAPIENTRY FogCoordfvEXT(const GLfloat *f)
 {
-   _glapi_Dispatch->FogCoordfvEXT(f);
+   GL_CALL(FogCoordfvEXT)(f);
 }
 
 static void GLAPIENTRY FogCoorddvEXT(const GLdouble *f)
 {
-   _glapi_Dispatch->FogCoorddvEXT(f);
+   GL_CALL(FogCoorddvEXT)(f);
 }
 
 static array_func FogCoordFuncs[8] = {
@@ -219,87 +219,86 @@ static array_func FogCoordFuncs[8] = {
 
 static void GLAPIENTRY VertexAttrib1Nbv(GLuint index, const GLbyte *v)
 {
-   _glapi_Dispatch->VertexAttrib1fNV(index, BYTE_TO_FLOAT(v[0]));
+   GL_CALL(VertexAttrib1fNV)(index, BYTE_TO_FLOAT(v[0]));
 }
 
 static void GLAPIENTRY VertexAttrib1bv(GLuint index, const GLbyte *v)
 {
-      _glapi_Dispatch->VertexAttrib1fNV(index, v[0]);
+   GL_CALL(VertexAttrib1fNV)(index, v[0]);
 }
 
 static void GLAPIENTRY VertexAttrib2Nbv(GLuint index, const GLbyte *v)
 {
-   _glapi_Dispatch->VertexAttrib2fNV(index, BYTE_TO_FLOAT(v[0]),
-                                     BYTE_TO_FLOAT(v[1]));
+   GL_CALL(VertexAttrib2fNV)(index, BYTE_TO_FLOAT(v[0]), BYTE_TO_FLOAT(v[1]));
 }
 
 static void GLAPIENTRY VertexAttrib2bv(GLuint index, const GLbyte *v)
 {
-   _glapi_Dispatch->VertexAttrib2fNV(index, v[0], v[1]);
+   GL_CALL(VertexAttrib2fNV)(index, v[0], v[1]);
 }
 
 static void GLAPIENTRY VertexAttrib3Nbv(GLuint index, const GLbyte *v)
 {
-   _glapi_Dispatch->VertexAttrib3fNV(index, BYTE_TO_FLOAT(v[0]),
-                                     BYTE_TO_FLOAT(v[1]),
-                                     BYTE_TO_FLOAT(v[2]));
+   GL_CALL(VertexAttrib3fNV)(index, BYTE_TO_FLOAT(v[0]),
+			     BYTE_TO_FLOAT(v[1]),
+			     BYTE_TO_FLOAT(v[2]));
 }
 
 static void GLAPIENTRY VertexAttrib3bv(GLuint index, const GLbyte *v)
 {
-   _glapi_Dispatch->VertexAttrib3fNV(index, v[0], v[1], v[2]);
+   GL_CALL(VertexAttrib3fNV)(index, v[0], v[1], v[2]);
 }
 
 static void GLAPIENTRY VertexAttrib4Nbv(GLuint index, const GLbyte *v)
 {
-   _glapi_Dispatch->VertexAttrib4fNV(index, BYTE_TO_FLOAT(v[0]),
-                                     BYTE_TO_FLOAT(v[1]),
-                                     BYTE_TO_FLOAT(v[2]),
-                                     BYTE_TO_FLOAT(v[3]));
+   GL_CALL(VertexAttrib4fNV)(index, BYTE_TO_FLOAT(v[0]),
+			     BYTE_TO_FLOAT(v[1]),
+			     BYTE_TO_FLOAT(v[2]),
+			     BYTE_TO_FLOAT(v[3]));
 }
 
 static void GLAPIENTRY VertexAttrib4bv(GLuint index, const GLbyte *v)
 {
-   _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], v[3]);
+   GL_CALL(VertexAttrib4fNV)(index, v[0], v[1], v[2], v[3]);
 }
 
 /* GL_UNSIGNED_BYTE attributes */
 
 static void GLAPIENTRY VertexAttrib1Nubv(GLuint index, const GLubyte *v)
 {
-   _glapi_Dispatch->VertexAttrib1fNV(index, UBYTE_TO_FLOAT(v[0]));
+   GL_CALL(VertexAttrib1fNV)(index, UBYTE_TO_FLOAT(v[0]));
 }
 
 static void GLAPIENTRY VertexAttrib1ubv(GLuint index, const GLubyte *v)
 {
-   _glapi_Dispatch->VertexAttrib1fNV(index, v[0]);
+   GL_CALL(VertexAttrib1fNV)(index, v[0]);
 }
 
 static void GLAPIENTRY VertexAttrib2Nubv(GLuint index, const GLubyte *v)
 {
-   _glapi_Dispatch->VertexAttrib2fNV(index, UBYTE_TO_FLOAT(v[0]),
-                                     UBYTE_TO_FLOAT(v[1]));
+   GL_CALL(VertexAttrib2fNV)(index, UBYTE_TO_FLOAT(v[0]),
+			     UBYTE_TO_FLOAT(v[1]));
 }
 
 static void GLAPIENTRY VertexAttrib2ubv(GLuint index, const GLubyte *v)
 {
-   _glapi_Dispatch->VertexAttrib2fNV(index, v[0], v[1]);
+   GL_CALL(VertexAttrib2fNV)(index, v[0], v[1]);
 }
 
 static void GLAPIENTRY VertexAttrib3Nubv(GLuint index, const GLubyte *v)
 {
-   _glapi_Dispatch->VertexAttrib3fNV(index, UBYTE_TO_FLOAT(v[0]),
-                                     UBYTE_TO_FLOAT(v[1]),
-                                     UBYTE_TO_FLOAT(v[2]));
+   GL_CALL(VertexAttrib3fNV)(index, UBYTE_TO_FLOAT(v[0]),
+			     UBYTE_TO_FLOAT(v[1]),
+			     UBYTE_TO_FLOAT(v[2]));
 }
 static void GLAPIENTRY VertexAttrib3ubv(GLuint index, const GLubyte *v)
 {
-   _glapi_Dispatch->VertexAttrib3fNV(index, v[0], v[1], v[2]);
+   GL_CALL(VertexAttrib3fNV)(index, v[0], v[1], v[2]);
 }
 
 static void GLAPIENTRY VertexAttrib4Nubv(GLuint index, const GLubyte *v)
 {
-   _glapi_Dispatch->VertexAttrib4fNV(index, UBYTE_TO_FLOAT(v[0]),
+   GL_CALL(VertexAttrib4fNV)(index, UBYTE_TO_FLOAT(v[0]),
                                      UBYTE_TO_FLOAT(v[1]),
                                      UBYTE_TO_FLOAT(v[2]),
                                      UBYTE_TO_FLOAT(v[3]));
@@ -307,243 +306,243 @@ static void GLAPIENTRY VertexAttrib4Nubv(GLuint index, const GLubyte *v)
 
 static void GLAPIENTRY VertexAttrib4ubv(GLuint index, const GLubyte *v)
 {
-   _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], v[3]);
+   GL_CALL(VertexAttrib4fNV)(index, v[0], v[1], v[2], v[3]);
 }
 
 /* GL_SHORT attributes */
 
 static void GLAPIENTRY VertexAttrib1Nsv(GLuint index, const GLshort *v)
 {
-   _glapi_Dispatch->VertexAttrib1fNV(index, SHORT_TO_FLOAT(v[0]));
+   GL_CALL(VertexAttrib1fNV)(index, SHORT_TO_FLOAT(v[0]));
 }
 
 static void GLAPIENTRY VertexAttrib1sv(GLuint index, const GLshort *v)
 {
-   _glapi_Dispatch->VertexAttrib1fNV(index, v[0]);
+   GL_CALL(VertexAttrib1fNV)(index, v[0]);
 }
 
 static void GLAPIENTRY VertexAttrib2Nsv(GLuint index, const GLshort *v)
 {
-   _glapi_Dispatch->VertexAttrib2fNV(index, SHORT_TO_FLOAT(v[0]),
-                                     SHORT_TO_FLOAT(v[1]));
+   GL_CALL(VertexAttrib2fNV)(index, SHORT_TO_FLOAT(v[0]),
+			     SHORT_TO_FLOAT(v[1]));
 }
 
 static void GLAPIENTRY VertexAttrib2sv(GLuint index, const GLshort *v)
 {
-   _glapi_Dispatch->VertexAttrib2fNV(index, v[0], v[1]);
+   GL_CALL(VertexAttrib2fNV)(index, v[0], v[1]);
 }
 
 static void GLAPIENTRY VertexAttrib3Nsv(GLuint index, const GLshort *v)
 {
-   _glapi_Dispatch->VertexAttrib3fNV(index, SHORT_TO_FLOAT(v[0]),
-                                     SHORT_TO_FLOAT(v[1]),
-                                     SHORT_TO_FLOAT(v[2]));
+   GL_CALL(VertexAttrib3fNV)(index, SHORT_TO_FLOAT(v[0]),
+			     SHORT_TO_FLOAT(v[1]),
+			     SHORT_TO_FLOAT(v[2]));
 }
 
 static void GLAPIENTRY VertexAttrib3sv(GLuint index, const GLshort *v)
 {
-   _glapi_Dispatch->VertexAttrib3fNV(index, v[0], v[1], v[2]);
+   GL_CALL(VertexAttrib3fNV)(index, v[0], v[1], v[2]);
 }
 
 static void GLAPIENTRY VertexAttrib4Nsv(GLuint index, const GLshort *v)
 {
-   _glapi_Dispatch->VertexAttrib4fNV(index, SHORT_TO_FLOAT(v[0]),
-                                     SHORT_TO_FLOAT(v[1]),
-                                     SHORT_TO_FLOAT(v[2]),
-                                     SHORT_TO_FLOAT(v[3]));
+   GL_CALL(VertexAttrib4fNV)(index, SHORT_TO_FLOAT(v[0]),
+			     SHORT_TO_FLOAT(v[1]),
+			     SHORT_TO_FLOAT(v[2]),
+			     SHORT_TO_FLOAT(v[3]));
 }
 
 static void GLAPIENTRY VertexAttrib4sv(GLuint index, const GLshort *v)
 {
-   _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], v[3]);
+   GL_CALL(VertexAttrib4fNV)(index, v[0], v[1], v[2], v[3]);
 }
 
 /* GL_UNSIGNED_SHORT attributes */
 
 static void GLAPIENTRY VertexAttrib1Nusv(GLuint index, const GLushort *v)
 {
-   _glapi_Dispatch->VertexAttrib1fNV(index, USHORT_TO_FLOAT(v[0]));
+   GL_CALL(VertexAttrib1fNV)(index, USHORT_TO_FLOAT(v[0]));
 }
 
 static void GLAPIENTRY VertexAttrib1usv(GLuint index, const GLushort *v)
 {
-   _glapi_Dispatch->VertexAttrib1fNV(index, v[0]);
+   GL_CALL(VertexAttrib1fNV)(index, v[0]);
 }
 
 static void GLAPIENTRY VertexAttrib2Nusv(GLuint index, const GLushort *v)
 {
-   _glapi_Dispatch->VertexAttrib2fNV(index, USHORT_TO_FLOAT(v[0]),
-                                     USHORT_TO_FLOAT(v[1]));
+   GL_CALL(VertexAttrib2fNV)(index, USHORT_TO_FLOAT(v[0]),
+			     USHORT_TO_FLOAT(v[1]));
 }
 
 static void GLAPIENTRY VertexAttrib2usv(GLuint index, const GLushort *v)
 {
-   _glapi_Dispatch->VertexAttrib2fNV(index, v[0], v[1]);
+   GL_CALL(VertexAttrib2fNV)(index, v[0], v[1]);
 }
 
 static void GLAPIENTRY VertexAttrib3Nusv(GLuint index, const GLushort *v)
 {
-   _glapi_Dispatch->VertexAttrib3fNV(index, USHORT_TO_FLOAT(v[0]),
-                                     USHORT_TO_FLOAT(v[1]),
-                                     USHORT_TO_FLOAT(v[2]));
+   GL_CALL(VertexAttrib3fNV)(index, USHORT_TO_FLOAT(v[0]),
+			     USHORT_TO_FLOAT(v[1]),
+			     USHORT_TO_FLOAT(v[2]));
 }
 
 static void GLAPIENTRY VertexAttrib3usv(GLuint index, const GLushort *v)
 {
-   _glapi_Dispatch->VertexAttrib3fNV(index, v[0], v[1], v[2]);
+   GL_CALL(VertexAttrib3fNV)(index, v[0], v[1], v[2]);
 }
 
 static void GLAPIENTRY VertexAttrib4Nusv(GLuint index, const GLushort *v)
 {
-   _glapi_Dispatch->VertexAttrib4fNV(index, USHORT_TO_FLOAT(v[0]),
-                                     USHORT_TO_FLOAT(v[1]),
-                                     USHORT_TO_FLOAT(v[2]),
-                                     USHORT_TO_FLOAT(v[3]));
+   GL_CALL(VertexAttrib4fNV)(index, USHORT_TO_FLOAT(v[0]),
+			     USHORT_TO_FLOAT(v[1]),
+			     USHORT_TO_FLOAT(v[2]),
+			     USHORT_TO_FLOAT(v[3]));
 }
 
 static void GLAPIENTRY VertexAttrib4usv(GLuint index, const GLushort *v)
 {
-   _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], v[3]);
+   GL_CALL(VertexAttrib4fNV)(index, v[0], v[1], v[2], v[3]);
 }
 
 /* GL_INT attributes */
 
 static void GLAPIENTRY VertexAttrib1Niv(GLuint index, const GLint *v)
 {
-   _glapi_Dispatch->VertexAttrib1fNV(index, INT_TO_FLOAT(v[0]));
+   GL_CALL(VertexAttrib1fNV)(index, INT_TO_FLOAT(v[0]));
 }
 
 static void GLAPIENTRY VertexAttrib1iv(GLuint index, const GLint *v)
 {
-   _glapi_Dispatch->VertexAttrib1fNV(index, v[0]);
+   GL_CALL(VertexAttrib1fNV)(index, v[0]);
 }
 
 static void GLAPIENTRY VertexAttrib2Niv(GLuint index, const GLint *v)
 {
-   _glapi_Dispatch->VertexAttrib2fNV(index, INT_TO_FLOAT(v[0]),
-                                     INT_TO_FLOAT(v[1]));
+   GL_CALL(VertexAttrib2fNV)(index, INT_TO_FLOAT(v[0]),
+			     INT_TO_FLOAT(v[1]));
 }
 
 static void GLAPIENTRY VertexAttrib2iv(GLuint index, const GLint *v)
 {
-   _glapi_Dispatch->VertexAttrib2fNV(index, v[0], v[1]);
+   GL_CALL(VertexAttrib2fNV)(index, v[0], v[1]);
 }
 
 static void GLAPIENTRY VertexAttrib3Niv(GLuint index, const GLint *v)
 {
-   _glapi_Dispatch->VertexAttrib3fNV(index, INT_TO_FLOAT(v[0]),
-                                     INT_TO_FLOAT(v[1]),
-                                     INT_TO_FLOAT(v[2]));
+   GL_CALL(VertexAttrib3fNV)(index, INT_TO_FLOAT(v[0]),
+			     INT_TO_FLOAT(v[1]),
+			     INT_TO_FLOAT(v[2]));
 }
 
 static void GLAPIENTRY VertexAttrib3iv(GLuint index, const GLint *v)
 {
-   _glapi_Dispatch->VertexAttrib3fNV(index, v[0], v[1], v[2]);
+   GL_CALL(VertexAttrib3fNV)(index, v[0], v[1], v[2]);
 }
 
 static void GLAPIENTRY VertexAttrib4Niv(GLuint index, const GLint *v)
 {
-   _glapi_Dispatch->VertexAttrib4fNV(index, INT_TO_FLOAT(v[0]),
-                                     INT_TO_FLOAT(v[1]),
-                                     INT_TO_FLOAT(v[2]),
-                                     INT_TO_FLOAT(v[3]));
+   GL_CALL(VertexAttrib4fNV)(index, INT_TO_FLOAT(v[0]),
+			     INT_TO_FLOAT(v[1]),
+			     INT_TO_FLOAT(v[2]),
+			     INT_TO_FLOAT(v[3]));
 }
 
 static void GLAPIENTRY VertexAttrib4iv(GLuint index, const GLint *v)
 {
-   _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], v[3]);
+   GL_CALL(VertexAttrib4fNV)(index, v[0], v[1], v[2], v[3]);
 }
 
 /* GL_UNSIGNED_INT attributes */
 
 static void GLAPIENTRY VertexAttrib1Nuiv(GLuint index, const GLuint *v)
 {
-   _glapi_Dispatch->VertexAttrib1fNV(index, UINT_TO_FLOAT(v[0]));
+   GL_CALL(VertexAttrib1fNV)(index, UINT_TO_FLOAT(v[0]));
 }
 
 static void GLAPIENTRY VertexAttrib1uiv(GLuint index, const GLuint *v)
 {
-   _glapi_Dispatch->VertexAttrib1fNV(index, v[0]);
+   GL_CALL(VertexAttrib1fNV)(index, v[0]);
 }
 
 static void GLAPIENTRY VertexAttrib2Nuiv(GLuint index, const GLuint *v)
 {
-   _glapi_Dispatch->VertexAttrib2fNV(index, UINT_TO_FLOAT(v[0]),
-                                     UINT_TO_FLOAT(v[1]));
+   GL_CALL(VertexAttrib2fNV)(index, UINT_TO_FLOAT(v[0]),
+			     UINT_TO_FLOAT(v[1]));
 }
 
 static void GLAPIENTRY VertexAttrib2uiv(GLuint index, const GLuint *v)
 {
-   _glapi_Dispatch->VertexAttrib2fNV(index, v[0], v[1]);
+   GL_CALL(VertexAttrib2fNV)(index, v[0], v[1]);
 }
 
 static void GLAPIENTRY VertexAttrib3Nuiv(GLuint index, const GLuint *v)
 {
-   _glapi_Dispatch->VertexAttrib3fNV(index, UINT_TO_FLOAT(v[0]),
-                                     UINT_TO_FLOAT(v[1]),
-                                     UINT_TO_FLOAT(v[2]));
+   GL_CALL(VertexAttrib3fNV)(index, UINT_TO_FLOAT(v[0]),
+			     UINT_TO_FLOAT(v[1]),
+			     UINT_TO_FLOAT(v[2]));
 }
 
 static void GLAPIENTRY VertexAttrib3uiv(GLuint index, const GLuint *v)
 {
-   _glapi_Dispatch->VertexAttrib3fNV(index, v[0], v[1], v[2]);
+   GL_CALL(VertexAttrib3fNV)(index, v[0], v[1], v[2]);
 }
 
 static void GLAPIENTRY VertexAttrib4Nuiv(GLuint index, const GLuint *v)
 {
-   _glapi_Dispatch->VertexAttrib4fNV(index, UINT_TO_FLOAT(v[0]),
-                                     UINT_TO_FLOAT(v[1]),
-                                     UINT_TO_FLOAT(v[2]),
-                                     UINT_TO_FLOAT(v[3]));
+   GL_CALL(VertexAttrib4fNV)(index, UINT_TO_FLOAT(v[0]),
+			     UINT_TO_FLOAT(v[1]),
+			     UINT_TO_FLOAT(v[2]),
+			     UINT_TO_FLOAT(v[3]));
 }
 
 static void GLAPIENTRY VertexAttrib4uiv(GLuint index, const GLuint *v)
 {
-   _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], v[3]);
+   GL_CALL(VertexAttrib4fNV)(index, v[0], v[1], v[2], v[3]);
 }
 
 /* GL_FLOAT attributes */
 
 static void GLAPIENTRY VertexAttrib1fv(GLuint index, const GLfloat *v)
 {
-   _glapi_Dispatch->VertexAttrib1fvNV(index, v);
+   GL_CALL(VertexAttrib1fvNV)(index, v);
 }
 
 static void GLAPIENTRY VertexAttrib2fv(GLuint index, const GLfloat *v)
 {
-   _glapi_Dispatch->VertexAttrib2fvNV(index, v);
+   GL_CALL(VertexAttrib2fvNV)(index, v);
 }
 
 static void GLAPIENTRY VertexAttrib3fv(GLuint index, const GLfloat *v)
 {
-   _glapi_Dispatch->VertexAttrib3fvNV(index, v);
+   GL_CALL(VertexAttrib3fvNV)(index, v);
 }
 
 static void GLAPIENTRY VertexAttrib4fv(GLuint index, const GLfloat *v)
 {
-   _glapi_Dispatch->VertexAttrib4fvNV(index, v);
+   GL_CALL(VertexAttrib4fvNV)(index, v);
 }
 
 /* GL_DOUBLE attributes */
 
 static void GLAPIENTRY VertexAttrib1dv(GLuint index, const GLdouble *v)
 {
-   _glapi_Dispatch->VertexAttrib1dvNV(index, v);
+   GL_CALL(VertexAttrib1dvNV)(index, v);
 }
 
 static void GLAPIENTRY VertexAttrib2dv(GLuint index, const GLdouble *v)
 {
-   _glapi_Dispatch->VertexAttrib2dvNV(index, v);
+   GL_CALL(VertexAttrib2dvNV)(index, v);
 }
 
 static void GLAPIENTRY VertexAttrib3dv(GLuint index, const GLdouble *v)
 {
-   _glapi_Dispatch->VertexAttrib3dvNV(index, v);
+   GL_CALL(VertexAttrib3dvNV)(index, v);
 }
 
 static void GLAPIENTRY VertexAttrib4dv(GLuint index, const GLdouble *v)
 {
-   _glapi_Dispatch->VertexAttrib4dvNV(index, v);
+   GL_CALL(VertexAttrib4dvNV)(index, v);
 }
 
 

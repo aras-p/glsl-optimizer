@@ -394,17 +394,24 @@ static void VFMT_FALLBACK_OUTSIDE_BEGIN_END( const char *caller )
 }
 
 
+/**
+ * \todo
+ * An interesting optimization of this function would be to have 3 element
+ * table with the dispatch offsets of the TexCoord?fv functions, use count
+ * to look-up the table, and a specialized version of GL_CALL that used the
+ * offset number instead of the name.
+ */
 static void dispatch_texcoord( GLuint count, GLfloat * f )
 {
    switch( count ) {
    case 3:
-      _glapi_Dispatch->TexCoord3fv( f );
+      GL_CALL(TexCoord3fv)( f );
       break;
    case 2:
-      _glapi_Dispatch->TexCoord2fv( f );
+      GL_CALL(TexCoord2fv)( f );
       break;
    case 1:
-      _glapi_Dispatch->TexCoord1fv( f );
+      GL_CALL(TexCoord1fv)( f );
       break;
    default:
       assert( count == 0 );
@@ -416,13 +423,13 @@ static void dispatch_multitexcoord( GLuint count, GLuint unit, GLfloat * f )
 {
    switch( count ) {
    case 3:
-      _glapi_Dispatch->MultiTexCoord3fvARB( GL_TEXTURE0+unit, f );
+      GL_CALL(MultiTexCoord3fvARB)( GL_TEXTURE0+unit, f );
       break;
    case 2:
-      _glapi_Dispatch->MultiTexCoord2fvARB( GL_TEXTURE0+unit, f );
+      GL_CALL(MultiTexCoord2fvARB)( GL_TEXTURE0+unit, f );
       break;
    case 1:
-      _glapi_Dispatch->MultiTexCoord1fvARB( GL_TEXTURE0+unit, f );
+      GL_CALL(MultiTexCoord1fvARB)( GL_TEXTURE0+unit, f );
       break;
    default:
       assert( count == 0 );
@@ -470,7 +477,7 @@ static void VFMT_FALLBACK( const char *caller )
    assert(rmesa->dma.flush == 0);
    rmesa->vb.fell_back = GL_TRUE;
    rmesa->vb.installed = GL_FALSE;
-   _glapi_Dispatch->Begin( prim );
+   GL_CALL(Begin)( prim );
 
    if (rmesa->vb.installed_color_3f_sz == 4)
       alpha = ctx->Current.Attrib[VERT_ATTRIB_COLOR0][3];
@@ -481,25 +488,25 @@ static void VFMT_FALLBACK( const char *caller )
       GLuint offset = 3;
 
       if (ind0 & R200_VTX_N0) {
-	 _glapi_Dispatch->Normal3fv( &tmp[i][offset] ); 
+	 GL_CALL(Normal3fv)( &tmp[i][offset] ); 
 	 offset += 3;
       }
 
       if (VTX_COLOR(ind0, 0) == R200_VTX_PK_RGBA) {
-	 _glapi_Dispatch->Color4ubv( (GLubyte *)&tmp[i][offset] ); 
+	 GL_CALL(Color4ubv)( (GLubyte *)&tmp[i][offset] ); 
 	 offset++;
       }
       else if (VTX_COLOR(ind0, 0) == R200_VTX_FP_RGBA) {
-	 _glapi_Dispatch->Color4fv( &tmp[i][offset] ); 
+	 GL_CALL(Color4fv)( &tmp[i][offset] ); 
 	 offset+=4;
       } 
       else if (VTX_COLOR(ind0, 0) == R200_VTX_FP_RGB) {
-	 _glapi_Dispatch->Color3fv( &tmp[i][offset] ); 
+	 GL_CALL(Color3fv)( &tmp[i][offset] ); 
 	 offset+=3;
       }
 
       if (VTX_COLOR(ind0, 1) == R200_VTX_PK_RGBA) {
-	 _glapi_Dispatch->SecondaryColor3ubvEXT( (GLubyte *)&tmp[i][offset] ); 
+	 GL_CALL(SecondaryColor3ubvEXT)( (GLubyte *)&tmp[i][offset] ); 
 	 offset++;
       }
 
@@ -513,39 +520,39 @@ static void VFMT_FALLBACK( const char *caller )
 	 offset += count;
       }
 
-      _glapi_Dispatch->Vertex3fv( &tmp[i][0] );
+      GL_CALL(Vertex3fv)( &tmp[i][0] );
    }
 
    /* Replay current vertex
     */
    if (ind0 & R200_VTX_N0) 
-       _glapi_Dispatch->Normal3fv( rmesa->vb.normalptr );
+       GL_CALL(Normal3fv)( rmesa->vb.normalptr );
 
    if (VTX_COLOR(ind0, 0) == R200_VTX_PK_RGBA) {
-      _glapi_Dispatch->Color4ub( rmesa->vb.colorptr->red,
-				 rmesa->vb.colorptr->green,
-				 rmesa->vb.colorptr->blue,
-				 rmesa->vb.colorptr->alpha );
+      GL_CALL(Color4ub)( rmesa->vb.colorptr->red,
+			 rmesa->vb.colorptr->green,
+			 rmesa->vb.colorptr->blue,
+			 rmesa->vb.colorptr->alpha );
    }
    else if (VTX_COLOR(ind0, 0) == R200_VTX_FP_RGBA) {
-      _glapi_Dispatch->Color4fv( rmesa->vb.floatcolorptr );
+      GL_CALL(Color4fv)( rmesa->vb.floatcolorptr );
    }
    else if (VTX_COLOR(ind0, 0) == R200_VTX_FP_RGB) {
       if (rmesa->vb.installed_color_3f_sz == 4 && alpha != 1.0) {
-	 _glapi_Dispatch->Color4f( rmesa->vb.floatcolorptr[0],
-				   rmesa->vb.floatcolorptr[1],
-				   rmesa->vb.floatcolorptr[2],
-				   alpha );
+	 GL_CALL(Color4f)( rmesa->vb.floatcolorptr[0],
+			   rmesa->vb.floatcolorptr[1],
+			   rmesa->vb.floatcolorptr[2],
+			   alpha );
       }
       else {
-	 _glapi_Dispatch->Color3fv( rmesa->vb.floatcolorptr );
+	 GL_CALL(Color3fv)( rmesa->vb.floatcolorptr );
       }
    }
 
    if (VTX_COLOR(ind0, 1) == R200_VTX_PK_RGBA) 
-      _glapi_Dispatch->SecondaryColor3ubEXT( rmesa->vb.specptr->red, 
-					     rmesa->vb.specptr->green,
-					     rmesa->vb.specptr->blue ); 
+       GL_CALL(SecondaryColor3ubEXT)( rmesa->vb.specptr->red, 
+				      rmesa->vb.specptr->green,
+				      rmesa->vb.specptr->blue ); 
 
    count = VTX_TEXn_COUNT( ind1, 0 );
    dispatch_texcoord( count, rmesa->vb.texcoordptr[0] );
@@ -886,7 +893,7 @@ static void r200_Materialfv( GLenum face, GLenum pname,
 
    if (rmesa->vb.prim[0] != GL_POLYGON+1) {
       VFMT_FALLBACK( __FUNCTION__ );
-      _glapi_Dispatch->Materialfv( face, pname, params );
+      GL_CALL(Materialfv)( face, pname, params );
       return;
    }
    _mesa_noop_Materialfv( face, pname, params );
@@ -925,7 +932,7 @@ static void r200_Begin( GLenum mode )
       r200VtxfmtValidate( ctx );
 
    if (!rmesa->vb.installed) {
-      _glapi_Dispatch->Begin( mode );
+      GL_CALL(Begin)( mode );
       return;
    }
 

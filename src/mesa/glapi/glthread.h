@@ -290,6 +290,9 @@ _glthread_GetTSD(_glthread_TSD *);
 extern void
 _glthread_SetTSD(_glthread_TSD *, void *);
 
+#ifndef GL_CALL
+# define GL_CALL(name) (*(_glapi_Dispatch-> name))
+#endif
 
 
 #endif /* THREADS_H */
