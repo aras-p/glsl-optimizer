@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.19 2000/03/20 23:40:57 brianp Exp $ */
+/* $Id: dd.h,v 1.20 2000/03/20 23:45:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -506,60 +506,6 @@ struct dd_function_table {
    /* This is called by glBitmap.  Works the same as DrawPixels, above.
     */
 
-   void (*RenderStart)( GLcontext *ctx );
-   void (*RenderFinish)( GLcontext *ctx );
-    /* KW: These replace Begin and End, and have more relaxed semantics.
-     * They are called prior-to and after one or more vb flush, and are
-     * thus decoupled from the gl_begin/gl_end pairs, which are possibly 
-     * more frequent.  If a begin/end pair covers >1 vertex buffer, these
-     * are called at most once for the pair. (a bit broken at present)
-     */
-
-   void (*RasterSetup)( struct vertex_buffer *VB, GLuint start, GLuint end );
-   /* This function, if not NULL, is called whenever new window coordinates
-    * are put in the vertex buffer.  The vertices in question are those n
-    * such that start <= n < end.
-    * The device driver can convert the window coords to its own specialized
-    * format.  The 3Dfx driver uses this.
-    *
-    * Note: Deprecated in favour of RegisterPipelineStages, below.
-    */
-
-
-   render_func *RenderVBClippedTab;
-   render_func *RenderVBCulledTab;
-   render_func *RenderVBRawTab;
-   /* These function tables allow the device driver to rasterize an
-    * entire begin/end group of primitives at once.  See the
-    * gl_render_vb() function in vbrender.c for more details.  
-    */
-
-
-   void (*ReducedPrimitiveChange)( GLcontext *ctx, GLenum primitive );
-   /* If registered, this will be called when rendering transitions between
-    * points, lines and triangles.  It is not called on transitions between 
-    * primtives such as GL_TRIANGLES and GL_TRIANGLE_STRIPS, or between
-    * triangles and quads or triangles and polygons.
-    */
-
-   GLuint TriangleCaps;
-   /* Holds a list of the reasons why we might normally want to call
-    * render_triangle, but which are in fact implemented by the
-    * driver.  The FX driver sets this to DD_TRI_CULL, and will soon
-    * implement DD_TRI_OFFSET.
-    */
-
-
-   GLboolean (*MultipassFunc)( struct vertex_buffer *VB, GLuint passno );
-   /* Driver may request additional render passes by returning GL_TRUE
-    * when this function is called.  This function will be called
-    * after the first pass, and passes will be made until the function
-    * returns GL_FALSE.  If no function is registered, only one pass
-    * is made.  
-    * 
-    * This function will be first invoked with passno == 1.
-    */
-
    /***
     *** Texture mapping functions:
     ***/
@@ -766,12 +712,64 @@ struct dd_function_table {
    void (*PrioritizeTexture)( GLcontext *ctx, 
 			      struct gl_texture_object *t,
 			      GLclampf priority );
-   /*
-    * Notify driver of priority change for a texture.
+   /* Notify driver of priority change for a texture.
     */
 
 
+   /***
+    *** Transformation/Rendering functions
+    ***/
 
+   void (*RenderStart)( GLcontext *ctx );
+   void (*RenderFinish)( GLcontext *ctx );
+    /* KW: These replace Begin and End, and have more relaxed semantics.
+     * They are called prior-to and after one or more vb flush, and are
+     * thus decoupled from the gl_begin/gl_end pairs, which are possibly 
+     * more frequent.  If a begin/end pair covers >1 vertex buffer, these
+     * are called at most once for the pair. (a bit broken at present)
+     */
+
+   void (*RasterSetup)( struct vertex_buffer *VB, GLuint start, GLuint end );
+   /* This function, if not NULL, is called whenever new window coordinates
+    * are put in the vertex buffer.  The vertices in question are those n
+    * such that start <= n < end.
+    * The device driver can convert the window coords to its own specialized
+    * format.  The 3Dfx driver uses this.
+    *
+    * Note: Deprecated in favour of RegisterPipelineStages, below.
+    */
+
+   render_func *RenderVBClippedTab;
+   render_func *RenderVBCulledTab;
+   render_func *RenderVBRawTab;
+   /* These function tables allow the device driver to rasterize an
+    * entire begin/end group of primitives at once.  See the
+    * gl_render_vb() function in vbrender.c for more details.  
+    */
+
+   void (*ReducedPrimitiveChange)( GLcontext *ctx, GLenum primitive );
+   /* If registered, this will be called when rendering transitions between
+    * points, lines and triangles.  It is not called on transitions between 
+    * primtives such as GL_TRIANGLES and GL_TRIANGLE_STRIPS, or between
+    * triangles and quads or triangles and polygons.
+    */
+
+   GLuint TriangleCaps;
+   /* Holds a list of the reasons why we might normally want to call
+    * render_triangle, but which are in fact implemented by the
+    * driver.  The FX driver sets this to DD_TRI_CULL, and will soon
+    * implement DD_TRI_OFFSET.
+    */
+
+   GLboolean (*MultipassFunc)( struct vertex_buffer *VB, GLuint passno );
+   /* Driver may request additional render passes by returning GL_TRUE
+    * when this function is called.  This function will be called
+    * after the first pass, and passes will be made until the function
+    * returns GL_FALSE.  If no function is registered, only one pass
+    * is made.  
+    * 
+    * This function will be first invoked with passno == 1.
+    */
 
    /***
     *** NEW in Mesa 3.x
