@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.24 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: enable.c,v 1.25 2000/10/05 23:10:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -290,12 +290,14 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_POINT_SMOOTH:
 	 if (ctx->Point.SmoothFlag!=state) {
             ctx->Point.SmoothFlag = state;
+	    ctx->TriangleCaps ^= DD_POINT_SMOOTH;
             ctx->NewState |= NEW_RASTER_OPS;
          }
 	 break;
       case GL_POLYGON_SMOOTH:
 	 if (ctx->Polygon.SmoothFlag!=state) {
             ctx->Polygon.SmoothFlag = state;
+	    ctx->TriangleCaps ^= DD_TRI_SMOOTH;
             ctx->NewState |= NEW_RASTER_OPS;
          }
 	 break;
