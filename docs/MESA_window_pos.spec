@@ -16,11 +16,11 @@ Status
 
 Version
 
-    $Id: MESA_window_pos.spec,v 1.1 1999/07/20 00:30:41 brianp Exp $
+    $Id: MESA_window_pos.spec,v 1.2 2000/01/07 08:47:15 brianp Exp $
 
 Number
 
-    XXX non assigned
+    XXX not assigned
 
 Dependencies
 
@@ -33,7 +33,7 @@ Overview
     coordinate with the RasterPos command, the modelview matrix, projection
     matrix and viewport must be set very carefully.  Furthermore, if the
     desired window coordinate is outside of the window's bounds one must
-    rely a subtle side-effect of the Bitmap command in order to circumvent
+    rely on a subtle side-effect of the Bitmap command in order to circumvent
     frustum clipping.
 
     This extension provides a set of functions to directly set the
@@ -51,6 +51,26 @@ New Procedures and Functions
     void WindowPos2fMESA(float x, float y)
     void WindowPos2iMESA(int x, int y)
     void WindowPos2sMESA(short x, short y)
+    void WindowPos2ivMESA(const int *p)
+    void WindowPos2svMESA(const short *p)
+    void WindowPos2fvMESA(const float *p)
+    void WindowPos2dvMESA(const double *p)
+    void WindowPos3iMESA(int x, int y, int z)
+    void WindowPos3sMESA(short x, short y, short z)
+    void WindowPos3fMESA(float x, float y, float z)
+    void WindowPos3dMESA(double x, double y, double z)
+    void WindowPos3ivMESA(const int *p)
+    void WindowPos3svMESA(const short *p)
+    void WindowPos3fvMESA(const float *p)
+    void WindowPos3dvMESA(const double *p)
+    void WindowPos4iMESA(int x, int y, int z, int w)
+    void WindowPos4sMESA(short x, short y, short z, short w)
+    void WindowPos4fMESA(float x, float y, float z, float w)
+    void WindowPos4dMESA(double x, double y, double z, double )
+    void WindowPos4ivMESA(const int *p)
+    void WindowPos4svMESA(const short *p)
+    void WindowPos4fvMESA(const float *p)
+    void WindowPos4dvMESA(const double *p)
 
 New Tokens
 
@@ -64,7 +84,7 @@ Additions to Chapter 2 of the OpenGL 1.2 Specification (OpenGL Operation)
       WindowPosMESA commands:
 
          void WindowPos{234}{sidf}MESA( T coords );
-         void Window Pos{234}{sidf}vMESA( T coords );
+         void WindowPos{234}{sidf}vMESA( T coords );
 
       WindosPos4MESA takes four values indicating x, y, z, and w.
       WindowPos3MESA (or WindowPos2MESA) is analaguos, but sets only
@@ -77,14 +97,6 @@ Additions to Chapter 2 of the OpenGL 1.2 Specification (OpenGL Operation)
       are directly set to the parameters passed to WindowPosMESA.  The current
       color, color index and texture coordinate update the current raster
       position's associated data.
-
-      The current raster distance ??? XXX ???
-
-
-
-
-
-
 
 Additions to the AGL/GLX/WGL Specifications
 
@@ -100,7 +112,6 @@ Errors
     INVALID_OPERATION is generated if WindowPosMESA is called betweeen
     Begin and End.
 
-
 New State
 
     None.
@@ -112,3 +123,5 @@ New Implementation Dependent State
 Revision History
 
   * Revision 1.0 - Initial specification
+  * Revision 1.1 - Minor clean-up  (7 Jan 2000, Brian Paul)
+
