@@ -122,6 +122,11 @@ void LFB_WRITE_SPAN_MESA(GrBuffer_t dst_buffer,
 
 #if defined(FX_GLIDE3) && defined(XF86DRI)
 
+static FxBool writeRegionClipped(fxMesaContext fxMesa, GrBuffer_t dst_buffer,
+			  FxU32 dst_x, FxU32 dst_y, GrLfbSrcFmt_t src_format,
+			  FxU32 src_width, FxU32 src_height, FxI32 src_stride,
+			  void *src_data);
+
 FxBool writeRegionClipped(fxMesaContext fxMesa, GrBuffer_t dst_buffer,
 			  FxU32 dst_x, FxU32 dst_y, GrLfbSrcFmt_t src_format,
 			  FxU32 src_width, FxU32 src_height, FxI32 src_stride,
@@ -383,7 +388,7 @@ static void fxDDReadRGBAPixels(const GLcontext *ctx,
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   GLuint i;
-  GLint bottom=fxMesa->y_delta-1;
+  GLint bottom=fxMesa->height+fxMesa->y_offset-1;
 
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
      fprintf(stderr,"fxmesa: fxDDReadRGBAPixels(...)\n");

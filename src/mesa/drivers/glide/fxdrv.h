@@ -263,16 +263,13 @@ typedef struct {
 
 typedef void (*tfxRenderVBFunc)(GLcontext *);
 
-typedef struct tfxTMFreeListNode {
-  struct tfxTMFreeListNode *next;
-  FxU32 startAddress, endAddress;
-} tfxTMFreeNode;
-
-typedef struct tfxTMAllocListNode {
-  struct tfxTMAllocListNode *next;
-  FxU32 startAddress, endAddress;
-  struct gl_texture_object *tObj;
-} tfxTMAllocNode;
+/*
+  Memory range from startAddr to endAddr-1
+*/
+typedef struct MemRange_t {
+  struct MemRange_t *next;
+  FxU32 startAddr, endAddr;
+} MemRange;
 
 typedef struct {
   GLsizei width, height;
@@ -282,19 +279,17 @@ typedef struct {
   GLboolean translated, used;
 } tfxMipMapLevel;
 
-typedef struct {
+typedef struct tfxTexInfo_t {
+  struct tfxTexInfo *next;
+  struct gl_texture_object *tObj;
+
   GLuint lastTimeUsed;
-
   FxU32 whichTMU;
-
-  tfxTMAllocNode *tm[FX_NUM_TMU];
+  GLboolean isInTM;
 
   tfxMipMapLevel mipmapLevel[MAX_TEXTURE_LEVELS];
-  GLboolean isInTM;
-} tfxTMInfo;
 
-typedef struct {
-  tfxTMInfo tmi;
+  MemRange *tm[FX_NUM_TMU];
 
   GLint minLevel, maxLevel;
   GLint baseLevelInternalFormat;
@@ -410,7 +405,7 @@ struct tfxMesaVertexBuffer {
 
 #define FX_DRIVER_DATA(vb) ((struct tfxMesaVertexBuffer *)((vb)->driver_data))
 #define FX_CONTEXT(ctx) ((fxMesaContext)((ctx)->DriverCtx))
-#define FX_TEXTURE_DATA(t) ((tfxTexInfo *) ((t)->Current->DriverData))
+#define FX_TEXTURE_DATA(t) fxTMGetTexInfo((t)->Current)
 
 #if defined(XFree86Server) || defined(GLX_DIRECT_RENDERING)
 #include "tdfx_init.h"
@@ -475,9 +470,10 @@ struct tfxMesaContext {
   GLuint texBindNumber;
   GLint tmuSrc;
   GLuint lastUnitsMode;
+  GLuint texStart[FX_NUM_TMU];
   GLuint freeTexMem[FX_NUM_TMU];
-  tfxTMFreeNode *tmFree[FX_NUM_TMU];
-  tfxTMAllocNode *tmAlloc[FX_NUM_TMU];
+  MemRange *tmPool;
+  MemRange *tmFree[FX_NUM_TMU];
 
   GLenum fogTableMode;
   GLfloat fogDensity;
@@ -526,12 +522,8 @@ struct tfxMesaContext {
   int clipMinY;
   int clipMaxY;
   int needClip;
-  int numClipRects;
-#ifdef FX86DRI
-  XF86DRIClipRectPtr pClipRects;
-#endif
-  DRI_FX_CONTEXT
 
+  DRI_FX_CONTEXT
 };
 
 typedef void (*tfxSetupFunc)(struct vertex_buffer *, GLuint, GLuint);
@@ -573,6 +565,7 @@ extern void fxSetupDDSpanPointers(GLcontext *);
 
 extern void fxDDBufferSize(GLcontext *, GLuint *, GLuint *);
 
+extern void fxPrintTextureData(tfxTexInfo *ti);
 extern void fxDDTexEnv(GLcontext *, GLenum, const GLfloat *);
 extern void fxDDTexImg(GLcontext *, GLenum, struct gl_texture_object *,
 		       GLint, GLint, const struct gl_texture_image *);
@@ -622,6 +615,7 @@ extern void fxDDRenderVBIndirectDirect( struct vertex_buffer *VB );
 
 extern void fxDDInitExtensions( GLcontext *ctx );
 
+#define fxTMGetTexInfo(o) ((tfxTexInfo*)((o)->DriverData))
 extern void fxTMInit(fxMesaContext ctx);
 extern void fxTMClose(fxMesaContext ctx);
 extern void fxTMMoveInTM(fxMesaContext, struct gl_texture_object *, GLint);

@@ -55,7 +55,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-FxI32 grGetInteger(FxU32 pname)
+static FxI32 FX_grGetInteger_NoLock(FxU32 pname)
 {
 #if !defined(FX_GLIDE3)
   switch (pname) 
@@ -103,7 +103,7 @@ FxI32 FX_grGetInteger(FxU32 pname)
   int result;
 
   BEGIN_BOARD_LOCK();
-  result=grGetInteger(pname);
+  result=FX_grGetInteger_NoLock(pname);
   END_BOARD_LOCK();
   return result;
 }
@@ -247,34 +247,37 @@ void FX_grAADrawPoint(GrVertex *a)
 #if FX_USE_PARGB
 void FX_setupGrVertexLayout(void)
 {
-   grReset(GR_VERTEX_PARAMETER);
+  BEGIN_BOARD_LOCK();
+  grReset(GR_VERTEX_PARAMETER);
    
-   grCoordinateSpace(GR_WINDOW_COORDS);
-   grVertexLayout(GR_PARAM_XY,  	GR_VERTEX_X_OFFSET << 2, 	GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_PARGB, 	GR_VERTEX_PARGB_OFFSET << 2, 	GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_Q,		GR_VERTEX_OOW_OFFSET << 2,	GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_Z,           GR_VERTEX_OOZ_OFFSET << 2, 	GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_ST0, 	GR_VERTEX_SOW_TMU0_OFFSET << 2, GR_PARAM_ENABLE);	
-   grVertexLayout(GR_PARAM_Q0,  	GR_VERTEX_OOW_TMU0_OFFSET << 2, GR_PARAM_DISABLE); 
-   grVertexLayout(GR_PARAM_ST1, 	GR_VERTEX_SOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);	
-   grVertexLayout(GR_PARAM_Q1,  	GR_VERTEX_OOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);	
+  grCoordinateSpace(GR_WINDOW_COORDS);
+  grVertexLayout(GR_PARAM_XY, GR_VERTEX_X_OFFSET << 2, GR_PARAM_ENABLE);
+  grVertexLayout(GR_PARAM_PARGB, GR_VERTEX_PARGB_OFFSET << 2, GR_PARAM_ENABLE);
+  grVertexLayout(GR_PARAM_Q, GR_VERTEX_OOW_OFFSET << 2, GR_PARAM_ENABLE);
+  grVertexLayout(GR_PARAM_Z, GR_VERTEX_OOZ_OFFSET << 2, GR_PARAM_ENABLE);
+  grVertexLayout(GR_PARAM_ST0, GR_VERTEX_SOW_TMU0_OFFSET << 2, GR_PARAM_ENABLE);	
+  grVertexLayout(GR_PARAM_Q0, GR_VERTEX_OOW_TMU0_OFFSET << 2, GR_PARAM_DISABLE); 
+  grVertexLayout(GR_PARAM_ST1, GR_VERTEX_SOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);	
+  grVertexLayout(GR_PARAM_Q1, GR_VERTEX_OOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);	
+  END_BOARD_LOCK();
 }
 #else /* FX_USE_PARGB */
 void FX_setupGrVertexLayout(void)
 {
-   grReset(GR_VERTEX_PARAMETER);
+  BEGIN_BOARD_LOCK();
+  grReset(GR_VERTEX_PARAMETER);
    
-   grCoordinateSpace(GR_WINDOW_COORDS);
-   grVertexLayout(GR_PARAM_XY,  	GR_VERTEX_X_OFFSET << 2, 	GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_RGB, 	GR_VERTEX_R_OFFSET << 2, 	GR_PARAM_ENABLE);
- /*  grVertexLayout(GR_PARAM_Z,   	GR_VERTEX_Z_OFFSET << 2, 	GR_PARAM_ENABLE); */
-   grVertexLayout(GR_PARAM_A,   	GR_VERTEX_A_OFFSET << 2, 	GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_Q,		GR_VERTEX_OOW_OFFSET << 2,	GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_Z,           GR_VERTEX_OOZ_OFFSET << 2, 	GR_PARAM_ENABLE);
-   grVertexLayout(GR_PARAM_ST0, 	GR_VERTEX_SOW_TMU0_OFFSET << 2, GR_PARAM_ENABLE);	
-   grVertexLayout(GR_PARAM_Q0,  	GR_VERTEX_OOW_TMU0_OFFSET << 2, GR_PARAM_DISABLE); 
-   grVertexLayout(GR_PARAM_ST1, 	GR_VERTEX_SOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);	
-   grVertexLayout(GR_PARAM_Q1,  	GR_VERTEX_OOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);	
+  grCoordinateSpace(GR_WINDOW_COORDS);
+  grVertexLayout(GR_PARAM_XY, GR_VERTEX_X_OFFSET << 2, GR_PARAM_ENABLE);
+  grVertexLayout(GR_PARAM_RGB, GR_VERTEX_R_OFFSET << 2, GR_PARAM_ENABLE);
+  grVertexLayout(GR_PARAM_A, GR_VERTEX_A_OFFSET << 2, GR_PARAM_ENABLE);
+  grVertexLayout(GR_PARAM_Q, GR_VERTEX_OOW_OFFSET << 2, GR_PARAM_ENABLE);
+  grVertexLayout(GR_PARAM_Z, GR_VERTEX_OOZ_OFFSET << 2,	GR_PARAM_ENABLE);
+  grVertexLayout(GR_PARAM_ST0, GR_VERTEX_SOW_TMU0_OFFSET << 2, GR_PARAM_ENABLE);	
+  grVertexLayout(GR_PARAM_Q0, GR_VERTEX_OOW_TMU0_OFFSET << 2, GR_PARAM_DISABLE);
+  grVertexLayout(GR_PARAM_ST1, GR_VERTEX_SOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);	
+  grVertexLayout(GR_PARAM_Q1, GR_VERTEX_OOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);
+  END_BOARD_LOCK();
 }
 #endif
 
@@ -342,6 +345,34 @@ int FX_grSstQueryHardware(GrHwConfiguration *config)
    return 1;
 }
 
+#else
+
+int FX_grSstScreenWidth()
+{
+   int i;
+   BEGIN_BOARD_LOCK();
+   i = grSstScreenWidth();
+   END_BOARD_LOCK();
+   return i;
+}
+
+int FX_grSstScreenHeight()
+{
+   int i;
+   BEGIN_BOARD_LOCK();
+   i = grSstScreenHeight();
+   END_BOARD_LOCK();
+   return i;
+}
+
+int FX_grSstQueryHardware(GrHwConfiguration *c)	
+{
+   int i;
+   BEGIN_BOARD_LOCK();
+   i = grSstQueryHardware(c);
+   END_BOARD_LOCK();
+   return i;
+} 
 
 FX_GrContext_t FX_grSstWinOpen( FxU32                hWnd,
                                 GrScreenResolution_t screen_resolution,
@@ -377,38 +408,9 @@ FX_GrContext_t FX_grSstWinOpen( FxU32                hWnd,
    return i;
 }
 
-#else /* FX_GLIDE3 */
-
-int FX_grSstScreenWidth()
-{
-  return grSstScreenWidth();
-}
-
-int FX_grSstScreenHeight()
-{
-  return grSstScreenHeight();
-}
-
-int FX_grSstQueryHardware(GrHwConfiguration *config)
-{
-  return grSstQueryHardware(config);
-}
-
-FX_GrContext_t FX_grSstWinOpen( FxU32                hWnd,
-                                GrScreenResolution_t screen_resolution,
-                                GrScreenRefresh_t    refresh_rate,
-                                GrColorFormat_t      color_format,
-                                GrOriginLocation_t   origin_location,
-                                int                  nColBuffers,
-                                int                  nAuxBuffers)
-{
-  return grSstWinOpen(hWnd, screen_resolution, refresh_rate,
-                      color_format, origin_location, nColBuffers, nAuxBuffers);
-}
 
 
-#endif /* FX_GLIDE3 */
-
+#endif 
 #else
 
 /*
