@@ -40,8 +40,9 @@
 #include "texformat.h"
 #include "xmesaP.h"
 #include "array_cache/acache.h"
-#include "swrast/s_context.h"
 #include "swrast/swrast.h"
+#include "swrast/s_context.h"
+#include "swrast/s_drawpix.h"
 #include "swrast/s_alphabuf.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
@@ -760,61 +761,194 @@ xmesa_resize_buffers( GLframebuffer *buffer )
    _swrast_alloc_buffers( buffer );
 }
 
-#if 0
-/*
+
+/**
  * This function implements glDrawPixels() with an XPutImage call when
  * drawing to the front buffer (X Window drawable).
  * The image format must be GL_BGRA to match the PF_8R8G8B pixel format.
- * XXX top/bottom edge clipping is broken!
  */
-static GLboolean
-drawpixels_8R8G8B( GLcontext *ctx,
-                   GLint x, GLint y, GLsizei width, GLsizei height,
-                   GLenum format, GLenum type,
-                   const struct gl_pixelstore_attrib *unpack,
-                   const GLvoid *pixels )
+static void
+xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
+                         GLint x, GLint y, GLsizei width, GLsizei height,
+                         GLenum format, GLenum type,
+                         const struct gl_pixelstore_attrib *unpack,
+                         const GLvoid *pixels )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   const SWcontext *swrast = SWRAST_CONTEXT( ctx );
    XMesaDisplay *dpy = xmesa->xm_visual->display;
-   XMesaDrawable buffer = xmesa->xm_draw_buffer->buffer;
-   XMesaGC gc = xmesa->xm_draw_buffer->gc;
-   assert(dpy);
-   assert(buffer);
-   assert(gc);
+   const XMesaDrawable buffer = xmesa->xm_draw_buffer->buffer;
+   const XMesaGC gc = xmesa->xm_draw_buffer->gc;
 
-   /* XXX also check for pixel scale/bias/lookup/zooming! */
-   if (format == GL_BGRA && type == GL_UNSIGNED_BYTE) {
+   ASSERT(dpy);
+   ASSERT(gc);
+   ASSERT(xmesa->xm_visual->dithered_pf == PF_8R8G8B);
+   ASSERT(xmesa->xm_visual->undithered_pf == PF_8R8G8B);
+
+   if (buffer &&   /* buffer != 0 means it's a Window or Pixmap */
+       format == GL_BGRA &&
+       type == GL_UNSIGNED_BYTE &&
+       (swrast->_RasterMask & ~CLIP_BIT) == 0 && /* no blend, z-test, etc */
+       ctx->_ImageTransferState == 0 &&  /* no color tables, scale/bias, etc */
+       ctx->Pixel.ZoomX == 1.0 &&        /* no zooming */
+       ctx->Pixel.ZoomY == 1.0) {
       int dstX = x;
       int dstY = y;
       int w = width;
       int h = height;
       int srcX = unpack->SkipPixels;
       int srcY = unpack->SkipRows;
-      if (_mesa_clip_pixelrect(ctx, &dstX, &dstY, &w, &h, &srcX, &srcY)) {
+      int rowLength = unpack->RowLength ? unpack->RowLength : width;
+      if (_swrast_clip_pixelrect(ctx, &dstX, &dstY, &w, &h, &srcX, &srcY)) {
+         /* This is a little tricky since all coordinates up to now have
+          * been in the OpenGL bottom-to-top orientation.  X is top-to-bottom
+          * so we have to carefully compute the Y coordinates/addresses here.
+          */
          XMesaImage ximage;
          MEMSET(&ximage, 0, sizeof(XMesaImage));
          ximage.width = width;
          ximage.height = height;
          ximage.format = ZPixmap;
-         ximage.data = (char *) pixels + (height - 1) * width * 4;
+         ximage.data = (char *) pixels
+            + ((srcY + h - 1) * rowLength + srcX) * 4;
          ximage.byte_order = LSBFirst;
          ximage.bitmap_unit = 32;
          ximage.bitmap_bit_order = LSBFirst;
          ximage.bitmap_pad = 32;
          ximage.depth = 24;
-         ximage.bytes_per_line = -width * 4;
+         ximage.bytes_per_line = -rowLength * 4; /* negative to flip image */
          ximage.bits_per_pixel = 32;
          ximage.red_mask   = 0xff0000;
          ximage.green_mask = 0x00ff00;
          ximage.blue_mask  = 0x0000ff;
-         dstY = FLIP(xmesa->xm_draw_buffer,dstY) - height + 1;
-         XPutImage(dpy, buffer, gc, &ximage, srcX, srcY, dstX, dstY, w, h);
-         return GL_TRUE;
+         /* flip Y axis for dest position */
+         dstY = FLIP(xmesa->xm_draw_buffer, dstY) - h + 1;
+         XPutImage(dpy, buffer, gc, &ximage, 0, 0, dstX, dstY, w, h);
       }
    }
-   return GL_FALSE;
+   else {
+      /* software fallback */
+      _swrast_DrawPixels(ctx, x, y, width, height,
+                         format, type, unpack, pixels);
+   }
 }
-#endif
+
+
+
+/**
+ * This function implements glDrawPixels() with an XPutImage call when
+ * drawing to the front buffer (X Window drawable).  The image format
+ * must be GL_RGB and image type must be GL_UNSIGNED_SHORT_5_6_5 to
+ * match the PF_5R6G5B pixel format.
+ */
+static void
+xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
+                         GLint x, GLint y, GLsizei width, GLsizei height,
+                         GLenum format, GLenum type,
+                         const struct gl_pixelstore_attrib *unpack,
+                         const GLvoid *pixels )
+{
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   const SWcontext *swrast = SWRAST_CONTEXT( ctx );
+   XMesaDisplay *dpy = xmesa->xm_visual->display;
+   const XMesaDrawable buffer = xmesa->xm_draw_buffer->buffer;
+   const XMesaGC gc = xmesa->xm_draw_buffer->gc;
+
+   ASSERT(dpy);
+   ASSERT(gc);
+   ASSERT(xmesa->xm_visual->undithered_pf == PF_5R6G5B);
+
+   if (buffer &&   /* buffer != 0 means it's a Window or Pixmap */
+       format == GL_RGB &&
+       type == GL_UNSIGNED_SHORT_5_6_5 &&
+       !ctx->Color.DitherFlag &&  /* no dithering */
+       (swrast->_RasterMask & ~CLIP_BIT) == 0 && /* no blend, z-test, etc */
+       ctx->_ImageTransferState == 0 &&  /* no color tables, scale/bias, etc */
+       ctx->Pixel.ZoomX == 1.0 &&        /* no zooming */
+       ctx->Pixel.ZoomY == 1.0) {
+      int dstX = x;
+      int dstY = y;
+      int w = width;
+      int h = height;
+      int srcX = unpack->SkipPixels;
+      int srcY = unpack->SkipRows;
+      int rowLength = unpack->RowLength ? unpack->RowLength : width;
+      if (_swrast_clip_pixelrect(ctx, &dstX, &dstY, &w, &h, &srcX, &srcY)) {
+         /* This is a little tricky since all coordinates up to now have
+          * been in the OpenGL bottom-to-top orientation.  X is top-to-bottom
+          * so we have to carefully compute the Y coordinates/addresses here.
+          */
+         XMesaImage ximage;
+         MEMSET(&ximage, 0, sizeof(XMesaImage));
+         ximage.width = width;
+         ximage.height = height;
+         ximage.format = ZPixmap;
+         ximage.data = (char *) pixels
+            + ((srcY + h - 1) * rowLength + srcX) * 2;
+         ximage.byte_order = LSBFirst;
+         ximage.bitmap_unit = 32;
+         ximage.bitmap_bit_order = LSBFirst;
+         ximage.bitmap_pad = 32;
+         ximage.depth = 16;
+         ximage.bytes_per_line = -rowLength * 2; /* negative to flip image */
+         ximage.bits_per_pixel = 16;
+         ximage.red_mask   = 0xff0000;
+         ximage.green_mask = 0x00ff00;
+         ximage.blue_mask  = 0x0000ff;
+         /* flip Y axis for dest position */
+         dstY = FLIP(xmesa->xm_draw_buffer, dstY) - h + 1;
+         XPutImage(dpy, buffer, gc, &ximage, 0, 0, dstX, dstY, w, h);
+      }
+   }
+   else {
+      /* software fallback */
+      _swrast_DrawPixels(ctx, x, y, width, height,
+                         format, type, unpack, pixels);
+   }
+}
+
+
+
+/**
+ * Implement glCopyPixels for the front color buffer (or back buffer Pixmap)
+ * for the color buffer.  Don't support zooming, pixel transfer, etc.
+ * We do support copying from one window to another, ala glXMakeCurrentRead.
+ */
+static void
+xmesa_CopyPixels( GLcontext *ctx,
+                  GLint srcx, GLint srcy, GLsizei width, GLsizei height,
+                  GLint destx, GLint desty, GLenum type )
+{
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   const SWcontext *swrast = SWRAST_CONTEXT( ctx );
+   XMesaDisplay *dpy = xmesa->xm_visual->display;
+   const XMesaDrawable drawBuffer = xmesa->xm_draw_buffer->buffer;
+   const XMesaDrawable readBuffer = xmesa->xm_read_buffer->buffer;
+   const XMesaGC gc = xmesa->xm_draw_buffer->gc;
+
+   ASSERT(dpy);
+   ASSERT(gc);
+
+   if (drawBuffer &&  /* buffer != 0 means it's a Window or Pixmap */
+       readBuffer &&
+       type == GL_COLOR &&
+       (swrast->_RasterMask & ~CLIP_BIT) == 0 && /* no blend, z-test, etc */
+       ctx->_ImageTransferState == 0 &&  /* no color tables, scale/bias, etc */
+       ctx->Pixel.ZoomX == 1.0 &&        /* no zooming */
+       ctx->Pixel.ZoomY == 1.0) {
+      /* Note: we don't do any special clipping work here.  We could,
+       * but X will do it for us.
+       */
+      srcy = FLIP(xmesa->xm_read_buffer, srcy) - height + 1;
+      desty = FLIP(xmesa->xm_draw_buffer, desty) - height + 1;
+      XCopyArea(dpy, readBuffer, drawBuffer, gc,
+                srcx, srcy, width, height, destx, desty);
+   }
+   else {
+      _swrast_CopyPixels(ctx, srcx, srcy, width, height, destx, desty, type );
+   }
+}
+
 
 
 /*
@@ -961,6 +1095,7 @@ void xmesa_init_pointers( GLcontext *ctx )
 {
    TNLcontext *tnl;
    struct swrast_device_driver *dd = _swrast_GetDeviceDriverReference( ctx );
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
    /* Plug in our driver-specific functions here */
    ctx->Driver.GetString = get_string;
@@ -979,8 +1114,17 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.Bitmap = _swrast_Bitmap;
    ctx->Driver.Clear = clear_buffers;
    ctx->Driver.ResizeBuffers = xmesa_resize_buffers;
-   ctx->Driver.CopyPixels = _swrast_CopyPixels;
-   ctx->Driver.DrawPixels = _swrast_DrawPixels;
+   ctx->Driver.CopyPixels = xmesa_CopyPixels;
+   if (xmesa->xm_visual->undithered_pf == PF_8R8G8B &&
+       xmesa->xm_visual->dithered_pf == PF_8R8G8B) {
+      ctx->Driver.DrawPixels = xmesa_DrawPixels_8R8G8B;
+   }
+   else if (xmesa->xm_visual->undithered_pf == PF_5R6G5B) {
+      ctx->Driver.DrawPixels = xmesa_DrawPixels_5R6G5B;
+   }
+   else {
+      ctx->Driver.DrawPixels = _swrast_DrawPixels;
+   }
    ctx->Driver.ReadPixels = _swrast_ReadPixels;
    ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
 
