@@ -452,7 +452,7 @@ struct tfxMesaContext
    GLuint new_state;
    GLuint new_gl_state;
 
-   /* Texture Memory Manager Data 
+   /* Texture Memory Manager Data
     */
    GLuint texBindNumber;
    GLint tmuSrc;
@@ -483,7 +483,7 @@ struct tfxMesaContext
    GLenum render_primitive;
    GLenum raster_primitive;
 
-   /* Current rasterization functions 
+   /* Current rasterization functions
     */
    fx_point_func draw_point;
    fx_line_func draw_line;
@@ -556,7 +556,7 @@ extern void fxAllocVB(GLcontext * ctx);
 extern void fxFreeVB(GLcontext * ctx);
 extern void fxPrintSetupFlags(char *msg, GLuint flags );
 extern void fxCheckTexSizes( GLcontext *ctx );
-extern void fxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
+extern void fxBuildVertices( GLcontext *ctx, GLuint start, GLuint end,
 			     GLuint newinputs );
 extern void fxChooseVertexState( GLcontext *ctx );
 
