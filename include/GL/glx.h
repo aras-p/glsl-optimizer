@@ -521,6 +521,28 @@ extern Bool glXDrawableAttribARB(Display *dpy, GLXDrawable draw, const int *attr
 #endif /* GLX_NV_float_buffer */
 
 
+/*** Should these go here, or in another header? */
+/*
+** GLX Events
+*/
+typedef struct {
+    int event_type;		/* GLX_DAMAGED or GLX_SAVED */
+    int draw_type;		/* GLX_WINDOW or GLX_PBUFFER */
+    unsigned long serial;	/* # of last request processed by server */
+    Bool send_event;		/* true if this came for SendEvent request */
+    Display *display;		/* display the event was read from */
+    GLXDrawable drawable;	/* XID of Drawable */
+    unsigned int buffer_mask;	/* mask indicating which buffers are affected */
+    unsigned int aux_buffer;	/* which aux buffer was affected */
+    int x, y;
+    int width, height;
+    int count;			/* if nonzero, at least this many more */
+} GLXPbufferClobberEvent;
+
+typedef union __GLXEvent {
+    GLXPbufferClobberEvent glxpbufferclobber;
+    long pad[24];
+} GLXEvent;
 
 #ifdef __cplusplus
 }
