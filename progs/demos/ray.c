@@ -386,8 +386,7 @@ colorcheckmap(float ppos[3], float c[3])
    h[1] = 0.5f * (vdir[1] + ldir[1]);
    h[2] = 0.5f * (vdir[2] + ldir[2]);
    kfact = dprod(h, norm);
-   kfact =
-      kfact * kfact * kfact * kfact * kfact * kfact * kfact * 7.0f * 255.0f;
+   kfact = pow(kfact, 6.0) * 7.0 * 255.0;
 
    r = r * dfact + kfact;
    g = g * dfact + kfact;
@@ -487,12 +486,10 @@ updatereflectmap(int slot)
 	    h[1] = 0.5f * (vdir[1] + ldir[1]);
 	    h[2] = 0.5f * (vdir[2] + ldir[2]);
 	    kfact = dprod(h, norm);
-	    kfact *= kfact;
-	    kfact *= kfact;
-	    kfact *= kfact;
-	    kfact *= kfact;
-	    kfact *= 10.0f;
-	 }
+            kfact = pow(kfact, 4.0);
+            if (kfact < 1.0e-10)
+               kfact = 0.0;
+         }
 
 	 r = dfact + kfact;
 	 g = dfact + kfact;
