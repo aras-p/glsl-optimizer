@@ -393,7 +393,7 @@ static void TAG2(ReadRGBASpan,_MMX)( const GLcontext *ctx,
 	     CLIPSPAN(x,y,n,x1,n1,i);
 
 	       {
-		  const char * src = (read_buf + x1*4 + y*pitch);
+		  const char * src = GET_SRC_PTR( x1, y );
 		  _generic_read_RGBA_span_BGRA8888_REV_MMX( src, rgba[i], n1 );
 	       }
 	  }
@@ -427,7 +427,7 @@ static void TAG2(ReadRGBASpan,_SSE2)( const GLcontext *ctx,
 	     CLIPSPAN(x,y,n,x1,n1,i);
 
 	       {
-		  const char * src = (read_buf + x1*4 + y*pitch);
+		  const char * src = GET_SRC_PTR( x1, y );
 		  _generic_read_RGBA_span_BGRA8888_REV_SSE2( src, rgba[i], n1 );
 	       }
 	  }
@@ -464,7 +464,7 @@ static void TAG2(ReadRGBASpan,_SSE)( const GLcontext *ctx,
 	     CLIPSPAN(x,y,n,x1,n1,i);
 
 	       {
-		  const char * src = (read_buf + x1*4 + y*pitch);
+		  const char * src = GET_SRC_PTR( x1, y );
 		  _generic_read_RGBA_span_BGRA8888_REV_SSE( src, rgba[i], n1 );
 	       }
 	  }
