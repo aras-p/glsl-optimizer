@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.6 1999/09/07 22:31:30 brianp Exp $ */
+/* $Id: context.c,v 1.7 1999/09/11 11:31:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,6 +53,7 @@
 #include "dlist.h"
 #include "eval.h"
 #include "enums.h"
+#include "extensions.h"
 #include "fog.h"
 #include "hash.h"
 #include "light.h"
@@ -1759,7 +1760,7 @@ GLenum gl_GetError( GLcontext *ctx )
 {
    GLenum e = ctx->ErrorValue;
 
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL( ctx, "glGetError", 0);
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL( ctx, "glGetError", (GLenum) 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glGetError <-- %s\n", gl_lookup_enum_by_nr(e));

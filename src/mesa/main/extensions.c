@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: extensions.c,v 1.2 1999/09/11 11:31:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,9 +26,11 @@
 
 
 #include <stdlib.h>
+#include "context.h"
 #include "extensions.h"
 #include "simple_list.h"
 #include "types.h"
+
 
 #define MAX_EXT_NAMELEN 80
 #define MALLOC_STRUCT(T)  (struct T *) malloc( sizeof(struct T) )
@@ -67,6 +69,7 @@ static struct { int enabled; const char *name; } default_extensions[] = {
    { DEFAULT_ON,     "GL_EXT_compiled_vertex_array" },
    { DEFAULT_OFF,    "GL_EXT_vertex_array_set" },
    { DEFAULT_ON,     "GL_EXT_clip_volume_hint" },
+   { ALWAYS_ENABLED, "GL_EXT_get_proc_address" }
 };
 
 
@@ -194,3 +197,189 @@ const char *gl_extensions_get_string( GLcontext *ctx )
 }
 
 
+
+/*
+ * Return the address of an extension function.
+ * NOTE: this function could be optimized to binary search a sorted
+ * list of function names.
+ * Also, this function does not yet do per-context function searches.
+ * But since the client must also call glGetString(GL_EXTENSIONS) to
+ * test for the extension this isn't a big deal.
+ */
+void *gl_GetProcAddress( GLcontext *ctx, const GLubyte *procName )
+{
+   struct proc {
+      const char *name;
+      void *address;
+   };
+   static struct proc procTable[] = {
+      { "glGetProcAddressEXT", glGetProcAddressEXT },  /* myself! */
+
+      /* OpenGL 1.1 functions */
+      { "glEnableClientState", glEnableClientState },
+      { "glDisableClientState", glDisableClientState },
+      { "glPushClientAttrib", glPushClientAttrib },
+      { "glPopClientAttrib", glPopClientAttrib },
+      { "glIndexub", glIndexub },
+      { "glIndexubv", glIndexubv },
+      { "glVertexPointer", glVertexPointer },
+      { "glNormalPointer", glNormalPointer },
+      { "glColorPointer", glColorPointer },
+      { "glIndexPointer", glIndexPointer },
+      { "glTexCoordPointer", glTexCoordPointer },
+      { "glEdgeFlagPointer", glEdgeFlagPointer },
+      { "glGetPointerv", glGetPointerv },
+      { "glArrayElement", glArrayElement },
+      { "glDrawArrays", glDrawArrays },
+      { "glDrawElements", glDrawElements },
+      { "glInterleavedArrays", glInterleavedArrays },
+      { "glGenTextures", glGenTextures },
+      { "glDeleteTextures", glDeleteTextures },
+      { "glBindTexture", glBindTexture },
+      { "glPrioritizeTextures", glPrioritizeTextures },
+      { "glAreTexturesResident", glAreTexturesResident },
+      { "glIsTexture", glIsTexture },
+      { "glTexSubImage1D", glTexSubImage1D },
+      { "glTexSubImage2D", glTexSubImage2D },
+      { "glCopyTexImage1D", glCopyTexImage1D },
+      { "glCopyTexImage2D", glCopyTexImage2D },
+      { "glCopyTexSubImage1D", glCopyTexSubImage1D },
+      { "glCopyTexSubImage2D", glCopyTexSubImage2D },
+
+      /* OpenGL 1.2 functions */
+      { "glDrawRangeElements", glDrawRangeElements },
+      { "glTexImage3D", glTexImage3D },
+      { "glTexSubImage3D", glTexSubImage3D },
+      { "glCopyTexSubImage3D", glCopyTexSubImage3D },
+      /* NOTE: 1.2 imaging subset functions not implemented in Mesa */
+
+      /* GL_EXT_blend_minmax */
+      { "glBlendEquationEXT", glBlendEquationEXT },
+
+      /* GL_EXT_blend_color */
+      { "glBlendColorEXT", glBlendColorEXT },
+
+      /* GL_EXT_polygon_offset */
+      { "glPolygonOffsetEXT", glPolygonOffsetEXT },
+
+      /* GL_EXT_vertex_arrays */
+      { "glVertexPointerEXT", glVertexPointerEXT },
+      { "glNormalPointerEXT", glNormalPointerEXT },
+      { "glColorPointerEXT", glColorPointerEXT },
+      { "glIndexPointerEXT", glIndexPointerEXT },
+      { "glTexCoordPointerEXT", glTexCoordPointerEXT },
+      { "glEdgeFlagPointerEXT", glEdgeFlagPointerEXT },
+      { "glGetPointervEXT", glGetPointervEXT },
+      { "glArrayElementEXT", glArrayElementEXT },
+      { "glDrawArraysEXT", glDrawArraysEXT },
+
+      /* GL_EXT_texture_object */
+      { "glGenTexturesEXT", glGenTexturesEXT },
+      { "glDeleteTexturesEXT", glDeleteTexturesEXT },
+      { "glBindTextureEXT", glBindTextureEXT },
+      { "glPrioritizeTexturesEXT", glPrioritizeTexturesEXT },
+      { "glAreTexturesResidentEXT", glAreTexturesResidentEXT },
+      { "glIsTextureEXT", glIsTextureEXT },
+
+      /* GL_EXT_texture3D */
+      { "glTexImage3DEXT", glTexImage3DEXT },
+      { "glTexSubImage3DEXT", glTexSubImage3DEXT },
+      { "glCopyTexSubImage3DEXT", glCopyTexSubImage3DEXT },
+
+      /* GL_EXT_color_table */
+      { "glColorTableEXT", glColorTableEXT },
+      { "glColorSubTableEXT", glColorSubTableEXT },
+      { "glGetColorTableEXT", glGetColorTableEXT },
+      { "glGetColorTableParameterfvEXT", glGetColorTableParameterfvEXT },
+      { "glGetColorTableParameterivEXT", glGetColorTableParameterivEXT },
+
+      /* GL_ARB_multitexture */
+      { "glActiveTextureARB", glActiveTextureARB },
+      { "glClientActiveTextureARB", glClientActiveTextureARB },
+      { "glMultiTexCoord1dARB", glMultiTexCoord1dARB },
+      { "glMultiTexCoord1dvARB", glMultiTexCoord1dvARB },
+      { "glMultiTexCoord1fARB", glMultiTexCoord1fARB },
+      { "glMultiTexCoord1fvARB", glMultiTexCoord1fvARB },
+      { "glMultiTexCoord1iARB", glMultiTexCoord1iARB },
+      { "glMultiTexCoord1ivARB", glMultiTexCoord1ivARB },
+      { "glMultiTexCoord1sARB", glMultiTexCoord1sARB },
+      { "glMultiTexCoord1svARB", glMultiTexCoord1svARB },
+      { "glMultiTexCoord2dARB", glMultiTexCoord2dARB },
+      { "glMultiTexCoord2dvARB", glMultiTexCoord2dvARB },
+      { "glMultiTexCoord2fARB", glMultiTexCoord2fARB },
+      { "glMultiTexCoord2fvARB", glMultiTexCoord2fvARB },
+      { "glMultiTexCoord2iARB", glMultiTexCoord2iARB },
+      { "glMultiTexCoord2ivARB", glMultiTexCoord2ivARB },
+      { "glMultiTexCoord2sARB", glMultiTexCoord2sARB },
+      { "glMultiTexCoord2svARB", glMultiTexCoord2svARB },
+      { "glMultiTexCoord3dARB", glMultiTexCoord3dARB },
+      { "glMultiTexCoord3dvARB", glMultiTexCoord3dvARB },
+      { "glMultiTexCoord3fARB", glMultiTexCoord3fARB },
+      { "glMultiTexCoord3fvARB", glMultiTexCoord3fvARB },
+      { "glMultiTexCoord3iARB", glMultiTexCoord3iARB },
+      { "glMultiTexCoord3ivARB", glMultiTexCoord3ivARB },
+      { "glMultiTexCoord3sARB", glMultiTexCoord3sARB },
+      { "glMultiTexCoord3svARB", glMultiTexCoord3svARB },
+      { "glMultiTexCoord4dARB", glMultiTexCoord4dARB },
+      { "glMultiTexCoord4dvARB", glMultiTexCoord4dvARB },
+      { "glMultiTexCoord4fARB", glMultiTexCoord4fARB },
+      { "glMultiTexCoord4fvARB", glMultiTexCoord4fvARB },
+      { "glMultiTexCoord4iARB", glMultiTexCoord4iARB },
+      { "glMultiTexCoord4ivARB", glMultiTexCoord4ivARB },
+      { "glMultiTexCoord4sARB", glMultiTexCoord4sARB },
+      { "glMultiTexCoord4svARB", glMultiTexCoord4svARB },
+
+      /* GL_EXT_point_parameters */
+      { "glPointParameterfEXT", glPointParameterfEXT },
+      { "glPointParameterfvEXT", glPointParameterfvEXT },
+
+      /* GL_INGR_blend_func_separate */
+      { "glBlendFuncSeparateINGR", glBlendFuncSeparateINGR },
+
+      /* GL_MESA_window_pos */
+      { "glWindowPos2iMESA", glWindowPos2iMESA },
+      { "glWindowPos2sMESA", glWindowPos2sMESA },
+      { "glWindowPos2fMESA", glWindowPos2fMESA },
+      { "glWindowPos2dMESA", glWindowPos2dMESA },
+      { "glWindowPos2ivMESA", glWindowPos2ivMESA },
+      { "glWindowPos2svMESA", glWindowPos2svMESA },
+      { "glWindowPos2fvMESA", glWindowPos2fvMESA },
+      { "glWindowPos2dvMESA", glWindowPos2dvMESA },
+      { "glWindowPos3iMESA", glWindowPos3iMESA },
+      { "glWindowPos3sMESA", glWindowPos3sMESA },
+      { "glWindowPos3fMESA", glWindowPos3fMESA },
+      { "glWindowPos3dMESA", glWindowPos3dMESA },
+      { "glWindowPos3ivMESA", glWindowPos3ivMESA },
+      { "glWindowPos3svMESA", glWindowPos3svMESA },
+      { "glWindowPos3fvMESA", glWindowPos3fvMESA },
+      { "glWindowPos3dvMESA", glWindowPos3dvMESA },
+      { "glWindowPos4iMESA", glWindowPos4iMESA },
+      { "glWindowPos4sMESA", glWindowPos4sMESA },
+      { "glWindowPos4fMESA", glWindowPos4fMESA },
+      { "glWindowPos4dMESA", glWindowPos4dMESA },
+      { "glWindowPos4ivMESA", glWindowPos4ivMESA },
+      { "glWindowPos4svMESA", glWindowPos4svMESA },
+      { "glWindowPos4fvMESA", glWindowPos4fvMESA },
+      { "glWindowPos4dvMESA", glWindowPos4dvMESA },
+
+      /* GL_MESA_resize_buffers */
+      { "glResizeBuffersMESA", glResizeBuffersMESA },
+
+      /* GL_EXT_compiled_vertex_array */
+      { "glLockArraysEXT", glLockArraysEXT },
+      { "glUnlockArraysEXT", glUnlockArraysEXT },
+
+      { NULL, NULL } /* end of list token */
+   };
+   GLuint i;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, "glGetProcAddressEXT", NULL);
+
+   /* First, look for core library functions */
+   for (i = 0; procTable[i].address; i++) {
+      if (strcmp((const char *) procName, procTable[i].name) == 0)
+	 return procTable[i].address;
+   }
+
+   return NULL;
+}

@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.3 1999/09/04 14:40:49 keithw Exp $ */
+/* $Id: dlist.c,v 1.4 1999/09/11 11:31:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,6 +48,7 @@
 #include "enable.h"
 #include "enums.h"
 #include "eval.h"
+#include "extensions.h"
 #include "feedback.h"
 #include "fog.h"
 #include "get.h"
@@ -3336,6 +3337,9 @@ void gl_init_dlist_pointers( struct gl_api_table *table )
    /* GL_ARB_multitexture */
    table->ActiveTexture = save_ActiveTexture;
    table->ClientActiveTexture = save_ClientActiveTexture;
+
+   /* GL_EXT_get_proc_address */
+   table->GetProcAddress = gl_GetProcAddress;  /* NOT SAVED */
 }
 
 
