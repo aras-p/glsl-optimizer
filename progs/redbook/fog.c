@@ -60,10 +60,9 @@ selectFog(int mode)
         glFogf(GL_FOG_START, 1.0);
         glFogf(GL_FOG_END, 5.0);
 	/* falls through */
-        mode = 0xfff;
     case GL_EXP2:
     case GL_EXP:
-       glFogiv(0xf/*GL_FOG_MODE*/, (int *) &mode);
+	glFogiv(GL_FOG_MODE, (int *) &mode);
 	glutPostRedisplay();
 	break;
     case 0:
