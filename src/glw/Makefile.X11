@@ -46,7 +46,8 @@ targets: $(LIBDIR)/$(GLW_LIB) message
 # Make the library
 $(LIBDIR)/$(GLW_LIB): $(OBJECTS)
 	$(TOP)/bin/mklib -o GLw -major $(MAJOR) -minor $(MINOR) \
-		-patch $(TINY) $(GLW_LIB_DEPS) -install $(LIBDIR) $(OBJECTS)
+		-patch $(TINY) $(GLW_LIB_DEPS) -install $(LIBDIR) \
+		$(MKLIB_OPTIONS) $(OBJECTS)
 
 
 message:

@@ -335,6 +335,46 @@ case $ARCH in
 	FINAL_LIBS="${LIBNAME}"
 	;;
 
+    'icc')
+	# Intel C compiler
+	LIBNAME="lib${LIBNAME}"     # prefix with "lib"
+
+        if [ $STATIC = 1 ] ; then
+            echo "mklib: Making Intel ICC static library: " ${LIBNAME}.a
+            LINK="ar"
+            OPTS="-ruv"
+            # make lib
+            ${LINK} ${OPTS} ${LIBNAME}.a ${OBJECTS}
+            # finish up
+            FINAL_LIBS="${LIBNAME}.a"
+        else
+            OPTS="-shared"
+            VERSION="${MAJOR}.${MINOR}.${PATCH}"
+
+            echo "mklib: Making Intel ICC shared library: " ${LIBNAME}.so.${VERSION}
+
+            if [ $CPLUSPLUS = 1 ] ; then
+                LINK="icc"
+            else
+                LINK="icc"
+            fi
+
+            # rm any old libs
+            rm -f ${LIBNAME}.so.${VERSION}
+            rm -f ${LIBNAME}.so.${MAJOR}
+            rm -f ${LIBNAME}.so
+
+            # make lib
+            ${LINK} ${OPTS} -o ${LIBNAME}.so.${VERSION} ${OBJECTS} ${DEPS}
+            # make usual symlinks
+            ln -s ${LIBNAME}.so.${VERSION} ${LIBNAME}.so.${MAJOR}
+            ln -s ${LIBNAME}.so.${MAJOR} ${LIBNAME}.so
+            # finish up
+            FINAL_LIBS="${LIBNAME}.so.${VERSION} ${LIBNAME}.so.${MAJOR} ${LIBNAME}.so"
+        fi
+	;;
+
+
     'example')
 	# If you're adding support for a new architecture, you can
 	# start with this:

@@ -142,7 +142,8 @@ targets: $(LIBDIR)/$(GLU_LIB)
 $(LIBDIR)/$(GLU_LIB): $(OBJECTS)
 	$(TOP)/bin/mklib -o $(GLU_LIB_NAME) -major $(GLU_MAJOR) \
 		-minor $(GLU_MINOR) -patch $(GLU_TINY) \
-		$(GLU_LIB_DEPS) -cplusplus -install $(LIBDIR) $(OBJECTS)
+		$(GLU_LIB_DEPS) -cplusplus -install $(LIBDIR) \
+		$(MKLIB_OPTIONS) $(OBJECTS)
 
 
 

@@ -461,7 +461,7 @@ linux-x86-sse:
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
-	"APP_LIB_DEPS = -lm" \
+	"APP_LIB_DEPS = -lglut -lGLU -lGL -lm" \
 	"ASM_SOURCES = $(X86_SOURCES)"
 
 linux-icc:
@@ -477,8 +477,9 @@ linux-icc:
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
-	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = $(X86_SOURCES)"
+	"APP_LIB_DEPS = -lglut -lGLU -lGL -lm" \
+	"ASM_SOURCES = $(X86_SOURCES)" \
+	"MKLIB_OPTIONS = -arch icc"
 
 # Contributed by Uwe_Maurer@t-online.de
 linux-ggi:
