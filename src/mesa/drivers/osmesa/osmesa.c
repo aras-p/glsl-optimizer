@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.15 2000/04/04 15:14:10 brianp Exp $ */
+/* $Id: osmesa.c,v 1.16 2000/04/22 01:05:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -216,12 +216,12 @@ OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
          return NULL;
       }
 
-      if (!gl_initialize_context_data(&osmesa->gl_ctx,
-                                      osmesa->gl_visual,
-                                      sharelist ? &sharelist->gl_ctx
-                                                : (GLcontext *) NULL,
-                                      (void *) osmesa, GL_TRUE )) {
-         gl_destroy_visual( osmesa->gl_visual );
+      if (!_mesa_initialize_context(&osmesa->gl_ctx,
+                                    osmesa->gl_visual,
+                                    sharelist ? &sharelist->gl_ctx
+                                              : (GLcontext *) NULL,
+                                    (void *) osmesa, GL_TRUE )) {
+         _mesa_destroy_visual( osmesa->gl_visual );
          FREE(osmesa);
          return NULL;
       }
