@@ -22,5 +22,30 @@ Details to come...
 
 
 
+New Extensions
+--------------
+
+GL_EXT_convolution
+	Adds image convolution to glRead/Copy/DrawPixels/TexImage.
+
+GL_ARB_imaging
+	This is the optional imaging subset of OpenGL 1.2.
+	It's the GL_EXT_convolution, GL_HP_convolution_border_modes,
+	GL_EXT_histogram, GL_EXT_color_table, GL_EXT_color_subtable
+	GL_EXT_blend_color, GL_EXT_blend_minmax, GL_EXT_blend_subtract
+	and GL_SGI_color_matrix extensions all rolled together.
+	This is supported in all software renderers but not in all
+	hardware drivers (3dfx for example).
+
+GL_ARB_texture_compression
+	This is supported in Mesa but only used by the 3dfx DRI drivers
+	for Voodoo4 and later.
+
+GL_NV_blend_square
+	Adds extra blend source and dest factors which allow squaring
+	of color values.
+
+
+
 ----------------------------------------------------------------------
-$Id: RELNOTES-3.5,v 1.1 2000/07/31 13:58:04 brianp Exp $
+$Id: RELNOTES-3.5,v 1.2 2000/08/31 23:04:17 brianp Exp $
