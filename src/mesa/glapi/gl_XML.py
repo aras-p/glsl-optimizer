@@ -153,6 +153,12 @@ class glParameter( glItem ):
 		self.p_type_string = attrs.get('type', None)
 		self.p_count_parameters = attrs.get('variable_param', None)
 
+		if self.p_count_parameters:
+			temp = self.p_count_parameters.replace( ' ', '' )
+			self.count_parameter_list = temp.split( ',' )
+		else:
+			self.count_parameter_list = []
+
 		self.p_type = context.context.find_type(self.p_type_string)
 		if self.p_type == None:
 			raise RuntimeError("Unknown type '%s' in function '%s'." % (self.p_type_string, context.name))
@@ -300,6 +306,11 @@ class glParameter( glItem ):
 			a_prod = "compsize"
 			b_prod = self.p_type.size
 
+			# Handle functions like glCompressedTexImage2D that
+			# have a counted 'void *' parameter.
+
+			if b_prod == 0:	b_prod = 1
+
 			if self.p_count_parameters == None and self.counter != None:
 				a_prod = self.counter
 			elif self.p_count_parameters != None and self.counter == None:
@@ -349,6 +360,7 @@ class glFunction( glItem ):
 		self.fn_alias = attrs.get('alias', None)
 		self.fn_parameters = []
 		self.image = None
+		self.count_parameter_list = []
 
 		temp = attrs.get('offset', None)
 		if temp == None or temp == "?":
@@ -390,6 +402,8 @@ class glFunction( glItem ):
 			self.image = p
 
 		self.fn_parameters.append(p)
+		if p.count_parameter_list != []:
+			self.count_parameter_list.extend( p.count_parameter_list )
 
 
 	def set_return_type(self, t):

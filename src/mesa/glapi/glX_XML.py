@@ -81,8 +81,9 @@ class glXItemFactory(gl_XML.glItemFactory):
 			return gl_XML.glItemFactory.create(self, context, name, attrs)
 
 class glXEnumFunction:
-	def __init__(self, name):
+	def __init__(self, name, context):
 		self.name = name
+		self.context = context
 		self.mode = 0
 		self.sig = None
 
@@ -261,7 +262,7 @@ class glXEnum(gl_XML.glEnum):
 			[n, c, mode] = self.process_attributes(attrs)
 
 			if not self.context.glx_enum_functions.has_key( n ):
-				f = glXEnumFunction( n )
+				f = self.context.createEnumFunction( n )
 				f.set_mode( mode )
 				self.context.glx_enum_functions[ f.name ] = f
 
@@ -692,3 +693,7 @@ class GlxProto(gl_XML.FilterGLAPISpecBase):
 		else:
 			gl_XML.FilterGLAPISpecBase.endElement(self, name)
 		return
+
+
+	def createEnumFunction(self, n):
+		return glXEnumFunction(n, self)

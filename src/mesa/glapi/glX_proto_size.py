@@ -94,6 +94,52 @@ class SizeStubFunctionIterator:
 		return f
 
 
+class glXServerEnumFunction(glX_XML.glXEnumFunction):
+	def signature( self ):
+		if self.sig == None:
+			sig = glX_XML.glXEnumFunction.signature(self)
+
+			f = self.context.find_function( self.name )
+			p = f.variable_length_parameter()
+
+			try:
+				sig += "%u" % (p.p_type.size)
+			except Exception,e:
+				print '%s' % (self.name)
+				raise e
+
+			self.sig = sig
+
+		return self.sig;
+
+
+	def Print(self, name):
+		f = self.context.find_function( self.name )
+		self.context.common_func_print_just_header( f )
+
+		fixup = []
+		o = 0
+		for p in f.parameterIterator(1, 1):
+			if f.count_parameter_list.count(p.name) or p.name == f.counter:
+				self.context.common_emit_one_arg(p, o, "pc", "    ", 0)
+				fixup.append(p.name)
+
+			o += p.size()
+
+		print '    GLsizei compsize;'
+		print ''
+
+		self.context.common_emit_fixups(fixup)
+
+		print ''
+		print '    compsize = __gl%s_size(%s);' % (self.name, f.count_parameters)
+		p = f.variable_length_parameter()
+		print '    return __GLX_PAD(%s);' % (p.size_string())
+
+		print '}'
+		print ''
+
+
 class PrintGlxSizeStubs_common(glX_XML.GlxProto):
 	do_get = (1 << 0)
 	do_set = (1 << 1)
@@ -193,6 +239,238 @@ class PrintGlxSizeStubs_h(PrintGlxSizeStubs_common):
 		print 'extern INTERNAL PURE FASTCALL GLint __gl%s_size(GLenum);' % (f.name)
 
 
+class PrintGlxReqSize_h(glX_XML.GlxProto):
+	def __init__(self):
+		glX_XML.GlxProto.__init__(self)
+		self.name = "glX_proto_size.py (from Mesa)"
+		self.license = license.bsd_license_template % ( "(C) Copyright IBM Corporation 2005", "IBM")
+		self.aliases = []
+		self.glx_enum_sigs = {}
+		self.header_tag = "_INDIRECT_REQSIZE_H_"
+
+
+	def printRealHeader(self):
+		glX_XML.printVisibility("HIDDEN", "hidden")
+		print ''
+		glX_XML.printPure()
+		print ''
+
+
+	def printRealFooter(self):
+		print ''
+		print '#  undef HIDDEN'
+		print '#  undef PURE'
+
+
+	def printFunction(self, f):
+		if f.glx_rop == 0 or f.ignore: return
+
+		has_counter = 0
+		for p in f.parameterIterator(1,2):
+			if p.is_counter:
+				has_counter = 1
+				break
+
+		if self.glx_enum_functions.has_key(f.name) or f.image or has_counter:
+			print 'extern PURE HIDDEN int __glX%sReqSize(const GLbyte *pc, Bool swap);' % (f.name)
+
+
+class PrintGlxReqSize_c(glX_XML.GlxProto):
+	def __init__(self):
+		glX_XML.GlxProto.__init__(self)
+		self.name = "glX_proto_size.py (from Mesa)"
+		self.license = license.bsd_license_template % ( "(C) Copyright IBM Corporation 2005", "IBM")
+		self.aliases = []
+		self.glx_enum_sigs = {}
+		self.counter_sigs = {}
+
+
+	def createEnumFunction(self, n):
+		return glXServerEnumFunction(n, self)
+
+
+	def printRealHeader(self):
+		print ''
+		print '#include <GL/gl.h>'
+		print '#include <byteswap.h>'
+		print '#include "glxserver.h"'
+		print '#include "indirect_size.h"'
+		print '#include "indirect_reqsize.h"'
+		
+		print ''
+		print '#define __GLX_PAD(x)  (((x) + 3) & ~3)'
+		print ''
+		glX_XML.printHaveAlias()
+		print ''
+		print '#ifdef HAVE_ALIAS'
+		print '#  define ALIAS2(from,to) \\'
+		print '    GLint __glX ## from ## ReqSize( const GLbyte * pc, Bool swap ) \\'
+		print '        __attribute__ ((alias( # to )));'
+		print '#  define ALIAS(from,to) ALIAS2( from, __glX ## to ## ReqSize )'
+		print '#else'
+		print '#  define ALIAS(from,to) \\'
+		print '    GLint __glX ## from ## ReqSize( const GLbyte * pc, Bool swap ) \\'
+		print '    { return __glX ## to ## ReqSize( pc, swap ); }'
+		print '#endif'
+		print ''
+		print ''
+
+
+	def printRealFooter(self):
+		for a in self.aliases:
+			print a
+
+
+	def printFunction(self, f):
+		if f.glx_rop == 0 or f.server_handcode or f.ignore: return
+
+		if self.glx_enum_functions.has_key(f.name):
+			ef = self.glx_enum_functions[f.name]
+
+			sig = ef.signature();
+			if self.glx_enum_sigs.has_key(sig):
+				n = self.glx_enum_sigs[sig];
+				a = 'ALIAS( %s, %s )' % (f.name, n)
+				self.aliases.append(a)
+			else:
+				ef.Print( f.name )
+				self.glx_enum_sigs[sig] = f.name;
+		elif f.image:
+			self.printPixelFunction(f)
+		else:
+			for p in f.parameterIterator(1,2):
+				if p.counter and not p.is_output:
+					self.printCountedFunction(f)
+					break
+
+
+	def common_emit_fixups(self, fixup):
+		"""Utility function to emit conditional byte-swaps."""
+
+		if fixup:
+			print '    if (swap) {'
+			for name in fixup:
+				print '        %-14s = bswap_32( %s );' % (name, name)
+			print '    }'
+
+		return
+
+
+	def common_emit_one_arg(self, p, offset, pc, indent, adjust):
+		dst = '%s %s' % (p.p_type_string, p.name)
+		src = '(%s *)' % (p.p_type_string)
+		print '%s%-18s = *%11s(%s + %u);' % (indent, dst, src, pc, offset + adjust);
+		return
+
+
+	def common_func_print_just_header(self, f):
+		print 'int'
+		print '__glX%sReqSize( const GLbyte * pc, Bool swap )' % (f.name)
+		print '{'
+
+
+	def printPixelFunction(self, f):
+		self.common_func_print_just_header(f)
+		
+		[dim, w, h, d, junk] = f.dimensions()
+
+		offset = f.offset_of_first_parameter()
+
+		print '    GLint row_length   = *  (GLint *)(pc +  4);'
+
+		if dim < 3:
+			fixup = ['row_length', 'skip_rows', 'alignment']
+			print '    GLint image_height = 0;'
+			print '    GLint skip_images  = 0;'
+			print '    GLint skip_rows    = *  (GLint *)(pc +  8);'
+			print '    GLint alignment    = *  (GLint *)(pc + 16);'
+		else:
+			fixup = ['row_length', 'image_height', 'skip_rows', 'skip_images', 'alignment']
+			print '    GLint image_height = *  (GLint *)(pc +  8);'
+			print '    GLint skip_rows    = *  (GLint *)(pc + 16);'
+			print '    GLint skip_images  = *  (GLint *)(pc + 20);'
+			print '    GLint alignment    = *  (GLint *)(pc + 32);'
+
+		for p in f.parameterIterator(1, 2):
+			if p.name in [w, h, d, f.image.img_format, f.image.img_type, f.image.img_target]:
+				self.common_emit_one_arg(p, offset, "pc", "    ", 0 )
+				fixup.append( p.name )
+
+			offset += p.size()
+
+		print ''
+
+		self.common_emit_fixups(fixup)
+
+		print ''
+		print '    return __glXImageSize(%s, %s, %s, %s, %s, %s,' % (f.image.img_format, f.image.img_type, f.image.img_target, w, h, d )
+		print '                          image_height, row_length, skip_images,'
+		print '                          skip_rows, alignment);'
+		print '}'
+		print ''
+		return
+
+
+	def printCountedFunction(self, f):
+
+		sig = ""
+		offset = 0
+		fixup = []
+		params = []
+		plus = ''
+		size = ''
+		param_offsets = {}
+
+		# Calculate the offset of each counter parameter and the
+		# size string for the variable length parameter(s).  While
+		# that is being done, calculate a unique signature for this
+		# function.
+
+		for p in f.parameterIterator(1,2):
+			if p.is_counter:
+				param_offsets[ p.name ] = offset
+				fixup.append( p.name )
+				params.append( [p, offset] )
+			elif p.counter:
+				s = p.p_type.size
+				if s == 0: s = 1
+
+				sig += "(%u,%u)" % (param_offsets[p.counter], s)
+				size += '%s%s' % (plus, p.size_string())
+				plus = ' + '
+
+
+			offset += p.size()
+
+
+		# If the calculate signature matches a function that has
+		# already be emitted, don't emit this function.  Instead, add
+		# it to the list of function aliases.
+
+		if self.counter_sigs.has_key(sig):
+			n = self.counter_sigs[sig];
+			a = 'ALIAS( %s, %s )' % (f.name, n)
+			self.aliases.append(a)
+		else:
+			self.counter_sigs[sig] = f.name
+
+			self.common_func_print_just_header(f)
+
+			for [p, offset] in params:
+				self.common_emit_one_arg(p, offset, "pc", "    ", 0 )
+
+
+			print ''
+			self.common_emit_fixups(fixup)
+			print ''
+
+			print '    return __GLX_PAD(%s);' % (size)
+			print '}'
+			print ''
+
+		return
+
+
 def show_usage():
 	print "Usage: %s [-f input_file_name] -m output_mode [--only-get | --only-set] [--get-alias-set]" % sys.argv[0]
 	print "    -m output_mode   Output mode can be one of 'size_c' or 'size_h'."
@@ -237,6 +515,10 @@ if __name__ == '__main__':
 		dh = PrintGlxSizeStubs_h( which_functions )
 		if header_tag:
 			dh.header_tag = header_tag
+	elif mode == "reqsize_c":
+		dh = PrintGlxReqSize_c()
+	elif mode == "reqsize_h":
+		dh = PrintGlxReqSize_h()
 	else:
 		show_usage()
 
