@@ -95,6 +95,6 @@ tags:
 
 # Remove .o and backup files
 clean:
-	-rm -f *.o */*.o *~ *.o *~ *.so server/*.o $(SYMLINKS)
+	-rm -f *.o */*.o *~ *.o *~ *.so server/*.o $(SYMLINKS) depend
 
 include depend
