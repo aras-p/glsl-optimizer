@@ -682,17 +682,6 @@ hook_in_driver_functions( GLcontext *ctx )
    ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
    ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 
-#if FEATURE_ARB_vertex_buffer_object
-   ctx->Driver.NewBufferObject = _mesa_new_buffer_object;
-   ctx->Driver.DeleteBuffer = _mesa_delete_buffer_object;
-   ctx->Driver.BindBuffer = NULL;
-   ctx->Driver.BufferData = _mesa_buffer_data;
-   ctx->Driver.BufferSubData = _mesa_buffer_subdata;
-   ctx->Driver.GetBufferSubData = _mesa_buffer_get_subdata;
-   ctx->Driver.MapBuffer = _mesa_buffer_map;
-   ctx->Driver.UnmapBuffer = NULL;
-#endif
-
    swdd->SetBuffer = set_buffer;
 
    /* RGB(A) span/pixel functions */
