@@ -1,4 +1,4 @@
-/* $Id: glthread.h,v 1.9 2001/11/12 23:50:12 brianp Exp $ */
+/* $Id: glthread.h,v 1.10 2001/11/30 22:11:45 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -225,12 +225,9 @@ typedef benaphore _glthread_Mutex;
 
 #define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = { 0,
 create_sem(0, #name"_benaphore") }
-#define _glthread_INIT_MUTEX(name)    name.sem = create_sem(0,
-#name"_benaphore"), name.lock = 0
-#define _glthread_LOCK_MUTEX(name)    if((atomic_add(&(name.lock), 1)) >= 1)
-acquire_sem(name.sem)
-#define _glthread_UNLOCK_MUTEX(name)  if((atomic_add(&(name.lock), -1)) > 1)
-release_sem(name.sem)
+#define _glthread_INIT_MUTEX(name)    name.sem = create_sem(0, #name"_benaphore"), name.lock = 0
+#define _glthread_LOCK_MUTEX(name)    if((atomic_add(&(name.lock), 1)) >= 1) acquire_sem(name.sem)
+#define _glthread_UNLOCK_MUTEX(name)  if((atomic_add(&(name.lock), -1)) > 1) release_sem(name.sem)
 
 #endif /* BEOS_THREADS */
 
