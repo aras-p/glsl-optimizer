@@ -1,4 +1,4 @@
-/* $Id: hash.h,v 1.3 2000/01/24 16:19:54 brianp Exp $ */
+/* $Id: hash.h,v 1.4 2000/03/21 22:20:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,11 +46,11 @@ extern void _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *da
 
 extern void _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key);
 
-extern GLuint _mesa_HashFirstEntry(const struct _mesa_HashTable *table);
+extern GLuint _mesa_HashFirstEntry(struct _mesa_HashTable *table);
 
 extern void _mesa_HashPrint(const struct _mesa_HashTable *table);
 
-extern GLuint _mesa_HashFindFreeKeyBlock(const struct _mesa_HashTable *table, GLuint numKeys);
+extern GLuint _mesa_HashFindFreeKeyBlock(struct _mesa_HashTable *table, GLuint numKeys);
 
 
 #endif

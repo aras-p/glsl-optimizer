@@ -1,4 +1,4 @@
-/* $Id: hash.c,v 1.8 2000/03/21 17:42:27 brianp Exp $ */
+/* $Id: hash.c,v 1.9 2000/03/21 22:20:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -206,7 +206,7 @@ void _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key)
  * This is used in the course of deleting all display lists when
  * a context is destroyed.
  */
-GLuint _mesa_HashFirstEntry(const struct _mesa_HashTable *table)
+GLuint _mesa_HashFirstEntry(struct _mesa_HashTable *table)
 {
    GLuint pos;
    assert(table);
@@ -247,7 +247,7 @@ void _mesa_HashPrint(const struct _mesa_HashTable *table)
  *         numKeys - number of keys needed
  * Return:  starting key of free block or 0 if failure
  */
-GLuint _mesa_HashFindFreeKeyBlock(const struct _mesa_HashTable *table, GLuint numKeys)
+GLuint _mesa_HashFindFreeKeyBlock(struct _mesa_HashTable *table, GLuint numKeys)
 {
    GLuint maxKey = ~((GLuint) 0);
    _glthread_LOCK_MUTEX(table->Mutex);
