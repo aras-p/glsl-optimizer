@@ -37,6 +37,11 @@ beos: depend subdirs mesa.a
 	cd drivers/beos; $(MAKE)
 
 
+install: default
+	@if [ "${DRIVER_DIRS}" = "dri" ] ; then \
+		cd drivers/dri ; $(MAKE) install ; \
+	fi
+
 ######################################################################
 # Linux solo DRI drivers
 
@@ -211,5 +216,6 @@ clean:
 	-rm -f depend depend.bak mesa.a
 	-rm -f drivers/*/*.o
 	(cd drivers/dri ; $(MAKE) clean)
+	(cd x86 ; $(MAKE) clean)
 
 include depend
