@@ -1,4 +1,4 @@
-/* $Id: m_clip_tmp.h,v 1.2 2000/12/26 05:09:31 keithw Exp $ */
+/* $Id: m_clip_tmp.h,v 1.3 2001/01/13 05:48:25 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -100,6 +100,59 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points4)( GLvector4f *clip_vec,
    return proj_vec;
 }
 
+
+
+static GLvector4f * _XFORMAPI TAG(cliptest_np_points4)( GLvector4f *clip_vec, 
+							GLvector4f *proj_vec, 
+							GLubyte clipMask[],
+							GLubyte *orMask, 
+							GLubyte *andMask )
+{
+   const GLuint stride = clip_vec->stride;
+   const GLfloat *from = (GLfloat *)clip_vec->start;
+   const GLuint count = clip_vec->count;
+   GLuint c = 0;
+   GLubyte tmpAndMask = *andMask;
+   GLubyte tmpOrMask = *orMask;
+   GLuint i;
+   STRIDE_LOOP {
+      const GLfloat cx = from[0];
+      const GLfloat cy = from[1];
+      const GLfloat cz = from[2];
+      const GLfloat cw = from[3];
+#if defined(macintosh)
+      /* on powerpc cliptest is 17% faster in this way. */
+      GLuint mask;
+      mask = (((cw < cx) << CLIP_RIGHT_SHIFT));
+      mask |= (((cw < -cx) << CLIP_LEFT_SHIFT));
+      mask |= (((cw < cy) << CLIP_TOP_SHIFT));
+      mask |= (((cw < -cy) << CLIP_BOTTOM_SHIFT));
+      mask |= (((cw < cz) << CLIP_FAR_SHIFT));
+      mask |= (((cw < -cz) << CLIP_NEAR_SHIFT));
+#else /* !defined(macintosh)) */
+      GLubyte mask = 0;
+      if (-cx + cw < 0) mask |= CLIP_RIGHT_BIT;
+      if ( cx + cw < 0) mask |= CLIP_LEFT_BIT;
+      if (-cy + cw < 0) mask |= CLIP_TOP_BIT;
+      if ( cy + cw < 0) mask |= CLIP_BOTTOM_BIT;
+      if (-cz + cw < 0) mask |= CLIP_FAR_BIT;
+      if ( cz + cw < 0) mask |= CLIP_NEAR_BIT;
+#endif /* defined(macintosh) */
+
+      clipMask[i] = mask;
+      if (mask) {
+	 c++;
+	 tmpAndMask &= mask;
+	 tmpOrMask |= mask;
+      }	 
+   }
+
+   *orMask = tmpOrMask;
+   *andMask = (GLubyte) (c < count ? 0 : tmpAndMask);
+   return clip_vec;
+}
+
+
 static GLvector4f * _XFORMAPI TAG(cliptest_points3)( GLvector4f *clip_vec, 
 					   GLvector4f *proj_vec, 
 					   GLubyte clipMask[],
@@ -131,6 +184,7 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points3)( GLvector4f *clip_vec,
    *andMask = tmpAndMask;
    return clip_vec;
 }
+
 
 static GLvector4f * _XFORMAPI TAG(cliptest_points2)( GLvector4f *clip_vec, 
 					   GLvector4f *proj_vec, 
@@ -168,4 +222,8 @@ static void TAG(init_c_cliptest)( void )
    gl_clip_tab[4] = TAG(cliptest_points4);
    gl_clip_tab[3] = TAG(cliptest_points3);
    gl_clip_tab[2] = TAG(cliptest_points2);
+
+   gl_clip_np_tab[4] = TAG(cliptest_np_points4);
+   gl_clip_np_tab[3] = TAG(cliptest_points3);
+   gl_clip_np_tab[2] = TAG(cliptest_points2);
 }

@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.25 2001/01/08 04:09:41 keithw Exp $ */
+/* $Id: lines.c,v 1.26 2001/01/13 05:48:25 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -79,12 +79,14 @@ _mesa_LineStipple( GLint factor, GLushort pattern )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (ctx->Line.StippleFactor == CLAMP( factor, 1, 256 ) &&
+   factor = CLAMP( factor, 1, 256 );
+
+   if (ctx->Line.StippleFactor == factor &&
        ctx->Line.StipplePattern == pattern)
       return;
 
    FLUSH_VERTICES(ctx, _NEW_LINE);
-   ctx->Line.StippleFactor = CLAMP( factor, 1, 256 );
+   ctx->Line.StippleFactor = factor;
    ctx->Line.StipplePattern = pattern;
 
    if (ctx->Driver.LineStipple)

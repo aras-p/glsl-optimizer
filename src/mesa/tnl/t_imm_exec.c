@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.6 2001/01/08 21:56:00 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.7 2001/01/13 05:48:26 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -357,16 +357,21 @@ static void exec_elt_cassette( GLcontext *ctx, struct immediate *IM )
  */
 void _tnl_run_empty_cassette( GLcontext *ctx, struct immediate *IM )
 {
-   GLuint start = IM->CopyStart;
-
    copy_to_current( ctx, IM, IM->OrFlag ); 
 
-   if (IM->OrFlag & VERT_MATERIAL) 
-      gl_update_material( ctx, IM->Material[start], IM->MaterialMask[start] );
+   if (IM->OrFlag & (VERT_RGBA|VERT_MATERIAL)) {
+      GLuint start = IM->CopyStart;
 
-   if (IM->OrFlag & VERT_RGBA) 
-      if (ctx->Light.ColorMaterialEnabled)
-	 gl_update_color_material( ctx, ctx->Current.Color );
+      if (IM->OrFlag & VERT_MATERIAL) 
+	 gl_update_material( ctx, IM->Material[start], 
+			     IM->MaterialMask[start] );
+      
+      if (IM->OrFlag & VERT_RGBA) 
+	 if (ctx->Light.ColorMaterialEnabled)
+	    gl_update_color_material( ctx, ctx->Current.Color );
+
+      gl_validate_all_lighting_tables( ctx );
+   }
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.9 2001/01/05 02:26:49 keithw Exp $ */
+/* $Id: t_context.h,v 1.10 2001/01/13 05:48:26 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -411,6 +411,10 @@ typedef struct {
    GLuint DlistPrimitive;
    GLuint DlistPrimitiveLength;
    GLuint DlistLastPrimitive;
+
+   /* Probably need a better configuration mechanism:
+    */
+   GLboolean NeedProjCoords;
 
    /* Derived state and storage for _tnl_eval_vb:
     */

@@ -1,4 +1,4 @@
-/* $Id: m_xform.h,v 1.4 2001/01/05 05:31:42 keithw Exp $ */
+/* $Id: m_xform.h,v 1.5 2001/01/13 05:48:25 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -201,6 +201,7 @@ extern dotprod_func  gl_dotprod_tab[2][5];
 extern vec_copy_func gl_copy_tab[2][0x10];
 extern vec_copy_func gl_copy_clean_tab[2][5];
 extern clip_func     gl_clip_tab[5];
+extern clip_func     gl_clip_np_tab[5];
 extern normal_func   gl_normal_tab[0xf][0x4];
 
 /* Use of 3 layers of linked 1-dimensional arrays to reduce

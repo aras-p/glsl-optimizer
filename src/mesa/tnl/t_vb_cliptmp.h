@@ -1,4 +1,4 @@
-/* $Id: t_vb_cliptmp.h,v 1.5 2001/01/05 02:26:49 keithw Exp $ */
+/* $Id: t_vb_cliptmp.h,v 1.6 2001/01/13 05:48:26 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -115,29 +115,32 @@ do {								\
 } while (0)
 
 
-/* Project if necessary.
- */
 static void TAG(build_proj_verts)( GLcontext *ctx )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   GLfloat (*coord)[4] = VB->ClipPtr->data;
-   GLfloat (*proj)[4] = VB->ProjectedClipPtr->data;
-   GLuint last = VB->LastClipped;
-   GLuint i;
 
-   for (i = VB->FirstClipped; i < last; i++) {
-      if (VB->ClipMask[i] == 0) {
-	 if (SIZE == 4 && W(i) != 0.0F) {
-	    GLfloat wInv = 1.0F / W(i);
-	    proj[i][0] = X(i) * wInv;
-	    proj[i][1] = Y(i) * wInv;
-	    proj[i][2] = Z(i) * wInv;
-	    proj[i][3] = wInv;
-	 } else {
-	    proj[i][0] = X(i);
-	    proj[i][1] = Y(i);
-	    proj[i][2] = Z(i);
-	    proj[i][3] = W(i);
+   /* Project if necessary.
+    */
+   if (VB->ProjectedClipPtr) {
+      GLfloat (*coord)[4] = VB->ClipPtr->data;
+      GLfloat (*proj)[4] = VB->ProjectedClipPtr->data;
+      GLuint last = VB->LastClipped;
+      GLuint i;
+
+      for (i = VB->FirstClipped; i < last; i++) {
+	 if (VB->ClipMask[i] == 0) {
+	    if (SIZE == 4 && W(i) != 0.0F) {
+	       GLfloat wInv = 1.0F / W(i);
+	       proj[i][0] = X(i) * wInv;
+	       proj[i][1] = Y(i) * wInv;
+	       proj[i][2] = Z(i) * wInv;
+	       proj[i][3] = wInv;
+	    } else {
+	       proj[i][0] = X(i);
+	       proj[i][1] = Y(i);
+	       proj[i][2] = Z(i);
+	       proj[i][3] = W(i);
+	    }
 	 }
       }
    }

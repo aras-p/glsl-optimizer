@@ -59,17 +59,7 @@ _tnl_wakeup_exec( GLcontext *ctx );
 extern void
 _tnl_wakeup_save_exec( GLcontext *ctx );
 
-
-/* Functions to assist driver t&l modules which have to fallback to
- * this module in the middle of a begin/end pair.  Use this instead of
- * glBegin() to identify the primitive as wrapped:
- *
- * Even with this it's difficult to see how the drivers are going to
- * replay any glMaterial commands received in the few vertices before
- * the fallback.
- */
 extern void
-_tnl_fallback_begin( GLcontext *ctx, GLenum mode );
-
+_tnl_need_projected_coords( GLcontext *ctx, GLboolean flag );
 
 #endif

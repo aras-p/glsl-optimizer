@@ -1,4 +1,4 @@
-/* $Id: x86_cliptest.S,v 1.3 2000/12/26 05:09:31 keithw Exp $ */
+/* $Id: x86_cliptest.S,v 1.4 2001/01/13 05:48:25 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -246,3 +246,163 @@ LLBL( ctp4_finish ):
 	POP_L( ESI )
 
 	RET
+
+
+
+
+
+
+
+ALIGNTEXT16
+GLOBL GLNAME( gl_x86_cliptest_points4_np )
+GLNAME( gl_x86_cliptest_points4_np ):
+
+#ifdef ELFPIC
+#define FRAME_OFFSET 20
+#else
+#define FRAME_OFFSET 16
+#endif
+	PUSH_L( ESI )
+	PUSH_L( EDI )
+	PUSH_L( EBP )
+	PUSH_L( EBX )
+
+#ifdef ELFPIC
+	/* store pointer to clip_table on stack */
+	CALL( LLBL( ctp4_np_get_eip ) )
+	ADD_L( CONST(_GLOBAL_OFFSET_TABLE_), EBX )
+	MOV_L( REGOFF(clip_table@GOT, EBX), EBX )
+	PUSH_L( EBX )
+	JMP( LLBL( ctp4_np_clip_table_ready ) )
+
+LLBL( ctp4_np_get_eip ):
+	/* store eip in ebx */
+	MOV_L( REGIND(ESP), EBX )
+	RET
+
+LLBL( ctp4_np_clip_table_ready ):
+#endif
+
+	MOV_L( ARG_SOURCE, ESI )
+	/* slot */
+
+	MOV_L( ARG_CLIP, EDX )
+	MOV_L( ARG_OR, EBX )
+
+	MOV_L( ARG_AND, EBP )
+	MOV_L( REGOFF(V4F_STRIDE, ESI), EAX )
+
+	MOV_L( REGOFF(V4F_COUNT, ESI), ECX )
+	MOV_L( REGOFF(V4F_START, ESI), ESI )
+
+	MOV_L( EAX, ARG_DEST )   	/* put stride in ARG_DEST */
+	ADD_L( EDX, ECX )
+
+	MOV_L( ECX, EDI )		/* put clipmask + count in EDI */
+	CMP_L( ECX, EDX )
+
+	MOV_B( REGIND(EBX), AL )
+	MOV_B( REGIND(EBP), AH )
+
+	JZ( LLBL( ctp4_np_finish ) )
+
+ALIGNTEXT16
+LLBL( ctp4_np_top ):
+
+	MOV_L( SRC(3), EBP )
+	MOV_L( SRC(2), EBX )
+
+	XOR_L( ECX, ECX )
+	ADD_L( EBP, EBP )	/* ebp = abs(S(3))*2 ; carry = sign of S(3) */
+
+	ADC_L( ECX, ECX )
+	ADD_L( EBX, EBX )	/* ebx = abs(S(2))*2 ; carry = sign of S(2) */
+
+	ADC_L( ECX, ECX )
+	CMP_L( EBX, EBP )	/* carry = abs(S(2))*2 > abs(S(3))*2 */
+
+	ADC_L( ECX, ECX )
+	MOV_L( SRC(1), EBX )
+
+	ADD_L( EBX, EBX )	/* ebx = abs(S(1))*2 ; carry = sign of S(1) */
+
+	ADC_L( ECX, ECX )
+	CMP_L( EBX, EBP )	/* carry = abs(S(1))*2 > abs(S(3))*2 */
+
+	ADC_L( ECX, ECX )
+	MOV_L( SRC(0), EBX )
+
+	ADD_L( EBX, EBX )	/* ebx = abs(S(0))*2 ; carry = sign of S(0) */
+
+	ADC_L( ECX, ECX )
+	CMP_L( EBX, EBP )	/* carry = abs(S(0))*2 > abs(S(3))*2 */
+
+	ADC_L( ECX, ECX )
+
+#ifdef ELFPIC
+	MOV_L( REGIND(ESP), EBP )	/* clip_table */
+
+	MOV_B( REGBI(EBP, ECX), CL )
+#else
+	MOV_B( REGOFF(clip_table,ECX), CL )
+#endif
+
+	OR_B( CL, AL )
+	AND_B( CL, AH )
+
+	TEST_B( CL, CL )
+	MOV_B( CL, REGIND(EDX) )
+
+	INC_L( EDX )
+	/* slot */
+
+	ADD_L( ARG_DEST, ESI )
+	CMP_L( EDX, EDI )
+
+	JNZ( LLBL( ctp4_np_top ) )
+
+	MOV_L( ARG_OR, ECX )
+	MOV_L( ARG_AND, EDX )
+
+	MOV_B( AL, REGIND(ECX) )
+	MOV_B( AH, REGIND(EDX) )
+
+LLBL( ctp4_np_finish ):
+
+	MOV_L( ARG_SOURCE, EAX )
+#ifdef ELFPIC
+	POP_L( ESI )			/* discard ptr to clip_table */
+#endif
+	POP_L( EBX )
+	POP_L( EBP )
+	POP_L( EDI )
+	POP_L( ESI )
+
+	RET
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+	

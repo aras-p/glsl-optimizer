@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.33 2001/01/04 16:22:18 brianp Exp $ */
+/* $Id: light.c,v 1.34 2001/01/13 05:48:25 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1050,14 +1050,12 @@ static void validate_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
    struct gl_shine_tab *list = ctx->_ShineTabList;
    struct gl_shine_tab *s;
 
-/*     fprintf(stderr, "validate_shine_table %d, shininess %f\n", i, shininess); */
-
    foreach(s, list)
       if ( s->shininess == shininess )
 	 break;
 
    if (s == list) {
-      GLint i;
+      GLint j;
       GLfloat *m;
 
       foreach(s, list)
@@ -1067,19 +1065,19 @@ static void validate_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
       m = s->tab;
       m[0] = 0.0;
       if (shininess == 0.0) {
-	 for (i = 1 ; i <= SHINE_TABLE_SIZE ; i++)
-	    m[i] = 1.0;
+	 for (j = 1 ; j <= SHINE_TABLE_SIZE ; j++)
+	    m[j] = 1.0;
       }
       else {
-	 for (i = 1 ; i < SHINE_TABLE_SIZE ; i++) {
-            GLdouble t, x = i / (GLfloat) (SHINE_TABLE_SIZE - 1);
+	 for (j = 1 ; j < SHINE_TABLE_SIZE ; j++) {
+            GLdouble t, x = j / (GLfloat) (SHINE_TABLE_SIZE - 1);
             if (x < 0.005) /* underflow check */
                x = 0.005;
             t = pow(x, shininess);
 	    if (t > 1e-20)
-	       m[i] = t;
+	       m[j] = t;
 	    else
-	       m[i] = 0.0;
+	       m[j] = 0.0;
 	 }
 	 m[SHINE_TABLE_SIZE] = 1.0;
       }

@@ -1,4 +1,4 @@
-/* $Id: x86.c,v 1.14 2000/12/27 19:57:37 keithw Exp $ */
+/* $Id: x86.c,v 1.15 2001/01/13 05:48:25 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -93,6 +93,13 @@ extern GLvector4f * _ASMAPI gl_x86_cliptest_points4( GLvector4f *clip_vec,
 						     GLubyte *andMask );
 
 
+extern GLvector4f * _ASMAPI gl_x86_cliptest_points4_np( GLvector4f *clip_vec,
+							GLvector4f *proj_vec,
+							GLubyte clipMask[],
+							GLubyte *orMask,
+							GLubyte *andMask );
+
+
 extern void _ASMAPI gl_v16_x86_cliptest_points4( GLfloat *first_vert,
 						 GLfloat *last_vert,
 						 GLubyte *or_mask,
@@ -121,6 +128,7 @@ void gl_init_x86_transform_asm( void )
 
    /* XXX this function has been found to cause FP overflow exceptions */
    gl_clip_tab[4] = gl_x86_cliptest_points4;
+   gl_clip_np_tab[4] = gl_x86_cliptest_points4_np;
 
 #ifdef DEBUG
    gl_test_all_transform_functions( "x86" );

@@ -1,4 +1,4 @@
-/* $Id: t_context.c,v 1.9 2001/01/08 21:56:00 keithw Exp $ */
+/* $Id: t_context.c,v 1.10 2001/01/13 05:48:25 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -104,6 +104,8 @@ _tnl_CreateContext( GLcontext *ctx )
    _tnl_eval_init( ctx );
    _tnl_install_pipeline( ctx, _tnl_default_pipeline );
 
+
+   tnl->NeedProjCoords = GL_TRUE;
     
    /* Hook our functions into exec and compile dispatch tables.
     */
@@ -195,3 +197,13 @@ _tnl_wakeup_save_exec( GLcontext *ctx )
    ctx->Save->Begin = _tnl_save_Begin;
 }
 
+
+void
+_tnl_need_projected_coords( GLcontext *ctx, GLboolean mode )
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   if (tnl->NeedProjCoords != mode) {
+      tnl->NeedProjCoords = mode;
+      _tnl_InvalidateState( ctx, _NEW_PROJECTION );
+   }
+}

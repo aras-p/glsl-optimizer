@@ -1,4 +1,4 @@
-/* $Id: m_xform.c,v 1.6 2001/01/08 04:09:41 keithw Exp $ */
+/* $Id: m_xform.c,v 1.7 2001/01/13 05:48:25 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,6 +57,7 @@
 #endif
 
 clip_func gl_clip_tab[5];
+clip_func gl_clip_np_tab[5];
 dotprod_func gl_dotprod_tab[2][5];
 vec_copy_func gl_copy_tab[2][0x10];
 normal_func gl_normal_tab[0xf][0x4];
