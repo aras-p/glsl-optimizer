@@ -1,10 +1,10 @@
-/* $Id: texobj.c,v 1.63 2002/12/12 13:03:15 keithw Exp $ */
+/* $Id: texobj.c,v 1.64 2003/01/08 16:48:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -454,18 +454,18 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
                height /= 2;
             }
             if (i >= minLevel && i <= maxLevel) {
-               /* Don't support GL_DEPTH_COMPONENT for cube maps */
-               if (t->Image[i]->Format == GL_DEPTH_COMPONENT) {
-                  t->Complete = GL_FALSE;
-                  incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
-                  return;
-               }
                /* check that we have images defined */
                if (!t->Image[i] || !t->NegX[i] ||
                    !t->PosY[i]  || !t->NegY[i] ||
                    !t->PosZ[i]  || !t->NegZ[i]) {
                   t->Complete = GL_FALSE;
                   incomplete(t, "CubeMap Image[i] == NULL");
+                  return;
+               }
+               /* Don't support GL_DEPTH_COMPONENT for cube maps */
+               if (t->Image[i]->Format == GL_DEPTH_COMPONENT) {
+                  t->Complete = GL_FALSE;
+                  incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
                   return;
                }
                /* check that all six images have same size */
