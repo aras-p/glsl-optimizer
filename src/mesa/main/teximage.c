@@ -1,5 +1,3 @@
-/* $Id: teximage.c,v 1.127 2003/04/01 16:41:53 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -453,7 +451,8 @@ is_proxy_target(GLenum target)
    return (target == GL_PROXY_TEXTURE_1D ||
            target == GL_PROXY_TEXTURE_2D ||
            target == GL_PROXY_TEXTURE_3D ||
-           target == GL_PROXY_TEXTURE_CUBE_MAP_ARB);
+           target == GL_PROXY_TEXTURE_CUBE_MAP_ARB ||
+           target == GL_PROXY_TEXTURE_RECTANGLE_NV);
 }
 
 
