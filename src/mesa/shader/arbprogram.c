@@ -265,7 +265,7 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
       }
       ASSIGN_4V(ctx->FragmentProgram.Parameters[index], x, y, z, w);
    }
-   if (target == GL_VERTEX_PROGRAM_ARB
+   else if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
       if (index >= ctx->Const.MaxVertexProgramEnvParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter(index)");
@@ -325,7 +325,7 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
       }
       COPY_4V(params, ctx->FragmentProgram.Parameters[index]);
    }
-   if (target == GL_VERTEX_PROGRAM_ARB
+   else if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
       if (index >= ctx->Const.MaxVertexProgramEnvParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramEnvParameter(index)");
