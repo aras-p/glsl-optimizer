@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.45 2002/01/09 00:09:33 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.46 2002/01/09 00:27:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -392,7 +392,12 @@ affine_span(GLcontext *ctx, struct sw_span *span,
 
 /* shortcuts */
 
-#define NEAREST_RGB_REPLACE  NEAREST_RGB;REPLACE
+#define NEAREST_RGB_REPLACE		\
+   NEAREST_RGB;				\
+   dest[0] = sample[0];			\
+   dest[1] = sample[1];			\
+   dest[2] = sample[2];			\
+   dest[3] = FixedToInt(span->alpha);
 
 #define NEAREST_RGBA_REPLACE  COPY_CHAN4(dest, tex00)
 
