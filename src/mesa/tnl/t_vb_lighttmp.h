@@ -962,11 +962,12 @@ static void TAG(light_ci)( GLcontext *ctx,
 	 else {
 	    GLfloat d_a = ind[MAT_INDEX_DIFFUSE] - ind[MAT_INDEX_AMBIENT];
 	    GLfloat s_a = ind[MAT_INDEX_SPECULAR] - ind[MAT_INDEX_AMBIENT];
-	    GLfloat i = (ind[MAT_INDEX_AMBIENT]
-			 + diffuse[side] * (1.0F-specular[side]) * d_a
-			 + specular[side] * s_a);
-	    if (i > ind[MAT_INDEX_SPECULAR]) {
-	       i = ind[MAT_INDEX_SPECULAR];
+	    
+	    index = (ind[MAT_INDEX_AMBIENT]
+		     + diffuse[side] * (1.0F-specular[side]) * d_a
+		     + specular[side] * s_a);
+	    if (index > ind[MAT_INDEX_SPECULAR]) {
+	       index = ind[MAT_INDEX_SPECULAR];
 	    }
 	 }
 	 indexResult[side][j] = (GLuint) (GLint) index;
