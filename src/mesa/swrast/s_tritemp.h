@@ -474,15 +474,15 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #ifdef INTERP_RGB
       span.interpMask |= SPAN_RGBA;
       if (ctx->Light.ShadeModel == GL_SMOOTH) {
-         GLfloat eMaj_dr = (GLfloat) ((ColorTemp) vMax->color[RCOMP] - vMin->color[RCOMP]);
-         GLfloat eBot_dr = (GLfloat) ((ColorTemp) vMid->color[RCOMP] - vMin->color[RCOMP]);
-         GLfloat eMaj_dg = (GLfloat) ((ColorTemp) vMax->color[GCOMP] - vMin->color[GCOMP]);
-         GLfloat eBot_dg = (GLfloat) ((ColorTemp) vMid->color[GCOMP] - vMin->color[GCOMP]);
-         GLfloat eMaj_db = (GLfloat) ((ColorTemp) vMax->color[BCOMP] - vMin->color[BCOMP]);
-         GLfloat eBot_db = (GLfloat) ((ColorTemp) vMid->color[BCOMP] - vMin->color[BCOMP]);
+         GLfloat eMaj_dr = (GLfloat) ((ColorTemp) vMax->color[RCOMP] - (ColorTemp) vMin->color[RCOMP]);
+         GLfloat eBot_dr = (GLfloat) ((ColorTemp) vMid->color[RCOMP] - (ColorTemp) vMin->color[RCOMP]);
+         GLfloat eMaj_dg = (GLfloat) ((ColorTemp) vMax->color[GCOMP] - (ColorTemp) vMin->color[GCOMP]);
+         GLfloat eBot_dg = (GLfloat) ((ColorTemp) vMid->color[GCOMP] - (ColorTemp) vMin->color[GCOMP]);
+         GLfloat eMaj_db = (GLfloat) ((ColorTemp) vMax->color[BCOMP] - (ColorTemp) vMin->color[BCOMP]);
+         GLfloat eBot_db = (GLfloat) ((ColorTemp) vMid->color[BCOMP] - (ColorTemp) vMin->color[BCOMP]);
 #  ifdef INTERP_ALPHA
-         GLfloat eMaj_da = (GLfloat) ((ColorTemp) vMax->color[ACOMP] - vMin->color[ACOMP]);
-         GLfloat eBot_da = (GLfloat) ((ColorTemp) vMid->color[ACOMP] - vMin->color[ACOMP]);
+         GLfloat eMaj_da = (GLfloat) ((ColorTemp) vMax->color[ACOMP] - (ColorTemp) vMin->color[ACOMP]);
+         GLfloat eBot_da = (GLfloat) ((ColorTemp) vMid->color[ACOMP] - (ColorTemp) vMin->color[ACOMP]);
 #  endif
          span.drdx = oneOverArea * (eMaj_dr * eBot.dy - eMaj.dy * eBot_dr);
          span.drdy = oneOverArea * (eMaj.dx * eBot_dr - eMaj_dr * eBot.dx);
@@ -537,12 +537,12 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #ifdef INTERP_SPEC
       span.interpMask |= SPAN_SPEC;
       if (ctx->Light.ShadeModel == GL_SMOOTH) {
-         GLfloat eMaj_dsr = (GLfloat) ((ColorTemp) vMax->specular[RCOMP] - vMin->specular[RCOMP]);
-         GLfloat eBot_dsr = (GLfloat) ((ColorTemp) vMid->specular[RCOMP] - vMin->specular[RCOMP]);
-         GLfloat eMaj_dsg = (GLfloat) ((ColorTemp) vMax->specular[GCOMP] - vMin->specular[GCOMP]);
-         GLfloat eBot_dsg = (GLfloat) ((ColorTemp) vMid->specular[GCOMP] - vMin->specular[GCOMP]);
-         GLfloat eMaj_dsb = (GLfloat) ((ColorTemp) vMax->specular[BCOMP] - vMin->specular[BCOMP]);
-         GLfloat eBot_dsb = (GLfloat) ((ColorTemp) vMid->specular[BCOMP] - vMin->specular[BCOMP]);
+         GLfloat eMaj_dsr = (GLfloat) ((ColorTemp) vMax->specular[RCOMP] - (ColorTemp) vMin->specular[RCOMP]);
+         GLfloat eBot_dsr = (GLfloat) ((ColorTemp) vMid->specular[RCOMP] - (ColorTemp) vMin->specular[RCOMP]);
+         GLfloat eMaj_dsg = (GLfloat) ((ColorTemp) vMax->specular[GCOMP] - (ColorTemp) vMin->specular[GCOMP]);
+         GLfloat eBot_dsg = (GLfloat) ((ColorTemp) vMid->specular[GCOMP] - (ColorTemp) vMin->specular[GCOMP]);
+         GLfloat eMaj_dsb = (GLfloat) ((ColorTemp) vMax->specular[BCOMP] - (ColorTemp) vMin->specular[BCOMP]);
+         GLfloat eBot_dsb = (GLfloat) ((ColorTemp) vMid->specular[BCOMP] - (ColorTemp) vMin->specular[BCOMP]);
          span.dsrdx = oneOverArea * (eMaj_dsr * eBot.dy - eMaj.dy * eBot_dsr);
          span.dsrdy = oneOverArea * (eMaj.dx * eBot_dsr - eMaj_dsr * eBot.dx);
          span.dsgdx = oneOverArea * (eMaj_dsg * eBot.dy - eMaj.dy * eBot_dsg);
