@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.123 2002/10/24 23:57:21 brianp Exp $ */
+/* $Id: teximage.c,v 1.124 2002/10/30 19:58:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -986,7 +986,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
           (type != GL_UNSIGNED_SHORT_8_8_MESA &&
           type != GL_UNSIGNED_SHORT_8_8_REV_MESA)) {
          char message[100];
-         sprintf(message,
+         _mesa_sprintf(message,
                  "glTexImage%d(format/type/internalFormat YCBCR mismatch",
                  dimensions);
          _mesa_error(ctx, GL_INVALID_ENUM, message);
@@ -1003,7 +1003,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
       if (border != 0) {
          if (!isProxy) {
             char message[100];
-            sprintf(message,
+            _mesa_sprintf(message,
                     "glTexImage%d(format=GL_YCBCR_MESA and border=%d)",
                     dimensions, border);
             _mesa_error(ctx, GL_INVALID_VALUE, message);
