@@ -1,4 +1,4 @@
-/* $Id: nvprogram.c,v 1.1 2003/01/14 04:55:46 brianp Exp $ */
+/* $Id: nvprogram.c,v 1.2 2003/02/10 20:31:11 alanh Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -799,7 +799,8 @@ void
 _mesa_ProgramParameter4dNV(GLenum target, GLuint index,
                            GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-   _mesa_ProgramParameter4fNV(target, index, x, y, z, w);
+   _mesa_ProgramParameter4fNV(target, index, 
+		   	      (GLfloat)x, (GLfloat)y, (GLfloat)z, (GLfloat)w);
 }
 
 
@@ -812,7 +813,8 @@ _mesa_ProgramParameter4dvNV(GLenum target, GLuint index,
                             const GLdouble *params)
 {
    _mesa_ProgramParameter4fNV(target, index,
-                              params[0], params[1], params[2], params[3]);
+                              (GLfloat)params[0], (GLfloat)params[1], 
+			      (GLfloat)params[2], (GLfloat)params[3]);
 }
 
 
@@ -1035,7 +1037,8 @@ void
 glProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte *name,
                             GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-   glProgramNamedParameter4fNV(id, len, name, x, y, z, w);
+   glProgramNamedParameter4fNV(id, len, name, (GLfloat)x, (GLfloat)y, 
+		   			      (GLfloat)z, (GLfloat)w);
 }
 
 
@@ -1043,7 +1046,8 @@ void
 glProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte *name,
                              const double v[])
 {
-   glProgramNamedParameter4fNV(id, len, name, v[0], v[1], v[2], v[3]);
+   glProgramNamedParameter4fNV(id, len, name, (GLfloat)v[0], (GLfloat)v[1], 
+		   			      (GLfloat)v[2], (GLfloat)v[3]);
 }
 
 
@@ -1132,7 +1136,8 @@ void
 glProgramLocalParameter4dARB(GLenum target, GLuint index,
                              GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-   glProgramLocalParameter4fARB(target, index, x, y, z, w);
+   glProgramLocalParameter4fARB(target, index, (GLfloat)x, (GLfloat)y, 
+		   			       (GLfloat)z, (GLfloat)w);
 }
 
 
@@ -1140,8 +1145,9 @@ void
 glProgramLocalParameter4dvARB(GLenum target, GLuint index,
                               const GLdouble *params)
 {
-   glProgramLocalParameter4fARB(target, index, params[0], params[1],
-                                params[2], params[3]);
+   glProgramLocalParameter4fARB(target, index, (GLfloat)params[0], 
+		   		(GLfloat)params[1], (GLfloat)params[2],
+				(GLfloat)params[3]);
 }
 
 
