@@ -43,17 +43,17 @@
 #error "must have at least triangles to use render template"
 #endif
 
-/*  #if !HAVE_ELTS  */
-/*  #define ALLOC_ELTS( nr ) */
-/*  #define EMIT_ELT( offset, elt ) */
-/*  #define INCR_ELTS( nr ) */
-/*  #define ELT_INIT(prim)  */
-/*  #define GET_CURRENT_VB_MAX_ELTS() 0 */
-/*  #define GET_SUBSEQUENT_VB_MAX_ELTS() 0 */
-/*  #define ALLOC_ELTS_NEW_PRIMITIVE(nr) */
-/*  #define RELEASE_ELT_VERTS()  */
-/*  #define EMIT_INDEXED_VERTS( ctx, start, count )  */
-/*  #endif */
+#if !HAVE_ELTS 
+#define ALLOC_ELTS( nr )
+#define EMIT_ELT( offset, elt )
+#define INCR_ELTS( nr )
+#define ELT_INIT(prim) 
+#define GET_CURRENT_VB_MAX_ELTS() 0
+#define GET_SUBSEQUENT_VB_MAX_ELTS() 0
+#define ALLOC_ELTS_NEW_PRIMITIVE(nr)
+#define RELEASE_ELT_VERTS() 
+#define EMIT_INDEXED_VERTS( ctx, start, count ) 
+#endif
 
 #ifndef EMIT_TWO_ELTS
 #define EMIT_TWO_ELTS( offset, elt0, elt1 )	\
