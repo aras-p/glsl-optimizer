@@ -1,10 +1,10 @@
-/* $Id: varray.c,v 1.17 1999/11/19 00:03:27 keithw Exp $ */
+/* $Id: varray.c,v 1.18 2000/01/13 00:25:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.1
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -341,9 +341,10 @@ _mesa_EdgeFlagPointer(GLsizei stride, const void *vptr)
 }
 
 
+#if 0
 /* Called only from gl_DrawElements
  */
-void gl_CVAEltPointer( GLcontext *ctx, GLenum type, const GLvoid *ptr )
+static void gl_CVAEltPointer( GLcontext *ctx, GLenum type, const GLvoid *ptr )
 {
    switch (type) {
       case GL_UNSIGNED_BYTE:
@@ -365,7 +366,7 @@ void gl_CVAEltPointer( GLcontext *ctx, GLenum type, const GLvoid *ptr )
    ctx->CVA.EltFunc = gl_trans_1ui_tab[TYPE_IDX(type)];
    ctx->Array.NewArrayState |= VERT_ELT; /* ??? */
 }
-
+#endif
 
 
 /* KW: Batch function to exec all the array elements in the input
@@ -462,7 +463,8 @@ _mesa_ArrayElement( GLint i )
 }
 
 
-void gl_ArrayElement( GLcontext *CC, GLint i )
+static void
+gl_ArrayElement( GLcontext *CC, GLint i )
 {
    struct immediate *im = CC->input;
    ARRAY_ELT( im, i );
