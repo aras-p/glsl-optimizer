@@ -1,4 +1,4 @@
-/* $Id: nvfragprog.h,v 1.4 2003/03/14 15:40:59 brianp Exp $ */
+/* $Id: nvfragprog.h,v 1.5 2003/03/15 17:33:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +34,21 @@
 #define NVFRAGPROG_H
 
 #include "config.h"
+
+
+/* Fragment input registers / attributes */
+#define FRAG_ATTRIB_WPOS  0
+#define FRAG_ATTRIB_COL0  1
+#define FRAG_ATTRIB_COL1  2
+#define FRAG_ATTRIB_FOGC  3
+#define FRAG_ATTRIB_TEX0  4
+#define FRAG_ATTRIB_TEX1  5
+#define FRAG_ATTRIB_TEX2  6
+#define FRAG_ATTRIB_TEX3  7
+#define FRAG_ATTRIB_TEX4  8
+#define FRAG_ATTRIB_TEX5  9
+#define FRAG_ATTRIB_TEX6  10
+#define FRAG_ATTRIB_TEX7  11
 
 
 /* Location of register sets within the whole register file */

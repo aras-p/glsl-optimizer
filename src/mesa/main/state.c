@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.99 2003/03/01 01:50:22 brianp Exp $ */
+/* $Id: state.c,v 1.100 2003/03/15 17:33:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -813,17 +813,26 @@ update_texture_state( GLcontext *ctx )
     */
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+      GLuint enableBits;
 
       texUnit->_ReallyEnabled = 0;
       texUnit->_GenFlags = 0;
 
-      if (!texUnit->Enabled)
-	 continue;
+      /* Get the bitmask of texture enables */
+      if (ctx->FragmentProgram.Enabled && ctx->FragmentProgram.Current) {
+         enableBits = ctx->FragmentProgram.Current->TexturesUsed[unit];
+      }
+      else {
+         if (!texUnit->Enabled)
+            continue;
+         enableBits = texUnit->Enabled;
+      }
 
       /* Look for the highest-priority texture target that's enabled and
-       * complete.  That's the one we'll use for texturing.
+       * complete.  That's the one we'll use for texturing.  If we're using
+       * a fragment program we're guaranteed that bitcount(enabledBits) <= 1.
        */
-      if (texUnit->Enabled & TEXTURE_CUBE_BIT) {
+      if (enableBits & TEXTURE_CUBE_BIT) {
          struct gl_texture_object *texObj = texUnit->CurrentCubeMap;
          if (!texObj->Complete) {
             _mesa_test_texobj_completeness(ctx, texObj);
@@ -834,7 +843,7 @@ update_texture_state( GLcontext *ctx )
          }
       }
 
-      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE_3D_BIT)) {
+      if (!texUnit->_ReallyEnabled && (enableBits & TEXTURE_3D_BIT)) {
          struct gl_texture_object *texObj = texUnit->Current3D;
          if (!texObj->Complete) {
             _mesa_test_texobj_completeness(ctx, texObj);
@@ -845,7 +854,7 @@ update_texture_state( GLcontext *ctx )
          }
       }
 
-      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE_RECT_BIT)) {
+      if (!texUnit->_ReallyEnabled && (enableBits & TEXTURE_RECT_BIT)) {
          struct gl_texture_object *texObj = texUnit->CurrentRect;
          if (!texObj->Complete) {
             _mesa_test_texobj_completeness(ctx, texObj);
@@ -856,7 +865,7 @@ update_texture_state( GLcontext *ctx )
          }
       }
 
-      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE_2D_BIT)) {
+      if (!texUnit->_ReallyEnabled && (enableBits & TEXTURE_2D_BIT)) {
          struct gl_texture_object *texObj = texUnit->Current2D;
          if (!texObj->Complete) {
             _mesa_test_texobj_completeness(ctx, texObj);
@@ -867,7 +876,7 @@ update_texture_state( GLcontext *ctx )
          }
       }
 
-      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE_1D_BIT)) {
+      if (!texUnit->_ReallyEnabled && (enableBits & TEXTURE_1D_BIT)) {
          struct gl_texture_object *texObj = texUnit->Current1D;
          if (!texObj->Complete) {
             _mesa_test_texobj_completeness(ctx, texObj);

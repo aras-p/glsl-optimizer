@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.75 2003/03/01 01:50:20 brianp Exp $ */
+/* $Id: enable.c,v 1.76 2003/03/15 17:33:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -884,7 +884,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          CHECK_EXTENSION(NV_fragment_program, cap);
          if (ctx->FragmentProgram.Enabled == state)
             return;
-         FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+         FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_TEXTURE);
          ctx->FragmentProgram.Enabled = state;
          break;
 #endif /* FEATURE_NV_fragment_program */

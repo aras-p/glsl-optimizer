@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.46 2003/03/14 15:41:00 brianp Exp $ */
+/* $Id: s_context.c,v 1.47 2003/03/15 17:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -303,35 +303,6 @@ _swrast_validate_texture_sample( GLcontext *ctx, GLuint texUnit,
       }
       else {
          swrast->_MinMagThresh[texUnit] = 0.0F;
-      }
-   }
-
-   if (ctx->FragmentProgram.Enabled) {
-      ASSERT(ctx->FragmentProgram.Current);
-      /* only one target can be referenced per unit per fragment program */
-      switch (ctx->FragmentProgram.Current->TexturesUsed[texUnit]) {
-      case TEXTURE_1D_BIT:
-         tObj = ctx->Texture.Unit[texUnit].Current1D;
-         break;
-      case TEXTURE_2D_BIT:
-         tObj = ctx->Texture.Unit[texUnit].Current2D;
-         break;
-      case TEXTURE_3D_BIT:
-         tObj = ctx->Texture.Unit[texUnit].Current3D;
-         break;
-      case TEXTURE_CUBE_BIT:
-         tObj = ctx->Texture.Unit[texUnit].CurrentCubeMap;
-         break;
-      case TEXTURE_RECT_BIT:
-         tObj = ctx->Texture.Unit[texUnit].CurrentRect;
-         break;
-      default:
-         _mesa_problem(ctx, "Bad texture in _swrast_validate_texture_sample");
-         return;
-      }
-      if (!tObj->Complete) {
-         _mesa_test_texobj_completeness(ctx,
-                                        (struct gl_texture_object *) tObj );
       }
    }
 

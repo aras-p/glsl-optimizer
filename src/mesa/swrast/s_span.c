@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.57 2003/03/04 16:34:03 brianp Exp $ */
+/* $Id: s_span.c,v 1.58 2003/03/15 17:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -321,10 +321,10 @@ compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
 /*
  * This is a faster approximation
  */
-static GLfloat
-compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
-               GLfloat dqdx, GLfloat dqdy, GLfloat texW, GLfloat texH,
-               GLfloat s, GLfloat t, GLfloat q, GLfloat invQ)
+GLfloat
+_mesa_compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
+                     GLfloat dqdx, GLfloat dqdy, GLfloat texW, GLfloat texH,
+                     GLfloat s, GLfloat t, GLfloat q, GLfloat invQ)
 {
    GLfloat dsdx2 = (s + dsdx) / (q + dqdx) - s * invQ;
    GLfloat dtdx2 = (t + dtdx) / (q + dqdx) - t * invQ;
@@ -361,7 +361,8 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          if (ctx->Texture.Unit[u]._ReallyEnabled) {
             const struct gl_texture_object *obj =ctx->Texture.Unit[u]._Current;
             const struct gl_texture_image *img = obj->Image[obj->BaseLevel];
-            GLboolean needLambda = (obj->MinFilter != obj->MagFilter);
+            const GLboolean needLambda = (obj->MinFilter != obj->MagFilter)
+               || ctx->FragmentProgram.Enabled;
             if (needLambda) {
                GLfloat (*texcoord)[4] = span->array->texcoords[u];
                GLfloat *lambda = span->array->lambda[u];
@@ -384,9 +385,10 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                   texcoord[i][0] = s * invQ;
                   texcoord[i][1] = t * invQ;
                   texcoord[i][2] = r * invQ;
-                  lambda[i] = compute_lambda(dsdx, dsdy, dtdx, dtdy,
-                                             dqdx, dqdy, texW, texH,
-                                             s, t, q, invQ);
+                  texcoord[i][3] = q;
+                  lambda[i] = _mesa_compute_lambda(dsdx, dsdy, dtdx, dtdy,
+                                                   dqdx, dqdy, texW, texH,
+                                                   s, t, q, invQ);
                   s += dsdx;
                   t += dtdx;
                   r += drdx;
@@ -440,7 +442,8 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
       /* single texture */
       const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;
       const struct gl_texture_image *img = obj->Image[obj->BaseLevel];
-      GLboolean needLambda = (obj->MinFilter != obj->MagFilter);
+      const GLboolean needLambda = (obj->MinFilter != obj->MagFilter)
+         || ctx->FragmentProgram.Enabled;
       span->arrayMask |= SPAN_TEXTURE;
       if (needLambda) {
          /* just texture unit 0, with lambda */
@@ -462,12 +465,13 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLuint i;
          for (i = 0; i < span->end; i++) {
             const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-            lambda[i] = compute_lambda(dsdx, dsdy, dtdx, dtdy,
-                                       dqdx, dqdy, texW, texH,
-                                       s, t, q, invQ);
+            lambda[i] = _mesa_compute_lambda(dsdx, dsdy, dtdx, dtdy,
+                                             dqdx, dqdy, texW, texH,
+                                             s, t, q, invQ);
             texcoord[i][0] = s * invQ;
             texcoord[i][1] = t * invQ;
             texcoord[i][2] = r * invQ;
+            texcoord[i][3] = q;
             s += dsdx;
             t += dtdx;
             r += drdx;

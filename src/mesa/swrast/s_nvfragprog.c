@@ -1,4 +1,4 @@
-/* $Id: s_nvfragprog.c,v 1.7 2003/03/14 15:41:00 brianp Exp $ */
+/* $Id: s_nvfragprog.c,v 1.8 2003/03/15 17:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,6 +33,7 @@
 #include "macros.h"
 
 #include "s_nvfragprog.h"
+#include "s_span.h"
 #include "s_texture.h"
 
 
@@ -46,30 +47,9 @@ fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLuint unit,
    const GLfloat *lambda = NULL;
    GLchan rgba[4];
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const struct gl_texture_object *texObj = NULL;
 
-   switch (targetBit) {
-      case TEXTURE_1D_BIT:
-         texObj = ctx->Texture.Unit[unit].Current1D;
-         break;
-      case TEXTURE_2D_BIT:
-         texObj = ctx->Texture.Unit[unit].Current2D;
-         break;
-      case TEXTURE_3D_BIT:
-         texObj = ctx->Texture.Unit[unit].Current3D;
-         break;
-      case TEXTURE_CUBE_BIT:
-         texObj = ctx->Texture.Unit[unit].CurrentCubeMap;
-         break;
-      case TEXTURE_RECT_BIT:
-         texObj = ctx->Texture.Unit[unit].CurrentRect;
-         break;
-      default:
-         _mesa_problem(ctx, "Invalid target in fetch_texel");
-   }
-
-   swrast->TextureSample[unit](ctx, unit, texObj, 1,
-                               (const GLfloat (*)[4]) texcoord,
+   swrast->TextureSample[unit](ctx, unit, ctx->Texture.Unit[unit]._Current,
+                               1, (const GLfloat (*)[4]) texcoord,
                                lambda, &rgba);
    color[0] = CHAN_TO_FLOAT(rgba[0]);
    color[1] = CHAN_TO_FLOAT(rgba[1]);
@@ -83,11 +63,30 @@ fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLuint unit,
  */
 static void
 fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
-                   const GLfloat dtdx[4], const GLfloat dtdy[4],
+                   const GLfloat texdx[4], const GLfloat texdy[4],
                    GLuint unit, GLuint targetBit, GLfloat color[4] )
 {
-   /* XXX to do */
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
+   const struct gl_texture_image *texImg = texObj->Image[texObj->BaseLevel];
+   const GLfloat texW = (GLfloat) texImg->WidthScale;
+   const GLfloat texH = (GLfloat) texImg->HeightScale;
+   GLchan rgba[4];
 
+   GLfloat lambda = _mesa_compute_lambda(texdx[0], texdy[0], /* ds/dx, ds/dy */
+                                         texdx[1], texdy[1], /* dt/dx, dt/dy */
+                                         texdx[3], texdy[2], /* dq/dx, dq/dy */
+                                         texW, texH,
+                                         texcoord[0], texcoord[1], texcoord[3],
+                                         1.0F / texcoord[3]);
+
+   swrast->TextureSample[unit](ctx, unit, ctx->Texture.Unit[unit]._Current,
+                               1, (const GLfloat (*)[4]) texcoord,
+                               &lambda, &rgba);
+   color[0] = CHAN_TO_FLOAT(rgba[0]);
+   color[1] = CHAN_TO_FLOAT(rgba[1]);
+   color[2] = CHAN_TO_FLOAT(rgba[2]);
+   color[3] = CHAN_TO_FLOAT(rgba[3]);
 }
 
 
@@ -300,6 +299,15 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
             {
                GLfloat a[4], result[4];
                fetch_vector4( &inst->SrcReg[0], machine, a );
+               /* XXX - UGH! this is going to be a mess to implement!
+                * If we need the partial derivative of a texture coord
+                * or color, that's not too bad, but for an arbitrary register
+                * this will require a recursive solution.  That is, we'll have
+                * to run another instance of this program with WPOS.x or .y
+                * incremented by one, stopping at the preceeding instruction.
+                * Then, read the register from that other instance and compute
+                * the difference.  Yuck!
+                */
                result[0] = 0; /* XXX fix */
                result[1] = 0;
                result[2] = 0;
@@ -701,6 +709,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
             {
                GLfloat texcoord[4], color[4];
                fetch_vector4( &inst->SrcReg[0], machine, texcoord );
+               /* XXX: Undo perspective divide from interpolate_texcoords() */
                fetch_texel( ctx, texcoord, inst->TexSrcUnit,
                             inst->TexSrcBit, color );
                store_vector4( inst, machine, color );
@@ -723,9 +732,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
             {
                GLfloat texcoord[4], color[4];
                fetch_vector4( &inst->SrcReg[0], machine, texcoord );
-               texcoord[0] /= texcoord[3];
-               texcoord[1] /= texcoord[3];
-               texcoord[2] /= texcoord[3];
+               /* Already did perspective divide in interpolate_texcoords() */
                fetch_texel( ctx, texcoord, inst->TexSrcUnit,
                             inst->TexSrcBit, color );
                store_vector4( inst, machine, color );
@@ -807,56 +814,63 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
 void
 _swrast_exec_nv_fragment_program( GLcontext *ctx, struct sw_span *span )
 {
+   const struct fragment_program *program = ctx->FragmentProgram.Current;
    GLuint i;
 
    for (i = 0; i < span->end; i++) {
       if (span->array->mask[i]) {
-         GLfloat *wpos = ctx->FragmentProgram.Machine.Registers[0];
-         GLfloat *col0 = ctx->FragmentProgram.Machine.Registers[1];
-         GLfloat *col1 = ctx->FragmentProgram.Machine.Registers[2];
-         GLfloat *fogc = ctx->FragmentProgram.Machine.Registers[3];
          const GLfloat *colOut = ctx->FragmentProgram.Machine.Registers[FP_OUTPUT_REG_START];
-         GLuint j;
+         GLuint u;
 
-         /* Clear temporary registers XXX use memzero() */
+         /* Clear temporary registers */
          _mesa_bzero(ctx->FragmentProgram.Machine.Registers +FP_TEMP_REG_START,
                      MAX_NV_FRAGMENT_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
 
          /*
           * Load input registers - yes this is all very inefficient for now.
           */
-         wpos[0] = span->x + i;
-         wpos[1] = span->y + i;
-         wpos[2] = (GLfloat) span->array->z[i] / ctx->DepthMaxF;
-         wpos[3] = 1.0; /* XXX should be 1/w */
-
-         col0[0] = CHAN_TO_FLOAT(span->array->rgba[i][RCOMP]);
-         col0[1] = CHAN_TO_FLOAT(span->array->rgba[i][GCOMP]);
-         col0[2] = CHAN_TO_FLOAT(span->array->rgba[i][BCOMP]);
-         col0[3] = CHAN_TO_FLOAT(span->array->rgba[i][ACOMP]);
-
-         col1[0] = CHAN_TO_FLOAT(span->array->spec[i][RCOMP]);
-         col1[1] = CHAN_TO_FLOAT(span->array->spec[i][GCOMP]);
-         col1[2] = CHAN_TO_FLOAT(span->array->spec[i][BCOMP]);
-         col1[3] = CHAN_TO_FLOAT(span->array->spec[i][ACOMP]);
-
-         fogc[0] = span->array->fog[i];
-         fogc[1] = 0.0F;
-         fogc[2] = 0.0F;
-         fogc[3] = 0.0F;
-
-         for (j = 0; j < ctx->Const.MaxTextureCoordUnits; j++) {
-            if (ctx->Texture.Unit[j]._ReallyEnabled) {
-               COPY_4V(ctx->FragmentProgram.Machine.Registers[4 + j],
-                       span->array->texcoords[j][i]);
-            }
-            else {
-               COPY_4V(ctx->FragmentProgram.Machine.Registers[4 + j],
-                       ctx->Current.Attrib[VERT_ATTRIB_TEX0 + j]);
+         if (program->InputsRead & (1 << FRAG_ATTRIB_WPOS)) {
+            GLfloat *wpos = ctx->FragmentProgram.Machine.Registers[0];
+            wpos[0] = span->x + i;
+            wpos[1] = span->y + i;
+            wpos[2] = (GLfloat) span->array->z[i] / ctx->DepthMaxF;
+            wpos[3] = 1.0; /* XXX should be 1/w */
+         }
+         if (program->InputsRead & (1 << FRAG_ATTRIB_COL0)) {
+            GLfloat *col0 = ctx->FragmentProgram.Machine.Registers[1];
+            col0[0] = CHAN_TO_FLOAT(span->array->rgba[i][RCOMP]);
+            col0[1] = CHAN_TO_FLOAT(span->array->rgba[i][GCOMP]);
+            col0[2] = CHAN_TO_FLOAT(span->array->rgba[i][BCOMP]);
+            col0[3] = CHAN_TO_FLOAT(span->array->rgba[i][ACOMP]);
+         }
+         if (program->InputsRead & (1 << FRAG_ATTRIB_COL1)) {
+            GLfloat *col1 = ctx->FragmentProgram.Machine.Registers[2];
+            col1[0] = CHAN_TO_FLOAT(span->array->spec[i][RCOMP]);
+            col1[1] = CHAN_TO_FLOAT(span->array->spec[i][GCOMP]);
+            col1[2] = CHAN_TO_FLOAT(span->array->spec[i][BCOMP]);
+            col1[3] = CHAN_TO_FLOAT(span->array->spec[i][ACOMP]);
+         }
+         if (program->InputsRead & (1 << FRAG_ATTRIB_FOGC)) {
+            GLfloat *fogc = ctx->FragmentProgram.Machine.Registers[3];
+            fogc[0] = span->array->fog[i];
+            fogc[1] = 0.0F;
+            fogc[2] = 0.0F;
+            fogc[3] = 0.0F;
+         }
+         for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
+            if (program->InputsRead & (1 << (FRAG_ATTRIB_TEX0 + u))) {
+               if (ctx->Texture.Unit[u]._ReallyEnabled) {
+                  COPY_4V(ctx->FragmentProgram.Machine.Registers[4 + u],
+                          span->array->texcoords[u][i]);
+               }
+               else {
+                  COPY_4V(ctx->FragmentProgram.Machine.Registers[4 + u],
+                          ctx->Current.Attrib[VERT_ATTRIB_TEX0 + u]);
+               }
             }
          }
 
-         if (!execute_program(ctx, ctx->FragmentProgram.Current))
+         if (!execute_program(ctx, program))
             span->array->mask[i] = GL_FALSE;  /* killed fragment */
 
          /* Store output registers */
