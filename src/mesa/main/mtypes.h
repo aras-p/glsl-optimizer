@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.30 2001/03/23 06:07:31 gareth Exp $ */
+/* $Id: mtypes.h,v 1.31 2001/03/24 06:01:27 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1624,7 +1624,6 @@ struct __GLcontextRec {
 
 /* The string names for GL_POINT, GL_LINE_LOOP, etc */
 extern const char *_mesa_prim_name[GL_POLYGON+4];
-extern GLenum gl_reduce_prim[];
 
 
 #ifdef MESA_DEBUG
@@ -1680,7 +1679,7 @@ do {									\
 
 #define ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, retval)		\
 do {									\
-   if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {		\
+   if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {	\
       _mesa_error( ctx, GL_INVALID_OPERATION, "begin/end" );		\
       return retval;							\
    }									\
@@ -1688,7 +1687,7 @@ do {									\
 
 #define ASSERT_OUTSIDE_BEGIN_END(ctx)					\
 do {									\
-   if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {		\
+   if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {	\
       _mesa_error( ctx, GL_INVALID_OPERATION, "begin/end" );		\
       return;								\
    }									\

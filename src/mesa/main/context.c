@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.129 2001/03/18 08:53:49 gareth Exp $ */
+/* $Id: context.c,v 1.130 2001/03/24 06:01:27 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2031,18 +2031,4 @@ const char *_mesa_prim_name[GL_POLYGON+4] = {
    "outside begin/end",
    "inside unkown primitive",
    "unknown state"
-};
-
-
-GLenum gl_reduce_prim[GL_POLYGON+1] = {
-   GL_POINTS,
-   GL_LINES,
-   GL_LINES,
-   GL_LINES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
 };
