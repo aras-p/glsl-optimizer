@@ -76,6 +76,7 @@ static void tdfxDDInitExtensions( GLcontext *ctx )
    _mesa_enable_extension( ctx, "GL_EXT_blend_func_separate" );
    _mesa_enable_extension( ctx, "GL_EXT_fog_coord" );
    _mesa_enable_extension( ctx, "GL_EXT_texture_env_add" );
+   _mesa_enable_extension( ctx, "GL_EXT_stencil_wrap" );
 
 #if 0
    _mesa_enable_extension(ctx, "GL_EXT_secondary_color");
@@ -98,10 +99,6 @@ static void tdfxDDInitExtensions( GLcontext *ctx )
       _mesa_enable_extension( ctx, "GL_EXT_blend_equation_separate" );
    } else {
       _mesa_enable_extension( ctx, "GL_SGIS_generate_mipmap" );
-   }
-
-   if (fxMesa->haveHwStencil) {
-      _mesa_enable_extension( ctx, "GL_EXT_stencil_wrap" );
    }
 
    if (1/*fxMesa->Glide.HaveMirrorExt - JJJ*/) {
