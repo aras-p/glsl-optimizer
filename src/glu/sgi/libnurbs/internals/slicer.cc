@@ -35,8 +35,8 @@
 /*
  * slicer.c++
  *
- * $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/slicer.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+ * $Date: 2001/05/01 14:56:00 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/slicer.cc,v 1.2 2001/05/01 14:56:00 brianp Exp $
  */
 
 #include <stdlib.h>
@@ -575,11 +575,14 @@ static void triangulateRectCenter(int n_ulines, REAL* u_val,
   TrimVertex trimVert;
   trimVert.nuid = 0;//????
 
-  backend.surfgrid(u_val[0], u_val[n_ulines-1], n_ulines-1, 
-		   v_val[n_vlines-1], v_val[0], n_vlines-1);
-
-  if(n_ulines>1 && n_vlines>1)
+  // XXX this code was patched by Diego Santa Cruz <Diego.SantaCruz@epfl.ch>
+  // to fix a problem in which glMapGrid2f() was called with bad parameters.
+  // This has beens submitted to SGI but not integrated as of May 1, 2001.
+  if(n_ulines>1 && n_vlines>1) {
+    backend.surfgrid(u_val[0], u_val[n_ulines-1], n_ulines-1, 
+                     v_val[n_vlines-1], v_val[0], n_vlines-1);
     backend.surfmesh(0,0,n_ulines-1,n_vlines-1);
+  }
 
   return;
 
