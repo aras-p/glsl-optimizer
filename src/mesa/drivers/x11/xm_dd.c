@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.1 2000/09/07 15:40:30 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.2 2000/09/08 21:44:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -345,22 +345,6 @@ color_mask(GLcontext *ctx,
          if (bmask)   m |= GET_BLUEMASK(xmesa->xm_visual);
       }
       XMesaSetPlaneMask( xmesa->display, xmesa->xm_buffer->cleargc, m );
-   }
-}
-
-
-/*
- * Enable/disable dithering
- */
-static void
-dither( GLcontext *ctx, GLboolean enable )
-{
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   if (enable) {
-      xmesa->pixelformat = xmesa->xm_visual->dithered_pf;
-   }
-   else {
-      xmesa->pixelformat = xmesa->xm_visual->undithered_pf;
    }
 }
 
@@ -920,6 +904,25 @@ get_string( GLcontext *ctx, GLenum name )
 }
 
 
+static void
+enable( GLcontext *ctx, GLenum pname, GLboolean state )
+{
+   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+
+   switch (pname) {
+      case GL_DITHER:
+         if (state)
+            xmesa->pixelformat = xmesa->xm_visual->dithered_pf;
+         else
+            xmesa->pixelformat = xmesa->xm_visual->undithered_pf;
+         break;
+      default:
+         ;  /* silence compiler warning */
+   }
+}
+
+
+
 /*
  * Initialize all the DD.* function pointers depending on the color
  * buffer configuration.  This is mainly called by XMesaMakeCurrent.
@@ -957,7 +960,7 @@ xmesa_update_state( GLcontext *ctx )
    ctx->Driver.Clear = clear_buffers;
    ctx->Driver.IndexMask = index_mask;
    ctx->Driver.ColorMask = color_mask;
-   ctx->Driver.Dither = dither;
+   ctx->Driver.Enable = enable;
 
    ctx->Driver.PointsFunc = xmesa_get_points_func( ctx );
    ctx->Driver.LineFunc = xmesa_get_line_func( ctx );

@@ -279,32 +279,6 @@ static void set_color( GLcontext* ctx, GLubyte r, GLubyte g, GLubyte b, GLubyte 
 
 
 
-/* Set the index mode bitplane mask. */
-static GLboolean index_mask(GLcontext* ctx, GLuint mask)
-{
-   /* can't implement */
-   return GL_FALSE;
-}
-
-
-
-/* Set the RGBA drawing mask. */
-static GLboolean color_mask( GLcontext* ctx,
-							 GLboolean rmask, GLboolean gmask,
-							 GLboolean bmask, GLboolean amask)
-{
-   /* can't implement */
-   return GL_FALSE;
-}
-
-
-
-static void dither( GLcontext* ctx, GLboolean enable )
-{
-   /* No op */
-}
-
-
 
 static GLboolean set_buffer( GLcontext* ctx, GLenum mode )
 {
@@ -1031,10 +1005,6 @@ void setup_DD_pointers( GLcontext* ctx )
 
    ctx->Driver.Index = set_index;
    ctx->Driver.Color = set_color;
-   ctx->Driver.IndexMask = index_mask;
-   ctx->Driver.ColorMask = color_mask;
-
-   ctx->Driver.Dither = dither;
 
    ctx->Driver.SetBuffer = set_buffer;
    ctx->Driver.GetBufferSize = buffer_size;

@@ -1406,7 +1406,6 @@ void fxDDColorMask(GLcontext *ctx,
   fxMesa->new_state |= FX_NEW_COLOR_MASK;
   ctx->Driver.RenderStart = fxSetupFXUnits;
   (void) r; (void) g; (void) b; (void) a;
-  return GL_FALSE;
 }
 
 static void fxSetupColorMask(GLcontext *ctx)
@@ -1618,6 +1617,13 @@ void fxDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
       us->depthTestEnabled=state;
       fxMesa->new_state |= FX_NEW_DEPTH;
       ctx->Driver.RenderStart = fxSetupFXUnits;
+    }
+    break;
+  case GL_DITHER:
+    if (state) {
+      FX_grDitherMode(GR_DITHER_4x4);
+    } else {
+      FX_grDitherMode(GR_DITHER_DISABLE);
     }
     break;
   case GL_SCISSOR_TEST:

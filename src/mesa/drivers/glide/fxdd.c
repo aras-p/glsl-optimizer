@@ -102,21 +102,6 @@ void fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder)
 /*****                 Miscellaneous functions                    *****/
 /**********************************************************************/
 
-/* Enalbe/Disable dithering */
-static void fxDDDither(GLcontext *ctx, GLboolean enable)
-{
-  if (MESA_VERBOSE&VERBOSE_DRIVER) {
-    fprintf(stderr,"fxmesa: fxDDDither()\n");
-  }
-
-  if (enable) {
-    FX_grDitherMode(GR_DITHER_4x4);
-  } else {
-    FX_grDitherMode(GR_DITHER_DISABLE);
-  }
-}
-
-
 /* Return buffer size information */
 static void fxDDBufferSize(GLcontext *ctx, GLuint *width, GLuint *height)
 {
@@ -1098,8 +1083,6 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.ReadDepthPixels=fxDDReadDepthPixels;
          
   ctx->Driver.GetString=fxDDGetString;
-
-  ctx->Driver.Dither=fxDDDither;
 
   ctx->Driver.NearFar=fxDDSetNearFar;
 

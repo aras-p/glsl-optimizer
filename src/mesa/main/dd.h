@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.30 2000/09/07 15:45:27 brianp Exp $ */
+/* $Id: dd.h,v 1.31 2000/09/08 21:44:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -334,13 +334,6 @@ struct dd_function_table {
    void (*Flush)( GLcontext *ctx );
    /*
     * This is called whenever glFlush() is called.
-    */
-
-   void (*Dither)( GLcontext *ctx, GLboolean enable );
-   /*
-    * Enable/disable dithering.
-    * NOTE: This function will be removed in the future in favor
-    * of the "Enable" driver function.
     */
 
    void (*Error)( GLcontext *ctx );

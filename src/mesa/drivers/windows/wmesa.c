@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.5 2000/09/07 15:45:28 brianp Exp $ */
+/* $Id: wmesa.c,v 1.6 2000/09/08 21:44:56 brianp Exp $ */
 
 /*
 *   File name   :   wmesa.c
@@ -22,6 +22,9 @@
 
 /*
  * $Log: wmesa.c,v $
+ * Revision 1.6  2000/09/08 21:44:56  brianp
+ * removed ctx->Driver.Dither function
+ *
  * Revision 1.5  2000/09/07 15:45:28  brianp
  * Removed ctx->Driver.LogicOp().
  * ctx->Driver.Index/ColorMask() now return void.
@@ -570,24 +573,26 @@ static void set_color( GLcontext* ctx, GLubyte r, GLubyte g, GLubyte b, GLubyte 
 }
 
 
-static void dither( GLcontext* ctx, GLboolean enable )
+static void enable( GLcontext* ctx, GLenum pname, GLboolean enable )
 {
    if (!Current)
       return;
 
-    if(enable == GL_FALSE){
-        Current->dither_flag = GL_FALSE;
-        if(Current->cColorBits == 8)
+   if (pname == GL_DITHER) {
+      if(enable == GL_FALSE){
+         Current->dither_flag = GL_FALSE;
+         if(Current->cColorBits == 8)
             Current->pixelformat = PF_INDEX8;
-    }
-    else{
-        if (Current->rgb_flag && Current->cColorBits == 8){
+      }
+      else{
+         if (Current->rgb_flag && Current->cColorBits == 8){
             Current->pixelformat = PF_DITHER8;
             Current->dither_flag = GL_TRUE;
-        }
-        else
+         }
+         else
             Current->dither_flag = GL_FALSE;
-    }
+      }
+   }
 }
 
 
@@ -1165,7 +1170,7 @@ void setup_DD_pointers( GLcontext* ctx )
     ctx->Driver.Index = set_index;
     ctx->Driver.Color = set_color;
 
-    ctx->Driver.Dither = dither;
+    ctx->Driver.Enable = enable;
 
     ctx->Driver.SetBuffer = set_buffer;
     ctx->Driver.GetBufferSize = buffer_size;

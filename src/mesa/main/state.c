@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.25 2000/09/08 21:28:04 brianp Exp $ */
+/* $Id: state.c,v 1.26 2000/09/08 21:44:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -885,9 +885,6 @@ void gl_update_state( GLcontext *ctx )
       if (ctx->NewState & (NEW_RASTER_OPS | NEW_TEXTURE_ENABLE)) {
 	 update_fog_mode(ctx);
 	 update_rasterflags(ctx);
-	 if (ctx->Driver.Dither) {
-	    (*ctx->Driver.Dither)( ctx, ctx->Color.DitherFlag );
-	 }
 
 	 /* update scissor region */
 	 ctx->DrawBuffer->Xmin = 0;
