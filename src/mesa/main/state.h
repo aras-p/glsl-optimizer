@@ -1,4 +1,4 @@
-/* $Id: state.h,v 1.1 2000/02/02 19:15:19 brianp Exp $ */
+/* $Id: state.h,v 1.2 2000/05/24 15:04:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,13 @@
 #define STATE_H
 
 #include "types.h"
+
+
+extern void
+_mesa_init_no_op_table(struct _glapi_table *exec, GLuint tableSize);
+
+extern void
+_mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize);
 
 
 extern void gl_update_state( GLcontext *ctx );

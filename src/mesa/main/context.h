@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.17 2000/05/04 13:53:55 brianp Exp $ */
+/* $Id: context.h,v 1.18 2000/05/24 15:04:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -251,13 +251,6 @@ _mesa_Finish( void );
 extern void
 _mesa_Flush( void );
 
-
-
-extern void
-_mesa_init_no_op_table(struct _glapi_table *exec);
-
-extern void
-_mesa_init_exec_table(struct _glapi_table *exec);
 
 
 #endif

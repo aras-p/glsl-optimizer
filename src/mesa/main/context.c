@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.68 2000/05/23 23:23:00 brianp Exp $ */
+/* $Id: context.c,v 1.69 2000/05/24 15:04:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1341,6 +1341,8 @@ _mesa_initialize_context( GLcontext *ctx,
                           void *driver_ctx,
                           GLboolean direct )
 {
+   GLuint dispatchSize;
+
    (void) direct;  /* not used */
 
    /* misc one-time initializations */
@@ -1421,9 +1423,17 @@ _mesa_initialize_context( GLcontext *ctx,
    _glapi_add_entrypoint("glCompressedTexSubImage1DARB", 559);
    _glapi_add_entrypoint("glGetCompressedTexImageARB", 560);
 
+   /* Find the larger of Mesa's dispatch table and libGL's dispatch table.
+    * In practice, this'll be the same for stand-alone Mesa.  But for DRI
+    * Mesa we do this to accomodate different versions of libGL and various
+    * DRI drivers.
+    */
+   dispatchSize = MAX2(_glapi_get_dispatch_table_size(),
+                       sizeof(struct _glapi_table) / sizeof(void *));
+
    /* setup API dispatch tables */
-   ctx->Exec = (struct _glapi_table *) CALLOC(_glapi_get_dispatch_table_size() * sizeof(void *));
-   ctx->Save = (struct _glapi_table *) CALLOC(_glapi_get_dispatch_table_size() * sizeof(void *));
+   ctx->Exec = (struct _glapi_table *) CALLOC(dispatchSize * sizeof(void*));
+   ctx->Save = (struct _glapi_table *) CALLOC(dispatchSize * sizeof(void*));
    if (!ctx->Exec || !ctx->Save) {
       free_shared_state(ctx, ctx->Shared);
       FREE(ctx->VB);
@@ -1432,8 +1442,8 @@ _mesa_initialize_context( GLcontext *ctx,
          FREE(ctx->Exec);
       FREE(ctx);
    }
-   _mesa_init_exec_table( ctx->Exec );
-   _mesa_init_dlist_table( ctx->Save );
+   _mesa_init_exec_table(ctx->Exec, dispatchSize);
+   _mesa_init_dlist_table(ctx->Save, dispatchSize);
    ctx->CurrentDispatch = ctx->Exec;
 
    return GL_TRUE;

@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.40 2000/05/23 20:10:49 brianp Exp $ */
+/* $Id: dlist.c,v 1.41 2000/05/24 15:04:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -4723,13 +4723,13 @@ _mesa_ListBase( GLuint base )
 
 
 /*
- * Assign all the pointers in 'table' to point to Mesa's display list
+ * Assign all the pointers in <table> to point to Mesa's display list
  * building functions.
  */
 void
-_mesa_init_dlist_table( struct _glapi_table *table )
+_mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
 {
-   _mesa_init_no_op_table(table);
+   _mesa_init_no_op_table(table, tableSize);
 
    /* GL 1.0 */
    table->Accum = save_Accum;

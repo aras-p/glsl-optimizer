@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.13 2000/05/23 20:10:50 brianp Exp $ */
+/* $Id: state.c,v 1.14 2000/05/24 15:04:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -99,20 +99,17 @@ generic_noop(void)
 }
 
 
+/*
+ * Set all pointers in the given dispatch table to point to a
+ * generic no-op function.
+ */
 void
-_mesa_init_no_op_table(struct _glapi_table *table)
+_mesa_init_no_op_table(struct _glapi_table *table, GLuint tableSize)
 {
-   /* Check to be sure the dispatcher's table is at least as big as Mesa's. */
-   const GLuint size = sizeof(struct _glapi_table) / sizeof(void *);
-   assert(_glapi_get_dispatch_table_size() >= size);
-
-   {
-      const GLuint n = _glapi_get_dispatch_table_size();
-      GLuint i;
-      void **dispatch = (void **) table;
-      for (i = 0; i < n; i++) {
-         dispatch[i] = (void *) generic_noop;
-      }
+   GLuint i;
+   void **dispatch = (void **) table;
+   for (i = 0; i < tableSize; i++) {
+      dispatch[i] = (void *) generic_noop;
    }
 }
 
@@ -122,10 +119,10 @@ _mesa_init_no_op_table(struct _glapi_table *table)
  * immediate-mode commands.
  */
 void
-_mesa_init_exec_table(struct _glapi_table *exec)
+_mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 {
    /* first initialize all dispatch slots to no-op */
-   _mesa_init_no_op_table(exec);
+   _mesa_init_no_op_table(exec, tableSize);
 
    /* load the dispatch slots we understand */
    exec->Accum = _mesa_Accum;
