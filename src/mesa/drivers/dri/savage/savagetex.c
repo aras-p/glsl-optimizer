@@ -1050,38 +1050,15 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
             break;
     }
 
-    if((ctx->Texture.Unit[0].LodBias !=0.0F) &&
+    if((ctx->Texture.Unit[0].LodBias !=0.0F) ||
        (imesa->regs.s4.texCtrl[0].ni.dBias != 0))
     {
-	union {
-	    GLfloat f;
-	    GLint i;
-	} bias;
-    	GLuint  ul;
-    	
-    	bias.f = ctx->Texture.Unit[0].LodBias;
-    	
-    	/* if the value is >= 15.9375 determine whether >= 16
-    	   or <0
-    	*/
-    	if(((bias.i) & 0x7FFFFFFF) >= 0x417F0000)
-    	{
-    	    if((bias.i) & 0x80000000)
-    	    {
-    	        ul=0x101;
-    	    }
-    	    else
-    	    {
-    	        ul=0xff;
-    	    }
-    	}
-    	else
-    	{
-            ul=(GLuint)(bias.f*16.0);
-        }
-        
-        ul &= 0x1FF;
-        imesa->regs.s4.texCtrl[0].ni.dBias = ul;
+	int bias = (int)(ctx->Texture.Unit[0].LodBias * 32.0);
+	if (bias < -256)
+	    bias = -256;
+	else if (bias > 255)
+	    bias = 255;
+	imesa->regs.s4.texCtrl[0].ni.dBias = bias & 0x1ff;
     }
 
     imesa->regs.s4.texDescr.ni.tex0En = GL_TRUE;
@@ -1275,38 +1252,15 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
             break;
     }
     
-    if((ctx->Texture.Unit[1].LodBias !=0.0F)&&
+    if((ctx->Texture.Unit[1].LodBias !=0.0F) ||
        (imesa->regs.s4.texCtrl[1].ni.dBias != 0))
     {
-	union {
-	    GLfloat f;
-	    GLint i;
-	} bias;
-    	GLuint  ul;
-    	
-    	bias.f = ctx->Texture.Unit[1].LodBias;
-    	
-    	/* if the value is >= 15.9375 determine whether >= 16
-    	   or <0
-    	*/
-    	if(((bias.i) & 0x7FFFFFFF) >= 0x417F0000)
-    	{
-    	    if((bias.i) & 0x80000000)
-    	    {
-    	        ul=0x101;
-    	    }
-    	    else
-    	    {
-    	        ul=0xff;
-    	    }
-    	}
-    	else
-    	{
-            ul=(GLuint)(bias.f*16.0);
-        }
-        
-        ul &= 0x1FF;
-        imesa->regs.s4.texCtrl[1].ni.dBias = ul;
+	int bias = (int)(ctx->Texture.Unit[1].LodBias * 32.0);
+	if (bias < -256)
+	    bias = -256;
+	else if (bias > 255)
+	    bias = 255;
+	imesa->regs.s4.texCtrl[1].ni.dBias = bias & 0x1ff;
     }
 
     imesa->regs.s4.texDescr.ni.tex1En = GL_TRUE;
@@ -1439,9 +1393,16 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
     }
     */
 
-    /* LOD bias makes corruption of small mipmap levels worse on Savage IX
-     * but doesn't show the desired effect with the lodbias mesa demo. */
-    imesa->regs.s3d.texCtrl.ni.dBias = 0;
+    if((ctx->Texture.Unit[0].LodBias !=0.0F) ||
+       (imesa->regs.s3d.texCtrl.ni.dBias != 0))
+    {
+	int bias = (int)(ctx->Texture.Unit[0].LodBias * 16.0);
+	if (bias < -256)
+	    bias = -256;
+	else if (bias > 255)
+	    bias = 255;
+	imesa->regs.s3d.texCtrl.ni.dBias = bias & 0x1ff;
+    }
 
     imesa->regs.s3d.texCtrl.ni.texEn = GL_TRUE;
     imesa->regs.s3d.texDescr.ni.texWidth  = t->image[0].image->WidthLog2;
