@@ -40,6 +40,7 @@ typedef struct savage_texture_object_t *savageTextureObjectPtr;
 #include "savage_sarea.h"
 #include "savage_init.h"
 #include "mm.h"
+#include "tnl/t_vertex.h"
 
 #include "savagetex.h"
 #include "savagedma.h"
@@ -157,6 +158,13 @@ struct savage_context_t {
      */
     GLuint LcsCullMode;
 
+   /* Vertex state 
+    */
+   GLuint vertex_size;
+   struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
+   GLuint vertex_attr_count;
+   char *verts;			/* points to tnl->clipspace.vertex_buf */
+
    /* Rasterization state 
     */
    GLuint SetupNewInputs;
@@ -167,11 +175,7 @@ struct savage_context_t {
    GLenum raster_primitive;
    GLenum render_primitive;
 
-   GLubyte *verts;
-   GLuint vertex_format;		
-   GLuint vertex_size;
    GLuint DrawPrimitiveCmd;
-   GLuint DrawPrimitiveMask; 
 
    /* Fallback rasterization functions 
     */

@@ -628,8 +628,13 @@ typedef union {
 #define SAVAGE_HW_NO_W          (1<<1)
 #define SAVAGE_HW_NO_CD         (1<<2)
 #define SAVAGE_HW_NO_CS         (1<<3)
+#define SAVAGE_HW_NO_U0         (1<<4)
+#define SAVAGE_HW_NO_V0         (1<<5)
 #define SAVAGE_HW_NO_UV0        ((1<<4) | (1<<5))
+#define SAVAGE_HW_NO_U1         (1<<6)
+#define SAVAGE_HW_NO_V1         (1<<7)
 #define SAVAGE_HW_NO_UV1        ((1<<6) | (1<<7))
+#define SAVAGE_HW_SKIPFLAGS     0x000000ff
 
 #define SAVAGE_HW_TRIANGLE_TYPE     (3UL<<25)
 #define SAVAGE_HW_TRIANGLE_CONT     (1UL<<24)

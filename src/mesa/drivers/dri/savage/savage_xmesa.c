@@ -48,7 +48,6 @@
 #include "savagetex.h"
 #include "savagespan.h"
 #include "savagetris.h"
-#include "savagevb.h"
 #include "savageioctl.h"
 #include "savage_bci.h"
 
@@ -412,7 +411,6 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    imesa->new_state = ~0;
    imesa->RenderIndex = ~0;
    imesa->dirty = ~0;
-   imesa->vertex_format = 0;
    imesa->TextureMode = ctx->Texture.Unit[0].EnvMode;
    imesa->CurrentTexObj[0] = 0;
    imesa->CurrentTexObj[1] = 0;
@@ -454,7 +452,6 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    savageDDInitIoctlFuncs( ctx );
    savageInitTriFuncs( ctx );
 
-   savageInitVB( ctx );
    savageDDInitState( imesa );
 
    driContextPriv->driverPrivate = (void *) imesa;
@@ -486,8 +483,6 @@ savageDestroyContext(__DRIcontextPrivate *driContextPriv)
       _tnl_DestroyContext( imesa->glCtx );
       _ac_DestroyContext( imesa->glCtx );
       _swrast_DestroyContext( imesa->glCtx );
-
-      savageFreeVB( imesa->glCtx );
 
       /* free the Mesa context */
       imesa->glCtx->DriverCtx = NULL;

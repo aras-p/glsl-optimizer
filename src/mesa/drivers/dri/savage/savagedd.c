@@ -28,12 +28,13 @@
 #include <stdio.h>
 
 #include "mm.h"
+#include "swrast/swrast.h"
+
 #include "savagedd.h"
 #include "savagestate.h"
 #include "savagespan.h"
 #include "savagetex.h"
 #include "savagetris.h"
-#include "savagevb.h"
 #include "savagecontext.h"
 #include "extensions.h"
 

@@ -36,7 +36,6 @@
 
 #include "savagestate.h"
 #include "savagetex.h"
-#include "savagevb.h"
 #include "savagetris.h"
 #include "savageioctl.h"
 #include "savage_bci.h"
