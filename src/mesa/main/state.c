@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.30 2000/10/02 15:45:12 brianp Exp $ */
+/* $Id: state.c,v 1.31 2000/10/18 15:02:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -825,7 +825,7 @@ void gl_update_state( GLcontext *ctx )
       if (ctx->Texture.Unit[0].EnvMode == ctx->Texture.Unit[0].LastEnvMode &&
 	  ctx->Texture.Unit[1].EnvMode == ctx->Texture.Unit[1].LastEnvMode
 #if MAX_TEXTURE_UNITS > 2
-	  && ctx->Texture.Unit[2].EnvMode == ctx->Texture.Unit[2].LastEnvMode)
+	  && ctx->Texture.Unit[2].EnvMode == ctx->Texture.Unit[2].LastEnvMode
 #endif
          ) {
 	 ctx->NewState &= ~NEW_TEXTURE_ENV;

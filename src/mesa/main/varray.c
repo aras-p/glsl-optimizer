@@ -1,8 +1,8 @@
-/* $Id: varray.c,v 1.23 2000/09/11 18:49:06 brianp Exp $ */
+/* $Id: varray.c,v 1.24 2000/10/18 15:02:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -488,6 +488,13 @@ void gl_exec_array_elements( GLcontext *ctx, struct immediate *IM,
 				       flags, elts, (VERT_ELT|VERT_TEX1_ANY),
 				       start, count);
 
+#if MAX_TEXTURE_UNITS > 2
+   if (translate & VERT_TEX2_ANY)
+      (ctx->Array.TexCoordEltFunc[1])( IM->TexCoord[2], 
+				       &ctx->Array.TexCoord[2], 
+				       flags, elts, (VERT_ELT|VERT_TEX2_ANY),
+				       start, count);
+#endif
 
    for (i = start ; i < count ; i++) 
       if (flags[i] & VERT_ELT) 
@@ -544,8 +551,7 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
       return;
    }
 
-   if (!ctx->CompileFlag && ctx->Array.Vertex.Enabled)
-   {
+   if (!ctx->CompileFlag && ctx->Array.Vertex.Enabled) {
       GLint remaining = count;
       GLint i;
       struct gl_client_array *Normal;
@@ -582,8 +588,7 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
        */
       IM->v.Obj.size = ctx->Array.Vertex.Size;
 
-      if (required & VERT_RGBA) 
-      {
+      if (required & VERT_RGBA) {
 	 Color = &ctx->Array.Color;
 	 if (fallback & VERT_RGBA) {
 	    Color = &ctx->Fallback.Color;
@@ -592,8 +597,7 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 }
       }
    
-      if (required & VERT_INDEX) 
-      {
+      if (required & VERT_INDEX) {
 	 Index = &ctx->Array.Index;
 	 if (fallback & VERT_INDEX) {
 	    Index = &ctx->Fallback.Index;
@@ -601,15 +605,13 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 }
       }
 
-      for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++) 
-      {
+      for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)  {
 	 GLuint flag = VERT_TEX_ANY(i);
 
 	 if (required & flag) {
 	    TexCoord[i] = &ctx->Array.TexCoord[i];
 
-	    if (fallback & flag) 
-	    {
+	    if (fallback & flag) {
 	       TexCoord[i] = &ctx->Fallback.TexCoord[i];
 	       TexCoord[i]->Size = gl_texcoord_size( ctx->Current.Flag, i );
 
@@ -619,13 +621,12 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 }
       }
 
-      if (ctx->Array.Flags != ctx->Array.Flag[0])
+      if (ctx->Array.Flags != ctx->Array.Flag[0]) {
  	 for (i = 0 ; i < VB_MAX ; i++) 
 	    ctx->Array.Flag[i] = ctx->Array.Flags;
+      }
 
-
-      if (required & VERT_NORM) 
-      {
+      if (required & VERT_NORM)  {
 	 Normal = &ctx->Array.Normal;
 	 if (fallback & VERT_NORM) {
 	    Normal = &ctx->Fallback.Normal;
@@ -633,12 +634,10 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 }
       }
 
-      if ( required & VERT_EDGE )
-      {
+      if ( required & VERT_EDGE ) {
 	 if (mode == GL_TRIANGLES || 
 	     mode == GL_QUADS || 
-	     mode == GL_POLYGON)
-	 {
+	     mode == GL_POLYGON) {
 	    EdgeFlag = &ctx->Array.EdgeFlag;
 	    if (fallback & VERT_EDGE) {
 	       EdgeFlag = &ctx->Fallback.EdgeFlag;
@@ -663,7 +662,8 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 if (vbspace >= remaining) {
 	    n = remaining;
 	    VB->LastPrimitive = VB_START + n;
-	 } else {
+	 }
+         else {
 	    n = vbspace;
 	    VB->LastPrimitive = VB_START;
 	 }
@@ -704,6 +704,13 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	    ctx->Array.TexCoordFunc[1]( IM->TexCoord[1] + VB_START, 
 					TexCoord[1], start, n );
 	 }
+#if MAX_TEXTURE_UNITS > 2
+	 if (required & VERT_TEX2_ANY) {
+	    IM->v.TexCoord[2].size = TexCoord[2]->Size;
+	    ctx->Array.TexCoordFunc[2]( IM->TexCoord[2] + VB_START, 
+					TexCoord[2], start, n );
+	 }
+#endif
 
 	 VB->ObjPtr = &IM->v.Obj;
 	 VB->NormalPtr = &IM->v.Normal;
@@ -711,8 +718,9 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 VB->Color[0] = VB->Color[1] = VB->ColorPtr;
 	 VB->IndexPtr = &IM->v.Index;
 	 VB->EdgeFlagPtr = &IM->v.EdgeFlag;
-	 VB->TexCoordPtr[0] = &IM->v.TexCoord[0];
-	 VB->TexCoordPtr[1] = &IM->v.TexCoord[1];
+         for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+            VB->TexCoordPtr[i] = &IM->v.TexCoord[i];
+         }
 
 	 VB->Flag = ctx->Array.Flag;
 	 VB->OrFlag = ctx->Array.Flags;
@@ -724,8 +732,9 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
 
 	 RESET_VEC(IM->v.Obj, (GLfloat *), VB_START, count);
 	 RESET_VEC(IM->v.Normal, (GLfloat *), VB_START, count);
-	 RESET_VEC(IM->v.TexCoord[0], (GLfloat *), VB_START, count);
-	 RESET_VEC(IM->v.TexCoord[1], (GLfloat *), VB_START, count);
+         for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+            RESET_VEC(IM->v.TexCoord[i], (GLfloat *), VB_START, count);
+         }
 	 RESET_VEC(IM->v.Index, &, VB_START, count);
 	 RESET_VEC(IM->v.Elt, &, VB_START, count);
 	 RESET_VEC(IM->v.EdgeFlag, &, VB_START, count);
@@ -1203,17 +1212,21 @@ _mesa_DrawRangeElements(GLenum mode, GLuint start,
 
 void gl_update_client_state( GLcontext *ctx )
 {
-   static GLuint sz_flags[5] = { 0, 
-				 0,
-				 VERT_OBJ_2, 
-				 VERT_OBJ_23, 
-				 VERT_OBJ_234 };
-
-   static GLuint tc_flags[5] = { 0, 
-				 VERT_TEX0_1,
-				 VERT_TEX0_12, 
-				 VERT_TEX0_123, 
-				 VERT_TEX0_1234 };
+   static const GLuint sz_flags[5] = {
+      0, 
+      0,
+      VERT_OBJ_2, 
+      VERT_OBJ_23, 
+      VERT_OBJ_234
+   };
+   static const GLuint tc_flags[5] = {
+      0, 
+      VERT_TEX0_1,
+      VERT_TEX0_12, 
+      VERT_TEX0_123, 
+      VERT_TEX0_1234
+   };
+   GLint i;
 
    ctx->Array.Flags = 0;
    ctx->Array.Summary = 0;
@@ -1227,11 +1240,10 @@ void gl_update_client_state( GLcontext *ctx )
       ctx->Array.Flags |= sz_flags[ctx->Array.Vertex.Size];
       ctx->input->ArrayIncr = 1;
    }
-   if (ctx->Array.TexCoord[0].Enabled) {
-      ctx->Array.Flags |= tc_flags[ctx->Array.TexCoord[0].Size];
-   }
-   if (ctx->Array.TexCoord[1].Enabled) {
-      ctx->Array.Flags |= (tc_flags[ctx->Array.TexCoord[1].Size] << NR_TEXSIZE_BITS);
+   for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+      if (ctx->Array.TexCoord[i].Enabled) {
+         ctx->Array.Flags |= (tc_flags[ctx->Array.TexCoord[i].Size] << (i * NR_TEXSIZE_BITS));
+      }
    }
 
    /* Not really important any more:
