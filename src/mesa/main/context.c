@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.131 2001/03/28 17:20:20 brianp Exp $ */
+/* $Id: context.c,v 1.132 2001/04/04 13:38:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1885,7 +1885,11 @@ _mesa_get_dispatch(GLcontext *ctx)
 void _mesa_problem( const GLcontext *ctx, const char *s )
 {
    fprintf( stderr, "Mesa implementation error: %s\n", s );
-   fprintf( stderr, "Report to Mesa bug database at www.mesa3d.org\n" );
+#ifdef XF86DRI
+   fprintf( stderr, "Please report to the DRI bug database at dri.sourceforge.net\n");
+#else
+   fprintf( stderr, "Please report to the Mesa bug database at www.mesa3d.org\n" );
+#endif
    (void) ctx;
 }
 
