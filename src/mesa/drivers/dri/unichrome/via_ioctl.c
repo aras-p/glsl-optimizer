@@ -3,7 +3,7 @@
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
-v * copy of this software and associated documentation files (the "Software"),
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sub license,
  * and/or sell copies of the Software, and to permit persons to whom the
@@ -629,10 +629,10 @@ void viaFlushDmaLocked(viaContextPtr vmesa, GLuint flags)
 
    if (flags & VIA_NO_CLIPRECTS) {
       if (0) fprintf(stderr, "%s VIA_NO_CLIPRECTS\n", __FUNCTION__);
-      assert(vmesa->dmaCliprectAddr == 0);
+      assert(vmesa->dmaCliprectAddr == ~0);
       fire_buffer( vmesa );
    }
-   else if (!vmesa->dmaCliprectAddr) {
+   else if (vmesa->dmaCliprectAddr == ~0) {
       /* Contains only state.  Could just dump the packet?
        */
       if (0) fprintf(stderr, "%s: no dmaCliprectAddr\n", __FUNCTION__);
@@ -673,7 +673,7 @@ void viaFlushDmaLocked(viaContextPtr vmesa, GLuint flags)
    /* Reset vmesa vars:
     */
    vmesa->dmaLow = 0;
-   vmesa->dmaCliprectAddr = 0;
+   vmesa->dmaCliprectAddr = ~0;
    vmesa->newEmitState = ~0;
 }
 
@@ -747,6 +747,8 @@ GLuint *viaAllocDmaFunc(viaContextPtr vmesa, int bytes, const char *func, int li
 
    {
       GLuint *start = (GLuint *)(vmesa->dma + vmesa->dmaLow);
+      if (0)
+	 fprintf(stderr, "%s %04x 0x%x bytes\n", func, vmesa->dmaLow, bytes);
       vmesa->dmaLow += bytes;
       return start;
    }
@@ -765,6 +767,8 @@ GLuint *viaExtendPrimitive(viaContextPtr vmesa, int bytes)
 
    {
       GLuint *start = (GLuint *)(vmesa->dma + vmesa->dmaLow);
+      if (0)
+	 fprintf(stderr, "%s %04x 0x%x bytes\n", __FUNCTION__, vmesa->dmaLow, bytes);
       vmesa->dmaLow += bytes;
       return start;
    }

@@ -36,7 +36,6 @@
 #include "via_context.h"
 #include "via_state.h"
 #include "via_tex.h"
-#include "via_vb.h"
 #include "via_tris.h"
 #include "via_ioctl.h"
 
@@ -764,7 +763,7 @@ void viaInitState(GLcontext *ctx)
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
 
     vmesa->regCmdA = HC_ACMD_HCmdA;
-    vmesa->regCmdB = HC_ACMD_HCmdB | HC_HVPMSK_X | HC_HVPMSK_Y | HC_HVPMSK_Z;
+    vmesa->regCmdB = HC_ACMD_HCmdB;
     vmesa->regEnable = HC_HenCW_MASK;
 
    /* Mesa should do this for us:
@@ -862,7 +861,7 @@ static void viaChooseTextureState(GLcontext *ctx)
                 FALLBACK(vmesa, VIA_FALLBACK_TEXTURE, GL_TRUE);
                 return;
             }
-            vmesa->regCmdB |= HC_HVPMSK_S | HC_HVPMSK_T | HC_HVPMSK_W | HC_HVPMSK_Cs;
+
             vmesa->regEnable |= HC_HenTXMP_MASK | HC_HenTXCH_MASK | HC_HenTXPP_MASK;
    
             switch (texObj->MinFilter) {
@@ -919,9 +918,6 @@ static void viaChooseTextureState(GLcontext *ctx)
 
 	    viaTexCombineState( vmesa, texUnit0->_CurrentCombine, 0 );
         }
-	else {
-	/* Should turn Cs off if actually no Cs */
-	}
 
         if (texUnit1->_ReallyEnabled) {
             struct gl_texture_object *texObj = texUnit1->_Current;
@@ -999,10 +995,6 @@ static void viaChooseTextureState(GLcontext *ctx)
 	}
     }
     else {
-	if (ctx->Fog.Enabled)
-    	    vmesa->regCmdB &= (~(HC_HVPMSK_S | HC_HVPMSK_T));	
-	else	    
-    	    vmesa->regCmdB &= (~(HC_HVPMSK_S | HC_HVPMSK_T | HC_HVPMSK_W));
         vmesa->regEnable &= (~(HC_HenTXMP_MASK | HC_HenTXCH_MASK | HC_HenTXPP_MASK));
     }
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
@@ -1307,7 +1299,6 @@ static void viaChooseFogState(GLcontext *ctx)
     if (ctx->Fog.Enabled) {
         GLubyte r, g, b, a;
 
-        vmesa->regCmdB |= (HC_HVPMSK_Cd | HC_HVPMSK_Cs | HC_HVPMSK_W);
         vmesa->regEnable |= HC_HenFOG_MASK;
 
         /* Use fog equation 0 (OpenGL's default) & local fog.
@@ -1322,10 +1313,6 @@ static void viaChooseFogState(GLcontext *ctx)
         vmesa->regHFogCH = a;
     }
     else {
-        if (!ctx->Texture._EnabledUnits) {
-            vmesa->regCmdB &= ~ HC_HVPMSK_W;
-    	    vmesa->regCmdB &= ~ HC_HVPMSK_Cs;
-	}	    
         vmesa->regEnable &= ~HC_HenFOG_MASK;
     }
 }
@@ -1334,7 +1321,6 @@ static void viaChooseDepthState(GLcontext *ctx)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     if (ctx->Depth.Test) {
-        vmesa->regCmdB |= HC_HVPMSK_Z;
         vmesa->regEnable |= HC_HenZT_MASK;
         if (ctx->Depth.Mask)
             vmesa->regEnable |= HC_HenZW_MASK;
@@ -1344,10 +1330,6 @@ static void viaChooseDepthState(GLcontext *ctx)
 	
     }
     else {
-        /* Still need to send parameter Z.
-         */
-        
-	vmesa->regCmdB |= HC_HVPMSK_Z;
         vmesa->regEnable &= ~HC_HenZT_MASK;
         
         /*=* [DBG] racer : can't display cars in car selection menu *=*/
@@ -1365,11 +1347,9 @@ static void viaChooseLightState(GLcontext *ctx)
 
     if (ctx->Light.ShadeModel == GL_SMOOTH) {
         vmesa->regCmdA |= HC_HShading_Gouraud;
-        vmesa->regCmdB |= HC_HVPMSK_Cd;
     }
     else {
         vmesa->regCmdA &= ~HC_HShading_Gouraud;
-        vmesa->regCmdB |= HC_HVPMSK_Cd;
     }
 }
 
@@ -1550,17 +1530,6 @@ static void viaChooseTriangle(GLcontext *ctx)
 void viaValidateState( GLcontext *ctx )
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    struct gl_texture_unit *texUnit0 = &ctx->Texture.Unit[0];
-    struct gl_texture_unit *texUnit1 = &ctx->Texture.Unit[1];
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-
-
-    if (texUnit0->_ReallyEnabled || texUnit1->_ReallyEnabled || ctx->Fog.Enabled) {
-	vmesa->regCmdB |= HC_HVPMSK_Cs;
-    }
-    else {
-    	vmesa->regCmdB &= ~ HC_HVPMSK_Cs;
-    }
     
     if (vmesa->newState & _NEW_TEXTURE) {
         viaChooseTextureState(ctx);
@@ -1592,8 +1561,6 @@ void viaValidateState( GLcontext *ctx )
     
     vmesa->newEmitState |= vmesa->newState;
     vmesa->newState = 0;
-            
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);        
 }
 
 static void viaInvalidateState(GLcontext *ctx, GLuint newState)

@@ -38,7 +38,6 @@
 #include "via_context.h"
 #include "via_tris.h"
 #include "via_state.h"
-#include "via_vb.h"
 #include "via_ioctl.h"
 
 /*
@@ -52,7 +51,7 @@
 #define HAVE_LINE_LOOP   1
 #define HAVE_TRIANGLES   1
 #define HAVE_TRI_STRIPS  1
-#define HAVE_TRI_STRIP_1 0      /* has it, template can't use it yet */
+#define HAVE_TRI_STRIP_1 0  
 #define HAVE_TRI_FANS    1
 #define HAVE_POLYGONS    1
 #define HAVE_QUADS       0
@@ -73,7 +72,7 @@
     viaExtendPrimitive( vmesa, (nr) * vmesa->vertexSize * 4)
 
 #define EMIT_VERTS(ctx, j, nr, buf) \
-    via_emit_contiguous_verts(ctx, j, (j) + (nr), buf)
+    _tnl_emit_vertices_to_buffer(ctx, j, (j)+(nr), buf )  
     
 #define FLUSH() VIA_FINISH_PRIM( vmesa )
 
@@ -94,24 +93,18 @@ static GLboolean via_run_fastrender(GLcontext *ctx,
     struct vertex_buffer *VB = &tnl->vb;
     GLuint i;
     
-    /* Don't handle clipping or indexed vertices.
-     */
-    if (VB->ClipOrMask || 
-	vmesa->renderIndex != 0 || 
-	!via_fastvalidate_render( ctx, VB )) {
-	if (VIA_DEBUG) { 
-	    fprintf(stderr, "slow path\n");    
-	    fprintf(stderr, "ClipOrMask = %08x\n", VB->ClipOrMask);
-	    fprintf(stderr, "renderIndex = %08x\n", vmesa->renderIndex);	
-	    fprintf(stderr, "Elts = %08x\n", (GLuint)VB->Elts);	
-	}	    
-        return GL_TRUE;
-    }
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-    vmesa->setupNewInputs = VERT_BIT_CLIP;
 
     tnl->Driver.Render.Start(ctx);
     
+    if (VB->ClipOrMask || 
+	vmesa->renderIndex != 0 || 
+	!via_fastvalidate_render( ctx, VB )) {
+	tnl->Driver.Render.Finish(ctx);
+        return GL_TRUE;
+    }
+
+    tnl->clipspace.new_inputs |= VERT_BIT_POS;
+
     for (i = 0; i < VB->PrimitiveCount; ++i) {
         GLuint mode = VB->Primitive[i].mode;
         GLuint start = VB->Primitive[i].start;
@@ -121,31 +114,14 @@ static GLboolean via_run_fastrender(GLcontext *ctx,
     }
 
     tnl->Driver.Render.Finish(ctx);
-    
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
+
     return GL_FALSE;            /* finished the pipe */
 }
 
 
 static void via_check_fastrender(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
-    GLuint inputs = VERT_BIT_CLIP | VERT_BIT_COLOR0;
-    
-    if (ctx->RenderMode == GL_RENDER) {
-        if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
-            inputs |= VERT_BIT_COLOR1;
-
-        if (ctx->Texture.Unit[0]._ReallyEnabled)
-            inputs |= VERT_BIT_TEX0;
-
-        if (ctx->Texture.Unit[1]._ReallyEnabled)
-            inputs |= VERT_BIT_TEX1;
-
-        if (ctx->Fog.Enabled)
-            inputs |= VERT_BIT_FOG;
-    }
-
-    stage->inputs = inputs;
+   stage->inputs = TNL_CONTEXT(ctx)->render_inputs;
 }
 
 

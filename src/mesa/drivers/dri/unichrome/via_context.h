@@ -35,11 +35,13 @@ typedef struct via_texture_object_t *viaTextureObjectPtr;
 #include "mtypes.h"
 #include "drm.h"
 #include "mm.h"
+#include "tnl/t_vertex.h"
 
 #include "via_screen.h"
 #include "via_tex.h"
 #include "via_common.h"
 #include "xf86drmVIA.h"
+
 #define VIA_FALLBACK_TEXTURE           	0x1
 #define VIA_FALLBACK_DRAW_BUFFER       	0x2
 #define VIA_FALLBACK_READ_BUFFER       	0x4
@@ -51,9 +53,10 @@ typedef struct via_texture_object_t *viaTextureObjectPtr;
 #define VIA_FALLBACK_BLEND_EQ          	0x200
 #define VIA_FALLBACK_BLEND_FUNC        	0x400
 #define VIA_FALLBACK_USER_DISABLE      	0x800
+#define VIA_FALLBACK_PROJ_TEXTURE      	0x1000
 
-#define VIA_DMA_BUFSIZ                  5000
-#define VIA_DMA_HIGHWATER               (VIA_DMA_BUFSIZ - 256)
+#define VIA_DMA_BUFSIZ                  4096
+#define VIA_DMA_HIGHWATER               (VIA_DMA_BUFSIZ - 128)
 
 #define VIA_NO_CLIPRECTS 0x1
 
@@ -121,11 +124,15 @@ struct via_context_t {
      */
     GLuint Fallback;
 
-    /* State for via_vb.c and via_tris.c.
+    /* State for via_tris.c.
      */
     GLuint newState;            /* _NEW_* flags */
     GLuint newEmitState;            /* _NEW_* flags */
-    GLuint setupNewInputs;
+    GLuint newRenderState;            /* _NEW_* flags */
+
+    struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
+    GLuint vertex_attr_count;
+
     GLuint setupIndex;
     GLuint renderIndex;
     GLmatrix ViewportMatrix;
@@ -204,11 +211,12 @@ struct via_context_t {
     GLuint regHTXnTBLRAa_1;
     GLuint regHTXnTBLRFog_1;
 
-    /* Hardware state 
-     */
-    GLuint dirty;             
     int vertexSize;
-    int vertexFormat;
+    int hwVertexSize;
+    GLboolean ptexHack;
+    int coloroffset;
+    int specoffset;
+
     GLint lastStamp;
 
     GLenum TexEnvImageFmt[2];

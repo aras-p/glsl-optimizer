@@ -52,7 +52,6 @@
 #include "via_tex.h"
 #include "via_span.h"
 #include "via_tris.h"
-#include "via_vb.h"
 #include "via_ioctl.h"
 #include "via_fb.h"
 #include "via_regs.h"
@@ -288,7 +287,7 @@ AllocateDmaBuffer(const GLvisual *visual, viaContextPtr vmesa)
         return GL_FALSE;
 
     vmesa->dmaLow = 0;
-    vmesa->dmaCliprectAddr = 0;
+    vmesa->dmaCliprectAddr = ~0;
     return GL_TRUE;
 }
 
@@ -468,6 +467,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
 
     vmesa->texHeap = mmInit(0, viaScreen->textureSize);
     vmesa->renderIndex = ~0;
+    vmesa->setupIndex = ~0;
 
     make_empty_list(&vmesa->TexObjList);
     make_empty_list(&vmesa->SwappedOut);
@@ -492,7 +492,6 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     viaInitTriFuncs(ctx);
     viaInitSpanFuncs(ctx);
     viaInitIoctlFuncs(ctx);
-    viaInitVB(ctx);
     viaInitState(ctx);
         
 #ifdef DEBUG
@@ -555,7 +554,6 @@ viaDestroyContext(__DRIcontextPrivate *driContextPriv)
         _tnl_DestroyContext(vmesa->glCtx);
         _ac_DestroyContext(vmesa->glCtx);
         _swrast_DestroyContext(vmesa->glCtx);
-        viaFreeVB(vmesa->glCtx);
 	FreeBuffer(vmesa);
         /* free the Mesa context */
 	_mesa_destroy_context(vmesa->glCtx);

@@ -29,7 +29,6 @@ DRIVER_SOURCES = \
 	via_texmem.c \
 	via_texstate.c \
 	via_tris.c \
-	via_vb.c \
 	via_texcombine.c \
 	xf86drmVIA.c
 

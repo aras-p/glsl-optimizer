@@ -42,7 +42,6 @@
 #include "via_context.h"
 #include "via_state.h"
 #include "via_tex.h"
-#include "via_vb.h"
 #include "via_tris.h"
 #include "via_ioctl.h"
 
