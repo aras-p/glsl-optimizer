@@ -1,4 +1,4 @@
-/* $Id: isosurf.c,v 1.2 1999/09/03 14:56:40 keithw Exp $ */
+/* $Id: isosurf.c,v 1.3 1999/09/08 22:14:31 brianp Exp $ */
 
 /*
  * Display an isosurface of 3-D wind speed volume.  
@@ -24,6 +24,9 @@
 
 /*
  * $Log: isosurf.c,v $
+ * Revision 1.3  1999/09/08 22:14:31  brianp
+ * minor changes. always call compactify_arrays()
+ *
  * Revision 1.2  1999/09/03 14:56:40  keithw
  * Fog, displaylist and zoom operations
  *
@@ -105,6 +108,10 @@ static GLint state, allowed = ~0;
 static GLboolean doubleBuffer = GL_TRUE;
 static GLdouble plane[4] = {1.0, 0.0, -1.0, 0.0};
 static GLuint surf1;
+
+/* forward decl */
+int BuildList( int mode );
+
 
 static void read_surface( char *filename )
 {
@@ -246,7 +253,7 @@ static void extract_indices1( const struct data_idx *in, unsigned int *out,
 }
 
 
-static void compactify_arrays()
+static void compactify_arrays(void)
 {
    int i;
    struct data_idx *ind;
@@ -676,10 +683,8 @@ static void Init(void)
    glHint(GL_FOG_HINT,GL_DONT_CARE);
 
 
-   if (allowed & COMPILED) {
-      compactify_arrays();
-      make_tri_indices();
-   }
+   compactify_arrays();
+   make_tri_indices();
 
    surf1 = BuildList( GL_COMPILE );
 
@@ -706,6 +711,8 @@ static void Reshape(int width, int height)
 
 static void Key( unsigned char key, int x, int y )
 {
+   (void) x;
+   (void) y;
    switch (key) {
    case 27:
       exit(0);
@@ -765,6 +772,8 @@ static void Key( unsigned char key, int x, int y )
 
 static void SpecialKey( int key, int x, int y )
 {
+   (void) x;
+   (void) y;
    switch (key) {
    case GLUT_KEY_LEFT:
       yrot -= 15.0;
