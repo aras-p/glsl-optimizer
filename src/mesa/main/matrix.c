@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.35 2001/06/12 22:08:41 brianp Exp $ */
+/* $Id: matrix.c,v 1.36 2001/09/18 16:16:21 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -104,7 +104,9 @@ _mesa_Frustum( GLdouble left, GLdouble right,
       return;
    }
 
-   _math_matrix_frustum( mat, left, right, bottom, top, nearval, farval );
+   _math_matrix_frustum( mat, (GLfloat) left, (GLfloat) right, 
+			 (GLfloat) bottom, (GLfloat) top, 
+			 (GLfloat) nearval, (GLfloat) farval );
 }
 
 
@@ -127,7 +129,9 @@ _mesa_Ortho( GLdouble left, GLdouble right,
       return;
    }
 
-   _math_matrix_ortho( mat, left, right, bottom, top, nearval, farval );
+   _math_matrix_ortho( mat, (GLfloat) left, (GLfloat) right, 
+		       (GLfloat) bottom, (GLfloat) top, 
+		       (GLfloat) nearval, (GLfloat) farval );
 }
 
 
@@ -293,7 +297,7 @@ _mesa_LoadMatrixd( const GLdouble *m )
    GLint i;
    GLfloat f[16];
    for (i = 0; i < 16; i++)
-      f[i] = m[i];
+      f[i] = (GLfloat) m[i];
    _mesa_LoadMatrixf(f);
 }
 
@@ -322,7 +326,7 @@ _mesa_MultMatrixd( const GLdouble *m )
    GLint i;
    GLfloat f[16];
    for (i = 0; i < 16; i++)
-      f[i] = m[i];
+      f[i] = (GLfloat) m[i];
    _mesa_MultMatrixf( f );
 }
 
@@ -347,7 +351,7 @@ _mesa_Rotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
 void
 _mesa_Rotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z )
 {
-   _mesa_Rotatef(angle, x, y, z);
+   _mesa_Rotatef((GLfloat) angle, (GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
 
@@ -368,7 +372,7 @@ _mesa_Scalef( GLfloat x, GLfloat y, GLfloat z )
 void
 _mesa_Scaled( GLdouble x, GLdouble y, GLdouble z )
 {
-   _mesa_Scalef(x, y, z);
+   _mesa_Scalef((GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
 
@@ -389,7 +393,7 @@ _mesa_Translatef( GLfloat x, GLfloat y, GLfloat z )
 void
 _mesa_Translated( GLdouble x, GLdouble y, GLdouble z )
 {
-   _mesa_Translatef(x, y, z);
+   _mesa_Translatef((GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
 
@@ -477,8 +481,8 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
    ctx->Viewport._WindowMap.m[MAT_TX] = ctx->Viewport._WindowMap.m[MAT_SX] + x;
    ctx->Viewport._WindowMap.m[MAT_SY] = (GLfloat) height / 2.0F;
    ctx->Viewport._WindowMap.m[MAT_TY] = ctx->Viewport._WindowMap.m[MAT_SY] + y;
-   ctx->Viewport._WindowMap.m[MAT_SZ] = ctx->DepthMaxF * ((f - n) / 2.0);
-   ctx->Viewport._WindowMap.m[MAT_TZ] = ctx->DepthMaxF * ((f - n) / 2.0 + n);
+   ctx->Viewport._WindowMap.m[MAT_SZ] = ctx->DepthMaxF * ((f - n) / 2.0F);
+   ctx->Viewport._WindowMap.m[MAT_TZ] = ctx->DepthMaxF * ((f - n) / 2.0F + n);
    ctx->Viewport._WindowMap.flags = MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION;
    ctx->Viewport._WindowMap.type = MATRIX_3D_NO_ROT;
    ctx->NewState |= _NEW_VIEWPORT;
@@ -521,8 +525,8 @@ _mesa_DepthRange( GLclampd nearval, GLclampd farval )
 
    ctx->Viewport.Near = n;
    ctx->Viewport.Far = f;
-   ctx->Viewport._WindowMap.m[MAT_SZ] = ctx->DepthMaxF * ((f - n) / 2.0);
-   ctx->Viewport._WindowMap.m[MAT_TZ] = ctx->DepthMaxF * ((f - n) / 2.0 + n);
+   ctx->Viewport._WindowMap.m[MAT_SZ] = ctx->DepthMaxF * ((f - n) / 2.0F);
+   ctx->Viewport._WindowMap.m[MAT_TZ] = ctx->DepthMaxF * ((f - n) / 2.0F + n);
    ctx->NewState |= _NEW_VIEWPORT;
 
    if (ctx->Driver.DepthRange) {

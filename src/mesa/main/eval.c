@@ -1,4 +1,4 @@
-/* $Id: eval.c,v 1.20 2001/05/16 17:06:28 brianp Exp $ */
+/* $Id: eval.c,v 1.21 2001/09/18 16:16:21 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -329,7 +329,7 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
    map->Order = uorder;
    map->u1 = u1;
    map->u2 = u2;
-   map->du = 1.0 / (u2 - u1);
+   map->du = 1.0F / (u2 - u1);
    if (map->Points)
       FREE( map->Points );
    map->Points = pnts;
@@ -349,7 +349,7 @@ void
 _mesa_Map1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
              GLint order, const GLdouble *points )
 {
-   map1(target, u1, u2, stride, order, points, GL_DOUBLE);
+   map1(target, (GLfloat) u1, (GLfloat) u2, stride, order, points, GL_DOUBLE);
 }
 
 
@@ -450,11 +450,11 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
    map->Uorder = uorder;
    map->u1 = u1;
    map->u2 = u2;
-   map->du = 1.0 / (u2 - u1);
+   map->du = 1.0F / (u2 - u1);
    map->Vorder = vorder;
    map->v1 = v1;
    map->v2 = v2;
-   map->dv = 1.0 / (v2 - v1);
+   map->dv = 1.0F / (v2 - v1);
    if (map->Points)
       FREE( map->Points );
    map->Points = pnts;
@@ -478,8 +478,8 @@ _mesa_Map2d( GLenum target,
              GLdouble v1, GLdouble v2, GLint vstride, GLint vorder,
              const GLdouble *points )
 {
-   map2(target, u1, u2, ustride, uorder, v1, v2, vstride, vorder,
-        points, GL_DOUBLE);
+   map2(target, (GLfloat) u1, (GLfloat) u2, ustride, uorder, 
+	(GLfloat) v1, (GLfloat) v2, vstride, vorder, points, GL_DOUBLE);
 }
 
 
@@ -863,67 +863,67 @@ _mesa_GetMapfv( GLenum target, GLenum query, GLfloat *v )
       case GL_ORDER:
 	 switch (target) {
 	    case GL_MAP1_COLOR_4:
-	       *v = ctx->EvalMap.Map1Color4.Order;
+	       *v = (GLfloat) ctx->EvalMap.Map1Color4.Order;
 	       break;
 	    case GL_MAP1_INDEX:
-	       *v = ctx->EvalMap.Map1Index.Order;
+	       *v = (GLfloat) ctx->EvalMap.Map1Index.Order;
 	       break;
 	    case GL_MAP1_NORMAL:
-	       *v = ctx->EvalMap.Map1Normal.Order;
+	       *v = (GLfloat) ctx->EvalMap.Map1Normal.Order;
 	       break;
 	    case GL_MAP1_TEXTURE_COORD_1:
-	       *v = ctx->EvalMap.Map1Texture1.Order;
+	       *v = (GLfloat) ctx->EvalMap.Map1Texture1.Order;
 	       break;
 	    case GL_MAP1_TEXTURE_COORD_2:
-	       *v = ctx->EvalMap.Map1Texture2.Order;
+	       *v = (GLfloat) ctx->EvalMap.Map1Texture2.Order;
 	       break;
 	    case GL_MAP1_TEXTURE_COORD_3:
-	       *v = ctx->EvalMap.Map1Texture3.Order;
+	       *v = (GLfloat) ctx->EvalMap.Map1Texture3.Order;
 	       break;
 	    case GL_MAP1_TEXTURE_COORD_4:
-	       *v = ctx->EvalMap.Map1Texture4.Order;
+	       *v = (GLfloat) ctx->EvalMap.Map1Texture4.Order;
 	       break;
 	    case GL_MAP1_VERTEX_3:
-	       *v = ctx->EvalMap.Map1Vertex3.Order;
+	       *v = (GLfloat) ctx->EvalMap.Map1Vertex3.Order;
 	       break;
 	    case GL_MAP1_VERTEX_4:
-	       *v = ctx->EvalMap.Map1Vertex4.Order;
+	       *v = (GLfloat) ctx->EvalMap.Map1Vertex4.Order;
 	       break;
 	    case GL_MAP2_COLOR_4:
-	       v[0] = ctx->EvalMap.Map2Color4.Uorder;
-	       v[1] = ctx->EvalMap.Map2Color4.Vorder;
+	       v[0] = (GLfloat) ctx->EvalMap.Map2Color4.Uorder;
+	       v[1] = (GLfloat) ctx->EvalMap.Map2Color4.Vorder;
 	       break;
 	    case GL_MAP2_INDEX:
-	       v[0] = ctx->EvalMap.Map2Index.Uorder;
-	       v[1] = ctx->EvalMap.Map2Index.Vorder;
+	       v[0] = (GLfloat) ctx->EvalMap.Map2Index.Uorder;
+	       v[1] = (GLfloat) ctx->EvalMap.Map2Index.Vorder;
 	       break;
 	    case GL_MAP2_NORMAL:
-	       v[0] = ctx->EvalMap.Map2Normal.Uorder;
-	       v[1] = ctx->EvalMap.Map2Normal.Vorder;
+	       v[0] = (GLfloat) ctx->EvalMap.Map2Normal.Uorder;
+	       v[1] = (GLfloat) ctx->EvalMap.Map2Normal.Vorder;
 	       break;
 	    case GL_MAP2_TEXTURE_COORD_1:
-	       v[0] = ctx->EvalMap.Map2Texture1.Uorder;
-	       v[1] = ctx->EvalMap.Map2Texture1.Vorder;
+	       v[0] = (GLfloat) ctx->EvalMap.Map2Texture1.Uorder;
+	       v[1] = (GLfloat) ctx->EvalMap.Map2Texture1.Vorder;
 	       break;
 	    case GL_MAP2_TEXTURE_COORD_2:
-	       v[0] = ctx->EvalMap.Map2Texture2.Uorder;
-	       v[1] = ctx->EvalMap.Map2Texture2.Vorder;
+	       v[0] = (GLfloat) ctx->EvalMap.Map2Texture2.Uorder;
+	       v[1] = (GLfloat) ctx->EvalMap.Map2Texture2.Vorder;
 	       break;
 	    case GL_MAP2_TEXTURE_COORD_3:
-	       v[0] = ctx->EvalMap.Map2Texture3.Uorder;
-	       v[1] = ctx->EvalMap.Map2Texture3.Vorder;
+	       v[0] = (GLfloat) ctx->EvalMap.Map2Texture3.Uorder;
+	       v[1] = (GLfloat) ctx->EvalMap.Map2Texture3.Vorder;
 	       break;
 	    case GL_MAP2_TEXTURE_COORD_4:
-	       v[0] = ctx->EvalMap.Map2Texture4.Uorder;
-	       v[1] = ctx->EvalMap.Map2Texture4.Vorder;
+	       v[0] = (GLfloat) ctx->EvalMap.Map2Texture4.Uorder;
+	       v[1] = (GLfloat) ctx->EvalMap.Map2Texture4.Vorder;
 	       break;
 	    case GL_MAP2_VERTEX_3:
-	       v[0] = ctx->EvalMap.Map2Vertex3.Uorder;
-	       v[1] = ctx->EvalMap.Map2Vertex3.Vorder;
+	       v[0] = (GLfloat) ctx->EvalMap.Map2Vertex3.Uorder;
+	       v[1] = (GLfloat) ctx->EvalMap.Map2Vertex3.Vorder;
 	       break;
 	    case GL_MAP2_VERTEX_4:
-	       v[0] = ctx->EvalMap.Map2Vertex4.Uorder;
-	       v[1] = ctx->EvalMap.Map2Vertex4.Vorder;
+	       v[0] = (GLfloat) ctx->EvalMap.Map2Vertex4.Uorder;
+	       v[1] = (GLfloat) ctx->EvalMap.Map2Vertex4.Vorder;
 	       break;
 	    default:
 	       _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapfv(target)" );
@@ -1328,7 +1328,7 @@ _mesa_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
 void
 _mesa_MapGrid1d( GLint un, GLdouble u1, GLdouble u2 )
 {
-   _mesa_MapGrid1f( un, u1, u2 );
+   _mesa_MapGrid1f( un, (GLfloat) u1, (GLfloat) u2 );
 }
 
 
@@ -1364,5 +1364,6 @@ void
 _mesa_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
                  GLint vn, GLdouble v1, GLdouble v2 )
 {
-   _mesa_MapGrid2f( un, u1, u2, vn, v1, v2 );
+   _mesa_MapGrid2f( un, (GLfloat) u1, (GLfloat) u2, 
+		    vn, (GLfloat) v1, (GLfloat) v2 );
 }

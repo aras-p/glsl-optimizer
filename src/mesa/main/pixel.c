@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.30 2001/07/13 20:07:37 brianp Exp $ */
+/* $Id: pixel.c,v 1.31 2001/09/18 16:16:21 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -290,7 +290,7 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
       case GL_PIXEL_MAP_I_TO_R:
          ctx->Pixel.MapItoRsize = mapsize;
          for (i=0;i<mapsize;i++) {
-            GLfloat val = CLAMP( values[i], 0.0, 1.0 );
+            GLfloat val = CLAMP( values[i], 0.0F, 1.0F );
 	    ctx->Pixel.MapItoR[i] = val;
 	    ctx->Pixel.MapItoR8[i] = (GLint) (val * 255.0F);
 	 }
@@ -298,7 +298,7 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
       case GL_PIXEL_MAP_I_TO_G:
          ctx->Pixel.MapItoGsize = mapsize;
          for (i=0;i<mapsize;i++) {
-            GLfloat val = CLAMP( values[i], 0.0, 1.0 );
+            GLfloat val = CLAMP( values[i], 0.0F, 1.0F );
 	    ctx->Pixel.MapItoG[i] = val;
 	    ctx->Pixel.MapItoG8[i] = (GLint) (val * 255.0F);
 	 }
@@ -306,7 +306,7 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
       case GL_PIXEL_MAP_I_TO_B:
          ctx->Pixel.MapItoBsize = mapsize;
          for (i=0;i<mapsize;i++) {
-            GLfloat val = CLAMP( values[i], 0.0, 1.0 );
+            GLfloat val = CLAMP( values[i], 0.0F, 1.0F );
 	    ctx->Pixel.MapItoB[i] = val;
 	    ctx->Pixel.MapItoB8[i] = (GLint) (val * 255.0F);
 	 }
@@ -314,7 +314,7 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
       case GL_PIXEL_MAP_I_TO_A:
          ctx->Pixel.MapItoAsize = mapsize;
          for (i=0;i<mapsize;i++) {
-            GLfloat val = CLAMP( values[i], 0.0, 1.0 );
+            GLfloat val = CLAMP( values[i], 0.0F, 1.0F );
 	    ctx->Pixel.MapItoA[i] = val;
 	    ctx->Pixel.MapItoA8[i] = (GLint) (val * 255.0F);
 	 }
@@ -322,25 +322,25 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
       case GL_PIXEL_MAP_R_TO_R:
          ctx->Pixel.MapRtoRsize = mapsize;
          for (i=0;i<mapsize;i++) {
-	    ctx->Pixel.MapRtoR[i] = CLAMP( values[i], 0.0, 1.0 );
+	    ctx->Pixel.MapRtoR[i] = CLAMP( values[i], 0.0F, 1.0F );
 	 }
 	 break;
       case GL_PIXEL_MAP_G_TO_G:
          ctx->Pixel.MapGtoGsize = mapsize;
          for (i=0;i<mapsize;i++) {
-	    ctx->Pixel.MapGtoG[i] = CLAMP( values[i], 0.0, 1.0 );
+	    ctx->Pixel.MapGtoG[i] = CLAMP( values[i], 0.0F, 1.0F );
 	 }
 	 break;
       case GL_PIXEL_MAP_B_TO_B:
          ctx->Pixel.MapBtoBsize = mapsize;
          for (i=0;i<mapsize;i++) {
-	    ctx->Pixel.MapBtoB[i] = CLAMP( values[i], 0.0, 1.0 );
+	    ctx->Pixel.MapBtoB[i] = CLAMP( values[i], 0.0F, 1.0F );
 	 }
 	 break;
       case GL_PIXEL_MAP_A_TO_A:
          ctx->Pixel.MapAtoAsize = mapsize;
          for (i=0;i<mapsize;i++) {
-	    ctx->Pixel.MapAtoA[i] = CLAMP( values[i], 0.0, 1.0 );
+	    ctx->Pixel.MapAtoA[i] = CLAMP( values[i], 0.0F, 1.0F );
 	 }
 	 break;
       default:
@@ -822,10 +822,10 @@ _mesa_scale_and_bias_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4],
 void
 _mesa_map_rgba( const GLcontext *ctx, GLuint n, GLfloat rgba[][4] )
 {
-   const GLfloat rscale = ctx->Pixel.MapRtoRsize - 1;
-   const GLfloat gscale = ctx->Pixel.MapGtoGsize - 1;
-   const GLfloat bscale = ctx->Pixel.MapBtoBsize - 1;
-   const GLfloat ascale = ctx->Pixel.MapAtoAsize - 1;
+   const GLfloat rscale = (GLfloat) (ctx->Pixel.MapRtoRsize - 1);
+   const GLfloat gscale = (GLfloat) (ctx->Pixel.MapGtoGsize - 1);
+   const GLfloat bscale = (GLfloat) (ctx->Pixel.MapBtoBsize - 1);
+   const GLfloat ascale = (GLfloat) (ctx->Pixel.MapAtoAsize - 1);
    const GLfloat *rMap = ctx->Pixel.MapRtoR;
    const GLfloat *gMap = ctx->Pixel.MapGtoG;
    const GLfloat *bMap = ctx->Pixel.MapBtoB;
@@ -1297,15 +1297,15 @@ _mesa_chan_to_float_span(const GLcontext *ctx, GLuint n,
    const GLuint gShift = CHAN_BITS - ctx->Visual.greenBits;
    const GLuint bShift = CHAN_BITS - ctx->Visual.blueBits;
    GLuint aShift;
-   const GLfloat rScale = 1.0 / (GLfloat) ((1 << ctx->Visual.redBits  ) - 1);
-   const GLfloat gScale = 1.0 / (GLfloat) ((1 << ctx->Visual.greenBits) - 1);
-   const GLfloat bScale = 1.0 / (GLfloat) ((1 << ctx->Visual.blueBits ) - 1);
+   const GLfloat rScale = 1.0F / (GLfloat) ((1 << ctx->Visual.redBits  ) - 1);
+   const GLfloat gScale = 1.0F / (GLfloat) ((1 << ctx->Visual.greenBits) - 1);
+   const GLfloat bScale = 1.0F / (GLfloat) ((1 << ctx->Visual.blueBits ) - 1);
    GLfloat aScale;
    GLuint i;
 
    if (ctx->Visual.alphaBits > 0) {
       aShift = CHAN_BITS - ctx->Visual.alphaBits;
-      aScale = 1.0 / (GLfloat) ((1 << ctx->Visual.alphaBits) - 1);
+      aScale = 1.0F / (GLfloat) ((1 << ctx->Visual.alphaBits) - 1);
    }
    else {
       aShift = 0;

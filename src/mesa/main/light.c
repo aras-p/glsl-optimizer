@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.45 2001/07/28 19:28:49 keithw Exp $ */
+/* $Id: light.c,v 1.46 2001/09/18 16:16:21 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -161,7 +161,7 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 	 return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       l->SpotCutoff = params[0];
-      l->_CosCutoff = cos(params[0]*DEG2RAD);
+      l->_CosCutoff = (GLfloat) cos(params[0]*DEG2RAD);
       if (l->_CosCutoff < 0)
 	 l->_CosCutoff = 0;
       if (l->SpotCutoff != 180.0F)
@@ -1058,7 +1058,7 @@ static void validate_spot_exp_table( struct gl_light *l )
 	    clamp = 1;
 	 }
       }
-      l->_SpotExpTable[i][0] = tmp;
+      l->_SpotExpTable[i][0] = (GLfloat) tmp;
    }
    for (i = 0; i < EXP_TABLE_SIZE - 1; i++) {
       l->_SpotExpTable[i][1] = (l->_SpotExpTable[i+1][0] -
@@ -1112,7 +1112,7 @@ static void validate_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
                x = 0.005;
             t = pow(x, shininess);
 	    if (t > 1e-20)
-	       m[j] = t;
+	       m[j] = (GLfloat) t;
 	    else
 	       m[j] = 0.0;
 	 }
@@ -1225,7 +1225,7 @@ _mesa_update_lighting( GLcontext *ctx )
       }
    }
    else {
-      static const GLfloat ci[3] = { .30, .59, .11 };
+      static const GLfloat ci[3] = { .30F, .59F, .11F };
       foreach(light, &ctx->Light.EnabledList) {
 	 light->_dli = DOT3(ci, light->Diffuse);
 	 light->_sli = DOT3(ci, light->Specular);
@@ -1300,7 +1300,7 @@ _mesa_compute_light_positions( GLcontext *ctx )
 	       double x = PV_dot_dir * (EXP_TABLE_SIZE-1);
 	       int k = (int) x;
 	       light->_VP_inf_spot_attenuation =
-		  (light->_SpotExpTable[k][0] +
+		  (GLfloat) (light->_SpotExpTable[k][0] +
 		   (x-k)*light->_SpotExpTable[k][1]);
 	    }
 	    else {

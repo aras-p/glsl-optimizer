@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.67 2001/08/28 22:46:22 brianp Exp $ */
+/* $Id: get.c,v 1.68 2001/09/18 16:16:21 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3398,13 +3398,13 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) ctx->Const.SubPixelBits;
 	 break;
       case GL_TEXTURE_1D:
-         *params = _mesa_IsEnabled(GL_TEXTURE_1D) ? 1.0 : 0.0;
+         *params = _mesa_IsEnabled(GL_TEXTURE_1D) ? 1.0F : 0.0F;
 	 break;
       case GL_TEXTURE_2D:
-         *params = _mesa_IsEnabled(GL_TEXTURE_2D) ? 1.0 : 0.0;
+         *params = _mesa_IsEnabled(GL_TEXTURE_2D) ? 1.0F : 0.0F;
 	 break;
       case GL_TEXTURE_3D:
-         *params = _mesa_IsEnabled(GL_TEXTURE_3D) ? 1.0 : 0.0;
+         *params = _mesa_IsEnabled(GL_TEXTURE_3D) ? 1.0F : 0.0F;
 	 break;
       case GL_TEXTURE_BINDING_1D:
          *params = (GLfloat) textureUnit->Current1D->Name;
@@ -3425,16 +3425,16 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = ENUM_TO_FLOAT(textureUnit->EnvMode);
 	 break;
       case GL_TEXTURE_GEN_S:
-	 *params = (textureUnit->TexGenEnabled & S_BIT) ? 1.0 : 0.0;
+	 *params = (textureUnit->TexGenEnabled & S_BIT) ? 1.0F : 0.0F;
 	 break;
       case GL_TEXTURE_GEN_T:
-	 *params = (textureUnit->TexGenEnabled & T_BIT) ? 1.0 : 0.0;
+	 *params = (textureUnit->TexGenEnabled & T_BIT) ? 1.0F : 0.0F;
 	 break;
       case GL_TEXTURE_GEN_R:
-	 *params = (textureUnit->TexGenEnabled & R_BIT) ? 1.0 : 0.0;
+	 *params = (textureUnit->TexGenEnabled & R_BIT) ? 1.0F : 0.0F;
 	 break;
       case GL_TEXTURE_GEN_Q:
-	 *params = (textureUnit->TexGenEnabled & Q_BIT) ? 1.0 : 0.0;
+	 *params = (textureUnit->TexGenEnabled & Q_BIT) ? 1.0F : 0.0F;
 	 break;
       case GL_TEXTURE_MATRIX:
          for (i=0;i<16;i++) {

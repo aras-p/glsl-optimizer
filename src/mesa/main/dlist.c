@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.75 2001/06/18 17:26:08 brianp Exp $ */
+/* $Id: dlist.c,v 1.76 2001/09/18 16:16:21 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -999,10 +999,10 @@ static void save_ClipPlane( GLenum plane, const GLdouble *equ )
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CLIP_PLANE, 5 );
    if (n) {
       n[1].e = plane;
-      n[2].f = equ[0];
-      n[3].f = equ[1];
-      n[4].f = equ[2];
-      n[5].f = equ[3];
+      n[2].f = (GLfloat) equ[0];
+      n[3].f = (GLfloat) equ[1];
+      n[4].f = (GLfloat) equ[2];
+      n[5].f = (GLfloat) equ[3];
    }
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->ClipPlane)( plane, equ );
@@ -1770,12 +1770,12 @@ static void save_Frustum( GLdouble left, GLdouble right,
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_FRUSTUM, 6 );
    if (n) {
-      n[1].f = left;
-      n[2].f = right;
-      n[3].f = bottom;
-      n[4].f = top;
-      n[5].f = nearval;
-      n[6].f = farval;
+      n[1].f = (GLfloat) left;
+      n[2].f = (GLfloat) right;
+      n[3].f = (GLfloat) bottom;
+      n[4].f = (GLfloat) top;
+      n[5].f = (GLfloat) nearval;
+      n[6].f = (GLfloat) farval;
    }
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->Frustum)( left, right, bottom, top, nearval, farval );
@@ -2083,7 +2083,7 @@ static void save_LoadMatrixd( const GLdouble *m )
    GLfloat f[16];
    GLint i;
    for (i = 0; i < 16; i++) {
-      f[i] = m[i];
+      f[i] = (GLfloat) m[i];
    }
    save_LoadMatrixf(f);
 }
@@ -2129,8 +2129,8 @@ static void save_Map1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
    if (n) {
       GLfloat *pnts = _mesa_copy_map_points1d( target, stride, order, points );
       n[1].e = target;
-      n[2].f = u1;
-      n[3].f = u2;
+      n[2].f = (GLfloat) u1;
+      n[3].f = (GLfloat) u2;
       n[4].i = _mesa_evaluator_components(target);  /* stride */
       n[5].i = order;
       n[6].data = (void *) pnts;
@@ -2175,10 +2175,10 @@ static void save_Map2d( GLenum target,
       GLfloat *pnts = _mesa_copy_map_points2d( target, ustride, uorder,
                                             vstride, vorder, points );
       n[1].e = target;
-      n[2].f = u1;
-      n[3].f = u2;
-      n[4].f = v1;
-      n[5].f = v2;
+      n[2].f = (GLfloat) u1;
+      n[3].f = (GLfloat) u2;
+      n[4].f = (GLfloat) v1;
+      n[5].f = (GLfloat) v2;
       /* XXX verify these strides are correct */
       n[6].i = _mesa_evaluator_components(target) * vorder;  /*ustride*/
       n[7].i = _mesa_evaluator_components(target);           /*vstride*/
@@ -2244,7 +2244,7 @@ static void save_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
 
 static void save_MapGrid1d( GLint un, GLdouble u1, GLdouble u2 )
 {
-   save_MapGrid1f(un, u1, u2);
+   save_MapGrid1f(un, (GLfloat) u1, (GLfloat) u2);
 }
 
 
@@ -2273,7 +2273,8 @@ static void save_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
 static void save_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
                             GLint vn, GLdouble v1, GLdouble v2 )
 {
-   save_MapGrid2f(un, u1, u2, vn, v1, v2);
+   save_MapGrid2f(un, (GLfloat) u1, (GLfloat) u2, 
+		  vn, (GLfloat) v1, (GLfloat) v2);
 }
 
 
@@ -2334,7 +2335,7 @@ static void save_MultMatrixd( const GLdouble *m )
    GLfloat f[16];
    GLint i;
    for (i = 0; i < 16; i++) {
-      f[i] = m[i];
+      f[i] = (GLfloat) m[i];
    }
    save_MultMatrixf(f);
 }
@@ -2360,12 +2361,12 @@ static void save_Ortho( GLdouble left, GLdouble right,
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_ORTHO, 6 );
    if (n) {
-      n[1].f = left;
-      n[2].f = right;
-      n[3].f = bottom;
-      n[4].f = top;
-      n[5].f = nearval;
-      n[6].f = farval;
+      n[1].f = (GLfloat) left;
+      n[2].f = (GLfloat) right;
+      n[3].f = (GLfloat) bottom;
+      n[4].f = (GLfloat) top;
+      n[5].f = (GLfloat) nearval;
+      n[6].f = (GLfloat) farval;
    }
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->Ortho)( left, right, bottom, top, nearval, farval );
@@ -2688,7 +2689,7 @@ static void save_RasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 
 static void save_RasterPos2d(GLdouble x, GLdouble y)
 {
-   save_RasterPos4f(x, y, 0.0F, 1.0F);
+   save_RasterPos4f((GLfloat) x, (GLfloat) y, 0.0F, 1.0F);
 }
 
 static void save_RasterPos2f(GLfloat x, GLfloat y)
@@ -2698,7 +2699,7 @@ static void save_RasterPos2f(GLfloat x, GLfloat y)
 
 static void save_RasterPos2i(GLint x, GLint y)
 {
-   save_RasterPos4f(x, y, 0.0F, 1.0F);
+   save_RasterPos4f((GLfloat) x, (GLfloat) y, 0.0F, 1.0F);
 }
 
 static void save_RasterPos2s(GLshort x, GLshort y)
@@ -2708,7 +2709,7 @@ static void save_RasterPos2s(GLshort x, GLshort y)
 
 static void save_RasterPos3d(GLdouble x, GLdouble y, GLdouble z)
 {
-   save_RasterPos4f(x, y, z, 1.0F);
+   save_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
 static void save_RasterPos3f(GLfloat x, GLfloat y, GLfloat z)
@@ -2718,7 +2719,7 @@ static void save_RasterPos3f(GLfloat x, GLfloat y, GLfloat z)
 
 static void save_RasterPos3i(GLint x, GLint y, GLint z)
 {
-   save_RasterPos4f(x, y, z, 1.0F);
+   save_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
 static void save_RasterPos3s(GLshort x, GLshort y, GLshort z)
@@ -2728,12 +2729,12 @@ static void save_RasterPos3s(GLshort x, GLshort y, GLshort z)
 
 static void save_RasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-   save_RasterPos4f(x, y, z, w);
+   save_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 static void save_RasterPos4i(GLint x, GLint y, GLint z, GLint w)
 {
-   save_RasterPos4f(x, y, z, w);
+   save_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 static void save_RasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
@@ -2743,7 +2744,7 @@ static void save_RasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
 
 static void save_RasterPos2dv(const GLdouble *v)
 {
-   save_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
+   save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
 }
 
 static void save_RasterPos2fv(const GLfloat *v)
@@ -2753,7 +2754,7 @@ static void save_RasterPos2fv(const GLfloat *v)
 
 static void save_RasterPos2iv(const GLint *v)
 {
-   save_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
+   save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
 }
 
 static void save_RasterPos2sv(const GLshort *v)
@@ -2763,7 +2764,7 @@ static void save_RasterPos2sv(const GLshort *v)
 
 static void save_RasterPos3dv(const GLdouble *v)
 {
-   save_RasterPos4f(v[0], v[1], v[2], 1.0F);
+   save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
 }
 
 static void save_RasterPos3fv(const GLfloat *v)
@@ -2773,7 +2774,7 @@ static void save_RasterPos3fv(const GLfloat *v)
 
 static void save_RasterPos3iv(const GLint *v)
 {
-   save_RasterPos4f(v[0], v[1], v[2], 1.0F);
+   save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
 }
 
 static void save_RasterPos3sv(const GLshort *v)
@@ -2783,7 +2784,8 @@ static void save_RasterPos3sv(const GLshort *v)
 
 static void save_RasterPos4dv(const GLdouble *v)
 {
-   save_RasterPos4f(v[0], v[1], v[2], v[3]);
+   save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 
+		    (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void save_RasterPos4fv(const GLfloat *v)
@@ -2793,7 +2795,8 @@ static void save_RasterPos4fv(const GLfloat *v)
 
 static void save_RasterPos4iv(const GLint *v)
 {
-   save_RasterPos4f(v[0], v[1], v[2], v[3]);
+   save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 
+		    (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void save_RasterPos4sv(const GLshort *v)
@@ -2884,7 +2887,7 @@ static void save_Rotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
 
 static void save_Rotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z )
 {
-   save_Rotatef(angle, x, y, z);
+   save_Rotatef((GLfloat) angle, (GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
 
@@ -2907,7 +2910,7 @@ static void save_Scalef( GLfloat x, GLfloat y, GLfloat z )
 
 static void save_Scaled( GLdouble x, GLdouble y, GLdouble z )
 {
-   save_Scalef(x, y, z);
+   save_Scalef((GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
 
@@ -3062,10 +3065,10 @@ static void save_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 static void save_TexGeniv(GLenum coord, GLenum pname, const GLint *params )
 {
    GLfloat p[4];
-   p[0] = params[0];
-   p[1] = params[1];
-   p[2] = params[2];
-   p[3] = params[3];
+   p[0] = (GLfloat) params[0];
+   p[1] = (GLfloat) params[1];
+   p[2] = (GLfloat) params[2];
+   p[3] = (GLfloat) params[3];
    save_TexGenfv(coord, pname, p);
 }
 
@@ -3080,10 +3083,10 @@ static void save_TexGend(GLenum coord, GLenum pname, GLdouble param )
 static void save_TexGendv(GLenum coord, GLenum pname, const GLdouble *params )
 {
    GLfloat p[4];
-   p[0] = params[0];
-   p[1] = params[1];
-   p[2] = params[2];
-   p[3] = params[3];
+   p[0] = (GLfloat) params[0];
+   p[1] = (GLfloat) params[1];
+   p[2] = (GLfloat) params[2];
+   p[3] = (GLfloat) params[3];
    save_TexGenfv( coord, pname, p );
 }
 
@@ -3383,7 +3386,7 @@ static void save_Translatef( GLfloat x, GLfloat y, GLfloat z )
 
 static void save_Translated( GLdouble x, GLdouble y, GLdouble z )
 {
-   save_Translatef(x, y, z);
+   save_Translatef((GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
 
@@ -3426,7 +3429,7 @@ static void save_WindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 
 static void save_WindowPos2dMESA(GLdouble x, GLdouble y)
 {
-   save_WindowPos4fMESA(x, y, 0.0F, 1.0F);
+   save_WindowPos4fMESA((GLfloat) x, (GLfloat) y, 0.0F, 1.0F);
 }
 
 static void save_WindowPos2fMESA(GLfloat x, GLfloat y)
@@ -3436,7 +3439,7 @@ static void save_WindowPos2fMESA(GLfloat x, GLfloat y)
 
 static void save_WindowPos2iMESA(GLint x, GLint y)
 {
-   save_WindowPos4fMESA(x, y, 0.0F, 1.0F);
+   save_WindowPos4fMESA((GLfloat) x, (GLfloat) y, 0.0F, 1.0F);
 }
 
 static void save_WindowPos2sMESA(GLshort x, GLshort y)
@@ -3446,7 +3449,7 @@ static void save_WindowPos2sMESA(GLshort x, GLshort y)
 
 static void save_WindowPos3dMESA(GLdouble x, GLdouble y, GLdouble z)
 {
-   save_WindowPos4fMESA(x, y, z, 1.0F);
+   save_WindowPos4fMESA((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
 static void save_WindowPos3fMESA(GLfloat x, GLfloat y, GLfloat z)
@@ -3456,7 +3459,7 @@ static void save_WindowPos3fMESA(GLfloat x, GLfloat y, GLfloat z)
 
 static void save_WindowPos3iMESA(GLint x, GLint y, GLint z)
 {
-   save_WindowPos4fMESA(x, y, z, 1.0F);
+   save_WindowPos4fMESA((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
 static void save_WindowPos3sMESA(GLshort x, GLshort y, GLshort z)
@@ -3466,12 +3469,12 @@ static void save_WindowPos3sMESA(GLshort x, GLshort y, GLshort z)
 
 static void save_WindowPos4dMESA(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-   save_WindowPos4fMESA(x, y, z, w);
+   save_WindowPos4fMESA((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 static void save_WindowPos4iMESA(GLint x, GLint y, GLint z, GLint w)
 {
-   save_WindowPos4fMESA(x, y, z, w);
+   save_WindowPos4fMESA((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 static void save_WindowPos4sMESA(GLshort x, GLshort y, GLshort z, GLshort w)
@@ -3481,7 +3484,7 @@ static void save_WindowPos4sMESA(GLshort x, GLshort y, GLshort z, GLshort w)
 
 static void save_WindowPos2dvMESA(const GLdouble *v)
 {
-   save_WindowPos4fMESA(v[0], v[1], 0.0F, 1.0F);
+   save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
 }
 
 static void save_WindowPos2fvMESA(const GLfloat *v)
@@ -3491,7 +3494,7 @@ static void save_WindowPos2fvMESA(const GLfloat *v)
 
 static void save_WindowPos2ivMESA(const GLint *v)
 {
-   save_WindowPos4fMESA(v[0], v[1], 0.0F, 1.0F);
+   save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
 }
 
 static void save_WindowPos2svMESA(const GLshort *v)
@@ -3501,7 +3504,7 @@ static void save_WindowPos2svMESA(const GLshort *v)
 
 static void save_WindowPos3dvMESA(const GLdouble *v)
 {
-   save_WindowPos4fMESA(v[0], v[1], v[2], 1.0F);
+   save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
 }
 
 static void save_WindowPos3fvMESA(const GLfloat *v)
@@ -3511,7 +3514,7 @@ static void save_WindowPos3fvMESA(const GLfloat *v)
 
 static void save_WindowPos3ivMESA(const GLint *v)
 {
-   save_WindowPos4fMESA(v[0], v[1], v[2], 1.0F);
+   save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
 }
 
 static void save_WindowPos3svMESA(const GLshort *v)
@@ -3521,7 +3524,8 @@ static void save_WindowPos3svMESA(const GLshort *v)
 
 static void save_WindowPos4dvMESA(const GLdouble *v)
 {
-   save_WindowPos4fMESA(v[0], v[1], v[2], v[3]);
+   save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], 
+			(GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void save_WindowPos4fvMESA(const GLfloat *v)
@@ -3531,7 +3535,8 @@ static void save_WindowPos4fvMESA(const GLfloat *v)
 
 static void save_WindowPos4ivMESA(const GLint *v)
 {
-   save_WindowPos4fMESA(v[0], v[1], v[2], v[3]);
+   save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], 
+			(GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void save_WindowPos4svMESA(const GLshort *v)
@@ -4055,7 +4060,7 @@ execute_list( GLcontext *ctx, GLuint list )
 	    (*ctx->Exec->ClearDepth)( (GLclampd) n[1].f );
 	    break;
 	 case OPCODE_CLEAR_INDEX:
-	    (*ctx->Exec->ClearIndex)( n[1].ui );
+	    (*ctx->Exec->ClearIndex)( (GLfloat) n[1].ui );
 	    break;
 	 case OPCODE_CLEAR_STENCIL:
 	    (*ctx->Exec->ClearStencil)( n[1].i );
