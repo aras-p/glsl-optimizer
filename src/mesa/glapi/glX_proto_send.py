@@ -142,8 +142,8 @@ class PrintGlxProtoStubs(glX_XML.GlxProto):
 		print '         temp.s[0] = (size); temp.s[1] = (op); \\'
 		print '         *((int *)(dest)) = temp.i; } while(0)'
 		print ''
-		print """static NOINLINE CARD32
-read_reply( Display *dpy, size_t size, void * dest, GLboolean reply_is_always_array )
+		print """NOINLINE CARD32
+__glXReadReply( Display *dpy, size_t size, void * dest, GLboolean reply_is_always_array )
 {
     xGLXSingleReply reply;
     
@@ -167,8 +167,8 @@ read_reply( Display *dpy, size_t size, void * dest, GLboolean reply_is_always_ar
     return reply.retval;
 }
 
-static NOINLINE void
-read_pixel_reply( Display *dpy, __GLXcontext * gc, unsigned max_dim,
+NOINLINE void
+__glXReadPixelReply( Display *dpy, __GLXcontext * gc, unsigned max_dim,
     GLint width, GLint height, GLint depth, GLenum format, GLenum type,
     void * dest, GLboolean dimensions_in_reply )
 {
@@ -211,8 +211,8 @@ read_pixel_reply( Display *dpy, __GLXcontext * gc, unsigned max_dim,
 
 #define X_GLXSingle 0
 
-static NOINLINE FASTCALL GLubyte *
-setup_single_request( __GLXcontext * gc, GLint sop, GLint cmdlen )
+NOINLINE FASTCALL GLubyte *
+__glXSetupSingleRequest( __GLXcontext * gc, GLint sop, GLint cmdlen )
 {
     xGLXSingleReq * req;
     Display * const dpy = gc->currentDpy;
@@ -226,8 +226,8 @@ setup_single_request( __GLXcontext * gc, GLint sop, GLint cmdlen )
     return (GLubyte *)(req) + sz_xGLXSingleReq;
 }
 
-static NOINLINE FASTCALL GLubyte *
-setup_vendor_request( __GLXcontext * gc, GLint code, GLint vop, GLint cmdlen )
+NOINLINE FASTCALL GLubyte *
+__glXSetupVendorRequest( __GLXcontext * gc, GLint code, GLint vop, GLint cmdlen )
 {
     xGLXVendorPrivateReq * req;
     Display * const dpy = gc->currentDpy;
@@ -425,9 +425,9 @@ generic_%u_byte( GLint rop, const void * ptr )
 			pc_decl = "(void)"
 
 		if f.glx_vendorpriv != 0:
-			print '        %s setup_vendor_request(gc, %s, %s, cmdlen);' % (pc_decl, f.opcode_real_name(), f.opcode_name())
+			print '        %s __glXSetupVendorRequest(gc, %s, %s, cmdlen);' % (pc_decl, f.opcode_real_name(), f.opcode_name())
 		else:
-			print '        %s setup_single_request(gc, %s, cmdlen);' % (pc_decl, f.opcode_name())
+			print '        %s __glXSetupSingleRequest(gc, %s, cmdlen);' % (pc_decl, f.opcode_name())
 
 		self.common_emit_args(f, "pc", "    ", 0, 0)
 		if f.image and f.image.is_output:
@@ -444,9 +444,9 @@ generic_%u_byte( GLint rop, const void * ptr )
 			if f.image and f.image.is_output:
 				[dim, w, h, d, junk] = f.dimensions()
 				if f.dimensions_in_reply:
-					print "        read_pixel_reply(dpy, gc, %u, 0, 0, 0, %s, %s, %s, GL_TRUE);" % (dim, f.image.img_format, f.image.img_type, f.image.name)
+					print "        __glXReadPixelReply(dpy, gc, %u, 0, 0, 0, %s, %s, %s, GL_TRUE);" % (dim, f.image.img_format, f.image.img_type, f.image.name)
 				else:
-					print "        read_pixel_reply(dpy, gc, %u, %s, %s, %s, %s, %s, %s, GL_FALSE);" % (dim, w, h, d, f.image.img_format, f.image.img_type, f.image.name)
+					print "        __glXReadPixelReply(dpy, gc, %u, %s, %s, %s, %s, %s, %s, GL_FALSE);" % (dim, w, h, d, f.image.img_format, f.image.img_type, f.image.name)
 			else:
 				if f.output != None:
 					output_size = f.output.p_type.size
@@ -465,7 +465,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 				else:
 					aa = "GL_FALSE"
 
-				print "       %s read_reply(dpy, %s, %s, %s);" % (return_str, output_size, output_str, aa)
+				print "       %s __glXReadReply(dpy, %s, %s, %s);" % (return_str, output_size, output_str, aa)
 
 		elif self.debug:
 			# Only emit the extra glFinish call for functions
@@ -825,6 +825,26 @@ class PrintGlxProtoInit_h(glX_XML.GlxProto):
  */
 """
 		self.printVisibility( "HIDDEN", "hidden" )
+		self.printFastcall()
+		self.printNoinline()
+
+		print """
+#include "glxclient.h"
+
+extern HIDDEN NOINLINE CARD32 __glXReadReply( Display *dpy, size_t size,
+    void * dest, GLboolean reply_is_always_array );
+
+extern HIDDEN NOINLINE void __glXReadPixelReply( Display *dpy,
+    __GLXcontext * gc, unsigned max_dim, GLint width, GLint height,
+    GLint depth, GLenum format, GLenum type, void * dest,
+    GLboolean dimensions_in_reply );
+
+extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupSingleRequest(
+    __GLXcontext * gc, GLint sop, GLint cmdlen );
+
+extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupVendorRequest(
+    __GLXcontext * gc, GLint code, GLint vop, GLint cmdlen );
+"""
 
 
 	def printFunction(self, f):

@@ -42,6 +42,33 @@
 #  else
 #    define HIDDEN
 #  endif
+#  if defined(__i386__) && defined(__GNUC__)
+#    define FASTCALL __attribute__((fastcall))
+#  else
+#    define FASTCALL
+#  endif
+#  if defined(__GNUC__)
+#    define NOINLINE __attribute__((noinline))
+#  else
+#    define NOINLINE
+#  endif
+
+#include "glxclient.h"
+
+extern HIDDEN NOINLINE CARD32 __glXReadReply( Display *dpy, size_t size,
+    void * dest, GLboolean reply_is_always_array );
+
+extern HIDDEN NOINLINE void __glXReadPixelReply( Display *dpy,
+    __GLXcontext * gc, unsigned max_dim, GLint width, GLint height,
+    GLint depth, GLenum format, GLenum type, void * dest,
+    GLboolean dimensions_in_reply );
+
+extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupSingleRequest(
+    __GLXcontext * gc, GLint sop, GLint cmdlen );
+
+extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupVendorRequest(
+    __GLXcontext * gc, GLint code, GLint vop, GLint cmdlen );
+
 extern HIDDEN void __indirect_glNewList(GLuint list, GLenum mode);
 extern HIDDEN void __indirect_glEndList(void);
 extern HIDDEN void __indirect_glCallList(GLuint list);
@@ -521,5 +548,7 @@ extern HIDDEN void __indirect_glMultiDrawElementsEXT(GLenum mode, const GLsizei 
 extern HIDDEN void __indirect_glActiveStencilFaceEXT(GLenum face);
 
 #  undef HIDDEN
+#  undef FASTCALL
+#  undef NOINLINE
 
 #endif /* !defined( _INDIRECT_H_ ) */
