@@ -836,7 +836,7 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
 	    errstr = "unknown";
 	    break;
       }
-      _mesa_debug(ctx, "Mesa user error: %s in %s\n", errstr, where);
+      _mesa_debug(ctx, "User error: %s in %s\n", errstr, where);
    }
 
    _mesa_record_error(ctx, error);
