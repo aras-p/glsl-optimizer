@@ -164,17 +164,17 @@ driCheckDriDdxDrmVersions(__DRIscreenPrivate *sPriv,
 	 return GL_FALSE;
       }
    }
-#else
-   (void)major;(void)minor;(void)patch;
-#endif
-   
+
    /* Check that the DDX driver version is compatible */
    if (sPriv->ddxMajor != ddx_major || sPriv->ddxMinor < ddx_minor) {
       __driUtilMessage(format, "DDX", driver_name, ddx_major, ddx_minor,
 		       sPriv->ddxMajor, sPriv->ddxMinor, sPriv->ddxPatch);
       return GL_FALSE;
    }
-
+#else
+   (void)major;(void)minor;(void)patch;
+#endif
+   
    /* Check that the DRM driver version is compatible */
    if (sPriv->drmMajor != drm_major || sPriv->drmMinor < drm_minor) {
       __driUtilMessage(format, "DRM", driver_name, drm_major, drm_minor,
