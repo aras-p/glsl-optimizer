@@ -1,4 +1,4 @@
-/* $Id: glu.h,v 1.20 2000/05/22 16:21:27 brianp Exp $ */
+/* $Id: glu.h,v 1.21 2000/05/22 19:40:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,7 +39,7 @@ extern "C" {
 
 
 	/* to facilitate clean DLL building ... */
-#if !defined(OPENSTEP) && (defined(__WIN32__) || defined(__CYGWIN32__))
+#if !defined(OPENSTEP) && (defined(__WIN32__) || defined(__CYGWIN__))
 #	if defined(_MSC_VER) && defined(BUILD_GLU32) /* tag specify we're building mesa as a DLL */
 #		define GLUAPI __declspec(dllexport)
 #	elif defined(_MSC_VER) && defined(_DLL) /* tag specifying we're building for DLL runtime support */
@@ -53,7 +53,7 @@ extern "C" {
 #	define GLUAPI extern
 #	define GLCALLBACK
 #	define GLCALLBACKP *
-#endif /* WIN32 / CYGWIN32 bracket */
+#endif /* WIN32 / CYGWIN bracket */
 
 /* compatability guard so we don't need to change client code */
 #if defined(_WIN32) && !defined(_WINDEF_) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP)

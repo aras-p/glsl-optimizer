@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 
-#if defined(_WIN32) && !defined(__CYGWIN32__)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 #endif

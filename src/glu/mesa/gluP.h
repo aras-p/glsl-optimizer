@@ -1,4 +1,4 @@
-/* $Id: gluP.h,v 1.3 2000/05/22 16:25:37 brianp Exp $ */
+/* $Id: gluP.h,v 1.4 2000/05/22 19:41:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: gluP.h,v $
+ * Revision 1.4  2000/05/22 19:41:11  brianp
+ * replaced __CYGWIN32__ with __CYGWIN__
+ *
  * Revision 1.3  2000/05/22 16:25:37  brianp
  * added some Window-isms formerly in gl.h
  *
@@ -75,7 +78,7 @@
 #	define __WIN32__
 #endif
 
-#if !defined(OPENSTEP) && (defined(__WIN32__) || defined(__CYGWIN32__))
+#if !defined(OPENSTEP) && (defined(__WIN32__) || defined(__CYGWIN__))
 #  pragma warning( disable : 4068 ) /* unknown pragma */
 #  pragma warning( disable : 4710 ) /* function 'foo' not inlined */
 #  pragma warning( disable : 4711 ) /* function 'foo' selected for automatic inline expansion */
@@ -101,7 +104,7 @@
 #  define GLAPIENTRYP __stdcall *
 #  define GLCALLBACK __stdcall
 #  define GLCALLBACKP __stdcall *
-#  if defined(__CYGWIN32__)
+#  if defined(__CYGWIN__)
 #    define GLCALLBACKPCAST *
 #  else
 #    define GLCALLBACKPCAST __stdcall *
@@ -118,7 +121,7 @@
 #  define GLCALLBACKPCAST *
 #  define GLWINAPI
 #  define GLWINAPIV
-#endif /* WIN32 / CYGWIN32 bracket */
+#endif /* WIN32 / CYGWIN bracket */
 
 /* compatability guard so we don't need to change client code */
 
