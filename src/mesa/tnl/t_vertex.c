@@ -1064,7 +1064,7 @@ void _tnl_init_vertices( GLcontext *ctx,
    if (max_vertex_size > vtx->max_vertex_size) {
       _tnl_free_vertices( ctx );
       vtx->max_vertex_size = max_vertex_size;
-      vtx->vertex_buf = (GLubyte *)ALIGN_MALLOC(vb_size * max_vertex_size, 32 );
+      vtx->vertex_buf = (GLubyte *)ALIGN_CALLOC(vb_size * max_vertex_size, 32 );
    }
 }
 
