@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.0
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -530,13 +530,12 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
        && ctx->Extensions.NV_vertex_program) {
       struct vertex_program *vprog = (struct vertex_program *) prog;
       if (!vprog) {
-         vprog = CALLOC_STRUCT(vertex_program);
+         vprog = (struct vertex_program *)
+            ctx->Driver.NewProgram(ctx, target, id);
          if (!vprog) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
             return;
          }
-         vprog->Base.RefCount = 1;
-         vprog->Base.Resident = GL_TRUE;
          _mesa_HashInsert(ctx->Shared->Programs, id, vprog);
       }
       _mesa_parse_nv_vertex_program(ctx, target, program, len, vprog);
@@ -545,13 +544,12 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
             && ctx->Extensions.NV_fragment_program) {
       struct fragment_program *fprog = (struct fragment_program *) prog;
       if (!fprog) {
-         fprog = CALLOC_STRUCT(fragment_program);
+         fprog = (struct fragment_program *)
+            ctx->Driver.NewProgram(ctx, target, id);
          if (!fprog) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
             return;
          }
-         fprog->Base.RefCount = 1;
-         fprog->Base.Resident = GL_TRUE;
          _mesa_HashInsert(ctx->Shared->Programs, id, fprog);
       }
       _mesa_parse_nv_fragment_program(ctx, target, program, len, fprog);
