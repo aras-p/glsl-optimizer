@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.19 2000/04/11 20:42:22 brianp Exp $ */
+/* $Id: drawpix.c,v 1.20 2000/04/12 18:54:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -120,6 +120,7 @@ simple_DrawPixels( GLcontext *ctx, GLint x, GLint y,
        && !ctx->Pixel.ScaleOrBiasRGBA
        && !ctx->Pixel.ScaleOrBiasRGBApcm
        && ctx->ColorMatrix.type == MATRIX_IDENTITY
+       && !ctx->Pixel.ColorTableEnabled
        && ctx->Pixel.IndexShift==0 && ctx->Pixel.IndexOffset==0
        && ctx->Pixel.MapColorFlag==0
        && ctx->Texture.ReallyEnabled == 0
@@ -340,7 +341,7 @@ simple_DrawPixels( GLcontext *ctx, GLint x, GLint y,
                GLint row;
                for (row=0; row<drawHeight; row++) {
                   assert(drawWidth < MAX_WIDTH);
-                  gl_map_ci8_to_rgba(ctx, drawWidth, src, rgba);
+                  _mesa_map_ci8_to_rgba(ctx, drawWidth, src, rgba);
                   (*ctx->Driver.WriteRGBASpan)(ctx, drawWidth, destX, destY,
                                                (const GLubyte (*)[4])rgba, 
 					       NULL);
@@ -354,7 +355,7 @@ simple_DrawPixels( GLcontext *ctx, GLint x, GLint y,
                GLint row;
                for (row=0; row<drawHeight; row++) {
                   assert(drawWidth < MAX_WIDTH);
-                  gl_map_ci8_to_rgba(ctx, drawWidth, src, rgba);
+                  _mesa_map_ci8_to_rgba(ctx, drawWidth, src, rgba);
                   gl_write_zoomed_rgba_span(ctx, drawWidth, destX, destY,
                                             zSpan, (void *) rgba, zoomY0);
                   src += rowLength;
@@ -448,6 +449,7 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
                      GLenum type, const GLvoid *pixels )
 {
    const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
+   const GLboolean shift_or_offset = ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset;
    const GLint desty = y;
    GLint row, drawWidth;
 
@@ -472,7 +474,13 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
       const GLvoid *source = _mesa_image_address(&ctx->Unpack,
                     pixels, width, height, GL_COLOR_INDEX, type, 0, row, 0);
       _mesa_unpack_index_span(ctx, drawWidth, destType, values,
-                              type, source, &ctx->Unpack, GL_TRUE);
+                              type, source, &ctx->Unpack, GL_FALSE);
+      if (shift_or_offset) {
+         _mesa_shift_and_offset_stencil( ctx, drawWidth, values );
+      }
+      if (ctx->Pixel.MapStencilFlag) {
+         _mesa_map_stencil( ctx, drawWidth, values );
+      }
 
       if (zoom) {
          gl_write_zoomed_stencil_span( ctx, (GLuint) drawWidth, x, y,
