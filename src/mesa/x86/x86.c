@@ -1,4 +1,4 @@
-/* $Id: x86.c,v 1.6 2000/05/05 17:02:33 brianp Exp $ */
+/* $Id: x86.c,v 1.7 2000/05/26 16:17:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,11 +29,7 @@
  */
 
 
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-
+#include "glheader.h"
 #include "context.h"
 #include "types.h"
 #include "vertices.h"

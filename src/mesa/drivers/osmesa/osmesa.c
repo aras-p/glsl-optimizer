@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.17 2000/05/26 14:44:59 brianp Exp $ */
+/* $Id: osmesa.c,v 1.18 2000/05/26 16:17:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,8 +38,7 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#include <stdlib.h>
-#include <string.h>
+#include "glheader.h"
 #include "GL/osmesa.h"
 #include "context.h"
 #include "depth.h"

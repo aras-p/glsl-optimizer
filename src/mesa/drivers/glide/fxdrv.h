@@ -50,14 +50,10 @@
  * you turn debugging on/off from the debugger.
  */
 
-#ifndef XFree86Server
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <assert.h>
-#else 
+#ifdef XFree86Server
 #include "GL/xf86glx.h"
+#else 
+#include "glheader.h"
 #endif
 
 
