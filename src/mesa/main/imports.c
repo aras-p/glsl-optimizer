@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.27 2002/12/06 03:10:59 brianp Exp $ */
+/* $Id: imports.c,v 1.28 2003/01/14 03:02:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -356,6 +356,17 @@ _mesa_strncmp( const char *s1, const char *s2, size_t n )
 }
 
 
+char *
+_mesa_strdup( const char *s )
+{
+   int l = _mesa_strlen(s);
+   char *s2 = _mesa_malloc(l + 1);
+   if (s2)
+      _mesa_strcpy(s2, s);
+   return s2;
+}
+
+
 int
 _mesa_atoi(const char *s)
 {
@@ -363,6 +374,17 @@ _mesa_atoi(const char *s)
    return xf86atoi(s);
 #else
    return atoi(s);
+#endif
+}
+
+
+float
+_mesa_strtof( const char *s, const char **end )
+{
+#if defined(XFree86LOADER) && defined(IN_MODULE)
+   return xf86strtof(s, end);
+#else
+   return strtod(s, end);
 #endif
 }
 
