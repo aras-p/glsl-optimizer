@@ -560,7 +560,7 @@ var_cache_find (struct var_cache *va, GLubyte * name)
    while (va) {
       if (!strcmp ( (const char*) name, (const char*) va->name)) {
          if (va->type == vt_alias)
-            return var_cache_find (first, va->name);
+            return va->alias_binding;
          return va;
       }
 
