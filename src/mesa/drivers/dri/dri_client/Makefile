@@ -55,4 +55,6 @@ dri.a:	$(OBJECTS)
 clean:
 	-rm -f *.o */*.o *~ *.so *.a depend depend.bak
 
+install:
+
 include depend
