@@ -28,6 +28,7 @@
  *	Leif Delgass <ldelgass@retinalburn.net>
  *	José Fonseca <j_r_fonseca@yahoo.co.uk>
  */
+#include <errno.h>
 
 #include "mach64_context.h"
 #include "mach64_state.h"
