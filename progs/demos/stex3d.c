@@ -1,4 +1,4 @@
-/* $Id: stex3d.c,v 1.7 2002/10/23 14:00:01 brianp Exp $ */
+/* $Id: stex3d.c,v 1.8 2003/03/29 16:40:23 brianp Exp $ */
 
 /*----------------------------- 
  * stex3d.c GL example of the mesa 3d-texture extention to simulate procedural
@@ -472,8 +472,8 @@ KeyHandler(unsigned char key, int x, int y)
 {
    static const char *mode[] = {
       "glTexCoord3f (no texgen)",
-      "texgen fixed to eye coords",
-      "texgen fixed to object coords"
+      "texgen fixed to object coords",
+      "texgen fixed to eye coords"
    };
    (void) x;
    (void) y;
