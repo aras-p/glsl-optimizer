@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.2
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -146,7 +146,7 @@ __extension__ static char arb_grammar_text[] =
     - changed and merged V_* and F_* opcode values to OP_*.
     - added GL_ARB_fragment_program_shadow specific tokens (michal)
 */
-#define  REVISION                                   0x08
+#define  REVISION                                   0x09
 
 /* program type */
 #define  FRAGMENT_PROGRAM                           0x01
@@ -158,21 +158,21 @@ __extension__ static char arb_grammar_text[] =
 #define  DECLARATION                                0x03
 #define  END                                        0x04
 
-/* GL_ARB_fragment_program option flags */
-#define  ARB_PRECISION_HINT_FASTEST                 0x01
-#define  ARB_PRECISION_HINT_NICEST                  0x02
-#define  ARB_FOG_EXP                                0x04
-#define  ARB_FOG_EXP2                               0x08
-#define  ARB_FOG_LINEAR                             0x10
+/* GL_ARB_fragment_program option */
+#define  ARB_PRECISION_HINT_FASTEST                 0x00
+#define  ARB_PRECISION_HINT_NICEST                  0x01
+#define  ARB_FOG_EXP                                0x02
+#define  ARB_FOG_EXP2                               0x03
+#define  ARB_FOG_LINEAR                             0x04
 
-/* GL_ARB_vertex_program option flags */
-#define  ARB_POSITION_INVARIANT                     0x20
+/* GL_ARB_vertex_program option */
+#define  ARB_POSITION_INVARIANT                     0x05
 
-/* GL_ARB_fragment_program_shadow option flags */
-#define  ARB_FRAGMENT_PROGRAM_SHADOW                0x40
+/* GL_ARB_fragment_program_shadow option */
+#define  ARB_FRAGMENT_PROGRAM_SHADOW                0x06
 
-/* GL_ARB_draw_buffers option flags */
-#define  ARB_DRAW_BUFFERS                           0x80
+/* GL_ARB_draw_buffers option */
+#define  ARB_DRAW_BUFFERS                           0x07
 
 /* GL_ARB_fragment_program instruction class */
 #define  OP_ALU_INST                                0x00
@@ -778,14 +778,6 @@ parse_relative_offset (GLcontext *ctx, GLubyte **inst, struct arb_program *Progr
                         GLint *offset)
 {
    *offset = parse_integer(inst, Program);
-   if ((*offset > 63) || (*offset < -64)) {
-      _mesa_set_program_error (ctx, Program->Position,
-                               "Relative offset out of range");
-      _mesa_error (ctx, GL_INVALID_OPERATION, "Relative offset %d out of range",
-                                                *offset);
-      return 1;
-   }
-
    return 0;
 }
 
@@ -3911,7 +3903,8 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
 #if DEBUG_PARSING
    printf ("Checking Grammar!\n");
 #endif
-   err = grammar_check (arbprogram_syn_id, strz, &parsed, &parsed_len);
+   /* do a fast check on program string - initial production buffer is 4K */
+   err = grammar_fast_check (arbprogram_syn_id, strz, &parsed, &parsed_len, 0x1000);
 
    /* Syntax parse error */
    if (err == 0) {
@@ -3975,15 +3968,8 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
       err = 1;
    }
    else {
-      switch (*inst++) {
-         case FRAGMENT_PROGRAM:
-            program->Base.Target = GL_FRAGMENT_PROGRAM_ARB;
-            break;
-
-         case VERTEX_PROGRAM:
-            program->Base.Target = GL_VERTEX_PROGRAM_ARB;
-            break;
-      }
+      /* ignore program target */
+      inst++;
 
       err = parse_arb_program (ctx, inst, &vc_head, program);
 #if DEBUG_PARSING
