@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.34 2000/02/12 17:31:40 brianp Exp $ */
+/* $Id: glapi.c,v 1.35 2000/02/12 21:08:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,9 +47,7 @@
 #include "glapinoop.h"
 #include "glapioffsets.h"
 #include "glapitable.h"
-#if defined(THREADS)
 #include "glthread.h"
-#endif
 
 
 /* This is used when thread safety is disabled */
