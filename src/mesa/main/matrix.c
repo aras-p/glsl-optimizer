@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.14 2000/02/02 19:28:27 brianp Exp $ */
+/* $Id: matrix.c,v 1.15 2000/02/21 23:00:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1058,7 +1058,7 @@ _mesa_PushMatrix( void )
 
    switch (ctx->Transform.MatrixMode) {
       case GL_MODELVIEW:
-         if (ctx->ModelViewStackDepth>=MAX_MODELVIEW_STACK_DEPTH-1) {
+         if (ctx->ModelViewStackDepth >= MAX_MODELVIEW_STACK_DEPTH - 1) {
             gl_error( ctx,  GL_STACK_OVERFLOW, "glPushMatrix");
             return;
          }
@@ -1066,7 +1066,7 @@ _mesa_PushMatrix( void )
 			 &ctx->ModelView );
          break;
       case GL_PROJECTION:
-         if (ctx->ProjectionStackDepth>=MAX_PROJECTION_STACK_DEPTH) {
+         if (ctx->ProjectionStackDepth >= MAX_PROJECTION_STACK_DEPTH - 1) {
             gl_error( ctx,  GL_STACK_OVERFLOW, "glPushMatrix");
             return;
          }
@@ -1082,7 +1082,7 @@ _mesa_PushMatrix( void )
       case GL_TEXTURE:
          {
             GLuint t = ctx->Texture.CurrentTransformUnit;
-            if (ctx->TextureStackDepth[t] >= MAX_TEXTURE_STACK_DEPTH) {
+            if (ctx->TextureStackDepth[t] >= MAX_TEXTURE_STACK_DEPTH - 1) {
                gl_error( ctx,  GL_STACK_OVERFLOW, "glPushMatrix");
                return;
             }
