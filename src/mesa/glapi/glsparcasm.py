@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: glsparcasm.py,v 1.5 2001/11/18 22:42:57 brianp Exp $
+# $Id: glsparcasm.py,v 1.6 2001/11/19 00:40:33 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -112,7 +112,7 @@ def EmitFunction(name, returnType, argTypeList, argNameList, alias, offset):
 	# print the assembly code
 	print ''
 	print "GLOBL_FN(GL_PREFIX(%s))" % (name)
-	print '.type %s,#function' %(name)
+	print '.type gl%s,#function' %(name)
 	print "GL_PREFIX(%s):" % (name)
 	print '#ifdef __sparc_v9__'
 	print '\tsethi\t%hi(0x00000000), %g2'
