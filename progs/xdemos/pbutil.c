@@ -26,7 +26,6 @@
 int
 QueryPbuffers(Display *dpy, int screen)
 {
-   return 1;
 #if defined(GLX_VERSION_1_3)
    {
       /* GLX 1.3 supports pbuffers */
