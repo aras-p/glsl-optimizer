@@ -1,623 +1,91 @@
-
-    Mesa/Readme.win32
-
-    Last Updated: Sunday, September 19th, 1999 - tjump@tertius.com
-
-*** What's New
-
-- Updated for Mesa 3.1beta3/CVS. Debug and Release command-line builds of
-  Mesa, fxMesa, GLU, GLUT and all sample programs DLL-based. Manual
-  executions tests with minimum requisite results (aka: things looked like
-  I expected them to).
-
-  What did you expect, complete regression testing maybe?
-
-- NASM build support. Any file in the project coded as a .S file will
-  automatically be recognized and built as a NASM-source assember file.
-
-  To enable building using NASM, set the environment variable NASM to
-  indicate that command to execute to run nasm on a file. If NASM is in
-  your command search path then all this needs be set to is 'nasmw' -
-  otherwise you will need to include the complete drive and directory path.
-
-  NASM may be retrieved here: http://www.web-sites.co.uk/nasm/
-
-- DevStudio projects suspended for compatability reasons: projects modified
-  by DevStudio 6 are not compatible with DevStudio 5.
-
-  These will slowly be rebuilt and put into CVS as I can.
-
-- Build environment change: The Glide SDK is no longer assumed to be in
-  the global INCLUDE/LIB environment vars, it is required that you set the
-  value 'GLIDE2X' as either an environment variable pointing to your Glide
-  SDK install directory or that you configure that as a build option to
-  nmake.exe when building fxmesagl32.  Examples:
-
-    nmake /f nmake.mak GLIDE2X=g:\sdk\glide2x fxmesagl32
-
-          <or>
-
-    nmake /f nmake.mak GLIDE2X=g:\sdk\glide2x allfx
-
-          <or>
-
-    nmake /f nmake.mak GLIDE2X=g:\sdk\glide2x progs.3dfx.demos
-
-  The DevStudio workspace files for 3Dfx OpenGL require the definition of
-  GLIDE2SDK as an environment variable pointing to where your copy of the
-  Glide SDK has been installed. Adding this to your AUTOEXEC.BAT would do
-  so (change the directories to match):
-
-       SET GLIDE2SDK=G:\SDK\GLIDE2X
-
-*** Legalese
-
-These build files are provided as-is and are submitted to be included with
-the "Mesa 3-D Graphics Library" package as (currently) maintained by Brian
-Paul. These project build files are free software; you can redistribute it
-and/or modify it under the terms of the GNU Library General Public License
-as published by the Free Software Foundation; either version 2 of the
-License, or (at your option) any later version.
-
-These project files are distributed in the hope that they will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library
-General Public License for more details.
-
-You should have received a copy of the GNU Library General Public License
-along with this library; if not, write to the Free Software Foundation,
-Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-*** Maintenance Responsiblity and Technical Support
-
-While these files are now part of the Mesa core distribution please do NOT
-contact Mr. Paul for help with them if you encounter problems as he can't
-help you (currently).  I will, however, attempt my straightforward best in
-assisting anyone with using these files on their system.  I can NOT
-guarantee instant responses owing to other responsiblities, but I do try
-dang hard to answer any mail w/in 24 hours.  I may be contacted at the
-above email address for the forseeable future.
-
--Ted
-mailto://tjump@tertius.com
-http://www.tertius.com/tjump
-
-*** General Information
-
-These build files facilitate convenient building of many variants of Mesa,
-both as static link libraries (including mesaglu) and as dynamic link
-libraries that in some cases may be used as "drop-in" replacements for
-OpenGL32.DLL on both Windows95 and Windows NT.
-
-The construction of the Win32 command-line build files and projects has
-been something of a pet project of mine, and is based upon my own
-"standard" Win32 build environment as supplied by the "nmake.mif" file.
-They have been tested under Windows95 OSR2, Windows NT 4.0SP3, and Windows
-NT 5.0 beta 1.  The libraries that they generated have been tested (via the
-demo programs) in a *limited* fashion on the above three systems, including
-the 3Dfx versions.
-
-The reason I went with command-line build environment instead of the more
-convenient IDE-based project files is for two reasons: 1. These appear to
-have some amount of portability between versions (the nmake syntax hasn't
-changed much since Microsoft C 7.0) while the IDE project files seem to
-change drastically each version. and 2. These are readable with any ascii
-editor and such are better self-documentation of the file relationships for
-more people such that it will facilitate supporting other Win32 compilers.
-
-While these files only deal with building for x86 targeted code it *should*
-be possible to add the necessary logic to them to build for the other MSVC
-supported CPU targets, I simply have no hardware to test them on nor the
-alternative compilers to build with.
-
-*** Prerequisites for use
-
-1. You must have a 32-bit Microsoft compiler installed. I have tested
-this with Visual C 5.0 (SP3) and Visual C 4.2, but with minor
-(possibly no) modification to the nmake.mak and nmake.mif files this
-sequence should work on Visual C 2.0 also. The workspace files
-(mesalib.dsw and mesademos-*.dsw) and their included project files
-(*.dsp) are specific to the DevStudio IDE - I have made no attempt at
-building a VC4 IDE project set as I do not use that any more.  Note
-that the VC workspace files NO LONGER use NORE are dependant upon the
-nmake.mak and nmake.mif files for construction of definition (*.DEF)
-and resource (*.RC) files.
-
-*** Visual C 4.x Users Warning ****
-
-Note that early editions of VC4 do NOT have header files current enough
-for use building this code base. If you are using VC4 you will either need
-to get an update to version 4.2 *or* you may download the Platform SDK
-directly from Microsoft's web site (www.microsoft.com) and update your
-build environment that way.
-
-*** Visual C 4.x Users Warning ****
-
-2. You must have the PATH, INCLUDE, and LIB environment variables set
-properly. With VC5 you can easily get this by executing the VCVARS32.BAT
-file that was created for you upon installation. It is found in the
-DevStudio\VC\BIN directory, wherever you installed DevStudio. VC4 provides
-a similar batch file in it's BIN directory also.
-
-3. (optional) If you're going to build for 3Dfx/Voodoo you will need to
-have previously installed the Glide SDK version 2.3 or later, if I
-recall. This may be retrieved from www.3dfx.com for no money and some
-download time. ;-) These build files assume that you have the Glide SDK
-added to the respective environment variables (LIB and INCLUDE).
-
-4. (optional) If you're going to build for S3/Virge you will need the S3
-Developers Toolkit which may be downloaded from www.s3.com for the price of
-registering on-line and some time. NOTE: I can build the s3mesa.dll file to
-completion, however the compilation of s3mesa.c currently generates a large
-amount of compiler warnings and between that and the fact that I can not at
-all test it I can make no claims to it's ability to execute.  Again, like
-the 3Dfx version before this, these build files assume you have the S3Dtk H
-and LIB files in the path of their respective environment variables.
-Note 2: As of Mesa3.0beta6 I have build files, both command-line and IDE,
-which should be able to build the s3mesa code base if it weren't for updates
-being required in the S3 DD code support (Mesa-3.0/src/s3 directory).
-
-I advise putting any include and lib files for secondary toolkits (Glide,
-S3Tk, whatever) in their respective environment variables *before* the
-Microsoft-assigned default values.
-
-*** FAQ: Frequenty Asked Questions and Other Important Information ***
-
-- When running the 3Dfx demos under Windows NT, they crash on exit, what's
-  up?
-
-  This is apparently a problem in Glide itself. The workaround is to go to
-  your C:\WINNT\SYSTEM32 directory and rename the file FXOEM2X.DLL to
-  FXOEM2X.DL_ to prevent Glide from loading and initializing it upon
-  startup.  This is known to be an issue with cards that do not have "TV
-  out" and is known to cause crashes on Diamond Monster II 8M and 3Dfx
-  Reference boards, all using 3Dfx Reference Drivers version 2.53. Other
-  hardware/driver combinations will also likely exhibit this behavior.
-
-- I'm having a problem building Mesa for static library linking.
-
-  This was caused by some incomplete testing on my part, and a fix is now
-  available in the form of an add-on to the base Mesa 3.0 release.  The
-  file to get is:
-
-       via FTP download from: iris.ssec.wisc.edu
-         you want to go here: /pub/Mesa/patches_to_3.0/
-        you want to get file: Mesa-3.0-w32-static-fixes.tar.gz
-
-  This required a minor addition to INCLUDE/GL for a clean solution, the
-  file "include/gl/mesa_wgl.h" is automatically included by
-  "include/gl/gl.h" when a Win32 non-DLL build is in progress to provide
-  prototypes for the various wgl functions.
-
-  The only remaining hitch in this setup is that the 3Dfx build is not yet
-  running as a static build, because of problems with conflicts in
-  existance of the various GDI functions like ChoosePixelFormat,
-  etc. *sigh*
-
-  Anyway, the "allstatic" target now works as expected and builds all
-  book/sample/demos programs to boot. ;^)
-
-- How do I get fxMesa to render in a window on the desktop instead of only
-  full-screen?
-
-  Use the Microsoft Windows fxMesa-in-a-window hack!
-
-  Seriously, if you want fxMesaGL to render using the 3Dfx Voodoo1 or
-  Voodoo2 hardware into a window on the desktop then all you need to do is
-  set the MESA_WGL_FX environment variable to anything other than
-  "fullscreen" and it will render into a window.  If you wish to go
-  fullscreen then you only need to NOT have the environment variable, or
-  have it set to "fullscreen".  You may also switch at runtime between
-  fullscreen-mode and windowed by pressing ALT-ENTER on the keyboard
-  (unless the application using Mesa does something with those keystrokes,
-  of course).
-
-  As of 8/13/98 this should be running a LOT better for more people as a
-  low-compatability item was cleaned up which prevented it from working on
-  many (most?) display drivers under Windows 9x.
-
-- I have my 3Dfx card hooked to it's own monitor and I want the output to
-  stay on even if I switch to another program, is this possible?
-
-  If the Glide environment variable SST_DUALHEAD is set to '1' then fxMesa
-  will never disable the Voodoo output on a Voodoo1 or Voodoo2 display
-  regardless of whether the fxMesa application is "current" or not. This
-  works regardless of whether it's rendering using the window hack
-  mentioned above or not.
-
-- I want to run the Mesa demos on my Intel740 card using it's own OpenGL
-  acceleration, how do I do this?
-
-  Build GLUT standalone for use with system OpenGL and GLU drivers!
-
-  The Command-line project supports building all test/demo programs against
-  these drivers also! This allows you full use of GLUT on Windows using
-  hardware accelerated OpenGL. Wheee! This includes the "3dfx/demos"
-  directory of which only two programs will not run on "standard"
-  opengl. Note that there are a few of the sample programs which will NOT
-  work without Mesa as they directly call into Mesa instead of using the
-  extension mechanism.
-
-*** Included programs that exhibit unfortunate or bad behavior
-
-- demos/bounce - doesn't run on high-colors screens?  It's requesting an
-  INDEX display from GLUT and that fails on my true-color desktop. Changing
-  this to _RGB let's the program work, but it doesn't display
-  properly. This is probably just an idiosyncracy of my machine though, as
-  if I test the program using GLUT for System OpenGL on my Intel740 OpenGL
-  accelerated machine it's just hunky-dory.
-
-- demos/glutfx - runs, but crashes on exit (but not on my Intel740 machine)
-
-- demos/texobj - runs, but crashes on exit if ESC is pressed. Exits cleanly
-  if the Close box on the window frame is pressed with the mouse. Go figure.
-
-- book/aaindex - doesn't run, can't get pixel format, because it wants an
-  INDEX display maybe (but is okay on my Intel740 machine)?
-
-- most of the book/* demos don't respond to ESC being pressed.
-
-- 3dfx/demos/* - all demos run, however they all crash on exit. I've traced
-  this so far as to determine the call it's happening with. The crash comes
-  from within Glide during the processing of the grGlideShutdown() call, as
-  in invalid memory reference exception. I'm wondering if this is because
-  of some state or processing not being completed before the call. Dunno,
-  but putting grSstIdle() in just before grGlideShutdown() does NOT fix the
-  problem.
-
-- 3dfx/demos/tunnel2 - does not run on my system even with SLI mode
-  disabled. Hmmmm, maybe I need to disconnect my Voodoo2 cards?
-
-*** Important Notes and Changing Default values
-
-- The optimizer settings have been manually reworked in both command line
-  and DevStudio IDE files to hopefully prevent possible irrational code on
-  the part of the code generator.  Formerly, it was configured for "/Ox",
-  now it is configured for safer handling at a slight potential performance
-  cost. This may not be required for Visual Studio 6 but I can't test that
-  (yet).
-
-- These files build with the code targeted for Pentium processors and
-  8-byte structure padding.
-
-- The IDE-built programs seem to be "happier" in that the command line
-  build of the 3Dfx demo "fire" will grenade on exit (?). Otherwise pretty
-  much everything may be built with either interface.
-
-- The currently configured Mesa version is 3.1, and MesaDemos version is
-  the same. To change this permanently you will need to edit NMAKE.MAK and
-  change the lines that look like this (they start o/a line 116):
-
-    # Currently, Mesa is at rev 3.1 ...
-    #
-    !IF "$(MESAVER)" == ""
-    MESAVER=3.1
-    !ENDIF
-
-    # used in building all of the resource files for the Mesa DLLs
-    #
-    !IF "$(MESAFILEVER)" == ""
-    MESAFILEVER=3,1,0,0
-    !ENDIF
-
-- Currently the build files are configured to be used from a Win32
-  directory that is included inside the main Mesa-3.1 heirarchy.
-
-- The build files are smart enough to find the files for the core lib, glu,
-  glut, and the various demo programs if they are unpacked in the current
-  Mesa-3.1 heirarchy, like this:
-
-    \Mesa-3.1
-    \Mesa-3.1\src
-    \Mesa-3.1\src-glu
-    \Mesa-3.1\src-glut
-    \Mesa-3.1\Win32
-    \Mesa-3.1\samples
-    \Mesa-3.1\demos
-    \Mesa-3.1\book
-    \Mesa-3.1\3Dfx\demos
-
-    ... should work.  This arose because my initial build tests for the
-    demo files were done before MesaDemos 2.6 had been released.
-
-- With the exception of the static link libraries generated by this file
-  set (mesagl.lib, mesaglu.lib, mesaglut.lib) all DLLs and executables are
-  built against the "Multithreaded DLL" runtime - this means that they
-  require MSVCRT.DLL or MSVCRTD.DLL in the path to execute.
-
-  ** CHANGED 8/11/98 ***
-
-  Note also that the demos are all built aginst the "OpenGL32, GLU32, and
-  GLUT32" and as such they are fairly agnostic wrt: building against Mesa
-  for CPU-rendering, Mesa-for-3Dfx, Mesa-for-S3, or System OpenGL.
-
-  If you want to build them for use on your system and your display card
-  provides full OpenGL acceleration (Permedia, Intel740, Intergraph,
-  whatever) then you only need to build GLUT prior to building any of the
-  demo programs. For convenience, the GLUT project is included in each of
-  the demo projects Workspace files for the DevStudio IDE builds BUT it is
-  not automatically built - you still need to build it first manually.
-
-  Note that if you have GLUT already installed on your system (gl/glut.h in
-  yoru INCLUDE path, glut32.lib/glut32d.lib in your LIB path, and the DLL
-  in your PATH) then you do NOT need to build GLUT prior to the test
-  programs.
-
-- The 3Dfx build of Mesa has primarily been tested with Quake 2 and it runs
-  (mostly) fine on my PC (take that for what you want it)...
-
-  ** CHANGED  8/11/98 ***
-
-  There is still something going on that causes Glide to crash on shutdown,
-  when I run fxMesa under Windows NT, however it does not appear to occur
-  under Windows 9x on either Voodoo1 or Voodoo2 cards. *sigh*
-
-- I can not test the S3 build as I have no machines available with Virge
-  based display cards.
-
-- The multithreaded test code is *not* built as it requires pthreads and I
-  have as of yet spent not time trying to get that running. The latest word
-  that I saw WRT threading support on win32 was that they are intending to
-  support it natively within Win32 - so I'm waiting it out until they get
-  it done.
-
-- Similarly, the 'xdemos' are not currently built because I haven't gotten
-  around to building the client libs for native win32 and getting it all
-  setup for use.
-
-*** Output Files
-
-All final output files (DLL/LIB) are placed in the Mesa-3.1/lib directory,
-with the exception of the fxMesaGL32 build which is placed in
-Mesa-3./lib/FX and the executable images which are placed in their source
-directories.
-
-To be able to execute the various test programs, you will need to copy the
-requisite DLL files into the same directory as the EXE files. Note that
-most of the 3Dfx/demos/* programs WILL run with the non-FX build of Mesa -
-just very slowly. The two programs which are hard-linked with the FX build
-and will not run without it are "glbpaltx" which uses "gl3DfxSetPaletteEXT"
-directly instead of via the extensions mechanism and "tunnel2" which uses
-"fxMesaSelectCurrentBoard" API for selecting between multiple 3Dfx cards
-installed in one system. Likewise, "paltex" directly uses the
-"glColorTableEXT" extension and thus may not run on anything except
-Mesa. If these applications used the proper extension mechanism they could
-then be used on more than "just" fxMesa to good effect (for example, the
-rest of the "3Dfx/demos" run just peachy on the Intel740 card in my test
-machine) under WinNT.
-
-Because I'm anal about my computer and it's organization, and I like to
-prevent collision between builds, each of the subprojects has their own
-intermediate file directory inside .\win32\release (for example, when
-building mesagl.lib all of it's intermediate files will be found in
-.\win32\release\lib.mesagl).  This makes it very easy to cleanup as you
-only need to remove .\win32\release.
-
-*** Okay, Enough, how do I build with this stuff already Ted!
-
-Okay, no major calamity here. The basic way to use the project file is to
-call it via NMAKE from the command line. The format is:
-
-    nmake[.exe] /f nmake.mak [options] [target]
-
-The most likely [options] values you will use may be any combination of the
-following:
-
-    DEBUG=1 or DEBUG=0
-    USE_CRTDLL=1 or USE_CRTDLL=0
-
-    Note that all three of these options are OFF by default.
-
-The [target] includes but is not limited to the following (for full details
-please peruse the NMAKE.MAK and NMAKE.MIF files - but be warned that
-NMAKE.MIF is rather large and sometimes hard to follow):
-
-    --- convenience targets ---
-
-    all                 - builds everything
-    libfiles            - builds all linking library files
-    progs               - builds all executable images
-
-    --- library files, static and dynamic ---
-
-    mesagl              - static lib build of Mesa core.
-    mesaglu             - static lib build of MesaGLU core.
-    mesaglut            - static lib build of Mesa GLUT core.
-
-    mesagl32            - dynamic lib build of Mesa core.
-
-    mesaglu32           - dynamic lib build of GLU core, generates
-                          GLU32.DLL and/or GLU32d.DLL.
-
-    mesaglut32          - dynamic lib build of GLUT core, generates
-                          GLUT32.DLL and/or GLUT32d.dll.
-
-    --- hardware accelerated mesa builds ---
-
-    fxmesagl32          - builds Mesa for use on top of the 3Dfx
-                          Glide runtime libs
-
-    s3mesagl32          - builds mesa for use on top of the S3
-                          'S3Tk' runtime libs.
-
-    --- executable images ---
-
-    progs.book          - builds all programs in \book directory
-    progs.demos         - builds all programs in \demos directory
-    progs.samples       - builds all programs in \samples directory
-
-        These targets generate all of the programs in their respective
-        directories and link the executables against OpenGL32.DLL,
-        GLU32.DLL, and GLUT32.DLL (or their debug equivalents).
-
-    progs.3dfx.demos    - builds all programs in \3dfx\demos directory
-
-        This target generates the 3Dfx/Demo executables, linking them
-        against GLUT32.DLL, GLU32.DLL, OPENGL32.DLL and are thus NOT
-        hard-bound to using Mesa per-se as you can simply NOT build the
-        Mesa core and GLU libraries.
-
-   --- Microsoft/SGI OpenGL-based GLUT and Demo program builds ----
-
-   *** IMPORTANT SAFETY TIP: If you're going to build these variants of
-       GLUT then DO NOT build any other target libraries in this package
-       first, OR from the command line run the "nmake /f nmake.mak clean"
-       command first!  This is because generation of the GLUT for SGI
-       OpenGL target libraries conflicts in naming with the static build
-       libraries of Mesa and it's supporting GLUT build.
-
-   Currently, you may build GLUT as either GLUT32.DLL or GLUT.DLL for
-   use running against either Microsoft or SGI OpenGL for Window,
-   respectively.  This allows for the general use of GLUT 3.7 on Windows
-   systems with fully compliant OpenGL.
-
-   You can build the GLUT DLL files either with the command line by
-   issuing either of these commands:
-
-        nmake /f nmake.mak glut.sysgl
-
-        <or>
-
-        nmake /f nmake.mak glut.sgigl
-
-   OR by using the DevStudio MesaLib Worksapce build the GLUT_SGIGL or
-   GLUT_SYSGL projects within the DevStudio IDE.
-
-   Unfortunately, the only way to build the test programs against this
-   build of GLUT is via the command line, and I will NOT be making
-   duplicate demo program projects for the IDE as it's just not worth it,
-   sorry.
-
-   To build the test programs against either MS or SGI OpenGL, you do so
-   via either of these two commands:
-
-        nmake /f nmake.mak progs.sysgl
-
-        <or>
-
-        nmake /f nmake.mak progs.sgigl
-
-   To use the GLUT-for-system-OpenGL in your own programs, you need to do
-   three things by way of preparation, after building GLUT of course:
-
-         1. Copy include\gl\glut.h to somewhere in your %INCLUDE% path, one
-            likely candidate location would be in your
-            "DevStudio\VC\INCLUDE\GL" directory.
-
-         2. Copy the linking libraries to somewhere in your %LIB% path, one
-            likely candidate location would be in your "DevStudio\VC\LIB"
-            directory. The linking libraries you need to copy are as
-            follows:
-
-                .\Release\GLUT32.LIB
-                .\Release\GLUT.LIB
-                .\Debug\GLUT32.LIB
-                .\Debug\GLUT.LIB
-
-        3. Copy the runtime libraries to somewhere in your %PATH%, one
-           likely candidate location would be in WINDOWS\SYSTEM. the files
-           that you should copy are as follows:
-
-                .\Release\GLUT32.DLL
-                .\Release\GLUT32.PDB
-                .\Release\GLUT.DLL
-                .\Release\GLUT.PDB
-                .\Debug\GLUT32d.DLL
-                .\Debug\GLUT32d.PDB
-                .\Debug\GLUTd.DLL
-                .\Debug\GLUTd.PDB
-
-Some examples are in order ...
-
-    ... build all dynamic-link libs using MSVCRT.DLL for C runtime:
-
-        nmake /f nmake.mak USE_CRTDLL=1 alldynamic
-
-    ... To build all library variants and all test and demonstration
-        programs with the default settings you do this:
-
-        nmake /f nmake.mak all
-
-    ... to build all static link libs and nothing else you do this:
-
-        nmake /f nmake.mak allstatic
-
-    ... to build all non-accelerated dynamic link libs you do this:
-
-        nmake /f nmake.mak alldynamic
-
-    ... to build all 3Dfx targeted dynamic link libs you do this:
-
-        nmake /f nmake.mak allaccel
-
-    ... to build all S3 Virge targetd dynamic link libs you do this:
-
-        nmake /f nmake.mak alls3
-
-    ... to build all libraries, static and dynamic, in all versions
-        you do this:
-
-        nmake /f nmake.mak libfiles
-
-    ... to subsequently build all demo and test programs you do this:
-
-        nmake /f nmake.mak progs
-
-    ... to cleanup all intermediate files you do this:
-
-        nmake /f clean
-
-You get the picture. (I hope) ;^)  You may also specify specify
-single targets in a convenient fashion. The rule is simple, any of the
-above named lib files, static or dynamic, may be built by providing it's
-name on the command line as the target. Examples:
-
-    ... to build only Mesa as OpenGL32.DLL ...
-
-        nmake /f nmake.mak opengl32
-
-    ... to build only Mesa on top of the 3Dfx Glide API ...
-
-        nmake /f nmake.mak fxMesaGL32
-              <or>
-        nmake /f nmake.mak fxMesaGL
-
-    ... to build only Mesa on top of the S3 Toolkit ...
-
-        nmake /f nmake.mak s3MesaGL32
-              <or>
-        nmake /f nmake.mak s3mesaGL
-
-*** Revision history for ./win32 project files
-
-1/18/98 - initial cut submitted and included with core mesa
-2/5/98  - fixed internal dependency within nmake.mif upon there being
-          a $(DEVDIR) variable to make some temporary batch files
-          dependant upon (thanks to Keven T. McDonnell for finding
-          that there was this particular bug). I also updated the
-          build files for 2.6beta6.
-2/8/98  - added DevStudio workspace and project files for all lib
-          files and some test programs. Updated readme.win32.
-6/25/98 - initial revision for Mesa 3.0, does not include IDE files,
-          not everything is running. *sigh*
-7/20/98 - Mesa 3.0beta6 rev of all build files, all libs built and
-          minimally tested, all demo programs built and minimally
-          tested to within limits of my PC. ;^) Eveything looks
-          MUCH better now ...
-7/30/98 - Minor updates/edits based upon feedback from
-          Eero Pajarre <epajarre@koti.tpo.fi>. These updates include a fix
-          to the Mesa-on-3Dfx build such that Quake-II now runs almost
-          properly on my system. It runs, just *very* slowly and with *no*
-          textures. Hmmm. Doesn't make any difference whether Quake is set
-          to use 8-bit textures or not.
-8/13/98 - Lots of build cleanups, minor bug fixes in fxwgl.c, and
-          compatability fix in fxapi.c for in-window rendering using 3Dfx
-          hardware.
-8/26/98 - Final revisions for Mesa 3 release checked
-9/22/98 - Fixed static builds for all but fxMesaGL32 and s3MesaGL32 targets
-9/29/98 - Reorganized FAQ information and added Added faq entry about Glide
-          bug under NT (crash on exit) and a workaround.
-11/21/98 - Updated files for Mesa 3.1 beta 1
-           Updated fxMesa window-hack code
-           Updated fxMesa resolution support to handle 1600x1200 & 1280x1024
-7/9/99  - Rev'd for Mesa 3.1 beta 2
+File: docs/README.WIN32
+
+Last updated: Oct 15, 2001 - Karl Schultz - kschultz@users.sourceforge.net
+
+Quick Start
+
+If you have Microsoft Visual C++ 6.0 installed, simply go to the top directory
+of the Mesa distribution and type 'nmake -f Makefile.win NODEBUG=1' for
+an optimized build.
+
+Details and Notes
+
+- Building Mesa as noted above should visit and build the following:
+  src        MesaGL.dll, MesaGL.lib, osmesa.dll, osmesa.lib
+  si-glu     MesaGLU.dll, MesaGLU.lib
+  src-glut   glut32.dll, glut32.lib
+  demos      a handful of demo executables.
+
+- After building, you can copy the above DLL files to a place in your PATH
+  or to the demos directory if you just want to give the demos a try.
+  The DLL and LIB files are copied to the ./lib directory.  The makefile
+  creates this directory if it does not already exist.
+
+- The make targets 'clean' and 'clobber' will remove objects and libraries.
+  But the files in ./lib are never cleaned.
+
+- The make target 'install' will take its best shot at copying DLL files,
+  LIB files, and headers to the right places.  I strongly suggest that
+  you examine the makefiles to make sure that 'install' doesn't do anything
+  that you can't live with.
+
+- The makefiles are designed to work with Microsoft's NMAKE, and do,
+  unfortunately, have some Microsoft-specific things in them.  If you
+  would like to use gcc or some other build tools like the Cygnus tools,
+  then you will have to hack the makefiles to make them work with your
+  tools.  I'm sorry about this; I wasn't motivated to make this any
+  different, but if you end up modifying the makefiles for your tools,
+  you can send me the changes and I can apply the changes to the 
+  source tree.
+
+- There are no Microsoft Visual Studio project files.  However, these
+  should be very easy to create.  One can use the compiler and linker
+  options found in the makefiles to make quick progress in creating
+  projects.
+
+- The DLL files are built so that the external entry points use the
+  stdcall calling convention.
+
+- Static LIB files are not built.  The LIB files that are built with
+  the current makefiles are the linker import files associated with
+  the DLL files.  If static LIB's are desired, it should not be too
+  difficult to modify the makefiles to generate them.
+
+- The si-glu sources are used to build the GLU libs.  This was done
+  mainly to get the better tessellator code.  However the C++ NURBS
+  code is not built.  If you need NURBS, consider modifying the
+  makefiles to build the C++ code or try to build the older GLU
+  code in src-glu.
+
+- The osmesa driver builds and should work on Windows as well as
+  any other platform.
+
+- The Windows driver (in src/Windows) builds and runs at least at
+  a minimal level.  I modified this driver to work with the new
+  Mesa 4.0 code and driver architecture, but I did not do a great
+  deal of optimization and testing.  There are many opportunities
+  for optimization, many of which can be done by coding more specific
+  paths for the rasterizers.  See src/osmesa/osmesa.c for some good
+  examples.
+
+- There is DirectDraw support in the Windows driver, but I do not
+  know if it compiles or works.  If you have an application that
+  does not draw much in a frame, but needs a higher framerate, then
+  it may pay to turn on the DirectDraw code, since DD often performs
+  the off-screen to on-screen blit faster than GDI.
+
+- Some of the more specialized code like FX drivers, stereo, and
+  parallel support isn't compiled or tested.  I left much of this
+  code alone, but it may need some work to get it 'turned on' again.
+
+- No assembly code is compiled or assembled.  Again, this may need
+  some work to turn it back on or use it again.
+
+If you have a Windows-related build problem or question, it is
+probably better to direct it to me (kschultz@users.sourceforge.net),
+rather than directly to the other Mesa developers.  I will help you
+as much as I can.  I also monitor the Mesa mailing lists and will
+answer questions in this area there as well.
+
+
+Karl Schultz
