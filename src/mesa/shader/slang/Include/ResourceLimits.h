@@ -1,4 +1,4 @@
-//
+/*
 //Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
@@ -30,7 +30,7 @@
 //LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //POSSIBILITY OF SUCH DAMAGE.
-//
+*/
 
 #ifndef _RESOURCE_LIMITS_INCLUDED_
 #define _RESOURCE_LIMITS_INCLUDED_
@@ -39,7 +39,7 @@
 extern "C" {
 #endif
 
-struct TBuiltInResource {
+typedef struct TBuiltInResource_ {
     int maxLights;
     int maxClipPlanes;
     int maxTextureUnits;
@@ -52,10 +52,10 @@ struct TBuiltInResource {
     int maxTextureImageUnits;
     int maxFragmentUniformComponents;
     int maxDrawBuffers;
-};
+} TBuiltInResource;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _RESOURCE_LIMITS_INCLUDED_
+#endif /* _RESOURCE_LIMITS_INCLUDED_ */
