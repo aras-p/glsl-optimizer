@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.8 1999/12/10 19:09:22 brianp Exp $ */
+/* $Id: dd.h,v 1.9 2000/01/06 09:28:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -118,6 +118,15 @@ struct gl_pipeline_stage;
 
 
 
+/* Mask bits sent to the driver Clear() function */
+#define DD_FRONT_LEFT_BIT  FRONT_LEFT_BIT         /* 1 */
+#define DD_FRONT_RIGHT_BIT FRONT_RIGHT_BIT        /* 2 */
+#define DD_BACK_LEFT_BIT   BACK_LEFT_BIT          /* 4 */
+#define DD_BACK_RIGHT_BIT  BACK_RIGHT_BIT         /* 8 */
+#define DD_DEPTH_BIT       GL_DEPTH_BUFFER_BIT    /* 0x00000100 */
+#define DD_STENCIL_BIT     GL_STENCIL_BUFFER_BIT  /* 0x00000400 */
+#define DD_ACCUM_BIT       GL_ACCUM_BUFFER_BIT    /* 0x00000200 */
+
 
 
 /*
@@ -161,10 +170,14 @@ struct dd_function_table {
    GLbitfield (*Clear)( GLcontext *ctx, GLbitfield mask, GLboolean all,
                         GLint x, GLint y, GLint width, GLint height );
    /* Clear the color/depth/stencil/accum buffer(s).
-    * 'mask' indicates which buffers need to be cleared.  Return a bitmask
-    *    indicating which buffers weren't cleared by the driver function.
-    * If 'all' is true then the clear the whole buffer, else clear the
-    *    region defined by (x,y,width,height).
+    * 'mask' is a bitmask of the DD_*_BIT values defined above that indicates
+    * which buffers need to be cleared.  The driver should clear those
+    * buffers then return a new bitmask indicating which buffers should be
+    * cleared by software Mesa.
+    * If 'all' is true then the clear the whole buffer, else clear only the
+    * region defined by (x,y,width,height).
+    * This function must obey the glColorMask, glIndexMask and glStencilMask
+    * settings!  Software Mesa can do masked clears if the device driver can't.
     */
 
    void (*Index)( GLcontext *ctx, GLuint index );
