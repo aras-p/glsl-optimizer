@@ -36,7 +36,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "enums.h"
 #include "mtypes.h"
 #include "macros.h"
-#include "texutil.h"
 #include "swrast/swrast.h"
 
 #include "r200_context.h"

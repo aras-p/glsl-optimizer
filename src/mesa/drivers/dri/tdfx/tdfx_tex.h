@@ -39,9 +39,6 @@
 #define _TDFX_TEX_H_
 
 
-#include "texutil.h"
-
-
 #define tdfxDDIsCompressedFormatMacro(internalFormat) \
     (((internalFormat) == GL_COMPRESSED_RGB_FXT1_3DFX) || \
      ((internalFormat) == GL_COMPRESSED_RGBA_FXT1_3DFX))

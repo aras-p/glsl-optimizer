@@ -29,7 +29,6 @@
 
 #include "mtypes.h"
 #include "macros.h"
-#include "texutil.h"
 #include "mgadd.h"
 #include "mgacontext.h"
 #include "mgaioctl.h"

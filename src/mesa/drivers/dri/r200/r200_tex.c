@@ -41,7 +41,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "simple_list.h"
 #include "texformat.h"
 #include "texstore.h"
-#include "texutil.h"
 #include "texmem.h"
 #include "teximage.h"
 #include "texobj.h"

@@ -42,7 +42,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "enums.h"
 #include "texformat.h"
 #include "texstore.h"
-#include "texutil.h"
 
 #include "mm.h"
 

@@ -36,7 +36,6 @@
  */
 
 #include "image.h"
-#include "texutil.h"
 #include "texformat.h"
 #include "teximage.h"
 #include "texstore.h"
