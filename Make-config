@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.20 2000/02/16 01:09:06 brianp Exp $
+# $Id: Make-config,v 1.21 2000/02/24 00:52:23 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=3
@@ -479,7 +479,7 @@ linux-386:
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
-	"APP_LIB_DEPS = -lm"
+	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S X86/vertex.S"
 
 linux-386-static:
