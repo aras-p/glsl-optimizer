@@ -224,7 +224,7 @@ extern void _ext_mesa_free_pixelbuffer( void *pb );
  ***/
 #if defined(__i386__) || defined(__386__) || defined(__sparc__) || \
     defined(__s390x__) || defined(__powerpc__) || \
-    defined(__AMD64__) || \
+    defined(__amd64__) || \
     defined(ia64) || defined(__ia64__) || \
     defined(__hppa__) || defined(hpux) || \
     defined(__mips) || defined(_MIPS_ARCH) || \
