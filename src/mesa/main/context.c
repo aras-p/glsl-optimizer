@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.139 2001/05/29 15:23:48 brianp Exp $ */
+/* $Id: context.c,v 1.140 2001/06/05 03:58:20 davem69 Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1794,6 +1794,11 @@ static void print_info( void )
    fprintf(stderr, "Mesa x86-optimized: YES\n");
 #else
    fprintf(stderr, "Mesa x86-optimized: NO\n");
+#endif
+#if defined(USE_SPARC_ASM)
+   fprintf(stderr, "Mesa sparc-optimized: YES\n");
+#else
+   fprintf(stderr, "Mesa sparc-optimized: NO\n");
 #endif
 }
 
