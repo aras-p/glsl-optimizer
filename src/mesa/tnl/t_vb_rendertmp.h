@@ -1,4 +1,4 @@
-/* $Id: t_vb_rendertmp.h,v 1.6 2001/01/14 06:14:21 keithw Exp $ */
+/* $Id: t_vb_rendertmp.h,v 1.7 2001/01/16 05:29:43 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -348,7 +348,7 @@ static void TAG(render_quads)( GLcontext *ctx,
       }
    }
    POSTFIX;
-}
+} 
 
 static void TAG(render_quad_strip)( GLcontext *ctx,
 				    GLuint start,

@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.9 2001/01/08 21:56:00 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.10 2001/01/16 05:29:43 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -577,8 +577,7 @@ static GLboolean run_render( GLcontext *ctx,
     * that window coordinates are guarenteed not to change before
     * rendering.
     */
-   if (ctx->Driver.RenderStart)
-      ctx->Driver.RenderStart( ctx );
+   ctx->Driver.RenderStart( ctx );
    
    if (VB->ClipOrMask) {
       tab = VB->Elts ? clip_render_tab_elts : clip_render_tab_verts;
@@ -611,9 +610,8 @@ static GLboolean run_render( GLcontext *ctx,
    } while (ctx->Driver.MultipassFunc &&
 	    ctx->Driver.MultipassFunc( ctx, ++pass ));
 
-   if (ctx->Driver.RenderFinish)
-      ctx->Driver.RenderFinish( ctx );
 
+   ctx->Driver.RenderFinish( ctx );
    return GL_FALSE;		/* finished the pipe */
 }
 

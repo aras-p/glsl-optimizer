@@ -25,7 +25,9 @@
  *    Keith Whitwell <keithw@valinux.com>
  */
 
-/* Public interface to the swrast_setup module.
+/* Public interface to the swrast_setup module.  This module provides
+ * an implementation of the driver interface to t_vb_render.c, and uses
+ * the software rasterizer (swrast) to perform actual rasterization.
  */
 
 #ifndef SWRAST_SETUP_H
@@ -59,6 +61,12 @@ extern void
 _swsetup_Points( GLcontext *ctx, GLuint first, GLuint last );
 
 extern void
-_swsetup_RenderPrimNoop( GLcontext *ctx, GLenum mode );
+_swsetup_RenderPrimitive( GLcontext *ctx, GLenum mode );
+
+extern void
+_swsetup_RenderStart( GLcontext *ctx );
+
+extern void
+_swsetup_RenderFinish( GLcontext *ctx );
 
 #endif

@@ -26,6 +26,7 @@
  */
 
 #include "glheader.h"
+#include "colormac.h"
 #include "macros.h"
 #include "mtypes.h"
 
@@ -43,6 +44,100 @@
 static triangle_func tri_tab[SS_MAX_TRIFUNC];
 static quad_func     quad_tab[SS_MAX_TRIFUNC];
 
+
+static void _swsetup_render_line_tri( GLcontext *ctx, 
+				      GLuint e0, GLuint e1, GLuint e2 )
+{
+   SScontext *swsetup = SWSETUP_CONTEXT(ctx);   
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   GLubyte *ef = VB->EdgeFlag;
+   SWvertex *verts = swsetup->verts;
+   SWvertex *v0 = &verts[e0];
+   SWvertex *v1 = &verts[e1];
+   SWvertex *v2 = &verts[e2];
+   GLchan c[2][4];
+   GLchan s[2][4];
+   GLuint i[2];
+
+   if (ctx->_TriangleCaps & DD_FLATSHADE) {
+      COPY_CHAN4(c[0], v0->color);
+      COPY_CHAN4(c[1], v1->color);
+      COPY_CHAN4(s[0], v0->specular);
+      COPY_CHAN4(s[1], v1->specular);
+      i[0] = v0->index;
+      i[1] = v1->index;
+
+      COPY_CHAN4(v0->color, v2->color);
+      COPY_CHAN4(v1->color, v2->color);
+      COPY_CHAN4(v0->specular, v2->specular);
+      COPY_CHAN4(v1->specular, v2->specular);
+      v0->index = v2->index;
+      v1->index = v2->index;
+   }
+
+   if (swsetup->render_prim == GL_POLYGON) {
+      if (ef[e2]) _swrast_Line( ctx, v2, v0 ); 
+      if (ef[e0]) _swrast_Line( ctx, v0, v1 ); 
+      if (ef[e1]) _swrast_Line( ctx, v1, v2 ); 
+   } else {
+      if (ef[e0]) _swrast_Line( ctx, v0, v1 ); 
+      if (ef[e1]) _swrast_Line( ctx, v1, v2 ); 
+      if (ef[e2]) _swrast_Line( ctx, v2, v0 ); 
+   }
+
+   if (ctx->_TriangleCaps & DD_FLATSHADE) {
+      COPY_CHAN4(v0->color, c[0]);
+      COPY_CHAN4(v1->color, c[1]);
+      COPY_CHAN4(v0->specular, s[0]);
+      COPY_CHAN4(v1->specular, s[1]);
+      v0->index = i[0];
+      v1->index = i[1];
+   }
+}
+
+static void _swsetup_render_point_tri( GLcontext *ctx, 
+				       GLuint e0, GLuint e1, GLuint e2 )
+{
+   SScontext *swsetup = SWSETUP_CONTEXT(ctx);   
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   GLubyte *ef = VB->EdgeFlag;
+   SWvertex *verts = swsetup->verts;
+   SWvertex *v0 = &verts[e0];
+   SWvertex *v1 = &verts[e1];
+   SWvertex *v2 = &verts[e2];
+   GLchan c[2][4];
+   GLchan s[2][4];
+   GLuint i[2];
+
+   if (ctx->_TriangleCaps & DD_FLATSHADE) {
+      COPY_CHAN4(c[0], v0->color);
+      COPY_CHAN4(c[1], v1->color);
+      COPY_CHAN4(s[0], v0->specular);
+      COPY_CHAN4(s[1], v1->specular);
+      i[0] = v0->index;
+      i[1] = v1->index;
+
+      COPY_CHAN4(v0->color, v2->color);
+      COPY_CHAN4(v1->color, v2->color);
+      COPY_CHAN4(v0->specular, v2->specular);
+      COPY_CHAN4(v1->specular, v2->specular);
+      v0->index = v2->index;
+      v1->index = v2->index;
+   }
+
+   if (ef[e0]) _swrast_Point( ctx, v0 ); 
+   if (ef[e1]) _swrast_Point( ctx, v1 ); 
+   if (ef[e2]) _swrast_Point( ctx, v2 ); 
+
+   if (ctx->_TriangleCaps & DD_FLATSHADE) {
+      COPY_CHAN4(v0->color, c[0]);
+      COPY_CHAN4(v1->color, c[1]);
+      COPY_CHAN4(v0->specular, s[0]);
+      COPY_CHAN4(v1->specular, s[1]);
+      v0->index = i[0];
+      v1->index = i[1];
+   }
+}
 
 #define SS_COLOR(a,b) COPY_4UBV(a,b)
 #define SS_SPEC(a,b) COPY_4UBV(a,b)

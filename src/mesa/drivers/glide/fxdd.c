@@ -1028,8 +1028,38 @@ static void fxDDUpdateDDPointers(GLcontext *ctx, GLuint new_state)
 
 static void fxDDRenderPrimitive( GLcontext *ctx, GLenum mode )
 {
-   (void) ctx; (void) mode;
+  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
+
+  if (!fxMesa->is_in_hardware) {
+     _swsetup_RenderPrimitive( ctx, mode );
+  } 
+  else {
+     fxMesa->render_prim = mode;
+  }   
 }
+
+
+static void fxDDRenderStart( GLcontext *ctx )
+{
+  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
+
+  if (!fxMesa->is_in_hardware) {
+     _swsetup_RenderStart( ctx );
+  } 
+  else if (fxMesa->new_state) {
+     fxSetupFXUnits( ctx );
+  }
+}
+
+static void fxDDRenderFinish( GLcontext *ctx )
+{
+  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
+
+  if (!fxMesa->is_in_hardware) {
+     _swsetup_RenderFinish( ctx );
+  } 
+}
+
 
 
 void fxSetupDDPointers(GLcontext *ctx)
@@ -1062,8 +1092,8 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.Finish=fxDDFinish;
   ctx->Driver.Flush=NULL;
 
-  ctx->Driver.RenderStart=fxSetupFXUnits;
-  ctx->Driver.RenderFinish=_swrast_flush;
+  ctx->Driver.RenderStart=fxDDRenderStart;
+  ctx->Driver.RenderFinish=fxDDRenderFinish;
   ctx->Driver.ResetLineStipple=_swrast_ResetLineStipple;
   ctx->Driver.RenderPrimitive=fxDDRenderPrimitive;
 

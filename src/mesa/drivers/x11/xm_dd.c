@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.9 2001/01/08 04:06:20 keithw Exp $ */
+/* $Id: xm_dd.c,v 1.10 2001/01/16 05:29:43 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -922,9 +922,16 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.Flush = flush;
    ctx->Driver.Finish = finish;
 
-   ctx->Driver.RenderStart = 0;
-   ctx->Driver.RenderPrimitive = _swsetup_RenderPrimNoop;
-   ctx->Driver.RenderFinish = _swrast_flush;
+   ctx->Driver.RenderStart = _swsetup_RenderStart;
+   ctx->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
+   ctx->Driver.RenderPrimitive = _swsetup_RenderPrimitive;
+   ctx->Driver.PointsFunc = _swsetup_Points;
+   ctx->Driver.LineFunc = _swsetup_Line;
+   ctx->Driver.TriangleFunc = _swsetup_Triangle;
+   ctx->Driver.QuadFunc = _swsetup_Quad;
+   ctx->Driver.ResetLineStipple = _swrast_ResetLineStipple;
+   ctx->Driver.RenderFinish = _swsetup_RenderFinish;
+
 
    ctx->Driver.SetDrawBuffer = set_draw_buffer;
    ctx->Driver.SetReadBuffer = set_read_buffer;
@@ -936,11 +943,5 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.ColorMask = color_mask;
    ctx->Driver.Enable = enable;
 
-   ctx->Driver.PointsFunc = _swsetup_Points;
-   ctx->Driver.LineFunc = _swsetup_Line;
-   ctx->Driver.TriangleFunc = _swsetup_Triangle;
-   ctx->Driver.QuadFunc = _swsetup_Quad;
-   ctx->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
-   ctx->Driver.ResetLineStipple = _swrast_ResetLineStipple;
    (void) DitherValues;  /* silenced unused var warning */
 }

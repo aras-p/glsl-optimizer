@@ -424,6 +424,7 @@ struct tfxMesaContext {
    GLuint render_index;
    GLuint passes, multipass;
    GLuint is_in_hardware;
+   GLenum render_prim;
 
    /* Current rasterization functions 
     */

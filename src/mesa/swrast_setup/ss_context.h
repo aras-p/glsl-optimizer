@@ -54,6 +54,7 @@ typedef struct {
    void (*Points)( GLcontext *ctx, GLuint first, GLuint last );
 
    SWvertex *verts;
+   GLenum render_prim;
 
 } SScontext;
 

@@ -99,25 +99,19 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    }
 
    if (mode == GL_POINT) {
-      GLubyte *ef = VB->EdgeFlag;
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetPoint) {
 	 v[0]->win[2] += offset;
 	 v[1]->win[2] += offset;
 	 v[2]->win[2] += offset;
       }
-      if (ef[e0]) _swrast_Point( ctx, v[0] ); 
-      if (ef[e1]) _swrast_Point( ctx, v[1] ); 
-      if (ef[e2]) _swrast_Point( ctx, v[2] ); 
+      _swsetup_render_point_tri( ctx, e0, e1, e2 );
    } else if (mode == GL_LINE) {
-      GLubyte *ef = VB->EdgeFlag;
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetLine) {
 	 v[0]->win[2] += offset;
 	 v[1]->win[2] += offset;
 	 v[2]->win[2] += offset;
       }
-      if (ef[e0]) _swrast_Line( ctx, v[0], v[1] ); 
-      if (ef[e1]) _swrast_Line( ctx, v[1], v[2] ); 
-      if (ef[e2]) _swrast_Line( ctx, v[2], v[0] ); 
+      _swsetup_render_line_tri( ctx, e0, e1, e2 );
    } else {
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetFill) {
 	 v[0]->win[2] += offset;
