@@ -1,4 +1,4 @@
-/* $Id: tess.h,v 1.15 1999/11/05 20:37:14 gareth Exp $ */
+/* $Id: tess.h,v 1.16 1999/12/06 09:39:34 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,32 +56,38 @@ extern "C" {
 struct GLUtesselator
 {
     tess_callbacks_t	callbacks;
-    GLboolean		boundary_only;
     GLenum		winding_rule;
+    GLboolean		boundary_only;
     GLdouble		tolerance;
-    tess_plane_t	plane;
-    GLuint		contour_count;
+    GLenum		orientation;
+    void		*data;
+    GLint		num_contours;
     tess_contour_t	*contours, *last_contour;
     tess_contour_t	*current_contour;
     GLdouble		mins[2], maxs[2];
-    GLuint		vertex_count;
+    GLint		num_vertices;
     tess_vertex_t	**sorted_vertices;
 #if 0
     tess_grid_t		*grid;			/* Not currently used... */
 #endif
     heap_t		*ears;
-    hashtable_t		*cvc_lists;
-    void		*data;
     GLboolean		edge_flag;
     GLuint		label;
+    tess_plane_t	plane;
     GLenum		error;
 };
 
 
 /*****************************************************************************
- * Tessellation error handler:
+ * Common tessellation functions:
  *****************************************************************************/
 extern void tess_error_callback( GLUtesselator *, GLenum );
+
+extern GLdouble twice_contour_area( tess_contour_t *contour );
+extern void reverse_contour( tess_contour_t *contour );
+extern void delete_contour( tess_contour_t **contour );
+
+extern void contour_dump( tess_contour_t *contour );
 
 
 /*****************************************************************************
@@ -115,8 +121,8 @@ extern	int	tess_dbg_level;
 #define MSG		tess_msg
 #endif /* DEBUG */
 
-extern INLINE void tess_msg( int level, char *format, ... );
-extern INLINE void tess_info( char *file, char *line );
+extern INLINE void tess_msg( GLint level, char *format, ... );
+extern INLINE void tess_info( char *file, GLint line );
 
 #ifdef __cplusplus
 }
