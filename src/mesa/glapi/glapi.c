@@ -1,10 +1,10 @@
-/* $Id: glapi.c,v 1.48 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: glapi.c,v 1.49 2001/01/23 23:35:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,6 +38,10 @@
  * based libGL.so, and perhaps the SGI SI.
  *
  * There are no dependencies on Mesa in this code.
+ *
+ * Versions (API changes):
+ *   2000/02/23  - original version for Mesa 3.3 and XFree86 4.0
+ *   2001/01/16  - added dispatch override feature for Mesa 3.5
  */
 
 
@@ -49,12 +53,9 @@
 #include "glapitable.h"
 #include "glthread.h"
 
-#if defined(MESA_TRACE)
-#include "mtypes.h"
-#endif
-
 /* This is used when thread safety is disabled */
 struct _glapi_table *_glapi_Dispatch = (struct _glapi_table *) __glapi_noop_table;
+struct _glapi_table *_glapi_RealDispatch = (struct _glapi_table *) __glapi_noop_table;
 
 /* Used when thread safety disabled */
 void *_glapi_Context = NULL;
@@ -66,6 +67,7 @@ void *_glapi_Context = NULL;
 static GLboolean ThreadSafe = GL_FALSE;
 
 static _glthread_TSD DispatchTSD;
+static _glthread_TSD RealDispatchTSD; /* only when using override */
 
 static _glthread_TSD ContextTSD;
 
@@ -75,6 +77,10 @@ static _glthread_TSD ContextTSD;
 
 static GLuint MaxDispatchOffset = sizeof(struct _glapi_table) / sizeof(void *) - 1;
 static GLboolean GetSizeCalled = GL_FALSE;
+
+static GLboolean DispatchOverride = GL_FALSE;
+
+
 
 /* strdup is actually not a standard ANSI C or POSIX routine
    Irix will not define it if ANSI mode is in effect. */
@@ -170,10 +176,6 @@ _glapi_get_context(void)
 void
 _glapi_set_dispatch(struct _glapi_table *dispatch)
 {
-#if defined(MESA_TRACE)
-   GLcontext * ctx;
-#endif
-
    if (!dispatch) {
       /* use the no-op functions */
       dispatch = (struct _glapi_table *) __glapi_noop_table;
@@ -185,36 +187,28 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 #endif
 
 #if defined(THREADS)
-#if defined(MESA_TRACE)
-   ctx = (GLcontext *)_glthread_GetTSD(&ContextTSD);
-   if (ctx->TraceCtx->traceEnabled == GL_TRUE) {
-      _glthread_SetTSD(&DispatchTSD, (void *) ctx->TraceDispatch);
+   if (DispatchOverride) {
+      _glthread_SetTSD(&RealDispatchTSD, (void *) dispatch);
       if (ThreadSafe)
-         _glapi_Dispatch = NULL;
+         _glapi_RealDispatch = NULL;
       else
-         _glapi_Dispatch = ctx->TraceDispatch;
+         _glapi_RealDispatch = dispatch;
    }
    else {
+      /* normal operation */
       _glthread_SetTSD(&DispatchTSD, (void *) dispatch);
       if (ThreadSafe)
          _glapi_Dispatch = NULL;
       else
          _glapi_Dispatch = dispatch;
    }
-#else
-   _glthread_SetTSD(&DispatchTSD, (void *) dispatch);
-   if (ThreadSafe)
-      _glapi_Dispatch = NULL;
-   else
-      _glapi_Dispatch = dispatch;
-#endif /*MESA_TRACE*/
 #else /*THREADS*/
-#if defined(MESA_TRACE)
-   ctx = (GLcontext *)_glthread_GetTSD(&ContextTSD);
-   _glapi_Dispatch = ctx->TraceDispatch;
-#else
-   _glapi_Dispatch = dispatch;
-#endif /*MESA_TRACE*/
+   if (DispatchOverride) {
+      _glapi_RealDispatch = dispatch;
+   }
+   else {
+      _glapi_Dispatch = dispatch;
+   }
 #endif /*THREADS*/
 }
 
@@ -228,11 +222,22 @@ _glapi_get_dispatch(void)
 {
 #if defined(THREADS)
    if (ThreadSafe) {
-      return (struct _glapi_table *) _glthread_GetTSD(&DispatchTSD);
+      if (DispatchOverride) {
+         return (struct _glapi_table *) _glthread_GetTSD(&RealDispatchTSD);
+      }
+      else {
+         return (struct _glapi_table *) _glthread_GetTSD(&DispatchTSD);
+      }
    }
    else {
-      assert(_glapi_Dispatch);
-      return _glapi_Dispatch;
+      if (DispatchOverride) {
+         assert(_glapi_RealDispatch);
+         return _glapi_RealDispatch;
+      }
+      else {
+         assert(_glapi_Dispatch);
+         return _glapi_Dispatch;
+      }
    }
 #else
    return _glapi_Dispatch;
@@ -240,31 +245,86 @@ _glapi_get_dispatch(void)
 }
 
 
-#if defined(MESA_TRACE)
-struct _glapi_table *
-_glapi_get_true_dispatch(void)
+/*
+ * Notes on dispatch overrride:
+ *
+ * Dispatch override allows an external agent to hook into the GL dispatch
+ * mechanism before execution goes into the core rendering library.  For
+ * example, a trace mechanism would insert itself as an overrider, print
+ * logging info for each GL function, then dispatch to the real GL function.
+ *
+ * libGLS (GL Stream library) is another agent that might use override.
+ *
+ * We don't allow more than one layer of overriding at this time.
+ * In the future we may allow nested/layered override.  In that case
+ * _glapi_begin_dispatch_override() will return an override layer,
+ * _glapi_end_dispatch_override(layer) will remove an override layer
+ * and _glapi_get_override_dispatch(layer) will return the dispatch
+ * table for a given override layer.  layer = 0 will be the "real"
+ * dispatch table.
+ */
+
+/*
+ * Return: dispatch override layer number.
+ */
+int
+_glapi_begin_dispatch_override(struct _glapi_table *override)
 {
-   GLcontext* ctx;
+   struct _glapi_table *real = _glapi_get_dispatch();
+
+   assert(!DispatchOverride);  /* can't nest at this time */
+   DispatchOverride = GL_TRUE;
+
+   _glapi_set_dispatch(real);
 
 #if defined(THREADS)
-   if (ThreadSafe) {
-      ctx = (GLcontext *) _glthread_GetTSD(&ContextTSD);
-      assert(ctx);
-      assert(ctx->CurrentDispatch);
-      return ctx->CurrentDispatch;
+   _glthread_SetTSD(&DispatchTSD, (void *) override);
+   if (ThreadSafe)
+      _glapi_Dispatch = NULL;
+   else
+      _glapi_Dispatch = override;
+#else
+   _glapi_Dispatch = override;
+#endif
+   return 1;
+}
+
+
+void
+_glapi_end_dispatch_override(int layer)
+{
+   struct _glapi_table *real = _glapi_get_dispatch();
+   (void) layer;
+   DispatchOverride = GL_FALSE;
+   _glapi_set_dispatch(real);
+   /* the rest of this isn't needed, just play it safe */
+#if defined(THREADS)
+   _glthread_SetTSD(&RealDispatchTSD, NULL);
+#endif
+   _glapi_RealDispatch = NULL;
+}
+
+
+struct _glapi_table *
+_glapi_get_override_dispatch(int layer)
+{
+   if (layer == 0) {
+      return _glapi_get_dispatch();
    }
    else {
-      assert(_glapi_Context);
-      assert(((GLcontext *)_glapi_Context)->CurrentDispatch);
-      return ((GLcontext *)_glapi_Context)->CurrentDispatch;
-   }
+      if (DispatchOverride) {
+#if defined(THREADS)
+         return (struct _glapi_table *) _glthread_GetTSD(&DispatchTSD);
 #else
-   assert(_glapi_Context);
-   assert(((GLcontext *)_glapi_Context)->CurrentDispatch);
-   return ((GLcontext *)_glapi_Context)->CurrentDispatch;
+         return _glapi_Dispatch;
 #endif
+      }
+      else {
+         return NULL;
+      }
+   }
 }
-#endif /* MESA_TRACE */
+
 
 
 /*
@@ -287,7 +347,7 @@ _glapi_get_dispatch_table_size(void)
 const char *
 _glapi_get_version(void)
 {
-   return "20001026";  /* YYYYMMDD */
+   return "20010116";  /* YYYYMMDD */
 }
 
 
