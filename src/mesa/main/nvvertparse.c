@@ -1,4 +1,4 @@
-/* $Id: nvvertparse.c,v 1.2 2003/02/23 05:24:39 brianp Exp $ */
+/* $Id: nvvertparse.c,v 1.3 2003/02/25 19:27:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,7 +41,11 @@
 #include "nvvertparse.h"
 #include "nvvertprog.h"
 
-
+/**
+ * Current parsing state.  This structure is passed among the parsing
+ * functions and keeps track of the current parser position and various
+ * program attributes.
+ */
 struct parse_state {
    const GLubyte *pos;
    GLboolean isStateProgram;
@@ -161,25 +165,46 @@ Peek_Token(struct parse_state *parseState, GLubyte *token)
       parseState->pos += (-i);
       return GL_FALSE;
    }
-   len = _mesa_strlen((char *) token);
+   len = _mesa_strlen((const char *) token);
    parseState->pos += (i - len);
    return GL_TRUE;
 }
 
 
 /**
- * String equality test
+ * Try to match 'pattern' as the next token after any whitespace/comments.
+ * Advance the current parsing position only if we match the pattern.
+ * \return GL_TRUE if pattern is matched, GL_FALSE otherwise.
  */
 static GLboolean
-StrEq(const GLubyte *a, const GLubyte *b)
+Parse_String(struct parse_state *parseState, const char *pattern)
 {
+   const GLubyte *m;
    GLint i;
-   for (i = 0; a[i] && b[i] && a[i] == b[i]; i++)
-      ;
-   if (a[i] == 0 && b[i] == 0)
-      return GL_TRUE;
-   else
-      return GL_FALSE;
+
+   /* skip whitespace and comments */
+   while (IsWhitespace(*parseState->pos) || *parseState->pos == '#') {
+      if (*parseState->pos == '#') {
+         while (*parseState->pos && (*parseState->pos != '\n' && *parseState->pos != '\r')) {
+            parseState->pos += 1;
+         }
+      }
+      else {
+         /* skip whitespace */
+         parseState->pos += 1;
+      }
+   }
+
+   /* Try to match the pattern */
+   m = parseState->pos;
+   for (i = 0; pattern[i]; i++) {
+      if (*m != (GLubyte) pattern[i])
+         return GL_FALSE;
+      m += 1;
+   }
+   parseState->pos = m;
+
+   return GL_TRUE; /* success */
 }
 
 
@@ -206,19 +231,19 @@ static const char *Opcodes[] = {
 
 #define RETURN_ERROR						\
 do {								\
-   _mesa_printf("vpparse.c error at %d: parse error\n", __LINE__);	\
+   _mesa_printf("vert prog error at %d\n", __LINE__);		\
    return GL_FALSE;						\
 } while(0)
 
 #define RETURN_ERROR1(msg)					\
 do {								\
-   _mesa_printf("vpparse.c error at %d: %s\n", __LINE__, msg);	\
+   _mesa_printf("vert prog error at %d: %s\n", __LINE__, msg);	\
    return GL_FALSE;						\
 } while(0)
 
 #define RETURN_ERROR2(msg1, msg2)					\
 do {									\
-   _mesa_printf("vpparse.c error at %d: %s %s\n", __LINE__, msg1, msg2);	\
+   _mesa_printf("vert prog error at %d: %s %s\n", __LINE__, msg1, msg2);\
    return GL_FALSE;							\
 } while(0)
 
@@ -247,39 +272,6 @@ static GLuint
 IsOutputRegister(GLuint r)
 {
    return (GLuint) (r >= VP_OUTPUT_REG_START && r <= VP_OUTPUT_REG_END);
-}
-
-
-
-/**
- * Try to match 'pattern' as the next token after any whitespace/comments.
- */
-static GLboolean
-Parse_String(struct parse_state *parseState, const char *pattern)
-{
-   GLint i;
-
-   /* skip whitespace and comments */
-   while (IsWhitespace(*parseState->pos) || *parseState->pos == '#') {
-      if (*parseState->pos == '#') {
-         while (*parseState->pos && (*parseState->pos != '\n' && *parseState->pos != '\r')) {
-            parseState->pos += 1;
-         }
-      }
-      else {
-         /* skip whitespace */
-         parseState->pos += 1;
-      }
-   }
-
-   /* Try to match the pattern */
-   for (i = 0; pattern[i]; i++) {
-      if (*parseState->pos != pattern[i])
-         RETURN_ERROR2("failed to match", pattern); /* failure */
-      parseState->pos += 1;
-   }
-
-   return GL_TRUE; /* success */
 }
 
 
@@ -391,7 +383,7 @@ Parse_ParamReg(struct parse_state *parseState, struct vp_src_register *srcReg)
          RETURN_ERROR1("Bad constant program number");
       srcReg->Register = VP_PROG_REG_START + reg;
    }
-   else if (StrEq(token, (GLubyte *) "A0")) {
+   else if (_mesa_strcmp((const char *) token, "A0") == 0) {
       /* address register "A0.x" */
       if (!Parse_AddrReg(parseState))
          RETURN_ERROR;
@@ -476,7 +468,7 @@ Parse_AttribReg(struct parse_state *parseState, GLint *tempRegNum)
    }
    else {
       for (j = 0; InputRegisters[j]; j++) {
-         if (StrEq(token, (const GLubyte *) InputRegisters[j])) {
+         if (_mesa_strcmp((const char *) token, InputRegisters[j]) == 0) {
             *tempRegNum = VP_INPUT_REG_START + j;
             break;
          }
@@ -520,7 +512,7 @@ Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
 
    /* try to match an output register name */
    for (j = start; OutputRegisters[j]; j++) {
-      if (StrEq(token, (const GLubyte *) OutputRegisters[j])) {
+      if (_mesa_strcmp((const char *) token, OutputRegisters[j]) == 0) {
          *outputRegNum = VP_OUTPUT_REG_START + j;
          break;
       }
@@ -769,26 +761,13 @@ Parse_ScalarSrcReg(struct parse_state *parseState, struct vp_src_register *srcRe
 
 
 static GLint
-Parse_UnaryOpInstruction(struct parse_state *parseState, struct vp_instruction *inst)
+Parse_UnaryOpInstruction(struct parse_state *parseState,
+                         struct vp_instruction *inst, enum vp_opcode opcode)
 {
-   GLubyte token[100];
+   if (opcode == VP_OPCODE_ABS && !parseState->isVersion1_1)
+      RETURN_ERROR1("ABS illegal for vertex program 1.0");
 
-   /* opcode */
-   if (!Parse_Token(parseState, token))
-      RETURN_ERROR;
-
-   if (StrEq(token, (GLubyte *) "MOV")) {
-      inst->Opcode = VP_OPCODE_MOV;
-   }
-   else if (StrEq(token, (GLubyte *) "LIT")) {
-      inst->Opcode = VP_OPCODE_LIT;
-   }
-   else if (StrEq(token, (GLubyte *) "ABS") && parseState->isVersion1_1) {
-      inst->Opcode = VP_OPCODE_ABS;
-   }
-   else {
-      RETURN_ERROR;
-   }
+   inst->Opcode = opcode;
 
    /* dest reg */
    if (!Parse_MaskedDstReg(parseState, &inst->DstReg))
@@ -811,50 +790,15 @@ Parse_UnaryOpInstruction(struct parse_state *parseState, struct vp_instruction *
 
 
 static GLboolean
-Parse_BiOpInstruction(struct parse_state *parseState, struct vp_instruction *inst)
+Parse_BiOpInstruction(struct parse_state *parseState,
+                      struct vp_instruction *inst, enum vp_opcode opcode)
 {
-   GLubyte token[100];
+   if (opcode == VP_OPCODE_DPH && !parseState->isVersion1_1)
+      RETURN_ERROR1("DPH illegal for vertex program 1.0");
+   if (opcode == VP_OPCODE_SUB && !parseState->isVersion1_1)
+      RETURN_ERROR1("SUB illegal for vertex program 1.0");
 
-   /* opcode */
-   if (!Parse_Token(parseState, token))
-      RETURN_ERROR;
-
-   if (StrEq(token, (GLubyte *) "MUL")) {
-      inst->Opcode = VP_OPCODE_MUL;
-   }
-   else if (StrEq(token, (GLubyte *) "ADD")) {
-      inst->Opcode = VP_OPCODE_ADD;
-   }
-   else if (StrEq(token, (GLubyte *) "DP3")) {
-      inst->Opcode = VP_OPCODE_DP3;
-   }
-   else if (StrEq(token, (GLubyte *) "DP4")) {
-      inst->Opcode = VP_OPCODE_DP4;
-   }
-   else if (StrEq(token, (GLubyte *) "DST")) {
-      inst->Opcode = VP_OPCODE_DST;
-   }
-   else if (StrEq(token, (GLubyte *) "MIN")) {
-      inst->Opcode = VP_OPCODE_ADD;
-   }
-   else if (StrEq(token, (GLubyte *) "MAX")) {
-      inst->Opcode = VP_OPCODE_ADD;
-   }
-   else if (StrEq(token, (GLubyte *) "SLT")) {
-      inst->Opcode = VP_OPCODE_SLT;
-   }
-   else if (StrEq(token, (GLubyte *) "SGE")) {
-      inst->Opcode = VP_OPCODE_SGE;
-   }
-   else if (StrEq(token, (GLubyte *) "DPH") && parseState->isVersion1_1) {
-      inst->Opcode = VP_OPCODE_DPH;
-   }
-   else if (StrEq(token, (GLubyte *) "SUB") && parseState->isVersion1_1) {
-      inst->Opcode = VP_OPCODE_SUB;
-   }
-   else {
-      RETURN_ERROR;
-   }
+   inst->Opcode = opcode;
 
    /* dest reg */
    if (!Parse_MaskedDstReg(parseState, &inst->DstReg))
@@ -897,20 +841,10 @@ Parse_BiOpInstruction(struct parse_state *parseState, struct vp_instruction *ins
 
 
 static GLboolean
-Parse_TriOpInstruction(struct parse_state *parseState, struct vp_instruction *inst)
+Parse_TriOpInstruction(struct parse_state *parseState,
+                       struct vp_instruction *inst, enum vp_opcode opcode)
 {
-   GLubyte token[100];
-
-   /* opcode */
-   if (!Parse_Token(parseState, token))
-      RETURN_ERROR;
-
-   if (StrEq(token, (GLubyte *) "MAD")) {
-      inst->Opcode = VP_OPCODE_MAD;
-   }
-   else {
-      RETURN_ERROR;
-   }
+   inst->Opcode = opcode;
 
    /* dest reg */
    if (!Parse_MaskedDstReg(parseState, &inst->DstReg))
@@ -973,32 +907,13 @@ Parse_TriOpInstruction(struct parse_state *parseState, struct vp_instruction *in
 
 
 static GLboolean
-Parse_ScalarInstruction(struct parse_state *parseState, struct vp_instruction *inst)
+Parse_ScalarInstruction(struct parse_state *parseState,
+                        struct vp_instruction *inst, enum vp_opcode opcode)
 {
-   GLubyte token[100];
+   if (opcode == VP_OPCODE_RCC && !parseState->isVersion1_1)
+      RETURN_ERROR1("RCC illegal for vertex program 1.0");
 
-   /* opcode */
-   if (!Parse_Token(parseState, token))
-      RETURN_ERROR;
-
-   if (StrEq(token, (GLubyte *) "RCP")) {
-      inst->Opcode = VP_OPCODE_RCP;
-   }
-   else if (StrEq(token, (GLubyte *) "RSQ")) {
-      inst->Opcode = VP_OPCODE_RSQ;
-   }
-   else if (StrEq(token, (GLubyte *) "EXP")) {
-      inst->Opcode = VP_OPCODE_EXP;
-   }
-   else if (StrEq(token, (GLubyte *) "LOG")) {
-      inst->Opcode = VP_OPCODE_LOG;
-   }
-   else if (StrEq(token, (GLubyte *) "RCC") && parseState->isVersion1_1) {
-      inst->Opcode = VP_OPCODE_RCC;
-   }
-   else {
-      RETURN_ERROR;
-   }
+   inst->Opcode = opcode;
 
    /* dest reg */
    if (!Parse_MaskedDstReg(parseState, &inst->DstReg))
@@ -1025,10 +940,6 @@ Parse_AddressInstruction(struct parse_state *parseState, struct vp_instruction *
 {
    inst->Opcode = VP_OPCODE_ARL;
 
-   /* opcode */
-   if (!Parse_String(parseState, "ARL"))
-      RETURN_ERROR;
-
    /* dest A0 reg */
    if (!Parse_AddrReg(parseState))
       RETURN_ERROR;
@@ -1054,10 +965,6 @@ Parse_EndInstruction(struct parse_state *parseState, struct vp_instruction *inst
 {
    GLubyte token[100];
 
-   /* opcode */
-   if (!Parse_String(parseState, "END"))
-      RETURN_ERROR;
-
    inst->Opcode = VP_OPCODE_END;
 
    /* this should fail! */
@@ -1073,22 +980,16 @@ Parse_OptionSequence(struct parse_state *parseState,
                      struct vp_instruction program[])
 {
    while (1) {
-      GLubyte token[100];
-      if (!Peek_Token(parseState, token)) {
-         RETURN_ERROR1("Unexpected end of input");
-         return GL_FALSE; /* end of input */
+      if (!Parse_String(parseState, "OPTION"))
+         return GL_TRUE;  /* ok, not an OPTION statement */
+      if (Parse_String(parseState, "NV_position_invariant")) {
+         parseState->isPositionInvariant = GL_TRUE;
       }
-
-      if (!StrEq(token, (GLubyte *) "OPTION"))
-         return GL_TRUE;  /* probably an instruction */
-
-      Parse_Token(parseState, token);
-
-      if (!Parse_String(parseState, "NV_position_invariant"))
-         return GL_FALSE;
+      else {
+         RETURN_ERROR1("unexpected OPTION statement");
+      }
       if (!Parse_String(parseState, ";"))
          return GL_FALSE;
-      parseState->isPositionInvariant = GL_TRUE;
    }
 }
 
@@ -1097,8 +998,6 @@ static GLboolean
 Parse_InstructionSequence(struct parse_state *parseState,
                           struct vp_instruction program[])
 {
-   GLubyte token[100];
-
    while (1) {
       struct vp_instruction *inst = program + parseState->numInst;
 
@@ -1108,46 +1007,91 @@ Parse_InstructionSequence(struct parse_state *parseState,
       inst->SrcReg[2].Register = -1;
       inst->DstReg.Register = -1;
 
-      if (!Peek_Token(parseState, token))
-         RETURN_ERROR;
-
-      if (StrEq(token, (GLubyte *) "MOV") ||
-          StrEq(token, (GLubyte *) "LIT") ||
-          StrEq(token, (GLubyte *) "ABS")) {
-         if (!Parse_UnaryOpInstruction(parseState, inst))
+      if (Parse_String(parseState, "MOV")) {
+         if (!Parse_UnaryOpInstruction(parseState, inst, VP_OPCODE_MOV))
             RETURN_ERROR;
       }
-      else if (StrEq(token, (GLubyte *) "MUL") ||
-          StrEq(token, (GLubyte *) "ADD") ||
-          StrEq(token, (GLubyte *) "DP3") ||
-          StrEq(token, (GLubyte *) "DP4") ||
-          StrEq(token, (GLubyte *) "DST") ||
-          StrEq(token, (GLubyte *) "MIN") ||
-          StrEq(token, (GLubyte *) "MAX") ||
-          StrEq(token, (GLubyte *) "SLT") ||
-          StrEq(token, (GLubyte *) "SGE") ||
-          StrEq(token, (GLubyte *) "DPH") ||
-          StrEq(token, (GLubyte *) "SUB")) {
-         if (!Parse_BiOpInstruction(parseState, inst))
+      else if (Parse_String(parseState, "LIT")) {
+         if (!Parse_UnaryOpInstruction(parseState, inst, VP_OPCODE_LIT))
             RETURN_ERROR;
       }
-      else if (StrEq(token, (GLubyte *) "MAD")) {
-         if (!Parse_TriOpInstruction(parseState, inst))
+      else if (Parse_String(parseState, "ABS")) {
+         if (!Parse_UnaryOpInstruction(parseState, inst, VP_OPCODE_ABS))
             RETURN_ERROR;
       }
-      else if (StrEq(token, (GLubyte *) "RCP") ||
-               StrEq(token, (GLubyte *) "RSQ") ||
-               StrEq(token, (GLubyte *) "EXP") ||
-               StrEq(token, (GLubyte *) "LOG") ||
-               StrEq(token, (GLubyte *) "RCC")) {
-         if (!Parse_ScalarInstruction(parseState, inst))
+      else if (Parse_String(parseState, "MUL")) {
+         if (!Parse_BiOpInstruction(parseState, inst, VP_OPCODE_MUL))
             RETURN_ERROR;
       }
-      else if (StrEq(token, (GLubyte *) "ARL")) {
+      else if (Parse_String(parseState, "ADD")) {
+         if (!Parse_BiOpInstruction(parseState, inst, VP_OPCODE_ADD))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "DP3")) {
+         if (!Parse_BiOpInstruction(parseState, inst, VP_OPCODE_DP3))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "DP4")) {
+         if (!Parse_BiOpInstruction(parseState, inst, VP_OPCODE_DP4))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "DST")) {
+         if (!Parse_BiOpInstruction(parseState, inst, VP_OPCODE_DST))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "MIN")) {
+         if (!Parse_BiOpInstruction(parseState, inst, VP_OPCODE_MIN))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "MAX")) {
+         if (!Parse_BiOpInstruction(parseState, inst, VP_OPCODE_MAX))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "SLT")) {
+         if (!Parse_BiOpInstruction(parseState, inst, VP_OPCODE_SLT))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "SGE")) {
+         if (!Parse_BiOpInstruction(parseState, inst, VP_OPCODE_SGE))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "DPH")) {
+         if (!Parse_BiOpInstruction(parseState, inst, VP_OPCODE_DPH))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "SUB")) {
+         if (!Parse_BiOpInstruction(parseState, inst, VP_OPCODE_SUB))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "MAD")) {
+         if (!Parse_TriOpInstruction(parseState, inst, VP_OPCODE_MAD))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "RCP")) {
+         if (!Parse_ScalarInstruction(parseState, inst, VP_OPCODE_RCP))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "RSQ")) {
+         if (!Parse_ScalarInstruction(parseState, inst, VP_OPCODE_RSQ))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "EXP")) {
+         if (!Parse_ScalarInstruction(parseState, inst, VP_OPCODE_EXP))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "LOG")) {
+         if (!Parse_ScalarInstruction(parseState, inst, VP_OPCODE_LOG))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "RCC")) {
+         if (!Parse_ScalarInstruction(parseState, inst, VP_OPCODE_RCC))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "ARL")) {
          if (!Parse_AddressInstruction(parseState, inst))
             RETURN_ERROR;
       }
-      else if (StrEq(token, (GLubyte *) "END")) {
+      else if (Parse_String(parseState, "END")) {
          if (!Parse_EndInstruction(parseState, inst))
             RETURN_ERROR;
          else {
@@ -1157,7 +1101,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
       }
       else {
          /* bad instruction name */
-         RETURN_ERROR2("Unexpected token: ", token);
+         RETURN_ERROR1("Unexpected token");
       }
 
       /* examine input/output registers */
@@ -1290,11 +1234,6 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
          }
       }
 
-      /* save bitmasks of registers read/written */
-      program->InputsRead = parseState.inputsRead;
-      program->OutputsWritten = parseState.outputsWritten;
-      program->IsPositionInvariant = parseState.isPositionInvariant;
-
       /* copy the compiled instructions */
       assert(parseState.numInst <= MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS);
       newInst = (struct vp_instruction *)
@@ -1317,6 +1256,9 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
          FREE(program->Instructions);
       }
       program->Instructions = newInst;
+      program->InputsRead = parseState.inputsRead;
+      program->OutputsWritten = parseState.outputsWritten;
+      program->IsPositionInvariant = parseState.isPositionInvariant;
 
 #ifdef DEBUG_foo
       _mesa_printf("--- glLoadProgramNV result ---\n");
@@ -1331,11 +1273,11 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
 #ifdef DEBUG
       {
          GLint line, column;
-         const char *lineStr;
-         lineStr = _mesa_find_line_column((const char *) programString,
-                                (const char *) parseState.pos, &line, &column);
+         const GLubyte *lineStr;
+         lineStr = _mesa_find_line_column(programString,
+                                          parseState.pos, &line, &column);
          _mesa_debug(ctx, "Parse error on line %d, column %d:%s\n",
-                     line, column, lineStr);
+                     line, column, (char *) lineStr);
          _mesa_free((void *) lineStr);
       }
 #endif
