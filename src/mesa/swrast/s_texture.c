@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.25 2001/04/17 22:08:28 brianp Exp $ */
+/* $Id: s_texture.c,v 1.26 2001/04/19 22:40:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,24 +37,6 @@
 #include "s_context.h"
 #include "s_pb.h"
 #include "s_texture.h"
-
-
-/* XXX this is temporary, until GL/glext.h is updated. */
-#ifndef GL_DOT3_RGB_ARB
-#define GL_DOT3_RGB_ARB 0x86AE
-#endif
-#ifndef GL_DOT3_RGBA_ARB
-#define GL_DOT3_RGBA_ARB 0x86AF
-#endif
-
-/* XXX this is temporary, until GL/glext.h is updated. */
-#ifndef GL_CLAMP_TO_BORDER_ARB
-#define GL_CLAMP_TO_BORDER_ARB 0x812D
-#endif
-
-#ifndef GL_SUBTRACT_ARB
-#define GL_SUBTRACT_ARB 0x84E7
-#endif
 
 
 /*
