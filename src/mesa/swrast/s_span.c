@@ -716,7 +716,7 @@ multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
          /* make copy of incoming colors */
          MEMCPY( rgbaTmp, span->array->rgba, 4 * span->end * sizeof(GLchan) );
 
-         if (ctx->Color.ColorLogicOpEnabled) {
+         if (ctx->Color._LogicOpEnabled) {
             _swrast_logicop_rgba_span(ctx, span, rgbaTmp);
          }
          else if (ctx->Color.BlendEnabled) {
@@ -1100,7 +1100,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
    }
    else {
       /* normal: write to exactly one buffer */
-      if (ctx->Color.ColorLogicOpEnabled) {
+      if (ctx->Color._LogicOpEnabled) {
          _swrast_logicop_rgba_span(ctx, span, span->array->rgba);
          monoColor = GL_FALSE;
       }
@@ -1373,7 +1373,7 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
    }
    else {
       /* normal: write to exactly one buffer */
-      if (ctx->Color.ColorLogicOpEnabled) {
+      if (ctx->Color._LogicOpEnabled) {
          _swrast_logicop_rgba_span(ctx, span, span->array->rgba);
       }
       else if (ctx->Color.BlendEnabled) {

@@ -334,8 +334,9 @@ _mesa_BlendEquation( GLenum mode )
    /* This is needed to support 1.1's RGB logic ops AND
     * 1.0's blending logicops.
     */
-   ctx->Color.ColorLogicOpEnabled = (mode==GL_LOGIC_OP &&
-				     ctx->Color.BlendEnabled);
+   ctx->Color._LogicOpEnabled = (ctx->Color.ColorLogicOpEnabled ||
+                                 (ctx->Color.BlendEnabled &&
+                                  mode == GL_LOGIC_OP));
 
    if (ctx->Driver.BlendEquation)
       (*ctx->Driver.BlendEquation)( ctx, mode );
@@ -572,6 +573,7 @@ void _mesa_init_color( GLcontext * ctx )
    ASSIGN_4V( ctx->Color.BlendColor, 0.0, 0.0, 0.0, 0.0 );
    ctx->Color.IndexLogicOpEnabled = GL_FALSE;
    ctx->Color.ColorLogicOpEnabled = GL_FALSE;
+   ctx->Color._LogicOpEnabled = GL_FALSE;
    ctx->Color.LogicOp = GL_COPY;
    ctx->Color.DitherFlag = GL_TRUE;
 

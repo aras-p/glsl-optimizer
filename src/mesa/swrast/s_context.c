@@ -59,7 +59,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
    if (ctx->Visual.rgbMode) {
       const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
       if (colorMask != 0xffffffff)        RasterMask |= MASKING_BIT;
-      if (ctx->Color.ColorLogicOpEnabled) RasterMask |= LOGIC_OP_BIT;
+      if (ctx->Color._LogicOpEnabled)     RasterMask |= LOGIC_OP_BIT;
       if (ctx->Texture._EnabledUnits)     RasterMask |= TEXTURE_BIT;
    }
    else {
