@@ -1323,6 +1323,10 @@ struct gl_transform_attrib {
    GLboolean Normalize;				/**< Normalize all normals? */
    GLboolean RescaleNormals;			/**< GL_EXT_rescale_normal */
    GLboolean RasterPositionUnclipped;           /**< GL_IBM_rasterpos_clip */
+
+   GLboolean CullVertexFlag;	/**< True if GL_CULL_VERTEX_EXT is enabled */
+   GLfloat CullEyePos[4];
+   GLfloat CullObjPos[4];
 };
 
 
@@ -1885,6 +1889,7 @@ struct gl_extensions
    GLboolean EXT_blend_minmax;
    GLboolean EXT_blend_subtract;
    GLboolean EXT_clip_volume_hint;
+   GLboolean EXT_cull_vertex;
    GLboolean EXT_convolution;
    GLboolean EXT_compiled_vertex_array;
    GLboolean EXT_copy_texture;

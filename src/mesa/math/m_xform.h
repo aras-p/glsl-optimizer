@@ -98,6 +98,7 @@ _math_init_transformation(void);
 #define CLIP_NEAR_BIT    0x10
 #define CLIP_FAR_BIT     0x20
 #define CLIP_USER_BIT    0x40
+#define CLIP_CULL_BIT    0x80
 #define CLIP_ALL_BITS    0x3f
 
 

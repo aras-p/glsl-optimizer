@@ -1152,7 +1152,7 @@ static GLboolean TAG(validate_render)( GLcontext *ctx,
 {
    GLint i;
 
-   if (VB->ClipOrMask)
+   if (VB->ClipOrMask & ~CLIP_CULL_BIT)
       return GL_FALSE;
 
    if (VB->Elts && !HAVE_ELTS)

@@ -211,6 +211,8 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->ClipPlane = _mesa_ClipPlane;
    exec->ColorMaterial = _mesa_ColorMaterial;
    exec->CopyPixels = _mesa_CopyPixels;
+   exec->CullParameterfvEXT = _mesa_CullParameterfvEXT;
+   exec->CullParameterdvEXT = _mesa_CullParameterdvEXT;
    exec->DeleteLists = _mesa_DeleteLists;
    exec->DepthFunc = _mesa_DepthFunc;
    exec->DepthMask = _mesa_DepthMask;

@@ -208,6 +208,7 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 	    return GL_FALSE;
       }
 
+      VB->ClipAndMask = store->andmask;
       VB->ClipOrMask = store->ormask;
       VB->ClipMask = store->clipmask;
 
@@ -222,6 +223,7 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
       VB->ClipPtr = store->save_clipptr;
       VB->NdcPtr = store->save_ndcptr;
       VB->ClipMask = store->clipmask;
+      VB->ClipAndMask = store->andmask;
       VB->ClipOrMask = store->ormask;
       if (store->andmask)
 	 return GL_FALSE;

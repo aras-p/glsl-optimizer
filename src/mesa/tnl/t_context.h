@@ -432,6 +432,7 @@ struct vertex_buffer
    GLvector4f  *ClipPtr;	                /* _TNL_BIT_POS */
    GLvector4f  *NdcPtr;                         /* _TNL_BIT_POS */
    GLubyte     ClipOrMask;	                /* _TNL_BIT_POS */
+   GLubyte     ClipAndMask;	                /* _TNL_BIT_POS */
    GLubyte     *ClipMask;		        /* _TNL_BIT_POS */
    GLvector4f  *NormalPtr;	                /* _TNL_BIT_NORMAL */
    GLfloat     *NormalLengthPtr;	        /* _TNL_BIT_NORMAL */
