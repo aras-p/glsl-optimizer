@@ -219,9 +219,9 @@ static void i915_emit_state( intelContextPtr intel )
 {
    i915ContextPtr i915 = I915_CONTEXT(intel);
    struct i915_hw_state *state = i915->current;
-   BATCH_LOCALS;
    int i;
    GLuint dirty;
+   BATCH_LOCALS;
 
    /* More to workaround the multitex hang - if one texture unit state
     * is modified, emit all texture units.

@@ -360,9 +360,11 @@ static void i830_emit_state( intelContextPtr intel )
 {
    i830ContextPtr i830 = I830_CONTEXT(intel);
    struct i830_hw_state *state = i830->current;
-   BATCH_LOCALS;
    int i;
-   GLuint dirty = state->active & ~state->emitted;
+   GLuint dirty;
+   BATCH_LOCALS;
+
+   dirty = state->active & ~state->emitted;
 
    if (dirty & I830_UPLOAD_CTX) {
       if (VERBOSE) fprintf(stderr, "I830_UPLOAD_CTX:\n"); 
