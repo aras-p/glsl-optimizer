@@ -957,6 +957,17 @@ texture_error_check( GLcontext *ctx, GLenum target,
       }
    }
 
+   /* For cube map, width must equal height */
+   if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
+       target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB) {
+      if (width != height) {
+         if (!isProxy) {
+            gl_error(ctx, GL_INVALID_VALUE, "glTexImage2D(width != height)");
+         }
+         return GL_TRUE;
+      }
+   }
+
    /* Depth */
    if (dimensions >= 3) {
       if (depth < 2 * border || depth > 2 + ctx->Const.MaxTextureSize
@@ -1182,6 +1193,15 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
          char message[100];
          sprintf(message, "glCopyTexImage%dD(height)", dimensions);
          gl_error(ctx, GL_INVALID_VALUE, message);
+         return GL_TRUE;
+      }
+   }
+
+   /* For cube map, width must equal height */
+   if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
+       target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB) {
+      if (width != height) {
+         gl_error(ctx, GL_INVALID_VALUE, "glCopyTexImage2D(width != height)");
          return GL_TRUE;
       }
    }
