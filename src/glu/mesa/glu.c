@@ -1,4 +1,4 @@
-/* $Id: glu.c,v 1.10 1999/09/17 00:06:14 brianp Exp $ */
+/* $Id: glu.c,v 1.11 1999/09/17 01:00:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: glu.c,v $
+ * Revision 1.11  1999/09/17 01:00:38  brianp
+ * fixed typo
+ *
  * Revision 1.10  1999/09/17 00:06:14  brianp
  * gluGetProcAddressEXT change for C++ / BeOS
  *
@@ -370,7 +373,7 @@ const GLubyte* GLAPIENTRY gluGetString( GLenum name )
 /* for BeOS R4.5 */
 void GLAPIENTRY (*gluGetProcAddressEXT(const GLubyte *procName))(...)
 #else
-void GLAPIENTRY (*gluGetProcAddressEXT(const GLubyte *procName))(...)
+void GLAPIENTRY (*gluGetProcAddressEXT(const GLubyte *procName))()
 #endif
 {
    struct proc {
