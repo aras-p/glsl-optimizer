@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.78 2001/02/19 20:01:41 brianp Exp $ */
+/* $Id: teximage.c,v 1.79 2001/02/26 18:24:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -731,6 +731,15 @@ texture_error_check( GLcontext *ctx, GLenum target,
          gl_error(ctx, GL_INVALID_VALUE, message);
       }
       return GL_TRUE;
+   }
+
+   /* For cube map, width must equal height */
+   if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
+       target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB) {
+      if (width != height) {
+         gl_error(ctx, GL_INVALID_VALUE, "glTexImage2D(width != height)");
+         return GL_TRUE;
+      }
    }
 
    iformat = _mesa_base_tex_format( ctx, internalFormat );
