@@ -1,4 +1,4 @@
-/* $Id: texline.c,v 1.3 2001/05/21 17:45:25 brianp Exp $ */
+/* $Id: texline.c,v 1.4 2002/08/17 00:30:36 brianp Exp $ */
 
 /*
  * Test textured lines.
@@ -18,14 +18,14 @@
 
 static GLboolean Antialias = GL_FALSE;
 static GLboolean Animate = GL_FALSE;
-static GLboolean Texture = GL_TRUE;
+static GLint Texture = 1;
+static GLboolean Stipple = GL_FALSE;
 static GLfloat LineWidth = 1.0;
-static GLboolean Multitex = GL_FALSE;
 
 static GLfloat Xrot = -60.0, Yrot = 0.0, Zrot = 0.0;
 static GLfloat DYrot = 1.0;
 static GLboolean Points = GL_FALSE;
-
+static GLfloat Scale = 1.0;
 
 static void Idle( void )
 {
@@ -46,6 +46,7 @@ static void Display( void )
    glRotatef(Xrot, 1.0, 0.0, 0.0);
    glRotatef(Yrot, 0.0, 1.0, 0.0);
    glRotatef(Zrot, 0.0, 0.0, 1.0);
+   glScalef(Scale, Scale, Scale);
 
    if (Texture)
       glColor3f(1, 1, 1);
@@ -122,11 +123,27 @@ static void Key( unsigned char key, int x, int y )
          }
          break;
       case 't':
-         Texture = !Texture;
-         if (Texture)
-            glEnable(GL_TEXTURE_2D);
-         else
+         Texture++;
+         if (Texture > 2)
+            Texture = 0;
+         if (Texture == 0) {
+            glActiveTextureARB(GL_TEXTURE0_ARB);
             glDisable(GL_TEXTURE_2D);
+            glActiveTextureARB(GL_TEXTURE1_ARB);
+            glDisable(GL_TEXTURE_2D);
+         }
+         else if (Texture == 1) {
+            glActiveTextureARB(GL_TEXTURE0_ARB);
+            glEnable(GL_TEXTURE_2D);
+            glActiveTextureARB(GL_TEXTURE1_ARB);
+            glDisable(GL_TEXTURE_2D);
+         }
+         else {
+            glActiveTextureARB(GL_TEXTURE0_ARB);
+            glEnable(GL_TEXTURE_2D);
+            glActiveTextureARB(GL_TEXTURE1_ARB);
+            glEnable(GL_TEXTURE_2D);
+         }
          break;
       case 'w':
          LineWidth -= 0.25;
@@ -142,17 +159,15 @@ static void Key( unsigned char key, int x, int y )
          glLineWidth(LineWidth);
          glPointSize(LineWidth);
          break;
-      case 'm':
-         Multitex = !Multitex;
-         if (Multitex) {
-            glEnable(GL_TEXTURE_2D);
-         }
-         else {
-            glDisable(GL_TEXTURE_2D);
-         }
-         break;
       case 'p':
          Points = !Points;
+         break;
+      case 's':
+         Stipple = !Stipple;
+         if (Stipple)
+            glEnable(GL_LINE_STIPPLE);
+         else
+            glDisable(GL_LINE_STIPPLE);
          break;
       case ' ':
          Animate = !Animate;
@@ -200,7 +215,7 @@ static void Init( int argc, char *argv[] )
    for (u = 0; u < 2; u++) {
       glActiveTextureARB(GL_TEXTURE0_ARB + u);
       glBindTexture(GL_TEXTURE_2D, 10+u);
-      if (u == 0 || Multitex)
+      if (u == 0)
          glEnable(GL_TEXTURE_2D);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -218,6 +233,8 @@ static void Init( int argc, char *argv[] )
          exit(1);
       }
    }
+
+   glLineStipple(1, 0xff);
 
    if (argc > 1 && strcmp(argv[1], "-info")==0) {
       printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
