@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.9 2000/04/01 05:57:41 brianp Exp $
+# $Id: Makefile.X11,v 1.10 2000/04/07 16:30:46 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -18,8 +18,8 @@ LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
 
 PROGS = bounce clearspd drawpix gamma gears geartrain glinfo gloss \
 	glutfx isosurf lodbias morph3d multiarb occlude osdemo paltex \
-	pointblast readpix reflect renormal spectex stex3d tessdemo texcyl \
-	texdown texobj trispd winpos \
+	pixeltex pointblast readpix reflect renormal spectex stex3d \
+	tessdemo texcyl texdown texobj trispd winpos \
 
 
 ##### RULES #####
