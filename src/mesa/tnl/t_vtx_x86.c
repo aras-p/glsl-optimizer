@@ -50,21 +50,21 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern const char *FUNC;	\
 extern const char *FUNC##_end
 
-EXTERN( _x86_Attribute1fv );
-EXTERN( _x86_Attribute2fv );
-EXTERN( _x86_Attribute3fv );
-EXTERN( _x86_Attribute4fv );
-EXTERN( _x86_Vertex1fv );
-EXTERN( _x86_Vertex2fv );
-EXTERN( _x86_Vertex3fv );
-EXTERN( _x86_Vertex4fv );
+EXTERN( _tnl_x86_Attribute1fv );
+EXTERN( _tnl_x86_Attribute2fv );
+EXTERN( _tnl_x86_Attribute3fv );
+EXTERN( _tnl_x86_Attribute4fv );
+EXTERN( _tnl_x86_Vertex1fv );
+EXTERN( _tnl_x86_Vertex2fv );
+EXTERN( _tnl_x86_Vertex3fv );
+EXTERN( _tnl_x86_Vertex4fv );
 
-EXTERN( _x86_dispatch_attrf );
-EXTERN( _x86_dispatch_attrfv );
-EXTERN( _x86_dispatch_multitexcoordf );
-EXTERN( _x86_dispatch_multitexcoordfv );
-EXTERN( _x86_dispatch_vertexattribf );
-EXTERN( _x86_dispatch_vertexattribfv );
+EXTERN( _tnl_x86_dispatch_attrf );
+EXTERN( _tnl_x86_dispatch_attrfv );
+EXTERN( _tnl_x86_dispatch_multitexcoordf );
+EXTERN( _tnl_x86_dispatch_multitexcoordfv );
+EXTERN( _tnl_x86_dispatch_vertexattribf );
+EXTERN( _tnl_x86_dispatch_vertexattribfv );
 
 
 static void notify( void )
@@ -134,7 +134,7 @@ do {							\
 static struct _tnl_dynfn *makeX86Vertex1fv( GLcontext *ctx, int vertex_size )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   DFN ( _x86_Vertex1fv, tnl->vtx.cache.Vertex[1-1], vertex_size );
+   DFN ( _tnl_x86_Vertex1fv, tnl->vtx.cache.Vertex[1-1], vertex_size );
 
    FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
    FIXUP(dfn->code, 0, 1, vertex_size - 1);
@@ -150,7 +150,7 @@ static struct _tnl_dynfn *makeX86Vertex1fv( GLcontext *ctx, int vertex_size )
 static struct _tnl_dynfn *makeX86Vertex2fv( GLcontext *ctx, int vertex_size )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   DFN ( _x86_Vertex2fv, tnl->vtx.cache.Vertex[2-1], vertex_size );
+   DFN ( _tnl_x86_Vertex2fv, tnl->vtx.cache.Vertex[2-1], vertex_size );
 
    FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
    FIXUP(dfn->code, 0, 1, vertex_size - 2);
@@ -166,7 +166,7 @@ static struct _tnl_dynfn *makeX86Vertex2fv( GLcontext *ctx, int vertex_size )
 static struct _tnl_dynfn *makeX86Vertex3fv( GLcontext *ctx, int vertex_size )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   DFN ( _x86_Vertex3fv, tnl->vtx.cache.Vertex[3-1], vertex_size );
+   DFN ( _tnl_x86_Vertex3fv, tnl->vtx.cache.Vertex[3-1], vertex_size );
 
    FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
    FIXUP(dfn->code, 0, 1, vertex_size - 3);
@@ -181,7 +181,7 @@ static struct _tnl_dynfn *makeX86Vertex3fv( GLcontext *ctx, int vertex_size )
 static struct _tnl_dynfn *makeX86Vertex4fv( GLcontext *ctx, int vertex_size )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   DFN ( _x86_Vertex4fv, tnl->vtx.cache.Vertex[4-1], vertex_size );
+   DFN ( _tnl_x86_Vertex4fv, tnl->vtx.cache.Vertex[4-1], vertex_size );
 
    FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
    FIXUP(dfn->code, 0, 1, vertex_size - 4);
@@ -198,7 +198,7 @@ static struct _tnl_dynfn *makeX86Vertex4fv( GLcontext *ctx, int vertex_size )
 static struct _tnl_dynfn *makeX86Attribute1fv( GLcontext *ctx, int dest )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   DFN ( _x86_Attribute1fv, tnl->vtx.cache.Attribute[1-1], dest );
+   DFN ( _tnl_x86_Attribute1fv, tnl->vtx.cache.Attribute[1-1], dest );
 
    FIXUP(dfn->code, 0, 0, dest); 
 
@@ -208,7 +208,7 @@ static struct _tnl_dynfn *makeX86Attribute1fv( GLcontext *ctx, int dest )
 static struct _tnl_dynfn *makeX86Attribute2fv( GLcontext *ctx, int dest )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   DFN ( _x86_Attribute2fv, tnl->vtx.cache.Attribute[2-1], dest );
+   DFN ( _tnl_x86_Attribute2fv, tnl->vtx.cache.Attribute[2-1], dest );
 
    FIXUP(dfn->code, 0, 0, dest); 
    FIXUP(dfn->code, 0, 1, 4+dest); 
@@ -219,7 +219,7 @@ static struct _tnl_dynfn *makeX86Attribute2fv( GLcontext *ctx, int dest )
 static struct _tnl_dynfn *makeX86Attribute3fv( GLcontext *ctx, int dest )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   DFN ( _x86_Attribute3fv, tnl->vtx.cache.Attribute[3-1], dest );
+   DFN ( _tnl_x86_Attribute3fv, tnl->vtx.cache.Attribute[3-1], dest );
 
    FIXUP(dfn->code, 0, 0, dest); 
    FIXUP(dfn->code, 0, 1, 4+dest); 
@@ -231,7 +231,7 @@ static struct _tnl_dynfn *makeX86Attribute3fv( GLcontext *ctx, int dest )
 static struct _tnl_dynfn *makeX86Attribute4fv( GLcontext *ctx, int dest )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   DFN ( _x86_Attribute4fv, tnl->vtx.cache.Attribute[4-1], dest );
+   DFN ( _tnl_x86_Attribute4fv, tnl->vtx.cache.Attribute[4-1], dest );
 
    FIXUP(dfn->code, 0, 0, dest); 
    FIXUP(dfn->code, 0, 1, 4+dest); 
@@ -266,8 +266,8 @@ void _do_choose( void )
 #define MAKE_DISPATCH_ATTR(FUNC, SIZE, TYPE, ATTR)			\
 do {									\
    char *code;								\
-   char *start = (char *)&_x86_dispatch_attr##TYPE;			\
-   char *end = (char *)&_x86_dispatch_attr##TYPE##_end;			\
+   char *start = (char *)&_tnl_x86_dispatch_attr##TYPE;			\
+   char *end = (char *)&_tnl_x86_dispatch_attr##TYPE##_end;			\
    int offset = 0;							\
    code = ALIGN_MALLOC( end - start, 16 );				\
    memcpy (code, start, end - start);					\
@@ -279,8 +279,8 @@ do {									\
 #define MAKE_DISPATCH_MULTITEXCOORD(FUNC, SIZE, TYPE, ATTR)		\
 do {									\
    char *code;								\
-   char *start = (char *)&_x86_dispatch_multitexcoord##TYPE;		\
-   char *end = (char *)&_x86_dispatch_multitexcoord##TYPE##_end;	\
+   char *start = (char *)&_tnl_x86_dispatch_multitexcoord##TYPE;		\
+   char *end = (char *)&_tnl_x86_dispatch_multitexcoord##TYPE##_end;	\
    int offset = 0;							\
    code = ALIGN_MALLOC( end - start, 16 );				\
    memcpy (code, start, end - start);					\
@@ -292,8 +292,8 @@ do {									\
 #define MAKE_DISPATCH_VERTEXATTRIB(FUNC, SIZE, TYPE, ATTR)		\
 do {									\
    char *code;								\
-   char *start = (char *)&_x86_dispatch_vertexattrib##TYPE;		\
-   char *end = (char *)&_x86_dispatch_vertexattrib##TYPE##_end;		\
+   char *start = (char *)&_tnl_x86_dispatch_vertexattrib##TYPE;		\
+   char *end = (char *)&_tnl_x86_dispatch_vertexattrib##TYPE##_end;		\
    int offset = 0;							\
    code = ALIGN_MALLOC( end - start, 16 );				\
    memcpy (code, start, end - start);					\
