@@ -102,7 +102,7 @@ PostBuild_Cmds=if not exist ..\..\..\..\..\lib md ..\..\..\..\..\lib	if not exis
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\mesa.def
+SOURCE=.\mesa.def
 # End Source File
 # Begin Source File
 
