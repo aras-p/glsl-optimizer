@@ -716,6 +716,19 @@ struct r300_context {
 
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))
 
+static __inline GLuint r300PackColor( GLuint cpp,
+					GLubyte r, GLubyte g,
+					GLubyte b, GLubyte a )
+{
+   switch ( cpp ) {
+   case 2:
+      return PACK_COLOR_565( r, g, b );
+   case 4:
+      return PACK_COLOR_8888( r, g, b, a );
+   default:
+      return 0;
+   }
+}
 extern void r300DestroyContext(__DRIcontextPrivate * driContextPriv);
 extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 				   __DRIcontextPrivate * driContextPriv,

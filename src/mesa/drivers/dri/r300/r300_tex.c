@@ -267,7 +267,7 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
 
 static void r300SetTexBorderColor(r300TexObjPtr t, GLubyte c[4])
 {
-	t->pp_border_color = radeonPackColor(4, c[3], c[2], c[1], c[0]);
+	t->pp_border_color = r300PackColor(4, c[0], c[1], c[2], c[3]);
 }
 
 /**

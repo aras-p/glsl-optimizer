@@ -119,7 +119,7 @@ static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 	CLAMPED_FLOAT_TO_UBYTE(color[2], cf[2]);
 	CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
 
-	rmesa->hw.unk4E10.cmd[1]=radeonPackColor(4, color[0], color[1], color[2], color[3]);
+	rmesa->hw.unk4E10.cmd[1]=r300PackColor(4, color[0], color[1], color[2], color[3]);
 	//fprintf(stderr, "%s:%s is not implemented yet. Fixme !\n", __FILE__, __FUNCTION__);
 #if 0
 	R200_STATECHANGE(rmesa, ctx);
