@@ -36,6 +36,9 @@
 #define OFF GL_FALSE
 
 
+/*
+ * Note: The GL_MESAX_* extensions are placeholders for future ARB extensions.
+ */
 static const struct {
    GLboolean enabled;
    const char *name;
@@ -43,7 +46,7 @@ static const struct {
 } default_extensions[] = {
    { OFF, "GL_ARB_depth_texture",              F(ARB_depth_texture) },
    { OFF, "GL_ARB_fragment_program",           F(ARB_fragment_program) },
-   { OFF, "GL_MESAX_half_float_pixel",           F(ARB_half_float_pixel) },
+   { OFF, "GL_MESAX_half_float_pixel",         F(ARB_half_float_pixel) },
    { OFF, "GL_ARB_imaging",                    F(ARB_imaging) },
    { OFF, "GL_ARB_multisample",                F(ARB_multisample) },
    { OFF, "GL_ARB_multitexture",               F(ARB_multitexture) },
@@ -59,7 +62,7 @@ static const struct {
    { OFF, "GL_ARB_texture_env_combine",        F(ARB_texture_env_combine) },
    { OFF, "GL_ARB_texture_env_crossbar",       F(ARB_texture_env_crossbar) },
    { OFF, "GL_ARB_texture_env_dot3",           F(ARB_texture_env_dot3) },
-   { OFF, "GL_MESAX_texture_float",              F(ARB_texture_float) },
+   { OFF, "GL_MESAX_texture_float",            F(ARB_texture_float) },
    { OFF, "GL_ARB_texture_mirrored_repeat",    F(ARB_texture_mirrored_repeat)},
    { OFF, "GL_ARB_texture_non_power_of_two",   F(ARB_texture_non_power_of_two)},
    { ON,  "GL_ARB_transpose_matrix",           F(ARB_transpose_matrix) },
@@ -165,7 +168,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #if FEATURE_ARB_fragment_program
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
 #endif
-   ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
+   /*ctx->Extensions.ARB_half_float_pixel = GL_TRUE;*/
    ctx->Extensions.ARB_imaging = GL_TRUE;
    ctx->Extensions.ARB_multitexture = GL_TRUE;
 #if FEATURE_ARB_occlusion_query
@@ -178,7 +181,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_texture_env_combine = GL_TRUE;
    ctx->Extensions.ARB_texture_env_crossbar = GL_TRUE;
    ctx->Extensions.ARB_texture_env_dot3 = GL_TRUE;
-   ctx->Extensions.ARB_texture_float = GL_TRUE;
+   /*ctx->Extensions.ARB_texture_float = GL_TRUE;*/
    ctx->Extensions.ARB_texture_mirrored_repeat = GL_TRUE;
    ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
 #if FEATURE_ARB_vertex_program
