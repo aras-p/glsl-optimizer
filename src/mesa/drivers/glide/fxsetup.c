@@ -1411,11 +1411,17 @@ static void fxSetupColorMask(GLcontext *ctx)
 {
   fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
-  FX_grColorMask(ctx->Color.ColorMask[RCOMP] ||
-	      ctx->Color.ColorMask[GCOMP] ||
-	      ctx->Color.ColorMask[BCOMP],
-	      ctx->Color.ColorMask[ACOMP] && fxMesa->haveAlphaBuffer);
+  if (ctx->Color.DrawBuffer == GL_NONE) {
+    FX_grColorMask(FXFALSE, FXFALSE);
+  }
+  else {
+    FX_grColorMask(ctx->Color.ColorMask[RCOMP] ||
+                   ctx->Color.ColorMask[GCOMP] ||
+                   ctx->Color.ColorMask[BCOMP],
+                   ctx->Color.ColorMask[ACOMP] && fxMesa->haveAlphaBuffer);
+  }
 }
+
 
 
 

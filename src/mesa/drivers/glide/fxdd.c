@@ -286,7 +286,7 @@ static GLbitfield fxDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 
 /* Set the buffer used for drawing */
 /* XXX support for separate read/draw buffers hasn't been tested */
-static GLboolean fxDDSetDrawBuffer(GLcontext *ctx, GLenum mode )
+static GLboolean fxDDSetDrawBuffer(GLcontext *ctx, GLenum mode)
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
 
@@ -302,6 +302,10 @@ static GLboolean fxDDSetDrawBuffer(GLcontext *ctx, GLenum mode )
   else if (mode == GL_BACK_LEFT) {
     fxMesa->currentFB = GR_BUFFER_BACKBUFFER;
     FX_grRenderBuffer(fxMesa->currentFB);
+    return GL_TRUE;
+  }
+  else if (mode == GL_NONE) {
+    FX_grColorMask(FXFALSE,FXFALSE);
     return GL_TRUE;
   }
   else {
@@ -943,7 +947,7 @@ static GLboolean fxIsInHardware(GLcontext *ctx)
   if (!ctx->Hint.AllowDrawMem)
      return GL_TRUE;		/* you'll take it and like it */
 
-  if((ctx->RasterMask & STENCIL_BIT) ||
+  if((ctx->RasterMask & (STENCIL_BIT | MULTI_DRAW_BIT)) ||
      ((ctx->Color.BlendEnabled) && (ctx->Color.BlendEquation!=GL_FUNC_ADD_EXT)) ||
      ((ctx->Color.ColorLogicOpEnabled) && (ctx->Color.LogicOp!=GL_COPY)) ||
      (ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR) ||
