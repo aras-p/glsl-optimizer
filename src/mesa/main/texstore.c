@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.16 2001/03/19 02:25:35 keithw Exp $ */
+/* $Id: texstore.c,v 1.17 2001/03/21 01:08:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -145,18 +145,18 @@ components_in_intformat( GLint format )
  *   dimensions - 1, 2, or 3
  *   texFormat - GL_LUMINANCE, GL_INTENSITY, GL_LUMINANCE_ALPHA, GL_ALPHA,
  *               GL_RGB or GL_RGBA
- *   texAddr - destination image address
+ *   texDestAddr - destination image address
  *   srcWidth, srcHeight, srcDepth - size (in pixels) of src and dest images
  *   dstXoffset, dstYoffset, dstZoffset - position to store the image within
  *      the destination 3D texture
- *   dstRowStride, dstImageStride - dest image strides in GLchan's
+ *   dstRowStride, dstImageStride - dest image strides in bytes
  *   srcFormat - source image format (GL_ALPHA, GL_RED, GL_RGB, etc)
  *   srcType - GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_5_6_5, GL_FLOAT, etc
  *   srcPacking - describes packing of incoming image.
  */
 void
 _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
-                        GLenum texFormat, GLchan *texAddr,
+                        GLenum texFormat, GLvoid *texDestAddr,
                         GLint srcWidth, GLint srcHeight, GLint srcDepth,
                         GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
                         GLint dstRowStride, GLint dstImageStride,
@@ -168,7 +168,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
 
    ASSERT(ctx);
    ASSERT(dimensions >= 1 && dimensions <= 3);
-   ASSERT(texAddr);
+   ASSERT(texDestAddr);
    ASSERT(srcWidth >= 1);
    ASSERT(srcHeight >= 1);
    ASSERT(srcDepth >= 1);
@@ -195,7 +195,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
          const GLint srcRowStride = _mesa_image_row_stride(srcPacking,
                                                srcWidth, srcFormat, srcType);
          const GLint widthInBytes = srcWidth * texComponents * sizeof(GLchan);
-         GLchan *dst = texAddr + dstYoffset * dstRowStride
+         GLchan *dst = (GLchan *) texDestAddr + dstYoffset * dstRowStride
                       + dstXoffset * texComponents;
          if (srcRowStride == widthInBytes && dstRowStride == widthInBytes) {
             MEMCPY(dst, src, srcHeight * widthInBytes);
@@ -217,7 +217,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
                                    srcFormat, srcType, 0, 0, 0);
          const GLint srcRowStride = _mesa_image_row_stride(srcPacking,
                                                srcWidth, srcFormat, srcType);
-         GLchan *dst = texAddr + dstYoffset * dstRowStride
+         GLchan *dst = (GLchan *) texDestAddr + dstYoffset * dstRowStride
                       + dstXoffset * texComponents;
          GLint i, j;
          for (i = 0; i < srcHeight; i++) {
@@ -243,7 +243,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
       /* color index texture */
       const GLenum texType = CHAN_TYPE;
       GLint img, row;
-      GLchan *dest = texAddr + dstZoffset * dstImageStride
+      GLchan *dest = (GLchan *) texDestAddr + dstZoffset * dstImageStride
                     + dstYoffset * dstRowStride
                     + dstXoffset * texComponents;
       for (img = 0; img < srcDepth; img++) {
@@ -262,15 +262,16 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
    else if (texFormat == GL_DEPTH_COMPONENT) {
       /* Depth texture (shadow maps) */
       GLint img, row;
-      GLfloat *dest = (GLfloat *) texAddr + dstZoffset * dstImageStride
+      GLubyte *dest = (GLubyte *) texDestAddr
+                    + dstZoffset * dstImageStride
                     + dstYoffset * dstRowStride
                     + dstXoffset * texComponents;
       for (img = 0; img < srcDepth; img++) {
-         GLfloat *destRow = dest;
+         GLubyte *destRow = dest;
          for (row = 0; row < srcHeight; row++) {
             const GLvoid *src = _mesa_image_address(srcPacking,
                 srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, row, 0);
-            _mesa_unpack_depth_span(ctx, srcWidth, destRow,
+            _mesa_unpack_depth_span(ctx, srcWidth, (GLfloat *) destRow,
                                     srcType, src, srcPacking);
             destRow += dstRowStride;
          }
@@ -336,7 +337,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
 
             /* packing and transfer ops after convolution */
             srcf = convImage;
-            dest = texAddr + (dstZoffset + img) * dstImageStride
+            dest = (GLchan *) texDestAddr + (dstZoffset + img) * dstImageStride
                  + dstYoffset * dstRowStride;
             for (row = 0; row < convHeight; row++) {
                _mesa_pack_float_rgba_span(ctx, convWidth,
@@ -358,7 +359,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
           * no convolution
           */
          GLint img, row;
-         GLchan *dest = texAddr + dstZoffset * dstImageStride
+         GLchan *dest = (GLchan *) texDestAddr + dstZoffset * dstImageStride
                        + dstYoffset * dstRowStride
                        + dstXoffset * texComponents;
          for (img = 0; img < srcDepth; img++) {
@@ -413,7 +414,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
       return;      /* out of memory */
 
    /* unpack image, apply transfer ops and store in texImage->Data */
-   _mesa_transfer_teximage(ctx, 1, texImage->Format, (GLchan *) texImage->Data,
+   _mesa_transfer_teximage(ctx, 1, texImage->Format, texImage->Data,
                            width, 1, 1, 0, 0, 0,
                            0, /* dstRowStride */
                            0, /* dstImageStride */
@@ -458,7 +459,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
       return;      /* out of memory */
 
    /* unpack image, apply transfer ops and store in texImage->Data */
-   _mesa_transfer_teximage(ctx, 2, texImage->Format, (GLchan *) texImage->Data,
+   _mesa_transfer_teximage(ctx, 2, texImage->Format, texImage->Data,
                            width, height, 1, 0, 0, 0,
                            texImage->Width * texelBytes,
                            0, /* dstImageStride */
@@ -497,7 +498,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
       return;      /* out of memory */
 
    /* unpack image, apply transfer ops and store in texImage->Data */
-   _mesa_transfer_teximage(ctx, 3, texImage->Format, (GLchan *) texImage->Data,
+   _mesa_transfer_teximage(ctx, 3, texImage->Format, texImage->Data,
                            width, height, depth, 0, 0, 0,
                            texImage->Width * texelBytes,
                            texImage->Width * texImage->Height * texelBytes,
@@ -518,7 +519,7 @@ _mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage)
 {
-   _mesa_transfer_teximage(ctx, 1, texImage->Format, (GLchan *) texImage->Data,
+   _mesa_transfer_teximage(ctx, 1, texImage->Format, texImage->Data,
                            width, 1, 1, /* src size */
                            xoffset, 0, 0, /* dest offsets */
                            0, /* dstRowStride */
@@ -541,7 +542,7 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
 {
    const GLint components = components_in_intformat(texImage->IntFormat);
    const GLint compSize = _mesa_sizeof_type(texImage->Type);
-   _mesa_transfer_teximage(ctx, 2, texImage->Format, (GLchan *) texImage->Data,
+   _mesa_transfer_teximage(ctx, 2, texImage->Format, texImage->Data,
                            width, height, 1, /* src size */
                            xoffset, yoffset, 0, /* dest offsets */
                            texImage->Width * components * compSize,
@@ -564,7 +565,7 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
 {
    const GLint components = components_in_intformat(texImage->IntFormat);
    const GLint compSize = _mesa_sizeof_type(texImage->Type);
-   _mesa_transfer_teximage(ctx, 3, texImage->Format, (GLchan *) texImage->Data,
+   _mesa_transfer_teximage(ctx, 3, texImage->Format, texImage->Data,
                            width, height, depth, /* src size */
                            xoffset, yoffset, xoffset, /* dest offsets */
                            texImage->Width * components * compSize,
