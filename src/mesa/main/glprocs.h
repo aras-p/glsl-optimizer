@@ -619,6 +619,8 @@ static struct name_address_offset static_functions[] = {
    { "glSecondaryColor3usEXT", (GLvoid *) glSecondaryColor3usEXT, _gloffset_SecondaryColor3usEXT },
    { "glSecondaryColor3usvEXT", (GLvoid *) glSecondaryColor3usvEXT, _gloffset_SecondaryColor3usvEXT },
    { "glSecondaryColorPointerEXT", (GLvoid *) glSecondaryColorPointerEXT, _gloffset_SecondaryColorPointerEXT },
+   { "glMultiDrawArraysEXT", (GLvoid *) glMultiDrawArraysEXT, _gloffset_MultiDrawArraysEXT },
+   { "glMultiDrawElementsEXT", (GLvoid *) glMultiDrawElementsEXT, _gloffset_MultiDrawElementsEXT },
    { "glFogCoordfEXT", (GLvoid *) glFogCoordfEXT, _gloffset_FogCoordfEXT },
    { "glFogCoordfvEXT", (GLvoid *) glFogCoordfvEXT, _gloffset_FogCoordfvEXT },
    { "glFogCoorddEXT", (GLvoid *) glFogCoorddEXT, _gloffset_FogCoorddEXT },

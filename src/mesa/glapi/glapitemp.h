@@ -3169,8 +3169,16 @@ KEYWORD1 void KEYWORD2 NAME(SecondaryColorPointerEXT)(GLint size, GLenum type, G
 }
 
 /* No dispatch for TextureNormalEXT() */
-/* No dispatch for MultiDrawArraysEXT() */
-/* No dispatch for MultiDrawElementsEXT() */
+KEYWORD1 void KEYWORD2 NAME(MultiDrawArraysEXT)(GLenum mode, GLint * first, GLsizei * count, GLsizei primcount)
+{
+   DISPATCH(MultiDrawArraysEXT, (mode, first, count, primcount), (F, "glMultiDrawArraysEXT(0x%x, %p, %p, %d);\n", mode, (void *) first, (void *) count, primcount));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiDrawElementsEXT)(GLenum mode, const GLsizei * count, GLenum type, const GLvoid ** indices, GLsizei primcount)
+{
+   DISPATCH(MultiDrawElementsEXT, (mode, count, type, indices, primcount), (F, "glMultiDrawElementsEXT(0x%x, %p, 0x%x, %p, %d);\n", mode, (void *) count, type, (void *) indices, primcount));
+}
+
 KEYWORD1 void KEYWORD2 NAME(FogCoordfEXT)(GLfloat coord)
 {
    DISPATCH(FogCoordfEXT, (coord), (F, "glFogCoordfEXT(%f);\n", coord));
@@ -4611,6 +4619,8 @@ void *DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(VertexAttribs4ubvNV),
    TABLE_ENTRY(PointParameteriNV),
    TABLE_ENTRY(PointParameterivNV),
+   TABLE_ENTRY(MultiDrawArraysEXT),
+   TABLE_ENTRY(MultiDrawElementsEXT),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.

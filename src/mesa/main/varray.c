@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.45 2002/06/15 02:38:16 brianp Exp $ */
+/* $Id: varray.c,v 1.46 2002/06/30 15:47:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -798,4 +798,42 @@ _mesa_UnlockArraysEXT( void )
 
    if (ctx->Driver.UnlockArraysEXT)
       ctx->Driver.UnlockArraysEXT( ctx );
+}
+
+
+
+/* GL_EXT_multi_draw_arrays */
+/* Somebody forgot to spec the first and count parameters as const! <sigh> */
+void
+_mesa_MultiDrawArraysEXT( GLenum mode, GLint *first,
+                          GLsizei *count, GLsizei primcount )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLint i;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   for (i = 0; i < primcount; i++) {
+      if (count[i] > 0) {
+         (ctx->Exec->DrawArrays)(mode, first[i], count[i]);
+      }
+   }
+}
+
+
+/* GL_EXT_multi_draw_arrays */
+void
+_mesa_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
+                            const GLvoid **indices, GLsizei primcount )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLint i;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   for (i = 0; i < primcount; i++) {
+      if (count[i] > 0) {
+         (ctx->Exec->DrawElements)(mode, count[i], type, indices[i]);
+      }
+   }
 }

@@ -646,5 +646,7 @@
 #define _gloffset_VertexAttribs4ubvNV 641
 #define _gloffset_PointParameteriNV 642
 #define _gloffset_PointParameterivNV 643
+#define _gloffset_MultiDrawArraysEXT 644
+#define _gloffset_MultiDrawElementsEXT 645
 
 #endif

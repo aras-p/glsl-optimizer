@@ -12936,6 +12936,48 @@ glSecondaryColorPointerEXT:
 	jmpl	%g3, %g0
 	nop
 
+.globl glMultiDrawArraysEXT
+.type glMultiDrawArraysEXT,#function
+glMultiDrawArraysEXT:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_MultiDrawArraysEXT), %g2
+	or	%g2, %lo(8 * _gloffset_MultiDrawArraysEXT), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_MultiDrawArraysEXT)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glMultiDrawElementsEXT
+.type glMultiDrawElementsEXT,#function
+glMultiDrawElementsEXT:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_MultiDrawElementsEXT), %g2
+	or	%g2, %lo(8 * _gloffset_MultiDrawElementsEXT), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_MultiDrawElementsEXT)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
 .globl glFogCoordfEXT
 .type glFogCoordfEXT,#function
 glFogCoordfEXT:

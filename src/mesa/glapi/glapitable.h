@@ -650,6 +650,8 @@ struct _glapi_table
    void (*VertexAttribs4ubvNV)(GLuint index, GLsizei n, const GLubyte * v); /* 641 */
    void (*PointParameteriNV)(GLenum pname, GLint params); /* 642 */
    void (*PointParameterivNV)(GLenum pname, const GLint * params); /* 643 */
+   void (*MultiDrawArraysEXT)(GLenum mode, GLint * first, GLsizei * count, GLsizei primcount); /* 644 */
+   void (*MultiDrawElementsEXT)(GLenum mode, const GLsizei * count, GLenum type, const GLvoid ** indices, GLsizei primcount); /* 645 */
 };
 
 #endif

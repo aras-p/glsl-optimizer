@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.91 2002/06/29 19:48:15 brianp Exp $ */
+/* $Id: dlist.c,v 1.92 2002/06/30 15:47:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -5725,6 +5725,26 @@ static void exec_FogCoordPointerEXT(GLenum type, GLsizei stride,
    ctx->Exec->FogCoordPointerEXT( type, stride, ptr);
 }
 
+/* GL_EXT_multi_draw_arrays */
+static void exec_MultiDrawArraysEXT(GLenum mode, GLint *first,
+                                    GLsizei *count, GLsizei primcount)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->MultiDrawArraysEXT( mode, first, count, primcount );
+}
+
+/* GL_EXT_multi_draw_arrays */
+static void exec_MultiDrawElementsEXT(GLenum mode, const GLsizei *count,
+                                      GLenum type, const GLvoid **indices,
+                                      GLsizei primcount)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->MultiDrawElementsEXT(mode, count, type, indices, primcount);
+}
+
+
 
 /*
  * Assign all the pointers in <table> to point to Mesa's display list
@@ -6044,6 +6064,10 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
 
    /* 145. GL_EXT_secondary_color */
    table->SecondaryColorPointerEXT = exec_SecondaryColorPointerEXT;
+
+   /* 148. GL_EXT_multi_draw_arrays */
+   table->MultiDrawArraysEXT = exec_MultiDrawArraysEXT;
+   table->MultiDrawElementsEXT = exec_MultiDrawElementsEXT;
 
    /* 149. GL_EXT_fog_coord */
    table->FogCoordPointerEXT = exec_FogCoordPointerEXT;

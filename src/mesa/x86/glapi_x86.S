@@ -3712,6 +3712,18 @@ GL_PREFIX(SecondaryColorPointerEXT):
 	JMP(GL_OFFSET(_gloffset_SecondaryColorPointerEXT))
 
 ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiDrawArraysEXT))
+GL_PREFIX(MultiDrawArraysEXT):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiDrawArraysEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiDrawElementsEXT))
+GL_PREFIX(MultiDrawElementsEXT):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiDrawElementsEXT))
+
+ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(FogCoordfEXT))
 GL_PREFIX(FogCoordfEXT):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)

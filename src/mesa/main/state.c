@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.87 2002/06/25 02:31:37 brianp Exp $ */
+/* $Id: state.c,v 1.88 2002/06/30 15:47:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -424,6 +424,10 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    /* 97. GL_EXT_compiled_vertex_array */
    exec->LockArraysEXT = _mesa_LockArraysEXT;
    exec->UnlockArraysEXT = _mesa_UnlockArraysEXT;
+
+   /* 148. GL_EXT_multi_draw_arrays */
+   exec->MultiDrawArraysEXT = _mesa_MultiDrawArraysEXT;
+   exec->MultiDrawElementsEXT = _mesa_MultiDrawElementsEXT;
 
    /* 173. GL_INGR_blend_func_separate */
    exec->BlendFuncSeparateEXT = _mesa_BlendFuncSeparateEXT;
