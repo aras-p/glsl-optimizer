@@ -32,5 +32,5 @@ WINDOW_SYSTEM=dri
 # not be converted to use the new interface.  Do i810 & i830 really
 # need to be included here?
 #
-DRI_DIRS = dri_client i810 i830 mach64 mga r128 r200 radeon tdfx unichrome
+DRI_DIRS = dri_client i810 i830 i915 mach64 mga r128 r200 radeon tdfx unichrome
 
