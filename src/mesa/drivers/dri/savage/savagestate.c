@@ -1622,6 +1622,16 @@ static void savageDDInitState_s4( savageContextPtr imesa )
     imesa->regs.s4.drawCtrl1.ni.ditherEn=GL_TRUE;
     imesa->regs.s4.drawCtrl1.ni.cullMode             = BCM_None;
 
+    imesa->regs.s4.zBufCtrl.ni.stencilRefVal      = 0x00;
+
+    imesa->regs.s4.stencilCtrl.ni.stencilEn       = GL_FALSE;
+    imesa->regs.s4.stencilCtrl.ni.cmpFunc         = CF_Always;
+    imesa->regs.s4.stencilCtrl.ni.failOp          = STC_FAIL_Keep;
+    imesa->regs.s4.stencilCtrl.ni.passZfailOp     = STC_FAIL_Keep;
+    imesa->regs.s4.stencilCtrl.ni.passZpassOp     = STC_FAIL_Keep;
+    imesa->regs.s4.stencilCtrl.ni.writeMask       = 0xff;
+    imesa->regs.s4.stencilCtrl.ni.readMask        = 0xff;
+
     imesa->LcsCullMode=BCM_None;
     imesa->regs.s4.texDescr.ni.palSize               = TPS_256;
 
@@ -1669,15 +1679,6 @@ static void savageDDInitState_s3d( savageContextPtr imesa )
     imesa->regs.s3d.zBufCtrl.ni.drawUpdateEn     = GL_TRUE;
     imesa->regs.s3d.zBufCtrl.ni.wrZafterAlphaTst = GL_FALSE;
     imesa->regs.s3d.zBufCtrl.ni.zUpdateEn        = GL_TRUE;
-    imesa->regs.s4.zBufCtrl.ni.stencilRefVal      = 0x00;
-
-    imesa->regs.s4.stencilCtrl.ni.stencilEn       = GL_FALSE;
-    imesa->regs.s4.stencilCtrl.ni.cmpFunc         = CF_Always;
-    imesa->regs.s4.stencilCtrl.ni.failOp          = STC_FAIL_Keep;
-    imesa->regs.s4.stencilCtrl.ni.passZfailOp     = STC_FAIL_Keep;
-    imesa->regs.s4.stencilCtrl.ni.passZpassOp     = STC_FAIL_Keep;
-    imesa->regs.s4.stencilCtrl.ni.writeMask       = 0xff;
-    imesa->regs.s4.stencilCtrl.ni.readMask        = 0xff;
 
     imesa->regs.s3d.drawCtrl.ni.srcAlphaMode      = SAM_One;
     imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_TRUE;
