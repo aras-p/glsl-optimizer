@@ -1180,7 +1180,7 @@ _mesa_update_tnl_spaces( GLcontext *ctx, GLuint new_state )
 void
 _mesa_allow_light_in_model( GLcontext *ctx, GLboolean flag )
 {
-   ctx->_ForceEyeCoords = flag;
+   ctx->_ForceEyeCoords = !flag;
    ctx->NewState |= _NEW_POINT;	/* one of the bits from
 				 * _MESA_NEW_NEED_EYE_COORDS.
 				 */
