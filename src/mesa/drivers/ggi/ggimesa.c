@@ -219,7 +219,7 @@ static void gl_ggiSetupPointers(GLcontext *ctx)
 
 	ctx->Driver.ClearIndex = gl_ggiSetClearIndex; 
 	ctx->Driver.ClearColor = gl_ggiSetClearColor;
-	ctx->Driver.Clear = gl_ggiClear;
+//	ctx->Driver.Clear = gl_ggiClear;
 	ctx->Driver.IndexMask = gl_ggiIndexMask;
 	ctx->Driver.ColorMask = gl_ggiColorMask;
 	ctx->Driver.Enable = gl_ggiEnable;
@@ -345,7 +345,7 @@ GGIMesaContext GGIMesaCreateContext(void)
 	  return NULL;
 
 	ctx->viewport_init = GL_FALSE;	
-	ctx->gl_vis->DBflag = GL_FALSE;
+//	ctx->gl_vis->DBflag = GL_FALSE;
 
 	ctx->gl_ctx = _mesa_create_context(ctx->gl_vis, NULL, (void *)ctx, GL_TRUE);
 	if (!ctx->gl_ctx) 
@@ -454,10 +454,14 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 	}
 
 	ctx->gl_buffer = _mesa_create_framebuffer(ctx->gl_vis,
-					       ctx->gl_vis->DepthBits > 0,
-					       ctx->gl_vis->StencilBits > 0,
-					       ctx->gl_vis->AccumRedBits > 0,
-					       ctx->gl_vis->AlphaBits > 0);
+//					       ctx->gl_vis->DepthBits > 0,
+//					       ctx->gl_vis->StencilBits > 0,
+//					       ctx->gl_vis->AccumRedBits > 0,
+//					       ctx->gl_vis->AlphaBits > 0);
+					       info.depth_bits > 0,
+					       info.stencil_bits > 0,
+					       info.accum_bits > 0,
+					       info.alpha_bits > 0);
 					       
 
 	if (!ctx->gl_buffer) 
@@ -557,10 +561,10 @@ void GGIMesaSwapBuffers(void)
 	_mesa_swapbuffers( GGIMesa->gl_ctx );
 	gl_ggiFlush(GGIMesa->gl_ctx);
 	
-	if (GGIMesa->gl_vis->DBflag)
-	{
+//	if (GGIMesa->gl_vis->DBflag)
+//	{
 		memcpy(GGIMesa->lfb[0], GGIMesa->lfb[1], GGIMesa->bufsize);
-	}
+//	}
 }
 
 static void gl_ggiUpdateState(GLcontext *ctx, GLuint new_state)
