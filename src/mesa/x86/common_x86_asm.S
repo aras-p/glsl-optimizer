@@ -1,4 +1,4 @@
-/* $Id: common_x86_asm.S,v 1.15 2003/01/09 18:03:20 brianp Exp $ */
+/* $Id: common_x86_asm.S,v 1.16 2003/01/09 23:43:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -230,8 +230,6 @@ GLNAME( _mesa_test_os_sse_exception_support ):
 	/* Restore the original MXCSR register value.
 	 */
 	LDMXCSR	( REGOFF( -4, EBP ) )
-
-	ADD_L	( CONST( 16 ), ESP )
 
 	LEAVE
 	RET
