@@ -147,6 +147,18 @@ DRI_CONF_OPT_BEGIN_V(texture_depth,enum,def,"0:3") \
         DRI_CONF_DESC_END \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_DEF_MAX_ANISOTROPY(def,range) \
+DRI_CONF_OPT_BEGIN_V(def_max_anisotropy,float,def,range) \
+        DRI_CONF_DESC(en,"Default maximum value for anisotropic texture filtering") \
+        DRI_CONF_DESC(de,"Standard Maximalwert für anisotropische Texturfilterung") \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_NO_NEG_LOD_BIAS(def) \
+DRI_CONF_OPT_BEGIN(no_neg_lod_bias,bool,def) \
+        DRI_CONF_DESC(en,"Forbid negative texture LOD bias") \
+        DRI_CONF_DESC(de,"Verbiete negativen Textur-LOD-Bias") \
+DRI_CONF_OPT_END
+
 #define DRI_CONF_COLOR_REDUCTION_ROUND 0
 #define DRI_CONF_COLOR_REDUCTION_DITHER 1
 #define DRI_CONF_COLOR_REDUCTION(def) \
