@@ -394,6 +394,10 @@ is_color_format(GLenum format)
       case GL_COMPRESSED_INTENSITY:
       case GL_COMPRESSED_RGB:
       case GL_COMPRESSED_RGBA:
+      case GL_RGB_S3TC:
+      case GL_RGB4_S3TC:
+      case GL_RGBA_S3TC:
+      case GL_RGBA4_S3TC:
       case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
       case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
       case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
