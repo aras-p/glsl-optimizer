@@ -287,7 +287,7 @@ static GLboolean run_validate_program( GLcontext *ctx,
  */
 static void init_color_array( struct gl_client_array *a, GLvector4f *vec )
 {
-   a->Ptr = vec->data;
+   a->Ptr = (GLubyte *) vec->data;
    a->Size = 4;
    a->Type = GL_FLOAT;
    a->Stride = 0;

@@ -77,6 +77,7 @@
 #include "attrib.h"
 #include "blend.h"
 #include "buffers.h"
+#include "bufferobj.h"
 #include "colortab.h"
 #include "context.h"
 #include "debug.h"
@@ -1092,6 +1093,7 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_accum( ctx );
    _mesa_init_attrib( ctx );
    _mesa_init_buffers( ctx );
+   _mesa_init_buffer_objects( ctx );
    _mesa_init_color( ctx );
    _mesa_init_colortables( ctx );
    _mesa_init_current( ctx );

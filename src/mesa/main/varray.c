@@ -24,17 +24,14 @@
 
 
 #include "glheader.h"
+#include "imports.h"
 #include "context.h"
 #include "enable.h"
 #include "enums.h"
 #include "dlist.h"
-#include "light.h"
-#include "macros.h"
-#include "state.h"
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
-#include "math/m_translate.h"
 
 
 void
@@ -82,14 +79,15 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.Vertex.Type = type;
    ctx->Array.Vertex.Stride = stride;
    ctx->Array.Vertex.Ptr = (void *) ptr;
+#if FEATURE_ARB_vertex_buffer_object
+   ctx->Array.Vertex.BufferObj = ctx->Array.ArrayBufferObj;
+#endif
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
 
    if (ctx->Driver.VertexPointer)
       ctx->Driver.VertexPointer( ctx, size, type, stride, ptr );
 }
-
-
 
 
 void
@@ -134,13 +132,15 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
    ctx->Array.Normal.Type = type;
    ctx->Array.Normal.Stride = stride;
    ctx->Array.Normal.Ptr = (void *) ptr;
+#if FEATURE_ARB_vertex_buffer_object
+   ctx->Array.Normal.BufferObj = ctx->Array.ArrayBufferObj;
+#endif
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= _NEW_ARRAY_NORMAL;
 
    if (ctx->Driver.NormalPointer)
       ctx->Driver.NormalPointer( ctx, type, stride, ptr );
 }
-
 
 
 void
@@ -199,13 +199,15 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.Color.Type = type;
    ctx->Array.Color.Stride = stride;
    ctx->Array.Color.Ptr = (void *) ptr;
+#if FEATURE_ARB_vertex_buffer_object
+   ctx->Array.Color.BufferObj = ctx->Array.ArrayBufferObj;
+#endif
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= _NEW_ARRAY_COLOR0;
 
    if (ctx->Driver.ColorPointer)
       ctx->Driver.ColorPointer( ctx, size, type, stride, ptr );
 }
-
 
 
 void
@@ -238,6 +240,9 @@ _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.FogCoord.Type = type;
    ctx->Array.FogCoord.Stride = stride;
    ctx->Array.FogCoord.Ptr = (void *) ptr;
+#if FEATURE_ARB_vertex_buffer_object
+   ctx->Array.FogCoord.BufferObj = ctx->Array.ArrayBufferObj;
+#endif
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= _NEW_ARRAY_FOGCOORD;
 
@@ -285,6 +290,9 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.Index.Type = type;
    ctx->Array.Index.Stride = stride;
    ctx->Array.Index.Ptr = (void *) ptr;
+#if FEATURE_ARB_vertex_buffer_object
+   ctx->Array.Index.BufferObj = ctx->Array.ArrayBufferObj;
+#endif
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= _NEW_ARRAY_INDEX;
 
@@ -350,13 +358,15 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
    ctx->Array.SecondaryColor.Type = type;
    ctx->Array.SecondaryColor.Stride = stride;
    ctx->Array.SecondaryColor.Ptr = (void *) ptr;
+#if FEATURE_ARB_vertex_buffer_object
+   ctx->Array.SecondaryColor.BufferObj = ctx->Array.ArrayBufferObj;
+#endif
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= _NEW_ARRAY_COLOR1;
 
    if (ctx->Driver.SecondaryColorPointer)
       ctx->Driver.SecondaryColorPointer( ctx, size, type, stride, ptr );
 }
-
 
 
 void
@@ -406,6 +416,9 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
    ctx->Array.TexCoord[texUnit].Type = type;
    ctx->Array.TexCoord[texUnit].Stride = stride;
    ctx->Array.TexCoord[texUnit].Ptr = (void *) ptr;
+#if FEATURE_ARB_vertex_buffer_object
+   ctx->Array.TexCoord[texUnit].BufferObj = ctx->Array.ArrayBufferObj;
+#endif
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= _NEW_ARRAY_TEXCOORD(texUnit);
 
@@ -428,6 +441,9 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *vptr)
    ctx->Array.EdgeFlag.Stride = stride;
    ctx->Array.EdgeFlag.StrideB = stride ? stride : sizeof(GLboolean);
    ctx->Array.EdgeFlag.Ptr = (GLboolean *) ptr;
+#if FEATURE_ARB_vertex_buffer_object
+   ctx->Array.EdgeFlag.BufferObj = ctx->Array.ArrayBufferObj;
+#endif
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= _NEW_ARRAY_EDGEFLAG;
 
@@ -436,6 +452,7 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *vptr)
 }
 
 
+#if FEATURE_NV_vertex_program
 void
 _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
                             GLsizei stride, const GLvoid *ptr)
@@ -489,15 +506,19 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
    ctx->Array.VertexAttrib[index].Size = size;
    ctx->Array.VertexAttrib[index].Type = type;
    ctx->Array.VertexAttrib[index].Ptr = (void *) ptr;
-
+#if FEATURE_ARB_vertex_buffer_object
+   ctx->Array.VertexAttrib[index].BufferObj = ctx->Array.ArrayBufferObj;
+#endif
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
 
    if (ctx->Driver.VertexAttribPointer)
       ctx->Driver.VertexAttribPointer( ctx, index, size, type, stride, ptr );
 }
+#endif
 
 
+#if FEATURE_ARB_vertex_program
 void
 _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
                              GLboolean normalized,
@@ -566,7 +587,9 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
    ctx->Array.VertexAttrib[index].Type = type;
    ctx->Array.VertexAttrib[index].Normalized = normalized;
    ctx->Array.VertexAttrib[index].Ptr = (void *) ptr;
-
+#if FEATURE_ARB_vertex_buffer_object
+   ctx->Array.VertexAttrib[index].BufferObj = ctx->Array.ArrayBufferObj;
+#endif
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
 
@@ -575,7 +598,7 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
       ctx->Driver.VertexAttribPointer( ctx, index, size, type, stride, ptr );
    */
 }
-
+#endif
 
 
 void
@@ -629,8 +652,6 @@ _mesa_EdgeFlagPointerEXT(GLsizei stride, GLsizei count, const GLboolean *ptr)
    (void) count;
    _mesa_EdgeFlagPointer(stride, ptr);
 }
-
-
 
 
 void
@@ -828,7 +849,6 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
 }
 
 
-
 void
 _mesa_LockArraysEXT(GLint first, GLsizei count)
 {
@@ -873,7 +893,6 @@ _mesa_UnlockArraysEXT( void )
    if (ctx->Driver.UnlockArraysEXT)
       ctx->Driver.UnlockArraysEXT( ctx );
 }
-
 
 
 /* GL_EXT_multi_draw_arrays */
@@ -957,9 +976,10 @@ _mesa_MultiModeDrawElementsIBM( const GLenum * mode, const GLsizei * count,
 /*****                      Initialization                        *****/
 /**********************************************************************/
 
-void _mesa_init_varray( GLcontext * ctx )
+void
+_mesa_init_varray( GLcontext * ctx )
 {
-   int i;
+   GLuint i;
 
    /* Vertex arrays */
    ctx->Array.Vertex.Size = 4;
@@ -1018,4 +1038,13 @@ void _mesa_init_varray( GLcontext * ctx )
    ctx->Array.EdgeFlag.Enabled = GL_FALSE;
    ctx->Array.EdgeFlag.Flags = CA_CLIENT_DATA;
    ctx->Array.ActiveTexture = 0;   /* GL_ARB_multitexture */
+   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      ctx->Array.TexCoord[i].Size = 4;
+      ctx->Array.TexCoord[i].Type = GL_FLOAT;
+      ctx->Array.TexCoord[i].Stride = 0;
+      ctx->Array.TexCoord[i].StrideB = 0;
+      ctx->Array.TexCoord[i].Ptr = NULL;
+      ctx->Array.TexCoord[i].Enabled = GL_FALSE;
+      ctx->Array.TexCoord[i].Flags = CA_CLIENT_DATA;
+   }
 }

@@ -36,7 +36,7 @@
 
 #define STRIDE_ARRAY( array, offset ) 		\
 do {						\
-   char *tmp = (char *) (array).Ptr;		\
+   GLubyte *tmp = (array).Ptr;			\
    tmp += (offset) * (array).StrideB;		\
    (array).Ptr = tmp;				\
 } while (0)

@@ -1,4 +1,3 @@
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -52,6 +51,9 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Ptr = (void *) ctx->Current.Attrib[VERT_ATTRIB_NORMAL];
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
+#if FEATURE_ARB_vertex_buffer_object
+   cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
 
    cl = &ac->Fallback.Color;
    cl->Size = 4;
@@ -61,6 +63,9 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Ptr = (void *) ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
+#if FEATURE_ARB_vertex_buffer_object
+   cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
 
    cl = &ac->Fallback.SecondaryColor;
    cl->Size = 3;
@@ -70,6 +75,9 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Ptr = (void *) ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
+#if FEATURE_ARB_vertex_buffer_object
+   cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
 
    cl = &ac->Fallback.FogCoord;
    cl->Size = 1;
@@ -79,6 +87,9 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Ptr = (void *) &ctx->Current.Attrib[VERT_ATTRIB_FOG];
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
+#if FEATURE_ARB_vertex_buffer_object
+   cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
 
    cl = &ac->Fallback.Index;
    cl->Size = 1;
@@ -88,6 +99,9 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Ptr = (void *) &ctx->Current.Index;
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
+#if FEATURE_ARB_vertex_buffer_object
+   cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
 
    for (i = 0 ; i < MAX_TEXTURE_COORD_UNITS ; i++) {
       cl = &ac->Fallback.TexCoord[i];
@@ -98,6 +112,9 @@ static void _ac_fallbacks_init( GLcontext *ctx )
       cl->Ptr = (void *) ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i];
       cl->Enabled = 1;
       cl->Flags = CA_CLIENT_DATA;	/* hack */
+#if FEATURE_ARB_vertex_buffer_object
+      cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
    }
 
    cl = &ac->Fallback.EdgeFlag;
@@ -108,6 +125,9 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Ptr = (void *) &ctx->Current.EdgeFlag;
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
+#if FEATURE_ARB_vertex_buffer_object
+   cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
       cl = &ac->Fallback.Attrib[i];
@@ -118,6 +138,9 @@ static void _ac_fallbacks_init( GLcontext *ctx )
       cl->Ptr = (void *) ctx->Current.Attrib[i];
       cl->Enabled = 1;
       cl->Flags = CA_CLIENT_DATA; /* hack */
+#if FEATURE_ARB_vertex_buffer_object
+      cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
    }
 }
 
@@ -140,6 +163,9 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Ptr = MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;
+#if FEATURE_ARB_vertex_buffer_object
+   cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
 
    cl = &ac->Cache.Normal;
    cl->Size = 3;
@@ -149,6 +175,9 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Ptr = MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;
+#if FEATURE_ARB_vertex_buffer_object
+   cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
 
    cl = &ac->Cache.Color;
    cl->Size = 4;
@@ -158,6 +187,9 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Ptr = MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;
+#if FEATURE_ARB_vertex_buffer_object
+   cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
 
    cl = &ac->Cache.SecondaryColor;
    cl->Size = 3;
@@ -167,6 +199,9 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Ptr = MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;
+#if FEATURE_ARB_vertex_buffer_object
+   cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
 
    cl = &ac->Cache.FogCoord;
    cl->Size = 1;
@@ -176,6 +211,9 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Ptr = MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;
+#if FEATURE_ARB_vertex_buffer_object
+   cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
 
    cl = &ac->Cache.Index;
    cl->Size = 1;
@@ -185,6 +223,9 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Ptr = MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;
+#if FEATURE_ARB_vertex_buffer_object
+   cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
 
    for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
       cl = &ac->Cache.TexCoord[i];
@@ -195,6 +236,9 @@ static void _ac_cache_init( GLcontext *ctx )
       cl->Ptr = MALLOC( cl->StrideB * size );
       cl->Enabled = 1;
       cl->Flags = 0;
+#if FEATURE_ARB_vertex_buffer_object
+      cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
    }
 
    cl = &ac->Cache.EdgeFlag;
@@ -205,6 +249,9 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Ptr = MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;
+#if FEATURE_ARB_vertex_buffer_object
+   cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
 
    for (i = 0 ; i < VERT_ATTRIB_MAX; i++) {
       cl = &ac->Cache.Attrib[i];
@@ -215,6 +262,9 @@ static void _ac_cache_init( GLcontext *ctx )
       cl->Ptr = MALLOC( cl->StrideB * size );
       cl->Enabled = 1;
       cl->Flags = 0;
+#if FEATURE_ARB_vertex_buffer_object
+      cl->BufferObj = ctx->Array.NullBufferObj;
+#endif
    }
 }
 

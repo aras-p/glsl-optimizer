@@ -1252,6 +1252,22 @@ struct gl_attrib_node {
 
 
 /**
+ * GL_ARB_vertex_buffer_object buffer object
+ */
+struct gl_buffer_object {
+   GLint RefCount;
+   GLuint Name;
+   GLenum Target;
+   GLenum Usage;
+   GLenum Access;
+   GLvoid *Pointer;   /**< Only valid while buffer is mapped */
+   GLuint Size;       /**< Size of data array in bytes */
+   GLubyte *Data;        /**< The storage */
+};
+
+
+
+/**
  * Client pixel packing/unpacking attributes
  */
 struct gl_pixelstore_attrib {
@@ -1279,11 +1295,13 @@ struct gl_client_array {
    GLenum Type;
    GLsizei Stride;		/**< user-specified stride */
    GLsizei StrideB;		/**< actual stride in bytes */
-   void *Ptr;
+   GLubyte *Ptr;
    GLuint Flags;
    GLuint Enabled;		/**< one of the _NEW_ARRAY_ bits */
    GLboolean Normalized;        /**< GL_ARB_vertex_program */
-   GLuint BufferBinding;        /**< GL_ARB_vertex_buffer_object */
+
+   /**< GL_ARB_vertex_buffer_object */
+   struct gl_buffer_object *BufferObj;
 };
 
 
@@ -1304,15 +1322,17 @@ struct gl_array_attrib {
 
    GLint TexCoordInterleaveFactor;
    GLint ActiveTexture;		/**< Client Active Texture */
-   GLuint LockFirst;
-   GLuint LockCount;
+   GLuint LockFirst;            /**< GL_EXT_compiled_vertex_array */
+   GLuint LockCount;            /**< GL_EXT_compiled_vertex_array */
 
    GLuint _Enabled;		/**< _NEW_ARRAY_* - bit set if array enabled */
    GLuint NewState;		/**< _NEW_ARRAY_* */
 
-   /* GL_ARB_vertex_buffer_object */
-   GLuint ArrayBufferBinding;
-   GLuint ElementArrayBufferBinding;
+#if FEATURE_ARB_vertex_buffer_object
+   struct gl_buffer_object *NullBufferObj;
+   struct gl_buffer_object *ArrayBufferObj;
+   struct gl_buffer_object *ElementArrayBufferObj;
+#endif
 };
 
 
@@ -1589,8 +1609,9 @@ struct gl_shared_state
 #endif
    /*@}*/
 
-   /** GL_ARB_vertex_buffer_objects */
+#if FEATURE_ARB_vertex_buffer_object
    struct _mesa_HashTable *BufferObjects;
+#endif
 
    void *DriverData;  /**< Device driver shared state */
 };
@@ -1979,7 +2000,6 @@ typedef union node Node;
 
 
 /* This has to be included here. */
-struct gl_buffer_object;
 #include "dd.h"
 
 
@@ -2214,18 +2234,6 @@ struct __GLcontextRec {
 
    /** Core tnl module support */
    struct gl_tnl_module TnlModule;
-
-   /**
-    * \name GL_ARB_vertex_buffer_object state
-    * 
-    * These pointers track the buffer objects last bound via
-    * \c glBindBufferObjectARB.  If it the last bound object ID was 0 for a
-    * given target, the pointer will be \c NULL.
-    */
-   /*@{*/
-   struct gl_buffer_object * ArrayBuffer;
-   struct gl_buffer_object * ElementArrayBuffer;
-   /*@}*/
 
    /**
     * \name Hooks for module contexts.  

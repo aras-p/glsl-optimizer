@@ -29,9 +29,15 @@
 #define BUFFEROBJ_H
 
 
+#include "context.h"
+
+
 /*
  * Internal functions
  */
+
+extern void
+_mesa_init_buffer_objects( GLcontext *ctx );
 
 extern void
 _mesa_initialize_buffer_object( struct gl_buffer_object *obj,
@@ -39,6 +45,9 @@ _mesa_initialize_buffer_object( struct gl_buffer_object *obj,
 
 extern struct gl_buffer_object *
 _mesa_new_buffer_object( GLcontext *ctx, GLuint name, GLenum target );
+
+extern void
+_mesa_delete_buffer_object( GLcontext *ctx, struct gl_buffer_object *bufObj );
 
 extern void
 _mesa_initialize_buffer_object( struct gl_buffer_object *obj,
