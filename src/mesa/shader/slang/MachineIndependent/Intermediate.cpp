@@ -1670,7 +1670,7 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, TIntermTyped* constantNod
                     //
                     int rightValue = constantNode->getAsConstantUnion()->getUnionArrayPointer()->iConst;
                     int leftValue = this->getUnionArrayPointer()->iConst;
-                    int line = this->getLine();
+                    //int line = this->getLine();
 
                     switch(op) {
                     //?? add constant intrinsics
@@ -2085,6 +2085,7 @@ bool TIntermediate::removeMatrixConstNode(TIntermSequence &parentSequence, TType
                     case EbtInt:   constantUnion->iConst = 0;     break;
                     case EbtFloat: constantUnion->fConst = 0.0;   break;
                     case EbtBool:  constantUnion->bConst = false; break;
+                    default: ; /* default added by BrianP */
                     }
                 }
                 TIntermConstantUnion *constant = new TIntermConstantUnion(constantUnion,

@@ -83,12 +83,12 @@ class TType {
 public:
     POOL_ALLOCATOR_NEW_DELETE(GlobalPoolAllocator)
     explicit TType(TBasicType t, TQualifier q = EvqTemporary, int s = 1, bool m = false, bool a = false) :
-                            type(t), qualifier(q), size(s), matrix(m), array(a), arraySize(0),
-                            structure(0), structureSize(0), maxArraySize(0), arrayInformationType(0), typeName(0), mangled(0), fieldName(0)
+                            type(t), qualifier(q), size(s), matrix(m), array(a), arraySize(0), structure(0),
+                            structureSize(0), maxArraySize(0), arrayInformationType(0), fieldName(0), typeName(0), mangled(0)
                             { }
     explicit TType(TPublicType p) :  
                             type(p.type), qualifier(p.qualifier), size(p.size), matrix(p.matrix), array(p.array), arraySize(0), 
-                            structure(0), structureSize(0), maxArraySize(0), arrayInformationType(0), fieldName(0), mangled(0), typeName(0)
+                            structure(0), structureSize(0), maxArraySize(0), arrayInformationType(0), fieldName(0), typeName(0), mangled(0)
                             {
                               if (p.userDef) {
                                   structure = p.userDef->getStruct();
@@ -277,20 +277,21 @@ public:
 protected:
     void buildMangledName(TString&);
 
-    int arraySize;
-    TTypeList* structure;      // 0 unless this is a struct
-	TString *fieldName;         // for structure field names
-	TString *typeName;          // for structure field type name
-    TString *mangled;
-    int structureSize;
-    int maxArraySize;
-    TType* arrayInformationType;
-
-	TQualifier qualifier : 7;
 	TBasicType type      : 6;
+	TQualifier qualifier : 7;
 	int size             : 8; // size of vector or matrix, not size of array
 	unsigned int matrix  : 1;
 	unsigned int array   : 1;
+
+    int arraySize;
+    TTypeList* structure;      // 0 unless this is a struct
+    int structureSize;
+    int maxArraySize;
+    TType* arrayInformationType;
+    TString *fieldName;         // for structure field names
+    TString *typeName;          // for structure field type name
+    TString *mangled;
+
 };
 
 #endif // _TYPES_INCLUDED_

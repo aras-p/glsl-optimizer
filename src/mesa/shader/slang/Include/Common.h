@@ -230,7 +230,10 @@ public:
     typedef pool_allocator<std::pair <K, D> > tAllocator;
 
     TMap() : TBaseMap<K, D, CMP, tAllocator >() {}
+/*
     TMap(const tAllocator& a) : TBaseMap<K, D, CMP, tAllocator >(key_compare(), a) {}
+*/
+    TMap(const tAllocator& a) : TBaseMap<K, D, CMP, tAllocator >() {}
 };
 
 //
@@ -275,7 +278,7 @@ __inline TPersistString FormatSourceLoc(const TSourceLoc loc)
     if (line)
         sprintf(locText, "%d:%d", string, line);
     else
-        sprintf(locText, "%d:? ", string, line);
+        sprintf(locText, "%d:? ", string);
 
     return TPersistString(locText);
 }

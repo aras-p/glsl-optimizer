@@ -53,7 +53,7 @@ namespace Lf {
     class TBindingList;
     class TLinker;
     class TLibrary;
-};
+}
 
 //
 // The base class used to back handles returned to the driver.
