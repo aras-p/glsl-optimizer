@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.72 2000/06/27 21:42:13 brianp Exp $ */
+/* $Id: context.c,v 1.73 2000/06/27 22:10:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1391,7 +1391,7 @@ _mesa_initialize_context( GLcontext *ctx,
 
    ctx->PB = gl_alloc_pb();
    if (!ctx->PB) {
-      FREE( ctx->VB );
+      ALIGN_FREE( ctx->VB );
       FREE( ctx );
       return GL_FALSE;
    }
@@ -1404,9 +1404,9 @@ _mesa_initialize_context( GLcontext *ctx,
       /* allocate new group of display lists */
       ctx->Shared = alloc_shared_state();
       if (!ctx->Shared) {
-         FREE(ctx->VB);
-         FREE(ctx->PB);
-         FREE(ctx);
+         ALIGN_FREE( ctx->VB );
+         FREE( ctx->PB );
+         FREE( ctx );
          return GL_FALSE;
       }
    }
@@ -1436,9 +1436,9 @@ _mesa_initialize_context( GLcontext *ctx,
 
    if (!alloc_proxy_textures(ctx)) {
       free_shared_state(ctx, ctx->Shared);
-      FREE(ctx->VB);
-      FREE(ctx->PB);
-      FREE(ctx);
+      ALIGN_FREE( ctx->VB );
+      FREE( ctx->PB );
+      FREE( ctx );
       return GL_FALSE;
    }
 
@@ -1465,11 +1465,11 @@ _mesa_initialize_context( GLcontext *ctx,
    ctx->Save = (struct _glapi_table *) CALLOC(dispatchSize * sizeof(void*));
    if (!ctx->Exec || !ctx->Save) {
       free_shared_state(ctx, ctx->Shared);
-      FREE(ctx->VB);
-      FREE(ctx->PB);
+      ALIGN_FREE( ctx->VB );
+      FREE( ctx->PB );
       if (ctx->Exec)
-         FREE(ctx->Exec);
-      FREE(ctx);
+         FREE( ctx->Exec );
+      FREE( ctx );
    }
    _mesa_init_exec_table(ctx->Exec, dispatchSize);
    _mesa_init_dlist_table(ctx->Save, dispatchSize);
@@ -1612,7 +1612,7 @@ gl_free_context_data( GLcontext *ctx )
    /* Free cache of immediate buffers. */
    while (ctx->nr_im_queued-- > 0) {
       struct immediate * next = ctx->freed_im_queue->next;
-      FREE( ctx->freed_im_queue );
+      ALIGN_FREE( ctx->freed_im_queue );
       ctx->freed_im_queue = next;
    }
    gl_extensions_dtr(ctx);

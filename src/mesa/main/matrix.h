@@ -1,4 +1,4 @@
-/* $Id: matrix.h,v 1.5 1999/12/10 20:01:06 brianp Exp $ */
+/* $Id: matrix.h,v 1.6 2000/06/27 22:10:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,8 +34,8 @@
 
 
 typedef struct {
-   GLfloat m[16];
-   GLfloat *inv;		/* optional */
+   GLfloat *m;			/* 16-byte aligned */
+   GLfloat *inv;		/* optional, 16-byte aligned */
    GLuint flags;
    GLuint type;
 } GLmatrix;

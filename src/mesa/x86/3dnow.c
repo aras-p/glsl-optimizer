@@ -1,4 +1,4 @@
-/* $Id: 3dnow.c,v 1.4 2000/06/14 21:55:11 brianp Exp $ */
+/* $Id: 3dnow.c,v 1.5 2000/06/27 22:10:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,7 +50,7 @@
 
 
 #define XFORM_ARGS      GLvector4f *to_vec,             \
-                        const GLmatrix *mat,            \
+                        const GLfloat m[16],            \
                         const GLvector4f *from_vec,     \
                         const GLubyte *mask,            \
                         const GLubyte flag

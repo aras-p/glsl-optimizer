@@ -1,4 +1,4 @@
-/* $Id: x86.c,v 1.7 2000/05/26 16:17:00 brianp Exp $ */
+/* $Id: x86.c,v 1.8 2000/06/27 22:10:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,23 +37,23 @@
 #include "x86.h"
 
 #ifdef USE_X86_ASM
-extern void _ASMAPI gl_v16_x86_cliptest_points4(GLfloat *first_vert,
+extern void _ASMAPI gl_v16_x86_cliptest_points4( GLfloat *first_vert,
 					GLfloat *last_vert,
 					GLubyte *or_mask,
 					GLubyte *and_mask,
 					GLubyte *clip_mask );
 
   
-extern void _ASMAPI gl_v16_x86_general_xform(GLfloat *dest,
+extern void _ASMAPI gl_v16_x86_general_xform( GLfloat *dest,
 				     const GLfloat *m,
 				     const GLfloat *src,
 				     GLuint src_stride,
-				     GLuint count);
+					      GLuint count );
 #endif
 
 
 #define XFORM_ARGS 	GLvector4f *to_vec, 		\
-			const GLmatrix *mat, 		\
+			const GLfloat m[16], 		\
 			const GLvector4f *from_vec, 	\
 			const GLubyte *mask, 		\
 			const GLubyte flag
@@ -117,7 +117,6 @@ void gl_init_x86_asm_transforms( void )
 #ifdef DEBUG
    gl_test_all_transform_functions("x86");
 #endif
-
 
    gl_cliptest_points4_v16 = gl_v16_x86_cliptest_points4;
    gl_xform_points3_v16_general = gl_v16_x86_general_xform;
