@@ -1781,6 +1781,7 @@ struct gl_extensions
    GLboolean EXT_vertex_array_set;
    GLboolean HP_occlusion_test;
    GLboolean IBM_rasterpos_clip;
+   GLboolean IBM_multimode_draw_arrays;
    GLboolean MESA_pack_invert;
    GLboolean MESA_packed_depth_stencil;
    GLboolean MESA_program_debug;

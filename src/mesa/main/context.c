@@ -1134,175 +1134,191 @@ init_attrib_groups( GLcontext *ctx )
 static void
 add_newer_entrypoints(void)
 {
-   /* GL_ARB_window_pos aliases with GL_MESA_window_pos */
-   _glapi_add_entrypoint("glWindowPos2dARB", 513);
-   _glapi_add_entrypoint("glWindowPos2dvARB", 514);
-   _glapi_add_entrypoint("glWindowPos2fARB", 515);
-   _glapi_add_entrypoint("glWindowPos2fvARB", 516);
-   _glapi_add_entrypoint("glWindowPos2iARB", 517);
-   _glapi_add_entrypoint("glWindowPos2ivARB", 518);
-   _glapi_add_entrypoint("glWindowPos2sARB", 519);
-   _glapi_add_entrypoint("glWindowPos2svARB", 520);
-   _glapi_add_entrypoint("glWindowPos3dARB", 521);
-   _glapi_add_entrypoint("glWindowPos3dvARB", 522);
-   _glapi_add_entrypoint("glWindowPos3fARB", 523);
-   _glapi_add_entrypoint("glWindowPos3fvARB", 524);
-   _glapi_add_entrypoint("glWindowPos3iARB", 525);
-   _glapi_add_entrypoint("glWindowPos3ivARB", 526);
-   _glapi_add_entrypoint("glWindowPos3sARB", 527);
-   _glapi_add_entrypoint("glWindowPos3svARB", 528);
+   unsigned   i;
+   static const struct {
+      const char * const name;
+      unsigned  offset;
+   }
+   newer_entrypoints[] = {
+      /* GL_ARB_window_pos aliases with GL_MESA_window_pos */
+      { "glWindowPos2dARB", 513 },
+      { "glWindowPos2dvARB", 514 },
+      { "glWindowPos2fARB", 515 },
+      { "glWindowPos2fvARB", 516 },
+      { "glWindowPos2iARB", 517 },
+      { "glWindowPos2ivARB", 518 },
+      { "glWindowPos2sARB", 519 },
+      { "glWindowPos2svARB", 520 },
+      { "glWindowPos3dARB", 521 },
+      { "glWindowPos3dvARB", 522 },
+      { "glWindowPos3fARB", 523 },
+      { "glWindowPos3fvARB", 524 },
+      { "glWindowPos3iARB", 525 },
+      { "glWindowPos3ivARB", 526 },
+      { "glWindowPos3sARB", 527 },
+      { "glWindowPos3svARB", 528 },
 #if FEATURE_NV_vertex_program
-   _glapi_add_entrypoint("glAreProgramsResidentNV", 578);
-   _glapi_add_entrypoint("glBindProgramNV", 579);
-   _glapi_add_entrypoint("glDeleteProgramsNV", 580);
-   _glapi_add_entrypoint("glExecuteProgramNV", 581);
-   _glapi_add_entrypoint("glGenProgramsNV", 582);
-   _glapi_add_entrypoint("glGetProgramParameterdvNV", 583);
-   _glapi_add_entrypoint("glGetProgramParameterfvNV", 584);
-   _glapi_add_entrypoint("glGetProgramivNV", 585);
-   _glapi_add_entrypoint("glGetProgramStringNV", 586);
-   _glapi_add_entrypoint("glGetTrackMatrixivNV", 587);
-   _glapi_add_entrypoint("glGetVertexAttribdvNV", 588);
-   _glapi_add_entrypoint("glGetVertexAttribfvNV", 589);
-   _glapi_add_entrypoint("glGetVertexAttribivNV", 590);
-   _glapi_add_entrypoint("glGetVertexAttribPointervNV", 591);
-   _glapi_add_entrypoint("glIsProgramNV", 592);
-   _glapi_add_entrypoint("glLoadProgramNV", 593);
-   _glapi_add_entrypoint("glProgramParameter4dNV", 594);
-   _glapi_add_entrypoint("glProgramParameter4dvNV", 595);
-   _glapi_add_entrypoint("glProgramParameter4fNV", 596);
-   _glapi_add_entrypoint("glProgramParameter4fvNV", 597);
-   _glapi_add_entrypoint("glProgramParameters4dvNV", 598);
-   _glapi_add_entrypoint("glProgramParameters4fvNV", 599);
-   _glapi_add_entrypoint("glRequestResidentProgramsNV", 600);
-   _glapi_add_entrypoint("glTrackMatrixNV", 601);
-   _glapi_add_entrypoint("glVertexAttribPointerNV", 602);
-   _glapi_add_entrypoint("glVertexAttrib1dNV", 603);
-   _glapi_add_entrypoint("glVertexAttrib1dvNV", 604);
-   _glapi_add_entrypoint("glVertexAttrib1fNV", 605);
-   _glapi_add_entrypoint("glVertexAttrib1fvNV", 606);
-   _glapi_add_entrypoint("glVertexAttrib1sNV", 607);
-   _glapi_add_entrypoint("glVertexAttrib1svNV", 608);
-   _glapi_add_entrypoint("glVertexAttrib2dNV", 609);
-   _glapi_add_entrypoint("glVertexAttrib2dvNV", 610);
-   _glapi_add_entrypoint("glVertexAttrib2fNV", 611);
-   _glapi_add_entrypoint("glVertexAttrib2fvNV", 612);
-   _glapi_add_entrypoint("glVertexAttrib2sNV", 613);
-   _glapi_add_entrypoint("glVertexAttrib2svNV", 614);
-   _glapi_add_entrypoint("glVertexAttrib3dNV", 615);
-   _glapi_add_entrypoint("glVertexAttrib3dvNV", 616);
-   _glapi_add_entrypoint("glVertexAttrib3fNV", 617);
-   _glapi_add_entrypoint("glVertexAttrib3fvNV", 618);
-   _glapi_add_entrypoint("glVertexAttrib3sNV", 619);
-   _glapi_add_entrypoint("glVertexAttrib3svNV", 620);
-   _glapi_add_entrypoint("glVertexAttrib4dNV", 621);
-   _glapi_add_entrypoint("glVertexAttrib4dvNV", 622);
-   _glapi_add_entrypoint("glVertexAttrib4fNV", 623);
-   _glapi_add_entrypoint("glVertexAttrib4fvNV", 624);
-   _glapi_add_entrypoint("glVertexAttrib4sNV", 625);
-   _glapi_add_entrypoint("glVertexAttrib4svNV", 626);
-   _glapi_add_entrypoint("glVertexAttrib4ubNV", 627);
-   _glapi_add_entrypoint("glVertexAttrib4ubvNV", 628);
-   _glapi_add_entrypoint("glVertexAttribs1dvNV", 629);
-   _glapi_add_entrypoint("glVertexAttribs1fvNV", 630);
-   _glapi_add_entrypoint("glVertexAttribs1svNV", 631);
-   _glapi_add_entrypoint("glVertexAttribs2dvNV", 632);
-   _glapi_add_entrypoint("glVertexAttribs2fvNV", 633);
-   _glapi_add_entrypoint("glVertexAttribs2svNV", 634);
-   _glapi_add_entrypoint("glVertexAttribs3dvNV", 635);
-   _glapi_add_entrypoint("glVertexAttribs3fvNV", 636);
-   _glapi_add_entrypoint("glVertexAttribs3svNV", 637);
-   _glapi_add_entrypoint("glVertexAttribs4dvNV", 638);
-   _glapi_add_entrypoint("glVertexAttribs4fvNV", 639);
-   _glapi_add_entrypoint("glVertexAttribs4svNV", 640);
-   _glapi_add_entrypoint("glVertexAttribs4ubvNV", 641);
+      { "glAreProgramsResidentNV", 578 },
+      { "glBindProgramNV", 579 },
+      { "glDeleteProgramsNV", 580 },
+      { "glExecuteProgramNV", 581 },
+      { "glGenProgramsNV", 582 },
+      { "glGetProgramParameterdvNV", 583 },
+      { "glGetProgramParameterfvNV", 584 },
+      { "glGetProgramivNV", 585 },
+      { "glGetProgramStringNV", 586 },
+      { "glGetTrackMatrixivNV", 587 },
+      { "glGetVertexAttribdvNV", 588 },
+      { "glGetVertexAttribfvNV", 589 },
+      { "glGetVertexAttribivNV", 590 },
+      { "glGetVertexAttribPointervNV", 591 },
+      { "glIsProgramNV", 592 },
+      { "glLoadProgramNV", 593 },
+      { "glProgramParameter4dNV", 594 },
+      { "glProgramParameter4dvNV", 595 },
+      { "glProgramParameter4fNV", 596 },
+      { "glProgramParameter4fvNV", 597 },
+      { "glProgramParameters4dvNV", 598 },
+      { "glProgramParameters4fvNV", 599 },
+      { "glRequestResidentProgramsNV", 600 },
+      { "glTrackMatrixNV", 601 },
+      { "glVertexAttribPointerNV", 602 },
+      { "glVertexAttrib1dNV", 603 },
+      { "glVertexAttrib1dvNV", 604 },
+      { "glVertexAttrib1fNV", 605 },
+      { "glVertexAttrib1fvNV", 606 },
+      { "glVertexAttrib1sNV", 607 },
+      { "glVertexAttrib1svNV", 608 },
+      { "glVertexAttrib2dNV", 609 },
+      { "glVertexAttrib2dvNV", 610 },
+      { "glVertexAttrib2fNV", 611 },
+      { "glVertexAttrib2fvNV", 612 },
+      { "glVertexAttrib2sNV", 613 },
+      { "glVertexAttrib2svNV", 614 },
+      { "glVertexAttrib3dNV", 615 },
+      { "glVertexAttrib3dvNV", 616 },
+      { "glVertexAttrib3fNV", 617 },
+      { "glVertexAttrib3fvNV", 618 },
+      { "glVertexAttrib3sNV", 619 },
+      { "glVertexAttrib3svNV", 620 },
+      { "glVertexAttrib4dNV", 621 },
+      { "glVertexAttrib4dvNV", 622 },
+      { "glVertexAttrib4fNV", 623 },
+      { "glVertexAttrib4fvNV", 624 },
+      { "glVertexAttrib4sNV", 625 },
+      { "glVertexAttrib4svNV", 626 },
+      { "glVertexAttrib4ubNV", 627 },
+      { "glVertexAttrib4ubvNV", 628 },
+      { "glVertexAttribs1dvNV", 629 },
+      { "glVertexAttribs1fvNV", 630 },
+      { "glVertexAttribs1svNV", 631 },
+      { "glVertexAttribs2dvNV", 632 },
+      { "glVertexAttribs2fvNV", 633 },
+      { "glVertexAttribs2svNV", 634 },
+      { "glVertexAttribs3dvNV", 635 },
+      { "glVertexAttribs3fvNV", 636 },
+      { "glVertexAttribs3svNV", 637 },
+      { "glVertexAttribs4dvNV", 638 },
+      { "glVertexAttribs4fvNV", 639 },
+      { "glVertexAttribs4svNV", 640 },
+      { "glVertexAttribs4ubvNV", 641 },
 #endif
-   _glapi_add_entrypoint("glPointParameteriNV", 642);
-   _glapi_add_entrypoint("glPointParameterivNV", 643);
-   _glapi_add_entrypoint("glMultiDrawArraysEXT", 644);
-   _glapi_add_entrypoint("glMultiDrawElementsEXT", 645);
-   _glapi_add_entrypoint("glActiveStencilFaceEXT", 646);
+      { "glPointParameteriNV", 642 },
+      { "glPointParameterivNV", 643 },
+      { "glMultiDrawArraysEXT", 644 },
+      { "glMultiDrawElementsEXT", 645 },
+      { "glMultiDrawArraysSUN", _gloffset_MultiDrawArraysEXT  },
+      { "glMultiDrawElementsSUN", _gloffset_MultiDrawElementsEXT  },
+      { "glActiveStencilFaceEXT", 646 },
 #if FEATURE_NV_fence
-   _glapi_add_entrypoint("glDeleteFencesNV", 647);
-   _glapi_add_entrypoint("glGenFencesNV", 648);
-   _glapi_add_entrypoint("glIsFenceNV", 649);
-   _glapi_add_entrypoint("glTestFenceNV", 650);
-   _glapi_add_entrypoint("glGetFenceivNV", 651);
-   _glapi_add_entrypoint("glFinishFenceNV", 652);
-   _glapi_add_entrypoint("glSetFenceNV", 653);
+      { "glDeleteFencesNV", 647 },
+      { "glGenFencesNV", 648 },
+      { "glIsFenceNV", 649 },
+      { "glTestFenceNV", 650 },
+      { "glGetFenceivNV", 651 },
+      { "glFinishFenceNV", 652 },
+      { "glSetFenceNV", 653 },
 #endif
 #if FEATURE_NV_fragment_program
-   _glapi_add_entrypoint("glProgramNamedParameter4fNV", 682);
-   _glapi_add_entrypoint("glProgramNamedParameter4dNV", 683);
-   _glapi_add_entrypoint("glProgramNamedParameter4fvNV", 683);
-   _glapi_add_entrypoint("glProgramNamedParameter4dvNV", 684);
-   _glapi_add_entrypoint("glGetProgramNamedParameterfvNV", 685);
-   _glapi_add_entrypoint("glGetProgramNamedParameterdvNV", 686);
+      { "glProgramNamedParameter4fNV", 682 },
+      { "glProgramNamedParameter4dNV", 683 },
+      { "glProgramNamedParameter4fvNV", 683 },
+      { "glProgramNamedParameter4dvNV", 684 },
+      { "glGetProgramNamedParameterfvNV", 685 },
+      { "glGetProgramNamedParameterdvNV", 686 },
 #endif
 #if FEATURE_ARB_vertex_program
-   _glapi_add_entrypoint("glVertexAttrib1sARB", _gloffset_VertexAttrib1sNV);
-   _glapi_add_entrypoint("glVertexAttrib1fARB", _gloffset_VertexAttrib1fNV);
-   _glapi_add_entrypoint("glVertexAttrib1dARB", _gloffset_VertexAttrib1dNV);
-   _glapi_add_entrypoint("glVertexAttrib2sARB", _gloffset_VertexAttrib2sNV);
-   _glapi_add_entrypoint("glVertexAttrib2fARB", _gloffset_VertexAttrib2fNV);
-   _glapi_add_entrypoint("glVertexAttrib2dARB", _gloffset_VertexAttrib2dNV);
-   _glapi_add_entrypoint("glVertexAttrib3sARB", _gloffset_VertexAttrib3sNV);
-   _glapi_add_entrypoint("glVertexAttrib3fARB", _gloffset_VertexAttrib3fNV);
-   _glapi_add_entrypoint("glVertexAttrib3dARB", _gloffset_VertexAttrib3dNV);
-   _glapi_add_entrypoint("glVertexAttrib4sARB", _gloffset_VertexAttrib4sNV);
-   _glapi_add_entrypoint("glVertexAttrib4fARB", _gloffset_VertexAttrib4fNV);
-   _glapi_add_entrypoint("glVertexAttrib4dARB", _gloffset_VertexAttrib4dNV);
-   _glapi_add_entrypoint("glVertexAttrib4NubARB", _gloffset_VertexAttrib4ubNV);
-   _glapi_add_entrypoint("glVertexAttrib1svARB", _gloffset_VertexAttrib1svNV);
-   _glapi_add_entrypoint("glVertexAttrib1fvARB", _gloffset_VertexAttrib1fvNV);
-   _glapi_add_entrypoint("glVertexAttrib1dvARB", _gloffset_VertexAttrib1dvNV);
-   _glapi_add_entrypoint("glVertexAttrib2svARB", _gloffset_VertexAttrib2svNV);
-   _glapi_add_entrypoint("glVertexAttrib2fvARB", _gloffset_VertexAttrib2fvNV);
-   _glapi_add_entrypoint("glVertexAttrib2dvARB", _gloffset_VertexAttrib2dvNV);
-   _glapi_add_entrypoint("glVertexAttrib3svARB", _gloffset_VertexAttrib3svNV);
-   _glapi_add_entrypoint("glVertexAttrib3fvARB", _gloffset_VertexAttrib3fvNV);
-   _glapi_add_entrypoint("glVertexAttrib3dvARB", _gloffset_VertexAttrib3dvNV);
-   _glapi_add_entrypoint("glVertexAttrib4bvARB", _gloffset_VertexAttrib4bvARB);
-   _glapi_add_entrypoint("glVertexAttrib4svARB", _gloffset_VertexAttrib4svNV);
-   _glapi_add_entrypoint("glVertexAttrib4ivARB", _gloffset_VertexAttrib4ivARB);
-   _glapi_add_entrypoint("glVertexAttrib4ubvARB", _gloffset_VertexAttrib4ubvARB);
-   _glapi_add_entrypoint("glVertexAttrib4usvARB", _gloffset_VertexAttrib4usvARB);
-   _glapi_add_entrypoint("glVertexAttrib4uivARB", _gloffset_VertexAttrib4uivARB);
-   _glapi_add_entrypoint("glVertexAttrib4fvARB", _gloffset_VertexAttrib4fvNV);
-   _glapi_add_entrypoint("glVertexAttrib4dvARB", _gloffset_VertexAttrib4dvNV);
-   _glapi_add_entrypoint("glVertexAttrib4NbvARB", _gloffset_VertexAttrib4NbvARB);
-   _glapi_add_entrypoint("glVertexAttrib4NsvARB", _gloffset_VertexAttrib4NsvARB);
-   _glapi_add_entrypoint("glVertexAttrib4NivARB", _gloffset_VertexAttrib4NivARB);
-   _glapi_add_entrypoint("glVertexAttrib4NubvARB", _gloffset_VertexAttrib4ubvNV);
-   _glapi_add_entrypoint("glVertexAttrib4NusvARB", _gloffset_VertexAttrib4NusvARB);
-   _glapi_add_entrypoint("glVertexAttrib4NuivARB", _gloffset_VertexAttrib4NuivARB);
-   _glapi_add_entrypoint("glVertexAttribPointerARB", _gloffset_VertexAttribPointerARB);
-   _glapi_add_entrypoint("glEnableVertexAttribArrayARB", _gloffset_EnableVertexAttribArrayARB);
-   _glapi_add_entrypoint("glDisableVertexAttribArrayARB", _gloffset_DisableVertexAttribArrayARB);
-   _glapi_add_entrypoint("glProgramStringARB", _gloffset_ProgramStringARB);
-   _glapi_add_entrypoint("glBindProgramARB", _gloffset_BindProgramNV);
-   _glapi_add_entrypoint("glDeleteProgramsARB", _gloffset_DeleteProgramsNV);
-   _glapi_add_entrypoint("glGenProgramsARB", _gloffset_GenProgramsNV);
-   _glapi_add_entrypoint("glIsProgramARB", _gloffset_IsProgramNV);
-   _glapi_add_entrypoint("glProgramEnvParameter4dARB", _gloffset_ProgramEnvParameter4dARB);
-   _glapi_add_entrypoint("glProgramEnvParameter4dvARB", _gloffset_ProgramEnvParameter4dvARB);
-   _glapi_add_entrypoint("glProgramEnvParameter4fARB", _gloffset_ProgramEnvParameter4fARB);
-   _glapi_add_entrypoint("glProgramEnvParameter4fvARB", _gloffset_ProgramEnvParameter4fvARB);
-   _glapi_add_entrypoint("glProgramLocalParameter4dARB", _gloffset_ProgramLocalParameter4dARB);
-   _glapi_add_entrypoint("glProgramLocalParameter4dvARB", _gloffset_ProgramLocalParameter4dvARB);
-   _glapi_add_entrypoint("glProgramLocalParameter4fARB", _gloffset_ProgramLocalParameter4fARB);
-   _glapi_add_entrypoint("glProgramLocalParameter4fvARB", _gloffset_ProgramLocalParameter4fvARB);
-   _glapi_add_entrypoint("glGetProgramEnvParameterdvARB", _gloffset_GetProgramEnvParameterdvARB);
-   _glapi_add_entrypoint("glGetProgramEnvParameterfvARB", _gloffset_GetProgramEnvParameterfvARB);
-   _glapi_add_entrypoint("glGetProgramLocalParameterdvARB", _gloffset_GetProgramLocalParameterdvARB);
-   _glapi_add_entrypoint("glGetProgramLocalParameterfvARB", _gloffset_GetProgramLocalParameterfvARB);
-   _glapi_add_entrypoint("glGetProgramivARB", _gloffset_GetProgramivARB);
-   _glapi_add_entrypoint("glGetProgramStringARB", _gloffset_GetProgramStringARB);
-   _glapi_add_entrypoint("glGetVertexAttribdvARB", _gloffset_GetVertexAttribdvNV);
-   _glapi_add_entrypoint("glGetVertexAttribfvARB", _gloffset_GetVertexAttribfvNV);
-   _glapi_add_entrypoint("glGetVertexAttribivARB", _gloffset_GetVertexAttribivNV);
-   _glapi_add_entrypoint("glGetVertexAttribPointervARB", _gloffset_GetVertexAttribPointervNV);
+      { "glVertexAttrib1sARB", _gloffset_VertexAttrib1sNV },
+      { "glVertexAttrib1fARB", _gloffset_VertexAttrib1fNV },
+      { "glVertexAttrib1dARB", _gloffset_VertexAttrib1dNV },
+      { "glVertexAttrib2sARB", _gloffset_VertexAttrib2sNV },
+      { "glVertexAttrib2fARB", _gloffset_VertexAttrib2fNV },
+      { "glVertexAttrib2dARB", _gloffset_VertexAttrib2dNV },
+      { "glVertexAttrib3sARB", _gloffset_VertexAttrib3sNV },
+      { "glVertexAttrib3fARB", _gloffset_VertexAttrib3fNV },
+      { "glVertexAttrib3dARB", _gloffset_VertexAttrib3dNV },
+      { "glVertexAttrib4sARB", _gloffset_VertexAttrib4sNV },
+      { "glVertexAttrib4fARB", _gloffset_VertexAttrib4fNV },
+      { "glVertexAttrib4dARB", _gloffset_VertexAttrib4dNV },
+      { "glVertexAttrib4NubARB", _gloffset_VertexAttrib4ubNV },
+      { "glVertexAttrib1svARB", _gloffset_VertexAttrib1svNV },
+      { "glVertexAttrib1fvARB", _gloffset_VertexAttrib1fvNV },
+      { "glVertexAttrib1dvARB", _gloffset_VertexAttrib1dvNV },
+      { "glVertexAttrib2svARB", _gloffset_VertexAttrib2svNV },
+      { "glVertexAttrib2fvARB", _gloffset_VertexAttrib2fvNV },
+      { "glVertexAttrib2dvARB", _gloffset_VertexAttrib2dvNV },
+      { "glVertexAttrib3svARB", _gloffset_VertexAttrib3svNV },
+      { "glVertexAttrib3fvARB", _gloffset_VertexAttrib3fvNV },
+      { "glVertexAttrib3dvARB", _gloffset_VertexAttrib3dvNV },
+      { "glVertexAttrib4bvARB", _gloffset_VertexAttrib4bvARB },
+      { "glVertexAttrib4svARB", _gloffset_VertexAttrib4svNV },
+      { "glVertexAttrib4ivARB", _gloffset_VertexAttrib4ivARB },
+      { "glVertexAttrib4ubvARB", _gloffset_VertexAttrib4ubvARB },
+      { "glVertexAttrib4usvARB", _gloffset_VertexAttrib4usvARB },
+      { "glVertexAttrib4uivARB", _gloffset_VertexAttrib4uivARB },
+      { "glVertexAttrib4fvARB", _gloffset_VertexAttrib4fvNV },
+      { "glVertexAttrib4dvARB", _gloffset_VertexAttrib4dvNV },
+      { "glVertexAttrib4NbvARB", _gloffset_VertexAttrib4NbvARB },
+      { "glVertexAttrib4NsvARB", _gloffset_VertexAttrib4NsvARB },
+      { "glVertexAttrib4NivARB", _gloffset_VertexAttrib4NivARB },
+      { "glVertexAttrib4NubvARB", _gloffset_VertexAttrib4ubvNV },
+      { "glVertexAttrib4NusvARB", _gloffset_VertexAttrib4NusvARB },
+      { "glVertexAttrib4NuivARB", _gloffset_VertexAttrib4NuivARB },
+      { "glVertexAttribPointerARB", _gloffset_VertexAttribPointerARB },
+      { "glEnableVertexAttribArrayARB", _gloffset_EnableVertexAttribArrayARB },
+      { "glDisableVertexAttribArrayARB", _gloffset_DisableVertexAttribArrayARB },
+      { "glProgramStringARB", _gloffset_ProgramStringARB },
+      { "glBindProgramARB", _gloffset_BindProgramNV },
+      { "glDeleteProgramsARB", _gloffset_DeleteProgramsNV },
+      { "glGenProgramsARB", _gloffset_GenProgramsNV },
+      { "glIsProgramARB", _gloffset_IsProgramNV },
+      { "glProgramEnvParameter4dARB", _gloffset_ProgramEnvParameter4dARB },
+      { "glProgramEnvParameter4dvARB", _gloffset_ProgramEnvParameter4dvARB },
+      { "glProgramEnvParameter4fARB", _gloffset_ProgramEnvParameter4fARB },
+      { "glProgramEnvParameter4fvARB", _gloffset_ProgramEnvParameter4fvARB },
+      { "glProgramLocalParameter4dARB", _gloffset_ProgramLocalParameter4dARB },
+      { "glProgramLocalParameter4dvARB", _gloffset_ProgramLocalParameter4dvARB },
+      { "glProgramLocalParameter4fARB", _gloffset_ProgramLocalParameter4fARB },
+      { "glProgramLocalParameter4fvARB", _gloffset_ProgramLocalParameter4fvARB },
+      { "glGetProgramEnvParameterdvARB", _gloffset_GetProgramEnvParameterdvARB },
+      { "glGetProgramEnvParameterfvARB", _gloffset_GetProgramEnvParameterfvARB },
+      { "glGetProgramLocalParameterdvARB", _gloffset_GetProgramLocalParameterdvARB },
+      { "glGetProgramLocalParameterfvARB", _gloffset_GetProgramLocalParameterfvARB },
+      { "glGetProgramivARB", _gloffset_GetProgramivARB },
+      { "glGetProgramStringARB", _gloffset_GetProgramStringARB },
+      { "glGetVertexAttribdvARB", _gloffset_GetVertexAttribdvNV },
+      { "glGetVertexAttribfvARB", _gloffset_GetVertexAttribfvNV },
+      { "glGetVertexAttribivARB", _gloffset_GetVertexAttribivNV },
+      { "glGetVertexAttribPointervARB", _gloffset_GetVertexAttribPointervNV },
 #endif
+      { "glMultiModeDrawArraysIBM", _gloffset_MultiModeDrawArraysIBM },
+      { "glMultiModeDrawElementsIBM", _gloffset_MultiModeDrawElementsIBM },
+   };
+   
+   for ( i = 0 ; i < Elements(newer_entrypoints) ; i++ ) {
+      _glapi_add_entrypoint( newer_entrypoints[i].name,
+			     newer_entrypoints[i].offset );
+   }
 }
 
 

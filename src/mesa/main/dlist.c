@@ -6099,6 +6099,29 @@ static void exec_MultiDrawElementsEXT(GLenum mode, const GLsizei *count,
    ctx->Exec->MultiDrawElementsEXT(mode, count, type, indices, primcount);
 }
 
+/* GL_IBM_multimode_draw_arrays */
+static void exec_MultiModeDrawArraysIBM(const GLenum *mode, const GLint *first,
+					const GLsizei *count, GLsizei primcount,
+					GLint modestride)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->MultiModeDrawArraysIBM(mode, first, count, primcount, modestride);
+}
+
+/* GL_IBM_multimode_draw_arrays */
+static void exec_MultiModeDrawElementsIBM(const GLenum *mode,
+					  const GLsizei *count,
+					  GLenum type,
+					  const GLvoid * const *indices,
+					  GLsizei primcount, GLint modestride)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->MultiModeDrawElementsIBM(mode, count, type, indices, primcount,
+				       modestride);
+}
+
 
 
 /*
@@ -6474,6 +6497,10 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->WindowPos4ivMESA = save_WindowPos4ivMESA;
    table->WindowPos4sMESA = save_WindowPos4sMESA;
    table->WindowPos4svMESA = save_WindowPos4svMESA;
+
+   /* 200. GL_IBM_multimode_draw_arrays */
+   table->MultiModeDrawArraysIBM = exec_MultiModeDrawArraysIBM;
+   table->MultiModeDrawElementsIBM = exec_MultiModeDrawElementsIBM;
 
 #if FEATURE_NV_vertex_program
    /* 233. GL_NV_vertex_program */

@@ -913,6 +913,46 @@ _mesa_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
 }
 
 
+/* GL_IBM_multimode_draw_arrays */
+void
+_mesa_MultiModeDrawArraysIBM( const GLenum * mode, const GLint * first,
+			      const GLsizei * count,
+			      GLsizei primcount, GLint modestride )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLint i;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   for ( i = 0 ; i < primcount ; i++ ) {
+      if ( count[i] > 0 ) {
+	 (ctx->Exec->DrawArrays)( *(GLenum *) ((char *) mode + (i * modestride)),
+				  first[i], count[i] );
+      }
+   }
+}
+
+
+/* GL_IBM_multimode_draw_arrays */
+void
+_mesa_MultiModeDrawElementsIBM( const GLenum * mode, const GLsizei * count,
+				GLenum type, const GLvoid * const * indices,
+				GLsizei primcount, GLint modestride )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLint i;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   for ( i = 0 ; i < primcount ; i++ ) {
+      if ( count[i] > 0 ) {
+	 (ctx->Exec->DrawElements)( *(GLenum *) ((char *) mode + (i * modestride)),
+				    count[i], type, indices[i] );
+      }
+   }
+}
+
+
 /**********************************************************************/
 /*****                      Initialization                        *****/
 /**********************************************************************/

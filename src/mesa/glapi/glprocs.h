@@ -898,5 +898,7 @@ static struct name_address_offset static_functions[] = {
    { "glGetQueryivARB", (GLvoid *) glGetQueryivARB, _gloffset_GetQueryivARB },
    { "glGetQueryObjectivARB", (GLvoid *) glGetQueryObjectivARB, _gloffset_GetQueryObjectivARB },
    { "glGetQueryObjectuivARB", (GLvoid *) glGetQueryObjectuivARB, _gloffset_GetQueryObjectuivARB },
+   { "glMultiModeDrawArraysIBM", (GLvoid *) glMultiModeDrawArraysIBM, _gloffset_MultiModeDrawArraysIBM },
+   { "glMultiModeDrawElementsIBM", (GLvoid *) glMultiModeDrawElementsIBM, _gloffset_MultiModeDrawElementsIBM },
    { NULL, NULL }  /* end of list marker */
 };

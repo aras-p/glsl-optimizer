@@ -5385,5 +5385,17 @@ GL_PREFIX(GetQueryObjectuivARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetQueryObjectuivARB))
 
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiModeDrawArraysIBM))
+GL_PREFIX(MultiModeDrawArraysIBM):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiModeDrawArraysIBM))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiModeDrawElementsIBM))
+GL_PREFIX(MultiModeDrawElementsIBM):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiModeDrawElementsIBM))
+
 
 #endif  /* __WIN32__ */

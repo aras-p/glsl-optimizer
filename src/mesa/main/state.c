@@ -536,6 +536,12 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->WindowPos4svMESA = _mesa_WindowPos4svMESA;
 #endif
 
+   /* 200. GL_IBM_multimode_draw_arrays */
+#if _HAVE_FULL_GL
+   exec->MultiModeDrawArraysIBM = _mesa_MultiModeDrawArraysIBM;
+   exec->MultiModeDrawElementsIBM = _mesa_MultiModeDrawElementsIBM;
+#endif
+
    /* 233. GL_NV_vertex_program */
 #if FEATURE_NV_vertex_program
    exec->BindProgramNV = _mesa_BindProgramNV;

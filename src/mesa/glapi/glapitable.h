@@ -714,6 +714,8 @@ struct _glapi_table
    void (*GetQueryivARB)(GLenum target, GLenum pname, GLint * params); /* 705 */
    void (*GetQueryObjectivARB)(GLuint id, GLenum pname, GLint * params); /* 706 */
    void (*GetQueryObjectuivARB)(GLuint id, GLenum pname, GLuint * params); /* 707 */
+   void (*MultiModeDrawArraysIBM)(const GLenum * mode, const GLint * first, const GLsizei * count, GLsizei primcount, GLint modestride); /* 708 */
+   void (*MultiModeDrawElementsIBM)(const GLenum * mode, const GLsizei * count, GLenum type, const GLvoid * const * indices, GLsizei primcount, GLint modestride); /* 709 */
 };
 
 #endif

@@ -4664,6 +4664,16 @@ KEYWORD1 void KEYWORD2 NAME(GetQueryObjectuivARB)(GLuint id, GLenum pname, GLuin
    DISPATCH(GetQueryObjectuivARB, (id, pname, params), (F, "glGetQueryObjectuivARB(%d, 0x%x, %p);\n", id, pname, (const void *) params));
 }
 
+KEYWORD1 void KEYWORD2 NAME(MultiModeDrawArraysIBM)(const GLenum * mode, const GLint * first, const GLsizei * count, GLsizei primcount, GLint modestride)
+{
+   DISPATCH(MultiModeDrawArraysIBM, (mode, first, count, primcount, modestride), (F, "glMultiModeDrawArraysIBM(%p, %p, %p, %d, %d);\n", (const void *) mode, (const void *) first, (const void *) count, primcount, modestride));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiModeDrawElementsIBM)(const GLenum * mode, const GLsizei * count, GLenum type, const GLvoid * const * indices, GLsizei primcount, GLint modestride)
+{
+   DISPATCH(MultiModeDrawElementsIBM, (mode, count, type, indices, primcount, modestride), (F, "glMultiModeDrawElementsIBM(%p, %p, 0x%x, %p, %d, %d);\n", (const void *) mode, (const void *) count, type, (const void *) indices, primcount, modestride));
+}
+
 
 
 /*
@@ -5385,6 +5395,8 @@ void *DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(GetQueryivARB),
    TABLE_ENTRY(GetQueryObjectivARB),
    TABLE_ENTRY(GetQueryObjectuivARB),
+   TABLE_ENTRY(MultiModeDrawArraysIBM),
+   TABLE_ENTRY(MultiModeDrawElementsIBM),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.

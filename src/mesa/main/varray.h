@@ -134,6 +134,19 @@ extern void
 _mesa_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
                             const GLvoid **indices, GLsizei primcount );
 
+
+extern void
+_mesa_MultiModeDrawArraysIBM( const GLenum * mode, const GLint * first,
+			      const GLsizei * count,
+			      GLsizei primcount, GLint modestride );
+
+
+extern void
+_mesa_MultiModeDrawElementsIBM( const GLenum * mode, const GLsizei * count,
+				GLenum type, const GLvoid * const * indices,
+				GLsizei primcount, GLint modestride );
+
+
 extern void
 _mesa_init_varray( GLcontext * ctx );
 

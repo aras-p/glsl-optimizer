@@ -110,6 +110,7 @@ static const struct {
    { OFF, "GL_ATI_texture_env_combine3",       F(ATI_texture_env_combine3)},
    { OFF, "GL_ATI_texture_mirror_once",        F(ATI_texture_mirror_once)},
    { OFF, "GL_HP_occlusion_test",              F(HP_occlusion_test) },
+   { OFF, "GL_IBM_multimode_draw_arrays",      F(IBM_multimode_draw_arrays) },
    { ON,  "GL_IBM_rasterpos_clip",             F(IBM_rasterpos_clip) },
    { OFF, "GL_IBM_texture_mirrored_repeat",    F(ARB_texture_mirrored_repeat)},
    { OFF, "GL_INGR_blend_func_separate",       F(EXT_blend_func_separate) },
@@ -139,6 +140,7 @@ static const struct {
    { OFF, "GL_SGIX_pixel_texture",             F(SGIX_pixel_texture) },
    { OFF, "GL_SGIX_shadow",                    F(SGIX_shadow) },
    { OFF, "GL_SGIX_shadow_ambient",            F(SGIX_shadow_ambient) },
+   { OFF, "GL_SUN_multi_draw_arrays",          F(EXT_multi_draw_arrays) },
 };
 
 
@@ -181,6 +183,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_depth_bounds_test = GL_TRUE;
    ctx->Extensions.EXT_fog_coord = GL_TRUE;
    ctx->Extensions.EXT_histogram = GL_TRUE;
+   ctx->Extensions.EXT_multi_draw_arrays = GL_TRUE;
    ctx->Extensions.EXT_paletted_texture = GL_TRUE;
    ctx->Extensions.EXT_point_parameters = GL_TRUE;
    ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
@@ -193,6 +196,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
    ctx->Extensions.HP_occlusion_test = GL_TRUE;
+   ctx->Extensions.IBM_multimode_draw_arrays = GL_TRUE;
    ctx->Extensions.MESA_pack_invert = GL_TRUE;
 #if FEATURE_MESA_program_debug
    ctx->Extensions.MESA_program_debug = GL_TRUE;

@@ -710,5 +710,7 @@
 #define _gloffset_GetQueryivARB 705
 #define _gloffset_GetQueryObjectivARB 706
 #define _gloffset_GetQueryObjectuivARB 707
+#define _gloffset_MultiModeDrawArraysIBM 708
+#define _gloffset_MultiModeDrawElementsIBM 709
 
 #endif
