@@ -60,6 +60,8 @@ FX_DEBUG
 	enable driver debug code
 FX_TRAP_GLIDE
 	enable Glide trace code
+FX_PACKEDCOLOR
+	use packed color in vertex structure
 FX_TC_NAPALM
 	map GL_COMPRESSED_RGB[A] to FXT1. This will have effect on Napalm
 	only (can coexist with FX_TC_NCC, but has higher priority)

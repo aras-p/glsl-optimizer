@@ -55,7 +55,14 @@ static void copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )
    GrVertex *dst = fxMesa->verts + edst;
    GrVertex *src = fxMesa->verts + esrc;
 
+#if FX_PACKEDCOLOR
    *(GLuint *)&dst->pargb = *(GLuint *)&src->pargb;
+#else  /* !FX_PACKEDCOLOR */
+   *(GLuint *)&dst->r = *(GLuint *)&src->r;
+   *(GLuint *)&dst->g = *(GLuint *)&src->g;
+   *(GLuint *)&dst->b = *(GLuint *)&src->b;
+   *(GLuint *)&dst->a = *(GLuint *)&src->a;
+#endif /* !FX_PACKEDCOLOR */
 }
 
 static void copy_pv2( GLcontext *ctx, GLuint edst, GLuint esrc )
@@ -64,8 +71,18 @@ static void copy_pv2( GLcontext *ctx, GLuint edst, GLuint esrc )
    GrVertex *dst = fxMesa->verts + edst;
    GrVertex *src = fxMesa->verts + esrc;
 
+#if FX_PACKEDCOLOR
    *(GLuint *)&dst->pargb = *(GLuint *)&src->pargb;
    *(GLuint *)&dst->pspec = *(GLuint *)&src->pspec;
+#else  /* !FX_PACKEDCOLOR */
+   *(GLuint *)&dst->r = *(GLuint *)&src->r;
+   *(GLuint *)&dst->g = *(GLuint *)&src->g;
+   *(GLuint *)&dst->b = *(GLuint *)&src->b;
+   *(GLuint *)&dst->a = *(GLuint *)&src->a;
+   *(GLuint *)&dst->r1 = *(GLuint *)&src->r1;
+   *(GLuint *)&dst->g1 = *(GLuint *)&src->g1;
+   *(GLuint *)&dst->b1 = *(GLuint *)&src->b1;
+#endif /* !FX_PACKEDCOLOR */
 }
 
 static struct {

@@ -38,7 +38,9 @@
 
 #include "fxg.h"
 
-
+#ifndef FX_PACKEDCOLOR
+#define FX_PACKEDCOLOR 1
+#endif
 
 #define MAX_NUM_SST             4
 
@@ -112,6 +114,7 @@ typedef struct {
         float oow;		/* 1/w (used mipmapping - really 0xfff/w) */
 } GrTmuVertex;
 
+#if FX_PACKEDCOLOR
 typedef struct {
         float x, y;		/* X and Y in screen space */
         float ooz;		/* 65535/Z (used for Z-buffering) */
@@ -137,6 +140,34 @@ typedef struct {
 #define GR_VERTEX_OOW_TMU1_OFFSET       10
 #define GR_VERTEX_FOG_OFFSET            11
 #define GR_VERTEX_PSPEC_OFFSET          12
+#else  /* !FX_PACKEDCOLOR */
+typedef struct {
+        float x, y;		/* X and Y in screen space */
+        float ooz;		/* 65535/Z (used for Z-buffering) */
+        float oow;		/* 1/W (used for W-buffering, texturing) */
+        float r, g, b, a;	/* R, G, B, A [0..255] */
+        GrTmuVertex tmuvtx[GLIDE_NUM_TMU];
+        float fog;		/* fog coordinate */
+        float r1, g1, b1;	/* R, G, B [0..255] */
+        float psize;		/* point size */
+        long pad[20 - 19];	/* ensure multiple of 16 */
+} GrVertex;
+
+#define GR_VERTEX_X_OFFSET              0
+#define GR_VERTEX_Y_OFFSET              1
+#define GR_VERTEX_OOZ_OFFSET            2
+#define GR_VERTEX_OOW_OFFSET            3
+#define GR_VERTEX_RGB_OFFSET            4
+#define GR_VERTEX_A_OFFSET              7
+#define GR_VERTEX_SOW_TMU0_OFFSET       8
+#define GR_VERTEX_TOW_TMU0_OFFSET       9
+#define GR_VERTEX_OOW_TMU0_OFFSET       10
+#define GR_VERTEX_SOW_TMU1_OFFSET       11
+#define GR_VERTEX_TOW_TMU1_OFFSET       12
+#define GR_VERTEX_OOW_TMU1_OFFSET       13
+#define GR_VERTEX_FOG_OFFSET            14
+#define GR_VERTEX_SPEC_OFFSET           15
+#endif /* !FX_PACKEDCOLOR */
 
 
 

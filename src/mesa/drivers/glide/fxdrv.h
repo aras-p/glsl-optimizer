@@ -731,6 +731,28 @@ void fxSetupStencil (GLcontext *ctx);
 
 extern GLuint fx_check_IsInHardware(GLcontext *ctx);
 
+/***
+ *** CNORM: clamp float to [0,1] and map to float in [0,255]
+ ***/
+#if defined(USE_IEEE) && !defined(DEBUG)
+#define IEEE_0996 0x3f7f0000	/* 0.996 or so */
+#define CNORM(N, F)				\
+        do {					\
+           fi_type __tmp;			\
+           __tmp.f = (F);			\
+           if (__tmp.i < 0)			\
+              N = 0;				\
+           else if (__tmp.i >= IEEE_0996)	\
+              N = 255.0f;			\
+           else {				\
+              N = (F) * 255.0f;			\
+           }					\
+        } while (0)
+#else
+#define CNORM(n, f) \
+	n = (CLAMP((f), 0.0F, 1.0F) * 255.0F)
+#endif
+
 /* run-time debugging */
 #ifndef FX_DEBUG
 #define FX_DEBUG 0

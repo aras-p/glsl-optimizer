@@ -145,6 +145,7 @@ static void TAG(emit)( GLcontext *ctx,
 	 proj =  (GLfloat (*)[4])((GLubyte *)proj +  proj_stride);
       }
       if (IND & SETUP_RGBA) {
+#if FX_PACKEDCOLOR
          UNCLAMPED_FLOAT_TO_UBYTE(v->pargb[2], col[0][0]);
          UNCLAMPED_FLOAT_TO_UBYTE(v->pargb[1], col[0][1]);
          UNCLAMPED_FLOAT_TO_UBYTE(v->pargb[0], col[0][2]);
@@ -153,12 +154,28 @@ static void TAG(emit)( GLcontext *ctx,
          } else {
             v->pargb[3] = 255;
          }
+#else  /* !FX_PACKEDCOLOR */
+         CNORM(v->r, col[0][0]);
+         CNORM(v->g, col[0][1]);
+         CNORM(v->b, col[0][2]);
+         if (col_size == 4) {
+            CNORM(v->a, col[0][3]);
+         } else {
+            v->a = 255.0f;
+         }
+#endif /* !FX_PACKEDCOLOR */
 	 STRIDE_4F(col, col_stride);
       }
       if (IND & SETUP_SPEC) {
+#if FX_PACKEDCOLOR
 	 UNCLAMPED_FLOAT_TO_UBYTE(v->pspec[2], spec[0][0]);
 	 UNCLAMPED_FLOAT_TO_UBYTE(v->pspec[1], spec[0][1]);
 	 UNCLAMPED_FLOAT_TO_UBYTE(v->pspec[0], spec[0][2]);
+#else  /* !FX_PACKEDCOLOR */
+         CNORM(v->r1, spec[0][0]);
+         CNORM(v->g1, spec[0][1]);
+         CNORM(v->b1, spec[0][2]);
+#endif /* !FX_PACKEDCOLOR */
 	 STRIDE_4F(spec, spec_stride);
       }
       if (IND & SETUP_FOGC) {
@@ -253,15 +270,28 @@ static void TAG(interp)( GLcontext *ctx,
    }
 
    
+#if FX_PACKEDCOLOR
    INTERP_UB( t, dst->pargb[0], out->pargb[0], in->pargb[0] );
    INTERP_UB( t, dst->pargb[1], out->pargb[1], in->pargb[1] );
    INTERP_UB( t, dst->pargb[2], out->pargb[2], in->pargb[2] );
    INTERP_UB( t, dst->pargb[3], out->pargb[3], in->pargb[3] );
+#else  /* !FX_PACKEDCOLOR */
+   INTERP_F( t, dst->r, out->r, in->r );
+   INTERP_F( t, dst->g, out->g, in->g );
+   INTERP_F( t, dst->b, out->b, in->b );
+   INTERP_F( t, dst->a, out->a, in->a );
+#endif /* !FX_PACKEDCOLOR */
 
    if (IND & SETUP_SPEC) {
+#if FX_PACKEDCOLOR
       INTERP_UB( t, dst->pspec[0], out->pspec[0], in->pspec[0] );
       INTERP_UB( t, dst->pspec[1], out->pspec[1], in->pspec[1] );
       INTERP_UB( t, dst->pspec[2], out->pspec[2], in->pspec[2] );
+#else  /* !FX_PACKEDCOLOR */
+      INTERP_F( t, dst->r1, out->r1, in->r1 );
+      INTERP_F( t, dst->g1, out->g1, in->g1 );
+      INTERP_F( t, dst->b1, out->b1, in->b1 );
+#endif /* !FX_PACKEDCOLOR */
    }
 
    if (IND & SETUP_FOGC) {
