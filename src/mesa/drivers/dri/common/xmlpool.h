@@ -273,6 +273,14 @@ DRI_CONF_OPT_BEGIN_V(vblank_mode,enum,def,"0:3") \
         DRI_CONF_DESC_END \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_HYPERZ_DISABLED 0
+#define DRI_CONF_HYPERZ_ENABLED 1
+#define DRI_CONF_HYPERZ(def) \
+DRI_CONF_OPT_BEGIN(hyperz,bool,def) \
+        DRI_CONF_DESC(en,"Use hyperz") \
+        DRI_CONF_DESC(de,"Hyperz benutzen") \
+DRI_CONF_OPT_END
+
 #define DRI_CONF_MAX_TEXTURE_UNITS(def,min,max) \
 DRI_CONF_OPT_BEGIN_V(texture_units,int,def, # min ":" # max ) \
         DRI_CONF_DESC(en,"Number of texture units") \

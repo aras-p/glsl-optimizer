@@ -374,6 +374,21 @@ static void r200DepthFunc( GLcontext *ctx, GLenum func )
    }
 }
 
+static void r200ClearDepth( GLcontext *ctx, GLclampd d )
+{
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   GLuint format = (rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] &
+		    R200_DEPTH_FORMAT_MASK);
+
+   switch ( format ) {
+   case R200_DEPTH_FORMAT_16BIT_INT_Z:
+      rmesa->state.depth.clear = d * 0x0000ffff;
+      break;
+   case R200_DEPTH_FORMAT_24BIT_INT_Z:
+      rmesa->state.depth.clear = d * 0x00ffffff;
+      break;
+   }
+}
 
 static void r200DepthMask( GLcontext *ctx, GLboolean flag )
 {
@@ -2315,7 +2330,7 @@ void r200InitStateFuncs( struct dd_function_table *functions )
    functions->BlendEquationSeparate	= r200BlendEquationSeparate;
    functions->BlendFuncSeparate		= r200BlendFuncSeparate;
    functions->ClearColor		= r200ClearColor;
-   functions->ClearDepth		= NULL;
+   functions->ClearDepth		= r200ClearDepth;
    functions->ClearIndex		= NULL;
    functions->ClearStencil		= r200ClearStencil;
    functions->ClipPlane			= r200ClipPlane;

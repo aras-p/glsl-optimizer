@@ -169,14 +169,16 @@ void r200InitState( r200ContextPtr rmesa )
 
    switch ( ctx->Visual.depthBits ) {
    case 16:
+      rmesa->state.depth.clear = 0x0000ffff;
       rmesa->state.depth.scale = 1.0 / (GLfloat)0xffff;
       depth_fmt = R200_DEPTH_FORMAT_16BIT_INT_Z;
       rmesa->state.stencil.clear = 0x00000000;
       break;
    case 24:
+      rmesa->state.depth.clear = 0x00ffffff;
       rmesa->state.depth.scale = 1.0 / (GLfloat)0xffffff;
       depth_fmt = R200_DEPTH_FORMAT_24BIT_INT_Z;
-      rmesa->state.stencil.clear = 0xff000000;
+      rmesa->state.stencil.clear = 0xffff0000;
       break;
    default:
       fprintf( stderr, "Error: Unsupported depth %d... exiting\n",
@@ -448,14 +450,24 @@ void r200InitState( r200ContextPtr rmesa )
       ((rmesa->r200Screen->depthPitch &
 	R200_DEPTHPITCH_MASK) |
        R200_DEPTH_ENDIAN_NO_SWAP);
+   
+   if (rmesa->using_hyperz)
+      rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHPITCH] |= R200_DEPTH_HYPERZ;
 
    rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] = (depth_fmt |
-  					       R200_Z_TEST_LESS |  
+					       R200_Z_TEST_LESS |
 					       R200_STENCIL_TEST_ALWAYS |
 					       R200_STENCIL_FAIL_KEEP |
 					       R200_STENCIL_ZPASS_KEEP |
 					       R200_STENCIL_ZFAIL_KEEP |
 					       R200_Z_WRITE_ENABLE);
+
+   if (rmesa->using_hyperz) {
+      rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= R200_Z_COMPRESSION_ENABLE |
+						  R200_Z_DECOMPRESSION_ENABLE;
+/*      if (rmesa->r200Screen->chipset & R200_CHIPSET_REAL_R200)
+	 rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_Z_HIERARCHY_ENABLE;*/
+   }
 
    rmesa->hw.ctx.cmd[CTX_PP_CNTL] = (R200_ANTI_ALIAS_NONE 
  				     | R200_TEX_BLEND_0_ENABLE);

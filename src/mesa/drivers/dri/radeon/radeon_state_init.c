@@ -174,7 +174,7 @@ void radeonInitState( radeonContextPtr rmesa )
       rmesa->state.depth.clear = 0x00ffffff;
       rmesa->state.depth.scale = 1.0 / (GLfloat)0xffffff;
       depth_fmt = RADEON_DEPTH_FORMAT_24BIT_INT_Z;
-      rmesa->state.stencil.clear = 0xff000000;
+      rmesa->state.stencil.clear = 0xffff0000;
       break;
    default:
       fprintf( stderr, "Error: Unsupported depth %d... exiting\n",
@@ -329,6 +329,9 @@ void radeonInitState( radeonContextPtr rmesa )
       ((rmesa->radeonScreen->depthPitch &
 	RADEON_DEPTHPITCH_MASK) |
        RADEON_DEPTH_ENDIAN_NO_SWAP);
+       
+   if (rmesa->using_hyperz)
+       rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHPITCH] |= RADEON_DEPTH_HYPERZ;
 
    rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] = (depth_fmt |
 					       RADEON_Z_TEST_LESS |
@@ -337,6 +340,17 @@ void radeonInitState( radeonContextPtr rmesa )
 					       RADEON_STENCIL_ZPASS_KEEP |
 					       RADEON_STENCIL_ZFAIL_KEEP |
 					       RADEON_Z_WRITE_ENABLE);
+
+   if (rmesa->using_hyperz) {
+       rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_Z_COMPRESSION_ENABLE |
+						   RADEON_Z_DECOMPRESSION_ENABLE;
+      if (rmesa->radeonScreen->chipset & RADEON_CHIPSET_TCL) {
+	 /* works for q3, but slight rendering errors with glxgears ? */
+/*	 rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_Z_HIERARCHY_ENABLE;*/
+	 /* need this otherwise get lots of lockups with q3 ??? */
+	 rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_FORCE_Z_DIRTY;
+      } 
+   }
 
    rmesa->hw.ctx.cmd[CTX_PP_CNTL] = (RADEON_SCISSOR_ENABLE |
 				     RADEON_ANTI_ALIAS_NONE);

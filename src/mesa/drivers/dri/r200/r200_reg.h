@@ -91,6 +91,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R200_RB3D_DEPTHOFFSET             0x1c24
 #define R200_RB3D_DEPTHPITCH              0x1c28
 #define     R200_DEPTHPITCH_MASK         0x00001ff8
+#define     R200_DEPTH_HYPERZ            (3 << 16)
 #define     R200_DEPTH_ENDIAN_NO_SWAP    (0 << 18)
 #define     R200_DEPTH_ENDIAN_WORD_SWAP  (1 << 18)
 #define     R200_DEPTH_ENDIAN_DWORD_SWAP (2 << 18)
@@ -112,6 +113,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_Z_TEST_NEQUAL              (6  <<  4)
 #define     R200_Z_TEST_ALWAYS              (7  <<  4)
 #define     R200_Z_TEST_MASK                (7  <<  4)
+#define     R200_Z_HIERARCHY_ENABLE         (1  <<  8)
 #define     R200_STENCIL_TEST_NEVER         (0  << 12)
 #define     R200_STENCIL_TEST_LESS          (1  << 12)
 #define     R200_STENCIL_TEST_LEQUAL        (2  << 12)
@@ -148,7 +150,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_STENCIL_ZFAIL_INC_WRAP     (6  << 24)
 #define     R200_STENCIL_ZFAIL_DEC_WRAP     (7  << 24)
 #define     R200_STENCIL_ZFAIL_MASK         (0x7 << 24)
+#define     R200_Z_COMPRESSION_ENABLE       (1  << 28)
+#define     R200_FORCE_Z_DIRTY              (1  << 29)
 #define     R200_Z_WRITE_ENABLE             (1  << 30)
+#define     R200_Z_DECOMPRESSION_ENABLE     (1  << 31)
 /*gap*/
 #define R200_PP_CNTL                      0x1c38 
 #define     R200_TEX_0_ENABLE                         0x00000010
@@ -649,6 +654,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_CULL_FRONT                     (1<<29)
 #define     R200_CULL_BACK                      (1<<30)
 #define R200_SE_TCL_POINT_SPRITE_CNTL     0x22c4
+#define     R200_POINTSIZE_SEL_STATE            (1<<16)
 /* gap */
 #define R200_SE_VTX_ST_POS_0_X_4                   0x2300
 #define R200_SE_VTX_ST_POS_0_Y_4                   0x2304

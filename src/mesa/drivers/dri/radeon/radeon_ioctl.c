@@ -1043,7 +1043,7 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    }
 
    if ( mask & DD_DEPTH_BIT ) {
-      if ( ctx->Depth.Mask ) flags |= RADEON_DEPTH; /* FIXME: ??? */
+      flags |= RADEON_DEPTH;
       mask &= ~DD_DEPTH_BIT;
    }
 
@@ -1061,6 +1061,16 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    if ( !flags ) 
       return;
 
+   if (rmesa->using_hyperz) {
+      flags |= RADEON_USE_COMP_ZBUF;
+/*      if (rmesa->radeonScreen->chipset & RADEON_CHIPSET_TCL) 
+         flags |= RADEON_USE_HIERZ; */
+      if (!(rmesa->state.stencil.hwBuffer) ||
+	 ((flags & RADEON_DEPTH) && (flags & RADEON_STENCIL) &&
+	    ((rmesa->state.stencil.clear & RADEON_STENCIL_WRITE_MASK) == RADEON_STENCIL_WRITE_MASK))) {
+	  flags |= RADEON_CLEAR_FASTZ;
+      }
+   }
 
    /* Flip top to bottom */
    cx += dPriv->x;

@@ -60,6 +60,7 @@ DRI_CONF_BEGIN
         DRI_CONF_TCL_MODE(DRI_CONF_TCL_CODEGEN)
         DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
         DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+        DRI_CONF_HYPERZ(false)
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_QUALITY
         DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
@@ -74,7 +75,7 @@ DRI_CONF_BEGIN
         DRI_CONF_NO_RAST(false)
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 11;
+static const GLuint __driNConfigOptions = 12;
 
 #if 1
 /* Including xf86PciInfo.h introduces a bunch of errors...

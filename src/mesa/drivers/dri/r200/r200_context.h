@@ -102,6 +102,7 @@ struct r200_colorbuffer_state {
 
 
 struct r200_depthbuffer_state {
+   GLuint clear;
    GLfloat scale;
 };
 
@@ -930,6 +931,8 @@ struct r200_context {
    /* Configuration cache
     */
    driOptionCache optionCache;
+
+   GLboolean using_hyperz;
 };
 
 #define R200_CONTEXT(ctx)		((r200ContextPtr)(ctx->DriverCtx))

@@ -782,7 +782,8 @@ struct radeon_context {
     */
    driOptionCache optionCache;
 
- 
+   GLboolean using_hyperz;
+
    /* Performance counters
     */
    GLuint boxes;			/* Draw performance boxes */

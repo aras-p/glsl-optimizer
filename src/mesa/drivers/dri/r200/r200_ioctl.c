@@ -610,7 +610,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    }
 
    if ( mask & DD_DEPTH_BIT ) {
-      if ( ctx->Depth.Mask ) flags |= RADEON_DEPTH; /* FIXME: ??? */
+      flags |= RADEON_DEPTH;
       mask &= ~DD_DEPTH_BIT;
    }
 
@@ -627,6 +627,17 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 
    if ( !flags ) 
       return;
+
+   if (rmesa->using_hyperz) {
+      flags |= RADEON_USE_COMP_ZBUF;
+/*      if (rmesa->r200Screen->chipset & R200_CHIPSET_REAL_R200)
+	 flags |= RADEON_USE_HIERZ; */
+      if (!(rmesa->state.stencil.hwBuffer) ||
+	 ((flags & RADEON_DEPTH) && (flags & RADEON_STENCIL) &&
+	    ((rmesa->state.stencil.clear & R200_STENCIL_WRITE_MASK) == R200_STENCIL_WRITE_MASK))) {
+	  flags |= RADEON_CLEAR_FASTZ;
+      }
+   }
 
    /* Flip top to bottom */
    cx += dPriv->x;
@@ -707,7 +718,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 
       clear.flags       = flags;
       clear.clear_color = rmesa->state.color.clear;
-      clear.clear_depth = 0;	/* not used */
+      clear.clear_depth = rmesa->state.depth.clear;	/* needed for hyperz */
       clear.color_mask  = rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK];
       clear.depth_mask  = rmesa->state.stencil.clear;
       clear.depth_boxes = depth_boxes;

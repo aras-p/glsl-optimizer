@@ -62,7 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_vtxfmt.h"
 #include "radeon_maos.h"
 
-#define DRIVER_DATE	"20041007"
+#define DRIVER_DATE	"20041207"
 
 #include "vblank.h"
 #include "utils.h"
@@ -245,6 +245,14 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 			screen->driScreen->myNum, "radeon");
    rmesa->initialMaxAnisotropy = driQueryOptionf(&rmesa->optionCache,
                                                  "def_max_anisotropy");
+
+   if ( driQueryOptionb( &rmesa->optionCache, "hyperz" ) ) {
+      if ( sPriv->drmMinor < 13 )
+	 fprintf( stderr, "DRM version 1.%d too old to support HyperZ, "
+			  "disabling.\n",sPriv->drmMinor );
+      else
+	 rmesa->using_hyperz = GL_TRUE;
+   }
 
    /* Init default driver functions then plug in our Radeon-specific functions
     * (the texture functions are especially important)

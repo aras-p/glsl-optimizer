@@ -1552,6 +1552,7 @@
 #define RADEON_RB3D_DEPTHOFFSET             0x1c24
 #define RADEON_RB3D_DEPTHPITCH              0x1c28
 #       define RADEON_DEPTHPITCH_MASK         0x00001ff8
+#       define RADEON_DEPTH_HYPERZ            (3 << 16)
 #       define RADEON_DEPTH_ENDIAN_NO_SWAP    (0 << 18)
 #       define RADEON_DEPTH_ENDIAN_WORD_SWAP  (1 << 18)
 #       define RADEON_DEPTH_ENDIAN_DWORD_SWAP (2 << 18)
@@ -1600,6 +1601,7 @@
 #       define RADEON_Z_TEST_NEQUAL              (6  <<  4)
 #       define RADEON_Z_TEST_ALWAYS              (7  <<  4)
 #       define RADEON_Z_TEST_MASK                (7  <<  4)
+#       define RADEON_Z_HIERARCHY_ENABLE         (1  <<  8)
 #       define RADEON_STENCIL_TEST_NEVER         (0  << 12)
 #       define RADEON_STENCIL_TEST_LESS          (1  << 12)
 #       define RADEON_STENCIL_TEST_LEQUAL        (2  << 12)
@@ -1639,6 +1641,7 @@
 #       define RADEON_Z_COMPRESSION_ENABLE       (1  << 28)
 #       define RADEON_FORCE_Z_DIRTY              (1  << 29)
 #       define RADEON_Z_WRITE_ENABLE             (1  << 30)
+#       define RADEON_Z_DECOMPRESSION_ENABLE     (1  << 31)
 #define RADEON_RE_LINE_PATTERN              0x1cd0
 #       define RADEON_LINE_PATTERN_MASK             0x0000ffff
 #       define RADEON_LINE_REPEAT_COUNT_SHIFT       16
