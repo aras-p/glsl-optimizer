@@ -1,4 +1,4 @@
-/* $Id: gears.c,v 1.5 2000/04/05 21:36:03 brianp Exp $ */
+/* $Id: gears.c,v 1.6 2000/04/06 02:22:59 brianp Exp $ */
 
 /*
  * 3-D gear wheels.  This program is in the public domain.
@@ -330,7 +330,7 @@ init(int argc, char *argv[])
   }
 }
 
-void 
+static void 
 visible(int vis)
 {
   if (vis == GLUT_VISIBLE)

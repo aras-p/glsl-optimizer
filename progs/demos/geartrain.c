@@ -1,4 +1,4 @@
-/* $Id: geartrain.c,v 1.5 2000/04/05 21:36:03 brianp Exp $ */
+/* $Id: geartrain.c,v 1.6 2000/04/06 02:22:59 brianp Exp $ */
 
 /*
  * GearTrain Simulator * Version:  1.00
@@ -100,7 +100,7 @@ int number_of_belts;
 char Buf1[256], Buf2[256], Buf3[256], Buf4[256], Buf5[256];
 
 
-void 
+static void 
 strset (char buf[], char ch) 
 {
     int i;
@@ -109,7 +109,7 @@ strset (char buf[], char ch)
 }
 
 
-void 
+static void 
 Clear_Buffers () 
 {
     strset (Buf1, 0);
@@ -120,7 +120,7 @@ Clear_Buffers ()
 }
 
 
-void 
+static void 
 LoadTriplet (TDA A) 
 {
     Clear_Buffers ();
@@ -131,7 +131,7 @@ LoadTriplet (TDA A)
 }
 
 
-void 
+static void 
 LoadReal (float *a) 
 {
     Clear_Buffers ();
@@ -140,7 +140,7 @@ LoadReal (float *a)
 }
 
 
-void 
+static void 
 LoadInteger (int *a) 
 {
     Clear_Buffers ();
@@ -149,7 +149,7 @@ LoadInteger (int *a)
 }
 
 
-void 
+static void 
 LoadText (char *a) 
 {
     Clear_Buffers ();
@@ -158,7 +158,7 @@ LoadText (char *a)
 }
 
 
-void 
+static void 
 getdata (char filename[]) 
 {
     int gear_count = 0, axle_count = 0, belt_count = 0, i;
@@ -545,7 +545,7 @@ belt (struct GEAR g1, struct GEAR g2)
 }
 
 
-int 
+static int 
 axle_find (char axle_name[]) 
 {
     int i;
@@ -559,7 +559,7 @@ axle_find (char axle_name[])
 }
 
 
-int 
+static int 
 gear_find (char gear_name[]) 
 {
     int i;
@@ -573,7 +573,7 @@ gear_find (char gear_name[])
 }
 
 
-void 
+static void 
 process () 
 {
     GLfloat x, y, z, D, dist;
