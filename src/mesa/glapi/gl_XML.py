@@ -367,6 +367,9 @@ class glFunction( glItem ):
 		else:
 			self.real_name = fn_name
 
+		self.parameters_by_name = {}
+		self.variable_length_parameters = []
+
 		glItem.__init__(self, name, fn_name, context)
 		return
 
@@ -387,6 +390,32 @@ class glFunction( glItem ):
 			self.set_return_type(attrs.get('type', None))
 
 
+	def endElement(self, name):
+		"""Handle the end of a <function> element.
+
+		At the end of a <function> element, there is some semantic
+		checking that can be done.  This prevents some possible
+		exceptions from being thrown elsewhere in the code.
+		"""
+
+		if name == "function":
+			for p in self.variable_length_parameters:
+				if p.counter:
+					counter = self.parameters_by_name[ p.counter ]
+					if not self.parameters_by_name.has_key( p.counter ):
+						raise RuntimeError("Parameter '%s' of function '%s' has counter '%s', but function has no such parameter." % (p.name, self.name, p.counter))
+					elif not self.parameters_by_name[ p.counter ].is_counter:
+						raise RuntimeError("Parameter '%s' of function '%s' has counter '%s', but '%s' is not marked as a counter." % (p.name, self.name, p.counter, p.counter))
+
+					for n in p.count_parameter_list:
+						if not self.parameters_by_name.has_key( n ):
+							raise RuntimeError("Parameter '%s' of function '%s' has size parameter '%s', but function has no such parameter." % (p.name, self.name, n))
+
+			return 1
+		else:
+			return 0
+
+
 	def append(self, tag_name, p):
 		if tag_name != "param":
 			raise RuntimeError("Trying to append '%s' to parameter list of function '%s'." % (tag_name, self.name))
@@ -397,6 +426,11 @@ class glFunction( glItem ):
 		self.fn_parameters.append(p)
 		if p.count_parameter_list != []:
 			self.count_parameter_list.extend( p.count_parameter_list )
+
+		if p.is_variable_length_array():
+			self.variable_length_parameters.append(p)
+
+		self.parameters_by_name[ p.name ] = p
 
 
 	def set_return_type(self, t):
