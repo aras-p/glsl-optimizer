@@ -28,7 +28,6 @@ DRIVER_SOURCES = \
 		sis_clear.c \
 		sis_context.c \
 		sis_dd.c \
-		sis_debug.c \
 		sis_fog.c \
 		sis_lock.c \
 		sis_screen.c \
