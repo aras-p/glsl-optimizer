@@ -332,7 +332,17 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
    struct vp_machine *machine = &ctx->VertexProgram.Machine;
    const struct vp_instruction *inst;
 
+   ctx->_CurrentProgram = GL_VERTEX_PROGRAM_ARB; /* or NV, doesn't matter */
+
    for (inst = program->Instructions; inst->Opcode != VP_OPCODE_END; inst++) {
+
+      if (ctx->VertexProgram.CallbackEnabled &&
+          ctx->VertexProgram.Callback) {
+         ctx->VertexProgram.CurrentPosition = inst->StringPos;
+         ctx->VertexProgram.Callback(program->Base.Target,
+                                     ctx->VertexProgram.CallbackData);
+      }
+
       switch (inst->Opcode) {
          case VP_OPCODE_MOV:
             {
@@ -420,10 +430,11 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
                    * infinity.  This may need some tweaking.
                    */
 #ifdef VMS
-                  if (abs_t0 == __MAXFLOAT) {
+                  if (abs_t0 == __MAXFLOAT)
 #else
-                  if (IS_INF_OR_NAN(abs_t0)) {
+                  if (IS_INF_OR_NAN(abs_t0))
 #endif
+                  {
                      SET_POS_INFINITY(q[0]);
                      q[1] = 1.0F;
                      SET_POS_INFINITY(q[2]);
@@ -435,7 +446,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
                      q[1] = (GLfloat) (2.0 * mantissa); /* map [.5, 1) -> [1, 2) */
                      q[2] = (GLfloat) (q[0] + LOG2(q[1]));
                   }
-               }
+                  }
                else {
                   SET_NEG_INFINITY(q[0]);
                   q[1] = 1.0F;
@@ -723,13 +734,17 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
             break;
 
          case VP_OPCODE_END:
+            ctx->_CurrentProgram = 0;
             return;
          default:
             /* bad instruction opcode */
             _mesa_problem(ctx, "Bad VP Opcode in _mesa_exec_vertex_program");
+            ctx->_CurrentProgram = 0;
             return;
-      }
-   }
+      } /* switch */
+   } /* for */
+
+   ctx->_CurrentProgram = 0;
 }
 
 

@@ -136,13 +136,15 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
    if (!params)
       return;
 
-   /* We need this in order to get correct results for
-    * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
-    */
-   FLUSH_VERTICES(ctx, 0);
-
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glGetBooleanv %s\n", _mesa_lookup_enum_by_nr(pname));
+
+   if (!ctx->_CurrentProgram) {
+      /* We need this in order to get correct results for
+       * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
+       */
+      FLUSH_VERTICES(ctx, 0);
+   }
 
    if (ctx->Driver.GetBooleanv
        && (*ctx->Driver.GetBooleanv)(ctx, pname, params))
@@ -1679,13 +1681,15 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
    if (!params)
       return;
 
-   /* We need this in order to get correct results for
-    * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
-    */
-   FLUSH_VERTICES(ctx, 0);
-
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glGetDoublev %s\n", _mesa_lookup_enum_by_nr(pname));
+
+   if (!ctx->_CurrentProgram) {
+      /* We need this in order to get correct results for
+       * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
+       */
+      FLUSH_VERTICES(ctx, 0);
+   }
 
    if (ctx->Driver.GetDoublev && (*ctx->Driver.GetDoublev)(ctx, pname, params))
       return;
@@ -3216,13 +3220,15 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
    if (!params)
       return;
 
-   /* We need this in order to get correct results for
-    * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
-    */
-   FLUSH_VERTICES(ctx, 0);
-
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glGetFloatv %s\n", _mesa_lookup_enum_by_nr(pname));
+
+   if (!ctx->_CurrentProgram) {
+      /* We need this in order to get correct results for
+       * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
+       */
+      FLUSH_VERTICES(ctx, 0);
+   }
 
    if (ctx->Driver.GetFloatv && (*ctx->Driver.GetFloatv)(ctx, pname, params))
       return;
@@ -4729,19 +4735,19 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
    if (!params)
       return;
 
-#if 0
-   /* We need this in order to get correct results for
-    * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
-    */
-   FLUSH_VERTICES(ctx, 0);
-
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glGetIntegerv %s\n", _mesa_lookup_enum_by_nr(pname));
+
+   if (!ctx->_CurrentProgram) {
+      /* We need this in order to get correct results for
+       * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
+       */
+      FLUSH_VERTICES(ctx, 0);
+   }
 
    if (ctx->Driver.GetIntegerv
        && (*ctx->Driver.GetIntegerv)(ctx, pname, params))
       return;
-#endif
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:

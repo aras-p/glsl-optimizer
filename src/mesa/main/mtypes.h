@@ -2143,6 +2143,7 @@ struct __GLcontextRec {
    GLuint _NeedEyeCoords;
    GLuint _ForceEyeCoords; 
    GLboolean _RotateMode;
+   GLenum _CurrentProgram;    /* currently executing program */
 
    struct gl_shine_tab *_ShineTable[2]; /**< Active shine tables */
    struct gl_shine_tab *_ShineTabList;  /**< MRU list of inactive shine tables */

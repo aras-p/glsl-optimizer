@@ -571,7 +571,9 @@ _mesa_GetProgramivNV(GLuint id, GLenum pname, GLint *params)
 {
    struct program *prog;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!ctx->_CurrentProgram)
+      ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    prog = (struct program *) _mesa_HashLookup(ctx->Shared->Programs, id);
    if (!prog) {
@@ -606,16 +608,18 @@ _mesa_GetProgramStringNV(GLuint id, GLenum pname, GLubyte *program)
 {
    struct program *prog;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!ctx->_CurrentProgram)
+      ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (pname != GL_PROGRAM_STRING_NV) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivNV(pname)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramStringNV(pname)");
       return;
    }
 
    prog = (struct program *) _mesa_HashLookup(ctx->Shared->Programs, id);
    if (!prog) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetProgramivNV");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetProgramStringNV");
       return;
    }
 
@@ -1165,7 +1169,9 @@ _mesa_GetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
    struct fragment_program *fragProg;
    GLint i;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!ctx->_CurrentProgram)
+      ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    prog = (struct program *) _mesa_HashLookup(ctx->Shared->Programs, id);
    if (!prog || prog->Target != GL_FRAGMENT_PROGRAM_NV) {
@@ -1204,107 +1210,3 @@ _mesa_GetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
    _mesa_GetProgramNamedParameterfvNV(id, len, name, floatParams);
    COPY_4V(params, floatParams);
 }
-
-
-#if 000
-void
-_mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
-                                 GLfloat x, GLfloat y, GLfloat z, GLfloat w)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
-   if (target == GL_FRAGMENT_PROGRAM_NV) {
-      struct fragment_program *fprog = ctx->FragmentProgram.Current;
-      if (!fprog) {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glProgramLocalParameterARB");
-         return;
-      }
-      if (index >= MAX_NV_FRAGMENT_PROGRAM_PARAMS) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameterARB");
-         return;
-      }
-      fprog->Base.LocalParams[index][0] = x;
-      fprog->Base.LocalParams[index][1] = y;
-      fprog->Base.LocalParams[index][2] = z;
-      fprog->Base.LocalParams[index][3] = w;
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramLocalParameterARB");
-      return;
-   }
-}
-
-
-/* XXX move into arbprogram.c */
-void
-_mesa_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
-                                  const GLfloat *params)
-{
-   _mesa_ProgramLocalParameter4fARB(target, index, params[0], params[1],
-                                    params[2], params[3]);
-}
-
-
-/* XXX move into arbprogram.c */
-void
-_mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
-                                 GLdouble x, GLdouble y,
-                                 GLdouble z, GLdouble w)
-{
-   _mesa_ProgramLocalParameter4fARB(target, index, (GLfloat)x, (GLfloat)y, 
-                                    (GLfloat)z, (GLfloat)w);
-}
-
-
-/* XXX move into arbprogram.c */
-void
-_mesa_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
-                                  const GLdouble *params)
-{
-   _mesa_ProgramLocalParameter4fARB(target, index, (GLfloat)params[0], 
-                                    (GLfloat)params[1], (GLfloat)params[2],
-                                    (GLfloat)params[3]);
-}
-
-
-/* XXX move into arbprogram.c */
-void
-_mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
-                                    GLfloat *params)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
-   if (target == GL_FRAGMENT_PROGRAM_NV) {
-      struct fragment_program *fprog = ctx->FragmentProgram.Current;
-      if (!fprog) {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramLocalParameterARB");
-         return;
-      }
-      if (index >= MAX_NV_FRAGMENT_PROGRAM_PARAMS) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramLocalParameterARB");
-         return;
-      }
-      params[0] = fprog->Base.LocalParams[index][0];
-      params[1] = fprog->Base.LocalParams[index][1];
-      params[2] = fprog->Base.LocalParams[index][2];
-      params[3] = fprog->Base.LocalParams[index][3];
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramLocalParameterARB");
-      return;
-   }
-}
-
-
-/* XXX move into arbprogram.c */
-void
-_mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
-                                    GLdouble *params)
-{
-   GLfloat floatParams[4];
-   _mesa_GetProgramLocalParameterfvARB(target, index, floatParams);
-   COPY_4V(params, floatParams);
-}
-#endif

@@ -48,6 +48,7 @@ struct parse_state {
    GLcontext *ctx;
    const GLubyte *start;
    const GLubyte *pos;
+   const GLubyte *curLine;
    GLboolean isStateProgram;
    GLboolean isPositionInvariant;
    GLboolean isVersion1_1;
@@ -134,8 +135,9 @@ static GLboolean IsWhitespace(GLubyte b)
  * \return <= 0 we found an error, else, return number of characters parsed.
  */
 static GLint
-GetToken(const GLubyte *str, GLubyte *token)
+GetToken(struct parse_state *parseState, GLubyte *token)
 {
+   const GLubyte *str = parseState->pos;
    GLint i = 0, j = 0;
 
    token[0] = 0;
@@ -147,9 +149,13 @@ GetToken(const GLubyte *str, GLubyte *token)
          while (str[i] && (str[i] != '\n' && str[i] != '\r')) {
             i++;
          }
+         if (str[i] == '\n' || str[i] == '\r')
+            parseState->curLine = str + i + 1;
       }
       else {
          /* skip whitespace */
+         if (str[i] == '\n' || str[i] == '\r')
+            parseState->curLine = str + i + 1;
          i++;
       }
    }
@@ -175,7 +181,7 @@ GetToken(const GLubyte *str, GLubyte *token)
       return i;
    }
 
-   /* punctuation */
+   /* punctuation character */
    if (str[i]) {
       token[0] = str[i++];
       token[1] = 0;
@@ -195,7 +201,7 @@ static GLboolean
 Parse_Token(struct parse_state *parseState, GLubyte *token)
 {
    GLint i;
-   i = GetToken(parseState->pos, token);
+   i = GetToken(parseState, token);
    if (i <= 0) {
       parseState->pos += (-i);
       return GL_FALSE;
@@ -212,7 +218,7 @@ static GLboolean
 Peek_Token(struct parse_state *parseState, GLubyte *token)
 {
    GLint i, len;
-   i = GetToken(parseState->pos, token);
+   i = GetToken(parseState, token);
    if (i <= 0) {
       parseState->pos += (-i);
       return GL_FALSE;
@@ -240,9 +246,13 @@ Parse_String(struct parse_state *parseState, const char *pattern)
          while (*parseState->pos && (*parseState->pos != '\n' && *parseState->pos != '\r')) {
             parseState->pos += 1;
          }
+         if (*parseState->pos == '\n' || *parseState->pos == '\r')
+            parseState->curLine = parseState->pos + 1;
       }
       else {
          /* skip whitespace */
+         if (*parseState->pos == '\n' || *parseState->pos == '\r')
+            parseState->curLine = parseState->pos + 1;
          parseState->pos += 1;
       }
    }
@@ -792,6 +802,7 @@ Parse_UnaryOpInstruction(struct parse_state *parseState,
       RETURN_ERROR1("ABS illegal for vertex program 1.0");
 
    inst->Opcode = opcode;
+   inst->StringPos = parseState->curLine - parseState->start;
 
    /* dest reg */
    if (!Parse_MaskedDstReg(parseState, &inst->DstReg))
@@ -823,6 +834,7 @@ Parse_BiOpInstruction(struct parse_state *parseState,
       RETURN_ERROR1("SUB illegal for vertex program 1.0");
 
    inst->Opcode = opcode;
+   inst->StringPos = parseState->curLine - parseState->start;
 
    /* dest reg */
    if (!Parse_MaskedDstReg(parseState, &inst->DstReg))
@@ -869,6 +881,7 @@ Parse_TriOpInstruction(struct parse_state *parseState,
                        struct vp_instruction *inst, enum vp_opcode opcode)
 {
    inst->Opcode = opcode;
+   inst->StringPos = parseState->curLine - parseState->start;
 
    /* dest reg */
    if (!Parse_MaskedDstReg(parseState, &inst->DstReg))
@@ -938,6 +951,7 @@ Parse_ScalarInstruction(struct parse_state *parseState,
       RETURN_ERROR1("RCC illegal for vertex program 1.0");
 
    inst->Opcode = opcode;
+   inst->StringPos = parseState->curLine - parseState->start;
 
    /* dest reg */
    if (!Parse_MaskedDstReg(parseState, &inst->DstReg))
@@ -963,6 +977,7 @@ static GLboolean
 Parse_AddressInstruction(struct parse_state *parseState, struct vp_instruction *inst)
 {
    inst->Opcode = VP_OPCODE_ARL;
+   inst->StringPos = parseState->curLine - parseState->start;
 
    /* dest A0 reg */
    if (!Parse_AddrReg(parseState))
@@ -990,6 +1005,7 @@ Parse_EndInstruction(struct parse_state *parseState, struct vp_instruction *inst
    GLubyte token[100];
 
    inst->Opcode = VP_OPCODE_END;
+   inst->StringPos = parseState->curLine - parseState->start;
 
    /* this should fail! */
    if (Parse_Token(parseState, token))

@@ -114,6 +114,9 @@ struct vp_instruction
    enum vp_opcode Opcode;
    struct vp_src_register SrcReg[3];
    struct vp_dst_register DstReg;
+#if FEATURE_MESA_program_debug
+   GLint StringPos;
+#endif
 };
 
 

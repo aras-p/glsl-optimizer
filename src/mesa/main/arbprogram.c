@@ -304,7 +304,9 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
                                   GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!ctx->_CurrentProgram)
+      ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target == GL_FRAGMENT_PROGRAM_ARB
        && ctx->Extensions.ARB_fragment_program) {
@@ -477,7 +479,9 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
 {
    struct program *prog;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!ctx->_CurrentProgram)
+      ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
@@ -682,7 +686,9 @@ _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string)
 {
    struct program *prog;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!ctx->_CurrentProgram)
+      ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target == GL_VERTEX_PROGRAM_ARB) {
       prog = &(ctx->VertexProgram.Current->Base);
@@ -741,7 +747,7 @@ _mesa_ProgramCallbackMESA(GLenum target, GLprogramcallbackMESA callback,
          break;
       case GL_VERTEX_PROGRAM_ARB: /* == GL_VERTEX_PROGRAM_NV */
          if (!ctx->Extensions.ARB_vertex_program &&
-             !ctx->Extensions.ARB_vertex_program) {
+             !ctx->Extensions.NV_vertex_program) {
             _mesa_error(ctx, GL_INVALID_ENUM, "glProgramCallbackMESA(target)");
             return;
          }
@@ -815,7 +821,10 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
             GLint i;
             for (i = 0; i < ctx->Const.MaxVertexProgramAttribs; i++) {
                const char *name = _mesa_nv_vertex_input_register_name(i);
-               if (_mesa_strncmp(reg + 2, name, 4) == 0) {
+               char number[10];
+               sprintf(number, "%d", i);
+               if (_mesa_strncmp(reg + 2, name, 4) == 0 ||
+                   _mesa_strncmp(reg + 2, number, _mesa_strlen(number)) == 0) {
                   COPY_4V(v, ctx->VertexProgram.Machine.Registers
                           [VP_INPUT_REG_START + i]);
                   return;

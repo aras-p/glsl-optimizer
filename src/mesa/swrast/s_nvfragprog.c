@@ -1181,6 +1181,8 @@ _swrast_exec_nv_fragment_program( GLcontext *ctx, struct sw_span *span )
    const struct fragment_program *program = ctx->FragmentProgram.Current;
    GLuint i;
 
+   ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
+
    for (i = 0; i < span->end; i++) {
       if (span->array->mask[i]) {
          init_machine(ctx, &ctx->FragmentProgram.Machine,
@@ -1205,5 +1207,7 @@ _swrast_exec_nv_fragment_program( GLcontext *ctx, struct sw_span *span )
             span->array->z[i] = IROUND(ctx->FragmentProgram.Machine.Registers[FP_OUTPUT_REG_START + 2][0] * ctx->DepthMaxF);
       }
    }
+
+   ctx->_CurrentProgram = 0;
 }
 
