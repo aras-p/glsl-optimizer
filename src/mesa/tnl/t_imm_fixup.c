@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.24 2001/08/01 05:10:42 keithw Exp $ */
+/* $Id: t_imm_fixup.c,v 1.25 2001/08/02 22:39:51 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,6 +50,7 @@
 #include "t_imm_debug.h"
 #include "t_imm_elt.h"
 #include "t_imm_fixup.h"
+#include "t_imm_exec.h"
 #include "t_pipeline.h"
 
 
@@ -151,7 +152,8 @@ fixup_first_3f( GLfloat data[][3], GLuint flag[], GLuint match,
    GLuint i = start-1;
    match |= VERT_END_VB;
 
-/*     fprintf(stderr, "fixup_first_3f\n"); */
+/*     fprintf(stderr, "fixup_first_3f default: %f %f %f start: %d\n", */
+/*  	   dflt[0], dflt[1], dflt[2], start);  */
 
    while ((flag[++i]&match) == 0)
       COPY_3FV(data[i], dflt);
@@ -192,6 +194,41 @@ fixup_first_1ub( GLubyte data[], GLuint flag[], GLuint match,
       data[i] = dflt;
 }
 
+static void copy_from_current( GLcontext *ctx, struct immediate *IM, 
+			      GLuint start, GLuint copy )
+{
+   if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
+      _tnl_print_vert_flags("copy from current", copy); 
+
+   if (copy & VERT_NORM) {
+      COPY_3V( IM->Normal[start], ctx->Current.Normal );
+   }
+
+   if (copy & VERT_RGBA) {
+      COPY_4FV( IM->Color[start], ctx->Current.Color);
+   }
+
+   if (copy & VERT_SPEC_RGB)
+      COPY_4FV( IM->SecondaryColor[start], ctx->Current.SecondaryColor);
+
+   if (copy & VERT_FOG_COORD)
+      IM->FogCoord[start] = ctx->Current.FogCoord;
+
+   if (copy & VERT_INDEX)
+      IM->Index[start] = ctx->Current.Index;
+
+   if (copy & VERT_EDGE)
+      IM->EdgeFlag[start] = ctx->Current.EdgeFlag;
+
+   if (copy & VERT_TEX_ANY) {
+      GLuint i;
+      for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
+	 if (copy & VERT_TEX(i))
+	    COPY_4FV( IM->TexCoord[i][start], ctx->Current.Texcoord[i] );
+      }
+   }
+}
+
 
 void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
 {
@@ -227,39 +264,8 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
       /* Equivalent to a lazy copy-from-current when setting up the
        * immediate.
        */
-      if (ctx->ExecuteFlag && copy) {
-
-	 if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
-	    _tnl_print_vert_flags("copy from current", copy); 
-
-	 if (copy & VERT_NORM) {
-	    COPY_3V( IM->Normal[start], ctx->Current.Normal );
-	 }
-
-	 if (copy & VERT_RGBA) {
-	    COPY_4FV( IM->Color[start], ctx->Current.Color);
-	 }
-
-	 if (copy & VERT_SPEC_RGB)
-	    COPY_4FV( IM->SecondaryColor[start], ctx->Current.SecondaryColor);
-
-	 if (copy & VERT_FOG_COORD)
-	    IM->FogCoord[start] = ctx->Current.FogCoord;
-
-	 if (copy & VERT_INDEX)
-	    IM->Index[start] = ctx->Current.Index;
-
-	 if (copy & VERT_EDGE)
-	    IM->EdgeFlag[start] = ctx->Current.EdgeFlag;
-
-	 if (copy & VERT_TEX_ANY) {
-	    GLuint i;
-	    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
-	       if (copy & VERT_TEX(i))
-		  COPY_4FV( IM->TexCoord[i][start], ctx->Current.Texcoord[i] );
-	    }
-	 }
-      }
+      if (ctx->ExecuteFlag && copy) 
+	 copy_from_current( ctx, IM, start, copy );
 
       if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
   	 _tnl_print_vert_flags("fixup", fixup); 
@@ -425,6 +431,7 @@ void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
 	 next->Elt[dst] = prev->Elt[src];
 	 next->Flag[dst] = VERT_ELT;
       }
+/*        fprintf(stderr, "ADDING VERT_ELT!\n"); */
       next->CopyOrFlag |= VERT_ELT;
       next->CopyAndFlag &= VERT_ELT;
    }
@@ -445,6 +452,10 @@ void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
       next->TexSize |= tnl->ExecCopyTexSize;
       next->CopyAndFlag &= flag;
 	 
+
+/*        _tnl_print_vert_flags("copy vertex components", copy); */
+/*        _tnl_print_vert_flags("prev copyorflag", prev->CopyOrFlag); */
+/*        _tnl_print_vert_flags("flag", flag); */
 
       /* Copy whole vertices
        */
@@ -503,7 +514,9 @@ void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
 	 }
 
 	 next->Flag[dst] = flag;
-	 next->CopyOrFlag |= prev->Flag[src];
+	 next->CopyOrFlag |= prev->Flag[src] & (VERT_FIXUP|
+						VERT_MATERIAL|
+						VERT_OBJ);
       }
    }
 
@@ -513,6 +526,7 @@ void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
    tnl->ExecCopySource = 0;
    tnl->ExecCopyCount = 0;
 }
+
 
 
 /* Revive a compiled immediate struct - propogate new 'Current'
@@ -525,6 +539,8 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint fixup;
    GLuint start = IM->Start;
+
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    IM->Evaluated = 0;
    IM->CopyOrFlag = IM->OrFlag;	  
@@ -541,11 +557,22 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
     * display list.  Need to translate them away:
     */
    if (IM->CopyOrFlag & VERT_ELT) {
+      GLuint copy = tnl->pipeline.inputs & ~ctx->Array._Enabled;
+      GLuint i;
+
       ASSERT(IM->CopyStart < IM->Start);
+
       _tnl_translate_array_elts( ctx, IM, IM->CopyStart, IM->Start );
+
+      for (i = IM->CopyStart ; i < IM->Start ; i++)
+	 copy_from_current( ctx, IM, i, copy ); 
+
+      _tnl_copy_to_current( ctx, IM, ctx->Array._Enabled, IM->Start );
    }
 
    fixup = tnl->pipeline.inputs & ~IM->Flag[start] & VERT_FIXUP;
+
+/*     _tnl_print_vert_flags("fixup compiled", fixup); */
 
    if (fixup) {
       if (fixup & VERT_TEX_ANY) {
@@ -582,7 +609,10 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 	 fixup_first_3f(IM->Normal, IM->Flag, VERT_NORM, start,
 			ctx->Current.Normal );
       }
+
+      IM->CopyOrFlag |= fixup;
    }
+   
 
    /* Materials:
     */

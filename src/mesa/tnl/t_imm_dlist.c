@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.27 2001/07/28 21:04:21 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.28 2001/08/02 22:39:51 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -368,9 +368,11 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
 	 fixup_normal_lengths( IM );
       
       if (IM->Count == IM->Start) 
-	 _tnl_copy_to_current( ctx, IM, IM->OrFlag );
-      else
+	 _tnl_copy_to_current( ctx, IM, IM->OrFlag, IM->LastData );
+      else {
+/*  	 _tnl_print_cassette( IM ); */
 	 _tnl_run_cassette( ctx, IM );
+      }
 
       restore_compiled_primitives( ctx, IM );
    }

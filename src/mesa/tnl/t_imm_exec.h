@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.h,v 1.6 2001/05/11 08:11:31 keithw Exp $ */
+/* $Id: t_imm_exec.h,v 1.7 2001/08/02 22:39:51 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,7 +44,7 @@ extern void _tnl_flush_immediate( struct immediate *IM );
  */
 extern void _tnl_run_cassette( GLcontext *ctx, struct immediate *IM );
 extern void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
-				  GLuint flag );
+				  GLuint flag, GLuint row );
 
 /* Initialize some stuff:
  */

@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.28 2001/08/01 05:10:42 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.29 2001/08/02 22:39:51 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -118,10 +118,8 @@ void _tnl_reset_compile_input( GLcontext *ctx,
   
 
 void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
-			   GLuint flag )
+			   GLuint flag, GLuint count )
 {
-   GLuint count = IM->LastData;
-
    if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
       _tnl_print_vert_flags("copy to current", flag);
 
@@ -198,7 +196,8 @@ void _tnl_compute_orflag( struct immediate *IM, GLuint start )
 
    IM->Flag[IM->LastData+1] |= VERT_END_VB;
    IM->CopyAndFlag = IM->AndFlag = andflag;
-   IM->CopyOrFlag = IM->OrFlag = orflag;
+   IM->OrFlag = orflag;
+   IM->CopyOrFlag = orflag;
    IM->Evaluated = 0;
 }
 
@@ -360,9 +359,11 @@ void _tnl_run_cassette( GLcontext *ctx, struct immediate *IM )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+
    _tnl_vb_bind_immediate( ctx, IM );
 
-   if (IM->CopyOrFlag & VERT_EVAL_ANY)
+   if (IM->OrFlag & VERT_EVAL_ANY)
       _tnl_eval_immediate( ctx, IM );
 
    /* Invalidate all stored data before and after run:
@@ -371,7 +372,7 @@ void _tnl_run_cassette( GLcontext *ctx, struct immediate *IM )
    tnl->Driver.RunPipeline( ctx );
    tnl->pipeline.run_input_changes |= tnl->pipeline.inputs;
 
-   _tnl_copy_to_current( ctx, IM, IM->OrFlag );
+   _tnl_copy_to_current( ctx, IM, IM->OrFlag, IM->LastData );
 }
 
 
@@ -379,6 +380,8 @@ void _tnl_run_cassette( GLcontext *ctx, struct immediate *IM )
  */
 static void exec_vert_cassette( GLcontext *ctx, struct immediate *IM )
 {
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+
    if (IM->FlushElt) {
       /* Orflag is computed twice, but only reach this code if app is
        * using a mixture of glArrayElement() and glVertex() while
@@ -404,6 +407,8 @@ static void exec_elt_cassette( GLcontext *ctx, struct immediate *IM )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
 
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+
    _tnl_vb_bind_arrays( ctx, ctx->Array.LockFirst, ctx->Array.LockCount );
 
    /* Take only elements and primitive information from the immediate:
@@ -421,7 +426,7 @@ static void exec_elt_cassette( GLcontext *ctx, struct immediate *IM )
     */
    if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1) {
       _tnl_translate_array_elts( ctx, IM, IM->LastData, IM->LastData );
-      _tnl_copy_to_current( ctx, IM, ctx->Array._Enabled );
+      _tnl_copy_to_current( ctx, IM, ctx->Array._Enabled, IM->LastData );
    }
 }
 
@@ -432,7 +437,7 @@ exec_empty_cassette( GLcontext *ctx, struct immediate *IM )
    if (IM->FlushElt)
       _tnl_translate_array_elts( ctx, IM, IM->CopyStart, IM->CopyStart );
 
-   _tnl_copy_to_current( ctx, IM, IM->OrFlag );
+   _tnl_copy_to_current( ctx, IM, IM->OrFlag, IM->LastData );
 }
 
 
