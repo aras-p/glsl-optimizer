@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.15 2000/01/31 23:10:16 brianp Exp $ */
+/* $Id: teximage.c,v 1.16 2000/02/12 17:26:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1674,7 +1674,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
          gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D" );
          return;
       }
-      (*ctx->Exec.TexImage1D)( target, level, internalFormat, width,
+      (*ctx->Exec->TexImage1D)( target, level, internalFormat, width,
                      border, GL_RGBA, GL_UNSIGNED_BYTE, image );
       FREE(image);
    }
@@ -1697,7 +1697,7 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
          gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D" );
          return;
       }
-      (ctx->Exec.TexImage2D)( target, level, internalFormat, width,
+      (ctx->Exec->TexImage2D)( target, level, internalFormat, width,
                          height, border, GL_RGBA, GL_UNSIGNED_BYTE, image );
       FREE(image);
    }

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.42 2000/02/03 19:40:07 brianp Exp $ */
+/* $Id: context.c,v 1.43 2000/02/12 17:26:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1374,9 +1374,19 @@ GLboolean gl_initialize_context_data( GLcontext *ctx,
    }
 
    /* setup API dispatch tables */
-   _mesa_init_exec_table( &ctx->Exec );
-   _mesa_init_dlist_table( &ctx->Save );
-   ctx->CurrentDispatch = &ctx->Exec;
+   ctx->Exec = CALLOC(_glapi_get_dispatch_table_size() * sizeof(void *));
+   ctx->Save = CALLOC(_glapi_get_dispatch_table_size() * sizeof(void *));
+   if (!ctx->Exec || !ctx->Save) {
+      free_shared_state(ctx, ctx->Shared);
+      FREE(ctx->VB);
+      FREE(ctx->PB);
+      if (ctx->Exec)
+         FREE(ctx->Exec);
+      FREE(ctx);
+   }
+   _mesa_init_exec_table( ctx->Exec );
+   _mesa_init_dlist_table( ctx->Save );
+   ctx->CurrentDispatch = ctx->Exec;
 
    return GL_TRUE;
 }
@@ -1513,6 +1523,9 @@ void gl_free_context_data( GLcontext *ctx )
       ctx->freed_im_queue = next;
    }
    gl_extensions_dtr(ctx);
+
+   FREE(ctx->Exec);
+   FREE(ctx->Save);
 }
 
 

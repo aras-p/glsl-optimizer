@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.29 2000/02/11 21:14:27 brianp Exp $ */
+/* $Id: dlist.c,v 1.30 2000/02/12 17:26:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -610,7 +610,7 @@ static void save_Accum( GLenum op, GLfloat value )
       n[2].f = value;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Accum)( op, value );
+      (*ctx->Exec->Accum)( op, value );
    }
 }
 
@@ -626,7 +626,7 @@ static void save_AlphaFunc( GLenum func, GLclampf ref )
       n[2].f = (GLfloat) ref;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.AlphaFunc)( func, ref );
+      (*ctx->Exec->AlphaFunc)( func, ref );
    }
 }
 
@@ -648,7 +648,7 @@ static void save_BindTexture( GLenum target, GLuint texture )
       n[2].ui = texture;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.BindTexture)( target, texture );
+      (*ctx->Exec->BindTexture)( target, texture );
    }
 }
 
@@ -676,7 +676,7 @@ static void save_Bitmap( GLsizei width, GLsizei height,
       FREE(image);
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Bitmap)( width, height,
+      (*ctx->Exec->Bitmap)( width, height,
                            xorig, yorig, xmove, ymove, pixels );
    }
 }
@@ -692,7 +692,7 @@ static void save_BlendEquation( GLenum mode )
       n[1].e = mode;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.BlendEquationEXT)( mode );
+      (*ctx->Exec->BlendEquationEXT)( mode );
    }
 }
 
@@ -708,7 +708,7 @@ static void save_BlendFunc( GLenum sfactor, GLenum dfactor )
       n[2].e = dfactor;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.BlendFunc)( sfactor, dfactor );
+      (*ctx->Exec->BlendFunc)( sfactor, dfactor );
    }
 }
 
@@ -727,7 +727,7 @@ static void save_BlendFuncSeparateINGR(GLenum sfactorRGB, GLenum dfactorRGB,
       n[4].e = dfactorA;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.BlendFuncSeparateINGR)( sfactorRGB, dfactorRGB,
+      (*ctx->Exec->BlendFuncSeparateINGR)( sfactorRGB, dfactorRGB,
                                           sfactorA, dfactorA);
    }
 }
@@ -747,7 +747,7 @@ static void save_BlendColor( GLfloat red, GLfloat green,
       n[4].f = alpha;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.BlendColorEXT)( red, green, blue, alpha );
+      (*ctx->Exec->BlendColorEXT)( red, green, blue, alpha );
    }
 }
 
@@ -762,7 +762,7 @@ static void save_CallList( GLuint list )
       n[1].ui = list;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.CallList)( list );
+      (*ctx->Exec->CallList)( list );
    }
 }
 
@@ -781,7 +781,7 @@ static void save_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
       }
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.CallLists)( n, type, lists );
+      (*ctx->Exec->CallLists)( n, type, lists );
    }
 }
 
@@ -796,7 +796,7 @@ static void save_Clear( GLbitfield mask )
       n[1].bf = mask;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Clear)( mask );
+      (*ctx->Exec->Clear)( mask );
    }
 }
 
@@ -815,7 +815,7 @@ static void save_ClearAccum( GLfloat red, GLfloat green,
       n[4].f = alpha;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.ClearAccum)( red, green, blue, alpha );
+      (*ctx->Exec->ClearAccum)( red, green, blue, alpha );
    }
 }
 
@@ -834,7 +834,7 @@ static void save_ClearColor( GLclampf red, GLclampf green,
       n[4].f = alpha;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.ClearColor)( red, green, blue, alpha );
+      (*ctx->Exec->ClearColor)( red, green, blue, alpha );
    }
 }
 
@@ -849,7 +849,7 @@ static void save_ClearDepth( GLclampd depth )
       n[1].f = (GLfloat) depth;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.ClearDepth)( depth );
+      (*ctx->Exec->ClearDepth)( depth );
    }
 }
 
@@ -864,7 +864,7 @@ static void save_ClearIndex( GLfloat c )
       n[1].f = c;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.ClearIndex)( c );
+      (*ctx->Exec->ClearIndex)( c );
    }
 }
 
@@ -879,7 +879,7 @@ static void save_ClearStencil( GLint s )
       n[1].i = s;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.ClearStencil)( s );
+      (*ctx->Exec->ClearStencil)( s );
    }
 }
 
@@ -898,7 +898,7 @@ static void save_ClipPlane( GLenum plane, const GLdouble *equ )
       n[5].f = equ[3];
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.ClipPlane)( plane, equ );
+      (*ctx->Exec->ClipPlane)( plane, equ );
    }
 }
 
@@ -918,7 +918,7 @@ static void save_ColorMask( GLboolean red, GLboolean green,
       n[4].b = alpha;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.ColorMask)( red, green, blue, alpha );
+      (*ctx->Exec->ColorMask)( red, green, blue, alpha );
    }
 }
 
@@ -934,7 +934,7 @@ static void save_ColorMaterial( GLenum face, GLenum mode )
       n[2].e = mode;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.ColorMaterial)( face, mode );
+      (*ctx->Exec->ColorMaterial)( face, mode );
    }
 }
 
@@ -948,7 +948,7 @@ static void save_ColorTableEXT( GLenum target, GLenum internalFormat,
        target == GL_PROXY_TEXTURE_2D ||
        target == GL_PROXY_TEXTURE_3D) {
       /* execute immediately */
-      (*ctx->Exec.ColorTableEXT)( target, internalFormat, width,
+      (*ctx->Exec->ColorTableEXT)( target, internalFormat, width,
                                   format, type, table );
    }
    else {
@@ -969,7 +969,7 @@ static void save_ColorTableEXT( GLenum target, GLenum internalFormat,
          FREE(image);
       }
       if (ctx->ExecuteFlag) {
-         (*ctx->Exec.ColorTableEXT)( target, internalFormat, width,
+         (*ctx->Exec->ColorTableEXT)( target, internalFormat, width,
                                      format, type, table );
       }
    }
@@ -998,7 +998,7 @@ static void save_ColorSubTableEXT( GLenum target, GLsizei start, GLsizei count,
       FREE(image);
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.ColorSubTableEXT)(target, start, count, format, type, table);
+      (*ctx->Exec->ColorSubTableEXT)(target, start, count, format, type, table);
    }
 }
 
@@ -1019,7 +1019,7 @@ static void save_CopyPixels( GLint x, GLint y,
       n[5].e = type;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.CopyPixels)( x, y, width, height, type );
+      (*ctx->Exec->CopyPixels)( x, y, width, height, type );
    }
 }
 
@@ -1043,7 +1043,7 @@ save_CopyTexImage1D( GLenum target, GLint level, GLenum internalformat,
       n[7].i = border;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.CopyTexImage1D)( target, level, internalformat,
+      (*ctx->Exec->CopyTexImage1D)( target, level, internalformat,
                                    x, y, width, border );
    }
 }
@@ -1070,7 +1070,7 @@ save_CopyTexImage2D( GLenum target, GLint level,
       n[8].i = border;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.CopyTexImage2D)( target, level, internalformat,
+      (*ctx->Exec->CopyTexImage2D)( target, level, internalformat,
                                    x, y, width, height, border );
    }
 }
@@ -1095,7 +1095,7 @@ save_CopyTexSubImage1D( GLenum target, GLint level,
       n[6].i = width;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.CopyTexSubImage1D)( target, level, xoffset, x, y, width );
+      (*ctx->Exec->CopyTexSubImage1D)( target, level, xoffset, x, y, width );
    }
 }
 
@@ -1121,7 +1121,7 @@ save_CopyTexSubImage2D( GLenum target, GLint level,
       n[8].i = height;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.CopyTexSubImage2D)( target, level, xoffset, yoffset,
+      (*ctx->Exec->CopyTexSubImage2D)( target, level, xoffset, yoffset,
                                x, y, width, height );
    }
 }
@@ -1149,7 +1149,7 @@ save_CopyTexSubImage3D( GLenum target, GLint level,
       n[9].i = height;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.CopyTexSubImage3D)( target, level,
+      (*ctx->Exec->CopyTexSubImage3D)( target, level,
                                       xoffset, yoffset, zoffset,
                                       x, y, width, height );
    }
@@ -1166,7 +1166,7 @@ static void save_CullFace( GLenum mode )
       n[1].e = mode;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.CullFace)( mode );
+      (*ctx->Exec->CullFace)( mode );
    }
 }
 
@@ -1181,7 +1181,7 @@ static void save_DepthFunc( GLenum func )
       n[1].e = func;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.DepthFunc)( func );
+      (*ctx->Exec->DepthFunc)( func );
    }
 }
 
@@ -1196,7 +1196,7 @@ static void save_DepthMask( GLboolean mask )
       n[1].b = mask;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.DepthMask)( mask );
+      (*ctx->Exec->DepthMask)( mask );
    }
 }
 
@@ -1212,7 +1212,7 @@ static void save_DepthRange( GLclampd nearval, GLclampd farval )
       n[2].f = (GLfloat) farval;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.DepthRange)( nearval, farval );
+      (*ctx->Exec->DepthRange)( nearval, farval );
    }
 }
 
@@ -1227,7 +1227,7 @@ static void save_Disable( GLenum cap )
       n[1].e = cap;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Disable)( cap );
+      (*ctx->Exec->Disable)( cap );
    }
 }
 
@@ -1242,7 +1242,7 @@ static void save_DrawBuffer( GLenum mode )
       n[1].e = mode;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.DrawBuffer)( mode );
+      (*ctx->Exec->DrawBuffer)( mode );
    }
 }
 
@@ -1268,7 +1268,7 @@ static void save_DrawPixels( GLsizei width, GLsizei height,
       FREE(image);
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.DrawPixels)( width, height, format, type, pixels );
+      (*ctx->Exec->DrawPixels)( width, height, format, type, pixels );
    }
 }
 
@@ -1284,7 +1284,7 @@ static void save_Enable( GLenum cap )
       n[1].e = cap;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Enable)( cap );
+      (*ctx->Exec->Enable)( cap );
    }
 }
 
@@ -1302,7 +1302,7 @@ static void save_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
       n[3].i = i2;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.EvalMesh1)( mode, i1, i2 );
+      (*ctx->Exec->EvalMesh1)( mode, i1, i2 );
    }
 }
 
@@ -1322,7 +1322,7 @@ static void save_EvalMesh2(
       n[5].i = j2;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.EvalMesh2)( mode, i1, i2, j1, j2 );
+      (*ctx->Exec->EvalMesh2)( mode, i1, i2, j1, j2 );
    }
 }
 
@@ -1343,7 +1343,7 @@ static void save_Fogfv( GLenum pname, const GLfloat *params )
       n[5].f = params[3];
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Fogfv)( pname, params );
+      (*ctx->Exec->Fogfv)( pname, params );
    }
 }
 
@@ -1395,7 +1395,7 @@ static void save_FrontFace( GLenum mode )
       n[1].e = mode;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.FrontFace)( mode );
+      (*ctx->Exec->FrontFace)( mode );
    }
 }
 
@@ -1417,7 +1417,7 @@ static void save_Frustum( GLdouble left, GLdouble right,
       n[6].f = farval;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Frustum)( left, right, bottom, top, nearval, farval );
+      (*ctx->Exec->Frustum)( left, right, bottom, top, nearval, farval );
    }
 }
 
@@ -1433,7 +1433,7 @@ static void save_Hint( GLenum target, GLenum mode )
       n[2].e = mode;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Hint)( target, mode );
+      (*ctx->Exec->Hint)( target, mode );
    }
 }
 
@@ -1450,7 +1450,7 @@ static void save_HintPGI( GLenum target, GLint mode )
       n[2].i = mode;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.HintPGI)( target, mode );
+      (*ctx->Exec->HintPGI)( target, mode );
    }
 }
 
@@ -1465,7 +1465,7 @@ static void save_IndexMask( GLuint mask )
       n[1].ui = mask;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.IndexMask)( mask );
+      (*ctx->Exec->IndexMask)( mask );
    }
 }
 
@@ -1476,7 +1476,7 @@ static void save_InitNames( void )
    FLUSH_VB(ctx, "dlist");
    (void) alloc_instruction( ctx, OPCODE_INIT_NAMES, 0 );
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.InitNames)();
+      (*ctx->Exec->InitNames)();
    }
 }
 
@@ -1530,7 +1530,7 @@ static void save_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
       }
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Lightfv)( light, pname, params );
+      (*ctx->Exec->Lightfv)( light, pname, params );
    }
 }
 
@@ -1599,7 +1599,7 @@ static void save_LightModelfv( GLenum pname, const GLfloat *params )
       n[5].f = params[3];
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.LightModelfv)( pname, params );
+      (*ctx->Exec->LightModelfv)( pname, params );
    }
 }
 
@@ -1650,7 +1650,7 @@ static void save_LineStipple( GLint factor, GLushort pattern )
       n[2].us = pattern;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.LineStipple)( factor, pattern );
+      (*ctx->Exec->LineStipple)( factor, pattern );
    }
 }
 
@@ -1665,7 +1665,7 @@ static void save_LineWidth( GLfloat width )
       n[1].f = width;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.LineWidth)( width );
+      (*ctx->Exec->LineWidth)( width );
    }
 }
 
@@ -1680,7 +1680,7 @@ static void save_ListBase( GLuint base )
       n[1].ui = base;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.ListBase)( base );
+      (*ctx->Exec->ListBase)( base );
    }
 }
 
@@ -1691,7 +1691,7 @@ static void save_LoadIdentity( void )
    FLUSH_VB(ctx, "dlist");
    (void) alloc_instruction( ctx, OPCODE_LOAD_IDENTITY, 0 );
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.LoadIdentity)();
+      (*ctx->Exec->LoadIdentity)();
    }
 }
 
@@ -1709,7 +1709,7 @@ static void save_LoadMatrixf( const GLfloat *m )
       }
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.LoadMatrixf)( m );
+      (*ctx->Exec->LoadMatrixf)( m );
    }
 }
 
@@ -1735,7 +1735,7 @@ static void save_LoadName( GLuint name )
       n[1].ui = name;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.LoadName)( name );
+      (*ctx->Exec->LoadName)( name );
    }
 }
 
@@ -1750,7 +1750,7 @@ static void save_LogicOp( GLenum opcode )
       n[1].e = opcode;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.LogicOp)( opcode );
+      (*ctx->Exec->LogicOp)( opcode );
    }
 }
 
@@ -1772,7 +1772,7 @@ static void save_Map1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
       n[6].data = (void *) pnts;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Map1d)( target, u1, u2, stride, order, points );
+      (*ctx->Exec->Map1d)( target, u1, u2, stride, order, points );
    }
 }
 
@@ -1793,7 +1793,7 @@ static void save_Map1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride,
       n[6].data = (void *) pnts;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Map1f)( target, u1, u2, stride, order, points );
+      (*ctx->Exec->Map1f)( target, u1, u2, stride, order, points );
    }
 }
 
@@ -1823,7 +1823,7 @@ static void save_Map2d( GLenum target,
       n[10].data = (void *) pnts;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Map2d)( target,
+      (*ctx->Exec->Map2d)( target,
                           u1, u2, ustride, uorder,
                           v1, v2, vstride, vorder, points );
    }
@@ -1855,7 +1855,7 @@ static void save_Map2f( GLenum target,
       n[10].data = (void *) pnts;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Map2f)( target, u1, u2, ustride, uorder,
+      (*ctx->Exec->Map2f)( target, u1, u2, ustride, uorder,
                           v1, v2, vstride, vorder, points );
    }
 }
@@ -1873,7 +1873,7 @@ static void save_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
       n[3].f = u2;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.MapGrid1f)( un, u1, u2 );
+      (*ctx->Exec->MapGrid1f)( un, u1, u2 );
    }
 }
 
@@ -1900,7 +1900,7 @@ static void save_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
       n[6].f = v2;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.MapGrid2f)( un, u1, u2, vn, v1, v2 );
+      (*ctx->Exec->MapGrid2f)( un, u1, u2, vn, v1, v2 );
    }
 }
 
@@ -1923,7 +1923,7 @@ static void save_MatrixMode( GLenum mode )
       n[1].e = mode;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.MatrixMode)( mode );
+      (*ctx->Exec->MatrixMode)( mode );
    }
 }
 
@@ -1941,7 +1941,7 @@ static void save_MultMatrixf( const GLfloat *m )
       }
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.MultMatrixf)( m );
+      (*ctx->Exec->MultMatrixf)( m );
    }
 }
 
@@ -1985,7 +1985,7 @@ static void save_Ortho( GLdouble left, GLdouble right,
       n[6].f = farval;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Ortho)( left, right, bottom, top, nearval, farval );
+      (*ctx->Exec->Ortho)( left, right, bottom, top, nearval, farval );
    }
 }
 
@@ -2003,7 +2003,7 @@ static void save_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
       MEMCPY( n[3].data, (void *) values, mapsize * sizeof(GLfloat) );
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PixelMapfv)( map, mapsize, values );
+      (*ctx->Exec->PixelMapfv)( map, mapsize, values );
    }
 }
 
@@ -2055,7 +2055,7 @@ static void save_PixelTransferf( GLenum pname, GLfloat param )
       n[2].f = param;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PixelTransferf)( pname, param );
+      (*ctx->Exec->PixelTransferf)( pname, param );
    }
 }
 
@@ -2077,7 +2077,7 @@ static void save_PixelZoom( GLfloat xfactor, GLfloat yfactor )
       n[2].f = yfactor;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PixelZoom)( xfactor, yfactor );
+      (*ctx->Exec->PixelZoom)( xfactor, yfactor );
    }
 }
 
@@ -2095,7 +2095,7 @@ static void save_PointParameterfvEXT( GLenum pname, const GLfloat *params )
       n[4].f = params[2];
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PointParameterfvEXT)( pname, params );
+      (*ctx->Exec->PointParameterfvEXT)( pname, params );
    }
 }
 
@@ -2116,7 +2116,7 @@ static void save_PointSize( GLfloat size )
       n[1].f = size;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PointSize)( size );
+      (*ctx->Exec->PointSize)( size );
    }
 }
 
@@ -2132,7 +2132,7 @@ static void save_PolygonMode( GLenum face, GLenum mode )
       n[2].e = mode;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PolygonMode)( face, mode );
+      (*ctx->Exec->PolygonMode)( face, mode );
    }
 }
 
@@ -2153,7 +2153,7 @@ static void save_PolygonStipple( const GLubyte *pattern )
       MEMCPY( data, pattern, 32 * 4 );
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PolygonStipple)( (GLubyte*) pattern );
+      (*ctx->Exec->PolygonStipple)( (GLubyte*) pattern );
    }
 }
 
@@ -2169,7 +2169,7 @@ static void save_PolygonOffset( GLfloat factor, GLfloat units )
       n[2].f = units;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PolygonOffset)( factor, units );
+      (*ctx->Exec->PolygonOffset)( factor, units );
    }
 }
 
@@ -2186,7 +2186,7 @@ static void save_PopAttrib( void )
    FLUSH_VB(ctx, "dlist");
    (void) alloc_instruction( ctx, OPCODE_POP_ATTRIB, 0 );
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PopAttrib)();
+      (*ctx->Exec->PopAttrib)();
    }
 }
 
@@ -2197,7 +2197,7 @@ static void save_PopMatrix( void )
    FLUSH_VB(ctx, "dlist");
    (void) alloc_instruction( ctx, OPCODE_POP_MATRIX, 0 );
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PopMatrix)();
+      (*ctx->Exec->PopMatrix)();
    }
 }
 
@@ -2208,7 +2208,7 @@ static void save_PopName( void )
    FLUSH_VB(ctx, "dlist");
    (void) alloc_instruction( ctx, OPCODE_POP_NAME, 0 );
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PopName)();
+      (*ctx->Exec->PopName)();
    }
 }
 
@@ -2229,7 +2229,7 @@ static void save_PrioritizeTextures( GLsizei num, const GLuint *textures,
       }
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PrioritizeTextures)( num, textures, priorities );
+      (*ctx->Exec->PrioritizeTextures)( num, textures, priorities );
    }
 }
 
@@ -2244,7 +2244,7 @@ static void save_PushAttrib( GLbitfield mask )
       n[1].bf = mask;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PushAttrib)( mask );
+      (*ctx->Exec->PushAttrib)( mask );
    }
 }
 
@@ -2255,7 +2255,7 @@ static void save_PushMatrix( void )
    FLUSH_VB(ctx, "dlist");
    (void) alloc_instruction( ctx, OPCODE_PUSH_MATRIX, 0 );
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PushMatrix)();
+      (*ctx->Exec->PushMatrix)();
    }
 }
 
@@ -2270,7 +2270,7 @@ static void save_PushName( GLuint name )
       n[1].ui = name;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PushName)( name );
+      (*ctx->Exec->PushName)( name );
    }
 }
 
@@ -2288,7 +2288,7 @@ static void save_RasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
       n[4].f = w;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.RasterPos4f)( x, y, z, w );
+      (*ctx->Exec->RasterPos4f)( x, y, z, w );
    }
 }
 
@@ -2418,7 +2418,7 @@ static void save_PassThrough( GLfloat token )
       n[1].f = token;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.PassThrough)( token );
+      (*ctx->Exec->PassThrough)( token );
    }
 }
 
@@ -2433,7 +2433,7 @@ static void save_ReadBuffer( GLenum mode )
       n[1].e = mode;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.ReadBuffer)( mode );
+      (*ctx->Exec->ReadBuffer)( mode );
    }
 }
 
@@ -2451,7 +2451,7 @@ static void save_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 )
       n[4].f = y2;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Rectf)( x1, y1, x2, y2 );
+      (*ctx->Exec->Rectf)( x1, y1, x2, y2 );
    }
 }
 
@@ -2517,7 +2517,7 @@ static void save_Scalef( GLfloat x, GLfloat y, GLfloat z )
       n[3].f = z;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Scalef)( x, y, z );
+      (*ctx->Exec->Scalef)( x, y, z );
    }
 }
 
@@ -2541,7 +2541,7 @@ static void save_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
       n[4].i = height;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Scissor)( x, y, width, height );
+      (*ctx->Exec->Scissor)( x, y, width, height );
    }
 }
 
@@ -2556,7 +2556,7 @@ static void save_ShadeModel( GLenum mode )
       n[1].e = mode;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.ShadeModel)( mode );
+      (*ctx->Exec->ShadeModel)( mode );
    }
 }
 
@@ -2573,7 +2573,7 @@ static void save_StencilFunc( GLenum func, GLint ref, GLuint mask )
       n[3].ui = mask;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.StencilFunc)( func, ref, mask );
+      (*ctx->Exec->StencilFunc)( func, ref, mask );
    }
 }
 
@@ -2588,7 +2588,7 @@ static void save_StencilMask( GLuint mask )
       n[1].ui = mask;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.StencilMask)( mask );
+      (*ctx->Exec->StencilMask)( mask );
    }
 }
 
@@ -2605,7 +2605,7 @@ static void save_StencilOp( GLenum fail, GLenum zfail, GLenum zpass )
       n[3].e = zpass;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.StencilOp)( fail, zfail, zpass );
+      (*ctx->Exec->StencilOp)( fail, zfail, zpass );
    }
 }
 
@@ -2625,7 +2625,7 @@ static void save_TexEnvfv( GLenum target, GLenum pname, const GLfloat *params )
       n[6].f = params[3];
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.TexEnvfv)( target, pname, params );
+      (*ctx->Exec->TexEnvfv)( target, pname, params );
    }
 }
 
@@ -2671,7 +2671,7 @@ static void save_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
       n[6].f = params[3];
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.TexGenfv)( coord, pname, params );
+      (*ctx->Exec->TexGenfv)( coord, pname, params );
    }
 }
 
@@ -2733,7 +2733,7 @@ static void save_TexParameterfv( GLenum target,
       n[6].f = params[3];
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.TexParameterfv)( target, pname, params );
+      (*ctx->Exec->TexParameterfv)( target, pname, params );
    }
 }
 
@@ -2771,7 +2771,7 @@ static void save_TexImage1D( GLenum target,
    GET_CURRENT_CONTEXT(ctx);
    if (target == GL_PROXY_TEXTURE_1D) {
       /* don't compile, execute immediately */
-      (*ctx->Exec.TexImage1D)( target, level, components, width,
+      (*ctx->Exec->TexImage1D)( target, level, components, width,
                                border, format, type, pixels );
    }
    else {
@@ -2794,7 +2794,7 @@ static void save_TexImage1D( GLenum target,
          FREE(image);
       }
       if (ctx->ExecuteFlag) {
-         (*ctx->Exec.TexImage1D)( target, level, components, width,
+         (*ctx->Exec->TexImage1D)( target, level, components, width,
                                   border, format, type, pixels );
       }
    }
@@ -2810,7 +2810,7 @@ static void save_TexImage2D( GLenum target,
    GET_CURRENT_CONTEXT(ctx);
    if (target == GL_PROXY_TEXTURE_2D) {
       /* don't compile, execute immediately */
-      (*ctx->Exec.TexImage2D)( target, level, components, width,
+      (*ctx->Exec->TexImage2D)( target, level, components, width,
                                height, border, format, type, pixels );
    }
    else {
@@ -2834,7 +2834,7 @@ static void save_TexImage2D( GLenum target,
          FREE(image);
       }
       if (ctx->ExecuteFlag) {
-         (*ctx->Exec.TexImage2D)( target, level, components, width,
+         (*ctx->Exec->TexImage2D)( target, level, components, width,
                                   height, border, format, type, pixels );
       }
    }
@@ -2851,7 +2851,7 @@ static void save_TexImage3D( GLenum target,
    GET_CURRENT_CONTEXT(ctx);
    if (target == GL_PROXY_TEXTURE_3D) {
       /* don't compile, execute immediately */
-      (*ctx->Exec.TexImage3D)( target, level, components, width,
+      (*ctx->Exec->TexImage3D)( target, level, components, width,
                                height, depth, border, format, type, pixels );
    }
    else {
@@ -2876,7 +2876,7 @@ static void save_TexImage3D( GLenum target,
          FREE(image);
       }
       if (ctx->ExecuteFlag) {
-         (*ctx->Exec.TexImage3D)( target, level, components, width,
+         (*ctx->Exec->TexImage3D)( target, level, components, width,
                                 height, depth, border, format, type, pixels );
       }
    }
@@ -2917,7 +2917,7 @@ static void save_TexSubImage1D( GLenum target, GLint level, GLint xoffset,
       FREE(image);
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.TexSubImage1D)( target, level, xoffset, width,
+      (*ctx->Exec->TexSubImage1D)( target, level, xoffset, width,
                                   format, type, pixels );
    }
 }
@@ -2950,7 +2950,7 @@ static void save_TexSubImage2D( GLenum target, GLint level,
       FREE(image);
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.TexSubImage2D)( target, level, xoffset, yoffset,
+      (*ctx->Exec->TexSubImage2D)( target, level, xoffset, yoffset,
                            width, height, format, type, pixels );
    }
 }
@@ -2985,7 +2985,7 @@ static void save_TexSubImage3D( GLenum target, GLint level,
       FREE(image);
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.TexSubImage3D)( target, level,
+      (*ctx->Exec->TexSubImage3D)( target, level,
                                   xoffset, yoffset, zoffset,
                                   width, height, depth, format, type, pixels );
    }
@@ -3004,7 +3004,7 @@ static void save_Translatef( GLfloat x, GLfloat y, GLfloat z )
       n[3].f = z;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Translatef)( x, y, z );
+      (*ctx->Exec->Translatef)( x, y, z );
    }
 }
 
@@ -3029,7 +3029,7 @@ static void save_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
       n[4].i = (GLint) height;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.Viewport)( x, y, width, height );
+      (*ctx->Exec->Viewport)( x, y, width, height );
    }
 }
 
@@ -3047,7 +3047,7 @@ static void save_WindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
       n[4].f = w;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.WindowPos4fMESA)( x, y, z, w );
+      (*ctx->Exec->WindowPos4fMESA)( x, y, z, w );
    }
 }
 
@@ -3179,7 +3179,7 @@ static void save_ActiveTextureARB( GLenum target )
       n[1].e = target;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.ActiveTextureARB)( target );
+      (*ctx->Exec->ActiveTextureARB)( target );
    }
 }
 
@@ -3195,7 +3195,7 @@ static void save_ClientActiveTextureARB( GLenum target )
       n[1].e = target;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.ClientActiveTextureARB)( target );
+      (*ctx->Exec->ClientActiveTextureARB)( target );
    }
 }
 
@@ -3385,34 +3385,34 @@ static void execute_list( GLcontext *ctx, GLuint list )
             break;
 	 }
          case OPCODE_ACCUM:
-	    (*ctx->Exec.Accum)( n[1].e, n[2].f );
+	    (*ctx->Exec->Accum)( n[1].e, n[2].f );
 	    break;
          case OPCODE_ALPHA_FUNC:
-	    (*ctx->Exec.AlphaFunc)( n[1].e, n[2].f );
+	    (*ctx->Exec->AlphaFunc)( n[1].e, n[2].f );
 	    break;
          case OPCODE_BIND_TEXTURE:
-            (*ctx->Exec.BindTexture)( n[1].e, n[2].ui );
+            (*ctx->Exec->BindTexture)( n[1].e, n[2].ui );
             break;
 	 case OPCODE_BITMAP:
             {
                struct gl_pixelstore_attrib save = ctx->Unpack;
                ctx->Unpack = _mesa_native_packing;
-               (*ctx->Exec.Bitmap)( (GLsizei) n[1].i, (GLsizei) n[2].i,
+               (*ctx->Exec->Bitmap)( (GLsizei) n[1].i, (GLsizei) n[2].i,
                                 n[3].f, n[4].f, n[5].f, n[6].f, n[7].data );
                ctx->Unpack = save;  /* restore */
             }
 	    break;
 	 case OPCODE_BLEND_COLOR:
-	    (*ctx->Exec.BlendColorEXT)( n[1].f, n[2].f, n[3].f, n[4].f );
+	    (*ctx->Exec->BlendColorEXT)( n[1].f, n[2].f, n[3].f, n[4].f );
 	    break;
 	 case OPCODE_BLEND_EQUATION:
-	    (*ctx->Exec.BlendEquationEXT)( n[1].e );
+	    (*ctx->Exec->BlendEquationEXT)( n[1].e );
 	    break;
 	 case OPCODE_BLEND_FUNC:
-	    (*ctx->Exec.BlendFunc)( n[1].e, n[2].e );
+	    (*ctx->Exec->BlendFunc)( n[1].e, n[2].e );
 	    break;
 	 case OPCODE_BLEND_FUNC_SEPARATE:
-	    (*ctx->Exec.BlendFuncSeparateINGR)(n[1].e, n[2].e, n[3].e, n[4].e);
+	    (*ctx->Exec->BlendFuncSeparateINGR)(n[1].e, n[2].e, n[3].e, n[4].e);
 	    break;
          case OPCODE_CALL_LIST:
 	    /* Generated by glCallList(), don't add ListBase */
@@ -3427,22 +3427,22 @@ static void execute_list( GLcontext *ctx, GLuint list )
             }
             break;
 	 case OPCODE_CLEAR:
-	    (*ctx->Exec.Clear)( n[1].bf );
+	    (*ctx->Exec->Clear)( n[1].bf );
 	    break;
 	 case OPCODE_CLEAR_COLOR:
-	    (*ctx->Exec.ClearColor)( n[1].f, n[2].f, n[3].f, n[4].f );
+	    (*ctx->Exec->ClearColor)( n[1].f, n[2].f, n[3].f, n[4].f );
 	    break;
 	 case OPCODE_CLEAR_ACCUM:
-	    (*ctx->Exec.ClearAccum)( n[1].f, n[2].f, n[3].f, n[4].f );
+	    (*ctx->Exec->ClearAccum)( n[1].f, n[2].f, n[3].f, n[4].f );
 	    break;
 	 case OPCODE_CLEAR_DEPTH:
-	    (*ctx->Exec.ClearDepth)( (GLclampd) n[1].f );
+	    (*ctx->Exec->ClearDepth)( (GLclampd) n[1].f );
 	    break;
 	 case OPCODE_CLEAR_INDEX:
-	    (*ctx->Exec.ClearIndex)( n[1].ui );
+	    (*ctx->Exec->ClearIndex)( n[1].ui );
 	    break;
 	 case OPCODE_CLEAR_STENCIL:
-	    (*ctx->Exec.ClearStencil)( n[1].i );
+	    (*ctx->Exec->ClearStencil)( n[1].i );
 	    break;
          case OPCODE_CLIP_PLANE:
             {
@@ -3451,20 +3451,20 @@ static void execute_list( GLcontext *ctx, GLuint list )
                eq[1] = n[3].f;
                eq[2] = n[4].f;
                eq[3] = n[5].f;
-               (*ctx->Exec.ClipPlane)( n[1].e, eq );
+               (*ctx->Exec->ClipPlane)( n[1].e, eq );
             }
             break;
 	 case OPCODE_COLOR_MASK:
-	    (*ctx->Exec.ColorMask)( n[1].b, n[2].b, n[3].b, n[4].b );
+	    (*ctx->Exec->ColorMask)( n[1].b, n[2].b, n[3].b, n[4].b );
 	    break;
 	 case OPCODE_COLOR_MATERIAL:
-	    (*ctx->Exec.ColorMaterial)( n[1].e, n[2].e );
+	    (*ctx->Exec->ColorMaterial)( n[1].e, n[2].e );
 	    break;
          case OPCODE_COLOR_TABLE:
             {
                struct gl_pixelstore_attrib save = ctx->Unpack;
                ctx->Unpack = _mesa_native_packing;
-               (*ctx->Exec.ColorTableEXT)( n[1].e, n[2].e, n[3].i, n[4].e,
+               (*ctx->Exec->ColorTableEXT)( n[1].e, n[2].e, n[3].i, n[4].e,
                                            n[5].e, n[6].data );
                ctx->Unpack = save;  /* restore */
             }
@@ -3473,70 +3473,70 @@ static void execute_list( GLcontext *ctx, GLuint list )
             {
                struct gl_pixelstore_attrib save = ctx->Unpack;
                ctx->Unpack = _mesa_native_packing;
-               (*ctx->Exec.ColorSubTableEXT)( n[1].e, n[2].i, n[3].i,
+               (*ctx->Exec->ColorSubTableEXT)( n[1].e, n[2].i, n[3].i,
                                               n[4].e, n[5].e, n[6].data );
                ctx->Unpack = save;  /* restore */
             }
             break;
 	 case OPCODE_COPY_PIXELS:
-	    (*ctx->Exec.CopyPixels)( n[1].i, n[2].i,
+	    (*ctx->Exec->CopyPixels)( n[1].i, n[2].i,
 			   (GLsizei) n[3].i, (GLsizei) n[4].i, n[5].e );
 	    break;
          case OPCODE_COPY_TEX_IMAGE1D:
-	    (*ctx->Exec.CopyTexImage1D)( n[1].e, n[2].i, n[3].e, n[4].i,
+	    (*ctx->Exec->CopyTexImage1D)( n[1].e, n[2].i, n[3].e, n[4].i,
                                          n[5].i, n[6].i, n[7].i );
             break;
          case OPCODE_COPY_TEX_IMAGE2D:
-	    (*ctx->Exec.CopyTexImage2D)( n[1].e, n[2].i, n[3].e, n[4].i,
+	    (*ctx->Exec->CopyTexImage2D)( n[1].e, n[2].i, n[3].e, n[4].i,
                                          n[5].i, n[6].i, n[7].i, n[8].i );
             break;
          case OPCODE_COPY_TEX_SUB_IMAGE1D:
-	    (*ctx->Exec.CopyTexSubImage1D)( n[1].e, n[2].i, n[3].i,
+	    (*ctx->Exec->CopyTexSubImage1D)( n[1].e, n[2].i, n[3].i,
                                             n[4].i, n[5].i, n[6].i );
             break;
          case OPCODE_COPY_TEX_SUB_IMAGE2D:
-	    (*ctx->Exec.CopyTexSubImage2D)( n[1].e, n[2].i, n[3].i,
+	    (*ctx->Exec->CopyTexSubImage2D)( n[1].e, n[2].i, n[3].i,
                                      n[4].i, n[5].i, n[6].i, n[7].i, n[8].i );
             break;
          case OPCODE_COPY_TEX_SUB_IMAGE3D:
-            (*ctx->Exec.CopyTexSubImage3D)( n[1].e, n[2].i, n[3].i,
+            (*ctx->Exec->CopyTexSubImage3D)( n[1].e, n[2].i, n[3].i,
                             n[4].i, n[5].i, n[6].i, n[7].i, n[8].i , n[9].i);
             break;
 	 case OPCODE_CULL_FACE:
-	    (*ctx->Exec.CullFace)( n[1].e );
+	    (*ctx->Exec->CullFace)( n[1].e );
 	    break;
 	 case OPCODE_DEPTH_FUNC:
-	    (*ctx->Exec.DepthFunc)( n[1].e );
+	    (*ctx->Exec->DepthFunc)( n[1].e );
 	    break;
 	 case OPCODE_DEPTH_MASK:
-	    (*ctx->Exec.DepthMask)( n[1].b );
+	    (*ctx->Exec->DepthMask)( n[1].b );
 	    break;
 	 case OPCODE_DEPTH_RANGE:
-	    (*ctx->Exec.DepthRange)( (GLclampd) n[1].f, (GLclampd) n[2].f );
+	    (*ctx->Exec->DepthRange)( (GLclampd) n[1].f, (GLclampd) n[2].f );
 	    break;
 	 case OPCODE_DISABLE:
-	    (*ctx->Exec.Disable)( n[1].e );
+	    (*ctx->Exec->Disable)( n[1].e );
 	    break;
 	 case OPCODE_DRAW_BUFFER:
-	    (*ctx->Exec.DrawBuffer)( n[1].e );
+	    (*ctx->Exec->DrawBuffer)( n[1].e );
 	    break;
 	 case OPCODE_DRAW_PIXELS:
             {
                struct gl_pixelstore_attrib save = ctx->Unpack;
                ctx->Unpack = _mesa_native_packing;
-               (*ctx->Exec.DrawPixels)( n[1].i, n[2].i, n[3].e, n[4].e,
+               (*ctx->Exec->DrawPixels)( n[1].i, n[2].i, n[3].e, n[4].e,
                                         n[5].data );
                ctx->Unpack = save;  /* restore */
             }
 	    break;
 	 case OPCODE_ENABLE:
-	    (*ctx->Exec.Enable)( n[1].e );
+	    (*ctx->Exec->Enable)( n[1].e );
 	    break;
 	 case OPCODE_EVALMESH1:
-	    (*ctx->Exec.EvalMesh1)( n[1].e, n[2].i, n[3].i );
+	    (*ctx->Exec->EvalMesh1)( n[1].e, n[2].i, n[3].i );
 	    break;
 	 case OPCODE_EVALMESH2:
-	    (*ctx->Exec.EvalMesh2)( n[1].e, n[2].i, n[3].i, n[4].i, n[5].i );
+	    (*ctx->Exec->EvalMesh2)( n[1].e, n[2].i, n[3].i, n[4].i, n[5].i );
 	    break;
 	 case OPCODE_FOG:
 	    {
@@ -3545,26 +3545,26 @@ static void execute_list( GLcontext *ctx, GLuint list )
 	       p[1] = n[3].f;
 	       p[2] = n[4].f;
 	       p[3] = n[5].f;
-	       (*ctx->Exec.Fogfv)( n[1].e, p );
+	       (*ctx->Exec->Fogfv)( n[1].e, p );
 	    }
 	    break;
 	 case OPCODE_FRONT_FACE:
-	    (*ctx->Exec.FrontFace)( n[1].e );
+	    (*ctx->Exec->FrontFace)( n[1].e );
 	    break;
          case OPCODE_FRUSTUM:
-            (*ctx->Exec.Frustum)( n[1].f, n[2].f, n[3].f, n[4].f, n[5].f, n[6].f );
+            (*ctx->Exec->Frustum)( n[1].f, n[2].f, n[3].f, n[4].f, n[5].f, n[6].f );
             break;
 	 case OPCODE_HINT:
-	    (*ctx->Exec.Hint)( n[1].e, n[2].e );
+	    (*ctx->Exec->Hint)( n[1].e, n[2].e );
 	    break;
 	 case OPCODE_HINT_PGI:
-	    (*ctx->Exec.HintPGI)( n[1].e, n[2].i );
+	    (*ctx->Exec->HintPGI)( n[1].e, n[2].i );
 	    break;
 	 case OPCODE_INDEX_MASK:
-	    (*ctx->Exec.IndexMask)( n[1].ui );
+	    (*ctx->Exec->IndexMask)( n[1].ui );
 	    break;
 	 case OPCODE_INIT_NAMES:
-	    (*ctx->Exec.InitNames)();
+	    (*ctx->Exec->InitNames)();
 	    break;
          case OPCODE_LIGHT:
 	    {
@@ -3573,7 +3573,7 @@ static void execute_list( GLcontext *ctx, GLuint list )
 	       p[1] = n[4].f;
 	       p[2] = n[5].f;
 	       p[3] = n[6].f;
-	       (*ctx->Exec.Lightfv)( n[1].e, n[2].e, p );
+	       (*ctx->Exec->Lightfv)( n[1].e, n[2].e, p );
 	    }
 	    break;
          case OPCODE_LIGHT_MODEL:
@@ -3583,24 +3583,24 @@ static void execute_list( GLcontext *ctx, GLuint list )
 	       p[1] = n[3].f;
 	       p[2] = n[4].f;
 	       p[3] = n[5].f;
-	       (*ctx->Exec.LightModelfv)( n[1].e, p );
+	       (*ctx->Exec->LightModelfv)( n[1].e, p );
 	    }
 	    break;
 	 case OPCODE_LINE_STIPPLE:
-	    (*ctx->Exec.LineStipple)( n[1].i, n[2].us );
+	    (*ctx->Exec->LineStipple)( n[1].i, n[2].us );
 	    break;
 	 case OPCODE_LINE_WIDTH:
-	    (*ctx->Exec.LineWidth)( n[1].f );
+	    (*ctx->Exec->LineWidth)( n[1].f );
 	    break;
 	 case OPCODE_LIST_BASE:
-	    (*ctx->Exec.ListBase)( n[1].ui );
+	    (*ctx->Exec->ListBase)( n[1].ui );
 	    break;
 	 case OPCODE_LOAD_IDENTITY:
-            (*ctx->Exec.LoadIdentity)();
+            (*ctx->Exec->LoadIdentity)();
             break;
 	 case OPCODE_LOAD_MATRIX:
 	    if (sizeof(Node)==sizeof(GLfloat)) {
-	       (*ctx->Exec.LoadMatrixf)( &n[1].f );
+	       (*ctx->Exec->LoadMatrixf)( &n[1].f );
 	    }
 	    else {
 	       GLfloat m[16];
@@ -3608,14 +3608,14 @@ static void execute_list( GLcontext *ctx, GLuint list )
 	       for (i=0;i<16;i++) {
 		  m[i] = n[1+i].f;
 	       }
-	       (*ctx->Exec.LoadMatrixf)( m );
+	       (*ctx->Exec->LoadMatrixf)( m );
 	    }
 	    break;
 	 case OPCODE_LOAD_NAME:
-	    (*ctx->Exec.LoadName)( n[1].ui );
+	    (*ctx->Exec->LoadName)( n[1].ui );
 	    break;
 	 case OPCODE_LOGIC_OP:
-	    (*ctx->Exec.LogicOp)( n[1].e );
+	    (*ctx->Exec->LogicOp)( n[1].e );
 	    break;
 	 case OPCODE_MAP1:
             {
@@ -3624,7 +3624,7 @@ static void execute_list( GLcontext *ctx, GLuint list )
                GLint uorder = n[5].i;
                GLfloat u1 = n[2].f;
                GLfloat u2 = n[3].f;
-               (*ctx->Exec.Map1f)( target, u1, u2, ustride, uorder,
+               (*ctx->Exec->Map1f)( target, u1, u2, ustride, uorder,
                                    (GLfloat *) n[6].data );
             }
 	    break;
@@ -3639,23 +3639,23 @@ static void execute_list( GLcontext *ctx, GLuint list )
                GLint vstride = n[7].i;
                GLint uorder = n[8].i;
                GLint vorder = n[9].i;
-               (*ctx->Exec.Map2f)( target, u1, u2, ustride, uorder,
+               (*ctx->Exec->Map2f)( target, u1, u2, ustride, uorder,
                                    v1, v2, vstride, vorder,
                                    (GLfloat *) n[10].data );
             }
 	    break;
 	 case OPCODE_MAPGRID1:
-	    (*ctx->Exec.MapGrid1f)( n[1].i, n[2].f, n[3].f );
+	    (*ctx->Exec->MapGrid1f)( n[1].i, n[2].f, n[3].f );
 	    break;
 	 case OPCODE_MAPGRID2:
-	    (*ctx->Exec.MapGrid2f)( n[1].i, n[2].f, n[3].f, n[4].i, n[5].f, n[6].f);
+	    (*ctx->Exec->MapGrid2f)( n[1].i, n[2].f, n[3].f, n[4].i, n[5].f, n[6].f);
 	    break;
          case OPCODE_MATRIX_MODE:
-            (*ctx->Exec.MatrixMode)( n[1].e );
+            (*ctx->Exec->MatrixMode)( n[1].e );
             break;
 	 case OPCODE_MULT_MATRIX:
 	    if (sizeof(Node)==sizeof(GLfloat)) {
-	       (*ctx->Exec.MultMatrixf)( &n[1].f );
+	       (*ctx->Exec->MultMatrixf)( &n[1].f );
 	    }
 	    else {
 	       GLfloat m[16];
@@ -3663,26 +3663,26 @@ static void execute_list( GLcontext *ctx, GLuint list )
 	       for (i=0;i<16;i++) {
 		  m[i] = n[1+i].f;
 	       }
-	       (*ctx->Exec.MultMatrixf)( m );
+	       (*ctx->Exec->MultMatrixf)( m );
 	    }
 	    break;
          case OPCODE_ORTHO:
-            (*ctx->Exec.Ortho)( n[1].f, n[2].f, n[3].f, n[4].f, n[5].f, n[6].f );
+            (*ctx->Exec->Ortho)( n[1].f, n[2].f, n[3].f, n[4].f, n[5].f, n[6].f );
             break;
 	 case OPCODE_PASSTHROUGH:
-	    (*ctx->Exec.PassThrough)( n[1].f );
+	    (*ctx->Exec->PassThrough)( n[1].f );
 	    break;
 	 case OPCODE_PIXEL_MAP:
-	    (*ctx->Exec.PixelMapfv)( n[1].e, n[2].i, (GLfloat *) n[3].data );
+	    (*ctx->Exec->PixelMapfv)( n[1].e, n[2].i, (GLfloat *) n[3].data );
 	    break;
 	 case OPCODE_PIXEL_TRANSFER:
-	    (*ctx->Exec.PixelTransferf)( n[1].e, n[2].f );
+	    (*ctx->Exec->PixelTransferf)( n[1].e, n[2].f );
 	    break;
 	 case OPCODE_PIXEL_ZOOM:
-	    (*ctx->Exec.PixelZoom)( n[1].f, n[2].f );
+	    (*ctx->Exec->PixelZoom)( n[1].f, n[2].f );
 	    break;
 	 case OPCODE_POINT_SIZE:
-	    (*ctx->Exec.PointSize)( n[1].f );
+	    (*ctx->Exec->PointSize)( n[1].f );
 	    break;
 	 case OPCODE_POINT_PARAMETERS:
 	    {
@@ -3690,65 +3690,65 @@ static void execute_list( GLcontext *ctx, GLuint list )
 		params[0] = n[2].f;
 		params[1] = n[3].f;
 		params[2] = n[4].f;
-		(*ctx->Exec.PointParameterfvEXT)( n[1].e, params ); 
+		(*ctx->Exec->PointParameterfvEXT)( n[1].e, params ); 
 	    }
 	    break;
 	 case OPCODE_POLYGON_MODE:
-	    (*ctx->Exec.PolygonMode)( n[1].e, n[2].e );
+	    (*ctx->Exec->PolygonMode)( n[1].e, n[2].e );
 	    break;
 	 case OPCODE_POLYGON_STIPPLE:
-	    (*ctx->Exec.PolygonStipple)( (GLubyte *) n[1].data );
+	    (*ctx->Exec->PolygonStipple)( (GLubyte *) n[1].data );
 	    break;
 	 case OPCODE_POLYGON_OFFSET:
-	    (*ctx->Exec.PolygonOffset)( n[1].f, n[2].f );
+	    (*ctx->Exec->PolygonOffset)( n[1].f, n[2].f );
 	    break;
 	 case OPCODE_POP_ATTRIB:
-	    (*ctx->Exec.PopAttrib)();
+	    (*ctx->Exec->PopAttrib)();
 	    break;
 	 case OPCODE_POP_MATRIX:
-	    (*ctx->Exec.PopMatrix)();
+	    (*ctx->Exec->PopMatrix)();
 	    break;
 	 case OPCODE_POP_NAME:
-	    (*ctx->Exec.PopName)();
+	    (*ctx->Exec->PopName)();
 	    break;
 	 case OPCODE_PRIORITIZE_TEXTURE:
-            (*ctx->Exec.PrioritizeTextures)( 1, &n[1].ui, &n[2].f );
+            (*ctx->Exec->PrioritizeTextures)( 1, &n[1].ui, &n[2].f );
 	    break;
 	 case OPCODE_PUSH_ATTRIB:
-	    (*ctx->Exec.PushAttrib)( n[1].bf );
+	    (*ctx->Exec->PushAttrib)( n[1].bf );
 	    break;
 	 case OPCODE_PUSH_MATRIX:
-	    (*ctx->Exec.PushMatrix)();
+	    (*ctx->Exec->PushMatrix)();
 	    break;
 	 case OPCODE_PUSH_NAME:
-	    (*ctx->Exec.PushName)( n[1].ui );
+	    (*ctx->Exec->PushName)( n[1].ui );
 	    break;
 	 case OPCODE_RASTER_POS:
-            (*ctx->Exec.RasterPos4f)( n[1].f, n[2].f, n[3].f, n[4].f );
+            (*ctx->Exec->RasterPos4f)( n[1].f, n[2].f, n[3].f, n[4].f );
 	    break;
 	 case OPCODE_READ_BUFFER:
-	    (*ctx->Exec.ReadBuffer)( n[1].e );
+	    (*ctx->Exec->ReadBuffer)( n[1].e );
 	    break;
          case OPCODE_RECTF:
-            (*ctx->Exec.Rectf)( n[1].f, n[2].f, n[3].f, n[4].f );
+            (*ctx->Exec->Rectf)( n[1].f, n[2].f, n[3].f, n[4].f );
             break;
          case OPCODE_SCALE:
-            (*ctx->Exec.Scalef)( n[1].f, n[2].f, n[3].f );
+            (*ctx->Exec->Scalef)( n[1].f, n[2].f, n[3].f );
             break;
 	 case OPCODE_SCISSOR:
-	    (*ctx->Exec.Scissor)( n[1].i, n[2].i, n[3].i, n[4].i );
+	    (*ctx->Exec->Scissor)( n[1].i, n[2].i, n[3].i, n[4].i );
 	    break;
 	 case OPCODE_SHADE_MODEL:
-	    (*ctx->Exec.ShadeModel)( n[1].e );
+	    (*ctx->Exec->ShadeModel)( n[1].e );
 	    break;
 	 case OPCODE_STENCIL_FUNC:
-	    (*ctx->Exec.StencilFunc)( n[1].e, n[2].i, n[3].ui );
+	    (*ctx->Exec->StencilFunc)( n[1].e, n[2].i, n[3].ui );
 	    break;
 	 case OPCODE_STENCIL_MASK:
-	    (*ctx->Exec.StencilMask)( n[1].ui );
+	    (*ctx->Exec->StencilMask)( n[1].ui );
 	    break;
 	 case OPCODE_STENCIL_OP:
-	    (*ctx->Exec.StencilOp)( n[1].e, n[2].e, n[3].e );
+	    (*ctx->Exec->StencilOp)( n[1].e, n[2].e, n[3].e );
 	    break;
          case OPCODE_TEXENV:
             {
@@ -3757,7 +3757,7 @@ static void execute_list( GLcontext *ctx, GLuint list )
                params[1] = n[4].f;
                params[2] = n[5].f;
                params[3] = n[6].f;
-               (*ctx->Exec.TexEnvfv)( n[1].e, n[2].e, params );
+               (*ctx->Exec->TexEnvfv)( n[1].e, n[2].e, params );
             }
             break;
          case OPCODE_TEXGEN:
@@ -3767,7 +3767,7 @@ static void execute_list( GLcontext *ctx, GLuint list )
                params[1] = n[4].f;
                params[2] = n[5].f;
                params[3] = n[6].f;
-               (*ctx->Exec.TexGenfv)( n[1].e, n[2].e, params );
+               (*ctx->Exec->TexGenfv)( n[1].e, n[2].e, params );
             }
             break;
          case OPCODE_TEXPARAMETER:
@@ -3777,14 +3777,14 @@ static void execute_list( GLcontext *ctx, GLuint list )
                params[1] = n[4].f;
                params[2] = n[5].f;
                params[3] = n[6].f;
-               (*ctx->Exec.TexParameterfv)( n[1].e, n[2].e, params );
+               (*ctx->Exec->TexParameterfv)( n[1].e, n[2].e, params );
             }
             break;
 	 case OPCODE_TEX_IMAGE1D:
             {
                struct gl_pixelstore_attrib save = ctx->Unpack;
                ctx->Unpack = _mesa_native_packing;
-               (*ctx->Exec.TexImage1D)(
+               (*ctx->Exec->TexImage1D)(
                                         n[1].e, /* target */
                                         n[2].i, /* level */
                                         n[3].i, /* components */
@@ -3800,7 +3800,7 @@ static void execute_list( GLcontext *ctx, GLuint list )
             {
                struct gl_pixelstore_attrib save = ctx->Unpack;
                ctx->Unpack = _mesa_native_packing;
-               (*ctx->Exec.TexImage2D)(
+               (*ctx->Exec->TexImage2D)(
                                         n[1].e, /* target */
                                         n[2].i, /* level */
                                         n[3].i, /* components */
@@ -3817,7 +3817,7 @@ static void execute_list( GLcontext *ctx, GLuint list )
             {
                struct gl_pixelstore_attrib save = ctx->Unpack;
                ctx->Unpack = _mesa_native_packing;
-               (*ctx->Exec.TexImage3D)(
+               (*ctx->Exec->TexImage3D)(
                                         n[1].e, /* target */
                                         n[2].i, /* level */
                                         n[3].i, /* components */
@@ -3835,7 +3835,7 @@ static void execute_list( GLcontext *ctx, GLuint list )
             {
                struct gl_pixelstore_attrib save = ctx->Unpack;
                ctx->Unpack = _mesa_native_packing;
-               (*ctx->Exec.TexSubImage1D)( n[1].e, n[2].i, n[3].i,
+               (*ctx->Exec->TexSubImage1D)( n[1].e, n[2].i, n[3].i,
                                            n[4].i, n[5].e,
                                            n[6].e, n[7].data );
                ctx->Unpack = save;  /* restore */
@@ -3845,7 +3845,7 @@ static void execute_list( GLcontext *ctx, GLuint list )
             {
                struct gl_pixelstore_attrib save = ctx->Unpack;
                ctx->Unpack = _mesa_native_packing;
-               (*ctx->Exec.TexSubImage2D)( n[1].e, n[2].i, n[3].i,
+               (*ctx->Exec->TexSubImage2D)( n[1].e, n[2].i, n[3].i,
                                            n[4].i, n[5].e,
                                            n[6].i, n[7].e, n[8].e, n[9].data );
                ctx->Unpack = save;  /* restore */
@@ -3855,7 +3855,7 @@ static void execute_list( GLcontext *ctx, GLuint list )
             {
                struct gl_pixelstore_attrib save = ctx->Unpack;
                ctx->Unpack = _mesa_native_packing;
-               (*ctx->Exec.TexSubImage3D)( n[1].e, n[2].i, n[3].i,
+               (*ctx->Exec->TexSubImage3D)( n[1].e, n[2].i, n[3].i,
                                            n[4].i, n[5].i, n[6].i, n[7].i,
                                            n[8].i, n[9].e, n[10].e,
                                            n[11].data );
@@ -3863,20 +3863,20 @@ static void execute_list( GLcontext *ctx, GLuint list )
             }
             break;
          case OPCODE_TRANSLATE:
-            (*ctx->Exec.Translatef)( n[1].f, n[2].f, n[3].f );
+            (*ctx->Exec->Translatef)( n[1].f, n[2].f, n[3].f );
             break;
 	 case OPCODE_VIEWPORT:
-	    (*ctx->Exec.Viewport)(n[1].i, n[2].i,
+	    (*ctx->Exec->Viewport)(n[1].i, n[2].i,
                                   (GLsizei) n[3].i, (GLsizei) n[4].i);
 	    break;
 	 case OPCODE_WINDOW_POS:
-            (*ctx->Exec.WindowPos4fMESA)( n[1].f, n[2].f, n[3].f, n[4].f );
+            (*ctx->Exec->WindowPos4fMESA)( n[1].f, n[2].f, n[3].f, n[4].f );
 	    break;
          case OPCODE_ACTIVE_TEXTURE:  /* GL_ARB_multitexture */
-            (*ctx->Exec.ActiveTextureARB)( n[1].e );
+            (*ctx->Exec->ActiveTextureARB)( n[1].e );
             break;
          case OPCODE_CLIENT_ACTIVE_TEXTURE:  /* GL_ARB_multitexture */
-            (*ctx->Exec.ClientActiveTextureARB)( n[1].e );
+            (*ctx->Exec->ClientActiveTextureARB)( n[1].e );
             break;
 	 case OPCODE_CONTINUE:
 	    n = (Node *) n[1].next;
@@ -4020,7 +4020,7 @@ _mesa_NewList( GLuint list, GLenum mode )
    ctx->CompileCVAFlag = GL_FALSE;
    ctx->ExecuteFlag = (mode == GL_COMPILE_AND_EXECUTE);
 
-   ctx->CurrentDispatch = &ctx->Save;
+   ctx->CurrentDispatch = ctx->Save;
    _glapi_set_dispatch( ctx->CurrentDispatch );
 }
 
@@ -4073,7 +4073,7 @@ _mesa_EndList( void )
     */
    ctx->NewState = ~0;
 
-   ctx->CurrentDispatch = &ctx->Exec;
+   ctx->CurrentDispatch = ctx->Exec;
    _glapi_set_dispatch( ctx->CurrentDispatch );
 }
 
@@ -4101,7 +4101,7 @@ _mesa_CallList( GLuint list )
 
    /* also restore API function pointers to point to "save" versions */
    if (save_compile_flag) {
-      ctx->CurrentDispatch = &ctx->Save;
+      ctx->CurrentDispatch = ctx->Save;
       _glapi_set_dispatch( ctx->CurrentDispatch );
    }
 }
@@ -4136,7 +4136,7 @@ _mesa_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
 
    /* also restore API function pointers to point to "save" versions */
    if (save_compile_flag) {
-      ctx->CurrentDispatch = &ctx->Save;
+      ctx->CurrentDispatch = ctx->Save;
       _glapi_set_dispatch( ctx->CurrentDispatch );
    }
 
