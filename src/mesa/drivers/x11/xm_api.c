@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.23 2001/05/29 19:48:47 brianp Exp $ */
+/* $Id: xm_api.c,v 1.24 2001/06/04 22:33:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1688,10 +1688,12 @@ void XMesaDestroyContext( XMesaContext c )
       _mesa_destroy_context( c->gl_ctx );
    }
 
-   /* Disassociate old buffer with this context */
-   if (c->xm_buffer)
-       c->xm_buffer->xm_context = NULL;
-
+   /*
+    * XXX This code should really go away because the ancilliary data
+    * associated with a window/pixmap should not go away just because
+    * a context is destroyed.
+    */
+#if 0
    /* Destroy any buffers which are using this context.  If we don't
     * we may have dangling references.  Hmm, maybe we should just
     * set the buffer's context pointer to NULL instead of deleting it?
@@ -1713,6 +1715,7 @@ void XMesaDestroyContext( XMesaContext c )
          }
       }
    }
+#endif
 
    FREE( c );
 }
@@ -1993,7 +1996,7 @@ void XMesaDestroyBuffer( XMesaBuffer b )
    }
 
    if (b->xm_context)
-       b->xm_context->xm_buffer = NULL;
+      b->xm_context->xm_buffer = NULL;
 
    free_xmesa_buffer(client, b);
 }
