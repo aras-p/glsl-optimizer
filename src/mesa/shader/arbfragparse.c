@@ -145,7 +145,7 @@ _mesa_debug_fp_inst(GLint num, struct fp_instruction *fp)
          case  FP_OPCODE_TXP:
             fprintf(stderr, "FP_OPCODE_TXP"); break;
 
-         case  FP_OPCODE_X2D:
+         case  FP_OPCODE_XPD:
             fprintf(stderr, "FP_OPCODE_XPD"); break;
 
          default:
