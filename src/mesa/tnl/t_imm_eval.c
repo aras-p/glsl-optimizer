@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.9 2001/04/30 21:08:52 keithw Exp $ */
+/* $Id: t_imm_eval.c,v 1.10 2001/05/01 13:18:03 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -64,16 +64,13 @@ static void eval_points2( GLfloat outcoord[][4],
 			  GLfloat dv, GLfloat v1 )
 {
    GLuint i;
-   fprintf(stderr, "%p %p\n", coord, outcoord);
    for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++) {
       if (flags[i] & VERT_EVAL_ANY) {
 	 outcoord[i][0] = coord[i][0];
 	 outcoord[i][1] = coord[i][1];
 	 if (flags[i] & VERT_EVAL_P2) {
-	    fprintf(stderr, "point %f %f ==>", coord[i][0], coord[i][1]);
 	    outcoord[i][0] = coord[i][0] * du + u1;
 	    outcoord[i][1] = coord[i][1] * dv + v1;
-	    fprintf(stderr, "%f %f\n", outcoord[i][0], outcoord[i][1]);
 	 }
       }
    }
@@ -193,7 +190,7 @@ static void eval2_obj_norm( GLvector4f *obj_ptr,
    GLfloat (*normal)[3] = norm_ptr->data;
    GLuint i;
 
-   fprintf(stderr, "%s\n", __FUNCTION__);
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
       if (flags[i] & (VERT_EVAL_C2|VERT_EVAL_P2)) {
@@ -231,7 +228,7 @@ static void eval2_4f( GLvector4f *dest,
       if (flags[i] & (VERT_EVAL_C2|VERT_EVAL_P2)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 GLfloat v = (coord[i][1] - v1) * dv;
-	 fprintf(stderr, "coord %d: %f %f\n", i, coord[i][0], coord[i][1]);
+/*  	 fprintf(stderr, "coord %d: %f %f\n", i, coord[i][0], coord[i][1]); */
 
 	 _math_horner_bezier_surf(map->Points, to[i], u, v, dimension,
 				  map->Uorder, map->Vorder);
@@ -333,8 +330,8 @@ static void copy_4f_stride( GLfloat to[][4], GLfloat *from,
       MEMCPY( to, from, count * sizeof(to[0]));
    else {
       int i;
-      fprintf(stderr, "%s stride %d count %d\n", __FUNCTION__,
-	      stride, count);
+/*        fprintf(stderr, "%s stride %d count %d\n", __FUNCTION__, */
+/*  	      stride, count); */
       for (i = 0 ; i < count ; i++, STRIDE_F(from, stride))
 	 COPY_4FV( to[i], from );
    }
@@ -441,8 +438,8 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
    else
       copycount = IM->Count - IM->CopyStart; /* copy all vertices */
 
-   fprintf(stderr, "%s copystart %d start %d count %d copycount %d\n",
-	   __FUNCTION__, IM->CopyStart, IM->Start, IM->Count, copycount);
+/*     fprintf(stderr, "%s copystart %d start %d count %d copycount %d\n", */
+/*  	   __FUNCTION__, IM->CopyStart, IM->Start, IM->Count, copycount); */
 
    if (!store)
       store = tnl->eval.im = _tnl_alloc_immediate( ctx );
@@ -485,7 +482,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
    }
 
 
-   _tnl_print_vert_flags(__FUNCTION__, req);
+/*     _tnl_print_vert_flags(__FUNCTION__, req); */
 
    /* Perform the evaluations on active data elements.
     */
@@ -634,7 +631,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       GLuint generated = 0;
 
       if (copycount) {
-	 fprintf(stderr, "%s: Copy normals\n", __FUNCTION__);
+/*  	 fprintf(stderr, "%s: Copy normals\n", __FUNCTION__); */
 	 copy_3f( store->Normal + IM->CopyStart, tmp->Normal.data, 
 		  copycount );
       }
@@ -733,7 +730,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       struct vertex_buffer *VB = &tnl->vb;
       GLuint i,j,count = VB->Count;
 
-      fprintf(stderr, "PURGING\n");
+/*        fprintf(stderr, "PURGING\n"); */
 
       for (i = 0, j = 0 ; i < count ; i++) {
 	 if (flags[i] & vertex) {

@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.19 2001/04/30 21:08:52 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.20 2001/05/01 13:15:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -375,7 +375,7 @@ static void exec_vert_cassette( GLcontext *ctx, struct immediate *IM )
    }
 
    _tnl_fixup_input( ctx, IM );
-   _tnl_print_cassette( IM );
+/*     _tnl_print_cassette( IM ); */
    _tnl_run_cassette( ctx, IM );
 }
 
