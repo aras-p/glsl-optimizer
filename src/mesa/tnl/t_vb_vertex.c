@@ -161,8 +161,10 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 	 /* impossible */
       case 2:
 	 _mesa_vector4f_clean_elem( VB->ClipPtr, VB->Count, 2 );
+         /* fall-through */
       case 3:
 	 _mesa_vector4f_clean_elem( VB->ClipPtr, VB->Count, 3 );
+         /* fall-through */
       case 4:
 	 break;
       }
