@@ -477,7 +477,7 @@ init_machine_deriv( GLcontext *ctx,
    _mesa_memcpy(dMachine, machine, sizeof(struct fp_machine));
 
    /* Clear temporary registers */
-   _mesa_bzero(machine->Temporaries,
+   _mesa_bzero( (void*) machine->Temporaries,
                MAX_NV_FRAGMENT_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
 
    /* Add derivatives */
