@@ -646,55 +646,6 @@ e32(RADEON_CP_PACKET2);
 #endif
 }
 
-void static inline upload_vertex_shader_fragment(PREFIX int dest, struct r300_vertex_shader_fragment *vsf)
-{
-int i;
-LOCAL_VARS
-
-if(vsf->length==0)return;
-
-if(vsf->length & 0x3){
-	fprintf(stderr,"VERTEX_SHADER_FRAGMENT must have length divisible by 4\n");
-	exit(-1);
-	}
-
-vsf_start_fragment(dest, vsf->length);
-for(i=0;i<vsf->length;i++)
-	e32(vsf->body.d[i]);
-
-}
-
-void r300EmitVertexShader(r300ContextPtr rmesa)
-{
-LOCAL_VARS
-
-upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_PROGRAM, &(rmesa->state.vertex_shader.program));
-
-upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_MATRIX0, &(rmesa->state.vertex_shader.matrix[0]));
-upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_MATRIX1, &(rmesa->state.vertex_shader.matrix[0]));
-upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_MATRIX2, &(rmesa->state.vertex_shader.matrix[0]));
-
-upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_VECTOR0, &(rmesa->state.vertex_shader.vector[0]));
-upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_VECTOR1, &(rmesa->state.vertex_shader.vector[1]));
-
-upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_UNKNOWN1, &(rmesa->state.vertex_shader.unknown1));
-upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_UNKNOWN2, &(rmesa->state.vertex_shader.unknown2));
-
-reg_start(R300_VAP_PVS_CNTL_1, 2);
-e32(      (rmesa->state.vertex_shader.program_start << R300_PVS_CNTL_1_PROGRAM_START_SHIFT)
- 	| (rmesa->state.vertex_shader.unknown_ptr1 << R300_PVS_CNTL_1_UNKNOWN_SHIFT)
- 	| (rmesa->state.vertex_shader.program_end << R300_PVS_CNTL_1_PROGRAM_END_SHIFT)
-    );
-e32(      (rmesa->state.vertex_shader.param_offset << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT)
- 	| (rmesa->state.vertex_shader.param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT)
-    );
-e32( (rmesa->state.vertex_shader.unknown_ptr2 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT)
-   | (rmesa->state.vertex_shader.unknown_ptr3 << 0));
-
-reg_start(R300_VAP_PVS_WAITIDLE,0);
-	e32(0x00000000);
-}
-
 void r300EmitPixelShader(r300ContextPtr rmesa)
 {
 int i,k;

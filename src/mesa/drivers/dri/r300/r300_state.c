@@ -791,7 +791,7 @@ static int inline translate_src(int src)
 }
 	   
 /* I think 357 and 457 are prime numbers.. wiggle them if you get coincidences */
-#define FORMAT_HASH(opRGB, srcRGB, modeRGB, opA, srcA, modeA, format)	( \
+#define FORMAT_HASH(opRGB, srcRGB, modeRGB, opA, srcA, modeA, format, intFormat)	( \
 	(\
 	((opRGB)<<30) | ((opA)<<28) | \
 	((srcRGB)<< 25) | ((srcA)<<22) | \
@@ -799,12 +799,15 @@ static int inline translate_src(int src)
 	) \
 	^ ((modeA)*357) \
 	^ (((format)) *457) \
+	^ ((intFormat) * 7) \
 	)
 	   
-static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint format)
+static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint format, GLint IntFormat)
 {
 	const struct gl_texture_unit *texUnit= &ctx->Texture.Unit[tex_unit];
 	int i=0; /* number of alpha args .. */
+	
+	/* Size field in format specific first */
 	switch(FORMAT_HASH(							
 		texUnit->_CurrentCombine->OperandRGB[i] -GL_SRC_COLOR,
 		translate_src(texUnit->_CurrentCombine->SourceRGB[i]),
@@ -812,46 +815,94 @@ static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint fo
 		texUnit->_CurrentCombine->OperandA[i] -GL_SRC_ALPHA,
 		translate_src(texUnit->_CurrentCombine->SourceA[i]),
 		texUnit->_CurrentCombine->ModeA,
-		format
+		format,
+		IntFormat
 		)){
-	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00088047):
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00088047, 0x1908):
 		/* tested with:
 			kfiresaver.kss 
 			*/
-		return 0x1a0c;
-	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00077047):
+		return 0x7a0c; /* kfiresaver.kss */
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00088047, 0x8058):
+		/* tested with:
+			Quake3demo 
+			*/
+		return 0x8a0c; /* Quake3demo -small font on the bottom */
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00077047, 4):
 		/* tested with:
 			kfiresaver.kss 
 			*/
 		return 0x4ba0c;
-	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00055047):
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00055047, 4):
 		/* tested with:
 			kfiresaver.kss
 			kfountain.kss
 			*/
 		return 0x51a0c;	
-	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00088047):
+	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00088047, 3):
 		/* tested with
 			lesson 06
 			lesson 07
 			*/
 		return 0x53a0c;
-	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00055047):
+	//case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00055047, 0):
 		/* Can't remember what I tested this with.. 
 		   try putting return 0 of you see broken textures which 
 		   are not being complained about */
 		return 0x53a0c;	
+	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00099047, 0x8051):
+	//case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00089047, 0x8058):
+	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00077047, 0x8051):
+		/* Tested with:
+			Quake3demo
+			*/
+		return 0x53a0c;	
+	case  FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00055045, 0x00008056):
+	case  FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00088045, 0x00008056):
+		return 0x53a23;
+	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00099004, 0x00008050):
+		return 0;
+		return 0x2a0b;
+	}
+	//	return 0x53a0c;	
+	
+	/* Just key on internal format  - useful for quick tryouts*/
+	
+		return 0;
+	#if 1
+	switch(IntFormat
+		){
+	case 0x3:
+		return 0x53a0c;
+	case 0x8050:
+		return 0x2a0b;
+	case 0x8056:
+	
+		return 0x53a23;
+	case 0x8058:
+		return 0;
+		return 0x8a0c;
+		//fprintf(stderr, "%08x\n", format);
+		/* Tested with:
+			Quake3demo
+			*/
+		return 0x53a0c;	
 	default:
-		{
+		return 0x53a0c;
+	}
+	#endif
+	
+	
+	
+	{
 		static int warn_once=1;
 		if(warn_once){
 			fprintf(stderr, "%s:%s Do not know how to translate texture format - help me !\n",
 				__FILE__, __FUNCTION__);
 			warn_once=0;
 			}
-		}
-		return 0;
 	}
+		return 0;
 }
 	
 void r300_setup_textures(GLcontext *ctx)
@@ -907,31 +958,35 @@ void r300_setup_textures(GLcontext *ctx)
 			r300->hw.tex.unknown5.cmd[R300_TEX_VALUE_0+i]=0x0;
 			
 			
+			
 			/* We don't know how to set this yet */
 			//value from r300_lib.c for RGB24
 			//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x88a0c; 
-			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=translate_texture_format(ctx, i, t->format);
+			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=translate_texture_format(ctx, i, t->format, t->base.tObj->Image[0][0]->IntFormat);
 			/* Use the code below to quickly find matching texture
 			   formats. Requires an app that displays the same texture
 			   repeatedly  */
 			      #if 1
 				if(r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]==0){ 
-					static int fmt=1;
+					static int fmt=0x0;
 					static int k=0;
 					k++;
-					if(k>200){
+					if(k>400){
 						k=0;
-						fmt+=2;
+						fmt++;
 						texUnit = &ctx->Texture.Unit[i];
-						fprintf(stderr, "Want to set FORMAT_HASH(%d, %d, 0x%04x, %d, %d, 0x%04x, 0x%08x)\n",
+						fprintf(stderr, "Want to set FORMAT_HASH(%d, %d, 0x%04x, %d, %d, 0x%04x, 0x%08x, 0x%08x)\n",
 							texUnit->_CurrentCombine->OperandRGB[0] -GL_SRC_COLOR,
 							translate_src(texUnit->_CurrentCombine->SourceRGB[0]),
 							texUnit->_CurrentCombine->ModeRGB,
 							texUnit->_CurrentCombine->OperandA[0] -GL_SRC_ALPHA,
 							translate_src(texUnit->_CurrentCombine->SourceA[0]),
 							texUnit->_CurrentCombine->ModeA,
-							t->format
+							t->format,
+							t->base.tObj->Image[0][0]->IntFormat
 							);
+						fprintf(stderr, "Also known: format_x=%08x border_color=%08x cubic_faces=%08x\n", t->format_x, t->pp_border_color, t->pp_cubic_faces);
+						fprintf(stderr, "\t_ReallyEnabled=%08x EnvMode=%08x IntFormat=%08x\n", texUnit->_ReallyEnabled, texUnit->EnvMode,  t->base.tObj->Image[0][0]->IntFormat);
 						if(fmt>0xff){
 							//exit(-1);
 							fmt=0;
@@ -941,7 +996,9 @@ void r300_setup_textures(GLcontext *ctx)
 							0x00a0c | (fmt<<12));
 						fprintf(stderr, "size=%08x\n", t->size);
 						}
-					r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x00a0c | (fmt<<12);
+					r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x00a0b | (fmt<<12);
+					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x51a00 | (fmt);
+					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x53a0c | (fmt<<24);
 					}
 			      #endif
 			
@@ -1006,6 +1063,118 @@ void r300_setup_rs_unit(GLcontext *ctx)
 		}
 }
 
+#define vpucount(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
+
+#define bump_vpu_count(ptr, new_count)   do{\
+	drm_r300_cmd_header_t* _p=((drm_r300_cmd_header_t*)(ptr));\
+	int _nc=(new_count)/4; \
+	if(_nc>_p->vpu.count)_p->vpu.count=_nc;\
+	}while(0)
+
+void static inline setup_vertex_shader_fragment(r300ContextPtr r300, int dest, struct r300_vertex_shader_fragment *vsf)
+{
+	int i;
+	
+	if(vsf->length==0)return;
+	
+	if(vsf->length & 0x3){
+		fprintf(stderr,"VERTEX_SHADER_FRAGMENT must have length divisible by 4\n");
+		exit(-1);
+		}
+	
+	switch((dest>>8) & 0xf){
+	case 0:
+		R300_STATECHANGE(r300, vpi);
+		for(i=0;i<vsf->length;i++)
+			r300->hw.vpi.cmd[R300_VPI_INSTR_0+i+4*(dest & 0xff)]=(vsf->body.d[i]);
+		bump_vpu_count(r300->hw.vpi.cmd, vsf->length+4*(dest & 0xff));
+		break;
+		
+	case 2:
+		R300_STATECHANGE(r300, vpp);
+		for(i=0;i<vsf->length;i++)
+			r300->hw.vpp.cmd[R300_VPP_PARAM_0+i+4*(dest & 0xff)]=(vsf->body.d[i]);
+		bump_vpu_count(r300->hw.vpp.cmd, vsf->length+4*(dest & 0xff));
+		break;
+	case 4:	
+		R300_STATECHANGE(r300, vps);
+		for(i=0;i<vsf->length;i++)
+			r300->hw.vps.cmd[1+i+4*(dest & 0xff)]=(vsf->body.d[i]);
+		bump_vpu_count(r300->hw.vps.cmd, vsf->length+4*(dest & 0xff));
+		break;
+	default:
+		fprintf(stderr, "%s:%s don't know how to handle dest %04x\n", __FILE__, __FUNCTION__, dest);
+		exit(-1);
+	}
+}
+
+
+#include "r300_lib.h"
+
+void r300SetupVertexShader(r300ContextPtr rmesa)
+{
+	GLcontext* ctx = rmesa->radeon.glCtx;
+	
+	/* Reset state, in case we don't use something */
+	((drm_r300_cmd_header_t*)rmesa->hw.vpp.cmd)->vpu.count = 0;
+	((drm_r300_cmd_header_t*)rmesa->hw.vpi.cmd)->vpu.count = 0;
+	((drm_r300_cmd_header_t*)rmesa->hw.vps.cmd)->vpu.count = 0;
+
+
+/* This needs to be replaced by vertex shader generation code */
+
+	
+	/* Watch out ! This is buggy .. but will do for now */
+	
+	/* At least one sanity check is in order */
+	if(sizeof(rmesa->state.vertex_shader) != sizeof(FLAT_COLOR_PIPELINE.vertex_shader)){
+		fprintf(stderr, "Aieee ! vertex_shader sizes don't match.\n");
+		exit(-1);
+		}
+	/* textures enabled ? */
+	if(rmesa->state.texture.tc_count>0){
+   		memcpy(&rmesa->state.vertex_shader, &(SINGLE_TEXTURE_PIPELINE.vertex_shader), sizeof(rmesa->state.vertex_shader));
+		} else {
+   		memcpy(&rmesa->state.vertex_shader, &(FLAT_COLOR_PIPELINE.vertex_shader), sizeof(rmesa->state.vertex_shader));
+		}
+
+
+        rmesa->state.vertex_shader.matrix[0].length=16;
+        memcpy(rmesa->state.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
+	
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(rmesa->state.vertex_shader.program));
+	
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_MATRIX0, &(rmesa->state.vertex_shader.matrix[0]));
+	#if 0
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_MATRIX1, &(rmesa->state.vertex_shader.matrix[0]));
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_MATRIX2, &(rmesa->state.vertex_shader.matrix[0]));
+	
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_VECTOR0, &(rmesa->state.vertex_shader.vector[0]));
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_VECTOR1, &(rmesa->state.vertex_shader.vector[1]));
+	#endif
+	
+	#if 0
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1, &(rmesa->state.vertex_shader.unknown1));
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN2, &(rmesa->state.vertex_shader.unknown2));
+	#endif
+	
+	R300_STATECHANGE(rmesa, pvs);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1]=(rmesa->state.vertex_shader.program_start << R300_PVS_CNTL_1_PROGRAM_START_SHIFT)
+		| (rmesa->state.vertex_shader.unknown_ptr1 << R300_PVS_CNTL_1_UNKNOWN_SHIFT)
+		| (rmesa->state.vertex_shader.program_end << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2]=(rmesa->state.vertex_shader.param_offset << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT)
+		| (rmesa->state.vertex_shader.param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3]=(rmesa->state.vertex_shader.unknown_ptr2 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT)
+	| (rmesa->state.vertex_shader.unknown_ptr3 << 0);
+	
+	/* This is done for vertex shader fragments, but also needs to be done for vap_pvs, 
+	so I leave it as a reminder */
+	#if 0
+	reg_start(R300_VAP_PVS_WAITIDLE,0);
+		e32(0x00000000);
+	#endif
+}
+
 /**
  * Called by Mesa after an internal state update.
  */
@@ -1055,6 +1224,7 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300_setup_textures(ctx);
 	r300_setup_rs_unit(ctx);
 	
+	r300SetupVertexShader(r300);
 	
 	r300_set_blend_state(ctx);
 	r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
@@ -1262,6 +1432,7 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk4F54.cmd[1] = 0;
 
+	#if 0
 	((drm_r300_cmd_header_t*)r300->hw.vpi.cmd)->vpu.count = 0;
 	for(i = 1; i < R300_VPI_CMDSIZE; i += 4) {
 		/* MOV t0, t0 */
@@ -1274,7 +1445,8 @@ void r300ResetHwState(r300ContextPtr r300)
 	((drm_r300_cmd_header_t*)r300->hw.vpp.cmd)->vpu.count = 0;
 	for(i = 1; i < R300_VPP_CMDSIZE; ++i)
 		r300->hw.vpp.cmd[i] = 0;
-
+	#endif
+		
 	r300->hw.vps.cmd[R300_VPS_ZERO_0] = 0;
 	r300->hw.vps.cmd[R300_VPS_ZERO_1] = 0;
 	r300->hw.vps.cmd[R300_VPS_POINTSIZE] = r300PackFloat32(1.0);

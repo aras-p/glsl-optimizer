@@ -301,7 +301,6 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 	#endif
    R300_STATECHANGE(rmesa, vte);
    
-   r300EmitState(rmesa);
       
    /* Magic register - note it is right after 20b0 */
 
@@ -313,18 +312,10 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 	} else {
 	   assign_pipeline(rmesa, &FLAT_COLOR_PIPELINE);
 	}
-   
-   rmesa->state.vertex_shader.matrix[0].length=16;
-   memcpy(rmesa->state.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
-
-   rmesa->state.vertex_shader.unknown2.length=4;
-   rmesa->state.vertex_shader.unknown2.body.f[0]=0.0;
-   rmesa->state.vertex_shader.unknown2.body.f[1]=0.0;
-   rmesa->state.vertex_shader.unknown2.body.f[2]=1.0;
-   rmesa->state.vertex_shader.unknown2.body.f[3]=0.0;
-	
-   
-   r300EmitVertexShader(rmesa);
+ 
+   r300SetupVertexShader(rmesa);
+      
+   r300EmitState(rmesa);
    r300EmitPixelShader(rmesa);
    
    #if 0
@@ -576,7 +567,7 @@ static GLboolean r300_run_render(GLcontext *ctx,
 #define FALLBACK_IF(expr) \
 do {										\
 	if (expr) {								\
-		if (RADEON_DEBUG & DEBUG_FALLBACKS)				\
+		if (1 || RADEON_DEBUG & DEBUG_FALLBACKS)				\
 			fprintf(stderr, "%s: fallback:%s\n",			\
 				__FUNCTION__, #expr);				\
 		stage->active = GL_FALSE;					\

@@ -177,8 +177,9 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 		assert(size > 0);
 
 		if(0)
-			fprintf(stderr, "w=%d h=%d d=%d tb=%d\n", texImage->Width, texImage->Height,
-				texImage->Depth, texImage->TexFormat->TexelBytes);
+			fprintf(stderr, "w=%d h=%d d=%d tb=%d intFormat=%d\n", texImage->Width, texImage->Height,
+				texImage->Depth, texImage->TexFormat->TexelBytes,
+				texImage->IntFormat);
 
 		/* Align to 32-byte offset.  It is faster to do this unconditionally
 		 * (no branch penalty).
