@@ -100,30 +100,25 @@
 
 #define HW_WRITE_CLIPLOOP()						\
     do {								\
-	const int _nc = 1; /* numcliprects */				\
 	/* [dBorca] Hack alert: */					\
 	/* remember, we need to flip the scissor, too */		\
 	/* is it better to do it inside fxDDScissor? */			\
-	while (_nc--) {							\
-	    const int minx = fxMesa->clipMinX;				\
-	    const int maxy = Y_FLIP(fxMesa->clipMinY);			\
-	    const int maxx = fxMesa->clipMaxX;				\
-	    const int miny = Y_FLIP(fxMesa->clipMaxY);
+	const int minx = fxMesa->clipMinX;				\
+	const int maxy = Y_FLIP(fxMesa->clipMinY);			\
+	const int maxx = fxMesa->clipMaxX;				\
+	const int miny = Y_FLIP(fxMesa->clipMaxY);
 
 #define HW_READ_CLIPLOOP()						\
     do {								\
-	const int _nc = 1; /* numcliprects */				\
 	/* [dBorca] Hack alert: */					\
 	/* remember, we need to flip the scissor, too */		\
 	/* is it better to do it inside fxDDScissor? */			\
-	while (_nc--) {							\
-	    const int minx = fxMesa->clipMinX;				\
-	    const int maxy = Y_FLIP(fxMesa->clipMinY);			\
-	    const int maxx = fxMesa->clipMaxX;				\
-	    const int miny = Y_FLIP(fxMesa->clipMaxY);
+	const int minx = fxMesa->clipMinX;				\
+	const int maxy = Y_FLIP(fxMesa->clipMinY);			\
+	const int maxx = fxMesa->clipMaxX;				\
+	const int miny = Y_FLIP(fxMesa->clipMaxY);
 
 #define HW_ENDCLIPLOOP()						\
-	}								\
     } while (0)
 
 
