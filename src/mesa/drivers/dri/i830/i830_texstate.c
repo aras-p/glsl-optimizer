@@ -278,7 +278,6 @@ static void i830UpdateTexEnv( GLcontext *ctx, GLuint unit )
 				  TEXBLEND_ARG1 |
 				  TEXBLENDARG_MODIFY_PARMS |
 				  TEXBLENDARG_CURRENT);
-      imesa->TexBlendColorPipeNum[unit] = 0;
       imesa->TexBlendWordsUsed[unit] = 4;
    }
    else {
@@ -440,15 +439,9 @@ static void i830UpdateTexEnv( GLcontext *ctx, GLuint unit )
       /* Native Arg2 == Arg1 in GL_EXT_texture_env_combine spec */
       /* Native Arg0 == Arg2 in GL_EXT_texture_env_combine spec */
 
-      /* When we render we need to figure out which is the last really enabled
-       * tex unit, and put last stage on it
-       */
-
-      imesa->TexBlendColorPipeNum[unit] = 0;
-      used = 0;
-
       /* Build color pipeline */
 
+      used = 0;
       imesa->TexBlend[unit][used++] = (STATE3D_MAP_BLEND_OP_CMD(unit) |
 				       TEXPIPE_COLOR |
 				       ENABLE_TEXOUTPUT_WRT_SEL |
@@ -659,40 +652,34 @@ static GLboolean i830UpdateTexUnit( GLcontext *ctx, GLuint unit )
       return GL_FALSE;
    }
    else {
-      disable_tex( ctx, unit );
-      return GL_TRUE;
+      return disable_tex( ctx, unit );
    }
 }
 
 
 
-/* Only deal with unit 0 and 1 for right now */
 void i830UpdateTextureState( GLcontext *ctx )
 {
    i830ContextPtr imesa = I830_CONTEXT(ctx);
-   int pipe_num = 0;
+   int i;
+   int last_stage = 0;
    GLboolean ok;
 
-   ok = (i830UpdateTexUnit( ctx, 0 ) &&
-	 i830UpdateTexUnit( ctx, 1 ) &&
-	 i830UpdateTexUnit( ctx, 2 ) &&
-	 i830UpdateTexUnit( ctx, 3 ));
+   for ( i = 0 ; i < ctx->Const.MaxTextureUnits ; i++ ) {
+      if ( (ctx->Texture.Unit[i]._ReallyEnabled == TEXTURE_2D_BIT)
+	   || (ctx->Texture.Unit[i]._ReallyEnabled == TEXTURE_RECT_BIT) ) {
+	 last_stage = i;
+      }
+   }
+
+   ok = GL_TRUE;
+   for ( i = 0 ; i <= last_stage ; i++ ) {
+      ok = ok && i830UpdateTexUnit( ctx, i );
+   }
 
    FALLBACK( imesa, I830_FALLBACK_TEXTURE, !ok );
 
 
    /* Make sure last stage is set correctly */
-   if(imesa->TexEnabledMask & I830_TEX_UNIT_ENABLED(3)) {
-      pipe_num = imesa->TexBlendColorPipeNum[3];
-      imesa->TexBlend[3][pipe_num] |= TEXOP_LAST_STAGE;
-   } else if(imesa->TexEnabledMask & I830_TEX_UNIT_ENABLED(2)) {
-      pipe_num = imesa->TexBlendColorPipeNum[2];
-      imesa->TexBlend[2][pipe_num] |= TEXOP_LAST_STAGE;
-   } else if(imesa->TexEnabledMask & I830_TEX_UNIT_ENABLED(1)) {
-      pipe_num = imesa->TexBlendColorPipeNum[1];
-      imesa->TexBlend[1][pipe_num] |= TEXOP_LAST_STAGE;
-   } else {
-      pipe_num = imesa->TexBlendColorPipeNum[0];
-      imesa->TexBlend[0][pipe_num] |= TEXOP_LAST_STAGE;
-   }
+   imesa->TexBlend[last_stage][0] |= TEXOP_LAST_STAGE;
 }

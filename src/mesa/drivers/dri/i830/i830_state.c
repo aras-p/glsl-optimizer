@@ -1429,8 +1429,6 @@ void i830DDInitState( GLcontext *ctx )
 
       imesa->TexBlendWordsUsed[i] = 0;
       imesa->Init_TexBlendWordsUsed[i] = 0;
-      imesa->TexBlendColorPipeNum[i] = 0;
-      imesa->Init_TexBlendColorPipeNum[i] = 0;
    }
 
    /* Set default blend state */
@@ -1462,7 +1460,6 @@ void i830DDInitState( GLcontext *ctx )
 			    TEXBLENDARG_DIFFUSE);
 
    imesa->TexBlendWordsUsed[0] = 4;
-   imesa->TexBlendColorPipeNum[0] = 0;
 
    imesa->Init_TexBlend[0][0] = (STATE3D_MAP_BLEND_OP_CMD(0) |
 			    TEXPIPE_COLOR |
@@ -1491,7 +1488,6 @@ void i830DDInitState( GLcontext *ctx )
 			    TEXBLENDARG_MODIFY_PARMS |
 			    TEXBLENDARG_CURRENT);
    imesa->Init_TexBlendWordsUsed[0] = 4;
-   imesa->Init_TexBlendColorPipeNum[0] = 0;
 
    memset(imesa->Setup, 0, sizeof(imesa->Setup));
 

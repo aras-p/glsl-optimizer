@@ -86,8 +86,6 @@ struct i830_context_t
    GLuint TexBlend[I830_MAX_TEXTURE_UNITS][I830_TEXBLEND_SIZE];
    GLuint Init_TexBlend[I830_MAX_TEXTURE_UNITS][I830_TEXBLEND_SIZE];
    GLuint Init_TexBlendWordsUsed[I830_MAX_TEXTURE_UNITS];
-   GLuint Init_TexBlendColorPipeNum[I830_MAX_TEXTURE_UNITS];
-   GLuint TexBlendColorPipeNum[I830_MAX_TEXTURE_UNITS];
    GLuint Init_BufferSetup[I830_DEST_SETUP_SIZE];
    GLuint LodBias[I830_MAX_TEXTURE_UNITS];
    
