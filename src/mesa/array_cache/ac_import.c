@@ -1,4 +1,4 @@
-/* $Id: ac_import.c,v 1.12 2001/04/17 20:37:44 brianp Exp $ */
+/* $Id: ac_import.c,v 1.13 2001/04/17 21:08:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -198,7 +198,7 @@ static void import_texcoord( GLcontext *ctx, GLuint unit,
 		   from->StrideB,
 		   from->Type,
 		   from->Size,
-		   ac->start,
+		   0,
 		   ac->count - ac->start);
 
    to->Size = from->Size;
