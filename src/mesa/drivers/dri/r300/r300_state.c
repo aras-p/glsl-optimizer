@@ -1111,14 +1111,14 @@ void r300_setup_textures(GLcontext *ctx)
 	for(i=0;i<mtu;i++){
 		if(ctx->Texture.Unit[i].Enabled){
 			t=r300->state.texture.unit[i].texobj;
-			fprintf(stderr, "format=%08x\n", r300->state.texture.unit[i].format);
+			//fprintf(stderr, "format=%08x\n", r300->state.texture.unit[i].format);
 			r300->state.texture.tc_count++;
 			if(t==NULL){
 				fprintf(stderr, "Texture unit %d enabled, but corresponding texobj is NULL, using default object.\n", i);
 				//exit(-1);
 				t=&default_tex_obj;
 				}
-			fprintf(stderr, "t->format=%08x\n", t->format);
+			//fprintf(stderr, "t->format=%08x\n", t->format);
 			if (RADEON_DEBUG & DEBUG_STATE)
 				fprintf(stderr, "Activating texture unit %d\n", i);
 			max_texture_unit=i;

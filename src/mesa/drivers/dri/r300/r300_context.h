@@ -59,7 +59,7 @@ typedef struct r300_context *r300ContextPtr;
 #define WARN_ONCE(a)	{ \
 	static int warn=1; \
 	if(warn){ \
-		fprintf(stderr, (a)); \
+		fprintf(stderr, "***WARN_ONCE*** " a); \
 		warn=0;\
 		} \
 	}

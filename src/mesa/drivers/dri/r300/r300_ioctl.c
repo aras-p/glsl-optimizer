@@ -69,7 +69,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	drm_r300_cmd_header_t* cmd2;
 	LOCAL_VARS;
 
-	if (1 || RADEON_DEBUG & DEBUG_IOCTL)
+	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s: %s buffer (%i,%i %ix%i)\n",
 			__FUNCTION__, buffer ? "back" : "front",
 			dPriv->x, dPriv->y, dPriv->w, dPriv->h);

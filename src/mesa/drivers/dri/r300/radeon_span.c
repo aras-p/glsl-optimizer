@@ -352,8 +352,10 @@ static void radeonSetBuffer(GLcontext * ctx,
 	if (radeon->doPageFlip && radeon->sarea->pfCurrentPage == 1)
 		buffer ^= 1;
 
+	#if 0
 	fprintf(stderr, "%s: using %s buffer\n", __FUNCTION__,
 		buffer ? "back" : "front");
+	#endif
 
 	if (buffer) {
 		radeon->state.pixel.readOffset =
