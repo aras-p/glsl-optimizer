@@ -349,7 +349,8 @@ void fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj, G
 
     for (i=FX_largeLodValue(ti->info), l=ti->minLevel;
 	 i<=FX_smallLodValue(ti->info);
-	 i++,l++)
+	 i++,l++) {
+      struct gl_texture_image *texImage = tObj->Image[l];
       FX_grTexDownloadMipMapLevel_NoLock(where,
 					 ti->tm[where]->startAddr,
 					 FX_valueToLod(i),
@@ -357,7 +358,8 @@ void fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj, G
 					 FX_aspectRatioLog2(ti->info),
 					 ti->info.format,
 					 GR_MIPMAPLEVELMASK_BOTH,
-					 ti->mipmapLevel[l].data);
+					 texImage->Data);
+    }
     break;
   case FX_TMU_SPLIT: 
     texmemsize=(int)FX_grTexTextureMemRequired_NoLock(GR_MIPMAPLEVELMASK_ODD,
@@ -373,6 +375,8 @@ void fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj, G
     for (i=FX_largeLodValue(ti->info),l=ti->minLevel;
 	 i<=FX_smallLodValue(ti->info);
 	 i++,l++) {
+      struct gl_texture_image *texImage = tObj->Image[l];
+
       FX_grTexDownloadMipMapLevel_NoLock(GR_TMU0,
 					 ti->tm[FX_TMU0]->startAddr,
 					 FX_valueToLod(i),
@@ -380,7 +384,7 @@ void fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj, G
 					 FX_aspectRatioLog2(ti->info),
 					 ti->info.format,
 					 GR_MIPMAPLEVELMASK_ODD,
-					 ti->mipmapLevel[l].data);
+					 texImage->Data);
 
       FX_grTexDownloadMipMapLevel_NoLock(GR_TMU1,
 					 ti->tm[FX_TMU1]->startAddr,
@@ -389,7 +393,7 @@ void fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj, G
 					 FX_aspectRatioLog2(ti->info),
 					 ti->info.format,
 					 GR_MIPMAPLEVELMASK_EVEN,
-					 ti->mipmapLevel[l].data);
+					 texImage->Data);
     }
     break;
   case FX_TMU_BOTH:
@@ -406,6 +410,7 @@ void fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj, G
     for (i=FX_largeLodValue(ti->info),l=ti->minLevel;
 	 i<=FX_smallLodValue(ti->info);
 	 i++,l++) {
+      struct gl_texture_image *texImage = tObj->Image[l];
       FX_grTexDownloadMipMapLevel_NoLock(GR_TMU0,
 					 ti->tm[FX_TMU0]->startAddr,
 					 FX_valueToLod(i),
@@ -413,7 +418,7 @@ void fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj, G
 					 FX_aspectRatioLog2(ti->info),
 					 ti->info.format,
 					 GR_MIPMAPLEVELMASK_BOTH,
-					 ti->mipmapLevel[l].data);
+					 texImage->Data);
 
       FX_grTexDownloadMipMapLevel_NoLock(GR_TMU1,
 					 ti->tm[FX_TMU1]->startAddr,
@@ -422,7 +427,7 @@ void fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj, G
 					 FX_aspectRatioLog2(ti->info),
 					 ti->info.format,
 					 GR_MIPMAPLEVELMASK_BOTH,
-					 ti->mipmapLevel[l].data);
+					 texImage->Data);
     }
     break;
   default:
@@ -436,17 +441,27 @@ void fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj, G
   ti->isInTM=GL_TRUE;
 }
 
-void fxTMMoveInTM(fxMesaContext fxMesa, struct gl_texture_object *tObj, GLint where) {
+
+void
+fxTMMoveInTM(fxMesaContext fxMesa, struct gl_texture_object *tObj, GLint where)
+{
   BEGIN_BOARD_LOCK();
   fxTMMoveInTM_NoLock(fxMesa, tObj, where);
   END_BOARD_LOCK();
 }
 
-void fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj, GLint level)
+
+void
+fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
+                      GLint level)
 {
-  tfxTexInfo *ti=fxTMGetTexInfo(tObj);
+  tfxTexInfo *ti = fxTMGetTexInfo(tObj);
   GrLOD_t lodlevel;
   GLint tmu;
+  struct gl_texture_image *texImage = tObj->Image[level];
+  tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
+
+  assert(mml);
 
   if (!ti->validated) {
     fprintf(stderr,"fx Driver: internal error in fxTMReloadMipMapLevel() -> not validated\n");
@@ -454,10 +469,10 @@ void fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
     exit(-1);
   }
 
-  tmu=(int)ti->whichTMU;
+  tmu = (int)ti->whichTMU;
   fxTMMoveInTM(fxMesa, tObj, tmu);
 
-  fxTexGetInfo(ti->mipmapLevel[0].width,ti->mipmapLevel[0].height,
+  fxTexGetInfo(mml->width, mml->height,
 	       &lodlevel, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 #ifdef FX_GLIDE3
@@ -475,7 +490,7 @@ void fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
 				FX_aspectRatioLog2(ti->info),
 				ti->info.format,
 				GR_MIPMAPLEVELMASK_BOTH,
-				ti->mipmapLevel[level].data);
+				texImage->Data);
     break;
   case FX_TMU_SPLIT:
     FX_grTexDownloadMipMapLevel(GR_TMU0,
@@ -485,7 +500,7 @@ void fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
 				FX_aspectRatioLog2(ti->info),
 				ti->info.format,
 				GR_MIPMAPLEVELMASK_ODD,
-				ti->mipmapLevel[level].data);
+                                texImage->Data);
     
     FX_grTexDownloadMipMapLevel(GR_TMU1,
 				ti->tm[GR_TMU1]->startAddr,
@@ -494,7 +509,7 @@ void fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
 				FX_aspectRatioLog2(ti->info),
 				ti->info.format,
 				GR_MIPMAPLEVELMASK_EVEN,
-				ti->mipmapLevel[level].data);
+				texImage->Data);
     break;
   case FX_TMU_BOTH:
     FX_grTexDownloadMipMapLevel(GR_TMU0,
@@ -504,7 +519,7 @@ void fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
 				FX_aspectRatioLog2(ti->info),
 				ti->info.format,
 				GR_MIPMAPLEVELMASK_BOTH,
-				ti->mipmapLevel[level].data);
+                                texImage->Data);
     
     FX_grTexDownloadMipMapLevel(GR_TMU1,
 				ti->tm[GR_TMU1]->startAddr,
@@ -513,7 +528,7 @@ void fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
 				FX_aspectRatioLog2(ti->info),
 				ti->info.format,
 				GR_MIPMAPLEVELMASK_BOTH,
-				ti->mipmapLevel[level].data);
+                                texImage->Data);
     break;
 
   default:
@@ -531,8 +546,12 @@ void fxTMReloadSubMipMapLevel(fxMesaContext fxMesa,
   GrLOD_t lodlevel;
   unsigned short *data;
   GLint tmu;
+  struct gl_texture_image *texImage = tObj->Image[level];
+  tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
 
-  if(!ti->validated) {
+  assert(mml);
+
+  if (!ti->validated) {
     fprintf(stderr,"fx Driver: internal error in fxTMReloadSubMipMapLevel() -> not validated\n");
     fxCloseHardware();
     exit(-1);
@@ -541,15 +560,15 @@ void fxTMReloadSubMipMapLevel(fxMesaContext fxMesa,
   tmu=(int)ti->whichTMU;
   fxTMMoveInTM(fxMesa, tObj, tmu);
 
-  fxTexGetInfo(ti->mipmapLevel[0].width, ti->mipmapLevel[0].height,
+  fxTexGetInfo(mml->width, mml->height,
 	       &lodlevel, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
   if((ti->info.format==GR_TEXFMT_INTENSITY_8) ||
      (ti->info.format==GR_TEXFMT_P_8) ||
      (ti->info.format==GR_TEXFMT_ALPHA_8))
-    data=ti->mipmapLevel[level].data+((yoffset*ti->mipmapLevel[level].width)>>1);
+    data = (GLushort *) texImage->Data + ((yoffset * mml->width) >> 1);
   else
-    data=ti->mipmapLevel[level].data+yoffset*ti->mipmapLevel[level].width;
+    data = (GLushort *) texImage->Data + yoffset * mml->width;
 
   switch(tmu) {
   case FX_TMU0:
@@ -651,10 +670,15 @@ void fxTMFreeTexture(fxMesaContext fxMesa, struct gl_texture_object *tObj)
   fxTMMoveOutTM(fxMesa, tObj);
 
   for (i=0; i<MAX_TEXTURE_LEVELS; i++) {
-    if (ti->mipmapLevel[i].data) {
-      FREE(ti->mipmapLevel[i].data);
-      ti->mipmapLevel[i].data = NULL;
-    }
+     struct gl_texture_image *texImage = tObj->Image[i];
+     if (texImage->Data) {
+        FREE(texImage->Data);
+        texImage->Data = NULL;
+     }
+     if (texImage->DriverData) {
+        FREE(texImage->DriverData);
+        texImage->DriverData = NULL;
+     }
   }
   switch (ti->whichTMU) {
   case FX_TMU0:

@@ -211,10 +211,14 @@ typedef struct MemRange_t {
 
 typedef struct {
   GLsizei width, height;              /* image size */
+  GLint wScale, hScale;               /* image scale factor */
   GrTextureFormat_t glideFormat;      /* Glide image format */
-  unsigned short *data;               /* Glide-formated texture image */
 } tfxMipMapLevel;
 
+/*
+ * TDFX-specific texture object data.  This hangs off of the
+ * struct gl_texture_object DriverData pointer.
+ */
 typedef struct tfxTexInfo_t {
   struct tfxTexInfo *next;
   struct gl_texture_object *tObj;
@@ -222,8 +226,6 @@ typedef struct tfxTexInfo_t {
   GLuint lastTimeUsed;
   FxU32 whichTMU;
   GLboolean isInTM;
-
-  tfxMipMapLevel mipmapLevel[MAX_TEXTURE_LEVELS];
 
   MemRange *tm[FX_NUM_TMU];
 
@@ -300,7 +302,12 @@ typedef struct {
 
 
 #define FX_CONTEXT(ctx) ((fxMesaContext)((ctx)->DriverCtx))
-#define FX_TEXTURE_DATA(t) fxTMGetTexInfo((t)->_Current)
+
+#define FX_TEXTURE_DATA(texUnit) fxTMGetTexInfo((texUnit)->_Current)
+
+#define fxTMGetTexInfo(o) ((tfxTexInfo*)((o)->DriverData))
+
+#define FX_MIPMAP_DATA(img)  ((tfxMipMapLevel *) (img)->DriverData)
 
 #define BEGIN_BOARD_LOCK()
 #define END_BOARD_LOCK()
@@ -570,7 +577,6 @@ extern void fxDDDepthFunc(GLcontext *, GLenum);
 
 extern void fxDDInitExtensions( GLcontext *ctx );
 
-#define fxTMGetTexInfo(o) ((tfxTexInfo*)((o)->DriverData))
 extern void fxTMInit(fxMesaContext ctx);
 extern void fxTMClose(fxMesaContext ctx);
 extern void fxTMRestoreTextures_NoLock(fxMesaContext ctx);
