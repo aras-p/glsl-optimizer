@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.91 2000/09/28 22:44:30 brianp Exp $ */
+/* $Id: context.c,v 1.92 2000/10/09 22:42:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -277,10 +277,11 @@ _mesa_initialize_visual( GLvisual *vis,
 
    if (depthBits == 0) {
       /* Special case.  Even if we don't have a depth buffer we need
-       * good values for DepthMax for Z vertex transformation purposes.
+       * good values for DepthMax for Z vertex transformation purposes
+       * and for per-fragment fog computation.
        */
-      vis->DepthMax = 1;
-      vis->DepthMaxF = 1.0F;
+      vis->DepthMax = 1 << 16;
+      vis->DepthMaxF = (GLfloat) vis->DepthMax;
    }
    else if (depthBits < 32) {
       vis->DepthMax = (1 << depthBits) - 1;
