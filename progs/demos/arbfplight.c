@@ -28,6 +28,8 @@ static GLboolean PixelLight = GL_TRUE;
 static GLfloat Xrot = 0, Yrot = 0;
 
 static PFNGLPROGRAMLOCALPARAMETER4FVARBPROC glProgramLocalParameter4fvARB_func;
+static PFNGLPROGRAMLOCALPARAMETER4DARBPROC glProgramLocalParameter4dARB_func;
+static PFNGLGETPROGRAMLOCALPARAMETERDVARBPROC glGetProgramLocalParameterdvARB_func;
 static PFNGLGENPROGRAMSARBPROC glGenProgramsARB_func;
 static PFNGLPROGRAMSTRINGARBPROC glProgramStringARB_func;
 static PFNGLBINDPROGRAMARBPROC glBindProgramARB_func;
@@ -45,8 +47,8 @@ static void Redisplay( void )
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
    if (PixelLight) {
-      glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB,
-                                    LIGHTPOS, LightPos);
+      glProgramLocalParameter4fvARB_func(GL_FRAGMENT_PROGRAM_ARB,
+                                         LIGHTPOS, LightPos);
       glEnable(GL_FRAGMENT_PROGRAM_ARB);
       glEnable(GL_VERTEX_PROGRAM_ARB);
       glDisable(GL_LIGHTING);
@@ -241,6 +243,12 @@ static void Init( void )
    glProgramLocalParameter4fvARB_func = (PFNGLPROGRAMLOCALPARAMETER4FVARBPROC) glutGetProcAddress("glProgramLocalParameter4fvARB");
    assert(glProgramLocalParameter4fvARB_func);
 
+   glProgramLocalParameter4dARB_func = (PFNGLPROGRAMLOCALPARAMETER4DARBPROC) glutGetProcAddress("glProgramLocalParameter4dARB");
+   assert(glProgramLocalParameter4dARB_func);
+
+   glGetProgramLocalParameterdvARB_func = (PFNGLGETPROGRAMLOCALPARAMETERDVARBPROC) glutGetProcAddress("glGetProgramLocalParameterdvARB");
+   assert(glGetProgramLocalParameterdvARB_func);
+
    glGenProgramsARB_func = (PFNGLGENPROGRAMSARBPROC) glutGetProcAddress("glGenProgramsARB");
    assert(glGenProgramsARB_func);
 
@@ -272,22 +280,22 @@ static void Init( void )
    }
    assert(glIsProgramARB_func(FragProg));
 
-   glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, DIFFUSE, Diffuse);
-   glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, SPECULAR, Specular);
+   glProgramLocalParameter4fvARB_func(GL_FRAGMENT_PROGRAM_ARB, DIFFUSE, Diffuse);
+   glProgramLocalParameter4fvARB_func(GL_FRAGMENT_PROGRAM_ARB, SPECULAR, Specular);
 
    /*
     * Do some sanity tests
     */
    {
       GLdouble v[4];
-      glProgramLocalParameter4dARB(GL_FRAGMENT_PROGRAM_ARB, 8,
+      glProgramLocalParameter4dARB_func(GL_FRAGMENT_PROGRAM_ARB, 8,
                                    10.0, 20.0, 30.0, 40.0);
-      glGetProgramLocalParameterdvARB(GL_FRAGMENT_PROGRAM_ARB, 8, v);
+      glGetProgramLocalParameterdvARB_func(GL_FRAGMENT_PROGRAM_ARB, 8, v);
       assert(v[0] == 10.0);
       assert(v[1] == 20.0);
       assert(v[2] == 30.0);
       assert(v[3] == 40.0);
-      glGetProgramLocalParameterdvARB(GL_FRAGMENT_PROGRAM_ARB, DIFFUSE, v);
+      glGetProgramLocalParameterdvARB_func(GL_FRAGMENT_PROGRAM_ARB, DIFFUSE, v);
       assert(v[0] == Diffuse[0]);
       assert(v[1] == Diffuse[1]);
       assert(v[2] == Diffuse[2]);
