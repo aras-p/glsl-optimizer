@@ -319,17 +319,23 @@ do {						\
 #define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->ui[coloroffset]
 #define VERT_RESTORE_RGBA( idx ) v[idx]->ui[coloroffset] = color[idx]
 
-#define VERT_SET_SPEC( v, c )    if (havespec) SAVAGE_SPEC( v->ub4[5], c )
-#define VERT_COPY_SPEC( v0, v1 ) if (havespec) COPY_3V(v0->ub4[5], v1->ub4[5])
-#define VERT_SAVE_SPEC( idx )    if (havespec) spec[idx] = v[idx]->ui[5]
-#define VERT_RESTORE_SPEC( idx ) if (havespec) v[idx]->ui[5] = spec[idx]
+#define VERT_SET_SPEC( v, c )						\
+   if (specoffset) SAVAGE_SPEC( v->ub4[specoffset], c )
+#define VERT_COPY_SPEC( v0, v1 )					\
+   if (specoffset) COPY_3V(v0->ub4[specoffset], v1->ub4[specoffset])
+#define VERT_SAVE_SPEC( idx )						\
+   if (specoffset) spec[idx] = v[idx]->ui[specoffset]
+#define VERT_RESTORE_SPEC( idx )					\
+   if (specoffset) v[idx]->ui[specoffset] = spec[idx]
 
 #define LOCAL_VARS(n)						\
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);		\
    GLuint color[n], spec[n];					\
-   GLuint coloroffset = 4/*(rmesa->vertex_size == 4 ? 3 : 4)*/;	\
-   GLboolean havespec = 1/*(rmesa->vertex_size == 4 ? 0 : 1)*/;	\
-   (void) color; (void) spec; (void) coloroffset; (void) havespec;
+   GLuint coloroffset =						\
+      ((imesa->DrawPrimitiveCmd & SAVAGE_HW_NO_W) ? 3 : 4);	\
+   GLboolean specoffset =					\
+      ((imesa->DrawPrimitiveCmd & SAVAGE_HW_NO_CS) ? 0 : coloroffset+1);\
+   (void) color; (void) spec; (void) coloroffset; (void) specoffset;
 
 /***********************************************************************
  *                Helpers for rendering unfilled primitives            *
