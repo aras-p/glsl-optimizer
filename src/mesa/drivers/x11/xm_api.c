@@ -2237,7 +2237,11 @@ static void FXgetImage( XMesaBuffer b )
       xmesa_alloc_back_buffer( b );
    }
 
-   grLfbWriteColorFormat(GR_COLORFORMAT_ARGB);
+   /* [dBorca]
+    * not needed for Voodoo2 anymore.
+    * should we test fxMesa->bgrOrder?
+    */
+   /* grLfbWriteColorFormat(GR_COLORFORMAT_ARGB); */
    if (b->xm_visual->undithered_pf==PF_5R6G5B) {
       /* Special case: 16bpp RGB */
       grLfbReadRegion( GR_BUFFER_FRONTBUFFER,       /* src buffer */
@@ -2292,7 +2296,7 @@ static void FXgetImage( XMesaBuffer b )
          }
       }
    }
-   grLfbWriteColorFormat(GR_COLORFORMAT_ABGR);
+   /* grLfbWriteColorFormat(GR_COLORFORMAT_ABGR); */
 }
 #endif
 
