@@ -1,0 +1,16 @@
+# Configuration for FreeBSD
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = FreeBSD
+
+# Compiler and flags
+CC = gcc
+CXX = g++
+
+CFLAGS = -O2 -fPIC -pedantic -I/usr/X11R6/include -DUSE_XSHM -DHZ=100
+CXXFLAGS = -O2 -fPIC -pedantic
+GLUT_CFLAGS = -fexceptions
+
+APP_LIB_DEPS = -L$(LIB_DIR) -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm
+

@@ -1,0 +1,21 @@
+# Configuration for Ultrix, with gcc
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = ultrix-gcc
+
+# Compiler and flags
+CC = gcc
+CXX = g++
+CFLAGS = -pedantic -O2
+CXXFLAGS = -pedantic -O2
+GLUT_CFLAGS = -fexceptions
+MKLIB_OPTIONS = -static
+
+GL_LIB_NAME = libGL.a
+GLU_LIB_NAME = libGLU.a
+GLUT_LIB_NAME = libglut.a
+GLW_LIB_NAME = libGLw.a
+OSMESA_LIB_NAME = libOSMesa.a
+
+APP_LIB_DEPS = -L$(LIB_DIR) -lglut -lGLU -lGL -lXmu -lX11 -lXi -lm

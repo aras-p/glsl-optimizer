@@ -1,0 +1,24 @@
+# Configuration for Solaris on x86 with gcc, static libs
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = solaris-x86-gcc
+
+# Compiler and flags
+CC = gcc
+CXX = g++
+CFLAGS = -O3 -m486 -fPIC -I/usr/openwin/include -DUSE_XSHM
+CXXFLAGS = -O3 -m486 -fPIC
+GLUT_CFLAGS = -fexceptions
+MKLIB_OPTIONS = -static
+
+GL_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lm -lpthread
+GLU_LIB_DEPS = -L$(LIB_DIR) -lGL -lm
+GLUT_LIB_DEPS = -L$(LIB_DIR) -lGLU -lGL -L/usr/openwin/lib -lX11 -lXmu -lXt -lXi -lm
+APP_LIB_DEPS = -L$(LIB_DIR) -L/usr/openwin/lib -R/usr/openwin/lib -lglut -lGLU -lGL -lm
+
+GL_LIB_NAME = libGL.a
+GLU_LIB_NAME = libGLU.a
+GLUT_LIB_NAME = libglut.a
+GLW_LIB_NAME = libGLw.a
+OSMESA_LIB_NAME = libOSMesa.a

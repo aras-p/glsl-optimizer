@@ -1,0 +1,24 @@
+# Configuration for Darwin / MacOS X, making static libs
+
+include $(TOP)/configs/darwin
+
+CONFIG_NAME = darwin-static
+
+# Compiler and flags
+CFLAGS = -I/usr/X11R6/include -O3 -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
+CXXFLAGS = -I/usr/X11R6/include -O3 -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
+MKLIB_OPTIONS = -static
+
+# Library names (actual file names)
+GL_LIB_NAME = libGL.a
+GLU_LIB_NAME = libGLU.a
+GLUT_LIB_NAME = libglut.a
+GLW_LIB_NAME = libGLw.a
+OSMESA_LIB_NAME = libOSMesa.a
+
+GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread
+OSMESA_LIB_DEPS = 
+GLU_LIB_DEPS = 
+GLUT_LIB_DEPS = 
+GLW_LIB_DEPS = 
+APP_LIB_DEPS = -L$(TOP)/lib -lglut -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm

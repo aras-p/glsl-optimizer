@@ -1,0 +1,23 @@
+# Configuration for IRIX 6.x, make n64 static libs
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = irix6-64-static
+
+# Compiler and flags
+CC = cc
+CXX = CC
+CFLAGS = -64 -O3 -ansi -woff 1068,1069,1174,1185,1209,1474,1552 -DUSE_XSHM
+CXXFLAGS = -64 -O3 -ansi -woff 1174
+MKLIB_OPTIONS = -archopt 64 -static
+
+LIB_DIR = $(TOP)/lib64
+
+APP_LIB_DEPS = -L$(LIB_DIR) -64 -lglut -lGLU -lGL -lX11 -lXext -lXmu -lXi -lm
+
+GL_LIB_NAME = libGL.a
+GLU_LIB_NAME = libGLU.a
+GLUT_LIB_NAME = libglut.a
+GLW_LIB_NAME = libGLw.a
+OSMESA_LIB_NAME = libOSMesa.a
+

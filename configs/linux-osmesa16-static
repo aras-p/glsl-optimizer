@@ -1,0 +1,28 @@
+# Configuration for 16 bits/channel OSMesa library on Linux
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = linux-osmesa16-static
+
+# Compiler and flags
+CC = gcc
+CXX = g++
+CFLAGS = -O3 -ansi -pedantic -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include -DCHAN_BITS=16 -DDEFAULT_SOFTWARE_DEPTH_BITS=31
+CXXFLAGS = -O3 -ansi -pedantic -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE
+MKLIB_OPTIONS = -static
+
+
+# Library names
+OSMESA_LIB = OSMesa16
+OSMESA_LIB_NAME = libOSMesa16.a
+
+
+# Directories
+SRC_DIRS = mesa glu
+DRIVER_DIRS = osmesa
+PROGRAM_DIRS = 
+
+
+# Dependencies
+OSMESA_LIB_DEPS = -lm -lpthread
+APP_LIB_DEPS = -lOSMesa16

@@ -1,0 +1,61 @@
+# Default/template configuration
+
+# This is included by other config files which may override some
+# of these variables.
+
+CONFIG_NAME = default
+
+# Version info
+MESA_MAJOR=6
+MESA_MINOR=1
+MESA_TINY=0
+
+
+# Compiler and flags
+CC = cc
+CXX = CC
+CFLAGS = -O
+CXXFLAGS = -O
+GLU_CFLAGS = 
+MKLIB_OPTIONS = 
+
+
+# Library names (base name)
+GL_LIB = GL
+GLU_LIB = GLU
+GLUT_LIB = glut
+GLW_LIB = GLw
+OSMESA_LIB = OSMesa
+
+
+# Library names (actual file names)
+GL_LIB_NAME = libGL.so
+GLU_LIB_NAME = libGLU.so
+GLUT_LIB_NAME = libglut.so
+GLW_LIB_NAME = libGLw.so
+OSMESA_LIB_NAME = libOSMesa.so
+
+
+# Optional assembly language optimization files for libGL
+ASM_SOURCES = 
+
+# GLw widget sources (second file needs Motif)
+GLW_SOURCES = GLwDrawA.c GLwMDrawA.c
+
+
+# Directories
+LIB_DIR = $(TOP)/lib
+INSTALL_PREFIX = /usr/local
+SRC_DIRS = mesa glu glut/glx
+GLU_DIRS = sgi
+DRIVER_DIRS = x11 osmesa
+PROGRAM_DIRS = demos redbook samples xdemos
+
+
+# Library/program dependencies
+GL_LIB_DEPS = -lX11 -lXext -lm -lpthread
+OSMESA_LIB_DEPS = -L$(LIB_DIR) -lGL
+GLU_LIB_DEPS = -L$(LIB_DIR) -lGL -lm
+GLUT_LIB_DEPS = -L$(LIB_DIR) -lGLU -lGL -lX11 -lXmu -lXt -lXi -lm
+GLW_LIB_DEPS = -L$(LIB_DIR) -lGL -lXt -lXm -lX11
+APP_LIB_DEPS = -L$(LIB_DIR) -lglut -lGLU -lGL -lm
