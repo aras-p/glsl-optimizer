@@ -1,10 +1,10 @@
-/* $Id: get.c,v 1.101 2003/01/14 04:55:45 brianp Exp $ */
+/* $Id: get.c,v 1.102 2003/01/21 15:45:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -5786,7 +5786,10 @@ _mesa_GetString( GLenum name )
             return (const GLubyte *) _mesa_extensions_get_string(ctx);
 #if FEATURE_NV_fragment_program
          case GL_PROGRAM_ERROR_STRING_NV:
-            return (const GLubyte *) ctx->Program.ErrorString;
+            if (ctx->Extensions.NV_fragment_program) {
+               return (const GLubyte *) ctx->Program.ErrorString;
+            }
+            /* FALL-THROUGH */
 #endif
          default:
             _mesa_error( ctx, GL_INVALID_ENUM, "glGetString" );
