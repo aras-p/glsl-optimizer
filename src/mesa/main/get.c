@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.13 2000/02/17 20:53:48 brianp Exp $ */
+/* $Id: get.c,v 1.14 2000/02/24 22:04:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -122,16 +122,16 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_BLEND_SRC:
          *params = ENUM_TO_BOOL(ctx->Color.BlendSrcRGB);
          break;
-      case GL_BLEND_SRC_RGB_INGR:
+      case GL_BLEND_SRC_RGB_EXT:
          *params = ENUM_TO_BOOL(ctx->Color.BlendSrcRGB);
          break;
-      case GL_BLEND_DST_RGB_INGR:
+      case GL_BLEND_DST_RGB_EXT:
          *params = ENUM_TO_BOOL(ctx->Color.BlendDstRGB);
          break;
-      case GL_BLEND_SRC_ALPHA_INGR:
+      case GL_BLEND_SRC_ALPHA_EXT:
          *params = ENUM_TO_BOOL(ctx->Color.BlendSrcA);
          break;
-      case GL_BLEND_DST_ALPHA_INGR:
+      case GL_BLEND_DST_ALPHA_EXT:
          *params = ENUM_TO_BOOL(ctx->Color.BlendDstA);
          break;
       case GL_BLEND_EQUATION_EXT:
@@ -1084,16 +1084,16 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       case GL_BLEND_SRC:
          *params = ENUM_TO_DOUBLE(ctx->Color.BlendSrcRGB);
          break;
-      case GL_BLEND_SRC_RGB_INGR:
+      case GL_BLEND_SRC_RGB_EXT:
          *params = ENUM_TO_DOUBLE(ctx->Color.BlendSrcRGB);
          break;
-      case GL_BLEND_DST_RGB_INGR:
+      case GL_BLEND_DST_RGB_EXT:
          *params = ENUM_TO_DOUBLE(ctx->Color.BlendDstRGB);
          break;
-      case GL_BLEND_SRC_ALPHA_INGR:
+      case GL_BLEND_SRC_ALPHA_EXT:
          *params = ENUM_TO_DOUBLE(ctx->Color.BlendSrcA);
          break;
-      case GL_BLEND_DST_ALPHA_INGR:
+      case GL_BLEND_DST_ALPHA_EXT:
          *params = ENUM_TO_DOUBLE(ctx->Color.BlendDstA);
          break;
       case GL_BLEND_EQUATION_EXT:
@@ -2047,16 +2047,16 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_BLEND_SRC:
          *params = ENUM_TO_FLOAT(ctx->Color.BlendSrcRGB);
          break;
-      case GL_BLEND_SRC_RGB_INGR:
+      case GL_BLEND_SRC_RGB_EXT:
          *params = ENUM_TO_FLOAT(ctx->Color.BlendSrcRGB);
          break;
-      case GL_BLEND_DST_RGB_INGR:
+      case GL_BLEND_DST_RGB_EXT:
          *params = ENUM_TO_FLOAT(ctx->Color.BlendDstRGB);
          break;
-      case GL_BLEND_SRC_ALPHA_INGR:
+      case GL_BLEND_SRC_ALPHA_EXT:
          *params = ENUM_TO_FLOAT(ctx->Color.BlendSrcA);
          break;
-      case GL_BLEND_DST_ALPHA_INGR:
+      case GL_BLEND_DST_ALPHA_EXT:
          *params = ENUM_TO_FLOAT(ctx->Color.BlendDstA);
          break;
       case GL_BLEND_EQUATION_EXT:
@@ -2987,16 +2987,16 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_BLEND_SRC:
          *params = (GLint) ctx->Color.BlendSrcRGB;
          break;
-      case GL_BLEND_SRC_RGB_INGR:
+      case GL_BLEND_SRC_RGB_EXT:
          *params = (GLint) ctx->Color.BlendSrcRGB;
          break;
-      case GL_BLEND_DST_RGB_INGR:
+      case GL_BLEND_DST_RGB_EXT:
          *params = (GLint) ctx->Color.BlendDstRGB;
          break;
-      case GL_BLEND_SRC_ALPHA_INGR:
+      case GL_BLEND_SRC_ALPHA_EXT:
          *params = (GLint) ctx->Color.BlendSrcA;
          break;
-      case GL_BLEND_DST_ALPHA_INGR:
+      case GL_BLEND_DST_ALPHA_EXT:
          *params = (GLint) ctx->Color.BlendDstA;
          break;
       case GL_BLEND_EQUATION_EXT:

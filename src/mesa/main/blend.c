@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.12 2000/02/21 14:50:31 brianp Exp $ */
+/* $Id: blend.c,v 1.13 2000/02/24 22:04:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -102,10 +102,10 @@ _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
 }
 
 
-/* GL_INGR_blend_func_separate */
+/* GL_EXT_blend_func_separate */
 void
-_mesa_BlendFuncSeparateINGR( GLenum sfactorRGB, GLenum dfactorRGB,
-                             GLenum sfactorA, GLenum dfactorA )
+_mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
+                            GLenum sfactorA, GLenum dfactorA )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glBlendFuncSeparate");
@@ -212,7 +212,7 @@ _mesa_BlendFuncSeparateINGR( GLenum sfactorRGB, GLenum dfactorRGB,
 
 /* This is really an extension function! */
 void
-_mesa_BlendEquationEXT( GLenum mode )
+_mesa_BlendEquation( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glBlendEquation");
@@ -256,7 +256,7 @@ _mesa_BlendEquationEXT( GLenum mode )
 
 
 void
-_mesa_BlendColorEXT( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
+_mesa_BlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Color.BlendColor[0] = CLAMP( red,   0.0F, 1.0F );

@@ -1,10 +1,10 @@
-/* $Id: colortab.h,v 1.4 1999/11/12 08:32:37 joukj Exp $ */
+/* $Id: colortab.h,v 1.5 2000/02/24 22:04:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,29 +33,24 @@
 
 
 extern void
-_mesa_ColorTableEXT( GLenum target, GLenum internalformat,
-                     GLsizei width, GLenum format, GLenum type,
+_mesa_ColorTable( GLenum target, GLenum internalformat,
+                  GLsizei width, GLenum format, GLenum type,
+                  const GLvoid *table );
+
+extern void
+_mesa_ColorSubTable( GLenum target, GLsizei start,
+                     GLsizei count, GLenum format, GLenum type,
                      const GLvoid *table );
 
 extern void
-_mesa_ColorSubTableEXT( GLenum target, GLsizei start,
-                        GLsizei count, GLenum format, GLenum type,
-                        const GLvoid *table );
+_mesa_GetColorTable( GLenum target, GLenum format,
+                     GLenum type, GLvoid *table );
 
 extern void
-_mesa_GetColorTableEXT( GLenum target, GLenum format,
-                        GLenum type, GLvoid *table );
-#ifdef VMS
-/* VMS does not support externals longer than 32 characters. */
-#define _mesa_GetColorTableParameterfvEXT VMS_GCTParameterfvEXT
-#define _mesa_GetColorTableParameterivEXT VMS_GCTParameterivEXT
-#endif
+_mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params );
 
 extern void
-_mesa_GetColorTableParameterfvEXT( GLenum target, GLenum pname, GLfloat *params );
-
-extern void
-_mesa_GetColorTableParameterivEXT( GLenum target, GLenum pname, GLint *params );
+_mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params );
 
 
 #endif

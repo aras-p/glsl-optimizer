@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.3 2000/02/11 21:14:29 brianp Exp $ */
+/* $Id: state.c,v 1.4 2000/02/24 22:04:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,8 +85,6 @@
 #include "vbrender.h"
 #include "winpos.h"
 #endif
-
-
 
 
 
@@ -511,17 +509,21 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->ResetMinmax = _mesa_ResetMinmax;
    exec->SeparableFilter2D = _mesa_SeparableFilter2D;
 
-   /* 6. GL_EXT_texture3d */
+   /* GL_EXT_texture3d */
+#if 0
    exec->CopyTexSubImage3DEXT = _mesa_CopyTexSubImage3D;
    exec->TexImage3DEXT = _mesa_TexImage3DEXT;
    exec->TexSubImage3DEXT = _mesa_TexSubImage3D;
+#endif
 
    /* GL_EXT_paletted_texture */
+#if 0
    exec->ColorTableEXT = _mesa_ColorTableEXT;
    exec->ColorSubTableEXT = _mesa_ColorSubTableEXT;
-   exec->GetColorTableEXT = _mesa_GetColorTableEXT;
-   exec->GetColorTableParameterfvEXT = _mesa_GetColorTableParameterfvEXT;
-   exec->GetColorTableParameterivEXT = _mesa_GetColorTableParameterivEXT;
+#endif
+   exec->GetColorTableEXT = _mesa_GetColorTable;
+   exec->GetColorTableParameterfvEXT = _mesa_GetColorTableParameterfv;
+   exec->GetColorTableParameterivEXT = _mesa_GetColorTableParameteriv;
 
    /* GL_EXT_compiled_vertex_array */
    exec->LockArraysEXT = _mesa_LockArraysEXT;
@@ -531,17 +533,21 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->PointParameterfEXT = _mesa_PointParameterfEXT;
    exec->PointParameterfvEXT = _mesa_PointParameterfvEXT;
 
-   /* 77. GL_PGI_misc_hints */
+   /* GL_PGI_misc_hints */
    exec->HintPGI = _mesa_HintPGI;
 
    /* GL_EXT_polygon_offset */
    exec->PolygonOffsetEXT = _mesa_PolygonOffsetEXT;
 
    /* GL_EXT_blend_minmax */
+#if 0
    exec->BlendEquationEXT = _mesa_BlendEquationEXT;
+#endif
 
    /* GL_EXT_blend_color */
+#if 0
    exec->BlendColorEXT = _mesa_BlendColorEXT;
+#endif
 
    /* GL_ARB_multitexture */
    exec->ActiveTextureARB = _mesa_ActiveTextureARB;
@@ -580,7 +586,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->MultiTexCoord4svARB = _mesa_MultiTexCoord4svARB;
 
    /* GL_INGR_blend_func_separate */
-   exec->BlendFuncSeparateINGR = _mesa_BlendFuncSeparateINGR;
+   exec->BlendFuncSeparateEXT = _mesa_BlendFuncSeparateEXT;
 
    /* GL_MESA_window_pos */
    exec->WindowPos2dMESA = _mesa_WindowPos2dMESA;
