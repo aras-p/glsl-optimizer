@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.19 1999/11/25 18:15:23 brianp Exp $ */
+/* $Id: dlist.c,v 1.20 1999/11/27 21:40:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,6 +41,7 @@
 #include "copypix.h"
 #include "cva.h"
 #include "depth.h"
+#include "dispatch.h"
 #include "drawpix.h"
 #include "enable.h"
 #include "enums.h"
@@ -3996,6 +3997,8 @@ _mesa_ListBase( GLuint base )
 void
 _mesa_init_dlist_table( struct _glapi_table *table )
 {
+   _mesa_init_no_op_table(table);
+
    table->Accum = save_Accum;
    table->AlphaFunc = save_AlphaFunc;
    table->Begin = save_Begin;
