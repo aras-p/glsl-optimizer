@@ -1,4 +1,4 @@
-/* $Id: glu.c,v 1.6 1999/09/13 14:31:32 joukj Exp $ */
+/* $Id: glu.c,v 1.7 1999/09/14 00:11:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: glu.c,v $
+ * Revision 1.7  1999/09/14 00:11:40  brianp
+ * added gluCheckExtension()
+ *
  * Revision 1.6  1999/09/13 14:31:32  joukj
  *
  * strcmp needs the string.h
@@ -87,6 +90,7 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -388,3 +392,29 @@ GLfunction GLAPIENTRY gluGetProcAddressEXT( const GLubyte *procName )
 
 #endif
 
+
+
+/*
+ * New in GLU 1.3
+ */
+GLboolean GLAPIENTRY
+gluCheckExtension( const char *extName, const GLubyte *extString )
+{
+   assert(extName);
+   assert(extString);
+   {
+      const int len = strlen(extName);
+      const char *start = (const char *) extString;
+
+      while (1) {
+         const char *c = strstr( start, extName );
+         if (!c)
+            return GL_FALSE;
+
+         if ((c == start || c[-1] == ' ') && (c[len] == ' ' || c[len] == 0))
+            return GL_TRUE;
+
+         start = c + len;
+      }
+   }
+}
