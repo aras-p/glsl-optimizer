@@ -1,4 +1,4 @@
-/* $Id: sparc.c,v 1.7 2002/04/17 19:08:32 brianp Exp $ */
+/* $Id: sparc.c,v 1.8 2002/07/12 16:00:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -165,12 +165,12 @@ void _mesa_init_sparc_glapi_relocs(void)
 		insn_ptr[2] |= ((disp_addr >> 32) & ((1 << 10) - 1));
 		insn_ptr[3] |= (disp_addr & ((1 << 10) - 1));
 		__glapi_sparc_icache_flush(&insn_ptr[2]);
-		insn_ptr += 10;
+		insn_ptr += 11;
 #else
 		insn_ptr[0] |= (disp_addr >> 10);
 		insn_ptr[1] |= (disp_addr & ((1 << 10) - 1));
 		__glapi_sparc_icache_flush(&insn_ptr[0]);
-		insn_ptr += 4;
+		insn_ptr += 5;
 #endif
 	}
 }
