@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.38 2000/11/05 18:40:57 keithw Exp $ */
+/* $Id: dd.h,v 1.39 2000/11/10 17:36:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -466,30 +466,6 @@ struct dd_function_table {
    /***
     *** Texture mapping functions:
     ***/
-
-   void (*TexImage)( GLcontext *ctx, GLenum target,
-                     struct gl_texture_object *tObj, GLint level,
-                     GLint internalFormat,
-                     const struct gl_texture_image *image );
-   /* XXX this function is obsolete */
-   /* Called whenever a texture object's image is changed.
-    *    texObject is the number of the texture object being changed.
-    *    level indicates the mipmap level.
-    *    internalFormat is the format in which the texture is to be stored.
-    *    image is a pointer to a gl_texture_image struct which contains
-    *       the actual image data.
-    */
-
-   void (*TexSubImage)( GLcontext *ctx, GLenum target,
-                        struct gl_texture_object *tObj, GLint level,
-                        GLint xoffset, GLint yoffset,
-                        GLsizei width, GLsizei height,
-                        GLint internalFormat,
-                        const struct gl_texture_image *image );
-   /* XXX this function is obsolete */
-   /* Called from glTexSubImage() to define a sub-region of a texture.
-    */
-
 
    GLboolean (*TexImage1D)( GLcontext *ctx, GLenum target, GLint level,
                             GLenum format, GLenum type, const GLvoid *pixels,
