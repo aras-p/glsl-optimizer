@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.60 2001/11/09 21:54:30 brianp Exp $ */
+/* $Id: gl.h,v 1.61 2001/11/19 00:13:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1685,7 +1685,7 @@ GLAPI void GLAPIENTRY glDrawRangeElements( GLenum mode, GLuint start,
 	GLuint end, GLsizei count, GLenum type, const GLvoid *indices );
 
 GLAPI void GLAPIENTRY glTexImage3D( GLenum target, GLint level,
-                                      GLenum internalFormat,
+                                      GLint internalFormat,
                                       GLsizei width, GLsizei height,
                                       GLsizei depth, GLint border,
                                       GLenum format, GLenum type,
@@ -2497,6 +2497,45 @@ GLAPI void GLAPIENTRY glTracePointerRangeMESA( const GLvoid* first, const GLvoid
 #define GL_SPRITE_POINT_MESA 0x8757  /* XXX not finalized! */
 
 #endif
+
+
+#ifndef GL_ARB_window_pos
+#define GL_ARB_window_pos 1
+
+/* XXX not finalized yet - just testing */
+GLAPI void GLAPIENTRY glWindowPos2dARB(GLdouble x, GLdouble y);
+
+GLAPI void GLAPIENTRY glWindowPos2fARB(GLfloat x, GLfloat y);
+
+GLAPI void GLAPIENTRY glWindowPos2iARB(GLint x, GLint y);
+
+GLAPI void GLAPIENTRY glWindowPos2sARB(GLshort x, GLshort y);
+
+GLAPI void GLAPIENTRY glWindowPos2dvARB(const GLdouble *p);
+
+GLAPI void GLAPIENTRY glWindowPos2fvARB(const GLfloat *p);
+
+GLAPI void GLAPIENTRY glWindowPos2ivARB(const GLint *p);
+
+GLAPI void GLAPIENTRY glWindowPos2svARB(const GLshort *p);
+
+GLAPI void GLAPIENTRY glWindowPos3dARB(GLdouble x, GLdouble y, GLdouble z);
+
+GLAPI void GLAPIENTRY glWindowPos3fARB(GLfloat x, GLfloat y, GLfloat z);
+
+GLAPI void GLAPIENTRY glWindowPos3iARB(GLint x, GLint y, GLint z);
+
+GLAPI void GLAPIENTRY glWindowPos3sARB(GLshort x, GLshort y, GLshort z);
+
+GLAPI void GLAPIENTRY glWindowPos3dvARB(const GLdouble *p);
+
+GLAPI void GLAPIENTRY glWindowPos3fvARB(const GLfloat *p);
+
+GLAPI void GLAPIENTRY glWindowPos3ivARB(const GLint *p);
+
+GLAPI void GLAPIENTRY glWindowPos3svARB(const GLshort *p);
+
+#endif /* GL_ARB_window_pos */
 
 
 /**********************************************************************
