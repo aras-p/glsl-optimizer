@@ -258,18 +258,6 @@ static void tdfx_print_vertex( GLcontext *ctx, const tdfxVertex *v )
  * rendering.  These functions are only used when mixed-mode rendering
  * is occurring.
  */
-static void tdfx_draw_quad( tdfxContextPtr fxMesa,
-			    tdfxVertexPtr v0,
-			    tdfxVertexPtr v1,
-			    tdfxVertexPtr v2,
-			    tdfxVertexPtr v3 )
-{
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
-   BEGIN_CLIP_LOOP_LOCKED(fxMesa) {
-      QUAD( v0, v1, v2, v3 );
-   } END_CLIP_LOOP_LOCKED(fxMesa);
-}
-
 static void tdfx_draw_triangle( tdfxContextPtr fxMesa,
 				tdfxVertexPtr v0,
 				tdfxVertexPtr v1,
