@@ -57,7 +57,7 @@ LINK32=link.exe
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
 PostBuild_Desc=Copy import lib and dll
-PostBuild_Cmds=if not exist ..\..\..\lib md ..\..\..\lib	copy Release\GLUT32.LIB ..\..\..\lib	copy Release\GLUT32.DLL ..\..\..\libexec
+PostBuild_Cmds=if not exist ..\..\..\lib md ..\..\..\lib	copy Release\GLUT32.LIB ..\..\..\lib	copy Release\GLUT32.DLL ..\..\..\lib
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "glut - Win32 Debug"
@@ -89,7 +89,7 @@ LINK32=link.exe
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
 PostBuild_Desc=Copy import lib and dll
-PostBuild_Cmds=if not exist ..\..\..\lib md ..\..\..\lib	copy Debug\GLUT32.LIB ..\..\..\lib	copy Debug\GLUT32.DLL ..\..\..\libexec
+PostBuild_Cmds=if not exist ..\..\..\lib md ..\..\..\lib	copy Debug\GLUT32.LIB ..\..\..\lib	copy Debug\GLUT32.DLL ..\..\..\lib
 # End Special Build Tool
 
 !ENDIF 

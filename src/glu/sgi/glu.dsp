@@ -58,7 +58,7 @@ LINK32=link.exe
 SOURCE="$(InputPath)"
 PreLink_Cmds=cl @ccRelease.txt	LIB /OUT:Release/GLUCC.LIB @ccReleaseObj.txt
 PostBuild_Desc=Copy import lib and dll
-PostBuild_Cmds=if not exist ..\..\..\lib md ..\..\..\lib	if not exist ..\..\..\libexec md ..\..\..\libexec	copy Release\GLU32.LIB ..\..\..\lib	copy Release\GLU32.DLL ..\..\..\libexec
+PostBuild_Cmds=if not exist ..\..\..\lib md ..\..\..\lib	copy Release\GLU32.LIB ..\..\..\lib	copy Release\GLU32.DLL ..\..\..\lib
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "glu - Win32 Debug"
@@ -91,7 +91,7 @@ SOURCE="$(InputPath)"
 PreLink_Desc=C++ compilations
 PreLink_Cmds=cl @ccDebug.txt	LIB /OUT:Debug/GLUCC.LIB @ccDebugObj.txt
 PostBuild_Desc=Copy import lib and dll
-PostBuild_Cmds=if not exist ..\..\..\lib md ..\..\..\lib	if not exist ..\..\..\libexec md ..\..\..\libexec	copy Debug\GLU32.LIB ..\..\..\lib	copy Debug\GLU32.DLL ..\..\..\libexec
+PostBuild_Cmds=if not exist ..\..\..\lib md ..\..\..\lib	copy Debug\GLU32.LIB ..\..\..\lib	copy Debug\GLU32.DLL ..\..\..\lib
 # End Special Build Tool
 
 !ENDIF 

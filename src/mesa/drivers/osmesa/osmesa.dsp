@@ -56,7 +56,7 @@ LINK32=link.exe
 # ADD LINK32 msvcrt.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386 /nodefaultlib /out:"Release/OSMESA32.DLL"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=copy Release\OSMESA32.LIB ..\..\..\..\lib	copy Release\OSMESA32.DLL ..\..\..\..\libexec
+PostBuild_Cmds=copy Release\OSMESA32.LIB ..\..\..\..\lib	copy Release\OSMESA32.DLL ..\..\..\..\lib
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "osmesa - Win32 Debug"
@@ -86,7 +86,7 @@ LINK32=link.exe
 # ADD LINK32 msvcrtd.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /nodefaultlib /out:"Debug/OSMESA32.DLL" /pdbtype:sept
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=copy Debug\OSMESA32.LIB ..\..\..\..\lib	copy Debug\OSMESA32.DLL ..\..\..\..\libexec
+PostBuild_Cmds=copy Debug\OSMESA32.LIB ..\..\..\..\lib	copy Debug\OSMESA32.DLL ..\..\..\..\lib
 # End Special Build Tool
 
 !ENDIF 

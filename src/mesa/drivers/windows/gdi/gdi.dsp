@@ -57,7 +57,7 @@ LINK32=link.exe
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
 PostBuild_Desc=Copy import lib and dll
-PostBuild_Cmds=if not exist ..\..\..\..\..\lib md ..\..\..\..\..\lib	if not exist ..\..\..\..\..\libexec md ..\..\..\..\..\libexec	copy Release\OPENGL32.LIB ..\..\..\..\..\lib	copy Release\OPENGL32.DLL ..\..\..\..\..\libexec
+PostBuild_Cmds=if not exist ..\..\..\..\..\lib md ..\..\..\..\..\lib	copy Release\OPENGL32.LIB ..\..\..\..\..\lib	copy Release\OPENGL32.DLL ..\..\..\..\..\lib
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "gdi - Win32 Debug"
@@ -88,7 +88,7 @@ LINK32=link.exe
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
 PostBuild_Desc=Copy import lib and dll
-PostBuild_Cmds=if not exist ..\..\..\..\..\lib md ..\..\..\..\..\lib	if not exist ..\..\..\..\..\libexec md ..\..\..\..\..\libexec	copy Debug\OPENGL32.LIB ..\..\..\..\..\lib	copy Debug\OPENGL32.DLL ..\..\..\..\..\libexec
+PostBuild_Cmds=if not exist ..\..\..\..\..\lib md ..\..\..\..\..\lib	copy Debug\OPENGL32.LIB ..\..\..\..\..\lib	copy Debug\OPENGL32.DLL ..\..\..\..\..\lib
 # End Special Build Tool
 
 !ENDIF 
