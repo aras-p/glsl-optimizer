@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.35 2002/10/29 20:29:01 brianp Exp $ */
+/* $Id: t_imm_api.c,v 1.36 2002/11/25 13:55:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -127,6 +127,11 @@ _tnl_save_Begin( GLenum mode )
    }
 #endif
 
+   if (IM->Count > IMM_MAXDATA-8) {
+      _tnl_flush_immediate( IM );
+      IM = TNL_CURRENT_IM(ctx);
+   }
+
    /* Check for and flush buffered vertices from internal operations.
     */
    if (IM->SavedBeginState) {
@@ -193,6 +198,15 @@ _tnl_Begin( GLenum mode )
 
    if (ctx->NewState)
       _mesa_update_state(ctx);
+
+   {
+      struct immediate *IM = TNL_CURRENT_IM(ctx);
+      if (IM->Count > IMM_MAXDATA-8) {
+	 _tnl_flush_immediate( IM );
+	 IM = TNL_CURRENT_IM(ctx);
+      }
+   }
+
 
    {
       struct immediate *IM = TNL_CURRENT_IM(ctx);
