@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.5 1999/11/22 21:52:23 brianp Exp $ */
+/* $Id: glxapi.c,v 1.6 1999/11/23 19:54:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -358,6 +358,164 @@ Display *glXGetCurrentDisplay( void )
 #endif
       return Fake_glXGetCurrentDisplay();
 }
+
+
+
+/*
+ * GLX 1.3 and later
+ * XXX these are just no-op stubs for now.
+ */
+GLXFBConfig glXChooseFBConfig( Display *dpy, int screen,
+                               const int *attribList, int *nitems )
+{
+   (void) dpy;
+   (void) screen;
+   (void) attribList;
+   (void) nitems;
+   return 0;
+}
+
+
+int glXGetFBConfigAttrib( Display *dpy, GLXFBConfig config,
+                          int attribute, int *value )
+{
+   (void) dpy;
+   (void) config;
+   (void) attribute;
+   (void) value;
+   return 0;
+}
+
+
+XVisualInfo *glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config )
+{
+   (void) dpy;
+   (void) config;
+   return 0;
+}
+
+
+GLXWindow glXCreateWindow( Display *dpy, GLXFBConfig config, Window win,
+                           const int *attribList )
+{
+   (void) dpy;
+   (void) config;
+   (void) win;
+   (void) attribList;
+   return 0;
+}
+
+
+void glXDestroyWindow( Display *dpy, GLXWindow window )
+{
+   (void) dpy;
+   (void) window;
+   return;
+}
+
+
+GLXPixmap glXCreatePixmap( Display *dpy, GLXFBConfig config, Pixmap pixmap,
+                           const int *attribList )
+{
+   (void) dpy;
+   (void) config;
+   (void) pixmap;
+   (void) attribList;
+   return 0;
+}
+
+
+void glXDestroyPixmap( Display *dpy, GLXPixmap pixmap )
+{
+   (void) dpy;
+   (void) pixmap;
+   return;
+}
+
+
+GLXPbuffer glXCreatePbuffer( Display *dpy, GLXFBConfig config,
+                             const int *attribList )
+{
+   (void) dpy;
+   (void) config;
+   (void) attribList;
+   return 0;
+}
+
+
+void glXDestroyPbuffer( Display *dpy, GLXPbuffer pbuf )
+{
+   (void) dpy;
+   (void) pbuf;
+}
+
+
+void glXQueryDrawable( Display *dpy, GLXDrawable draw, int attribute,
+                       unsigned int *value )
+{
+   (void) dpy;
+   (void) draw;
+   (void) attribute;
+   (void) value;
+}
+
+
+GLXContext glXCreateNewContext( Display *dpy, GLXFBConfig config,
+                                int renderType, GLXContext shareList,
+                                Bool direct )
+{
+   (void) dpy;
+   (void) config;
+   (void) renderType;
+   (void) shareList;
+   (void) direct;
+   return 0;
+}
+
+
+Bool glXMakeContextCurrent( Display *dpy, GLXDrawable draw, GLXDrawable read,
+                            GLXContext ctx )
+{
+   (void) dpy;
+   (void) draw;
+   (void) read;
+   (void) ctx;
+   return 0;
+}
+
+
+GLXDrawable glXGetCurrentReadDrawable( void )
+{
+   return 0;
+}
+
+
+int glXQueryContext( Display *dpy, GLXContext ctx, int attribute, int *value )
+{
+   (void) dpy;
+   (void) ctx;
+   (void) attribute;
+   (void) value;
+   return 0;
+}
+
+
+void glXSelectEvent( Display *dpy, GLXDrawable drawable, unsigned long mask )
+{
+   (void) dpy;
+   (void) drawable;
+   (void) mask;
+}
+
+
+void glXGetSelectedEvent( Display *dpy, GLXDrawable drawable,
+                          unsigned long *mask )
+{
+   (void) dpy;
+   (void) drawable;
+   (void) mask;
+}
+
 
 
 
