@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.105 2003/03/01 01:50:22 brianp Exp $ */
+/* $Id: mtypes.h,v 1.106 2003/03/02 19:31:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1842,9 +1842,6 @@ struct __GLcontextRec {
 /* The string names for GL_POINT, GL_LINE_LOOP, etc */
 extern const char *_mesa_prim_name[GL_POLYGON+4];
 
-#ifndef MESA_DEBUG
-#define MESA_DEBUG
-#endif
 
 #ifdef MESA_DEBUG
 extern int MESA_VERBOSE;
