@@ -126,6 +126,11 @@ static int r300_get_primitive_type(r300ContextPtr rmesa,
 	        type=R300_VAP_VF_CNTL__PRIM_QUAD_STRIP;
 		min_vertices=4;
       		break;
+	case GL_POLYGON:
+		name="P";
+			type=R300_VAP_VF_CNTL__PRIM_POLYGON;
+		min_vertices=3;
+		break;
    	default:
  		fprintf(stderr, "%s:%s Do not know how to handle primitive %02x - help me !\n",
 			__FILE__, __FUNCTION__,
@@ -136,7 +141,7 @@ static int r300_get_primitive_type(r300ContextPtr rmesa,
    #if 0
    fprintf(stderr, "[%d-%d]%s ", start, end, name);
    #endif
-   if(start+min_vertices>=end){
+   if(start+min_vertices>end){
 	static int warn_once=1;
 	if(warn_once){
 		fprintf(stderr, "%s:%s Not enough vertices to draw primitive %02x - help me !\n",
