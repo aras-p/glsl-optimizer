@@ -1,0 +1,217 @@
+<HTML>
+
+<TITLE>Mesa fbdev/DRI Environment</TITLE>
+
+<BODY text="#000000" bgcolor="#55bbff" link="#111188">
+
+<center><H1>Mesa fbdev/DRI Drivers</H1></center>
+
+
+<H1>1. Introduction</H1>
+
+<p>
+The fbdev/DRI sub-project within Mesa brings hardware accelerated OpenGL
+rendering to the Linux fbdev environment.
+The X Window System / XFree86 is not needed.
+</p>
+
+<p>
+Basically, the <a href="http://dri.sf.net/">DRI</a> drivers for hardware
+accelerated OpenGL for XFree86 have been ported to fbdev so that X is
+not needed.
+This means fbdev/DRI works in full-screen mode only.
+</p>
+
+<p>
+DRI driver writers may find this simplified environment easier to work in,
+compared to the full XFree86/DRI environment.
+</p>
+
+<p>
+Much of the work for this project has been done by Jon Smirl and
+Keith Whitwell.
+</p>
+
+<p>
+To use fbdev/DRI, you'll need a Linux 2.4 or 2.6 kernel.
+</p>
+
+<p>
+The fbdev/DRI Mesa code is in the Mesa CVS trunk (to be released as Mesa
+5.1 in the future).
+</p>
+
+
+<h1>2. Compilation</h1>
+
+<p>
+Assuming you're starting with a fresh Mesa CVS checkout, do the following:
+</p>
+<pre>
+   cd Mesa-newtree
+   cp Makefile.X11 Makefile     # or use a symlink
+   make linux-solo
+</pre>
+
+<p>
+When this is finished, check the <code>Mesa-newtree/lib</code> directory
+to verify that the following files were made:
+</p>
+
+<ul>
+<li><code>libGL.so.1.2</code> - the client-side OpenGL library
+    (and a few symlinks to it).
+<li><code>libGLU.so.1.1</code> - the GLU library (and a few symlinks to it).
+<li><code>libglut.so.3.7</code> - the GLUT library (and a few symlinks to it).
+<li><code>mga_dri.so</code> - DRI driver for Matrox G200/G400 cards.
+<li><code>r128_dri.so</code> - DRI driver for ATI Rage 128 cards.
+<li><code>r200_dri.so</code> - DRI driver for ATI R200 Radeon cards.
+<li><code>radeon_dri.so</code> - DRI driver for original ATI Radeon cards.
+<li><code>fb_dri.so</code> - software-only fbdev driver.
+<li><code>miniglx.conf</code> - configuration file for the MiniGLX interface
+</ul>
+
+
+<h1>3. Using fbdev/DRI</h1>
+
+<p>
+If XFree86 is currently running, exit/stop the X server so you're
+working from the console.
+</p>
+
+
+<h2>3.1 Kernel Modules</h2>
+
+<p>
+You'll need to load kernel modules specific to your graphics hardware.
+The following kernel modules should be included with your kernel.
+</p>
+
+
+<p>
+If you have ATI Radeon/R200 hardware, run as root:
+</p>
+<pre>
+   modprobe agpgart            # the AGP GART module
+   modprobe radeonfb           # the Radeon fbdev driver
+   modprobe radeon             # the Radeon DRI kernel module
+</pre>
+
+<p>
+If you have ATI Rage 128 hardware, run as root:
+</p>
+<pre>
+   modprobe agpgart            # the AGP GART module
+   modprobe aty128fb           # the Rage 128 fbdev driver
+   modprobe r128               # the Rage 128 DRI kernel module
+</pre>
+
+<p>
+If you have Matrox G200/G400 hardware, run as root:
+</p>
+<pre>
+   modprobe agpgart            # the AGP GART module
+   modprobe mgafb              # the Matrox fbdev driver
+   modprobe mga                # the Matrox DRI kernel module
+</pre>
+
+<p>
+Then run <code>lsmod</code> to be sure the modules are loaded.
+For a Radeon card, you should see something like this:
+</p>
+<pre>
+Module                  Size  Used by    Not tainted
+radeon                110308   0  (unused)
+radeonfb               21900   0  (unused)
+agpgart                43072   1 
+</pre>
+
+
+<h2>3.2 Configuration File</h2>
+
+<p>
+The <code>Mesa-newtree/lib/miniglx.conf</code> file should be installed
+in <code>/etc/</code>.
+</p>
+
+<p>
+Edit <code>/etc/miniglx.conf</code> to be sure it's set up correctly
+for your hardware.
+Comments in the file explain the options.
+</p>
+
+
+<h2>3.3 Running fbdev/DRI Programs</h2>
+
+<p>
+Make sure your LD_LIBRARY_PATH environment variable is set to the
+<code>Mesa-newtree/lib/</code> directory.
+</p>
+
+<p>
+Change to the <code>Mesa-newtree/progs/miniglx/</code> directory and
+start the sample_server program in the background:
+</p>
+<pre>
+   ./sample_server &
+</pre>
+
+<p>
+Then try running the <code>miniglxtest</code> program:
+</p>
+<pre>
+   ./miniglxtest
+</pre>
+<p>
+You should see a rotating quadrilateral which changes color as it rotates.
+It will exit automatically after a bit.
+</p>
+
+<p>
+If you run other tests in the miniglx/ directory, you may want to run
+them from a remote shell so that you can stop them with ctrl-C.
+</p>
+
+
+
+<h1>4.0 Troubleshooting</h1>
+
+<p>
+If you try to run miniglxtest and get the following:
+</p>
+<pre>
+   [miniglx] failed to probe chipset
+   connect: Connection refused
+   server connection lost
+</pre>
+<p>
+It means that the sample_server process is not running.
+</p>
+
+
+
+
+<h1>5.0 Programming Information</h1>
+
+<p>
+The full OpenGL API is available with fbdev/DRI.
+</p>
+
+<p>
+OpenGL/Mesa is interfaced to fbdev via the <a href="MiniGLX.html">MiniGLX</a>
+interface.
+MiniGLX is a subset of Xlib and GLX API functions which provides just
+enough functionality to setup OpenGL rendering and respond to simple
+input events.
+</p>
+
+<p>
+Since MiniGLX is a subset of the usual Xlib and GLX APIs, programs written
+to the MiniGLX API can also be run on full Xlib/GLX implementations.
+This allows some degree of flexibility for software development and testing.
+</p>
+
+
+
+</body>
+</html>

@@ -1,0 +1,547 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Mini GLX Specification</title>
+</head>
+<body>
+<h1>
+<center>Mini GLX Specification</center>
+</h1>
+<h2>
+<center>Tungsten Graphics, Inc.<br>
+<br>
+January 20, 2003<br>
+<br>
+</center>
+</h2>
+<p> Copyright &copy; 2002-2003 by Tungsten Graphics, Inc., Cedar Park,
+Texas. All Rights Reserved. <br>
+<br>
+Permission is granted to make and distribute verbatim copies of this
+document provided the copyright notice and this permission notice are
+preserved on all copies.<br>
+<br>
+</p>
+<h1>1. Introduction</h1>
+<p>The Mini GLX interface facilitates OpenGL rendering on embedded
+devices. The interface is a subset of the GLX interface, plus a minimal
+set of Xlib-like functions.</p>
+<p>Programs written to the Mini GLX specification should run unchanged
+on systems with the X Window System and the GLX extension. The intention
+is to allow flexibility for prototyping and testing.</p>
+<p>This document serves as both the reference guide and programming
+guide for Mini GLX.<br>
+<br>
+</p>
+<h1>2. Mini GLX Concepts</h1>
+<p>The OpenGL specification does not describe how OpenGL rendering
+contexts and drawing surfaces (i.e. the frame buffer) are created and
+managed. Rather, this is handled by an OpenGL window system interface,
+such as Mini GLX.</p>
+<p>There are three main datatypes or resources managed by Mini GLX. The
+resources and their corresponding GLX or Xlib data types are:</p>
+<table cellspacing="10" align="center">
+  <tbody>
+    <tr>
+      <td><u>Resource</u></td>
+      <td><u>Data type</u></td>
+    </tr>
+    <tr>
+      <td>pixel formats</td>
+      <td>X Visual and XVisualInfo</td>
+    </tr>
+    <tr>
+      <td>drawing surfaces</td>
+      <td>X Window or GLXDrawable</td>
+    </tr>
+    <tr>
+      <td>rendering contexts</td>
+      <td>GLXContext</td>
+    </tr>
+  </tbody>
+</table>
+<p>Pixel formats or X Visuals describe the per-pixel attributes of the
+frame buffer.  For example, bits per color component, Z buffer size,
+stencil size, TrueColor vs PseudoColor, etc.</p>
+<p>Drawing surfaces or X Windows typically describe a spatial
+allocation of the frame buffer (i.e. the position and size of a
+rectangular region of pixels).  Since MiniGLX doesn't really support a
+window system, the window is effectively the entire frame buffer.</p>
+<p>A rendering context represents the current OpenGL state such as
+current drawing color, line width, blending mode, texture parameters,
+etc. Several rendering contexts can be created but only one can be in
+use at any given time.</p>
+<p>The Mini GLX interface provides all the functions needed for
+choosing pixel formats, create drawing surfaces, creating rendering
+contexts and binding rendering contexts to drawing surfaces.<br>
+<br>
+</p>
+<h1>3. Using Mini GLX</h1>
+<p>To use the Mini GLX interface in your application, include the
+GL/miniglx.h header file at compile time:</p>
+<blockquote><code>	#include &lt;GL/miniglx.h&gt;<br>
+  </code></blockquote>
+<code></code>Applications should link with libGL.so (i.e. <code>gcc
+myprogram.o -lGL -o myprogram</code>). &nbsp;libGL.so implements the
+MiniGLX API functions and, in turn, loads a hardware-specific device
+driver (such as <code>radeon_dri.so</code>) at runtime. &nbsp;The
+environment variable <code>LIBGL_DRIVERS_PATH</code> should name the
+directory where these modules are located.<br>
+<br>
+Prior to running a MiniGXL application, the following kernel modules
+must be installed:<br>
+<br>
+<div style="margin-left: 40px;"> agpgart.o<br>
+radeonfb.o &nbsp;(assuming Radeon hardware)<br>
+radeon.o &nbsp;(assuming Radeon hardware)<br>
+</div>
+<code></code> <br>
+Finally, MiniGLX reads a configuration file (by default,<code>
+/etc/miniglx.conf</code>) to determine basic configuration information.
+&nbsp;The configuration file may also be located in the directory
+specified by the <code>MINIGLX_CONF</code> environment variable).<br>
+<br>
+The remainder of this section describes the MiniGLX API functions.<br>
+<br>
+<h2>3.1 Initialization</h2>
+<p>The XOpenDisplay function is used to initialize the graphics system:</p>
+<blockquote>
+  <pre>Display *XOpenDisplay(const char *displayname)<br></pre>
+</blockquote>
+<p>The <code>displayName</code> parameter is currently ignored in Mini
+GLX. It is recommended that <code>NULL</code> be passed as the<code>displayName</code>
+parameter.</p>
+<p>If XOpenDisplay is able to initialize the graphics system a pointer
+to a Display will be returned.  Otherwise, NULL will be returned.</p>
+<h2>3.2 Choosing a Visual</h2>
+<p>A visual (i.e. pixel format) must be chosen before a drawing surface
+or rendering context can be created.  This is done with the
+glXChooseVisual function:</p>
+<blockquote>
+  <pre>XVisualInfo *glXChooseVisual(Display *dpy, int screen, const int *attribList)<br></pre>
+</blockquote>
+<p><code>dpy</code> is a pointer to the display returned by
+XOpenDisplay. </p>
+<p><code>screen</code> is currently ignored by Mini GLX and should be
+zero. </p>
+<p><code>attribList</code> is a list of GLX attributes which describe
+the desired pixel format.  It is terminated by the token <code>None</code>.
+The attributes are as follows:</p>
+<blockquote>
+  <dl>
+    <dt><code>GLX_USE_GL</code></dt>
+    <dd>This attribute should always be present in order to maintain
+compatibility with GLX.</dd>
+    <dt><code>GLX_RGBA</code></dt>
+    <dd>If present, only RGBA pixel formats will be considered.
+Otherwise, only color index formats are considered.</dd>
+    <dt><code>GLX_DOUBLEBUFFER</code></dt>
+    <dd>if present, only double-buffered pixel formats will	be chosen.</dd>
+    <dt><code>GLX_RED_SIZE n</code></dt>
+    <dd>Must be followed by a non-negative integer indicating the
+minimum number of bits per red pixel component that is acceptable.</dd>
+    <dt><code>GLX_GREEN_SIZE n</code></dt>
+    <dd>Must be followed by a non-negative integer indicating the
+minimum number of bits per green pixel component that is acceptable.</dd>
+    <dt><code>GLX_BLUE_SIZE n</code></dt>
+    <dd>Must be followed by a non-negative integer indicating the
+minimum number of bits per blue pixel component that is acceptable.</dd>
+    <dt><code>GLX_ALPHA_SIZE n</code></dt>
+    <dd>Must be followed by a non-negative integer indicating the
+minimum number of bits per alpha pixel component that is acceptable.</dd>
+    <dt><code>GLX_STENCIL_SIZE n</code></dt>
+    <dd>Must be followed by a non-negative integer indicating the
+minimum number of bits per stencil value that is acceptable.</dd>
+    <dt><code>None</code></dt>
+    <dd>This token is used to terminate the attribute list.</dd>
+  </dl>
+</blockquote>
+<p>glXChooseVisual will return a pointer to an XVisualInfo object which
+most closely matches the requirements of the attribute list.  If there
+is no visual which matches the request, NULL will be returned.</p>
+<p>Note that visuals with accumulation buffers and depth buffers are
+not available.<br>
+<br>
+</p>
+<h2>3.3 Creating a Drawing Surface</h2>
+<p>Drawing surfaces are created as X windows. &nbsp;For Mini GLX,
+windows are <i>full-screen</i>; they cover the entire frame buffer.
+&nbsp;Also, Mini GLX imposes a limit of one window.  A second window
+cannot be created until the first one is destroyed.</p>
+<h3>3.3.1 Window Creation</h3>
+<p>The XCreateWindow function is used to create a drawing surface:</p>
+<blockquote>
+  <pre>Window XCreateWindow( Display *display,<br>                      Window parent,<br>                      int x, int y,<br>                      unsigned int width, unsigned int height,<br>                      unsigned int borderWidth,<br>                      int depth,<br>                      unsigned int class,<br>                      Visual *visual,<br>                      unsigned long valuemask,<br>                      XSetWindowAttributes *attributes )<br></pre>
+</blockquote>
+<p>The parameters are as follows:</p>
+<blockquote>
+  <dl>
+    <dt><code>display</code></dt>
+    <dd>A Display pointer, as returned by XOpenDisplay.</dd>
+    <dt><code>parent</code></dt>
+    <dd>The parent window for the new window.  For Mini GLX, this
+should be<code>RootWindow(dpy, 0)</code>.</dd>
+    <dt><code>x, y</code></dt>
+    <dd>The position of the window.  For Mini GLX, both values should
+be zero.</dd>
+    <dt><code>width, height</code></dt>
+    <dd>The size of the window.  For Mini GLX, this specifies the
+desired screen size such as 1024, 768 or 1280, 1024.</dd>
+    <dt><code>borderWidth</code></dt>
+    <dd>This parameter should be zero.</dd>
+    <dt><code>depth</code></dt>
+    <dd>The pixel depth for the window.  For Mini GLX this should be
+the depth found in the XVisualInfo object returned by <code>glxChooseVisual</code>.</dd>
+    <dt><code>class</code></dt>
+    <dd>The window class.  For Mini GLX this value should be <code>InputOutput</code>.</dd>
+    <dt><code>visual</code></dt>
+    <dd>This parameter should be the <code>visual</code> field of the <code>XVisualInfo</code>
+object returned by <code>glxChooseVisual</code>.</dd>
+    <dt><code>valuemask</code></dt>
+    <dd>This parameter indicates which fields of the <code>XSetWindowAttributes</code>
+are to be used. For Mini GLX this is typically the bitmask<code>CWBackPixel
+| CWBorderPixel | CWColormap</code>.</dd>
+    <dt><code>attributes</code></dt>
+    <dd>Initial window attributes. Of the fields in the <code>XSetWindowAttributes</code>
+structure, the<code>background_pixel</code>, <code>border_pixel</code>
+and <code>colormap</code> fields should be set. &nbsp;See the discussion
+below regarding colormaps.</dd>
+  </dl>
+</blockquote>
+<p><code>XCreateWindow</code> will return a window handle if it succeeds
+or zero if it fails.</p>
+<h3>3.3.2 Window Mapping</h3>
+<p>To display the window the XMapWindow function must be called:</p>
+<blockquote>
+  <pre>void XMapWindow(Display *dpy, Window w)</pre>
+</blockquote>
+<p>This function does nothing in Mini GLX but is required for Xlib/GLX
+compatibility</p>
+<h3>3.3.3 Colormaps<br>
+</h3>
+<p>Xlib requires specification of a colormap when creating a window.
+&nbsp;For purposes of interoperability, Mini GLX requires this as well,
+though the colormap is not actually used. &nbsp;The XCreateColormap
+function is used to create a colormap:</p>
+<blockquote><code>Colormap XCreateColormap(Display *dpy, Window window,
+Visual *visual, int alloc)</code><br>
+  <code></code></blockquote>
+<p>The parameters are as follows:<br>
+</p>
+<blockquote>
+  <dl>
+    <dt><code>dpy</code></dt>
+    <dd>The display handle as returned by XOpenDisplay.</dd>
+    <dt><code>window</code></dt>
+    <dd> This parameter is ignored by Mini GLX but should be the value
+returned by the <code>RootWindow(dpy, 0)</code> macro.<br>
+    </dd>
+    <dt><code>visual</code></dt>
+    <dd>This parameter is ignored by Mini GLX but should be the visual
+field of the XVisualInfo object returned by glXChooseVisual. </dd>
+    <dt><code>alloc</code></dt>
+    <dd>This parameter is ignored by Mini GLX but should be set to <code>AllocNone</code>.</dd>
+  </dl>
+</blockquote>
+<br>
+<h2>3.4 Creating a Rendering Context</h2>
+<p>An OpenGL rendering context is created with the <code>glXCreateContext</code>
+function:</p>
+<blockquote>
+  <pre>GLXContext glXCreateContext(Display *dpy, XVisualInfo *visInfo, GLXContext shareList, Bool direct)<br></pre>
+</blockquote>
+<p>The parameters are as follows:</p>
+<blockquote>
+  <dl>
+    <dt><code>dpy</code></dt>
+    <dd>The display handle as returned by XOpenDisplay.</dd>
+    <dt><code>visInfo</code></dt>
+    <dd>The visual as returned by glXChooseVisual.</dd>
+    <dt><code>shareList</code></dt>
+    <dd>If non-zero, texture objects and display lists are shared with
+the named rendering context. If zero, texture objects and display lists
+will (initially) be private to this context. They may be shared when a
+subsequent context is created.</dd>
+    <dt><code>direct</code></dt>
+    <dd>Specifies whether direct or indirect rendering is desired. For
+Mini GLX this value is ignored but it should be set to <code>True</code>.</dd>
+  </dl>
+</blockquote>
+<p><code>glXCreateContext</code> will return a GLXContext handle if it
+succeeds or zero if it fails due to invalid parameter or insufficient
+resources.<br>
+<br>
+</p>
+<h2>3.5 Binding a Rendering Context</h2>
+<p>The final step before beginning OpenGL rendering is to bind (i.e.
+activate) a rendering context and drawing surface with the
+glXMakeCurrent function:</p>
+<blockquote>
+  <pre>Bool glXMakeCurrent(Display *dpy, GLXDrawable drawable, GLXContext ctx)<br></pre>
+</blockquote>
+<p>The parameters are as follows:</p>
+<blockquote>
+  <dl>
+    <dt><code>dpy</code></dt>
+    <dd>The display handle, as returned by XOpenDisplay.</dd>
+    <dt><code>drawable</code></dt>
+    <dd>The window or drawable to bind to the rendering context. This
+should be the value returned by XCreateWindow.</dd>
+    <dt><code>ctx</code></dt>
+    <dd>The rendering context to bind, as returned by glXCreateContext.</dd>
+  </dl>
+</blockquote>
+<p>If glXMakeCurrent succeeds True is returned.  Otherwise False is
+returned to indicate an invalid display, window or context parameter.</p>
+<p>After the rendering context has been bound to the drawing surface
+OpenGL rendering can begin.</p>
+<p>The current rendering context may be unbound by calling
+glXMakeCurrent with the window and context parameters set to zero.</p>
+<p>An application may create any number of rendering contexts and bind
+them as needed. Note that binding a rendering context is generally not a
+light-weight operation. &nbsp;Most simple OpenGL applications create
+only one rendering context.<br>
+<br>
+</p>
+<h2>3.6 Color Buffer Swapping</h2>
+<p>A double buffered window has two color buffers: a front buffer and a
+back buffer.  Normally, rendering is directed to the back buffer while
+the front buffer is displayed.  When rendering of a frame is finished
+the front and back buffers are swapped to provide the illusion of
+instanteous screen updates.</p>
+<p>The color buffers for a particular window (i.e. drawable) may be
+swapped with the glXSwapBuffers command:</p>
+<blockquote>
+  <pre>void glXSwapBuffers(Display *dpy, GLXDrawable drawable)<br></pre>
+</blockquote>
+Any pending rendering commands will be completed before the buffer swap
+takes place.<br>
+<br>
+Calling glXSwapBuffers on a window which is single-buffered has no
+effect.<br>
+<br>
+<h2>3.7 Releasing Resources</h2>
+<h3>3.7.1 Releasing Rendering Contexts</h3>
+<p>A rendering context may be destroyed by calling glXDestroyContext:</p>
+<blockquote>
+  <pre>void glXDestroyContext(Display *dpy, GLXContext ctx)<br></pre>
+</blockquote>
+<h3>3.7.2 Releasing Windows</h3>
+<p>A window may be destroyed by calling XDestroyWindow:</p>
+<blockquote>
+  <pre>void XDestroyWindow(Display *dpy, Window window)<br></pre>
+</blockquote>
+<h3>3.7.3 Releasing Visuals</h3>
+<p>An XVisualInfo object may be freed by calling XFree:</p>
+<blockquote>
+  <pre>void XFree(void *data)<br></pre>
+</blockquote>
+<h3>3.7.4 Releasing Colormaps</h3>
+<p>A colormap may be freed by calling XFreeColormap:</p>
+<blockquote>
+  <pre>void XFreeColormap(Display *dpy, Colormap colormap)<br></pre>
+</blockquote>
+<h3>3.7.4 Releasing Display Resources</h3>
+<p>When the application is about to exit, the resources associated with
+the graphics system can be released by calling XCloseDisplay:</p>
+<blockquote>
+  <pre>void XCloseDisplay(Display *dpy)<br></pre>
+</blockquote>
+<p>The display handle becomes invalid at this point.<br>
+<br>
+</p>
+<h2>3.8 Query Functions</h2>
+<h3>3.8.1 Querying Available Visuals</h3>
+A list of all available visuals can be obtained with the XGetVisualInfo
+function:<br>
+<br>
+<div style="margin-left: 40px;"><code>XVisualInfo
+*XGetVisualInfo(Display *dpy, long vinfo_mask, XVisualInfo
+*vinfo_template, int *nitems_return)<br>
+</code></div>
+<br>
+The parameters are as follows:<br>
+<blockquote>
+  <dl>
+    <dt><code>dpy</code></dt>
+    <dd>The display handle, as returned by XOpenDisplay.</dd>
+    <dt><code>vinfo_mask</code></dt>
+    <dd>A bitmask indicating which fields of the vinfo_template are to
+be matched. &nbsp;The value must be VisualScreenMask.</dd>
+    <dt><code>vinfo_template</code></dt>
+    <dd>A template whose fields indicate which visual attributes must
+be matched by the results. &nbsp;The screen field of this structure must
+be zero.</dd>
+    <dt><code>nitems_return</code></dt>
+    <dd>Returns the number of visuals returned. </dd>
+  </dl>
+</blockquote>
+The return value is the address of an array of all available visuals.<br>
+<br>
+An example of using XGetVisualInfo to get all available visuals follows:<br>
+<br>
+<div style="margin-left: 40px;"><code>XVisualInfo visTemplate, *results;</code><br>
+<code>int numVisuals;</code><br>
+<code>Display *dpy = XOpenDisplay(NULL);</code><br>
+<code>visTemplate.screen = 0;</code><br>
+<code>results = XGetVisualInfo(dpy, VisualScreenMask, &amp;visTemplate,
+&amp;numVisuals);</code><br>
+<code></code></div>
+<br>
+<h3>3.8.2 Querying Visual Attributes</h3>
+<p>The GLX attributes of an X visual may be queried with the
+glXGetConfig function:</p>
+<blockquote>
+  <pre>int glXGetConfig(Display *dpy, XVisualInfo *vis, int attribute, int *value)<br></pre>
+</blockquote>
+<p>The parameters are as follows:</p>
+<blockquote>
+  <dl>
+    <dt><code>dpy</code></dt>
+    <dd>The display handle, as returned by XOpenDisplay.</dd>
+    <dt><code>vis</code></dt>
+    <dd>The visual, as returned by glXChooseVisual.</dd>
+    <dt><code>attribute</code></dt>
+    <dd>The attribute to query.  The attributes are listed below.</dd>
+    <dt><code>value</code></dt>
+    <dd>Pointer to an integer in which the result of the query will be
+stored. </dd>
+  </dl>
+</blockquote>
+<p>The return value will be zero if no error occurs.<code>
+&nbsp;GLX_INVALID_ATTRIBUTE</code> will be returned if the attribute
+parameter is invalid.<code> &nbsp;GLX_BAD_VISUAL</code> will be returned
+if the XVisualInfo parameter is invalid.</p>
+<p>The following attributes may be queried:</p>
+<blockquote>
+  <dl>
+    <dt><code>GLX_USE_GL</code></dt>
+    <dd>The result will be <code>True</code> or <code>False</code> to
+indicate if OpenGL rendering is supported with the visual.  Mini GLX
+always return <code>True</code>.</dd>
+    <dt><code>GLX_RGBA</code></dt>
+    <dd>The result will be <code>True</code> for RGBA visuals or <code>False</code>
+for color index visuals.</dd>
+    <dt><code>GLX_DOUBLEBUFFER</code></dt>
+    <dd>The result will be <code>True</code> if the visual has two
+color buffers or <code>False</code> if the visual has one color buffer.</dd>
+    <dt><code>GLX_RED_SIZE</code></dt>
+    <dd>The result will be the number of red bits per pixel.</dd>
+    <dt><code>GLX_GREEN_SIZE</code></dt>
+    <dd>The result will be the number of green bits per pixel.</dd>
+    <dt><code>GLX_BLUE_SIZE</code></dt>
+    <dd>The result will be the number of blue bits per pixel.</dd>
+    <dt><code>GLX_ALPHA_SIZE</code></dt>
+    <dd>The result will be the number of alpha bits per pixel.</dd>
+    <dt><code>GLX_DEPTH_SIZE</code></dt>
+    <dd>The result will be the number of bits per Z value.</dd>
+    <dt><code>GLX_STENCIL_SIZE</code></dt>
+    <dd>The result will be the number of bits per stencil value.<br>
+      <br>
+    </dd>
+  </dl>
+</blockquote>
+<h3>3.8.3 Querying the Current Rendering Context</h3>
+<p>The current rendering context can be queried with
+glXGetCurrentContext: </p>
+<blockquote>
+  <pre>GLXContext glXGetCurrentContext(void)<br></pre>
+</blockquote>
+<p>Zero will be returned if no context is currently bound.<br>
+<br>
+</p>
+<h3>3.8.4 Querying the Current Drawable</h3>
+<p>The current drawable (i.e. window or drawing surface) can be queried
+with glXGetCurrentDrawable:</p>
+<blockquote>
+  <pre>GLXDrawable glXGetCurrentDrawable(void)<br></pre>
+</blockquote>
+<p>Zero will be returned if no drawable is currently bound.<br>
+<br>
+</p>
+<h3>3.8.5 Function Address Queries</h3>
+<p>The glXGetProcAddress function will return the address of any
+available OpenGL or Mini GLX function:</p>
+<blockquote>
+  <pre>void *glXGetProcAddress(const GLubyte *procName)<br></pre>
+</blockquote>
+<p>If <code>procName</code> is a valid function name, a pointer to that
+function will be returned. &nbsp;Otherwise, NULL will be returned.</p>
+<p>The purpose of glXGetProcAddress is to facilitate using future
+extensions to OpenGL or Mini GLX.  If a future version of the library
+adds new extension functions they'll be accessible via
+glXGetProcAddress. The alternative is to hard-code calls to the new
+functions in the application but doing so will prevent linking the
+application with older versions of the library.<br>
+<br>
+</p>
+<h2>3.9 Versioning</h2>
+The Mini GLX version can be queried at run time with glXQueryVersion:
+<blockquote>
+  <pre>Bool glXQueryVersion(Display *dpy, int *major, int *minor)<br></pre>
+</blockquote>
+<p><code>major</code> will be set to the major version number and<code>minor</code>
+will be set to the minor version number.<code>True</code> will be
+returned if the function succeeds. <code>False</code> will be returned
+if the function fails due to invalid parameters. The <code>dpy</code>
+argument is currently ignored, but should be the value returned by
+XOpenDisplay.</p>
+<p>At compile time, the Mini GLX interface version can be tested with
+the MINI_GLX_VERSION_1_<i>x</i> preprocessor tokens. For example, if
+version 1.0 of Mini GLX is supported, then<code> MINI_GLX_VERSION_1_0</code>
+will be defined. If version 1.1 of Mini GLX is supported, then<code>
+MINI_GLX_VERSION_1_1</code> will be defined.</p>
+<p>At the time of writing the current Mini GLX version is 1.0.<br>
+<br>
+</p>
+<h1>4.0 Interoperability with GLX and Xlib</h1>
+While Mini GLX strives to be compatible with GLX and Xlib there are
+some unavoidable differences which must be taken into consideration.<br>
+<h2>4.1 Public vs Private Structures</h2>
+The structure of many X data types is public. &nbsp;For example, the <code>Display</code>
+data type is defined as a structure in /usr/include/X11/Xlib.h and
+programmers may access any fields of that structure at will. &nbsp;Mini
+GLX also defines a Display data type but its fields are hidden and not
+visiblein <code>miniglx.h</code>. &nbsp;Duplicating the Xlib
+declaration for the <code>Display</code> data type in minigl.h would
+require defining a large number of other superfluous Xlib datatypes.<br>
+<br>
+Mini GLX users are discouraged from directly accessing the fields of
+Xlib data types to maximize portability - though this is unavoidable to
+some extent. &nbsp;For example, the <code>XVisualInfo</code> and <code>XSetWindowAtttributes</code>
+data types must be completely public.
+<h2>4.2 Macros</h2>
+In some cases, Xlib defines macros which are meant to be used instead
+of direct structure accesses. &nbsp;For example, the <code>RootWindow(dpy,
+screen)</code> macro returns the root window for a given screen on a
+given display. &nbsp;Unfortunately, macros do nothing to aid in ABI
+compatibility since they are resolved at compile time instead of at
+link/run time.<br>
+<br>
+Mini GLX also defines a <code>RootWindow</code> macro since it's
+essential for creating windows. &nbsp;But the implementation of this
+macro by Xlib and Mini GLX is completely different.<br>
+<h2>4.3 Summary</h2>
+Because Xlib and Mini GLX define data types and macros differently,
+Mini GLX applications must be recompiled when retargeting Mini GLX or
+native Xlib/GLX. &nbsp;That is, applications can't simply be re-linked
+because of ABI incompatibilities.<br>
+<br>
+Nevertheless, the fact that Mini GLX programs can be recompiled for
+Xlib and GLX increases portability and flexibility for testing and
+prototyping.<br>
+<br>
+<h1>5.0 Example Program</h1>
+<p>This section shows an example program which uses the Mini GLX
+interface. The program simply draws several frames of a rotating square.<br>
+</p>
+<p>The program may be compiled for use with Xlib/GLX or Mini GLX by
+setting the <code>USE_MINIGLX</code> token to 0 or 1, respectively.
+&nbsp;Note that the only difference is the header files which are
+included.<br>
+</p>
+<p> </p>
+<pre><code><br></code>#define USE_MINIGLX 1  /* 1 = use Mini GLX, 0 = use Xlib/GLX */<br><br>#include &lt;stdio.h&gt;<br>#include &lt;stdlib.h&gt;<br>#include &lt;GL/gl.h&gt;<br><br>#if USE_MINIGLX<br>#include &lt;GL/miniglx.h&gt;<br>#else<br>#include &lt;GL/glx.h&gt;<br>#include &lt;X11/Xlib.h&gt;<br>#endif<br><br><code>/*<br> * Create a simple double-buffered RGBA window.<br> */<br>static Window<br>MakeWindow(Display * dpy, unsigned int width, unsigned int height)<br>{<br>   int visAttributes[] = {<br>      GLX_RGBA,<br>      GLX_RED_SIZE, 1,<br>      GLX_GREEN_SIZE, 1,<br>      GLX_BLUE_SIZE, 1,<br>      GLX_DOUBLEBUFFER,<br>      None<br>   };<br>   XSetWindowAttributes attr;<br>   unsigned long attrMask;<br>   Window root;<br>   Window win;<br>   GLXContext ctx;<br>   XVisualInfo *visinfo;<br><br>   root = RootWindow(dpy, 0);<br><br>   /* Choose GLX visual / pixel format */<br>   visinfo = glXChooseVisual(dpy, 0, visAttributes);<br>   if (!visinfo) {<br>      printf("Error: couldn't get an RGB, Double-buffered visual\n");<br>      exit(1);<br>   }<br><br>   /* Create the window */<br>   attr.background_pixel = 0;<br>   attr.border_pixel = 0;<br>   attr.colormap = XCreateColormap(dpy, root, visinfo-&gt;visual, AllocNone);<br>   attrMask = CWBackPixel | CWBorderPixel | CWColormap;<br>   win = XCreateWindow(dpy, root, 0, 0, width, height,<br>		       0, visinfo-&gt;depth, InputOutput,<br>		       visinfo-&gt;visual, attrMask, &amp;attr);<br>   if (!win) {<br>      printf("Error: XCreateWindow failed\n");<br>      exit(1);<br>   }<br><br>   /* Display the window */<br>   XMapWindow(dpy, win);<br><br>   /* Create GLX rendering context */<br>   ctx = glXCreateContext(dpy, visinfo, NULL, True);<br>   if (!ctx) {<br>      printf("Error: glXCreateContext failed\n");<br>      exit(1);<br>   }<br><br>   /* Bind the rendering context and window */<br>   glXMakeCurrent(dpy, win, ctx);<br><br>   return win;<br>}<br><br><br>/*<br> * Draw a few frames of a rotating square.<br> */<br>static void<br>DrawFrames(Display * dpy, Window win)<br>{<br>   int angle;<br>   glShadeModel(GL_FLAT);<br>   glClearColor(0.5, 0.5, 0.5, 1.0);<br>   for (angle = 0; angle &lt; 360; angle += 10) {<br>      glClear(GL_COLOR_BUFFER_BIT);<br>      glColor3f(1.0, 1.0, 0.0);<br>      glPushMatrix();<br>      glRotatef(angle, 0, 0, 1);<br>      glRectf(-0.8, -0.8, 0.8, 0.8);<br>      glPopMatrix();<br>      glXSwapBuffers(dpy, win);<br>   }<br>}<br><br><br>int<br>main(int argc, char *argv[])<br>{<br>   Display *dpy;<br>   Window win;<br><br>   dpy = XOpenDisplay(NULL);<br>   if (!dpy) {<br>      printf("Error: XOpenDisplay failed\n");<br>      return 1;<br>   }<br><br>   win = MakeWindow(dpy, 300, 300);<br><br>   DrawFrames(dpy, win);<br><br>   return 0;<br>}<br></code></pre>
+<br>
+</body>
+</html>
