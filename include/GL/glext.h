@@ -1078,8 +1078,8 @@ typedef void (APIENTRY * PFNGLLIGHTENVISGIXPROC) (GLenum pname, GLint param);
 #ifndef GL_HP_occlusion_test
 #define GL_HP_occlusion_test 1
 
-#define GL_OCCLUSION_TEST_HP			0x1
-#define GL_OCCLUSION_TEST_RESULT_HP		0x2
+#define GL_OCCLUSION_TEST_HP			0x8165
+#define GL_OCCLUSION_TEST_RESULT_HP		0x8166
 
 #endif /* GL_HP_occlusion_test */
 
