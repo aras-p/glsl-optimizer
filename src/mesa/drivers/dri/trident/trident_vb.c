@@ -26,10 +26,8 @@
  */
 #include "glheader.h"
 #include "mtypes.h"
-#include "mem.h"
 #include "macros.h"
 #include "colormac.h"
-#include "mmath.h"
 
 #include "swrast_setup/swrast_setup.h"
 #include "swrast/swrast.h"
@@ -49,8 +47,8 @@
 
 static struct {
    void                (*emit)( GLcontext *, GLuint, GLuint, void *, GLuint );
-   interp_func		interp;
-   copy_pv_func	        copy_pv;
+   tnl_interp_func	interp;
+   tnl_copy_pv_func     copy_pv;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
    GLuint               vertex_size;
    GLuint               vertex_stride_shift;
@@ -77,10 +75,12 @@ static struct {
 #define DO_PTEX (IND & TRIDENT_PTEX_BIT)
 
 #define VERTEX tridentVertex
+#define VERTEX_COLOR trident_color_t
 #define LOCALVARS tridentContextPtr tmesa = TRIDENT_CONTEXT(ctx);
 #define GET_VIEWPORT_MAT() 		tmesa->hw_viewport
 #define GET_TEXSOURCE(n)  		tmesa->tmu_source[n]
 #define GET_VERTEX_FORMAT() 		tmesa->vertex_format
+#define GET_VERTEX_SIZE()               tmesa->vertex_size
 #define GET_VERTEX_STORE()  		tmesa->verts
 #define GET_VERTEX_STRIDE_SHIFT() 	tmesa->vertex_stride_shift
 #define GET_UBYTE_COLOR_STORE() 	&tmesa->UbyteColor
@@ -310,24 +310,24 @@ void tridentBuildVertices( GLcontext *ctx,
    if (!newinputs)
       return;
 
-   if (newinputs & VERT_CLIP) {
+   if (newinputs & VERT_BIT_POS) {
       setup_tab[tmesa->SetupIndex].emit( ctx, start, count, v, stride );   
    } else {
       GLuint ind = 0;
 
-      if (newinputs & VERT_RGBA)
+      if (newinputs & VERT_BIT_COLOR0)
 	 ind |= TRIDENT_RGBA_BIT;
 
-      if (newinputs & VERT_SPEC_RGB)
+      if (newinputs & VERT_BIT_COLOR1)
 	 ind |= TRIDENT_SPEC_BIT;
 
-      if (newinputs & VERT_TEX0)
+      if (newinputs & VERT_BIT_TEX0)
 	 ind |= TRIDENT_TEX0_BIT;
 
-      if (newinputs & VERT_TEX1)
+      if (newinputs & VERT_BIT_TEX1)
 	 ind |= TRIDENT_TEX1_BIT;
 
-      if (newinputs & VERT_FOG_COORD)
+      if (newinputs & VERT_BIT_FOG)
 	 ind |= TRIDENT_FOG_BIT;
 
       if (tmesa->SetupIndex & TRIDENT_PTEX_BIT)
@@ -373,10 +373,9 @@ void tridentChooseVertexState( GLcontext *ctx )
    if (ctx->Fog.Enabled)
       ind |= TRIDENT_FOG_BIT;
 
-   if (ctx->Texture._ReallyEnabled) {
+   if (ctx->Texture.Unit[0]._ReallyEnabled) {
       ind |= TRIDENT_TEX0_BIT;
-      if (ctx->Texture.Unit[0]._ReallyEnabled &&
-	  ctx->Texture.Unit[1]._ReallyEnabled) {
+      if (ctx->Texture.Unit[1]._ReallyEnabled) {
 	 ind |= TRIDENT_TEX1_BIT;
       }
    }
@@ -424,12 +423,12 @@ void tridentFreeVB( GLcontext *ctx )
    }
 
    if (tmesa->UbyteSecondaryColor.Ptr) {
-      ALIGN_FREE(tmesa->UbyteSecondaryColor.Ptr);
+      ALIGN_FREE((void *)tmesa->UbyteSecondaryColor.Ptr);
       tmesa->UbyteSecondaryColor.Ptr = 0;
    }
 
    if (tmesa->UbyteColor.Ptr) {
-      ALIGN_FREE(tmesa->UbyteColor.Ptr);
+      ALIGN_FREE((void *)tmesa->UbyteColor.Ptr);
       tmesa->UbyteColor.Ptr = 0;
    }
 }

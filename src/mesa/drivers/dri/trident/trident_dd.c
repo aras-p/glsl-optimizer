@@ -33,8 +33,7 @@
 #include "swrast/swrast.h"
 #include "context.h"
 
-#define TRIDENT_DATE	"20020318"
-
+#define TRIDENT_DATE	"20041223"
 
 /* Return the width and height of the current color buffer.
  */

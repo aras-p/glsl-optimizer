@@ -31,6 +31,7 @@
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 #include "swrast/swrast.h"
+#include "swrast_setup/swrast_setup.h"
 
 static int first = 1;
 
@@ -277,7 +278,7 @@ void Init3D( tridentContextPtr tmesa )
 
 int DrawTriangle( tridentContextPtr tmesa)
 {
-   volatile unsigned char *MMIO = tmesa->tridentScreen->mmio.map;
+   unsigned char *MMIO = tmesa->tridentScreen->mmio.map;
    dmaBufRec clr;
 
 printf("DRAW TRI\n");
@@ -416,6 +417,7 @@ static INLINE void trident_draw_point(tridentContextPtr tmesa,
 			     const tridentVertex *v0 )
 {
    unsigned char *MMIO = tmesa->tridentScreen->mmio.map;
+   (void) MMIO;
 }
 
 static INLINE void trident_draw_line( tridentContextPtr tmesa, 
@@ -423,6 +425,7 @@ static INLINE void trident_draw_line( tridentContextPtr tmesa,
 			     const tridentVertex *v1 )
 {
    unsigned char *MMIO = tmesa->tridentScreen->mmio.map;
+   (void) MMIO;
 }
 
 static INLINE void trident_draw_triangle( tridentContextPtr tmesa,
@@ -547,6 +550,7 @@ if (vertsize == 4) {
  * primitives are being drawn, and only for the unaccelerated
  * primitives.  
  */
+#if 0
 static void 
 trident_fallback_quad( tridentContextPtr tmesa, 
 		    const tridentVertex *v0, 
@@ -562,6 +566,11 @@ trident_fallback_quad( tridentContextPtr tmesa,
    trident_translate_vertex( ctx, v3, &v[3] );
    _swrast_Quad( ctx, &v[0], &v[1], &v[2], &v[3] );
 }
+#endif
+
+/* XXX hack to get the prototype defined in time... */
+void trident_translate_vertex(GLcontext *ctx, const tridentVertex *src,
+                              SWvertex *dst);
 
 static void 
 trident_fallback_tri( tridentContextPtr tmesa, 
@@ -649,10 +658,10 @@ do {						\
 
 
 static struct {
-   points_func		points;
-   line_func		line;
-   triangle_func	triangle;
-   quad_func		quad;
+   tnl_points_func	points;
+   tnl_line_func	line;
+   tnl_triangle_func	triangle;
+   tnl_quad_func	quad;
 } rast_tab[TRIDENT_MAX_TRIFUNC];
 
 
@@ -733,7 +742,9 @@ static const GLuint hw_prim[GL_POLYGON+1] = {
 #endif
 
 static void tridentResetLineStipple( GLcontext *ctx );
+#if 0
 static void tridentRasterPrimitive( GLcontext *ctx, GLuint hwprim );
+#endif
 static void tridentRenderPrimitive( GLcontext *ctx, GLenum prim );
 
 #define RASTERIZE(x) /*if (tmesa->hw_primitive != hw_prim[x]) \
@@ -985,13 +996,14 @@ static void tridentChooseRenderState(GLcontext *ctx)
  * which renders strips as strips, the equivalent calculations are
  * performed in tridentrender.c.
  */
-
+#if 0
 static void tridentRasterPrimitive( GLcontext *ctx, GLuint hwprim )
 {
    tridentContextPtr tmesa = TRIDENT_CONTEXT(ctx);
    if (tmesa->hw_primitive != hwprim)
       tmesa->hw_primitive = hwprim;
 }
+#endif
 
 static void tridentRenderPrimitive( GLcontext *ctx, GLenum prim )
 {
@@ -1043,6 +1055,7 @@ static void tridentRenderFinish( GLcontext *ctx )
 static void tridentResetLineStipple( GLcontext *ctx )
 {
    tridentContextPtr tmesa = TRIDENT_CONTEXT(ctx);
+   (void) tmesa;
 
    /* Reset the hardware stipple counter.
     */

@@ -26,7 +26,10 @@
  */
 #include "trident_context.h"
 #include "trident_lock.h"
+#include "array_cache/acache.h"
 #include "swrast/swrast.h"
+#include "swrast_setup/swrast_setup.h"
+#include "tnl/tnl.h"
 
 #define TRIDENTPACKCOLOR332(r, g, b)					\
    (((r) & 0xe0) | (((g) & 0xe0) >> 3) | (((b) & 0xc0) >> 6))
@@ -90,9 +93,9 @@ void tridentCopyBuffer( const __DRIdrawablePrivate *dPriv )
 {
    unsigned char *MMIO;
    tridentContextPtr tmesa;
-   GLint nbox, i, ret;
+   GLint nbox, i;
    int busy;
-   XF86DRIClipRectPtr pbox;
+   drm_clip_rect_t *pbox;
 
    assert(dPriv);
    assert(dPriv->driContextPriv);
@@ -110,7 +113,7 @@ void tridentCopyBuffer( const __DRIdrawablePrivate *dPriv )
    for ( i = 0 ; i < nbox ; i++ ) {
 #if 0
       GLint nr = MIN2( i + MACH64_NR_SAREA_CLIPRECTS , nbox );
-      XF86DRIClipRectPtr b = tmesa->sarea->boxes;
+      drm_clip_rect_t *b = tmesa->sarea->boxes;
       GLint n = 0;
 
       for ( ; i < nr ; i++ ) {
@@ -151,11 +154,9 @@ static void tridentDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 {
    tridentContextPtr tmesa = TRIDENT_CONTEXT(ctx);
    unsigned char *MMIO = tmesa->tridentScreen->mmio.map;
-   __DRIdrawablePrivate *dPriv = tmesa->driDrawable;
    int busy;
    GLuint flags = 0;
    GLint i;
-   GLint ret;
 
 #define DRM_TRIDENT_FRONT	0x01
 #define DRM_TRIDENT_BACK	0x02
@@ -195,8 +196,8 @@ static void tridentDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       for ( i = 0 ; i < tmesa->numClipRects ; i++ ) {
 #if 0
          int nr = MIN2( i + TRIDENT_NR_SAREA_CLIPRECTS, tmesa->numClipRects );
-         XF86DRIClipRectPtr box = tmesa->pClipRects;
-         XF86DRIClipRectPtr b = tmesa->sarea->boxes;
+         drm_clip_rect_t *box = tmesa->pClipRects;
+         drm_clip_rect_t *b = tmesa->sarea->boxes;
          GLint n = 0;
    
          if ( !all ) {
@@ -363,12 +364,12 @@ void tridentSetCliprects( tridentContextPtr tmesa, GLenum mode )
    switch ( mode ) {
    case GL_FRONT_LEFT:
       if (dPriv->numClipRects == 0) {
-	 static XF86DRIClipRectRec zeroareacliprect = {0,0,0,0};
+	 static drm_clip_rect_t zeroareacliprect = {0,0,0,0};
 	 tmesa->numClipRects = 1;
 	 tmesa->pClipRects = &zeroareacliprect;
       } else {
 	 tmesa->numClipRects = dPriv->numClipRects;
-	 tmesa->pClipRects = (XF86DRIClipRectPtr)dPriv->pClipRects;
+	 tmesa->pClipRects = (drm_clip_rect_t *)dPriv->pClipRects;
       }
       tmesa->drawX = dPriv->x;
       tmesa->drawY = dPriv->y;
@@ -376,19 +377,19 @@ void tridentSetCliprects( tridentContextPtr tmesa, GLenum mode )
    case GL_BACK_LEFT:
       if ( dPriv->numBackClipRects == 0 ) {
 	  if (dPriv->numClipRects == 0) {
-	     static XF86DRIClipRectRec zeroareacliprect = {0,0,0,0};
+	     static drm_clip_rect_t zeroareacliprect = {0,0,0,0};
 	     tmesa->numClipRects = 1;
 	     tmesa->pClipRects = &zeroareacliprect;
 	  } else {
 	     tmesa->numClipRects = dPriv->numClipRects;
-	     tmesa->pClipRects = (XF86DRIClipRectPtr)dPriv->pClipRects;
+	     tmesa->pClipRects = (drm_clip_rect_t *)dPriv->pClipRects;
 	     tmesa->drawX = dPriv->x;
 	     tmesa->drawY = dPriv->y;
 	  }
       }
       else {
 	 tmesa->numClipRects = dPriv->numBackClipRects;
-	 tmesa->pClipRects = (XF86DRIClipRectPtr)dPriv->pBackClipRects;
+	 tmesa->pClipRects = (drm_clip_rect_t *)dPriv->pBackClipRects;
 	 tmesa->drawX = dPriv->backX;
 	 tmesa->drawY = dPriv->backY;
       }
@@ -402,6 +403,7 @@ void tridentSetCliprects( tridentContextPtr tmesa, GLenum mode )
 #endif
 }
 
+#if 0
 static GLboolean tridentDDSetDrawBuffer( GLcontext *ctx, GLenum mode )
 {
    tridentContextPtr tmesa = TRIDENT_CONTEXT(ctx);
@@ -450,7 +452,7 @@ static void tridentDDClearColor( GLcontext *ctx,
 					color[0], color[1], 
 					color[2], color[3] );
 }
-
+#endif
 
 void tridentDDUpdateState( GLcontext *ctx, GLuint new_state )
 {

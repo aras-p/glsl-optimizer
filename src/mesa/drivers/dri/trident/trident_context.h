@@ -27,7 +27,6 @@
 #ifndef _TRIDENT_CONTEXT_H_
 #define _TRIDENT_CONTEXT_H_
 
-#include "compiler.h"
 #include "dri_util.h"
 #include "macros.h"
 #include "mtypes.h"
@@ -54,6 +53,23 @@
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
 
+/* these require that base be dword-aligned */
+static inline void MMIO_OUT32(unsigned char *base, unsigned int offset,
+                              unsigned int val)
+{
+    unsigned int *addr = (unsigned int *)(base + offset);
+    *addr = val;
+}
+
+static inline unsigned int MMIO_IN32(unsigned char *base, unsigned int offset)
+{
+    unsigned int *addr = (unsigned int *)(base + offset);
+    return *addr;
+}
+
+#define MMIO_OUT8(base, offset, val) *((base) + (offset)) = (val)
+#define MMIO_IN8(base, offset) *((base) + (offset))
+
 struct trident_context;
 typedef struct trident_context tridentContextRec;
 typedef struct trident_context *tridentContextPtr;
@@ -74,7 +90,7 @@ typedef void (*trident_point_func)( tridentContextPtr,
 				  const tridentVertex * );
 
 typedef struct {
-   drmHandle handle;			/* Handle to the DRM region */
+   drm_handle_t handle;			/* Handle to the DRM region */
    drmSize size;			/* Size of the DRM region */
    unsigned char *map;			/* Mapping of the DRM region */
 } tridentRegionRec, *tridentRegionPtr;
@@ -123,11 +139,9 @@ struct trident_context {
 
    	/* Mirrors of some DRI state
     	 */
-   	Display *display;			/* X server display */
-
 	int lastStamp;		        /* mirror driDrawable->lastStamp */
 
-   	drmContext hHWContext;
+   	drm_context_t hHWContext;
    	drmLock *driHwLock;
    	int driFd;
 
@@ -141,10 +155,10 @@ struct trident_context {
    	GLint readOffset, readPitch;
 
    	GLuint numClipRects;		/* Cliprects for the draw buffer */
-   	XF86DRIClipRectPtr pClipRects;
+   	drm_clip_rect_t *pClipRects;
 
    	GLint scissor;
-   	XF86DRIClipRectRec ScissorRect;	/* Current software scissor */
+   	drm_clip_rect_t ScissorRect;	/* Current software scissor */
 
    	GLuint Fallback;
 	GLuint RenderIndex;
@@ -199,10 +213,19 @@ void tridentInitHW( tridentContextPtr tmesa );
 void tridentDDInitStateFuncs( GLcontext *ctx );
 void tridentDDInitTextureFuncs( GLcontext *ctx );
 void tridentDDInitTriFuncs( GLcontext *ctx );
+
 extern void tridentBuildVertices( GLcontext *ctx, 
 				GLuint start, 
 				GLuint count,
 				GLuint newinputs );
+extern void tridentInitVB( GLcontext *ctx );
+extern void tridentCopyBuffer( const __DRIdrawablePrivate *dPriv );
+extern void tridentFallback( tridentContextPtr tmesa, GLuint bit,
+                             GLboolean mode );
+extern void tridentCheckTexSizes( GLcontext *ctx );
+extern void tridentChooseVertexState( GLcontext *ctx );
+extern void tridentDDUpdateHWState( GLcontext *ctx );
+extern void tridentUploadHwStateLocked( tridentContextPtr tmesa );
 
 #define TRIDENT_CONTEXT(ctx)		((tridentContextPtr)(ctx->DriverCtx))
 

@@ -37,17 +37,18 @@
 
 #include "context.h"
 #include "simple_list.h"
-#include "mem.h"
 #include "matrix.h"
 #include "extensions.h"
 #if defined(USE_X86_ASM)
 #include "X86/common_x86_asm.h"
 #endif
 #include "simple_list.h"
-#include "mem.h"
 #include "mm.h"
 
-static const struct gl_pipeline_stage *trident_pipeline[] = {
+#include "drivers/common/driverfuncs.h"
+#include "dri_util.h"
+
+static const struct tnl_pipeline_stage *trident_pipeline[] = {
    &_tnl_vertex_transform_stage, 
    &_tnl_normal_transform_stage, 
    &_tnl_lighting_stage,
@@ -58,7 +59,7 @@ static const struct gl_pipeline_stage *trident_pipeline[] = {
 };
 
 
-GLboolean tridentCreateContext( Display *dpy, const __GLcontextModes *glVisual,
+GLboolean tridentCreateContext( const __GLcontextModes *glVisual,
 			     __DRIcontextPrivate *driContextPriv,
                      	     void *sharedContextPrivate)
 {
@@ -66,6 +67,7 @@ GLboolean tridentCreateContext( Display *dpy, const __GLcontextModes *glVisual,
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    tridentContextPtr tmesa;
    tridentScreenPtr tridentscrn;
+   struct dd_function_table functions;
 #if 0
    drm_trident_sarea_t *saPriv=(drm_trident_sarea_t *)(((char*)sPriv->pSAREA)+
 						 sizeof(XF86DRISAREARec));
@@ -80,20 +82,22 @@ GLboolean tridentCreateContext( Display *dpy, const __GLcontextModes *glVisual,
    else
       shareCtx = NULL;
 
-   tmesa->glCtx = _mesa_create_context(glVisual, shareCtx, tmesa, GL_TRUE);
+   _mesa_init_driver_functions(&functions);
+
+   tmesa->glCtx =
+      _mesa_create_context(glVisual, shareCtx, &functions, (void *)tmesa);
+
    if (!tmesa->glCtx) {
       FREE(tmesa);
       return GL_FALSE;
    }
-
-   tmesa->display = dpy;
 
    tmesa->driContext = driContextPriv;
    tmesa->driScreen = sPriv;
    tmesa->driDrawable = NULL; /* Set by XMesaMakeCurrent */
 
    tmesa->hHWContext = driContextPriv->hHWContext;
-   tmesa->driHwLock = &sPriv->pSAREA->lock;
+   tmesa->driHwLock = (drmLock *)&sPriv->pSAREA->lock;
    tmesa->driFd = sPriv->fd;
 #if 0
    tmesa->sarea = saPriv;
@@ -159,11 +163,11 @@ GLboolean tridentCreateContext( Display *dpy, const __GLcontextModes *glVisual,
    tridentDDInitTriFuncs( ctx );
    tridentDDInitState( tmesa );
 
-    driContextPriv->driverPrivate = (void *)tmesa;
+   driContextPriv->driverPrivate = (void *)tmesa;
 
    UNLOCK_HARDWARE(tmesa);
 
-    return GL_TRUE;
+   return GL_TRUE;
 }
 
 static void 
@@ -181,15 +185,14 @@ tridentDestroyContext(__DRIcontextPrivate *driContextPriv)
       tmesa->glCtx->DriverCtx = NULL;
       _mesa_destroy_context(tmesa->glCtx);
 
-      Xfree(tmesa);
+      _mesa_free(tmesa);
       driContextPriv->driverPrivate = NULL;
     }
 }
 
 
 static GLboolean
-tridentCreateBuffer( Display *dpy,
-                   __DRIscreenPrivate *driScrnPriv,
+tridentCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                    __DRIdrawablePrivate *driDrawPriv,
                    const __GLcontextModes *mesaVis,
                    GLboolean isPixmap )
@@ -217,10 +220,9 @@ tridentDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 }
 
 static void
-tridentSwapBuffers(Display *dpy, void *drawablePrivate)
+tridentSwapBuffers(__DRIdrawablePrivate *drawablePrivate)
 {
    __DRIdrawablePrivate *dPriv = (__DRIdrawablePrivate *) drawablePrivate;
-   (void) dpy;
 
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       tridentContextPtr tmesa;
@@ -228,7 +230,7 @@ tridentSwapBuffers(Display *dpy, void *drawablePrivate)
       tmesa = (tridentContextPtr) dPriv->driContextPriv->driverPrivate;
       ctx = tmesa->glCtx;
       if (ctx->Visual.doubleBufferMode) {
-         _mesa_swapbuffers( ctx );  /* flush pending rendering comands */
+         _mesa_notifySwapBuffers( ctx );  /* flush pending rendering comands */
          tridentCopyBuffer( dPriv );
       }
    }
@@ -284,24 +286,11 @@ tridentUnbindContext( __DRIcontextPrivate *driContextPriv )
    return GL_TRUE;
 }
 
-static GLboolean
-tridentOpenFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-    return GL_TRUE;
-}
-
-static GLboolean
-tridentCloseFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-    return GL_TRUE;
-}
-
 
 tridentScreenPtr tridentCreateScreen( __DRIscreenPrivate *sPriv )
 {
    TRIDENTDRIPtr tDRIPriv = (TRIDENTDRIPtr)sPriv->pDevPriv;
    tridentScreenPtr tridentScreen;
-   int i;
 
 #if 0
    /* Check the DRI version */
@@ -360,7 +349,7 @@ printf("offset 0x%x 0x%x\n",tridentScreen->backOffset,tridentScreen->depthOffset
 	    FREE(tridentScreen);
 	    return GL_FALSE;
     }
-printf("MAPPED at 0x%x\n",tridentScreen->mmio.map);
+printf("MAPPED at %p\n", tridentScreen->mmio.map);
 
    return tridentScreen;
 }
@@ -396,22 +385,48 @@ static struct __DriverAPIRec tridentAPI = {
    tridentSwapBuffers,
    tridentMakeCurrent,
    tridentUnbindContext,
-   tridentOpenFullScreen,
-   tridentCloseFullScreen
 };
 
-/*
- * This is the bootstrap function for the driver.
- * The __driCreateScreen name is the symbol that libGL.so fetches.
- * Return:  pointer to a __DRIscreenPrivate.
- */
-void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                        int numConfigs, __GLXvisualConfig *config)
+#ifndef USE_NEW_INTERFACE
+#error trident_dri.so is new-interface only.
+#else
+
+static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
+
+PUBLIC void *__driCreateNewScreen( __DRInativeDisplay *dpy, int scrn,
+                                   __DRIscreen *psc,
+                                   const __GLcontextModes * modes,
+                                   const __DRIversion * ddx_version,
+                                   const __DRIversion * dri_version,
+                                   const __DRIversion * drm_version,
+                                   const __DRIframebuffer * frame_buffer,
+                                   drmAddress pSAREA, int fd,
+                                   int internal_api_version,
+                                   __GLcontextModes ** driver_modes )
 {
-   __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &tridentAPI);
-   return (void *) psp;
+    __DRIscreenPrivate *psp;
+    /* XXX version checks */
+
+    psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
+                                   ddx_version, dri_version, drm_version,
+                                   frame_buffer, pSAREA, fd,
+                                   internal_api_version, &tridentAPI);
+
+    if ( psp != NULL ) {
+        create_context_modes = (PFNGLXCREATECONTEXTMODES)
+            glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
+#if 0
+        if ( create_context_modes != NULL ) {
+            TRIDENTDRIPtr dri_priv = (TRIDENTDRIPtr) psp->pDevPriv;
+            *driver_modes = tridentFillInModes( dri_priv->bytesPerPixel * 8,
+                                                GL_TRUE );
+        }
+#endif
+    }
+    return (void *) psp;
 }
+
+#endif
 
 void __driRegisterExtensions(void)
 {
