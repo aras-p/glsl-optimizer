@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.40 2002/07/09 01:22:51 brianp Exp $ */
+/* $Id: xm_api.c,v 1.41 2002/08/21 02:57:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2234,8 +2234,6 @@ static void FXgetImage( XMesaBuffer b )
    unsigned int bw, depth, width, height;
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 
-   assert(xmesa->xm_draw_buffer->FXctx);
-
 #ifdef XFree86Server
    x = b->frontbuffer->x;
    y = b->frontbuffer->y;
@@ -2243,37 +2241,37 @@ static void FXgetImage( XMesaBuffer b )
    height = b->frontbuffer->height;
    depth = b->frontbuffer->depth;
 #else
-   XGetGeometry( xmesa->xm_visual->display, b->frontbuffer,
+   XGetGeometry( b->xm_visual->display, b->frontbuffer,
                  &root, &xpos, &ypos, &width, &height, &bw, &depth);
 #endif
    if (b->width != width || b->height != height) {
-      b->width = MIN2((int)width, xmesa->xm_draw_buffer->FXctx->width);
-      b->height = MIN2((int)height, xmesa->xm_draw_buffer->FXctx->height);
+      b->width = MIN2((int)width, b->FXctx->width);
+      b->height = MIN2((int)height, b->FXctx->height);
       if (b->width & 1)
          b->width--;  /* prevent odd width */
       xmesa_alloc_back_buffer( b );
    }
 
    grLfbWriteColorFormat(GR_COLORFORMAT_ARGB);
-   if (xmesa->xm_visual->undithered_pf==PF_5R6G5B) {
+   if (b->xm_visual->undithered_pf==PF_5R6G5B) {
       /* Special case: 16bpp RGB */
       grLfbReadRegion( GR_BUFFER_FRONTBUFFER,       /* src buffer */
-                       0, xmesa->xm_draw_buffer->FXctx->height - b->height,  /*pos*/
+                       0, b->FXctx->height - b->height,  /*pos*/
                        b->width, b->height,         /* size */
                        b->width * sizeof(GLushort), /* stride */
                        b->backimage->data);         /* dest buffer */
    }
-   else if (xmesa->xm_visual->dithered_pf==PF_DITHER
-	    && GET_VISUAL_DEPTH(xmesa->xm_visual)==8) {
+   else if (b->xm_visual->dithered_pf==PF_DITHER
+	    && GET_VISUAL_DEPTH(b->xm_visual)==8) {
       /* Special case: 8bpp RGB */
       for (y=0;y<b->height;y++) {
-         GLubyte *ptr = (GLubyte*) xmesa->xm_draw_buffer->backimage->data
-                        + xmesa->xm_draw_buffer->backimage->bytes_per_line * y;
+         GLubyte *ptr = (GLubyte*) b->backimage->data
+                        + b->backimage->bytes_per_line * y;
          XDITHER_SETUP(y);
 
          /* read row from 3Dfx frame buffer */
          grLfbReadRegion( GR_BUFFER_FRONTBUFFER,
-                          0, xmesa->xm_draw_buffer->FXctx->height-(b->height-y),
+                          0, b->FXctx->height-(b->height-y),
                           b->width, 1,
                           0,
                           pixbuf );
@@ -2292,7 +2290,7 @@ static void FXgetImage( XMesaBuffer b )
       for (y=0;y<b->height;y++) {
          /* read row from 3Dfx frame buffer */
          grLfbReadRegion( GR_BUFFER_FRONTBUFFER,
-                          0, xmesa->xm_draw_buffer->FXctx->height-(b->height-y),
+                          0, b->FXctx->height-(b->height-y),
                           b->width, 1,
                           0,
                           pixbuf );
@@ -2304,7 +2302,8 @@ static void FXgetImage( XMesaBuffer b )
 					       (pixbuf[x] & 0xf800) >> 8,
 					       (pixbuf[x] & 0x07e0) >> 3,
 					       (pixbuf[x] & 0x001f) << 3,
-					       0xff, xmesa->pixelformat));
+					       0xff,
+                                               b->xm_visual->undithered_pf));
          }
       }
    }
