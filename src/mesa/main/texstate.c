@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.5 1999/11/11 01:22:28 brianp Exp $ */
+/* $Id: texstate.c,v 1.6 1999/11/12 02:07:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,6 +31,7 @@
 #include "glheader.h"
 #include "context.h"
 #include "enums.h"
+#include "extensions.h"
 #include "macros.h"
 #include "matrix.h"
 #include "texobj.h"
@@ -84,10 +85,16 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
    if (pname==GL_TEXTURE_ENV_MODE) {
       GLenum mode = (GLenum) (GLint) *param;
       switch (mode) {
-	 case GL_MODULATE:
-	 case GL_BLEND:
-	 case GL_DECAL:
-	 case GL_REPLACE:
+         case GL_ADD:
+            if (!gl_extension_is_enabled(ctx, "GL_EXT_texture_env_add")) {
+               gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(param)");
+               return;
+            }
+            /* FALL-THROUGH */
+         case GL_MODULATE:
+         case GL_BLEND:
+         case GL_DECAL:
+         case GL_REPLACE:
 	    /* A small optimization for drivers */ 
 	    if (texUnit->EnvMode == mode)
                return;

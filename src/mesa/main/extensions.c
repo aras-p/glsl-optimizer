@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.12 1999/11/12 02:05:46 brianp Exp $ */
+/* $Id: extensions.c,v 1.13 1999/11/12 02:07:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,6 +74,7 @@ static struct { int enabled; const char *name; } default_extensions[] = {
    { DEFAULT_ON,     "GL_EXT_compiled_vertex_array" },
    { DEFAULT_OFF,    "GL_EXT_vertex_array_set" },
    { DEFAULT_ON,     "GL_EXT_clip_volume_hint" },
+   { DEFAULT_ON,     "GL_EXT_texture_env_add" },
 };
 
 

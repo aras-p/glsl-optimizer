@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.20 1999/11/11 17:48:32 brianp Exp $ */
+/* $Id: gl.h,v 1.21 1999/11/12 02:08:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2306,6 +2306,17 @@ GLAPI void GLAPIENTRY glResizeBuffersMESA( void );
 
 #endif /* GL_MESA_resize_bufffers */
 
+
+
+/*
+ * GL_EXT_texture_env_add
+ */
+#ifndef GL_EXT_texture_env_add
+#define GL_EXT_texture_env_add 1
+
+/* No new tokens or functions */
+
+#endif /* GL_EXT_texture_env_add */
 
 
 
