@@ -98,7 +98,7 @@ static struct r300_pixel_shader_state FLAT_COLOR_PIXEL_SHADER={
 				length: 0
 				},
 			alu: {
-				length: 0,
+				length: 1,
 					/* My understanding is that we need at least 1 instructions for pixel shader, 
 					   in particular because alu_end==0 means there is one instruction */
 				inst: {
