@@ -68,6 +68,7 @@ CORE_SOURCES =accum.c \
 	scissor.c \
 	state.c \
 	stencil.c \
+	texformat.c \
 	teximage.c \
 	texobj.c \
 	texstate.c \
@@ -105,6 +106,7 @@ RASTER_SOURCES = [.swrast]s_aatriangle.c \
 [.swrast]s_fog.c \
 [.swrast]s_feedback.c \
 [.swrast]s_histogram.c \
+[.swrast]s_imaging.c \
 [.swrast]s_lines.c \
 [.swrast]s_logic.c \
 [.swrast]s_masking.c \
@@ -115,6 +117,7 @@ RASTER_SOURCES = [.swrast]s_aatriangle.c \
 [.swrast]s_scissor.c \
 [.swrast]s_span.c \
 [.swrast]s_stencil.c \
+[.swrast]s_texstore.c \
 [.swrast]s_texture.c \
 [.swrast]s_triangle.c \
 [.swrast]s_zoom.c \
@@ -218,6 +221,7 @@ readpix.obj,\
 scissor.obj,\
 state.obj,\
 stencil.obj,\
+texformat.obj,\
 teximage.obj,\
 texobj.obj,\
 texstate.obj,\
@@ -256,6 +260,7 @@ OBJECTS7=[.swrast]s_aatriangle.obj,\
 OBJECTS8=[.swrast]s_drawpix.obj,\
 [.swrast]s_fog.obj,\
 [.swrast]s_histogram.obj,\
+[.swrast]s_imaging.obj,\
 [.swrast]s_lines.obj,\
 [.swrast]s_logic.obj,\
 [.swrast]s_masking.obj,\
@@ -268,6 +273,7 @@ OBJECTS9=[.swrast]s_readpix.obj,\
 [.swrast]s_scissor.obj,\
 [.swrast]s_span.obj,\
 [.swrast]s_stencil.obj,\
+[.swrast]s_texstore.obj,\
 [.swrast]s_texture.obj,\
 [.swrast]s_triangle.obj,\
 [.swrast]s_feedback.obj,\
@@ -451,6 +457,8 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_fog.obj [.swrast]s_fog.c
 [.swrast]s_histogram.obj : [.swrast]s_histogram.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_histogram.obj [.swrast]s_histogram.c
+[.swrast]s_imaging.obj : [.swrast]s_imaging.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_imaging.obj [.swrast]s_imaging.c
 [.swrast]s_lines.obj : [.swrast]s_lines.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_lines.obj [.swrast]s_lines.c
 [.swrast]s_logic.obj : [.swrast]s_logic.c
@@ -471,6 +479,8 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_span.obj [.swrast]s_span.c
 [.swrast]s_stencil.obj : [.swrast]s_stencil.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_stencil.obj [.swrast]s_stencil.c
+[.swrast]s_texstore.obj : [.swrast]s_texstore.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_texstore.obj [.swrast]s_texstore.c
 [.swrast]s_texture.obj : [.swrast]s_texture.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_texture.obj [.swrast]s_texture.c
 [.swrast]s_triangle.obj : [.swrast]s_triangle.c

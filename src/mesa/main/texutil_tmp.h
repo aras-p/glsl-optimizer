@@ -1,4 +1,4 @@
-/* $Id: texutil_tmp.h,v 1.3 2001/03/18 13:34:24 gareth Exp $ */
+/* $Id: texutil_tmp.h,v 1.4 2001/03/20 10:18:13 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,10 @@
 /*
  * NOTE: All 3D code is untested and most definitely broken...
  */
+
+#ifdef VMS
+#define __FUNCTION__
+#endif
 
 #define DST_TEXEL_BYTES		(4 / DST_TEXELS_PER_DWORD)
 #define DST_ROW_WIDTH		(convert->width * DST_TEXEL_BYTES)
