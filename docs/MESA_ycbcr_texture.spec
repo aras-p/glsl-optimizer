@@ -75,14 +75,14 @@ Additions to Chapter 2 of the OpenGL 1.4 Specification (OpenGL Operation)
 
 Additions to Chapter 3 of the OpenGL 1.4 Specification (Rasterization)
 
-    In section 3.6.4, Rasterization of Pixel Rectangles, on page 102,
+    In section 3.6.4, Rasterization of Pixel Rectangles, on page 101,
     add the following to Table 3.8 (Packed pixel formats):
     
     type Parameter                GL Data   Number of        Matching
      Token Name                    Type     Components     Pixel Formats
     --------------                -------   ----------     -------------
-    UNSIGNED_SHORT_8_8_MESA       ushort         3         YCBCR_422_MESA
-    UNSIGNED_SHORT_8_8_REV_MESA   ushort         3         YCBCR_422_MESA
+    UNSIGNED_SHORT_8_8_MESA       ushort         2         YCBCR_MESA
+    UNSIGNED_SHORT_8_8_REV_MESA   ushort         2         YCBCR_MESA
 
 
     In section 3.6.4, Rasterization of Pixel Rectangles, on page 102,
@@ -103,13 +103,13 @@ Additions to Chapter 3 of the OpenGL 1.4 Specification (Rasterization)
     +-------------------------------+-------------------------------+
 
 
-    In section 3.6.4, Rasterization of Pixel Rectangles, on page 102,
+    In section 3.6.4, Rasterization of Pixel Rectangles, on page 104,
     add the following to Table 3.12 (Packed pixel fiedl assignments):
 
                        First       Second     Third      Fourth
     Format             Element     Element    Element    Element
     ------             -------     -------    -------    -------
-    YCBCR_422_MESA     luminance   chroma
+    YCBCR_MESA         luminance   chroma
 
 
     In section 3.8.1, Texture Image Specification, on page 125, add
