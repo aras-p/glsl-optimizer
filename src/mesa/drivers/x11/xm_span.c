@@ -1,8 +1,8 @@
-/* $Id: xm_span.c,v 1.17 2002/10/24 23:57:23 brianp Exp $ */
+/* $Id: xm_span.c,v 1.18 2002/11/13 16:48:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -2563,7 +2563,7 @@ static void write_span_mono_pixmap( MONO_SPAN_ARGS )
 
       /* Identify and emit contiguous rendered pixels
        */
-      while (i < n && mask[i])
+      while (i < n && (!mask || mask[i]))
 	 i++;
 
       if (start < i) 
@@ -2765,7 +2765,7 @@ static void write_span_mono_8R8G8B_ximage( MONO_SPAN_ARGS )
    GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
    GLuint i;
    for (i=0;i<n;i++) {
-      if (mask[i]) {
+      if (!mask || mask[i]) {
 	 ptr[i] = pixel;
       }
    }
