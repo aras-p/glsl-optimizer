@@ -43,7 +43,7 @@ typedef union
         unsigned reserved : 4;
         unsigned ofs      : 28;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegZPixelOffset;
 
 /* This reg exists only on Savage4. */
@@ -60,7 +60,7 @@ typedef union
         unsigned passZpassOp :  3;
         unsigned reserved    :  3;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegStencilCtrl;
 
 /**************************
@@ -85,7 +85,7 @@ typedef union
         unsigned palSize    : 2;
         unsigned newPal     : 1;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegTexDescr_s4;
 typedef union
 {
@@ -102,7 +102,7 @@ typedef union
         unsigned reserved3 : 10;
         unsigned newPal    : 1;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegTexDescr_s3d;
 
 /* The layout of this reg is the same on Savage4 and Savage3D,
@@ -116,7 +116,7 @@ typedef union
         unsigned reserved : 1;
         unsigned addr     : 29;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegTexAddr;
 
 /* The layout of this reg is the same on Savage4 and Savage3D. */
@@ -127,7 +127,7 @@ typedef union
         unsigned reserved : 3;
         unsigned addr     : 29;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegTexPalAddr;
 
 /* The layout of this reg on Savage4 and Savage3D are very similar. */
@@ -138,7 +138,7 @@ typedef union
         unsigned xprClr0 : 16;
         unsigned xprClr1 : 16; /* this is reserved on Savage3D */
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegTexXprClr;   /* transparency color in RGB565 format*/
 
 /* The layout of this reg differs between Savage4 and Savage3D.
@@ -164,7 +164,7 @@ typedef union
         unsigned alphaArg1Invert    : 1;
         unsigned alphaArg2Invert    : 1;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegTexCtrl_s4;
 typedef union
 {
@@ -187,7 +187,7 @@ typedef union
         unsigned texXprEn      : 1;
         unsigned reserved2     : 11;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegTexCtrl_s3d;
 
 /* This reg exists only on Savage4. */
@@ -218,7 +218,7 @@ typedef union
         unsigned colorDoDiffMul  : 1;
         unsigned LeftShiftVal    : 2;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegTexBlendCtrl;
 
 /* This reg exists only on Savage4. */
@@ -231,7 +231,7 @@ typedef union
         unsigned red   : 8;
         unsigned alpha : 8;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegTexBlendColor;
 
 /********************************
@@ -247,7 +247,7 @@ typedef union
         unsigned widthInTile  : 6;
         unsigned bitPerPixel  : 1;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegTiledSurface;
 
 /********************************
@@ -264,7 +264,7 @@ typedef union
         unsigned scissorYStart : 12;
         unsigned alphaRefVal   : 8;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegDrawCtrl0;
 
 /* This reg exists only on Savage4. */
@@ -281,7 +281,7 @@ typedef union
         unsigned alphaTestCmpFunc :  3;
         unsigned alphaTestEn      :  1;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegDrawCtrl1;
 
 /* This reg exists only on Savage4. */
@@ -304,7 +304,7 @@ typedef union
         unsigned flushPdDestWrites   :  1;
         unsigned flushPdZbufWrites   :  1;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegDrawLocalCtrl;
 
 /* This reg exists only on Savage3D. */
@@ -330,7 +330,7 @@ typedef union
 	/* havn't found an equivalent for Savage4. Utah-driver sets it to 0. */
         unsigned interpMode        : 1;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegDrawCtrl;
 
 #define SAVAGETBC_DECAL_S3D                     0
@@ -352,7 +352,7 @@ typedef union
         unsigned scissorYStart : 11;
 	unsigned reserved2     : 5;
     } ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegScissorsStart;
 
 /* This reg exists only on Savage3D. */
@@ -365,7 +365,7 @@ typedef union
         unsigned scissorYEnd : 11;
 	unsigned reserved2   : 5;
     } ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegScissorsEnd;
 
 /********************************
@@ -384,7 +384,7 @@ typedef union
         unsigned reserved : 1;
         unsigned addr     : 29; /*quad word aligned*/
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegVertBufAddr;
 
 /* I havn't found a Savage3D equivalent of this reg in the Utah-driver. 
@@ -399,7 +399,7 @@ typedef union
         unsigned reserved : 1;
         unsigned addr     : 29; /*4-quad word aligned*/
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegDMABufAddr;
 
 /********************************
@@ -427,7 +427,7 @@ typedef union
         unsigned reserved   : 17;
         unsigned kickOff    : 1;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegFlag;
 
 /********************************
@@ -452,7 +452,7 @@ typedef union
         unsigned floatZEn      : 1;
         unsigned wToZEn        : 1;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegZBufCtrl_s4;
 typedef union
 {
@@ -474,7 +474,7 @@ typedef union
         unsigned wrZafterAlphaTst : 1;
         unsigned reserved2        : 15;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegZBufCtrl_s3d;
 
 /* The layout of this reg on Savage4 and Savage3D is very similar. */
@@ -495,7 +495,7 @@ typedef union
 	 */
         unsigned zDepthSelect     : 1;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegZBufOffset;
 
 /* The layout of this reg is the same on Savage4 and Savage3D. */
@@ -512,7 +512,7 @@ typedef union
         unsigned wHigh     : 6;
         unsigned reserved4 : 2;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegZWatermarks;
 
 /********************************
@@ -530,7 +530,7 @@ typedef union
         unsigned fogMode     : 1;
         unsigned fogEndShift : 2;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegFogCtrl;
 
 /*not in spec, but tempo for pp and driver*/
@@ -541,7 +541,7 @@ typedef union
         unsigned fogDensity : 16;
         unsigned fogStart   : 16;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegFogParam;
 
 /**************************************
@@ -565,7 +565,7 @@ typedef union
         unsigned antiAliasMode  :  2;
         unsigned dstPixFmt      :  1;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegDestCtrl;
 
 /* The layout of this reg on Savage4 and Savage3D are very similar. */
@@ -584,7 +584,7 @@ typedef union
 	 * However, it is not used in either driver. */
         unsigned destFlush     : 2;
     }ni;
-    uint32_t ui;
+    u_int32_t ui;
 } savageRegDestTexWatermarks;
 
 /* Savage4/Twister/ProSavage register BCI addresses */
@@ -629,7 +629,7 @@ typedef union
 #define SAVAGE_FIRST_REG 0x18
 #define SAVAGE_NR_REGS   34
 typedef struct savage_registers_s4_t {
-    uint32_t                   unused1[6];        /* 0x18-0x1d */
+    u_int32_t                   unused1[6];        /* 0x18-0x1d */
     savageRegDrawLocalCtrl     drawLocalCtrl;     /* 0x1e */
     savageRegTexPalAddr        texPalAddr;        /* 0x1f */
     savageRegTexCtrl_s4        texCtrl[2];        /* 0x20, 0x21 */
@@ -655,7 +655,7 @@ typedef struct savage_registers_s3d_t {
     savageRegTexAddr           texAddr;           /* 0x1a */
     savageRegTexDescr_s3d      texDescr;          /* 0x1b */
     savageRegTexCtrl_s3d       texCtrl;           /* 0x1c */
-    uint32_t                   unused1[3];        /* 0x1d-0x1f */
+    u_int32_t                   unused1[3];        /* 0x1d-0x1f */
     uint8_t                    fogTable[64];      /* 0x20-0x2f (16dwords) */
     savageRegFogCtrl           fogCtrl;           /* 0x30 */
     savageRegDrawCtrl          drawCtrl;          /* 0x31 */
@@ -666,12 +666,12 @@ typedef struct savage_registers_s3d_t {
     savageRegScissorsEnd       scissorsEnd;       /* 0x36 */
     savageRegZWatermarks       zWatermarks;       /* 0x37 */
     savageRegDestTexWatermarks destTexWatermarks; /* 0x38 */
-    uint32_t                   unused2;           /* 0x39 */
+    u_int32_t                   unused2;           /* 0x39 */
 } savageRegistersS3D;
 typedef union savage_registers_t {
     savageRegistersS4  s4;
     savageRegistersS3D s3d;
-    uint32_t           ui[SAVAGE_NR_REGS];
+    u_int32_t           ui[SAVAGE_NR_REGS];
 } savageRegisters;
 
 

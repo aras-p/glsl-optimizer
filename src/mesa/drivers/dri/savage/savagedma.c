@@ -85,7 +85,7 @@ void *savageDMAAlloc (savageContextPtr imesa, GLuint size) {
     /* make sure that everything has been filled in and committed */
     assert (dmaBuff->end == dmaBuff->allocEnd);
 
-    size *= sizeof (uint32_t); /* size in bytes */
+    size *= sizeof (u_int32_t); /* size in bytes */
     if (dmaBuff->kickFlag == GL_TRUE) {
 	if (size > DMA_PAGE_SIZE)
 	    return NULL;
@@ -102,9 +102,9 @@ void *savageDMAAlloc (savageContextPtr imesa, GLuint size) {
 
 /* Flush DMA buffer via DMA */
 void savageDMAFlush (savageContextPtr imesa) {
-    volatile uint32_t* BCIbase;
+    volatile u_int32_t* BCIbase;
     DMABufferPtr dmaBuff = &imesa->DMABuf;
-    uint32_t phyAddress;
+    u_int32_t phyAddress;
     GLuint dmaCount, dmaCount1, remain;
     int i;
 
@@ -117,7 +117,7 @@ void savageDMAFlush (savageContextPtr imesa) {
       return;
 
     /* get bci base */
-    BCIbase = (volatile uint32_t *)SAVAGE_GET_BCI_POINTER(imesa,4);
+    BCIbase = (volatile u_int32_t *)SAVAGE_GET_BCI_POINTER(imesa,4);
 
     /* set the eventtag */
     *BCIbase = (dmaBuff->usingPage & 0xffffL) | (CMD_UpdateShadowStat << 27)
@@ -136,7 +136,7 @@ void savageDMAFlush (savageContextPtr imesa) {
     dmaCount1 = (dmaCount + 31UL) & ~31UL;
     remain = (dmaCount1 - dmaCount) >> 2;
     for (i = 0; i < remain; i++) {
-        *((uint32_t *)dmaBuff->end) = 0x40000000L;
+        *((u_int32_t *)dmaBuff->end) = 0x40000000L;
         dmaBuff->end+=4;
     }
     dmaCount = (dmaCount1 >> 3) - 1;
@@ -227,7 +227,7 @@ void *savageDMAAlloc (savageContextPtr imesa, GLuint size) {
     /* make sure that everything has been filled in and committed */
     assert (dmaBuff->end == dmaBuff->allocEnd);
 
-    size *= sizeof (uint32_t); /* size in bytes */
+    size *= sizeof (u_int32_t); /* size in bytes */
     if (dmaBuff->end + size >= dmaBuff->buf->linear + DMA_PAGE_SIZE) {
 	/* need kick off */
 	savageDMAFlush (imesa);
@@ -238,9 +238,9 @@ void *savageDMAAlloc (savageContextPtr imesa, GLuint size) {
 
 /* Flush DMA buffer via BCI (faked DMA) */
 void savageDMAFlush(savageContextPtr imesa) {
-    volatile uint32_t* BCIbase;
+    volatile u_int32_t* BCIbase;
     DMABufferPtr dmaBuff = &imesa->DMABuf;
-    uint32_t *entry;
+    u_int32_t *entry;
 
     /* make sure that everything has been filled in and committed */
     assert (dmaBuff->allocEnd == dmaBuff->end);
@@ -249,11 +249,11 @@ void savageDMAFlush(savageContextPtr imesa) {
       return;
 
     /* get bci base */
-    BCIbase = (volatile uint32_t *)SAVAGE_GET_BCI_POINTER(
-	imesa, (dmaBuff->end - dmaBuff->start) / sizeof (uint32_t));
+    BCIbase = (volatile u_int32_t *)SAVAGE_GET_BCI_POINTER(
+	imesa, (dmaBuff->end - dmaBuff->start) / sizeof (u_int32_t));
 
-    for (entry = (uint32_t *)dmaBuff->start;
-	 entry < (uint32_t *)dmaBuff->end; ++entry)
+    for (entry = (u_int32_t *)dmaBuff->start;
+	 entry < (u_int32_t *)dmaBuff->end; ++entry)
 	*BCIbase = *entry;
 
     dmaBuff->end = dmaBuff->allocEnd = dmaBuff->start;
@@ -303,7 +303,7 @@ int savageDMAClose (savageContextPtr imesa) {
  * vertex DMA is implemented and eventually moved to the DRM.
  */
 
-static uint32_t vertex_data[16384]; /* 64KB */
+static u_int32_t vertex_data[16384]; /* 64KB */
 static drmBuf vertex_buffer = {
     0,                       /* idx */
     65536,                   /* total = 64KB */
@@ -315,8 +315,8 @@ void savageFakeVertices (savageContextPtr imesa, drmBufPtr buffer) {
     GLuint vertexStride = imesa->vertex_size; /* stride in dwords */
     GLuint vertexSize = imesa->vertex_size; /* the real vertex size in dwords */
     GLuint nVertices = buffer->used / (vertexStride*4);
-    uint32_t *data = (uint32_t*)buffer->address;
-    uint32_t vertexFormat = imesa->DrawPrimitiveCmd & SAVAGE_HW_SKIPFLAGS;
+    u_int32_t *data = (u_int32_t*)buffer->address;
+    u_int32_t vertexFormat = imesa->DrawPrimitiveCmd & SAVAGE_HW_SKIPFLAGS;
     GLuint i, j, left;
 
     /* we have the monopoly on vertex buffers ;-) */
@@ -333,15 +333,15 @@ void savageFakeVertices (savageContextPtr imesa, drmBufPtr buffer) {
 	GLuint count = left > 255 ? 255 : left;
 	/* Don't go through another buffering mechanism, copy to BCI
 	 * directly. */
-	volatile uint32_t *vb = SAVAGE_GET_BCI_POINTER(imesa,
+	volatile u_int32_t *vb = SAVAGE_GET_BCI_POINTER(imesa,
 						       count*vertexSize + 1);
 
 	WRITE_CMD (vb, SAVAGE_DRAW_PRIMITIVE(
 		       count, SAVAGE_HW_TRIANGLE_LIST | vertexFormat, 0),
-		   uint32_t);
+		   u_int32_t);
 	for (i = 0; i < count; ++i) {
 	    for (j = 0; j < vertexSize; ++j)
-		WRITE_CMD (vb, data[j], uint32_t);
+		WRITE_CMD (vb, data[j], u_int32_t);
 	    data += vertexStride;
 	}
 	left -= count;

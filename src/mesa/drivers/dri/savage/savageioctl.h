@@ -73,9 +73,9 @@ int  savageFreeDMABuffer(savageContextPtr, drm_savage_alloc_cont_mem_t*);
 } while (0)
 
 static __inline
-uint32_t *savageAllocDmaLow( savageContextPtr imesa, GLuint bytes )
+u_int32_t *savageAllocDmaLow( savageContextPtr imesa, GLuint bytes )
 {
-   uint32_t *head;
+   u_int32_t *head;
 
    if (!imesa->vertex_dma_buffer) {
       LOCK_HARDWARE(imesa);
@@ -89,7 +89,7 @@ uint32_t *savageAllocDmaLow( savageContextPtr imesa, GLuint bytes )
       UNLOCK_HARDWARE(imesa);
    }
 
-   head = (uint32_t *)((uint8_t *)imesa->vertex_dma_buffer->address +
+   head = (u_int32_t *)((uint8_t *)imesa->vertex_dma_buffer->address +
 		       imesa->vertex_dma_buffer->used);
 
    imesa->vertex_dma_buffer->used += bytes;
