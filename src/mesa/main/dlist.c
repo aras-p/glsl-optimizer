@@ -5355,8 +5355,6 @@ _mesa_CallList( GLuint list )
    /* VERY IMPORTANT:  Save the CompileFlag status, turn it off, */
    /* execute the display list, and restore the CompileFlag. */
 
-   printf("%s %d\n", __FUNCTION__, list);
-
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glCallList %d\n", list); 
 
