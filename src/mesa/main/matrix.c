@@ -1,10 +1,10 @@
-/* $Id: matrix.c,v 1.12 1999/12/10 20:01:06 brianp Exp $ */
+/* $Id: matrix.c,v 1.13 2000/01/13 00:27:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1554,13 +1554,14 @@ void gl_matrix_dtr( GLmatrix *m )
    }
 }
 
+#if 0
 void gl_matrix_set_identity( GLmatrix *m )
 {
    MEMCPY( m->m, Identity, sizeof(Identity));
    m->type = MATRIX_IDENTITY;
    m->flags = MAT_DIRTY_DEPENDENTS;
 }
-
+#endif
 
 void gl_matrix_alloc_inv( GLmatrix *m )
 {
