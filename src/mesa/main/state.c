@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.86 2002/06/16 01:14:22 brianp Exp $ */
+/* $Id: state.c,v 1.87 2002/06/25 02:31:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -522,6 +522,10 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 /**********************************************************************/
 
 
+/*
+ * Check polygon state and set DD_TRI_CULL_FRONT_BACK and/or DD_TRI_OFFSET
+ * in ctx->_TriangleCaps if needed.
+ */
 static void
 update_polygon( GLcontext *ctx )
 {
@@ -532,8 +536,6 @@ update_polygon( GLcontext *ctx )
 
    /* Any Polygon offsets enabled? */
    ctx->Polygon._OffsetAny = GL_FALSE;
-   ctx->_TriangleCaps &= ~DD_TRI_OFFSET;
-
    if (ctx->Polygon.OffsetPoint ||
        ctx->Polygon.OffsetLine ||
        ctx->Polygon.OffsetFill) {
