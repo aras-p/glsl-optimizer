@@ -1,4 +1,4 @@
-/* $Id: osdemo.c,v 1.4 2000/03/28 16:59:39 rjfrank Exp $ */
+/* $Id: osdemo.c,v 1.5 2000/09/08 16:42:06 brianp Exp $ */
 
 /*
  * Demo of off-screen Mesa rendering
@@ -223,14 +223,37 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
 
 int main( int argc, char *argv[] )
 {
+   void *buffer;
+
    /* Create an RGBA-mode context */
+#if OSMESA_MAJOR_VERSION * 100 + OSMESA_MINOR_VERSION >= 305
+   /* specify Z, stencil, accum sizes */
+   OSMesaContext ctx = OSMesaCreateContextExt( GL_RGBA, 16, 0, 0, NULL );
+#else
    OSMesaContext ctx = OSMesaCreateContext( GL_RGBA, NULL );
+#endif
+   if (!ctx) {
+      printf("OSMesaCreateContext failed!\n");
+      return 0;
+   }
 
    /* Allocate the image buffer */
-   void *buffer = malloc( WIDTH * HEIGHT * 4 );
+   buffer = malloc( WIDTH * HEIGHT * 4 );
+   if (!buffer) {
+      printf("Alloc image buffer failed!\n");
+      return 0;
+   }
 
    /* Bind the buffer to the context and make it current */
    OSMesaMakeCurrent( ctx, buffer, GL_UNSIGNED_BYTE, WIDTH, HEIGHT );
+
+   {
+      int z, s, a;
+      glGetIntegerv(GL_DEPTH_BITS, &z);
+      glGetIntegerv(GL_STENCIL_BITS, &s);
+      glGetIntegerv(GL_ACCUM_RED_BITS, &a);
+      printf("%d %d %d\n", z, s, a);
+   }
 
    render_image();
 
