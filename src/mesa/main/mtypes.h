@@ -2214,14 +2214,11 @@ struct __GLcontextRec {
 
    /** \name For debugging/development only */
    /*@{*/
-   GLboolean NoRaster;
    GLboolean FirstTimeCurrent;
    /*@}*/
 
    /** Dither disable via MESA_NO_DITHER env var */
    GLboolean NoDither;
-
-   GLboolean Rendering;
 
 #if defined(MESA_TRACE)
    struct _glapi_table *TraceDispatch;

@@ -229,7 +229,6 @@ _mesa_init_debug( GLcontext *ctx )
    char *c;
 
    /* For debug/development only */
-   ctx->NoRaster = _mesa_getenv("MESA_NO_RASTER") ? GL_TRUE : GL_FALSE;
    ctx->FirstTimeCurrent = GL_TRUE;
 
    /* Dither disable */
