@@ -1257,7 +1257,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
      }
    }
 #endif
-#if 1 || FX_COMPRESS_DXT5_AS_DXT3_HACK
+#if 0 && FX_COMPRESS_DXT5_AS_DXT3_HACK
    /* [dBorca] either VSA is stupid at DXT5, 
     * or our compression tool is broken. See
     * above for caveats.

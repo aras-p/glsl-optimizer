@@ -147,10 +147,9 @@ GLint GLAPIENTRY fxMesaSelectCurrentBoard (int n)
 }
 
 
-void * GLAPIENTRY fxMesaGetCurrentContext (void)
+fxMesaContext GLAPIENTRY fxMesaGetCurrentContext (void)
 {
- GET_CURRENT_CONTEXT(ctx);
- return ctx;
+ return fxMesaCurrentCtx;
 }
 
 

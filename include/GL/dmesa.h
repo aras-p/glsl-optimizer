@@ -90,7 +90,7 @@ void DMesaDestroyContext (DMesaContext c);
 /*
  * Return a handle to the current context.
  */
-void *DMesaGetCurrentContext (void);
+DMesaContext DMesaGetCurrentContext (void);
 
 
 
@@ -105,6 +105,11 @@ DMesaBuffer DMesaCreateBuffer (DMesaVisual visual,
  * Destroy Buffer.
  */
 void DMesaDestroyBuffer (DMesaBuffer b);
+
+/*
+ * Return a handle to the current buffer.
+ */
+DMesaBuffer DMesaGetCurrentBuffer (void);
 
 /*
  * Swap the front and back buffers for the given Buffer.

@@ -807,7 +807,7 @@ static const GLubyte* get_string (GLcontext *ctx, GLenum name)
  switch (name) {
         case GL_RENDERER:
              return (const GLubyte *)"Mesa DJGPP"
-                                     "\0port (c) Borca Daniel dec-2003";
+                                     "\0port (c) Borca Daniel feb-2004";
         default:
              return NULL;
  }
@@ -1137,8 +1137,8 @@ void DMesaDestroyBuffer (DMesaBuffer b)
 DMesaContext DMesaCreateContext (DMesaVisual visual,
                                  DMesaContext share)
 {
-#ifndef FX
  GLcontext *c;
+#ifndef FX
  TNLcontext *tnl;
  struct dd_function_table functions;
 
@@ -1177,11 +1177,11 @@ DMesaContext DMesaCreateContext (DMesaVisual visual,
     _swsetup_Wakeup(c);
  }
 
- return (DMesaContext)c;
-
 #else  /* FX */
- return (DMesaContext)visual;
+ c = (GLcontext *)0xdeadbeef;
 #endif /* FX */
+
+ return (DMesaContext)c;
 }
 
 
@@ -1292,13 +1292,34 @@ void DMesaSetCI (int ndx, GLfloat red, GLfloat green, GLfloat blue)
 
 
 
-void *DMesaGetCurrentContext (void)
+DMesaContext DMesaGetCurrentContext (void)
 {
-#ifndef FX
  GET_CURRENT_CONTEXT(ctx);
- return ctx;
+
+#ifndef FX
 #else
- return fxMesaGetCurrentContext();
+ if (ctx != NULL) {
+    ctx = (GLcontext *)0xdeadbeef;
+ }
+#endif
+
+ return (DMesaContext)ctx;
+}
+
+
+
+DMesaBuffer DMesaGetCurrentBuffer (void)
+{
+ const DMesaContext dmesa = DMesaGetCurrentContext();
+
+ if (dmesa == NULL) {
+    return NULL;
+ }
+
+#ifndef FX
+ return dmesa->buffer;
+#else
+ return (DMesaBuffer)fxMesaGetCurrentContext();
 #endif
 }
 
