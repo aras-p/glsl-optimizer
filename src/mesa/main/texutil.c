@@ -993,9 +993,9 @@ do {									\
    const TYPE *src = (const TYPE *)srcImage;				\
    TYPE *dst = (TYPE *)dstImage;					\
 									\
-   if ( srcHeight <= dstHeight ) {					\
+   if ( srcHeight < dstHeight ) {					\
       const GLint hScale = dstHeight / srcHeight;			\
-      if ( srcWidth <= dstWidth ) {					\
+      if ( srcWidth < dstWidth ) {					\
 	 const GLint wScale = dstWidth / srcWidth;			\
 	 INNER_LOOP( TYPE, /, / );					\
       }									\
@@ -1006,7 +1006,7 @@ do {									\
    }									\
    else {								\
       const GLint hScale = srcHeight / dstHeight;			\
-      if ( srcWidth <= dstWidth ) {					\
+      if ( srcWidth < dstWidth ) {					\
 	 const GLint wScale = dstWidth / srcWidth;			\
 	 INNER_LOOP( TYPE, *, / );					\
       }									\
