@@ -1,4 +1,4 @@
-/* $Id: glxinfo.c,v 1.13 2001/04/02 22:45:07 brianp Exp $ */
+/* $Id: glxinfo.c,v 1.14 2001/04/24 20:57:36 brianp Exp $ */
 
 /*
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
@@ -148,7 +148,7 @@ print_display_info(Display *dpy)
 
 
 static void
-print_screen_info(Display *dpy, int scrnum)
+print_screen_info(Display *dpy, int scrnum, Bool allowDirect)
 {
    Window win;
    int attribSingle[] = {
@@ -192,7 +192,7 @@ print_screen_info(Display *dpy, int scrnum)
 		       0, visinfo->depth, InputOutput,
 		       visinfo->visual, mask, &attr);
 
-   ctx = glXCreateContext( dpy, visinfo, NULL, True );
+   ctx = glXCreateContext( dpy, visinfo, NULL, allowDirect );
    if (!ctx) {
       fprintf(stderr, "Error: glXCreateContext failed\n");
       XDestroyWindow(dpy, win);
@@ -617,6 +617,19 @@ find_best_visual(Display *dpy, int scrnum)
 }
 
 
+static void
+usage(void)
+{
+   printf("Usage: glxinfo [-v] [-t] [-h] [-i] [-b] [-display <dname>]\n");
+   printf("\t-v: Print visuals info in verbose form.\n");
+   printf("\t-t: Print verbose table.\n");
+   printf("\t-display <dname>: Print GLX visuals on specified server.\n");
+   printf("\t-h: This information.\n");
+   printf("\t-i: Force an indirect rendering context.\n");
+   printf("\t-b: Find the 'best' visual and print it's number.\n");
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -625,6 +638,7 @@ main(int argc, char *argv[])
    int numScreens, scrnum;
    InfoMode mode = Normal;
    GLboolean findBest = GL_FALSE;
+   Bool allowDirect = True;
    int i;
 
    for (i = 1; i < argc; i++) {
@@ -640,6 +654,18 @@ main(int argc, char *argv[])
       }
       else if (strcmp(argv[i], "-b") == 0) {
          findBest = GL_TRUE;
+      }
+      else if (strcmp(argv[i], "-i") == 0) {
+         allowDirect = False;
+      }
+      else if (strcmp(argv[i], "-h") == 0) {
+         usage();
+         return 0;
+      }
+      else {
+         printf("Unknown option `%s'\n", argv[i]);
+         usage();
+         return 0;
       }
    }
 
@@ -660,7 +686,7 @@ main(int argc, char *argv[])
       print_display_info(dpy);
       for (scrnum = 0; scrnum < numScreens; scrnum++) {
          mesa_hack(dpy, scrnum);
-         print_screen_info(dpy, scrnum);
+         print_screen_info(dpy, scrnum, allowDirect);
          printf("\n");
          print_visual_info(dpy, scrnum, mode);
          if (scrnum + 1 < numScreens)
