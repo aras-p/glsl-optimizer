@@ -325,8 +325,11 @@ extern __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *);
 typedef __GLXextFuncPtr ( * PFNGLXGETPROCADDRESSARBPROC) (const GLubyte *procName);
 #endif
 
+#if 0
+/* XXX the enums for this extension are missing */
 #ifndef GLX_SGIS_multisample
 #define GLX_SGIS_multisample 1
+#endif
 #endif
 
 #ifndef GLX_EXT_visual_info
