@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.15 2001/08/14 00:50:44 keithw Exp $ */
+/* $Id: t_imm_eval.c,v 1.16 2001/08/14 00:52:47 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -206,13 +206,13 @@ static void eval2_obj_norm( GLvector4f *obj_ptr,
 	 _math_de_casteljau_surf(map->Points, obj[i], du, dv, u, v, dimension,
 				 map->Uorder, map->Vorder);
 
-	 du[0] = du[0]*obj[i][3] - du[3]*obj[i][0];
-	 du[1] = du[1]*obj[i][3] - du[3]*obj[i][1];
-	 du[2] = du[2]*obj[i][3] - du[3]*obj[i][2];
+/*  	 du[0] = du[0]*obj[i][3] - du[3]*obj[i][0]; */
+/*  	 du[1] = du[1]*obj[i][3] - du[3]*obj[i][1]; */
+/*  	 du[2] = du[2]*obj[i][3] - du[3]*obj[i][2]; */
 	 
-	 dv[0] = dv[0]*obj[i][3] - dv[3]*obj[i][0];
-	 dv[1] = dv[1]*obj[i][3] - dv[3]*obj[i][1];
-	 dv[2] = dv[2]*obj[i][3] - dv[3]*obj[i][2];
+/*  	 dv[0] = dv[0]*obj[i][3] - dv[3]*obj[i][0]; */
+/*  	 dv[1] = dv[1]*obj[i][3] - dv[3]*obj[i][1]; */
+/*  	 dv[2] = dv[2]*obj[i][3] - dv[3]*obj[i][2]; */
 
 	 CROSS3(normal[i], du, dv);
 	 NORMALIZE_3FV(normal[i]);
