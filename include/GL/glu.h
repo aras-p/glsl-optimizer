@@ -1,4 +1,4 @@
-/* $Id: glu.h,v 1.12 1999/10/22 10:47:58 brianp Exp $ */
+/* $Id: glu.h,v 1.13 1999/10/27 09:43:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -461,19 +461,6 @@ GLUAPI void GLAPIENTRY gluEndPolygon( GLUtesselator *tobj );
 
 GLUAPI const GLubyte* GLAPIENTRY gluGetString( GLenum name );
 
-
-
-/*
- * GLU_EXT_get_proc_address extension
- */
-/*
- * WARNING: this extension is not finalized yet!  Do not release code
- * which uses this extension yet!  It may change!
- */
-#define GLU_EXT_get_proc_address 1
-#ifdef GLU_EXT_get_proc_address
-GLUAPI void (GLAPIENTRY *gluGetProcAddressEXT(const GLubyte *procName))();
-#endif
 
 
 #if defined(__BEOS__) || defined(__QUICKDRAW__)
