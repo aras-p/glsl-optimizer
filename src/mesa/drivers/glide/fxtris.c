@@ -32,6 +32,8 @@
 #include <stdio.h>
 #include <math.h>
 
+#ifdef FX
+
 #include "glheader.h"
 #include "mtypes.h"
 #include "macros.h"
@@ -822,3 +824,19 @@ void fxDDInitTriFuncs( GLcontext *ctx )
    
    (void) fx_print_vertex;
 }
+
+#else
+
+
+/*
+ * Need this to provide at least one external definition.
+ */
+
+extern int gl_fx_dummy_function_tris(void);
+int
+gl_fx_dummy_function_tris(void)
+{
+   return 0;
+}
+
+#endif /* FX */

@@ -112,7 +112,6 @@ RASTER_SOURCES = [.swrast]s_aatriangle.c \
 [.swrast]s_triangle.c \
 [.swrast]s_zoom.c \
 [.swrast_setup]ss_context.c \
-[.swrast_setup]ss_interp.c \
 [.swrast_setup]ss_triangle.c \
 [.swrast_setup]ss_vb.c 
 
@@ -260,7 +259,6 @@ OBJECTS9=[.swrast]s_readpix.obj,\
 [.swrast]s_zoom.obj
 
 OBJECTS10=[.swrast_setup]ss_context.obj,\
-[.swrast_setup]ss_interp.obj,\
 [.swrast_setup]ss_triangle.obj,\
 [.swrast_setup]ss_vb.obj 
 
@@ -469,8 +467,6 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_zoom.obj [.swrast]s_zoom.c
 [.swrast_setup]ss_context.obj : [.swrast_setup]ss_context.c
 	$(CC) $(CFLAGS) /obj=[.swrast_setup]ss_context.obj [.swrast_setup]ss_context.c
-[.swrast_setup]ss_interp.obj : [.swrast_setup]ss_interp.c
-	$(CC) $(CFLAGS) /obj=[.swrast_setup]ss_interp.obj [.swrast_setup]ss_interp.c
 [.swrast_setup]ss_triangle.obj : [.swrast_setup]ss_triangle.c
 	$(CC) $(CFLAGS) /obj=[.swrast_setup]ss_triangle.obj [.swrast_setup]ss_triangle.c
 [.swrast_setup]ss_vb.obj : [.swrast_setup]ss_vb.c

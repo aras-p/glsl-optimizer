@@ -24,6 +24,8 @@
  */
 /* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfxvb.c,v 1.7 2000/11/08 05:02:43 dawes Exp $ */
  
+#ifdef FX
+
 #include "glheader.h"
 #include "mtypes.h"
 #include "mem.h"
@@ -391,3 +393,18 @@ void fxFreeVB( GLcontext *ctx )
       fxMesa->UbyteColor.Ptr = 0;
    }
 }
+#else
+
+
+/*
+ * Need this to provide at least one external definition.
+ */
+
+extern int gl_fx_dummy_function_vb(void);
+int
+gl_fx_dummy_function_vb(void)
+{
+   return 0;
+}
+
+#endif /* FX */
