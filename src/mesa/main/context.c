@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.2 1999/08/26 14:50:49 keithw Exp $ */
+/* $Id: context.c,v 1.3 1999/08/29 10:26:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -83,6 +83,7 @@
 #include "vbfill.h"
 #include "vbrender.h"
 #include "vbxform.h"
+#include "vertices.h"
 #include "xform.h"
 #ifdef XFree86Server
 #include "GL/xf86glx.h"
@@ -305,6 +306,7 @@ static void one_time_init( void )
       gl_init_translate();
       gl_init_vbrender();
       gl_init_vbxform();
+      gl_init_vertices();
       alreadyCalled = GL_TRUE;
    }
 #if defined(DEBUG) && defined(__DATE__) && defined(__TIME__)
