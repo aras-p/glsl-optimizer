@@ -164,7 +164,7 @@ read_depth_pixels( GLcontext *ctx,
                                     GL_DEPTH_COMPONENT, type, 0, j, 0);
 
          _mesa_pack_depth_span(ctx, readWidth, (GLdepth *) dest, type,
-                               depth, &ctx->Pack);
+                               depth, packing);
       }
    }
 }
@@ -210,7 +210,7 @@ read_stencil_pixels( GLcontext *ctx,
       dest = _mesa_image_address(packing, pixels, width, height,
                                  GL_STENCIL_INDEX, type, 0, j, 0);
 
-      _mesa_pack_stencil_span(ctx, readWidth, type, dest, stencil, &ctx->Pack);
+      _mesa_pack_stencil_span(ctx, readWidth, type, dest, stencil, packing);
    }
 }
 
@@ -499,19 +499,18 @@ void
 _swrast_ReadPixels( GLcontext *ctx,
 		    GLint x, GLint y, GLsizei width, GLsizei height,
 		    GLenum format, GLenum type,
-		    const struct gl_pixelstore_attrib *pack,
+		    const struct gl_pixelstore_attrib *packing,
 		    GLvoid *pixels )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   (void) pack;
 
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-   if (pack->BufferObj->Name) {
+   if (packing->BufferObj->Name) {
       /* pack into PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(pack, width, height, 1,
+      if (!_mesa_validate_pbo_access(packing, width, height, 1,
                                      format, type, pixels)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glReadPixels(invalid PBO access)");
@@ -519,7 +518,7 @@ _swrast_ReadPixels( GLcontext *ctx,
       }
       buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
                                               GL_WRITE_ONLY_ARB,
-                                              pack->BufferObj);
+                                              packing->BufferObj);
       if (!buf) {
          /* buffer is already mapped - that's an error */
          _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(PBO is mapped)");
@@ -532,13 +531,13 @@ _swrast_ReadPixels( GLcontext *ctx,
 
    switch (format) {
       case GL_COLOR_INDEX:
-         read_index_pixels(ctx, x, y, width, height, type, pixels, &ctx->Pack);
+         read_index_pixels(ctx, x, y, width, height, type, pixels, packing);
 	 break;
       case GL_STENCIL_INDEX:
-	 read_stencil_pixels(ctx, x,y, width,height, type, pixels, &ctx->Pack);
+	 read_stencil_pixels(ctx, x,y, width,height, type, pixels, packing);
          break;
       case GL_DEPTH_COMPONENT:
-	 read_depth_pixels(ctx, x, y, width, height, type, pixels, &ctx->Pack);
+	 read_depth_pixels(ctx, x, y, width, height, type, pixels, packing);
 	 break;
       case GL_RED:
       case GL_GREEN:
@@ -552,7 +551,7 @@ _swrast_ReadPixels( GLcontext *ctx,
       case GL_BGRA:
       case GL_ABGR_EXT:
          read_rgba_pixels(ctx, x, y, width, height,
-                          format, type, pixels, &ctx->Pack);
+                          format, type, pixels, packing);
 	 break;
       default:
 	 _mesa_error( ctx, GL_INVALID_ENUM, "glReadPixels(format)" );
@@ -561,9 +560,9 @@ _swrast_ReadPixels( GLcontext *ctx,
 
    RENDER_FINISH(swrast, ctx);
 
-   if (pack->BufferObj->Name) {
+   if (packing->BufferObj->Name) {
       /* done with PBO so unmap it now */
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                              pack->BufferObj);
+                              packing->BufferObj);
    }
 }
