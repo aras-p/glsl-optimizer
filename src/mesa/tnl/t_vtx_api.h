@@ -76,7 +76,7 @@ extern void _tnl_generic_attr_table_init( attrfv_func (*tab)[4] );
 
 /* t_vtx_x86.c:
  */
-extern void _tnl_InitX86Codegen( struct dynfn_generators *gen );
+extern void _tnl_InitX86Codegen( struct _tnl_dynfn_generators *gen );
 
 
 

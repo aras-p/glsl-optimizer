@@ -330,9 +330,9 @@ static void _tnl_fixup_vertex( GLcontext *ctx, GLuint attr, GLuint sz )
 }
 
 
-static struct dynfn *lookup( struct dynfn *l, GLuint key )
+static struct _tnl_dynfn *lookup( struct _tnl_dynfn *l, GLuint key )
 {
-   struct dynfn *f;
+   struct _tnl_dynfn *f;
 
    foreach( f, l ) {
       if (f->key == key) 
@@ -346,7 +346,7 @@ static struct dynfn *lookup( struct dynfn *l, GLuint key )
 static attrfv_func do_codegen( GLcontext *ctx, GLuint attr, GLuint sz )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx); 
-   struct dynfn *dfn = 0;
+   struct _tnl_dynfn *dfn = 0;
 
    if (attr == 0) {
       GLuint key = tnl->vtx.vertex_size;
@@ -846,7 +846,7 @@ static void _tnl_current_init( GLcontext *ctx )
    tnl->vtx.current[_TNL_ATTRIB_INDEX] = &ctx->Current.Index;
 }
 
-static struct dynfn *no_codegen( GLcontext *ctx, int key )
+static struct _tnl_dynfn *no_codegen( GLcontext *ctx, int key )
 {
    return 0;
 }
@@ -913,9 +913,9 @@ void _tnl_vtx_init( GLcontext *ctx )
    tnl->vtx.have_materials = 0;
 }
 
-static void free_funcs( struct dynfn *l )
+static void free_funcs( struct _tnl_dynfn *l )
 {
-   struct dynfn *f, *tmp;
+   struct _tnl_dynfn *f, *tmp;
    foreach_s (f, tmp, l) {
       remove_from_list( f );
       ALIGN_FREE( f->code );

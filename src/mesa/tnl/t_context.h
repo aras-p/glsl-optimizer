@@ -251,20 +251,20 @@ struct tnl_copied_vtx {
 
 typedef void (*attrfv_func)( const GLfloat * );
 
-struct dynfn {
-   struct dynfn *next, *prev;
+struct _tnl_dynfn {
+   struct _tnl_dynfn *next, *prev;
    int key;
    char *code;
 };
 
-struct dynfn_lists {
-   struct dynfn Vertex[4];
-   struct dynfn Attribute[4];
+struct _tnl_dynfn_lists {
+   struct _tnl_dynfn Vertex[4];
+   struct _tnl_dynfn Attribute[4];
 };
 
-struct dynfn_generators {
-   struct dynfn *(*Vertex[4])( GLcontext *ctx, int key );
-   struct dynfn *(*Attribute[4])( GLcontext *ctx, int key );
+struct _tnl_dynfn_generators {
+   struct _tnl_dynfn *(*Vertex[4])( GLcontext *ctx, int key );
+   struct _tnl_dynfn *(*Attribute[4])( GLcontext *ctx, int key );
 };
 
 #define _TNL_MAX_ATTR_CODEGEN 16 
@@ -290,8 +290,8 @@ struct tnl_vtx {
 
    attrfv_func tabfv[_TNL_MAX_ATTR_CODEGEN+1][4]; /* plus 1 for ERROR_ATTRIB */
 
-   struct dynfn_lists cache;
-   struct dynfn_generators gen;
+   struct _tnl_dynfn_lists cache;
+   struct _tnl_dynfn_generators gen;
 
    struct tnl_eval eval;
    GLboolean *edgeflag_tmp;

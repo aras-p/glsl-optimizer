@@ -79,7 +79,7 @@ static void notify( void )
 
 
 #define DFN( FUNC, CACHE, KEY )				\
-   struct dynfn *dfn = MALLOC_STRUCT( dynfn );          \
+   struct _tnl_dynfn *dfn = MALLOC_STRUCT( _tnl_dynfn );          \
    char *start = (char *)&FUNC;				\
    char *end = (char *)&FUNC##_end;			\
    int offset = 0;               			\
@@ -114,7 +114,7 @@ do {							\
  * the current state.  Generic x86 versions.
  */
 
-static struct dynfn *makeX86Vertex1fv( GLcontext *ctx, int vertex_size )
+static struct _tnl_dynfn *makeX86Vertex1fv( GLcontext *ctx, int vertex_size )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    DFN ( _x86_Vertex1fv, tnl->vtx.cache.Vertex[1-1], vertex_size );
@@ -130,7 +130,7 @@ static struct dynfn *makeX86Vertex1fv( GLcontext *ctx, int vertex_size )
    return dfn;
 }
 
-static struct dynfn *makeX86Vertex2fv( GLcontext *ctx, int vertex_size )
+static struct _tnl_dynfn *makeX86Vertex2fv( GLcontext *ctx, int vertex_size )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    DFN ( _x86_Vertex2fv, tnl->vtx.cache.Vertex[2-1], vertex_size );
@@ -146,7 +146,7 @@ static struct dynfn *makeX86Vertex2fv( GLcontext *ctx, int vertex_size )
    return dfn;
 }
 
-static struct dynfn *makeX86Vertex3fv( GLcontext *ctx, int vertex_size )
+static struct _tnl_dynfn *makeX86Vertex3fv( GLcontext *ctx, int vertex_size )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    DFN ( _x86_Vertex3fv, tnl->vtx.cache.Vertex[3-1], vertex_size );
@@ -161,7 +161,7 @@ static struct dynfn *makeX86Vertex3fv( GLcontext *ctx, int vertex_size )
    return dfn;
 }
 
-static struct dynfn *makeX86Vertex4fv( GLcontext *ctx, int vertex_size )
+static struct _tnl_dynfn *makeX86Vertex4fv( GLcontext *ctx, int vertex_size )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    DFN ( _x86_Vertex4fv, tnl->vtx.cache.Vertex[4-1], vertex_size );
@@ -178,7 +178,7 @@ static struct dynfn *makeX86Vertex4fv( GLcontext *ctx, int vertex_size )
 }
 
 
-static struct dynfn *makeX86Attribute1fv( GLcontext *ctx, int dest )
+static struct _tnl_dynfn *makeX86Attribute1fv( GLcontext *ctx, int dest )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    DFN ( _x86_Attribute1fv, tnl->vtx.cache.Attribute[1-1], dest );
@@ -188,7 +188,7 @@ static struct dynfn *makeX86Attribute1fv( GLcontext *ctx, int dest )
    return dfn;
 }
 
-static struct dynfn *makeX86Attribute2fv( GLcontext *ctx, int dest )
+static struct _tnl_dynfn *makeX86Attribute2fv( GLcontext *ctx, int dest )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    DFN ( _x86_Attribute2fv, tnl->vtx.cache.Attribute[2-1], dest );
@@ -199,7 +199,7 @@ static struct dynfn *makeX86Attribute2fv( GLcontext *ctx, int dest )
    return dfn;
 }
 
-static struct dynfn *makeX86Attribute3fv( GLcontext *ctx, int dest )
+static struct _tnl_dynfn *makeX86Attribute3fv( GLcontext *ctx, int dest )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    DFN ( _x86_Attribute3fv, tnl->vtx.cache.Attribute[3-1], dest );
@@ -211,7 +211,7 @@ static struct dynfn *makeX86Attribute3fv( GLcontext *ctx, int dest )
    return dfn;
 }
 
-static struct dynfn *makeX86Attribute4fv( GLcontext *ctx, int dest )
+static struct _tnl_dynfn *makeX86Attribute4fv( GLcontext *ctx, int dest )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    DFN ( _x86_Attribute4fv, tnl->vtx.cache.Attribute[4-1], dest );
@@ -225,7 +225,7 @@ static struct dynfn *makeX86Attribute4fv( GLcontext *ctx, int dest )
 }
 
 
-void _tnl_InitX86Codegen( struct dynfn_generators *gen )
+void _tnl_InitX86Codegen( struct _tnl_dynfn_generators *gen )
 {
    gen->Vertex[0] = makeX86Vertex1fv;
    gen->Vertex[1] = makeX86Vertex2fv;
@@ -243,7 +243,7 @@ void _do_choose( void )
 
 #else 
 
-void _tnl_InitX86Codegen( struct dynfn_generators *gen )
+void _tnl_InitX86Codegen( struct _tnl_dynfn_generators *gen )
 {
    (void) gen;
 }
