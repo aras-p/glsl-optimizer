@@ -63,10 +63,10 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #if FLAGS & (ATTENUATE | LARGE | SMOOTH | SPRITE)
    GLfloat size;
 #endif
-#if FLAGS & ATTENUATE
+#if FLAGS & RGBA
+#if (FLAGS & ATTENUATE) && (FLAGS & SMOOTH)
    GLfloat alphaAtten;
 #endif
-#if FLAGS & RGBA
    const GLchan red   = vert->color[0];
    const GLchan green = vert->color[1];
    const GLchan blue  = vert->color[2];
@@ -134,12 +134,16 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #if FLAGS & ATTENUATE
    if (vert->pointSize >= ctx->Point.Threshold) {
       size = MIN2(vert->pointSize, ctx->Point.MaxSize);
+#if (FLAGS & RGBA) && (FLAGS & SMOOTH)
       alphaAtten = 1.0F;
+#endif
    }
    else {
+#if (FLAGS & RGBA) && (FLAGS & SMOOTH)
       GLfloat dsize = vert->pointSize / ctx->Point.Threshold;
-      size = MAX2(ctx->Point.Threshold, ctx->Point.MinSize);
       alphaAtten = dsize * dsize;
+#endif
+      size = MAX2(ctx->Point.Threshold, ctx->Point.MinSize);
    }
 #elif FLAGS & (LARGE | SMOOTH | SPRITE)
    size = ctx->Point._Size;

@@ -385,18 +385,16 @@ TAG(texsubimage2d_stride_unpack)( const struct convert_info *convert )
    DST_TYPE *dst = (DST_TYPE *)((GLubyte *)convert->dstImage +
 				(convert->yoffset * convert->dstImageWidth +
 				 convert->xoffset) * DST_TEXEL_BYTES);
-   GLint adjust;
-   GLint row, col = 0;
-   (void) col;
-
-   adjust = convert->dstImageWidth - convert->width;
+   GLint row;
+#ifndef CONVERT_DIRECT
+   GLint adjust = convert->dstImageWidth - convert->width;
+#endif
 
 #if DEBUG_TEXUTIL
    _mesa_debug( NULL, __FUNCTION__ ":\n" );
    _mesa_debug( NULL, "   x=%d y=%d w=%d h=%d s=%d\n",
             convert->xoffset, convert->yoffset, convert->width,
             convert->height, convert->dstImageWidth );
-   _mesa_debug( NULL, "   adjust=%d\n", adjust );
 #endif
 
    for ( row = 0 ; row < convert->height ; row++ ) {
@@ -406,6 +404,7 @@ TAG(texsubimage2d_stride_unpack)( const struct convert_info *convert )
       dst += convert->dstImageWidth;
 #else
       const GLubyte *srcRow = src;
+      GLint col;
       for ( col = 0 ; col < convert->width ; col++ ) {
 	 CONVERT_TEXEL( *dst++, src );
 	 src += SRC_TEXEL_BYTES;
@@ -437,18 +436,16 @@ TAG(texsubimage3d_stride_unpack)( const struct convert_info *convert )
 				((convert->zoffset * convert->dstImageHeight +
 				  convert->yoffset) * convert->dstImageWidth +
 				 convert->xoffset) * DST_TEXEL_BYTES);
-   GLint adjust;
-   GLint row, col = 0, img;
-   (void) col;
-
-   adjust = convert->dstImageWidth - convert->width;
+   GLint row, img;
+#ifndef CONVERT_DIRECT
+   GLint adjust = convert->dstImageWidth - convert->width;
+#endif
 
 #if DEBUG_TEXUTIL
    _mesa_debug( NULL, __FUNCTION__ ":\n" );
    _mesa_debug( NULL, "   x=%d y=%d w=%d h=%d s=%d\n",
             convert->xoffset, convert->yoffset, convert->width,
             convert->height, convert->dstImageWidth );
-   _mesa_debug( NULL, "   adjust=%d\n", adjust );
 #endif
 
    for ( img = 0 ; img < convert->depth ; img++ ) {
@@ -460,6 +457,7 @@ TAG(texsubimage3d_stride_unpack)( const struct convert_info *convert )
 	 dst += convert->dstImageWidth;
 #else
 	 const GLubyte *srcRow = src;
+	 GLint col;
 	 for ( col = 0 ; col < convert->width ; col++ ) {
 	    CONVERT_TEXEL( *dst++, src );
 	    src += SRC_TEXEL_BYTES;

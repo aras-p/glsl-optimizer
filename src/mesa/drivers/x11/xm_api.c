@@ -881,6 +881,8 @@ static GLboolean setup_grayscale( int client, XMesaVisual v,
 static GLboolean setup_dithered_color( int client, XMesaVisual v,
                                        XMesaBuffer buffer, XMesaColormap cmap )
 {
+   (void) DitherValues;  /* silence warning */
+
    if (GET_VISUAL_DEPTH(v)<4 || GET_VISUAL_DEPTH(v)>16) {
       return GL_FALSE;
    }

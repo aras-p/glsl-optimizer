@@ -31,7 +31,7 @@
 #include "mtypes.h"
 
 
-#define F(x) (int)&(((struct gl_extensions *)0)->x)
+#define F(x) (int)(unsigned long)&(((struct gl_extensions *)0)->x)
 #define ON GL_TRUE
 #define OFF GL_FALSE
 

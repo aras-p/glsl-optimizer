@@ -627,6 +627,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
                                          srcPacking, srcAddr,
                                          dstAddr);
          assert(b);
+         (void) b;
       }
       else if (dimensions == 2) {
          GLboolean b;
@@ -638,6 +639,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
                                          srcPacking, srcAddr,
                                          dstAddr);
          assert(b);
+         (void) b;
       }
       else {
          GLboolean b;
@@ -648,6 +650,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
                                       srcFormat, srcType,
                                       srcPacking, srcAddr, dstAddr);
          assert(b);
+         (void) b;
       }
    }
    else {

@@ -254,7 +254,8 @@ const_80:
 /* Blend transparency function
  */
 
-#define TAG(x) x##_transparency
+#define TAG(x) CONCAT(x,_transparency)
+#define LLTAG(x) LLBL2(x,_transparency)
 
 #define INIT \
     PXOR       ( MM0, MM0 )			/*   0x0000  |   0x0000  |   0x0000  |   0x0000  */
@@ -275,7 +276,8 @@ const_80:
  * FIXME: Add some loop unrolling here...
  */
 
-#define TAG(x) x##_add
+#define TAG(x) CONCAT(x,_add)
+#define LLTAG(x) LLBL2(x,_add)
 
 #define INIT
 
@@ -295,7 +297,8 @@ TWO(MOVQ       ( MM1, REGIND(rgba) ))
 /* Blend min function
  */
 
-#define TAG(x) x##_min
+#define TAG(x) CONCAT(x,_min)
+#define LLTAG(x) LLBL2(x,_min)
 
 #define INIT \
     MOVQ       ( CONTENT(const_80), MM7 )	/* 0x80| 0x80| 0x80| 0x80| 0x80| 0x80| 0x80| 0x80*/
@@ -318,7 +321,8 @@ TWO(MOVQ       ( MM1, REGIND(rgba) ))
 /* Blend max function
  */
 
-#define TAG(x) x##_max
+#define TAG(x) CONCAT(x,_max)
+#define LLTAG(x) LLBL2(x,_max)
 
 #define INIT \
     MOVQ       ( CONTENT(const_80), MM7 )	/* 0x80| 0x80| 0x80| 0x80| 0x80| 0x80| 0x80| 0x80*/
@@ -341,7 +345,8 @@ TWO(MOVQ       ( MM1, REGIND(rgba) ))
 /* Blend modulate function
  */
 
-#define TAG(x) x##_modulate
+#define TAG(x) CONCAT(x,_modulate)
+#define LLTAG(x) LLBL2(x,_modulate)
 
 #define INIT \
     PXOR       ( MM0, MM0 )			/*   0x0000  |   0x0000  |   0x0000  |   0x0000  */	;\

@@ -78,9 +78,11 @@
 #endif
 
 #if (defined(__STDC__) && !defined(UNIXCPP)) || (defined (sun) && defined (i386) && defined (SVR4) && defined (__STDC__) && !defined (__GNUC__))
-#define CONCAT(x, y)	x ## y
+#define CONCAT(x, y)		x ## y
+#define CONCAT3(x, y, z)	x ## y ## z
 #else
-#define CONCAT(x, y)	x/**/y
+#define CONCAT(x, y)		x/**/y
+#define CONCAT3(x, y, z)	x/**/y/**/z
 #endif
 
 #ifdef ACK_ASSEMBLER
@@ -862,7 +864,8 @@
 #define P_XMM6		xmm6
 #define P_XMM7		xmm7
 
-#define CONCAT(x, y)	x ## y
+#define CONCAT(x, y)		x ## y
+#define CONCAT3(x, y, z)	x ## y ## z
 
 #if defined(NASM_ASSEMBLER)
 
@@ -1689,8 +1692,10 @@ SECTION _DATA public align=16 class=DATA use32 flat
 /* Added by BrianP for FreeBSD (per David Dawes) */
 #if !defined(NASM_ASSEMBLER) && !defined(MASM_ASSEMBLER) && !defined(__bsdi__)
 #define LLBL(a)		CONCAT(.L,a)
+#define LLBL2(a,b)	CONCAT3(.L,a,b)
 #else
 #define LLBL(a)		a
+#define LLBL2(a,b)	CONCAT(a,b)
 #endif
 
 /* Segment overrides */

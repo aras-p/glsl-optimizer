@@ -137,8 +137,8 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
    else if (bufferBit == BACK_LEFT_BIT) {
       ASSERT(target->db_state);
       if (target->backpixmap) {
-         /* back buffer is a pixmape */
-         target->buffer = target->backpixmap; /* incompatible types? */
+         /* back buffer is a pixmap */
+         target->buffer = (XMesaDrawable) target->backpixmap;
       }
       else if (target->backimage) {
          /* back buffer is an XImage */
@@ -413,6 +413,7 @@ clear_24bit_ximage( GLcontext *ctx, GLboolean all,
    const GLubyte r = xmesa->clearcolor[0];
    const GLubyte g = xmesa->clearcolor[1];
    const GLubyte b = xmesa->clearcolor[2];
+#if 0	/* See below */
    register GLuint clearPixel;
    if (xmesa->swapbytes) {
       clearPixel = (b << 16) | (g << 8) | r;
@@ -420,6 +421,7 @@ clear_24bit_ximage( GLcontext *ctx, GLboolean all,
    else {
       clearPixel = (r << 16) | (g << 8) | b;
    }
+#endif
 
    if (all) {
       if (r==g && g==b) {

@@ -1100,6 +1100,8 @@ static XMesaVisual choose_visual( Display *dpy, int screen, const int *list )
       }
    }
 
+   (void) caveat;
+
    /*
     * Since we're only simulating the GLX extension this function will never
     * find any real GL visuals.  Instead, all we can do is try to find an RGB
@@ -2019,6 +2021,10 @@ Fake_glXCreatePbuffer( Display *dpy, GLXFBConfig config,
       }
    }
 
+   /* not used at this time */
+   (void) useLargest;
+   (void) preserveContents;
+
    if (width == 0 || height == 0)
       return 0;
 
@@ -2372,6 +2378,10 @@ Fake_glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
             return 0;
       }
    }
+
+   /* not used at this time */
+   (void) useLargest;
+   (void) preserveContents;
 
    xmbuf = XMesaCreatePBuffer( xmvis, 0, width, height);
    /* A GLXPbuffer handle must be an X Drawable because that's what
