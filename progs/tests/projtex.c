@@ -31,7 +31,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#define MAX_TEX 2
+#define MAX_TEX 4
 int NumTextures = 1;
 
 int winWidth, winHeight;
@@ -55,7 +55,9 @@ GLboolean linearFilter = GL_TRUE;
 
 char *texFilename[MAX_TEX] = {
    "../images/girl.rgb",
-   "../images/tile.rgb"
+   "../images/tile.rgb",
+   "../images/bw.rgb",
+   "../images/reflect.rgb"
 };
 
 
@@ -649,9 +651,9 @@ initialize(void)
   for (i = 0; i < NumTextures; i++) {
      ActiveTexture(GL_TEXTURE0_ARB + i);
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
      glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
      glTexGenfv(GL_S, GL_EYE_PLANE, eyePlaneS);
@@ -680,10 +682,12 @@ display(void)
       for (i = 0; i < NumTextures; i++) {
         glPushMatrix();
         glLoadIdentity();
+#if 0
         if (i & 1)
            glRotatef(angle, axis[0], axis[1], axis[2]);
         else
-           glRotatef(angle*2, axis[0], axis[1], axis[2]);
+#endif
+           glRotatef(angle*(i+1), axis[0], axis[1], axis[2]);
 
         glMultMatrixf((GLfloat *) textureXform[i]);
         glGetFloatv(GL_MODELVIEW_MATRIX, (GLfloat *) textureXform[i]);
@@ -997,6 +1001,7 @@ main(int argc, char **argv)
   if (argc > 1) {
      NumTextures = atoi(argv[1]);
   }
+  assert(NumTextures <= MAX_TEX);
 
   glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
   (void) glutCreateWindow("projtex");
