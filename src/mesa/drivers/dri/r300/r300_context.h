@@ -661,7 +661,8 @@ struct r300_state {
 	int aos_count;
 
 	GLuint *Elts;
-
+	struct r300_dma_region elt_ao;
+	
 	GLuint render_inputs; /* actual render inputs that R300 was configured for. 
 				 They are the same as tnl->render_inputs for fixed pipeline */
 

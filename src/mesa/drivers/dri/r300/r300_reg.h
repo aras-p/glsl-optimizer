@@ -1308,6 +1308,10 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 // Note that if the total number of arrays is odd, the third dword of
 // the last block is omitted.
 #define R300_PACKET3_3D_LOAD_VBPNTR         0x00002F00
+
+#define R300_PACKET3_INDX_BUFFER            0x00003300
+#define R300_PACKET3_3D_DRAW_INDX_2         0x00003600
+
 //END
 
 #endif /* _R300_REG_H */

@@ -209,7 +209,58 @@ static void emit_vector(GLcontext * ctx,
 	}
 
 }
-				
+
+void emit_elts(GLcontext * ctx, GLuint *elts, int oec, int ec)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	radeonScreenPtr rsp=rmesa->radeon.radeonScreen;
+	unsigned short int *hw_elts;
+	int i;
+	int inc_found=0;
+	int dec_found=0;
+	
+	hw_elts=malloc(ec*sizeof(unsigned short int));
+	
+	for(i=0; i < oec; i++)
+		hw_elts[i]=(unsigned short int)elts[i];
+	
+	/* Work around magic_1 problem by filling rest of the data with last idx */
+	for(; i < ec; i++)
+		hw_elts[i]=(unsigned short int)elts[oec-1];
+	
+	memcpy(rsp->gartTextures.map, hw_elts, ec*sizeof(unsigned short int));
+	//memset(((char *)rsp->gartTextures.map)+ec*sizeof(unsigned short int), 0, 1024);
+	/*emit_vector(ctx, &rmesa->state.elt_ao,
+			(char *)hw_elts,
+			2,
+			2, ec);*/
+	/*
+	// some debug code...
+	inc_found=1;
+	for(i=1; i < oec; i++)
+		if(hw_elts[i-1] != hw_elts[i]+1){
+			inc_found=0;
+			break;
+		}
+		
+	dec_found=1;
+	for(i=1; i < oec; i++)
+		if(hw_elts[i-1] != hw_elts[i]-1){
+			dec_found=0;
+		}
+		
+	fprintf(stderr, "elts:");
+	for(i=0; i < oec; i++)
+		fprintf(stderr, "%d\n", hw_elts[i]);
+		fprintf(stderr, "\n");
+		
+	if(inc_found==0 && dec_found==0){
+		fprintf(stderr, "error found\n");
+		exit(-1);
+	}
+	*/
+}
+		
 /* Emit vertex data to GART memory (unless immediate mode)
  * Route inputs to the vertex processor
  */
@@ -479,6 +530,7 @@ void r300ReleaseArrays(GLcontext * ctx)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	int i;
 
+	//r300ReleaseDmaRegion(rmesa, &rmesa->state.elt_ao, __FUNCTION__);
 	for (i=0;i<rmesa->state.aos_count;i++) {
 		r300ReleaseDmaRegion(rmesa, &rmesa->state.aos[i], __FUNCTION__);
 	}

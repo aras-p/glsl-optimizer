@@ -253,6 +253,8 @@ void dump_inputs(GLcontext *ctx, int render_inputs)
 {
 	int k;
 	fprintf(stderr, "inputs:");
+	fprintf(stderr, "%08x ", render_inputs);
+	
 	if(render_inputs & _TNL_BIT_POS)
 		fprintf(stderr, "_TNL_BIT_POS ");
 	if(render_inputs & _TNL_BIT_NORMAL)
@@ -512,6 +514,44 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 }
 
 /* vertex buffer implementation */
+void emit_elts(GLcontext * ctx, GLuint *elts, int oec, int ec);
+
+#    define R300_EB_UNK1_SHIFT 24
+#    define R300_EB_UNK1 (0x80<<24)
+#    define R300_EB_UNK2 0x0810
+
+unsigned long get_num_elts(unsigned long count)
+{
+	unsigned long magic_1;
+	
+	/* round up elt count so that magic_1 is 0 (divisable by 4)*/
+	return (count+3) & (~3);
+	//return count - (count % 4);
+}
+
+static void inline fire_EB(PREFIX unsigned long addr, int vertex_count, int type)
+{
+	LOCAL_VARS
+	unsigned long magic_1;
+	unsigned char magic1_tbl[4]={ 0, 6, 4, 2 };
+
+	magic_1 = magic1_tbl[vertex_count % 4];
+
+	if(magic_1 != 0){
+		WARN_ONCE("Dont know how to handle this yet!\n");
+		return ;
+	}
+	
+	check_space(6);
+	
+	start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, 0);
+	e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count<<16) | type);
+	
+	start_packet3(RADEON_CP_PACKET3_INDX_BUFFER, 2);
+	e32(R300_EB_UNK1 | (magic_1 << 16) | R300_EB_UNK2);
+	e32(addr);
+	e32(((vertex_count+1) / 2) + magic_1);
+}
 
 static void r300_render_vb_primitive(r300ContextPtr rmesa, 
 	GLcontext *ctx,
@@ -520,15 +560,27 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 	int prim)
 {
    int type, num_verts;
+   radeonScreenPtr rsp=rmesa->radeon.radeonScreen;
    LOCAL_VARS
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
    
    type=r300_get_primitive_type(rmesa, ctx, prim);
    num_verts=r300_get_num_verts(rmesa, ctx, end-start, prim);
    
    if(type<0 || num_verts <= 0)return;
    
-   
-   fire_AOS(PASS_PREFIX num_verts, type);
+   if(rmesa->state.Elts){
+	unsigned long elt_count;
+	
+	WARN_ONCE("Rendering with elts\n");
+	
+	elt_count=get_num_elts(num_verts);
+	//emit_elts(ctx, rmesa->state.Elts, VB->Count, get_num_elts(VB->Count));
+	emit_elts(ctx, rmesa->state.Elts+start, num_verts, elt_count);
+	fire_EB(PASS_PREFIX rsp->gartTextures.handle/*rmesa->state.elt_ao.aos_offset*/, elt_count, type);
+   }else
+	   fire_AOS(PASS_PREFIX num_verts, type);
 }
 
 static GLboolean r300_run_vb_render(GLcontext *ctx,
@@ -546,6 +598,11 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
    
 	r300ReleaseArrays(ctx);
 	r300EmitArrays(ctx, GL_FALSE);
+	//dump_inputs(ctx, rmesa->state.render_inputs);
+#if 0 /* Cant do this here yet due to magic_1 */
+	if(rmesa->state.Elts)
+		emit_elts(ctx, rmesa->state.Elts, /*600*/VB->Count, get_num_elts(/*600*/VB->Count));
+#endif	
 	
 //	LOCK_HARDWARE(&(rmesa->radeon));
 
