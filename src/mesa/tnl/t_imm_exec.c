@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.39 2002/04/19 12:32:14 brianp Exp $ */
+/* $Id: t_imm_exec.c,v 1.40 2002/06/13 04:49:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -72,8 +72,7 @@ static void reset_input( GLcontext *ctx,
       MEMSET(IM->Flag + start, 0, sizeof(GLuint) * (IM->Count+2-start));
 
    if (MESA_VERBOSE & VERBOSE_IMMEDIATE)
-      fprintf(stderr, "reset_input: IM(%d) new %x\n", 
-	      IM->id, beginstate);
+      _mesa_debug("reset_input: IM(%d) new %x\n", IM->id, beginstate);
 
    IM->Start = start;
    IM->Count = start;
@@ -409,8 +408,6 @@ void _tnl_run_cassette( GLcontext *ctx, struct immediate *IM )
  */
 static void exec_vert_cassette( GLcontext *ctx, struct immediate *IM )
 {
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
-
    if (IM->FlushElt) {
       /* Orflag is computed twice, but only reach this code if app is
        * using a mixture of glArrayElement() and glVertex() while
@@ -435,8 +432,6 @@ static void exec_elt_cassette( GLcontext *ctx, struct immediate *IM )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-
-/*      fprintf(stderr, "%s\n", __FUNCTION__);  */
 
    _tnl_vb_bind_arrays( ctx, ctx->Array.LockFirst, ctx->Array.LockCount );
 
@@ -518,9 +513,6 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
 
    if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1)
       ctx->Driver.NeedFlush &= ~FLUSH_STORED_VERTICES;
-
-/*     fprintf(stderr, "%s: NeedFlush: %x\n", __FUNCTION__,  */
-/*  	   ctx->Driver.NeedFlush); */
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.40 2002/04/19 00:45:50 brianp Exp $ */
+/* $Id: t_imm_dlist.c,v 1.41 2002/06/13 04:49:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -129,7 +129,7 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
    GLuint new_beginstate;
 
    if (MESA_VERBOSE & VERBOSE_DISPLAY_LIST)
-      fprintf(stderr, "_tnl_compiled_cassette IM: %d\n", IM->id); 
+      _mesa_debug("_tnl_compiled_cassette IM: %d\n", IM->id); 
 
    if (IM->FlushElt) {
       ASSERT (IM->FlushElt == FLUSH_ELT_LAZY); 
@@ -296,7 +296,7 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
    TNLvertexcassette *node = (TNLvertexcassette *)data;
    struct immediate *IM = node->IM;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+/*     _mesa_debug("%s\n", __FUNCTION__); */
 
    IM->Start = node->Start;
    IM->CopyStart = node->Start;
@@ -317,9 +317,8 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
       _tnl_print_cassette( IM );
 
    if (MESA_VERBOSE & VERBOSE_DISPLAY_LIST) {
-      fprintf(stderr, "Run cassette %d, rows %d..%d, beginstate %x ",
-	      IM->id,
-	      IM->Start, IM->Count, IM->BeginState);
+      _mesa_debug("Run cassette %d, rows %d..%d, beginstate %x ",
+                  IM->id, IM->Start, IM->Count, IM->BeginState);
       _tnl_print_vert_flags("orflag", IM->OrFlag);
    }
 
@@ -401,8 +400,8 @@ print_compiled_cassette( GLcontext *ctx, void *data )
    TNLvertexcassette *node = (TNLvertexcassette *)data;
    struct immediate *IM = node->IM;
 
-   fprintf(stderr, "TNL-VERTEX-CASSETTE, id %u, rows %u..%u\n",
-	   node->IM->id, node->Start, node->Count);
+   _mesa_debug("TNL-VERTEX-CASSETTE, id %u, rows %u..%u\n",
+               node->IM->id, node->Start, node->Count);
 
    IM->Start = node->Start;
    IM->CopyStart = node->Start;

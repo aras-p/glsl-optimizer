@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.52 2002/02/15 16:32:06 brianp Exp $ */
+/* $Id: texobj.c,v 1.53 2002/06/13 04:49:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -565,8 +565,8 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
-      fprintf(stderr, "glBindTexture %s %d\n",
-	      _mesa_lookup_enum_by_nr(target), (GLint) texName);
+      _mesa_debug("glBindTexture %s %d\n",
+                  _mesa_lookup_enum_by_nr(target), (GLint) texName);
 
    switch (target) {
       case GL_TEXTURE_1D:

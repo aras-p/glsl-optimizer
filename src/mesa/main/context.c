@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.165 2002/06/13 04:31:09 brianp Exp $ */
+/* $Id: context.c,v 1.166 2002/06/13 04:49:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2264,16 +2264,16 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *where )
 /*
  * Call this to report debug information.
  */
-#ifdef DEBUG
 void
 _mesa_debug( const char *fmtString, ... )
 {
+#ifdef DEBUG
    va_list args;
    va_start( args, fmtString );  
    (void) vfprintf( stderr, fmtString, args );
    va_end( args );
-}
 #endif
+}
 
 
 void

@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.43 2002/04/21 18:49:18 brianp Exp $ */
+/* $Id: varray.c,v 1.44 2002/06/13 04:49:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,7 +60,7 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    }
 
    if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
-      fprintf(stderr, "glVertexPointer( sz %d type %s stride %d )\n", size,
+      _mesa_debug("glVertexPointer( sz %d type %s stride %d )\n", size,
 	      _mesa_lookup_enum_by_nr( type ),
 	      stride);
 
@@ -112,7 +112,7 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
    }
 
    if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
-      fprintf(stderr, "glNormalPointer( type %s stride %d )\n",
+      _mesa_debug("glNormalPointer( type %s stride %d )\n",
 	      _mesa_lookup_enum_by_nr( type ),
 	      stride);
 
@@ -168,7 +168,7 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    }
 
    if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
-      fprintf(stderr, "glColorPointer( sz %d type %s stride %d )\n", size,
+      _mesa_debug("glColorPointer( sz %d type %s stride %d )\n", size,
 	  _mesa_lookup_enum_by_nr( type ),
 	  stride);
 
@@ -320,10 +320,8 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
    }
 
    if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
-      fprintf(stderr,
-              "glSecondaryColorPointer( sz %d type %s stride %d )\n", size,
-	  _mesa_lookup_enum_by_nr( type ),
-	  stride);
+      _mesa_debug("glSecondaryColorPointer( sz %d type %s stride %d )\n",
+                  size, _mesa_lookup_enum_by_nr( type ), stride);
 
    switch (type) {
       case GL_BYTE:
@@ -389,7 +387,7 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
    }
 
    if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
-      fprintf(stderr, "glTexCoordPointer( unit %u sz %d type %s stride %d )\n",
+      _mesa_debug("glTexCoordPointer( unit %u sz %d type %s stride %d )\n",
 	  texUnit,
 	  size,
 	  _mesa_lookup_enum_by_nr( type ),
@@ -770,7 +768,7 @@ _mesa_LockArraysEXT(GLint first, GLsizei count)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glLockArrays %d %d\n", first, count);
+      _mesa_debug("glLockArrays %d %d\n", first, count);
 
    if (first == 0 && count > 0 &&
        count <= (GLint) ctx->Const.MaxArrayLockSize) {
@@ -797,7 +795,7 @@ _mesa_UnlockArraysEXT( void )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glUnlockArrays\n");
+      _mesa_debug("glUnlockArrays\n");
 
    ctx->Array.LockFirst = 0;
    ctx->Array.LockCount = 0;

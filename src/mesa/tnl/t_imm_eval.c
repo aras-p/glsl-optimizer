@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.22 2002/04/09 16:56:52 keithw Exp $ */
+/* $Id: t_imm_eval.c,v 1.23 2002/06/13 04:49:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -193,8 +193,6 @@ static void eval2_obj_norm( GLvector4f *obj_ptr,
    GLfloat (*obj)[4] = obj_ptr->data;
    GLfloat (*normal)[4] = norm_ptr->data;
    GLuint i;
-
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    for (i = 0 ; !(flags[i] & VERT_BIT_END_VB) ; i++)
       if (flags[i] & (VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2)) {
@@ -611,7 +609,6 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       GLuint generated = 0;
 
       if (copycount) {
-/*    	 fprintf(stderr, "%s: Copy normals\n", __FUNCTION__);  */
 	 copy_3f( store->Attrib[VERT_ATTRIB_NORMAL] + IM->CopyStart,
                   tmp->Normal.data, copycount );
       }

@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.72 2002/05/27 17:04:53 brianp Exp $ */
+/* $Id: texstate.c,v 1.73 2002/06/13 04:49:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -454,11 +454,11 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
    }
 
    if (MESA_VERBOSE&(VERBOSE_API|VERBOSE_TEXTURE))
-      fprintf(stderr, "glTexEnv %s %s %.1f(%s) ...\n",
-	      _mesa_lookup_enum_by_nr(target),
-	      _mesa_lookup_enum_by_nr(pname),
-	      *param,
-	      _mesa_lookup_enum_by_nr((GLenum) (GLint) *param));
+      _mesa_debug("glTexEnv %s %s %.1f(%s) ...\n",
+                  _mesa_lookup_enum_by_nr(target),
+                  _mesa_lookup_enum_by_nr(pname),
+                  *param,
+                  _mesa_lookup_enum_by_nr((GLenum) (GLint) *param));
 
    /* Tell device driver about the new texture environment */
    if (ctx->Driver.TexEnv) {
@@ -950,10 +950,10 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&(VERBOSE_API|VERBOSE_TEXTURE))
-      fprintf(stderr, "texPARAM %s %s %d...\n",
-	      _mesa_lookup_enum_by_nr(target),
-	      _mesa_lookup_enum_by_nr(pname),
-	      eparam);
+      _mesa_debug("texPARAM %s %s %d...\n",
+                  _mesa_lookup_enum_by_nr(target),
+                  _mesa_lookup_enum_by_nr(pname),
+                  eparam);
 
 
    switch (target) {
@@ -1764,10 +1764,10 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&(VERBOSE_API|VERBOSE_TEXTURE))
-      fprintf(stderr, "texGEN %s %s %x...\n",
-	      _mesa_lookup_enum_by_nr(coord),
-	      _mesa_lookup_enum_by_nr(pname),
-	      *(int *)params);
+      _mesa_debug("texGEN %s %s %x...\n",
+                  _mesa_lookup_enum_by_nr(coord),
+                  _mesa_lookup_enum_by_nr(pname),
+                  *(int *)params);
 
    switch (coord) {
       case GL_S:
@@ -2303,8 +2303,8 @@ _mesa_ActiveTextureARB( GLenum target )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
-      fprintf(stderr, "glActiveTexture %s\n",
-	      _mesa_lookup_enum_by_nr(target));
+      _mesa_debug("glActiveTexture %s\n",
+                  _mesa_lookup_enum_by_nr(target));
 
    if (texUnit > ctx->Const.MaxTextureUnits) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glActiveTextureARB(target)");

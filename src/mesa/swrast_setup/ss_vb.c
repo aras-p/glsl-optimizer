@@ -1,4 +1,4 @@
-/* $Id: ss_vb.c,v 1.16 2002/06/06 16:19:25 brianp Exp $ */
+/* $Id: ss_vb.c,v 1.17 2002/06/13 04:49:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -298,7 +298,7 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
 static void
 emit_invalid( GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
 {
-   fprintf(stderr, "swrast_setup: invalid setup function\n");
+   _mesa_debug("swrast_setup: invalid setup function\n");
    (void) (ctx && start && end && newinputs);
 }
 
@@ -307,14 +307,14 @@ interp_invalid( GLcontext *ctx, GLfloat t,
 		GLuint edst, GLuint eout, GLuint ein,
 		GLboolean force_boundary )
 {
-   fprintf(stderr, "swrast_setup: invalid interp function\n");
+   _mesa_debug("swrast_setup: invalid interp function\n");
    (void) (ctx && t && edst && eout && ein && force_boundary);
 }
 
 static void 
 copy_pv_invalid( GLcontext *ctx, GLuint edst, GLuint esrc )
 {
-   fprintf(stderr, "swrast_setup: invalid copy_pv function\n");
+   _mesa_debug("swrast_setup: invalid copy_pv function\n");
    (void) (ctx && edst && esrc );
 }
 
@@ -361,7 +361,7 @@ static void init_standard( void )
 
 static void printSetupFlags(char *msg, GLuint flags )
 {
-   fprintf(stderr, "%s(%x): %s%s%s%s%s%s%s\n",
+   _mesa_debug("%s(%x): %s%s%s%s%s%s%s\n",
 	   msg,
 	   (int)flags,
 	   (flags & COLOR) ? "color, " : "",

@@ -1,4 +1,4 @@
-/* $Id: t_imm_elt.c,v 1.16 2002/01/22 14:35:16 brianp Exp $ */
+/* $Id: t_imm_elt.c,v 1.17 2002/06/13 04:49:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,7 @@
 
 #include "glheader.h"
 #include "colormac.h"
+#include "context.h"
 #include "mem.h"
 #include "mmath.h"
 #include "mtypes.h"
@@ -758,7 +759,7 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
    GLuint i;
 
    if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
-      fprintf(stderr, "exec_array_elements %d .. %d\n", start, count);
+      _mesa_debug("exec_array_elements %d .. %d\n", start, count);
 
    if (translate & VERT_BIT_POS) {
       _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_POS],

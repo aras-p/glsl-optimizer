@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.27 2002/04/19 12:32:14 brianp Exp $ */
+/* $Id: t_imm_api.c,v 1.28 2002/06/13 04:49:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,8 +60,8 @@ void _tnl_flush_immediate( GLcontext *ctx, struct immediate *IM )
    }
 
    if (MESA_VERBOSE & VERBOSE_IMMEDIATE)
-      fprintf(stderr, "_tnl_flush_immediate IM: %d compiling: %d\n",
-	      IM->id, ctx->CompileFlag);
+      _mesa_debug("_tnl_flush_immediate IM: %d compiling: %d\n",
+                  IM->id, ctx->CompileFlag);
 
    if (IM->FlushElt == FLUSH_ELT_EAGER) {
       _tnl_translate_array_elts( ctx, IM, IM->LastPrimitive, IM->Count );
@@ -86,10 +86,9 @@ void _tnl_flush_vertices( GLcontext *ctx, GLuint flags )
    struct immediate *IM = TNL_CURRENT_IM(ctx);
 
    if (MESA_VERBOSE & VERBOSE_IMMEDIATE)
-      fprintf( stderr, 
-	       "_tnl_flush_vertices flags %x IM(%d) %d..%d Flag[%d]: %x\n", 
-	       flags, IM->id, IM->Start, IM->Count, IM->Start,
-	       IM->Flag[IM->Start]);
+      _mesa_debug("_tnl_flush_vertices flags %x IM(%d) %d..%d Flag[%d]: %x\n", 
+                  flags, IM->id, IM->Start, IM->Count, IM->Start,
+                  IM->Flag[IM->Start]);
 
    if (IM->Flag[IM->Start])
       if ((flags & FLUSH_UPDATE_CURRENT) || IM->Count > IM->Start)
@@ -106,7 +105,7 @@ _tnl_save_Begin( GLenum mode )
    struct immediate *IM = TNL_CURRENT_IM(ctx);
    GLuint inflags, state;
 
-/*     fprintf(stderr, "%s: before: %x\n", __FUNCTION__, IM->BeginState); */
+/*     _mesa_debug("%s: before: %x\n", __FUNCTION__, IM->BeginState); */
 
    if (mode > GL_POLYGON) {
       _mesa_compile_error( ctx, GL_INVALID_ENUM, "_tnl_Begin" );
@@ -224,7 +223,7 @@ _tnl_Begin( GLenum mode )
       IM->LastPrimitive = count;
       IM->BeginState = (VERT_BEGIN_0|VERT_BEGIN_1);
 
-/*        fprintf(stderr, "%s: %x\n", __FUNCTION__, IM->BeginState);  */
+/*        _mesa_debug("%s: %x\n", __FUNCTION__, IM->BeginState);  */
 
       ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
       ctx->Driver.CurrentExecPrimitive = mode;
@@ -239,12 +238,12 @@ _tnl_Begin( GLenum mode )
 GLboolean
 _tnl_hard_begin( GLcontext *ctx, GLenum p )
 {
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+/*     _mesa_debug("%s\n", __FUNCTION__); */
 
    if (!ctx->CompileFlag) {
       /* If not compiling, treat as a normal begin().
        */
-/*        fprintf(stderr, "%s: treating as glBegin\n", __FUNCTION__); */
+/*        _mesa_debug("%s: treating as glBegin\n", __FUNCTION__); */
       glBegin( p );
       return GL_TRUE;
    }
@@ -1206,7 +1205,7 @@ _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
       return;
    
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "_tnl_Materialfv\n");
+      _mesa_debug("_tnl_Materialfv\n");
 
    if (tnl->IsolateMaterials &&
        !(IM->BeginState & VERT_BEGIN_1)) /* heuristic */

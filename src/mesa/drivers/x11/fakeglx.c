@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.64 2002/05/27 17:06:59 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.65 2002/06/13 04:49:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -269,8 +269,7 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
             ximageFlag = GL_TRUE;
          }
          else {
-            fprintf(stderr, "Mesa: invalid value for MESA_BACK_BUFFER ");
-            fprintf(stderr, "environment variable, using an XImage.\n");
+            _mesa_warning(NULL, "Mesa: invalid value for MESA_BACK_BUFFER environment variable, using an XImage.");
          }
       }
    }
@@ -308,8 +307,8 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
 
    /* Create a new visual and add it to the list. */
 
-   if (NumVisuals>=MAX_VISUALS) {
-      fprintf( stderr, "GLX Error: maximum number of visuals exceeded\n");
+   if (NumVisuals >= MAX_VISUALS) {
+      _mesa_problem(NULL, "GLX Error: maximum number of visuals exceeded");
       return NULL;
    }
 
@@ -392,7 +391,7 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
       }
    }
    else {
-      fprintf(stderr,"Mesa: error in glXCreateContext: bad visual\n");
+      _mesa_warning(NULL, "Mesa: error in glXCreateContext: bad visual\n");
       return NULL;
    }
 }
@@ -578,8 +577,13 @@ static XVisualInfo *get_env_visual(Display *dpy, int scr, const char *varname)
       }
    }
 
-   fprintf( stderr, "Mesa: GLX unable to find visual class=%s, depth=%d.\n",
-	    type, depth );
+   {
+      char s[1000];
+      sprintf(s, "Mesa: GLX unable to find visual class=%s, depth=%d.\n",
+              type, depth );
+      _mesa_warning(NULL, s);
+   }
+
    return NULL;
 }
 
@@ -1336,7 +1340,7 @@ Fake_glXDestroyGLXPixmap( Display *dpy, GLXPixmap pixmap )
       XMesaDestroyBuffer(b);
    }
    else if (getenv("MESA_DEBUG")) {
-      fprintf( stderr, "Mesa: glXDestroyGLXPixmap: invalid pixmap\n");
+      _mesa_warning(NULL, "Mesa: glXDestroyGLXPixmap: invalid pixmap\n");
    }
 }
 
@@ -1408,7 +1412,7 @@ Fake_glXSwapBuffers( Display *dpy, GLXDrawable drawable )
       XMesaSwapBuffers(buffer);
    }
    else if (getenv("MESA_DEBUG")) {
-      fprintf(stderr, "Mesa Warning: glXSwapBuffers: invalid drawable\n");
+      _mesa_warning(NULL, "Mesa: glXSwapBuffers: invalid drawable\n");
    }
 }
 
@@ -1425,7 +1429,7 @@ Fake_glXCopySubBufferMESA( Display *dpy, GLXDrawable drawable,
       XMesaCopySubBuffer(buffer, x, y, width, height);
    }
    else if (getenv("MESA_DEBUG")) {
-      fprintf(stderr, "Mesa Warning: glXCopySubBufferMESA: invalid drawable\n");
+      _mesa_warning(NULL, "Mesa: glXCopySubBufferMESA: invalid drawable\n");
    }
 }
 
@@ -1464,7 +1468,6 @@ Fake_glXGetConfig( Display *dpy, XVisualInfo *visinfo,
 	    return 0;
 	 }
 	 else {
-	    /*fprintf( stderr, "Mesa: Error in glXGetConfig: bad visual\n");*/
 	    return GLX_BAD_VISUAL;
 	 }
       }
