@@ -26,6 +26,8 @@ MAIN_SOURCES = \
 	main/api_validate.c \
 	main/accum.c \
 	main/arbprogram.c \
+	main/arbfragparse.c \
+	main/arbvertparse.c \
 	main/attrib.c \
 	main/blend.c \
 	main/bufferobj.c \
