@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.50 2000/11/28 00:07:51 brianp Exp $ */
+/* $Id: state.c,v 1.51 2000/12/08 00:20:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -779,6 +779,13 @@ void gl_update_state( GLcontext *ctx )
       if (ctx->Light.Enabled &&
 	  !TEST_MAT_FLAGS( &ctx->ModelView, MAT_FLAGS_LENGTH_PRESERVING))
 	    ctx->_NeedEyeCoords |= NEED_EYE_LIGHT_MODELVIEW;
+   }
+
+   /* point attenuation requires eye coords */
+   if (new_state & _NEW_POINT) {
+      if (ctx->Point._Attenuated) {
+         ctx->_NeedEyeCoords |= NEED_EYE_POINT_ATTEN;
+      }
    }
 
    /* ctx->_NeedEyeCoords and ctx->_NeedEyeNormals are now uptodate.

@@ -1,4 +1,4 @@
-/* $Id: s_points.c,v 1.8 2000/12/08 00:18:39 brianp Exp $ */
+/* $Id: s_points.c,v 1.9 2000/12/08 00:20:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -838,6 +838,60 @@ dist_atten_antialiased_rgba_point( GLcontext *ctx, const SWvertex *vert )
 }
 
 
+/*
+ * Sprite (textured point)
+ */
+static void
+sprite_point( GLcontext *ctx, const SWvertex *vert )
+{
+   SWcontext *swctx = SWRAST_CONTEXT(ctx);
+   const GLfloat radius = vert->pointSize;  /* XXX threshold, alpha */
+   SWvertex v0, v1, v2, v3;
+   GLuint unit;
+
+   /* lower left corner */
+   v0 = *vert;
+   v0.win[0] -= radius;
+   v0.win[1] -= radius;
+
+   /* lower right corner */
+   v1 = *vert;
+   v1.win[0] += radius;
+   v1.win[1] -= radius;
+
+   /* upper right corner */
+   v2 = *vert;
+   v2.win[0] += radius;
+   v2.win[1] += radius;
+
+   /* upper left corner */
+   v3 = *vert;
+   v3.win[0] -= radius;
+   v3.win[1] += radius;
+
+   for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
+      if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+         v0.texcoord[unit][0] = 0.0;
+         v0.texcoord[unit][1] = 0.0;
+         v1.texcoord[unit][0] = 1.0;
+         v1.texcoord[unit][1] = 0.0;
+         v2.texcoord[unit][0] = 1.0;
+         v2.texcoord[unit][1] = 1.0;
+         v3.texcoord[unit][0] = 0.0;
+         v3.texcoord[unit][1] = 1.0;
+      }
+   }
+
+   /* XXX if radius < threshold, attenuate alpha? */
+   /* XXX what about clipping? */
+
+   /* render */
+   swctx->Triangle(ctx, &v0, &v1, &v2);
+   swctx->Triangle(ctx, &v0, &v2, &v3);
+}
+
+
+
 
 #ifdef DEBUG
 extern void
@@ -889,7 +943,11 @@ _swrast_choose_point( GLcontext *ctx )
    GLboolean rgbmode = ctx->Visual.RGBAflag;
 
    if (ctx->RenderMode==GL_RENDER) {
-      if (!ctx->Point._Attenuated) {
+      if (ctx->Point.SpriteMode) {
+         /* XXX this is hacked in! */
+         swrast->Point = sprite_point;
+      }
+      else if (!ctx->Point._Attenuated) {
          if (ctx->Point.SmoothFlag && rgbmode) {
             swrast->Point = antialiased_rgba_point;
          }
@@ -943,3 +1001,54 @@ _swrast_choose_point( GLcontext *ctx )
    /*_mesa_print_points_function(ctx);*/
 }
 
+
+
+#if 000 /* prototype of new point code */
+
+#define RGBA       0x1
+#define SMOOTH     0x2
+#define LARGE      0x4
+#define TEXTURE    0x8
+#define ATTENUATE 0x10
+#define SPRITE    0x20
+
+#define FLAGS (RGBA | SMOOTH | LARGE)
+#define NAME rgba_smooth_large
+#include "s_pointtemp.h"
+
+#define FLAGS (RGBA | TEXTURE | ATTENUATE)
+#define NAME rgba_texture_smooth_attenuate
+#include "s_pointtemp.h"
+
+#define FLAGS (INDEX | LARGE | ATTENUATE)
+#define NAME index_large_attenuate
+#include "s_pointtemp.h"
+
+
+static void* point_tab[0x20];
+
+void 
+_swrast_choose_point( GLcontext *ctx )
+{
+   GLuint index = 0;
+
+   if (ctx->RenderMode==GL_RENDER) {
+      if (ctx->Visual.RGBAflag)
+         index |= RGBA;
+      if (ctx->Point.SmoothFlag)
+         index |= SMOOTH;
+      if (ctx->Point._Attenuated || ctx->Point.Size > 1.0)
+         index |= SIZED;
+      if (ctx->Texture.ReallyEnabled)
+         index |= TEXTURE;
+      swrast->Point = point_tab[index];
+   }
+   else if (ctx->RenderMode==GL_FEEDBACK) {
+      swrast->Point = gl_feedback_point;
+   }
+   else {
+      /* GL_SELECT mode */
+      swrast->Point = gl_select_point;
+   }
+}
+#endif

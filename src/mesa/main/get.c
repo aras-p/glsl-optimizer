@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.44 2000/11/27 18:22:13 brianp Exp $ */
+/* $Id: get.c,v 1.45 2000/12/08 00:20:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1274,6 +1274,17 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = INT_TO_BOOL(ctx->Array.FogCoord.Stride);
 	 break;
 
+      /* GL_MESA_sprite_point */
+      case GL_SPRITE_POINT_MESA:
+         if (ctx->Extensions.MESA_sprite_point) {
+            *params = ctx->Point.SpriteMode;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
+            return;
+         }
+         break;
+
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
    }
@@ -2472,6 +2483,16 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) ctx->Array.FogCoord.Stride;
 	 break;
 
+      /* GL_MESA_sprite_point */
+      case GL_SPRITE_POINT_MESA:
+         if (ctx->Extensions.MESA_sprite_point) {
+            *params = (GLdouble) ctx->Point.SpriteMode;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
+            return;
+         }
+         break;
 
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
@@ -3645,6 +3666,16 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) ctx->Array.FogCoord.Stride;
 	 break;
 
+      /* GL_MESA_sprite_point */
+      case GL_SPRITE_POINT_MESA:
+         if (ctx->Extensions.MESA_sprite_point) {
+            *params = (GLfloat) ctx->Point.SpriteMode;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+            return;
+         }
+         break;
 
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
@@ -4834,18 +4865,49 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
       /* GL_EXT_fog_coord */
       case GL_CURRENT_FOG_COORDINATE_EXT:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
-	 *params = (GLint) ctx->Current.FogCoord;
+         if (ctx->Extensions.EXT_fog_coord) {
+            FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+            *params = (GLint) ctx->Current.FogCoord;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+         }
 	 break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
-         *params = (GLint) ctx->Array.FogCoord.Enabled;
+         if (ctx->Extensions.EXT_fog_coord) {
+            *params = (GLint) ctx->Array.FogCoord.Enabled;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+         }
          break;
       case GL_FOG_COORDINATE_ARRAY_TYPE_EXT:
-	 *params = (GLint) ctx->Array.FogCoord.Type;
+         if (ctx->Extensions.EXT_fog_coord) {
+            *params = (GLint) ctx->Array.FogCoord.Type;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+         }
 	 break;
       case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
-	 *params = (GLint) ctx->Array.FogCoord.Stride;
+         if (ctx->Extensions.EXT_fog_coord) {
+            *params = (GLint) ctx->Array.FogCoord.Stride;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+         }
 	 break;
+
+      /* GL_MESA_sprite_point */
+      case GL_SPRITE_POINT_MESA:
+         if (ctx->Extensions.MESA_sprite_point) {
+            *params = (GLint) ctx->Point.SpriteMode;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+            return;
+         }
+         break;
 
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );

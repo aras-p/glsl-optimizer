@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.42 2000/11/22 07:32:16 joukj Exp $ */
+/* $Id: extensions.c,v 1.43 2000/12/08 00:20:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,6 +95,7 @@ static struct {
    { ON,  "GL_INGR_blend_func_separate",      F(INGR_blend_func_separate) },
    { ON,  "GL_MESA_window_pos",               F(MESA_window_pos) },
    { ON,  "GL_MESA_resize_buffers",           F(MESA_resize_buffers) },
+   { OFF, "GL_MESA_sprite_point",             F(MESA_sprite_point) },
    { OFF, "GL_NV_blend_square",               F(NV_blend_square) },
    { ON,  "GL_NV_texgen_reflection",          F(NV_texgen_reflection) },
    { ON,  "GL_PGI_misc_hints",                F(PGI_misc_hints) },
@@ -121,6 +122,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    gl_extensions_enable(ctx, "GL_EXT_texture_env_combine");
    gl_extensions_enable(ctx, "GL_HP_occlusion_test");
    gl_extensions_enable(ctx, "GL_NV_blend_square");
+   gl_extensions_enable(ctx, "GL_MESA_sprite_point");
 }
 
 
