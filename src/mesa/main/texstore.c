@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.45 2002/10/24 23:57:21 brianp Exp $ */
+/* $Id: texstore.c,v 1.46 2002/10/28 23:01:24 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1909,7 +1909,8 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
    /* Find convertFormat - the format that do_row() will process */
    if (srcImage->IsCompressed) {
       /* setup for compressed textures */
-      GLint row, components, size;
+      GLuint row;
+      GLint  components, size;
       GLchan *dst;
 
       assert(texObj->Target == GL_TEXTURE_2D);
@@ -1946,7 +1947,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       /* decompress base image here */
       dst = (GLchan *) srcData;
       for (row = 0; row < srcImage->Height; row++) {
-         GLint col;
+         GLuint col;
          for (col = 0; col < srcImage->Width; col++) {
             (*srcImage->FetchTexel)(srcImage, col, row, 0, (GLvoid *) dst);
             dst += components;

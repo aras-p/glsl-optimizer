@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.73 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: s_texture.c,v 1.74 2002/10/28 23:01:24 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -97,7 +97,7 @@
          U = 1.0F - (S - (GLfloat) flr);	/* flr is odd */	\
       else								\
          U = S - (GLfloat) flr;		/* flr is even */		\
-      U = (U * SIZE) - 0.5;						\
+      U = (U * SIZE) - 0.5F;						\
       I0 = IFLOOR(U);							\
       I1 = I0 + 1;							\
       if (I0 < 0)							\
@@ -106,7 +106,7 @@
          I1 = SIZE - 1;							\
    }									\
    else if (wrapMode == GL_MIRROR_CLAMP_ATI) {				\
-      U = fabs(S);							\
+      U = (GLfloat) fabs(S);						\
       if (U >= 1.0F)							\
          U = (GLfloat) SIZE;						\
       else								\
@@ -116,7 +116,7 @@
       I1 = I0 + 1;							\
    }									\
    else if (wrapMode == GL_MIRROR_CLAMP_TO_EDGE_ATI) {			\
-      U = fabs(S);							\
+      U = (GLfloat) fabs(S);						\
       if (U >= 1.0F)							\
          U = (GLfloat) SIZE;						\
       else								\
@@ -198,7 +198,7 @@
    else if (wrapMode == GL_MIRROR_CLAMP_ATI) {				\
       /* s limited to [0,1] */						\
       /* i limited to [0,size-1] */					\
-      const GLfloat u = fabs(S);					\
+      const GLfloat u = (GLfloat) fabs(S);				\
       if (u <= 0.0F)							\
          I = 0;								\
       else if (u >= 1.0F)						\
@@ -211,7 +211,7 @@
       /* i limited to [0, size-1] */					\
       const GLfloat min = 1.0F / (2.0F * SIZE);				\
       const GLfloat max = 1.0F - min;					\
-      const GLfloat u = fabs(S);					\
+      const GLfloat u = (GLfloat) fabs(S);				\
       if (u < min)							\
          I = 0;								\
       else if (u > max)							\
