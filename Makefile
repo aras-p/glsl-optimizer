@@ -169,13 +169,14 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/math/*.[ch]				\
 	$(DIRECTORY)/src/mesa/math/math.dsp				\
 	$(DIRECTORY)/src/mesa/math/descrip.mms				\
+	$(DIRECTORY)/src/mesa/shader/*.[ch]				\
 	$(DIRECTORY)/src/mesa/swrast/*.[ch]				\
 	$(DIRECTORY)/src/mesa/swrast/swrast.dsp				\
 	$(DIRECTORY)/src/mesa/swrast/descrip.mms			\
 	$(DIRECTORY)/src/mesa/swrast_setup/*.[ch]			\
 	$(DIRECTORY)/src/mesa/swrast_setup/swrast_setup.dsp		\
 	$(DIRECTORY)/src/mesa/swrast_setup/descrip.mms			\
-	$(DIRECTORY)/src/mesa/tnl/*.[ch]				\
+	$(DIRECTORY)/src/mesa/tnl/*.[chS]				\
 	$(DIRECTORY)/src/mesa/tnl/tnl.dsp				\
 	$(DIRECTORY)/src/mesa/tnl/descrip.mms				\
 	$(DIRECTORY)/src/mesa/tnl_dd/*.[ch]				\
