@@ -1,4 +1,4 @@
-/* $Id: s_points.c,v 1.4 2000/11/13 20:02:57 keithw Exp $ */
+/* $Id: s_points.c,v 1.5 2000/11/15 16:38:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -111,7 +111,7 @@ static void
 general_ci_point( GLcontext *ctx, SWvertex *vert )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
-   const GLint isize = (GLint) (ctx->Point.Size + 0.5F);
+   const GLint isize = (GLint) (ctx->Point._Size + 0.5F);
    GLint radius = isize >> 1;
 
    GLint x0, x1, y0, y1;
@@ -156,7 +156,7 @@ static void
 general_rgba_point( GLcontext *ctx, SWvertex *vert )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
-   GLint isize = (GLint) (ctx->Point.Size + 0.5F);
+   GLint isize = (GLint) (ctx->Point._Size + 0.5F);
    GLint radius = isize >> 1;
 
    GLint x0, x1, y0, y1;
@@ -216,7 +216,7 @@ textured_rgba_point( GLcontext *ctx, SWvertex *vert )
    GLint x = (GLint)  vert->win[0];
    GLint y = (GLint)  vert->win[1];
    GLint z = (GLint) (vert->win[2]);
-   GLint isize = (GLint) (ctx->Point.Size + 0.5F);
+   GLint isize = (GLint) (ctx->Point._Size + 0.5F);
 
    GLfixed fog = FloatToFixed( vert->fog );
 
@@ -289,7 +289,7 @@ multitextured_rgba_point( GLcontext *ctx, SWvertex *vert )
    GLint ix, iy;
    GLfloat texcoord[MAX_TEXTURE_UNITS][4];
    GLint radius, u;
-   GLint isize = (GLint) (ctx->Point.Size + 0.5F);
+   GLint isize = (GLint) (ctx->Point._Size + 0.5F);
 
    GLfixed fog = FloatToFixed( vert->fog );
 
@@ -364,7 +364,7 @@ antialiased_rgba_point( GLcontext *ctx, SWvertex *vert )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct pixel_buffer *PB = swrast->PB;
-   const GLfloat radius = ctx->Point.Size * 0.5F;
+   const GLfloat radius = ctx->Point._Size * 0.5F;
    const GLfloat rmin = radius - 0.7071F;  /* 0.7071 = sqrt(2)/2 */
    const GLfloat rmax = radius + 0.7071F;
    const GLfloat rmin2 = MAX2(0.0, rmin * rmin);
@@ -505,7 +505,7 @@ static void
 dist_atten_general_ci_point( GLcontext *ctx, SWvertex *vert )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
-   const GLfloat psize = ctx->Point.Size;
+   const GLfloat psize = ctx->Point._Size;
    GLfloat dist = attenuation_distance( ctx, vert->eye );
    GLint x0, x1, y0, y1;
    GLint ix, iy;
@@ -557,7 +557,7 @@ static void
 dist_atten_general_rgba_point( GLcontext *ctx, SWvertex *vert )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
-   const GLfloat psize = ctx->Point.Size;
+   const GLfloat psize = ctx->Point._Size;
    GLfloat dist = attenuation_distance( ctx, vert->eye );
    GLint x0, x1, y0, y1;
    GLint ix, iy;
@@ -617,7 +617,7 @@ dist_atten_textured_rgba_point( GLcontext *ctx, SWvertex *vert )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct pixel_buffer *PB = swrast->PB;
-   const GLfloat psize = ctx->Point.Size;
+   const GLfloat psize = ctx->Point._Size;
    GLfloat dist = attenuation_distance( ctx, vert->eye );
 
    const GLint x = (GLint)  vert->win[0];
@@ -710,7 +710,7 @@ dist_atten_antialiased_rgba_point( GLcontext *ctx, SWvertex *vert )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct pixel_buffer *PB = swrast->PB;
-   const GLfloat psize = ctx->Point.Size;
+   const GLfloat psize = ctx->Point._Size;
    GLfloat dist = attenuation_distance( ctx, vert->eye );
 
    if (ctx->Texture._ReallyEnabled) {
@@ -918,7 +918,7 @@ _swrast_choose_point( GLcontext *ctx )
                swrast->Point = textured_rgba_point;
             }
          }
-         else if (ctx->Point.Size==1.0) {
+         else if (ctx->Point._Size == 1.0) {
             /* size=1, any raster ops */
             if (rgbmode)
                swrast->Point = size1_rgba_point;

@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.39 2000/10/30 13:32:00 keithw Exp $ */
+/* $Id: get.c,v 1.40 2000/11/15 16:38:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -661,7 +661,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = INT_TO_BOOL(ctx->Pixel.MapStoSsize);
 	 break;
       case GL_POINT_SIZE:
-	 *params = FLOAT_TO_BOOL(ctx->Point.UserSize);
+	 *params = FLOAT_TO_BOOL(ctx->Point.Size);
 	 break;
       case GL_POINT_SIZE_GRANULARITY:
 	 *params = FLOAT_TO_BOOL(ctx->Const.PointSizeGranularity );
@@ -1852,7 +1852,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) ctx->Pixel.MapStoSsize;
 	 break;
       case GL_POINT_SIZE:
-         *params = (GLdouble) ctx->Point.UserSize;
+         *params = (GLdouble) ctx->Point.Size;
          break;
       case GL_POINT_SIZE_GRANULARITY:
 	 *params = (GLdouble) ctx->Const.PointSizeGranularity;
@@ -3044,7 +3044,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) ctx->Pixel.MapStoSsize;
 	 break;
       case GL_POINT_SIZE:
-         *params = (GLfloat) ctx->Point.UserSize;
+         *params = (GLfloat) ctx->Point.Size;
          break;
       case GL_POINT_SIZE_GRANULARITY:
 	 *params = (GLfloat) ctx->Const.PointSizeGranularity;
@@ -4212,7 +4212,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 *params = ctx->Pixel.MapStoSsize;
 	 break;
       case GL_POINT_SIZE:
-         *params = (GLint) ctx->Point.UserSize;
+         *params = (GLint) ctx->Point.Size;
          break;
       case GL_POINT_SIZE_GRANULARITY:
 	 *params = (GLint) ctx->Const.PointSizeGranularity;

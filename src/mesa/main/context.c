@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.104 2000/11/13 20:02:56 keithw Exp $ */
+/* $Id: context.c,v 1.105 2000/11/15 16:38:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1153,14 +1153,14 @@ init_attrib_groups( GLcontext *ctx )
 
    /* Point group */
    ctx->Point.SmoothFlag = GL_FALSE;
-   ctx->Point.UserSize = 1.0;
    ctx->Point.Size = 1.0;
+   ctx->Point._Size = 1.0;
    ctx->Point.Params[0] = 1.0;
    ctx->Point.Params[1] = 0.0;
    ctx->Point.Params[2] = 0.0;
    ctx->Point._Attenuated = GL_FALSE;
    ctx->Point.MinSize = 0.0;
-   ctx->Point.MaxSize = (GLfloat) MAX_POINT_SIZE;
+   ctx->Point.MaxSize = ctx->Const.MaxPointSize;
    ctx->Point.Threshold = 1.0;
 
    /* Polygon group */

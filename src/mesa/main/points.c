@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.21 2000/11/13 20:02:56 keithw Exp $ */
+/* $Id: points.c,v 1.22 2000/11/15 16:38:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,9 +52,9 @@ _mesa_PointSize( GLfloat size )
       return;
    }
 
-   if (ctx->Point.UserSize != size) {
-      ctx->Point.UserSize = size;
-      ctx->Point.Size = CLAMP(size, ctx->Const.MinPointSize, ctx->Const.MaxPointSize);
+   if (ctx->Point.Size != size) {
+      ctx->Point.Size = size;
+      ctx->Point._Size = CLAMP(size, ctx->Const.MinPointSize, ctx->Const.MaxPointSize);
       ctx->_TriangleCaps &= ~DD_POINT_SIZE;
       if (size != 1.0)
          ctx->_TriangleCaps |= DD_POINT_SIZE;
