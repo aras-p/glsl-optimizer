@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.51 2001/10/17 13:31:07 brianp Exp $ */
+/* $Id: mtypes.h,v 1.52 2001/11/06 15:53:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1165,6 +1165,7 @@ struct gl_constants {
    GLint MaxCubeTextureLevels;
    GLuint MaxTextureUnits;
    GLfloat MaxTextureMaxAnisotropy;	/* GL_EXT_texture_filter_anisotropic */
+   GLfloat MaxTextureLodBias;           /* GL_EXT_texture_lod_bias */
    GLuint MaxArrayLockSize;
    GLint SubPixelBits;
    GLfloat MinPointSize, MaxPointSize;		/* aliased */

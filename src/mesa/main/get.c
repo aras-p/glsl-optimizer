@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.71 2001/10/25 23:21:28 brianp Exp $ */
+/* $Id: get.c,v 1.72 2001/11/06 15:53:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1257,6 +1257,11 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
 	 *params = INT_TO_BOOL(ctx->Array.FogCoord.Stride);
 	 break;
+
+      /* GL_EXT_texture_lod_bias */
+      case GL_MAX_TEXTURE_LOD_BIAS_EXT:
+         *params = FLOAT_TO_BOOL(ctx->Const.MaxTextureLodBias);
+         break;
 
       /* GL_EXT_texture_filter_anisotropic */
       case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
@@ -2557,6 +2562,11 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) ctx->Array.FogCoord.Stride;
 	 break;
 
+      /* GL_EXT_texture_lod_bias */
+      case GL_MAX_TEXTURE_LOD_BIAS_EXT:
+         *params = (GLdouble) ctx->Const.MaxTextureLodBias;
+         break;
+
       /* GL_EXT_texture_filter_anisotropic */
       case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
          if (ctx->Extensions.EXT_texture_filter_anisotropic) {
@@ -3836,6 +3846,11 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
 	 *params = (GLfloat) ctx->Array.FogCoord.Stride;
 	 break;
+
+      /* GL_EXT_texture_lod_bias */
+      case GL_MAX_TEXTURE_LOD_BIAS_EXT:
+         *params = ctx->Const.MaxTextureLodBias;
+         break;
 
       /* GL_EXT_texture_filter_anisotropic */
       case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
@@ -5158,6 +5173,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
          }
 	 break;
+
+      /* GL_EXT_texture_lod_bias */
+      case GL_MAX_TEXTURE_LOD_BIAS_EXT:
+         *params = (GLint) ctx->Const.MaxTextureLodBias;
+         break;
 
       /* GL_EXT_texture_filter_anisotropic */
       case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:

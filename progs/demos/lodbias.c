@@ -40,7 +40,7 @@
 static GLfloat Xrot = 0, Yrot = -30, Zrot = 0;
 static GLboolean Anim = GL_TRUE;
 static GLint Bias = 0, BiasStepSign = +1; /* ints avoid fp precision problem */
-static GLint BiasMin = -200, BiasMax = 500;
+static GLint BiasMin = -400, BiasMax = 400;
 
 
 
@@ -192,6 +192,8 @@ static void SpecialKey( int key, int x, int y )
 static void Init( void )
 {
    const char *exten = (const char *) glGetString(GL_EXTENSIONS);
+   GLfloat maxBias;
+
    if (!strstr(exten, "GL_EXT_texture_lod_bias")) {
       printf("Sorry, GL_EXT_texture_lod_bias not supported by this renderer.\n");
       exit(1);
@@ -207,6 +209,11 @@ static void Init( void )
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+   glGetFloatv(GL_MAX_TEXTURE_LOD_BIAS_EXT, &maxBias);
+   printf("LOD bias range: [%g, %g]\n", -maxBias, maxBias);
+   BiasMin = -100 * maxBias;
+   BiasMax =  100 * maxBias;
 }
 
 

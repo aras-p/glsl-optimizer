@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.58 2001/10/17 13:31:07 brianp Exp $ */
+/* $Id: texstate.c,v 1.59 2001/11/06 15:53:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -413,7 +413,8 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 if (texUnit->LodBias == param[0])
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-	 texUnit->LodBias = param[0];
+         texUnit->LodBias = CLAMP(param[0], -ctx->Const.MaxTextureLodBias,
+                                  ctx->Const.MaxTextureLodBias);
 	 break;
       default:
          TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);

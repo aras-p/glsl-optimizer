@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.34 2001/07/16 15:54:23 brianp Exp $ */
+/* $Id: config.h,v 1.35 2001/11/06 15:53:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -133,6 +133,9 @@
 
 /* GL_EXT_texture_filter_anisotropic */
 #define MAX_TEXTURE_MAX_ANISOTROPY 16.0
+
+/* GL_EXT_texture_lod_bias */
+#define MAX_TEXTURE_LOD_BIAS 4.0
 
 
 
