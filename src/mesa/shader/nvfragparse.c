@@ -95,7 +95,7 @@ static const struct instruction_pattern Instructions[] = {
    { "EX2", FP_OPCODE_DP4, INPUT_1S, OUTPUT_S, _R | _H |      _C | _S },
    { "FLR", FP_OPCODE_FLR, INPUT_1V, OUTPUT_V, _R | _H | _X | _C | _S },
    { "FRC", FP_OPCODE_FRC, INPUT_1V, OUTPUT_V, _R | _H | _X | _C | _S },
-   { "KIL", FP_OPCODE_KIL, INPUT_CC, OUTPUT_NONE, 0                   },
+   { "KIL", FP_OPCODE_KIL_NV, INPUT_CC, OUTPUT_NONE, 0                   },
    { "LG2", FP_OPCODE_LG2, INPUT_1S, OUTPUT_S, _R | _H |      _C | _S },
    { "LIT", FP_OPCODE_LIT, INPUT_1V, OUTPUT_V, _R | _H |      _C | _S },
    { "LRP", FP_OPCODE_LRP, INPUT_3V, OUTPUT_V, _R | _H | _X | _C | _S },
@@ -1291,7 +1291,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
                RETURN_ERROR1("Expected ,");
          }
          else if (instMatch.outputs == OUTPUT_NONE) {
-            ASSERT(instMatch.opcode == FP_OPCODE_KIL);
+            ASSERT(instMatch.opcode == FP_OPCODE_KIL_NV);
             /* This is a little weird, the cond code info is in the dest register */
             if (!Parse_CondCodeMask(parseState, &inst->DstReg))
                RETURN_ERROR;

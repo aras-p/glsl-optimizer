@@ -75,7 +75,8 @@ enum fp_opcode {
    FP_OPCODE_EX2,
    FP_OPCODE_FLR,
    FP_OPCODE_FRC,
-   FP_OPCODE_KIL,
+   FP_OPCODE_KIL_NV,         /* NV_f_p only */
+   FP_OPCODE_KIL,            /* ARB_f_p only */
    FP_OPCODE_LG2,
    FP_OPCODE_LIT,
    FP_OPCODE_LRP,

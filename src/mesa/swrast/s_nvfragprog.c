@@ -763,7 +763,7 @@ execute_program( GLcontext *ctx,
                store_vector4( inst, machine, result );
             }
             break;
-         case FP_OPCODE_KIL:
+         case FP_OPCODE_KIL_NV: /* NV_f_p only */
             {
                const GLuint *swizzle = inst->DstReg.CondSwizzle;
                const GLuint condMask = inst->DstReg.CondMask;
@@ -771,6 +771,15 @@ execute_program( GLcontext *ctx,
                    test_cc(machine->CondCodes[swizzle[1]], condMask) ||
                    test_cc(machine->CondCodes[swizzle[2]], condMask) ||
                    test_cc(machine->CondCodes[swizzle[3]], condMask)) {
+                  return GL_FALSE;
+               }
+            }
+            break;
+         case FP_OPCODE_KIL: /* ARB_f_p only */
+            {
+               GLfloat a[4];
+               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a );
+               if (a[0] < 0.0F || a[1] < 0.0F || a[2] < 0.0F || a[3] < 0.0F) {
                   return GL_FALSE;
                }
             }
