@@ -1025,6 +1025,40 @@ PrintTexture(int w, int h, int c, const GLubyte * data)
 }
 
 
+static const struct gl_texture_format *
+choose_format(GLenum format, GLenum type)
+{
+   if (type == CHAN_TYPE) {
+      switch (format) {
+      case GL_ALPHA:
+         return &_mesa_texformat_alpha;
+      case GL_LUMINANCE:
+         return &_mesa_texformat_luminance;
+      case GL_LUMINANCE_ALPHA:
+         return &_mesa_texformat_luminance_alpha;
+      case GL_INTENSITY:
+         return &_mesa_texformat_intensity;
+      case GL_RGB:
+         return &_mesa_texformat_rgb;
+      case GL_RGBA:
+         return &_mesa_texformat_rgba;
+      case GL_COLOR_INDEX:
+         return &_mesa_texformat_color_index;
+      default:
+         _mesa_problem(NULL, "Unexpected CHAN format in choose_format\n");
+         return NULL;
+      }
+   }
+   else if (format == GL_DEPTH_COMPONENT && type == GL_FLOAT) {
+      return &_mesa_texformat_depth_component;
+   }
+   else {
+         _mesa_problem(NULL, "Unexpected format/type in choose_format\n");
+      return NULL;
+   }
+}
+
+
 void
 fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 	       GLint internalFormat, GLint width, GLint height, GLint border,
@@ -1170,9 +1204,11 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    fxTexInvalidate(ctx, texObj);
 
    /* store the texture image */
-   /* XXX check for image rescale */
-   if (ctx->_ImageTransferState) {
-      success = GL_FALSE;  /* Can't do image transfer ops here */
+   if (ctx->_ImageTransferState ||
+       mml->width != width ||
+       mml->height != height) {
+      /* Need to image transfer ops or image rescale */
+      success = GL_FALSE;
    }
    else {
       success = _mesa_convert_texsubimage2d(mesaTexFormat->IntFormat,
@@ -1207,8 +1243,31 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 			      0,	/* dstImageStride */
 			      format, type, pixels, packing /* src info */ );
 
-      /* this conversion better work! */
-      success = _mesa_convert_texsubimage2d(mesaTexFormat->IntFormat,
+      if (mml->width != width || mml->height != height) {
+         /* Upscale image to accomodate Glide's image aspect limitations. */
+         const struct gl_texture_format *texFormat
+            = choose_format(simpleFormat, CHAN_TYPE);
+         GLvoid *rescaledImage = MALLOC(mml->width * mml->height
+                                        * texFormat->TexelBytes);
+         if (!rescaledImage) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+            return;
+         }
+         _mesa_rescale_teximage2d(texFormat,
+                                  width, height, mml->width, mml->height,
+                                  tempImage, rescaledImage);
+         success = _mesa_convert_texsubimage2d(mesaTexFormat->IntFormat,
+                                            0, 0, /* xoffset, yoffset */
+                                            mml->width, mml->height,
+                                            mml->width,   /* destImageWidth */
+                                            simpleFormat, /* source format */
+                                            CHAN_TYPE,    /* source type */
+                                            &_mesa_native_packing,
+                                            rescaledImage, texImage->Data);
+         FREE(rescaledImage);
+      }
+      else {
+         success = _mesa_convert_texsubimage2d(mesaTexFormat->IntFormat,
                                             0, 0, /* xoffset, yoffset */
                                             mml->width, mml->height,
                                             mml->width,   /* destImageWidth */
@@ -1216,6 +1275,8 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
                                             CHAN_TYPE,    /* source type */
                                             &_mesa_native_packing,
                                             tempImage, texImage->Data);
+      }
+      /* the conversion had better of worked! */
       assert(success);
       FREE(tempImage);
    }
@@ -1259,7 +1320,9 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    assert(texImage->Format);
 
    /* XXX check for image rescale */
-   if (ctx->_ImageTransferState) {
+   if (ctx->_ImageTransferState ||
+       texImage->Width != mml->width ||
+       texImage->Height != mml->height) {
       success = GL_FALSE;
    }
    else {
@@ -1296,14 +1359,43 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
 			      0,	/* dstImageStride */
 			      format, type, pixels, packing /* src info */ );
 
-      /* this conversion better work! */
-      success = _mesa_convert_texsubimage2d(texImage->TexFormat->IntFormat,
+      if (texImage->Width != mml->width || texImage->Height != mml->height) {
+         /* Upscale image to accomodate Glide's image aspect limitations. */
+         const GLint wScale = mml->width / texImage->Width;
+         const GLint hScale = mml->height / texImage->Height;
+         const GLint newWidth = width * wScale;
+         const GLint newHeight = height *hScale;
+         GLvoid *rescaledImage = MALLOC(newWidth * newHeight
+                                        * texImage->TexFormat->TexelBytes);
+         assert(mml->width >= texImage->Width);
+         assert(mml->height >= texImage->Height);
+         if (!rescaledImage) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage2D");
+            return;
+         }
+         _mesa_rescale_teximage2d(texImage->TexFormat,
+                                  width, height, newWidth, newHeight,
+                                  tempImage, rescaledImage);
+         success = _mesa_convert_texsubimage2d(texImage->TexFormat->IntFormat,
+                                            xoffset * wScale, yoffset * hScale,
+                                            newWidth, newHeight,
+                                            mml->width,   /* destImageWidth */
+                                            simpleFormat, /* source format */
+                                            CHAN_TYPE,    /* source type */
+                                            &_mesa_native_packing,
+                                            rescaledImage, texImage->Data);
+         FREE(rescaledImage);
+      }
+      else {
+         success = _mesa_convert_texsubimage2d(texImage->TexFormat->IntFormat,
                                             xoffset, yoffset,
                                             width, height,
                                             mml->width,
                                             simpleFormat, CHAN_TYPE,
                                             &_mesa_native_packing,
                                             tempImage, texImage->Data);
+      }
+      /* the conversion had better of worked! */
       assert(success);
       FREE(tempImage);
    }
