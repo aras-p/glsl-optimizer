@@ -5,11 +5,7 @@
 .first
 	define gl [----.include.gl]
 	define math [--.math]
-	define tnl [--.tnl]
 	define swrast [--.swrast]
-	define swrast_setup [--.swrast_setup]
-	define array_cache [--.array_cache]
-	define drivers [-]
 
 .include [----]mms-config.
 
@@ -21,11 +17,9 @@ INCDIR = [----.include],[--.main],[--.glapi]
 LIBDIR = [----.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
 
-SOURCES = fakeglx.c glxapi.c xfonts.c xm_api.c xm_dd.c xm_line.c xm_span.c\
-	xm_tri.c
+SOURCES = driverfuncs.c
 
-OBJECTS =fakeglx.obj,glxapi.obj,xfonts.obj,xm_api.obj,xm_dd.obj,xm_line.obj,\
-	xm_span.obj,xm_tri.obj
+OBJECTS =driverfuncs.obj
 
 ##### RULES #####
 
@@ -40,11 +34,4 @@ clean :
 	purge
 	delete *.obj;*
 
-fakeglx.obj : fakeglx.c
-glxapi.obj : glxapi.c
-xfonts.obj : xfonts.c
-xm_api.obj : xm_api.c
-xm_dd.obj : xm_dd.c
-xm_line.obj : xm_line.c
-xm_span.obj : xm_span.c
-xm_tri.obj : xm_tri.c
+driverfuncs.obj : driverfuncs.c

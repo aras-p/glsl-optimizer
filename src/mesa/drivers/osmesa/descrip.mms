@@ -9,6 +9,7 @@
 	define swrast [--.swrast]
 	define swrast_setup [--.swrast_setup]
 	define array_cache [--.array_cache]
+	define drivers [-]
 
 .include [----]mms-config.
 

@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.108 2004/01/19 16:56:50 brianp Exp $
+# $Id: Makefile.X11,v 1.109 2004/01/22 15:02:17 joukj Exp $
 
 # Mesa 3-D graphics library
 # Version:  6.1
@@ -549,6 +549,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/drivers/beos/*.cpp			\
 	$(DIRECTORY)/src/mesa/drivers/beos/*.h				\
 	$(DIRECTORY)/src/mesa/drivers/common/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/common/descrip.mms			\
 	$(DIRECTORY)/src/mesa/drivers/dos/*.[chS]			\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/fbdev/glfbdev.c			\

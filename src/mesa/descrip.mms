@@ -6,7 +6,9 @@ all :
 	$(MMS)$(MMSQUALIFIERS)
 	set default [-.glapi]
 	$(MMS)$(MMSQUALIFIERS)
-	set default [-.drivers.x11]
+	set default [-.drivers.common]
+	$(MMS)$(MMSQUALIFIERS)
+	set default [-.x11]
 	$(MMS)$(MMSQUALIFIERS)
 	set default [-.osmesa]
 	$(MMS)$(MMSQUALIFIERS)
