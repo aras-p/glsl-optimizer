@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.0.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,7 +51,7 @@ _swrast_alloc_alpha_buffers( GLframebuffer *buffer )
    if (buffer->FrontLeftAlpha) {
       MESA_PBUFFER_FREE( buffer->FrontLeftAlpha );
    }
-   buffer->FrontLeftAlpha = MESA_PBUFFER_ALLOC( bytes );
+   buffer->FrontLeftAlpha = (GLchan *) MESA_PBUFFER_ALLOC( bytes );
    if (!buffer->FrontLeftAlpha) {
       /* out of memory */
       _mesa_error( NULL, GL_OUT_OF_MEMORY,
@@ -63,7 +62,7 @@ _swrast_alloc_alpha_buffers( GLframebuffer *buffer )
       if (buffer->BackLeftAlpha) {
          MESA_PBUFFER_FREE( buffer->BackLeftAlpha );
       }
-      buffer->BackLeftAlpha = MESA_PBUFFER_ALLOC( bytes );
+      buffer->BackLeftAlpha = (GLchan *) MESA_PBUFFER_ALLOC( bytes );
       if (!buffer->BackLeftAlpha) {
          /* out of memory */
          _mesa_error( NULL, GL_OUT_OF_MEMORY,
@@ -75,7 +74,7 @@ _swrast_alloc_alpha_buffers( GLframebuffer *buffer )
       if (buffer->FrontRightAlpha) {
          MESA_PBUFFER_FREE( buffer->FrontRightAlpha );
       }
-      buffer->FrontRightAlpha = MESA_PBUFFER_ALLOC( bytes );
+      buffer->FrontRightAlpha = (GLchan *) MESA_PBUFFER_ALLOC( bytes );
       if (!buffer->FrontRightAlpha) {
          /* out of memory */
          _mesa_error( NULL, GL_OUT_OF_MEMORY,
@@ -86,7 +85,7 @@ _swrast_alloc_alpha_buffers( GLframebuffer *buffer )
          if (buffer->BackRightAlpha) {
             MESA_PBUFFER_FREE( buffer->BackRightAlpha );
          }
-         buffer->BackRightAlpha = MESA_PBUFFER_ALLOC( bytes );
+         buffer->BackRightAlpha = (GLchan *) MESA_PBUFFER_ALLOC( bytes );
          if (!buffer->BackRightAlpha) {
             /* out of memory */
             _mesa_error( NULL, GL_OUT_OF_MEMORY,
@@ -116,16 +115,16 @@ _swrast_clear_alpha_buffers( GLcontext *ctx )
       if (bufferBit & ctx->Color._DrawDestMask) {
          GLchan *buffer;
          if (bufferBit == FRONT_LEFT_BIT) {
-            buffer = (GLchan *) ctx->DrawBuffer->FrontLeftAlpha;
+            buffer = ctx->DrawBuffer->FrontLeftAlpha;
          }
          else if (bufferBit == FRONT_RIGHT_BIT) {
-            buffer = (GLchan *) ctx->DrawBuffer->FrontRightAlpha;
+            buffer = ctx->DrawBuffer->FrontRightAlpha;
          }
          else if (bufferBit == BACK_LEFT_BIT) {
-            buffer = (GLchan *) ctx->DrawBuffer->BackLeftAlpha;
+            buffer = ctx->DrawBuffer->BackLeftAlpha;
          }
          else {
-            buffer = (GLchan *) ctx->DrawBuffer->BackRightAlpha;
+            buffer = ctx->DrawBuffer->BackRightAlpha;
          }
 
          if (ctx->Scissor.Enabled) {
@@ -178,16 +177,16 @@ GLchan *get_alpha_buffer( GLcontext *ctx )
 
    switch (swrast->CurrentBuffer) {
    case FRONT_LEFT_BIT:
-      return (GLchan *) ctx->DrawBuffer->FrontLeftAlpha;
+      return ctx->DrawBuffer->FrontLeftAlpha;
       break;
    case BACK_LEFT_BIT:
-      return (GLchan *) ctx->DrawBuffer->BackLeftAlpha;
+      return ctx->DrawBuffer->BackLeftAlpha;
       break;
    case FRONT_RIGHT_BIT:
-      return (GLchan *) ctx->DrawBuffer->FrontRightAlpha;
+      return ctx->DrawBuffer->FrontRightAlpha;
       break;
    case BACK_RIGHT_BIT:
-      return (GLchan *) ctx->DrawBuffer->BackRightAlpha;
+      return ctx->DrawBuffer->BackRightAlpha;
       break;
    default:
       _mesa_problem(ctx, "Bad CurrentBuffer in get_alpha_buffer()");

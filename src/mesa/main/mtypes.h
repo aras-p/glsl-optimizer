@@ -1667,10 +1667,10 @@ struct gl_frame_buffer
 
    /** \name Software alpha planes */
    /*@{*/
-   GLvoid *FrontLeftAlpha;	/**< array [Width*Height] of GLubyte */
-   GLvoid *BackLeftAlpha;	/**< array [Width*Height] of GLubyte */
-   GLvoid *FrontRightAlpha;	/**< array [Width*Height] of GLubyte */
-   GLvoid *BackRightAlpha;	/**< array [Width*Height] of GLubyte */
+   GLchan *FrontLeftAlpha;	/**< array [Width*Height] of GLchan */
+   GLchan *BackLeftAlpha;	/**< array [Width*Height] of GLchan */
+   GLchan *FrontRightAlpha;	/**< array [Width*Height] of GLchan */
+   GLchan *BackRightAlpha;	/**< array [Width*Height] of GLchan */
    /*@}*/
 
    /** 
