@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.24 2002/10/30 19:44:41 brianp Exp $ */
+/* $Id: imports.c,v 1.25 2002/10/30 20:40:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,6 +63,13 @@
 /* Wrappers for standard C library functions                          */
 /**********************************************************************/
 
+/*
+ * Functions still needed:
+ * scanf
+ * qsort
+ * bsearch
+ * rand and RAND_MAX
+ */
 
 void *
 _mesa_malloc(size_t bytes)
