@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.85 2002/06/29 20:03:13 brianp Exp $ */
+/* $Id: get.c,v 1.86 2002/06/29 20:04:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -5607,50 +5607,50 @@ _mesa_GetString( GLenum name )
       if (str)
          return str;
 
-       switch (name) {
-          case GL_VENDOR:
-             return (const GLubyte *) vendor;
-          case GL_RENDERER:
-             return (const GLubyte *) renderer;
-          case GL_VERSION:
-             if (ctx->Extensions.ARB_multisample &&
-                 ctx->Extensions.ARB_multitexture &&
-                 ctx->Extensions.ARB_texture_border_clamp &&
-                 ctx->Extensions.ARB_texture_compression &&
-                 ctx->Extensions.EXT_texture_env_add &&
-                 ctx->Extensions.ARB_texture_env_combine &&
-                 ctx->Extensions.ARB_texture_env_dot3) {
-                if (ctx->Extensions.ARB_depth_texture &&
-                    ctx->Extensions.ARB_shadow &&
-                    ctx->Extensions.ARB_texture_env_crossbar &&
-                    ctx->Extensions.ARB_texture_mirrored_repeat &&
-                    ctx->Extensions.ARB_window_pos &&
-                    ctx->Extensions.EXT_blend_color &&
-                    ctx->Extensions.EXT_blend_func_separate &&
-                    ctx->Extensions.EXT_blend_logic_op &&
-                    ctx->Extensions.EXT_blend_minmax &&
-                    ctx->Extensions.EXT_blend_subtract &&
-                    ctx->Extensions.EXT_fog_coord &&
-                    ctx->Extensions.EXT_multi_draw_arrays &&
-                    ctx->Extensions.EXT_point_parameters && /*aka ARB*/
-                    ctx->Extensions.EXT_secondary_color &&
-                    ctx->Extensions.EXT_stencil_wrap &&
-                    ctx->Extensions.SGIS_generate_mipmap) {
-                   return (const GLubyte *) version_1_4;
-                }
-                else {
-                   return (const GLubyte *) version_1_3;
-                }
-             }
-             else {
-                return (const GLubyte *) version_1_2;
-             }
-          case GL_EXTENSIONS:
-             return (const GLubyte *) _mesa_extensions_get_string(ctx);
-          default:
-             _mesa_error( ctx, GL_INVALID_ENUM, "glGetString" );
-             return (const GLubyte *) 0;
-       }
+      switch (name) {
+         case GL_VENDOR:
+            return (const GLubyte *) vendor;
+         case GL_RENDERER:
+            return (const GLubyte *) renderer;
+         case GL_VERSION:
+            if (ctx->Extensions.ARB_multisample &&
+                ctx->Extensions.ARB_multitexture &&
+                ctx->Extensions.ARB_texture_border_clamp &&
+                ctx->Extensions.ARB_texture_compression &&
+                ctx->Extensions.EXT_texture_env_add &&
+                ctx->Extensions.ARB_texture_env_combine &&
+                ctx->Extensions.ARB_texture_env_dot3) {
+               if (ctx->Extensions.ARB_depth_texture &&
+                   ctx->Extensions.ARB_shadow &&
+                   ctx->Extensions.ARB_texture_env_crossbar &&
+                   ctx->Extensions.ARB_texture_mirrored_repeat &&
+                   ctx->Extensions.ARB_window_pos &&
+                   ctx->Extensions.EXT_blend_color &&
+                   ctx->Extensions.EXT_blend_func_separate &&
+                   ctx->Extensions.EXT_blend_logic_op &&
+                   ctx->Extensions.EXT_blend_minmax &&
+                   ctx->Extensions.EXT_blend_subtract &&
+                   ctx->Extensions.EXT_fog_coord &&
+                   ctx->Extensions.EXT_multi_draw_arrays &&
+                   ctx->Extensions.EXT_point_parameters && /*aka ARB*/
+                   ctx->Extensions.EXT_secondary_color &&
+                   ctx->Extensions.EXT_stencil_wrap &&
+                   ctx->Extensions.SGIS_generate_mipmap) {
+                  return (const GLubyte *) version_1_4;
+               }
+               else {
+                  return (const GLubyte *) version_1_3;
+               }
+            }
+            else {
+               return (const GLubyte *) version_1_2;
+            }
+         case GL_EXTENSIONS:
+            return (const GLubyte *) _mesa_extensions_get_string(ctx);
+         default:
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetString" );
+            return (const GLubyte *) 0;
+      }
    }
 }
 
