@@ -1731,7 +1731,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #endif
 
 /* hidden symbol visibility support */
-#ifdef GNU_ASSEMBLER
+#if defined(GNU_ASSEMBLER) && !defined(__DJGPP__) && !defined(__MINGW32__)
 #define HIDDEN(a)       .hidden a
 #else
 #define HIDDEN(a)
