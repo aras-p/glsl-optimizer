@@ -2171,7 +2171,10 @@ sample_nearest_rect(GLcontext *ctx, GLuint texUnit,
       GLint row, col;
       /* NOTE: we DO NOT use [0, 1] texture coordinates! */
       if (tObj->WrapS == GL_CLAMP) {
-         col = IFLOOR( CLAMP(texcoords[i][0], 0.0F, width) );
+         /* Note: we use width-1, not what the spec says, but it actually
+          * does work correctly.
+          */
+         col = IFLOOR( CLAMP(texcoords[i][0], 0.0F, width - 1) );
       }
       else if (tObj->WrapS == GL_CLAMP_TO_EDGE) {
          col = IFLOOR( CLAMP(texcoords[i][0], 0.5F, width - 0.5F) );
@@ -2180,7 +2183,7 @@ sample_nearest_rect(GLcontext *ctx, GLuint texUnit,
          col = IFLOOR( CLAMP(texcoords[i][0], -0.5F, width + 0.5F) );
       }
       if (tObj->WrapT == GL_CLAMP) {
-         row = IFLOOR( CLAMP(texcoords[i][1], 0.0F, height) );
+         row = IFLOOR( CLAMP(texcoords[i][1], 0.0F, height - 1) );
       }
       else if (tObj->WrapT == GL_CLAMP_TO_EDGE) {
          row = IFLOOR( CLAMP(texcoords[i][1], 0.5F, height - 0.5F) );
@@ -2189,10 +2192,10 @@ sample_nearest_rect(GLcontext *ctx, GLuint texUnit,
          row = IFLOOR( CLAMP(texcoords[i][1], -0.5F, height + 0.5F) );
       }
 
-      col = CLAMP(col, 0, width_minus_1);
-      row = CLAMP(row, 0, height_minus_1);
-
-      img->FetchTexelc(img, col, row, 0, rgba[i]);
+      if (col < 0 || col > width_minus_1 || row < 0 || row > height_minus_1)
+         COPY_CHAN4(rgba[i], tObj->_BorderChan);
+      else
+         img->FetchTexelc(img, col, row, 0, rgba[i]);
    }
 }
 
@@ -2224,45 +2227,91 @@ sample_linear_rect(GLcontext *ctx, GLuint texUnit,
    /* XXX lots of opportunity for optimization in this loop */
    for (i = 0; i < n; i++) {
       GLfloat frow, fcol;
-      GLint row0, col0, row1, col1;
+      GLint i0, j0, i1, j1;
       GLchan t00[4], t01[4], t10[4], t11[4];
       GLfloat a, b, w00, w01, w10, w11;
+      GLuint useBorderColor = 0;
 
       /* NOTE: we DO NOT use [0, 1] texture coordinates! */
       if (tObj->WrapS == GL_CLAMP) {
-         fcol = CLAMP(texcoords[i][0], 0.0F, width);
+         /* clamping to width-1 looks wrong, but it's really correct */
+         fcol = CLAMP(texcoords[i][0], 0.0F, width_minus_1);
+         i0 = IFLOOR(fcol);
+         i1 = i0 + 1;
       }
       else if (tObj->WrapS == GL_CLAMP_TO_EDGE) {
          fcol = CLAMP(texcoords[i][0], 0.5F, width - 0.5F);
+         i0 = IFLOOR(fcol);
+         i1 = i0 + 1;
+         if (i1 > width_minus_1)
+            i1 = width_minus_1;
       }
-      else {
+      else { /* GL_CLAMP_TO_BORDER */
+#if 0
+         /* literal reading of GL_NV_texture_rectangle spec */
          fcol = CLAMP(texcoords[i][0], -0.5F, width + 0.5F);
+         i0 = IFLOOR(fcol);
+         i1 = i0 + 1;
+#else
+         /* Note: this produces results that matches NVIDIA, but it's not
+          * exactly what the GL_NV_texture_rectangle specifies!
+          */
+         fcol = texcoords[i][0];
+         i0 = IFLOOR(fcol);
+         i1 = i0 + 1;
+#endif
+
       }
       if (tObj->WrapT == GL_CLAMP) {
-         frow = CLAMP(texcoords[i][1], 0.0F, height);
+         frow = CLAMP(texcoords[i][1], 0.0F, height_minus_1);
+         j0 = IFLOOR(frow);
+         j1 = j0 + 1;
       }
       else if (tObj->WrapT == GL_CLAMP_TO_EDGE) {
          frow = CLAMP(texcoords[i][1], 0.5F, height - 0.5F);
+         j0 = IFLOOR(frow);
+         j1 = j0 + 1;
+         if (j1 > height_minus_1)
+            j1 = height_minus_1;
       }
-      else {
+      else { /* GL_CLAMP_TO_BORDER */
+#if 0
          frow = CLAMP(texcoords[i][1], -0.5F, height + 0.5F);
+         j0 = IFLOOR(frow);
+         j1 = j0 + 1;
+#else
+         frow = texcoords[i][1];
+         j0 = IFLOOR(frow);
+         j1 = j0 + 1;
+#endif
       }
 
       /* compute integer rows/columns */
-      col0 = IFLOOR(fcol);
-      col1 = col0 + 1;
-      col0 = CLAMP(col0, 0, width_minus_1);
-      col1 = CLAMP(col1, 0, width_minus_1);
-      row0 = IFLOOR(frow);
-      row1 = row0 + 1;
-      row0 = CLAMP(row0, 0, height_minus_1);
-      row1 = CLAMP(row1, 0, height_minus_1);
+      if (i0 < 0 || i0 > width_minus_1)   useBorderColor |= I0BIT;
+      if (i1 < 0 || i1 > width_minus_1)   useBorderColor |= I1BIT;
+      if (j0 < 0 || j0 > height_minus_1)  useBorderColor |= J0BIT;
+      if (j1 < 0 || j1 > height_minus_1)  useBorderColor |= J1BIT;
 
       /* get four texel samples */
-      img->FetchTexelc(img, col0, row0, 0, t00);
-      img->FetchTexelc(img, col1, row0, 0, t10);
-      img->FetchTexelc(img, col0, row1, 0, t01);
-      img->FetchTexelc(img, col1, row1, 0, t11);
+      if (useBorderColor & (I0BIT | J0BIT))
+         COPY_CHAN4(t00, tObj->_BorderChan);
+      else
+         img->FetchTexelc(img, i0, j0, 0, t00);
+
+      if (useBorderColor & (I1BIT | J0BIT))
+         COPY_CHAN4(t10, tObj->_BorderChan);
+      else
+         img->FetchTexelc(img, i1, j0, 0, t10);
+
+      if (useBorderColor & (I0BIT | J1BIT))
+         COPY_CHAN4(t01, tObj->_BorderChan);
+      else
+         img->FetchTexelc(img, i0, j1, 0, t01);
+
+      if (useBorderColor & (I1BIT | J1BIT))
+         COPY_CHAN4(t11, tObj->_BorderChan);
+      else
+         img->FetchTexelc(img, i1, j1, 0, t11);
 
       /* compute sample weights */
       a = FRAC(fcol);
