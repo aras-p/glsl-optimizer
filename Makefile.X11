@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.27 2000/06/27 17:37:17 brianp Exp $
+# $Id: Makefile.X11,v 1.28 2000/07/18 01:14:38 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -345,7 +345,6 @@ LIB_FILES =	\
 	$(DIRECTORY)/missing			\
 	$(DIRECTORY)/mkinstalldirs		\
 	$(DIRECTORY)/stamp-h.in			\
-	$(DIRECTORY)/configure			\
 	$(DIRECTORY)/docs/CONFIG		\
 	$(DIRECTORY)/docs/CONFORM		\
 	$(DIRECTORY)/docs/COPYING		\
