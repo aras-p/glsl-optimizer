@@ -363,7 +363,12 @@ case $ARCH in
             LIBNAME="${LIBNAME}.dylib"
             echo "mklib: Making Darwin libraries: " ${LIBNAME}
             FLAGS="-dynamiclib -multiply_defined suppress"
-            cc ${FLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+	    if [ $CPLUSPLUS = 1 ] ; then
+		LINK="g++"
+	    else
+		LINK="cc"
+	    fi
+            ${LINK} ${FLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
             FINAL_LIBS=${LIBNAME}
         fi
         ;;
