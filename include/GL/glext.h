@@ -52,8 +52,10 @@ extern "C" {
  *   8. Brian Paul, 15 Apr 2000
  *      Added GL_EXT_texture_cube_map, GL_NV_texgen_emboss, adding some
  *      missing tokens values.
+ *   9. Brian Paul, 4 May 2000
+ *      Added a bunch of missing token values.
  */
-#define GL_GLEXT_VERSION_EXT 8
+#define GL_GLEXT_VERSION_EXT 9
 
 
 /*
@@ -445,10 +447,10 @@ typedef void (APIENTRY * PFNGLPIXELTEXGENSGIXPROC) (GLenum mode);
 #ifndef GL_SGIS_pixel_texture
 #define GL_SGIS_pixel_texture 1
 
-#define GL_PIXEL_TEXTURE_SGIS			0x1000  /*?*/
-#define GL_PIXEL_FRAGMENT_RGB_SOURCE_SGIS	0x1001  /*?*/
-#define GL_PIXEL_FRAGMENT_ALPHA_SOURCE_SGIS	0x1002  /*?*/
-#define GL_PIXEL_GROUP_COLOR_SGIS		0x1003  /*?*/
+#define GL_PIXEL_TEXTURE_SGIS			0x8353
+#define GL_PIXEL_FRAGMENT_RGB_SOURCE_SGIS	0x8354
+#define GL_PIXEL_FRAGMENT_ALPHA_SOURCE_SGIS	0x8355
+#define GL_PIXEL_GROUP_COLOR_SGIS		0x8356
 
 GLAPI void APIENTRY glPixelTexGenParameterfSGIS(GLenum target, GLfloat value);
 GLAPI void APIENTRY glPixelTexGenParameterfvSGIS(GLenum target, const GLfloat *value);
@@ -1174,21 +1176,21 @@ typedef void (APIENTRY * PFNGLFLUSHRASTERSGIXPROC) (void);
 #ifndef GL_HP_image_transform
 #define GL_HP_image_transform 1
 
-#define GL_IMAGE_SCALE_X_HP				?
-#define GL_IMAGE_SCALE_Y_HP				?
-#define GL_IMAGE_TRANSLATE_X_HP				?
-#define GL_IMAGE_TRANSLATE_Y_HP				?
-#define GL_IMAGE_ROTATE_ANGLE_HP			?
-#define GL_IMAGE_ROTATE_ORIGIN_X_HP			?
-#define GL_IMAGE_ROTATE_ORIGIN_Y_HP			?
-#define GL_IMAGE_MAG_FILTER_HP				?
-#define GL_IMAGE_MIN_FILTER_HP				?
-#define GL_IMAGE_CUBIC_WEIGHT_HP			?
-#define GL_CUBIC_HP					?
-#define GL_AVERAGE_HP					?
-#define GL_IMAGE_TRANSFORM_2D_HP			?
-#define GL_POST_IMAGE_TRANSFORM_COLOR_TABLE_HP		?
-#define GL_PROXY_POST_IMAGE_TRANSFORM_COLOR_TABLE_HP	?
+#define GL_IMAGE_SCALE_X_HP				0x8155
+#define GL_IMAGE_SCALE_Y_HP				0x8156
+#define GL_IMAGE_TRANSLATE_X_HP				0x8157
+#define GL_IMAGE_TRANSLATE_Y_HP				0x8158
+#define GL_IMAGE_ROTATE_ANGLE_HP			0x8159
+#define GL_IMAGE_ROTATE_ORIGIN_X_HP			0x815A
+#define GL_IMAGE_ROTATE_ORIGIN_Y_HP			0x815B
+#define GL_IMAGE_MAG_FILTER_HP				0x815C
+#define GL_IMAGE_MIN_FILTER_HP				0x815D
+#define GL_IMAGE_CUBIC_WEIGHT_HP			0x815E
+#define GL_CUBIC_HP					0x815F
+#define GL_AVERAGE_HP					0x8160
+#define GL_IMAGE_TRANSFORM_2D_HP			0x8161
+#define GL_POST_IMAGE_TRANSFORM_COLOR_TABLE_HP		0x8162
+#define GL_PROXY_POST_IMAGE_TRANSFORM_COLOR_TABLE_HP	0x8163
 
 GLAPI void APIENTRY glImageTransformParameteriHP(GLenum target, GLenum pname, const GLint param);
 GLAPI void APIENTRY glImageTransformParameterfHP(GLenum target, GLenum pname, const GLfloat param);
@@ -1214,10 +1216,10 @@ typedef void (APIENTRY * PFNGLGETIMAGETRANSFORMPARAMETERFVHPPROC) (GLenum target
 #ifndef GL_HP_convolution_border_modes
 #define GL_HP_convolution_border_modes 1
 
-#define GL_IGNORE_BORDER_HP			?
-#define GL_CONSTANT_BORDER_HP			?
-#define GL_REPLICATE_BORDER_HP			?
-#define GL_CONVOLUTION_BORDER_COLOR_HP		?
+#define GL_IGNORE_BORDER_HP			0x8150
+#define GL_CONSTANT_BORDER_HP			0x8151
+#define GL_REPLICATE_BORDER_HP			0x8153
+#define GL_CONVOLUTION_BORDER_COLOR_HP		0x8154
 
 #endif /* GL_HP_convolution_border_modes */
 
@@ -1481,9 +1483,9 @@ typedef void (APIENTRY * PFNGLLISTPARAMETERIVSGIXPROC) (GLuint list, GLenum name
 #ifndef GL_EXT_index_material
 #define GL_EXT_index_material 1
 
-#define GL_INDEX_MATERIAL_EXT			?
-#define GL_INDEX_MATERIAL_PARAMETER_EXT		?
-#define GL_INDEX_MATERIAL_FACE_EXT		?
+#define GL_INDEX_MATERIAL_EXT			0x81B8
+#define GL_INDEX_MATERIAL_PARAMETER_EXT		0x81B9
+#define GL_INDEX_MATERIAL_FACE_EXT		0x81BA
 
 GLAPI void APIENTRY glIndexMaterialEXT(GLenum face, GLenum mode);
 
@@ -1499,9 +1501,9 @@ typedef void (APIENTRY * PFNGLINDEXMATERIALEXTPROC) (GLenum face, GLenum mode);
 #ifndef GL_EXT_index_func
 #define GL_EXT_index_func 1
 
-#define GL_INDEX_TEST_EXT			?
-#define GL_INDEX_TEST_FUNC_EXT			?
-#define GL_INDEX_TEST_REF_EXT			?
+#define GL_INDEX_TEST_EXT			0x81B5
+#define GL_INDEX_TEST_FUNC_EXT			0x81B6
+#define GL_INDEX_TEST_REF_EXT			0x81B7
 
 GLAPI void APIENTRY glIndexFuncEXT(GLenum func, GLfloat ref);
 
@@ -1517,14 +1519,14 @@ typedef void (APIENTRY * PFNGLINDEXFUNCEXTPROC) (GLenum func, GLfloat ref);
 #ifndef GL_EXT_index_array_formats
 #define GL_EXT_index_array_formats 1
 
-#define GL_IUI_V2F_EXT				?
-#define GL_IUI_V3F_EXT				?
-#define GL_IUI_N3F_V2F_EXT			?
-#define GL_IUI_N3F_V3F_EXT			?
-#define GL_T2F_IUI_V2F_EXT			?
-#define GL_T2F_IUI_V3F_EXT			?
-#define GL_T2F_IUI_N3F_V2F_EXT			?
-#define GL_T2F_IUI_N3F_V3F_EXT			?
+#define GL_IUI_V2F_EXT				0x81AD
+#define GL_IUI_V3F_EXT				0x81AE
+#define GL_IUI_N3F_V2F_EXT			0x81AF
+#define GL_IUI_N3F_V3F_EXT			0x81B0
+#define GL_T2F_IUI_V2F_EXT			0x81B1
+#define GL_T2F_IUI_V3F_EXT			0x81B2
+#define GL_T2F_IUI_N3F_V2F_EXT			0x81B3
+#define GL_T2F_IUI_N3F_V3F_EXT			0x81B4
 
 #endif /* GL_EXT_index_array_formats */
 
@@ -1665,9 +1667,9 @@ typedef void (APIENTRY * PFNGLLIGHTENVISGIXPROC) (GLenum pname, GLint param);
 #ifndef GL_HP_texture_lighting
 #define GL_HP_texture_lighting 1
 
-#define GL_TEXTURE_LIGHTING_MODE_HP		?
-#define GL_TEXTURE_POST_SPECULAR_HP		?
-#define GL_TEXTURE_PRE_SPECULAR_HP		?
+#define GL_TEXTURE_LIGHTING_MODE_HP		0x8167
+#define GL_TEXTURE_POST_SPECULAR_HP		0x8168
+#define GL_TEXTURE_PRE_SPECULAR_HP		0x8169
 
 #endif /* GL_HP_texture_lighting */
 
@@ -1842,11 +1844,11 @@ typedef void (APIENTRY * PFNGLTEXSCISSORFUNCINTELPROC) (GLenum target, GLenum lf
 #ifndef GL_INTEL_parallel_arrays
 #define GL_INTEL_parallel_arrays 1
 
-#define GL_PARALLEL_ARRAYS_INTEL			?
-#define GL_VERTEX_ARRAY_PARALLEL_POINTERS_INTEL		?
-#define GL_NORMAL_ARRAY_PARALLEL_POINTERS_INTEL		?
-#define GL_COLOR_ARRAY_PARALLEL_POINTERS_INTEL		?
-#define GL_TEXTURE_COORD_ARRAY_PARALLEL_POINTERS_INTEL	?
+#define GL_PARALLEL_ARRAYS_INTEL			0x83F4
+#define GL_VERTEX_ARRAY_PARALLEL_POINTERS_INTEL		0x83F5
+#define GL_NORMAL_ARRAY_PARALLEL_POINTERS_INTEL		0x83F6
+#define GL_COLOR_ARRAY_PARALLEL_POINTERS_INTEL		0x83F7
+#define GL_TEXTURE_COORD_ARRAY_PARALLEL_POINTERS_INTEL	0x83F8
 
 GLAPI void APIENTRY glVertexPointervINTEL(GLint size, GLenum type, const void ** pointer);
 GLAPI void APIENTRY glNormalPointervINTEL(GLenum type, const void** pointer);
@@ -2935,6 +2937,23 @@ typedef void (APIENTRY * PFNGLWINDOWPOS4DVMESAPROC) (const GLdouble *p);
 #endif /* GL_MESA_window_pos */
 
 
+/*
+ * 198. GL_EXT_texture_compression_s3tc
+ * 199. GL_IBM_cull_vertex
+ * 200. GL_IBM_multimode_draw_arrays
+ * 201. GL_IBM_vertex_array_lists
+ * 202. ?
+ * 203. ?
+ * 204. ?
+ * 205. ?
+ * 206. GL_3DFX_texture_compression_FXT1 
+ * 207. GL_3DFX_multisample
+ * 208. GL_3DFX_tbuffer
+ * 209. WGL_EXT_multisample 
+ * 210. GL_SGIX_vertex_preclip 
+ * 212. GL_SGIX_resample 
+ */
+
 
 /*
  * ARB 1. GL_ARB_multitexture
@@ -3137,7 +3156,39 @@ typedef void (APIENTRY * PFNGLSAMPLECOVERAGEARBPROC) (GLclampf value, GLboolean 
 
 
 /*
- * ARB ?. GL_ARB_texture_compression
+ * ARB 7. GL_ARB_texture_cube_map
+ */
+#ifndef GL_ARB_texture_cube_map
+#define GL_ARB_texture_cube_map 1
+
+#define GL_NORMAL_MAP_ARB			0x8511
+#define GL_REFLECTION_MAP_ARB			0x8512
+#define GL_TEXTURE_CUBE_MAP_ARB			0x8513
+#define GL_TEXTURE_BINDING_CUBE_MAP_ARB		0x8514
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB	0x8515
+#define GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB	0x8516
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB	0x8517
+#define GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB	0x8518
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB	0x8519
+#define GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB	0x851A
+#define GL_PROXY_TEXTURE_CUBE_MAP_ARB		0x851B 
+#define GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB	0x851C
+
+#endif /* GL_ARB_texture_cube_map */
+
+
+
+/*
+ * ARB 8. WGL_ARB_extensions_string
+ * ARB 9. WGL_ARB_pixel_format
+ * ARB 10. WGL_ARB_make_current_read
+ * ARB 11. WGL_ARB_pbuffer
+ */
+
+
+
+/*
+ * ARB 12. GL_ARB_texture_compression
  */
 #ifndef GL_ARB_texture_compression
 #define GL_ARB_texture_compression 1
@@ -3175,29 +3226,6 @@ typedef void (APIENTRY * PFNGLGETCOMPRESSEDTEXIMAGEARBPROC) (GLenum target, GLin
 
 
 /*
- * ?. GL_EXT_texture_cube_map
- */
-#ifndef GL_EXT_texture_cube_map
-#define GL_EXT_texture_cube_map 1
-
-#define GL_NORMAL_MAP_EXT			0x8511
-#define GL_REFLECTION_MAP_EXT			0x8512
-#define GL_TEXTURE_CUBE_MAP_EXT			0x8513
-#define GL_TEXTURE_BINDING_CUBE_MAP_EXT		0x8514
-#define GL_TEXTURE_CUBE_MAP_POSITIVE_X_EXT	0x8515
-#define GL_TEXTURE_CUBE_MAP_NEGATIVE_X_EXT	0x8516
-#define GL_TEXTURE_CUBE_MAP_POSITIVE_Y_EXT	0x8517
-#define GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_EXT	0x8518
-#define GL_TEXTURE_CUBE_MAP_POSITIVE_Z_EXT	0x8519
-#define GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_EXT	0x851A
-#define GL_PROXY_TEXTURE_CUBE_MAP_EXT		0x851B 
-#define GL_MAX_CUBE_MAP_TEXTURE_SIZE_EXT	0x851C
-
-#endif /* GL_EXT_texture_cube_map */
-
-
-
-/*
  * ? GL_NV_texgen_emboss
  */
 
@@ -3213,7 +3241,7 @@ typedef void (APIENTRY * PFNGLGETCOMPRESSEDTEXIMAGEARBPROC) (GLenum target, GLin
 
 
 /*
- * ??. GL_WIN_swap_hint
+ * ?. GL_WIN_swap_hint
  */
 #ifndef GL_WIN_swap_hint
 #define GL_WIN_swap_hint 1
