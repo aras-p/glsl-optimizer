@@ -6,7 +6,7 @@ include $(TOP)/configs/current
 LIBNAME = r200_dri.so
 
 MINIGLX_SOURCES = server/radeon_dri.c 
-		
+
 
 COMMON_SOURCES = \
 	../../common/driverfuncs.c \

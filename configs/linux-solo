@@ -8,11 +8,11 @@ CONFIG_NAME = linux-solo
 CC = gcc
 CXX = g++
 
-CCOMMON = -DDRI_NEW_INTERFACE_ONLY -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -D_POSIX_C_SOURCE=199309L -D_GNU_SOURCE
+DEFINES = -DDRI_NEW_INTERFACE_ONLY -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -D_POSIX_C_SOURCE=199309L -D_GNU_SOURCE
 
-CFLAGS = $(CCOMMON) -Wmissing-prototypes -g -std=c99 -Wundef -fPIC -ffast-math
+CFLAGS = $(DEFINES) -Wmissing-prototypes -g -std=c99 -Wundef -fPIC -ffast-math
 
-CXXFLAGS = $(CCOMMON) -Wall -O3 -ansi -pedantic -fPIC
+CXXFLAGS = $(DEFINES) -Wall -O3 -ansi -pedantic -fPIC
 
 
 ASM_SOURCES = $(X86_SOURCES)

@@ -82,7 +82,7 @@ $(LIB_DIR)/$(LIBNAME):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src
 
 # Run 'make depend' to update the dependencies if you change
 # what's included by any source file.
-depend: $(C_SOURCES) $(ASM_SOURCES)
+depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDES) $(C_SOURCES) $(ASM_SOURCES) \
 		> /dev/null 

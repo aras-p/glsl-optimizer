@@ -9,6 +9,10 @@ CONFIG_NAME = linux-dri
 CC = gcc
 CXX = g++
 
+MKDEP = /usr/X11R6/bin/makedepend
+#MKDEP = gcc -M
+#MKDEP_OPTIONS = -MF depend
+
 WARN_FLAGS = -Wall
 OPT_FLAGS = -O -g
 PIC_FLAGS = -fPIC
