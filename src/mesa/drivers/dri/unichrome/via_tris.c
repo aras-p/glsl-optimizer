@@ -907,7 +907,7 @@ void viaRasterPrimitive(GLcontext *ctx,
 	    HC_HVCycle_AC | HC_HVCycle_BB | HC_HVCycle_NewC;
 	 regCmdB |= HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
 	 if (ctx->Light.ShadeModel == GL_FLAT)
-            vmesa->regCmdA_End |= HC_HShading_FlatB; 
+            vmesa->regCmdA_End |= HC_HShading_FlatC; 
 	 break;
       case GL_TRIANGLE_FAN:
 	 vmesa->regCmdA_End |= HC_HPMType_Tri | HC_HVCycle_AFP |
