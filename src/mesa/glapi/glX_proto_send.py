@@ -162,7 +162,7 @@ class glXEnumFunction:
 			masked_enums = {}
 			masked_count = {}
 
-			for i in range(0, mask):
+			for i in range(0, mask + 1):
 				masked_enums[i] = "0";
 				masked_count[i] = 0;
 
@@ -380,6 +380,15 @@ class glXFunction(gl_XML.glFunction):
 		size = ((size + 3) & ~3)
 		return "%u%s" % (size, size_string)
 
+
+	def opcode_real_value(self):
+		if self.glx_vendorpriv != 0:
+			if self.needs_reply():
+				return 17
+			else:
+				return 16
+		else:
+			return self.opcode_value()
 
 	def opcode_value(self):
 		if self.glx_rop != 0:
@@ -691,6 +700,13 @@ generic_%u_byte( GLint rop, const void * ptr )
 
 
 	def printRenderFunction(self, f):
+		# There is a class of GL functions that take a single pointer
+		# as a parameter.  This pointer points to a fixed-size chunk
+		# of data, and the protocol for this functions is very
+		# regular.  Since they are so regular and there are so many
+		# of them, special case them with generic functions.  On
+		# x86, this save about 26KB in the libGL.so binary.
+
 		if f.variable_length_parameter() == None and len(f.fn_parameters) == 1:
 			p = f.fn_parameters[0]
 			if p.is_pointer:
