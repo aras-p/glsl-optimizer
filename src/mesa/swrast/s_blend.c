@@ -1,4 +1,4 @@
-/* $Id: s_blend.c,v 1.16 2002/04/02 23:36:51 brianp Exp $ */
+/* $Id: s_blend.c,v 1.17 2002/04/04 01:40:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,6 +28,7 @@
 
 #include "glheader.h"
 #include "context.h"
+#include "colormac.h"
 #include "macros.h"
 
 #include "s_alphabuf.h"
@@ -60,10 +61,7 @@ blend_noop( GLcontext *ctx, GLuint n, const GLubyte mask[],
 
    for (i = 0; i < n; i++) {
       if (mask[i]) {
-         rgba[i][RCOMP] = dest[i][RCOMP];
-         rgba[i][GCOMP] = dest[i][GCOMP];
-         rgba[i][BCOMP] = dest[i][BCOMP];
-         rgba[i][ACOMP] = dest[i][ACOMP];
+         COPY_CHAN4( rgba[i], dest[i] );
       }
    }
 }
@@ -142,6 +140,7 @@ blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
             const GLint g = DIV255((rgba[i][GCOMP] - dest[i][GCOMP]) * t) + dest[i][GCOMP];
             const GLint b = DIV255((rgba[i][BCOMP] - dest[i][BCOMP]) * t) + dest[i][BCOMP];
             const GLint a = DIV255((rgba[i][ACOMP] - dest[i][ACOMP]) * t) + dest[i][ACOMP]; 
+
 #undef DIV255
 #elif CHAN_BITS == 16
             const GLfloat tt = (GLfloat) t / CHAN_MAXF;
@@ -187,6 +186,16 @@ blend_add( GLcontext *ctx, GLuint n, const GLubyte mask[],
 
    for (i=0;i<n;i++) {
       if (mask[i]) {
+#if CHAN_TYPE == GL_FLOAT
+         GLfloat r = rgba[i][RCOMP] + dest[i][RCOMP];
+         GLfloat g = rgba[i][GCOMP] + dest[i][GCOMP];
+         GLfloat b = rgba[i][BCOMP] + dest[i][BCOMP];
+         GLfloat a = rgba[i][ACOMP] + dest[i][ACOMP];
+         rgba[i][RCOMP] = (GLchan) MIN2( r, CHAN_MAXF );
+         rgba[i][GCOMP] = (GLchan) MIN2( g, CHAN_MAXF );
+         rgba[i][BCOMP] = (GLchan) MIN2( b, CHAN_MAXF );
+         rgba[i][ACOMP] = (GLchan) MIN2( a, CHAN_MAXF );
+#else
          GLint r = rgba[i][RCOMP] + dest[i][RCOMP];
          GLint g = rgba[i][GCOMP] + dest[i][GCOMP];
          GLint b = rgba[i][BCOMP] + dest[i][BCOMP];
@@ -195,6 +204,7 @@ blend_add( GLcontext *ctx, GLuint n, const GLubyte mask[],
          rgba[i][GCOMP] = (GLchan) MIN2( g, CHAN_MAX );
          rgba[i][BCOMP] = (GLchan) MIN2( b, CHAN_MAX );
          rgba[i][ACOMP] = (GLchan) MIN2( a, CHAN_MAX );
+#endif
       }
    }
 }
