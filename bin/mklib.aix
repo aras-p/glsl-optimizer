@@ -6,22 +6,18 @@
 
 #--identification------------------------------------------------------
 
-# $Id: mklib.aix,v 1.1 1999/08/19 13:52:56 brianp Exp $
+# $Id: mklib.aix,v 1.2 1999/09/15 15:10:20 brianp Exp $
 
 # $Log: mklib.aix,v $
+# Revision 1.2  1999/09/15 15:10:20  brianp
+# added third, tiny version number to arguments
+#
 # Revision 1.1  1999/08/19 13:52:56  brianp
 # initial check-in (post-crash)
 #
 
 
 #--common--------------------------------------------------------------
-
-# Usage:  mklib libname major minor file.o ...
-#
-# First argument is name of output library (LIBRARY)
-# Second arg is major version number (MAJOR)
-# Third arg is minor version number (MINOR)
-# Rest of arguments are object files (OBJECTS)
 
 LIBRARY=$1
 shift 1
@@ -30,6 +26,9 @@ MAJOR=$1
 shift 1
 
 MINOR=$1
+shift 1
+
+TINY=$1
 shift 1
 
 OBJECTS=$*
