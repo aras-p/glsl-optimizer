@@ -932,8 +932,8 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 	if(tnl->render_inputs & _TNL_BIT_COLOR1)
 		CONFIGURE_AOS(VB->SecondaryColorPtr[0], 0, i_color[1], AOS_FORMAT_FLOAT_COLOR);
 	
-	if(tnl->render_inputs & _TNL_BIT_FOG)
-		CONFIGURE_AOS(VB->FogCoordPtr, 0, i_fog, AOS_FORMAT_FLOAT);
+	/*if(tnl->render_inputs & _TNL_BIT_FOG) // Causes lock ups when immediate mode is on
+		CONFIGURE_AOS(VB->FogCoordPtr, 0, i_fog, AOS_FORMAT_FLOAT);*/
 	
 	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
 		if(tnl->render_inputs & (_TNL_BIT_TEX0<<i))

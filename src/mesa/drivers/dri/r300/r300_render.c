@@ -249,6 +249,37 @@ static int r300_get_num_verts(r300ContextPtr rmesa,
 	return num_verts - verts_off;
 }
 
+void dump_inputs(GLcontext *ctx, int render_inputs)
+{
+	int k;
+	fprintf(stderr, "inputs:");
+	if(render_inputs & _TNL_BIT_POS)
+		fprintf(stderr, "_TNL_BIT_POS ");
+	if(render_inputs & _TNL_BIT_NORMAL)
+		fprintf(stderr, "_TNL_BIT_NORMAL ");
+		
+		/* color components */
+	if(render_inputs & _TNL_BIT_COLOR0)
+		fprintf(stderr, "_TNL_BIT_COLOR0 ");
+	if(render_inputs & _TNL_BIT_COLOR1)
+		fprintf(stderr, "_TNL_BIT_COLOR1 ");
+
+	if(render_inputs & _TNL_BIT_FOG)
+		fprintf(stderr, "_TNL_BIT_FOG ");
+					
+		/* texture coordinates */
+	for(k=0;k < ctx->Const.MaxTextureUnits;k++)
+		if(render_inputs & (_TNL_BIT_TEX0<<k))
+			fprintf(stderr, "_TNL_BIT_TEX%d ", k);
+		
+	if(render_inputs & _TNL_BIT_INDEX)
+		fprintf(stderr, "_TNL_BIT_INDEX ");
+	if(render_inputs & _TNL_BIT_POINTSIZE)
+		fprintf(stderr, "_TNL_BIT_POINTSIZE ");
+	
+	fprintf(stderr, "\n");
+}
+
 /* This function compiles GL context into state registers that 
    describe data routing inside of R300 pipeline.
    
@@ -327,6 +358,8 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
    	WARN_ONCE("Aeiee ! render_inputs==0. Skipping rendering.\n");
 	return;
    	}
+
+	//dump_inputs(ctx, render_inputs); return ;
 	
    start_immediate_packet(num_verts, type, 4*rmesa->state.aos_count);
 
@@ -358,8 +391,8 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
 		if(render_inputs & _TNL_BIT_COLOR1)
 			output_vector(VB->SecondaryColorPtr[0], i);
 
-		if(render_inputs & _TNL_BIT_FOG)
-			output_vector(VB->FogCoordPtr, i);
+/*		if(render_inputs & _TNL_BIT_FOG) // Causes lock ups when immediate mode is on
+			output_vector(VB->FogCoordPtr, i);*/
 					
 		/* texture coordinates */
 		for(k=0;k < ctx->Const.MaxTextureUnits;k++)
@@ -557,6 +590,7 @@ static void upload_vertex_buffer(r300ContextPtr rmesa, GLcontext *ctx)
 		fprintf(stderr, "Aieee ! Maximum AOS arrays count exceeded.. \n");
 		exit(-1);
 		}
+	//dump_inputs(ctx, render_inputs); return ;
 }
 
 static void r300_render_vb_primitive(r300ContextPtr rmesa, 
@@ -657,10 +691,6 @@ static GLboolean r300_run_render(GLcontext *ctx,
    #if 1
 	
    	#if 1
-	/* I dont recall fog locking up before polygon offset modifications.
-	   Or then having fog on only locks up if immediate mode is on... */
-	if(ctx->Fog.Enabled)
-		return GL_FALSE;
 	
         return r300_run_immediate_render(ctx, stage);
 	#else 
