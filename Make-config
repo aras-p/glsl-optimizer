@@ -739,7 +739,7 @@ linux-solo:
 	"GLUT_LIB = libglut.so" \
 	"CC = gcc" \
 	"CXX = g++" \
-	"CFLAGS = -g -std=c99 -pedantic -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
+	"CFLAGS = -Wmissing-prototypes -g -std=c99 -pedantic -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"CXXFLAGS = -g -Wall -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -lm -lpthread -lexpat" \

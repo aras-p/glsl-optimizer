@@ -536,8 +536,8 @@ convertPalette(FxU32 data[256], const struct gl_color_table *table)
 
 
 
-void
-tdfxTexturePalette(GLcontext * ctx, struct gl_texture_object *tObj)
+static void
+tdfxUpdateTexturePalette(GLcontext * ctx, struct gl_texture_object *tObj)
 {
     tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -1498,6 +1498,6 @@ void tdfxInitTextureFuncs( struct dd_function_table *functions )
    functions->TexImage2D		= tdfxTexImage2D;
    functions->TexSubImage2D		= tdfxTexSubImage2D;
    functions->IsTextureResident		= tdfxIsTextureResident;
-   functions->UpdateTexturePalette      = tdfxTexturePalette;
+   functions->UpdateTexturePalette      = tdfxUpdateTexturePalette;
 }
 

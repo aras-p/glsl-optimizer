@@ -54,9 +54,6 @@ extern void
 tdfxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj);
 
 
-extern void
-tdfxTexturePalette(GLcontext * ctx, struct gl_texture_object *tObj);
-
 #if 000 /* DEAD? */
 extern void
 fxDDTexUseGlobalPalette(GLcontext * ctx, GLboolean state);

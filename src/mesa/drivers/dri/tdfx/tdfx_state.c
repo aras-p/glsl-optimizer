@@ -1404,9 +1404,6 @@ void tdfxDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.Scissor			= tdfxDDScissor;
    ctx->Driver.ShadeModel		= tdfxDDShadeModel;
 
-/*     ctx->Driver.GetTexImage		= tdfxDDGetTexImage; */
-   ctx->Driver.UpdateTexturePalette	= tdfxDDTexturePalette;
-
    if ( fxMesa->haveHwStencil ) {
       ctx->Driver.StencilFunc		= tdfxDDStencilFunc;
       ctx->Driver.StencilMask		= tdfxDDStencilMask;
