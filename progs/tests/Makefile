@@ -44,7 +44,8 @@ SOURCES = antialias.c \
 	vptorus.c \
 	vpwarpmesh.c \
 	yuvrect.c \
-	yuvsquare.c
+	yuvsquare.c \
+	zreaddraw.c
 
 PROGS = $(SOURCES:%.c=%)
 
