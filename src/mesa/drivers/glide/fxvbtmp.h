@@ -248,16 +248,16 @@ static void TAG(interp)( GLcontext *ctx,
    }
 
    if (IND & SETUP_TMU0) {
-      INTERP_F( t, 
-		dst->tmuvtx[0].sow, 
-		out->tmuvtx[0].sow * wout, 
+      INTERP_F( t,
+		dst->tmuvtx[0].sow,
+		out->tmuvtx[0].sow * wout,
 		in->tmuvtx[0].sow * win );
       INTERP_F( t,
 		dst->tmuvtx[0].tow,
-		out->tmuvtx[0].tow * wout, 
+		out->tmuvtx[0].tow * wout,
 		in->tmuvtx[0].tow * win );
       if (IND & SETUP_PTEX) {
-	 INTERP_F( t, 
+	 INTERP_F( t,
 		   dst->tmuvtx[0].oow, 
 		   out->tmuvtx[0].oow * wout, 
 		   in->tmuvtx[0].oow * win );
@@ -265,16 +265,16 @@ static void TAG(interp)( GLcontext *ctx,
    }
 
    if (IND & SETUP_TMU1) {
-      INTERP_F( t, 
-		dst->tmuvtx[1].sow, 
-		out->tmuvtx[1].sow * wout, 
+      INTERP_F( t,
+		dst->tmuvtx[1].sow,
+		out->tmuvtx[1].sow * wout,
 		in->tmuvtx[1].sow * win );
       INTERP_F( t,
 		dst->tmuvtx[1].tow,
-		out->tmuvtx[1].tow * wout, 
+		out->tmuvtx[1].tow * wout,
 		in->tmuvtx[1].tow * win );
       if (IND & SETUP_PTEX) {
-	 INTERP_F( t, 
+	 INTERP_F( t,
 		   dst->tmuvtx[1].oow, 
 		   out->tmuvtx[1].oow * wout, 
 		   in->tmuvtx[1].oow * win );

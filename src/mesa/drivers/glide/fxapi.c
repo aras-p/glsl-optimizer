@@ -345,17 +345,17 @@ fxMesaCreateContext(GLuint win,
  }
 
  fxMesa->type = voodoo->type;
- fxMesa->HavePalExt = voodoo->HavePalExt;
- fxMesa->HavePixExt = voodoo->HavePixExt;
- fxMesa->HaveTexFmt = voodoo->HaveTexFmt;
- fxMesa->HaveCmbExt = voodoo->HaveCmbExt;
- fxMesa->HaveMirExt = voodoo->HaveMirExt;
- fxMesa->HaveTexUma = voodoo->HaveTexUma;
+ fxMesa->HavePalExt = voodoo->HavePalExt && !getenv("MESA_FX_IGNORE_PALEXT");
+ fxMesa->HavePixExt = voodoo->HavePixExt && !getenv("MESA_FX_IGNORE_PIXEXT");
+ fxMesa->HaveTexFmt = voodoo->HaveTexFmt && !getenv("MESA_FX_IGNORE_TEXFMT");
+ fxMesa->HaveCmbExt = voodoo->HaveCmbExt && !getenv("MESA_FX_IGNORE_CMBEXT");
+ fxMesa->HaveMirExt = voodoo->HaveMirExt && !getenv("MESA_FX_IGNORE_MIREXT");
+ fxMesa->HaveTexUma = voodoo->HaveTexUma && !getenv("MESA_FX_IGNORE_TEXUMA");
  fxMesa->Glide = glbHWConfig.Glide;
  Glide = &fxMesa->Glide;
  fxMesa->HaveTexus2 = Glide->txImgQuantize &&
                       Glide->txMipQuantize &&
-                      Glide->txPalToNcc;
+                      Glide->txPalToNcc && !getenv("MESA_FX_IGNORE_TEXUS2");
 
  /*
   * Pixel tables are used during pixel read-back
@@ -588,7 +588,7 @@ fxMesaCreateContext(GLuint win,
   }
   END_BOARD_LOCK();
 
-  sprintf(fxMesa->rendererString, "Mesa %s v0.51 %s %dMB FB, %dMB TM, %d TMU, %s",
+  sprintf(fxMesa->rendererString, "Mesa %s v0.60 %s %dMB FB, %dMB TM, %d TMU, %s",
                            grGetString(GR_RENDERER),
                            grGetString(GR_HARDWARE),
                            fbRam,
