@@ -506,6 +506,44 @@ void viaInitState(GLcontext *ctx)
     }
 }
 
+/**
+ * Convert S and T texture coordinate wrap modes to hardware bits.
+ */
+static uint32_t
+get_wrap_mode( GLenum sWrap, GLenum tWrap )
+{
+    uint32_t v = 0;
+
+
+    switch( sWrap ) {
+    case GL_REPEAT:
+	v |= HC_HTXnMPMD_Srepeat;
+	break;
+    case GL_CLAMP:
+    case GL_CLAMP_TO_EDGE:
+	v |= HC_HTXnMPMD_Sclamp;
+	break;
+    case GL_MIRRORED_REPEAT:
+	v |= HC_HTXnMPMD_Smirror;
+	break;
+    }
+
+    switch( tWrap ) {
+    case GL_REPEAT:
+	v |= HC_HTXnMPMD_Trepeat;
+	break;
+    case GL_CLAMP:
+    case GL_CLAMP_TO_EDGE:
+	v |= HC_HTXnMPMD_Tclamp;
+	break;
+    case GL_MIRRORED_REPEAT:
+	v |= HC_HTXnMPMD_Tmirror;
+	break;
+    }
+    
+    return v;
+}
+
 void viaChooseTextureState(GLcontext *ctx) 
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
@@ -580,17 +618,10 @@ void viaChooseTextureState(GLcontext *ctx)
                                       HC_HTXnFLTe_Nearest;
             }
 
-            if (texObj->WrapS == GL_REPEAT)
-                vmesa->regHTXnMPMD_0 = HC_HTXnMPMD_Srepeat;
-            else
-                vmesa->regHTXnMPMD_0 = HC_HTXnMPMD_Sclamp;
+	    vmesa->regHTXnMPMD_0 &= ~(HC_HTXnMPMD_SMASK | HC_HTXnMPMD_TMASK);
+	    vmesa->regHTXnMPMD_0 |= get_wrap_mode( texObj->WrapS,
+						   texObj->WrapT );
 
-            if (GL_TRUE) {
-                if (texObj->WrapT == GL_REPEAT)
-                    vmesa->regHTXnMPMD_0 |= HC_HTXnMPMD_Trepeat;
-                else
-                    vmesa->regHTXnMPMD_0 |= HC_HTXnMPMD_Tclamp;
-            }
 #ifdef DEBUG
 	    if (VIA_DEBUG) fprintf(stderr, "texUnit0->EnvMode %x\n",texUnit0->EnvMode);    
 #endif
@@ -3135,17 +3166,9 @@ void viaChooseTextureState(GLcontext *ctx)
             	    break;
 	    }
 	    
-            if (texObj->WrapS == GL_REPEAT)
-                vmesa->regHTXnMPMD_1 = HC_HTXnMPMD_Srepeat;
-            else
-                vmesa->regHTXnMPMD_1 = HC_HTXnMPMD_Sclamp;
-
-            if (GL_TRUE) {
-                if (texObj->WrapT == GL_REPEAT)
-                    vmesa->regHTXnMPMD_1 |= HC_HTXnMPMD_Trepeat;
-                else
-                    vmesa->regHTXnMPMD_1 |= HC_HTXnMPMD_Tclamp;
-            }
+	    vmesa->regHTXnMPMD_1 &= ~(HC_HTXnMPMD_SMASK | HC_HTXnMPMD_TMASK);
+	    vmesa->regHTXnMPMD_1 |= get_wrap_mode( texObj->WrapS,
+						   texObj->WrapT );
 
             switch (texUnit1->EnvMode) {
             case GL_MODULATE:

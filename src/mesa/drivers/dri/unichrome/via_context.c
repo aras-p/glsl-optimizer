@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include "macros.h"
 
-#define DRIVER_DATE	"20020221"
+#define DRIVER_DATE	"20040923"
 
 #include "utils.h"
 
@@ -263,12 +263,12 @@ static const char * const card_extensions[] =
    "GL_ARB_texture_env_add",
    "GL_ARB_texture_env_combine",     /* John Sheng [2003.7.18] tex combine */
    "GL_ARB_texture_env_dot3",        /* John Sheng [2003.7.18] tex dot3 */
-   "GL_EXT_point_parameters",        /* John Sheng [2003.7.18] point param. */
+   "GL_ARB_texture_mirrored_repeat",
    "GL_EXT_stencil_wrap",
-   "GL_EXT_texture_env_add",
    "GL_EXT_texture_env_combine",     /* John Sheng [2003.7.18] tex combine */
    "GL_EXT_texture_env_dot3",        /* John Sheng [2003.7.18] tex dot3 */
    "GL_EXT_texture_lod_bias",
+   "GL_NV_blend_square",
    NULL
 };
 
