@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.7 1999/10/09 10:01:46 brianp Exp $ */
+/* $Id: dlist.c,v 1.8 1999/10/10 12:51:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -303,7 +303,7 @@ static Node *alloc_instruction( GLcontext *ctx, OpCode opcode, GLint argcount )
       /* This block is full.  Allocate a new block and chain to it */
       n = ctx->CurrentBlock + ctx->CurrentPos;
       n[0].opcode = OPCODE_CONTINUE;
-      newblock = (Node *) malloc( sizeof(Node) * BLOCK_SIZE );
+      newblock = (Node *) GL_ALLOC( sizeof(Node) * BLOCK_SIZE );
       if (!newblock) {
          gl_error( ctx, GL_OUT_OF_MEMORY, "Building display list" );
          return NULL;
@@ -329,7 +329,7 @@ static Node *alloc_instruction( GLcontext *ctx, OpCode opcode, GLint argcount )
  */
 static Node *make_empty_list( void )
 {
-   Node *n = (Node *) malloc( sizeof(Node) );
+   Node *n = (Node *) GL_ALLOC( sizeof(Node) );
    n[0].opcode = OPCODE_END_OF_LIST;
    return n;
 }
@@ -385,7 +385,7 @@ void gl_destroy_list( GLcontext *ctx, GLuint list )
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_POLYGON_STIPPLE:
-            free( n[1].data );
+            GL_FREE( n[1].data );
 	    n += InstSize[n[0].opcode];
             break;
 	 case OPCODE_TEX_IMAGE1D:
@@ -412,11 +412,11 @@ void gl_destroy_list( GLcontext *ctx, GLuint list )
             break;
 	 case OPCODE_CONTINUE:
 	    n = (Node *) n[1].next;
-	    free( block );
+	    GL_FREE( block );
 	    block = n;
 	    break;
 	 case OPCODE_END_OF_LIST:
-	    free( block );
+	    GL_FREE( block );
 	    done = GL_TRUE;
 	    break;
 	 default:
@@ -1670,7 +1670,7 @@ static void save_PixelMapfv( GLcontext *ctx,
    if (n) {
       n[1].e = map;
       n[2].i = mapsize;
-      n[3].data  = (void *) malloc( mapsize * sizeof(GLfloat) );
+      n[3].data  = (void *) GL_ALLOC( mapsize * sizeof(GLfloat) );
       MEMCPY( n[3].data, (void *) values, mapsize * sizeof(GLfloat) );
    }
    if (ctx->ExecuteFlag) {
@@ -1766,7 +1766,7 @@ static void save_PolygonStipple( GLcontext *ctx, const GLuint *pattern )
    n = alloc_instruction( ctx, OPCODE_POLYGON_STIPPLE, 1 );
    if (n) {
       void *data;
-      n[1].data = malloc( 32 * 4 );
+      n[1].data = GL_ALLOC( 32 * 4 );
       data = n[1].data;   /* This needed for Acorn compiler */
       MEMCPY( data, pattern, 32 * 4 );
    }
@@ -2380,8 +2380,6 @@ static void save_ClientActiveTexture( GLcontext *ctx, GLenum target )
 
 
 
-
-
 void gl_compile_cassette( GLcontext *ctx )
 {
    Node *n = alloc_instruction( ctx, OPCODE_VERTEX_CASSETTE, 1 );
@@ -2389,20 +2387,19 @@ void gl_compile_cassette( GLcontext *ctx )
    struct immediate *im = ctx->input;
    
    if (!n || !new_im) {
-      if (n) free(n);
-      if (new_im) gl_immediate_free(new_im);
+      if (n)
+	 GL_FREE(n);
+      if (new_im)
+	 gl_immediate_free(new_im);
       return;
    }
 
    /* Do some easy optimizations of the cassette.  
     */
-   if (im->v.Obj.size < 4 && 
-       im->Count > 15)
-   {
-      im->Bounds = (GLfloat (*)[3]) malloc(6 * sizeof(GLfloat));
+   if (im->v.Obj.size < 4 && im->Count > 15) {
+      im->Bounds = (GLfloat (*)[3]) GL_ALLOC(6 * sizeof(GLfloat));
       (gl_calc_bound_tab[im->v.Obj.size])( im->Bounds, &im->v.Obj );
    }
-
 
    n[1].data = (void *)im;   
    SET_IMMEDIATE( ctx, new_im );
@@ -3041,7 +3038,7 @@ void gl_NewList( GLcontext *ctx, GLuint list, GLenum mode )
 
    /* Allocate new display list */
    ctx->CurrentListNum = list;
-   ctx->CurrentBlock = (Node *) malloc( sizeof(Node) * BLOCK_SIZE );
+   ctx->CurrentBlock = (Node *) GL_ALLOC( sizeof(Node) * BLOCK_SIZE );
    ctx->CurrentListPtr = ctx->CurrentBlock;
    ctx->CurrentPos = 0;
 
@@ -3092,7 +3089,7 @@ void gl_EndList( GLcontext *ctx )
 
    /* KW: Put back the old input pointer.
     */
-   free( ctx->input );
+   GL_FREE( ctx->input );
    SET_IMMEDIATE( ctx, ctx->VB->IM );
    gl_reset_input( ctx );
 

@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.5 1999/10/08 09:27:10 keithw Exp $ */
+/* $Id: extensions.c,v 1.6 1999/10/10 12:54:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,7 +33,6 @@
 
 
 #define MAX_EXT_NAMELEN 80
-#define MALLOC_STRUCT(T)  (struct T *) malloc( sizeof(struct T) )
 
 struct extension {
    struct extension *next, *prev;
@@ -83,7 +82,7 @@ int gl_extensions_add( GLcontext *ctx,
 
    if (ctx->Extensions.ext_string == 0) 
    {
-      struct extension *t = MALLOC_STRUCT(extension);
+      struct extension *t = GL_ALLOC_STRUCT(extension);
       t->enabled = state;
       strncpy(t->name, name, MAX_EXT_NAMELEN);
       t->name[MAX_EXT_NAMELEN] = 0;
@@ -135,17 +134,17 @@ void gl_extensions_dtr( GLcontext *ctx )
    struct extension *i, *nexti;
 
    if (ctx->Extensions.ext_string) {
-      free( ctx->Extensions.ext_string );
+      GL_FREE( ctx->Extensions.ext_string );
       ctx->Extensions.ext_string = 0;
    }
 
    if (ctx->Extensions.ext_list) {
       foreach_s( i, nexti, ctx->Extensions.ext_list ) {
 	 remove_from_list( i );
-	 free( i );
+	 GL_FREE( i );
       }
    
-      free(ctx->Extensions.ext_list);
+      GL_FREE(ctx->Extensions.ext_list);
       ctx->Extensions.ext_list = 0;
    }      
 }
@@ -156,7 +155,7 @@ void gl_extensions_ctr( GLcontext *ctx )
    GLuint i;
 
    ctx->Extensions.ext_string = 0;
-   ctx->Extensions.ext_list = MALLOC_STRUCT(extension);
+   ctx->Extensions.ext_list = GL_ALLOC_STRUCT(extension);
    make_empty_list( ctx->Extensions.ext_list );
 
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
@@ -182,7 +181,7 @@ const char *gl_extensions_get_string( GLcontext *ctx )
       if (len == 0) 
 	 return "";
 
-      str = (char *)malloc(len * sizeof(char));
+      str = (char *)GL_ALLOC(len * sizeof(char));
       ctx->Extensions.ext_string = str;
 
       foreach (i, ctx->Extensions.ext_list) 

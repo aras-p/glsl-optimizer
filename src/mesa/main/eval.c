@@ -1,4 +1,4 @@
-/* $Id: eval.c,v 1.2 1999/10/08 09:27:10 keithw Exp $ */
+/* $Id: eval.c,v 1.3 1999/10/10 12:54:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,9 +23,6 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
-
-
 
 
 /*
@@ -585,7 +582,7 @@ GLfloat *gl_copy_map_points1f( GLenum target,
       return NULL;
    }
 
-   buffer = (GLfloat *) malloc(uorder * size * sizeof(GLfloat));
+   buffer = (GLfloat *) GL_ALLOC(uorder * size * sizeof(GLfloat));
 
    if(buffer) 
       for(i=0, p=buffer; i<uorder; i++, points+=ustride)
@@ -611,7 +608,7 @@ GLfloat *gl_copy_map_points1d( GLenum target,
       return NULL;
    }
 
-   buffer = (GLfloat *) malloc(uorder * size * sizeof(GLfloat));
+   buffer = (GLfloat *) GL_ALLOC(uorder * size * sizeof(GLfloat));
 
    if(buffer)
       for(i=0, p=buffer; i<uorder; i++, points+=ustride)
@@ -655,9 +652,9 @@ GLfloat *gl_copy_map_points2f( GLenum target,
    hsize = (uorder > vorder ? uorder : vorder)*size;
 
    if(hsize>dsize)
-     buffer = (GLfloat *) malloc((uorder*vorder*size+hsize)*sizeof(GLfloat));
+     buffer = (GLfloat *) GL_ALLOC((uorder*vorder*size+hsize)*sizeof(GLfloat));
    else
-     buffer = (GLfloat *) malloc((uorder*vorder*size+dsize)*sizeof(GLfloat));
+     buffer = (GLfloat *) GL_ALLOC((uorder*vorder*size+dsize)*sizeof(GLfloat));
 
    /* compute the increment value for the u-loop */
    uinc = ustride - vorder*vstride;
@@ -698,9 +695,9 @@ GLfloat *gl_copy_map_points2d(GLenum target,
    hsize = (uorder > vorder ? uorder : vorder)*size;
 
    if(hsize>dsize)
-     buffer = (GLfloat *) malloc((uorder*vorder*size+hsize)*sizeof(GLfloat));
+     buffer = (GLfloat *) GL_ALLOC((uorder*vorder*size+hsize)*sizeof(GLfloat));
    else
-     buffer = (GLfloat *) malloc((uorder*vorder*size+dsize)*sizeof(GLfloat));
+     buffer = (GLfloat *) GL_ALLOC((uorder*vorder*size+dsize)*sizeof(GLfloat));
 
    /* compute the increment value for the u-loop */
    uinc = ustride - vorder*vstride;
@@ -793,7 +790,7 @@ void gl_free_control_points( GLcontext* ctx, GLenum target, GLfloat *data )
       else {
          /* The control points in the display list are not currently */
          /* being used. */
-         free( data );
+         GL_FREE( data );
       }
    }
    if (map2) {
@@ -805,7 +802,7 @@ void gl_free_control_points( GLcontext* ctx, GLenum target, GLfloat *data )
       else {
          /* The control points in the display list are not currently */
          /* being used. */
-         free( data );
+         GL_FREE( data );
       }
    }
 
@@ -867,7 +864,7 @@ void gl_Map1f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map1Vertex3.du = 1.0 / (u2 - u1);
 	 if (ctx->EvalMap.Map1Vertex3.Points
              && !ctx->EvalMap.Map1Vertex3.Retain) {
-	    free( ctx->EvalMap.Map1Vertex3.Points );
+	    GL_FREE( ctx->EvalMap.Map1Vertex3.Points );
 	 }
 	 ctx->EvalMap.Map1Vertex3.Points = (GLfloat *) points;
          ctx->EvalMap.Map1Vertex3.Retain = retain;
@@ -879,7 +876,7 @@ void gl_Map1f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map1Vertex4.du = 1.0 / (u2 - u1);
 	 if (ctx->EvalMap.Map1Vertex4.Points
              && !ctx->EvalMap.Map1Vertex4.Retain) {
-	    free( ctx->EvalMap.Map1Vertex4.Points );
+	    GL_FREE( ctx->EvalMap.Map1Vertex4.Points );
 	 }
 	 ctx->EvalMap.Map1Vertex4.Points = (GLfloat *) points;
 	 ctx->EvalMap.Map1Vertex4.Retain = retain;
@@ -891,7 +888,7 @@ void gl_Map1f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map1Index.du = 1.0 / (u2 - u1);
 	 if (ctx->EvalMap.Map1Index.Points
              && !ctx->EvalMap.Map1Index.Retain) {
-	    free( ctx->EvalMap.Map1Index.Points );
+	    GL_FREE( ctx->EvalMap.Map1Index.Points );
 	 }
 	 ctx->EvalMap.Map1Index.Points = (GLfloat *) points;
 	 ctx->EvalMap.Map1Index.Retain = retain;
@@ -903,7 +900,7 @@ void gl_Map1f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map1Color4.du = 1.0 / (u2 - u1);
 	 if (ctx->EvalMap.Map1Color4.Points
              && !ctx->EvalMap.Map1Color4.Retain) {
-	    free( ctx->EvalMap.Map1Color4.Points );
+	    GL_FREE( ctx->EvalMap.Map1Color4.Points );
 	 }
 	 ctx->EvalMap.Map1Color4.Points = (GLfloat *) points;
 	 ctx->EvalMap.Map1Color4.Retain = retain;
@@ -915,7 +912,7 @@ void gl_Map1f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map1Normal.du = 1.0 / (u2 - u1);
 	 if (ctx->EvalMap.Map1Normal.Points
              && !ctx->EvalMap.Map1Normal.Retain) {
-	    free( ctx->EvalMap.Map1Normal.Points );
+	    GL_FREE( ctx->EvalMap.Map1Normal.Points );
 	 }
 	 ctx->EvalMap.Map1Normal.Points = (GLfloat *) points;
 	 ctx->EvalMap.Map1Normal.Retain = retain;
@@ -927,7 +924,7 @@ void gl_Map1f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map1Texture1.du = 1.0 / (u2 - u1);
 	 if (ctx->EvalMap.Map1Texture1.Points
              && !ctx->EvalMap.Map1Texture1.Retain) {
-	    free( ctx->EvalMap.Map1Texture1.Points );
+	    GL_FREE( ctx->EvalMap.Map1Texture1.Points );
 	 }
 	 ctx->EvalMap.Map1Texture1.Points = (GLfloat *) points;
 	 ctx->EvalMap.Map1Texture1.Retain = retain;
@@ -939,7 +936,7 @@ void gl_Map1f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map1Texture2.du = 1.0 / (u2 - u1);
 	 if (ctx->EvalMap.Map1Texture2.Points
              && !ctx->EvalMap.Map1Texture2.Retain) {
-	    free( ctx->EvalMap.Map1Texture2.Points );
+	    GL_FREE( ctx->EvalMap.Map1Texture2.Points );
 	 }
 	 ctx->EvalMap.Map1Texture2.Points = (GLfloat *) points;
 	 ctx->EvalMap.Map1Texture2.Retain = retain;
@@ -951,7 +948,7 @@ void gl_Map1f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map1Texture3.du = 1.0 / (u2 - u1);
 	 if (ctx->EvalMap.Map1Texture3.Points
              && !ctx->EvalMap.Map1Texture3.Retain) {
-	    free( ctx->EvalMap.Map1Texture3.Points );
+	    GL_FREE( ctx->EvalMap.Map1Texture3.Points );
 	 }
 	 ctx->EvalMap.Map1Texture3.Points = (GLfloat *) points;
 	 ctx->EvalMap.Map1Texture3.Retain = retain;
@@ -963,7 +960,7 @@ void gl_Map1f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map1Texture4.du = 1.0 / (u2 - u1);
 	 if (ctx->EvalMap.Map1Texture4.Points
              && !ctx->EvalMap.Map1Texture4.Retain) {
-	    free( ctx->EvalMap.Map1Texture4.Points );
+	    GL_FREE( ctx->EvalMap.Map1Texture4.Points );
 	 }
 	 ctx->EvalMap.Map1Texture4.Points = (GLfloat *) points;
 	 ctx->EvalMap.Map1Texture4.Retain = retain;
@@ -1036,7 +1033,7 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Vertex3.dv = 1.0 / (v2 - v1);
 	 if (ctx->EvalMap.Map2Vertex3.Points
              && !ctx->EvalMap.Map2Vertex3.Retain) {
-	    free( ctx->EvalMap.Map2Vertex3.Points );
+	    GL_FREE( ctx->EvalMap.Map2Vertex3.Points );
 	 }
 	 ctx->EvalMap.Map2Vertex3.Retain = retain;
 	 ctx->EvalMap.Map2Vertex3.Points = (GLfloat *) points;
@@ -1052,7 +1049,7 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Vertex4.dv = 1.0 / (v2 - v1);
 	 if (ctx->EvalMap.Map2Vertex4.Points
              && !ctx->EvalMap.Map2Vertex4.Retain) {
-	    free( ctx->EvalMap.Map2Vertex4.Points );
+	    GL_FREE( ctx->EvalMap.Map2Vertex4.Points );
 	 }
 	 ctx->EvalMap.Map2Vertex4.Points = (GLfloat *) points;
 	 ctx->EvalMap.Map2Vertex4.Retain = retain;
@@ -1068,7 +1065,7 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Index.dv = 1.0 / (v2 - v1);
 	 if (ctx->EvalMap.Map2Index.Points
              && !ctx->EvalMap.Map2Index.Retain) {
-	    free( ctx->EvalMap.Map2Index.Points );
+	    GL_FREE( ctx->EvalMap.Map2Index.Points );
 	 }
 	 ctx->EvalMap.Map2Index.Retain = retain;
 	 ctx->EvalMap.Map2Index.Points = (GLfloat *) points;
@@ -1084,7 +1081,7 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Color4.dv = 1.0 / (v2 - v1);
 	 if (ctx->EvalMap.Map2Color4.Points
              && !ctx->EvalMap.Map2Color4.Retain) {
-	    free( ctx->EvalMap.Map2Color4.Points );
+	    GL_FREE( ctx->EvalMap.Map2Color4.Points );
 	 }
 	 ctx->EvalMap.Map2Color4.Retain = retain;
 	 ctx->EvalMap.Map2Color4.Points = (GLfloat *) points;
@@ -1100,7 +1097,7 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Normal.dv = 1.0 / (v2 - v1);
 	 if (ctx->EvalMap.Map2Normal.Points
              && !ctx->EvalMap.Map2Normal.Retain) {
-	    free( ctx->EvalMap.Map2Normal.Points );
+	    GL_FREE( ctx->EvalMap.Map2Normal.Points );
 	 }
 	 ctx->EvalMap.Map2Normal.Retain = retain;
 	 ctx->EvalMap.Map2Normal.Points = (GLfloat *) points;
@@ -1116,7 +1113,7 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Texture1.dv = 1.0 / (v2 - v1);
 	 if (ctx->EvalMap.Map2Texture1.Points
              && !ctx->EvalMap.Map2Texture1.Retain) {
-	    free( ctx->EvalMap.Map2Texture1.Points );
+	    GL_FREE( ctx->EvalMap.Map2Texture1.Points );
 	 }
 	 ctx->EvalMap.Map2Texture1.Retain = retain;
 	 ctx->EvalMap.Map2Texture1.Points = (GLfloat *) points;
@@ -1132,7 +1129,7 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Texture2.dv = 1.0 / (v2 - v1);
 	 if (ctx->EvalMap.Map2Texture2.Points
              && !ctx->EvalMap.Map2Texture2.Retain) {
-	    free( ctx->EvalMap.Map2Texture2.Points );
+	    GL_FREE( ctx->EvalMap.Map2Texture2.Points );
 	 }
 	 ctx->EvalMap.Map2Texture2.Retain = retain;
 	 ctx->EvalMap.Map2Texture2.Points = (GLfloat *) points;
@@ -1148,7 +1145,7 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Texture3.dv = 1.0 / (v2 - v1);
 	 if (ctx->EvalMap.Map2Texture3.Points
              && !ctx->EvalMap.Map2Texture3.Retain) {
-	    free( ctx->EvalMap.Map2Texture3.Points );
+	    GL_FREE( ctx->EvalMap.Map2Texture3.Points );
 	 }
 	 ctx->EvalMap.Map2Texture3.Retain = retain;
 	 ctx->EvalMap.Map2Texture3.Points = (GLfloat *) points;
@@ -1164,7 +1161,7 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Texture4.dv = 1.0 / (v2 - v1);
 	 if (ctx->EvalMap.Map2Texture4.Points
              && !ctx->EvalMap.Map2Texture4.Retain) {
-	    free( ctx->EvalMap.Map2Texture4.Points );
+	    GL_FREE( ctx->EvalMap.Map2Texture4.Points );
 	 }
 	 ctx->EvalMap.Map2Texture4.Retain = retain;
 	 ctx->EvalMap.Map2Texture4.Points = (GLfloat *) points;
@@ -2560,7 +2557,7 @@ void gl_eval_vb( struct vertex_buffer *VB )
       GLuint count = VB->Count;
 
       if (!flags) {
-	 VB->EvaluatedFlags = (GLuint *)malloc(VB->Size * sizeof(GLuint));
+	 VB->EvaluatedFlags = (GLuint *) GL_ALLOC(VB->Size * sizeof(GLuint));
 	 flags = VB->Flag = VB->EvaluatedFlags;
       }
 
@@ -2726,4 +2723,3 @@ void gl_EvalMesh2( GLcontext* ctx,
       return;
    }
 }
-

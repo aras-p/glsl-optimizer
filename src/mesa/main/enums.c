@@ -1,4 +1,4 @@
-/* $Id: enums.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: enums.c,v 1.2 1999/10/10 12:51:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,6 +27,7 @@
 
 #include "GL/gl.h"
 #include "enums.h"
+#include "macros.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -824,7 +825,7 @@ static int compar_nr( const enum_elt **a, const enum_elt **b )
 static void sort_enums( void )
 {
    int i;
-   index1 = (enum_elt **)malloc( Elements(all_enums) * sizeof(enum_elt *) );
+   index1 = (enum_elt **)GL_ALLOC( Elements(all_enums) * sizeof(enum_elt *) );
    sorted = 1;
 
    qsort( all_enums, Elements(all_enums), sizeof(*all_enums), 

@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.3 1999/10/08 09:27:10 keithw Exp $ */
+/* $Id: image.c,v 1.4 1999/10/10 12:54:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -515,9 +515,9 @@ static struct gl_image *alloc_error_image( GLint width, GLint height,
 void gl_free_image( struct gl_image *image )
 {
    if (image->Data) {
-      free(image->Data);
+      GL_FREE(image->Data);
    }
-   free(image);
+   GL_FREE(image);
 }
 
 
@@ -575,15 +575,15 @@ unpack_depth_image( GLcontext *ctx, GLenum type, GLint width, GLint height,
       image->Format = GL_DEPTH_COMPONENT;
       if (type==GL_UNSIGNED_SHORT) {
          image->Type = GL_UNSIGNED_SHORT;
-         image->Data = malloc( width * height * sizeof(GLushort));
+         image->Data = GL_ALLOC( width * height * sizeof(GLushort));
       }
       else if (type==GL_UNSIGNED_INT) {
          image->Type = GL_UNSIGNED_INT;
-         image->Data = malloc( width * height * sizeof(GLuint));
+         image->Data = GL_ALLOC( width * height * sizeof(GLuint));
       }
       else {
          image->Type = GL_FLOAT;
-         image->Data = malloc( width * height * sizeof(GLfloat));
+         image->Data = GL_ALLOC( width * height * sizeof(GLfloat));
       }
       image->RefCount = 0;
       if (!image->Data)
@@ -711,7 +711,7 @@ unpack_stencil_image( GLcontext *ctx, GLenum type, GLint width, GLint height,
       image->Components = 1;
       image->Format = GL_STENCIL_INDEX;
       image->Type = GL_UNSIGNED_BYTE;
-      image->Data = malloc( width * height * sizeof(GLubyte));
+      image->Data = GL_ALLOC( width * height * sizeof(GLubyte));
       image->RefCount = 0;
       if (!image->Data)
          return image;
@@ -825,7 +825,7 @@ unpack_bitmap( GLenum format, GLint width, GLint height,
    /* Alloc dest storage */
    bytes = ((width+7)/8 * height);
    if (bytes>0 && pixels!=NULL) {
-      buffer = (GLubyte *) malloc( bytes );
+      buffer = (GLubyte *) GL_ALLOC( bytes );
       if (!buffer) {
          return NULL;
       }
@@ -838,7 +838,7 @@ unpack_bitmap( GLenum format, GLint width, GLint height,
                                                GL_COLOR_INDEX, GL_BITMAP,
                                                0, i, 0 );
          if (!src) {
-            free(buffer);
+            GL_FREE(buffer);
             return NULL;
          }
          MEMCPY( dst, src, width_in_bytes );
@@ -866,7 +866,7 @@ unpack_bitmap( GLenum format, GLint width, GLint height,
       image->RefCount = 0;
    }
    else {
-      free( buffer );
+      GL_FREE( buffer );
       return NULL;
    }
 
@@ -943,7 +943,7 @@ unpack_ubyte_image( GLint width, GLint height,
    components = gl_components_in_format( format );
 
    width_in_bytes = width * components * sizeof(GLubyte);
-   buffer = (GLubyte *) malloc( height * width_in_bytes * depth );
+   buffer = (GLubyte *) GL_ALLOC( height * width_in_bytes * depth );
    if (!buffer) {
       return NULL;
    }
@@ -956,7 +956,7 @@ unpack_ubyte_image( GLint width, GLint height,
                        pixels, width, height, format, GL_UNSIGNED_BYTE,
                        d, i, 0 );
          if (!src) {
-            free(buffer);
+            GL_FREE(buffer);
             return NULL;
          }
          MEMCPY( dst, src, width_in_bytes );
@@ -1016,7 +1016,7 @@ unpack_ubyte_image( GLint width, GLint height,
       image->RefCount = 0;
    }
    else {
-      free( buffer );
+      GL_FREE( buffer );
    }
 
    return image;
@@ -1077,7 +1077,7 @@ unpack_float_image( GLcontext *ctx, GLint width, GLint height, GLint depth,
       else
          image->Format = format;
       image->Type = GL_FLOAT;
-      image->Data = malloc( elems_per_row * height * depth * sizeof(GLfloat));
+      image->Data = GL_ALLOC( elems_per_row * height * depth * sizeof(GLfloat));
       image->RefCount = 0;
       if (!image->Data)
          return image;

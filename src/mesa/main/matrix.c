@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.5 1999/10/08 09:27:11 keithw Exp $ */
+/* $Id: matrix.c,v 1.6 1999/10/10 12:56:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1410,7 +1410,7 @@ void gl_matrix_ctr( GLmatrix *m )
 void gl_matrix_dtr( GLmatrix *m )
 {
    if (m->inv != 0) {
-      free(m->inv);
+      GL_FREE(m->inv);
       m->inv = 0;
    }
 }
@@ -1426,7 +1426,7 @@ void gl_matrix_set_identity( GLmatrix *m )
 void gl_matrix_alloc_inv( GLmatrix *m )
 {
    if (m->inv == 0) {
-      m->inv = (GLfloat *)malloc(16*sizeof(GLfloat));
+      m->inv = (GLfloat *)GL_ALLOC(16*sizeof(GLfloat));
       MEMCPY( m->inv, Identity, 16 * sizeof(GLfloat) );
    }
 }
