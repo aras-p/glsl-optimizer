@@ -223,14 +223,14 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
    	WARN_ONCE("Aeiee ! aos_count==0, while it shouldn't. Skipping rendering\n");
 	return;
    	}
-   
+  
    render_inputs = rmesa->state.render_inputs;
 
    if(!render_inputs){
    	WARN_ONCE("Aeiee ! render_inputs==0. Skipping rendering.\n");
 	return;
    	}
-
+	
    start_immediate_packet(end-start, type, 4*rmesa->state.aos_count);
 
 	for(i=start;i<end;i++){
@@ -390,6 +390,7 @@ static void upload_vertex_buffer(r300ContextPtr rmesa, GLcontext *ctx)
 	int idx=0;
 	int i,j,k;
 	radeonScreenPtr rsp=rmesa->radeon.radeonScreen;
+	GLuint render_inputs;
 	
 	/* A hack - we don't want to overwrite vertex buffers, so we
 	just use AGP space for them.. Fix me ! */
@@ -422,13 +423,37 @@ static void upload_vertex_buffer(r300ContextPtr rmesa, GLcontext *ctx)
 		offset+=v->size*4*VB->Count; \
 		idx++; \
 		}
+		
+   render_inputs = rmesa->state.render_inputs;
 
-	UPLOAD_VECTOR(VB->ObjPtr);
-	UPLOAD_VECTOR(VB->ColorPtr[0]);
+   if(!render_inputs){
+   	WARN_ONCE("Aeiee ! render_inputs==0. Skipping rendering.\n");
+	return;
+   	}
+	/* coordinates */
+	if(render_inputs & _TNL_BIT_POS)
+		UPLOAD_VECTOR(VB->ObjPtr);
+	if(render_inputs & _TNL_BIT_NORMAL)
+		UPLOAD_VECTOR(VB->NormalPtr);
+	
+	/* color components */
+	if(render_inputs & _TNL_BIT_COLOR0)
+		UPLOAD_VECTOR(VB->ColorPtr[0]);
+	if(render_inputs & _TNL_BIT_COLOR1)
+		UPLOAD_VECTOR(VB->SecondaryColorPtr[0]);
+	
+	if(render_inputs & _TNL_BIT_FOG)
+		UPLOAD_VECTOR(VB->FogCoordPtr);
+	
 	/* texture coordinates */
 	for(k=0;k < ctx->Const.MaxTextureUnits;k++)
-		if(ctx->Texture.Unit[k].Enabled)
+		if(render_inputs & (_TNL_BIT_TEX0<<k))
 			UPLOAD_VECTOR(VB->TexCoordPtr[k]);
+	
+	if(render_inputs & _TNL_BIT_INDEX)
+		UPLOAD_VECTOR(VB->IndexPtr[0]);
+	if(render_inputs & _TNL_BIT_POINTSIZE)
+		UPLOAD_VECTOR(VB->PointSizePtr);
 
 	if(idx>=R300_MAX_AOS_ARRAYS){
 		fprintf(stderr, "Aieee ! Maximum AOS arrays count exceeded.. \n");

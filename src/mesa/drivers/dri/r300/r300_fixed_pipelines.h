@@ -234,9 +234,15 @@ static struct r300_pixel_shader_state SINGLE_TEXTURE_PIXEL_SHADER={
 				inst: { 0x00018000 }
 				},
 			alu: {
-				length: 1,
+				length: 2,
 				inst: 	
-					{ 
+					{
+/* I get misc problems without this after doing cold-reboot.
+   This would imply that alu programming is buggy. --aet */
+#if 1
+					PFS_NOP,
+#endif					
+		 						
 					/* What are 0's ORed with flags ? They are register numbers that
 					   just happen to be 0 */
 					{
