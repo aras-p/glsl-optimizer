@@ -1300,6 +1300,7 @@ Mesa Version History
 6.3  Month day, 2004
     New:
 	- GL_ARB_draw_buffers extension
+	- GL_OES_read_format extension (Ian Romanick)
     Changes:
 	- 
     Bug fixes:
