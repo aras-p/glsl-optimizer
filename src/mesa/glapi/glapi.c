@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.39 2000/03/27 21:13:58 rjfrank Exp $ */
+/* $Id: glapi.c,v 1.40 2000/03/29 18:46:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,13 +75,14 @@ static GLboolean GetSizeCalled = GL_FALSE;
 
 /* strdup is actually not a standard ANSI C or POSIX routine
    Irix will not define it if ANSI mode is in effect. */
-static char *mesaStrdup(const char *str)
+static char *str_dup(const char *str)
 {
-	char	*copy;
-	copy = (char*) malloc(strlen(str) + 1);
-	if (!copy) return(NULL);
-	strcpy(copy,str);
-	return(copy);
+   char *copy;
+   copy = (char*) malloc(strlen(str) + 1);
+   if (!copy)
+      return NULL;
+   strcpy(copy, str);
+   return copy;
 }
 
 
@@ -1343,7 +1344,7 @@ _glapi_add_entrypoint(const char *funcName, GLuint offset)
          if (!entrypoint)
             return GL_FALSE;
 
-         ExtEntryTable[NumExtEntryPoints].Name = mesaStrdup(funcName);
+         ExtEntryTable[NumExtEntryPoints].Name = str_dup(funcName);
          ExtEntryTable[NumExtEntryPoints].Offset = offset;
          ExtEntryTable[NumExtEntryPoints].Address = entrypoint;
          NumExtEntryPoints++;
@@ -1388,7 +1389,7 @@ _glapi_add_entrypoint2(const char *funcName)
       entryPoint = generate_entrypoint(offset);
       if (entryPoint) {
          NextFreeOffset++;
-         ExtEntryTable[NumExtEntryPoints].Name = mesaStrdup(funcName);
+         ExtEntryTable[NumExtEntryPoints].Name = str_dup(funcName);
          ExtEntryTable[NumExtEntryPoints].Offset = offset;
          ExtEntryTable[NumExtEntryPoints].Address = entryPoint;
          NumExtEntryPoints++;
