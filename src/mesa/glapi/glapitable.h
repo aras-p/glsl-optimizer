@@ -1,4 +1,4 @@
-/* $Id: glapitable.h,v 1.7 2000/01/31 22:52:50 brianp Exp $ */
+/* $Id: glapitable.h,v 1.8 2000/02/03 09:35:17 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -714,6 +714,10 @@ struct _glapi_table
    /* 65. GL_SGIX_fog_offset - no functions */
 
    /* 66. GL_HP_image_transform */
+#ifdef VMS
+#define glGetImageTransformParameterfvHP glGetImageTransformParameterfvH
+#define glGetImageTransformParameterivHP glGetImageTransformParameterivH
+#endif
    void (*GetImageTransformParameterfvHP)(GLenum, GLenum, GLfloat *);
    void (*GetImageTransformParameterivHP)(GLenum, GLenum, GLint *);
    void (*ImageTransformParameterfHP)(GLenum, GLenum, const GLfloat);

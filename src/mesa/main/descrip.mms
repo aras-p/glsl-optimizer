@@ -56,7 +56,7 @@ OBJECTS4=stencil.obj,teximage.obj,texobj.obj,texstate.obj,texture.obj,translate.
 triangle.obj,varray.obj,winpos.obj,vb.obj,vbcull.obj,vbfill.obj,vbrender.obj
 
 OBJECTS6=vbxform.obj,xform.obj,zoom.obj,bbox.obj,cva.obj,vector.obj,vbindirect.obj,\
-	config.obj,enums.obj,extensions.obj,pipeline.obj,stages.obj,state.obj\
+	config.obj,enums.obj,extensions.obj,pipeline.obj,stages.obj,state.obj,\
 	vertices.obj,[.x86]x86.obj
 
 OBJECTS2=[.x]glxapi.obj,[.x]fakeglx.obj,[.x]xfonts.obj,\
