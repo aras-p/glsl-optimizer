@@ -1,8 +1,8 @@
-/* $Id: swrast.h,v 1.32 2002/10/29 20:29:00 brianp Exp $ */
+/* $Id: swrast.h,v 1.33 2002/11/13 16:47:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -458,6 +458,8 @@ struct swrast_device_driver {
    void (*WriteMonoRGBASpan)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
                               const GLchan color[4], const GLubyte mask[] );
    /* Write a horizontal run of RGBA pixels all with the same color.
+    * If mask is NULL, draw all pixels.
+    * If mask is not null, only draw pixel [i] when mask [i] is true.
     */
 
    void (*WriteRGBAPixels)( const GLcontext *ctx,
@@ -479,12 +481,16 @@ struct swrast_device_driver {
    /* Write a horizontal run of CI pixels.  One function is for 32bpp
     * indexes and the other for 8bpp pixels (the common case).  You mus
     * implement both for color index mode.
+    * If mask is NULL, draw all pixels.
+    * If mask is not null, only draw pixel [i] when mask [i] is true.
     */
 
    void (*WriteMonoCISpan)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
                             GLuint colorIndex, const GLubyte mask[] );
    /* Write a horizontal run of color index pixels using the color index
     * last specified by the Index() function.
+    * If mask is NULL, draw all pixels.
+    * If mask is not null, only draw pixel [i] when mask [i] is true.
     */
 
    void (*WriteCI32Pixels)( const GLcontext *ctx,
