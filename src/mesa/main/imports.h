@@ -1,4 +1,4 @@
-/* $Id: imports.h,v 1.18 2003/03/07 14:54:22 brianp Exp $ */
+/* $Id: imports.h,v 1.19 2003/03/17 15:13:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,14 +35,14 @@
 #define IMPORTS_H
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 /* XXX some of the stuff in glheader.h should be moved into this file.
  */
 #include "glheader.h"
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 /**********************************************************************
