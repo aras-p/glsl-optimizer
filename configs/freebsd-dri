@@ -19,7 +19,7 @@ CXXFLAGS = $(DEFINES) -Wall -g -ansi -pedantic -fPIC
 ASM_SOURCES = 
 
 # Library/program dependencies
-DRI_LIB_DEPS = -lm -lpthread -lexpat
+DRI_LIB_DEPS = -L/usr/local/lib -lm -lpthread -lexpat
 GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -pthread
 
 GLUT_LIB_DEPS = -L$(LIB_DIR) -L/usr/X11R6/lib -lGLU -lGL -lX11 -lXmu -lXt -lXi -lm
