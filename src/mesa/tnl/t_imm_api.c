@@ -1,8 +1,8 @@
-/* $Id: t_imm_api.c,v 1.18 2001/11/18 22:48:14 brianp Exp $ */
+/* $Id: t_imm_api.c,v 1.19 2001/12/04 23:43:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -313,7 +313,7 @@ _tnl_end( GLcontext *ctx )
    /* You can set this flag to get the old 'flush_vb on glEnd()'
     * behaviour.
     */
-   if ((MESA_DEBUG_FLAGS&DEBUG_ALWAYS_FLUSH))
+   if (1/*(MESA_DEBUG_FLAGS&DEBUG_ALWAYS_FLUSH)*/)
       _tnl_flush_immediate( IM );
 }
 
@@ -1232,14 +1232,14 @@ void _tnl_imm_vtxfmt_init( GLcontext *ctx )
    vfmt->Indexi = _tnl_Indexi;
    vfmt->Indexiv = _tnl_Indexiv;
    vfmt->Materialfv = _tnl_Materialfv;
-   vfmt->MultiTexCoord1f = _tnl_MultiTexCoord1fARB;
-   vfmt->MultiTexCoord1fv = _tnl_MultiTexCoord1fvARB;
-   vfmt->MultiTexCoord2f = _tnl_MultiTexCoord2fARB;
-   vfmt->MultiTexCoord2fv = _tnl_MultiTexCoord2fvARB;
-   vfmt->MultiTexCoord3f = _tnl_MultiTexCoord3fARB;
-   vfmt->MultiTexCoord3fv = _tnl_MultiTexCoord3fvARB;
-   vfmt->MultiTexCoord4f = _tnl_MultiTexCoord4fARB;
-   vfmt->MultiTexCoord4fv = _tnl_MultiTexCoord4fvARB;
+   vfmt->MultiTexCoord1fARB = _tnl_MultiTexCoord1fARB;
+   vfmt->MultiTexCoord1fvARB = _tnl_MultiTexCoord1fvARB;
+   vfmt->MultiTexCoord2fARB = _tnl_MultiTexCoord2fARB;
+   vfmt->MultiTexCoord2fvARB = _tnl_MultiTexCoord2fvARB;
+   vfmt->MultiTexCoord3fARB = _tnl_MultiTexCoord3fARB;
+   vfmt->MultiTexCoord3fvARB = _tnl_MultiTexCoord3fvARB;
+   vfmt->MultiTexCoord4fARB = _tnl_MultiTexCoord4fARB;
+   vfmt->MultiTexCoord4fvARB = _tnl_MultiTexCoord4fvARB;
    vfmt->Normal3f = _tnl_Normal3f;
    vfmt->Normal3fv = _tnl_Normal3fv;
    vfmt->SecondaryColor3fEXT = _tnl_SecondaryColor3fEXT;

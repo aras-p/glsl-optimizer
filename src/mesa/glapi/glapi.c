@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.59 2001/11/18 22:48:11 brianp Exp $ */
+/* $Id: glapi.c,v 1.60 2001/12/04 23:43:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -444,17 +444,6 @@ const char *
 _glapi_get_version(void)
 {
    return "20010116";  /* YYYYMMDD */
-}
-
-
-/*
- * For each entry in static_functions[] which use this function
- * we should implement a dispatch function in glapitemp.h and
- * in glapinoop.c
- */
-static int NotImplemented(void)
-{
-   return 0;
 }
 
 

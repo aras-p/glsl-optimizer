@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.24 2001/09/14 22:19:19 brianp Exp $ */
+/* $Id: dispatch.c,v 1.25 2001/12/04 23:43:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,10 +28,7 @@
 /*
  * This file generates all the gl* function entyrpoints.
  * But if we're using X86-optimized dispatch (X86/glapi_x86.S) then
- * we don't use this file's code.
- *
- * Eventually this file may be replaced by automatically generated
- * code from an API spec file.
+ * we don't use this code.
  *
  * NOTE: This file should _not_ be used when compiling Mesa for a DRI-
  * based device driver.
@@ -64,8 +61,22 @@
 #define NAME(func)  gl##func
 #endif
 
+
+#if 0  /* Use this to log GL calls to stdout */
+
+#define F stdout
 #define DISPATCH(FUNC, ARGS, MESSAGE)		\
-   (_glapi_Dispatch->FUNC) ARGS
+   (_glapi_Dispatch->FUNC) ARGS; \
+   fprintf MESSAGE; \
+   fprintf(F, "\n");
+
+#else
+
+#define DISPATCH(FUNC, ARGS, MESSAGE)		\
+   (_glapi_Dispatch->FUNC) ARGS;
+
+#endif /* logging */
+
 
 #define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 	\
    return (_glapi_Dispatch->FUNC) ARGS

@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.3 2001/11/26 23:41:24 brianp Exp $
+# $Id: APIspec,v 1.4 2001/12/04 23:43:31 brianp Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -2843,585 +2843,201 @@ category	1.2
 offset		373
 
 
-# OpenGL 1.3
-
-name		ActiveTexture
-return		void
-param		texture		GLenum
-category	1.3
-offset		374
-
-name		ClientActiveTexture
-return		void
-param		texture		GLenum
-category	1.3
-offset		375
-
-name		MultiTexCoord1d
-return		void
-param		target		GLenum
-param		s		GLdouble
-category	1.3
-offset		376
-
-name		MultiTexCoord1dv
-return		void
-param		target		GLenum
-param		v		const GLdouble *
-category	1.3
-offset		377
-
-name		MultiTexCoord1f
-return		void
-param		target		GLenum
-param		s		GLfloat
-category	1.3
-offset		378
-
-name		MultiTexCoord1fv
-return		void
-param		target		GLenum
-param		v		const GLfloat *
-category	1.3
-offset		379
-
-name		MultiTexCoord1i
-return		void
-param		target		GLenum
-param		s		GLint
-category	1.3
-offset		380
-
-name		MultiTexCoord1iv
-return		void
-param		target		GLenum
-param		v		const GLint *
-category	1.3
-offset		381
-
-name		MultiTexCoord1s
-return		void
-param		target		GLenum
-param		s		GLshort
-category	1.3
-offset		382
-
-name		MultiTexCoord1sv
-return		void
-param		target		GLenum
-param		v		const GLshort *
-category	1.3
-offset		383
-
-name		MultiTexCoord2d
-return		void
-param		target		GLenum
-param		s		GLdouble
-param		t		GLdouble
-category	1.3
-offset		384
-
-name		MultiTexCoord2dv
-return		void
-param		target		GLenum
-param		v		const GLdouble *
-category	1.3
-offset		385
-
-name		MultiTexCoord2f
-return		void
-param		target		GLenum
-param		s		GLfloat
-param		t		GLfloat
-category	1.3
-offset		386
-
-name		MultiTexCoord2fv
-return		void
-param		target		GLenum
-param		v		const GLfloat *
-category	1.3
-offset		387
-
-name		MultiTexCoord2i
-return		void
-param		target		GLenum
-param		s		GLint
-param		t		GLint
-category	1.3
-offset		388
-
-name		MultiTexCoord2iv
-return		void
-param		target		GLenum
-param		v		const GLint *
-category	1.3
-offset		389
-
-name		MultiTexCoord2s
-return		void
-param		target		GLenum
-param		s		GLshort
-param		t		GLshort
-category	1.3
-offset		390
-
-name		MultiTexCoord2sv
-return		void
-param		target		GLenum
-param		v		const GLshort *
-category	1.3
-offset		391
-
-name		MultiTexCoord3d
-return		void
-param		target		GLenum
-param		s		GLdouble
-param		t		GLdouble
-param		r		GLdouble
-category	1.3
-offset		392
-
-name		MultiTexCoord3dv
-return		void
-param		target		GLenum
-param		v		const GLdouble *
-category	1.3
-offset		393
-
-name		MultiTexCoord3f
-return		void
-param		target		GLenum
-param		s		GLfloat
-param		t		GLfloat
-param		r		GLfloat
-category	1.3
-offset		394
-
-name		MultiTexCoord3fv
-return		void
-param		target		GLenum
-param		v		const GLfloat *
-category	1.3
-offset		395
-
-name		MultiTexCoord3i
-return		void
-param		target		GLenum
-param		s		GLint
-param		t		GLint
-param		r		GLint
-category	1.3
-offset		396
-
-name		MultiTexCoord3iv
-return		void
-param		target		GLenum
-param		v		const GLint *
-category	1.3
-offset		397
-
-name		MultiTexCoord3s
-return		void
-param		target		GLenum
-param		s		GLshort
-param		t		GLshort
-param		r		GLshort
-category	1.3
-offset		398
-
-name		MultiTexCoord3sv
-return		void
-param		target		GLenum
-param		v		const GLshort *
-category	1.3
-offset		399
-
-name		MultiTexCoord4d
-return		void
-param		target		GLenum
-param		s		GLdouble
-param		t		GLdouble
-param		r		GLdouble
-param		q		GLdouble
-category	1.3
-offset		400
-
-name		MultiTexCoord4dv
-return		void
-param		target		GLenum
-param		v		const GLdouble *
-category	1.3
-offset		401
-
-name		MultiTexCoord4f
-return		void
-param		target		GLenum
-param		s		GLfloat
-param		t		GLfloat
-param		r		GLfloat
-param		q		GLfloat
-category	1.3
-offset		402
-
-name		MultiTexCoord4fv
-return		void
-param		target		GLenum
-param		v		const GLfloat *
-category	1.3
-offset		403
-
-name		MultiTexCoord4i
-return		void
-param		target		GLenum
-param		s		GLint
-param		t		GLint
-param		r		GLint
-param		q		GLint
-category	1.3
-offset		404
-
-name		MultiTexCoord4iv
-return		void
-param		target		GLenum
-param		v		const GLint *
-category	1.3
-offset		405
-
-name		MultiTexCoord4s
-return		void
-param		target		GLenum
-param		s		GLshort
-param		t		GLshort
-param		r		GLshort
-param		q		GLshort
-category	1.3
-offset		406
-
-name		MultiTexCoord4sv
-return		void
-param		target		GLenum
-param		v		const GLshort *
-category	1.3
-offset		407
-
-name		LoadTransposeMatrixf
-return		void
-param		m		const GLfloat *
-category	1.3
-offset		408
-
-name		LoadTransposeMatrixd
-return		void
-param		m		const GLdouble *
-category	1.3
-offset		409
-
-name		MultTransposeMatrixf
-return		void
-param		m		const GLfloat *
-category	1.3
-offset		410
-
-name		MultTransposeMatrixd
-return		void
-param		m		const GLdouble *
-category	1.3
-offset		411
-
-name		SampleCoverage
-return		void
-param		value		GLclampf
-param		invert		GLboolean
-category	1.3
-offset		412
-
-name		CompressedTexImage3D
-return		void
-param		target		GLenum
-param		level		GLint
-param		internalformat	GLenum
-param		width		GLsizei
-param		height		GLsizei
-param		depth		GLsizei
-param		border		GLint
-param		imageSize	GLsizei
-param		data		const GLvoid *
-category	1.3
-offset		554
-
-name		CompressedTexImage2D
-return		void
-param		target		GLenum
-param		level		GLint
-param		internalformat	GLenum
-param		width		GLsizei
-param		height		GLsizei
-param		border		GLint
-param		imageSize	GLsizei
-param		data		const GLvoid *
-category	1.3
-offset		555
-
-name		CompressedTexImage1D
-return		void
-param		target		GLenum
-param		level		GLint
-param		internalformat	GLenum
-param		width		GLsizei
-param		border		GLint
-param		imageSize	GLsizei
-param		data		const GLvoid *
-category	1.3
-offset		556
-
-name		CompressedTexSubImage3D
-return		void
-param		target		GLenum
-param		level		GLint
-param		xoffset		GLint
-param		yoffset		GLint
-param		zoffset		GLint
-param		width		GLsizei
-param		height		GLsizei
-param		depth		GLsizei
-param		format		GLenum
-param		imageSize	GLsizei
-param		data		const GLvoid *
-category	1.3
-offset		557
-
-name		CompressedTexSubImage2D
-return		void
-param		target		GLenum
-param		level		GLint
-param		xoffset		GLint
-param		yoffset		GLint
-param		width		GLsizei
-param		height		GLsizei
-param		format		GLenum
-param		imageSize	GLsizei
-param		data		const GLvoid *
-category	1.3
-offset		558
-
-name		CompressedTexSubImage1D
-return		void
-param		target		GLenum
-param		level		GLint
-param		xoffset		GLint
-param		width		GLsizei
-param		format		GLenum
-param		imageSize	GLsizei
-param		data		const GLvoid *
-category	1.3
-offset		559
-
-name		GetCompressedTexImage
-return		void
-param		target		GLenum
-param		level		GLint
-param		img		GLvoid *
-category	1.3
-offset		560
-
-
 # GL_ARB_multitexture
 
 name		ActiveTextureARB
-alias		ActiveTexture
 return		void
 param		texture		GLenum
 category	GL_ARB_multitexture
+offset		374
 
 name		ClientActiveTextureARB
-alias		ClientActiveTexture
 return		void
 param		texture		GLenum
 category	GL_ARB_multitexture
+offset		375
 
 name		MultiTexCoord1dARB
-alias		MultiTexCoord1d
 return		void
 param		target		GLenum
 param		s		GLdouble
 category	GL_ARB_multitexture
+offset		376
 
 name		MultiTexCoord1dvARB
-alias		MultiTexCoord1dv
 return		void
 param		target		GLenum
 param		v		const GLdouble *
 category	GL_ARB_multitexture
+offset		377
 
 name		MultiTexCoord1fARB
-alias		MultiTexCoord1f
 return		void
 param		target		GLenum
 param		s		GLfloat
 category	GL_ARB_multitexture
+offset		378
 
 name		MultiTexCoord1fvARB
-alias		MultiTexCoord1fv
 return		void
 param		target		GLenum
 param		v		const GLfloat *
 category	GL_ARB_multitexture
+offset		379
 
 name		MultiTexCoord1iARB
-alias		MultiTexCoord1i
 return		void
 param		target		GLenum
 param		s		GLint
 category	GL_ARB_multitexture
+offset		380
 
 name		MultiTexCoord1ivARB
-alias		MultiTexCoord1iv
 return		void
 param		target		GLenum
 param		v		const GLint *
 category	GL_ARB_multitexture
+offset		381
 
 name		MultiTexCoord1sARB
-alias		MultiTexCoord1s
 return		void
 param		target		GLenum
 param		s		GLshort
 category	GL_ARB_multitexture
+offset		382
 
 name		MultiTexCoord1svARB
-alias		MultiTexCoord1sv
 return		void
 param		target		GLenum
 param		v		const GLshort *
 category	GL_ARB_multitexture
+offset		383
 
 name		MultiTexCoord2dARB
-alias		MultiTexCoord2d
 return		void
 param		target		GLenum
 param		s		GLdouble
 param		t		GLdouble
 category	GL_ARB_multitexture
+offset		384
 
 name		MultiTexCoord2dvARB
-alias		MultiTexCoord2dv
 return		void
 param		target		GLenum
 param		v		const GLdouble *
 category	GL_ARB_multitexture
+offset		385
 
 name		MultiTexCoord2fARB
-alias		MultiTexCoord2f
 return		void
 param		target		GLenum
 param		s		GLfloat
 param		t		GLfloat
 category	GL_ARB_multitexture
+offset		386
 
 name		MultiTexCoord2fvARB
-alias		MultiTexCoord2fv
 return		void
 param		target		GLenum
 param		v		const GLfloat *
 category	GL_ARB_multitexture
+offset		387
 
 name		MultiTexCoord2iARB
-alias		MultiTexCoord2i
 return		void
 param		target		GLenum
 param		s		GLint
 param		t		GLint
 category	GL_ARB_multitexture
+offset		388
 
 name		MultiTexCoord2ivARB
-alias		MultiTexCoord2iv
 return		void
 param		target		GLenum
 param		v		const GLint *
 category	GL_ARB_multitexture
+offset		389
 
 name		MultiTexCoord2sARB
-alias		MultiTexCoord2s
 return		void
 param		target		GLenum
 param		s		GLshort
 param		t		GLshort
 category	GL_ARB_multitexture
+offset		390
 
 name		MultiTexCoord2svARB
-alias		MultiTexCoord2sv
 return		void
 param		target		GLenum
 param		v		const GLshort *
 category	GL_ARB_multitexture
+offset		391
 
 name		MultiTexCoord3dARB
-alias		MultiTexCoord3d
 return		void
 param		target		GLenum
 param		s		GLdouble
 param		t		GLdouble
 param		r		GLdouble
 category	GL_ARB_multitexture
+offset		392
 
 name		MultiTexCoord3dvARB
-alias		MultiTexCoord3dv
 return		void
 param		target		GLenum
 param		v		const GLdouble *
 category	GL_ARB_multitexture
+offset		393
 
 name		MultiTexCoord3fARB
-alias		MultiTexCoord3f
 return		void
 param		target		GLenum
 param		s		GLfloat
 param		t		GLfloat
 param		r		GLfloat
 category	GL_ARB_multitexture
+offset		394
 
 name		MultiTexCoord3fvARB
-alias		MultiTexCoord3fv
 return		void
 param		target		GLenum
 param		v		const GLfloat *
 category	GL_ARB_multitexture
+offset		395
 
 name		MultiTexCoord3iARB
-alias		MultiTexCoord3i
 return		void
 param		target		GLenum
 param		s		GLint
 param		t		GLint
 param		r		GLint
 category	GL_ARB_multitexture
+offset		396
 
 name		MultiTexCoord3ivARB
-alias		MultiTexCoord3iv
 return		void
 param		target		GLenum
 param		v		const GLint *
 category	GL_ARB_multitexture
+offset		397
 
 name		MultiTexCoord3sARB
-alias		MultiTexCoord3s
 return		void
 param		target		GLenum
 param		s		GLshort
 param		t		GLshort
 param		r		GLshort
 category	GL_ARB_multitexture
+offset		398
 
 name		MultiTexCoord3svARB
-alias		MultiTexCoord3sv
 return		void
 param		target		GLenum
 param		v		const GLshort *
 category	GL_ARB_multitexture
+offset		399
 
 name		MultiTexCoord4dARB
-alias		MultiTexCoord4d
 return		void
 param		target		GLenum
 param		s		GLdouble
@@ -3429,16 +3045,16 @@ param		t		GLdouble
 param		r		GLdouble
 param		q		GLdouble
 category	GL_ARB_multitexture
+offset		400
 
 name		MultiTexCoord4dvARB
-alias		MultiTexCoord4dv
 return		void
 param		target		GLenum
 param		v		const GLdouble *
 category	GL_ARB_multitexture
+offset		401
 
 name		MultiTexCoord4fARB
-alias		MultiTexCoord4f
 return		void
 param		target		GLenum
 param		s		GLfloat
@@ -3446,16 +3062,16 @@ param		t		GLfloat
 param		r		GLfloat
 param		q		GLfloat
 category	GL_ARB_multitexture
+offset		402
 
 name		MultiTexCoord4fvARB
-alias		MultiTexCoord4fv
 return		void
 param		target		GLenum
 param		v		const GLfloat *
 category	GL_ARB_multitexture
+offset		403
 
 name		MultiTexCoord4iARB
-alias		MultiTexCoord4i
 return		void
 param		target		GLenum
 param		s		GLint
@@ -3463,16 +3079,16 @@ param		t		GLint
 param		r		GLint
 param		q		GLint
 category	GL_ARB_multitexture
+offset		404
 
 name		MultiTexCoord4ivARB
-alias		MultiTexCoord4iv
 return		void
 param		target		GLenum
 param		v		const GLint *
 category	GL_ARB_multitexture
+offset		405
 
 name		MultiTexCoord4sARB
-alias		MultiTexCoord4s
 return		void
 param		target		GLenum
 param		s		GLshort
@@ -3480,50 +3096,51 @@ param		t		GLshort
 param		r		GLshort
 param		q		GLshort
 category	GL_ARB_multitexture
+offset		406
 
 name		MultiTexCoord4svARB
-alias		MultiTexCoord4sv
 return		void
 param		target		GLenum
 param		v		const GLshort *
 category	GL_ARB_multitexture
+offset		407
 
 
 # GL_ARB_transpose_matrix
 
 name		LoadTransposeMatrixfARB
-alias		LoadTransposeMatrixf
 return		void
 param		m		const GLfloat *
 category	GL_ARB_transpose_matrix
+offset		408
 
 name		LoadTransposeMatrixdARB
-alias		LoadTransposeMatrixd
 return		void
 param		m		const GLdouble *
 category	GL_ARB_transpose_matrix
+offset		409
 
 name		MultTransposeMatrixfARB
-alias		MultTransposeMatrixf
 return		void
 param		m		const GLfloat *
 category	GL_ARB_transpose_matrix
+offset		410
 
 name		MultTransposeMatrixdARB
-alias		MultTransposeMatrixd
 return		void
 param		m		const GLdouble *
 category	GL_ARB_transpose_matrix
+offset		411
 
 
 # GL_ARB_multisample
 
 name		SampleCoverageARB
-alias		SampleCoverage
 return		void
 param		value		GLclampf
 param		invert		GLboolean
 category	GL_ARB_multisample
+offset		412
 
 name		__unused413
 return		void
@@ -3534,7 +3151,6 @@ offset		413
 # GL_ARB_texture_compression
 
 name		CompressedTexImage3DARB
-alias		CompressedTexImage3D
 return		void
 param		target		GLenum
 param		level		GLint
@@ -3546,9 +3162,9 @@ param		border		GLint
 param		imageSize	GLsizei
 param		data		const GLvoid *
 category	GL_ARB_texture_compression
+offset		554
 
 name		CompressedTexImage2DARB
-alias		CompressedTexImage2D
 return		void
 param		target		GLenum
 param		level		GLint
@@ -3559,9 +3175,9 @@ param		border		GLint
 param		imageSize	GLsizei
 param		data		const GLvoid *
 category	GL_ARB_texture_compression
+offset		555
 
 name		CompressedTexImage1DARB
-alias		CompressedTexImage1D
 return		void
 param		target		GLenum
 param		level		GLint
@@ -3571,9 +3187,9 @@ param		border		GLint
 param		imageSize	GLsizei
 param		data		const GLvoid *
 category	GL_ARB_texture_compression
+offset		556
 
 name		CompressedTexSubImage3DARB
-alias		CompressedTexSubImage3D
 return		void
 param		target		GLenum
 param		level		GLint
@@ -3587,9 +3203,9 @@ param		format		GLenum
 param		imageSize	GLsizei
 param		data		const GLvoid *
 category	GL_ARB_texture_compression
+offset		557
 
 name		CompressedTexSubImage2DARB
-alias		CompressedTexSubImage2D
 return		void
 param		target		GLenum
 param		level		GLint
@@ -3601,9 +3217,9 @@ param		format		GLenum
 param		imageSize	GLsizei
 param		data		const GLvoid *
 category	GL_ARB_texture_compression
+offset		558
 
 name		CompressedTexSubImage1DARB
-alias		CompressedTexSubImage1D
 return		void
 param		target		GLenum
 param		level		GLint
@@ -3613,14 +3229,398 @@ param		format		GLenum
 param		imageSize	GLsizei
 param		data		const GLvoid *
 category	GL_ARB_texture_compression
+offset		559
 
 name		GetCompressedTexImageARB
-alias		GetCompressedTexImage
 return		void
 param		target		GLenum
 param		level		GLint
 param		img		GLvoid *
 category	GL_ARB_texture_compression
+offset		560
+
+
+# OpenGL 1.3
+
+name		ActiveTexture
+alias		ActiveTextureARB
+return		void
+param		texture		GLenum
+category	1.3
+
+name		ClientActiveTexture
+alias		ClientActiveTextureARB
+return		void
+param		texture		GLenum
+category	1.3
+
+name		MultiTexCoord1d
+alias		MultiTexCoord1dARB
+return		void
+param		target		GLenum
+param		s		GLdouble
+category	1.3
+
+name		MultiTexCoord1dv
+alias		MultiTexCoord1dvARB
+return		void
+param		target		GLenum
+param		v		const GLdouble *
+category	1.3
+
+name		MultiTexCoord1f
+alias		MultiTexCoord1fARB
+return		void
+param		target		GLenum
+param		s		GLfloat
+category	1.3
+
+name		MultiTexCoord1fv
+alias		MultiTexCoord1fvARB
+return		void
+param		target		GLenum
+param		v		const GLfloat *
+category	1.3
+
+name		MultiTexCoord1i
+alias		MultiTexCoord1iARB
+return		void
+param		target		GLenum
+param		s		GLint
+category	1.3
+
+name		MultiTexCoord1iv
+alias		MultiTexCoord1ivARB
+return		void
+param		target		GLenum
+param		v		const GLint *
+category	1.3
+
+name		MultiTexCoord1s
+alias		MultiTexCoord1sARB
+return		void
+param		target		GLenum
+param		s		GLshort
+category	1.3
+
+name		MultiTexCoord1sv
+alias		MultiTexCoord1svARB
+return		void
+param		target		GLenum
+param		v		const GLshort *
+category	1.3
+
+name		MultiTexCoord2d
+alias		MultiTexCoord2dARB
+return		void
+param		target		GLenum
+param		s		GLdouble
+param		t		GLdouble
+category	1.3
+
+name		MultiTexCoord2dv
+alias		MultiTexCoord2dvARB
+return		void
+param		target		GLenum
+param		v		const GLdouble *
+category	1.3
+
+name		MultiTexCoord2f
+alias		MultiTexCoord2fARB
+return		void
+param		target		GLenum
+param		s		GLfloat
+param		t		GLfloat
+category	1.3
+
+name		MultiTexCoord2fv
+alias		MultiTexCoord2fvARB
+return		void
+param		target		GLenum
+param		v		const GLfloat *
+category	1.3
+
+name		MultiTexCoord2i
+alias		MultiTexCoord2iARB
+return		void
+param		target		GLenum
+param		s		GLint
+param		t		GLint
+category	1.3
+
+name		MultiTexCoord2iv
+alias		MultiTexCoord2ivARB
+return		void
+param		target		GLenum
+param		v		const GLint *
+category	1.3
+
+name		MultiTexCoord2s
+alias		MultiTexCoord2sARB
+return		void
+param		target		GLenum
+param		s		GLshort
+param		t		GLshort
+category	1.3
+
+name		MultiTexCoord2sv
+alias		MultiTexCoord2svARB
+return		void
+param		target		GLenum
+param		v		const GLshort *
+category	1.3
+
+name		MultiTexCoord3d
+alias		MultiTexCoord3dARB
+return		void
+param		target		GLenum
+param		s		GLdouble
+param		t		GLdouble
+param		r		GLdouble
+category	1.3
+
+name		MultiTexCoord3dv
+alias		MultiTexCoord3dvARB
+return		void
+param		target		GLenum
+param		v		const GLdouble *
+category	1.3
+
+name		MultiTexCoord3f
+alias		MultiTexCoord3fARB
+return		void
+param		target		GLenum
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+category	1.3
+
+name		MultiTexCoord3fv
+alias		MultiTexCoord3fvARB
+return		void
+param		target		GLenum
+param		v		const GLfloat *
+category	1.3
+
+name		MultiTexCoord3i
+alias		MultiTexCoord3iARB
+return		void
+param		target		GLenum
+param		s		GLint
+param		t		GLint
+param		r		GLint
+category	1.3
+
+name		MultiTexCoord3iv
+alias		MultiTexCoord3ivARB
+return		void
+param		target		GLenum
+param		v		const GLint *
+category	1.3
+
+name		MultiTexCoord3s
+alias		MultiTexCoord3sARB
+return		void
+param		target		GLenum
+param		s		GLshort
+param		t		GLshort
+param		r		GLshort
+category	1.3
+
+name		MultiTexCoord3sv
+alias		MultiTexCoord3svARB
+return		void
+param		target		GLenum
+param		v		const GLshort *
+category	1.3
+
+name		MultiTexCoord4d
+alias		MultiTexCoord4dARB
+return		void
+param		target		GLenum
+param		s		GLdouble
+param		t		GLdouble
+param		r		GLdouble
+param		q		GLdouble
+category	1.3
+
+name		MultiTexCoord4dv
+alias		MultiTexCoord4dvARB
+return		void
+param		target		GLenum
+param		v		const GLdouble *
+category	1.3
+
+name		MultiTexCoord4f
+alias		MultiTexCoord4fARB
+return		void
+param		target		GLenum
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+param		q		GLfloat
+category	1.3
+
+name		MultiTexCoord4fv
+alias		MultiTexCoord4fvARB
+return		void
+param		target		GLenum
+param		v		const GLfloat *
+category	1.3
+
+name		MultiTexCoord4i
+alias		MultiTexCoord4iARB
+return		void
+param		target		GLenum
+param		s		GLint
+param		t		GLint
+param		r		GLint
+param		q		GLint
+category	1.3
+
+name		MultiTexCoord4iv
+alias		MultiTexCoord4ivARB
+return		void
+param		target		GLenum
+param		v		const GLint *
+category	1.3
+
+name		MultiTexCoord4s
+alias		MultiTexCoord4sARB
+return		void
+param		target		GLenum
+param		s		GLshort
+param		t		GLshort
+param		r		GLshort
+param		q		GLshort
+category	1.3
+
+name		MultiTexCoord4sv
+alias		MultiTexCoord4svARB
+return		void
+param		target		GLenum
+param		v		const GLshort *
+category	1.3
+
+name		LoadTransposeMatrixf
+alias		LoadTransposeMatrixfARB
+return		void
+param		m		const GLfloat *
+category	1.3
+
+name		LoadTransposeMatrixd
+alias		LoadTransposeMatrixdARB
+return		void
+param		m		const GLdouble *
+category	1.3
+
+name		MultTransposeMatrixf
+alias		MultTransposeMatrixfARB
+return		void
+param		m		const GLfloat *
+category	1.3
+
+name		MultTransposeMatrixd
+alias		MultTransposeMatrixdARB
+return		void
+param		m		const GLdouble *
+category	1.3
+
+name		SampleCover
+alias		SampleCoverageARBARB
+return		void
+param		value		GLclampf
+param		invert		GLboolean
+category	1.3
+
+name		CompressedTexImage3D
+alias		CompressedTexImage3DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		border		GLint
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+
+name		CompressedTexImage2D
+alias		CompressedTexImage2DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		border		GLint
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+
+name		CompressedTexImage1D
+alias		CompressedTexImage1DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		border		GLint
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+
+name		CompressedTexSubImage3D
+alias		CompressedTexSubImage3DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		zoffset		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		format		GLenum
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+
+name		CompressedTexSubImage2D
+alias		CompressedTexSubImage2DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+
+name		CompressedTexSubImage1D
+alias		CompressedTexSubImage1DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		width		GLsizei
+param		format		GLenum
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+
+name		GetCompressedTexImage
+alias		GetCompressedTexImageARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		img		GLvoid *
+category	1.3
 
 
 # GL_ARB_vertex_blend
@@ -4477,51 +4477,51 @@ category	GL_SGIX_sprite
 offset		457
 
 
-# GL_ARB_point_parameters
-
-name		PointParameterfARB
-return		void
-param		pname		GLenum
-param		param		GLfloat
-category	GL_ARB_point_parameters
-offset		458
-
-name		PointParameterfvARB
-return		void
-param		pname		GLenum
-param		params		const GLfloat *
-category	GL_ARB_point_parameters
-offset		459
-
-
 # GL_EXT_point_parameters
 
 name		PointParameterfEXT
-alias		PointParameterfARB
 return		void
 param		pname		GLenum
 param		param		GLfloat
 category	GL_EXT_point_parameters
+offset		458
 
 name		PointParameterfvEXT
-alias		PointParameterfvARB
 return		void
 param		pname		GLenum
 param		params		const GLfloat *
 category	GL_EXT_point_parameters
+offset		459
+
+
+# GL_ARB_point_parameters
+
+name		PointParameterfARB
+alias		PointParameterfEXT
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	GL_ARB_point_parameters
+
+name		PointParameterfvARB
+alias		PointParameterfvEXT
+return		void
+param		pname		GLenum
+param		params		const GLfloat *
+category	GL_ARB_point_parameters
 
 
 # GL_SGIS_point_parameters
 
 name		PointParameterfSGIS
-alias		PointParameterfARB
+alias		PointParameterfEXT
 return		void
 param		pname		GLenum
 param		param		GLfloat
 category	GL_SGIS_point_parameters
 
 name		PointParameterfvSGIS
-alias		PointParameterfvARB
+alias		PointParameterfvEXT
 return		void
 param		pname		GLenum
 param		params		const GLfloat *

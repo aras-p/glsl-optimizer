@@ -1,8 +1,8 @@
-/* $Id: vtxfmt.c,v 1.7 2001/11/18 22:48:13 brianp Exp $ */
+/* $Id: vtxfmt.c,v 1.8 2001/12/04 23:43:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -55,17 +55,15 @@
    if ( new_state )							\
       _mesa_update_state( ctx );					\
 									\
-   /* Validate the current tnl module.					\
-    */									\
+   /* Validate the current tnl module. */				\
    if ( new_state & ctx->Driver.NeedValidate )				\
       ctx->Driver.ValidateTnlModule( ctx, new_state );			\
 									\
    ASSERT( tnl->Current );						\
    ASSERT( tnl->SwapCount < NUM_VERTEX_FORMAT_ENTRIES );		\
 									\
-   /* Save the swapped function's dispatch entry so it can be		\
-    * restored later.							\
-    */									\
+   /* Save the swapped function's dispatch entry so it can be */	\
+   /* restored later. */						\
    tnl->Swapped[tnl->SwapCount][0] = (void *)&(ctx->Exec->FUNC);	\
    tnl->Swapped[tnl->SwapCount][1] = (void *)TAG(FUNC);			\
    tnl->SwapCount++;							\
@@ -73,8 +71,7 @@
    if ( 0 )								\
       fprintf( stderr, "   swapping gl" #FUNC"...\n" );			\
 									\
-   /* Install the tnl function pointer.					\
-    */									\
+   /* Install the tnl function pointer.	*/				\
    ctx->Exec->FUNC = tnl->Current->FUNC;				\
 }
 
@@ -107,14 +104,14 @@ static void install_vtxfmt( struct _glapi_table *tab, GLvertexformat *vfmt )
    tab->Indexi = vfmt->Indexi;
    tab->Indexiv = vfmt->Indexiv;
    tab->Materialfv = vfmt->Materialfv;
-   tab->MultiTexCoord1f = vfmt->MultiTexCoord1f;
-   tab->MultiTexCoord1fv = vfmt->MultiTexCoord1fv;
-   tab->MultiTexCoord2f = vfmt->MultiTexCoord2f;
-   tab->MultiTexCoord2fv = vfmt->MultiTexCoord2fv;
-   tab->MultiTexCoord3f = vfmt->MultiTexCoord3f;
-   tab->MultiTexCoord3fv = vfmt->MultiTexCoord3fv;
-   tab->MultiTexCoord4f = vfmt->MultiTexCoord4f;
-   tab->MultiTexCoord4fv = vfmt->MultiTexCoord4fv;
+   tab->MultiTexCoord1fARB = vfmt->MultiTexCoord1fARB;
+   tab->MultiTexCoord1fvARB = vfmt->MultiTexCoord1fvARB;
+   tab->MultiTexCoord2fARB = vfmt->MultiTexCoord2fARB;
+   tab->MultiTexCoord2fvARB = vfmt->MultiTexCoord2fvARB;
+   tab->MultiTexCoord3fARB = vfmt->MultiTexCoord3fARB;
+   tab->MultiTexCoord3fvARB = vfmt->MultiTexCoord3fvARB;
+   tab->MultiTexCoord4fARB = vfmt->MultiTexCoord4fARB;
+   tab->MultiTexCoord4fvARB = vfmt->MultiTexCoord4fvARB;
    tab->Normal3f = vfmt->Normal3f;
    tab->Normal3fv = vfmt->Normal3fv;
    tab->SecondaryColor3fEXT = vfmt->SecondaryColor3fEXT;
