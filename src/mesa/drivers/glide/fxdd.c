@@ -1519,7 +1519,8 @@ fxDDInitExtensions(GLcontext * ctx)
    /* not until texel fetchers are right */
    _mesa_enable_extension(ctx, "GL_SGIS_generate_mipmaps");
 #endif
-#if 1
+#if 0
+   /* breaks UT2004 */
    _mesa_enable_extension(ctx, "GL_ARB_vertex_buffer_object");
 #endif
 #if 0
