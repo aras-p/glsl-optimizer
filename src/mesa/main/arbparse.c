@@ -2851,11 +2851,11 @@ parse_sign (GLubyte ** inst)
    /*return *(*inst)++ != '+'; */
 
    if (**inst == '-') {
-      *(*inst)++;
+      (*inst)++;
       return 1;
    }
    else if (**inst == '+') {
-      *(*inst)++;
+      (*inst)++;
       return 0;
    }
 
@@ -2880,7 +2880,7 @@ parse_integer (GLubyte ** inst, struct arb_program *Program)
     * if yes, increment the *inst and return the default value
     */
    if (**inst == 0) {
-      *(*inst)++;
+      (*inst)++;
       return 0;
    }
 
@@ -3038,7 +3038,6 @@ parse_texcoord_num (GLcontext * ctx, GLubyte ** inst,
       return 1;
    }
 
-   Program->TexturesUsed[*coord] = 1;
    return 0;
 }
 
@@ -3958,7 +3957,7 @@ parse_param_elements (GLcontext * ctx, GLubyte ** inst,
          }
 			else
 			{
-				(*(*inst)++);
+				(*inst)++;
 			}
          break;
 
@@ -4601,7 +4600,7 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
       case REGISTER_PARAM:
          switch (**inst) {
             case PARAM_ARRAY_ELEMENT:
-               *(*inst)++;
+               (*inst)++;
                src = parse_string (inst, vc_head, Program, &found);
                Program->Position = parse_position (inst);
 
@@ -5138,6 +5137,7 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
                fp->TexSrcBit = TEXTURE_CUBE_BIT;
                break;
          }
+         Program->TexturesUsed[texcoord] |= fp->TexSrcBit;			
          break;
 
       case F_TEX_KIL:
