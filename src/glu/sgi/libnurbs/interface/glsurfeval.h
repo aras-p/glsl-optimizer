@@ -35,8 +35,8 @@
 /*
  * glsurfeval.h
  *
- * $Date: 2001/07/16 15:46:42 $ $Revision: 1.2 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glsurfeval.h,v 1.2 2001/07/16 15:46:42 brianp Exp $
+ * $Date: 2001/07/17 15:39:13 $ $Revision: 1.3 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glsurfeval.h,v 1.3 2001/07/17 15:39:13 brianp Exp $
  */
 
 #ifndef __gluglsurfeval_h_
@@ -45,6 +45,7 @@
 #include "basicsurfeval.h"
 #include "bezierPatchMesh.h" //in case output triangles
 #include "GL/gl.h"
+#include "GL/glu.h"
 
 class SurfaceMap;
 class OpenGLSurfaceEvaluator;
