@@ -186,13 +186,7 @@ static const struct extension_info known_gl_extensions[] = {
    { GL(ATI_texture_mirror_once),        VER(0,0), Y, N, N, N },
    { GL(ATIX_texture_env_combine3),      VER(0,0), Y, N, N, N },
    { GL(HP_convolution_border_modes),    VER(0,0), Y, N, N, N },
-
-    /* This is currently removed because there seem to be some problems with
-     * it and the software-only indirect rendering path.  At this point, I'm
-     * not sure which side (client or server) has the problem. - idr
-     */
-   { GL(HP_occlusion_test),              VER(0,0), N, N, N, N },
-
+   { GL(HP_occlusion_test),              VER(0,0), Y, N, N, N },
    { GL(IBM_cull_vertex),                VER(0,0), Y, N, N, N },
    { GL(IBM_pixel_filter_hint),          VER(0,0), Y, N, N, N },
    { GL(IBM_rasterpos_clip),             VER(0,0), Y, N, N, N },
