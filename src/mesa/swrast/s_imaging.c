@@ -1,10 +1,10 @@
-/* $Id: s_imaging.c,v 1.4 2001/03/19 02:28:59 keithw Exp $ */
+/* $Id: s_imaging.c,v 1.5 2002/04/04 16:53:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -54,7 +54,7 @@ _swrast_CopyColorTable( GLcontext *ctx,
    (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
                                  ctx->Color.DriverDrawBuffer );
 
-   glColorTable(target, internalformat, width, GL_RGBA, GL_UNSIGNED_BYTE, data);
+   glColorTable(target, internalformat, width, GL_RGBA, CHAN_TYPE, data);
 }
 
 void
@@ -78,7 +78,7 @@ _swrast_CopyColorSubTable( GLcontext *ctx,GLenum target, GLsizei start,
    (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
                                  ctx->Color.DriverDrawBuffer );
 
-   glColorSubTable(target, start, width, GL_RGBA, GL_UNSIGNED_BYTE, data);
+   glColorSubTable(target, start, width, GL_RGBA, CHAN_TYPE, data);
 }
 
 
