@@ -1,4 +1,4 @@
-/* $Id: s_pointtemp.h,v 1.19 2002/10/04 17:37:47 brianp Exp $ */
+/* $Id: s_pointtemp.h,v 1.20 2002/10/18 17:02:01 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -117,7 +117,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
       if (ctx->Texture.Unit[u]._ReallyEnabled) {
          const GLfloat q = vert->texcoord[u][3];
-         const GLfloat invQ = (q == 0.0 || q == 1.0) ? 1.0 : (1.0 / q);
+         const GLfloat invQ = (q == 0.0F || q == 1.0F) ? 1.0F : (1.0F / q);
          texcoord[u][0] = vert->texcoord[u][0] * invQ;
          texcoord[u][1] = vert->texcoord[u][1] * invQ;
          texcoord[u][2] = vert->texcoord[u][2] * invQ;

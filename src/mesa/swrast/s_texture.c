@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.70 2002/10/18 13:40:59 brianp Exp $ */
+/* $Id: s_texture.c,v 1.71 2002/10/18 17:02:01 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -97,7 +97,7 @@
          U = 1.0F - (S - (GLfloat) flr);	/* flr is odd */	\
       else								\
          U = S - (GLfloat) flr;		/* flr is even */		\
-      U = (U * SIZE) - 0.5;						\
+      U = (U * SIZE) - 0.5F;						\
       I0 = IFLOOR(U);							\
       I1 = I0 + 1;							\
       if (I0 < 0)							\
@@ -2154,10 +2154,14 @@ sample_linear_rect(GLcontext *ctx, GLuint texUnit,
       w11 =       a  *       b ;
 
       /* compute weighted average of samples */
-      rgba[i][0] = w00 * t00[0] + w10 * t10[0] + w01 * t01[0] + w11 * t11[0];
-      rgba[i][1] = w00 * t00[1] + w10 * t10[1] + w01 * t01[1] + w11 * t11[1];
-      rgba[i][2] = w00 * t00[2] + w10 * t10[2] + w01 * t01[2] + w11 * t11[2];
-      rgba[i][3] = w00 * t00[3] + w10 * t10[3] + w01 * t01[3] + w11 * t11[3];
+      rgba[i][0] = 
+	  (GLchan) (w00 * t00[0] + w10 * t10[0] + w01 * t01[0] + w11 * t11[0]);
+      rgba[i][1] = 
+	  (GLchan) (w00 * t00[1] + w10 * t10[1] + w01 * t01[1] + w11 * t11[1]);
+      rgba[i][2] = 
+	  (GLchan) (w00 * t00[2] + w10 * t10[2] + w01 * t01[2] + w11 * t11[2]);
+      rgba[i][3] = 
+	  (GLchan) (w00 * t00[3] + w10 * t10[3] + w01 * t01[3] + w11 * t11[3]);
    }
 }
 

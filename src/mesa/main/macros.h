@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.29 2002/07/09 01:22:50 brianp Exp $ */
+/* $Id: macros.h,v 1.30 2002/10/18 17:02:00 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -111,6 +111,27 @@ do {						\
    (DST)[1] = (SRC)[1];				\
    (DST)[2] = (SRC)[2];				\
    (DST)[3] = (SRC)[3];				\
+} while (0)
+
+#define COPY_2V_CAST( DST, SRC, CAST )		\
+do {						\
+   (DST)[0] = (CAST)(SRC)[0];			\
+   (DST)[1] = (CAST)(SRC)[1];			\
+} while (0)
+
+#define COPY_3V_CAST( DST, SRC, CAST )		\
+do {						\
+   (DST)[0] = (CAST)(SRC)[0];			\
+   (DST)[1] = (CAST)(SRC)[1];			\
+   (DST)[2] = (CAST)(SRC)[2];			\
+} while (0)
+
+#define COPY_4V_CAST( DST, SRC, CAST )		\
+do {						\
+   (DST)[0] = (CAST)(SRC)[0];			\
+   (DST)[1] = (CAST)(SRC)[1];			\
+   (DST)[2] = (CAST)(SRC)[2];			\
+   (DST)[3] = (CAST)(SRC)[3];			\
 } while (0)
 
 #if defined(__i386__)

@@ -1,4 +1,4 @@
-/* $Id: s_aatriangle.c,v 1.24 2002/06/15 03:03:11 brianp Exp $ */
+/* $Id: s_aatriangle.c,v 1.25 2002/10/18 17:02:01 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -361,8 +361,8 @@ compute_lambda(const GLfloat sPlane[4], const GLfloat tPlane[4],
 {
    const GLfloat s = solve_plane(cx, cy, sPlane);
    const GLfloat t = solve_plane(cx, cy, tPlane);
-   const GLfloat invQ_x1 = solve_plane_recip(cx+1.0, cy, qPlane);
-   const GLfloat invQ_y1 = solve_plane_recip(cx, cy+1.0, qPlane);
+   const GLfloat invQ_x1 = solve_plane_recip(cx+1.0F, cy, qPlane);
+   const GLfloat invQ_y1 = solve_plane_recip(cx, cy+1.0F, qPlane);
    const GLfloat s_x1 = s - sPlane[0] / sPlane[2];
    const GLfloat s_y1 = s - sPlane[1] / sPlane[2];
    const GLfloat t_x1 = t - tPlane[0] / tPlane[2];
