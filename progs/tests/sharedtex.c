@@ -1,4 +1,4 @@
-/* $Id: sharedtex.c,v 1.1 2000/09/01 21:01:18 brianp Exp $ */
+/* $Id: sharedtex.c,v 1.2 2002/01/16 14:32:46 joukj Exp $ */
 
 /*
  * Test sharing of display lists and texture objects between GLX contests.
@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 
 struct window {
@@ -142,7 +143,7 @@ AddWindow(const char *displayName, int xpos, int ypos,
    if (!glXMakeCurrent(dpy, win, ctx)) {
       Error(displayName, "glXMakeCurrent failed");
       printf("glXMakeCurrent failed in Redraw()\n");
-      return;
+      return NULL;
    }
 
    /* save the info for this window */
