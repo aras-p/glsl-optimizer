@@ -104,17 +104,18 @@ static void interp_extras( GLcontext *ctx,
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
-   /* If stride is zero, ColorPtr[1] is constant across the VB, so
-    * there is no point interpolating between two values as they will
-    * be identical.
-    */
    if (VB->ColorPtr[1]) {
-      assert(VB->ColorPtr[1]->stride == 4 * sizeof(GLfloat));
-
-      INTERP_4F( t,
-		 GET_COLOR(VB->ColorPtr[1], dst),
-		 GET_COLOR(VB->ColorPtr[1], out),
-		 GET_COLOR(VB->ColorPtr[1], in) );
+      /* If stride is zero, ColorPtr[1] is constant across the VB, so
+       * there is no point interpolating between two values as they will
+       * be identical.  This case is handled in t_dd_tritmp.h
+       */
+      if (VB->ColorPtr[1]->stride) {
+	 assert(VB->ColorPtr[1]->stride == 4 * sizeof(GLfloat));
+	 INTERP_4F( t,
+		    GET_COLOR(VB->ColorPtr[1], dst),
+		    GET_COLOR(VB->ColorPtr[1], out),
+		    GET_COLOR(VB->ColorPtr[1], in) );
+      }
 
       if (VB->SecondaryColorPtr[1]) {
 	 INTERP_3F( t,
