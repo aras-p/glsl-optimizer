@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.23 1999/11/24 18:48:31 brianp Exp $ */
+/* $Id: context.c,v 1.24 1999/11/30 20:34:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,6 +50,7 @@
 #include "enums.h"
 #include "extensions.h"
 #include "fog.h"
+#include "get.h"
 #include "glapi.h"
 #include "hash.h"
 #include "light.h"
@@ -1017,6 +1018,7 @@ static void initialize_context( GLcontext *ctx )
 
       /* For debug/development only */
       ctx->NoRaster = getenv("MESA_NO_RASTER") ? GL_TRUE : GL_FALSE;
+      ctx->FirstTimeCurrent = GL_TRUE;
 
       /* Dither disable */
       ctx->NoDither = getenv("MESA_NO_DITHER") ? GL_TRUE : GL_FALSE;
@@ -1279,6 +1281,7 @@ GLcontext *gl_create_context( GLvisual *visual,
    ctx->Driver.ReadDepthSpanFloat = gl_read_depth_span_float;
    ctx->Driver.ReadDepthSpanInt = gl_read_depth_span_int;
 
+
 #ifdef PROFILE
    init_timings( ctx );
 #endif
@@ -1530,6 +1533,21 @@ void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
       newCtx->ReadBuffer = readBuffer;
       newCtx->NewState = NEW_ALL;   /* just to be safe */
       gl_update_state( newCtx );
+   }
+
+   /* We can use this to help debug user's problems.  Tell the to set
+    * the MESA_INFO env variable before running their app.  Then the
+    * first time each context is made current we'll print some useful
+    * information.
+    */
+   if (newCtx->FirstTimeCurrent) {
+      if (getenv("MESA_INFO")) {
+         fprintf(stderr, "Mesa GL_VERSION = %s\n", (char *) _mesa_GetString(GL_VERSION));
+         fprintf(stderr, "Mesa GL_RENDERER = %s\n", (char *) _mesa_GetString(GL_RENDERER));
+         fprintf(stderr, "Mesa GL_VENDOR = %s\n", (char *) _mesa_GetString(GL_VENDOR));
+         fprintf(stderr, "Mesa GL_EXTENSIONS = %s\n", (char *) _mesa_GetString(GL_EXTENSIONS));
+      }
+      newCtx->FirstTimeCurrent = GL_FALSE;
    }
 }
 
