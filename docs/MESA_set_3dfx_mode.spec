@@ -8,7 +8,7 @@ Name Strings
 
 Contact
 
-    Brian Paul (brian 'at' mesa3d.org)
+    Brian Paul (brian.paul 'at' tungstengraphics.com)
 
 Status
 

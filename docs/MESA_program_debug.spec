@@ -8,7 +8,7 @@ Name Strings
 
 Contact
 
-    Brian Paul (brian @ tungstengraphics.com)
+    Brian Paul (brian.paul 'at' tungstengraphics.com)
 
 Status
 
@@ -18,7 +18,7 @@ Version
 
     Last Modified Date: July 20, 2003
     Author Revision: 1.0
-    $Date: 2003/09/23 14:46:11 $ $Revision: 1.3 $
+    $Date: 2004/03/25 01:42:41 $ $Revision: 1.4 $
 
 Number
 

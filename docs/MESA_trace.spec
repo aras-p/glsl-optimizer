@@ -4,7 +4,7 @@ Name
 
 Name Strings
 
-     GL_MESA_TRACE
+     GL_MESA_trace
 
 Contact
     
@@ -17,7 +17,7 @@ Status
 
 Version
 
-    $Id: MESA_trace.spec,v 1.3 2003/09/19 14:58:21 brianp Exp $
+    $Id: MESA_trace.spec,v 1.4 2004/03/25 01:42:42 brianp Exp $
 
 Number
 

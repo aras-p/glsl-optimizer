@@ -8,7 +8,7 @@ Name Strings
 
 Contact
 
-    Brian Paul, brianp 'at' mesa3d.org
+    Brian Paul, brian.paul 'at' tungstengraphics.com
 
 Status
 
@@ -16,7 +16,7 @@ Status
 
 Version
 
-    $Id: MESA_window_pos.spec,v 1.3 2000/04/04 23:29:32 brianp Exp $
+    $Id: MESA_window_pos.spec,v 1.4 2004/03/25 01:42:42 brianp Exp $
 
 Number
 

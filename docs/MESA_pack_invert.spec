@@ -8,7 +8,7 @@ Name Strings
 
 Contact
 
-    Brian Paul, Tungsten Graphics, Inc. (brian 'at' tungstengraphics.com)
+    Brian Paul, Tungsten Graphics, Inc. (brian.paul 'at' tungstengraphics.com)
     Keith Whitwell, Tungsten Graphics, Inc.  (keith 'at' tungstengraphics.com)
 
 Status
