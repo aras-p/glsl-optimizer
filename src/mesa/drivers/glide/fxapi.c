@@ -696,6 +696,8 @@ void GLAPIENTRY fxMesaSetNearFar(GLfloat n, GLfloat f)
 /*
  * The extension GL_FXMESA_global_texture_lod_bias
  */
+/* XXX this function may soon go away in favor of GL_EXT_texture_lod_bias */
+extern void GLAPIENTRY glGlobalTextureLODBiasFXMESA(GLfloat biasVal);
 void GLAPIENTRY glGlobalTextureLODBiasFXMESA(GLfloat biasVal)
 {
   grTexLodBiasValue(GR_TMU0,biasVal);
@@ -710,6 +712,7 @@ void GLAPIENTRY glGlobalTextureLODBiasFXMESA(GLfloat biasVal)
  * More a trick than a real extesion, use the shared global
  * palette extension. 
  */
+extern void GLAPIENTRY gl3DfxSetPaletteEXT(GLuint *pal); /* silence warning */
 void GLAPIENTRY gl3DfxSetPaletteEXT(GLuint *pal)
 {
   fxMesaContext fxMesa =fxMesaCurrentCtx;
@@ -890,8 +893,10 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
       case FXMESA_DEPTH_SIZE:
 	 i++;
 	 depthSize=attribList[i];
-	 if(depthSize)
+	 if(depthSize) {
 	    aux=1;
+            depthSize = 16;
+         }
 	 break;
       case FXMESA_STENCIL_SIZE:
 	 i++;
@@ -982,11 +987,20 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
        * as Voodoo3s have 2 TMUs on board, Banshee has only 1
        * Thanks to Joseph Kain for that one
        */
-      if (glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.nTexelfx == 2) {
-         fxInitPixelTables(fxMesa, GL_FALSE); /* use RGB pixel order (Voodoo3) */
+      GrVoodooConfig_t *voodoo;
+      voodoo = &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig;
+
+      printf("nTexelfx  %d\n", voodoo->nTexelfx);
+      printf("fbRam %d\n", voodoo->fbRam);
+      printf("fbiRev %d\n", voodoo->fbiRev);
+
+      if (voodoo->nTexelfx == 2 && voodoo->fbiRev != 260) {
+         /* RGB pixel order (Voodoo3, but some Quantum3D models) */
+         fxInitPixelTables(fxMesa, GL_FALSE);
       }
       else {
-         fxInitPixelTables(fxMesa, GL_TRUE); /* use BGR pixel order on Voodoo1/2 */
+         /* BGR pixel order on Voodoo1/2, or certain Quantum3D models  */
+         fxInitPixelTables(fxMesa, GL_TRUE);
       }
    }
    else {
