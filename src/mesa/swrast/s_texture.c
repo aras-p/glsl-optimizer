@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.51 2002/02/15 16:32:06 brianp Exp $ */
+/* $Id: s_texture.c,v 1.52 2002/02/16 23:44:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3042,23 +3042,12 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
             }
          }
 
-         /* Sample the texture. */
-#if 000
-         if (curObj->Image[curObj->BaseLevel]->Format == GL_DEPTH_COMPONENT) {
-            /* depth texture */
-            sample_depth_texture(ctx, texUnit, textureUnit->_Current,
-                                 n, texcoords, lambda, texel);
-         }
-         else {
-            /* color texture */
-#endif
-            SWRAST_CONTEXT(ctx)->TextureSample[texUnit]( ctx, texUnit,
-                                                         textureUnit->_Current,
-                                                         n, texcoords,
-                                                         lambda, texel );
-#if 0
-         }
-#endif
+         /* Sample the texture for n fragments */
+         SWRAST_CONTEXT(ctx)->TextureSample[texUnit]( ctx, texUnit,
+                                                      textureUnit->_Current,
+                                                      n, texcoords,
+                                                      lambda, texel );
+
          apply_texture( ctx, textureUnit, n, primary_rgba,
                         (const GLchan (*)[4]) texel, rgba );
       }
