@@ -36,7 +36,6 @@
 static GLfloat angle = -150;   /* in degrees */
 static int spin = 0;
 static int moving, begin;
-static int newModel = 1;
 static float theTime;
 static int repeat = 1;
 static int blend = 1;
@@ -183,7 +182,6 @@ idle(void)
   updatePointList();
   if (spin) {
     angle += 0.3;
-    newModel = 1;
   }
   glutPostRedisplay();
 }
@@ -201,22 +199,15 @@ visible(int vis)
 }
 
 static void
-recalcModelView(void)
-{
-  glPopMatrix();
-  glPushMatrix();
-  glRotatef(angle, 0.0, 1.0, 0.0);
-  newModel = 0;
-}
-
-static void
 redraw(void)
 {
   int i;
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  if (newModel)
-    recalcModelView();
+
+  glPushMatrix();
+  glRotatef(15.0, 1.0, 0.0, 0.0);
+  glRotatef(angle, 0.0, 1.0, 0.0);
 
   glDepthMask(GL_FALSE);
 
@@ -264,6 +255,8 @@ redraw(void)
 #endif
   glDisable(GL_BLEND);
 
+  glPopMatrix();
+
   glutSwapBuffers();
 }
 
@@ -289,7 +282,6 @@ mouseMotion(int x, int y)
   if (moving) {
     angle = angle + (x - begin);
     begin = x;
-    newModel = 1;
     glutPostRedisplay();
   }
 }
@@ -301,7 +293,7 @@ menu(int option)
   case 0:
     makePointList();
     break;
-#if GL_ARB_point_parameters
+#ifdef GL_ARB_point_parameters
   case 1:
     glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, constant);
     break;
@@ -318,7 +310,7 @@ menu(int option)
   case 5:
     blend = 0;
     break;
-#if GL_ARB_point_parameters
+#ifdef GL_ARB_point_parameters
   case 6:
     glPointParameterfARB(GL_POINT_FADE_THRESHOLD_SIZE_ARB, 1.0);
     break;
@@ -390,8 +382,8 @@ key(unsigned char c, int x, int y)
   case 'o':
   case 'O':
     org ^= 1;
-#if GL_VERSION_2_0
-#if GL_ARB_point_parameters
+#ifdef GL_VERSION_2_0
+#ifdef GL_ARB_point_parameters
     glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN,
                       org ? GL_LOWER_LEFT : GL_UPPER_LEFT);
 #endif
@@ -485,10 +477,10 @@ reshape(int width, int height)
   glViewport(0, 0, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glFrustum(-1.0, 1.0, -h, h, 2.0, 20.0);
+  glFrustum(-1.0, 1.0, -h, h, 2.0, 30.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  glTranslatef(0.0, 0.0, -60.0);
+  glTranslatef(0.0, 0.0, -10.0);
 }
 
 int
@@ -544,19 +536,9 @@ main(int argc, char **argv)
   glEnable(GL_POINT_SMOOTH);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glPointSize(16.0);
-#if GL_ARB_point_parameters
+#ifdef GL_ARB_point_parameters
   glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, theQuad);
 #endif
-  glMatrixMode(GL_PROJECTION);
-  gluPerspective( /* field of view in degree */ 40.0,
-  /* aspect ratio */ 1.0,
-    /* Z near */ 0.5, /* Z far */ 40.0);
-  glMatrixMode(GL_MODELVIEW);
-  gluLookAt(0.0, 1.0, 8.0, /* eye location */
-    0.0, 1.0, 0.0,      /* center is at (0,0,0) */
-    0.0, 1.0, 0.);      /* up is in postivie Y direction */
-  glPushMatrix();       /* dummy push so we can pop on model
-                           recalc */
 
   makePointList();
   makeSprite();
