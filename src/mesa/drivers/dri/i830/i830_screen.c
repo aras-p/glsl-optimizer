@@ -52,6 +52,7 @@
 
 #include "i830_dri.h"
 
+#include "utils.h"
 #include "xmlpool.h"
 
 const char __driConfigOptions[] =
@@ -462,7 +463,8 @@ i830FillInModes( unsigned pixel_bits, unsigned depth_bits,
    unsigned num_modes;
    unsigned depth_buffer_factor;
    unsigned back_buffer_factor;
-   unsigned i;
+   GLenum fb_format;
+   GLenum fb_type;
 
    /* GLX_SWAP_COPY_OML is only supported because the MGA driver doesn't
     * support pageflipping at all.
@@ -471,42 +473,46 @@ i830FillInModes( unsigned pixel_bits, unsigned depth_bits,
       GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
    };
 
-   int depth_buffer_modes[2][2];
+   uint8_t depth_bits_array[2];
+   uint8_t stencil_bits_array[2];
 
 
-   depth_buffer_modes[0][0] = depth_bits;
-   depth_buffer_modes[1][0] = depth_bits;
+   depth_bits_array[0] = 0;
+   depth_bits_array[1] = depth_bits;
 
    /* Just like with the accumulation buffer, always provide some modes
     * with a stencil buffer.  It will be a sw fallback, but some apps won't
     * care about that.
     */
-   depth_buffer_modes[0][1] = 0;
-   depth_buffer_modes[1][1] = (stencil_bits == 0) ? 8 : stencil_bits;
+   stencil_bits_array[0] = 0;
+   stencil_bits_array[1] = (stencil_bits == 0) ? 8 : stencil_bits;
 
    depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
    back_buffer_factor  = (have_back_buffer) ? 3 : 1;
 
    num_modes = depth_buffer_factor * back_buffer_factor * 4;
 
+    if ( pixel_bits == 16 ) {
+        fb_format = GL_RGB;
+        fb_type = GL_UNSIGNED_SHORT_5_6_5;
+    }
+    else {
+        fb_format = GL_BGRA;
+        fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
+    }
+
    modes = (*create_context_modes)( num_modes, sizeof( __GLcontextModes ) );
    m = modes;
-   for ( i = 0 ; i < depth_buffer_factor ; i++ ) {
-      m = fill_in_modes( m, pixel_bits, 
-			 depth_buffer_modes[i][0], depth_buffer_modes[i][1],
-			 back_buffer_modes, back_buffer_factor,
-			 GLX_TRUE_COLOR );
-   }
+   if ( ! driFillInModes( & m, fb_format, fb_type,
+			  depth_bits_array, stencil_bits_array, depth_buffer_factor,
+			  back_buffer_modes, back_buffer_factor,
+			  GLX_TRUE_COLOR ) ) {
+	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
+		 __func__, __LINE__ );
+	return NULL;
+    }
 
    /* There's no direct color modes on i830? */
-#if 0
-   for ( i = 0 ; i < depth_buffer_factor ; i++ ) {
-      m = fill_in_modes( m, pixel_bits, 
-			 depth_buffer_modes[i][0], depth_buffer_modes[i][1],
-			 back_buffer_modes, back_buffer_factor,
-			 GLX_DIRECT_COLOR );
-   }
-#endif
 
    /* Mark the visual as slow if there are "fake" stencil bits.
     */
