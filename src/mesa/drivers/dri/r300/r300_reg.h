@@ -587,6 +587,11 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_TX_SIZE_SHIFT                26 /* largest of width, height */
 #       define R300_TX_SIZE_MASK                 (15 << 26)
 #define R300_TX_FORMAT_0                    0x44C0
+	/* Note - other bits are not known yet.. */
+#	define R300_TX_FORMAT_WIDTH_SHIFT	12
+#	define R300_TX_FORMAT_WIDTH_MASK	(0xf<<R300_TX_FORMAT_WIDTH_SHIFT)
+#	define R300_TX_FORMAT_HEIGHT_SHIFT	16
+#	define R300_TX_FORMAT_HEIGHT_MASK	(0xf<<R300_TX_FORMAT_HEIGHT_SHIFT)
 #define R300_TX_OFFSET_0                    0x4540
 /* BEGIN: Guess from R200 */
 #       define R300_TXO_ENDIAN_NO_SWAP           (0 << 0)
