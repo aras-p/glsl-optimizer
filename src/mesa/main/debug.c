@@ -1,7 +1,6 @@
 #include "mtypes.h"
 #include "debug.h"
 
-
 void gl_print_state( const char *msg, GLuint state )
 {
    fprintf(stderr,
