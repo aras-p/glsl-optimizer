@@ -257,4 +257,108 @@ _mesa_Flush( void );
 
 /*@}*/
 
+
+
+/**********************************************************************/
+/** \name Macros for contexts/flushing. */
+/*@{*/
+
+/**
+ * Flush vertices.
+ *
+ * \param ctx GL context.
+ * \param newstate new state.
+ *
+ * Checks if dd_function_table::NeedFlush is marked to flush stored vertices,
+ * and calls dd_function_table::FlushVertices if so. Marks
+ * __GLcontextRec::NewState with \p newstate.
+ * 
+ * \todo Eventually let the driver specify what state changes require a flush:
+ */
+#define FLUSH_VERTICES(ctx, newstate)				\
+do {								\
+   if (MESA_VERBOSE & VERBOSE_STATE)				\
+      _mesa_debug(ctx, "FLUSH_VERTICES in %s\n", __FUNCTION__);	\
+   if (ctx->Driver.NeedFlush & FLUSH_STORED_VERTICES)		\
+      ctx->Driver.FlushVertices(ctx, FLUSH_STORED_VERTICES);	\
+   ctx->NewState |= newstate;					\
+} while (0)
+
+/**
+ * Flush current state.
+ *
+ * \param ctx GL context.
+ * \param newstate new state.
+ *
+ * Checks if dd_function_table::NeedFlush is marked to flush current state,
+ * and calls dd_function_table::FlushVertices if so. Marks
+ * __GLcontextRec::NewState with \p newstate.
+ */
+#define FLUSH_CURRENT(ctx, newstate)				\
+do {								\
+   if (MESA_VERBOSE & VERBOSE_STATE)				\
+      _mesa_debug(ctx, "FLUSH_CURRENT in %s\n", __FUNCTION__);	\
+   if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)		\
+      ctx->Driver.FlushVertices(ctx, FLUSH_UPDATE_CURRENT);	\
+   ctx->NewState |= newstate;					\
+} while (0)
+
+/**
+ * Macro to assert that the API call was made outside the
+ * glBegin()/glEnd() pair, with return value.
+ * 
+ * \param ctx GL context.
+ * \param retval value to return value in case the assertion fails.
+ */
+#define ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, retval)		\
+do {									\
+   if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {	\
+      _mesa_error( ctx, GL_INVALID_OPERATION, "begin/end" );		\
+      return retval;							\
+   }									\
+} while (0)
+
+/**
+ * Macro to assert that the API call was made outside the
+ * glBegin()/glEnd() pair.
+ * 
+ * \param ctx GL context.
+ */
+#define ASSERT_OUTSIDE_BEGIN_END(ctx)					\
+do {									\
+   if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {	\
+      _mesa_error( ctx, GL_INVALID_OPERATION, "begin/end" );		\
+      return;								\
+   }									\
+} while (0)
+
+/**
+ * Macro to assert that the API call was made outside the
+ * glBegin()/glEnd() pair and flush the vertices.
+ * 
+ * \param ctx GL context.
+ */
+#define ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx)				\
+do {									\
+   ASSERT_OUTSIDE_BEGIN_END(ctx);					\
+   FLUSH_VERTICES(ctx, 0);						\
+} while (0)
+
+/**
+ * Macro to assert that the API call was made outside the
+ * glBegin()/glEnd() pair and flush the vertices, with return value.
+ * 
+ * \param ctx GL context.
+ * \param retval value to return value in case the assertion fails.
+ */
+#define ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, retval)	\
+do {									\
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, retval);			\
+   FLUSH_VERTICES(ctx, 0);						\
+} while (0)
+
+
+/*@}*/
+
+
 #endif
