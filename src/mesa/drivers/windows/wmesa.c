@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.26 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: wmesa.c,v 1.27 2002/04/23 18:23:33 kschultz Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -396,6 +396,13 @@ static clear(GLcontext* ctx, GLbitfield mask,
   /* sanity check - can't have right(stereo) buffers */ 
   assert((mask & (DD_FRONT_RIGHT_BIT | DD_BACK_RIGHT_BIT)) == 0); 
   
+  /* clear alpha */
+  if ((mask & (DD_FRONT_LEFT_BIT | DD_BACK_RIGHT_BIT)) &&
+      ctx->DrawBuffer->UseSoftwareAlphaBuffers &&
+      ctx->Color.ColorMask[ACOMP]) {
+      _mesa_clear_alpha_buffers( ctx );
+  }
+
   if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) { 
       if (mask & DD_BACK_LEFT_BIT) { 
 #if defined(USE_GDI_TO_CLEAR) 
@@ -1240,7 +1247,8 @@ static void GetPalette(HPALETTE Pal,RGBQUAD *aRGB)
 
 WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
 				 GLboolean rgb_flag,
-				 GLboolean db_flag )
+				 GLboolean db_flag,
+                                 GLboolean alpha_flag )
 {
   RECT CR;
   WMesaContext c;
@@ -1318,7 +1326,8 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
   c->gl_visual = _mesa_create_visual(rgb_flag,
 				     db_flag,    /* db_flag */
 				     GL_FALSE,   /* stereo */
-				     8,8,8,8,    /* r, g, b, a bits */
+				     8,8,8,      /* r, g, b bits */
+                                     alpha_flag ? 8 : 0, /* alpha bits */
 				     0,          /* index bits */
 				     16,         /* depth_bits */
 				     8,          /* stencil_bits */
@@ -1355,7 +1364,7 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
 					   c->gl_visual->depthBits > 0,
 					   c->gl_visual->stencilBits > 0,
 					   c->gl_visual->accumRedBits > 0,
-					   GL_FALSE /* s/w alpha */ );
+					   alpha_flag /* s/w alpha */ );
   if (!c->gl_buffer) {
     _mesa_destroy_visual( c->gl_visual );
     _mesa_free_context_data( c->gl_ctx );

@@ -1,4 +1,4 @@
-/* $Id: wmesa.h,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: wmesa.h,v 1.2 2002/04/23 18:23:32 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,8 +24,17 @@
 
 /*
  * $Log: wmesa.h,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
+ * Revision 1.2  2002/04/23 18:23:32  kschultz
+ * Fix up alpha buffer handling for Windows.
+ * - add two new Pixel Format Descriptors that do not have alpha bits to
+ * mirror the two that do.
+ * - add logic to wglChoosePixelFormat to match PFD's with respect to alpha.
+ * - Create/clear software alpha buffer as required.
+ * Now a wgl or GLUT program can control the creation of a software alpha
+ * buffer via the PFD or GLUT parms, respectively.
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
+ * Imported sources
  *
  * Revision 3.2  1999/01/03 02:54:45  brianp
  * updated per Ted Jump
@@ -101,13 +110,17 @@ typedef struct wmesa_context *WMesaContext;
  *                    GL_FALSE = color index mode
  *         db_flag - GL_TRUE = double-buffered,
  *                   GL_FALSE = single buffered
+ *         alpha_flag - GL_TRUE = create software alpha buffer,
+ *                      GL_FALSE = no software alpha buffer
  *
  * Note: Indexed mode requires double buffering under Windows.
  *
  * Return:  a WMesa_context or NULL if error.
  */
 extern WMesaContext WMesaCreateContext(HWND hWnd,HPALETTE* pPal,
-                                       GLboolean rgb_flag,GLboolean db_flag);
+                                       GLboolean rgb_flag,
+                                       GLboolean db_flag,
+                                       GLboolean alpha_flag);
 
 
 /*

@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.9 2001/09/18 16:39:38 kschultz Exp $ */
+/* $Id: wgl.c,v 1.10 2002/04/23 18:23:33 kschultz Exp $ */
 
 /*
 * This library is free software; you can redistribute it and/or
@@ -100,6 +100,7 @@ int qt_ext = sizeof(ext) / sizeof(ext[0]);
 
 struct __pixelformat__	pix[] =
 {
+    /* Double Buffer, alpha */
     {	{	sizeof(PIXELFORMATDESCRIPTOR),	1,
         PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_GENERIC_FORMAT|PFD_DOUBLEBUFFER|PFD_SWAP_COPY,
         PFD_TYPE_RGBA,
@@ -107,10 +108,27 @@ struct __pixelformat__	pix[] =
         0,	0,	0,	0,	0,	16,	8,	0,	0,	0,	0,	0,	0 },
         GL_TRUE
     },
+    /* Single Buffer, alpha */
     {	{	sizeof(PIXELFORMATDESCRIPTOR),	1,
         PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_GENERIC_FORMAT,
         PFD_TYPE_RGBA,
         24,	8,	0,	8,	8,	8,	16,	8,	24,
+        0,	0,	0,	0,	0,	16,	8,	0,	0,	0,	0,	0,	0 },
+        GL_FALSE
+    },
+    /* Double Buffer, no alpha */
+    {	{	sizeof(PIXELFORMATDESCRIPTOR),	1,
+        PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_GENERIC_FORMAT|PFD_DOUBLEBUFFER|PFD_SWAP_COPY,
+        PFD_TYPE_RGBA,
+        24,	8,	0,	8,	8,	8,	16,	0,	0,
+        0,	0,	0,	0,	0,	16,	8,	0,	0,	0,	0,	0,	0 },
+        GL_TRUE
+    },
+    /* Single Buffer, no alpha */
+    {	{	sizeof(PIXELFORMATDESCRIPTOR),	1,
+        PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_GENERIC_FORMAT,
+        PFD_TYPE_RGBA,
+        24,	8,	0,	8,	8,	8,	16,	0,	0,
         0,	0,	0,	0,	0,	16,	8,	0,	0,	0,	0,	0,	0 },
         GL_FALSE
     },
@@ -158,7 +176,8 @@ WGLAPI HGLRC GLAPIENTRY wglCreateContext(HDC hdc)
         if ( wgl_ctx[i].ctx == NULL )
         {
             wgl_ctx[i].ctx = WMesaCreateContext( hWnd, NULL, GL_TRUE,
-                pix[curPFD-1].doubleBuffered );
+                pix[curPFD-1].doubleBuffered, 
+                pix[curPFD-1].pfd.cAlphaBits ? GL_TRUE : GL_FALSE);
             if (wgl_ctx[i].ctx == NULL)
                 break;
             wgl_ctx[i].hdc = hdc;
@@ -558,6 +577,8 @@ WGLAPI int GLAPIENTRY wglChoosePixelFormat(HDC hdc,
             ((ppfd->dwFlags & PFD_STEREO) != (pix[i].pfd.dwFlags & PFD_STEREO)))
             continue;
         if(ppfd->iPixelType != pix[i].pfd.iPixelType)
+            delta++;
+        if(ppfd->cAlphaBits != pix[i].pfd.cAlphaBits)
             delta++;
         if(delta < bestdelta)
         {
