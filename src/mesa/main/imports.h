@@ -696,6 +696,12 @@ _mesa_log2(float x);
 extern unsigned int
 _mesa_bitcount(unsigned int n);
 
+extern GLhalfNV
+_mesa_float_to_half(float f);
+
+extern float
+_mesa_half_to_float(GLhalfNV h);
+
 
 extern char *
 _mesa_getenv( const char *var );

@@ -353,6 +353,9 @@ static void init_sqrt_table(void)
 }
 
 
+/**
+ * Single precision square root.
+ */
 float
 _mesa_sqrtf( float x )
 {
@@ -497,7 +500,9 @@ _mesa_inv_sqrtf(float n)
 }
 
 
-/** Wrapper around either pow() or xf86pow() */
+/**
+ * Wrapper around either pow() or xf86pow().
+ */
 double
 _mesa_pow(double x, double y)
 {
@@ -509,7 +514,7 @@ _mesa_pow(double x, double y)
 }
 
 
-/*
+/**
  * Return number of bits set in given GLuint.
  */
 unsigned int
@@ -522,6 +527,141 @@ _mesa_bitcount(unsigned int n)
    return bits;
 }
 
+
+/**
+ * Convert a 4-byte float to a 2-byte half float.
+ */
+GLhalfNV
+_mesa_float_to_half(float val)
+{
+   const int flt = *((int *) &val);
+   const int flt_m = flt & 0x7fffff;
+   const int flt_e = (flt >> 23) & 0xff;
+   const int flt_s = (flt >> 31) & 0x1;
+   int s, e, m;
+   GLhalfNV result;
+   
+   /* sign bit */
+   s = flt_s;
+
+   /* handle special cases */
+   if ((flt_e == 0) && (flt_m == 0)) {
+      /* zero */
+      m = 0;
+      e = 0;
+   }
+   else if ((flt_e == 0) && (flt_m != 0)) {
+      /* denorm -- denorm float maps to 0 half */
+      m = 0;
+      e = 0;
+   }
+   else if ((flt_e == 0xff) && (flt_m == 0)) {
+      /* infinity */
+      m = 0;
+      e = 31;
+   }
+   else if ((flt_e == 0xff) && (flt_m != 0)) {
+      /* NaN */
+      m = 1;
+      e = 31;
+   }
+   else {
+      /* regular number */
+      const int new_exp = flt_e - 127;
+      if (new_exp < -24) {
+         /* this maps to 0 */
+         m = 0;
+         e = 0;
+      }
+      else if (new_exp < -14) {
+         /* this maps to a denorm */
+         unsigned int exp_val = (unsigned int) (-14 - new_exp); /* 2^-exp_val*/
+         e = 0;
+         switch (exp_val) {
+            case 0:
+               _mesa_warning(NULL,
+                   "float_to_half: logical error in denorm creation!\n");
+               m = 0;
+               break;
+            case 1: m = 512 + (flt_m >> 14); break;
+            case 2: m = 256 + (flt_m >> 15); break;
+            case 3: m = 128 + (flt_m >> 16); break;
+            case 4: m = 64 + (flt_m >> 17); break;
+            case 5: m = 32 + (flt_m >> 18); break;
+            case 6: m = 16 + (flt_m >> 19); break;
+            case 7: m = 8 + (flt_m >> 20); break;
+            case 8: m = 4 + (flt_m >> 21); break;
+            case 9: m = 2 + (flt_m >> 22); break;
+            case 10: m = 1; break;
+         }
+      }
+      else if (new_exp > 15) {
+         /* map this value to infinity */
+         m = 0;
+         e = 31;
+      }
+      else {
+         /* regular */
+         e = new_exp + 15;
+         m = flt_m >> 13;
+      }
+   }
+
+   result = (s << 15) | (e << 10) | m;
+   return result;
+}
+
+
+/**
+ * Convert a 2-byte half float to a 4-byte float.
+ */
+float
+_mesa_half_to_float(GLhalfNV val)
+{
+   /* XXX could also use a 64K-entry lookup table */
+   const int m = val & 0x3ff;
+   const int e = (val >> 10) & 0x1f;
+   const int s = (val >> 15) & 0x1;
+   int flt_m, flt_e, flt_s, flt;
+   float result;
+
+   /* sign bit */
+   flt_s = s;
+
+   /* handle special cases */
+   if ((e == 0) && (m == 0)) {
+      /* zero */
+      flt_m = 0;
+      flt_e = 0;
+   }
+   else if ((e == 0) && (m != 0)) {
+      /* denorm -- denorm half will fit in non-denorm single */
+      const float half_denorm = 1.0f / 16384.0f; /* 2^-14 */
+      float mantissa = ((float) (m)) / 1024.0f;
+      float sign = s ? -1.0f : 1.0f;
+      return sign * mantissa * half_denorm;
+   }
+   else if ((e == 31) && (m == 0)) {
+      /* infinity */
+      flt_e = 0xff;
+      flt_m = 0;
+   }
+   else if ((e == 31) && (m != 0)) {
+      /* NaN */
+      flt_e = 0xff;
+      flt_m = 1;
+   }
+   else {
+      /* regular */
+      flt_e = e + 112;
+      flt_m = m << 13;
+   }
+
+   flt = (flt_s << 31) | (flt_e << 23) | flt_m;
+   result = *((float *) &flt);
+   return result;
+}
+
 /*@}*/
 
 
@@ -529,7 +669,9 @@ _mesa_bitcount(unsigned int n)
 /** \name Environment vars */
 /*@{*/
 
-/** Wrapper around either () or xf86() */
+/**
+ * Wrapper for getenv().
+ */
 char *
 _mesa_getenv( const char *var )
 {

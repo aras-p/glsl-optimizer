@@ -161,6 +161,8 @@ GLint _mesa_sizeof_type( GLenum type )
 	 return sizeof(GLint);
       case GL_FLOAT:
 	 return sizeof(GLfloat);
+      case GL_HALF_FLOAT_NV:
+	 return sizeof(GLhalfNV);
       default:
          return -1;
    }
@@ -188,6 +190,8 @@ GLint _mesa_sizeof_packed_type( GLenum type )
 	 return sizeof(GLuint);
       case GL_INT:
 	 return sizeof(GLint);
+      case GL_HALF_FLOAT_NV:
+	 return sizeof(GLhalfNV);
       case GL_FLOAT:
 	 return sizeof(GLfloat);
       case GL_UNSIGNED_BYTE_3_3_2:
@@ -297,6 +301,8 @@ GLint _mesa_bytes_per_pixel( GLenum format, GLenum type )
          return comps * sizeof(GLint);
       case GL_FLOAT:
          return comps * sizeof(GLfloat);
+      case GL_HALF_FLOAT_NV:
+         return comps * sizeof(GLhalfNV);
       case GL_UNSIGNED_BYTE_3_3_2:
       case GL_UNSIGNED_BYTE_2_3_3_REV:
          if (format == GL_RGB || format == GL_BGR)
@@ -361,6 +367,7 @@ _mesa_is_legal_format_and_type( GLenum format, GLenum type )
             case GL_INT:
             case GL_UNSIGNED_INT:
             case GL_FLOAT:
+            case GL_HALF_FLOAT_NV:
                return GL_TRUE;
             default:
                return GL_FALSE;
@@ -381,6 +388,7 @@ _mesa_is_legal_format_and_type( GLenum format, GLenum type )
             case GL_INT:
             case GL_UNSIGNED_INT:
             case GL_FLOAT:
+            case GL_HALF_FLOAT_NV:
                return GL_TRUE;
             default:
                return GL_FALSE;
@@ -395,6 +403,7 @@ _mesa_is_legal_format_and_type( GLenum format, GLenum type )
             case GL_INT:
             case GL_UNSIGNED_INT:
             case GL_FLOAT:
+            case GL_HALF_FLOAT_NV:
             case GL_UNSIGNED_BYTE_3_3_2:
             case GL_UNSIGNED_BYTE_2_3_3_REV:
             case GL_UNSIGNED_SHORT_5_6_5:
@@ -414,6 +423,7 @@ _mesa_is_legal_format_and_type( GLenum format, GLenum type )
             case GL_INT:
             case GL_UNSIGNED_INT:
             case GL_FLOAT:
+            case GL_HALF_FLOAT_NV:
             case GL_UNSIGNED_SHORT_4_4_4_4:
             case GL_UNSIGNED_SHORT_4_4_4_4_REV:
             case GL_UNSIGNED_SHORT_5_5_5_1:
@@ -1538,6 +1548,82 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
             }
          }
          break;
+      case GL_HALF_FLOAT_NV:
+         {
+            GLhalfNV *dst = (GLhalfNV *) dstAddr;
+            switch (dstFormat) {
+               case GL_RED:
+                  for (i=0;i<n;i++)
+                     dst[i] = _mesa_float_to_half(rgba[i][RCOMP]);
+                  break;
+               case GL_GREEN:
+                  for (i=0;i<n;i++)
+                     dst[i] = _mesa_float_to_half(rgba[i][GCOMP]);
+                  break;
+               case GL_BLUE:
+                  for (i=0;i<n;i++)
+                     dst[i] = _mesa_float_to_half(rgba[i][BCOMP]);
+                  break;
+               case GL_ALPHA:
+                  for (i=0;i<n;i++)
+                     dst[i] = _mesa_float_to_half(rgba[i][ACOMP]);
+                  break;
+               case GL_LUMINANCE:
+                  for (i=0;i<n;i++)
+                     dst[i] = _mesa_float_to_half(luminance[i]);
+                  break;
+               case GL_LUMINANCE_ALPHA:
+                  for (i=0;i<n;i++) {
+                     dst[i*2+0] = _mesa_float_to_half(luminance[i]);
+                     dst[i*2+1] = _mesa_float_to_half(rgba[i][ACOMP]);
+                  }
+                  break;
+               case GL_RGB:
+                  for (i=0;i<n;i++) {
+                     dst[i*3+0] = _mesa_float_to_half(rgba[i][RCOMP]);
+                     dst[i*3+1] = _mesa_float_to_half(rgba[i][GCOMP]);
+                     dst[i*3+2] = _mesa_float_to_half(rgba[i][BCOMP]);
+                  }
+                  break;
+               case GL_RGBA:
+                  for (i=0;i<n;i++) {
+                     dst[i*4+0] = _mesa_float_to_half(rgba[i][RCOMP]);
+                     dst[i*4+1] = _mesa_float_to_half(rgba[i][GCOMP]);
+                     dst[i*4+2] = _mesa_float_to_half(rgba[i][BCOMP]);
+                     dst[i*4+3] = _mesa_float_to_half(rgba[i][ACOMP]);
+                  }
+                  break;
+               case GL_BGR:
+                  for (i=0;i<n;i++) {
+                     dst[i*3+0] = _mesa_float_to_half(rgba[i][BCOMP]);
+                     dst[i*3+1] = _mesa_float_to_half(rgba[i][GCOMP]);
+                     dst[i*3+2] = _mesa_float_to_half(rgba[i][RCOMP]);
+                  }
+                  break;
+               case GL_BGRA:
+                  for (i=0;i<n;i++) {
+                     dst[i*4+0] = _mesa_float_to_half(rgba[i][BCOMP]);
+                     dst[i*4+1] = _mesa_float_to_half(rgba[i][GCOMP]);
+                     dst[i*4+2] = _mesa_float_to_half(rgba[i][RCOMP]);
+                     dst[i*4+3] = _mesa_float_to_half(rgba[i][ACOMP]);
+                  }
+                  break;
+               case GL_ABGR_EXT:
+                  for (i=0;i<n;i++) {
+                     dst[i*4+0] = _mesa_float_to_half(rgba[i][ACOMP]);
+                     dst[i*4+1] = _mesa_float_to_half(rgba[i][BCOMP]);
+                     dst[i*4+2] = _mesa_float_to_half(rgba[i][GCOMP]);
+                     dst[i*4+3] = _mesa_float_to_half(rgba[i][RCOMP]);
+                  }
+                  break;
+               default:
+                  _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
+            }
+            if (dstPacking->SwapBytes) {
+               _mesa_swap2( (GLushort *) dst, n * comps );
+            }
+         }
+         break;
       case GL_UNSIGNED_BYTE_3_3_2:
          if (dstFormat == GL_RGB) {
             GLubyte *dst = (GLubyte *) dstAddr;
@@ -1925,6 +2011,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
           srcType == GL_SHORT ||
           srcType == GL_UNSIGNED_INT ||
           srcType == GL_INT ||
+          srcType == GL_HALF_FLOAT_NV ||
           srcType == GL_FLOAT);
 
    switch (srcType) {
@@ -2062,6 +2149,23 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
             }
          }
          break;
+      case GL_HALF_FLOAT_NV:
+         {
+            GLuint i;
+            const GLhalfNV *s = (const GLhalfNV *) src;
+            if (unpack->SwapBytes) {
+               for (i = 0; i < n; i++) {
+                  GLhalfNV value = s[i];
+                  SWAP2BYTE(value);
+                  indexes[i] = (GLuint) _mesa_half_to_float(value);
+               }
+            }
+            else {
+               for (i = 0; i < n; i++)
+                  indexes[i] = (GLuint) _mesa_half_to_float(s[i]);
+            }
+         }
+         break;
       default:
          _mesa_problem(NULL, "bad srcType in extract_uint_indexes");
          return;
@@ -2113,6 +2217,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
           srcType == GL_SHORT ||
           srcType == GL_UNSIGNED_INT ||
           srcType == GL_INT ||
+          srcType == GL_HALF_FLOAT_NV ||
           srcType == GL_FLOAT ||
           srcType == GL_UNSIGNED_BYTE_3_3_2 ||
           srcType == GL_UNSIGNED_BYTE_2_3_3_REV ||
@@ -2290,6 +2395,12 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
          PROCESS(greenIndex, GCOMP, 0.0F, GLfloat, (GLfloat));
          PROCESS(blueIndex,  BCOMP, 0.0F, GLfloat, (GLfloat));
          PROCESS(alphaIndex, ACOMP, 1.0F, GLfloat, (GLfloat));
+         break;
+      case GL_HALF_FLOAT_NV:
+         PROCESS(redIndex,   RCOMP, 0.0F, GLhalfNV, _mesa_half_to_float);
+         PROCESS(greenIndex, GCOMP, 0.0F, GLhalfNV, _mesa_half_to_float);
+         PROCESS(blueIndex,  BCOMP, 0.0F, GLhalfNV, _mesa_half_to_float);
+         PROCESS(alphaIndex, ACOMP, 1.0F, GLhalfNV, _mesa_half_to_float);
          break;
       case GL_UNSIGNED_BYTE_3_3_2:
          {
@@ -2626,6 +2737,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
           srcType == GL_SHORT ||
           srcType == GL_UNSIGNED_INT ||
           srcType == GL_INT ||
+          srcType == GL_HALF_FLOAT_NV ||
           srcType == GL_FLOAT ||
           srcType == GL_UNSIGNED_BYTE_3_3_2 ||
           srcType == GL_UNSIGNED_BYTE_2_3_3_REV ||
@@ -3019,6 +3131,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
           srcType == GL_SHORT ||
           srcType == GL_UNSIGNED_INT ||
           srcType == GL_INT ||
+          srcType == GL_HALF_FLOAT_NV ||
           srcType == GL_FLOAT ||
           srcType == GL_UNSIGNED_BYTE_3_3_2 ||
           srcType == GL_UNSIGNED_BYTE_2_3_3_REV ||
@@ -3285,6 +3398,7 @@ _mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
           srcType == GL_SHORT ||
           srcType == GL_UNSIGNED_INT ||
           srcType == GL_INT ||
+          srcType == GL_HALF_FLOAT_NV ||
           srcType == GL_FLOAT);
 
    ASSERT(dstType == GL_UNSIGNED_BYTE ||
@@ -3457,6 +3571,18 @@ _mesa_pack_index_span( const GLcontext *ctx, GLuint n,
          }
       }
       break;
+   case GL_HALF_FLOAT_NV:
+      {
+         GLhalfNV *dst = (GLhalfNV *) dest;
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            dst[i] = _mesa_float_to_half((GLfloat) source[i]);
+         }
+         if (dstPacking->SwapBytes) {
+            _mesa_swap2( (GLushort *) dst, n );
+         }
+      }
+      break;
    default:
       _mesa_problem(ctx, "bad type in _mesa_pack_index_span");
    }
@@ -3491,6 +3617,7 @@ _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
           srcType == GL_SHORT ||
           srcType == GL_UNSIGNED_INT ||
           srcType == GL_INT ||
+          srcType == GL_HALF_FLOAT_NV ||
           srcType == GL_FLOAT);
 
    ASSERT(dstType == GL_UNSIGNED_BYTE ||
@@ -3677,6 +3804,18 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
          }
       }
       break;
+   case GL_HALF_FLOAT_NV:
+      {
+         GLhalfNV *dst = (GLhalfNV *) dest;
+         GLuint i;
+         for (i=0;i<n;i++) {
+            dst[i] = _mesa_half_to_float(source[i]);
+         }
+         if (dstPacking->SwapBytes) {
+            _mesa_swap2( (GLushort *) dst, n );
+         }
+      }
+      break;
    case GL_BITMAP:
       if (dstPacking->LsbFirst) {
          GLubyte *dst = (GLubyte *) dest;
@@ -3777,6 +3916,15 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
          break;
       case GL_FLOAT:
          MEMCPY(dest, source, n * sizeof(GLfloat));
+         break;
+      case GL_HALF_FLOAT_NV:
+         {
+            GLuint i;
+            const GLhalfNV *src = (const GLhalfNV *) source;
+            for (i = 0; i < n; i++) {
+               dest[i] = _mesa_half_to_float(src[i]);
+            }
+         }
          break;
       default:
          _mesa_problem(NULL, "bad type in _mesa_unpack_depth_span()");
@@ -3895,6 +4043,18 @@ _mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLvoid *dest,
          }
          if (dstPacking->SwapBytes) {
             _mesa_swap4( (GLuint *) dst, n );
+         }
+      }
+      break;
+   case GL_HALF_FLOAT_NV:
+      {
+         GLhalfNV *dst = (GLhalfNV *) dest;
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            dst[i] = _mesa_float_to_half(depthSpan[i]);
+         }
+         if (dstPacking->SwapBytes) {
+            _mesa_swap2( (GLushort *) dst, n );
          }
       }
       break;
