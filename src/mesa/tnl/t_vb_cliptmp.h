@@ -1,4 +1,4 @@
-/* $Id: t_vb_cliptmp.h,v 1.9 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_vb_cliptmp.h,v 1.10 2001/03/19 02:25:37 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -122,8 +122,9 @@ static __inline void TAG(clip_line)( GLcontext *ctx,
 				     GLuint i, GLuint j,
 				     GLubyte mask )
 {
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   interp_func interp = ctx->Driver.RenderInterp;
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   interp_func interp = tnl->Driver.RenderInterp;
    GLfloat (*coord)[4] = VB->ClipPtr->data;
    GLuint ii = i, jj = j, p;
 
@@ -151,9 +152,9 @@ static __inline void TAG(clip_line)( GLcontext *ctx,
    }
 
    if ((ctx->_TriangleCaps & DD_FLATSHADE) && j != jj)
-      ctx->Driver.RenderCopyPV( ctx, jj, j );
+      tnl->Driver.RenderCopyPV( ctx, jj, j );
 
-   ctx->Driver.RenderClippedLine( ctx, ii, jj );
+   tnl->Driver.RenderClippedLine( ctx, ii, jj );
 }
 
 
@@ -163,8 +164,9 @@ static __inline void TAG(clip_tri)( GLcontext *ctx,
 			   GLuint v0, GLuint v1, GLuint v2,
 			   GLubyte mask )
 {
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   interp_func interp = ctx->Driver.RenderInterp;
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   interp_func interp = tnl->Driver.RenderInterp;
    GLfloat (*coord)[4] = VB->ClipPtr->data;
    GLuint pv = v0;
    GLuint vlist[2][MAX_CLIPPED_VERTICES];
@@ -201,11 +203,11 @@ static __inline void TAG(clip_tri)( GLcontext *ctx,
    if (ctx->_TriangleCaps & DD_FLATSHADE) {
       if (pv != inlist[0]) {
 	 ASSERT( inlist[0] >= VB->FirstClipped );
-	 ctx->Driver.RenderCopyPV( ctx, inlist[0], pv );
+	 tnl->Driver.RenderCopyPV( ctx, inlist[0], pv );
       }
    }
 
-   ctx->Driver.RenderClippedPolygon( ctx, inlist, n );
+   tnl->Driver.RenderClippedPolygon( ctx, inlist, n );
 }
 
 
@@ -215,8 +217,9 @@ static __inline void TAG(clip_quad)( GLcontext *ctx,
 				     GLuint v0, GLuint v1, GLuint v2, GLuint v3,
 				     GLubyte mask )
 {
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   interp_func interp = ctx->Driver.RenderInterp;
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   interp_func interp = tnl->Driver.RenderInterp;
    GLfloat (*coord)[4] = VB->ClipPtr->data;
    GLuint pv = v0;
    GLuint vlist[2][MAX_CLIPPED_VERTICES];
@@ -253,11 +256,11 @@ static __inline void TAG(clip_quad)( GLcontext *ctx,
    if (ctx->_TriangleCaps & DD_FLATSHADE) {
       if (pv != inlist[0]) {
 	 ASSERT( inlist[0] >= VB->FirstClipped );
-	 ctx->Driver.RenderCopyPV( ctx, inlist[0], pv );
+	 tnl->Driver.RenderCopyPV( ctx, inlist[0], pv );
       }
    }
 
-   ctx->Driver.RenderClippedPolygon( ctx, inlist, n );
+   tnl->Driver.RenderClippedPolygon( ctx, inlist, n );
 }
 
 #undef W

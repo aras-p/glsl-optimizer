@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.17 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: s_context.c,v 1.18 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -316,6 +316,27 @@ _swrast_invalidate_state( GLcontext *ctx, GLuint new_state )
    if (new_state & _SWRAST_NEW_TEXTURE_SAMPLE_FUNC)
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
 	 swrast->TextureSample[i] = _swrast_validate_texture_sample;
+
+
+   if (ctx->Visual.rgbMode) {
+      ASSERT(swrast->Driver.WriteRGBASpan);
+      ASSERT(swrast->Driver.WriteRGBSpan);
+      ASSERT(swrast->Driver.WriteMonoRGBASpan);
+      ASSERT(swrast->Driver.WriteRGBAPixels);
+      ASSERT(swrast->Driver.WriteMonoRGBAPixels);
+      ASSERT(swrast->Driver.ReadRGBASpan);
+      ASSERT(swrast->Driver.ReadRGBAPixels);
+   }
+   else {
+      ASSERT(swrast->Driver.WriteCI32Span);
+      ASSERT(swrast->Driver.WriteCI8Span);
+      ASSERT(swrast->Driver.WriteMonoCISpan);
+      ASSERT(swrast->Driver.WriteCI32Pixels);
+      ASSERT(swrast->Driver.WriteMonoCIPixels);
+      ASSERT(swrast->Driver.ReadCI32Span);
+      ASSERT(swrast->Driver.ReadCI32Pixels);
+   }
+
 }
 
 
@@ -468,6 +489,14 @@ _swrast_DestroyContext( GLcontext *ctx )
    FREE( swrast );
 
    ctx->swrast_context = 0;
+}
+
+
+struct swrast_device_driver *
+_swrast_GetDeviceDriverReference( GLcontext *ctx )
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   return &swrast->Driver;
 }
 
 

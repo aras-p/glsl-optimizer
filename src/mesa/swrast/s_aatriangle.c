@@ -1,4 +1,4 @@
-/* $Id: s_aatriangle.c,v 1.9 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: s_aatriangle.c,v 1.10 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -395,7 +395,7 @@ spec_multitex_aa_tri(GLcontext *ctx,
 
 
 /*
- * Examine GL state and set ctx->Driver.TriangleFunc to an
+ * Examine GL state and set swrast->Triangle to an
  * appropriate antialiased triangle rasterizer function.
  */
 void

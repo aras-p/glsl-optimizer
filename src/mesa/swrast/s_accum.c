@@ -1,4 +1,4 @@
-/* $Id: s_accum.c,v 1.8 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: s_accum.c,v 1.9 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -312,8 +312,8 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
          if (value == 0.0F)
             return;
 
-         (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
-                                       ctx->Pixel.DriverReadBuffer );
+         (*swrast->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+					  ctx->Pixel.DriverReadBuffer );
 
          /* May have to leave optimized accum buffer mode */
          if (swrast->_IntegerAccumScaler == 0.0 && value > 0.0 && value <= 1.0)
@@ -321,7 +321,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
          if (swrast->_IntegerAccumMode && value != swrast->_IntegerAccumScaler)
             rescale_accum(ctx);
 
-         RENDER_START(ctx);
+         RENDER_START(swrast,ctx);
 
          if (swrast->_IntegerAccumMode) {
             /* simply add integer color values into accum buffer */
@@ -364,14 +364,14 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             }
          }
          /* restore read buffer = draw buffer (the default) */
-         (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
-                                       ctx->Color.DriverDrawBuffer );
-         RENDER_FINISH(ctx);
+         (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
+					  ctx->Color.DriverDrawBuffer );
+         RENDER_FINISH(swrast,ctx);
 	 break;
 
       case GL_LOAD:
-         (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
-                                       ctx->Pixel.DriverReadBuffer );
+         (*swrast->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+					  ctx->Pixel.DriverReadBuffer );
 
          /* This is a change to go into optimized accum buffer mode */
          if (value > 0.0 && value <= 1.0) {
@@ -387,7 +387,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             swrast->_IntegerAccumScaler = 0.0;
          }
 
-         RENDER_START(ctx);
+         RENDER_START(swrast,ctx);
          if (swrast->_IntegerAccumMode) {
             /* just copy values into accum buffer */
             GLint j;
@@ -429,9 +429,9 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
          }
 
          /* restore read buffer = draw buffer (the default) */
-         (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
+         (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
                                        ctx->Color.DriverDrawBuffer );
-         RENDER_FINISH(ctx);
+         RENDER_FINISH(swrast,ctx);
 	 break;
 
       case GL_RETURN:
@@ -439,7 +439,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
          if (swrast->_IntegerAccumMode && value != 1.0)
             rescale_accum(ctx);
 
-         RENDER_START(ctx);
+         RENDER_START(swrast,ctx);
          if (swrast->_IntegerAccumMode && swrast->_IntegerAccumScaler > 0) {
             /* build lookup table to avoid many floating point multiplies */
             static GLchan multTable[32768];
@@ -471,7 +471,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
                if (colorMask != 0xffffffff) {
                   _mesa_mask_rgba_span( ctx, width, xpos, ypos, rgba );
                }
-               (*ctx->Driver.WriteRGBASpan)( ctx, width, xpos, ypos,
+               (*swrast->Driver.WriteRGBASpan)( ctx, width, xpos, ypos,
                                              (const GLchan (*)[4])rgba, NULL );
                if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
                    && ctx->Color.ColorMask[ACOMP]) {
@@ -503,7 +503,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
                if (colorMask != 0xffffffff) {
                   _mesa_mask_rgba_span( ctx, width, xpos, ypos, rgba );
                }
-               (*ctx->Driver.WriteRGBASpan)( ctx, width, xpos, ypos,
+               (*swrast->Driver.WriteRGBASpan)( ctx, width, xpos, ypos,
                                              (const GLchan (*)[4])rgba, NULL );
                if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
                    && ctx->Color.ColorMask[ACOMP]) {
@@ -513,7 +513,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
                ypos++;
             }
 	 }
-         RENDER_FINISH(ctx);
+         RENDER_FINISH(swrast,ctx);
 	 break;
 
       default:

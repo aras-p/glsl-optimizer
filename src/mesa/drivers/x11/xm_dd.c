@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.18 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.19 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,6 +41,7 @@
 #include "swrast/s_alphabuf.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
+#include "tnl/t_context.h"
 
 
 /*
@@ -181,8 +182,8 @@ set_draw_buffer( GLcontext *ctx, GLenum mode )
 }
 
 
-static void
-set_read_buffer( GLcontext *ctx, GLframebuffer *buffer, GLenum mode )
+void
+xmesa_set_read_buffer( GLcontext *ctx, GLframebuffer *buffer, GLenum mode )
 {
    XMesaBuffer target;
    const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
@@ -933,27 +934,13 @@ void xmesa_update_state( GLcontext *ctx, GLuint new_state )
  */
 void xmesa_init_pointers( GLcontext *ctx )
 {
+   TNLcontext *tnl;
+
    ctx->Driver.GetString = get_string;
    ctx->Driver.GetBufferSize = get_buffer_size;
    ctx->Driver.Flush = flush;
    ctx->Driver.Finish = finish;
- 
-   /* Hooks for t_vb_render.c:
-    */
-   ctx->Driver.RenderStart = _swsetup_RenderStart;
-   ctx->Driver.RenderFinish = _swsetup_RenderFinish;
-   ctx->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
-   ctx->Driver.RenderPrimitive = _swsetup_RenderPrimitive;
-   ctx->Driver.PointsFunc = _swsetup_Points;
-   ctx->Driver.LineFunc = _swsetup_Line;
-   ctx->Driver.TriangleFunc = _swsetup_Triangle;
-   ctx->Driver.QuadFunc = _swsetup_Quad;
-   ctx->Driver.ResetLineStipple = _swrast_ResetLineStipple;
-   ctx->Driver.RenderInterp = _swsetup_RenderInterp;
-   ctx->Driver.RenderCopyPV = _swsetup_RenderCopyPV;
-   ctx->Driver.RenderClippedLine = _swsetup_RenderClippedLine;
-   ctx->Driver.RenderClippedPolygon = _swsetup_RenderClippedPolygon;
-   
+    
    /* Software rasterizer pixel paths:
     */
    ctx->Driver.Accum = _swrast_Accum;
@@ -972,22 +959,49 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
    ctx->Driver.TexSubImage2D = _mesa_store_texsubimage2d;
    ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
-   ctx->Driver.CopyTexImage1D = _mesa_copy_teximage1d;
-   ctx->Driver.CopyTexImage2D = _mesa_copy_teximage2d;
-   ctx->Driver.CopyTexSubImage1D = _mesa_copy_texsubimage1d;
-   ctx->Driver.CopyTexSubImage2D = _mesa_copy_texsubimage2d;
-   ctx->Driver.CopyTexSubImage3D = _mesa_copy_texsubimage3d;
    ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
 
-   /* 
+   ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
+   ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
+   ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
+   ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
+   ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
+
+
+   /* Swrast hooks for imaging extensions:
+    */
+   ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
+   ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
+   ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
+   ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
+
+
+   /* Statechange callbacks:
     */
    ctx->Driver.SetDrawBuffer = set_draw_buffer;
-   ctx->Driver.SetReadBuffer = set_read_buffer;
    ctx->Driver.ClearIndex = clear_index;
    ctx->Driver.ClearColor = clear_color;
    ctx->Driver.IndexMask = index_mask;
    ctx->Driver.ColorMask = color_mask;
    ctx->Driver.Enable = enable;
+
+
+   /* Initialize the TNL driver interface:
+    */
+   tnl = TNL_CONTEXT(ctx);
+   tnl->Driver.RenderStart = _swsetup_RenderStart;
+   tnl->Driver.RenderFinish = _swsetup_RenderFinish;
+   tnl->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
+   tnl->Driver.RenderPrimitive = _swsetup_RenderPrimitive;
+   tnl->Driver.PointsFunc = _swsetup_Points;
+   tnl->Driver.LineFunc = _swsetup_Line;
+   tnl->Driver.TriangleFunc = _swsetup_Triangle;
+   tnl->Driver.QuadFunc = _swsetup_Quad;
+   tnl->Driver.ResetLineStipple = _swrast_ResetLineStipple;
+   tnl->Driver.RenderInterp = _swsetup_RenderInterp;
+   tnl->Driver.RenderCopyPV = _swsetup_RenderCopyPV;
+   tnl->Driver.RenderClippedLine = _swsetup_RenderClippedLine;
+   tnl->Driver.RenderClippedPolygon = _swsetup_RenderClippedPolygon;
 
    (void) DitherValues;  /* silenced unused var warning */
 }

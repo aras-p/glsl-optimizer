@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.18 2001/03/08 15:23:46 brianp Exp $ */
+/* $Id: xm_api.c,v 1.19 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1659,10 +1659,6 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    c->driContextPriv = driContextPriv;
 #endif
 
-   /* Set up some constant pointers:
-    */
-   xmesa_init_pointers( ctx );
-
    /* Initialize the software rasterizer and helper modules.
     */
    _swrast_CreateContext( ctx );
@@ -1671,6 +1667,11 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    _swsetup_CreateContext( ctx );
 
    xmesa_register_swrast_functions( ctx );
+
+   /* Set up some constant pointers:
+    */
+   xmesa_init_pointers( ctx );
+
 
    /* Run the config file
     */
@@ -1692,6 +1693,8 @@ void XMesaDestroyContext( XMesaContext c )
    if (c->gl_ctx) {
       _swsetup_DestroyContext( c->gl_ctx );
       _swrast_DestroyContext( c->gl_ctx );
+      _tnl_DestroyContext( c->gl_ctx );
+      _ac_DestroyContext( c->gl_ctx );
       _mesa_destroy_context( c->gl_ctx );
    }
 

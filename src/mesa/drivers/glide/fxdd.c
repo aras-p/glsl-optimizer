@@ -60,6 +60,7 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
+#include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 #include "array_cache/acache.h"
 
@@ -300,27 +301,6 @@ fxDDSetDrawBuffer(GLcontext * ctx, GLenum mode)
 }
 
 
-/* Set the buffer used for reading */
-/* XXX support for separate read/draw buffers hasn't been tested */
-static void
-fxDDSetReadBuffer(GLcontext * ctx, GLframebuffer * buffer, GLenum mode)
-{
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
-   (void) buffer;
-
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxDDSetBuffer(%x)\n", (int) mode);
-   }
-
-   if (mode == GL_FRONT_LEFT) {
-      fxMesa->currentFB = GR_BUFFER_FRONTBUFFER;
-      FX_grRenderBuffer(fxMesa->currentFB);
-   }
-   else if (mode == GL_BACK_LEFT) {
-      fxMesa->currentFB = GR_BUFFER_BACKBUFFER;
-      FX_grRenderBuffer(fxMesa->currentFB);
-   }
-}
 
 
 
@@ -984,6 +964,7 @@ update_texture_scales(GLcontext * ctx)
 static void
 fxDDUpdateDDPointers(GLcontext * ctx, GLuint new_state)
 {
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
    _swrast_InvalidateState(ctx, new_state);
@@ -1000,7 +981,6 @@ fxDDUpdateDDPointers(GLcontext * ctx, GLuint new_state)
    if (new_state & (_FX_NEW_IS_IN_HARDWARE |
 		    _FX_NEW_RENDERSTATE |
 		    _FX_NEW_SETUP_FUNCTION | _NEW_TEXTURE)) {
-      fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
 
       if (new_state & _FX_NEW_IS_IN_HARDWARE)
 	 fxMesa->is_in_hardware = fxIsInHardware(ctx);
@@ -1012,7 +992,7 @@ fxDDUpdateDDPointers(GLcontext * ctx, GLuint new_state)
 	 fxDDChooseRenderState(ctx);
 
       if (new_state & _FX_NEW_SETUP_FUNCTION)
-	 ctx->Driver.BuildProjectedVertices = fx_validate_BuildProjVerts;
+	 tnl->Driver.BuildProjectedVertices = fx_validate_BuildProjVerts;
 
       if (new_state & _NEW_TEXTURE)
 	 update_texture_scales(ctx);
@@ -1071,68 +1051,48 @@ fxDDRenderFinish(GLcontext * ctx)
 void
 fxSetupDDPointers(GLcontext * ctx)
 {
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+
    if (MESA_VERBOSE & VERBOSE_DRIVER) {
       fprintf(stderr, "fxmesa: fxSetupDDPointers()\n");
    }
 
    ctx->Driver.UpdateState = fxDDUpdateDDPointers;
-
-   ctx->Driver.WriteDepthSpan = fxDDWriteDepthSpan;
-   ctx->Driver.WriteDepthPixels = fxDDWriteDepthPixels;
-   ctx->Driver.ReadDepthSpan = fxDDReadDepthSpan;
-   ctx->Driver.ReadDepthPixels = fxDDReadDepthPixels;
-
    ctx->Driver.GetString = fxDDGetString;
-
    ctx->Driver.ClearIndex = NULL;
    ctx->Driver.ClearColor = fxDDClearColor;
    ctx->Driver.Clear = fxDDClear;
-
    ctx->Driver.SetDrawBuffer = fxDDSetDrawBuffer;
-   ctx->Driver.SetReadBuffer = fxDDSetReadBuffer;
    ctx->Driver.GetBufferSize = fxDDBufferSize;
-
    ctx->Driver.Accum = _swrast_Accum;
    ctx->Driver.Bitmap = fxDDDrawBitmap;
    ctx->Driver.CopyPixels = _swrast_CopyPixels;
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
    ctx->Driver.ReadPixels = fxDDReadPixels;
    ctx->Driver.ResizeBuffersMESA = _swrast_alloc_buffers;
-
    ctx->Driver.Finish = fxDDFinish;
    ctx->Driver.Flush = NULL;
-
-   ctx->Driver.RenderStart = fxDDRenderStart;
-   ctx->Driver.RenderFinish = fxDDRenderFinish;
-   ctx->Driver.ResetLineStipple = _swrast_ResetLineStipple;
-   ctx->Driver.RenderPrimitive = fxDDRenderPrimitive;
-
-   /* Install the oldstyle interp functions:
-    */
-   ctx->Driver.RenderInterp = _swsetup_RenderInterp;
-   ctx->Driver.RenderCopyPV = _swsetup_RenderCopyPV;
-   ctx->Driver.RenderClippedLine = _swsetup_RenderClippedLine;
-   ctx->Driver.RenderClippedPolygon = _swsetup_RenderClippedPolygon;
-
    ctx->Driver.TexImage1D = _mesa_store_teximage1d;
    ctx->Driver.TexImage2D = fxDDTexImage2D;
    ctx->Driver.TexImage3D = _mesa_store_teximage3d;
    ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
    ctx->Driver.TexSubImage2D = fxDDTexSubImage2D;
    ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
-   ctx->Driver.CopyTexImage1D = _mesa_copy_teximage1d;
-   ctx->Driver.CopyTexImage2D = _mesa_copy_teximage2d;
-   ctx->Driver.CopyTexSubImage1D = _mesa_copy_texsubimage1d;
-   ctx->Driver.CopyTexSubImage2D = _mesa_copy_texsubimage2d;
-   ctx->Driver.CopyTexSubImage3D = _mesa_copy_texsubimage3d;
+   ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
+   ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
+   ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
+   ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
+   ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
    ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
-
+   ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
+   ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
+   ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
+   ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
    ctx->Driver.TexEnv = fxDDTexEnv;
    ctx->Driver.TexParameter = fxDDTexParam;
    ctx->Driver.BindTexture = fxDDTexBind;
    ctx->Driver.DeleteTexture = fxDDTexDel;
    ctx->Driver.UpdateTexturePalette = fxDDTexPalette;
-
    ctx->Driver.AlphaFunc = fxDDAlphaFunc;
    ctx->Driver.BlendFunc = fxDDBlendFunc;
    ctx->Driver.DepthFunc = fxDDDepthFunc;
@@ -1145,7 +1105,14 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.ShadeModel = fxDDShadeModel;
    ctx->Driver.Enable = fxDDEnable;
 
-
+   tnl->Driver.RenderStart = fxDDRenderStart;
+   tnl->Driver.RenderFinish = fxDDRenderFinish;
+   tnl->Driver.ResetLineStipple = _swrast_ResetLineStipple;
+   tnl->Driver.RenderPrimitive = fxDDRenderPrimitive;
+   tnl->Driver.RenderInterp = _swsetup_RenderInterp;
+   tnl->Driver.RenderCopyPV = _swsetup_RenderCopyPV;
+   tnl->Driver.RenderClippedLine = _swsetup_RenderClippedLine;
+   tnl->Driver.RenderClippedPolygon = _swsetup_RenderClippedPolygon;
 
    fxSetupDDSpanPointers(ctx);
    fxDDUpdateDDPointers(ctx, ~0);

@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.17 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_context.h,v 1.18 2001/03/19 02:25:37 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -364,7 +364,106 @@ struct tnl_eval_store {
    GLuint  Elts[IMM_SIZE];
 };
 
+
+typedef void (*points_func)( GLcontext *ctx, GLuint first, GLuint last );
+typedef void (*line_func)( GLcontext *ctx, GLuint v1, GLuint v2 );
+typedef void (*triangle_func)( GLcontext *ctx,
+                               GLuint v1, GLuint v2, GLuint v3 );
+typedef void (*quad_func)( GLcontext *ctx, GLuint v1, GLuint v2,
+                           GLuint v3, GLuint v4 );
+typedef void (*render_func)( GLcontext *ctx, GLuint start, GLuint count,
+			     GLuint flags );
+typedef void (*interp_func)( GLcontext *ctx,
+			     GLfloat t, GLuint dst, GLuint in, GLuint out,
+			     GLboolean force_boundary );
+typedef void (*copy_pv_func)( GLcontext *ctx, GLuint dst, GLuint src );
+
+
+struct tnl_device_driver {
+   /***
+    *** TNL Pipeline
+    ***/
+
+   void (*PipelineStart)(GLcontext *ctx);
+   void (*PipelineFinish)(GLcontext *ctx);
+   /* Called before and after all pipeline stages.
+    * These are a suitable place for grabbing/releasing hardware locks.
+    */
+
+   /***
+    *** Rendering
+    ***/
+
+   void (*RenderStart)(GLcontext *ctx);
+   void (*RenderFinish)(GLcontext *ctx);
+   /* Called before and after all rendering operations, including DrawPixels,
+    * ReadPixels, Bitmap, span functions, and CopyTexImage, etc commands.
+    * These are a suitable place for grabbing/releasing hardware locks.
+    */
+
+   void (*RenderPrimitive)(GLcontext *ctx, GLenum mode);
+   /* Called between RednerStart() and RenderFinish() to indicate the
+    * type of primitive we're about to draw.  Mode will be one of the
+    * modes accepted by glBegin().
+    */
+
+   interp_func RenderInterp;
+   copy_pv_func RenderCopyPV;
+   void (*RenderClippedPolygon)( GLcontext *ctx, const GLuint *elts, GLuint n );
+   void (*RenderClippedLine)( GLcontext *ctx, GLuint v0, GLuint v1 );
+   /* Functions to interpolate between prebuilt vertices, copy flat-shade
+    * provoking color, and to render clipped primitives.
+    */
+
+   points_func           PointsFunc; /* must now respect vb->elts */
+   line_func             LineFunc;
+   triangle_func         TriangleFunc;
+   quad_func             QuadFunc;
+   /* These functions are called in order to render points, lines,
+    * triangles and quads.  These are only called via the T&L module.
+    */
+
+   render_func          *RenderTabVerts;
+   render_func          *RenderTabElts;
+   /* Render whole unclipped primitives (points, lines, linestrips,
+    * lineloops, etc).  The tables are indexed by the GL enum of the
+    * primitive to be rendered.
+    */
+
+   void (*ResetLineStipple)( GLcontext *ctx );
+   /* Reset the hardware's line stipple counter.
+    */
+
+   void (*BuildProjectedVertices)( GLcontext *ctx,
+				   GLuint start, GLuint end,
+				   GLuint new_inputs);
+   /* This function is called whenever new vertices are required for
+    * rendering.  The vertices in question are those n such that start
+    * <= n < end.  The new_inputs parameter indicates those fields of
+    * the vertex which need to be updated, if only a partial repair of
+    * the vertex is required.
+    *
+    * This function is called only from _tnl_render_stage in tnl/t_render.c.
+    */
+
+
+   GLboolean (*MultipassFunc)( GLcontext *ctx, GLuint passno );
+   /* Driver may request additional render passes by returning GL_TRUE
+    * when this function is called.  This function will be called
+    * after the first pass, and passes will be made until the function
+    * returns GL_FALSE.  If no function is registered, only one pass
+    * is made.
+    *
+    * This function will be first invoked with passno == 1.
+    */
+};
+
+
 typedef struct {
+
+   /* Driver interface.
+    */
+   struct tnl_device_driver Driver;
 
    /* Track whether the module is active.
     */
@@ -386,7 +485,10 @@ typedef struct {
    GLuint *tmp_primitive;
    GLuint *tmp_primitive_length;
 
-   /* Set when executing an internally generated immediate.
+   /* Set when executing an internally generated begin/end object.  If
+    * such an object is encountered in a display list, it will be
+    * replayed only if the list is outside any existing begin/end
+    * objects.  
     */
    GLboolean ReplayHardBeginEnd;
    GLenum CurrentPrimitive;

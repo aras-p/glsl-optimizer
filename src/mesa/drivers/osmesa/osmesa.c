@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.50 2001/03/08 17:33:33 brianp Exp $ */
+/* $Id: osmesa.c,v 1.51 2001/03/19 02:25:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,6 +55,7 @@
 #include "swrast/s_lines.h"
 #include "swrast/s_triangle.h"
 #include "tnl/tnl.h"
+#include "tnl/t_context.h"
 
 
 
@@ -343,6 +344,11 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
 void GLAPIENTRY OSMesaDestroyContext( OSMesaContext ctx )
 {
    if (ctx) {
+      _swsetup_DestroyContext( &ctx->gl_ctx );
+      _tnl_DestroyContext( &ctx->gl_ctx );
+      _ac_DestroyContext( &ctx->gl_ctx );
+      _swrast_DestroyContext( &ctx->gl_ctx );
+
       _mesa_destroy_visual( ctx->gl_visual );
       _mesa_destroy_framebuffer( ctx->gl_buffer );
       _mesa_free_context_data( &ctx->gl_ctx );
@@ -1757,6 +1763,8 @@ static const GLubyte *get_string( GLcontext *ctx, GLenum name )
 static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
+   struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference( ctx );
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
 
    ASSERT((void *) osmesa == (void *) ctx->DriverCtx);
 
@@ -1768,23 +1776,8 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.GetString = get_string;
    ctx->Driver.UpdateState = osmesa_update_state;
    ctx->Driver.SetDrawBuffer = set_draw_buffer;
-   ctx->Driver.SetReadBuffer = set_read_buffer;
    ctx->Driver.ResizeBuffersMESA = _swrast_alloc_buffers;
    ctx->Driver.GetBufferSize = buffer_size;
-
-   ctx->Driver.RenderStart = _swsetup_RenderStart;
-   ctx->Driver.RenderFinish = _swsetup_RenderFinish;
-   ctx->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
-   ctx->Driver.RenderPrimitive = _swsetup_RenderPrimitive;
-   ctx->Driver.PointsFunc = _swsetup_Points;
-   ctx->Driver.LineFunc = _swsetup_Line;
-   ctx->Driver.TriangleFunc = _swsetup_Triangle;
-   ctx->Driver.QuadFunc = _swsetup_Quad;
-   ctx->Driver.ResetLineStipple = _swrast_ResetLineStipple;
-   ctx->Driver.RenderInterp = _swsetup_RenderInterp;
-   ctx->Driver.RenderCopyPV = _swsetup_RenderCopyPV;
-   ctx->Driver.RenderClippedLine = _swsetup_RenderClippedLine;
-   ctx->Driver.RenderClippedPolygon = _swsetup_RenderClippedPolygon;
 
    ctx->Driver.Accum = _swrast_Accum;
    ctx->Driver.Bitmap = _swrast_Bitmap;
@@ -1799,61 +1792,83 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
    ctx->Driver.TexSubImage2D = _mesa_store_texsubimage2d;
    ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
-   ctx->Driver.CopyTexImage1D = _mesa_copy_teximage1d;
-   ctx->Driver.CopyTexImage2D = _mesa_copy_teximage2d;
-   ctx->Driver.CopyTexSubImage1D = _mesa_copy_texsubimage1d;
-   ctx->Driver.CopyTexSubImage2D = _mesa_copy_texsubimage2d;
-   ctx->Driver.CopyTexSubImage3D = _mesa_copy_texsubimage3d;
    ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
+
+   ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
+   ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
+   ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
+   ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
+   ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
+   ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
+   ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
+   ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
+   ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 
 
    /* RGB(A) span/pixel functions */
    if (osmesa->format == OSMESA_RGB) {
-      ctx->Driver.WriteRGBASpan = write_rgba_span_RGB;
-      ctx->Driver.WriteRGBSpan = write_rgb_span_RGB;
-      ctx->Driver.WriteMonoRGBASpan = write_monocolor_span_RGB;
-      ctx->Driver.WriteRGBAPixels = write_rgba_pixels_RGB;
-      ctx->Driver.WriteMonoRGBAPixels = write_monocolor_pixels_RGB;
-      ctx->Driver.ReadRGBASpan = read_rgba_span3;
-      ctx->Driver.ReadRGBAPixels = read_rgba_pixels3;
+      swdd->WriteRGBASpan = write_rgba_span_RGB;
+      swdd->WriteRGBSpan = write_rgb_span_RGB;
+      swdd->WriteMonoRGBASpan = write_monocolor_span_RGB;
+      swdd->WriteRGBAPixels = write_rgba_pixels_RGB;
+      swdd->WriteMonoRGBAPixels = write_monocolor_pixels_RGB;
+      swdd->ReadRGBASpan = read_rgba_span3;
+      swdd->ReadRGBAPixels = read_rgba_pixels3;
    }
    else if (osmesa->format == OSMESA_BGR) {
-      ctx->Driver.WriteRGBASpan = write_rgba_span_BGR;
-      ctx->Driver.WriteRGBSpan = write_rgb_span_BGR;
-      ctx->Driver.WriteMonoRGBASpan = write_monocolor_span_BGR;
-      ctx->Driver.WriteRGBAPixels = write_rgba_pixels_BGR;
-      ctx->Driver.WriteMonoRGBAPixels = write_monocolor_pixels_BGR;
-      ctx->Driver.ReadRGBASpan = read_rgba_span3;
-      ctx->Driver.ReadRGBAPixels = read_rgba_pixels3;
+      swdd->WriteRGBASpan = write_rgba_span_BGR;
+      swdd->WriteRGBSpan = write_rgb_span_BGR;
+      swdd->WriteMonoRGBASpan = write_monocolor_span_BGR;
+      swdd->WriteRGBAPixels = write_rgba_pixels_BGR;
+      swdd->WriteMonoRGBAPixels = write_monocolor_pixels_BGR;
+      swdd->ReadRGBASpan = read_rgba_span3;
+      swdd->ReadRGBAPixels = read_rgba_pixels3;
    }
    else {
       /* 4 bytes / pixel in frame buffer */
-      ctx->Driver.WriteRGBSpan = write_rgb_span;
-      ctx->Driver.WriteRGBAPixels = write_rgba_pixels;
-      ctx->Driver.WriteMonoRGBASpan = write_monocolor_span;
-      ctx->Driver.WriteMonoRGBAPixels = write_monocolor_pixels;
+      swdd->WriteRGBSpan = write_rgb_span;
+      swdd->WriteRGBAPixels = write_rgba_pixels;
+      swdd->WriteMonoRGBASpan = write_monocolor_span;
+      swdd->WriteMonoRGBAPixels = write_monocolor_pixels;
       if (osmesa->format == OSMESA_RGBA &&
           CHAN_TYPE == GL_UNSIGNED_BYTE &&
           RCOMP==0 && GCOMP==1 && BCOMP==2 && ACOMP==3) {
          /* special, fast case */
-         ctx->Driver.WriteRGBASpan = write_rgba_span_rgba;
-         ctx->Driver.ReadRGBASpan = read_rgba_span_rgba;
+         swdd->WriteRGBASpan = write_rgba_span_rgba;
+         swdd->ReadRGBASpan = read_rgba_span_rgba;
       }
       else {
-         ctx->Driver.WriteRGBASpan = write_rgba_span;
-         ctx->Driver.ReadRGBASpan = read_rgba_span;
+         swdd->WriteRGBASpan = write_rgba_span;
+         swdd->ReadRGBASpan = read_rgba_span;
       }
-      ctx->Driver.ReadRGBAPixels = read_rgba_pixels;
+      swdd->ReadRGBAPixels = read_rgba_pixels;
    }
 
    /* CI span/pixel functions */
-   ctx->Driver.WriteCI32Span = write_index32_span;
-   ctx->Driver.WriteCI8Span = write_index8_span;
-   ctx->Driver.WriteMonoCISpan = write_monoindex_span;
-   ctx->Driver.WriteCI32Pixels = write_index_pixels;
-   ctx->Driver.WriteMonoCIPixels = write_monoindex_pixels;
-   ctx->Driver.ReadCI32Span = read_index_span;
-   ctx->Driver.ReadCI32Pixels = read_index_pixels;
+   swdd->WriteCI32Span = write_index32_span;
+   swdd->WriteCI8Span = write_index8_span;
+   swdd->WriteMonoCISpan = write_monoindex_span;
+   swdd->WriteCI32Pixels = write_index_pixels;
+   swdd->WriteMonoCIPixels = write_monoindex_pixels;
+   swdd->ReadCI32Span = read_index_span;
+   swdd->ReadCI32Pixels = read_index_pixels;
+
+   swdd->SetReadBuffer = set_read_buffer;
+
+   tnl->Driver.RenderStart = _swsetup_RenderStart;
+   tnl->Driver.RenderFinish = _swsetup_RenderFinish;
+   tnl->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
+   tnl->Driver.RenderPrimitive = _swsetup_RenderPrimitive;
+   tnl->Driver.PointsFunc = _swsetup_Points;
+   tnl->Driver.LineFunc = _swsetup_Line;
+   tnl->Driver.TriangleFunc = _swsetup_Triangle;
+   tnl->Driver.QuadFunc = _swsetup_Quad;
+   tnl->Driver.ResetLineStipple = _swrast_ResetLineStipple;
+   tnl->Driver.RenderInterp = _swsetup_RenderInterp;
+   tnl->Driver.RenderCopyPV = _swsetup_RenderCopyPV;
+   tnl->Driver.RenderClippedLine = _swsetup_RenderClippedLine;
+   tnl->Driver.RenderClippedPolygon = _swsetup_RenderClippedPolygon;
+
 
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );

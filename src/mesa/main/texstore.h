@@ -1,4 +1,4 @@
-/* $Id: texstore.h,v 1.2 2001/02/19 20:01:42 brianp Exp $ */
+/* $Id: texstore.h,v 1.3 2001/03/19 02:25:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -105,36 +105,6 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
                           const struct gl_pixelstore_attrib *packing,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage);
-
-
-extern void
-_mesa_copy_teximage1d(GLcontext *ctx, GLenum target, GLint level,
-                      GLenum internalFormat,
-                      GLint x, GLint y, GLsizei width, GLint border);
-
-extern void
-_mesa_copy_teximage2d(GLcontext *ctx, GLenum target, GLint level,
-                      GLenum internalFormat,
-                      GLint x, GLint y, GLsizei width, GLsizei height,
-                      GLint border);
-
-
-extern void
-_mesa_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
-                         GLint xoffset, GLint x, GLint y, GLsizei width);
-
-extern void
-_mesa_copy_texsubimage2d(GLcontext *ctx,
-                         GLenum target, GLint level,
-                         GLint xoffset, GLint yoffset,
-                         GLint x, GLint y, GLsizei width, GLsizei height);
-
-extern void
-_mesa_copy_texsubimage3d(GLcontext *ctx,
-                         GLenum target, GLint level,
-                         GLint xoffset, GLint yoffset, GLint zoffset,
-                         GLint x, GLint y, GLsizei width, GLsizei height);
-
 
 
 extern void

@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.22 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: convolve.c,v 1.23 2001/03/19 02:25:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -468,7 +468,6 @@ void
 _mesa_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat, GLint x, GLint y, GLsizei width)
 {
    GLenum baseFormat;
-   GLchan rgba[MAX_CONVOLUTION_WIDTH][4];
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -488,14 +487,8 @@ _mesa_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat, GLint x, GLi
       return;
    }
 
-   /* read pixels from framebuffer */
-   RENDER_START(ctx);
-   _mesa_read_rgba_span(ctx, ctx->ReadBuffer, width, x, y, (GLchan (*)[4]) rgba);
-   RENDER_FINISH(ctx);
-
-   /* store as convolution filter */
-   _mesa_ConvolutionFilter1D(target, internalFormat, width,
-                             GL_RGBA, CHAN_TYPE, rgba);
+   ctx->Driver.CopyConvolutionFilter1D( ctx, target, 
+					internalFormat, x, y, width);
 }
 
 
@@ -503,9 +496,6 @@ void
 _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLsizei height)
 {
    GLenum baseFormat;
-   GLint i;
-   struct gl_pixelstore_attrib packSave;
-   GLchan rgba[MAX_CONVOLUTION_HEIGHT][MAX_CONVOLUTION_WIDTH][4];
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -529,34 +519,9 @@ _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLi
       return;
    }
 
-   /* read pixels from framebuffer */
-   RENDER_START(ctx);
-   for (i = 0; i < height; i++) {
-      _mesa_read_rgba_span(ctx, ctx->ReadBuffer, width, x, y + i,
-                        (GLchan (*)[4]) rgba[i]);
-   }
-   RENDER_FINISH(ctx);
+   ctx->Driver.CopyConvolutionFilter2D( ctx, target, internalFormat, x, y, 
+					width, height );
 
-   /*
-    * store as convolution filter
-    */
-   packSave = ctx->Unpack;  /* save pixel packing params */
-
-   ctx->Unpack.Alignment = 1;
-   ctx->Unpack.RowLength = MAX_CONVOLUTION_WIDTH;
-   ctx->Unpack.SkipPixels = 0;
-   ctx->Unpack.SkipRows = 0;
-   ctx->Unpack.ImageHeight = 0;
-   ctx->Unpack.SkipImages = 0;
-   ctx->Unpack.SwapBytes = GL_FALSE;
-   ctx->Unpack.LsbFirst = GL_FALSE;
-   ctx->NewState |= _NEW_PACKUNPACK;
-
-   _mesa_ConvolutionFilter2D(target, internalFormat, width, height,
-                             GL_RGBA, CHAN_TYPE, rgba);
-
-   ctx->Unpack = packSave;  /* restore pixel packing params */
-   ctx->NewState |= _NEW_PACKUNPACK;
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.27 2001/03/18 08:53:49 gareth Exp $ */
+/* $Id: mtypes.h,v 1.28 2001/03/19 02:25:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1702,43 +1702,6 @@ do {									\
 } while (0)
 
 
-#ifdef DEBUG
-
-#define RENDER_START(CTX)			\
-   do {						\
-      assert(!(CTX)->Rendering);		\
-      (CTX)->Rendering = GL_TRUE;		\
-      if ((CTX)->Driver.RenderStart) {		\
-         (*(CTX)->Driver.RenderStart)(CTX);	\
-      }						\
-   } while (0)
-
-#define RENDER_FINISH(CTX)			\
-   do {						\
-      assert((CTX)->Rendering);			\
-      (CTX)->Rendering = GL_FALSE;		\
-      if ((CTX)->Driver.RenderFinish) {		\
-         (*(CTX)->Driver.RenderFinish)(CTX);	\
-      }						\
-   } while (0)
-
-#else
-
-#define RENDER_START(CTX)			\
-   do {						\
-      if ((CTX)->Driver.RenderStart) {		\
-         (*(CTX)->Driver.RenderStart)(CTX);	\
-      }						\
-   } while (0)
-
-#define RENDER_FINISH(CTX)			\
-   do {						\
-      if ((CTX)->Driver.RenderFinish) {		\
-         (*(CTX)->Driver.RenderFinish)(CTX);	\
-      }						\
-   } while (0)
-
-#endif
 
 
 #endif /* TYPES_H */

@@ -1,4 +1,4 @@
-/* $Id: s_context.h,v 1.7 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: s_context.h,v 1.8 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -100,6 +100,10 @@ typedef void (*swrast_tri_func)( GLcontext *ctx, const SWvertex *,
 
 typedef struct
 {
+   /* Driver interface:
+    */
+   struct swrast_device_driver Driver;
+
    /* Configuration mechanisms to make software rasterizer match
     * characteristics of the hardware rasterizer (if present):
     */
@@ -170,6 +174,19 @@ _swrast_validate_derived( GLcontext *ctx );
 
 #define SWRAST_CONTEXT(ctx) ((SWcontext *)ctx->swrast_context)
 
+#define RENDER_START(SWctx, GLctx)			\
+   do {						\
+      if ((SWctx)->Driver.SpanRenderStart) {		\
+         (*(SWctx)->Driver.SpanRenderStart)(GLctx);	\
+      }						\
+   } while (0)
+
+#define RENDER_FINISH(SWctx, GLctx)			\
+   do {						\
+      if ((SWctx)->Driver.SpanRenderFinish) {		\
+         (*(SWctx)->Driver.SpanRenderFinish)(GLctx);	\
+      }						\
+   } while (0)
 
 
 #endif

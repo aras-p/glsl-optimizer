@@ -1,4 +1,4 @@
-/* $Id: t_context.c,v 1.15 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_context.c,v 1.16 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -70,9 +70,6 @@ install_driver_callbacks( GLcontext *ctx )
    ctx->Driver.MakeCurrent = _tnl_MakeCurrent;
    ctx->Driver.BeginCallList = _tnl_BeginCallList;
    ctx->Driver.EndCallList = _tnl_EndCallList;
-
-   ctx->Driver.RenderTabElts = _tnl_render_tab_elts;
-   ctx->Driver.RenderTabVerts = _tnl_render_tab_verts;
 }
 
 
@@ -111,9 +108,9 @@ _tnl_CreateContext( GLcontext *ctx )
     */
    _mesa_install_exec_vtxfmt( ctx, &tnl->vtxfmt );
    _mesa_install_save_vtxfmt( ctx, &tnl->vtxfmt );
-   ctx->Save->CallList = _mesa_save_CallList;	/* fixme */
+   ctx->Save->CallList = _mesa_save_CallList;	
    ctx->Save->CallLists = _mesa_save_CallLists;
-   ctx->Save->EvalMesh1 = _mesa_save_EvalMesh1;	/* fixme */
+   ctx->Save->EvalMesh1 = _mesa_save_EvalMesh1;	
    ctx->Save->EvalMesh2 = _mesa_save_EvalMesh2;
    ctx->Save->Begin = _tnl_save_Begin;
 
@@ -123,6 +120,9 @@ _tnl_CreateContext( GLcontext *ctx )
    ctx->Driver.NeedFlush = FLUSH_UPDATE_CURRENT;
    ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
    ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
+
+   tnl->Driver.RenderTabElts = _tnl_render_tab_elts;
+   tnl->Driver.RenderTabVerts = _tnl_render_tab_verts;
    return GL_TRUE;
 }
 

@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.50 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: drawpix.c,v 1.51 2001/03/19 02:25:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -68,12 +68,8 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       y = (GLint) (ctx->Current.RasterPos[1] + 0.5F);
 
       ctx->OcclusionResult = GL_TRUE;
-
-      /* see if device driver can do the drawpix */
-      RENDER_START(ctx);
       ctx->Driver.DrawPixels(ctx, x, y, width, height, format, type,
 			     &ctx->Unpack, pixels);
-      RENDER_FINISH(ctx);
    }
    else if (ctx->RenderMode==GL_FEEDBACK) {
       if (ctx->Current.RasterPosValid) {

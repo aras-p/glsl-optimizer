@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.15 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: s_copypix.c,v 1.16 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -96,6 +96,7 @@ static void
 copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                       GLint width, GLint height, GLint destx, GLint desty)
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLdepth zspan[MAX_WIDTH];
    GLboolean quick_draw;
    GLint row;
@@ -147,7 +148,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    dest = tmpImage;
 
    if (changeBuffer) {
-      (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+      (*swrast->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
                                     ctx->Pixel.DriverReadBuffer );
       if (ctx->Pixel.DriverReadBuffer == GL_FRONT_LEFT)
          ctx->ReadBuffer->Alpha = ctx->ReadBuffer->FrontLeftAlpha;
@@ -176,7 +177,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    /* read from the draw buffer again (in case of blending) */
    if (changeBuffer) {
-      (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
+      (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
                                     ctx->Color.DriverDrawBuffer );
       ctx->ReadBuffer->Alpha = saveReadAlpha;
    }
@@ -277,7 +278,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
       dy = desty + row;
       if (quick_draw && dy >= 0 && dy < ctx->DrawBuffer->Height) {
-         (*ctx->Driver.WriteRGBASpan)( ctx, width, destx, dy,
+         (*swrast->Driver.WriteRGBASpan)( ctx, width, destx, dy,
 				       (const GLchan (*)[4])rgba, NULL );
       }
       else if (zoom) {
@@ -300,6 +301,7 @@ static void
 copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                  GLint width, GLint height, GLint destx, GLint desty)
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLdepth zspan[MAX_WIDTH];
    GLchan rgba[MAX_WIDTH][4];
    GLchan *tmpImage,*p;
@@ -357,7 +359,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    changeBuffer = ctx->Pixel.ReadBuffer != ctx->Color.DrawBuffer
                   || ctx->DrawBuffer != ctx->ReadBuffer;
 
-   (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+   (*swrast->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
                                  ctx->Pixel.DriverReadBuffer );
 
    if (overlapping) {
@@ -369,7 +371,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
       p = tmpImage;
       if (changeBuffer) {
-         (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+         (*swrast->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
                                        ctx->Pixel.DriverReadBuffer );
          if (ctx->Pixel.DriverReadBuffer == GL_FRONT_LEFT)
             ctx->ReadBuffer->Alpha = ctx->ReadBuffer->FrontLeftAlpha;
@@ -402,7 +404,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       else {
          /* get from framebuffer */
          if (changeBuffer) {
-            (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+            (*swrast->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
                                           ctx->Pixel.DriverReadBuffer );
             if (ctx->Pixel.DriverReadBuffer == GL_FRONT_LEFT) {
                ctx->ReadBuffer->Alpha = ctx->ReadBuffer->FrontLeftAlpha;
@@ -422,7 +424,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
       if (changeBuffer) {
          /* read from the draw buffer again (in case of blending) */
-         (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
+         (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
                                        ctx->Color.DriverDrawBuffer );
          ctx->ReadBuffer->Alpha = saveReadAlpha;
       }
@@ -521,7 +523,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
 
       if (quick_draw && dy >= 0 && dy < ctx->DrawBuffer->Height) {
-         (*ctx->Driver.WriteRGBASpan)( ctx, width, destx, dy,
+         (*swrast->Driver.WriteRGBASpan)( ctx, width, destx, dy,
 				       (const GLchan (*)[4])rgba, NULL );
       }
       else if (zoom) {
@@ -534,7 +536,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    /* Restore pixel source to be the draw buffer (for blending, etc) */
-   (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
+   (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
                                  ctx->Color.DriverDrawBuffer );
 
    if (overlapping)
@@ -546,6 +548,7 @@ static void copy_ci_pixels( GLcontext *ctx,
                             GLint srcx, GLint srcy, GLint width, GLint height,
                             GLint destx, GLint desty )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLdepth zspan[MAX_WIDTH];
    GLuint *tmpImage,*p;
    GLint sy, dy, stepy;
@@ -584,7 +587,7 @@ static void copy_ci_pixels( GLcontext *ctx,
    changeBuffer = ctx->Pixel.ReadBuffer != ctx->Color.DrawBuffer
                || ctx->DrawBuffer != ctx->ReadBuffer;
 
-   (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+   (*swrast->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
                                  ctx->Pixel.DriverReadBuffer );
 
    if (overlapping) {
@@ -596,7 +599,7 @@ static void copy_ci_pixels( GLcontext *ctx,
       }
       p = tmpImage;
       if (changeBuffer) {
-         (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+         (*swrast->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
                                        ctx->Pixel.DriverReadBuffer );
       }
       for (j = 0; j < height; j++, ssy += stepy) {
@@ -618,7 +621,7 @@ static void copy_ci_pixels( GLcontext *ctx,
       }
       else {
          if (changeBuffer) {
-            (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+            (*swrast->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
                                           ctx->Pixel.DriverReadBuffer );
          }
          _mesa_read_index_span( ctx, ctx->ReadBuffer, width, srcx, sy, indexes );
@@ -626,7 +629,7 @@ static void copy_ci_pixels( GLcontext *ctx,
 
       if (changeBuffer) {
          /* set read buffer back to draw buffer (in case of logicops) */
-         (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
+         (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
                                        ctx->Color.DriverDrawBuffer );
       }
 
@@ -646,7 +649,7 @@ static void copy_ci_pixels( GLcontext *ctx,
    }
 
    /* Restore pixel source to be the draw buffer (for blending, etc) */
-   (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
+   (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
                                  ctx->Color.DriverDrawBuffer );
 
    if (overlapping)
@@ -860,7 +863,10 @@ _swrast_CopyPixels( GLcontext *ctx,
 		    GLint destx, GLint desty,
 		    GLenum type )
 {
-   if (SWRAST_CONTEXT(ctx)->NewState)
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   RENDER_START(swrast,ctx);
+      
+   if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
    if (type == GL_COLOR && ctx->Visual.rgbMode) {
@@ -878,4 +884,6 @@ _swrast_CopyPixels( GLcontext *ctx,
    else {
       _mesa_error( ctx, GL_INVALID_ENUM, "glCopyPixels" );
    }
+
+   RENDER_FINISH(swrast,ctx);
 }

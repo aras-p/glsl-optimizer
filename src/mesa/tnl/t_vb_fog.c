@@ -1,4 +1,4 @@
-/* $Id: t_vb_fog.c,v 1.8 2001/03/12 00:48:44 gareth Exp $ */
+/* $Id: t_vb_fog.c,v 1.9 2001/03/19 02:25:37 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -135,12 +135,15 @@ static GLboolean run_fog_stage( GLcontext *ctx,
    struct fog_stage_data *store = FOG_STAGE_DATA(stage);
    GLvector1f *input;
 
-   VB->FogCoordPtr = &store->fogcoord;
-
    if (stage->changed_inputs == 0)
       return GL_TRUE;
 
    if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT) {
+      /* fog computed from Z depth */
+      /* source = VB->ObjPtr or VB->EyePtr coords */
+      /* dest = VB->FogCoordPtr = fog stage private storage */
+      VB->FogCoordPtr = &store->fogcoord;
+
       if (!ctx->_NeedEyeCoords) {
 	 GLfloat *m = ctx->ModelView.m;
 	 GLfloat plane[4];
@@ -174,8 +177,13 @@ static GLboolean run_fog_stage( GLcontext *ctx,
 	 input->stride = VB->EyePtr->stride;
 	 input->count = VB->EyePtr->count;
       }
-   } else
+   } else {
+      /* use glFogCoord() coordinates */
+      /* source = VB->FogCoordPtr */
       input = VB->FogCoordPtr;
+      /* dest = fog stage private storage */
+      VB->FogCoordPtr = &store->fogcoord;
+   }
 
    make_win_fog_coords( ctx, VB->FogCoordPtr, input );
    return GL_TRUE;

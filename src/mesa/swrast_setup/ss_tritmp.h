@@ -1,4 +1,4 @@
-/* $Id: ss_tritmp.h,v 1.9 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: ss_tritmp.h,v 1.10 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -154,7 +154,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 
 
 
-/* Need to do something with edgeflags:
+/* Need to fixup edgeflags when decomposing to triangles:
  */
 static void TAG(quad)( GLcontext *ctx, GLuint v0,
 		       GLuint v1, GLuint v2, GLuint v3 )

@@ -531,6 +531,7 @@ fx_null_tri(GLcontext * ctx,
 void
 fxDDChooseRenderState(GLcontext * ctx)
 {
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GLuint flags = ctx->_TriangleCaps;
    GLuint index = 0;
@@ -539,12 +540,12 @@ fxDDChooseRenderState(GLcontext * ctx)
       /* Build software vertices directly.  No acceleration is
        * possible.  GrVertices may be insufficient for this mode.
        */
-      ctx->Driver.PointsFunc = _swsetup_Points;
-      ctx->Driver.LineFunc = _swsetup_Line;
-      ctx->Driver.TriangleFunc = _swsetup_Triangle;
-      ctx->Driver.QuadFunc = _swsetup_Quad;
-      ctx->Driver.RenderTabVerts = _tnl_render_tab_verts;
-      ctx->Driver.RenderTabElts = _tnl_render_tab_elts;
+      tnl->Driver.PointsFunc = _swsetup_Points;
+      tnl->Driver.LineFunc = _swsetup_Line;
+      tnl->Driver.TriangleFunc = _swsetup_Triangle;
+      tnl->Driver.QuadFunc = _swsetup_Quad;
+      tnl->Driver.RenderTabVerts = _tnl_render_tab_verts;
+      tnl->Driver.RenderTabElts = _tnl_render_tab_elts;
 
       fxMesa->render_index = FX_FALLBACK_BIT;
       return;
@@ -604,19 +605,19 @@ fxDDChooseRenderState(GLcontext * ctx)
       FX_grCullMode(fxMesa->cullMode);
    }
 
-   ctx->Driver.PointsFunc = rast_tab[index].points;
-   ctx->Driver.LineFunc = rast_tab[index].line;
-   ctx->Driver.TriangleFunc = rast_tab[index].triangle;
-   ctx->Driver.QuadFunc = rast_tab[index].quad;
+   tnl->Driver.PointsFunc = rast_tab[index].points;
+   tnl->Driver.LineFunc = rast_tab[index].line;
+   tnl->Driver.TriangleFunc = rast_tab[index].triangle;
+   tnl->Driver.QuadFunc = rast_tab[index].quad;
    fxMesa->render_index = index;
 
    if (fxMesa->render_index == 0) {
-      ctx->Driver.RenderTabVerts = fx_render_tab_verts;
-      ctx->Driver.RenderTabElts = fx_render_tab_elts;
+      tnl->Driver.RenderTabVerts = fx_render_tab_verts;
+      tnl->Driver.RenderTabElts = fx_render_tab_elts;
    }
    else {
-      ctx->Driver.RenderTabVerts = _tnl_render_tab_verts;
-      ctx->Driver.RenderTabElts = _tnl_render_tab_elts;
+      tnl->Driver.RenderTabVerts = _tnl_render_tab_verts;
+      tnl->Driver.RenderTabElts = _tnl_render_tab_elts;
    }
 }
 

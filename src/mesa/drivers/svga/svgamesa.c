@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.14 2001/03/03 20:33:29 brianp Exp $ */
+/* $Id: svgamesa.c,v 1.15 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -277,6 +277,8 @@ static void set_read_buffer( GLcontext *ctx, GLframebuffer *colorBuffer,
 
 static void svgamesa_update_state( GLcontext *ctx, GLuint new_state )
 {
+   struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference( ctx );
+
    /* Initialize all the pointers in the DD struct.  Do this whenever */
    /* a new context is made current or we change buffers via set_buffer! */
 
@@ -284,7 +286,6 @@ static void svgamesa_update_state( GLcontext *ctx, GLuint new_state )
 
    ctx->Driver.GetBufferSize = get_buffer_size;
    ctx->Driver.SetDrawBuffer = set_draw_buffer;
-   ctx->Driver.SetReadBuffer = set_read_buffer;
 
    /* Software rasterizer pixel paths:
     */
@@ -294,21 +295,21 @@ static void svgamesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
    ctx->Driver.ReadPixels = _swrast_ReadPixels;
 
-   ctx->Driver.PointsFunc = NULL;
-   ctx->Driver.LineFunc = NULL;
-   ctx->Driver.TriangleFunc = NULL;
+   /* Fill in the swrast driver interface:
+    */
+   swdd->SetReadBuffer = set_read_buffer;
 
    switch (SVGABuffer.Depth) {
     case  8: ctx->Driver.ClearIndex = __clear_index8;
              ctx->Driver.Clear 	    = __clear8;
 
-             ctx->Driver.ReadCI32Span         = __read_ci32_span8;
-             ctx->Driver.ReadCI32Pixels       = __read_ci32_pixels8;
-             ctx->Driver.WriteCI8Span         = __write_ci8_span8;
-             ctx->Driver.WriteCI32Span        = __write_ci32_span8;
-             ctx->Driver.WriteCI32Pixels      = __write_ci32_pixels8;
-             ctx->Driver.WriteMonoCISpan      = __write_mono_ci_span8;
-             ctx->Driver.WriteMonoCIPixels    = __write_mono_ci_pixels8;
+             swdd->ReadCI32Span         = __read_ci32_span8;
+             swdd->ReadCI32Pixels       = __read_ci32_pixels8;
+             swdd->WriteCI8Span         = __write_ci8_span8;
+             swdd->WriteCI32Span        = __write_ci32_span8;
+             swdd->WriteCI32Pixels      = __write_ci32_pixels8;
+             swdd->WriteMonoCISpan      = __write_mono_ci_span8;
+             swdd->WriteMonoCIPixels    = __write_mono_ci_pixels8;
 #ifdef SVGA_DEBUG
     SVGAlog("SVGAUpdateState: 8 bit mode.");
 #endif
@@ -317,12 +318,12 @@ static void svgamesa_update_state( GLcontext *ctx, GLuint new_state )
     case 15: ctx->Driver.ClearColor = __clear_color15;
              ctx->Driver.Clear 	    = __clear15;
 
-             ctx->Driver.ReadRGBASpan         = __read_rgba_span15;
-             ctx->Driver.ReadRGBAPixels       = __read_rgba_pixels15;
-             ctx->Driver.WriteRGBASpan        = __write_rgba_span15;
-             ctx->Driver.WriteRGBAPixels      = __write_rgba_pixels15;
-             ctx->Driver.WriteMonoRGBASpan    = __write_mono_rgba_span15;
-             ctx->Driver.WriteMonoRGBAPixels  = __write_mono_rgba_pixels15;
+             swdd->ReadRGBASpan         = __read_rgba_span15;
+             swdd->ReadRGBAPixels       = __read_rgba_pixels15;
+             swdd->WriteRGBASpan        = __write_rgba_span15;
+             swdd->WriteRGBAPixels      = __write_rgba_pixels15;
+             swdd->WriteMonoRGBASpan    = __write_mono_rgba_span15;
+             swdd->WriteMonoRGBAPixels  = __write_mono_rgba_pixels15;
 #ifdef SVGA_DEBUG
     SVGAlog("SVGAUpdateState: 15 bit mode.");
 #endif
@@ -330,12 +331,12 @@ static void svgamesa_update_state( GLcontext *ctx, GLuint new_state )
     case 16: ctx->Driver.ClearColor = __clear_color16;
              ctx->Driver.Clear 	    = __clear16;
 
-             ctx->Driver.ReadRGBASpan         = __read_rgba_span16;
-             ctx->Driver.ReadRGBAPixels       = __read_rgba_pixels16;
-             ctx->Driver.WriteRGBASpan        = __write_rgba_span16;
-             ctx->Driver.WriteRGBAPixels      = __write_rgba_pixels16;
-             ctx->Driver.WriteMonoRGBASpan    = __write_mono_rgba_span16;
-             ctx->Driver.WriteMonoRGBAPixels  = __write_mono_rgba_pixels16;
+             swdd->ReadRGBASpan         = __read_rgba_span16;
+             swdd->ReadRGBAPixels       = __read_rgba_pixels16;
+             swdd->WriteRGBASpan        = __write_rgba_span16;
+             swdd->WriteRGBAPixels      = __write_rgba_pixels16;
+             swdd->WriteMonoRGBASpan    = __write_mono_rgba_span16;
+             swdd->WriteMonoRGBAPixels  = __write_mono_rgba_pixels16;
 	     break;
 #ifdef SVGA_DEBUG
     SVGAlog("SVGAUpdateState: 16 bit mode.");
@@ -343,12 +344,12 @@ static void svgamesa_update_state( GLcontext *ctx, GLuint new_state )
     case 24: ctx->Driver.ClearColor = __clear_color24;
              ctx->Driver.Clear 	    = __clear24;
 
-             ctx->Driver.ReadRGBASpan         = __read_rgba_span24;
-             ctx->Driver.ReadRGBAPixels       = __read_rgba_pixels24;
-             ctx->Driver.WriteRGBASpan        = __write_rgba_span24;
-             ctx->Driver.WriteRGBAPixels      = __write_rgba_pixels24;
-             ctx->Driver.WriteMonoRGBASpan    = __write_mono_rgba_span24;
-             ctx->Driver.WriteMonoRGBAPixels  = __write_mono_rgba_pixels24;
+             swdd->ReadRGBASpan         = __read_rgba_span24;
+             swdd->ReadRGBAPixels       = __read_rgba_pixels24;
+             swdd->WriteRGBASpan        = __write_rgba_span24;
+             swdd->WriteRGBAPixels      = __write_rgba_pixels24;
+             swdd->WriteMonoRGBASpan    = __write_mono_rgba_span24;
+             swdd->WriteMonoRGBAPixels  = __write_mono_rgba_pixels24;
 	     break;
 #ifdef SVGA_DEBUG
     SVGAlog("SVGAUpdateState: 32 bit mode.");
@@ -356,12 +357,12 @@ static void svgamesa_update_state( GLcontext *ctx, GLuint new_state )
     case 32: ctx->Driver.ClearColor = __clear_color32;
              ctx->Driver.Clear 	    = __clear32;
 
-             ctx->Driver.ReadRGBASpan         = __read_rgba_span32;
-             ctx->Driver.ReadRGBAPixels       = __read_rgba_pixels32;
-             ctx->Driver.WriteRGBASpan        = __write_rgba_span32;
-             ctx->Driver.WriteRGBAPixels      = __write_rgba_pixels32;
-             ctx->Driver.WriteMonoRGBASpan    = __write_mono_rgba_span32;
-             ctx->Driver.WriteMonoRGBAPixels  = __write_mono_rgba_pixels32;
+             swdd->ReadRGBASpan         = __read_rgba_span32;
+             swdd->ReadRGBAPixels       = __read_rgba_pixels32;
+             swdd->WriteRGBASpan        = __write_rgba_span32;
+             swdd->WriteRGBAPixels      = __write_rgba_pixels32;
+             swdd->WriteMonoRGBASpan    = __write_mono_rgba_span32;
+             swdd->WriteMonoRGBAPixels  = __write_mono_rgba_pixels32;
    }	
 }
 

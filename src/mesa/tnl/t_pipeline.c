@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.c,v 1.14 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_pipeline.c,v 1.15 2001/03/19 02:25:37 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -132,8 +132,8 @@ void _tnl_run_pipeline( GLcontext *ctx )
    ASSERT(pipe->build_state_changes == 0);
 
    START_FAST_MATH(__tmp);
-   if (ctx->Driver.PipelineStart)
-      ctx->Driver.PipelineStart( ctx );
+   if (tnl->Driver.PipelineStart)
+      tnl->Driver.PipelineStart( ctx );
 
    /* If something changes in the pipeline, tag all subsequent stages
     * using this value for recalculation.
@@ -160,8 +160,8 @@ void _tnl_run_pipeline( GLcontext *ctx )
       }
    }
 
-   if (ctx->Driver.PipelineFinish)
-      ctx->Driver.PipelineFinish( ctx );
+   if (tnl->Driver.PipelineFinish)
+      tnl->Driver.PipelineFinish( ctx );
    END_FAST_MATH(__tmp);
 
    pipe->run_state_changes = 0;

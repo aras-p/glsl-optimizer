@@ -1,4 +1,4 @@
-/* $Id: s_masking.c,v 1.4 2001/03/12 00:48:42 gareth Exp $ */
+/* $Id: s_masking.c,v 1.5 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -91,6 +91,7 @@ _mesa_mask_rgba_pixels( GLcontext *ctx,
                         GLuint n, const GLint x[], const GLint y[],
                         GLchan rgba[][4], const GLubyte mask[] )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLchan dest[PB_SIZE][4];
    GLuint i;
 
@@ -101,7 +102,7 @@ _mesa_mask_rgba_pixels( GLcontext *ctx,
    GLuint *rgba32 = (GLuint *) rgba;
    GLuint *dest32 = (GLuint *) dest;
 
-   (*ctx->Driver.ReadRGBAPixels)( ctx, n, x, y, dest, mask );
+   (*swrast->Driver.ReadRGBAPixels)( ctx, n, x, y, dest, mask );
    if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
       _mesa_read_alpha_pixels( ctx, n, x, y, dest, mask );
    }
@@ -117,7 +118,7 @@ _mesa_mask_rgba_pixels( GLcontext *ctx,
    const GLint bMask = ctx->Color.ColorMask[BCOMP];
    const GLint aMask = ctx->Color.ColorMask[ACOMP];
 
-   (*ctx->Driver.ReadRGBAPixels)( ctx, n, x, y, dest, mask );
+   (*swrast->Driver.ReadRGBAPixels)( ctx, n, x, y, dest, mask );
    if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
       _mesa_read_alpha_pixels( ctx, n, x, y, dest, mask );
    }
@@ -165,11 +166,12 @@ _mesa_mask_index_pixels( GLcontext *ctx,
                          GLuint n, const GLint x[], const GLint y[],
                          GLuint index[], const GLubyte mask[] )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint i;
    GLuint fbindexes[PB_SIZE];
    GLuint msrc, mdest;
 
-   (*ctx->Driver.ReadCI32Pixels)( ctx, n, x, y, fbindexes, mask );
+   (*swrast->Driver.ReadCI32Pixels)( ctx, n, x, y, fbindexes, mask );
 
    msrc = ctx->Color.IndexMask;
    mdest = ~msrc;

@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.85 2001/03/18 08:53:49 gareth Exp $ */
+/* $Id: teximage.c,v 1.86 2001/03/19 02:25:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1349,11 +1349,13 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
          }
       }
 
+#if 0
       /* one of these has to be non-zero! */
       ASSERT(texImage->RedBits || texImage->IndexBits || texImage->AlphaBits ||
              texImage->LuminanceBits || texImage->IntensityBits ||
              texImage->DepthBits);
       ASSERT(texImage->FetchTexel);
+#endif
 
       /* state update */
       texObj->Complete = GL_FALSE;
@@ -1461,11 +1463,13 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
          }
       }
 
+#if 0
       /* one of these has to be non-zero! */
       ASSERT(texImage->RedBits || texImage->IndexBits || texImage->AlphaBits ||
              texImage->LuminanceBits || texImage->IntensityBits ||
              texImage->DepthBits);
       ASSERT(texImage->FetchTexel);
+#endif
 
       /* state update */
       texObj->Complete = GL_FALSE;
@@ -1566,11 +1570,13 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
          }
       }
 
+#if 0
       /* one of these has to be non-zero! */
       ASSERT(texImage->RedBits || texImage->IndexBits || texImage->AlphaBits ||
              texImage->LuminanceBits || texImage->IntensityBits ||
              texImage->DepthBits);
       ASSERT(texImage->FetchTexel);
+#endif
 
       /* state update */
       texObj->Complete = GL_FALSE;

@@ -1,4 +1,4 @@
-/* $Id: s_logic.c,v 1.5 2001/03/12 00:48:42 gareth Exp $ */
+/* $Id: s_logic.c,v 1.6 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -169,9 +169,10 @@ void
 _mesa_logicop_ci_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                        GLuint index[], const GLubyte mask[] )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint dest[MAX_WIDTH];
    /* Read dest values from frame buffer */
-   (*ctx->Driver.ReadCI32Span)( ctx, n, x, y, dest );
+   (*swrast->Driver.ReadCI32Span)( ctx, n, x, y, dest );
    index_logicop( ctx, n, index, dest, mask );
 }
 
@@ -186,9 +187,10 @@ _mesa_logicop_ci_pixels( GLcontext *ctx,
                          GLuint n, const GLint x[], const GLint y[],
                          GLuint index[], const GLubyte mask[] )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint dest[PB_SIZE];
    /* Read dest values from frame buffer */
-   (*ctx->Driver.ReadCI32Pixels)( ctx, n, x, y, dest, mask );
+   (*swrast->Driver.ReadCI32Pixels)( ctx, n, x, y, dest, mask );
    index_logicop( ctx, n, index, dest, mask );
 }
 
@@ -352,8 +354,9 @@ _mesa_logicop_rgba_pixels( GLcontext *ctx,
                            GLuint n, const GLint x[], const GLint y[],
                            GLchan rgba[][4], const GLubyte mask[] )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLchan dest[PB_SIZE][4];
-   (*ctx->Driver.ReadRGBAPixels)( ctx, n, x, y, dest, mask );
+   (*swrast->Driver.ReadRGBAPixels)( ctx, n, x, y, dest, mask );
    if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
       _mesa_read_alpha_pixels( ctx, n, x, y, dest, mask );
    }

@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.61 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: state.c,v 1.62 2001/03/19 02:25:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -959,26 +959,7 @@ void _mesa_update_state( GLcontext *ctx )
    ASSERT(ctx->Driver.UpdateState);
    ASSERT(ctx->Driver.Clear);
    ASSERT(ctx->Driver.SetDrawBuffer);
-   ASSERT(ctx->Driver.SetReadBuffer);
    ASSERT(ctx->Driver.GetBufferSize);
-   if (ctx->Visual.rgbMode) {
-      ASSERT(ctx->Driver.WriteRGBASpan);
-      ASSERT(ctx->Driver.WriteRGBSpan);
-      ASSERT(ctx->Driver.WriteMonoRGBASpan);
-      ASSERT(ctx->Driver.WriteRGBAPixels);
-      ASSERT(ctx->Driver.WriteMonoRGBAPixels);
-      ASSERT(ctx->Driver.ReadRGBASpan);
-      ASSERT(ctx->Driver.ReadRGBAPixels);
-   }
-   else {
-      ASSERT(ctx->Driver.WriteCI32Span);
-      ASSERT(ctx->Driver.WriteCI8Span);
-      ASSERT(ctx->Driver.WriteMonoCISpan);
-      ASSERT(ctx->Driver.WriteCI32Pixels);
-      ASSERT(ctx->Driver.WriteMonoCIPixels);
-      ASSERT(ctx->Driver.ReadCI32Span);
-      ASSERT(ctx->Driver.ReadCI32Pixels);
-   }
    if (ctx->Visual.accumRedBits > 0) {
       ASSERT(ctx->Driver.Accum);
    }
@@ -1009,6 +990,4 @@ void _mesa_update_state( GLcontext *ctx )
       ASSERT(ctx->Driver.GetCompressedTexImage);
       ASSERT(ctx->Driver.BaseCompressedTexFormat);
    }
-   ASSERT(ctx->Driver.RenderStart);
-   ASSERT(ctx->Driver.RenderFinish);
 }

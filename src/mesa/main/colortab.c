@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.37 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: colortab.c,v 1.38 2001/03/19 02:25:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -609,28 +609,11 @@ void
 _mesa_CopyColorTable(GLenum target, GLenum internalformat,
                      GLint x, GLint y, GLsizei width)
 {
-   GLchan data[MAX_WIDTH][4];
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    /* Select buffer to read from */
-   (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
-                                 ctx->Pixel.DriverReadBuffer );
-
-   if (width > MAX_WIDTH)
-      width = MAX_WIDTH;
-
-   /* read the data from framebuffer */
-   RENDER_START(ctx);
-   _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
-   RENDER_FINISH(ctx);
-
-   /* Restore reading from draw buffer (the default) */
-   (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
-                                 ctx->Color.DriverDrawBuffer );
-
-   _mesa_ColorTable(target, internalformat, width,
-                    GL_RGBA, GL_UNSIGNED_BYTE, data);
+   ctx->Driver.CopyColorTable( ctx, target, internalformat, x, y, width );
 }
 
 
@@ -640,27 +623,10 @@ void
 _mesa_CopyColorSubTable(GLenum target, GLsizei start,
                         GLint x, GLint y, GLsizei width)
 {
-   GLchan data[MAX_WIDTH][4];
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   /* Select buffer to read from */
-   (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
-                                 ctx->Pixel.DriverReadBuffer );
-
-   if (width > MAX_WIDTH)
-      width = MAX_WIDTH;
-
-   /* read the data from framebuffer */
-   RENDER_START(ctx);
-   _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
-   RENDER_FINISH(ctx);
-
-   /* Restore reading from draw buffer (the default) */
-   (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
-                                 ctx->Color.DriverDrawBuffer );
-
-   _mesa_ColorSubTable(target, start, width, GL_RGBA, GL_UNSIGNED_BYTE, data);
+   ctx->Driver.CopyColorSubTable( ctx, target, start, x, y, width );
 }
 
 

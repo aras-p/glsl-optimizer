@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.19 2001/01/08 04:06:20 keithw Exp $ */
+/* $Id: xmesaP.h,v 1.20 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -550,5 +550,8 @@ extern void XMesaSetVisualDisplay( XMesaDisplay *dpy, XMesaVisual v );
 extern GLboolean XMesaForceCurrent(XMesaContext c);
 extern GLboolean XMesaLoseCurrent(XMesaContext c);
 extern void XMesaReset( void );
+
+extern void xmesa_set_read_buffer( GLcontext *ctx, 
+				   GLframebuffer *buffer, GLenum mode );
 
 #endif

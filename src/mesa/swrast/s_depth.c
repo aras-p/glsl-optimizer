@@ -1,4 +1,4 @@
-/* $Id: s_depth.c,v 1.8 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: s_depth.c,v 1.9 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -538,14 +538,15 @@ GLuint
 _mesa_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                        const GLdepth z[], GLubyte mask[] )
 {
-   if (ctx->Driver.ReadDepthSpan) {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   if (swrast->Driver.ReadDepthSpan) {
       /* hardware-based depth buffer */
       GLdepth zbuffer[MAX_WIDTH];
       GLuint passed;
-      (*ctx->Driver.ReadDepthSpan)(ctx, n, x, y, zbuffer);
+      (*swrast->Driver.ReadDepthSpan)(ctx, n, x, y, zbuffer);
       passed = depth_test_span32(ctx, n, x, y, zbuffer, z, mask);
-      assert(ctx->Driver.WriteDepthSpan);
-      (*ctx->Driver.WriteDepthSpan)(ctx, n, x, y, zbuffer, mask);
+      assert(swrast->Driver.WriteDepthSpan);
+      (*swrast->Driver.WriteDepthSpan)(ctx, n, x, y, zbuffer, mask);
       return passed;
    }
    else {
@@ -1297,16 +1298,17 @@ _mesa_depth_test_pixels( GLcontext *ctx,
                          GLuint n, const GLint x[], const GLint y[],
                          const GLdepth z[], GLubyte mask[] )
 {
-   if (ctx->Driver.ReadDepthPixels) {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   if (swrast->Driver.ReadDepthPixels) {
       /* read depth values from hardware Z buffer */
       GLdepth zbuffer[PB_SIZE];
-      (*ctx->Driver.ReadDepthPixels)(ctx, n, x, y, zbuffer);
+      (*swrast->Driver.ReadDepthPixels)(ctx, n, x, y, zbuffer);
 
       hardware_depth_test_pixels( ctx, n, zbuffer, z, mask );
 
       /* update hardware Z buffer with new values */
-      assert(ctx->Driver.WriteDepthPixels);
-      (*ctx->Driver.WriteDepthPixels)(ctx, n, x, y, zbuffer, mask );
+      assert(swrast->Driver.WriteDepthPixels);
+      (*swrast->Driver.WriteDepthPixels)(ctx, n, x, y, zbuffer, mask );
    }
    else {
       /* software depth testing */
@@ -1334,6 +1336,8 @@ void
 _mesa_read_depth_span( GLcontext *ctx,
                        GLint n, GLint x, GLint y, GLdepth depth[] )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+
    if (y < 0 || y >= ctx->DrawBuffer->Height ||
        x + (GLint) n <= 0 || x >= ctx->DrawBuffer->Width) {
       /* span is completely outside framebuffer */
@@ -1380,9 +1384,9 @@ _mesa_read_depth_span( GLcontext *ctx,
          }
       }
    }
-   else if (ctx->Driver.ReadDepthSpan) {
+   else if (swrast->Driver.ReadDepthSpan) {
       /* read from hardware depth buffer */
-      (*ctx->Driver.ReadDepthSpan)( ctx, n, x, y, depth );
+      (*swrast->Driver.ReadDepthSpan)( ctx, n, x, y, depth );
    }
    else {
       /* no depth buffer */
@@ -1405,6 +1409,7 @@ void
 _mesa_read_depth_span_float( GLcontext *ctx,
                              GLint n, GLint x, GLint y, GLfloat depth[] )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLfloat scale = 1.0F / ctx->DepthMaxF;
 
    if (y < 0 || y >= ctx->DrawBuffer->Height ||
@@ -1452,12 +1457,12 @@ _mesa_read_depth_span_float( GLcontext *ctx,
          }
       }
    }
-   else if (ctx->Driver.ReadDepthSpan) {
+   else if (swrast->Driver.ReadDepthSpan) {
       /* read from hardware depth buffer */
       GLdepth d[MAX_WIDTH];
       GLint i;
       assert(n <= MAX_WIDTH);
-      (*ctx->Driver.ReadDepthSpan)( ctx, n, x, y, d );
+      (*swrast->Driver.ReadDepthSpan)( ctx, n, x, y, d );
       for (i = 0; i < n; i++) {
 	 depth[i] = d[i] * scale;
       }

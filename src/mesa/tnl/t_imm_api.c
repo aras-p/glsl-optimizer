@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.8 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_imm_api.c,v 1.9 2001/03/19 02:25:37 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -199,8 +199,6 @@ _tnl_hard_begin( GLcontext *ctx, GLenum p )
        */
       ASSERT (IM->SavedBeginState == 0);
 
-/*        ASSERT (ctx->Driver.CurrentSavePrimitive >= GL_POLYGON+1); */
-
       /* Push current beginstate, to be restored later.  Don't worry
        * about raising errors.
        */
@@ -330,8 +328,6 @@ _tnl_end( GLcontext *ctx )
 	 _tnl_translate_array_elts( ctx, IM, last, count );
 	 IM->FlushElt = 0;
       }
-
-/*        ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES; */
    }
 
    IM->BeginState = state;

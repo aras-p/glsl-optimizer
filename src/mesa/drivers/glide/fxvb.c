@@ -290,10 +290,11 @@ void
 fx_validate_BuildProjVerts(GLcontext * ctx, GLuint start, GLuint count,
 			   GLuint newinputs)
 {
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
    fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
 
    if (!fxMesa->is_in_hardware)
-      ctx->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
+      tnl->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
    else {
       GLuint setupindex = SETUP_XYZW;
 
@@ -329,9 +330,9 @@ fx_validate_BuildProjVerts(GLcontext * ctx, GLuint start, GLuint count,
 	 fxPrintSetupFlags("fxmesa: vertex setup function", setupindex);
 
       fxMesa->setupindex = setupindex;
-      ctx->Driver.BuildProjectedVertices = fx_BuildProjVerts;
+      tnl->Driver.BuildProjectedVertices = fx_BuildProjVerts;
    }
-   ctx->Driver.BuildProjectedVertices(ctx, start, count, newinputs);
+   tnl->Driver.BuildProjectedVertices(ctx, start, count, newinputs);
 }
 
 

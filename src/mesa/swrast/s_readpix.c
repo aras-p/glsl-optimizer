@@ -1,4 +1,4 @@
-/* $Id: s_readpix.c,v 1.10 2001/03/12 00:48:42 gareth Exp $ */
+/* $Id: s_readpix.c,v 1.11 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,6 +53,7 @@ read_index_pixels( GLcontext *ctx,
                    GLenum type, GLvoid *pixels,
                    const struct gl_pixelstore_attrib *packing )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLint i, readWidth;
 
    /* error checking */
@@ -61,8 +62,8 @@ read_index_pixels( GLcontext *ctx,
       return;
    }
 
-   ASSERT(ctx->Driver.SetReadBuffer);
-   (*ctx->Driver.SetReadBuffer)(ctx, ctx->ReadBuffer,
+   ASSERT(swrast->Driver.SetReadBuffer);
+   (*swrast->Driver.SetReadBuffer)(ctx, ctx->ReadBuffer,
                                 ctx->Pixel.DriverReadBuffer);
 
    readWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
@@ -72,7 +73,7 @@ read_index_pixels( GLcontext *ctx,
       GLuint index[MAX_WIDTH];
       GLvoid *dest;
 
-      (*ctx->Driver.ReadCI32Span)(ctx, readWidth, x, y + i, index);
+      (*swrast->Driver.ReadCI32Span)(ctx, readWidth, x, y + i, index);
 
       dest = _mesa_image_address(packing, pixels, width, height,
                                  GL_COLOR_INDEX, type, 0, i, 0);
@@ -81,7 +82,7 @@ read_index_pixels( GLcontext *ctx,
                             &ctx->Pack, ctx->_ImageTransferState);
    }
 
-   (*ctx->Driver.SetReadBuffer)(ctx, ctx->DrawBuffer,
+   (*swrast->Driver.SetReadBuffer)(ctx, ctx->DrawBuffer,
                                 ctx->Color.DriverDrawBuffer);
 }
 
@@ -221,6 +222,7 @@ read_fast_rgba_pixels( GLcontext *ctx,
                        GLvoid *pixels,
                        const struct gl_pixelstore_attrib *packing )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    /* can't do scale, bias, mapping, etc */
    if (ctx->_ImageTransferState)
        return GL_FALSE;
@@ -283,7 +285,7 @@ read_fast_rgba_pixels( GLcontext *ctx,
                          + (skipRows * rowLength + skipPixels) * 4;
          GLint row;
          for (row=0; row<readHeight; row++) {
-            (*ctx->Driver.ReadRGBASpan)(ctx, readWidth, srcX, srcY,
+            (*swrast->Driver.ReadRGBASpan)(ctx, readWidth, srcX, srcY,
                                         (GLchan (*)[4]) dest);
             if (ctx->DrawBuffer->UseSoftwareAlphaBuffers) {
                _mesa_read_alpha_span(ctx, readWidth, srcX, srcY,
@@ -313,15 +315,16 @@ read_rgba_pixels( GLcontext *ctx,
                   GLenum format, GLenum type, GLvoid *pixels,
                   const struct gl_pixelstore_attrib *packing )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLint readWidth;
 
-   (*ctx->Driver.SetReadBuffer)(ctx, ctx->ReadBuffer, ctx->Pixel.DriverReadBuffer);
+   (*swrast->Driver.SetReadBuffer)(ctx, ctx->ReadBuffer, ctx->Pixel.DriverReadBuffer);
 
    /* Try optimized path first */
    if (read_fast_rgba_pixels( ctx, x, y, width, height,
                               format, type, pixels, packing )) {
 
-      (*ctx->Driver.SetReadBuffer)(ctx, ctx->DrawBuffer, ctx->Color.DriverDrawBuffer);
+      (*swrast->Driver.SetReadBuffer)(ctx, ctx->DrawBuffer, ctx->Color.DriverDrawBuffer);
       return; /* done! */
    }
 
@@ -387,7 +390,7 @@ read_rgba_pixels( GLcontext *ctx,
          }
          else {
             GLuint index[MAX_WIDTH];
-            (*ctx->Driver.ReadCI32Span)(ctx, readWidth, x, y, index);
+            (*swrast->Driver.ReadCI32Span)(ctx, readWidth, x, y, index);
             if (ctx->Pixel.IndexShift != 0 || ctx->Pixel.IndexOffset !=0 ) {
                _mesa_map_ci(ctx, readWidth, index);
             }
@@ -433,7 +436,7 @@ read_rgba_pixels( GLcontext *ctx,
          }
          else {
             GLuint index[MAX_WIDTH];
-            (*ctx->Driver.ReadCI32Span)(ctx, readWidth, x, y, index);
+            (*swrast->Driver.ReadCI32Span)(ctx, readWidth, x, y, index);
             if (ctx->Pixel.IndexShift != 0 || ctx->Pixel.IndexOffset != 0) {
                _mesa_map_ci(ctx, readWidth, index);
             }
@@ -465,7 +468,7 @@ read_rgba_pixels( GLcontext *ctx,
       }
    }
 
-   (*ctx->Driver.SetReadBuffer)(ctx, ctx->DrawBuffer, ctx->Color.DriverDrawBuffer);
+   (*swrast->Driver.SetReadBuffer)(ctx, ctx->DrawBuffer, ctx->Color.DriverDrawBuffer);
 }
 
 
@@ -477,10 +480,13 @@ _swrast_ReadPixels( GLcontext *ctx,
 		    const struct gl_pixelstore_attrib *pack,
 		    GLvoid *pixels )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    (void) pack;
 
-   if (SWRAST_CONTEXT(ctx)->NewState)
+   if (swrast->NewState)
       _swrast_validate_derived( ctx );
+
+   RENDER_START(swrast,ctx);
 
    switch (format) {
       case GL_COLOR_INDEX:
@@ -509,4 +515,6 @@ _swrast_ReadPixels( GLcontext *ctx,
       default:
 	 _mesa_error( ctx, GL_INVALID_ENUM, "glReadPixels(format)" );
    }
+
+   RENDER_FINISH(swrast,ctx);
 }

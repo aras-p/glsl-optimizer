@@ -1,4 +1,4 @@
-/* $Id: xm_span.c,v 1.10 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: xm_span.c,v 1.11 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,7 +36,7 @@
 #include "xmesaP.h"
 #include "extensions.h"
 
-
+#include "swrast/swrast.h"
 
 
 /*
@@ -4236,6 +4236,7 @@ void xmesa_update_span_funcs( GLcontext *ctx )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    int depth=GET_VISUAL_DEPTH(xmesa->xm_visual);
+   struct swrast_device_driver *dd = _swrast_GetDeviceDriverReference( ctx );
 
    /*
     * These drawing functions depend on color buffer config:
@@ -4244,98 +4245,98 @@ void xmesa_update_span_funcs( GLcontext *ctx )
       /* Writing to window or back pixmap */
       switch (xmesa->pixelformat) {
 	 case PF_INDEX:
-	    ctx->Driver.WriteCI32Span     = write_span_index_pixmap;
-	    ctx->Driver.WriteCI8Span      = write_span_index8_pixmap;
-	    ctx->Driver.WriteMonoCISpan   = write_span_mono_index_pixmap;
-	    ctx->Driver.WriteCI32Pixels   = write_pixels_index_pixmap;
-	    ctx->Driver.WriteMonoCIPixels = write_pixels_mono_index_pixmap;
+	    dd->WriteCI32Span     = write_span_index_pixmap;
+	    dd->WriteCI8Span      = write_span_index8_pixmap;
+	    dd->WriteMonoCISpan   = write_span_mono_index_pixmap;
+	    dd->WriteCI32Pixels   = write_pixels_index_pixmap;
+	    dd->WriteMonoCIPixels = write_pixels_mono_index_pixmap;
 	    break;
 	 case PF_TRUECOLOR:
-	    ctx->Driver.WriteRGBASpan       = write_span_TRUECOLOR_pixmap;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_TRUECOLOR_pixmap;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_pixmap;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_TRUECOLOR_pixmap;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+	    dd->WriteRGBASpan       = write_span_TRUECOLOR_pixmap;
+	    dd->WriteRGBSpan        = write_span_rgb_TRUECOLOR_pixmap;
+	    dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+	    dd->WriteRGBAPixels     = write_pixels_TRUECOLOR_pixmap;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
 	    break;
 	 case PF_TRUEDITHER:
-	    ctx->Driver.WriteRGBASpan       = write_span_TRUEDITHER_pixmap;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_TRUEDITHER_pixmap;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_TRUEDITHER_pixmap;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_TRUEDITHER_pixmap;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_TRUEDITHER_pixmap;
+	    dd->WriteRGBASpan       = write_span_TRUEDITHER_pixmap;
+	    dd->WriteRGBSpan        = write_span_rgb_TRUEDITHER_pixmap;
+	    dd->WriteMonoRGBASpan   = write_span_mono_TRUEDITHER_pixmap;
+	    dd->WriteRGBAPixels     = write_pixels_TRUEDITHER_pixmap;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_TRUEDITHER_pixmap;
 	    break;
 	 case PF_8A8B8G8R:
-	    ctx->Driver.WriteRGBASpan       = write_span_8A8B8G8R_pixmap;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_8A8B8G8R_pixmap;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_pixmap;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_8A8B8G8R_pixmap;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+	    dd->WriteRGBASpan       = write_span_8A8B8G8R_pixmap;
+	    dd->WriteRGBSpan        = write_span_rgb_8A8B8G8R_pixmap;
+	    dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+	    dd->WriteRGBAPixels     = write_pixels_8A8B8G8R_pixmap;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
 	    break;
 	 case PF_8R8G8B:
-	    ctx->Driver.WriteRGBASpan       = write_span_8R8G8B_pixmap;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_8R8G8B_pixmap;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_pixmap;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_8R8G8B_pixmap;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+	    dd->WriteRGBASpan       = write_span_8R8G8B_pixmap;
+	    dd->WriteRGBSpan        = write_span_rgb_8R8G8B_pixmap;
+	    dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+	    dd->WriteRGBAPixels     = write_pixels_8R8G8B_pixmap;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
 	    break;
 	 case PF_8R8G8B24:
-	    ctx->Driver.WriteRGBASpan       = write_span_8R8G8B24_pixmap;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_8R8G8B24_pixmap;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_pixmap;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_8R8G8B24_pixmap;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+	    dd->WriteRGBASpan       = write_span_8R8G8B24_pixmap;
+	    dd->WriteRGBSpan        = write_span_rgb_8R8G8B24_pixmap;
+	    dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+	    dd->WriteRGBAPixels     = write_pixels_8R8G8B24_pixmap;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
 	    break;
 	 case PF_5R6G5B:
-	    ctx->Driver.WriteRGBASpan       = write_span_5R6G5B_pixmap;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_5R6G5B_pixmap;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_pixmap;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_5R6G5B_pixmap;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+	    dd->WriteRGBASpan       = write_span_5R6G5B_pixmap;
+	    dd->WriteRGBSpan        = write_span_rgb_5R6G5B_pixmap;
+	    dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+	    dd->WriteRGBAPixels     = write_pixels_5R6G5B_pixmap;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
 	    break;
 	 case PF_DITHER_5R6G5B:
-	    ctx->Driver.WriteRGBASpan       = write_span_DITHER_5R6G5B_pixmap;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_DITHER_5R6G5B_pixmap;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_TRUEDITHER_pixmap;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_DITHER_5R6G5B_pixmap;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_TRUEDITHER_pixmap;
+	    dd->WriteRGBASpan       = write_span_DITHER_5R6G5B_pixmap;
+	    dd->WriteRGBSpan        = write_span_rgb_DITHER_5R6G5B_pixmap;
+	    dd->WriteMonoRGBASpan   = write_span_mono_TRUEDITHER_pixmap;
+	    dd->WriteRGBAPixels     = write_pixels_DITHER_5R6G5B_pixmap;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_TRUEDITHER_pixmap;
 	    break;
 	 case PF_DITHER:
-	    ctx->Driver.WriteRGBASpan       = write_span_DITHER_pixmap;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_DITHER_pixmap;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_DITHER_pixmap;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_DITHER_pixmap;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_DITHER_pixmap;
+	    dd->WriteRGBASpan       = write_span_DITHER_pixmap;
+	    dd->WriteRGBSpan        = write_span_rgb_DITHER_pixmap;
+	    dd->WriteMonoRGBASpan   = write_span_mono_DITHER_pixmap;
+	    dd->WriteRGBAPixels     = write_pixels_DITHER_pixmap;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_DITHER_pixmap;
 	    break;
 	 case PF_1BIT:
-	    ctx->Driver.WriteRGBASpan       = write_span_1BIT_pixmap;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_1BIT_pixmap;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_1BIT_pixmap;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_1BIT_pixmap;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_1BIT_pixmap;
+	    dd->WriteRGBASpan       = write_span_1BIT_pixmap;
+	    dd->WriteRGBSpan        = write_span_rgb_1BIT_pixmap;
+	    dd->WriteMonoRGBASpan   = write_span_mono_1BIT_pixmap;
+	    dd->WriteRGBAPixels     = write_pixels_1BIT_pixmap;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_1BIT_pixmap;
 	    break;
          case PF_HPCR:
-            ctx->Driver.WriteRGBASpan       = write_span_HPCR_pixmap;
-            ctx->Driver.WriteRGBSpan        = write_span_rgb_HPCR_pixmap;
-            ctx->Driver.WriteMonoRGBASpan   = write_span_mono_pixmap;
-            ctx->Driver.WriteRGBAPixels     = write_pixels_HPCR_pixmap;
-            ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+            dd->WriteRGBASpan       = write_span_HPCR_pixmap;
+            dd->WriteRGBSpan        = write_span_rgb_HPCR_pixmap;
+            dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+            dd->WriteRGBAPixels     = write_pixels_HPCR_pixmap;
+            dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
 	    if (xmesa->xm_visual->hpcr_clear_flag) {
-   		ctx->Driver.ClearColor = clear_color_HPCR_pixmap;
+	       ctx->Driver.ClearColor = clear_color_HPCR_pixmap;
 	    }
             break;
          case PF_LOOKUP:
-            ctx->Driver.WriteRGBASpan       = write_span_LOOKUP_pixmap;
-            ctx->Driver.WriteRGBSpan        = write_span_rgb_LOOKUP_pixmap;
-            ctx->Driver.WriteMonoRGBASpan   = write_span_mono_pixmap;
-            ctx->Driver.WriteRGBAPixels     = write_pixels_LOOKUP_pixmap;
-            ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+            dd->WriteRGBASpan       = write_span_LOOKUP_pixmap;
+            dd->WriteRGBSpan        = write_span_rgb_LOOKUP_pixmap;
+            dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+            dd->WriteRGBAPixels     = write_pixels_LOOKUP_pixmap;
+            dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
             break;
          case PF_GRAYSCALE:
-            ctx->Driver.WriteRGBASpan       = write_span_GRAYSCALE_pixmap;
-            ctx->Driver.WriteRGBSpan        = write_span_rgb_GRAYSCALE_pixmap;
-            ctx->Driver.WriteMonoRGBASpan   = write_span_mono_pixmap;
-            ctx->Driver.WriteRGBAPixels     = write_pixels_GRAYSCALE_pixmap;
-            ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+            dd->WriteRGBASpan       = write_span_GRAYSCALE_pixmap;
+            dd->WriteRGBSpan        = write_span_rgb_GRAYSCALE_pixmap;
+            dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+            dd->WriteRGBAPixels     = write_pixels_GRAYSCALE_pixmap;
+            dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
             break;
 	 default:
 	    _mesa_problem(NULL,"Bad pixel format in xmesa_update_state (1)");
@@ -4346,128 +4347,128 @@ void xmesa_update_span_funcs( GLcontext *ctx )
       /* Writing to back XImage */
       switch (xmesa->pixelformat) {
 	 case PF_INDEX:
-	    ctx->Driver.WriteCI32Span     = write_span_index_ximage;
+	    dd->WriteCI32Span     = write_span_index_ximage;
 	    if (depth==8)
-               ctx->Driver.WriteCI8Span   = write_span_index8_ximage8;
+               dd->WriteCI8Span   = write_span_index8_ximage8;
             else
-               ctx->Driver.WriteCI8Span   = write_span_index8_ximage;
-	    ctx->Driver.WriteMonoCISpan   = write_span_mono_index_ximage;
-	    ctx->Driver.WriteCI32Pixels   = write_pixels_index_ximage;
-	    ctx->Driver.WriteMonoCIPixels = write_pixels_mono_index_ximage;
+               dd->WriteCI8Span   = write_span_index8_ximage;
+	    dd->WriteMonoCISpan   = write_span_mono_index_ximage;
+	    dd->WriteCI32Pixels   = write_pixels_index_ximage;
+	    dd->WriteMonoCIPixels = write_pixels_mono_index_ximage;
 	    break;
 	 case PF_TRUECOLOR:
 	    /* Generic RGB */
-	    ctx->Driver.WriteRGBASpan       = write_span_TRUECOLOR_ximage;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_TRUECOLOR_ximage;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_ximage;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_TRUECOLOR_ximage;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_ximage;
+	    dd->WriteRGBASpan       = write_span_TRUECOLOR_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_TRUECOLOR_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_TRUECOLOR_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_ximage;
 	    break;
 	 case PF_TRUEDITHER:
-	    ctx->Driver.WriteRGBASpan       = write_span_TRUEDITHER_ximage;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_TRUEDITHER_ximage;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_TRUEDITHER_ximage;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_TRUEDITHER_ximage;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_TRUEDITHER_ximage;
+	    dd->WriteRGBASpan       = write_span_TRUEDITHER_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_TRUEDITHER_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_TRUEDITHER_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_TRUEDITHER_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_TRUEDITHER_ximage;
 	    break;
 	 case PF_8A8B8G8R:
-	    ctx->Driver.WriteRGBASpan       = write_span_8A8B8G8R_ximage;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_8A8B8G8R_ximage;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_8A8B8G8R_ximage;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_8A8B8G8R_ximage;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_8A8B8G8R_ximage;
+	    dd->WriteRGBASpan       = write_span_8A8B8G8R_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_8A8B8G8R_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_8A8B8G8R_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_8A8B8G8R_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_8A8B8G8R_ximage;
 	    break;
 	 case PF_8R8G8B:
-	    ctx->Driver.WriteRGBASpan       = write_span_8R8G8B_ximage;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_8R8G8B_ximage;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_8R8G8B_ximage;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_8R8G8B_ximage;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_8R8G8B_ximage;
+	    dd->WriteRGBASpan       = write_span_8R8G8B_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_8R8G8B_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_8R8G8B_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_8R8G8B_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_8R8G8B_ximage;
 	    break;
 	 case PF_8R8G8B24:
-	    ctx->Driver.WriteRGBASpan       = write_span_8R8G8B24_ximage;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_8R8G8B24_ximage;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_8R8G8B24_ximage;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_8R8G8B24_ximage;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_8R8G8B24_ximage;
+	    dd->WriteRGBASpan       = write_span_8R8G8B24_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_8R8G8B24_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_8R8G8B24_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_8R8G8B24_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_8R8G8B24_ximage;
 	    break;
 	 case PF_5R6G5B:
-	    ctx->Driver.WriteRGBASpan       = write_span_5R6G5B_ximage;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_5R6G5B_ximage;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_ximage;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_5R6G5B_ximage;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_ximage;
+	    dd->WriteRGBASpan       = write_span_5R6G5B_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_5R6G5B_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_5R6G5B_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_ximage;
 	    break;
 	 case PF_DITHER_5R6G5B:
-	    ctx->Driver.WriteRGBASpan       = write_span_DITHER_5R6G5B_ximage;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_DITHER_5R6G5B_ximage;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_DITHER_5R6G5B_ximage;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_DITHER_5R6G5B_ximage;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_DITHER_5R6G5B_ximage;
+	    dd->WriteRGBASpan       = write_span_DITHER_5R6G5B_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_DITHER_5R6G5B_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_DITHER_5R6G5B_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_DITHER_5R6G5B_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_DITHER_5R6G5B_ximage;
 	    break;
 	 case PF_DITHER:
 	    if (depth==8) {
-	       ctx->Driver.WriteRGBASpan      = write_span_DITHER8_ximage;
-	       ctx->Driver.WriteRGBSpan       = write_span_rgb_DITHER8_ximage;
-	       ctx->Driver.WriteMonoRGBASpan  = write_span_mono_DITHER8_ximage;
-	       ctx->Driver.WriteRGBAPixels    = write_pixels_DITHER8_ximage;
-	       ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_DITHER8_ximage;
+	       dd->WriteRGBASpan      = write_span_DITHER8_ximage;
+	       dd->WriteRGBSpan       = write_span_rgb_DITHER8_ximage;
+	       dd->WriteMonoRGBASpan  = write_span_mono_DITHER8_ximage;
+	       dd->WriteRGBAPixels    = write_pixels_DITHER8_ximage;
+	       dd->WriteMonoRGBAPixels = write_pixels_mono_DITHER8_ximage;
 	    }
 	    else {
-	       ctx->Driver.WriteRGBASpan       = write_span_DITHER_ximage;
-	       ctx->Driver.WriteRGBSpan        = write_span_rgb_DITHER_ximage;
-	       ctx->Driver.WriteMonoRGBASpan   = write_span_mono_DITHER_ximage;
-	       ctx->Driver.WriteRGBAPixels     = write_pixels_DITHER_ximage;
-	       ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_DITHER_ximage;
+	       dd->WriteRGBASpan       = write_span_DITHER_ximage;
+	       dd->WriteRGBSpan        = write_span_rgb_DITHER_ximage;
+	       dd->WriteMonoRGBASpan   = write_span_mono_DITHER_ximage;
+	       dd->WriteRGBAPixels     = write_pixels_DITHER_ximage;
+	       dd->WriteMonoRGBAPixels = write_pixels_mono_DITHER_ximage;
 	    }
 	    break;
 	 case PF_1BIT:
-	    ctx->Driver.WriteRGBASpan       = write_span_1BIT_ximage;
-	    ctx->Driver.WriteRGBSpan        = write_span_rgb_1BIT_ximage;
-	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_1BIT_ximage;
-	    ctx->Driver.WriteRGBAPixels     = write_pixels_1BIT_ximage;
-	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_1BIT_ximage;
+	    dd->WriteRGBASpan       = write_span_1BIT_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_1BIT_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_1BIT_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_1BIT_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_1BIT_ximage;
 	    break;
          case PF_HPCR:
-            ctx->Driver.WriteRGBASpan       = write_span_HPCR_ximage;
-            ctx->Driver.WriteRGBSpan        = write_span_rgb_HPCR_ximage;
-            ctx->Driver.WriteMonoRGBASpan   = write_span_mono_HPCR_ximage;
-            ctx->Driver.WriteRGBAPixels     = write_pixels_HPCR_ximage;
-            ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_HPCR_ximage;
+            dd->WriteRGBASpan       = write_span_HPCR_ximage;
+            dd->WriteRGBSpan        = write_span_rgb_HPCR_ximage;
+            dd->WriteMonoRGBASpan   = write_span_mono_HPCR_ximage;
+            dd->WriteRGBAPixels     = write_pixels_HPCR_ximage;
+            dd->WriteMonoRGBAPixels = write_pixels_mono_HPCR_ximage;
 	    if (xmesa->xm_visual->hpcr_clear_flag) {
                ctx->Driver.ClearColor = clear_color_HPCR_ximage;
 	    }
             break;
          case PF_LOOKUP:
 	    if (depth==8) {
-               ctx->Driver.WriteRGBASpan       = write_span_LOOKUP8_ximage;
-               ctx->Driver.WriteRGBSpan        = write_rgb_LOOKUP8_ximage;
-               ctx->Driver.WriteMonoRGBASpan   = write_span_mono_LOOKUP8_ximage;
-               ctx->Driver.WriteRGBAPixels     = write_pixels_LOOKUP8_ximage;
-               ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_LOOKUP8_ximage;
+               dd->WriteRGBASpan       = write_span_LOOKUP8_ximage;
+               dd->WriteRGBSpan        = write_rgb_LOOKUP8_ximage;
+               dd->WriteMonoRGBASpan   = write_span_mono_LOOKUP8_ximage;
+               dd->WriteRGBAPixels     = write_pixels_LOOKUP8_ximage;
+               dd->WriteMonoRGBAPixels = write_pixels_mono_LOOKUP8_ximage;
             }
             else {
-               ctx->Driver.WriteRGBASpan       = write_span_LOOKUP_ximage;
-               ctx->Driver.WriteRGBSpan        = write_span_rgb_LOOKUP_ximage;
-               ctx->Driver.WriteMonoRGBASpan   = write_span_mono_ximage;
-               ctx->Driver.WriteRGBAPixels     = write_pixels_LOOKUP_ximage;
-               ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_ximage;
+               dd->WriteRGBASpan       = write_span_LOOKUP_ximage;
+               dd->WriteRGBSpan        = write_span_rgb_LOOKUP_ximage;
+               dd->WriteMonoRGBASpan   = write_span_mono_ximage;
+               dd->WriteRGBAPixels     = write_pixels_LOOKUP_ximage;
+               dd->WriteMonoRGBAPixels = write_pixels_mono_ximage;
             }
             break;
          case PF_GRAYSCALE:
 	    if (depth==8) {
-	       ctx->Driver.WriteRGBASpan       = write_span_GRAYSCALE8_ximage;
-	       ctx->Driver.WriteRGBSpan        = write_span_rgb_GRAYSCALE8_ximage;
-	       ctx->Driver.WriteMonoRGBASpan   = write_span_mono_GRAYSCALE8_ximage;
-	       ctx->Driver.WriteRGBAPixels     = write_pixels_GRAYSCALE8_ximage;
-	       ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_GRAYSCALE8_ximage;
+	       dd->WriteRGBASpan       = write_span_GRAYSCALE8_ximage;
+	       dd->WriteRGBSpan        = write_span_rgb_GRAYSCALE8_ximage;
+	       dd->WriteMonoRGBASpan   = write_span_mono_GRAYSCALE8_ximage;
+	       dd->WriteRGBAPixels     = write_pixels_GRAYSCALE8_ximage;
+	       dd->WriteMonoRGBAPixels = write_pixels_mono_GRAYSCALE8_ximage;
 	    }
 	    else {
-	       ctx->Driver.WriteRGBASpan       = write_span_GRAYSCALE_ximage;
-	       ctx->Driver.WriteRGBSpan        = write_span_rgb_GRAYSCALE_ximage;
-	       ctx->Driver.WriteMonoRGBASpan   = write_span_mono_ximage;
-	       ctx->Driver.WriteRGBAPixels     = write_pixels_GRAYSCALE_ximage;
-	       ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_ximage;
+	       dd->WriteRGBASpan       = write_span_GRAYSCALE_ximage;
+	       dd->WriteRGBSpan        = write_span_rgb_GRAYSCALE_ximage;
+	       dd->WriteMonoRGBASpan   = write_span_mono_ximage;
+	       dd->WriteRGBAPixels     = write_pixels_GRAYSCALE_ximage;
+	       dd->WriteMonoRGBAPixels = write_pixels_mono_ximage;
 	    }
 	    break;
 	 default:
@@ -4477,8 +4478,10 @@ void xmesa_update_span_funcs( GLcontext *ctx )
    }
 
    /* Pixel/span reading functions: */
-   ctx->Driver.ReadCI32Span = read_index_span;
-   ctx->Driver.ReadRGBASpan = read_color_span;
-   ctx->Driver.ReadCI32Pixels = read_index_pixels;
-   ctx->Driver.ReadRGBAPixels = read_color_pixels;
+   dd->ReadCI32Span = read_index_span;
+   dd->ReadRGBASpan = read_color_span;
+   dd->ReadCI32Pixels = read_index_pixels;
+   dd->ReadRGBAPixels = read_color_pixels;
+
+   dd->SetReadBuffer = xmesa_set_read_buffer;
 }

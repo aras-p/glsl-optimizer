@@ -52,6 +52,7 @@
 #if defined(FX)
 
 #include "fxdrv.h"
+#include "swrast/swrast.h"
 
 #ifdef _MSC_VER
 #ifdef _WIN32
@@ -542,31 +543,54 @@ fxDDReadDepthPixels(GLcontext * ctx, GLuint n,
 
 
 
+/* Set the buffer used for reading */
+/* XXX support for separate read/draw buffers hasn't been tested */
+static void
+fxDDSetReadBuffer(GLcontext * ctx, GLframebuffer * buffer, GLenum mode)
+{
+   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   (void) buffer;
+
+   if (MESA_VERBOSE & VERBOSE_DRIVER) {
+      fprintf(stderr, "fxmesa: fxDDSetBuffer(%x)\n", (int) mode);
+   }
+
+   if (mode == GL_FRONT_LEFT) {
+      fxMesa->currentFB = GR_BUFFER_FRONTBUFFER;
+      FX_grRenderBuffer(fxMesa->currentFB);
+   }
+   else if (mode == GL_BACK_LEFT) {
+      fxMesa->currentFB = GR_BUFFER_BACKBUFFER;
+      FX_grRenderBuffer(fxMesa->currentFB);
+   }
+}
+
 
 /************************************************************************/
+
 
 
 void
 fxSetupDDSpanPointers(GLcontext * ctx)
 {
-   ctx->Driver.WriteRGBASpan = fxDDWriteRGBASpan;
-   ctx->Driver.WriteRGBSpan = fxDDWriteRGBSpan;
-   ctx->Driver.WriteMonoRGBASpan = fxDDWriteMonoRGBASpan;
-   ctx->Driver.WriteRGBAPixels = fxDDWriteRGBAPixels;
-   ctx->Driver.WriteMonoRGBAPixels = fxDDWriteMonoRGBAPixels;
+   struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference( ctx );
 
-   ctx->Driver.WriteCI8Span = NULL;
-   ctx->Driver.WriteCI32Span = NULL;
-   ctx->Driver.WriteMonoCISpan = NULL;
-   ctx->Driver.WriteCI32Pixels = NULL;
-   ctx->Driver.WriteMonoCIPixels = NULL;
+   swdd->SetReadBuffer = fxDDSetReadBuffer;
 
-   /*  ctx->Driver.ReadRGBASpan        =fxDDReadRGBASpan; */
-   ctx->Driver.ReadRGBASpan = read_R5G6B5_span;
-   ctx->Driver.ReadRGBAPixels = read_R5G6B5_pixels;
+   swdd->WriteRGBASpan = fxDDWriteRGBASpan;
+   swdd->WriteRGBSpan = fxDDWriteRGBSpan;
+   swdd->WriteMonoRGBASpan = fxDDWriteMonoRGBASpan;
+   swdd->WriteRGBAPixels = fxDDWriteRGBAPixels;
+   swdd->WriteMonoRGBAPixels = fxDDWriteMonoRGBAPixels;
 
-   ctx->Driver.ReadCI32Span = NULL;
-   ctx->Driver.ReadCI32Pixels = NULL;
+   swdd->WriteDepthSpan = fxDDWriteDepthSpan;
+   swdd->WriteDepthPixels = fxDDWriteDepthPixels;
+   swdd->ReadDepthSpan = fxDDReadDepthSpan;
+   swdd->ReadDepthPixels = fxDDReadDepthPixels;
+
+   /*  swdd->ReadRGBASpan        =fxDDReadRGBASpan; */
+   swdd->ReadRGBASpan = read_R5G6B5_span;
+   swdd->ReadRGBAPixels = read_R5G6B5_pixels;
 }
 
 

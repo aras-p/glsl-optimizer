@@ -1,4 +1,4 @@
-/* $Id: ac_import.c,v 1.10 2001/03/17 18:04:54 keithw Exp $ */
+/* $Id: ac_import.c,v 1.11 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -266,7 +266,6 @@ static void import_color( GLcontext *ctx,
 
    /* Limited choices at this stage:
     */
-   /* XXX GLchan: is this right for GLchan? */
    ASSERT(type == CHAN_TYPE);
    ASSERT(stride == 4 * sizeof(GLchan) || stride == 0);
 
@@ -408,7 +407,7 @@ struct gl_client_array *_ac_import_texcoord( GLcontext *ctx,
    /* Do we need to pull in a copy of the client data:
     */
    if (ac->Raw.TexCoord[unit].Type != type ||
-       (reqstride != 0 && ac->Raw.TexCoord[unit].StrideB != (GLint) reqstride) ||
+       (reqstride != 0 && ac->Raw.TexCoord[unit].StrideB != (GLint)reqstride) ||
        reqwriteable)
    {
       if (!ac->IsCached.TexCoord[unit])
@@ -459,10 +458,10 @@ struct gl_client_array *_ac_import_vertex( GLcontext *ctx,
 }
 
 struct gl_client_array *_ac_import_normal( GLcontext *ctx,
-					     GLenum type,
-					     GLuint reqstride,
-					     GLboolean reqwriteable,
-					     GLboolean *writeable )
+					   GLenum type,
+					   GLuint reqstride,
+					   GLboolean reqwriteable,
+					   GLboolean *writeable )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -578,7 +577,7 @@ struct gl_client_array *_ac_import_secondarycolor( GLcontext *ctx,
    /* Do we need to pull in a copy of the client data:
     */
    if (ac->Raw.SecondaryColor.Type != type ||
-       (reqstride != 0 && ac->Raw.SecondaryColor.StrideB != (GLint) reqstride) ||
+       (reqstride != 0 && ac->Raw.SecondaryColor.StrideB != (GLint)reqstride) ||
        reqwriteable)
    {
       if (!ac->IsCached.SecondaryColor)
@@ -665,12 +664,6 @@ struct gl_client_array *_ac_import_edgeflag( GLcontext *ctx,
 void _ac_import_range( GLcontext *ctx, GLuint start, GLuint count )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
-
-   /* Discard cached data which has been invalidated by state changes
-    * since last time.  **ALREADY DONE**
-   if (ac->NewState)
-      _ac_update_state( ctx );
-    */
 
    if (!ctx->Array.LockCount) {
       /* Not locked, discard cached data.  Changes to lock

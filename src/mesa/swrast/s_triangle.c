@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.19 2001/03/17 17:43:05 keithw Exp $ */
+/* $Id: s_triangle.c,v 1.20 2001/03/19 02:25:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,11 +26,10 @@
 
 
 /*
- * Triangle rasterizers
- * When the device driver doesn't implement triangle rasterization Mesa
- * will use these functions to draw triangles.
+ * When the device driver doesn't implement triangle rasterization it
+ * can hook in _swrast_Triangle, which eventually calls one of these
+ * functions to draw triangles.  
  */
-
 
 #include "glheader.h"
 #include "context.h"
@@ -244,6 +243,7 @@ static void simple_textured_triangle( GLcontext *ctx,
 #define S_SCALE twidth
 #define T_SCALE theight
 #define SETUP_CODE							\
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);                             \
    struct gl_texture_object *obj = ctx->Texture.Unit[0].Current2D;	\
    GLint b = obj->BaseLevel;						\
    GLfloat twidth = (GLfloat) obj->Image[b]->Width;			\
@@ -276,7 +276,7 @@ static void simple_textured_triangle( GLcontext *ctx,
 		 ffs += fdsdx;					\
 		 fft += fdtdx;					\
 	      }							\
-              (*ctx->Driver.WriteRGBSpan)( ctx, n, LEFT, Y,	\
+              (*swrast->Driver.WriteRGBSpan)( ctx, n, LEFT, Y,	\
                            (CONST GLchan (*)[3]) rgb, NULL );	\
 	   }							\
 	}
@@ -304,6 +304,7 @@ static void simple_z_textured_triangle( GLcontext *ctx,
 #define S_SCALE twidth
 #define T_SCALE theight
 #define SETUP_CODE							\
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);                             \
    struct gl_texture_object *obj = ctx->Texture.Unit[0].Current2D;	\
    GLint b = obj->BaseLevel;						\
    GLfloat twidth = (GLfloat) obj->Image[b]->Width;			\
@@ -347,7 +348,7 @@ static void simple_z_textured_triangle( GLcontext *ctx,
 		 ffs += fdsdx;					\
 		 fft += fdtdx;					\
 	      }							\
-              (*ctx->Driver.WriteRGBSpan)( ctx, n, LEFT, Y,	\
+              (*swrast->Driver.WriteRGBSpan)( ctx, n, LEFT, Y,	\
                            (CONST GLchan (*)[3]) rgb, mask );	\
 	   }							\
 	}
