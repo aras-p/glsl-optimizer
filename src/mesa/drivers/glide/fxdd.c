@@ -90,11 +90,11 @@ GLuint FX_rgb_scale_6[64] = {
  */
 static void fxDisableColor (fxMesaContext fxMesa)
 {
- if (fxMesa->colDepth != 16) {
-    /* 32bpp mode or 15bpp mode */
+ if (fxMesa->colDepth == 32) {
+    /* 32bpp mode */
     fxMesa->Glide.grColorMaskExt(FXFALSE, FXFALSE, FXFALSE, FXFALSE);
  } else {
-    /* 16 bpp mode */
+    /* 15/16 bpp mode */
     grColorMask(FXFALSE, FXFALSE);
  }
 }
@@ -185,7 +185,7 @@ static void fxDDClear( GLcontext *ctx,
    /*
     * As per GL spec, color masking should be obeyed when clearing
     */
-   if (ctx->Visual.greenBits != 8 && ctx->Visual.greenBits != 5) {
+   if (ctx->Visual.greenBits != 8) {
       /* can only do color masking if running in 24/32bpp on Napalm */
       if (ctx->Color.ColorMask[RCOMP] != ctx->Color.ColorMask[GCOMP] ||
           ctx->Color.ColorMask[GCOMP] != ctx->Color.ColorMask[BCOMP]) {
@@ -1113,15 +1113,15 @@ fxDDDrawPixels8888 (GLcontext * ctx, GLint x, GLint y,
        ctx->Pixel.ZoomY != 1.0F ||
        (ctx->_ImageTransferState & (IMAGE_SCALE_BIAS_BIT|
 				    IMAGE_MAP_COLOR_BIT)) ||
-       ctx->Color.AlphaEnabled ||
+       /*ctx->Color.AlphaEnabled ||*/
        ctx->Depth.Test ||
        ctx->Fog.Enabled ||
        ctx->Scissor.Enabled ||
        ctx->Stencil.Enabled ||
-       !ctx->Color.ColorMask[0] ||
+       /*!ctx->Color.ColorMask[0] ||
        !ctx->Color.ColorMask[1] ||
        !ctx->Color.ColorMask[2] ||
-       !ctx->Color.ColorMask[3] ||
+       !ctx->Color.ColorMask[3] ||*/
        ctx->Color.ColorLogicOpEnabled ||
        ctx->Texture._EnabledUnits ||
        ctx->Depth.OcclusionTest ||
@@ -1303,11 +1303,11 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
 
    fxMesa->unitsState.stencilWriteMask = 0xff;
 
-   if (fxMesa->colDepth != 16) {
-      /* 32bpp mode or 15bpp mode */
+   if (fxMesa->colDepth == 32) {
+      /* 32bpp */
       fxMesa->Glide.grColorMaskExt(FXTRUE, FXTRUE, FXTRUE, fxMesa->haveHwAlpha);
    } else {
-      /* 16 bpp mode */
+      /* 15/16 bpp mode */
       grColorMask(FXTRUE, fxMesa->haveHwAlpha);
    }
 
@@ -1357,6 +1357,7 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
         textureLevels++;
     } while ((textureSize >>= 0x1) & 0x7ff);
     ctx->Const.MaxTextureLevels = textureLevels;
+    ctx->Const.MaxTextureLodBias = /*textureLevels - 1*/8; /* Glide bug */
 #if FX_RESCALE_BIG_TEXURES_HACK
     fxMesa->textureMaxLod = textureLevels - 1;
     if ((env = getenv("MESA_FX_MAXLOD")) != NULL) {
@@ -1448,6 +1449,7 @@ fxDDInitExtensions(GLcontext * ctx)
    _mesa_enable_extension(ctx, "GL_EXT_secondary_color");
 #endif
 
+   _mesa_enable_extension(ctx, "GL_ARB_point_sprite");
    _mesa_enable_extension(ctx, "GL_EXT_point_parameters");
    _mesa_enable_extension(ctx, "GL_EXT_paletted_texture");
    _mesa_enable_extension(ctx, "GL_EXT_texture_lod_bias");
@@ -1582,7 +1584,7 @@ fx_check_IsInHardware(GLcontext * ctx)
    }
 #endif
 
-   if ((fxMesa->colDepth == 16) &&
+   if ((fxMesa->colDepth != 32) &&
        ((ctx->Color.ColorMask[RCOMP] != ctx->Color.ColorMask[GCOMP]) ||
         (ctx->Color.ColorMask[GCOMP] != ctx->Color.ColorMask[BCOMP]))) {
       return FX_FALLBACK_COLORMASK;

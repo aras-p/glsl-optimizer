@@ -156,10 +156,7 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
       FX_smallLodLog2(ti->info) = FX_largeLodLog2(ti->info);
 
    /* this is necessary because of fxDDCompressedTexImage2D */
-   if ((ti->info.format == GR_TEXFMT_ARGB_CMP_FXT1) ||
-       (ti->info.format == GR_TEXFMT_ARGB_CMP_DXT1) ||
-       (ti->info.format == GR_TEXFMT_ARGB_CMP_DXT3) ||
-       (ti->info.format == GR_TEXFMT_ARGB_CMP_DXT5)) {
+   if (ti->padded) {
       struct gl_texture_image *texImage = tObj->Image[0][minl];
       tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
       if (mml->wScale != 1 || mml->hScale != 1) {
@@ -1784,15 +1781,15 @@ fxSetupColorMask(GLcontext * ctx)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
-   if (fxMesa->colDepth != 16) {
-      /* 32bpp mode or 15bpp mode */
+   if (fxMesa->colDepth == 32) {
+      /* 32bpp mode */
       fxMesa->Glide.grColorMaskExt(ctx->Color.ColorMask[RCOMP],
                                    ctx->Color.ColorMask[GCOMP],
                                    ctx->Color.ColorMask[BCOMP],
                                    ctx->Color.ColorMask[ACOMP] && fxMesa->haveHwAlpha);
    }
    else {
-      /* 16 bpp mode */
+      /* 15/16 bpp mode */
       grColorMask(ctx->Color.ColorMask[RCOMP] |
                   ctx->Color.ColorMask[GCOMP] |
                   ctx->Color.ColorMask[BCOMP],

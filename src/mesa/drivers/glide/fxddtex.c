@@ -171,8 +171,9 @@ fxDDTexEnv(GLcontext * ctx, GLenum target, GLenum pname,
    /* apply any lod biasing right now */
    if (pname == GL_TEXTURE_LOD_BIAS_EXT) {
       GLfloat bias = *param;
-      CLAMP_SELF(bias, -8.0, 7.75);
-      
+      CLAMP_SELF(bias, -ctx->Const.MaxTextureLodBias,
+                        ctx->Const.MaxTextureLodBias - 0.25);
+
       grTexLodBiasValue(GR_TMU0, bias);
 
       if (fxMesa->haveTwoTMUs) {
@@ -296,6 +297,7 @@ fxDDTexParam(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj,
       case GL_MIRRORED_REPEAT:
          ti->sClamp = GR_TEXTURECLAMP_MIRROR_EXT;
          break;
+      case GL_CLAMP_TO_BORDER: /* no-no, but don't REPEAT, either */
       case GL_CLAMP_TO_EDGE: /* CLAMP discarding border */
       case GL_CLAMP:
 	 ti->sClamp = GR_TEXTURECLAMP_CLAMP;
@@ -314,6 +316,7 @@ fxDDTexParam(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj,
       case GL_MIRRORED_REPEAT:
          ti->tClamp = GR_TEXTURECLAMP_MIRROR_EXT;
          break;
+      case GL_CLAMP_TO_BORDER: /* no-no, but don't REPEAT, either */
       case GL_CLAMP_TO_EDGE: /* CLAMP discarding border */
       case GL_CLAMP:
 	 ti->tClamp = GR_TEXTURECLAMP_CLAMP;
@@ -1591,6 +1594,7 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
        *    our data aligned inside a 8:1 rectangle.
        * 3) just in case if MIN("s", "t") gets overflowed with GL_REPEAT,
        *    we replicate the data over the padded area.
+       * For now, we take 2) + 3) but texelfetchers will be wrong!
        */
       GLuint srcRowStride = _mesa_compressed_row_stride(internalFormat, width);
 
@@ -1601,7 +1605,7 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
                                destRowStride, (mml->height+3) / 4,
                                1, data, srcRowStride,
                                texImage->Data);
-
+      ti->padded = GL_TRUE;
    } else {
       MEMCPY(texImage->Data, data, texImage->CompressedSize);
    }

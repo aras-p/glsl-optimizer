@@ -294,6 +294,8 @@ typedef struct tfxTexInfo_t
 
    GLboolean fixedPalette;
    GLboolean validated;
+
+   GLboolean padded;
 }
 tfxTexInfo;
 
