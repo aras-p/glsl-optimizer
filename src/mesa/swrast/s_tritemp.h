@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -63,6 +63,34 @@
  * This code was designed for the origin to be in the lower-left corner.
  *
  * Inspired by triangle rasterizer code written by Allen Akin.  Thanks Allen!
+ *
+ *
+ * Some notes on rasterization accuracy:
+ *
+ * This code uses fixed point arithmetic (the GLfixed type) to iterate
+ * over the triangle edges and interpolate ancillary data (such as Z,
+ * color, secondary color, etc).  The number of fractional bits in
+ * GLfixed and the value of SUB_PIXEL_BITS has a direct bearing on the
+ * accuracy of rasterization.
+ *
+ * If SUB_PIXEL_BITS=4 then we'll snap the vertices to the nearest
+ * 1/16 of a pixel.  If we're walking up a long, nearly vertical edge
+ * (dx=1/16, dy=1024) we'll need 4 + 10 = 14 fractional bits in
+ * GLfixed to walk the edge without error.  If the maximum viewport
+ * height is 4K pixels, then we'll need 4 + 12 = 16 fractional bits.
+ *
+ * Historically, Mesa has used 11 fractional bits in GLfixed, snaps
+ * vertices to 1/16 pixel and allowed a maximum viewport height of 2K
+ * pixels.  11 fractional bits is actually insufficient for accurately
+ * rasterizing some triangles.  More recently, the maximum viewport
+ * height was increased to 4K pixels.  Thus, Mesa should be using 16
+ * fractional bits in GLfixed.  Unfortunately, there may be some issues
+ * with setting FIXED_FRAC_BITS=16, such as multiplication overflow.
+ * This will have to be examined in some detail...
+ *
+ * For now, if you find rasterization errors, particularly with tall,
+ * sliver triangles, try increasing FIXED_FRAC_BITS and/or decreasing
+ * SUB_PIXEL_BITS.
  */
 
 
@@ -558,24 +586,18 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
        */
 
       {
-         int subTriangle;
-         GLfixed fx;
+         GLint subTriangle;
          GLfixed fxLeftEdge = 0, fxRightEdge = 0;
          GLfixed fdxLeftEdge = 0, fdxRightEdge = 0;
-         GLfixed fdxOuter;
-         int idxOuter;
-         float dxOuter;
          GLfixed fError = 0, fdError = 0;
-         float adjx, adjy;
-         GLfixed fy;
 #ifdef PIXEL_ADDRESS
          PIXEL_TYPE *pRow = NULL;
-         int dPRowOuter = 0, dPRowInner;  /* offset in bytes */
+         GLint dPRowOuter = 0, dPRowInner;  /* offset in bytes */
 #endif
 #ifdef INTERP_Z
 #  ifdef DEPTH_TYPE
          DEPTH_TYPE *zRow = NULL;
-         int dZRowOuter = 0, dZRowInner;  /* offset in bytes */
+         GLint dZRowOuter = 0, dZRowInner;  /* offset in bytes */
 #  endif
          GLfixed zLeft = 0, fdzOuter = 0, fdzInner;
 #endif
@@ -659,31 +681,31 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
             }
 
             if (setupLeft && eLeft->lines > 0) {
-               const SWvertex *vLower;
-               GLfixed fsx = eLeft->fsx;
-               fx = FixedCeil(fsx);
+               const SWvertex *vLower = eLeft->v0;
+               const GLfixed fsx = eLeft->fsx;  /* no fractional part */
+               const GLfixed fsy = eLeft->fsy;
+               const GLfixed fx = FixedCeil(fsx);  /* no fractional part */
+               const GLfloat adjx = (GLfloat) (fx - eLeft->fx0); /* SCALED! */
+               const GLfloat adjy = eLeft->adjy;                 /* SCALED! */
+               GLfixed fdxOuter;
+               GLint idxOuter;
+               GLfloat dxOuter;
+
                fError = fx - fsx - FIXED_ONE;
                fxLeftEdge = fsx - FIXED_EPSILON;
                fdxLeftEdge = eLeft->fdxdy;
                fdxOuter = FixedFloor(fdxLeftEdge - FIXED_EPSILON);
                fdError = fdxOuter - fdxLeftEdge + FIXED_ONE;
                idxOuter = FixedToInt(fdxOuter);
-               dxOuter = (float) idxOuter;
+               dxOuter = (GLfloat) idxOuter;
+
+               span.y = FixedToInt(fsy);
+
+               /* silence warnings on some compilers */
                (void) dxOuter;
-
-               fy = eLeft->fsy;
-               span.y = FixedToInt(fy);
-
-               adjx = (float)(fx - eLeft->fx0);  /* SCALED! */
-               adjy = eLeft->adjy;		 /* SCALED! */
-#ifndef __IBMCPP__
-               (void) adjx;  /* silence compiler warnings */
-               (void) adjy;  /* silence compiler warnings */
-#endif
-               vLower = eLeft->v0;
-#ifndef __IBMCPP__
-               (void) vLower;  /* silence compiler warnings */
-#endif
+               (void) adjx;
+               (void) adjy;
+               (void) vLower;
 
 #ifdef PIXEL_ADDRESS
                {
@@ -694,7 +716,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #endif
                /*
                 * Now we need the set of parameter (z, color, etc.) values at
-                * the point (fx, fy).  This gives us properly-sampled parameter
+                * the point (fx, fsy).  This gives us properly-sampled parameter
                 * values that we can step from pixel to pixel.  Furthermore,
                 * although we might have intermediate results that overflow
                 * the normal parameter range when we step temporarily outside
