@@ -1,4 +1,4 @@
-/* $Id: getprocaddress.c,v 1.1 2001/11/18 23:16:56 brianp Exp $ */
+/* $Id: getprocaddress.c,v 1.2 2001/11/21 17:21:41 brianp Exp $ */
 
 /*
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
@@ -24,6 +24,8 @@
 /*
  * Test that glXGetProcAddress works.
  */
+
+#define GLX_GLXEXT_PROTOTYPES
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -1060,7 +1062,7 @@ test_functions( const char *extensions )
          passes = 0;
       }
       else if (doTests) {
-         void *p = (void *) glXGetProcAddress((const GLubyte *) functions[i]);
+         void *p = (void *) glXGetProcAddressARB((const GLubyte *) functions[i]);
          if (p) {
             passes++;
          }
