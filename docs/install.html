@@ -36,6 +36,15 @@ system and wants to contribute one and maintain it, we'll consider
 adding it again.
 </p>
 
+<p>
+In Mesa 6.1 we modified the conventional Makefile system.
+Instead of specifying all the various system configurations in the
+Make-config file, there's a directory named <code>configs/</code> which
+has an individual file for each configuration.
+One of the configs gets copied to <code>configs/current</code>, which
+is then included by all Makefiles.
+</p>
+
 
 <h3>1.1 Compilation</h3>
 
@@ -43,13 +52,12 @@ adding it again.
 Note: if you've obtained Mesa through CVS, do this first:
 </p>
 <pre>
-    cd Mesa-newtree
-    cp Makefile.X11 Makefile
+    cd Mesa
     chmod a+x bin/mklib
 </pre>
 
 <p>
-Now, just type <b>make</b>.
+Just type <b>make</b> in the top-level directory.
 You'll see a list of supported system configurations.
 Choose one from the list (such as linux-x86), and type:
 </p>
@@ -57,8 +65,10 @@ Choose one from the list (such as linux-x86), and type:
     make linux-x86
 </pre>
 <p>
-That's it.
+If you want to rebuild for a different configuration run
+<code>make realclean</code> before rebuilding.
 </p>
+
 
 <h3>1.2 The libraries</h3>
 
@@ -67,16 +77,21 @@ When compilation has finished, look in the top-level <b>lib/</b> directory.
 You'll see a set of library files similar to this:
 </p>
 <pre>
-lrwxrwxrwx    1 brian    users          10 Sep  4 17:55 libGL.so -> libGL.so.1*
-lrwxrwxrwx    1 brian    users          19 Sep  4 17:55 libGL.so.1 -> libGL.so.1.4.050100*
--rwxr-xr-x    1 brian    users    13940317 Sep  4 17:55 libGL.so.1.4.050100*
-lrwxrwxrwx    1 brian    users          11 Sep  4 17:54 libGLU.so -> libGLU.so.1*
-lrwxrwxrwx    1 brian    users          20 Sep  4 17:54 libGLU.so.1 -> libGLU.so.1.3.050100*
--rwxr-xr-x    1 brian    users      324746 Sep  3 13:54 libGLU.so.1.1*
--rwxr-xr-x    1 brian    users     2830539 Sep  4 17:54 libGLU.so.1.3.050100*
-lrwxrwxrwx    1 brian    users          12 Sep  4 17:53 libglut.so -> libglut.so.3*
-lrwxrwxrwx    1 brian    users          16 Sep  4 17:53 libglut.so.3 -> libglut.so.3.7.1*
--rwxr-xr-x    1 brian    users     2426683 Sep  4 17:53 libglut.so.3.7.1*
+lrwxrwxrwx    1 brian    users          10 Mar 26 07:53 libGL.so -> libGL.so.1*
+lrwxrwxrwx    1 brian    users          19 Mar 26 07:53 libGL.so.1 -> libGL.so.1.5.060100*
+-rwxr-xr-x    1 brian    users     3375861 Mar 26 07:53 libGL.so.1.5.060100*
+lrwxrwxrwx    1 brian    users          11 Mar 26 07:53 libGLU.so -> libGLU.so.1*
+lrwxrwxrwx    1 brian    users          20 Mar 26 07:53 libGLU.so.1 -> libGLU.so.1.3.060100*
+-rwxr-xr-x    1 brian    users      549269 Mar 26 07:53 libGLU.so.1.3.060100*
+lrwxrwxrwx    1 brian    users          12 Mar 26 07:53 libglut.so -> libglut.so.3*
+lrwxrwxrwx    1 brian    users          16 Mar 26 07:53 libglut.so.3 -> libglut.so.3.7.1*
+-rwxr-xr-x    1 brian    users      597754 Mar 26 07:53 libglut.so.3.7.1*
+lrwxrwxrwx    1 brian    users          11 Mar 26 08:04 libGLw.so -> libGLw.so.1*
+lrwxrwxrwx    1 brian    users          15 Mar 26 08:04 libGLw.so.1 -> libGLw.so.1.0.0*
+-rwxr-xr-x    1 brian    users       20750 Mar 26 08:04 libGLw.so.1.0.0*
+lrwxrwxrwx    1 brian    users          14 Mar 26 07:53 libOSMesa.so -> libOSMesa.so.6*
+lrwxrwxrwx    1 brian    users          23 Mar 26 07:53 libOSMesa.so.6 -> libOSMesa.so.6.1.060100*
+-rwxr-xr-x    1 brian    users       23871 Mar 26 07:53 libOSMesa.so.6.1.060100*
 </pre>
 
 <p>
@@ -85,6 +100,10 @@ lrwxrwxrwx    1 brian    users          16 Sep  4 17:53 libglut.so.3 -> libglut.
 <b>libGLU</b> is the OpenGL Utility library.
 <br>
 <b>libglut</b> is the GLUT library.
+<br>
+<b>libGLw</b> is the Xt/Motif OpenGL drawing area widget library.
+<br>
+<b>libOSMesa</b> is the OSMesa (Off-Screen) interface library.
 </p>
 
 
@@ -184,24 +203,14 @@ already installed, you'll have to choose different directories, like
 </p>
 
 <p>
-To install the Mesa headers, do this:
-<blockquote>
-<b>cp -r include/GL /usr/include</b>
-</blockquote>
-
-<p>
-To install the Mesa libraries, do this:
+To install Mesa's headers and libraries, run <code>make install</code>
+You'll be prompted to enter alternative directories for the headers
+and libraries.
 </p>
-<blockquote>
-<b>cp -pd lib/* /usr/lib</b>
-<br>
-(The -pd options preserve symbolic links)
-</blockquote>
 
 <p>
-If you install the libraries in a non-standard location you can use
-LD_LIBRARY_PATH (on Linux) to switch between the Mesa libs and another
-vendor libs whenever you want.
+Note: at runtime, you can set the LD_LIBRARY_PATH (on Linux) to switch
+between the Mesa libs and another vendor libs whenever you want.
 This is a handy way to compare multiple OpenGL implementations.
 </p>
 
