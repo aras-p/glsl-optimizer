@@ -2106,7 +2106,7 @@ struct gl_tnl_module {
    /**
     * Vertex format to be lazily swapped into current dispatch.
     */
-   GLvertexformat *Current;
+   const GLvertexformat *Current;
 
    /**
     * \name Record of functions swapped out.  
