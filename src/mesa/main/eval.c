@@ -1,4 +1,4 @@
-/* $Id: eval.c,v 1.19 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: eval.c,v 1.20 2001/05/16 17:06:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -279,6 +279,12 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
       return;
    }
 
+   if (ctx->Texture.CurrentUnit != 0) {
+      /* See OpenGL 1.2.1 spec, section F.2.13 */
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glMap2(ACTIVE_TEXTURE != 0)" );
+      return;
+   }
+
    switch (target) {
       case GL_MAP1_VERTEX_3:
          map = &ctx->EvalMap.Map1Vertex3;
@@ -389,6 +395,12 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
    }
    if (vstride < k) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glMap2(vstride)" );
+      return;
+   }
+
+   if (ctx->Texture.CurrentUnit != 0) {
+      /* See OpenGL 1.2.1 spec, section F.2.13 */
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glMap2(ACTIVE_TEXTURE != 0)" );
       return;
    }
 
