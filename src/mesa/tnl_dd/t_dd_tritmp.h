@@ -196,20 +196,34 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	       }
 	       else {
 		  GLfloat (*vbcolor)[4] = VB->ColorPtr[1]->data;
-		  ASSERT(VB->ColorPtr[1]->stride == 4*sizeof(GLfloat));
 		  (void) vbcolor;
 
 		  if (!DO_FLAT) {
 		     VERT_SAVE_RGBA( 0 );
 		     VERT_SAVE_RGBA( 1 );
-		     VERT_SET_RGBA( v[0], vbcolor[e0] );
-		     VERT_SET_RGBA( v[1], vbcolor[e1] );
 		  }
 		  VERT_SAVE_RGBA( 2 );
-		  VERT_SET_RGBA( v[2], vbcolor[e2] );
+
+		  if (VB->ColorPtr[1]->stride) {
+		     ASSERT(VB->ColorPtr[1]->stride == 4*sizeof(GLfloat));
+
+		     if (!DO_FLAT) {		  
+			VERT_SET_RGBA( v[0], vbcolor[e0] );
+			VERT_SET_RGBA( v[1], vbcolor[e1] );
+		     }
+		     VERT_SET_RGBA( v[2], vbcolor[e2] );
+		  }
+		  else {
+		     if (!DO_FLAT) {		  
+			VERT_SET_RGBA( v[0], vbcolor[0] );
+			VERT_SET_RGBA( v[1], vbcolor[0] );
+		     }
+		     VERT_SET_RGBA( v[2], vbcolor[0] );
+		  }
 
 		  if (HAVE_SPEC && VB->SecondaryColorPtr[1]) {
 		     GLfloat (*vbspec)[4] = VB->SecondaryColorPtr[1]->data;
+		     ASSERT(VB->SecondaryColorPtr[1]->stride == 4*sizeof(GLfloat));
 
 		     if (!DO_FLAT) {
 			VERT_SAVE_SPEC( 0 );
@@ -458,12 +472,25 @@ static void TAG(quad)( GLcontext *ctx,
 		     VERT_SAVE_RGBA( 0 );
 		     VERT_SAVE_RGBA( 1 );
 		     VERT_SAVE_RGBA( 2 );
-		     VERT_SET_RGBA( v[0], vbcolor[e0] );
-		     VERT_SET_RGBA( v[1], vbcolor[e1] );
-		     VERT_SET_RGBA( v[2], vbcolor[e2] );
-	          }
+		  }
 	          VERT_SAVE_RGBA( 3 );
-	          VERT_SET_RGBA( v[3], vbcolor[e3] );
+
+		  if (VB->ColorPtr[1]->stride) {
+		     if (!DO_FLAT) {
+			VERT_SET_RGBA( v[0], vbcolor[e0] );
+			VERT_SET_RGBA( v[1], vbcolor[e1] );
+			VERT_SET_RGBA( v[2], vbcolor[e2] );
+		     }
+		     VERT_SET_RGBA( v[3], vbcolor[e3] );
+		  }
+		  else {
+		     if (!DO_FLAT) {
+			VERT_SET_RGBA( v[0], vbcolor[0] );
+			VERT_SET_RGBA( v[1], vbcolor[0] );
+			VERT_SET_RGBA( v[2], vbcolor[0] );
+		     }
+		     VERT_SET_RGBA( v[3], vbcolor[0] );
+		  }
 
 	          if (HAVE_SPEC && VB->SecondaryColorPtr[1]) {
 		     GLfloat (*vbspec)[4] = VB->SecondaryColorPtr[1]->data;
