@@ -1093,8 +1093,8 @@ struct gl_array_attrib {
    struct gl_client_array Index;
    struct gl_client_array TexCoord[MAX_TEXTURE_COORD_UNITS];
    struct gl_client_array EdgeFlag;
-
-   struct gl_client_array VertexAttrib[16];  /* GL_NV_vertex_program */
+   /* GL_NV_vertex_program */
+   struct gl_client_array VertexAttrib[VERT_ATTRIB_MAX];
 
    GLint TexCoordInterleaveFactor;
    GLint ActiveTexture;		/* Client Active Texture */
@@ -1103,6 +1103,20 @@ struct gl_array_attrib {
 
    GLuint _Enabled;		/* _NEW_ARRAY_* - bit set if array enabled */
    GLuint NewState;		/* _NEW_ARRAY_* */
+
+   /* GL_ARB_vertex_buffer_object */
+   GLuint ArrayBufferBinding;
+   GLuint VertexArrayBufferBinding;
+   GLuint NormalArrayBufferBinding;
+   GLuint ColorArrayBufferBinding;
+   GLuint IndexArrayBufferBinding;
+   GLuint TextureArrayBufferBinding;
+   GLuint EdgeFlagArrayBufferBinding;
+   GLuint SecondaryColorArrayBufferBinding;
+   GLuint FogCoordArrayBufferBinding;
+   GLuint WeightArrayBufferBinding;
+   GLuint ElementArrayBufferBinding;
+   GLuint VertexAttribArrayBufferBinding[VERT_ATTRIB_MAX];
 };
 
 

@@ -723,6 +723,13 @@ _mesa_GetVertexAttribivNV(GLuint index, GLenum pname, GLint *params)
       case GL_CURRENT_ATTRIB_NV:
          COPY_4V_CAST(params, ctx->Current.Attrib[index], GLint);
          break;
+      case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB:
+         if (!ctx->Extensions.ARB_vertex_buffer_object) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribdvNV");
+            return;
+         }
+         params[0] = ctx->Array.VertexAttribArrayBufferBinding[index];
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribdvNV");
          return;

@@ -1,5 +1,3 @@
-/* $Id: get.c,v 1.110 2003/04/01 19:07:35 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -1519,6 +1517,52 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ENUM_TO_BOOL(ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
 
+      /* GL_ARB_vertex_buffer_object */
+      case GL_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
+         *params = INT_TO_BOOL(ctx->Array.ArrayBufferBinding);
+         break;
+      case GL_VERTEX_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
+         *params = INT_TO_BOOL(ctx->Array.VertexArrayBufferBinding);
+         break;
+      case GL_NORMAL_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
+         *params = INT_TO_BOOL(ctx->Array.NormalArrayBufferBinding);
+         break;
+      case GL_COLOR_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
+         *params = INT_TO_BOOL(ctx->Array.ColorArrayBufferBinding);
+         break;
+      case GL_INDEX_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
+         *params = INT_TO_BOOL(ctx->Array.IndexArrayBufferBinding);
+         break;
+      case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
+         *params = INT_TO_BOOL(ctx->Array.TextureArrayBufferBinding);
+         break;
+      case GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
+         *params = INT_TO_BOOL(ctx->Array.EdgeFlagArrayBufferBinding);
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
+         *params = INT_TO_BOOL(ctx->Array.SecondaryColorArrayBufferBinding);
+         break;
+      case GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
+         *params = INT_TO_BOOL(ctx->Array.FogCoordArrayBufferBinding);
+         break;
+      case GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
+         *params = INT_TO_BOOL(ctx->Array.WeightArrayBufferBinding);
+         break;
+      case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
+         *params = INT_TO_BOOL(ctx->Array.ElementArrayBufferBinding);
+         break;
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
    }
@@ -2929,6 +2973,52 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) (ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
 
+      /* GL_ARB_vertex_buffer_object */
+      case GL_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
+         *params = (GLdouble) ctx->Array.ArrayBufferBinding;
+         break;
+      case GL_VERTEX_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
+         *params = (GLdouble) ctx->Array.VertexArrayBufferBinding;
+         break;
+      case GL_NORMAL_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
+         *params = (GLdouble) ctx->Array.NormalArrayBufferBinding;
+         break;
+      case GL_COLOR_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
+         *params = (GLdouble) ctx->Array.ColorArrayBufferBinding;
+         break;
+      case GL_INDEX_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
+         *params = (GLdouble) ctx->Array.IndexArrayBufferBinding;
+         break;
+      case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
+         *params = (GLdouble) ctx->Array.TextureArrayBufferBinding;
+         break;
+      case GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
+         *params = (GLdouble) ctx->Array.EdgeFlagArrayBufferBinding;
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
+         *params = (GLdouble) ctx->Array.SecondaryColorArrayBufferBinding;
+         break;
+      case GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
+         *params = (GLdouble) ctx->Array.FogCoordArrayBufferBinding;
+         break;
+      case GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
+         *params = (GLdouble) ctx->Array.WeightArrayBufferBinding;
+         break;
+      case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
+         *params = (GLdouble) ctx->Array.ElementArrayBufferBinding;
+         break;
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev(pname=0x%x)", pname);
    }
@@ -4313,6 +4403,52 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_ACTIVE_STENCIL_FACE_EXT:
          CHECK_EXTENSION_F(EXT_stencil_two_side, pname);
          *params = (GLfloat) (ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
+         break;
+
+      /* GL_ARB_vertex_buffer_object */
+      case GL_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
+         *params = (GLfloat) ctx->Array.ArrayBufferBinding;
+         break;
+      case GL_VERTEX_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
+         *params = (GLfloat) ctx->Array.VertexArrayBufferBinding;
+         break;
+      case GL_NORMAL_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
+         *params = (GLfloat) ctx->Array.NormalArrayBufferBinding;
+         break;
+      case GL_COLOR_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
+         *params = (GLfloat) ctx->Array.ColorArrayBufferBinding;
+         break;
+      case GL_INDEX_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
+         *params = (GLfloat) ctx->Array.IndexArrayBufferBinding;
+         break;
+      case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
+         *params = (GLfloat) ctx->Array.TextureArrayBufferBinding;
+         break;
+      case GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
+         *params = (GLfloat) ctx->Array.EdgeFlagArrayBufferBinding;
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
+         *params = (GLfloat) ctx->Array.SecondaryColorArrayBufferBinding;
+         break;
+      case GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
+         *params = (GLfloat) ctx->Array.FogCoordArrayBufferBinding;
+         break;
+      case GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
+         *params = (GLfloat) ctx->Array.WeightArrayBufferBinding;
+         break;
+      case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
+         *params = (GLfloat) ctx->Array.ElementArrayBufferBinding;
          break;
 
       default:
@@ -5737,6 +5873,52 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_ACTIVE_STENCIL_FACE_EXT:
          CHECK_EXTENSION_I(EXT_stencil_two_side, pname);
          *params = (GLint) (ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
+         break;
+
+      /* GL_ARB_vertex_buffer_object */
+      case GL_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
+         *params = (GLint) ctx->Array.ArrayBufferBinding;
+         break;
+      case GL_VERTEX_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
+         *params = (GLint) ctx->Array.VertexArrayBufferBinding;
+         break;
+      case GL_NORMAL_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
+         *params = (GLint) ctx->Array.NormalArrayBufferBinding;
+         break;
+      case GL_COLOR_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
+         *params = (GLint) ctx->Array.ColorArrayBufferBinding;
+         break;
+      case GL_INDEX_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
+         *params = (GLint) ctx->Array.IndexArrayBufferBinding;
+         break;
+      case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
+         *params = (GLint) ctx->Array.TextureArrayBufferBinding;
+         break;
+      case GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
+         *params = (GLint) ctx->Array.EdgeFlagArrayBufferBinding;
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
+         *params = (GLint) ctx->Array.SecondaryColorArrayBufferBinding;
+         break;
+      case GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
+         *params = (GLint) ctx->Array.FogCoordArrayBufferBinding;
+         break;
+      case GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
+         *params = (GLint) ctx->Array.WeightArrayBufferBinding;
+         break;
+      case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
+         CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
+         *params = (GLint) ctx->Array.ElementArrayBufferBinding;
          break;
 
       default:
