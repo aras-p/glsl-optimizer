@@ -1,10 +1,10 @@
-/* $Id: hash.c,v 1.12 2002/06/29 19:48:16 brianp Exp $ */
+/* $Id: hash.c,v 1.13 2002/09/16 17:55:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,32 +36,41 @@
 #endif
 
 
-/*
- * Generic hash table.
- *
- * This is used to implement display list and texture object lookup.
- * NOTE: key=0 is illegal.
+/**
+ * \file hash.c
+ * \brief Generic hash table.  Used for display lists and texture objects.
+ * The hash functions are thread-safe.
+ * \author Brian Paul
+ * \note key=0 is illegal
  */
 
 
-#define TABLE_SIZE 1024
+#define TABLE_SIZE 1023  /**< Size of lookup table/array */
 
+/**
+ * An entry in the hash table.  This struct is private to this file.
+ */
 struct HashEntry {
-   GLuint Key;
-   void *Data;
-   struct HashEntry *Next;
+   GLuint Key;             /**< the entry's key */
+   void *Data;             /**< the entry's data */
+   struct HashEntry *Next; /**< pointer to next entry */
 };
 
+/**
+ * The hashtable data structure.  This is an opaque types (it's not
+ * defined in the .h file).
+ */
 struct _mesa_HashTable {
-   struct HashEntry *Table[TABLE_SIZE];
-   GLuint MaxKey;
-   _glthread_Mutex Mutex;
+   struct HashEntry *Table[TABLE_SIZE];  /**< the lookup table */
+   GLuint MaxKey;                        /**< highest key inserted so far */
+   _glthread_Mutex Mutex;                /**< mutual exclusion lock */
 };
 
 
 
-/*
- * Return pointer to a new, empty hash table.
+/**
+ * Create a new hash table.
+ * \return pointer to a new, empty hash table.
  */
 struct _mesa_HashTable *_mesa_NewHashTable(void)
 {
@@ -74,8 +83,9 @@ struct _mesa_HashTable *_mesa_NewHashTable(void)
 
 
 
-/*
+/**
  * Delete a hash table.
+ * \param table - the hash table to delete
  */
 void _mesa_DeleteHashTable(struct _mesa_HashTable *table)
 {
@@ -94,11 +104,11 @@ void _mesa_DeleteHashTable(struct _mesa_HashTable *table)
 
 
 
-/*
+/**
  * Lookup an entry in the hash table.
- * Input:  table - the hash table
- *         key - the key
- * Return:  user data pointer or NULL if key not in table
+ * \param table - the hash table
+ * \param key - the key
+ * \return pointer to user's data or NULL if key not in table
  */
 void *_mesa_HashLookup(const struct _mesa_HashTable *table, GLuint key)
 {
@@ -121,12 +131,12 @@ void *_mesa_HashLookup(const struct _mesa_HashTable *table, GLuint key)
 
 
 
-/*
+/**
  * Insert into the hash table.  If an entry with this key already exists
  * we'll replace the existing entry.
- * Input:  table - the hash table
- *         key - the key (not zero)
- *         data - pointer to user data
+ * \param table - the hash table
+ * \param key - the key (not zero)
+ * \param data - pointer to user data
  */
 void _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
 {
@@ -166,10 +176,10 @@ void _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
 
 
 
-/*
+/**
  * Remove an entry from the hash table.
- * Input:  table - the hash table
- *         key - key of entry to remove
+ * \param table - the hash table
+ * \param key - key of entry to remove
  */
 void _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key)
 {
@@ -206,10 +216,12 @@ void _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key)
 
 
 
-/*
- * Return the key of the "first" entry in the hash table.
+/**
+ * Get the key of the "first" entry in the hash table.
  * This is used in the course of deleting all display lists when
  * a context is destroyed.
+ * \param table - the hash table
+ * \return key for the "first" entry in the hash table.
  */
 GLuint _mesa_HashFirstEntry(struct _mesa_HashTable *table)
 {
@@ -228,8 +240,9 @@ GLuint _mesa_HashFirstEntry(struct _mesa_HashTable *table)
 
 
 
-/*
+/**
  * Dump contents of hash table for debugging.
+ * \param table - the hash table
  */
 void _mesa_HashPrint(const struct _mesa_HashTable *table)
 {
@@ -246,11 +259,11 @@ void _mesa_HashPrint(const struct _mesa_HashTable *table)
 
 
 
-/*
+/**
  * Find a block of 'numKeys' adjacent unused hash keys.
- * Input:  table - the hash table
- *         numKeys - number of keys needed
- * Return:  starting key of free block or 0 if failure
+ * \param table - the hash table
+ * \param numKeys - number of keys needed
+ * \return Starting key of free block or 0 if failure
  */
 GLuint _mesa_HashFindFreeKeyBlock(struct _mesa_HashTable *table, GLuint numKeys)
 {
