@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -209,11 +209,11 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
       const GLfloat s0 = v0->texcoord[0][0] * invW0;
       const GLfloat s1 = v1->texcoord[0][0] * invW1;
       const GLfloat t0 = v0->texcoord[0][1] * invW0;
-      const GLfloat t1 = v1->texcoord[0][1] * invW0;
+      const GLfloat t1 = v1->texcoord[0][1] * invW1;
       const GLfloat r0 = v0->texcoord[0][2] * invW0;
-      const GLfloat r1 = v1->texcoord[0][2] * invW0;
+      const GLfloat r1 = v1->texcoord[0][2] * invW1;
       const GLfloat q0 = v0->texcoord[0][3] * invW0;
-      const GLfloat q1 = v1->texcoord[0][3] * invW0;
+      const GLfloat q1 = v1->texcoord[0][3] * invW1;
       line.span.arrayMask |= (SPAN_TEXTURE | SPAN_LAMBDA);
       compute_plane(line.x0, line.y0, line.x1, line.y1, s0, s1, line.sPlane[0]);
       compute_plane(line.x0, line.y0, line.x1, line.y1, t0, t1, line.tPlane[0]);
@@ -235,11 +235,11 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
             const GLfloat s0 = v0->texcoord[u][0] * invW0;
             const GLfloat s1 = v1->texcoord[u][0] * invW1;
             const GLfloat t0 = v0->texcoord[u][1] * invW0;
-            const GLfloat t1 = v1->texcoord[u][1] * invW0;
+            const GLfloat t1 = v1->texcoord[u][1] * invW1;
             const GLfloat r0 = v0->texcoord[u][2] * invW0;
-            const GLfloat r1 = v1->texcoord[u][2] * invW0;
+            const GLfloat r1 = v1->texcoord[u][2] * invW1;
             const GLfloat q0 = v0->texcoord[u][3] * invW0;
-            const GLfloat q1 = v1->texcoord[u][3] * invW0;
+            const GLfloat q1 = v1->texcoord[u][3] * invW1;
             compute_plane(line.x0, line.y0, line.x1, line.y1, s0, s1, line.sPlane[u]);
             compute_plane(line.x0, line.y0, line.x1, line.y1, t0, t1, line.tPlane[u]);
             compute_plane(line.x0, line.y0, line.x1, line.y1, r0, r1, line.uPlane[u]);
