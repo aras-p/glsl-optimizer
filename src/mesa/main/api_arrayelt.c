@@ -726,7 +726,7 @@ static void _ae_update_state( GLcontext *ctx )
          struct gl_client_array *attribArray = &ctx->Array.TexCoord[i];
          at->array = attribArray;
          at->func = AttribFuncs[at->array->Normalized][at->array->Size-1][TYPE_IDX(at->array->Type)];
-         at->index = i;
+         at->index = VERT_ATTRIB_TEX0 + i;
          at++;
       }
    }
