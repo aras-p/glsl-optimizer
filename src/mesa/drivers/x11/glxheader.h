@@ -1,4 +1,4 @@
-/* $Id: glxheader.h,v 1.3 2001/01/08 04:06:20 keithw Exp $ */
+/* $Id: glxheader.h,v 1.4 2001/05/29 19:48:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,9 +50,6 @@
 
 #else
 
-# ifdef GLX_DIRECT_RENDERING
-#  include "dri_mesaint.h"
-# endif
 # include <X11/Xlib.h>
 # include <X11/Xutil.h>
 # ifdef USE_XSHM  /* was SHM */

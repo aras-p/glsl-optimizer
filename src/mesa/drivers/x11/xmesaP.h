@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.22 2001/05/01 22:01:11 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.23 2001/05/29 19:48:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,27 +33,15 @@
 # include "GL/xf86glx.h"
 # include "xf86glx_util.h"
 #else
-# ifdef GLX_DIRECT_RENDERING
-#  include "dri_mesa.h"
-# endif
 # ifdef USE_XSHM
 #  include <X11/extensions/XShm.h>
 # endif
 #endif
 #include "GL/xmesa.h"
 #include "mtypes.h"
-#if defined(FX) && !defined(GLX_DIRECT_RENDERING)
+#if defined(FX)
 #include "GL/fxmesa.h"
 #include "FX/fxdrv.h"
-#endif
-
-
-#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
-#  include "xdriP.h"
-#else
-#  define DRI_DRAWABLE_ARG
-#  define DRI_DRAWABLE_PARM
-#  define DRI_CTX_ARG
 #endif
 
 
@@ -144,13 +132,6 @@ struct xmesa_context {
 
    GLubyte clearcolor[4];		/* current clearing color */
    unsigned long clearpixel;		/* current clearing pixel value */
-
-#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
-  __DRIcontextPrivate *driContextPriv; /* back pointer to DRI context
-					* used for locking
-					*/
-  void *private;			/* device-specific private context */
-#endif
 };
 
 
@@ -229,14 +210,7 @@ struct xmesa_buffer {
    unsigned long alloced_colors[256];
 #endif
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
-  __DRIdrawablePrivate *driDrawPriv;	/* back pointer to DRI drawable
-					 * used for direct access to framebuffer
-					 */
-  void *private;			/* device-specific private drawable */
-#endif
-
-#if defined( FX ) && !defined(GLX_DIRECT_RENDERING)
+#if defined( FX )
    /* For 3Dfx Glide only */
    GLboolean FXisHackUsable;	/* Can we render into window? */
    GLboolean FXwindowHack;	/* Are we rendering into a window? */
@@ -543,7 +517,6 @@ extern void xmesa_register_swrast_functions( GLcontext *ctx );
 extern XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v,
 					     XMesaWindow w,
 					     XMesaContext c
-					     DRI_DRAWABLE_ARG
 					   );
 
 /*

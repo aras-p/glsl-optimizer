@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.22 2001/05/03 14:11:18 brianp Exp $ */
+/* $Id: xm_api.c,v 1.23 2001/05/29 19:48:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1649,10 +1649,6 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
    ctx->Driver.UpdateState = xmesa_update_state;
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
-   c->driContextPriv = driContextPriv;
-#endif
-
    /* Initialize the software rasterizer and helper modules.
     */
    _swrast_CreateContext( ctx );
@@ -1882,10 +1878,6 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
    }
 #endif
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
-   b->driDrawPriv = driDrawPriv;
-#endif
-
    return b;
 }
 
@@ -1954,10 +1946,6 @@ XMesaBuffer XMesaCreatePixmapBuffer( XMesaVisual v,
       free_xmesa_buffer(client, b);
       return NULL;
    }
-
-#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
-   b->driDrawPriv = driDrawPriv;
-#endif
 
    return b;
 }
@@ -2351,16 +2339,12 @@ void XMesaSwapBuffers( XMesaBuffer b )
 	 else
 #endif
          {
-#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
-	    XMesaDriSwapBuffers( b );
-#else
             /*_glthread_LOCK_MUTEX(_xmesa_lock);*/
             XMesaPutImage( b->xm_visual->display, b->frontbuffer,
 			   b->cleargc,
 			   b->backimage, 0, 0,
 			   0, 0, b->width, b->height );
             /*_glthread_UNLOCK_MUTEX(_xmesa_lock);*/
-#endif
          }
       }
       else {
@@ -2376,7 +2360,7 @@ void XMesaSwapBuffers( XMesaBuffer b )
          /*_glthread_UNLOCK_MUTEX(_xmesa_lock);*/
       }
    }
-#if !defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
+#if !defined(XFree86Server)
    XSync( b->xm_visual->display, False );
 #endif
 }

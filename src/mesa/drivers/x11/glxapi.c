@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.25 2001/05/29 16:23:26 brianp Exp $ */
+/* $Id: glxapi.c,v 1.26 2001/05/29 19:48:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -98,7 +98,7 @@ get_dispatch(Display *dpy)
 #ifdef GLX_BUILD_IN_XLIB_MESA
          if (getenv("LIBGL_DEBUG")) {
             fprintf(stderr,
-               "libGL: server lacks GLX extension. Using Mesa Xlib renderer.");
+             "libGL: server lacks GLX extension. Using Mesa Xlib renderer.\n");
          }
 #endif
          t = _mesa_GetGLXDispatchTable();
@@ -672,10 +672,15 @@ GLXContextID glXGetContextIDEXT(const GLXContext context)
 }
 #endif
 
+#ifdef GLX_BUILD_IN_XLIB_MESA
+/* Use real libGL's glXGetCurrentDisplayEXT() function */
+#else
+/* stand-alone Mesa */
 Display *glXGetCurrentDisplayEXT(void)
 {
    return glXGetCurrentDisplay();
 }
+#endif
 
 GLXContext glXImportContextEXT(Display *dpy, GLXContextID contextID)
 {
