@@ -66,6 +66,14 @@ GL_ARB_occlusion_query
 GL_ARB_texture_non_power_of_two
    Removes the restriction that texture dimensions must be powers of two.
 
+GL_IBM_multimode_draw_arrays
+   Allows multiple vertex arrays to be drawn with one call, including arrays
+   of different types of primitives.
+
+GL_SUN_multi_draw_arrays
+   An alias for GL_EXT_multi_draw_arrays, standard in OpenGL 1.4.
+
+
 
 Build System Changes
 --------------------
@@ -77,6 +85,25 @@ The "old style" makefile system has been updated:
       bugs in it, but it's been tested on Linux, SunOS 5.8 and IRIX 6.5.
       Improvements/contributes are greatly appreciated.
    3. The Makefile.X11 files have been cleaned up in various ways
+
+The GNU automake/autoconf support has been removed.  As it was, it seldom
+worked on anything but Linux.  The Mesa developers aren't big fans of
+automake/autoconf and didn't have the time to maintain it.  If someone
+wants to contribute new automake/autoconf support (and is willing to
+maintain it), it may be re-incorporated into Mesa.
+
+
+
+Directory tree reorganization
+-----------------------------
+
+The directory structure for Mesa has been overhauled to improve its layout.
+All source code for Mesa, GLU, GLUT, etc is now under the src/ directory
+in appropriate subdirectories.
+
+The Mesa source code and drivers has been reorganized under src/mesa/.
+
+All demonstration programs and test are now in subdirectories under progs/.
 
 
 
