@@ -385,6 +385,38 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
 }
 
 
+/*
+ * Given a texture unit and a texture target, return the corresponding
+ * texture object.
+ */
+static struct gl_texture_object *
+select_tex_object(struct gl_texture_unit *unit, GLenum target)
+{
+   switch (target) {
+      case GL_TEXTURE_1D:
+         return unit->CurrentD[1];
+      case GL_TEXTURE_2D:
+         return unit->CurrentD[2];
+      case GL_TEXTURE_3D:
+         return unit->CurrentD[3];
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+         return unit->CurrentPosX;
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+         return unit->CurrentNegX;
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+         return unit->CurrentPosY;
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+         return unit->CurrentNegY;
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+         return unit->CurrentPosZ;
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+         return unit->CurrentNegZ;
+      default:
+         gl_problem(NULL, "bad target in select_tex_object()");
+         return NULL;
+   }
+}
+
 
 /*
  * Return new gl_texture_image struct with all fields initialized to zero.
@@ -1189,7 +1221,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       }
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-      texObj = texUnit->CurrentD[2];
+      texObj = select_tex_object(texUnit, target);
       texImage = texObj->Image[level];
 
       if (!texImage) {
@@ -1756,7 +1788,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
    }
 
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   texObj = texUnit->CurrentD[2];
+   texObj = select_tex_object(texUnit, target);
    texImage = texObj->Image[level];
    assert(texImage);
 

@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.19 2000/05/07 20:41:30 brianp Exp $ */
+/* $Id: enable.c,v 1.20 2000/05/22 16:33:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -506,6 +506,26 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          ctx->Pixel.Separable2DEnabled = state;
          break;
 
+      /* GL_ARB_texture_cube_map */
+      case GL_TEXTURE_CUBE_MAP_ARB:
+#if 0
+         if (ctx->Visual->RGBAflag) {
+	    const GLuint curr = ctx->Texture.CurrentUnit;
+	    const GLuint flag = TEXTURE0_CUBE << (curr * 4);
+            struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
+	    ctx->NewState |= NEW_TEXTURE_ENABLE;
+            if (state) {
+	       texUnit->Enabled |= TEXTURE0_2D;
+	       ctx->Enabled |= flag;
+	    }
+            else {
+               texUnit->Enabled &= ~TEXTURE0_2D;
+               ctx->Enabled &= ~flag;
+            }
+         }
+	 break;
+#endif
+
       default:
 	 if (state) {
 	    gl_error( ctx, GL_INVALID_ENUM, "glEnable" );
@@ -737,6 +757,26 @@ _mesa_IsEnabled( GLenum cap )
          return ctx->Pixel.Convolution2DEnabled;
       case GL_SEPARABLE_2D:
          return ctx->Pixel.Separable2DEnabled;
+
+      /* GL_ARB_texture_cube_map */
+      case GL_TEXTURE_CUBE_MAP_ARB:
+#if 0
+         if (ctx->Visual->RGBAflag) {
+	    const GLuint curr = ctx->Texture.CurrentUnit;
+	    const GLuint flag = TEXTURE0_CUBE << (curr * 4);
+            struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
+	    ctx->NewState |= NEW_TEXTURE_ENABLE;
+            if (state) {
+	       texUnit->Enabled |= TEXTURE0_2D;
+	       ctx->Enabled |= flag;
+	    }
+            else {
+               texUnit->Enabled &= ~TEXTURE0_2D;
+               ctx->Enabled &= ~flag;
+            }
+         }
+	 break;
+#endif
 
       default:
 	 gl_error( ctx, GL_INVALID_ENUM, "glIsEnabled" );

@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.25 2000/05/04 13:48:49 brianp Exp $ */
+/* $Id: extensions.c,v 1.26 2000/05/22 16:33:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,6 +51,7 @@ struct extension {
 static struct { int enabled; const char *name; } default_extensions[] = {
    { DEFAULT_OFF,    "GL_ARB_imaging" },
    { DEFAULT_ON,     "GL_ARB_multitexture" },
+   { DEFAULT_OFF,    "GL_ARB_texture_cube_map" },
    { ALWAYS_ENABLED, "GL_ARB_tranpose_matrix" },
    { ALWAYS_ENABLED, "GL_EXT_abgr" },
    { DEFAULT_ON,     "GL_EXT_blend_color" },
@@ -97,6 +98,7 @@ update_extension_flags( GLcontext *ctx )
    ctx->Extensions.HaveTextureEnvAdd = gl_extension_is_enabled(ctx, "GL_EXT_texture_env_add");
    ctx->Extensions.HaveTextureLodBias = gl_extension_is_enabled(ctx, "GL_EXT_texture_lod_bias");
    ctx->Extensions.HaveHpOcclusionTest = gl_extension_is_enabled(ctx, "GL_HP_occlusion_test");
+   ctx->Extensions.HaveTextureCubeMap = gl_extension_is_enabled(ctx, "GL_ARB_texture_cube_map");
 }
 
 

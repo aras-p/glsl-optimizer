@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.25 2000/05/07 23:18:54 brianp Exp $ */
+/* $Id: get.c,v 1.26 2000/05/22 16:33:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -782,13 +782,13 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = INT_TO_BOOL(ctx->Const.SubPixelBits);
 	 break;
       case GL_TEXTURE_1D:
-         *params = _mesa_IsEnabled(GL_TEXTURE_1D );
+         *params = _mesa_IsEnabled(GL_TEXTURE_1D);
 	 break;
       case GL_TEXTURE_2D:
-         *params = _mesa_IsEnabled(GL_TEXTURE_2D );
+         *params = _mesa_IsEnabled(GL_TEXTURE_2D);
 	 break;
       case GL_TEXTURE_3D:
-         *params = _mesa_IsEnabled(GL_TEXTURE_3D );
+         *params = _mesa_IsEnabled(GL_TEXTURE_3D);
 	 break;
       case GL_TEXTURE_BINDING_1D:
          *params = INT_TO_BOOL(textureUnit->CurrentD[1]->Name);
@@ -798,7 +798,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
           break;
       case GL_TEXTURE_BINDING_3D:
          *params = INT_TO_BOOL(textureUnit->CurrentD[3]->Name);
-          break;
+         break;
       case GL_TEXTURE_ENV_COLOR:
          {
             params[0] = FLOAT_TO_BOOL(textureUnit->EnvColor[0]);
@@ -943,6 +943,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = INT_TO_BOOL(ctx->Array.EdgeFlag.Stride);
          break;
 
+      /* GL_ARB_multitexture */
       case GL_MAX_TEXTURE_UNITS_ARB:
          *params = ctx->Const.MaxTextureUnits;
          break;
@@ -951,6 +952,26 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_CLIENT_ACTIVE_TEXTURE_ARB:
          *params = INT_TO_BOOL(GL_TEXTURE0_ARB + ctx->Array.ActiveTexture);
+         break;
+
+      /* GL_ARB_texture_cube_map */
+      case GL_TEXTURE_CUBE_MAP_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap)
+            *params = _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+         return;
+      case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap)
+            *params = INT_TO_BOOL(textureUnit->CurrentPosX->Name);
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+         return;
+      case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap)
+            *params = INT_TO_BOOL(ctx->Const.MaxCubeTextureSize);
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          break;
 
       /* GL_PGI_misc_hints */
@@ -1013,7 +1034,14 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
       /* GL_ARB_transpose_matrix */
       case GL_TRANSPOSE_COLOR_MATRIX_ARB:
-         /* don't have a color matrix */
+         {
+            GLfloat tm[16];
+            GLuint i;
+            gl_matrix_transposef(tm, ctx->ColorMatrix.m);
+            for (i=0;i<16;i++) {
+               params[i] = FLOAT_TO_BOOL(tm[i]);
+            }
+         }
          break;
       case GL_TRANSPOSE_MODELVIEW_MATRIX_ARB:
          {
@@ -2033,6 +2061,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = 0.0;
          break;
 
+      /* GL_ARB_multitexture */
       case GL_MAX_TEXTURE_UNITS_ARB:
          *params = (GLdouble) ctx->Const.MaxTextureUnits;
          break;
@@ -2043,6 +2072,25 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) (GL_TEXTURE0_ARB + ctx->Array.ActiveTexture);
          break;
 
+      /* GL_ARB_texture_cube_map */
+      case GL_TEXTURE_CUBE_MAP_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap)
+            *params = (GLdouble) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+         return;
+      case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap)
+            *params = (GLdouble) textureUnit->CurrentPosX->Name;
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+         return;
+      case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap)
+            *params = (GLdouble) ctx->Const.MaxCubeTextureSize;
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+         return;
 
       /* GL_PGI_misc_hints */
       case GL_STRICT_DEPTHFUNC_HINT_PGI:
@@ -2104,7 +2152,14 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 
       /* GL_ARB_transpose_matrix */
       case GL_TRANSPOSE_COLOR_MATRIX_ARB:
-         /* don't have a color matrix */
+         {
+            GLfloat tm[16];
+            GLuint i;
+            gl_matrix_transposef(tm, ctx->ColorMatrix.m);
+            for (i=0;i<16;i++) {
+               params[i] = (GLdouble) tm[i];
+            }
+         }
          break;
       case GL_TRANSPOSE_MODELVIEW_MATRIX_ARB:
          {
@@ -3123,6 +3178,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = 0.0;
          break;
 
+      /* GL_ARB_multitexture */
       case GL_MAX_TEXTURE_UNITS_ARB:
          *params = (GLfloat) ctx->Const.MaxTextureUnits;
          break;
@@ -3132,6 +3188,26 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_CLIENT_ACTIVE_TEXTURE_ARB:
          *params = (GLfloat) (GL_TEXTURE0_ARB + ctx->Array.ActiveTexture);
          break;
+
+      /* GL_ARB_texture_cube_map */
+      case GL_TEXTURE_CUBE_MAP_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap)
+            *params = (GLfloat) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+         return;
+      case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap)
+            *params = (GLfloat) textureUnit->CurrentPosX->Name;
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+         return;
+      case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap)
+            *params = (GLfloat) ctx->Const.MaxCubeTextureSize;
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+         return;
 
       /* GL_PGI_misc_hints */
       case GL_STRICT_DEPTHFUNC_HINT_PGI:
@@ -3193,7 +3269,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 
       /* GL_ARB_transpose_matrix */
       case GL_TRANSPOSE_COLOR_MATRIX_ARB:
-         /* don't have a color matrix */
+         gl_matrix_transposef(params, ctx->ColorMatrix.m);
          break;
       case GL_TRANSPOSE_MODELVIEW_MATRIX_ARB:
          gl_matrix_transposef(params, ctx->ModelView.m);
@@ -4193,6 +4269,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = 0;
          break;
 
+      /* GL_ARB_multitexture */
       case GL_MAX_TEXTURE_UNITS_ARB:
          *params = ctx->Const.MaxTextureUnits;
          break;
@@ -4202,6 +4279,26 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_CLIENT_ACTIVE_TEXTURE_ARB:
          *params = GL_TEXTURE0_ARB + ctx->Array.ActiveTexture;
          break;
+
+      /* GL_ARB_texture_cube_map */
+      case GL_TEXTURE_CUBE_MAP_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap)
+            *params = (GLint) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+         return;
+      case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap)
+            *params = textureUnit->CurrentPosX->Name;
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+         return;
+      case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap)
+            *params = ctx->Const.MaxCubeTextureSize;
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+         return;
 
       /* GL_PGI_misc_hints */
       case GL_STRICT_DEPTHFUNC_HINT_PGI:
@@ -4263,7 +4360,14 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 
       /* GL_ARB_transpose_matrix */
       case GL_TRANSPOSE_COLOR_MATRIX_ARB:
-         /* don't have a color matrix */
+         {
+            GLfloat tm[16];
+            GLuint i;
+            gl_matrix_transposef(tm, ctx->ColorMatrix.m);
+            for (i=0;i<16;i++) {
+               params[i] = (GLint) tm[i];
+            }
+         }
          break;
       case GL_TRANSPOSE_MODELVIEW_MATRIX_ARB:
          {

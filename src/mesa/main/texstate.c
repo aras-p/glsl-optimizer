@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.9 2000/03/07 17:54:58 brianp Exp $ */
+/* $Id: texstate.c,v 1.10 2000/05/22 16:33:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -273,6 +273,12 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
       case GL_TEXTURE_3D_EXT:
          texObj = texUnit->CurrentD[3];
          break;
+      case GL_TEXTURE_CUBE_MAP_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap) {
+            texObj = texUnit->CurrentPosX;
+            break;
+         }
+         /* fallthrough */
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glTexParameter(target)" );
          return;
@@ -454,7 +460,17 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       case GL_TEXTURE_3D:
          img = texUnit->CurrentD[3]->Image[level];
          dimensions = 3; 
-        break;
+         break;
+      case GL_TEXTURE_CUBE_MAP_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap) {
+            img = texUnit->CurrentPosX->Image[level];
+            dimensions = 2;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetTexLevelParameter[if]v(target)");
+            return;
+         }
+         break;
       case GL_PROXY_TEXTURE_1D:
          img = ctx->Texture.Proxy1D->Image[level];
          dimensions = 1;
@@ -466,6 +482,16 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       case GL_PROXY_TEXTURE_3D:
          img = ctx->Texture.Proxy3D->Image[level];
          dimensions = 3;
+         break;
+      case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap) {
+            img = ctx->Texture.ProxyCubeMap->Image[level];
+            dimensions = 2;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetTexLevelParameter[if]v(target)");
+            return;
+         }
          break;
       default:
 	 gl_error(ctx, GL_INVALID_ENUM, "glGetTexLevelParameter[if]v(target)");

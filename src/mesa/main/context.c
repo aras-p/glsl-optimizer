@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.65 2000/05/18 18:12:36 brianp Exp $ */
+/* $Id: context.c,v 1.66 2000/05/22 16:33:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -704,6 +704,7 @@ init_attrib_groups( GLcontext *ctx )
    /* Constants, may be overriden by device drivers */
    ctx->Const.MaxTextureLevels = MAX_TEXTURE_LEVELS;
    ctx->Const.MaxTextureSize = 1 << (MAX_TEXTURE_LEVELS - 1);
+   ctx->Const.MaxCubeTextureSize = ctx->Const.MaxTextureSize;
    ctx->Const.MaxTextureUnits = MAX_TEXTURE_UNITS;
    ctx->Const.MaxArrayLockSize = MAX_ARRAY_LOCK_SIZE;
    ctx->Const.SubPixelBits = SUB_PIXEL_BITS;
