@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.7 2001/01/13 05:48:26 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.8 2001/01/14 06:14:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -278,9 +278,9 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
 	    tmp->TexCoord[i].data = IM->TexCoord[i] + start;
 	    tmp->TexCoord[i].start = (GLfloat *)(IM->TexCoord[i] + start);
 	    tmp->TexCoord[i].size = 2;
-	    if (IM->TexSize & i) {
+	    if (IM->TexSize & TEX_SIZE_3(i)) {
 	       tmp->TexCoord[i].size = 3;
-	       if (IM->TexSize & (i<<16)) 
+	       if (IM->TexSize & TEX_SIZE_4(i)) 
 		  tmp->TexCoord[i].size = 4;
 	    }
 	    VB->TexCoordPtr[i] = &tmp->TexCoord[i];

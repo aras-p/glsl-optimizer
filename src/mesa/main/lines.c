@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.26 2001/01/13 05:48:25 keithw Exp $ */
+/* $Id: lines.c,v 1.27 2001/01/14 06:14:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,6 @@
 #include "glheader.h"
 #include "context.h"
 #include "depth.h"
-#include "feedback.h"
 #include "lines.h"
 #include "macros.h"
 #include "mmath.h"

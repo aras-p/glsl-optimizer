@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.27 2001/01/09 00:02:55 brianp Exp $ */
+/* $Id: points.c,v 1.28 2001/01/14 06:14:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,6 @@
 #else
 #include "glheader.h"
 #include "context.h"
-#include "feedback.h"
 #include "macros.h"
 #include "mmath.h"
 #include "points.h"

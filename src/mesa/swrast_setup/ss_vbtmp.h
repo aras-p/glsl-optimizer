@@ -110,7 +110,7 @@ static void TAG(rs)(GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
 	 if (IND & MULTITEX) {
 	    GLuint u;
 	    for (u = 0 ; u < maxtex ; u++)
-	       if (tc[u])
+	       if (tc[u]) 
 		  COPY_CLEAN_4V( v->texcoord[u], tsz[u], tc[u][i] );
 	 }
 

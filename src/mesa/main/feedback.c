@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.19 2001/01/08 04:09:41 keithw Exp $ */
+/* $Id: feedback.c,v 1.20 2001/01/14 06:14:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -58,14 +58,13 @@ _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
       gl_error( ctx, GL_INVALID_OPERATION, "glFeedbackBuffer" );
       return;
    }
-
    if (size<0) {
       gl_error( ctx, GL_INVALID_VALUE, "glFeedbackBuffer(size<0)" );
       return;
    }
    if (!buffer) {
       gl_error( ctx, GL_INVALID_VALUE, "glFeedbackBuffer(buffer==NULL)" );
-      ctx->Feedback.BufferSize = 0; /* XXX -- Sould this be here??? */
+      ctx->Feedback.BufferSize = 0; 
       return;
    }
 
@@ -101,7 +100,6 @@ _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
    ctx->Feedback.Buffer = buffer;
    ctx->Feedback.Count = 0;	              /* Becaues of this. */
 }
-
 
 
 void
@@ -152,6 +150,7 @@ void gl_feedback_vertex( GLcontext *ctx,
       FEEDBACK_TOKEN( ctx, texcoord[3] );
    }
 }
+
 
 /**********************************************************************/
 /*                              Selection                             */

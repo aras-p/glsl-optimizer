@@ -1,4 +1,4 @@
-/* $Id: t_vb_rendertmp.h,v 1.5 2001/01/08 04:09:42 keithw Exp $ */
+/* $Id: t_vb_rendertmp.h,v 1.6 2001/01/14 06:14:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -287,7 +287,7 @@ static void TAG(render_poly)( GLcontext *ctx,
       if (j<count-1) {
 	 GLboolean ef = EDGEFLAG_GET( ELT(j) );
 	 EDGEFLAG_SET( ELT(j), GL_FALSE );
-	 RENDER_TRI( ELT(start), ELT(j-1), ELT(j) );
+	 RENDER_TRI( ELT(j-1), ELT(j), ELT(start) );
 	 EDGEFLAG_SET( ELT(j), ef );
 	 j++;
 	    
@@ -298,7 +298,7 @@ static void TAG(render_poly)( GLcontext *ctx,
 	 for (;j<count-1;j++) {
 	    GLboolean efj = EDGEFLAG_GET( ELT(j) );
 	    EDGEFLAG_SET( ELT(j), GL_FALSE );
-	    RENDER_TRI( ELT(start), ELT(j-1), ELT(j) );
+	    RENDER_TRI( ELT(j-1), ELT(j), ELT(start) );
 	    EDGEFLAG_SET( ELT(j), efj );
 	 }
       }

@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.2 2001/01/08 21:56:00 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.3 2001/01/14 06:14:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -148,7 +148,7 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    FLUSH_CURRENT( ctx, 0 );
-   
+
    _tnl_vb_bind_arrays( ctx, start, end );
 
    tnl->vb.FirstPrimitive = 0;
@@ -260,11 +260,11 @@ _tnl_DrawRangeElements(GLenum mode,
 		     "elements outside locked range.");
       }
    }
-   else if (end - start < ctx->Const.MaxArrayLockSize) {
+   else if (end + 1 - start < ctx->Const.MaxArrayLockSize) {
       /* The arrays aren't locked but we can still fit them inside a single
        * vertexbuffer.
        */
-      _tnl_draw_range_elements( ctx, mode, start, end, count, ui_indices );
+      _tnl_draw_range_elements( ctx, mode, start, end + 1, count, ui_indices );
    } else {
       /* Range is too big to optimize:
        */
@@ -292,7 +292,8 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
 
    ui_indices = (GLuint *)_ac_import_elements( ctx, GL_UNSIGNED_INT, 
 					       count, type, indices );
-            
+
+#if 1            
    if (ctx->Array.LockCount) {
       _tnl_draw_range_elements( ctx, mode, 
 				ctx->Array.LockFirst,
@@ -309,11 +310,14 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
 	 if (ui_indices[i] > max_elt) max_elt = ui_indices[i];
 
       if (max_elt < ctx->Const.MaxArrayLockSize && /* can we use it? */
-	  max_elt < count)	                   /* do we want to use it? */
-	 _tnl_draw_range_elements( ctx, mode, 0, max_elt, count, ui_indices );
+	  max_elt < count) 	                   /* do we want to use it? */
+	 _tnl_draw_range_elements( ctx, mode, 0, max_elt + 1, count, ui_indices );
       else
 	 _tnl_draw_elements( ctx, mode, count, ui_indices );
    }
+#else
+	 _tnl_draw_elements( ctx, mode, count, ui_indices );
+#endif
 }
 
 
