@@ -62,7 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define HAVE_TRI_STRIPS  1
 #define HAVE_TRI_STRIP_1 0
 #define HAVE_TRI_FANS    1
-#define HAVE_QUADS       0	/* hw quad verts in wrong order??? */
+#define HAVE_QUADS       1
 #define HAVE_QUAD_STRIPS 1
 #define HAVE_POLYGONS    1
 #define HAVE_ELTS        1
