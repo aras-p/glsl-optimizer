@@ -357,7 +357,7 @@ printhelp(void)
    printstring(GLUT_BITMAP_TIMES_ROMAN_24, "p - Toggle Wire frame");
    glRasterPos2i(60, 150);
    printstring(GLUT_BITMAP_TIMES_ROMAN_24,
-	       "b - Toggle GL_EXT_rescale_normal extension");
+	       "n - Toggle GL_EXT_rescale_normal extension");
    glRasterPos2i(60, 120);
    printstring(GLUT_BITMAP_TIMES_ROMAN_24,
 	       "+/- - Increase/decrease the Object maximum LOD");
