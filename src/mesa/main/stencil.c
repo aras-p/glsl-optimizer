@@ -1,4 +1,4 @@
-/* $Id: stencil.c,v 1.9 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: stencil.c,v 1.10 1999/11/24 18:48:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,12 +46,6 @@
    illegal number of stencil bits
 #endif
 
-
-
-/*
- * Return the address of a stencil buffer value given the window coords:
- */
-#define STENCIL_ADDRESS(X,Y)  (ctx->Buffer->Stencil + ctx->Buffer->Width * (Y) + (X))
 
 
 void
@@ -195,6 +189,13 @@ ENDIF
 
 */
 
+
+
+/*
+ * Return the address of a stencil buffer value given the window coords:
+ */
+#define STENCIL_ADDRESS(X,Y)  \
+       (ctx->DrawBuffer->Stencil + ctx->DrawBuffer->Width * (Y) + (X))
 
 
 
@@ -1006,7 +1007,7 @@ void gl_depth_stencil_pixels( GLcontext *ctx,
 void gl_read_stencil_span( GLcontext *ctx,
                            GLuint n, GLint x, GLint y, GLstencil stencil[] )
 {
-   if (ctx->Buffer->Stencil) {
+   if (ctx->DrawBuffer->Stencil) {
       const GLstencil *s = STENCIL_ADDRESS( x, y );
 #if STENCIL_BITS == 8
       MEMCPY( stencil, s, n * sizeof(GLstencil) );
@@ -1030,7 +1031,7 @@ void gl_write_stencil_span( GLcontext *ctx,
                             GLuint n, GLint x, GLint y,
 			    const GLstencil stencil[] )
 {
-   if (ctx->Buffer->Stencil) {
+   if (ctx->DrawBuffer->Stencil) {
       GLstencil *s = STENCIL_ADDRESS( x, y );
 #if STENCIL_BITS == 8
       MEMCPY( s, stencil, n * sizeof(GLstencil) );
@@ -1050,17 +1051,17 @@ void gl_write_stencil_span( GLcontext *ctx,
  */
 void gl_alloc_stencil_buffer( GLcontext *ctx )
 {
-   GLuint buffersize = ctx->Buffer->Width * ctx->Buffer->Height;
+   GLuint buffersize = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height;
 
    /* deallocate current stencil buffer if present */
-   if (ctx->Buffer->Stencil) {
-      FREE(ctx->Buffer->Stencil);
-      ctx->Buffer->Stencil = NULL;
+   if (ctx->DrawBuffer->Stencil) {
+      FREE(ctx->DrawBuffer->Stencil);
+      ctx->DrawBuffer->Stencil = NULL;
    }
 
    /* allocate new stencil buffer */
-   ctx->Buffer->Stencil = (GLstencil *) MALLOC(buffersize * sizeof(GLstencil));
-   if (!ctx->Buffer->Stencil) {
+   ctx->DrawBuffer->Stencil = (GLstencil *) MALLOC(buffersize * sizeof(GLstencil));
+   if (!ctx->DrawBuffer->Stencil) {
       /* out of memory */
       _mesa_set_enable( ctx, GL_STENCIL_TEST, GL_FALSE );
       gl_error( ctx, GL_OUT_OF_MEMORY, "gl_alloc_stencil_buffer" );
@@ -1076,7 +1077,7 @@ void gl_alloc_stencil_buffer( GLcontext *ctx )
  */
 void gl_clear_stencil_buffer( GLcontext *ctx )
 {
-   if (ctx->Visual->StencilBits==0 || !ctx->Buffer->Stencil) {
+   if (ctx->Visual->StencilBits==0 || !ctx->DrawBuffer->Stencil) {
       /* no stencil buffer */
       return;
    }
@@ -1084,9 +1085,9 @@ void gl_clear_stencil_buffer( GLcontext *ctx )
    if (ctx->Scissor.Enabled) {
       /* clear scissor region only */
       GLint y;
-      GLint width = ctx->Buffer->Xmax - ctx->Buffer->Xmin + 1;
-      for (y=ctx->Buffer->Ymin; y<=ctx->Buffer->Ymax; y++) {
-         GLstencil *ptr = STENCIL_ADDRESS( ctx->Buffer->Xmin, y );
+      GLint width = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin + 1;
+      for (y=ctx->DrawBuffer->Ymin; y<=ctx->DrawBuffer->Ymax; y++) {
+         GLstencil *ptr = STENCIL_ADDRESS( ctx->DrawBuffer->Xmin, y );
 #if STENCIL_BITS==8
          MEMSET( ptr, ctx->Stencil.Clear, width * sizeof(GLstencil) );
 #else
@@ -1099,12 +1100,12 @@ void gl_clear_stencil_buffer( GLcontext *ctx )
    else {
       /* clear whole stencil buffer */
 #if STENCIL_BITS==8
-      MEMSET( ctx->Buffer->Stencil, ctx->Stencil.Clear,
-              ctx->Buffer->Width * ctx->Buffer->Height * sizeof(GLstencil) );
+      MEMSET( ctx->DrawBuffer->Stencil, ctx->Stencil.Clear,
+              ctx->DrawBuffer->Width * ctx->DrawBuffer->Height * sizeof(GLstencil) );
 #else
       GLuint i;
-      GLuint pixels = ctx->Buffer->Width * ctx->Buffer->Height;
-      GLstencil *buffer = ctx->Buffer->Stencil;
+      GLuint pixels = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height;
+      GLstencil *buffer = ctx->DrawBuffer->Stencil;
       for (i = 0; i < pixels; i++)
          ptr[i] = ctx->Stencil.Clear;
 #endif

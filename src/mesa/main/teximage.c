@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.12 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: teximage.c,v 1.13 1999/11/24 18:48:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1632,7 +1632,8 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
    dst = image;
    stride = width * 4 * sizeof(GLubyte);
    for (i = 0; i < height; i++) {
-      gl_read_rgba_span( ctx, width, x, y + i, (GLubyte (*)[4]) dst );
+      gl_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y + i,
+                         (GLubyte (*)[4]) dst );
       dst += stride;
    }
 
@@ -1732,7 +1733,7 @@ copy_tex_sub_image( GLcontext *ctx, struct gl_texture_image *dest,
    for (i = 0;i < height; i++) {
       GLubyte rgba[MAX_WIDTH][4];
       GLubyte *dst;
-      gl_read_rgba_span( ctx, width, srcx, srcy + i, rgba );
+      gl_read_rgba_span( ctx, ctx->ReadBuffer, width, srcx, srcy + i, rgba );
       dst = dest->Data + ( zoffset + (dsty+i) * texwidth + dstx) * components;
       _mesa_unpack_ubyte_color_span(ctx, width, format, dst,
                                     GL_RGBA, GL_UNSIGNED_BYTE, rgba,

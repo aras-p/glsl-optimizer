@@ -1,8 +1,8 @@
-/* $Id: blend.c,v 1.9 1999/11/12 04:56:55 kendallb Exp $ */
+/* $Id: blend.c,v 1.10 1999/11/24 18:48:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -782,7 +782,7 @@ void gl_blend_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
    }
 
    /* Read span of current frame buffer pixels */
-   gl_read_rgba_span( ctx, n, x, y, dest );
+   gl_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
 
    if (!ctx->Color.BlendFunc)
       set_blend_function(ctx);

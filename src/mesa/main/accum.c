@@ -1,8 +1,8 @@
-/* $Id: accum.c,v 1.11 1999/11/11 01:22:25 brianp Exp $ */
+/* $Id: accum.c,v 1.12 1999/11/24 18:48:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -70,15 +70,15 @@ void gl_alloc_accum_buffer( GLcontext *ctx )
 {
    GLint n;
 
-   if (ctx->Buffer->Accum) {
-      FREE( ctx->Buffer->Accum );
-      ctx->Buffer->Accum = NULL;
+   if (ctx->DrawBuffer->Accum) {
+      FREE( ctx->DrawBuffer->Accum );
+      ctx->DrawBuffer->Accum = NULL;
    }
 
    /* allocate accumulation buffer if not already present */
-   n = ctx->Buffer->Width * ctx->Buffer->Height * 4 * sizeof(GLaccum);
-   ctx->Buffer->Accum = (GLaccum *) MALLOC( n );
-   if (!ctx->Buffer->Accum) {
+   n = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height * 4 * sizeof(GLaccum);
+   ctx->DrawBuffer->Accum = (GLaccum *) MALLOC( n );
+   if (!ctx->DrawBuffer->Accum) {
       /* unable to setup accumulation buffer */
       gl_error( ctx, GL_OUT_OF_MEMORY, "glAccum" );
    }
@@ -113,10 +113,10 @@ _mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
  */
 static void rescale_accum( GLcontext *ctx )
 {
-   const GLuint n = ctx->Buffer->Width * ctx->Buffer->Height * 4;
+   const GLuint n = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height * 4;
    const GLfloat fChanMax = (1 << (sizeof(GLchan) * 8)) - 1;
    const GLfloat s = ctx->IntegerAccumScaler * (32767.0 / fChanMax);
-   GLaccum *accum = ctx->Buffer->Accum;
+   GLaccum *accum = ctx->DrawBuffer->Accum;
    GLuint i;
 
    assert(ctx->IntegerAccumMode);
@@ -143,9 +143,13 @@ _mesa_Accum( GLenum op, GLfloat value )
    
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glAccum");
 
-   if (ctx->Visual->AccumBits==0 || !ctx->Buffer->Accum) {
-      /* No accumulation buffer! */
-      gl_warning(ctx, "Calling glAccum() without an accumulation buffer");
+   if (ctx->Visual->AccumBits == 0 || ctx->DrawBuffer != ctx->ReadBuffer) {
+      gl_error(ctx, GL_INVALID_OPERATION, "glAccum");
+      return;
+   }
+
+   if (!ctx->DrawBuffer->Accum) {
+      gl_warning(ctx, "Calling glAccum() without an accumulation buffer (low memory?)");
       return;
    }
 
@@ -174,8 +178,8 @@ _mesa_Accum( GLenum op, GLfloat value )
       /* whole window */
       xpos = 0;
       ypos = 0;
-      width = ctx->Buffer->Width;
-      height = ctx->Buffer->Height;
+      width = ctx->DrawBuffer->Width;
+      height = ctx->DrawBuffer->Height;
    }
 
    width4 = 4 * width;
@@ -189,7 +193,7 @@ _mesa_Accum( GLenum op, GLfloat value )
             if (ctx->IntegerAccumMode)
                rescale_accum(ctx);
 	    for (j = 0; j < height; j++) {
-	       GLaccum * acc = ctx->Buffer->Accum + ypos * width4 + 4 * xpos;
+	       GLaccum * acc = ctx->DrawBuffer->Accum + ypos * width4 + 4 * xpos;
                GLuint i;
 	       for (i = 0; i < width4; i++) {
                   acc[i] += intVal;
@@ -206,7 +210,7 @@ _mesa_Accum( GLenum op, GLfloat value )
             if (ctx->IntegerAccumMode)
                rescale_accum(ctx);
 	    for (j = 0; j < height; j++) {
-	       GLaccum *acc = ctx->Buffer->Accum + ypos * width4 + 4 * xpos;
+	       GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + 4 * xpos;
                GLuint i;
 	       for (i = 0; i < width4; i++) {
                   acc[i] = (GLaccum) ( (GLfloat) acc[i] * value );
@@ -228,13 +232,13 @@ _mesa_Accum( GLenum op, GLfloat value )
          if (ctx->IntegerAccumMode) {
             /* simply add integer color values into accum buffer */
             GLuint j;
-            GLaccum *acc = ctx->Buffer->Accum + ypos * width4 + xpos * 4;
+            GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos * 4;
             assert(ctx->IntegerAccumScaler > 0.0);
             assert(ctx->IntegerAccumScaler <= 1.0);
             for (j = 0; j < height; j++) {
                
                GLuint i, i4;
-               gl_read_rgba_span(ctx, width, xpos, ypos, rgba);
+               gl_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
                for (i = i4 = 0; i < width; i++, i4+=4) {
                   acc[i4+0] += rgba[i][RCOMP];
                   acc[i4+1] += rgba[i][GCOMP];
@@ -253,9 +257,9 @@ _mesa_Accum( GLenum op, GLfloat value )
             const GLfloat ascale = value * acc_scale / fChanMax;
             GLuint j;
             for (j=0;j<height;j++) {
-               GLaccum *acc = ctx->Buffer->Accum + ypos * width4 + xpos * 4;
+               GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos * 4;
                GLuint i;
-               gl_read_rgba_span(ctx, width, xpos, ypos, rgba);
+               gl_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
                for (i=0;i<width;i++) {
                   *acc += (GLaccum) ( (GLfloat) rgba[i][RCOMP] * rscale );  acc++;
                   *acc += (GLaccum) ( (GLfloat) rgba[i][GCOMP] * gscale );  acc++;
@@ -288,12 +292,12 @@ _mesa_Accum( GLenum op, GLfloat value )
          if (ctx->IntegerAccumMode) {
             /* just copy values into accum buffer */
             GLuint j;
-            GLaccum *acc = ctx->Buffer->Accum + ypos * width4 + xpos * 4;
+            GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos * 4;
             assert(ctx->IntegerAccumScaler > 0.0);
             assert(ctx->IntegerAccumScaler <= 1.0);
             for (j = 0; j < height; j++) {
                GLuint i, i4;
-               gl_read_rgba_span(ctx, width, xpos, ypos, rgba);
+               gl_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
                for (i = i4 = 0; i < width; i++, i4 += 4) {
                   acc[i4+0] = rgba[i][RCOMP];
                   acc[i4+1] = rgba[i][GCOMP];
@@ -313,8 +317,8 @@ _mesa_Accum( GLenum op, GLfloat value )
             const GLfloat d = 3.0 / acc_scale;
             GLuint i, j;
             for (j = 0; j < height; j++) {
-               GLaccum *acc = ctx->Buffer->Accum + ypos * width4 + xpos * 4;
-               gl_read_rgba_span(ctx, width, xpos, ypos, rgba);
+               GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos * 4;
+               gl_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
                for (i=0;i<width;i++) {
                   *acc++ = (GLaccum) ((GLfloat) rgba[i][RCOMP] * rscale + d);
                   *acc++ = (GLaccum) ((GLfloat) rgba[i][GCOMP] * gscale + d);
@@ -349,7 +353,7 @@ _mesa_Accum( GLenum op, GLfloat value )
             assert(ctx->IntegerAccumScaler > 0.0);
             assert(ctx->IntegerAccumScaler <= 1.0);
             for (j = 0; j < height; j++) {
-               const GLaccum *acc = ctx->Buffer->Accum + ypos * width4 + xpos*4;
+               const GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos*4;
                GLuint i, i4;
                for (i = i4 = 0; i < width; i++, i4 += 4) {
                   ASSERT(acc[i4+0] < max);
@@ -376,7 +380,7 @@ _mesa_Accum( GLenum op, GLfloat value )
             const GLfloat ascale = value / acc_scale * fChanMax;
             GLuint i, j;
             for (j=0;j<height;j++) {
-               const GLaccum *acc = ctx->Buffer->Accum + ypos * width4 + xpos*4;
+               const GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos*4;
                for (i=0;i<width;i++) {
                   GLint r, g, b, a;
                   r = (GLint) ( (GLfloat) (*acc++) * rscale + 0.5F );
@@ -430,15 +434,15 @@ void gl_clear_accum_buffer( GLcontext *ctx )
    }
 
    /* number of pixels */
-   buffersize = ctx->Buffer->Width * ctx->Buffer->Height;
+   buffersize = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height;
 
-   if (!ctx->Buffer->Accum) {
+   if (!ctx->DrawBuffer->Accum) {
       /* try to alloc accumulation buffer */
-      ctx->Buffer->Accum = (GLaccum *)
+      ctx->DrawBuffer->Accum = (GLaccum *)
 	                   MALLOC( buffersize * 4 * sizeof(GLaccum) );
    }
 
-   if (ctx->Buffer->Accum) {
+   if (ctx->DrawBuffer->Accum) {
       if (ctx->Scissor.Enabled) {
 	 /* Limit clear to scissor box */
 	 GLaccum r, g, b, a;
@@ -450,12 +454,12 @@ void gl_clear_accum_buffer( GLcontext *ctx )
 	 b = (GLaccum) (ctx->Accum.ClearColor[2] * acc_scale);
 	 a = (GLaccum) (ctx->Accum.ClearColor[3] * acc_scale);
          /* size of region to clear */
-         width = 4 * (ctx->Buffer->Xmax - ctx->Buffer->Xmin + 1);
-         height = ctx->Buffer->Ymax - ctx->Buffer->Ymin + 1;
+         width = 4 * (ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin + 1);
+         height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin + 1;
          /* ptr to first element to clear */
-         row = ctx->Buffer->Accum
-               + 4 * (ctx->Buffer->Ymin * ctx->Buffer->Width
-                      + ctx->Buffer->Xmin);
+         row = ctx->DrawBuffer->Accum
+               + 4 * (ctx->DrawBuffer->Ymin * ctx->DrawBuffer->Width
+                      + ctx->DrawBuffer->Xmin);
          for (j=0;j<height;j++) {
             for (i=0;i<width;i+=4) {
                row[i+0] = r;
@@ -463,7 +467,7 @@ void gl_clear_accum_buffer( GLcontext *ctx )
                row[i+2] = b;
                row[i+3] = a;
 	    }
-            row += 4 * ctx->Buffer->Width;
+            row += 4 * ctx->DrawBuffer->Width;
 	 }
       }
       else {
@@ -473,14 +477,14 @@ void gl_clear_accum_buffer( GLcontext *ctx )
 	     ctx->Accum.ClearColor[2]==0.0 &&
 	     ctx->Accum.ClearColor[3]==0.0) {
 	    /* Black */
-	    MEMSET( ctx->Buffer->Accum, 0, buffersize * 4 * sizeof(GLaccum) );
+	    MEMSET( ctx->DrawBuffer->Accum, 0, buffersize * 4 * sizeof(GLaccum) );
 	 }
 	 else {
 	    /* Not black */
 	    GLaccum *acc, r, g, b, a;
 	    GLuint i;
 
-	    acc = ctx->Buffer->Accum;
+	    acc = ctx->DrawBuffer->Accum;
 	    r = (GLaccum) (ctx->Accum.ClearColor[0] * acc_scale);
 	    g = (GLaccum) (ctx->Accum.ClearColor[1] * acc_scale);
 	    b = (GLaccum) (ctx->Accum.ClearColor[2] * acc_scale);

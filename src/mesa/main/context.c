@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.22 1999/11/19 22:51:29 brianp Exp $ */
+/* $Id: context.c,v 1.23 1999/11/24 18:48:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1204,7 +1204,8 @@ GLcontext *gl_create_context( GLvisual *visual,
 
    ctx->DriverCtx = driver_ctx;
    ctx->Visual = visual;
-   ctx->Buffer = NULL;
+   ctx->DrawBuffer = NULL;
+   ctx->ReadBuffer = NULL;
 
    ctx->VB = gl_vb_create_for_immediate( ctx );
    if (!ctx->VB) {
@@ -1479,6 +1480,17 @@ void gl_destroy_framebuffer( GLframebuffer *buffer )
  */
 void gl_make_current( GLcontext *newCtx, GLframebuffer *buffer )
 {
+   gl_make_current2( newCtx, buffer, buffer );
+}
+
+
+/*
+ * Bind the given context to the given draw-buffer and read-buffer
+ * and make it the current context for this thread.
+ */
+void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
+                       GLframebuffer *readBuffer )
+{
    GET_CURRENT_CONTEXT(oldCtx);
 
    /* Flush the old context
@@ -1487,9 +1499,12 @@ void gl_make_current( GLcontext *newCtx, GLframebuffer *buffer )
       ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(oldCtx, "gl_make_current");
    }
 
-   if (oldCtx && oldCtx->Buffer) {
-      /* unbind frame buffer from context */
-      oldCtx->Buffer = NULL;
+   /* unbind frame buffers from context */
+   if (oldCtx && oldCtx->DrawBuffer) {
+      oldCtx->DrawBuffer = NULL;
+   }
+   if (oldCtx && oldCtx->ReadBuffer) {
+      oldCtx->ReadBuffer = NULL;
    }
 
 #ifdef THREADS
@@ -1509,13 +1524,15 @@ void gl_make_current( GLcontext *newCtx, GLframebuffer *buffer )
 
    if (MESA_VERBOSE) fprintf(stderr, "gl_make_current()\n");
 
-   if (newCtx && buffer) {
+   if (newCtx && drawBuffer && readBuffer) {
       /* TODO: check if newCtx and buffer's visual match??? */
-      newCtx->Buffer = buffer;      /* Bind the frame buffer to the context */
+      newCtx->DrawBuffer = drawBuffer;
+      newCtx->ReadBuffer = readBuffer;
       newCtx->NewState = NEW_ALL;   /* just to be safe */
       gl_update_state( newCtx );
    }
 }
+
 
 
 /*
@@ -1648,15 +1665,15 @@ _mesa_ResizeBuffersMESA( void )
    (*ctx->Driver.GetBufferSize)( ctx, &buf_width, &buf_height );
 
    /* see if size of device driver's color buffer (window) has changed */
-   if (ctx->Buffer->Width == (GLint) buf_width &&
-       ctx->Buffer->Height == (GLint) buf_height)
+   if (ctx->DrawBuffer->Width == (GLint) buf_width &&
+       ctx->DrawBuffer->Height == (GLint) buf_height)
       return;
 
    ctx->NewState |= NEW_RASTER_OPS;  /* to update scissor / window bounds */
 
    /* save buffer size */
-   ctx->Buffer->Width = buf_width;
-   ctx->Buffer->Height = buf_height;
+   ctx->DrawBuffer->Width = buf_width;
+   ctx->DrawBuffer->Height = buf_height;
 
    /* Reallocate other buffers if needed. */
    if (ctx->Visual->DepthBits>0) {
@@ -1959,9 +1976,9 @@ static void update_rasterflags( GLcontext *ctx )
       ctx->RasterMask |= ALPHABUF_BIT;
 
    if (   ctx->Viewport.X<0
-       || ctx->Viewport.X + ctx->Viewport.Width > ctx->Buffer->Width
+       || ctx->Viewport.X + ctx->Viewport.Width > ctx->DrawBuffer->Width
        || ctx->Viewport.Y<0
-       || ctx->Viewport.Y + ctx->Viewport.Height > ctx->Buffer->Height) {
+       || ctx->Viewport.Y + ctx->Viewport.Height > ctx->DrawBuffer->Height) {
       ctx->RasterMask |= WINCLIP_BIT;
    }
 
@@ -2144,22 +2161,22 @@ void gl_update_state( GLcontext *ctx )
 
 	 /* update scissor region */
 
-	 ctx->Buffer->Xmin = 0;
-	 ctx->Buffer->Ymin = 0;
-	 ctx->Buffer->Xmax = ctx->Buffer->Width-1;
-	 ctx->Buffer->Ymax = ctx->Buffer->Height-1;
+	 ctx->DrawBuffer->Xmin = 0;
+	 ctx->DrawBuffer->Ymin = 0;
+	 ctx->DrawBuffer->Xmax = ctx->DrawBuffer->Width-1;
+	 ctx->DrawBuffer->Ymax = ctx->DrawBuffer->Height-1;
 	 if (ctx->Scissor.Enabled) {
-	    if (ctx->Scissor.X > ctx->Buffer->Xmin) {
-	       ctx->Buffer->Xmin = ctx->Scissor.X;
+	    if (ctx->Scissor.X > ctx->DrawBuffer->Xmin) {
+	       ctx->DrawBuffer->Xmin = ctx->Scissor.X;
 	    }
-	    if (ctx->Scissor.Y > ctx->Buffer->Ymin) {
-	       ctx->Buffer->Ymin = ctx->Scissor.Y;
+	    if (ctx->Scissor.Y > ctx->DrawBuffer->Ymin) {
+	       ctx->DrawBuffer->Ymin = ctx->Scissor.Y;
 	    }
-	    if (ctx->Scissor.X + ctx->Scissor.Width - 1 < ctx->Buffer->Xmax) {
-	       ctx->Buffer->Xmax = ctx->Scissor.X + ctx->Scissor.Width - 1;
+	    if (ctx->Scissor.X + ctx->Scissor.Width - 1 < ctx->DrawBuffer->Xmax) {
+	       ctx->DrawBuffer->Xmax = ctx->Scissor.X + ctx->Scissor.Width - 1;
 	    }
-	    if (ctx->Scissor.Y + ctx->Scissor.Height - 1 < ctx->Buffer->Ymax) {
-	       ctx->Buffer->Ymax = ctx->Scissor.Y + ctx->Scissor.Height - 1;
+	    if (ctx->Scissor.Y + ctx->Scissor.Height - 1 < ctx->DrawBuffer->Ymax) {
+	       ctx->DrawBuffer->Ymax = ctx->Scissor.Y + ctx->Scissor.Height - 1;
 	    }
 	 }
 

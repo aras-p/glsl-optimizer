@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.3 1999/11/19 22:26:53 brianp Exp $ */
+/* $Id: context.h,v 1.4 1999/11/24 18:48:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -104,6 +104,9 @@ extern void gl_destroy_framebuffer( GLframebuffer *buffer );
 
 
 extern void gl_make_current( GLcontext *ctx, GLframebuffer *buffer );
+
+extern void gl_make_current2( GLcontext *ctx, GLframebuffer *drawBuffer,
+                              GLframebuffer *readBuffer );
 
 extern GLcontext *gl_get_current_context(void);
 

@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.9 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: depth.c,v 1.10 1999/11/24 18:48:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -747,7 +747,7 @@ void gl_read_depth_span_float( GLcontext* ctx,
 
    scale = 1.0F / DEPTH_SCALE;
 
-   if (ctx->Buffer->Depth) {
+   if (ctx->DrawBuffer->Depth) {
       zptr = Z_ADDRESS( ctx, x, y );
       for (i=0;i<n;i++) {
 	 depth[i] = (GLfloat) zptr[i] * scale;
@@ -772,7 +772,7 @@ void gl_read_depth_span_float( GLcontext* ctx,
 void gl_read_depth_span_int( GLcontext* ctx,
                              GLuint n, GLint x, GLint y, GLdepth depth[] )
 {
-   if (ctx->Buffer->Depth) {
+   if (ctx->DrawBuffer->Depth) {
       GLdepth *zptr = Z_ADDRESS( ctx, x, y );
       MEMCPY( depth, zptr, n * sizeof(GLdepth) );
    }
@@ -800,16 +800,16 @@ void gl_read_depth_span_int( GLcontext* ctx,
 void gl_alloc_depth_buffer( GLcontext* ctx )
 {
    /* deallocate current depth buffer if present */
-   if (ctx->Buffer->Depth) {
-      FREE(ctx->Buffer->Depth);
-      ctx->Buffer->Depth = NULL;
+   if (ctx->DrawBuffer->Depth) {
+      FREE(ctx->DrawBuffer->Depth);
+      ctx->DrawBuffer->Depth = NULL;
    }
 
    /* allocate new depth buffer, but don't initialize it */
-   ctx->Buffer->Depth = (GLdepth *) MALLOC( ctx->Buffer->Width
-                                            * ctx->Buffer->Height
+   ctx->DrawBuffer->Depth = (GLdepth *) MALLOC( ctx->DrawBuffer->Width
+                                            * ctx->DrawBuffer->Height
                                             * sizeof(GLdepth) );
-   if (!ctx->Buffer->Depth) {
+   if (!ctx->DrawBuffer->Depth) {
       /* out of memory */
       ctx->Depth.Test = GL_FALSE;
       ctx->NewState |= NEW_RASTER_OPS;
@@ -829,7 +829,7 @@ void gl_clear_depth_buffer( GLcontext* ctx )
 {
    GLdepth clear_value = (GLdepth) (ctx->Depth.Clear * DEPTH_SCALE);
    
-   if (ctx->Visual->DepthBits==0 || !ctx->Buffer->Depth || !ctx->Depth.Mask) {
+   if (ctx->Visual->DepthBits==0 || !ctx->DrawBuffer->Depth || !ctx->Depth.Mask) {
       /* no depth buffer, or writing to it is disabled */
       return;
    }
@@ -841,9 +841,9 @@ void gl_clear_depth_buffer( GLcontext* ctx )
    if (ctx->Scissor.Enabled) {
       /* only clear scissor region */
       GLint y;
-      for (y=ctx->Buffer->Ymin; y<=ctx->Buffer->Ymax; y++) {
-         GLdepth *d = Z_ADDRESS( ctx, ctx->Buffer->Xmin, y );
-         GLint n = ctx->Buffer->Xmax - ctx->Buffer->Xmin + 1;
+      for (y=ctx->DrawBuffer->Ymin; y<=ctx->DrawBuffer->Ymax; y++) {
+         GLdepth *d = Z_ADDRESS( ctx, ctx->DrawBuffer->Xmin, y );
+         GLint n = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin + 1;
          do {
             *d++ = clear_value;
             n--;
@@ -854,12 +854,12 @@ void gl_clear_depth_buffer( GLcontext* ctx )
       /* clear whole buffer */
       if (sizeof(GLdepth)==2 && (clear_value&0xff)==(clear_value>>8)) {
          /* lower and upper bytes of clear_value are same, use MEMSET */
-         MEMSET( ctx->Buffer->Depth, clear_value&0xff,
-                 2*ctx->Buffer->Width*ctx->Buffer->Height);
+         MEMSET( ctx->DrawBuffer->Depth, clear_value&0xff,
+                 2*ctx->DrawBuffer->Width*ctx->DrawBuffer->Height);
       }
       else {
-         GLdepth *d = ctx->Buffer->Depth;
-         GLint n = ctx->Buffer->Width * ctx->Buffer->Height;
+         GLdepth *d = ctx->DrawBuffer->Depth;
+         GLint n = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height;
          while (n>=16) {
             d[0] = clear_value;    d[1] = clear_value;
             d[2] = clear_value;    d[3] = clear_value;

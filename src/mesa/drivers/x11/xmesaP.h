@@ -1,8 +1,8 @@
-/* $Id: xmesaP.h,v 1.2 1999/10/08 09:27:12 keithw Exp $ */
+/* $Id: xmesaP.h,v 1.3 1999/11/24 18:49:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -23,9 +23,6 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/X/xmesaP.h,v 1.5 1999/07/06 14:51:28 dawes Exp $ */
-
-
 
 
 #ifndef XMESAP_H
@@ -39,7 +36,7 @@
 # ifdef GLX_DIRECT_RENDERING
 #  include "dri_mesa.h"
 # endif
-# ifdef SHM
+# ifdef USE_XSHM
 #  include <X11/extensions/XShm.h>
 # endif
 #endif
@@ -127,6 +124,7 @@ struct xmesa_context {
    GLcontext *gl_ctx;		/* the core library context */
    XMesaVisual xm_visual;	/* Describes the buffers */
    XMesaBuffer xm_buffer;	/* current framebuffer */
+   XMesaBuffer xm_read_buffer;	/* current framebuffer */
 
    XMesaDisplay *display;	/* == xm_visual->display */
    GLboolean swapbytes;		/* Host byte order != display byte order? */
@@ -179,7 +177,7 @@ struct xmesa_buffer {
 				/*    0 = not available			*/
 				/*    1 = XImage support available	*/
 				/*    2 = Pixmap support available too	*/
-#ifdef SHM
+#ifdef USE_XSHM
    XShmSegmentInfo shminfo;
 #endif
 #endif

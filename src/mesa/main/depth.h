@@ -1,4 +1,4 @@
-/* $Id: depth.h,v 1.3 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: depth.h,v 1.4 1999/11/24 18:48:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,7 +36,7 @@
  * Return the address of the Z-buffer value for window coordinate (x,y):
  */
 #define Z_ADDRESS( CTX, X, Y )  \
-            ((CTX)->Buffer->Depth + (CTX)->Buffer->Width * (Y) + (X))
+            ((CTX)->DrawBuffer->Depth + (CTX)->DrawBuffer->Width * (Y) + (X))
 
 
 

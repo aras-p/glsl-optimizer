@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.10 1999/11/12 18:10:47 brianp Exp $ */
+/* $Id: matrix.c,v 1.11 1999/11/24 18:48:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1397,9 +1397,9 @@ gl_Viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height )
    ctx->RasterMask &= ~WINCLIP_BIT;
 
    if (   ctx->Viewport.X<0
-       || ctx->Viewport.X + ctx->Viewport.Width > ctx->Buffer->Width
+       || ctx->Viewport.X + ctx->Viewport.Width > ctx->DrawBuffer->Width
        || ctx->Viewport.Y<0
-       || ctx->Viewport.Y + ctx->Viewport.Height > ctx->Buffer->Height) {
+       || ctx->Viewport.Y + ctx->Viewport.Height > ctx->DrawBuffer->Height) {
       ctx->RasterMask |= WINCLIP_BIT;
    }
 
