@@ -149,15 +149,20 @@ SHADER_SOURCES = \
 	shader/nvvertparse.c \
 	shader/program.c \
 	shader/shaderobjects.c \
-	shader/shaderobjects_3dlabs.c \
+	shader/shaderobjects_3dlabs.c
+
+SLANG_SOURCES = \
 	shader/slang/MachineIndependent/preprocessor/atom.c \
 	shader/slang/MachineIndependent/preprocessor/cpp.c \
 	shader/slang/MachineIndependent/preprocessor/cppstruct.c \
 	shader/slang/MachineIndependent/preprocessor/memory.c \
 	shader/slang/MachineIndependent/preprocessor/scanner.c \
 	shader/slang/MachineIndependent/preprocessor/symbols.c \
-	shader/slang/MachineIndependent/preprocessor/tokens.c \
+	shader/slang/MachineIndependent/preprocessor/tokens.c
+
+SLANG_CPP_SOURCES = \
 	shader/slang/slang_mesa.cpp 
+
 
 ASM_C_SOURCES =	\
 	x86/common_x86.c \
@@ -183,7 +188,7 @@ X86_SOURCES =			\
 	x86/sse_xform2.S	\
 	x86/sse_xform3.S	\
 	x86/sse_xform4.S	\
-	x86/sse_normal.S \
+	x86/sse_normal.S	\
 	x86/read_rgba_span_x86.S \
 	tnl/t_vtx_x86_gcc.S
 
@@ -250,12 +255,13 @@ CORE_SOURCES = \
 	$(SWRAST_SOURCES)	\
 	$(SWRAST_SETUP_SOURCES)	\
 	$(ASM_C_SOURCES)
-
+#	$(SLANG_SOURCES)	\
 
 
 ### Object files
 
-CORE_OBJECTS = $(CORE_SOURCES:.c=.o) $(SHADER_SOURCES:.cpp=.o)
+CORE_OBJECTS = $(CORE_SOURCES:.c=.o)
+# $(SLANG_CPP_SOURCES:.cpp=.o)
 
 OSMESA_DRIVER_OBJECTS = $(OSMESA_DRIVER_SOURCES:.c=.o)
 
