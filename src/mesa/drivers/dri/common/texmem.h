@@ -89,16 +89,17 @@ struct dri_texture_object {
 					 * the framebuffer.  
 					 */
 
-        unsigned    firstLevel;         /**< Image in \c tObj->Image that
+        unsigned    firstLevel;         /**< Image in \c tObj->Image[0] that
 					 * corresponds to the base-level of
 					 * this texture object.
 					 */
 
-        unsigned    lastLevel;          /**< Last image in \c tObj->Image used
-					 * by the current LOD settings of this
-					 * texture object.  This value must be
-					 * greater than or equal to
-					 * \c firstLevel.
+        unsigned    lastLevel;          /**< Last image in \c tObj->Image[0] 
+					 * used by the
+					 * current LOD settings of
+					 * this texture object.  This
+					 * value must be greater than
+					 * or equal to \c firstLevel.
 					 */
 };
 

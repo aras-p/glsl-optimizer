@@ -1575,7 +1575,7 @@ fx_check_IsInHardware(GLcontext * ctx)
 	      ctx->Texture.Unit[0].EnvColor[3] != 1)) {
 	    return FX_FALLBACK_TEXTURE_ENV;
 	 }
-	 if (ctx->Texture.Unit[0]._Current->Image[0]->Border > 0)
+	 if (ctx->Texture.Unit[0]._Current->Image[0][0]->Border > 0)
 	    return FX_FALLBACK_TEXTURE_BORDER;
       }
 
@@ -1583,7 +1583,7 @@ fx_check_IsInHardware(GLcontext * ctx)
          if (fxMesa->type < GR_SSTTYPE_Voodoo2)
 	 if (ctx->Texture.Unit[1].EnvMode == GL_BLEND)
 	    return FX_FALLBACK_TEXTURE_ENV;
-	 if (ctx->Texture.Unit[1]._Current->Image[0]->Border > 0)
+	 if (ctx->Texture.Unit[1]._Current->Image[0][0]->Border > 0)
 	    return FX_FALLBACK_TEXTURE_BORDER;
       }
 

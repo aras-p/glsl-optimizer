@@ -56,8 +56,8 @@ fxPrintTextureData(tfxTexInfo * ti)
       fprintf(stderr, "\tName: %d\n", ti->tObj->Name);
       fprintf(stderr, "\tBaseLevel: %d\n", ti->tObj->BaseLevel);
       fprintf(stderr, "\tSize: %d x %d\n",
-	      ti->tObj->Image[ti->tObj->BaseLevel]->Width,
-	      ti->tObj->Image[ti->tObj->BaseLevel]->Height);
+	      ti->tObj->Image[0][ti->tObj->BaseLevel]->Width,
+	      ti->tObj->Image[0][ti->tObj->BaseLevel]->Height);
    }
    else
       fprintf(stderr, "\tName: UNNAMED\n");

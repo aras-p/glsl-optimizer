@@ -78,7 +78,7 @@ fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
-   const struct gl_texture_image *texImg = texObj->Image[texObj->BaseLevel];
+   const struct gl_texture_image *texImg = texObj->Image[0][texObj->BaseLevel];
    const GLfloat texW = (GLfloat) texImg->WidthScale;
    const GLfloat texH = (GLfloat) texImg->HeightScale;
    GLchan rgba[4];

@@ -152,7 +152,7 @@ static void radeonUploadSubImage( radeonContextPtr rmesa,
    drmRadeonTexImage tmp;
 
    level += t->firstLevel;
-   texImage = t->tObj->Image[level];
+   texImage = t->tObj->Image[0][level];
 
    if ( !texImage || !texImage->Data ) 
       return;
@@ -200,7 +200,7 @@ static void radeonSetTexImages( radeonContextPtr rmesa,
 				struct gl_texture_object *tObj )
 {
    radeonTexObjPtr t = (radeonTexObjPtr)tObj->DriverData;
-   const struct gl_texture_image *baseImage = tObj->Image[tObj->BaseLevel];
+   const struct gl_texture_image *baseImage = tObj->Image[0][tObj->BaseLevel];
    GLint totalSize;
    GLint texelsPerDword = 0, blitWidth = 0, blitPitch = 0;
    GLint x, y, width, height;
@@ -273,11 +273,11 @@ static void radeonSetTexImages( radeonContextPtr rmesa,
 
    numLevels = lastLevel - firstLevel + 1;
 
-   log2Width = tObj->Image[firstLevel]->WidthLog2;
-   log2Height = tObj->Image[firstLevel]->HeightLog2;
+   log2Width = tObj->Image[0][firstLevel]->WidthLog2;
+   log2Height = tObj->Image[0][firstLevel]->HeightLog2;
 
    for ( i = 0 ; i < numLevels ; i++ ) {
-      const struct gl_texture_image *texImage = tObj->Image[i + firstLevel];
+      const struct gl_texture_image *texImage = tObj->Image[0][i + firstLevel];
       if ( !texImage )
 	 break;
 
@@ -524,7 +524,7 @@ static void radeonUpdateTextureEnv( GLcontext *ctx, int unit )
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    const struct gl_texture_object *tObj = texUnit->_Current;
-   const GLenum format = tObj->Image[tObj->BaseLevel]->Format;
+   const GLenum format = tObj->Image[0][tObj->BaseLevel]->Format;
    GLuint color_combine = radeon_color_combine[unit][RADEON_DISABLE];
    GLuint alpha_combine = radeon_alpha_combine[unit][RADEON_DISABLE];
 

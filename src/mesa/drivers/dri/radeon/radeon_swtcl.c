@@ -704,7 +704,7 @@ static GLboolean run_texrect_stage( GLcontext *ctx,
    
       if (stage->changed_inputs & VERT_BIT_TEX(i)) {
 	 struct gl_texture_object *texObj = ctx->Texture.Unit[i].CurrentRect;
-	 struct gl_texture_image *texImage = texObj->Image[texObj->BaseLevel];
+	 struct gl_texture_image *texImage = texObj->Image[0][texObj->BaseLevel];
 	 const GLfloat iw = 1.0/texImage->Width;
 	 const GLfloat ih = 1.0/texImage->Height;
 	 GLfloat *in = (GLfloat *)VB->TexCoordPtr[i]->data;

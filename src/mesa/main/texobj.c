@@ -133,7 +133,7 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
 void
 _mesa_delete_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
 {
-   GLuint i;
+   GLuint i, face;
 
    (void) ctx;
 
@@ -142,9 +142,11 @@ _mesa_delete_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
    _mesa_free_colortable_data(&texObj->Palette);
 
    /* free the texture images */
-   for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
-      if (texObj->Image[i]) {
-         _mesa_delete_texture_image( texObj->Image[i] );
+   for (face = 0; face < 6; face++) {
+      for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
+	 if (texObj->Image[face][i]) {
+	    _mesa_delete_texture_image( texObj->Image[face][i] );
+	 }
       }
    }
 
@@ -295,7 +297,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
    t->_IsPowerOfTwo = GL_TRUE;  /* may be set FALSE below */
 
    /* Always need the base level image */
-   if (!t->Image[baseLevel]) {
+   if (!t->Image[0][baseLevel]) {
       char s[100];
       sprintf(s, "obj %p (%d) Image[baseLevel=%d] == NULL",
               (void *) t, t->Name, baseLevel);
@@ -305,9 +307,9 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
    }
 
    /* Check width/height/depth for zero */
-   if (t->Image[baseLevel]->Width == 0 ||
-       t->Image[baseLevel]->Height == 0 ||
-       t->Image[baseLevel]->Depth == 0) {
+   if (t->Image[0][baseLevel]->Width == 0 ||
+       t->Image[0][baseLevel]->Height == 0 ||
+       t->Image[0][baseLevel]->Depth == 0) {
       incomplete(t, "texture width = 0");
       t->Complete = GL_FALSE;
       return;
@@ -315,23 +317,23 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
 
    /* Compute _MaxLevel */
    if (t->Target == GL_TEXTURE_1D) {
-      maxLog2 = t->Image[baseLevel]->WidthLog2;
+      maxLog2 = t->Image[0][baseLevel]->WidthLog2;
       maxLevels = ctx->Const.MaxTextureLevels;
    }
    else if (t->Target == GL_TEXTURE_2D) {
-      maxLog2 = MAX2(t->Image[baseLevel]->WidthLog2,
-                     t->Image[baseLevel]->HeightLog2);
+      maxLog2 = MAX2(t->Image[0][baseLevel]->WidthLog2,
+                     t->Image[0][baseLevel]->HeightLog2);
       maxLevels = ctx->Const.MaxTextureLevels;
    }
    else if (t->Target == GL_TEXTURE_3D) {
-      GLint max = MAX2(t->Image[baseLevel]->WidthLog2,
-                       t->Image[baseLevel]->HeightLog2);
-      maxLog2 = MAX2(max, (GLint)(t->Image[baseLevel]->DepthLog2));
+      GLint max = MAX2(t->Image[0][baseLevel]->WidthLog2,
+                       t->Image[0][baseLevel]->HeightLog2);
+      maxLog2 = MAX2(max, (GLint)(t->Image[0][baseLevel]->DepthLog2));
       maxLevels = ctx->Const.Max3DTextureLevels;
    }
    else if (t->Target == GL_TEXTURE_CUBE_MAP_ARB) {
-      maxLog2 = MAX2(t->Image[baseLevel]->WidthLog2,
-                     t->Image[baseLevel]->HeightLog2);
+      maxLog2 = MAX2(t->Image[0][baseLevel]->WidthLog2,
+                     t->Image[0][baseLevel]->HeightLog2);
       maxLevels = ctx->Const.MaxCubeTextureLevels;
    }
    else if (t->Target == GL_TEXTURE_RECTANGLE_NV) {
@@ -354,31 +356,22 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
 
    if (t->Target == GL_TEXTURE_CUBE_MAP_ARB) {
       /* make sure that all six cube map level 0 images are the same size */
-      const GLuint w = t->Image[baseLevel]->Width2;
-      const GLuint h = t->Image[baseLevel]->Height2;
-      if (!t->NegX[baseLevel] ||
-          t->NegX[baseLevel]->Width2 != w ||
-          t->NegX[baseLevel]->Height2 != h ||
-          !t->PosY[baseLevel] ||
-          t->PosY[baseLevel]->Width2 != w ||
-          t->PosY[baseLevel]->Height2 != h ||
-          !t->NegY[baseLevel] ||
-          t->NegY[baseLevel]->Width2 != w ||
-          t->NegY[baseLevel]->Height2 != h ||
-          !t->PosZ[baseLevel] ||
-          t->PosZ[baseLevel]->Width2 != w ||
-          t->PosZ[baseLevel]->Height2 != h ||
-          !t->NegZ[baseLevel] ||
-          t->NegZ[baseLevel]->Width2 != w ||
-          t->NegZ[baseLevel]->Height2 != h) {
-         t->Complete = GL_FALSE;
-         incomplete(t, "Non-quare cubemap image");
-         return;
+      const GLuint w = t->Image[0][baseLevel]->Width2;
+      const GLuint h = t->Image[0][baseLevel]->Height2;
+      GLuint face;
+      for (face = 1; face < 6; face++) {
+	 if (t->Image[face][baseLevel] == NULL ||
+	     t->Image[face][baseLevel]->Width2 != w ||
+	     t->Image[face][baseLevel]->Height2 != h) {
+	    t->Complete = GL_FALSE;
+	    incomplete(t, "Non-quare cubemap image");
+	    return;
+	 }
       }
    }
 
    /* check for non power of two */
-   if (!t->Image[baseLevel]->_IsPowerOfTwo) {
+   if (!t->Image[0][baseLevel]->_IsPowerOfTwo) {
       t->_IsPowerOfTwo = GL_FALSE;
    }
 
@@ -399,13 +392,13 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
 
       /* Test dimension-independent attributes */
       for (i = minLevel; i <= maxLevel; i++) {
-         if (t->Image[i]) {
-            if (t->Image[i]->TexFormat != t->Image[baseLevel]->TexFormat) {
+         if (t->Image[0][i]) {
+            if (t->Image[0][i]->TexFormat != t->Image[0][baseLevel]->TexFormat) {
                t->Complete = GL_FALSE;
                incomplete(t, "Format[i] != Format[baseLevel]");
                return;
             }
-            if (t->Image[i]->Border != t->Image[baseLevel]->Border) {
+            if (t->Image[0][i]->Border != t->Image[0][baseLevel]->Border) {
                t->Complete = GL_FALSE;
                incomplete(t, "Border[i] != Border[baseLevel]");
                return;
@@ -416,20 +409,20 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       /* Test things which depend on number of texture image dimensions */
       if (t->Target == GL_TEXTURE_1D) {
          /* Test 1-D mipmaps */
-         GLuint width = t->Image[baseLevel]->Width2;
+         GLuint width = t->Image[0][baseLevel]->Width2;
          for (i = baseLevel + 1; i < maxLevels; i++) {
             if (width > 1) {
                width /= 2;
             }
             if (i >= minLevel && i <= maxLevel) {
-               if (!t->Image[i]) {
+               if (!t->Image[0][i]) {
                   t->Complete = GL_FALSE;
-                  incomplete(t, "1D Image[i] == NULL");
+                  incomplete(t, "1D Image[0][i] == NULL");
                   return;
                }
-               if (t->Image[i]->Width2 != width ) {
+               if (t->Image[0][i]->Width2 != width ) {
                   t->Complete = GL_FALSE;
-                  incomplete(t, "1D Image[i] bad width");
+                  incomplete(t, "1D Image[0][i] bad width");
                   return;
                }
             }
@@ -440,8 +433,8 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       }
       else if (t->Target == GL_TEXTURE_2D) {
          /* Test 2-D mipmaps */
-         GLuint width = t->Image[baseLevel]->Width2;
-         GLuint height = t->Image[baseLevel]->Height2;
+         GLuint width = t->Image[0][baseLevel]->Width2;
+         GLuint height = t->Image[0][baseLevel]->Height2;
          for (i = baseLevel + 1; i < maxLevels; i++) {
             if (width > 1) {
                width /= 2;
@@ -450,19 +443,19 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
                height /= 2;
             }
             if (i >= minLevel && i <= maxLevel) {
-               if (!t->Image[i]) {
+               if (!t->Image[0][i]) {
                   t->Complete = GL_FALSE;
-                  incomplete(t, "2D Image[i] == NULL");
+                  incomplete(t, "2D Image[0][i] == NULL");
                   return;
                }
-               if (t->Image[i]->Width2 != width) {
+               if (t->Image[0][i]->Width2 != width) {
                   t->Complete = GL_FALSE;
-                  incomplete(t, "2D Image[i] bad width");
+                  incomplete(t, "2D Image[0][i] bad width");
                   return;
                }
-               if (t->Image[i]->Height2 != height) {
+               if (t->Image[0][i]->Height2 != height) {
                   t->Complete = GL_FALSE;
-                  incomplete(t, "2D Image[i] bad height");
+                  incomplete(t, "2D Image[0][i] bad height");
                   return;
                }
                if (width==1 && height==1) {
@@ -473,9 +466,9 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       }
       else if (t->Target == GL_TEXTURE_3D) {
          /* Test 3-D mipmaps */
-         GLuint width = t->Image[baseLevel]->Width2;
-         GLuint height = t->Image[baseLevel]->Height2;
-         GLuint depth = t->Image[baseLevel]->Depth2;
+         GLuint width = t->Image[0][baseLevel]->Width2;
+         GLuint height = t->Image[0][baseLevel]->Height2;
+         GLuint depth = t->Image[0][baseLevel]->Depth2;
 	 for (i = baseLevel + 1; i < maxLevels; i++) {
             if (width > 1) {
                width /= 2;
@@ -487,29 +480,29 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
                depth /= 2;
             }
             if (i >= minLevel && i <= maxLevel) {
-               if (!t->Image[i]) {
-                  incomplete(t, "3D Image[i] == NULL");
+               if (!t->Image[0][i]) {
+                  incomplete(t, "3D Image[0][i] == NULL");
                   t->Complete = GL_FALSE;
                   return;
                }
-               if (t->Image[i]->Format == GL_DEPTH_COMPONENT) {
+               if (t->Image[0][i]->Format == GL_DEPTH_COMPONENT) {
                   t->Complete = GL_FALSE;
                   incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
                   return;
                }
-               if (t->Image[i]->Width2 != width) {
+               if (t->Image[0][i]->Width2 != width) {
                   t->Complete = GL_FALSE;
-                  incomplete(t, "3D Image[i] bad width");
+                  incomplete(t, "3D Image[0][i] bad width");
                   return;
                }
-               if (t->Image[i]->Height2 != height) {
+               if (t->Image[0][i]->Height2 != height) {
                   t->Complete = GL_FALSE;
-                  incomplete(t, "3D Image[i] bad height");
+                  incomplete(t, "3D Image[0][i] bad height");
                   return;
                }
-               if (t->Image[i]->Depth2 != depth) {
+               if (t->Image[0][i]->Depth2 != depth) {
                   t->Complete = GL_FALSE;
-                  incomplete(t, "3D Image[i] bad depth");
+                  incomplete(t, "3D Image[0][i] bad depth");
                   return;
                }
             }
@@ -520,8 +513,8 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       }
       else if (t->Target == GL_TEXTURE_CUBE_MAP_ARB) {
          /* make sure 6 cube faces are consistant */
-         GLuint width = t->Image[baseLevel]->Width2;
-         GLuint height = t->Image[baseLevel]->Height2;
+         GLuint width = t->Image[0][baseLevel]->Width2;
+         GLuint height = t->Image[0][baseLevel]->Height2;
 	 for (i = baseLevel + 1; i < maxLevels; i++) {
             if (width > 1) {
                width /= 2;
@@ -530,33 +523,31 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
                height /= 2;
             }
             if (i >= minLevel && i <= maxLevel) {
-               /* check that we have images defined */
-               if (!t->Image[i] || !t->NegX[i] ||
-                   !t->PosY[i]  || !t->NegY[i] ||
-                   !t->PosZ[i]  || !t->NegZ[i]) {
-                  t->Complete = GL_FALSE;
-                  incomplete(t, "CubeMap Image[i] == NULL");
-                  return;
-               }
-               /* Don't support GL_DEPTH_COMPONENT for cube maps */
-               if (t->Image[i]->Format == GL_DEPTH_COMPONENT) {
-                  t->Complete = GL_FALSE;
-                  incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
-                  return;
-               }
-               /* check that all six images have same size */
-               if (t->NegX[i]->Width2!=width || t->NegX[i]->Height2!=height ||
-                   t->PosY[i]->Width2!=width || t->PosY[i]->Height2!=height ||
-                   t->NegY[i]->Width2!=width || t->NegY[i]->Height2!=height ||
-                   t->PosZ[i]->Width2!=width || t->PosZ[i]->Height2!=height ||
-                   t->NegZ[i]->Width2!=width || t->NegZ[i]->Height2!=height) {
-                  t->Complete = GL_FALSE;
-                  incomplete(t, "CubeMap Image[i] bad size");
-                  return;
-               }
-            }
-            if (width == 1 && height == 1) {
-               return;  /* found smallest needed mipmap, all done! */
+	       GLuint face;
+	       for (face = 0; face < 6; face++) {
+		  /* check that we have images defined */
+		  if (!t->Image[face][i]) {
+		     t->Complete = GL_FALSE;
+		     incomplete(t, "CubeMap Image[n][i] == NULL");
+		     return;
+		  }
+		  /* Don't support GL_DEPTH_COMPONENT for cube maps */
+		  if (t->Image[face][i]->Format == GL_DEPTH_COMPONENT) {
+		     t->Complete = GL_FALSE;
+		     incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
+		     return;
+		  }
+		  /* check that all six images have same size */
+		  if (t->Image[face][i]->Width2!=width || 
+		      t->Image[face][i]->Height2!=height) {
+		     t->Complete = GL_FALSE;
+		     incomplete(t, "CubeMap Image[n][i] bad size");
+		     return;
+		  }
+	       }
+	    }
+	    if (width == 1 && height == 1) {
+	       return;  /* found smallest needed mipmap, all done! */
             }
          }
       }

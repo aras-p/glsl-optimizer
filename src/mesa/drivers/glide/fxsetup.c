@@ -63,7 +63,7 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
 
    ti->tObj = tObj;
    minl = ti->minLevel = tObj->BaseLevel;
-   maxl = ti->maxLevel = MIN2(tObj->MaxLevel, tObj->Image[0]->MaxLog2);
+   maxl = ti->maxLevel = MIN2(tObj->MaxLevel, tObj->Image[0][0]->MaxLog2);
 
 #if 1||FX_RESCALE_BIG_TEXURES
 {
@@ -110,7 +110,7 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
        */
       if ((tObj->MinFilter == GL_NEAREST) || (tObj->MinFilter == GL_LINEAR)) {
          /* no mipmaps! need to rescale */
-         struct gl_texture_image *texImage = tObj->Image[minl];
+         struct gl_texture_image *texImage = tObj->Image[0][minl];
          tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
          GLint texelBytes = texImage->TexFormat->TexelBytes;
          GLvoid *texImage_Data = texImage->Data;
@@ -134,7 +134,7 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
          MESA_PBUFFER_FREE(texImage_Data);
          mml->width = _w;
          mml->height = _h;
-         maxl = ti->maxLevel = tObj->Image[0]->MaxLog2 = minl + fxMesa->textureMaxLod;
+         maxl = ti->maxLevel = tObj->Image[0][0]->MaxLog2 = minl + fxMesa->textureMaxLod;
       } else {
          /* skip a certain number of LODs */
          minl += maxl - fxMesa->textureMaxLod;
@@ -147,19 +147,19 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
 }
 #endif
 
-   fxTexGetInfo(tObj->Image[minl]->Width, tObj->Image[minl]->Height,
+   fxTexGetInfo(tObj->Image[0][minl]->Width, tObj->Image[0][minl]->Height,
 		&(FX_largeLodLog2(ti->info)), &(FX_aspectRatioLog2(ti->info)),
 		&(ti->sScale), &(ti->tScale),
 		NULL, NULL);
 
    if ((tObj->MinFilter != GL_NEAREST) && (tObj->MinFilter != GL_LINEAR))
-      fxTexGetInfo(tObj->Image[maxl]->Width, tObj->Image[maxl]->Height,
+      fxTexGetInfo(tObj->Image[0][maxl]->Width, tObj->Image[0][maxl]->Height,
 		   &(FX_smallLodLog2(ti->info)), NULL,
 		   NULL, NULL, NULL, NULL);
    else
       FX_smallLodLog2(ti->info) = FX_largeLodLog2(ti->info);
 
-   ti->baseLevelInternalFormat = tObj->Image[minl]->Format;
+   ti->baseLevelInternalFormat = tObj->Image[0][minl]->Format;
 
    ti->validated = GL_TRUE;
 

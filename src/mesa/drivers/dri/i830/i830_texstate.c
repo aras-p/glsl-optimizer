@@ -61,7 +61,7 @@ static void i830SetTexImages( i830ContextPtr imesa,
 {
    GLuint total_height, pitch, i, textureFormat;
    i830TextureObjectPtr t = (i830TextureObjectPtr) tObj->DriverData;
-   const struct gl_texture_image *baseImage = tObj->Image[tObj->BaseLevel];
+   const struct gl_texture_image *baseImage = tObj->Image[0][tObj->BaseLevel];
    GLint numLevels;
 
    switch( baseImage->TexFormat->MesaFormat ) {
@@ -135,11 +135,11 @@ static void i830SetTexImages( i830ContextPtr imesa,
     */
    if (0) {
       pitch = 128;
-      while (pitch < tObj->Image[t->base.firstLevel]->Width * t->texelBytes)
+      while (pitch < tObj->Image[0][t->base.firstLevel]->Width * t->texelBytes)
 	 pitch *= 2;
    }
    else {
-      pitch = tObj->Image[t->base.firstLevel]->Width * t->texelBytes;
+      pitch = tObj->Image[0][t->base.firstLevel]->Width * t->texelBytes;
       pitch = (pitch + 3) & ~3;
    }
 
@@ -148,7 +148,7 @@ static void i830SetTexImages( i830ContextPtr imesa,
     * lines required:
     */
    for ( total_height = i = 0 ; i < numLevels ; i++ ) {
-      t->image[0][i].image = tObj->Image[t->base.firstLevel + i];
+      t->image[0][i].image = tObj->Image[0][t->base.firstLevel + i];
       if (!t->image[0][i].image) 
 	 break;
       
@@ -160,8 +160,8 @@ static void i830SetTexImages( i830ContextPtr imesa,
    t->Pitch = pitch;
    t->base.totalSize = total_height*pitch;
    t->Setup[I830_TEXREG_TM0S1] = 
-      (((tObj->Image[t->base.firstLevel]->Height - 1) << TM0S1_HEIGHT_SHIFT) |
-       ((tObj->Image[t->base.firstLevel]->Width - 1) << TM0S1_WIDTH_SHIFT) |
+      (((tObj->Image[0][t->base.firstLevel]->Height - 1) << TM0S1_HEIGHT_SHIFT) |
+       ((tObj->Image[0][t->base.firstLevel]->Width - 1) << TM0S1_WIDTH_SHIFT) |
        textureFormat);
    t->Setup[I830_TEXREG_TM0S2] = 
       ((((pitch / 4) - 1) << TM0S2_PITCH_SHIFT));   
@@ -1328,7 +1328,7 @@ static GLboolean enable_tex_common( GLcontext *ctx, GLuint unit )
    i830TextureObjectPtr t = (i830TextureObjectPtr)tObj->DriverData;
 
    /* Fallback if there's a texture border */
-   if ( tObj->Image[tObj->BaseLevel]->Border > 0 ) {
+   if ( tObj->Image[0][tObj->BaseLevel]->Border > 0 ) {
       return GL_FALSE;
    }
 
@@ -1366,9 +1366,9 @@ static GLboolean enable_tex_common( GLcontext *ctx, GLuint unit )
     * missed (need to update last stage flag?).  Call
     * i830UpdateTexEnv always.
     */
-   if (tObj->Image[tObj->BaseLevel]->Format !=
+   if (tObj->Image[0][tObj->BaseLevel]->Format !=
        imesa->TexEnvImageFmt[unit]) {
-      imesa->TexEnvImageFmt[unit] = tObj->Image[tObj->BaseLevel]->Format;
+      imesa->TexEnvImageFmt[unit] = tObj->Image[0][tObj->BaseLevel]->Format;
    }
    i830UpdateTexEnv( ctx, unit );
    imesa->TexEnabledMask |= I830_TEX_UNIT_ENABLED(unit);

@@ -102,7 +102,7 @@ static void r200SetTexImages( r200ContextPtr rmesa,
 			      struct gl_texture_object *tObj )
 {
    r200TexObjPtr t = (r200TexObjPtr)tObj->DriverData;
-   const struct gl_texture_image *baseImage = tObj->Image[tObj->BaseLevel];
+   const struct gl_texture_image *baseImage = tObj->Image[0][tObj->BaseLevel];
    GLint curOffset;
    GLint i;
    GLint numLevels;
@@ -129,9 +129,9 @@ static void r200SetTexImages( r200ContextPtr rmesa,
     */
 
    driCalculateTextureFirstLastLevel( (driTextureObject *) t );
-   log2Width  = tObj->Image[t->base.firstLevel]->WidthLog2;
-   log2Height = tObj->Image[t->base.firstLevel]->HeightLog2;
-   log2Depth  = tObj->Image[t->base.firstLevel]->DepthLog2;
+   log2Width  = tObj->Image[0][t->base.firstLevel]->WidthLog2;
+   log2Height = tObj->Image[0][t->base.firstLevel]->HeightLog2;
+   log2Depth  = tObj->Image[0][t->base.firstLevel]->DepthLog2;
 
    numLevels = t->base.lastLevel - t->base.firstLevel + 1;
 
@@ -147,7 +147,7 @@ static void r200SetTexImages( r200ContextPtr rmesa,
       const struct gl_texture_image *texImage;
       GLuint size;
 
-      texImage = tObj->Image[i + t->base.firstLevel];
+      texImage = tObj->Image[0][i + t->base.firstLevel];
       if ( !texImage )
 	 break;
 
@@ -255,17 +255,17 @@ static void r200SetTexImages( r200ContextPtr rmesa,
                            (log2Height << R200_FACE_HEIGHT_4_SHIFT));
    }
 
-   t->pp_txsize = (((tObj->Image[t->base.firstLevel]->Width - 1) << 0) |
-                   ((tObj->Image[t->base.firstLevel]->Height - 1) << 16));
+   t->pp_txsize = (((tObj->Image[0][t->base.firstLevel]->Width - 1) << 0) |
+                   ((tObj->Image[0][t->base.firstLevel]->Height - 1) << 16));
 
    /* Only need to round to nearest 32 for textures, but the blitter
     * requires 64-byte aligned pitches, and we may/may not need the
     * blitter.   NPOT only!
     */
    if (baseImage->IsCompressed)
-      t->pp_txpitch = (tObj->Image[t->base.firstLevel]->Width + 63) & ~(63);
+      t->pp_txpitch = (tObj->Image[0][t->base.firstLevel]->Width + 63) & ~(63);
    else
-      t->pp_txpitch = ((tObj->Image[t->base.firstLevel]->Width * baseImage->TexFormat->TexelBytes) + 63) & ~(63);
+      t->pp_txpitch = ((tObj->Image[0][t->base.firstLevel]->Width * baseImage->TexFormat->TexelBytes) + 63) & ~(63);
    t->pp_txpitch -= 32;
 
    t->dirty_state = TEX_ALL;
@@ -736,7 +736,7 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
    }
    else {
       const struct gl_texture_object *tObj = texUnit->_Current;
-      const GLenum format = tObj->Image[tObj->BaseLevel]->Format;
+      const GLenum format = tObj->Image[0][tObj->BaseLevel]->Format;
       GLuint color_arg[3], alpha_arg[3];
       GLuint i, numColorArgs = 0, numAlphaArgs = 0;
       GLuint RGBshift = texUnit->CombineScaleShiftRGB;
@@ -1606,7 +1606,7 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
    GLenum format;
 
    /* Fallback if there's a texture border */
-   if ( tObj->Image[tObj->BaseLevel]->Border > 0 )
+   if ( tObj->Image[0][tObj->BaseLevel]->Border > 0 )
        return GL_FALSE;
 
    /* Update state if this is a different texture object to last
@@ -1653,7 +1653,7 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
       rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
    }
 
-   format = tObj->Image[tObj->BaseLevel]->Format;
+   format = tObj->Image[0][tObj->BaseLevel]->Format;
    if ( rmesa->state.texture.unit[unit].format != format ||
 	rmesa->state.texture.unit[unit].envMode != texUnit->EnvMode ) {
       rmesa->state.texture.unit[unit].format = format;

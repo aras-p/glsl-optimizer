@@ -361,7 +361,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
             GLfloat texW, texH;
             GLboolean needLambda;
             if (obj) {
-               const struct gl_texture_image *img = obj->Image[obj->BaseLevel];
+               const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
                needLambda = (obj->MinFilter != obj->MagFilter)
                   || ctx->FragmentProgram.Enabled;
                texW = img->WidthScale;
@@ -453,7 +453,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
       GLfloat texW, texH;
       GLboolean needLambda;
       if (obj) {
-         const struct gl_texture_image *img = obj->Image[obj->BaseLevel];
+         const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
          needLambda = (obj->MinFilter != obj->MagFilter)
             || ctx->FragmentProgram.Enabled;
          texW = (GLfloat) img->WidthScale;

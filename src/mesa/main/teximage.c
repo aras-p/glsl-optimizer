@@ -471,29 +471,22 @@ _mesa_set_tex_image(struct gl_texture_object *tObj,
       case GL_TEXTURE_1D:
       case GL_TEXTURE_2D:
       case GL_TEXTURE_3D:
-         tObj->Image[level] = texImage;
+         tObj->Image[0][level] = texImage;
          return;
       case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-         tObj->Image[level] = texImage;
-         return;
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-         tObj->NegX[level] = texImage;
-         return;
       case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-         tObj->PosY[level] = texImage;
-         return;
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-         tObj->NegY[level] = texImage;
-         return;
       case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-         tObj->PosZ[level] = texImage;
-         return;
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-         tObj->NegZ[level] = texImage;
-         return;
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB: {
+	 GLuint face = ((GLuint) target - 
+			(GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X);
+         tObj->Image[face][level] = texImage;
+	 break;
+      }
       case GL_TEXTURE_RECTANGLE_NV:
          ASSERT(level == 0);
-         tObj->Image[level] = texImage;
+         tObj->Image[0][level] = texImage;
          return;
       default:
          _mesa_problem(NULL, "bad target in _mesa_set_tex_image()");
@@ -630,56 +623,39 @@ _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
    ASSERT(level < MAX_TEXTURE_LEVELS);
    switch (target) {
       case GL_TEXTURE_1D:
-         return texUnit->Current1D->Image[level];
+         return texUnit->Current1D->Image[0][level];
       case GL_PROXY_TEXTURE_1D:
-         return ctx->Texture.Proxy1D->Image[level];
+         return ctx->Texture.Proxy1D->Image[0][level];
       case GL_TEXTURE_2D:
-         return texUnit->Current2D->Image[level];
+         return texUnit->Current2D->Image[0][level];
       case GL_PROXY_TEXTURE_2D:
-         return ctx->Texture.Proxy2D->Image[level];
+         return ctx->Texture.Proxy2D->Image[0][level];
       case GL_TEXTURE_3D:
-         return texUnit->Current3D->Image[level];
+         return texUnit->Current3D->Image[0][level];
       case GL_PROXY_TEXTURE_3D:
-         return ctx->Texture.Proxy3D->Image[level];
+         return ctx->Texture.Proxy3D->Image[0][level];
       case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-         if (ctx->Extensions.ARB_texture_cube_map)
-            return texUnit->CurrentCubeMap->Image[level];
-         else
-            return NULL;
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-         if (ctx->Extensions.ARB_texture_cube_map)
-            return texUnit->CurrentCubeMap->NegX[level];
-         else
-            return NULL;
       case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-         if (ctx->Extensions.ARB_texture_cube_map)
-            return texUnit->CurrentCubeMap->PosY[level];
-         else
-            return NULL;
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-         if (ctx->Extensions.ARB_texture_cube_map)
-            return texUnit->CurrentCubeMap->NegY[level];
-         else
-            return NULL;
       case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-         if (ctx->Extensions.ARB_texture_cube_map)
-            return texUnit->CurrentCubeMap->PosZ[level];
-         else
-            return NULL;
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-         if (ctx->Extensions.ARB_texture_cube_map)
-            return texUnit->CurrentCubeMap->NegZ[level];
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB: 
+         if (ctx->Extensions.ARB_texture_cube_map) {
+	    GLuint face = ((GLuint) target - 
+			   (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X);
+            return texUnit->CurrentCubeMap->Image[face][level];
+	 }
          else
             return NULL;
       case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
          if (ctx->Extensions.ARB_texture_cube_map)
-            return ctx->Texture.ProxyCubeMap->Image[level];
+            return ctx->Texture.ProxyCubeMap->Image[0][level];
          else
             return NULL;
       case GL_TEXTURE_RECTANGLE_NV:
          if (ctx->Extensions.NV_texture_rectangle) {
             ASSERT(level == 0);
-            return texUnit->CurrentRect->Image[level];
+            return texUnit->CurrentRect->Image[0][level];
          }
          else {
             return NULL;
@@ -687,7 +663,7 @@ _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
       case GL_PROXY_TEXTURE_RECTANGLE_NV:
          if (ctx->Extensions.NV_texture_rectangle) {
             ASSERT(level == 0);
-            return ctx->Texture.ProxyRect->Image[level];
+            return ctx->Texture.ProxyRect->Image[0][level];
          }
          else {
             return NULL;
@@ -743,66 +719,66 @@ _mesa_get_proxy_tex_image(GLcontext *ctx, GLenum target, GLint level)
    case GL_PROXY_TEXTURE_1D:
       if (level >= ctx->Const.MaxTextureLevels)
          return NULL;
-      texImage = ctx->Texture.Proxy1D->Image[level];
+      texImage = ctx->Texture.Proxy1D->Image[0][level];
       if (!texImage) {
          texImage = ctx->Driver.NewTextureImage(ctx);
          if (!texImage) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
             return NULL;
          }
-         ctx->Texture.Proxy1D->Image[level] = texImage;
+         ctx->Texture.Proxy1D->Image[0][level] = texImage;
       }
       return texImage;
    case GL_PROXY_TEXTURE_2D:
       if (level >= ctx->Const.MaxTextureLevels)
          return NULL;
-      texImage = ctx->Texture.Proxy2D->Image[level];
+      texImage = ctx->Texture.Proxy2D->Image[0][level];
       if (!texImage) {
          texImage = ctx->Driver.NewTextureImage(ctx);
          if (!texImage) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
             return NULL;
          }
-         ctx->Texture.Proxy2D->Image[level] = texImage;
+         ctx->Texture.Proxy2D->Image[0][level] = texImage;
       }
       return texImage;
    case GL_PROXY_TEXTURE_3D:
       if (level >= ctx->Const.Max3DTextureLevels)
          return NULL;
-      texImage = ctx->Texture.Proxy3D->Image[level];
+      texImage = ctx->Texture.Proxy3D->Image[0][level];
       if (!texImage) {
          texImage = ctx->Driver.NewTextureImage(ctx);
          if (!texImage) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
             return NULL;
          }
-         ctx->Texture.Proxy3D->Image[level] = texImage;
+         ctx->Texture.Proxy3D->Image[0][level] = texImage;
       }
       return texImage;
    case GL_PROXY_TEXTURE_CUBE_MAP:
       if (level >= ctx->Const.MaxCubeTextureLevels)
          return NULL;
-      texImage = ctx->Texture.ProxyCubeMap->Image[level];
+      texImage = ctx->Texture.ProxyCubeMap->Image[0][level];
       if (!texImage) {
          texImage = ctx->Driver.NewTextureImage(ctx);
          if (!texImage) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
             return NULL;
          }
-         ctx->Texture.ProxyCubeMap->Image[level] = texImage;
+         ctx->Texture.ProxyCubeMap->Image[0][level] = texImage;
       }
       return texImage;
    case GL_PROXY_TEXTURE_RECTANGLE_NV:
       if (level > 0)
          return NULL;
-      texImage = ctx->Texture.ProxyRect->Image[level];
+      texImage = ctx->Texture.ProxyRect->Image[0][level];
       if (!texImage) {
          texImage = ctx->Driver.NewTextureImage(ctx);
          if (!texImage) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
             return NULL;
          }
-         ctx->Texture.ProxyRect->Image[level] = texImage;
+         ctx->Texture.ProxyRect->Image[0][level] = texImage;
       }
       return texImage;
    default:
@@ -2170,7 +2146,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                               1, border)) {
          /* when error, clear all proxy texture image parameters */
          if (texImage)
-            clear_teximage_fields(ctx->Texture.Proxy2D->Image[level]);
+            clear_teximage_fields(ctx->Texture.Proxy2D->Image[0][level]);
       }
       else {
          /* no error, set the tex image parameters */

@@ -149,7 +149,7 @@ struct gamma_texture_object_t {
    GLuint max_level;
    GLuint dirty_images;
 
-   GLint firstLevel, lastLevel;  /* upload tObj->Image[first .. lastLevel] */
+   GLint firstLevel, lastLevel;  /* upload tObj->Image[0][first .. lastLevel] */
 
    struct { 
       const struct gl_texture_image *image;

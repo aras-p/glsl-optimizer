@@ -17,7 +17,7 @@ static void gammaSetTexImages( gammaContextPtr gmesa,
 {
    GLuint height, width, pitch, i, log_pitch;
    gammaTextureObjectPtr t = (gammaTextureObjectPtr) tObj->DriverData;
-   const struct gl_texture_image *baseImage = tObj->Image[tObj->BaseLevel];
+   const struct gl_texture_image *baseImage = tObj->Image[0][tObj->BaseLevel];
    GLint firstLevel, lastLevel, numLevels;
    GLint log2Width, log2Height;
 
@@ -49,15 +49,15 @@ static void gammaSetTexImages( gammaContextPtr gmesa,
 
    numLevels = lastLevel - firstLevel + 1;
 
-   log2Width = tObj->Image[firstLevel]->WidthLog2;
-   log2Height = tObj->Image[firstLevel]->HeightLog2;
+   log2Width = tObj->Image[0][firstLevel]->WidthLog2;
+   log2Height = tObj->Image[0][firstLevel]->HeightLog2;
 
 
    /* Figure out the amount of memory required to hold all the mipmap
     * levels.  Choose the smallest pitch to accomodate the largest
     * mipmap:
     */
-   width = tObj->Image[firstLevel]->Width * t->texelBytes;
+   width = tObj->Image[0][firstLevel]->Width * t->texelBytes;
    for (pitch = 32, log_pitch=2 ; pitch < width ; pitch *= 2 )
       log_pitch++;
    
@@ -65,7 +65,7 @@ static void gammaSetTexImages( gammaContextPtr gmesa,
     * lines required:
     */
    for ( height = i = 0 ; i < numLevels ; i++ ) {
-      t->image[i].image = tObj->Image[firstLevel + i];
+      t->image[i].image = tObj->Image[0][firstLevel + i];
       t->image[i].offset = height * pitch;
       t->image[i].internalFormat = baseImage->Format;
       height += t->image[i].image->Height;
@@ -86,7 +86,7 @@ static void gammaUpdateTexEnv( GLcontext *ctx, GLuint unit )
 {
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    const struct gl_texture_object *tObj = texUnit->_Current;
-   const GLuint format = tObj->Image[tObj->BaseLevel]->Format;
+   const GLuint format = tObj->Image[0][tObj->BaseLevel]->Format;
    gammaTextureObjectPtr t = (gammaTextureObjectPtr)tObj->DriverData;
    GLuint tc;
 
@@ -167,7 +167,7 @@ static void gammaUpdateTexUnit( GLcontext *ctx, GLuint unit )
       }
 
 #if 0
-      if (tObj->Image[tObj->BaseLevel]->Border > 0) {
+      if (tObj->Image[0][tObj->BaseLevel]->Border > 0) {
          FALLBACK( gmesa, GAMMA_FALLBACK_TEXTURE, GL_TRUE );
          return;
       }
@@ -185,8 +185,8 @@ static void gammaUpdateTexUnit( GLcontext *ctx, GLuint unit )
       /* Update texture environment if texture object image format or 
        * texture environment state has changed.
        */
-      if (tObj->Image[tObj->BaseLevel]->Format != gmesa->TexEnvImageFmt[unit]) {
-	 gmesa->TexEnvImageFmt[unit] = tObj->Image[tObj->BaseLevel]->Format;
+      if (tObj->Image[0][tObj->BaseLevel]->Format != gmesa->TexEnvImageFmt[unit]) {
+	 gmesa->TexEnvImageFmt[unit] = tObj->Image[0][tObj->BaseLevel]->Format;
 	 gammaUpdateTexEnv( ctx, unit );
       }
    }

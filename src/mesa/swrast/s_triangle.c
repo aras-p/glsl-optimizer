@@ -154,12 +154,12 @@ GLboolean _swrast_culltriangle( GLcontext *ctx,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);                             \
    struct gl_texture_object *obj = ctx->Texture.Unit[0].Current2D;	\
    const GLint b = obj->BaseLevel;					\
-   const GLfloat twidth = (GLfloat) obj->Image[b]->Width;		\
-   const GLfloat theight = (GLfloat) obj->Image[b]->Height;		\
-   const GLint twidth_log2 = obj->Image[b]->WidthLog2;			\
-   const GLchan *texture = (const GLchan *) obj->Image[b]->Data;	\
-   const GLint smask = obj->Image[b]->Width - 1;			\
-   const GLint tmask = obj->Image[b]->Height - 1;			\
+   const GLfloat twidth = (GLfloat) obj->Image[0][b]->Width;		\
+   const GLfloat theight = (GLfloat) obj->Image[0][b]->Height;		\
+   const GLint twidth_log2 = obj->Image[0][b]->WidthLog2;			\
+   const GLchan *texture = (const GLchan *) obj->Image[0][b]->Data;	\
+   const GLint smask = obj->Image[0][b]->Width - 1;			\
+   const GLint tmask = obj->Image[0][b]->Height - 1;			\
    if (!texture) {							\
       /* this shouldn't happen */					\
       return;								\
@@ -205,12 +205,12 @@ GLboolean _swrast_culltriangle( GLcontext *ctx,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);                             \
    struct gl_texture_object *obj = ctx->Texture.Unit[0].Current2D;	\
    const GLint b = obj->BaseLevel;					\
-   const GLfloat twidth = (GLfloat) obj->Image[b]->Width;		\
-   const GLfloat theight = (GLfloat) obj->Image[b]->Height;		\
-   const GLint twidth_log2 = obj->Image[b]->WidthLog2;			\
-   const GLchan *texture = (const GLchan *) obj->Image[b]->Data;	\
-   const GLint smask = obj->Image[b]->Width - 1;			\
-   const GLint tmask = obj->Image[b]->Height - 1;			\
+   const GLfloat twidth = (GLfloat) obj->Image[0][b]->Width;		\
+   const GLfloat theight = (GLfloat) obj->Image[0][b]->Height;		\
+   const GLint twidth_log2 = obj->Image[0][b]->WidthLog2;			\
+   const GLchan *texture = (const GLchan *) obj->Image[0][b]->Data;	\
+   const GLint smask = obj->Image[0][b]->Width - 1;			\
+   const GLint tmask = obj->Image[0][b]->Height - 1;			\
    if (!texture) {							\
       /* this shouldn't happen */					\
       return;								\
@@ -538,13 +538,13 @@ affine_span(GLcontext *ctx, struct sw_span *span,
    struct gl_texture_unit *unit = ctx->Texture.Unit+0;			\
    struct gl_texture_object *obj = unit->Current2D;			\
    const GLint b = obj->BaseLevel;					\
-   const GLfloat twidth = (GLfloat) obj->Image[b]->Width;		\
-   const GLfloat theight = (GLfloat) obj->Image[b]->Height;		\
-   info.texture = (const GLchan *) obj->Image[b]->Data;			\
-   info.twidth_log2 = obj->Image[b]->WidthLog2;				\
-   info.smask = obj->Image[b]->Width - 1;				\
-   info.tmask = obj->Image[b]->Height - 1;				\
-   info.format = obj->Image[b]->Format;					\
+   const GLfloat twidth = (GLfloat) obj->Image[0][b]->Width;		\
+   const GLfloat theight = (GLfloat) obj->Image[0][b]->Height;		\
+   info.texture = (const GLchan *) obj->Image[0][b]->Data;			\
+   info.twidth_log2 = obj->Image[0][b]->WidthLog2;				\
+   info.smask = obj->Image[0][b]->Width - 1;				\
+   info.tmask = obj->Image[0][b]->Height - 1;				\
+   info.format = obj->Image[0][b]->Format;					\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
    span.arrayMask |= SPAN_RGBA;						\
@@ -565,22 +565,22 @@ affine_span(GLcontext *ctx, struct sw_span *span,
    case GL_ALPHA:							\
    case GL_LUMINANCE:							\
    case GL_INTENSITY:							\
-      info.tbytesline = obj->Image[b]->Width;				\
+      info.tbytesline = obj->Image[0][b]->Width;				\
       break;								\
    case GL_LUMINANCE_ALPHA:						\
-      info.tbytesline = obj->Image[b]->Width * 2;			\
+      info.tbytesline = obj->Image[0][b]->Width * 2;			\
       break;								\
    case GL_RGB:								\
-      info.tbytesline = obj->Image[b]->Width * 3;			\
+      info.tbytesline = obj->Image[0][b]->Width * 3;			\
       break;								\
    case GL_RGBA:							\
-      info.tbytesline = obj->Image[b]->Width * 4;			\
+      info.tbytesline = obj->Image[0][b]->Width * 4;			\
       break;								\
    default:								\
       _mesa_problem(NULL, "Bad texture format in affine_texture_triangle");\
       return;								\
    }									\
-   info.tsize = obj->Image[b]->Height * info.tbytesline;
+   info.tsize = obj->Image[0][b]->Height * info.tbytesline;
 
 #define RENDER_SPAN( span )   affine_span(ctx, &span, &info);
 
@@ -808,11 +808,11 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
    const struct gl_texture_unit *unit = ctx->Texture.Unit+0;		\
    const struct gl_texture_object *obj = unit->Current2D;		\
    const GLint b = obj->BaseLevel;					\
-   info.texture = (const GLchan *) obj->Image[b]->Data;			\
-   info.twidth_log2 = obj->Image[b]->WidthLog2;				\
-   info.smask = obj->Image[b]->Width - 1;				\
-   info.tmask = obj->Image[b]->Height - 1;				\
-   info.format = obj->Image[b]->Format;					\
+   info.texture = (const GLchan *) obj->Image[0][b]->Data;			\
+   info.twidth_log2 = obj->Image[0][b]->WidthLog2;				\
+   info.smask = obj->Image[0][b]->Width - 1;				\
+   info.tmask = obj->Image[0][b]->Height - 1;				\
+   info.format = obj->Image[0][b]->Format;					\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
 									\
@@ -832,22 +832,22 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
    case GL_ALPHA:							\
    case GL_LUMINANCE:							\
    case GL_INTENSITY:							\
-      info.tbytesline = obj->Image[b]->Width;				\
+      info.tbytesline = obj->Image[0][b]->Width;				\
       break;								\
    case GL_LUMINANCE_ALPHA:						\
-      info.tbytesline = obj->Image[b]->Width * 2;			\
+      info.tbytesline = obj->Image[0][b]->Width * 2;			\
       break;								\
    case GL_RGB:								\
-      info.tbytesline = obj->Image[b]->Width * 3;			\
+      info.tbytesline = obj->Image[0][b]->Width * 3;			\
       break;								\
    case GL_RGBA:							\
-      info.tbytesline = obj->Image[b]->Width * 4;			\
+      info.tbytesline = obj->Image[0][b]->Width * 4;			\
       break;								\
    default:								\
       _mesa_problem(NULL, "Bad texture format in persp_textured_triangle");\
       return;								\
    }									\
-   info.tsize = obj->Image[b]->Height * info.tbytesline;
+   info.tsize = obj->Image[0][b]->Height * info.tbytesline;
 
 #define RENDER_SPAN( span )			\
    span.interpMask &= ~SPAN_RGBA;		\
@@ -1062,7 +1062,7 @@ _swrast_choose_triangle( GLcontext *ctx )
          GLenum minFilter, magFilter, envMode;
          GLint format;
          texObj2D = ctx->Texture.Unit[0].Current2D;
-         texImg = texObj2D ? texObj2D->Image[texObj2D->BaseLevel] : NULL;
+         texImg = texObj2D ? texObj2D->Image[0][texObj2D->BaseLevel] : NULL;
          format = texImg ? texImg->TexFormat->MesaFormat : -1;
          minFilter = texObj2D ? texObj2D->MinFilter : (GLenum) 0;
          magFilter = texObj2D ? texObj2D->MagFilter : (GLenum) 0;

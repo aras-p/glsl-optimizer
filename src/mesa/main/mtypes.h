@@ -1061,6 +1061,13 @@ struct gl_texture_image {
    /*@}*/
 };
 
+#define FACE_POS_X   0
+#define FACE_NEG_X   1
+#define FACE_POS_Y   2
+#define FACE_NEG_Y   3
+#define FACE_POS_Z   4
+#define FACE_NEG_Z   5
+#define MAX_FACES  6
 
 /**
  * Texture object record
@@ -1099,20 +1106,7 @@ struct gl_texture_object {
    GLboolean GenerateMipmap;    /**< GL_SGIS_generate_mipmap */
    GLboolean _IsPowerOfTwo;	/**< Are all image dimensions powers of two? */
 
-   struct gl_texture_image *Image[MAX_TEXTURE_LEVELS];
-
-   /**
-    * \name Texture cube faces 
-    * 
-    * Image[] is alias for *PosX[MAX_TEXTURE_LEVELS];
-    */
-   /*@{*/
-   struct gl_texture_image *NegX[MAX_TEXTURE_LEVELS];
-   struct gl_texture_image *PosY[MAX_TEXTURE_LEVELS];
-   struct gl_texture_image *NegY[MAX_TEXTURE_LEVELS];
-   struct gl_texture_image *PosZ[MAX_TEXTURE_LEVELS];
-   struct gl_texture_image *NegZ[MAX_TEXTURE_LEVELS];
-   /*@}*/
+   struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
 
    /** GL_EXT_paletted_texture */
    struct gl_color_table Palette;

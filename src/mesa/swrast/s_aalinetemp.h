@@ -200,7 +200,7 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
 #ifdef DO_TEX
    {
       const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;
-      const struct gl_texture_image *texImage = obj->Image[obj->BaseLevel];
+      const struct gl_texture_image *texImage = obj->Image[0][obj->BaseLevel];
       const GLfloat invW0 = v0->win[3];
       const GLfloat invW1 = v1->win[3];
       const GLfloat s0 = v0->texcoord[0][0] * invW0;
@@ -226,7 +226,7 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
          if (ctx->Texture.Unit[u]._ReallyEnabled) {
             const struct gl_texture_object *obj = ctx->Texture.Unit[u]._Current;
-            const struct gl_texture_image *texImage = obj->Image[obj->BaseLevel];
+            const struct gl_texture_image *texImage = obj->Image[0][obj->BaseLevel];
             const GLfloat invW0 = v0->win[3];
             const GLfloat invW1 = v1->win[3];
             const GLfloat s0 = v0->texcoord[u][0] * invW0;

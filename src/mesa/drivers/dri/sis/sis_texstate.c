@@ -317,7 +317,7 @@ sis_set_texobj_parm( GLcontext *ctx, struct gl_texture_object *texObj,
       lastLevel = texObj->BaseLevel + (GLint)(texObj->MaxLod + 0.5);
       lastLevel = MAX2(lastLevel, texObj->BaseLevel);
       lastLevel = MIN2(lastLevel, texObj->BaseLevel +
-         texObj->Image[texObj->BaseLevel]->MaxLog2);
+         texObj->Image[0][texObj->BaseLevel]->MaxLog2);
       lastLevel = MIN2(lastLevel, texObj->MaxLevel);
       lastLevel = MAX2(firstLevel, lastLevel); /* need at least one level */
    }
@@ -437,9 +437,9 @@ sis_set_texobj_parm( GLcontext *ctx, struct gl_texture_object *texObj,
    }
 
    current->texture[hw_unit].hwTextureSet |=
-      texObj->Image[firstLevel]->WidthLog2 << 4;
+      texObj->Image[0][firstLevel]->WidthLog2 << 4;
    current->texture[hw_unit].hwTextureSet |=
-      texObj->Image[firstLevel]->HeightLog2;
+      texObj->Image[0][firstLevel]->HeightLog2;
 
    if (hw_unit == 0)
       smesa->GlobalFlag |= GFLAG_TEXTUREADDRESS;

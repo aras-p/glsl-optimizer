@@ -171,20 +171,20 @@ static void RevalidateTexture(GLcontext *ctx, struct gl_texture_object *tObj)
 
     minl = maxl = tObj->BaseLevel;
 
-    if (tObj->Image[minl]) {
-       maxl = MIN2(tObj->MaxLevel, tObj->Image[minl]->MaxLog2);
+    if (tObj->Image[0][minl]) {
+       maxl = MIN2(tObj->MaxLevel, tObj->Image[0][minl]->MaxLog2);
 
        /* compute largeLodLog2, aspect ratio and texcoord scale factors */
-       tdfxTexGetInfo(ctx, tObj->Image[minl]->Width, tObj->Image[minl]->Height,
+       tdfxTexGetInfo(ctx, tObj->Image[0][minl]->Width, tObj->Image[0][minl]->Height,
                       &ti->info.largeLodLog2,
                       &ti->info.aspectRatioLog2,
                       &(ti->sScale), &(ti->tScale), NULL, NULL);
     }
 
-    if (tObj->Image[maxl] && (tObj->MinFilter != GL_NEAREST) && (tObj->MinFilter != GL_LINEAR)) {
+    if (tObj->Image[0][maxl] && (tObj->MinFilter != GL_NEAREST) && (tObj->MinFilter != GL_LINEAR)) {
         /* mipmapping: need to compute smallLodLog2 */
-        tdfxTexGetInfo(ctx, tObj->Image[maxl]->Width,
-                       tObj->Image[maxl]->Height,
+        tdfxTexGetInfo(ctx, tObj->Image[0][maxl]->Width,
+                       tObj->Image[0][maxl]->Height,
                        &ti->info.smallLodLog2, NULL,
                        NULL, NULL, NULL, NULL);
     }
@@ -1282,11 +1282,11 @@ tdfxTestProxyTexImage(GLcontext *ctx, GLenum target,
             assert(ti);
 
             /* assign the parameters to test against */
-            tObj->Image[level]->Width = width;
-            tObj->Image[level]->Height = height;
-            tObj->Image[level]->Border = border;
+            tObj->Image[0][level]->Width = width;
+            tObj->Image[0][level]->Height = height;
+            tObj->Image[0][level]->Border = border;
 #if 0
-            tObj->Image[level]->IntFormat = internalFormat;
+            tObj->Image[0][level]->IntFormat = internalFormat;
 #endif
             if (level == 0) {
                /* don't use mipmap levels > 0 */

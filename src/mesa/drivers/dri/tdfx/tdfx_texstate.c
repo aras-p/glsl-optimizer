@@ -1483,8 +1483,8 @@ static void print_state(tdfxContextPtr fxMesa)
    GLcontext *ctx = fxMesa->glCtx;
    struct gl_texture_object *tObj0 = ctx->Texture.Unit[0].Current2D;
    struct gl_texture_object *tObj1 = ctx->Texture.Unit[1].Current2D;
-   GLenum base0 = tObj0->Image[tObj0->BaseLevel] ? tObj0->Image[tObj0->BaseLevel]->Format : 99;
-   GLenum base1 = tObj1->Image[tObj1->BaseLevel] ? tObj1->Image[tObj1->BaseLevel]->Format : 99;
+   GLenum base0 = tObj0->Image[0][tObj0->BaseLevel] ? tObj0->Image[0][tObj0->BaseLevel]->Format : 99;
+   GLenum base1 = tObj1->Image[0][tObj1->BaseLevel] ? tObj1->Image[0][tObj1->BaseLevel]->Format : 99;
 
    printf("Unit 0: Enabled:  GL=%d   Gr=%d\n", ctx->Texture.Unit[0]._ReallyEnabled,
           fxMesa->TexState.Enabled[0]);
@@ -1517,7 +1517,7 @@ static void setupTextureSingleTMU(GLcontext * ctx, GLuint unit)
    GLenum envMode, baseFormat;
 
    tObj = ctx->Texture.Unit[unit].Current2D;
-   if (tObj->Image[tObj->BaseLevel]->Border > 0) {
+   if (tObj->Image[0][tObj->BaseLevel]->Border > 0) {
       FALLBACK(fxMesa, TDFX_FALLBACK_TEXTURE_BORDER, GL_TRUE);
       return;
    }
@@ -1539,7 +1539,7 @@ static void setupTextureSingleTMU(GLcontext * ctx, GLuint unit)
 
    /* Check if we really need to update the texenv state */
    envMode = ctx->Texture.Unit[unit].EnvMode;
-   baseFormat = tObj->Image[tObj->BaseLevel]->Format;
+   baseFormat = tObj->Image[0][tObj->BaseLevel]->Format;
 
    if (TDFX_IS_NAPALM(fxMesa)) {
       /* see if we really need to update the unit */
@@ -1826,8 +1826,8 @@ static void setupTextureDoubleTMU(GLcontext * ctx)
    struct gl_texture_object *tObj1 = ctx->Texture.Unit[1].Current2D;
    tdfxTexInfo *ti0 = TDFX_TEXTURE_DATA(tObj0);
    tdfxTexInfo *ti1 = TDFX_TEXTURE_DATA(tObj1);
-   struct gl_texture_image *baseImage0 = tObj0->Image[tObj0->BaseLevel];
-   struct gl_texture_image *baseImage1 = tObj1->Image[tObj1->BaseLevel];
+   struct gl_texture_image *baseImage0 = tObj0->Image[0][tObj0->BaseLevel];
+   struct gl_texture_image *baseImage1 = tObj1->Image[0][tObj1->BaseLevel];
    const GLenum envMode0 = ctx->Texture.Unit[0].EnvMode;
    const GLenum envMode1 = ctx->Texture.Unit[1].EnvMode;
 

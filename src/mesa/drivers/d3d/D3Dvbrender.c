@@ -1516,7 +1516,7 @@ static void SetRenderStates( GLcontext *ctx )
       switch( ctx->Texture.Set[ctx->Texture.CurrentSet].EnvMode )
       {
         case GL_MODULATE:
-		if ( ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0]->Format == GL_RGBA )
+		if ( ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0][0]->Format == GL_RGBA )
 		  dwFunc = pContext->pShared->dwTexFunc[d3dtblend_modulatealpha];
 		else
 		  dwFunc = pContext->pShared->dwTexFunc[d3dtblend_modulate];
@@ -1531,7 +1531,7 @@ static void SetRenderStates( GLcontext *ctx )
 		break;
 
         case GL_DECAL:
-		if ( ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0]->Format == GL_RGBA )
+		if ( ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0][0]->Format == GL_RGBA )
 		  dwFunc = pContext->pShared->dwTexFunc[d3dtblend_decalalpha];
 		else
 		  dwFunc = pContext->pShared->dwTexFunc[d3dtblend_decal];
@@ -1592,12 +1592,12 @@ static void SetRenderStates( GLcontext *ctx )
 	   CreateTMgrHAL( pContext->pShared,
 				   texName,
 				   0,
-				   ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0]->Format,
+				   ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0][0]->Format,
 				   (RECT *)NULL,
-				   ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0]->Width,
-				   ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0]->Height,
+				   ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0][0]->Width,
+				   ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0][0]->Height,
 				   TM_ACTION_BIND,
-				   (void *)ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0]->Data );
+				   (void *)ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0][0]->Data );
 	   //	 }
 	 bTexture = TRUE;
    }
@@ -1884,7 +1884,7 @@ static void DebugRenderStates( GLcontext *ctx, BOOL bForce )
 	  textName = ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Name;
 	  DPF(( 0, "\tTexture Name:\t%d", textName ));
 	  DPF(( 0, "\tTexture Format:\t%s",
-		   (ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0]->Format == GL_RGBA) ?
+		   (ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0][0]->Format == GL_RGBA) ?
 		   "GL_RGBA" : "GLRGB" ));
 	}
 

@@ -200,26 +200,7 @@ static void uploadSubImage( radeonContextPtr rmesa, radeonTexObjPtr t,
       return;
    }
 
-   switch (face) {
-   case 0:
-      texImage = t->base.tObj->Image[level];
-      break;
-   case 1:
-      texImage = t->base.tObj->NegX[level];
-      break;
-   case 2:
-      texImage = t->base.tObj->PosY[level];
-      break;
-   case 3:
-      texImage = t->base.tObj->NegY[level];
-      break;
-   case 4:
-      texImage = t->base.tObj->PosZ[level];
-      break;
-   case 5:
-      texImage = t->base.tObj->NegZ[level];
-      break;
-   }
+   texImage = t->base.tObj->Image[face][level];
 
    if ( !texImage ) {
       if ( RADEON_DEBUG & DEBUG_TEXTURE )

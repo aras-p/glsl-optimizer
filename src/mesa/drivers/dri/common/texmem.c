@@ -1183,7 +1183,7 @@ driCalculateTextureFirstLastLevel( driTextureObject * t )
 {
    struct gl_texture_object * const tObj = t->tObj;
    const struct gl_texture_image * const baseImage =
-       tObj->Image[tObj->BaseLevel];
+       tObj->Image[0][tObj->BaseLevel];
 
    /* These must be signed values.  MinLod and MaxLod can be negative numbers,
     * and having firstLevel and lastLevel as signed prevents the need for

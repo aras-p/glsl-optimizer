@@ -105,7 +105,7 @@ static void mgaUploadSubImage( mgaContextPtr mmesa,
       return;
    }
 
-   texImage = t->base.tObj->Image[level];
+   texImage = t->base.tObj->Image[0][level];
    if ( texImage == NULL ) {
       fprintf( stderr, "[%s:%d] Image[%d] = NULL\n", __FILE__, __LINE__,
 	       level );

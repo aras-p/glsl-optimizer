@@ -93,7 +93,7 @@ static void uploadSubImage( r128ContextPtr rmesa, r128TexObjPtr t,
    if ( ( level < 0 ) || ( level > R128_MAX_TEXTURE_LEVELS ) )
       return;
 
-   image = t->base.tObj->Image[level];
+   image = t->base.tObj->Image[0][level];
    if ( !image )
       return;
 
