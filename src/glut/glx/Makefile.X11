@@ -82,7 +82,7 @@ OBJECTS = $(SOURCES:.c=.o)
 ##### RULES #####
 
 .c.o:
-	$(CC) -c -I$(INCDIR) $(CFLAGS) $<
+	$(CC) -c -I$(INCDIR) $(CFLAGS) $(GLUT_CFLAGS) $<
 
 
 
