@@ -436,6 +436,8 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 
    /* Configure swrast to match hardware characteristics:
     */
+   _tnl_allow_pixel_fog( ctx, GL_FALSE );
+   _tnl_allow_vertex_fog( ctx, GL_TRUE );
    _swrast_allow_pixel_fog( ctx, GL_FALSE );
    _swrast_allow_vertex_fog( ctx, GL_TRUE );
 
