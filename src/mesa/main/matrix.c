@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.43 2002/06/23 02:52:18 brianp Exp $ */
+/* $Id: matrix.c,v 1.44 2002/08/21 16:39:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -407,13 +407,14 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
    const GLfloat n = ctx->Viewport.Near;
    const GLfloat f = ctx->Viewport.Far;
 
-   if (width < 0 || height < 0) {
-      _mesa_error( ctx,  GL_INVALID_VALUE, "glViewport" );
-      return;
-   }
-
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glViewport %d %d %d %d\n", x, y, width, height);
+
+   if (width < 0 || height < 0) {
+      _mesa_error( ctx,  GL_INVALID_VALUE,
+                   "glViewport(%d, %d, %d, %d)", x, y, width, height );
+      return;
+   }
 
    /* clamp width, and height to implementation dependent range */
    width  = CLAMP( width,  1, MAX_WIDTH );

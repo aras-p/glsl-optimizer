@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.61 2002/06/15 02:38:15 brianp Exp $ */
+/* $Id: drawpix.c,v 1.62 2002/08/21 16:39:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -104,7 +104,8 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (width < 0 || height < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glReadPixels(width or height < 0)" );
+      _mesa_error( ctx, GL_INVALID_VALUE,
+                   "glReadPixels(width=%d height=%d)", width, height );
       return;
    }
 
@@ -118,7 +119,6 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
 
    ctx->Driver.ReadPixels(ctx, x, y, width, height,
 			  format, type, &ctx->Pack, pixels);
-
 }
 
 
