@@ -1218,7 +1218,7 @@ fxDDGetString(GLcontext * ctx, GLenum name)
  switch (name) {
         case GL_RENDERER:
              return (GLubyte *)fxMesa->rendererString;
-#if 1 /* hack to advertise vanilla extension names */
+#if 0 /* hack to advertise vanilla extension names */
         case GL_EXTENSIONS:
              {
               static const GLubyte *ext = NULL;
@@ -1229,7 +1229,7 @@ fxDDGetString(GLcontext * ctx, GLenum name)
                     if (ext != NULL) {
                        strcpy((char *)ext, (char *)x);
 #if 0 /* put any additional extension names here */
-                       strcat((char *)ext, " GL_xxx");
+                       strcat((char *)ext, " 3DFX_set_global_palette");
 #endif
                        _mesa_free(x);
                     } else {
@@ -1418,7 +1418,6 @@ fxDDInitExtensions(GLcontext * ctx)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
-   /*_mesa_add_extension(ctx, GL_TRUE, "3DFX_set_global_palette", 0);*/
    _mesa_enable_extension(ctx, "GL_EXT_point_parameters");
    _mesa_enable_extension(ctx, "GL_EXT_paletted_texture");
    _mesa_enable_extension(ctx, "GL_EXT_texture_lod_bias");
