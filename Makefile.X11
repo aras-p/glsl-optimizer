@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.104 2003/12/21 04:06:31 brianp Exp $
+# $Id: Makefile.X11,v 1.105 2004/01/05 16:42:34 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  6.0
@@ -516,24 +516,32 @@ LIB_FILES =	\
 	$(DIRECTORY)/include/GL/xmesa.h					\
 	$(DIRECTORY)/include/GL/xmesa_x.h				\
 	$(DIRECTORY)/include/GL/xmesa_xf86.h				\
+	$(DIRECTORY)/src/descrip.mms					\
 	$(DIRECTORY)/src/mesa/Makefile*					\
 	$(DIRECTORY)/src/mesa/sources					\
 	$(DIRECTORY)/src/mesa/descrip.mms				\
 	$(DIRECTORY)/src/mesa/depend					\
 	$(DIRECTORY)/src/mesa/main/*.[chS]				\
 	$(DIRECTORY)/src/mesa/main/main.dsp				\
+	$(DIRECTORY)/src/mesa/main/descrip.mms				\
 	$(DIRECTORY)/src/mesa/glapi/*.[chS]				\
 	$(DIRECTORY)/src/mesa/glapi/glapi.dsp				\
+	$(DIRECTORY)/src/mesa/glapi/descrip.mms				\
 	$(DIRECTORY)/src/mesa/array_cache/*.[ch]			\
 	$(DIRECTORY)/src/mesa/array_cache/array_cache.dsp		\
+	$(DIRECTORY)/src/mesa/array_cache/descrip.mms			\
 	$(DIRECTORY)/src/mesa/math/*.[ch]				\
 	$(DIRECTORY)/src/mesa/math/math.dsp				\
+	$(DIRECTORY)/src/mesa/math/descrip.mms				\
 	$(DIRECTORY)/src/mesa/swrast/*.[ch]				\
 	$(DIRECTORY)/src/mesa/swrast/swrast.dsp				\
+	$(DIRECTORY)/src/mesa/swrast/descrip.mms			\
 	$(DIRECTORY)/src/mesa/swrast_setup/*.[ch]			\
 	$(DIRECTORY)/src/mesa/swrast_setup/swrast_setup.dsp		\
+	$(DIRECTORY)/src/mesa/swrast_setup/descrip.mms			\
 	$(DIRECTORY)/src/mesa/tnl/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl/tnl.dsp				\
+	$(DIRECTORY)/src/mesa/tnl/descrip.mms				\
 	$(DIRECTORY)/src/mesa/tnl_dd/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/NOTES.imm			\
@@ -553,6 +561,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/drivers/ggi/display/fbdev.conf.in		\
 	$(DIRECTORY)/src/mesa/drivers/ggi/include/ggi/mesa/*.h		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.win		\
+	$(DIRECTORY)/src/mesa/drivers/osmesa/descrip.mms		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/osmesa.def			\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/osmesa.dsp			\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/*.[ch]			\
@@ -560,10 +569,12 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.def			\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.dsp			\
+	$(DIRECTORY)/src/mesa/drivers/x11/descrip.mms			\
 	$(DIRECTORY)/src/mesa/drivers/x11/*.[ch]			\
 	$(DIRECTORY)/src/mesa/sparc/*.[chS]				\
 	$(DIRECTORY)/src/mesa/x86/*.[ch]				\
 	$(DIRECTORY)/src/mesa/x86/*.S					\
+	$(DIRECTORY)/src/glu/descrip.mms				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.X11				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.win				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.DJ				\
