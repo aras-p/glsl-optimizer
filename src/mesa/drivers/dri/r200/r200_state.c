@@ -2114,7 +2114,6 @@ static GLboolean check_material( GLcontext *ctx )
 static void r200WrapRunPipeline( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLboolean has_material;
 
    if (0)
@@ -2137,7 +2136,6 @@ static void r200WrapRunPipeline( GLcontext *ctx )
 
    if (has_material) {
       TCL_FALLBACK( ctx, R200_TCL_FALLBACK_MATERIAL, GL_FALSE );
-      r200UpdateMaterial( ctx ); /* not needed any more? */
    }
 }
 
