@@ -1320,18 +1320,10 @@ static void viaChooseColorState(GLcontext *ctx)
     else
         vmesa->regHROP = HC_HROP_P;
 
-    if (vmesa->viaScreen->bitsPerPixel == 32) {
-    	vmesa->regHFBBMSKL = PACK_COLOR_888(ctx->Color.ColorMask[0],
-			 		    ctx->Color.ColorMask[1],
-			 		    ctx->Color.ColorMask[2]);
-    	vmesa->regHROP |= ctx->Color.ColorMask[3];
-    } else {
-    	GLushort color = PACK_COLOR_565(ctx->Color.ColorMask[0],
-			 		ctx->Color.ColorMask[1],
-			 		ctx->Color.ColorMask[2]);
-    	vmesa->regHFBBMSKL = (color & 0xFF) << 16;
-    	vmesa->regHROP |= (color & 0xFF00) >> 8;
-    }
+    vmesa->regHFBBMSKL = PACK_COLOR_888(ctx->Color.ColorMask[0],
+					ctx->Color.ColorMask[1],
+					ctx->Color.ColorMask[2]);
+    vmesa->regHROP |= ctx->Color.ColorMask[3];
 
     if (ctx->Color.ColorMask[3])
         vmesa->regEnable |= HC_HenAW_MASK;
