@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: getprocaddress.py,v 1.2 2002/11/08 15:49:31 brianp Exp $
+# $Id: getprocaddress.py,v 1.3 2003/06/10 14:54:37 brianp Exp $
 
 # Helper for the getprocaddress.c test.
 
@@ -90,7 +90,7 @@ def PrintFunctions(specFile, tests):
 
 tests = FindTestFunctions()
 PrintHead()
-PrintFunctions("../bin/APIspec", tests)
+PrintFunctions("../../src/mesa/glapi/APIspec", tests)
 PrintTail()
 
 

@@ -3,10 +3,11 @@
 # These programs aren't intended to be included with the normal
 # distro.  They're not too interesting but they're good for testing.
 
+TOP = ../../
 
 CC = gcc
-CFLAGS = -g -I../include
-LIBS = -L../lib -lglut -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXext -lm
+CFLAGS = -g -I$(TOP)/include
+LIBS = -L$(TOP)/lib -lglut -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXext -lm
 
 PROGS = antialias \
 	cva \
@@ -42,7 +43,7 @@ PROGS = antialias \
 	$(CC) $(CFLAGS) $< $(LIBS) -o $@
 
 .c.o:
-	$(CC) -c -I. -I../include $(CFLAGS) $< -o $@
+	$(CC) -c -I. -I$(TOP)/include $(CFLAGS) $< -o $@
 
 
 ##### TARGETS #####
@@ -57,7 +58,7 @@ clean:
 # auto code generation
 getprocaddress: getprocaddress.c getproclist.h
 
-getproclist.h: ../bin/APIspec getprocaddress.c getprocaddress.py
+getproclist.h: $(TOP)/src/mesa/glapi/APIspec getprocaddress.c getprocaddress.py
 	python getprocaddress.py > getproclist.h
 
 
@@ -71,8 +72,8 @@ readtex.o: readtex.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
 
-readtex.h: ../util/readtex.h
-	ln -s ../util/readtex.h .
+readtex.h: $(TOP)/progs/util/readtex.h
+	ln -s $(TOP)/progs/util/readtex.h .
 
-readtex.c: ../util/readtex.c
-	ln -s ../util/readtex.c .
+readtex.c: $(TOP)/progs/util/readtex.c
+	ln -s $(TOP)/progs/util/readtex.c .
