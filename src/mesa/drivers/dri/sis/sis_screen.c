@@ -43,7 +43,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "GL/internal/dri_interface.h"
 
-const char __driConfigOptions[] =
+PUBLIC const char __driConfigOptions[] =
 DRI_CONF_BEGIN
 	DRI_CONF_SECTION_DEBUG
 		DRI_CONF_OPT_BEGIN(agp_disable,bool,false)

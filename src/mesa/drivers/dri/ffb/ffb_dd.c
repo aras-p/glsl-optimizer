@@ -39,7 +39,7 @@
 
 #define FFB_DATE	"20021125"
 
-const char __driConfigOptions[] = { 0 };
+PUBLIC const char __driConfigOptions[] = { 0 };
 const GLuint __driNConfigOptions = 0;
 
 /* Mesa's Driver Functions */

@@ -44,7 +44,7 @@
 
 #include "i830_dri.h"
 
-const char __driConfigOptions[] =
+PUBLIC const char __driConfigOptions[] =
 DRI_CONF_BEGIN
     DRI_CONF_SECTION_PERFORMANCE
        DRI_CONF_FORCE_S3TC_ENABLE(false)

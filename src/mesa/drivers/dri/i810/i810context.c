@@ -64,7 +64,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 int I810_DEBUG = (0);
 #endif
 
-const char __driConfigOptions[] = { 0 };
+PUBLIC const char __driConfigOptions[] = { 0 };
 const GLuint __driNConfigOptions = 0;
 
 static const GLubyte *i810GetString( GLcontext *ctx, GLenum name )
