@@ -225,7 +225,7 @@ void FX_grGlideGetVersion(char *buf)
 
 void FX_grSstPerfStats(GrSstPerfStats_t *st)
 {
-  int n;
+  FxI32 n;
   grGet(GR_STATS_PIXELS_IN, 4, &n);              st->pixelsIn = n;
   grGet(GR_STATS_PIXELS_CHROMA_FAIL, 4, &n);     st->chromaFail = n;
   grGet(GR_STATS_PIXELS_DEPTHFUNC_FAIL, 4, &n);  st->zFuncFail = n;
