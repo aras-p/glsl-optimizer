@@ -41,8 +41,10 @@
 #include <string.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
-#include <stdint.h>
-#define GLX_GLXEXT_PROTOTYPES
+#ifndef __VMS
+# include <stdint.h>
+#endif
+# define GLX_GLXEXT_PROTOTYPES
 #include <GL/gl.h>
 #include <GL/glx.h>
 

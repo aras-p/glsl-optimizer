@@ -160,6 +160,7 @@ OBJECTS1=accum.obj,\
 api_loopback.obj,\
 api_noop.obj,\
 api_validate.obj,\
+arbprogram.obj,\
 attrib.obj,\
 blend.obj,\
 bufferobj.obj,\
