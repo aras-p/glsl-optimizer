@@ -1,10 +1,10 @@
-/* $Id: dd.h,v 1.18 2000/03/20 14:37:52 brianp Exp $ */
+/* $Id: dd.h,v 1.19 2000/03/20 23:40:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -592,6 +592,86 @@ struct dd_function_table {
    /*
     * Called from glTexSubImage() to define a sub-region of a texture.
     */
+
+
+   GLboolean (*TexImage1D)( GLcontext *ctx, GLenum target, GLint level,
+                            GLenum format, GLenum type, const GLvoid *pixels,
+                            const struct gl_pixelstore_attrib *packing,
+                            struct gl_texture_object *texObj,
+                            struct gl_texture_image *texImage,
+                            GLboolean *retainInternalCopy );
+   GLboolean (*TexImage2D)( GLcontext *ctx, GLenum target, GLint level,
+                            GLenum format, GLenum type, const GLvoid *pixels,
+                            const struct gl_pixelstore_attrib *packing,
+                            struct gl_texture_object *texObj,
+                            struct gl_texture_image *texImage,
+                            GLboolean *retainInternalCopy );
+   GLboolean (*TexImage3D)( GLcontext *ctx, GLenum target, GLint level,
+                            GLenum format, GLenum type, const GLvoid *pixels,
+                            const struct gl_pixelstore_attrib *packing,
+                            struct gl_texture_object *texObj,
+                            struct gl_texture_image *texImage,
+                            GLboolean *retainInternalCopy );
+   /* Called by glTexImage1/2/3D.
+    * Will not be called if any glPixelTransfer operations are enabled.
+    * Arguments:
+    *   <target>, <level>, <format>, <type> and <pixels> are user specified.
+    *   <packing> indicates the image packing of pixels.
+    *   <texObj> is the target texture object.
+    *   <texImage> is the target texture image.  It will have the texture
+    *      width, height, depth, border and internalFormat information.
+    *   <retainInternalCopy> is returned by this function and indicates whether
+    *      core Mesa should keep an internal copy of the texture image.
+    * Return GL_TRUE if operation completed, return GL_FALSE if core Mesa
+    * should do the job.  If GL_FALSE is returned, this function will be
+    * called a second time after the texture image has been unpacked into
+    * GLubytes.  It may be easier for the driver to handle then.
+    */
+
+   GLboolean (*TexSubImage1D)( GLcontext *ctx, GLenum target, GLint level,
+                               GLint xoffset, GLsizei width,
+                               GLenum format, GLenum type,
+                               const GLvoid *pixels,
+                               const struct gl_pixelstore_attrib *packing,
+                               struct gl_texture_object *texObj,
+                               struct gl_texture_image *texImage,
+                               GLboolean *retainInternalCopy );
+   GLboolean (*TexSubImage2D)( GLcontext *ctx, GLenum target, GLint level,
+                               GLint xoffset, GLint yoffset,
+                               GLsizei width, GLsizei height,
+                               GLenum format, GLenum type,
+                               const GLvoid *pixels,
+                               const struct gl_pixelstore_attrib *packing,
+                               struct gl_texture_object *texObj,
+                               struct gl_texture_image *texImage,
+                               GLboolean *retainInternalCopy );
+   GLboolean (*TexSubImage3D)( GLcontext *ctx, GLenum target, GLint level,
+                               GLint xoffset, GLint yoffset, GLint zoffset,
+                               GLsizei width, GLsizei height, GLint depth,
+                               GLenum format, GLenum type,
+                               const GLvoid *pixels,
+                               const struct gl_pixelstore_attrib *packing,
+                               struct gl_texture_object *texObj,
+                               struct gl_texture_image *texImage,
+                               GLboolean *retainInternalCopy );
+
+   /* Called by glTexSubImage1/2/3D.
+    * Will not be called if any glPixelTransfer operations are enabled.
+    * Arguments:
+    *   <target>, <level>, <xoffset>, <yoffset>, <zoffset>, <width>, <height>,
+    *      <depth>, <format>, <type> and <pixels> are user specified.
+    *   <packing> indicates the image packing of pixels.
+    *   <texObj> is the target texture object.
+    *   <texImage> is the target texture image.  It will have the texture
+    *      width, height, border and internalFormat information.
+    * Return GL_TRUE if operation completed, return GL_FALSE if core Mesa
+    * should do the job.  If GL_FALSE is returned, this function will be
+    * called a second time after the texture image has been unpacked into
+    * GLubytes.  It may be easier for the driver to handle then.
+    */
+      
+
+
 
    GLboolean (*CopyTexImage1D)( GLcontext *ctx, GLenum target, GLint level,
                                 GLenum internalFormat, GLint x, GLint y,
