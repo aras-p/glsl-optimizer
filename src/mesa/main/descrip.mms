@@ -59,6 +59,7 @@ SOURCES =accum.c \
 	pixel.c \
 	points.c \
 	polygon.c \
+	program.c \
 	rastpos.c \
 	state.c \
 	stencil.c \
@@ -116,6 +117,7 @@ occlude.obj,\
 pixel.obj,\
 points.obj,\
 polygon.obj,\
+program.obj,\
 rastpos.obj,\
 state.obj,\
 stencil.obj,\
@@ -187,6 +189,7 @@ occlude.obj : occlude.c
 pixel.obj : pixel.c
 points.obj : points.c
 polygon.obj : polygon.c
+program.obj : program.c
 rastpos.obj : rastpos.c
 state.obj : state.c
 stencil.obj : stencil.c

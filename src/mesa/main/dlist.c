@@ -34,6 +34,7 @@
 #include "config.h"
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
 #include "arbprogram.h"
+#include "program.h"
 #endif
 #include "attrib.h"
 #include "blend.h"
@@ -71,6 +72,7 @@
 #include "varray.h"
 #if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
 #include "nvprogram.h"
+#include "program.h"
 #endif
 
 #include "math/m_matrix.h"
@@ -6509,9 +6511,9 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
     * VertexAttribPointerNV, GetProgram*, GetVertexAttrib*
     */
    table->BindProgramNV = save_BindProgramNV;
-   table->DeleteProgramsNV = _mesa_DeleteProgramsNV;
+   table->DeleteProgramsNV = _mesa_DeletePrograms;
    table->ExecuteProgramNV = save_ExecuteProgramNV;
-   table->GenProgramsNV = _mesa_GenProgramsNV;
+   table->GenProgramsNV = _mesa_GenPrograms;
    table->AreProgramsResidentNV = _mesa_AreProgramsResidentNV;
    table->RequestResidentProgramsNV = save_RequestResidentProgramsNV;
    table->GetProgramParameterfvNV = _mesa_GetProgramParameterfvNV;
@@ -6523,7 +6525,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->GetVertexAttribfvNV = _mesa_GetVertexAttribfvNV;
    table->GetVertexAttribivNV = _mesa_GetVertexAttribivNV;
    table->GetVertexAttribPointervNV = _mesa_GetVertexAttribPointervNV;
-   table->IsProgramNV = _mesa_IsProgramNV;
+   table->IsProgramNV = _mesa_IsProgram;
    table->LoadProgramNV = save_LoadProgramNV;
    table->ProgramParameter4dNV = save_ProgramParameter4dNV;
    table->ProgramParameter4dvNV = save_ProgramParameter4dvNV;

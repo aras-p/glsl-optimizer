@@ -74,7 +74,6 @@
 #include "glheader.h"
 #include "imports.h"
 #include "accum.h"
-#include "arbprogram.h"
 #include "attrib.h"
 #include "blend.h"
 #include "buffers.h"
@@ -111,8 +110,8 @@
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
-#if FEATURE_NV_vertex_program
-#include "nvprogram.h"
+#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
+#include "program.h"
 #endif
 #include "vtxfmt.h"
 #if _HAVE_FULL_GL

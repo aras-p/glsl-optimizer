@@ -75,11 +75,13 @@
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
-#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
+#if FEATURE_NV_vertex_program
 #include "nvprogram.h"
 #endif
 #if FEATURE_NV_fragment_program
 #include "nvfragprog.h"
+#include "nvprogram.h"
+#include "program.h"
 #endif
 #include "debug.h"
 
@@ -544,10 +546,10 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 
    /* 233. GL_NV_vertex_program */
 #if FEATURE_NV_vertex_program
-   exec->BindProgramNV = _mesa_BindProgramNV;
-   exec->DeleteProgramsNV = _mesa_DeleteProgramsNV;
+   exec->BindProgramNV = _mesa_BindProgram;
+   exec->DeleteProgramsNV = _mesa_DeletePrograms;
    exec->ExecuteProgramNV = _mesa_ExecuteProgramNV;
-   exec->GenProgramsNV = _mesa_GenProgramsNV;
+   exec->GenProgramsNV = _mesa_GenPrograms;
    exec->AreProgramsResidentNV = _mesa_AreProgramsResidentNV;
    exec->RequestResidentProgramsNV = _mesa_RequestResidentProgramsNV;
    exec->GetProgramParameterfvNV = _mesa_GetProgramParameterfvNV;
@@ -559,7 +561,7 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->GetVertexAttribfvNV = _mesa_GetVertexAttribfvNV;
    exec->GetVertexAttribivNV = _mesa_GetVertexAttribivNV;
    exec->GetVertexAttribPointervNV = _mesa_GetVertexAttribPointervNV;
-   exec->IsProgramNV = _mesa_IsProgramNV;
+   exec->IsProgramNV = _mesa_IsProgram;
    exec->LoadProgramNV = _mesa_LoadProgramNV;
    exec->ProgramParameter4dNV = _mesa_ProgramParameter4dNV;
    exec->ProgramParameter4dvNV = _mesa_ProgramParameter4dvNV;

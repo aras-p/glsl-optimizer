@@ -25,6 +25,8 @@
 
 /* Private fragment program types and constants only used by files
  * related to fragment programs.
+ *
+ * XXX TO-DO: Rename this file "fragprog.h" since it's not NV-specific.
  */
 
 

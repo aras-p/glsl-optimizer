@@ -25,6 +25,8 @@
 
 /* Private vertex program types and constants only used by files
  * related to vertex programs.
+ *
+ * XXX TO-DO: Rename this file "vertprog.h" since it's not NV-specific.
  */
 
 

@@ -37,6 +37,7 @@
 #include "nvfragprog.h"
 #include "nvfragparse.h"
 #include "nvprogram.h"
+#include "program.h"
 
 
 #define INPUT_1V     1
@@ -136,11 +137,7 @@ struct parse_state {
    const GLubyte *curLine;
    struct fragment_program *program;  /* current program */
 
-   GLuint numParameters;
-   struct program_parameter *parameters; /* DECLARE */
-
-   GLuint numConstants;
-   struct program_parameter *constants; /* DEFINE */
+   struct program_parameter_list *parameters;
 
    GLuint numInst;                    /* number of instructions parsed */
    GLuint inputsRead;                 /* bitmask of input registers used */
@@ -148,69 +145,6 @@ struct parse_state {
    GLuint texturesUsed[MAX_TEXTURE_IMAGE_UNITS];
 };
 
-
-/**
- * Add a new program parameter (via DEFINE statement)
- * \return index of the new entry in the parameter list
- */
-static GLuint
-add_parameter(struct parse_state *parseState,
-              const char *name, const GLfloat values[4], GLboolean constant)
-{
-   const GLuint n = parseState->numParameters;
-
-   parseState->parameters = _mesa_realloc(parseState->parameters,
-                                   n * sizeof(struct program_parameter),
-                                   (n + 1) * sizeof(struct program_parameter));
-   parseState->numParameters = n + 1;
-   parseState->parameters[n].Name = _mesa_strdup(name);
-   COPY_4V(parseState->parameters[n].Values, values);
-   parseState->parameters[n].Constant = constant;
-   return n;
-}
-
-
-/**
- * Add a new unnamed constant to the parameter lists.
- * \param parseState  parsing state
- * \param values  four float values
- * \return index of the new parameter.
- */
-static GLuint
-add_unnamed_constant(struct parse_state *parseState, const GLfloat values[4])
-{
-   /* generate a new dummy name */
-   static GLuint n = 0;
-   char name[20];
-   _mesa_sprintf(name, "constant%d", n);
-   n++;
-   /* store it */
-   return add_parameter(parseState, name, values, GL_TRUE);
-}
-
-
-static const GLfloat *
-lookup_parameter(struct parse_state *parseState, const char *name)
-{
-   GLuint i;
-   for (i = 0; i < parseState->numParameters; i++) {
-      if (_mesa_strcmp(parseState->parameters[i].Name, name) == 0)
-         return parseState->parameters[i].Values;
-   }
-   return NULL;
-}
-
-
-static const GLint
-lookup_parameter_index(struct parse_state *parseState, const char *name)
-{
-   GLuint i;
-   for (i = 0; i < parseState->numParameters; i++) {
-      if (_mesa_strcmp(parseState->parameters[i].Name, name) == 0)
-         return i;
-   }
-   return -1;
-}
 
 
 /*
@@ -532,7 +466,8 @@ Parse_ScalarConstant(struct parse_state *parseState, GLfloat *number)
       const GLfloat *constant;
       if (!Parse_Identifier(parseState, ident))
          RETURN_ERROR1("Expected an identifier");
-      constant = lookup_parameter(parseState, (const char *) ident);
+      constant = _mesa_lookup_parameter_value(parseState->parameters,
+                                              -1, (const char *) ident);
       /* XXX Check that it's a constant and not a parameter */
       if (!constant) {
          RETURN_ERROR1("Undefined symbol");
@@ -1078,7 +1013,8 @@ Parse_VectorSrc(struct parse_state *parseState,
       GLint paramIndex;
       if (!Parse_Identifier(parseState, ident))
          RETURN_ERROR;
-      paramIndex = lookup_parameter_index(parseState, (const char *) ident);
+      paramIndex = _mesa_lookup_parameter_index(parseState->parameters,
+                                                -1, (const char *) ident);
       if (paramIndex < 0) {
          RETURN_ERROR2("Undefined constant or parameter: ", ident);
       }
@@ -1091,7 +1027,7 @@ Parse_VectorSrc(struct parse_state *parseState,
       GLuint paramIndex;
       if (!Parse_ScalarConstant(parseState, values))
          RETURN_ERROR;
-      paramIndex = add_unnamed_constant(parseState, values);
+      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;
    }
@@ -1102,7 +1038,7 @@ Parse_VectorSrc(struct parse_state *parseState,
       (void) Parse_String(parseState, "{");
       if (!Parse_VectorConstant(parseState, values))
          RETURN_ERROR;
-      paramIndex = add_unnamed_constant(parseState, values);
+      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;      
    }
@@ -1188,7 +1124,7 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
       (void) Parse_String(parseState, "{");
       if (!Parse_VectorConstant(parseState, values))
          RETURN_ERROR;
-      paramIndex = add_unnamed_constant(parseState, values);
+      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;      
    }
@@ -1198,7 +1134,7 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
       GLuint paramIndex;
       if (!Parse_ScalarConstant(parseState, values))
          RETURN_ERROR;
-      paramIndex = add_unnamed_constant(parseState, values);
+      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values);
       srcReg->Index = paramIndex;      
       srcReg->File = PROGRAM_NAMED_PARAM;
       needSuffix = GL_FALSE;
@@ -1278,10 +1214,12 @@ Parse_InstructionSequence(struct parse_state *parseState,
             RETURN_ERROR;
          if (!Parse_String(parseState, ";"))
             RETURN_ERROR1("Expected ;");
-         if (lookup_parameter(parseState, (const char *) id)) {
+         if (_mesa_lookup_parameter_index(parseState->parameters,
+                                          -1, (const char *) id) >= 0) {
             RETURN_ERROR2(id, "already defined");
          }
-         add_parameter(parseState, (const char *) id, value, GL_TRUE);
+         _mesa_add_named_parameter(parseState->parameters,
+                                   (const char *) id, value);
       }
       else if (Parse_String(parseState, "DECLARE")) {
          GLubyte id[100];
@@ -1295,10 +1233,12 @@ Parse_InstructionSequence(struct parse_state *parseState,
          }
          if (!Parse_String(parseState, ";"))
             RETURN_ERROR1("Expected ;");
-         if (lookup_parameter(parseState, (const char *) id)) {
+         if (_mesa_lookup_parameter_index(parseState->parameters,
+                                          -1, (const char *) id) >= 0) {
             RETURN_ERROR2(id, "already declared");
          }
-         add_parameter(parseState, (const char *) id, value, GL_FALSE);
+         _mesa_add_named_parameter(parseState->parameters,
+                                   (const char *) id, value);
       }
       else if (Parse_String(parseState, "END")) {
          inst->Opcode = FP_OPCODE_END;
@@ -1461,6 +1401,7 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
    parseState.program = program;
    parseState.numInst = 0;
    parseState.curLine = programString;
+   parseState.parameters = _mesa_new_parameter_list();
 
    /* Reset error state */
    _mesa_set_program_error(ctx, -1, NULL);
@@ -1530,23 +1471,7 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
          program->TexturesUsed[u] = parseState.texturesUsed[u];
 
       /* save program parameters */
-      if (program->Parameters) {
-         GLuint i;
-         for (i = 0; i < program->NumParameters; i++)
-            _mesa_free((void *) program->Parameters[i].Name);
-         _mesa_free(program->Parameters);
-      }
-      program->NumParameters = parseState.numParameters;
       program->Parameters = parseState.parameters;
-
-      /* free program constants */
-      if (parseState.constants) {
-         GLuint i;
-         for (i = 0; i < parseState.numConstants; i++)
-            _mesa_free((void *) parseState.constants[i].Name);
-         _mesa_free(parseState.constants);
-      }
-         
 
       /* allocate registers for declared program parameters */
 #if 00
@@ -1583,15 +1508,17 @@ PrintSrcReg(const struct fragment_program *program,
       _mesa_printf("-");
    }
    if (src->File == PROGRAM_NAMED_PARAM) {
-      if (program->Parameters[src->Index].Constant) {
+      if (program->Parameters->Parameters[src->Index].Type == CONSTANT) {
          printf("{%g, %g, %g, %g}",
-                program->Parameters[src->Index].Values[0],
-                program->Parameters[src->Index].Values[1],
-                program->Parameters[src->Index].Values[2],
-                program->Parameters[src->Index].Values[3]);
+                program->Parameters->Parameters[src->Index].Values[0],
+                program->Parameters->Parameters[src->Index].Values[1],
+                program->Parameters->Parameters[src->Index].Values[2],
+                program->Parameters->Parameters[src->Index].Values[3]);
       }
       else {
-         printf("%s", program->Parameters[src->Index].Name);
+         ASSERT(program->Parameters->Parameters[src->Index].Type
+                == NAMED_PARAMETER);
+         printf("%s", program->Parameters->Parameters[src->Index].Name);
       }
    }
    else if (src->File == PROGRAM_OUTPUT) {

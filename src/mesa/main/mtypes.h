@@ -1445,16 +1445,7 @@ enum register_file
 struct vp_instruction;
 struct fp_instruction;
 
-
-/**
- * Named program parameters 
- */
-struct program_parameter
-{
-   const char *Name;
-   GLfloat Values[4];
-   GLboolean Constant;
-};
+struct program_parameter_list;
 
 
 /**
@@ -1499,8 +1490,7 @@ struct fragment_program
    GLuint NumAluInstructions; /**< GL_ARB_fragment_program */
    GLuint NumTexInstructions;
    GLuint NumTexIndirections;
-   struct program_parameter *Parameters; /**< array [NumParameters] */
-   GLuint NumParameters;
+   struct program_parameter_list *Parameters; /**< array [NumParameters] */
 };
 
 

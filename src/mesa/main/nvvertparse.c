@@ -38,6 +38,8 @@
 #include "nvprogram.h"
 #include "nvvertparse.h"
 #include "nvvertprog.h"
+#include "program.h"
+
 
 /**
  * Current parsing state.  This structure is passed among the parsing

@@ -265,6 +265,10 @@ SOURCE=.\polygon.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\program.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\rastpos.c
 # End Source File
 # Begin Source File
@@ -522,6 +526,10 @@ SOURCE=.\points.h
 # Begin Source File
 
 SOURCE=.\polygon.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\program.h
 # End Source File
 # Begin Source File
 

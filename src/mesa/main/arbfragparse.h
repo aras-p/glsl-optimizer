@@ -25,6 +25,8 @@
 #ifndef ARBFRAGPARSE_H
 #define ARBFRAGPARSE_H
 
+#include "mtypes.h"
+
 extern void
 _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
                                  const GLubyte * str, GLsizei len,

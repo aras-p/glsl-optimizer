@@ -62,6 +62,7 @@ CORE_SOURCES = \
 	pixel.c \
 	points.c \
 	polygon.c \
+	program.c \
 	rastpos.c \
 	state.c \
 	stencil.c \

@@ -30,35 +30,8 @@
 #define NVPROGRAM_H
 
 
-/** Internal functions **/
-extern void
-_mesa_set_program_error(GLcontext *ctx, GLint pos, const char *string);
-
-extern const GLubyte *
-_mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
-                       GLint *line, GLint *col);
-
-extern struct program *
-_mesa_alloc_program(GLcontext *ctx, GLenum target, GLuint id);
-
-extern void
-_mesa_delete_program(GLcontext *ctx, struct program *prog);
-
-
-
-/** API functions **/
-
-extern void
-_mesa_BindProgramNV(GLenum target, GLuint id);
-
-extern void
-_mesa_DeleteProgramsNV(GLsizei n, const GLuint *ids);
-
 extern void
 _mesa_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params);
-
-extern void
-_mesa_GenProgramsNV(GLsizei n, GLuint *ids);
 
 extern GLboolean
 _mesa_AreProgramsResidentNV(GLsizei n, const GLuint *ids, GLboolean *residences);
@@ -92,9 +65,6 @@ _mesa_GetVertexAttribivNV(GLuint index, GLenum pname, GLint *params);
 
 extern void
 _mesa_GetVertexAttribPointervNV(GLuint index, GLenum pname, GLvoid **pointer);
-
-extern GLboolean
-_mesa_IsProgramNV(GLuint id);
 
 extern void
 _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len, const GLubyte *program);
@@ -144,33 +114,6 @@ _mesa_GetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
 extern void
 _mesa_GetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
                                    GLdouble *params);
-
-#if 0
-extern void
-_mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
-                                 GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-
-extern void
-_mesa_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
-                                  const GLfloat *params);
-
-extern void
-_mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
-                                 GLdouble x, GLdouble y,
-                                 GLdouble z, GLdouble w);
-
-extern void
-_mesa_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
-                                  const GLdouble *params);
-
-extern void
-_mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
-                                    GLfloat *params);
-
-extern void
-_mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
-                                    GLdouble *params);
-#endif
 
 
 #endif
