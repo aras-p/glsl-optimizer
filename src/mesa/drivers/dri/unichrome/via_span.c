@@ -163,7 +163,7 @@
     GLushort p;                                                      	\
     char *buf, *read_buf;                                            	\
     p = 0;							     	\
-    if (vmesa->glCtx->Color._DrawDestMask[0][0] == __GL_BACK_BUFFER_MASK) {	\
+    if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {	\
 	buf = (char *)(vmesa->drawMap);                              	\
 	read_buf = (char *)(vmesa->readMap);                         	\
     }                                                                	\
@@ -224,7 +224,7 @@
     GLuint p;                                                        	\
     char *buf, *read_buf;                                            	\
     p = 0;	                                                        \
-    if (vmesa->glCtx->Color._DrawDestMask[0][0] == __GL_BACK_BUFFER_MASK) {	\
+    if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {	\
 	buf = (char *)(vmesa->drawMap);                              	\
 	read_buf = (char *)(vmesa->readMap);                         	\
     }                                                                	\
