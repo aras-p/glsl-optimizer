@@ -105,6 +105,10 @@ SOURCE=.\s_alphabuf.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\s_atifragshader.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\s_auxbuffer.c
 # End Source File
 # Begin Source File
@@ -230,6 +234,10 @@ SOURCE=.\s_alpha.h
 # Begin Source File
 
 SOURCE=.\s_alphabuf.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\s_atifragshader.h
 # End Source File
 # Begin Source File
 
