@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.18 2001/03/19 02:25:36 keithw Exp $ */
+/* $Id: s_context.c,v 1.19 2001/03/29 16:50:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -162,7 +162,7 @@ _swrast_update_hint( GLcontext *ctx )
                               _SWRAST_NEW_RASTERMASK|		\
                               _NEW_LIGHT|			\
                               _NEW_FOG |			\
-			      _DD_NEW_SEPERATE_SPECULAR)
+			      _DD_NEW_SEPARATE_SPECULAR)
 
 #define _SWRAST_NEW_LINE (_SWRAST_NEW_DERIVED |		\
 			  _NEW_RENDERMODE|		\
@@ -171,7 +171,7 @@ _swrast_update_hint( GLcontext *ctx )
                           _NEW_LIGHT|			\
                           _NEW_FOG|			\
                           _NEW_DEPTH |			\
-                          _DD_NEW_SEPERATE_SPECULAR)
+                          _DD_NEW_SEPARATE_SPECULAR)
 
 #define _SWRAST_NEW_POINT (_SWRAST_NEW_DERIVED |	\
 			   _NEW_RENDERMODE |		\
@@ -179,7 +179,7 @@ _swrast_update_hint( GLcontext *ctx )
 			   _NEW_TEXTURE |		\
 			   _NEW_LIGHT |			\
 			   _NEW_FOG |			\
-                           _DD_NEW_SEPERATE_SPECULAR)
+                           _DD_NEW_SEPARATE_SPECULAR)
 
 #define _SWRAST_NEW_TEXTURE_SAMPLE_FUNC _NEW_TEXTURE
 
@@ -201,7 +201,7 @@ _swrast_validate_triangle( GLcontext *ctx,
    _swrast_validate_derived( ctx );
    swrast->choose_triangle( ctx );
 
-   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) &&
+   if ((ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) &&
        !ctx->Texture._ReallyEnabled) {
       swrast->SpecTriangle = swrast->Triangle;
       swrast->Triangle = _swrast_add_spec_terms_triangle;
@@ -218,7 +218,7 @@ _swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
    _swrast_validate_derived( ctx );
    swrast->choose_line( ctx );
 
-   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) &&
+   if ((ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) &&
        !ctx->Texture._ReallyEnabled) {
       swrast->SpecLine = swrast->Line;
       swrast->Line = _swrast_add_spec_terms_line;
@@ -236,7 +236,7 @@ _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
    _swrast_validate_derived( ctx );
    swrast->choose_point( ctx );
 
-   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) &&
+   if ((ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) &&
        !ctx->Texture._ReallyEnabled) {
       swrast->SpecPoint = swrast->Point;
       swrast->Point = _swrast_add_spec_terms_point;

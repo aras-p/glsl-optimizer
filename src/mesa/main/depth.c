@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.27 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: depth.c,v 1.28 2001/03/29 16:50:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -92,11 +92,6 @@ _mesa_DepthFunc( GLenum func )
 
    FLUSH_VERTICES(ctx, _NEW_DEPTH);
    ctx->Depth.Func = func;
-
-   if (func == GL_NEVER)
-      ctx->_TriangleCaps |= DD_Z_NEVER;
-   else
-      ctx->_TriangleCaps &= ~DD_Z_NEVER;
 
    if (ctx->Driver.DepthFunc)
       ctx->Driver.DepthFunc( ctx, func );

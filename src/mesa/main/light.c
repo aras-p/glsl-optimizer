@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.41 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: light.c,v 1.42 2001/03/29 16:50:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -425,9 +425,9 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
 	 if ((ctx->Light.Enabled &&
 	      ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
 	     || ctx->Fog.ColorSumEnabled)
-	    ctx->_TriangleCaps |= DD_SEPERATE_SPECULAR;
+	    ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
 	 else
-	    ctx->_TriangleCaps &= ~DD_SEPERATE_SPECULAR;
+	    ctx->_TriangleCaps &= ~DD_SEPARATE_SPECULAR;
 
          break;
       default:

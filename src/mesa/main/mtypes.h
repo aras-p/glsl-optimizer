@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.35 2001/03/28 21:36:31 gareth Exp $ */
+/* $Id: mtypes.h,v 1.36 2001/03/29 16:50:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,12 +38,6 @@
 
 #if defined(MESA_TRACE)
 #include "Trace/tr_context.h"
-#endif
-
-
-/* This is a macro on IRIX */
-#ifdef _P
-#undef _P
 #endif
 
 
@@ -680,22 +674,22 @@ struct gl_stencil_attrib {
 #define TEXTURE3_3D   (TEXTURE0_3D << 12)
 #define TEXTURE3_CUBE (TEXTURE0_CUBE << 12)
 #define TEXTURE3_ANY  (TEXTURE3_1D | TEXTURE3_2D | TEXTURE3_3D | TEXTURE3_CUBE)
-#define TEXTURE4_1D   (TEXTURE0_1D << 16)    /* Texture unit 3 */
+#define TEXTURE4_1D   (TEXTURE0_1D << 16)    /* Texture unit 4 */
 #define TEXTURE4_2D   (TEXTURE0_2D << 16)
 #define TEXTURE4_3D   (TEXTURE0_3D << 16)
 #define TEXTURE4_CUBE (TEXTURE0_CUBE << 16)
 #define TEXTURE5_ANY  (TEXTURE3_1D | TEXTURE3_2D | TEXTURE3_3D | TEXTURE3_CUBE)
-#define TEXTURE5_1D   (TEXTURE0_1D << 20)    /* Texture unit 3 */
+#define TEXTURE5_1D   (TEXTURE0_1D << 20)    /* Texture unit 5 */
 #define TEXTURE5_2D   (TEXTURE0_2D << 20)
 #define TEXTURE5_3D   (TEXTURE0_3D << 20)
 #define TEXTURE5_CUBE (TEXTURE0_CUBE << 20)
 #define TEXTURE5_ANY  (TEXTURE3_1D | TEXTURE3_2D | TEXTURE3_3D | TEXTURE3_CUBE)
-#define TEXTURE6_1D   (TEXTURE0_1D << 24)    /* Texture unit 3 */
+#define TEXTURE6_1D   (TEXTURE0_1D << 24)    /* Texture unit 6 */
 #define TEXTURE6_2D   (TEXTURE0_2D << 24)
 #define TEXTURE6_3D   (TEXTURE0_3D << 24)
 #define TEXTURE6_CUBE (TEXTURE0_CUBE << 24)
 #define TEXTURE6_ANY  (TEXTURE3_1D | TEXTURE3_2D | TEXTURE3_3D | TEXTURE3_CUBE)
-#define TEXTURE7_1D   (TEXTURE0_1D << 28)    /* Texture unit 3 */
+#define TEXTURE7_1D   (TEXTURE0_1D << 28)    /* Texture unit 7 */
 #define TEXTURE7_2D   (TEXTURE0_2D << 28)
 #define TEXTURE7_3D   (TEXTURE0_3D << 28)
 #define TEXTURE7_CUBE (TEXTURE0_CUBE << 28)
@@ -979,7 +973,6 @@ struct gl_attrib_node {
 };
 
 
-
 /*
  * Client pixel packing/unpacking attributes
  */
@@ -1008,8 +1001,6 @@ struct gl_client_array {
 };
 
 
-
-
 struct gl_array_attrib {
    struct gl_client_array Vertex;	     /* client data descriptors */
    struct gl_client_array Normal;
@@ -1030,8 +1021,6 @@ struct gl_array_attrib {
 };
 
 
-
-
 struct gl_feedback {
    GLenum Type;
    GLuint _Mask;		/* FB_* bits */
@@ -1039,7 +1028,6 @@ struct gl_feedback {
    GLuint BufferSize;
    GLuint Count;
 };
-
 
 
 struct gl_selection {
@@ -1052,7 +1040,6 @@ struct gl_selection {
    GLboolean HitFlag;
    GLfloat HitMinZ, HitMaxZ;
 };
-
 
 
 /*
@@ -1105,7 +1092,6 @@ struct gl_evaluators {
 };
 
 
-
 /*
  * State which can be shared by multiple contexts:
  */
@@ -1124,7 +1110,6 @@ struct gl_shared_state {
 
    void *DriverData;  /* Device driver shared state */
 };
-
 
 
 /*
@@ -1166,7 +1151,8 @@ struct gl_frame_buffer {
 
 
 /*
- * Constants which may be overriden by device driver.
+ * Constants which may be overriden by device driver during context creation
+ * but are never changed after that.
  */
 struct gl_constants {
    GLint MaxTextureSize;
@@ -1298,25 +1284,21 @@ struct gl_extensions {
 #define _NEW_EVAL		0x80       /* ctx->Eval, ctx->EvalMap */
 #define _NEW_FOG		0x100      /* ctx->Fog */
 #define _NEW_HINT		0x200      /* ctx->Hint */
-#define _NEW_400		0x400      /*  */
-#define _NEW_LIGHT		0x800      /* ctx->Light */
-#define _NEW_1000              	0x1000     /*  */
-#define _NEW_LINE		0x2000     /* ctx->Line */
-#define _NEW_4000               0x4000     /*  */
-#define _NEW_PIXEL		0x8000     /* ctx->Pixel */
-#define _NEW_POINT		0x10000    /* ctx->Point */
-#define _NEW_POLYGON		0x20000    /* ctx->Polygon */
-#define _NEW_POLYGONSTIPPLE	0x40000    /* ctx->PolygonStipple */
-#define _NEW_SCISSOR		0x80000    /* ctx->Scissor */
-#define _NEW_STENCIL		0x100000   /* ctx->Stencil */
-#define _NEW_TEXTURE		0x200000   /* ctx->Texture */
-#define _NEW_TRANSFORM		0x400000   /* ctx->Transform */
-#define _NEW_VIEWPORT		0x800000   /* ctx->Viewport */
-#define _NEW_PACKUNPACK		0x1000000  /* ctx->Pack, ctx->Unpack */
-#define _NEW_ARRAY	        0x2000000  /* ctx->Array */
-#define _NEW_COLORTABLE		0x4000000  /* ctx->{*}ColorTable */
-#define _NEW_RENDERMODE		0x8000000  /* RenderMode, Feedback, Select */
-#define _NEW_BUFFERS            0x10000000 /* ctx->Visual, ctx->DrawBuffer, */
+#define _NEW_LIGHT		0x400      /* ctx->Light */
+#define _NEW_LINE		0x800     /* ctx->Line */
+#define _NEW_PIXEL		0x1000     /* ctx->Pixel */
+#define _NEW_POINT		0x2000    /* ctx->Point */
+#define _NEW_POLYGON		0x4000    /* ctx->Polygon */
+#define _NEW_POLYGONSTIPPLE	0x8000    /* ctx->PolygonStipple */
+#define _NEW_SCISSOR		0x10000    /* ctx->Scissor */
+#define _NEW_STENCIL		0x20000   /* ctx->Stencil */
+#define _NEW_TEXTURE		0x40000   /* ctx->Texture */
+#define _NEW_TRANSFORM		0x80000   /* ctx->Transform */
+#define _NEW_VIEWPORT		0x100000   /* ctx->Viewport */
+#define _NEW_PACKUNPACK		0x200000  /* ctx->Pack, ctx->Unpack */
+#define _NEW_ARRAY	        0x400000  /* ctx->Array */
+#define _NEW_RENDERMODE		0x800000  /* RenderMode, Feedback, Select */
+#define _NEW_BUFFERS            0x1000000 /* ctx->Visual, ctx->DrawBuffer, */
 
 #define _NEW_ALL ~0
 
@@ -1341,14 +1323,14 @@ struct gl_extensions {
 #define _NEW_ARRAY_TEXCOORD_7       0x4000
 #define _NEW_ARRAY_ALL              0x7fff
 
-#define _NEW_ARRAY_TEXCOORD(i) (_NEW_ARRAY_TEXCOORD_0<<(i))
+#define _NEW_ARRAY_TEXCOORD(i) (_NEW_ARRAY_TEXCOORD_0 << (i))
 
 /* A bunch of flags that we think might be useful to drivers.
  */
 #define DD_FEEDBACK                 0x1
 #define DD_SELECT                   0x2
 #define DD_FLATSHADE                0x4
-#define DD_SEPERATE_SPECULAR        0x10
+#define DD_SEPARATE_SPECULAR        0x10
 #define DD_TRI_LIGHT_TWOSIDE        0x20
 #define DD_TRI_UNFILLED             0x40
 #define DD_TRI_SMOOTH               0x80
@@ -1361,8 +1343,7 @@ struct gl_extensions {
 #define DD_POINT_SIZE               0x8000
 #define DD_POINT_ATTEN              0x10000
 #define DD_TRI_CULL_FRONT_BACK      0x400000 /* special case on some hw */
-#define DD_Z_NEVER                  0x800000 /* special case on some hw */
-#define DD_STENCIL                  0x1000000
+#define DD_STENCIL                  0x800000
 
 /* Define the state changes under which each of these bits might change
  */
@@ -1370,7 +1351,7 @@ struct gl_extensions {
 #define _DD_NEW_SELECT                   _NEW_RENDERMODE
 #define _DD_NEW_FLATSHADE                _NEW_LIGHT
 #define _DD_NEW_MULTIDRAW                _NEW_COLOR
-#define _DD_NEW_SEPERATE_SPECULAR        (_NEW_LIGHT|_NEW_FOG)
+#define _DD_NEW_SEPARATE_SPECULAR        (_NEW_LIGHT | _NEW_FOG)
 #define _DD_NEW_TRI_LIGHT_TWOSIDE        _NEW_LIGHT
 #define _DD_NEW_TRI_UNFILLED             _NEW_POLYGON
 #define _DD_NEW_TRI_SMOOTH               _NEW_POLYGON
@@ -1383,18 +1364,17 @@ struct gl_extensions {
 #define _DD_NEW_POINT_SIZE               _NEW_POINT
 #define _DD_NEW_POINT_ATTEN              _NEW_POINT
 #define _DD_NEW_TRI_CULL_FRONT_BACK      _NEW_POLYGON
-#define _DD_NEW_Z_NEVER                  _NEW_DEPTH
 #define _DD_NEW_STENCIL                  _NEW_STENCIL
 
+#define _MESA_NEW_NEED_EYE_COORDS         (_NEW_LIGHT |		\
+                                           _NEW_TEXTURE |	\
+                                           _NEW_POINT |		\
+                                           _NEW_MODELVIEW)
 
-#define _MESA_NEW_NEED_EYE_COORDS         (_NEW_LIGHT|		\
-                                            _NEW_TEXTURE|		\
-                                            _NEW_POINT|		\
-                                            _NEW_MODELVIEW)
+#define _MESA_NEW_NEED_NORMALS            (_NEW_LIGHT |		\
+                                           _NEW_TEXTURE)
 
-#define _MESA_NEW_NEED_NORMALS            (_NEW_LIGHT|		\
-                                            _NEW_TEXTURE)
-#define _IMAGE_NEW_TRANSFER_STATE        (_NEW_PIXEL|_NEW_COLOR_MATRIX)
+#define _IMAGE_NEW_TRANSFER_STATE         (_NEW_PIXEL | _NEW_COLOR_MATRIX)
 
 
 #define NEED_NORMALS_TEXGEN      0x1
@@ -1406,7 +1386,6 @@ struct gl_extensions {
 #define NEED_EYE_POINT_ATTEN     0x8
 
 
-
 /*
  * Forward declaration of display list datatypes:
  */
@@ -1414,12 +1393,8 @@ union node;
 typedef union node Node;
 
 
-
-
 /* This has to be included here. */
 #include "dd.h"
-
-
 
 
 /*

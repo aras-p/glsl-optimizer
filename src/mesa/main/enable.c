@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.45 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: enable.c,v 1.46 2001/03/29 16:50:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -277,9 +277,9 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       if ((ctx->Light.Enabled &&
 	   ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
 	  || ctx->Fog.ColorSumEnabled)
-	 ctx->_TriangleCaps |= DD_SEPERATE_SPECULAR;
+	 ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
       else
-	 ctx->_TriangleCaps &= ~DD_SEPERATE_SPECULAR;
+	 ctx->_TriangleCaps &= ~DD_SEPARATE_SPECULAR;
 
       break;
    case GL_LINE_SMOOTH:
@@ -736,9 +736,9 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       if ((ctx->Light.Enabled &&
 	   ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
 	  || ctx->Fog.ColorSumEnabled)
-	 ctx->_TriangleCaps |= DD_SEPERATE_SPECULAR;
+	 ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
       else
-	 ctx->_TriangleCaps &= ~DD_SEPERATE_SPECULAR;
+	 ctx->_TriangleCaps &= ~DD_SEPARATE_SPECULAR;
 
       break;
 

@@ -1,4 +1,4 @@
-/* $Id: ss_vbtmp.h,v 1.12 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: ss_vbtmp.h,v 1.13 2001/03/29 16:50:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -82,7 +82,7 @@ static void TAG(rs)(GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
 
    /* Tie up some dangling pointers for flat/twoside code in ss_tritmp.h
     */
-   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) == 0) {
+   if ((ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) == 0) {
       VB->SecondaryColorPtr[0] = VB->ColorPtr[0];
       VB->SecondaryColorPtr[1] = VB->ColorPtr[1];
    }

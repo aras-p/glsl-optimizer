@@ -321,7 +321,7 @@ fxDDTrifuncInit(void)
 
 
 /* Build an SWvertex from a GrVertex.  This is workable because in
- * states where the GrVertex is insufficent (eg seperate-specular),
+ * states where the GrVertex is insufficent (eg separate-specular),
  * the driver initiates a total fallback, and builds SWvertices
  * directly -- it recognizes that it will never have use for the
  * GrVertex. 

@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.16 2001/03/19 02:25:37 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.17 2001/03/29 16:50:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -360,7 +360,7 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
    if (ctx->Visual.rgbMode) {
       inputs |= VERT_RGBA;
 
-      if (ctx->_TriangleCaps & DD_SEPERATE_SPECULAR)
+      if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
 	 inputs |= VERT_SPEC_RGB;
 
       if (ctx->Texture._ReallyEnabled) {
@@ -403,7 +403,7 @@ const struct gl_pipeline_stage _tnl_render_stage =
 {
    "render",
    (_NEW_BUFFERS |
-    _DD_NEW_SEPERATE_SPECULAR |
+    _DD_NEW_SEPARATE_SPECULAR |
     _DD_NEW_FLATSHADE |
     _NEW_TEXTURE|
     _NEW_LIGHT|

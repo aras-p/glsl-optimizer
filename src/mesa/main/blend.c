@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.31 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: blend.c,v 1.32 2001/03/29 16:50:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -126,7 +126,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
-      fprintf(stderr, "glBlendFuncSeperate %s %s %s %s\n",
+      fprintf(stderr, "glBlendFuncSeparate %s %s %s %s\n",
 	      _mesa_lookup_enum_by_nr(sfactorRGB),
 	      _mesa_lookup_enum_by_nr(dfactorRGB),
 	      _mesa_lookup_enum_by_nr(sfactorA),

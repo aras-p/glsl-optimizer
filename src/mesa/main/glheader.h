@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.18 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: glheader.h,v 1.19 2001/03/29 16:50:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -160,6 +160,11 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #endif
 #endif
 
+
+/* This is a macro on IRIX */
+#ifdef _P
+#undef _P
+#endif
 
 
 

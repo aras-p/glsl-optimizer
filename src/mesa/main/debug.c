@@ -1,4 +1,4 @@
-/* $Id: debug.c,v 1.9 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: debug.c,v 1.10 2001/03/29 16:50:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,7 +55,6 @@ void _mesa_print_state( const char *msg, GLuint state )
 	   (state & _NEW_VIEWPORT)        ? "ctx->Viewport, " : "",
 	   (state & _NEW_PACKUNPACK)      ? "ctx->Pack/Unpack, " : "",
 	   (state & _NEW_ARRAY)           ? "ctx->Array, " : "",
-	   (state & _NEW_COLORTABLE)      ? "ctx->{*}ColorTable, " : "",
 	   (state & _NEW_RENDERMODE)      ? "ctx->RenderMode, " : "",
 	   (state & _NEW_BUFFERS)         ? "ctx->Visual, ctx->DrawBuffer,, " : "");
 }
@@ -99,7 +98,7 @@ void _mesa_print_tri_caps( const char *name, GLuint flags )
 	   (flags & DD_FEEDBACK)            ? "feedback, " : "",
 	   (flags & DD_SELECT)              ? "select, " : "",
 	   (flags & DD_FLATSHADE)           ? "flat-shade, " : "",
-	   (flags & DD_SEPERATE_SPECULAR)   ? "seperate-specular, " : "",
+	   (flags & DD_SEPARATE_SPECULAR)   ? "separate-specular, " : "",
 	   (flags & DD_TRI_LIGHT_TWOSIDE)   ? "tri-light-twoside, " : "",
 	   (flags & DD_TRI_UNFILLED)        ? "tri-unfilled, " : "",
 	   (flags & DD_TRI_STIPPLE)         ? "tri-stipple, " : "",
