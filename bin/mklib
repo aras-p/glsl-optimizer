@@ -20,9 +20,11 @@
 #   -install DIR  move resulting library file(s) to DIR
 #   -arch ARCH    override using `uname` to determine architecture
 #   -archopt OPT  specify an extra achitecture-specific option OPT
+#   -noprefix     don't prefix library name with "lib" or any suffix
 #
 # The library name should just be "GL" or "GLU", etc.  The 'lib' prefix
-# will be added here if needed, as well as the ".so" or ".a" suffix, etc.
+# will be added here if needed, as well as the ".so" or ".a" suffix,
+# etc (unless the -noprefix option is used).
 #
 # objects should be:  foo.o bar.o etc.o
 #
@@ -45,6 +47,7 @@ STATIC=0
 INSTALLDIR="."
 ARCH="auto"
 ARCHOPT=""
+NOPREFIX=0
 
 
 #
@@ -64,6 +67,7 @@ do
 	'-install')   shift 1; INSTALLDIR=$1;;
 	'-arch')      shift 1; ARCH=$1;;
 	'-archopt')   shift 1; ARCHOPT=$1;;
+	'-noprefix')  NOPREFIX=1;;
 	-*)           echo "mklib: Unknown option: " $1 ; exit 1;;
 	*) break
     esac
@@ -111,9 +115,25 @@ case $ARCH in
 
     'Linux' | 'OpenBSD')
 	# GCC-based environment
-	LIBNAME="lib${LIBNAME}"     # prefix with "lib"
 
-        if [ $STATIC = 1 ] ; then
+	if [ $NOPREFIX = 1 ] ; then
+	    # No "lib" or ".so" part
+	    echo "mklib: Making" $ARCH "shared library: " ${LIBNAME}
+	    #OPTS="-shared -Wl,-soname,${LIBNAME}"  # soname???
+	    OPTS="-shared"
+            if [ $CPLUSPLUS = 1 ] ; then
+                LINK="g++"
+            else
+                LINK="gcc"
+            fi
+            rm -f ${LIBNAME}
+
+            # make lib
+            ${LINK} ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+            # finish up
+            FINAL_LIBS="${LIBNAME}"
+        elif [ $STATIC = 1 ] ; then
+	    LIBNAME="lib${LIBNAME}"     # prefix with "lib"
             echo "mklib: Making" $ARCH "static library: " ${LIBNAME}.a
             LINK="ar"
             OPTS="-ru"
@@ -123,6 +143,7 @@ case $ARCH in
             # finish up
             FINAL_LIBS=${LIBNAME}.a
         else
+	    LIBNAME="lib${LIBNAME}"     # prefix with "lib"
 	    if [ $ARCH = 'Linux' ] ; then
 		OPTS="-Xlinker -Bsymbolic -shared -Wl,-soname,${LIBNAME}.so.${MAJOR}"
 	    else
@@ -214,7 +235,13 @@ case $ARCH in
 	;;
 
     'FreeBSD')
-        if [ $STATIC = 1 ] ; then
+	if [ $NOPREFIX = 1 ] ; then
+	    # No "lib" or ".so" part
+	    echo "mklib: Making FreeBSD shared library: " ${LIBNAME}
+	    rm -f ${LIBNAME}
+	    ld -Bshareable -o ${LIBNAME} ${OBJECTS}
+	    FINAL_LIBS=${LIBNAME}
+        elif [ $STATIC = 1 ] ; then
 	    STLIB="lib${LIBNAME}.a"
 	    echo "mklib: Making FreeBSD static library: " ${STLIB}
 	    rm -f ${STLIB}
