@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.145 2001/07/19 15:54:34 brianp Exp $ */
+/* $Id: context.c,v 1.146 2001/07/26 20:02:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1351,9 +1351,11 @@ alloc_proxy_textures( GLcontext *ctx )
       ctx->Texture.Proxy1D->Image[i] = _mesa_alloc_texture_image();
       ctx->Texture.Proxy2D->Image[i] = _mesa_alloc_texture_image();
       ctx->Texture.Proxy3D->Image[i] = _mesa_alloc_texture_image();
+      ctx->Texture.ProxyCubeMap->Image[i] = _mesa_alloc_texture_image();
       if (!ctx->Texture.Proxy1D->Image[i]
           || !ctx->Texture.Proxy2D->Image[i]
-          || !ctx->Texture.Proxy3D->Image[i]) {
+          || !ctx->Texture.Proxy3D->Image[i]
+          || !ctx->Texture.ProxyCubeMap->Image[i]) {
          out_of_memory = GL_TRUE;
       }
    }
@@ -1368,10 +1370,14 @@ alloc_proxy_textures( GLcontext *ctx )
          if (ctx->Texture.Proxy3D->Image[i]) {
             _mesa_free_texture_image(ctx->Texture.Proxy3D->Image[i]);
          }
+         if (ctx->Texture.ProxyCubeMap->Image[i]) {
+            _mesa_free_texture_image(ctx->Texture.ProxyCubeMap->Image[i]);
+         }
       }
       _mesa_free_texture_object(NULL, ctx->Texture.Proxy1D);
       _mesa_free_texture_object(NULL, ctx->Texture.Proxy2D);
       _mesa_free_texture_object(NULL, ctx->Texture.Proxy3D);
+      _mesa_free_texture_object(NULL, ctx->Texture.ProxyCubeMap);
       return GL_FALSE;
    }
    else {

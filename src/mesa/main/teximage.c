@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.102 2001/07/23 16:18:18 brianp Exp $ */
+/* $Id: teximage.c,v 1.103 2001/07/26 20:02:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1525,7 +1525,9 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       texObj->Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
    }
-   else if (target == GL_PROXY_TEXTURE_2D) {
+   else if (target == GL_PROXY_TEXTURE_2D ||
+            (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB &&
+             ctx->Extensions.ARB_texture_cube_map)) {
       /* Proxy texture: check for errors and update proxy state */
       GLenum error = texture_error_check(ctx, target, level, internalFormat,
 				format, type, 2,
