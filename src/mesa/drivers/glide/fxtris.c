@@ -389,8 +389,16 @@ static struct {
 #define VERT_X(_v) _v->x
 #define VERT_Y(_v) _v->y
 #define VERT_Z(_v) _v->ooz
-#define AREA_IS_CCW( a ) IS_NEGATIVE(a) /*(a < 0)*/
 #define GET_VERTEX(e) (fxMesa->verts + e)
+
+#ifdef USE_IEEE
+/* type-punning, keep -fstrict-aliasing happy */
+typedef union { GLfloat f; GLuint u; } fu_type;
+/* 0/1 value, to allow XOR'ing with other booleans */
+#define AREA_IS_CCW( a ) (((fu_type *)&(a))->u >> 31)
+#else
+#define AREA_IS_CCW( a ) (a < 0)
+#endif
 
 #define VERT_SET_RGBA( dst, f )			\
 do {						\
