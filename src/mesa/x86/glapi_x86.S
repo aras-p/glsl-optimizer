@@ -4582,6 +4582,54 @@ GL_PREFIX(PointParameterivNV):
 	JMP(GL_OFFSET(_gloffset_PointParameterivNV))
 
 ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(BlendFuncSeparate))
+GL_PREFIX(BlendFuncSeparate):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_BlendFuncSeparateEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(FogCoordf))
+GL_PREFIX(FogCoordf):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_FogCoordfEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(FogCoordfv))
+GL_PREFIX(FogCoordfv):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_FogCoordfvEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(FogCoordd))
+GL_PREFIX(FogCoordd):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_FogCoorddEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(FogCoorddv))
+GL_PREFIX(FogCoorddv):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_FogCoorddvEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(FogCoordPointer))
+GL_PREFIX(FogCoordPointer):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_FogCoordPointerEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiDrawArrays))
+GL_PREFIX(MultiDrawArrays):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiDrawArraysEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiDrawElements))
+GL_PREFIX(MultiDrawElements):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiDrawElementsEXT))
+
+ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(PointParameterf))
 GL_PREFIX(PointParameterf):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
@@ -4802,36 +4850,6 @@ GLOBL_FN(GL_PREFIX(WindowPos3sv))
 GL_PREFIX(WindowPos3sv):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3svMESA))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FogCoordf))
-GL_PREFIX(FogCoordf):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_FogCoordfEXT))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FogCoordfv))
-GL_PREFIX(FogCoordfv):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_FogCoordfvEXT))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FogCoordd))
-GL_PREFIX(FogCoordd):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_FogCoorddEXT))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FogCoorddv))
-GL_PREFIX(FogCoorddv):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_FogCoorddvEXT))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FogCoordPointer))
-GL_PREFIX(FogCoordPointer):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_FogCoordPointerEXT))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(ActiveStencilFaceEXT))

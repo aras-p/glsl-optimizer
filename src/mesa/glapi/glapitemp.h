@@ -3994,6 +3994,46 @@ KEYWORD1 void KEYWORD2 NAME(PointParameterivNV)(GLenum pname, const GLint * para
    DISPATCH(PointParameterivNV, (pname, params), (F, "glPointParameterivNV(0x%x, %p);\n", pname, (void *) params));
 }
 
+KEYWORD1 void KEYWORD2 NAME(BlendFuncSeparate)(GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha)
+{
+   DISPATCH(BlendFuncSeparateEXT, (sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha), (F, "glBlendFuncSeparate(0x%x, 0x%x, 0x%x, 0x%x);\n", sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha));
+}
+
+KEYWORD1 void KEYWORD2 NAME(FogCoordf)(GLfloat coord)
+{
+   DISPATCH(FogCoordfEXT, (coord), (F, "glFogCoordf(%f);\n", coord));
+}
+
+KEYWORD1 void KEYWORD2 NAME(FogCoordfv)(const GLfloat * coord)
+{
+   DISPATCH(FogCoordfvEXT, (coord), (F, "glFogCoordfv(%p);\n", (void *) coord));
+}
+
+KEYWORD1 void KEYWORD2 NAME(FogCoordd)(GLdouble coord)
+{
+   DISPATCH(FogCoorddEXT, (coord), (F, "glFogCoordd(%f);\n", coord));
+}
+
+KEYWORD1 void KEYWORD2 NAME(FogCoorddv)(const GLdouble * coord)
+{
+   DISPATCH(FogCoorddvEXT, (coord), (F, "glFogCoorddv(%p);\n", (void *) coord));
+}
+
+KEYWORD1 void KEYWORD2 NAME(FogCoordPointer)(GLenum type, GLsizei stride, const GLvoid * pointer)
+{
+   DISPATCH(FogCoordPointerEXT, (type, stride, pointer), (F, "glFogCoordPointer(0x%x, %d, %p);\n", type, stride, (void *) pointer));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiDrawArrays)(GLenum mode, GLint * first, GLsizei * count, GLsizei primcount)
+{
+   DISPATCH(MultiDrawArraysEXT, (mode, first, count, primcount), (F, "glMultiDrawArrays(0x%x, %p, %p, %d);\n", mode, (void *) first, (void *) count, primcount));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiDrawElements)(GLenum mode, const GLsizei * count, GLenum type, const GLvoid ** indices, GLsizei primcount)
+{
+   DISPATCH(MultiDrawElementsEXT, (mode, count, type, indices, primcount), (F, "glMultiDrawElements(0x%x, %p, 0x%x, %p, %d);\n", mode, (void *) count, type, (void *) indices, primcount));
+}
+
 KEYWORD1 void KEYWORD2 NAME(PointParameterf)(GLenum pname, GLfloat param)
 {
    DISPATCH(PointParameterfEXT, (pname, param), (F, "glPointParameterf(0x%x, %f);\n", pname, param));
@@ -4177,31 +4217,6 @@ KEYWORD1 void KEYWORD2 NAME(WindowPos3s)(GLshort x, GLshort y, GLshort z)
 KEYWORD1 void KEYWORD2 NAME(WindowPos3sv)(const GLshort * v)
 {
    DISPATCH(WindowPos3svMESA, (v), (F, "glWindowPos3sv(%p);\n", (void *) v));
-}
-
-KEYWORD1 void KEYWORD2 NAME(FogCoordf)(GLfloat coord)
-{
-   DISPATCH(FogCoordfEXT, (coord), (F, "glFogCoordf(%f);\n", coord));
-}
-
-KEYWORD1 void KEYWORD2 NAME(FogCoordfv)(const GLfloat * coord)
-{
-   DISPATCH(FogCoordfvEXT, (coord), (F, "glFogCoordfv(%p);\n", (void *) coord));
-}
-
-KEYWORD1 void KEYWORD2 NAME(FogCoordd)(GLdouble coord)
-{
-   DISPATCH(FogCoorddEXT, (coord), (F, "glFogCoordd(%f);\n", coord));
-}
-
-KEYWORD1 void KEYWORD2 NAME(FogCoorddv)(const GLdouble * coord)
-{
-   DISPATCH(FogCoorddvEXT, (coord), (F, "glFogCoorddv(%p);\n", (void *) coord));
-}
-
-KEYWORD1 void KEYWORD2 NAME(FogCoordPointer)(GLenum type, GLsizei stride, const GLvoid * pointer)
-{
-   DISPATCH(FogCoordPointerEXT, (type, stride, pointer), (F, "glFogCoordPointer(0x%x, %d, %p);\n", type, stride, (void *) pointer));
 }
 
 KEYWORD1 void KEYWORD2 NAME(ActiveStencilFaceEXT)(GLenum face)
@@ -5096,6 +5111,14 @@ void *UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(WindowPos3fvARB),
    TABLE_ENTRY(WindowPos3ivARB),
    TABLE_ENTRY(WindowPos3svARB),
+   TABLE_ENTRY(BlendFuncSeparate),
+   TABLE_ENTRY(FogCoordf),
+   TABLE_ENTRY(FogCoordfv),
+   TABLE_ENTRY(FogCoordd),
+   TABLE_ENTRY(FogCoorddv),
+   TABLE_ENTRY(FogCoordPointer),
+   TABLE_ENTRY(MultiDrawArrays),
+   TABLE_ENTRY(MultiDrawElements),
    TABLE_ENTRY(PointParameterf),
    TABLE_ENTRY(PointParameterfv),
    TABLE_ENTRY(PointParameteri),
@@ -5133,11 +5156,6 @@ void *UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(WindowPos3iv),
    TABLE_ENTRY(WindowPos3s),
    TABLE_ENTRY(WindowPos3sv),
-   TABLE_ENTRY(FogCoordf),
-   TABLE_ENTRY(FogCoordfv),
-   TABLE_ENTRY(FogCoordd),
-   TABLE_ENTRY(FogCoorddv),
-   TABLE_ENTRY(FogCoordPointer),
 };
 #endif /*UNUSED_TABLE_NAME*/
 

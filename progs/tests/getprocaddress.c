@@ -1,4 +1,4 @@
-/* $Id: getprocaddress.c,v 1.4 2002/11/07 16:23:40 brianp Exp $ */
+/* $Id: getprocaddress.c,v 1.5 2002/11/07 16:35:02 brianp Exp $ */
 
 /*
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
@@ -465,11 +465,14 @@ static const char *functions[] = {
    "glCompressedTexSubImage1D",
    "glGetCompressedTexImage",
    "-1.4",
+   "glBlendFuncSeparate",
    "glFogCoordf",
    "glFogCoordfv",
    "glFogCoordd",
    "glFogCoorddv",
    "glFogCoordPointer",
+   "glMultiDrawArrays",
+   "glMultiDrawElements",
    "glPointParameterf",
    "glPointParameterfv",
    "glPointParameteri",

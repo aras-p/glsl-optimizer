@@ -15981,6 +15981,174 @@ glPointParameterivNV:
 	jmpl	%g3, %g0
 	nop
 
+.globl glBlendFuncSeparate
+.type glBlendFuncSeparate,#function
+glBlendFuncSeparate:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_BlendFuncSeparateEXT), %g2
+	or	%g2, %lo(8 * _gloffset_BlendFuncSeparateEXT), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_BlendFuncSeparateEXT)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glFogCoordf
+.type glFogCoordf,#function
+glFogCoordf:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_FogCoordfEXT), %g2
+	or	%g2, %lo(8 * _gloffset_FogCoordfEXT), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_FogCoordfEXT)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glFogCoordfv
+.type glFogCoordfv,#function
+glFogCoordfv:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_FogCoordfvEXT), %g2
+	or	%g2, %lo(8 * _gloffset_FogCoordfvEXT), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_FogCoordfvEXT)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glFogCoordd
+.type glFogCoordd,#function
+glFogCoordd:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_FogCoorddEXT), %g2
+	or	%g2, %lo(8 * _gloffset_FogCoorddEXT), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_FogCoorddEXT)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glFogCoorddv
+.type glFogCoorddv,#function
+glFogCoorddv:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_FogCoorddvEXT), %g2
+	or	%g2, %lo(8 * _gloffset_FogCoorddvEXT), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_FogCoorddvEXT)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glFogCoordPointer
+.type glFogCoordPointer,#function
+glFogCoordPointer:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_FogCoordPointerEXT), %g2
+	or	%g2, %lo(8 * _gloffset_FogCoordPointerEXT), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_FogCoordPointerEXT)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glMultiDrawArrays
+.type glMultiDrawArrays,#function
+glMultiDrawArrays:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_MultiDrawArraysEXT), %g2
+	or	%g2, %lo(8 * _gloffset_MultiDrawArraysEXT), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_MultiDrawArraysEXT)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glMultiDrawElements
+.type glMultiDrawElements,#function
+glMultiDrawElements:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_MultiDrawElementsEXT), %g2
+	or	%g2, %lo(8 * _gloffset_MultiDrawElementsEXT), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_MultiDrawElementsEXT)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
 .globl glPointParameterf
 .type glPointParameterf,#function
 glPointParameterf:
@@ -16754,111 +16922,6 @@ glWindowPos3sv:
 	sethi	%hi(0x00000000), %g1
 	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos3svMESA)], %g3
-#endif
-	jmpl	%g3, %g0
-	nop
-
-.globl glFogCoordf
-.type glFogCoordf,#function
-glFogCoordf:
-#ifdef __sparc_v9__
-	sethi	%hi(0x00000000), %g2
-	sethi	%hi(0x00000000), %g1
-	or	%g2, %lo(0x00000000), %g2
-	or	%g1, %lo(0x00000000), %g1
-	sllx	%g2, 32, %g2
-	ldx	[%g1 + %g2], %g1
-	sethi	%hi(8 * _gloffset_FogCoordfEXT), %g2
-	or	%g2, %lo(8 * _gloffset_FogCoordfEXT), %g2
-	ldx	[%g1 + %g2], %g3
-#else
-	sethi	%hi(0x00000000), %g1
-	ld	[%g1 + %lo(0x00000000)], %g1
-	ld	[%g1 + (4 * _gloffset_FogCoordfEXT)], %g3
-#endif
-	jmpl	%g3, %g0
-	nop
-
-.globl glFogCoordfv
-.type glFogCoordfv,#function
-glFogCoordfv:
-#ifdef __sparc_v9__
-	sethi	%hi(0x00000000), %g2
-	sethi	%hi(0x00000000), %g1
-	or	%g2, %lo(0x00000000), %g2
-	or	%g1, %lo(0x00000000), %g1
-	sllx	%g2, 32, %g2
-	ldx	[%g1 + %g2], %g1
-	sethi	%hi(8 * _gloffset_FogCoordfvEXT), %g2
-	or	%g2, %lo(8 * _gloffset_FogCoordfvEXT), %g2
-	ldx	[%g1 + %g2], %g3
-#else
-	sethi	%hi(0x00000000), %g1
-	ld	[%g1 + %lo(0x00000000)], %g1
-	ld	[%g1 + (4 * _gloffset_FogCoordfvEXT)], %g3
-#endif
-	jmpl	%g3, %g0
-	nop
-
-.globl glFogCoordd
-.type glFogCoordd,#function
-glFogCoordd:
-#ifdef __sparc_v9__
-	sethi	%hi(0x00000000), %g2
-	sethi	%hi(0x00000000), %g1
-	or	%g2, %lo(0x00000000), %g2
-	or	%g1, %lo(0x00000000), %g1
-	sllx	%g2, 32, %g2
-	ldx	[%g1 + %g2], %g1
-	sethi	%hi(8 * _gloffset_FogCoorddEXT), %g2
-	or	%g2, %lo(8 * _gloffset_FogCoorddEXT), %g2
-	ldx	[%g1 + %g2], %g3
-#else
-	sethi	%hi(0x00000000), %g1
-	ld	[%g1 + %lo(0x00000000)], %g1
-	ld	[%g1 + (4 * _gloffset_FogCoorddEXT)], %g3
-#endif
-	jmpl	%g3, %g0
-	nop
-
-.globl glFogCoorddv
-.type glFogCoorddv,#function
-glFogCoorddv:
-#ifdef __sparc_v9__
-	sethi	%hi(0x00000000), %g2
-	sethi	%hi(0x00000000), %g1
-	or	%g2, %lo(0x00000000), %g2
-	or	%g1, %lo(0x00000000), %g1
-	sllx	%g2, 32, %g2
-	ldx	[%g1 + %g2], %g1
-	sethi	%hi(8 * _gloffset_FogCoorddvEXT), %g2
-	or	%g2, %lo(8 * _gloffset_FogCoorddvEXT), %g2
-	ldx	[%g1 + %g2], %g3
-#else
-	sethi	%hi(0x00000000), %g1
-	ld	[%g1 + %lo(0x00000000)], %g1
-	ld	[%g1 + (4 * _gloffset_FogCoorddvEXT)], %g3
-#endif
-	jmpl	%g3, %g0
-	nop
-
-.globl glFogCoordPointer
-.type glFogCoordPointer,#function
-glFogCoordPointer:
-#ifdef __sparc_v9__
-	sethi	%hi(0x00000000), %g2
-	sethi	%hi(0x00000000), %g1
-	or	%g2, %lo(0x00000000), %g2
-	or	%g1, %lo(0x00000000), %g1
-	sllx	%g2, 32, %g2
-	ldx	[%g1 + %g2], %g1
-	sethi	%hi(8 * _gloffset_FogCoordPointerEXT), %g2
-	or	%g2, %lo(8 * _gloffset_FogCoordPointerEXT), %g2
-	ldx	[%g1 + %g2], %g3
-#else
-	sethi	%hi(0x00000000), %g1
-	ld	[%g1 + %lo(0x00000000)], %g1
-	ld	[%g1 + (4 * _gloffset_FogCoordPointerEXT)], %g3
 #endif
 	jmpl	%g3, %g0
 	nop
