@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.132 2001/04/04 13:38:51 brianp Exp $ */
+/* $Id: context.c,v 1.133 2001/04/25 18:21:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -476,32 +476,20 @@ alloc_shared_state( void )
    if (!ss->Default1D) {
       outOfMemory = GL_TRUE;
    }
-   else {
-      ss->Default1D->RefCount++;
-   }
 
    ss->Default2D = _mesa_alloc_texture_object(ss, 0, 2);
    if (!ss->Default2D) {
       outOfMemory = GL_TRUE;
-   }
-   else {
-      ss->Default2D->RefCount++;
    }
 
    ss->Default3D = _mesa_alloc_texture_object(ss, 0, 3);
    if (!ss->Default3D) {
       outOfMemory = GL_TRUE;
    }
-   else {
-      ss->Default1D->RefCount++;
-   }
 
    ss->DefaultCubeMap = _mesa_alloc_texture_object(ss, 0, 6);
    if (!ss->DefaultCubeMap) {
       outOfMemory = GL_TRUE;
-   }
-   else {
-      ss->DefaultCubeMap->RefCount++;
    }
 
    if (!ss->DisplayList || !ss->TexObjects || outOfMemory) {
@@ -546,8 +534,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_DeleteHashTable(ss->DisplayList);
 
    /* Free texture objects */
-   while (ss->TexObjectList)
-   {
+   while (ss->TexObjectList) {
       if (ctx->Driver.DeleteTexture)
          (*ctx->Driver.DeleteTexture)( ctx, ss->TexObjectList );
       /* this function removes from linked list too! */
@@ -1367,11 +1354,11 @@ _mesa_initialize_context( GLcontext *ctx,
    ctx->ReadBuffer = NULL;
 
    if (share_list) {
-      /* share the group of display lists of another context */
+      /* share state with another context */
       ctx->Shared = share_list->Shared;
    }
    else {
-      /* allocate new group of display lists */
+      /* allocate new, unshared state */
       ctx->Shared = alloc_shared_state();
       if (!ctx->Shared) {
          return GL_FALSE;
@@ -1380,6 +1367,12 @@ _mesa_initialize_context( GLcontext *ctx,
    _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
    ctx->Shared->RefCount++;
    _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+
+   /* Effectively bind the default textures to all texture units */
+   ctx->Shared->Default1D->RefCount += MAX_TEXTURE_UNITS;
+   ctx->Shared->Default2D->RefCount += MAX_TEXTURE_UNITS;
+   ctx->Shared->Default3D->RefCount += MAX_TEXTURE_UNITS;
+   ctx->Shared->DefaultCubeMap->RefCount += MAX_TEXTURE_UNITS;
 
    init_attrib_groups( ctx );
 
