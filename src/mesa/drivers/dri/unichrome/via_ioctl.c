@@ -665,10 +665,10 @@ void viaFlushDmaLocked(viaContextPtr vmesa, GLuint flags)
 	 b.y1 = pbox[i].y1 - vmesa->drawY;
 	 b.y2 = pbox[i].y2 - vmesa->drawY;
 
-	 if (vmesa->glCtx->Scissor.Enabled &&
+	 if (vmesa->scissor &&
 	     !intersect_rect(&b, &b, &vmesa->scissorRect)) 
 	    continue;
-	 
+
 	 b.x1 += vmesa->drawXoff;
 	 b.x2 += vmesa->drawXoff;
 

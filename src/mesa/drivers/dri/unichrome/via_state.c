@@ -612,14 +612,15 @@ static void viaScissor(GLcontext *ctx, GLint x, GLint y,
     if (VIA_DEBUG)
        fprintf(stderr, "%s %d,%d %dx%d, drawH %d\n", __FUNCTION__, x,y,w,h, vmesa->driDrawable->h);
 
-    if (ctx->Scissor.Enabled) {
+    if (vmesa->scissor) {
         VIA_FLUSH_DMA(vmesa); /* don't pipeline cliprect changes */
     }
 
     vmesa->scissorRect.x1 = x;
-    vmesa->scissorRect.y1 = vmesa->driDrawable->h - (y + h);
+    vmesa->scissorRect.y1 = vmesa->driDrawable->h - y - h;
     vmesa->scissorRect.x2 = x + w;
     vmesa->scissorRect.y2 = vmesa->driDrawable->h - y;
+
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);    
 }
 
@@ -630,6 +631,7 @@ static void viaEnable(GLcontext *ctx, GLenum cap, GLboolean state)
    switch (cap) {
    case GL_SCISSOR_TEST:
       VIA_FLUSH_DMA(vmesa);
+      vmesa->scissor = state;
       break;
    default:
       break;

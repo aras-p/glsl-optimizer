@@ -676,6 +676,11 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 	
 	_mesa_update_state(vmesa->glCtx);
 	viaValidateState(vmesa->glCtx);
+	ctx->Driver.Scissor(vmesa->glCtx,
+			    vmesa->glCtx->Scissor.X,
+			    vmesa->glCtx->Scissor.Y,
+			    vmesa->glCtx->Scissor.Width,
+			    vmesa->glCtx->Scissor.Height);
     }
     else {
         _mesa_make_current(0,0);
