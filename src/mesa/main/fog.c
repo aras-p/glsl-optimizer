@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.34 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: fog.c,v 1.35 2001/05/30 14:43:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -141,9 +141,10 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
 	 ctx->Fog.Color[3] = params[3];
          break;
       case GL_FOG_COORDINATE_SOURCE_EXT: {
-	 GLenum p = (GLenum)(GLint) *params;
-	 if (p != GL_FOG_COORDINATE_EXT && p != GL_FRAGMENT_DEPTH_EXT) {
-	    _mesa_error( ctx, GL_INVALID_ENUM, "glFog" );
+	 GLenum p = (GLenum) (GLint) *params;
+         if (!ctx->Extensions.EXT_fog_coord ||
+             (p != GL_FOG_COORDINATE_EXT && p != GL_FRAGMENT_DEPTH_EXT)) {
+	    _mesa_error(ctx, GL_INVALID_ENUM, "glFog");
 	    return;
 	 }
 	 if (ctx->Fog.FogCoordinateSource == p)
