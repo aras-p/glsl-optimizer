@@ -16,7 +16,7 @@
 #include "matrix.h"
 #include "extensions.h"
 #if defined(USE_X86_ASM)
-#include "X86/common_x86_asm.h"
+#include "x86/common_x86_asm.h"
 #endif
 #include "simple_list.h"
 #include "mm.h"

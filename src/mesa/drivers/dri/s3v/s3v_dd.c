@@ -6,7 +6,7 @@
 #include "s3v_vb.h"
 #include "s3v_lock.h"
 #if defined(USE_X86_ASM)
-#include "X86/common_x86_asm.h"
+#include "x86/common_x86_asm.h"
 #endif
 
 #include "context.h"
