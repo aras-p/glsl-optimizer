@@ -1255,11 +1255,14 @@ Mesa Version History
 	- glArrayElement in display lists didn't handle generic vertex attribs
 	- glFogCoord didn't always work properly
 	- ARB_fragment_program fog options didn't work
-	- fp TEX instruction no longer incorrectly divides s,t,r by q
-	- ARB fp TEX and TEXP instructions now use LOD=0
+	- frag prog TEX instruction no longer incorrectly divides s,t,r by q
+	- ARB frag prog TEX and TEXP instructions now use LOD=0
 	- glTexEnviv in display lists didn't work
 	- glRasterPos didn't do texgen or apply texture matrix
 	- GL_DOUBLE-valued vertex arrays were broken in some cases
 	- fixed texture rectangle edge/border sampling bugs
 	- sampling an incomplete texture in a fragment program would segfault
 	- glTexImage was missing a few error checks
+	- fixed some minor glGetTexParameter glitches
+	- GL_INTENSITY was mistakenly accepted as a <format> to glTexImage
+	- fragment program writes to RC/HC register were broken
