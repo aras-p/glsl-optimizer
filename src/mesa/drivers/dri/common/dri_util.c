@@ -1007,7 +1007,7 @@ driCreateNewContext(Display *dpy, const __GLcontextModes *modes,
     pctx->unbindContext  = NULL;
     pctx->bindContext2   = NULL;
     pctx->unbindContext2 = NULL;
-    pctx->bindContex3    = driBindContext3;
+    pctx->bindContext3   = driBindContext3;
     pctx->unbindContext3 = driUnbindContext3;
 #else
     pctx->bindContext    = driBindContext;
@@ -1271,7 +1271,7 @@ __driUtilCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc,
 #ifndef DRI_NEW_INTERFACE_ONLY
     psc->createContext     = driCreateContext;
 #else
-    psc->createConteext    = NULL;
+    psc->createContext     = NULL;
 #endif
     psc->createNewDrawable = driCreateNewDrawable;
     psc->getDrawable       = driGetDrawable;
