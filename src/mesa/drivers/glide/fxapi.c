@@ -856,6 +856,7 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
    /*FX_GrContext_t glideContext = 0;*/
    char *errorstr;
    GLboolean useBGR;
+   char *system = NULL;
 
    if (MESA_VERBOSE&VERBOSE_DRIVER) {
       fprintf(stderr,"fxmesa: fxMesaCreateContext() Start\n");
@@ -965,40 +966,76 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
     * Either initialize them for RGB or BGR order.
     */
 #if FXMESA_USE_ARGB 
-   useBGR = GL_FALSE; /* Force RGB pixel order */	
+   useBGR = GL_FALSE; /* Force RGB pixel order */       
+   system = "FXMESA_USE_ARGB";
 #else
    if (glbHWConfig.SSTs[glbCurrentBoard].type == GR_SSTTYPE_VOODOO) {
-      /* jk991130 - GROSS HACK!!! - Voodoo 3s don't use BGR!!
-       * the only way to tell if it's a Voodoo 3 at this stage of the
-       * ballgame (no Glide 3.x for linux *yet*) is to query the # of TMUs
+      /* jk991130 - Voodoo 3s don't use BGR. Query the # of TMUs
        * as Voodoo3s have 2 TMUs on board, Banshee has only 1
-       * Thanks to Joseph Kain for that one
+       * bk000413 - another suggestion from Joseph Kain is using
+       *  VendorID 0x121a for all 3dfx boards
+       *   DeviceID VG  1/V2  2/VB  3/V3  5
+       * For now we cehck for known BGR devices, and presume
+       *  everything else to be a V3/RGB.
        */
       GrVoodooConfig_t *voodoo;
       voodoo = &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig;
 
-      /*
-         printf("Voodoo num_sst %d\n", glbHWConfig.num_sst);
-         printf("Voodoo nTexelfx %d\n", voodoo->nTexelfx);
-         printf("Voodoo fbRam %d\n", voodoo->fbRam);
-         printf("Voodoo fbiRev %d\n", voodoo->fbiRev);
-      */
-
-      if (voodoo->nTexelfx == 2 && voodoo->fbiRev != 260) {
-         /* RGB pixel order (Voodoo3, but some Quantum3D models) */
-         useBGR = GL_FALSE;
-      }
-      else {
-         /* BGR pixel order on Voodoo1/2, or certain Quantum3D models  */
+      if (voodoo->nTexelfx == 1) {
+         /* Voodoo1 or Banshee */
          useBGR = GL_TRUE;
+         system = "Voodoo1";
+      }
+      else if (voodoo->nTexelfx == 2 &&
+               voodoo->fbiRev == 260 &&
+               voodoo->tmuConfig[0].tmuRev == 4 &&
+               voodoo->tmuConfig[0].tmuRam == 2) {
+         /* Voodoo 2 */
+         useBGR = GL_TRUE;
+         system = "Voodoo2";
+      }
+      else if (voodoo->nTexelfx == 2 &&
+               voodoo->fbiRev == 2 &&
+               voodoo->tmuConfig[0].tmuRev == 1 &&
+               voodoo->tmuConfig[0].tmuRam == 4) {
+         /* Quantum3D Obsidian 50/100 */
+         useBGR = GL_TRUE;
+         system = "Quantum3D Obsidian";
+      }
+      else 
+         /* Brian
+          *       (voodoo->nTexelfx == 2 &&
+          *        voodoo->fbiRev == 0 &&
+          *        voodoo->tmuConfig[0].tmuRev == 148441048 &&
+          *        voodoo->tmuConfig[0].tmuRam == 3)
+          * Bernd 
+          *       (voodoo->nTexelfx == 2 &&
+          *        voodoo->fbiRev ==  69634 &&
+          *        voodoo->tmuConfig[0].tmuRev == 69634 &&
+          *        voodoo->tmuConfig[0].tmuRam == 2 )
+          */
+      {
+         /* Presumed Voodoo3 */
+         useBGR =  GL_FALSE;
+         system = "Voodoo3";
+      }
+      if (getenv("MESA_FX_INFO")) { 
+        printf("Voodoo: Texelfx: %d / FBI Rev.: %d / TMU Rev.: %d / TMU RAM: %d\n",
+               voodoo->nTexelfx,
+               voodoo->fbiRev,
+               voodoo->tmuConfig[0].tmuRev,
+               voodoo->tmuConfig[0].tmuRam );
       }
    }
    else {
       useBGR = GL_FALSE; /* use RGB pixel order otherwise */
+      system = "non-voodoo";
    }
-#endif
-   if (getenv("MESA_FX_INFO"))
-      printf("Voodoo pixel order: %s\n", useBGR ? "BGR" : "RGB");
+#endif /*FXMESA_USE_ARGB*/
+
+   if (getenv("MESA_FX_INFO")) 
+      printf("Voodoo pixel order: %s (%s)\n", useBGR ? "BGR" : "RGB", system);
+
    fxInitPixelTables(fxMesa, useBGR);
 
    fxMesa->width=FX_grSstScreenWidth();
