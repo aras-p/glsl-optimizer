@@ -1,4 +1,4 @@
-/* $Id: multiarb.c,v 1.8 2000/12/24 22:53:54 pesco Exp $ */
+/* $Id: multiarb.c,v 1.9 2001/06/13 14:33:16 brianp Exp $ */
 
 /*
  * GL_ARB_multitexture demo
@@ -12,6 +12,9 @@
 
 /*
  * $Log: multiarb.c,v $
+ * Revision 1.9  2001/06/13 14:33:16  brianp
+ * moved glTexEnvi calls to better logical locations
+ *
  * Revision 1.8  2000/12/24 22:53:54  pesco
  * * demos/Makefile.am (INCLUDES): Added -I$(top_srcdir)/util.
  * * demos/Makefile.X11, demos/Makefile.BeOS-R4, demos/Makefile.cygnus:
@@ -286,6 +289,8 @@ static void Init( int argc, char *argv[] )
    glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &units);
    printf("%d texture units supported\n", units);
 
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
    /* allocate two texture objects */
    glGenTextures(2, texObj);
 
@@ -299,11 +304,6 @@ static void Init( int argc, char *argv[] )
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 #endif
-
-   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
    if (!LoadRGBMipmaps(TEXTURE_1_FILE, GL_RGB)) {
       printf("Error: couldn't load texture image\n");
       exit(1);
@@ -320,9 +320,6 @@ static void Init( int argc, char *argv[] )
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 #endif
-
-   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
    if (!LoadRGBMipmaps(TEXTURE_2_FILE, GL_RGB)) {
       printf("Error: couldn't load texture image\n");
       exit(1);
@@ -333,8 +330,10 @@ static void Init( int argc, char *argv[] )
 #ifdef GL_ARB_multitexture
    glActiveTextureARB(GL_TEXTURE0_ARB);
    glBindTexture(GL_TEXTURE_2D, texObj[0]);
+   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
    glActiveTextureARB(GL_TEXTURE1_ARB);
    glBindTexture(GL_TEXTURE_2D, texObj[1]);
+   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 #endif
 
    glShadeModel(GL_FLAT);
