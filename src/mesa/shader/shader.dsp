@@ -41,7 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /I "../../../include" /I "../" /I "../main" /I "../glapi" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /Zm500 /c
+# ADD CPP /nologo /W3 /GX /O2 /I "../../../include" /I "../" /I "../main" /I "../glapi" /I "slang" /I "slang/OSDependent/Windows" /I "slang/OGLCompilersDLL" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /Zm500 /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -64,7 +64,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "../../../include" /I "../" /I "../main" /I "../glapi" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /Zm500 /GZ /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "../../../include" /I "../" /I "../main" /I "../glapi" /I "slang" /I "slang/OSDependent/Windows" /I "slang/OGLCompilersDLL" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /Zm500 /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -215,6 +215,274 @@ SOURCE=.\shaderobjects.h
 # Begin Source File
 
 SOURCE=.\shaderobjects_3dlabs.h
+# End Source File
+# End Group
+# Begin Group "slang"
+
+# PROP Default_Filter ""
+# Begin Group "Include"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\slang\Include\BaseTypes.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\Include\Common.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\Include\ConstantUnion.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\Include\InfoSink.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\Include\InitializeGlobals.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\Include\InitializeParseContext.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\Include\intermediate.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\Include\PoolAlloc.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\Include\ResourceLimits.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\Include\ShHandle.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\Include\Types.h
+# End Source File
+# End Group
+# Begin Group "MachineIndependent"
+
+# PROP Default_Filter ""
+# Begin Group "preprocessor"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\atom.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\atom.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\compile.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\cpp.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\cpp.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\cppstruct.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\memory.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\memory.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\parser.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\preprocess.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\scanner.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\scanner.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\slglobals.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\symbols.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\symbols.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\tokens.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\preprocessor\tokens.h
+# End Source File
+# End Group
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\Gen_glslang.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\Gen_glslang_tab.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\glslang_tab.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\InfoSink.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\Initialize.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\Initialize.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\Intermediate.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\intermOut.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\IntermTraverse.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\localintermediate.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\MMap.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\parseConst.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\ParseHelper.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\ParseHelper.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\PoolAlloc.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\QualifierAlive.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\QualifierAlive.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\RemoveTree.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\RemoveTree.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\ShaderLang.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\SymbolTable.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\SymbolTable.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\MachineIndependent\unistd.h
+# End Source File
+# End Group
+# Begin Group "OGLCompilersDLL"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\slang\OGLCompilersDLL\Initialisation.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\OGLCompilersDLL\Initialisation.h
+# End Source File
+# End Group
+# Begin Group "OSDependent"
+
+# PROP Default_Filter ""
+# Begin Group "Windows"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\slang\OSDependent\Windows\osinclude.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\OSDependent\Windows\ossource.cpp
+# End Source File
+# End Group
+# End Group
+# Begin Group "Public"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\slang\Public\ShaderLang.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\Public\ShaderLangExt.h
+# End Source File
+# End Group
+# Begin Source File
+
+SOURCE=.\slang\slang_mesa.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\slang\slang_mesa.h
 # End Source File
 # End Group
 # End Target
