@@ -1,10 +1,10 @@
-/* $Id: s_span.c,v 1.54 2003/01/14 04:55:46 brianp Exp $ */
+/* $Id: s_span.c,v 1.55 2003/02/27 18:15:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  5.0.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -141,14 +141,6 @@ _mesa_span_default_texcoords( GLcontext *ctx, struct sw_span *span )
 static void
 interpolate_colors(GLcontext *ctx, struct sw_span *span)
 {
-   GLfixed r = span->red;
-   GLfixed g = span->green;
-   GLfixed b = span->blue;
-   GLfixed a = span->alpha;
-   const GLint dr = span->redStep;
-   const GLint dg = span->greenStep;
-   const GLint db = span->blueStep;
-   const GLint da = span->alphaStep;
    const GLuint n = span->end;
    GLchan (*rgba)[4] = span->array->rgba;
    GLuint i;
@@ -159,16 +151,35 @@ interpolate_colors(GLcontext *ctx, struct sw_span *span)
    if (span->interpMask & SPAN_FLAT) {
       /* constant color */
       GLchan color[4];
-      color[RCOMP] = FixedToChan(r);
-      color[GCOMP] = FixedToChan(g);
-      color[BCOMP] = FixedToChan(b);
-      color[ACOMP] = FixedToChan(a);
+      color[RCOMP] = FixedToChan(span->red);
+      color[GCOMP] = FixedToChan(span->green);
+      color[BCOMP] = FixedToChan(span->blue);
+      color[ACOMP] = FixedToChan(span->alpha);
       for (i = 0; i < n; i++) {
          COPY_CHAN4(span->array->rgba[i], color);
       }
    }
    else {
       /* interpolate */
+#if CHAN_TYPE == GL_FLOAT
+      GLfloat r = span->red;
+      GLfloat g = span->green;
+      GLfloat b = span->blue;
+      GLfloat a = span->alpha;
+      const GLfloat dr = span->redStep;
+      const GLfloat dg = span->greenStep;
+      const GLfloat db = span->blueStep;
+      const GLfloat da = span->alphaStep;
+#else
+      GLfixed r = span->red;
+      GLfixed g = span->green;
+      GLfixed b = span->blue;
+      GLfixed a = span->alpha;
+      const GLint dr = span->redStep;
+      const GLint dg = span->greenStep;
+      const GLint db = span->blueStep;
+      const GLint da = span->alphaStep;
+#endif
       for (i = 0; i < n; i++) {
          rgba[i][RCOMP] = FixedToChan(r);
          rgba[i][GCOMP] = FixedToChan(g);
