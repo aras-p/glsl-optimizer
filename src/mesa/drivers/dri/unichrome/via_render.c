@@ -70,7 +70,7 @@
     (VIA_DMA_BUF_SZ - 512) / (vmesa->vertexSize * 4)
 
 #define ALLOC_VERTS( nr ) \
-    viaAllocDma( vmesa, (nr) * vmesa->vertexSize * 4)
+    viaExtendPrimitive( vmesa, (nr) * vmesa->vertexSize * 4)
 
 #define EMIT_VERTS(ctx, j, nr, buf) \
     via_emit_contiguous_verts(ctx, j, (j) + (nr), buf)

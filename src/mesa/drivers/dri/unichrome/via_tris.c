@@ -40,6 +40,7 @@
 #include "via_context.h"
 #include "via_tris.h"
 #include "via_state.h"
+#include "via_span.h"
 #include "via_vb.h"
 #include "via_ioctl.h"
 
@@ -74,7 +75,7 @@ static void __inline__ via_draw_triangle(viaContextPtr vmesa,
                                          viaVertexPtr v2)
 {
     GLuint vertsize = vmesa->vertexSize;
-    GLuint *vb = viaAllocDma(vmesa, 3 * 4 * vertsize);
+    GLuint *vb = viaExtendPrimitive(vmesa, 3 * 4 * vertsize);
 /*     fprintf(stderr, "%s: %p %p %p\n", __FUNCTION__, v0, v1, v2); */
     COPY_DWORDS(vb, vertsize, v0);
     COPY_DWORDS(vb, vertsize, v1);
@@ -89,7 +90,7 @@ static void __inline__ via_draw_quad(viaContextPtr vmesa,
                                      viaVertexPtr v3)
 {
     GLuint vertsize = vmesa->vertexSize;
-    GLuint *vb = viaAllocDma(vmesa, 6 * 4 * vertsize);
+    GLuint *vb = viaExtendPrimitive(vmesa, 6 * 4 * vertsize);
 
 /*     fprintf(stderr, "%s: %p %p %p %p\n", __FUNCTION__, v0, v1, v2, v3); */
     COPY_DWORDS(vb, vertsize, v0);
@@ -105,7 +106,7 @@ static __inline__ void via_draw_line(viaContextPtr vmesa,
                                      viaVertexPtr v1)
 {
     GLuint vertsize = vmesa->vertexSize;
-    GLuint *vb = viaAllocDma(vmesa, 2 * 4 * vertsize);
+    GLuint *vb = viaExtendPrimitive(vmesa, 2 * 4 * vertsize);
     COPY_DWORDS(vb, vertsize, v0);
     COPY_DWORDS(vb, vertsize, v1);
 }
@@ -115,7 +116,7 @@ static __inline__ void via_draw_point(viaContextPtr vmesa,
                                       viaVertexPtr v0)
 {
     GLuint vertsize = vmesa->vertexSize;
-    GLuint *vb = viaAllocDma(vmesa, 4 * vertsize);
+    GLuint *vb = viaExtendPrimitive(vmesa, 4 * vertsize);
     COPY_DWORDS(vb, vertsize, v0);
 }
 
@@ -521,7 +522,7 @@ static void viaFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     GLuint vertsize = vmesa->vertexSize;
-    GLuint *vb = viaAllocDma(vmesa, (n - 2) * 3 * 4 * vertsize);
+    GLuint *vb = viaExtendPrimitive(vmesa, (n - 2) * 3 * 4 * vertsize);
     GLubyte *vertptr = (GLubyte *)vmesa->verts;
     const GLuint *start = (const GLuint *)V(elts[0]);
     int i;
@@ -632,6 +633,8 @@ static void viaRunPipeline(GLcontext *ctx)
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     
     if (vmesa->newState) {
+       viaChooseVertexState(ctx);
+       viaChooseRenderState(ctx);
        viaValidateState( ctx );
     }
 
@@ -672,7 +675,13 @@ void viaRasterPrimitive(GLcontext *ctx,
 	       _mesa_lookup_enum_by_nr(hwprim));
 
     VIA_FINISH_PRIM(vmesa);
+    
     viaCheckDma( vmesa, 1024 );	/* Ensure no wrapping inside this function  */
+
+    if (vmesa->newEmitState) {
+       viaEmitState(vmesa);
+    }
+       
 
     regCmdB = vmesa->regCmdB;
 
@@ -782,11 +791,12 @@ void viaFinishPrimitive(viaContextPtr vmesa)
    if (VIA_DEBUG) fprintf(stderr, "%s\n", __FUNCTION__);
 
    if (!vmesa->dmaLastPrim) {
-      return;
    }
    else if (vmesa->dmaLow != vmesa->dmaLastPrim) {
       GLuint cmdA = vmesa->regCmdA_End | HC_HPLEND_MASK | HC_HPMValidN_MASK | HC_HE3Fire_MASK;    
       RING_VARS;
+
+      vmesa->dmaLastPrim = 0;
 
       /* KW: modified 0x1 to 0x4 below:
        */
@@ -801,7 +811,6 @@ void viaFinishPrimitive(viaContextPtr vmesa)
 	 OUT_RING( cmdA );
 	 ADVANCE_RING();
       }   
-      vmesa->dmaLastPrim = 0;
 
       if (vmesa->dmaLow > VIA_DMA_HIGHWATER)
 	 viaFlushDma( vmesa );
@@ -819,6 +828,10 @@ void viaFinishPrimitive(viaContextPtr vmesa)
 	 vmesa->dmaCliprectAddr = 0;
       }
    }
+
+   vmesa->renderPrimitive = GL_POLYGON + 1;
+   vmesa->hwPrimitive = GL_POLYGON + 1;
+   vmesa->dmaLastPrim = 0;
 }
 
 

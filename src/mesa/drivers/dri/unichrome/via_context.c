@@ -681,7 +681,7 @@ void viaGetLock(viaContextPtr vmesa, GLuint flags)
 
     if (vmesa->sarea->ctxOwner != vmesa->hHWContext) {
        vmesa->sarea->ctxOwner = vmesa->hHWContext;
-       vmesa->newState = ~0;
+       vmesa->newEmitState = ~0;
     }
 
     if (vmesa->lastStamp != dPriv->lastStamp) {

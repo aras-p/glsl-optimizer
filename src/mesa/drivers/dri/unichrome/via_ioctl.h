@@ -49,6 +49,7 @@ void viaCheckDma(viaContextPtr vmesa, GLuint bytes);
 } while (0)
     
 
+GLuint *viaExtendPrimitive(viaContextPtr vmesa, int bytes);
 GLuint *viaAllocDmaFunc(viaContextPtr vmesa, int bytes, const char *func, int line);
 #define viaAllocDma( v, b ) viaAllocDmaFunc(v, b, __FUNCTION__, __LINE__)
 

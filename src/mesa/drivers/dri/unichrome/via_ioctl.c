@@ -32,6 +32,7 @@ v * copy of this software and associated documentation files (the "Software"),
 
 #include "mm.h"
 #include "via_context.h"
+#include "via_tris.h"
 #include "via_ioctl.h"
 #include "via_state.h"
 
@@ -678,33 +679,36 @@ void viaFlushDmaLocked(viaContextPtr vmesa, GLuint flags)
     */
    vmesa->dmaLow = 0;
    vmesa->dmaCliprectAddr = 0;
-   viaValidateState(vmesa->glCtx);
+   vmesa->newEmitState = ~0;
 }
 
-void viaWrapPrimitive( viaContextPtr vmesa )
+static void viaWrapPrimitive( viaContextPtr vmesa )
 {
-   if (VIA_DEBUG) fprintf(stderr, "%s\n", __FUNCTION__);
-   viaFinishPrimitive( vmesa );
-   
-   LOCK_HARDWARE(vmesa); 
-   viaFlushDmaLocked(vmesa, 0);
-   UNLOCK_HARDWARE(vmesa);
+   GLenum renderPrimitive = vmesa->renderPrimitive;
+   GLenum hwPrimitive = vmesa->hwPrimitive;
 
-   viaRasterPrimitive( vmesa->glCtx,
-		       vmesa->renderPrimitive,
-		       vmesa->hwPrimitive );
+   if (VIA_DEBUG) fprintf(stderr, "%s\n", __FUNCTION__);
+   
+   if (vmesa->dmaLastPrim)
+      viaFinishPrimitive( vmesa );
+   
+   viaFlushDma(vmesa);
+
+   if (renderPrimitive != GL_POLYGON + 1)
+      viaRasterPrimitive( vmesa->glCtx,
+			  renderPrimitive,
+			  hwPrimitive );
+
 }
 
 void viaFlushDma(viaContextPtr vmesa)
 {
    if (vmesa->dmaLow) {
-      if (vmesa->dmaLastPrim)
-	 viaWrapPrimitive(vmesa); 
-      else {      
-	 LOCK_HARDWARE(vmesa); 
-	 viaFlushDmaLocked(vmesa, 0);
-	 UNLOCK_HARDWARE(vmesa);
-      }
+      assert(!vmesa->dmaLastPrim);
+
+      LOCK_HARDWARE(vmesa); 
+      viaFlushDmaLocked(vmesa, 0);
+      UNLOCK_HARDWARE(vmesa);
    }
 }
 
@@ -739,6 +743,7 @@ void viaInitIoctlFuncs(GLcontext *ctx)
 
 GLuint *viaAllocDmaFunc(viaContextPtr vmesa, int bytes, const char *func, int line)
 {
+   assert(!vmesa->dmaLastPrim);
    if (vmesa->dmaLow + bytes > VIA_DMA_HIGHWATER) {
       if (VIA_DEBUG) fprintf(stderr, "buffer overflow in check dma = %d + %d = %d\n", 
 			     vmesa->dmaLow, bytes, vmesa->dmaLow + bytes);
@@ -748,8 +753,21 @@ GLuint *viaAllocDmaFunc(viaContextPtr vmesa, int bytes, const char *func, int li
    {
       GLuint *start = (GLuint *)(vmesa->dma + vmesa->dmaLow);
       vmesa->dmaLow += bytes;
-      if (VIA_DEBUG && (vmesa->dmaLow & 0x4))
-	 fprintf(stderr, "%s/%d: alloc 0x%x --> dmaLow 0x%x\n", func, line, bytes, vmesa->dmaLow);
+      return start;
+   }
+}
+
+
+GLuint *viaExtendPrimitive(viaContextPtr vmesa, int bytes)
+{
+   assert(vmesa->dmaLastPrim);
+   if (vmesa->dmaLow + bytes > VIA_DMA_HIGHWATER) {
+      viaWrapPrimitive(vmesa);
+   }
+
+   {
+      GLuint *start = (GLuint *)(vmesa->dma + vmesa->dmaLow);
+      vmesa->dmaLow += bytes;
       return start;
    }
 }

@@ -123,6 +123,7 @@ struct via_context_t {
     /* State for via_vb.c and via_tris.c.
      */
     GLuint newState;            /* _NEW_* flags */
+    GLuint newEmitState;            /* _NEW_* flags */
     GLuint setupNewInputs;
     GLuint setupIndex;
     GLuint renderIndex;

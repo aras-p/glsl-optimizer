@@ -69,7 +69,7 @@ static GLuint ROP[16] = {
 
 
 
-static void via_emit_state(viaContextPtr vmesa)
+void viaEmitState(viaContextPtr vmesa)
 {
    GLcontext *ctx = vmesa->glCtx;
    GLuint i = 0;
@@ -516,6 +516,8 @@ static void via_emit_state(viaContextPtr vmesa)
    }
    
    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
+
+   vmesa->newEmitState = 0;
 }
 
 
@@ -1548,9 +1550,7 @@ void viaValidateState( GLcontext *ctx )
         viaChooseStencilState(ctx);
     
     if (!vmesa->Fallback) {
-       viaChooseVertexState(ctx);
-       viaChooseRenderState(ctx);
-       via_emit_state(vmesa);
+       vmesa->newEmitState |= vmesa->newState;
        vmesa->newState = 0;
     }
             
