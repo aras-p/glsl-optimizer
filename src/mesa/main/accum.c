@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.7 1999/10/20 22:32:02 brianp Exp $ */
+/* $Id: accum.c,v 1.8 1999/10/20 22:39:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -342,16 +342,17 @@ void gl_Accum( GLcontext *ctx, GLenum op, GLfloat value )
             rescale_accum(ctx);
 
          if (ctx->IntegerAccumMode) {
-            /* build lookup table to avoid integer divides */
-            GLfloat divisor = 1.0F / ctx->IntegerAccumScaler;
-            static GLubyte divTable[32768];
-            static GLfloat prevDivisor = 0.0;
+            /* build lookup table to avoid many floating point multiplies */
+            const GLfloat mult = ctx->IntegerAccumScaler;
+            static GLchan multTable[32768];
+            static GLfloat prevMult = 0.0;
             GLuint j;
-            if (divisor != prevDivisor) {
-               assert(divisor * 256 <= 32768);
-               for (j = 0; j < divisor * 256; j++)
-                  divTable[j] = (GLint) ((GLfloat) j / divisor + 0.5F);
-               prevDivisor = divisor;
+            const GLint max = 256 / mult;
+            if (mult != prevMult) {
+               assert(max <= 32768);
+               for (j = 0; j < max; j++)
+                  multTable[j] = (GLint) ((GLfloat) j * mult + 0.5F);
+               prevMult = mult;
             }
 
             assert(ctx->IntegerAccumScaler > 0.0);
@@ -360,14 +361,14 @@ void gl_Accum( GLcontext *ctx, GLenum op, GLfloat value )
                const GLaccum *acc = ctx->Buffer->Accum + ypos * width4 + xpos*4;
                GLuint i, i4;
                for (i = i4 = 0; i < width; i++, i4 += 4) {
-                  ASSERT(acc[i4+0] < divisor * 256);
-                  ASSERT(acc[i4+1] < divisor * 256);
-                  ASSERT(acc[i4+2] < divisor * 256);
-                  ASSERT(acc[i4+3] < divisor * 256);
-                  rgba[i][RCOMP] = divTable[acc[i4+0]];
-                  rgba[i][GCOMP] = divTable[acc[i4+1]];
-                  rgba[i][BCOMP] = divTable[acc[i4+2]];
-                  rgba[i][ACOMP] = divTable[acc[i4+3]];
+                  ASSERT(acc[i4+0] < max);
+                  ASSERT(acc[i4+1] < max);
+                  ASSERT(acc[i4+2] < max);
+                  ASSERT(acc[i4+3] < max);
+                  rgba[i][RCOMP] = multTable[acc[i4+0]];
+                  rgba[i][GCOMP] = multTable[acc[i4+1]];
+                  rgba[i][BCOMP] = multTable[acc[i4+2]];
+                  rgba[i][ACOMP] = multTable[acc[i4+3]];
                }
                if (ctx->Color.SWmasking) {
                   gl_mask_rgba_span( ctx, width, xpos, ypos, rgba );
