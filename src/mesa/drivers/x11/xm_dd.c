@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.43 2003/03/25 02:26:30 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.44 2003/03/25 02:29:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -963,9 +963,6 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
    ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
    ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
-
-   ctx->Driver.NewTextureObject = _mesa_alloc_texture_object;
-   ctx->Driver.DeleteTexture = _mesa_free_texture_object;
 
    ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
    ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
