@@ -27,6 +27,7 @@
 #define SAVAGEDMA
 
 /* Whether use DMA to transfer the 3d commands and data */
+/* Need to fix the drm driver first though */
 #define SAVAGE_CMD_DMA 0
 
 #define DMA_BUFFER_SIZE (4*1024*1024) /*4M*/
