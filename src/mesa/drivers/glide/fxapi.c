@@ -972,12 +972,27 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
    }
 
    /* Pixel tables are use during pixel read-back */
+#if FXMESA_USE_ARGB 
+   fxInitPixelTables(GL_FALSE); /* Force RGB pixel order */	
+#else
    if (glbHWConfig.SSTs[glbCurrentBoard].type == GR_SSTTYPE_VOODOO) {
-      fxInitPixelTables(GL_TRUE); /* use BGR pixel order on Voodoo1/2 */
+      /* jk991130 - GROSS HACK!!! - Voodoo 3s don't use BGR!!
+       * the only way to tell if it's a Voodoo 3 at this stage of the
+       * ballgame (no Glide 3.x for linux *yet*) is to query the # of TMUs
+       * as Voodoo3s have 2 TMUs on board, Banshee has only 1
+       * Thanks to Joseph Kain for that one
+       */
+      if (glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.nTexelfx == 2) {
+         fxInitPixelTables(GL_FALSE); /* use RGB pixel order (Voodoo3) */
+      }
+      else {
+         fxInitPixelTables(GL_TRUE); /* use BGR pixel order on Voodoo1/2 */
+      }
    }
    else {
       fxInitPixelTables(GL_FALSE); /* use RGB pixel order otherwise */
    }
+#endif
 
    fxMesa->width=FX_grSstScreenWidth();
    fxMesa->height=FX_grSstScreenHeight();
