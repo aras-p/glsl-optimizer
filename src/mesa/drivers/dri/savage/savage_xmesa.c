@@ -430,6 +430,8 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    imesa->depth_scale = (imesa->savageScreen->zpp == 2) ?
        (1.0F/0x10000):(1.0F/0x1000000);
 
+   imesa->vertex_dma_buffer = NULL;
+
    /* Uninitialized vertex format. Force setting the vertex state in
     * savageRenderStart.
     */
@@ -497,6 +499,8 @@ savageDestroyContext(__DRIcontextPrivate *driContextPriv)
    assert (imesa); /* should never be NULL */
    if (imesa) {
       savageTextureObjectPtr next_t, t;
+
+      FLUSH_BATCH(imesa);
 
       /* update for multi-tex*/ 
       {
