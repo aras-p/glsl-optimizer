@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.65 2001/06/26 01:32:48 brianp Exp $ */
+/* $Id: get.c,v 1.66 2001/08/20 16:42:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2663,6 +2663,13 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 }
 
 
+#define GET_FLOAT_ERROR				\
+{						\
+   char s[100];					\
+   sprintf(s, "glGetFloatv(0x%x)", pname);	\
+   _mesa_error(ctx, GL_INVALID_ENUM, s);	\
+}
+
 void
 _mesa_GetFloatv( GLenum pname, GLfloat *params )
 {
@@ -2948,7 +2955,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Pixel.HistogramEnabled;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
             return;
          }
 	 break;
@@ -3568,19 +3575,19 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLfloat) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
          if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLfloat) textureUnit->CurrentCubeMap->Name;
          else
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
          if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLfloat) (1 << (ctx->Const.MaxCubeTextureLevels - 1));
          else
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
          return;
 
       /* GL_ARB_texture_compression */
@@ -3589,14 +3596,14 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Hint.TextureCompression;
          }
          else
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
          if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLfloat) ctx->Const.NumCompressedTextureFormats;
          }
          else
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
          if (ctx->Extensions.ARB_texture_compression) {
@@ -3605,7 +3612,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
                params[i] = (GLfloat) ctx->Const.CompressedTextureFormats[i];
          }
          else
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
          break;
 
       /* GL_EXT_compiled_vertex_array */
@@ -3636,7 +3643,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Depth.OcclusionTest;
          }
          else {
-            _mesa_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+            GET_FLOAT_ERROR;
          }
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
@@ -3650,7 +3657,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             ctx->OcclusionResultSaved = GL_FALSE;
          }
          else {
-            _mesa_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+            GET_FLOAT_ERROR;
          }
          return;
 
@@ -3710,7 +3717,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Pixel.Convolution1DEnabled;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
             return;
          }
          break;
@@ -3719,7 +3726,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Pixel.Convolution2DEnabled;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
             return;
          }
          break;
@@ -3728,7 +3735,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Pixel.Separable2DEnabled;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
             return;
          }
          break;
@@ -3818,7 +3825,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	    *params = ctx->Const.MaxTextureMaxAnisotropy;
          }
          else {
-            _mesa_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+            GET_FLOAT_ERROR;
             return;
          }
 	 break;
@@ -3829,7 +3836,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Multisample.Enabled;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
             return;
          }
       case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
@@ -3837,7 +3844,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Multisample.SampleAlphaToCoverage;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
             return;
          }
       case GL_SAMPLE_ALPHA_TO_ONE_ARB:
@@ -3845,7 +3852,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Multisample.SampleAlphaToOne;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
             return;
          }
       case GL_SAMPLE_COVERAGE_ARB:
@@ -3853,7 +3860,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Multisample.SampleCoverage;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
             return;
          }
       case GL_SAMPLE_COVERAGE_VALUE_ARB:
@@ -3861,7 +3868,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = ctx->Multisample.SampleCoverageValue;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
             return;
          }
       case GL_SAMPLE_COVERAGE_INVERT_ARB:
@@ -3869,7 +3876,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Multisample.SampleCoverageInvert;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
             return;
          }
       case GL_SAMPLE_BUFFERS_ARB:
@@ -3877,7 +3884,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = 0.0; /* XXX fix someday */
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
             return;
          }
       case GL_SAMPLES_ARB:
@@ -3885,7 +3892,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = 0.0; /* XXX fix someday */
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
             return;
          }
 
@@ -3895,7 +3902,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Transform.RasterPositionUnclipped;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatn");
+            GET_FLOAT_ERROR;
             return;
          }
 
@@ -3905,7 +3912,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Point.SpriteMode;
          }
          else {
-            _mesa_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+            GET_FLOAT_ERROR;
             return;
          }
          break;
@@ -3916,13 +3923,13 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Hint.GenerateMipmap;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
 	    return;
          }
          break;
 
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+         GET_FLOAT_ERROR;
    }
 }
 
@@ -5303,7 +5310,8 @@ _mesa_GetString( GLenum name )
    GET_CURRENT_CONTEXT(ctx);
    static const char *vendor = "Brian Paul";
    static const char *renderer = "Mesa";
-   static const char *version = "1.2 Mesa 3.5";
+   static const char *version = "1.2 Mesa 3.5.1";
+
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
    /* this is a required driver function */
