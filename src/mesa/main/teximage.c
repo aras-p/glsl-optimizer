@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.114 2002/09/14 16:51:34 brianp Exp $ */
+/* $Id: teximage.c,v 1.115 2002/09/21 16:51:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -222,6 +222,11 @@ _mesa_base_tex_format( GLcontext *ctx, GLint format )
             return GL_DEPTH_COMPONENT;
          else
             return -1;
+      case GL_YCBCR_MESA:
+         if (ctx->Extensions.MESA_ycbcr_texture)
+            return GL_YCBCR_MESA;
+         else
+            return -1;
       default:
          return -1;  /* error */
    }
@@ -279,6 +284,7 @@ is_color_format(GLenum format)
       case GL_RGBA12:
       case GL_RGBA16:
          return GL_TRUE;
+      case GL_YCBCR_MESA:  /* not considered to be RGB */
       default:
          return GL_FALSE;
    }
@@ -895,6 +901,21 @@ texture_error_check( GLcontext *ctx, GLenum target,
       return GL_TRUE;
    }
 
+   if (format == GL_YCBCR_MESA || iformat == GL_YCBCR_MESA) {
+      ASSERT(ctx->Extensions.MESA_ycbcr_texture);
+      if (format != GL_YCBCR_MESA ||
+          iformat != GL_YCBCR_MESA ||
+          (type != GL_UNSIGNED_SHORT_8_8_MESA &&
+          type != GL_UNSIGNED_SHORT_8_8_REV_MESA)) {
+         char message[100];
+         sprintf(message,
+                 "glTexImage%d(format/type/internalFormat YCBCR mismatch",
+                 dimensions);
+         _mesa_error(ctx, GL_INVALID_ENUM, message);
+         return GL_TRUE; /* error */
+      }
+   }
+
    /* if we get here, the parameters are OK */
    return GL_FALSE;
 }
@@ -1336,6 +1357,10 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
    }
 
+   if (!ctx->Extensions.MESA_ycbcr_texture && format == GL_YCBCR_MESA) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+   }
+
    /* XXX what if format/type doesn't match texture format/type? */
 
    if (!pixels)
@@ -1385,6 +1410,22 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                }
                _mesa_pack_depth_span(ctx, width, dest, type,
                                      depthRow, &ctx->Pack);
+            }
+            else if (format == GL_YCBCR_MESA) {
+               /* No pixel transfer */
+               MEMCPY(dest, (const GLushort *) texImage->Data + row * width,
+                      width * sizeof(GLushort));
+               /* check for byte swapping */
+               if ((texImage->TexFormat->MesaFormat == MESA_FORMAT_YCBCR
+                    && type == GL_UNSIGNED_SHORT_8_8_REV_MESA) ||
+                   (texImage->TexFormat->MesaFormat == MESA_FORMAT_YCBCR_REV
+                    && type == GL_UNSIGNED_SHORT_8_8_MESA)) {
+                  if (!ctx->Pack.SwapBytes)
+                     _mesa_swap2((GLushort *) dest, width);
+               }
+               else if (ctx->Pack.SwapBytes) {
+                  _mesa_swap2((GLushort *) dest, width);
+               }
             }
             else {
                /* general case:  convert row to RGBA format */
@@ -1537,8 +1578,6 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
    GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-
-   internalFormat = GL_RGBA;
 
    if (is_color_format(internalFormat)) {
       _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,

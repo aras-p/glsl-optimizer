@@ -1,10 +1,10 @@
-/* $Id: texformat_tmp.h,v 1.6 2002/06/15 02:55:22 brianp Exp $ */
+/* $Id: texformat_tmp.h,v 1.7 2002/09/21 16:51:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -191,7 +191,8 @@ static void FETCH(rgb565)( const struct gl_texture_image *texImage,
 			   GLint i, GLint j, GLint k, GLvoid *texel )
 {
    const GLushort *src = USHORT_SRC( texImage, i, j, k );
-   GLchan *rgba = (GLchan *) texel; GLushort s = *src;
+   const GLushort s = *src;
+   GLchan *rgba = (GLchan *) texel;
    rgba[RCOMP] = UBYTE_TO_CHAN( ((s >> 8) & 0xf8) * 255 / 0xf8 );
    rgba[GCOMP] = UBYTE_TO_CHAN( ((s >> 3) & 0xfc) * 255 / 0xfc );
    rgba[BCOMP] = UBYTE_TO_CHAN( ((s << 3) & 0xf8) * 255 / 0xf8 );
@@ -202,7 +203,8 @@ static void FETCH(argb4444)( const struct gl_texture_image *texImage,
 			     GLint i, GLint j, GLint k, GLvoid *texel )
 {
    const GLushort *src = USHORT_SRC( texImage, i, j, k );
-   GLchan *rgba = (GLchan *) texel; GLushort s = *src;
+   const GLushort s = *src;
+   GLchan *rgba = (GLchan *) texel;
    rgba[RCOMP] = UBYTE_TO_CHAN( ((s >>  8) & 0xf) * 255 / 0xf );
    rgba[GCOMP] = UBYTE_TO_CHAN( ((s >>  4) & 0xf) * 255 / 0xf );
    rgba[BCOMP] = UBYTE_TO_CHAN( ((s      ) & 0xf) * 255 / 0xf );
@@ -213,7 +215,8 @@ static void FETCH(argb1555)( const struct gl_texture_image *texImage,
 			     GLint i, GLint j, GLint k, GLvoid *texel )
 {
    const GLushort *src = USHORT_SRC( texImage, i, j, k );
-   GLchan *rgba = (GLchan *) texel; GLushort s = *src;
+   const GLushort s = *src;
+   GLchan *rgba = (GLchan *) texel;
    rgba[RCOMP] = UBYTE_TO_CHAN( ((s >> 10) & 0x1f) * 255 / 0x1f );
    rgba[GCOMP] = UBYTE_TO_CHAN( ((s >>  5) & 0x1f) * 255 / 0x1f );
    rgba[BCOMP] = UBYTE_TO_CHAN( ((s      ) & 0x1f) * 255 / 0x1f );
@@ -235,7 +238,8 @@ static void FETCH(rgb332)( const struct gl_texture_image *texImage,
 			   GLint i, GLint j, GLint k, GLvoid *texel )
 {
    const GLubyte *src = UBYTE_SRC( texImage, i, j, k, 1 );
-   GLchan *rgba = (GLchan *) texel; GLubyte s = *src;
+   const GLubyte s = *src;
+   GLchan *rgba = (GLchan *) texel;
    rgba[RCOMP] = UBYTE_TO_CHAN( ((s     ) & 0xe0) * 255 / 0xe0 );
    rgba[GCOMP] = UBYTE_TO_CHAN( ((s << 3) & 0xe0) * 255 / 0xe0 );
    rgba[BCOMP] = UBYTE_TO_CHAN( ((s << 5) & 0xc0) * 255 / 0xc0 );
@@ -283,6 +287,67 @@ static void FETCH(ci8)( const struct gl_texture_image *texImage,
    *index = UBYTE_TO_CHAN( *src );
 }
 
+/* XXX this may break if GLchan != GLubyte */
+static void FETCH(ycbcr)( const struct gl_texture_image *texImage,
+                          GLint i, GLint j, GLint k, GLvoid *texel )
+{
+   const GLushort *src0 = USHORT_SRC( texImage, (i & ~1), j, k ); /* even */
+   const GLushort *src1 = src0 + 1;                               /* odd */
+   const GLubyte y0 = (*src0 >> 8) & 0xff;  /* luminance */
+   const GLubyte cb = *src0 & 0xff;         /* chroma U */
+   const GLubyte y1 = (*src1 >> 8) & 0xff;  /* luminance */
+   const GLubyte cr = *src1 & 0xff;         /* chroma V */
+   GLchan *rgba = (GLchan *) texel;
+   GLint r, g, b;
+   if (i & 1) {
+      /* odd pixel: use y1,cr,cb */
+      r = (GLint) (1.164 * (y1-16) + 1.596 * (cr-128));
+      g = (GLint) (1.164 * (y1-16) - 0.813 * (cr-128) - 0.391 * (cb-128));
+      b = (GLint) (1.164 * (y1-16) + 2.018 * (cb-128));
+   }
+   else {
+      /* even pixel: use y0,cr,cb */
+      r = (GLint) (1.164 * (y0-16) + 1.596 * (cr-128));
+      g = (GLint) (1.164 * (y0-16) - 0.813 * (cr-128) - 0.391 * (cb-128));
+      b = (GLint) (1.164 * (y0-16) + 2.018 * (cb-128));
+   }
+   rgba[RCOMP] = CLAMP(r, 0, CHAN_MAX);
+   rgba[GCOMP] = CLAMP(g, 0, CHAN_MAX);
+   rgba[BCOMP] = CLAMP(b, 0, CHAN_MAX);
+   rgba[ACOMP] = CHAN_MAX;
+}
+
+/* XXX this may break if GLchan != GLubyte */
+static void FETCH(ycbcr_rev)( const struct gl_texture_image *texImage,
+                              GLint i, GLint j, GLint k, GLvoid *texel )
+{
+   const GLushort *src0 = USHORT_SRC( texImage, (i & ~1), j, k ); /* even */
+   const GLushort *src1 = src0 + 1;                               /* odd */
+   const GLubyte y0 = *src0 & 0xff;         /* luminance */
+   const GLubyte cr = (*src0 >> 8) & 0xff;  /* chroma U */
+   const GLubyte y1 = *src1 & 0xff;         /* luminance */
+   const GLubyte cb = (*src1 >> 8) & 0xff;  /* chroma V */
+   GLchan *rgba = (GLchan *) texel;
+   GLint r, g, b;
+   if (i & 1) {
+      /* odd pixel: use y1,cr,cb */
+      r = (GLint) (1.164 * (y1-16) + 1.596 * (cr-128));
+      g = (GLint) (1.164 * (y1-16) - 0.813 * (cr-128) - 0.391 * (cb-128));
+      b = (GLint) (1.164 * (y1-16) + 2.018 * (cb-128));
+   }
+   else {
+      /* even pixel: use y0,cr,cb */
+      r = (GLint) (1.164 * (y0-16) + 1.596 * (cr-128));
+      g = (GLint) (1.164 * (y0-16) - 0.813 * (cr-128) - 0.391 * (cb-128));
+      b = (GLint) (1.164 * (y0-16) + 2.018 * (cb-128));
+   }
+   rgba[RCOMP] = CLAMP(r, 0, CHAN_MAX);
+   rgba[GCOMP] = CLAMP(g, 0, CHAN_MAX);
+   rgba[BCOMP] = CLAMP(b, 0, CHAN_MAX);
+   rgba[ACOMP] = CHAN_MAX;
+}
+
+
 
 /* big-endian */
 
@@ -324,7 +389,8 @@ static void FETCH(bgr565)( const struct gl_texture_image *texImage,
 			   GLint i, GLint j, GLint k, GLvoid *texel )
 {
    const GLushort *src = USHORT_SRC( texImage, i, j, k );
-   GLchan *rgba = (GLchan *) texel; GLushort s = *src;
+   const GLushort s = *src;
+   GLchan *rgba = (GLchan *) texel;
    rgba[RCOMP] = UBYTE_TO_CHAN( ((s >> 8) & 0xf8) * 255 / 0xf8 );
    rgba[GCOMP] = UBYTE_TO_CHAN( ((s >> 3) & 0xfc) * 255 / 0xfc );
    rgba[BCOMP] = UBYTE_TO_CHAN( ((s << 3) & 0xf8) * 255 / 0xf8 );
@@ -335,7 +401,8 @@ static void FETCH(bgra4444)( const struct gl_texture_image *texImage,
 			     GLint i, GLint j, GLint k, GLvoid *texel )
 {
    const GLushort *src = USHORT_SRC( texImage, i, j, k );
-   GLchan *rgba = (GLchan *) texel; GLushort s = *src;
+   const GLushort s = *src;
+   GLchan *rgba = (GLchan *) texel;
    rgba[RCOMP] = UBYTE_TO_CHAN( ((s >>  8) & 0xf) * 255 / 0xf );
    rgba[GCOMP] = UBYTE_TO_CHAN( ((s >>  4) & 0xf) * 255 / 0xf );
    rgba[BCOMP] = UBYTE_TO_CHAN( ((s      ) & 0xf) * 255 / 0xf );
@@ -346,7 +413,8 @@ static void FETCH(bgra5551)( const struct gl_texture_image *texImage,
 			     GLint i, GLint j, GLint k, GLvoid *texel )
 {
    const GLushort *src = USHORT_SRC( texImage, i, j, k );
-   GLchan *rgba = (GLchan *) texel; GLushort s = *src;
+   const GLushort s = *src;
+   GLchan *rgba = (GLchan *) texel;
    rgba[RCOMP] = UBYTE_TO_CHAN( ((s >> 10) & 0x1f) * 255 / 0x1f );
    rgba[GCOMP] = UBYTE_TO_CHAN( ((s >>  5) & 0x1f) * 255 / 0x1f );
    rgba[BCOMP] = UBYTE_TO_CHAN( ((s      ) & 0x1f) * 255 / 0x1f );
@@ -368,7 +436,8 @@ static void FETCH(bgr233)( const struct gl_texture_image *texImage,
 			   GLint i, GLint j, GLint k, GLvoid *texel )
 {
    const GLubyte *src = UBYTE_SRC( texImage, i, j, k, 1 );
-   GLchan *rgba = (GLchan *) texel; GLubyte s = *src;
+   const GLubyte s = *src;
+   GLchan *rgba = (GLchan *) texel;
    rgba[RCOMP] = UBYTE_TO_CHAN( ((s     ) & 0xe0) * 255 / 0xe0 );
    rgba[GCOMP] = UBYTE_TO_CHAN( ((s << 3) & 0xe0) * 255 / 0xe0 );
    rgba[BCOMP] = UBYTE_TO_CHAN( ((s << 5) & 0xc0) * 255 / 0xc0 );

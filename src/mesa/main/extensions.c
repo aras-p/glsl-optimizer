@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.78 2002/09/06 02:56:08 brianp Exp $ */
+/* $Id: extensions.c,v 1.79 2002/09/21 16:51:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -113,6 +113,7 @@ static struct {
    { OFF, "GL_INGR_blend_func_separate",       F(INGR_blend_func_separate) },
    { OFF, "GL_MESA_packed_depth_stencil",      0 },
    { OFF, "GL_MESA_resize_buffers",            F(MESA_resize_buffers) },
+   { OFF, "GL_MESA_ycbcr_texture",             F(MESA_ycbcr_texture) },
    { ON,  "GL_MESA_window_pos",                F(MESA_window_pos) },
    { OFF, "GL_NV_blend_square",                F(NV_blend_square) },
    { OFF, "GL_NV_point_sprite",                F(NV_point_sprite) },
@@ -130,7 +131,9 @@ static struct {
    { OFF, "GL_SGIX_pixel_texture",             F(SGIX_pixel_texture) },
    { OFF, "GL_SGIX_shadow",                    F(SGIX_shadow) },
    { OFF, "GL_SGIX_shadow_ambient",            F(SGIX_shadow_ambient) },
-   { OFF, "GL_3DFX_texture_compression_FXT1",  F(_3DFX_texture_compression_FXT1) }
+   { OFF, "GL_3DFX_texture_compression_FXT1",  F(_3DFX_texture_compression_FXT1) },
+   { OFF, "GL_APPLE_client_storage",           F(APPLE_client_storage) }
+
 };
 
 
@@ -181,6 +184,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_IBM_texture_mirrored_repeat",
       "GL_INGR_blend_func_separate",
       "GL_MESA_resize_buffers",
+      "GL_MESA_ycbcr_texture",
       "GL_NV_blend_square",
       "GL_NV_point_sprite",
       "GL_NV_texture_rectangle",

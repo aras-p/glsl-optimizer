@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.85 2002/09/06 02:56:09 brianp Exp $ */
+/* $Id: mtypes.h,v 1.86 2002/09/21 16:51:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -850,6 +850,8 @@ struct gl_texture_image {
    GLfloat HeightScale;		/* used for mipmap lod computation */
    GLfloat DepthScale;		/* used for mipmap lod computation */
    GLvoid *Data;		/* Image data, accessed via FetchTexel() */
+   GLboolean IsClientData;	/* Data owned by client? */
+
 
    const struct gl_texture_format *TexFormat;
 
@@ -1042,6 +1044,7 @@ struct gl_pixelstore_attrib {
    GLint SkipImages;      /* for GL_EXT_texture3D */
    GLboolean SwapBytes;
    GLboolean LsbFirst;
+   GLboolean ClientStorage; /* GL_APPLE_client_storage */
 };
 
 
@@ -1433,7 +1436,7 @@ struct gl_extensions {
    GLboolean INGR_blend_func_separate;
    GLboolean MESA_window_pos;
    GLboolean MESA_resize_buffers;
-   GLboolean MESA_sprite_point;
+   GLboolean MESA_ycbcr_texture;
    GLboolean NV_blend_square;
    GLboolean NV_point_sprite;
    GLboolean NV_texture_rectangle;
@@ -1450,6 +1453,7 @@ struct gl_extensions {
    GLboolean SGIX_shadow;
    GLboolean SGIX_shadow_ambient; /* or GL_ARB_shadow_ambient */
    GLboolean _3DFX_texture_compression_FXT1;
+   GLboolean APPLE_client_storage;
 };
 
 

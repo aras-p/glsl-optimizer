@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.65 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_texture.c,v 1.66 2002/09/21 16:51:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3268,7 +3268,8 @@ texture_apply( const GLcontext *ctx,
 
    format = texUnit->_Current->Image[baseLevel]->Format;
 
-   if (format == GL_COLOR_INDEX || format == GL_DEPTH_COMPONENT) {
+   if (format == GL_COLOR_INDEX || format == GL_DEPTH_COMPONENT
+       || format == GL_YCBCR_MESA) {
       format = GL_RGBA;  /* a bit of a hack */
    }
 

@@ -1,4 +1,4 @@
-/* $Id: texformat.c,v 1.14 2002/07/09 01:22:50 brianp Exp $ */
+/* $Id: texformat.c,v 1.15 2002/09/21 16:51:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -437,6 +437,44 @@ const struct gl_texture_format _mesa_texformat_ci8 = {
 };
 
 
+const struct gl_texture_format _mesa_texformat_ycbcr = {
+   MESA_FORMAT_YCBCR,			/* MesaFormat */
+   GL_YCBCR_MESA,			/* BaseFormat */
+   GL_UNSIGNED_SHORT_8_8_MESA,		/* Type */
+   0,					/* RedBits */
+   0,					/* GreenBits */
+   0,					/* BlueBits */
+   0,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   2,					/* TexelBytes */
+   fetch_1d_texel_ycbcr,		/* FetchTexel1D */
+   fetch_2d_texel_ycbcr,		/* FetchTexel2D */
+   fetch_3d_texel_ycbcr,		/* FetchTexel3D */
+};
+
+
+const struct gl_texture_format _mesa_texformat_ycbcr_rev = {
+   MESA_FORMAT_YCBCR_REV,		/* MesaFormat */
+   GL_YCBCR_MESA,			/* BaseFormat */
+   GL_UNSIGNED_SHORT_8_8_REV_MESA,	/* Type */
+   0,					/* RedBits */
+   0,					/* GreenBits */
+   0,					/* BlueBits */
+   0,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   2,					/* TexelBytes */
+   fetch_1d_texel_ycbcr_rev,		/* FetchTexel1D */
+   fetch_2d_texel_ycbcr_rev,		/* FetchTexel2D */
+   fetch_3d_texel_ycbcr_rev,		/* FetchTexel3D */
+};
+
+
 /* Big-endian */
 #if 0
 const struct gl_texture_format _mesa_texformat_abgr8888 = {
@@ -735,6 +773,12 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
       if (!ctx->Extensions.ARB_texture_compression)
 	 _mesa_problem(ctx, "texture compression extension not enabled");
       return &_mesa_texformat_rgba;
+
+   case GL_YCBCR_MESA:
+      if (type == GL_UNSIGNED_SHORT_8_8_MESA)
+         return &_mesa_texformat_ycbcr;
+      else
+         return &_mesa_texformat_ycbcr_rev;
 
    default:
       _mesa_problem(ctx, "unexpected format in _mesa_choose_tex_format()");

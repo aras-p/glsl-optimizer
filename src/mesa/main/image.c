@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.66 2002/04/26 13:59:09 brianp Exp $ */
+/* $Id: image.c,v 1.67 2002/09/21 16:51:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,7 +57,8 @@ const struct gl_pixelstore_attrib _mesa_native_packing = {
    0,            /* ImageHeight */
    0,            /* SkipImages */
    GL_FALSE,     /* SwapBytes */
-   GL_FALSE      /* LsbFirst */
+   GL_FALSE,     /* LsbFirst */
+   GL_FALSE      /* ClientStorage */
 };
 
 
@@ -203,6 +204,9 @@ GLint _mesa_sizeof_packed_type( GLenum type )
          return sizeof(GLuint);
       case GL_UNSIGNED_INT_2_10_10_10_REV:
          return sizeof(GLuint);
+      case GL_UNSIGNED_SHORT_8_8_MESA:
+      case GL_UNSIGNED_SHORT_8_8_REV_MESA:
+          return sizeof(GLushort);      
       default:
          return -1;
    }
@@ -245,6 +249,8 @@ GLint _mesa_components_in_format( GLenum format )
 	 return 4;
       case GL_ABGR_EXT:
          return 4;
+      case GL_YCBCR_MESA:
+         return 2;
       default:
          return -1;
    }
@@ -301,6 +307,12 @@ GLint _mesa_bytes_per_pixel( GLenum format, GLenum type )
       case GL_UNSIGNED_INT_2_10_10_10_REV:
          if (format == GL_RGBA || format == GL_BGRA || format == GL_ABGR_EXT)
             return sizeof(GLuint);
+         else
+            return -1;
+      case GL_UNSIGNED_SHORT_8_8_MESA:
+      case GL_UNSIGNED_SHORT_8_8_REV_MESA:
+         if (format == GL_YCBCR_MESA)
+            return sizeof(GLushort);
          else
             return -1;
       default:
@@ -393,6 +405,12 @@ _mesa_is_legal_format_and_type( GLenum format, GLenum type )
             default:
                return GL_FALSE;
          }
+      case GL_YCBCR_MESA:
+         if (type == GL_UNSIGNED_SHORT_8_8_MESA ||
+             type == GL_UNSIGNED_SHORT_8_8_REV_MESA)
+            return GL_TRUE;
+         else
+            return GL_FALSE;
       default:
          ; /* fall-through */
    }
