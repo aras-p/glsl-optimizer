@@ -1,0 +1,164 @@
+========================================================
+MESA 2.6 BEOS PORT RELEASE 2
+========================================================
+
+BeOS notes
+--------------------------------------------------------
+
+	The BeOS driver is implemented through Mesa's 
+	Off-Screen rendering interface. This is the best way
+	to integrate it into the C++ framework of the BeOS.
+	As of this second port, the mesa accelerated 3Dfx driver
+	is also supported.
+	The TK and AUX are partially supported but somewhat unstable.
+	
+
+Installing the library
+--------------------------------------------------------
+
+	You'll have to build the library, and copy the files from
+	Mesa2.6/lib/ into your /boot/home/config/lib/ directory.
+
+
+Rebuilding the library
+--------------------------------------------------------
+
+	Type 'make beos-ppc', 'make beos-x86', or 'make beos-glide' (for the accelerated version)
+	in the Mesa2.6/ directory to compile the library and the demos.
+	You will naturally need the unlimited linker.
+
+	For the x86 version you will have to play with the OSMesaCreateContext() parameters
+	as the OSMESA_BGRA used in the ppc version makes the colors screwy in the x86
+	version (damn little endian CPU....), see line 897 of src-tk/tkbeos.cpp and 
+	include/GL/osmesa.h for more info.
+
+	The glide version expects the lib3DfxGlide2X.so library to be in your
+	/boot/home/config/lib directory, and the glide/ directory (containing
+	at least the include/ directory) to be in the same directory as the
+	Mesa-2.6 directory. These files are in the glide.zip package, see the
+	changes section.
+
+
+BeOS demos
+--------------------------------------------------------
+
+	I have converted some of the supplied demo into
+	BeOS specific code to show how to integrate
+	Mesa into your own projects. Look in the BeOS/
+	directory to test them.
+	NOTE that these demos directly use the OSMesa driver and
+	don't work with the glide version of the library. Looking
+	at src-tk/tkbeos.cpp it should be trivial to convert them
+	to an accelerated version.
+	For animation demos try the 'wave' and the 'logo'
+	demo:
+
+	wave demo keys:
+
+	c		Toggle contouring mode.
+	s		Toggle flat/smooth shade mode.
+	l		Toggle lighting mode.
+	d		Toggle depth checking mode.
+	a		Toggle spin mode.
+	
+	logo demo keys:
+	
+	LEFT	Rotate.
+	RIGHT	Rotate
+	UP		Move clipping plane.
+	DOWN	Move clipping plane.
+	Z	Translate.
+	z	Translate.
+	1	Use GL_POINT polygon mode.
+	2	Use GL_LINE polygon mode.
+	3	Use GL_FILL polygon mode.
+	p	Toggle polygon fill modes.
+	4	Use GL_NICEST for GL_POLYGON_SMOOTH_HINT.
+	5	Use anti-aliased polygon mode.
+	6	Use aliased polygon mode.
+	8	Toggle dither mode.
+	9	Toggle stipple polygon mode.
+	0	Toggle flat/smooth shading mode.
+	q	Disable cull mode.
+	w	Use front face cull mode.
+	e	Use back face cull mode.
+	r	Use clockwise front face mode.
+	t 	Use counter-clockwise front face mode.
+	y	Use MSB first stipple pattern.
+	u	Use LSB first stipple pattern.
+	a	Use brick texture map.
+	s	Use checker texture map.
+	d	Disable texture map.
+	f	Use decal texture environment mode.
+	g	Use modulate texture environment mode.
+
+
+	
+How to compile the other demos in samples/ and demos/
+--------------------------------------------------------
+
+	Just type 
+		
+		'mwcc demo.c -I../include ../lib/libMesaGL.so'
+
+	or something similar. I especially like the
+	isosurf.c in demos/ ...
+
+NOTE: R3 has broken the demos, due to some of the code in BeBuild.h. Either make sure that file isn't included or comment out the stuff in the GL section if you want to build the demos.
+
+Changes
+-------
+
+	In the second release I (Duncan Wilcox) have reworked
+	the Makefiles a bit, and added out of the box support for
+	the 3Dfx drivers by David Bucciarelli. To use or build the
+	3Dfx versions, you'll need the Glide driver ported to BeOS
+	by Be, Inc. The file is called glide.zip, and currently is
+	at ftp://ftp.be.com/pub/samples/preview/graphics/glide.zip
+
+	I didn't have time to work on a BeOS version of GLUT, but
+	the version that Jake Hamby (jehamby@be.com) ported is probably
+	the best start, if you want to try and adapt it to Mesa. You
+	can find that at ftp://ftp.be.com/pub/beos_updates/developers/glut-3.5.zip
+
+	While it's a bit of a hack, you'll find that src-tk/tkbeos.cpp
+	provides most of the ideas to use Mesa in a BeOS application both for
+	off screen and accelerated rendering.*
+
+	The libraries have been split into four (libMesaGL.so, libMesaGLU.so, libMesatk.so,
+	and libMesaaux.so).
+
+	Tinic Uro did most of the work with the first BeOS port, at DR8.2 time.
+
+
+	*The tkbeos.cpp file has been updated slightly to fix some mouse problems.
+	Also the Makefiles have been updated to support x86 versions.
+
+ToDo
+--------------------------------------------------------
+
+	- implementing a BeOS context.
+	- Better support of the TK and AUX package.*
+	- Speedups
+	- split into four shared libraries.**
+	- bugfixes
+	- a FXhack similar to the X driver, to use glide
+	  acceleration in a window
+
+	*fixed, see Changes section above.
+	**Done.
+
+Author
+--------------------------------------------------------
+
+	Send bugreports, comments and other stuff to:
+
+	Tinic Uro <5uro@informatik.uni-hamburg.de>
+
+	or
+
+	Duncan Wilcox <duncan@mclink.it>
+
+	or 
+	
+	Ed Silva <esilva@earthlink.net>
