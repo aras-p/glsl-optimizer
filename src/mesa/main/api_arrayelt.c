@@ -675,7 +675,9 @@ void _ae_destroy_context( GLcontext *ctx )
 
 /**
  * Make a list of per-vertex functions to call for each glArrayElement call.
- * These functions access the array data (i.e. glVertex, glColor, glNormal, etc);
+ * These functions access the array data (i.e. glVertex, glColor, glNormal,
+ * etc).
+ * Note: this may be called during display list construction.
  */
 static void _ae_update_state( GLcontext *ctx )
 {
@@ -684,8 +686,8 @@ static void _ae_update_state( GLcontext *ctx )
    AEattrib *at = actx->attribs;
    GLuint i;
 
-   /* yuck, no generic array to correspond to color index or edge flag */
-   if (ctx->Array.Index.Enabled) {
+   /* conventional vertex arrays */
+  if (ctx->Array.Index.Enabled) {
       aa->array = &ctx->Array.Index;
       aa->func = indexfuncs[TYPE_IDX(aa->array->Type)];
       aa++;
@@ -695,86 +697,44 @@ static void _ae_update_state( GLcontext *ctx )
       aa->func = (array_func) glEdgeFlagv;
       aa++;
    }
-
-   /* all other arrays handled here */
-   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      /* Note: we count down to zero so glVertex (attrib 0) is last!!! */
-      const GLuint index = VERT_ATTRIB_MAX - i - 1;
-      struct gl_client_array *attribArray = NULL;
-
-      /* Generic arrays take priority over conventional arrays if vertex program
-       * mode is enabled.
-       */
-      if (ctx->VertexProgram.Enabled
-          && ctx->Array.VertexAttrib[index].Enabled) {
-         if (index == 0) {
-            /* Special case: use glVertex() for vertex position so
-             * that it's always executed last.
-             */
-            aa->array = &ctx->Array.VertexAttrib[0];
-            aa->func = vertexfuncs[aa->array->Size-2][TYPE_IDX(aa->array->Type)];
-            aa++;
-         }
-         else {
-            attribArray = &ctx->Array.VertexAttrib[index];
-         }
+   if (ctx->Array.Normal.Enabled) {
+      aa->array = &ctx->Array.Normal;
+      aa->func = normalfuncs[TYPE_IDX(aa->array->Type)];
+      aa++;
+   }
+   if (ctx->Array.Color.Enabled) {
+      aa->array = &ctx->Array.Color;
+      aa->func = colorfuncs[aa->array->Size-3][TYPE_IDX(aa->array->Type)];
+      aa++;
+   }
+   if (ctx->Array.SecondaryColor.Enabled) {
+      aa->array = &ctx->Array.SecondaryColor;
+      aa->func = secondarycolorfuncs[TYPE_IDX(aa->array->Type)];
+      aa++;
+   }
+   if (ctx->Array.FogCoord.Enabled) {
+      aa->array = &ctx->Array.FogCoord;
+      aa->func = fogcoordfuncs[TYPE_IDX(aa->array->Type)];
+      aa++;
+   }
+   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
+      if (ctx->Array.TexCoord[i].Enabled) {
+         /* NOTE: we use generic glVertexAttrib functions here.
+          * If we ever de-alias conventional/generic vertex attribs this
+          * will have to change.
+          */
+         struct gl_client_array *attribArray = &ctx->Array.TexCoord[i];
+         at->array = attribArray;
+         at->func = attribfuncs[at->array->Normalized][at->array->Size-1][TYPE_IDX(at->array->Type)];
+         at->index = i;
+         at++;
       }
-      else {
-         switch (index) {
-         case VERT_ATTRIB_POS:
-            if (ctx->Array.Vertex.Enabled) {
-               aa->array = &ctx->Array.Vertex;
-               aa->func = vertexfuncs[aa->array->Size-2][TYPE_IDX(aa->array->Type)];
-               aa++;
-            }
-            break;
-         case VERT_ATTRIB_NORMAL:
-            if (ctx->Array.Normal.Enabled) {
-               aa->array = &ctx->Array.Normal;
-               aa->func = normalfuncs[TYPE_IDX(aa->array->Type)];
-               aa++;
-            }
-            break;
-         case VERT_ATTRIB_COLOR0:
-            if (ctx->Array.Color.Enabled) {
-               aa->array = &ctx->Array.Color;
-               aa->func = colorfuncs[aa->array->Size-3][TYPE_IDX(aa->array->Type)];
-               aa++;
-            }
-            break;
-         case VERT_ATTRIB_COLOR1:
-            if (ctx->Array.SecondaryColor.Enabled) {
-               aa->array = &ctx->Array.SecondaryColor;
-               aa->func = secondarycolorfuncs[TYPE_IDX(aa->array->Type)];
-               aa++;
-            }
-            break;
-         case VERT_ATTRIB_FOG:
-            if (ctx->Array.FogCoord.Enabled) {
-               aa->array = &ctx->Array.FogCoord;
-               aa->func = fogcoordfuncs[TYPE_IDX(aa->array->Type)];
-               aa++;
-            }
-            break;
-         case VERT_ATTRIB_TEX0:
-         case VERT_ATTRIB_TEX1:
-         case VERT_ATTRIB_TEX2:
-         case VERT_ATTRIB_TEX3:
-         case VERT_ATTRIB_TEX4:
-         case VERT_ATTRIB_TEX5:
-         case VERT_ATTRIB_TEX6:
-         case VERT_ATTRIB_TEX7:
-            /* use generic vertex attribs for texcoords */
-            if (ctx->Array.TexCoord[index - VERT_ATTRIB_TEX0].Enabled) {
-               attribArray = &ctx->Array.TexCoord[index - VERT_ATTRIB_TEX0];
-            }
-         default:
-            /* nothing */;
-         }
-      }
+   }
 
-      /* Save glVertexAttrib call (may be for glMultiTexCoord) */
-      if (attribArray) {
+   /* generic vertex attribute arrays */
+   for (i = 1; i < VERT_ATTRIB_MAX; i++) {  /* skip zero! */
+      if (ctx->Array.VertexAttrib[i].Enabled) {
+         struct gl_client_array *attribArray = &ctx->Array.VertexAttrib[i];
          at->array = attribArray;
          /* Note: we can't grab the _glapi_Dispatch->VertexAttrib1fvNV
           * function pointer here (for float arrays) since the pointer may
@@ -782,10 +742,27 @@ static void _ae_update_state( GLcontext *ctx )
           * the next.  Doing so caused UT to break.
           */
          at->func = attribfuncs[at->array->Normalized][at->array->Size-1][TYPE_IDX(at->array->Type)];
-         at->index = index;
+         at->index = i;
          at++;
       }
    }
+
+   /* finally, vertex position */
+   if (ctx->Array.VertexAttrib[0].Enabled) {
+      /* Use glVertex(v) instead of glVertexAttrib(0, v) to be sure it's
+       * issued as the last (proviking) attribute).
+       */
+      aa->array = &ctx->Array.VertexAttrib[0];
+      assert(aa->array->Size >= 2); /* XXX fix someday? */
+      aa->func = vertexfuncs[aa->array->Size-2][TYPE_IDX(aa->array->Type)];
+      aa++;
+   }
+   else if (ctx->Array.Vertex.Enabled) {
+      aa->array = &ctx->Array.Vertex;
+      aa->func = vertexfuncs[aa->array->Size-2][TYPE_IDX(aa->array->Type)];
+      aa++;
+   }
+
    ASSERT(at - actx->attribs <= VERT_ATTRIB_MAX);
    ASSERT(aa - actx->arrays < 32);
    at->func = NULL;  /* terminate the list */
@@ -795,6 +772,12 @@ static void _ae_update_state( GLcontext *ctx )
 }
 
 
+/**
+ * Called via glArrayElement() and glDrawArrays().
+ * Issue the glNormal, glVertex, glColor, glVertexAttrib, etc functions
+ * for all enabled vertex arrays (for elt-th element).
+ * Note: this may be called during display list construction.
+ */
 void GLAPIENTRY _ae_loopback_array_elt( GLint elt )
 {
    GET_CURRENT_CONTEXT(ctx);
