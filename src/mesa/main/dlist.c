@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.73 2001/06/11 19:17:11 brianp Exp $ */
+/* $Id: dlist.c,v 1.74 2001/06/12 22:06:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -235,7 +235,6 @@ typedef enum {
 	OPCODE_WINDOW_POS,
         /* GL_ARB_multitexture */
         OPCODE_ACTIVE_TEXTURE,
-        OPCODE_CLIENT_ACTIVE_TEXTURE,
         /* GL_SGIX/SGIS_pixel_texture */
         OPCODE_PIXEL_TEXGEN_SGIX,
         OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS,
@@ -633,7 +632,6 @@ void _mesa_init_lists( void )
       InstSize[OPCODE_SAMPLE_COVERAGE] = 3;
       /* GL_ARB_multitexture */
       InstSize[OPCODE_ACTIVE_TEXTURE] = 2;
-      InstSize[OPCODE_CLIENT_ACTIVE_TEXTURE] = 2;
    }
    init_flag = 1;
 }
@@ -3564,23 +3562,6 @@ static void save_ActiveTextureARB( GLenum target )
 }
 
 
-/* GL_ARB_multitexture */
-static void save_ClientActiveTextureARB( GLenum target )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_CLIENT_ACTIVE_TEXTURE, 1 );
-   if (n) {
-      n[1].e = target;
-   }
-   if (ctx->ExecuteFlag) {
-      (*ctx->Exec->ClientActiveTextureARB)( target );
-   }
-}
-
-
-
 /* GL_ARB_transpose_matrix */
 
 static void save_LoadTransposeMatrixdARB( const GLdouble m[16] )
@@ -4596,9 +4577,6 @@ execute_list( GLcontext *ctx, GLuint list )
          case OPCODE_ACTIVE_TEXTURE:  /* GL_ARB_multitexture */
             (*ctx->Exec->ActiveTextureARB)( n[1].e );
             break;
-         case OPCODE_CLIENT_ACTIVE_TEXTURE:  /* GL_ARB_multitexture */
-            (*ctx->Exec->ClientActiveTextureARB)( n[1].e );
-            break;
          case OPCODE_PIXEL_TEXGEN_SGIX:  /* GL_SGIX_pixel_texture */
             (*ctx->Exec->PixelTexGenSGIX)( n[1].e );
             break;
@@ -5520,6 +5498,14 @@ static void exec_ResizeBuffersMESA( void )
    ctx->Exec->ResizeBuffersMESA( );
 }
 
+
+static void exec_ClientActiveTextureARB( GLenum target )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->ClientActiveTextureARB(target);
+}
+
 static void exec_SecondaryColorPointerEXT(GLint size, GLenum type,
 			       GLsizei stride, const GLvoid *ptr)
 {
@@ -5855,7 +5841,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
 
    /* GL_ARB_multitexture */
    table->ActiveTextureARB = save_ActiveTextureARB;
-   table->ClientActiveTextureARB = save_ClientActiveTextureARB;
+   table->ClientActiveTextureARB = exec_ClientActiveTextureARB;
 
    /* GL_EXT_blend_func_separate */
    table->BlendFuncSeparateEXT = save_BlendFuncSeparateEXT;
