@@ -7,6 +7,53 @@
 <H1>News</H1>
 
 
+<h2>September 5, 2003</h2>
+
+<p>
+Mesa 5.0.2 has been released.  This is a stable, bug-fix release.
+</p>
+<pre>
+    Bug fixes:
+	- fixed texgen problem causing texcoord's Q to be zero (stex3d)
+	- default GL_TEXTURE_COMPARE_MODE_ARB was wrong
+	- GL_CURRENT_MATRIX_NV query was wrong
+	- GL_CURRENT_MATRIX_STACK_DEPTH_NV query was off by one
+	- GL_LIST_MODE query wasn't correct
+	- GL_FOG_COORDINATE_SOURCE_EXT query wasn't supported
+	- GL_SECONDARY_COLOR_ARRAY_SIZE_EXT query returned wrong value
+	- blended, wide lines didn't always work correctly (bug 711595)
+	- glVertexAttrib4svNV w component was always 1
+	- fixed bug in GL_IBM_rasterpos_clip (missing return)
+	- GL_DEPTH_TEXTURE_MODE = GL_ALPHA didn't work correctly
+	- a few Solaris compilation fixes
+	- fixed glClear() problem for DRI drivers (non-existant stencil, etc)
+	- fixed int/REAL mixup in GLU NURBS curve evaluator (Eric Cazeaux)
+	- fixed delete [] bug in SI GLU (bug 721765) (Diego Santa Cruz)
+	- glFog() didn't clamp fog colors
+	- fixed bad float/int conversion for GL_TEXTURE_PRIORITY in the
+	  gl[Get]TexParameteri[v] functions
+	- fixed invalid memory references in glTexGen functions (bug 781602)
+	- integer-valued color arrays weren't handled correctly
+	- glDrawPixels(GL_DEPTH_COMPONENT) with glPixelZoom didn't work
+	- GL_EXT_texture_lod_bias is part of 1.4, overlooked in 5.0.1
+    Changes:
+	- build GLUT with -fexceptions so C++ apps propogate exceptions
+</pre>
+<p>
+MD5 checksums follow:
+</p>
+<pre>
+2deb4176e7a06a0477ae31cadd55444b  MesaLib-5.0.2.tar.gz
+dc147598ebdff4312260a7f79b3c5c9c  MesaLib-5.0.2.tar.bz2
+1eb0fa7079131efef574e3bda328b8c8  MesaLib-5.0.2.zip
+e0dc86e9417620e794968641403604d4  MesaDemos-5.0.2.tar.gz
+a71afaeddd0b567423f88085576850d3  MesaDemos-5.0.2.tar.bz2
+32fbf1925cf45f548468ddda96087828  MesaDemos-5.0.2.zip
+</pre>
+
+
+
+
 <h2>June 2003</h2>
 
 <p>
@@ -626,6 +673,6 @@ source code</a>.</p>
 
 
 <hr>
-$Id: news.html,v 3.6 2003/08/15 19:10:47 brianp Exp $
+$Id: news.html,v 3.7 2003/09/05 13:39:39 brianp Exp $
 </body>
 </html>
