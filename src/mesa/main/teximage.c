@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.110 2002/06/29 19:48:16 brianp Exp $ */
+/* $Id: teximage.c,v 1.111 2002/07/09 01:22:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,7 +41,6 @@
 #include "texstate.h"
 #include "texstore.h"
 #include "mtypes.h"
-#include "swrast/s_span.h" /* XXX SWRAST hack */
 #endif
 
 

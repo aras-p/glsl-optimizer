@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.28 2002/06/12 00:52:50 brianp Exp $ */
+/* $Id: macros.h,v 1.29 2002/07/09 01:22:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,15 +57,6 @@
 #ifndef NULL
 #define NULL 0
 #endif
-
-
-
-/*
- * Bitmask helpers
- */
-#define SET_BITS(WORD, BITS)    (WORD) |= (BITS)
-#define CLEAR_BITS(WORD, BITS)  (WORD) &= ~(BITS)
-#define TEST_BITS(WORD, BITS)   ((WORD) & (BITS))
 
 
 /* Stepping a GLfloat pointer by a byte stride

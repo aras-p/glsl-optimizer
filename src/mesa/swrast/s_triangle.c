@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.59 2002/06/15 03:03:12 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.60 2002/07/09 01:22:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -218,7 +218,7 @@ static void simple_textured_triangle( GLcontext *ctx,
       span->intTex[1] += span->intTexStep[1];				\
    }									\
    (*swrast->Driver.WriteRGBSpan)(ctx, span->end, span->x, span->y,	\
-                                  (CONST GLchan (*)[3]) span->color.rgb,	\
+                                  (CONST GLchan (*)[3]) span->color.rgb,\
                                   NULL );
 
 #include "s_tritemp.h"
@@ -283,7 +283,7 @@ static void simple_z_textured_triangle( GLcontext *ctx,
       span->z += span->zStep;						\
    }									\
    (*swrast->Driver.WriteRGBSpan)(ctx, span->end, span->x, span->y,	\
-                                  (CONST GLchan (*)[3]) span->color.rgb,	\
+                                  (CONST GLchan (*)[3]) span->color.rgb,\
                                   span->mask );
 
 #include "s_tritemp.h"
@@ -589,7 +589,7 @@ static void affine_textured_triangle( GLcontext *ctx,
    info.format = obj->Image[b]->Format;					\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
-   span->arrayMask |= SPAN_RGBA;						\
+   span->arrayMask |= SPAN_RGBA;					\
 									\
    if (info.envmode == GL_BLEND) {					\
       /* potential off-by-one error here? (1.0f -> 2048 -> 0) */	\
@@ -896,7 +896,7 @@ static void persp_textured_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )			\
    span->interpMask &= ~SPAN_RGBA;		\
-   span->arrayMask |= SPAN_RGBA;			\
+   span->arrayMask |= SPAN_RGBA;		\
    fast_persp_span(ctx, span, &info);
 
 #include "s_tritemp.h"
@@ -976,7 +976,7 @@ static void occlusion_zless_triangle( GLcontext *ctx,
 #define RENDER_SPAN( span )				\
    GLuint i;						\
    for (i = 0; i < span->end; i++) {			\
-      GLdepth z = FixedToDepth(span->z);			\
+      GLdepth z = FixedToDepth(span->z);		\
       if (z < zRow[i]) {				\
          ctx->OcclusionResult = GL_TRUE;		\
          return;					\

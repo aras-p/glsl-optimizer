@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.69 2002/06/15 02:38:15 brianp Exp $ */
+/* $Id: dd.h,v 1.70 2002/07/09 01:22:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,11 +48,6 @@ struct gl_pixelstore_attrib;
  */
 struct dd_function_table {
 
-   /**********************************************************************
-    *** Mandatory functions:  these functions must be implemented by   ***
-    *** every device driver.                                           ***
-    **********************************************************************/
-
    const GLubyte * (*GetString)( GLcontext *ctx, GLenum name );
    /* Return a string as needed by glGetString().
     * Only the GL_RENDERER token must be implemented.  Otherwise,
@@ -74,26 +69,21 @@ struct dd_function_table {
     * If 'all' is true then the clear the whole buffer, else clear only the
     * region defined by (x,y,width,height).
     * This function must obey the glColorMask, glIndexMask and glStencilMask
-    * settings!  Software Mesa can do masked clears if the device driver can't.
+    * settings!
+    * Software Mesa can do masked clears if the device driver can't.
     */
 
-   void (*SetDrawBuffer)( GLcontext *ctx, GLenum buffer );
+   void (*DrawBuffer)( GLcontext *ctx, GLenum buffer );
    /*
-    * Specifies the current buffer for writing.
-    * The following values must be accepted when applicable:
-    *    GL_FRONT_LEFT - this buffer always exists
-    *    GL_BACK_LEFT - when double buffering
-    *    GL_FRONT_RIGHT - when using stereo
-    *    GL_BACK_RIGHT - when using stereo and double buffering
-    *    GL_FRONT - write to front left and front right if it exists
-    *    GL_BACK - write to back left and back right if it exists
-    *    GL_LEFT - write to front left and back left if it exists
-    *    GL_RIGHT - write to right left and back right if they exist
-    *    GL_FRONT_AND_BACK - write to all four buffers if they exist
-    *    GL_NONE - disable buffer write in device driver.
-    *
+    * Specifies the current buffer for writing.  Called via glDrawBuffer().
     * Note the driver must organize fallbacks (eg with swrast) if it
     * cannot implement the requested mode.
+    */
+
+
+   void (*ReadBuffer)( GLcontext *ctx, GLenum buffer );
+   /*
+    * Specifies the current buffer for reading.  Called via glReadBuffer().
     */
 
    void (*GetBufferSize)( GLframebuffer *buffer,
@@ -520,7 +510,6 @@ struct dd_function_table {
    void (*TextureMatrix)(GLcontext *ctx, GLuint unit, const GLmatrix *mat);
    void (*Viewport)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
 
-
    /***
     *** Vertex array functions
     ***
@@ -554,8 +543,6 @@ struct dd_function_table {
    GLboolean (*GetFloatv)(GLcontext *ctx, GLenum pname, GLfloat *result);
    GLboolean (*GetIntegerv)(GLcontext *ctx, GLenum pname, GLint *result);
    GLboolean (*GetPointerv)(GLcontext *ctx, GLenum pname, GLvoid **result);
-
-
 
    /***
     *** Support for multiple t&l engines

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.174 2002/06/29 19:48:15 brianp Exp $ */
+/* $Id: context.c,v 1.175 2002/07/09 01:22:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -978,7 +978,6 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Color.ColorLogicOpEnabled = GL_FALSE;
    ctx->Color.LogicOp = GL_COPY;
    ctx->Color.DitherFlag = GL_TRUE;
-   ctx->Color.MultiDrawBuffer = GL_FALSE;
 
    /* Current group */
    ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_WEIGHT], 0.0, 0.0, 0.0, 0.0 );
@@ -1689,17 +1688,17 @@ _mesa_initialize_context( GLcontext *ctx,
 
    if (visual->doubleBufferMode) {
       ctx->Color.DrawBuffer = GL_BACK;
-      ctx->Color.DriverDrawBuffer = GL_BACK_LEFT;
-      ctx->Color.DrawDestMask = BACK_LEFT_BIT;
+      ctx->Color._DriverDrawBuffer = GL_BACK_LEFT;
+      ctx->Color._DrawDestMask = BACK_LEFT_BIT;
       ctx->Pixel.ReadBuffer = GL_BACK;
-      ctx->Pixel.DriverReadBuffer = GL_BACK_LEFT;
+      ctx->Pixel._DriverReadBuffer = GL_BACK_LEFT;
    }
    else {
       ctx->Color.DrawBuffer = GL_FRONT;
-      ctx->Color.DriverDrawBuffer = GL_FRONT_LEFT;
-      ctx->Color.DrawDestMask = FRONT_LEFT_BIT;
+      ctx->Color._DriverDrawBuffer = GL_FRONT_LEFT;
+      ctx->Color._DrawDestMask = FRONT_LEFT_BIT;
       ctx->Pixel.ReadBuffer = GL_FRONT;
-      ctx->Pixel.DriverReadBuffer = GL_FRONT_LEFT;
+      ctx->Pixel._DriverReadBuffer = GL_FRONT_LEFT;
    }
 
    if (!alloc_proxy_textures(ctx)) {
@@ -1716,6 +1715,8 @@ _mesa_initialize_context( GLcontext *ctx,
    _glapi_add_entrypoint("glCompressedTexSubImage2DARB", 558);
    _glapi_add_entrypoint("glCompressedTexSubImage1DARB", 559);
    _glapi_add_entrypoint("glGetCompressedTexImageARB", 560);
+   /* XXX we should add a bunch of new functions here */
+
 
    /* Find the larger of Mesa's dispatch table and libGL's dispatch table.
     * In practice, this'll be the same for stand-alone Mesa.  But for DRI

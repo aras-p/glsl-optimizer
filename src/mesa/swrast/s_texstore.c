@@ -1,4 +1,4 @@
-/* $Id: s_texstore.c,v 1.5 2001/05/21 16:41:04 brianp Exp $ */
+/* $Id: s_texstore.c,v 1.6 2002/07/09 01:22:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -73,8 +73,7 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
       return NULL;
 
    /* Select buffer to read from */
-   (*swrast->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
-                                 ctx->Pixel.DriverReadBuffer );
+   _swrast_use_read_buffer(ctx);
 
    RENDER_START(swrast,ctx);
 
@@ -89,8 +88,7 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
    RENDER_FINISH(swrast,ctx);
 
    /* Read from draw buffer (the default) */
-   (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
-                                 ctx->Color.DriverDrawBuffer );
+   _swrast_use_draw_buffer(ctx);
 
    return image;
 }

@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.19 2002/06/15 02:38:17 brianp Exp $ */
+/* $Id: svgamesa.c,v 1.20 2002/07/09 01:22:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -217,34 +217,9 @@ static void get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *heigh
    *height = SVGAMesa->height = vga_getydim();
 }
 
-static void set_draw_buffer( GLcontext *ctx, GLenum buffer )
-{
-   if (buffer == GL_FRONT_LEFT) {
-      SVGABuffer.DrawBuffer = SVGABuffer.FrontBuffer;
-#if 0
-      /*    vga_waitretrace(); */
-      void * tmpptr;
-      copy_buffer(SVGABuffer.FrontBuffer);
-      tmpptr=SVGABuffer.BackBuffer;
-      SVGABuffer.BackBuffer=SVGABuffer.FrontBuffer;
-      SVGABuffer.FrontBuffer=tmpptr;
-#endif
-   }
-   else if (buffer == GL_BACK_LEFT) {
-      SVGABuffer.DrawBuffer = SVGABuffer.BackBuffer;
-#if 0
-      /*    vga_waitretrace(); */
-      copy_buffer(SVGABuffer.BackBuffer);
-#endif
-   }
-   else {
-      /* nothing since we don't have any point/line/triangle functions. */
-   }
-}
 
-
-static void set_read_buffer( GLcontext *ctx, GLframebuffer *colorBuffer,
-                             GLenum buffer )
+static void set_buffer( GLcontext *ctx, GLframebuffer *colorBuffer,
+                        GLenum buffer )
 {
    /* We can ignore colorBuffer since we don't support a MakeCurrentRead()
     * function.
@@ -253,6 +228,7 @@ static void set_read_buffer( GLcontext *ctx, GLframebuffer *colorBuffer,
 
    if (buffer == GL_FRONT_LEFT) {
       SVGABuffer.ReadBuffer = SVGABuffer.FrontBuffer;
+      SVGABuffer.DrawBuffer = SVGABuffer.FrontBuffer;
 #if 0
       void * tmpptr;
       /*    vga_waitretrace(); */
@@ -264,6 +240,7 @@ static void set_read_buffer( GLcontext *ctx, GLframebuffer *colorBuffer,
    }
    else if (buffer == GL_BACK_LEFT) {
       SVGABuffer.ReadBuffer = SVGABuffer.BackBuffer;
+      SVGABuffer.DrawBuffer = SVGABuffer.BackBuffer;
 #if 0
       /*    vga_waitretrace(); */
       copy_buffer(SVGABuffer.BackBuffer);
@@ -285,7 +262,6 @@ static void svgamesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.UpdateState = svgamesa_update_state;
 
    ctx->Driver.GetBufferSize = get_buffer_size;
-   ctx->Driver.SetDrawBuffer = set_draw_buffer;
    ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
 
    /* Software rasterizer pixel paths:
@@ -295,10 +271,11 @@ static void svgamesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.CopyPixels = _swrast_CopyPixels;
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
    ctx->Driver.ReadPixels = _swrast_ReadPixels;
+   ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
 
    /* Fill in the swrast driver interface:
     */
-   swdd->SetReadBuffer = set_read_buffer;
+   swdd->SetBuffer = set_buffer;
 
    switch (SVGABuffer.Depth) {
     case  8: ctx->Driver.ClearIndex = __clear_index8;

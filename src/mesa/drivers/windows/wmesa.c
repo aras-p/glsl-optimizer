@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.31 2002/06/15 03:03:10 brianp Exp $ */
+/* $Id: wmesa.c,v 1.32 2002/07/09 01:22:51 brianp Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -569,20 +569,12 @@ static void enable( GLcontext* ctx, GLenum pname, GLboolean enable )
   }
 }
 
-static void set_draw_buffer( GLcontext* ctx, GLenum mode )
-{
-   /* XXX doing nothing for now */
-   /* if front buffer, fine */
-   /* if back buffer, fine */
-   /* else, check swrast->_RasterMask & MULTI_DRAW_BIT, if true, */
-   /* use a swrast fallback function */
-}
 
 
-static void set_read_buffer(GLcontext *ctx, GLframebuffer *colorBuffer,
-                            GLenum buffer )
+static void set_buffer(GLcontext *ctx, GLframebuffer *colorBuffer,
+                       GLenum buffer )
 {
-  /* XXX todo */
+  /* XXX todo - examine buffer and set read/write pointers */
   return;
 }
 
@@ -1027,7 +1019,6 @@ static void SetFunctionPointers(GLcontext *ctx)
   struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference( ctx );
   ctx->Driver.GetString = get_string;
   ctx->Driver.UpdateState = wmesa_update_state;
-  ctx->Driver.SetDrawBuffer = set_draw_buffer;
   ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
   ctx->Driver.GetBufferSize = buffer_size;
   
@@ -1043,6 +1034,7 @@ static void SetFunctionPointers(GLcontext *ctx)
   ctx->Driver.CopyPixels = _swrast_CopyPixels;
   ctx->Driver.DrawPixels = _swrast_DrawPixels;
   ctx->Driver.ReadPixels = _swrast_ReadPixels;
+  ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
   
   ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
   ctx->Driver.TexImage1D = _mesa_store_teximage1d;
@@ -1068,7 +1060,7 @@ static void SetFunctionPointers(GLcontext *ctx)
   ctx->Driver.GetCompressedTexImage = _mesa_get_compressed_teximage;
   
   
-  swdd->SetReadBuffer = set_read_buffer;
+  swdd->SetBuffer = set_buffer;
   
   
   /* Pixel/span writing functions: */
@@ -1106,7 +1098,6 @@ static void wmesa_update_state( GLcontext *ctx, GLuint new_state )
 #if 0
   ctx->Driver.GetString = get_string;
   ctx->Driver.UpdateState = wmesa_update_state;
-  ctx->Driver.SetDrawBuffer = set_draw_buffer;
   ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
   ctx->Driver.GetBufferSize = buffer_size;
   
@@ -1145,10 +1136,8 @@ static void wmesa_update_state( GLcontext *ctx, GLuint new_state )
   ctx->Driver.BaseCompressedTexFormat = _mesa_base_compressed_texformat;
   ctx->Driver.CompressedTextureSize = _mesa_compressed_texture_size;
   ctx->Driver.GetCompressedTexImage = _mesa_get_compressed_teximage;
-  
-  
-  swdd->SetReadBuffer = set_read_buffer;
-  
+    
+  swdd->SetBuffer = set_buffer;
   
   /* Pixel/span writing functions: */
   swdd->WriteRGBASpan        = write_rgba_span;

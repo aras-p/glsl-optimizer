@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.85 2002/06/30 16:07:18 brianp Exp $ */
+/* $Id: osmesa.c,v 1.86 2002/07/09 01:22:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -721,14 +721,7 @@ do {									\
 
 
 
-static void set_draw_buffer( GLcontext *ctx, GLenum mode )
-{
-   (void) ctx;
-   (void) mode;
-}
-
-
-static void set_read_buffer( GLcontext *ctx, GLframebuffer *buffer, GLenum mode )
+static void set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLenum mode )
 {
    /* separate read buffer not supported */
    ASSERT(buffer == ctx->DrawBuffer);
@@ -1887,7 +1880,6 @@ static void smooth_rgba_z_triangle( GLcontext *ctx,
                                     const SWvertex *v2 )
 {
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
@@ -1903,7 +1895,7 @@ static void smooth_rgba_z_triangle( GLcontext *ctx,
             FixedToChan(span->alpha));				\
          zRow[i] = z;						\
       }								\
-      span->red += span->redStep;					\
+      span->red += span->redStep;				\
       span->green += span->greenStep;				\
       span->blue += span->blueStep;				\
       span->alpha += span->alphaStep;				\
@@ -2080,7 +2072,6 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
 
    ctx->Driver.GetString = get_string;
    ctx->Driver.UpdateState = osmesa_update_state;
-   ctx->Driver.SetDrawBuffer = set_draw_buffer;
    ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
    ctx->Driver.GetBufferSize = buffer_size;
 
@@ -2090,6 +2081,7 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.CopyPixels = _swrast_CopyPixels;
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
    ctx->Driver.ReadPixels = _swrast_ReadPixels;
+   ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
 
    ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
    ctx->Driver.TexImage1D = _mesa_store_teximage1d;
@@ -2113,6 +2105,8 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.BaseCompressedTexFormat = _mesa_base_compressed_texformat;
    ctx->Driver.CompressedTextureSize = _mesa_compressed_texture_size;
    ctx->Driver.GetCompressedTexImage = _mesa_get_compressed_teximage;
+
+   swdd->SetBuffer = set_buffer;
 
    /* RGB(A) span/pixel functions */
    if (osmesa->format == OSMESA_RGB) {
@@ -2170,8 +2164,6 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    swdd->WriteMonoCIPixels = write_monoindex_pixels;
    swdd->ReadCI32Span = read_index_span;
    swdd->ReadCI32Pixels = read_index_pixels;
-
-   swdd->SetReadBuffer = set_read_buffer;
 
    tnl->Driver.RunPipeline = _tnl_run_pipeline;
 

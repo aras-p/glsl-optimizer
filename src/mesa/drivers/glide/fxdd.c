@@ -1,4 +1,4 @@
-/* $Id: fxdd.c,v 1.88 2002/06/15 03:03:10 brianp Exp $ */
+/* $Id: fxdd.c,v 1.89 2002/07/09 01:22:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -288,6 +288,9 @@ fxDDSetDrawBuffer(GLcontext * ctx, GLenum mode)
       /* we'll need a software fallback */
       /* XXX not implemented */
    }
+
+   /* update s/w fallback state */
+   _swrast_DrawBuffer(ctx, mode);
 }
 
 
@@ -991,7 +994,7 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.ClearIndex = NULL;
    ctx->Driver.ClearColor = fxDDClearColor;
    ctx->Driver.Clear = fxDDClear;
-   ctx->Driver.SetDrawBuffer = fxDDSetDrawBuffer;
+   ctx->Driver.DrawBuffer = fxDDSetDrawBuffer;
    ctx->Driver.GetBufferSize = fxDDBufferSize;
    ctx->Driver.Accum = _swrast_Accum;
    ctx->Driver.Bitmap = fxDDDrawBitmap;

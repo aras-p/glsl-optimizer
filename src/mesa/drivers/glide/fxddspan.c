@@ -1,4 +1,4 @@
-/* $Id: fxddspan.c,v 1.19 2001/09/23 16:50:01 brianp Exp $ */
+/* $Id: fxddspan.c,v 1.20 2002/07/09 01:22:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -536,7 +536,7 @@ fxDDReadDepthPixels(GLcontext * ctx, GLuint n,
 /* Set the buffer used for reading */
 /* XXX support for separate read/draw buffers hasn't been tested */
 static void
-fxDDSetReadBuffer(GLcontext * ctx, GLframebuffer * buffer, GLenum mode)
+fxDDSetBuffer(GLcontext * ctx, GLframebuffer * buffer, GLenum mode)
 {
    fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
    (void) buffer;
@@ -565,7 +565,7 @@ fxSetupDDSpanPointers(GLcontext * ctx)
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference( ctx );
 
-   swdd->SetReadBuffer = fxDDSetReadBuffer;
+   swdd->SetBuffer = fxDDSetBuffer;
 
    swdd->WriteRGBASpan = fxDDWriteRGBASpan;
    swdd->WriteRGBSpan = fxDDWriteRGBSpan;

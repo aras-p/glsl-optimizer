@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.39 2002/06/17 23:38:14 brianp Exp $ */
+/* $Id: xm_api.c,v 1.40 2002/07/09 01:22:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1654,6 +1654,8 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    }
 
    c->xm_visual = v;
+   c->xm_draw_buffer = NULL;   /* set later by XMesaMakeCurrent */
+   c->xm_read_buffer = NULL;   /* set later by XMesaMakeCurrent */
    c->xm_buffer = NULL;   /* set later by XMesaMakeCurrent */
    c->display = v->display;
    c->pixelformat = v->dithered_pf;      /* Dithering is enabled by default */
@@ -1682,8 +1684,8 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 void XMesaDestroyContext( XMesaContext c )
 {
 #ifdef FX
-   if (c->xm_buffer && c->xm_buffer->FXctx)
-      fxMesaDestroyContext(c->xm_buffer->FXctx);
+   if (c->xm_draw_buffer && c->xm_buffer->FXctx)
+      fxMesaDestroyContext(c->xm_draw_buffer->FXctx);
 #endif
    if (c->gl_ctx) {
       _swsetup_DestroyContext( c->gl_ctx );
@@ -2045,24 +2047,24 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
       if (drawBuffer->FXctx) {
          fxMesaMakeCurrent(drawBuffer->FXctx);
 
-         c->xm_buffer = drawBuffer;
+         c->xm_draw_buffer = drawBuffer;
          c->xm_read_buffer = readBuffer;
-         c->use_read_buffer = (drawBuffer != readBuffer);
+         c->xm_buffer = drawBuffer;
 
          return GL_TRUE;
       }
 #endif
       if (c->gl_ctx == _mesa_get_current_context()
-          && c->xm_buffer == drawBuffer
+          && c->xm_draw_buffer == drawBuffer
           && c->xm_read_buffer == readBuffer
-          && c->xm_buffer->wasCurrent) {
+          && c->xm_draw_buffer->wasCurrent) {
          /* same context and buffer, do nothing */
          return GL_TRUE;
       }
 
-      c->xm_buffer = drawBuffer;
+      c->xm_draw_buffer = drawBuffer;
       c->xm_read_buffer = readBuffer;
-      c->use_read_buffer = (drawBuffer != readBuffer);
+      c->xm_buffer = drawBuffer;
 
       _mesa_make_current2(c->gl_ctx,
                           &drawBuffer->mesa_buffer,
@@ -2086,11 +2088,11 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
                                                c->clearcolor[2],
                                                c->clearcolor[3],
                                                c->xm_visual->undithered_pf);
-         XMesaSetForeground(c->display, c->xm_buffer->cleargc, c->clearpixel);
+         XMesaSetForeground(c->display, c->xm_draw_buffer->cleargc, c->clearpixel);
       }
 
       /* Solution to Stephane Rehel's problem with glXReleaseBuffersMESA(): */
-      c->xm_buffer->wasCurrent = GL_TRUE;
+      c->xm_draw_buffer->wasCurrent = GL_TRUE;
    }
    else {
       /* Detach */
@@ -2128,7 +2130,7 @@ XMesaBuffer XMesaGetCurrentBuffer( void )
    GET_CURRENT_CONTEXT(ctx);
    if (ctx) {
       XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-      return xmesa->xm_buffer;
+      return xmesa->xm_draw_buffer;
    }
    else {
       return 0;
@@ -2142,7 +2144,7 @@ XMesaBuffer XMesaGetCurrentReadBuffer( void )
    GET_CURRENT_CONTEXT(ctx);
    if (ctx) {
       XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-      return xmesa->xm_buffer;
+      return xmesa->xm_read_buffer;
    }
    else {
       return 0;
@@ -2154,7 +2156,7 @@ GLboolean XMesaForceCurrent(XMesaContext c)
 {
    if (c) {
       if (c->gl_ctx != _mesa_get_current_context()) {
-	 _mesa_make_current(c->gl_ctx, &c->xm_buffer->mesa_buffer);
+	 _mesa_make_current(c->gl_ctx, &c->xm_draw_buffer->mesa_buffer);
       }
    }
    else {
@@ -2193,15 +2195,15 @@ GLboolean XMesaSetFXmode( GLint mode )
       if (ctx) {
          XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
          if (mode == XMESA_FX_WINDOW) {
-	    if (xmesa->xm_buffer->FXisHackUsable) {
+	    if (xmesa->xm_draw_buffer->FXisHackUsable) {
 	       FX_grSstControl(GR_CONTROL_DEACTIVATE);
-	       xmesa->xm_buffer->FXwindowHack = GL_TRUE;
+	       xmesa->xm_draw_buffer->FXwindowHack = GL_TRUE;
 	       return GL_TRUE;
 	    }
 	 }
 	 else if (mode == XMESA_FX_FULLSCREEN) {
 	    FX_grSstControl(GR_CONTROL_ACTIVATE);
-	    xmesa->xm_buffer->FXwindowHack = GL_FALSE;
+	    xmesa->xm_draw_buffer->FXwindowHack = GL_FALSE;
 	    return GL_TRUE;
 	 }
 	 else {
@@ -2232,7 +2234,7 @@ static void FXgetImage( XMesaBuffer b )
    unsigned int bw, depth, width, height;
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 
-   assert(xmesa->xm_buffer->FXctx);
+   assert(xmesa->xm_draw_buffer->FXctx);
 
 #ifdef XFree86Server
    x = b->frontbuffer->x;
@@ -2245,8 +2247,8 @@ static void FXgetImage( XMesaBuffer b )
                  &root, &xpos, &ypos, &width, &height, &bw, &depth);
 #endif
    if (b->width != width || b->height != height) {
-      b->width = MIN2((int)width, xmesa->xm_buffer->FXctx->width);
-      b->height = MIN2((int)height, xmesa->xm_buffer->FXctx->height);
+      b->width = MIN2((int)width, xmesa->xm_draw_buffer->FXctx->width);
+      b->height = MIN2((int)height, xmesa->xm_draw_buffer->FXctx->height);
       if (b->width & 1)
          b->width--;  /* prevent odd width */
       xmesa_alloc_back_buffer( b );
@@ -2256,7 +2258,7 @@ static void FXgetImage( XMesaBuffer b )
    if (xmesa->xm_visual->undithered_pf==PF_5R6G5B) {
       /* Special case: 16bpp RGB */
       grLfbReadRegion( GR_BUFFER_FRONTBUFFER,       /* src buffer */
-                       0, xmesa->xm_buffer->FXctx->height - b->height,  /*pos*/
+                       0, xmesa->xm_draw_buffer->FXctx->height - b->height,  /*pos*/
                        b->width, b->height,         /* size */
                        b->width * sizeof(GLushort), /* stride */
                        b->backimage->data);         /* dest buffer */
@@ -2265,13 +2267,13 @@ static void FXgetImage( XMesaBuffer b )
 	    && GET_VISUAL_DEPTH(xmesa->xm_visual)==8) {
       /* Special case: 8bpp RGB */
       for (y=0;y<b->height;y++) {
-         GLubyte *ptr = (GLubyte*) xmesa->xm_buffer->backimage->data
-                        + xmesa->xm_buffer->backimage->bytes_per_line * y;
+         GLubyte *ptr = (GLubyte*) xmesa->xm_draw_buffer->backimage->data
+                        + xmesa->xm_draw_buffer->backimage->bytes_per_line * y;
          XDITHER_SETUP(y);
 
          /* read row from 3Dfx frame buffer */
          grLfbReadRegion( GR_BUFFER_FRONTBUFFER,
-                          0, xmesa->xm_buffer->FXctx->height-(b->height-y),
+                          0, xmesa->xm_draw_buffer->FXctx->height-(b->height-y),
                           b->width, 1,
                           0,
                           pixbuf );
@@ -2290,7 +2292,7 @@ static void FXgetImage( XMesaBuffer b )
       for (y=0;y<b->height;y++) {
          /* read row from 3Dfx frame buffer */
          grLfbReadRegion( GR_BUFFER_FRONTBUFFER,
-                          0, xmesa->xm_buffer->FXctx->height-(b->height-y),
+                          0, xmesa->xm_draw_buffer->FXctx->height-(b->height-y),
                           b->width, 1,
                           0,
                           pixbuf );

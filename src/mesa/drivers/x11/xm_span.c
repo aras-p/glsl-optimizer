@@ -1,4 +1,4 @@
-/* $Id: xm_span.c,v 1.14 2002/03/01 04:28:32 brianp Exp $ */
+/* $Id: xm_span.c,v 1.15 2002/07/09 01:22:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3472,13 +3472,8 @@ static void read_index_span( const GLcontext *ctx,
 			     GLuint n, GLint x, GLint y, GLuint index[] )
 {
    const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   XMesaBuffer source;
+   XMesaBuffer source = xmesa->xm_buffer;
    GLuint i;
-
-   if (xmesa->use_read_buffer)
-      source = xmesa->xm_read_buffer;
-   else
-      source = xmesa->xm_buffer;
 
    y = FLIP(source, y);
 
@@ -3528,12 +3523,7 @@ static void read_color_span( const GLcontext *ctx,
                              GLubyte rgba[][4] )
 {
    const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   XMesaBuffer source;
-
-   if (xmesa->use_read_buffer)
-      source = xmesa->xm_read_buffer;
-   else
-      source = xmesa->xm_buffer;
+   XMesaBuffer source = xmesa->xm_buffer;
 
    if (source->buffer) {
       /* Read from Pixmap or Window */
@@ -3902,12 +3892,7 @@ static void read_index_pixels( const GLcontext *ctx,
 {
    const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    register GLuint i;
-   XMesaBuffer source;
-
-   if (xmesa->use_read_buffer)
-      source = xmesa->xm_read_buffer;
-   else
-      source = xmesa->xm_buffer;
+   XMesaBuffer source = xmesa->xm_buffer;
 
    if (source->buffer) {
       for (i=0;i<n;i++) {
@@ -3937,15 +3922,8 @@ static void read_color_pixels( const GLcontext *ctx,
    const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    register GLuint i;
-   XMesaBuffer source;
-   XMesaDrawable buffer;
-
-   if (xmesa->use_read_buffer)
-      source = xmesa->xm_read_buffer;
-   else
-      source = xmesa->xm_buffer;
-
-   buffer = source->buffer;  /* the X drawable */
+   XMesaBuffer source = xmesa->xm_buffer;
+   XMesaDrawable buffer = source->buffer;  /* the X drawable */
 
    if (source->buffer) {
       switch (xmesa->pixelformat) {
@@ -4491,6 +4469,4 @@ void xmesa_update_span_funcs( GLcontext *ctx )
    dd->ReadRGBASpan = read_color_span;
    dd->ReadCI32Pixels = read_index_pixels;
    dd->ReadRGBAPixels = read_color_pixels;
-
-   dd->SetReadBuffer = xmesa_set_read_buffer;
 }

@@ -1,4 +1,4 @@
-/* $Id: s_readpix.c,v 1.14 2002/04/19 00:38:27 brianp Exp $ */
+/* $Id: s_readpix.c,v 1.15 2002/07/09 01:22:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -62,9 +62,7 @@ read_index_pixels( GLcontext *ctx,
       return;
    }
 
-   ASSERT(swrast->Driver.SetReadBuffer);
-   (*swrast->Driver.SetReadBuffer)(ctx, ctx->ReadBuffer,
-                                ctx->Pixel.DriverReadBuffer);
+   _swrast_use_read_buffer(ctx);
 
    readWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
 
@@ -82,8 +80,7 @@ read_index_pixels( GLcontext *ctx,
                             &ctx->Pack, ctx->_ImageTransferState);
    }
 
-   (*swrast->Driver.SetReadBuffer)(ctx, ctx->DrawBuffer,
-                                ctx->Color.DriverDrawBuffer);
+   _swrast_use_draw_buffer(ctx);
 }
 
 
@@ -318,13 +315,13 @@ read_rgba_pixels( GLcontext *ctx,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLint readWidth;
 
-   (*swrast->Driver.SetReadBuffer)(ctx, ctx->ReadBuffer, ctx->Pixel.DriverReadBuffer);
+   _swrast_use_read_buffer(ctx);
 
    /* Try optimized path first */
    if (read_fast_rgba_pixels( ctx, x, y, width, height,
                               format, type, pixels, packing )) {
 
-      (*swrast->Driver.SetReadBuffer)(ctx, ctx->DrawBuffer, ctx->Color.DriverDrawBuffer);
+      _swrast_use_draw_buffer(ctx);
       return; /* done! */
    }
 
@@ -470,7 +467,7 @@ read_rgba_pixels( GLcontext *ctx,
       }
    }
 
-   (*swrast->Driver.SetReadBuffer)(ctx, ctx->DrawBuffer, ctx->Color.DriverDrawBuffer);
+   _swrast_use_draw_buffer(ctx);
 }
 
 

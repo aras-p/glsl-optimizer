@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.24 2002/04/19 14:05:50 brianp Exp $ */
+/* $Id: swrast.h,v 1.25 2002/07/09 01:22:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -204,6 +204,12 @@ struct swrast_device_driver;
 extern void
 _swrast_alloc_buffers( GLframebuffer *buffer );
 
+extern void
+_swrast_use_read_buffer( GLcontext *ctx );
+
+extern void
+_swrast_use_draw_buffer( GLcontext *ctx );
+
 extern GLboolean
 _swrast_CreateContext( GLcontext *ctx );
 
@@ -252,6 +258,10 @@ extern void
 _swrast_Accum( GLcontext *ctx, GLenum op,
 	       GLfloat value, GLint xpos, GLint ypos,
 	       GLint width, GLint height );
+
+
+extern void
+_swrast_DrawBuffer( GLcontext *ctx, GLenum mode );
 
 
 /* Reset the stipple counter
@@ -363,11 +373,14 @@ _swrast_copy_texsubimage3d(GLcontext *ctx,
  */
 struct swrast_device_driver {
 
-   void (*SetReadBuffer)( GLcontext *ctx, GLframebuffer *colorBuffer,
-                          GLenum buffer );
+   void (*SetBuffer)( GLcontext *ctx, GLframebuffer *buffer,
+                      GLenum colorBuffer );
    /*
-    * Specifies the current buffer for span/pixel reading.
-    * colorBuffer will be one of:
+    * Specifies the current buffer for span/pixel writing/reading.
+    * buffer indicates which window to write to / read from.  Normally,
+    * this'll be the buffer currently bound to the context, but it doesn't
+    * have to be!
+    * colorBuffer indicates which color buffer, one of:
     *    GL_FRONT_LEFT - this buffer always exists
     *    GL_BACK_LEFT - when double buffering
     *    GL_FRONT_RIGHT - when using stereo

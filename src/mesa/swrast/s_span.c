@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.44 2002/06/15 03:03:11 brianp Exp $ */
+/* $Id: s_span.c,v 1.45 2002/07/09 01:22:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -608,19 +608,19 @@ multi_write_index_span( GLcontext *ctx, struct sw_span *span )
    GLuint bufferBit;
 
    /* loop over four possible dest color buffers */
-   for (bufferBit = 1; bufferBit <= 8; bufferBit = bufferBit << 1) {
-      if (bufferBit & ctx->Color.DrawDestMask) {
+   for (bufferBit = 1; bufferBit <= 8; bufferBit <<= 1) {
+      if (bufferBit & ctx->Color._DrawDestMask) {
          GLuint indexTmp[MAX_WIDTH];
          ASSERT(span->end < MAX_WIDTH);
 
          if (bufferBit == FRONT_LEFT_BIT)
-            (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_FRONT_LEFT);
+            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_FRONT_LEFT);
          else if (bufferBit == FRONT_RIGHT_BIT)
-            (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_FRONT_RIGHT);
+            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_FRONT_RIGHT);
          else if (bufferBit == BACK_LEFT_BIT)
-            (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_BACK_LEFT);
+            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_BACK_LEFT);
          else
-            (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_BACK_RIGHT);
+            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_BACK_RIGHT);
 
          /* make copy of incoming indexes */
          MEMCPY( indexTmp, span->color.index, span->end * sizeof(GLuint) );
@@ -648,7 +648,7 @@ multi_write_index_span( GLcontext *ctx, struct sw_span *span )
    }
 
    /* restore default dest buffer */
-   (void) (*ctx->Driver.SetDrawBuffer)( ctx, ctx->Color.DriverDrawBuffer);
+   _swrast_use_draw_buffer(ctx);
 }
 
 
@@ -670,26 +670,26 @@ multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
       return;
 
    /* loop over four possible dest color buffers */
-   for (bufferBit = 1; bufferBit <= 8; bufferBit = bufferBit << 1) {
-      if (bufferBit & ctx->Color.DrawDestMask) {
+   for (bufferBit = 1; bufferBit <= 8; bufferBit <<= 1) {
+      if (bufferBit & ctx->Color._DrawDestMask) {
          GLchan rgbaTmp[MAX_WIDTH][4];
          ASSERT(span->end < MAX_WIDTH);
 
          if (bufferBit == FRONT_LEFT_BIT) {
-            (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_FRONT_LEFT);
-            ctx->DrawBuffer->Alpha = ctx->DrawBuffer->FrontLeftAlpha;
+            ctx->Color._DriverDrawBuffer = GL_FRONT_LEFT;
+            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_FRONT_LEFT);
          }
          else if (bufferBit == FRONT_RIGHT_BIT) {
-            (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_FRONT_RIGHT);
-            ctx->DrawBuffer->Alpha = ctx->DrawBuffer->FrontRightAlpha;
+            ctx->Color._DriverDrawBuffer = GL_FRONT_RIGHT;
+            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_FRONT_RIGHT);
          }
          else if (bufferBit == BACK_LEFT_BIT) {
-            (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_BACK_LEFT);
-            ctx->DrawBuffer->Alpha = ctx->DrawBuffer->BackLeftAlpha;
+            ctx->Color._DriverDrawBuffer = GL_BACK_LEFT;
+            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_BACK_LEFT);
          }
          else {
-            (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_BACK_RIGHT);
-            ctx->DrawBuffer->Alpha = ctx->DrawBuffer->BackRightAlpha;
+            ctx->Color._DriverDrawBuffer = GL_BACK_RIGHT;
+            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_BACK_RIGHT);
          }
 
          /* make copy of incoming colors */
@@ -734,7 +734,7 @@ multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
    }
 
    /* restore default dest buffer */
-   (void) (*ctx->Driver.SetDrawBuffer)( ctx, ctx->Color.DriverDrawBuffer );
+   _swrast_use_draw_buffer(ctx);
 }
 
 

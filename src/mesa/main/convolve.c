@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.26 2002/03/19 15:22:50 brianp Exp $ */
+/* $Id: convolve.c,v 1.27 2002/07/09 01:22:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -43,7 +43,6 @@
 #include "image.h"
 #include "mtypes.h"
 #include "state.h"
-#include "swrast/s_span.h" /* XXX SWRAST hack */
 #endif
 
 

@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.28 2002/05/27 17:06:59 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.29 2002/07/09 01:22:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -120,9 +120,9 @@ struct xmesa_visual {
 struct xmesa_context {
    GLcontext *gl_ctx;		/* the core library context */
    XMesaVisual xm_visual;	/* Describes the buffers */
-   XMesaBuffer xm_buffer;	/* current draw framebuffer */
+   XMesaBuffer xm_draw_buffer;	/* current draw framebuffer */
    XMesaBuffer xm_read_buffer;	/* current read framebuffer */
-   GLboolean use_read_buffer;	/* read from the xm_read_buffer/ */
+   XMesaBuffer xm_buffer;	/* current span/point/line/triangle buffer */
 
    XMesaDisplay *display;	/* == xm_visual->display */
    GLboolean swapbytes;		/* Host byte order != display byte order? */
@@ -149,6 +149,7 @@ typedef enum {
  */
 struct xmesa_buffer {
    GLframebuffer mesa_buffer;	/* depth, stencil, accum, etc buffers */
+				/* This MUST BE FIRST! */
    GLboolean wasCurrent;	/* was ever the current buffer? */
    XMesaVisual xm_visual;	/* the X/Mesa visual */
 
@@ -535,9 +536,6 @@ extern void XMesaSetVisualDisplay( XMesaDisplay *dpy, XMesaVisual v );
 extern GLboolean XMesaForceCurrent(XMesaContext c);
 extern GLboolean XMesaLoseCurrent(XMesaContext c);
 extern void XMesaReset( void );
-
-extern void xmesa_set_read_buffer( GLcontext *ctx, 
-				   GLframebuffer *buffer, GLenum mode );
 
 extern void xmesa_resize_buffers( GLframebuffer *buffer );
 

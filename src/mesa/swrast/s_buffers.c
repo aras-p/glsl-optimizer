@@ -1,4 +1,4 @@
-/* $Id: s_buffers.c,v 1.11 2002/06/15 02:38:17 brianp Exp $ */
+/* $Id: s_buffers.c,v 1.12 2002/07/09 01:22:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -167,22 +167,18 @@ clear_color_buffers(GLcontext *ctx)
 
    /* loop over four possible dest color buffers */
    for (bufferBit = 1; bufferBit <= 8; bufferBit = bufferBit << 1) {
-      if (bufferBit & ctx->Color.DrawDestMask) {
+      if (bufferBit & ctx->Color._DrawDestMask) {
          if (bufferBit == FRONT_LEFT_BIT) {
-            (*ctx->Driver.SetDrawBuffer)( ctx, GL_FRONT_LEFT);
-            (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_FRONT_LEFT);
+            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_FRONT_LEFT);
          }
          else if (bufferBit == FRONT_RIGHT_BIT) {
-            (*ctx->Driver.SetDrawBuffer)( ctx, GL_FRONT_RIGHT);
-            (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_FRONT_RIGHT);
+            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_FRONT_RIGHT);
          }
          else if (bufferBit == BACK_LEFT_BIT) {
-            (*ctx->Driver.SetDrawBuffer)( ctx, GL_BACK_LEFT);
-            (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_BACK_LEFT);
+            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_BACK_LEFT);
          }
          else {
-            (*ctx->Driver.SetDrawBuffer)( ctx, GL_BACK_RIGHT);
-            (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_BACK_RIGHT);
+            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_BACK_RIGHT);
          }
 
          if (colorMask != 0xffffffff) {
@@ -194,9 +190,8 @@ clear_color_buffers(GLcontext *ctx)
       }
    }
 
-   /* restore default read/draw buffers */
-   (void) (*ctx->Driver.SetDrawBuffer)( ctx, ctx->Color.DriverDrawBuffer );
-   (void) (*swrast->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer, ctx->Pixel.DriverReadBuffer );
+   /* restore default read/draw buffer */
+   _swrast_use_draw_buffer(ctx);
 }
 
 
@@ -224,7 +219,7 @@ _swrast_Clear( GLcontext *ctx, GLbitfield mask,
 
    /* do software clearing here */
    if (mask) {
-      if (mask & ctx->Color.DrawDestMask)   clear_color_buffers(ctx);
+      if (mask & ctx->Color._DrawDestMask)   clear_color_buffers(ctx);
       if (mask & GL_DEPTH_BUFFER_BIT)    _mesa_clear_depth_buffer(ctx);
       if (mask & GL_ACCUM_BUFFER_BIT)    _mesa_clear_accum_buffer(ctx);
       if (mask & GL_STENCIL_BUFFER_BIT)  _mesa_clear_stencil_buffer(ctx);
@@ -257,4 +252,69 @@ _swrast_alloc_buffers( GLframebuffer *buffer )
    if (buffer->UseSoftwareAlphaBuffers) {
       _mesa_alloc_alpha_buffers( buffer );
    }
+}
+
+
+/*
+ * Fallback for ctx->Driver.DrawBuffer()
+ */
+void
+_swrast_DrawBuffer( GLcontext *ctx, GLenum mode )
+{
+   _swrast_use_draw_buffer(ctx);
+}
+
+
+/*
+ * Setup things so that we read/write spans from the user-designated
+ * read buffer (set via glReadPixels).  We usually just have to call
+ * this for glReadPixels, glCopyPixels, etc.
+ */
+void
+_swrast_use_read_buffer( GLcontext *ctx )
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+
+   /* Do this so the software-emulated alpha plane span functions work! */
+   ctx->Color._DriverDrawBuffer = ctx->Pixel._DriverReadBuffer;
+   /* Tell the device driver where to read/write spans */
+   (*swrast->Driver.SetBuffer)( ctx, ctx->ReadBuffer,
+                                ctx->Pixel._DriverReadBuffer );
+}
+
+
+/*
+ * Setup things so that we read/write spans from the default draw buffer.
+ * This is the usual mode that Mesa's software rasterizer operates in.
+ */
+void
+_swrast_use_draw_buffer( GLcontext *ctx )
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+
+   /* The user can specify rendering to zero, one, two, or four color
+    * buffers simultaneously with glDrawBuffer()!
+    * We don't expect the span/point/line/triangle functions to deal with
+    * that mess so we'll iterate over the multiple buffers as needed.
+    * But usually we only render to one color buffer at a time.
+    * We set ctx->Color._DriverDrawBuffer to that buffer and tell the
+    * device driver to use that buffer.
+    * Look in s_span.c's multi_write_rgba_span() function to see how
+    * we loop over multiple color buffers when needed.
+    */
+
+   if (ctx->Color._DrawDestMask & FRONT_LEFT_BIT)
+      ctx->Color._DriverDrawBuffer = GL_FRONT_LEFT;
+   else if (ctx->Color._DrawDestMask & BACK_LEFT_BIT)
+      ctx->Color._DriverDrawBuffer = GL_BACK_LEFT;
+   else if (ctx->Color._DrawDestMask & FRONT_RIGHT_BIT)
+      ctx->Color._DriverDrawBuffer = GL_FRONT_RIGHT;
+   else if (ctx->Color._DrawDestMask & BACK_RIGHT_BIT)
+      ctx->Color._DriverDrawBuffer = GL_BACK_RIGHT;
+   else
+      /* glDrawBuffer(GL_NONE) */
+      ctx->Color._DriverDrawBuffer = GL_FRONT_LEFT; /* always have this */
+
+   (*swrast->Driver.SetBuffer)( ctx, ctx->DrawBuffer,
+                                ctx->Color._DriverDrawBuffer );
 }

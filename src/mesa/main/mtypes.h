@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.83 2002/06/29 20:03:14 brianp Exp $ */
+/* $Id: mtypes.h,v 1.84 2002/07/09 01:22:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -317,9 +317,8 @@ struct gl_colorbuffer_attrib {
    GLubyte ColorMask[4];		/* Each flag is 0xff or 0x0 */
 
    GLenum DrawBuffer;			/* Which buffer to draw into */
-   GLenum DriverDrawBuffer;		/* Current device driver dest buffer */
-   GLboolean MultiDrawBuffer;		/* Drawing to multiple buffers? */
-   GLubyte DrawDestMask;		/* bitwise-OR of bitflags above */
+   GLenum _DriverDrawBuffer;		/* Single src/dst buffer for drivers */
+   GLubyte _DrawDestMask;		/* bitwise-OR of bitflags above */
 
    /* alpha testing */
    GLboolean AlphaEnabled;		/* Alpha test enabled flag */
@@ -599,7 +598,7 @@ struct gl_multisample_attrib {
 
 struct gl_pixel_attrib {
    GLenum ReadBuffer;		/* src buffer for glRead/CopyPixels */
-   GLenum DriverReadBuffer;	/* Driver's current source buffer */
+   GLenum _DriverReadBuffer;	/* Driver's current source buffer */
    GLfloat RedBias, RedScale;
    GLfloat GreenBias, GreenScale;
    GLfloat BlueBias, BlueScale;
@@ -1315,7 +1314,6 @@ struct gl_frame_buffer {
    GLchan *BackLeftAlpha;	/* array [Width*Height] of GLubyte */
    GLchan *FrontRightAlpha;	/* array [Width*Height] of GLubyte */
    GLchan *BackRightAlpha;	/* array [Width*Height] of GLubyte */
-   GLchan *Alpha;		/* Points to current alpha buffer */
 
    /* Drawing bounds: intersection of window size and scissor box */
    GLint _Xmin, _Ymin;  /* inclusive */
@@ -1431,7 +1429,9 @@ struct gl_extensions {
 };
 
 
-/* XXX just an idea */
+/*
+ * A stack of matrices (projection, modelview, color, texture, etc).
+ */
 struct matrix_stack
 {
    GLmatrix *Top;      /* points into Stack */
@@ -1532,7 +1532,9 @@ struct matrix_stack
 #define _NEW_ARRAY_TEXCOORD(i) (_NEW_ARRAY_TEXCOORD_0 << (i))
 #define _NEW_ARRAY_ATTRIB(i) (_NEW_ARRAY_ATTRIB_0 << (i))
 
+
 /* A bunch of flags that we think might be useful to drivers.
+ * Set in the ctx->_TriangleCaps bitfield.
  */
 #define DD_FLATSHADE                0x1
 #define DD_SEPARATE_SPECULAR        0x2
@@ -1548,6 +1550,7 @@ struct matrix_stack
 #define DD_POINT_SMOOTH             0x800
 #define DD_POINT_SIZE               0x1000
 #define DD_POINT_ATTEN              0x2000
+
 
 /* Define the state changes under which each of these bits might change
  */

@@ -1,4 +1,4 @@
-/* $Id: texformat.c,v 1.13 2002/06/29 19:48:16 brianp Exp $ */
+/* $Id: texformat.c,v 1.14 2002/07/09 01:22:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -40,7 +40,6 @@
 #include "texformat.h"
 #include "teximage.h"
 #include "texstate.h"
-#include "swrast/s_span.h"
 #endif
 
 

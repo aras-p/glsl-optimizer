@@ -512,25 +512,12 @@ static void clear (GLcontext *ctx, GLbitfield mask, GLboolean all,
 /*
  * Set the current reading buffer.
  */
-static void set_read_buffer (GLcontext *ctx, GLframebuffer *buffer,
-                             GLenum mode)
+static void set_buffer (GLcontext *ctx, GLframebuffer *buffer, GLenum mode)
 {
 /*
  DMesaContext c = (DMesaContext)ctx->DriverCtx;
  dmesa_update_state(ctx);
 */
-}
-
-
-
-/*
- * Set the destination/draw buffer.
- */
-static void set_draw_buffer (GLcontext *ctx, GLenum mode)
-{
-   /*
-     XXX this has to be fixed
-   */
 }
 
 
@@ -640,6 +627,7 @@ void dmesa_init_pointers (GLcontext *ctx)
  ctx->Driver.CopyPixels = _swrast_CopyPixels;
  ctx->Driver.DrawPixels = _swrast_DrawPixels;
  ctx->Driver.ReadPixels = _swrast_ReadPixels;
+ ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
 
  /* Software texture functions:
   */
@@ -671,7 +659,6 @@ void dmesa_init_pointers (GLcontext *ctx)
 
  /* Statechange callbacks:
   */
- ctx->Driver.SetDrawBuffer = set_draw_buffer;
  ctx->Driver.ClearColor = clear_color;
 
  /* Initialize the TNL driver interface:
@@ -699,7 +686,7 @@ static void dmesa_update_state (GLcontext *ctx, GLuint new_state)
  _ac_InvalidateState(ctx, new_state);
  _tnl_InvalidateState(ctx, new_state);
 
- swdd->SetReadBuffer = set_read_buffer;
+ swdd->SetBuffer = set_buffer;
 
  /* RGB(A) span/pixel functions */
  swdd->WriteRGBASpan = write_rgba_span;

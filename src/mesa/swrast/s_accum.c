@@ -1,4 +1,4 @@
-/* $Id: s_accum.c,v 1.17 2002/06/15 02:38:17 brianp Exp $ */
+/* $Id: s_accum.c,v 1.18 2002/07/09 01:22:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -306,8 +306,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
          if (value == 0.0F)
             return;
 
-         (*swrast->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
-					  ctx->Pixel.DriverReadBuffer );
+         _swrast_use_read_buffer(ctx);
 
          /* May have to leave optimized accum buffer mode */
          if (swrast->_IntegerAccumScaler == 0.0 && value > 0.0 && value <= 1.0)
@@ -359,14 +358,13 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             }
          }
          /* restore read buffer = draw buffer (the default) */
-         (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
-					  ctx->Color.DriverDrawBuffer );
+         _swrast_use_draw_buffer(ctx);
+
          RENDER_FINISH(swrast,ctx);
 	 break;
 
       case GL_LOAD:
-         (*swrast->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
-					  ctx->Pixel.DriverReadBuffer );
+         _swrast_use_read_buffer(ctx);
 
          /* This is a change to go into optimized accum buffer mode */
          if (value > 0.0 && value <= 1.0) {
@@ -433,8 +431,8 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
          }
 
          /* restore read buffer = draw buffer (the default) */
-         (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
-                                       ctx->Color.DriverDrawBuffer );
+         _swrast_use_draw_buffer(ctx);
+
          RENDER_FINISH(swrast,ctx);
 	 break;
 

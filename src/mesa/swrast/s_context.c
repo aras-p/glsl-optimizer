@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.35 2002/06/15 03:03:11 brianp Exp $ */
+/* $Id: s_context.c,v 1.36 2002/07/09 01:22:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -87,8 +87,11 @@ _swrast_update_rasterflags( GLcontext *ctx )
     * MULTI_DRAW_BIT flag.  Also set it if we're drawing to no
     * buffers or the RGBA or CI mask disables all writes.
     */
-   if (ctx->Color.DrawBuffer == GL_FRONT_AND_BACK ||
-       ctx->Color.DrawBuffer == GL_NONE) {
+   if (ctx->Color._DrawDestMask != FRONT_LEFT_BIT &&
+       ctx->Color._DrawDestMask != BACK_LEFT_BIT &&
+       ctx->Color._DrawDestMask != FRONT_RIGHT_BIT &&
+       ctx->Color._DrawDestMask != BACK_RIGHT_BIT) {
+      /* more than one color buffer designated for writing (or zero buffers) */
       RasterMask |= MULTI_DRAW_BIT;
    }
    else if (ctx->Visual.rgbMode && *((GLuint *) ctx->Color.ColorMask) == 0) {

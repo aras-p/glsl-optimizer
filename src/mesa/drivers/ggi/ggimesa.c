@@ -143,50 +143,30 @@ static void gl_ggiClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 	
 }
 
-/* Set the buffer used for drawing */
-static void gl_ggiSetDrawBuffer(GLcontext *ctx, GLenum mode)
-{
-	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
-
-	printf("set draw %d\n", mode);
-	GGIMESADPRINT_CORE("gl_ggiSetDrawBuffer() called\n");
-	
-	if (mode == GL_FRONT_LEFT) 
-	{
-		ggiSetWriteFrame(ggi_ctx->ggi_visual,
-				 ggiGetDisplayFrame(ggi_ctx->ggi_visual));
-	}
-	else if (mode == GL_BACK_LEFT) 
-	{
-		ggiSetWriteFrame(ggi_ctx->ggi_visual,
-				 ggiGetDisplayFrame(ggi_ctx->ggi_visual)?0 : 1);
-	}
-	else 
-	{
-		/* nothing since we don't have any point/line/triangle functions. */
-	}
-}
-
 
 /* Set the buffer used for reading */
 /* XXX support for separate read/draw buffers hasn't been tested */
-static GLboolean gl_ggiSetReadBuffer(GLcontext *ctx, GLframebuffer *buffer, GLenum mode)
+static GLboolean gl_ggiSetBuffer(GLcontext *ctx, GLframebuffer *buffer, GLenum mode)
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	
 	printf("set read %d\n", mode);
-	GGIMESADPRINT_CORE("gl_ggiSetReadBuffer() called\n");
+	GGIMESADPRINT_CORE("gl_ggiSetBuffer() called\n");
 
 	if (mode == GL_FRONT_LEFT) 
 	{
 		ggiSetReadFrame(ggi_ctx->ggi_visual,
 				ggiGetDisplayFrame(ggi_ctx->ggi_visual));
+		ggiSetWriteFrame(ggi_ctx->ggi_visual,
+				 ggiGetDisplayFrame(ggi_ctx->ggi_visual));
 		return GL_TRUE;
 	}
 	else if (mode == GL_BACK_LEFT) 
 	{
 		ggiSetReadFrame(ggi_ctx->ggi_visual,
 				ggiGetDisplayFrame(ggi_ctx->ggi_visual)?0 : 1);
+		ggiSetWriteFrame(ggi_ctx->ggi_visual,
+				 ggiGetDisplayFrame(ggi_ctx->ggi_visual)?0 : 1);
 		return GL_TRUE;
 	}
 	else
@@ -249,6 +229,7 @@ static void gl_ggiSetupPointers(GLcontext *ctx)
 	ctx->Driver.CopyPixels = _swrast_CopyPixels;
 	ctx->Driver.DrawPixels = _swrast_DrawPixels;
 	ctx->Driver.ReadPixels = _swrast_ReadPixels;
+        ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
 
 	/* Software texturing */
 	ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
@@ -277,7 +258,6 @@ static void gl_ggiSetupPointers(GLcontext *ctx)
 	ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 	
 	/* State change callbacks */
-	ctx->Driver.SetDrawBuffer = gl_ggiSetDrawBuffer;
 	ctx->Driver.ClearIndex = gl_ggiSetClearIndex; 
 	ctx->Driver.ClearColor = gl_ggiSetClearColor;
 	ctx->Driver.IndexMask = gl_ggiIndexMask;

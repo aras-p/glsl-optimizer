@@ -1,4 +1,4 @@
-/* $Id: s_imaging.c,v 1.5 2002/04/04 16:53:00 brianp Exp $ */
+/* $Id: s_imaging.c,v 1.6 2002/07/09 01:22:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,12 +37,10 @@ _swrast_CopyColorTable( GLcontext *ctx,
 			GLenum target, GLenum internalformat,
 			GLint x, GLint y, GLsizei width)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLchan data[MAX_WIDTH][4];
 
    /* Select buffer to read from */
-   (*swrast->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
-                                 ctx->Pixel.DriverReadBuffer );
+   _swrast_use_read_buffer(ctx);
 
    if (width > MAX_WIDTH)
       width = MAX_WIDTH;
@@ -51,8 +49,7 @@ _swrast_CopyColorTable( GLcontext *ctx,
    _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
 
    /* Restore reading from draw buffer (the default) */
-   (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
-                                 ctx->Color.DriverDrawBuffer );
+   _swrast_use_draw_buffer(ctx);
 
    glColorTable(target, internalformat, width, GL_RGBA, CHAN_TYPE, data);
 }
@@ -61,12 +58,10 @@ void
 _swrast_CopyColorSubTable( GLcontext *ctx,GLenum target, GLsizei start,
 			   GLint x, GLint y, GLsizei width)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLchan data[MAX_WIDTH][4];
 
    /* Select buffer to read from */
-   (*swrast->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
-                                 ctx->Pixel.DriverReadBuffer );
+   _swrast_use_read_buffer(ctx);
 
    if (width > MAX_WIDTH)
       width = MAX_WIDTH;
@@ -75,8 +70,7 @@ _swrast_CopyColorSubTable( GLcontext *ctx,GLenum target, GLsizei start,
    _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
 
    /* Restore reading from draw buffer (the default) */
-   (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
-                                 ctx->Color.DriverDrawBuffer );
+   _swrast_use_draw_buffer(ctx);
 
    glColorSubTable(target, start, width, GL_RGBA, CHAN_TYPE, data);
 }
@@ -90,6 +84,9 @@ _swrast_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLchan rgba[MAX_CONVOLUTION_WIDTH][4];
 
+   /* Select buffer to read from */
+   _swrast_use_read_buffer(ctx);
+
    RENDER_START( swrast, ctx );
 
    /* read the data from framebuffer */
@@ -97,6 +94,9 @@ _swrast_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
 				(GLchan (*)[4]) rgba );
    
    RENDER_FINISH( swrast, ctx );
+
+   /* Restore reading from draw buffer (the default) */
+   _swrast_use_draw_buffer(ctx);
 
    /* store as convolution filter */
    glConvolutionFilter1D(target, internalFormat, width,
@@ -114,6 +114,9 @@ _swrast_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
    GLchan rgba[MAX_CONVOLUTION_HEIGHT][MAX_CONVOLUTION_WIDTH][4];
    GLint i;
 
+   /* Select buffer to read from */
+   _swrast_use_read_buffer(ctx);
+
    RENDER_START(swrast,ctx);
    
    /* read pixels from framebuffer */
@@ -123,6 +126,9 @@ _swrast_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
    }
 
    RENDER_FINISH(swrast,ctx);
+
+   /* Restore reading from draw buffer (the default) */
+   _swrast_use_draw_buffer(ctx);
 
    /*
     * HACK: save & restore context state so we can store this as a

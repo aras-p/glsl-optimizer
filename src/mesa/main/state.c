@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.88 2002/06/30 15:47:01 brianp Exp $ */
+/* $Id: state.c,v 1.89 2002/07/09 01:22:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1017,7 +1017,6 @@ void _mesa_update_state( GLcontext *ctx )
    ASSERT(ctx->Driver.GetString);
    ASSERT(ctx->Driver.UpdateState);
    ASSERT(ctx->Driver.Clear);
-   ASSERT(ctx->Driver.SetDrawBuffer);
    ASSERT(ctx->Driver.GetBufferSize);
    if (ctx->Visual.accumRedBits > 0) {
       ASSERT(ctx->Driver.Accum);
