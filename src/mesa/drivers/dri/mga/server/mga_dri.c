@@ -36,6 +36,7 @@
 
 #include "driver.h"
 #include "drm.h"
+#include "memops.h"
 
 #include "mga_reg.h"
 #include "mga.h"
@@ -805,11 +806,11 @@ static int MGAScreenInit( struct DRIDriverContextRec *ctx, MGAPtr pMga )
     * the clear ioctl to do this, but would need to setup hw state
     * first.
     */
-   memset((char *)ctx->FBAddress + pMga->frontOffset,
+   drimemsetio((char *)ctx->FBAddress + pMga->frontOffset,
 	  0,
 	  pMga->frontPitch * ctx->shared.virtualHeight );
 
-   memset((char *)ctx->FBAddress + pMga->backOffset,
+   drimemsetio((char *)ctx->FBAddress + pMga->backOffset,
 	  0,
 	  pMga->backPitch * ctx->shared.virtualHeight );
 

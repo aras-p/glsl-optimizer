@@ -16,6 +16,7 @@
 
 #include "driver.h"
 #include "drm.h"
+#include "memops.h"
 
 #include "radeon.h"
 #include "radeon_dri.h"
@@ -981,11 +982,11 @@ static int RADEONScreenInit( DRIDriverContext *ctx, RADEONInfoPtr info )
     * the clear ioctl to do this, but would need to setup hw state
     * first.
     */
-   memset((char *)ctx->FBAddress + info->frontOffset,
+   drimemsetio((char *)ctx->FBAddress + info->frontOffset,
 	  0,
 	  info->frontPitch * ctx->cpp * ctx->shared.virtualHeight );
 
-   memset((char *)ctx->FBAddress + info->backOffset,
+   drimemsetio((char *)ctx->FBAddress + info->backOffset,
 	  0,
 	  info->backPitch * ctx->cpp * ctx->shared.virtualHeight );
 
