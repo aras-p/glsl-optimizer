@@ -1768,6 +1768,7 @@ USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 		gc->currentContextTag = reply.contextTag;
 		if ( state->array_state == NULL ) {
 		    (void) glGetString( GL_EXTENSIONS );
+		    (void) glGetString( GL_VERSION );
 		    __glXInitVertexArrayState(gc);
 		}
 	    }

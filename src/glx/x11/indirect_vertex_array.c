@@ -32,6 +32,7 @@
 #include <GL/glxproto.h>
 #include "glxextensions.h"
 #include "indirect_vertex_array.h"
+#include "indirect_va_private.h"
 
 #define __GLX_PAD(n) (((n)+3) & ~3)
 
@@ -63,278 +64,6 @@
  *
  * \author Ian Romanick <idr@us.ibm.com>
  */
-
-
-/**
- * State descriptor for a single array of vertex data.
- */
-struct array_state {
-    /**
-     * Pointer to the application supplied data.
-     */
-    const void * data;
-    
-    /**
-     * Enum representing the type of the application supplied data.
-     */
-    GLenum data_type;
-
-    /**
-     * Stride value supplied by the application.  This value is not used
-     * internally.  It is only kept so that it can be queried by the
-     * application using glGet*v.
-     */
-    GLsizei user_stride;
-
-    /**
-     * Calculated size, in bytes, of a single element in the array.  This
-     * is calculated based on \c count and the size of the data type
-     * represented by \c data_type.
-     */
-    GLsizei element_size;
-
-    /**
-     * Actual byte-stride from one element to the next.  This value will
-     * be equal to either \c user_stride or \c element_stride.
-     */
-    GLsizei true_stride;
-
-    /**
-     * Number of data values in each element.
-     */
-    GLint count;
-
-    /**
-     * "Normalized" data is on the range [0,1] (unsigned) or [-1,1] (signed).
-     * This is used for mapping integral types to floating point types.
-     */
-    GLboolean normalized;
-
-    /**
-     * Pre-calculated GLX protocol command header.
-     */
-    uint32_t header[2];
-    
-    /**
-     * Size of the header data.  For simple data, like glColorPointerfv,
-     * this is 4.  For complex data that requires either a count (e.g.,
-     * glWeightfvARB), an index (e.g., glVertexAttrib1fvARB), or a
-     * selector enum (e.g., glMultiTexCoord2fv) this is 8.
-     */
-    unsigned header_size;
-    
-    /**
-     * Set to \c GL_TRUE if this array is enabled.  Otherwise, it is set
-     * to \c GL_FALSE.
-     */
-    GLboolean  enabled;
-
-    /**
-     * For multi-arrayed data (e.g., texture coordinates, generic vertex
-     * program attributes, etc.), this specifies which array this is.
-     */
-    unsigned index;
-    
-    /**
-     * Per-array-type key.  For most arrays, this will be the GL enum for
-     * that array (e.g., GL_VERTEX_ARRAY for vertex data, GL_NORMAL_ARRAY
-     * for normal data, GL_TEXTURE_COORD_ARRAY for texture coordinate data,
-     * etc.).
-     */
-    GLenum key;
-
-    /**
-     * If this array can be used with the "classic" \c glDrawArrays protocol,
-     * this is set to \c GL_TRUE.  Otherwise, it is set to \c GL_FALSE.
-     */
-    GLboolean old_DrawArrays_possible;
-};
-
-
-/**
- * Array state that is pushed / poped by \c glPushClientAttrib and
- * \c glPopClientAttrib.
- */
-struct array_stack_state {
-    /**
-     * Pointer to the application supplied data.
-     */
-    const void * data;
-    
-    /**
-     * Enum representing the type of the application supplied data.
-     */
-    GLenum data_type;
-
-    /**
-     * Stride value supplied by the application.  This value is not used
-     * internally.  It is only kept so that it can be queried by the
-     * application using glGet*v.
-     */
-    GLsizei user_stride;
-
-    /**
-     * Number of data values in each element.
-     */
-    GLint count;
-
-    /**
-     * Per-array-type key.  For most arrays, this will be the GL enum for
-     * that array (e.g., GL_VERTEX_ARRAY for vertex data, GL_NORMAL_ARRAY
-     * for normal data, GL_TEXTURE_COORD_ARRAY for texture coordinate data,
-     * etc.).
-     */
-    GLenum key;
-
-    /**
-     * For multi-arrayed data (e.g., texture coordinates, generic vertex
-     * program attributes, etc.), this specifies which array this is.
-     */
-    unsigned index;
-
-    /**
-     * Set to \c GL_TRUE if this array is enabled.  Otherwise, it is set
-     * to \c GL_FALSE.
-     */
-    GLboolean  enabled;
-};
-
-
-/**
- * Collection of all the vertex array state.
- */
-struct array_state_vector {
-    /**
-     * Number of arrays tracked by \c ::arrays.
-     */
-    size_t num_arrays;
-
-    /**
-     * Array of vertex array state.  This array contains all of the valid
-     * vertex arrays.  If a vertex array isn't in this array, then it isn't
-     * valid.  For example, if an implementation does not support
-     * EXT_fog_coord, there won't be a GL_FOG_COORD_ARRAY entry in this
-     * array.
-     */
-    struct array_state * arrays;
-
-    /**
-     * Number of currently enabled arrays.  The value of this field is
-     * only valid if \c array_info_cache_valid is true.
-     */
-    size_t enabled_array_count;
-
-    /**
-     * \name ARRAY_INFO cache.
-     * 
-     * These fields track the state of the ARRAY_INFO cache.  The
-     * \c array_info_cache_size is the size of the actual data stored in
-     * \c array_info_cache.  \c array_info_cache_buffer_size is the size of
-     * the buffer.  This will always be greater than or equal to
-     * \c array_info_cache_size.
-     *
-     * \c large_header doesn't completely belong in this group.  This is a
-     * pointer to a buffer to hold the header information for DrawArrays in
-     * a RenderLarge command.  This buffer is immediately before
-     * \c array_info_cache.  The idea is that the header data will be written
-     * to \c large_header and a single call to \c __glXSendLargeChunk can be
-     * made to send the header and the ARRAY_INFO data.
-     * 
-     * \note
-     * \c array_info_cache_size and \c array_info_cache_buffer_size do
-     * NOT include the size of \c large_header.
-     */
-    /*@{*/
-    size_t array_info_cache_size;
-    size_t array_info_cache_buffer_size;
-    void * array_info_cache;
-    GLubyte * large_header;
-    /*@}*/
-
-
-    /**
-     * Is the cache of ARRAY_INFO data valid?  The cache can become invalid
-     * when one of several state changes occur.  Among these chages are
-     * modifying the array settings for an enabled array and enabling /
-     * disabling an array.
-     */
-    GLboolean array_info_cache_valid;
-
-    /**
-     * Is it possible to use the GL 1.1 / EXT_vertex_arrays protocol?  Use
-     * of this protocol is disabled with really old servers (i.e., servers
-     * that don't support GL 1.1 or EXT_vertex_arrays) or when an environment
-     * variable is set.
-     * 
-     * \todo
-     * GL 1.1 and EXT_vertex_arrays use identical protocol, but have different
-     * opcodes for \c glDrawArrays.  For servers that advertise one or the
-     * other, there should be a way to select which opcode to use.
-     */
-    GLboolean old_DrawArrays_possible;
-
-    /**
-     * Is it possible to use the new GL X.X / ARB_vertex_buffer_object
-     * protocol?
-     * 
-     * \todo
-     * This protocol has not yet been defined by the ARB, but is currently a
-     * work in progress.  This field is a place-holder.
-     */
-    GLboolean new_DrawArrays_possible;
-
-    /**
-     * Active texture unit set by \c glClientActiveTexture.
-     * 
-     * \sa __glXGetActiveTextureUnit
-     */
-    unsigned active_texture_unit;
-    
-    /**
-     * Number of supported texture units.  Even if ARB_multitexture /
-     * GL 1.3 are not supported, this will be at least 1.  When multitexture
-     * is supported, this will be the value queried by calling
-     * \c glGetIntegerv with \c GL_MAX_TEXTURE_UNITS.
-     * 
-     * \todo
-     * Investigate if this should be the value of \c GL_MAX_TEXTURE_COORDS
-     * instead (if GL 2.0 / ARB_fragment_shader / ARB_fragment_program /
-     * NV_fragment_program are supported).
-     */
-    unsigned num_texture_units;
-
-    /**
-     * Number of generic vertex program attribs.  If GL_ARB_vertex_program
-     * is not supported, this will be zero.  Otherwise it will be the value
-     * queries by calling \c glGetProgramiv with \c GL_VERTEX_PROGRAM_ARB
-     * and \c GL_MAX_PROGRAM_ATTRIBS_ARB.
-     */
-    unsigned num_vertex_program_attribs;
-
-    /**
-     * \n Methods for implementing various GL functions.
-     * 
-     * These method pointers are only valid \c array_info_cache_valid is set.
-     * When each function starts, it much check \c array_info_cache_valid.
-     * If it is not set, it must call \c fill_array_info_cache and call
-     * the new method.
-     * 
-     * \sa fill_array_info_cache
-     * 
-     * \todo
-     * Write code to plug these functions directly into the dispatch table.
-     */
-    /*@{*/
-    void (*DrawArrays)( GLenum, GLint, GLsizei );
-    void (*DrawElements)( GLenum mode, GLsizei count, GLenum type,
-			  const GLvoid *indices );
-    /*@}*/
-
-    struct array_stack_state * stack;
-    unsigned active_texture_unit_stack[ __GL_CLIENT_ATTRIB_STACK_DEPTH ];
-    unsigned stack_index;
-};
-
 
 static void emit_DrawArrays_none( GLenum mode, GLint first, GLsizei count );
 static void emit_DrawArrays_old ( GLenum mode, GLint first, GLsizei count );
@@ -403,13 +132,8 @@ __glXInitVertexArrayState( __GLXcontext * gc )
     GLboolean got_secondary_color = GL_FALSE;
 
 
-    arrays = malloc( sizeof( struct array_state_vector ) );
+    arrays = calloc( 1, sizeof( struct array_state_vector ) );
     state->array_state = arrays;
-    arrays->enabled_array_count = 0;
-    arrays->array_info_cache = NULL;
-    arrays->array_info_cache_size = 0;
-    arrays->array_info_cache_buffer_size = 0;
-    arrays->array_info_cache_valid= GL_FALSE;
 
     arrays->old_DrawArrays_possible = !state->NoDrawArraysProtocol;
     arrays->new_DrawArrays_possible = GL_FALSE;
@@ -457,11 +181,7 @@ __glXInitVertexArrayState( __GLXcontext * gc )
     arrays->num_vertex_program_attribs = vertex_program_attribs;
     array_count += texture_units + vertex_program_attribs;
     arrays->num_arrays = array_count;
-    arrays->arrays = malloc( sizeof( struct array_state ) * array_count );
-    
-    (void) memset( arrays->arrays, 0,
-		   sizeof( struct array_state ) * array_count );
-
+    arrays->arrays = calloc( array_count, sizeof( struct array_state ) );
 
     arrays->arrays[0].data_type = GL_FLOAT;
     arrays->arrays[0].count = 3;
@@ -542,6 +262,7 @@ __glXInitVertexArrayState( __GLXcontext * gc )
     arrays->arrays[i].key = GL_VERTEX_ARRAY;
     arrays->arrays[i].old_DrawArrays_possible = GL_TRUE;
 
+    assert( (i + 1) == arrays->num_arrays );
 
     arrays->stack_index = 0;
     arrays->stack = malloc( sizeof( struct array_stack_state )
@@ -688,11 +409,11 @@ fill_array_info_cache( struct array_state_vector * arrays )
     /* Determine how many arrays are enabled.
      */
 
-    arrays->enabled_array_count = 0;
+    arrays->enabled_client_array_count = 0;
     old_DrawArrays_possible = arrays->old_DrawArrays_possible;
     for ( i = 0 ; i < arrays->num_arrays ; i++ ) {
 	if ( arrays->arrays[i].enabled ) {
-	    arrays->enabled_array_count++;
+	    arrays->enabled_client_array_count++;
 	    old_DrawArrays_possible &= arrays->arrays[i].old_DrawArrays_possible;
 	}
     }
@@ -702,7 +423,7 @@ fill_array_info_cache( struct array_state_vector * arrays )
 	assert( ! arrays->new_DrawArrays_possible );
     }
     else if ( old_DrawArrays_possible ) {
-	const size_t required_size = arrays->enabled_array_count * 12;
+	const size_t required_size = arrays->enabled_client_array_count * 12;
 	uint32_t * info;
 
 
@@ -720,7 +441,6 @@ fill_array_info_cache( struct array_state_vector * arrays )
 	    }
 	}
 
-        arrays->array_info_cache_valid = GL_TRUE;
 	arrays->DrawArrays = emit_DrawArrays_old;
 	arrays->DrawElements = emit_DrawElements_old;
     }
@@ -728,6 +448,8 @@ fill_array_info_cache( struct array_state_vector * arrays )
 	arrays->DrawArrays = emit_DrawArrays_none;
 	arrays->DrawElements = emit_DrawElements_none;
     }
+
+    arrays->array_info_cache_valid = GL_TRUE;
 }
 
 
@@ -872,7 +594,7 @@ emit_DrawArrays_header_old( __GLXcontext * gc,
 	*(uint32_t *)(pc +  0) = command_size;
 	*(uint32_t *)(pc +  4) = X_GLrop_DrawArrays;
 	*(uint32_t *)(pc +  8) = count;
-	*(uint32_t *)(pc + 12) = arrays->enabled_array_count;
+	*(uint32_t *)(pc + 12) = arrays->enabled_client_array_count;
 	*(uint32_t *)(pc + 16) = mode;
 
 	__glXSendLargeChunk( gc, 1, *total_requests, pc,
@@ -889,7 +611,7 @@ emit_DrawArrays_header_old( __GLXcontext * gc,
 	*(uint16_t *)(pc +  0) = command_size;
 	*(uint16_t *)(pc +  2) = X_GLrop_DrawArrays;
 	*(uint32_t *)(pc +  4) = count;
-	*(uint32_t *)(pc +  8) = arrays->enabled_array_count;
+	*(uint32_t *)(pc +  8) = arrays->enabled_client_array_count;
 	*(uint32_t *)(pc + 12) = mode;
 
 	pc += header_size;
@@ -897,7 +619,7 @@ emit_DrawArrays_header_old( __GLXcontext * gc,
 	(void) memcpy( pc, arrays->array_info_cache,
 		       arrays->array_info_cache_size );
 	pc += arrays->array_info_cache_size;
-	
+
 	*elements_per_request = count;
 	*total_requests = 0;
     }
@@ -1325,12 +1047,13 @@ void __indirect_glMultiDrawElementsEXT(GLenum mode, const GLsizei *count,
 }
 
 
-#define COMMON_ARRAY_DATA_INIT(a, PTR, TYPE, STRIDE, COUNT, HDR_SIZE, OPCODE) \
+#define COMMON_ARRAY_DATA_INIT(a, PTR, TYPE, STRIDE, COUNT, NORMALIZED, HDR_SIZE, OPCODE) \
     do { \
 	(a)->data = PTR; \
 	(a)->data_type = TYPE; \
 	(a)->user_stride = STRIDE; \
 	(a)->count = COUNT; \
+	(a)->normalized = NORMALIZED; \
 	\
 	(a)->element_size = __glXTypeSize( TYPE ) * COUNT; \
 	(a)->true_stride = (STRIDE == 0) \
@@ -1381,7 +1104,8 @@ void __indirect_glVertexPointer( GLint size, GLenum type, GLsizei stride,
 
     a = get_array_entry( arrays, GL_VERTEX_ARRAY, 0 );
     assert( a != NULL );
-    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, size, 4, opcode );
+    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, size, GL_FALSE, 4,
+			    opcode );
 
     if ( a->enabled ) {
 	arrays->array_info_cache_valid = GL_FALSE;
@@ -1403,7 +1127,7 @@ void __indirect_glNormalPointer( GLenum type, GLsizei stride,
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
     }
-    
+
     switch ( type ) {
     case GL_BYTE:	opcode = X_GLrop_Normal3bv; break;
     case GL_SHORT:	opcode = X_GLrop_Normal3sv; break;
@@ -1417,7 +1141,8 @@ void __indirect_glNormalPointer( GLenum type, GLsizei stride,
 
     a = get_array_entry( arrays, GL_NORMAL_ARRAY, 0 );
     assert( a != NULL );
-    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, 3, 4, opcode );
+    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, 3, GL_TRUE, 4,
+			    opcode );
 
     if ( a->enabled ) {
 	arrays->array_info_cache_valid = GL_FALSE;
@@ -1480,7 +1205,8 @@ void __indirect_glColorPointer( GLint size, GLenum type, GLsizei stride,
 
     a = get_array_entry( arrays, GL_COLOR_ARRAY, 0 );
     assert( a != NULL );
-    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, size, 4, opcode );
+    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, size, GL_TRUE, 4,
+			    opcode );
 
     if ( a->enabled ) {
 	arrays->array_info_cache_valid = GL_FALSE;
@@ -1516,7 +1242,8 @@ void __indirect_glIndexPointer( GLenum type, GLsizei stride,
 
     a = get_array_entry( arrays, GL_INDEX_ARRAY, 0 );
     assert( a != NULL );
-    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, 1, 4, opcode );
+    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, 1, GL_FALSE, 4,
+			    opcode );
 
     if ( a->enabled ) {
 	arrays->array_info_cache_valid = GL_FALSE;
@@ -1540,7 +1267,8 @@ void __indirect_glEdgeFlagPointer( GLsizei stride, const GLvoid * pointer )
 
     a = get_array_entry( arrays, GL_EDGE_FLAG_ARRAY, 0 );
     assert( a != NULL );
-    COMMON_ARRAY_DATA_INIT( a, pointer, GL_UNSIGNED_BYTE, stride, 1, 4, X_GLrop_EdgeFlagv );
+    COMMON_ARRAY_DATA_INIT( a, pointer, GL_UNSIGNED_BYTE, stride, 1, GL_FALSE,
+			    4, X_GLrop_EdgeFlagv );
 
     if ( a->enabled ) {
 	arrays->array_info_cache_valid = GL_FALSE;
@@ -1621,7 +1349,8 @@ void __indirect_glTexCoordPointer( GLint size, GLenum type, GLsizei stride,
 
     a = get_array_entry( arrays, GL_TEXTURE_COORD_ARRAY, index );
     assert( a != NULL );
-    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, size, header_size, opcode );
+    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, size, GL_FALSE,
+			    header_size, opcode );
 
     if ( a->enabled ) {
 	arrays->array_info_cache_valid = GL_FALSE;
@@ -1664,7 +1393,8 @@ void __indirect_glSecondaryColorPointerEXT( GLint size, GLenum type, GLsizei str
         return;
     }
 
-    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, size, 4, opcode );
+    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, size, GL_TRUE, 4,
+			    opcode );
 
     if ( a->enabled ) {
 	arrays->array_info_cache_valid = GL_FALSE;
@@ -1686,7 +1416,7 @@ void __indirect_glFogCoordPointerEXT( GLenum type, GLsizei stride,
         __glXSetError(gc, GL_INVALID_VALUE);
         return;
     }
-    
+
     switch ( type ) {
     case GL_FLOAT:		opcode = 4124; break;
     case GL_DOUBLE:		opcode = 4125; break;
@@ -1701,7 +1431,8 @@ void __indirect_glFogCoordPointerEXT( GLenum type, GLsizei stride,
         return;
     }
 
-    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, 1, 4, opcode );
+    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, 1, GL_FALSE, 4,
+			    opcode );
 
     if ( a->enabled ) {
 	arrays->array_info_cache_valid = GL_FALSE;
@@ -1793,7 +1524,8 @@ void __indirect_glVertexAttribPointerARB(GLuint index, GLint size,
         return;
     }
 
-    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, size, 8, opcode );
+    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, size, normalized, 8,
+			    opcode );
 
     true_immediate_size = __glXTypeSize(type) * true_immediate_count;
     ((uint16_t *) (a)->header)[0] = __GLX_PAD(a->header_size 
@@ -2102,5 +1834,6 @@ __glXPopArrayState( __GLXattribute * state )
 			     stack[i].enabled );
     }
 
-    arrays->active_texture_unit = arrays->active_texture_unit_stack[ arrays->stack_index ];
+    arrays->active_texture_unit = 
+      arrays->active_texture_unit_stack[ arrays->stack_index ];
 }
