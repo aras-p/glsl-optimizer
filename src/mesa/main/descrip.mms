@@ -15,11 +15,13 @@ INCDIR = [-.include]
 LIBDIR = [-.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(FBIND=1)
 
-CORE_SOURCES = accum.c alpha.c alphabuf.c api1.c api2.c apiext.c attrib.c \
+CORE_SOURCES = accum.c alpha.c alphabuf.c attrib.c \
 bitmap.c blend.c clip.c colortab.c context.c copypix.c depth.c \
+dispatch.c \
 dlist.c drawpix.c enable.c eval.c feedback.c fog.c \
-get.c hash.c image.c light.c lines.c logic.c masking.c matrix.c \
-glmisc.c mmath.c mthreads.c pb.c pixel.c points.c pointers.c polygon.c \
+get.c hash.c image.c imaging.c light.c lines.c logic.c masking.c matrix.c \
+mem.c glapi.c glapinoop.c \
+glmisc.c mmath.c mthreads.c pb.c pixel.c points.c polygon.c \
 quads.c rastpos.c readpix.c rect.c scissor.c shade.c span.c \
 stencil.c teximage.c texobj.c texstate.c texture.c translate.c triangle.c \
 varray.c winpos.c vb.c vbcull.c vbfill.c vbrender.c vbxform.c xform.c \
@@ -37,13 +39,16 @@ DRIVER_SOURCES = [.x]glxapi.c [.x]fakeglx.c [.x]realglx.c [.x]xfonts.c \
 ASM_SOURCES =
 
 OBJECTS =\
-accum.obj,alpha.obj,alphabuf.obj,api1.obj,api2.obj,apiext.obj,attrib.obj,\
+accum.obj,alpha.obj,alphabuf.obj,attrib.obj,\
 bitmap.obj,blend.obj,clip.obj,colortab.obj,context.obj,copypix.obj,depth.obj,\
 dlist.obj,drawpix.obj,enable.obj,eval.obj,feedback.obj,fog.obj
 
 
-OBJECTS3=get.obj,hash.obj,image.obj,light.obj,lines.obj,logic.obj,masking.obj,matrix.obj,\
-glmisc.obj,mmath.obj,mthreads.obj,pb.obj,pixel.obj,points.obj,pointers.obj,polygon.obj,\
+OBJECTS3=get.obj,hash.obj,image.obj,light.obj,lines.obj,logic.obj,masking.obj,\
+matrix.obj,glapi.obj,glapinoop.obj,dispatch.obj,imaging.obj,mem.obj,\
+glmisc.obj,mmath.obj,mthreads.obj,pb.obj,pixel.obj,points.obj
+
+OBJECTS7=polygon.obj,\
 quads.obj,rastpos.obj,readpix.obj,rect.obj,scissor.obj,shade.obj,span.obj
 
 
@@ -71,7 +76,7 @@ VERSION=Mesa V3.1
 ##### TARGETS #####
 # Make the library
 $(LIBDIR)$(GL_LIB) : $(OBJECTS),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
-	$(OBJECTS5) $(OBJECTS6)
+	$(OBJECTS5) $(OBJECTS7) $(OBJECTS6)
 .ifdef SHARE
   @ WRITE_ SYS$OUTPUT "  generating mesagl1.opt"
   @ OPEN_/WRITE FILE  mesagl1.opt
@@ -83,6 +88,7 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
   @ WRITE_ FILE "$(OBJECTS)"
   @ WRITE_ FILE "$(OBJECTS3)"
   @ WRITE_ FILE "$(OBJECTS4)"
+  @ WRITE_ FILE "$(OBJECTS7)"
   @ WRITE_ FILE "$(OBJECTS6)"
   @ WRITE_ FILE "$(OBJECTS2)"
   @ WRITE_ FILE "$(OBJECTS5)"
@@ -101,6 +107,7 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
   @ library $(GL_LIB) $(OBJECTS3)
   @ library $(GL_LIB) $(OBJECTS4)
   @ library $(GL_LIB) $(OBJECTS5)
+  @ library $(GL_LIB) $(OBJECTS7)
   @ library $(GL_LIB) $(OBJECTS6)
 .endif
   @ rename $(GL_LIB)* $(LIBDIR)
