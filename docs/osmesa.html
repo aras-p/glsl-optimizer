@@ -43,16 +43,14 @@ memory.
 <p>
    To build Mesa/OSMesa with 16-bit color channels:
 <pre>
-      cd Mesa-5.x/src
-      make -f Makefile.X11 clean
-      make -f Makefile.OSMesa16 linux-osmesa16
+      make realclean
+      make linux-osmesa16
 </pre>
 
    For 32-bit channels:
 <pre>
-      cd Mesa-5.x/src
-      make -f Makefile.X11 clean
-      make -f Makefile.OSMesa16 linux-osmesa32
+      make realclean
+      make linux-osmesa32
 </pre>
 
 <p>
@@ -60,13 +58,12 @@ You'll wind up with a library named libOSMesa16.so or libOSMesa32.so.
 </p>
 
 <p>
-If you're not using Linux, you can easily edit Make-config and add
-an appropriate configuration.
+If you need to compile on a non-Linux platform, copy Mesa/configs/linux-osmesa16
+to a new config file and edit it as needed.  Then, add the new config name to
+the top-level Makefile.  Send a patch to the Mesa developers too, if you're
+inclined.
 </p>
-<p>
-The Mesa/tests/osdemo16.c file (available via CVS) demonstrates how
-to use this feature.
-</p>
+
 <p>
 BE WARNED: 16 and 32-bit channel support has not been exhaustively
 tested and there may be some bugs.  However, a number of people have
