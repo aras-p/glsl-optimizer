@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.29 2000/09/26 15:27:20 brianp Exp $
+# $Id: Make-config,v 1.30 2000/10/23 00:20:50 gareth Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=5
@@ -200,7 +200,11 @@ freebsd-386:
 	"CFLAGS = -O3 -ffast-math -fPIC -pedantic -I/usr/X11R6/include -DUSE_XSHM -DHZ=100 -DUSE_X86_ASM -DFREEBSD" \
 	"MAKELIB = ../bin/mklib.freebsd" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S"
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
+		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
+		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_cliptest.S"
 
 gcc:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -481,32 +485,65 @@ linux-static:
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lm -lpthread"
 
-linux-386:
+linux-x86:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
-	"CC = gcc" \
-	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM  -DPTHREADS -I/usr/X11R6/include" \
+	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
+	"CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM -DPTHREADS -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S X86/vertex.S"
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
+		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
+		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_cliptest.S X86/x86_vertex.S \
+		X86/mmx_blend.S \
+		X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
+		X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
+		X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
+		X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
+		X86/3dnow_norm_raw.S X86/3dnow_vertex.S \
+		X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
+		X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
+		X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
+		X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
+		X86/katmai_norm_raw.S X86/katmai_vertex.S"
 
-linux-386-static:
+linux-x86-static:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.a" \
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
-	"CC = gcc" \
-	"CFLAGS = -O3 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DPTHREADS -I/usr/X11R6/include" \
+	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
+	"CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM -DPTHREADS -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lm -lpthread" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S X86/vertex.S"
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
+	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
+	"APP_LIB_DEPS = -lm" \
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
+		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
+		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_cliptest.S X86/x86_vertex.S \
+		X86/mmx_blend.S \
+		X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
+		X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
+		X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
+		X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
+		X86/3dnow_norm_raw.S X86/3dnow_vertex.S \
+		X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
+		X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
+		X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
+		X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
+		X86/katmai_norm_raw.S X86/katmai_vertex.S"
 
 linux-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -535,7 +572,11 @@ linux-386-glide:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S X86/vertex.S"
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S
+		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
+		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_cliptest.S X86/x86_vertex.S"
 
 linux-386-opt-V2-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -550,7 +591,11 @@ linux-386-opt-V2-glide:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S X86/vertex.S"
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S
+		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
+		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_cliptest.S X86/x86_vertex.S"
 
 linux-386-opt-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -565,79 +610,13 @@ linux-386-opt-glide:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S X86/vertex.S"
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S
+		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
+		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_cliptest.S X86/x86_vertex.S"
 
-linux-3dnow:
-	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
-	"GL_LIB = libGL.so" \
-	"GLU_LIB = libGLU.so" \
-	"GLUT_LIB = libglut.so" \
-	"GLW_LIB = libGLw.so" \
-	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
-	"CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DPTHREADS -I/usr/X11R6/include" \
-	"MAKELIB = ../bin/mklib.linux" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
-	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
-	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
-	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S \
-	X86/mmx_blend.S \
-	X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
-	X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
-	X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
-	X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
-	X86/3dnow_norm_raw.S X86/vertex.S X86/vertex_3dnow.S" 
-
-linux-3dnow-glide:
-	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
-	"GL_LIB = libGL.so" \
-	"GLU_LIB = libGLU.so" \
-	"GLUT_LIB = libglut.so" \
-	"GLW_LIB = libGLw.so" \
-	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
-	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_XSHM -DFX -DPTHREADS -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include -I/usr/src/mesa-glx/src/FX/X86" \
-	"MAKELIB = ../bin/mklib.linux" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
-	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
-	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
-	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S \
-	X86/mmx_blend.S \
-	X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
-	X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
-	X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
-	X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
-	X86/3dnow_norm_raw.S X86/vertex.S X86/vertex_3dnow.S \
-	FX/X86/fx_3dnow_fastpath.S"
-
-linux-katmai:
-	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
-	"GL_LIB = libGL.so" \
-	"GLU_LIB = libGLU.so" \
-	"GLUT_LIB = libglut.so" \
-	"GLW_LIB = libGLw.so" \
-	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
-	"CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM -DPTHREADS -I/usr/X11R6/include" \
-	"MAKELIB = ../bin/mklib.linux" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
-	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
-	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
-	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S \
-	X86/mmx_blend.S \
-	X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
-	X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
-	X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
-	X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
-	X86/3dnow_norm_raw.S X86/vertex.S X86/vertex_3dnow.S \
-	X86/katmai_norm_raw.S \
-	X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
-	X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
-	X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
-	X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
-	X86/vertex_katmai.S"
-
-linux-katmai-glide:
+linux-x86-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
 	"GLU_LIB = libGLU.so" \
@@ -650,20 +629,23 @@ linux-katmai-glide:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S \
-	X86/mmx_blend.S \
-	X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
-	X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
-	X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
-	X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
-	X86/3dnow_norm_raw.S X86/vertex.S X86/vertex_3dnow.S \
-	FX/X86/fx_3dnow_fastpath.S \
-	X86/katmai_norm_raw.S \
-	X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
-	X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
-	X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
-	X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
-	X86/vertex_katmai.S" 
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
+		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
+		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_cliptest.S X86/x86_vertex.S \
+		X86/mmx_blend.S \
+		X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
+		X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
+		X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
+		X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
+		X86/3dnow_norm_raw.S X86/3dnow_vertex.S \
+		FX/X86/fx_3dnow_fastpath.S \
+		X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
+		X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
+		X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
+		X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
+		X86/katmai_norm_raw.S X86/katmai_vertex.S"
 
 # Contributed by Uwe_Maurer@t-online.de
 linux-ggi:
@@ -688,7 +670,11 @@ linux-386-ggi:
 	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DUSE_X86_ASM -DGGI -DCDECL=" \
 	"MAKELIB = ../bin/mklib.ggi" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lggi -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S X86/vertex.S"
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
+		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
+		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_cliptest.S X86/x86_vertex.S"
 
 linux-alpha:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -888,7 +874,11 @@ os2-x11:
 	"CFLAGS = -Zmt -O3 -m486 -funroll-loops -Wall -Wno-unused -ansi -pedantic -ffast-math -DUSE_X86_ASM -D_SVID_SOURCE -D_BSD_SOURCE -I$(X11ROOT)/XFree86/include" \
 	"MAKELIB = ..\\bin\\mklib-emx.cmd " \
 	"APP_LIB_DEPS = -Zmt -Zcrtdll -Zexe -L$(X11ROOT)/XFree86/lib -lXt -lX11 -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S X86/vertex.S"
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
+		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
+		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_cliptest.S X86/x86_vertex.S"
 
 osf1:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1287,6 +1277,20 @@ DEBUG:
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lfpe -lm"
 
 # for debugging on Linux systems
+linux-debug:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DSVGA -I/usr/include/glide -DFX" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -lvga -L/usr/local/glide/lib -lglide2x" \
+	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
+	"APP_LIB_DEPS = -lglut -lGLU -lGL"
+
 linux-static-debug:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.a" \
@@ -1294,24 +1298,39 @@ linux-static-debug:
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
 	"CC = gcc" \
-	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -DUSE_XSHM -DDEBUG -DSVGA -DFX -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM_not -I/usr/include/glide -I/usr/local/glide/include" \
+	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -DUSE_XSHM -DDEBUG -DMESA_DEBUG -DSVGA -DFX -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide2x -ltexus -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lvga -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S X86/vertex.S"
 
-linux-elf-debug:
+linux-x86-debug:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
-	"CC = gcc" \
-	"CFLAGS = -g -ansi -pedantic -Wall -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DSVGA -I/usr/include/glide -DFX" \
+	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
+	"CFLAGS = -O2 -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM -DPTHREADS -I/usr/X11R6/include -DDEBUG -DMESA_DEBUG" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -lvga -L/usr/local/glide/lib -lglide2x" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
-	"APP_LIB_DEPS = -lglut -lGLU -lGL"
+	"APP_LIB_DEPS = -lm" \
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
+		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
+		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_cliptest.S X86/x86_vertex.S \
+		X86/mmx_blend.S \
+		X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
+		X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
+		X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
+		X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
+		X86/3dnow_norm_raw.S X86/3dnow_vertex.S \
+		X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
+		X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
+		X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
+		X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
+		X86/katmai_norm_raw.S X86/katmai_vertex.S"
 
 linux-glide-debug:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1332,14 +1351,51 @@ linux-prof:
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
 	"CC = gcc" \
-	"CFLAGS = -O2 -pg -ansi -pedantic -Wall -DUSE_XSHM -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -I/usr/include/glide -I/usr/local/glide/include" \
+	"CFLAGS = -Wall -O2 -pg -ansi -pedantic -ffast-math -DUSE_XSHM -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"APP_LIB_DEPS = -L/usr/X11/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
+		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
+		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_cliptest.S X86/x86_vertex.S \
+		X86/mmx_blend.S \
+		X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
+		X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
+		X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
+		X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
+		X86/3dnow_norm_raw.S X86/3dnow_vertex.S \
+		FX/X86/fx_3dnow_fastpath.S \
+		X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
+		X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
+		X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
+		X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
+		X86/katmai_norm_raw.S X86/katmai_vertex.S"
+
+linux-glide-prof:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O2 -pg -ansi -pedantic -Wall -DUSE_XSHM -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide2x -L/usr/X11/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S \
-	X86/mmx_blend.S \
-	X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
-	X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
-	X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
-	X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
-	X86/3dnow_norm_raw.S X86/vertex.S X86/vertex_3dnow.S \
-	FX/X86/fx_3dnow_fastpath.S"
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
+		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
+		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_cliptest.S X86/x86_vertex.S \
+		X86/mmx_blend.S \
+		X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
+		X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
+		X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
+		X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
+		X86/3dnow_norm_raw.S X86/3dnow_vertex.S \
+		FX/X86/fx_3dnow_fastpath.S \
+		X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
+		X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
+		X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
+		X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
+		X86/katmai_norm_raw.S X86/katmai_vertex.S"

@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.35 2000/09/15 19:44:39 brianp Exp $
+# $Id: Makefile.X11,v 1.36 2000/10/23 00:20:50 gareth Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -67,7 +67,6 @@ default:
 	@echo "  make irix6-64-dso         for SGI systems with IRIX 6.x, make 64-bit DSOs"
 
 	@echo "  make linux                for Linux systems, make shared .so libs"
-	@echo "  make linux-trace          for Linux systems, make shared trace .so libs"
 	@echo "  make linux-static         for Linux systems, make static .a libs"
 	@echo "  make linux-386            for Linux on Intel, make shared .so libs"
 	@echo "  make linux-386-static     for Linux on Intel, make static .a libs"
@@ -77,10 +76,8 @@ default:
 	@echo "  make linux-386-glide      for Linux w/ 3Dfx Glide driver, Intel assembly"
 	@echo "  make linux-386-opt-glide  for Linux with 3Dfx Voodoo1 for GLQuake"
 	@echo "  make linux-386-opt-V2-glide  for Linux with 3Dfx Voodoo2 for GLQuake"
-	@echo "  make linux-3dnow          for Linux on AMD w/ 3DNow!"
-	@echo "  make linux-3dnow-glide    for Linux on AMD w/ 3DNow! for Glide"
-	@echo "  make linux-katmai         for Linux on PentiumIII w/ SSE"
-	@echo "  make linux-katmai-glide   for Linux on PentiumIII w/ SSE for Glide"
+	@echo "  make linux-x86            for Linux w/ all x86 asm"
+	@echo "  make linux-x86-glide      for Linux w/ all x86 asm for Glide"
 	@echo "  make linux-alpha          for Linux on Alpha systems"
 	@echo "  make linux-alpha-static   for Linux on Alpha systems, static libs"
 	@echo "  make linux-ppc            for Linux on PowerPC systems"
@@ -140,13 +137,10 @@ aix aix-sl amix bsdos bsdos4 dgux freebsd freebsd-386 gcc \
 hpux9 hpux9-sl hpux9-gcc hpux9-gcc-sl \
 hpux10 hpux10-sl hpux10-gcc hpux10-gcc-sl \
 irix4 irix5 irix5-gcc irix5-dso irix6-o32 irix6-o32-dso \
-linux-static-debug linux-elf-debug linux-prof linux-glide-debug \
-linux linux-trace linux-static \
-linux-386 linux-386-static \
+linux linux-static linux-debug linux-static-debug linux-prof \
+linux-x86 linux-x86-static linux-x86-debug \
 linux-glide linux-386-glide linux-386-opt-glide \
-linux-386-opt-V2-glide \
-linux-3dnow linux-3dnow-glide \
-linux-katmai linux-katmai-glide \
+linux-386-opt-V2-glide linux-x86-glide linux-glide-debug linux-glide-prof \
 linux-alpha-static linux-alpha \
 linux-ppc-static linux-ppc \
 linux-sparc \
