@@ -1,4 +1,4 @@
-/* $Id: texutil_tmp.h,v 1.5 2001/03/21 16:44:08 brianp Exp $ */
+/* $Id: texutil_tmp.h,v 1.6 2001/03/27 20:32:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -65,7 +65,7 @@ TAG(texsubimage2d)( struct gl_texture_convert *convert )
 	     DST_TEXELS_PER_DWORD - 1) / DST_TEXELS_PER_DWORD;
 
    for ( i = 0 ; i < dwords ; i++ ) {
-      *dst++ = CONVERT_TEXEL_DWORD( src );
+      CONVERT_TEXEL_DWORD( *dst++, src );
       src += SRC_TEXEL_BYTES * DST_TEXELS_PER_DWORD;
    }
 #endif
@@ -96,7 +96,7 @@ TAG(texsubimage3d)( struct gl_texture_convert *convert )
 	     DST_TEXELS_PER_DWORD - 1) / DST_TEXELS_PER_DWORD;
 
    for ( i = 0 ; i < dwords ; i++ ) {
-      *dst++ = CONVERT_TEXEL_DWORD( src );
+      CONVERT_TEXEL_DWORD( *dst++, src );
       src += SRC_TEXEL_BYTES * DST_TEXELS_PER_DWORD;
    }
 #endif
@@ -131,7 +131,7 @@ TAG(texsubimage2d_stride)( struct gl_texture_convert *convert )
 
    for ( row = 0 ; row < convert->height ; row++ ) {
       for ( col = 0 ; col < convert->width ; col++ ) {
-	 *dst++ = CONVERT_TEXEL( src );
+	 CONVERT_TEXEL( *dst++, src );
 	 src += SRC_TEXEL_BYTES;
       }
       dst += adjust;
@@ -166,7 +166,7 @@ TAG(texsubimage3d_stride)( struct gl_texture_convert *convert )
    for ( img = 0 ; img < convert->depth ; img++ ) {
       for ( row = 0 ; row < convert->height ; row++ ) {
 	 for ( col = 0 ; col < convert->width ; col++ ) {
-	    *dst++ = CONVERT_TEXEL( src );
+	    CONVERT_TEXEL( *dst++, src );
 	    src += SRC_TEXEL_BYTES;
 	 }
 	 dst += adjust;
@@ -213,7 +213,7 @@ TAG(texsubimage2d_pack)( struct gl_texture_convert *convert )
 #else
       const GLubyte *srcRow = src;
       for ( col = width / DST_TEXELS_PER_DWORD ; col ; col-- ) {
-	 *dst++ = CONVERT_TEXEL_DWORD( src );
+	 CONVERT_TEXEL_DWORD( *dst++, src );
 	 src += SRC_TEXEL_BYTES * DST_TEXELS_PER_DWORD;
       }
       src = srcRow + srcRowStride;
@@ -258,7 +258,7 @@ TAG(texsubimage3d_pack)( struct gl_texture_convert *convert )
 #else
 	 const GLubyte *srcRow = src;
 	 for ( col = width / DST_TEXELS_PER_DWORD ; col ; col-- ) {
-	    *dst++ = CONVERT_TEXEL_DWORD( src );
+	    CONVERT_TEXEL_DWORD( *dst++, src );
 	    src += SRC_TEXEL_BYTES * DST_TEXELS_PER_DWORD;
 	 }
 	 src = srcRow + srcRowStride;
@@ -309,7 +309,7 @@ TAG(texsubimage2d_stride_pack)( struct gl_texture_convert *convert )
 #else
       const GLubyte *srcRow = src;
       for ( col = 0 ; col < convert->width ; col++ ) {
-	 *dst++ = CONVERT_TEXEL( src );
+	 CONVERT_TEXEL( *dst++, src );
 	 src += SRC_TEXEL_BYTES;
       }
       src = srcRow + srcRowStride;
@@ -359,7 +359,7 @@ TAG(texsubimage3d_stride_pack)( struct gl_texture_convert *convert )
 #else
 	 const GLubyte *srcRow = src;
 	 for ( col = 0 ; col < convert->width ; col++ ) {
-	    *dst++ = CONVERT_TEXEL( src );
+	    CONVERT_TEXEL( *dst++, src );
 	    src += SRC_TEXEL_BYTES;
 	 }
 	 src = srcRow + srcRowStride;
