@@ -217,8 +217,6 @@ static void gl_ggiSetupPointers( GLcontext *ctx )
 	ctx->Driver.ClearIndex = gl_ggiSetClearIndex; 
 	ctx->Driver.ClearColor = gl_ggiSetClearColor;
 	ctx->Driver.Clear = gl_ggiClear;
-	ctx->Driver.Index = gl_ggiSetIndex;
-	ctx->Driver.Color = gl_ggiSetColor;
 	
 	ctx->Driver.SetDrawBuffer = gl_ggiSetDrawBuffer;
 	ctx->Driver.SetReadBuffer = gl_ggiSetReadBuffer;
