@@ -102,6 +102,7 @@ static void Key( unsigned char key, int x, int y )
    (void) y;
    switch (key) {
      case ' ':
+     case 'a':
         Anim = !Anim;
         if (Anim)
            glutIdleFunc(Idle);
@@ -224,6 +225,7 @@ static void Init( void )
       "!!ARBvp1.0\n"
       "ATTRIB pos = vertex.position; \n"
       "ATTRIB norm = vertex.normal; \n"
+      "PARAM modelview[4] = { state.matrix.modelview }; \n"
       "PARAM modelviewProj[4] = { state.matrix.mvp }; \n"
       "PARAM invModelview[4] = { state.matrix.modelview.invtrans }; \n"
 
@@ -240,8 +242,8 @@ static void Init( void )
       "DP3 result.texcoord[0].w, norm, invModelview[3]; \n"
 
 #if DO_FRAGMENT_FOG
-      "# compute fog coordinate\n"
-      "DP4 result.fogcoord, pos, modelviewProj[2]; \n"
+      "# compute fog coordinate = vertex eye-space Z coord (negated)\n"
+      "DP4 result.fogcoord, -pos, modelview[2]; \n"
 #endif
       "END\n";
       ;
@@ -360,7 +362,7 @@ static void Init( void )
       glFogi(GL_FOG_MODE, GL_LINEAR);
       glFogfv(GL_FOG_COLOR, fogColor);
       glFogf(GL_FOG_START, 5.0);
-      glFogf(GL_FOG_END, 10.0);
+      glFogf(GL_FOG_END, 25.0);
       glEnable(GL_FOG);
    }
 #endif
