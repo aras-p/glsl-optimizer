@@ -35,7 +35,8 @@
 #include "context.h"
 #include "macros.h"
 #include "hash.h"
-
+#include "slang_mesa.h"
+#include "Public/ShaderLang.h"
 
 struct gl2_unknown_obj
 {
@@ -98,6 +99,59 @@ _unknown_constructor (struct gl2_unknown_impl *impl)
 	impl->_vftbl = &_unknown_vftbl;
 	impl->_obj.reference_count = 1;
 	impl->_obj._destructor = _unknown_destructor;
+}
+
+struct gl2_unkinner_obj
+{
+	struct gl2_unknown_intf **unkouter;
+};
+
+struct gl2_unkinner_impl
+{
+	struct gl2_unknown_intf *_vftbl;
+	struct gl2_unkinner_obj _obj;
+};
+
+static void
+_unkinner_destructor (struct gl2_unknown_intf **intf)
+{
+}
+
+static void
+_unkinner_AddRef (struct gl2_unknown_intf **intf)
+{
+	struct gl2_unkinner_impl *impl = (struct gl2_unkinner_impl *) intf;
+
+	(**impl->_obj.unkouter).AddRef (impl->_obj.unkouter);
+}
+
+static void
+_unkinner_Release (struct gl2_unknown_intf **intf)
+{
+	struct gl2_unkinner_impl *impl = (struct gl2_unkinner_impl *) intf;
+
+	(**impl->_obj.unkouter).Release (impl->_obj.unkouter);
+}
+
+static struct gl2_unknown_intf **
+_unkinner_QueryInterface (struct gl2_unknown_intf **intf, enum gl2_uiid uiid)
+{
+	struct gl2_unkinner_impl *impl = (struct gl2_unkinner_impl *) intf;
+
+	return (**impl->_obj.unkouter).QueryInterface (impl->_obj.unkouter, uiid);
+}
+
+static struct gl2_unknown_intf _unkinner_vftbl = {
+	_unkinner_AddRef,
+	_unkinner_Release,
+	_unkinner_QueryInterface
+};
+
+static void
+_unkinner_constructor (struct gl2_unkinner_impl *impl, struct gl2_unknown_intf **outer)
+{
+	impl->_vftbl = &_unkinner_vftbl;
+	impl->_obj.unkouter = outer;
 }
 
 struct gl2_generic_obj
@@ -183,7 +237,7 @@ static struct gl2_generic_intf _generic_vftbl = {
 		_generic_QueryInterface
 	},
 	_generic_Delete,
-	NULL,
+	NULL,		/* abstract GetType */
 	_generic_GetName,
 	_generic_GetDeleteStatus,
 	_generic_GetInfoLog
@@ -314,18 +368,18 @@ _container_GetAttached (struct gl2_container_intf **intf, GLuint index)
 }
 
 static struct gl2_container_intf _container_vftbl = {
-   {
-      {
-	_unknown_AddRef,
-	_unknown_Release,
-	_container_QueryInterface,
-      },
-	_generic_Delete,
-	NULL,
-	_generic_GetName,
-	_generic_GetDeleteStatus,
-	_generic_GetInfoLog,
-   },
+	{
+		{
+			_unknown_AddRef,
+			_unknown_Release,
+			_container_QueryInterface
+		},
+		_generic_Delete,
+		NULL,		/* abstract GetType */
+		_generic_GetName,
+		_generic_GetDeleteStatus,
+		_generic_GetInfoLog
+	},
 	_container_Attach,
 	_container_Detach,
 	_container_GetAttachedCount,
@@ -342,9 +396,56 @@ _container_constructor (struct gl2_container_impl *impl)
 	impl->_obj.attached_count = 0;
 }
 
+struct gl2_3dlabs_shhandle_obj
+{
+	struct gl2_unkinner_obj _unknown;
+	ShHandle handle;
+};
+
+struct gl2_3dlabs_shhandle_impl
+{
+	struct gl2_3dlabs_shhandle_intf *_vftbl;
+	struct gl2_3dlabs_shhandle_obj _obj;
+};
+
+static void
+_3dlabs_shhandle_destructor (struct gl2_unknown_intf **intf)
+{
+	struct gl2_3dlabs_shhandle_impl *impl = (struct gl2_3dlabs_shhandle_impl *) intf;
+
+	ShDestruct (impl->_obj.handle);
+	_unkinner_destructor (intf);
+}
+
+static GLvoid *
+_3dlabs_shhandle_GetShHandle (struct gl2_3dlabs_shhandle_intf **intf)
+{
+	struct gl2_3dlabs_shhandle_impl *impl = (struct gl2_3dlabs_shhandle_impl *) intf;
+
+	return impl->_obj.handle;
+}
+
+static struct gl2_3dlabs_shhandle_intf _3dlabs_shhandle_vftbl = {
+	{
+		_unkinner_AddRef,
+		_unkinner_Release,
+		_unkinner_QueryInterface
+	},
+	_3dlabs_shhandle_GetShHandle
+};
+
+static void
+_3dlabs_shhandle_constructor (struct gl2_3dlabs_shhandle_impl *impl, struct gl2_unknown_intf **outer)
+{
+	_unkinner_constructor ((struct gl2_unkinner_impl *) impl, outer);
+	impl->_vftbl = &_3dlabs_shhandle_vftbl;
+	impl->_obj.handle = NULL;
+}
+
 struct gl2_shader_obj
 {
 	struct gl2_generic_obj _generic;
+	struct gl2_3dlabs_shhandle_impl _3dlabs_shhandle;
 	GLboolean compile_status;
 	GLcharARB *source;
 	GLint *offsets;
@@ -364,16 +465,24 @@ _shader_destructor (struct gl2_unknown_intf **intf)
 
 	_mesa_free ((void *) impl->_obj.source);
 	_mesa_free ((void *) impl->_obj.offsets);
+	_3dlabs_shhandle_destructor ((struct gl2_unknown_intf **) &impl->_obj._3dlabs_shhandle._vftbl);
 	_generic_destructor (intf);
 }
 
 static struct gl2_unknown_intf **
 _shader_QueryInterface (struct gl2_unknown_intf **intf, enum gl2_uiid uiid)
 {
+	struct gl2_shader_impl *impl = (struct gl2_shader_impl *) intf;
+
 	if (uiid == UIID_SHADER)
 	{
 		(**intf).AddRef (intf);
 		return intf;
+	}
+	if (uiid == UIID_3DLABS_SHHANDLE)
+	{
+		(**intf).AddRef (intf);
+		return (struct gl2_unknown_intf **) &impl->_obj._3dlabs_shhandle._vftbl;
 	}
 	return _generic_QueryInterface (intf, uiid);
 }
@@ -416,28 +525,93 @@ static GLvoid
 _shader_Compile (struct gl2_shader_intf **intf)
 {
 	struct gl2_shader_impl *impl = (struct gl2_shader_impl *) intf;
+	char **strings;
+	TBuiltInResource res;
 
 	impl->_obj.compile_status = GL_FALSE;
 	_mesa_free ((void *) impl->_obj._generic.info_log);
 	impl->_obj._generic.info_log = NULL;
 
-	/* TODO compile */
+	/* 3dlabs compiler expects us to feed it with null-terminated string array,
+	we've got only one big string with offsets, so we must split it; but when
+	there's only one string to deal with, we pass its address directly */
+
+	if (impl->_obj.offset_count <= 1)
+		strings = &impl->_obj.source;
+	else
+	{
+		GLsizei i, offset = 0;
+
+		strings = (char **) _mesa_malloc (impl->_obj.offset_count * sizeof (char *));
+		if (strings == NULL)
+			return;
+
+		for (i = 0; i < impl->_obj.offset_count; i++)
+		{
+			GLsizei size = impl->_obj.offsets[i] - offset;
+
+			strings[i] = (char *) _mesa_malloc ((size + 1) * sizeof (char));
+			if (strings[i] == NULL)
+			{
+				GLsizei j;
+
+				for (j = 0; j < i; j++)
+					_mesa_free (strings[j]);
+				_mesa_free (strings);
+				return;
+			}
+
+			_mesa_memcpy (strings[i], impl->_obj.source + offset, size * sizeof (char));
+			strings[i][size] = '\0';
+			offset = impl->_obj.offsets[i];
+		}
+	}
+
+	/* TODO set these fields to some REAL numbers */
+	res.maxLights = 8;
+	res.maxClipPlanes = 6;
+	res.maxTextureUnits = 2;
+	res.maxTextureCoords = 2;
+	res.maxVertexAttribs = 8;
+	res.maxVertexUniformComponents = 64;
+	res.maxVaryingFloats = 8;
+	res.maxVertexTextureImageUnits = 2;
+	res.maxCombinedTextureImageUnits = 2;
+	res.maxTextureImageUnits = 2;
+	res.maxFragmentUniformComponents = 64;
+	res.maxDrawBuffers = 1;
+
+	if (ShCompile (impl->_obj._3dlabs_shhandle._obj.handle, strings, impl->_obj.offset_count,
+			EShOptFull, &res, 0))
+		impl->_obj.compile_status = GL_TRUE;
+
+	if (impl->_obj.offset_count > 1)
+	{
+		GLsizei i;
+
+		for (i = 0; i < impl->_obj.offset_count; i++)
+			_mesa_free (strings[i]);
+		_mesa_free (strings);
+	}
+
+	impl->_obj._generic.info_log = _mesa_strdup (ShGetInfoLog (
+		impl->_obj._3dlabs_shhandle._obj.handle));
 }
 
 static struct gl2_shader_intf _shader_vftbl = {
-   {
-      {
-	_unknown_AddRef,
-	_unknown_Release,
-	_shader_QueryInterface,
-      },
-	_generic_Delete,
-	_shader_GetType,
-	_generic_GetName,
-	_generic_GetDeleteStatus,
-	_generic_GetInfoLog,
-   },
-	NULL,
+	{
+		{
+			_unknown_AddRef,
+			_unknown_Release,
+			_shader_QueryInterface
+		},
+		_generic_Delete,
+		_shader_GetType,
+		_generic_GetName,
+		_generic_GetDeleteStatus,
+		_generic_GetInfoLog
+	},
+	NULL,		/* abstract GetSubType */
 	_shader_GetCompileStatus,
 	_shader_SetSource,
 	_shader_GetSource,
@@ -448,6 +622,8 @@ static void
 _shader_constructor (struct gl2_shader_impl *impl)
 {
 	_generic_constructor ((struct gl2_generic_impl *) impl);
+	_3dlabs_shhandle_constructor (&impl->_obj._3dlabs_shhandle, (struct gl2_unknown_intf **)
+		&impl->_vftbl);
 	impl->_vftbl = &_shader_vftbl;
 	impl->_obj._generic._unknown._destructor = _shader_destructor;
 	impl->_obj.compile_status = GL_FALSE;
@@ -461,6 +637,8 @@ struct gl2_program_obj
 	struct gl2_container_obj _container;
 	GLboolean link_status;
 	GLboolean validate_status;
+	ShHandle linker;
+	ShHandle uniforms;
 };
 
 struct gl2_program_impl
@@ -473,7 +651,9 @@ static void
 _program_destructor (struct gl2_unknown_intf **intf)
 {
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
-	(void) impl;
+
+	ShDestruct (impl->_obj.linker);
+	ShDestruct (impl->_obj.uniforms);
 	_container_destructor (intf);
 }
 
@@ -531,12 +711,41 @@ static GLvoid
 _program_Link (struct gl2_program_intf **intf)
 {
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
+	ShHandle *handles;
+	GLuint i;
 
 	impl->_obj.link_status = GL_FALSE;
 	_mesa_free ((void *) impl->_obj._container._generic.info_log);
 	impl->_obj._container._generic.info_log = NULL;
 
-	/* TODO link */
+	handles = (ShHandle *) _mesa_malloc (impl->_obj._container.attached_count * sizeof (ShHandle));
+	if (handles == NULL)
+		return;
+
+	for (i = 0; i < impl->_obj._container.attached_count; i++)
+	{
+		struct gl2_generic_intf **gen = impl->_obj._container.attached[i];
+		struct gl2_3dlabs_shhandle_intf **sh;
+
+		sh = (struct gl2_3dlabs_shhandle_intf **) (**gen)._unknown.QueryInterface (
+			(struct gl2_unknown_intf **) gen, UIID_3DLABS_SHHANDLE);
+		if (sh != NULL)
+		{
+			handles[i] = (**sh).GetShHandle (sh);
+			(**sh)._unknown.Release ((struct gl2_unknown_intf **) sh);
+		}
+		else
+		{
+			_mesa_free (handles);
+			return;
+		}
+	}
+
+	if (ShLink (impl->_obj.linker, handles, impl->_obj._container.attached_count,
+			impl->_obj.uniforms, NULL, NULL))
+		impl->_obj.link_status = GL_TRUE;
+
+	impl->_obj._container._generic.info_log = _mesa_strdup (ShGetInfoLog (impl->_obj.linker));
 }
 
 static GLvoid
@@ -545,6 +754,8 @@ _program_Validate (struct gl2_program_intf **intf)
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
 
 	impl->_obj.validate_status = GL_FALSE;
+	_mesa_free ((void *) impl->_obj._container._generic.info_log);
+	impl->_obj._container._generic.info_log = NULL;
 
 	/* TODO validate */
 }
@@ -555,18 +766,18 @@ static struct gl2_program_intf _program_vftbl = {
 			{
 				_unknown_AddRef,
 				_unknown_Release,
-				_program_QueryInterface,
+				_program_QueryInterface
 			},
 			_generic_Delete,
 			_program_GetType,
 			_generic_GetName,
 			_generic_GetDeleteStatus,
-			_generic_GetInfoLog,
+			_generic_GetInfoLog
 		},
 		_program_Attach,
 		_container_Detach,
 		_container_GetAttachedCount,
-		_container_GetAttached,
+		_container_GetAttached
 	},
 	_program_GetLinkStatus,
 	_program_GetValidateStatus,
@@ -582,6 +793,8 @@ _program_constructor (struct gl2_program_impl *impl)
 	impl->_obj._container._generic._unknown._destructor = _program_destructor;
 	impl->_obj.link_status = GL_FALSE;
 	impl->_obj.validate_status = GL_FALSE;
+	impl->_obj.linker = ShConstructLinker (EShExVertexFragment, 0);
+	impl->_obj.uniforms = ShConstructUniformMap ();
 }
 
 struct gl2_fragment_shader_obj
@@ -599,6 +812,7 @@ static void
 _fragment_shader_destructor (struct gl2_unknown_intf **intf)
 {
 	struct gl2_fragment_shader_impl *impl = (struct gl2_fragment_shader_impl *) intf;
+
 	(void) impl;
 	/* TODO free fragment shader data */
 
@@ -628,13 +842,13 @@ static struct gl2_fragment_shader_intf _fragment_shader_vftbl = {
 			{
 				_unknown_AddRef,
 				_unknown_Release,
-				_fragment_shader_QueryInterface,
+				_fragment_shader_QueryInterface
 			},
 			_generic_Delete,
 			_shader_GetType,
 			_generic_GetName,
 			_generic_GetDeleteStatus,
-			_generic_GetInfoLog,
+			_generic_GetInfoLog
 		},
 		_fragment_shader_GetSubType,
 		_shader_GetCompileStatus,
@@ -650,6 +864,7 @@ _fragment_shader_constructor (struct gl2_fragment_shader_impl *impl)
 	_shader_constructor ((struct gl2_shader_impl *) impl);
 	impl->_vftbl = &_fragment_shader_vftbl;
 	impl->_obj._shader._generic._unknown._destructor = _fragment_shader_destructor;
+	impl->_obj._shader._3dlabs_shhandle._obj.handle = ShConstructCompiler (EShLangFragment, 0);
 }
 
 struct gl2_vertex_shader_obj
@@ -667,6 +882,7 @@ static void
 _vertex_shader_destructor (struct gl2_unknown_intf **intf)
 {
 	struct gl2_vertex_shader_impl *impl = (struct gl2_vertex_shader_impl *) intf;
+
 	(void) impl;
 	/* TODO free vertex shader data */
 
@@ -696,13 +912,13 @@ static struct gl2_vertex_shader_intf _vertex_shader_vftbl = {
 			{
 				_unknown_AddRef,
 				_unknown_Release,
-				_vertex_shader_QueryInterface,
+				_vertex_shader_QueryInterface
 			},
 			_generic_Delete,
 			_shader_GetType,
 			_generic_GetName,
 			_generic_GetDeleteStatus,
-			_generic_GetInfoLog,
+			_generic_GetInfoLog
 		},
 		_vertex_shader_GetSubType,
 		_shader_GetCompileStatus,
@@ -718,19 +934,18 @@ _vertex_shader_constructor (struct gl2_vertex_shader_impl *impl)
 	_shader_constructor ((struct gl2_shader_impl *) impl);
 	impl->_vftbl = &_vertex_shader_vftbl;
 	impl->_obj._shader._generic._unknown._destructor = _vertex_shader_destructor;
+	impl->_obj._shader._3dlabs_shhandle._obj.handle = ShConstructCompiler (EShLangVertex, 0);
 }
 
 GLhandleARB
 _mesa_3dlabs_create_shader_object (GLenum shaderType)
 {
-	GET_CURRENT_CONTEXT(ctx);
-	(void) ctx;
 	switch (shaderType)
 	{
 	case GL_FRAGMENT_SHADER_ARB:
 		{
-			struct gl2_fragment_shader_impl *x = (struct gl2_fragment_shader_impl *) _mesa_malloc (
-				sizeof (struct gl2_fragment_shader_impl));
+			struct gl2_fragment_shader_impl *x = (struct gl2_fragment_shader_impl *)
+				_mesa_malloc (sizeof (struct gl2_fragment_shader_impl));
 
 			if (x != NULL)
 			{
@@ -741,8 +956,8 @@ _mesa_3dlabs_create_shader_object (GLenum shaderType)
 		break;
 	case GL_VERTEX_SHADER_ARB:
 		{
-			struct gl2_vertex_shader_impl *x = (struct gl2_vertex_shader_impl *) _mesa_malloc (
-				sizeof (struct gl2_vertex_shader_impl));
+			struct gl2_vertex_shader_impl *x = (struct gl2_vertex_shader_impl *)
+				_mesa_malloc (sizeof (struct gl2_vertex_shader_impl));
 
 			if (x != NULL)
 			{
@@ -759,11 +974,9 @@ _mesa_3dlabs_create_shader_object (GLenum shaderType)
 GLhandleARB
 _mesa_3dlabs_create_program_object (void)
 {
-	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_program_impl *x = (struct gl2_program_impl *)
+	struct gl2_program_impl *x = (struct gl2_program_impl *) 
 		_mesa_malloc (sizeof (struct gl2_program_impl));
 
-	(void) ctx;
 	if (x != NULL)
 	{
 		_program_constructor (x);
@@ -771,5 +984,12 @@ _mesa_3dlabs_create_program_object (void)
 	}
 
 	return 0;
+}
+
+void
+_mesa_init_shaderobjects_3dlabs (GLcontext *ctx)
+{
+	_glslang_3dlabs_InitProcess ();
+	_glslang_3dlabs_ShInitialize ();
 }
 
