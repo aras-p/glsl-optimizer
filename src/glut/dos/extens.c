@@ -19,9 +19,9 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.4 for Mesa
+ * DOS/DJGPP glut driver v1.5 for Mesa
  *
- *  Copyright (C) 2002 - Borca Daniel
+ *  Copyright (C) 2002 - Daniel Borca
  *  Email : dborca@yahoo.com
  *  Web   : http://www.geocities.com/dborca
  */
@@ -34,39 +34,43 @@
 #include "GL/dmesa.h"
 
 
-int APIENTRY glutExtensionSupported (const char *extension)
+int APIENTRY
+glutExtensionSupported (const char *extension)
 {
- static const GLubyte *extensions = NULL;
- const GLubyte *last, *where;
+   static const GLubyte *extensions = NULL;
+   const GLubyte *last, *where;
 
- /* Extension names should not have spaces. */
- if (strchr(extension, ' ') || *extension == '\0') {
-    return GL_FALSE;
- }
+   /* Extension names should not have spaces. */
+   if (strchr(extension, ' ') || *extension == '\0') {
+      return GL_FALSE;
+   }
 
- /* Not my problem if you don't have a valid OpenGL context */
- if (!extensions) {
-    extensions = glGetString(GL_EXTENSIONS);
- }
+   /* Not my problem if you don't have a valid OpenGL context */
+   if (!extensions) {
+      extensions = glGetString(GL_EXTENSIONS);
+   }
+   if (!extensions) {
+      return GL_FALSE;
+   }
 
- /* Take care of sub-strings etc. */
- for (last = extensions;;) {
-     if ((where = (GLubyte *)strstr((const char *)last, extension)) == NULL) {
-        return GL_FALSE;
-     }
-     last = where + strlen(extension);
-     if (where == extensions || *(where - 1) == ' ') {
-        if (*last == ' ' || *last == '\0') {
-           return GL_TRUE;
-        }
-     }
- }
+   /* Take care of sub-strings etc. */
+   for (last = extensions;;) {
+      if ((where = (GLubyte *)strstr((const char *)last, extension)) == NULL) {
+         return GL_FALSE;
+      }
+      last = where + strlen(extension);
+      if (where == extensions || *(where - 1) == ' ') {
+         if (*last == ' ' || *last == '\0') {
+            return GL_TRUE;
+         }
+      }
+   }
 }
 
 
 GLUTproc APIENTRY
 glutGetProcAddress (const char *procName)
 {
- /* TODO - handle glut namespace */
- return (GLUTproc)DMesaGetProcAddress(procName);
+   /* TODO - handle glut namespace */
+   return (GLUTproc)DMesaGetProcAddress(procName);
 }
