@@ -1964,7 +1964,7 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
       case GL_TEXTURE_LOD_BIAS:
          if (ctx->Extensions.EXT_texture_lod_bias) {
             *params = obj->LodBias;
-            break;
+            return;
          }
          break;
       default:
@@ -1993,12 +1993,6 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
    switch (pname) {
       case GL_TEXTURE_MAG_FILTER:
          *params = (GLint) obj->MagFilter;
-      case GL_TEXTURE_LOD_BIAS:
-         if (ctx->Extensions.EXT_texture_lod_bias) {
-            *params = (GLint) obj->LodBias;
-            break;
-         }
-         break;
          return;
       case GL_TEXTURE_MIN_FILTER:
          *params = (GLint) obj->MinFilter;
@@ -2095,6 +2089,12 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
       case GL_DEPTH_TEXTURE_MODE_ARB:
          if (ctx->Extensions.ARB_depth_texture) {
             *params = (GLint) obj->DepthMode;
+            return;
+         }
+         break;
+      case GL_TEXTURE_LOD_BIAS:
+         if (ctx->Extensions.EXT_texture_lod_bias) {
+            *params = (GLint) obj->LodBias;
             return;
          }
          break;
