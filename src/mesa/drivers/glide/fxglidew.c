@@ -332,34 +332,47 @@ void FX_grHints(GrHint_t hintType, FxU32 hintMask) {
   END_BOARD_LOCK();
 }
 
+/*
+ * Glide3 doesn't have the grSstQueryHardware function anymore.
+ * Instead, we call grGet() and fill in the data structures ourselves.
+ */
 int FX_grSstQueryHardware(GrHwConfiguration *config)
 {
-   int i,j;
+   int i, j;
    int numFB;
 
    BEGIN_BOARD_LOCK();
-   grGet(GR_NUM_BOARDS,4,(void*)&(config->num_sst));
+
+   grGet(GR_NUM_BOARDS, 4, (void*)&(config->num_sst));
    if (config->num_sst == 0)
-   	return 0;
-   for (i = 0; i< config->num_sst; i++)
-   {
+      return 0;
+
+   for (i = 0; i< config->num_sst; i++) {
+      FxI32 result;
+
       config->SSTs[i].type = GR_SSTTYPE_VOODOO;
       grSstSelect(i);
-      grGet(GR_MEMORY_FB,4,(void*)&(config->SSTs[i].sstBoard.VoodooConfig.fbRam));
-      config->SSTs[i].sstBoard.VoodooConfig.fbRam/= 1024*1024;
+
+      grGet(GR_MEMORY_FB, 4, &result);
+      config->SSTs[i].sstBoard.VoodooConfig.fbRam = result / (1024 * 1024);
       
-      grGet(GR_NUM_TMU,4,(void*)&(config->SSTs[i].sstBoard.VoodooConfig.nTexelfx));
+      grGet(GR_NUM_TMU, 4, &result);
+      config->SSTs[i].sstBoard.VoodooConfig.nTexelfx = result;
+
+      grGet(GR_REVISION_FB, 4, &result);
+      config->SSTs[i].sstBoard.VoodooConfig.fbiRev = result;
    
-      
       grGet(GR_NUM_FB,4,(void*)&numFB);
       if (numFB > 1)
          config->SSTs[i].sstBoard.VoodooConfig.sliDetect = FXTRUE;
       else
          config->SSTs[i].sstBoard.VoodooConfig.sliDetect = FXFALSE;
-      for (j = 0; j < config->SSTs[i].sstBoard.VoodooConfig.nTexelfx; j++)
-      {
-      	 grGet(GR_MEMORY_TMU,4,(void*)&(config->SSTs[i].sstBoard.VoodooConfig.tmuConfig[j].tmuRam));
-      	 config->SSTs[i].sstBoard.VoodooConfig.tmuConfig[j].tmuRam /= 1024*1024;
+
+      for (j = 0; j < config->SSTs[i].sstBoard.VoodooConfig.nTexelfx; j++) {
+      	 grGet(GR_MEMORY_TMU, 4, &result);
+      	 config->SSTs[i].sstBoard.VoodooConfig.tmuConfig[j].tmuRam = result / (1024*1024);
+         grGet(GR_REVISION_TMU, 4, &result);
+         config->SSTs[i].sstBoard.VoodooConfig.tmuConfig[j].tmuRev = result;
       }
    }
    END_BOARD_LOCK();
