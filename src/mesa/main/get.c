@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.8 2000/01/17 18:05:46 brianp Exp $ */
+/* $Id: get.c,v 1.9 2000/02/03 15:33:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -742,7 +742,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = ctx->Visual->StereoFlag;
 	 break;
       case GL_SUBPIXEL_BITS:
-	 *params = INT_TO_BOOL(0);  /* TODO */
+	 *params = INT_TO_BOOL(ctx->Const.SubPixelBits);
 	 break;
       case GL_TEXTURE_1D:
          *params = _mesa_IsEnabled(GL_TEXTURE_1D );
@@ -1694,7 +1694,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) ctx->Visual->StereoFlag;
 	 break;
       case GL_SUBPIXEL_BITS:
-	 *params = 0.0;   /* TODO */
+	 *params = (GLdouble) ctx->Const.SubPixelBits;
 	 break;
       case GL_TEXTURE_1D:
          *params = _mesa_IsEnabled(GL_TEXTURE_1D) ? 1.0 : 0.0;
@@ -2643,7 +2643,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) ctx->Visual->StereoFlag;
 	 break;
       case GL_SUBPIXEL_BITS:
-	 *params = 0.0F;  /* TODO */
+	 *params = (GLfloat) ctx->Const.SubPixelBits;
 	 break;
       case GL_TEXTURE_1D:
          *params = _mesa_IsEnabled(GL_TEXTURE_1D) ? 1.0 : 0.0;
@@ -3574,7 +3574,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 *params = (GLint) ctx->Visual->StereoFlag;
 	 break;
       case GL_SUBPIXEL_BITS:
-	 *params = 0;  /* TODO */
+	 *params = ctx->Const.SubPixelBits;
 	 break;
       case GL_TEXTURE_1D:
          *params = _mesa_IsEnabled(GL_TEXTURE_1D) ? 1 : 0;

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.40 2000/02/02 22:21:39 brianp Exp $ */
+/* $Id: context.c,v 1.41 2000/02/03 15:33:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -739,6 +739,7 @@ static void init_attrib_groups( GLcontext *ctx )
    ctx->Const.MaxTextureSize = 1 << (MAX_TEXTURE_LEVELS - 1);
    ctx->Const.MaxTextureUnits = MAX_TEXTURE_UNITS;
    ctx->Const.MaxArrayLockSize = MAX_ARRAY_LOCK_SIZE;
+   ctx->Const.SubPixelBits = 4;
 
    /* Modelview matrix */
    gl_matrix_ctr( &ctx->ModelView );
