@@ -1,4 +1,4 @@
-/* $Id: assyntax.h,v 1.16 2000/10/23 00:16:28 gareth Exp $ */
+/* $Id: assyntax.h,v 1.17 2002/01/04 14:35:46 brianp Exp $ */
 
 #ifndef __ASSYNTAX_H__
 #define __ASSYNTAX_H__
@@ -244,7 +244,7 @@
 #endif /* ACK_ASSEMBLER */
 
 
-#if defined(__QNX__) || defined(Lynx) || (defined(SYSV) || defined(SVR4)) && !defined(ACK_ASSEMBLER) || defined(__ELF__) || defined(__GNU__)
+#if defined(__QNX__) || defined(Lynx) || (defined(SYSV) || defined(SVR4)) && !defined(ACK_ASSEMBLER) || defined(__ELF__) || defined(__GNU__) || defined(__GNUC__)
 #define GLNAME(a)	a
 #else
 #define GLNAME(a)	CONCAT(_,a)
