@@ -783,6 +783,10 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    }
 
    if (oldTexObj->Name == texName)
+      /* XXX this might be wrong.  If the texobj is in use by another
+       * context and a texobj parameter was changed, this might be our
+       * only chance to update this context's hardware state.
+       */
       return;   /* rebinding the same texture- no change */
 
    /*
