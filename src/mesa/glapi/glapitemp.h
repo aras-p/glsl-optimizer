@@ -3620,6 +3620,11 @@ KEYWORD1 void KEYWORD2 NAME(MultiModeDrawElementsIBM)(const GLenum * mode, const
    DISPATCH(MultiModeDrawElementsIBM, (mode, count, type, indices, primcount, modestride), (F, "glMultiModeDrawElementsIBM(%p, %p, 0x%x, %p, %d, %d);\n", (const void *) mode, (const void *) count, type, (const void *) indices, primcount, modestride));
 }
 
+KEYWORD1 void KEYWORD2 NAME(BlendEquationSeparateEXT)(GLenum modeRGB, GLenum modeA)
+{
+   DISPATCH(BlendEquationSeparateEXT, (modeRGB, modeA), (F, "glBlendEquationSeparateEXT(0x%x, 0x%x);\n", modeRGB, modeA));
+}
+
 KEYWORD1 void KEYWORD2 NAME(DeleteObjectARB)(GLhandleARB obj)
 {
    DISPATCH(DeleteObjectARB, (obj), (F, "glDeleteObjectARB(%d);\n", obj));
@@ -3780,9 +3785,9 @@ KEYWORD1 void KEYWORD2 NAME(GetObjectParameterivARB)(GLhandleARB obj, GLenum pna
    DISPATCH(GetObjectParameterivARB, (obj, pname, params), (F, "glGetObjectParameterivARB(%d, 0x%x, %p);\n", obj, pname, (const void *) params));
 }
 
-KEYWORD1 void KEYWORD2 NAME(GetInfoLogARB)(GLhandleARB obj, GLsizei , GLsizei * , GLcharARB * )
+KEYWORD1 void KEYWORD2 NAME(GetInfoLogARB)(GLhandleARB obj, GLsizei maxLength, GLsizei * length, GLcharARB * infoLog)
 {
-   DISPATCH(GetInfoLogARB, (obj, , , ), (F, "glGetInfoLogARB(%d, %d, %p, %p);\n", obj, , (const void *) , (const void *) ));
+   DISPATCH(GetInfoLogARB, (obj, maxLength, length, infoLog), (F, "glGetInfoLogARB(%d, %d, %p, %p);\n", obj, maxLength, (const void *) length, (const void *) infoLog));
 }
 
 KEYWORD1 void KEYWORD2 NAME(GetAttachedObjectsARB)(GLhandleARB containerObj, GLsizei maxLength, GLsizei * length, GLhandleARB * infoLog)
@@ -3828,11 +3833,6 @@ KEYWORD1 void KEYWORD2 NAME(GetActiveAttribARB)(GLhandleARB programObj, GLuint i
 KEYWORD1 GLint KEYWORD2 NAME(GetAttribLocationARB)(GLhandleARB programObj, const GLcharARB * name)
 {
    RETURN_DISPATCH(GetAttribLocationARB, (programObj, name), (F, "glGetAttribLocationARB(%d, %p);\n", programObj, (const void *) name));
-}
-
-KEYWORD1 void KEYWORD2 NAME(BlendEquationSeparateEXT)(GLenum modeRGB, GLenum modeA)
-{
-   DISPATCH(BlendEquationSeparateEXT, (modeRGB, modeA), (F, "glBlendEquationSeparateEXT(0x%x, 0x%x);\n", modeRGB, modeA));
 }
 
 KEYWORD1 void KEYWORD2 NAME(ActiveTexture)(GLenum texture)
@@ -5594,6 +5594,7 @@ static void * DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(GetQueryObjectuivARB),
    TABLE_ENTRY(MultiModeDrawArraysIBM),
    TABLE_ENTRY(MultiModeDrawElementsIBM),
+   TABLE_ENTRY(BlendEquationSeparateEXT),
    TABLE_ENTRY(DeleteObjectARB),
    TABLE_ENTRY(GetHandleARB),
    TABLE_ENTRY(DetachObjectARB),
@@ -5636,7 +5637,6 @@ static void * DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(BindAttribLocationARB),
    TABLE_ENTRY(GetActiveAttribARB),
    TABLE_ENTRY(GetAttribLocationARB),
-   TABLE_ENTRY(BlendEquationSeparateEXT),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.
