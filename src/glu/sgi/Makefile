@@ -1,5 +1,7 @@
 # src/glu/sgi/Makefile
 
+.SUFFIXES : .cc
+
 TOP = ../../..
 
 include $(TOP)/configs/current
