@@ -6,6 +6,8 @@ GLU_MAJOR = 1
 GLU_MINOR = 1
 GLU_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
+GLU_LIB_NAME = "GLU"  # may be overridden in Make-config
+
 VPATH = RCS
 
 TOP = ..
@@ -38,9 +40,9 @@ targets: $(LIBDIR)/$(GLU_LIB)
 
 # Make the library:
 $(LIBDIR)/$(GLU_LIB): $(OBJECTS)
-	$(TOP)/bin/mklib -o GLU -major $(GLU_MAJOR) -minor $(GLU_MINOR) \
-		-patch $(GLU_TINY) $(GLU_LIB_DEPS) -install $(LIBDIR) \
-		$(OBJECTS)
+	$(TOP)/bin/mklib -o $(GLU_LIB_NAME) -major $(GLU_MAJOR) \
+		-minor $(GLU_MINOR) -patch $(GLU_TINY) $(GLU_LIB_DEPS) \
+		-install $(LIBDIR) $(OBJECTS)
 
 include $(TOP)/Make-config
 

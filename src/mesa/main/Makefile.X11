@@ -7,6 +7,8 @@ GL_MAJOR = 1
 GL_MINOR = 4
 GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
+GL_LIB_NAME = "GL"  # may be overridden in Make-config
+
 VPATH = RCS
 
 TOP = ..
@@ -223,8 +225,9 @@ targets: $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(OSMESA_LIB)
 
 # Make the GL library
 $(LIBDIR)/$(GL_LIB): $(OBJECTS)
-	$(TOP)/bin/mklib -o GL -major $(GL_MAJOR) -minor $(GL_MINOR) \
-		-patch $(GL_TINY) -install $(LIBDIR) $(GL_LIB_DEPS) $(OBJECTS)
+	$(TOP)/bin/mklib -o $(GL_LIB_NAME) -major $(GL_MAJOR) \
+		-minor $(GL_MINOR) -patch $(GL_TINY) -install $(LIBDIR) \
+		$(GL_LIB_DEPS) $(OBJECTS)
 
 
 # Make the OSMesa library
