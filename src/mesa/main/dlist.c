@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.17 1999/11/11 17:50:04 brianp Exp $ */
+/* $Id: dlist.c,v 1.18 1999/11/12 23:38:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -4380,7 +4380,7 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    table->SeparableFilter2D = _mesa_SeparableFilter2D;
 #endif
 
-#ifdef _GLAPI_EXT_color_table
+#ifdef _GLAPI_EXT_paletted_texture
    table->ColorTableEXT = save_ColorTableEXT;
    table->ColorSubTableEXT = save_ColorSubTableEXT;
    table->GetColorTableEXT = _mesa_GetColorTableEXT;

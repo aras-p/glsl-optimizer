@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.2 1999/11/11 17:50:04 brianp Exp $ */
+/* $Id: dispatch.c,v 1.3 1999/11/12 23:38:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -464,7 +464,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->SeparableFilter2D = _mesa_SeparableFilter2D;
 #endif
 
-#ifdef _GLAPI_EXT_color_table
+#ifdef _GLAPI_EXT_paletted_texture
    exec->ColorTableEXT = _mesa_ColorTableEXT;
    exec->ColorSubTableEXT = _mesa_ColorSubTableEXT;
    exec->GetColorTableEXT = _mesa_GetColorTableEXT;

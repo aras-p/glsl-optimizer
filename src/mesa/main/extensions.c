@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.13 1999/11/12 02:07:56 brianp Exp $ */
+/* $Id: extensions.c,v 1.14 1999/11/12 23:38:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -308,7 +308,7 @@ void (*gl_get_proc_address( const GLubyte *procName ))()
       { "glTexSubImage3DEXT", (gl_function) glTexSubImage3DEXT },
       { "glCopyTexSubImage3DEXT", (gl_function) glCopyTexSubImage3DEXT },
 
-      /* GL_EXT_color_table */
+      /* GL_EXT_paletted_texture */
       { "glColorTableEXT", (gl_function) glColorTableEXT },
       { "glColorSubTableEXT", (gl_function) glColorSubTableEXT },
       { "glGetColorTableEXT", (gl_function) glGetColorTableEXT },
