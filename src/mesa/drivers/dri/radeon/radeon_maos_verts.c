@@ -361,8 +361,10 @@ void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
 
+#if 0
    if (RADEON_DEBUG & DEBUG_VERTS) 
       _tnl_print_vert_flags( __FUNCTION__, newinputs );
+#endif
 
    if (newinputs) 
      radeonReleaseDmaRegion( rmesa, &rmesa->tcl.indexed_verts, __FUNCTION__ );
