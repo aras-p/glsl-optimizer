@@ -1,10 +1,10 @@
-/* $Id: genkgi.h,v 1.1 1999/08/21 05:59:29 jtaylor Exp $
+/* $Id: genkgi.h,v 1.2 1999/08/21 22:36:52 jtaylor Exp $
 ******************************************************************************
 
    GGIMesa - KGIcon specific overrides for fbcon-mesa
    API header
 
-   Copyright (C) 1999 Creative Labs
+   Copyright (C) 1999 Jon Taylor [taylorj@ggi-project.org]
 
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -28,7 +28,7 @@
 
 
 #include <ggi/internal/ggi-dl.h>
-#include <ggi/mesa/display/fbdev.h>
+#include <ggi/mesa/display_fbdev.h>
 
 //ggifunc_setmode GGIMesa_genkgi_setmode;
 ggifunc_getapi GGIMesa_genkgi_getapi;

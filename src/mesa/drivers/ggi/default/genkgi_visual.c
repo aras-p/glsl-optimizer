@@ -1,11 +1,9 @@
-/* $Id: genkgi_visual.c,v 1.1 1999/08/21 05:59:29 jtaylor Exp $
+/* $Id: genkgi_visual.c,v 1.2 1999/08/21 22:36:52 jtaylor Exp $
 ******************************************************************************
 
-   display-fbdev-mesa-generic-kgi: visual handling
-
-   Copyright (C) 1998 Andrew Apted	[andrew@ggi-project.org]
-   Copyright (C) 1999 Marcus Sundberg	[marcus@ggi-project.org]
-   Copyright (C) 1999 Creative Labs
+   genkgi_visual.c: visual handling for the generic KGI helper
+   
+   Copyright (C) 1999 Jon Taylor [taylorj@ggi-project.org]
 
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -29,7 +27,7 @@
 
 #include <ggi/internal/ggi-dl.h>
 #include <ggi/mesa/ggimesa_int.h>
-#include <ggi/mesa/display/fbdev.h>
+#include <ggi/mesa/display_fbdev.h>
 #include "genkgi.h"
 
 #include <stdio.h>
@@ -52,16 +50,16 @@
 #include <linux/tty.h>
 
 
-static int refcount = 0;
-static int vtnum;
-static void *_ggi_fbdev_lock = NULL;
-#ifdef FBIOGET_CON2FBMAP
-static struct fb_con2fbmap origconmap;
-#endif
+//static int refcount = 0;
+//static int vtnum;
+//static void *_ggi_fbdev_lock = NULL;
+//#ifdef FBIOGET_CON2FBMAP
+//static struct fb_con2fbmap origconmap;
+//#endif
 
-#define MAX_DEV_LEN	63
+//#define MAX_DEV_LEN	63
 #define DEFAULT_FBNUM	0
-
+#if 0
 static char accel_prefix[] = "tgt-fbdev-kgicon-";
 #define PREFIX_LEN	(sizeof(accel_prefix))
 
@@ -76,7 +74,7 @@ static accel_info accel_strings[] =
 };
 
 #define NUM_ACCELS	(sizeof(accel_strings)/sizeof(accel_info))
-
+#endif
 /* FIXME: These should be defined in the makefile system */
 #define CONF_FILE "/usr/local/etc/ggi/mesa/targets/genkgi.conf"
 void *_configHandle;
@@ -143,7 +141,7 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 	 * the acceleration type.
 	 */
 	priv->have_accel = 0;
-#if 1
+#if 0
 	if (stat("/proc/savage4", &junk) == 0)
 	{
 		sprintf(priv->accel, "%s%s", accel_prefix, "savage4");

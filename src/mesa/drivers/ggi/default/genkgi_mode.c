@@ -1,9 +1,9 @@
-/* $Id: genkgi_mode.c,v 1.1 1999/08/21 05:59:29 jtaylor Exp $
+/* $Id: genkgi_mode.c,v 1.2 1999/08/21 22:36:52 jtaylor Exp $
 ******************************************************************************
 
    display-fbdev-kgicon-generic-mesa
 
-   Copyright (C) 1999 Creative Labs
+   Copyright (C) 1999 Jon Taylor [taylorj@ggi-project.org]
 
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
