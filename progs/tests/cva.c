@@ -1,4 +1,4 @@
-/* $Id: cva.c,v 1.1 2000/11/01 03:14:12 gareth Exp $ */
+/* $Id: cva.c,v 1.2 2000/11/03 00:09:31 gareth Exp $ */
 
 /*
  * Trivial CVA test, good for testing driver fastpaths (especially
@@ -16,9 +16,9 @@
 
 
 GLfloat verts[][4] = {
-   { 0.25, 0.25, 0.0, 0.0 },
-   { 0.75, 0.25, 0.0, 0.0 },
-   { 0.25, 0.75, 0.0, 0.0 },
+   { -0.5, -0.5, -2.0, 0.0 },
+   {  0.5, -0.5, -2.0, 0.0 },
+   { -0.5,  0.5, -2.0, 0.0 },
 };
 
 GLubyte color[][4] = {
@@ -44,8 +44,9 @@ void init( void )
 
    glMatrixMode( GL_PROJECTION );
    glLoadIdentity();
-   glOrtho( 0.0, 1.0, 0.0, 1.0, -1.0, 1.0 );
+   glFrustum( -1.0, 1.0, -1.0, 1.0, 2.0, 10.0 );
    glMatrixMode( GL_MODELVIEW );
+   glLoadIdentity();
 
    glVertexPointer( 3, GL_FLOAT, sizeof(verts[0]), verts );
    glColorPointer( 4, GL_UNSIGNED_BYTE, 0, color );
