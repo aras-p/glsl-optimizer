@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.7 2000/02/22 17:14:02 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.8 2000/02/25 20:36:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -78,7 +78,7 @@ struct xmesa_visual {
    GLvisual *gl_visual;		/* Device independent visual parameters */
    XMesaDisplay *display;	/* The X11 display */
 #ifdef XFree86Server
-   GLint screen_depth;	/* The depth of the screen */
+   GLint screen_depth;		/* The depth of the screen */
 #else
    XVisualInfo *vishandle;	/* The pointer returned by glXChooseVisual */
 #endif
