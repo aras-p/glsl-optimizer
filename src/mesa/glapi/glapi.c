@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.31 2000/02/02 18:50:07 brianp Exp $ */
+/* $Id: glapi.c,v 1.32 2000/02/10 21:27:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,9 +42,7 @@
 
 
 
-#include <assert.h>
-#include <stdlib.h>  /* to get NULL */
-#include <string.h>
+#include "glheader.h"
 #include "glapi.h"
 #include "glapinoop.h"
 #include "glapioffsets.h"
@@ -68,18 +66,7 @@ static GLboolean ThreadSafe = GL_FALSE;
 
 static _glthread_TSD DispatchTSD;
 
-static void dispatch_thread_init()
-{
-   _glthread_InitTSD(&DispatchTSD);
-}
-
-
 static _glthread_TSD ContextTSD;
-
-static void context_thread_init()
-{
-   _glthread_InitTSD(&ContextTSD);
-}
 
 #endif
 
@@ -130,7 +117,7 @@ void
 _glapi_set_context(void *context)
 {
 #if defined(THREADS)
-   _glthread_SetTSD(&ContextTSD, context, context_thread_init);
+   _glthread_SetTSD(&ContextTSD, context);
    if (ThreadSafe)
       _glapi_Context = NULL;
    else
@@ -181,7 +168,7 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 #endif
 
 #if defined(THREADS)
-   _glthread_SetTSD(&DispatchTSD, (void*) dispatch, dispatch_thread_init);
+   _glthread_SetTSD(&DispatchTSD, (void*) dispatch);
    if (ThreadSafe)
       _glapi_Dispatch = NULL;
    else
