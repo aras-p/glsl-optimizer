@@ -232,4 +232,10 @@ _mesa_rescale_teximage2d(GLuint bytesPerPixel, GLuint dstRowStride,
                          GLint dstWidth, GLint dstHeight,
                          const GLvoid *srcImage, GLvoid *dstImage);
 
+extern void
+_mesa_upscale_teximage2d( GLsizei inWidth, GLsizei inHeight,
+                          GLsizei outWidth, GLsizei outHeight,
+                          GLint comps, const GLchan *src, GLint srcRowStride,
+                          GLchan *dest );
+
 #endif

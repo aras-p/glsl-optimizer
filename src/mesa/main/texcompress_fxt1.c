@@ -40,14 +40,14 @@
 #include "texstore.h"
 
 
-static GLint
+static GLuint
 compress_fxt1 (GLcontext *ctx,
-               GLint srcWidth,
-               GLint srcHeight,
+               GLsizei srcWidth,
+               GLsizei srcHeight,
                GLenum srcFormat,
-               const GLvoid *pixels,
+               const GLchan *source,
                GLint srcRowStride,
-               GLvoid *dst,
+               GLubyte *dest,
                GLint dstRowStride);
 
 
@@ -69,11 +69,8 @@ texstore_rgb_fxt1(STORE_PARAMS)
    const GLchan *pixels;
    GLint srcRowStride;
    GLubyte *dst;
-   GLint texWidth;
+   const GLint texWidth = dstRowStride * 8 / 16; /* a bit of a hack */
    const GLchan *tempImage = NULL;
-
-   dstRowStride = _mesa_compressed_row_stride(GL_COMPRESSED_RGB_FXT1_3DFX, srcWidth);
-   texWidth = dstRowStride * 8 / 16; /* a bit of a hack */
 
    ASSERT(dstFormat == &_mesa_texformat_rgb_fxt1);
    ASSERT(dstXoffset % 8 == 0);
@@ -130,13 +127,10 @@ texstore_rgba_fxt1(STORE_PARAMS)
    const GLchan *pixels;
    GLint srcRowStride;
    GLubyte *dst;
-   GLint texWidth;
+   GLint texWidth = dstRowStride * 8 / 16; /* a bit of a hack */
    const GLchan *tempImage = NULL;
 
-   dstRowStride = _mesa_compressed_row_stride(GL_COMPRESSED_RGBA_FXT1_3DFX, srcWidth);
-   texWidth = dstRowStride * 8 / 16; /* a bit of a hack */
-
-   ASSERT(dstFormat == &_mesa_texformat_rgba_dxt1);
+   ASSERT(dstFormat == &_mesa_texformat_rgba_fxt1);
    ASSERT(dstXoffset % 8 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset     == 0);
@@ -269,14 +263,14 @@ const struct gl_texture_format _mesa_texformat_rgba_fxt1 = {
 };
 
 
-static GLint
+static GLuint
 compress_fxt1 (GLcontext *ctx,
-               GLint srcWidth,
-               GLint srcHeight,
+               GLsizei srcWidth,
+               GLsizei srcHeight,
                GLenum srcFormat,
-               const GLvoid *pixels,
+               const GLchan *source,
                GLint srcRowStride,
-               GLvoid *dst,
+               GLubyte *dest,
                GLint dstRowStride)
 {
    /* here be dragons */

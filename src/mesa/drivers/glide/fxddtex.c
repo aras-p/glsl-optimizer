@@ -46,7 +46,6 @@
 #include "texcompress.h"
 #include "texobj.h"
 #include "texstore.h"
-#include "texutil.h"
 
 
 void
@@ -1207,7 +1206,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxTexInfo *ti;
    tfxMipMapLevel *mml;
-   GLint texelBytes;
+   GLint texelBytes, dstRowStride;
 
    if (TDFX_DEBUG & VERBOSE_TEXTURE) {
        fprintf(stderr, "fxDDTexImage2D: id=%d int 0x%x  format 0x%x  type 0x%x  %dx%d\n",
@@ -1279,14 +1278,17 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    /*if (!fxMesa->HaveTexFmt) assert(texelBytes == 1 || texelBytes == 2);*/
 
    mml->glideFormat = fxGlideFormat(texImage->TexFormat->MesaFormat);
-   /* [dBorca] Hack alert ZZZ: how do we handle FX_TC_NCC/FX_TC_NAPALM? */
-   /* [dBorca] Hack alert ZZZ: how do we handle S3TC outside MESA?!?!?! */
+   /* [dBorca] ZYX: how do we handle FX_TC_NCC/FX_TC_NAPALM? */
+   /* [dBorca] ZYX: how do we handle S3TC outside MESA?!?!?! */
+   /* [dBorca] ZYX: how do we handle aspectratio adjustemnt? */
 
    /* allocate mipmap buffer */
    assert(!texImage->Data);
    if (texImage->IsCompressed) {
+      dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat, mml->width);
       texImage->Data = MESA_PBUFFER_ALLOC(texImage->CompressedSize);
    } else {
+      dstRowStride = mml->width * texelBytes;
       texImage->Data = MESA_PBUFFER_ALLOC(mml->width * mml->height * texelBytes);
    }
    if (!texImage->Data) {
@@ -1332,10 +1334,10 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
          texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
                                          texImage->TexFormat, texImage->Data,
                                          0, 0, 0, /* dstX/Y/Zoffset */
-                                         mml->width * texelBytes, /* dstRowStride */
+                                         dstRowStride,
                                          0, /* dstImageStride */
                                          mml->width, mml->height, 1,
-                                         GL_BGRA, type, tempImage, packing);
+                                         GL_BGRA, CHAN_TYPE, tempImage, &ctx->DefaultPacking);
          FREE(rgbaImage);
       } else {
          /* [dBorca] mild case:
@@ -1370,7 +1372,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
                                       texImage->TexFormat, texImage->Data,
                                       0, 0, 0, /* dstX/Y/Zoffset */
-                                      mml->width * texelBytes, /* dstRowStride */
+                                      dstRowStride,
                                       0, /* dstImageStride */
                                       width, height, 1,
                                       format, type, pixels, packing);

@@ -37,6 +37,8 @@ static GLboolean fxt1, dxtc, s3tc;
 static const char *TextureName (GLenum TC)
 {
  switch (TC) {
+        case GL_RGB:
+             return "RGB";
         case GL_RGBA:
              return "RGBA";
         case GL_COMPRESSED_RGB:
