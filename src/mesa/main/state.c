@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.22 2000/08/21 14:22:24 brianp Exp $ */
+/* $Id: state.c,v 1.23 2000/08/23 14:33:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,6 +44,7 @@
 #include "clip.h"
 #include "colortab.h"
 #include "context.h"
+#include "convolve.h"
 #include "copypix.h"
 #include "cva.h"
 #include "depth.h"
