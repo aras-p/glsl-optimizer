@@ -42,7 +42,7 @@ default: depend dri.a
 # what's included by any source file.
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	touch depend
-	makedepend -fdepend -Y $(INCLUDES) \
+	$(MKDEP) $(MKDEP_OPTIONS) -Y $(INCLUDES) \
 		$(C_SOURCES) $(ASM_SOURCES) >& /dev/null
 
 
