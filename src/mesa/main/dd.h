@@ -580,7 +580,6 @@ struct dd_function_table {
    /** Set the blend equation */
    void (*BlendEquation)(GLcontext *ctx, GLenum mode);
    /** Specify pixel arithmetic */
-   void (*BlendFunc)(GLcontext *ctx, GLenum sfactor, GLenum dfactor);
    void (*BlendFuncSeparate)(GLcontext *ctx,
                              GLenum sfactorRGB, GLenum dfactorRGB,
                              GLenum sfactorA, GLenum dfactorA);

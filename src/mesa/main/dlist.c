@@ -170,7 +170,6 @@ typedef enum {
 	OPCODE_BITMAP,
 	OPCODE_BLEND_COLOR,
 	OPCODE_BLEND_EQUATION,
-	OPCODE_BLEND_FUNC,
 	OPCODE_BLEND_FUNC_SEPARATE,
         OPCODE_CALL_LIST,
         OPCODE_CALL_LIST_OFFSET,
@@ -629,7 +628,6 @@ void _mesa_init_lists( void )
       InstSize[OPCODE_BITMAP] = 8;
       InstSize[OPCODE_BLEND_COLOR] = 5;
       InstSize[OPCODE_BLEND_EQUATION] = 2;
-      InstSize[OPCODE_BLEND_FUNC] = 3;
       InstSize[OPCODE_BLEND_FUNC_SEPARATE] = 5;
       InstSize[OPCODE_CALL_LIST] = 2;
       InstSize[OPCODE_CALL_LIST_OFFSET] = 3;
@@ -954,22 +952,6 @@ static void GLAPIENTRY save_BlendEquation( GLenum mode )
    }
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->BlendEquation)( mode );
-   }
-}
-
-
-static void GLAPIENTRY save_BlendFunc( GLenum sfactor, GLenum dfactor )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_BLEND_FUNC, 2 );
-   if (n) {
-      n[1].e = sfactor;
-      n[2].e = dfactor;
-   }
-   if (ctx->ExecuteFlag) {
-      (*ctx->Exec->BlendFunc)( sfactor, dfactor );
    }
 }
 
@@ -5284,9 +5266,6 @@ execute_list( GLcontext *ctx, GLuint list )
 	 case OPCODE_BLEND_EQUATION:
 	    (*ctx->Exec->BlendEquation)( n[1].e );
 	    break;
-	 case OPCODE_BLEND_FUNC:
-	    (*ctx->Exec->BlendFunc)( n[1].e, n[2].e );
-	    break;
 	 case OPCODE_BLEND_FUNC_SEPARATE:
 	    (*ctx->Exec->BlendFuncSeparateEXT)(n[1].e, n[2].e, n[3].e, n[4].e);
 	    break;
@@ -6994,7 +6973,6 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->Accum = save_Accum;
    table->AlphaFunc = save_AlphaFunc;
    table->Bitmap = save_Bitmap;
-   table->BlendFunc = save_BlendFunc;
    table->CallList = _mesa_save_CallList;
    table->CallLists = _mesa_save_CallLists;
    table->Clear = save_Clear;

@@ -138,7 +138,9 @@ static void radeonBlendEquation( GLcontext *ctx, GLenum mode )
    }
 }
 
-static void radeonBlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
+static void radeonBlendFuncSeparate( GLcontext *ctx,
+				     GLenum sfactorRGB, GLenum dfactorRGB,
+				     GLenum sfactorA, GLenum dfactorA )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    GLuint b = rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] & 
@@ -241,13 +243,6 @@ static void radeonBlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
       RADEON_STATECHANGE( rmesa, ctx );
       rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = b;
    }
-}
-
-static void radeonBlendFuncSeparate( GLcontext *ctx,
-				     GLenum sfactorRGB, GLenum dfactorRGB,
-				     GLenum sfactorA, GLenum dfactorA )
-{
-   radeonBlendFunc( ctx, sfactorRGB, dfactorRGB );
 }
 
 
@@ -1686,8 +1681,10 @@ static void radeonEnable( GLcontext *ctx, GLenum cap, GLboolean state )
        */
       if (state) {
 	 ctx->Driver.BlendEquation( ctx, ctx->Color.BlendEquation );
-	 ctx->Driver.BlendFunc( ctx, ctx->Color.BlendSrcRGB,
-				ctx->Color.BlendDstRGB );
+	 ctx->Driver.BlendFuncSeparate( ctx, ctx->Color.BlendSrcRGB,
+					ctx->Color.BlendDstRGB,
+					ctx->Color.BlendSrcRGB,
+					ctx->Color.BlendDstRGB );
       }
       else {
 	 FALLBACK( rmesa, RADEON_FALLBACK_BLEND_FUNC, GL_FALSE );
@@ -2178,7 +2175,6 @@ void radeonInitStateFuncs( GLcontext *ctx )
 
    ctx->Driver.AlphaFunc		= radeonAlphaFunc;
    ctx->Driver.BlendEquation		= radeonBlendEquation;
-   ctx->Driver.BlendFunc		= radeonBlendFunc;
    ctx->Driver.BlendFuncSeparate	= radeonBlendFuncSeparate;
    ctx->Driver.ClearColor		= radeonClearColor;
    ctx->Driver.ClearDepth		= radeonClearDepth;

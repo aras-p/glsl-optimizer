@@ -144,7 +144,9 @@ static void r200BlendEquation( GLcontext *ctx, GLenum mode )
    }
 }
 
-static void r200BlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
+static void r200BlendFuncSeparate( GLcontext *ctx,
+				     GLenum sfactorRGB, GLenum dfactorRGB,
+				     GLenum sfactorA, GLenum dfactorA )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint b = rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] & 
@@ -249,13 +251,6 @@ static void r200BlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
 
    R200_STATECHANGE( rmesa, ctx );
    rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = b;
-}
-
-static void r200BlendFuncSeparate( GLcontext *ctx,
-				     GLenum sfactorRGB, GLenum dfactorRGB,
-				     GLenum sfactorA, GLenum dfactorA )
-{
-   r200BlendFunc( ctx, sfactorRGB, dfactorRGB );
 }
 
 
@@ -2156,7 +2151,6 @@ void r200InitStateFuncs( struct dd_function_table *functions )
 
    functions->AlphaFunc			= r200AlphaFunc;
    functions->BlendEquation		= r200BlendEquation;
-   functions->BlendFunc			= r200BlendFunc;
    functions->BlendFuncSeparate		= r200BlendFuncSeparate;
    functions->ClearColor		= r200ClearColor;
    functions->ClearDepth		= NULL;

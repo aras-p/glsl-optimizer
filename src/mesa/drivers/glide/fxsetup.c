@@ -1556,12 +1556,6 @@ which are drawn front-to-back.
 }
 
 void
-fxDDBlendFunc(GLcontext * ctx, GLenum sfactor, GLenum dfactor)
-{
-   fxDDBlendFuncSeparate(ctx, sfactor, dfactor, sfactor, dfactor);
-}
-
-void
 fxDDBlendEquation(GLcontext * ctx, GLenum mode)
 {
  fxMesaContext fxMesa = FX_CONTEXT(ctx);

@@ -275,7 +275,9 @@ static void tdfxDDBlendEquation( GLcontext *ctx, GLenum mode )
    fxMesa->new_state |= TDFX_NEW_ALPHA;
 }
 
-static void tdfxDDBlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
+static void tdfxDDBlendFuncSeparate( GLcontext *ctx,
+				     GLenum sfactorRGB, GLenum dfactorRGB,
+				     GLenum sfactorA, GLenum dfactorA )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
 
@@ -287,16 +289,6 @@ static void tdfxDDBlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
     * blend modes.  To pass all the conformance tests we'd have to
     * fall back to software for many modes.  Revisit someday.
     */
-}
-
-static void tdfxDDBlendFuncSeparate( GLcontext *ctx,
-				     GLenum sfactorRGB, GLenum dfactorRGB,
-				     GLenum sfactorA, GLenum dfactorA )
-{
-   tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
-
-   FLUSH_BATCH( fxMesa );
-   fxMesa->new_state |= TDFX_NEW_ALPHA;
 }
 
 /* =============================================================
@@ -1396,7 +1388,6 @@ void tdfxDDInitStateFuncs( GLcontext *ctx )
 
    ctx->Driver.AlphaFunc		= tdfxDDAlphaFunc;
    ctx->Driver.BlendEquation		= tdfxDDBlendEquation;
-   ctx->Driver.BlendFunc		= tdfxDDBlendFunc;
    ctx->Driver.BlendFuncSeparate	= tdfxDDBlendFuncSeparate;
    ctx->Driver.ClearDepth		= tdfxDDClearDepth;
    ctx->Driver.CullFace			= tdfxDDCullFace;

@@ -102,14 +102,19 @@ static void ffbDDBlendEquation(GLcontext *ctx, GLenum mode)
 	FALLBACK( ctx, (mode != GL_FUNC_ADD_EXT), FFB_BADATTR_BLENDEQN);
 }
 
-static void ffbDDBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
+static void ffbDDBlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB,
+				   GLenum dfactorRGB, GLenum sfactorA,
+				   GLenum dfactorA)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	unsigned int blendc = 1 << 4;
 
 #ifdef STATE_TRACE
-	fprintf(stderr, "ffbDDBlendFunc: sfactor(%s) dfactor(%s)\n",
-		_mesa_lookup_enum_by_nr(sfactor), _mesa_lookup_enum_by_nr(dfactor));
+	fprintf(stderr, "ffbDDBlendFuncSeparate: sRGB(%s) dRGB(%s) sA(%s) dA(%s)\n",
+		_mesa_lookup_enum_by_nr(sfactorRGB),
+		_mesa_lookup_enum_by_nr(dfactorRGB),
+		_mesa_lookup_enum_by_nr(sfactorA),
+		_mesa_lookup_enum_by_nr(dfactorA));
 #endif
 	switch (ctx->Color.BlendSrcRGB) {
 	case GL_ZERO:
@@ -177,21 +182,6 @@ static void ffbDDBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
 		fmesa->blendc = blendc;
 		FFB_MAKE_DIRTY(fmesa, FFB_STATE_BLEND, 1);
 	}
-}
-
-static void ffbDDBlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB,
-				   GLenum dfactorRGB, GLenum sfactorA,
-				   GLenum dfactorA)
-{
-#ifdef STATE_TRACE
-	fprintf(stderr, "ffbDDBlendFuncSeparate: sRGB(%s) dRGB(%s) sA(%s) dA(%s)\n",
-		_mesa_lookup_enum_by_nr(sfactorRGB),
-		_mesa_lookup_enum_by_nr(dfactorRGB),
-		_mesa_lookup_enum_by_nr(sfactorA),
-		_mesa_lookup_enum_by_nr(dfactorA));
-#endif
-
-	ffbDDBlendFunc(ctx, sfactorRGB, dfactorRGB);
 }
 
 static void ffbDDDepthFunc(GLcontext *ctx, GLenum func)
@@ -817,7 +807,7 @@ static void ffbDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
 		if (fmesa->ppc != tmp) {
 			fmesa->ppc = tmp;
 			FFB_MAKE_DIRTY(fmesa, FFB_STATE_PPC, 1);
-			ffbDDBlendFunc(ctx, 0, 0);
+			ffbDDBlendFuncSeparate(ctx, 0, 0, 0, 0 );
 		}
 		break;
 
@@ -1063,7 +1053,6 @@ void ffbDDInitStateFuncs(GLcontext *ctx)
 	ctx->Driver.Enable = ffbDDEnable;
 	ctx->Driver.AlphaFunc = ffbDDAlphaFunc;
 	ctx->Driver.BlendEquation = ffbDDBlendEquation;
-	ctx->Driver.BlendFunc = ffbDDBlendFunc;
 	ctx->Driver.BlendFuncSeparate = ffbDDBlendFuncSeparate;
 	ctx->Driver.DepthFunc = ffbDDDepthFunc;
 	ctx->Driver.DepthMask = ffbDDDepthMask;

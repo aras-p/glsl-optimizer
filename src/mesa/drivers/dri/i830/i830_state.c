@@ -398,109 +398,6 @@ static void i830BlendEquation(GLcontext *ctx, GLenum mode)
 		  imesa->Setup[I830_CTXREG_STATE1]);
 }
 
-static void i830BlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
-{
-   i830ContextPtr imesa = I830_CONTEXT(ctx);
-   int func = (ENABLE_SRC_BLND_FACTOR|ENABLE_DST_BLND_FACTOR);
-
-   if (I830_DEBUG&DEBUG_DRI)
-      fprintf(stderr, "%s %s %s\n", __FUNCTION__,
-	      _mesa_lookup_enum_by_nr(sfactor),
-	      _mesa_lookup_enum_by_nr(dfactor));
-
-   switch(sfactor) {
-   case GL_ZERO: 
-      func |= SRC_BLND_FACT(BLENDFACT_ZERO); 
-      break;
-   case GL_SRC_ALPHA: 
-      func |= SRC_BLND_FACT(BLENDFACT_SRC_ALPHA); 
-      break;
-   case GL_ONE: 
-      func |= SRC_BLND_FACT(BLENDFACT_ONE); 
-      break;
-   case GL_DST_COLOR: 
-      func |= SRC_BLND_FACT(BLENDFACT_DST_COLR); 
-      break;
-   case GL_ONE_MINUS_DST_COLOR: 
-      func |= SRC_BLND_FACT(BLENDFACT_INV_DST_COLR); 
-      break;
-   case GL_ONE_MINUS_SRC_ALPHA:
-      func |= SRC_BLND_FACT(BLENDFACT_INV_SRC_ALPHA); 
-      break;
-   case GL_DST_ALPHA: 
-      func |= SRC_BLND_FACT(BLENDFACT_DST_ALPHA); 
-      break;
-   case GL_ONE_MINUS_DST_ALPHA:
-      func |= SRC_BLND_FACT(BLENDFACT_INV_DST_ALPHA); 
-      break;
-   case GL_SRC_ALPHA_SATURATE: 
-      func |= SRC_BLND_FACT(BLENDFACT_SRC_ALPHA_SATURATE);
-      break;
-   case GL_CONSTANT_COLOR_EXT:
-      func |= SRC_BLND_FACT(BLENDFACT_CONST_COLOR); 
-      break;
-   case GL_ONE_MINUS_CONSTANT_COLOR_EXT:
-      func |= SRC_BLND_FACT(BLENDFACT_INV_CONST_COLOR);
-      break;
-   case GL_CONSTANT_ALPHA_EXT:
-      func |= SRC_BLND_FACT(BLENDFACT_CONST_ALPHA); 
-      break;
-   case GL_ONE_MINUS_CONSTANT_ALPHA_EXT:
-      func |= SRC_BLND_FACT(BLENDFACT_INV_CONST_ALPHA);
-      break;
-   default: 
-      return;
-   }
-
-   switch(dfactor) {
-   case GL_SRC_ALPHA: 
-      func |= DST_BLND_FACT(BLENDFACT_SRC_ALPHA); 
-      break;
-   case GL_ONE_MINUS_SRC_ALPHA: 
-      func |= DST_BLND_FACT(BLENDFACT_INV_SRC_ALPHA); 
-      break;
-   case GL_ZERO: 
-      func |= DST_BLND_FACT(BLENDFACT_ZERO); 
-      break;
-   case GL_ONE: 
-      func |= DST_BLND_FACT(BLENDFACT_ONE); 
-      break;
-   case GL_SRC_COLOR: 
-      func |= DST_BLND_FACT(BLENDFACT_SRC_COLR); 
-      break;
-   case GL_ONE_MINUS_SRC_COLOR: 
-      func |= DST_BLND_FACT(BLENDFACT_INV_SRC_COLR); 
-      break;
-   case GL_DST_ALPHA:
-      func |= DST_BLND_FACT(BLENDFACT_DST_ALPHA); 
-      break;
-   case GL_ONE_MINUS_DST_ALPHA: 
-      func |= DST_BLND_FACT(BLENDFACT_INV_DST_ALPHA); 
-      break;
-   case GL_CONSTANT_COLOR_EXT:
-      func |= DST_BLND_FACT(BLENDFACT_CONST_COLOR); 
-      break;
-   case GL_ONE_MINUS_CONSTANT_COLOR_EXT:
-      func |= DST_BLND_FACT(BLENDFACT_INV_CONST_COLOR);
-      break;
-   case GL_CONSTANT_ALPHA_EXT:
-      func |= DST_BLND_FACT(BLENDFACT_CONST_ALPHA); 
-      break;
-   case GL_ONE_MINUS_CONSTANT_ALPHA_EXT:
-      func |= DST_BLND_FACT(BLENDFACT_INV_CONST_ALPHA); 
-      break;
-   default: 
-      return;
-   }
-
-   I830_STATECHANGE(imesa, I830_UPLOAD_CTX);
-   imesa->Setup[I830_CTXREG_IALPHAB] &= ~SRC_DST_ABLEND_MASK;
-   imesa->Setup[I830_CTXREG_STATE1] &= ~SRC_DST_BLND_MASK;
-   imesa->Setup[I830_CTXREG_STATE1] |= func;
-   /* Insure Independant Alpha Blend is really disabled. */
-   i830EvalLogicOpBlendState(ctx);
-}
-
 static void i830BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, 
 				  GLenum dfactorRGB, GLenum sfactorA,
 				  GLenum dfactorA )
@@ -680,12 +577,15 @@ static void i830BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB,
 
    I830_STATECHANGE(imesa, I830_UPLOAD_CTX);
    imesa->Setup[I830_CTXREG_IALPHAB] &= ~SRC_DST_ABLEND_MASK;
-   imesa->Setup[I830_CTXREG_IALPHAB] |= funcA;
    imesa->Setup[I830_CTXREG_STATE1] &= ~SRC_DST_BLND_MASK;
    imesa->Setup[I830_CTXREG_STATE1] |= funcRGB;
 
-   /* Insure Independant Alpha Blend is really enabled if
-    * Blending is already enabled. 
+   if ( (dfactorRGB != dfactorA) || (sfactorRGB != sfactorA) ) {
+      imesa->Setup[I830_CTXREG_IALPHAB] |= funcA;
+   }
+
+   /* Ensure Independant Alpha Blend is really in the correct state (either
+    * enabled or disabled) if blending is already enabled.
     */
    i830EvalLogicOpBlendState(ctx);
 }
@@ -1744,7 +1644,6 @@ void i830DDInitStateFuncs(GLcontext *ctx)
     */
    ctx->Driver.AlphaFunc = i830AlphaFunc;
    ctx->Driver.BlendEquation = i830BlendEquation;
-   ctx->Driver.BlendFunc = i830BlendFunc;
    ctx->Driver.BlendFuncSeparate = i830BlendFuncSeparate;
    ctx->Driver.BlendColor = i830BlendColor;
    ctx->Driver.ClearColor = i830ClearColor;

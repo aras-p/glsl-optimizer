@@ -98,7 +98,9 @@ sisDDAlphaFunc( GLcontext * ctx, GLenum func, GLfloat ref )
 }
 
 static void
-sisDDBlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
+sisDDBlendFuncSeparate( GLcontext *ctx, 
+			GLenum sfactorRGB, GLenum dfactorRGB,
+			GLenum sfactorA,   GLenum dfactorA )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
@@ -109,7 +111,7 @@ sisDDBlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
    /* blending enable */
    current->hwDstSrcBlend = 0x10000;	/* Default destination alpha */
 
-   switch (dfactor)
+   switch (dfactorRGB)
    {
    case GL_ZERO:
       current->hwDstSrcBlend |= SiS_D_ZERO;
@@ -137,7 +139,7 @@ sisDDBlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
       break;
    }
 
-   switch (sfactor)
+   switch (sfactorRGB)
    {
    case GL_ZERO:
       current->hwDstSrcBlend |= SiS_S_ZERO;
@@ -847,7 +849,7 @@ void sisDDInitStateFuncs( GLcontext *ctx )
 
    ctx->Driver.AlphaFunc	 = sisDDAlphaFunc;
    ctx->Driver.Bitmap		 = sisDDBitmap;
-   ctx->Driver.BlendFunc	 = sisDDBlendFunc;
+   ctx->Driver.BlendFuncSeparate = sisDDBlendFuncSeparate;
    ctx->Driver.ColorMask	 = sisDDColorMask;
    ctx->Driver.CullFace		 = sisDDCullFace;
    ctx->Driver.DepthMask	 = sisDDDepthMask;

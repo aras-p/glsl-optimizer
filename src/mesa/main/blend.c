@@ -44,93 +44,22 @@
  * \param sfactor source factor operator.
  * \param dfactor destination factor operator.
  *
- * \sa glBlendFunc().
- * 
- * Verifies the parameters and updates gl_colorbuffer_attrib.  On a change,
- * flushes the vertices and notifies the driver via
- * dd_function_table::BlendFunc callback.
+ * \sa glBlendFunc, glBlendFuncSeparateEXT
+ *
+ * Swizzles the inputs and calls \c glBlendFuncSeparateEXT.  This is done
+ * using the \c CurrentDispatch table in the context, so this same function
+ * can be used while compiling display lists.  Therefore, there is no need
+ * for the display list code to save and restore this function.
  */
 void GLAPIENTRY
 _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
 {
-
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
-      _mesa_debug(ctx, "glBlendFunc %s %s\n",
-                  _mesa_lookup_enum_by_nr(sfactor),
-                  _mesa_lookup_enum_by_nr(dfactor));
-
-   switch (sfactor) {
-      case GL_SRC_COLOR:
-      case GL_ONE_MINUS_SRC_COLOR:
-         if (!ctx->Extensions.NV_blend_square) {
-            _mesa_error( ctx, GL_INVALID_ENUM, "glBlendFunc(sfactor)" );
-            return;
-         }
-         /* fall-through */
-      case GL_ZERO:
-      case GL_ONE:
-      case GL_DST_COLOR:
-      case GL_ONE_MINUS_DST_COLOR:
-      case GL_SRC_ALPHA:
-      case GL_ONE_MINUS_SRC_ALPHA:
-      case GL_DST_ALPHA:
-      case GL_ONE_MINUS_DST_ALPHA:
-      case GL_SRC_ALPHA_SATURATE:
-      case GL_CONSTANT_COLOR:
-      case GL_ONE_MINUS_CONSTANT_COLOR:
-      case GL_CONSTANT_ALPHA:
-      case GL_ONE_MINUS_CONSTANT_ALPHA:
-         break;
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glBlendFunc(sfactor)" );
-         return;
-   }
-
-   switch (dfactor) {
-      case GL_DST_COLOR:
-      case GL_ONE_MINUS_DST_COLOR:
-         if (!ctx->Extensions.NV_blend_square) {
-            _mesa_error( ctx, GL_INVALID_ENUM, "glBlendFunc(dfactor)" );
-            return;
-         }
-         /* fall-through */
-      case GL_ZERO:
-      case GL_ONE:
-      case GL_SRC_COLOR:
-      case GL_ONE_MINUS_SRC_COLOR:
-      case GL_SRC_ALPHA:
-      case GL_ONE_MINUS_SRC_ALPHA:
-      case GL_DST_ALPHA:
-      case GL_ONE_MINUS_DST_ALPHA:
-      case GL_CONSTANT_COLOR:
-      case GL_ONE_MINUS_CONSTANT_COLOR:
-      case GL_CONSTANT_ALPHA:
-      case GL_ONE_MINUS_CONSTANT_ALPHA:
-         break;
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glBlendFunc(dfactor)" );
-         return;
-   }
-
-   if (ctx->Color.BlendDstRGB == dfactor &&
-       ctx->Color.BlendSrcRGB == sfactor &&
-       ctx->Color.BlendDstA == dfactor &&
-       ctx->Color.BlendSrcA == sfactor)
-      return;
-
-   FLUSH_VERTICES(ctx, _NEW_COLOR);
-   ctx->Color.BlendDstRGB = ctx->Color.BlendDstA = dfactor;
-   ctx->Color.BlendSrcRGB = ctx->Color.BlendSrcA = sfactor;
-
-   if (ctx->Driver.BlendFunc)
-      ctx->Driver.BlendFunc( ctx, sfactor, dfactor );
+   (*ctx->CurrentDispatch->BlendFuncSeparateEXT)( sfactor, dfactor,
+						  sfactor, dfactor );
 }
 
-
-#if _HAVE_FULL_GL
 
 /**
  * Process GL_EXT_blend_func_separate().
@@ -283,6 +212,8 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
    }
 }
 
+
+#if _HAVE_FULL_GL
 
 /* This is really an extension function! */
 void GLAPIENTRY

@@ -211,14 +211,6 @@ static void r128DDBlendEquation( GLcontext *ctx, GLenum mode )
    rmesa->new_state |= R128_NEW_ALPHA;
 }
 
-static void r128DDBlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
-{
-   r128ContextPtr rmesa = R128_CONTEXT(ctx);
-
-   FLUSH_BATCH( rmesa );
-   rmesa->new_state |= R128_NEW_ALPHA;
-}
-
 static void r128DDBlendFuncSeparate( GLcontext *ctx,
 				     GLenum sfactorRGB, GLenum dfactorRGB,
 				     GLenum sfactorA, GLenum dfactorA )
@@ -1196,7 +1188,6 @@ void r128DDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.ColorMask		= r128DDColorMask;
    ctx->Driver.AlphaFunc		= r128DDAlphaFunc;
    ctx->Driver.BlendEquation		= r128DDBlendEquation;
-   ctx->Driver.BlendFunc		= r128DDBlendFunc;
    ctx->Driver.BlendFuncSeparate	= r128DDBlendFuncSeparate;
    ctx->Driver.ClearDepth		= r128DDClearDepth;
    ctx->Driver.CullFace			= r128DDCullFace;

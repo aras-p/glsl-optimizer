@@ -129,7 +129,9 @@ static void mgaDDBlendEquation(GLcontext *ctx, GLenum mode)
    updateBlendLogicOp( ctx );
 }
 
-static void mgaDDBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
+static void mgaDDBlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB,
+				    GLenum dfactorRGB, GLenum sfactorA,
+				    GLenum dfactorA )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    GLuint   src;
@@ -193,13 +195,6 @@ static void mgaDDBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
    FALLBACK( ctx, MGA_FALLBACK_BLEND,
              ctx->Color.BlendEnabled && !ctx->Color._LogicOpEnabled &&
              mmesa->hw.blend_func == (AC_src_src_alpha_sat | AC_dst_zero) );
-}
-
-static void mgaDDBlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB,
-				    GLenum dfactorRGB, GLenum sfactorA,
-				    GLenum dfactorA )
-{
-   mgaDDBlendFunc( ctx, sfactorRGB, dfactorRGB );
 }
 
 /* =============================================================
@@ -1199,7 +1194,6 @@ void mgaDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.LightModelfv = mgaDDLightModelfv;
    ctx->Driver.AlphaFunc = mgaDDAlphaFunc;
    ctx->Driver.BlendEquation = mgaDDBlendEquation;
-   ctx->Driver.BlendFunc = mgaDDBlendFunc;
    ctx->Driver.BlendFuncSeparate = mgaDDBlendFuncSeparate;
    ctx->Driver.DepthFunc = mgaDDDepthFunc;
    ctx->Driver.DepthMask = mgaDDDepthMask;

@@ -1719,7 +1719,6 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.IsTextureResident = fxDDIsTextureResident;
    ctx->Driver.UpdateTexturePalette = fxDDTexPalette;
    ctx->Driver.AlphaFunc = fxDDAlphaFunc;
-   ctx->Driver.BlendFunc = fxDDBlendFunc;
    ctx->Driver.BlendFuncSeparate = fxDDBlendFuncSeparate;
    ctx->Driver.BlendEquation = fxDDBlendEquation;
    ctx->Driver.DepthFunc = fxDDDepthFunc;
