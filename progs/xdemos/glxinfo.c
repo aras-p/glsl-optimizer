@@ -1,4 +1,4 @@
-/* $Id: glxinfo.c,v 1.8 2000/04/22 20:31:23 brianp Exp $ */
+/* $Id: glxinfo.c,v 1.9 2000/05/07 18:07:23 brianp Exp $ */
 
 /*
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
@@ -161,14 +161,14 @@ print_screen_info(Display *dpy, int scrnum)
    if (!visinfo) {
       visinfo = glXChooseVisual(dpy, scrnum, attribDouble);
       if (!visinfo) {
-         fprintf(stderr, "Error: couldn't find RGB GLX visual!\n");
+         fprintf(stderr, "Error: couldn't find RGB GLX visual\n");
          return;
       }
    }
 
    attr.background_pixel = 0;
    attr.border_pixel = 0;
-   attr.colormap = XCreateColormap( dpy, root, visinfo->visual, AllocNone);
+   attr.colormap = XCreateColormap(dpy, root, visinfo->visual, AllocNone);
    attr.event_mask = StructureNotifyMask | ExposureMask;
    mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
    win = XCreateWindow(dpy, root, 0, 0, width, height,
@@ -177,11 +177,12 @@ print_screen_info(Display *dpy, int scrnum)
 
    ctx = glXCreateContext( dpy, visinfo, NULL, True );
    if (!ctx) {
+      fprintf(stderr, "Error: glXCreateContext failed\n");
       XDestroyWindow(dpy, win);
       return;
    }
 
-   if (glXMakeCurrent( dpy, win, ctx )) {
+   if (glXMakeCurrent(dpy, win, ctx)) {
       const char *serverVendor = glXQueryServerString(dpy, scrnum, GLX_VENDOR);
       const char *serverVersion = glXQueryServerString(dpy, scrnum, GLX_VERSION);
       const char *serverExtensions = glXQueryServerString(dpy, scrnum, GLX_EXTENSIONS);
@@ -196,6 +197,7 @@ print_screen_info(Display *dpy, int scrnum)
       const char *gluVersion = (const char *) gluGetString(GLU_VERSION);
       const char *gluExtensions = (const char *) gluGetString(GLU_EXTENSIONS);
       printf("display: %s  screen:%d\n", DisplayString(dpy), scrnum);
+      printf("Direct: %d\n", glXIsDirect(dpy, ctx));
       printf("server glx vendor string: %s\n", serverVendor);
       printf("server glx version string: %s\n", serverVersion);
       printf("server glx extensions:\n");
@@ -214,6 +216,9 @@ print_screen_info(Display *dpy, int scrnum)
       printf("glu version: %s\n", gluVersion);
       printf("glu extensions:\n");
       print_extension_list(gluExtensions);
+   }
+   else {
+      fprintf(stderr, "Error: glXMakeCurrent failed\n");
    }
 
    glXDestroyContext(dpy, ctx);
