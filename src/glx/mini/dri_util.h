@@ -55,7 +55,7 @@
 #define _SOLO
 
 typedef unsigned long CARD32;
-typedef int (* PFNGLXGETUSTPROC) ( uint64_t * ust );
+typedef int (* PFNGLXGETUSTPROC) ( int64_t * ust );
 
 typedef struct __DRIdisplayPrivateRec  __DRIdisplayPrivate;  /**< \brief Alias for __DRIdisplayPrivateRec */
 typedef struct __DRIscreenPrivateRec   __DRIscreenPrivate;   /**< \brief Alias for __DRIscreenPrivateRec */
