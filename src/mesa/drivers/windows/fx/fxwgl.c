@@ -1159,6 +1159,153 @@ wglSetLayerPaletteEntries(HDC hdc,int iLayerPlane, int iStart,
   return(FALSE);
 }
 
+
+/***************************************************************************
+ * [dBorca] simplistic ICD implementation, based on ICD code by Gregor Anich
+ */
+
+typedef struct _icdTable {
+   DWORD size;
+   PROC  table[336];
+} ICDTABLE, *PICDTABLE;
+
+#ifdef USE_MGL_NAMESPACE
+#define GL_FUNC(func) mgl##func
+#else
+#define GL_FUNC(func) gl##func
+#endif
+
+static ICDTABLE icdTable = { 336, {
+#define ICD_ENTRY(func) (PROC)GL_FUNC(func),
+#include "../icd/icdlist.h"
+#undef ICD_ENTRY
+} };
+
+
+GLAPI BOOL GLAPIENTRY
+DrvCopyContext (HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
+{
+   return wglCopyContext(hglrcSrc, hglrcDst, mask);
+}
+
+
+GLAPI HGLRC GLAPIENTRY
+DrvCreateContext (HDC hdc)
+{
+   return wglCreateContext(hdc);
+}
+
+
+GLAPI BOOL GLAPIENTRY
+DrvDeleteContext (HGLRC hglrc)
+{
+   return wglDeleteContext(hglrc);
+}
+
+
+GLAPI HGLRC GLAPIENTRY
+DrvCreateLayerContext (HDC hdc, int iLayerPlane)
+{
+   return wglCreateContext(hdc);
+}
+
+
+GLAPI PICDTABLE GLAPIENTRY
+DrvSetContext (HDC hdc, HGLRC hglrc, void *callback)
+{
+   return wglMakeCurrent(hdc, hglrc) ? &icdTable : NULL;
+}
+
+
+GLAPI BOOL GLAPIENTRY
+DrvReleaseContext (HGLRC hglrc)
+{
+   return TRUE;
+}
+
+
+GLAPI BOOL GLAPIENTRY
+DrvShareLists (HGLRC hglrc1, HGLRC hglrc2)
+{
+   return wglShareLists(hglrc1, hglrc2);
+}
+
+
+GLAPI BOOL GLAPIENTRY
+DrvDescribeLayerPlane (HDC hdc, int iPixelFormat,
+                       int iLayerPlane,UINT nBytes,
+                       LPLAYERPLANEDESCRIPTOR plpd)
+{
+   return wglDescribeLayerPlane(hdc, iPixelFormat, iLayerPlane, nBytes, plpd);
+}
+
+
+GLAPI int GLAPIENTRY
+DrvSetLayerPaletteEntries (HDC hdc, int iLayerPlane,
+                           int iStart, int cEntries, CONST COLORREF *pcr)
+{
+   return wglSetLayerPaletteEntries(hdc, iLayerPlane, iStart, cEntries, pcr);
+}
+
+
+GLAPI int GLAPIENTRY
+DrvGetLayerPaletteEntries (HDC hdc, int iLayerPlane,
+                           int iStart, int cEntries, COLORREF *pcr)
+{
+   return wglGetLayerPaletteEntries(hdc, iLayerPlane, iStart, cEntries, pcr);
+}
+
+
+GLAPI BOOL GLAPIENTRY
+DrvRealizeLayerPalette (HDC hdc, int iLayerPlane, BOOL bRealize)
+{
+   return wglRealizeLayerPalette(hdc, iLayerPlane, bRealize);
+}
+
+
+GLAPI BOOL GLAPIENTRY
+DrvSwapLayerBuffers (HDC hdc, UINT fuPlanes)
+{
+   return wglSwapLayerBuffers(hdc, fuPlanes);
+}
+
+GLAPI int GLAPIENTRY
+DrvDescribePixelFormat (HDC hdc, int iPixelFormat, UINT nBytes,
+                        LPPIXELFORMATDESCRIPTOR ppfd)
+{
+   return wglDescribePixelFormat(hdc, iPixelFormat, nBytes, ppfd);
+}
+
+
+GLAPI PROC GLAPIENTRY
+DrvGetProcAddress (LPCSTR lpszProc)
+{
+   return wglGetProcAddress(lpszProc);
+}
+
+
+GLAPI BOOL GLAPIENTRY
+DrvSetPixelFormat (HDC hdc, int iPixelFormat)
+{
+   return wglSetPixelFormat(hdc, iPixelFormat, NULL);
+}
+
+
+GLAPI BOOL GLAPIENTRY
+DrvSwapBuffers (HDC hdc)
+{
+   return wglSwapBuffers(hdc);
+}
+
+
+GLAPI BOOL GLAPIENTRY
+DrvValidateVersion (DWORD version)
+{
+   (void) version;
+   return TRUE;
+}
+
+
 #if (_MSC_VER >= 1200)
 #pragma warning( pop )
 #endif

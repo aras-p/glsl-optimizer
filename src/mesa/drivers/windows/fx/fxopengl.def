@@ -936,3 +936,20 @@ EXPORTS
  GetPixelFormat
  SetPixelFormat
  SwapBuffers
+ DrvCopyContext
+ DrvCreateContext
+ DrvCreateLayerContext
+ DrvDeleteContext
+ DrvDescribeLayerPlane
+ DrvDescribePixelFormat
+ DrvGetLayerPaletteEntries
+ DrvGetProcAddress
+ DrvReleaseContext
+ DrvRealizeLayerPalette
+ DrvSetContext
+ DrvSetLayerPaletteEntries
+ DrvSetPixelFormat
+ DrvShareLists
+ DrvSwapBuffers
+ DrvSwapLayerBuffers
+ DrvValidateVersion
