@@ -21,7 +21,7 @@
 /*
  * DOS/DJGPP glut driver v1.6 for Mesa
  *
- *  Copyright (C) 2002 - Borca Daniel
+ *  Copyright (C) 2002 - Daniel Borca
  *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
@@ -33,7 +33,6 @@
 #include <GL/glut.h>
 
 #include "GL/dmesa.h"
-
 
 
 /* GLUT  function types */
@@ -62,41 +61,41 @@ typedef void (GLUTCALLBACK *GLUTtabletButtonCB) (int, int, int, int);
 typedef void (GLUTCALLBACK *GLUTjoystickCB) (unsigned int, int, int, int);
 
 typedef struct GLUTwindow {
-        int num;                         /* window id */
+   int num;                         /* window id */
 
-        DMesaContext context;
-        DMesaBuffer buffer;
+   DMesaContext context;
+   DMesaBuffer buffer;
 
-        int show_mouse;
-        GLboolean redisplay;
+   int show_mouse;
+   GLboolean redisplay;
 
-        /* GLUT settable or visible window state. */
-        int xpos;
-        int ypos;
-        int width;                       /* window width in pixels */
-        int height;                      /* window height in pixels */
+   /* GLUT settable or visible window state. */
+   int xpos;
+   int ypos;
+   int width;                       /* window width in pixels */
+   int height;                      /* window height in pixels */
 
-        /* Per-window callbacks. */
-        GLUTdisplayCB      display;      /* redraw */
-        GLUTreshapeCB      reshape;      /* resize (width,height) */
-        GLUTmouseCB        mouse;        /* mouse (button,state,x,y) */
-        GLUTmotionCB       motion;       /* motion (x,y) */
-        GLUTpassiveCB      passive;      /* passive motion (x,y) */
-        GLUTentryCB        entry;        /* window entry/exit (state) */
-        GLUTkeyboardCB     keyboard;     /* keyboard (ASCII,x,y) */
-        GLUTkeyboardCB     keyboardUp;   /* keyboard up (ASCII,x,y) */
-        GLUTwindowStatusCB windowStatus; /* window status */
-        GLUTvisibilityCB   visibility;   /* visibility */
-        GLUTspecialCB      special;      /* special key */
-        GLUTspecialCB      specialUp;    /* special up key */
-        GLUTbuttonBoxCB    buttonBox;    /* button box */
-        GLUTdialsCB        dials;        /* dials */
-        GLUTspaceMotionCB  spaceMotion;  /* Spaceball motion */
-        GLUTspaceRotateCB  spaceRotate;  /* Spaceball rotate */
-        GLUTspaceButtonCB  spaceButton;  /* Spaceball button */
-        GLUTtabletMotionCB tabletMotion; /* tablet motion */
-        GLUTtabletButtonCB tabletButton; /* tablet button */
-        GLUTjoystickCB     joystick;     /* joystick */
+   /* Per-window callbacks. */
+   GLUTdisplayCB      display;      /* redraw */
+   GLUTreshapeCB      reshape;      /* resize (width,height) */
+   GLUTmouseCB        mouse;        /* mouse (button,state,x,y) */
+   GLUTmotionCB       motion;       /* motion (x,y) */
+   GLUTpassiveCB      passive;      /* passive motion (x,y) */
+   GLUTentryCB        entry;        /* window entry/exit (state) */
+   GLUTkeyboardCB     keyboard;     /* keyboard (ASCII,x,y) */
+   GLUTkeyboardCB     keyboardUp;   /* keyboard up (ASCII,x,y) */
+   GLUTwindowStatusCB windowStatus; /* window status */
+   GLUTvisibilityCB   visibility;   /* visibility */
+   GLUTspecialCB      special;      /* special key */
+   GLUTspecialCB      specialUp;    /* special up key */
+   GLUTbuttonBoxCB    buttonBox;    /* button box */
+   GLUTdialsCB        dials;        /* dials */
+   GLUTspaceMotionCB  spaceMotion;  /* Spaceball motion */
+   GLUTspaceRotateCB  spaceRotate;  /* Spaceball rotate */
+   GLUTspaceButtonCB  spaceButton;  /* Spaceball button */
+   GLUTtabletMotionCB tabletMotion; /* tablet motion */
+   GLUTtabletButtonCB tabletButton; /* tablet button */
+   GLUTjoystickCB     joystick;     /* joystick */
 } GLUTwindow;
 
 extern GLUTidleCB g_idle_func;
@@ -138,16 +137,19 @@ extern void *__glutFont(void *font);
 #endif
 
 
-
 /* hmmm... */
 #include "pc_hw/pc_hw.h"
 
+typedef struct {
+   void (*func) (int); /* function to call */
+   int value;          /* value to pass to callback */
+   int time;           /* end time */
+} GLUTSShotCB;
 
+extern GLUTSShotCB g_sscb[];
 
 #define MAX_WINDOWS 2
-
 #define MAX_SSHOT_CB 8
-
 #define RESERVED_COLORS 0
 
 #endif /* __glutint_h__ */
