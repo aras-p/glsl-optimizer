@@ -1276,35 +1276,34 @@ OSMesaGetColorBuffer( OSMesaContext c, GLint *width,
 }
 
 
-typedef void (*generic_function)();
-
 struct name_function
 {
    const char *Name;
-   generic_function Function;
+   OSMESAproc Function;
 };
 
 static struct name_function functions[] = {
-   { "OSMesaCreateContext", (generic_function) OSMesaCreateContext },
-   { "OSMesaCreateContextExt", (generic_function) OSMesaCreateContextExt },
-   { "OSMesaDestroyContext", (generic_function) OSMesaDestroyContext },
-   { "OSMesaMakeCurrent", (generic_function) OSMesaMakeCurrent },
-   { "OSMesaGetCurrentContext", (generic_function) OSMesaGetCurrentContext },
-   { "OSMesaPixelsStore", (generic_function) OSMesaPixelStore },
-   { "OSMesaGetIntegerv", (generic_function) OSMesaGetIntegerv },
-   { "OSMesaGetDepthBuffer", (generic_function) OSMesaGetDepthBuffer },
-   { "OSMesaGetColorBuffer", (generic_function) OSMesaGetColorBuffer },
-   { "OSMesaGetProcAddress", (generic_function) OSMesaGetProcAddress },
+   { "OSMesaCreateContext", (OSMESAproc) OSMesaCreateContext },
+   { "OSMesaCreateContextExt", (OSMESAproc) OSMesaCreateContextExt },
+   { "OSMesaDestroyContext", (OSMESAproc) OSMesaDestroyContext },
+   { "OSMesaMakeCurrent", (OSMESAproc) OSMesaMakeCurrent },
+   { "OSMesaGetCurrentContext", (OSMESAproc) OSMesaGetCurrentContext },
+   { "OSMesaPixelsStore", (OSMESAproc) OSMesaPixelStore },
+   { "OSMesaGetIntegerv", (OSMESAproc) OSMesaGetIntegerv },
+   { "OSMesaGetDepthBuffer", (OSMESAproc) OSMesaGetDepthBuffer },
+   { "OSMesaGetColorBuffer", (OSMESAproc) OSMesaGetColorBuffer },
+   { "OSMesaGetProcAddress", (OSMESAproc) OSMesaGetProcAddress },
    { NULL, NULL }
 };
 
-GLAPI void * GLAPIENTRY
+
+GLAPI OSMESAproc GLAPIENTRY
 OSMesaGetProcAddress( const char *funcName )
 {
    int i;
    for (i = 0; functions[i].Name; i++) {
       if (_mesa_strcmp(functions[i].Name, funcName) == 0)
-         return (void *) functions[i].Function;
+         return functions[i].Function;
    }
-   return (void *) _glapi_get_proc_address(funcName);
+   return _glapi_get_proc_address(funcName);
 }
