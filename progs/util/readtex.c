@@ -417,7 +417,6 @@ static void ConvertRGBtoYUV(GLint w, GLint h, GLint texel_bytes,
 GLushort *LoadYUVImage( const char *imageFile, GLint *width, GLint *height )
 {
    TK_RGBImageRec *image;
-   GLint bytes;
    GLushort *buffer;
 
    image = tkRGBImageLoad( imageFile );
