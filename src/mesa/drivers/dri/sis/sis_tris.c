@@ -609,21 +609,12 @@ sis_fallback_point( sisContextPtr smesa,
 /*                    Choose render functions                         */
 /**********************************************************************/
 
-#define _SIS_NEW_RENDER_STATE (_DD_NEW_LINE_STIPPLE |	\
-			       _DD_NEW_LINE_SMOOTH |		\
-			       _DD_NEW_POINT_SMOOTH |	\
-			       _DD_NEW_TRI_SMOOTH |		\
-			       _DD_NEW_TRI_UNFILLED |	\
-			       _DD_NEW_TRI_LIGHT_TWOSIDE |	\
-			       _DD_NEW_TRI_OFFSET)		\
-
-
 #define POINT_FALLBACK (DD_POINT_SMOOTH)
 #define LINE_FALLBACK (DD_LINE_STIPPLE|DD_LINE_SMOOTH)
 #define TRI_FALLBACK (DD_TRI_SMOOTH)
 #define ANY_FALLBACK_FLAGS (POINT_FALLBACK|LINE_FALLBACK|TRI_FALLBACK)
 #define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET|DD_TRI_UNFILLED)
-
+#define _SIS_NEW_RENDER_STATE (ANY_RASTER_FLAGS | ANY_FALLBACK_FLAGS)
 
 static void sisChooseRenderState(GLcontext *ctx)
 {
@@ -732,7 +723,7 @@ static void sisRunPipeline( GLcontext *ctx )
 	 sisUpdateTextureState(ctx);
       }
 
-      if (smesa->NewGLState & (_SIS_NEW_RENDER_STATE | _NEW_TEXTURE))
+      if (smesa->NewGLState & _SIS_NEW_RENDER_STATE)
 	 sisChooseRenderState( ctx );
 
       smesa->NewGLState = 0;
