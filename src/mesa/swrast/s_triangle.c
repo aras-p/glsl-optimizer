@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.52 2002/01/28 04:25:56 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.53 2002/01/30 16:54:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1181,7 +1181,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 		  }
 	       }
 	       else {
-#if CHAN_TYPE == GL_FLOAT
+#if (CHAN_BITS == 16 || CHAN_BITS == 32)
                   USE(general_textured_triangle);
 #else
                   USE(affine_textured_triangle);
@@ -1189,7 +1189,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 	       }
 	    }
 	    else {
-#if CHAN_TYPE == GL_FLOAT
+#if (CHAN_BITS == 16 || CHAN_BITS == 32)
                USE(general_textured_triangle);
 #else
                USE(persp_textured_triangle);
