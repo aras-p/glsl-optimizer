@@ -1064,7 +1064,7 @@ fxDDReadPixels8888 (GLcontext * ctx,
 }
 
 
-void
+static void
 fxDDDrawPixels555 (GLcontext * ctx, GLint x, GLint y,
                    GLsizei width, GLsizei height,
                    GLenum format, GLenum type,
@@ -1199,7 +1199,7 @@ fxDDDrawPixels555 (GLcontext * ctx, GLint x, GLint y,
 }
 
 
-void
+static void
 fxDDDrawPixels565 (GLcontext * ctx, GLint x, GLint y,
                    GLsizei width, GLsizei height,
                    GLenum format, GLenum type,
@@ -1334,7 +1334,7 @@ fxDDDrawPixels565 (GLcontext * ctx, GLint x, GLint y,
 }
 
 
-void
+static void
 fxDDDrawPixels565_rev (GLcontext * ctx, GLint x, GLint y,
                    GLsizei width, GLsizei height,
                    GLenum format, GLenum type,
@@ -1469,7 +1469,7 @@ fxDDDrawPixels565_rev (GLcontext * ctx, GLint x, GLint y,
 }
 
 
-void
+static void
 fxDDDrawPixels8888 (GLcontext * ctx, GLint x, GLint y,
                     GLsizei width, GLsizei height,
                     GLenum format, GLenum type,
@@ -1869,27 +1869,34 @@ fxDDInitExtensions(GLcontext * ctx)
       _mesa_enable_extension(ctx, "GL_S3_s3tc");
       _mesa_enable_extension(ctx, "GL_NV_blend_square");
    } else {
-#if FX_TC_NCC
-      /* [dBorca] Hack alert:
-       * 1) NCC w/o DITHER_ERR has poor quality and NCC w/ DITHER_ERR is
-       *    damn slow!
-       * 2) NCC compression cannot be used with multitexturing, because
-       *    the decompression tables are not per TMU anymore (bear in mind
-       *    that earlier Voodoos could handle 2 NCC tables for each TMU --
-       *    just look for POINTCAST_PALETTE). As a last resort, we could
-       *    fake NCC multitexturing through multipass rendering, but...
-       *    ohwell, it's not worth the effort...
-       *    This stand true for multitexturing palletized textures.
-       * 3) since NCC is not an OpenGL standard (as opposed to FXT1/DXTC), we
-       *    can't use precompressed textures!
+      /* [dBorca]
+       * We should enable generic texture compression functions,
+       * but some poorly written apps automatically assume S3TC.
+       * Binding NCC to GL_COMPRESSED_RGB[A] is an unnecessary hassle,
+       * since it's slow and ugly (better with palette textures, then).
+       * Moreover, NCC is not an OpenGL standard, so we can't use
+       * precompressed textures. Last, but not least, NCC runs amok
+       * when multitexturing on a Voodoo3 and up (see POINTCAST vs UMA).
+       * Note: this is also a problem with palette textures, but
+       * faking multitex by multipass is evil...
+       * Implementing NCC requires three stages:
+       * fxDDChooseTextureFormat:
+       *    bind GL_COMPRESSED_RGB[A] to _mesa_texformat_argb8888,
+       *    so we can quantize properly, at a later time
+       * fxDDTexImage:
+       *    if GL_COMPRESSED_RGB
+       *       use _mesa_texformat_l8 to get 1bpt and set GR_TEXFMT_YIQ_422
+       *    if GL_COMPRESSED_RGBA
+       *       use _mesa_texformat_al88 to get 2bpt and set GR_TEXFMT_AYIQ_8422
+       *    txMipQuantize(...);
+       *    if (level == 0) {
+       *       txPalToNcc((GuNccTable *)(&(ti->palette)), pxMip.pal);
+       *    }
+       * fxSetupSingleTMU_NoLock/fxSetupDoubleTMU_NoLock:
+       *    grTexDownloadTable(GR_TEXTABLE_NCC0, &(ti->palette));
        */
-      if (fxMesa->HaveTexus2) {
-         _mesa_enable_extension(ctx, "GL_ARB_texture_compression");
-      }
-#else
-      /* doesn't like texture compression */
+      /*_mesa_enable_extension(ctx, "GL_ARB_texture_compression");*/
       _mesa_enable_extension(ctx, "GL_SGIS_generate_mipmap");
-#endif
    }
 
    if (fxMesa->HaveCmbExt) {
@@ -1914,12 +1921,16 @@ fxDDInitExtensions(GLcontext * ctx)
    _mesa_enable_extension(ctx, "GL_EXT_multi_draw_arrays");
    _mesa_enable_extension(ctx, "GL_IBM_multimode_draw_arrays");
    _mesa_enable_extension(ctx, "GL_ARB_vertex_buffer_object");
-#if 1
-   /* not just yet */
-   _mesa_enable_extension(ctx, "GL_ARB_vertex_program");
-   _mesa_enable_extension(ctx, "GL_NV_vertex_program");
-   _mesa_enable_extension(ctx, "GL_NV_vertex_program1_1");
-   _mesa_enable_extension(ctx, "GL_MESA_program_debug");
+   /* dangerous */
+   if (getenv("MESA_FX_ALLOW_VP")) {
+      _mesa_enable_extension(ctx, "GL_ARB_vertex_program");
+      _mesa_enable_extension(ctx, "GL_NV_vertex_program");
+      _mesa_enable_extension(ctx, "GL_NV_vertex_program1_1");
+      _mesa_enable_extension(ctx, "GL_MESA_program_debug");
+   }
+#if 0
+   /* this requires _tnl_vertex_cull_stage in the pipeline */
+   _mesa_enable_extension(ctx, "EXT_cull_vertex");
 #endif
 }
 
@@ -2051,7 +2062,8 @@ fx_check_IsInHardware(GLcontext * ctx)
 	 }
 #endif
 
-	 if ((ctx->Texture.Unit[0].EnvMode != ctx->Texture.Unit[1].EnvMode) &&
+	 if (!fxMesa->HaveCmbExt &&
+	     (ctx->Texture.Unit[0].EnvMode != ctx->Texture.Unit[1].EnvMode) &&
 	     (ctx->Texture.Unit[0].EnvMode != GL_MODULATE) &&
 	     (ctx->Texture.Unit[0].EnvMode != GL_REPLACE)) {	/* q2, seems ok... */
 	    if (TDFX_DEBUG & VERBOSE_DRIVER)
