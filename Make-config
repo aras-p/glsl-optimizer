@@ -120,6 +120,7 @@ aix-gcc:
 	"CXXFLAGS = -O2 -DAIXV3" \
 	"MKLIB_OPTIONS = -arch aix-gcc" \
 	"GL_LIB_DEPS = -lX11 -lXext -lm" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lXi -lXmu" \
 	"APP_LIB_DEPS = -Wl,-brtl -lglut -lGLU -lGL -lm -lX11 -lXext -lXmu -lXi"
@@ -188,9 +189,11 @@ darwin:
                 -funroll-loops -fexpensive-optimizations -no-cpp-precomp \
                 -dynamic -Ddarwin" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
-	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
-	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL \
-                       -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" 
+	"OSMESA_LIB_DEPS = $(TOP)/lib/GL.dylib" \
+	"GLU_LIB_DEPS = $(TOP)/lib/GL.dylib" \
+	"GLUT_LIB_DEPS = " \
+	"GLW_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXt $(TOP)/lib/GL.dylib" \
+	"APP_LIB_DEPS = -L$(TOP)/lib -lglut -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" 
 
 darwin-static:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -207,8 +210,9 @@ darwin-static:
 	"CXXFLAGS = $(CFLAGS)" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
-	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
-	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
+	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm"
 
 darwin-static-nothreads:
@@ -226,8 +230,9 @@ darwin-static-nothreads:
 	"CXXFLAGS = $(CFLAGS)" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm" \
-	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
-	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
+	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm"
 
 freebsd:
@@ -591,7 +596,7 @@ irix6-64:
 	"CXX = CC" \
 	"CFLAGS = -64 -O3 -ansi -woff 1068,1069,1174,1185,1209,1474,1552 -DUSE_XSHM -DPTHREAD" \
 	"CXXFLAGS = -64 -O3 -ansi -woff 1174 -DPTHREAD" \
-	"MKLIB_OPTIONS = -static" \
+	"MKLIB_OPTIONS = -static -archopt 64" \
 	"APP_LIB_DEPS = -64 -lglut -lGLU -lGL -lX11 -lXext -lXmu -lXi -lm -lpthread"
 
 irix6-64-nothreads:
@@ -651,6 +656,7 @@ linux:
 	"CXXFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
@@ -669,6 +675,7 @@ linux-static:
 	"CXXFLAGS = -O3 -ansi -pedantic -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = " \
+	"OSMESA_LIB_DEPS = " \
 	"GLU_LIB_DEPS = " \
 	"GLUT_LIB_DEPS = " \
 	"GLW_LIB_DEPS = " \
@@ -688,6 +695,7 @@ linux-x86:
 	"CXXFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
@@ -708,6 +716,7 @@ linux-x86-static:
 	"MKLIB_OPTIONS = -static" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
@@ -728,6 +737,7 @@ linux-x86-static-nothreads:
 	"MKLIB_OPTIONS = -static" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm " \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
@@ -747,8 +757,9 @@ linux-x86-64-static:
 	"CXXFLAGS = -m64 -Wall -O3 -ansi -pedantic -ffast-math -funroll-loops -fomit-frame-pointer -falign-loops=2 -falign-jumps=2 -falign-functions=2 -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
-	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
-	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
+	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm"
 
 linux-x86-64-static-nothreads:
@@ -764,8 +775,9 @@ linux-x86-64-static-nothreads:
 	"CXXFLAGS = -m64 -Wall -O3 -ansi -pedantic -ffast-math -funroll-loops -fomit-frame-pointer -falign-loops=2 -falign-jumps=2 -falign-functions=2 -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -I/usr/X11R6/include" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm" \
-	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
-	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
+	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm"
 
 linux-x86-sse:
@@ -781,6 +793,7 @@ linux-x86-sse:
 	"CXXFLAGS = -mcpu=pentium4 -mfpmath=sse -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lglut -lGLU -lGL -lm" \
@@ -815,6 +828,7 @@ linux-icc:
 	"CXX = g++" \
 	"CFLAGS = -O3 -tpp6 -axK -KPIC -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lglut -lGLU -lGL -lm" \
@@ -834,6 +848,7 @@ linux-icc-static:
 	"CXXFLAGS = -O3 -tpp6 -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lglut -lGLU -lGL -lm" \
@@ -853,6 +868,7 @@ linux-icc-static-nothreads:
 	"CXXFLAGS = -O3 -tpp6 -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -I/usr/X11R6/include" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lglut -lGLU -lGL -lm" \
@@ -873,6 +889,7 @@ linux-ggi:
 	"CXXFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DCDECL=" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lggi -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm"
@@ -891,6 +908,7 @@ linux-x86-ggi:
 	"CXXFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DCDECL=" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lggi -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
@@ -907,6 +925,7 @@ linux-glfbdev:
 	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_GLFBDEV_DRIVER" \
 	"CXXFLAGS = -O3 -fPIC" \
 	"GL_LIB_DEPS = -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"APP_LIB_DEPS = -lm"
 
@@ -923,6 +942,7 @@ linux-glide:
 	"CXXFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -L/usr/local/glide/lib -lglide3x" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide3x -lglut -lGLU -lGL"
@@ -940,6 +960,7 @@ linux-x86-glide:
 	"CXXFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -L/usr/local/glide/lib -lglide3x -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
@@ -959,8 +980,9 @@ linux-ia64-ecc-static:
 	"CXXFLAGS = -O3 -ansi -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
-	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
-	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
+	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES ="
 
@@ -977,8 +999,9 @@ linux-ia64-ecc-static-nothreads:
 	"CXXFLAGS = -O3 -ansi -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -I/usr/X11R6/include" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm" \
-	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
-	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
+	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES ="
 
@@ -995,6 +1018,7 @@ linux-alpha:
 	"CXXFLAGS = -O3 -mcpu=ev5 -ansi -mieee -pedantic -fPIC -D_XOPEN_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
@@ -1027,6 +1051,7 @@ linux-ppc:
 	"CXXFLAGS = -O3 -mcpu=603 -ansi -pedantic -fPIC -fsigned-char -ffast-math -funroll-loops -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
@@ -1059,6 +1084,7 @@ linux-sparc:
 	"CXXFLAGS = -O2 -ffast-math -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
@@ -1077,6 +1103,7 @@ linux-sparc5:
 	"CXXFLAGS = -mv8 -O2 -ffast-math -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
@@ -1096,6 +1123,7 @@ linux-sparc-ultra:
 	"CXXFLAGS = -mv8 -O2 -mtune=ultrasparc -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
@@ -1250,6 +1278,7 @@ osf1:
 	"CXXFLAGS = -O2 -std1 -ieee_with_no_inexact -DPTHREADS -D_REENTRANT -DUSE_XSHM" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lm"
@@ -1267,6 +1296,7 @@ osf1-nothreads:
 	"CXXFLAGS = -O2 -std1 -ieee_with_no_inexact -DUSE_XSHM" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -lX11 -lXext -lm" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lm"
@@ -1307,6 +1337,7 @@ solaris-x86-gcc:
 	"CXXFLAGS = -O3 -m486 -fPIC" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/openwin/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -L/usr/openwin/lib -R/usr/openwin/lib -lglut -lGLU -lGL -lm"
@@ -1387,6 +1418,7 @@ sunos5:
 	"CFLAGS = -KPIC -Xa -O -I/usr/openwin/include -I/usr/dt/include -DUSE_XSHM" \
 	"CXXFLAGS = -KPIC -Xa -O -I/usr/openwin/include -I/usr/dt/include" \
 	"GL_LIB_DEPS = -L/usr/openwin/lib -L/usr/dt/lib -lX11 -lXext -lXmu -lXi -lm" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLUT_CFLAGS = -DSOLARIS_2_4_BUG" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lm" \
@@ -1464,6 +1496,7 @@ sunos5-smp:
 	"CXXFLAGS = -KPIC -Xa -native -fast -xO5 -xlibmil -xsafe=mem -xdepend -I/usr/openwin/include -I/usr/dt/include" \
 	"GLUT_CFLAGS = -DSOLARIS_2_4_BUG" \
 	"GL_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/openwin/lib -lXt -lX11" \
@@ -1482,6 +1515,7 @@ sunos5-gcc:
 	"CXXFLAGS = -O3 -I/usr/openwin/include -fPIC -fomit-frame-pointer -D_REENTRANT" \
 	"GLUT_CFLAGS = -fexceptions -DSOLARIS_2_4_BUG" \
 	"GL_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/openwin/lib -lXt -lX11" \
@@ -1500,6 +1534,7 @@ sunos5-gcc-debug:
 	"CXXFLAGS = -g -I/usr/openwin/include -fPIC -fomit-frame-pointer -D_REENTRANT" \
 	"GLUT_CFLAGS = -fexceptions -DSOLARIS_2_4_BUG" \
 	"GL_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/openwin/lib -lXt -lX11" \
@@ -1575,6 +1610,7 @@ linux-debug:
 	"CXXFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -DDEBUG -DMESA_DEBUG" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
@@ -1593,6 +1629,7 @@ linux-x86-debug:
 	"CXXFLAGS = -O2 -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DDEBUG" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
+	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
