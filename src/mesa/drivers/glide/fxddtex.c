@@ -1193,7 +1193,6 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    }
 
    texImage->TexFormat = mesaTexFormat;
-   texImage->Type = 0;		/* indicates a driver-specific format */
 
    /* allocate storage for texture image */
    texImage->Data = MALLOC(mml->width * mml->height * texelSize);
@@ -1340,7 +1339,7 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
        * a simpler format now.
        */
 
-      GLenum simpleFormat = _mesa_base_tex_format(ctx, texImage->IntFormat);
+      GLenum simpleFormat = _mesa_base_tex_format(ctx, texImage->TexFormat->IntFormat);
       GLint comps = _mesa_components_in_format(simpleFormat);
       GLubyte *tempImage;
       GLboolean success;
