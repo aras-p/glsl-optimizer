@@ -1362,8 +1362,14 @@ void r200UpdateTextureState( GLcontext *ctx )
        * Texture cache LRU hang workaround -------------
        * not needed for r200 derivatives?
        */
-      dbg = 0x0;
 
+      /* While the cases below attempt to only enable the workaround in the
+       * specific cases necessary, they were insufficient.  See bugzilla #1519,
+       * #729, #814.  Tests with quake3 showed no impact on performance.
+       */
+      dbg = 0x6;
+
+      /*
       if (((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & (R200_TEX_0_ENABLE )) &&
          ((((rmesa->hw.tex[0].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK)) &
          0x04) == 0)) ||
@@ -1388,7 +1394,7 @@ void r200UpdateTextureState( GLcontext *ctx )
          0x04) == 0)))
       {
          dbg |= 0x04;
-      }
+      }*/
 
       if (dbg != rmesa->hw.tam.cmd[TAM_DEBUG3]) {
          R200_STATECHANGE( rmesa, tam );
