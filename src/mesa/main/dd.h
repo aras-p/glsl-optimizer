@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,20 +34,6 @@
 /* THIS FILE ONLY INCLUDED BY mtypes.h !!!!! */
 
 struct gl_pixelstore_attrib;
-
-/* Mask bits sent to the driver Clear() function */
-#define DD_FRONT_LEFT_BIT  FRONT_LEFT_BIT         /* 1 */
-#define DD_FRONT_RIGHT_BIT FRONT_RIGHT_BIT        /* 2 */
-#define DD_BACK_LEFT_BIT   BACK_LEFT_BIT          /* 4 */
-#define DD_BACK_RIGHT_BIT  BACK_RIGHT_BIT         /* 8 */
-#define DD_AUX0            AUX0_BIT               /* future use */
-#define DD_AUX1            AUX1_BIT               /* future use */
-#define DD_AUX2            AUX2_BIT               /* future use */
-#define DD_AUX3            AUX3_BIT               /* future use */
-#define DD_DEPTH_BIT       GL_DEPTH_BUFFER_BIT    /* 0x00000100 */
-#define DD_ACCUM_BIT       GL_ACCUM_BUFFER_BIT    /* 0x00000200 */
-#define DD_STENCIL_BIT     GL_STENCIL_BUFFER_BIT  /* 0x00000400 */
-
 
 /**
  * Device driver function table.
@@ -629,7 +615,7 @@ struct dd_function_table {
    void (*DepthFunc)(GLcontext *ctx, GLenum func);
    /** Enable or disable writing into the depth buffer */
    void (*DepthMask)(GLcontext *ctx, GLboolean flag);
-   /** Specify mapping of depth values from normalized device coordinates to window coordinates */
+   /** Specify mapping of depth values from NDC to window coordinates */
    void (*DepthRange)(GLcontext *ctx, GLclampd nearval, GLclampd farval);
    /** Specify the current buffer for writing */
    void (*DrawBuffer)( GLcontext *ctx, GLenum buffer );

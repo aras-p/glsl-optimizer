@@ -268,12 +268,14 @@ static void gammaSetBuffer( GLcontext *ctx,
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);
 
    switch ( bufferBit ) {
-   case FRONT_LEFT_BIT:
+   case DD_FRONT_LEFT_BIT:
       gmesa->readOffset = 0;
       break;
-   case BACK_LEFT_BIT:
+   case DD_BACK_LEFT_BIT:
       gmesa->readOffset = gmesa->driScreen->fbHeight * gmesa->driScreen->fbWidth * gmesa->gammaScreen->cpp; 
       break;
+   default:
+      _mesa_problem(ctx, "Unexpected buffer 0x%x in gammaSetBuffer()", bufferBit);
    }
 }
 

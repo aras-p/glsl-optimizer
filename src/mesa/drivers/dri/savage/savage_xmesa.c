@@ -592,10 +592,10 @@ static void savageXMesaWindowMoved( savageContextPtr imesa )
       fprintf(stderr, "savageXMesaWindowMoved\n\n");
 
    switch (imesa->glCtx->Color._DrawDestMask) {
-   case FRONT_LEFT_BIT:
+   case DD_FRONT_LEFT_BIT:
       savageXMesaSetFrontClipRects( imesa );
       break;
-   case BACK_LEFT_BIT:
+   case DD_BACK_LEFT_BIT:
       savageXMesaSetBackClipRects( imesa );
       break;
    default:

@@ -71,8 +71,8 @@
 /** Maximum pixel map lookup table size */
 #define MAX_PIXEL_MAP_TABLE 256
 
-/** Number of auxillary color buffers */
-#define NUM_AUX_BUFFERS 0
+/** Maximum Number of auxillary color buffers */
+#define MAX_AUX_BUFFERS 4
 
 /** Maximum order (degree) of curves */
 #ifdef AMIGA

@@ -114,13 +114,13 @@ _swrast_clear_alpha_buffers( GLcontext *ctx )
    for (bufferBit = 1; bufferBit <= 8; bufferBit = bufferBit << 1) {
       if (bufferBit & ctx->Color._DrawDestMask) {
          GLchan *buffer;
-         if (bufferBit == FRONT_LEFT_BIT) {
+         if (bufferBit == DD_FRONT_LEFT_BIT) {
             buffer = ctx->DrawBuffer->FrontLeftAlpha;
          }
-         else if (bufferBit == FRONT_RIGHT_BIT) {
+         else if (bufferBit == DD_FRONT_RIGHT_BIT) {
             buffer = ctx->DrawBuffer->FrontRightAlpha;
          }
-         else if (bufferBit == BACK_LEFT_BIT) {
+         else if (bufferBit == DD_BACK_LEFT_BIT) {
             buffer = ctx->DrawBuffer->BackLeftAlpha;
          }
          else {
@@ -175,17 +175,17 @@ GLchan *get_alpha_buffer( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   switch (swrast->CurrentBuffer) {
-   case FRONT_LEFT_BIT:
+   switch (swrast->CurrentBufferBit) {
+   case DD_FRONT_LEFT_BIT:
       return ctx->DrawBuffer->FrontLeftAlpha;
       break;
-   case BACK_LEFT_BIT:
+   case DD_BACK_LEFT_BIT:
       return ctx->DrawBuffer->BackLeftAlpha;
       break;
-   case FRONT_RIGHT_BIT:
+   case DD_FRONT_RIGHT_BIT:
       return ctx->DrawBuffer->FrontRightAlpha;
       break;
-   case BACK_RIGHT_BIT:
+   case DD_BACK_RIGHT_BIT:
       return ctx->DrawBuffer->BackRightAlpha;
       break;
    default:

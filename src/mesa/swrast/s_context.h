@@ -281,6 +281,7 @@ typedef struct
    GLboolean _IntegerAccumMode;	/**< Storing unscaled integers? */
    GLfloat _IntegerAccumScaler;	/**< Implicit scale factor */
 
+   GLchan *CurAuxBuffer;
 
    /* Working values:
     */
@@ -288,7 +289,7 @@ typedef struct
    GLuint NewState;
    GLuint StateChanges;
    GLenum Primitive;    /* current primitive being drawn (ala glBegin) */
-   GLuint CurrentBuffer; /* exactly one of FRONT_LEFT_BIT, BACK_LEFT_BIT, etc*/
+   GLbitfield CurrentBufferBit; /* exactly one the of DD_*_BIT buffer bits */
 
    /** Mechanism to allow driver (like X11) to register further
     * software rasterization routines.

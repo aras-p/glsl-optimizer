@@ -236,6 +236,27 @@ enum {
 			   FRAG_BIT_TEX7)
 
 
+/**
+ * Bits for each basic buffer in a complete framebuffer.
+ * When glDrawBuffer(GL_FRONT_AND_BACK) is called (non-stereo),
+ * _DrawDestMask will be set to (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT),
+ * for example.  Also passed to ctx->Driver.Clear() to indicate which
+ * buffers to clear.
+ */
+/*@{*/
+#define DD_FRONT_LEFT_BIT  0x1
+#define DD_FRONT_RIGHT_BIT 0x2
+#define DD_BACK_LEFT_BIT   0x4
+#define DD_BACK_RIGHT_BIT  0x8
+#define DD_AUX0_BIT        0x10
+#define DD_AUX1_BIT        0x20
+#define DD_AUX2_BIT        0x40
+#define DD_AUX3_BIT        0x80
+#define DD_DEPTH_BIT       GL_DEPTH_BUFFER_BIT    /* 0x00000100 */
+#define DD_ACCUM_BIT       GL_ACCUM_BUFFER_BIT    /* 0x00000200 */
+#define DD_STENCIL_BIT     GL_STENCIL_BUFFER_BIT  /* 0x00000400 */
+/*@}*/
+
 
 /**
  * Maximum number of temporary vertices required for clipping.  
@@ -410,24 +431,6 @@ struct gl_accum_attrib {
 
 
 /**
- * \name Clipping planes bits
- * 
- * Used in gl_colorbuffer_attrib::_DrawDestMask and
- * gl_colorbuffer_attrib::_ReadSrcMask below to identify color buffers.
- */
-/*@{*/
-#define FRONT_LEFT_BIT  0x1
-#define FRONT_RIGHT_BIT 0x2
-#define BACK_LEFT_BIT   0x4
-#define BACK_RIGHT_BIT  0x8
-#define AUX0_BIT        0x10
-#define AUX1_BIT        0x20
-#define AUX2_BIT        0x40
-#define AUX3_BIT        0x80
-/*@}*/
-
-
-/**
  * Color buffers attributes.
  */
 struct gl_colorbuffer_attrib {
@@ -438,7 +441,7 @@ struct gl_colorbuffer_attrib {
    GLubyte ColorMask[4];		/**< Each flag is 0xff or 0x0 */
 
    GLenum DrawBuffer;			/**< Which buffer to draw into */
-   GLubyte _DrawDestMask;		/**< bitwise-OR of FRONT/BACK_LEFT/RIGHT_BITs */
+   GLbitfield _DrawDestMask;		/**< bitmask of DD_*_BIT bits */
 
    /** 
     * \name alpha testing
@@ -1709,6 +1712,7 @@ struct gl_frame_buffer
    GLboolean UseSoftwareAccumBuffer;
    GLboolean UseSoftwareStencilBuffer;
    GLboolean UseSoftwareAlphaBuffers;
+   GLboolean UseSoftwareAuxBuffers;
 
    /** \name Software depth (aka Z) buffer */
    /*@{*/
@@ -1732,6 +1736,8 @@ struct gl_frame_buffer
    GLchan *FrontRightAlpha;	/**< array [Width*Height] of GLchan */
    GLchan *BackRightAlpha;	/**< array [Width*Height] of GLchan */
    /*@}*/
+
+   GLchan *AuxBuffers[MAX_AUX_BUFFERS];
 
    /** 
     * \name Drawing bounds
@@ -1770,7 +1776,6 @@ struct gl_constants
    GLfloat MinLineWidth, MaxLineWidth;		/* aliased */
    GLfloat MinLineWidthAA, MaxLineWidthAA;	/* antialiased */
    GLfloat LineWidthGranularity;
-   GLuint NumAuxBuffers;
    GLuint MaxColorTableSize;
    GLuint MaxConvolutionWidth;
    GLuint MaxConvolutionHeight;

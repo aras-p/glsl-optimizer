@@ -5,7 +5,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.0
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -212,7 +212,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ctx->Eval.AutoNormal;
          break;
       case GL_AUX_BUFFERS:
-         *params = (ctx->Const.NumAuxBuffers) ? GL_TRUE : GL_FALSE;
+         *params = (ctx->Visual.numAuxBuffers) ? GL_TRUE : GL_FALSE;
          break;
       case GL_BLEND:
          *params = ctx->Color.BlendEnabled;
@@ -1767,7 +1767,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Eval.AutoNormal;
          break;
       case GL_AUX_BUFFERS:
-         *params = (GLdouble) ctx->Const.NumAuxBuffers;
+         *params = (GLdouble) ctx->Visual.numAuxBuffers;
          break;
       case GL_BLEND:
          *params = (GLdouble) ctx->Color.BlendEnabled;
@@ -3317,7 +3317,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) ctx->Eval.AutoNormal;
          break;
       case GL_AUX_BUFFERS:
-         *params = (GLfloat) ctx->Const.NumAuxBuffers;
+         *params = (GLfloat) ctx->Visual.numAuxBuffers;
          break;
       case GL_BLEND:
          *params = (GLfloat) ctx->Color.BlendEnabled;
@@ -4844,7 +4844,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Eval.AutoNormal;
          break;
       case GL_AUX_BUFFERS:
-         *params = (GLint) ctx->Const.NumAuxBuffers;
+         *params = (GLint) ctx->Visual.numAuxBuffers;
          break;
       case GL_BLEND:
          *params = (GLint) ctx->Color.BlendEnabled;

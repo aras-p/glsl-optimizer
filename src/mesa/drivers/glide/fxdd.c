@@ -380,7 +380,7 @@ static void fxDDClear( GLcontext *ctx,
                           fxMesa->clearA,
                           clearD);
 	 fxSetupColorMask(ctx);
-	 if (ctx->Color._DrawDestMask & FRONT_LEFT_BIT) {
+	 if (ctx->Color._DrawDestMask & DD_FRONT_LEFT_BIT) {
             grRenderBuffer(GR_BUFFER_FRONTBUFFER);
          }
 	 if (!fxMesa->unitsState.depthTestEnabled) {
@@ -401,7 +401,7 @@ static void fxDDClear( GLcontext *ctx,
                grDepthMask(FXTRUE);
             }
             fxSetupColorMask(ctx);
-            if (ctx->Color._DrawDestMask & FRONT_LEFT_BIT) {
+            if (ctx->Color._DrawDestMask & DD_FRONT_LEFT_BIT) {
                grRenderBuffer(GR_BUFFER_FRONTBUFFER);
             }
          }
@@ -1552,7 +1552,8 @@ fx_check_IsInHardware(GLcontext * ctx)
       return FX_FALLBACK_STENCIL;
    }
 
-   if (ctx->Color._DrawDestMask != FRONT_LEFT_BIT && ctx->Color._DrawDestMask != BACK_LEFT_BIT) {
+   if (ctx->Color._DrawDestMask != DD_FRONT_LEFT_BIT &&
+       ctx->Color._DrawDestMask != DD_BACK_LEFT_BIT) {
       return FX_FALLBACK_DRAW_BUFFER;
    }
 

@@ -730,17 +730,17 @@ static void mach64DDDrawBuffer( GLcontext *ctx, GLenum mode )
     * _DrawDestMask is easier to cope with than <mode>.
     */
    switch ( ctx->Color._DrawDestMask ) {
-   case FRONT_LEFT_BIT:
+   case DD_FRONT_LEFT_BIT:
       FALLBACK( mmesa, MACH64_FALLBACK_DRAW_BUFFER, GL_FALSE );
       mach64SetCliprects( ctx, GL_FRONT_LEFT );
       if (MACH64_DEBUG & DEBUG_VERBOSE_MSG)
-	 fprintf(stderr,"%s: FRONT_LEFT_BIT\n", __FUNCTION__);
+	 fprintf(stderr,"%s: DD_FRONT_LEFT_BIT\n", __FUNCTION__);
       break;
-   case BACK_LEFT_BIT:
+   case DD_BACK_LEFT_BIT:
       FALLBACK( mmesa, MACH64_FALLBACK_DRAW_BUFFER, GL_FALSE );
       mach64SetCliprects( ctx, GL_BACK_LEFT );
       if (MACH64_DEBUG & DEBUG_VERBOSE_MSG)
-	 fprintf(stderr,"%s: BACK_LEFT_BIT\n", __FUNCTION__);
+	 fprintf(stderr,"%s: DD_BACK_LEFT_BIT\n", __FUNCTION__);
       break;
    default:
       /* GL_NONE or GL_FRONT_AND_BACK or stereo left&right, etc */

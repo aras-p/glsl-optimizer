@@ -203,11 +203,11 @@ static void sisDDSetBuffer( GLcontext *ctx,
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
    switch ( bufferBit ) {
-   case FRONT_LEFT_BIT:
+   case DD_FRONT_LEFT_BIT:
       smesa->drawOffset = smesa->readOffset = smesa->frontOffset;
       smesa->drawPitch  = smesa->readPitch  = smesa->frontPitch;
       break;
-   case BACK_LEFT_BIT:
+   case DD_BACK_LEFT_BIT:
       smesa->drawOffset = smesa->readOffset = smesa->backOffset;
       smesa->drawPitch  = smesa->readPitch  = smesa->backPitch;
       break;

@@ -469,21 +469,21 @@ static void ffbDDDrawBuffer(GLcontext *ctx, GLenum buffer)
 #endif
 	fbc &= ~(FFB_FBC_WB_AB | FFB_FBC_RB_MASK);
 	switch (buffer) {
-	case FRONT_LEFT_BIT:
+	case GL_FRONT:
 		if (fmesa->back_buffer == 0)
 			fbc |= FFB_FBC_WB_B | FFB_FBC_RB_B;
 		else
 			fbc |= FFB_FBC_WB_A | FFB_FBC_RB_A;
 		break;
 
-	case BACK_LEFT_BIT:
+	case GL_BACK:
 		if (fmesa->back_buffer == 0)
 			fbc |= FFB_FBC_WB_A | FFB_FBC_RB_A;
 		else
 			fbc |= FFB_FBC_WB_B | FFB_FBC_RB_B;
 		break;
 
-	case BACK_LEFT_BIT | FRONT_LEFT_BIT:
+	case GL_FRONT_AND_BACK:
 		fbc |= FFB_FBC_WB_AB;
 		break;
 
@@ -519,14 +519,14 @@ static void ffbDDSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
 #endif
 	fbc &= ~(FFB_FBC_RB_MASK);
 	switch (bufferBit) {
-	case FRONT_LEFT_BIT:
+	case DD_FRONT_LEFT_BIT:
 		if (fmesa->back_buffer == 0)
 			fbc |= FFB_FBC_RB_B;
 		else
 			fbc |= FFB_FBC_RB_A;
 		break;
 
-	case BACK_LEFT_BIT:
+	case DD_BACK_LEFT_BIT:
 		if (fmesa->back_buffer == 0)
 			fbc |= FFB_FBC_RB_A;
 		else
@@ -534,6 +534,7 @@ static void ffbDDSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
 		break;
 
 	default:
+		_mesa_problem(ctx, "Unexpected buffer in ffbDDSetBuffer()");
 		return;
 	};
 

@@ -147,10 +147,10 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
 
 
    switch (bufferBit) {
-   case FRONT_LEFT_BIT:
+   case DD_FRONT_LEFT_BIT:
       dPriv->currentBuffer = dPriv->frontBuffer;
       break;
-   case BACK_LEFT_BIT:
+   case DD_BACK_LEFT_BIT:
       dPriv->currentBuffer = dPriv->backBuffer;
       break;
    default:

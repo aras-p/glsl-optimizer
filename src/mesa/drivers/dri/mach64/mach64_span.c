@@ -200,15 +200,15 @@ static void mach64DDSetBuffer( GLcontext *ctx,
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 
    switch ( bufferBit ) {
-   case FRONT_LEFT_BIT:
+   case DD_FRONT_LEFT_BIT:
       if (MACH64_DEBUG & DEBUG_VERBOSE_MSG)
-	 fprintf(stderr,"%s: FRONT_LEFT_BIT\n", __FUNCTION__);
+	 fprintf(stderr,"%s: DD_FRONT_LEFT_BIT\n", __FUNCTION__);
       mmesa->drawOffset = mmesa->readOffset = mmesa->mach64Screen->frontOffset;
       mmesa->drawPitch  = mmesa->readPitch  = mmesa->mach64Screen->frontPitch;
       break;
-   case BACK_LEFT_BIT:
+   case DD_BACK_LEFT_BIT:
       if (MACH64_DEBUG & DEBUG_VERBOSE_MSG)
-	 fprintf(stderr,"%s: BACK_LEFT_BIT\n", __FUNCTION__);
+	 fprintf(stderr,"%s: DD_BACK_LEFT_BIT\n", __FUNCTION__);
       mmesa->drawOffset = mmesa->readOffset = mmesa->mach64Screen->backOffset;
       mmesa->drawPitch  = mmesa->readPitch  = mmesa->mach64Screen->backPitch;
       break;

@@ -514,8 +514,8 @@ void sisDDDrawBuffer( GLcontext *ctx, GLenum mode )
     * _DrawDestMask is easier to cope with than <mode>.
     */
    switch ( ctx->Color._DrawDestMask ) {
-   case FRONT_LEFT_BIT:
-   case BACK_LEFT_BIT:
+   case DD_FRONT_LEFT_BIT:
+   case DD_BACK_LEFT_BIT:
       FALLBACK( smesa, SIS_FALLBACK_DRAW_BUFFER, GL_FALSE );
       break;
    default:

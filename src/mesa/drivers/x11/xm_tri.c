@@ -1313,6 +1313,8 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
    triFuncName = NULL;
 #endif
 
+   if ((ctx->Color._DrawDestMask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) ==0)
+      return (swrast_tri_func) NULL;
    if (ctx->RenderMode != GL_RENDER)  return (swrast_tri_func) NULL;
    if (ctx->Polygon.SmoothFlag)       return (swrast_tri_func) NULL;
    if (ctx->Texture._EnabledUnits)    return (swrast_tri_func) NULL;

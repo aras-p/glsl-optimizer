@@ -390,7 +390,7 @@ static void r128DDSetBuffer( GLcontext *ctx,
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
    switch ( bufferBit ) {
-   case FRONT_LEFT_BIT:
+   case DD_FRONT_LEFT_BIT:
       if ( rmesa->sarea->pfCurrentPage == 1 ) {
          rmesa->drawOffset = rmesa->readOffset = rmesa->r128Screen->backOffset;
          rmesa->drawPitch  = rmesa->readPitch  = rmesa->r128Screen->backPitch;
@@ -399,7 +399,7 @@ static void r128DDSetBuffer( GLcontext *ctx,
          rmesa->drawPitch  = rmesa->readPitch  = rmesa->r128Screen->frontPitch;
       }
       break;
-   case BACK_LEFT_BIT:
+   case DD_BACK_LEFT_BIT:
       if ( rmesa->sarea->pfCurrentPage == 1 ) {
          rmesa->drawOffset = rmesa->readOffset = rmesa->r128Screen->frontOffset;
          rmesa->drawPitch  = rmesa->readPitch  = rmesa->r128Screen->frontPitch;

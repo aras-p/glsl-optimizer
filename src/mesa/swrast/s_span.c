@@ -653,7 +653,7 @@ multi_write_index_span( GLcontext *ctx, struct sw_span *span )
          ASSERT(span->end < MAX_WIDTH);
 
          /* Set the current read/draw buffer */
-         swrast->CurrentBuffer = bufferBit;
+         swrast->CurrentBufferBit = bufferBit;
          (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, bufferBit);
 
          /* make copy of incoming indexes */
@@ -710,7 +710,7 @@ multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
          ASSERT(span->end < MAX_WIDTH);
 
          /* Set the current read/draw buffer */
-         swrast->CurrentBuffer = bufferBit;
+         swrast->CurrentBufferBit = bufferBit;
          (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, bufferBit);
 
          /* make copy of incoming colors */

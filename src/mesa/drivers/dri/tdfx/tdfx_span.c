@@ -1314,10 +1314,10 @@ static void tdfxDDSetBuffer( GLcontext *ctx,
    (void) buffer;
 
    switch ( bufferBit ) {
-   case FRONT_LEFT_BIT:
+   case DD_FRONT_LEFT_BIT:
       fxMesa->DrawBuffer = fxMesa->ReadBuffer = GR_BUFFER_FRONTBUFFER;
       break;
-   case BACK_LEFT_BIT:
+   case DD_BACK_LEFT_BIT:
       fxMesa->DrawBuffer = fxMesa->ReadBuffer = GR_BUFFER_BACKBUFFER;
       break;
    default:

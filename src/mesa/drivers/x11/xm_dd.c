@@ -41,6 +41,7 @@
 #include "xmesaP.h"
 #include "array_cache/acache.h"
 #include "swrast/swrast.h"
+#include "swrast/s_auxbuffer.h"
 #include "swrast/s_context.h"
 #include "swrast/s_drawpix.h"
 #include "swrast/s_alphabuf.h"
@@ -167,10 +168,11 @@ xmesa_set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
    /*
     * Now determine front vs back color buffer.
     */
-   if (bufferBit == FRONT_LEFT_BIT) {
+   if (bufferBit == DD_FRONT_LEFT_BIT) {
       target->buffer = target->frontbuffer;
+      xmesa_update_span_funcs(ctx);
    }
-   else if (bufferBit == BACK_LEFT_BIT) {
+   else if (bufferBit == DD_BACK_LEFT_BIT) {
       ASSERT(target->db_state);
       if (target->backpixmap) {
          /* back buffer is a pixmap */
@@ -184,12 +186,15 @@ xmesa_set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
          /* No back buffer!!!!  Must be out of memory, use front buffer */
          target->buffer = target->frontbuffer;
       }
+      xmesa_update_span_funcs(ctx);
    }
+   else if (bufferBit & (DD_AUX0_BIT | DD_AUX1_BIT | DD_AUX2_BIT | DD_AUX3_BIT)) {
+      _swrast_use_aux_buffer(ctx, buffer, bufferBit);
+   } 
    else {
       _mesa_problem(ctx, "invalid buffer 0x%x in set_buffer() in xm_dd.c");
       return;
    }
-   xmesa_update_span_funcs(ctx);
 }
 
 
@@ -1105,7 +1110,9 @@ void xmesa_update_state( GLcontext *ctx, GLuint new_state )
       break;
    }
 
-   xmesa_update_span_funcs(ctx);
+   if (ctx->Color._DrawDestMask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) {
+      xmesa_update_span_funcs(ctx);
+   }
 }
 
 

@@ -262,18 +262,18 @@ _swrast_copy_texsubimage3d(GLcontext *ctx,
  */
 struct swrast_device_driver {
 
-   void (*SetBuffer)( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit);
+   void (*SetBuffer)(GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit);
    /*
-    * Specifies the current buffer for span/pixel writing/reading.
+    * Specifies the current color buffer for span/pixel writing/reading.
     * buffer indicates which window to write to / read from.  Normally,
     * this'll be the buffer currently bound to the context, but it doesn't
     * have to be!
-    * bufferBit indicates which color buffer, one of:
-    *    FRONT_LEFT_BIT - this buffer always exists
-    *    BACK_LEFT_BIT - when double buffering
-    *    FRONT_RIGHT_BIT - when using stereo
-    *    BACK_RIGHT_BIT - when using stereo and double buffering
-    *    AUXn_BIT - if aux buffers are implemented
+    * bufferBit indicates which color buffer, exactly one of:
+    *    DD_FRONT_LEFT_BIT - this buffer always exists
+    *    DD_BACK_LEFT_BIT - when double buffering
+    *    DD_FRONT_RIGHT_BIT - when using stereo
+    *    DD_BACK_RIGHT_BIT - when using stereo and double buffering
+    *    DD_AUXn_BIT - if aux buffers are implemented
     */
 
 

@@ -1602,6 +1602,7 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
                             accum_blue_size, accum_alpha_size,
                             0 );
 
+   /* XXX minor hack */
    v->mesa_visual.level = level;
    return v;
 }
@@ -1789,6 +1790,8 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
                                 v->mesa_visual.stencilBits > 0,
                                 v->mesa_visual.accumRedBits > 0,
                                 v->mesa_visual.alphaBits > 0 );
+   /* XXX hack */
+   b->mesa_buffer.UseSoftwareAuxBuffers = GL_TRUE;
 
    if (!initialize_visual_and_buffer( client, v, b, v->mesa_visual.rgbMode,
                                       (XMesaDrawable)w, b->cmap )) {

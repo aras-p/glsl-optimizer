@@ -557,11 +557,11 @@ fxDDSetBuffer(GLcontext * ctx, GLframebuffer * buffer, GLuint bufferBit)
       fprintf(stderr, "fxDDSetBuffer(%x)\n", (int)bufferBit);
    }
 
-   if (bufferBit == FRONT_LEFT_BIT) {
+   if (bufferBit == DD_FRONT_LEFT_BIT) {
       fxMesa->currentFB = GR_BUFFER_FRONTBUFFER;
       grRenderBuffer(fxMesa->currentFB);
    }
-   else if (bufferBit == BACK_LEFT_BIT) {
+   else if (bufferBit == DD_BACK_LEFT_BIT) {
       fxMesa->currentFB = GR_BUFFER_BACKBUFFER;
       grRenderBuffer(fxMesa->currentFB);
    }

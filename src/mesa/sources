@@ -84,6 +84,7 @@ SWRAST_SOURCES = \
 	swrast/s_accum.c \
 	swrast/s_alpha.c \
 	swrast/s_alphabuf.c \
+	swrast/s_auxbuffer.c \
 	swrast/s_bitmap.c \
 	swrast/s_blend.c \
 	swrast/s_buffers.c \

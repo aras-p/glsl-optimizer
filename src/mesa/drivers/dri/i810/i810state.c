@@ -285,10 +285,10 @@ void i810DrawBuffer(GLcontext *ctx, GLenum mode )
     * _DrawDestMask is easier to cope with than <mode>.
     */
    switch ( ctx->Color._DrawDestMask ) {
-   case FRONT_LEFT_BIT:
-     front=1;
+   case DD_FRONT_LEFT_BIT:
+     front = 1;
      break;
-   case BACK_LEFT_BIT:
+   case DD_BACK_LEFT_BIT:
      front = 0;
      break;
    default:

@@ -91,10 +91,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
     * MULTI_DRAW_BIT flag.  Also set it if we're drawing to no
     * buffers or the RGBA or CI mask disables all writes.
     */
-   if (ctx->Color._DrawDestMask != FRONT_LEFT_BIT &&
-       ctx->Color._DrawDestMask != BACK_LEFT_BIT &&
-       ctx->Color._DrawDestMask != FRONT_RIGHT_BIT &&
-       ctx->Color._DrawDestMask != BACK_RIGHT_BIT) {
+   if (_mesa_bitcount(ctx->Color._DrawDestMask) != 1) {
       /* more than one color buffer designated for writing (or zero buffers) */
       RasterMask |= MULTI_DRAW_BIT;
    }
@@ -582,9 +579,9 @@ _swrast_CreateContext( GLcontext *ctx )
    swrast->AllowPixelFog = GL_TRUE;
 
    if (ctx->Visual.doubleBufferMode)
-      swrast->CurrentBuffer = BACK_LEFT_BIT;
+      swrast->CurrentBufferBit = DD_BACK_LEFT_BIT;
    else
-      swrast->CurrentBuffer = FRONT_LEFT_BIT;
+      swrast->CurrentBufferBit = DD_FRONT_LEFT_BIT;
 
    /* Optimized Accum buffer */
    swrast->_IntegerAccumMode = GL_TRUE;

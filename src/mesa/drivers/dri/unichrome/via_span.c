@@ -327,13 +327,13 @@ static void viaSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
 #ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
 #endif
-    if (bufferBit == FRONT_LEFT_BIT) {
+    if (bufferBit == DD_FRONT_LEFT_BIT) {
 	vmesa->drawMap = (char *)vmesa->driScreen->pFB;
         vmesa->readMap = (char *)vmesa->driScreen->pFB;
 	vmesa->drawPitch = vmesa->front.pitch;
 	vmesa->readPitch = vmesa->front.pitch;
     }
-    else if (bufferBit == BACK_LEFT_BIT) {
+    else if (bufferBit == DD_BACK_LEFT_BIT) {
 	vmesa->drawMap = vmesa->back.map;
         vmesa->readMap = vmesa->back.map;
 	vmesa->drawPitch = vmesa->back.pitch;

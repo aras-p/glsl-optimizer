@@ -1683,8 +1683,12 @@ void _mesa_update_pixel( GLcontext *ctx, GLuint new_state )
 /*****                      Initialization                        *****/
 /**********************************************************************/
 
+
+/**
+ * Initialize the context's PIXEL attribute group.
+ */
 void
-_mesa_init_pixel( GLcontext * ctx )
+_mesa_init_pixel( GLcontext *ctx )
 {
    int i;
 
@@ -1815,11 +1819,11 @@ _mesa_init_pixel( GLcontext * ctx )
 
    if (ctx->Visual.doubleBufferMode) {
       ctx->Pixel.ReadBuffer = GL_BACK;
-      ctx->Pixel._ReadSrcMask = BACK_LEFT_BIT;
+      ctx->Pixel._ReadSrcMask = DD_BACK_LEFT_BIT;
    }
    else {
       ctx->Pixel.ReadBuffer = GL_FRONT;
-      ctx->Pixel._ReadSrcMask = FRONT_LEFT_BIT;
+      ctx->Pixel._ReadSrcMask = DD_FRONT_LEFT_BIT;
    }
 
    /* Miscellaneous */

@@ -301,7 +301,7 @@ static void radeonSetBuffer( GLcontext *ctx,
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 
    switch ( bufferBit ) {
-   case FRONT_LEFT_BIT:
+   case DD_FRONT_LEFT_BIT:
       if ( rmesa->sarea->pfCurrentPage == 1 ) {
         rmesa->state.pixel.readOffset = rmesa->radeonScreen->backOffset;
         rmesa->state.pixel.readPitch  = rmesa->radeonScreen->backPitch;
@@ -314,7 +314,7 @@ static void radeonSetBuffer( GLcontext *ctx,
       	rmesa->state.color.drawPitch  = rmesa->radeonScreen->frontPitch;
       }
       break;
-   case BACK_LEFT_BIT:
+   case DD_BACK_LEFT_BIT:
       if ( rmesa->sarea->pfCurrentPage == 1 ) {
       	rmesa->state.pixel.readOffset = rmesa->radeonScreen->frontOffset;
       	rmesa->state.pixel.readPitch  = rmesa->radeonScreen->frontPitch;

@@ -275,7 +275,7 @@ static void tdfxClear( GLcontext *ctx,
                                         fxMesa->Color.ClearAlpha,
                                         fxMesa->Depth.Clear);
 	 FX_grColorMaskv_NoLock(ctx, true4);
-	 if (ctx->Color._DrawDestMask & FRONT_LEFT_BIT)
+	 if (ctx->Color._DrawDestMask & DD_FRONT_LEFT_BIT)
             fxMesa->Glide.grRenderBuffer(GR_BUFFER_FRONTBUFFER);
 	 if (!ctx->Depth.Test || !ctx->Depth.Mask)
 	    fxMesa->Glide.grDepthMask(FXFALSE);
@@ -295,7 +295,7 @@ static void tdfxClear( GLcontext *ctx,
                fxMesa->Glide.grDepthMask(FXTRUE);
             }
             FX_grColorMaskv_NoLock(ctx, true4);
-            if (ctx->Color._DrawDestMask & FRONT_LEFT_BIT)
+            if (ctx->Color._DrawDestMask & DD_FRONT_LEFT_BIT)
                fxMesa->Glide.grRenderBuffer(GR_BUFFER_FRONTBUFFER);
          }
       }

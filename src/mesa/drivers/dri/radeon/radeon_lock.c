@@ -56,7 +56,7 @@ radeonUpdatePageFlipping( radeonContextPtr rmesa )
 
    rmesa->doPageFlip = rmesa->sarea->pfState;
 
-   use_back = (rmesa->glCtx->Color._DrawDestMask == BACK_LEFT_BIT);
+   use_back = (rmesa->glCtx->Color._DrawDestMask == DD_BACK_LEFT_BIT);
    use_back ^= (rmesa->sarea->pfCurrentPage == 1);
 
    if ( RADEON_DEBUG & DEBUG_VERBOSE )
@@ -108,7 +108,7 @@ void radeonGetLock( radeonContextPtr rmesa, GLuint flags )
 
    if ( rmesa->lastStamp != dPriv->lastStamp ) {
       radeonUpdatePageFlipping( rmesa );
-      if (rmesa->glCtx->Color._DrawDestMask == BACK_LEFT_BIT)
+      if (rmesa->glCtx->Color._DrawDestMask == DD_BACK_LEFT_BIT)
          radeonSetCliprects( rmesa, GL_BACK_LEFT );
       else
          radeonSetCliprects( rmesa, GL_FRONT_LEFT );

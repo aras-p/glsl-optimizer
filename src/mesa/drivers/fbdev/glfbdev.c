@@ -159,10 +159,10 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
    GLFBDevBufferPtr fbdevbuf = GLFBDEV_BUFFER(buffer);
    fbdevctx->curBuffer = fbdevbuf;
    switch (bufferBit) {
-   case FRONT_LEFT_BIT:
+   case DD_FRONT_LEFT_BIT:
       fbdevbuf->curBottom = fbdevbuf->frontBottom;
       break;
-   case BACK_LEFT_BIT:
+   case DD_BACK_LEFT_BIT:
       fbdevbuf->curBottom = fbdevbuf->backBottom;
       break;
    default:

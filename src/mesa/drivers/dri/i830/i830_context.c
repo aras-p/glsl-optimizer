@@ -461,10 +461,10 @@ void i830XMesaSetBackClipRects( i830ContextPtr imesa )
 static void i830XMesaWindowMoved( i830ContextPtr imesa )
 {
    switch (imesa->glCtx->Color._DrawDestMask) {
-   case FRONT_LEFT_BIT:
+   case DD_FRONT_LEFT_BIT:
       i830XMesaSetFrontClipRects( imesa );
       break;
-   case BACK_LEFT_BIT:
+   case DD_BACK_LEFT_BIT:
       i830XMesaSetBackClipRects( imesa );
       break;
    default:

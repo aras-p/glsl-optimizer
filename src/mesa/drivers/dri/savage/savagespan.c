@@ -225,9 +225,9 @@ static void savageDDSetBuffer(GLcontext *ctx, GLframebuffer *buffer,
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    char *map;
 
-   assert( (bufferBit == FRONT_LEFT_BIT) || (bufferBit == BACK_LEFT_BIT) );
+   assert((bufferBit == DD_FRONT_LEFT_BIT) || (bufferBit == DD_BACK_LEFT_BIT));
 
-   map = (bufferBit == FRONT_LEFT_BIT)
+   map = (bufferBit == DD_FRONT_LEFT_BIT)
        ? (char*)imesa->apertureBase[TARGET_FRONT]
        : (char*)imesa->apertureBase[TARGET_BACK];
 

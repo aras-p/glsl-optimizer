@@ -160,7 +160,7 @@ static GLboolean gl_ggiSetBuffer(GLcontext *ctx, GLframebuffer *buffer, GLuint b
 	printf("set read %d\n", bufferBit);
 	GGIMESADPRINT_CORE("gl_ggiSetBuffer() called\n");
 
-	if (bufferBit == FRONT_LEFT_BIT) 
+	if (bufferBit == DD_FRONT_LEFT_BIT) 
 	{
 		ggiSetReadFrame(ggi_ctx->ggi_visual,
 				ggiGetDisplayFrame(ggi_ctx->ggi_visual));
@@ -168,7 +168,7 @@ static GLboolean gl_ggiSetBuffer(GLcontext *ctx, GLframebuffer *buffer, GLuint b
 				 ggiGetDisplayFrame(ggi_ctx->ggi_visual));
 		return GL_TRUE;
 	}
-	else if (bufferBit == BACK_LEFT_BIT)
+	else if (bufferBit == DD_BACK_LEFT_BIT)
 	{
 		ggiSetReadFrame(ggi_ctx->ggi_visual,
 				ggiGetDisplayFrame(ggi_ctx->ggi_visual)?0 : 1);

@@ -123,13 +123,13 @@ static void i810SetBuffer(GLcontext *ctx, GLframebuffer *buffer,
    (void) buffer;
 
    switch(bufferBit) {
-    case FRONT_LEFT_BIT:
+    case DD_FRONT_LEFT_BIT:
       if ( imesa->sarea->pf_current_page == 1)
         imesa->readMap = imesa->i810Screen->back.map;
       else
         imesa->readMap = (char*)imesa->driScreen->pFB;
       break;
-    case BACK_LEFT_BIT:
+    case DD_BACK_LEFT_BIT:
       if ( imesa->sarea->pf_current_page == 1)
         imesa->readMap =  (char*)imesa->driScreen->pFB;
       else

@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -532,7 +532,7 @@ _mesa_ColorMask( GLboolean red, GLboolean green,
 /*@{*/
 
 /**
- * Initialization of the context color data.
+ * Initialization of the context's Color attribute group.
  *
  * \param ctx GL context.
  *
@@ -569,11 +569,11 @@ void _mesa_init_color( GLcontext * ctx )
 
    if (ctx->Visual.doubleBufferMode) {
       ctx->Color.DrawBuffer = GL_BACK;
-      ctx->Color._DrawDestMask = BACK_LEFT_BIT;
+      ctx->Color._DrawDestMask = DD_BACK_LEFT_BIT;
    }
    else {
       ctx->Color.DrawBuffer = GL_FRONT;
-      ctx->Color._DrawDestMask = FRONT_LEFT_BIT;
+      ctx->Color._DrawDestMask = DD_FRONT_LEFT_BIT;
    }
 }
 

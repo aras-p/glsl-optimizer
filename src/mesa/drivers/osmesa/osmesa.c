@@ -133,7 +133,7 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
 {
    /* separate read buffer not supported */
    ASSERT(buffer == ctx->DrawBuffer);
-   ASSERT(bufferBit == FRONT_LEFT_BIT);
+   ASSERT(bufferBit == DD_FRONT_LEFT_BIT);
 }
 
 

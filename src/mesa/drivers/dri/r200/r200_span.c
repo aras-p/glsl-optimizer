@@ -301,7 +301,7 @@ static void r200SetBuffer( GLcontext *ctx,
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
    switch ( bufferBit ) {
-   case FRONT_LEFT_BIT:
+   case DD_FRONT_LEFT_BIT:
       if ( rmesa->doPageFlip && rmesa->sarea->pfCurrentPage == 1 ) {
         rmesa->state.pixel.readOffset = rmesa->r200Screen->backOffset;
         rmesa->state.pixel.readPitch  = rmesa->r200Screen->backPitch;
@@ -314,7 +314,7 @@ static void r200SetBuffer( GLcontext *ctx,
       	rmesa->state.color.drawPitch  = rmesa->r200Screen->frontPitch;
       }
       break;
-   case BACK_LEFT_BIT:
+   case DD_BACK_LEFT_BIT:
       if ( rmesa->doPageFlip && rmesa->sarea->pfCurrentPage == 1 ) {
       	rmesa->state.pixel.readOffset = rmesa->r200Screen->frontOffset;
       	rmesa->state.pixel.readPitch  = rmesa->r200Screen->frontPitch;

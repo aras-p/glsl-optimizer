@@ -418,7 +418,8 @@ __glCoreNopDispatch(void)
 /*@{*/
 
 /**
- * Allocate a new GLvisual object.
+ * Allocates a GLvisual structure and initializes it via
+ * _mesa_initialize_visual().
  * 
  * \param rgbFlag GL_TRUE for RGB(A) mode, GL_FALSE for Color Index mode.
  * \param dbFlag double buffering
@@ -439,8 +440,7 @@ __glCoreNopDispatch(void)
  * \return pointer to new GLvisual or NULL if requested parameters can't be
  * met.
  *
- * Allocates a GLvisual structure and initializes it via
- * _mesa_initialize_visual().
+ * \note Need to add params for level and numAuxBuffers (at least)
  */
 GLvisual *
 _mesa_create_visual( GLboolean rgbFlag,
@@ -475,14 +475,14 @@ _mesa_create_visual( GLboolean rgbFlag,
 }
 
 /**
- * Initialize the fields of the given GLvisual.
+ * Makes some sanity checks and fills in the fields of the
+ * GLvisual structure with the given parameters.
  * 
  * \return GL_TRUE on success, or GL_FALSE on failure.
  *
  * \sa _mesa_create_visual() above for the parameter description.
  *
- * Makes some sanity checks and fills in the fields of the
- * GLvisual structure with the given parameters.
+ * \note Need to add params for level and numAuxBuffers (at least)
  */
 GLboolean
 _mesa_initialize_visual( GLvisual *vis,
@@ -502,8 +502,6 @@ _mesa_initialize_visual( GLvisual *vis,
                          GLint accumAlphaBits,
                          GLint numSamples )
 {
-   (void) numSamples;
-
    assert(vis);
 
    /* This is to catch bad values from device drivers not updated for
@@ -555,12 +553,14 @@ _mesa_initialize_visual( GLvisual *vis,
    vis->numAuxBuffers = 0;
    vis->level = 0;
    vis->pixmapMode = 0;
+   vis->samples = numSamples;
 
    return GL_TRUE;
 }
 
+
 /**
- * Destroy a visual.
+ * Destroy a visual and free its memory.
  *
  * \param vis visual.
  * 
@@ -581,7 +581,8 @@ _mesa_destroy_visual( GLvisual *vis )
 /*@{*/
 
 /**
- * Create a new framebuffer.  
+ * Allocate a GLframebuffer structure and initializes it via
+ * _mesa_initialize_framebuffer().
  *
  * A GLframebuffer is a structure which encapsulates the depth, stencil and
  * accum buffers and related parameters.
@@ -594,8 +595,7 @@ _mesa_destroy_visual( GLvisual *vis )
  *
  * \return pointer to new GLframebuffer struct or NULL if error.
  *
- * Allocate a GLframebuffer structure and initializes it via
- * _mesa_initialize_framebuffer().
+ * \note Need to add softwareAuxBuffers parameter.
  */
 GLframebuffer *
 _mesa_create_framebuffer( const GLvisual *visual,
@@ -614,13 +614,12 @@ _mesa_create_framebuffer( const GLvisual *visual,
    return buffer;
 }
 
+
 /**
- * Initialize a GLframebuffer object.
- * 
- * \sa _mesa_create_framebuffer() above for the parameter description.
- *
  * Makes some sanity checks and fills in the fields of the
  * GLframebuffer structure with the given parameters.
+ * 
+ * \sa _mesa_create_framebuffer() above for the parameter description.
  */
 void
 _mesa_initialize_framebuffer( GLframebuffer *buffer,
@@ -630,6 +629,7 @@ _mesa_initialize_framebuffer( GLframebuffer *buffer,
                               GLboolean softwareAccum,
                               GLboolean softwareAlpha )
 {
+   GLboolean softwareAux = GL_FALSE;
    assert(buffer);
    assert(visual);
 
@@ -658,7 +658,9 @@ _mesa_initialize_framebuffer( GLframebuffer *buffer,
    buffer->UseSoftwareStencilBuffer = softwareStencil;
    buffer->UseSoftwareAccumBuffer = softwareAccum;
    buffer->UseSoftwareAlphaBuffers = softwareAlpha;
+   buffer->UseSoftwareAuxBuffers = softwareAux;
 }
+
 
 /**
  * Free a framebuffer struct and its buffers.
@@ -673,6 +675,7 @@ _mesa_destroy_framebuffer( GLframebuffer *buffer )
       FREE(buffer);
    }
 }
+
 
 /**
  * Free the data hanging off of \p buffer, but not \p buffer itself.
@@ -757,11 +760,11 @@ one_time_init( GLcontext *ctx )
 
       /* do some implementation tests */
       assert( sizeof(GLbyte) == 1 );
-      assert( sizeof(GLshort) >= 2 );
-      assert( sizeof(GLint) >= 4 );
       assert( sizeof(GLubyte) == 1 );
-      assert( sizeof(GLushort) >= 2 );
-      assert( sizeof(GLuint) >= 4 );
+      assert( sizeof(GLshort) == 2 );
+      assert( sizeof(GLushort) == 2 );
+      assert( sizeof(GLint) == 4 );
+      assert( sizeof(GLuint) == 4 );
 
       _mesa_init_lists();
 
@@ -799,15 +802,15 @@ one_time_init( GLcontext *ctx )
    _glthread_UNLOCK_MUTEX(OneTimeLock);
 }
 
+
 /**
  * Allocate and initialize a shared context state structure.
- *
- * \return pointer to a gl_shared_state structure on success, or NULL on
- * failure.
- *
  * Initializes the display list, texture objects and vertex programs hash
  * tables, allocates the texture objects. If it runs out of memory, frees
  * everything already allocated before returning NULL.
+ *
+ * \return pointer to a gl_shared_state structure on success, or NULL on
+ * failure.
  */
 static GLboolean
 alloc_shared_state( GLcontext *ctx )
@@ -1033,7 +1036,6 @@ _mesa_init_constants( GLcontext *ctx )
    ctx->Const.MinLineWidthAA = MIN_LINE_WIDTH;
    ctx->Const.MaxLineWidthAA = MAX_LINE_WIDTH;
    ctx->Const.LineWidthGranularity = (GLfloat) LINE_WIDTH_GRANULARITY;
-   ctx->Const.NumAuxBuffers = NUM_AUX_BUFFERS;
    ctx->Const.MaxColorTableSize = MAX_COLOR_TABLE_SIZE;
    ctx->Const.MaxConvolutionWidth = MAX_CONVOLUTION_WIDTH;
    ctx->Const.MaxConvolutionHeight = MAX_CONVOLUTION_HEIGHT;

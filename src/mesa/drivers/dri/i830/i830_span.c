@@ -267,10 +267,10 @@ static void i830SetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
                           GLuint bufferBit)
 {
    i830ContextPtr imesa = I830_CONTEXT(ctx);
-   if (bufferBit == FRONT_LEFT_BIT) {
+   if (bufferBit == DD_FRONT_LEFT_BIT) {
       imesa->drawMap = (char *)imesa->driScreen->pFB;
       imesa->readMap = (char *)imesa->driScreen->pFB;
-   } else if (bufferBit == BACK_LEFT_BIT) {
+   } else if (bufferBit == DD_BACK_LEFT_BIT) {
       imesa->drawMap = imesa->i830Screen->back.map;
       imesa->readMap = imesa->i830Screen->back.map;
    } else {

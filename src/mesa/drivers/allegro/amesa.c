@@ -117,10 +117,10 @@ static GLboolean set_buffer(GLcontext *ctx, GLframebuffer *buffer, GLuint bit)
     AMesaContext context = (AMesaContext)(ctx->DriverCtx);
     GLboolean    ok      = GL_TRUE;
 
-    if (bit == FRONT_LEFT_BIT)
+    if (bit == DD_FRONT_LEFT_BIT)
         context->Buffer->Active = context->Buffer->Screen;
 
-    else if (bit == BACK_LEFT)
+    else if (bit == DD_BACK_LEFT)
         {
         if (context->Buffer->Background)
             context->Buffer->Active = context->Buffer->Background;

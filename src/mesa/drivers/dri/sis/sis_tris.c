@@ -792,7 +792,7 @@ static void sisRenderStart( GLcontext *ctx )
     */
    sisCheckTexSizes( ctx );
 
-   if (ctx->Color._DrawDestMask == FRONT_LEFT_BIT && 
+   if (ctx->Color._DrawDestMask == DD_FRONT_LEFT_BIT && 
       smesa->driDrawable->numClipRects != 0)
    {
       multipass_cliprect(ctx, 0);
