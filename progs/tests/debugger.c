@@ -12,7 +12,35 @@
 #include <GL/glut.h>
 
 
+/*
+ * Print the string with line numbers
+ */
+static void list_program(const GLubyte *string, GLsizei len)
+{
+   const char *c = (const char *) string;
+   int i, line = 1, printNumber = 1;
 
+   for (i = 0; i < len; i++) {
+      if (printNumber) {
+         printf("%3d ", line);
+         printNumber = 0;
+      }
+      if (*c == '\n') {
+         line++;
+         printNumber = 1;
+      }
+      putchar(*c);
+      c++;
+   }
+   putchar('\n');
+}
+
+
+/*
+ * Return the line number and column number that corresponds to the
+ * given program position.  Also return a null-terminated copy of that
+ * line of the program string.
+ */
 static const GLubyte *
 find_line_column(const GLubyte *string, const GLubyte *pos,
                  GLint *line, GLint *col)
@@ -46,6 +74,241 @@ find_line_column(const GLubyte *string, const GLubyte *pos,
 }
 
 
+#define ARB_VERTEX_PROGRAM    1
+#define ARB_FRAGMENT_PROGRAM  2
+#define NV_VERTEX_PROGRAM     3
+#define NV_FRAGMENT_PROGRAM   4
+
+
+/*
+ * Interactive debugger
+ */
+static void Debugger2(GLenum target, GLvoid *data)
+{
+   static GLboolean continueFlag = GL_FALSE;
+   const GLubyte *ln;
+   GLint pos, line, column;
+   GLint id;
+   int progType;
+   GLint len;
+   GLubyte *program;
+
+   /* Sigh, GL_VERTEX_PROGRAM_ARB == GL_VERTEX_PROGRAM_NV so it's a bit
+    * hard to distinguish between them.
+    */
+   if (target == GL_FRAGMENT_PROGRAM_ARB)
+      progType = ARB_FRAGMENT_PROGRAM;
+   else if (target == GL_FRAGMENT_PROGRAM_NV)
+      progType = NV_FRAGMENT_PROGRAM;
+   else
+      progType = NV_VERTEX_PROGRAM;         
+
+
+   if (continueFlag)
+      return;
+
+   /* Get id of the program and current position */
+   switch (progType) {
+   case ARB_FRAGMENT_PROGRAM:
+      glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_BINDING_ARB, &id);
+      glGetIntegerv(GL_FRAGMENT_PROGRAM_POSITION_MESA, &pos);
+      break;
+   case NV_FRAGMENT_PROGRAM:
+      glGetIntegerv(GL_FRAGMENT_PROGRAM_BINDING_NV, &id);
+      glGetIntegerv(GL_FRAGMENT_PROGRAM_POSITION_MESA, &pos);
+      break;
+   case ARB_VERTEX_PROGRAM:
+      glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_BINDING_ARB, &id);
+      glGetIntegerv(GL_VERTEX_PROGRAM_POSITION_MESA, &pos);
+      break;
+   case NV_VERTEX_PROGRAM:
+      glGetIntegerv(GL_VERTEX_PROGRAM_BINDING_NV, &id);
+      glGetIntegerv(GL_VERTEX_PROGRAM_POSITION_MESA, &pos);
+      break;
+   default:
+      abort();
+   }
+
+   /* get program string */
+   if (progType == ARB_VERTEX_PROGRAM ||
+       progType == ARB_FRAGMENT_PROGRAM)
+      glGetProgramivARB(target, GL_PROGRAM_LENGTH_ARB, &len);
+   else
+      glGetProgramivNV(id, GL_PROGRAM_LENGTH_NV, &len);
+   program = malloc(len + 1);
+   if (progType == ARB_VERTEX_PROGRAM ||
+       progType == ARB_FRAGMENT_PROGRAM)
+      glGetProgramStringARB(target, GL_PROGRAM_STRING_ARB, program);
+   else
+      glGetProgramStringNV(id, GL_PROGRAM_STRING_NV, program);
+
+
+   /* Get current line number, column, line string */
+   ln = find_line_column(program, program + pos, &line, &column);
+
+   printf("%d: %s\n", line, ln);
+
+   /* get commands from stdin */
+   while (1) {
+      char command[1000], *cmd;
+
+      /* print prompt and get command */
+      printf("(%s %d) ", (target == GL_VERTEX_PROGRAM_ARB ? "vert" : "frag"),
+             line);
+      fgets(command, 999, stdin);
+
+      /* skip leading whitespace */
+      for (cmd = command; cmd[0] == ' '; cmd++)
+         ;
+
+      if (!cmd[0])
+         /* nothing (repeat the previous cmd?) */
+         continue;
+
+      switch (cmd[0]) {
+         case 's':
+         case 'n':
+            /* step / next */
+            return;
+         case 'c':
+            continueFlag = GL_TRUE;
+            return;
+         case 'd':
+            /* dump machine state */
+            if (progType == NV_FRAGMENT_PROGRAM) {
+               static const char *inRegs[] = {
+                  "f[WPOS]", "f[COL0]", "f[COL1]", "f[FOGC]",
+                  "f[TEX0]", "f[TEX1]", "f[TEX2]", "f[TEX3]",
+                  NULL
+               };
+               static const char *outRegs[] = {
+                  "o[COLR]", "o[COLH]", "o[DEPR]", NULL
+               };
+               GLfloat v[4];
+               int i;
+               printf("Fragment input attributes:\n");
+               for (i = 0; inRegs[i]; i++) {
+                  glGetProgramRegisterfvMESA(GL_FRAGMENT_PROGRAM_NV,
+                                             strlen(inRegs[i]),
+                                             (const GLubyte *) inRegs[i], v);
+                  printf("  %s: %g, %g, %g, %g\n", inRegs[i],
+                         v[0], v[1], v[2], v[3]);
+               }
+               printf("Fragment output attributes:\n");
+               for (i = 0; outRegs[i]; i++) {
+                  glGetProgramRegisterfvMESA(GL_FRAGMENT_PROGRAM_NV,
+                                             strlen(outRegs[i]),
+                                             (const GLubyte *) outRegs[i], v);
+                  printf("  %s: %g, %g, %g, %g\n", outRegs[i],
+                         v[0], v[1], v[2], v[3]);
+               }
+               printf("Temporaries:\n");
+               for (i = 0; i < 4; i++) {
+                  char temp[100];
+                  GLfloat v[4];
+                  sprintf(temp, "R%d", i);
+                  glGetProgramRegisterfvMESA(GL_FRAGMENT_PROGRAM_NV,
+                                             strlen(temp),
+                                             (const GLubyte *) temp, v);
+                  printf("  %s: %g, %g, %g, %g\n", temp, v[0],v[1],v[2],v[3]);
+               }
+            }
+            else if (progType == NV_VERTEX_PROGRAM) {
+               GLfloat v[4];
+               int i;
+               static const char *inRegs[] = {
+                  "v[OPOS]", "v[WGHT]", "v[NRML]", "v[COL0]",
+                  "v[COL1]", "v[FOGC]", "v[6]", "v[7]",
+                  "v[TEX0]", "v[TEX1]", "v[TEX2]", "v[TEX3]",
+                  "v[TEX4]", "v[TEX5]", "v[TEX6]", "v[TEX7]",
+                  NULL
+               };
+               static const char *outRegs[] = {
+                  "o[HPOS]", "o[COL0]", "o[COL1]", "o[BFC0]",
+                  "o[BFC1]", "o[FOGC]", "o[PSIZ]",
+                  "o[TEX0]", "o[TEX1]", "o[TEX2]", "o[TEX3]",
+                  "o[TEX4]", "o[TEX5]", "o[TEX6]", "o[TEX7]",
+                  NULL
+               };
+               printf("Vertex input attributes:\n");
+               for (i = 0; inRegs[i]; i++) {
+                  glGetProgramRegisterfvMESA(GL_VERTEX_PROGRAM_NV,
+                                             strlen(inRegs[i]),
+                                             (const GLubyte *) inRegs[i], v);
+                  printf("  %s: %g, %g, %g, %g\n", inRegs[i],
+                         v[0], v[1], v[2], v[3]);
+               }
+               printf("Vertex output attributes:\n");
+               for (i = 0; outRegs[i]; i++) {
+                  glGetProgramRegisterfvMESA(GL_VERTEX_PROGRAM_NV,
+                                             strlen(outRegs[i]),
+                                             (const GLubyte *) outRegs[i], v);
+                  printf("  %s: %g, %g, %g, %g\n", outRegs[i],
+                         v[0], v[1], v[2], v[3]);
+               }
+               printf("Temporaries:\n");
+               for (i = 0; i < 4; i++) {
+                  char temp[100];
+                  GLfloat v[4];
+                  sprintf(temp, "R%d", i);
+                  glGetProgramRegisterfvMESA(GL_VERTEX_PROGRAM_NV,
+                                             strlen(temp),
+                                             (const GLubyte *) temp, v);
+                  printf("  %s: %g, %g, %g, %g\n", temp, v[0],v[1],v[2],v[3]);
+               }
+            }
+            break;
+         case 'l':
+            /* list */
+            list_program(program, len);
+            break;
+         case 'p':
+            /* print */
+            {
+               GLfloat v[4];
+               char *c;
+               cmd++;
+               while (*cmd == ' ')
+                  cmd++;
+               c = cmd;
+               while (*c) {
+                  if (*c == '\n' || *c == '\r')
+                     *c = 0;
+                  else
+                     c++;
+               }
+               glGetProgramRegisterfvMESA(target, strlen(cmd),
+                                          (const GLubyte *) cmd, v);
+               if (glGetError() == GL_NO_ERROR)
+                  printf("%s = %g, %g, %g, %g\n", cmd, v[0], v[1], v[2], v[3]);
+               else
+                  printf("Invalid expression\n");
+            }
+            break;
+         case 'b':
+            /* break */
+            /* break at line number */
+            /* break at screen pixel (x,y) */
+            /* break if condition is true */
+            printf("Breakpoints not implemented yet.\n");
+            break;
+         case 'h':
+            /* help */
+            printf("Debugger commands:\n");
+            printf("  s  step         n  next       c continue\n");
+            printf("  d  dump regs    h  help       l list\n");
+            printf("  b  break        p  print\n");
+            break;
+         default:
+            printf("Unknown command: %c\n", cmd[0]);
+      }
+   }
+}
+
+
+/*
+ * Print current line, some registers, and continue.
+ */
 static void Debugger(GLenum target, GLvoid *data)
 {
    GLint pos;
@@ -226,7 +489,7 @@ static void SpecialKey( int key, int x, int y )
 }
 
 
-static void Init( void )
+static void Init( int argc, char *argv[] )
 {
    static const char *fragProgramText =
       "!!FP1.0\n"
@@ -324,9 +587,18 @@ static void Init( void )
    printf("Press p to toggle between per-pixel and per-vertex lighting\n");
 
 #ifdef GL_MESA_program_debug
-   glProgramCallbackMESA(GL_FRAGMENT_PROGRAM_ARB, Debugger,
-                         (GLvoid *) fragProgramText);
-   glEnable(GL_FRAGMENT_PROGRAM_CALLBACK_MESA);
+   if (argc > 1 && strcmp(argv[1], "fragment") == 0) {
+      printf(">> Debugging fragment program\n");
+      glProgramCallbackMESA(GL_FRAGMENT_PROGRAM_ARB, Debugger2,
+                            (GLvoid *) fragProgramText);
+      glEnable(GL_FRAGMENT_PROGRAM_CALLBACK_MESA);
+   }
+   else {
+      printf(">> Debugging vertex program\n");
+      glProgramCallbackMESA(GL_VERTEX_PROGRAM_ARB, Debugger2,
+                            (GLvoid *) fragProgramText);
+      glEnable(GL_VERTEX_PROGRAM_CALLBACK_MESA);
+   }
 #endif
 }
 
@@ -344,7 +616,7 @@ int main( int argc, char *argv[] )
    glutDisplayFunc( Display );
    if (Anim)
       glutIdleFunc(Idle);
-   Init();
+   Init(argc, argv);
    glutMainLoop();
    return 0;
 }
