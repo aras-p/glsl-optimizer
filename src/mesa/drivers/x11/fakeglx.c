@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.72 2002/10/29 23:53:22 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.73 2002/10/30 20:24:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -588,12 +588,8 @@ static XVisualInfo *get_env_visual(Display *dpy, int scr, const char *varname)
       }
    }
 
-   {
-      char s[1000];
-      sprintf(s, "Mesa: GLX unable to find visual class=%s, depth=%d.\n",
-              type, depth );
-      _mesa_warning(NULL, s);
-   }
+   _mesa_warning(NULL, "GLX unable to find visual class=%s, depth=%d.",
+                 type, depth);
 
    return NULL;
 }
@@ -1081,7 +1077,8 @@ static XMesaVisual choose_visual( Display *dpy, int screen, const int *list )
 
 	 default:
 	    /* undefined attribute */
-            printf("unexpected attrib 0x%x\n", *parselist);
+            _mesa_warning(NULL, "unexpected attrib 0x%x in choose_visual()",
+                          *parselist);
 	    return NULL;
       }
    }
@@ -1768,8 +1765,8 @@ static const char *
 Fake_glXQueryServerString( Display *dpy, int screen, int name )
 {
    static char version[1000];
-   sprintf(version, "%d.%d %s", SERVER_MAJOR_VERSION, SERVER_MINOR_VERSION,
-           MESA_GLX_VERSION);
+   _mesa_sprintf(version, "%d.%d %s",
+                 SERVER_MAJOR_VERSION, SERVER_MINOR_VERSION, MESA_GLX_VERSION);
 
    (void) dpy;
    (void) screen;
@@ -1793,8 +1790,8 @@ static const char *
 Fake_glXGetClientString( Display *dpy, int name )
 {
    static char version[1000];
-   sprintf(version, "%d.%d %s", CLIENT_MAJOR_VERSION, CLIENT_MINOR_VERSION,
-           MESA_GLX_VERSION);
+   _mesa_sprintf(version, "%d.%d %s", CLIENT_MAJOR_VERSION,
+                 CLIENT_MINOR_VERSION, MESA_GLX_VERSION);
 
    (void) dpy;
 

@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.49 2002/10/29 23:53:22 brianp Exp $ */
+/* $Id: xm_api.c,v 1.50 2002/10/30 20:24:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -158,18 +158,6 @@ static short hpcr_rgbTbl[3][256] = {
 /**********************************************************************/
 /*****                     X Utility Functions                    *****/
 /**********************************************************************/
-
-
-/*
- * X/Mesa error reporting function:
- */
-static void error( const char *msg )
-{
-   (void)DitherValues;		/* Muffle compiler */
-
-   if (_mesa_getenv("MESA_DEBUG"))
-      fprintf( stderr, "X/Mesa error: %s\n", msg );
-}
 
 
 /*
@@ -496,7 +484,7 @@ static GLboolean alloc_shm_back_buffer( XMesaBuffer b )
 				   ZPixmap, NULL, &b->shminfo,
 				   b->width, b->height );
    if (b->backimage == NULL) {
-      error("alloc_back_buffer: Shared memory error (XShmCreateImage), disabling.");
+      _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (XShmCreateImage), disabling.");
       b->shm = 0;
       return GL_FALSE;
    }
@@ -504,11 +492,10 @@ static GLboolean alloc_shm_back_buffer( XMesaBuffer b )
    b->shminfo.shmid = shmget( IPC_PRIVATE, b->backimage->bytes_per_line
 			     * b->backimage->height, IPC_CREAT|0777 );
    if (b->shminfo.shmid < 0) {
-      if (_mesa_getenv("MESA_DEBUG"))
-          perror("alloc_back_buffer");
+      _mesa_warning(NULL, "shmget failed while allocating back buffer");
       XDestroyImage( b->backimage );
       b->backimage = NULL;
-      error("alloc_back_buffer: Shared memory error (shmget), disabling.");
+      _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (shmget), disabling.");
       b->shm = 0;
       return GL_FALSE;
    }
@@ -516,12 +503,11 @@ static GLboolean alloc_shm_back_buffer( XMesaBuffer b )
    b->shminfo.shmaddr = b->backimage->data
                       = (char*)shmat( b->shminfo.shmid, 0, 0 );
    if (b->shminfo.shmaddr == (char *) -1) {
-      if (_mesa_getenv("MESA_DEBUG"))
-          perror("alloc_back_buffer");
+      _mesa_warning(NULL, "shmat() failed while allocating back buffer");
       XDestroyImage( b->backimage );
       shmctl( b->shminfo.shmid, IPC_RMID, 0 );
       b->backimage = NULL;
-      error("alloc_back_buffer: Shared memory error (shmat), disabling.");
+      _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (shmat), disabling.");
       b->shm = 0;
       return GL_FALSE;
    }
@@ -634,12 +620,12 @@ void xmesa_alloc_back_buffer( XMesaBuffer b )
 				      8, 0 );  /* pad, bytes_per_line */
 #endif
 	 if (!b->backimage) {
-	    error("alloc_back_buffer: XCreateImage failed.");
+	    _mesa_warning(NULL, "alloc_back_buffer: XCreateImage failed.");
 	 }
          b->backimage->data = (char *) MALLOC( b->backimage->height
                                              * b->backimage->bytes_per_line );
          if (!b->backimage->data) {
-            error("alloc_back_buffer: MALLOC failed.");
+            _mesa_warning(NULL, "alloc_back_buffer: MALLOC failed.");
             XMesaDestroyImage( b->backimage );
             b->backimage = NULL;
          }
@@ -873,7 +859,7 @@ static GLboolean setup_grayscale( int client, XMesaVisual v,
          }
 
          if (colorsfailed && _mesa_getenv("MESA_DEBUG")) {
-            fprintf( stderr,
+            _mesa_warning(NULL,
                   "Note: %d out of 256 needed colors do not match exactly.\n",
                   colorsfailed );
          }
@@ -953,7 +939,7 @@ static GLboolean setup_dithered_color( int client, XMesaVisual v,
          }
 
          if (colorsfailed && _mesa_getenv("MESA_DEBUG")) {
-            fprintf( stderr,
+            _mesa_warning(NULL,
                   "Note: %d out of %d needed colors do not match exactly.\n",
                   colorsfailed, _R*_G*_B );
          }
@@ -1237,7 +1223,7 @@ static GLboolean initialize_visual_and_buffer( int client,
          }
       }
       else {
-	 error("XMesa: RGB mode rendering not supported in given visual.");
+	 _mesa_warning(NULL, "XMesa: RGB mode rendering not supported in given visual.");
 	 return GL_FALSE;
       }
       v->index_bits = 0;
@@ -1254,12 +1240,12 @@ static GLboolean initialize_visual_and_buffer( int client,
     * reports bugs.
     */
    if (_mesa_getenv("MESA_INFO")) {
-      fprintf(stderr, "X/Mesa visual = %p\n", (void *) v);
-      fprintf(stderr, "X/Mesa dithered pf = %u\n", v->dithered_pf);
-      fprintf(stderr, "X/Mesa undithered pf = %u\n", v->undithered_pf);
-      fprintf(stderr, "X/Mesa level = %d\n", v->level);
-      fprintf(stderr, "X/Mesa depth = %d\n", GET_VISUAL_DEPTH(v));
-      fprintf(stderr, "X/Mesa bits per pixel = %d\n", v->BitsPerPixel);
+      _mesa_printf("X/Mesa visual = %p\n", (void *) v);
+      _mesa_printf("X/Mesa dithered pf = %u\n", v->dithered_pf);
+      _mesa_printf("X/Mesa undithered pf = %u\n", v->undithered_pf);
+      _mesa_printf("X/Mesa level = %d\n", v->level);
+      _mesa_printf("X/Mesa depth = %d\n", GET_VISUAL_DEPTH(v));
+      _mesa_printf("X/Mesa bits per pixel = %d\n", v->BitsPerPixel);
    }
 
    if (b && window) {
@@ -1732,9 +1718,7 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
 
    if (GET_VISUAL_DEPTH(v) != attr.depth) {
 #endif
-      if (_mesa_getenv("MESA_DEBUG")) {
-         fprintf(stderr, "XMesaCreateWindowBuffer: depth mismatch between visual and window!\n");
-      }
+      _mesa_warning(NULL, "XMesaCreateWindowBuffer: depth mismatch between visual and window!\n");
       return NULL;
    }
 
@@ -1748,9 +1732,7 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
       b->cmap = attr.colormap;
    }
    else {
-      if (_mesa_getenv("MESA_DEBUG")) {
-         fprintf(stderr, "Window %u has no colormap!\n", (unsigned int) w);
-      }
+      _mesa_warning(NULL, "Window %u has no colormap!\n", (unsigned int) w);
       /* this is weird, a window w/out a colormap!? */
       /* OK, let's just allocate a new one and hope for the best */
       b->cmap = XCreateColormap(v->display, w, attr.visual, AllocNone);
@@ -1843,10 +1825,10 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
      }
    }
    else {
-      fprintf(stderr,"WARNING: This Mesa Library includes the Glide driver but\n");
-      fprintf(stderr,"         you have not defined the MESA_GLX_FX env. var.\n");
-      fprintf(stderr,"         (check the README.3DFX file for more information).\n\n");
-      fprintf(stderr,"         you can disable this message with a 'export MESA_GLX_FX=disable'.\n");
+      _mesa_warning(NULL, "WARNING: This Mesa Library includes the Glide driver but\n");
+      _mesa_warning(NULL, "         you have not defined the MESA_GLX_FX env. var.\n");
+      _mesa_warning(NULL, "         (check the README.3DFX file for more information).\n\n");
+      _mesa_warning(NULL, "         you can disable this message with a 'export MESA_GLX_FX=disable'.\n");
    }
 #endif
 

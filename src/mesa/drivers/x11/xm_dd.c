@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.40 2002/10/24 23:57:23 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.41 2002/10/30 20:24:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -158,8 +158,7 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
       }
    }
    else {
-      _mesa_problem(ctx, "invalid buffer in set_buffer() in xm_dd.c");
-      printf("bufferBit = 0x%x\n", bufferBit);
+      _mesa_problem(ctx, "invalid buffer 0x%x in set_buffer() in xm_dd.c");
       return;
    }
    xmesa_update_span_funcs(ctx);

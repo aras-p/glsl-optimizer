@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.28 2002/10/24 23:57:23 brianp Exp $ */
+/* $Id: xm_tri.c,v 1.29 2002/10/30 20:24:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1406,89 +1406,89 @@ static void flat_LOOKUP8_triangle( GLcontext *ctx,
 extern void _xmesa_print_triangle_func( swrast_tri_func triFunc );
 void _xmesa_print_triangle_func( swrast_tri_func triFunc )
 {
-   printf("XMesa tri func = ");
+   _mesa_printf("XMesa tri func = ");
    if (triFunc ==smooth_TRUECOLOR_z_triangle)
-      printf("smooth_TRUECOLOR_z_triangle\n");
+      _mesa_printf("smooth_TRUECOLOR_z_triangle\n");
    else if (triFunc ==smooth_8A8B8G8R_z_triangle)
-      printf("smooth_8A8B8G8R_z_triangle\n");
+      _mesa_printf("smooth_8A8B8G8R_z_triangle\n");
    else if (triFunc ==smooth_8R8G8B_z_triangle)
-      printf("smooth_8R8G8B_z_triangle\n");
+      _mesa_printf("smooth_8R8G8B_z_triangle\n");
    else if (triFunc ==smooth_8R8G8B24_z_triangle)
-      printf("smooth_8R8G8B24_z_triangle\n");
+      _mesa_printf("smooth_8R8G8B24_z_triangle\n");
    else if (triFunc ==smooth_TRUEDITHER_z_triangle)
-      printf("smooth_TRUEDITHER_z_triangle\n");
+      _mesa_printf("smooth_TRUEDITHER_z_triangle\n");
    else if (triFunc ==smooth_5R6G5B_z_triangle)
-      printf("smooth_5R6G5B_z_triangle\n");
+      _mesa_printf("smooth_5R6G5B_z_triangle\n");
    else if (triFunc ==smooth_DITHER_5R6G5B_z_triangle)
-      printf("smooth_DITHER_5R6G5B_z_triangle\n");
+      _mesa_printf("smooth_DITHER_5R6G5B_z_triangle\n");
    else if (triFunc ==smooth_HPCR_z_triangle)
-      printf("smooth_HPCR_z_triangle\n");
+      _mesa_printf("smooth_HPCR_z_triangle\n");
    else if (triFunc ==smooth_DITHER8_z_triangle)
-      printf("smooth_DITHER8_z_triangle\n");
+      _mesa_printf("smooth_DITHER8_z_triangle\n");
    else if (triFunc ==smooth_LOOKUP8_z_triangle)
-      printf("smooth_LOOKUP8_z_triangle\n");
+      _mesa_printf("smooth_LOOKUP8_z_triangle\n");
    else if (triFunc ==flat_TRUECOLOR_z_triangle)
-      printf("flat_TRUECOLOR_z_triangle\n");
+      _mesa_printf("flat_TRUECOLOR_z_triangle\n");
    else if (triFunc ==flat_8A8B8G8R_z_triangle)
-      printf("flat_8A8B8G8R_z_triangle\n");
+      _mesa_printf("flat_8A8B8G8R_z_triangle\n");
    else if (triFunc ==flat_8R8G8B_z_triangle)
-      printf("flat_8R8G8B_z_triangle\n");
+      _mesa_printf("flat_8R8G8B_z_triangle\n");
    else if (triFunc ==flat_8R8G8B24_z_triangle)
-      printf("flat_8R8G8B24_z_triangle\n");
+      _mesa_printf("flat_8R8G8B24_z_triangle\n");
    else if (triFunc ==flat_TRUEDITHER_z_triangle)
-      printf("flat_TRUEDITHER_z_triangle\n");
+      _mesa_printf("flat_TRUEDITHER_z_triangle\n");
    else if (triFunc ==flat_5R6G5B_z_triangle)
-      printf("flat_5R6G5B_z_triangle\n");
+      _mesa_printf("flat_5R6G5B_z_triangle\n");
    else if (triFunc ==flat_DITHER_5R6G5B_z_triangle)
-      printf("flat_DITHER_5R6G5B_z_triangle\n");
+      _mesa_printf("flat_DITHER_5R6G5B_z_triangle\n");
    else if (triFunc ==flat_HPCR_z_triangle)
-      printf("flat_HPCR_z_triangle\n");
+      _mesa_printf("flat_HPCR_z_triangle\n");
    else if (triFunc ==flat_DITHER8_z_triangle)
-      printf("flat_DITHER8_z_triangle\n");
+      _mesa_printf("flat_DITHER8_z_triangle\n");
    else if (triFunc ==flat_LOOKUP8_z_triangle)
-      printf("flat_LOOKUP8_z_triangle\n");
+      _mesa_printf("flat_LOOKUP8_z_triangle\n");
    else if (triFunc ==smooth_TRUECOLOR_triangle)
-      printf("smooth_TRUECOLOR_triangle\n");
+      _mesa_printf("smooth_TRUECOLOR_triangle\n");
    else if (triFunc ==smooth_8A8B8G8R_triangle)
-      printf("smooth_8A8B8G8R_triangle\n");
+      _mesa_printf("smooth_8A8B8G8R_triangle\n");
    else if (triFunc ==smooth_8R8G8B_triangle)
-      printf("smooth_8R8G8B_triangle\n");
+      _mesa_printf("smooth_8R8G8B_triangle\n");
    else if (triFunc ==smooth_8R8G8B24_triangle)
-      printf("smooth_8R8G8B24_triangle\n");
+      _mesa_printf("smooth_8R8G8B24_triangle\n");
    else if (triFunc ==smooth_TRUEDITHER_triangle)
-      printf("smooth_TRUEDITHER_triangle\n");
+      _mesa_printf("smooth_TRUEDITHER_triangle\n");
    else if (triFunc ==smooth_5R6G5B_triangle)
-      printf("smooth_5R6G5B_triangle\n");
+      _mesa_printf("smooth_5R6G5B_triangle\n");
    else if (triFunc ==smooth_DITHER_5R6G5B_triangle)
-      printf("smooth_DITHER_5R6G5B_triangle\n");
+      _mesa_printf("smooth_DITHER_5R6G5B_triangle\n");
    else if (triFunc ==smooth_HPCR_triangle)
-      printf("smooth_HPCR_triangle\n");
+      _mesa_printf("smooth_HPCR_triangle\n");
    else if (triFunc ==smooth_DITHER8_triangle)
-      printf("smooth_DITHER8_triangle\n");
+      _mesa_printf("smooth_DITHER8_triangle\n");
    else if (triFunc ==smooth_LOOKUP8_triangle)
-      printf("smooth_LOOKUP8_triangle\n");
+      _mesa_printf("smooth_LOOKUP8_triangle\n");
    else if (triFunc ==flat_TRUECOLOR_triangle)
-      printf("flat_TRUECOLOR_triangle\n");
+      _mesa_printf("flat_TRUECOLOR_triangle\n");
    else if (triFunc ==flat_TRUEDITHER_triangle)
-      printf("flat_TRUEDITHER_triangle\n");
+      _mesa_printf("flat_TRUEDITHER_triangle\n");
    else if (triFunc ==flat_8A8B8G8R_triangle)
-      printf("flat_8A8B8G8R_triangle\n");
+      _mesa_printf("flat_8A8B8G8R_triangle\n");
    else if (triFunc ==flat_8R8G8B_triangle)
-      printf("flat_8R8G8B_triangle\n");
+      _mesa_printf("flat_8R8G8B_triangle\n");
    else if (triFunc ==flat_8R8G8B24_triangle)
-      printf("flat_8R8G8B24_triangle\n");
+      _mesa_printf("flat_8R8G8B24_triangle\n");
    else if (triFunc ==flat_5R6G5B_triangle)
-      printf("flat_5R6G5B_triangle\n");
+      _mesa_printf("flat_5R6G5B_triangle\n");
    else if (triFunc ==flat_DITHER_5R6G5B_triangle)
-      printf("flat_DITHER_5R6G5B_triangle\n");
+      _mesa_printf("flat_DITHER_5R6G5B_triangle\n");
    else if (triFunc ==flat_HPCR_triangle)
-      printf("flat_HPCR_triangle\n");
+      _mesa_printf("flat_HPCR_triangle\n");
    else if (triFunc ==flat_DITHER8_triangle)
-      printf("flat_DITHER8_triangle\n");
+      _mesa_printf("flat_DITHER8_triangle\n");
    else if (triFunc ==flat_LOOKUP8_triangle)
-      printf("flat_LOOKUP8_triangle\n");
+      _mesa_printf("flat_LOOKUP8_triangle\n");
    else
-      printf("???\n");
+      _mesa_printf("???\n");
 }
 #endif
 
