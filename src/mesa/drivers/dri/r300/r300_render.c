@@ -58,62 +58,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_maos.h"
 #include "r300_emit.h"
 
-/* Turns out we might not need this after all... */
-void update_zbias(GLcontext * ctx, int prim)
-{
-    r300ContextPtr rmesa = R300_CONTEXT(ctx);
-    int enabled = 0;
-    uint32_t values[4];
-    //return ;
-    switch(prim & PRIM_MODE_MASK) {
-	case GL_POINTS:
-		if(ctx->Polygon.OffsetPoint == GL_TRUE)
-			enabled=1;
-      		break;
-	case GL_LINES:
-	case GL_LINE_STRIP:
-	case GL_LINE_LOOP:
-		if(ctx->Polygon.OffsetLine == GL_TRUE)
-			enabled=1;
-      		break;
-    	case GL_TRIANGLES:
-   	case GL_TRIANGLE_STRIP:
-   	case GL_TRIANGLE_FAN:
-	case GL_QUADS:
-	case GL_QUAD_STRIP:
-	case GL_POLYGON:
-		if(ctx->Polygon.OffsetFill == GL_TRUE)
-			enabled=1;
-		break;
-   	default:
- 		fprintf(stderr, "%s:%s Do not know how to handle primitive %02x - help me !\n",
-			__FILE__, __FUNCTION__,
-			prim & PRIM_MODE_MASK);
-
-    }
-
-    if(enabled){
-	    values[0]=values[2]=r300PackFloat32(ctx->Polygon.OffsetFactor * 12.0);
-	    values[1]=values[3]=r300PackFloat32(ctx->Polygon.OffsetUnits * 4.0);
-    }else{
-	    values[0]=values[2]=r300PackFloat32(0.0);
-	    values[1]=values[3]=r300PackFloat32(0.0);
-    }
-
-    if(values[0] != rmesa->hw.zbs.cmd[R300_ZBS_T_FACTOR] ||
-       values[1] != rmesa->hw.zbs.cmd[R300_ZBS_T_CONSTANT] ||
-       values[2] != rmesa->hw.zbs.cmd[R300_ZBS_W_FACTOR] ||
-       values[3] != rmesa->hw.zbs.cmd[R300_ZBS_W_CONSTANT]){
-
-              R300_STATECHANGE(rmesa, zbs);
-              rmesa->hw.zbs.cmd[R300_ZBS_T_FACTOR] = values[0];
-              rmesa->hw.zbs.cmd[R300_ZBS_T_CONSTANT] = values[1];
-              rmesa->hw.zbs.cmd[R300_ZBS_W_FACTOR] = values[2];
-              rmesa->hw.zbs.cmd[R300_ZBS_W_CONSTANT] = values[3];
-
-    }
-}
-
 /**********************************************************************
 *                     Hardware rasterization
 *

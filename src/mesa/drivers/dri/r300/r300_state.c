@@ -1796,8 +1796,53 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 	r300ResetHwState(r300);
 }
 
-void update_zbias(GLcontext * ctx, int prim);
-
+/* Checks that r300ResetHwState actually modifies all states.
+   Should probably be burried in somewhere else as this file is getting longish. */
+void verify_r300ResetHwState(r300ContextPtr r300, int stage)
+{
+	struct r300_state_atom* atom;
+	int i;
+	drm_r300_cmd_header_t cmd;
+	
+	if(stage){ /* mess around with states */
+		unsigned long fp1, cb1;
+	
+		fp1=r300->hw.fp.cmd[R300_FP_CMD_1]; /* some special cases... */
+		cb1=r300->hw.cb.cmd[R300_CB_CMD_1];
+	
+		fprintf(stderr, "verify begin:\n");
+	
+		foreach(atom, &r300->hw.atomlist) {
+			for(i=1; i < (*atom->check)(r300, atom); i++)
+				atom->cmd[i]=0xdeadbeef;
+		}	
+		r300->hw.fp.cmd[R300_FP_CMD_1]=fp1;
+		r300->hw.cb.cmd[R300_CB_CMD_1]=cb1;
+			
+		foreach(atom, &r300->hw.atomlist) {
+			cmd.u=atom->cmd[0];
+			switch(cmd.header.cmd_type){
+			case R300_CMD_UNCHECKED_STATE:
+			case R300_CMD_VPU:
+			case R300_CMD_PACKET3:
+			case R300_CMD_END3D:
+			case R300_CMD_CP_DELAY:
+			case R300_CMD_DMA_DISCARD:
+				break;
+			default: fprintf(stderr, "unknown cmd_type %d in atom %s\n",
+					cmd.header.cmd_type, atom->name);
+			}
+		
+		}	
+	} else { /* check that they were set */
+		foreach(atom, &r300->hw.atomlist) {
+			for(i=1; i < (*atom->check)(r300, atom); i++)
+				if(atom->cmd[i]==0xdeadbeef)
+					fprintf(stderr, "atom %s is untouched\n", atom->name);
+		}	
+	}
+}
+		
 /**
  * Completely recalculates hardware state based on the Mesa state.
  */
@@ -1809,6 +1854,8 @@ void r300ResetHwState(r300ContextPtr r300)
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
+	//verify_r300ResetHwState(r300, 1);
+			
 		/* This is a place to initialize registers which
 		   have bitfields accessed by different functions
 		   and not all bits are used */
@@ -1958,9 +2005,6 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300PolygonMode(ctx, GL_FRONT, ctx->Polygon.FrontMode);
 	r300PolygonMode(ctx, GL_BACK, ctx->Polygon.BackMode);
-#if 0
-	r300->hw.unk4288.cmd[1] = 0x00000000;
-#endif
 	r300->hw.unk4288.cmd[2] = 0x00000001;
 	r300->hw.unk4288.cmd[3] = 0x00000000;
 	r300->hw.unk4288.cmd[4] = 0x00000000;
@@ -1968,10 +2012,11 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk42A0.cmd[1] = 0x00000000;
 
-	update_zbias(ctx, GL_TRIANGLES);/* FIXME */
-#if 0
-	r300->hw.unk42B4.cmd[1] = 0x00000000;
-#endif
+	r300PolygonOffset(ctx, ctx->Polygon.OffsetFactor, ctx->Polygon.OffsetUnits);
+	r300Enable(ctx, GL_POLYGON_OFFSET_POINT, ctx->Polygon.OffsetPoint);
+	r300Enable(ctx, GL_POLYGON_OFFSET_LINE, ctx->Polygon.OffsetLine);
+	r300Enable(ctx, GL_POLYGON_OFFSET_FILL, ctx->Polygon.OffsetFill);
+	
 	r300->hw.unk42C0.cmd[1] = 0x4B7FFFFF;
 	r300->hw.unk42C0.cmd[2] = 0x00000000;
 
@@ -2029,18 +2074,25 @@ void r300ResetHwState(r300ContextPtr r300)
 #endif
 
 	r300BlendColor(ctx, ctx->Color.BlendColor);
-#if 0
-	r300->hw.unk4E10.cmd[1] = 0;
-#endif
 	r300->hw.unk4E10.cmd[2] = 0;
 	r300->hw.unk4E10.cmd[3] = 0;
-
-	r300->hw.cb.cmd[R300_CB_OFFSET] =
-		r300->radeon.radeonScreen->backOffset +
-		r300->radeon.radeonScreen->fbLocation;
-	r300->hw.cb.cmd[R300_CB_PITCH] = r300->radeon.radeonScreen->backPitch
-		| R300_COLOR_UNKNOWN_22_23;
-
+	
+	/* Again, r300ClearBuffer uses this */
+	if(ctx->Visual.doubleBufferMode){
+		r300->hw.cb.cmd[R300_CB_OFFSET] =
+			r300->radeon.radeonScreen->backOffset +
+			r300->radeon.radeonScreen->fbLocation;
+		r300->hw.cb.cmd[R300_CB_PITCH] = r300->radeon.radeonScreen->backPitch
+			| R300_COLOR_UNKNOWN_22_23;
+	} else {
+		r300->hw.cb.cmd[R300_CB_OFFSET] =
+			r300->radeon.radeonScreen->frontOffset +
+			r300->radeon.radeonScreen->fbLocation;
+		r300->hw.cb.cmd[R300_CB_PITCH] = r300->radeon.radeonScreen->frontPitch
+			| R300_COLOR_UNKNOWN_22_23;
+		
+	}
+	
 	r300->hw.unk4E50.cmd[1] = 0;
 	r300->hw.unk4E50.cmd[2] = 0;
 	r300->hw.unk4E50.cmd[3] = 0;
@@ -2099,6 +2151,7 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.vps.cmd[R300_VPS_ZERO_3] = 0;
 
 //END: TODO
+	//verify_r300ResetHwState(r300, 0);
 
 	r300->hw.all_dirty = GL_TRUE;
 }
@@ -2139,7 +2192,7 @@ void r300InitState(r300ContextPtr r300)
 					 ctx->Visual.depthBits == 24);
 
 	memset(&(r300->state.texture), 0, sizeof(r300->state.texture));
-
+	
 	r300ResetHwState(r300);
 }
 
