@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.16 2001/03/08 15:23:46 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.17 2001/03/08 17:33:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -66,6 +66,7 @@ GLboolean _mesa_cull_triangle( GLcontext *ctx,
 }
 
 
+
 /*
  * Render a flat-shaded color index triangle.
  */
@@ -75,6 +76,7 @@ static void flat_ci_triangle( GLcontext *ctx,
 			      const SWvertex *v2 )
 {
 #define INTERP_Z 1
+#define INTERP_FOG 1
 
 #define INNER_LOOP( LEFT, RIGHT, Y )				\
 	{							\
@@ -108,6 +110,7 @@ static void smooth_ci_triangle( GLcontext *ctx,
 				const SWvertex *v2 )
 {
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_INDEX 1
 
 #define INNER_LOOP( LEFT, RIGHT, Y )				\
@@ -145,6 +148,7 @@ static void flat_rgba_triangle( GLcontext *ctx,
 				const SWvertex *v2 )
 {
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 
 #define INNER_LOOP( LEFT, RIGHT, Y )				\
@@ -184,6 +188,7 @@ static void smooth_rgba_triangle( GLcontext *ctx,
 {
 
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
@@ -293,6 +298,7 @@ static void simple_z_textured_triangle( GLcontext *ctx,
 					const SWvertex *v2 )
 {
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_INT_TEX 1
 #define S_SCALE twidth
@@ -360,6 +366,7 @@ static void affine_textured_triangle( GLcontext *ctx,
 				      const SWvertex *v2 )
 {
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
@@ -689,6 +696,7 @@ static void near_persp_textured_triangle(GLcontext *ctx,
 #define BIAS 4096.0F
 
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
@@ -1420,6 +1428,7 @@ static void lin_persp_textured_triangle( GLcontext *ctx,
 					 const SWvertex *v2 )
 {
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
@@ -1595,6 +1604,7 @@ static void general_textured_triangle( GLcontext *ctx,
 				       const SWvertex *v2 )
 {
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
@@ -1689,6 +1699,7 @@ static void general_textured_spec_triangle1( GLcontext *ctx,
                                              GLchan spec[MAX_WIDTH][4] )
 {
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define INTERP_SPEC 1
@@ -1793,6 +1804,7 @@ static void lambda_textured_triangle1( GLcontext *ctx,
                                        GLfloat u[MAX_WIDTH] )
 {
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
@@ -1896,6 +1908,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
                                             GLfloat u[MAX_WIDTH] )
 {
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define INTERP_SPEC 1
@@ -2012,6 +2025,7 @@ lambda_multitextured_triangle1( GLcontext *ctx,
 				GLfloat u[MAX_TEXTURE_UNITS][MAX_WIDTH])
 {
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
@@ -2185,6 +2199,7 @@ static void occlusion_zless_triangle( GLcontext *ctx,
 
 #define DO_OCCLUSION_TEST
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INNER_LOOP( LEFT, RIGHT, Y )		\
    {						\

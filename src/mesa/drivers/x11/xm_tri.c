@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.18 2001/02/06 04:06:36 keithw Exp $ */
+/* $Id: xm_tri.c,v 1.19 2001/03/08 17:33:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -70,7 +70,6 @@ static void smooth_TRUECOLOR_z_triangle( GLcontext *ctx,
 {									\
    GLint i, xx = LEFT, yy = FLIP(xmesa->xm_buffer, Y);			\
    GLint len = RIGHT-LEFT;						\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++,xx++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -106,7 +105,6 @@ static void smooth_8A8B8G8R_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
 {									\
    GLint i, len = RIGHT-LEFT;						\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -140,7 +138,6 @@ static void smooth_8R8G8B_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
 {									\
    GLint i, len = RIGHT-LEFT;						\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -174,7 +171,6 @@ static void smooth_8R8G8B24_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
 {									\
    GLint i, len = RIGHT-LEFT;						\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -208,7 +204,6 @@ static void smooth_TRUEDITHER_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
 {									\
    GLint i, xx = LEFT, yy = FLIP(xmesa->xm_buffer,Y), len = RIGHT-LEFT;	\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++,xx++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -244,7 +239,6 @@ static void smooth_5R6G5B_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
 {									\
    GLint i, len = RIGHT-LEFT;						\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++) {						\
       DEPTH_TYPE z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -279,7 +273,6 @@ static void smooth_DITHER_5R6G5B_z_triangle( GLcontext *ctx,
 {									\
    GLint i, len = RIGHT-LEFT;						\
    GLint yy = FLIP(xmesa->xm_buffer, Y);				\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -314,7 +307,6 @@ static void smooth_DITHER8_z_triangle( GLcontext *ctx,
 {									\
    GLint i, xx = LEFT, yy = FLIP(xmesa->xm_buffer,Y), len = RIGHT-LEFT;	\
    XDITHER_SETUP(yy);							\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++,xx++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -350,7 +342,6 @@ static void smooth_DITHER_z_triangle( GLcontext *ctx,
 {									\
    GLint i, xx = LEFT, yy = FLIP(xmesa->xm_buffer,Y), len = RIGHT-LEFT;	\
    XDITHER_SETUP(yy);							\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++,xx++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -386,7 +377,6 @@ static void smooth_LOOKUP8_z_triangle( GLcontext *ctx,
 {									\
    GLint i, len = RIGHT-LEFT;						\
    LOOKUP_SETUP;							\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -421,7 +411,6 @@ static void smooth_HPCR_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
 {									\
    GLint i, xx = LEFT, yy = FLIP(xmesa->xm_buffer,Y), len = RIGHT-LEFT;	\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++,xx++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -456,7 +445,6 @@ static void flat_TRUECOLOR_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
 {									\
    GLint i, xx = LEFT, yy = FLIP(xmesa->xm_buffer,Y), len = RIGHT-LEFT;	\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++,xx++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -490,7 +478,6 @@ static void flat_8A8B8G8R_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
 {									\
    GLint i, len = RIGHT-LEFT;						\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -524,7 +511,6 @@ static void flat_8R8G8B_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )			\
 {							\
    GLint i, len = RIGHT-LEFT;				\
-   (void) fffog; 					\
    for (i=0;i<len;i++) {				\
       GLdepth z = FixedToDepth(ffz);			\
       if (z < zRow[i]) {				\
@@ -556,7 +542,6 @@ static void flat_8R8G8B24_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )			\
 {							\
    GLint i, len = RIGHT-LEFT;				\
-   (void) fffog; 					\
    for (i=0;i<len;i++) {				\
       GLdepth z = FixedToDepth(ffz);			\
       if (z < zRow[i]) {				\
@@ -588,7 +573,6 @@ static void flat_TRUEDITHER_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
 {									\
    GLint i, xx = LEFT, yy = FLIP(xmesa->xm_buffer,Y), len = RIGHT-LEFT;	\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++,xx++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -625,7 +609,6 @@ static void flat_5R6G5B_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )			\
 {							\
    GLint i, len = RIGHT-LEFT;				\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++) {				\
       DEPTH_TYPE z = FixedToDepth(ffz);			\
       if (z < zRow[i]) {				\
@@ -658,7 +641,6 @@ static void flat_DITHER_5R6G5B_z_triangle( GLcontext *ctx,
 {								\
    GLint i, len = RIGHT-LEFT;					\
    GLint yy = FLIP(xmesa->xm_buffer, Y);			\
-   (void) fffog; 					        \
    for (i=0;i<len;i++) {					\
       DEPTH_TYPE z = FixedToDepth(ffz);				\
       if (z < zRow[i]) {					\
@@ -694,7 +676,6 @@ static void flat_DITHER8_z_triangle( GLcontext *ctx,
 {									\
    GLint i, xx = LEFT, yy = FLIP(xmesa->xm_buffer,Y), len = RIGHT-LEFT;	\
    FLAT_DITHER_ROW_SETUP(FLIP(xmesa->xm_buffer, yy));			\
-   (void) fffog;							\
    for (i=0;i<len;i++,xx++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -727,7 +708,6 @@ static void flat_DITHER_z_triangle( GLcontext *ctx,
 {									\
    GLint i, xx = LEFT, yy = FLIP(xmesa->xm_buffer,Y), len = RIGHT-LEFT;	\
    FLAT_DITHER_ROW_SETUP(yy);						\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++,xx++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -763,7 +743,6 @@ static void flat_HPCR_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
 {									\
    GLint i, xx = LEFT, yy = FLIP(xmesa->xm_buffer,Y), len = RIGHT-LEFT;	\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++,xx++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
@@ -800,7 +779,6 @@ static void flat_LOOKUP8_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )			\
 {							\
    GLint i, len = RIGHT-LEFT;				\
-   (void) fffog; 					        	\
    for (i=0;i<len;i++) {				\
       GLdepth z = FixedToDepth(ffz);			\
       if (z < zRow[i]) {				\

@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.49 2001/03/08 15:23:46 brianp Exp $ */
+/* $Id: osmesa.c,v 1.50 2001/03/08 17:33:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1596,7 +1596,6 @@ static void smooth_rgba_z_triangle( GLcontext *ctx,
 {								\
    GLint i, len = RIGHT-LEFT;					\
    GLchan *img = PIXELADDR4(LEFT, Y); 				\
-   (void) fffog;                        			\
    for (i = 0; i < len; i++, img += 4) {			\
       GLdepth z = FixedToDepth(ffz);				\
       if (z < zRow[i]) {					\
@@ -1638,7 +1637,6 @@ static void flat_rgba_z_triangle( GLcontext *ctx,
 {							\
    GLint i, len = RIGHT-LEFT;				\
    GLuint *img = (GLuint *) PIXELADDR4(LEFT, Y);   	\
-   (void) fffog;                        		\
    for (i=0;i<len;i++) {				\
       GLdepth z = FixedToDepth(ffz);			\
       if (z < zRow[i]) {				\

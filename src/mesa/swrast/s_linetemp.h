@@ -1,4 +1,4 @@
-/* $Id: s_linetemp.h,v 1.5 2001/02/07 18:36:52 brianp Exp $ */
+/* $Id: s_linetemp.h,v 1.6 2001/03/08 17:33:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,8 @@
  *
  * The following macros may be defined to indicate what auxillary information
  * must be interplated along the line:
- *    INTERP_Z        - if defined, interpolate Z and FOG values
+ *    INTERP_Z        - if defined, interpolate Z values
+ *    INTERP_FOG      - if defined, interpolate FOG values
  *    INTERP_RGB      - if defined, interpolate RGB values
  *    INTERP_SPEC     - if defined, interpolate specular RGB values
  *    INTERP_ALPHA    - if defined, interpolate Alpha values
@@ -92,6 +93,8 @@
    GLint zPtrXstep, zPtrYstep;
    DEPTH_TYPE *zPtr;
 #  endif
+#endif
+#ifdef INTERP_FOG
    GLfixed fog0 = FloatToFixed(vert0->fog);
    GLfixed dfog = FloatToFixed(vert1->fog) - fog0;   
 #endif
@@ -293,6 +296,8 @@
       GLint errorDec = error-dx;
 #ifdef INTERP_Z
       dz = (z1-z0) / dx;
+#endif
+#ifdef INTERP_FOG
       dfog /= dx;
 #endif
 #ifdef INTERP_RGB
@@ -398,6 +403,8 @@
          zPtr = (DEPTH_TYPE *) ((GLubyte*) zPtr + zPtrXstep);
 #  endif
          z0 += dz;
+#endif
+#ifdef INTERP_FOG
 	 fog0 += dfog;
 #endif
 #ifdef INTERP_RGB
@@ -464,6 +471,8 @@
       GLint errorDec = error-dy;
 #ifdef INTERP_Z
       dz = (z1-z0) / dy;
+#endif
+#ifdef INTERP_FOG
       dfog /= dy;
 #endif
 #ifdef INTERP_RGB
@@ -569,6 +578,8 @@
          zPtr = (DEPTH_TYPE *) ((GLubyte*) zPtr + zPtrYstep);
 #  endif
          z0 += dz;
+#endif
+#ifdef INTERP_FOG
 	 fog0 += dfog;
 #endif
 #ifdef INTERP_RGB
@@ -632,6 +643,7 @@
 
 #undef INTERP_XY
 #undef INTERP_Z
+#undef INTERP_FOG
 #undef INTERP_RGB
 #undef INTERP_SPEC
 #undef INTERP_ALPHA

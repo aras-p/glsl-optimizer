@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.12 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: s_lines.c,v 1.13 2001/03/08 17:33:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,7 +52,6 @@
  */
 
 
-
 /* Flat, color index line */
 static void flat_ci_line( GLcontext *ctx,
                           const SWvertex *vert0,
@@ -82,6 +81,7 @@ static void flat_ci_z_line( GLcontext *ctx,
 
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define PLOT(X,Y)  PB_WRITE_PIXEL(PB, X, Y, Z, fog0);
 
 #include "s_linetemp.h"
@@ -121,6 +121,7 @@ static void flat_rgba_z_line( GLcontext *ctx,
 
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define PLOT(X,Y)   PB_WRITE_PIXEL(PB, X, Y, Z, fog0);
 
 #include "s_linetemp.h"
@@ -176,6 +177,7 @@ static void smooth_ci_z_line( GLcontext *ctx,
 
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_INDEX 1
 
 #define PLOT(X,Y)		\
@@ -245,6 +247,7 @@ static void smooth_rgba_z_line( GLcontext *ctx,
 
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
 
@@ -294,6 +297,7 @@ static void general_smooth_ci_line( GLcontext *ctx,
       /* stippled */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_INDEX 1
 #define WIDE 1
 #define STIPPLE 1
@@ -313,6 +317,7 @@ static void general_smooth_ci_line( GLcontext *ctx,
          /* special case: unstippled and width=2 */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_INDEX 1
 #define XMAJOR_PLOT(X,Y)				\
 	pbx[count] = X;  pbx[count+1] = X;		\
@@ -336,6 +341,7 @@ static void general_smooth_ci_line( GLcontext *ctx,
          /* unstippled, any width */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_INDEX 1
 #define WIDE 1
 #define PLOT(X,Y)		\
@@ -373,6 +379,7 @@ static void general_flat_ci_line( GLcontext *ctx,
       /* stippled, any width */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define WIDE 1
 #define STIPPLE 1
 #define PLOT(X,Y)		\
@@ -390,6 +397,7 @@ static void general_flat_ci_line( GLcontext *ctx,
          /* special case: unstippled and width=2 */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define XMAJOR_PLOT(X,Y)				\
 	pbx[count] = X;  pbx[count+1] = X;		\
 	pby[count] = Y;  pby[count+1] = Y+1;		\
@@ -410,6 +418,7 @@ static void general_flat_ci_line( GLcontext *ctx,
          /* unstippled, any width */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define WIDE 1
 #define PLOT(X,Y)		\
 	pbx[count] = X;		\
@@ -446,6 +455,7 @@ static void general_smooth_rgba_line( GLcontext *ctx,
       /* stippled */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
 #define WIDE 1
@@ -469,6 +479,7 @@ static void general_smooth_rgba_line( GLcontext *ctx,
          /* special case: unstippled and width=2 */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
 #define XMAJOR_PLOT(X,Y)				\
@@ -507,6 +518,7 @@ static void general_smooth_rgba_line( GLcontext *ctx,
          /* unstippled, any width */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
 #define WIDE 1
@@ -542,6 +554,7 @@ static void general_flat_rgba_line( GLcontext *ctx,
       /* stippled */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define WIDE 1
 #define STIPPLE 1
 #define PLOT(X,Y)  PB_WRITE_PIXEL(PB, X, Y, Z, fog0);
@@ -553,6 +566,7 @@ static void general_flat_rgba_line( GLcontext *ctx,
          /* special case: unstippled and width=2 */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define XMAJOR_PLOT(X,Y) PB_WRITE_PIXEL(PB, X, Y, Z, fog0); \
                          PB_WRITE_PIXEL(PB, X, Y+1, Z, fog0);
 #define YMAJOR_PLOT(X,Y)  PB_WRITE_PIXEL(PB, X, Y, Z, fog0); \
@@ -563,6 +577,7 @@ static void general_flat_rgba_line( GLcontext *ctx,
          /* unstippled, any width */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define WIDE 1
 #define PLOT(X,Y) PB_WRITE_PIXEL(PB, X, Y, Z, fog0);
 #include "s_linetemp.h"
@@ -595,6 +610,7 @@ static void flat_textured_line( GLcontext *ctx,
       /* stippled */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_TEX 1
 #define WIDE 1
 #define STIPPLE 1
@@ -616,6 +632,7 @@ static void flat_textured_line( GLcontext *ctx,
       /* unstippled */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_TEX 1
 #define WIDE 1
 #define PLOT(X,Y)			\
@@ -661,6 +678,7 @@ static void smooth_textured_line( GLcontext *ctx,
       /* stippled */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
 #define INTERP_TEX 1
@@ -688,6 +706,7 @@ static void smooth_textured_line( GLcontext *ctx,
       /* unstippled */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
 #define INTERP_TEX 1
@@ -738,6 +757,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
       /* stippled */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_RGB 1
 #define INTERP_SPEC 1
 #define INTERP_ALPHA 1
@@ -775,6 +795,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
       /* unstippled */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_RGB 1
 #define INTERP_SPEC 1
 #define INTERP_ALPHA 1
@@ -839,6 +860,7 @@ static void flat_multitextured_line( GLcontext *ctx,
       /* stippled */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_ALPHA 1
 #define INTERP_MULTITEX 1
 #define WIDE 1
@@ -874,6 +896,7 @@ static void flat_multitextured_line( GLcontext *ctx,
       /* unstippled */
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define INTERP_FOG 1
 #define INTERP_ALPHA 1
 #define INTERP_MULTITEX 1
 #define WIDE 1
