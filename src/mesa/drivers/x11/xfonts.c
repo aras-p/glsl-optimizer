@@ -1,4 +1,4 @@
-/* $Id: xfonts.c,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: xfonts.c,v 1.2 1999/10/13 18:49:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -257,7 +257,7 @@ void Fake_glXUseXFont( Font font, int first, int count, int listbase )
   max_bm_width = (max_width + 7) / 8;
   max_bm_height = max_height;
 
-  bm = (GLubyte *) malloc ((max_bm_width * max_bm_height) * sizeof 
+  bm = (GLubyte *) MALLOC((max_bm_width * max_bm_height) * sizeof 
 (GLubyte));
   if (!bm) {
       XFreeFontInfo( NULL, fs, 0 );

@@ -351,7 +351,7 @@ HGLRC GLAPIENTRY wglCreateContext(HDC hdc)
 
       hDC = GetDC(dibWnd);
 
-      dibBMI = (BITMAPINFO*) malloc( sizeof(BITMAPINFO) + (256*sizeof(RGBQUAD)));
+      dibBMI = (BITMAPINFO*) MALLOC( sizeof(BITMAPINFO) + (256*sizeof(RGBQUAD)));
 
       memset(dibBMI,0,sizeof(BITMAPINFO) + (256*sizeof(RGBQUAD)));
 
@@ -429,7 +429,7 @@ BOOL GLAPIENTRY wglDeleteContext(HGLRC hglrc)
   if(ctx && hglrc == (HGLRC)1) {
     if (gdiWindowHackEna) {
       DeleteObject(dibHBM);
-      free(dibBMI);
+      FREE(dibBMI);
 
       dibSurfacePtr = NULL;
       dibBMI = NULL;
@@ -584,7 +584,7 @@ BOOL GLAPIENTRY wglUseFontBitmaps(HDC fontDevice, DWORD firstChar, DWORD numChar
 
     // Convert the display dependant representation to a 1 bit deep DIB
     numBytes = (bmapWidth * bmapHeight) / 8;
-    bmap = malloc(numBytes);
+    bmap = MALLOC(numBytes);
     dibInfo->bmiHeader.biWidth = bmapWidth;
     dibInfo->bmiHeader.biHeight = bmapHeight;
     res = GetDIBits(bitDevice, bitObject, 0, bmapHeight, bmap,
@@ -604,13 +604,13 @@ BOOL GLAPIENTRY wglUseFontBitmaps(HDC fontDevice, DWORD firstChar, DWORD numChar
     DeleteObject(bitObject);
 
     // Deallocate the bitmap data
-    free(bmap);
+    FREE(bmap);
   }
 
   // Destroy the DC
   VERIFY(DeleteDC(bitDevice));
 
-  free(dibInfo);
+  FREE(dibInfo);
 
   return TRUE;
 #undef VERIFY

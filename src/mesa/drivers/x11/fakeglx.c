@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.8 1999/09/16 16:44:37 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.9 1999/10/13 18:49:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -812,7 +812,7 @@ static XVisualInfo *choose_x_overlay_visual( Display *dpy, int scr,
       if (deepvis==NULL || vislist->depth > deepest) {
          /* YES!  found a satisfactory visual */
          if (deepvis) {
-            free( deepvis );
+            XFree( deepvis );
          }
          deepest = vislist->depth;
          deepvis = vislist;

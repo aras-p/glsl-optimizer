@@ -34,7 +34,7 @@ static tfxTMFreeNode *fxTMNewTMFreeNode(FxU32 start, FxU32 end)
 {
   tfxTMFreeNode *tmn;
 
-  if(!(tmn=malloc(sizeof(tfxTMFreeNode)))) {
+  if(!(tmn=MALLOC(sizeof(tfxTMFreeNode)))) {
     fprintf(stderr,"fx Driver: out of memory !\n");
     fxCloseHardware();
     exit(-1);
@@ -163,7 +163,7 @@ static tfxTMFreeNode *fxTMExtractTMFreeBlock(tfxTMFreeNode *tmfree, int texmemsi
     *startadr=tmfree->startAddress;
 
     nexttmfree=tmfree->next;
-    free(tmfree);
+    FREE(tmfree);
 
     return nexttmfree;
   }
@@ -198,7 +198,7 @@ static tfxTMAllocNode *fxTMGetTMBlock(fxMesaContext fxMesa, struct gl_texture_ob
 
       fxMesa->freeTexMem[tmu]-=texmemsize;
 
-      if(!(newtmalloc=malloc(sizeof(tfxTMAllocNode)))) {
+      if(!(newtmalloc=MALLOC(sizeof(tfxTMAllocNode)))) {
 	fprintf(stderr,"fx Driver: out of memory !\n");
 	fxCloseHardware();
 	exit(-1);
@@ -413,7 +413,7 @@ static tfxTMAllocNode *fxTMFreeTMAllocBlock(tfxTMAllocNode *tmalloc,
     tfxTMAllocNode *newtmalloc;
 
     newtmalloc=tmalloc->next;
-    free(tmalloc);
+    FREE(tmalloc);
 
     return newtmalloc;
   }
@@ -444,7 +444,7 @@ static tfxTMFreeNode *fxTMAddTMFree(tfxTMFreeNode *tmfree, FxU32 startadr, FxU32
       tmfree->endAddress=tmfree->next->endAddress;
 
       nexttmfree=tmfree->next->next;
-      free(tmfree->next);
+      FREE(tmfree->next);
 
       tmfree->next=nexttmfree;
     }
@@ -521,7 +521,7 @@ void fxTMFreeTexture(fxMesaContext fxMesa, struct gl_texture_object *tObj)
   for(i=0;i<MAX_TEXTURE_LEVELS;i++) {
     if(ti->tmi.mipmapLevel[i].used &&
        ti->tmi.mipmapLevel[i].translated)
-      free(ti->tmi.mipmapLevel[i].data);
+      FREE(ti->tmi.mipmapLevel[i].data);
 
     (void)ti->tmi.mipmapLevel[i].data;
   }
@@ -535,7 +535,7 @@ void fxTMFreeAllFreeNode(tfxTMFreeNode *fn)
   if(fn->next)
     fxTMFreeAllFreeNode(fn->next);
 
-  free(fn);
+  FREE(fn);
 }
 
 void fxTMFreeAllAllocNode(tfxTMAllocNode *an)
@@ -546,7 +546,7 @@ void fxTMFreeAllAllocNode(tfxTMAllocNode *an)
   if(an->next)
     fxTMFreeAllAllocNode(an->next);
 
-  free(an);
+  FREE(an);
 }
 
 void fxTMClose(fxMesaContext fxMesa)
