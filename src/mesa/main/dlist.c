@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.36 2000/03/21 17:42:27 brianp Exp $ */
+/* $Id: dlist.c,v 1.37 2000/04/07 16:45:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,6 +59,7 @@
 #include "mem.h"
 #include "pipeline.h"
 #include "pixel.h"
+#include "pixeltex.h"
 #include "points.h"
 #include "polygon.h"
 #include "readpix.h"
@@ -227,6 +228,9 @@ typedef enum {
         /* GL_ARB_multitexture */
         OPCODE_ACTIVE_TEXTURE,
         OPCODE_CLIENT_ACTIVE_TEXTURE,
+        /* GL_SGIX/SGIS_pixel_texture */
+        OPCODE_PIXEL_TEXGEN_SGIX,
+        OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS,
 	/* The following three are meta instructions */
 	OPCODE_ERROR,	        /* raise compiled-in error */
 	OPCODE_VERTEX_CASSETTE,	/* render prebuilt vertex buffer */
@@ -586,6 +590,9 @@ void gl_init_lists( void )
       InstSize[OPCODE_ERROR] = 3;
       InstSize[OPCODE_VERTEX_CASSETTE] = 9;
       InstSize[OPCODE_END_OF_LIST] = 1;
+      /* GL_SGIX/SGIS_pixel_texture */
+      InstSize[OPCODE_PIXEL_TEXGEN_SGIX] = 2;
+      InstSize[OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS] = 3,
       /* GL_ARB_multitexture */
       InstSize[OPCODE_ACTIVE_TEXTURE] = 2;
       InstSize[OPCODE_CLIENT_ACTIVE_TEXTURE] = 2;
@@ -3224,6 +3231,53 @@ static void save_MultTransposeMatrixfARB( const GLfloat m[16] )
 }
 
 
+static void save_PixelTexGenSGIX(GLenum mode)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   FLUSH_VB(ctx, "dlist");
+   n = alloc_instruction( ctx, OPCODE_PIXEL_TEXGEN_SGIX, 1 );
+   if (n) {
+      n[1].e = mode;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->PixelTexGenSGIX)( mode );
+   }
+}
+
+
+static void save_PixelTexGenParameteriSGIS(GLenum target, GLint value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   FLUSH_VB(ctx, "dlist");
+   n = alloc_instruction( ctx, OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS, 2 );
+   if (n) {
+      n[1].e = target;
+      n[2].i = value;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->PixelTexGenParameteriSGIS)( target, value );
+   }
+}
+
+
+static void save_PixelTexGenParameterfSGIS(GLenum target, GLfloat value)
+{
+   save_PixelTexGenParameteriSGIS(target, (GLint) value);
+}
+
+
+static void save_PixelTexGenParameterivSGIS(GLenum target, const GLint *value)
+{
+   save_PixelTexGenParameteriSGIS(target, *value);
+}
+
+
+static void save_PixelTexGenParameterfvSGIS(GLenum target, const GLfloat *value)
+{
+   save_PixelTexGenParameteriSGIS(target, (GLint) *value);
+}
 
 void gl_compile_cassette( GLcontext *ctx )
 {
@@ -3870,6 +3924,12 @@ static void execute_list( GLcontext *ctx, GLuint list )
             break;
          case OPCODE_CLIENT_ACTIVE_TEXTURE:  /* GL_ARB_multitexture */
             (*ctx->Exec->ClientActiveTextureARB)( n[1].e );
+            break;
+         case OPCODE_PIXEL_TEXGEN_SGIX:  /* GL_SGIX_pixel_texture */
+            (*ctx->Exec->PixelTexGenSGIX)( n[1].e );
+            break;
+         case OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS:  /* GL_SGIS_pixel_texture */
+            (*ctx->Exec->PixelTexGenParameteriSGIS)( n[1].e, n[2].i );
             break;
 	 case OPCODE_CONTINUE:
 	    n = (Node *) n[1].next;
@@ -4567,6 +4627,17 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    table->GetColorTableEXT = _mesa_GetColorTable;
    table->GetColorTableParameterfvEXT = _mesa_GetColorTableParameterfv;
    table->GetColorTableParameterivEXT = _mesa_GetColorTableParameteriv;
+
+   /* 15. GL_SGIX_pixel_texture */
+   table->PixelTexGenSGIX = save_PixelTexGenSGIX;
+
+   /* 15. GL_SGIS_pixel_texture */
+   table->PixelTexGenParameteriSGIS = save_PixelTexGenParameteriSGIS;
+   table->PixelTexGenParameterfSGIS = save_PixelTexGenParameterfSGIS;
+   table->PixelTexGenParameterivSGIS = save_PixelTexGenParameterivSGIS;
+   table->PixelTexGenParameterfvSGIS = save_PixelTexGenParameterfvSGIS;
+   table->GetPixelTexGenParameterivSGIS = _mesa_GetPixelTexGenParameterivSGIS;
+   table->GetPixelTexGenParameterfvSGIS = _mesa_GetPixelTexGenParameterfvSGIS;
 
    /* GL_EXT_compiled_vertex_array */
    table->LockArraysEXT = _mesa_LockArraysEXT;
