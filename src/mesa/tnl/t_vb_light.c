@@ -1,4 +1,4 @@
-/* $Id: t_vb_light.c,v 1.5 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: t_vb_light.c,v 1.6 2001/01/29 22:10:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -170,7 +170,8 @@ static GLboolean run_validate_lighting( GLcontext *ctx,
    
    if (ctx->Visual.rgbMode) {
       if (ctx->Light._NeedVertices) {
-	 if (ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR) 
+	 if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR &&
+             ctx->Texture._ReallyEnabled) 
 	    tab = _tnl_light_spec_tab;
 	 else
 	    tab = _tnl_light_tab;	 
@@ -267,7 +268,8 @@ static void check_lighting( GLcontext *ctx, struct gl_pipeline_stage *stage )
 	 stage->inputs |= VERT_RGBA;
 
       stage->outputs = VERT_RGBA;
-      if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
+      if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR &&
+          ctx->Texture._ReallyEnabled)
 	 stage->outputs |= VERT_SPEC_RGB;
    }
 }
