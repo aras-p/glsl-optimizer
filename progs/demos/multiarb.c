@@ -1,4 +1,4 @@
-/* $Id: multiarb.c,v 1.6 2000/05/23 23:21:00 brianp Exp $ */
+/* $Id: multiarb.c,v 1.7 2000/11/01 16:02:01 brianp Exp $ */
 
 /*
  * GL_ARB_multitexture demo
@@ -12,6 +12,9 @@
 
 /*
  * $Log: multiarb.c,v $
+ * Revision 1.7  2000/11/01 16:02:01  brianp
+ * print number of texture units
+ *
  * Revision 1.6  2000/05/23 23:21:00  brianp
  * set default window pos
  *
@@ -246,12 +249,16 @@ static void SpecialKey( int key, int x, int y )
 static void Init( int argc, char *argv[] )
 {
    GLuint texObj[2];
+   GLint units;
 
    const char *exten = (const char *) glGetString(GL_EXTENSIONS);
    if (!strstr(exten, "GL_ARB_multitexture")) {
       printf("Sorry, GL_ARB_multitexture not supported by this renderer.\n");
       exit(1);
    }
+
+   glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &units);
+   printf("%d texture units supported\n", units);
 
    /* allocate two texture objects */
    glGenTextures(2, texObj);
