@@ -1,6 +1,8 @@
-/* $Id: clip.S,v 1.1 2001/05/23 14:27:03 brianp Exp $ */
+/*
+ * Clip testing in SPARC assembly
+ */
 
-#ifdef __sparc_v9__
+#if defined(__sparc_v9__) && !defined(__linux__)
 #define LDPTR		ldx
 #define V4F_DATA	0x00
 #define V4F_START	0x08

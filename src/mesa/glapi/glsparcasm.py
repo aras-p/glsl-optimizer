@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
-# $Id: glsparcasm.py,v 1.7 2002/01/03 16:33:59 brianp Exp $
-
 # Mesa 3-D graphics library
-# Version:  4.1
+# Version:  5.1
 # 
-# Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+# Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -111,7 +109,7 @@ def EmitFunction(name, returnType, argTypeList, argNameList, alias, offset):
 	print '.globl gl%s' % (name)
 	print '.type gl%s,#function' % (name)
 	print 'gl%s:' % (name)
-	print '#ifdef __sparc_v9__'
+	print '#if defined(__sparc_v9__) && !defined(__linux__)'
 	print '\tsethi\t%hi(0x00000000), %g2'
 	print '\tsethi\t%hi(0x00000000), %g1'
 	print '\tor\t%g2, %lo(0x00000000), %g2'

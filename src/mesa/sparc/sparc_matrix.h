@@ -1,9 +1,11 @@
-/* $Id: sparc_matrix.h,v 1.3 2001/06/06 11:46:04 davem69 Exp $ */
+/*
+ * SPARC assembly matrix code.
+ */
 
 #ifndef _SPARC_MATRIX_H
 #define _SPARC_MATRIX_H
 
-#ifdef __sparc_v9__
+#if defined(__sparc_v9__) && !defined(__linux__)
 #define LDPTR		ldx
 #define MAT_M		0x00
 #define MAT_INV		0x08

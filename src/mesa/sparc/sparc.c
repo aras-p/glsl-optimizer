@@ -165,7 +165,7 @@ void _mesa_init_sparc_glapi_relocs(void)
 	disp_addr = (unsigned long) &_glapi_Dispatch;
 
 	while (insn_ptr < end_ptr) {
-#ifdef __sparc_v9__
+#if defined(__sparc_v9__) && !defined(__linux__)
 		insn_ptr[0] |= (disp_addr >> (32 + 10));
 		insn_ptr[1] |= ((disp_addr & 0xffffffff) >> 10);
 		__glapi_sparc_icache_flush(&insn_ptr[0]);
