@@ -151,10 +151,7 @@ sisAllocZStencilBuffer( sisContextPtr smesa )
 
    addr = sisAllocFB( smesa, totalBytes, &smesa->zbFree );
    if (addr == NULL)
-   {
-      fprintf (stderr, "SIS driver : out of video memory\n");
-      sis_fatal_error ();
-   }
+      sis_fatal_error("Failure to allocate Z buffer.\n");
 
    if (SIS_VERBOSE & VERBOSE_SIS_BUFFER) {
       fprintf(stderr, "sis_alloc_z_stencil_buffer: addr=%p\n", addr);
@@ -210,10 +207,7 @@ sisAllocBackbuffer( sisContextPtr smesa )
    /* Fixme: unique context alloc/free back-buffer? */
    addr = sisAllocFB( smesa, size, &smesa->bbFree );
    if (addr == NULL)
-   {
-      fprintf (stderr, "SIS driver : out of video memory\n");
-      sis_fatal_error ();
-   }
+      sis_fatal_error("Failure to allocate back buffer.\n");
 
    addr = (char *)ALIGNMENT( (unsigned long)addr, DRAW_BUFFER_HW_ALIGNMENT );
 

@@ -395,6 +395,12 @@ struct sis_context
   *(GLint *)(GET_IOBase(smesa) + 0x8b60) = (GLint)(-1); \
 }
 
+#define sis_fatal_error(msg)						\
+do {									\
+	fprintf(stderr, "[%s:%d]: %s", __FILE__, __LINE__, msg);	\
+	exit(-1);							\
+} while (0)
+
 /* Lock required */
 #define mWait3DCmdQueue(wLen)						\
 /* Update the mirrored queue pointer if it doesn't indicate enough space */ \
@@ -430,7 +436,5 @@ void WaitingFor3dIdle(sisContextPtr smesa, int wLen);
 /* update to hw */
 extern void sis_update_texture_state( sisContextPtr smesa );
 extern void sis_update_render_state( sisContextPtr smesa );
-
-void sis_fatal_error (void);
 
 #endif

@@ -146,7 +146,7 @@ sisUpdateBufferSize( sisContextPtr smesa )
       z_depth = 4;
       break;
    default:
-      assert( 0 );
+      sis_fatal_error("Bad Z format\n");
    }
 
    current->hwZ &= ~MASK_ZBufferPitch;

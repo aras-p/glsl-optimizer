@@ -66,7 +66,7 @@ set_color_pattern( sisContextPtr smesa, GLubyte red, GLubyte green,
       smesa->clearColorPattern |= smesa->clearColorPattern << 16;
       break;
    default:
-      assert(0);
+      sis_fatal_error("Bad dst color format\n");
    }
 }
 
@@ -89,7 +89,7 @@ sisUpdateZStencilPattern( sisContextPtr smesa, GLclampd z, GLint stencil )
       zPattern = FLOAT_TO_UINT(z);
       break;
    default:
-      assert(0);
+      sis_fatal_error("Bad Z format\n");
    }
    smesa->clearZStencilPattern = zPattern;
 }

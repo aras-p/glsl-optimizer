@@ -85,7 +85,7 @@ sisAllocTexImage( sisContextPtr smesa, sisTexObjPtr t, int level,
          t->hwformat = TEXEL_ARGB_0888_32;
          break;
       default:
-         assert(0);
+         sis_fatal_error("Bad texture format.\n");
       }
    }
    assert(t->format == image->Format);
@@ -96,10 +96,8 @@ sisAllocTexImage( sisContextPtr smesa, sisTexObjPtr t, int level,
    addr = sisAllocFB( smesa, size, &t->image[level].handle );
    if (addr == NULL) {
       addr = sisAllocAGP( smesa, size, &t->image[level].handle );
-      if (addr == NULL) {
-         fprintf (stderr, "SIS driver : out of video/agp memory\n");
-         sis_fatal_error();
-      }
+      if (addr == NULL)
+         sis_fatal_error("Failure to allocate texture memory.\n");
       t->image[level].memType = AGP_TYPE;
    }
    else

@@ -294,7 +294,7 @@ sisDDInitSpanFuncs( GLcontext *ctx )
       swdd->ReadRGBAPixels = sisReadRGBAPixels_8888;
       break;
     default:
-      assert(0);
+      sis_fatal_error("Bad bytesPerPixel.\n");
       break;
    }
 
