@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.5 1999/12/10 19:09:59 brianp Exp $ */
+/* $Id: osmesa.c,v 1.6 1999/12/17 12:23:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,6 +27,11 @@
 
 /*
  * Off-Screen Mesa rendering / Rendering into client memory space
+ *
+ * Note on thread safety:  this driver is thread safe.  All
+ * functions are reentrant.  The notion of current context is
+ * managed by the core gl_make_current() and gl_get_current_context()
+ * functions.  Those functions are thread-safe.
  */
 
 
@@ -66,32 +71,6 @@ struct osmesa_context {
 
 
 
-#ifdef THREADS
-
-#include "mthreads.h" /* Mesa platform independent threads interface */
-
-static MesaTSD osmesa_ctx_tsd;
-
-static void osmesa_ctx_thread_init() {
-  MesaInitTSD(&osmesa_ctx_tsd);
-}
-
-static OSMesaContext osmesa_get_thread_context( void ) {
-  return (OSMesaContext) MesaGetTSD(&osmesa_ctx_tsd);
-}
-
-static void osmesa_set_thread_context( OSMesaContext ctx ) {
-  MesaSetTSD(&osmesa_ctx_tsd, ctx, osmesa_ctx_thread_init);
-}
-
-
-#else
-   /* One current context for address space, all threads */
-   static OSMesaContext Current = NULL;
-#endif
-
-
-
 /* A forward declaration: */
 static void osmesa_update_state( GLcontext *ctx );
 
@@ -111,7 +90,8 @@ static void osmesa_update_state( GLcontext *ctx );
  *                     display lists.  NULL indicates no sharing.
  * Return:  an OSMesaContext or 0 if error
  */
-OSMesaContext GLAPIENTRY OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
+OSMesaContext GLAPIENTRY
+OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
 {
    OSMesaContext osmesa;
    GLint rshift, gshift, bshift, ashift;
@@ -373,8 +353,9 @@ static void compute_row_addresses( OSMesaContext ctx )
  *          invalid buffer address, type!=GL_UNSIGNED_BYTE, width<1, height<1,
  *          width>internal limit or height>internal limit.
  */
-GLboolean GLAPIENTRY OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
-                             GLsizei width, GLsizei height )
+GLboolean GLAPIENTRY
+OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
+                   GLsizei width, GLsizei height )
 {
    if (!ctx || !buffer || type!=GL_UNSIGNED_BYTE
        || width<1 || height<1 || width>MAX_WIDTH || height>MAX_HEIGHT) {
@@ -391,14 +372,6 @@ GLboolean GLAPIENTRY OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum 
       ctx->rowlength = ctx->userRowLength;
    else
       ctx->rowlength = width;
-
-#ifdef THREADS
-   /* Set current context for the calling thread */
-   osmesa_set_thread_context(ctx);
-#else
-   /* Set current context for the address space, all threads */
-   Current = ctx;
-#endif
 
    compute_row_addresses( ctx );
 
@@ -418,13 +391,11 @@ GLboolean GLAPIENTRY OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum 
 
 OSMesaContext GLAPIENTRY OSMesaGetCurrentContext( void )
 {
-#ifdef THREADS
-   /* Return current handle for the calling thread */
-   return osmesa_get_thread_context();
-#else
-   /* Return current handle for the address space, all threads */
-   return Current;
-#endif
+   GLcontext *ctx = gl_get_current_context();
+   if (ctx)
+      return (OSMesaContext) ctx->DriverCtx;
+   else
+      return NULL;
 }
 
 
