@@ -62,7 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_vtxfmt.h"
 #include "r200_maos.h"
 
-#define DRIVER_DATE	"20040923"
+#define DRIVER_DATE	"20040924"
 
 #include "vblank.h"
 #include "utils.h"

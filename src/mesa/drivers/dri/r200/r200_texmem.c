@@ -43,7 +43,6 @@ SOFTWARE.
 #include "context.h"
 #include "colormac.h"
 #include "macros.h"
-#include "simple_list.h"
 #include "radeon_reg.h" /* gets definition for usleep */
 #include "r200_context.h"
 #include "r200_state.h"
@@ -73,10 +72,8 @@ r200DestroyTexObj( r200ContextPtr rmesa, r200TexObjPtr t )
       for ( i = 0 ; i < rmesa->glCtx->Const.MaxTextureUnits ; i++ ) {
 	 if ( t == rmesa->state.texture.unit[i].texobj ) {
 	    rmesa->state.texture.unit[i].texobj = NULL;
-	    remove_from_list( &rmesa->hw.tex[i] );
-	    make_empty_list( &rmesa->hw.tex[i] );
-	    remove_from_list( &rmesa->hw.cube[i] );
-	    make_empty_list( &rmesa->hw.cube[i] );
+	    rmesa->hw.tex[i].dirty = GL_FALSE;
+	    rmesa->hw.cube[i].dirty = GL_FALSE;
 	 }
       }
    }
