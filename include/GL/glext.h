@@ -111,9 +111,9 @@ GLAPI void APIENTRY glCopyTexSubImage3DEXT(GLenum target, GLint level, GLint xof
 #define GL_FILTER4_SGIS			?
 #define GL_TEXTURE_FILTER4_SIZE_SGIS	?
 
-GLAPI void APIENTRY glGetTexFilterFuncSGIS(GLenum target, GLenum filter, GLsizei n, const GLfloat *weights);
+GLAPI void APIENTRY glGetTexFilterFuncSGIS(GLenum target, GLenum filter, GLfloat *weights);
 
-GLAPI void APIENTRY glTexFilterFuncSGIS(GLenum target, GLenum filter, GLfloat *weights);
+GLAPI void APIENTRY glTexFilterFuncSGIS(GLenum target, GLenum filter, GLsizei n, const GLfloat *weights);
 
 #endif /* GL_SGI_texture_filter4 */
 
@@ -314,6 +314,18 @@ GLAPI void APIENTRY glGetColorTableSGI(GLenum target, GLenum format, GLenum type
 
 
 /*
+ * ?. GL_SGIX_pixel_texture
+ */
+#ifndef GL_SGIX_pixel_texture
+#define GL_SGIX_pixel_texture 1
+
+GLAPI void APIENTRY glPixelTexGenSGIX(GLenum mode);
+
+#endif /* GL_SGIX_pixel_texture */
+
+
+
+/*
  * 15. GL_SGIS_pixel_texture
  */
 #ifndef GL_SGIS_pixel_texture
@@ -326,7 +338,11 @@ GLAPI void APIENTRY glGetColorTableSGI(GLenum target, GLenum format, GLenum type
 
 GLAPI void APIENTRY glPixelTexGenParameterfSGIS(GLenum target, GLfloat value);
 
+GLAPI void APIENTRY glPixelTexGenParameterfvSGIS(GLenum target, const GLfloat *value);
+
 GLAPI void APIENTRY glPixelTexGenParameteriSGIS(GLenum target, GLint value);
+
+GLAPI void APIENTRY glPixelTexGenParameterivSGIS(GLenum target, const GLint *value);
 
 GLAPI void APIENTRY glGetPixelTexGenParameterfvSGIS(GLenum target, GLfloat *value);
 
@@ -353,7 +369,7 @@ GLAPI void APIENTRY glGetPixelTexGenParameterivSGIS(GLenum target, GLint *value)
 #define GL_MAX_4D_TEXTURE_SIZE_SGIS	?
 #define GL_TEXTURE_4D_BINDING_SGIS	?
 
-GLAPI void APIENTRY glTexImage4DSGIS(GLenum target, GLint level, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLsizei extent, GLint border, GLenum format, GLenum type, const void *pixels);
+GLAPI void APIENTRY glTexImage4DSGIS(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLsizei extent, GLint border, GLenum format, GLenum type, const void *pixels);
 
 GLAPI void APIENTRY glTexSubImage4DSGIS(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint woffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei extent, GLenum format, GLenum type, const void *pixels);
 
@@ -385,6 +401,47 @@ GLAPI GLboolean APIENTRY glAreTexturesResidentEXT(GLsizei n, const GLuint *textu
 GLAPI GLboolean APIENTRY glIsTextureEXT(GLuint texture);
 
 #endif /* GL_EXT_texture_object */
+
+
+
+/*
+ * 21. GL_SGIS_detail_texture
+ */
+#ifndef GL_SGIS_detail_texture
+#define GL_SGIS_detail_texture
+
+#define GL_DETAIL_TEXTURE_2D_SGIS		0x8095
+#define GL_DETAIL_TEXTURE_2D_BINDING_SGIS	0x8096
+#define GL_LINEAR_DETAIL_SGIS			0x8097
+#define GL_LINEAR_DETAIL_ALPHA_SGIS		0x8098
+#define GL_LINEAR_DETAIL_COLOR_SGIS		0x8099
+#define GL_DETAIL_TEXTURE_LEVEL_SGIS		0x809A
+#define GL_DETAIL_TEXTURE_MODE_SGIS		0x809B
+
+GLAPI void APIENTRY glDetailTexFuncSGIS(GLenum target, GLsizei n, const GLfloat *points);
+
+GLAPI void APIENTRY glGetDetailTexFuncSGIS(GLenum target, GLfloat *points);
+
+#endif /* GL_SGIS_detail_texture */
+
+
+
+/*
+ * 22. GL_SGIS_sharpen_texture
+ */
+#ifndef GL_SGIS_sharpen_texture
+#define GL_SGIS_sharpen_texture 1
+
+#define GL_LINEAR_SHARPEN_SGIS			0x80AD
+#define GL_LINEAR_SHARPEN_ALPHA_SGIS		0x80AE
+#define GL_LINEAR_SHARPEN_COLOR_SGIS		0x80AF
+#define GL_SHARPEN_TEXTURE_FUNC_POINTS_SGIS	0x80B0
+
+GLAPI void APIENTRY glGetSharpenTexFuncSGIS(GLenum target, GLfloat *points);
+
+GLAPI void APIENTRY glSharpenTexFuncSGIS(GLenum target, GLsizei n, const GLfloat *points);
+
+#endif /* GL_SGIS_sharpen_texture */
 
 
 
@@ -852,11 +909,11 @@ typedef void (APIENTRY * PFNGLADDSWAPHINTRECTWINPROC) (GLint x, GLint y, GLsizei
 #define GL_MODELVIEW1_STACK_DEPTH_EXT		0x8502
 #define GL_VERTEX_WEIGHT_ARRAY_POINTER_EXT	0x8510
 
-GLAPI void APIENTRY VertexWeightfEXT(GLfloat weight);
+GLAPI void APIENTRY glVertexWeightfEXT(GLfloat weight);
 
-GLAPI void APIENTRY VertexWeightfvEXT(GLfloat *weight);
+GLAPI void APIENTRY glVertexWeightfvEXT(const GLfloat *weight);
 
-GLAPI void APIENTRY VertexWeightPointerEXT(GLint size, GLenum type, GLsizei stride, GLvoid *pointer);
+GLAPI void APIENTRY glVertexWeightPointerEXT(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
 
 #endif
 
