@@ -1617,14 +1617,12 @@ void viaValidateState( GLcontext *ctx )
      * are incorrectly writen to the z buffer.  This is a pretty big
      * slowdown, it would be good to find out this wasn't necessary:
      */
-#if 0
     if (vmesa->viaScreen->deviceID == VIA_CLE266) {
        GLboolean fallback = (ctx->Color.AlphaEnabled && 
 			     ctx->Color.AlphaFunc != GL_ALWAYS &&
 			     ctx->Depth.Mask);
        FALLBACK( vmesa, VIA_FALLBACK_ALPHATEST, fallback );
     }
-#endif
 
     vmesa->newEmitState |= vmesa->newState;
     vmesa->newState = 0;
