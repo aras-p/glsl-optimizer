@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.18 2000/01/13 00:25:22 brianp Exp $ */
+/* $Id: varray.c,v 1.19 2000/02/02 19:17:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,6 +37,7 @@
 #include "macros.h"
 #include "mmath.h"
 #include "pipeline.h"
+#include "state.h"
 #include "texstate.h"
 #include "translate.h"
 #include "types.h"

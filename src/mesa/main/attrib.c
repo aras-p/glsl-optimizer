@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.13 1999/11/23 21:15:37 keithw Exp $ */
+/* $Id: attrib.c,v 1.14 2000/02/02 19:17:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,8 +30,8 @@
 #else
 #include "glheader.h"
 #include "attrib.h"
+#include "buffers.h"
 #include "context.h"
-#include "glmisc.h"
 #include "enable.h"
 #include "enums.h"
 #include "mem.h"

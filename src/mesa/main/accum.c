@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.13 1999/11/25 17:36:48 brianp Exp $ */
+/* $Id: accum.c,v 1.14 2000/02/02 19:17:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +34,7 @@
 #include "mem.h"
 #include "masking.h"
 #include "span.h"
+#include "state.h"
 #include "types.h"
 #endif
 

@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.4 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: rastpos.c,v 1.5 2000/02/02 19:17:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,6 +38,7 @@
 #include "mmath.h"
 #include "rastpos.h"
 #include "shade.h"
+#include "state.h"
 #include "types.h"
 #include "xform.h"
 #endif
