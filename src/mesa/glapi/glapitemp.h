@@ -1487,9 +1487,9 @@ KEYWORD1 GLboolean KEYWORD2 NAME(IsList)(GLuint list)
    RETURN_DISPATCH(IsList, (list), (F, "glIsList(%d);", list));
 }
 
-KEYWORD1 void KEYWORD2 NAME(DepthRange)(GLclampd near, GLclampd far)
+KEYWORD1 void KEYWORD2 NAME(DepthRange)(GLclampd zNear, GLclampd zFar)
 {
-   DISPATCH(DepthRange, (near, far), (F, "glDepthRange(%f, %f);", near, far));
+   DISPATCH(DepthRange, (zNear, zFar), (F, "glDepthRange(%f, %f);", zNear, zFar));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Frustum)(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar)
