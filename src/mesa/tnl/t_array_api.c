@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.0
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -52,10 +52,10 @@ static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
    assert(!ctx->CompileFlag);
    assert(ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1);
 
-   glBegin(mode);
-   for (i = start; i < count; i++) 
-      glArrayElement( i );
-   glEnd();
+   _glapi_Dispatch->Begin(mode);
+   for (i = 0; i < count; i++) 
+      _glapi_Dispatch->ArrayElement( start + i );
+   _glapi_Dispatch->End();
 }
 
 
@@ -69,11 +69,11 @@ static void fallback_drawelements( GLcontext *ctx, GLenum mode, GLsizei count,
 
    /* Here, indices will already reflect the buffer object if active */
 
-   glBegin(mode);
+   _glapi_Dispatch->Begin(mode);
    for (i = 0 ; i < count ; i++) {
-      glArrayElement( indices[i] );
+      _glapi_Dispatch->ArrayElement( indices[i] );
    }
-   glEnd();
+   _glapi_Dispatch->End();
 }
 
 
