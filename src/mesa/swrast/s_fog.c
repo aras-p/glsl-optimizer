@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.17 2002/01/21 18:12:34 brianp Exp $ */
+/* $Id: s_fog.c,v 1.18 2002/01/27 18:32:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,9 +85,10 @@ _mesa_fog_rgba_pixels( const GLcontext *ctx, struct sw_span *span,
    GLfloat fog = span->fog, Dfog = span->fogStep;
    GLchan rFog, gFog, bFog;
 
+   /*   printf("%s\n", __FUNCTION__);*/
    ASSERT(ctx->Fog.Enabled);
-   ASSERT(span->activeMask & SPAN_FOG);
-   ASSERT(span->filledColor == GL_TRUE);
+   ASSERT(span->interpMask & SPAN_FOG);
+   ASSERT(span->filledColor == GL_TRUE || (span->arrayMask & SPAN_RGBA));
 
    UNCLAMPED_FLOAT_TO_CHAN(rFog, ctx->Fog.Color[RCOMP]);
    UNCLAMPED_FLOAT_TO_CHAN(gFog, ctx->Fog.Color[GCOMP]);
@@ -118,9 +119,10 @@ _mesa_fog_rgba_pixels_with_array( const GLcontext *ctx, struct sw_span *span,
    GLuint i;
    GLchan rFog, gFog, bFog;
 
+   /*   printf("%s\n", __FUNCTION__);*/
    ASSERT(fog != NULL);
    ASSERT(ctx->Fog.Enabled);
-   ASSERT(span->filledColor == GL_TRUE);
+   ASSERT(span->filledColor == GL_TRUE || (span->arrayMask & SPAN_RGBA));
 
    UNCLAMPED_FLOAT_TO_CHAN(rFog, ctx->Fog.Color[RCOMP]);
    UNCLAMPED_FLOAT_TO_CHAN(gFog, ctx->Fog.Color[GCOMP]);
@@ -151,6 +153,7 @@ _old_fog_rgba_pixels( const GLcontext *ctx,
    GLuint i;
    GLchan rFog, gFog, bFog;
 
+   /*   printf("%s\n", __FUNCTION__);*/
    UNCLAMPED_FLOAT_TO_CHAN(rFog, ctx->Fog.Color[RCOMP]);
    UNCLAMPED_FLOAT_TO_CHAN(gFog, ctx->Fog.Color[GCOMP]);
    UNCLAMPED_FLOAT_TO_CHAN(bFog, ctx->Fog.Color[BCOMP]);
@@ -181,8 +184,8 @@ _mesa_fog_ci_pixels( const GLcontext *ctx, struct sw_span *span,
    GLfloat fog = span->fog, Dfog = span->fogStep;
 
    ASSERT(ctx->Fog.Enabled);
-   ASSERT(span->activeMask & SPAN_FOG);
-   ASSERT(span->filledColor == GL_TRUE);
+   ASSERT(span->interpMask & SPAN_FOG);
+   ASSERT(span->interpMask & SPAN_INDEX);
 
    for (i = 0; i < span->end; i++) {
       const GLfloat f = CLAMP(fog, 0.0F, 1.0F);
@@ -209,7 +212,7 @@ _mesa_fog_ci_pixels_with_array( const GLcontext *ctx, struct sw_span *span,
 
    ASSERT(fog != NULL);
    ASSERT(ctx->Fog.Enabled);
-   ASSERT(span->filledColor == GL_TRUE);
+   ASSERT((span->filledColor == GL_TRUE) || (span->arrayMask & SPAN_INDEX));
 
    for (i = span->start; i < span->end; i++) {
       const GLfloat f = CLAMP(fog[i], 0.0F, 1.0F);
@@ -383,7 +386,7 @@ compute_fog_factors_from_z( const GLcontext *ctx,
 /**
  * Apply fog to a span of RGBA pixels.
  * Input:  ctx  -
- *         span - where span->depth has to be filled.
+ *         span - where span->zArray has to be filled.
  *         red, green, blue, alpha - pixel colors
  * Output:  red, green, blue, alpha - fogged pixel colors
  */
@@ -393,13 +396,13 @@ _mesa_depth_fog_rgba_pixels(const GLcontext *ctx, struct sw_span *span,
 {
    GLfloat fogFact[PB_SIZE];
 
+   /*   printf("%s\n", __FUNCTION__);*/
    ASSERT(ctx->Fog.Enabled);
-   ASSERT(span->activeMask & SPAN_Z);
+   ASSERT(span->arrayMask & SPAN_Z);
    ASSERT(span->end <= PB_SIZE);
-   ASSERT(span->filledDepth == GL_TRUE);
-   ASSERT(span->filledColor == GL_TRUE);
+   ASSERT((span->filledDepth) == GL_TRUE || (span->arrayMask & SPAN_Z));
 
-   compute_fog_factors_from_z(ctx, span->end, span->depth, fogFact );
+   compute_fog_factors_from_z(ctx, span->end, span->zArray, fogFact );
    _mesa_fog_rgba_pixels_with_array( ctx, span, fogFact, rgba );
 }
 
@@ -417,6 +420,7 @@ _old_depth_fog_rgba_pixels( const GLcontext *ctx,
 {
    GLfloat fogFact[PB_SIZE];
    ASSERT(n <= PB_SIZE);
+   /*   printf("%s\n", __FUNCTION__);*/
    compute_fog_factors_from_z( ctx, n, z, fogFact );
    _old_fog_rgba_pixels( ctx, n, fogFact, rgba );
 }
@@ -425,7 +429,7 @@ _old_depth_fog_rgba_pixels( const GLcontext *ctx,
 /**
  * Apply fog to a span of color index pixels.
  * Input:  ctx  -
- *         span - where span->depth has to be filled.
+ *         span - where span->zArray has to be filled.
  *         index - pixel color indexes
  * Output:  index - fogged pixel color indexes
  */
@@ -436,12 +440,11 @@ _mesa_depth_fog_ci_pixels( const GLcontext *ctx, struct sw_span *span,
    GLfloat fogFact[PB_SIZE];
 
    ASSERT(ctx->Fog.Enabled);
-   ASSERT(span->activeMask & SPAN_Z);
+   ASSERT(span->arrayMask & SPAN_Z);
    ASSERT(span->end <= PB_SIZE);
-   ASSERT(span->filledDepth == GL_TRUE);
-   ASSERT(span->filledColor == GL_TRUE);
+   ASSERT((span->filledDepth == GL_TRUE) || (span->arrayMask & SPAN_Z));
 
-   compute_fog_factors_from_z(ctx, span->end, span->depth, fogFact );
+   compute_fog_factors_from_z(ctx, span->end, span->zArray, fogFact );
    _mesa_fog_ci_pixels_with_array( ctx, span, fogFact, index );
 }
 

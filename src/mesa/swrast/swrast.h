@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.15 2002/01/21 18:12:34 brianp Exp $ */
+/* $Id: swrast.h,v 1.16 2002/01/27 18:32:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -92,7 +92,8 @@ typedef struct {
 #define SPAN_TEXTURE      0x020
 #define SPAN_INT_TEXTURE  0x040
 #define SPAN_LAMBDA       0x080
-#define SPAN_FLAT         0x100  /* flat shading? */
+#define SPAN_COVERAGE     0x100
+#define SPAN_FLAT         0x200  /* flat shading? */
 
 
 struct sw_span {
@@ -104,7 +105,10 @@ struct sw_span {
    /* This flag indicates that only a part of the span is visible */
    GLboolean writeAll;
 
-   GLuint activeMask;  /* OR of the SPAN_* flags */
+   /* This bitmask (bitwise-or of SPAN_* flags) indicates which of the
+    * x/xStep variables are relevant.
+    */
+   GLuint interpMask;
 
 #if CHAN_TYPE == GL_FLOAT
    GLfloat red, redStep;
@@ -132,39 +136,52 @@ struct sw_span {
    GLfloat rho[MAX_TEXTURE_UNITS];
    GLfloat texWidth[MAX_TEXTURE_UNITS], texHeight[MAX_TEXTURE_UNITS];
 
+   /* This bitmask (bitwise-or of SPAN_* flags) indicates which of the
+    * fragment arrays are relevant.
+    */
+   GLuint arrayMask;
+
    /**
     * Arrays of fragment values.  These will either be computed from the
     * x/xStep values above or loadd from glDrawPixels, etc.
     */
-   GLdepth depth[MAX_WIDTH];
    union {
       GLchan rgb[MAX_WIDTH][3];
       GLchan rgba[MAX_WIDTH][4];
       GLuint index[MAX_WIDTH];
    } color;
-   GLchan  specular[MAX_WIDTH][4];
-   GLint   itexcoords[MAX_WIDTH][2];           /* Integer texture (s, t) */
+   GLchan  specArray[MAX_WIDTH][4];
+   GLdepth zArray[MAX_WIDTH];
+   GLfloat fogArray[MAX_WIDTH];
    /* Texture (s,t,r).  4th component only used for pixel texture */
    GLfloat texcoords[MAX_TEXTURE_UNITS][MAX_WIDTH][4];
    GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH];
    GLfloat coverage[MAX_WIDTH];
+
+   /* This mask indicates if fragment is alive or culled */
    GLubyte mask[MAX_WIDTH];
 
 #ifdef DEBUG
-   GLboolean filledDepth, filledMask, filledAlpha;
+   GLboolean filledDepth, filledAlpha;
    GLboolean filledColor, filledSpecular;
    GLboolean filledLambda[MAX_TEXTURE_UNITS], filledTex[MAX_TEXTURE_UNITS];
-   GLboolean testedDepth, testedAlpha;
 #endif
 };
+
+
+#define INIT_SPAN(S)	\
+do {			\
+   S.interpMask = 0;	\
+   S.arrayMask = 0;	\
+   S.start = S.end = 0;	\
+} while (0)
 
 
 #ifdef DEBUG
 #define SW_SPAN_SET_FLAG(flag) {ASSERT((flag) == GL_FALSE);(flag) = GL_TRUE;}
 #define SW_SPAN_RESET(span) {                                        \
-         (span).filledDepth = (span).filledMask = (span).filledAlpha \
-         = (span).filledColor = (span).filledSpecular                \
-         = (span).testedDepth = (span).testedAlpha = GL_FALSE;       \
+         (span).filledDepth = (span).filledAlpha \
+         = (span).filledColor = (span).filledSpecular = GL_FALSE;    \
          MEMSET((span).filledTex, GL_FALSE,                          \
 		MAX_TEXTURE_UNITS*sizeof(GLboolean));                \
          MEMSET((span).filledLambda, GL_FALSE,                       \

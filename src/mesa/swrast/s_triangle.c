@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.48 2002/01/21 18:12:34 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.49 2002/01/27 18:32:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -80,8 +80,13 @@ static void flat_ci_triangle( GLcontext *ctx,
 #define INTERP_Z 1
 #define INTERP_FOG 1
 
-#define RENDER_SPAN( span )						\
-   _mesa_write_monoindex_span(ctx, &span, v2->index, GL_POLYGON );
+#define SETUP_CODE					\
+   span.interpMask |= SPAN_INDEX;			\
+   span.index = IntToFixed(v2->index);			\
+   span.indexStep = 0;
+
+#define RENDER_SPAN( span )				\
+   _mesa_write_index_span(ctx, &span, GL_POLYGON );
 
 #include "s_tritemp.h"
 }
@@ -107,7 +112,7 @@ static void smooth_ci_triangle( GLcontext *ctx,
       span.color.index[i] = FixedToInt(span.index);			\
       span.index += span.indexStep;					\
    }									\
-   _mesa_write_index_span(ctx, &span, NULL, GL_POLYGON);
+   _mesa_write_index_span(ctx, &span, GL_POLYGON);
 
 #include "s_tritemp.h"
 }
@@ -156,6 +161,8 @@ static void smooth_rgba_triangle( GLcontext *ctx,
    GLuint i;				        	        \
    SW_SPAN_SET_FLAG(span.filledColor);			        \
    SW_SPAN_SET_FLAG(span.filledAlpha);			        \
+   ASSERT(span.interpMask & SPAN_RGBA);				\
+   span.arrayMask |= SPAN_RGBA;					\
    for (i = 0; i < span.end; i++) {				\
       span.color.rgba[i][RCOMP] = FixedToChan(span.red);	\
       span.color.rgba[i][GCOMP] = FixedToChan(span.green);	\
@@ -166,7 +173,7 @@ static void smooth_rgba_triangle( GLcontext *ctx,
       span.blue += span.blueStep;				\
       span.alpha += span.alphaStep;				\
    }								\
-   _mesa_write_rgba_span(ctx, &span, NULL, GL_POLYGON);
+   _mesa_write_rgba_span(ctx, &span, GL_POLYGON);
 
 #include "s_tritemp.h"
 
@@ -267,6 +274,7 @@ static void simple_z_textured_triangle( GLcontext *ctx,
    span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
    span.intTex[1] -= FIXED_HALF;					\
    SW_SPAN_SET_FLAG(span.filledColor);					\
+   SW_SPAN_SET_FLAG(span.filledDepth);					\
    for (i = 0; i < span.end; i++) {					\
       const GLdepth z = FixedToDepth(span.z);				\
       if (z < zRow[i]) {						\
@@ -460,6 +468,7 @@ affine_span(GLcontext *ctx, struct sw_span *span,
    GLchan *dest = span->color.rgba[0];
 
    SW_SPAN_SET_FLAG(span->filledColor);
+   SW_SPAN_SET_FLAG(span->filledAlpha);
 
    span->intTex[0] -= FIXED_HALF;
    span->intTex[1] -= FIXED_HALF;
@@ -555,7 +564,9 @@ affine_span(GLcontext *ctx, struct sw_span *span,
       }
       break;
    }
-   _mesa_write_rgba_span(ctx, span, NULL, GL_POLYGON);
+   ASSERT(span->interpMask & SPAN_RGBA);
+   ASSERT(span->arrayMask & SPAN_RGBA);
+   _mesa_write_rgba_span(ctx, span, GL_POLYGON);
 
 #undef SPAN_NEAREST
 #undef SPAN_LINEAR
@@ -594,6 +605,7 @@ static void affine_textured_triangle( GLcontext *ctx,
    info.format = obj->Image[b]->Format;					\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
+   span.arrayMask |= SPAN_RGBA;						\
 									\
    if (info.envmode == GL_BLEND) {					\
       /* potential off-by-one error here? (1.0f -> 2048 -> 0) */	\
@@ -726,6 +738,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
    GLchan *dest = span->color.rgba[0];
 
    SW_SPAN_SET_FLAG(span->filledColor);
+   SW_SPAN_SET_FLAG(span->filledAlpha);
 
    tex_coord[0] = span->tex[0][0]  * (info->smask + 1),
      tex_step[0] = span->texStep[0][0] * (info->smask + 1);
@@ -827,7 +840,9 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
       break;
    }
    
-   _mesa_write_rgba_span(ctx, span, NULL, GL_POLYGON);
+   ASSERT(span->interpMask & SPAN_RGBA);
+   ASSERT(span->arrayMask & SPAN_RGBA);
+   _mesa_write_rgba_span(ctx, span, GL_POLYGON);
 
 
 #undef SPAN_NEAREST
@@ -865,6 +880,7 @@ static void persp_textured_triangle( GLcontext *ctx,
    info.format = obj->Image[b]->Format;					\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
+   span.arrayMask |= SPAN_RGBA;						\
 									\
    if (info.envmode == GL_BLEND) {					\
       /* potential off-by-one error here? (1.0f -> 2048 -> 0) */	\
@@ -939,10 +955,11 @@ static void general_textured_triangle( GLcontext *ctx,
    SW_SPAN_SET_FLAG(span.filledColor);					\
    SW_SPAN_SET_FLAG(span.filledAlpha);					\
    SW_SPAN_SET_FLAG(span.filledTex[0]);					\
+   SW_SPAN_SET_FLAG(span.filledDepth);					\
    /* NOTE: we could just call rasterize_span() here instead */		\
    for (i = 0; i < span.end; i++) {					\
       GLdouble invQ = span.tex[0][3] ? (1.0 / span.tex[0][3]) : 1.0;	\
-      span.depth[i] = FixedToDepth(span.z);				\
+      span.zArray[i] = FixedToDepth(span.z);				\
       span.z += span.zStep;						\
       span.color.rgba[i][RCOMP] = FixedToChan(span.red);		\
       span.color.rgba[i][GCOMP] = FixedToChan(span.green);		\
@@ -960,7 +977,7 @@ static void general_textured_triangle( GLcontext *ctx,
       span.tex[0][2] += span.texStep[0][2];				\
       span.tex[0][3] += span.texStep[0][3];				\
    }									\
-   _mesa_write_texture_span( ctx, &span, NULL, GL_POLYGON );
+   _mesa_write_texture_span( ctx, &span, GL_POLYGON );
 
 #include "s_tritemp.h"
 }
@@ -1204,11 +1221,11 @@ void _swrast_add_spec_terms_triangle( GLcontext *ctx,
 /* record the current triangle function name */
 const char *_mesa_triFuncName = NULL;
 
-#define USE(triFunc)                   \
-do {                                   \
-    _mesa_triFuncName = #triFunc;      \
-    /*printf("%s\n", triFuncName);*/   \
-    swrast->Triangle = triFunc;        \
+#define USE(triFunc)				\
+do {						\
+    _mesa_triFuncName = #triFunc;		\
+    /*printf("%s\n", _mesa_triFuncName);*/	\
+    swrast->Triangle = triFunc;			\
 } while (0)
 
 #else

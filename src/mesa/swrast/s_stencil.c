@@ -1,4 +1,4 @@
-/* $Id: s_stencil.c,v 1.15 2002/01/21 18:12:34 brianp Exp $ */
+/* $Id: s_stencil.c,v 1.16 2002/01/27 18:32:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -559,10 +559,11 @@ _mesa_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span)
    
    ASSERT(ctx->Stencil.Enabled);
    ASSERT(span->end <= MAX_WIDTH);
-   ASSERT(span->filledMask == GL_TRUE);
-   ASSERT(span->filledDepth == GL_TRUE);
-   SW_SPAN_SET_FLAG(span->testedDepth);
-   
+#ifdef DEBUG
+   if (ctx->Depth.Test) {
+      ASSERT((span->filledDepth == GL_TRUE) || (span->arrayMask & SPAN_Z));
+   }
+#endif
    
    /* Get initial stencil values */
    if (swrast->Driver.WriteStencilSpan) {
@@ -578,7 +579,7 @@ _mesa_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span)
    
    /* do all the stencil/depth testing/updating */
    result = stencil_and_ztest_span( ctx, span->end, span->x, span->y,
-				    span->depth, stencil, span->mask );
+				    span->zArray, stencil, span->mask );
    
    if (swrast->Driver.WriteStencilSpan) {
       /* Write updated stencil values into hardware stencil buffer */

@@ -1,4 +1,4 @@
-/* $Id: s_pixeltex.c,v 1.4 2002/01/10 16:54:29 brianp Exp $ */
+/* $Id: s_pixeltex.c,v 1.5 2002/01/27 18:32:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,17 +35,19 @@
 
 #include "glheader.h"
 #include "colormac.h"
+#include "mem.h"
 
 #include "s_context.h"
 #include "s_pixeltex.h"
+#include "s_texture.h"
 
 
 /*
  * Convert RGBA values into strq texture coordinates.
  */
-void
-_mesa_pixeltexgen(GLcontext *ctx, GLuint n, const GLchan rgba[][4],
-                  GLfloat texcoord[][4])
+static void
+pixeltexgen(GLcontext *ctx, GLuint n, const GLchan rgba[][4],
+            GLfloat texcoord[][4])
 {
    if (ctx->Pixel.FragmentRgbSource == GL_CURRENT_RASTER_COLOR) {
       GLuint i;
@@ -77,5 +79,43 @@ _mesa_pixeltexgen(GLcontext *ctx, GLuint n, const GLchan rgba[][4],
       for (i = 0; i < n; i++) {
          texcoord[i][3] = CHAN_TO_FLOAT(rgba[i][ACOMP]);
       }
+   }
+}
+
+
+
+/*
+ * Used byglDraw/CopyPixels: the incoming image colors are treated
+ * as texture coordinates.  Use those coords to texture the image.
+ * This is for GL_SGIS_pixel_texture / GL_SGIX_pixel_texture.
+ */
+void
+_swrast_pixel_texture(GLcontext *ctx, struct sw_span *span)
+{
+   if (ctx->Texture._ReallyEnabled & ~TEXTURE0_ANY) {
+      /* multitexture! */
+      GLchan rgbaOut[MAX_WIDTH][4];
+      GLuint unit;
+
+      MEMCPY(rgbaOut, span->color.rgba, 4 * span->end * sizeof(GLchan));
+      
+      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
+         if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+            pixeltexgen(ctx, span->end,
+                        (const GLchan (*)[4]) span->color.rgba,
+                        span->texcoords[unit]);
+            _swrast_texture_fragments(ctx, unit, span, rgbaOut);
+         }
+      }
+
+      MEMCPY(span->color.rgba, rgbaOut, 4 * span->end * sizeof(GLchan));
+   }
+   else {
+      /* single texture, unit 0 */
+      ASSERT(ctx->Texture._ReallyEnabled & TEXTURE0_ANY);
+      pixeltexgen(ctx, span->end,
+                  (const GLchan (*)[4]) span->color.rgba,
+                  span->texcoords[0]);
+      _swrast_texture_fragments(ctx, 0, span, span->color.rgba);
    }
 }

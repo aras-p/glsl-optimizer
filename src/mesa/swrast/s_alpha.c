@@ -1,4 +1,4 @@
-/* $Id: s_alpha.c,v 1.5 2002/01/21 18:12:34 brianp Exp $ */
+/* $Id: s_alpha.c,v 1.6 2002/01/27 18:32:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,11 +49,7 @@ _mesa_alpha_test( const GLcontext *ctx, struct sw_span *span,
    const GLchan ref = ctx->Color.AlphaRef;
    GLubyte *mask = span->mask;
 
-   ASSERT (span->filledMask == GL_TRUE);
-   ASSERT (span->filledAlpha == GL_TRUE);
-
-   SW_SPAN_SET_FLAG(span->testedAlpha);
-
+   ASSERT (span->filledAlpha == GL_TRUE || (span->arrayMask & SPAN_RGBA));
 
    /* switch cases ordered from most frequent to less frequent */
    switch (ctx->Color.AlphaFunc) {
@@ -97,6 +93,8 @@ _mesa_alpha_test( const GLcontext *ctx, struct sw_span *span,
          return 0;
    }
 
+#if 0
+   /* XXXX This causes conformance failures!!!! */
    while ((span->start <= span->end)  &&
 	  (mask[span->start] == 0))
      span->start ++;
@@ -104,7 +102,7 @@ _mesa_alpha_test( const GLcontext *ctx, struct sw_span *span,
    while ((span->end >= span->start)  &&
 	  (mask[span->end] == 0))
      span->end --;
-
+#endif
    span->writeAll = GL_FALSE;
 
    if (span->start >= span->end)

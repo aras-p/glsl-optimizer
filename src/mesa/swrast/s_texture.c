@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.45 2002/01/10 16:54:29 brianp Exp $ */
+/* $Id: s_texture.c,v 1.46 2002/01/27 18:32:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1032,19 +1032,27 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
                                    texcoords[i][0], texcoords[i][1], rgba[i]);
                   break;
                case GL_NEAREST_MIPMAP_NEAREST:
-                  sample_2d_nearest_mipmap_nearest(ctx, tObj, texcoords[i][0], texcoords[i][1],
+                  sample_2d_nearest_mipmap_nearest(ctx, tObj,
+                                                   texcoords[i][0],
+                                                   texcoords[i][1],
                                                    lambda[i], rgba[i]);
                   break;
                case GL_LINEAR_MIPMAP_NEAREST:
-                  sample_2d_linear_mipmap_nearest(ctx,tObj, texcoords[i][0], texcoords[i][1],
+                  sample_2d_linear_mipmap_nearest(ctx, tObj,
+                                                  texcoords[i][0],
+                                                  texcoords[i][1],
                                                   lambda[i], rgba[i]);
                   break;
                case GL_NEAREST_MIPMAP_LINEAR:
-                  sample_2d_nearest_mipmap_linear(ctx,tObj, texcoords[i][0], texcoords[i][1],
+                  sample_2d_nearest_mipmap_linear(ctx, tObj,
+                                                  texcoords[i][0],
+                                                  texcoords[i][1],
                                                   lambda[i], rgba[i]);
                   break;
                case GL_LINEAR_MIPMAP_LINEAR:
-                  sample_2d_linear_mipmap_linear(ctx,tObj, texcoords[i][0], texcoords[i][1],
+                  sample_2d_linear_mipmap_linear(ctx, tObj,
+                                                 texcoords[i][0],
+                                                 texcoords[i][1],
                                                  lambda[i], rgba[i] );
                   break;
                default:
@@ -1393,7 +1401,9 @@ sample_nearest_3d(GLcontext *ctx, GLuint texUnit,
    struct gl_texture_image *image = tObj->Image[tObj->BaseLevel];
    (void) lambda;
    for (i=0;i<n;i++) {
-      sample_3d_nearest(ctx, tObj, image, texcoords[i][0], texcoords[i][1], texcoords[i][2], rgba[i]);
+      sample_3d_nearest(ctx, tObj, image,
+                        texcoords[i][0], texcoords[i][1], texcoords[i][2],
+                        rgba[i]);
    }
 }
 
@@ -1409,7 +1419,9 @@ sample_linear_3d( GLcontext *ctx, GLuint texUnit,
    struct gl_texture_image *image = tObj->Image[tObj->BaseLevel];
    (void) lambda;
    for (i=0;i<n;i++) {
-      sample_3d_linear(ctx, tObj, image, texcoords[i][0], texcoords[i][1], texcoords[i][2], rgba[i]);
+      sample_3d_linear(ctx, tObj, image,
+                       texcoords[i][0], texcoords[i][1], texcoords[i][2],
+                       rgba[i]);
    }
 }
 
@@ -1434,26 +1446,40 @@ sample_lambda_3d( GLcontext *ctx, GLuint texUnit,
          switch (tObj->MinFilter) {
             case GL_NEAREST:
                sample_3d_nearest(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                 texcoords[i][0], texcoords[i][1], texcoords[i][2], rgba[i]);
+                                 texcoords[i][0], texcoords[i][1],
+                                 texcoords[i][2], rgba[i]);
                break;
             case GL_LINEAR:
                sample_3d_linear(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                texcoords[i][0], texcoords[i][1], texcoords[i][2], rgba[i]);
+                                texcoords[i][0], texcoords[i][1],
+                                texcoords[i][2], rgba[i]);
                break;
             case GL_NEAREST_MIPMAP_NEAREST:
-               sample_3d_nearest_mipmap_nearest(ctx, tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2],
+               sample_3d_nearest_mipmap_nearest(ctx, tObj,
+                                                texcoords[i][0],
+                                                texcoords[i][1],
+                                                texcoords[i][2],
                                                 lambda[i], rgba[i]);
                break;
             case GL_LINEAR_MIPMAP_NEAREST:
-               sample_3d_linear_mipmap_nearest(ctx, tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2],
+               sample_3d_linear_mipmap_nearest(ctx, tObj,
+                                               texcoords[i][0],
+                                               texcoords[i][1],
+                                               texcoords[i][2],
                                                lambda[i], rgba[i]);
                break;
             case GL_NEAREST_MIPMAP_LINEAR:
-               sample_3d_nearest_mipmap_linear(ctx, tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2],
+               sample_3d_nearest_mipmap_linear(ctx, tObj,
+                                               texcoords[i][0],
+                                               texcoords[i][1],
+                                               texcoords[i][2],
                                                lambda[i], rgba[i]);
                break;
             case GL_LINEAR_MIPMAP_LINEAR:
-               sample_3d_linear_mipmap_linear(ctx, tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2],
+               sample_3d_linear_mipmap_linear(ctx, tObj,
+                                              texcoords[i][0],
+                                              texcoords[i][1],
+                                              texcoords[i][2],
                                               lambda[i], rgba[i]);
                break;
             default:
@@ -1465,11 +1491,13 @@ sample_lambda_3d( GLcontext *ctx, GLuint texUnit,
          switch (tObj->MagFilter) {
             case GL_NEAREST:
                sample_3d_nearest(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                 texcoords[i][0], texcoords[i][1], texcoords[i][2], rgba[i]);
+                                 texcoords[i][0], texcoords[i][1],
+                                 texcoords[i][2], rgba[i]);
                break;
             case GL_LINEAR:
                sample_3d_linear(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                texcoords[i][0], texcoords[i][1], texcoords[i][2], rgba[i]);
+                                texcoords[i][0], texcoords[i][1],
+                                texcoords[i][2], rgba[i]);
                break;
             default:
                _mesa_problem(NULL, "Bad mag filter in sample_3d_texture");
@@ -3062,16 +3090,20 @@ _old_swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
 void
 _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit,
                            struct sw_span *span,
-                           GLchan rgba[][4] )
+                           GLchan rgbaOut[][4] )
 {
    const GLuint mask = TEXTURE0_ANY << (texUnit * 4);
 
    if (ctx->Texture._ReallyEnabled & mask) {
       const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
-      GLfloat *lambda = span->lambda[texUnit];
+      GLfloat *lambda;
       
+      lambda = (span->arrayMask & SPAN_LAMBDA) ? span->lambda[texUnit] : NULL;
+
+      /* XXXX
       ASSERT(span->filledTex[texUnit] == GL_TRUE);
-      
+      */
+
       if (textureUnit->_Current) {   /* XXX need this? */
          const struct gl_texture_object *curObj = textureUnit->_Current;
          GLchan texel[PB_SIZE][4];
@@ -3111,10 +3143,9 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit,
                                                          lambda, texel );
          }
          apply_texture( ctx, textureUnit, span->end,
-                        (CONST GLchan (*)[4])span->color.rgba,
-                        (CONST GLchan (*)[4]) texel, rgba );
+                        (CONST GLchan (*)[4]) span->color.rgba,
+                        (CONST GLchan (*)[4]) texel,
+                        rgbaOut );
       }
    }
 }
-
-

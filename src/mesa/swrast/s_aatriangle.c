@@ -1,4 +1,4 @@
-/* $Id: s_aatriangle.c,v 1.21 2001/12/17 04:54:35 brianp Exp $ */
+/* $Id: s_aatriangle.c,v 1.22 2002/01/27 18:32:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,7 @@
  */
 
 
+#include "macros.h"
 #include "mem.h"
 #include "mmath.h"
 #include "s_aatriangle.h"

@@ -1,4 +1,4 @@
-/* $Id: s_span.h,v 1.11 2002/01/21 18:12:34 brianp Exp $ */
+/* $Id: s_span.h,v 1.12 2002/01/27 18:32:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,48 +34,34 @@
 
 
 extern void
-_old_write_index_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                        const GLdepth z[], const GLfloat fog[],
-                        GLuint index[], const GLint coverage[],
-                        GLenum primitive );
+_mesa_span_default_z( GLcontext *ctx, struct sw_span *span );
 
 extern void
-_old_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                       const GLdepth z[], const GLfloat fog[],
-                       GLchan rgba[][4], const GLfloat coverage[],
-                       GLenum primitive );
-
-void
-_mesa_write_index_span( GLcontext *ctx,	struct sw_span *span,
-			const GLfloat fog[MAX_WIDTH], GLenum primitive);
+_mesa_span_default_fog( GLcontext *ctx, struct sw_span *span );
 
 extern void
-_mesa_write_monoindex_span( GLcontext *ctx, struct sw_span *span,
-                            GLuint index, GLenum primitive );
+_mesa_span_default_color( GLcontext *ctx, struct sw_span *span );
+
+
+extern void
+_mesa_write_index_span( GLcontext *ctx, struct sw_span *span,
+                        GLenum primitive);
 
 extern void
 _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
-		       const GLfloat fog[MAX_WIDTH], GLenum primitive);
+                       GLenum primitive);
 
 extern void
 _mesa_write_monocolor_span( GLcontext *ctx, struct sw_span *span,
-			    const GLchan color[4], GLenum primitive );
+                            const GLchan color[4], GLenum primitive );
 
 extern void
 _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
-			  const GLfloat fog[MAX_WIDTH], GLenum primitive );
+                          GLenum primitive );
 
 
 extern void
 _mesa_rasterize_span(GLcontext *ctx, struct sw_span *span);
-
-
-extern void
-_old_write_texture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-			 const GLdepth z[], const GLfloat fog[],
-			 GLfloat texcoord[][4], GLfloat lambda[],
-			 GLchan rgba[][4], GLchan spec[][4],
-			 const GLfloat coverage[], GLenum primitive );
 
 
 extern void

@@ -1,4 +1,4 @@
-/* $Id: s_pixeltex.h,v 1.4 2002/01/10 16:54:29 brianp Exp $ */
+/* $Id: s_pixeltex.h,v 1.5 2002/01/27 18:32:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,9 +31,9 @@
 #include "mtypes.h"
 #include "swrast.h"
 
+
 extern void
-_mesa_pixeltexgen(GLcontext *ctx, GLuint n, const GLchan rgba[][4],
-                  GLfloat texcoord[][4]);
+_swrast_pixel_texture(GLcontext *ctx, struct sw_span *span);
 
 
 #endif

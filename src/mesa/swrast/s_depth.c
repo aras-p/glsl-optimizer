@@ -1,4 +1,4 @@
-/* $Id: s_depth.c,v 1.11 2002/01/21 18:12:34 brianp Exp $ */
+/* $Id: s_depth.c,v 1.12 2002/01/27 18:32:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -572,10 +572,8 @@ _mesa_depth_test_span( GLcontext *ctx, struct sw_span *span)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   ASSERT(span->activeMask & SPAN_Z);
-   ASSERT(span->filledMask == GL_TRUE);
-   ASSERT(span->filledDepth == GL_TRUE);
-   SW_SPAN_SET_FLAG(span->testedDepth);
+   ASSERT((span->interpMask & SPAN_Z) || (span->arrayMask & SPAN_Z));
+   ASSERT((span->filledDepth == GL_TRUE) || (span->arrayMask & SPAN_Z));
    
    if (swrast->Driver.ReadDepthSpan) {
       /* hardware-based depth buffer */
@@ -583,7 +581,7 @@ _mesa_depth_test_span( GLcontext *ctx, struct sw_span *span)
       GLuint passed;
       (*swrast->Driver.ReadDepthSpan)(ctx, span->end, span->x, span->y, zbuffer);
       passed = depth_test_span32(ctx, span->end, span->x, span->y,
-	                         zbuffer, span->depth, span->mask);
+	                         zbuffer, span->zArray, span->mask);
       ASSERT(swrast->Driver.WriteDepthSpan);
       (*swrast->Driver.WriteDepthSpan)(ctx, span->end, span->x, span->y, zbuffer, span->mask);
       if (passed < span->end)
@@ -595,11 +593,11 @@ _mesa_depth_test_span( GLcontext *ctx, struct sw_span *span)
       /* software depth buffer */
       if (ctx->Visual.depthBits <= 16) {
          GLushort *zptr = (GLushort *) Z_ADDRESS16(ctx, span->x, span->y);
-         passed = depth_test_span16(ctx, span->end, span->x, span->y, zptr, span->depth, span->mask);
+         passed = depth_test_span16(ctx, span->end, span->x, span->y, zptr, span->zArray, span->mask);
       }
       else {
          GLuint *zptr = (GLuint *) Z_ADDRESS32(ctx, span->x, span->y);
-         passed = depth_test_span32(ctx, span->end, span->x, span->y, zptr, span->depth, span->mask);
+         passed = depth_test_span32(ctx, span->end, span->x, span->y, zptr, span->zArray, span->mask);
       }
       if (passed < span->end)
          span->writeAll = GL_FALSE;

@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.30 2001/12/17 04:58:50 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.31 2002/01/27 18:32:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -121,6 +121,8 @@
    GLfixed vMin_fx, vMin_fy, vMid_fx, vMid_fy, vMax_fx, vMax_fy;
 
    struct sw_span span;
+
+   INIT_SPAN(span);
 
 #ifdef INTERP_Z
    (void) fixedToDepthShift;
@@ -340,11 +342,10 @@
 
       scan_from_left_to_right = (oneOverArea < 0.0F);
 
-      span.activeMask = 0;
 
       /* compute d?/dx and d?/dy derivatives */
 #ifdef INTERP_Z
-      span.activeMask |= SPAN_Z;
+      span.interpMask |= SPAN_Z;
       {
          GLfloat eMaj_dz, eBot_dz;
          eMaj_dz = vMax->win[2] - vMin->win[2];
@@ -365,7 +366,7 @@
       }
 #endif
 #ifdef INTERP_FOG
-      span.activeMask |= SPAN_FOG;
+      span.interpMask |= SPAN_FOG;
       {
          const GLfloat eMaj_dfog = vMax->fog - vMin->fog;
          const GLfloat eBot_dfog = vMid->fog - vMin->fog;
@@ -374,7 +375,7 @@
       }
 #endif
 #ifdef INTERP_RGB
-      span.activeMask |= SPAN_RGBA;
+      span.interpMask |= SPAN_RGBA;
       if (ctx->Light.ShadeModel == GL_SMOOTH) {
          GLfloat eMaj_dr, eBot_dr;
          GLfloat eMaj_dg, eBot_dg;
@@ -415,7 +416,7 @@
       }
       else {
          ASSERT (ctx->Light.ShadeModel == GL_FLAT);
-         span.activeMask |= SPAN_FLAT;
+         span.interpMask |= SPAN_FLAT;
          drdx = drdy = 0.0F;
          dgdx = dgdy = 0.0F;
          dbdx = dbdy = 0.0F;
@@ -429,7 +430,7 @@
       }
 #endif
 #ifdef INTERP_FLOAT_RGBA
-      span.activeMask |= SPAN_RGBA;
+      span.interpMask |= SPAN_RGBA;
       if (ctx->Light.ShadeModel == GL_SMOOTH) {
          GLfloat eMaj_dr, eBot_dr;
          GLfloat eMaj_dg, eBot_dg;
@@ -464,7 +465,7 @@
       }
 #endif
 #ifdef INTERP_SPEC
-      span.activeMask |= SPAN_SPEC;
+      span.interpMask |= SPAN_SPEC;
       if (ctx->Light.ShadeModel == GL_SMOOTH) {
          GLfloat eMaj_dsr, eBot_dsr;
          GLfloat eMaj_dsg, eBot_dsg;
@@ -501,7 +502,7 @@
       }
 #endif
 #ifdef INTERP_FLOAT_SPEC
-      span.activeMask |= SPAN_SPEC;
+      span.interpMask |= SPAN_SPEC;
       if (ctx->Light.ShadeModel == GL_SMOOTH) {
          GLfloat eMaj_dsr, eBot_dsr;
          GLfloat eMaj_dsg, eBot_dsg;
@@ -529,7 +530,7 @@
       }
 #endif
 #ifdef INTERP_INDEX
-      span.activeMask |= SPAN_INDEX;
+      span.interpMask |= SPAN_INDEX;
       if (ctx->Light.ShadeModel == GL_SMOOTH) {
          GLfloat eMaj_di, eBot_di;
          eMaj_di = (GLfloat) ((GLint) vMax->index - (GLint) vMin->index);
@@ -539,13 +540,13 @@
          didy = oneOverArea * (eMaj.dx * eBot_di - eMaj_di * eBot.dx);
       }
       else {
-         span.activeMask |= SPAN_FLAT;
+         span.interpMask |= SPAN_FLAT;
          didx = didy = 0.0F;
          span.indexStep = 0;
       }
 #endif
 #ifdef INTERP_INT_TEX
-      span.activeMask |= SPAN_INT_TEXTURE;
+      span.interpMask |= SPAN_INT_TEXTURE;
       {
          GLfloat eMaj_ds, eBot_ds;
          eMaj_ds = (vMax->texcoord[0][0] - vMin->texcoord[0][0]) * S_SCALE;
@@ -565,7 +566,7 @@
 
 #endif
 #ifdef INTERP_TEX
-      span.activeMask |= SPAN_TEXTURE;
+      span.interpMask |= SPAN_TEXTURE;
       {
          GLfloat wMax = vMax->win[3];
          GLfloat wMin = vMin->win[3];
@@ -608,14 +609,14 @@
          GLfloat r1 = dudx * dudx + dudy * dudy;
          GLfloat r2 = dvdx * dvdx + dvdy * dvdy;
          span.rho[0] = r1 + r2; /* was rho2 = MAX2(r1,r2) */
-         span.activeMask |= SPAN_LAMBDA;
+         span.interpMask |= SPAN_LAMBDA;
       }
 #  endif
 #endif
 #ifdef INTERP_MULTITEX
-      span.activeMask |= SPAN_TEXTURE;
+      span.interpMask |= SPAN_TEXTURE;
 #  ifdef INTERP_LAMBDA
-      span.activeMask |= SPAN_LAMBDA;
+      span.interpMask |= SPAN_LAMBDA;
 #  endif
       {
          GLfloat wMax = vMax->win[3];
@@ -1143,6 +1144,7 @@
                /* initialize the span interpolants to the leftmost value */
                /* ff = fixed-pt fragment */
                const GLint right = FixedToInt(fxRightEdge);
+	       /*INIT_SPAN(span);*/
 	       SW_SPAN_RESET(span);
                span.x = FixedToInt(fxLeftEdge);
 
