@@ -4,7 +4,7 @@
 # up to him/her to re-run this makefile and check in the newly generated files.
 
 
-OUTPUTS = glprocs.h glapitemp.h glapioffsets.h glapitable.h glapi_x86.S 
+OUTPUTS = glprocs.h glapitemp.h glapioffsets.h glapitable.h ../x86/glapi_x86.S 
 
 COMMON = gl_XML.pyc license.pyc gl_API.xml
 
@@ -30,8 +30,8 @@ glapioffsets.h: $(COMMON) gl_offsets.py
 glapitable.h: $(COMMON) gl_table.py
 	python2 -t gl_table.py > glapitable.h
 
-glapi_x86.S: $(COMMON) gl_x86_asm.py
-	python2 -t gl_x86_asm.py > glapi_x86.S
+../x86/glapi_x86.S: $(COMMON) gl_x86_asm.py
+	python2 -t gl_x86_asm.py > ../x86/glapi_x86.S
 
 clean:
 	rm -f *~ *.pyc
