@@ -2120,7 +2120,7 @@ static void update_texturematrix( GLcontext *ctx )
    rmesa->TexMatEnabled = 0;
    rmesa->TexMatCompSel = 0;
 
-   for (unit = 0 ; unit < 2; unit++) {
+   for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
       if (!ctx->Texture.Unit[unit]._ReallyEnabled) 
 	 continue;
 

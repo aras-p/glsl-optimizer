@@ -302,6 +302,7 @@ static void r200_check_tcl_render( GLcontext *ctx,
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint inputs = VERT_BIT_POS;
+   GLuint unit;
 
    /* Validate state:
     */
@@ -326,23 +327,15 @@ static void r200_check_tcl_render( GLcontext *ctx,
 	 }
       }
 
-      if (ctx->Texture.Unit[0]._ReallyEnabled) {
-	 if (ctx->Texture.Unit[0].TexGenEnabled) {
-	    if (rmesa->TexGenNeedNormals[0]) {
-	       inputs |= VERT_BIT_NORMAL;
+      for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
+	 if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+	    if (ctx->Texture.Unit[unit].TexGenEnabled) {
+	       if (rmesa->TexGenNeedNormals[unit]) {
+		  inputs |= VERT_BIT_NORMAL;
+	       }
+	    } else {
+	       inputs |= VERT_BIT_TEX(unit);
 	    }
-	 } else {
-	    inputs |= VERT_BIT_TEX0;
-	 }
-      }
-
-      if (ctx->Texture.Unit[1]._ReallyEnabled) {
-	 if (ctx->Texture.Unit[1].TexGenEnabled) {
-	    if (rmesa->TexGenNeedNormals[1]) {
-	       inputs |= VERT_BIT_NORMAL;
-	    }
-	 } else {
-	    inputs |= VERT_BIT_TEX1;
 	 }
       }
 

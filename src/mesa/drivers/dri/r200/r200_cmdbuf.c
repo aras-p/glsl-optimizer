@@ -63,7 +63,7 @@ static void r200_emit_state_list( r200ContextPtr rmesa,
 {
    struct r200_state_atom *state, *tmp;
    char *dest;
-   int i, size;
+   int i, size, mtu;
 
    size = 0;
    foreach_s( state, tmp, list ) {
@@ -84,6 +84,7 @@ static void r200_emit_state_list( r200ContextPtr rmesa,
       return;
 
    dest = r200AllocCmdBuf( rmesa, size * 4, __FUNCTION__);
+   mtu = rmesa->glCtx->Const.MaxTextureUnits;
 
 #define EMIT_ATOM(ATOM) \
 do { \
@@ -112,13 +113,13 @@ do { \
    EMIT_ATOM (fog);
    EMIT_ATOM (tam);
    EMIT_ATOM (tf);
-   for (i = 0; i < 2; ++i) {
+   for (i = 0; i < mtu; ++i) {
        EMIT_ATOM (tex[i]);
    }
-   for (i = 0; i < 2; ++i) {
+   for (i = 0; i < mtu; ++i) {
        EMIT_ATOM (cube[i]);
    }
-   for (i = 0; i < 5; ++i)
+   for (i = 0; i < 3 + mtu; ++i)
        EMIT_ATOM (mat[i]);
    EMIT_ATOM (eye);
    EMIT_ATOM (glt);

@@ -422,7 +422,7 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
    }
 
 /*    vtx = (rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] & */
-/* 	  ~(R200_TCL_VTX_Q0|R200_TCL_VTX_Q1)); */
+/* 	  ~(R200_TCL_VTX_Q0|R200_TCL_VTX_Q1|R200_TCL_VTX_Q2|R200_TCL_VTX_Q3|R200_TCL_VTX_Q4|R200_TCL_VTX_Q5)); */
       
    re_cntl = rmesa->hw.set.cmd[SET_RE_CNTL] & ~(R200_VTX_STQ0_D3D |
 						R200_VTX_STQ1_D3D |
@@ -468,6 +468,7 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
 
 void r200ReleaseArrays( GLcontext *ctx, GLuint newinputs )
 {
+   GLuint unit;
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
 
 /*    if (R200_DEBUG & DEBUG_VERTS)  */
@@ -485,9 +486,8 @@ void r200ReleaseArrays( GLcontext *ctx, GLuint newinputs )
    if (newinputs & VERT_BIT_COLOR1) 
       r200ReleaseDmaRegion( rmesa, &rmesa->tcl.spec, __FUNCTION__ );
 
-   if (newinputs & VERT_BIT_TEX0)
-      r200ReleaseDmaRegion( rmesa, &rmesa->tcl.tex[0], __FUNCTION__ );
-
-   if (newinputs & VERT_BIT_TEX1)
-      r200ReleaseDmaRegion( rmesa, &rmesa->tcl.tex[1], __FUNCTION__ );
+   for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
+      if (newinputs & VERT_BIT_TEX(unit))
+	 r200ReleaseDmaRegion( rmesa, &rmesa->tcl.tex[unit], __FUNCTION__ );
+   }
 }
