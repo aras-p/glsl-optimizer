@@ -1301,8 +1301,10 @@ Mesa Version History
     New:
 	- GL_ARB_draw_buffers extension
 	- GL_OES_read_format extension (Ian Romanick)
+	- full support for GL_EXT_pixel_buffer_object (convolution filters,
+	  polygon stipple, colormaps, etc)
     Changes:
-	- 
+	- added -stereo option for glxgears demo (Jacek Rosik)
     Bug fixes:
 	fixes from 6.2.1, plus:
 	- 
