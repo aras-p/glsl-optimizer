@@ -2154,9 +2154,14 @@ _mesa_TexGeniv(GLenum coord, GLenum pname, const GLint *params )
 {
    GLfloat p[4];
    p[0] = (GLfloat) params[0];
-   p[1] = (GLfloat) params[1];
-   p[2] = (GLfloat) params[2];
-   p[3] = (GLfloat) params[3];
+   if (pname == GL_TEXTURE_GEN_MODE) {
+      p[1] = p[2] = p[3] = 0.0F;
+   }
+   else {
+      p[1] = (GLfloat) params[1];
+      p[2] = (GLfloat) params[2];
+      p[3] = (GLfloat) params[3];
+   }
    _mesa_TexGenfv(coord, pname, p);
 }
 
@@ -2174,9 +2179,14 @@ _mesa_TexGendv(GLenum coord, GLenum pname, const GLdouble *params )
 {
    GLfloat p[4];
    p[0] = (GLfloat) params[0];
-   p[1] = (GLfloat) params[1];
-   p[2] = (GLfloat) params[2];
-   p[3] = (GLfloat) params[3];
+   if (pname == GL_TEXTURE_GEN_MODE) {
+      p[1] = p[2] = p[3] = 0.0F;
+   }
+   else {
+      p[1] = (GLfloat) params[1];
+      p[2] = (GLfloat) params[2];
+      p[3] = (GLfloat) params[3];
+   }
    _mesa_TexGenfv( coord, pname, p );
 }
 
