@@ -1050,16 +1050,6 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
             return;
         }
 
-#if !NEWTEXSTORE
-        _mesa_transfer_teximage(ctx, 2, texImage->Format,/* Tex int format */
-                                texImage->TexFormat,     /* dest format */
-                                (GLubyte *) tempImage,   /* dest */
-                                width, height, 1,        /* subimage size */
-                                0, 0, 0,                 /* subimage pos */
-                                width * texelBytes,      /* dest row stride */
-                                0,                       /* dst image stride */
-                                format, type, pixels, packing);
-#else
         texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
                                         &texImage->Format, texImage->Data,
                                         0, 0, 0, /* dstX/Y/Zoffset */
@@ -1067,7 +1057,6 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
                                         0, /* dstImageStride */
                                         width, height, 1,
                                         format, type, pixels, packing);
-#endif
 
         /* now rescale */
         scaledImage = MALLOC(newWidth * newHeight * texelBytes);
@@ -1093,16 +1082,6 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
     }
     else {
         /* no rescaling needed */
-#if !NEWTEXSTORE
-        _mesa_transfer_teximage(ctx, 2, texImage->Format,  /* Tex int format */
-                                texImage->TexFormat,       /* dest format */
-                                (GLubyte *) texImage->Data,/* dest */
-                                width, height, 1,          /* subimage size */
-                                xoffset, yoffset, 0,       /* subimage pos */
-                                mml->width * texelBytes, /* dest row stride */
-                                0,                       /* dst image stride */
-                                format, type, pixels, packing);
-#else
         texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
                                     &texImage->Format, texImage->Data,
                                     xoffset, yoffset, 0,
@@ -1110,7 +1089,6 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
                                     0, /* dstImageStride */
                                     width, height, 1,
                                     format, type, pixels, packing);
-#endif
     }
 
     ti->reloadImages = GL_TRUE; /* signal the image needs to be reloaded */

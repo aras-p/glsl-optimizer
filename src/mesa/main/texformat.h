@@ -34,8 +34,6 @@
 #ifndef TEXFORMAT_H
 #define TEXFORMAT_H
 
-#define NEWTEXSTORE 1
-
 
 #include "mtypes.h"
 

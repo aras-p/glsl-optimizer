@@ -37,8 +37,6 @@
 
 #include "mtypes.h"
 
-/*** NEWTEXSTORE ***/
-
 /* Macro just to save some typing */
 #define STORE_PARAMS \
 	GLcontext *ctx, GLuint dims, \
@@ -93,23 +91,6 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
                            GLenum srcFormat, GLenum srcType,
                            const GLvoid *srcAddr,
                            const struct gl_pixelstore_attrib *srcPacking);
-
-
-#if !NEWTEXSTORE
-
-extern void
-_mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
-                        GLenum baseInternalFormat,
-                        const struct gl_texture_format *texDestFormat,
-                        GLvoid *texDestAddr,
-                        GLint srcWidth, GLint srcHeight, GLint srcDepth,
-                        GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
-                        GLint dstRowStride, GLint dstImageStride,
-                        GLenum srcFormat, GLenum srcType,
-                        const GLvoid *srcAddr,
-                        const struct gl_pixelstore_attrib *srcPacking);
-
-#endif /* NEWTEXSTORE */
 
 
 extern void
