@@ -13,8 +13,7 @@ VPATH = RCS
 
 INCDIR = [-.include]
 LIBDIR = [-.lib]
-CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)\
-	/define=("__FUNCTION__=""<has no meaning on OpenVMS>""")
+CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
 
 CORE_SOURCES =accum.c \
 	api_loopback.c \
