@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.8 1999/11/08 07:36:44 brianp Exp $ */
+/* $Id: enable.c,v 1.9 1999/11/10 06:29:44 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -123,6 +123,8 @@ void gl_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          if (ctx->Light.ColorMaterialEnabled!=state) {
             ctx->Light.ColorMaterialEnabled = state;
 	    ctx->NewState |= NEW_LIGHTING;
+	    if (state) 
+	       gl_update_color_material( ctx, ctx->Current.ByteColor );
          }
 	 break;
       case GL_CULL_FACE:

@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.7 1999/11/08 07:36:44 brianp Exp $ */
+/* $Id: light.c,v 1.8 1999/11/10 06:29:44 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -435,6 +435,9 @@ void gl_update_material( GLcontext *ctx,
    if (ctx->Light.ColorMaterialEnabled)
       bitmask &= ~ctx->Light.ColorMaterialBitmask;
 
+   if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
+      fprintf(stderr, "gl_update_material, mask %x\n", bitmask);
+
    if (!bitmask) 
       return;
 
@@ -531,6 +534,26 @@ void gl_update_material( GLcontext *ctx,
       ctx->Light.Material[1].SpecularIndex = src[1].SpecularIndex;
    }
 
+   if (0)
+   {
+      struct gl_material *mat = &ctx->Light.Material[0];
+      fprintf(stderr, "update_mat  emission : %f %f %f\n",
+	      mat->Emission[0],
+	      mat->Emission[1],
+	      mat->Emission[2]);
+      fprintf(stderr, "update_mat  specular : %f %f %f\n",
+	      mat->Specular[0],
+	      mat->Specular[1],
+	      mat->Specular[2]);
+      fprintf(stderr, "update_mat  diffuse : %f %f %f\n",
+	      mat->Diffuse[0],
+	      mat->Diffuse[1],
+	      mat->Diffuse[2]);
+      fprintf(stderr, "update_mat  ambient : %f %f %f\n",
+	      mat->Ambient[0],
+	      mat->Ambient[1],
+	      mat->Ambient[2]);
+   }
 }
 
 
@@ -546,6 +569,10 @@ void gl_update_color_material( GLcontext *ctx,
    GLfloat tmp[4], color[4];
 
    UBYTE_RGBA_TO_FLOAT_RGBA( color, rgba );
+
+   if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
+      fprintf(stderr, "gl_update_color_material, mask %x\n", bitmask);
+
    
    if (bitmask & FRONT_AMBIENT_BIT) {
       struct gl_material *mat = &ctx->Light.Material[0];
@@ -623,6 +650,27 @@ void gl_update_color_material( GLcontext *ctx,
       ACC_3V( ctx->Light.BaseColor[1], tmp );
       COPY_4FV( mat->Emission, color );
    }
+
+   if (0)
+   {
+      struct gl_material *mat = &ctx->Light.Material[0];
+      fprintf(stderr, "update_color_mat  emission : %f %f %f\n",
+	      mat->Emission[0],
+	      mat->Emission[1],
+	      mat->Emission[2]);
+      fprintf(stderr, "update_color_mat  specular : %f %f %f\n",
+	      mat->Specular[0],
+	      mat->Specular[1],
+	      mat->Specular[2]);
+      fprintf(stderr, "update_color_mat  diffuse : %f %f %f\n",
+	      mat->Diffuse[0],
+	      mat->Diffuse[1],
+	      mat->Diffuse[2]);
+      fprintf(stderr, "update_color_mat  ambient : %f %f %f\n",
+	      mat->Ambient[0],
+	      mat->Ambient[1],
+	      mat->Ambient[2]);
+   }
 }
 
 
@@ -638,6 +686,11 @@ void gl_ColorMaterial( GLcontext *ctx, GLenum face, GLenum mode )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glColorMaterial");
 
+   if (MESA_VERBOSE&VERBOSE_API) 
+      fprintf(stderr, "glColorMaterial %s %s\n", 
+	      gl_lookup_enum_by_nr(face),
+	      gl_lookup_enum_by_nr(mode));
+
    bitmask = gl_material_bitmask( ctx, face, mode, legal, "glColorMaterial" );
 
    if (bitmask != 0) {
@@ -645,6 +698,9 @@ void gl_ColorMaterial( GLcontext *ctx, GLenum face, GLenum mode )
       ctx->Light.ColorMaterialFace = face;
       ctx->Light.ColorMaterialMode = mode;
    }
+
+   if (ctx->Light.ColorMaterialEnabled)
+      gl_update_color_material( ctx, ctx->Current.ByteColor );
 }
 
 
@@ -679,7 +735,6 @@ void gl_Materialfv( GLcontext *ctx,
       IM->Flag[count] |= VERT_MATERIAL;
       IM->MaterialMask[count] = 0;      
    }
-
 
    IM->MaterialMask[count] |= bitmask;
    mat = IM->Material[count];
