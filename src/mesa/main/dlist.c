@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.28 2000/02/02 19:50:26 brianp Exp $ */
+/* $Id: dlist.c,v 1.29 2000/02/11 21:14:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3051,6 +3051,120 @@ static void save_WindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
    }
 }
 
+static void save_WindowPos2dMESA(GLdouble x, GLdouble y)
+{
+   save_WindowPos4fMESA(x, y, 0.0F, 1.0F);
+}
+
+static void save_WindowPos2fMESA(GLfloat x, GLfloat y)
+{
+   save_WindowPos4fMESA(x, y, 0.0F, 1.0F);
+}
+
+static void save_WindowPos2iMESA(GLint x, GLint y)
+{
+   save_WindowPos4fMESA(x, y, 0.0F, 1.0F);
+}
+
+static void save_WindowPos2sMESA(GLshort x, GLshort y)
+{
+   save_WindowPos4fMESA(x, y, 0.0F, 1.0F);
+}
+
+static void save_WindowPos3dMESA(GLdouble x, GLdouble y, GLdouble z)
+{
+   save_WindowPos4fMESA(x, y, z, 1.0F);
+}
+
+static void save_WindowPos3fMESA(GLfloat x, GLfloat y, GLfloat z)
+{
+   save_WindowPos4fMESA(x, y, z, 1.0F);
+}
+
+static void save_WindowPos3iMESA(GLint x, GLint y, GLint z)
+{
+   save_WindowPos4fMESA(x, y, z, 1.0F);
+}
+
+static void save_WindowPos3sMESA(GLshort x, GLshort y, GLshort z)
+{
+   save_WindowPos4fMESA(x, y, z, 1.0F);
+}
+
+static void save_WindowPos4dMESA(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+{
+   save_WindowPos4fMESA(x, y, z, w);
+}
+
+static void save_WindowPos4iMESA(GLint x, GLint y, GLint z, GLint w)
+{
+   save_WindowPos4fMESA(x, y, z, w);
+}
+
+static void save_WindowPos4sMESA(GLshort x, GLshort y, GLshort z, GLshort w)
+{
+   save_WindowPos4fMESA(x, y, z, w);
+}
+
+static void save_WindowPos2dvMESA(const GLdouble *v)
+{
+   save_WindowPos4fMESA(v[0], v[1], 0.0F, 1.0F);
+}
+
+static void save_WindowPos2fvMESA(const GLfloat *v)
+{
+   save_WindowPos4fMESA(v[0], v[1], 0.0F, 1.0F);
+}
+
+static void save_WindowPos2ivMESA(const GLint *v)
+{
+   save_WindowPos4fMESA(v[0], v[1], 0.0F, 1.0F);
+}
+
+static void save_WindowPos2svMESA(const GLshort *v)
+{
+   save_WindowPos4fMESA(v[0], v[1], 0.0F, 1.0F);
+}
+
+static void save_WindowPos3dvMESA(const GLdouble *v)
+{
+   save_WindowPos4fMESA(v[0], v[1], v[2], 1.0F);
+}
+
+static void save_WindowPos3fvMESA(const GLfloat *v)
+{
+   save_WindowPos4fMESA(v[0], v[1], v[2], 1.0F);
+}
+
+static void save_WindowPos3ivMESA(const GLint *v)
+{
+   save_WindowPos4fMESA(v[0], v[1], v[2], 1.0F);
+}
+
+static void save_WindowPos3svMESA(const GLshort *v)
+{
+   save_WindowPos4fMESA(v[0], v[1], v[2], 1.0F);
+}
+
+static void save_WindowPos4dvMESA(const GLdouble *v)
+{
+   save_WindowPos4fMESA(v[0], v[1], v[2], v[3]);
+}
+
+static void save_WindowPos4fvMESA(const GLfloat *v)
+{
+   save_WindowPos4fMESA(v[0], v[1], v[2], v[3]);
+}
+
+static void save_WindowPos4ivMESA(const GLint *v)
+{
+   save_WindowPos4fMESA(v[0], v[1], v[2], v[3]);
+}
+
+static void save_WindowPos4svMESA(const GLshort *v)
+{
+   save_WindowPos4fMESA(v[0], v[1], v[2], v[3]);
+}
 
 
 
@@ -4509,7 +4623,30 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    table->BlendFuncSeparateINGR = save_BlendFuncSeparateINGR;
 
    /* GL_MESA_window_pos */
+   table->WindowPos2dMESA = save_WindowPos2dMESA;
+   table->WindowPos2dvMESA = save_WindowPos2dvMESA;
+   table->WindowPos2fMESA = save_WindowPos2fMESA;
+   table->WindowPos2fvMESA = save_WindowPos2fvMESA;
+   table->WindowPos2iMESA = save_WindowPos2iMESA;
+   table->WindowPos2ivMESA = save_WindowPos2ivMESA;
+   table->WindowPos2sMESA = save_WindowPos2sMESA;
+   table->WindowPos2svMESA = save_WindowPos2svMESA;
+   table->WindowPos3dMESA = save_WindowPos3dMESA;
+   table->WindowPos3dvMESA = save_WindowPos3dvMESA;
+   table->WindowPos3fMESA = save_WindowPos3fMESA;
+   table->WindowPos3fvMESA = save_WindowPos3fvMESA;
+   table->WindowPos3iMESA = save_WindowPos3iMESA;
+   table->WindowPos3ivMESA = save_WindowPos3ivMESA;
+   table->WindowPos3sMESA = save_WindowPos3sMESA;
+   table->WindowPos3svMESA = save_WindowPos3svMESA;
+   table->WindowPos4dMESA = save_WindowPos4dMESA;
+   table->WindowPos4dvMESA = save_WindowPos4dvMESA;
    table->WindowPos4fMESA = save_WindowPos4fMESA;
+   table->WindowPos4fvMESA = save_WindowPos4fvMESA;
+   table->WindowPos4iMESA = save_WindowPos4iMESA;
+   table->WindowPos4ivMESA = save_WindowPos4ivMESA;
+   table->WindowPos4sMESA = save_WindowPos4sMESA;
+   table->WindowPos4svMESA = save_WindowPos4svMESA;
 
    /* GL_MESA_resize_buffers */
    table->ResizeBuffersMESA = _mesa_ResizeBuffersMESA;

@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.13 2000/02/01 01:19:07 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.14 2000/02/11 21:14:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2828,92 +2828,92 @@ KEYWORD1 void KEYWORD2 NAME(BlendFuncSeparateINGR)(GLenum sfactorRGB, GLenum dfa
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos2iMESA)(GLint x, GLint y)
 {
-   DISPATCH(WindowPos4fMESA, (x, y, 0, 1), (F, ";"));
+   DISPATCH(WindowPos2iMESA, (x, y), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos2sMESA)(GLshort x, GLshort y)
 {
-   DISPATCH(WindowPos4fMESA, (x, y, 0, 1), (F, ";"));
+   DISPATCH(WindowPos2sMESA, (x, y), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos2fMESA)(GLfloat x, GLfloat y)
 {
-   DISPATCH(WindowPos4fMESA, (x, y, 0, 1), (F, ";"));
+   DISPATCH(WindowPos2fMESA, (x, y), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos2dMESA)(GLdouble x, GLdouble y)
 {
-   DISPATCH(WindowPos4fMESA, (x, y, 0, 1), (F, ";"));
+   DISPATCH(WindowPos2dMESA, (x, y), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos2ivMESA)(const GLint *p)
 {
-   DISPATCH(WindowPos4fMESA, (p[0], p[1], 0, 1), (F, ";"));
+   DISPATCH(WindowPos2ivMESA, (p), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos2svMESA)(const GLshort *p)
 {
-   DISPATCH(WindowPos4fMESA, (p[0], p[1], 0, 1), (F, ";"));
+   DISPATCH(WindowPos2svMESA, (p), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos2fvMESA)(const GLfloat *p)
 {
-   DISPATCH(WindowPos4fMESA, (p[0], p[1], 0, 1), (F, ";"));
+   DISPATCH(WindowPos2fvMESA, (p), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos2dvMESA)(const GLdouble *p)
 {
-   DISPATCH(WindowPos4fMESA, (p[0], p[1], 0, 1), (F, ";"));
+   DISPATCH(WindowPos2dvMESA, (p), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos3iMESA)(GLint x, GLint y, GLint z)
 {
-   DISPATCH(WindowPos4fMESA, (x, y, z, 1), (F, ";"));
+   DISPATCH(WindowPos3iMESA, (x, y, z), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos3sMESA)(GLshort x, GLshort y, GLshort z)
 {
-   DISPATCH(WindowPos4fMESA, (x, y, z, 1), (F, ";"));
+   DISPATCH(WindowPos3sMESA, (x, y, z), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos3fMESA)(GLfloat x, GLfloat y, GLfloat z)
 {
-   DISPATCH(WindowPos4fMESA, (x, y, z, 1), (F, ";"));
+   DISPATCH(WindowPos3fMESA, (x, y, z), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos3dMESA)(GLdouble x, GLdouble y, GLdouble z)
 {
-   DISPATCH(WindowPos4fMESA, (x, y, z, 1), (F, ";"));
+   DISPATCH(WindowPos3dMESA, (x, y, z), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos3ivMESA)(const GLint *p)
 {
-   DISPATCH(WindowPos4fMESA, (p[0], p[1], p[2], 1.0), (F, ";"));
+   DISPATCH(WindowPos3ivMESA, (p), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos3svMESA)(const GLshort *p)
 {
-   DISPATCH(WindowPos4fMESA, (p[0], p[1], p[2], 1.0), (F, ";"));
+   DISPATCH(WindowPos3svMESA, (p), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos3fvMESA)(const GLfloat *p)
 {
-   DISPATCH(WindowPos4fMESA, (p[0], p[1], p[2], 1.0), (F, ";"));
+   DISPATCH(WindowPos3fvMESA, (p), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos3dvMESA)(const GLdouble *p)
 {
-   DISPATCH(WindowPos4fMESA, (p[0], p[1], p[2], 1.0), (F, ";"));
+   DISPATCH(WindowPos3dvMESA, (p), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos4iMESA)(GLint x, GLint y, GLint z, GLint w)
 {
-   DISPATCH(WindowPos4fMESA, (x, y, z, w), (F, ";"));
+   DISPATCH(WindowPos4iMESA, (x, y, z, w), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos4sMESA)(GLshort x, GLshort y, GLshort z, GLshort w)
 {
-   DISPATCH(WindowPos4fMESA, (x, y, z, w), (F, ";"));
+   DISPATCH(WindowPos4sMESA, (x, y, z, w), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos4fMESA)(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
@@ -2923,27 +2923,27 @@ KEYWORD1 void KEYWORD2 NAME(WindowPos4fMESA)(GLfloat x, GLfloat y, GLfloat z, GL
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos4dMESA)(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-   DISPATCH(WindowPos4fMESA, (x, y, z, w), (F, ";"));
+   DISPATCH(WindowPos4dMESA, (x, y, z, w), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos4ivMESA)(const GLint *p)
 {
-   DISPATCH(WindowPos4fMESA, (p[0], p[1], p[2], p[3]), (F, ";"));
+   DISPATCH(WindowPos4ivMESA, (p), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos4svMESA)(const GLshort *p)
 {
-   DISPATCH(WindowPos4fMESA, (p[0], p[1], p[2], p[3]), (F, ";"));
+   DISPATCH(WindowPos4svMESA, (p), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos4fvMESA)(const GLfloat *p)
 {
-   DISPATCH(WindowPos4fMESA, (p[0], p[1], p[2], p[3]), (F, ";"));
+   DISPATCH(WindowPos4fvMESA, (p), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(WindowPos4dvMESA)(const GLdouble *p)
 {
-   DISPATCH(WindowPos4fMESA, (p[0], p[1], p[2], p[3]), (F, ";"));
+   DISPATCH(WindowPos4dvMESA, (p), (F, ";"));
 }
 
 

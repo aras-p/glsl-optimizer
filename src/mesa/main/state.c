@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.2 2000/02/02 19:34:08 brianp Exp $ */
+/* $Id: state.c,v 1.3 2000/02/11 21:14:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -583,7 +583,30 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->BlendFuncSeparateINGR = _mesa_BlendFuncSeparateINGR;
 
    /* GL_MESA_window_pos */
+   exec->WindowPos2dMESA = _mesa_WindowPos2dMESA;
+   exec->WindowPos2dvMESA = _mesa_WindowPos2dvMESA;
+   exec->WindowPos2fMESA = _mesa_WindowPos2fMESA;
+   exec->WindowPos2fvMESA = _mesa_WindowPos2fvMESA;
+   exec->WindowPos2iMESA = _mesa_WindowPos2iMESA;
+   exec->WindowPos2ivMESA = _mesa_WindowPos2ivMESA;
+   exec->WindowPos2sMESA = _mesa_WindowPos2sMESA;
+   exec->WindowPos2svMESA = _mesa_WindowPos2svMESA;
+   exec->WindowPos3dMESA = _mesa_WindowPos3dMESA;
+   exec->WindowPos3dvMESA = _mesa_WindowPos3dvMESA;
+   exec->WindowPos3fMESA = _mesa_WindowPos3fMESA;
+   exec->WindowPos3fvMESA = _mesa_WindowPos3fvMESA;
+   exec->WindowPos3iMESA = _mesa_WindowPos3iMESA;
+   exec->WindowPos3ivMESA = _mesa_WindowPos3ivMESA;
+   exec->WindowPos3sMESA = _mesa_WindowPos3sMESA;
+   exec->WindowPos3svMESA = _mesa_WindowPos3svMESA;
+   exec->WindowPos4dMESA = _mesa_WindowPos4dMESA;
+   exec->WindowPos4dvMESA = _mesa_WindowPos4dvMESA;
    exec->WindowPos4fMESA = _mesa_WindowPos4fMESA;
+   exec->WindowPos4fvMESA = _mesa_WindowPos4fvMESA;
+   exec->WindowPos4iMESA = _mesa_WindowPos4iMESA;
+   exec->WindowPos4ivMESA = _mesa_WindowPos4ivMESA;
+   exec->WindowPos4sMESA = _mesa_WindowPos4sMESA;
+   exec->WindowPos4svMESA = _mesa_WindowPos4svMESA;
 
    /* GL_MESA_resize_buffers */
    exec->ResizeBuffersMESA = _mesa_ResizeBuffersMESA;

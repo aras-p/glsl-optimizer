@@ -1,4 +1,4 @@
-/* $Id: glapitable.h,v 1.8 2000/02/03 09:35:17 joukj Exp $ */
+/* $Id: glapitable.h,v 1.9 2000/02/11 21:14:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -817,7 +817,30 @@ struct _glapi_table
    void (*BlendFuncSeparateINGR)(GLenum, GLenum, GLenum, GLenum);
 
    /* GL_MESA_window_pos */
-   void (*WindowPos4fMESA)(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+   void (*WindowPos2dMESA)(GLdouble, GLdouble);
+   void (*WindowPos2dvMESA)(const GLdouble *);
+   void (*WindowPos2fMESA)(GLfloat, GLfloat);
+   void (*WindowPos2fvMESA)(const GLfloat *);
+   void (*WindowPos2iMESA)(GLint, GLint);
+   void (*WindowPos2ivMESA)(const GLint *);
+   void (*WindowPos2sMESA)(GLshort, GLshort);
+   void (*WindowPos2svMESA)(const GLshort *);
+   void (*WindowPos3dMESA)(GLdouble, GLdouble, GLdouble);
+   void (*WindowPos3dvMESA)(const GLdouble *);
+   void (*WindowPos3fMESA)(GLfloat, GLfloat, GLfloat);
+   void (*WindowPos3fvMESA)(const GLfloat *);
+   void (*WindowPos3iMESA)(GLint, GLint, GLint);
+   void (*WindowPos3ivMESA)(const GLint *);
+   void (*WindowPos3sMESA)(GLshort, GLshort, GLshort);
+   void (*WindowPos3svMESA)(const GLshort *);
+   void (*WindowPos4dMESA)(GLdouble, GLdouble, GLdouble, GLdouble);
+   void (*WindowPos4dvMESA)(const GLdouble *);
+   void (*WindowPos4fMESA)(GLfloat, GLfloat, GLfloat, GLfloat);
+   void (*WindowPos4fvMESA)(const GLfloat *);
+   void (*WindowPos4iMESA)(GLint, GLint, GLint, GLint);
+   void (*WindowPos4ivMESA)(const GLint *);
+   void (*WindowPos4sMESA)(GLshort, GLshort, GLshort, GLshort);
+   void (*WindowPos4svMESA)(const GLshort *);
 
    /* GL_MESA_resize_buffers */
    void (*ResizeBuffersMESA)(void);

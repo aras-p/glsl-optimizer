@@ -1,4 +1,4 @@
-/* $Id: glapioffsets.h,v 1.2 2000/01/16 07:26:35 joshv Exp $ */
+/* $Id: glapioffsets.h,v 1.3 2000/02/11 21:14:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -784,16 +784,39 @@
 #define _gloffset_BlendFuncSeparateINGR			(_EXTBASE + 107)
 
 /* GL_MESA_window_pos */
-#define _gloffset_WindowPos4fMESA			(_EXTBASE + 108)
+#define _gloffset_WindowPos2dMESA			(_EXTBASE + 108)
+#define _gloffset_WindowPos2dvMESA			(_EXTBASE + 109)
+#define _gloffset_WindowPos2fMESA			(_EXTBASE + 110)
+#define _gloffset_WindowPos2fvMESA			(_EXTBASE + 111)
+#define _gloffset_WindowPos2iMESA			(_EXTBASE + 112)
+#define _gloffset_WindowPos2ivMESA			(_EXTBASE + 113)
+#define _gloffset_WindowPos2sMESA			(_EXTBASE + 114)
+#define _gloffset_WindowPos2svMESA			(_EXTBASE + 115)
+#define _gloffset_WindowPos3dMESA			(_EXTBASE + 116)
+#define _gloffset_WindowPos3dvMESA			(_EXTBASE + 117)
+#define _gloffset_WindowPos3fMESA			(_EXTBASE + 118)
+#define _gloffset_WindowPos3fvMESA			(_EXTBASE + 119)
+#define _gloffset_WindowPos3iMESA			(_EXTBASE + 120)
+#define _gloffset_WindowPos3ivMESA			(_EXTBASE + 121)
+#define _gloffset_WindowPos3sMESA			(_EXTBASE + 122)
+#define _gloffset_WindowPos3svMESA			(_EXTBASE + 123)
+#define _gloffset_WindowPos4dMESA			(_EXTBASE + 124)
+#define _gloffset_WindowPos4dvMESA			(_EXTBASE + 125)
+#define _gloffset_WindowPos4fMESA			(_EXTBASE + 126)
+#define _gloffset_WindowPos4fvMESA			(_EXTBASE + 127)
+#define _gloffset_WindowPos4iMESA			(_EXTBASE + 128)
+#define _gloffset_WindowPos4ivMESA			(_EXTBASE + 129)
+#define _gloffset_WindowPos4sMESA			(_EXTBASE + 130)
+#define _gloffset_WindowPos4svMESA			(_EXTBASE + 131)
 
 /* GL_MESA_resize_buffers */
-#define _gloffset_ResizeBuffersMESA			(_EXTBASE + 109)
+#define _gloffset_ResizeBuffersMESA			(_EXTBASE + 132)
 
 /* GL_ARB_transpose_matrix */
-#define _gloffset_LoadTransposeMatrixdARB		(_EXTBASE + 110)
-#define _gloffset_LoadTransposeMatrixfARB		(_EXTBASE + 111)
-#define _gloffset_MultTransposeMatrixdARB		(_EXTBASE + 112)
-#define _gloffset_MultTransposeMatrixfARB		(_EXTBASE + 113)
+#define _gloffset_LoadTransposeMatrixdARB		(_EXTBASE + 133)
+#define _gloffset_LoadTransposeMatrixfARB		(_EXTBASE + 134)
+#define _gloffset_MultTransposeMatrixdARB		(_EXTBASE + 135)
+#define _gloffset_MultTransposeMatrixfARB		(_EXTBASE + 136)
 
 
 
