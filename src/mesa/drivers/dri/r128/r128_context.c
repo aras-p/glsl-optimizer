@@ -67,10 +67,13 @@ int R128_DEBUG = 0;
 
 static const char * const card_extensions[] =
 {
+   "GL_ARB_multisample",
    "GL_ARB_multitexture",
+   "GL_ARB_texture_compression",
    "GL_ARB_texture_env_add",
    "GL_ARB_texture_mirrored_repeat",
    "GL_EXT_texture_edge_clamp",
+   "GL_MESA_ycbcr_texture",
    "GL_SGIS_generate_mipmap",
    NULL
 };
