@@ -1,8 +1,8 @@
-/* $Id: vtxfmt_tmp.h,v 1.5 2001/11/18 22:48:13 brianp Exp $ */
+/* $Id: vtxfmt_tmp.h,v 1.6 2001/11/27 00:05:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -136,13 +136,13 @@ static void TAG(EvalPoint2)( GLint a, GLint b )
 static void TAG(FogCoordfEXT)( GLfloat a )
 {
    PRE_LOOPBACK( FogCoordfEXT );
-   glFogCoordfEXT( a );
+   _glapi_Dispatch->FogCoordfEXT( a );
 }
 
 static void TAG(FogCoordfvEXT)( const GLfloat *v )
 {
    PRE_LOOPBACK( FogCoordfvEXT );
-   glFogCoordfvEXT( v );
+   _glapi_Dispatch->FogCoordfvEXT( v );
 }
 
 static void TAG(Indexi)( GLint a )
@@ -228,25 +228,25 @@ static void TAG(Normal3fv)( const GLfloat *v )
 static void TAG(SecondaryColor3fEXT)( GLfloat a, GLfloat b, GLfloat c )
 {
    PRE_LOOPBACK( SecondaryColor3fEXT );
-   glSecondaryColor3fEXT( a, b, c );
+   _glapi_Dispatch->SecondaryColor3fEXT( a, b, c );
 }
 
 static void TAG(SecondaryColor3fvEXT)( const GLfloat *v )
 {
    PRE_LOOPBACK( SecondaryColor3fvEXT );
-   glSecondaryColor3fvEXT( v );
+   _glapi_Dispatch->SecondaryColor3fvEXT( v );
 }
 
 static void TAG(SecondaryColor3ubEXT)( GLubyte a, GLubyte b, GLubyte c )
 {
    PRE_LOOPBACK( SecondaryColor3ubEXT );
-   glSecondaryColor3ubEXT( a, b, c );
+   _glapi_Dispatch->SecondaryColor3ubEXT( a, b, c );
 }
 
 static void TAG(SecondaryColor3ubvEXT)( const GLubyte *v )
 {
    PRE_LOOPBACK( SecondaryColor3ubvEXT );
-   glSecondaryColor3ubvEXT( v );
+   _glapi_Dispatch->SecondaryColor3ubvEXT( v );
 }
 
 static void TAG(TexCoord1f)( GLfloat a )
