@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.28 2000/07/18 01:14:38 brianp Exp $
+# $Id: Makefile.X11,v 1.29 2000/07/18 01:30:36 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -355,7 +355,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/docs/INSTALL.GNU		\
 	$(DIRECTORY)/docs/README		\
 	$(DIRECTORY)/docs/README.*		\
-	$(DIRECTORY)/docs/RELNOTES		\
+	$(DIRECTORY)/docs/RELNOTES*		\
 	$(DIRECTORY)/docs/VERSIONS		\
 	$(DIRECTORY)/docs/*.spec		\
 	$(DIRECTORY)/bin/README			\
@@ -369,7 +369,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/mesawin32.mak		\
 	$(DIRECTORY)/Names.win			\
 	$(DIRECTORY)/win32-openstep.sh		\
-	$(DIRECTORY)/*.dja			\
+	$(DIRECTORY)/common.dja			\
 	$(DIRECTORY)/include/GL/Makefile.in	\
 	$(DIRECTORY)/include/GL/Makefile.am	\
 	$(DIRECTORY)/include/GL/dosmesa.h	\
@@ -460,13 +460,11 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/X86/Makefile.in			\
 	$(DIRECTORY)/src/X86/*.m4				\
 	$(DIRECTORY)/src/X86/*.S				\
-	$(DIRECTORY)/src/*.dja					\
 	$(DIRECTORY)/src-glu/README[12]				\
 	$(DIRECTORY)/src-glu/Makefile*				\
 	$(DIRECTORY)/src-glu/descrip.mms			\
 	$(DIRECTORY)/src-glu/mms_depend				\
 	$(DIRECTORY)/src-glu/*.def				\
-	$(DIRECTORY)/src-glu/*.dja				\
 	$(DIRECTORY)/src-glu/depend				\
 	$(DIRECTORY)/src-glu/*.[ch]				\
 	$(DIRECTORY)/widgets-mesa/ChangeLog			\
@@ -491,8 +489,6 @@ LIB_FILES =	\
 	$(DIRECTORY)/widgets-mesa/man/Makefile.in		\
 	$(DIRECTORY)/widgets-mesa/man/Mesa*			\
 	$(DIRECTORY)/widgets-mesa/src/ChangeLog			\
-	$(DIRECTORY)/widgets-mesa/*.[ch]			\
-	$(DIRECTORY)/widgets-mesa/Makefile.in			\
 	$(DIRECTORY)/widgets-sgi/*.[ch]				\
 	$(DIRECTORY)/widgets-sgi/Makefile*			\
 	$(DIRECTORY)/widgets-sgi/README				\
@@ -559,7 +555,6 @@ DEMO_FILES =	\
 	$(DIRECTORY)/samples/Makefile*		\
 	$(DIRECTORY)/samples/README		\
 	$(DIRECTORY)/samples/*.c		\
-	$(DIRECTORY)/samples/*.dja		\
 	$(DIRECTORY)/mtdemos			\
 	$(DIRECTORY)/ggi
 
@@ -577,7 +572,6 @@ GLU_FILES = \
 	$(DIRECTORY)/src-glu/descrip.mms	\
 	$(DIRECTORY)/src-glu/mms_depend		\
 	$(DIRECTORY)/src-glu/*.def		\
-	$(DIRECTORY)/src-glu/*.dja		\
 	$(DIRECTORY)/src-glu/depend		\
 	$(DIRECTORY)/src-glu/*.[ch]
 
