@@ -273,7 +273,7 @@ __indirect_glCallLists(GLsizei n, GLenum type, const GLvoid * lists)
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint compsize = __glCallLists_size(type);
     const GLuint cmdlen = 12 + __GLX_PAD((compsize * n));
-    if (__builtin_expect(gc->currentDpy != NULL, 1)) {
+    if (__builtin_expect((n >= 0) && (gc->currentDpy != NULL), 1)) {
         if (cmdlen <= gc->maxSmallRenderCommandSize) {
             if ( (gc->pc + cmdlen) > gc->bufEnd ) {
                 (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -4030,7 +4030,7 @@ __indirect_glGenTextures(GLsizei n, GLuint * textures)
     __GLXcontext * const gc = __glXGetCurrentContext();
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 4;
-    if (__builtin_expect(dpy != NULL, 1)) {
+    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
         GLubyte const * pc = setup_single_request(gc, X_GLsop_GenTextures, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&n), 4);
         (void) read_reply(dpy, 4, textures, GL_TRUE);
@@ -5285,7 +5285,7 @@ __indirect_glGenTexturesEXT(GLsizei n, GLuint * textures)
     __GLXcontext * const gc = __glXGetCurrentContext();
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 4;
-    if (__builtin_expect(dpy != NULL, 1)) {
+    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
         GLubyte const * pc = setup_vendor_request(gc, X_GLXVendorPrivateWithReply, X_GLvop_GenTexturesEXT, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&n), 4);
         (void) read_reply(dpy, 4, textures, GL_TRUE);

@@ -844,7 +844,7 @@ glx:
     </function>
 
     <function name="CallLists" offset="3">
-        <param name="n" type="GLsizei"/>
+        <param name="n" type="GLsizei" counter="true"/>
         <param name="type" type="GLenum"/>
         <param name="lists" type="const GLvoid *" variable_param="type" count="n"/>
         <glx rop="2" large="true"/>
@@ -2988,7 +2988,7 @@ glx:
     </function>
 
     <function name="GenTextures" offset="328">
-        <param name="n" type="GLsizei"/>
+        <param name="n" type="GLsizei" counter="true"/>
         <param name="textures" type="GLuint *" output="true"/>
         <glx sop="145" always_array="true"/>
     </function>
@@ -7026,7 +7026,7 @@ glx:
     </function>
 
     <function name="GenTexturesEXT" offset="440">
-        <param name="n" type="GLsizei"/>
+        <param name="n" type="GLsizei" counter="true"/>
         <param name="textures" type="GLuint *" output="true"/>
         <glx vendorpriv="13" always_array="true"/>
     </function>
