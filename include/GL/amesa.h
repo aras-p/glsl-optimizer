@@ -1,10 +1,10 @@
-/* $Id: amesa.h,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: amesa.h,v 1.2 2000/02/09 19:03:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,23 +25,15 @@
  */
 
 
-/*
- * $Log: amesa.h,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
- *
- * Revision 1.1  1999/03/16 01:24:13  brianp
- * initial check-in
- *
- */
-
-
 /* Allegro (DJGPP) driver by Bernhard Tschirren (bernie-t@geocities.com) */
-
 
 
 #ifndef AMESA_H
 #define AMESA_H
+
+
+#define AMESA_MAJOR_VERSION 3
+#define AMESA_MINOR_VERSION 3
 
 
 typedef struct amesa_visual  *AMesaVisual;

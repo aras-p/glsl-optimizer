@@ -1,9 +1,9 @@
-/* $Id: ggimesa.h,v 1.2 1999/08/23 22:34:08 jtaylor Exp $ */
+/* $Id: ggimesa.h,v 1.3 2000/02/09 19:03:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
- * Copyright (C) 1995-1998  Brian Paul
+ * Version:  3.3
+ * Copyright (C) 1995-2000  Brian Paul
  * Copyright (C) 1998  Uwe Maurer
  *
  * This library is free software; you can redistribute it and/or
@@ -22,22 +22,13 @@
  */
 
 
-/*
- * $Log: ggimesa.h,v $
- * Revision 1.2  1999/08/23 22:34:08  jtaylor
- * Misc small cleanups
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 1.2  1998/09/29 01:46:40  brianp
- * applied Emmanuel Marty's patches for latest GGI
- *
- */
-
-
 #ifndef GGIMESA_H
 #define GGIMESA_H
+
+
+#define GGIMESA_MAJOR_VERSION 3
+#define GGIMESA_MINOR_VERSION 3
+
 
 #ifdef __cplusplus
 extern "C" {
