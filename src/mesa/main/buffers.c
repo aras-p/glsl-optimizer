@@ -35,6 +35,7 @@
 #include "context.h"
 #include "depth.h"
 #include "enums.h"
+#include "fbobject.h"
 #include "stencil.h"
 #include "state.h"
 #include "mtypes.h"
@@ -294,33 +295,52 @@ read_buffer_enum_to_bitmask(GLenum buffer)
 void GLAPIENTRY
 _mesa_DrawBuffer( GLenum mode )
 {
-   GLenum destMask, supportedMask;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* too complex... */
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glDrawBuffer %s\n", _mesa_lookup_enum_by_nr(mode));
 
-   /*
-    * Do error checking and compute the _DrawDestMask bitfield.
-    */
-   destMask = draw_buffer_enum_to_bitmask(mode);
-   if (destMask == ~0u) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawBuffer(mode)");
-      return;
+   if (ctx->Extensions.EXT_framebuffer_object && ctx->CurrentFramebuffer) {
+      /* Set drawbuffer for a framebuffer object */
+      if (mode == GL_NONE) {
+         ctx->CurrentFramebuffer->DrawBuffer[0] = mode;
+      }
+      else {
+         const GLint k = mode - GL_COLOR_ATTACHMENT0_EXT;
+         if (k >= 0 && k < ctx->Const.MaxColorAttachments) {
+            /* XXX check that the attachment point's Type != GL_NONE */
+            ctx->CurrentFramebuffer->DrawBuffer[0] = mode;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glDrawBuffer(mode)");
+            return;
+         }
+      }
    }
+   else {
+      /* conventional behaviour */
+      /* Do error checking and compute the _DrawDestMask bitfield. */
+      GLenum destMask, supportedMask;
 
-   supportedMask = supported_buffer_bitmask(ctx);
-   destMask &= supportedMask;
+      destMask = draw_buffer_enum_to_bitmask(mode);
+      if (destMask == ~0u) {
+         _mesa_error(ctx, GL_INVALID_ENUM, "glDrawBuffer(mode)");
+         return;
+      }
 
-   if (destMask == 0) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawBuffer(mode)");
-      return;
+      supportedMask = supported_buffer_bitmask(ctx);
+      destMask &= supportedMask;
+
+      if (destMask == 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawBuffer(mode)");
+         return;
+      }
+
+      ctx->Color.DrawBuffer[0] = mode;
+      ctx->Color._DrawDestMask[0] = destMask;
+      ctx->NewState |= _NEW_COLOR;
    }
-
-   ctx->Color.DrawBuffer[0] = mode;
-   ctx->Color._DrawDestMask[0] = destMask;
-   ctx->NewState |= _NEW_COLOR;
 
    /*
     * Call device driver function.
@@ -337,8 +357,6 @@ _mesa_DrawBuffer( GLenum mode )
 void GLAPIENTRY
 _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
 {
-   GLint i;
-   GLuint usedBufferMask, supportedMask;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -347,34 +365,79 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
       return;
    }
 
-   supportedMask = supported_buffer_bitmask(ctx);
-   usedBufferMask = 0;
-   for (i = 0; i < n; i++) {
-      GLuint destMask = draw_buffer_enum_to_bitmask(buffers[i]);
-      if (destMask == ~0u ) {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glDrawBuffersARB(buffer)");
-         return;
-      }         
-      destMask &= supportedMask;
-      if (destMask == 0) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glDrawBuffersARB(unsupported buffer)");
-         return;
+   if (ctx->Extensions.EXT_framebuffer_object && ctx->CurrentFramebuffer) {
+      /* Set drawbuffers for a framebuffer object */
+      GLint i;
+      GLuint usedAttachments = 0x0;
+      for (i = 0; i < n; i++) {
+         if (buffers[i] == GL_NONE) {
+            /* OK */
+            ctx->CurrentFramebuffer->DrawBuffer[i] = GL_NONE;
+         }
+         else {
+            const GLint k = buffers[i] - GL_COLOR_ATTACHMENT0_EXT;
+            if (k >= 0 && k < ctx->Const.MaxColorAttachments) {
+               /* XXX check that the attachment point's Type != GL_NONE */
+               if ((1 << k) & usedAttachments) {
+                  _mesa_error(ctx, GL_INVALID_OPERATION,
+                              "glDrawBuffersARB(duplicated attachment)");
+                  return;
+               }
+               usedAttachments |= (1 << k);
+               ctx->CurrentFramebuffer->DrawBuffer[i] = buffers[i];
+            }
+            else {
+               _mesa_error(ctx, GL_INVALID_ENUM, "glDrawBuffersARB(mode)");
+               return;
+            }
+         }
       }
-      if (destMask & usedBufferMask) {
-         /* can't use a dest buffer more than once! */
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glDrawBuffersARB(duplicated buffer)");
-         return;
-      }
-      /* update bitmask */
-      usedBufferMask |= destMask;
-      /* save state */
-      ctx->Color.DrawBuffer[i] = buffers[i];
-      ctx->Color._DrawDestMask[i] = destMask;
-   }
 
-   ctx->NewState |= _NEW_COLOR;
+      /* set remaining color outputs to NONE */
+      for (i = n; i < ctx->Const.MaxDrawBuffers; i++) {
+         ctx->CurrentFramebuffer->DrawBuffer[i] = GL_NONE;
+      }
+   }
+   else {
+      /* Conventional operation */
+      GLint i;
+      GLuint usedBufferMask, supportedMask;
+
+      supportedMask = supported_buffer_bitmask(ctx);
+      usedBufferMask = 0;
+      for (i = 0; i < n; i++) {
+         GLuint destMask = draw_buffer_enum_to_bitmask(buffers[i]);
+         if (destMask == ~0u ) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glDrawBuffersARB(buffer)");
+            return;
+         }         
+         destMask &= supportedMask;
+         if (destMask == 0) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glDrawBuffersARB(unsupported buffer)");
+            return;
+         }
+         if (destMask & usedBufferMask) {
+            /* can't specify a dest buffer more than once! */
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glDrawBuffersARB(duplicated buffer)");
+            return;
+         }
+         /* update bitmask */
+         usedBufferMask |= destMask;
+         /* save state */
+         ctx->Color.DrawBuffer[i] = buffers[i];
+         ctx->Color._DrawDestMask[i] = destMask;
+      }
+
+      /* set remaining color outputs to NONE */
+      for (i = n; i < ctx->Const.MaxDrawBuffers; i++) {
+         ctx->Color.DrawBuffer[i] = GL_NONE;
+         ctx->Color._DrawDestMask[i] = 0;
+      }
+
+      ctx->NewState |= _NEW_COLOR;
+   }
 
    /*
     * Call device driver function.
@@ -398,26 +461,47 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
 void GLAPIENTRY
 _mesa_ReadBuffer( GLenum mode )
 {
-   GLuint srcMask, supportedMask;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glReadBuffer %s\n", _mesa_lookup_enum_by_nr(mode));
 
-   srcMask = read_buffer_enum_to_bitmask(mode);
-   if (srcMask == ~0u) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glReadBuffer(mode)");
-      return;
+   if (ctx->Extensions.EXT_framebuffer_object && ctx->CurrentFramebuffer) {
+      /* Set readbuffer for a framebuffer object */
+      if (mode == GL_NONE) {
+         ctx->CurrentFramebuffer->ReadBuffer = mode;
+      }
+      else {
+         const GLint k = mode - GL_COLOR_ATTACHMENT0_EXT;
+         if (k >= 0 && k < ctx->Const.MaxColorAttachments) {
+            /* XXX check that the attachment point's Type != GL_NONE */
+            ctx->CurrentFramebuffer->ReadBuffer = mode;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glReadBuffer(mode)");
+            return;
+         }
+      }
    }
-   supportedMask = supported_buffer_bitmask(ctx);
-   if ((srcMask & supportedMask) == 0) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glReadBuffer(mode)");
-      return;
+   else {
+      /* conventional operation */
+      GLuint srcMask, supportedMask;
+
+      srcMask = read_buffer_enum_to_bitmask(mode);
+      if (srcMask == ~0u) {
+         _mesa_error(ctx, GL_INVALID_ENUM, "glReadBuffer(mode)");
+         return;
+      }
+      supportedMask = supported_buffer_bitmask(ctx);
+      if ((srcMask & supportedMask) == 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glReadBuffer(mode)");
+         return;
+      }
+      ctx->Pixel._ReadSrcMask = srcMask;
+      ctx->Pixel.ReadBuffer = mode;
+      ctx->NewState |= _NEW_PIXEL;
    }
-   ctx->Pixel._ReadSrcMask = srcMask;
-   ctx->Pixel.ReadBuffer = mode;
-   ctx->NewState |= _NEW_PIXEL;
 
    /*
     * Call device driver function.
