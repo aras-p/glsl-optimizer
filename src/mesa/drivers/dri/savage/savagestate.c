@@ -1189,31 +1189,13 @@ static void savageDDEnable_s4(GLcontext *ctx, GLenum cap, GLboolean state)
             break;
         case GL_STENCIL_TEST:
             imesa->dirty |= SAVAGE_UPLOAD_CTX;
-            if (state)
-            { 
+	    if (!imesa->hw_stencil)
+		FALLBACK (ctx, SAVAGE_FALLBACK_STENCIL, state);
 #if HW_STENCIL
-                if(imesa->hw_stencil)
-                {
-#endif /* end if HW_STENCIL */
-                    if(!imesa->hw_stencil)
-			FALLBACK (ctx, SAVAGE_FALLBACK_STENCIL, GL_TRUE);
-
-#if HW_STENCIL
-                    imesa->regs.s4.stencilCtrl.ni.stencilEn=GL_TRUE;
-                }
-#endif /* end if HW_STENCIL */	
-            }
-	    
-            else
-            {
-#if HW_STENCIL
-                if(imesa->hw_stencil)
-                {
-		    imesa->regs.s4.stencilCtrl.ni.stencilEn=GL_FALSE;
-                }
-#endif      
-		FALLBACK (ctx, SAVAGE_FALLBACK_STENCIL, GL_FALSE);
-            }
+	    else
+		imesa->regs.s4.stencilCtrl.ni.stencilEn =
+		    state ? GL_TRUE : GL_FALSE;
+#endif
             break;
         case GL_FOG:
             imesa->dirty |= SAVAGE_UPLOAD_CTX;
@@ -1292,6 +1274,9 @@ static void savageDDEnable_s3d(GLcontext *ctx, GLenum cap, GLboolean state)
             imesa->scissor = state;
             imesa->dirty |= SAVAGE_UPLOAD_CLIPRECTS;
             break;
+        case GL_STENCIL_TEST:
+	    FALLBACK (ctx, SAVAGE_FALLBACK_STENCIL, state);
+	    break;
         case GL_FOG:
             imesa->dirty |= SAVAGE_UPLOAD_CTX;
             savageDDFogfv(ctx,0,0);	
