@@ -831,7 +831,6 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
    fxMesa->glCtx->Const.MaxTextureLevels=9;
    fxMesa->glCtx->Const.MaxTextureSize=256;
    fxMesa->glCtx->Const.MaxTextureUnits=fxMesa->emulateTwoTMUs ? 2 : 1;
-   fxMesa->glCtx->NewState|=NEW_DRVSTATE1;
    fxMesa->new_state = NEW_ALL;
   
    fxDDSetupInit();

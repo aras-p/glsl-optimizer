@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.26 2000/09/08 21:44:55 brianp Exp $ */
+/* $Id: state.c,v 1.27 2000/09/08 22:07:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -762,17 +762,13 @@ static void update_rasterflags( GLcontext *ctx )
 void gl_print_state( const char *msg, GLuint state )
 {
    fprintf(stderr,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   msg,
 	   state,
 	   (state & NEW_LIGHTING)         ? "lighting, " : "",
 	   (state & NEW_RASTER_OPS)       ? "raster-ops, " : "",
 	   (state & NEW_TEXTURING)        ? "texturing, " : "",
 	   (state & NEW_POLYGON)          ? "polygon, " : "",
-	   (state & NEW_DRVSTATE0)        ? "driver-0, " : "",
-	   (state & NEW_DRVSTATE1)        ? "driver-1, " : "",
-	   (state & NEW_DRVSTATE2)        ? "driver-2, " : "",
-	   (state & NEW_DRVSTATE3)        ? "driver-3, " : "",
 	   (state & NEW_MODELVIEW)        ? "modelview, " : "",
 	   (state & NEW_PROJECTION)       ? "projection, " : "",
 	   (state & NEW_TEXTURE_MATRIX)   ? "texture-matrix, " : "",
@@ -880,40 +876,40 @@ void gl_update_state( GLcontext *ctx )
       ctx->NeedNormals = (ctx->Light.Enabled || ctx->Texture.NeedNormals);
    }
 
-   if (ctx->NewState & (NEW_RASTER_OPS | NEW_LIGHTING | NEW_FOG | NEW_TEXTURE_ENABLE)) {
+   if (ctx->NewState & NEW_FOG) {
+      update_fog_mode(ctx);
+   }
 
-      if (ctx->NewState & (NEW_RASTER_OPS | NEW_TEXTURE_ENABLE)) {
-	 update_fog_mode(ctx);
-	 update_rasterflags(ctx);
+   if (ctx->NewState & NEW_RASTER_OPS) {
+      update_rasterflags(ctx);
 
-	 /* update scissor region */
-	 ctx->DrawBuffer->Xmin = 0;
-	 ctx->DrawBuffer->Ymin = 0;
-	 ctx->DrawBuffer->Xmax = ctx->DrawBuffer->Width;
-	 ctx->DrawBuffer->Ymax = ctx->DrawBuffer->Height;
-	 if (ctx->Scissor.Enabled) {
-	    if (ctx->Scissor.X > ctx->DrawBuffer->Xmin) {
-	       ctx->DrawBuffer->Xmin = ctx->Scissor.X;
-	    }
-	    if (ctx->Scissor.Y > ctx->DrawBuffer->Ymin) {
-	       ctx->DrawBuffer->Ymin = ctx->Scissor.Y;
-	    }
-	    if (ctx->Scissor.X + ctx->Scissor.Width < ctx->DrawBuffer->Xmax) {
-	       ctx->DrawBuffer->Xmax = ctx->Scissor.X + ctx->Scissor.Width;
-	    }
-	    if (ctx->Scissor.Y + ctx->Scissor.Height < ctx->DrawBuffer->Ymax) {
-	       ctx->DrawBuffer->Ymax = ctx->Scissor.Y + ctx->Scissor.Height;
-	    }
-	 }
+      /* update scissor region */
+      ctx->DrawBuffer->Xmin = 0;
+      ctx->DrawBuffer->Ymin = 0;
+      ctx->DrawBuffer->Xmax = ctx->DrawBuffer->Width;
+      ctx->DrawBuffer->Ymax = ctx->DrawBuffer->Height;
+      if (ctx->Scissor.Enabled) {
+         if (ctx->Scissor.X > ctx->DrawBuffer->Xmin) {
+            ctx->DrawBuffer->Xmin = ctx->Scissor.X;
+         }
+         if (ctx->Scissor.Y > ctx->DrawBuffer->Ymin) {
+            ctx->DrawBuffer->Ymin = ctx->Scissor.Y;
+         }
+         if (ctx->Scissor.X + ctx->Scissor.Width < ctx->DrawBuffer->Xmax) {
+            ctx->DrawBuffer->Xmax = ctx->Scissor.X + ctx->Scissor.Width;
+         }
+         if (ctx->Scissor.Y + ctx->Scissor.Height < ctx->DrawBuffer->Ymax) {
+            ctx->DrawBuffer->Ymax = ctx->Scissor.Y + ctx->Scissor.Height;
+         }
       }
+   }
 
-      if (ctx->NewState & NEW_LIGHTING) {
-	 ctx->TriangleCaps &= ~(DD_TRI_LIGHT_TWOSIDE|DD_LIGHTING_CULL);
-	 if (ctx->Light.Enabled) {
-	    if (ctx->Light.Model.TwoSide)
-	       ctx->TriangleCaps |= (DD_TRI_LIGHT_TWOSIDE|DD_LIGHTING_CULL);
-	    gl_update_lighting(ctx);
-	 }
+   if (ctx->NewState & NEW_LIGHTING) {
+      ctx->TriangleCaps &= ~(DD_TRI_LIGHT_TWOSIDE|DD_LIGHTING_CULL);
+      if (ctx->Light.Enabled) {
+         if (ctx->Light.Model.TwoSide)
+            ctx->TriangleCaps |= (DD_TRI_LIGHT_TWOSIDE|DD_LIGHTING_CULL);
+         gl_update_lighting(ctx);
       }
    }
 
@@ -959,9 +955,7 @@ void gl_update_state( GLcontext *ctx )
       }
    }
 
-   if (ctx->NewState & ~(NEW_CLIENT_STATE|
-			 NEW_DRIVER_STATE|NEW_USER_CLIP|
-			 NEW_POLYGON))
+   if (ctx->NewState & ~(NEW_CLIENT_STATE | NEW_USER_CLIP | NEW_POLYGON))
       gl_update_clipmask(ctx);
 
    if (ctx->NewState & (NEW_LIGHTING|
@@ -970,10 +964,6 @@ void gl_update_state( GLcontext *ctx )
 			NEW_TEXTURE_ENABLE|
 			NEW_TEXTURE_ENV|
 			NEW_POLYGON|
-			NEW_DRVSTATE0|
-			NEW_DRVSTATE1|
-			NEW_DRVSTATE2|
-			NEW_DRVSTATE3|
 			NEW_USER_CLIP))
    {
       ctx->IndirectTriangles = ctx->TriangleCaps & ~ctx->Driver.TriangleCaps;
