@@ -145,11 +145,12 @@ SKIP_FUNCTION_MACROS   = YES
 # Configuration::addtions related to external references   
 #---------------------------------------------------------------------------
 TAGFILES               = core.tag=../core \
-					   	 tnl.tag=../tnl \
-					   	 swrast_setup.tag=../swrast_setup \
-					   	 swrast.tag=../swrast \
-					   	 math.tag=../math \
-					   	 tnl_dd.tag=../tnl_dd
+			 array_cahe.tag=../array_cache \
+			 tnl.tag=../tnl \
+			 swrast_setup.tag=../swrast_setup \
+			 swrast.tag=../swrast \
+			 math.tag=../math \
+			 tnl_dd.tag=../tnl_dd
 GENERATE_TAGFILE       = array_cache.tag
 ALLEXTERNALS           = NO
 PERL_PATH              = 
