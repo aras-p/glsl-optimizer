@@ -45,46 +45,48 @@
 #include "s_texture.h"
 
 
-/*
+/**
  * Recompute the value of swrast->_RasterMask, etc. according to
- * the current context.
+ * the current context.  The _RasterMask field can be easily tested by
+ * drivers to determine certain basic GL state (does the primitive need
+ * stenciling, logic-op, fog, etc?).
  */
 static void
 _swrast_update_rasterflags( GLcontext *ctx )
 {
-   GLuint RasterMask = 0;
+   GLuint rasterMask = 0;
 
-   if (ctx->Color.AlphaEnabled)           RasterMask |= ALPHATEST_BIT;
-   if (ctx->Color.BlendEnabled)           RasterMask |= BLEND_BIT;
-   if (ctx->Depth.Test)                   RasterMask |= DEPTH_BIT;
-   if (ctx->Fog.Enabled)                  RasterMask |= FOG_BIT;
-   if (ctx->Scissor.Enabled)              RasterMask |= CLIP_BIT;
-   if (ctx->Stencil.Enabled)              RasterMask |= STENCIL_BIT;
+   if (ctx->Color.AlphaEnabled)           rasterMask |= ALPHATEST_BIT;
+   if (ctx->Color.BlendEnabled)           rasterMask |= BLEND_BIT;
+   if (ctx->Depth.Test)                   rasterMask |= DEPTH_BIT;
+   if (ctx->Fog.Enabled)                  rasterMask |= FOG_BIT;
+   if (ctx->Scissor.Enabled)              rasterMask |= CLIP_BIT;
+   if (ctx->Stencil.Enabled)              rasterMask |= STENCIL_BIT;
    if (ctx->Visual.rgbMode) {
       const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
-      if (colorMask != 0xffffffff)        RasterMask |= MASKING_BIT;
-      if (ctx->Color._LogicOpEnabled)     RasterMask |= LOGIC_OP_BIT;
-      if (ctx->Texture._EnabledUnits)     RasterMask |= TEXTURE_BIT;
+      if (colorMask != 0xffffffff)        rasterMask |= MASKING_BIT;
+      if (ctx->Color._LogicOpEnabled)     rasterMask |= LOGIC_OP_BIT;
+      if (ctx->Texture._EnabledUnits)     rasterMask |= TEXTURE_BIT;
    }
    else {
-      if (ctx->Color.IndexMask != 0xffffffff) RasterMask |= MASKING_BIT;
-      if (ctx->Color.IndexLogicOpEnabled)     RasterMask |= LOGIC_OP_BIT;
+      if (ctx->Color.IndexMask != 0xffffffff) rasterMask |= MASKING_BIT;
+      if (ctx->Color.IndexLogicOpEnabled)     rasterMask |= LOGIC_OP_BIT;
    }
 
    if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
        && ctx->Color.ColorMask[ACOMP]
        && ctx->Color.DrawBuffer != GL_NONE)
-      RasterMask |= ALPHABUF_BIT;
+      rasterMask |= ALPHABUF_BIT;
 
    if (   ctx->Viewport.X < 0
        || ctx->Viewport.X + ctx->Viewport.Width > (GLint) ctx->DrawBuffer->Width
        || ctx->Viewport.Y < 0
        || ctx->Viewport.Y + ctx->Viewport.Height > (GLint) ctx->DrawBuffer->Height) {
-      RasterMask |= CLIP_BIT;
+      rasterMask |= CLIP_BIT;
    }
 
    if (ctx->Depth.OcclusionTest || ctx->Occlusion.Active)
-      RasterMask |= OCCLUSION_BIT;
+      rasterMask |= OCCLUSION_BIT;
 
 
    /* If we're not drawing to exactly one color buffer set the
@@ -93,23 +95,29 @@ _swrast_update_rasterflags( GLcontext *ctx )
     */
    if (_mesa_bitcount(ctx->Color._DrawDestMask) != 1) {
       /* more than one color buffer designated for writing (or zero buffers) */
-      RasterMask |= MULTI_DRAW_BIT;
+      rasterMask |= MULTI_DRAW_BIT;
    }
    else if (ctx->Visual.rgbMode && *((GLuint *) ctx->Color.ColorMask) == 0) {
-      RasterMask |= MULTI_DRAW_BIT; /* all RGBA channels disabled */
+      rasterMask |= MULTI_DRAW_BIT; /* all RGBA channels disabled */
    }
    else if (!ctx->Visual.rgbMode && ctx->Color.IndexMask==0) {
-      RasterMask |= MULTI_DRAW_BIT; /* all color index bits disabled */
+      rasterMask |= MULTI_DRAW_BIT; /* all color index bits disabled */
    }
 
    if (ctx->FragmentProgram._Enabled) {
-      RasterMask |= FRAGPROG_BIT;
+      rasterMask |= FRAGPROG_BIT;
    }
 
-   SWRAST_CONTEXT(ctx)->_RasterMask = RasterMask;
+   SWRAST_CONTEXT(ctx)->_RasterMask = rasterMask;
 }
 
 
+/**
+ * Examine polycon culls tate to compute the _BackfaceSign field.
+ * _BackfaceSign will be 0 if no culling, -1 if culling back-faces,
+ * and 1 if culling front-faces.  The Polygon FrontFace state also
+ * factors in.
+ */
 static void
 _swrast_update_polygon( GLcontext *ctx )
 {
@@ -140,6 +148,10 @@ _swrast_update_polygon( GLcontext *ctx )
 }
 
 
+/**
+ * Update the _PreferPixelFog field to indicate if we need to compute
+ * fog factors per-fragment.
+ */
 static void
 _swrast_update_fog_hint( GLcontext *ctx )
 {
@@ -152,7 +164,7 @@ _swrast_update_fog_hint( GLcontext *ctx )
 
 
 
-/*
+/**
  * Update the swrast->_AnyTextureCombine flag.
  */
 static void
@@ -171,7 +183,7 @@ _swrast_update_texture_env( GLcontext *ctx )
 }
 
 
-/*
+/**
  * Update swrast->_FogColor and swrast->_FogEnable values.
  */
 static void
@@ -200,6 +212,10 @@ _swrast_update_fog_state( GLcontext *ctx )
 }
 
 
+/**
+ * Update state for running fragment programs.  Basically, load the
+ * program parameters with current state values.
+ */
 static void
 _swrast_update_fragment_program( GLcontext *ctx )
 {
@@ -255,7 +271,8 @@ _swrast_update_fragment_program( GLcontext *ctx )
 
 
 
-/* Stub for swrast->Triangle to select a true triangle function
+/**
+ * Stub for swrast->Triangle to select a true triangle function
  * after a state change.
  */
 static void
@@ -280,6 +297,10 @@ _swrast_validate_triangle( GLcontext *ctx,
    swrast->Triangle( ctx, v0, v1, v2 );
 }
 
+/**
+ * Called via swrast->Line.  Examine current GL state and choose a software
+ * line routine.  Then call it.
+ */
 static void
 _swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 {
@@ -299,6 +320,10 @@ _swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
    swrast->Line( ctx, v0, v1 );
 }
 
+/**
+ * Called via swrast->Point.  Examine current GL state and choose a software
+ * point routine.  Then call it.
+ */
 static void
 _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
 {
@@ -318,6 +343,10 @@ _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
 }
 
 
+/**
+ * Called via swrast->BlendFunc.  Examine GL state to choose a blending
+ * function, then call it.
+ */
 static void _ASMAPI
 _swrast_validate_blend_func( GLcontext *ctx, GLuint n,
 			     const GLubyte mask[],
@@ -410,6 +439,7 @@ _swrast_invalidate_state( GLcontext *ctx, GLuint new_state )
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
 	 swrast->TextureSample[i] = _swrast_validate_texture_sample;
 
+   /* Debug checks */
    if (ctx->Visual.rgbMode) {
       ASSERT(swrast->Driver.WriteRGBASpan);
       ASSERT(swrast->Driver.WriteRGBSpan);
