@@ -714,9 +714,6 @@ fetch_alpha8(const struct gl_texture_image *texImage,
 
    i = i * mml->wScale;
    j = j * mml->hScale;
-   /* [dBorca] why, oh... why? */
-   i = i * mml->width / texImage->Width;
-   j = j * mml->height / texImage->Height;
 
    texel = ((GLubyte *) texImage->Data) + j * mml->width + i;
    rgba[RCOMP] = 255;
@@ -736,9 +733,6 @@ fetch_index8(const struct gl_texture_image *texImage,
 
    i = i * mml->wScale;
    j = j * mml->hScale;
-   /* [dBorca] why, oh... why? */
-   i = i * mml->width / texImage->Width;
-   j = j * mml->height / texImage->Height;
 
    texel = ((GLubyte *) texImage->Data) + j * mml->width + i;
    *indexOut = *texel;
@@ -1428,7 +1422,6 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    }
    else {
       /* no rescaling needed */
-      /* [dBorca] Hack alert: compute address of dest subimage within the overal tex image */
       _mesa_transfer_teximage(ctx, 2, texImage->Format,  /* Tex int format */
                               texImage->TexFormat,       /* dest format */
                               (GLubyte *) texImage->Data,/* dest */
