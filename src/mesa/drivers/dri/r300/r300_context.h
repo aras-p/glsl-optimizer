@@ -54,6 +54,15 @@ typedef struct r300_context *r300ContextPtr;
 #include "radeon_lock.h"
 #include "mm.h"
 
+/* Checkpoint.. for convenience */
+#define CPT	{ fprintf(stderr, "%s:%s line %d\n", __FILE__, __FUNCTION__, __LINE__); }
+#define WARN_ONCE(a)	{ \
+	static int warn=1; \
+	if(warn){ \
+		fprintf(stderr, (a)); \
+		warn=0;\
+		} \
+	}
 
 typedef GLuint uint32_t;
 typedef GLubyte uint8_t;

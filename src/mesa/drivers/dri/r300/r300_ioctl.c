@@ -51,6 +51,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "r300_program.h"
 #include "radeon_reg.h"
+#include "r300_emit.h"
 
 #include "vblank.h"
 
@@ -61,12 +62,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 {
 	GLcontext* ctx = r300->radeon.glCtx;
+	r300ContextPtr rmesa=r300;
 	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
 	int i;
 	GLuint cboffset, cbpitch;
-	drm_r300_cmd_header_t* cmd;
+	drm_r300_cmd_header_t* cmd2;
+	LOCAL_VARS;
 
-	if (RADEON_DEBUG & DEBUG_IOCTL)
+	if (1 || RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s: %s buffer (%i,%i %ix%i)\n",
 			__FUNCTION__, buffer ? "back" : "front",
 			dPriv->x, dPriv->y, dPriv->w, dPriv->h);
@@ -219,21 +222,38 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	}
 
 	/* Make sure we have enough space */
-	r300EnsureCmdBufSpace(r300, r300->hw.max_state_size + 9, __FUNCTION__);
+	r300EnsureCmdBufSpace(r300, r300->hw.max_state_size + 9+8, __FUNCTION__);
 
+   /* needed before starting 3d operation .. */
+   reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
+	e32(0x0000000a);
+   
+   reg_start(0x4f18,0);
+	e32(0x00000003);
+	
 	r300EmitState(r300);
 
-	cmd = (drm_r300_cmd_header_t*)r300AllocCmdBuf(r300, 9, __FUNCTION__);
-	cmd[0].packet3.cmd_type = R300_CMD_PACKET3;
-	cmd[0].packet3.packet = R300_CMD_PACKET3_CLEAR;
-	cmd[1].u = r300PackFloat32(dPriv->w / 2.0);
-	cmd[2].u = r300PackFloat32(dPriv->h / 2.0);
-	cmd[3].u = r300PackFloat32(ctx->Depth.Clear);
-	cmd[4].u = r300PackFloat32(1.0);
-	cmd[5].u = r300PackFloat32(ctx->Color.ClearColor[0]);
-	cmd[6].u = r300PackFloat32(ctx->Color.ClearColor[1]);
-	cmd[7].u = r300PackFloat32(ctx->Color.ClearColor[2]);
-	cmd[8].u = r300PackFloat32(ctx->Color.ClearColor[3]);
+	cmd2 = (drm_r300_cmd_header_t*)r300AllocCmdBuf(r300, 9, __FUNCTION__);
+	cmd2[0].packet3.cmd_type = R300_CMD_PACKET3;
+	cmd2[0].packet3.packet = R300_CMD_PACKET3_CLEAR;
+	cmd2[1].u = r300PackFloat32(dPriv->w / 2.0);
+	cmd2[2].u = r300PackFloat32(dPriv->h / 2.0);
+	cmd2[3].u = r300PackFloat32(ctx->Depth.Clear);
+	cmd2[4].u = r300PackFloat32(1.0);
+	cmd2[5].u = r300PackFloat32(ctx->Color.ClearColor[0]);
+	cmd2[6].u = r300PackFloat32(ctx->Color.ClearColor[1]);
+	cmd2[7].u = r300PackFloat32(ctx->Color.ClearColor[2]);
+	cmd2[8].u = r300PackFloat32(ctx->Color.ClearColor[3]);
+
+    /* This sequence is required after any 3d drawing packet
+      I suspect it work arounds a bug (or deficiency) in hardware */
+  
+   reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
+	e32(0x0000000a);
+   
+   reg_start(0x4f18,0);
+	e32(0x00000003);
+         
 }
 
 

@@ -393,6 +393,19 @@ static void uploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
 	tex.image->width /=4;
 	#endif
 
+	#if 0	
+	sleep(1);
+	
+	fprintf(stderr, "*** Uploading texture\n");
+		fprintf(stderr, "   offset=0x%08x\n", offset);
+		fprintf(stderr, "   image width=%d height=%d\n",
+			imageWidth, imageHeight);
+		fprintf(stderr, "    blit width=%d height=%d data=%p\n",
+			t->image[face][hwlevel].width,
+			t->image[face][hwlevel].height,
+			t->image[face][hwlevel].data);
+	#endif
+
 	LOCK_HARDWARE(&rmesa->radeon);
 	do {
 		ret = drmCommandWriteRead(rmesa->radeon.dri.fd, DRM_RADEON_TEXTURE,

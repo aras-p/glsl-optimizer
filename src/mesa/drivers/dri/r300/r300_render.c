@@ -213,7 +213,7 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
    	return;
    }
    /* A packet cannot have more than 16383 data words.. */
-   if(((end-start)*8+4*rmesa->state.texture.tc_count)>16380){
+   if(((end-start)*4*rmesa->state.aos_count)>16380){
    	fprintf(stderr, "%s:%s: Too many vertices to paint. Fix me !\n");
 	return;   	
 	}
@@ -615,7 +615,8 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 		FALLBACK_IF(ctx->Point.PointSprite); // GL_POINT_SPRITE_NV
 	FALLBACK_IF(ctx->Polygon.OffsetPoint); // GL_POLYGON_OFFSET_POINT
 	FALLBACK_IF(ctx->Polygon.OffsetLine); // GL_POLYGON_OFFSET_LINE
-	FALLBACK_IF(ctx->Polygon.OffsetFill); // GL_POLYGON_OFFSET_FILL
+	//FALLBACK_IF(ctx->Polygon.OffsetFill); // GL_POLYGON_OFFSET_FILL
+	if(ctx->Polygon.OffsetFill)WARN_ONCE("Polygon.OffsetFill not implemented, ignoring\n");
 	FALLBACK_IF(ctx->Polygon.SmoothFlag); // GL_POLYGON_SMOOTH
 	FALLBACK_IF(ctx->Polygon.StippleFlag); // GL_POLYGON_STIPPLE
 	//FALLBACK_IF(ctx->Stencil.Enabled); // GL_STENCIL_TEST
