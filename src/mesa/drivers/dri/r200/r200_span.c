@@ -122,61 +122,27 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* 16 bit, RGB565 color spanline and pixel functions
  */
-#define INIT_MONO_PIXEL(p, color) \
-  p = PACK_COLOR_565( color[0], color[1], color[2] )
 
-#define WRITE_RGBA( _x, _y, r, g, b, a )				\
-   *(GLushort *)(buf + _x*2 + _y*pitch) = ((((int)r & 0xf8) << 8) |	\
-					   (((int)g & 0xfc) << 3) |	\
-					   (((int)b & 0xf8) >> 3))
+#define GET_SRC_PTR(_x, _y) (read_buf + _x * 2 + _y * pitch)
+#define GET_DST_PTR(_x, _y) (     buf + _x * 2 + _y * pitch)
+#define SPANTMP_PIXEL_FMT GL_RGB
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
 
-#define WRITE_PIXEL( _x, _y, p )					\
-   *(GLushort *)(buf + _x*2 + _y*pitch) = p
-
-#define READ_RGBA( rgba, _x, _y )					\
-   do {									\
-      GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);		\
-      rgba[0] = ((p >> 8) & 0xf8) * 255 / 0xf8;				\
-      rgba[1] = ((p >> 3) & 0xfc) * 255 / 0xfc;				\
-      rgba[2] = ((p << 3) & 0xf8) * 255 / 0xf8;				\
-      rgba[3] = 0xff;							\
-   } while (0)
-
-#define TAG(x) r200##x##_RGB565
-#include "spantmp.h"
+#define TAG(x)    r200##x##_RGB565
+#define TAG2(x,y) r200##x##_RGB565##y
+#include "spantmp2.h"
 
 /* 32 bit, ARGB8888 color spanline and pixel functions
  */
-#undef INIT_MONO_PIXEL
-#define INIT_MONO_PIXEL(p, color) \
-  p = PACK_COLOR_8888( color[3], color[0], color[1], color[2] )
 
-#define WRITE_RGBA( _x, _y, r, g, b, a )			\
-do {								\
-   *(GLuint *)(buf + _x*4 + _y*pitch) = ((b <<  0) |		\
-					 (g <<  8) |		\
-					 (r << 16) |		\
-					 (a << 24) );		\
-} while (0)
+#define GET_SRC_PTR(_x, _y) (read_buf + _x * 4 + _y * pitch)
+#define GET_DST_PTR(_x, _y) (     buf + _x * 4 + _y * pitch)
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
 
-#define WRITE_PIXEL( _x, _y, p ) 			\
-do {							\
-   *(GLuint *)(buf + _x*4 + _y*pitch) = p;		\
-} while (0)
-
-#define READ_RGBA( rgba, _x, _y )				\
-do {								\
-   volatile GLuint *ptr = (volatile GLuint *)(read_buf + _x*4 + _y*pitch); \
-   GLuint p = *ptr;					\
-   rgba[0] = (p >> 16) & 0xff;					\
-   rgba[1] = (p >>  8) & 0xff;					\
-   rgba[2] = (p >>  0) & 0xff;					\
-   rgba[3] = (p >> 24) & 0xff;					\
-} while (0)
-
-#define TAG(x) r200##x##_ARGB8888
-#include "spantmp.h"
-
+#define TAG(x)    r200##x##_ARGB8888
+#define TAG2(x,y) r200##x##_ARGB8888##y
+#include "spantmp2.h"
 
 
 /* ================================================================
@@ -380,23 +346,11 @@ void r200InitSpanFuncs( GLcontext *ctx )
 
    switch ( rmesa->r200Screen->cpp ) {
    case 2:
-      swdd->WriteRGBASpan	= r200WriteRGBASpan_RGB565;
-      swdd->WriteRGBSpan	= r200WriteRGBSpan_RGB565;
-      swdd->WriteMonoRGBASpan	= r200WriteMonoRGBASpan_RGB565;
-      swdd->WriteRGBAPixels	= r200WriteRGBAPixels_RGB565;
-      swdd->WriteMonoRGBAPixels	= r200WriteMonoRGBAPixels_RGB565;
-      swdd->ReadRGBASpan	= r200ReadRGBASpan_RGB565;
-      swdd->ReadRGBAPixels      = r200ReadRGBAPixels_RGB565;
+      r200InitPointers_RGB565( swdd );
       break;
 
    case 4:
-      swdd->WriteRGBASpan	= r200WriteRGBASpan_ARGB8888;
-      swdd->WriteRGBSpan	= r200WriteRGBSpan_ARGB8888;
-      swdd->WriteMonoRGBASpan   = r200WriteMonoRGBASpan_ARGB8888;
-      swdd->WriteRGBAPixels     = r200WriteRGBAPixels_ARGB8888;
-      swdd->WriteMonoRGBAPixels = r200WriteMonoRGBAPixels_ARGB8888;
-      swdd->ReadRGBASpan	= r200ReadRGBASpan_ARGB8888;
-      swdd->ReadRGBAPixels      = r200ReadRGBAPixels_ARGB8888;
+      r200InitPointers_ARGB8888( swdd );
       break;
 
    default:

@@ -204,19 +204,6 @@
 #undef LOCAL_VARS
 #undef LOCAL_DEPTH_VARS
  
-/*=* [DBG] csmash : fix options worng position *=*/
-/*#define LOCAL_VARS                                    \
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;   \
-    GLuint pitch = vmesa->drawPitch;                    \
-    GLuint height = dPriv->h;                           \
-    GLuint p;                                           \
-    char *buf = (char *)(vmesa->drawMap +               \
-                         dPriv->x * 4 +                 \
-                         dPriv->y * pitch);             \
-    char *read_buf = (char *)(vmesa->readMap +          \
-                              dPriv->x * 4 +            \
-                              dPriv->y * pitch);        \
-    (void)read_buf; (void)buf; (void)p*/
 #define LOCAL_VARS                                                   	\
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;                	\
     GLuint pitch = vmesa->drawPitch;                                 	\
@@ -237,33 +224,15 @@
                               dPriv->y * pitch);                     	\
     }
 
+#define GET_SRC_PTR(_x, _y) (read_buf + _x * 4 + _y * pitch)
+#define GET_DST_PTR(_x, _y) (     buf + _x * 4 + _y * pitch)
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
 
-#undef INIT_MONO_PIXEL
-#define INIT_MONO_PIXEL(p, color)                       \
-    p = PACK_COLOR_8888(color[3], color[0], color[1], color[2]) 
-    
-#define WRITE_RGBA(_x, _y, r, g, b, a)                                  \
-    *(GLuint *)(buf + _x * 4 + _y * pitch) = ((r << 16) |    		\
-                                              (g << 8) |    		\
-                                              (b << 0) |    		\
-                                              (a << 24));
-                                              
+#define TAG(x)    via##x##_8888
+#define TAG2(x,y) via##x##_8888##y
+#include "spantmp2.h"
 
-#define WRITE_PIXEL(_x, _y, p)                      \
-    *(GLuint *)(buf + _x * 4 + _y * pitch) = p
-
-#define READ_RGBA(rgba, _x, _y)                                         \
-    do {                                                                \
-        GLuint p = *(GLuint *)(read_buf + _x * 4 + _y * pitch);         \
-        rgba[0] = (p >> 16) & 0xff;                       		\
-        rgba[1] = (p >> 8) & 0xff;                       		\
-        rgba[2] = (p >> 0) & 0xff;                       		\
-        rgba[3] = 255;                                                  \
-    } while (0)
-
-#define TAG(x) via##x##_8888
-#include "spantmp.h"
-/*#include "via_spantmp.h"*/
 
 /* 16 bit depthbuffer functions.
  */
@@ -367,13 +336,7 @@ void viaInitSpanFuncs(GLcontext *ctx)
 	swdd->ReadRGBAPixels = viaReadRGBAPixels_565;
     }
     else if (vmesa->viaScreen->bitsPerPixel == 0x20) {
-	swdd->WriteRGBASpan = viaWriteRGBASpan_8888;
-	swdd->WriteRGBSpan = viaWriteRGBSpan_8888;
-	swdd->WriteMonoRGBASpan = viaWriteMonoRGBASpan_8888;
-	swdd->WriteRGBAPixels = viaWriteRGBAPixels_8888;
-	swdd->WriteMonoRGBAPixels = viaWriteMonoRGBAPixels_8888;
-	swdd->ReadRGBASpan = viaReadRGBASpan_8888;
-	swdd->ReadRGBAPixels = viaReadRGBAPixels_8888;
+	viaInitPointers_8888( swdd );
     }
     else 
 	ASSERT(0);

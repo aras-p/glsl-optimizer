@@ -125,85 +125,27 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* 16 bit, RGB565 color spanline and pixel functions
  */
-#undef INIT_MONO_PIXEL
-#define INIT_MONO_PIXEL(p, color) \
-  p = R128PACKCOLOR565( color[0], color[1], color[2] )
+#define GET_SRC_PTR(_x, _y) (read_buf + _x * 2 + _y * pitch)
+#define GET_DST_PTR(_x, _y) (     buf + _x * 2 + _y * pitch)
+#define SPANTMP_PIXEL_FMT GL_RGB
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
 
-#define WRITE_RGBA( _x, _y, r, g, b, a )				\
-   *(GLushort *)(buf + _x*2 + _y*pitch) = ((((int)r & 0xf8) << 8) |	\
-					   (((int)g & 0xfc) << 3) |	\
-					   (((int)b & 0xf8) >> 3))
+#define TAG(x)    r128##x##_RGB565
+#define TAG2(x,y) r128##x##_RGB565##y
+#include "spantmp2.h"
 
-#define WRITE_PIXEL( _x, _y, p )					\
-   *(GLushort *)(buf + _x*2 + _y*pitch) = p
-
-#define READ_RGBA( rgba, _x, _y )					\
-   do {									\
-      GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);		\
-      rgba[0] = (p >> 8) & 0xf8;					\
-      rgba[1] = (p >> 3) & 0xfc;					\
-      rgba[2] = (p << 3) & 0xf8;					\
-      rgba[3] = 0xff;							\
-      if ( rgba[0] & 0x08 ) rgba[0] |= 0x07;				\
-      if ( rgba[1] & 0x04 ) rgba[1] |= 0x03;				\
-      if ( rgba[2] & 0x08 ) rgba[2] |= 0x07;				\
-   } while (0)
-
-#define TAG(x) r128##x##_RGB565
-#include "spantmp.h"
-
-#define READ_DEPTH(d, _x, _y)                                                 \
-    d = *(GLushort *)(buf + _x*2 + _y*pitch)
 
 /* 32 bit, ARGB8888 color spanline and pixel functions
  */
-#undef INIT_MONO_PIXEL
-#define INIT_MONO_PIXEL(p, color) \
-  p = R128PACKCOLOR8888( color[0], color[1], color[2], color[3] )
+#define GET_SRC_PTR(_x, _y) (read_buf + _x * 4 + _y * pitch)
+#define GET_DST_PTR(_x, _y) (     buf + _x * 4 + _y * pitch)
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
 
-#define WRITE_RGBA( _x, _y, r, g, b, a )				\
-   *(GLuint *)(buf + _x*4 + _y*pitch) = ((b <<  0) |			\
-					 (g <<  8) |			\
-					 (r << 16) |			\
-					 (a << 24) )
+#define TAG(x)    r128##x##_ARGB8888
+#define TAG2(x,y) r128##x##_ARGB8888##y
+#include "spantmp2.h"
 
-#define WRITE_PIXEL( _x, _y, p )					\
-   *(GLuint *)(buf + _x*4 + _y*pitch) = p
-
-#define READ_RGBA( rgba, _x, _y )					\
-do {									\
-   GLuint p = *(GLuint *)(read_buf + _x*4 + _y*pitch);			\
-   rgba[0] = (p >> 16) & 0xff;						\
-   rgba[1] = (p >>  8) & 0xff;						\
-   rgba[2] = (p >>  0) & 0xff;						\
-   rgba[3] = 0xff;/*(p >> 24) & 0xff;*/						\
-} while (0)
-
-#define TAG(x) r128##x##_ARGB8888
-#include "spantmp.h"
-
-
-/* 24 bit, RGB888 color spanline and pixel functions */
-#undef INIT_MONO_PIXEL
-#define INIT_MONO_PIXEL(p, color) \
-  p = R128PACKCOLOR888( color[0], color[1], color[2] )
-
-#define WRITE_RGBA(_x, _y, r, g, b, a)                                        \
-    *(GLuint *)(buf + _x*3 + _y*pitch) = ((r << 16) |                         \
-					  (g << 8)  |                         \
-					  (b << 0))
-
-#define WRITE_PIXEL(_x, _y, p)                                                \
-    *(GLuint *)(buf + _x*3 + _y*pitch) = p
-
-#define READ_RGBA(rgba, _x, _y)                                               \
-    do {                                                                      \
-	GLuint p = *(GLuint *)(read_buf + _x*3 + _y*pitch);                   \
-	rgba[0] = (p >> 16) & 0xff;                                           \
-	rgba[1] = (p >> 8)  & 0xff;                                           \
-	rgba[2] = (p >> 0)  & 0xff;                                           \
-	rgba[3] = 0xff;                                                       \
-    } while (0)
 
 /* ================================================================
  * Depth buffer
@@ -211,6 +153,9 @@ do {									\
 
 /* 16-bit depth buffer functions
  */
+#define READ_DEPTH(d, _x, _y)                                           \
+    d = *(GLushort *)(buf + _x*2 + _y*pitch)
+
 #define WRITE_DEPTH_SPAN()						\
    r128WriteDepthSpanLocked( rmesa, n,					\
 			     x + dPriv->x,				\
@@ -423,23 +368,11 @@ void r128DDInitSpanFuncs( GLcontext *ctx )
 
    switch ( rmesa->r128Screen->cpp ) {
    case 2:
-      swdd->WriteRGBASpan	= r128WriteRGBASpan_RGB565;
-      swdd->WriteRGBSpan	= r128WriteRGBSpan_RGB565;
-      swdd->WriteMonoRGBASpan	= r128WriteMonoRGBASpan_RGB565;
-      swdd->WriteRGBAPixels	= r128WriteRGBAPixels_RGB565;
-      swdd->WriteMonoRGBAPixels	= r128WriteMonoRGBAPixels_RGB565;
-      swdd->ReadRGBASpan	= r128ReadRGBASpan_RGB565;
-      swdd->ReadRGBAPixels	= r128ReadRGBAPixels_RGB565;
+      r128InitPointers_RGB565( swdd );
       break;
 
    case 4:
-      swdd->WriteRGBASpan	= r128WriteRGBASpan_ARGB8888;
-      swdd->WriteRGBSpan	= r128WriteRGBSpan_ARGB8888;
-      swdd->WriteMonoRGBASpan	= r128WriteMonoRGBASpan_ARGB8888;
-      swdd->WriteRGBAPixels	= r128WriteRGBAPixels_ARGB8888;
-      swdd->WriteMonoRGBAPixels	= r128WriteMonoRGBAPixels_ARGB8888;
-      swdd->ReadRGBASpan	= r128ReadRGBASpan_ARGB8888;
-      swdd->ReadRGBAPixels	= r128ReadRGBAPixels_ARGB8888;
+      r128InitPointers_ARGB8888( swdd );
       break;
 
    default:
