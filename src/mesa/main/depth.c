@@ -26,8 +26,9 @@
 #include "glheader.h"
 #include "imports.h"
 #include "context.h"
-#include "enums.h"
 #include "depth.h"
+#include "enums.h"
+#include "hash.h"
 #include "macros.h"
 #include "mtypes.h"
 

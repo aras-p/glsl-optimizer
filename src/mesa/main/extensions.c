@@ -427,10 +427,3 @@ _mesa_make_extension_string( GLcontext *ctx )
 
    return s;
 }
-
-void 
-_mesa_extensions_dtr( GLcontext *ctx ) 
-{
-   if (ctx->Extensions.String)
-      FREE((void *) ctx->Extensions.String);
-}

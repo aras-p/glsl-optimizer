@@ -42,6 +42,7 @@
 #include "matrix.h"
 #include "mtypes.h"
 #include "math/m_matrix.h"
+#include "math/m_xform.h"
 
 
 /**

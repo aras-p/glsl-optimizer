@@ -1195,7 +1195,6 @@ _mesa_initialize_context( GLcontext *ctx,
 
    if (!init_attrib_groups( ctx )) {
       free_shared_state(ctx, ctx->Shared);
-      fprintf(stderr, "%s: failed to init attrib groups\n", __FUNCTION__);
       return GL_FALSE;
    }
 
@@ -1313,7 +1312,6 @@ _mesa_initialize_context( GLcontext *ctx,
 
 #endif
 
-   fprintf(stderr, "%s: succeded\n", __FUNCTION__);
    return GL_TRUE;
 }
 
@@ -1398,7 +1396,8 @@ _mesa_free_context_data( GLcontext *ctx )
       free_shared_state( ctx, ctx->Shared );
    }
 
-   _mesa_extensions_dtr(ctx);
+   if (ctx->Extensions.String)
+      FREE((void *) ctx->Extensions.String);
 
    FREE(ctx->Exec);
    FREE(ctx->Save);

@@ -2987,5 +2987,5 @@ void _mesa_free_texture_data( GLcontext *ctx )
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.ProxyRect );
 
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
-      _mesa_free_colortable_data( &ctx->Texture.Unit[i].ColorTable );
+      _mesa_free_one_colortable( &ctx->Texture.Unit[i].ColorTable );
 }
