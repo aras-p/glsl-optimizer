@@ -75,12 +75,16 @@
 #endif
 
 
-#if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__) && !defined(BUILD_FOR_SNAP)
 #	define __WIN32__
 #	define finite _finite
 #endif
 
-#if !defined(OPENSTEP) && (defined(__WIN32__) && !defined(__CYGWIN__))
+#if defined(__WATCOMC__)
+#	define finite _finite
+#endif
+
+#if !defined(OPENSTEP) && (defined(__WIN32__) && !defined(__CYGWIN__)) && !defined(BUILD_FOR_SNAP)
 #  pragma warning( disable : 4068 ) /* unknown pragma */
 #  pragma warning( disable : 4710 ) /* function 'foo' not inlined */
 #  pragma warning( disable : 4711 ) /* function 'foo' selected for automatic inline expansion */
@@ -113,7 +117,7 @@
 #  endif
 #  define GLWINAPI __stdcall
 #  define GLWINAPIV __cdecl
-#elif !defined(__SCITECH_SNAP__)
+#elif !defined(BUILD_FOR_SNAP)
 /* non-Windows compilation */
 #  define GLAPI extern
 #  define GLAPIENTRY
@@ -127,7 +131,7 @@
 
 /* compatibility guard so we don't need to change client code */
 
-#if defined(_WIN32) && !defined(_WINDEF_) && !defined(_WINDEF_H) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(_WINDEF_) && !defined(_WINDEF_H) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP) && !defined(__CYGWIN__) && !defined(BUILD_FOR_SNAP)
 #if 0
 #	define CALLBACK GLCALLBACK
 typedef void *HGLRC;
@@ -142,7 +146,7 @@ typedef unsigned long COLORREF;
 #define GL_GLEXT_PROTOTYPES
 
 
-#if defined(_WIN32) && !defined(_WINGDI_) && !defined(_WINGDI_H) && !defined(_GNU_H_WINDOWS32_DEFINES) && !defined(OPENSTEP)
+#if defined(_WIN32) && !defined(_WINGDI_) && !defined(_WINGDI_H) && !defined(_GNU_H_WINDOWS32_DEFINES) && !defined(OPENSTEP) && !defined(BUILD_FOR_SNAP) 
 #	define WGL_FONT_LINES      0
 #	define WGL_FONT_POLYGONS   1
 #ifndef _GNU_H_WINDOWS32_FUNCTIONS
@@ -196,7 +200,7 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 
 
 #ifndef CAPI
-#ifdef WIN32
+#if defined(WIN32) && !defined(BUILD_FOR_SNAP)
 #define CAPI _cdecl
 #else
 #define CAPI
@@ -278,7 +282,7 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #endif
 
 
-#if defined(__SCITECH_SNAP__) && defined(CHECKED)
+#if defined(BUILD_FOR_SNAP) && defined(CHECKED)
 #  define ASSERT(X)   _CHECK(X) 
 #elif defined(DEBUG)
 #  define ASSERT(X)   assert(X)

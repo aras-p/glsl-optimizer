@@ -33,9 +33,15 @@
  *   SPAN_VARS  to declare any local variables
  *   INIT_PIXEL_PTR(P, X, Y)  to initialize a pointer to a pixel
  *   INC_PIXEL_PTR(P)  to increment a pixel pointer by one pixel
- *   STORE_RGB_PIXEL(P, R, G, B)  to store RGB values in  pixel P
- *   STORE_RGBA_PIXEL(P, R, G, B, A)  to store RGBA values in pixel P
+ *   STORE_RGB_PIXEL(P, X, Y, R, G, B)  to store RGB values in  pixel P
+ *   STORE_RGBA_PIXEL(P, X, Y, R, G, B, A)  to store RGBA values in pixel P
  *   FETCH_RGBA_PIXEL(R, G, B, A, P)  to fetch RGBA values from pixel P
+ *
+ * Note that in the above STORE_RGBx_PIXEL macros, we also pass in the (X,Y)
+ * coordinates for the pixels to be stored, which enables dithering in 8-bit
+ * and 15/16-bit display modes. Most undithered modes or 24/32-bit display
+ * modes will simply ignore the passed in (X,Y) values.
+ *
  * For color index mode:
  *   STORE_CI_PIXEL(P, CI)  to store a color index in pixel P
  *   FETCH_CI_PIXEL(CI, P)  to fetch a pixel index from pixel P
@@ -56,7 +62,7 @@ NAME(write_rgba_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
    if (mask) {
       for (i = 0; i < n; i++) {
          if (mask[i]) {
-            STORE_RGBA_PIXEL(pixel, rgba[i][RCOMP], rgba[i][GCOMP],
+            STORE_RGBA_PIXEL(pixel, x+i, y, rgba[i][RCOMP], rgba[i][GCOMP],
                              rgba[i][BCOMP], rgba[i][ACOMP]);
          }
          INC_PIXEL_PTR(pixel);
@@ -64,7 +70,7 @@ NAME(write_rgba_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
    }
    else {
       for (i = 0; i < n; i++) {
-         STORE_RGBA_PIXEL(pixel, rgba[i][RCOMP], rgba[i][GCOMP],
+         STORE_RGBA_PIXEL(pixel, x+i, y, rgba[i][RCOMP], rgba[i][GCOMP],
                           rgba[i][BCOMP], rgba[i][ACOMP]);
          INC_PIXEL_PTR(pixel);
       }
@@ -83,7 +89,7 @@ NAME(write_rgb_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
    if (mask) {
       for (i = 0; i < n; i++) {
          if (mask[i]) {
-            STORE_RGB_PIXEL(pixel, rgb[i][RCOMP], rgb[i][GCOMP],
+            STORE_RGB_PIXEL(pixel, x+i, y, rgb[i][RCOMP], rgb[i][GCOMP],
                             rgb[i][BCOMP]);
          }
          INC_PIXEL_PTR(pixel);
@@ -91,7 +97,7 @@ NAME(write_rgb_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
    }
    else {
       for (i = 0; i < n; i++) {
-         STORE_RGB_PIXEL(pixel, rgb[i][RCOMP], rgb[i][GCOMP],
+         STORE_RGB_PIXEL(pixel, x+i, y, rgb[i][RCOMP], rgb[i][GCOMP],
                          rgb[i][BCOMP]);
          INC_PIXEL_PTR(pixel);
       }
@@ -110,7 +116,7 @@ NAME(write_monorgba_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
    if (mask) {
       for (i = 0; i < n; i++) {
          if (mask[i]) {
-            STORE_RGBA_PIXEL(pixel, color[RCOMP], color[GCOMP],
+            STORE_RGBA_PIXEL(pixel, x+i, y, color[RCOMP], color[GCOMP],
                              color[BCOMP], color[ACOMP]);
          }
          INC_PIXEL_PTR(pixel);
@@ -118,7 +124,7 @@ NAME(write_monorgba_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
    }
    else {
       for (i = 0; i < n; i++) {
-         STORE_RGBA_PIXEL(pixel, color[RCOMP], color[GCOMP],
+         STORE_RGBA_PIXEL(pixel, x+i, y, color[RCOMP], color[GCOMP],
                           color[BCOMP], color[ACOMP]);
          INC_PIXEL_PTR(pixel);
       }
@@ -138,7 +144,7 @@ NAME(write_rgba_pixels)( const GLcontext *ctx, GLuint n,
    for (i = 0; i < n; i++) {
       if (mask[i]) {
          INIT_PIXEL_PTR(pixel, x[i], y[i]);
-         STORE_RGBA_PIXEL(pixel, rgba[i][RCOMP], rgba[i][GCOMP],
+         STORE_RGBA_PIXEL(pixel, x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP],
                           rgba[i][BCOMP], rgba[i][ACOMP]);
       }
    }
@@ -157,7 +163,7 @@ NAME(write_monorgba_pixels)( const GLcontext *ctx,
    for (i = 0; i < n; i++) {
       if (mask[i]) {
          INIT_PIXEL_PTR(pixel, x[i], y[i]);
-         STORE_RGBA_PIXEL(pixel, color[RCOMP], color[GCOMP],
+         STORE_RGBA_PIXEL(pixel, x[i], y[i], color[RCOMP], color[GCOMP],
                           color[BCOMP], color[ACOMP]);
       }
    }

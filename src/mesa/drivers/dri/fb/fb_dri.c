@@ -1,4 +1,4 @@
-/* $Id: fb_dri.c,v 1.1 2003/08/06 18:11:57 keithw Exp $ */
+/* $Id: fb_dri.c,v 1.2 2003/10/08 01:53:30 kendallb Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -212,9 +212,9 @@ init_core_functions( GLcontext *ctx )
 #define INIT_PIXEL_PTR(P, X, Y) \
    GLubyte *P = (char *)dPriv->currentBuffer + (Y) * dPriv->currentPitch + (X) * 3
 #define INC_PIXEL_PTR(P) P += 3
-#define STORE_RGB_PIXEL(P, R, G, B) \
+#define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
    P[0] = B;  P[1] = G;  P[2] = R
-#define STORE_RGBA_PIXEL(P, R, G, B, A) \
+#define STORE_RGBA_PIXEL(P, X, Y, R, G, B, A) \
    P[0] = B;  P[1] = G;  P[2] = R
 #define FETCH_RGBA_PIXEL(R, G, B, A, P) \
    R = P[2];  G = P[1];  B = P[0];  A = CHAN_MAX
@@ -230,9 +230,9 @@ init_core_functions( GLcontext *ctx )
 #define INIT_PIXEL_PTR(P, X, Y) \
    GLubyte *P = (char *)dPriv->currentBuffer + (Y) * dPriv->currentPitch + (X) * 4;
 #define INC_PIXEL_PTR(P) P += 4
-#define STORE_RGB_PIXEL(P, R, G, B) \
+#define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
    P[0] = B;  P[1] = G;  P[2] = R;  P[3] = 255
-#define STORE_RGBA_PIXEL(P, R, G, B, A) \
+#define STORE_RGBA_PIXEL(P, X, Y, R, G, B, A) \
    P[0] = B;  P[1] = G;  P[2] = R;  P[3] = A
 #define FETCH_RGBA_PIXEL(R, G, B, A, P) \
    R = P[2];  G = P[1];  B = P[0];  A = P[3]
@@ -248,9 +248,9 @@ init_core_functions( GLcontext *ctx )
 #define INIT_PIXEL_PTR(P, X, Y) \
    GLushort *P = (GLushort *) ((char *)dPriv->currentBuffer + (Y) * dPriv->currentPitch + (X) * 2)
 #define INC_PIXEL_PTR(P) P += 1
-#define STORE_RGB_PIXEL(P, R, G, B) \
+#define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
    *P = ( (((R) & 0xf8) << 8) | (((G) & 0xfc) << 3) | ((B) >> 3) )
-#define STORE_RGBA_PIXEL(P, R, G, B, A) \
+#define STORE_RGBA_PIXEL(P, X, Y, R, G, B, A) \
    *P = ( (((R) & 0xf8) << 8) | (((G) & 0xfc) << 3) | ((B) >> 3) )
 #define FETCH_RGBA_PIXEL(R, G, B, A, P) \
    R = ( (((*P) >> 8) & 0xf8) | (((*P) >> 11) & 0x7) ); \
@@ -269,9 +269,9 @@ init_core_functions( GLcontext *ctx )
 #define INIT_PIXEL_PTR(P, X, Y) \
    GLushort *P = (GLushort *) ((char *)dPriv->currentBuffer + (Y) * dPriv->currentPitch + (X) * 2)
 #define INC_PIXEL_PTR(P) P += 1
-#define STORE_RGB_PIXEL(P, R, G, B) \
+#define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
    *P = ( (((R) & 0xf8) << 7) | (((G) & 0xf8) << 2) | ((B) >> 3) )
-#define STORE_RGBA_PIXEL(P, R, G, B, A) \
+#define STORE_RGBA_PIXEL(P, X, Y, R, G, B, A) \
    *P = ( (((R) & 0xf8) << 7) | (((G) & 0xf8) << 2) | ((B) >> 3) )
 #define FETCH_RGBA_PIXEL(R, G, B, A, P) \
    R = ( (((*P) >> 7) & 0xf8) | (((*P) >> 10) & 0x7) ); \

@@ -268,6 +268,8 @@ enum { NIL = 0, ONE = 1, NEG = -1, VAR = 2 };
 #  define ALIGN16	__attribute__ ((aligned (16)))
 #elif defined(__MSC__)
 #  define ALIGN16	__declspec(align(16)) /* GH: Does this work? */
+#elif defined(__WATCOMC__)
+#  define ALIGN16	                    /* Watcom does not support this */ 
 #else
 #  warning "ALIGN16 will not 16-byte align!\n"
 #  define ALIGN16
