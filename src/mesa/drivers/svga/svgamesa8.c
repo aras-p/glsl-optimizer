@@ -1,4 +1,4 @@
-/* $Id: svgamesa8.c,v 1.6 2000/06/14 21:59:07 brianp Exp $ */
+/* $Id: svgamesa8.c,v 1.7 2000/11/14 17:40:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,11 +51,6 @@ static unsigned long __svga_getpixel8(int x, int y)
     y = SVGAInfo->height-y-1;
     offset = y * SVGAInfo->linewidth + x;
     return SVGABuffer.ReadBuffer[offset];
-}
-
-void __set_index8( GLcontext *ctx, GLuint index )
-{
-   SVGAMesa->index = index;
 }
 
 void __clear_index8( GLcontext *ctx, GLuint index )
@@ -121,12 +116,13 @@ void __write_ci8_span8( const GLcontext *ctx, GLuint n, GLint x, GLint y,
 }
 
 void __write_mono_ci_span8( const GLcontext *ctx, GLuint n,
-                            GLint x, GLint y, const GLubyte mask[] )
+                            GLint x, GLint y,
+                            GLuint colorIndex, const GLubyte mask[] )
 {
    int i;
    for (i=0;i<n;i++,x++) {
       if (mask[i]) {
-         __svga_drawpixel8( x, y, SVGAMesa->index);
+         __svga_drawpixel8( x, y, colorIndex);
       }
    }
 }
@@ -155,12 +151,12 @@ void __write_ci32_pixels8( const GLcontext *ctx,
 
 void __write_mono_ci_pixels8( const GLcontext *ctx, GLuint n,
                               const GLint x[], const GLint y[],
-                              const GLubyte mask[] )
+                              GLuint colorIndex, const GLubyte mask[] )
 {
    int i;
    for (i=0; i<n; i++) {
       if (mask[i]) {
-         __svga_drawpixel8( x[i], y[i], SVGAMesa->index);
+         __svga_drawpixel8( x[i], y[i], colorIndex);
       }
    }
 }

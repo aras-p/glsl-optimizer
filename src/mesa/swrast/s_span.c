@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.3 2000/11/13 20:02:57 keithw Exp $ */
+/* $Id: s_span.c,v 1.4 2000/11/14 17:40:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -364,7 +364,7 @@ void gl_write_monoindex_span( GLcontext *ctx,
       }
       else {
          /* normal situation: draw to exactly one buffer */
-         (*ctx->Driver.WriteMonoCISpan)( ctx, n, x, y, mask );
+         (*ctx->Driver.WriteMonoCISpan)( ctx, n, x, y, index, mask );
       }
    }
 }
@@ -713,7 +713,7 @@ void gl_write_monocolor_span( GLcontext *ctx,
 				(const GLchan (*)[4]) rgba, mask );
       }
       else {
-         (*ctx->Driver.WriteMonoRGBASpan)( ctx, n, x, y, mask );
+         (*ctx->Driver.WriteMonoRGBASpan)( ctx, n, x, y, color, mask );
          if (swrast->_RasterMask & ALPHABUF_BIT) {
             _mesa_write_mono_alpha_span( ctx, n, x, y, (GLchan) color[ACOMP],
                                          write_all ? Null : mask );

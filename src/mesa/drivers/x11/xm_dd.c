@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.4 2000/11/13 20:02:57 keithw Exp $ */
+/* $Id: xm_dd.c,v 1.5 2000/11/14 17:40:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -241,33 +241,6 @@ clear_color( GLcontext *ctx, GLubyte r, GLubyte g, GLubyte b, GLubyte a )
    XMesaSetForeground( xmesa->display, xmesa->xm_buffer->cleargc,
                        xmesa->clearpixel );
    _glthread_UNLOCK_MUTEX(_xmesa_lock);
-}
-
-
-
-/* Set current color index */
-static void
-set_index( GLcontext *ctx, GLuint index )
-{
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   unsigned long p = (unsigned long) index;
-   xmesa->pixel = p;
-   XMesaSetForeground( xmesa->display, xmesa->xm_buffer->gc1, p );
-}
-
-
-
-/* Set current drawing color */
-static void
-set_color( GLcontext *ctx, GLubyte r, GLubyte g, GLubyte b, GLubyte a )
-{
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   xmesa->red   = r;
-   xmesa->green = g;
-   xmesa->blue  = b;
-   xmesa->alpha = a;
-   xmesa->pixel = xmesa_color_to_pixel( xmesa, r, g, b, a, xmesa->pixelformat );;
-   XMesaSetForeground( xmesa->display, xmesa->xm_buffer->gc1, xmesa->pixel );
 }
 
 
@@ -807,7 +780,7 @@ drawpixels_8R8G8B( GLcontext *ctx,
    const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
-   XMesaGC gc = xmesa->xm_buffer->gc1;
+   XMesaGC gc = xmesa->xm_buffer->gc;
    assert(dpy);
    assert(buffer);
    assert(gc);
@@ -952,8 +925,6 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.SetDrawBuffer = set_draw_buffer;
    ctx->Driver.SetReadBuffer = set_read_buffer;
 
-   ctx->Driver.Index = set_index;
-   ctx->Driver.Color = set_color;
    ctx->Driver.ClearIndex = clear_index;
    ctx->Driver.ClearColor = clear_color;
    ctx->Driver.Clear = clear_buffers;

@@ -223,12 +223,13 @@ static void fxDDWriteRGBSpan(const GLcontext *ctx,
 
 static void fxDDWriteMonoRGBASpan(const GLcontext *ctx, 
                                   GLuint n, GLint x, GLint y,
-                                  const GLubyte mask[])
+                                  const GLchan color[4], const GLubyte mask[])
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   GLuint i;
   GLint bottom=fxMesa->height-1;
   GLuint data[MAX_WIDTH];
+  GrColor_t gColor = FXCOLOR4(color);
 
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
      fprintf(stderr,"fxmesa: fxDDWriteMonoRGBASpan(...)\n");
@@ -239,7 +240,7 @@ static void fxDDWriteMonoRGBASpan(const GLcontext *ctx,
 
     for (i=0;i<n;i++) {
       if (mask[i]) {
-        data[span] = (GLuint) fxMesa->color;
+        data[span] = (GLuint) gColor;
         ++span;
       } else {
         if (span > 0) {
@@ -257,7 +258,7 @@ static void fxDDWriteMonoRGBASpan(const GLcontext *ctx,
                         (void *) data );
   } else {
     for (i=0;i<n;i++) {
-      data[i]=(GLuint) fxMesa->color;
+      data[i]=(GLuint) gColor;
     }
 
     writeRegionClipped(fxMesa,  fxMesa->currentFB, x, bottom-y, GR_LFB_SRC_FMT_8888,
@@ -372,11 +373,12 @@ static void fxDDWriteRGBAPixels(const GLcontext *ctx,
 
 static void fxDDWriteMonoRGBAPixels(const GLcontext *ctx,
                                     GLuint n, const GLint x[], const GLint y[],
-                                    const GLubyte mask[])
+                                    const GLchan color[4], const GLubyte mask[])
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   GLuint i;
   GLint bottom=fxMesa->height-1;
+  GrColor_t gColor = FXCOLOR4(color);
 
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
      fprintf(stderr,"fxmesa: fxDDWriteMonoRGBAPixels(...)\n");
@@ -385,7 +387,7 @@ static void fxDDWriteMonoRGBAPixels(const GLcontext *ctx,
   for(i=0;i<n;i++)
     if(mask[i])
       writeRegionClipped(fxMesa, fxMesa->currentFB,x[i],bottom-y[i],
-                       GR_LFB_SRC_FMT_8888,1,1,0,(void *) &fxMesa->color);
+                       GR_LFB_SRC_FMT_8888,1,1,0,(void *) &gColor);
 }
 
 

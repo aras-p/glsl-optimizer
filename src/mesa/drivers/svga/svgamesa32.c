@@ -1,4 +1,4 @@
-/* $Id: svgamesa32.c,v 1.7 2000/06/14 21:59:07 brianp Exp $ */
+/* $Id: svgamesa32.c,v 1.8 2000/11/14 17:40:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,16 +74,6 @@ static unsigned long __svga_getpixel32(int x, int y)
     return intBuffer[offset];
 }
 
-void __set_color32( GLcontext *ctx,
-                    GLubyte red, GLubyte green,
-                    GLubyte blue, GLubyte alpha )
-{
-   SVGAMesa->red = red;
-   SVGAMesa->green = green;
-   SVGAMesa->blue = blue;
-   SVGAMesa->truecolor = red<<16 | green<<8 | blue;
-}
-
 void __clear_color32( GLcontext *ctx,
                       GLubyte red, GLubyte green,
                       GLubyte blue, GLubyte alpha )
@@ -151,12 +141,13 @@ void __write_rgba_span32( const GLcontext *ctx, GLuint n, GLint x, GLint y,
 
 void __write_mono_rgba_span32( const GLcontext *ctx,
                                GLuint n, GLint x, GLint y,
-                               const GLubyte mask[])
+                               const GLchan color[4], const GLubyte mask[])
 {
    int i;
+   GLuint truecolor = color[RCOMP]<<16 | color[GCOMP]<<8 | color[BCOMP];
    for (i=0; i<n; i++, x++) {
       if (mask[i]) {
-         __svga_drawpixel32( x, y, SVGAMesa->truecolor);
+         __svga_drawpixel32( x, y, truecolor);
       }
    }
 }
@@ -185,13 +176,13 @@ void __write_rgba_pixels32( const GLcontext *ctx,
 void __write_mono_rgba_pixels32( const GLcontext *ctx,
                                  GLuint n,
                                  const GLint x[], const GLint y[],
-                                 const GLubyte mask[] )
+                                 const GLchan color[4], const GLubyte mask[] )
 {
+   GLuint truecolor = color[RCOMP]<<16 | color[GCOMP]<<8 | color[BCOMP];
    int i;
-   /* use current rgb color */
    for (i=0; i<n; i++) {
       if (mask[i]) {
-         __svga_drawpixel32( x[i], y[i], SVGAMesa->truecolor );
+         __svga_drawpixel32( x[i], y[i], truecolor );
       }
    }
 }

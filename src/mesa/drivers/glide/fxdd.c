@@ -981,8 +981,10 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.ClearColor=fxDDClearColor;
   ctx->Driver.Clear=fxDDClear;
 
+#if 0
   ctx->Driver.Index=NULL;
   ctx->Driver.Color=fxDDSetColor;
+#endif
 
   ctx->Driver.SetDrawBuffer=fxDDSetDrawBuffer;
   ctx->Driver.SetReadBuffer=fxDDSetReadBuffer;

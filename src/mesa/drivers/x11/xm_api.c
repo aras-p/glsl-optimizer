@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.6 2000/11/05 18:26:12 keithw Exp $ */
+/* $Id: xm_api.c,v 1.7 2000/11/14 17:40:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1295,14 +1295,11 @@ static GLboolean initialize_visual_and_buffer( int client,
 
       /* X11 graphics contexts */
 #ifdef XFree86Server
-      b->gc1 = CreateScratchGC(v->display, window->depth);
-      b->gc2 = CreateScratchGC(v->display, window->depth);
+      b->gc = CreateScratchGC(v->display, window->depth);
 #else
-      b->gc1 = XCreateGC( v->display, window, 0, NULL );
-      b->gc2 = XCreateGC( v->display, window, 0, NULL );
+      b->gc = XCreateGC( v->display, window, 0, NULL );
 #endif
-      XMesaSetFunction( v->display, b->gc1, GXcopy );
-      XMesaSetFunction( v->display, b->gc2, GXcopy );
+      XMesaSetFunction( v->display, b->gc, GXcopy );
 
       /*
        * Don't generate Graphics Expose/NoExpose events in swapbuffers().
@@ -1993,8 +1990,7 @@ void XMesaDestroyBuffer( XMesaBuffer b )
        client = CLIENT_ID(b->frontbuffer->id);
 #endif
 
-   if (b->gc1)  XMesaFreeGC( b->xm_visual->display, b->gc1 );
-   if (b->gc2)  XMesaFreeGC( b->xm_visual->display, b->gc2 );
+   if (b->gc)  XMesaFreeGC( b->xm_visual->display, b->gc );
    if (b->cleargc)  XMesaFreeGC( b->xm_visual->display, b->cleargc );
 
    if (b->backimage) {
@@ -2099,9 +2095,6 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
           * Must recompute and set these pixel values because colormap
           * can be different for different windows.
           */
-         c->pixel = xmesa_color_to_pixel( c, c->red, c->green,
-                                          c->blue, c->alpha, c->pixelformat );
-         XMesaSetForeground( c->display, c->xm_buffer->gc1, c->pixel );
          c->clearpixel = xmesa_color_to_pixel( c,
                                                c->clearcolor[0],
                                                c->clearcolor[1],

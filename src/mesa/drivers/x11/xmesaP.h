@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.14 2000/11/05 18:26:12 keithw Exp $ */
+/* $Id: xmesaP.h,v 1.15 2000/11/14 17:40:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -142,9 +142,6 @@ struct xmesa_context {
 
    GLuint pixelformat;		/* Current pixel format */
 
-   GLubyte red, green, blue, alpha;	/* current drawing color */
-   unsigned long pixel;			/* current drawing pixel value */
-
    GLubyte clearcolor[4];		/* current clearing color */
    unsigned long clearpixel;		/* current clearing pixel value */
 
@@ -209,8 +206,7 @@ struct xmesa_buffer {
    XMesaPixmap stipple_pixmap;	/* For polygon stippling */
    XMesaGC stipple_gc;		/* For polygon stippling */
 
-   XMesaGC gc1;			/* GC for infrequent color changes */
-   XMesaGC gc2;			/* GC for frequent color changes */
+   XMesaGC gc;			/* scratch GC for span, line, tri drawing */
    XMesaGC cleargc;		/* GC for clearing the color buffer */
 
    /* The following are here instead of in the XMesaVisual

@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.6 2000/09/26 20:54:12 brianp Exp $ */
+/* $Id: svgamesa.c,v 1.7 2000/11/14 17:40:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -291,7 +291,6 @@ static void svgamesa_update_state( GLcontext *ctx )
    switch (SVGABuffer.Depth) {
     case  8: ctx->Driver.ClearIndex = __clear_index8;
              ctx->Driver.Clear 	    = __clear8;
-             ctx->Driver.Index 	    = __set_index8; 
 
              ctx->Driver.ReadCI32Span         = __read_ci32_span8;
              ctx->Driver.ReadCI32Pixels       = __read_ci32_pixels8;
@@ -307,7 +306,6 @@ static void svgamesa_update_state( GLcontext *ctx )
 	     break;
     case 15: ctx->Driver.ClearColor = __clear_color15;
              ctx->Driver.Clear 	    = __clear15;
-             ctx->Driver.Color 	    = __set_color15;
 
              ctx->Driver.ReadRGBASpan         = __read_rgba_span15;
              ctx->Driver.ReadRGBAPixels       = __read_rgba_pixels15;
@@ -321,7 +319,6 @@ static void svgamesa_update_state( GLcontext *ctx )
 	     break;
     case 16: ctx->Driver.ClearColor = __clear_color16;
              ctx->Driver.Clear 	    = __clear16;
-             ctx->Driver.Color 	    = __set_color16;
 
              ctx->Driver.ReadRGBASpan         = __read_rgba_span16;
              ctx->Driver.ReadRGBAPixels       = __read_rgba_pixels16;
@@ -335,7 +332,6 @@ static void svgamesa_update_state( GLcontext *ctx )
 #endif    
     case 24: ctx->Driver.ClearColor = __clear_color24;
              ctx->Driver.Clear 	    = __clear24;
-             ctx->Driver.Color 	    = __set_color24;
 
              ctx->Driver.ReadRGBASpan         = __read_rgba_span24;
              ctx->Driver.ReadRGBAPixels       = __read_rgba_pixels24;
@@ -349,7 +345,6 @@ static void svgamesa_update_state( GLcontext *ctx )
 #endif    
     case 32: ctx->Driver.ClearColor = __clear_color32;
              ctx->Driver.Clear 	    = __clear32;
-             ctx->Driver.Color 	    = __set_color32;
 
              ctx->Driver.ReadRGBASpan         = __read_rgba_span32;
              ctx->Driver.ReadRGBAPixels       = __read_rgba_pixels32;
@@ -428,9 +423,6 @@ SVGAMesaContext SVGAMesaCreateContext( GLboolean doubleBuffer )
                                               ctx->gl_vis->StencilBits > 0,
                                               ctx->gl_vis->AccumRedBits > 0,
                                               ctx->gl_vis->AlphaBits > 0 );
-
-   ctx->index = 1;
-   ctx->red = ctx->green = ctx->blue = 255;
 
    ctx->width = ctx->height = 0;  /* temporary until first "make-current" */
 #endif

@@ -1,4 +1,4 @@
-/* $Id: svgamesa15.c,v 1.6 2000/06/14 21:59:07 brianp Exp $ */
+/* $Id: svgamesa15.c,v 1.7 2000/11/14 17:40:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,14 +53,6 @@ static unsigned long __svga_getpixel15(int x, int y)
     offset = y * SVGAInfo->width + x;
     return shortBuffer[offset];
 }
-
-void __set_color15( GLcontext *ctx,
-                    GLubyte red, GLubyte green,
-                    GLubyte blue, GLubyte alpha )
-{
-   SVGAMesa->hicolor=(red>>3)<<10 | (green>>3)<<5 | (blue>>3); 
-/*   SVGAMesa->hicolor=(red)<<10 | (green)<<5 | (blue); */
-}   
 
 void __clear_color15( GLcontext *ctx,
                       GLubyte red, GLubyte green,
@@ -134,12 +126,15 @@ void __write_rgba_span15( const GLcontext *ctx, GLuint n, GLint x, GLint y,
 
 void __write_mono_rgba_span15( const GLcontext *ctx,
                                GLuint n, GLint x, GLint y,
-                               const GLubyte mask[])
+                               const GLchan color[4], const GLubyte mask[])
 {
+   GLushort hicolor = (color[RCOMP] >> 3) << 10 |
+                      (color[GCOMP] >> 3) << 5 |
+                      (color[BCOMP] >> 3); 
    int i;
    for (i=0; i<n; i++, x++) {
       if (mask[i]) {
-         __svga_drawpixel15( x, y, SVGAMesa->hicolor);
+         __svga_drawpixel15( x, y, hicolor);
       }
    }
 }
@@ -174,13 +169,16 @@ void __write_rgba_pixels15( const GLcontext *ctx,
 void __write_mono_rgba_pixels15( const GLcontext *ctx,
                                  GLuint n,
                                  const GLint x[], const GLint y[],
-                                 const GLubyte mask[] )
+                                 const GLchan color[4], const GLubyte mask[] )
 {
+   GLushort hicolor = (color[RCOMP] >> 3) << 10 |
+                      (color[GCOMP] >> 3) << 5 |
+                      (color[BCOMP] >> 3); 
    int i;
    /* use current rgb color */
    for (i=0; i<n; i++) {
       if (mask[i]) {
-         __svga_drawpixel15( x[i], y[i], SVGAMesa->hicolor );
+         __svga_drawpixel15( x[i], y[i], hicolor );
       }
    }
 }

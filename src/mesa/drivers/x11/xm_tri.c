@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.8 2000/11/06 17:28:20 brianp Exp $ */
+/* $Id: xm_tri.c,v 1.9 2000/11/14 17:40:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,46 +51,6 @@
 /**********************************************************************/
 /***                   Triangle rendering                           ***/
 /**********************************************************************/
-
-
-#if 0
-/*
- * Render a triangle into a pixmap, any pixel format, flat shaded and
- * no raster ops.
- */
-static void flat_pixmap_triangle( GLcontext *ctx,
-				  SWvertex *v0,
-				  SWvertex *v1,
-				  SWvertex *v2 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   XMesaPoint p[3];
-   XMesaGC gc;
-
-   {
-      unsigned long pixel;
-      if (xmesa->xm_visual->gl_visual->RGBAflag) {
-         pixel = xmesa_color_to_pixel( xmesa,
-                         v0->color[0], v0->color[1],
-                         v0->color[2], v0->color[3],
-                         xmesa->pixelformat );
-      }
-      else {
-         pixel = v0->index;
-      }
-      gc = xmesa->xm_buffer->gc2;
-      XMesaSetForeground( xmesa->display, gc, pixel );
-   }
-   p[0].x =                         (GLint) (v0->win[0] + 0.5f);
-   p[0].y = FLIP( xmesa->xm_buffer, (GLint) (v0->win[1] - 0.5f) );
-   p[1].x =                         (GLint) (v1->win[0] + 0.5f);
-   p[1].y = FLIP( xmesa->xm_buffer, (GLint) (v1->win[1] - 0.5f) );
-   p[2].x =                         (GLint) (v2->win[0] + 0.5f);
-   p[2].y = FLIP( xmesa->xm_buffer, (GLint) (v2->win[1] - 0.5f) );
-   XMesaFillPolygon( xmesa->display, xmesa->xm_buffer->buffer, gc,
-		     p, 3, Convex, CoordModeOrigin );
-}
-#endif
 
 
 /*
@@ -563,7 +523,7 @@ static void flat_8R8G8B_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )			\
 {							\
    GLint i, len = RIGHT-LEFT;				\
-   (void) fffog; 					        	\
+   (void) fffog; 					\
    for (i=0;i<len;i++) {				\
       GLdepth z = FixedToDepth(ffz);			\
       if (z < zRow[i]) {				\
@@ -595,7 +555,7 @@ static void flat_8R8G8B24_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )			\
 {							\
    GLint i, len = RIGHT-LEFT;				\
-   (void) fffog; 					        	\
+   (void) fffog; 					\
    for (i=0;i<len;i++) {				\
       GLdepth z = FixedToDepth(ffz);			\
       if (z < zRow[i]) {				\

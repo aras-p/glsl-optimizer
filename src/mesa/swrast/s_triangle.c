@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.3 2000/11/13 20:02:57 keithw Exp $ */
+/* $Id: s_triangle.c,v 1.4 2000/11/14 17:40:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,12 +74,7 @@ static void flat_ci_triangle( GLcontext *ctx,
 			      SWvertex *v2 )
 {
 #define INTERP_Z 1
-#define SETUP_CODE				\
-   GLuint index = v0->index;	\
-   if (1) {					\
-      /* set the color index */			\
-      (*ctx->Driver.Index)( ctx, index );	\
-   }
+#define SETUP_CODE
 
 #define INNER_LOOP( LEFT, RIGHT, Y )				\
 	{							\
@@ -95,7 +90,7 @@ static void flat_ci_triangle( GLcontext *ctx,
 		 fffog += fdfogdx;				\
 	      }							\
 	      gl_write_monoindex_span( ctx, n, LEFT, Y, zspan,	\
-	                         fogspan, index, GL_POLYGON );	\
+                         fogspan, v0->index, GL_POLYGON );	\
 	   }							\
 	}
 
@@ -152,15 +147,7 @@ static void flat_rgba_triangle( GLcontext *ctx,
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 
-#define SETUP_CODE				\
-   if (1) {					\
-      /* set the color */			\
-      GLchan r = v0->color[0];	\
-      GLchan g = v0->color[1];	\
-      GLchan b = v0->color[2];	\
-      GLchan a = v0->color[3];	\
-      (*ctx->Driver.Color)( ctx, r, g, b, a );	\
-   }
+#define SETUP_CODE
 
 #define INNER_LOOP( LEFT, RIGHT, Y )				\
 	{							\
@@ -176,8 +163,7 @@ static void flat_rgba_triangle( GLcontext *ctx,
 		 fffog += fdfogdx;				\
 	      }							\
               gl_write_monocolor_span( ctx, n, LEFT, Y, zspan,	\
-                                       fogspan, \
-                                       v0->color,	\
+                                       fogspan, v0->color,	\
 			               GL_POLYGON );		\
 	   }							\
 	}

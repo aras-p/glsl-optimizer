@@ -1,4 +1,4 @@
-/* $Id: xm_line.c,v 1.8 2000/11/06 17:28:20 brianp Exp $ */
+/* $Id: xm_line.c,v 1.9 2000/11/14 17:40:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,7 +60,7 @@ static void draw_points_ANY_pixmap( GLcontext *ctx, SWvertex *vert )
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
-   XMesaGC gc = xmesa->xm_buffer->gc2;
+   XMesaGC gc = xmesa->xm_buffer->gc;
 
    if (xmesa->xm_visual->gl_visual->RGBAflag) {
       register int x, y;
@@ -112,38 +112,6 @@ void xmesa_choose_point( GLcontext *ctx )
 /**********************************************************************/
 /***                      Line rendering                            ***/
 /**********************************************************************/
-
-
-#if 0
-/*
- * Render a line into a pixmap, any pixel format.
- */
-static void flat_pixmap_line( GLcontext *ctx,
-                              SWvertex *vert0, SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   register int x0, y0, x1, y1;
-   XMesaGC gc;
-   unsigned long pixel;
-   if (xmesa->xm_visual->gl_visual->RGBAflag) {
-      const GLubyte *color = vert0->color;
-      pixel = xmesa_color_to_pixel( xmesa, color[0], color[1], color[2], color[3],
-                                    xmesa->pixelformat );
-   }
-   else {
-      pixel = vert0->index;
-   }
-   gc = xmesa->xm_buffer->gc2;
-   XMesaSetForeground( xmesa->display, gc, pixel );
-
-   x0 =                         (GLint) vert0->win[0];
-   y0 = FLIP( xmesa->xm_buffer, (GLint) vert0->win[1] );
-   x1 =                         (GLint) vert1->win[0];
-   y1 = FLIP( xmesa->xm_buffer, (GLint) vert1->win[1] );
-   XMesaDrawLine( xmesa->display, xmesa->xm_buffer->buffer, gc,
-		  x0, y0, x1, y1 );
-}
-#endif
 
 
 /*

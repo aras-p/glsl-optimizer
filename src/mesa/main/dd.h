@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.40 2000/11/13 20:02:56 keithw Exp $ */
+/* $Id: dd.h,v 1.41 2000/11/14 17:40:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -177,19 +177,6 @@ struct dd_function_table {
     * settings!  Software Mesa can do masked clears if the device driver can't.
     */
 
-   void (*Index)( GLcontext *ctx, GLuint index );
-   /*
-    * Sets current color index for drawing flat-shaded primitives.
-    * This index should also be used in the "mono" drawing functions.
-    */
-
-   void (*Color)( GLcontext *ctx,
-                  GLchan red, GLchan green, GLchan glue, GLchan alpha );
-   /*
-    * Sets current color for drawing flat-shaded primitives.
-    * This color should also be used in the "mono" drawing functions.
-    */
-
    GLboolean (*SetDrawBuffer)( GLcontext *ctx, GLenum buffer );
    /*
     * Specifies the current buffer for writing.
@@ -243,9 +230,8 @@ struct dd_function_table {
     */
 
    void (*WriteMonoRGBASpan)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
-                              const GLubyte mask[] );
-   /* Write a horizontal run of RGBA pixels all with the color last
-    * specified by the Color function.
+                              const GLchan color[4], const GLubyte mask[] );
+   /* Write a horizontal run of RGBA pixels all with the same color.
     */
 
    void (*WriteRGBAPixels)( const GLcontext *ctx,
@@ -256,7 +242,7 @@ struct dd_function_table {
 
    void (*WriteMonoRGBAPixels)( const GLcontext *ctx,
                                 GLuint n, const GLint x[], const GLint y[],
-                                const GLubyte mask[] );
+                                const GLchan color[4], const GLubyte mask[] );
    /* Write an array of mono-RGBA pixels at random locations.
     */
 
@@ -270,7 +256,7 @@ struct dd_function_table {
     */
 
    void (*WriteMonoCISpan)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
-                            const GLubyte mask[] );
+                            GLuint colorIndex, const GLubyte mask[] );
    /* Write a horizontal run of color index pixels using the color index
     * last specified by the Index() function.
     */
@@ -284,7 +270,7 @@ struct dd_function_table {
 
    void (*WriteMonoCIPixels)( const GLcontext *ctx,
                               GLuint n, const GLint x[], const GLint y[],
-                              const GLubyte mask[] );
+                              GLuint colorIndex, const GLubyte mask[] );
    /* Write a random array of color index pixels using the color index
     * last specified by the Index() function.
     */

@@ -1,4 +1,4 @@
-/* $Id: svgamesa24.c,v 1.7 2000/06/14 21:59:07 brianp Exp $ */
+/* $Id: svgamesa24.c,v 1.8 2000/11/14 17:40:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,16 +76,6 @@ static unsigned long __svga_getpixel24(int x, int y)
     y = SVGAInfo->height-y-1;
     offset = y * SVGAInfo->width + x;
     return rgbBuffer[offset].r<<16 | rgbBuffer[offset].g<<8 | rgbBuffer[offset].b;
-}
-
-void __set_color24( GLcontext *ctx,
-                    GLubyte red, GLubyte green,
-                    GLubyte blue, GLubyte alpha )
-{
-   SVGAMesa->red = red;
-   SVGAMesa->green = green;
-   SVGAMesa->blue = blue;
-/*   SVGAMesa->truecolor = red<<16 | green<<8 | blue; */
 }
 
 void __clear_color24( GLcontext *ctx,
@@ -172,14 +162,12 @@ void __write_rgba_span24( const GLcontext *ctx, GLuint n, GLint x, GLint y,
 
 void __write_mono_rgba_span24( const GLcontext *ctx,
                                GLuint n, GLint x, GLint y,
-                               const GLubyte mask[])
+                               const GLchan color[4], const GLubyte mask[])
 {
    int i;
    for (i=0; i<n; i++, x++) {
       if (mask[i]) {
-         __svga_drawpixel24( x, y, SVGAMesa->red,
-                                   SVGAMesa->green,
-				   SVGAMesa->blue);
+         __svga_drawpixel24( x, y, color[RCOMP], color[GCOMP], color[BCOMP]);
       }
    }
 }
@@ -210,15 +198,13 @@ void __write_rgba_pixels24( const GLcontext *ctx,
 void __write_mono_rgba_pixels24( const GLcontext *ctx,
                                  GLuint n,
                                  const GLint x[], const GLint y[],
-                                 const GLubyte mask[] )
+                                 const GLchan color[4], const GLubyte mask[] )
 {
    int i;
-   /* use current rgb color */
    for (i=0; i<n; i++) {
       if (mask[i]) {
-         __svga_drawpixel24( x[i], y[i], SVGAMesa->red,
-                                         SVGAMesa->green,
-				         SVGAMesa->blue);
+         __svga_drawpixel24( x[i], y[i],
+                             color[RCOMP], color[GCOMP], color[BCOMP] );
       }
    }
 }

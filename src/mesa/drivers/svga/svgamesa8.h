@@ -1,4 +1,4 @@
-/* $Id: svgamesa8.h,v 1.2 2000/01/22 20:08:36 brianp Exp $ */
+/* $Id: svgamesa8.h,v 1.3 2000/11/14 17:40:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,15 +31,14 @@
 #ifndef SVGA_MESA_8_H
 #define SVGA_MESA_8_H
 
-extern void __set_index8( GLcontext *ctx, GLuint index );
 extern void __clear_index8( GLcontext *ctx, GLuint index );
 extern GLbitfield __clear8( GLcontext *ctx, GLbitfield mask, GLboolean all, GLint x, GLint y, GLint width, GLint height );
 extern void __write_ci32_span8( const GLcontext *ctx, GLuint n, GLint x, GLint y, const GLuint index[], const GLubyte mask[] );
 extern void __write_ci8_span8( const GLcontext *ctx, GLuint n, GLint x, GLint y, const GLubyte index[], const GLubyte mask[] );
-extern void __write_mono_ci_span8( const GLcontext *ctx, GLuint n, GLint x, GLint y, const GLubyte mask[] );
+extern void __write_mono_ci_span8( const GLcontext *ctx, GLuint n, GLint x, GLint y, GLuint colorIndex, const GLubyte mask[] );
 extern void __read_ci32_span8( const GLcontext *ctx, GLuint n, GLint x, GLint y, GLuint index[]);
 extern void __write_ci32_pixels8( const GLcontext *ctx, GLuint n, const GLint x[], const GLint y[], const GLuint index[], const GLubyte mask[] );
-extern void __write_mono_ci_pixels8( const GLcontext *ctx, GLuint n, const GLint x[], const GLint y[], const GLubyte mask[] );
+extern void __write_mono_ci_pixels8( const GLcontext *ctx, GLuint n, const GLint x[], const GLint y[], GLuint colorIndex, const GLubyte mask[] );
 extern void __read_ci32_pixels8( const GLcontext *ctx, GLuint n, const GLint x[], const GLint y[], GLuint index[], const GLubyte mask[] );
 
 #endif /* SVGA_MESA_15_H */
