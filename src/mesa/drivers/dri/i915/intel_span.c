@@ -67,7 +67,7 @@
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS 
 
 #define INIT_MONO_PIXEL(p,color)\
-	 p = PACK_COLOR_565(color[0],color[1],color[2])
+	 p = INTEL_PACKCOLOR565(color[0],color[1],color[2])
 
 #define CLIPPIXEL(_x,_y) (_x >= minx && _x < maxx && \
 			  _y >= miny && _y < maxy)
@@ -181,7 +181,7 @@ do {								\
 
 #undef INIT_MONO_PIXEL
 #define INIT_MONO_PIXEL(p,color)\
-	 p = PACK_COLOR_888(color[0],color[1],color[2])
+	 p = INTEL_PACKCOLOR8888(color[0],color[1],color[2],color[3])
 
 /* 32 bit, 8888 argb color spanline and pixel functions
  */
