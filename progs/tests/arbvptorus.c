@@ -158,7 +158,7 @@ static void Init( void )
 
       glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorpos);
       printf("errorpos: %d\n", errorpos);
-      printf("%s\n", glGetString(GL_PROGRAM_ERROR_STRING_ARB));
+      printf("%s\n", (char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB));
    }
 
    /* Light position */
