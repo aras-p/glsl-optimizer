@@ -30,7 +30,8 @@ SOURCES = \
 	nvvertexec.c \
 	nvvertparse.c \
 	program.c \
-	shaderobjects.c
+	shaderobjects.c \
+	shaderobjects_3dlabs.c
 
 OBJECTS = \
 	atifragshader.obj,\
@@ -44,7 +45,8 @@ OBJECTS = \
 	nvvertexec.obj,\
 	nvvertparse.obj,\
 	program.obj,\
-	shaderobjects.obj
+	shaderobjects.obj \
+	shaderobjects_3dlabs.obj
 
 
 ##### RULES #####
@@ -72,3 +74,4 @@ nvvertexec.obj : nvvertexec.c
 nvvertparse.obj : nvvertparse.c
 program.obj : program.c
 shaderobjects.obj : shaderobjects.c
+shaderobjects_3dlabs.obj : shaderobjects_3dlabs.c
