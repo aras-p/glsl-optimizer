@@ -1,8 +1,8 @@
-/* $Id: points.c,v 1.11 2000/07/15 03:13:43 brianp Exp $ */
+/* $Id: points.c,v 1.12 2000/08/16 17:26:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.4
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -555,8 +555,8 @@ antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          if (VB->ClipMask[i] == 0) {
             GLint x, y;
             GLint red, green, blue, alpha;
-            GLfloat s, t, u;
-            GLfloat s1, t1, u1;
+            GLfloat s = 0.0F, t = 0.0F, u = 0.0F;
+            GLfloat s1 = 0.0F, t1 = 0.0F, u1 = 0.0F;
             GLfloat vx = VB->Win.data[i][0];
             GLfloat vy = VB->Win.data[i][1];
 
@@ -962,8 +962,8 @@ dist_atten_textured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          GLint ix, iy;
          GLint isize, radius;
          GLint red, green, blue, alpha;
-         GLfloat s, t, u;
-         GLfloat s1, t1, u1;
+         GLfloat s = 0.0F, t = 0.0F, u = 0.0F;
+         GLfloat s1 = 0.0F, t1 = 0.0F, u1 = 0.0F;
 
          GLint x = (GLint)  VB->Win.data[i][0];
          GLint y = (GLint)  VB->Win.data[i][1];
@@ -1110,8 +1110,8 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             GLint xmin, ymin, xmax, ymax;
             GLint x, y, z;
             GLint red, green, blue, alpha;
-            GLfloat s, t, u;
-            GLfloat s1, t1, u1;
+            GLfloat s = 0.0F, t = 0.0F, u = 0.0F;
+            GLfloat s1 = 0.0F, t1 = 0.0F, u1 = 0.0F;
             GLfloat dsize = psize * dist[i];
 
             if (dsize >= ctx->Point.Threshold) {
