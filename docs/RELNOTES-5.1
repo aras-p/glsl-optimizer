@@ -35,6 +35,35 @@ GL_SGI_texture_color_table
 
 GL_NV_fragment_program
    NVIDIA's fragment-level programming feature.
+   Possible lurking bugs:
+     - the DDX and DDY commands aren't fully tested
+     - there may be bugs in the parser
+     - the TEX and TXP instructions both do perspective correction
+     - the pack/unpack instructions may not be correct
+
+GL_EXT_depth_bounds_test
+   This extension adds a scissor-like test for the Z axis.  It's used to
+   optimize stencil-volume shadow algorithms.
+
+GL_NV_light_max_exponent
+   Lifts the 128 limit for max light exponent.
+
+
+
+Build System Changes
+--------------------
+
+The "old style" makefile system has been updated:
+   1. Make-config has been trimmed down to fewer, modern configurations.
+   2. Most of the bin/mklib.* scripts have been rolled into a new "mklib"
+      script that works on all sorts of systems.  There are probably some
+      bugs in it, but it's been tested on Linux, SunOS 5.8 and IRIX 6.5.
+      Improvements/contributes are greatly appreciated.
+   3. The Makefile.X11 files have been cleaned up in various ways
+
+NOTE: there are plans to completely reorganize the Mesa directory tree
+structure.  At that time, the GNU autoconf/autoconfig support will be
+removed.
 
 
 
@@ -61,8 +90,37 @@ New files:
 Removed files:
 	swrast/s_historgram.[ch]	- moved into src/histogram.c
 
-New files:
+Other New files:
 	bufferobj.[ch]		- GL_ARB_vertex_buffer_object functions
+	arbprogram.[ch]		- GL_ARB_vertex/fragment_program functions
+	version.h		- defines the Mesa version info
+
+
+Other Changes
+-------------
+
+The ctx->Driver.CreateTexture function has been removed - it wasn't used.
+
+New device driver hook functions:
+   NewTextureObject   - used to allocate struct gl_texture_objects
+   NewTextureImage    - used to allocate struct gl_texture_images
+
+New ctx->Texture._EnabledCoordUnits field:
+   With the addition of GL_NV_fragment_program we may need to interpolate
+   various sets of texture coordinates even when the corresponding texture
+   unit is not enabled.  That is, glEnable(GL_TEXTURE_xD) may never get
+   called but we still may have to interpolate texture coordinates across
+   triangles so that the fragment program will get them.
+   This new field indicates which sets of texture coordinates are needed.
+   If a bit is set in the ctx->Texture._EnabledUnits bitmask is set, the
+   same bit MUST be set in ctx->Texture._EnabledCoordUnits.
+
+
+
+To Do
+-----
+Add screen-awareness to fakeglx.c
+
 
 
 
@@ -93,4 +151,4 @@ driver call the _mesa_enable_1_4_extensions() function.
 
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-5.1,v 1.9 2003/03/30 16:17:57 brianp Exp $
+$Id: RELNOTES-5.1,v 1.10 2003/06/01 16:27:37 brianp Exp $
