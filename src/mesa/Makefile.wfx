@@ -405,8 +405,8 @@ $(LIBDIR)\x86.lib: x86\matypes.h $(X86_OBJS)
 # [dBorca] Hack alert:
 # glapi_x86.S needs some adjustments
 # in order to generate correct entrypoints
-x86/glapi_x86.o: x86/glapi_x86.S
-	$(CC) $(CFLAGS) $(FLAGS) $(INCS) $< -DSTDCALL_API -DNASM_ASSEMBLER -EP > $*.i
+x86\glapi_x86.obj: x86\glapi_x86.S
+	$(CC) $(CFLAGS) $(FLAGS) $(INCS) x86\glapi_x86.S -DSTDCALL_API -DNASM_ASSEMBLER -EP > $*.i
 	$(AS) $(ASFLAGS) $(INCS) $*.i -o $*.obj
 	$(RM) $*.i
 
