@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.17 1999/10/13 19:12:25 gareth Exp $ */
+/* $Id: tess.c,v 1.18 1999/10/14 07:44:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -186,21 +186,23 @@ void GLAPIENTRY gluTessBeginContour( GLUtesselator *tobj )
     COPY_3V( tobj->current_contour->plane.normal, tobj->plane.normal );
     tobj->current_contour->plane.dist = tobj->plane.dist;
 
+    tobj->current_contour->area = 0.0;
+    tobj->current_contour->orientation = GLU_UNKNOWN;
+
+    tobj->current_contour->label = 0;
+    tobj->current_contour->winding = 0;
+
+    tobj->current_contour->rotx = tobj->current_contour->roty = 0.0;
+
+    CLEAR_BBOX_2DV( tobj->current_contour->mins,
+		    tobj->current_contour->maxs );
+
     tobj->current_contour->vertex_count = 0;
     tobj->current_contour->vertices =
 	tobj->current_contour->last_vertex = NULL;
 
     tobj->current_contour->reflex_vertices = NULL;
     tobj->current_contour->cross_vertices = hashtable_init( HT_DEFAULT_SIZE );
-
-    tobj->current_contour->orientation = GLU_UNKNOWN;
-    tobj->current_contour->area = 0.0;
-
-    tobj->current_contour->label = 0;
-    CLEAR_BBOX_2DV( tobj->current_contour->mins,
-		    tobj->current_contour->maxs );
-
-    tobj->current_contour->rotx = tobj->current_contour->roty = 0.0;
 
  cleanup:
     DEBUGP( 15, ( "  <- gluTessBeginContour( tobj:%p )\n", tobj ) );
