@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.98 2001/06/15 14:18:46 brianp Exp $ */
+/* $Id: teximage.c,v 1.99 2001/07/13 15:44:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1349,7 +1349,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       _mesa_init_teximage_fields(ctx, texImage, postConvWidth, 1, 1,
                                  border, internalFormat);
 
-      if (ctx->NewState & _NEW_PIXEL)
+      if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
          _mesa_update_state(ctx);
 
       ASSERT(ctx->Driver.TexImage1D);
@@ -1466,7 +1466,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       _mesa_init_teximage_fields(ctx, texImage, postConvWidth, postConvHeight,
                                  1, border, internalFormat);
 
-      if (ctx->NewState & _NEW_PIXEL)
+      if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
          _mesa_update_state(ctx);
 
       ASSERT(ctx->Driver.TexImage2D);
@@ -1577,7 +1577,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLenum internalFormat,
       _mesa_init_teximage_fields(ctx, texImage, width, height, depth, border,
                                  internalFormat);
 
-      if (ctx->NewState & _NEW_PIXEL)
+      if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
          _mesa_update_state(ctx);
 
       ASSERT(ctx->Driver.TexImage3D);
@@ -1669,7 +1669,7 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _NEW_PIXEL)
+   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    /* XXX should test internal format */
@@ -1715,7 +1715,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _NEW_PIXEL)
+   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    /* XXX should test internal format */
@@ -1763,7 +1763,7 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _NEW_PIXEL)
+   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    if (subtexture_error_check(ctx, 3, target, level, xoffset, yoffset, zoffset,
@@ -1808,7 +1808,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _NEW_PIXEL)
+   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    if (is_color_format(internalFormat)) {
@@ -1871,7 +1871,7 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _NEW_PIXEL)
+   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    if (is_color_format(internalFormat)) {
@@ -1933,7 +1933,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _NEW_PIXEL)
+   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    /* XXX should test internal format */
@@ -1969,7 +1969,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _NEW_PIXEL)
+   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    /* XXX should test internal format */
@@ -2007,7 +2007,7 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _NEW_PIXEL)
+   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    /* XXX should test internal format */
