@@ -24,7 +24,6 @@ CORE_SOURCES =accum.c \
 	buffers.c \
 	clip.c \
 	colortab.c \
-	config.c \
 	context.c \
 	convolve.c \
 	debug.c \
@@ -164,7 +163,6 @@ blend.obj,\
 buffers.obj,\
 clip.obj,\
 colortab.obj,\
-config.obj,\
 context.obj,\
 convolve.obj,\
 debug.obj,\
