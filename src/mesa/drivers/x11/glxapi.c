@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.9 1999/11/28 20:18:50 brianp Exp $ */
+/* $Id: glxapi.c,v 1.10 1999/12/10 15:16:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +34,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include "glapi.h"
 #include "glxapi.h"
 
 
@@ -781,6 +782,8 @@ static struct name_address_pair GLX_functions[] = {
    { "glXSet3DfxModeMESA", (GLvoid *) glXSet3DfxModeMESA },
 #endif
 
+   { "glXGetProcAddressARB", (GLvoid *) glXGetProcAddressARB },
+
    { NULL, NULL }   /* end of list */
 };
 
@@ -798,4 +801,24 @@ _glxapi_get_proc_address(const char *funcName)
          return GLX_functions[i].Address;
    }
    return NULL;
+}
+
+
+
+/*
+ * This function does not get dispatched through the dispatch table
+ * since it's really a "meta" function.
+ */
+void (*glXGetProcAddressARB(const GLubyte *procName))()
+{
+   typedef void (*gl_function)();
+   gl_function f;
+
+   f = (gl_function) _glxapi_get_proc_address((const char *) procName);
+   if (f) {
+      return f;
+   }
+
+   f = (gl_function) _glapi_get_proc_address((const char *) procName);
+   return f;
 }
