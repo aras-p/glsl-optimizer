@@ -767,7 +767,8 @@ static GLboolean r300UpdateTextureEnv(GLcontext * ctx, int unit)
 		 */
 	}
 
-	fprintf(stderr, "color_combine=%08x alpha_combine=%08x color_scale=%08x alpha_scale=%08x\n");
+	fprintf(stderr, "color_combine=%08x alpha_combine=%08x color_scale=%08x alpha_scale=%08x\n", 
+		color_combine, alpha_combine, color_scale, alpha_scale);
 	
 	#if 0
 	if (rmesa->hw.pix[unit].cmd[PIX_PP_TXCBLEND] != color_combine ||
