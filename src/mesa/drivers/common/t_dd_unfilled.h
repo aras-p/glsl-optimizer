@@ -1,4 +1,3 @@
-/* $Id: t_dd_unfilled.h,v 1.5 2002/10/29 20:29:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

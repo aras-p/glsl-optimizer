@@ -1,4 +1,3 @@
-/* $Id: t_dd_tritmp.h,v 1.13 2002/10/29 20:29:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -177,9 +176,8 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 		  }
 	       }
 	       else {
-		  GLchan (*vbcolor)[4] = VB->ColorPtr[1]->Ptr;
-		  ASSERT(VB->ColorPtr[1]->Type == CHAN_TYPE);
-		  ASSERT(VB->ColorPtr[1]->StrideB == 4*sizeof(GLchan));
+		  GLfloat (*vbcolor)[4] = VB->ColorPtr[1]->data;
+		  ASSERT(VB->ColorPtr[1]->stride == 4*sizeof(GLfloat));
 		  (void) vbcolor;
 
 		  if (!DO_FLAT) {
@@ -192,7 +190,7 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 		  VERT_SET_RGBA( v[2], vbcolor[e2] );
 
 		  if (HAVE_SPEC && VB->SecondaryColorPtr[1]) {
-		     GLchan (*vbspec)[4] = VB->SecondaryColorPtr[1]->Ptr;
+		     GLfloat (*vbspec)[4] = VB->SecondaryColorPtr[1]->data;
 
 		     if (!DO_FLAT) {
 			VERT_SAVE_SPEC( 0 );
@@ -206,11 +204,14 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	       }
 	    }
 	    else {
-	       GLuint *vbindex = VB->IndexPtr[1]->data;
+	       GLfloat (*vbindex) = (GLfloat *)VB->IndexPtr[1]->data;
 	       if (!DO_FLAT) {
+		  VERT_SAVE_IND( 0 );
+		  VERT_SAVE_IND( 1 );
 		  VERT_SET_IND( v[0], vbindex[e0] );
 		  VERT_SET_IND( v[1], vbindex[e1] );
 	       }
+	       VERT_SAVE_IND( 2 );
 	       VERT_SET_IND( v[2], vbindex[e2] );
 	    }
 	 }
@@ -309,12 +310,11 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	 }
       }
       else {
-	 GLuint *vbindex = VB->IndexPtr[0]->data;
 	 if (!DO_FLAT) {
-	    VERT_SET_IND( v[0], vbindex[e0] );
-	    VERT_SET_IND( v[1], vbindex[e1] );
+	    VERT_RESTORE_IND( 0 );
+	    VERT_RESTORE_IND( 1 );
 	 }
-	 VERT_SET_IND( v[2], vbindex[e2] );
+	 VERT_RESTORE_IND( 2 );
       }
    }
 
@@ -385,7 +385,7 @@ static void TAG(quad)( GLcontext *ctx,
 	 if (DO_TWOSIDE && facing == 1)
 	 {
 	    if (HAVE_RGBA) {
-	       GLchan (*vbcolor)[4] = VB->ColorPtr[1]->Ptr;
+	       GLfloat (*vbcolor)[4] = VB->ColorPtr[1]->data;
 	       (void)vbcolor;
 
 	       if (HAVE_BACK_COLORS) {
@@ -425,8 +425,8 @@ static void TAG(quad)( GLcontext *ctx,
 	          VERT_SET_RGBA( v[3], vbcolor[e3] );
 
 	          if (HAVE_SPEC && VB->SecondaryColorPtr[1]) {
-		     GLchan (*vbspec)[4] = VB->SecondaryColorPtr[1]->Ptr;
-		     ASSERT(VB->SecondaryColorPtr[1]->StrideB==4*sizeof(GLchan));
+		     GLfloat (*vbspec)[4] = VB->SecondaryColorPtr[1]->data;
+		     ASSERT(VB->SecondaryColorPtr[1]->stride==4*sizeof(GLfloat));
 
 		     if (!DO_FLAT) {
 		        VERT_SAVE_SPEC( 0 );
@@ -442,12 +442,16 @@ static void TAG(quad)( GLcontext *ctx,
 	       }
 	    }
 	    else {
-	       GLuint *vbindex = VB->IndexPtr[1]->data;
+	       GLfloat *vbindex = (GLfloat *)VB->IndexPtr[1]->data;
 	       if (!DO_FLAT) {
+		  VERT_SAVE_IND( 0 );
+		  VERT_SAVE_IND( 1 );
+		  VERT_SAVE_IND( 2 );
 		  VERT_SET_IND( v[0], vbindex[e0] );
 		  VERT_SET_IND( v[1], vbindex[e1] );
 		  VERT_SET_IND( v[2], vbindex[e2] );
 	       }
+	       VERT_SAVE_IND( 3 );
 	       VERT_SET_IND( v[3], vbindex[e3] );
 	    }
 	 }
@@ -558,13 +562,12 @@ static void TAG(quad)( GLcontext *ctx,
 	 }
       }
       else {
-	 GLuint *vbindex = VB->IndexPtr[0]->data;
 	 if (!DO_FLAT) {
-	    VERT_SET_IND( v[0], vbindex[e0] );
-	    VERT_SET_IND( v[1], vbindex[e1] );
-	    VERT_SET_IND( v[2], vbindex[e2] );
+	    VERT_RESTORE_IND( 0 );
+	    VERT_RESTORE_IND( 1 );
+	    VERT_RESTORE_IND( 2 );
 	 }
-	 VERT_SET_IND( v[3], vbindex[e3] );
+	 VERT_RESTORE_IND( 3 );
       }
    }
 
@@ -612,7 +615,7 @@ static void TAG(quad)( GLcontext *ctx, GLuint e0,
 #if DO_LINE
 static void TAG(line)( GLcontext *ctx, GLuint e0, GLuint e1 )
 {
-   TNLvertexbuffer *VB = &TNL_CONTEXT(ctx)->vb;
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    VERTEX *v[2];
    LOCAL_VARS(2);
 

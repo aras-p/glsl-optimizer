@@ -1,4 +1,3 @@
-/* $Id: t_dd_dmatmp.h,v 1.15 2002/10/29 20:29:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -317,14 +316,6 @@ static void TAG(render_tri_strip_verts)( GLcontext *ctx,
       if (currentsz < 8) {
 	 NEW_BUFFER();
 	 currentsz = dmasz;
-      }
-
-      if ((flags & PRIM_PARITY) && count - start > 2) {
-	 if (HAVE_TRI_STRIP_1 && 0) {
-	 } else {
-	    EMIT_VERTS( ctx, start, 1 );
-	    currentsz--;
-	 }
       }
 
       /* From here on emit even numbers of tris when wrapping over buffers:
@@ -868,10 +859,6 @@ static void TAG(render_tri_strip_elts)( GLcontext *ctx,
       if (currentsz < 8) {
 	 NEW_BUFFER();
 	 currentsz = dmasz;
-      }
-
-      if ((flags & PRIM_PARITY) && count - start > 2) {
-	 TAG(emit_elts)( ctx, elts+start, 1 );
       }
 
       /* Keep the same winding over multiple buffers:

@@ -283,7 +283,7 @@ void TAG(print_vertex)( GLcontext *ctx, const VERTEX *v )
 #define INTERP_QUALIFIER static
 #endif
 
-#define GET_COLOR(ptr, idx) (((GLchan (*)[4])((ptr)->Ptr))[idx])
+#define GET_COLOR(ptr, idx) ((ptr)->data[idx])
 
 
 INTERP_QUALIFIER void TAG(interp_extras)( GLcontext *ctx,
@@ -295,16 +295,18 @@ INTERP_QUALIFIER void TAG(interp_extras)( GLcontext *ctx,
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
    if (VB->ColorPtr[1]) {
+      assert(VB->ColorPtr[1]->stride == 4 * sizeof(GLfloat));
+
       INTERP_4F( t,
-		 GET_COLOR(VB->ColorPtr[1], dst),
-		 GET_COLOR(VB->ColorPtr[1], out),
-		 GET_COLOR(VB->ColorPtr[1], in) );
+		    GET_COLOR(VB->ColorPtr[1], dst),
+		    GET_COLOR(VB->ColorPtr[1], out),
+		    GET_COLOR(VB->ColorPtr[1], in) );
 
       if (VB->SecondaryColorPtr[1]) {
 	 INTERP_3F( t,
-		    GET_COLOR(VB->SecondaryColorPtr[1], dst),
-		    GET_COLOR(VB->SecondaryColorPtr[1], out),
-		    GET_COLOR(VB->SecondaryColorPtr[1], in) );
+		       GET_COLOR(VB->SecondaryColorPtr[1], dst),
+		       GET_COLOR(VB->SecondaryColorPtr[1], out),
+		       GET_COLOR(VB->SecondaryColorPtr[1], in) );
       }
    }
 
@@ -336,7 +338,6 @@ INTERP_QUALIFIER void TAG(copy_pv_extras)( GLcontext *ctx,
 
 
 #undef INTERP_QUALIFIER
-#undef IMPORT_QUALIFIER
 #undef GET_COLOR
 
 #undef IND

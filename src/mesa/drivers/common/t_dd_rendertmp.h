@@ -1,4 +1,3 @@
-/* $Id: t_dd_rendertmp.h,v 1.3 2002/10/29 20:29:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -186,9 +185,6 @@ static void TAG(render_tri_strip)( GLcontext *ctx,
    GLuint j;
    GLuint parity = 0;
    LOCAL_VARS;
-
-   if (TEST_PRIM_PARITY(flags))
-      parity = 1;
 
    INIT(GL_TRIANGLE_STRIP);
    if (NEED_EDGEFLAG_SETUP) {

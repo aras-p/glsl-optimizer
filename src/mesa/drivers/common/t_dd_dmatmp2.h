@@ -56,10 +56,10 @@
 
 
 #ifndef EMIT_TWO_ELTS
-#define EMIT_TWO_ELTS( offset, elt0, elt1 )	\
+#define EMIT_TWO_ELTS( dest, offset, elt0, elt1 )	\
 do { 						\
-   EMIT_ELT( offset, elt0 ); 			\
-   EMIT_ELT( offset+1, elt1 ); 			\
+   (dest)[offset] = (elt0); 			\
+   (dest)[offset+1] = (elt1); 			\
 } while (0)
 #endif
 
@@ -69,36 +69,42 @@ do { 						\
 /**********************************************************************/
 
 
-static void TAG(emit_elts)( GLcontext *ctx, GLuint *elts, GLuint nr )
+static ELT_TYPE *TAG(emit_elts)( GLcontext *ctx, 
+			    ELT_TYPE *dest,
+			    GLuint *elts, GLuint nr )
 {
    GLint i;
    LOCAL_VARS;
-   ELTS_VARS;
 
-   ALLOC_ELTS( nr );
-
-   for ( i = 0 ; i < nr ; i+=2, elts += 2 ) {
-      EMIT_TWO_ELTS( 0, elts[0], elts[1] );
-      INCR_ELTS( 2 );
-   }
-}
-
-static void TAG(emit_consecutive_elts)( GLcontext *ctx, GLuint start, GLuint nr )
-{
-   GLint i;
-   LOCAL_VARS;
-   ELTS_VARS;
-
-   ALLOC_ELTS( nr );
-
-   for ( i = 0 ; i+1 < nr ; i+=2, start += 2 ) {
-      EMIT_TWO_ELTS( 0, start, start+1 );
-      INCR_ELTS( 2 );
+   for ( i = 0 ; i+1 < nr ; i+=2, elts += 2 ) {
+      EMIT_TWO_ELTS( dest, 0, elts[0], elts[1] );
+      dest += 2;
    }
    if (i < nr) {
-      EMIT_ELT( 0, start );
-      INCR_ELTS( 1 );
+      EMIT_ELT( dest, 0, elts[0] );
+      dest += 1;
    }
+   
+   return dest;
+}
+
+static ELT_TYPE *TAG(emit_consecutive_elts)( GLcontext *ctx, 
+					ELT_TYPE *dest,
+					GLuint start, GLuint nr )
+{
+   GLint i;
+   LOCAL_VARS;
+
+   for ( i = 0 ; i+1 < nr ; i+=2, start += 2 ) {
+      EMIT_TWO_ELTS( dest, 0, start, start+1 );
+      dest += 2;
+   }
+   if (i < nr) {
+      EMIT_ELT( dest, 0, start );
+      dest += 1;
+   }
+
+   return dest;
 }
 
 /***********************************************************************
@@ -160,8 +166,7 @@ static void TAG(render_line_strip_verts)( GLcontext *ctx,
 
    if (PREFER_DISCRETE_ELT_PRIM( count-start, HW_LINES ))
    {   
-      int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-      int currentsz;
+      int dmasz = GET_MAX_HW_ELTS();
       GLuint j, nr;
 
       ELT_INIT( GL_LINES, HW_LINES );
@@ -169,30 +174,21 @@ static void TAG(render_line_strip_verts)( GLcontext *ctx,
       /* Emit whole number of lines in each full buffer.
        */
       dmasz = dmasz/2;
-      currentsz = GET_CURRENT_VB_MAX_ELTS();
-      currentsz = currentsz/2;
 
-      if (currentsz < 4) {
-	 NEW_BUFFER();
-	 currentsz = dmasz;
-      }
 
       for (j = start; j + 1 < count; j += nr - 1 ) {
+	 ELT_TYPE *dest;
 	 GLint i;
-	 ELTS_VARS;
-	 nr = MIN2( currentsz, count - j );
-	    
-	 ALLOC_ELTS( (nr-1)*2 );
+
+	 nr = MIN2( dmasz, count - j );
+	 dest = ALLOC_ELTS( (nr-1)*2 );
 	    
 	 for ( i = j ; i+1 < j+nr ; i+=1 ) {
-	    EMIT_TWO_ELTS( 0, (i+0), (i+1) );
-	    INCR_ELTS( 2 );
+	    EMIT_TWO_ELTS( dest, 0, (i+0), (i+1) );
+	    dest += 2;
 	 }
 
-	 if (nr == currentsz) {
-	    NEW_BUFFER();
-	    currentsz = dmasz;
-	 }
+	 CLOSE_ELTS();
       }
    }
    else
@@ -223,96 +219,61 @@ static void TAG(render_line_loop_verts)( GLcontext *ctx,
 	 return;
 
       if (PREFER_DISCRETE_ELT_PRIM( count-start, HW_LINES )) {
-	 int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-	 int currentsz;
+	 int dmasz = GET_MAX_HW_ELTS();
 
 	 ELT_INIT( GL_LINES, HW_LINES );
 
 	 /* Emit whole number of lines in each full buffer.
 	  */
 	 dmasz = dmasz/2;
-	 currentsz = GET_CURRENT_VB_MAX_ELTS();
-	 currentsz = currentsz/2;
-
-	 if (currentsz < 4) {
-	    NEW_BUFFER();
-	    currentsz = dmasz;
-	 }
 
 	 /* Ensure last vertex doesn't wrap:
 	  */
-	 currentsz--;
 	 dmasz--;
 
 	 for (; j + 1 < count;  ) {
 	    GLint i;
-	    ELTS_VARS;
-	    nr = MIN2( currentsz, count - j );
-	    
-	    ALLOC_ELTS( (nr-1)*2 );	    
-	    for ( i = j ; i+1 < j+nr ; i+=1 ) {
-	       EMIT_TWO_ELTS( 0, (i+0), (i+1) );
-	       INCR_ELTS( 2 );
+	    ELT_TYPE *dest;
+
+	    nr = MIN2( dmasz, count - j );
+	    dest = ALLOC_ELTS( nr*2 );	/* allocs room for 1 more line */
+
+	    for ( i = 0 ; i < nr - 1 ; i+=1 ) {
+	       EMIT_TWO_ELTS( dest, 0, (j+i), (j+i+1) );
+	       dest += 2;
 	    }
 
 	    j += nr - 1;
-	    if (j + 1 < count) {
-	       NEW_BUFFER();
-	       currentsz = dmasz;
-	    }
- 	    else { 
- 	       ALLOC_ELTS( 2 ); 
- 	       EMIT_TWO_ELTS( 0, (j), (start) ); 
- 	       INCR_ELTS( 2 ); 
- 	    } 
+
+	    /* Emit 1 more line into space alloced above */
+	    if (j + 1 >= count) {
+ 	       EMIT_TWO_ELTS( dest, 0, (j), (start) ); 
+ 	       dest += 2; 
+ 	    }
+ 
+	    CLOSE_ELTS();
 	 }
       }
       else
       {
-	 int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-	 int currentsz;
+	 int dmasz = GET_MAX_HW_ELTS() - 1;
 
 	 ELT_INIT( GL_LINE_STRIP, HW_LINE_STRIP );
 
-	 currentsz = GET_CURRENT_VB_MAX_ELTS();
-
-	 if (currentsz < 8) {
-	    NEW_BUFFER();
-	    currentsz = dmasz;
-	 }
-
-	 /* Ensure last vertex doesn't wrap:
-	  */
-	 currentsz--;
-	 dmasz--;
-
 	 for ( ; j + 1 < count;  ) {
-	    nr = MIN2( currentsz, count - j );
+	    nr = MIN2( dmasz, count - j );
 	    if (j + nr < count) {
-	       TAG(emit_consecutive_elts)( ctx, j, nr );
-	       currentsz = dmasz;
+	       ELT_TYPE *dest = ALLOC_ELTS( nr );
+	       dest = TAG(emit_consecutive_elts)( ctx, dest, j, nr );
 	       j += nr - 1;
-	       NEW_BUFFER();
+	       CLOSE_ELTS();
 	    }
 	    else if (nr) {
-	       ELTS_VARS;
-	       int i;
-
-	       ALLOC_ELTS( nr + 1 );
-	       for ( i = 0 ; i+1 < nr ; i+=2, j += 2 ) {
-		  EMIT_TWO_ELTS( 0, j, j+1 );
-		  INCR_ELTS( 2 );
-	       }
-	       if (i < nr) {
-		  EMIT_ELT( 0, j ); j++;
-		  INCR_ELTS( 1 );
-	       }
-	       EMIT_ELT( 0, start );
-	       INCR_ELTS( 1 );
-	       NEW_BUFFER();
-	    }
-	    else {
-	       fprintf(stderr, "warining nr==0\n");
+	       ELT_TYPE *dest = ALLOC_ELTS( nr + 1 );
+	       dest = TAG(emit_consecutive_elts)( ctx, dest, j, nr );
+	       dest = TAG(emit_consecutive_elts)( ctx, dest, start, 1 );
+	       j += nr;
+	       CLOSE_ELTS();
 	    }
 	 }   
       }
@@ -356,65 +317,49 @@ static void TAG(render_tri_strip_verts)( GLcontext *ctx,
 
    if (PREFER_DISCRETE_ELT_PRIM( count-start, HW_TRIANGLES ))
    {   
-      int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-      int currentsz;
+      int dmasz = GET_MAX_HW_ELTS();
       int parity = 0;
       GLuint j, nr;
 
       ELT_INIT( GL_TRIANGLES, HW_TRIANGLES );
 
-      if (flags & PRIM_PARITY)
-	 parity = 1;
-
       /* Emit even number of tris in each full buffer.
        */
       dmasz = dmasz/3;
       dmasz -= dmasz & 1;
-      currentsz = GET_CURRENT_VB_MAX_ELTS();
-      currentsz = currentsz/3;
-      currentsz -= currentsz & 1;
-
-      if (currentsz < 4) {
-	 NEW_BUFFER();
-	 currentsz = dmasz;
-      }
 
       for (j = start; j + 2 < count; j += nr - 2 ) {
+	 ELT_TYPE *dest;
 	 GLint i;
-	 ELTS_VARS;
-	 nr = MIN2( currentsz, count - j );
-	    
-	 ALLOC_ELTS( (nr-2)*3 );
+
+	 nr = MIN2( dmasz, count - j );
+	 dest = ALLOC_ELTS( (nr-2)*3 );
 	    
 	 for ( i = j ; i+2 < j+nr ; i++, parity^=1 ) {
-	    EMIT_ELT( 0, (i+0+parity) );
-	    EMIT_ELT( 1, (i+1-parity) );
-	    EMIT_ELT( 2, (i+2) );
-	    INCR_ELTS( 3 );
+	    EMIT_ELT( dest, 0, (i+0+parity) );
+	    EMIT_ELT( dest, 1, (i+1-parity) );
+	    EMIT_ELT( dest, 2, (i+2) );
+	    dest += 3;
 	 }
 
-	 if (nr == currentsz) {
-	    NEW_BUFFER();
-	    currentsz = dmasz;
-	 }
+	 CLOSE_ELTS();
       }
    }
-   else if ((flags & PRIM_PARITY) == 0)  
-      EMIT_PRIM( ctx, GL_TRIANGLE_STRIP, HW_TRIANGLE_STRIP_0, start, count );
    else if (HAVE_TRI_STRIP_1)
       EMIT_PRIM( ctx, GL_TRIANGLE_STRIP, HW_TRIANGLE_STRIP_1, start, count );
    else {
       /* Emit the first triangle with elts, then the rest as a regular strip.
        * TODO:  Make this unlikely in t_imm_api.c
        */
-      ELTS_VARS;
+      ELT_TYPE *dest;
+
       ELT_INIT( GL_TRIANGLES, HW_TRIANGLES );
-      ALLOC_ELTS( 3 );
-      EMIT_ELT( 0, (start+1) );
-      EMIT_ELT( 1, (start+0) );
-      EMIT_ELT( 2, (start+2) );
-      INCR_ELTS( 3 );
-      NEW_PRIMITIVE();
+      dest = ALLOC_ELTS( 3 );
+      EMIT_ELT( dest, 0, (start+1) );
+      EMIT_ELT( dest, 1, (start+0) );
+      EMIT_ELT( dest, 2, (start+2) );
+      dest += 3;
+      CLOSE_ELTS();
 
       start++;
       if (start + 2 >= count)
@@ -438,39 +383,28 @@ static void TAG(render_tri_fan_verts)( GLcontext *ctx,
 
    if (PREFER_DISCRETE_ELT_PRIM( count-start, HW_TRIANGLES ))
    {   
-      int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-      int currentsz;
+      int dmasz = GET_MAX_HW_ELTS();
       GLuint j, nr;
 
       ELT_INIT( GL_TRIANGLES, HW_TRIANGLES );
 
       dmasz = dmasz/3;
-      currentsz = GET_CURRENT_VB_MAX_ELTS();
-      currentsz = currentsz/3;
-
-      if (currentsz < 4) {
-	 NEW_BUFFER();
-	 currentsz = dmasz;
-      }
 
       for (j = start + 1; j + 1 < count; j += nr - 1 ) {
+	 ELT_TYPE *dest;
 	 GLint i;
-	 ELTS_VARS;
-	 nr = MIN2( currentsz, count - j );
-	    
-	 ALLOC_ELTS( (nr-1)*3 );
+
+	 nr = MIN2( dmasz, count - j );
+	 dest = ALLOC_ELTS( (nr-1)*3 );
 	    
 	 for ( i = j ; i+1 < j+nr ; i++ ) {
-	    EMIT_ELT( 0, (start) );
-	    EMIT_ELT( 1, (i) );
-	    EMIT_ELT( 2, (i+1) );
-	    INCR_ELTS( 3 );
+	    EMIT_ELT( dest, 0, (start) );
+	    EMIT_ELT( dest, 1, (i) );
+	    EMIT_ELT( dest, 2, (i+1) );
+	    dest += 3;
 	 }
-
-	 if (nr == currentsz) {
-	    NEW_BUFFER();
-	    currentsz = dmasz;
-	 }
+	 
+	 CLOSE_ELTS();
       }
    }
    else {
@@ -511,44 +445,31 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
    } 
    else if (ctx->_TriangleCaps & DD_FLATSHADE) {
       LOCAL_VARS;
-      int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-      int currentsz;
+      int dmasz = GET_MAX_HW_ELTS();
       GLuint j, nr;
 
       ELT_INIT( GL_TRIANGLES, HW_TRIANGLES );
 
-      currentsz = GET_CURRENT_VB_MAX_ELTS();
-
       /* Emit whole number of quads in total, and in each buffer.
        */
-      currentsz = (currentsz/6)*2;
       dmasz = (dmasz/6)*2;
 
-      if (currentsz < 4) {
-	 NEW_BUFFER();
-	 currentsz = dmasz;
-      }
-
       for (j = start; j + 3 < count; j += nr - 2 ) {
-	 ELTS_VARS;
+	 ELT_TYPE *dest;
 	 GLint quads, i;
 
-	 nr = MIN2( currentsz, count - j );
+	 nr = MIN2( dmasz, count - j );
 	 quads = (nr/2)-1;
-	    
-	 ALLOC_ELTS( quads*6 );
+	 dest = ALLOC_ELTS( quads*6 );
 	    
 	 for ( i = j ; i < j+quads*2 ; i+=2 ) {
-	    EMIT_TWO_ELTS( 0, (i+0), (i+1) );
-	    EMIT_TWO_ELTS( 2, (i+2), (i+1) );
-	    EMIT_TWO_ELTS( 4, (i+3), (i+2) );
-	    INCR_ELTS( 6 );
+	    EMIT_TWO_ELTS( dest, 0, (i+0), (i+1) );
+	    EMIT_TWO_ELTS( dest, 2, (i+2), (i+1) );
+	    EMIT_TWO_ELTS( dest, 4, (i+3), (i+2) );
+	    dest += 6;
 	 }
 
-	 if (nr == currentsz) {
-	    NEW_BUFFER();
-	    currentsz = dmasz;
-	 }
+	 CLOSE_ELTS();
       }
    }
    else {
@@ -577,42 +498,31 @@ static void TAG(render_quads_verts)( GLcontext *ctx,
        * using indexed vertices and the triangle primitive: 
        */
       LOCAL_VARS;
-      int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-      int currentsz;
+      int dmasz = GET_MAX_HW_ELTS();
       GLuint j, nr;
 
       ELT_INIT( GL_TRIANGLES, HW_TRIANGLES );
-      currentsz = GET_CURRENT_VB_MAX_ELTS();
 
       /* Adjust for rendering as triangles:
        */
-      currentsz = (currentsz/6)*4;
       dmasz = (dmasz/6)*4;
 
-      if (currentsz < 8) {
-	 NEW_BUFFER();
-	 currentsz = dmasz;
-      }
-
       for (j = start; j < count; j += nr ) {
-	 ELTS_VARS;
+	 ELT_TYPE *dest;
 	 GLint quads, i;
-	 nr = MIN2( currentsz, count - j );
-	 quads = nr/4;
 
-	 ALLOC_ELTS( quads*6 );
+	 nr = MIN2( dmasz, count - j );
+	 quads = nr/4;
+	 dest = ALLOC_ELTS( quads*6 );
 
 	 for ( i = j ; i < j+quads*4 ; i+=4 ) {
-	    EMIT_TWO_ELTS( 0, (i+0), (i+1) );
-	    EMIT_TWO_ELTS( 2, (i+3), (i+1) );
-	    EMIT_TWO_ELTS( 4, (i+2), (i+3) );
-	    INCR_ELTS( 6 );
+	    EMIT_TWO_ELTS( dest, 0, (i+0), (i+1) );
+	    EMIT_TWO_ELTS( dest, 2, (i+3), (i+1) );
+	    EMIT_TWO_ELTS( dest, 4, (i+2), (i+3) );
+	    dest += 6;
 	 }
 
-	 if (nr == currentsz) {
-	    NEW_BUFFER();
-	    currentsz = dmasz;
-	 }
+	 CLOSE_ELTS();
       }
    }
 }
@@ -653,22 +563,18 @@ static void TAG(render_points_elts)( GLcontext *ctx,
 				     GLuint flags )
 {
    LOCAL_VARS;
-   int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-   int currentsz;
-   GLuint *elts = GET_ELTS();
+   int dmasz = GET_MAX_HW_ELTS();
+   GLuint *elts = GET_MESA_ELTS();
    GLuint j, nr;
+   ELT_TYPE *dest;
 
    ELT_INIT( GL_POINTS, HW_POINTS );
 
-   currentsz = GET_CURRENT_VB_MAX_ELTS();
-   if (currentsz < 8)
-      currentsz = dmasz;
-
    for (j = start; j < count; j += nr ) {
-      nr = MIN2( currentsz, count - j );
-      TAG(emit_elts)( ctx, elts+j, nr );
-      NEW_PRIMITIVE();
-      currentsz = dmasz;
+      nr = MIN2( dmasz, count - j );
+      dest = ALLOC_ELTS( nr );
+      dest = TAG(emit_elts)( ctx, dest, elts+j, nr );
+      CLOSE_ELTS();
    }
 }
 
@@ -680,10 +586,10 @@ static void TAG(render_lines_elts)( GLcontext *ctx,
 				    GLuint flags )
 {
    LOCAL_VARS;
-   int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-   int currentsz;
-   GLuint *elts = GET_ELTS();
+   int dmasz = GET_MAX_HW_ELTS();
+   GLuint *elts = GET_MESA_ELTS();
    GLuint j, nr;
+   ELT_TYPE *dest;
 
    if (start+1 >= count)
       return;
@@ -698,18 +604,13 @@ static void TAG(render_lines_elts)( GLcontext *ctx,
    /* Emit whole number of lines in total and in each buffer:
     */
    count -= (count-start) & 1;
-   currentsz -= currentsz & 1;
    dmasz -= dmasz & 1;
 
-   currentsz = GET_CURRENT_VB_MAX_ELTS();
-   if (currentsz < 8)
-      currentsz = dmasz;
-
    for (j = start; j < count; j += nr ) {
-      nr = MIN2( currentsz, count - j );
-      TAG(emit_elts)( ctx, elts+j, nr );
-      NEW_PRIMITIVE();
-      currentsz = dmasz;
+      nr = MIN2( dmasz, count - j );
+      dest = ALLOC_ELTS( nr );
+      dest = TAG(emit_elts)( ctx, dest, elts+j, nr );
+      CLOSE_ELTS();
    }
 
    if ((flags & PRIM_END) && ctx->Line.StippleFlag)
@@ -723,10 +624,10 @@ static void TAG(render_line_strip_elts)( GLcontext *ctx,
 					 GLuint flags )
 {
    LOCAL_VARS;
-   int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-   int currentsz;
-   GLuint *elts = GET_ELTS();
+   int dmasz = GET_MAX_HW_ELTS();
+   GLuint *elts = GET_MESA_ELTS();
    GLuint j, nr;
+   ELT_TYPE *dest;
 
    if (start+1 >= count)
       return;
@@ -736,15 +637,11 @@ static void TAG(render_line_strip_elts)( GLcontext *ctx,
    if ((flags & PRIM_BEGIN) && ctx->Line.StippleFlag)
       RESET_STIPPLE();
 
-   currentsz = GET_CURRENT_VB_MAX_ELTS();
-   if (currentsz < 8)
-      currentsz = dmasz;
-
    for (j = start; j + 1 < count; j += nr - 1 ) {
-      nr = MIN2( currentsz, count - j );
-      TAG(emit_elts)( ctx, elts+j, nr );
-      NEW_PRIMITIVE();
-      currentsz = dmasz;
+      nr = MIN2( dmasz, count - j );
+      dest = ALLOC_ELTS( nr );
+      dest = TAG(emit_elts)( ctx, dest, elts+j, nr );
+      CLOSE_ELTS();
    }
 }
 
@@ -755,10 +652,10 @@ static void TAG(render_line_loop_elts)( GLcontext *ctx,
 					GLuint flags )
 {
    LOCAL_VARS;
-   int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-   int currentsz;
-   GLuint *elts = GET_ELTS();
+   int dmasz = GET_MAX_HW_ELTS();
+   GLuint *elts = GET_MESA_ELTS();
    GLuint j, nr;
+   ELT_TYPE *dest;
 
    if (0) fprintf(stderr, "%s\n", __FUNCTION__);
 
@@ -783,27 +680,20 @@ static void TAG(render_line_loop_elts)( GLcontext *ctx,
       RESET_STIPPLE();
 
    
-   currentsz = GET_CURRENT_VB_MAX_ELTS();
-   if (currentsz < 8) {
-      NEW_BUFFER();
-      currentsz = dmasz;
-   }
-
    /* Ensure last vertex doesn't wrap:
     */
-   currentsz--;
    dmasz--;
 
-   for ( ; j + 1 < count; j += nr - 1 ) {
-      nr = MIN2( currentsz, count - j );
-      TAG(emit_elts)( ctx, elts+j, nr );
-      currentsz = dmasz;
+   for ( ; j + 1 < count; ) {
+      nr = MIN2( dmasz, count - j );
+      dest = ALLOC_ELTS( nr+1 );	/* Reserve possible space for last elt */
+      dest = TAG(emit_elts)( ctx, dest, elts+j, nr );
+      j += nr - 1;
+      if (j + 1 >= count && (flags & PRIM_END)) {
+	 dest = TAG(emit_elts)( ctx, dest, elts+start, 1 );
+      }
+      CLOSE_ELTS();
    }
-
-   if (flags & PRIM_END)
-      TAG(emit_elts)( ctx, elts+start, 1 );
-
-   NEW_PRIMITIVE();
 }
 
 
@@ -813,32 +703,27 @@ static void TAG(render_triangles_elts)( GLcontext *ctx,
 					GLuint flags )
 {
    LOCAL_VARS;
-   GLuint *elts = GET_ELTS();
-   int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS()/3*3;
-   int currentsz;
+   GLuint *elts = GET_MESA_ELTS();
+   int dmasz = GET_MAX_HW_ELTS()/3*3;
    GLuint j, nr;
+   ELT_TYPE *dest;
 
    if (start+2 >= count)
       return;
 
-/*     NEW_PRIMITIVE(); */
    ELT_INIT( GL_TRIANGLES, HW_TRIANGLES );
 
-   currentsz = GET_CURRENT_VB_MAX_ELTS();
 
    /* Emit whole number of tris in total.  dmasz is already a multiple
     * of 3.
     */
    count -= (count-start)%3;
-   currentsz -= currentsz%3;
-   if (currentsz < 8)
-      currentsz = dmasz;
 
    for (j = start; j < count; j += nr) {
-      nr = MIN2( currentsz, count - j );
-      TAG(emit_elts)( ctx, elts+j, nr );
-      NEW_PRIMITIVE();
-      currentsz = dmasz;
+      nr = MIN2( dmasz, count - j );
+      dest = ALLOC_ELTS( nr );
+      dest = TAG(emit_elts)( ctx, dest, elts+j, nr );
+      CLOSE_ELTS();
    }
 }
 
@@ -851,36 +736,25 @@ static void TAG(render_tri_strip_elts)( GLcontext *ctx,
 {
    LOCAL_VARS;
    GLuint j, nr;
-   GLuint *elts = GET_ELTS();
-   int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-   int currentsz;
+   GLuint *elts = GET_MESA_ELTS();
+   int dmasz = GET_MAX_HW_ELTS();
+   ELT_TYPE *dest;
 
    if (start+2 >= count)
       return;
 
    ELT_INIT( GL_TRIANGLE_STRIP, HW_TRIANGLE_STRIP_0 );
 
-   currentsz = GET_CURRENT_VB_MAX_ELTS();
-   if (currentsz < 8) {
-      NEW_BUFFER();
-      currentsz = dmasz;
-   }
-
-   if ((flags & PRIM_PARITY) && count - start > 2) {
-      TAG(emit_elts)( ctx, elts+start, 1 );
-      currentsz--;
-   }
-
    /* Keep the same winding over multiple buffers:
     */
    dmasz -= (dmasz & 1);
-   currentsz -= (currentsz & 1);
 
    for (j = start ; j + 2 < count; j += nr - 2 ) {
-      nr = MIN2( currentsz, count - j );
-      TAG(emit_elts)( ctx, elts+j, nr );
-      NEW_PRIMITIVE();
-      currentsz = dmasz;
+      nr = MIN2( dmasz, count - j );
+
+      dest = ALLOC_ELTS( nr );
+      dest = TAG(emit_elts)( ctx, dest, elts+j, nr );
+      CLOSE_ELTS();
    }
 }
 
@@ -890,28 +764,22 @@ static void TAG(render_tri_fan_elts)( GLcontext *ctx,
 				      GLuint flags )
 {
    LOCAL_VARS;
-   GLuint *elts = GET_ELTS();
+   GLuint *elts = GET_MESA_ELTS();
    GLuint j, nr;
-   int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-   int currentsz;
+   int dmasz = GET_MAX_HW_ELTS();
+   ELT_TYPE *dest;
 
    if (start+2 >= count)
       return;
 
    ELT_INIT( GL_TRIANGLE_FAN, HW_TRIANGLE_FAN );
 
-   currentsz = GET_CURRENT_VB_MAX_ELTS();
-   if (currentsz < 8) {
-      NEW_BUFFER();
-      currentsz = dmasz;
-   }
-
    for (j = start + 1 ; j + 1 < count; j += nr - 1 ) {
-      nr = MIN2( currentsz, count - j + 1 );
-      TAG(emit_elts)( ctx, elts+start, 1 );
-      TAG(emit_elts)( ctx, elts+j, nr - 1 );
-      NEW_PRIMITIVE();
-      currentsz = dmasz;
+      nr = MIN2( dmasz, count - j + 1 );
+      dest = ALLOC_ELTS( nr );
+      dest = TAG(emit_elts)( ctx, dest, elts+start, 1 );
+      dest = TAG(emit_elts)( ctx, dest, elts+j, nr - 1 );
+      CLOSE_ELTS();
    }
 }
 
@@ -922,28 +790,22 @@ static void TAG(render_poly_elts)( GLcontext *ctx,
 				   GLuint flags )
 {
    LOCAL_VARS;
-   GLuint *elts = GET_ELTS();
+   GLuint *elts = GET_MESA_ELTS();
    GLuint j, nr;
-   int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-   int currentsz;
+   int dmasz = GET_MAX_HW_ELTS();
+   ELT_TYPE *dest;
 
    if (start+2 >= count)
       return;
 
    ELT_INIT( GL_POLYGON, HW_POLYGON );
 
-   currentsz = GET_CURRENT_VB_MAX_ELTS();
-   if (currentsz < 8) {
-      NEW_BUFFER();
-      currentsz = dmasz;
-   }
-
    for (j = start + 1 ; j + 1 < count ; j += nr - 1 ) {
-      nr = MIN2( currentsz, count - j + 1 );
-      TAG(emit_elts)( ctx, elts+start, 1 );
-      TAG(emit_elts)( ctx, elts+j, nr - 1 );
-      NEW_PRIMITIVE();
-      currentsz = dmasz;
+      nr = MIN2( dmasz, count - j + 1 );
+      dest = ALLOC_ELTS( nr );
+      dest = TAG(emit_elts)( ctx, dest, elts+start, 1 );
+      dest = TAG(emit_elts)( ctx, dest, elts+j, nr - 1 );
+      CLOSE_ELTS();
    }
 }
 
@@ -959,61 +821,49 @@ static void TAG(render_quad_strip_elts)( GLcontext *ctx,
    }
    else {
       LOCAL_VARS;
-      GLuint *elts = GET_ELTS();
-      int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-      int currentsz;
+      GLuint *elts = GET_MESA_ELTS();
+      int dmasz = GET_MAX_HW_ELTS();
       GLuint j, nr;
-
-      NEW_PRIMITIVE();
-      currentsz = GET_CURRENT_VB_MAX_ELTS();
+      ELT_TYPE *dest;
 
       /* Emit whole number of quads in total, and in each buffer.
        */
       dmasz -= dmasz & 1;
       count -= (count-start) & 1;
-      currentsz -= currentsz & 1;
-
-      if (currentsz < 12)
-	 currentsz = dmasz;
 
       if (ctx->_TriangleCaps & DD_FLATSHADE) {
 	 ELT_INIT( GL_TRIANGLES, HW_TRIANGLES );
 
-	 currentsz = currentsz/6*2;
 	 dmasz = dmasz/6*2;
 
 	 for (j = start; j + 3 < count; j += nr - 2 ) {
-	    nr = MIN2( currentsz, count - j );
+	    nr = MIN2( dmasz, count - j );
 
 	    if (nr >= 4)
 	    {
-	       GLint i;
 	       GLint quads = (nr/2)-1;
-	       ELTS_VARS;
-
-	       ALLOC_ELTS( quads*6 );
+	       ELT_TYPE *dest = ALLOC_ELTS( quads*6 );
+	       GLint i;
 
 	       for ( i = j-start ; i < j-start+quads ; i++, elts += 2 ) {
-		  EMIT_TWO_ELTS( 0, elts[0], elts[1] );
-		  EMIT_TWO_ELTS( 2, elts[2], elts[1] );
-		  EMIT_TWO_ELTS( 4, elts[3], elts[2] );
-		  INCR_ELTS( 6 );
+		  EMIT_TWO_ELTS( dest, 0, elts[0], elts[1] );
+		  EMIT_TWO_ELTS( dest, 2, elts[2], elts[1] );
+		  EMIT_TWO_ELTS( dest, 4, elts[3], elts[2] );
+		  dest += 6;
 	       }
 
-	       NEW_PRIMITIVE();
+	       CLOSE_ELTS();
 	    }
-
-	    currentsz = dmasz;
 	 }
       }
       else {
 	 ELT_INIT( GL_TRIANGLE_STRIP, HW_TRIANGLE_STRIP_0 );
 
 	 for (j = start; j + 3 < count; j += nr - 2 ) {
-	    nr = MIN2( currentsz, count - j );
-	    TAG(emit_elts)( ctx, elts+j, nr );
-	    NEW_PRIMITIVE();
-	    currentsz = dmasz;
+	    nr = MIN2( dmasz, count - j );
+	    dest = ALLOC_ELTS( nr );
+	    dest = TAG(emit_elts)( ctx, dest, elts+j, nr );
+	    CLOSE_ELTS();
 	 }
       }
    }
@@ -1031,48 +881,38 @@ static void TAG(render_quads_elts)( GLcontext *ctx,
    if (HAVE_QUADS && 0) {
    } else {
       LOCAL_VARS;
-      GLuint *elts = GET_ELTS();
-      int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-      int currentsz;
+      GLuint *elts = GET_MESA_ELTS();
+      int dmasz = GET_MAX_HW_ELTS();
       GLuint j, nr;
 
       ELT_INIT( GL_TRIANGLES, HW_TRIANGLES );
-      currentsz = GET_CURRENT_VB_MAX_ELTS();
 
       /* Emit whole number of quads in total, and in each buffer.
        */
       dmasz -= dmasz & 3;
       count -= (count-start) & 3;
-      currentsz -= currentsz & 3;
 
       /* Adjust for rendering as triangles:
        */
-      currentsz = currentsz/6*4;
       dmasz = dmasz/6*4;
 
-      if (currentsz < 8)
-	 currentsz = dmasz;
+      for (j = start; j + 3 < count; j += nr ) {
+	 nr = MIN2( dmasz, count - j );
 
-      for (j = start; j + 3 < count; j += nr - 2 ) {
-	 nr = MIN2( currentsz, count - j );
-
-	 if (nr >= 4)
 	 {
 	    GLint quads = nr/4;
+	    ELT_TYPE *dest = ALLOC_ELTS( quads * 6 );
 	    GLint i;
-	    ELTS_VARS;
-	    ALLOC_ELTS( quads * 6 );
 
 	    for ( i = j-start ; i < j-start+quads ; i++, elts += 4 ) {
-	       EMIT_TWO_ELTS( 0, elts[0], elts[1] );
-	       EMIT_TWO_ELTS( 2, elts[3], elts[1] );
-	       EMIT_TWO_ELTS( 4, elts[2], elts[3] );
-	       INCR_ELTS( 6 );
+	       EMIT_TWO_ELTS( dest, 0, elts[0], elts[1] );
+	       EMIT_TWO_ELTS( dest, 2, elts[3], elts[1] );
+	       EMIT_TWO_ELTS( dest, 4, elts[2], elts[3] );
+	       dest += 6;
 	    }
-	 }
 
-	 NEW_PRIMITIVE();
-	 currentsz = dmasz;
+	    CLOSE_ELTS();
+	 }
       }
    }
 }
