@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.4 1999/10/27 09:44:10 brianp Exp $ */
+/* $Id: glx.h,v 1.5 1999/10/27 09:46:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,51 +25,9 @@
  */
 
 
-/*
- * $Log: glx.h,v $
- * Revision 1.4  1999/10/27 09:44:10  brianp
- * removed glXGetProcAddressEXT
- *
- * Revision 1.3  1999/09/16 15:52:51  brianp
- * added GLX_MESA_set_3dfx_mode.  clean-up of glXGetProcAddress
- *
- * Revision 1.2  1999/09/11 11:33:45  brianp
- * added GLX_EXT_get_proc_address
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.3  1999/02/14 03:39:09  brianp
- * new copyright
- *
- * Revision 3.2  1998/06/18 03:44:00  brianp
- * replaced "uint" with "unsigned int"
- *
- * Revision 3.1  1998/06/01 00:00:17  brianp
- * added GLX_SGI_video_sync extension
- *
- * Revision 3.0  1998/02/20 05:06:01  brianp
- * initial rev
- *
- */
-
 
 #ifndef GLX_H
 #define GLX_H
-
-
-/*
- * A pseudo-GLX implementation to allow GLX-based OpenGL programs to
- * work with Mesa.
- *
- * Notes:
- *   1. If the visual passed to glXGetConfig was not one returned by
- *      glXChooseVisual then the GLX_RGBA and GLX_DOUBLEBUFFER queries
- *      will always return True and the GLX_DEPTH_SIZE query will always
- *      return non-zero.
- *   2. The glXIsDirect() function always returns True.
- */
-
 
 
 #include <X11/Xlib.h>
