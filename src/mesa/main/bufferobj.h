@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -73,6 +73,9 @@ extern void *
 _mesa_buffer_map( GLcontext *ctx, GLenum target, GLenum access,
 		  struct gl_buffer_object * bufObj );
 
+extern GLboolean
+_mesa_buffer_unmap( GLcontext *ctx, GLenum target,
+                    struct gl_buffer_object * bufObj );
 
 extern GLboolean
 _mesa_validate_pbo_access(const struct gl_pixelstore_attrib *pack,
