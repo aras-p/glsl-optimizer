@@ -1,10 +1,10 @@
-/* $Id: s_readpix.c,v 1.12 2001/05/16 20:27:12 brianp Exp $ */
+/* $Id: s_readpix.c,v 1.13 2002/01/12 16:12:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -246,24 +246,24 @@ read_fast_rgba_pixels( GLcontext *ctx,
          rowLength = width;
 
       /* horizontal clipping */
-      if (srcX < ctx->ReadBuffer->_Xmin) {
-         skipPixels += (ctx->ReadBuffer->_Xmin - srcX);
-         readWidth  -= (ctx->ReadBuffer->_Xmin - srcX);
-         srcX = ctx->ReadBuffer->_Xmin;
+      if (srcX < 0) {
+         skipPixels -= srcX;
+         readWidth += srcX;
+         srcX = 0;
       }
-      if (srcX + readWidth > ctx->ReadBuffer->_Xmax)
-         readWidth -= (srcX + readWidth - ctx->ReadBuffer->_Xmax);
+      if (srcX + readWidth > ctx->ReadBuffer->Width)
+         readWidth -= (srcX + readWidth - ctx->ReadBuffer->Width);
       if (readWidth <= 0)
          return GL_TRUE;
 
       /* vertical clipping */
-      if (srcY < ctx->ReadBuffer->_Ymin) {
-         skipRows   += (ctx->ReadBuffer->_Ymin - srcY);
-         readHeight -= (ctx->ReadBuffer->_Ymin - srcY);
-         srcY = ctx->ReadBuffer->_Ymin;
+      if (srcY < 0) {
+         skipRows -= srcY;
+         readHeight += srcY;
+         srcY = 0;
       }
-      if (srcY + readHeight > ctx->ReadBuffer->_Ymax)
-         readHeight -= (srcY + readHeight - ctx->ReadBuffer->_Ymax);
+      if (srcY + readHeight > ctx->ReadBuffer->Height)
+         readHeight -= (srcY + readHeight - ctx->ReadBuffer->Height);
       if (readHeight <= 0)
          return GL_TRUE;
 
