@@ -2833,6 +2833,9 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
 
 /**
  * Error checking for glCompressedTexSubImage[123]D().
+ * \warning  There are some bad assumptions here about the size of compressed
+ *           texture tiles (multiple of 4) used to test the validity of the
+ *           offset and size parameters.
  * \return error code or GL_NO_ERROR.
  */
 static GLenum
@@ -2890,6 +2893,9 @@ compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
    if (level < 0 || level >= maxLevels)
       return GL_INVALID_VALUE;
 
+   /* XXX these tests are specific to the compressed format.
+    * this code should be generalized in some way.
+    */
    if ((xoffset & 3) != 0 || (yoffset & 3) != 0)
       return GL_INVALID_VALUE;
 
