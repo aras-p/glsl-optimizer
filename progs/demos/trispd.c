@@ -1,36 +1,9 @@
-/* $Id: trispd.c,v 1.2 2000/10/26 15:26:14 brianp Exp $ */
+/* $Id: trispd.c,v 1.3 2002/04/22 16:03:37 brianp Exp $ */
 
 /*
  * Simple GLUT program to measure triangle strip rendering speed.
  * Brian Paul  February 15, 1997  This file is in the public domain.
  */
-
-/*
- * $Log: trispd.c,v $
- * Revision 1.2  2000/10/26 15:26:14  brianp
- * added a glFinish() call
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.4  1999/03/28 18:24:37  brianp
- * minor clean-up
- *
- * Revision 3.3  1999/03/18 08:16:52  joukj
- *
- *     cmpstr needs string.h to included to avoid warnings
- *
- * Revision 3.2  1998/07/08 03:02:00  brianp
- * added Marten Stromberg's texture options
- *
- * Revision 3.1  1998/06/29 02:36:58  brianp
- * removed unneeded includes
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
-
 
 #include <stdio.h>
 #include <stdlib.h>

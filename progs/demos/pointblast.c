@@ -11,32 +11,6 @@
    is present , the particle size is attenuated based on eye distance. */
 
 
-/*
- * $Log: pointblast.c,v $
- * Revision 1.3  2002/01/16 00:48:43  kschultz
- * Demo updates for Windows (Robert Bergkvist)
- *
- * Revision 1.2  2000/06/27 17:04:43  brianp
- * fixed compiler warnings
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.3  1998/07/26 01:24:27  brianp
- * removed include of gl.h
- *
- * Revision 3.2  1998/02/14 18:51:46  brianp
- * fixed a small compiler warning
- *
- * Revision 3.1  1998/02/14 18:45:25  brianp
- * optimized to use flat shading, don't blend ground polygon
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

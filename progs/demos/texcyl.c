@@ -1,4 +1,4 @@
-/* $Id: texcyl.c,v 1.5 2001/03/27 17:35:26 brianp Exp $ */
+/* $Id: texcyl.c,v 1.6 2002/04/22 16:03:37 brianp Exp $ */
 
 /*
  * Textured cylinder demo: lighting, texturing, reflection mapping.
@@ -9,61 +9,6 @@
  *
  * Brian Paul  May 1997  This program is in the public domain.
  */
-
-/*
- * $Log: texcyl.c,v $
- * Revision 1.5  2001/03/27 17:35:26  brianp
- * set initial window pos
- *
- * Revision 1.4  2000/12/24 22:53:54  pesco
- * * demos/Makefile.am (INCLUDES): Added -I$(top_srcdir)/util.
- * * demos/Makefile.X11, demos/Makefile.BeOS-R4, demos/Makefile.cygnus:
- * Essentially the same.
- * Program files updated to include "readtex.c", not "../util/readtex.c".
- * * demos/reflect.c: Likewise for "showbuffer.c".
- *
- *
- * * Makefile.am (EXTRA_DIST): Added top-level regular files.
- *
- * * include/GL/Makefile.am (INC_X11): Added glxext.h.
- *
- *
- * * src/GGI/include/ggi/mesa/Makefile.am (EXTRA_HEADERS): Include
- * Mesa GGI headers in dist even if HAVE_GGI is not given.
- *
- * * configure.in: Look for GLUT and demo source dirs in $srcdir.
- *
- * * src/swrast/Makefile.am (libMesaSwrast_la_SOURCES): Set to *.[ch].
- * More source list updates in various Makefile.am's.
- *
- * * Makefile.am (dist-hook): Remove CVS directory from distribution.
- * (DIST_SUBDIRS): List all possible subdirs here.
- * (SUBDIRS): Only list subdirs selected for build again.
- * The above two applied to all subdir Makefile.am's also.
- *
- * Revision 1.3  2000/09/29 23:09:39  brianp
- * added fps output
- *
- * Revision 1.2  1999/10/21 16:39:06  brianp
- * added -info command line option
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.3  1999/03/28 18:24:37  brianp
- * minor clean-up
- *
- * Revision 3.2  1998/11/05 04:34:04  brianp
- * moved image files to ../images/ directory
- *
- * Revision 3.1  1998/06/23 03:16:51  brianp
- * added Point/Linear sampling menu items
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
-
 
 #include <stdio.h>
 #include <stdlib.h>

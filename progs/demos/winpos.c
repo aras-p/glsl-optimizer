@@ -1,62 +1,9 @@
-/* $Id: winpos.c,v 1.4 2002/01/16 00:48:43 kschultz Exp $ */
+/* $Id: winpos.c,v 1.5 2002/04/22 16:03:37 brianp Exp $ */
 
 /*
  * Example of how to use the GL_MESA_window_pos extension.
  * Brian Paul   This file is in the public domain.
  */
-
-
-/*
- * $Log: winpos.c,v $
- * Revision 1.4  2002/01/16 00:48:43  kschultz
- * Demo updates for Windows (Robert Bergkvist)
- *
- * Revision 1.3  2000/12/24 22:53:54  pesco
- * * demos/Makefile.am (INCLUDES): Added -I$(top_srcdir)/util.
- * * demos/Makefile.X11, demos/Makefile.BeOS-R4, demos/Makefile.cygnus:
- * Essentially the same.
- * Program files updated to include "readtex.c", not "../util/readtex.c".
- * * demos/reflect.c: Likewise for "showbuffer.c".
- *
- *
- * * Makefile.am (EXTRA_DIST): Added top-level regular files.
- *
- * * include/GL/Makefile.am (INC_X11): Added glxext.h.
- *
- *
- * * src/GGI/include/ggi/mesa/Makefile.am (EXTRA_HEADERS): Include
- * Mesa GGI headers in dist even if HAVE_GGI is not given.
- *
- * * configure.in: Look for GLUT and demo source dirs in $srcdir.
- *
- * * src/swrast/Makefile.am (libMesaSwrast_la_SOURCES): Set to *.[ch].
- * More source list updates in various Makefile.am's.
- *
- * * Makefile.am (dist-hook): Remove CVS directory from distribution.
- * (DIST_SUBDIRS): List all possible subdirs here.
- * (SUBDIRS): Only list subdirs selected for build again.
- * The above two applied to all subdir Makefile.am's also.
- *
- * Revision 1.2  2000/06/27 17:04:43  brianp
- * fixed compiler warnings
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.3  1999/03/28 18:24:37  brianp
- * minor clean-up
- *
- * Revision 3.2  1998/11/05 04:34:04  brianp
- * moved image files to ../images/ directory
- *
- * Revision 3.1  1998/02/22 16:36:10  brianp
- * changed image file and set unpack alignment to 1
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
-
 
 #include <math.h>
 #include <string.h>

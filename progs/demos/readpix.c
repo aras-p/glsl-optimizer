@@ -1,27 +1,10 @@
-/* $Id: readpix.c,v 1.4 2000/10/16 21:24:39 brianp Exp $ */
+/* $Id: readpix.c,v 1.5 2002/04/22 16:03:37 brianp Exp $ */
 
 /*
  * glReadPixels and glCopyPixels test
  * 
  * Brian Paul   March 1, 2000  This file is in the public domain.
  */
-
-/*
- * $Log: readpix.c,v $
- * Revision 1.4  2000/10/16 21:24:39  brianp
- * use gray background, memset TempImage to white to help with debugging
- *
- * Revision 1.3  2000/03/31 01:01:31  brianp
- * tweaks to allow different read formats/types
- *
- * Revision 1.2  2000/03/23 19:47:25  brianp
- * added benchmarking
- *
- * Revision 1.1  2000/03/01 16:23:14  brianp
- * test glDraw/Read/CopyPixels()
- *
- */
-
 
 #include <assert.h>
 #include <stdio.h>

@@ -1,68 +1,10 @@
-/* $Id: drawpix.c,v 1.6 2002/01/26 17:49:30 brianp Exp $ */
+/* $Id: drawpix.c,v 1.7 2002/04/22 16:03:37 brianp Exp $ */
 
 /*
  * glDrawPixels demo/test/benchmark
  * 
  * Brian Paul   September 25, 1997  This file is in the public domain.
  */
-
-/*
- * $Log: drawpix.c,v $
- * Revision 1.6  2002/01/26 17:49:30  brianp
- * added fog and raster Z position controls
- *
- * Revision 1.5  2000/12/24 22:53:54  pesco
- * * demos/Makefile.am (INCLUDES): Added -I$(top_srcdir)/util.
- * * demos/Makefile.X11, demos/Makefile.BeOS-R4, demos/Makefile.cygnus:
- * Essentially the same.
- * Program files updated to include "readtex.c", not "../util/readtex.c".
- * * demos/reflect.c: Likewise for "showbuffer.c".
- *
- *
- * * Makefile.am (EXTRA_DIST): Added top-level regular files.
- *
- * * include/GL/Makefile.am (INC_X11): Added glxext.h.
- *
- *
- * * src/GGI/include/ggi/mesa/Makefile.am (EXTRA_HEADERS): Include
- * Mesa GGI headers in dist even if HAVE_GGI is not given.
- *
- * * configure.in: Look for GLUT and demo source dirs in $srcdir.
- *
- * * src/swrast/Makefile.am (libMesaSwrast_la_SOURCES): Set to *.[ch].
- * More source list updates in various Makefile.am's.
- *
- * * Makefile.am (dist-hook): Remove CVS directory from distribution.
- * (DIST_SUBDIRS): List all possible subdirs here.
- * (SUBDIRS): Only list subdirs selected for build again.
- * The above two applied to all subdir Makefile.am's also.
- *
- * Revision 1.4  2000/09/08 21:45:21  brianp
- * added dither key option
- *
- * Revision 1.3  1999/10/28 18:23:29  brianp
- * minor changes to Usage() function
- *
- * Revision 1.2  1999/10/21 22:13:58  brianp
- * added f key to toggle front/back drawing
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.3  1999/03/28 18:18:33  brianp
- * minor clean-up
- *
- * Revision 3.2  1998/11/05 04:34:04  brianp
- * moved image files to ../images/ directory
- *
- * Revision 3.1  1998/02/22 16:43:17  brianp
- * added a few casts to silence compiler warnings
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
-
 
 #include <stdio.h>
 #include <stdlib.h>

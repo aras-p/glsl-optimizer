@@ -1,4 +1,4 @@
-/* $Id: stex3d.c,v 1.5 2000/06/27 17:04:43 brianp Exp $ */
+/* $Id: stex3d.c,v 1.6 2002/04/22 16:03:37 brianp Exp $ */
 
 /*----------------------------- 
  * stex3d.c GL example of the mesa 3d-texture extention to simulate procedural
@@ -14,32 +14,6 @@
  * cc stex3d.c -o stex3d -lglut -lMesaGLU -lMesaGL -lX11 -lXext -lm 
  *
  *---------------------------- */
-
-/*
- * $Log: stex3d.c,v $
- * Revision 1.5  2000/06/27 17:04:43  brianp
- * fixed compiler warnings
- *
- * Revision 1.4  2000/03/22 19:48:57  brianp
- * converted from GL_EXT_texture3D to GL 1.2
- *
- * Revision 1.3  1999/12/16 08:54:22  brianp
- * added a cast to malloc call
- *
- * Revision 1.2  1999/09/17 12:27:01  brianp
- * silenced some warnings
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.1  1998/06/09 01:53:49  brianp
- * main() should return an int
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
-
 
 #include <string.h>
 #include <stdio.h>

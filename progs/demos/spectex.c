@@ -1,4 +1,4 @@
-/* $Id: spectex.c,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: spectex.c,v 1.2 2002/04/22 16:03:37 brianp Exp $ */
 
 /*
  * GLUT demonstration of texturing with specular highlights.
@@ -16,24 +16,6 @@
  *
  * Brian Paul  February 1997
  */
-
-
-/*
- * $Log: spectex.c,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
- *
- * Revision 3.2  1999/03/28 18:22:05  brianp
- * minor clean-up
- *
- * Revision 3.1  1998/02/14 18:47:48  brianp
- * added OpenGL 1.2 separate specular interpolation support
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
-
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,27 +1,10 @@
-/* $Id: glinfo.c,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: glinfo.c,v 1.2 2002/04/22 16:03:37 brianp Exp $ */
 
 /*
  * Print GL, GLU and GLUT version and extension info
  *
  * Brian Paul  This file in public domain.
  * October 3, 1997
- */
-
-
-/*
- * $Log: glinfo.c,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
- *
- * Revision 3.2  1999/02/02 04:45:49  brianp
- * include stdio.h before glut.h
- *
- * Revision 3.1  1998/02/22 16:42:54  brianp
- * added casts to prevent compiler warnings
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
  */
 
 

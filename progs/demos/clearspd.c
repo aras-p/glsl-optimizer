@@ -1,34 +1,8 @@
-/* $Id: clearspd.c,v 1.3 2000/12/07 21:50:39 brianp Exp $ */
+/* $Id: clearspd.c,v 1.4 2002/04/22 16:03:37 brianp Exp $ */
 
 /*
  * Simple GLUT program to measure glClear() and glutSwapBuffers() speed.
  * Brian Paul  February 15, 1997  This file in public domain.
- */
-
-/*
- * $Log: clearspd.c,v $
- * Revision 1.3  2000/12/07 21:50:39  brianp
- * call glFinish() before getting t1 time
- *
- * Revision 1.2  2000/04/10 16:25:15  brianp
- * fixed visual selection and reporting results
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.3  1999/03/28 18:18:33  brianp
- * minor clean-up
- *
- * Revision 3.2  1999/03/18 08:16:34  joukj
- *
- *     cmpstr needs string.h to included to avoid warnings
- *
- * Revision 3.1  1998/06/29 02:38:30  brianp
- * removed unneeded includes
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
  */
 
 

@@ -1,5 +1,4 @@
-
-/* $Id: gamma.c,v 1.2 2000/03/18 01:13:29 brianp Exp $ */
+/* $Id: gamma.c,v 1.3 2002/04/22 16:03:37 brianp Exp $ */
 
 /* Draw test patterns to help determine correct gamma value for a display.
    When the intensities of the inner squares nearly match the intensities
@@ -22,22 +21,6 @@
    Kai Schuetz 05 Jun 1999 */
 
 /* Conversion to GLUT by Mark J. Kilgard */
-
-/*
- * $Log: gamma.c,v $
- * Revision 1.2  2000/03/18 01:13:29  brianp
- * colors were computed incorrectly (Hans Nelles)
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.1  1999/06/19 01:35:38  brianp
- * merged in Kai Schuetz's RGB changes
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
 
 
 #include <stdio.h>
