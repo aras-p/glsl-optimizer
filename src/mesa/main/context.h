@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.4 1999/11/24 18:48:31 brianp Exp $ */
+/* $Id: context.h,v 1.5 1999/12/10 19:09:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -97,7 +97,11 @@ extern void gl_copy_context(const GLcontext *src, GLcontext *dst, GLuint mask);
  * It bundles up the depth buffer, stencil buffer and accum buffers into a
  * single entity.
  */
-extern GLframebuffer *gl_create_framebuffer( GLvisual *visual );
+extern GLframebuffer *gl_create_framebuffer( GLvisual *visual,
+                                             GLboolean softwareDepth,
+                                             GLboolean softwareStencil,
+                                             GLboolean softwareAccum,
+                                             GLboolean softwareAlpha );
 
 extern void gl_destroy_framebuffer( GLframebuffer *buffer );
 

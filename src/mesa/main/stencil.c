@@ -1,4 +1,4 @@
-/* $Id: stencil.c,v 1.12 1999/12/10 16:15:04 brianp Exp $ */
+/* $Id: stencil.c,v 1.13 1999/12/10 19:09:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,7 @@
 #else
 #include "glheader.h"
 #include "context.h"
+#include "depth.h"
 #include "mem.h"
 #include "pb.h"
 #include "stencil.h"
@@ -579,8 +580,7 @@ stencil_and_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
       MEMCPY(oldmask, mask, n * sizeof(GLubyte));
 
       /* apply the depth test */
-      if (ctx->Driver.DepthTestSpan)
-         (*ctx->Driver.DepthTestSpan)( ctx, n, x, y, z, mask );
+      gl_depth_test_span(ctx, n, x, y, z, mask);
 
       /* Set the stencil pass/fail flags according to result of depth testing.
        * if oldmask[i] == 0 then
@@ -1059,8 +1059,7 @@ gl_stencil_and_depth_test_pixels( GLcontext *ctx,
 
          MEMCPY(oldmask, mask, n * sizeof(GLubyte));
 
-         if (ctx->Driver.DepthTestPixels)
-            (*ctx->Driver.DepthTestPixels)( ctx, n, x, y, z, mask );
+         gl_depth_test_pixels(ctx, n, x, y, z, mask);
 
          for (i=0;i<n;i++) {
             ASSERT(mask[i] == 0 || mask[i] == 1);
@@ -1100,8 +1099,7 @@ gl_stencil_and_depth_test_pixels( GLcontext *ctx,
 
          MEMCPY(oldmask, mask, n * sizeof(GLubyte));
 
-         if (ctx->Driver.DepthTestPixels)
-            (*ctx->Driver.DepthTestPixels)( ctx, n, x, y, z, mask );
+         gl_depth_test_pixels(ctx, n, x, y, z, mask);
 
          for (i=0;i<n;i++) {
             ASSERT(mask[i] == 0 || mask[i] == 1);

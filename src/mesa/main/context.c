@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.26 1999/12/04 21:23:17 brianp Exp $ */
+/* $Id: context.c,v 1.27 1999/12/10 19:09:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1277,10 +1277,11 @@ GLcontext *gl_create_context( GLvisual *visual,
    
    /* Fill in some driver defaults now.
     */
+#if 0
    ctx->Driver.AllocDepthBuffer = gl_alloc_depth_buffer;
    ctx->Driver.ReadDepthSpanFloat = gl_read_depth_span_float;
    ctx->Driver.ReadDepthSpanInt = gl_read_depth_span_int;
-
+#endif
 
 #ifdef PROFILE
    init_timings( ctx );
@@ -1427,18 +1428,47 @@ void gl_destroy_context( GLcontext *ctx )
  * encapsulates the depth, stencil and accum buffers and related
  * parameters.
  * Input:  visual - a GLvisual pointer
+ *         softwareDepth - create/use a software depth buffer?
+ *         softwareStencil - create/use a software stencil buffer?
+ *         softwareAccum - create/use a software accum buffer?
+ *         softwareAlpha - create/use a software alpha buffer?
+
  * Return:  pointer to new GLframebuffer struct or NULL if error.
  */
-GLframebuffer *gl_create_framebuffer( GLvisual *visual )
+GLframebuffer *gl_create_framebuffer( GLvisual *visual,
+                                      GLboolean softwareDepth,
+                                      GLboolean softwareStencil,
+                                      GLboolean softwareAccum,
+                                      GLboolean softwareAlpha )
 {
    GLframebuffer *buffer;
 
-   buffer = (GLframebuffer *) CALLOC( sizeof(GLframebuffer) );
+   buffer = CALLOC_STRUCT(gl_frame_buffer);
    if (!buffer) {
       return NULL;
    }
 
+   /* sanity checks */
+   if (softwareDepth ) {
+      assert(visual->DepthBits > 0);
+   }
+   if (softwareStencil) {
+      assert(visual->StencilBits > 0);
+   }
+   if (softwareAccum) {
+      assert(visual->RGBAflag);
+      assert(visual->AccumBits > 0);
+   }
+   if (softwareAlpha) {
+      assert(visual->RGBAflag);
+      assert(visual->AlphaBits > 0);
+   }
+
    buffer->Visual = visual;
+   buffer->UseSoftwareDepthBuffer = softwareDepth;
+   buffer->UseSoftwareStencilBuffer = softwareStencil;
+   buffer->UseSoftwareAccumBuffer = softwareAccum;
+   buffer->UseSoftwareAlphaBuffers = softwareAlpha;
 
    return buffer;
 }
@@ -1694,15 +1724,15 @@ _mesa_ResizeBuffersMESA( void )
    ctx->DrawBuffer->Height = buf_height;
 
    /* Reallocate other buffers if needed. */
-   if (ctx->Visual->DepthBits>0) {
+   if (ctx->DrawBuffer->UseSoftwareDepthBuffer) {
       /* reallocate depth buffer */
-      (*ctx->Driver.AllocDepthBuffer)( ctx );
+      gl_alloc_depth_buffer( ctx );
    }
-   if (ctx->Visual->StencilBits>0) {
+   if (ctx->DrawBuffer->UseSoftwareStencilBuffer) {
       /* reallocate stencil buffer */
       gl_alloc_stencil_buffer( ctx );
    }
-   if (ctx->Visual->AccumBits>0) {
+   if (ctx->DrawBuffer->UseSoftwareAccumBuffer) {
       /* reallocate accum buffer */
       gl_alloc_accum_buffer( ctx );
    }
@@ -2195,31 +2225,6 @@ void gl_update_state( GLcontext *ctx )
 	    }
 	    if (ctx->Scissor.Y + ctx->Scissor.Height - 1 < ctx->DrawBuffer->Ymax) {
 	       ctx->DrawBuffer->Ymax = ctx->Scissor.Y + ctx->Scissor.Height - 1;
-	    }
-	 }
-
-	 /* The driver isn't managing the depth buffer.
-	  */
-	 if (ctx->Driver.AllocDepthBuffer == gl_alloc_depth_buffer) 
-	 {
-	    if (ctx->Depth.Mask) {
-	       switch (ctx->Depth.Func) {
-	       case GL_LESS:
-		  ctx->Driver.DepthTestSpan = gl_depth_test_span_less;
-		  ctx->Driver.DepthTestPixels = gl_depth_test_pixels_less;
-		  break;
-	       case GL_GREATER:
-		  ctx->Driver.DepthTestSpan = gl_depth_test_span_greater;
-		  ctx->Driver.DepthTestPixels = gl_depth_test_pixels_greater;
-		  break;
-	       default:
-		  ctx->Driver.DepthTestSpan = gl_depth_test_span_generic;
-		  ctx->Driver.DepthTestPixels = gl_depth_test_pixels_generic;
-	       }
-	    }
-	    else {
-	       ctx->Driver.DepthTestSpan = gl_depth_test_span_generic;
-	       ctx->Driver.DepthTestPixels = gl_depth_test_pixels_generic;
 	    }
 	 }
       }

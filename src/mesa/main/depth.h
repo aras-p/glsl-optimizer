@@ -1,4 +1,4 @@
-/* $Id: depth.h,v 1.4 1999/11/24 18:48:31 brianp Exp $ */
+/* $Id: depth.h,v 1.5 1999/12/10 19:09:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,6 +33,24 @@
 
 
 /*
+ * Immediate-mode API entrpoints
+ */
+
+extern void
+_mesa_ClearDepth( GLclampd depth );
+
+
+extern void
+_mesa_DepthFunc( GLenum func );
+
+
+extern void
+_mesa_DepthMask( GLboolean flag );
+
+
+
+
+/*
  * Return the address of the Z-buffer value for window coordinate (x,y):
  */
 #define Z_ADDRESS( CTX, X, Y )  \
@@ -42,60 +60,27 @@
 
 
 extern GLuint
-gl_depth_test_span_generic( GLcontext* ctx, GLuint n, GLint x, GLint y,
+gl_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                             const GLdepth z[], GLubyte mask[] );
 
-extern GLuint
-gl_depth_test_span_less( GLcontext* ctx, GLuint n, GLint x, GLint y,
-                         const GLdepth z[], GLubyte mask[] );
-
-extern GLuint
-gl_depth_test_span_greater( GLcontext* ctx, GLuint n, GLint x, GLint y,
-                            const GLdepth z[], GLubyte mask[] );
-
+extern void
+gl_depth_test_pixels( GLcontext *ctx,
+                      GLuint n, const GLint x[], const GLint y[],
+                      const GLdepth z[], GLubyte mask[] );
 
 
 extern void
-gl_depth_test_pixels_generic( GLcontext* ctx,
-                              GLuint n, const GLint x[], const GLint y[],
-                              const GLdepth z[], GLubyte mask[] );
-
-extern void
-gl_depth_test_pixels_less( GLcontext* ctx,
-                           GLuint n, const GLint x[], const GLint y[],
-                           const GLdepth z[], GLubyte mask[] );
-
-extern void
-gl_depth_test_pixels_greater( GLcontext* ctx,
-                              GLuint n, const GLint x[], const GLint y[],
-                              const GLdepth z[], GLubyte mask[] );
-
-
-extern void gl_read_depth_span_float( GLcontext* ctx,
-                                      GLuint n, GLint x, GLint y,
-                                      GLfloat depth[] );
-
-
-extern void gl_read_depth_span_int( GLcontext* ctx, GLuint n, GLint x, GLint y,
-                                    GLdepth depth[] );
-
-
-extern void gl_alloc_depth_buffer( GLcontext* ctx );
-
-
-extern void gl_clear_depth_buffer( GLcontext* ctx );
-
+gl_read_depth_span_float( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                          GLfloat depth[] );
 
 
 extern void
-_mesa_ClearDepth( GLclampd depth );
-
-extern void
-_mesa_DepthFunc( GLenum func );
+gl_alloc_depth_buffer( GLcontext* ctx );
 
 
 extern void
-_mesa_DepthMask( GLboolean flag );
+gl_clear_depth_buffer( GLcontext* ctx );
+
 
 
 #endif
