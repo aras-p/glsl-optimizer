@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.12 2000/02/01 01:10:27 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.13 2000/02/01 01:19:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -81,6 +81,12 @@
  * XXX
  * Most functions need the msg (printf-message) parameter to be finished.
  * I.e. replace ";" with the real info.
+ */
+
+/*
+ * XXX
+ * Someday this code should be automatically generated from a spec file
+ * like that used in the SGI OpenGL SI.
  */
 
 
@@ -879,22 +885,22 @@ KEYWORD1 void KEYWORD2 NAME(NewList)(GLuint list, GLenum mode)
 
 KEYWORD1 void KEYWORD2 NAME(Normal3b)(GLbyte nx, GLbyte ny, GLbyte nz)
 {
-   DISPATCH(Normal3b, (nx, ny, nz), (F, ";"));
+   DISPATCH(Normal3b, (nx, ny, nz), (F, "glNormal3b(%d, %d, %d);", nx, ny, nz));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Normal3bv)(const GLbyte *v)
 {
-   DISPATCH(Normal3bv, (v), (F, ";"));
+   DISPATCH(Normal3bv, (v), (F, "glNormal3bv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Normal3d)(GLdouble nx, GLdouble ny, GLdouble nz)
 {
-   DISPATCH(Normal3d, (nx, ny, nz), (F, ";"));
+   DISPATCH(Normal3d, (nx, ny, nz), (F, "glNormal3d(%f, %f, %f);", nx, ny, nz));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Normal3dv)(const GLdouble *v)
 {
-   DISPATCH(Normal3dv, (v), (F, ";"));
+   DISPATCH(Normal3dv, (v), (F, "glNormal3dv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Normal3f)(GLfloat nx, GLfloat ny, GLfloat nz)
@@ -904,37 +910,37 @@ KEYWORD1 void KEYWORD2 NAME(Normal3f)(GLfloat nx, GLfloat ny, GLfloat nz)
 
 KEYWORD1 void KEYWORD2 NAME(Normal3fv)(const GLfloat *v)
 {
-   DISPATCH(Normal3fv, (v), (F, ";"));
+   DISPATCH(Normal3fv, (v), (F, "glNormal3fv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Normal3i)(GLint nx, GLint ny, GLint nz)
 {
-   DISPATCH(Normal3i, (nx, ny, nz), (F, ";"));
+   DISPATCH(Normal3i, (nx, ny, nz), (F, "glNormal3i(%d, %d, %d);", nx, ny, nz));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Normal3iv)(const GLint *v)
 {
-   DISPATCH(Normal3iv, (v), (F, ";"));
+   DISPATCH(Normal3iv, (v), (F, "glNormal3iv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Normal3s)(GLshort nx, GLshort ny, GLshort nz)
 {
-   DISPATCH(Normal3s, (nx, ny, nz), (F, ";"));
+   DISPATCH(Normal3s, (nx, ny, nz), (F, "glNormal3s(%d, %d, %d);", nx, ny, nz));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Normal3sv)(const GLshort *v)
 {
-   DISPATCH(Normal3sv, (v), (F, ";"));
+   DISPATCH(Normal3sv, (v), (F, "glNormal3sv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Ortho)(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble nearval, GLdouble farval)
 {
-   DISPATCH(Ortho, (left, right, bottom, top, nearval, farval), (F, ";"));
+   DISPATCH(Ortho, (left, right, bottom, top, nearval, farval), (F, "glOrtho(%f, %f, %f, %f, %f, %f);", left, right, bottom, top, nearval, farval));
 }
 
 KEYWORD1 void KEYWORD2 NAME(PassThrough)(GLfloat token)
 {
-   DISPATCH(PassThrough, (token), (F, ";"));
+   DISPATCH(PassThrough, (token), (F, "glPassThrough(%f);", token));
 }
 
 KEYWORD1 void KEYWORD2 NAME(PixelMapfv)(GLenum map, GLint mapsize, const GLfloat *values)
@@ -1499,52 +1505,52 @@ KEYWORD1 void KEYWORD2 NAME(Translatef)(GLfloat x, GLfloat y, GLfloat z)
 
 KEYWORD1 void KEYWORD2 NAME(Vertex2d)(GLdouble x, GLdouble y)
 {
-   DISPATCH(Vertex2d, (x, y), (F, ";"));
+   DISPATCH(Vertex2d, (x, y), (F, "glVertex2d(%f, %f);", x, y));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex2dv)(const GLdouble *v)
 {
-   DISPATCH(Vertex2dv, (v), (F, ";"));
+   DISPATCH(Vertex2dv, (v), (F, "glVertex2dv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex2f)(GLfloat x, GLfloat y)
 {
-   DISPATCH(Vertex2f, (x, y), (F, ";"));
+   DISPATCH(Vertex2f, (x, y), (F, "glVertex2f(%g, %g);", x, y));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex2fv)(const GLfloat *v)
 {
-   DISPATCH(Vertex2fv, (v), (F, ";"));
+   DISPATCH(Vertex2fv, (v), (F, "glVertex2fv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex2i)(GLint x, GLint y)
 {
-   DISPATCH(Vertex2i, (x, y), (F, ";"));
+   DISPATCH(Vertex2i, (x, y), (F, "glVertex2i(%d, %d);", x, y));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex2iv)(const GLint *v)
 {
-   DISPATCH(Vertex2iv, (v), (F, ";"));
+   DISPATCH(Vertex2iv, (v), (F, "glVertex2iv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex2s)(GLshort x, GLshort y)
 {
-   DISPATCH(Vertex2s, (x, y), (F, ";"));
+   DISPATCH(Vertex2s, (x, y), (F, "glVertex2s(%d, %d);", x, y));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex2sv)(const GLshort *v)
 {
-   DISPATCH(Vertex2sv, (v), (F, ";"));
+   DISPATCH(Vertex2sv, (v), (F, "glVertex2sv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex3d)(GLdouble x, GLdouble y, GLdouble z)
 {
-   DISPATCH(Vertex3d, (x, y, z), (F, ";"));
+   DISPATCH(Vertex3d, (x, y, z), (F, "glVertex3d(%f, %f, %f);", x, y, z));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex3dv)(const GLdouble *v)
 {
-   DISPATCH(Vertex3dv, (v), (F, ";"));
+   DISPATCH(Vertex3dv, (v), (F, "glVertex3dv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex3f)(GLfloat x, GLfloat y, GLfloat z)
@@ -1554,72 +1560,72 @@ KEYWORD1 void KEYWORD2 NAME(Vertex3f)(GLfloat x, GLfloat y, GLfloat z)
 
 KEYWORD1 void KEYWORD2 NAME(Vertex3fv)(const GLfloat *v)
 {
-   DISPATCH(Vertex3fv, (v), (F, ";"));
+   DISPATCH(Vertex3fv, (v), (F, "glVertex3fv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex3i)(GLint x, GLint y, GLint z)
 {
-   DISPATCH(Vertex3i, (x, y, z), (F, ";"));
+   DISPATCH(Vertex3i, (x, y, z), (F, "glVertex3i(%d, %d, %d);", x, y, z));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex3iv)(const GLint *v)
 {
-   DISPATCH(Vertex3iv, (v), (F, ";"));
+   DISPATCH(Vertex3iv, (v), (F, "glVertex3iv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex3s)(GLshort x, GLshort y, GLshort z)
 {
-   DISPATCH(Vertex3s, (x, y, z), (F, ";"));
+   DISPATCH(Vertex3s, (x, y, z), (F, "glVertex3s(%d, %d, %d);", x, y, z));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex3sv)(const GLshort *v)
 {
-   DISPATCH(Vertex3sv, (v), (F, ";"));
+   DISPATCH(Vertex3sv, (v), (F, "glVertex3sv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex4d)(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-   DISPATCH(Vertex4d, (x, y, z, w), (F, ";"));
+   DISPATCH(Vertex4d, (x, y, z, w), (F, "glVertex4d(%f, %f, %f, %f);", x, y, z, w));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex4dv)(const GLdouble *v)
 {
-   DISPATCH(Vertex4dv, (v), (F, ";"));
+   DISPATCH(Vertex4dv, (v), (F, "glVertex4dv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex4f)(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
-   DISPATCH(Vertex4f, (x, y, z, w), (F, ";"));
+   DISPATCH(Vertex4f, (x, y, z, w), (F, "glVertex4f(%f, %f, %f, %f);", x, y, z, w));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex4fv)(const GLfloat *v)
 {
-   DISPATCH(Vertex4fv, (v), (F, ";"));
+   DISPATCH(Vertex4fv, (v), (F, "glVertex4fv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex4i)(GLint x, GLint y, GLint z, GLint w)
 {
-   DISPATCH(Vertex4i, (x, y, z, w), (F, ";"));
+   DISPATCH(Vertex4i, (x, y, z, w), (F, "glVertex4i(%d, %d, %d, %d);", x, y, z, w));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex4iv)(const GLint *v)
 {
-   DISPATCH(Vertex4iv, (v), (F, ";"));
+   DISPATCH(Vertex4iv, (v), (F, "glVertex4iv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex4s)(GLshort x, GLshort y, GLshort z, GLshort w)
 {
-   DISPATCH(Vertex4s, (x, y, z, w), (F, ";"));
+   DISPATCH(Vertex4s, (x, y, z, w), (F, "glVertex4s(%d, %d, %d, %d);", x, y, z, w));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex4sv)(const GLshort *v)
 {
-   DISPATCH(Vertex4sv, (v), (F, ";"));
+   DISPATCH(Vertex4sv, (v), (F, "glVertex4sv(%p);", v));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Viewport)(GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   DISPATCH(Viewport, (x, y, width, height), (F, ";"));
+   DISPATCH(Viewport, (x, y, width, height), (F, "glViewport(%d, %d, %d, %d);", x, y, width, height));
 }
 
 
@@ -2561,7 +2567,7 @@ KEYWORD1 void KEYWORD2 NAME(DrawArraysEXT)(GLenum mode, GLint first, GLsizei cou
 /* 37. GL_EXT_blend_minmax */
 KEYWORD1 void KEYWORD2 NAME(BlendEquationEXT)(GLenum mode)
 {
-   DISPATCH(BlendEquationEXT, (mode), (F, ";"));
+   DISPATCH(BlendEquationEXT, (mode), (F, "glBlendEquationEXT(0x%x);", mode));
 }
 
 
