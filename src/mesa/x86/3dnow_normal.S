@@ -1,4 +1,4 @@
-/* $Id: 3dnow_normal.S,v 1.1 2001/03/29 06:46:16 gareth Exp $ */
+/* $Id: 3dnow_normal.S,v 1.2 2001/10/22 01:21:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -91,12 +91,12 @@ GLNAME(_mesa_3dnow_transform_normalize_normals):
     PFMUL      ( MM0, MM6 )             /* scale * m9    | scale * m8      */
     PFMUL      ( MM0, MM7 )             /*               | scale * m10     */
 
+ALIGNTEXT32
 LLBL (G3TN_scale_end):
+LLBL (G3TN_transform):
     MOVQ       ( REGIND (EDX), MM0 )    /*  x1              | x0         */
     MOVD       ( REGOFF (8, EDX), MM2 ) /*                  | x2         */
 
-ALIGNTEXT32
-LLBL (G3TN_transform):
     MOVQ       ( MM0, MM1 )             /*  x1              | x0           */
     PUNPCKLDQ  ( MM2, MM2 )             /*  x2              | x2           */
 
@@ -126,9 +126,6 @@ LLBL (G3TN_transform):
     PREFETCH   ( REGIND(EDX) )
 
     MOVD       ( MM1, REGOFF(-4, EAX) ) /*  write r2                       */
-    MOVQ       ( REGIND (EDX), MM0 )    /*  x1           | x0              */
-
-    MOVD       ( REGOFF (8, EDX), MM2 ) /*               | x2              */
     DEC_L      ( EBP )                  /*  decrement normal counter       */
     JA         ( LLBL (G3TN_transform) )
 
@@ -136,9 +133,6 @@ LLBL (G3TN_transform):
     POP_L      ( EDX )                  /*  end of transform ---           */
     POP_L      ( EAX )                  /*    now normalizing ...          */
     POP_L      ( EBP )
-
-    MOVQ       ( REGIND(EAX), MM0 )     /*  x1              | x0           */
-    MOVD       ( REGOFF(8, EAX), MM1 )  /*                  | x2           */
 
     CMP_L      ( CONST(0), EDI )        /*  lengths == 0 ?                 */
     JE         ( LLBL (G3TN_norm ) )    /*  calculate lengths              */
@@ -148,6 +142,9 @@ ALIGNTEXT32
 LLBL (G3TN_norm_w_lengths):
 
     PREFETCHW  ( REGOFF(12,EAX) )
+
+    MOVQ       ( REGIND(EAX), MM0 )     /*  x1              | x0           */
+    MOVD       ( REGOFF(8, EAX), MM1 )  /*                  | x2           */
 
     MOVD       ( REGIND (EDI), MM3 )    /*                  | length (x)   */
     PFMUL      ( MM3, MM1 )             /*                  | x2 (normalize*/
@@ -166,8 +163,6 @@ LLBL (G3TN_norm_w_lengths):
     ADD_L      ( CONST(12), EAX )       /*  next r                         */
     DEC_L      ( EBP )                  /*  decrement normal counter       */
 
-    MOVQ       ( REGIND(EAX), MM0 )     /*  x1              | x0           */
-    MOVD       ( REGOFF(8, EAX), MM1 )  /*                  | x2           */
     JA         ( LLBL (G3TN_norm_w_lengths) )
     JMP        ( LLBL (G3TN_exit_3dnow) )
 
@@ -262,9 +257,6 @@ GLNAME(_mesa_3dnow_transform_normalize_normals_no_rot):
 
 ALIGNTEXT32
 LLBL (G3TNNR_scale_end):
-    MOVQ       ( REGIND(EDX), MM6 )     /* x1            | x0                 */
-    MOVD       ( REGOFF(8, EDX), MM7 )  /*               | x2                 */
-
     CMP_L      ( CONST(0), EDI )        /* lengths == 0 ?                     */
     JE         ( LLBL (G3TNNR_norm) )   /* need to calculate lengths          */
 
@@ -275,6 +267,9 @@ ALIGNTEXT32
 LLBL (G3TNNR_norm_w_lengths):           /* use precalculated lengths          */
 
     PREFETCHW  ( REGIND(EAX) )
+
+    MOVQ       ( REGIND(EDX), MM6 )     /* x1            | x0                 */
+    MOVD       ( REGOFF(8, EDX), MM7 )  /*               | x2                 */
 
     PFMUL      ( MM0, MM6 )             /* x1*m5         | x0*m0              */
     ADD_L      ( STRIDE, EDX )          /* next normal                        */
@@ -296,9 +291,6 @@ LLBL (G3TNNR_norm_w_lengths):           /* use precalculated lengths          */
     MOVD       ( MM7, REGOFF(-4, EAX) ) /* write r2                           */
     MOVD       ( REGIND(EDI), MM3 )     /*                 | length (x)       */
 
-    MOVQ       ( REGIND(EDX), MM6 )     /* x1              | x0               */
-    MOVD       ( REGOFF(8, EDX), MM7 )  /*                 | x2               */
-
     JA         ( LLBL (G3TNNR_norm_w_lengths) )
     JMP        ( LLBL (G3TNNR_exit_3dnow) )
 
@@ -306,6 +298,9 @@ ALIGNTEXT32
 LLBL (G3TNNR_norm):                     /* need to calculate lengths          */
 
     PREFETCHW  ( REGIND(EAX) )
+
+    MOVQ       ( REGIND(EDX), MM6 )     /* x1              | x0               */
+    MOVD       ( REGOFF(8, EDX), MM7 )  /*                 | x2               */
 
     PFMUL      ( MM0, MM6 )             /* x1*m5           | x0*m0            */
     ADD_L      ( CONST(12), EAX )       /* next r                             */
@@ -341,9 +336,6 @@ LLBL (G3TNNR_norm):                     /* need to calculate lengths          */
     PFMUL      ( MM5, MM7 )             /*                 | x2 (normalized)  */
 
     MOVD       ( MM7, REGOFF(-4, EAX) ) /* write r2                           */
-    MOVQ       ( REGIND(EDX), MM6 )     /* x1              | x0               */
-
-    MOVD       ( REGOFF(8, EDX), MM7 )  /*                 | x2               */
     JA         ( LLBL (G3TNNR_norm) )
 
 
@@ -396,16 +388,16 @@ GLNAME(_mesa_3dnow_transform_rescale_normals_no_rot):
     PFMUL      ( MM6, MM0 )             /* scale*m5      | scale*m0           */
     MOVD       ( REGOFF(40, ECX), MM2 ) /*               | m10                */
 
-    MOVQ       ( REGIND(EDX), MM4 )     /* x1            | x0                 */
     PFMUL      ( MM6, MM2 )             /*               | scale*m10          */
-
-    MOVD       ( REGOFF(8, EDX), MM5 )  /*               | x2                 */
 
 ALIGNTEXT32
 LLBL (G3TRNR_rescale):
 
     PREFETCHW  ( REGIND(EAX) )
-
+	
+    MOVQ       ( REGIND(EDX), MM4 )     /* x1            | x0                 */
+    MOVD       ( REGOFF(8, EDX), MM5 )  /*               | x2                 */
+	
     PFMUL      ( MM0, MM4 )             /* x1*m5         | x0*m0              */
     ADD_L      ( STRIDE, EDX )          /* next normal                        */
 
@@ -418,9 +410,6 @@ LLBL (G3TRNR_rescale):
     MOVQ       ( MM4, REGOFF(-12, EAX) ) /* write r0, r1                      */
 
     MOVD       ( MM5, REGOFF(-4, EAX) ) /* write r2                           */
-    MOVQ       ( REGIND(EDX), MM4 )     /* x1            | x0                 */
-
-    MOVD       ( REGOFF(8, EDX), MM5 )  /*               | x2                 */
     JA         ( LLBL (G3TRNR_rescale) ) /* cnt > 0 ? -> process next normal  */
 
     FEMMS
@@ -477,15 +466,16 @@ GLNAME(_mesa_3dnow_transform_rescale_normals):
     PFMUL      ( MM0, MM5 )             /* scale*m6      | scale*m2           */
 
     PFMUL      ( MM0, MM6 )             /* scale*m9      | scale*m8           */
-    MOVD       ( REGOFF(8, EDX), MM2 )  /*               | x2                 */
 
     PFMUL      ( MM0, MM7 )             /*               | scale*m10          */
-    MOVQ       ( REGIND(EDX), MM0 )     /* x1            | x0                 */
 
 ALIGNTEXT32
 LLBL (G3TR_rescale):
 
     PREFETCHW  ( REGIND(EAX) )
+
+    MOVQ       ( REGIND(EDX), MM0 )     /* x1            | x0                 */
+    MOVD       ( REGOFF(8, EDX), MM2 )  /*               | x2                 */
 
     MOVQ       ( MM0, MM1 )             /* x1            | x0                 */
     PUNPCKLDQ  ( MM2, MM2 )             /* x2            | x2                 */
@@ -514,9 +504,6 @@ LLBL (G3TR_rescale):
 
     PFADD      ( MM2, MM1 )             /* *not used*    | x0*m8+x1*m9+x2*m10 */
     MOVD       ( MM1, REGOFF(-4, EAX) ) /* write r2                           */
-
-    MOVQ       ( REGIND(EDX), MM0 )     /* x1            | x0                 */
-    MOVD       ( REGOFF(8, EDX), MM2 )  /*               | x2                 */
 
     DEC_L      ( EDI )                  /* decrement normal counter           */
     JA         ( LLBL (G3TR_rescale) )
@@ -564,13 +551,13 @@ GLNAME(_mesa_3dnow_transform_normals_no_rot):
     MOVD       ( REGOFF(40, ECX), MM2 ) /*               | m10                */
     PUNPCKLDQ  ( MM2, MM2 )             /* m10           | m10                */
 
-    MOVQ       ( REGIND(EDX), MM4 )     /* x1            | x0                 */
-    MOVD       ( REGOFF(8, EDX), MM5 )  /*               | x2                 */
-
 ALIGNTEXT32
 LLBL (G3TNR_transform):
 
     PREFETCHW  ( REGIND(EAX) )
+
+    MOVQ       ( REGIND(EDX), MM4 )     /* x1            | x0                 */
+    MOVD       ( REGOFF(8, EDX), MM5 )  /*               | x2                 */
 
     PFMUL      ( MM0, MM4 )             /* x1*m5         | x0*m0              */
     ADD_L      ( STRIDE, EDX)           /* next normal      */
@@ -584,9 +571,6 @@ LLBL (G3TNR_transform):
     MOVQ       ( MM4, REGOFF(-12, EAX) ) /* write r0, r1                      */
 
     MOVD       ( MM5, REGOFF(-4, EAX) ) /* write r2                           */
-    MOVQ       ( REGIND(EDX), MM4 )     /* x1            | x0                 */
-
-    MOVD       ( REGOFF(8, EDX), MM5 )  /*               | x2                 */
     JA         ( LLBL (G3TNR_transform) )
 
     FEMMS
@@ -636,13 +620,13 @@ GLNAME(_mesa_3dnow_transform_normals):
     MOVQ       ( REGOFF(32, ECX), MM6 ) /* m9            | m8                 */
     MOVD       ( REGOFF(40, ECX), MM7 ) /*               | m10                */
 
-    MOVQ       ( REGIND(EDX), MM0 )     /* x1            | x0                 */
-    MOVD       ( REGOFF(8, EDX), MM2 )  /*               | x2                 */
-
 ALIGNTEXT32
 LLBL (G3T_transform):
 
     PREFETCHW  ( REGIND(EAX) )
+
+    MOVQ       ( REGIND(EDX), MM0 )     /* x1            | x0                 */
+    MOVD       ( REGOFF(8, EDX), MM2 )  /*               | x2                 */
 
     MOVQ       ( MM0, MM1 )             /* x1            | x0                 */
     PUNPCKLDQ  ( MM2, MM2 )             /* x2            | x2                 */
@@ -671,10 +655,8 @@ LLBL (G3T_transform):
     PFADD      ( MM2, MM1 )             /* *not used*    | x0*m8+x1*m9+x2*m10 */
 
     MOVD       ( MM1, REGOFF(-4, EAX) ) /* write r2                           */
-    MOVQ       ( REGIND(EDX), MM0 )     /* x1            | x0                 */
-
-    MOVD       ( REGOFF(8, EDX), MM2 )  /*               | x2                 */
     DEC_L      ( EDI )                  /* decrement normal counter           */
+
     JA         ( LLBL (G3T_transform) )
 
     FEMMS
@@ -713,9 +695,6 @@ GLNAME(_mesa_3dnow_normalize_normals):
 
     FEMMS
 
-    MOVQ       ( REGIND(ECX), MM0 )     /* x1              | x0               */
-    MOVD       ( REGOFF(8, ECX), MM1 )  /*                 | x2               */
-
     CMP_L      ( CONST(0), EDX )        /* lengths == 0 ?                     */
     JE         ( LLBL (G3N_norm2) )     /* calculate lengths                  */
 
@@ -723,6 +702,9 @@ ALIGNTEXT32
 LLBL (G3N_norm1):                       /* use precalculated lengths          */
 
     PREFETCH   ( REGIND(EAX) )
+
+    MOVQ       ( REGIND(ECX), MM0 )     /* x1              | x0               */
+    MOVD       ( REGOFF(8, ECX), MM1 )  /*                 | x2               */
 
     MOVD       ( REGIND(EDX), MM3 )     /*                 | length (x)       */
     PFMUL      ( MM3, MM1 )             /*                 | x2 (normalized)  */
@@ -741,8 +723,6 @@ LLBL (G3N_norm1):                       /* use precalculated lengths          */
     ADD_L      ( CONST(4), EDX )        /* next length                        */
     DEC_L      ( EBP )                  /* decrement normal counter           */
 
-    MOVQ       ( REGIND(ECX), MM0 )     /* x1              | x0               */
-    MOVD       ( REGOFF(8, ECX), MM1 )  /*                 | x2               */
     JA         ( LLBL (G3N_norm1) )
 
     JMP        ( LLBL (G3N_end1) )
@@ -756,6 +736,9 @@ LLBL (G3N_norm2):                       /* need to calculate lengths          */
     ADD_L      ( STRIDE, ECX )          /* next normal    */
 
     PREFETCH   ( REGIND(ECX) )
+
+    MOVQ       ( REGIND(ECX), MM0 )     /* x1              | x0               */
+    MOVD       ( REGOFF(8, ECX), MM1 )  /*                 | x2               */
 
     PFMUL      ( MM0, MM3 )             /* x1*x1           | x0*x0            */
     MOVQ       ( MM1, MM4 )             /*                 | x2               */
@@ -783,8 +766,6 @@ LLBL (G3N_norm2):                       /* need to calculate lengths          */
     PFMUL      ( MM5, MM1 )             /*                 | x2 (normalized)  */
     MOVD       ( MM1, REGOFF(-4, EAX) ) /* write new x2                       */
 
-    MOVQ       ( REGIND(ECX), MM0 )     /* x1              | x0               */
-    MOVD       ( REGOFF(8, ECX), MM1 )  /*                 | x2               */
     JA         ( LLBL (G3N_norm2) )
 
 LLBL (G3N_end1):
@@ -825,13 +806,13 @@ GLNAME(_mesa_3dnow_rescale_normals):
     MOVD       ( ARG_SCALE, MM0 )       /* scale                              */
     PUNPCKLDQ  ( MM0, MM0 )
 
-    MOVQ       ( REGIND(ECX), MM1 )     /* x1            | x0                 */
-    MOVD       ( REGOFF(8, ECX), MM2 )  /*               | x2                 */
-
 ALIGNTEXT32
 LLBL (G3R_rescale):
 
     PREFETCHW  ( REGIND(EAX) )
+
+    MOVQ       ( REGIND(ECX), MM1 )     /* x1            | x0                 */
+    MOVD       ( REGOFF(8, ECX), MM2 )  /*               | x2                 */
 
     PFMUL      ( MM0, MM1 )             /* x1*scale      | x0*scale           */
     ADD_L      ( STRIDE, ECX )          /* next normal                  */
@@ -845,9 +826,6 @@ LLBL (G3R_rescale):
     MOVD       ( MM2, REGOFF(-4, EAX) ) /* write r2                           */
 
     DEC_L      ( EDX )                  /* decrement normal counter           */
-    MOVQ       ( REGIND(ECX), MM1 )     /* x1            | x0                 */
-
-    MOVD       ( REGOFF(8, ECX), MM2 )  /*               | x2                 */
     JA         ( LLBL (G3R_rescale) )
 
     FEMMS

@@ -1,4 +1,4 @@
-/* $Id: 3dnow_xform3.S,v 1.1 2001/03/29 06:46:16 gareth Exp $ */
+/* $Id: 3dnow_xform3.S,v 1.2 2001/10/22 01:21:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,15 +59,15 @@ GLNAME( _mesa_3dnow_transform_points3_general ):
 
     PREFETCHW ( REGIND(EDX) )
 
-    MOVQ      ( REGIND(EAX), MM0 )	/* x1              | x0              */
-    MOVD      ( REGOFF(8, EAX), MM2 )	/*                 | x2              */
-
-    ADD_L     ( EDI, EAX )		/* next vertex                       */
-
 ALIGNTEXT16
 LLBL( G3TPGR_1 ):
 
     PREFETCHW ( REGOFF(32, EDX) )	/* prefetch 2 vertices ahead         */
+
+    MOVQ      ( REGIND(EAX), MM0 )	/* x1              | x0              */
+    MOVD      ( REGOFF(8, EAX), MM2 )	/*                 | x2              */
+
+    ADD_L     ( EDI, EAX )		/* next vertex                       */
     PREFETCH  ( REGIND(EAX) )
 
     MOVQ      ( MM0, MM1 )		/* x1              | x0              */
@@ -103,10 +103,6 @@ LLBL( G3TPGR_1 ):
     PFADD     ( MM4, MM5 )		/* r3              | r2              */
     MOVQ      ( MM5, REGOFF(-8, EDX) )	/* write r2, r3                      */
 
-    MOVQ      ( REGIND(EAX), MM0 )	/* x1              | x0              */
-    MOVD      ( REGOFF(8, EAX), MM2 )	/*                 | x2              */
-
-    ADD_L     ( EDI, EAX )		/* next vertex                       */
     DEC_L     ( ESI )			/* decrement vertex counter          */
     JNZ       ( LLBL( G3TPGR_1 ) )	/* cnt > 0 ? -> process next vertex  */
 
@@ -156,15 +152,15 @@ GLNAME( _mesa_3dnow_transform_points3_perspective ):
 
     MOVD      ( REGOFF(56, ECX), MM3 )	/*                 | m32             */
 
-    MOVD      ( REGOFF(8, EAX), MM5 )	/*                 | x2              */
-    MOVQ      ( REGIND(EAX), MM4 )	/* x1              | x0              */
-
-    ADD_L     ( EDI, EAX )		/* next vertex                       */
-
 ALIGNTEXT16
 LLBL( G3TPPR_1 ):
 
     PREFETCHW ( REGOFF(32, EDX) )	/* prefetch 2 vertices ahead         */
+
+    MOVD      ( REGOFF(8, EAX), MM5 )	/*                 | x2              */
+    MOVQ      ( REGIND(EAX), MM4 )	/* x1              | x0              */
+
+    ADD_L     ( EDI, EAX )		/* next vertex                       */
     PREFETCH  ( REGIND(EAX) )
 
     PXOR      ( MM7, MM7 )		/* 0               | 0               */
@@ -186,10 +182,6 @@ LLBL( G3TPPR_1 ):
     MOVD      ( MM6, REGOFF(-8, EDX) )	/* write r2                          */
 
     MOVD      ( MM7, REGOFF(-4, EDX) )	/* write r3                          */
-    MOVD      ( REGOFF(8, EAX), MM5 )	/*                 | x2              */
-
-    MOVQ      ( REGIND(EAX), MM4 )	/* x1              | x0              */
-    ADD_L     ( EDI, EAX )		/* next vertex                       */
 
     DEC_L     ( ESI )			/* decrement vertex counter          */
     JNZ       ( LLBL( G3TPPR_1 ) )	/* cnt > 0 ? -> process next vertex  */
@@ -235,15 +227,16 @@ GLNAME( _mesa_3dnow_transform_points3_3d ):
     MOVD      ( REGOFF(8, ECX), MM7 )	/*                 | m2              */
     PUNPCKLDQ ( REGOFF(24, ECX), MM7 )	/* m6              | m2              */
 
-    MOVQ      ( REGIND(EAX), MM0 )	/* x1              | x0              */
-    MOVD      ( REGOFF(8, EAX), MM1 )	/*                 | x2              */
-
-    ADD_L     ( EDI, EAX )		/* next vertex                       */
 
 ALIGNTEXT16
 LLBL( G3TP3R_1 ):
 
     PREFETCHW ( REGOFF(32, EDX) )	/* prefetch 2 vertices ahead         */
+
+    MOVQ      ( REGIND(EAX), MM0 )	/* x1              | x0              */
+    MOVD      ( REGOFF(8, EAX), MM1 )	/*                 | x2              */
+
+    ADD_L     ( EDI, EAX )		/* next vertex                       */
     PREFETCH  ( REGIND(EAX) )
 
     MOVQ      ( MM0, MM2 )		/* x1              | x0              */
@@ -276,11 +269,7 @@ LLBL( G3TP3R_1 ):
     PFACC     ( MM1, MM1 )		/*                 | r2              */
 
     MOVD      ( MM1, REGOFF(-8, EDX) )	/* write r2                          */
-    MOVQ      ( REGIND(EAX), MM0 )	/* x1              | x0              */
 
-    MOVD      ( REGOFF(8, EAX), MM1 )	/*                 | x2              */
-
-    ADD_L     ( EDI, EAX )		/* next vertex                       */
     DEC_L     ( ESI )			/* decrement vertex counter          */
     JNZ       ( LLBL( G3TP3R_1 ) )	/* cnt > 0 ? -> process next vertex  */
 
@@ -332,18 +321,19 @@ GLNAME( _mesa_3dnow_transform_points3_3d_no_rot ):
     MOVD      ( REGOFF(56, ECX), MM3 )	/*                 | m32             */
 
     PUNPCKLDQ ( MM3, MM3 )		/* m32             | m32             */
-    MOVQ      ( REGIND(EAX), MM4 )	/* x1              | x0              */
-
-    MOVD      ( REGOFF(8, EAX), MM5 )	/*                 | x2              */
 
 
 ALIGNTEXT16
 LLBL( G3TP3NRR_1 ):
 
     PREFETCHW ( REGOFF(32, EDX) )	/* prefetch 2 vertices ahead         */
-    ADD_L     ( EDI, EAX )		/* next vertex                       */
 
+    MOVQ      ( REGIND(EAX), MM4 )	/* x1              | x0              */
+    MOVD      ( REGOFF(8, EAX), MM5 )	/*                 | x2              */
+
+    ADD_L     ( EDI, EAX )		/* next vertex                       */
     PREFETCHW ( REGIND(EAX) )
+	
     PFMUL     ( MM0, MM4 )		/* x1*m11          | x0*m00          */
 
     PFADD     ( MM1, MM4 )		/* x1*m11+m31      | x0*m00+m30      */
@@ -356,9 +346,6 @@ LLBL( G3TP3NRR_1 ):
     DEC_L     ( ESI )			/* decrement vertex counter          */
 
     MOVD      ( MM5, REGOFF(-8, EDX) )	/* write r2                          */
-    MOVQ      ( REGIND(EAX), MM4 )	/* x1              | x0              */
-
-    MOVD      ( REGOFF(8, EAX), MM5 )	/*                 | x2              */
     JNZ       ( LLBL( G3TP3NRR_1 ) )	/* cnt > 0 ? -> process next vertex  */
 
 LLBL( G3TP3NRR_2 ):
@@ -406,15 +393,16 @@ GLNAME( _mesa_3dnow_transform_points3_2d ):
     PUNPCKLDQ ( REGOFF(20, ECX), MM1 )	/* m11             | m01             */
 
     MOVQ      ( REGOFF(48, ECX), MM2 )	/* m31             | m30             */
-    MOVQ      ( REGIND(EAX), MM3 )	/* x1              | x0              */
-
-    MOVD      ( REGOFF(8, EAX), MM5 )	/*                 | x2              */
-    ADD_L     ( EDI, EAX )		/* next vertex                       */
 
 ALIGNTEXT16
 LLBL( G3TP2R_2 ):
 
     PREFETCHW ( REGOFF(32, EDX) )	/* prefetch 2 vertices ahead         */
+
+    MOVQ      ( REGIND(EAX), MM3 )	/* x1              | x0              */
+    MOVD      ( REGOFF(8, EAX), MM5 )	/*                 | x2              */
+
+    ADD_L     ( EDI, EAX )		/* next vertex                       */
     PREFETCH  ( REGIND(EAX) )
 
     MOVQ      ( MM3, MM4 )		/* x1              | x0              */
@@ -429,10 +417,6 @@ LLBL( G3TP2R_2 ):
     PFADD     ( MM2, MM3 )		/* x0*...*m10+m30  | x0*...*m11+m31  */
     MOVQ      ( MM3, REGOFF(-16, EDX) )	/* write r0, r1                      */
 
-    MOVQ      ( REGIND(EAX), MM3 )	/* x1              | x0              */
-    MOVD      ( REGOFF(8, EAX), MM5 )	/*                 | x2              */
-
-    ADD_L     ( EDI, EAX )		/* next vertex                       */
     DEC_L     ( ESI )			/* decrement vertex counter          */
     JNZ       ( LLBL( G3TP2R_2 ) )	/* cnt > 0 ? -> process next vertex  */
 
@@ -478,16 +462,17 @@ GLNAME( _mesa_3dnow_transform_points3_2d_no_rot ):
     PUNPCKLDQ ( REGOFF(20, ECX), MM0 )	/* m11             | m00             */
 
     MOVQ      ( REGOFF(48, ECX), MM1 )	/* m31             | m30             */
-    MOVQ      ( REGIND(EAX), MM4 )	/* x1              | x0              */
-
-    MOVD      ( REGOFF(8, EAX), MM5 )	/*                 | x2              */
-    ADD_L     ( EDI, EAX )		/* next vertex                       */
 
 
 ALIGNTEXT16
 LLBL( G3TP2NRR_1 ):
 
     PREFETCHW ( REGOFF(32, EDX) )	/* prefetch 2 vertices ahead         */
+
+    MOVQ      ( REGIND(EAX), MM4 )	/* x1              | x0              */
+    MOVD      ( REGOFF(8, EAX), MM5 )	/*                 | x2              */
+
+    ADD_L     ( EDI, EAX )		/* next vertex                       */
     PREFETCH  ( REGIND(EAX) )
 
     PFMUL     ( MM0, MM4 )		/* x1*m11          | x0*m00          */
@@ -498,10 +483,6 @@ LLBL( G3TP2NRR_1 ):
     MOVQ      ( MM4, REGOFF(-16, EDX) )	/* write r0, r1                      */
     MOVD      ( MM5, REGOFF(-8, EDX) )	/* write r2 (=x2)                    */
 
-    MOVQ      ( REGIND(EAX), MM4 )	/* x1              | x0              */
-    MOVD      ( REGOFF(8, EAX), MM5 )	/*                 | x2              */
-
-    ADD_L     ( EDI, EAX )		/* next vertex                       */
     DEC_L     ( ESI )			/* decrement vertex counter          */
     JNZ       ( LLBL( G3TP2NRR_1 ) )	/* cnt > 0 ? -> process next vertex  */
 
@@ -542,13 +523,13 @@ GLNAME( _mesa_3dnow_transform_points3_identity ):
 
     PREFETCHW ( REGIND(EDX) )
 
-    MOVQ      ( REGIND(EAX), MM0 )	/* x1              | x0              */
-    MOVD      ( REGOFF(8, EAX), MM1 )	/*                 | x2              */
-
 ALIGNTEXT16
 LLBL( G3TPIR_1 ):
 
     PREFETCHW ( REGOFF(32, EDX) )
+
+    MOVQ      ( REGIND(EAX), MM0 )	/* x1              | x0              */
+    MOVD      ( REGOFF(8, EAX), MM1 )	/*                 | x2              */
 
     ADD_L     ( EDI, EAX )		/* next vertex                       */
     ADD_L     ( CONST(16), EDX )	/* next r                            */
@@ -557,9 +538,6 @@ LLBL( G3TPIR_1 ):
     MOVQ      ( MM0, REGOFF(-16, EDX) )	/* r1              | r0              */
 
     MOVD      ( MM1, REGOFF(-8, EDX) )	/*                 | r2              */
-    MOVQ      ( REGIND(EAX), MM0 )	/* x1              | x0              */
-
-    MOVD      ( REGOFF(8, EAX), MM1 )	/*                 | x2              */
     JNZ       ( LLBL( G3TPIR_1 ) )	/* cnt > 0 ? -> process next vertex  */
 
 LLBL( G3TPIR_2 ):
