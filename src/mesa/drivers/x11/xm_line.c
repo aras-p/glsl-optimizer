@@ -1,4 +1,4 @@
-/* $Id: xm_line.c,v 1.12 2000/11/22 07:32:18 joukj Exp $ */
+/* $Id: xm_line.c,v 1.13 2000/12/13 16:24:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,6 +54,8 @@
 /*
  * Render an array of points into a pixmap, any pixel format.
  */
+#if 000
+/* XXX don't use this, it doesn't dither correctly */
 static void draw_points_ANY_pixmap( GLcontext *ctx, const SWvertex *vert )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
@@ -82,7 +84,7 @@ static void draw_points_ANY_pixmap( GLcontext *ctx, const SWvertex *vert )
       XMesaDrawPoint( dpy, buffer, gc, x, y);
    }
 }
-
+#endif
 
 
 /* Override the swrast point-selection function.  Try to use one of
@@ -91,6 +93,7 @@ static void draw_points_ANY_pixmap( GLcontext *ctx, const SWvertex *vert )
  */
 void xmesa_choose_point( GLcontext *ctx )
 {
+#if 0
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
@@ -104,6 +107,9 @@ void xmesa_choose_point( GLcontext *ctx )
    else {
       _swrast_choose_point( ctx );
    }
+#else
+   _swrast_choose_point( ctx );
+#endif
 }
 
 

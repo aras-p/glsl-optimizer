@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.13 2000/11/24 10:25:09 keithw Exp $ */
+/* $Id: xm_tri.c,v 1.14 2000/12/13 16:24:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -277,11 +277,12 @@ static void smooth_DITHER_5R6G5B_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
 {									\
    GLint i, len = RIGHT-LEFT;						\
+   GLint yy = FLIP(xmesa->xm_buffer, Y);				\
    (void) fffog; 					        	\
    for (i=0;i<len;i++) {						\
       GLdepth z = FixedToDepth(ffz);					\
       if (z < zRow[i]) {						\
-         PACK_TRUEDITHER(pRow[i], LEFT+i, Y, FixedToInt(ffr),		\
+         PACK_TRUEDITHER(pRow[i], LEFT+i, yy, FixedToInt(ffr),		\
 			 FixedToInt(ffg), FixedToInt(ffb) );		\
          zRow[i] = z;							\
       }									\
@@ -655,11 +656,12 @@ static void flat_DITHER_5R6G5B_z_triangle( GLcontext *ctx,
 #define INNER_LOOP( LEFT, RIGHT, Y )				\
 {								\
    GLint i, len = RIGHT-LEFT;					\
-   (void) fffog; 					        	\
+   GLint yy = FLIP(xmesa->xm_buffer, Y);			\
+   (void) fffog; 					        \
    for (i=0;i<len;i++) {					\
       DEPTH_TYPE z = FixedToDepth(ffz);				\
       if (z < zRow[i]) {					\
-	 PACK_TRUEDITHER(pRow[i], LEFT+i, Y, color[RCOMP],	\
+	 PACK_TRUEDITHER(pRow[i], LEFT+i, yy, color[RCOMP],	\
 			 color[GCOMP], color[BCOMP]);		\
          zRow[i] = z;						\
       }								\
@@ -687,19 +689,19 @@ static void flat_DITHER8_z_triangle( GLcontext *ctx,
 #define SETUP_CODE	\
    FLAT_DITHER_SETUP( v0->color[0], v0->color[1], v0->color[2] );
 
-#define INNER_LOOP( LEFT, RIGHT, Y )				\
-{								\
-   GLint i, xx = LEFT, len = RIGHT-LEFT;			\
-   FLAT_DITHER_ROW_SETUP(FLIP(xmesa->xm_buffer, Y));		\
-   (void) fffog; 					        	\
-   for (i=0;i<len;i++,xx++) {					\
-      GLdepth z = FixedToDepth(ffz);				\
-      if (z < zRow[i]) {					\
-	 pRow[i] = (PIXEL_TYPE) FLAT_DITHER(xx);		\
-         zRow[i] = z;						\
-      }								\
-      ffz += fdzdx;						\
-   }								\
+#define INNER_LOOP( LEFT, RIGHT, Y )					\
+{									\
+   GLint i, xx = LEFT, yy = FLIP(xmesa->xm_buffer,Y), len = RIGHT-LEFT;	\
+   FLAT_DITHER_ROW_SETUP(FLIP(xmesa->xm_buffer, yy));			\
+   (void) fffog;							\
+   for (i=0;i<len;i++,xx++) {						\
+      GLdepth z = FixedToDepth(ffz);					\
+      if (z < zRow[i]) {						\
+	 pRow[i] = (PIXEL_TYPE) FLAT_DITHER(xx);			\
+         zRow[i] = z;							\
+      }									\
+      ffz += fdzdx;							\
+   }									\
 }
 #include "swrast/s_tritemp.h"
 }
@@ -988,10 +990,10 @@ static void smooth_DITHER_5R6G5B_triangle( GLcontext *ctx,
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
 {									\
-   GLint xx;								\
+   GLint xx, yy = FLIP(xmesa->xm_buffer, Y);				\
    PIXEL_TYPE *pixel = pRow;						\
    for (xx=LEFT;xx<RIGHT;xx++,pixel++) {				\
-      PACK_TRUEDITHER(*pixel, xx, Y, FixedToInt(ffr),			\
+      PACK_TRUEDITHER(*pixel, xx, yy, FixedToInt(ffr),			\
 				 FixedToInt(ffg), FixedToInt(ffb) );	\
       ffr += fdrdx;  ffg += fdgdx;  ffb += fdbdx;			\
    }									\
@@ -1286,10 +1288,10 @@ static void flat_DITHER_5R6G5B_triangle( GLcontext *ctx,
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define INNER_LOOP( LEFT, RIGHT, Y )			\
 {							\
-   GLint xx;						\
+   GLint xx, yy = FLIP(xmesa->xm_buffer, Y);		\
    PIXEL_TYPE *pixel = pRow;				\
    for (xx=LEFT;xx<RIGHT;xx++,pixel++) {		\
-      PACK_TRUEDITHER(*pixel, xx, Y, color[RCOMP],	\
+      PACK_TRUEDITHER(*pixel, xx, yy, color[RCOMP],	\
                      color[GCOMP], color[BCOMP]);	\
    }							\
 }
