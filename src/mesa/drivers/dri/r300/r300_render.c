@@ -634,12 +634,6 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 		return;
 	}
 	
-#if 0 // selecting VERT_BIT_NORMAL still doesnt give us normals but why?
-	stage->inputs |= VERT_BIT_POS;
-	stage->inputs |= VERT_BIT_NORMAL;
-	stage->inputs |= VERT_BIT_COLOR0;
-#endif
-	
 	// I failed to figure out how dither works in hardware,
 	// let's just ignore it for now
 	//FALLBACK_IF(ctx->Color.DitherFlag);
@@ -649,7 +643,7 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	FALLBACK_IF(ctx->Color.AlphaEnabled); // GL_ALPHA_TEST
 	FALLBACK_IF(ctx->Color.BlendEnabled); // GL_BLEND
 	#endif
-	FALLBACK_IF(ctx->Fog.Enabled); // GL_FOG
+	//FALLBACK_IF(ctx->Fog.Enabled); // GL_FOG disable as swtcl doesnt seem to support this
 	FALLBACK_IF(ctx->Line.SmoothFlag); // GL_LINE_SMOOTH
 	FALLBACK_IF(ctx->Line.StippleFlag); // GL_LINE_STIPPLE
 	FALLBACK_IF(ctx->Point.SmoothFlag); // GL_POINT_SMOOTH
