@@ -440,6 +440,10 @@ static void _save_upgrade_vertex( GLcontext *ctx,
    tnl->save.vertex_size += newsz - oldsz;
    tnl->save.counter = ((SAVE_BUFFER_SIZE - tnl->save.vertex_store->used) / 
 			tnl->save.vertex_size);
+   /* [dBorca] begin shameless plug */
+   if (tnl->save.counter > ctx->Const.MaxArrayLockSize )
+      tnl->save.counter = ctx->Const.MaxArrayLockSize;
+   /* [dBorca] end shameless plug */
    tnl->save.initial_counter = tnl->save.counter;
 
 
