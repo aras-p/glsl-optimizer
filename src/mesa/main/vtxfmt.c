@@ -1,4 +1,4 @@
-/* $Id: vtxfmt.c,v 1.3 2001/03/11 23:49:20 gareth Exp $ */
+/* $Id: vtxfmt.c,v 1.4 2001/03/11 23:55:19 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -156,9 +156,7 @@ void _mesa_init_exec_vtxfmt( GLcontext *ctx )
 
 void _mesa_install_exec_vtxfmt( GLcontext *ctx, GLvertexformat *vfmt )
 {
-   struct gl_tnl_module *tnl = &(ctx->TnlModule);
-
-   tnl->Current = vfmt;
+   ctx->TnlModule.Current = vfmt;
    _mesa_restore_exec_vtxfmt( ctx );
    if ( ctx->ExecPrefersFloat != vfmt->prefer_float_colors )
       _mesa_loopback_prefer_float( ctx->Exec, vfmt->prefer_float_colors );
