@@ -47,15 +47,16 @@
 #define SPAN_SPEC         0x002
 #define SPAN_INDEX        0x004
 #define SPAN_Z            0x008
-#define SPAN_FOG          0x010
-#define SPAN_TEXTURE      0x020
-#define SPAN_INT_TEXTURE  0x040
-#define SPAN_LAMBDA       0x080
-#define SPAN_COVERAGE     0x100
-#define SPAN_FLAT         0x200  /**< flat shading? */
+#define SPAN_W            0x010
+#define SPAN_FOG          0x020
+#define SPAN_TEXTURE      0x040
+#define SPAN_INT_TEXTURE  0x080
+#define SPAN_LAMBDA       0x100
+#define SPAN_COVERAGE     0x200
+#define SPAN_FLAT         0x400  /**< flat shading? */
 /** sw_span::arrayMask only - for span_arrays::x, span_arrays::y */
-#define SPAN_XY           0x400
-#define SPAN_MASK         0x800  /**< sw_span::arrayMask only */
+#define SPAN_XY           0x800
+#define SPAN_MASK        0x1000  /**< sw_span::arrayMask only */
 /*@}*/
 
 
