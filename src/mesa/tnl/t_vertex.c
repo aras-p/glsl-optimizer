@@ -716,15 +716,17 @@ static void generic_interp( GLcontext *ctx,
 
    if (tnl->NeedNdcCoords) {
       const GLfloat *dstclip = VB->ClipPtr->data[edst];
-      const GLfloat w = 1.0 / dstclip[3];
-      GLfloat pos[4];
+      if (dstclip[3] != 0.0) {
+	 const GLfloat w = 1.0 / dstclip[3];
+	 GLfloat pos[4];
 
-      pos[0] = dstclip[0] * w;
-      pos[1] = dstclip[1] * w;
-      pos[2] = dstclip[2] * w;
-      pos[3] = w;
+	 pos[0] = dstclip[0] * w;
+	 pos[1] = dstclip[1] * w;
+	 pos[2] = dstclip[2] * w;
+	 pos[3] = w;
 
-      a[0].insert[4-1]( &a[0], vdst, pos );
+	 a[0].insert[4-1]( &a[0], vdst, pos );
+      }
    }
    else {
       a[0].insert[4-1]( &a[0], vdst, VB->ClipPtr->data[edst] );
