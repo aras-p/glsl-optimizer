@@ -5,6 +5,9 @@
 #include "matypes.h"
 
 
+/* FIXME: The pairing rules must be checked as they aren't being fully obeyed.
+ */
+
 /* integer multiplication - alpha plus one
  *
  * makes the following approximation to the division (Sree)
@@ -238,20 +241,23 @@ TWO(PUNPCKHDQ  ( MA2, MA2 ))                    /*    pa2    |    pa2    |    pa
     PACKUSWB   ( MS2, MS1 )			/* sa2 | sb2 | sg2 | sr2 | sa1 | sb1 | sg1 | sr1 */	;\
 
 #define GMB_STORE(rgba, MSS ) \
-ONE(MOVD       ( MSS, REGIND(rgba) ))									;\
-TWO(MOVQ       ( MSS, REGIND(rgba) ))
+ONE(MOVD       ( MSS, REGIND(rgba) ))		/*     |     |     |     | sa1 | sb1 | sg1 | sr1 */	;\
+TWO(MOVQ       ( MSS, REGIND(rgba) ))		/* sa2 | sb2 | sg2 | sr2 | sa1 | sb1 | sg1 | sr1 */
 
 
     SEG_DATA
 
 ALIGNDATA8
+const_0080:
+    D_LONG 0x00800080, 0x00800080
+
 const_80:
-	D_LONG 0x00800080, 0x00800080
+    D_LONG 0x80808080, 0x80808080
 
     SEG_TEXT
 
 
-/* common transparency blending mode
+/* Blend transparency function
  */
 
 #define TAG(x) x##_transparency
@@ -270,7 +276,9 @@ const_80:
 #include "mmx_blendtmp.h"
 
 
-/* add bleding mode
+/* Blend add function
+ *
+ * FIXME: Add some loop unrolling here...
  */
 
 #define TAG(x) x##_add
@@ -278,21 +286,72 @@ const_80:
 #define INIT
 
 #define MAIN( rgba, dest ) \
-    GMB_LOAD( rgba, dest, MM1, MM2 )									;\
-    PADDUSB     ( MM1, MM2 )										;\
-    GMB_STORE( rgba, MM2 )
+ONE(MOVD       ( REGIND(rgba), MM1 ))		/*     |     |     |     | qa1 | qb1 | qg1 | qr1 */	;\
+ONE(MOVD       ( REGIND(dest), MM2 ))		/*     |     |     |     | pa1 | pb1 | pg1 | pr1 */	;\
+ONE(PADDUSB    ( MM2, MM1 ))										;\
+ONE(MOVD       ( MM1, REGIND(rgba) ))		/*     |     |     |     | sa1 | sb1 | sg1 | sr1 */	;\
+													;\
+TWO(MOVQ       ( REGIND(rgba), MM1 ))		/* qa2 | qb2 | qg2 | qr2 | qa1 | qb1 | qg1 | qr1 */	;\
+TWO(PADDUSB    ( REGIND(dest), MM1 ))		/* sa2 | sb2 | sg2 | sr2 | sa1 | sb1 | sg1 | sr1 */	;\
+TWO(MOVQ       ( MM1, REGIND(rgba) ))
 
 #include "mmx_blendtmp.h"
 
 
-/* modulate blending mode
+/* Blend min function
+ */
+
+#define TAG(x) x##_min
+
+#define INIT \
+    MOVQ       ( CONTENT(const_80), MM7 )	/* 0x80| 0x80| 0x80| 0x80| 0x80| 0x80| 0x80| 0x80*/
+
+#define MAIN( rgba, dest ) \
+    GMB_LOAD( rgba, dest, MM1, MM2 )									;\
+    MOVQ       ( MM1, MM3 )										;\
+    MOVQ       ( MM2, MM4 )										;\
+    PXOR       ( MM7, MM3 )			/*              unsigned -> signed               */	;\
+    PXOR       ( MM7, MM4 )			/*              unsigned -> signed               */	;\
+    PCMPGTB    ( MM3, MM4 )			/*                 q > p ? 0xff : 0x00           */	;\
+    PAND       ( MM4, MM1 )			/*                 q > p ? p : 0                 */	;\
+    PANDN      ( MM2, MM4 )			/*                 q > p ? 0 : q                 */	;\
+    POR        ( MM1, MM4 )			/*                 q > p ? p : q                 */	;\
+    GMB_STORE( rgba, MM4 )
+
+#include "mmx_blendtmp.h"
+
+
+/* Blend max function
+ */
+
+#define TAG(x) x##_max
+
+#define INIT \
+    MOVQ       ( CONTENT(const_80), MM7 )	/* 0x80| 0x80| 0x80| 0x80| 0x80| 0x80| 0x80| 0x80*/
+
+#define MAIN( rgba, dest ) \
+    GMB_LOAD( rgba, dest, MM1, MM2 )									;\
+    MOVQ       ( MM1, MM3 )										;\
+    MOVQ       ( MM2, MM4 )										;\
+    PXOR       ( MM7, MM3 )			/*              unsigned -> signed               */	;\
+    PXOR       ( MM7, MM4 )			/*              unsigned -> signed               */	;\
+    PCMPGTB    ( MM3, MM4 )			/*                 q > p ? 0xff : 0x00           */	;\
+    PAND       ( MM4, MM2 )			/*                 q > p ? q : 0                 */	;\
+    PANDN      ( MM1, MM4 )			/*                 q > p ? 0 : p                 */	;\
+    POR        ( MM2, MM4 )			/*                 q > p ? p : q                 */	;\
+    GMB_STORE( rgba, MM4 )
+
+#include "mmx_blendtmp.h"
+
+
+/* Blend modulate function
  */
 
 #define TAG(x) x##_modulate
 
 #define INIT \
     PXOR       ( MM0, MM0 )			/*   0x0000  |   0x0000  |   0x0000  |   0x0000  */	;\
-    MOVQ       ( CONTENT(const_80), MM7 )	/*   0xffff  |   0xffff  |   0xffff  |   0xffff  */
+    MOVQ       ( CONTENT(const_0080), MM7 )	/*   0x0080  |   0x0080  |   0x0080  |   0x0080  */
 
 #define MAIN( rgba, dest ) \
     GMB_LOAD( rgba, dest, MM1, MM2 )									;\

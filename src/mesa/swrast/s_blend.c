@@ -1,4 +1,4 @@
-/* $Id: s_blend.c,v 1.21 2002/04/19 10:53:08 jrfonseca Exp $ */
+/* $Id: s_blend.c,v 1.22 2002/04/19 20:12:31 jrfonseca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -678,10 +678,22 @@ void _swrast_choose_blend_func( GLcontext *ctx )
          SWRAST_CONTEXT(ctx)->BlendFunc = blend_modulate;
    }
    else if (eq==GL_MIN_EXT) {
-      SWRAST_CONTEXT(ctx)->BlendFunc = blend_min;
+#if defined(USE_MMX_ASM)
+      if ( cpu_has_mmx ) {
+         SWRAST_CONTEXT(ctx)->BlendFunc = _mesa_mmx_blend_min;
+      }
+      else
+#endif
+         SWRAST_CONTEXT(ctx)->BlendFunc = blend_min;
    }
    else if (eq==GL_MAX_EXT) {
-      SWRAST_CONTEXT(ctx)->BlendFunc = blend_max;
+#if defined(USE_MMX_ASM)
+      if ( cpu_has_mmx ) {
+         SWRAST_CONTEXT(ctx)->BlendFunc = _mesa_mmx_blend_max;
+      }
+      else
+#endif
+         SWRAST_CONTEXT(ctx)->BlendFunc = blend_max;
    }
    else if (eq==GL_FUNC_ADD_EXT && srcRGB == GL_ZERO && dstRGB == GL_ONE) {
       SWRAST_CONTEXT(ctx)->BlendFunc = blend_noop;
