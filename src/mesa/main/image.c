@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.15 2000/01/05 09:21:32 brianp Exp $ */
+/* $Id: image.c,v 1.16 2000/01/13 00:32:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1583,6 +1583,8 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
           srcType == GL_UNSIGNED_SHORT_5_5_5_1 ||
           srcType == GL_UNSIGNED_INT_8_8_8_8 ||
           srcType == GL_UNSIGNED_INT_10_10_10_2);
+
+   rComp = gComp = bComp = aComp = -1;
 
    switch (srcFormat) {
       case GL_RED:
