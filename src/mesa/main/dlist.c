@@ -84,40 +84,61 @@
 
 
 /**
- * Functions which aren't compiled but executed immediately:
- * - glIsList
- * - glGenLists
- * - glDeleteLists
- * - glEndList  --- BUT:  call ctx->Driver.EndList at end of list execution?
- * - glFeedbackBuffer
- * - glSelectBuffer
- * - glRenderMode
- * - glReadPixels
- * - glPixelStore
- * - glFlush
- * - glFinish
- * - glIsEnabled
- * - glGet*
- *
- * Functions which cause errors if called while compiling a display list:
- *  - glNewList
+ * Macro to assert that the API call was made outside the
+ * glBegin()/glEnd() pair, with return value.
+ * 
+ * \param ctx GL context.
+ * \param retval value to return value in case the assertion fails.
  */
-
-
+#define ASSERT_OUTSIDE_SAVE_BEGIN_END_WITH_RETVAL(ctx, retval)		\
+do {									\
+   if (ctx->Driver.CurrentSavePrimitive <= GL_POLYGON ||		\
+       ctx->Driver.CurrentSavePrimitive == PRIM_INSIDE_UNKNOWN_PRIM) {	\
+      _mesa_compile_error( ctx, GL_INVALID_OPERATION, "begin/end" );	\
+      return retval;							\
+   }									\
+} while (0)
 
 /**
- * Display list instructions are stored as sequences of "nodes".  Nodes
- * are allocated in blocks.  Each block has BLOCK_SIZE nodes.  Blocks
- * are linked together with a pointer.
+ * Macro to assert that the API call was made outside the
+ * glBegin()/glEnd() pair.
+ * 
+ * \param ctx GL context.
  */
-
+#define ASSERT_OUTSIDE_SAVE_BEGIN_END(ctx)				\
+do {									\
+   if (ctx->Driver.CurrentSavePrimitive <= GL_POLYGON ||		\
+       ctx->Driver.CurrentSavePrimitive == PRIM_INSIDE_UNKNOWN_PRIM) {	\
+      _mesa_compile_error( ctx, GL_INVALID_OPERATION, "begin/end" );	\
+      return;								\
+   }									\
+} while (0)
 
 /**
- * How many nodes to allocate at a time.
- *
- * \note Reduced now that we hold vertices etc. elsewhere.
+ * Macro to assert that the API call was made outside the
+ * glBegin()/glEnd() pair and flush the vertices.
+ * 
+ * \param ctx GL context.
  */
-#define BLOCK_SIZE 256
+#define ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx)			\
+do {									\
+   ASSERT_OUTSIDE_SAVE_BEGIN_END(ctx);					\
+   FLUSH_VERTICES(ctx, 0);						\
+} while (0)
+
+/**
+ * Macro to assert that the API call was made outside the
+ * glBegin()/glEnd() pair and flush the vertices, with return value.
+ * 
+ * \param ctx GL context.
+ * \param retval value to return value in case the assertion fails.
+ */
+#define ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, retval)\
+do {									\
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_WITH_RETVAL(ctx, retval);		\
+   FLUSH_VERTICES(ctx, 0);						\
+} while (0)
+
 
 
 /**
@@ -281,8 +302,13 @@ typedef enum {
 } OpCode;
 
 
+
 /**
  * Display list node.
+ *
+ * Display list instructions are stored as sequences of "nodes".  Nodes
+ * are allocated in blocks.  Each block has BLOCK_SIZE nodes.  Blocks
+ * are linked together with a pointer.
  *
  * Each instruction in the display list is stored as a sequence of
  * contiguous nodes in memory.
@@ -302,6 +328,15 @@ union node {
 	GLvoid		*data;
 	void		*next;	/* If prev node's opcode==OPCODE_CONTINUE */
 };
+
+
+/**
+ * How many nodes to allocate at a time.
+ *
+ * \note Reduced now that we hold vertices etc. elsewhere.
+ */
+#define BLOCK_SIZE 256
+
 
 
 /**
