@@ -1102,6 +1102,6 @@ void viaInitTriFuncs(GLcontext *ctx)
     _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
 			(6 + 2*ctx->Const.MaxTextureUnits) * sizeof(GLfloat) );
    
-    vmesa->verts = (char *)tnl->clipspace.vertex_buf;
+    vmesa->verts = (GLubyte *)tnl->clipspace.vertex_buf;
 
 }
