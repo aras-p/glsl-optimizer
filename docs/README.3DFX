@@ -185,6 +185,11 @@ MESA_FX_MAXLOD
 	    "9"  - 512x512 textures
 	    "10" - 1024x1024 textures
 	    "11" - 2048x2048 textures
+MESA_3DFX_STRING
+	OS: all
+	HW: all
+	Desc: advertise "3dfx" substring in GL_RENDERER
+	Note: used by some games aware by 3dfx hw limitations
 MESA_GLX_FX
 	OS: win32, linux
 	HW: selective

@@ -19,8 +19,8 @@ EXPORTS
  glBindTexture
  glBindTextureEXT
  glBitmap
- glBlendColor
- glBlendColorEXT
+;glBlendColor
+;glBlendColorEXT
  glBlendEquation
  glBlendEquationEXT
  glBlendFunc

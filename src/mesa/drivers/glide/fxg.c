@@ -1364,7 +1364,7 @@ void FX_CALL trap_grStippleMode (GrStippleMode_t mode)
 {
 #define FN_NAME "grStippleMode"
  TRAP_LOG("%s(%s)\n", FN_NAME, TRP_STIPPLEMODE(mode));
- grStippleMode(mode);
+ grStippleMode(mode); /* some Glide libs don't have it; not used anyway */
 #undef FN_NAME
 }
 
@@ -1372,7 +1372,7 @@ void FX_CALL trap_grStipplePattern (GrStipplePattern_t mode)
 {
 #define FN_NAME "grStipplePattern"
  TRAP_LOG("%s(%08lx)\n", FN_NAME, mode);
- grStipplePattern(mode);
+ grStipplePattern(mode); /* some Glide libs don't have it; not used anyway */
 #undef FN_NAME
 }
 

@@ -510,7 +510,8 @@ wglGetProcAddress(LPCSTR lpszProc)
    int i;
    PROC p = (PROC) _glapi_get_proc_address((const char *) lpszProc);
 
-   if (p)
+   /* [dBorca] we can't do BlendColor... yet */
+   if (p && strcmp(lpszProc, "glBlendColor") && strcmp(lpszProc, "glBlendColorEXT"))
       return p;
 
    for (i = 0; wgl_ext[i].name; i++) {
