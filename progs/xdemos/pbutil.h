@@ -46,6 +46,14 @@ extern XVisualInfo *
 GetVisualFromFBConfig(Display *dpy, int screen, FBCONFIG config);
 
 
+extern GLXContext
+CreateContext(Display *dpy, int screen, FBCONFIG config);
+
+
+extern void
+DestroyContext(Display *dpy, GLXContext ctx);
+
+
 extern PBUFFER
 CreatePbuffer(Display *dpy, int screen, FBCONFIG config,
 	      int width, int height, Bool preserve, Bool largest);
