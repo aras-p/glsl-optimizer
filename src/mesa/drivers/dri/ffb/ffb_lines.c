@@ -27,7 +27,6 @@
 
 #include "mtypes.h"
 #include "mm.h"
-#include "mmath.h"
 #include "ffb_dd.h"
 #include "ffb_span.h"
 #include "ffb_depth.h"

@@ -26,7 +26,6 @@
  */
 
 #include "mtypes.h"
-#include "mmath.h"
 #include "ffb_dd.h"
 #include "ffb_context.h"
 #include "ffb_vb.h"
