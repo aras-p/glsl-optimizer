@@ -237,7 +237,7 @@ viaTexCombineState( viaContextPtr vmesa,
     */
    case GL_ADD:
    case GL_SUBTRACT:
-      if ( combine->ModeRGCb == GL_SUBTRACT ) {
+      if ( combine->ModeRGB == GL_SUBTRACT ) {
 	 op |= HC_HTXnTBLCop_Sub;
       }
 
