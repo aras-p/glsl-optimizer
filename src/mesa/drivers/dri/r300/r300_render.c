@@ -340,9 +340,17 @@ static void upload_vertex_buffer(r300ContextPtr rmesa,
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   int offset=0, idx=0;
-   int i,j;
+   int idx=0;
+   int i,j,k;
    radeonScreenPtr rsp=rmesa->radeon.radeonScreen;
+   
+   /* A hack - we don't want to overwrite vertex buffers, so we
+      just use AGP space for them.. Fix me ! */
+   static int offset=0;
+   if(offset>2*1024*1024){
+   	//fprintf(stderr, "Wrapping agp vertex buffer offset\n");
+   	offset=0;
+	}
    /* Not the most efficient implementation, but, for now, I just want something that
       works */
       /* to do - make single memcpy per column (is it possible ?) */
@@ -351,7 +359,7 @@ static void upload_vertex_buffer(r300ContextPtr rmesa,
 	{ \
 	 /* Is the data dirty ? */ \
 	if (v->flags & ((1<<v->size)-1)) { \
-		fprintf(stderr, "size=%d vs stride=%d\n", v->size, v->stride); \
+		/* fprintf(stderr, "size=%d vs stride=%d\n", v->size, v->stride); */ \
 		if(v->size*4==v->stride){\
 			/* fast path */  \
 			memcpy(rsp->gartTextures.map+offset, v->data, v->stride*VB->Count); \
@@ -375,6 +383,10 @@ static void upload_vertex_buffer(r300ContextPtr rmesa,
 	
 UPLOAD_VECTOR(VB->ObjPtr, REG_COORDS, AOS_FORMAT_FLOAT);
 UPLOAD_VECTOR(VB->ColorPtr[0], REG_COLOR0, AOS_FORMAT_FLOAT_COLOR);
+	/* texture coordinates */
+	for(k=0;k < ctx->Const.MaxTextureUnits;k++)
+		if(ctx->Texture.Unit[k].Enabled)
+			UPLOAD_VECTOR(VB->TexCoordPtr[k], REG_TEX0+i, AOS_FORMAT_FLOAT);
 
 *n_arrays=idx;
 if(idx>=R300_MAX_AOS_ARRAYS){
@@ -383,16 +395,13 @@ if(idx>=R300_MAX_AOS_ARRAYS){
 	}
 }
 
-static void r300_render_vb_flat_primitive(r300ContextPtr rmesa, 
+static void r300_render_vb_primitive(r300ContextPtr rmesa, 
 	GLcontext *ctx,
 	int start,
 	int end,
 	int prim)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   GLuint i;
-   int k, type, n_arrays;
+   int type;
    LOCAL_VARS
        	
    if(end<=start)return; /* do we need to watch for this ? */
@@ -403,7 +412,7 @@ static void r300_render_vb_flat_primitive(r300ContextPtr rmesa,
    fire_AOS(PASS_PREFIX end-start, type);
 }
 
-static GLboolean r300_run_vb_flat_render(GLcontext *ctx,
+static GLboolean r300_run_vb_render(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
    r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -411,16 +420,11 @@ static GLboolean r300_run_vb_flat_render(GLcontext *ctx,
    struct vertex_buffer *VB = &tnl->vb;
    int i, j, n_arrays;
    AOS_DATA vb_arrays[R300_MAX_AOS_ARRAYS];
-   AOS_DATA vb_arrays2[R300_MAX_AOS_ARRAYS];
    LOCAL_VARS
 	
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-   /* setup array of structures data */
-
-   upload_vertex_buffer(rmesa, ctx, vb_arrays, &n_arrays);
-   fprintf(stderr, "Using %d AOS arrays\n", n_arrays);
    
    reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
@@ -428,42 +432,31 @@ static GLboolean r300_run_vb_flat_render(GLcontext *ctx,
    reg_start(0x4f18,0);
 	e32(0x00000003);
    
-   r300_setup_routing(rmesa, ctx, GL_FALSE);
-   
+   r300_setup_routing(ctx, GL_FALSE);
+	
    r300EmitState(rmesa);
-   
-   FLAT_COLOR_PIPELINE.vertex_shader.matrix[0].length=16;
-   memcpy(FLAT_COLOR_PIPELINE.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
 
-   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.length=4;
-   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[0]=0.0;
-   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[1]=0.0;
-   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[2]=1.0;
-   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[3]=0.0;
+   /* setup array of structures data */
+   LOCK_HARDWARE(&(rmesa->radeon));
 
-   program_pipeline(PASS_PREFIX &FLAT_COLOR_PIPELINE);
-      
-   set_quad0(PASS_PREFIX 1.0,1.0,1.0,1.0);
-   set_init21(PASS_PREFIX 0.0,1.0);
+   upload_vertex_buffer(rmesa, ctx, vb_arrays, &n_arrays);
+   //fprintf(stderr, "Using %d AOS arrays\n", n_arrays);
+   for(i=0;i<n_arrays;i++)
+   	rmesa->state.aos[i].offset=vb_arrays[i].offset;
    
    for(i=0; i < VB->PrimitiveCount; i++){
        GLuint prim = VB->Primitive[i].mode;
        GLuint start = VB->Primitive[i].start;
        GLuint length = VB->Primitive[i].count;
+       		
+	   /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. */
+        r300EmitLOAD_VBPNTR(rmesa, start);
        
-        /* copy arrays */
-        memcpy(vb_arrays2, vb_arrays, sizeof(AOS_DATA)*n_arrays);
-	for(j=0;j<n_arrays;j++){
-		vb_arrays2[j].offset+=vb_arrays2[j].stride*start*4;
-		}
-		
-        setup_AOS(PASS_PREFIX vb_arrays2, n_arrays);
-       
-	r300_render_vb_flat_primitive(rmesa, ctx, start, start + length, prim);
+	r300_render_vb_primitive(rmesa, ctx, start, start + length, prim);
    	}
 	
     /* This sequence is required after any 3d drawing packet
-      I suspect it work arounds a bug (or deficiency) in hardware */
+      I suspect it works around a bug (or deficiency) in hardware */
   
   reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
@@ -474,8 +467,10 @@ static GLboolean r300_run_vb_flat_render(GLcontext *ctx,
    end_3d(PASS_PREFIX_VOID);
    
    /* Flush state - we are done drawing.. */
-   r300Flush(ctx);
-   fprintf(stderr, "\n");
+   r300FlushCmdBufLocked(ctx, __FUNCTION__);
+   radeonWaitForIdleLocked(&(rmesa->radeon));
+   
+   UNLOCK_HARDWARE(&(rmesa->radeon));
    return GL_FALSE;
 }
 
@@ -500,7 +495,11 @@ static GLboolean r300_run_render(GLcontext *ctx,
 		
    #if 1
 	
+   	#if 0
         return r300_run_immediate_render(ctx, stage);
+	#else 
+        return r300_run_vb_render(ctx, stage);
+	#endif
    #else
 	return GL_TRUE;
    #endif

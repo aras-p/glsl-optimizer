@@ -59,7 +59,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /**
  * Send the current command buffer via ioctl to the hardware.
  */
-int r300FlushCmdBuf(r300ContextPtr r300, const char* caller)
+int r300FlushCmdBufLocked(r300ContextPtr r300, const char* caller)
 {
 	int ret;
 	int i;
@@ -81,8 +81,6 @@ int r300FlushCmdBuf(r300ContextPtr r300, const char* caller)
 					r300->cmdbuf.cmd_buf[i]);
 	}
 
-	LOCK_HARDWARE(&r300->radeon);
-
 	cmd.buf = (char*)(r300->cmdbuf.cmd_buf + start);
 	cmd.bufsz = (r300->cmdbuf.count_used - start) * 4;
 
@@ -97,27 +95,43 @@ int r300FlushCmdBuf(r300ContextPtr r300, const char* caller)
 	if (cmd.nbox) {
 		ret = drmCommandWrite(r300->radeon.dri.fd,
 				DRM_RADEON_CMDBUF, &cmd, sizeof(cmd));
-		if (ret) {
-			UNLOCK_HARDWARE(&r300->radeon);
-			fprintf(stderr, "drmCommandWrite: %d\n", ret);
-			exit(-1);
-		}
-
+		
 		if (RADEON_DEBUG & DEBUG_SYNC) {
 			fprintf(stderr, "Syncing in %s\n\n", __FUNCTION__);
 			radeonWaitForIdleLocked(&r300->radeon);
 		}
 	} else {
+		ret = 0;
 		if (RADEON_DEBUG & DEBUG_IOCTL)
 			fprintf(stderr, "%s: No cliprects\n", __FUNCTION__);
 	}
 
-	UNLOCK_HARDWARE(&r300->radeon);
-
 	r300->cmdbuf.count_used = 0;
 	r300->cmdbuf.count_reemit = 0;
 
-	return 0;
+	return ret;
+}
+
+ 
+int r300FlushCmdBuf(r300ContextPtr r300, const char* caller)
+{
+	int ret;
+	int i;
+	drm_radeon_cmd_buffer_t cmd;
+	int start;
+
+	LOCK_HARDWARE(&r300->radeon);
+	
+	ret=r300FlushCmdBufLocked(r300, caller);
+
+	UNLOCK_HARDWARE(&r300->radeon);
+
+	if (ret) {
+		fprintf(stderr, "drmRadeonCmdBuffer: %d (exiting)\n", ret);
+		exit(ret);
+	}
+
+	return ret;
 }
 
 
