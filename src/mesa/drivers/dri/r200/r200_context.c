@@ -414,11 +414,6 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    r200InitState( rmesa );
    r200InitSwtcl( ctx );
 
-   /* used to be in r200InitTextureFuncs() */
-   driInitTextureObjects( ctx, & rmesa->swapped,
-			  DRI_TEXMGR_DO_TEXTURE_1D
-			  | DRI_TEXMGR_DO_TEXTURE_2D );
-
    fthrottle_mode = driQueryOptioni(&rmesa->optionCache, "fthrottle_mode");
    rmesa->iw.irq_seq = -1;
    rmesa->irqsEmitted = 0;

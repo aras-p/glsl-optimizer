@@ -941,10 +941,14 @@ static void r200BindTexture( GLcontext *ctx, GLenum target,
 	       ctx->Texture.CurrentUnit );
    }
 
-   if ( target == GL_TEXTURE_2D || target == GL_TEXTURE_1D ) {
-      if ( texObj->DriverData == NULL ) {
-	 r200AllocTexObj( texObj );
-      }
+   if ( (target == GL_TEXTURE_1D)
+	|| (target == GL_TEXTURE_2D) 
+#if ENABLE_HW_3D_TEXTURE
+	|| (target == GL_TEXTURE_3D)
+#endif
+	|| (target == GL_TEXTURE_CUBE_MAP)
+	|| (target == GL_TEXTURE_RECTANGLE_NV) ) {
+      assert( texObj->DriverData != NULL );
    }
 }
 
@@ -1012,6 +1016,7 @@ r200NewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
    if (!obj)
       return NULL;
    obj->MaxAnisotropy = rmesa->initialMaxAnisotropy;
+   r200AllocTexObj( obj );
    return obj;
 }
 
