@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.12 2001/05/10 17:55:54 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.13 2001/05/10 18:01:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -321,9 +321,10 @@
             coverage = compute_coveragef(pMin, pMid, pMax, ix, iy);
          }
 
-         n = (GLuint) ix - (GLuint) startX;
-         if (n == 0)
+         if (ix <= startX)
             continue;
+
+         n = (GLuint) ix - (GLuint) startX;
 
 #ifdef DO_MULTITEX
 #  ifdef DO_SPEC
@@ -442,9 +443,10 @@
             coverage = compute_coveragef(pMin, pMax, pMid, ix, iy);
          }
 
-         n = (GLuint) startX - (GLuint) ix;
-         if (n == 0)
+         if (startX <= ix)
             continue;
+
+         n = (GLuint) startX - (GLuint) ix;
 
          left = ix + 1;
 #ifdef DO_MULTITEX
