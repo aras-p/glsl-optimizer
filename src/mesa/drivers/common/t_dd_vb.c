@@ -1,4 +1,4 @@
-/* $Id: t_dd_vb.c,v 1.7 2001/03/17 17:31:42 keithw Exp $ */
+/* $Id: t_dd_vb.c,v 1.8 2001/03/30 00:39:02 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -132,7 +132,7 @@ void TAG(translate_vertex)(GLcontext *ctx,
       dst->specular[1] = src->v.specular.green;
       dst->specular[2] = src->v.specular.blue;
 
-      dst->fog = src->v.color.alpha/255.0;
+      dst->fog = src->v.specular.alpha/255.0;
 
       if (HAVE_PTEX_VERTICES &&
 	  ((HAVE_TEX2_VERTICES && format == PROJ_TEX3_VERTEX_FORMAT) ||
