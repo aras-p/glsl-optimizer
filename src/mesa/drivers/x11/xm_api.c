@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.14 2001/01/08 04:06:20 keithw Exp $ */
+/* $Id: xm_api.c,v 1.15 2001/01/08 04:55:22 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1613,8 +1613,7 @@ void XMesaDestroyVisual( XMesaVisual v )
  *                      lists or NULL if no sharing is wanted.
  * Return:  an XMesaContext or NULL if error.
  */
-struct __GLcontextRec *XMesaCreateContext( XMesaVisual v,
-					   struct __GLcontextRec *share_list )
+XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
    XMesaContext c;
    GLcontext *ctx;
@@ -1633,9 +1632,8 @@ struct __GLcontextRec *XMesaCreateContext( XMesaVisual v,
    }
 
    ctx = c->gl_ctx = _mesa_create_context( v->gl_visual,
-					   share_list,
-					   (void *) c, 
-					   direct );
+                      share_list ? share_list->gl_ctx : (GLcontext *) NULL,
+                      (void *) c, direct );
    if (!c->gl_ctx) {
       FREE(c);
       return NULL;
@@ -1678,7 +1676,8 @@ struct __GLcontextRec *XMesaCreateContext( XMesaVisual v,
     */
    _mesa_context_initialize( ctx );
 
-   return ctx;
+
+   return c;
 }
 
 
@@ -1760,12 +1759,12 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
    assert(v);
 
 #ifdef XFree86Server
-   if (GET_VISUAL_DEPTH(v) != ((XMesaDrawable)w)->depth) 
+   if (GET_VISUAL_DEPTH(v) != ((XMesaDrawable)w)->depth) {
 #else
-      XGetWindowAttributes( v->display, w, &attr );
-   if (GET_VISUAL_DEPTH(v) != attr.depth)      
+   XGetWindowAttributes( v->display, w, &attr );
+
+   if (GET_VISUAL_DEPTH(v) != attr.depth) {
 #endif
-   {
       if (getenv("MESA_DEBUG")) {
          fprintf(stderr, "XMesaCreateWindowBuffer: depth mismatch between visual and window!\n");
       }
@@ -1826,61 +1825,61 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
 #ifdef FX
    fxEnvVar = getenv("MESA_GLX_FX");
    if (fxEnvVar) {
-      if (fxEnvVar[0]!='d') {
-	 int attribs[100];
-	 int numAttribs = 0;
-	 int hw;
-	 if (v->gl_visual->DepthBits > 0) {
-	    attribs[numAttribs++] = FXMESA_DEPTH_SIZE;
-	    attribs[numAttribs++] = 1;
-	 }
-	 if (v->gl_visual->DBflag) {
-	    attribs[numAttribs++] = FXMESA_DOUBLEBUFFER;
-	 }
-	 if (v->gl_visual->AccumRedBits > 0) {
-	    attribs[numAttribs++] = FXMESA_ACCUM_SIZE;
-	    attribs[numAttribs++] = v->gl_visual->AccumRedBits;
-	 }
-	 if (v->gl_visual->StencilBits > 0) {
-	    attribs[numAttribs++] = FXMESA_STENCIL_SIZE;
-	    attribs[numAttribs++] = v->gl_visual->StencilBits;
-	 }
-	 if (v->gl_visual->AlphaBits > 0) {
-	    attribs[numAttribs++] = FXMESA_ALPHA_SIZE;
-	    attribs[numAttribs++] = 1;
-	 }
-	 if (c->gl_ctx) {
+     if (fxEnvVar[0]!='d') {
+       int attribs[100];
+       int numAttribs = 0;
+       int hw;
+       if (v->gl_visual->DepthBits > 0) {
+	 attribs[numAttribs++] = FXMESA_DEPTH_SIZE;
+	 attribs[numAttribs++] = 1;
+       }
+       if (v->gl_visual->DBflag) {
+	 attribs[numAttribs++] = FXMESA_DOUBLEBUFFER;
+       }
+       if (v->gl_visual->AccumRedBits > 0) {
+	 attribs[numAttribs++] = FXMESA_ACCUM_SIZE;
+	 attribs[numAttribs++] = v->gl_visual->AccumRedBits;
+       }
+       if (v->gl_visual->StencilBits > 0) {
+         attribs[numAttribs++] = FXMESA_STENCIL_SIZE;
+         attribs[numAttribs++] = v->gl_visual->StencilBits;
+       }
+       if (v->gl_visual->AlphaBits > 0) {
+         attribs[numAttribs++] = FXMESA_ALPHA_SIZE;
+         attribs[numAttribs++] = 1;
+       }
+       if (c->gl_ctx) {
 #define FXMESA_SHARE_CONTEXT 990099  /* keep in sync with fxapi.c! */
-	    attribs[numAttribs++] = FXMESA_SHARE_CONTEXT;
-	    attribs[numAttribs++] = (int) c->gl_ctx;
-	 }
-	 attribs[numAttribs++] = FXMESA_NONE;
+         attribs[numAttribs++] = FXMESA_SHARE_CONTEXT;
+         attribs[numAttribs++] = (int) c->gl_ctx;
+       }
+       attribs[numAttribs++] = FXMESA_NONE;
 
-	 if ((hw = fxQueryHardware())==GR_SSTTYPE_VOODOO) {
-	    b->FXctx = fxMesaCreateBestContext(0, b->width, b->height, attribs);
-	    if ((v->undithered_pf!=PF_INDEX) && (b->backimage)) {
-	       b->FXisHackUsable = b->FXctx ? GL_TRUE : GL_FALSE;
-	       if (fxEnvVar[0]=='w' || fxEnvVar[0]=='W')
-		  b->FXwindowHack = b->FXctx ? GL_TRUE : GL_FALSE;
-	       else
-		  b->FXwindowHack = GL_FALSE;
-	    }
-	 }
-	 else {
-	    if (fxEnvVar[0]=='w' || fxEnvVar[0]=='W')
-	       b->FXctx = fxMesaCreateContext(w, GR_RESOLUTION_NONE,
-					      GR_REFRESH_75Hz, attribs);
-	    else
-	       b->FXctx = fxMesaCreateBestContext(0, b->width, b->height, attribs);
-	    b->FXisHackUsable = GL_FALSE;
-	    b->FXwindowHack = GL_FALSE;
-	 }
-	 /*
-	   fprintf(stderr,
-	   "voodoo %d, wid %d height %d hack: usable %d active %d\n",
-	   hw, b->width, b->height, b->FXisHackUsable, b->FXwindowHack);
-	 */
-      }
+       if ((hw = fxQueryHardware())==GR_SSTTYPE_VOODOO) {
+         b->FXctx = fxMesaCreateBestContext(0, b->width, b->height, attribs);
+         if ((v->undithered_pf!=PF_INDEX) && (b->backimage)) {
+	   b->FXisHackUsable = b->FXctx ? GL_TRUE : GL_FALSE;
+	   if (fxEnvVar[0]=='w' || fxEnvVar[0]=='W')
+	     b->FXwindowHack = b->FXctx ? GL_TRUE : GL_FALSE;
+	   else
+	     b->FXwindowHack = GL_FALSE;
+         }
+       }
+       else {
+         if (fxEnvVar[0]=='w' || fxEnvVar[0]=='W')
+	   b->FXctx = fxMesaCreateContext(w, GR_RESOLUTION_NONE,
+					  GR_REFRESH_75Hz, attribs);
+         else
+	   b->FXctx = fxMesaCreateBestContext(0, b->width, b->height, attribs);
+         b->FXisHackUsable = GL_FALSE;
+         b->FXwindowHack = GL_FALSE;
+       }
+       /*
+       fprintf(stderr,
+               "voodoo %d, wid %d height %d hack: usable %d active %d\n",
+               hw, b->width, b->height, b->FXisHackUsable, b->FXwindowHack);
+       */
+     }
    }
    else {
       fprintf(stderr,"WARNING: This Mesa Library includes the Glide driver but\n");
