@@ -1,4 +1,4 @@
-/* $Id: nvprogram.h,v 1.6 2003/03/29 16:37:08 brianp Exp $ */
+/* $Id: nvprogram.h,v 1.7 2003/04/17 01:48:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -40,8 +40,11 @@ extern const GLubyte *
 _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
                        GLint *line, GLint *col);
 
+extern struct program *
+_mesa_alloc_program(GLcontext *ctx, GLenum target, GLuint id);
+
 extern void
-_mesa_delete_program(GLcontext *ctx, GLuint id);
+_mesa_delete_program(GLcontext *ctx, struct program *prog);
 
 
 

@@ -1,5 +1,3 @@
-/* $Id: nvvertexec.c,v 1.5 2003/03/29 16:04:31 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1

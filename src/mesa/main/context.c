@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.198 2003/04/11 01:20:08 brianp Exp $ */
+/* $Id: context.c,v 1.199 2003/04/17 01:48:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -650,8 +650,19 @@ alloc_shared_state( GLcontext *ctx )
 
    ss->DisplayList = _mesa_NewHashTable();
    ss->TexObjects = _mesa_NewHashTable();
-#if FEATURE_NV_vertex_program
+#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
    ss->Programs = _mesa_NewHashTable();
+#endif
+
+#if FEATURE_ARB_vertex_program
+   ss->DefaultVertexProgram = _mesa_alloc_program(ctx, GL_VERTEX_PROGRAM_ARB, 0);
+   if (!ss->DefaultVertexProgram)
+      goto cleanup;
+#endif
+#if FEATURE_ARB_fragment_program
+   ss->DefaultFragmentProgram = _mesa_alloc_program(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
+   if (!ss->DefaultFragmentProgram)
+      goto cleanup;
 #endif
 
    ss->Default1D = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_1D);
@@ -700,6 +711,14 @@ alloc_shared_state( GLcontext *ctx )
 #if FEATURE_NV_vertex_program
    if (ss->Programs)
       _mesa_DeleteHashTable(ss->Programs);
+#endif
+#if FEATURE_ARB_vertex_program
+   if (ss->DefaultVertexProgram)
+      _mesa_delete_program(ctx, ss->DefaultVertexProgram);
+#endif
+#if FEATURE_ARB_fragment_program
+   if (ss->DefaultFragmentProgram)
+      _mesa_delete_program(ctx, ss->DefaultFragmentProgram);
 #endif
    if (ss->Default1D)
       (*ctx->Driver.DeleteTexture)(ctx, ss->Default1D);
@@ -757,7 +776,11 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    while (1) {
       GLuint prog = _mesa_HashFirstEntry(ss->Programs);
       if (prog) {
-         _mesa_delete_program(ctx, prog);
+         struct program *p = (struct program *) _mesa_HashLookup(ss->Programs,
+                                                                 prog);
+         ASSERT(p);
+         _mesa_delete_program(ctx, p);
+         _mesa_HashRemove(ss->Programs, prog);
       }
       else {
          break;
@@ -966,12 +989,23 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Const.MaxClipPlanes = MAX_CLIP_PLANES;
    ctx->Const.MaxLights = MAX_LIGHTS;
 #if FEATURE_ARB_vertex_program
-   ctx->Const.MaxVertexProgramParams = MAX_NV_VERTEX_PROGRAM_PARAMS;
    ctx->Const.MaxVertexProgramInstructions = MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS;
+   ctx->Const.MaxVertexProgramAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
+   ctx->Const.MaxVertexProgramTemps = MAX_NV_VERTEX_PROGRAM_TEMPS;
+   ctx->Const.MaxVertexProgramLocalParams = MAX_NV_VERTEX_PROGRAM_PARAMS;
+   ctx->Const.MaxVertexProgramEnvParams = MAX_NV_VERTEX_PROGRAM_PARAMS;/*XXX*/
+   ctx->Const.MaxVertexProgramAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
 #endif
 #if FEATURE_ARB_fragment_program
-   ctx->Const.MaxFragmentProgramParams = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
    ctx->Const.MaxFragmentProgramInstructions = MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS;
+   ctx->Const.MaxFragmentProgramAttribs = MAX_NV_FRAGMENT_PROGRAM_INPUTS;
+   ctx->Const.MaxFragmentProgramTemps = MAX_NV_FRAGMENT_PROGRAM_TEMPS;
+   ctx->Const.MaxFragmentProgramLocalParams = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
+   ctx->Const.MaxFragmentProgramEnvParams = MAX_NV_FRAGMENT_PROGRAM_PARAMS;/*XXX*/
+   ctx->Const.MaxFragmentProgramAddressRegs = MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
+   ctx->Const.MaxFragmentProgramAluInstructions = MAX_FRAGMENT_PROGRAM_ALU_INSTRUCTIONS;
+   ctx->Const.MaxFragmentProgramTexInstructions = MAX_FRAGMENT_PROGRAM_TEX_INSTRUCTIONS;
+   ctx->Const.MaxFragmentProgramTexIndirections = MAX_FRAGMENT_PROGRAM_TEX_INDIRECTIONS;
 #endif
 
 
@@ -1940,14 +1974,14 @@ _mesa_free_context_data( GLcontext *ctx )
    if (ctx->VertexProgram.Current) {
       ctx->VertexProgram.Current->Base.RefCount--;
       if (ctx->VertexProgram.Current->Base.RefCount <= 0)
-         _mesa_delete_program(ctx, ctx->VertexProgram.Current->Base.Id);
+         _mesa_delete_program(ctx, &(ctx->VertexProgram.Current->Base));
    }
 #endif
 #if FEATURE_NV_fragment_program
    if (ctx->FragmentProgram.Current) {
       ctx->FragmentProgram.Current->Base.RefCount--;
       if (ctx->FragmentProgram.Current->Base.RefCount <= 0)
-         _mesa_delete_program(ctx, ctx->FragmentProgram.Current->Base.Id);
+         _mesa_delete_program(ctx, &(ctx->FragmentProgram.Current->Base));
    }
 #endif
 

@@ -1081,6 +1081,7 @@ struct gl_client_array {
    void *Ptr;
    GLuint Flags;
    GLuint Enabled;		/* one of the _NEW_ARRAY_ bits */
+   GLboolean Normalized;        /* GL_ARB_vertex_program */
 };
 
 
@@ -1267,8 +1268,11 @@ struct fragment_program
    GLuint InputsRead;     /* Bitmask of which input regs are read */
    GLuint OutputsWritten; /* Bitmask of which output regs are written to */
    GLuint TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /* TEXTURE_x_INDEX bitmask */
-   GLuint NumParameters;
+   GLuint NumAluInstructions; /* GL_ARB_fragment_program */
+   GLuint NumTexInstructions;
+   GLuint NumTexIndirections;
    struct program_parameter *Parameters; /* array [NumParameters] */
+   GLuint NumParameters;
 };
 
 
@@ -1282,7 +1286,7 @@ struct program_state {
 
 
 /*
- * State for GL_NV_vertex_program
+ * State for GL_ARB/NV_vertex_program
  */
 struct vertex_program_state
 {
@@ -1298,7 +1302,7 @@ struct vertex_program_state
 
 
 /*
- * State for GL_NV_fragment_program
+ * State for GL_ARB/NV_fragment_program
  */
 struct fragment_program_state
 {
@@ -1327,6 +1331,12 @@ struct gl_shared_state {
 
    /* GL_NV_vertex/_program */
    struct _mesa_HashTable *Programs;
+#if FEATURE_ARB_vertex_program
+   struct program *DefaultVertexProgram;
+#endif
+#if FEATURE_ARB_fragment_program
+   struct program *DefaultFragmentProgram;
+#endif
 
    void *DriverData;  /* Device driver shared state */
 };
@@ -1398,11 +1408,22 @@ struct gl_constants {
    GLuint MaxClipPlanes;
    GLuint MaxLights;
    /* GL_ARB_vertex_program */
-   GLuint MaxVertexProgramParams;
    GLuint MaxVertexProgramInstructions;
+   GLuint MaxVertexProgramAttribs;
+   GLuint MaxVertexProgramTemps;
+   GLuint MaxVertexProgramLocalParams;
+   GLuint MaxVertexProgramEnvParams;
+   GLuint MaxVertexProgramAddressRegs;
    /* GL_ARB_fragment_program */
-   GLuint MaxFragmentProgramParams;
    GLuint MaxFragmentProgramInstructions;
+   GLuint MaxFragmentProgramAttribs;
+   GLuint MaxFragmentProgramTemps;
+   GLuint MaxFragmentProgramLocalParams;
+   GLuint MaxFragmentProgramEnvParams;
+   GLuint MaxFragmentProgramAddressRegs;
+   GLuint MaxFragmentProgramAluInstructions;
+   GLuint MaxFragmentProgramTexInstructions;
+   GLuint MaxFragmentProgramTexIndirections;
 };
 
 

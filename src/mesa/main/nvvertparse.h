@@ -1,5 +1,3 @@
-/* $Id: nvvertparse.h,v 1.2 2003/03/29 16:38:08 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1

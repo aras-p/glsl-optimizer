@@ -102,6 +102,45 @@ _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
 
 
 
+/**
+ * Allocate and initialize a new fragment/vertex program object
+ * \param ctx  context
+ * \param id   program id/number
+ * \param target  program target/type
+ * \return  pointer to new program object
+ */
+struct program *
+_mesa_alloc_program(GLcontext *ctx, GLenum target, GLuint id)
+{
+   struct program *prog;
+
+   if (target == GL_VERTEX_PROGRAM_NV
+       || target == GL_VERTEX_PROGRAM_ARB) {
+      struct vertex_program *vprog = CALLOC_STRUCT(vertex_program);
+      if (!vprog) {
+         return NULL;
+      }
+      prog = &(vprog->Base);
+   }
+   else if (target == GL_FRAGMENT_PROGRAM_NV
+            || target == GL_FRAGMENT_PROGRAM_ARB) {
+      struct fragment_program *fprog = CALLOC_STRUCT(fragment_program);
+      if (!fprog) {
+         return NULL;
+      }
+      prog = &(fprog->Base);
+   }
+   else {
+      _mesa_problem(ctx, "bad target in _mesa_alloc_program");
+      return NULL;
+   }
+   prog->Id = id;
+   prog->Target = target;
+   prog->Resident = GL_TRUE;
+   prog->RefCount = 1;
+   return prog;
+}
+
 
 /**
  * Delete a program and remove it from the hash table, ignoring the
@@ -109,35 +148,31 @@ _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
  * \note Called from the GL API dispatcher.
  */
 void
-_mesa_delete_program(GLcontext *ctx, GLuint id)
+_mesa_delete_program(GLcontext *ctx, struct program *prog)
 {
-   struct program *prog = (struct program *)
-      _mesa_HashLookup(ctx->Shared->Programs, id);
+   ASSERT(prog);
 
-   if (prog) {
-      if (prog->String)
-         _mesa_free(prog->String);
-      if (prog->Target == GL_VERTEX_PROGRAM_NV ||
-          prog->Target == GL_VERTEX_STATE_PROGRAM_NV) {
-         struct vertex_program *vprog = (struct vertex_program *) prog;
-         if (vprog->Instructions)
-            _mesa_free(vprog->Instructions);
-      }
-      else if (prog->Target == GL_FRAGMENT_PROGRAM_NV) {
-         struct fragment_program *fprog = (struct fragment_program *) prog;
-         if (fprog->Instructions)
-            _mesa_free(fprog->Instructions);
-         if (fprog->Parameters) {
-            GLuint i;
-            for (i = 0; i < fprog->NumParameters; i++) {
-               _mesa_free((void *) fprog->Parameters[i].Name);
-            }
-            _mesa_free(fprog->Parameters);
-         }
-      }
-      _mesa_HashRemove(ctx->Shared->Programs, id);
-      _mesa_free(prog);
+   if (prog->String)
+      _mesa_free(prog->String);
+   if (prog->Target == GL_VERTEX_PROGRAM_NV ||
+       prog->Target == GL_VERTEX_STATE_PROGRAM_NV) {
+      struct vertex_program *vprog = (struct vertex_program *) prog;
+      if (vprog->Instructions)
+         _mesa_free(vprog->Instructions);
    }
+   else if (prog->Target == GL_FRAGMENT_PROGRAM_NV) {
+      struct fragment_program *fprog = (struct fragment_program *) prog;
+      if (fprog->Instructions)
+         _mesa_free(fprog->Instructions);
+      if (fprog->Parameters) {
+         GLuint i;
+         for (i = 0; i < fprog->NumParameters; i++) {
+            _mesa_free((void *) fprog->Parameters[i].Name);
+         }
+         _mesa_free(fprog->Parameters);
+      }
+   }
+   _mesa_free(prog);
 }
 
 
@@ -152,7 +187,8 @@ _mesa_BindProgramNV(GLenum target, GLuint id)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (target == GL_VERTEX_PROGRAM_NV) {
+   if (target == GL_VERTEX_PROGRAM_NV
+       && ctx->Extensions.NV_vertex_program) {
       if (ctx->VertexProgram.Current &&
           ctx->VertexProgram.Current->Base.Id == id)
          return;
@@ -160,11 +196,14 @@ _mesa_BindProgramNV(GLenum target, GLuint id)
       if (ctx->VertexProgram.Current) {
          ctx->VertexProgram.Current->Base.RefCount--;
          /* and delete if refcount goes below one */
-         if (ctx->VertexProgram.Current->Base.RefCount <= 0)
-            _mesa_delete_program(ctx, ctx->VertexProgram.Current->Base.Id);
+         if (ctx->VertexProgram.Current->Base.RefCount <= 0) {
+            _mesa_delete_program(ctx, &(ctx->VertexProgram.Current->Base));
+            _mesa_HashRemove(ctx->Shared->Programs, id);
+         }
       }
    }
-   else if (target == GL_FRAGMENT_PROGRAM_NV) {
+   else if (target == GL_FRAGMENT_PROGRAM_NV
+       && ctx->Extensions.NV_fragment_program) {
       if (ctx->FragmentProgram.Current &&
           ctx->FragmentProgram.Current->Base.Id == id)
          return;
@@ -172,12 +211,14 @@ _mesa_BindProgramNV(GLenum target, GLuint id)
       if (ctx->FragmentProgram.Current) {
          ctx->FragmentProgram.Current->Base.RefCount--;
          /* and delete if refcount goes below one */
-         if (ctx->FragmentProgram.Current->Base.RefCount <= 0)
-            _mesa_delete_program(ctx, ctx->FragmentProgram.Current->Base.Id);
+         if (ctx->FragmentProgram.Current->Base.RefCount <= 0) {
+            _mesa_delete_program(ctx, &(ctx->FragmentProgram.Current->Base));
+            _mesa_HashRemove(ctx->Shared->Programs, id);
+         }
       }
    }
    else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glBindProgramNV");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBindProgramNV(target)");
       return;
    }
 
@@ -190,27 +231,11 @@ _mesa_BindProgramNV(GLenum target, GLuint id)
    }
    else {
       prog = (struct program *) _mesa_HashLookup(ctx->Shared->Programs, id);
-
       if (!prog && id > 0){
          /* allocate new program */
-         if (target == GL_VERTEX_PROGRAM_NV) {
-            struct vertex_program *vprog = CALLOC_STRUCT(vertex_program);
-            if (!vprog) {
-               _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramNV");
-               return;
-            }
-            prog = &(vprog->Base);
-         }
-         else if (target == GL_FRAGMENT_PROGRAM_NV) {
-            struct fragment_program *fprog = CALLOC_STRUCT(fragment_program);
-            if (!fprog) {
-               _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramNV");
-               return;
-            }
-            prog = &(fprog->Base);
-         }
-         else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glBindProgramNV(target)");
+         prog = _mesa_alloc_program(ctx, target, id);
+         if (!prog) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramNV");
             return;
          }
          prog->Id = id;
@@ -277,7 +302,7 @@ _mesa_DeleteProgramsNV(GLsizei n, const GLuint *ids)
             }
             prog->RefCount--;
             if (prog->RefCount <= 0) {
-               _mesa_delete_program(ctx, ids[i]);
+               _mesa_delete_program(ctx, prog);
             }
          }
       }
@@ -330,7 +355,7 @@ _mesa_GenProgramsNV(GLsizei n, GLuint *ids)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (n < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGenProgramsNV");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGenPrograms");
       return;
    }
 
@@ -344,7 +369,7 @@ _mesa_GenProgramsNV(GLsizei n, GLuint *ids)
                              sizeof(struct fragment_program));
       struct program *prog = (struct program *) _mesa_calloc(bytes);
       if (!prog) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenProgramsNV");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenPrograms");
          return;
       }
       prog->RefCount = 1;
@@ -595,7 +620,8 @@ _mesa_GetTrackMatrixivNV(GLenum target, GLuint address,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (target == GL_VERTEX_PROGRAM_NV) {
+   if (target == GL_VERTEX_PROGRAM_NV
+       && ctx->Extensions.NV_vertex_program) {
       GLuint i;
 
       if ((address & 0x3) || address >= MAX_NV_VERTEX_PROGRAM_PARAMS) {
@@ -769,7 +795,8 @@ _mesa_GetVertexAttribPointervNV(GLuint index, GLenum pname, GLvoid **pointer)
  * \param id is the program identifier
  * \return GL_TRUE if id is a program, else GL_FALSE.
  */
-GLboolean _mesa_IsProgramNV(GLuint id)
+GLboolean
+_mesa_IsProgramNV(GLuint id)
 {
    struct program *prog;
    GET_CURRENT_CONTEXT(ctx);
@@ -787,7 +814,7 @@ GLboolean _mesa_IsProgramNV(GLuint id)
 
 
 /**
- * Load a program.
+ * Load/parse/compile a program.
  * \note Called from the GL API dispatcher.
  */
 void
@@ -810,11 +837,9 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
       return;
    }
 
-   /* Reset error pos and string */
-   _mesa_set_program_error(ctx, -1, NULL);
-
-   if (target == GL_VERTEX_PROGRAM_NV ||
-       target == GL_VERTEX_STATE_PROGRAM_NV) {
+   if ((target == GL_VERTEX_PROGRAM_NV ||
+        target == GL_VERTEX_STATE_PROGRAM_NV)
+       && ctx->Extensions.NV_vertex_program) {
       struct vertex_program *vprog = (struct vertex_program *) prog;
       if (!vprog) {
          vprog = CALLOC_STRUCT(vertex_program);
@@ -828,7 +853,8 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
       }
       _mesa_parse_nv_vertex_program(ctx, target, program, len, vprog);
    }
-   else if (target == GL_FRAGMENT_PROGRAM_NV) {
+   else if (target == GL_FRAGMENT_PROGRAM_NV
+            && ctx->Extensions.NV_fragment_program) {
       struct fragment_program *fprog = (struct fragment_program *) prog;
       if (!fprog) {
          fprog = CALLOC_STRUCT(fragment_program);
@@ -843,7 +869,7 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
       _mesa_parse_nv_fragment_program(ctx, target, program, len, fprog);
    }
    else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "LoadProgramNV(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glLoadProgramNV(target)");
    }
 }
 
@@ -887,7 +913,7 @@ _mesa_ProgramParameter4fNV(GLenum target, GLuint index,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (target == GL_VERTEX_PROGRAM_NV) {
+   if (target == GL_VERTEX_PROGRAM_NV && ctx->Extensions.NV_vertex_program) {
       if (index < MAX_NV_VERTEX_PROGRAM_PARAMS) {
          index += VP_PROG_REG_START;
          ASSIGN_4V(ctx->VertexProgram.Machine.Registers[index], x, y, z, w);
@@ -929,7 +955,7 @@ _mesa_ProgramParameters4dvNV(GLenum target, GLuint index,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (target == GL_VERTEX_PROGRAM_NV) {
+   if (target == GL_VERTEX_PROGRAM_NV && ctx->Extensions.NV_vertex_program) {
       GLuint i;
       if (index + num > MAX_NV_VERTEX_PROGRAM_PARAMS) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramParameters4dvNV");
@@ -960,7 +986,7 @@ _mesa_ProgramParameters4fvNV(GLenum target, GLuint index,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (target == GL_VERTEX_PROGRAM_NV) {
+   if (target == GL_VERTEX_PROGRAM_NV && ctx->Extensions.NV_vertex_program) {
       GLuint i;
       if (index + num > MAX_NV_VERTEX_PROGRAM_PARAMS) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramParameters4fvNV");
@@ -991,7 +1017,7 @@ _mesa_TrackMatrixNV(GLenum target, GLuint address,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (target == GL_VERTEX_PROGRAM_NV) {
+   if (target == GL_VERTEX_PROGRAM_NV && ctx->Extensions.NV_vertex_program) {
       if (address & 0x3) {
          /* addr must be multiple of four */
          _mesa_error(ctx, GL_INVALID_VALUE, "glTrackMatrixNV(address)");
