@@ -731,6 +731,7 @@ static void i830RenderStart( GLcontext *ctx )
    GLuint index = tnl->render_inputs;
    GLuint v0 = STATE3D_VERTEX_FORMAT_CMD;
    GLuint v2 = STATE3D_VERTEX_FORMAT_2_CMD;
+   GLuint force_emit = 0;
 
    /* Important:
     */
@@ -750,15 +751,31 @@ static void i830RenderStart( GLcontext *ctx )
    EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, VRTX_HAS_DIFFUSE );
       
    if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
-      if (index & _TNL_BIT_COLOR1) 
-	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, VRTX_HAS_SPEC );
-      else 
-	 EMIT_PAD( 3 );
 
-      if (index & _TNL_BIT_FOG) 
-	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, VRTX_HAS_SPEC );
+      if (index & _TNL_BIT_COLOR1) 
+      {
+         if (imesa->vertex_attrs[imesa->vertex_attr_count].format != EMIT_3UB_3F_BGR)
+            force_emit=1;
+	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, VRTX_HAS_SPEC );
+      }
       else 
+      {
+         if (imesa->vertex_attrs[imesa->vertex_attr_count].format != EMIT_PAD)
+            force_emit=1;
+	 EMIT_PAD( 3 );
+      }
+      if (index & _TNL_BIT_FOG) 
+      {
+         if (imesa->vertex_attrs[imesa->vertex_attr_count].format != EMIT_1UB_1F)
+            force_emit=1;
+	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, VRTX_HAS_SPEC );
+      }
+      else 
+      {
+         if (imesa->vertex_attrs[imesa->vertex_attr_count].format != EMIT_PAD)
+            force_emit=1;
 	 EMIT_PAD( 1 );
+      }
    }
 
    if (index & _TNL_BITS_TEX_ANY) {
@@ -807,7 +824,8 @@ static void i830RenderStart( GLcontext *ctx )
     * statechange to a new hardware vertex format:
     */
    if (v0 != imesa->Setup[I830_CTXREG_VF] ||
-       v2 != imesa->Setup[I830_CTXREG_VF2] ) {
+       v2 != imesa->Setup[I830_CTXREG_VF2] ||
+	force_emit == 1) {
     
       I830_STATECHANGE( imesa, I830_UPLOAD_CTX );
 
