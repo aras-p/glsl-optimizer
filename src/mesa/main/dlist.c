@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.68 2001/03/27 16:42:37 brianp Exp $ */
+/* $Id: dlist.c,v 1.69 2001/05/09 12:48:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -724,7 +724,7 @@ static void save_Accum( GLenum op, GLfloat value )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VERTICES(ctx, 0);
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_ACCUM, 2 );
    if (n) {
       n[1].e = op;
@@ -872,6 +872,7 @@ void _mesa_save_CallList( GLuint list )
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_CURRENT(ctx, 0);
 
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CALL_LIST, 1 );
    if (n) {
@@ -888,6 +889,7 @@ void _mesa_save_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_CURRENT(ctx, 0);
 
    for (i=0;i<n;i++) {
       GLuint list = translate_id( i, type, lists );
@@ -1044,6 +1046,8 @@ static void save_ColorMaterial( GLenum face, GLenum mode )
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_CURRENT(ctx, 0);
+
    n = ALLOC_INSTRUCTION( ctx, OPCODE_COLOR_MATERIAL, 2 );
    if (n) {
       n[1].e = face;
@@ -1372,8 +1376,9 @@ save_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 }
 
 
-static void save_CopyPixels( GLint x, GLint y,
-                             GLsizei width, GLsizei height, GLenum type )
+static void 
+save_CopyPixels( GLint x, GLint y,
+		 GLsizei width, GLsizei height, GLenum type )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -2592,6 +2597,7 @@ static void save_PopMatrix( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_CURRENT(ctx, 0);
    (void) ALLOC_INSTRUCTION( ctx, OPCODE_POP_MATRIX, 0 );
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->PopMatrix)();
@@ -2636,6 +2642,7 @@ static void save_PushAttrib( GLbitfield mask )
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_CURRENT(ctx, 0);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_PUSH_ATTRIB, 1 );
    if (n) {
       n[1].bf = mask;
@@ -2677,6 +2684,7 @@ static void save_RasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_CURRENT(ctx, 0);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_RASTER_POS, 4 );
    if (n) {
       n[1].f = x;
@@ -3414,6 +3422,7 @@ static void save_WindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_CURRENT(ctx, 0);
    n = ALLOC_INSTRUCTION( ctx,  OPCODE_WINDOW_POS, 4 );
    if (n) {
       n[1].f = x;
