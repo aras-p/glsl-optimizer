@@ -1,7 +1,11 @@
-/* $Id: gears.c,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: gears.c,v 1.2 1999/10/21 16:39:06 brianp Exp $ */
 
 /*
  * 3-D gear wheels.  This program is in the public domain.
+ *
+ * Command line options:
+ *    -info      print GL implementation information
+ *
  *
  * Brian Paul
  */
@@ -10,8 +14,11 @@
 
 /*
  * $Log: gears.c,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
+ * Revision 1.2  1999/10/21 16:39:06  brianp
+ * added -info command line option
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
+ * Imported sources
  *
  * Revision 3.2  1999/06/03 17:07:36  brianp
  * an extra quad was being drawn in front and back faces
@@ -28,6 +35,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <GL/glut.h>
 
 #ifndef M_PI
@@ -287,7 +295,7 @@ reshape(int width, int height)
 }
 
 static void
-init(void)
+init(int argc, char *argv[])
 {
   static GLfloat pos[4] =
   {5.0, 5.0, 10.0, 0.0};
@@ -324,6 +332,13 @@ init(void)
   glEndList();
 
   glEnable(GL_NORMALIZE);
+
+  if (argc > 1 && strcmp(argv[1], "-info")==0) {
+     printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
+     printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
+     printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
+     printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
+  }
 }
 
 void 
@@ -343,7 +358,7 @@ int main(int argc, char *argv[])
   glutInitWindowPosition(0, 0);
   glutInitWindowSize(300, 300);
   glutCreateWindow("Gears");
-  init();
+  init(argc, argv);
 
   glutDisplayFunc(draw);
   glutReshapeFunc(reshape);

@@ -1,12 +1,20 @@
-/* $Id: multiarb.c,v 1.2 1999/10/13 12:02:13 brianp Exp $ */
+/* $Id: multiarb.c,v 1.3 1999/10/21 16:40:32 brianp Exp $ */
 
 /*
  * GL_ARB_multitexture demo
+ *
+ * Command line options:
+ *    -info      print GL implementation information
+ *
+ *
  * Brian Paul  November 1998  This program is in the public domain.
  */
 
 /*
  * $Log: multiarb.c,v $
+ * Revision 1.3  1999/10/21 16:40:32  brianp
+ * added -info command line option
+ *
  * Revision 1.2  1999/10/13 12:02:13  brianp
  * use texture objects now
  *
@@ -224,7 +232,7 @@ static void SpecialKey( int key, int x, int y )
 }
 
 
-static void Init( void )
+static void Init( int argc, char *argv[] )
 {
    GLuint texObj[2];
 
@@ -289,6 +297,13 @@ static void Init( void )
    glClearColor(0.3, 0.3, 0.4, 1.0);
 
    ModeMenu(TEXBOTH);
+
+   if (argc > 1 && strcmp(argv[1], "-info")==0) {
+      printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
+      printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
+      printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
+      printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
+   }
 }
 
 
@@ -299,7 +314,7 @@ int main( int argc, char *argv[] )
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
    glutCreateWindow(argv[0] );
 
-   Init();
+   Init( argc, argv );
 
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );

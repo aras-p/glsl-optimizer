@@ -1,14 +1,22 @@
-/* $Id: texcyl.c,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: texcyl.c,v 1.2 1999/10/21 16:39:06 brianp Exp $ */
 
 /*
  * Textured cylinder demo: lighting, texturing, reflection mapping.
+ *
+ * Command line options:
+ *    -info      print GL implementation information
+ *
+ *
  * Brian Paul  May 1997  This program is in the public domain.
  */
 
 /*
  * $Log: texcyl.c,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
+ * Revision 1.2  1999/10/21 16:39:06  brianp
+ * added -info command line option
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
+ * Imported sources
  *
  * Revision 3.3  1999/03/28 18:24:37  brianp
  * minor clean-up
@@ -171,7 +179,7 @@ static void SpecialKey( int key, int x, int y )
 }
 
 
-static void Init( void )
+static void Init( int argc, char *argv[] )
 {
    GLUquadricObj *q = gluNewQuadric();
    CylinderObj = glGenLists(1);
@@ -226,6 +234,13 @@ static void Init( void )
    glEnable(GL_CULL_FACE);  /* don't need Z testing for convex objects */
 
    SetMode(LIT);
+
+   if (argc > 1 && strcmp(argv[1], "-info")==0) {
+      printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
+      printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
+      printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
+      printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
+   }
 }
 
 
@@ -238,7 +253,7 @@ int main( int argc, char *argv[] )
 
    glutCreateWindow(argv[0] );
 
-   Init();
+   Init(argc, argv);
 
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );

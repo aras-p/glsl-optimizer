@@ -1,7 +1,10 @@
-/* $Id: isosurf.c,v 1.3 1999/09/08 22:14:31 brianp Exp $ */
+/* $Id: isosurf.c,v 1.4 1999/10/21 16:39:06 brianp Exp $ */
 
 /*
  * Display an isosurface of 3-D wind speed volume.  
+ *
+ * Command line options:
+ *    -info      print GL implementation information
  *
  * Brian Paul  This file in public domain.
  */
@@ -24,6 +27,9 @@
 
 /*
  * $Log: isosurf.c,v $
+ * Revision 1.4  1999/10/21 16:39:06  brianp
+ * added -info command line option
+ *
  * Revision 1.3  1999/09/08 22:14:31  brianp
  * minor changes. always call compactify_arrays()
  *
@@ -49,6 +55,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "GL/glut.h"
 
@@ -109,6 +116,8 @@ static GLboolean doubleBuffer = GL_TRUE;
 static GLdouble plane[4] = {1.0, 0.0, -1.0, 0.0};
 static GLuint surf1;
 
+static GLboolean PrintInfo = GL_FALSE;
+
 /* forward decl */
 int BuildList( int mode );
 
@@ -147,7 +156,7 @@ struct data_idx {
 
 
 #define COMPARE_FUNC( AXIS )                            \
-int compare_axis_##AXIS( const void *a, const void *b )	\
+static int compare_axis_##AXIS( const void *a, const void *b )	\
 {							\
    float t = ( (*(struct data_idx *)a).data[AXIS] -	\
 	       (*(struct data_idx *)b).data[AXIS] );	\
@@ -644,7 +653,7 @@ static void ModeMenu(int m)
 
 
 
-static void Init(void)
+static void Init(int argc, char *argv[])
 {
    GLfloat fogColor[4] = {0.5,1.0,0.5,1.0};
 
@@ -698,6 +707,13 @@ static void Init(void)
 	    NO_MATERIALS|
 	    NO_FOG|
 	    GLVERTEX);
+
+   if (PrintInfo) {
+      printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
+      printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
+      printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
+      printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
+   }
 }
 
 
@@ -808,6 +824,9 @@ static GLint Args(int argc, char **argv)
       else if (strcmp(argv[i], "-db") == 0) {
          doubleBuffer = GL_TRUE;
       }
+      else if (strcmp(argv[i], "-info") == 0) {
+         PrintInfo = GL_TRUE;
+      }
       else {
          printf("%s (Bad option).\n", argv[i]);
 	 return QUIT;
@@ -855,7 +874,7 @@ int main(int argc, char **argv)
       allowed &= ~COMPILED;
    }
 
-   Init();
+   Init(argc, argv);
    ModeMenu(arg_mode);
    
    glutCreateMenu(ModeMenu);
