@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.18 1999/11/28 20:08:02 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.19 1999/11/28 20:15:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,8 +26,8 @@
 
 
 /*
- * A pseudo-GLX implementation to allow OpenGL/GLX programs to work with Mesa.
- * The Fake_glX*() functions implemented here are called from glxapi.c
+ * This is an emulation of the GLX API which allows Mesa/GLX-based programs
+ * to run on X servers which do not have the real GLX extension.
  *
  * Thanks to the contributors:
  *
@@ -1141,22 +1141,6 @@ Fake_glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
 
 
 
-/* GLX 1.3 and later */
-#if 0
-static GLXDrawable
-Fake_glXGetCurrentReadDrawable( void )
-{
-   XMesaBuffer b = XMesaGetCurrentReadBuffer();
-   if (b) {
-      return b->frontbuffer;
-   }
-   else {
-      return 0;
-   }
-}
-#endif
-
-
 static GLXPixmap
 Fake_glXCreateGLXPixmap( Display *dpy, XVisualInfo *visinfo, Pixmap pixmap )
 {
@@ -1464,30 +1448,6 @@ Fake_glXGetConfig( Display *dpy, XVisualInfo *visinfo,
 
 
 
-#if 0
-static GLXContext
-Fake_glXGetCurrentContext( void )
-{
-   return (GLXContext) XMesaGetCurrentContext();
-}
-#endif
-
-
-#if 0
-static GLXDrawable
-Fake_glXGetCurrentDrawable( void )
-{
-   XMesaBuffer b = XMesaGetCurrentBuffer();
-   if (b) {
-      return b->frontbuffer;
-   }
-   else {
-      return 0;
-   }
-}
-#endif
-
-
 static void
 Fake_glXWaitGL( void )
 {
@@ -1579,20 +1539,6 @@ Fake_glXGetClientString( Display *dpy, int name )
    }
 }
 
-
-
-/* GLX 1.2 and later */
-#if 0
-static Display *
-Fake_glXGetCurrentDisplay( void )
-{
-   XMesaContext xmesa = XMesaGetCurrentContext();
-   if (xmesa && xmesa->xm_visual)
-      return xmesa->xm_visual->display;
-   else
-      return NULL;
-}
-#endif
 
 
 /*
@@ -1795,42 +1741,6 @@ Fake_glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
 
 #endif
 
-
-
-#if 0
-/*GLfunction glXGetProcAddress( const GLubyte *procName )*/
-void (*Fake_glXGetProcAddress( const GLubyte *procName ))()
-{
-   typedef void (*GLfunction)();
-   struct proc {
-      const char *name;
-      GLfunction address;
-   };
-   static struct proc procTable[] = {
-      { "glXGetProcAddressEXT", (GLfunction) glXGetProcAddressEXT },
-      { "glXCreateGLXPixmapMESA", (GLfunction) glXCreateGLXPixmapMESA },
-      { "glXReleaseBuffersMESA", (GLfunction) glXReleaseBuffersMESA },
-      { "glXCopySubBufferMESA", (GLfunction) glXCopySubBufferMESA },
-      { "glXSet3DfxModeMESA", (GLfunction) glXSet3DfxModeMESA },
-      /* NOTE: GLX_SGI_video_sync not implemented in Mesa */
-      { NULL, NULL }  /* end of list token */
-   };
-   GLuint i;
-
-   /* First, look for core library functions */
-   GLfunction f = (GLfunction) gl_get_proc_address(procName);
-   if (f)
-      return f;
-
-   /* Second, look for GLX funtion */
-   for (i = 0; procTable[i].address; i++) {
-      if (strcmp((const char *) procName, procTable[i].name) == 0)
-	  return (GLfunction) procTable[i].address;
-   }
-
-   return NULL;
-}
-#endif
 
 
 extern void Fake_glXUseXFont( Font font, int first, int count, int listbase );
