@@ -39,7 +39,8 @@ DRIVER_SOURCES = \
                 ../common/mm.c \
                 ../common/utils.c \
                 ../common/texmem.c \
-                ../common/vblank.c
+                ../common/vblank.c \
+		../common/xmlconfig.c
 
 INCLUDES = $(MINIGLX_INCLUDES) \
 	   $(SHARED_INCLUDES)
