@@ -304,6 +304,7 @@ LONG GLAPIENTRY __wglMonitor(HWND hwnd,UINT message,UINT wParam,LONG lParam)
       break;
     case WM_SHOWWINDOW:
       break;
+    case WM_SYSKEYDOWN:
     case WM_SYSCHAR:
       if(gdiWindowHackEna && (VK_RETURN == wParam)) {
         if(gdiWindowHack) {
