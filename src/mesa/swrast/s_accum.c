@@ -1,4 +1,4 @@
-/* $Id: s_accum.c,v 1.9 2001/03/19 02:25:36 keithw Exp $ */
+/* $Id: s_accum.c,v 1.10 2001/04/10 15:25:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,6 +27,7 @@
 
 #include "context.h"
 #include "macros.h"
+#include "mmath.h"
 #include "mem.h"
 
 #include "s_accum.h"
@@ -449,7 +450,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             GLint j;
             if (mult != prevMult) {
                for (j = 0; j < max; j++)
-                  multTable[j] = (GLint) ((GLfloat) j * mult + 0.5F);
+                  multTable[j] = IROUND((GLfloat) j * mult);
                prevMult = mult;
             }
 
@@ -490,11 +491,11 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             for (j=0;j<height;j++) {
                const GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos*4;
                for (i=0;i<width;i++) {
-                  GLint r, g, b, a;
-                  r = (GLint) ( (GLfloat) (*acc++) * rscale + 0.5F );
-                  g = (GLint) ( (GLfloat) (*acc++) * gscale + 0.5F );
-                  b = (GLint) ( (GLfloat) (*acc++) * bscale + 0.5F );
-                  a = (GLint) ( (GLfloat) (*acc++) * ascale + 0.5F );
+                  GLint r = IROUND( (GLfloat) (acc[0]) * rscale );
+                  GLint g = IROUND( (GLfloat) (acc[1]) * gscale );
+                  GLint b = IROUND( (GLfloat) (acc[2]) * bscale );
+                  GLint a = IROUND( (GLfloat) (acc[3]) * ascale );
+                  acc += 4;
                   rgba[i][RCOMP] = CLAMP( r, 0, iChanMax );
                   rgba[i][GCOMP] = CLAMP( g, 0, iChanMax );
                   rgba[i][BCOMP] = CLAMP( b, 0, iChanMax );

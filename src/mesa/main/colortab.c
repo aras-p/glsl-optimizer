@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.38 2001/03/19 02:25:35 keithw Exp $ */
+/* $Id: colortab.c,v 1.39 2001/04/10 15:25:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -683,7 +683,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
                rgba[i][RCOMP] = 0;
                rgba[i][GCOMP] = 0;
                rgba[i][BCOMP] = 0;
-               rgba[i][ACOMP] = (GLint) (tableF[i] * CHAN_MAXF);
+               rgba[i][ACOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
             }
          }
          else {
@@ -702,9 +702,9 @@ _mesa_GetColorTable( GLenum target, GLenum format,
             const GLfloat *tableF = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = (GLint) (tableF[i] * CHAN_MAXF);
-               rgba[i][GCOMP] = (GLint) (tableF[i] * CHAN_MAXF);
-               rgba[i][BCOMP] = (GLint) (tableF[i] * CHAN_MAXF);
+               rgba[i][RCOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
+               rgba[i][GCOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
+               rgba[i][BCOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
                rgba[i][ACOMP] = CHAN_MAX;
             }
          }
@@ -724,10 +724,10 @@ _mesa_GetColorTable( GLenum target, GLenum format,
             const GLfloat *tableF = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = (GLint) (tableF[i*2+0] * CHAN_MAXF);
-               rgba[i][GCOMP] = (GLint) (tableF[i*2+0] * CHAN_MAXF);
-               rgba[i][BCOMP] = (GLint) (tableF[i*2+0] * CHAN_MAXF);
-               rgba[i][ACOMP] = (GLint) (tableF[i*2+1] * CHAN_MAXF);
+               rgba[i][RCOMP] = IROUND_POS(tableF[i*2+0] * CHAN_MAXF);
+               rgba[i][GCOMP] = IROUND_POS(tableF[i*2+0] * CHAN_MAXF);
+               rgba[i][BCOMP] = IROUND_POS(tableF[i*2+0] * CHAN_MAXF);
+               rgba[i][ACOMP] = IROUND_POS(tableF[i*2+1] * CHAN_MAXF);
             }
          }
          else {
@@ -746,10 +746,10 @@ _mesa_GetColorTable( GLenum target, GLenum format,
             const GLfloat *tableF = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = (GLint) (tableF[i] * CHAN_MAXF);
-               rgba[i][GCOMP] = (GLint) (tableF[i] * CHAN_MAXF);
-               rgba[i][BCOMP] = (GLint) (tableF[i] * CHAN_MAXF);
-               rgba[i][ACOMP] = (GLint) (tableF[i] * CHAN_MAXF);
+               rgba[i][RCOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
+               rgba[i][GCOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
+               rgba[i][BCOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
+               rgba[i][ACOMP] = IROUND_POS(tableF[i] * CHAN_MAXF);
             }
          }
          else {
@@ -768,9 +768,9 @@ _mesa_GetColorTable( GLenum target, GLenum format,
             const GLfloat *tableF = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = (GLint) (tableF[i*3+0] * CHAN_MAXF);
-               rgba[i][GCOMP] = (GLint) (tableF[i*3+1] * CHAN_MAXF);
-               rgba[i][BCOMP] = (GLint) (tableF[i*3+2] * CHAN_MAXF);
+               rgba[i][RCOMP] = IROUND_POS(tableF[i*3+0] * CHAN_MAXF);
+               rgba[i][GCOMP] = IROUND_POS(tableF[i*3+1] * CHAN_MAXF);
+               rgba[i][BCOMP] = IROUND_POS(tableF[i*3+2] * CHAN_MAXF);
                rgba[i][ACOMP] = CHAN_MAX;
             }
          }
@@ -790,10 +790,10 @@ _mesa_GetColorTable( GLenum target, GLenum format,
             const GLfloat *tableF = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = (GLint) (tableF[i*4+0] * CHAN_MAXF + 0.5F);
-               rgba[i][GCOMP] = (GLint) (tableF[i*4+1] * CHAN_MAXF + 0.5F);
-               rgba[i][BCOMP] = (GLint) (tableF[i*4+2] * CHAN_MAXF + 0.5F);
-               rgba[i][ACOMP] = (GLint) (tableF[i*4+3] * CHAN_MAXF + 0.5F);
+               rgba[i][RCOMP] = IROUND_POS(tableF[i*4+0] * CHAN_MAXF);
+               rgba[i][GCOMP] = IROUND_POS(tableF[i*4+1] * CHAN_MAXF);
+               rgba[i][BCOMP] = IROUND_POS(tableF[i*4+2] * CHAN_MAXF);
+               rgba[i][ACOMP] = IROUND_POS(tableF[i*4+3] * CHAN_MAXF);
             }
          }
          else {

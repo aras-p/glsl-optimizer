@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.51 2001/03/19 02:25:35 keithw Exp $ */
+/* $Id: drawpix.c,v 1.52 2001/04/10 15:25:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -64,8 +64,8 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
          _mesa_update_state(ctx);
       }
 
-      x = (GLint) (ctx->Current.RasterPos[0] + 0.5F);
-      y = (GLint) (ctx->Current.RasterPos[1] + 0.5F);
+      x = IROUND(ctx->Current.RasterPos[0]);
+      y = IROUND(ctx->Current.RasterPos[1]);
 
       ctx->OcclusionResult = GL_TRUE;
       ctx->Driver.DrawPixels(ctx, x, y, width, height, format, type,

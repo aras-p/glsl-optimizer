@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.19 2001/03/19 02:25:36 keithw Exp $ */
+/* $Id: xm_api.c,v 1.20 2001/04/10 15:25:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,6 +71,7 @@
 #include "glthread.h"
 #include "matrix.h"
 #include "mem.h"
+#include "mmath.h"
 #include "mtypes.h"
 #ifdef HAVE_CONFIG_H
 #include "conf.h"
@@ -264,7 +265,7 @@ static GLint gamma_adjust( GLfloat gamma, GLint value, GLint max )
    }
    else {
       double x = (double) value / (double) max;
-      return (GLint) ((GLfloat) max * pow( x, 1.0F/gamma ) + 0.5F);
+      return IROUND_POS((GLfloat) max * pow(x, 1.0F/gamma));
    }
 }
 
@@ -985,19 +986,19 @@ static void setup_8bit_hpcr( XMesaVisual v )
 
    g = 1.0 / v->RedGamma;
    for (i=0; i<256; i++) {
-      GLint red = (GLint) (255.0 * pow( hpcr_rgbTbl[0][i]/255.0, g ) + 0.5);
+      GLint red = IROUND_POS(255.0 * pow( hpcr_rgbTbl[0][i]/255.0, g ));
       v->hpcr_rgbTbl[0][i] = CLAMP( red, 16, 239 );
    }
 
    g = 1.0 / v->GreenGamma;
    for (i=0; i<256; i++) {
-      GLint green = (GLint) (255.0 * pow( hpcr_rgbTbl[1][i]/255.0, g ) + 0.5);
+      GLint green = IROUND_POS(255.0 * pow( hpcr_rgbTbl[1][i]/255.0, g ));
       v->hpcr_rgbTbl[1][i] = CLAMP( green, 16, 239 );
    }
 
    g = 1.0 / v->BlueGamma;
    for (i=0; i<256; i++) {
-      GLint blue = (GLint) (255.0 * pow( hpcr_rgbTbl[2][i]/255.0, g ) + 0.5);
+      GLint blue = IROUND_POS(255.0 * pow( hpcr_rgbTbl[2][i]/255.0, g ));
       v->hpcr_rgbTbl[2][i] = CLAMP( blue, 32, 223 );
    }
    v->undithered_pf = PF_HPCR;  /* can't really disable dithering for now */

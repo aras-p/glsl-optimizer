@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.27 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: pixel.c,v 1.28 2001/04/10 15:25:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -832,10 +832,10 @@ _mesa_map_rgba( const GLcontext *ctx, GLuint n, GLfloat rgba[][4] )
    const GLfloat *aMap = ctx->Pixel.MapAtoA;
    GLuint i;
    for (i=0;i<n;i++) {
-      rgba[i][RCOMP] = rMap[(GLint) (rgba[i][RCOMP] * rscale + 0.5F)];
-      rgba[i][GCOMP] = gMap[(GLint) (rgba[i][GCOMP] * gscale + 0.5F)];
-      rgba[i][BCOMP] = bMap[(GLint) (rgba[i][BCOMP] * bscale + 0.5F)];
-      rgba[i][ACOMP] = aMap[(GLint) (rgba[i][ACOMP] * ascale + 0.5F)];
+      rgba[i][RCOMP] = rMap[IROUND(rgba[i][RCOMP] * rscale)];
+      rgba[i][GCOMP] = gMap[IROUND(rgba[i][GCOMP] * gscale)];
+      rgba[i][BCOMP] = bMap[IROUND(rgba[i][BCOMP] * bscale)];
+      rgba[i][ACOMP] = aMap[IROUND(rgba[i][ACOMP] * ascale)];
    }
 }
 
@@ -888,7 +888,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
             const GLchan *lut = (const GLchan *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint j = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
+               GLint j = IROUND(rgba[i][RCOMP] * scale);
                GLfloat c = CHAN_TO_FLOAT(lut[j]);
                rgba[i][RCOMP] = rgba[i][GCOMP] =
                   rgba[i][BCOMP] = rgba[i][ACOMP] = c;
@@ -900,7 +900,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint j = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
+               GLint j = IROUND(rgba[i][RCOMP] * scale);
                GLfloat c = lut[j];
                rgba[i][RCOMP] = rgba[i][GCOMP] =
                   rgba[i][BCOMP] = rgba[i][ACOMP] = c;
@@ -914,7 +914,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
             const GLchan *lut = (const GLchan *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint j = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
+               GLint j = IROUND(rgba[i][RCOMP] * scale);
                GLfloat c = CHAN_TO_FLOAT(lut[j]);
                rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = c;
             }
@@ -924,7 +924,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint j = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
+               GLint j = IROUND(rgba[i][RCOMP] * scale);
                GLfloat c = lut[j];
                rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = c;
             }
@@ -937,7 +937,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
             const GLchan *lut = (const GLchan *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint j = (GLint) (rgba[i][ACOMP] * scale + 0.5F);
+               GLint j = IROUND(rgba[i][ACOMP] * scale);
                rgba[i][ACOMP] = CHAN_TO_FLOAT(lut[j]);
             }
          }
@@ -946,7 +946,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint j = (GLint) (rgba[i][ACOMP] * scale + 0.5F);
+               GLint j = IROUND(rgba[i][ACOMP] * scale);
                rgba[i][ACOMP] = lut[j];
             }
          }
@@ -958,8 +958,8 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
             const GLchan *lut = (const GLchan *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint jL = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
-               GLint jA = (GLint) (rgba[i][ACOMP] * scale + 0.5F);
+               GLint jL = IROUND(rgba[i][RCOMP] * scale);
+               GLint jA = IROUND(rgba[i][ACOMP] * scale);
                GLfloat luminance = CHAN_TO_FLOAT(lut[jL * 2 + 0]);
                GLfloat alpha     = CHAN_TO_FLOAT(lut[jA * 2 + 1]);
                rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = luminance;
@@ -971,8 +971,8 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint jL = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
-               GLint jA = (GLint) (rgba[i][ACOMP] * scale + 0.5F);
+               GLint jL = IROUND(rgba[i][RCOMP] * scale);
+               GLint jA = IROUND(rgba[i][ACOMP] * scale);
                GLfloat luminance = lut[jL * 2 + 0];
                GLfloat alpha     = lut[jA * 2 + 1];
                rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = luminance;
@@ -987,9 +987,9 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
             const GLchan *lut = (const GLchan *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint jR = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
-               GLint jG = (GLint) (rgba[i][GCOMP] * scale + 0.5F);
-               GLint jB = (GLint) (rgba[i][BCOMP] * scale + 0.5F);
+               GLint jR = IROUND(rgba[i][RCOMP] * scale);
+               GLint jG = IROUND(rgba[i][GCOMP] * scale);
+               GLint jB = IROUND(rgba[i][BCOMP] * scale);
                rgba[i][RCOMP] = CHAN_TO_FLOAT(lut[jR * 3 + 0]);
                rgba[i][GCOMP] = CHAN_TO_FLOAT(lut[jG * 3 + 1]);
                rgba[i][BCOMP] = CHAN_TO_FLOAT(lut[jB * 3 + 2]);
@@ -1000,9 +1000,9 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint jR = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
-               GLint jG = (GLint) (rgba[i][GCOMP] * scale + 0.5F);
-               GLint jB = (GLint) (rgba[i][BCOMP] * scale + 0.5F);
+               GLint jR = IROUND(rgba[i][RCOMP] * scale);
+               GLint jG = IROUND(rgba[i][GCOMP] * scale);
+               GLint jB = IROUND(rgba[i][BCOMP] * scale);
                rgba[i][RCOMP] = lut[jR * 3 + 0];
                rgba[i][GCOMP] = lut[jG * 3 + 1];
                rgba[i][BCOMP] = lut[jB * 3 + 2];
@@ -1016,10 +1016,10 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
             const GLchan *lut = (const GLchan *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint jR = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
-               GLint jG = (GLint) (rgba[i][GCOMP] * scale + 0.5F);
-               GLint jB = (GLint) (rgba[i][BCOMP] * scale + 0.5F);
-               GLint jA = (GLint) (rgba[i][ACOMP] * scale + 0.5F);
+               GLint jR = IROUND(rgba[i][RCOMP] * scale);
+               GLint jG = IROUND(rgba[i][GCOMP] * scale);
+               GLint jB = IROUND(rgba[i][BCOMP] * scale);
+               GLint jA = IROUND(rgba[i][ACOMP] * scale);
                rgba[i][RCOMP] = CHAN_TO_FLOAT(lut[jR * 4 + 0]);
                rgba[i][GCOMP] = CHAN_TO_FLOAT(lut[jG * 4 + 1]);
                rgba[i][BCOMP] = CHAN_TO_FLOAT(lut[jB * 4 + 2]);
@@ -1031,10 +1031,10 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint jR = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
-               GLint jG = (GLint) (rgba[i][GCOMP] * scale + 0.5F);
-               GLint jB = (GLint) (rgba[i][BCOMP] * scale + 0.5F);
-               GLint jA = (GLint) (rgba[i][ACOMP] * scale + 0.5F);
+               GLint jR = IROUND(rgba[i][RCOMP] * scale);
+               GLint jG = IROUND(rgba[i][GCOMP] * scale);
+               GLint jB = IROUND(rgba[i][BCOMP] * scale);
+               GLint jA = IROUND(rgba[i][ACOMP] * scale);
                rgba[i][RCOMP] = lut[jR * 4 + 0];
                rgba[i][GCOMP] = lut[jG * 4 + 1];
                rgba[i][BCOMP] = lut[jB * 4 + 2];

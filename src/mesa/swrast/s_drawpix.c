@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.15 2001/03/19 02:25:36 keithw Exp $ */
+/* $Id: s_drawpix.c,v 1.16 2001/04/10 15:25:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -190,7 +190,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
             zSpan[i] = z;
 
          /* save Y value of first row */
-         zoomY0 = (GLint) (ctx->Current.RasterPos[1] + 0.5F);
+         zoomY0 = IROUND(ctx->Current.RasterPos[1]);
       }
 
 

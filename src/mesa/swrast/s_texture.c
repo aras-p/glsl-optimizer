@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.21 2001/03/28 20:40:52 gareth Exp $ */
+/* $Id: s_texture.c,v 1.22 2001/04/10 15:25:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -320,10 +320,10 @@ sample_1d_linear(GLcontext *ctx,
    }
 
    {
-      const GLfloat a = FRAC(u);
+      const GLfloat a = FRAC(u + 1.0F);
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
-      const GLint w0 = IROUND((1.0F-a) * WEIGHT_SCALE);
-      const GLint w1 = IROUND(      a  * WEIGHT_SCALE);
+      const GLint w0 = IROUND_POS((1.0F-a) * WEIGHT_SCALE);
+      const GLint w1 = IROUND_POS(      a  * WEIGHT_SCALE);
 
       GLchan t0[4], t1[4];  /* texels */
 
@@ -612,13 +612,13 @@ sample_2d_linear(GLcontext *ctx,
    }
 
    {
-      const GLfloat a = FRAC(u);
-      const GLfloat b = FRAC(v);
+      const GLfloat a = FRAC(u + 1.0F); /* add one in case u is just below 0 */
+      const GLfloat b = FRAC(v + 1.0F);
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
-      const GLint w00 = IROUND((1.0F-a) * (1.0F-b) * WEIGHT_SCALE);
-      const GLint w10 = IROUND(      a  * (1.0F-b) * WEIGHT_SCALE);
-      const GLint w01 = IROUND((1.0F-a) *       b  * WEIGHT_SCALE);
-      const GLint w11 = IROUND(      a  *       b  * WEIGHT_SCALE);
+      const GLint w00 = IROUND_POS((1.0F-a) * (1.0F-b) * WEIGHT_SCALE);
+      const GLint w10 = IROUND_POS(      a  * (1.0F-b) * WEIGHT_SCALE);
+      const GLint w01 = IROUND_POS((1.0F-a) *       b  * WEIGHT_SCALE);
+      const GLint w11 = IROUND_POS(      a  *       b  * WEIGHT_SCALE);
       GLchan t00[4];
       GLchan t10[4];
       GLchan t01[4];
@@ -1032,18 +1032,18 @@ sample_3d_linear(GLcontext *ctx,
    }
 
    {
-      const GLfloat a = FRAC(u);
-      const GLfloat b = FRAC(v);
-      const GLfloat c = FRAC(w);
+      const GLfloat a = FRAC(u + 1.0F);
+      const GLfloat b = FRAC(v + 1.0F);
+      const GLfloat c = FRAC(w + 1.0F);
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
-      GLint w000 = IROUND((1.0F-a) * (1.0F-b) * (1.0F-c) * WEIGHT_SCALE);
-      GLint w100 = IROUND(      a  * (1.0F-b) * (1.0F-c) * WEIGHT_SCALE);
-      GLint w010 = IROUND((1.0F-a) *       b  * (1.0F-c) * WEIGHT_SCALE);
-      GLint w110 = IROUND(      a  *       b  * (1.0F-c) * WEIGHT_SCALE);
-      GLint w001 = IROUND((1.0F-a) * (1.0F-b) *       c  * WEIGHT_SCALE);
-      GLint w101 = IROUND(      a  * (1.0F-b) *       c  * WEIGHT_SCALE);
-      GLint w011 = IROUND((1.0F-a) *       b  *       c  * WEIGHT_SCALE);
-      GLint w111 = IROUND(      a  *       b  *       c  * WEIGHT_SCALE);
+      GLint w000 = IROUND_POS((1.0F-a) * (1.0F-b) * (1.0F-c) * WEIGHT_SCALE);
+      GLint w100 = IROUND_POS(      a  * (1.0F-b) * (1.0F-c) * WEIGHT_SCALE);
+      GLint w010 = IROUND_POS((1.0F-a) *       b  * (1.0F-c) * WEIGHT_SCALE);
+      GLint w110 = IROUND_POS(      a  *       b  * (1.0F-c) * WEIGHT_SCALE);
+      GLint w001 = IROUND_POS((1.0F-a) * (1.0F-b) *       c  * WEIGHT_SCALE);
+      GLint w101 = IROUND_POS(      a  * (1.0F-b) *       c  * WEIGHT_SCALE);
+      GLint w011 = IROUND_POS((1.0F-a) *       b  *       c  * WEIGHT_SCALE);
+      GLint w111 = IROUND_POS(      a  *       b  *       c  * WEIGHT_SCALE);
 
       GLchan t000[4], t010[4], t001[4], t011[4];
       GLchan t100[4], t110[4], t101[4], t111[4];
@@ -2531,8 +2531,8 @@ sample_depth_texture(const GLcontext *ctx,
 
          if (0) {
             /* compute a single weighted depth sample and do one comparison */
-            const GLfloat a = FRAC(u);
-            const GLfloat b = FRAC(v);
+            const GLfloat a = FRAC(u + 1.0F);
+            const GLfloat b = FRAC(v + 1.0F);
             const GLfloat w00 = (1.0F - a) * (1.0F - b);
             const GLfloat w10 = (       a) * (1.0F - b);
             const GLfloat w01 = (1.0F - a) * (       b);
