@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.27 2001/06/01 16:29:18 brianp Exp $ */
+/* $Id: t_context.h,v 1.28 2001/06/04 16:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -524,6 +524,7 @@ typedef struct {
    /* Probably need a better configuration mechanism:
     */
    GLboolean NeedProjCoords;
+   GLboolean LoopbackDListCassettes;
 
    /* Derived state and storage for _tnl_eval_vb:
     */

@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.14 2001/05/11 15:53:06 keithw Exp $ */
+/* $Id: t_imm_api.c,v 1.15 2001/06/04 16:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -294,7 +294,9 @@ _tnl_end( GLcontext *ctx )
       IM->Flag[count] |= VERT_END;
       IM->Primitive[last] |= PRIM_END;
       IM->PrimitiveLength[last] = count - last;
-      IM->Primitive[count] = PRIM_OUTSIDE_BEGIN_END;
+      IM->Primitive[count] = PRIM_OUTSIDE_BEGIN_END; /* removes PRIM_BEGIN 
+						      * flag if length == 0
+						      */
       IM->LastPrimitive = count;
 
       if (IM->FlushElt == FLUSH_ELT_EAGER) {

@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.19 2001/05/16 09:28:32 keithw Exp $ */
+/* $Id: t_imm_fixup.c,v 1.20 2001/06/04 16:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -592,93 +592,6 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 
       } while (vulnerable);
    }
-
-   /* Can potentially overwrite primitive details - need to save the
-    * first slot:
-    */
-   tnl->DlistPrimitive = IM->Primitive[IM->Start];
-   tnl->DlistPrimitiveLength = IM->PrimitiveLength[IM->Start];
-   tnl->DlistLastPrimitive = IM->LastPrimitive;
-
-   /* The first primitive may be different from what was recorded in
-    * the immediate struct.  Consider an immediate that starts with a
-    * glBegin, compiled in a display list, which is called from within
-    * an existing Begin/End object.
-    */
-   if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1) {
-      GLuint i;
-
-      if (IM->BeginState & VERT_ERROR_1)
-	 _mesa_error( ctx, GL_INVALID_OPERATION, "glBegin/glEnd");
-
-      for (i = IM->Start ; i <= IM->Count ; i += IM->PrimitiveLength[i])
-	 if (IM->Flag[i] & (VERT_BEGIN|VERT_END_VB))
-	    break;
-
-      /* Would like to just ignore vertices upto this point.  Can't
-       * set copystart because it might skip materials?
-       */
-      ASSERT(IM->Start == IM->CopyStart);
-      if (i > IM->CopyStart) {
-	 IM->Primitive[IM->CopyStart] = GL_POLYGON+1;
-	 IM->PrimitiveLength[IM->CopyStart] = i - IM->CopyStart;
-	 if (IM->Flag[i] & VERT_END_VB) {
-	    IM->Primitive[IM->CopyStart] |= PRIM_LAST;
-	    IM->LastPrimitive = IM->CopyStart;
-	 }
-      }
-   } else {
-      GLuint i;
-
-      if (IM->BeginState & VERT_ERROR_0)
-	 _mesa_error( ctx, GL_INVALID_OPERATION, "glBegin/glEnd");
-
-      if (IM->CopyStart == IM->Start &&
-	  IM->Flag[IM->Start] & (VERT_END|VERT_END_VB))
-      {
-      }
-      else
-      {
-	 IM->Primitive[IM->CopyStart] = ctx->Driver.CurrentExecPrimitive;
-	 if (tnl->ExecParity)
-	    IM->Primitive[IM->CopyStart] |= PRIM_PARITY;
-
-         /* one of these should be true, else we'll be in an infinite loop 
-	  */
-         ASSERT(IM->PrimitiveLength[IM->Start] > 0 ||
-                IM->Flag[IM->Start] & (VERT_END|VERT_END_VB));
-
-	 for (i = IM->Start ; i <= IM->Count ; i += IM->PrimitiveLength[i])
-	    if (IM->Flag[i] & (VERT_END|VERT_END_VB)) {
-	       IM->PrimitiveLength[IM->CopyStart] = i - IM->CopyStart;
-	       if (IM->Flag[i] & VERT_END_VB) {
-		  IM->Primitive[IM->CopyStart] |= PRIM_LAST;
-		  IM->LastPrimitive = IM->CopyStart;
-	       }
-	       if (IM->Flag[i] & VERT_END) {
-		  IM->Primitive[IM->CopyStart] |= PRIM_END;
-	       }
-	       break;
-	    }
-      }
-   }
-
-   if (IM->Primitive[IM->LastPrimitive] & PRIM_END)
-      ctx->Driver.CurrentExecPrimitive = GL_POLYGON+1;
-   else
-      ctx->Driver.CurrentExecPrimitive =
-	 IM->Primitive[IM->LastPrimitive] & PRIM_MODE_MASK;
-}
-
-
-/* Undo any changes potentially made to the immediate in the range
- * IM->Start..IM->Count above.
- */
-void _tnl_restore_compiled_cassette( GLcontext *ctx, struct immediate *IM )
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   IM->Primitive[IM->Start] = tnl->DlistPrimitive;
-   IM->PrimitiveLength[IM->Start] = tnl->DlistPrimitiveLength;
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.h,v 1.5 2001/04/30 21:08:52 keithw Exp $ */
+/* $Id: t_imm_fixup.h,v 1.6 2001/06/04 16:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,9 +50,6 @@ extern void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM );
 
 extern void _tnl_fixup_compiled_cassette( GLcontext *ctx,
 					  struct immediate *IM );
-
-extern void _tnl_restore_compiled_cassette( GLcontext *ctx,
-					    struct immediate *IM );
 
 extern void _tnl_copy_immediate_vertices( GLcontext *ctx, 
 					  struct immediate *IM );
