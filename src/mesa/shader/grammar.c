@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.2
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -33,7 +33,7 @@
 #endif
 
 /*
-    Last Modified: 2004-II-8
+    $Id: grammar.c,v 1.9 2004/10/20 14:54:17 michal Exp $
 */
 
 /*
@@ -270,8 +270,10 @@ static const byte *OUT_OF_MEMORY =          (byte *) "internal error 1001: out o
 static const byte *UNRESOLVED_REFERENCE =   (byte *) "internal error 1002: unresolved reference '$'";
 static const byte *INVALID_GRAMMAR_ID =     (byte *) "internal error 1003: invalid grammar object";
 static const byte *INVALID_REGISTER_NAME =  (byte *) "internal error 1004: invalid register name: '$'";
+static const byte *DUPLICATE_IDENTIFIER =   (byte *) "internal error 1005: identifier '$' already defined";
+static const byte *UNREFERENCED_IDENTIFIER =(byte *) "internal error 1006: unreferenced identifier '$'";
 
-static const byte *error_message = NULL;
+static const byte *error_message = NULL;    /* points to one of the error messages above */
 static byte *error_param = NULL;        /* this is inserted into error_message in place of $ */
 static int error_position = -1;
 
@@ -294,7 +296,7 @@ static void clear_last_error ()
 
 static void set_last_error (const byte *msg, byte *param, int pos)
 {
-    /* error message can only be set only once */
+    /* error message can be set only once */
     if (error_message != NULL)
     {
         mem_free ((void **) (void *) &param);
@@ -303,6 +305,9 @@ static void set_last_error (const byte *msg, byte *param, int pos)
 
     error_message = msg;
 
+    /* if param is NULL, set error_param to unknown ("???") */
+    /* note: do not try to strdup the "???" - it may be that we are here because of */
+    /* out of memory error so strdup can fail */
     if (param != NULL)
         error_param = param;
     else
@@ -370,6 +375,15 @@ static unsigned int str_length (const byte *str)
 }
 
 /*
+    useful macros
+*/
+#define GRAMMAR_IMPLEMENT_LIST_APPEND(_Ty)\
+    static void _Ty##_append (_Ty **x, _Ty *nx) {\
+        while (*x) x = &(**x).next;\
+        *x = nx;\
+    }
+
+/*
     string to byte map typedef
 */
 typedef struct map_byte_
@@ -390,7 +404,6 @@ static void map_byte_create (map_byte **ma)
     }
 }
 
-/* XXX unfold the recursion */
 static void map_byte_destroy (map_byte **ma)
 {
     if (*ma)
@@ -401,12 +414,7 @@ static void map_byte_destroy (map_byte **ma)
     }
 }
 
-static void map_byte_append (map_byte **ma, map_byte **nm)
-{
-    while (*ma)
-        ma = &(**ma).next;
-    *ma = *nm;
-}
+GRAMMAR_IMPLEMENT_LIST_APPEND(map_byte)
 
 /*
     searches the map for the specified key,
@@ -556,6 +564,66 @@ static void emit_destroy (emit **em)
     }
 }
 
+static unsigned int emit_size (emit *_E)
+{
+    unsigned int _N = 0;
+
+    while (_E != NULL)
+    {
+        if (_E->m_emit_dest == ed_output)
+        {
+            if (_E->m_emit_type == et_position)
+                _N += 4;     /* position is a 32-bit unsigned integer */
+            else
+                _N++;
+        }
+        _E = _E->m_next;
+    }
+
+    return _N;
+}
+
+static int emit_push (emit *_E, byte *_P, byte _C, unsigned int _Pos, regbyte_ctx **_Ctx)
+{
+    while (_E != NULL)
+    {
+        if (_E->m_emit_dest == ed_output)
+        {
+            if (_E->m_emit_type == et_byte)
+                *_P++ = _E->m_byte;
+            else if (_E->m_emit_type == et_stream)
+                *_P++ = _C;
+            else /* _Em->type == et_position */
+            {
+                *_P++ = (byte) (_Pos);
+                *_P++ = (byte) (_Pos >> 8);
+                *_P++ = (byte) (_Pos >> 16);
+                *_P++ = (byte) (_Pos >> 24);
+            }
+        }
+        else
+        {
+            regbyte_ctx *new_rbc;
+            regbyte_ctx_create (&new_rbc);
+            if (new_rbc == NULL)
+                return 1;
+
+            new_rbc->m_prev = *_Ctx;
+            new_rbc->m_regbyte = _E->m_regbyte;
+            *_Ctx = new_rbc;
+
+            if (_E->m_emit_type == et_byte)
+                new_rbc->m_current_value = _E->m_byte;
+            else if (_E->m_emit_type == et_stream)
+                new_rbc->m_current_value = _C;
+        }
+
+        _E = _E->m_next;
+    }
+
+    return 0;
+}
+
 /*
     error typedef
 */
@@ -675,7 +743,7 @@ typedef struct spec_
     emit *m_emits;
     error *m_errtext;
     cond *m_cond;
-    struct spec_ *m_next;
+    struct spec_ *next;
 } spec;
 
 static void spec_create (spec **sp)
@@ -691,7 +759,7 @@ static void spec_create (spec **sp)
         (**sp).m_emits = NULL;
         (**sp).m_errtext = NULL;
         (**sp).m_cond = NULL;
-        (**sp).m_next = NULL;
+        (**sp).next = NULL;
     }
 }
 
@@ -699,7 +767,7 @@ static void spec_destroy (spec **sp)
 {
     if (*sp)
     {
-        spec_destroy (&(**sp).m_next);
+        spec_destroy (&(**sp).next);
         emit_destroy (&(**sp).m_emits);
         error_destroy (&(**sp).m_errtext);
         mem_free ((void **) &(**sp).m_string);
@@ -708,12 +776,7 @@ static void spec_destroy (spec **sp)
     }
 }
 
-static void spec_append (spec **sp, spec **ns)
-{
-    while (*sp)
-        sp = &(**sp).m_next;
-    *sp = *ns;
-}
+GRAMMAR_IMPLEMENT_LIST_APPEND(spec)
 
 /*
     operator typedef
@@ -732,8 +795,8 @@ typedef struct rule_
 {
     oper m_oper;
     spec *m_specs;
-    struct rule_ *m_next;
-/*  int m_referenced; */            /* for debugging purposes */
+    struct rule_ *next;
+    int m_referenced;
 } rule;
 
 static void rule_create (rule **ru)
@@ -743,8 +806,8 @@ static void rule_create (rule **ru)
     {
         (**ru).m_oper = op_none;
         (**ru).m_specs = NULL;
-        (**ru).m_next = NULL;
-/*      (**ru).m_referenced = 0; */
+        (**ru).next = NULL;
+        (**ru).m_referenced = 0;
     }
 }
 
@@ -752,18 +815,13 @@ static void rule_destroy (rule **ru)
 {
     if (*ru)
     {
-        rule_destroy (&(**ru).m_next);
+        rule_destroy (&(**ru).next);
         spec_destroy (&(**ru).m_specs);
         mem_free ((void **) ru);
     }
 }
 
-static void rule_append (rule **ru, rule **nr)
-{
-    while (*ru)
-        ru = &(**ru).m_next;
-    *ru = *nr;
-}
+GRAMMAR_IMPLEMENT_LIST_APPEND(rule)
 
 /*
     returns unique grammar id
@@ -785,7 +843,7 @@ typedef struct dict_
     rule *m_string;
     map_byte *m_regbytes;
     grammar m_id;
-    struct dict_ *m_next;
+    struct dict_ *next;
 } dict;
 
 static void dict_create (dict **di)
@@ -798,7 +856,7 @@ static void dict_create (dict **di)
         (**di).m_string = NULL;
         (**di).m_regbytes = NULL;
         (**di).m_id = next_valid_grammar_id ();
-        (**di).m_next = NULL;
+        (**di).next = NULL;
     }
 }
 
@@ -812,12 +870,7 @@ static void dict_destroy (dict **di)
     }
 }
 
-static void dict_append (dict **di, dict **nd)
-{
-    while (*di)
-        di = &(**di).m_next;
-    *di = *nd;
-}
+GRAMMAR_IMPLEMENT_LIST_APPEND(dict)
 
 static void dict_find (dict **di, grammar key, dict **data)
 {
@@ -829,7 +882,7 @@ static void dict_find (dict **di, grammar key, dict **data)
             return;
         }
 
-        di = &(**di).m_next;
+        di = &(**di).next;
     }
 
     *data = NULL;
@@ -839,8 +892,6 @@ static dict *g_dicts = NULL;
 
 /*
     byte array typedef
-
-    XXX this class is going to be replaced by a faster one, soon
 */
 typedef struct barray_
 {
@@ -886,7 +937,8 @@ static int barray_resize (barray **ba, unsigned int nlen)
     }
     else
     {
-        new_pointer = (byte *) mem_realloc ((**ba).data, (**ba).len * sizeof (byte), nlen * sizeof (byte));
+        new_pointer = (byte *) mem_realloc ((**ba).data, (**ba).len * sizeof (byte),
+            nlen * sizeof (byte));
         if (new_pointer)
         {
             (**ba).data = new_pointer;
@@ -923,58 +975,65 @@ static int barray_append (barray **ba, barray **nb)
 */
 static int barray_push (barray **ba, emit *em, byte c, unsigned int pos, regbyte_ctx **rbc)
 {
-    emit *temp = em;
-    unsigned int count = 0;
-
-    while (temp)
-    {
-		if (temp->m_emit_dest == ed_output) {
-            if (temp->m_emit_type == et_position)
-                count += 4;     /* position is a 32-bit unsigned integer */
-            else
-                count++;
-		}
-        temp = temp->m_next;
-    }
+    unsigned int count = emit_size (em);
 
     if (barray_resize (ba, (**ba).len + count))
         return 1;
 
-    while (em)
+    return emit_push (em, (**ba).data + ((**ba).len - count), c, pos, rbc);
+}
+
+/*
+    byte pool typedef
+*/
+typedef struct bytepool_
+{
+    byte *_F;
+    unsigned int _Siz;
+} bytepool;
+
+static void bytepool_destroy (bytepool **by)
+{
+    if (*by != NULL)
     {
-        if (em->m_emit_dest == ed_output)
-        {
-            if (em->m_emit_type == et_byte)
-                (**ba).data[(**ba).len - count--] = em->m_byte;
-            else if (em->m_emit_type == et_stream)
-                (**ba).data[(**ba).len - count--] = c;
-            else /* em->type == et_position */
-                (**ba).data[(**ba).len - count--] = (byte) pos,
-                (**ba).data[(**ba).len - count--] = (byte) (pos >> 8),
-                (**ba).data[(**ba).len - count--] = (byte) (pos >> 16),
-                (**ba).data[(**ba).len - count--] = (byte) (pos >> 24);
-        }
-        else
-        {
-            regbyte_ctx *new_rbc;
-            regbyte_ctx_create (&new_rbc);
-            if (new_rbc == NULL)
-                return 1;
+        mem_free ((void **) &(**by)._F);
+        mem_free ((void **) by);
+    }
+}
 
-            new_rbc->m_prev = *rbc;
-            new_rbc->m_regbyte = em->m_regbyte;
-            *rbc = new_rbc;
+static void bytepool_create (bytepool **by, int len)
+{
+    *by = (bytepool *) (mem_alloc (sizeof (bytepool)));
+    if (*by != NULL)
+    {
+        (**by)._F = (byte *) (mem_alloc (sizeof (byte) * len));
+        (**by)._Siz = len;
 
-            if (em->m_emit_type == et_byte)
-                new_rbc->m_current_value = em->m_byte;
-            else if (em->m_emit_type == et_stream)
-                new_rbc->m_current_value = c;
-        }
+        if ((**by)._F == NULL)
+            bytepool_destroy (by);
+    }
+}
 
-        em = em->m_next;
+static int bytepool_reserve (bytepool *by, unsigned int _N)
+{
+    byte *_P;
+
+    if (_N <= by->_Siz)
+        return 0;
+
+    /* byte pool can only grow and at least by doubling its size */
+    _N = _N >= by->_Siz * 2 ? _N : by->_Siz * 2;
+
+    /* reallocate the memory and adjust pointers to the new memory location */
+    _P = (byte *) (mem_realloc (by->_F, sizeof (byte) * by->_Siz, sizeof (byte) * _N));
+    if (_P != NULL)
+    {
+        by->_F = _P;
+        by->_Siz = _N;
+        return 0;
     }
 
-    return 0;
+    return 1;
 }
 
 /*
@@ -1009,12 +1068,7 @@ static void map_str_destroy (map_str **ma)
     }
 }
 
-static void map_str_append (map_str **ma, map_str **nm)
-{
-    while (*ma)
-        ma = &(**ma).next;
-    *ma = *nm;
-}
+GRAMMAR_IMPLEMENT_LIST_APPEND(map_str)
 
 /*
     searches the map for specified key,
@@ -1073,12 +1127,7 @@ static void map_rule_destroy (map_rule **ma)
     }
 }
 
-static void map_rule_append (map_rule **ma, map_rule **nm)
-{
-    while (*ma)
-        ma = &(**ma).next;
-    *ma = *nm;
-}
+GRAMMAR_IMPLEMENT_LIST_APPEND(map_rule)
 
 /*
     searches the map for specified key,
@@ -1242,6 +1291,24 @@ static int get_identifier (const byte **text, byte **id)
 }
 
 /*
+    converts sequence of DEC digits pointed by *text until non-DEC digit is encountered,
+    advances text pointer past the converted sequence,
+    returns the converted value
+*/
+static unsigned int dec_convert (const byte **text)
+{
+    unsigned int value = 0;
+
+    while (**text >= '0' && **text <= '9')
+    {
+        value = value * 10 + **text - '0';
+        (*text)++;
+    }
+
+    return value;
+}
+
+/*
     returns 1 if given character is HEX digit 0-9, A-F or a-f,
     returns 0 otherwise
 */
@@ -1392,7 +1459,8 @@ static int get_string (const byte **text, byte **str)
 }
 
 /*
-    gets emit code, the syntax is: ".emtcode" " " <symbol> " " ("0x" | "0X") <hex_value>
+    gets emit code, the syntax is:
+    ".emtcode" " " <symbol> " " (("0x" | "0X") <hex_value>) | <dec_value> | <character>
     assumes that *text already points to <symbol>,
     returns 0 if emit code is successfully read,
     returns 1 otherwise
@@ -1426,11 +1494,15 @@ static int get_emtcode (const byte **text, map_byte **ma)
         m->data = (byte) c[0];
         mem_free ((void **) (void *) &c);
     }
-    else
+    else if (t[0] == '0' && (t[1] == 'x' || t[1] == 'X'))
     {
         /* skip HEX "0x" or "0X" prefix */
         t += 2;
         m->data = (byte) hex_convert (&t);
+    }
+    else
+    {
+        m->data = (byte) dec_convert (&t);
     }
 
     eat_spaces (&t);
@@ -1441,13 +1513,15 @@ static int get_emtcode (const byte **text, map_byte **ma)
 }
 
 /*
-    gets regbyte declaration, the syntax is: ".regbyte" " " <symbol> " " ("0x" | "0X") <hex_value>
+    gets regbyte declaration, the syntax is:
+    ".regbyte" " " <symbol> " " (("0x" | "0X") <hex_value>) | <dec_value> | <character>
     assumes that *text already points to <symbol>,
     returns 0 if regbyte is successfully read,
     returns 1 otherwise
 */
 static int get_regbyte (const byte **text, map_byte **ma)
 {
+    /* pass it to the emtcode parser as it has the same syntax starting at <symbol> */
     return get_emtcode (text, ma);
 }
 
@@ -1675,10 +1749,17 @@ static int get_emits (const byte **text, emit **em, map_byte *mapb)
     }
 
     /* 0xNN */
-    if (*t == '0')
+    if (*t == '0' && (t[1] == 'x' || t[1] == 'X'))
     {
         t += 2;
         e->m_byte = (byte) hex_convert (&t);
+
+        e->m_emit_type = et_byte;
+    }
+    /* NNN */
+    else if (*t >= '0' && *t <= '9')
+    {
+        e->m_byte = (byte) dec_convert (&t);
 
         e->m_emit_type = et_byte;
     }
@@ -1801,14 +1882,23 @@ static int get_spec (const byte **text, spec **sp, map_str *maps, map_byte *mapb
             else
                 s->m_cond->m_type = ct_equal;
             u += 2;
-
-            /* skip the 0x prefix */
             eat_spaces (&u);
-            u += 2;
 
-            /* get the right operand */
-            s->m_cond->m_operands[1].m_byte = hex_convert (&u);
-            s->m_cond->m_operands[1].m_type = cot_byte;
+            if (u[0] == '0' && (u[1] == 'x' || u[1] == 'X'))
+            {
+                /* skip the 0x prefix */
+                u += 2;
+
+                /* get the right operand */
+                s->m_cond->m_operands[1].m_byte = hex_convert (&u);
+                s->m_cond->m_operands[1].m_type = cot_byte;
+            }
+            else /*if (*u >= '0' && *u <= '9')*/
+            {
+                /* get the right operand */
+                s->m_cond->m_operands[1].m_byte = dec_convert (&u);
+                s->m_cond->m_operands[1].m_type = cot_byte;
+            }
 
             /* skip the right paren */
             eat_spaces (&u);
@@ -1916,7 +2006,6 @@ static int get_spec (const byte **text, spec **sp, map_str *maps, map_byte *mapb
 
             s->m_spec_type = st_identifier_loop;
         }
-
         mem_free ((void **) (void *) &keyword);
     }
     else
@@ -2001,7 +2090,7 @@ static int get_rule (const byte **text, rule **ru, map_str *maps, map_byte *mapb
             return 1;
         }
 
-        spec_append (&r->m_specs, &sp);
+        spec_append (&r->m_specs, sp);
     }
 
     /* skip the semicolon */
@@ -2022,7 +2111,7 @@ static int update_dependency (map_rule *mapr, byte *symbol, rule **ru)
     if (map_rule_find (&mapr, symbol, ru))
         return 1;
 
-/*  (**ru).m_referenced = 1; */
+    (**ru).m_referenced = 1;
 
     return 0;
 }
@@ -2107,32 +2196,32 @@ static int update_dependencies (dict *di, map_rule *mapr, byte **syntax_symbol,
                 }
             }
 
-            sp = sp->m_next;
+            sp = sp->next;
         }
 
-        rulez = rulez->m_next;
+        rulez = rulez->next;
     }
 
-/* check for unreferenced symbols */
-/*  de = di->m_defntns;
-    while (de)
+    /* check for unreferenced symbols */
+    rulez = di->m_rulez;
+    while (rulez != NULL)
     {
-        if (!de->m_referenced)
+        if (!rulez->m_referenced)
         {
-            map_def *ma = mapd;
+            map_rule *ma = mapr;
             while (ma)
             {
-                if (ma->data == de)
+                if (ma->data == rulez)
                 {
-                    assert (0);
-                    break;
+                    set_last_error (UNREFERENCED_IDENTIFIER, str_duplicate (ma->key), -1);
+                    return 1;
                 }
                 ma = ma->next;
             }
         }
-        de = de->m_next;
+        rulez = rulez->next;
     }
-*/
+
     return 0;
 }
 
@@ -2187,8 +2276,6 @@ typedef enum match_result_
 
 /*
     This function does the main job. It parses the text and generates output data.
-
-    XXX optimize it - the barray seems to be the bottleneck
 */
 static match_result match (dict *di, const byte *text, unsigned int *index, rule *ru, barray **ba,
     int filtering_string, regbyte_ctx **rbc)
@@ -2217,6 +2304,7 @@ static match_result match (dict *di, const byte *text, unsigned int *index, rule
                 }
 
                 status = match (di, text, &ind, sp->m_rule, &array, filtering_string, &ctx);
+
                 if (status == mr_internal_error)
                 {
                     free_regbyte_ctx_stack (ctx, *rbc);
@@ -2275,6 +2363,7 @@ static match_result match (dict *di, const byte *text, unsigned int *index, rule
                     for (i = 0; status == mr_matched && i < len; i++)
                         if (text[ind + i] != sp->m_string[i])
                             status = mr_not_matched;
+
                     if (status == mr_matched)
                         ind += len;
                 }
@@ -2407,7 +2496,7 @@ static match_result match (dict *di, const byte *text, unsigned int *index, rule
             return mr_matched;
         }
 
-        sp = sp->m_next;
+        sp = sp->next;
     }
 
     /* everything went fine - all specifiers match up */
@@ -2415,6 +2504,218 @@ static match_result match (dict *di, const byte *text, unsigned int *index, rule
     {
         *index = ind;
         *rbc = ctx;
+        return mr_matched;
+    }
+
+    free_regbyte_ctx_stack (ctx, *rbc);
+    return mr_not_matched;
+}
+
+static match_result fast_match (dict *di, const byte *text, unsigned int *index, rule *ru, int *_PP, bytepool *_BP,
+    int filtering_string, regbyte_ctx **rbc)
+{
+    unsigned int ind = *index;
+    int _P = filtering_string ? 0 : *_PP;
+    int _P2;
+    match_result status = mr_not_matched;
+    spec *sp = ru->m_specs;
+    regbyte_ctx *ctx = *rbc;
+
+    /* for every specifier in the rule */
+    while (sp)
+    {
+        unsigned int i, len, save_ind = ind;
+
+        _P2 = _P + (sp->m_emits ? emit_size (sp->m_emits) : 0);
+        if (bytepool_reserve (_BP, _P2))
+        {
+            free_regbyte_ctx_stack (ctx, *rbc);
+            return mr_internal_error;
+        }
+
+        if (satisfies_condition (sp->m_cond, ctx))
+        {
+            switch (sp->m_spec_type)
+            {
+            case st_identifier:
+                status = fast_match (di, text, &ind, sp->m_rule, &_P2, _BP, filtering_string, &ctx);
+
+                if (status == mr_internal_error)
+                {
+                    free_regbyte_ctx_stack (ctx, *rbc);
+                    return mr_internal_error;
+                }
+                break;
+            case st_string:
+                len = str_length (sp->m_string);
+
+                /* prefilter the stream */
+                if (!filtering_string && di->m_string)
+                {
+                    unsigned int filter_index = 0;
+                    match_result result;
+                    regbyte_ctx *null_ctx = NULL;
+
+                    result = fast_match (di, text + ind, &filter_index, di->m_string, NULL, _BP, 1, &null_ctx);
+
+                    if (result == mr_internal_error)
+                    {
+                        free_regbyte_ctx_stack (ctx, *rbc);
+                        return mr_internal_error;
+                    }
+
+                    if (result != mr_matched)
+                    {
+                        status = mr_not_matched;
+                        break;
+                    }
+
+                    if (filter_index != len || !str_equal_n (sp->m_string, text + ind, len))
+                    {
+                        status = mr_not_matched;
+                        break;
+                    }
+
+                    status = mr_matched;
+                    ind += len;
+                }
+                else
+                {
+                    status = mr_matched;
+                    for (i = 0; status == mr_matched && i < len; i++)
+                        if (text[ind + i] != sp->m_string[i])
+                            status = mr_not_matched;
+
+                    if (status == mr_matched)
+                        ind += len;
+                }
+                break;
+            case st_byte:
+                status = text[ind] == *sp->m_byte ? mr_matched : mr_not_matched;
+                if (status == mr_matched)
+                    ind++;
+                break;
+            case st_byte_range:
+                status = (text[ind] >= sp->m_byte[0] && text[ind] <= sp->m_byte[1]) ?
+                    mr_matched : mr_not_matched;
+                if (status == mr_matched)
+                    ind++;
+                break;
+            case st_true:
+                status = mr_matched;
+                break;
+            case st_false:
+                status = mr_not_matched;
+                break;
+            case st_debug:
+                status = ru->m_oper == op_and ? mr_matched : mr_not_matched;
+                break;
+            case st_identifier_loop:
+                status = mr_dont_emit;
+                for (;;)
+                {
+                    match_result result;
+
+                    save_ind = ind;
+                    result = fast_match (di, text, &ind, sp->m_rule, &_P2, _BP, filtering_string, &ctx);
+
+                    if (result == mr_error_raised)
+                    {
+                        status = result;
+                        break;
+                    }
+                    else if (result == mr_matched)
+                    {
+                        if (!filtering_string)
+                        {
+                            if (sp->m_emits != NULL)
+                            {
+                                if (emit_push (sp->m_emits, _BP->_F + _P, text[ind - 1], save_ind, &ctx))
+                                {
+                                    free_regbyte_ctx_stack (ctx, *rbc);
+                                    return mr_internal_error;
+                                }
+                            }
+
+                            _P = _P2;
+                            _P2 += sp->m_emits ? emit_size (sp->m_emits) : 0;
+                            if (bytepool_reserve (_BP, _P2))
+                            {
+                                free_regbyte_ctx_stack (ctx, *rbc);
+                                return mr_internal_error;
+                            }
+                        }
+                    }
+                    else if (result == mr_internal_error)
+                    {
+                        free_regbyte_ctx_stack (ctx, *rbc);
+                        return mr_internal_error;
+                    }
+                    else
+                        break;
+                }
+                break;
+            }
+        }
+        else
+        {
+            status = mr_not_matched;
+        }
+
+        if (status == mr_error_raised)
+        {
+            free_regbyte_ctx_stack (ctx, *rbc);
+
+            return mr_error_raised;
+        }
+
+        if (ru->m_oper == op_and && status != mr_matched && status != mr_dont_emit)
+        {
+            free_regbyte_ctx_stack (ctx, *rbc);
+
+            if (sp->m_errtext)
+            {
+                set_last_error (sp->m_errtext->m_text, error_get_token (sp->m_errtext, di, text,
+                    ind), ind);
+
+                return mr_error_raised;
+            }
+
+            return mr_not_matched;
+        }
+
+        if (status == mr_matched)
+        {
+            if (sp->m_emits != NULL)
+                if (emit_push (sp->m_emits, _BP->_F + _P, text[ind - 1], save_ind, &ctx))
+                {
+                    free_regbyte_ctx_stack (ctx, *rbc);
+                    return mr_internal_error;
+                }
+
+            _P = _P2;
+        }
+
+        /* if the rule operator is a logical or, we pick up the first matching specifier */
+        if (ru->m_oper == op_or && (status == mr_matched || status == mr_dont_emit))
+        {
+            *index = ind;
+            *rbc = ctx;
+            if (!filtering_string)
+                *_PP = _P;
+            return mr_matched;
+        }
+
+        sp = sp->next;
+    }
+
+    /* everything went fine - all specifiers match up */
+    if (ru->m_oper == op_and && (status == mr_matched || status == mr_dont_emit))
+    {
+        *index = ind;
+        *rbc = ctx;
+        if (!filtering_string)
+            *_PP = _P;
         return mr_matched;
     }
 
@@ -2558,7 +2859,7 @@ grammar grammar_load_from_text (const byte *text)
                 return 0;
             }
 
-            map_byte_append (&g->mapb, &ma);
+            map_byte_append (&g->mapb, ma);
         }
         /* .regbyte */
         else if (is_dot && str_equal (symbol, (byte *) "regbyte"))
@@ -2573,7 +2874,7 @@ grammar grammar_load_from_text (const byte *text)
                 return 0;
             }
 
-            map_byte_append (&g->di->m_regbytes, &ma);
+            map_byte_append (&g->di->m_regbytes, ma);
         }
         /* .errtext */
         else if (is_dot && str_equal (symbol, (byte *) "errtext"))
@@ -2588,7 +2889,7 @@ grammar grammar_load_from_text (const byte *text)
                 return 0;
             }
 
-            map_str_append (&g->maps, &ma);
+            map_str_append (&g->maps, ma);
         }
         /* .string */
         else if (is_dot && str_equal (symbol, (byte *) "string"))
@@ -2623,7 +2924,7 @@ grammar grammar_load_from_text (const byte *text)
                 return 0;
             }
 
-            rule_append (&g->di->m_rulez, &ru);
+            rule_append (&g->di->m_rulez, ru);
 
             /* if a rule consist of only one specifier, give it an ".and" operator */
             if (ru->m_oper == op_none)
@@ -2638,7 +2939,7 @@ grammar grammar_load_from_text (const byte *text)
 
             ma->key = symbol;
             ma->data = ru;
-            map_rule_append (&g->mapr, &ma);
+            map_rule_append (&g->mapr, ma);
         }
     }
 
@@ -2649,7 +2950,7 @@ grammar grammar_load_from_text (const byte *text)
         return 0;
     }
 
-    dict_append (&g_dicts, &g->di);
+    dict_append (&g_dicts, g->di);
     id = g->di->m_id;
     g->di = NULL;
 
@@ -2683,12 +2984,14 @@ int grammar_set_reg8 (grammar id, const byte *name, byte value)
     return 1;
 }
 
-int grammar_check (grammar id, const byte *text, byte **prod, unsigned int *size)
+/*
+    internal checking function used by both grammar_check and grammar_fast_check functions
+*/
+static int _grammar_check (grammar id, const byte *text, byte **prod, unsigned int *size,
+    unsigned int estimate_prod_size, int use_fast_path)
 {
     dict *di = NULL;
-    barray *ba = NULL;
     unsigned int index = 0;
-    regbyte_ctx *rbc = NULL;
 
     clear_last_error ();
 
@@ -2699,34 +3002,75 @@ int grammar_check (grammar id, const byte *text, byte **prod, unsigned int *size
         return 0;
     }
 
-    barray_create (&ba);
-    if (ba == NULL)
-        return 0;
-
     *prod = NULL;
     *size = 0;
 
-    if (match (di, text, &index, di->m_syntax, &ba, 0, &rbc) != mr_matched)
+    if (use_fast_path)
     {
-        barray_destroy (&ba);
+        regbyte_ctx *rbc = NULL;
+        bytepool *bp = NULL;
+        int _P = 0;
+
+        bytepool_create (&bp, estimate_prod_size);
+        if (bp == NULL)
+            return 0;
+
+        if (fast_match (di, text, &index, di->m_syntax, &_P, bp, 0, &rbc) != mr_matched)
+        {
+            bytepool_destroy (&bp);
+            free_regbyte_ctx_stack (rbc, NULL);
+            return 0;
+        }
+
         free_regbyte_ctx_stack (rbc, NULL);
-        return 0;
+
+        *prod = bp->_F;
+        *size = _P;
+        bp->_F = NULL;
+        bytepool_destroy (&bp);
     }
-
-    free_regbyte_ctx_stack (rbc, NULL);
-
-    *prod = (byte *) mem_alloc (ba->len * sizeof (byte));
-    if (*prod == NULL)
+    else
     {
-        barray_destroy (&ba);
-        return 0;
-    }
+        regbyte_ctx *rbc = NULL;
+        barray *ba = NULL;
 
-    mem_copy (*prod, ba->data, ba->len * sizeof (byte));
-    *size = ba->len;
-    barray_destroy (&ba);
+        barray_create (&ba);
+        if (ba == NULL)
+            return 0;
+
+        if (match (di, text, &index, di->m_syntax, &ba, 0, &rbc) != mr_matched)
+        {
+            barray_destroy (&ba);
+            free_regbyte_ctx_stack (rbc, NULL);
+            return 0;
+        }
+
+        free_regbyte_ctx_stack (rbc, NULL);
+
+        *prod = (byte *) mem_alloc (ba->len * sizeof (byte));
+        if (*prod == NULL)
+        {
+            barray_destroy (&ba);
+            return 0;
+        }
+
+        mem_copy (*prod, ba->data, ba->len * sizeof (byte));
+        *size = ba->len;
+        barray_destroy (&ba);
+    }
 
     return 1;
+}
+
+int grammar_check (grammar id, const byte *text, byte **prod, unsigned int *size)
+{
+    return _grammar_check (id, text, prod, size, 0, 0);
+}
+
+int grammar_fast_check (grammar id, const byte *text, byte **prod, unsigned int *size,
+    unsigned int estimate_prod_size)
+{
+    return _grammar_check (id, text, prod, size, estimate_prod_size, 1);
 }
 
 int grammar_destroy (grammar id)
@@ -2740,16 +3084,36 @@ int grammar_destroy (grammar id)
         if ((**di).m_id == id)
         {
             dict *tmp = *di;
-            *di = (**di).m_next;
+            *di = (**di).next;
             dict_destroy (&tmp);
             return 1;
         }
 
-        di = &(**di).m_next;
+        di = &(**di).next;
     }
 
     set_last_error (INVALID_GRAMMAR_ID, NULL, -1);
     return 0;
+}
+
+static void append_character (const char x, byte *text, int *dots_made, int *len, int size)
+{
+    if (*dots_made == 0)
+    {
+        if (*len < size - 1)
+        {
+            text[(*len)++] = x;
+            text[*len] = '\0';
+        }
+        else
+        {
+            int i;
+            for (i = 0; i < 3; i++)
+                if (--(*len) >= 0)
+                    text[*len] = '.';
+            *dots_made = 1;
+        }
+    }
 }
 
 void grammar_get_last_error (byte *text, unsigned int size, int *pos)
@@ -2759,38 +3123,27 @@ void grammar_get_last_error (byte *text, unsigned int size, int *pos)
 
     *text = '\0';
 
-#define APPEND_CHARACTER(x) if (dots_made == 0) {\
-                                if (len < (int)size - 1) {\
-                                    text[len++] = (x); text[len] = '\0';\
-                                } else {\
-                                    int i;\
-                                    for (i = 0; i < 3; i++)\
-                                        if (--len >= 0)\
-                                            text[len] = '.';\
-                                    dots_made = 1;\
-                                }\
-                            }
-
-    if (p) {
-	while (*p) {
-            if (*p == '$') {
+    if (p)
+    {
+        while (*p)
+        {
+            if (*p == '$')
+            {
                 const byte *r = error_param;
 
-                while (*r) {
-                    APPEND_CHARACTER(*r)
-                    r++;
+                while (*r)
+                {
+                    append_character (*r++, text, &dots_made, &len, (int) size);
                 }
+
                 p++;
             }
-            else {
-                APPEND_CHARACTER(*p)
-                p++;
+            else
+            {
+                append_character (*p++, text, &dots_made, &len, size);
             }
-	}
+        }
     }
+
     *pos = error_position;
-
-#undef APPEND_CHARACTER
-
 }
-
