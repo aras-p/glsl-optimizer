@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.0
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -238,9 +238,10 @@ static void _tnl_import_attrib( GLcontext *ctx,
 
 
 
-
-
-
+/*
+ * XXX Is count correct?  From some of the callers, it appears that
+ * this should perhaps be an "end" index, ala the "start" index.
+ */
 void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.0
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -90,6 +90,9 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
    if (tnl->pipeline.build_state_changes)
       _tnl_validate_pipeline( ctx );
 
+   /* XXX is "end" correct?  Looking at the implementation of
+    * _tnl_vb_bind_arrays(), perhaps we should pass end-start.
+    */
    _tnl_vb_bind_arrays( ctx, start, end );
 
    tnl->vb.Primitive = &prim;
@@ -157,7 +160,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
       fallback_drawarrays( ctx, mode, start, start + count );
    } 
    else if (ctx->Array.LockCount && 
-	    count < (GLint) ctx->Const.MaxArrayLockSize) {
+	    count <= (GLint) ctx->Const.MaxArrayLockSize) {
       
       struct tnl_prim prim;
 
@@ -234,7 +237,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	  * must use the slow path if they cannot fit in a single
 	  * vertex buffer.  
 	  */
-	 if (count < (GLint) ctx->Const.MaxArrayLockSize) {
+	 if (count <= (GLint) ctx->Const.MaxArrayLockSize) {
 	    bufsz = ctx->Const.MaxArrayLockSize;
 	    minimum = 0;
 	    modulo = 1;
@@ -258,6 +261,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 
 	 nr = MIN2( bufsz, count - j );
 
+         /* XXX is the last parameter a count or index into the array??? */
 	 _tnl_vb_bind_arrays( ctx, j - minimum, j + nr );
 
 	 tnl->vb.Primitive = &prim;
@@ -352,12 +356,13 @@ _tnl_DrawRangeElements(GLenum mode,
 		     "elements outside locked range.");
       }
    }
-   else if (end + 1 - start < ctx->Const.MaxArrayLockSize) {
+   else if (end - start + 1 <= ctx->Const.MaxArrayLockSize) {
       /* The arrays aren't locked but we can still fit them inside a
        * single vertexbuffer.
        */
       _tnl_draw_range_elements( ctx, mode, start, end + 1, count, ui_indices );
-   } else {
+   }
+   else {
       /* Range is too big to optimize:
        */
       fallback_drawelements( ctx, mode, count, ui_indices );
@@ -411,6 +416,7 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
 	 if (ui_indices[i] > max_elt)
             max_elt = ui_indices[i];
 
+      /* XXX should this < really be <= ??? */
       if (max_elt < ctx->Const.MaxArrayLockSize && /* can we use it? */
 	  max_elt < (GLuint) count) 	           /* do we want to use it? */
 	 _tnl_draw_range_elements( ctx, mode, 0, max_elt+1, count, ui_indices );
