@@ -75,7 +75,7 @@ static void TAG(emit)( GLcontext *ctx,
 	    proj =  (GLfloat (*)[4])((GLubyte *)proj +  proj_stride);
 	 }
 	 if (IND & TDFX_RGBA_BIT) {
-	    GLubyte *b = (GLubyte *)&v[4];
+	    GLubyte *b = (GLubyte *)((GLuint *)v + 4);
 	    UNCLAMPED_FLOAT_TO_UBYTE(b[0], col[0][2]);
 	    UNCLAMPED_FLOAT_TO_UBYTE(b[1], col[0][1]);
 	    UNCLAMPED_FLOAT_TO_UBYTE(b[2], col[0][0]);
