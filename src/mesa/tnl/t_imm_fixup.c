@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.26 2001/08/03 00:16:36 keithw Exp $ */
+/* $Id: t_imm_fixup.c,v 1.27 2001/11/26 12:56:07 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -735,7 +735,12 @@ _tnl_get_exec_copy_verts( GLcontext *ctx, struct immediate *IM )
       tnl->ExecCopySource = IM;
       tnl->ExecCopyCount = 0;
       tnl->ExecCopyTexSize = IM->CopyTexSize;
-      tnl->ExecParity = IM->PrimitiveLength[IM->LastPrimitive] & 1;
+
+      if (IM->LastPrimitive != IM->CopyStart)
+	 tnl->ExecParity = 0;
+	 
+      tnl->ExecParity ^= IM->PrimitiveLength[IM->LastPrimitive] & 1;
+
 
       if (pincr != 1 && (IM->Count - last - pintro))
 	 ovf = (IM->Count - last - pintro) % pincr;
