@@ -152,9 +152,10 @@ r200TryReadPixels( GLcontext *ctx,
 		  GLvoid *pixels )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLint size;
    GLint pitch = pack->RowLength ? pack->RowLength : width;
    GLint blit_format;
+   GLuint cpp = rmesa->r200Screen->cpp;
+   GLint size = width * height * cpp;
 
    if (R200_DEBUG & DEBUG_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
