@@ -94,10 +94,9 @@ drmtest: xf86drm.o drmtest.o
 	rm -f drmtest && $(CC) -o drmtest xf86drm.o drmtest.o
 
 
-depend: $(C_SOURCES) $(ASM_SOURCES)
+depend: $(C_SOURCES) $(ASM_SOURCES) Makefile
 	touch depend
-	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(C_SOURCES) $(ASM_SOURCES) \
-		> /dev/null 
+	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(C_SOURCES) $(ASM_SOURCES) 
 
 
 # Emacs tags
