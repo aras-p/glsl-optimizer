@@ -1092,7 +1092,7 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
                            texImage->Format,
                            texImage->TexFormat, texImage->Data,
                            width, height, depth, /* src size */
-                           xoffset, yoffset, xoffset, /* dest offsets */
+                           xoffset, yoffset, zoffset, /* dest offsets */
                            texImage->Width * texelBytes,  /* dst row stride */
                            texImage->Width * texImage->Height * texelBytes,
                            format, type, pixels, packing);
