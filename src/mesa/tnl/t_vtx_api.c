@@ -981,7 +981,8 @@ static void GLAPIENTRY _tnl_Begin( GLenum mode )
 
       if (ctx->NewState) {
 	 _mesa_update_state( ctx );
-	 ctx->Exec->Begin(mode);
+	 if (!(tnl->Driver.NotifyBegin && tnl->Driver.NotifyBegin( ctx, mode )))
+	     ctx->Exec->Begin(mode);
 	 return;
       }
 

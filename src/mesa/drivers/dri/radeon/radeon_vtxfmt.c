@@ -705,12 +705,6 @@ void radeonVtxfmtInvalidate( GLcontext *ctx )
 }
 
 
-static void radeonNewList( GLcontext *ctx, GLuint list, GLenum mode )
-{
-   VFMT_FALLBACK_OUTSIDE_BEGIN_END( __FUNCTION__ );
-}
-
-
 static void radeonVtxfmtValidate( GLcontext *ctx )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
@@ -730,7 +724,6 @@ static void radeonVtxfmtValidate( GLcontext *ctx )
 
 	 _mesa_install_exec_vtxfmt( ctx, &rmesa->vb.vtxfmt );
 	 ctx->Driver.FlushVertices = radeonVtxfmtFlushVertices;
-	 ctx->Driver.NewList = radeonNewList;
 	 rmesa->vb.installed = GL_TRUE;
       }
       else if (RADEON_DEBUG & DEBUG_VFMT)
@@ -999,6 +992,14 @@ void radeonVtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
    vfmt->MultiTexCoord4fvARB = radeon_fallback_MultiTexCoord4fvARB;
    vfmt->Vertex4f = radeon_fallback_Vertex4f;
    vfmt->Vertex4fv = radeon_fallback_Vertex4fv;
+   vfmt->VertexAttrib1fNV  = radeon_fallback_VertexAttrib1fNV;
+   vfmt->VertexAttrib1fvNV = radeon_fallback_VertexAttrib1fvNV;
+   vfmt->VertexAttrib2fNV  = radeon_fallback_VertexAttrib2fNV;
+   vfmt->VertexAttrib2fvNV = radeon_fallback_VertexAttrib2fvNV;
+   vfmt->VertexAttrib3fNV  = radeon_fallback_VertexAttrib3fNV;
+   vfmt->VertexAttrib3fvNV = radeon_fallback_VertexAttrib3fvNV;
+   vfmt->VertexAttrib4fNV  = radeon_fallback_VertexAttrib4fNV;
+   vfmt->VertexAttrib4fvNV = radeon_fallback_VertexAttrib4fvNV;
 
    (void)radeon_fallback_vtxfmt;
 

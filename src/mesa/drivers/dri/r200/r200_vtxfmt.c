@@ -744,12 +744,6 @@ void r200VtxfmtInvalidate( GLcontext *ctx )
 }
 
 
-static void r200NewList( GLcontext *ctx, GLuint list, GLenum mode )
-{
-   VFMT_FALLBACK_OUTSIDE_BEGIN_END( __FUNCTION__ );
-}
-
-
 static void r200VtxfmtValidate( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
@@ -769,7 +763,6 @@ static void r200VtxfmtValidate( GLcontext *ctx )
 
 	 _mesa_install_exec_vtxfmt( ctx, &rmesa->vb.vtxfmt );
 	 ctx->Driver.FlushVertices = r200VtxFmtFlushVertices;
-	 ctx->Driver.NewList = r200NewList;
 	 rmesa->vb.installed = GL_TRUE;
       }
       else if (R200_DEBUG & DEBUG_VFMT)
@@ -1037,6 +1030,14 @@ void r200VtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
    vfmt->MultiTexCoord4fvARB = r200_fallback_MultiTexCoord4fvARB;
    vfmt->Vertex4f = r200_fallback_Vertex4f;
    vfmt->Vertex4fv = r200_fallback_Vertex4fv;
+   vfmt->VertexAttrib1fNV  = r200_fallback_VertexAttrib1fNV;
+   vfmt->VertexAttrib1fvNV = r200_fallback_VertexAttrib1fvNV;
+   vfmt->VertexAttrib2fNV  = r200_fallback_VertexAttrib2fNV;
+   vfmt->VertexAttrib2fvNV = r200_fallback_VertexAttrib2fvNV;
+   vfmt->VertexAttrib3fNV  = r200_fallback_VertexAttrib3fNV;
+   vfmt->VertexAttrib3fvNV = r200_fallback_VertexAttrib3fvNV;
+   vfmt->VertexAttrib4fNV  = r200_fallback_VertexAttrib4fNV;
+   vfmt->VertexAttrib4fvNV = r200_fallback_VertexAttrib4fvNV;
 
    (void)r200_fallback_vtxfmt;
 
