@@ -24,7 +24,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#ifndef __VMS
+# include <sys/param.h>
+#endif
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <signal.h>
