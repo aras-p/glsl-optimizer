@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.76 2000/06/29 18:55:52 brianp Exp $ */
+/* $Id: context.c,v 1.77 2000/06/30 22:11:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1073,6 +1073,10 @@ init_attrib_groups( GLcontext *ctx )
    ASSIGN_4V(ctx->Pixel.PostColorMatrixBias, 0.0, 0.0, 0.0, 0.0);
    ASSIGN_4V(ctx->Pixel.ColorTableScale, 1.0, 1.0, 1.0, 1.0);
    ASSIGN_4V(ctx->Pixel.ColorTableBias, 0.0, 0.0, 0.0, 0.0);
+   ASSIGN_4V(ctx->Pixel.PCCTscale, 1.0, 1.0, 1.0, 1.0);
+   ASSIGN_4V(ctx->Pixel.PCCTbias, 0.0, 0.0, 0.0, 0.0);
+   ASSIGN_4V(ctx->Pixel.PCMCTscale, 1.0, 1.0, 1.0, 1.0);
+   ASSIGN_4V(ctx->Pixel.PCMCTbias, 0.0, 0.0, 0.0, 0.0);
    ctx->Pixel.ColorTableEnabled = GL_FALSE;
    ctx->Pixel.PostConvolutionColorTableEnabled = GL_FALSE;
    ctx->Pixel.PostColorMatrixColorTableEnabled = GL_FALSE;
