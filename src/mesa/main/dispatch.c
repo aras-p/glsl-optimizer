@@ -1,8 +1,8 @@
-/* $Id: dispatch.c,v 1.15 2000/02/02 19:34:08 brianp Exp $ */
+/* $Id: dispatch.c,v 1.16 2000/09/05 20:17:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
@@ -64,6 +64,7 @@
 
 #ifdef DEBUG
 
+#if 0
 static int
 trace(void)
 {
@@ -72,26 +73,27 @@ trace(void)
       trace = getenv("MESA_TRACE") ? 1 : 0;
    return trace > 0;
 }
+#endif
 
 #define F stderr
 
 #define DISPATCH(FUNC, ARGS, MESSAGE)					\
    const struct _glapi_table *dispatch;					\
    dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
-   if (trace()) {							\
-      fprintf MESSAGE;							\
-      fprintf(F, "\n");							\
-   }									\
    (dispatch->FUNC) ARGS
 
 #define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 				\
    const struct _glapi_table *dispatch;					\
    dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
+   return (dispatch->FUNC) ARGS
+
+#if 0
+   /* From both macros above... */
    if (trace()) {							\
       fprintf MESSAGE;							\
       fprintf(F, "\n");							\
-   }									\
-   return (dispatch->FUNC) ARGS
+   }
+#endif
 
 #else
 
