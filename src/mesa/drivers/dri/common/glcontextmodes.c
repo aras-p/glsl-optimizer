@@ -33,8 +33,11 @@
 
 #ifdef DRI_NEW_INTERFACE_ONLY
 # include <stdlib.h>
+# include <string.h>
 # include <GL/gl.h>
 # include "dri_interface.h"
+# include "imports.h"
+# define __glXMemset  memset
 #else
 # include <X11/X.h>
 # include <GL/glx.h>
@@ -44,11 +47,13 @@
 #  include "GL/glx_ansic.h"
 extern void * __glXMalloc( size_t size );
 extern void __glXFree( void * ptr );
-#  define Xmalloc __glXMalloc
-#  define Xfree   __glXFree
+#  define _mesa_malloc(b) __glXMalloc(b)
+#  define _mesa_free(m)   __glXFree(m)
 # else
 #  include <X11/Xlibint.h>
 #  define __glXMemset  memset
+#  define _mesa_malloc(b) Xmalloc(b)
+#  define _mesa_free(m) Xfree(m)
 # endif /* XFree86Server */
 #endif  /* DRI_NEW_INTERFACE_ONLY */
 
@@ -355,7 +360,7 @@ _gl_context_modes_create( unsigned count, size_t minimum_size )
 
    next = & base;
    for ( i = 0 ; i < count ; i++ ) {
-      *next = (__GLcontextModes *) Xmalloc( size );
+      *next = (__GLcontextModes *) _mesa_malloc( size );
       if ( *next == NULL ) {
 	 _gl_context_modes_destroy( base );
 	 base = NULL;
@@ -396,7 +401,7 @@ _gl_context_modes_destroy( __GLcontextModes * modes )
    while ( modes != NULL ) {
       __GLcontextModes * const next = modes->next;
 
-      Xfree( modes );
+      _mesa_free( modes );
       modes = next;
    }
 }
