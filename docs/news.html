@@ -7,6 +7,50 @@
 <H1>News</H1>
 
 
+<h2>March 30, 2003</h2>
+
+<p>
+Mesa 5.0.1 has been released.  This is a stable, bug-fix release.
+</p>
+<pre>
+    New:
+	- DOS driver updates from Daniel Borca
+	- updated GL/gl_mangle.h file (Bill Hoffman)
+    Bug fixes:
+	- auto mipmap generation for cube maps was broken (bug 641363)
+	- writing/clearing software alpha channels was unreliable
+	- minor compilation fixes for OS/2 (Evgeny Kotsuba)
+	- fixed some bad assertions found with shadowtex demo
+	- fixed error checking bug in glCopyTexSubImage2D (bug 659020)
+	- glRotate(angle, -x, 0, 0) was incorrect (bug 659677)
+	- fixed potential segfault in texture object validation (bug 659012)
+	- fixed some bogus code in _mesa_test_os_sse_exception_support (Linus)
+	- fix fog stride bug in tnl code for h/w drivers (Michel Danzer)
+	- fixed glActiveTexture / glMatrixMode(GL_TEXTURE) bug (#669080)
+	- glGet(GL_CURRENT_SECONDARY_COLOR) should return 4 values, not 3
+	- fixed compilation problem on Solaris7/x86 (bug 536406)
+	- fixed prefetch bug in 3DNow! code (Felix Kuhling)
+	- fixed NeXT build problem (FABSF macro)
+	- glDrawPixels Z values when glPixelZoom!=1 were invalid (bug 687811)
+	- zoomed glDraw/CopyPixels with clipping sometimes failed (bug 689964)
+	- AA line and triangle Z values are now rounded, not truncated
+	- fixed color interpolation bug when GLchan==GLfloat (bug 694461)
+	- glArePrograms/TexturesResident() wasn't 100% correct (Jose Fonseca)
+	- fixed a minor GL_COLOR_MATERIAL bug
+	- NV vertex program EXP instruction was broken
+	- glColorMask misbehaved with X window / pixmap rendering
+	- fix autoconf/libtool GLU C++ linker problem on Linux (a total hack)
+	- attempt to fix GGI compilation problem when MesaDemos not present
+	- NV vertex program ARL-relative fetches didn't work
+    Changes:
+	- use glPolygonOffset in gloss demo to avoid z-fighting artifacts
+	- updated winpos and pointblast demos to use ARB extensions
+	- disable SPARC normal transformation code (bug 673938)
+	- GLU fixes for OS/2 (Evgeny Kotsuba)
+</pre>
+
+
+
 <h2>March 7, 2003</h2>
 <p>
 Website and documentation overhaul.
@@ -557,6 +601,6 @@ source code</a>.</p>
 
 
 <hr>
-$Id: news.html,v 3.2 2003/03/19 19:15:29 brianp Exp $
+$Id: news.html,v 3.3 2003/03/30 16:17:59 brianp Exp $
 </body>
 </html>
