@@ -880,14 +880,11 @@ static GLboolean fxIsInHardware(GLcontext *ctx)
   }
   /* Unsupported texture/multitexture cases */
 
-  if(fxMesa->emulateTwoTMUs) {
-    if((ctx->_Enabled & (TEXTURE0_3D | TEXTURE1_3D)) ||
-       /* Not very well written ... */
-       ((ctx->_Enabled & (TEXTURE0_1D | TEXTURE1_1D)) &&
-        ((ctx->_Enabled & (TEXTURE0_2D | TEXTURE1_2D))!=(TEXTURE0_2D | TEXTURE1_2D)))
-       ) {
-      return GL_FALSE;
-    }
+  if (fxMesa->emulateTwoTMUs) {
+    if (ctx->Texture._ReallyEnabled & (TEXTURE0_3D | TEXTURE1_3D))
+      return GL_FALSE;  /* can't do 3D textures */
+    if (ctx->Texture._ReallyEnabled & (TEXTURE0_1D | TEXTURE1_1D))
+      return GL_FALSE;  /* can't do 1D textures */
 
     if (ctx->Texture._ReallyEnabled & TEXTURE0_2D) {
       if (ctx->Texture.Unit[0].EnvMode == GL_BLEND &&

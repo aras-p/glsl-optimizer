@@ -788,7 +788,8 @@ void fxTexGetFormat(GLenum glformat, GrTextureFormat_t *tfmt, GLint *ifmt)
       break;
     default:
       fprintf(stderr,
-              "fx Driver: unsupported internalFormat in fxTexGetFormat()\n");
+       "fx Driver: unsupported internalFormat (0x%x) in fxTexGetFormat()\n",
+              glformat);
       fxCloseHardware();
       exit(-1);
       break;
@@ -860,7 +861,6 @@ fetch_luminance8(GLcontext *ctx,
    rgba[GCOMP] = *texel;
    rgba[BCOMP] = *texel;
    rgba[ACOMP] = 255;
-
 }
 
 
@@ -914,6 +914,7 @@ fetch_luminance8_alpha8(GLcontext *ctx,
    rgba[BCOMP] = texel[0];
    rgba[ACOMP] = texel[1];
 }
+
 
 static void
 fetch_r5g6b5(GLcontext *ctx,
@@ -1001,7 +1002,7 @@ fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
 {
    fxMesaContext fxMesa = (fxMesaContext)ctx->DriverCtx;
    GrTextureFormat_t gldformat;
-   tfxTexInfo *ti = fxTMGetTexInfo(texObj);
+   tfxTexInfo *ti;
    tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    MesaIntTexFormat mesaFormat;
    GLint texelSize;
@@ -1014,6 +1015,7 @@ fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
 
    if (!texObj->DriverData)
       texObj->DriverData = fxAllocTexObjData(fxMesa);
+   ti = fxTMGetTexInfo(texObj);
 
    if (!mml) {
       texImage->DriverData = MALLOC(sizeof(tfxMipMapLevel));
@@ -1025,8 +1027,8 @@ fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
    fxTexGetInfo(width, height, NULL, NULL, NULL, NULL,
                 NULL, NULL, &mml->wScale, &mml->hScale);
     
-   mml->width = texImage->Width * mml->wScale;
-   mml->height = texImage->Height * mml->hScale;
+   mml->width = width * mml->wScale;
+   mml->height = height * mml->hScale;
 
    switch (internalFormat) {
    case GL_INTENSITY:
@@ -1034,6 +1036,7 @@ fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
    case GL_INTENSITY8:
    case GL_INTENSITY12:
    case GL_INTENSITY16:
+      texImage->Format = GL_INTENSITY;
       texImage->FetchTexel = fetch_intensity8;
       texelSize = 1;
       mesaFormat = MESA_I8;
@@ -1044,6 +1047,7 @@ fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
    case GL_LUMINANCE8:
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
+      texImage->Format = GL_LUMINANCE;
       texImage->FetchTexel = fetch_luminance8;
       texelSize = 1;
       mesaFormat = MESA_L8;
@@ -1053,6 +1057,7 @@ fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
    case GL_ALPHA8:
    case GL_ALPHA12:
    case GL_ALPHA16:
+      texImage->Format = GL_ALPHA;
       texImage->FetchTexel = fetch_alpha8;
       texelSize = 1;
       mesaFormat = MESA_A8;
@@ -1064,6 +1069,7 @@ fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
    case GL_COLOR_INDEX8_EXT:
    case GL_COLOR_INDEX12_EXT:
    case GL_COLOR_INDEX16_EXT:
+      texImage->Format = GL_COLOR_INDEX;
       texImage->FetchTexel = fetch_index8;
       texelSize = 1;
       mesaFormat = MESA_C8;
@@ -1076,6 +1082,7 @@ fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
    case GL_LUMINANCE12_ALPHA4:
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
+      texImage->Format = GL_LUMINANCE_ALPHA;
       texImage->FetchTexel = fetch_luminance8_alpha8;
       texelSize = 2;
       mesaFormat = MESA_A8_L8;
@@ -1089,6 +1096,7 @@ fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
+      texImage->Format = GL_RGB;
       texImage->FetchTexel = fetch_r5g6b5;
       texelSize = 2;
       mesaFormat = MESA_R5_G6_B5;
@@ -1101,11 +1109,13 @@ fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
+      texImage->Format = GL_RGBA;
       texImage->FetchTexel = fetch_r4g4b4a4;
       texelSize = 2;
       mesaFormat = MESA_A4_R4_G4_B4;
       break;
    case GL_RGB5_A1:
+      texImage->Format = GL_RGBA;
       texImage->FetchTexel = fetch_r5g5b5a1;
       texelSize = 2;
       mesaFormat = MESA_A1_R5_G5_B5;
@@ -1116,8 +1126,9 @@ fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
    }
 
    _mesa_set_teximage_component_sizes(mesaFormat, texImage);
+   texImage->Type = 0; /* indicates a driver-specific format */
 
-   /* allocate new storage for texture image, if needed */
+   /* allocate storage for texture image */
    texImage->Data = MALLOC(mml->width * mml->height * texelSize);
    if (!texImage->Data)
       return;
