@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.9 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: light.c,v 1.10 1999/11/22 18:58:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,9 +54,12 @@ _mesa_ShadeModel( GLenum mode )
       fprintf(stderr, "glShadeModel %s\n", gl_lookup_enum_by_nr(mode));
 
    if (mode == GL_FLAT || mode == GL_SMOOTH) {
-      if (ctx->Light.ShadeModel!=mode) {
+      if (ctx->Light.ShadeModel != mode) {
          ctx->Light.ShadeModel = mode;
-         ctx->TriangleCaps ^= DD_FLATSHADE;
+         if (ctx->Light.ShadeModel == GL_FLAT)
+            SET_BITS(ctx->TriangleCaps, DD_FLATSHADE);
+         else
+            CLEAR_BITS(ctx->TriangleCaps, DD_FLATSHADE);
          ctx->NewState |= NEW_RASTER_OPS;
          if (ctx->Driver.ShadeModel) 
             (*ctx->Driver.ShadeModel)( ctx, mode );
@@ -377,11 +380,11 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
       case GL_LIGHT_MODEL_COLOR_CONTROL:
          if (params[0] == (GLfloat) GL_SINGLE_COLOR) {
             ctx->Light.Model.ColorControl = GL_SINGLE_COLOR;
-            ctx->TriangleCaps &= ~DD_SEPERATE_SPECULAR;
+            CLEAR_BITS(ctx->TriangleCaps, DD_SEPERATE_SPECULAR);
          }
          else if (params[0] == (GLfloat) GL_SEPARATE_SPECULAR_COLOR) {
             ctx->Light.Model.ColorControl = GL_SEPARATE_SPECULAR_COLOR;
-	    ctx->TriangleCaps |= DD_SEPERATE_SPECULAR;
+	    SET_BITS(ctx->TriangleCaps, DD_SEPERATE_SPECULAR);
 	 }
          else {
             gl_error( ctx, GL_INVALID_ENUM, "glLightModel(param)" );
