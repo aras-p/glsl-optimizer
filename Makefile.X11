@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.101 2003/12/13 01:58:41 brianp Exp $
+# $Id: Makefile.X11,v 1.102 2003/12/17 15:11:41 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -418,11 +418,11 @@ clean:
 	if ! [ -f progs/miniglx/depend ] ; then touch progs/miniglx/depend ; fi
 	-rm -f include/GL/*~
 	cd src/mesa          && $(MAKE) -f Makefile.X11 $@ || true
-	cd src/mesa/drivers/dri/r200   && $(MAKE) -f Makefile.X11 $@ || true
-	cd src/mesa/drivers/dri/r128   && $(MAKE) -f Makefile.X11 $@ || true
-	cd src/mesa/drivers/dri/radeon && $(MAKE) -f Makefile.X11 $@ || true
-	cd src/mesa/drivers/dri/mga    && $(MAKE) -f Makefile.X11 $@ || true
-	cd src/mesa/drivers/dri/fb     && $(MAKE) -f Makefile.X11 $@ || true
+	cd src/mesa/drivers/dri/r200   && $(MAKE) -f Makefile.solo $@ || true
+	cd src/mesa/drivers/dri/r128   && $(MAKE) -f Makefile.solo $@ || true
+	cd src/mesa/drivers/dri/radeon && $(MAKE) -f Makefile.solo $@ || true
+	cd src/mesa/drivers/dri/mga    && $(MAKE) -f Makefile.solo $@ || true
+	cd src/mesa/drivers/dri/fb     && $(MAKE) -f Makefile.solo $@ || true
 	cd src/glu/mesa      && $(MAKE) -f Makefile.X11 $@ || true
 	cd src/glu/sgi       && $(MAKE) -f Makefile.X11 $@ || true
 	cd src/glu/mini      && $(MAKE) -f Makefile.X11 $@ || true
@@ -435,7 +435,7 @@ clean:
 	cd progs/xdemos      && $(MAKE) -f Makefile.X11 $@ || true
 	cd progs/samples     && $(MAKE) -f Makefile.X11 $@ || true
 	cd progs/tests       && $(MAKE) -f Makefile.X11 $@ || true
-	cd progs/miniglx     && $(MAKE) -f Makefile.X11 $@ || true
+	cd progs/miniglx     && $(MAKE) -f Makefile.solo $@ || true
 	if [ -f src/mesa/depend      ] ; then rm src/mesa/depend      ; fi
 	if [ -f src/mesa/drivers/dri/r200/depend ];   then rm -f src/mesa/drivers/dri/r200/depend;   fi
 	if [ -f src/mesa/drivers/dri/r128/depend ];   then rm -f src/mesa/drivers/dri/r128/depend;   fi
