@@ -2250,6 +2250,16 @@ typedef void (APIENTRYP PFNGLBLENDEQUATIONSEPARATEATIPROC) (GLenum modeRGB, GLen
  **/
 
 
+/* 
+ * XXX temporary - remove when glext.h is updated
+ */
+#ifndef GL_VERSION_2_0
+GLAPI void GLAPIENTRY glStencilOpSeparate (GLenum, GLenum, GLenum, GLenum);
+GLAPI void GLAPIENTRY glStencilFuncSeparate (GLenum, GLenum, GLint, GLuint);
+GLAPI void GLAPIENTRY glStencilMaskSeparate (GLenum, GLuint);
+#endif
+
+
 /**********************************************************************
  * Begin system-specific stuff
  */
