@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.30 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.31 2002/03/19 16:48:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -231,7 +231,6 @@ index_mask( GLcontext *ctx, GLuint mask )
       else {
          m = (unsigned long) mask;
       }
-      XMesaSetPlaneMask( xmesa->display, xmesa->xm_buffer->gc, m );
       XMesaSetPlaneMask( xmesa->display, xmesa->xm_buffer->cleargc, m );
    }
 }
@@ -257,7 +256,6 @@ color_mask(GLcontext *ctx,
          if (gmask)   m |= GET_GREENMASK(xmesa->xm_visual);
          if (bmask)   m |= GET_BLUEMASK(xmesa->xm_visual);
       }
-      XMesaSetPlaneMask( xmesa->display, xmesa->xm_buffer->gc, m );
       XMesaSetPlaneMask( xmesa->display, xmesa->xm_buffer->cleargc, m );
    }
 }
