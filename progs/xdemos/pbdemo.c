@@ -41,22 +41,23 @@
 
 
 /* Some ugly global vars */
-static GLXFBConfigSGIX gFBconfig = 0;
 static Display *gDpy = NULL;
 static int gScreen = 0;
-static GLXPbufferSGIX gPBuffer = 0;
+static FBCONFIG gFBconfig = 0;
+static PBUFFER gPBuffer = 0;
 static int gWidth, gHeight;
+static GLXContext glCtx;
 
 
 
 /*
- * Create the pbuffer and return a GLXPbufferSGIX handle.
+ * Create the pbuffer and return a GLXPbuffer handle.
  *
  * We loop over a list of fbconfigs trying to create
  * a pixel buffer.  We return the first pixel buffer which we successfully
  * create.
  */
-static GLXPbufferSGIX
+static PBUFFER
 MakePbuffer( Display *dpy, int screen, int width, int height )
 {
 #define NUM_FB_CONFIGS 4
@@ -69,8 +70,8 @@ MakePbuffer( Display *dpy, int screen, int width, int height )
    int fbAttribs[NUM_FB_CONFIGS][100] = {
       {
          /* Single buffered, with depth buffer */
-         GLX_RENDER_TYPE_SGIX, GLX_RGBA_BIT_SGIX,
-         GLX_DRAWABLE_TYPE_SGIX, GLX_PBUFFER_BIT_SGIX,
+         GLX_RENDER_TYPE, GLX_RGBA_BIT,
+         GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
          GLX_RED_SIZE, 1,
          GLX_GREEN_SIZE, 1,
          GLX_BLUE_SIZE, 1,
@@ -81,8 +82,8 @@ MakePbuffer( Display *dpy, int screen, int width, int height )
       },
       {
          /* Double buffered, with depth buffer */
-         GLX_RENDER_TYPE_SGIX, GLX_RGBA_BIT_SGIX,
-         GLX_DRAWABLE_TYPE_SGIX, GLX_PBUFFER_BIT_SGIX,
+         GLX_RENDER_TYPE, GLX_RGBA_BIT,
+         GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
          GLX_RED_SIZE, 1,
          GLX_GREEN_SIZE, 1,
          GLX_BLUE_SIZE, 1,
@@ -93,8 +94,8 @@ MakePbuffer( Display *dpy, int screen, int width, int height )
       },
       {
          /* Single bufferd, without depth buffer */
-         GLX_RENDER_TYPE_SGIX, GLX_RGBA_BIT_SGIX,
-         GLX_DRAWABLE_TYPE_SGIX, GLX_PBUFFER_BIT_SGIX,
+         GLX_RENDER_TYPE, GLX_RGBA_BIT,
+         GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
          GLX_RED_SIZE, 1,
          GLX_GREEN_SIZE, 1,
          GLX_BLUE_SIZE, 1,
@@ -105,8 +106,8 @@ MakePbuffer( Display *dpy, int screen, int width, int height )
       },
       {
          /* Double bufferd, without depth buffer */
-         GLX_RENDER_TYPE_SGIX, GLX_RGBA_BIT_SGIX,
-         GLX_DRAWABLE_TYPE_SGIX, GLX_PBUFFER_BIT_SGIX,
+         GLX_RENDER_TYPE, GLX_RGBA_BIT,
+         GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
          GLX_RED_SIZE, 1,
          GLX_GREEN_SIZE, 1,
          GLX_BLUE_SIZE, 1,
@@ -116,13 +117,10 @@ MakePbuffer( Display *dpy, int screen, int width, int height )
          None
       }
    };
-   int pbAttribs[] = {
-      GLX_LARGEST_PBUFFER_SGIX, True,
-      GLX_PRESERVED_CONTENTS_SGIX, False,
-      None
-   };
-   GLXFBConfigSGIX *fbConfigs;
-   GLXPbufferSGIX pBuffer = None;
+   Bool largest = True;
+   Bool preserve = False;
+   FBCONFIG *fbConfigs;
+   PBUFFER pBuffer = None;
    int nConfigs;
    int i;
    int attempt;
@@ -130,23 +128,23 @@ MakePbuffer( Display *dpy, int screen, int width, int height )
    for (attempt=0; attempt<NUM_FB_CONFIGS; attempt++) {
 
       /* Get list of possible frame buffer configurations */
-      fbConfigs = glXChooseFBConfigSGIX(dpy, screen, fbAttribs[attempt], &nConfigs);
+      fbConfigs = ChooseFBConfig(dpy, screen, fbAttribs[attempt], &nConfigs);
       if (nConfigs==0 || !fbConfigs) {
-         printf("Error: glxChooseFBConfigSGIX failed\n");
+         printf("Error: glXChooseFBConfig failed\n");
          XCloseDisplay(dpy);
          return 0;
       }
 
-#ifdef DEBUG
+#if 0 /*DEBUG*/
       for (i=0;i<nConfigs;i++) {
          printf("Config %d\n", i);
-         PrintFBConfigInfo(dpy, fbConfigs[i], 0);
+         PrintFBConfigInfo(dpy, screen, fbConfigs[i], 0);
       }
 #endif
 
       /* Create the pbuffer using first fbConfig in the list that works. */
       for (i=0;i<nConfigs;i++) {
-         pBuffer = CreatePbuffer(dpy, fbConfigs[i], width, height, pbAttribs);
+         pBuffer = CreatePbuffer(dpy, screen, fbConfigs[i], width, height, preserve, largest);
          if (pBuffer) {
             gFBconfig = fbConfigs[i];
             gWidth = width;
@@ -178,9 +176,8 @@ MakePbuffer( Display *dpy, int screen, int width, int height )
 static int
 Setup(int width, int height)
 {
-#if defined(GLX_SGIX_fbconfig) && defined(GLX_SGIX_pbuffer)
+   int pbSupport;
    XVisualInfo *visInfo;
-   GLXContext glCtx;
 
    /* Open the X display */
    gDpy = XOpenDisplay(NULL);
@@ -193,7 +190,14 @@ Setup(int width, int height)
    gScreen = DefaultScreen(gDpy);
 
    /* Test that pbuffers are available */
-   if (!QueryPbuffers(gDpy, gScreen)) {
+   pbSupport = QueryPbuffers(gDpy, gScreen);
+   if (pbSupport == 1) {
+      printf("Using GLX 1.3 Pbuffers\n");
+   }
+   else if (pbSupport == 2) {
+      printf("Using SGIX Pbuffers\n");
+   }
+   else {
       printf("Error: pbuffers not available on this screen\n");
       XCloseDisplay(gDpy);
       return 0;
@@ -208,7 +212,7 @@ Setup(int width, int height)
    }
 
    /* Get corresponding XVisualInfo */
-   visInfo = glXGetVisualFromFBConfigSGIX(gDpy, gFBconfig);
+   visInfo = GetVisualFromFBConfig(gDpy, gScreen, gFBconfig);
    if (!visInfo) {
       printf("Error: can't get XVisualInfo from FBconfig\n");
       XCloseDisplay(gDpy);
@@ -240,11 +244,6 @@ Setup(int width, int height)
    }
 
    return 1;  /* Success!! */
-#else
-   printf("Error: GLX_SGIX_fbconfig and/or GLX_SGIX_pbuffer extensions not"
-                  " available at compile-time.\n");
-   return 0;
-#endif
 }
 
 
@@ -360,7 +359,6 @@ Render(void)
    int NumBoxes = 100;
    int i;
 
-   InitGL();
    glClearColor(0.2, 0.2, 0.9, 0.0);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -470,9 +468,10 @@ main(int argc, char *argv[])
       if (!Setup(width, height)) {
          return 1;
       }
+      InitGL();
       Render();
       WriteFile(fileName);
-      glXDestroyGLXPbufferSGIX( gDpy, gPBuffer );
+      DestroyPbuffer(gDpy, gScreen, gPBuffer);
    }
    return 0;
 }

@@ -20,18 +20,18 @@
 static void
 PrintConfigs(Display *dpy, int screen, Bool horizFormat)
 {
-   GLXFBConfigSGIX *fbConfigs;
+   FBCONFIG *fbConfigs;
    int nConfigs;
    int i;
    /* Note: you may want to tweek the attribute list to select a different
     * set of fbconfigs.
     */
    int fbAttribs[] = {
-                      GLX_RENDER_TYPE_SGIX, 0,
-		      GLX_DRAWABLE_TYPE_SGIX, 0,
+                      GLX_RENDER_TYPE, 0,
+		      GLX_DRAWABLE_TYPE, 0,
 #if 0
-                      GLX_RENDER_TYPE_SGIX, GLX_RGBA_BIT_SGIX,
-		      GLX_DRAWABLE_TYPE_SGIX, GLX_PIXMAP_BIT_SGIX,
+                      GLX_RENDER_TYPE, GLX_RGBA_BIT,
+		      GLX_DRAWABLE_TYPE, GLX_PIXMAP_BIT,
 		      GLX_RED_SIZE, 1,
 		      GLX_GREEN_SIZE, 1,
 		      GLX_BLUE_SIZE, 1,
@@ -43,17 +43,9 @@ PrintConfigs(Display *dpy, int screen, Bool horizFormat)
 
 
    /* Get list of possible frame buffer configurations */
-#if 0
-   /* SGIX method */
-   fbConfigs = glXChooseFBConfigSGIX(dpy, screen, fbAttribs, &nConfigs);
-#else
-   /* GLX 1.3 method */
-   (void) fbAttribs;
-   fbConfigs = glXGetFBConfigs(dpy, screen, &nConfigs);
-#endif
-
-   if (nConfigs==0 || !fbConfigs) {
-      printf("Error: glxChooseFBConfigSGIX failed\n");
+   fbConfigs = ChooseFBConfig(dpy, screen, fbAttribs, &nConfigs);
+   if (!nConfigs || !fbConfigs) {
+      printf("Error: glxChooseFBConfig failed\n");
       return;
    }
 
@@ -61,12 +53,12 @@ PrintConfigs(Display *dpy, int screen, Bool horizFormat)
 
    if (horizFormat) {
       printf("  ID  VisualType  Depth Lvl RGB CI DB Stereo  R  G  B  A");
-      printf("   Z  S  AR AG AB AA  MSbufs MSnum  Pbuffer\n");
+      printf("   Z  S  AR AG AB AA  MSbufs MSnum  Pbuffer  Float\n");
    }
 
    /* Print config info */
    for (i=0;i<nConfigs;i++) {
-      PrintFBConfigInfo(dpy, fbConfigs[i], horizFormat);
+      PrintFBConfigInfo(dpy, screen, fbConfigs[i], horizFormat);
    }
 
    /* free the list */

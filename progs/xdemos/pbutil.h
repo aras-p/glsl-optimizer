@@ -1,4 +1,3 @@
-
 /*
  * OpenGL pbuffers utility functions.
  *
@@ -15,23 +14,41 @@
 #include <GL/glx.h>
 
 
+#if defined(GLX_VERSION_1_3)
+#define PBUFFER GLXPbuffer
+#define FBCONFIG GLXFBConfig
+#elif defined(GLX_SGIX_fbconfig) && defined(GLX_SGIX_pbuffer)
+#define PBUFFER GLXPbufferSGIX
+#define FBCONFIG GLXFBConfigSGIX
+#else
+#define PBUFFER int
+#define FBCONFIG int
+#endif
+
+
 extern int
 QueryPbuffers(Display *dpy, int screen);
 
 
-#ifdef GLX_SGIX_fbconfig
+extern void
+PrintFBConfigInfo(Display *dpy, int screen, FBCONFIG config, Bool horizFormat);
+
+
+extern FBCONFIG *
+ChooseFBConfig(Display *dpy, int screen, const int attribs[], int *nConfigs);
+
+
+extern XVisualInfo *
+GetVisualFromFBConfig(Display *dpy, int screen, FBCONFIG config);
+
+
+extern PBUFFER
+CreatePbuffer(Display *dpy, int screen, FBCONFIG config,
+	      int width, int height, Bool preserve, Bool largest);
 
 
 extern void
-PrintFBConfigInfo(Display *dpy, GLXFBConfigSGIX fbConfig, Bool horizFormat);
-
-
-extern GLXPbufferSGIX
-CreatePbuffer( Display *dpy, GLXFBConfigSGIX fbConfig,
-	       int width, int height, int *pbAttribs );
-
-
-#endif  /*GLX_SGIX_fbconfig*/
+DestroyPbuffer(Display *dpy, int screen, PBUFFER pbuffer);
 
 
 #endif  /*PBUTIL_H*/
