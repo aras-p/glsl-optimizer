@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.64 2002/10/29 23:09:38 brianp Exp $
+# $Id: Make-config,v 1.65 2002/10/31 14:58:36 brianp Exp $
 
 MESA_MAJOR=5
 MESA_MINOR=0
@@ -316,9 +316,11 @@ hpux10:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
+	"CPLUSPLUS = aCC" \
 	"CFLAGS = +O3 +DAportable -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
+	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm -L/usr/lib -lCsup"
 
 hpux10-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -328,7 +330,9 @@ hpux10-sl:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
+	"CPLUSPLUS = aCC" \
 	"CFLAGS = +z -Ae +O2 +Onolimit +Oaggressive -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
+	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.hpux" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
