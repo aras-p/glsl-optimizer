@@ -1,4 +1,4 @@
-/* $Id: extensions.h,v 1.12 2001/02/26 23:58:12 brianp Exp $ */
+/* $Id: extensions.h,v 1.13 2001/03/12 00:48:37 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,5 +51,3 @@ extern void _mesa_extensions_ctr( GLcontext *ctx );
 extern const char *_mesa_extensions_get_string( GLcontext *ctx );
 
 #endif
-
-

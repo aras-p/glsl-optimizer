@@ -1,18 +1,47 @@
+/* $Id: t_dd_unfilled.h,v 1.3 2001/03/12 00:48:44 gareth Exp $ */
+
+/*
+ * Mesa 3-D graphics library
+ * Version:  3.5
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *    Keith Whitwell <keithw@valinux.com>
+ */
+
 #if HAVE_RGBA
-#define VERT_SET_IND( v, c ) 
+#define VERT_SET_IND( v, c )
 #define VERT_COPY_IND( v0, v1 )
-#define VERT_SAVE_IND( idx ) 
-#define VERT_RESTORE_IND( idx ) 
+#define VERT_SAVE_IND( idx )
+#define VERT_RESTORE_IND( idx )
 #endif
 
 #if !HAVE_SPEC
-#define VERT_SET_SPEC( v, c ) 
+#define VERT_SET_SPEC( v, c )
 #define VERT_COPY_SPEC( v0, v1 )
-#define VERT_SAVE_SPEC( idx ) 
-#define VERT_RESTORE_SPEC( idx ) 
+#define VERT_SAVE_SPEC( idx )
+#define VERT_RESTORE_SPEC( idx )
 #endif
 
-static void TAG(unfilled_tri)( GLcontext *ctx, 
+static void TAG(unfilled_tri)( GLcontext *ctx,
 			       GLenum mode,
 			       GLuint e0, GLuint e1, GLuint e2 )
 {
@@ -31,7 +60,7 @@ static void TAG(unfilled_tri)( GLcontext *ctx,
 	 VERT_SAVE_RGBA(1);
 	 VERT_COPY_RGBA(v[0], v[2]);
 	 VERT_COPY_RGBA(v[1], v[2]);
-	 
+
 	 if (HAVE_SPEC) {
 	    VERT_SAVE_SPEC(0);
 	    VERT_SAVE_SPEC(1);
@@ -48,21 +77,21 @@ static void TAG(unfilled_tri)( GLcontext *ctx,
 
    if (mode == GL_POINT) {
       RASTERIZE(GL_POINTS);
-      if (ef[e0]) POINT( v[0] ); 
-      if (ef[e1]) POINT( v[1] ); 
-      if (ef[e2]) POINT( v[2] ); 
+      if (ef[e0]) POINT( v[0] );
+      if (ef[e1]) POINT( v[1] );
+      if (ef[e2]) POINT( v[2] );
    }
    else {
       RASTERIZE(GL_LINES);
       if (RENDER_PRIMITIVE == GL_POLYGON) {
-	 if (ef[e2]) LINE( v[2], v[0] ); 
-	 if (ef[e0]) LINE( v[0], v[1] ); 
-	 if (ef[e1]) LINE( v[1], v[2] ); 
-      } 
+	 if (ef[e2]) LINE( v[2], v[0] );
+	 if (ef[e0]) LINE( v[0], v[1] );
+	 if (ef[e1]) LINE( v[1], v[2] );
+      }
       else {
-	 if (ef[e0]) LINE( v[0], v[1] ); 
-	 if (ef[e1]) LINE( v[1], v[2] ); 
-	 if (ef[e2]) LINE( v[2], v[0] ); 
+	 if (ef[e0]) LINE( v[0], v[1] );
+	 if (ef[e1]) LINE( v[1], v[2] );
+	 if (ef[e2]) LINE( v[2], v[0] );
       }
    }
 
@@ -70,7 +99,7 @@ static void TAG(unfilled_tri)( GLcontext *ctx,
       if (HAVE_RGBA) {
 	 VERT_RESTORE_RGBA(0);
 	 VERT_RESTORE_RGBA(1);
-	 
+
 	 if (HAVE_SPEC) {
 	    VERT_RESTORE_SPEC(0);
 	    VERT_RESTORE_SPEC(1);
@@ -83,9 +112,9 @@ static void TAG(unfilled_tri)( GLcontext *ctx,
 }
 
 
-static void TAG(unfilled_quad)( GLcontext *ctx, 
+static void TAG(unfilled_quad)( GLcontext *ctx,
 				GLenum mode,
-				GLuint e0, GLuint e1, 
+				GLuint e0, GLuint e1,
 				GLuint e2, GLuint e3 )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -109,7 +138,7 @@ static void TAG(unfilled_quad)( GLcontext *ctx,
 	 VERT_COPY_RGBA(v[0], v[3]);
 	 VERT_COPY_RGBA(v[1], v[3]);
 	 VERT_COPY_RGBA(v[2], v[3]);
-	 
+
 	 if (HAVE_SPEC) {
 	    VERT_SAVE_SPEC(0);
 	    VERT_SAVE_SPEC(1);
@@ -130,17 +159,17 @@ static void TAG(unfilled_quad)( GLcontext *ctx,
 
    if (mode == GL_POINT) {
       RASTERIZE(GL_POINTS);
-      if (ef[e0]) POINT( v[0] ); 
-      if (ef[e1]) POINT( v[1] ); 
-      if (ef[e2]) POINT( v[2] ); 
-      if (ef[e3]) POINT( v[3] ); 
+      if (ef[e0]) POINT( v[0] );
+      if (ef[e1]) POINT( v[1] );
+      if (ef[e2]) POINT( v[2] );
+      if (ef[e3]) POINT( v[3] );
    }
    else {
       RASTERIZE(GL_LINES);
-      if (ef[e0]) LINE( v[0], v[1] ); 
-      if (ef[e1]) LINE( v[1], v[2] ); 
-      if (ef[e2]) LINE( v[2], v[3] ); 
-      if (ef[e3]) LINE( v[3], v[0] ); 
+      if (ef[e0]) LINE( v[0], v[1] );
+      if (ef[e1]) LINE( v[1], v[2] );
+      if (ef[e2]) LINE( v[2], v[3] );
+      if (ef[e3]) LINE( v[3], v[0] );
    }
 
    if ((ctx->_TriangleCaps & DD_FLATSHADE) && HAVE_HW_FLATSHADE) {
@@ -148,7 +177,7 @@ static void TAG(unfilled_quad)( GLcontext *ctx,
 	 VERT_RESTORE_RGBA(0);
 	 VERT_RESTORE_RGBA(1);
 	 VERT_RESTORE_RGBA(2);
-	 
+
 	 if (HAVE_SPEC) {
 	    VERT_RESTORE_SPEC(0);
 	    VERT_RESTORE_SPEC(1);

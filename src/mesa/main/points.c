@@ -1,10 +1,10 @@
-/* $Id: points.c,v 1.29 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: points.c,v 1.30 2001/03/12 00:48:38 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,12 +50,12 @@ _mesa_PointSize( GLfloat size )
       return;
    }
 
-   if (ctx->Point.Size == size) 
+   if (ctx->Point.Size == size)
       return;
 
    FLUSH_VERTICES(ctx, _NEW_POINT);
    ctx->Point.Size = size;
-   ctx->Point._Size = CLAMP(size, 
+   ctx->Point._Size = CLAMP(size,
 			    ctx->Const.MinPointSize,
 			    ctx->Const.MaxPointSize);
 
@@ -146,4 +146,3 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
    if (ctx->Driver.PointParameterfv)
       (*ctx->Driver.PointParameterfv)(ctx, pname, params);
 }
-

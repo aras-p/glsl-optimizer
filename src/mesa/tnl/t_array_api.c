@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.9 2001/03/07 05:06:13 brianp Exp $ */
+/* $Id: t_array_api.c,v 1.10 2001/03/12 00:48:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -78,7 +78,7 @@ static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
 #else
    /* Simple alternative to above code.
     */
-   if (_tnl_hard_begin( ctx, mode )) 
+   if (_tnl_hard_begin( ctx, mode ))
    {
       GLuint i;
       for (i=start;i<count;i++) {
@@ -90,7 +90,7 @@ static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
 }
 
 
-static void _tnl_draw_elements( GLcontext *ctx, GLenum mode, GLsizei count, 
+static void _tnl_draw_elements( GLcontext *ctx, GLenum mode, GLsizei count,
 				const GLuint *indices)
 {
 #if 1
@@ -135,10 +135,10 @@ static void _tnl_draw_elements( GLcontext *ctx, GLenum mode, GLsizei count,
 }
 
 
-static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode, 
-				      GLuint start, GLuint end, 
+static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
+				      GLuint start, GLuint end,
 				      GLsizei count, const GLuint *indices )
-   
+
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    FLUSH_CURRENT( ctx, 0 );
@@ -150,7 +150,7 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
    tnl->vb.PrimitiveLength[0] = count;
    tnl->vb.Elts = (GLuint *)indices;
 
-   if (ctx->Array.LockCount) 
+   if (ctx->Array.LockCount)
       _tnl_run_pipeline( ctx );
    else {
       /* Note that arrays may have changed before/after execution.
@@ -202,18 +202,18 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 /* The arrays are small enough to fit in a single VB; just bind
 	  * them and go.  Any untransformed data will be copied on
 	  * clipping.
-	  * 
+	  *
 	  * Invalidate any locked data dependent on these arrays.
 	  */
 	 _tnl_vb_bind_arrays( ctx, start, count );
 	 VB->FirstPrimitive = 0;
 	 VB->Primitive[0] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;
-	 VB->PrimitiveLength[0] = count - start;	 
+	 VB->PrimitiveLength[0] = count - start;
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
 	 _tnl_run_pipeline( ctx );
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
       }
-   } 
+   }
    else if (!ctx->CompileFlag && mode == GL_TRIANGLE_STRIP) {
       int bufsz = (ctx->Const.MaxArrayLockSize - 2) & ~1;
       int j, nr;
@@ -226,8 +226,8 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 nr = MIN2( bufsz, count - j );
 	 _tnl_vb_bind_arrays( ctx, j, j + nr );
 	 VB->FirstPrimitive = 0;
-	 VB->Primitive[0] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;      
-	 VB->PrimitiveLength[0] = nr;	 
+	 VB->Primitive[0] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;
+	 VB->PrimitiveLength[0] = nr;
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
 	 _tnl_run_pipeline( ctx );
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
@@ -249,30 +249,30 @@ _tnl_DrawRangeElements(GLenum mode,
 
    /* Check arguments, etc.
     */
-   if (!_mesa_validate_DrawRangeElements( ctx, mode, start, end, count, 
+   if (!_mesa_validate_DrawRangeElements( ctx, mode, start, end, count,
                                           type, indices ))
       return;
 
    if (tnl->pipeline.build_state_changes)
       _tnl_validate_pipeline( ctx );
 
-   ui_indices = (GLuint *)_ac_import_elements( ctx, GL_UNSIGNED_INT, 
+   ui_indices = (GLuint *)_ac_import_elements( ctx, GL_UNSIGNED_INT,
 					       count, type, indices );
-            
+
 
    if (ctx->Array.LockCount) {
       /* Are the arrays already locked?  If so we currently have to look
        * at the whole locked range.
        */
       if (start >= ctx->Array.LockFirst && end <= ctx->Array.LockCount)
-	 _tnl_draw_range_elements( ctx, mode, 
-				   ctx->Array.LockFirst, 
+	 _tnl_draw_range_elements( ctx, mode,
+				   ctx->Array.LockFirst,
 				   ctx->Array.LockCount,
 				   count, ui_indices );
       else {
 	 /* The spec says referencing elements outside the locked
 	  * range is undefined.  I'm going to make it a noop this time
-	  * round, maybe come up with something beter before 3.6.  
+	  * round, maybe come up with something beter before 3.6.
 	  *
 	  * May be able to get away with just setting LockCount==0,
 	  * though this raises the problems of dependent state.  May
@@ -280,7 +280,7 @@ _tnl_DrawRangeElements(GLenum mode,
 	  *
 	  * Or scan the list and replace bad indices?
 	  */
-	 _mesa_problem( ctx, 
+	 _mesa_problem( ctx,
 		     "DrawRangeElements references "
 		     "elements outside locked range.");
       }
@@ -300,7 +300,7 @@ _tnl_DrawRangeElements(GLenum mode,
 
 
 void
-_tnl_DrawElements(GLenum mode, GLsizei count, GLenum type, 
+_tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
 		  const GLvoid *indices)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -315,22 +315,22 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
    if (tnl->pipeline.build_state_changes)
       _tnl_validate_pipeline( ctx );
 
-   ui_indices = (GLuint *)_ac_import_elements( ctx, GL_UNSIGNED_INT, 
+   ui_indices = (GLuint *)_ac_import_elements( ctx, GL_UNSIGNED_INT,
 					       count, type, indices );
 
    if (ctx->Array.LockCount) {
-      _tnl_draw_range_elements( ctx, mode, 
+      _tnl_draw_range_elements( ctx, mode,
 				ctx->Array.LockFirst,
 				ctx->Array.LockCount,
 				count, ui_indices );
-   } 
+   }
    else {
       /* Scan the index list and see if we can use the locked path anyway.
        */
       GLuint max_elt = 0;
       GLint i;
 
-      for (i = 0 ; i < count ; i++) 
+      for (i = 0 ; i < count ; i++)
 	 if (ui_indices[i] > max_elt)
             max_elt = ui_indices[i];
 
@@ -364,7 +364,7 @@ void _tnl_array_init( GLcontext *ctx )
    _mesa_vector1ui_init( &tmp->Index, 0, 0 );
    _mesa_vector1ub_init( &tmp->EdgeFlag, 0, 0 );
 
-   for (i = 0; i < ctx->Const.MaxTextureUnits; i++) 
+   for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
       _mesa_vector4f_init( &tmp->TexCoord[i], 0, 0);
 
    tnl->tmp_primitive = (GLuint *)MALLOC(sizeof(GLuint)*tnl->vb.Size);

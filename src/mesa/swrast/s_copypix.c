@@ -1,21 +1,21 @@
-/* $Id: s_copypix.c,v 1.14 2001/03/07 05:06:12 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.15 2001/03/12 00:48:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -277,11 +277,11 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
       dy = desty + row;
       if (quick_draw && dy >= 0 && dy < ctx->DrawBuffer->Height) {
-         (*ctx->Driver.WriteRGBASpan)( ctx, width, destx, dy, 
+         (*ctx->Driver.WriteRGBASpan)( ctx, width, destx, dy,
 				       (const GLchan (*)[4])rgba, NULL );
       }
       else if (zoom) {
-         _mesa_write_zoomed_rgba_span( ctx, width, destx, dy, zspan, 0, 
+         _mesa_write_zoomed_rgba_span( ctx, width, destx, dy, zspan, 0,
 				    (const GLchan (*)[4])rgba, desty);
       }
       else {
@@ -521,7 +521,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
 
       if (quick_draw && dy >= 0 && dy < ctx->DrawBuffer->Height) {
-         (*ctx->Driver.WriteRGBASpan)( ctx, width, destx, dy, 
+         (*ctx->Driver.WriteRGBASpan)( ctx, width, destx, dy,
 				       (const GLchan (*)[4])rgba, NULL );
       }
       else if (zoom) {
@@ -747,7 +747,7 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 				       (const GLchan (*)[4])rgba, desty );
          }
          else {
-            _mesa_write_rgba_span( ctx, width, destx, dy, zspan, 0, 
+            _mesa_write_rgba_span( ctx, width, destx, dy, zspan, 0,
 				rgba, GL_BITMAP);
          }
       }

@@ -1,4 +1,4 @@
-/* $Id: t_vb_light.c,v 1.11 2001/03/07 05:06:13 brianp Exp $ */
+/* $Id: t_vb_light.c,v 1.12 2001/03/12 00:48:44 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -141,10 +141,10 @@ static GLboolean run_lighting( GLcontext *ctx, struct gl_pipeline_stage *stage )
 	 _mesa_vector4f_clean_elem(input, VB->Count, 2);
       }
    }
-      
+
    if (VB->Flag)
       ind = LIGHT_FLAGS;
-   else 
+   else
       ind = 0;
 
    /* The individual tabs know about replaying side-effects vs. full
@@ -158,19 +158,19 @@ static GLboolean run_lighting( GLcontext *ctx, struct gl_pipeline_stage *stage )
 
 /* Called in place of do_lighting when the light table may have changed.
  */
-static GLboolean run_validate_lighting( GLcontext *ctx, 
+static GLboolean run_validate_lighting( GLcontext *ctx,
 					struct gl_pipeline_stage *stage )
 {
    GLuint ind = 0;
-   light_func *tab;   
-   
+   light_func *tab;
+
    if (ctx->Visual.rgbMode) {
       if (ctx->Light._NeedVertices) {
 	 if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
 	    tab = _tnl_light_spec_tab;
 	 else
-	    tab = _tnl_light_tab;	 
-      }  
+	    tab = _tnl_light_tab;
+      }
       else {
 	 if (ctx->Light.EnabledList.next == ctx->Light.EnabledList.prev)
 	    tab = _tnl_light_fast_single_tab;
@@ -183,7 +183,7 @@ static GLboolean run_validate_lighting( GLcontext *ctx,
 
    if (ctx->Light.ColorMaterialEnabled)
       ind |= LIGHT_COLORMATERIAL;
-   
+
    if (ctx->Light.Model.TwoSide)
       ind |= LIGHT_TWOSIDE;
 
@@ -202,7 +202,7 @@ static GLboolean run_validate_lighting( GLcontext *ctx,
 /* Called the first time stage->run is called.  In effect, don't
  * allocate data until the first time the stage is run.
  */
-static GLboolean run_init_lighting( GLcontext *ctx, 
+static GLboolean run_init_lighting( GLcontext *ctx,
 				    struct gl_pipeline_stage *stage )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -244,9 +244,9 @@ static void check_lighting( GLcontext *ctx, struct gl_pipeline_stage *stage )
       if (stage->privatePtr)
 	 stage->run = run_validate_lighting;
       stage->inputs = VERT_NORM|VERT_MATERIAL;
-      if (ctx->Light._NeedVertices) 
+      if (ctx->Light._NeedVertices)
 	 stage->inputs |= VERT_EYE; /* effectively, even when lighting in obj */
-      if (ctx->Light.ColorMaterialEnabled) 
+      if (ctx->Light.ColorMaterialEnabled)
 	 stage->inputs |= VERT_RGBA;
 
       stage->outputs = VERT_RGBA;
@@ -261,19 +261,19 @@ static void dtr( struct gl_pipeline_stage *stage )
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
 
    if (store) {
-      _mesa_vector4chan_free( &store->LitColor[0] );      
-      _mesa_vector4chan_free( &store->LitColor[1] );      
-      _mesa_vector4chan_free( &store->LitSecondary[0] );  
-      _mesa_vector4chan_free( &store->LitSecondary[1] );  
-      _mesa_vector1ui_free( &store->LitIndex[0] );      
-      _mesa_vector1ui_free( &store->LitIndex[1] );      
+      _mesa_vector4chan_free( &store->LitColor[0] );
+      _mesa_vector4chan_free( &store->LitColor[1] );
+      _mesa_vector4chan_free( &store->LitSecondary[0] );
+      _mesa_vector4chan_free( &store->LitSecondary[1] );
+      _mesa_vector1ui_free( &store->LitIndex[0] );
+      _mesa_vector1ui_free( &store->LitIndex[1] );
       FREE( store );
       stage->privatePtr = 0;
    }
 }
 
-const struct gl_pipeline_stage _tnl_lighting_stage = 
-{ 
+const struct gl_pipeline_stage _tnl_lighting_stage =
+{
    "lighting",
    _NEW_LIGHT,			/* recheck */
    _NEW_LIGHT|_NEW_MODELVIEW,	/* recalc -- modelview dependency
@@ -285,4 +285,3 @@ const struct gl_pipeline_stage _tnl_lighting_stage =
    check_lighting,		/* check */
    run_init_lighting		/* run -- initially set to ctr */
 };
-

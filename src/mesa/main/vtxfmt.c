@@ -1,4 +1,4 @@
-/* $Id: vtxfmt.c,v 1.4 2001/03/11 23:55:19 gareth Exp $ */
+/* $Id: vtxfmt.c,v 1.5 2001/03/12 00:48:39 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,7 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
+ * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  *    Gareth Hughes <gareth@valinux.com>
  */
@@ -154,6 +154,7 @@ void _mesa_init_exec_vtxfmt( GLcontext *ctx )
    install_vtxfmt( ctx->Exec, &neutral_vtxfmt );
 }
 
+
 void _mesa_install_exec_vtxfmt( GLcontext *ctx, GLvertexformat *vfmt )
 {
    ctx->TnlModule.Current = vfmt;
@@ -168,6 +169,7 @@ void _mesa_install_save_vtxfmt( GLcontext *ctx, GLvertexformat *vfmt )
    if ( ctx->SavePrefersFloat != vfmt->prefer_float_colors )
       _mesa_loopback_prefer_float( ctx->Save, vfmt->prefer_float_colors );
 }
+
 
 void _mesa_restore_exec_vtxfmt( GLcontext *ctx )
 {

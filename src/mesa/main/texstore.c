@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.10 2001/03/07 05:06:12 brianp Exp $ */
+/* $Id: texstore.c,v 1.11 2001/03/12 00:48:39 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1450,4 +1450,3 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
 
    return GL_TRUE;
 }
-

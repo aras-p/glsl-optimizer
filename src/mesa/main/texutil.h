@@ -1,10 +1,10 @@
-/* $Id: texutil.h,v 1.7 2001/01/24 00:04:58 brianp Exp $ */
+/* $Id: texutil.h,v 1.8 2001/03/12 00:48:39 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -90,4 +90,3 @@ _mesa_set_teximage_component_sizes(MesaIntTexFormat mesaFormat,
 
 
 #endif
-

@@ -1,4 +1,4 @@
-/* $Id: s_texture.h,v 1.5 2001/02/20 16:42:26 brianp Exp $ */
+/* $Id: s_texture.h,v 1.6 2001/03/12 00:48:42 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,4 +47,3 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texSet, GLuint n,
 
 
 #endif
-

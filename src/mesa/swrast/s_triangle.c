@@ -1,21 +1,21 @@
-/* $Id: s_triangle.c,v 1.17 2001/03/08 17:33:33 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.18 2001/03/12 00:48:42 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -47,10 +47,10 @@
 #include "s_feedback.h"
 #include "s_span.h"
 #include "s_triangle.h"
- 
+
 GLboolean _mesa_cull_triangle( GLcontext *ctx,
-			    const SWvertex *v0, 
-			    const SWvertex *v1, 
+			    const SWvertex *v0,
+			    const SWvertex *v1,
 			    const SWvertex *v2 )
 {
    GLfloat ex = v1->win[0] - v0->win[0];
@@ -61,7 +61,7 @@ GLboolean _mesa_cull_triangle( GLcontext *ctx,
 
    if (c * SWRAST_CONTEXT(ctx)->_backface_sign > 0)
       return 0;
-   
+
    return 1;
 }
 
@@ -71,8 +71,8 @@ GLboolean _mesa_cull_triangle( GLcontext *ctx,
  * Render a flat-shaded color index triangle.
  */
 static void flat_ci_triangle( GLcontext *ctx,
-			      const SWvertex *v0, 
-			      const SWvertex *v1, 
+			      const SWvertex *v0,
+			      const SWvertex *v1,
 			      const SWvertex *v2 )
 {
 #define INTERP_Z 1
@@ -96,7 +96,7 @@ static void flat_ci_triangle( GLcontext *ctx,
 	   }							\
 	}
 
-#include "s_tritemp.h"	      
+#include "s_tritemp.h"
 }
 
 
@@ -105,8 +105,8 @@ static void flat_ci_triangle( GLcontext *ctx,
  * Render a smooth-shaded color index triangle.
  */
 static void smooth_ci_triangle( GLcontext *ctx,
-				const SWvertex *v0, 
-				const SWvertex *v1, 
+				const SWvertex *v0,
+				const SWvertex *v1,
 				const SWvertex *v2 )
 {
 #define INTERP_Z 1
@@ -289,7 +289,7 @@ static void simple_textured_triangle( GLcontext *ctx,
  * Render an RGB, GL_DECAL, textured triangle.
  * Interpolate S,T, GL_LESS depth test, w/out mipmapping or
  * perspective correction.
- * 
+ *
  * No fog.
  */
 static void simple_z_textured_triangle( GLcontext *ctx,
@@ -423,11 +423,11 @@ static void affine_textured_triangle( GLcontext *ctx,
    tsize = obj->Image[b]->Height * tbytesline;
 
 
-  /* Instead of defining a function for each mode, a test is done 
+  /* Instead of defining a function for each mode, a test is done
    * between the outer and inner loops. This is to reduce code size
-   * and complexity. Observe that an optimizing compiler kills 
+   * and complexity. Observe that an optimizing compiler kills
    * unused variables (for instance tf,sf,ti,si in case of GL_NEAREST).
-   */ 
+   */
 
 #define NEAREST_RGB    \
         tr = tex00[RCOMP]; \
@@ -690,7 +690,7 @@ static void near_persp_textured_triangle(GLcontext *ctx,
 /* The BIAS value is used to shift negative values into positive values.
  * Without this, negative texture values don't GL_REPEAT correctly at just
  * below zero, because (int)-0.5 = 0 = (int)0.5. We're not going to worry
- * about texture coords less than -BIAS. This could be fixed by using 
+ * about texture coords less than -BIAS. This could be fixed by using
  * FLOORF etc. instead, but this is slower...
  */
 #define BIAS 4096.0F
@@ -825,7 +825,7 @@ static void near_persp_textured_triangle(GLcontext *ctx,
       DRAW_LINE (DO_TEX);					\
       x_m ++;							\
    }								\
-} 
+}
 
 #define SPAN3(DO_TEX, COMP, TEX_COORD) {				\
    GLfloat x_min = FLOORF (x_tex);					\
@@ -862,7 +862,7 @@ static void near_persp_textured_triangle(GLcontext *ctx,
       DRAW_LINE (DO_TEX);						\
    }									\
 }
-					
+
 #define SPAN4(DO_TEX, COMP, TEX_COORD)					\
 {									\
    GLfloat x_min = FLOORF(x_tex);					\
@@ -1798,7 +1798,7 @@ static void general_textured_spec_triangle1( GLcontext *ctx,
 static void lambda_textured_triangle1( GLcontext *ctx,
 				       const SWvertex *v0,
 				       const SWvertex *v1,
-				       const SWvertex *v2, 
+				       const SWvertex *v2,
                                        GLfloat s[MAX_WIDTH],
                                        GLfloat t[MAX_WIDTH],
                                        GLfloat u[MAX_WIDTH] )
@@ -2015,7 +2015,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
  * Interpolate Z, RGB, Alpha, and two sets of texture coordinates.
  * Yup, it's slow.
  */
-static void 
+static void
 lambda_multitextured_triangle1( GLcontext *ctx,
 				const SWvertex *v0,
 				const SWvertex *v1,
@@ -2144,7 +2144,7 @@ static void general_textured_spec_triangle(GLcontext *ctx,
 					   const SWvertex *v2 )
 {
    GLdepth zspan[MAX_WIDTH];
-   GLfixed fogspan[MAX_WIDTH];	                   
+   GLfixed fogspan[MAX_WIDTH];
    GLchan rgba[MAX_WIDTH][4], spec[MAX_WIDTH][4];
    general_textured_spec_triangle1(ctx,v0,v1,v2,zspan,fogspan,rgba,spec);
 }
@@ -2180,9 +2180,9 @@ static void lambda_multitextured_triangle( GLcontext *ctx,
    GLfloat t[MAX_TEXTURE_UNITS][MAX_WIDTH];
    DEFMARRAY(GLfloat,u,MAX_TEXTURE_UNITS,MAX_WIDTH);
    CHECKARRAY(u,return);
-   
+
    lambda_multitextured_triangle1(ctx,v0,v1,v2,s,t,u);
-   
+
    UNDEFARRAY(u);
 }
 
@@ -2238,7 +2238,7 @@ void _swrast_add_spec_terms_triangle( GLcontext *ctx,
    SWRAST_CONTEXT(ctx)->SpecTriangle( ctx, ncv0, ncv1, ncv2 );
    COPY_CHAN4( ncv0->color, c[0] );
    COPY_CHAN4( ncv1->color, c[1] );
-   COPY_CHAN4( ncv2->color, c[2] );   
+   COPY_CHAN4( ncv2->color, c[2] );
 }
 
 
@@ -2258,7 +2258,7 @@ void _swrast_add_spec_terms_triangle( GLcontext *ctx,
  * Please update the summary flag _SWRAST_NEW_TRIANGLE if you add or
  * remove tests to this code.
  */
-void 
+void
 _swrast_choose_triangle( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -2278,8 +2278,8 @@ _swrast_choose_triangle( GLcontext *ctx )
           ctx->Depth.Func == GL_LESS &&
           !ctx->Stencil.Enabled) {
          if ((rgbmode &&
-              ctx->Color.ColorMask[0] == 0 && 
-              ctx->Color.ColorMask[1] == 0 && 
+              ctx->Color.ColorMask[0] == 0 &&
+              ctx->Color.ColorMask[1] == 0 &&
               ctx->Color.ColorMask[2] == 0 &&
               ctx->Color.ColorMask[3] == 0)
              ||
@@ -2309,7 +2309,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 	     && ctx->Texture.Unit[0].EnvMode!=GL_COMBINE_EXT) {
 
 	    if (ctx->Hint.PerspectiveCorrection==GL_FASTEST) {
-	     
+
 	       if (filter==GL_NEAREST
 		   && format==GL_RGB
 		   && (ctx->Texture.Unit[0].EnvMode==GL_REPLACE

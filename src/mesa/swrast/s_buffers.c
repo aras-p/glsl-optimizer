@@ -1,21 +1,21 @@
-/* $Id: s_buffers.c,v 1.6 2001/03/07 05:06:12 brianp Exp $ */
+/* $Id: s_buffers.c,v 1.7 2001/03/12 00:48:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -180,7 +180,7 @@ clear_color_buffers(GLcontext *ctx)
             (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_BACK_RIGHT);
             (void) (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_BACK_RIGHT);
          }
-         
+
          if (colorMask != 0xffffffff) {
             clear_color_buffer_with_masking(ctx);
          }
@@ -197,9 +197,9 @@ clear_color_buffers(GLcontext *ctx)
 
 
 
-void 
+void
 _swrast_Clear( GLcontext *ctx, GLbitfield mask,
-	       GLboolean all, 
+	       GLboolean all,
 	       GLint x, GLint y, GLint width, GLint height )
 {
 
@@ -254,5 +254,3 @@ _swrast_alloc_buffers( GLcontext *ctx )
       _mesa_alloc_alpha_buffers( ctx );
    }
 }
-
-

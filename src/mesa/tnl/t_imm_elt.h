@@ -1,10 +1,10 @@
-/* $Id: t_imm_elt.h,v 1.1 2000/12/26 05:09:32 keithw Exp $ */
+/* $Id: t_imm_elt.h,v 1.2 2001/03/12 00:48:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
+ * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  */
 
@@ -37,7 +37,7 @@
 
 extern void _tnl_imm_elt_init( void );
 
-extern void _tnl_translate_array_elts( GLcontext *ctx, 
+extern void _tnl_translate_array_elts( GLcontext *ctx,
 				       struct immediate *IM,
 				       GLuint start,
 				       GLuint end );

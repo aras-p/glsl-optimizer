@@ -1,19 +1,21 @@
+/* $Id: ss_vb.c,v 1.11 2001/03/12 00:48:43 gareth Exp $ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -199,7 +201,7 @@ rs_invalid( GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
    (void) (ctx && start && end && newinputs);
 }
 
-void 
+void
 _swsetup_vb_init( GLcontext *ctx )
 {
    GLuint i;
@@ -258,7 +260,7 @@ static void printSetupFlags(char *msg, GLuint flags )
 }
 
 
-void 
+void
 _swsetup_choose_rastersetup_func(GLcontext *ctx)
 {
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
@@ -268,9 +270,9 @@ _swsetup_choose_rastersetup_func(GLcontext *ctx)
       if (ctx->Visual.rgbMode) {
          funcindex = COLOR;
 
-         if (ctx->Texture._ReallyEnabled & ~0xf) 
+         if (ctx->Texture._ReallyEnabled & ~0xf)
             funcindex |= MULTITEX;
-         else if (ctx->Texture._ReallyEnabled & 0xf) 
+         else if (ctx->Texture._ReallyEnabled & 0xf)
             funcindex |= TEX0;
 
          if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ||
@@ -288,11 +290,11 @@ _swsetup_choose_rastersetup_func(GLcontext *ctx)
 	 funcindex |= FOG;
    }
    else if (ctx->RenderMode == GL_FEEDBACK) {
-      if (ctx->Visual.rgbMode) 
+      if (ctx->Visual.rgbMode)
 	 funcindex = (COLOR | TEX0); /* is feedback color subject to fogging? */
       else
 	 funcindex = (INDEX | TEX0);
-   } 
+   }
    else
       funcindex = 0;
 
@@ -300,4 +302,3 @@ _swsetup_choose_rastersetup_func(GLcontext *ctx)
    swsetup->BuildProjVerts = setup_func[funcindex];
    ASSERT(setup_func[funcindex] != rs_invalid);
 }
-

@@ -1,10 +1,10 @@
-/* $Id: s_context.c,v 1.16 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: s_context.c,v 1.17 2001/03/12 00:48:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -201,7 +201,7 @@ _swrast_validate_triangle( GLcontext *ctx,
    _swrast_validate_derived( ctx );
    swrast->choose_triangle( ctx );
 
-   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) && 
+   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) &&
        !ctx->Texture._ReallyEnabled) {
       swrast->SpecTriangle = swrast->Triangle;
       swrast->Triangle = _swrast_add_spec_terms_triangle;
@@ -218,7 +218,7 @@ _swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
    _swrast_validate_derived( ctx );
    swrast->choose_line( ctx );
 
-   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) && 
+   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) &&
        !ctx->Texture._ReallyEnabled) {
       swrast->SpecLine = swrast->Line;
       swrast->Line = _swrast_add_spec_terms_line;
@@ -236,7 +236,7 @@ _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
    _swrast_validate_derived( ctx );
    swrast->choose_point( ctx );
 
-   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) && 
+   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) &&
        !ctx->Texture._ReallyEnabled) {
       swrast->SpecPoint = swrast->Point;
       swrast->Point = _swrast_add_spec_terms_point;
@@ -476,15 +476,15 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
 {
    GLuint i;
 
-   fprintf(stderr, "win %f %f %f %f\n", 
+   fprintf(stderr, "win %f %f %f %f\n",
 	   v->win[0], v->win[1], v->win[2], v->win[3]);
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
       fprintf(stderr, "texcoord[%d] %f %f %f %f\n", i,
-	      v->texcoord[i][0], v->texcoord[i][1], 
+	      v->texcoord[i][0], v->texcoord[i][1],
 	      v->texcoord[i][2], v->texcoord[i][3]);
 
-   fprintf(stderr, "color %d %d %d %d\n", 
+   fprintf(stderr, "color %d %d %d %d\n",
 	   v->color[0], v->color[1], v->color[2], v->color[3]);
    fprintf(stderr, "spec %d %d %d %d\n",
 	   v->specular[0], v->specular[1], v->specular[2], v->specular[3]);

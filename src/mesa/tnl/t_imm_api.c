@@ -1,9 +1,10 @@
+/* $Id: t_imm_api.c,v 1.8 2001/03/12 00:48:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,8 +23,8 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
- *   Keith Whitwell <keith@precisioninsight.com>
+ * Authors:
+ *    Keith Whitwell <keithw@valinux.com>
  */
 
 
@@ -45,15 +46,15 @@
 #include "t_imm_dlist.h"
 
 
-/* A cassette is full or flushed on a statechange.  
+/* A cassette is full or flushed on a statechange.
  */
 void _tnl_flush_immediate( struct immediate *IM )
 {
    GLcontext *ctx = IM->backref;
 
-   if (ctx->CompileFlag) 
+   if (ctx->CompileFlag)
       _tnl_compile_cassette( ctx, IM );
-   else 
+   else
       _tnl_execute_cassette( ctx, IM );
 }
 
@@ -76,13 +77,13 @@ _tnl_begin( GLcontext *ctx, GLenum p )
 
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glBegin(IM %d) %s\n", IM->id, _mesa_lookup_enum_by_nr(p));
-   
+
    if (ctx->NewState)
       _mesa_update_state(ctx);
-       
+
    /* if only a very few slots left, might as well flush now
     */
-   if (IM->Count > IMM_MAXDATA-8) {	      
+   if (IM->Count > IMM_MAXDATA-8) {
       _tnl_flush_immediate( IM );
       IM = TNL_CURRENT_IM(ctx);
    }
@@ -108,7 +109,7 @@ _tnl_begin( GLcontext *ctx, GLenum p )
       ASSERT(IM->Primitive[IM->LastPrimitive] & PRIM_LAST);
 
       state |= (VERT_BEGIN_0|VERT_BEGIN_1);
-      IM->Flag[count] |= VERT_BEGIN; 
+      IM->Flag[count] |= VERT_BEGIN;
       IM->Primitive[IM->LastPrimitive] &= ~PRIM_LAST;
       IM->Primitive[count] = p | PRIM_BEGIN | PRIM_LAST;
       IM->PrimitiveLength[IM->LastPrimitive] = count - IM->LastPrimitive;
@@ -136,12 +137,12 @@ _tnl_Begin( GLenum mode )
 
    if (mode > GL_POLYGON) {
       _mesa_compile_error( ctx, GL_INVALID_ENUM, "glBegin" );
-      return;		     
+      return;
    }
 
    _tnl_begin(ctx, mode);
 
-   /* If compiling update SavePrimitive now.  
+   /* If compiling update SavePrimitive now.
     *
     * In compile_and_exec mode, exec_primitive will be updated when
     * the cassette is finished.
@@ -149,10 +150,10 @@ _tnl_Begin( GLenum mode )
     * If not compiling, update exec_primitive now.
     */
    if (ctx->CompileFlag) {
-      if (ctx->Driver.CurrentSavePrimitive == PRIM_UNKNOWN) 
+      if (ctx->Driver.CurrentSavePrimitive == PRIM_UNKNOWN)
 	 ctx->Driver.CurrentSavePrimitive = PRIM_INSIDE_UNKNOWN_PRIM;
       else if (ctx->Driver.CurrentSavePrimitive == PRIM_OUTSIDE_BEGIN_END)
-	 ctx->Driver.CurrentSavePrimitive = mode; 
+	 ctx->Driver.CurrentSavePrimitive = mode;
       }
    else if (ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END)
       ctx->Driver.CurrentExecPrimitive = mode;
@@ -164,10 +165,10 @@ _tnl_hard_begin( GLcontext *ctx, GLenum p )
 {
    struct immediate *IM = TNL_CURRENT_IM(ctx);
    GLuint count, last;
-   
+
    if (ctx->NewState)
       _mesa_update_state(ctx);
-       
+
    /* If not compiling, treat as a normal begin().
     */
    if (!ctx->CompileFlag) {
@@ -178,53 +179,53 @@ _tnl_hard_begin( GLcontext *ctx, GLenum p )
       ctx->Driver.CurrentExecPrimitive = p;
       return GL_TRUE;
    }
-       
-   if (IM->Count > IMM_MAXDATA-8) {	      
+
+   if (IM->Count > IMM_MAXDATA-8) {
       _tnl_flush_immediate( IM );
       IM = TNL_CURRENT_IM(ctx);
    }
- 
+
    switch (IM->BeginState & (VERT_BEGIN_0|VERT_BEGIN_1)) {
    case VERT_BEGIN_0|VERT_BEGIN_1:
       /* This is an immediate known to be inside a begin/end object.
        */
       IM->BeginState |= (VERT_ERROR_1|VERT_ERROR_0);
       return GL_FALSE;
-      
+
    case VERT_BEGIN_0:
    case VERT_BEGIN_1:
       /* This is a display-list immediate in an unknown begin/end
-       * state.  Assert it is empty and conviert it to a 'hard' one.  
+       * state.  Assert it is empty and conviert it to a 'hard' one.
        */
       ASSERT (IM->SavedBeginState == 0);
-      
+
 /*        ASSERT (ctx->Driver.CurrentSavePrimitive >= GL_POLYGON+1); */
 
       /* Push current beginstate, to be restored later.  Don't worry
        * about raising errors.
        */
       IM->SavedBeginState = IM->BeginState;
-      
+
       /* FALLTHROUGH */
-   case 0: 
-      /* Unless we have fallen through, this is an immediate known to 
+   case 0:
+      /* Unless we have fallen through, this is an immediate known to
        * be outside begin/end objects.
        */
-      
+
       IM->BeginState |= VERT_BEGIN_0|VERT_BEGIN_1;
-	 
+
 
       count = IM->Count;
       last = IM->LastPrimitive;
 
       ASSERT(IM->Primitive[IM->LastPrimitive] & PRIM_LAST);
 
-      IM->Flag[count] |= VERT_BEGIN; 
+      IM->Flag[count] |= VERT_BEGIN;
       IM->Primitive[last] &= ~PRIM_LAST;
       IM->Primitive[count] = p | PRIM_BEGIN | PRIM_LAST;
       IM->PrimitiveLength[last] = count - last;
       IM->LastPrimitive = count;
-      
+
       ASSERT (!IM->FlushElt);
 
       /* This is necessary as this immediate will not be flushed in
@@ -234,10 +235,10 @@ _tnl_hard_begin( GLcontext *ctx, GLenum p )
       ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
 
       return GL_TRUE;
-      
+
    default:
       ASSERT (0);
-      return GL_TRUE;      
+      return GL_TRUE;
    }
 }
 
@@ -245,16 +246,16 @@ _tnl_hard_begin( GLcontext *ctx, GLenum p )
 
 /* Need to do this to get the correct begin/end error behaviour from
  * functions like ColorPointerEXT which are still active in
- * SAVE_AND_EXEC modes.  
+ * SAVE_AND_EXEC modes.
  */
 void
 _tnl_save_Begin( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-  
+
     if (mode > GL_POLYGON) {
       _mesa_compile_error( ctx, GL_INVALID_ENUM, "glBegin" );
-      return;		     
+      return;
    }
 
    if (ctx->ExecuteFlag) {
@@ -329,11 +330,11 @@ _tnl_end( GLcontext *ctx )
 	 _tnl_translate_array_elts( ctx, IM, last, count );
 	 IM->FlushElt = 0;
       }
-      
+
 /*        ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES; */
    }
 
-   IM->BeginState = state;      
+   IM->BeginState = state;
 
    if (!ctx->CompileFlag)
       ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
@@ -356,7 +357,7 @@ _tnl_End(void)
     * COMPILE_AND_EXEC modes, need to keep exec primitive uptodate
     * otherwise.
     */
-   if (ctx->CompileFlag) 
+   if (ctx->CompileFlag)
       ctx->Driver.CurrentSavePrimitive = PRIM_OUTSIDE_BEGIN_END;
 }
 
@@ -741,7 +742,7 @@ _tnl_TexCoord1f( GLfloat s )
 static void
 _tnl_TexCoord2f( GLfloat s, GLfloat t )
 {
-   TEXCOORD2F(s,t); 
+   TEXCOORD2F(s,t);
 }
 
 
@@ -884,7 +885,7 @@ static void
 _tnl_Vertex3f( GLfloat x, GLfloat y, GLfloat z )
 {
    GET_IMMEDIATE;
-   VERTEX3F( IM, x, y, z ); 
+   VERTEX3F( IM, x, y, z );
 }
 static void
 _tnl_Vertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
@@ -1048,9 +1049,9 @@ _tnl_MultiTexCoord4fvARB(GLenum target, const GLfloat *v)
 
 /* KW: Because the eval values don't become 'current', fixup will flow
  *     through these vertices, and then evaluation will write on top
- *     of the fixup results.  
+ *     of the fixup results.
  *
- *     Note: using Obj to hold eval coord data. 
+ *     Note: using Obj to hold eval coord data.
  */
 #define EVALCOORD1(IM, x)				\
 {							\
@@ -1078,7 +1079,7 @@ _tnl_MultiTexCoord4fvARB(GLenum target, const GLfloat *v)
    if (count == IMM_MAXDATA-1)				\
       _tnl_flush_immediate( IM );			\
 }
- 
+
 #define EVALPOINT2(IM, x, y)				\
 {							\
    GLuint count = IM->Count++;				\
@@ -1157,11 +1158,11 @@ _tnl_ArrayElement( GLint i )
 }
 
 
-/* Internal functions.  These are safe to use providing either: 
- * 
+/* Internal functions.  These are safe to use providing either:
+ *
  *    - It is determined that a display list is not being compiled, or
  *    if so that these commands won't be compiled into the list (see
- *    t_eval.c for an example).  
+ *    t_eval.c for an example).
  *
  *    - _tnl_hard_begin() is used instead of _tnl_[bB]egin, and tested
  *    for a GL_TRUE return value.  See _tnl_Rectf, below.
@@ -1233,10 +1234,10 @@ _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
       if (!IM->Material) {
 	 IM->Material = (GLmaterial (*)[2]) MALLOC( sizeof(GLmaterial) *
 						    IMM_SIZE * 2 );
-	 IM->MaterialMask = (GLuint *) MALLOC( sizeof(GLuint) * IMM_SIZE ); 
+	 IM->MaterialMask = (GLuint *) MALLOC( sizeof(GLuint) * IMM_SIZE );
       }
       else if (IM->MaterialOrMask & ~bitmask) {
-	 _mesa_copy_material_pairs( IM->Material[count], 
+	 _mesa_copy_material_pairs( IM->Material[count],
 				 IM->Material[IM->LastMaterial],
 				 IM->MaterialOrMask & ~bitmask );
       }
@@ -1245,7 +1246,7 @@ _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
       IM->LastMaterial = count;
       IM->MaterialMask[count] = 0;
    }
-   
+
    IM->MaterialOrMask |= bitmask;
    IM->MaterialMask[count] |= bitmask;
    mat = IM->Material[count];
@@ -1353,13 +1354,13 @@ void _tnl_imm_vtxfmt_init( GLcontext *ctx )
    vfmt->Vertex4f = _tnl_Vertex4f;
    vfmt->Vertex4fv = _tnl_Vertex4fv;
 
-   /* Outside begin/end functions (from t_varray.c, t_eval.c, ...): 
+   /* Outside begin/end functions (from t_varray.c, t_eval.c, ...):
     */
    vfmt->Rectf = _tnl_Rectf;
 
    /* Just use the core function:
     */
-   vfmt->CallList = _mesa_CallList; 
+   vfmt->CallList = _mesa_CallList;
 
    vfmt->prefer_float_colors = GL_FALSE;
 }

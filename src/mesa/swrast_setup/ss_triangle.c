@@ -1,8 +1,10 @@
+/* $Id: ss_triangle.c,v 1.12 2001/03/12 00:48:43 gareth Exp $ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,20 +37,20 @@
 #include "ss_triangle.h"
 #include "ss_context.h"
 
-#define SS_RGBA_BIT         0x1 
-#define SS_OFFSET_BIT	    0x2	
-#define SS_TWOSIDE_BIT	    0x4	
-#define SS_UNFILLED_BIT	    0x8	
+#define SS_RGBA_BIT         0x1
+#define SS_OFFSET_BIT	    0x2
+#define SS_TWOSIDE_BIT	    0x4
+#define SS_UNFILLED_BIT	    0x8
 #define SS_MAX_TRIFUNC      0x10
 
 static triangle_func tri_tab[SS_MAX_TRIFUNC];
 static quad_func     quad_tab[SS_MAX_TRIFUNC];
 
 
-static void _swsetup_render_line_tri( GLcontext *ctx, 
+static void _swsetup_render_line_tri( GLcontext *ctx,
 				      GLuint e0, GLuint e1, GLuint e2 )
 {
-   SScontext *swsetup = SWSETUP_CONTEXT(ctx);   
+   SScontext *swsetup = SWSETUP_CONTEXT(ctx);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLubyte *ef = VB->EdgeFlag;
    SWvertex *verts = swsetup->verts;
@@ -76,13 +78,13 @@ static void _swsetup_render_line_tri( GLcontext *ctx,
    }
 
    if (swsetup->render_prim == GL_POLYGON) {
-      if (ef[e2]) _swrast_Line( ctx, v2, v0 ); 
-      if (ef[e0]) _swrast_Line( ctx, v0, v1 ); 
-      if (ef[e1]) _swrast_Line( ctx, v1, v2 ); 
+      if (ef[e2]) _swrast_Line( ctx, v2, v0 );
+      if (ef[e0]) _swrast_Line( ctx, v0, v1 );
+      if (ef[e1]) _swrast_Line( ctx, v1, v2 );
    } else {
-      if (ef[e0]) _swrast_Line( ctx, v0, v1 ); 
-      if (ef[e1]) _swrast_Line( ctx, v1, v2 ); 
-      if (ef[e2]) _swrast_Line( ctx, v2, v0 ); 
+      if (ef[e0]) _swrast_Line( ctx, v0, v1 );
+      if (ef[e1]) _swrast_Line( ctx, v1, v2 );
+      if (ef[e2]) _swrast_Line( ctx, v2, v0 );
    }
 
    if (ctx->_TriangleCaps & DD_FLATSHADE) {
@@ -95,10 +97,10 @@ static void _swsetup_render_line_tri( GLcontext *ctx,
    }
 }
 
-static void _swsetup_render_point_tri( GLcontext *ctx, 
+static void _swsetup_render_point_tri( GLcontext *ctx,
 				       GLuint e0, GLuint e1, GLuint e2 )
 {
-   SScontext *swsetup = SWSETUP_CONTEXT(ctx);   
+   SScontext *swsetup = SWSETUP_CONTEXT(ctx);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLubyte *ef = VB->EdgeFlag;
    SWvertex *verts = swsetup->verts;
@@ -125,9 +127,9 @@ static void _swsetup_render_point_tri( GLcontext *ctx,
       v1->index = v2->index;
    }
 
-   if (ef[e0]) _swrast_Point( ctx, v0 ); 
-   if (ef[e1]) _swrast_Point( ctx, v1 ); 
-   if (ef[e2]) _swrast_Point( ctx, v2 ); 
+   if (ef[e0]) _swrast_Point( ctx, v0 );
+   if (ef[e1]) _swrast_Point( ctx, v1 );
+   if (ef[e2]) _swrast_Point( ctx, v2 );
 
    if (ctx->_TriangleCaps & DD_FLATSHADE) {
       COPY_CHAN4(v0->color, c[0]);
@@ -237,14 +239,14 @@ static void swsetup_points( GLcontext *ctx, GLuint first, GLuint last )
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    SWvertex *verts = SWSETUP_CONTEXT(ctx)->verts;
    GLuint i;
-   
+
    if (VB->Elts) {
-      for (i = first; i < last; i++) 
+      for (i = first; i < last; i++)
 	 if (VB->ClipMask[VB->Elts[i]] == 0)
 	    _swrast_Point( ctx, &verts[VB->Elts[i]] );
    }
    else {
-      for (i = first; i < last; i++) 
+      for (i = first; i < last; i++)
 	 if (VB->ClipMask[i] == 0)
 	    _swrast_Point( ctx, &verts[i] );
    }
@@ -280,4 +282,3 @@ void _swsetup_choose_trifuncs( GLcontext *ctx )
    swsetup->Line = swsetup_line;
    swsetup->Points = swsetup_points;
 }
-

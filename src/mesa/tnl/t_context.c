@@ -1,10 +1,10 @@
-/* $Id: t_context.c,v 1.14 2001/03/11 23:49:20 gareth Exp $ */
+/* $Id: t_context.c,v 1.15 2001/03/12 00:48:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *   Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keithw@valinux.com>
  */
 
 

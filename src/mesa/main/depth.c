@@ -1,10 +1,10 @@
-/* $Id: depth.c,v 1.26 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: depth.c,v 1.27 2001/03/12 00:48:37 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -87,9 +87,9 @@ _mesa_DepthFunc( GLenum func )
       return;
    }
 
-   if (ctx->Depth.Func == func) 
+   if (ctx->Depth.Func == func)
       return;
-   
+
    FLUSH_VERTICES(ctx, _NEW_DEPTH);
    ctx->Depth.Func = func;
 
@@ -98,7 +98,7 @@ _mesa_DepthFunc( GLenum func )
    else
       ctx->_TriangleCaps &= ~DD_Z_NEVER;
 
-   if (ctx->Driver.DepthFunc) 
+   if (ctx->Driver.DepthFunc)
       ctx->Driver.DepthFunc( ctx, func );
 }
 
@@ -117,14 +117,12 @@ _mesa_DepthMask( GLboolean flag )
     * GL_TRUE indicates depth buffer writing is enabled (default)
     * GL_FALSE indicates depth buffer writing is disabled
     */
-   if (ctx->Depth.Mask == flag) 
+   if (ctx->Depth.Mask == flag)
       return;
-   
+
    FLUSH_VERTICES(ctx, _NEW_DEPTH);
    ctx->Depth.Mask = flag;
 
-   if (ctx->Driver.DepthMask) 
+   if (ctx->Driver.DepthMask)
       ctx->Driver.DepthMask( ctx, flag );
 }
-
-

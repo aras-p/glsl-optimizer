@@ -1,4 +1,4 @@
-/* $Id: histogram.c,v 1.9 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: histogram.c,v 1.10 2001/03/12 00:48:38 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -950,7 +950,7 @@ _mesa_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean s
       ctx->Histogram.AlphaSize     = 8 * sizeof(GLuint);
       ctx->Histogram.LuminanceSize = 8 * sizeof(GLuint);
    }
-   
+
    ctx->NewState |= _NEW_PIXEL;
 }
 
@@ -975,7 +975,7 @@ _mesa_Minmax(GLenum target, GLenum internalFormat, GLboolean sink)
       _mesa_error(ctx, GL_INVALID_ENUM, "glMinMax(internalFormat)");
       return;
    }
-   
+
    if (ctx->MinMax.Sink == sink)
       return;
    FLUSH_VERTICES(ctx, _NEW_PIXEL);

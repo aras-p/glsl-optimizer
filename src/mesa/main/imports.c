@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.7 2001/03/07 05:06:12 brianp Exp $ */
+/* $Id: imports.c,v 1.8 2001/03/12 00:48:38 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -79,7 +79,7 @@ _mesa_warning(__GLcontext *gc, char *str)
 /* Whacko XFree86 macro:
  */
 #ifdef getenv
-#undef getenv			
+#undef getenv
 #endif
    if (gc->imports.getenv(gc, "MESA_DEBUG")) {
       debug = GL_TRUE;

@@ -1,8 +1,10 @@
+/* $Id: acache.h,v 1.2 2001/03/12 00:48:41 gareth Exp $ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,71 +43,71 @@ extern void
 _ac_InvalidateState( GLcontext *ctx, GLuint new_state );
 
 extern struct gl_client_array *
-_ac_import_texcoord( GLcontext *ctx, 
+_ac_import_texcoord( GLcontext *ctx,
 		     GLuint unit,
 		     GLenum type,
-		     GLuint reqstride, 
+		     GLuint reqstride,
 		     GLuint reqsize,
 		     GLboolean reqwritable,
 		     GLboolean *writable );
 
 extern struct gl_client_array *
-_ac_import_vertex( GLcontext *ctx, 
+_ac_import_vertex( GLcontext *ctx,
 		   GLenum type,
-		   GLuint reqstride, 
+		   GLuint reqstride,
 		   GLuint reqsize,
 		   GLboolean reqwritable,
 		   GLboolean *writable );
 
 extern struct gl_client_array *
-_ac_import_normal( GLcontext *ctx, 
+_ac_import_normal( GLcontext *ctx,
 		   GLenum type,
-		   GLuint reqstride, 
+		   GLuint reqstride,
 		   GLboolean reqwritable,
 		   GLboolean *writable );
 
 extern struct gl_client_array *
-_ac_import_color( GLcontext *ctx, 
+_ac_import_color( GLcontext *ctx,
 		  GLenum type,
-		  GLuint reqstride, 
+		  GLuint reqstride,
 		  GLuint reqsize,
 		  GLboolean reqwritable,
 		  GLboolean *writable );
 
 extern struct gl_client_array *
-_ac_import_index( GLcontext *ctx, 
+_ac_import_index( GLcontext *ctx,
 		  GLenum type,
-		  GLuint reqstride, 
+		  GLuint reqstride,
 		  GLboolean reqwritable,
 		  GLboolean *writable );
 
 extern struct gl_client_array *
-_ac_import_secondarycolor( GLcontext *ctx, 
+_ac_import_secondarycolor( GLcontext *ctx,
 			   GLenum type,
-			   GLuint reqstride, 
+			   GLuint reqstride,
 			   GLuint reqsize,
 			   GLboolean reqwritable,
 			   GLboolean *writable );
 
 extern struct gl_client_array *
-_ac_import_fogcoord( GLcontext *ctx, 
+_ac_import_fogcoord( GLcontext *ctx,
 		     GLenum type,
-		     GLuint reqstride, 
+		     GLuint reqstride,
 		     GLboolean reqwritable,
 		     GLboolean *writable );
 
 extern struct gl_client_array *
-_ac_import_edgeflag( GLcontext *ctx, 
+_ac_import_edgeflag( GLcontext *ctx,
 		     GLenum type,
-		     GLuint reqstride, 
+		     GLuint reqstride,
 		     GLboolean reqwritable,
 		     GLboolean *writable );
 
 
 /* Clients must call this function to validate state and set bounds
- * before importing any data: 
+ * before importing any data:
  */
-extern void 
+extern void
 _ac_import_range( GLcontext *ctx, GLuint start, GLuint count );
 
 

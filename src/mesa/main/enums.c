@@ -1,10 +1,10 @@
-/* $Id: enums.c,v 1.13 2001/03/07 05:06:11 brianp Exp $ */
+/* $Id: enums.c,v 1.14 2001/03/12 00:48:37 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,7 +22,7 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  * Author:
  *    Keith Whitwell <keithw@valinux.com>
  */
@@ -911,5 +911,3 @@ const char *_mesa_lookup_enum_by_nr( int nr )
 
    return f ? (*f)->c : "(unknown)";
 }
-
-

@@ -1,10 +1,10 @@
-/* $Id: t_pipeline.h,v 1.6 2001/02/16 00:35:35 keithw Exp $ */
+/* $Id: t_pipeline.h,v 1.7 2001/03/12 00:48:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,8 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- *
- * Author:
+ * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  */
 
@@ -42,19 +41,19 @@ extern void _tnl_validate_pipeline( GLcontext *ctx );
 
 extern void _tnl_destroy_pipeline( GLcontext *ctx );
 
-extern void _tnl_install_pipeline( GLcontext *ctx, 
+extern void _tnl_install_pipeline( GLcontext *ctx,
 				   const struct gl_pipeline_stage **stages );
 
 
 /* These are implemented in the t_vb_*.c files:
  */
-extern const struct gl_pipeline_stage _tnl_vertex_transform_stage; 
-extern const struct gl_pipeline_stage _tnl_normal_transform_stage; 
-extern const struct gl_pipeline_stage _tnl_lighting_stage; 
-extern const struct gl_pipeline_stage _tnl_fog_coordinate_stage; 
-extern const struct gl_pipeline_stage _tnl_texgen_stage; 
-extern const struct gl_pipeline_stage _tnl_texture_transform_stage; 
-extern const struct gl_pipeline_stage _tnl_point_attenuation_stage; 
+extern const struct gl_pipeline_stage _tnl_vertex_transform_stage;
+extern const struct gl_pipeline_stage _tnl_normal_transform_stage;
+extern const struct gl_pipeline_stage _tnl_lighting_stage;
+extern const struct gl_pipeline_stage _tnl_fog_coordinate_stage;
+extern const struct gl_pipeline_stage _tnl_texgen_stage;
+extern const struct gl_pipeline_stage _tnl_texture_transform_stage;
+extern const struct gl_pipeline_stage _tnl_point_attenuation_stage;
 extern const struct gl_pipeline_stage _tnl_render_stage;
 
 /* Shorthand to plug in the default pipeline:

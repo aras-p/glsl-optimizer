@@ -1,21 +1,21 @@
-/* $Id: s_feedback.c,v 1.6 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: s_feedback.c,v 1.7 2001/03/12 00:48:42 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -94,7 +94,7 @@ void _mesa_feedback_triangle( GLcontext *ctx,
    if (_mesa_cull_triangle( ctx, v0, v1, v2 )) {
       FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POLYGON_TOKEN );
       FEEDBACK_TOKEN( ctx, (GLfloat) 3 );        /* three vertices */
-      
+
       if (ctx->Light.ShadeModel == GL_SMOOTH) {
 	 feedback_vertex( ctx, v0, v0 );
 	 feedback_vertex( ctx, v1, v1 );
@@ -113,7 +113,7 @@ void _mesa_feedback_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1
    GLenum token = GL_LINE_TOKEN;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   if (swrast->StippleCounter==0) 
+   if (swrast->StippleCounter==0)
       token = GL_LINE_RESET_TOKEN;
 
    FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) token );
@@ -165,6 +165,3 @@ void _mesa_select_point( GLcontext *ctx, const SWvertex *v )
    const GLfloat zs = 1.0F / ctx->DepthMaxF;
    _mesa_update_hitflag( ctx, v->win[2] * zs );
 }
-
-
-

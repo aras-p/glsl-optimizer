@@ -1,4 +1,4 @@
-/* $Id: polygon.c,v 1.19 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: polygon.c,v 1.20 2001/03/12 00:48:38 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -137,7 +137,7 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
    }
 
    ctx->_TriangleCaps &= ~DD_TRI_UNFILLED;
-   if (ctx->Polygon.FrontMode!=GL_FILL || ctx->Polygon.BackMode!=GL_FILL) 
+   if (ctx->Polygon.FrontMode!=GL_FILL || ctx->Polygon.BackMode!=GL_FILL)
       ctx->_TriangleCaps |= DD_TRI_UNFILLED;
 
    if (ctx->Driver.PolygonMode) {

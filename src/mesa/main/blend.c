@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.30 2001/03/07 00:21:32 brianp Exp $ */
+/* $Id: blend.c,v 1.31 2001/03/12 00:48:37 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -40,7 +40,7 @@
 void
 _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
 {
-   
+
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -112,7 +112,7 @@ _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
    ctx->Color.BlendDstRGB = ctx->Color.BlendDstA = dfactor;
    ctx->Color.BlendSrcRGB = ctx->Color.BlendSrcA = sfactor;
 
-   if (ctx->Driver.BlendFunc) 
+   if (ctx->Driver.BlendFunc)
       ctx->Driver.BlendFunc( ctx, sfactor, dfactor );
 }
 
@@ -309,7 +309,7 @@ _mesa_BlendEquation( GLenum mode )
    /* This is needed to support 1.1's RGB logic ops AND
     * 1.0's blending logicops.
     */
-   ctx->Color.ColorLogicOpEnabled = (mode==GL_LOGIC_OP && 
+   ctx->Color.ColorLogicOpEnabled = (mode==GL_LOGIC_OP &&
 				     ctx->Color.BlendEnabled);
 
    if (ctx->Driver.BlendEquation)
@@ -339,4 +339,3 @@ _mesa_BlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
    if (ctx->Driver.BlendColor)
       (*ctx->Driver.BlendColor)(ctx, tmp);
 }
-

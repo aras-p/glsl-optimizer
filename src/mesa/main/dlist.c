@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.66 2001/03/07 05:06:11 brianp Exp $ */
+/* $Id: dlist.c,v 1.67 2001/03/12 00:48:37 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -4767,7 +4767,7 @@ _mesa_NewList( GLuint list, GLenum mode )
 
 
 /*
- * End definition of current display list.  Is the current 
+ * End definition of current display list.  Is the current
  * ASSERT_OUTSIDE_BEGIN_END strong enough to really guarentee that
  * we are outside begin/end calls?
  */
@@ -5088,7 +5088,7 @@ static void exec_GetTexLevelParameteriv( GLenum target, GLint level,
    ctx->Exec->GetTexLevelParameteriv( target, level, pname, params );
 }
 
-static void exec_GetTexParameterfv( GLenum target, GLenum pname, 
+static void exec_GetTexParameterfv( GLenum target, GLenum pname,
 				    GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5161,7 +5161,7 @@ static GLboolean exec_AreTexturesResident(GLsizei n, const GLuint *texName,
    return ctx->Exec->AreTexturesResident( n, texName, residences);
 }
 
-static void exec_ColorPointer(GLint size, GLenum type, GLsizei stride, 
+static void exec_ColorPointer(GLint size, GLenum type, GLsizei stride,
 			      const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5218,7 +5218,7 @@ static void exec_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Exec->IndexPointer( type, stride, ptr);
 }
 
-static void exec_InterleavedArrays(GLenum format, GLsizei stride, 
+static void exec_InterleavedArrays(GLenum format, GLsizei stride,
 				   const GLvoid *pointer)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5254,7 +5254,7 @@ static void exec_PushClientAttrib(GLbitfield mask)
    ctx->Exec->PushClientAttrib( mask);
 }
 
-static void exec_TexCoordPointer(GLint size, GLenum type, GLsizei stride, 
+static void exec_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
 				 const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5262,7 +5262,7 @@ static void exec_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
    ctx->Exec->TexCoordPointer( size,  type,  stride, ptr);
 }
 
-static void exec_GetCompressedTexImageARB(GLenum target, GLint level, 
+static void exec_GetCompressedTexImageARB(GLenum target, GLint level,
 					  GLvoid *img)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5270,7 +5270,7 @@ static void exec_GetCompressedTexImageARB(GLenum target, GLint level,
    ctx->Exec->GetCompressedTexImageARB( target, level, img);
 }
 
-static void exec_VertexPointer(GLint size, GLenum type, GLsizei stride, 
+static void exec_VertexPointer(GLint size, GLenum type, GLsizei stride,
 			       const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5278,7 +5278,7 @@ static void exec_VertexPointer(GLint size, GLenum type, GLsizei stride,
    ctx->Exec->VertexPointer( size, type, stride, ptr);
 }
 
-static void exec_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat, 
+static void exec_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat,
 					 GLint x, GLint y, GLsizei width)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5304,7 +5304,7 @@ static void exec_GetColorTable( GLenum target, GLenum format,
    ctx->Exec->GetColorTable( target, format, type, data );
 }
 
-static void exec_GetColorTableParameterfv( GLenum target, GLenum pname, 
+static void exec_GetColorTableParameterfv( GLenum target, GLenum pname,
 					   GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5312,7 +5312,7 @@ static void exec_GetColorTableParameterfv( GLenum target, GLenum pname,
    ctx->Exec->GetColorTableParameterfv( target, pname, params );
 }
 
-static void exec_GetColorTableParameteriv( GLenum target, GLenum pname, 
+static void exec_GetColorTableParameteriv( GLenum target, GLenum pname,
 					   GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5328,7 +5328,7 @@ static void exec_GetConvolutionFilter(GLenum target, GLenum format, GLenum type,
    ctx->Exec->GetConvolutionFilter( target, format, type, image);
 }
 
-static void exec_GetConvolutionParameterfv(GLenum target, GLenum pname, 
+static void exec_GetConvolutionParameterfv(GLenum target, GLenum pname,
 					   GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5344,7 +5344,7 @@ static void exec_GetConvolutionParameteriv(GLenum target, GLenum pname,
    ctx->Exec->GetConvolutionParameteriv( target, pname, params);
 }
 
-static void exec_GetHistogram(GLenum target, GLboolean reset, GLenum format, 
+static void exec_GetHistogram(GLenum target, GLboolean reset, GLenum format,
 			      GLenum type, GLvoid *values)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5352,7 +5352,7 @@ static void exec_GetHistogram(GLenum target, GLboolean reset, GLenum format,
    ctx->Exec->GetHistogram( target, reset, format, type, values);
 }
 
-static void exec_GetHistogramParameterfv(GLenum target, GLenum pname, 
+static void exec_GetHistogramParameterfv(GLenum target, GLenum pname,
 					 GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5360,7 +5360,7 @@ static void exec_GetHistogramParameterfv(GLenum target, GLenum pname,
    ctx->Exec->GetHistogramParameterfv( target, pname, params);
 }
 
-static void exec_GetHistogramParameteriv(GLenum target, GLenum pname, 
+static void exec_GetHistogramParameteriv(GLenum target, GLenum pname,
 					 GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5368,7 +5368,7 @@ static void exec_GetHistogramParameteriv(GLenum target, GLenum pname,
    ctx->Exec->GetHistogramParameteriv( target, pname, params);
 }
 
-static void exec_GetMinmax(GLenum target, GLboolean reset, GLenum format, 
+static void exec_GetMinmax(GLenum target, GLboolean reset, GLenum format,
 			   GLenum type, GLvoid *values)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5392,7 +5392,7 @@ static void exec_GetMinmaxParameteriv(GLenum target, GLenum pname,
    ctx->Exec->GetMinmaxParameteriv( target, pname, params);
 }
 
-static void exec_GetSeparableFilter(GLenum target, GLenum format, GLenum type, 
+static void exec_GetSeparableFilter(GLenum target, GLenum format, GLenum type,
 				    GLvoid *row, GLvoid *column, GLvoid *span)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -5502,7 +5502,7 @@ static void exec_SecondaryColorPointerEXT(GLint size, GLenum type,
    ctx->Exec->SecondaryColorPointerEXT( size, type, stride, ptr);
 }
 
-static void exec_FogCoordPointerEXT(GLenum type, GLsizei stride, 
+static void exec_FogCoordPointerEXT(GLenum type, GLsizei stride,
 				    const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);

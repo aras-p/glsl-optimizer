@@ -1,32 +1,30 @@
-/* $Id: api_loopback.c,v 1.6 2001/01/02 22:05:55 brianp Exp $ */
+/* $Id: api_loopback.c,v 1.7 2001/03/12 00:48:37 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
-/*
+ *
  * Authors:
- *   Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keithw@valinux.com>
  */
 
 
@@ -57,10 +55,10 @@
 #define TEXCOORD2(s,t)              DRIVER(TexCoord2f)(s,t)
 #define TEXCOORD3(s,t,u)            DRIVER(TexCoord3f)(s,t,u)
 #define TEXCOORD4(s,t,u,v)          DRIVER(TexCoord4f)(s,t,u,v)
-#define INDEX(c)		    DRIVER(Indexi)(c)	
-#define MULTI_TEXCOORD1(z,s)	    DRIVER(MultiTexCoord1fARB)(z,s)	
+#define INDEX(c)		    DRIVER(Indexi)(c)
+#define MULTI_TEXCOORD1(z,s)	    DRIVER(MultiTexCoord1fARB)(z,s)
 #define MULTI_TEXCOORD2(z,s,t)	    DRIVER(MultiTexCoord2fARB)(z,s,t)
-#define MULTI_TEXCOORD3(z,s,t,u)    DRIVER(MultiTexCoord3fARB)(z,s,t,u)       
+#define MULTI_TEXCOORD3(z,s,t,u)    DRIVER(MultiTexCoord3fARB)(z,s,t,u)
 #define MULTI_TEXCOORD4(z,s,t,u,v)  DRIVER(MultiTexCoord4fARB)(z,s,t,u,v)
 #define EVALCOORD1(x)               DRIVER(EvalCoord1f)(x)
 #define EVALCOORD2(x,y)             DRIVER(EvalCoord2f)(x,y)
@@ -177,7 +175,7 @@ loopback_Color4i( GLint red, GLint green, GLint blue, GLint alpha )
 }
 
 static void
-loopback_Color4s( GLshort red, GLshort green, GLshort blue, 
+loopback_Color4s( GLshort red, GLshort green, GLshort blue,
 			GLshort alpha )
 {
    GLubyte col[4];
@@ -200,7 +198,7 @@ loopback_Color4ui( GLuint red, GLuint green, GLuint blue, GLuint alpha )
 }
 
 static void
-loopback_Color4us( GLushort red, GLushort green, GLushort blue, 
+loopback_Color4us( GLushort red, GLushort green, GLushort blue,
 			 GLushort alpha )
 {
    GLubyte col[4];
@@ -249,7 +247,7 @@ loopback_Color3iv( const GLint *v )
 
 static void
 loopback_Color3sv( const GLshort *v )
-{  
+{
    GLubyte col[4];
    col[0] = SHORT_TO_UBYTE(v[0]);
    col[1] = SHORT_TO_UBYTE(v[1]);
@@ -354,9 +352,9 @@ loopback_Color4usv( const GLushort *v)
 static void
 loopback_Color3b_f( GLbyte red, GLbyte green, GLbyte blue )
 {
-   COLORF( BYTE_TO_FLOAT(red), 
+   COLORF( BYTE_TO_FLOAT(red),
 	   BYTE_TO_FLOAT(green),
-	   BYTE_TO_FLOAT(blue), 
+	   BYTE_TO_FLOAT(blue),
 	   1.0 );
 }
 
@@ -438,7 +436,7 @@ loopback_Color3usv_f( const GLushort *v )
 
 
 static void
-loopback_Color4b_f( GLbyte red, GLbyte green, GLbyte blue, 
+loopback_Color4b_f( GLbyte red, GLbyte green, GLbyte blue,
 			      GLbyte alpha )
 {
    COLORF( BYTE_TO_FLOAT(red), BYTE_TO_FLOAT(green),
@@ -460,7 +458,7 @@ loopback_Color4i_f( GLint red, GLint green, GLint blue, GLint alpha )
 }
 
 static void
-loopback_Color4s_f( GLshort red, GLshort green, GLshort blue, 
+loopback_Color4s_f( GLshort red, GLshort green, GLshort blue,
 			      GLshort alpha )
 {
    COLORF( SHORT_TO_FLOAT(red), SHORT_TO_FLOAT(green),
@@ -878,21 +876,21 @@ loopback_Vertex3sv( const GLshort *v )
 static void
 loopback_Vertex4dv( const GLdouble *v )
 {
-   VERTEX4( (GLfloat) v[0], (GLfloat) v[1], 
+   VERTEX4( (GLfloat) v[0], (GLfloat) v[1],
 	    (GLfloat) v[2], (GLfloat) v[3] );
 }
 
 static void
 loopback_Vertex4iv( const GLint *v )
 {
-   VERTEX4( (GLfloat) v[0], (GLfloat) v[1], 
+   VERTEX4( (GLfloat) v[0], (GLfloat) v[1],
 	    (GLfloat) v[2], (GLfloat) v[3] );
 }
 
 static void
 loopback_Vertex4sv( const GLshort *v )
 {
-   VERTEX4( (GLfloat) v[0], (GLfloat) v[1], 
+   VERTEX4( (GLfloat) v[0], (GLfloat) v[1],
 	    (GLfloat) v[2], (GLfloat) v[3] );
 }
 
@@ -1365,7 +1363,7 @@ loopback_SecondaryColor3usvEXT_f( const GLushort *v )
 
 
 void
-_mesa_loopback_prefer_float( struct _glapi_table *dest, 
+_mesa_loopback_prefer_float( struct _glapi_table *dest,
 			     GLboolean prefer_float_colors )
 {
    if (!prefer_float_colors) {
@@ -1405,7 +1403,7 @@ _mesa_loopback_prefer_float( struct _glapi_table *dest,
       dest->SecondaryColor3svEXT = loopback_SecondaryColor3svEXT;
       dest->SecondaryColor3uivEXT = loopback_SecondaryColor3uivEXT;
       dest->SecondaryColor3usvEXT = loopback_SecondaryColor3usvEXT;
-   } 
+   }
    else {
       dest->Color3b = loopback_Color3b_f;
       dest->Color3d = loopback_Color3d_f;
@@ -1448,13 +1446,13 @@ _mesa_loopback_prefer_float( struct _glapi_table *dest,
 
 /* Passing prefer_f_colors as true will mean that all colors
  * *except* Color{34}ub{v} are passed as floats.  Setting it false will
- * mean all colors *except* Color{34}f{v} are passed as ubytes.  
- * 
+ * mean all colors *except* Color{34}f{v} are passed as ubytes.
+ *
  * This code never registers handlers for any of the entry points
- * listed in vtxfmt.h.  
+ * listed in vtxfmt.h.
  */
 void
-_mesa_loopback_init_api_table( struct _glapi_table *dest, 
+_mesa_loopback_init_api_table( struct _glapi_table *dest,
 			       GLboolean prefer_float_colors )
 {
    _mesa_loopback_prefer_float( dest, prefer_float_colors );

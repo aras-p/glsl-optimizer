@@ -1,4 +1,4 @@
-/* $Id: s_aaline.c,v 1.5 2001/03/07 05:06:12 brianp Exp $ */
+/* $Id: s_aaline.c,v 1.6 2001/03/12 00:48:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -506,4 +506,3 @@ _swrast_choose_aa_line_function(GLcontext *ctx)
       swrast->Line = aa_ci_line;
    }
 }
-

@@ -1,4 +1,4 @@
-/* $Id: vtxfmt.h,v 1.3 2001/03/11 23:49:20 gareth Exp $ */
+/* $Id: vtxfmt.h,v 1.4 2001/03/12 00:48:39 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,7 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
+ * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  *    Gareth Hughes <gareth@valinux.com>
  */

@@ -1,10 +1,10 @@
-/* $Id: t_pipeline.c,v 1.13 2001/02/16 00:35:35 keithw Exp $ */
+/* $Id: t_pipeline.c,v 1.14 2001/03/12 00:48:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,8 +23,8 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
- *     Keith Whitwell <keithw@valinux.com>
+ * Authors:
+ *    Keith Whitwell <keithw@valinux.com>
  */
 
 #include "glheader.h"
@@ -41,7 +41,7 @@
 #include "t_pipeline.h"
 
 
-void _tnl_install_pipeline( GLcontext *ctx, 
+void _tnl_install_pipeline( GLcontext *ctx,
 			    const struct gl_pipeline_stage **stages )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -71,7 +71,7 @@ void _tnl_destroy_pipeline( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint i;
 
-   for (i = 0 ; i < tnl->pipeline.nr_stages ; i++) 
+   for (i = 0 ; i < tnl->pipeline.nr_stages ; i++)
       tnl->pipeline.stages[i].destroy( &tnl->pipeline.stages[i] );
 
    tnl->pipeline.nr_stages = 0;
@@ -95,22 +95,22 @@ void _tnl_validate_pipeline( GLcontext *ctx )
    for (i = pipe->nr_stages+1 ; --i ; s++) {
 
       s->changed_inputs |= s->inputs & changed_inputs;
-      
-      if (s->check_state & newstate) {      
+
+      if (s->check_state & newstate) {
 	 if (s->active) {
 	    GLuint old_outputs = s->outputs;
 	    s->check(ctx, s);
 	    if (!s->active)
 	       changed_inputs |= old_outputs;
 	 }
-	 else 
+	 else
 	    s->check(ctx, s);
       }
 
       if (s->active) {
 	 pipe->inputs |= s->inputs & ~generated;
 	 generated |= s->outputs;
-      } 
+      }
    }
 }
 
@@ -136,10 +136,10 @@ void _tnl_run_pipeline( GLcontext *ctx )
       ctx->Driver.PipelineStart( ctx );
 
    /* If something changes in the pipeline, tag all subsequent stages
-    * using this value for recalculation.  
+    * using this value for recalculation.
     *
     * Even inactive stages have their state and inputs examined to try
-    * to keep cached data alive over state-changes. 
+    * to keep cached data alive over state-changes.
     */
    for (i = pipe->nr_stages+1 ; --i ; s++) {
       s->changed_inputs |= s->inputs & changed_inputs;
@@ -151,7 +151,7 @@ void _tnl_run_pipeline( GLcontext *ctx )
 
       if (s->active) {
 	 if (running) {
-	    if (s->changed_inputs) 
+	    if (s->changed_inputs)
 	       changed_inputs |= s->outputs;
 
 /*  	    fprintf(stderr, "run %s\n", s->name); */
@@ -174,9 +174,9 @@ void _tnl_run_pipeline( GLcontext *ctx )
  * simple hardware rasterizers.  For customization, I don't recommend
  * tampering with the internals of these stages in the way that
  * drivers did in Mesa 3.4.  These stages are basically black boxes,
- * and should be left intact.  
+ * and should be left intact.
  *
- * To customize the pipeline, consider: 
+ * To customize the pipeline, consider:
  *
  * - removing redundant stages (making sure that the software rasterizer
  *   can cope with this on fallback paths).  An example is fog
@@ -199,17 +199,16 @@ void _tnl_run_pipeline( GLcontext *ctx )
  *   pipeline by returning GL_FALSE from run(), or do nothing).
  *
  * Some work can be done to lift some of the restrictions in the final
- * case, if it becomes necessary to do so. 
+ * case, if it becomes necessary to do so.
  */
 const struct gl_pipeline_stage *_tnl_default_pipeline[] = {
-   &_tnl_vertex_transform_stage, 
-   &_tnl_normal_transform_stage, 
-   &_tnl_lighting_stage, 
-   &_tnl_fog_coordinate_stage, 
-   &_tnl_texgen_stage, 
-   &_tnl_texture_transform_stage, 
-   &_tnl_point_attenuation_stage, 
+   &_tnl_vertex_transform_stage,
+   &_tnl_normal_transform_stage,
+   &_tnl_lighting_stage,
+   &_tnl_fog_coordinate_stage,
+   &_tnl_texgen_stage,
+   &_tnl_texture_transform_stage,
+   &_tnl_point_attenuation_stage,
    &_tnl_render_stage,
    0
 };
-

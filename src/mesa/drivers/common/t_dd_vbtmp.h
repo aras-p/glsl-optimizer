@@ -1,19 +1,21 @@
+/* $Id: t_dd_vbtmp.h,v 1.8 2001/03/12 00:48:44 gareth Exp $ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
- * 
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -21,8 +23,8 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
- *   Keith Whitwell <keithw@valinux.com>
+ * Authors:
+ *    Keith Whitwell <keithw@valinux.com>
  */
 
 
@@ -58,7 +60,7 @@
  *    unsigned int ui[16];
  *    unsigned char ub4[4][16];
  * }
- * 
+ *
 
  * DO_XYZW:  Emit xyz and maybe w coordinates.
  * DO_RGBA:  Emit color.
@@ -74,7 +76,7 @@
  *
  * HAVE_HW_VIEWPORT:  Hardware performs viewport transform.
  * HAVE_HW_DIVIDE:  Hardware performs perspective divide.
- * 
+ *
  * HAVE_TINY_VERTICES:  Hardware understands v.tv format.
  * HAVE_PTEX_VERTICES:  Hardware understands v.pv format.
  * HAVE_NOTEX_VERTICES:  Hardware understands v.v format with texcount 0.
@@ -186,7 +188,7 @@ static void TAG(emit)( GLcontext *ctx,
       if (VB->TexCoordPtr[t0]) {
          tc0_stride = VB->TexCoordPtr[t0]->stride;
          tc0 = VB->TexCoordPtr[t0]->data;
-         if (DO_PTEX) 
+         if (DO_PTEX)
             tc0_size = VB->TexCoordPtr[t0]->size;
       }
       else {
@@ -228,21 +230,21 @@ static void TAG(emit)( GLcontext *ctx,
 	 if (DO_TEX3)
             if (tc3)
                tc3 = (GLfloat (*)[4])((GLubyte *)tc3 + start * tc3_stride);
-	 if (DO_RGBA) 
+	 if (DO_RGBA)
 	    STRIDE_4UB(col, start * col_stride);
-	 if (DO_SPEC) 
+	 if (DO_SPEC)
 	    STRIDE_4UB(spec, start * spec_stride);
-	 if (DO_FOG) 
+	 if (DO_FOG)
 	    STRIDE_F(fog, start * fog_stride);
       }
 
       for (i=start; i < end; i++, v = (VERTEX *)((GLubyte *)v + stride)) {
 	 if (DO_XYZW) {
 	    if (HAVE_HW_VIEWPORT || mask[i] == 0) {
-	       VIEWPORT_X(v->v.x, coord[0][0]);	
-	       VIEWPORT_Y(v->v.y, coord[0][1]);	
-	       VIEWPORT_Z(v->v.z, coord[0][2]);	
-	       v->v.w = coord[0][3];	
+	       VIEWPORT_X(v->v.x, coord[0][0]);
+	       VIEWPORT_Y(v->v.y, coord[0][1]);
+	       VIEWPORT_Z(v->v.z, coord[0][2]);
+	       v->v.w = coord[0][3];
 	    }
 	    coord =  (GLfloat (*)[4])((GLubyte *)coord +  coord_stride);
 	 }
@@ -274,18 +276,18 @@ static void TAG(emit)( GLcontext *ctx,
                v->v.v0 = tc0[0][1];
                if (DO_PTEX) {
                   if (HAVE_PTEX_VERTICES) {
-                     if (tc0_size == 4) 
+                     if (tc0_size == 4)
                         v->pv.q0 = tc0[0][3];
                      else
                         v->pv.q0 = 1.0;
-                  } 
+                  }
                   else if (tc0_size == 4) {
                      float rhw = 1.0 / tc0[0][3];
                      v->v.w *= tc0[0][3];
                      v->v.u0 *= rhw;
                      v->v.v0 *= rhw;
-                  } 
-               } 
+                  }
+               }
                tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 +  tc0_stride);
             }
 	 }
@@ -294,18 +296,18 @@ static void TAG(emit)( GLcontext *ctx,
                if (DO_PTEX) {
                   v->pv.u1 = tc1[0][0];
                   v->pv.v1 = tc1[0][1];
-                  if (tc1_size == 4) 
+                  if (tc1_size == 4)
                      v->pv.q1 = tc1[0][3];
                   else
                      v->pv.q1 = 1.0;
-               } 
+               }
                else {
                   v->v.u1 = tc1[0][0];
                   v->v.v1 = tc1[0][1];
                }
                tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 +  tc1_stride);
             }
-	 } 
+	 }
 	 else if (DO_PTEX) {
 	    *(GLuint *)&v->pv.q1 = 0;	/* avoid culling on radeon */
 	 }
@@ -314,45 +316,45 @@ static void TAG(emit)( GLcontext *ctx,
                if (DO_PTEX) {
                   v->pv.u2 = tc2[0][0];
                   v->pv.v2 = tc2[0][1];
-                  if (tc2_size == 4) 
+                  if (tc2_size == 4)
                      v->pv.q2 = tc2[0][3];
                   else
                      v->pv.q2 = 1.0;
-               } 
+               }
                else {
                   v->v.u2 = tc2[0][0];
                   v->v.v2 = tc2[0][1];
                }
                tc2 =  (GLfloat (*)[4])((GLubyte *)tc2 +  tc2_stride);
             }
-	 } 
+	 }
 	 if (DO_TEX3) {
             if (tc3) {
                if (DO_PTEX) {
                   v->pv.u3 = tc3[0][0];
                   v->pv.v3 = tc3[0][1];
-                  if (tc3_size == 4) 
+                  if (tc3_size == 4)
                      v->pv.q3 = tc3[0][3];
                   else
                      v->pv.q3 = 1.0;
-               } 
+               }
                else {
                   v->v.u3 = tc3[0][0];
                   v->v.v3 = tc3[0][1];
                }
                tc3 =  (GLfloat (*)[4])((GLubyte *)tc3 +  tc3_stride);
             }
-	 } 
+	 }
       }
    }
    else {
       for (i=start; i < end; i++, v = (VERTEX *)((GLubyte *)v + stride)) {
 	 if (DO_XYZW) {
 	    if (HAVE_HW_VIEWPORT || mask[i] == 0) {
-	       VIEWPORT_X(v->v.x, coord[i][0]);	
-	       VIEWPORT_Y(v->v.y, coord[i][1]);	
-	       VIEWPORT_Z(v->v.z, coord[i][2]);	
-	       v->v.w = coord[i][3];	
+	       VIEWPORT_X(v->v.x, coord[i][0]);
+	       VIEWPORT_Y(v->v.y, coord[i][1]);
+	       VIEWPORT_Z(v->v.z, coord[i][2]);
+	       v->v.w = coord[i][3];
 	    }
 	 }
 	 if (DO_RGBA) {
@@ -380,20 +382,20 @@ static void TAG(emit)( GLcontext *ctx,
                   v->pv.u0 = tc0[i][0];
                   v->pv.v0 = tc0[i][1];
                   if (HAVE_PTEX_VERTICES) {
-                     if (tc0_size == 4) 
+                     if (tc0_size == 4)
                         v->pv.q0 = tc0[i][3];
                      else
                         v->pv.q0 = 1.0;
 
                      v->pv.q1 = 0;	/* radeon */
-                  } 
+                  }
                   else if (tc0_size == 4) {
                      float rhw = 1.0 / tc0[i][3];
                      v->v.w *= tc0[i][3];
                      v->v.u0 *= rhw;
                      v->v.v0 *= rhw;
-                  } 
-               } 
+                  }
+               }
                else {
                   v->v.u0 = tc0[i][0];
                   v->v.v0 = tc0[i][1];
@@ -405,11 +407,11 @@ static void TAG(emit)( GLcontext *ctx,
                if (DO_PTEX) {
                   v->pv.u1 = tc1[i][0];
                   v->pv.v1 = tc1[i][1];
-                  if (tc1_size == 4) 
+                  if (tc1_size == 4)
                      v->pv.q1 = tc1[i][3];
                   else
                      v->pv.q1 = 1.0;
-               } 
+               }
                else {
                   v->v.u1 = tc1[i][0];
                   v->v.v1 = tc1[i][1];
@@ -419,7 +421,7 @@ static void TAG(emit)( GLcontext *ctx,
       }
    }
 }
-#else 
+#else
 #if DO_XYZW
 
 #if HAVE_HW_DIVIDE
@@ -432,7 +434,7 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLubyte (*col)[4] = VB->ColorPtr[0]->data;
    GLuint col_stride = VB->ColorPtr[0]->stride;
-   GLfloat (*coord)[4] = VB->ProjectedClipPtr->data; 
+   GLfloat (*coord)[4] = VB->ProjectedClipPtr->data;
    GLuint coord_stride = VB->ProjectedClipPtr->stride;
    GLfloat *v = (GLfloat *)dest;
    const GLubyte *mask = VB->ClipMask;
@@ -444,7 +446,7 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
    ASSERT(stride == 4);
 
    /* Pack what's left into a 4-dword vertex.  Color is in a different
-    * place, and there is no 'w' coordinate.  
+    * place, and there is no 'w' coordinate.
     */
    if (VB->importable_data) {
       if (start) {
@@ -454,15 +456,15 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 
       for (i=start; i < end; i++, v+=4) {
 	 if (HAVE_HW_VIEWPORT || mask[i] == 0) {
-	    VIEWPORT_X(v[0], coord[0][0]);	
-	    VIEWPORT_Y(v[1], coord[0][1]);	
-	    VIEWPORT_Z(v[2], coord[0][2]);	
+	    VIEWPORT_X(v[0], coord[0][0]);
+	    VIEWPORT_Y(v[1], coord[0][1]);
+	    VIEWPORT_Z(v[2], coord[0][2]);
 	 }
 	 coord =  (GLfloat (*)[4])((GLubyte *)coord +  coord_stride);
 	 if (DO_RGBA) {
 	    if (HAVE_RGBA_COLOR) {
 	       *(GLuint *)&v[3] = *(GLuint *)col;
-	    } 
+	    }
 	    else {
 	       GLubyte *b = (GLubyte *)&v[3];
 	       b[0] = col[0][2];
@@ -477,9 +479,9 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
    else {
       for (i=start; i < end; i++, v+=4) {
 	 if (HAVE_HW_VIEWPORT || mask[i] == 0) {
-	    VIEWPORT_X(v[0], coord[i][0]);	
-	    VIEWPORT_Y(v[1], coord[i][1]);	
-	    VIEWPORT_Z(v[2], coord[i][2]);	
+	    VIEWPORT_X(v[0], coord[i][0]);
+	    VIEWPORT_Y(v[1], coord[i][1]);
+	    VIEWPORT_Z(v[2], coord[i][2]);
 	 }
 	 if (DO_RGBA) {
 	    if (HAVE_RGBA_COLOR) {
@@ -551,13 +553,13 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 
    if (DO_PTEX)
       return GL_TRUE;
-   
+
    if ((DO_TEX3 && VB->TexCoordPtr[3]->size == 4) ||
        (DO_TEX2 && VB->TexCoordPtr[2]->size == 4) ||
        (DO_TEX1 && VB->TexCoordPtr[1]->size == 4) ||
        (DO_TEX0 && VB->TexCoordPtr[0]->size == 4))
       return GL_FALSE;
-   
+
    return GL_TRUE;
 }
 #else
@@ -574,11 +576,11 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
    if (DO_TEX1 && VB->TexCoordPtr[0] == 0)
       VB->TexCoordPtr[0] = VB->TexCoordPtr[1];
 
-   if (DO_PTEX) 
+   if (DO_PTEX)
       return GL_TRUE;
-   
+
    /* No hardware support for projective texture.  Can fake it for
-    * TEX0 only.  
+    * TEX0 only.
     */
    if ((DO_TEX3 && VB->TexCoordPtr[3]->size == 4) ||
        (DO_TEX2 && VB->TexCoordPtr[2]->size == 4) ||
@@ -600,7 +602,7 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 
 
 static void TAG(interp)( GLcontext *ctx,
-			 GLfloat t, 
+			 GLfloat t,
 			 GLuint edst, GLuint eout, GLuint ein,
 			 GLboolean force_boundary )
 {
@@ -617,25 +619,25 @@ static void TAG(interp)( GLcontext *ctx,
 
    (void)s;
 
-   
+
    if (!HAVE_HW_DIVIDE) {
       w = 1.0 / dstclip[3];
-      VIEWPORT_X( dst->v.x, dstclip[0] * w );	
-      VIEWPORT_Y( dst->v.y, dstclip[1] * w );	
-      VIEWPORT_Z( dst->v.z, dstclip[2] * w );	
-   } 
+      VIEWPORT_X( dst->v.x, dstclip[0] * w );
+      VIEWPORT_Y( dst->v.y, dstclip[1] * w );
+      VIEWPORT_Z( dst->v.z, dstclip[2] * w );
+   }
    else {
-      VIEWPORT_X( dst->v.x, dstclip[0] );	
-      VIEWPORT_Y( dst->v.y, dstclip[1] );	
-      VIEWPORT_Z( dst->v.z, dstclip[2] );	
-      w = dstclip[3];	
+      VIEWPORT_X( dst->v.x, dstclip[0] );
+      VIEWPORT_Y( dst->v.y, dstclip[1] );
+      VIEWPORT_Z( dst->v.z, dstclip[2] );
+      w = dstclip[3];
    }
 
-   if (HAVE_HW_DIVIDE || DO_FOG || DO_SPEC || DO_TEX0 || DO_TEX1 || 
+   if (HAVE_HW_DIVIDE || DO_FOG || DO_SPEC || DO_TEX0 || DO_TEX1 ||
        DO_TEX2 || DO_TEX3) {
 
-      dst->v.w = w;	
-   
+      dst->v.w = w;
+
       INTERP_UB( t, dst->ub4[4][0], out->ub4[4][0], in->ub4[4][0] );
       INTERP_UB( t, dst->ub4[4][1], out->ub4[4][1], in->ub4[4][1] );
       INTERP_UB( t, dst->ub4[4][2], out->ub4[4][2], in->ub4[4][2] );
@@ -663,17 +665,17 @@ static void TAG(interp)( GLcontext *ctx,
 	       GLfloat qdst, rqdst;
 
 	       ASSERT( !HAVE_HW_DIVIDE );
-	       
+
 	       INTERP_F( t, dst->v.u0, out->v.u0 * qout, in->v.u0 * qin );
 	       INTERP_F( t, dst->v.v0, out->v.v0 * qout, in->v.v0 * qin );
 	       INTERP_F( t, qdst, qout, qin );
-	       
+
 	       rqdst = 1.0 / qdst;
 	       dst->v.u0 *= rqdst;
 	       dst->v.v0 *= rqdst;
 	       dst->v.w *= rqdst;
 	    }
-	 } 
+	 }
 	 else {
 	    INTERP_F( t, dst->v.u0, out->v.u0, in->v.u0 );
 	    INTERP_F( t, dst->v.v0, out->v.v0, in->v.v0 );
@@ -728,12 +730,12 @@ static void TAG(interp)( GLcontext *ctx,
 static void TAG(init)( void )
 {
    setup_tab[IND].emit = TAG(emit);
-   
+
 #if (DO_XYZW && DO_RGBA)
    setup_tab[IND].check_tex_sizes = TAG(check_tex_sizes);
    setup_tab[IND].interp = TAG(interp);
 #endif
-   
+
    if (DO_SPEC)
       setup_tab[IND].copy_pv = copy_pv_rgba4_spec5;
    else if (HAVE_HW_DIVIDE || DO_SPEC || DO_FOG || DO_TEX0 || DO_TEX1 ||
@@ -747,55 +749,55 @@ static void TAG(init)( void )
 	 ASSERT(HAVE_PTEX_VERTICES);
 	 setup_tab[IND].vertex_format = PROJ_TEX3_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 18;
-	 setup_tab[IND].vertex_stride_shift = 7; 
+	 setup_tab[IND].vertex_stride_shift = 7;
       }
       else {
 	 setup_tab[IND].vertex_format = TEX3_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 14;
-	 setup_tab[IND].vertex_stride_shift = 6; 
+	 setup_tab[IND].vertex_stride_shift = 6;
       }
-   } 
+   }
    else if (DO_TEX2) {
       if (DO_PTEX) {
 	 ASSERT(HAVE_PTEX_VERTICES);
 	 setup_tab[IND].vertex_format = PROJ_TEX3_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 18;
-	 setup_tab[IND].vertex_stride_shift = 7; 
+	 setup_tab[IND].vertex_stride_shift = 7;
       }
       else {
 	 setup_tab[IND].vertex_format = TEX2_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 12;
-	 setup_tab[IND].vertex_stride_shift = 6; 
+	 setup_tab[IND].vertex_stride_shift = 6;
       }
-   } 
+   }
    else if (DO_TEX1) {
       if (DO_PTEX) {
 	 ASSERT(HAVE_PTEX_VERTICES);
 	 setup_tab[IND].vertex_format = PROJ_TEX1_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 12;
-	 setup_tab[IND].vertex_stride_shift = 6; 
+	 setup_tab[IND].vertex_stride_shift = 6;
       }
       else {
 	 setup_tab[IND].vertex_format = TEX1_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 10;
-	 setup_tab[IND].vertex_stride_shift = 6; 
+	 setup_tab[IND].vertex_stride_shift = 6;
       }
-   } 
+   }
    else if (DO_TEX0) {
       if (DO_PTEX && HAVE_PTEX_VERTICES) {
 	 setup_tab[IND].vertex_format = PROJ_TEX1_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 12;
-	 setup_tab[IND].vertex_stride_shift = 6; 
+	 setup_tab[IND].vertex_stride_shift = 6;
       } else {
 	 setup_tab[IND].vertex_format = TEX0_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 8;
-	 setup_tab[IND].vertex_stride_shift = 5; 
+	 setup_tab[IND].vertex_stride_shift = 5;
       }
    }
    else if (!HAVE_HW_DIVIDE && !DO_SPEC && !DO_FOG && HAVE_TINY_VERTICES) {
       setup_tab[IND].vertex_format = TINY_VERTEX_FORMAT;
       setup_tab[IND].vertex_size = 4;
-      setup_tab[IND].vertex_stride_shift = 4; 
+      setup_tab[IND].vertex_stride_shift = 4;
    } else if (HAVE_NOTEX_VERTICES) {
       setup_tab[IND].vertex_format = NOTEX_VERTEX_FORMAT;
       setup_tab[IND].vertex_size = 6;
@@ -803,7 +805,7 @@ static void TAG(init)( void )
    } else {
       setup_tab[IND].vertex_format = TEX0_VERTEX_FORMAT;
       setup_tab[IND].vertex_size = 8;
-      setup_tab[IND].vertex_stride_shift = 5; 
+      setup_tab[IND].vertex_stride_shift = 5;
    }
 
    assert(setup_tab[IND].vertex_size * 4 <=

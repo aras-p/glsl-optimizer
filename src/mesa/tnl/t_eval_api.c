@@ -1,10 +1,10 @@
-/* $Id: t_eval_api.c,v 1.3 2001/03/03 20:33:31 brianp Exp $ */
+/* $Id: t_eval_api.c,v 1.4 2001/03/12 00:48:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,7 +50,7 @@
  *     Thus we need to have a check in the display list code or
  *     elsewhere for eval(1,2) vertices in the case where
  *     map(1,2)_vertex is disabled, and to purge those vertices from
- *     the vb.  
+ *     the vb.
  */
 void
 _tnl_exec_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
@@ -83,8 +83,8 @@ _tnl_exec_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 
    /* Need to turn off compilation -- this is already saved, and the
     * coordinates generated and the test above depend on state that
-    * may change before the list is executed.  
-    * 
+    * may change before the list is executed.
+    *
     * TODO: Anaylse display lists to determine if this state is
     * constant.
     */
@@ -137,7 +137,7 @@ _tnl_exec_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 
    /* Need to turn off compilation -- this is already saved, and the
     * coordinates generated and the test above depend on state that
-    * may change before the list is executed.  
+    * may change before the list is executed.
     */
    {
       GLboolean compiling = ctx->CompileFlag;

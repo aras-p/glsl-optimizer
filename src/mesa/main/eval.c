@@ -1,10 +1,10 @@
-/* $Id: eval.c,v 1.18 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: eval.c,v 1.19 2001/03/12 00:48:37 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -252,7 +252,7 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
    GLint k;
    GLfloat *pnts;
    struct gl_1d_map *map = 0;
-   ASSERT_OUTSIDE_BEGIN_END(ctx); 
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    assert(type == GL_FLOAT || type == GL_DOUBLE);
 
@@ -432,8 +432,8 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
    else
       pnts = _mesa_copy_map_points2d(target, ustride, uorder,
                                   vstride, vorder, (GLdouble*) points);
-   
-   
+
+
    FLUSH_VERTICES(ctx, _NEW_EVAL);
    map->Uorder = uorder;
    map->u1 = u1;
@@ -1354,7 +1354,3 @@ _mesa_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
 {
    _mesa_MapGrid2f( un, u1, u2, vn, v1, v2 );
 }
-
-
-
-

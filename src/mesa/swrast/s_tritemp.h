@@ -1,21 +1,21 @@
-/* $Id: s_tritemp.h,v 1.13 2001/03/08 17:33:33 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.14 2001/03/12 00:48:42 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -62,7 +62,7 @@
  *
  * Optionally, one may provide one-time setup code per triangle:
  *    SETUP_CODE    - code which is to be executed once per triangle
- * 
+ *
  * The following macro MUST be defined:
  *    INNER_LOOP(LEFT,RIGHT,Y) - code to write a span of pixels.
  *        Something like:
@@ -231,7 +231,7 @@
     * By stepping rasterization parameters along the major edge,
     * we can avoid recomputing them at the discontinuity where
     * the top and bottom edges meet.  However, this forces us to
-    * be able to scan both left-to-right and right-to-left. 
+    * be able to scan both left-to-right and right-to-left.
     * Also, we must determine whether the major edge is at the
     * left or right side of the triangle.  We do this by
     * computing the magnitude of the cross-product of the major
@@ -461,7 +461,7 @@
 	 eBot_dt = vMid->texcoord[0][1] * wMid - vMin->texcoord[0][1] * wMin;
 	 dtdx = oneOverArea * (eMaj_dt * eBot.dy - eMaj.dy * eBot_dt);
 	 dtdy = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
-	 
+
 	 eMaj_du = vMax->texcoord[0][2] * wMax - vMin->texcoord[0][2] * wMin;
 	 eBot_du = vMid->texcoord[0][2] * wMid - vMin->texcoord[0][2] * wMin;
 	 dudx = oneOverArea * (eMaj_du * eBot.dy - eMaj.dy * eBot_du);
@@ -498,14 +498,14 @@
 		       - vMin->texcoord[u][1] * wMin;
 	       dtdx[u] = oneOverArea * (eMaj_dt * eBot.dy - eMaj.dy * eBot_dt);
 	       dtdy[u] = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
-	       
+
 	       eMaj_du = vMax->texcoord[u][2] * wMax
                        - vMin->texcoord[u][2] * wMin;
 	       eBot_du = vMid->texcoord[u][2] * wMid
                        - vMin->texcoord[u][2] * wMin;
 	       dudx[u] = oneOverArea * (eMaj_du * eBot.dy - eMaj.dy * eBot_du);
 	       dudy[u] = oneOverArea * (eMaj.dx * eBot_du - eMaj_du * eBot.dx);
-	       
+
 	       eMaj_dv = vMax->texcoord[u][3] * wMax
                        - vMin->texcoord[u][3] * wMin;
 	       eBot_dv = vMid->texcoord[u][3] * wMid
@@ -540,7 +540,7 @@
        * inside the triangle.
        *
        * Next we creep down the major edge until we reach that y,
-       * and compute the corresponding x coordinate on the edge. 
+       * and compute the corresponding x coordinate on the edge.
        * Then we find the half-integral x that lies on or just
        * inside the edge.  This is the first pixel that might lie in
        * the interior of the triangle.  (We won't know for sure
@@ -1004,8 +1004,8 @@
                   GLfloat rho2 = r1 + r2; /* was:  rho2 = MAX2(r1,r2); */
                   lambda_nominator = rho2;
 	       }
-	       
-	       /* set DEST to log_(base 2) of sqrt(rho) */ 
+
+	       /* set DEST to log_(base 2) of sqrt(rho) */
                /* 1.442695 = 1/log(2) */
 #define COMPUTE_LAMBDA(DEST, X)  \
    DEST = log( lambda_nominator * (X)*(X) ) * 1.442695F * 0.5F
@@ -1013,7 +1013,7 @@
 
 #ifdef INTERP_MULTILAMBDA
 /*
- *  Read the comment for INTERP_LAMBDA, but apply to each texture unit 
+ *  Read the comment for INTERP_LAMBDA, but apply to each texture unit
  */
 	       {
                   GLuint unit;
@@ -1030,7 +1030,7 @@
                      }
                   }
 	       }
-	       /* set DEST to log_(base 2) of sqrt(rho) */ 
+	       /* set DEST to log_(base 2) of sqrt(rho) */
 #define COMPUTE_MULTILAMBDA(DEST, X, unit)  \
    DEST = log( lambda_nominator[unit] * (X)*(X) ) * 1.442695F * 0.5F
 #endif
@@ -1064,7 +1064,7 @@
                   fz += fdzOuter;
 #endif
 #ifdef INTERP_FOG
-                  ffog += fdfogOuter; 
+                  ffog += fdfogOuter;
 #endif
 #ifdef INTERP_RGB
                   fr += fdrOuter;   fg += fdgOuter;   fb += fdbOuter;

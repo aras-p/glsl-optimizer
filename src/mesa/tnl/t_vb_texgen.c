@@ -1,10 +1,10 @@
-/* $Id: t_vb_texgen.c,v 1.5 2001/03/07 05:06:13 brianp Exp $ */
+/* $Id: t_vb_texgen.c,v 1.6 2001/03/12 00:48:44 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -89,10 +89,10 @@ static GLuint all_bits[5] = {
 
 #define VEC_SIZE_FLAGS (VEC_SIZE_1|VEC_SIZE_2|VEC_SIZE_3|VEC_SIZE_4)
 
-/* 
+/*
  */
 static void build_m3(GLfloat f[][3], GLfloat m[],
-		     const GLvector3f *normal, 
+		     const GLvector3f *normal,
 		     const GLvector4f *eye )
 {
    GLuint stride = eye->stride;
@@ -104,11 +104,11 @@ static void build_m3(GLfloat f[][3], GLfloat m[],
 
    /* KW: Had to rearrange this loop to avoid a compiler bug with gcc
     *     2.7.3.1 at -O3 optimization.  Using -fno-strength-reduce
-    *     also fixed the bug - is this generally necessary?  
+    *     also fixed the bug - is this generally necessary?
     */
    for (i=0;i<count;i++,STRIDE_F(coord,stride)) {
       GLfloat u[3], two_nu, fx, fy, fz;
-      COPY_3V( u, coord ); 
+      COPY_3V( u, coord );
       NORMALIZE_3FV( u );
       two_nu = 2.0F * DOT3(norm,u);
       fx = f[i][0] = u[0] - norm[0] * two_nu;
@@ -126,7 +126,7 @@ static void build_m3(GLfloat f[][3], GLfloat m[],
 
 
 static void build_m2(GLfloat f[][3], GLfloat m[],
-		     const GLvector3f *normal, 
+		     const GLvector3f *normal,
 		     const GLvector4f *eye )
 {
    GLuint stride = eye->stride;
@@ -139,7 +139,7 @@ static void build_m2(GLfloat f[][3], GLfloat m[],
    for (i=0;i<count;i++,STRIDE_F(coord,stride)) {
 
       GLfloat u[3], two_nu, fx, fy, fz;
-      COPY_2V( u, coord ); 
+      COPY_2V( u, coord );
       u[2] = 0;
       NORMALIZE_3FV( u );
       two_nu = 2.0F * DOT3(norm,u);
@@ -175,9 +175,9 @@ static build_m_func build_m_tab[5] = {
 
 /* This is unusual in that we respect the stride of the output vector
  * (f).  This allows us to pass in either a texcoord vector4f, or a
- * temporary vector3f.  
+ * temporary vector3f.
  */
-static void build_f3( GLfloat *f, 
+static void build_f3( GLfloat *f,
 		      GLuint fstride,
 		      const GLvector3f *normal,
 		      const GLvector4f *eye )
@@ -191,20 +191,20 @@ static void build_f3( GLfloat *f,
 
    for (i=0;i<count;i++) {
       GLfloat u[3], two_nu;
-      COPY_3V( u, coord ); 
+      COPY_3V( u, coord );
       NORMALIZE_3FV( u );
       two_nu = 2.0F * DOT3(norm,u);
       f[0] = u[0] - norm[0] * two_nu;
       f[1] = u[1] - norm[1] * two_nu;
       f[2] = u[2] - norm[2] * two_nu;
       STRIDE_F(coord,stride);
-      STRIDE_F(f,fstride); 
+      STRIDE_F(f,fstride);
       STRIDE_F(norm, normal->stride);
    }
 }
 
 
-static void build_f2( GLfloat *f, 
+static void build_f2( GLfloat *f,
 		      GLuint fstride,
 		      const GLvector3f *normal,
 		      const GLvector4f *eye )
@@ -218,7 +218,7 @@ static void build_f2( GLfloat *f,
    for (i=0;i<count;i++) {
 
       GLfloat u[3], two_nu;
-      COPY_2V( u, coord ); 
+      COPY_2V( u, coord );
       u[2] = 0;
       NORMALIZE_3FV( u );
       two_nu = 2.0F * DOT3(norm,u);
@@ -239,14 +239,14 @@ typedef void (*build_f_func)( GLfloat *f,
 
 
 
-/* Just treat 4-vectors as 3-vectors. 
+/* Just treat 4-vectors as 3-vectors.
  */
 static build_f_func build_f_tab[5] = {
    0,
    0,
    build_f2,
    build_f3,
-   build_f3		
+   build_f3
 };
 
 
@@ -262,22 +262,22 @@ static void texgen_reflection_map_nv( GLcontext *ctx,
 
    build_f_tab[VB->EyePtr->size]( out->start,
 				  out->stride,
-				  VB->NormalPtr, 
-				  VB->EyePtr ); 
-   
+				  VB->NormalPtr,
+				  VB->EyePtr );
+
    if (in) {
       out->flags |= (in->flags & VEC_SIZE_FLAGS) | VEC_SIZE_3;
       out->count = in->count;
       out->size = MAX2(in->size, 3);
-      if (in->size == 4) 
+      if (in->size == 4)
 	 _mesa_copy_tab[0][0x8](out, in, 0);
-   } 
+   }
    else {
       out->flags |= VEC_SIZE_3;
       out->size = 3;
       out->count = in->count;
    }
-   
+
 }
 
 
@@ -289,7 +289,7 @@ static void texgen_normal_map_nv( GLcontext *ctx,
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLvector4f *in = VB->TexCoordPtr[unit];
    GLvector4f *out = &store->texcoord[unit];
-   GLvector3f *normal = VB->NormalPtr;   
+   GLvector3f *normal = VB->NormalPtr;
    GLfloat (*texcoord)[4] = (GLfloat (*)[4])out->start;
    GLuint count = VB->Count;
    GLuint i;
@@ -306,9 +306,9 @@ static void texgen_normal_map_nv( GLcontext *ctx,
       out->flags |= (in->flags & VEC_SIZE_FLAGS) | VEC_SIZE_3;
       out->count = in->count;
       out->size = MAX2(in->size, 3);
-      if (in->size == 4) 
+      if (in->size == 4)
 	 _mesa_copy_tab[0][0x8](out, in, 0);
-   } 
+   }
    else {
       out->flags |= VEC_SIZE_3;
       out->size = 3;
@@ -330,10 +330,10 @@ static void texgen_sphere_map( GLcontext *ctx,
    GLfloat (*f)[3] = store->tmp_f;
    GLfloat *m = store->tmp_m;
 
-   (build_m_tab[VB->EyePtr->size])( store->tmp_f, 
-				    store->tmp_m, 
-				    VB->NormalPtr, 
-				    VB->EyePtr ); 
+   (build_m_tab[VB->EyePtr->size])( store->tmp_f,
+				    store->tmp_m,
+				    VB->NormalPtr,
+				    VB->EyePtr );
 
    for (i=0;i<count;i++) {
       texcoord[i][0] = f[i][0] * m[i] + 0.5F;
@@ -344,7 +344,7 @@ static void texgen_sphere_map( GLcontext *ctx,
       out->size = MAX2(in->size,2);
       out->count = in->count;
       out->flags |= (in->flags & VEC_SIZE_FLAGS) | VEC_SIZE_2;
-      if (in->size > 2) 
+      if (in->size > 2)
 	 _mesa_copy_tab[0][all_bits[in->size] & ~0x3](out, in, 0);
    } else {
       out->size = 2;
@@ -355,7 +355,7 @@ static void texgen_sphere_map( GLcontext *ctx,
 
 
 
-static void texgen( GLcontext *ctx, 
+static void texgen( GLcontext *ctx,
 		    struct texgen_stage_data *store,
 		    GLuint unit )
 {
@@ -376,9 +376,9 @@ static void texgen( GLcontext *ctx,
 
 
    if (texUnit->_GenFlags & TEXGEN_NEED_M) {
-      build_m_tab[in->size]( store->tmp_f, store->tmp_m, normal, eye ); 
+      build_m_tab[in->size]( store->tmp_f, store->tmp_m, normal, eye );
    } else if (texUnit->_GenFlags & TEXGEN_NEED_F) {
-      build_f_tab[in->size]( (GLfloat *)store->tmp_f, 3, normal, eye ); 
+      build_f_tab[in->size]( (GLfloat *)store->tmp_f, 3, normal, eye );
    }
 
    if (!in) {
@@ -399,7 +399,7 @@ static void texgen( GLcontext *ctx,
       out->size = MAX2(in->size, store->TexgenSize[unit]);
       out->flags |= (in->flags & VEC_SIZE_FLAGS) | texUnit->TexGenEnabled;
       out->count = in->count;
-      
+
       holes = ~all_bits[in->size] & store->TexgenHoles[unit];
    }
 
@@ -414,20 +414,20 @@ static void texgen( GLcontext *ctx,
       switch (texUnit->GenModeS) {
       case GL_OBJECT_LINEAR:
 	 (_mesa_dotprod_tab[0][obj->size])((GLfloat *)out->data,
-					sizeof(out->data[0]), obj, 
+					sizeof(out->data[0]), obj,
 					texUnit->ObjectPlaneS, 0);
 	 break;
       case GL_EYE_LINEAR:
-	 (_mesa_dotprod_tab[0][eye->size])((GLfloat *)out->data, 
+	 (_mesa_dotprod_tab[0][eye->size])((GLfloat *)out->data,
 					sizeof(out->data[0]), eye,
 					texUnit->EyePlaneS, 0);
 	 break;
-      case GL_SPHERE_MAP: 
+      case GL_SPHERE_MAP:
 	 for (indata=in->start,i=0 ; i<count ;i++, STRIDE_F(indata,in->stride))
 	    texcoord[i][0] = indata[0] * m[i] + 0.5F;
 	 break;
-      case GL_REFLECTION_MAP_NV: 
-	 for (i=0;i<count;i++) 
+      case GL_REFLECTION_MAP_NV:
+	 for (i=0;i<count;i++)
 	     texcoord[i][0] = f[i][0];
 	 break;
       case GL_NORMAL_MAP_NV: {
@@ -440,27 +440,27 @@ static void texgen( GLcontext *ctx,
       default:
 	 _mesa_problem(ctx, "Bad S texgen");
       }
-   } 
+   }
 
    if (texUnit->TexGenEnabled & T_BIT) {
       GLuint i;
       switch (texUnit->GenModeT) {
       case GL_OBJECT_LINEAR:
-	 (_mesa_dotprod_tab[0][obj->size])(&(out->data[0][1]), 
-					sizeof(out->data[0]), obj, 
+	 (_mesa_dotprod_tab[0][obj->size])(&(out->data[0][1]),
+					sizeof(out->data[0]), obj,
 					texUnit->ObjectPlaneT, 0);
 	 break;
       case GL_EYE_LINEAR:
-	 (_mesa_dotprod_tab[0][eye->size])(&(out->data[0][1]), 
-					sizeof(out->data[0]), eye, 
+	 (_mesa_dotprod_tab[0][eye->size])(&(out->data[0][1]),
+					sizeof(out->data[0]), eye,
 					texUnit->EyePlaneT, 0);
-	 break; 
-      case GL_SPHERE_MAP: 
-	 for (indata=in->start,i=0; i<count ;i++,STRIDE_F(indata,in->stride)) 
+	 break;
+      case GL_SPHERE_MAP:
+	 for (indata=in->start,i=0; i<count ;i++,STRIDE_F(indata,in->stride))
 	     texcoord[i][1] = indata[1] * m[i] + 0.5F;
-	 break;      
-      case GL_REFLECTION_MAP_NV: 
-	 for (i=0;i<count;i++) 
+	 break;
+      case GL_REFLECTION_MAP_NV:
+	 for (i=0;i<count;i++)
 	     texcoord[i][0] = f[i][0];
 	 break;
       case GL_NORMAL_MAP_NV: {
@@ -479,17 +479,17 @@ static void texgen( GLcontext *ctx,
       GLuint i;
       switch (texUnit->GenModeR) {
       case GL_OBJECT_LINEAR:
-	 (_mesa_dotprod_tab[0][obj->size])(&(out->data[0][2]), 
-					sizeof(out->data[0]), obj, 
+	 (_mesa_dotprod_tab[0][obj->size])(&(out->data[0][2]),
+					sizeof(out->data[0]), obj,
 					texUnit->ObjectPlaneR, 0);
 	 break;
       case GL_EYE_LINEAR:
-	 (_mesa_dotprod_tab[0][eye->size])(&(out->data[0][2]), 
+	 (_mesa_dotprod_tab[0][eye->size])(&(out->data[0][2]),
 					sizeof(out->data[0]), eye,
 					texUnit->EyePlaneR, 0);
 	 break;
-      case GL_REFLECTION_MAP_NV: 
-	 for (i=0;i<count;i++) 
+      case GL_REFLECTION_MAP_NV:
+	 for (i=0;i<count;i++)
 	     texcoord[i][2] = f[i][2];
 	 break;
       case GL_NORMAL_MAP_NV: {
@@ -507,12 +507,12 @@ static void texgen( GLcontext *ctx,
    if (texUnit->TexGenEnabled & Q_BIT) {
       switch (texUnit->GenModeQ) {
       case GL_OBJECT_LINEAR:
-	 (_mesa_dotprod_tab[0][obj->size])(&(out->data[0][3]), 
-					sizeof(out->data[0]), obj, 
+	 (_mesa_dotprod_tab[0][obj->size])(&(out->data[0][3]),
+					sizeof(out->data[0]), obj,
 					texUnit->ObjectPlaneQ, 0);
 	 break;
       case GL_EYE_LINEAR:
-	 (_mesa_dotprod_tab[0][eye->size])(&(out->data[0][3]), 
+	 (_mesa_dotprod_tab[0][eye->size])(&(out->data[0][3]),
 					sizeof(out->data[0]), eye,
 					texUnit->EyePlaneQ, 0);
 	 break;
@@ -524,14 +524,14 @@ static void texgen( GLcontext *ctx,
 
 
 
-static GLboolean run_texgen_stage( GLcontext *ctx, 
+static GLboolean run_texgen_stage( GLcontext *ctx,
 				   struct gl_pipeline_stage *stage )
 {
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb; 
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct texgen_stage_data *store = TEXGEN_STAGE_DATA( stage );
    GLuint i;
 
-   for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) 
+   for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
       if (ctx->_Enabled & ENABLE_TEXGEN(i)) {
 	 if (stage->changed_inputs & (VERT_EYE | VERT_NORM | VERT_TEX(i)))
 	    store->TexgenFunc[i]( ctx, store, i );
@@ -545,7 +545,7 @@ static GLboolean run_texgen_stage( GLcontext *ctx,
 
 
 
-static GLboolean run_validate_texgen_stage( GLcontext *ctx, 
+static GLboolean run_validate_texgen_stage( GLcontext *ctx,
 					    struct gl_pipeline_stage *stage )
 {
    struct texgen_stage_data *store = TEXGEN_STAGE_DATA(stage);
@@ -565,11 +565,11 @@ static GLboolean run_validate_texgen_stage( GLcontext *ctx,
 	    sz = 2;
 	 else
 	    sz = 1;
-	
+
 	 store->TexgenSize[i] = sz;
 	 store->TexgenHoles[i] = (all_bits[sz] & ~texUnit->TexGenEnabled);
 	 store->TexgenFunc[i] = texgen;
-	
+
 	 if (texUnit->TexGenEnabled == (S_BIT|T_BIT|R_BIT)) {
 	    if (texUnit->_GenFlags == TEXGEN_REFLECTION_MAP_NV) {
 	       store->TexgenFunc[i] = texgen_reflection_map_nv;
@@ -605,8 +605,8 @@ static void check_texgen( GLcontext *ctx, struct gl_pipeline_stage *stage )
       if (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS)
 	 inputs |= VERT_NORM;
 
-      for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) 
-	 if (ctx->_Enabled & ENABLE_TEXGEN(i)) 
+      for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
+	 if (ctx->_Enabled & ENABLE_TEXGEN(i))
 	 {
 	    outputs |= VERT_TEX(i);
 
@@ -627,16 +627,16 @@ static void check_texgen( GLcontext *ctx, struct gl_pipeline_stage *stage )
       stage->outputs = outputs;
    }
 }
- 
+
 
 
 
 /* Called the first time stage->run() is invoked.
  */
-static GLboolean alloc_texgen_data( GLcontext *ctx, 
+static GLboolean alloc_texgen_data( GLcontext *ctx,
 				    struct gl_pipeline_stage *stage )
 {
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb; 
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct texgen_stage_data *store;
    GLuint i;
 
@@ -666,10 +666,10 @@ static void free_texgen_data( struct gl_pipeline_stage *stage )
 
    if (store) {
       for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)
-	 if (store->texcoord[i].data) 
+	 if (store->texcoord[i].data)
 	    _mesa_vector4f_free( &store->texcoord[i] );
 
-      
+
       if (store->tmp_f) FREE( store->tmp_f );
       if (store->tmp_m) FREE( store->tmp_m );
       FREE( store );
@@ -678,9 +678,9 @@ static void free_texgen_data( struct gl_pipeline_stage *stage )
 }
 
 
-   
-const struct gl_pipeline_stage _tnl_texgen_stage = 
-{ 
+
+const struct gl_pipeline_stage _tnl_texgen_stage =
+{
    "texgen",
    _NEW_TEXTURE,		/* when to call check() */
    _NEW_TEXTURE,		/* when to invalidate stored data */
@@ -690,5 +690,3 @@ const struct gl_pipeline_stage _tnl_texgen_stage =
    check_texgen,		/* check */
    alloc_texgen_data		/* run -- initially set to alloc data */
 };
-
-   

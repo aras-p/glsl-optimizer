@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.27 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: buffers.c,v 1.28 2001/03/12 00:48:37 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,7 +53,7 @@ _mesa_ClearIndex( GLfloat c )
 
    if (ctx->Color.ClearIndex == (GLuint) c)
       return;
-   
+
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    ctx->Color.ClearIndex = (GLuint) c;
 

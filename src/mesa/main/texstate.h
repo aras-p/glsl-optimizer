@@ -1,4 +1,4 @@
-/* $Id: texstate.h,v 1.6 2001/02/06 21:42:48 brianp Exp $ */
+/* $Id: texstate.h,v 1.7 2001/03/12 00:48:39 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -123,4 +123,3 @@ _mesa_ClientActiveTextureARB( GLenum target );
 
 
 #endif
-

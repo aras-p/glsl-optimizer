@@ -1,10 +1,10 @@
-/* $Id: dlist.h,v 1.13 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: dlist.h,v 1.14 2001/03/12 00:48:37 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -91,7 +91,7 @@ _mesa_alloc_opcode( GLcontext *ctx, GLuint sz,
 		    void (*destroy)( GLcontext *, void * ),
 		    void (*print)( GLcontext *, void * ) );
 
-extern void _mesa_save_EvalMesh2(GLenum mode, GLint i1, GLint i2, 
+extern void _mesa_save_EvalMesh2(GLenum mode, GLint i1, GLint i2,
 				 GLint j1, GLint j2 );
 extern void _mesa_save_EvalMesh1( GLenum mode, GLint i1, GLint i2 );
 extern void _mesa_save_CallLists( GLsizei n, GLenum type, const GLvoid *lists );

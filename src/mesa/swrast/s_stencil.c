@@ -1,21 +1,21 @@
-/* $Id: s_stencil.c,v 1.9 2001/03/07 05:06:12 brianp Exp $ */
+/* $Id: s_stencil.c,v 1.10 2001/03/12 00:48:42 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -42,11 +42,11 @@
 /* Stencil Logic:
 
 IF stencil test fails THEN
-   Apply fail-op to stencil value   
+   Apply fail-op to stencil value
    Don't write the pixel (RGBA,Z)
 ELSE
    IF doing depth test && depth test fails THEN
-      Apply zfail-op to stencil value   
+      Apply zfail-op to stencil value
       Write RGBA and Z to appropriate buffers
    ELSE
       Apply zpass-op to stencil value
@@ -416,7 +416,7 @@ do_stencil_test( GLcontext *ctx, GLuint n, GLstencil stencil[],
  *          mask - array [n] of flags (1=stencil and depth test passed)
  * Return: GL_TRUE - all fragments failed the testing
  *         GL_FALSE - one or more fragments passed the testing
- * 
+ *
  */
 static GLboolean
 stencil_and_ztest_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
@@ -499,7 +499,7 @@ stencil_and_ztest_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
  * Output:  mask - array [n] of flags (1=stencil and depth test passed)
  * Return: GL_TRUE - all fragments failed the testing
  *         GL_FALSE - one or more fragments passed the testing
- * 
+ *
  */
 GLboolean
 _mesa_stencil_and_ztest_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
@@ -896,7 +896,7 @@ stencil_test_pixels( GLcontext *ctx, GLuint n,
  * The comments in this function are a bit sparse but the code is
  * almost identical to stencil_and_ztest_span(), which is well
  * commented.
- * 
+ *
  * Input:  n - number of pixels in the array
  *         x, y - array of [n] pixel positions
  *         z - array [n] of z values
@@ -1301,4 +1301,3 @@ _mesa_clear_stencil_buffer( GLcontext *ctx )
       clear_software_stencil_buffer(ctx);
    }
 }
-

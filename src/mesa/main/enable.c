@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.44 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: enable.c,v 1.45 2001/03/12 00:48:37 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -67,7 +67,7 @@ client_state( GLcontext *ctx, GLenum cap, GLboolean state )
       var = &ctx->Array.Index.Enabled;
       flag = _NEW_ARRAY_INDEX;
       break;
-   case GL_TEXTURE_COORD_ARRAY: 
+   case GL_TEXTURE_COORD_ARRAY:
       var = &ctx->Array.TexCoord[ctx->Array.ActiveTexture].Enabled;
       flag = _NEW_ARRAY_TEXCOORD(ctx->Array.ActiveTexture);
       break;
@@ -95,7 +95,7 @@ client_state( GLcontext *ctx, GLenum cap, GLboolean state )
    ctx->Array.NewState |= flag;
    *var = state;
 
-   if (state) 
+   if (state)
       ctx->Array._Enabled |= flag;
    else
       ctx->Array._Enabled &= ~flag;
@@ -139,7 +139,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 
    switch (cap) {
    case GL_ALPHA_TEST:
-      if (ctx->Color.AlphaEnabled == state) 
+      if (ctx->Color.AlphaEnabled == state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_COLOR);
       ctx->Color.AlphaEnabled = state;
@@ -151,13 +151,13 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       ctx->Eval.AutoNormal = state;
       break;
    case GL_BLEND:
-      if (ctx->Color.BlendEnabled == state) 
+      if (ctx->Color.BlendEnabled == state)
 	 return;
 
       FLUSH_VERTICES(ctx, _NEW_COLOR);
       ctx->Color.BlendEnabled = state;
       /* The following needed to accomodate 1.0 RGB logic op blending */
-      ctx->Color.ColorLogicOpEnabled = 
+      ctx->Color.ColorLogicOpEnabled =
 	 (ctx->Color.BlendEquation == GL_LOGIC_OP && state);
       break;
    case GL_CLIP_PLANE0:
@@ -167,7 +167,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
    case GL_CLIP_PLANE4:
    case GL_CLIP_PLANE5: {
       GLuint p = cap-GL_CLIP_PLANE0;
-	 
+
       if (ctx->Transform.ClipEnabled[p] == state)
 	 return;
 
@@ -177,11 +177,11 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       if (state) {
 	 ctx->_Enabled |= ENABLE_USERCLIP;
 	 ctx->Transform._AnyClip++;
-	
+
 	 if (ctx->ProjectionMatrix.flags & MAT_DIRTY) {
 	    _math_matrix_analyse( &ctx->ProjectionMatrix );
 	 }
-	
+
 	 /* This derived state also calculated in clip.c and
 	  * from _mesa_update_state() on changes to EyeUserPlane
 	  * and ctx->ProjectionMatrix respectively.
@@ -191,12 +191,12 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 			      ctx->ProjectionMatrix.inv );
       } else {
 	 if (--ctx->Transform._AnyClip == 0)
-	    ctx->_Enabled &= ~ENABLE_USERCLIP;	
-      }	
+	    ctx->_Enabled &= ~ENABLE_USERCLIP;
+      }
    }
    break;
    case GL_COLOR_MATERIAL:
-      if (ctx->Light.ColorMaterialEnabled == state) 
+      if (ctx->Light.ColorMaterialEnabled == state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       ctx->Light.ColorMaterialEnabled = state;
@@ -206,7 +206,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       }
       break;
    case GL_CULL_FACE:
-      if (ctx->Polygon.CullFlag == state) 
+      if (ctx->Polygon.CullFlag == state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_POLYGON);
       ctx->Polygon.CullFlag = state;
@@ -216,7 +216,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 _mesa_warning(ctx,"glEnable(GL_DEPTH_TEST) but no depth buffer");
 	 return;
       }
-      if (ctx->Depth.Test==state) 
+      if (ctx->Depth.Test==state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_DEPTH);
       ctx->Depth.Test = state;
@@ -225,13 +225,13 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       if (ctx->NoDither) {
 	 state = GL_FALSE; /* MESA_NO_DITHER env var */
       }
-      if (ctx->Color.DitherFlag==state) 
+      if (ctx->Color.DitherFlag==state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_COLOR);
       ctx->Color.DitherFlag = state;
       break;
    case GL_FOG:
-      if (ctx->Fog.Enabled==state) 
+      if (ctx->Fog.Enabled==state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_FOG);
       ctx->Fog.Enabled = state;
@@ -255,7 +255,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
    case GL_LIGHT5:
    case GL_LIGHT6:
    case GL_LIGHT7:
-      if (ctx->Light.Light[cap-GL_LIGHT0].Enabled == state) 
+      if (ctx->Light.Light[cap-GL_LIGHT0].Enabled == state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       ctx->Light.Light[cap-GL_LIGHT0].Enabled = state;
@@ -268,7 +268,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       }
       break;
    case GL_LIGHTING:
-      if (ctx->Light.Enabled == state) 
+      if (ctx->Light.Enabled == state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       ctx->Light.Enabled = state;
@@ -277,33 +277,33 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       if ((ctx->Light.Enabled &&
 	   ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
 	  || ctx->Fog.ColorSumEnabled)
-	 ctx->_TriangleCaps |= DD_SEPERATE_SPECULAR; 
+	 ctx->_TriangleCaps |= DD_SEPERATE_SPECULAR;
       else
-	 ctx->_TriangleCaps &= ~DD_SEPERATE_SPECULAR; 
+	 ctx->_TriangleCaps &= ~DD_SEPERATE_SPECULAR;
 
       break;
    case GL_LINE_SMOOTH:
-      if (ctx->Line.SmoothFlag == state) 
+      if (ctx->Line.SmoothFlag == state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_LINE);
       ctx->Line.SmoothFlag = state;
       ctx->_TriangleCaps ^= DD_LINE_SMOOTH;
       break;
    case GL_LINE_STIPPLE:
-      if (ctx->Line.StippleFlag == state) 
+      if (ctx->Line.StippleFlag == state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_LINE);
       ctx->Line.StippleFlag = state;
       ctx->_TriangleCaps ^= DD_LINE_STIPPLE;
       break;
    case GL_INDEX_LOGIC_OP:
-      if (ctx->Color.IndexLogicOpEnabled == state) 
+      if (ctx->Color.IndexLogicOpEnabled == state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_COLOR);
       ctx->Color.IndexLogicOpEnabled = state;
       break;
    case GL_COLOR_LOGIC_OP:
-      if (ctx->Color.ColorLogicOpEnabled == state) 
+      if (ctx->Color.ColorLogicOpEnabled == state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_COLOR);
       ctx->Color.ColorLogicOpEnabled = state;
@@ -423,61 +423,61 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       ctx->Pixel.MinMaxEnabled = state;
       break;
    case GL_NORMALIZE:
-      if (ctx->Transform.Normalize == state) 
+      if (ctx->Transform.Normalize == state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
       ctx->Transform.Normalize = state;
       ctx->_Enabled ^= ENABLE_NORMALIZE;
       break;
    case GL_POINT_SMOOTH:
-      if (ctx->Point.SmoothFlag==state) 
+      if (ctx->Point.SmoothFlag==state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_POINT);
       ctx->Point.SmoothFlag = state;
       ctx->_TriangleCaps ^= DD_POINT_SMOOTH;
       break;
    case GL_POLYGON_SMOOTH:
-      if (ctx->Polygon.SmoothFlag==state) 
+      if (ctx->Polygon.SmoothFlag==state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_POLYGON);
       ctx->Polygon.SmoothFlag = state;
       ctx->_TriangleCaps ^= DD_TRI_SMOOTH;
       break;
    case GL_POLYGON_STIPPLE:
-      if (ctx->Polygon.StippleFlag==state) 
+      if (ctx->Polygon.StippleFlag==state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_POLYGON);
       ctx->Polygon.StippleFlag = state;
       ctx->_TriangleCaps ^= DD_TRI_STIPPLE;
       break;
    case GL_POLYGON_OFFSET_POINT:
-      if (ctx->Polygon.OffsetPoint==state) 
+      if (ctx->Polygon.OffsetPoint==state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_POLYGON);
       ctx->Polygon.OffsetPoint = state;
       break;
    case GL_POLYGON_OFFSET_LINE:
-      if (ctx->Polygon.OffsetLine==state) 
+      if (ctx->Polygon.OffsetLine==state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_POLYGON);
       ctx->Polygon.OffsetLine = state;
       break;
    case GL_POLYGON_OFFSET_FILL:
       /*case GL_POLYGON_OFFSET_EXT:*/
-      if (ctx->Polygon.OffsetFill==state) 
+      if (ctx->Polygon.OffsetFill==state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_POLYGON);
       ctx->Polygon.OffsetFill = state;
       break;
    case GL_RESCALE_NORMAL_EXT:
-      if (ctx->Transform.RescaleNormals == state) 
+      if (ctx->Transform.RescaleNormals == state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
       ctx->Transform.RescaleNormals = state;
       ctx->_Enabled ^= ENABLE_RESCALE;
       break;
    case GL_SCISSOR_TEST:
-      if (ctx->Scissor.Enabled==state) 
+      if (ctx->Scissor.Enabled==state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_SCISSOR);
       ctx->Scissor.Enabled = state;
@@ -493,7 +493,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 _mesa_warning(ctx, "glEnable(GL_STENCIL_TEST) but no stencil buffer");
 	 return;
       }
-      if (ctx->Stencil.Enabled==state) 
+      if (ctx->Stencil.Enabled==state)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_STENCIL);
       ctx->Stencil.Enabled = state;
@@ -503,7 +503,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       const GLuint curr = ctx->Texture.CurrentUnit;
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
       GLuint newenabled = texUnit->Enabled & ~TEXTURE0_1D;
-      if (state) 
+      if (state)
 	 newenabled |= TEXTURE0_1D;
       if (!ctx->Visual.rgbMode || texUnit->Enabled == newenabled)
 	 return;
@@ -515,7 +515,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       const GLuint curr = ctx->Texture.CurrentUnit;
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
       GLuint newenabled = texUnit->Enabled & ~TEXTURE0_2D;
-      if (state) 
+      if (state)
 	 newenabled |= TEXTURE0_2D;
       if (!ctx->Visual.rgbMode || texUnit->Enabled == newenabled)
 	 return;
@@ -527,7 +527,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       const GLuint curr = ctx->Texture.CurrentUnit;
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
       GLuint newenabled = texUnit->Enabled & ~TEXTURE0_3D;
-      if (state) 
+      if (state)
 	 newenabled |= TEXTURE0_3D;
       if (!ctx->Visual.rgbMode || texUnit->Enabled == newenabled)
 	 return;
@@ -558,7 +558,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
       texUnit->TexGenEnabled = newenabled;
       break;
-   }  
+   }
    break;
    case GL_TEXTURE_GEN_S: {
       GLuint unit = ctx->Texture.CurrentUnit;
@@ -571,7 +571,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
       texUnit->TexGenEnabled = newenabled;
       break;
-   }   
+   }
    break;
    case GL_TEXTURE_GEN_T: {
       GLuint unit = ctx->Texture.CurrentUnit;
@@ -594,7 +594,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
    case GL_NORMAL_ARRAY:
    case GL_COLOR_ARRAY:
    case GL_INDEX_ARRAY:
-   case GL_TEXTURE_COORD_ARRAY: 
+   case GL_TEXTURE_COORD_ARRAY:
    case GL_EDGE_FLAG_ARRAY:
    case GL_FOG_COORDINATE_ARRAY_EXT:
    case GL_SECONDARY_COLOR_ARRAY_EXT:
@@ -710,7 +710,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       const GLuint curr = ctx->Texture.CurrentUnit;
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
       GLuint newenabled = texUnit->Enabled & ~TEXTURE0_CUBE;
-      if (state) 
+      if (state)
 	 newenabled |= TEXTURE0_CUBE;
       if (!ctx->Extensions.ARB_texture_cube_map) {
 	 _mesa_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
@@ -732,13 +732,13 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 return;
       FLUSH_VERTICES(ctx, _NEW_FOG);
       ctx->Fog.ColorSumEnabled = state;
-      
+
       if ((ctx->Light.Enabled &&
 	   ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
 	  || ctx->Fog.ColorSumEnabled)
-	 ctx->_TriangleCaps |= DD_SEPERATE_SPECULAR; 
+	 ctx->_TriangleCaps |= DD_SEPERATE_SPECULAR;
       else
-	 ctx->_TriangleCaps &= ~DD_SEPERATE_SPECULAR; 
+	 ctx->_TriangleCaps &= ~DD_SEPERATE_SPECULAR;
 
       break;
 
@@ -1011,10 +1011,3 @@ _mesa_IsEnabled( GLenum cap )
 	 return GL_FALSE;
    }
 }
-
-
-
-
-
-
-

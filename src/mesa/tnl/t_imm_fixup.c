@@ -1,10 +1,10 @@
-/* $Id: t_imm_fixup.c,v 1.8 2001/03/03 20:33:31 brianp Exp $ */
+/* $Id: t_imm_fixup.c,v 1.9 2001/03/12 00:48:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,7 @@
 
 /*
  * Authors:
- *   Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keithw@valinux.com>
  */
 
 
@@ -226,7 +226,7 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
 
    fixup = ~andflag & VERT_FIXUP;
 
-   if (!ctx->CompileFlag) 
+   if (!ctx->CompileFlag)
       fixup &= tnl->pipeline.inputs;
 
    if (!ctx->ExecuteFlag)
@@ -238,7 +238,7 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
    if (fixup) {
       GLuint copy = fixup & ~IM->Flag[start];
 
-	 
+
       /* Equivalent to a lazy copy-from-current when setting up the
        * immediate.
        */
@@ -261,7 +261,7 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
 
 	 if (copy & VERT_INDEX)
 	    IM->Index[start] = ctx->Current.Index;
-	
+
 	 if (copy & VERT_EDGE)
 	    IM->EdgeFlag[start] = ctx->Current.EdgeFlag;
 
@@ -281,7 +281,7 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
 	 GLuint i;
 	 for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
 	    if (fixup & VERT_TEX(i)) {
-	       if (orflag & VERT_TEX(i)) 
+	       if (orflag & VERT_TEX(i))
 		  fixup_4f( IM->TexCoord[i], IM->Flag, start, VERT_TEX(i) );
 	       else
 		  fixup_first_4f( IM->TexCoord[i], IM->Flag, VERT_END_VB, start,
@@ -356,7 +356,7 @@ static void copy_material( struct immediate *next,
 						   IMM_SIZE * 2 );
       next->MaterialMask = (GLuint *) MALLOC( sizeof(GLuint) * IMM_SIZE );
    }
-   
+
    next->MaterialMask[dst] = prev->MaterialMask[src];
    MEMCPY(next->Material[dst], prev->Material[src], 2*sizeof(GLmaterial));
 }
@@ -370,7 +370,7 @@ static void copy_material( struct immediate *next,
  * primitives.
  *
  * Have to be careful with the transitions between display list
- * replay, compile and normal execute modes.  
+ * replay, compile and normal execute modes.
  */
 static void copy_vertices( GLcontext *ctx,
 			   struct immediate *next,
@@ -382,7 +382,7 @@ static void copy_vertices( GLcontext *ctx,
    GLuint offset = IMM_MAX_COPIED_VERTS - count;
    GLuint i;
 
-   next->CopyStart = next->Start - count; 
+   next->CopyStart = next->Start - count;
 
    /* Copy the vertices
     */
@@ -392,7 +392,7 @@ static void copy_vertices( GLcontext *ctx,
       GLuint dst = next->CopyStart+i;
 
       COPY_4FV( next->Obj[dst], prev->Obj[src] );
-      COPY_3FV( next->Normal[dst], prev->Normal[src] );      
+      COPY_3FV( next->Normal[dst], prev->Normal[src] );
       COPY_CHAN4( next->Color[dst], prev->Color[src] );
 
       if (prev->OrFlag & VERT_TEX_ANY) {
@@ -415,13 +415,13 @@ static void copy_vertices( GLcontext *ctx,
       next->CopyOrFlag |= prev->Flag[src];  /* redundant for current_im */
       next->CopyAndFlag &= prev->Flag[src]; /* redundant for current_im */
    }
-   
+
 
    ASSERT(prev == tnl->ExecCopySource);
 
    if (--tnl->ExecCopySource->ref_count == 0)
       _tnl_free_immediate( tnl->ExecCopySource );
-   
+
    next->ref_count++;
    tnl->ExecCopySource = next;
 
@@ -442,16 +442,16 @@ void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *IM )
    /* Need to push this in now as it won't be computed anywhere else/
     */
    IM->TexSize = tnl->ExecCopyTexSize;
-   
+
    /* A wrapped primitive.  We may be copying into a revived
     * display list immediate, or onto the front of a new execute-mode
     * immediate.
     */
-   copy_vertices( ctx, IM, 
-		  tnl->ExecCopySource, 
+   copy_vertices( ctx, IM,
+		  tnl->ExecCopySource,
 		  tnl->ExecCopyCount,
 		  tnl->ExecCopyElts );
-   
+
    if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1) {
       /* Immediates are built by default to be correct in this state,
        * and copying to the first slots of an immediate doesn't remove
@@ -462,14 +462,14 @@ void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *IM )
       ASSERT(IM->CopyStart == IM->Start);
    }
 
-   /* Copy the primitive information: 
+   /* Copy the primitive information:
     */
    IM->Primitive[IM->CopyStart] = (ctx->Driver.CurrentExecPrimitive | PRIM_LAST);
    IM->LastPrimitive = IM->CopyStart;
    if (tnl->ExecParity)
       IM->Primitive[IM->CopyStart] |= PRIM_PARITY;
 }
-			 
+
 
 /* Revive a compiled immediate struct - propogate new 'Current'
  * values.  Often this is redundant because the current values were
@@ -489,8 +489,8 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
    IM->CopyAndFlag = IM->AndFlag; /* redundant for current_im */
    IM->CopyTexSize = IM->TexSize | tnl->ExecCopyTexSize;
 
-   copy_vertices( ctx, IM, 
-		  tnl->ExecCopySource, 
+   copy_vertices( ctx, IM,
+		  tnl->ExecCopySource,
 		  tnl->ExecCopyCount,
 		  tnl->ExecCopyElts );
 
@@ -540,7 +540,7 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 
 
    /* Can potentially overwrite primitive details - need to save the
-    * first slot: 
+    * first slot:
     */
    tnl->DlistPrimitive = IM->Primitive[IM->Start];
    tnl->DlistPrimitiveLength = IM->PrimitiveLength[IM->Start];
@@ -554,15 +554,15 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
    if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1) {
       GLuint i;
 
-      if (IM->BeginState & VERT_ERROR_1) 
+      if (IM->BeginState & VERT_ERROR_1)
 	 _mesa_error( ctx, GL_INVALID_OPERATION, "glBegin/glEnd");
 
       for (i = IM->Start ; i <= IM->Count ; i += IM->PrimitiveLength[i])
-	 if (IM->Flag[i] & (VERT_BEGIN|VERT_END_VB)) 
+	 if (IM->Flag[i] & (VERT_BEGIN|VERT_END_VB))
 	    break;
 
       /* Would like to just ignore vertices upto this point.  Can't
-       * set copystart because it might skip materials? 
+       * set copystart because it might skip materials?
        */
       ASSERT(IM->Start == IM->CopyStart);
       if (i > IM->CopyStart) {
@@ -578,25 +578,25 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
    } else {
       GLuint i;
 
-      if (IM->BeginState & VERT_ERROR_0) 
+      if (IM->BeginState & VERT_ERROR_0)
 	 _mesa_error( ctx, GL_INVALID_OPERATION, "glBegin/glEnd");
-      
+
       if (IM->CopyStart == IM->Start &&
 	  IM->Flag[IM->Start] & (VERT_END|VERT_END_VB))
       {
       }
-      else 
+      else
       {
 	 IM->Primitive[IM->CopyStart] = ctx->Driver.CurrentExecPrimitive;
-	 if (tnl->ExecParity) 
-	    IM->Primitive[IM->CopyStart] |= PRIM_PARITY;      
-      
-      
+	 if (tnl->ExecParity)
+	    IM->Primitive[IM->CopyStart] |= PRIM_PARITY;
+
+
 	 for (i = IM->Start ; i <= IM->Count ; i += IM->PrimitiveLength[i])
 	    if (IM->Flag[i] & (VERT_END|VERT_END_VB)) {
 	       IM->PrimitiveLength[IM->CopyStart] = i - IM->CopyStart;
 	       if (IM->Flag[i] & VERT_END_VB) {
-		  IM->Primitive[IM->CopyStart] |= PRIM_LAST;	    
+		  IM->Primitive[IM->CopyStart] |= PRIM_LAST;
 		  IM->LastPrimitive = IM->CopyStart;
 	       }
 	       if (IM->Flag[i] & VERT_END) {
@@ -610,7 +610,7 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
    if (IM->Primitive[IM->LastPrimitive] & PRIM_END)
       ctx->Driver.CurrentExecPrimitive = GL_POLYGON+1;
    else
-      ctx->Driver.CurrentExecPrimitive = 
+      ctx->Driver.CurrentExecPrimitive =
 	 IM->Primitive[IM->LastPrimitive] & PRIM_MODE_MASK;
 }
 
@@ -626,9 +626,9 @@ void _tnl_restore_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 }
 
 
-			 
 
-			 
+
+
 
 static void copy_none( TNLcontext *tnl, GLuint start, GLuint count, GLuint ovf)
 {
@@ -694,7 +694,7 @@ static copy_func copy_tab[GL_POLYGON+2] =
 
 
 
-/* Figure out what vertices need to be copied next time. 
+/* Figure out what vertices need to be copied next time.
  */
 void
 _tnl_get_exec_copy_verts( GLcontext *ctx, struct immediate *IM )
@@ -708,7 +708,7 @@ _tnl_get_exec_copy_verts( GLcontext *ctx, struct immediate *IM )
    GLuint pincr = increment[prim];
    GLuint pintro = intro[prim];
    GLuint ovf = 0;
-   
+
 
    if (tnl->ExecCopySource != IM) {
       if (--tnl->ExecCopySource->ref_count == 0)
@@ -728,7 +728,7 @@ _tnl_get_exec_copy_verts( GLcontext *ctx, struct immediate *IM )
 
       if (pincr != 1 && (IM->Count - last - pintro))
 	 ovf = (IM->Count - last - pintro) % pincr;
-   
+
       if (last < IM->Count)
 	 copy_tab[prim]( tnl, last, IM->Count, ovf );
    }
@@ -743,7 +743,7 @@ _tnl_get_exec_copy_verts( GLcontext *ctx, struct immediate *IM )
  * etc.
  *
  * Generate the index list that will be used to render this immediate
- * struct.  
+ * struct.
  *
  * Finally, generate a new primitives list for rendering the indices.
  */
@@ -759,16 +759,16 @@ void _tnl_fixup_purged_eval( GLcontext *ctx,
    GLuint good_index = (VERT_EVAL_ANY & ~purge)|VERT_OBJ;
    GLuint prim_length = 0, lastprim = 0, nextprim = 0;
 
-   if (fixup & VERT_TEX0) 
+   if (fixup & VERT_TEX0)
       fixup_4f( store->TexCoord, flags, 0, VERT_TEX0|fixup_fence );
 
-   if (fixup & VERT_INDEX) 
+   if (fixup & VERT_INDEX)
       fixup_1ui( store->Index, flags, 0, VERT_INDEX|fixup_fence );
 
-   if (fixup & VERT_RGBA) 
+   if (fixup & VERT_RGBA)
       fixup_4chan( store->Color, flags, 0, VERT_RGBA|fixup_fence );
 
-   if (fixup & VERT_NORM) 
+   if (fixup & VERT_NORM)
       fixup_3f( store->Normal, flags, 0, VERT_NORM|fixup_fence );
 
    for (i = 0, j = 0 ; i < tnl->vb.Count ; i++) {
@@ -784,7 +784,7 @@ void _tnl_fixup_purged_eval( GLcontext *ctx,
 	 lastprimlen = VB->PrimitiveLength[i];
       }
    }
- 
+
    VB->Elts = store->Elts;
 
    /* What about copying???  No immediate exists with the right

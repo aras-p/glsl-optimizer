@@ -1,10 +1,10 @@
-/* $Id: t_imm_elt.c,v 1.5 2001/03/08 15:23:47 brianp Exp $ */
+/* $Id: t_imm_elt.c,v 1.6 2001/03/12 00:48:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
+ * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  */
 
@@ -597,7 +597,7 @@ static void _tnl_trans_elt_1f(GLfloat *to,
 		       GLuint start,
 		       GLuint n )
 {
-   _tnl_trans_elt_1f_tab[TYPE_IDX(from->Type)]( to, 
+   _tnl_trans_elt_1f_tab[TYPE_IDX(from->Type)]( to,
 					      from->Ptr,
 					      from->StrideB,
 					      flags,
@@ -605,7 +605,7 @@ static void _tnl_trans_elt_1f(GLfloat *to,
 					      match,
 					      start,
 					      n );
-					
+
 }
 
 static void _tnl_trans_elt_1ui(GLuint *to,
@@ -616,7 +616,7 @@ static void _tnl_trans_elt_1ui(GLuint *to,
 			GLuint start,
 			GLuint n )
 {
-   _tnl_trans_elt_1ui_tab[TYPE_IDX(from->Type)]( to, 
+   _tnl_trans_elt_1ui_tab[TYPE_IDX(from->Type)]( to,
 					       from->Ptr,
 					       from->StrideB,
 					       flags,
@@ -624,7 +624,7 @@ static void _tnl_trans_elt_1ui(GLuint *to,
 					       match,
 					       start,
 					       n );
-					
+
 }
 
 
@@ -636,7 +636,7 @@ static void _tnl_trans_elt_1ub(GLubyte *to,
 			GLuint start,
 			GLuint n )
 {
-   _tnl_trans_elt_1ub_tab[TYPE_IDX(from->Type)]( to, 
+   _tnl_trans_elt_1ub_tab[TYPE_IDX(from->Type)]( to,
                                                  from->Ptr,
                                                  from->StrideB,
                                                  flags,
@@ -644,7 +644,7 @@ static void _tnl_trans_elt_1ub(GLubyte *to,
                                                  match,
                                                  start,
                                                  n );
-					
+
 }
 
 
@@ -656,7 +656,7 @@ static void _tnl_trans_elt_4ub(GLubyte (*to)[4],
                                GLuint start,
                                GLuint n )
 {
-   _tnl_trans_elt_4ub_tab[from->Size][TYPE_IDX(from->Type)]( to, 
+   _tnl_trans_elt_4ub_tab[from->Size][TYPE_IDX(from->Type)]( to,
                                                              from->Ptr,
                                                              from->StrideB,
                                                              flags,
@@ -664,7 +664,7 @@ static void _tnl_trans_elt_4ub(GLubyte (*to)[4],
                                                              match,
                                                              start,
                                                              n );
-					
+
 }
 
 static void _tnl_trans_elt_4us(GLushort (*to)[4],
@@ -675,7 +675,7 @@ static void _tnl_trans_elt_4us(GLushort (*to)[4],
                                GLuint start,
                                GLuint n )
 {
-   _tnl_trans_elt_4us_tab[from->Size][TYPE_IDX(from->Type)]( to, 
+   _tnl_trans_elt_4us_tab[from->Size][TYPE_IDX(from->Type)]( to,
                                                              from->Ptr,
                                                              from->StrideB,
                                                              flags,
@@ -683,7 +683,7 @@ static void _tnl_trans_elt_4us(GLushort (*to)[4],
                                                              match,
                                                              start,
                                                              n );
-					
+
 }
 
 static void _tnl_trans_elt_4f(GLfloat (*to)[4],
@@ -694,7 +694,7 @@ static void _tnl_trans_elt_4f(GLfloat (*to)[4],
                               GLuint start,
                               GLuint n )
 {
-   _tnl_trans_elt_4f_tab[from->Size][TYPE_IDX(from->Type)]( to, 
+   _tnl_trans_elt_4f_tab[from->Size][TYPE_IDX(from->Type)]( to,
 					      from->Ptr,
 					      from->StrideB,
 					      flags,
@@ -702,7 +702,7 @@ static void _tnl_trans_elt_4f(GLfloat (*to)[4],
 					      match,
 					      start,
 					      n );
-					
+
 }
 
 static void _tnl_trans_elt_4chan(GLchan (*to)[4],
@@ -734,7 +734,7 @@ static void _tnl_trans_elt_3f(GLfloat (*to)[3],
 		       GLuint start,
 		       GLuint n )
 {
-   _tnl_trans_elt_3f_tab[TYPE_IDX(from->Type)]( to, 
+   _tnl_trans_elt_3f_tab[TYPE_IDX(from->Type)]( to,
 					      from->Ptr,
 					      from->StrideB,
 					      flags,
@@ -749,12 +749,12 @@ static void _tnl_trans_elt_3f(GLfloat (*to)[3],
 
 /* Batch function to translate away all the array elements in the
  * input buffer prior to transform.  Done only the first time a vertex
- * buffer is executed or compiled.  
+ * buffer is executed or compiled.
  *
- * KW: Have to do this after each glEnd if arrays aren't locked.  
+ * KW: Have to do this after each glEnd if arrays aren't locked.
  */
 void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
-				GLuint start, GLuint count ) 
+				GLuint start, GLuint count )
 {
    GLuint *flags = IM->Flag;
    GLuint *elts = IM->Elt;
@@ -826,14 +826,12 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
 	    if (ctx->Array.TexCoord[i].Size == 4)
 	       IM->TexSize |= TEX_SIZE_4(i);
 	    else if (ctx->Array.TexCoord[i].Size == 3)
-	       IM->TexSize |= TEX_SIZE_3(i);	       
+	       IM->TexSize |= TEX_SIZE_3(i);
 	 }
    }
 
-   for (i = start ; i < count ; i++) 
+   for (i = start ; i < count ; i++)
       if (flags[i] & VERT_ELT) flags[i] |= translate;
 
    IM->CopyOrFlag |= translate;
 }
-
-

@@ -1,10 +1,10 @@
-/* $Id: texobj.c,v 1.43 2001/03/08 15:23:46 brianp Exp $ */
+/* $Id: texobj.c,v 1.44 2001/03/12 00:48:39 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -54,7 +54,7 @@
  * Return:  pointer to new texture object
  */
 struct gl_texture_object *
-_mesa_alloc_texture_object( struct gl_shared_state *shared, 
+_mesa_alloc_texture_object( struct gl_shared_state *shared,
 			    GLuint name, GLuint dimensions )
 {
    struct gl_texture_object *obj;
@@ -609,7 +609,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
 
    newTexObj->RefCount++;
 
-   
+
    /* do the actual binding, but first flush outstanding vertices:
     */
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -743,4 +743,3 @@ _mesa_IsTexture( GLuint texture )
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
    return texture > 0 && _mesa_HashLookup(ctx->Shared->TexObjects, texture);
 }
-

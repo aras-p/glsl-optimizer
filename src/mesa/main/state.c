@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.60 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: state.c,v 1.61 2001/03/12 00:48:38 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -566,14 +566,14 @@ update_tnl_spaces( GLcontext *ctx, GLuint oldneedeyecoords )
       GLuint new_state = ctx->NewState;
 
       /* Recalculate that same state only if it has been invalidated
-       * by other statechanges. 
+       * by other statechanges.
        */
       if (new_state & _NEW_MODELVIEW)
 	 update_modelview_scale(ctx);
 
       if (new_state & (_NEW_MODELVIEW|_NEW_PROJECTION))
 	 calculate_model_project_matrix(ctx);
-	
+
       if (new_state & (_NEW_LIGHT|_NEW_MODELVIEW))
 	 _mesa_compute_light_positions( ctx );
    }
@@ -613,7 +613,7 @@ static void
 update_projection( GLcontext *ctx )
 {
    _math_matrix_analyse( &ctx->ProjectionMatrix );
-      
+
    /* Recompute clip plane positions in clipspace.  This is also done
     * in _mesa_ClipPlane().
     */
@@ -865,7 +865,7 @@ update_texture_state( GLcontext *ctx )
  * state references this value, and must be treated with care to
  * ensure that updates are done correctly.  All state dependent on
  * _NeedEyeCoords is calculated from within _mesa_update_tnl_spaces(),
- * and from nowhere else.  
+ * and from nowhere else.
  */
 void _mesa_update_state( GLcontext *ctx )
 {
@@ -926,7 +926,7 @@ void _mesa_update_state( GLcontext *ctx )
     * normal transform.
     *
     * If the lighting space hasn't changed, may still need to recompute
-    * light positions & normal transforms for other reasons. 
+    * light positions & normal transforms for other reasons.
     */
    if (new_state & (_NEW_MODELVIEW |
 		    _NEW_PROJECTION |
@@ -948,12 +948,12 @@ void _mesa_update_state( GLcontext *ctx )
    ctx->Array.NewState = 0;
 
    /* At this point we can do some assertions to be sure the required
-    * device driver function pointers are all initialized. 
+    * device driver function pointers are all initialized.
     *
     * KW: Moved the some of these asserts to t_vb_render.c, as they
     * are strictly only required for that stage.  The Driver struct
     * should probably be split; the read/write span/pixels functions
-    * should be referenced only from swrast, for instance.  
+    * should be referenced only from swrast, for instance.
     */
    ASSERT(ctx->Driver.GetString);
    ASSERT(ctx->Driver.UpdateState);

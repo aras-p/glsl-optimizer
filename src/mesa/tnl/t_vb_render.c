@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.14 2001/02/16 18:14:42 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.15 2001/03/12 00:48:44 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,7 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
+ * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  */
 
@@ -40,9 +40,9 @@
  *    context->Driver.PointsFunc()
  *    context->Driver.LineFunc()
  *    context->Driver.TriangleFunc()
- *    context->Driver.QuadFunc() 
+ *    context->Driver.QuadFunc()
  *
- *    context->Driver.RenderTabVerts[] 
+ *    context->Driver.RenderTabVerts[]
  *    context->Driver.RenderTabElts[]
  *
  * None of these may be null.
@@ -68,7 +68,7 @@
 /**********************************************************************/
 
 
-#if defined(USE_IEEE) 
+#if defined(USE_IEEE)
 #define NEGATIVE(x) ((*(GLuint *)&x) & (1<<31))
 #define DIFFERENT_SIGNS(x,y) (((*(GLuint *)&x)^(*(GLuint *)&y)) & (1<<31))
 #else
@@ -200,7 +200,7 @@ static void clip_elt_triangles( GLcontext *ctx,
    const GLuint * const elt = VB->Elts;
    GLubyte *mask = VB->ClipMask;
    (void) flags;
-   
+
    ctx->Driver.RenderPrimitive( ctx, GL_TRIANGLES );
 
    for (j=start; j < last; j+=3 ) {
@@ -209,15 +209,15 @@ static void clip_elt_triangles( GLcontext *ctx,
       GLubyte c3 = mask[elt[j+2]];
       GLubyte ormask = c1|c2|c3;
       if (ormask) {
-	 if (start < j) 
+	 if (start < j)
 	    render_tris( ctx, start, j, 0 );
-	 if (!(c1&c2&c3&0x3f)) 
+	 if (!(c1&c2&c3&0x3f))
 	    clip_tri_4( ctx, elt[j], elt[j+1], elt[j+2], ormask );
 	 start = j+3;
       }
    }
 
-   if (start < j) 
+   if (start < j)
       render_tris( ctx, start, j, 0 );
 }
 
@@ -258,7 +258,7 @@ static void clip_elt_triangles( GLcontext *ctx,
 #define RESET_STIPPLE ctx->Driver.ResetLineStipple( ctx )
 #define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE
 #define INIT(x) ctx->Driver.RenderPrimitive( ctx, x )
-#define RENDER_TAB_QUALIFIER 
+#define RENDER_TAB_QUALIFIER
 #define PRESERVE_VB_DEFS
 #include "t_vb_rendertmp.h"
 
@@ -282,7 +282,7 @@ static GLboolean run_render( GLcontext *ctx,
 			     struct gl_pipeline_stage *stage )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb; 
+   struct vertex_buffer *VB = &tnl->vb;
    GLuint new_inputs = stage->changed_inputs;
    render_func *tab;
    GLint pass = 0;
@@ -314,7 +314,7 @@ static GLboolean run_render( GLcontext *ctx,
    }
    else {
       tab = VB->Elts ? ctx->Driver.RenderTabElts : ctx->Driver.RenderTabVerts;
-   } 
+   }
 
    do
    {
@@ -322,7 +322,7 @@ static GLboolean run_render( GLcontext *ctx,
       for (i = 0 ; !(flags & PRIM_LAST) ; i += length)
       {
 	 flags = VB->Primitive[i];
-	 length= VB->PrimitiveLength[i];	
+	 length= VB->PrimitiveLength[i];
 	 ASSERT(length || (flags & PRIM_LAST));
 	 ASSERT((flags & PRIM_MODE_MASK) <= GL_POLYGON+1);
 	 if (length)
@@ -344,7 +344,7 @@ static GLboolean run_render( GLcontext *ctx,
 
 
 /* Quite a bit of work involved in finding out the inputs for the
- * render stage.  
+ * render stage.
  */
 static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
 {
@@ -354,7 +354,7 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
    if (ctx->Visual.rgbMode) {
       inputs |= VERT_RGBA;
 
-      if (ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) 
+      if (ctx->_TriangleCaps & DD_SEPERATE_SPECULAR)
 	 inputs |= VERT_SPEC_RGB;
 
       if (ctx->Texture._ReallyEnabled) {
@@ -368,18 +368,18 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
       inputs |= VERT_INDEX;
    }
 
-   if (ctx->Point._Attenuated) 
+   if (ctx->Point._Attenuated)
       inputs |= VERT_POINT_SIZE;
 
    /* How do drivers turn this off?
     */
-   if (ctx->Fog.Enabled) 
+   if (ctx->Fog.Enabled)
       inputs |= VERT_FOG_COORD;
 
-   if (ctx->_TriangleCaps & DD_TRI_UNFILLED) 
+   if (ctx->_TriangleCaps & DD_TRI_UNFILLED)
       inputs |= VERT_EDGE;
 
-   if (ctx->RenderMode==GL_FEEDBACK) 
+   if (ctx->RenderMode==GL_FEEDBACK)
       inputs |= VERT_TEX_ANY;
 
    stage->inputs = inputs;
@@ -393,8 +393,8 @@ static void dtr( struct gl_pipeline_stage *stage )
 }
 
 
-const struct gl_pipeline_stage _tnl_render_stage = 
-{ 
+const struct gl_pipeline_stage _tnl_render_stage =
+{
    "render",
    (_NEW_BUFFERS |
     _DD_NEW_SEPERATE_SPECULAR |

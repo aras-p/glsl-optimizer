@@ -1,19 +1,21 @@
+/* $Id: ss_tritmp.h,v 1.9 2001/03/12 00:48:43 gareth Exp $ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
- * 
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -52,10 +54,10 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
       if (IND & (SS_TWOSIDE_BIT | SS_UNFILLED_BIT))
       {
 	 facing = (cc < 0.0) ^ ctx->Polygon._FrontBit;
-	
+
 	 if (IND & SS_UNFILLED_BIT)
 	    mode = facing ? ctx->Polygon.BackMode : ctx->Polygon.FrontMode;
- 
+
 	 if (facing == 1) {
 	    if (IND & SS_TWOSIDE_BIT) {
 	       if (IND & SS_RGBA_BIT) {
@@ -74,7 +76,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 		  SS_IND(v[2]->index, vbindex[e2]);
 	       }
 	    }
-	 }   
+	 }
       }
 
       if (IND & SS_OFFSET_BIT)
@@ -120,7 +122,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	 v[1]->win[2] += offset;
 	 v[2]->win[2] += offset;
       }
-      _swrast_Triangle( ctx, v[0], v[1], v[2] ); 
+      _swrast_Triangle( ctx, v[0], v[1], v[2] );
    }
 
    if (IND & SS_OFFSET_BIT) {
@@ -129,7 +131,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
       v[2]->win[2] = z[2];
    }
 
-   if (IND & SS_TWOSIDE_BIT) { 
+   if (IND & SS_TWOSIDE_BIT) {
       if (facing == 1) {
 	 if (IND & SS_RGBA_BIT) {
 	    GLchan (*vbcolor)[4] = VB->ColorPtr[0]->data;
@@ -147,7 +149,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	    SS_IND(v[2]->index, vbindex[e2]);
 	 }
       }
-   }   
+   }
 }
 
 
@@ -161,12 +163,12 @@ static void TAG(quad)( GLcontext *ctx, GLuint v0,
       struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
       GLubyte ef1 = VB->EdgeFlag[v1];
       GLubyte ef3 = VB->EdgeFlag[v3];
-      VB->EdgeFlag[v1] = 0;      
+      VB->EdgeFlag[v1] = 0;
       TAG(triangle)( ctx, v0, v1, v3 );
       VB->EdgeFlag[v1] = ef1;
-      VB->EdgeFlag[v3] = 0;      
-      TAG(triangle)( ctx, v1, v2, v3 );      
-      VB->EdgeFlag[v3] = ef3;      
+      VB->EdgeFlag[v3] = 0;
+      TAG(triangle)( ctx, v1, v2, v3 );
+      VB->EdgeFlag[v3] = ef3;
    } else {
       TAG(triangle)( ctx, v0, v1, v3 );
       TAG(triangle)( ctx, v1, v2, v3 );
@@ -185,6 +187,3 @@ static void TAG(init)( void )
 
 #undef IND
 #undef TAG
-			 
-
-

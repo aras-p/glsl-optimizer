@@ -1,21 +1,21 @@
-/* $Id: m_norm_tmp.h,v 1.4 2001/03/03 20:57:00 brianp Exp $ */
+/* $Id: m_norm_tmp.h,v 1.5 2001/03/12 00:48:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
- * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ * Version:  3.5
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -39,7 +39,7 @@ TAG(transform_normalize_normals)( const GLmatrix *mat,
                                   const GLubyte mask[],
                                   GLvector3f *dest )
 {
-   GLuint i;  
+   GLuint i;
    const GLfloat *from = in->start;
    GLuint stride = in->stride;
    GLuint count = in->count;
@@ -113,7 +113,7 @@ TAG(transform_normalize_normals_no_rot)( const GLmatrix *mat,
                                          const GLubyte mask[],
                                          GLvector3f *dest )
 {
-   GLuint i;  
+   GLuint i;
    const GLfloat *from = in->start;
    GLuint stride = in->stride;
    GLuint count = in->count;
@@ -153,7 +153,7 @@ TAG(transform_normalize_normals_no_rot)( const GLmatrix *mat,
       /* scale has been snapped to 1.0 if it is close.
        */
       if (scale != 1.0) {
-	 m0 *= scale; 
+	 m0 *= scale;
 	 m5 *= scale;
 	 m10 *= scale;
       }
@@ -188,7 +188,7 @@ TAG(transform_rescale_normals_no_rot)( const GLmatrix *mat,
                                        const GLubyte mask[],
                                        GLvector3f *dest )
 {
-   GLuint i;  
+   GLuint i;
    const GLfloat *from = in->start;
    GLuint stride = in->stride;
    GLuint count = in->count;
@@ -218,7 +218,7 @@ TAG(transform_rescale_normals)( const GLmatrix *mat,
                                 const GLubyte mask[],
                                 GLvector3f *dest )
 {
-   GLuint i;  
+   GLuint i;
    const GLfloat *from = in->start;
    GLuint stride = in->stride;
    GLuint count = in->count;
@@ -252,7 +252,7 @@ TAG(transform_normals_no_rot)(const GLmatrix *mat,
                               const GLubyte mask[],
                               GLvector3f *dest )
 {
-   GLuint i;  
+   GLuint i;
    const GLfloat *from = in->start;
    GLuint stride = in->stride;
    GLuint count = in->count;
@@ -284,7 +284,7 @@ TAG(transform_normals)( const GLmatrix *mat,
                         const GLubyte mask[],
                         GLvector3f *dest )
 {
-   GLuint i;  
+   GLuint i;
    const GLfloat *from = in->start;
    GLuint stride = in->stride;
    GLuint count = in->count;
@@ -316,7 +316,7 @@ TAG(normalize_normals)( const GLmatrix *mat,
                         const GLubyte mask[],
                         GLvector3f *dest )
 {
-   GLuint i;  
+   GLuint i;
    const GLfloat *from = in->start;
    GLuint stride = in->stride;
    GLuint count = in->count;
@@ -332,7 +332,7 @@ TAG(normalize_normals)( const GLmatrix *mat,
 	    out[i][0] = x * invlen;
 	    out[i][1] = y * invlen;
 	    out[i][2] = z * invlen;
-	 }	 
+	 }
       }
    }
    else {
@@ -351,7 +351,7 @@ TAG(normalize_normals)( const GLmatrix *mat,
 	       out[i][1] = y;
 	       out[i][2] = z;
 	    }
-	 }	 
+	 }
       }
    }
    dest->count = in->count;
@@ -366,7 +366,7 @@ TAG(rescale_normals)( const GLmatrix *mat,
                       const GLubyte mask[],
                       GLvector3f *dest )
 {
-   GLuint i;  
+   GLuint i;
    const GLfloat *from = in->start;
    GLuint stride = in->stride;
    GLuint count = in->count;
@@ -387,27 +387,27 @@ TAG(rescale_normals)( const GLmatrix *mat,
 static void _XFORMAPI
 TAG(init_c_norm_transform)( void )
 {
-   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT][IDX] = 
+   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT][IDX] =
       TAG(transform_normals_no_rot);
 
-   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_RESCALE][IDX] = 
+   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_RESCALE][IDX] =
       TAG(transform_rescale_normals_no_rot);
 
-   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_NORMALIZE][IDX] = 
+   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_NORMALIZE][IDX] =
       TAG(transform_normalize_normals_no_rot);
 
-   _mesa_normal_tab[NORM_TRANSFORM][IDX] = 
+   _mesa_normal_tab[NORM_TRANSFORM][IDX] =
       TAG(transform_normals);
 
-   _mesa_normal_tab[NORM_TRANSFORM | NORM_RESCALE][IDX] = 
+   _mesa_normal_tab[NORM_TRANSFORM | NORM_RESCALE][IDX] =
       TAG(transform_rescale_normals);
 
-   _mesa_normal_tab[NORM_TRANSFORM | NORM_NORMALIZE][IDX] = 
+   _mesa_normal_tab[NORM_TRANSFORM | NORM_NORMALIZE][IDX] =
       TAG(transform_normalize_normals);
 
-   _mesa_normal_tab[NORM_RESCALE][IDX] = 
+   _mesa_normal_tab[NORM_RESCALE][IDX] =
       TAG(rescale_normals);
 
-   _mesa_normal_tab[NORM_NORMALIZE][IDX] = 
+   _mesa_normal_tab[NORM_NORMALIZE][IDX] =
       TAG(normalize_normals);
 }

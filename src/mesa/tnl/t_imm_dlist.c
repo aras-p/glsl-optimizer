@@ -1,21 +1,21 @@
-/* $Id: t_imm_dlist.c,v 1.10 2001/03/03 20:33:31 brianp Exp $ */
+/* $Id: t_imm_dlist.c,v 1.11 2001/03/12 00:48:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
- * 
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -23,8 +23,8 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
- *   Keith Whitwell <keithw@valinux.com>
+ * Authors:
+ *    Keith Whitwell <keithw@valinux.com>
  */
 
 
@@ -67,7 +67,7 @@ static void execute_compiled_cassette( GLcontext *ctx, void *data );
 /* Insert the active immediate struct onto the display list currently
  * being built.
  */
-void 
+void
 _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
 {
    struct immediate *im = TNL_CURRENT_IM(ctx);
@@ -84,7 +84,7 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
       GLuint andflag = ~0;
       GLuint i;
       GLuint start = IM->FlushElt ? IM->LastPrimitive : IM->CopyStart;
-      _tnl_translate_array_elts( ctx, IM, start, IM->Count ); 
+      _tnl_translate_array_elts( ctx, IM, start, IM->Count );
 
       /* Need to recompute andflag.
        */
@@ -104,14 +104,14 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
    IM->PrimitiveLength[IM->LastPrimitive] = IM->Count - IM->LastPrimitive;
    ASSERT(IM->Primitive[IM->LastPrimitive] & PRIM_LAST);
 
-   
-   node = (TNLvertexcassette *) 
-      _mesa_alloc_instruction(ctx, 
+
+   node = (TNLvertexcassette *)
+      _mesa_alloc_instruction(ctx,
 			      tnl->opcode_vertex_cassette,
 			      sizeof(TNLvertexcassette));
-   if (!node) 
+   if (!node)
       return;
-   
+
    node->IM = im; im->ref_count++;
    node->Start = im->Start;
    node->Count = im->Count;
@@ -128,8 +128,8 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
    if (ctx->ExecuteFlag) {
       execute_compiled_cassette( ctx, (void *)node );
    }
-	 
-   
+
+
    /* Discard any errors raised in the last cassette.
     */
    new_beginstate = node->BeginState & (VERT_BEGIN_0|VERT_BEGIN_1);
@@ -140,7 +140,7 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
    if (im->Count > IMM_MAXDATA - 16) {
       /* Call it full...
        */
-      struct immediate *new_im = _tnl_alloc_immediate(ctx);      
+      struct immediate *new_im = _tnl_alloc_immediate(ctx);
       if (!new_im) return;
       new_im->ref_count++;
       im->ref_count--;		/* remove CURRENT_IM reference */
@@ -153,11 +153,11 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
        */
       _tnl_reset_input( ctx, im->Count+1+IMM_MAX_COPIED_VERTS,
 			new_beginstate, node->SavedBeginState);
-   }   
+   }
 }
 
 
-static void 
+static void
 execute_compiled_cassette( GLcontext *ctx, void *data )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -169,14 +169,14 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
 
    if (tnl->pipeline.build_state_changes)
       _tnl_validate_pipeline( ctx );
-   
+
    IM->Start = node->Start;
    IM->CopyStart = node->Start;
    IM->Count = node->Count;
    IM->BeginState = node->BeginState;
-   IM->SavedBeginState = node->SavedBeginState;		
+   IM->SavedBeginState = node->SavedBeginState;
    IM->OrFlag = node->OrFlag;
-   IM->TexSize = node->TexSize; 	
+   IM->TexSize = node->TexSize;
    IM->AndFlag = node->AndFlag;
    IM->LastData = node->LastData;
    IM->LastPrimitive = node->LastPrimitive;
@@ -215,7 +215,7 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
 
    _tnl_fixup_compiled_cassette( ctx, IM );
    _tnl_get_exec_copy_verts( ctx, IM );
-   _tnl_run_cassette( ctx, IM ); 
+   _tnl_run_cassette( ctx, IM );
    _tnl_restore_compiled_cassette( ctx, IM );
 
    if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1)
@@ -232,13 +232,13 @@ destroy_compiled_cassette( GLcontext *ctx, void *data )
 }
 
 
-static void 
+static void
 print_compiled_cassette( GLcontext *ctx, void *data )
 {
    TNLvertexcassette *node = (TNLvertexcassette *)data;
    struct immediate *IM = node->IM;
 
-   fprintf(stderr, "TNL-VERTEX-CASSETTE, id %u, rows %u..%u\n", 
+   fprintf(stderr, "TNL-VERTEX-CASSETTE, id %u, rows %u..%u\n",
 	   node->IM->id, node->Start, node->Count);
 
    IM->Start = node->Start;
@@ -271,19 +271,19 @@ void
 _tnl_EndCallList( GLcontext *ctx )
 {
    /* May have to copy vertices from a dangling begin/end inside the
-    * list to the current immediate.  
+    * list to the current immediate.
     */
    if (ctx->CallDepth == 0) {
       TNLcontext *tnl = TNL_CONTEXT(ctx);
       struct immediate *IM = TNL_CURRENT_IM(ctx);
 
-      if (tnl->ExecCopySource != IM) 
+      if (tnl->ExecCopySource != IM)
 	 _tnl_copy_immediate_vertices( ctx, IM );
    }
 }
 
 
-void 
+void
 _tnl_EndList( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -312,16 +312,16 @@ _tnl_EndList( GLcontext *ctx )
    SET_IMMEDIATE( ctx, IM );
    IM->ref_count++;
 
-   _tnl_reset_input( ctx, IMM_MAX_COPIED_VERTS, 0, 0 );	
+   _tnl_reset_input( ctx, IMM_MAX_COPIED_VERTS, 0, 0 );
 
-   /* outside begin/end, even in COMPILE_AND_EXEC, 
-    * so no vertices to copy, right? 
+   /* outside begin/end, even in COMPILE_AND_EXEC,
+    * so no vertices to copy, right?
     */
    ASSERT(TNL_CONTEXT(ctx)->ExecCopyCount == 0);
 }
 
 
-void 
+void
 _tnl_NewList( GLcontext *ctx, GLuint list, GLenum mode )
 {
    struct immediate *IM = TNL_CURRENT_IM(ctx);
@@ -341,16 +341,15 @@ _tnl_NewList( GLcontext *ctx, GLuint list, GLenum mode )
 }
 
 
-void 
+void
 _tnl_dlist_init( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
-   tnl->opcode_vertex_cassette = 
+   tnl->opcode_vertex_cassette =
       _mesa_alloc_opcode( ctx,
 			  sizeof(TNLvertexcassette),
 			  execute_compiled_cassette,
 			  destroy_compiled_cassette,
 			  print_compiled_cassette );
 }
-

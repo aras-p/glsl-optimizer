@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.21 2001/03/07 05:06:11 brianp Exp $ */
+/* $Id: convolve.c,v 1.22 2001/03/12 00:48:37 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -550,13 +550,13 @@ _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLi
    ctx->Unpack.SkipImages = 0;
    ctx->Unpack.SwapBytes = GL_FALSE;
    ctx->Unpack.LsbFirst = GL_FALSE;
-   ctx->NewState |= _NEW_PACKUNPACK;	
+   ctx->NewState |= _NEW_PACKUNPACK;
 
    _mesa_ConvolutionFilter2D(target, internalFormat, width, height,
                              GL_RGBA, CHAN_TYPE, rgba);
 
    ctx->Unpack = packSave;  /* restore pixel packing params */
-   ctx->NewState |= _NEW_PACKUNPACK;	
+   ctx->NewState |= _NEW_PACKUNPACK;
 }
 
 
@@ -1450,4 +1450,3 @@ _mesa_adjust_image_for_convolution(const GLcontext *ctx, GLuint dimensions,
       *height = *height - (MAX2(ctx->Separable2D.Height, 1) - 1);
    }
 }
-

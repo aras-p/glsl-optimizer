@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.22 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: feedback.c,v 1.23 2001/03/12 00:48:37 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,7 +52,7 @@ void
 _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx); 
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->RenderMode==GL_FEEDBACK) {
       _mesa_error( ctx, GL_INVALID_OPERATION, "glFeedbackBuffer" );
@@ -64,7 +64,7 @@ _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
    }
    if (!buffer) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glFeedbackBuffer(buffer==NULL)" );
-      ctx->Feedback.BufferSize = 0; 
+      ctx->Feedback.BufferSize = 0;
       return;
    }
 
@@ -76,16 +76,16 @@ _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
 	 ctx->Feedback._Mask = FB_3D;
 	 break;
       case GL_3D_COLOR:
-	 ctx->Feedback._Mask = (FB_3D | 
+	 ctx->Feedback._Mask = (FB_3D |
 				(ctx->Visual.rgbMode ? FB_COLOR : FB_INDEX));
 	 break;
       case GL_3D_COLOR_TEXTURE:
-	 ctx->Feedback._Mask = (FB_3D | 
-				(ctx->Visual.rgbMode ? FB_COLOR : FB_INDEX) | 
+	 ctx->Feedback._Mask = (FB_3D |
+				(ctx->Visual.rgbMode ? FB_COLOR : FB_INDEX) |
 				FB_TEXTURE);
 	 break;
       case GL_4D_COLOR_TEXTURE:
-	 ctx->Feedback._Mask = (FB_3D | FB_4D | 
+	 ctx->Feedback._Mask = (FB_3D | FB_4D |
 				(ctx->Visual.rgbMode ? FB_COLOR : FB_INDEX) |
 				FB_TEXTURE);
 	 break;
@@ -405,9 +405,8 @@ _mesa_RenderMode( GLenum mode )
    }
 
    ctx->RenderMode = mode;
-   if (ctx->Driver.RenderMode) 
+   if (ctx->Driver.RenderMode)
       ctx->Driver.RenderMode( ctx, mode );
 
    return result;
 }
-

@@ -1,10 +1,10 @@
-/* $Id: t_vb_vertex.c,v 1.6 2001/03/07 05:06:13 brianp Exp $ */
+/* $Id: t_vb_vertex.c,v 1.7 2001/03/12 00:48:44 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
+ * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  */
 
@@ -46,7 +46,7 @@
 struct vertex_stage_data {
    GLvector4f eye;
    GLvector4f clip;
-   GLvector4f proj;	
+   GLvector4f proj;
    GLubyte *clipmask;
    GLubyte ormask;
    GLubyte andmask;
@@ -67,7 +67,7 @@ struct vertex_stage_data {
 
 /* This function implements cliptesting for user-defined clip planes.
  * The clipping of primitives to these planes is implemented in
- * t_render_clip.h.  
+ * t_render_clip.h.
  */
 #define USER_CLIPTEST(NAME, SZ)					\
 static void NAME( GLcontext *ctx,				\
@@ -113,13 +113,13 @@ static void NAME( GLcontext *ctx,				\
 }
 
 
-USER_CLIPTEST(userclip2, 2)		
-USER_CLIPTEST(userclip3, 3)		
-USER_CLIPTEST(userclip4, 4)		
+USER_CLIPTEST(userclip2, 2)
+USER_CLIPTEST(userclip3, 3)
+USER_CLIPTEST(userclip4, 4)
 
 static void (*(usercliptab[5]))( GLcontext *,
 				 GLvector4f *, GLubyte *,
-				 GLubyte *, GLubyte * ) = 
+				 GLubyte *, GLubyte * ) =
 {
    0,
    0,
@@ -130,14 +130,14 @@ static void (*(usercliptab[5]))( GLcontext *,
 
 
 
-static GLboolean run_vertex_stage( GLcontext *ctx, 
+static GLboolean run_vertex_stage( GLcontext *ctx,
 				   struct gl_pipeline_stage *stage )
 {
    struct vertex_stage_data *store = (struct vertex_stage_data *)stage->privatePtr;
-   TNLcontext *tnl = TNL_CONTEXT(ctx); 
-   struct vertex_buffer *VB = &tnl->vb; 
-   
-   if (stage->changed_inputs) 
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+
+   if (stage->changed_inputs)
    {
 /*        VB->ObjPtr->size = 4; */
 
@@ -147,20 +147,20 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 	 if (ctx->ModelView.type == MATRIX_IDENTITY)
 	    VB->EyePtr = VB->ObjPtr;
 	 else
-	    VB->EyePtr = TransformRaw( &store->eye, &ctx->ModelView, 
+	    VB->EyePtr = TransformRaw( &store->eye, &ctx->ModelView,
 				       VB->ObjPtr);
 
 	 if (ctx->ProjectionMatrix.type == MATRIX_IDENTITY)
 	    VB->ClipPtr = VB->EyePtr;
 	 else
-	    VB->ClipPtr = TransformRaw( &store->clip, &ctx->ProjectionMatrix, 
+	    VB->ClipPtr = TransformRaw( &store->clip, &ctx->ProjectionMatrix,
 					VB->EyePtr );
-      } 
-      else 
+      }
+      else
       {
 	 /* Combined modelviewproject transform:
 	  */
-	 if (ctx->_ModelProjectMatrix.type == MATRIX_IDENTITY) 
+	 if (ctx->_ModelProjectMatrix.type == MATRIX_IDENTITY)
 	    VB->ClipPtr = VB->ObjPtr;
 	 else
 	    VB->ClipPtr = TransformRaw( &store->clip, &ctx->_ModelProjectMatrix,
@@ -175,19 +175,19 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 	    VB->import_data( ctx, VERT_OBJ, VEC_NOT_WRITEABLE );
 	    VB->ClipPtr = VB->ObjPtr;
 	 }
-	 if (VB->ClipPtr->size == 2) 
+	 if (VB->ClipPtr->size == 2)
 	    _mesa_vector4f_clean_elem( VB->ClipPtr, VB->Count, 2 );
 	 _mesa_vector4f_clean_elem( VB->ClipPtr, VB->Count, 3 );
       }
 
       /* Cliptest and perspective divide.  Clip functions must clear
-       * the clipmask.  
+       * the clipmask.
        */
       store->ormask = 0;
       store->andmask = CLIP_ALL_BITS;
 
       if (tnl->NeedProjCoords) {
-	 VB->ProjectedClipPtr = 
+	 VB->ProjectedClipPtr =
 	    _mesa_clip_tab[VB->ClipPtr->size]( VB->ClipPtr,
                                                &store->proj,
                                                store->clipmask,
@@ -203,7 +203,7 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
                                                &store->andmask );
       }
 
-      if (store->andmask) 
+      if (store->andmask)
 	 return GL_FALSE;
 
 
@@ -220,7 +220,7 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 	 if (store->andmask)
 	    return GL_FALSE;
       }
-      
+
       VB->ClipOrMask = store->ormask;
       VB->ClipMask = store->clipmask;
 
@@ -230,9 +230,9 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
       store->save_eyeptr = VB->EyePtr;
       store->save_clipptr = VB->ClipPtr;
       store->save_projptr = VB->ProjectedClipPtr;
-   } 
+   }
    else {
-      /* Replay the sideeffects.  
+      /* Replay the sideeffects.
        */
       VB->EyePtr = store->save_eyeptr;
       VB->ClipPtr = store->save_clipptr;
@@ -251,14 +251,14 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 
 static void check_vertex( GLcontext *ctx, struct gl_pipeline_stage *stage )
 {
-   (void) ctx; 
+   (void) ctx;
    (void) stage;
 }
 
-static GLboolean init_vertex_stage( GLcontext *ctx, 
+static GLboolean init_vertex_stage( GLcontext *ctx,
 				    struct gl_pipeline_stage *stage )
 {
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb; 
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct vertex_stage_data *store;
    GLuint size = VB->Size;
 
@@ -266,17 +266,17 @@ static GLboolean init_vertex_stage( GLcontext *ctx,
    store = VERTEX_STAGE_DATA(stage);
    if (!store)
       return GL_FALSE;
-   
+
    _mesa_vector4f_alloc( &store->eye, 0, size, 32 );
    _mesa_vector4f_alloc( &store->clip, 0, size, 32 );
-   _mesa_vector4f_alloc( &store->proj, 0, size, 32 );  
+   _mesa_vector4f_alloc( &store->proj, 0, size, 32 );
 
    store->clipmask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte)*size, 32 );
 
    if (!store->clipmask ||
-       !store->eye.data || 
-       !store->clip.data || 
-       !store->proj.data) 
+       !store->eye.data ||
+       !store->clip.data ||
+       !store->proj.data)
       return GL_FALSE;
 
    /* Now run the stage.
@@ -301,8 +301,8 @@ static void dtr( struct gl_pipeline_stage *stage )
 }
 
 
-const struct gl_pipeline_stage _tnl_vertex_transform_stage = 
-{ 
+const struct gl_pipeline_stage _tnl_vertex_transform_stage =
+{
    "modelview/project/cliptest/divide",
    0,				/* re-check -- always on */
    _NEW_MODELVIEW|
@@ -316,5 +316,3 @@ const struct gl_pipeline_stage _tnl_vertex_transform_stage =
    check_vertex,		/* check */
    init_vertex_stage		/* run -- initially set to init */
 };
-
-

@@ -1,21 +1,21 @@
-/* $Id: t_vb_rendertmp.h,v 1.7 2001/01/16 05:29:43 keithw Exp $ */
+/* $Id: t_vb_rendertmp.h,v 1.8 2001/03/12 00:48:44 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
- * 
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -23,7 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
+ * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  */
 
@@ -33,13 +33,13 @@
 #endif
 
 #ifndef INIT
-#define INIT(x)  
+#define INIT(x)
 #endif
 
 #ifndef NEED_EDGEFLAG_SETUP
 #define NEED_EDGEFLAG_SETUP 0
 #define EDGEFLAG_GET(a) 0
-#define EDGEFLAG_SET(a,b) (void)b 
+#define EDGEFLAG_SET(a,b) (void)b
 #endif
 
 #ifndef RESET_STIPPLE
@@ -109,7 +109,7 @@ static void TAG(render_line_strip)( GLcontext *ctx,
    RESET_OCCLUSION;
    INIT(GL_LINE_STRIP);
 
-   for (j=start+1; j<count; j++ ) 
+   for (j=start+1; j<count; j++ )
       RENDER_LINE( ELT(j-1), ELT(j) );
 
    if (TEST_PRIM_END(flags))
@@ -124,7 +124,7 @@ static void TAG(render_line_loop)( GLcontext *ctx,
 				   GLuint count,
 				   GLuint flags )
 {
-   GLuint i;	 
+   GLuint i;
    LOCAL_VARS;
 
    (void) flags;
@@ -186,10 +186,10 @@ static void TAG(render_tri_strip)( GLcontext *ctx,
    GLuint j;
    GLuint parity = 0;
    LOCAL_VARS;
-   
+
    if (TEST_PRIM_PARITY(flags))
       parity = 1;
-   
+
    INIT(GL_TRIANGLE_STRIP);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+2;j<count;j++,parity^=1) {
@@ -273,13 +273,13 @@ static void TAG(render_poly)( GLcontext *ctx,
       /* If the primitive does not begin here, the first edge
        * is non-boundary.
        */
-      if (!TEST_PRIM_BEGIN(flags)) 
+      if (!TEST_PRIM_BEGIN(flags))
 	 EDGEFLAG_SET( ELT(start), GL_FALSE );
 
       /* If the primitive does not end here, the final edge is
        * non-boundary.
        */
-      if (!TEST_PRIM_END(flags)) 
+      if (!TEST_PRIM_END(flags))
 	 EDGEFLAG_SET( ELT(count-1), GL_FALSE );
 
       /* Draw the first triangles (possibly zero)
@@ -290,7 +290,7 @@ static void TAG(render_poly)( GLcontext *ctx,
 	 RENDER_TRI( ELT(j-1), ELT(j), ELT(start) );
 	 EDGEFLAG_SET( ELT(j), ef );
 	 j++;
-	    
+
 	 /* Don't render the first edge again:
 	  */
 	 EDGEFLAG_SET( ELT(start), GL_FALSE );
@@ -312,7 +312,7 @@ static void TAG(render_poly)( GLcontext *ctx,
        */
       EDGEFLAG_SET( ELT(count-1), efcount );
       EDGEFLAG_SET( ELT(start), efstart );
-	 
+
       if (TEST_PRIM_END(flags)) {
 	 RESET_STIPPLE;
       }
@@ -348,7 +348,7 @@ static void TAG(render_quads)( GLcontext *ctx,
       }
    }
    POSTFIX;
-} 
+}
 
 static void TAG(render_quad_strip)( GLcontext *ctx,
 				    GLuint start,
@@ -399,7 +399,7 @@ static void TAG(render_noop)( GLcontext *ctx,
 RENDER_TAB_QUALIFIER void (*TAG(render_tab)[GL_POLYGON+2])(GLcontext *,
 							   GLuint,
 							   GLuint,
-							   GLuint) = 
+							   GLuint) =
 {
    TAG(render_points),
    TAG(render_lines),
@@ -436,4 +436,3 @@ RENDER_TAB_QUALIFIER void (*TAG(render_tab)[GL_POLYGON+2])(GLcontext *,
 
 #undef PRESERVE_VB_DEFS
 #undef PRESERVE_TAG
-

@@ -1,10 +1,10 @@
-/* $Id: t_context.h,v 1.16 2001/03/07 05:06:13 brianp Exp $ */
+/* $Id: t_context.h,v 1.17 2001/03/12 00:48:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,7 +48,7 @@
 #define IMM_SIZE             (IMM_MAXDATA + MAX_CLIPPED_VERTICES)
 
 
-/* Values for IM->BeginState 
+/* Values for IM->BeginState
  */
 #define VERT_BEGIN_0    0x1	   /* glBegin (if initially inside beg/end) */
 #define VERT_BEGIN_1    0x2	   /* glBegin (if initially outside beg/end) */
@@ -66,16 +66,16 @@
 
 
 /* Flags that describe the inputs and outputs of pipeline stages, and
- * the contents of a vertex-cassette. 
+ * the contents of a vertex-cassette.
  *
  * 5 spare flags, rearrangement of eval flags can secure at least 3
- * more. 
+ * more.
  */
-#define VERT_OBJ             _NEW_ARRAY_VERTEX	
-#define VERT_RGBA            _NEW_ARRAY_COLOR	
-#define VERT_NORM            _NEW_ARRAY_NORMAL	
-#define VERT_INDEX           _NEW_ARRAY_INDEX	
-#define VERT_EDGE            _NEW_ARRAY_EDGEFLAG	
+#define VERT_OBJ             _NEW_ARRAY_VERTEX
+#define VERT_RGBA            _NEW_ARRAY_COLOR
+#define VERT_NORM            _NEW_ARRAY_NORMAL
+#define VERT_INDEX           _NEW_ARRAY_INDEX
+#define VERT_EDGE            _NEW_ARRAY_EDGEFLAG
 #define VERT_SPEC_RGB        _NEW_ARRAY_SECONDARYCOLOR
 #define VERT_FOG_COORD       _NEW_ARRAY_FOGCOORD
 #define VERT_TEX0            _NEW_ARRAY_TEXCOORD_0
@@ -161,7 +161,7 @@
  */
 struct immediate
 {
-   struct __GLcontextRec *backref;		
+   struct __GLcontextRec *backref;
    GLuint id, ref_count;
 
    /* This must be saved when immediates are shared in display lists.
@@ -171,7 +171,7 @@ struct immediate
    GLuint AndFlag, OrFlag;
    GLuint TexSize;		/* keep track of texcoord sizes */
    GLuint BeginState, SavedBeginState;
-   GLuint LastPrimitive;	
+   GLuint LastPrimitive;
 
    GLuint ArrayEltFlags;	/* precalc'ed for glArrayElt */
    GLuint ArrayEltIncr;
@@ -180,7 +180,7 @@ struct immediate
 
    GLuint MaxTextureUnits;	/* precalc'ed for glMultiTexCoordARB */
 
-   /* Temporary values created when vertices are copied into the 
+   /* Temporary values created when vertices are copied into the
     * first 3 slots of the struct:
     */
    GLuint CopyOrFlag;
@@ -200,8 +200,8 @@ struct immediate
    GLuint  Primitive[IMM_SIZE];	    /* BEGIN/END */
    GLuint  PrimitiveLength[IMM_SIZE]; /* BEGIN/END */
    GLuint  Flag[IMM_SIZE];	    /* VERT_* flags */
-   GLchan  Color[IMM_SIZE][4];	  
-   GLfloat Obj[IMM_SIZE][4];	  
+   GLchan  Color[IMM_SIZE][4];
+   GLfloat Obj[IMM_SIZE][4];
    GLfloat Normal[IMM_SIZE][3];
    GLfloat TexCoord0[IMM_SIZE][4];  /* just VERT_TEX0 */
    GLuint  Elt[IMM_SIZE];
@@ -265,27 +265,27 @@ typedef struct vertex_buffer
    GLuint      *Primitive;	                /* GL_(mode)|PRIM_* flags */
    GLuint      *PrimitiveLength;	        /* integers */
 
-   
+
    GLuint importable_data;
    void (*import_data)( GLcontext *ctx, GLuint flags, GLuint vecflags );
    /* Callback to the provider of the untransformed input for the
     * render stage (or other stages) to call if they need to write into
     * write-protected arrays, or fixup the stride on input arrays.
-    * 
+    *
     * This is currently only necessary for client arrays that make it
     * as far down the pipeline as the render stage.
     */
 
    GLuint LastClipped;
    /* Private data from _tnl_render_stage that has no business being
-    * in this struct.  
+    * in this struct.
     */
 
 } TNLvertexbuffer;
 
 
 
-/* Describes an individual operation on the pipeline. 
+/* Describes an individual operation on the pipeline.
  */
 struct gl_pipeline_stage {
    const char *name;
@@ -299,9 +299,9 @@ struct gl_pipeline_stage {
     */
    GLuint run_state;		/* All state referenced in run() --
 				 * When is the cached output of the
-				 * stage invalidated?  
+				 * stage invalidated?
 				 */
-   
+
    GLboolean active;		/* True if runnable in current state */
    GLuint inputs;		/* VERT_* inputs to the stage */
    GLuint outputs;		/* VERT_* outputs of the stage */
@@ -310,7 +310,7 @@ struct gl_pipeline_stage {
     */
    GLuint changed_inputs;	/* Generated value -- inputs to the
 				 * stage that have changed since last
-				 * call to 'run'. 
+				 * call to 'run'.
 				 */
 
    /* Private data for the pipeline stage:
@@ -322,14 +322,14 @@ struct gl_pipeline_stage {
    void (*destroy)( struct gl_pipeline_stage * );
 
    /* Called from _tnl_validate_pipeline().  Must update all fields in
-    * the pipeline_stage struct for the current state. 
+    * the pipeline_stage struct for the current state.
     */
    void (*check)( GLcontext *ctx, struct gl_pipeline_stage * );
 
    /* Called from _tnl_run_pipeline().  The stage.changed_inputs value
     * encodes all inputs to thee struct which have changed.  If
     * non-zero, recompute all affected outputs of the stage, otherwise
-    * execute any 'sideeffects' of the stage.  
+    * execute any 'sideeffects' of the stage.
     *
     * Return value: GL_TRUE - keep going
     *               GL_FALSE - finished pipeline
@@ -354,17 +354,17 @@ struct tnl_eval_store {
    GLuint EvalMap2Flags;
    GLuint EvalNewState;
 
-   GLfloat Coord[IMM_SIZE][4];	  
-   GLfloat Obj[IMM_SIZE][4];	  
-   GLfloat TexCoord[IMM_SIZE][4];  
+   GLfloat Coord[IMM_SIZE][4];
+   GLfloat Obj[IMM_SIZE][4];
+   GLfloat TexCoord[IMM_SIZE][4];
    GLfloat Normal[IMM_SIZE][3];
-   GLchan  Color[IMM_SIZE][4];	  
+   GLchan  Color[IMM_SIZE][4];
    GLuint  Index[IMM_SIZE];
    GLuint  Flag[IMM_SIZE];
    GLuint  Elts[IMM_SIZE];
 };
 
-typedef struct {	
+typedef struct {
 
    /* Track whether the module is active.
     */
@@ -388,14 +388,14 @@ typedef struct {
 
    /* Set when executing an internally generated immediate.
     */
-   GLboolean ReplayHardBeginEnd;    
+   GLboolean ReplayHardBeginEnd;
    GLenum CurrentPrimitive;
 
    /* Note which vertices need copying over succesive immediates.
     * Will add save versions to precompute vertex copying where
     * possible.
     */
-   struct immediate *ExecCopySource; 
+   struct immediate *ExecCopySource;
    GLuint ExecCopyCount;
    GLuint ExecCopyElts[IMM_MAX_COPIED_VERTS];
    GLuint ExecCopyTexSize;

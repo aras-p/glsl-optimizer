@@ -1,10 +1,10 @@
-/* $Id: stencil.c,v 1.25 2001/03/03 20:33:28 brianp Exp $ */
+/* $Id: stencil.c,v 1.26 2001/03/12 00:48:38 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,7 +46,7 @@ _mesa_ClearStencil( GLint s )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
-   
+
    if (ctx->Stencil.Clear == (GLstencil) s)
       return;
 
@@ -197,4 +197,3 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
       (*ctx->Driver.StencilOp)(ctx, fail, zfail, zpass);
    }
 }
-

@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.55 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: get.c,v 1.56 2001/03/12 00:48:37 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1214,7 +1214,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
          *params = ctx->Pixel.PostColorMatrixColorTableEnabled;
          break;
-	
+
       /* GL_EXT_secondary_color */
       case GL_COLOR_SUM_EXT:
 	 *params = ctx->Fog.ColorSumEnabled;
@@ -4568,7 +4568,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_ARRAY_ELEMENT_LOCK_COUNT_EXT:
 	 *params = ctx->Array.LockCount;
 	 break;
-	
+
       /* GL_ARB_transpose_matrix */
       case GL_TRANSPOSE_COLOR_MATRIX_ARB:
          {
@@ -4937,4 +4937,3 @@ _mesa_GetError( void )
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
    return e;
 }
-

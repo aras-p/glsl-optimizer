@@ -1,21 +1,21 @@
-/* $Id: m_trans_tmp.h,v 1.3 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: m_trans_tmp.h,v 1.4 2001/03/12 00:48:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -48,7 +48,7 @@ static void DEST_4F( GLfloat (*t)[4],
    (void) first;
    (void) start;
    for (i = DST_START ; i < n ; i++, NEXT_F) {
-      CHECK { 
+      CHECK {
          NEXT_F2;
 	 if (SZ >= 1) t[i][0] = TRX_4F(f, 0);
 	 if (SZ >= 2) t[i][1] = TRX_4F(f, 1);
@@ -118,7 +118,7 @@ static void DEST_4UB( GLubyte (*t)[4],
          NEXT_F2;
 	 if (SZ >= 1) TRX_UB(t[i][0], f, 0);
 	 if (SZ >= 2) TRX_UB(t[i][1], f, 1);
-	 if (SZ >= 3) TRX_UB(t[i][2], f, 2); 
+	 if (SZ >= 3) TRX_UB(t[i][2], f, 2);
 	 if (SZ == 4) TRX_UB(t[i][3], f, 3); else t[i][3] = 255;
       }
    }
@@ -142,7 +142,7 @@ static void DEST_4US( GLushort (*t)[4],
          NEXT_F2;
 	 if (SZ >= 1) TRX_US(t[i][0], f, 0);
 	 if (SZ >= 2) TRX_US(t[i][1], f, 1);
-	 if (SZ >= 3) TRX_US(t[i][2], f, 2); 
+	 if (SZ >= 3) TRX_US(t[i][2], f, 2);
 	 if (SZ == 4) TRX_US(t[i][3], f, 3); else t[i][3] = 65535;
       }
    }
@@ -220,7 +220,7 @@ static void INIT(void)
 #ifdef DEST_4F
    TAB(_4f)[SZ][SRC_IDX] = DEST_4F;
 #endif
-   
+
 }
 
 
@@ -234,5 +234,3 @@ static void INIT(void)
 #undef DEST_1F
 #undef SZ
 #undef TAG
-
-

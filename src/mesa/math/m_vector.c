@@ -1,21 +1,21 @@
-/* $Id: m_vector.c,v 1.5 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: m_vector.c,v 1.6 2001/03/12 00:48:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -45,14 +45,14 @@ void _mesa_vector4f_clean_elem( GLvector4f *vec, GLuint count, GLuint elt )
 {
    static const GLubyte elem_bits[4] = {
       VEC_DIRTY_0,
-      VEC_DIRTY_1, 
-      VEC_DIRTY_2, 
+      VEC_DIRTY_1,
+      VEC_DIRTY_2,
       VEC_DIRTY_3
    };
    static const GLfloat clean[4] = { 0, 0, 0, 1 };
    const GLfloat v = clean[elt];
    GLfloat (*data)[4] = (GLfloat (*)[4])vec->start;
-   GLuint i; 
+   GLuint i;
 
    for (i = 0 ; i < count ; i++)
       data[i][elt] = v;
@@ -234,7 +234,7 @@ void _mesa_vector1ub_alloc( GLvector1ub *v, GLuint flags, GLuint count,
 {
    v->stride = 1 * sizeof(GLubyte);
    v->storage = ALIGN_MALLOC( count * sizeof(GLubyte), alignment );
-   v->start = (GLubyte *) v->storage;      
+   v->start = (GLubyte *) v->storage;
    v->data = (GLubyte *) v->storage;
    v->count = 0;
    v->flags = flags | VEC_MALLOC ;
@@ -245,7 +245,7 @@ void _mesa_vector1ui_alloc( GLvector1ui *v, GLuint flags, GLuint count,
 {
    v->stride = 1 * sizeof(GLuint);
    v->storage = ALIGN_MALLOC( count * sizeof(GLuint), alignment );
-   v->start = (GLuint *) v->storage;      
+   v->start = (GLuint *) v->storage;
    v->data = (GLuint *) v->storage;
    v->count = 0;
    v->flags = flags | VEC_MALLOC ;
@@ -368,20 +368,20 @@ void _mesa_vector4f_print( GLvector4f *v, GLubyte *cullmask, GLboolean culling )
    GLuint j, i = 0, count;
 
    printf("data-start\n");
-   for ( ; d != v->start ; STRIDE_F(d, v->stride), i++) 
+   for ( ; d != v->start ; STRIDE_F(d, v->stride), i++)
       printf( t, i, d[0], d[1], d[2], d[3]);
-   
+
    printf("start-count(%u)\n", v->count);
    count = i + v->count;
 
    if (culling) {
-      for ( ; i < count ; STRIDE_F(d, v->stride), i++) 
-	 if (cullmask[i]) 
-	    printf( t, i, d[0], d[1], d[2], d[3]);      
+      for ( ; i < count ; STRIDE_F(d, v->stride), i++)
+	 if (cullmask[i])
+	    printf( t, i, d[0], d[1], d[2], d[3]);
    }
    else {
-      for ( ; i < count ; STRIDE_F(d, v->stride), i++) 
-	 printf( t, i, d[0], d[1], d[2], d[3]);      
+      for ( ; i < count ; STRIDE_F(d, v->stride), i++)
+	 printf( t, i, d[0], d[1], d[2], d[3]);
    }
 
    for (j = v->size ; j < 4; j++) {
@@ -389,13 +389,13 @@ void _mesa_vector4f_print( GLvector4f *v, GLubyte *cullmask, GLboolean culling )
 
 	 printf("checking col %u is clean as advertised ", j);
 
-	 for (i = 0, d = (GLfloat *) v->data ; 
-	      i < count && d[j] == c[j] ; 
+	 for (i = 0, d = (GLfloat *) v->data ;
+	      i < count && d[j] == c[j] ;
 	      i++, STRIDE_F(d, v->stride)) {};
 
-	 if (i == count) 
+	 if (i == count)
 	    printf(" --> ok\n");
-	 else 
+	 else
 	    printf(" --> Failed at %u ******\n", i);
       }
    }
@@ -411,19 +411,19 @@ void _mesa_vector3f_print( GLvector3f *v, GLubyte *cullmask, GLboolean culling )
    GLuint i = 0, count;
 
    printf("data-start\n");
-   for ( ; d != v->start ; STRIDE_F(d,v->stride), i++) 
+   for ( ; d != v->start ; STRIDE_F(d,v->stride), i++)
       printf( "%u:\t%f, %f, %f\n", i, d[0], d[1], d[2]);
-   
+
    printf("start-count(%u)\n", v->count);
    count = i + v->count;
 
    if (culling) {
-      for ( ; i < count ; STRIDE_F(d,v->stride), i++) 
+      for ( ; i < count ; STRIDE_F(d,v->stride), i++)
 	 if (cullmask[i])
-	    printf( "%u:\t%f, %f, %f\n", i, d[0], d[1], d[2]);      
+	    printf( "%u:\t%f, %f, %f\n", i, d[0], d[1], d[2]);
    }
    else {
-      for ( ; i < count ; STRIDE_F(d,v->stride), i++) 
-	 printf( "%u:\t%f, %f, %f\n", i, d[0], d[1], d[2]);      
+      for ( ; i < count ; STRIDE_F(d,v->stride), i++)
+	 printf( "%u:\t%f, %f, %f\n", i, d[0], d[1], d[2]);
    }
 }

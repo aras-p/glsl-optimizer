@@ -1,21 +1,21 @@
-/* $Id: macros.h,v 1.18 2001/01/24 00:04:58 brianp Exp $ */
+/* $Id: macros.h,v 1.19 2001/03/12 00:48:38 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -68,7 +68,7 @@
 #define TEST_BITS(WORD, BITS)   ((WORD) & (BITS))
 
 
-/* Stepping a GLfloat pointer by a byte stride 
+/* Stepping a GLfloat pointer by a byte stride
  */
 #define STRIDE_F(p, i)  (p = (GLfloat *)((GLubyte *)p + i))
 #define STRIDE_UI(p, i)  (p = (GLuint *)((GLubyte *)p + i))
@@ -92,7 +92,7 @@
 			  (a)[2] == (b)[2])
 
 #if defined(__i386__)
-#define TEST_EQ_4UBV(DST, SRC) *((GLuint*)(DST)) == *((GLuint*)(SRC))	
+#define TEST_EQ_4UBV(DST, SRC) *((GLuint*)(DST)) == *((GLuint*)(SRC))
 #else
 #define TEST_EQ_4UBV(DST, SRC) TEST_EQ_4V(DST, SRC)
 #endif
@@ -169,7 +169,7 @@ do {						\
    case 2: (DST)[1] = (SRC)[1];			\
    case 1: (DST)[0] = (SRC)[0];			\
    }  						\
-} while(0)			   
+} while(0)
 
 #define COPY_CLEAN_4V(DST, SZ, SRC) 		\
 do {						\

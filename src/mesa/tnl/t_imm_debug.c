@@ -1,21 +1,21 @@
-/* $Id: t_imm_debug.c,v 1.1 2000/12/26 05:09:32 keithw Exp $ */
+/* $Id: t_imm_debug.c,v 1.2 2001/03/12 00:48:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -28,7 +28,7 @@
 #include "t_context.h"
 #include "t_imm_debug.h"
 
-void _tnl_print_vert_flags( const char *name, GLuint flags ) 
+void _tnl_print_vert_flags( const char *name, GLuint flags )
 {
    fprintf(stderr,
 	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
@@ -61,7 +61,7 @@ void _tnl_print_vert_flags( const char *name, GLuint flags )
       );
 }
 
-void _tnl_print_cassette( struct immediate *IM ) 
+void _tnl_print_cassette( struct immediate *IM )
 {
    GLuint i;
    GLuint *flags = IM->Flag;
@@ -70,7 +70,7 @@ void _tnl_print_cassette( struct immediate *IM )
    GLuint state = IM->BeginState;
    GLuint req = ~0;
 
-   fprintf(stderr, "Cassette id %d, %u rows.\n", IM->id, 
+   fprintf(stderr, "Cassette id %d, %u rows.\n", IM->id,
 	   IM->Count - IM->CopyStart);
 
    _tnl_print_vert_flags("Contains at least one", orflag);
@@ -78,7 +78,7 @@ void _tnl_print_cassette( struct immediate *IM )
    if (IM->Count != IM->CopyStart)
    {
       _tnl_print_vert_flags("Contains a full complement of", andflag);
-   
+
       fprintf(stderr, "Final begin/end state %s/%s, errors %s/%s\n",
 	     (state & VERT_BEGIN_0) ? "in" : "out",
 	     (state & VERT_BEGIN_1) ? "in" : "out",
@@ -115,7 +115,7 @@ void _tnl_print_cassette( struct immediate *IM )
 	 GLuint j;
 	 for (j = 0 ; j < MAX_TEXTURE_UNITS ; j++) {
 	    if (req & flags[i] & VERT_TEX(j)) {
-	       fprintf(stderr, 
+	       fprintf(stderr,
 		       "TC%d %f %f %f %f",
 		       j,
 		       IM->TexCoord[j][i][0], IM->TexCoord[j][i][1],
@@ -145,7 +145,7 @@ void _tnl_print_cassette( struct immediate *IM )
 
       if (req & flags[i] & VERT_MATERIAL)
 	 fprintf(stderr, " Material ");
-	
+
 
       /* The order of these two is not easily knowable, but this is
        * the usually correct way to look at them.
@@ -154,7 +154,7 @@ void _tnl_print_cassette( struct immediate *IM )
 	 fprintf(stderr, " END ");
 
       if (req & flags[i] & VERT_BEGIN)
-	 fprintf(stderr, " BEGIN(%s) (%s%s%s%s)", 
+	 fprintf(stderr, " BEGIN(%s) (%s%s%s%s)",
 		 _mesa_prim_name[IM->Primitive[i] & PRIM_MODE_MASK],
 		 (IM->Primitive[i] & PRIM_LAST) ? "LAST," : "",
 		 (IM->Primitive[i] & PRIM_BEGIN) ? "BEGIN," : "",
@@ -164,6 +164,3 @@ void _tnl_print_cassette( struct immediate *IM )
       fprintf(stderr, "\n");
    }
 }
-
-
-

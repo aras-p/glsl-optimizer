@@ -1,10 +1,10 @@
-/* $Id: ac_context.c,v 1.2 2001/02/04 00:47:28 keithw Exp $ */
+/* $Id: ac_context.c,v 1.3 2001/03/12 00:48:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
+ * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  */
 
@@ -40,7 +40,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    ACcontext *ac = AC_CONTEXT(ctx);
    struct gl_client_array *cl;
    GLuint i;
-   
+
    cl = &ac->Fallback.Normal;
    cl->Size = 3;
    cl->Type = GL_FLOAT;
@@ -243,7 +243,7 @@ void _ac_DestroyContext( GLcontext *ctx )
    if (ac->Cache.FogCoord.Ptr) FREE( ac->Cache.FogCoord.Ptr );
 
    for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
-      if (ac->Cache.TexCoord[i].Ptr) 
+      if (ac->Cache.TexCoord[i].Ptr)
 	 FREE( ac->Cache.TexCoord[i].Ptr );
    }
 

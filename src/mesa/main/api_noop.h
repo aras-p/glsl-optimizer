@@ -1,3 +1,28 @@
+/* $Id: api_noop.h,v 1.3 2001/03/12 00:48:37 gareth Exp $ */
+
+/*
+ * Mesa 3-D graphics library
+ * Version:  3.5
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 
 #ifndef _API_NOOP_H
 #define _API_NOOP_H
@@ -52,17 +77,17 @@ extern void _mesa_noop_MultiTexCoord1fARB( GLenum target, GLfloat a );
 
 extern void _mesa_noop_MultiTexCoord1fvARB( GLenum target, GLfloat *v );
 
-extern void _mesa_noop_MultiTexCoord2fARB( GLenum target, GLfloat a, 
+extern void _mesa_noop_MultiTexCoord2fARB( GLenum target, GLfloat a,
 					   GLfloat b );
 
 extern void _mesa_noop_MultiTexCoord2fvARB( GLenum target, GLfloat *v );
 
-extern void _mesa_noop_MultiTexCoord3fARB( GLenum target, GLfloat a, 
+extern void _mesa_noop_MultiTexCoord3fARB( GLenum target, GLfloat a,
 					GLfloat b, GLfloat c);
 
 extern void _mesa_noop_MultiTexCoord3fvARB( GLenum target, GLfloat *v );
 
-extern void _mesa_noop_MultiTexCoord4fARB( GLenum target, GLfloat a, 
+extern void _mesa_noop_MultiTexCoord4fARB( GLenum target, GLfloat a,
 					GLfloat b, GLfloat c, GLfloat d );
 
 extern void _mesa_noop_MultiTexCoord4fvARB( GLenum target, GLfloat *v );
@@ -94,17 +119,17 @@ extern void _mesa_noop_TexCoord4fv( GLfloat *v );
 
 /* Not strictly a noop -- translate Rectf down to Begin/End and
  * vertices.  Closer to the loopback operations, but doesn't meet the
- * criteria for inclusion there (cannot be used in the Save table).  
+ * criteria for inclusion there (cannot be used in the Save table).
  */
 extern void _mesa_noop_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 );
 
 
 extern void _mesa_noop_DrawArrays(GLenum mode, GLint start, GLsizei count);
-extern void _mesa_noop_DrawElements(GLenum mode, GLsizei count, GLenum type, 
+extern void _mesa_noop_DrawElements(GLenum mode, GLsizei count, GLenum type,
 				    const GLvoid *indices);
-extern void _mesa_noop_DrawRangeElements(GLenum mode, 
-					 GLuint start, GLuint end, 
-					 GLsizei count, GLenum type, 
+extern void _mesa_noop_DrawRangeElements(GLenum mode,
+					 GLuint start, GLuint end,
+					 GLsizei count, GLenum type,
 					 const GLvoid *indices);
 
 

@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.26 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: pixel.c,v 1.27 2001/03/12 00:48:38 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,13 +75,13 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 
    switch (pname) {
       case GL_PACK_SWAP_BYTES:
-	 if (param == (GLint)ctx->Pack.SwapBytes) 
+	 if (param == (GLint)ctx->Pack.SwapBytes)
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
          ctx->Pack.SwapBytes = param ? GL_TRUE : GL_FALSE;
 	 break;
       case GL_PACK_LSB_FIRST:
-	 if (param == (GLint)ctx->Pack.LsbFirst) 
+	 if (param == (GLint)ctx->Pack.LsbFirst)
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
          ctx->Pack.LsbFirst = param ? GL_TRUE : GL_FALSE;
@@ -147,7 +147,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 ctx->Pack.Alignment = param;
 	 break;
       case GL_UNPACK_SWAP_BYTES:
-	 if (param == (GLint)ctx->Unpack.SwapBytes) 
+	 if (param == (GLint)ctx->Unpack.SwapBytes)
 	    return;
 	 if ((GLint)ctx->Unpack.SwapBytes == param)
 	    return;
@@ -155,7 +155,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 ctx->Unpack.SwapBytes = param ? GL_TRUE : GL_FALSE;
          break;
       case GL_UNPACK_LSB_FIRST:
-	 if (param == (GLint)ctx->Unpack.LsbFirst) 
+	 if (param == (GLint)ctx->Unpack.LsbFirst)
 	    return;
 	 if ((GLint)ctx->Unpack.LsbFirst == param)
 	    return;

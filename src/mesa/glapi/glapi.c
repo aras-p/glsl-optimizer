@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.50 2001/03/07 05:06:11 brianp Exp $ */
+/* $Id: glapi.c,v 1.51 2001/03/12 00:48:38 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1912,7 +1912,3 @@ _glapi_check_table(const struct _glapi_table *table)
    }
 #endif
 }
-
-
-
-

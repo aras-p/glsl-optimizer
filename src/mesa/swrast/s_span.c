@@ -1,21 +1,21 @@
-/* $Id: s_span.c,v 1.10 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: s_span.c,v 1.11 2001/03/12 00:48:42 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -99,7 +99,7 @@ static GLuint clip_span( GLcontext *ctx,
       }
       else {
          /* partially off left side */
-         BZERO(mask, -x * sizeof(GLubyte)); 
+         BZERO(mask, -x * sizeof(GLubyte));
       }
    }
 
@@ -269,7 +269,7 @@ void _mesa_write_index_span( GLcontext *ctx,
 
 
 void _mesa_write_monoindex_span( GLcontext *ctx,
-                              GLuint n, GLint x, GLint y, 
+                              GLuint n, GLint x, GLint y,
 			      const GLdepth z[],
 			      const GLfixed fog[],
 			      GLuint index, GLenum primitive )
@@ -426,10 +426,10 @@ static void multi_write_rgba_span( GLcontext *ctx, GLuint n,
             _mesa_mask_rgba_span( ctx, n, x, y, rgbaTmp );
          }
 
-         (*ctx->Driver.WriteRGBASpan)( ctx, n, x, y, 
+         (*ctx->Driver.WriteRGBASpan)( ctx, n, x, y,
 				       (const GLchan (*)[4]) rgbaTmp, mask );
          if (swrast->_RasterMask & ALPHABUF_BIT) {
-            _mesa_write_alpha_span( ctx, n, x, y, 
+            _mesa_write_alpha_span( ctx, n, x, y,
                                     (const GLchan (*)[4])rgbaTmp, mask );
          }
       }
@@ -523,7 +523,7 @@ void _mesa_write_rgba_span( GLcontext *ctx,
 
    /* Per-pixel fog */
    if (ctx->Fog.Enabled) {
-      if (fog && !swrast->_PreferPixelFog) 
+      if (fog && !swrast->_PreferPixelFog)
 	 _mesa_fog_rgba_pixels( ctx, n, fog, rgba );
       else
 	 _mesa_depth_fog_rgba_pixels( ctx, n, z, rgba );
@@ -553,13 +553,13 @@ void _mesa_write_rgba_span( GLcontext *ctx,
       }
 
       /* write pixels */
-      (*ctx->Driver.WriteRGBASpan)( ctx, n, x, y, 
-				    (const GLchan (*)[4]) rgba, 
+      (*ctx->Driver.WriteRGBASpan)( ctx, n, x, y,
+				    (const GLchan (*)[4]) rgba,
 				    write_all ? Null : mask );
 
       if (swrast->_RasterMask & ALPHABUF_BIT) {
-         _mesa_write_alpha_span( ctx, n, x, y, 
-                                 (const GLchan (*)[4]) rgba, 
+         _mesa_write_alpha_span( ctx, n, x, y,
+                                 (const GLchan (*)[4]) rgba,
                                  write_all ? Null : mask );
       }
    }
@@ -693,12 +693,12 @@ void _mesa_write_monocolor_span( GLcontext *ctx,
          }
 
          /* write pixels */
-         (*ctx->Driver.WriteRGBASpan)( ctx, n, x, y, 
-				       (const GLchan (*)[4]) rgba, 
+         (*ctx->Driver.WriteRGBASpan)( ctx, n, x, y,
+				       (const GLchan (*)[4]) rgba,
 				       write_all ? Null : mask );
          if (swrast->_RasterMask & ALPHABUF_BIT) {
-            _mesa_write_alpha_span( ctx, n, x, y, 
-                                    (const GLchan (*)[4]) rgba, 
+            _mesa_write_alpha_span( ctx, n, x, y,
+                                    (const GLchan (*)[4]) rgba,
                                     write_all ? Null : mask );
          }
       }
@@ -714,7 +714,7 @@ void _mesa_write_monocolor_span( GLcontext *ctx,
                COPY_CHAN4(rgba[i], color);
             }
          }
-         multi_write_rgba_span( ctx, n, x, y, 
+         multi_write_rgba_span( ctx, n, x, y,
 				(const GLchan (*)[4]) rgba, mask );
       }
       else {
@@ -811,7 +811,7 @@ void _mesa_write_texture_span( GLcontext *ctx,
       stipple_polygon_span( ctx, n, x, y, mask );
       write_all = GL_FALSE;
    }
-   
+
    /* Texture with alpha test*/
    if (ctx->Color.AlphaEnabled) {
       /* Texturing without alpha is done after depth-testing which
@@ -819,7 +819,7 @@ void _mesa_write_texture_span( GLcontext *ctx,
       ASSERT(ctx->Texture._ReallyEnabled);
       _swrast_texture_fragments( ctx, 0, n, s, t, u, lambda,
                                  (CONST GLchan (*)[4]) rgba, rgba );
-     
+
       /* Do the alpha test */
       if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4]) rgba, mask ) == 0) {
          return;
@@ -856,7 +856,7 @@ void _mesa_write_texture_span( GLcontext *ctx,
    }
 
    /* Add base and specular colors */
-   if (spec && 
+   if (spec &&
        (ctx->Fog.ColorSumEnabled ||
 	(ctx->Light.Enabled && ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)))
      add_colors( n, rgba, spec );   /* rgba = rgba + spec */
@@ -890,7 +890,7 @@ void _mesa_write_texture_span( GLcontext *ctx,
       (*ctx->Driver.WriteRGBASpan)( ctx, n, x, y, (const GLchan (*)[4])rgba,
 				    write_all ? Null : mask );
       if (swrast->_RasterMask & ALPHABUF_BIT) {
-         _mesa_write_alpha_span( ctx, n, x, y, (const GLchan (*)[4]) rgba, 
+         _mesa_write_alpha_span( ctx, n, x, y, (const GLchan (*)[4]) rgba,
                                  write_all ? Null : mask );
       }
    }
@@ -969,7 +969,7 @@ _mesa_write_multitexture_span( GLcontext *ctx,
       for (i = 0; i < texUnits; i++)
          _swrast_texture_fragments( ctx, i, n, s[i], t[i], u[i], lambda[i],
                                     (CONST GLchan (*)[4]) rgbaIn, rgba );
-     
+
       /* Do the alpha test */
       if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4])rgba, mask ) == 0) {
          return;
@@ -1007,9 +1007,9 @@ _mesa_write_multitexture_span( GLcontext *ctx,
    }
 
    /* Add base and specular colors */
-   if (spec && 
+   if (spec &&
        (ctx->Fog.ColorSumEnabled ||
-	(ctx->Light.Enabled && 
+	(ctx->Light.Enabled &&
 	 ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)))
       add_colors( n, rgba, spec );   /* rgba = rgba + spec */
 

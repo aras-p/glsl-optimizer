@@ -1,21 +1,21 @@
-/* $Id: glthread.c,v 1.7 2001/03/07 05:06:11 brianp Exp $ */
+/* $Id: glthread.c,v 1.8 2001/03/12 00:48:38 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
- * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ * Version:  3.5
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -35,7 +35,7 @@
 #include "all.h"
 #else
 #include "glheader.h"
-#include "glthread.h" 
+#include "glthread.h"
 #endif
 
 
@@ -117,9 +117,9 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 
 
 /*
- * Solaris/Unix International Threads -- Use only if POSIX threads 
+ * Solaris/Unix International Threads -- Use only if POSIX threads
  *   aren't available on your Unix platform.  Solaris 2.[34] are examples
- *   of platforms where this is the case.  Be sure to use -mt and/or 
+ *   of platforms where this is the case.  Be sure to use -mt and/or
  *   -D_REENTRANT when compiling.
  */
 #ifdef SOLARIS_THREADS
@@ -156,7 +156,7 @@ _glthread_GetTSD(_glthread_TSD *tsd)
 #ifdef USE_LOCK_FOR_KEY
    mutex_lock(&tsd->keylock);
    thr_getspecific(tsd->key, &ret);
-   mutex_unlock(&tsd->keylock); 
+   mutex_unlock(&tsd->keylock);
 #else
    if ((errno = thr_getspecific(tsd->key, &ret)) != 0) {
       perror(GET_TSD_ERROR);
@@ -188,7 +188,7 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
  * Win32 Threads.  The only available option for Windows 95/NT.
  * Be sure that you compile using the Multithreaded runtime, otherwise
  * bad things will happen.
- */  
+ */
 #ifdef WIN32_THREADS
 
 unsigned long

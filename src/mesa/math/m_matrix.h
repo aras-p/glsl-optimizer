@@ -1,21 +1,21 @@
-/* $Id: m_matrix.h,v 1.3 2001/02/05 18:48:52 brianp Exp $ */
+/* $Id: m_matrix.h,v 1.4 2001/03/12 00:48:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -119,35 +119,35 @@ _math_matrix_mul_matrix( GLmatrix *dest, const GLmatrix *a, const GLmatrix *b );
 extern void
 _math_matrix_mul_floats( GLmatrix *dest, const GLfloat *b );
 
-extern void 
+extern void
 _math_matrix_loadf( GLmatrix *mat, const GLfloat *m );
 
-extern void 
+extern void
 _math_matrix_translate( GLmatrix *mat, GLfloat x, GLfloat y, GLfloat z );
 
 extern void
-_math_matrix_rotate( GLmatrix *m, GLfloat angle, 
+_math_matrix_rotate( GLmatrix *m, GLfloat angle,
 		     GLfloat x, GLfloat y, GLfloat z );
 
-extern void 
+extern void
 _math_matrix_scale( GLmatrix *mat, GLfloat x, GLfloat y, GLfloat z );
 
 extern void
-_math_matrix_ortho( GLmatrix *mat, 	
+_math_matrix_ortho( GLmatrix *mat,
 		    GLfloat left, GLfloat right,
-		    GLfloat bottom, GLfloat top, 
+		    GLfloat bottom, GLfloat top,
 		    GLfloat nearval, GLfloat farval );
 
 extern void
-_math_matrix_frustum( GLmatrix *mat, 
+_math_matrix_frustum( GLmatrix *mat,
 		      GLfloat left, GLfloat right,
-		      GLfloat bottom, GLfloat top, 
+		      GLfloat bottom, GLfloat top,
 		      GLfloat nearval, GLfloat farval );
 
 extern void
 _math_matrix_set_identity( GLmatrix *dest );
 
-extern void 
+extern void
 _math_matrix_copy( GLmatrix *to, const GLmatrix *from );
 
 extern void

@@ -1,21 +1,21 @@
-/* $Id: s_accum.c,v 1.7 2001/03/08 15:23:46 brianp Exp $ */
+/* $Id: s_accum.c,v 1.8 2001/03/12 00:48:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -236,7 +236,7 @@ _mesa_clear_accum_buffer( GLcontext *ctx )
 
 void
 _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
-	       GLint xpos, GLint ypos, 
+	       GLint xpos, GLint ypos,
 	       GLint width, GLint height )
 
 {
@@ -247,13 +247,13 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
    const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
    const GLint iChanMax = (1 << (sizeof(GLchan) * 8)) - 1;
    const GLfloat fChanMax = (1 << (sizeof(GLchan) * 8)) - 1;
-   
+
 
    if (SWRAST_CONTEXT(ctx)->NewState)
       _swrast_validate_derived( ctx );
 
    if (!ctx->DrawBuffer->Accum) {
-      _mesa_warning(ctx, 
+      _mesa_warning(ctx,
 		    "Calling glAccum() without an accumulation "
 		    "buffer (low memory?)");
       return;
@@ -320,7 +320,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             swrast->_IntegerAccumScaler = value;
          if (swrast->_IntegerAccumMode && value != swrast->_IntegerAccumScaler)
             rescale_accum(ctx);
-            
+
          RENDER_START(ctx);
 
          if (swrast->_IntegerAccumMode) {
@@ -330,7 +330,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             assert(swrast->_IntegerAccumScaler > 0.0);
             assert(swrast->_IntegerAccumScaler <= 1.0);
             for (j = 0; j < height; j++) {
-               
+
                GLint i, i4;
                _mesa_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
                for (i = i4 = 0; i < width; i++, i4+=4) {
@@ -471,7 +471,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
                if (colorMask != 0xffffffff) {
                   _mesa_mask_rgba_span( ctx, width, xpos, ypos, rgba );
                }
-               (*ctx->Driver.WriteRGBASpan)( ctx, width, xpos, ypos, 
+               (*ctx->Driver.WriteRGBASpan)( ctx, width, xpos, ypos,
                                              (const GLchan (*)[4])rgba, NULL );
                if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
                    && ctx->Color.ColorMask[ACOMP]) {
@@ -503,7 +503,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
                if (colorMask != 0xffffffff) {
                   _mesa_mask_rgba_span( ctx, width, xpos, ypos, rgba );
                }
-               (*ctx->Driver.WriteRGBASpan)( ctx, width, xpos, ypos, 
+               (*ctx->Driver.WriteRGBASpan)( ctx, width, xpos, ypos,
                                              (const GLchan (*)[4])rgba, NULL );
                if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
                    && ctx->Color.ColorMask[ACOMP]) {

@@ -1,10 +1,10 @@
-/* $Id: t_imm_eval.c,v 1.5 2001/02/20 18:28:52 keithw Exp $ */
+/* $Id: t_imm_eval.c,v 1.6 2001/03/12 00:48:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -98,7 +98,7 @@ static void eval1_4f( GLvector4f *dest,
       if (flags[i] & (VERT_EVAL_C1|VERT_EVAL_P1)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 ASSIGN_4V(to[i], 0,0,0,1);
-	 _math_horner_bezier_curve(map->Points, to[i], u, 
+	 _math_horner_bezier_curve(map->Points, to[i], u,
 				   dimension, map->Order);
       }
 
@@ -129,7 +129,7 @@ static void eval1_1ui( GLvector1ui *dest,
 
 static void eval1_norm( GLvector3f *dest,
 			GLfloat coord[][4],
-			const GLuint *flags, 
+			const GLuint *flags,
 			struct gl_1d_map *map )
 {
    const GLfloat u1 = map->u1;
@@ -304,22 +304,22 @@ static void eval2_color( GLvector4chan *dest,
 
 static void copy_4f( GLfloat to[][4], GLfloat from[][4], GLuint count )
 {
-   MEMCPY( to, from, count * sizeof(to[0])); 
+   MEMCPY( to, from, count * sizeof(to[0]));
 }
 
 static void copy_3f( GLfloat to[][3], GLfloat from[][3], GLuint count )
 {
-   MEMCPY( to, from, (count) * sizeof(to[0])); 
+   MEMCPY( to, from, (count) * sizeof(to[0]));
 }
 
 static void copy_4chan( GLchan to[][4], GLchan from[][4], GLuint count )
 {
-   MEMCPY( to, from, (count) * sizeof(to[0])); 
+   MEMCPY( to, from, (count) * sizeof(to[0]));
 }
 
 static void copy_1ui( GLuint to[], GLuint from[], GLuint count )
 {
-   MEMCPY( to, from, (count) * sizeof(to[0])); 
+   MEMCPY( to, from, (count) * sizeof(to[0]));
 }
 
 
@@ -368,13 +368,13 @@ static void update_eval( GLcontext *ctx )
       eval1 |= VERT_OBJ_23;
 
    if (ctx->Eval.Map2Vertex4) {
-      if (ctx->Eval.AutoNormal) 
+      if (ctx->Eval.AutoNormal)
 	 eval2 |= VERT_OBJ_234 | VERT_NORM;
       else
 	 eval2 |= VERT_OBJ_234;
    }
    else if (ctx->Eval.Map2Vertex3) {
-      if (ctx->Eval.AutoNormal) 
+      if (ctx->Eval.AutoNormal)
 	 eval2 |= VERT_OBJ_23 | VERT_NORM;
       else
 	 eval2 |= VERT_OBJ_23;
@@ -388,14 +388,14 @@ static void update_eval( GLcontext *ctx )
 
 /* This looks a lot like a pipeline stage, but for various reasons is
  * better handled outside the pipeline, and considered the final stage
- * of fixing up an immediate struct for execution.  
+ * of fixing up an immediate struct for execution.
  *
  * Really want to cache the results of this function in display lists,
- * at least for EvalMesh commands.  
+ * at least for EvalMesh commands.
  */
-void _tnl_eval_vb( GLcontext *ctx, 
+void _tnl_eval_vb( GLcontext *ctx,
 		   GLfloat (*coord)[4],
-		   GLuint orflag, 
+		   GLuint orflag,
 		   GLuint andflag )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -417,18 +417,18 @@ void _tnl_eval_vb( GLcontext *ctx,
    if (any_eval1 && !ctx->Eval.Map1Vertex4 && !ctx->Eval.Map1Vertex3)
       purge_flags = (VERT_EVAL_P1|VERT_EVAL_C1);
 
-   if (any_eval2 && !ctx->Eval.Map2Vertex4 && !ctx->Eval.Map2Vertex3) 
+   if (any_eval2 && !ctx->Eval.Map2Vertex4 && !ctx->Eval.Map2Vertex3)
       purge_flags |= (VERT_EVAL_P1|VERT_EVAL_C1);
 
-   if (any_eval1) 
+   if (any_eval1)
       req |= tnl->pipeline.inputs & tnl->eval.EvalMap1Flags;
 
-   if (any_eval2) 
+   if (any_eval2)
       req |= tnl->pipeline.inputs & tnl->eval.EvalMap2Flags;
 
-   
+
    /* Translate points into coords.  Use store->Coord to hold the
-    * new data.  
+    * new data.
     */
    if (any_eval1 && (orflag & VERT_EVAL_P1))
    {
@@ -455,13 +455,13 @@ void _tnl_eval_vb( GLcontext *ctx,
     */
    if (req & VERT_INDEX)
    {
-      if (!all_eval) 
+      if (!all_eval)
 	 copy_1ui( store->Index, tmp->Index.data, count );
 
       tmp->Index.data = store->Index;
       tmp->Index.start = store->Index;
 
-      if (ctx->Eval.Map1Index && any_eval1) 
+      if (ctx->Eval.Map1Index && any_eval1)
 	 eval1_1ui( &tmp->Index, coord, flags, &ctx->EvalMap.Map1Index );
 
       if (ctx->Eval.Map2Index && any_eval2)
@@ -487,11 +487,11 @@ void _tnl_eval_vb( GLcontext *ctx,
 
    if (req & VERT_TEX(0))
    {
-      if (!all_eval) 
+      if (!all_eval)
 	 copy_4f( store->TexCoord, tmp->TexCoord[0].data, count );
-      else 
+      else
 	 tmp->TexCoord[0].size = 0;
-	 
+
       tmp->TexCoord[0].data = store->TexCoord;
       tmp->TexCoord[0].start = (GLfloat *)store->TexCoord;
 
@@ -507,7 +507,7 @@ void _tnl_eval_vb( GLcontext *ctx,
 	 else if (ctx->Eval.Map1TextureCoord2) {
 	    eval1_4f( &tmp->TexCoord[0], coord, flags, 2,
 		      &ctx->EvalMap.Map1Texture2 );
-	 } 
+	 }
 	 else if (ctx->Eval.Map1TextureCoord1) {
 	    eval1_4f( &tmp->TexCoord[0], coord, flags, 1,
 		      &ctx->EvalMap.Map1Texture1 );
@@ -520,7 +520,7 @@ void _tnl_eval_vb( GLcontext *ctx,
 		      &ctx->EvalMap.Map2Texture4 );
 	 }
 	 else if (ctx->Eval.Map2TextureCoord3) {
-	    eval2_4f( &tmp->TexCoord[0], coord, flags, 3, 
+	    eval2_4f( &tmp->TexCoord[0], coord, flags, 3,
 		      &ctx->EvalMap.Map2Texture3 );
 	 }
 	 else if (ctx->Eval.Map2TextureCoord2) {
@@ -569,7 +569,7 @@ void _tnl_eval_vb( GLcontext *ctx,
 
       if (any_eval1) {
 	 if (ctx->Eval.Map1Vertex4) {
-	    eval1_4f( &tmp->Obj, coord, flags, 4, 
+	    eval1_4f( &tmp->Obj, coord, flags, 4,
 		      &ctx->EvalMap.Map1Vertex4 );
 	 }
 	 else if (ctx->Eval.Map1Vertex3) {
@@ -581,16 +581,16 @@ void _tnl_eval_vb( GLcontext *ctx,
       if (any_eval2) {
 	 if (ctx->Eval.Map2Vertex4)
 	 {
-	    if (ctx->Eval.AutoNormal && (req & VERT_NORM)) 
-	       eval2_obj_norm( &tmp->Obj, &tmp->Normal, coord, flags, 4, 
+	    if (ctx->Eval.AutoNormal && (req & VERT_NORM))
+	       eval2_obj_norm( &tmp->Obj, &tmp->Normal, coord, flags, 4,
 			       &ctx->EvalMap.Map2Vertex4 );
 	    else
-	       eval2_4f( &tmp->Obj, coord, flags, 4, 
+	       eval2_4f( &tmp->Obj, coord, flags, 4,
 			 &ctx->EvalMap.Map2Vertex4 );
 	 }
 	 else if (ctx->Eval.Map2Vertex3)
 	 {
-	    if (ctx->Eval.AutoNormal && (req & VERT_NORM)) 
+	    if (ctx->Eval.AutoNormal && (req & VERT_NORM))
 	       eval2_obj_norm( &tmp->Obj, &tmp->Normal, coord, flags, 3,
 			       &ctx->EvalMap.Map2Vertex3 );
 	    else
@@ -605,7 +605,7 @@ void _tnl_eval_vb( GLcontext *ctx,
       GLuint i;
       copy_1ui( store->Flag, flags, count );
       tnl->vb.Flag = store->Flag;
-      
+
       /* This is overkill, but correct as fixup will have copied the
        * values to all vertices in the VB - we may be falsely stating
        * that some repeated values are new, but doing so is fairly
@@ -615,10 +615,3 @@ void _tnl_eval_vb( GLcontext *ctx,
 	 store->Flag[i] |= req;
    }
 }
-
-
-
-
-
-
-

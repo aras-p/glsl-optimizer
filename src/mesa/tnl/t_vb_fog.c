@@ -1,10 +1,10 @@
-/* $Id: t_vb_fog.c,v 1.7 2001/03/07 05:06:13 brianp Exp $ */
+/* $Id: t_vb_fog.c,v 1.8 2001/03/12 00:48:44 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
+ * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  */
 
@@ -85,14 +85,14 @@ static void init_static_data( void )
 }
 
 
-static void make_win_fog_coords( GLcontext *ctx, GLvector1f *out, 
+static void make_win_fog_coords( GLcontext *ctx, GLvector1f *out,
 				 const GLvector1f *in )
 {
    GLfloat end  = ctx->Fog.End;
    GLfloat *v = in->start;
    GLuint stride = in->stride;
    GLuint n = in->count;
-   GLfloat *data = out->data;		
+   GLfloat *data = out->data;
    GLfloat d;
    GLuint i;
 
@@ -111,7 +111,7 @@ static void make_win_fog_coords( GLcontext *ctx, GLvector1f *out,
       break;
    case GL_EXP:
       d = ctx->Fog.Density;
-      for ( i = 0 ; i < n ; i++, STRIDE_F(v,stride)) 
+      for ( i = 0 ; i < n ; i++, STRIDE_F(v,stride))
 	 NEG_EXP( data[i], d*ABSF(*v) );
       break;
    case GL_EXP2:
@@ -128,7 +128,7 @@ static void make_win_fog_coords( GLcontext *ctx, GLvector1f *out,
 }
 
 
-static GLboolean run_fog_stage( GLcontext *ctx, 
+static GLboolean run_fog_stage( GLcontext *ctx,
 				struct gl_pipeline_stage *stage )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -144,7 +144,7 @@ static GLboolean run_fog_stage( GLcontext *ctx,
       if (!ctx->_NeedEyeCoords) {
 	 GLfloat *m = ctx->ModelView.m;
 	 GLfloat plane[4];
-	 
+
 	 /* Use this to store calculated eye z values:
 	  */
 	 input = &store->fogcoord;
@@ -194,7 +194,7 @@ static void check_fog_stage( GLcontext *ctx, struct gl_pipeline_stage *stage )
 
 /* Called the first time stage->run() is invoked.
  */
-static GLboolean alloc_fog_data( GLcontext *ctx, 
+static GLboolean alloc_fog_data( GLcontext *ctx,
 				 struct gl_pipeline_stage *stage )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -228,11 +228,11 @@ static void free_fog_data( struct gl_pipeline_stage *stage )
 }
 
 
-const struct gl_pipeline_stage _tnl_fog_coordinate_stage = 
-{ 
+const struct gl_pipeline_stage _tnl_fog_coordinate_stage =
+{
    "build fog coordinates",
    _NEW_FOG,
-   _NEW_FOG,			
+   _NEW_FOG,
    0, 0, VERT_FOG_COORD,	/* active, inputs, outputs */
    0, 0,			/* changed_inputs, private_data */
    free_fog_data,		/* dtr */

@@ -1,21 +1,21 @@
-/* $Id: m_translate.c,v 1.5 2001/02/20 18:28:52 keithw Exp $ */
+/* $Id: m_translate.c,v 1.6 2001/03/12 00:48:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -42,13 +42,13 @@
 typedef void (*trans_1f_func)(GLfloat *to,
 			      CONST void *ptr,
 			      GLuint stride,
-			      GLuint start, 
+			      GLuint start,
 			      GLuint n );
 
 typedef void (*trans_1ui_func)(GLuint *to,
 			       CONST void *ptr,
 			       GLuint stride,
-			       GLuint start, 
+			       GLuint start,
 			       GLuint n );
 
 typedef void (*trans_1ub_func)(GLubyte *to,
@@ -72,13 +72,13 @@ typedef void (*trans_4us_func)(GLushort (*to)[4],
 typedef void (*trans_4f_func)(GLfloat (*to)[4],
 			      CONST void *ptr,
 			      GLuint stride,
-			      GLuint start, 
+			      GLuint start,
 			      GLuint n );
 
 typedef void (*trans_3f_func)(GLfloat (*to)[3],
 			      CONST void *ptr,
 			      GLuint stride,
-			      GLuint start, 
+			      GLuint start,
 			      GLuint n );
 
 
@@ -436,9 +436,9 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SRC GLfloat
 #define SRC_IDX TYPE_IDX(GL_FLOAT)
 #define SZ 4
-#define INIT init_trans_4_GLfloat_raw 
-#define DEST_4UB trans_4_GLfloat_4ub_raw 
-#define DEST_4US trans_4_GLfloat_4us_raw 
+#define INIT init_trans_4_GLfloat_raw
+#define DEST_4UB trans_4_GLfloat_4ub_raw
+#define DEST_4US trans_4_GLfloat_4us_raw
 #define DEST_4F  trans_4_GLfloat_4f_raw
 #include "m_trans_tmp.h"
 
@@ -481,7 +481,7 @@ static void trans_4_GLubyte_4ub_raw(GLubyte (*t)[4],
    const GLubyte *f = (GLubyte *) Ptr + SRC_START * stride;
    GLuint i;
 
-   if (((((long) f | (long) stride)) & 3L) == 0L) { 
+   if (((((long) f | (long) stride)) & 3L) == 0L) {
       /* Aligned.
        */
       for (i = DST_START ; i < n ; i++, f += stride) {
@@ -579,7 +579,7 @@ void _math_trans_1ui(GLuint *to,
 		     GLuint start,
 		     GLuint n )
 {
-   _math_trans_1ui_tab[TYPE_IDX(type)]( to, ptr, stride, start, n ); 
+   _math_trans_1ui_tab[TYPE_IDX(type)]( to, ptr, stride, start, n );
 }
 
 void _math_trans_1ub(GLubyte *to,
@@ -589,7 +589,7 @@ void _math_trans_1ub(GLubyte *to,
 		     GLuint start,
 		     GLuint n )
 {
-   _math_trans_1ub_tab[TYPE_IDX(type)]( to, ptr, stride, start, n ); 
+   _math_trans_1ub_tab[TYPE_IDX(type)]( to, ptr, stride, start, n );
 }
 
 
@@ -601,7 +601,7 @@ void _math_trans_4ub(GLubyte (*to)[4],
 		     GLuint start,
 		     GLuint n )
 {
-   _math_trans_4ub_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n ); 
+   _math_trans_4ub_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n );
 }
 
 void _math_trans_4chan( GLchan (*to)[4],
@@ -629,7 +629,7 @@ void _math_trans_4us(GLushort (*to)[4],
 		     GLuint start,
 		     GLuint n )
 {
-   _math_trans_4us_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n ); 
+   _math_trans_4us_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n );
 }
 
 void _math_trans_4f(GLfloat (*to)[4],
@@ -640,7 +640,7 @@ void _math_trans_4f(GLfloat (*to)[4],
 		    GLuint start,
 		    GLuint n )
 {
-   _math_trans_4f_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n ); 
+   _math_trans_4f_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n );
 }
 
 void _math_trans_3f(GLfloat (*to)[3],
@@ -650,6 +650,5 @@ void _math_trans_3f(GLfloat (*to)[3],
 		    GLuint start,
 		    GLuint n )
 {
-   _math_trans_3f_tab[TYPE_IDX(type)]( to, ptr, stride, start, n ); 
+   _math_trans_3f_tab[TYPE_IDX(type)]( to, ptr, stride, start, n );
 }
-

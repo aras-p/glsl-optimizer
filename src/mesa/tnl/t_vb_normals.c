@@ -1,10 +1,10 @@
-/* $Id: t_vb_normals.c,v 1.6 2001/03/07 05:06:13 brianp Exp $ */
+/* $Id: t_vb_normals.c,v 1.7 2001/03/12 00:48:44 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
+ * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  */
 
@@ -44,7 +44,7 @@
 
 
 struct normal_stage_data {
-   normal_func *NormalTransform; 
+   normal_func *NormalTransform;
    GLvector3f normal;
 };
 
@@ -53,7 +53,7 @@ struct normal_stage_data {
 
 
 
-static GLboolean run_normal_stage( GLcontext *ctx, 
+static GLboolean run_normal_stage( GLcontext *ctx,
 				   struct gl_pipeline_stage *stage )
 {
    struct normal_stage_data *store = NORMAL_STAGE_DATA(stage);
@@ -65,7 +65,7 @@ static GLboolean run_normal_stage( GLcontext *ctx,
       (store->NormalTransform[0])(&ctx->ModelView,
 				  ctx->_ModelViewInvScale,
 				  VB->NormalPtr,
-				  0, 
+				  0,
 				  0,
 				  &store->normal);
 
@@ -74,7 +74,7 @@ static GLboolean run_normal_stage( GLcontext *ctx,
 }
 
 
-static GLboolean run_validate_normal_stage( GLcontext *ctx, 
+static GLboolean run_validate_normal_stage( GLcontext *ctx,
 						struct gl_pipeline_stage *stage)
 {
    struct normal_stage_data *store = NORMAL_STAGE_DATA(stage);
@@ -89,8 +89,8 @@ static GLboolean run_validate_normal_stage( GLcontext *ctx,
 				  MAT_FLAG_GENERAL_3D |
 				  MAT_FLAG_PERSPECTIVE))
 	 transform = NORM_TRANSFORM;
-	
-	
+
+
       if (ctx->Transform.Normalize) {
 	 store->NormalTransform = _mesa_normal_tab[transform | NORM_NORMALIZE];
       }
@@ -131,12 +131,12 @@ static void check_normal_transform( GLcontext *ctx,
    stage->active = ctx->_NeedNormals;
    /* Don't clobber the initialize function:
     */
-   if (stage->privatePtr) 
+   if (stage->privatePtr)
       stage->run = run_validate_normal_stage;
 }
 
 
-static GLboolean alloc_normal_data( GLcontext *ctx, 
+static GLboolean alloc_normal_data( GLcontext *ctx,
 				 struct gl_pipeline_stage *stage )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -173,8 +173,8 @@ static void free_normal_data( struct gl_pipeline_stage *stage )
 
 
 
-const struct gl_pipeline_stage _tnl_normal_transform_stage = 
-{ 
+const struct gl_pipeline_stage _tnl_normal_transform_stage =
+{
    "normal transform",
    _TNL_NEW_NORMAL_TRANSFORM,	/* re-check */
    _TNL_NEW_NORMAL_TRANSFORM,	/* re-run */
@@ -184,4 +184,3 @@ const struct gl_pipeline_stage _tnl_normal_transform_stage =
    check_normal_transform,	/* check */
    alloc_normal_data		/* run -- initially set to alloc */
 };
-

@@ -1,10 +1,10 @@
-/* $Id: t_imm_exec.h,v 1.3 2001/02/15 01:33:52 keithw Exp $ */
+/* $Id: t_imm_exec.h,v 1.4 2001/03/12 00:48:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,9 +52,9 @@ extern void _tnl_imm_init( GLcontext *ctx );
 
 extern void _tnl_imm_destroy( GLcontext *ctx );
 
-extern void _tnl_reset_input( GLcontext *ctx, 
+extern void _tnl_reset_input( GLcontext *ctx,
 			      GLuint start,
-			      GLuint beginstate, 
+			      GLuint beginstate,
 			      GLuint savedbeginstate );
 
 extern void _tnl_compute_orflag( struct immediate *IM );

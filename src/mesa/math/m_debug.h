@@ -1,4 +1,4 @@
-/* $Id: m_debug.h,v 1.2 2001/02/05 19:17:31 brianp Exp $ */
+/* $Id: m_debug.h,v 1.3 2001/03/12 00:48:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,7 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
+ * Authors:
  *    Gareth Hughes <gareth@valinux.com>
  */
 

@@ -1,10 +1,10 @@
-/* $Id: light.c,v 1.40 2001/03/07 05:06:12 brianp Exp $ */
+/* $Id: light.c,v 1.41 2001/03/12 00:48:38 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -64,7 +64,7 @@ _mesa_ShadeModel( GLenum mode )
       return;
    }
 
-   if (ctx->Light.ShadeModel == mode) 
+   if (ctx->Light.ShadeModel == mode)
       return;
 
    FLUSH_VERTICES(ctx, _NEW_LIGHT);
@@ -146,7 +146,7 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 	 _mesa_error( ctx, GL_INVALID_VALUE, "glLight" );
 	 return;
       }
-      if (l->SpotExponent == params[0]) 
+      if (l->SpotExponent == params[0])
 	 return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       l->SpotExponent = params[0];
@@ -409,9 +409,9 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
 	 ctx->Light.Model.TwoSide = newbool;
          break;
       case GL_LIGHT_MODEL_COLOR_CONTROL:
-         if (params[0] == (GLfloat) GL_SINGLE_COLOR) 
+         if (params[0] == (GLfloat) GL_SINGLE_COLOR)
 	    newenum = GL_SINGLE_COLOR;
-         else if (params[0] == (GLfloat) GL_SEPARATE_SPECULAR_COLOR) 
+         else if (params[0] == (GLfloat) GL_SEPARATE_SPECULAR_COLOR)
 	    newenum = GL_SEPARATE_SPECULAR_COLOR;
 	 else {
             _mesa_error( ctx, GL_INVALID_ENUM, "glLightModel(param)" );
@@ -425,9 +425,9 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
 	 if ((ctx->Light.Enabled &&
 	      ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
 	     || ctx->Fog.ColorSumEnabled)
-	    ctx->_TriangleCaps |= DD_SEPERATE_SPECULAR; 
+	    ctx->_TriangleCaps |= DD_SEPERATE_SPECULAR;
 	 else
-	    ctx->_TriangleCaps &= ~DD_SEPERATE_SPECULAR; 
+	    ctx->_TriangleCaps &= ~DD_SEPERATE_SPECULAR;
 
          break;
       default:
@@ -600,7 +600,7 @@ void _mesa_copy_material_pairs( struct gl_material dst[2],
  *
  * src[0] is front material, src[1] is back material
  *
- * Additionally keeps the precomputed lighting state uptodate.  
+ * Additionally keeps the precomputed lighting state uptodate.
  */
 void _mesa_update_material( GLcontext *ctx,
 			 const struct gl_material src[2],
@@ -647,13 +647,13 @@ void _mesa_update_material( GLcontext *ctx,
    if (bitmask & (FRONT_EMISSION_BIT | FRONT_AMBIENT_BIT)) {
       struct gl_material *mat = &ctx->Light.Material[0];
       COPY_3V( ctx->Light._BaseColor[0], mat->Emission );
-      ACC_SCALE_3V( ctx->Light._BaseColor[0], mat->Ambient, 
+      ACC_SCALE_3V( ctx->Light._BaseColor[0], mat->Ambient,
 		    ctx->Light.Model.Ambient );
    }
    if (bitmask & (BACK_EMISSION_BIT | BACK_AMBIENT_BIT)) {
       struct gl_material *mat = &ctx->Light.Material[1];
       COPY_3V( ctx->Light._BaseColor[1], mat->Emission );
-      ACC_SCALE_3V( ctx->Light._BaseColor[1], mat->Ambient, 
+      ACC_SCALE_3V( ctx->Light._BaseColor[1], mat->Ambient,
 		    ctx->Light.Model.Ambient );
    }
 
@@ -1071,7 +1071,7 @@ static void validate_spot_exp_table( struct gl_light *l )
       l->_SpotExpTable[i][0] = tmp;
    }
    for (i = 0; i < EXP_TABLE_SIZE - 1; i++) {
-      l->_SpotExpTable[i][1] = (l->_SpotExpTable[i+1][0] - 
+      l->_SpotExpTable[i][1] = (l->_SpotExpTable[i+1][0] -
 				l->_SpotExpTable[i][0]);
    }
    l->_SpotExpTable[EXP_TABLE_SIZE-1][1] = 0.0;
@@ -1087,7 +1087,7 @@ static void validate_spot_exp_table( struct gl_light *l )
 void
 _mesa_invalidate_shine_table( GLcontext *ctx, GLuint i )
 {
-   if (ctx->_ShineTable[i]) 
+   if (ctx->_ShineTable[i])
       ctx->_ShineTable[i]->refcount--;
    ctx->_ShineTable[i] = 0;
 }
@@ -1132,7 +1132,7 @@ static void validate_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
       s->shininess = shininess;
    }
 
-   if (ctx->_ShineTable[i]) 
+   if (ctx->_ShineTable[i])
       ctx->_ShineTable[i]->refcount--;
 
    ctx->_ShineTable[i] = s;
@@ -1140,7 +1140,7 @@ static void validate_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
    s->refcount++;
 }
 
-void 
+void
 _mesa_validate_all_lighting_tables( GLcontext *ctx )
 {
    GLint i;
@@ -1154,7 +1154,7 @@ _mesa_validate_all_lighting_tables( GLcontext *ctx )
    if (!ctx->_ShineTable[1] || ctx->_ShineTable[1]->shininess != shininess)
       validate_shine_table( ctx, 1, shininess );
 
-   for (i = 0 ; i < MAX_LIGHTS ; i++) 
+   for (i = 0 ; i < MAX_LIGHTS ; i++)
       if (ctx->Light.Light[i]._SpotExpTable[0][0] == -1)
 	 validate_spot_exp_table( &ctx->Light.Light[i] );
 }
@@ -1210,7 +1210,7 @@ _mesa_update_lighting( GLcontext *ctx )
    /* Precompute some shading values.  Although we reference
     * Light.Material here, we can get away without flushing
     * FLUSH_UPDATE_CURRENT, as when any outstanding material changes
-    * are flushed, they will update the derived state at that time.  
+    * are flushed, they will update the derived state at that time.
     */
    if (ctx->Visual.rgbMode) {
       GLuint sides = ctx->Light.Model.TwoSide ? 2 : 1;
@@ -1227,7 +1227,7 @@ _mesa_update_lighting( GLcontext *ctx )
                                  ctx->Light.Material[side].Diffuse[3] );
       }
 
-      foreach (light, &ctx->Light.EnabledList) {	
+      foreach (light, &ctx->Light.EnabledList) {
 	 for (side=0; side< sides; side++) {
 	    const struct gl_material *mat = &ctx->Light.Material[side];
 	    SCALE_3V( light->_MatDiffuse[side], light->Diffuse, mat->Diffuse );
@@ -1323,5 +1323,3 @@ _mesa_compute_light_positions( GLcontext *ctx )
       }
    }
 }
-
-

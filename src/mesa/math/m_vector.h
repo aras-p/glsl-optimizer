@@ -1,21 +1,21 @@
-/* $Id: m_vector.h,v 1.5 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: m_vector.h,v 1.6 2001/03/12 00:48:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -36,7 +36,7 @@
 #include "mtypes.h"		/* hack for GLchan */
 
 
-#define VEC_DIRTY_0        0x1	
+#define VEC_DIRTY_0        0x1
 #define VEC_DIRTY_1        0x2
 #define VEC_DIRTY_2        0x4
 #define VEC_DIRTY_3        0x8
@@ -55,7 +55,7 @@
 /* Wrap all the information about vectors up in a struct.  Has
  * additional fields compared to the other vectors to help us track of
  * different vertex sizes, and whether we need to clean columns out
- * because they contain non-(0,0,0,1) values.  
+ * because they contain non-(0,0,0,1) values.
  *
  * The start field is used to reserve data for copied vertices at the
  * end of _mesa_transform_vb, and avoids the need for a multiplication in
@@ -82,10 +82,10 @@ extern void _mesa_vector4f_clean_elem( GLvector4f *vec, GLuint nr, GLuint elt );
 
 
 /* Could use a single vector type for normals and vertices, but
- * this way avoids some casts.  
+ * this way avoids some casts.
  */
 typedef struct {
-   GLfloat (*data)[3];       
+   GLfloat (*data)[3];
    GLfloat *start;
    GLuint count;
    GLuint stride;
@@ -101,7 +101,7 @@ extern void _mesa_vector3f_print( GLvector3f *v, GLubyte *, GLboolean );
 
 
 typedef struct {
-   GLfloat *data;       
+   GLfloat *data;
    GLfloat *start;
    GLuint count;
    GLuint stride;
@@ -121,12 +121,12 @@ typedef struct {
    GLubyte (*data)[4];
    GLubyte *start;
    GLuint count;
-   GLuint stride;		 
-   GLuint flags; 
+   GLuint stride;
+   GLuint flags;
    void *storage;
 } GLvector4ub;
 
-extern void _mesa_vector4ub_init( GLvector4ub *v, GLuint flags, 
+extern void _mesa_vector4ub_init( GLvector4ub *v, GLuint flags,
 			       GLubyte (*storage)[4] );
 extern void _mesa_vector4ub_alloc( GLvector4ub *v, GLuint flags, GLuint count,
 				GLuint alignment );
@@ -139,12 +139,12 @@ typedef struct {
    GLchan (*data)[4];
    GLchan *start;
    GLuint count;
-   GLuint stride;		 
-   GLuint flags; 
+   GLuint stride;
+   GLuint flags;
    void *storage;
 } GLvector4chan;
 
-extern void _mesa_vector4chan_init( GLvector4chan *v, GLuint flags, 
+extern void _mesa_vector4chan_init( GLvector4chan *v, GLuint flags,
 				 GLchan (*storage)[4] );
 extern void _mesa_vector4chan_alloc( GLvector4chan *v, GLuint flags, GLuint count,
 				  GLuint alignment );
@@ -159,12 +159,12 @@ typedef struct {
    GLushort (*data)[4];
    GLushort *start;
    GLuint count;
-   GLuint stride;		 
-   GLuint flags; 
+   GLuint stride;
+   GLuint flags;
    void *storage;
 } GLvector4us;
 
-extern void _mesa_vector4us_init( GLvector4us *v, GLuint flags, 
+extern void _mesa_vector4us_init( GLvector4us *v, GLuint flags,
                                GLushort (*storage)[4] );
 extern void _mesa_vector4us_alloc( GLvector4us *v, GLuint flags, GLuint count,
                                 GLuint alignment );
@@ -179,8 +179,8 @@ typedef struct {
    GLubyte *data;
    GLubyte *start;
    GLuint count;
-   GLuint stride;		 
-   GLuint flags; 
+   GLuint stride;
+   GLuint flags;
    void *storage;
 } GLvector1ub;
 
@@ -198,13 +198,13 @@ typedef struct {
    GLuint *data;
    GLuint *start;
    GLuint count;
-   GLuint stride; 
-   GLuint flags; 
+   GLuint stride;
+   GLuint flags;
    void *storage;
 } GLvector1ui;
 
 extern void _mesa_vector1ui_init( GLvector1ui *v, GLuint flags, GLuint *storage );
-extern void _mesa_vector1ui_alloc( GLvector1ui *v, GLuint flags, GLuint count, 
+extern void _mesa_vector1ui_alloc( GLvector1ui *v, GLuint flags, GLuint count,
 				GLuint alignment );
 extern void _mesa_vector1ui_free( GLvector1ui * );
 

@@ -1,10 +1,10 @@
-/* $Id: t_array_import.c,v 1.10 2001/03/07 05:06:13 brianp Exp $ */
+/* $Id: t_array_import.c,v 1.11 2001/03/12 00:48:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,13 +50,13 @@ static void _tnl_import_vertex( GLcontext *ctx,
    GLboolean is_writeable = 0;
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
 
-   tmp = _ac_import_vertex(ctx, 
+   tmp = _ac_import_vertex(ctx,
 			   GL_FLOAT,
 			   stride ? 4*sizeof(GLfloat) : 0,
 			   0,
-			   writeable, 
+			   writeable,
 			   &is_writeable);
-      
+
    inputs->Obj.data = (GLfloat (*)[4]) tmp->Ptr;
    inputs->Obj.start = (GLfloat *) tmp->Ptr;
    inputs->Obj.stride = tmp->StrideB;
@@ -76,10 +76,10 @@ static void _tnl_import_normal( GLcontext *ctx,
    GLboolean is_writeable = 0;
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
 
-   tmp = _ac_import_normal(ctx, GL_FLOAT, 
-			   stride ? 3*sizeof(GLfloat) : 0, writeable, 
+   tmp = _ac_import_normal(ctx, GL_FLOAT,
+			   stride ? 3*sizeof(GLfloat) : 0, writeable,
 			   &is_writeable);
-      
+
    inputs->Normal.data = (GLfloat (*)[3]) tmp->Ptr;
    inputs->Normal.start = (GLfloat *) tmp->Ptr;
    inputs->Normal.stride = tmp->StrideB;
@@ -99,13 +99,13 @@ static void _tnl_import_color( GLcontext *ctx,
    GLboolean is_writeable = 0;
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
 
-   tmp = _ac_import_color(ctx, 
-			  GL_UNSIGNED_BYTE, 
-			  stride ? 4*sizeof(GLubyte) : 0, 
+   tmp = _ac_import_color(ctx,
+			  GL_UNSIGNED_BYTE,
+			  stride ? 4*sizeof(GLubyte) : 0,
 			  4,
-			  writeable, 
+			  writeable,
 			  &is_writeable);
-      
+
    inputs->Color.data = (GLchan (*)[4]) tmp->Ptr;
    inputs->Color.start = (GLchan *) tmp->Ptr;
    inputs->Color.stride = tmp->StrideB;
@@ -125,12 +125,12 @@ static void _tnl_import_secondarycolor( GLcontext *ctx,
    GLboolean is_writeable = 0;
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
 
-   tmp = _ac_import_secondarycolor(ctx, GL_UNSIGNED_BYTE, 
-				   stride ? 4*sizeof(GLubyte) : 0, 
+   tmp = _ac_import_secondarycolor(ctx, GL_UNSIGNED_BYTE,
+				   stride ? 4*sizeof(GLubyte) : 0,
 				   4,
-				   writeable, 
+				   writeable,
 				   &is_writeable);
-      
+
    inputs->SecondaryColor.data = (GLchan (*)[4]) tmp->Ptr;
    inputs->SecondaryColor.start = (GLchan *) tmp->Ptr;
    inputs->SecondaryColor.stride = tmp->StrideB;
@@ -149,10 +149,10 @@ static void _tnl_import_fogcoord( GLcontext *ctx,
     struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
 
-   tmp = _ac_import_fogcoord(ctx, GL_FLOAT, 
-			     stride ? sizeof(GLfloat) : 0, writeable, 
+   tmp = _ac_import_fogcoord(ctx, GL_FLOAT,
+			     stride ? sizeof(GLfloat) : 0, writeable,
 			     &is_writeable);
-      
+
    inputs->FogCoord.data = (GLfloat *) tmp->Ptr;
    inputs->FogCoord.start = (GLfloat *) tmp->Ptr;
    inputs->FogCoord.stride = tmp->StrideB;
@@ -171,10 +171,10 @@ static void _tnl_import_index( GLcontext *ctx,
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
 
-   tmp = _ac_import_index(ctx, GL_UNSIGNED_INT, 
-			  stride ? sizeof(GLuint) : 0, writeable, 
+   tmp = _ac_import_index(ctx, GL_UNSIGNED_INT,
+			  stride ? sizeof(GLuint) : 0, writeable,
 			  &is_writeable);
-      
+
    inputs->Index.data = (GLuint *) tmp->Ptr;
    inputs->Index.start = (GLuint *) tmp->Ptr;
    inputs->Index.stride = tmp->StrideB;
@@ -185,7 +185,7 @@ static void _tnl_import_index( GLcontext *ctx,
       inputs->Index.flags |= VEC_NOT_WRITEABLE;
 }
 
-   
+
 static void _tnl_import_texcoord( GLcontext *ctx,
 			     GLuint i,
 			     GLboolean writeable,
@@ -195,12 +195,12 @@ static void _tnl_import_texcoord( GLcontext *ctx,
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
 
-   tmp = _ac_import_texcoord(ctx, i, GL_FLOAT, 
-			     stride ? 4*sizeof(GLfloat) : 0, 
+   tmp = _ac_import_texcoord(ctx, i, GL_FLOAT,
+			     stride ? 4*sizeof(GLfloat) : 0,
 			     0,
-			     writeable, 
+			     writeable,
 			     &is_writeable);
-      
+
    inputs->TexCoord[i].data = (GLfloat (*)[4]) tmp->Ptr;
    inputs->TexCoord[i].start = (GLfloat *) tmp->Ptr;
    inputs->TexCoord[i].stride = tmp->StrideB;
@@ -211,8 +211,8 @@ static void _tnl_import_texcoord( GLcontext *ctx,
    if (!is_writeable)
       inputs->TexCoord[i].flags |= VEC_NOT_WRITEABLE;
 }
- 
-  
+
+
 static void _tnl_import_edgeflag( GLcontext *ctx,
 			     GLboolean writeable,
 			     GLboolean stride )
@@ -221,11 +221,11 @@ static void _tnl_import_edgeflag( GLcontext *ctx,
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
 
-   tmp = _ac_import_edgeflag(ctx, GL_UNSIGNED_BYTE, 
-			     stride ? sizeof(GLubyte) : 0, 
-			     0, 
+   tmp = _ac_import_edgeflag(ctx, GL_UNSIGNED_BYTE,
+			     stride ? sizeof(GLubyte) : 0,
+			     0,
 			     &is_writeable);
-      
+
    inputs->EdgeFlag.data = (GLubyte *) tmp->Ptr;
    inputs->EdgeFlag.start = (GLubyte *) tmp->Ptr;
    inputs->EdgeFlag.stride = tmp->StrideB;
@@ -253,7 +253,7 @@ static void _tnl_upgrade_client_data( GLcontext *ctx,
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    (void) inputs;
 
-   if ((required & VERT_CLIP) && VB->ClipPtr == VB->ObjPtr) 
+   if ((required & VERT_CLIP) && VB->ClipPtr == VB->ObjPtr)
       required |= VERT_OBJ;
 
 /*     _tnl_print_vert_flags("_tnl_upgrade_client_data", required); */
@@ -295,13 +295,13 @@ static void _tnl_upgrade_client_data( GLcontext *ctx,
    }
 
    if (required & VERT_TEX_ANY)
-      for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) 
+      for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
 	 if ((required & VERT_TEX(i)) && (VB->TexCoordPtr[i]->flags & flags)) {
 	    ASSERT(VB->TexCoordPtr[i] == &inputs->TexCoord[i]);
 	    _tnl_import_texcoord( ctx, i, writeable, stride );
 	    VB->importable_data &= ~VERT_TEX(i);
 	 }
-   
+
 }
 
 
@@ -323,11 +323,11 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
       ASSERT(start == (GLint) ctx->Array.LockFirst);
       ASSERT(count == (GLint) ctx->Array.LockCount);
    }
-   
+
    imports = tnl->pipeline.inputs;
 
    _ac_import_range( ctx, start, count );
-   
+
    VB->Count = count - start;
    VB->FirstClipped = VB->Count;
 
@@ -335,14 +335,14 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
    VB->MaterialMask = 0;
    VB->Material = 0;
    VB->Flag = 0;
-   
+
 /*     _tnl_print_vert_flags("_tnl_vb_bind_arrays: inputs", inputs); */
 /*     _tnl_print_vert_flags("_tnl_vb_bind_arrays: imports", imports); */
 /*     _tnl_print_vert_flags("_tnl_vb_bind_arrays: _Enabled", ctx->Array._Enabled); */
 
    if (inputs & VERT_OBJ) {
       if (imports & VERT_OBJ) {
-	 _tnl_import_vertex( ctx, 0, 0 ); 
+	 _tnl_import_vertex( ctx, 0, 0 );
 	 tmp->Obj.count = VB->Count;
       }
       VB->ObjPtr = &tmp->Obj;
@@ -350,7 +350,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
 
    if (inputs & VERT_NORM) {
       if (imports & VERT_NORM) {
-	 _tnl_import_normal( ctx, 0, 0 ); 
+	 _tnl_import_normal( ctx, 0, 0 );
 	 tmp->Normal.count = VB->Count;
       }
       VB->NormalPtr = &tmp->Normal;
@@ -358,7 +358,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
 
    if (inputs & VERT_RGBA) {
       if (imports & VERT_RGBA) {
-	 _tnl_import_color( ctx, 0, 0 ); 
+	 _tnl_import_color( ctx, 0, 0 );
 	 tmp->Color.count = VB->Count;
       }
       VB->ColorPtr[0] = &tmp->Color;
@@ -367,42 +367,42 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
 
    if (inputs & VERT_INDEX) {
       if (imports & VERT_INDEX) {
-	 _tnl_import_index( ctx, 0, 0 ); 
+	 _tnl_import_index( ctx, 0, 0 );
 	 tmp->Index.count = VB->Count;
       }
       VB->IndexPtr[0] = &tmp->Index;
       VB->IndexPtr[1] = 0;
-   }      
+   }
 
 
    if (inputs & VERT_FOG_COORD) {
       if (imports & VERT_FOG_COORD) {
-	 _tnl_import_fogcoord( ctx, 0, 0 ); 
+	 _tnl_import_fogcoord( ctx, 0, 0 );
 	 tmp->FogCoord.count = VB->Count;
       }
       VB->FogCoordPtr = &tmp->FogCoord;
    }
-    
+
    if (inputs & VERT_EDGE) {
-      _tnl_import_edgeflag( ctx, GL_TRUE, sizeof(GLboolean) ); 
+      _tnl_import_edgeflag( ctx, GL_TRUE, sizeof(GLboolean) );
       VB->EdgeFlag = (GLboolean *) tmp->EdgeFlag.data;
    }
-    
+
    if (inputs & VERT_SPEC_RGB) {
       if (imports & VERT_SPEC_RGB) {
-	 _tnl_import_secondarycolor( ctx, 0, 0 ); 
+	 _tnl_import_secondarycolor( ctx, 0, 0 );
 	 tmp->SecondaryColor.count = VB->Count;
       }
       VB->SecondaryColorPtr[0] = &tmp->SecondaryColor;
       VB->SecondaryColorPtr[1] = 0;
    }
-   
+
    if (inputs & VERT_TEX_ANY) {
       GLuint i;
       for (i = 0; i < ctx->Const.MaxTextureUnits ; i++)
 	 if (inputs & VERT_TEX(i)) {
 	    if (imports & VERT_TEX(i)) {
-	       _tnl_import_texcoord( ctx, i, 0, 0 ); 
+	       _tnl_import_texcoord( ctx, i, 0, 0 );
 	       tmp->TexCoord[i].count = VB->Count;
 	    }
 	    VB->TexCoordPtr[i] = &tmp->TexCoord[i];
@@ -414,7 +414,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
    VB->import_data = _tnl_upgrade_client_data;
    VB->importable_data = imports & VERT_FIXUP;
 /*     _tnl_print_vert_flags("_tnl_vb_bind_arrays: importable", VB->importable_data); */
-   
+
 }
 
 
@@ -424,7 +424,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
  * consecutive calls to ArrayElement with consecutive indices.
  */
 void _tnl_fill_immediate_drawarrays( GLcontext *ctx, struct immediate *IM,
-				     GLuint start, GLuint count ) 
+				     GLuint start, GLuint count )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint required = ctx->Array._Enabled;
@@ -449,7 +449,7 @@ void _tnl_fill_immediate_drawarrays( GLcontext *ctx, struct immediate *IM,
    else if (ctx->Array.Vertex.Size == 3)
       required |= VERT_OBJ_23;
 
-	
+
    if (required & VERT_NORM) {
       _math_trans_3f( IM->Normal + IM->Start,
 		      ctx->Array.Normal.Ptr,
@@ -457,7 +457,7 @@ void _tnl_fill_immediate_drawarrays( GLcontext *ctx, struct immediate *IM,
 		      ctx->Array.Normal.Type,
 		      start, n );
    }
-	
+
    if (required & VERT_EDGE) {
       _math_trans_1ub( IM->EdgeFlag + IM->Start,
 		       ctx->Array.EdgeFlag.Ptr,
@@ -465,10 +465,10 @@ void _tnl_fill_immediate_drawarrays( GLcontext *ctx, struct immediate *IM,
 		       ctx->Array.EdgeFlag.Type,
 		       start, n );
    }
-	
+
    if (required & VERT_RGBA) {
       _math_trans_4chan( IM->Color + IM->Start,
-		       ctx->Array.Color.Ptr, 
+		       ctx->Array.Color.Ptr,
 		       ctx->Array.Color.StrideB,
 		       ctx->Array.Color.Type,
 		       ctx->Array.Color.Size,
@@ -478,28 +478,28 @@ void _tnl_fill_immediate_drawarrays( GLcontext *ctx, struct immediate *IM,
    if (required & VERT_SPEC_RGB) {
       _math_trans_4chan( IM->SecondaryColor + IM->Start,
 			 ctx->Array.SecondaryColor.Ptr,
-			 ctx->Array.SecondaryColor.StrideB, 
-			 ctx->Array.SecondaryColor.Type, 
-			 ctx->Array.SecondaryColor.Size, 
+			 ctx->Array.SecondaryColor.StrideB,
+			 ctx->Array.SecondaryColor.Type,
+			 ctx->Array.SecondaryColor.Size,
 			 start, n );
    }
 
    if (required & VERT_FOG_COORD) {
       _math_trans_1f( IM->FogCoord + IM->Start,
-		      ctx->Array.FogCoord.Ptr, 
+		      ctx->Array.FogCoord.Ptr,
 		      ctx->Array.FogCoord.StrideB,
 		      ctx->Array.FogCoord.Type,
 		      start, n );
    }
-	
+
    if (required & VERT_INDEX) {
       _math_trans_1ui( IM->Index + IM->Start,
-		       ctx->Array.Index.Ptr, 
-		       ctx->Array.Index.StrideB, 
-		       ctx->Array.Index.Type, 
+		       ctx->Array.Index.Ptr,
+		       ctx->Array.Index.StrideB,
+		       ctx->Array.Index.Type,
 		       start, n );
    }
-	
+
    if (required & VERT_TEX_ANY) {
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
 	 if (required & VERT_TEX(i)) {
@@ -513,15 +513,13 @@ void _tnl_fill_immediate_drawarrays( GLcontext *ctx, struct immediate *IM,
 	    if (ctx->Array.TexCoord[i].Size == 4)
 	       IM->TexSize |= TEX_SIZE_4(i);
 	    else if (ctx->Array.TexCoord[i].Size == 3)
-	       IM->TexSize |= TEX_SIZE_3(i);	       
+	       IM->TexSize |= TEX_SIZE_3(i);
 	 }
       }
    }
-   
+
    IM->Count = IM->Start + n;
    IM->Flag[IM->Start] |= required;
-   for (i = IM->Start+1 ; i < IM->Count ; i++) 
+   for (i = IM->Start+1 ; i < IM->Count ; i++)
       IM->Flag[i] = required;
 }
-
-

@@ -1,4 +1,4 @@
-/* $Id: s_context.h,v 1.6 2001/03/07 04:50:49 brianp Exp $ */
+/* $Id: s_context.h,v 1.7 2001/03/12 00:48:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -149,7 +149,7 @@ typedef struct
    swrast_tri_func Triangle;
 
    /* Placeholders for when seperate specular (or secondary color) is
-    * enabled but texturing is not.  
+    * enabled but texturing is not.
     */
    swrast_point_func SpecPoint;
    swrast_line_func SpecLine;

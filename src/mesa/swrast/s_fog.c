@@ -1,21 +1,21 @@
-/* $Id: s_fog.c,v 1.10 2001/03/07 05:06:12 brianp Exp $ */
+/* $Id: s_fog.c,v 1.11 2001/03/12 00:48:42 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -45,8 +45,8 @@
  */
 void
 _mesa_fog_rgba_pixels( const GLcontext *ctx,
-                       GLuint n, 
-		       const GLfixed fog[], 
+                       GLuint n,
+		       const GLfixed fog[],
 		       GLchan rgba[][4] )
 {
    GLuint i;
@@ -101,18 +101,18 @@ _mesa_fog_ci_pixels( const GLcontext *ctx,
 
 
 /*
- * Calculate fog coords from window z values 
+ * Calculate fog coords from window z values
  * Input:  n - number of pixels
  *         z - array of integer depth values
  *         red, green, blue, alpha - pixel colors
  * Output:  red, green, blue, alpha - fogged pixel colors
  *
- * Use lookup table & interpolation? 
+ * Use lookup table & interpolation?
  */
 void
 _mesa_win_fog_coords_from_z( const GLcontext *ctx,
-			     GLuint n, 
-			     const GLdepth z[], 
+			     GLuint n,
+			     const GLdepth z[],
 			     GLfixed fogcoord[] )
 {
    const GLboolean ortho = (ctx->ProjectionMatrix.m[15] != 0.0F);
@@ -274,4 +274,3 @@ _mesa_depth_fog_ci_pixels( const GLcontext *ctx,
    _mesa_win_fog_coords_from_z( ctx, n, z, fog );
    _mesa_fog_ci_pixels( ctx, n, fog, index );
 }
-
