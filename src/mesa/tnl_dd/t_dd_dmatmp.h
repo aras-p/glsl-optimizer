@@ -1011,8 +1011,7 @@ static void TAG(render_quad_strip_elts)( GLcontext *ctx,
 	    {
 	       GLint i;
 	       GLint quads = (nr/2)-1;
-	       void *buf = ALLOC_ELTS( quads*6 );
-	       ELTS_VARS( buf );
+	       ELTS_VARS( ALLOC_ELTS( quads*6 ) );
 
 	       for ( i = j-start ; i < j-start+quads ; i++, elts += 2 ) {
 		  EMIT_TWO_ELTS( 0, elts[0], elts[1] );
@@ -1100,8 +1099,7 @@ static void TAG(render_quads_elts)( GLcontext *ctx,
 	 {
 	    GLint quads = nr/4;
 	    GLint i;
-	    void *buf = ALLOC_ELTS( quads * 6 );
-	    ELTS_VARS(buf);
+	    ELTS_VARS( ALLOC_ELTS( quads * 6 ) );
 
 	    for ( i = j-start ; i < j-start+quads ; i++, elts += 4 ) {
 	       EMIT_TWO_ELTS( 0, elts[0], elts[1] );
