@@ -1603,7 +1603,6 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
    for (i = 0; i < dpy->numModes; i++) {
       const __GLcontextModes *mode = dpy->modes + i;
       if (mode->rgbMode == rgbFlag &&
-	  (mode->redBits+mode->greenBits+mode->blueBits+mode->alphaBits) == dpy->driverContext.bpp &&
           mode->redBits >= redBits &&
           mode->greenBits >= greenBits &&
           mode->blueBits >= blueBits &&
