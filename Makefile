@@ -304,6 +304,26 @@ DEMO_FILES =	\
 	$(DIRECTORY)/progs/ggi/*.c
 
 
+DRI_FILES = \
+	$(DIRECTORY)/src/glx/Makefile					\
+	$(DIRECTORY)/src/glx/mini/*.[ch]				\
+	$(DIRECTORY)/src/glx/mini/example.miniglx.conf			\
+	$(DIRECTORY)/src/glx/mini/NOTES					\
+	$(DIRECTORY)/src/mesa/drivers/dri/Makefile			\
+	$(DIRECTORY)/src/mesa/drivers/dri/Makefile.template		\
+	$(DIRECTORY)/src/mesa/drivers/dri/common/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/dri/dri_client/imports/*.h	\
+	$(DIRECTORY)/src/mesa/drivers/dri/*/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/dri/*/depend			\
+	$(DIRECTORY)/src/mesa/drivers/dri/*/Makefile			\
+	$(DIRECTORY)/src/mesa/drivers/dri/*/Doxyfile			\
+	$(DIRECTORY)/src/mesa/drivers/dri/*/server/*.[ch]
+
+
+# Everything for new a Mesa release:
+tarballs: lib_gz demo_gz lib_bz2 demo_bz2 lib_zip demo_zip md5
+
+
 lib_gz:
 	rm -f configs/current ; \
 	cd .. ; \
@@ -350,6 +370,3 @@ md5:
 	@-md5sum $(DEMO_NAME).tar.gz
 	@-md5sum $(DEMO_NAME).tar.bz2
 	@-md5sum $(DEMO_NAME).zip
-
-# Everything for new a Mesa release:
-tarballs: lib_gz demo_gz lib_bz2 demo_bz2 lib_zip demo_zip md5
