@@ -506,7 +506,11 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 		
 	case GL_POLYGON_OFFSET_FILL:
 		R300_STATECHANGE(r300, unk42B4);
-		r300->hw.unk42B4.cmd[1] = 3;
+		if(state){
+			r300->hw.unk42B4.cmd[1] |= 3;
+			} else {
+			r300->hw.unk42B4.cmd[1] &= ~3;
+			}
 		break;
 	case GL_VERTEX_PROGRAM_ARB:
 		//TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, state);
