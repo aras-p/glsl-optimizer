@@ -422,7 +422,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    _math_matrix_set_identity( &rmesa->tmpmat );
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
-   if (!rmesa->r200Screen->chipset & R200_CHIPSET_YCBCR_BROKEN) {
+   if (!(rmesa->r200Screen->chipset & R200_CHIPSET_YCBCR_BROKEN)) {
      /* yuv textures don't work with some chips - R200 / rv280 okay so far
 	others get the bit ordering right but don't actually do YUV-RGB conversion */
       _mesa_enable_extension( ctx, "GL_MESA_ycbcr_texture" );
