@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.9 1999/11/18 09:20:51 wertmann Exp $
+# $Id: Makefile.X11,v 1.10 1999/11/28 20:10:24 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -99,7 +99,6 @@ CORE_SOURCES = \
 DRIVER_SOURCES = \
 	X/glxapi.c \
 	X/fakeglx.c \
-	X/realglx.c \
 	X/xfonts.c \
 	X/xmesa1.c \
 	X/xmesa2.c \
@@ -147,8 +146,6 @@ OBJECTS = $(ASM_SOURCES:.S=.o) \
 X/glxapi.o: X/glxapi.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 X/fakeglx.o: X/fakeglx.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X/realglx.o: X/realglx.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 X/xfonts.o: X/xfonts.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
