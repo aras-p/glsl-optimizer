@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.27 2002/04/12 15:39:59 brianp Exp $ */
+/* $Id: s_lines.c,v 1.28 2002/04/19 00:38:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,7 +77,8 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       start = width / 2 - 1;
 
    if (xMajor) {
-      GLuint i, w;
+      GLuint i;
+      GLint w;
       for (w = 0; w < width; w++) {
          if (w == 0) {
             for (i = 0; i < span->end; i++)
@@ -96,7 +97,8 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       }
    }
    else {
-      GLuint i, w;
+      GLuint i;
+      GLint w;
       for (w = 0; w < width; w++) {
          if (w == 0) {
             for (i = 0; i < span->end; i++)

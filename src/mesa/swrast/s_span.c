@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.38 2002/04/12 15:39:59 brianp Exp $ */
+/* $Id: s_span.c,v 1.39 2002/04/19 00:38:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -753,7 +753,7 @@ _mesa_write_index_span( GLcontext *ctx, struct sw_span *span)
 
 #ifdef DEBUG
    if (span->arrayMask & SPAN_XY) {
-      int i;
+      GLuint i;
       for (i = 0; i < span->end; i++) {
          if (span->mask[i]) {
             assert(span->xArray[i] >= ctx->DrawBuffer->_Xmin);
@@ -925,7 +925,7 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span)
 
 #ifdef DEBUG
    if (span->arrayMask & SPAN_XY) {
-      int i;
+      GLuint i;
       for (i = 0; i < span->end; i++) {
          if (span->mask[i]) {
             assert(span->xArray[i] >= ctx->DrawBuffer->_Xmin);
@@ -1018,6 +1018,7 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span)
          monoColor = GL_FALSE;
       }
       else if (ctx->Color.BlendEnabled) {
+         printf("blending\n");
          _mesa_blend_span(ctx, span, span->color.rgba);
          monoColor = GL_FALSE;
       }
@@ -1139,7 +1140,7 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span)
 
 #ifdef DEBUG
    if (span->arrayMask & SPAN_XY) {
-      int i;
+      GLuint i;
       for (i = 0; i < span->end; i++) {
          if (span->mask[i]) {
             assert(span->xArray[i] >= ctx->DrawBuffer->_Xmin);
@@ -1305,8 +1306,10 @@ _mesa_read_rgba_span( GLcontext *ctx, GLframebuffer *buffer,
                       GLuint n, GLint x, GLint y, GLchan rgba[][4] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   if (y < 0 || y >= buffer->Height
-       || x + (GLint) n < 0 || x >= buffer->Width) {
+   const GLint bufWidth = (GLint) buffer->Width;
+   const GLint bufHeight = (GLint) buffer->Width;
+
+   if (y < 0 || y >= bufHeight || x + (GLint) n < 0 || x >= bufWidth) {
       /* completely above, below, or right */
       /* XXX maybe leave undefined? */
       BZERO(rgba, 4 * n * sizeof(GLchan));
@@ -1321,14 +1324,14 @@ _mesa_read_rgba_span( GLcontext *ctx, GLframebuffer *buffer,
             /* completely left of window */
             return;
          }
-         if (length > buffer->Width) {
-            length = buffer->Width;
+         if (length > bufWidth) {
+            length = bufWidth;
          }
       }
-      else if ((GLint) (x + n) > buffer->Width) {
+      else if ((GLint) (x + n) > bufWidth) {
          /* right edge clipping */
          skip = 0;
-         length = buffer->Width - x;
+         length = bufWidth - x;
          if (length < 0) {
             /* completely to right of window */
             return;
@@ -1357,8 +1360,10 @@ _mesa_read_index_span( GLcontext *ctx, GLframebuffer *buffer,
                        GLuint n, GLint x, GLint y, GLuint indx[] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   if (y < 0 || y >= buffer->Height
-       || x + (GLint) n < 0 || x >= buffer->Width) {
+   const GLint bufWidth = (GLint) buffer->Width;
+   const GLint bufHeight = (GLint) buffer->Width;
+
+   if (y < 0 || y >= bufHeight || x + (GLint) n < 0 || x >= bufWidth) {
       /* completely above, below, or right */
       BZERO(indx, n * sizeof(GLuint));
    }
@@ -1372,14 +1377,14 @@ _mesa_read_index_span( GLcontext *ctx, GLframebuffer *buffer,
             /* completely left of window */
             return;
          }
-         if (length > buffer->Width) {
-            length = buffer->Width;
+         if (length > bufWidth) {
+            length = bufWidth;
          }
       }
-      else if ((GLint) (x + n) > buffer->Width) {
+      else if ((GLint) (x + n) > bufWidth) {
          /* right edge clipping */
          skip = 0;
-         length = buffer->Width - x;
+         length = bufWidth - x;
          if (length < 0) {
             /* completely to right of window */
             return;

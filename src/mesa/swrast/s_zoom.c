@@ -1,4 +1,4 @@
-/* $Id: s_zoom.c,v 1.14 2002/04/12 15:39:59 brianp Exp $ */
+/* $Id: s_zoom.c,v 1.15 2002/04/19 00:38:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,7 +45,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
    GLint r0, r1, row;
    GLint c0, c1, skipCol;
    GLint i, j;
-   const GLint maxWidth = MIN2( ctx->DrawBuffer->Width, MAX_WIDTH );
+   const GLuint maxWidth = MIN2( ctx->DrawBuffer->Width, MAX_WIDTH );
    GLchan rgbaSave[MAX_WIDTH][4];
    GLuint indexSave[MAX_WIDTH];
    struct sw_span zoomed;
@@ -128,18 +128,18 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
     */
    if (r1 < 0) /* below window */
       return;
-   if (r0 >= ctx->DrawBuffer->Height) /* above window */
+   if (r0 >= (GLint) ctx->DrawBuffer->Height) /* above window */
       return;
    if (c1 < 0) /* left of window */
       return;
-   if (c0 >= ctx->DrawBuffer->Width) /* right of window */
+   if (c0 >= (GLint) ctx->DrawBuffer->Width) /* right of window */
       return;
 
    /* zoom the span horizontally */
    if (format == GL_RGBA) {
       if (ctx->Pixel.ZoomX == -1.0F) {
          /* common case */
-         for (j = zoomed.start; j < zoomed.end; j++) {
+         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
             i = span->end - (j + skipCol) - 1;
             COPY_CHAN4(zoomed.color.rgba[j], rgba[i]);
          }
@@ -147,7 +147,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
       else {
          /* general solution */
          const GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
-         for (j = zoomed.start; j < zoomed.end; j++) {
+         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
             i = (GLint) ((j + skipCol) * xscale);
             if (i < 0)
                i = span->end + i - 1;
@@ -158,7 +158,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
    else if (format == GL_RGB) {
       if (ctx->Pixel.ZoomX == -1.0F) {
          /* common case */
-         for (j = zoomed.start; j < zoomed.end; j++) {
+         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
             i = span->end - (j + skipCol) - 1;
             zoomed.color.rgba[j][0] = rgb[i][0];
             zoomed.color.rgba[j][1] = rgb[i][1];
@@ -169,7 +169,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
       else {
          /* general solution */
          const GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
-         for (j = zoomed.start; j < zoomed.end; j++) {
+         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
             i = (GLint) ((j + skipCol) * xscale);
             if (i < 0)
                i = span->end + i - 1;
@@ -183,7 +183,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
    else if (format == GL_COLOR_INDEX) {
       if (ctx->Pixel.ZoomX == -1.0F) {
          /* common case */
-         for (j = zoomed.start; j < zoomed.end; j++) {
+         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
             i = span->end - (j + skipCol) - 1;
             zoomed.color.index[j] = indexes[i];
          }
@@ -191,7 +191,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
       else {
          /* general solution */
          const GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
-         for (j = zoomed.start; j < zoomed.end; j++) {
+         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
             i = (GLint) ((j + skipCol) * xscale);
             if (i < 0)
                i = span->end + i - 1;
@@ -297,7 +297,8 @@ _mesa_write_zoomed_stencil_span( GLcontext *ctx,
       /* below window */
       return;
    }
-   if (r0>=ctx->DrawBuffer->Height && r1>=ctx->DrawBuffer->Height) {
+   if (r0 >= (GLint) ctx->DrawBuffer->Height &&
+       r1 >= (GLint) ctx->DrawBuffer->Height) {
       /* above window */
       return;
    }

@@ -1,4 +1,4 @@
-/* $Id: s_readpix.c,v 1.13 2002/01/12 16:12:52 brianp Exp $ */
+/* $Id: s_readpix.c,v 1.14 2002/04/19 00:38:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -251,8 +251,8 @@ read_fast_rgba_pixels( GLcontext *ctx,
          readWidth += srcX;
          srcX = 0;
       }
-      if (srcX + readWidth > ctx->ReadBuffer->Width)
-         readWidth -= (srcX + readWidth - ctx->ReadBuffer->Width);
+      if (srcX + readWidth > (GLint) ctx->ReadBuffer->Width)
+         readWidth -= (srcX + readWidth - (GLint) ctx->ReadBuffer->Width);
       if (readWidth <= 0)
          return GL_TRUE;
 
@@ -262,8 +262,8 @@ read_fast_rgba_pixels( GLcontext *ctx,
          readHeight += srcY;
          srcY = 0;
       }
-      if (srcY + readHeight > ctx->ReadBuffer->Height)
-         readHeight -= (srcY + readHeight - ctx->ReadBuffer->Height);
+      if (srcY + readHeight > (GLint) ctx->ReadBuffer->Height)
+         readHeight -= (srcY + readHeight - (GLint) ctx->ReadBuffer->Height);
       if (readHeight <= 0)
          return GL_TRUE;
 

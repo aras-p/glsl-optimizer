@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.29 2002/02/02 21:40:33 brianp Exp $ */
+/* $Id: s_context.c,v 1.30 2002/04/19 00:38:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,9 +75,9 @@ _swrast_update_rasterflags( GLcontext *ctx )
       RasterMask |= ALPHABUF_BIT;
 
    if (   ctx->Viewport.X < 0
-       || ctx->Viewport.X + ctx->Viewport.Width > ctx->DrawBuffer->Width
+       || ctx->Viewport.X + ctx->Viewport.Width > (GLint) ctx->DrawBuffer->Width
        || ctx->Viewport.Y < 0
-       || ctx->Viewport.Y + ctx->Viewport.Height > ctx->DrawBuffer->Height) {
+       || ctx->Viewport.Y + ctx->Viewport.Height > (GLint) ctx->DrawBuffer->Height) {
       RasterMask |= CLIP_BIT;
    }
 

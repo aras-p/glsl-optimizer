@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.60 2002/04/12 21:17:28 brianp Exp $ */
+/* $Id: s_texture.c,v 1.61 2002/04/19 00:38:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2250,7 +2250,7 @@ sample_depth_texture( GLcontext *ctx, GLuint unit,
                result = 0;
                break;
             case GL_NEVER:
-               result = CHAN_MAXF;
+               result = CHAN_MAX;
                break;
             case GL_NONE:
                /* ordinary bilinear filtering */
