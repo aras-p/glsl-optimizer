@@ -72,6 +72,10 @@ int I830_DEBUG = (0);
 
 #define DRIVER_DATE                     "20021115"
 
+
+const char __driConfigOptions[] = { 0 };
+const GLuint __driNConfigOptions = 0;
+
 static const GLubyte *i830DDGetString( GLcontext *ctx, GLenum name )
 {
    const char * chipset;

@@ -39,6 +39,9 @@
 
 #define FFB_DATE	"20021125"
 
+const char __driConfigOptions[] = { 0 };
+const GLuint __driNConfigOptions = 0;
+
 /* Mesa's Driver Functions */
 
 static const GLubyte *ffbDDGetString(GLcontext *ctx, GLenum name)

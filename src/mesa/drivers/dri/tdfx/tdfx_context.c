@@ -54,6 +54,8 @@
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 
+const char __driConfigOptions[] = { 0 };
+const GLuint __driNConfigOptions = 0;
 
 /*
  * Enable/Disable the extensions for this context.
