@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: wgl.c,v 1.2 1999/09/19 09:59:20 tjump Exp $ */
 
 /*
 * This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ extern "C" {
 #include <windows.h>
 
 #include <GL/gl.h>
-#include <GL/glu.h>
+//#include <GL/glu.h>
 
 #ifdef __cplusplus
 }
