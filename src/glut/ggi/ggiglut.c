@@ -26,6 +26,8 @@
  * 
  */
 
+#define BUILDING_GGIGLUT
+
 #define WIDTH	640
 #define HEIGHT	480
 #define GRAPHTYPE_RGB	GT_16BIT
@@ -41,9 +43,13 @@
 #include <stdarg.h>
 #include <string.h>
 #include "GL/ggimesa.h"
+#include "debug.h"
 
 #include <ggi/ggi.h>
 #include <ggi/gii.h>
+
+int _ggiglutDebugSync = 0;
+uint32 _ggiglutDebugState = 0;
 
 char *__glutProgramName = "GGI";
 
@@ -103,42 +109,30 @@ static menu_t *mainmenu;
 static menu_t *curmenu;
 static menu_t *activemenu;
 
-int glut_ggi_debug = GL_FALSE;
-
-void glut_ggiPRINT(char *format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	fprintf(stderr, "GGIGLUT: ");
-	vfprintf(stderr, format, args);
-	va_end(args);
-}
-
-void glut_ggiDEBUG(char *format, ...)
-{
-	va_list args;
-	if (glut_ggi_debug)
-	{
-		va_start(args, format);
-		fprintf(stderr, "GGIGLUT: ");
-		vfprintf(stderr, format, args);
-		va_end(args);
-	}
-}
-
 void glutInit(int *argc, char **argv)
 {
 	ggi_graphtype gt;
 	int i, k;
-	char *s;
+	char *str;
+	
+	GGIGLUTDPRINT_CORE("glutInit() called\n");
 
 	#define REMOVE  {for (k=i;k<*argc-1;k++) argv[k]=argv[k+1];  \
 				(*argc)--; i--; }
 
 	if (__glut_init) return;
 	
-	s = getenv("GGIGLUT_DEBUG");
-	glut_ggi_debug = (s && atoi(s));
+        str = getenv("GGIGLUT_DEBUG");
+	if (str != NULL) {
+		_ggiglutDebugState = atoi(str);
+		fprintf(stderr, "Debugging=%d\n", _ggiglutDebugState);
+		GGIGLUTDPRINT_CORE("Debugging=%d\n", _ggiglutDebugState);
+	}
+	
+	str = getenv("GGIGLUT_DEBUGSYNC");
+	if (str != NULL) {
+		_ggiglutDebugSync = 1;
+	}
 
 	if (argc && argv)
 	{
@@ -191,24 +185,29 @@ void glutInit(int *argc, char **argv)
 
 void glutInitWindowPosition(int x, int y)
 {
+	GGIGLUTDPRINT_CORE("glutInitWindowPosition() called\n");
 }
 
 void glutInitWindowSize(int x, int y)
 {
+	GGIGLUTDPRINT_CORE("glutInitWindowsSize() called\n");
 }
 
 void glutFullScreen(void)
 {
+	GGIGLUTDPRINT_CORE("glutFullScreen() called\n");
 }
 
 void glutInitDisplayMode(unsigned int mode)
 {
+	GGIGLUTDPRINT_CORE("glutInitDisplayMode() called\n");
+	
 	__glut_mode = mode;
 }
 
 void glutInitDisplayString(const char *string)
 {
-	glut_ggiPRINT("glutInitDisplayString: %s\n", string);
+	GGIGLUTDPRINT_CORE("glutInitDisplayString(%s) called\n", string);
 }
 
 int glutCreateWindow(const char *title)
@@ -227,10 +226,12 @@ int glutCreateWindow(const char *title)
 	int rgb;
 	int err;
 
+	GGIGLUTDPRINT_CORE("glutCreateWindow() called\n");
+	
 	if (!__glut_init) 
 	  glutInit(NULL, NULL);
 
-	glut_ggiPRINT("GGIGLUT: %s\n", title);
+	GGIGLUTDPRINT("GGIGLUT: %s\n", title);
 
 	rgb = !(__glut_mode & GLUT_INDEX);
 	frames = (__glut_mode & GLUT_DOUBLE) ? 2 : 1;
@@ -264,7 +265,6 @@ int glutCreateWindow(const char *title)
 
 	if (GGIMesaSetVisual(__glut_ctx, __glut_vis, rgb, frames > 1) < 0) 
 	{
-		glut_ggiDEBUG("AAA\n");
 		ggiPanic("GGIMesaSetVisual failed!\n");
 	}
 	
@@ -284,39 +284,51 @@ int glutCreateWindow(const char *title)
 
 void glutReshapeFunc(void (*func)(int, int))
 {
-  __glut_reshape = func;
-  if (__glut_vis && __glut_reshape) 
-    __glut_reshape(__glut_width, __glut_height);
+	GGIGLUTDPRINT_CORE("glutReshapeFunc() called\n");
+	
+	__glut_reshape = func;
+	if (__glut_vis && __glut_reshape) 
+	  __glut_reshape(__glut_width, __glut_height);
 }
 
 void glutKeyboardFunc(void (*keyboard)(unsigned char key, int x, int y))
 {
-  __glut_keyboard = keyboard;
+	GGIGLUTDPRINT_CORE("glutKeyBoardFunc() called\n");
+
+	__glut_keyboard = keyboard;
 }
 
 int glutGetModifiers(void)
 {
-  return __glut_mod_keys;
+	GGIGLUTDPRINT_CORE("glutGetModifiers() called\n");
+
+	return __glut_mod_keys;
 }
 
 void glutEntryFunc(void (*func)(int state))
 {
+	GGIGLUTDPRINT_CORE("glutEntryFunc() called\n");
 }
 
 void glutVisibilitFunc(void (*func)(int state))
 {
+	GGIGLUTDPRINT_CORE("glutVisibilityFunc() called\n");
 }
 
 void glutTimerFunc(unsigned int millis, void (*func)(int value), int value)
 {
+	GGIGLUTDPRINT_CORE("glutTimerFunc() called\n");
 }
 
 void glutMenuStateFunc(void (*func)(int state))
 {
+	GGIGLUTDPRINT_CORE("glutMenuStateFunc() called\n");
 }
 
 int glutGet(GLenum type)
 {
+	GGIGLUTDPRINT_CORE("glutGet() called\n");
+	
 	switch(type)
 	{
 		case GLUT_WINDOW_X:	
@@ -333,59 +345,72 @@ int glutGet(GLenum type)
 		else 
 		  return 0;
 		default:
-		glut_ggiDEBUG("glutGet: unknown type %i\n", type);
+		GGIGLUTDPRINT("glutGet: unknown type %i\n", type);
 	}
 	return 0;
 }
 
 void glutSpecialFunc(void (*special)(int key, int x, int y))
 {
-  __glut_special=special;
+	GGIGLUTDPRINT_CORE("glutSpecialFunc() called\n");
+	
+	__glut_special=special;
 }
 
 void glutDisplayFunc(void (*disp)(void))
 {
-  __glut_display=disp;
+	GGIGLUTDPRINT_CORE("glutDisplayFunc() called\n");
+	__glut_display=disp;
 }
 
 void glutSetColor(int index, GLfloat red, GLfloat green, GLfloat blue)
 {
-  ggi_color c;
-  GLfloat max;
+	ggi_color c;
+	GLfloat max;
   
-  if (red > 1.0) red = 1.0;
-  if (red < 0.0) red = 0.0;
-  if (green > 1.0) green = 1.0;
-  if (green < 0.0) green = 0.0;
-  if (blue > 1.0) blue = 1.0;
-  if (blue < 0.0) blue = 0.0;
+	GGIGLUTDPRINT_CORE("glutSetColor() called\n");
+	
+	if (red > 1.0) red = 1.0;
+	if (red < 0.0) red = 0.0;
+	if (green > 1.0) green = 1.0;
+	if (green < 0.0) green = 0.0;
+	if (blue > 1.0) blue = 1.0;
+	if (blue < 0.0) blue = 0.0;
   
-  max = (float)((1 << GGI_COLOR_PRECISION) - 1);
-  
-  c.r = (int)(max * red);
-  c.g = (int)(max * green);
-  c.b = (int)(max * blue);
-  ggiSetPalette(__glut_vis, index, 1, &c);
+	max = (float)((1 << GGI_COLOR_PRECISION) - 1);
+	
+	c.r = (int)(max * red);
+	c.g = (int)(max * green);
+	c.b = (int)(max * blue);
+	ggiSetPalette(__glut_vis, index, 1, &c);
 }
 
 void glutPostRedisplay(void)
 {
-  __glut_redisplay = GL_TRUE;
+	GGIGLUTDPRINT_CORE("glutPostRedisplay() called\n");
+
+	__glut_redisplay = GL_TRUE;
 }
 
 void glutPostWindowRedisplay(int win)
 {
-  __glut_redisplay = GL_TRUE;
+	GGIGLUTDPRINT_CORE("glutPostWindowRedisplay() called\n");
+	
+	__glut_redisplay = GL_TRUE;
 }
 
 void glutSwapBuffers(void)
 {
-  GGIMesaSwapBuffers();
+	GGIGLUTDPRINT_CORE("glutSwapBuffers() called\n");
+	
+	GGIMesaSwapBuffers();
 }
 
 void glutIdleFunc(void (*idle)(void))
 {
-  __glut_idle = idle;
+	GGIGLUTDPRINT_CORE("glutIdleFunc() called\n");
+	
+	__glut_idle = idle;
 }
 
 static void keyboard(ggi_event *ev)
@@ -393,6 +418,8 @@ static void keyboard(ggi_event *ev)
 	int sym;
 	int modifer = 0, key = 0;
   
+	GGIGLUTDPRINT_CORE("keyboard() called\n");
+	
 	sym = ev->key.sym;
   
 	modifer = ev->key.modifiers;
@@ -412,38 +439,39 @@ static void keyboard(ggi_event *ev)
 
 static void mouseabs(ggi_event *ev)
 {
-  int oldx=mousex;
-  int oldy=mousey;
+	int oldx = mousex;
+	int oldy = mousey;
   
-  mousex=ev->pmove.x;
-  mousey=ev->pmove.y;
+	mousex = ev->pmove.x;
+	mousey = ev->pmove.y;
   
-  if (mousex<0) mousex=0;
-  if (mousey<0) mousey=0;
-  if (mousex>=__glut_width) mousex=__glut_width-1;
-  if (mousey>=__glut_height) mousey=__glut_height-1;
-  
-  if (mousex!=oldx || mousey!=oldy) mouse_moved=GL_TRUE;
+	if (mousex < 0) mousex = 0;
+	if (mousey < 0) mousey = 0;
+	if (mousex >= __glut_width) mousex = __glut_width - 1;
+	if (mousey >= __glut_height) mousey = __glut_height - 1;
+	
+	if (mousex != oldx || mousey != oldy) mouse_moved = GL_TRUE;
 }
 
 static void mouse(ggi_event *ev)
 {
-  int oldx=mousex;
-  int oldy=mousey;
+	int oldx = mousex;
+	int oldy = mousey;
   
-  mousex+=ev->pmove.x>>1;
-  mousey+=ev->pmove.y>>1;
-  
-  if (mousex<0) mousex=0;
-  if (mousey<0) mousey=0;
-  if (mousex>=__glut_width) mousex=__glut_width-1;
-  if (mousey>=__glut_height) mousey=__glut_height-1;
-  
-  if (mousex!=oldx || mousey!=oldy) mouse_moved=GL_TRUE;
+	GGIGLUTDPRINT_CORE("mouse() called\n");
+	
+	mousex += ev->pmove.x >> 1;
+	mousey += ev->pmove.y >> 1;
+	
+	if (mousex < 0) mousex = 0;
+	if (mousey < 0) mousey = 0;
+	if (mousex >= __glut_width) mousex = __glut_width - 1;
+	if (mousey >= __glut_height) mousey = __glut_height - 1;
+	
+	if (mousex != oldx || mousey != oldy) mouse_moved = GL_TRUE;
   
 }
 
-/* FIXME: Prototypes belong in headers, not here! [JMT] */
 static void showmenu(void);
 static int clickmenu(void);
 static void updatemouse(void);
@@ -451,54 +479,65 @@ static void drawmouse(void);
 
 static void mousemove(void)
 {
-  if (mouse_moved) {
-    if (__glut_motion && mouse_down) {
-      __glut_motion(mousex,mousey);
-    }
-    
-    if (__glut_passive_motion && (!mouse_down)) {
-      __glut_passive_motion(mousex,mousey);
-    }
+	GGIGLUTDPRINT_CORE("mousemove() called\n");
 
-    if (__glut_menuactive) updatemouse();
-    mouse_moved=GL_FALSE;
-  }
+	if (mouse_moved) {
+		if (__glut_motion && mouse_down) {
+			__glut_motion(mousex,mousey);
+		}
+		
+		if (__glut_passive_motion && (!mouse_down)) {
+			__glut_passive_motion(mousex,mousey);
+		}
+		
+		if (__glut_menuactive) updatemouse();
+		mouse_moved=GL_FALSE;
+	}
 }
 
 static void button(ggi_event *ev)
 {
-  int i;
-  int btn[4]={0,GLUT_LEFT_BUTTON,GLUT_RIGHT_BUTTON,GLUT_MIDDLE_BUTTON};
-  mousemove();
-  
-  if (ev->pbutton.button <= 3) { /* GGI can have >3 buttons ! */ 
-    char state = ev->any.type == evPtrButtonPress ?GLUT_DOWN:GLUT_UP;
-    if (__glut_menuactive) {
-      if (state==GLUT_UP && clickmenu()) {
-	glutPostRedisplay();
-	__glut_menuactive=GL_FALSE;
-      }
-    } else
-      if (btn[ev->pbutton.button]==__glut_menubutton) {
-	__glut_menuactive=GL_TRUE;
-	activemenu=mainmenu;
-	showmenu();
-      } else 
-	if (__glut_mouse) {
-	  __glut_mouse(btn[ev->pbutton.button],state,mousex,mousey);
+	int i;
+	int btn[4] = {
+		0,
+		GLUT_LEFT_BUTTON,
+		GLUT_RIGHT_BUTTON,
+		GLUT_MIDDLE_BUTTON
+	};
+	
+	GGIGLUTDPRINT_CORE("button() called\n");
+	
+	mousemove();
+	
+	if (ev->pbutton.button <= 3) { /* GGI can have >3 buttons ! */ 
+		char state = ev->any.type == evPtrButtonPress ? GLUT_DOWN : GLUT_UP;
+		if (__glut_menuactive) {
+			if (state == GLUT_UP && clickmenu()) {
+				glutPostRedisplay();
+				__glut_menuactive = GL_FALSE;
+			}
+		} else
+		  if (btn[ev->pbutton.button] == __glut_menubutton) {
+			  __glut_menuactive = GL_TRUE;
+			  activemenu = mainmenu;
+			  showmenu();
+		  } else 
+		  if (__glut_mouse) {
+			  __glut_mouse(btn[ev->pbutton.button], state, mousex, mousey);
+		  }
+		if (state == GLUT_DOWN) {
+			mouse_down |= (1 << (ev->pbutton.button - 1));
+		}
+		else mouse_down &= ~( 1 << (ev->pbutton.button - 1));
 	}
-    if (state==GLUT_DOWN) {
-      mouse_down|=(1<<(ev->pbutton.button-1));
-    }
-    else mouse_down&=~(1<<(ev->pbutton.button-1));
-  }
 }
 
 void glutMainLoop(void)
 {
 	ggi_event ev;
 	ggi_event_mask evmask = (emKeyPress | emKeyRepeat | emPtrMove | emPtrButton);
-  
+
+	GGIGLUTDPRINT_CORE("glutMainLoop() called\n");
 
 	ggiSetEventMask(__glut_vis, evmask);
 
@@ -553,41 +592,45 @@ void glutMainLoop(void)
 
 static void showmenu()
 {
-  int y,i;
-  ggi_color col={0xffff,0xffff,0xffff};
-  
-  ggiSetGCForeground(__glut_vis,ggiMapColor(__glut_vis,&col));
-  ggiSetOrigin(__glut_vis,0,0);
-  
-  for (y=i=0;i<activemenu->num_entries;i++,y+=8) {
-    ggiPuts(__glut_vis,0,y,activemenu->label[i]);
-  }
-  drawmouse();
+	int y,i;
+	ggi_color col = { 0xffff, 0xffff, 0xffff };
+	
+	GGIGLUTDPRINT_CORE("showmenu() called\n");
+	
+	ggiSetGCForeground(__glut_vis,ggiMapColor(__glut_vis,&col));
+	ggiSetOrigin(__glut_vis,0,0);
+	
+	for (y = i = 0; i < activemenu->num_entries; i++, y += 8) {
+		ggiPuts(__glut_vis, 0, y, activemenu->label[i]);
+	}
+	drawmouse();
 }
 
 static int clickmenu(void)
 {
-  int i;
-  int w,h;
+	int i;
+	int w, h;
   
-  i=mousey/8;
+	GGIGLUTDPRINT_CORE("clickmenu() called\n");
+	
+	i = mousey / 8;
   
-  if (i>=activemenu->num_entries) return GL_TRUE;
-  if (mousex>=8*strlen(activemenu->label[i])) return GL_TRUE;
+	if (i >= activemenu->num_entries) return GL_TRUE;
+	if (mousex >= 8 * strlen(activemenu->label[i])) return GL_TRUE;
   
-  if (activemenu->submenu[i]) {
-    ggi_color col={0,0,0};
-    ggiSetGCForeground(__glut_vis,ggiMapColor(__glut_vis,&col));
-    h=activemenu->num_entries*8;
-    w=activemenu->max_strlen*8;
-    ggiDrawBox(__glut_vis,0,0,w,h);
-    activemenu=activemenu->submenu[i];
-    showmenu();
-    return GL_FALSE;
-  }
-  curmenu=activemenu;
-  activemenu->func(activemenu->value[i]);
-  return GL_TRUE;
+	if (activemenu->submenu[i]) {
+		ggi_color col={0,0,0};
+		ggiSetGCForeground(__glut_vis,ggiMapColor(__glut_vis,&col));
+		h=activemenu->num_entries*8;
+		w=activemenu->max_strlen*8;
+		ggiDrawBox(__glut_vis,0,0,w,h);
+		activemenu=activemenu->submenu[i];
+		showmenu();
+		return GL_FALSE;
+	}
+	curmenu=activemenu;
+	activemenu->func(activemenu->value[i]);
+	return GL_TRUE;
 }
 
 static int oldx=-1;
@@ -596,254 +639,320 @@ static char buffer[16*16*4];
 
 static void updatemouse()
 {
-  ggiPutBox(__glut_vis,oldx,oldy,16,16,buffer);
-  drawmouse();
+	GGIGLUTDPRINT_CORE("updatemouse() called\n");
+
+	ggiPutBox(__glut_vis,oldx,oldy,16,16,buffer);
+	drawmouse();
 }
 
 static void drawmouse()
 {
-  int x,y;
-  x=mousex-8;
-  if (x<0) x=0;
-  y=mousey-8;
-  if (y<0) y=0;
-  ggiGetBox(__glut_vis,x,y,16,16,buffer);
-  ggiDrawLine(__glut_vis,mousex-2,mousey,mousex+2,mousey);
-  ggiDrawLine(__glut_vis,mousex,mousey-2,mousex,mousey+2);
-  oldx=x;
-  oldy=y;
+	int x,y;
+	
+	GGIGLUTDPRINT_CORE("drawmouse() called\n");
+	
+	x=mousex-8;
+	if (x<0) x=0;
+	y=mousey-8;
+	if (y<0) y=0;
+	ggiGetBox(__glut_vis,x,y,16,16,buffer);
+	ggiDrawLine(__glut_vis,mousex-2,mousey,mousex+2,mousey);
+	ggiDrawLine(__glut_vis,mousex,mousey-2,mousex,mousey+2);
+	oldx=x;
+	oldy=y;
 }
 
 int glutCreateMenu(void(*func)(int))
 {
-  menu_t *m;
-  m=malloc(sizeof(menu_t));
-  memset(m,0,sizeof(menu_t));
-  curmenu=m;
-  curmenu->func=func;
-  return (int)curmenu;	
+	menu_t *m;
+	
+	GGIGLUTDPRINT_CORE("glutCreateMenu() called\n");
+	
+	m=malloc(sizeof(menu_t));
+	memset(m,0,sizeof(menu_t));
+	curmenu=m;
+	curmenu->func=func;
+	return (int)curmenu;
 }
 
 static void addEntry(const char *label,int value,menu_t *submenu)
 {
-  int i=curmenu->num_entries;	
-  /* printf("%i %i %s %p\n",i,value,label,submenu); */
-  if (i<MAX_ENTRIES) {
-    curmenu->label[i]=strdup(label);
-    curmenu->value[i]=value;
-    curmenu->submenu[i]=submenu;
+	int i=curmenu->num_entries;
+	
+	GGIGLUTDPRINT_CORE("addEntry() called\n");
+	
+	/* printf("%i %i %s %p\n",i,value,label,submenu); */
+	if (i<MAX_ENTRIES) {
+		curmenu->label[i]=strdup(label);
+		curmenu->value[i]=value;
+		curmenu->submenu[i]=submenu;
     
-    if (strlen(label)>curmenu->max_strlen)
-      curmenu->max_strlen=strlen(label);
-    curmenu->num_entries++;
-  }
+		if (strlen(label)>curmenu->max_strlen)
+		  curmenu->max_strlen=strlen(label);
+		curmenu->num_entries++;
+	}
 }
 
 void glutAddMenuEntry(const char *label,int value)
 {
-  addEntry(label,value,NULL);
+	GGIGLUTDPRINT_CORE("glutAddMenuEntry() called\n");
+
+	addEntry(label,value,NULL);
 }
 
 void glutAddSubMenu(const char *label,int submenu)
 {
-  char text[100];
-  
-  if (!curmenu) return;
-  strncpy(text,label,98);
-  text[98]=0;
-  text[strlen(text)+1]=0;
-  text[strlen(text)]='>';
-  
-  addEntry(text,0,(menu_t *) submenu);
+	char text[100];
+	
+	GGIGLUTDPRINT_CORE("glutAddSubMenu() called\n");
+	
+	if (!curmenu) return;
+	strncpy(text,label,98);
+	text[98]=0;
+	text[strlen(text)+1]=0;
+	text[strlen(text)]='>';
+	
+	addEntry(text,0,(menu_t *) submenu);
 }
 
 void glutAttachMenu(int button)
 {
-  mainmenu=curmenu;
-  __glut_menubutton=button;
+	GGIGLUTDPRINT_CORE("glutAttachMenu() called\n");
+
+	mainmenu=curmenu;
+	__glut_menubutton=button;
 }
 
 void glutDetachMenu(int button)
 {
+	GGIGLUTDPRINT_CORE("glutDetachMenu() called\n");
 }
 
 void glutVisibilityFunc(void (*func)(int state))
 {
-  __glut_visibility=func;
+	GGIGLUTDPRINT_CORE("glutVisibilityFunc() called\n");
+
+	__glut_visibility=func;
 }
 
 void glutMouseFunc(void (*mouse)(int, int, int, int))
 {
-  __glut_mouse=mouse;	
+	GGIGLUTDPRINT_CORE("glutMouseFunc() called\n");
+	
+	__glut_mouse=mouse;	
 }
 
 void glutMotionFunc(void (*motion)(int,int))
 {
-  __glut_motion=motion;
+	GGIGLUTDPRINT_CORE("glutMotionFunc() called\n");
+	
+	__glut_motion=motion;
 }
 
 void glutPassiveMotionFunc(void (*motion)(int,int))
 {
-  __glut_passive_motion=motion;
+	GGIGLUTDPRINT_CORE("glutPassiveMotionFunc() called\n");
+	
+	__glut_passive_motion=motion;
 }
 
 void glutSetWindowTitle(const char *title)
 {
+	GGIGLUTDPRINT_CORE("glutSetWindowTitle() called\n");
 }
 
 void glutSetIconTitle(const char *title)
 {
+	GGIGLUTDPRINT_CORE("glutSetIconTitle() called\n");
 }
 
 void glutChangeToMenuEntry(int item,const char *label,int value)
 {
-  if (item>0 && item<=curmenu->num_entries) {
-    item--;
-    free(curmenu->label[item]);
-    curmenu->label[item]=strdup(label);
-    curmenu->value[item]=value;
-    curmenu->submenu[item]=NULL;
-  }
+	GGIGLUTDPRINT_CORE("glutChangeToMenuEntry() called\n");
+
+	if (item>0 && item<=curmenu->num_entries) {
+		item--;
+		free(curmenu->label[item]);
+		curmenu->label[item]=strdup(label);
+		curmenu->value[item]=value;
+		curmenu->submenu[item]=NULL;
+	}
 }
 void glutChangeToSubMenu(int item,const char *label,int submenu)
 {
-  if (item>0 && item<=curmenu->num_entries) {
-    item--;
-    free(curmenu->label[item]);
-    curmenu->label[item]=strdup(label);
-    curmenu->value[item]=0;
-    curmenu->submenu[item]=(menu_t *)submenu;
-  }
+	GGIGLUTDPRINT_CORE("glutChengeToSubMenu() called\n");
+	
+	if (item>0 && item<=curmenu->num_entries) {
+		item--;
+		free(curmenu->label[item]);
+		curmenu->label[item]=strdup(label);
+		curmenu->value[item]=0;
+		curmenu->submenu[item]=(menu_t *)submenu;
+	}
 }
 
 void glutDestroyMenu(int menu)
 {
-  menu_t *m=(menu_t *)menu;
-  int i;
-  
-  for (i=0;i<m->num_entries;i++) {
-    free(m->label[i]);
-  }
-  free(m);
+	menu_t *m=(menu_t *)menu;
+	int i;
+	
+	GGIGLUTDPRINT_CORE("glutDestroyMenu() called\n");
+	
+	for (i=0;i<m->num_entries;i++) {
+		free(m->label[i]);
+	}
+	free(m);
 }
 
 int glutCreateSubWindow(int win,int x,int y,int w,int h)
 {
-  return 0;
+	GGIGLUTDPRINT_CORE("glutCreateSubWindow() called\n");
+
+	return 0;
 }
 
 void glutDestroyWindow(int win)
 {
+	GGIGLUTDPRINT_CORE("glutDestroyWindow() called\n");
 }
 
 int glutGetWindow(void)
 {
-  return 0;
+	GGIGLUTDPRINT_CORE("glutGetWindow() called\n");
+	
+	return 0;
 }
 
 void glutSetWindow(int win)
 {
+	GGIGLUTDPRINT_CORE("glutSetWindow() called\n");
 }
 
 void glutPositionWindow(int x,int y)
 {
+	GGIGLUTDPRINT_CORE("glutPositionWindow() called\n");
 }
 
 void glutReshapeWindow(int x,int y)
 {
+	GGIGLUTDPRINT_CORE("glutReshapeWindow() called\n");
 }
 
 void glutPushWindow(void)
 {
+	GGIGLUTDPRINT_CORE("glutPushWindow() called\n");
 }
 
 void glutPopWindow(void)
 {
+	GGIGLUTDPRINT_CORE("glutPopWindow() called\n");
 }
 
 void glutIconifyWindow(void)
 {
+	GGIGLUTDPRINT_CORE("glutIconifyWindow() called\n");
 }
 
 void glutShowWindow()
 {
+	GGIGLUTDPRINT_CORE("glutShowWindow() called\n");
 }
 
 void glutHideWindow()
 {
+	GGIGLUTDPRINT_CORE("glutHideWindow() called\n");
 }
 
 void glutSetCursor(int cursor)
 {
+	GGIGLUTDPRINT_CORE("glutSetCursor() called\n");
 }
 
 void glutWarpPointer(int x,int y)
 {
+	GGIGLUTDPRINT_CORE("glutWarpPointer() called\n");
 }
 
 void glutEstablishOverlay(void)
 {
+	GGIGLUTDPRINT_CORE("glutEstablishOverlay() called\n");
 }
 
 void glutRemoveOverlay(void)
 {
+	GGIGLUTDPRINT_CORE("glutRemoveOverlay() called\n");
 }
 
 void glutUseLayer(GLenum layer)
 {
+	GGIGLUTDPRINT_CORE("glutUseLayer() called\n");
 }
 
 int glutLayerGet(GLenum type)
 {
+	GGIGLUTDPRINT_CORE("glutLayerGet() called\n");
 	return 0;
 }
 
 void glutPostOverlayRedisplay(void)
 {
+	GGIGLUTDPRINT_CORE("glutPostOverlayRedisplay() called\n");
 }
 
 void glutPostWindowOverlayRedisplay(int w)
 {
+	GGIGLUTDPRINT_CORE("glutPostWindowOverlayRedisplay() called\n");
 }
 
 void glutShowOverlay(void)
 {
+	GGIGLUTDPRINT_CORE("glutShowOverlay() called\n");
 }
 
 void glutHideOverlay(void)
 {
+	GGIGLUTDPRINT_CORE("glutHideOverlay() called\n");
 }
 
 int glutGetMenu(void)
 {
+	GGIGLUTDPRINT_CORE("glutGetMenu() called\n");
 	return 0;
 }
 
 void glutSetMenu(int menu)
 {
+	GGIGLUTDPRINT_CORE("glutSetMenu() called\n");
 }
 
 void glutRemoveMenuItem(int item)
 {
+	GGIGLUTDPRINT_CORE("glutRemoveMenuItem() called\n");
 }
 
 void glutSpaceBallMotionFunc(void (*func)(int key,int x,int y))
 {
+	GGIGLUTDPRINT_CORE("glutSpaceBallMotionFunc() called\n");
 }
 
 void glutSpaceBallRotateFunc(void (*func)(int x,int y,int z))
 {
+	GGIGLUTDPRINT_CORE("glutSpaceBallRotateFunc() called\n");
 }
 
 void glutSpaceBallButtonFunc(void (*func)(int button,int state))
 {
+	GGIGLUTDPRINT_CORE("glutSpaceBallButtonFunc() called\n");
 }
 
 void glutCopyColormap(int win)
 {
+	GGIGLUTDPRINT_CORE("glutCopyColormap() called\n");
 }
 
 int glutDeviceGet(GLenum param)
 {
+	GGIGLUTDPRINT_CORE("glutDeviceGet() called\n");
+	
 	return 0;
 }
