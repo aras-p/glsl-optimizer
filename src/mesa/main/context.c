@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.163 2002/05/27 17:04:52 brianp Exp $ */
+/* $Id: context.c,v 1.164 2002/06/13 04:28:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,7 +41,6 @@
 #include "get.h"
 #include "glthread.h"
 #include "hash.h"
-#include "imports.h"
 #include "light.h"
 #include "macros.h"
 #include "mem.h"
@@ -78,13 +77,19 @@ int MESA_DEBUG_FLAGS = 0;
 #endif
 
 
+static void
+free_shared_state( GLcontext *ctx, struct gl_shared_state *ss );
+
 
 /**********************************************************************/
 /*****       OpenGL SI-style interface (new in Mesa 3.5)          *****/
 /**********************************************************************/
 
-static GLboolean
-_mesa_DestroyContext(__GLcontext *gc)
+/* Called by window system/device driver (via gc->exports.destroyCurrent())
+ * when the rendering context is to be destroyed.
+ */
+GLboolean
+_mesa_destroyContext(__GLcontext *gc)
 {
    if (gc) {
       _mesa_free_context_data(gc);
@@ -92,6 +97,133 @@ _mesa_DestroyContext(__GLcontext *gc)
    }
    return GL_TRUE;
 }
+
+/* Called by window system/device driver (via gc->exports.loseCurrent())
+ * when the rendering context is made non-current.
+ */
+GLboolean
+_mesa_loseCurrent(__GLcontext *gc)
+{
+   /* XXX unbind context from thread */
+   return GL_TRUE;
+}
+
+/* Called by window system/device driver (via gc->exports.makeCurrent())
+ * when the rendering context is made current.
+ */
+GLboolean
+_mesa_makeCurrent(__GLcontext *gc)
+{
+   /* XXX bind context to thread */
+   return GL_TRUE;
+}
+
+/* Called by window system/device driver - yadda, yadda, yadda.
+ * See above comments.
+ */
+GLboolean
+_mesa_shareContext(__GLcontext *gc, __GLcontext *gcShare)
+{
+   if (gc && gcShare && gc->Shared && gcShare->Shared) {
+      gc->Shared->RefCount--;
+      if (gc->Shared->RefCount == 0) {
+         free_shared_state(gc, gc->Shared);
+      }
+      gc->Shared = gcShare->Shared;
+      gc->Shared->RefCount++;
+      return GL_TRUE;
+   }
+   else {
+      return GL_FALSE;
+   }
+}
+
+GLboolean
+_mesa_copyContext(__GLcontext *dst, const __GLcontext *src, GLuint mask)
+{
+   if (dst && src) {
+      _mesa_copy_context( src, dst, mask );
+      return GL_TRUE;
+   }
+   else {
+      return GL_FALSE;
+   }
+}
+
+GLboolean
+_mesa_forceCurrent(__GLcontext *gc)
+{
+   return GL_TRUE;
+}
+
+GLboolean
+_mesa_notifyResize(__GLcontext *gc)
+{
+   GLint x, y;
+   GLuint width, height;
+   __GLdrawablePrivate *d = gc->imports.getDrawablePrivate(gc);
+   if (!d || !d->getDrawableSize)
+      return GL_FALSE;
+   d->getDrawableSize( d, &x, &y, &width, &height );
+   /* update viewport, resize software buffers, etc. */
+   return GL_TRUE;
+}
+
+void
+_mesa_notifyDestroy(__GLcontext *gc)
+{
+}
+
+/* Called by window system just before swapping buffers.
+ * We have to finish any pending rendering.
+ */
+void
+_mesa_notifySwapBuffers(__GLcontext *gc)
+{
+   FLUSH_VERTICES( gc, 0 );
+}
+
+struct __GLdispatchStateRec *
+_mesa_dispatchExec(__GLcontext *gc)
+{
+   return NULL;
+}
+
+void
+_mesa_beginDispatchOverride(__GLcontext *gc)
+{
+}
+
+void
+_mesa_endDispatchOverride(__GLcontext *gc)
+{
+}
+
+/* Setup the exports.  The window system will call these functions
+ * when it needs Mesa to do something.
+ * NOTE: Device drivers should override these functions!  For example,
+ * the Xlib driver should plug in the XMesa*-style functions into this
+ * structure.  The XMesa-style functions should then call the _mesa_*
+ * version of these functions.  This is an approximation to OO design
+ * (inheritance and virtual functions).
+ */
+static void
+_mesa_init_default_exports(__GLexports *exports)
+{
+    exports->destroyContext = _mesa_destroyContext;
+    exports->loseCurrent = _mesa_loseCurrent;
+    exports->makeCurrent = _mesa_makeCurrent;
+    exports->shareContext = _mesa_shareContext;
+    exports->copyContext = _mesa_copyContext;
+    exports->forceCurrent = _mesa_forceCurrent;
+    exports->notifyResize = _mesa_notifyResize;
+    exports->notifyDestroy = _mesa_notifyCestroy;
+    exports->notifySwapBuffers = _mesa_notifySwapBuffers;
+    exports->dispatchExec = _mesa_dispatchExec;
+    exports->beginDispatchOverride = _mesa_beginDispatchOverride;
+    exports->endDispatchOverride = _mesa_endDispatchOverride;
+}
+
 
 
 /* exported OpenGL SI interface */
@@ -104,7 +236,7 @@ __glCoreCreateContext(__GLimports *imports, __GLcontextModes *modes)
     if (ctx == NULL) {
 	return NULL;
     }
-   ctx->Driver.CurrentExecPrimitive=0;
+    ctx->Driver.CurrentExecPrimitive=0;  /* XXX why is this here??? */
     ctx->imports = *imports;
 
     _mesa_initialize_visual(&ctx->Visual,
@@ -124,10 +256,7 @@ __glCoreCreateContext(__GLimports *imports, __GLcontextModes *modes)
                             modes->accumAlphaBits,
                             0);
 
-    /* KW: was imports->wscx */
-    _mesa_initialize_context(ctx, &ctx->Visual, NULL, imports->other, GL_FALSE);
-
-    ctx->exports.destroyContext = _mesa_DestroyContext;
+    _mesa_initialize_context(ctx, &ctx->Visual, NULL, imports);
 
     return ctx;
 }
@@ -145,12 +274,6 @@ __glCoreNopDispatch(void)
    _glapi_set_dispatch(NULL);
 #endif
 }
-
-
-/**********************************************************************/
-/*****                  Context and Thread management             *****/
-/**********************************************************************/
-
 
 
 /**********************************************************************/
@@ -1472,25 +1595,30 @@ GLboolean
 _mesa_initialize_context( GLcontext *ctx,
                           const GLvisual *visual,
                           GLcontext *share_list,
-                          void *driver_ctx,
-                          GLboolean direct )
+                          const __GLimports *imports )
 {
    GLuint dispatchSize;
 
-   (void) direct;  /* not used */
+   ASSERT(imports);
+   ASSERT(imports->other); /* other points to the device driver's context */
 
    /* misc one-time initializations */
    one_time_init();
 
+   /* initialize the exports (Mesa functions called by the window system) */
+    _mesa_init_default_exports( &(ctx->exports) );
+
+#if 0
    /**
     ** OpenGL SI stuff
     **/
    if (!ctx->imports.malloc) {
-      _mesa_InitDefaultImports(&ctx->imports, driver_ctx, NULL);
+      _mesa_init_default_imports(&ctx->imports, driver_ctx);
    }
    /* exports are setup by the device driver */
+#endif
 
-   ctx->DriverCtx = driver_ctx;
+   ctx->DriverCtx = imports->other;
    ctx->Visual = *visual;
    ctx->DrawBuffer = NULL;
    ctx->ReadBuffer = NULL;
@@ -1643,21 +1771,20 @@ _mesa_initialize_context( GLcontext *ctx,
  * Allocate and initialize a GLcontext structure.
  * Input:  visual - a GLvisual pointer (we copy the struct contents)
  *         sharelist - another context to share display lists with or NULL
- *         driver_ctx - pointer to device driver's context state struct
+ *         imports - points to a fully-initialized __GLimports object.
  * Return:  pointer to a new __GLcontextRec or NULL if error.
  */
 GLcontext *
 _mesa_create_context( const GLvisual *visual,
                       GLcontext *share_list,
-                      void *driver_ctx,
-                      GLboolean direct )
+                      const __GLimports *imports )
 {
    GLcontext *ctx = (GLcontext *) CALLOC( sizeof(GLcontext) );
    if (!ctx) {
       return NULL;
    }
-   ctx->Driver.CurrentExecPrimitive = 0;
-   if (_mesa_initialize_context(ctx, visual, share_list, driver_ctx, direct)) {
+   ctx->Driver.CurrentExecPrimitive = 0;  /* XXX why is this here??? */
+   if (_mesa_initialize_context(ctx, visual, share_list, imports)) {
       return ctx;
    }
    else {
@@ -1879,15 +2006,6 @@ _mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
 }
 
 
-/*
- * Set the current context, binding the given frame buffer to the context.
- */
-void
-_mesa_make_current( GLcontext *newCtx, GLframebuffer *buffer )
-{
-   _mesa_make_current2( newCtx, buffer, buffer );
-}
-
 
 static void print_info( void )
 {
@@ -1914,6 +2032,16 @@ static void print_info( void )
 #else
    fprintf(stderr, "Mesa sparc-optimized: NO\n");
 #endif
+}
+
+
+/*
+ * Set the current context, binding the given frame buffer to the context.
+ */
+void
+_mesa_make_current( GLcontext *newCtx, GLframebuffer *buffer )
+{
+   _mesa_make_current2( newCtx, buffer, buffer );
 }
 
 
@@ -2132,6 +2260,20 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *where )
    }
 }
 
+
+/*
+ * Call this to report debug information.
+ */
+#ifdef DEBUG
+void
+_mesa_debug( const char *fmtString, ... )
+{
+   va_list args;
+   va_start( args, fmtString );  
+   (void) vfprintf( stderr, fmtString, args );
+   va_end( args );
+}
+#endif
 
 
 void

@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.26 2002/06/12 00:52:50 brianp Exp $ */
+/* $Id: glheader.h,v 1.27 2002/06/13 04:28:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -72,6 +72,9 @@
 #include "conf.h"
 #endif
 
+#ifdef DEBUG
+#include <stdarg.h>  /* for _mesa_debug() only */
+#endif
 
 
 #if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__)

@@ -1,4 +1,4 @@
-# $Id: Makefile.OSMesa16,v 1.6 2002/02/02 21:41:58 brianp Exp $
+# $Id: Makefile.OSMesa16,v 1.7 2002/06/13 04:28:29 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -31,7 +31,6 @@ CORE_SOURCES = \
 	buffers.c \
 	clip.c \
 	colortab.c \
-	config.c \
 	context.c \
 	convolve.c \
 	debug.c \

@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.17 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: svgamesa.c,v 1.18 2002/06/13 04:28:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,6 +44,7 @@
 #include "GL/svgamesa.h"
 #include "context.h"
 #include "extensions.h"
+#include "imports.h"
 #include "matrix.h"
 #include "mtypes.h"
 #include "swrast/swrast.h"
@@ -378,6 +379,8 @@ SVGAMesaContext SVGAMesaCreateContext( GLboolean doubleBuffer )
    GLfloat redscale, greenscale, bluescale, alphascale;
    GLint index_bits;
    GLint redbits, greenbits, bluebits, alphabits;
+   __GLimports imports;
+
    /* determine if we're in RGB or color index mode */
    if ((SVGABuffer.Depth==32) || (SVGABuffer.Depth==24)) {
       rgb_flag = GL_TRUE;
@@ -426,9 +429,10 @@ SVGAMesaContext SVGAMesaCreateContext( GLboolean doubleBuffer )
                                       1     /* samples */
                                       );
 
+   _mesa_init_default_imports( &imports, (void *) ctx);
    ctx->gl_ctx = _mesa_create_context( ctx->gl_vis,
                                        NULL,  /* share list context */
-                                       (void *) ctx, GL_TRUE );
+                                       &imports );
 
    _mesa_enable_sw_extensions(ctx->gl_ctx);
    _mesa_enable_1_3_extensions(ctx->gl_ctx);

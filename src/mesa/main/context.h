@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.28 2001/12/14 02:50:01 brianp Exp $ */
+/* $Id: context.h,v 1.29 2002/06/13 04:28:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,9 +53,7 @@
 
 
 /*
- * Create/destroy a GLvisual.  A GLvisual is like a GLX visual.  It describes
- * the colorbuffer, depth buffer, stencil buffer and accum buffer which will
- * be used by the GL context and framebuffer.
+ * Create/destroy a GLvisual.
  */
 extern GLvisual *
 _mesa_create_visual( GLboolean rgbFlag,
@@ -98,9 +96,7 @@ _mesa_destroy_visual( GLvisual *vis );
 
 
 /*
- * Create/destroy a GLframebuffer.  A GLframebuffer is like a GLX drawable.
- * It bundles up the depth buffer, stencil buffer and accum buffers into a
- * single entity.
+ * Create/destroy a GLframebuffer.
  */
 extern GLframebuffer *
 _mesa_create_framebuffer( const GLvisual *visual,
@@ -126,21 +122,18 @@ _mesa_destroy_framebuffer( GLframebuffer *buffer );
 
 
 /*
- * Create/destroy a GLcontext.  A GLcontext is like a GLX context.  It
- * contains the rendering state.
+ * Create/destroy a GLcontext.
  */
 extern GLcontext *
 _mesa_create_context( const GLvisual *visual,
                       GLcontext *share_list,
-                      void *driver_ctx,
-                      GLboolean direct);
+                      const __GLimports *imports );
 
 extern GLboolean
 _mesa_initialize_context( GLcontext *ctx,
                           const GLvisual *visual,
                           GLcontext *share_list,
-                          void *driver_ctx,
-                          GLboolean direct );
+                          const __GLimports *imports );
 
 extern void
 _mesa_free_context_data( GLcontext *ctx );
@@ -182,9 +175,49 @@ _mesa_get_current_context(void);
 
 
 
+/* OpenGL SI-style export functions. */
+
+extern GLboolean
+_mesa_destroyContext(__GLcontext *gc);
+
+extern GLboolean
+_mesa_loseCurrent(__GLcontext *gc);
+
+extern GLboolean
+_mesa_makeCurrent(__GLcontext *gc);
+
+extern GLboolean
+_mesa_shareContext(__GLcontext *gc, __GLcontext *gcShare);
+
+extern GLboolean
+_mesa_copyContext(__GLcontext *dst, const __GLcontext *src, GLuint mask);
+
+extern GLboolean
+_mesa_forceCurrent(__GLcontext *gc);
+
+extern GLboolean
+_mesa_notifyResize(__GLcontext *gc);
+
+extern void
+_mesa_notifyDestroy(__GLcontext *gc);
+
+extern void
+_mesa_notifySwapBuffers(__GLcontext *gc);
+
+extern void
+_mesa_dispatchExec(__GLcontext *gc);
+
+extern void
+_mesa_beginDispatchOverride(__GLcontext *gc);
+
+extern void
+_mesa_endDispatchOverride(__GLcontext *gc);
+
+
+
+
 extern void
 _mesa_swapbuffers(GLcontext *ctx);
-
 
 extern struct _glapi_table *
 _mesa_get_dispatch(GLcontext *ctx);
@@ -204,22 +237,16 @@ _mesa_warning( const GLcontext *ctx, const char *s );
 extern void
 _mesa_error( GLcontext *ctx, GLenum error, const char *s );
 
-
+#ifdef DEBUG
+extern void
+_mesa_debug( const char *fmtString, ... );
+#endif
 
 extern void
 _mesa_Finish( void );
 
 extern void
 _mesa_Flush( void );
-
-
-
-extern void
-_mesa_read_config_file(GLcontext *ctx);
-
-extern void
-_mesa_register_config_var(const char *name,
-                          void (*notify)( const char *, int ));
 
 
 #endif

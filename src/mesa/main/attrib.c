@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.65 2002/06/07 16:01:03 brianp Exp $ */
+/* $Id: attrib.c,v 1.66 2002/06/13 04:28:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -119,8 +119,8 @@ _mesa_PushAttrib(GLbitfield mask)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (MESA_VERBOSE&VERBOSE_API)
-      fprintf(stderr, "glPushAttrib %x\n", (int)mask);
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug("glPushAttrib %x\n", (int) mask);
 
    if (ctx->AttribStackDepth >= MAX_ATTRIB_STACK_DEPTH) {
       _mesa_error( ctx, GL_STACK_OVERFLOW, "glPushAttrib" );
@@ -801,9 +801,8 @@ _mesa_PopAttrib(void)
 
    while (attr) {
 
-      if (MESA_VERBOSE&VERBOSE_API) {
-	 fprintf(stderr, "glPopAttrib %s\n",
-                 _mesa_lookup_enum_by_nr(attr->kind));
+      if (MESA_VERBOSE & VERBOSE_API) {
+         _mesa_debug("glPopAttrib %s\n", _mesa_lookup_enum_by_nr(attr->kind));
       }
 
       switch (attr->kind) {

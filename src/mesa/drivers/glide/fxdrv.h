@@ -1,4 +1,4 @@
-/* $Id: fxdrv.h,v 1.52 2001/09/23 16:50:01 brianp Exp $ */
+/* $Id: fxdrv.h,v 1.53 2002/06/13 04:28:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,6 +49,7 @@
 #endif
 
 #include "context.h"
+#include "imports.h"
 #include "macros.h"
 #include "matrix.h"
 #include "mem.h"

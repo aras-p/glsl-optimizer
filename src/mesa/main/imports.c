@@ -1,10 +1,10 @@
-/* $Id: imports.c,v 1.10 2001/07/16 15:54:23 brianp Exp $ */
+/* $Id: imports.c,v 1.11 2002/06/13 04:28:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,8 +31,9 @@
  * will call these functions in order to do memory allocation, simple I/O,
  * etc.
  *
- * Some drivers will need to implement these functions themselves but
- * many (most?) Mesa drivers will be fine using these.
+ * Some drivers will want to provide a specialed __GLimport object, but
+ * most Mesa drivers will be able to call _mesa_init_default_imports()
+ * and go with that.
  *
  * A server-side GL renderer will likely not use these functions since
  * the renderer should use the XFree86-wrapped system calls.
@@ -119,8 +120,12 @@ _mesa_atoi(__GLcontext *gc, const char *str)
 static int CAPI
 _mesa_sprintf(__GLcontext *gc, char *str, const char *fmt, ...)
 {
-   /* XXX fix this */
-   return sprintf(str, fmt);
+   int r;
+   va_list args;
+   va_start( args, fmt );  
+   r = vsprintf( str, fmt, args );
+   va_end( args );
+   return r;
 }
 
 static void * CAPI
@@ -138,8 +143,12 @@ _mesa_fclose(__GLcontext *gc, void *stream)
 static int CAPI
 _mesa_fprintf(__GLcontext *gc, void *stream, const char *fmt, ...)
 {
-   /* XXX fix this */
-   return fprintf((FILE *) stream, fmt);
+   int r;
+   va_list args;
+   va_start( args, fmt );  
+   r = vfprintf( (FILE *) stream, fmt, args );
+   va_end( args );
+   return r;
 }
 
 /* XXX this really is driver-specific and can't be here */
@@ -151,7 +160,7 @@ _mesa_GetDrawablePrivate(__GLcontext *gc)
 
 
 void
-_mesa_InitDefaultImports(__GLimports *imports, void *driverCtx, void *other)
+_mesa_init_default_imports(__GLimports *imports, void *driverCtx)
 {
    imports->malloc = _mesa_Malloc;
    imports->calloc = _mesa_Calloc;
@@ -166,6 +175,5 @@ _mesa_InitDefaultImports(__GLimports *imports, void *driverCtx, void *other)
    imports->fclose = _mesa_fclose;
    imports->fprintf = _mesa_fprintf;
    imports->getDrawablePrivate = _mesa_GetDrawablePrivate;
-/*     imports->wscx = driverCtx; */
    imports->other = driverCtx;
 }

@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.36 2002/05/27 17:06:59 brianp Exp $ */
+/* $Id: xm_api.c,v 1.37 2002/06/13 04:28:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -69,6 +69,7 @@
 #include "context.h"
 #include "extensions.h"
 #include "glthread.h"
+#include "imports.h"
 #include "matrix.h"
 #include "mem.h"
 #include "mmath.h"
@@ -1618,11 +1619,10 @@ void XMesaDestroyVisual( XMesaVisual v )
  */
 XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
+   static GLboolean firstTime = GL_TRUE;
    XMesaContext c;
    GLcontext *ctx;
-   GLboolean direct = GL_TRUE; /* XXXX */
-   /* NOT_DONE: should this be GL_FALSE??? */
-   static GLboolean firstTime = GL_TRUE;
+   __GLimports imports;
 
    if (firstTime) {
       _glthread_INIT_MUTEX(_xmesa_lock);
@@ -1634,9 +1634,10 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       return NULL;
    }
 
+   _mesa_init_default_imports( &imports, (void *) c );
    ctx = c->gl_ctx = _mesa_create_context( &v->mesa_visual,
                       share_list ? share_list->gl_ctx : (GLcontext *) NULL,
-                      (void *) c, direct );
+                      &imports );
    if (!c->gl_ctx) {
       FREE(c);
       return NULL;
@@ -1671,12 +1672,6 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    /* Set up some constant pointers:
     */
    xmesa_init_pointers( ctx );
-
-
-   /* Run the config file
-    */
-   _mesa_read_config_file( ctx );
-
 
    return c;
 }

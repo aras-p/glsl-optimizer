@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.88 2002/05/29 15:16:01 brianp Exp $ */
+/* $Id: dlist.c,v 1.89 2002/06/13 04:28:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -4145,7 +4145,7 @@ execute_list( GLcontext *ctx, GLuint list )
    if (ctx->Driver.BeginCallList)
       ctx->Driver.BeginCallList( ctx, list );
 
-/*     fprintf(stderr, "execute list %d\n", list); */
+/*     _mesa_debug("execute list %d\n", list); */
 /*     mesa_print_display_list( list );  */
 
    ctx->CallDepth++;
@@ -4936,7 +4936,7 @@ _mesa_NewList( GLuint list, GLenum mode )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
-      fprintf(stderr, "glNewList %u %s\n", list, _mesa_lookup_enum_by_nr(mode));
+      _mesa_debug("glNewList %u %s\n", list, _mesa_lookup_enum_by_nr(mode));
 
    if (list==0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glNewList" );
@@ -4983,7 +4983,7 @@ _mesa_EndList( void )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
-      fprintf(stderr, "glEndList\n");
+      _mesa_debug("glEndList\n");
 
    /* Check that a list is under construction */
    if (!ctx->CurrentListPtr) {
@@ -5026,7 +5026,7 @@ _mesa_CallList( GLuint list )
 
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "_mesa_CallList %d\n", list); 
+      _mesa_debug("_mesa_CallList %d\n", list); 
 
 /*     mesa_print_display_list( list ); */
 
@@ -5059,7 +5059,7 @@ _mesa_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
    GLboolean save_compile_flag;
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "_mesa_CallLists %d\n", n); 
+      _mesa_debug("_mesa_CallLists %d\n", n); 
 
    /* Save the CompileFlag status, turn it off, execute display list,
     * and restore the CompileFlag.

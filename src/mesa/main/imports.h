@@ -1,10 +1,10 @@
-/* $Id: imports.h,v 1.2 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: imports.h,v 1.3 2002/06/13 04:28:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,7 +33,7 @@
 
 
 extern void
-_mesa_InitDefaultImports(__GLimports *imports, void *driverCtx, void *other);
+_mesa_init_default_imports(__GLimports *imports, void *driverCtx);
 
 
 #endif

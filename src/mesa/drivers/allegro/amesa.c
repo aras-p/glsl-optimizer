@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <allegro.h>
 #include "context.h"
+#include "imports.h"
 #include "matrix.h"
 #include "mtypes.h"
 #include "GL/amesa.h"
@@ -325,11 +326,12 @@ void AMesaDestroyBuffer(AMesaBuffer buffer)
 
 AMesaContext AMesaCreateContext(AMesaVisual visual,
                                 AMesaContext share)
-	{
+{
    	AMesaContext context;
    	GLboolean    direct = GL_FALSE;
+	__GLimports imports;
 
-    context = (AMesaContext)calloc(1, sizeof(struct amesa_context));
+	context = (AMesaContext)calloc(1, sizeof(struct amesa_context));
 	if (!context)
 		return NULL;
 
@@ -337,18 +339,18 @@ AMesaContext AMesaCreateContext(AMesaVisual visual,
 	context->Buffer		  = NULL;
 	context->ClearColor   = 0;
 	context->CurrentColor = 0;
-    context->GLContext    = _mesa_create_context(visual->GLVisual,
+	_mesa_init_default_imports( &imports, (void *) context);
+	context->GLContext    = _mesa_create_context(visual->GLVisual,
                                               share ? share->GLContext : NULL,
-                                  		      (void*)context,
-                                              direct);
-    if (!context->GLContext)
+                                  		&imports );
+	if (!context->GLContext)
         {
-        free(context);
-        return NULL;
+        	free(context);
+	        return NULL;
         }
 
    	return context;
-	}
+}
 
 
 void AMesaDestroyContext(AMesaContext context)

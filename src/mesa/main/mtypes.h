@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.77 2002/06/06 16:31:24 brianp Exp $ */
+/* $Id: mtypes.h,v 1.78 2002/06/13 04:28:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -828,7 +828,7 @@ struct gl_texture_format {
                                  * GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA,
                                  * GL_COLOR_INDEX or GL_DEPTH_COMPONENT.
                                  */
-   GLenum Type;			/* Internal type as GL enum value */
+   GLenum Type;			/* Internal type as GL enum value - UNUSED?? */
 
    GLubyte RedBits;		/* Bits per texel component */
    GLubyte GreenBits;
@@ -1638,6 +1638,8 @@ struct gl_tnl_module {
 /**
  * This is the central context data structure for Mesa.  Almost all
  * OpenGL state is contained in this structure.
+ * Think of this as a base class from which device drivers will derive
+ * sub classes.
  */
 struct __GLcontextRec {
    /**

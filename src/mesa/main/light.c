@@ -1,10 +1,10 @@
-/* $Id: light.c,v 1.49 2002/02/13 00:53:19 keithw Exp $ */
+/* $Id: light.c,v 1.50 2002/06/13 04:28:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,7 +57,7 @@ _mesa_ShadeModel( GLenum mode )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glShadeModel %s\n", _mesa_lookup_enum_by_nr(mode));
+      _mesa_debug("glShadeModel %s\n", _mesa_lookup_enum_by_nr(mode));
 
    if (mode != GL_FLAT && mode != GL_SMOOTH) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glShadeModel" );
@@ -617,7 +617,7 @@ void _mesa_update_material( GLcontext *ctx,
       bitmask &= ~ctx->Light.ColorMaterialBitmask;
 
    if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
-      fprintf(stderr, "_mesa_update_material, mask 0x%x\n", bitmask);
+      _mesa_debug("_mesa_update_material, mask 0x%x\n", bitmask);
 
    if (!bitmask)
       return;
@@ -717,19 +717,19 @@ void _mesa_update_material( GLcontext *ctx,
    if (0)
    {
       struct gl_material *mat = &ctx->Light.Material[0];
-      fprintf(stderr, "update_mat  emission : %f %f %f\n",
+      _mesa_debug("update_mat  emission : %f %f %f\n",
 	      mat->Emission[0],
 	      mat->Emission[1],
 	      mat->Emission[2]);
-      fprintf(stderr, "update_mat  specular : %f %f %f\n",
+      _mesa_debug("update_mat  specular : %f %f %f\n",
 	      mat->Specular[0],
 	      mat->Specular[1],
 	      mat->Specular[2]);
-      fprintf(stderr, "update_mat  diffuse : %f %f %f\n",
+      _mesa_debug("update_mat  diffuse : %f %f %f\n",
 	      mat->Diffuse[0],
 	      mat->Diffuse[1],
 	      mat->Diffuse[2]);
-      fprintf(stderr, "update_mat  ambient : %f %f %f\n",
+      _mesa_debug("update_mat  ambient : %f %f %f\n",
 	      mat->Ambient[0],
 	      mat->Ambient[1],
 	      mat->Ambient[2]);
@@ -754,7 +754,7 @@ void _mesa_update_color_material( GLcontext *ctx,
    GLuint bitmask = ctx->Light.ColorMaterialBitmask;
 
    if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
-      fprintf(stderr, "_mesa_update_color_material, mask 0x%x\n", bitmask);
+      _mesa_debug("_mesa_update_color_material, mask 0x%x\n", bitmask);
 
    /* update emissive colors */
    if (bitmask & FRONT_EMISSION_BIT) {
@@ -834,19 +834,19 @@ void _mesa_update_color_material( GLcontext *ctx,
    if (0)
    {
       struct gl_material *mat = &ctx->Light.Material[0];
-      fprintf(stderr, "update_color_mat  emission : %f %f %f\n",
+      _mesa_debug("update_color_mat  emission : %f %f %f\n",
 	      mat->Emission[0],
 	      mat->Emission[1],
 	      mat->Emission[2]);
-      fprintf(stderr, "update_color_mat  specular : %f %f %f\n",
+      _mesa_debug("update_color_mat  specular : %f %f %f\n",
 	      mat->Specular[0],
 	      mat->Specular[1],
 	      mat->Specular[2]);
-      fprintf(stderr, "update_color_mat  diffuse : %f %f %f\n",
+      _mesa_debug("update_color_mat  diffuse : %f %f %f\n",
 	      mat->Diffuse[0],
 	      mat->Diffuse[1],
 	      mat->Diffuse[2]);
-      fprintf(stderr, "update_color_mat  ambient : %f %f %f\n",
+      _mesa_debug("update_color_mat  ambient : %f %f %f\n",
 	      mat->Ambient[0],
 	      mat->Ambient[1],
 	      mat->Ambient[2]);
@@ -868,7 +868,7 @@ _mesa_ColorMaterial( GLenum face, GLenum mode )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
-      fprintf(stderr, "glColorMaterial %s %s\n",
+      _mesa_debug("glColorMaterial %s %s\n",
 	      _mesa_lookup_enum_by_nr(face),
 	      _mesa_lookup_enum_by_nr(mode));
 

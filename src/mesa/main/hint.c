@@ -1,10 +1,10 @@
-/* $Id: hint.c,v 1.10 2001/05/21 16:41:03 brianp Exp $ */
+/* $Id: hint.c,v 1.11 2002/06/13 04:28:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,7 +50,7 @@ GLboolean
 _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
 {
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glHint %s %d\n", _mesa_lookup_enum_by_nr(target), mode);
+      _mesa_debug("glHint %s %d\n", _mesa_lookup_enum_by_nr(target), mode);
 
    if (mode != GL_NICEST && mode != GL_FASTEST && mode != GL_DONT_CARE) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glHint(mode)");

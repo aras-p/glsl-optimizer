@@ -1,10 +1,10 @@
-/* $Id: feedback.c,v 1.24 2001/03/29 17:08:26 keithw Exp $ */
+/* $Id: feedback.c,v 1.25 2002/06/13 04:28:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -340,7 +340,7 @@ _mesa_RenderMode( GLenum mode )
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glRenderMode %s\n", _mesa_lookup_enum_by_nr(mode));
+      _mesa_debug("glRenderMode %s\n", _mesa_lookup_enum_by_nr(mode));
 
    FLUSH_VERTICES(ctx, _NEW_RENDERMODE);
 

@@ -30,6 +30,7 @@
 #include <ggi/mesa/ggimesa_int.h>
 #include <ggi/mesa/debug.h>
 #include "extensions.h"
+#include "imports.h"
 #include "matrix.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -470,6 +471,7 @@ ggi_mesa_context_t ggiMesaCreateContext(ggi_visual_t vis)
 	int err;
 	ggi_color pal[256];
 	int i;
+	__GLimports imports;
 
 	GGIMESADPRINT_CORE("ggiMesaCreateContext() called\n");
 	
@@ -480,9 +482,10 @@ ggi_mesa_context_t ggiMesaCreateContext(ggi_visual_t vis)
 	ctx->ggi_visual = vis;
 	ctx->color = 0;
 
+	_mesa_init_default_imports( &imports, (void *) ctx);
 	ctx->gl_ctx =
 	  _mesa_create_context(&(LIBGGI_MESAEXT(vis)->mesa_visual.gl_visual),
-			       NULL, (void *)ctx, GL_TRUE);
+			       NULL, &imports);
 	if (!ctx->gl_ctx)
 		goto free_context;
 	
@@ -509,8 +512,6 @@ ggi_mesa_context_t ggiMesaCreateContext(ggi_visual_t vis)
 		goto free_gl_context;
 	}
 
-	_mesa_read_config_file(ctx->gl_ctx);
-		
 	return ctx;
 	
 free_gl_context:

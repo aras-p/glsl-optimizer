@@ -1,4 +1,4 @@
-/* $Id: fxdd.c,v 1.85 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: fxdd.c,v 1.86 2002/06/13 04:28:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -765,9 +765,6 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    fxDDInitExtensions(fxMesa->glCtx);
 
    FX_grGlideGetState((GrState *) fxMesa->state);
-
-   /* Run the config file */
-   _mesa_read_config_file(fxMesa->glCtx);
 
    return 1;
 }

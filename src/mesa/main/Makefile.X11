@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.67 2002/04/09 14:58:03 keithw Exp $
+# $Id: Makefile.X11,v 1.68 2002/06/13 04:28:29 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -31,7 +31,6 @@ CORE_SOURCES = \
 	buffers.c \
 	clip.c \
 	colortab.c \
-	config.c \
 	context.c \
 	convolve.c \
 	debug.c \

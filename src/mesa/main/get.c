@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.79 2002/05/27 17:04:53 brianp Exp $ */
+/* $Id: get.c,v 1.80 2002/06/13 04:28:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -128,7 +128,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
    FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glGetBooleanv %s\n", _mesa_lookup_enum_by_nr(pname));
+      _mesa_debug("glGetBooleanv %s\n", _mesa_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetBooleanv
        && (*ctx->Driver.GetBooleanv)(ctx, pname, params))
@@ -1465,7 +1465,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
    FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glGetDoublev %s\n", _mesa_lookup_enum_by_nr(pname));
+      _mesa_debug("glGetDoublev %s\n", _mesa_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetDoublev && (*ctx->Driver.GetDoublev)(ctx, pname, params))
       return;
@@ -2708,7 +2708,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
    FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glGetFloatv %s\n", _mesa_lookup_enum_by_nr(pname));
+      _mesa_debug("glGetFloatv %s\n", _mesa_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetFloatv && (*ctx->Driver.GetFloatv)(ctx, pname, params))
       return;
@@ -3920,7 +3920,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
    FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glGetIntegerv %s\n", _mesa_lookup_enum_by_nr(pname));
+      _mesa_debug("glGetIntegerv %s\n", _mesa_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetIntegerv
        && (*ctx->Driver.GetIntegerv)(ctx, pname, params))
@@ -5171,7 +5171,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
       return;
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glGetPointerv %s\n", _mesa_lookup_enum_by_nr(pname));
+      _mesa_debug("glGetPointerv %s\n", _mesa_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetPointerv
        && (*ctx->Driver.GetPointerv)(ctx, pname, params))
@@ -5271,7 +5271,7 @@ _mesa_GetError( void )
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glGetError <-- %s\n", _mesa_lookup_enum_by_nr(e));
+      _mesa_debug("glGetError <-- %s\n", _mesa_lookup_enum_by_nr(e));
 
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
    return e;

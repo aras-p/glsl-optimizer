@@ -17,6 +17,7 @@
 #include <GL\wmesa.h>
 #include "context.h"
 #include "dd.h"
+#include "imports.h"
 #include "xform.h"
 #include "vb.h"
 #include "matrix.h"
@@ -1110,6 +1111,7 @@ WMesaContext /*APIENTRY*/ WMesaCreateContext( HWND hWnd, HPALETTE Pal,
   //HDC DC;
   RECT CR;
   WMesaContext c;
+  __GLimports imports;
 
   c = (struct wmesa_context * ) calloc(1,sizeof(struct wmesa_context));
   if (!c)
@@ -1196,7 +1198,8 @@ WMesaContext /*APIENTRY*/ WMesaCreateContext( HWND hWnd, HPALETTE Pal,
       }
 
   /* allocate a new Mesa context */
-  c->gl_ctx = _mesa_create_context( c->gl_visual, NULL,c);
+  _mesa_init_default_imports( &imports, (void *) c );
+  c->gl_ctx = _mesa_create_context( c->gl_visual, &imports );
 
   if (!c->gl_ctx) {
          _mesa_destroy_visual( c->gl_visual );

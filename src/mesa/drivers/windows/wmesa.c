@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.28 2002/04/23 18:39:09 kschultz Exp $ */
+/* $Id: wmesa.c,v 1.29 2002/06/13 04:28:30 brianp Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -36,6 +36,7 @@
 #include "dd.h"
 #include "depth.h"
 #include "extensions.h"
+#include "imports.h"
 #include "macros.h"
 #include "matrix.h"
 #include "mem.h"
@@ -1253,6 +1254,8 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
   RECT CR;
   WMesaContext c;
   GLboolean true_color_flag;
+  __GLimports imports;
+
   c = (struct wmesa_context * ) calloc(1,sizeof(struct wmesa_context));
   if (!c)
     return NULL;
@@ -1339,8 +1342,10 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
     return NULL;
   }
   
+   _mesa_init_default_imports( &imports, (void *) c );
+
   /* allocate a new Mesa context */
-  c->gl_ctx = _mesa_create_context( c->gl_visual, NULL, c, GL_TRUE);
+  c->gl_ctx = _mesa_create_context( c->gl_visual, NULL, &imports );
   
   if (!c->gl_ctx) {
     _mesa_destroy_visual( c->gl_visual );

@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.63 2002/05/27 17:04:53 brianp Exp $ */
+/* $Id: enable.c,v 1.64 2002/06/13 04:28:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -173,10 +173,10 @@ _mesa_DisableClientState( GLenum cap )
 void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 {
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "%s %s (newstate is %x)\n",
-	      state ? "glEnable" : "glDisable",
-	      _mesa_lookup_enum_by_nr(cap),
-	      ctx->NewState);
+      _mesa_debug("%s %s (newstate is %x)\n",
+                  state ? "glEnable" : "glDisable",
+                  _mesa_lookup_enum_by_nr(cap),
+                  ctx->NewState);
 
    switch (cap) {
       case GL_ALPHA_TEST:

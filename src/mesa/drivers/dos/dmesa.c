@@ -38,6 +38,7 @@
 #include "context.h"
 #include "GL/dmesa.h"
 #include "extensions.h"
+#inlcude "imports.h"
 #include "macros.h"
 #include "matrix.h"
 #include "mmath.h"
@@ -839,9 +840,11 @@ DMesaContext DMesaCreateContext (DMesaVisual visual,
  GLboolean direct = GL_FALSE;
 
  if ((c=(DMesaContext)calloc(1, sizeof(struct dmesa_context)))!=NULL) {
+    __GLimports imports;
+    _mesa_init_default_imports( &imports, (void *) c);
     c->gl_ctx = _mesa_create_context(visual->gl_visual,
                                      share ? share->gl_ctx : NULL,
-                                     (void *)c, direct);
+                                     &imports);
 
     _mesa_enable_sw_extensions(c->gl_ctx);
     _mesa_enable_1_3_extensions(c->gl_ctx);

@@ -61,7 +61,6 @@ GL_SOURCES = \
 	buffers.c \
 	clip.c \
 	colortab.c \
-	config.c \
 	context.c \
 	convolve.c \
 	debug.c \
