@@ -33,6 +33,7 @@
 #define DBG 0
 
 #define LOCAL_VARS					\
+   savageContextPtr imesa = SAVAGE_CONTEXT(ctx);	\
    __DRIdrawablePrivate *dPriv = imesa->mesa_drawable;	\
    savageScreenPrivate *savageScreen = imesa->savageScreen;	\
    GLuint cpp   = savageScreen->cpp;			\
@@ -48,6 +49,7 @@
    (void) read_buf; (void) buf; (void) p
 
 #define LOCAL_DEPTH_VARS				\
+   savageContextPtr imesa = SAVAGE_CONTEXT(ctx);	\
    __DRIdrawablePrivate *dPriv = imesa->mesa_drawable;	\
    savageScreenPrivate *savageScreen = imesa->savageScreen;	\
    GLuint zpp   = savageScreen->zpp;			\
@@ -77,8 +79,7 @@
 
 #define Y_FLIP(_y) (height - _y - 1)
 
-#define HW_LOCK() savageContextPtr imesa = SAVAGE_CONTEXT(ctx); \
-                  WAIT_IDLE_EMPTY;\
+#define HW_LOCK()
 
 #define HW_CLIPLOOP()						\
   do {								\
@@ -95,11 +96,7 @@
     }						\
   } while (0)
 
-#if 0
-#define HW_UNLOCK()				\
-    UNLOCK_HARDWARE(imesa);
-#endif
-#define HW_UNLOCK()	{ }
+#define HW_UNLOCK()
 
 
 /* 16 bit, 565 rgb color spanline and pixel functions
@@ -164,55 +161,47 @@ do {								\
 /* 16 bit depthbuffer functions.
  */
 #define WRITE_DEPTH( _x, _y, d ) \
-do{							\
-    *(GLushort *)(buf + (_x<<1) + _y*pitch)  = d;	\
-}while(0)
-    
+    *(GLushort *)(buf + ((_x)<<1) + (_y)*pitch) = d
+
 #define READ_DEPTH( d, _x, _y ) \
-do{							\
-    d = *(GLushort *)(buf + (_x<<1) + _y*pitch);	\
-}while(0)
-       
-/*     d = 0xffff; */
-       
+    d = *(GLushort *)(buf + ((_x)<<1) + (_y)*pitch)
+
 #define TAG(x) savage##x##_16
 #include "depthtmp.h"
-       
+
 
 
 
 
 /* 8-bit stencil /24-bit depth depthbuffer functions.
  */
-#define WRITE_DEPTH( _x, _y, d ) {			\
-   GLuint tmp = *(GLuint *)(buf + (_x<<2) + _y*pitch);	\
-   tmp &= 0xFF000000;					\
-   tmp |= d;						\
+#define WRITE_DEPTH( _x, _y, d ) do {				\
+   GLuint tmp = *(GLuint *)(buf + ((_x)<<2) + (_y)*pitch);	\
+   tmp &= 0xFF000000;						\
+   tmp |= d;							\
    *(GLuint *)(buf + (_x<<2) + _y*pitch)  = tmp;		\
-}
+} while(0)
 
 #define READ_DEPTH( d, _x, _y )	\
-   d = *(GLuint *)(buf + (_x<<2) + _y*pitch) & 0x00FFFFFF;
-
-/*     d = 0x00ffffff; */
+   d = *(GLuint *)(buf + ((_x)<<2) + (_y)*pitch)
 
 #define TAG(x) savage##x##_8_24
 #include "depthtmp.h"
 
 
-#define WRITE_STENCIL( _x, _y, d ) {                    \
-   GLuint tmp = *(GLuint *)(buf + (_x<<2) + _y*pitch);     \
-   tmp &= 0x00FFFFFF;                                   \
-   tmp |= (((GLuint)d)<<24) & 0xFF000000;               \
-   *(GLuint *)(buf + (_x<<2) + _y*pitch) = tmp;            \
-}
-            
-#define READ_STENCIL( d, _x, _y )               \
-   d = (GLstencil)((*(GLuint *)(buf + (_x<<2) + _y*pitch) & 0xFF000000) >> 24);
-                
+#define WRITE_STENCIL( _x, _y, d ) do {				\
+   GLuint tmp = *(GLuint *)(buf + ((_x)<<2) + (_y)*pitch);	\
+   tmp &= 0x00FFFFFF;						\
+   tmp |= (((GLuint)d)<<24) & 0xFF000000;			\
+   *(GLuint *)(buf + ((_x)<<2) + (_y)*pitch) = tmp;		\
+} while(0)
+
+#define READ_STENCIL( d, _x, _y ) \
+   d = (GLstencil)((*(GLuint *)(buf + ((_x)<<2) + (_y)*pitch) & 0xFF000000) >> 24)
+
 #define TAG(x) savage##x##_8_24
 #include "stenciltmp.h"
-                
+
 
 /*
  * This function is called to specify which buffer to read and write
@@ -239,6 +228,58 @@ static void savageDDSetBuffer(GLcontext *ctx, GLframebuffer *buffer,
 
    imesa->mesa_drawable = (buffer == imesa->driDrawable->driverPrivate)
        ? imesa->driDrawable : imesa->driReadable;
+}
+
+/*
+ * Wrappers around _swrast_Copy/Draw/ReadPixels that make sure all
+ * primitives are flushed and the hardware is idle before accessing
+ * the frame buffer.
+ */
+static void
+savageCopyPixels( GLcontext *ctx,
+		  GLint srcx, GLint srcy, GLsizei width, GLsizei height,
+		  GLint destx, GLint desty,
+		  GLenum type )
+{
+    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
+    FLUSH_BATCH(imesa);
+    WAIT_IDLE_EMPTY;
+    _swrast_CopyPixels(ctx, srcx, srcy, width, height, destx, desty, type);
+}
+static void
+savageDrawPixels( GLcontext *ctx,
+		  GLint x, GLint y,
+		  GLsizei width, GLsizei height,
+		  GLenum format, GLenum type,
+		  const struct gl_pixelstore_attrib *packing,
+		  const GLvoid *pixels )
+{
+    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
+    FLUSH_BATCH(imesa);
+    WAIT_IDLE_EMPTY;
+    _swrast_DrawPixels(ctx, x, y, width, height, format, type, packing, pixels);
+}
+static void
+savageReadPixels( GLcontext *ctx,
+		  GLint x, GLint y, GLsizei width, GLsizei height,
+		  GLenum format, GLenum type,
+		  const struct gl_pixelstore_attrib *packing,
+		  GLvoid *pixels )
+{
+    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
+    FLUSH_BATCH(imesa);
+    WAIT_IDLE_EMPTY;
+    _swrast_ReadPixels(ctx, x, y, width, height, format, type, packing, pixels);
+}
+
+/*
+ * Make sure the hardware is idle when span-rendering.
+ */
+static void savageSpanRenderStart( GLcontext *ctx )
+{
+   savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
+   FLUSH_BATCH(imesa);
+   WAIT_IDLE_EMPTY;
 }
 
 
@@ -277,6 +318,7 @@ void savageDDInitSpanFuncs( GLcontext *ctx )
    case 2: 
        swdd->ReadDepthSpan = savageReadDepthSpan_16;
        swdd->WriteDepthSpan = savageWriteDepthSpan_16;
+       swdd->WriteMonoDepthSpan = savageWriteMonoDepthSpan_16;
        swdd->ReadDepthPixels = savageReadDepthPixels_16;
        swdd->WriteDepthPixels = savageWriteDepthPixels_16;
        
@@ -284,6 +326,7 @@ void savageDDInitSpanFuncs( GLcontext *ctx )
    case 4: 
        swdd->ReadDepthSpan = savageReadDepthSpan_8_24;
        swdd->WriteDepthSpan = savageWriteDepthSpan_8_24;
+       swdd->WriteMonoDepthSpan = savageWriteMonoDepthSpan_8_24;
        swdd->ReadDepthPixels = savageReadDepthPixels_8_24;
        swdd->WriteDepthPixels = savageWriteDepthPixels_8_24;    
        swdd->ReadStencilSpan = savageReadStencilSpan_8_24;
@@ -301,11 +344,13 @@ void savageDDInitSpanFuncs( GLcontext *ctx )
    swdd->ReadCI32Span        =NULL;
    swdd->ReadCI32Pixels      =NULL;
 
+   swdd->SpanRenderStart = savageSpanRenderStart;
+
    /* Pixel path fallbacks.
     */
    ctx->Driver.Accum = _swrast_Accum;
    ctx->Driver.Bitmap = _swrast_Bitmap;
-   ctx->Driver.CopyPixels = _swrast_CopyPixels;
-   ctx->Driver.DrawPixels = _swrast_DrawPixels;
-   ctx->Driver.ReadPixels = _swrast_ReadPixels;
+   ctx->Driver.CopyPixels = savageCopyPixels;
+   ctx->Driver.DrawPixels = savageDrawPixels;
+   ctx->Driver.ReadPixels = savageReadPixels;
 }

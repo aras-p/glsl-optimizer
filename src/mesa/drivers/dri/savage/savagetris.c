@@ -1120,7 +1120,6 @@ void savageFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
       imesa->Fallback |= bit;
       if (oldfallback == 0) {
 	 /* the first fallback */
-	 FLUSH_BATCH( imesa );
 	 _swsetup_Wakeup( ctx );
 	 imesa->RenderIndex = ~0;
       }
