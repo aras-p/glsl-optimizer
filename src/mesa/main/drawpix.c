@@ -211,7 +211,8 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
 				ctx->Current.RasterTexCoords[0] );
       }
    }
-   else if (ctx->RenderMode==GL_SELECT) {
+   else {
+      ASSERT(ctx->RenderMode == GL_SELECT);
       /* Bitmaps don't generate selection hits.  See appendix B of 1.1 spec. */
    }
 #endif
