@@ -1,4 +1,4 @@
-/* $Id: eval.c,v 1.8 2000/01/13 00:30:41 brianp Exp $ */
+/* $Id: eval.c,v 1.9 2000/07/17 12:53:33 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2453,7 +2453,7 @@ void gl_eval_vb( struct vertex_buffer *VB )
 
       if (ctx->Eval.Map1Color4 && any_eval1) 
 	 VB->ColorPtr = eval1_color( out_color, coord, flags, IM->Start,
-				   &ctx->EvalMap.Map1Color4 );
+				     &ctx->EvalMap.Map1Color4 );
       
       if (ctx->Eval.Map2Color4 && any_eval2)
 	 VB->ColorPtr = eval2_color( out_color, coord, flags, IM->Start,
@@ -2482,8 +2482,9 @@ void gl_eval_vb( struct vertex_buffer *VB )
 	 VB->NormalPtr = eval2_norm( out_normal, coord, flags, IM->Start,
 				     &ctx->EvalMap.Map2Normal );
 	 
+      new_flags |= VERT_NORM;
+
       if (VB->NormalPtr != in_normal) {
-	 new_flags |= VERT_NORM;
 	 if (!all_eval)
 	    VB->NormalPtr = copy_3f( out_normal, in_normal, flags, IM->Start );
       }
@@ -2551,26 +2552,42 @@ void gl_eval_vb( struct vertex_buffer *VB )
       }
 
       if (any_eval2) {
+	 GLvector3f  *in_normal = VB->NormalPtr;
+	 GLvector3f  *out_normal = &IM->v.Normal;
+
 	 if (ctx->Eval.Map2Vertex4) 
 	 {
-	    if (ctx->Eval.AutoNormal && (req & VERT_NORM)) 
-	       obj = eval2_obj_norm( out, VB->NormalPtr, coord, flags, IM->Start,
-				     4, &ctx->EvalMap.Map2Vertex4 );
+	    if (ctx->Eval.AutoNormal && (req & VERT_NORM)) {
+	       obj = eval2_obj_norm( out, out_normal, coord, flags, 
+				     IM->Start, 4, &ctx->EvalMap.Map2Vertex4 );
+	       VB->NormalPtr = out_normal;
+	       new_flags |= VERT_NORM;
+	    }
 	    else
 	       obj = eval2_4f( out, coord, flags, IM->Start,
-			       4, &ctx->EvalMap.Map2Vertex4);
+			       4, &ctx->EvalMap.Map2Vertex4 );
 	 }
 	 else if (ctx->Eval.Map2Vertex3) 
 	 {
-	    if (ctx->Eval.AutoNormal && (req & VERT_NORM)) 
-	       obj = eval2_obj_norm( out, VB->NormalPtr, coord, flags, IM->Start,
-				     3, &ctx->EvalMap.Map2Vertex3 );
+	    if (ctx->Eval.AutoNormal && (req & VERT_NORM)) {
+	       obj = eval2_obj_norm( out, out_normal, coord, flags, 
+				     IM->Start, 3, &ctx->EvalMap.Map2Vertex3 );
+	       VB->NormalPtr = out_normal;
+	       new_flags |= VERT_NORM;
+	    }
 	    else
 	       obj = eval2_4f( out, coord, flags, IM->Start,
 			       3, &ctx->EvalMap.Map2Vertex3 );
 	 }
-      }
 
+
+	 if (VB->NormalPtr != in_normal) {
+	    if (!all_eval)
+	       VB->NormalPtr = copy_3f( out_normal, in_normal, flags, 
+					IM->Start );
+	 }
+      }
+      
       if (obj != in && !all_eval)
 	 obj = copy_4f( out, in, flags, IM->Start );
 
@@ -2582,6 +2599,7 @@ void gl_eval_vb( struct vertex_buffer *VB )
       GLuint *flags = VB->Flag = VB->EvaluatedFlags;
       GLuint i;
       GLuint count = VB->Count;
+      GLuint andflag = VB->IM->AndFlag;
 
       if (!flags) {
 	 VB->EvaluatedFlags = (GLuint *) MALLOC(VB->Size * sizeof(GLuint));
@@ -2591,14 +2609,18 @@ void gl_eval_vb( struct vertex_buffer *VB )
       if (all_eval) {
 	 for (i = 0 ; i < count ; i++) 
 	    flags[i] = oldflags[i] | new_flags;
+	 andflag |= new_flags;
       } else {
-	 GLuint andflag = ~0;
+	 andflag = ~0;
 	 for (i = 0 ; i < count ; i++) {
 	    if (oldflags[i] & VERT_EVAL_ANY) 
 	       flags[i] = oldflags[i] | new_flags;
 	    andflag &= flags[i];
 	 }
       }
+
+      VB->OrFlag |= new_flags;
+      VB->CullMode = (GLubyte) ((andflag & VERT_NORM) ? 0 : COMPACTED_NORMALS);
    }
 }
 
