@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.21 2000/03/20 23:54:54 brianp Exp $ */
+/* $Id: dd.h,v 1.22 2000/03/21 16:10:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -510,6 +510,7 @@ struct dd_function_table {
                      struct gl_texture_object *tObj, GLint level,
                      GLint internalFormat,
                      const struct gl_texture_image *image );
+   /* XXX this function is obsolete */
    /* Called whenever a texture object's image is changed.
     *    texObject is the number of the texture object being changed.
     *    level indicates the mipmap level.
@@ -524,6 +525,7 @@ struct dd_function_table {
                         GLsizei width, GLsizei height,
                         GLint internalFormat,
                         const struct gl_texture_image *image );
+   /* XXX this function is obsolete */
    /* Called from glTexSubImage() to define a sub-region of a texture.
     */
 
@@ -568,8 +570,7 @@ struct dd_function_table {
                                const GLvoid *pixels,
                                const struct gl_pixelstore_attrib *packing,
                                struct gl_texture_object *texObj,
-                               struct gl_texture_image *texImage,
-                               GLboolean *retainInternalCopy );
+                               struct gl_texture_image *texImage );
    GLboolean (*TexSubImage2D)( GLcontext *ctx, GLenum target, GLint level,
                                GLint xoffset, GLint yoffset,
                                GLsizei width, GLsizei height,
@@ -577,8 +578,7 @@ struct dd_function_table {
                                const GLvoid *pixels,
                                const struct gl_pixelstore_attrib *packing,
                                struct gl_texture_object *texObj,
-                               struct gl_texture_image *texImage,
-                               GLboolean *retainInternalCopy );
+                               struct gl_texture_image *texImage );
    GLboolean (*TexSubImage3D)( GLcontext *ctx, GLenum target, GLint level,
                                GLint xoffset, GLint yoffset, GLint zoffset,
                                GLsizei width, GLsizei height, GLint depth,
@@ -586,9 +586,7 @@ struct dd_function_table {
                                const GLvoid *pixels,
                                const struct gl_pixelstore_attrib *packing,
                                struct gl_texture_object *texObj,
-                               struct gl_texture_image *texImage,
-                               GLboolean *retainInternalCopy );
-
+                               struct gl_texture_image *texImage );
    /* Called by glTexSubImage1/2/3D.
     * Will not be called if any glPixelTransfer operations are enabled.
     * Arguments:
@@ -599,9 +597,8 @@ struct dd_function_table {
     *   <texImage> is the target texture image.  It will have the texture
     *      width, height, border and internalFormat information.
     * Return GL_TRUE if operation completed, return GL_FALSE if core Mesa
-    * should do the job.  If GL_FALSE is returned, this function will be
-    * called a second time after the texture image has been unpacked into
-    * GLubytes.  It may be easier for the driver to handle then.
+    * should do the job.  If GL_FALSE is returned, then TexImage1/2/3D will
+    * be called with the complete texture image.
     */
       
    GLboolean (*CopyTexImage1D)( GLcontext *ctx, GLenum target, GLint level,
