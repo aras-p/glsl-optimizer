@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.22 2001/04/30 21:08:52 keithw Exp $ */
+/* $Id: t_context.h,v 1.23 2001/05/10 12:18:38 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -345,7 +345,7 @@ struct gl_pipeline {
    GLuint run_state_changes;	  /* state changes since last run */
    GLuint run_input_changes;	  /* VERT_* changes since last run */
    GLuint inputs;		  /* VERT_* inputs to pipeline */
-   struct gl_pipeline_stage stages[MAX_PIPELINE_STAGES];
+   struct gl_pipeline_stage stages[MAX_PIPELINE_STAGES+1];
    GLuint nr_stages;
 };
 
@@ -377,10 +377,10 @@ struct tnl_device_driver {
     *** TNL Pipeline
     ***/
 
-   void (*PipelineStart)(GLcontext *ctx);
-   void (*PipelineFinish)(GLcontext *ctx);
-   /* Called before and after all pipeline stages.
-    * These are a suitable place for grabbing/releasing hardware locks.
+   void (*RunPipeline)(GLcontext *ctx);
+   /* Replaces PipelineStart/PipelineFinish -- intended to allow
+    * drivers to wrap _tnl_run_pipeline() with code to validate state
+    * and grab/release hardware locks.  
     */
 
    /***

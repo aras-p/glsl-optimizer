@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.12 2001/04/28 08:39:18 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.13 2001/05/10 12:18:38 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -151,12 +151,12 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
    tnl->vb.Elts = (GLuint *)indices;
 
    if (ctx->Array.LockCount)
-      _tnl_run_pipeline( ctx );
+      tnl->Driver.RunPipeline( ctx );
    else {
       /* Note that arrays may have changed before/after execution.
        */
       tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
-      _tnl_run_pipeline( ctx );
+      tnl->Driver.RunPipeline( ctx );
       tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
    }
 }
@@ -203,20 +203,20 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 VB->FirstPrimitive = start;
 	 VB->Primitive[start] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;
 	 VB->PrimitiveLength[start] = count - start;
-	 _tnl_run_pipeline( ctx );
+	 tnl->Driver.RunPipeline( ctx );
       } else {
 	 /* The arrays are small enough to fit in a single VB; just bind
 	  * them and go.  Any untransformed data will be copied on
 	  * clipping.
 	  *
-	  * Invalidate any locked data dependent on these arrays.
+	  * Invalidate any cached data dependent on these arrays.
 	  */
 	 _tnl_vb_bind_arrays( ctx, start, count );
 	 VB->FirstPrimitive = 0;
 	 VB->Primitive[0] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;
 	 VB->PrimitiveLength[0] = count - start;
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
-	 _tnl_run_pipeline( ctx );
+	 tnl->Driver.RunPipeline( ctx );
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
       }
    }
@@ -291,7 +291,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 VB->Primitive[0] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;
 	 VB->PrimitiveLength[0] = nr + minimum;
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
-	 _tnl_run_pipeline( ctx );
+	 tnl->Driver.RunPipeline( ctx );
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
       }
    }
@@ -418,8 +418,6 @@ void _tnl_array_init( GLcontext *ctx )
     */
    _mesa_vector4f_init( &tmp->Obj, 0, 0 );
    _mesa_vector3f_init( &tmp->Normal, 0, 0 );   
-/*     _mesa_vector4chan_init( &tmp->Color, 0, 0 ); */
-/*     _mesa_vector4chan_init( &tmp->SecondaryColor, 0, 0 ); */
    _mesa_vector1f_init( &tmp->FogCoord, 0, 0 );
    _mesa_vector1ui_init( &tmp->Index, 0, 0 );
    _mesa_vector1ub_init( &tmp->EdgeFlag, 0, 0 );

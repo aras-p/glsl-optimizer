@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.22 2001/05/09 13:53:36 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.23 2001/05/10 12:18:38 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -367,7 +367,7 @@ void _tnl_run_cassette( GLcontext *ctx, struct immediate *IM )
    /* Invalidate all stored data before and after run:
     */
    tnl->pipeline.run_input_changes |= tnl->pipeline.inputs;
-   _tnl_run_pipeline( ctx );
+   tnl->Driver.RunPipeline( ctx );
    tnl->pipeline.run_input_changes |= tnl->pipeline.inputs;
 
    _tnl_copy_to_current( ctx, IM, IM->OrFlag );
@@ -420,7 +420,7 @@ static void exec_elt_cassette( GLcontext *ctx, struct immediate *IM )
 
    /* Run the pipeline.  No input changes as a result of this action.
     */
-   _tnl_run_pipeline( ctx );
+   tnl->Driver.RunPipeline( ctx );
 
    /* Still need to update current values:  (TODO - copy from VB)
     * TODO: delay this until FlushVertices

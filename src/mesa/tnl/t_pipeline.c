@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.c,v 1.17 2001/04/30 09:04:00 keithw Exp $ */
+/* $Id: t_pipeline.c,v 1.18 2001/05/10 12:18:38 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,6 +63,8 @@ void _tnl_install_pipeline( GLcontext *ctx,
       pipe->build_state_trigger |= pipe->stages[i].check_state;
    }
 
+   MEMSET( &pipe->stages[i], 0, sizeof( **stages ));
+
    pipe->nr_stages = i;
 }
 
@@ -86,13 +88,12 @@ void _tnl_validate_pipeline( GLcontext *ctx )
    struct gl_pipeline_stage *s = pipe->stages;
    GLuint newstate = pipe->build_state_changes;
    GLuint generated = 0;
-   GLuint i;
    GLuint changed_inputs = 0;
 
    pipe->inputs = 0;
    pipe->build_state_changes = 0;
 
-   for (i = pipe->nr_stages+1 ; --i ; s++) {
+   for ( ; s->check ; s++) {
 
       s->changed_inputs |= s->inputs & changed_inputs;
 
@@ -125,55 +126,40 @@ void _tnl_run_pipeline( GLcontext *ctx )
    GLuint changed_state = pipe->run_state_changes;
    GLuint changed_inputs = pipe->run_input_changes;
    GLboolean running = GL_TRUE;
-   GLuint i;
    unsigned short __tmp;
+
+   pipe->run_state_changes = 0;
+   pipe->run_input_changes = 0;
 
    /* Done elsewhere.
     */
    ASSERT(pipe->build_state_changes == 0);
-
-/*     _tnl_print_vert_flags( "run_pipeline, new inputs", changed_inputs ); */
-/*     _mesa_print_state( "run_pipeline, new state", changed_state ); */
    
    START_FAST_MATH(__tmp);
-   if (tnl->Driver.PipelineStart)
-      tnl->Driver.PipelineStart( ctx );
 
    /* If something changes in the pipeline, tag all subsequent stages
-    * using this value for recalculation.
-    *
-    * Even inactive stages have their state and inputs examined to try
-    * to keep cached data alive over state-changes.
+    * using this value for recalculation.  Inactive stages have their
+    * state and inputs examined to try to keep cached data alive over
+    * state-changes.  
     */
-   for (i = pipe->nr_stages+1 ; --i ; s++) {
+   for ( ; s->run ; s++) {
       s->changed_inputs |= s->inputs & changed_inputs;
 
-      if (s->run_state & changed_state) {
+      if (s->run_state & changed_state) 
 	 s->changed_inputs = s->inputs;
-      }
 
-      if (s->active) {
-	 if (running) {
-	    if (s->changed_inputs)
-	       changed_inputs |= s->outputs;
+      if (s->active && running) {
+	 if (s->changed_inputs)
+	    changed_inputs |= s->outputs;
 
-  	    if (0)
-	       fprintf(stderr, "run %s inputs %x\n", 
-		       s->name, s->changed_inputs); 
+	 running = s->run( ctx, s );
 
-	    running = s->run( ctx, s );
-	    s->changed_inputs = 0;             /* readded this apr 30  */
-	    VB->importable_data &= ~s->outputs;
-	 }
+	 s->changed_inputs = 0;
+	 VB->importable_data &= ~s->outputs;
       }
    }
 
-   if (tnl->Driver.PipelineFinish)
-      tnl->Driver.PipelineFinish( ctx );
    END_FAST_MATH(__tmp);
-
-   pipe->run_state_changes = 0;
-   pipe->run_input_changes = 0;
 }
 
 
