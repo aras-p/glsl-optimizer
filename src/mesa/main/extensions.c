@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.50 2001/02/27 00:05:27 brianp Exp $ */
+/* $Id: extensions.c,v 1.51 2001/02/27 00:13:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -175,12 +175,10 @@ _mesa_enable_imaging_extensions(GLcontext *ctx)
    const char *extensions[] = {
       "GL_ARB_imaging",
       "GL_EXT_blend_color",
-      "GL_EXT_blend_logic_op",
       "GL_EXT_blend_minmax",
       "GL_EXT_blend_subtract",
       "GL_EXT_convolution",
       "GL_EXT_histogram",
-      "GL_SGI_color_matrix",
       "GL_SGI_color_matrix",
       "GL_SGI_color_table",
       NULL
