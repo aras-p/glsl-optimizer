@@ -47,7 +47,7 @@
  * table.
  * Input:  shared - the shared GL state structure to contain the texture object
  *         name - integer name for the texture object
- *         dimensions - either 1, 2 or 3
+ *         dimensions - either 1, 2, 3 or 6 (cube map)
  * Return:  pointer to new texture object
  */
 struct gl_texture_object *
@@ -56,7 +56,7 @@ gl_alloc_texture_object( struct gl_shared_state *shared, GLuint name,
 {
    struct gl_texture_object *obj;
 
-   ASSERT(dimensions <= 3);
+   ASSERT(dimensions <= 3 || dimensions == 6);
 
    obj = CALLOC_STRUCT(gl_texture_object);
 
@@ -173,7 +173,7 @@ void gl_test_texture_object_completeness( const GLcontext *ctx, struct gl_textur
    if (t->Dimensions==1) {
       t->P = t->Image[0]->WidthLog2;
    }
-   else if (t->Dimensions==2) {
+   else if (t->Dimensions == 2 || t->Dimensions == 6) {
       t->P = MAX2(t->Image[0]->WidthLog2, t->Image[0]->HeightLog2);
    }
    else if (t->Dimensions==3) {
@@ -428,25 +428,37 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    switch (target) {
       case GL_TEXTURE_1D:
          dim = 1;
+         oldTexObj = texUnit->CurrentD[1];
          break;
       case GL_TEXTURE_2D:
          dim = 2;
+         oldTexObj = texUnit->CurrentD[2];
          break;
       case GL_TEXTURE_3D:
          dim = 3;
+         oldTexObj = texUnit->CurrentD[3];
          break;
+      case GL_TEXTURE_CUBE_MAP_ARB:
+         if (ctx->Extensions.HaveTextureCubeMap) {
+            dim = 6;
+            oldTexObj = texUnit->CurrentCubeMap;
+            break;
+         }
+         /* fallthrough */
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glBindTexture(target)" );
          return;
    }
 
-   oldTexObj = texUnit->CurrentD[dim];
-
    if (oldTexObj->Name == texName)
       return;
 
-   if (texName == 0) 
-      newTexObj = ctx->Shared->DefaultD[dim];
+   if (texName == 0) {
+      if (target == GL_TEXTURE_CUBE_MAP_ARB)
+         newTexObj = ctx->Shared->DefaultCubeMap;
+      else
+         newTexObj = ctx->Shared->DefaultD[dim];
+   }
    else {
       struct _mesa_HashTable *hash = ctx->Shared->TexObjects;
       newTexObj = (struct gl_texture_object *) _mesa_HashLookup(hash, texName);
@@ -466,7 +478,22 @@ _mesa_BindTexture( GLenum target, GLuint texName )
 
    newTexObj->RefCount++;
 
-   texUnit->CurrentD[dim] = newTexObj;
+   switch (target) {
+      case GL_TEXTURE_1D:
+         texUnit->CurrentD[1] = newTexObj;
+         break;
+      case GL_TEXTURE_2D:
+         texUnit->CurrentD[2] = newTexObj;
+         break;
+      case GL_TEXTURE_3D:
+         texUnit->CurrentD[3] = newTexObj;
+         break;
+      case GL_TEXTURE_CUBE_MAP_ARB:
+         texUnit->CurrentCubeMap = newTexObj;
+         break;
+      default:
+         gl_problem(ctx, "bad target in BindTexture");
+   }
 
    /* If we've changed the CurrentD[123] texture object then update the
     * ctx->Texture.Current pointer to point to the new texture object.

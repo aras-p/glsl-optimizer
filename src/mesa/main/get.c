@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.26 2000/05/22 16:33:21 brianp Exp $ */
+/* $Id: get.c,v 1.27 2000/05/23 15:17:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -963,7 +963,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
          if (ctx->Extensions.HaveTextureCubeMap)
-            *params = INT_TO_BOOL(textureUnit->CurrentPosX->Name);
+            *params = INT_TO_BOOL(textureUnit->CurrentCubeMap->Name);
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          return;
@@ -2077,19 +2077,19 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          if (ctx->Extensions.HaveTextureCubeMap)
             *params = (GLdouble) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
          if (ctx->Extensions.HaveTextureCubeMap)
-            *params = (GLdouble) textureUnit->CurrentPosX->Name;
+            *params = (GLdouble) textureUnit->CurrentCubeMap->Name;
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
          if (ctx->Extensions.HaveTextureCubeMap)
             *params = (GLdouble) ctx->Const.MaxCubeTextureSize;
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          return;
 
       /* GL_PGI_misc_hints */
@@ -3194,19 +3194,19 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          if (ctx->Extensions.HaveTextureCubeMap)
             *params = (GLfloat) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
          if (ctx->Extensions.HaveTextureCubeMap)
-            *params = (GLfloat) textureUnit->CurrentPosX->Name;
+            *params = (GLfloat) textureUnit->CurrentCubeMap->Name;
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
          if (ctx->Extensions.HaveTextureCubeMap)
             *params = (GLfloat) ctx->Const.MaxCubeTextureSize;
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          return;
 
       /* GL_PGI_misc_hints */
@@ -4285,19 +4285,19 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          if (ctx->Extensions.HaveTextureCubeMap)
             *params = (GLint) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
          if (ctx->Extensions.HaveTextureCubeMap)
-            *params = textureUnit->CurrentPosX->Name;
+            *params = textureUnit->CurrentCubeMap->Name;
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
          if (ctx->Extensions.HaveTextureCubeMap)
             *params = ctx->Const.MaxCubeTextureSize;
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          return;
 
       /* GL_PGI_misc_hints */

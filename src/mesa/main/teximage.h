@@ -1,4 +1,4 @@
-/* $Id: teximage.h,v 1.6 2000/03/27 17:54:17 brianp Exp $ */
+/* $Id: teximage.h,v 1.7 2000/05/23 15:17:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,6 +45,11 @@ _mesa_alloc_texture_image( void );
 
 extern void
 _mesa_free_texture_image( struct gl_texture_image *teximage );
+
+
+extern struct gl_texture_image *
+_mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
+                       GLenum target, GLint level);
 
 
 extern void

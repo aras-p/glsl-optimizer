@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.20 2000/05/22 16:33:21 brianp Exp $ */
+/* $Id: enable.c,v 1.21 2000/05/23 15:17:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -508,23 +508,30 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
-#if 0
-         if (ctx->Visual->RGBAflag) {
-	    const GLuint curr = ctx->Texture.CurrentUnit;
-	    const GLuint flag = TEXTURE0_CUBE << (curr * 4);
-            struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
-	    ctx->NewState |= NEW_TEXTURE_ENABLE;
-            if (state) {
-	       texUnit->Enabled |= TEXTURE0_2D;
-	       ctx->Enabled |= flag;
-	    }
-            else {
-               texUnit->Enabled &= ~TEXTURE0_2D;
-               ctx->Enabled &= ~flag;
+         if (ctx->Extensions.HaveTextureCubeMap) {
+            if (ctx->Visual->RGBAflag) {
+               const GLuint curr = ctx->Texture.CurrentUnit;
+               const GLuint flag = TEXTURE0_CUBE << (curr * 4);
+               struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
+               ctx->NewState |= NEW_TEXTURE_ENABLE;
+               if (state) {
+                  texUnit->Enabled |= TEXTURE0_CUBE;
+                  ctx->Enabled |= flag;
+               }
+               else {
+                  texUnit->Enabled &= ~TEXTURE0_CUBE;
+                  ctx->Enabled &= ~flag;
+               }
             }
          }
+         else {
+            if (state)
+               gl_error(ctx, GL_INVALID_ENUM, "glEnable");
+            else
+               gl_error(ctx, GL_INVALID_ENUM, "glDisable");
+            return;
+         }
 	 break;
-#endif
 
       default:
 	 if (state) {
@@ -760,23 +767,14 @@ _mesa_IsEnabled( GLenum cap )
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
-#if 0
-         if (ctx->Visual->RGBAflag) {
-	    const GLuint curr = ctx->Texture.CurrentUnit;
-	    const GLuint flag = TEXTURE0_CUBE << (curr * 4);
-            struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
-	    ctx->NewState |= NEW_TEXTURE_ENABLE;
-            if (state) {
-	       texUnit->Enabled |= TEXTURE0_2D;
-	       ctx->Enabled |= flag;
-	    }
-            else {
-               texUnit->Enabled &= ~TEXTURE0_2D;
-               ctx->Enabled &= ~flag;
-            }
+         if (ctx->Extensions.HaveTextureCubeMap) {
+            const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+            return (texUnit->Enabled & TEXTURE0_CUBE) ? GL_TRUE : GL_FALSE;
          }
-	 break;
-#endif
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glIsEnabled");
+            return GL_FALSE;
+         }
 
       default:
 	 gl_error( ctx, GL_INVALID_ENUM, "glIsEnabled" );

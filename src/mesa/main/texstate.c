@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.10 2000/05/22 16:33:21 brianp Exp $ */
+/* $Id: texstate.c,v 1.11 2000/05/23 15:17:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,7 @@
 #include "macros.h"
 #include "matrix.h"
 #include "texobj.h"
+#include "teximage.h"
 #include "texstate.h"
 #include "texture.h"
 #include "types.h"
@@ -275,7 +276,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          break;
       case GL_TEXTURE_CUBE_MAP_ARB:
          if (ctx->Extensions.HaveTextureCubeMap) {
-            texObj = texUnit->CurrentPosX;
+            texObj = texUnit->CurrentCubeMap;
             break;
          }
          /* fallthrough */
@@ -431,6 +432,28 @@ _mesa_GetTexLevelParameterfv( GLenum target, GLint level,
 }
 
 
+static GLuint
+tex_image_dimensions(GLcontext *ctx, GLenum target)
+{
+   switch (target) {
+      case GL_TEXTURE_1D:
+      case GL_PROXY_TEXTURE_1D:
+         return 1;
+      case GL_TEXTURE_2D:
+      case GL_PROXY_TEXTURE_2D:
+         return 2;
+      case GL_TEXTURE_3D:
+      case GL_PROXY_TEXTURE_3D:
+         return 3;
+      case GL_TEXTURE_CUBE_MAP_ARB:
+      case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+         return ctx->Extensions.HaveTextureCubeMap ? 2 : 0;
+      default:
+         gl_problem(ctx, "bad target in _mesa_tex_target_dimensions()");
+         return 0;
+   }
+}
+
 
 void
 _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
@@ -448,54 +471,12 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       return;
    }
 
-   switch (target) {
-      case GL_TEXTURE_1D:
-         img = texUnit->CurrentD[1]->Image[level];
-         dimensions = 1;
-         break;
-      case GL_TEXTURE_2D:
-         img = texUnit->CurrentD[2]->Image[level];
-         dimensions = 2;
-         break;
-      case GL_TEXTURE_3D:
-         img = texUnit->CurrentD[3]->Image[level];
-         dimensions = 3; 
-         break;
-      case GL_TEXTURE_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap) {
-            img = texUnit->CurrentPosX->Image[level];
-            dimensions = 2;
-         }
-         else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetTexLevelParameter[if]v(target)");
-            return;
-         }
-         break;
-      case GL_PROXY_TEXTURE_1D:
-         img = ctx->Texture.Proxy1D->Image[level];
-         dimensions = 1;
-         break;
-      case GL_PROXY_TEXTURE_2D:
-         img = ctx->Texture.Proxy2D->Image[level];
-         dimensions = 2;
-         break;
-      case GL_PROXY_TEXTURE_3D:
-         img = ctx->Texture.Proxy3D->Image[level];
-         dimensions = 3;
-         break;
-      case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap) {
-            img = ctx->Texture.ProxyCubeMap->Image[level];
-            dimensions = 2;
-         }
-         else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetTexLevelParameter[if]v(target)");
-            return;
-         }
-         break;
-      default:
-	 gl_error(ctx, GL_INVALID_ENUM, "glGetTexLevelParameter[if]v(target)");
-         return;
+   dimensions = tex_image_dimensions(ctx, target);  /* 1, 2 or 3 */
+   img = _mesa_select_tex_image(ctx, texUnit, target, level);
+
+   if (dimensions == 0) {
+      gl_error(ctx, GL_INVALID_ENUM, "glGetTexLevelParameter[if]v(target)");
+      return;
    }
 
    if (!img) {
