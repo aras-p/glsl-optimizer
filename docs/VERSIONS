@@ -1250,6 +1250,7 @@ Mesa Version History
 	- support for AUX buffers in software GLX driver
     Changes:
 	- fragment fog interpolation is perspective corrected now
+	- new glTexImage code, much cleaner, may be a bit faster
     Bug fixes:
 	- glArrayElement in display lists didn't handle generic vertex attribs
 	- glFogCoord didn't always work properly
@@ -1258,3 +1259,7 @@ Mesa Version History
 	- ARB fp TEX and TEXP instructions now use LOD=0
 	- glTexEnviv in display lists didn't work
 	- glRasterPos didn't do texgen or apply texture matrix
+	- GL_DOUBLE-valued vertex arrays were broken in some cases
+	- fixed texture rectangle edge/border sampling bugs
+	- sampling an incomplete texture in a fragment program would segfault
+	- glTexImage was missing a few error checks
