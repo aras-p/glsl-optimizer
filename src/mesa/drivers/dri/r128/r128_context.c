@@ -74,8 +74,10 @@ static const char * const card_extensions[] =
    "GL_ARB_texture_compression",
    "GL_ARB_texture_env_add",
    "GL_ARB_texture_mirrored_repeat",
+   "GL_EXT_blend_subtract",
    "GL_EXT_texture_edge_clamp",
    "GL_MESA_ycbcr_texture",
+   "GL_NV_blend_square",
    "GL_SGIS_generate_mipmap",
    NULL
 };

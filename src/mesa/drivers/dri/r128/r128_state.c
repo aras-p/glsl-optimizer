@@ -56,6 +56,76 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Alpha blending
  */
 
+
+/**
+ * Calculate the hardware blend factor setting.  This same function is used
+ * for source and destination of both alpha and RGB.  
+ *
+ * \returns
+ * The hardware register value for the specified blend factor.  This value
+ * will need to be shifted into the correct position for either source or
+ * destination factor.
+ *
+ * \todo
+ * Since the two cases where source and destination are handled differently
+ * are essentially error cases, they should never happen.  Determine if these
+ * cases can be removed.
+ */
+static int blend_factor( r128ContextPtr rmesa, GLenum factor, GLboolean is_src )
+{
+   int   func;
+
+   switch ( factor ) {
+   case GL_ZERO:
+      func = R128_ALPHA_BLEND_ZERO;
+      break;
+   case GL_ONE:
+      func = R128_ALPHA_BLEND_ONE;
+      break;
+
+   case GL_SRC_COLOR:
+      func = R128_ALPHA_BLEND_SRCCOLOR;
+      break;
+   case GL_ONE_MINUS_SRC_COLOR:
+      func = R128_ALPHA_BLEND_INVSRCCOLOR;
+      break;
+   case GL_SRC_ALPHA:
+      func = R128_ALPHA_BLEND_SRCALPHA;
+      break;
+   case GL_ONE_MINUS_SRC_ALPHA:
+      func = R128_ALPHA_BLEND_INVSRCALPHA;
+      break;
+   case GL_SRC_ALPHA_SATURATE:
+      func = (is_src) ? R128_ALPHA_BLEND_SAT : R128_ALPHA_BLEND_ZERO;
+      break;
+
+   case GL_DST_COLOR:
+      func = R128_ALPHA_BLEND_DSTCOLOR;
+      break;
+   case GL_ONE_MINUS_DST_COLOR:
+      func = R128_ALPHA_BLEND_INVDSTCOLOR;
+      break;
+   case GL_DST_ALPHA:
+      func = R128_ALPHA_BLEND_DSTALPHA;
+      break;
+   case GL_ONE_MINUS_DST_ALPHA:
+      func = R128_ALPHA_BLEND_INVDSTALPHA;
+      break;
+
+   case GL_CONSTANT_COLOR:
+   case GL_ONE_MINUS_CONSTANT_COLOR:
+   case GL_CONSTANT_ALPHA:
+   case GL_ONE_MINUS_CONSTANT_ALPHA:
+   default:
+      FALLBACK( rmesa, R128_FALLBACK_BLEND_FUNC, GL_TRUE );
+      func = (is_src) ? R128_ALPHA_BLEND_ONE : R128_ALPHA_BLEND_ZERO;
+      break;
+   }
+   
+   return func;
+}
+
+
 static void r128UpdateAlphaMode( GLcontext *ctx )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
@@ -105,67 +175,24 @@ static void r128UpdateAlphaMode( GLcontext *ctx )
    FALLBACK( rmesa, R128_FALLBACK_BLEND_FUNC, GL_FALSE );
 
    if ( ctx->Color.BlendEnabled ) {
-      a &= ~(R128_ALPHA_BLEND_SRC_MASK | R128_ALPHA_BLEND_DST_MASK);
+      a &= ~((R128_ALPHA_BLEND_MASK << R128_ALPHA_BLEND_SRC_SHIFT) |
+	     (R128_ALPHA_BLEND_MASK << R128_ALPHA_BLEND_DST_SHIFT)
+	     | R128_ALPHA_COMB_FCN_MASK);
 
-      switch ( ctx->Color.BlendSrcRGB ) {
-      case GL_ZERO:
-	 a |= R128_ALPHA_BLEND_SRC_ZERO;
+      a |= blend_factor( rmesa, ctx->Color.BlendSrcRGB, GL_TRUE ) 
+	  << R128_ALPHA_BLEND_SRC_SHIFT;
+      a |= blend_factor( rmesa, ctx->Color.BlendDstRGB, GL_FALSE ) 
+	  << R128_ALPHA_BLEND_DST_SHIFT;
+
+      switch (ctx->Color.BlendEquationRGB) {
+      case GL_FUNC_ADD:
+	 a |= R128_ALPHA_COMB_ADD_CLAMP;
 	 break;
-      case GL_ONE:
-	 a |= R128_ALPHA_BLEND_SRC_ONE;
-	 break;
-      case GL_DST_COLOR:
-	 a |= R128_ALPHA_BLEND_SRC_DESTCOLOR;
-	 break;
-      case GL_ONE_MINUS_DST_COLOR:
-	 a |= R128_ALPHA_BLEND_SRC_INVDESTCOLOR;
-	 break;
-      case GL_SRC_ALPHA:
-	 a |= R128_ALPHA_BLEND_SRC_SRCALPHA;
-	 break;
-      case GL_ONE_MINUS_SRC_ALPHA:
-	 a |= R128_ALPHA_BLEND_SRC_INVSRCALPHA;
-	 break;
-      case GL_DST_ALPHA:
-	 a |= R128_ALPHA_BLEND_SRC_DESTALPHA;
-	 break;
-      case GL_ONE_MINUS_DST_ALPHA:
-	 a |= R128_ALPHA_BLEND_SRC_INVDESTALPHA;
-	 break;
-      case GL_SRC_ALPHA_SATURATE:
-	 a |= R128_ALPHA_BLEND_SRC_SRCALPHASAT;
+      case GL_FUNC_SUBTRACT:
+	 a |= R128_ALPHA_COMB_SUB_SRC_DST_CLAMP;
 	 break;
       default:
-         FALLBACK( rmesa, R128_FALLBACK_BLEND_FUNC, GL_TRUE );
-      }
-
-      switch ( ctx->Color.BlendDstRGB ) {
-      case GL_ZERO:
-	 a |= R128_ALPHA_BLEND_DST_ZERO;
-	 break;
-      case GL_ONE:
-	 a |= R128_ALPHA_BLEND_DST_ONE;
-	 break;
-      case GL_SRC_COLOR:
-	 a |= R128_ALPHA_BLEND_DST_SRCCOLOR;
-	 break;
-      case GL_ONE_MINUS_SRC_COLOR:
-	 a |= R128_ALPHA_BLEND_DST_INVSRCCOLOR;
-	 break;
-      case GL_SRC_ALPHA:
-	 a |= R128_ALPHA_BLEND_DST_SRCALPHA;
-	 break;
-      case GL_ONE_MINUS_SRC_ALPHA:
-	 a |= R128_ALPHA_BLEND_DST_INVSRCALPHA;
-	 break;
-      case GL_DST_ALPHA:
-	 a |= R128_ALPHA_BLEND_DST_DESTALPHA;
-	 break;
-      case GL_ONE_MINUS_DST_ALPHA:
-	 a |= R128_ALPHA_BLEND_DST_INVDESTALPHA;
-	 break;
-      default:
-         FALLBACK( rmesa, R128_FALLBACK_BLEND_FUNC, GL_TRUE );
+	 FALLBACK( rmesa, R128_FALLBACK_BLEND_EQ, GL_TRUE );
       }
 
       t |=  R128_ALPHA_ENABLE;
@@ -208,7 +235,7 @@ static void r128DDBlendEquationSeparate( GLcontext *ctx,
 
    /* Can only do blend addition, not min, max, subtract, etc. */
    FALLBACK( R128_CONTEXT(ctx), R128_FALLBACK_BLEND_EQ,
-	     modeRGB != GL_FUNC_ADD);
+	     (modeRGB != GL_FUNC_ADD) && (modeRGB != GL_FUNC_SUBTRACT));
 
    rmesa->new_state |= R128_NEW_ALPHA;
 }
@@ -1119,8 +1146,8 @@ void r128DDInitState( r128ContextPtr rmesa )
 					  R128_MISC_SCALE_PIX_REPLICATE |
 					  R128_ALPHA_COMB_ADD_CLAMP |
 					  R128_FOG_VERTEX |
-					  R128_ALPHA_BLEND_SRC_ONE |
-					  R128_ALPHA_BLEND_DST_ZERO |
+					  (R128_ALPHA_BLEND_ONE << R128_ALPHA_BLEND_SRC_SHIFT) |
+					  (R128_ALPHA_BLEND_ZERO << R128_ALPHA_BLEND_DST_SHIFT) |
 					  R128_ALPHA_TEST_ALWAYS);
 
    rmesa->setup.texture_clr_cmp_clr_c = 0x00000000;
@@ -1165,8 +1192,8 @@ void r128DDInitState( r128ContextPtr rmesa )
 				 R128_SCALE_PIX_REPLICATE |
 				 R128_ALPHA_COMB_ADD_CLAMP |
 				 R128_FOG_VERTEX |
-				 R128_ALPHA_BLEND_SRC_ONE |
-				 R128_ALPHA_BLEND_DST_ZERO |
+				 (R128_ALPHA_BLEND_ONE << R128_ALPHA_BLEND_SRC_SHIFT) |
+				 (R128_ALPHA_BLEND_ZERO << R128_ALPHA_BLEND_DST_SHIFT) |
 				 R128_ALPHA_TEST_ALWAYS |
 				 R128_COMPOSITE_SHADOW_CMP_EQUAL |
 				 R128_TEX_MAP_ALPHA_IN_TEXTURE |
