@@ -1,4 +1,4 @@
-/* $Id: texutil_tmp.h,v 1.7 2001/03/30 14:44:43 gareth Exp $ */
+/* $Id: texutil_tmp.h,v 1.8 2001/04/20 19:21:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,12 +28,9 @@
  */
 
 /*
- * NOTE: All 3D code is untested and most definitely broken...
+ * NOTE: All 3D teximage code is untested and most definitely broken...
  */
 
-#ifdef VMS
-#define __FUNCTION__
-#endif
 
 #define DST_TEXEL_BYTES		(4 / DST_TEXELS_PER_DWORD)
 #define DST_ROW_WIDTH		(convert->width * DST_TEXEL_BYTES)
@@ -55,8 +52,9 @@ TAG(texsubimage2d)( struct gl_texture_convert *convert )
    GLint dwords, i;
    (void) dwords; (void) i;
 
-   if ( DBG )
-      fprintf( stderr, __FUNCTION__ "\n" );
+#if DEBUG_TEXUTIL
+   fprintf( stderr, __FUNCTION__ "\n" );
+#endif
 
 #ifdef CONVERT_DIRECT
    MEMCPY( dst, src, convert->height * DST_ROW_WIDTH );
@@ -86,8 +84,9 @@ TAG(texsubimage3d)( struct gl_texture_convert *convert )
    GLint dwords, i;
    (void) dwords; (void) i;
 
-   if ( DBG )
-      fprintf( stderr, __FUNCTION__ "\n" );
+#if DEBUG_TEXUTIL
+   fprintf( stderr, __FUNCTION__ "\n" );
+#endif
 
 #ifdef CONVERT_DIRECT
    MEMCPY( dst, src, convert->depth * convert->height * DST_ROW_WIDTH );
@@ -121,13 +120,13 @@ TAG(texsubimage2d_stride)( struct gl_texture_convert *convert )
 
    adjust = convert->dstImageWidth - convert->width;
 
-   if ( DBG ) {
-      fprintf( stderr, __FUNCTION__ ":\n" );
-      fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
-	       convert->xoffset, convert->yoffset, convert->width,
-	       convert->height, convert->dstImageWidth );
-      fprintf( stderr, "   adjust=%d\n", adjust );
-   }
+#if DEBUG_TEXUTIL
+   fprintf( stderr, __FUNCTION__ ":\n" );
+   fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
+            convert->xoffset, convert->yoffset, convert->width,
+            convert->height, convert->dstImageWidth );
+   fprintf( stderr, "   adjust=%d\n", adjust );
+#endif
 
    for ( row = 0 ; row < convert->height ; row++ ) {
       for ( col = 0 ; col < convert->width ; col++ ) {
@@ -155,13 +154,13 @@ TAG(texsubimage3d_stride)( struct gl_texture_convert *convert )
 
    adjust = convert->dstImageWidth - convert->width;
 
-   if ( DBG ) {
-      fprintf( stderr, __FUNCTION__ ":\n" );
-      fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
-	       convert->xoffset, convert->yoffset, convert->width,
-	       convert->height, convert->dstImageWidth );
-      fprintf( stderr, "   adjust=%d\n", adjust );
-   }
+#if DEBUG_TEXUTIL
+   fprintf( stderr, __FUNCTION__ ":\n" );
+   fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
+            convert->xoffset, convert->yoffset, convert->width,
+            convert->height, convert->dstImageWidth );
+   fprintf( stderr, "   adjust=%d\n", adjust );
+#endif
 
    for ( img = 0 ; img < convert->depth ; img++ ) {
       for ( row = 0 ; row < convert->height ; row++ ) {
@@ -199,8 +198,9 @@ TAG(texsubimage2d_pack)( struct gl_texture_convert *convert )
    GLint row, col;
    (void) col;
 
-   if ( DBG )
-      fprintf( stderr, __FUNCTION__ "\n" );
+#if DEBUG_TEXUTIL
+   fprintf( stderr, __FUNCTION__ "\n" );
+#endif
 
    width = ((convert->width + DST_TEXELS_PER_DWORD - 1)
 	    & ~(DST_TEXELS_PER_DWORD - 1));
@@ -243,8 +243,9 @@ TAG(texsubimage3d_pack)( struct gl_texture_convert *convert )
    GLint row, col, img;
    (void) col;
 
-   if ( DBG )
-      fprintf( stderr, __FUNCTION__ "\n" );
+#if DEBUG_TEXUTIL
+   fprintf( stderr, __FUNCTION__ "\n" );
+#endif
 
    width = ((convert->width + DST_TEXELS_PER_DWORD - 1)
 	    & ~(DST_TEXELS_PER_DWORD - 1));
@@ -293,13 +294,13 @@ TAG(texsubimage2d_stride_pack)( struct gl_texture_convert *convert )
 
    adjust = convert->dstImageWidth - convert->width;
 
-   if ( DBG ) {
-      fprintf( stderr, __FUNCTION__ ":\n" );
-      fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
-	       convert->xoffset, convert->yoffset, convert->width,
-	       convert->height, convert->dstImageWidth );
-      fprintf( stderr, "   adjust=%d\n", adjust );
-   }
+#if DEBUG_TEXUTIL
+   fprintf( stderr, __FUNCTION__ ":\n" );
+   fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
+            convert->xoffset, convert->yoffset, convert->width,
+            convert->height, convert->dstImageWidth );
+   fprintf( stderr, "   adjust=%d\n", adjust );
+#endif
 
    for ( row = 0 ; row < convert->height ; row++ ) {
 #ifdef CONVERT_DIRECT
@@ -342,13 +343,13 @@ TAG(texsubimage3d_stride_pack)( struct gl_texture_convert *convert )
 
    adjust = convert->dstImageWidth - convert->width;
 
-   if ( DBG ) {
-      fprintf( stderr, __FUNCTION__ ":\n" );
-      fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
-	       convert->xoffset, convert->yoffset, convert->width,
-	       convert->height, convert->dstImageWidth );
-      fprintf( stderr, "   adjust=%d\n", adjust );
-   }
+#if DEBUG_TEXUTIL
+   fprintf( stderr, __FUNCTION__ ":\n" );
+   fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
+            convert->xoffset, convert->yoffset, convert->width,
+            convert->height, convert->dstImageWidth );
+   fprintf( stderr, "   adjust=%d\n", adjust );
+#endif
 
    for ( img = 0 ; img < convert->depth ; img++ ) {
       for ( row = 0 ; row < convert->height ; row++ ) {

@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.45 2001/04/19 22:39:50 brianp Exp $ */
+/* $Id: texstate.c,v 1.46 2001/04/20 19:21:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1058,7 +1058,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
 
 
 void
-_mesa_TexParameteri( GLenum target, GLenum pname, const GLint param )
+_mesa_TexParameteri( GLenum target, GLenum pname, GLint param )
 {
    GLfloat fparam[4];
    fparam[0] = (GLfloat) param;

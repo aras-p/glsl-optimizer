@@ -1,4 +1,4 @@
-/* $Id: texutil.c,v 1.22 2001/03/30 14:44:43 gareth Exp $ */
+/* $Id: texutil.c,v 1.23 2001/04/20 19:21:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,7 +41,7 @@
 #include "texutil.h"
 #endif
 
-#define DBG 0
+#define DEBUG_TEXUTIL 0
 
 
 struct gl_texture_convert {

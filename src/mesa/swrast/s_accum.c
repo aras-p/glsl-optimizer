@@ -1,4 +1,4 @@
-/* $Id: s_accum.c,v 1.10 2001/04/10 15:25:45 brianp Exp $ */
+/* $Id: s_accum.c,v 1.11 2001/04/20 19:21:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,6 +25,7 @@
  */
 
 
+#include "glheader.h"
 #include "context.h"
 #include "macros.h"
 #include "mmath.h"

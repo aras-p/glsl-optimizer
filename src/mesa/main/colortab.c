@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.39 2001/04/10 15:25:45 brianp Exp $ */
+/* $Id: colortab.c,v 1.40 2001/04/20 19:21:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -812,7 +812,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
          return;
    }
 
-   _mesa_pack_rgba_span(ctx, table->Size, (const GLchan (*)[]) rgba,
+   _mesa_pack_rgba_span(ctx, table->Size, (const GLchan (*)[4]) rgba,
                         format, type, data, &ctx->Pack, GL_FALSE);
 }
 
