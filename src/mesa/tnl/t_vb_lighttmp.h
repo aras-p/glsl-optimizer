@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.6 2001/02/14 23:00:42 brianp Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.7 2001/02/16 00:35:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -113,6 +113,8 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
    (void) flags;
    (void) nstride; 
    (void) vstride;
+
+/*     fprintf(stderr, "%s\n", __FUNCTION__ ); */
 
    if (IDX & LIGHT_COLORMATERIAL) {
       CMcolor = (GLchan (*)[4]) VB->ColorPtr[0]->data;
@@ -279,15 +281,6 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
 	 Bcolor[j][3] = sumA[1];
       }
    } 
-
-   if ( CHECK_COLOR_MATERIAL(j) ) 
-      gl_update_color_material( ctx, CMcolor[j] );
-   
-   if ( CHECK_MATERIAL(j) )
-      gl_update_material( ctx, new_material[j], new_material_mask[j] );
-
-   if ( CHECK_VALIDATE(j) )
-      gl_validate_all_lighting_tables( ctx );
 }
 
 
@@ -318,6 +311,7 @@ static void TAG(light_rgba)( GLcontext *ctx,
    GLuint *new_material_mask = VB->MaterialMask;
    GLuint nr = VB->Count;
 
+/*     fprintf(stderr, "%s\n", __FUNCTION__ ); */
    (void) flags;
    (void) nstride; 
    (void) vstride;
@@ -483,15 +477,6 @@ static void TAG(light_rgba)( GLcontext *ctx,
 	 Bcolor[j][3] = sumA[1];
       }
    } 
-
-   if ( CHECK_COLOR_MATERIAL(j) ) 
-      gl_update_color_material( ctx, (GLchan *)CMcolor[j] );
-   
-   if ( CHECK_MATERIAL(j) )
-      gl_update_material( ctx, new_material[j], new_material_mask[j] );
-
-   if ( CHECK_VALIDATE(j) )
-      gl_validate_all_lighting_tables( ctx );
 }
 
 
@@ -521,6 +506,7 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
    GLfloat base[2][3];
    GLuint nr = VB->Count;
 
+/*     fprintf(stderr, "%s\n", __FUNCTION__ ); */
    (void) input;		/* doesn't refer to Eye or Obj */
    (void) flags;
    (void) nr;
@@ -647,6 +633,7 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
    GLuint nr = VB->Count;
    struct gl_light *light;
 
+/*     fprintf(stderr, "%s\n", __FUNCTION__ ); */
    (void) flags;
    (void) input;
    (void) nr;
@@ -778,6 +765,7 @@ static void TAG(light_ci)( GLcontext *ctx,
    GLuint *new_material_mask = VB->MaterialMask;
    GLuint nr = VB->Count;
 
+/*     fprintf(stderr, "%s\n", __FUNCTION__ ); */
    (void) flags;
    (void) nstride; 
    (void) vstride;
@@ -936,15 +924,6 @@ static void TAG(light_ci)( GLcontext *ctx,
 	 indexResult[side][j] = (GLuint) (GLint) index;
       }
    } /*for vertex*/
-
-   if ( CHECK_COLOR_MATERIAL(j) ) 
-      gl_update_color_material( ctx, CMcolor[j] );
-	 
-   if ( CHECK_MATERIAL(j) )
-      gl_update_material( ctx, new_material[j], new_material_mask[j] );
-
-   if ( CHECK_VALIDATE(j) )
-      gl_validate_all_lighting_tables( ctx );
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.c,v 1.12 2001/02/15 01:33:52 keithw Exp $ */
+/* $Id: t_pipeline.c,v 1.13 2001/02/16 00:35:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -202,7 +202,6 @@ void _tnl_run_pipeline( GLcontext *ctx )
  * case, if it becomes necessary to do so. 
  */
 const struct gl_pipeline_stage *_tnl_default_pipeline[] = {
-   &_tnl_update_material_stage, 
    &_tnl_vertex_transform_stage, 
    &_tnl_normal_transform_stage, 
    &_tnl_lighting_stage, 

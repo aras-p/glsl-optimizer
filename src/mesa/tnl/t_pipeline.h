@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.h,v 1.5 2001/01/05 02:26:49 keithw Exp $ */
+/* $Id: t_pipeline.h,v 1.6 2001/02/16 00:35:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,7 +48,6 @@ extern void _tnl_install_pipeline( GLcontext *ctx,
 
 /* These are implemented in the t_vb_*.c files:
  */
-extern const struct gl_pipeline_stage _tnl_update_material_stage; 
 extern const struct gl_pipeline_stage _tnl_vertex_transform_stage; 
 extern const struct gl_pipeline_stage _tnl_normal_transform_stage; 
 extern const struct gl_pipeline_stage _tnl_lighting_stage; 

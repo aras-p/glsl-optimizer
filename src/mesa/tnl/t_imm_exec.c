@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.11 2001/02/15 01:33:52 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.12 2001/02/16 00:35:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,6 +76,8 @@ void _tnl_reset_input( GLcontext *ctx,
    IM->BeginState = beginstate;         
    IM->SavedBeginState = savedbeginstate;
    IM->TexSize = 0;
+   IM->LastMaterial = 0;
+   IM->MaterialOrMask = 0;
 
    IM->ArrayEltFlags = ~ctx->Array._Enabled;
    IM->ArrayEltIncr = ctx->Array.Vertex.Enabled ? 1 : 0;

@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.12 2001/01/29 20:47:39 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.13 2001/02/16 00:35:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,13 +63,13 @@
 
 
 
-typedef void (*clip_line_func)( GLcontext *ctx,
-				GLuint i, GLuint j,
-				GLubyte mask);
+/*  typedef void (*clip_line_func)( GLcontext *ctx, */
+/*  				GLuint i, GLuint j, */
+/*  				GLubyte mask); */
 
-typedef void (*clip_poly_func)( GLcontext *ctx,
-				GLuint n, GLuint vlist[],
-				GLubyte mask );
+/*  typedef void (*clip_poly_func)( GLcontext *ctx, */
+/*  				GLuint n, GLuint vlist[], */
+/*  				GLubyte mask ); */
 
 
 
@@ -250,10 +250,10 @@ static void clip_elt_triangles( GLcontext *ctx,
 #define RENDER_LINE( v1, v2 ) \
    LineFunc( ctx, v1, v2 )
 
-#define RENDER_TRI( v1, v2, v3 )		\
+#define RENDER_TRI( v1, v2, v3 ) \
    TriangleFunc( ctx, v1, v2, v3 )
 
-#define RENDER_QUAD( v1, v2, v3, v4 )	\
+#define RENDER_QUAD( v1, v2, v3, v4 ) \
    QuadFunc( ctx, v1, v2, v3, v4 )
 
 #define TAG(x) _tnl_##x##_verts
@@ -299,11 +299,25 @@ static GLboolean run_render( GLcontext *ctx,
    render_func *tab;
    GLint pass = 0;
 
+
    /* Allow the drivers to lock before projected verts are built so
     * that window coordinates are guarenteed not to change before
     * rendering.
     */
    ctx->Driver.RenderStart( ctx );
+
+   ASSERT(ctx->Driver.BuildProjectedVertices);
+   ASSERT(ctx->Driver.RenderPrimitive);
+   ASSERT(ctx->Driver.PointsFunc);
+   ASSERT(ctx->Driver.LineFunc);
+   ASSERT(ctx->Driver.TriangleFunc);
+   ASSERT(ctx->Driver.QuadFunc);
+   ASSERT(ctx->Driver.ResetLineStipple);
+   ASSERT(ctx->Driver.RenderInterp);
+   ASSERT(ctx->Driver.RenderCopyPV);
+   ASSERT(ctx->Driver.RenderClippedLine);
+   ASSERT(ctx->Driver.RenderClippedPolygon);
+
    ctx->Driver.BuildProjectedVertices( ctx, 0, VB->Count, new_inputs );
 
    if (VB->ClipOrMask) {
@@ -354,9 +368,8 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
    if (ctx->Visual.rgbMode) {
       inputs |= VERT_RGBA;
 
-      if (ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) {
+      if (ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) 
 	 inputs |= VERT_SPEC_RGB;
-      }
 
       if (ctx->Texture._ReallyEnabled) {
 	 for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
@@ -365,8 +378,7 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
 	 }
       }
    }
-   else 
-   {
+   else {
       inputs |= VERT_INDEX;
    }
 
@@ -375,17 +387,14 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
 
    /* How do drivers turn this off?
     */
-   if (ctx->Fog.Enabled) {
+   if (ctx->Fog.Enabled) 
       inputs |= VERT_FOG_COORD;
-   }
 
-   if (ctx->_TriangleCaps & DD_TRI_UNFILLED) {
+   if (ctx->_TriangleCaps & DD_TRI_UNFILLED) 
       inputs |= VERT_EDGE;
-   }
 
-   if (ctx->RenderMode==GL_FEEDBACK) {
+   if (ctx->RenderMode==GL_FEEDBACK) 
       inputs |= VERT_TEX_ANY;
-   }
 
    stage->inputs = inputs;
 }

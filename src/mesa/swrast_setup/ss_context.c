@@ -1,4 +1,4 @@
-/* $Id: ss_context.c,v 1.9 2001/01/29 20:47:39 keithw Exp $ */
+/* $Id: ss_context.c,v 1.10 2001/02/16 00:35:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -153,6 +153,16 @@ _swsetup_RenderStart( GLcontext *ctx )
       VB->import_data( ctx,
 		       VB->importable_data,
 		       VEC_NOT_WRITEABLE|VEC_BAD_STRIDE);
+
+   /* Ugly hack: Tie up some dangling pointers for flat/twoside code
+    * in ss_tritmp.h and ss_interptmp.h
+    */
+   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) == 0 ||
+       ctx->Texture._ReallyEnabled == 0) {
+      VB->SecondaryColorPtr[0] = VB->ColorPtr[0];
+      VB->SecondaryColorPtr[1] = VB->ColorPtr[1];
+   }
+     
 }
 
 void

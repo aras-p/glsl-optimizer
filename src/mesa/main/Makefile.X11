@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.43 2001/02/06 21:42:48 brianp Exp $
+# $Id: Makefile.X11,v 1.44 2001/02/16 00:35:34 keithw Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -36,7 +36,6 @@ CORE_SOURCES = \
 	tnl/t_pipeline.c \
 	tnl/t_vb_fog.c \
 	tnl/t_vb_light.c \
-	tnl/t_vb_material.c \
 	tnl/t_vb_normals.c \
 	tnl/t_vb_points.c \
 	tnl/t_vb_render.c \

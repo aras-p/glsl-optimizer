@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.8 2001/02/15 01:33:52 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.9 2001/02/16 00:35:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -180,6 +180,8 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
    IM->AndFlag = node->AndFlag;
    IM->LastData = node->LastData;
    IM->LastPrimitive = node->LastPrimitive;
+   IM->LastMaterial = node->LastMaterial;
+   IM->MaterialOrMask = node->MaterialOrMask;
 
    if ((MESA_VERBOSE & VERBOSE_DISPLAY_LIST) &&
        (MESA_VERBOSE & VERBOSE_IMMEDIATE))

@@ -1,4 +1,4 @@
-/* $Id: t_vb_light.c,v 1.6 2001/01/29 22:10:24 brianp Exp $ */
+/* $Id: t_vb_light.c,v 1.7 2001/02/16 00:35:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -133,17 +133,21 @@ static GLboolean run_lighting( GLcontext *ctx, struct gl_pipeline_stage *stage )
    GLuint ind;
 
    /* Make sure we can talk about elements 0..2 in the vector we are
-    * lighting.  TODO:  Don't repeat this in CVA!
+    * lighting.
     */
-   if (input->size <= 2) {
-      if (input->flags & VEC_NOT_WRITEABLE) {
-	 ASSERT(VB->importable_data & VERT_OBJ);
-	 VB->import_data( ctx, VERT_OBJ, VEC_NOT_WRITEABLE );
-	 input = ctx->_NeedEyeCoords ? VB->EyePtr : VB->ObjPtr;
-	 ASSERT((input->flags & VEC_NOT_WRITEABLE) == 0);
-      }
+   if (stage->changed_inputs & (VERT_EYE|VERT_OBJ)) {
+      if (input->size <= 2) {
+	 if (input->flags & VEC_NOT_WRITEABLE) {
+	    ASSERT(VB->importable_data & VERT_OBJ);
 
-      gl_vector4f_clean_elem(input, VB->Count, 2);
+	    VB->import_data( ctx, VERT_OBJ, VEC_NOT_WRITEABLE );
+	    input = ctx->_NeedEyeCoords ? VB->EyePtr : VB->ObjPtr;
+
+	    ASSERT((input->flags & VEC_NOT_WRITEABLE) == 0);
+	 }
+
+	 gl_vector4f_clean_elem(input, VB->Count, 2);
+      }
    }
       
    if (VB->Flag)
@@ -170,8 +174,8 @@ static GLboolean run_validate_lighting( GLcontext *ctx,
    
    if (ctx->Visual.rgbMode) {
       if (ctx->Light._NeedVertices) {
-	 if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR &&
-             ctx->Texture._ReallyEnabled) 
+	 if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR && 
+	     ctx->Texture._ReallyEnabled) 
 	    tab = _tnl_light_spec_tab;
 	 else
 	    tab = _tnl_light_tab;	 
@@ -182,7 +186,6 @@ static GLboolean run_validate_lighting( GLcontext *ctx,
 	 else
 	    tab = _tnl_light_fast_tab;
       }
-/*  	    tab = _tnl_light_tab;	  */
    }
    else
       tab = _tnl_light_ci_tab;
@@ -306,8 +309,9 @@ static void dtr( struct gl_pipeline_stage *stage )
 const struct gl_pipeline_stage _tnl_lighting_stage = 
 { 
    "lighting",
-   _NEW_LIGHT,			/* recheck */
-   _NEW_LIGHT|_NEW_MODELVIEW,	/* recalc -- modelview dependency
+   _NEW_LIGHT|_NEW_TEXTURE,	/* recheck; texture for seperate_specular */
+   _NEW_LIGHT|_NEW_MODELVIEW|
+   _NEW_TEXTURE,		/* recalc -- modelview dependency
 				 * otherwise not captured by inputs
 				 * (which may be VERT_OBJ) */
    0,0,0,			/* active, inputs, outputs */
