@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.74 2001/02/07 16:27:41 brianp Exp $ */
+/* $Id: teximage.c,v 1.75 2001/02/07 18:59:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1150,7 +1150,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                GLint col;
                for (col = 0; col < width; col++) {
                   (*texImage->FetchTexel)(ctx, texObj, texImage,
-                                          img, row, col, rgba[col]);
+                                          col, row, img, rgba[col]);
                }
 
                _mesa_pack_rgba_span( ctx, width, (const GLchan (*)[4])rgba,
