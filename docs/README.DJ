@@ -255,12 +255,13 @@ v1.6 (???-2004)
 	+ added DMesaGetProcAddress and glutGetProcAddress
 	* reorganized fxMesa wrapper to handle multiple contexts
 	! fixed a horrible bug in VGA initialization routine
+	! fixed partial clears
 
 
 
 Contact:
 ~~~~~~~~
 
-Name:   Borca Daniel
+Name:   Daniel Borca
 E-mail: dborca@users.sourceforge.net
 WWW:    http://www.geocities.com/dborca/
