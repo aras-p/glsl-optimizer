@@ -353,7 +353,7 @@ static void TAG(render_tri_fan_verts)( GLcontext *ctx,
 	 currentsz = dmasz;
       }
 
-      for (j = start + 1 ; j + 1 < count; j += nr - 1 ) {
+      for (j = start + 1 ; j + 1 < count; j += nr - 2 ) {
 	 void *tmp;
 	 nr = MIN2( currentsz, count - j + 1 );
 	 tmp = ALLOC_VERTS( nr );
@@ -392,7 +392,7 @@ static void TAG(render_poly_verts)( GLcontext *ctx,
 	 currentsz = dmasz;
       }
 
-      for (j = start + 1 ; j + 1 < count ; j += nr - 1 ) {
+      for (j = start + 1 ; j + 1 < count ; j += nr - 2 ) {
 	 void *tmp;
 	 nr = MIN2( currentsz, count - j + 1 );
 	 tmp = ALLOC_VERTS( nr );
@@ -919,7 +919,7 @@ static void TAG(render_tri_fan_elts)( GLcontext *ctx,
 	 currentsz = dmasz;
       }
 
-      for (j = start + 1 ; j + 1 < count; j += nr - 1 ) {
+      for (j = start + 1 ; j + 1 < count; j += nr - 2 ) {
 	 void *tmp;
 	 nr = MIN2( currentsz, count - j + 1 );
 	 tmp = ALLOC_ELTS( nr );
@@ -956,7 +956,7 @@ static void TAG(render_poly_elts)( GLcontext *ctx,
 	 currentsz = dmasz;
       }
 
-      for (j = start + 1 ; j + 1 < count; j += nr - 1 ) {
+      for (j = start + 1 ; j + 1 < count; j += nr - 2 ) {
 	 void *tmp;
 	 nr = MIN2( currentsz, count - j + 1 );
 	 tmp = ALLOC_ELTS( nr );
