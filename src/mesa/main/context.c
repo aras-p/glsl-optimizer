@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.172 2002/06/18 16:53:46 brianp Exp $ */
+/* $Id: context.c,v 1.173 2002/06/23 02:53:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2396,9 +2396,11 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *where )
 void
 _mesa_debug( const GLcontext *ctx, const char *fmtString, ... )
 {
+   char s[1000];
    va_list args;
    va_start( args, fmtString );  
-   (void) ctx->imports.fprintf( (__GLcontext *) ctx, stderr, fmtString, args );
+   vsprintf(s, fmtString, args);
+   (void) ctx->imports.fprintf( (__GLcontext *) ctx, stderr, s );
    va_end( args );
 }
 
@@ -2409,9 +2411,11 @@ _mesa_debug( const GLcontext *ctx, const char *fmtString, ... )
 void
 _mesa_printf( const GLcontext *ctx, const char *fmtString, ... )
 {
+   char s[1000];
    va_list args;
    va_start( args, fmtString );  
-   (void) ctx->imports.fprintf( (__GLcontext *) ctx, stdout, fmtString, args );
+   vsprintf(s, fmtString, args);
+   (void) ctx->imports.fprintf( (__GLcontext *) ctx, stdout, s );
    va_end( args );
 }
 
