@@ -529,22 +529,18 @@ class glFunctionIterator:
 class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 	name = "a"
 	license = "The license for this file is unspecified."
-	functions = {}
 	next_alias = -2
-	types = {}
-	xref = {}
 	current_object = None
-	factory = None
-	current_category = ""
 
 	def __init__(self):
 		saxutils.XMLFilterBase.__init__(self)
 		self.functions = {}
 		self.types = {}
-		self.xref = {}
+		self.functions_by_name = {}
 		self.factory = glItemFactory()
 		self.header_tag = None
 		self.undef_list = []
+		self.current_category = ""
 
 
 	def find_type(self,type_name):
@@ -556,8 +552,7 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 
 
 	def find_function(self,function_name):
-		index = self.xref[function_name]
-		return self.functions[index]
+		return self.functions_by_name[function_name]
 
 
 	def functionIterator(self):
@@ -626,7 +621,9 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 					self.next_alias -= 1
 
 				self.functions[index] = obj
-				self.xref[obj.name] = index
+
+			self.functions_by_name[obj.name] = obj
+
 		elif object_type == "type":
 			self.types[obj.name] = obj
 

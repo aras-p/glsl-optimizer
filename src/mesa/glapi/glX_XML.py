@@ -416,10 +416,9 @@ class glXFunction(gl_XML.glFunction):
 
 
 	def variable_length_parameter(self):
-		for param in self.fn_parameters:
-			if param.is_variable_length_array():
-				return param
-			
+		if len(self.variable_length_parameters):
+			return self.variable_length_parameters[0]
+
 		return None
 
 
