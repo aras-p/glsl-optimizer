@@ -603,23 +603,19 @@ static void r128RenderStart( GLcontext *ctx )
 	 EMIT_PAD( 1 );
    }
 
-   if ( index & _TNL_BIT_TEX(0) ) {
-      if ( VB->TexCoordPtr[0]->size > 2 )
+   if ( index & _TNL_BIT_TEX(rmesa->tmu_source[0]) ) {
+      if ( VB->TexCoordPtr[rmesa->tmu_source[0]]->size > 2 )
 	 fallback_projtex = GL_TRUE;
       EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_2F, R128_CCE_VC_FRMT_S_T, 8 );
-      if ( index & _TNL_BIT_TEX(1) ) {
-	 if ( VB->TexCoordPtr[1]->size > 2 )
-	    fallback_projtex = GL_TRUE;
-	 EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, R128_CCE_VC_FRMT_S2_T2, 8 );
-      }
-   } else if ( index & _TNL_BIT_TEX(1) ) {
-      if ( VB->TexCoordPtr[1]->size > 2 )
+   }
+   if ( index & _TNL_BIT_TEX(rmesa->tmu_source[1]) ) {
+      if ( VB->TexCoordPtr[rmesa->tmu_source[1]]->size > 2 )
 	 fallback_projtex = GL_TRUE;
-      EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, R128_CCE_VC_FRMT_S_T, 8 );
+      EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, R128_CCE_VC_FRMT_S2_T2, 8 );
    }
 
    /* projective textures are not supported by the hardware */
-   FALLBACK( rmesa, R128_FALLBACK_TEXTURE, fallback_projtex );
+   FALLBACK( rmesa, R128_FALLBACK_PROJTEX, fallback_projtex );
 
    /* Only need to change the vertex emit code if there has been a
     * statechange to a TNL index.
