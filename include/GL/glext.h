@@ -32,7 +32,14 @@ extern "C" {
 #endif
 
 
-#define GL_GLEXT_VERSION_EXT 1
+/*
+ * Versions:
+ *   1. Brian Paul, 24 Feb 2000
+ *      Intial Version
+ *   2. Brian Paul, 7 Mar 2000
+ *      Added GL_HP_occlusion_test, GL_EXT_texture_lod_bias
+ */
+#define GL_GLEXT_VERSION_EXT 2
 
 
 /*
@@ -1066,6 +1073,19 @@ typedef void (APIENTRY * PFNGLLIGHTENVISGIXPROC) (GLenum pname, GLint param);
 
 
 /*
+ * 137. GL_HP_occlusion_test
+ */
+#ifndef GL_HP_occlusion_test
+#define GL_HP_occlusion_test 1
+
+#define GL_OCCLUSION_TEST_HP			0x?
+#define GL_OCCLUSION_TEST_RESULT_HP		0x?
+
+#endif /* GL_HP_occlusion_test */
+
+
+
+/*
  * 141. GL_EXT_shared_texture_palette (req's GL_EXT_paletted_texture)
  */
 #ifndef GL_EXT_shared_texture_palette
@@ -1213,6 +1233,19 @@ typedef void (APIENTRY * PFNGLBLENDFUNCSEPARATEINGRPROC) (GLenum sfactorRGB, GLe
 /* No new tokens or functions */
 
 #endif /* GL_EXT_texture_env_add */
+
+
+
+/*
+ * 186. GL_EXT_texture_lod_bias
+ */
+#ifndef GL_EXT_texture_lod_bias
+#define GL_EXT_texture_lod_bias 1
+
+#define GL_TEXTURE_FILTER_CONTROL_EXT		0x8500
+#define GL_TEXTURE_LOD_BIAS_EXT			0x8501
+
+#endif /* GL_EXT_texture_lod_bias */
 
 
 
