@@ -186,9 +186,9 @@ static void savageUploadTiny (const savageTileInfo *tileInfo,
 
 /** \brief Upload an image from mesa's internal copy.
  */
-static void savageUploadTexLevel( savageTextureObjectPtr t, int level )
+static void savageUploadTexLevel( savageTexObjPtr t, int level )
 {
-    const struct gl_texture_image *image = t->image[level].image;
+    const struct gl_texture_image *image = t->base.tObj->Image[0][level];
     const savageTileInfo *tileInfo = t->tileInfo;
     GLuint width = image->Width2, height = image->Height2;
     GLuint bpp = t->texelBytes;
@@ -207,7 +207,7 @@ static void savageUploadTexLevel( savageTextureObjectPtr t, int level )
 	    GLuint wInTiles = width / tileInfo->width;
 	    GLuint hInTiles = height / tileInfo->height;
 	    GLubyte *srcTRow = image->Data, *src;
-	    GLubyte *dest = (GLubyte *)(t->BufAddr + t->image[level].offset);
+	    GLubyte *dest = (GLubyte *)(t->bufAddr + t->image[level].offset);
 	    GLuint x, y;
 	    for (y = 0; y < hInTiles; ++y) {
 		src = srcTRow;
@@ -224,7 +224,7 @@ static void savageUploadTexLevel( savageTextureObjectPtr t, int level )
 	    savageUploadTile (tileInfo, width / tileInfo->subWidth,
 			      height / tileInfo->subHeight, bpp,
 			      image->Data, width * bpp,
-			      (GLubyte *)(t->BufAddr+t->image[level].offset));
+			      (GLubyte *)(t->bufAddr+t->image[level].offset));
 	}
     } else {
 	GLuint minHeight, minWidth, hRepeat, vRepeat, x, y;
@@ -241,7 +241,7 @@ static void savageUploadTexLevel( savageTextureObjectPtr t, int level )
 	    GLuint offset = y * tileInfo->subWidth*height * bpp;
 	    for (x = 0; x < hRepeat; ++x) {
 		savageUploadTiny (tileInfo, width, height, bpp, image->Data,
-				  (GLubyte *)(t->BufAddr +
+				  (GLubyte *)(t->bufAddr +
 					      t->image[level].offset+offset));
 		offset += width * bpp;
 	    }
@@ -270,48 +270,47 @@ static GLuint savageTexImageSize (GLuint width, GLuint height, GLuint bpp) {
 	return 64 * bpp;
 }
 
-static void savageSetTexWrapping(savageTextureObjectPtr tex, GLenum s, GLenum t)
+static void savageSetTexWrapping(savageTexObjPtr tex, GLenum s, GLenum t)
 {
-    tex->texParams.sWrapMode = s;
-    tex->texParams.tWrapMode = t;
+    tex->setup.sWrapMode = s;
+    tex->setup.tWrapMode = t;
 }
 
-static void savageSetTexFilter(savageTextureObjectPtr t, 
-			       GLenum minf, GLenum magf)
+static void savageSetTexFilter(savageTexObjPtr t, GLenum minf, GLenum magf)
 {
-   t->texParams.minFilter = minf;
-   t->texParams.magFilter = magf;
+   t->setup.minFilter = minf;
+   t->setup.magFilter = magf;
 }
 
 
 /* Need a fallback ?
  */
-static void savageSetTexBorderColor(savageTextureObjectPtr t, GLubyte color[4])
+static void savageSetTexBorderColor(savageTexObjPtr t, GLubyte color[4])
 {
 /*    t->Setup[SAVAGE_TEXREG_TEXBORDERCOL] =  */
-      t->texParams.boarderColor = SAVAGEPACKCOLOR8888(color[0],color[1],color[2],color[3]); 
+    /*t->setup.borderColor = SAVAGEPACKCOLOR8888(color[0],color[1],color[2],color[3]); */
 }
 
 
 
-static savageTextureObjectPtr
+static savageTexObjPtr
 savageAllocTexObj( struct gl_texture_object *texObj ) 
 {
-   savageTextureObjectPtr t;
+   savageTexObjPtr t;
 
-   t = (savageTextureObjectPtr) calloc(1,sizeof(*t));
+   t = (savageTexObjPtr) calloc(1,sizeof(*t));
    texObj->DriverData = t;
    if ( t != NULL ) {
 
       /* Initialize non-image-dependent parts of the state:
        */
-      t->globj = texObj;
+      t->base.tObj = texObj;
 
       /* FIXME Something here to set initial values for other parts of
        * FIXME t->setup?
        */
   
-      make_empty_list( t );
+      make_empty_list( &t->base );
 
       savageSetTexWrapping(t,texObj->WrapS,texObj->WrapT);
       savageSetTexFilter(t,texObj->MinFilter,texObj->MagFilter);
@@ -333,7 +332,6 @@ savageChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
        ( imesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FORCE_16 );
    const GLboolean isSavage4 = (imesa->savageScreen->chipset >= S3_SAVAGE4);
    (void) format;
-   (void) type;
 
    switch ( internalFormat ) {
    case 4:
@@ -468,9 +466,10 @@ savageChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 static void savageSetTexImages( savageContextPtr imesa,
 				const struct gl_texture_object *tObj )
 {
-   savageTextureObjectPtr t = (savageTextureObjectPtr) tObj->DriverData;
+   savageTexObjPtr t = (savageTexObjPtr) tObj->DriverData;
    struct gl_texture_image *image = tObj->Image[0][tObj->BaseLevel];
    GLuint offset, i, textureFormat, size;
+   GLint firstLevel, lastLevel;
 
    assert(t);
    assert(image);
@@ -508,6 +507,7 @@ static void savageSetTexImages( savageContextPtr imesa,
       _mesa_problem(imesa->glCtx, "Bad texture format in %s", __FUNCTION__);
       return;
    }
+   t->hwFormat = textureFormat;
 
    /* Select tiling format depending on the chipset and bytes per texel */
    if (imesa->savageScreen->chipset <= S3_SAVAGE4)
@@ -515,288 +515,92 @@ static void savageSetTexImages( savageContextPtr imesa,
    else
        t->tileInfo = &tileInfo_pro[t->texelBytes];
 
+   /* Compute which mipmap levels we really want to send to the hardware.
+    */
+   driCalculateTextureFirstLastLevel( &t->base );
+   firstLevel = t->base.firstLevel;
+   lastLevel  = t->base.lastLevel;
+
    /* Figure out the size now (and count the levels).  Upload won't be done
     * until later.
     */ 
-   t->dirty_images = 0;
    offset = 0;
    size = 1;
-   for ( i = 0 ; i < SAVAGE_TEX_MAXLEVELS && tObj->Image[0][i] ; i++ ) {
-      image = tObj->Image[0][i];
-      t->image[i].image = image;
+   for ( i = firstLevel ; i <= lastLevel && tObj->Image[0][i] ; i++ ) {
       t->image[i].offset = offset;
-      t->image[i].internalFormat = textureFormat;
-      t->dirty_images |= (1<<i);
+
+      image = tObj->Image[0][i];
       size = savageTexImageSize (image->Width2, image->Height2,
 				 t->texelBytes);
       offset += size;
    }
 
-   t->totalSize = offset;
+   t->base.lastLevel = i-1;
+   t->base.totalSize = offset;
    /* the last three mipmap levels don't add to the offset. They are packed
     * into 64 pixels. */
    if (size == 0)
-       t->totalSize += 64 * t->texelBytes;
-   /* 2k-aligned */
-   t->totalSize = (t->totalSize + 2047UL) & ~2047UL;
-   t->max_level = i-1;
-   t->min_level = 0;
+       t->base.totalSize += 64 * t->texelBytes;
+   /* 2k-aligned (really needed?) */
+   t->base.totalSize = (t->base.totalSize + 2047UL) & ~2047UL;
 }
 
-void savageDestroyTexObj(savageContextPtr imesa, savageTextureObjectPtr t)
+void savageDestroyTexObj(savageContextPtr imesa, driTextureObject *t)
 {
-   if (!t) return;
+    /* See if it was the driver's current object.
+     */
 
-   /* This is sad - need to sync *in case* we upload a texture
-    * to this newly free memory...
-    */
-   if (t->MemBlock) {
-      mmFreeMem(t->MemBlock);
-      t->MemBlock = 0;
-
-      if (t->age > imesa->dirtyAge)
-	 imesa->dirtyAge = t->age;
-   }
-
-   if (t->globj)
-      t->globj->DriverData = 0;
-
-   remove_from_list(t);
-   free(t);
+    if ( imesa != NULL )
+    { 
+	GLuint i;
+	for ( i = 0 ; i < imesa->glCtx->Const.MaxTextureUnits ; i++ )
+	{
+	    if ( t == imesa->CurrentTexObj[ i ] ) {
+		assert( t->bound & (1 << i) );
+		imesa->CurrentTexObj[ i ] = NULL;
+	    }
+	}
+    }
 }
 
-
-static void savageSwapOutTexObj(savageContextPtr imesa, savageTextureObjectPtr t)
-{
-   if (t->MemBlock) {
-      mmFreeMem(t->MemBlock);
-      t->MemBlock = 0;      
-
-      if (t->age > imesa->dirtyAge)
-	 imesa->dirtyAge = t->age;
-   }
-
-   t->dirty_images = ~0;
-   move_to_tail(&(imesa->SwappedOut), t);
-}
-
-
-
-void savagePrintLocalLRU( savageContextPtr imesa , GLuint heap) 
-{
-   savageTextureObjectPtr t;
-   int sz = 1 << (imesa->savageScreen->logTextureGranularity[heap]);
-   
-   foreach( t, &imesa->TexObjList[heap] ) {
-      if (!t->globj)
-	 fprintf(stderr, "Placeholder %d at %x sz %x\n", 
-		 t->MemBlock->ofs / sz,
-		 t->MemBlock->ofs,
-		 t->MemBlock->size);      
-      else
-	 fprintf(stderr, "Texture (bound %d) at %x sz %x\n", 
-		 t->bound,
-		 t->MemBlock->ofs,
-		 t->MemBlock->size);      
-
-   }
-}
-
-void savagePrintGlobalLRU( savageContextPtr imesa , GLuint heap)
-{
-   int i, j;
-
-   drm_tex_region_t *list = imesa->sarea->texList[heap];
-   
-
-   for (i = 0, j = SAVAGE_NR_TEX_REGIONS ; i < SAVAGE_NR_TEX_REGIONS ; i++) {
-      fprintf(stderr, "list[%d] age %d next %d prev %d\n",
-	      j, list[j].age, list[j].next, list[j].prev);
-      j = list[j].next;
-      if (j == SAVAGE_NR_TEX_REGIONS) break;
-   }
-   
-   if (j != SAVAGE_NR_TEX_REGIONS)
-      fprintf(stderr, "Loop detected in global LRU\n");
-       for (i = 0 ; i < SAVAGE_NR_TEX_REGIONS ; i++) 
-       {
-          fprintf(stderr,"list[%d] age %d next %d prev %d\n",
-          i, list[i].age, list[i].next, list[i].prev);
-       }
-}
-
-
-void savageResetGlobalLRU( savageContextPtr imesa, GLuint heap )
-{
-    drm_tex_region_t *list = imesa->sarea->texList[heap];
-   int sz = 1 << imesa->savageScreen->logTextureGranularity[heap];
-   int i;
-
-   /* (Re)initialize the global circular LRU list.  The last element
-    * in the array (SAVAGE_NR_TEX_REGIONS) is the sentinal.  Keeping it
-    * at the end of the array allows it to be addressed rationally
-    * when looking up objects at a particular location in texture
-    * memory.  
-    */
-   for (i = 0 ; (i+1) * sz <= imesa->savageScreen->textureSize[heap]; i++) {
-      list[i].prev = i-1;
-      list[i].next = i+1;
-      list[i].age = 0;
-   }
-
-   i--;
-   list[0].prev = SAVAGE_NR_TEX_REGIONS;
-   list[i].prev = i-1;
-   list[i].next = SAVAGE_NR_TEX_REGIONS;
-   list[SAVAGE_NR_TEX_REGIONS].prev = i;
-   list[SAVAGE_NR_TEX_REGIONS].next = 0;
-   imesa->sarea->texAge[heap] = 0;
-}
-
-
-static void savageUpdateTexLRU( savageContextPtr imesa, savageTextureObjectPtr t ) 
-{
-   int i;
-   int heap = t->heap;
-   int logsz = imesa->savageScreen->logTextureGranularity[heap];
-   int start = t->MemBlock->ofs >> logsz;
-   int end = (t->MemBlock->ofs + t->MemBlock->size - 1) >> logsz;
-   drm_tex_region_t *list = imesa->sarea->texList[heap];
-   
-   imesa->texAge[heap] = ++imesa->sarea->texAge[heap];
-
-   /* Update our local LRU
-    */
-   move_to_head( &(imesa->TexObjList[heap]), t );
-
-   /* Update the global LRU
-    */
-   for (i = start ; i <= end ; i++) {
-
-      list[i].in_use = 1;
-      list[i].age = imesa->texAge[heap];
-
-      /* remove_from_list(i)
-       */
-      list[(unsigned)list[i].next].prev = list[i].prev;
-      list[(unsigned)list[i].prev].next = list[i].next;
-      
-      /* insert_at_head(list, i)
-       */
-      list[i].prev = SAVAGE_NR_TEX_REGIONS;
-      list[i].next = list[SAVAGE_NR_TEX_REGIONS].next;
-      list[(unsigned)list[SAVAGE_NR_TEX_REGIONS].next].prev = i;
-      list[SAVAGE_NR_TEX_REGIONS].next = i;
-   }
-}
-
-
-/* Called for every shared texture region which has increased in age
- * since we last held the lock.
- *
- * Figures out which of our textures have been ejected by other clients,
- * and pushes a placeholder texture onto the LRU list to represent 
- * the other client's textures.  
+/* Upload a texture's images to one of the texture heaps. May have to
+ * eject our own and/or other client's texture objects to make room
+ * for the upload.
  */
-void savageTexturesGone( savageContextPtr imesa,
-		       GLuint heap,
-		       GLuint offset, 
-		       GLuint size,
-		       GLuint in_use ) 
+static void savageUploadTexImages( savageContextPtr imesa, savageTexObjPtr t )
 {
-   savageTextureObjectPtr t, tmp;
+   const GLint numLevels = t->base.lastLevel - t->base.firstLevel + 1;
+   GLuint i;
+
+   assert(t);
+
+   LOCK_HARDWARE(imesa);
    
-   foreach_s ( t, tmp, &imesa->TexObjList[heap] ) {
-
-      if (t->MemBlock->ofs >= offset + size ||
-	  t->MemBlock->ofs + t->MemBlock->size <= offset)
-	 continue;
-
-      /* It overlaps - kick it off.  Need to hold onto the currently bound
-       * objects, however.
-       */
-      if (t->bound)
-	 savageSwapOutTexObj( imesa, t );
-      else
-	 savageDestroyTexObj( imesa, t );
-   }
-
-   
-   if (in_use) {
-      t = (savageTextureObjectPtr) calloc(1,sizeof(*t));
-      if (!t) return;
-
-      t->heap = heap;
-      t->MemBlock = mmAllocMem( imesa->texHeap[heap], size, 0, offset);      
-      if(!t->MemBlock)
-      {
-          free(t);
-          return;
-      }
-      insert_at_head( &imesa->TexObjList[heap], t );
-   }
-}
-
-
-
-
-
-/* This is called with the lock held.  May have to eject our own and/or
- * other client's texture objects to make room for the upload.
- */
-int savageUploadTexImages( savageContextPtr imesa, savageTextureObjectPtr t )
-{
-   int heap;
-   int i;
-   int ofs;
-   
-   heap = t->heap = SAVAGE_CARD_HEAP;
-
    /* Do we need to eject LRU texture objects?
     */
-   if (!t->MemBlock) {
-      while (1)
-      {
-	 t->MemBlock = mmAllocMem( imesa->texHeap[heap], t->totalSize, 12, 0 ); 
-	 if (t->MemBlock)
-	    break;
-	 else if (imesa->lastTexHeap == 2)
-	 {
-	     heap = t->heap = SAVAGE_AGP_HEAP;
-	     t->MemBlock = mmAllocMem( imesa->texHeap[heap], t->totalSize, 12, 0 ); 
-	     
-	     if (t->MemBlock)
-	         break;
-	 }
+   if (!t->base.memBlock) {
+      GLint heap;
+      GLuint ofs;
 
-	 if (imesa->TexObjList[heap].prev->bound) {
-  	    fprintf(stderr, "Hit bound texture in upload\n"); 
-	    savagePrintLocalLRU( imesa,heap );
-	    return -1;
-	 }
-
-	 if (imesa->TexObjList[heap].prev == &(imesa->TexObjList[heap])) {
- 	    fprintf(stderr, "Failed to upload texture, sz %d\n", t->totalSize);
-	    mmDumpMemInfo( imesa->texHeap[heap] );
-	    return -1;
-	 }
-	 
-	 savageSwapOutTexObj( imesa, imesa->TexObjList[heap].prev );
+      heap = driAllocateTexture(imesa->textureHeaps, imesa->lastTexHeap,
+				(driTextureObject *)t);
+      if (heap == -1) {
+	  UNLOCK_HARDWARE(imesa);
+	  return;
       }
- 
-      ofs = t->MemBlock->ofs;
-      t->texParams.hwPhysAddress = imesa->savageScreen->textureOffset[heap] + ofs;
-      t->BufAddr = (char *)((GLuint) imesa->savageScreen->texVirtual[heap] + ofs);
+
+      ofs = t->base.memBlock->ofs;
+      t->setup.physAddr = imesa->savageScreen->textureOffset[heap] + ofs;
+      t->bufAddr = (char *)((GLuint) imesa->savageScreen->texVirtual[heap] + ofs);
       imesa->dirty |= SAVAGE_UPLOAD_GLOBAL; /* FIXME: really needed? */
    }
 
    /* Let the world know we've used this memory recently.
     */
-   LOCK_HARDWARE(imesa);
-   savageUpdateTexLRU( imesa, t );
+   driUpdateTextureLRU( &t->base );
    UNLOCK_HARDWARE(imesa);
 
-   if (t->dirty_images) {
+   if (t->base.dirty_images[0]) {
       savageFlushVertices (imesa);
       LOCK_HARDWARE(imesa);
       savageFlushCmdBufLocked (imesa, GL_FALSE);
@@ -804,22 +608,14 @@ int savageUploadTexImages( savageContextPtr imesa, savageTextureObjectPtr t )
       if (SAVAGE_DEBUG & DEBUG_VERBOSE_LRU)
 	 fprintf(stderr, "*");
 
-      for (i = t->min_level ; i <= t->max_level ; i++)
-	 if (t->dirty_images & (1<<i)) 
-	    savageUploadTexLevel( t, i );
+      for (i = 0 ; i < numLevels ; i++) {
+         const GLint j = t->base.firstLevel + i;  /* the texObj's level */
+	 if (t->base.dirty_images[0] & (1<<j))
+	    savageUploadTexLevel( t, j );
+      }
       UNLOCK_HARDWARE(imesa);
+      t->base.dirty_images[0] = 0;
    }
-
-
-   t->dirty_images = 0;
-   return 0;
-}
-
-static void savageTexSetUnit( savageTextureObjectPtr t, GLuint unit )
-{
-   if (t->current_unit == unit) return;
-
-   t->current_unit = unit;
 }
 
 
@@ -829,7 +625,8 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    struct gl_texture_object	*tObj;
-   savageTextureObjectPtr t;
+   struct gl_texture_image *image;
+   savageTexObjPtr t;
    GLuint format;
 
    /* disable */
@@ -857,19 +654,15 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
          return;
    }
 
-   if (t->current_unit != 0)
-      savageTexSetUnit( t, 0 );
-    
-   imesa->CurrentTexObj[0] = t;
-   t->bound |= 1;
+   imesa->CurrentTexObj[0] = &t->base;
+   t->base.bound |= 1;
 
-   if (t->dirty_images) {
+   if (t->base.dirty_images[0]) {
        savageSetTexImages(imesa, tObj);
-       savageUploadTexImages(imesa, imesa->CurrentTexObj[0]); 
+       savageUploadTexImages(imesa, t); 
    }
    
-   if (t->MemBlock)
-      savageUpdateTexLRU( imesa, t );
+   driUpdateTextureLRU( &t->base );
 
    format = tObj->Image[0][tObj->BaseLevel]->Format;
 
@@ -1026,11 +819,11 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
    }
 
     imesa->regs.s4.texCtrl[0].ni.uMode =
-	t->texParams.sWrapMode == GL_REPEAT ? 0 : 1;
+	t->setup.sWrapMode == GL_REPEAT ? 0 : 1;
     imesa->regs.s4.texCtrl[0].ni.vMode = 
-	t->texParams.tWrapMode == GL_REPEAT ? 0 : 1;
+	t->setup.tWrapMode == GL_REPEAT ? 0 : 1;
 
-    switch (t->texParams.minFilter)
+    switch (t->setup.minFilter)
     {
         case GL_NEAREST:
             imesa->regs.s4.texCtrl[0].ni.filterMode   = TFM_Point;
@@ -1070,17 +863,18 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
 	imesa->regs.s4.texCtrl[0].ni.dBias = bias & 0x1ff;
     }
 
+    image = tObj->Image[0][tObj->BaseLevel];
     imesa->regs.s4.texDescr.ni.tex0En = GL_TRUE;
-    imesa->regs.s4.texDescr.ni.tex0Width  = t->image[0].image->WidthLog2;
-    imesa->regs.s4.texDescr.ni.tex0Height = t->image[0].image->HeightLog2;
-    imesa->regs.s4.texDescr.ni.tex0Fmt = t->image[0].internalFormat;
-    imesa->regs.s4.texCtrl[0].ni.dMax = t->max_level;
+    imesa->regs.s4.texDescr.ni.tex0Width  = image->WidthLog2;
+    imesa->regs.s4.texDescr.ni.tex0Height = image->HeightLog2;
+    imesa->regs.s4.texDescr.ni.tex0Fmt = t->hwFormat;
+    imesa->regs.s4.texCtrl[0].ni.dMax = t->base.lastLevel - t->base.firstLevel;
 
     if (imesa->regs.s4.texDescr.ni.tex1En)
         imesa->regs.s4.texDescr.ni.texBLoopEn = GL_TRUE;
 
-    imesa->regs.s4.texAddr[0].ui = (u_int32_t) t->texParams.hwPhysAddress | 0x2;
-    if(t->heap == SAVAGE_AGP_HEAP)
+    imesa->regs.s4.texAddr[0].ui = (u_int32_t) t->setup.physAddr | 0x2;
+    if(t->base.heap->heapId == SAVAGE_AGP_HEAP)
 	imesa->regs.s4.texAddr[0].ui |= 0x1;
     
     return;
@@ -1089,7 +883,8 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    struct gl_texture_object	*tObj;
-   savageTextureObjectPtr t;
+   struct gl_texture_image *image;
+   savageTexObjPtr t;
    GLuint format;
 
    /* disable */
@@ -1125,20 +920,16 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
          return;
    }
     
-   if (t->current_unit != 1)
-      savageTexSetUnit( t, 1 );
+   imesa->CurrentTexObj[1] = &t->base;
 
-   imesa->CurrentTexObj[1] = t;
+   t->base.bound |= 2;
 
-   t->bound |= 2;
-
-   if (t->dirty_images) {
+   if (t->base.dirty_images[0]) {
        savageSetTexImages(imesa, tObj);
-       savageUploadTexImages(imesa, imesa->CurrentTexObj[1]);
+       savageUploadTexImages(imesa, t);
    }
    
-   if (t->MemBlock)
-      savageUpdateTexLRU( imesa, t );
+   driUpdateTextureLRU( &t->base );
 
    format = tObj->Image[0][tObj->BaseLevel]->Format;
 
@@ -1229,11 +1020,11 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
    }
 
     imesa->regs.s4.texCtrl[1].ni.uMode =
-	t->texParams.sWrapMode == GL_REPEAT ? 0 : 1;
+	t->setup.sWrapMode == GL_REPEAT ? 0 : 1;
     imesa->regs.s4.texCtrl[1].ni.vMode =
-	t->texParams.tWrapMode == GL_REPEAT ? 0 : 1;
+	t->setup.tWrapMode == GL_REPEAT ? 0 : 1;
 
-    switch (t->texParams.minFilter)
+    switch (t->setup.minFilter)
     {
         case GL_NEAREST:
             imesa->regs.s4.texCtrl[1].ni.filterMode   = TFM_Point;
@@ -1273,22 +1064,24 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
 	imesa->regs.s4.texCtrl[1].ni.dBias = bias & 0x1ff;
     }
 
+    image = tObj->Image[0][tObj->BaseLevel];
     imesa->regs.s4.texDescr.ni.tex1En = GL_TRUE;
-    imesa->regs.s4.texDescr.ni.tex1Width  = t->image[0].image->WidthLog2;
-    imesa->regs.s4.texDescr.ni.tex1Height = t->image[0].image->HeightLog2;
-    imesa->regs.s4.texDescr.ni.tex1Fmt = t->image[0].internalFormat;
-    imesa->regs.s4.texCtrl[1].ni.dMax = t->max_level;
+    imesa->regs.s4.texDescr.ni.tex1Width  = image->WidthLog2;
+    imesa->regs.s4.texDescr.ni.tex1Height = image->HeightLog2;
+    imesa->regs.s4.texDescr.ni.tex1Fmt = t->hwFormat;
+    imesa->regs.s4.texCtrl[1].ni.dMax = t->base.lastLevel - t->base.firstLevel;
     imesa->regs.s4.texDescr.ni.texBLoopEn = GL_TRUE;
 
-    imesa->regs.s4.texAddr[1].ui = (u_int32_t) t->texParams.hwPhysAddress| 2;
-    if(t->heap == SAVAGE_AGP_HEAP)
+    imesa->regs.s4.texAddr[1].ui = (u_int32_t) t->setup.physAddr | 2;
+    if(t->base.heap->heapId == SAVAGE_AGP_HEAP)
 	imesa->regs.s4.texAddr[1].ui |= 0x1;
 }
 static void savageUpdateTexState_s3d( GLcontext *ctx )
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     struct gl_texture_object *tObj;
-    savageTextureObjectPtr t;
+    struct gl_texture_image *image;
+    savageTexObjPtr t;
     GLuint format;
 
     /* disable */
@@ -1316,19 +1109,15 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
 	    return;
     }
 
-    if (t->current_unit != 0)
-	savageTexSetUnit( t, 0 );
+    imesa->CurrentTexObj[0] = &t->base;
+    t->base.bound |= 1;
 
-    imesa->CurrentTexObj[0] = t;
-    t->bound |= 1;
-
-    if (t->dirty_images) {
+    if (t->base.dirty_images[0]) {
 	savageSetTexImages(imesa, tObj);
-	savageUploadTexImages(imesa, imesa->CurrentTexObj[0]); 
+	savageUploadTexImages(imesa, t);
     }
 
-    if (t->MemBlock)
-	savageUpdateTexLRU( imesa, t );
+    driUpdateTextureLRU( &t->base );
 
     format = tObj->Image[0][tObj->BaseLevel]->Format;
 
@@ -1357,12 +1146,12 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
        truth. */
     imesa->regs.s3d.texCtrl.ni.uWrapEn = 0;
     imesa->regs.s3d.texCtrl.ni.vWrapEn = 0;
-    if (t->texParams.sWrapMode == GL_CLAMP)
+    if (t->setup.sWrapMode == GL_CLAMP)
 	imesa->regs.s3d.texCtrl.ni.wrapMode = TAM_Clamp;
     else
 	imesa->regs.s3d.texCtrl.ni.wrapMode = TAM_Wrap;
 
-    switch (t->texParams.minFilter) {
+    switch (t->setup.minFilter) {
     case GL_NEAREST:
 	imesa->regs.s3d.texCtrl.ni.filterMode    = TFM_Point;
 	imesa->regs.s3d.texCtrl.ni.mipmapDisable = GL_TRUE;
@@ -1413,14 +1202,15 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
 	imesa->regs.s3d.texCtrl.ni.dBias = bias & 0x1ff;
     }
 
+    image = tObj->Image[0][tObj->BaseLevel];
     imesa->regs.s3d.texCtrl.ni.texEn = GL_TRUE;
-    imesa->regs.s3d.texDescr.ni.texWidth  = t->image[0].image->WidthLog2;
-    imesa->regs.s3d.texDescr.ni.texHeight = t->image[0].image->HeightLog2;
-    assert (t->image[0].internalFormat <= 7);
-    imesa->regs.s3d.texDescr.ni.texFmt = t->image[0].internalFormat;
+    imesa->regs.s3d.texDescr.ni.texWidth  = image->WidthLog2;
+    imesa->regs.s3d.texDescr.ni.texHeight = image->HeightLog2;
+    assert (t->hwFormat <= 7);
+    imesa->regs.s3d.texDescr.ni.texFmt = t->hwFormat;
 
-    imesa->regs.s3d.texAddr.ui = (u_int32_t) t->texParams.hwPhysAddress| 2;
-    if(t->heap == SAVAGE_AGP_HEAP)
+    imesa->regs.s3d.texAddr.ui = (u_int32_t) t->setup.physAddr | 2;
+    if(t->base.heap->heapId == SAVAGE_AGP_HEAP)
 	imesa->regs.s3d.texAddr.ui |= 0x1;
 }
 
@@ -1500,9 +1290,9 @@ static void savageTexImage1D( GLcontext *ctx, GLenum target, GLint level,
 			      struct gl_texture_object *texObj,
 			      struct gl_texture_image *texImage )
 {
-   savageTextureObjectPtr t = (savageTextureObjectPtr) texObj->DriverData;
+   savageTexObjPtr t = (savageTexObjPtr) texObj->DriverData;
    if (t) {
-      savageSwapOutTexObj( SAVAGE_CONTEXT(ctx), t );
+      driSwapOutTextureObject( &t->base );
    } else {
       t = savageAllocTexObj(texObj);
       if (!t) {
@@ -1513,7 +1303,7 @@ static void savageTexImage1D( GLcontext *ctx, GLenum target, GLint level,
    _mesa_store_teximage1d( ctx, target, level, internalFormat,
 			   width, border, format, type,
 			   pixels, packing, texObj, texImage );
-   t->dirty_images |= (1 << level);
+   t->base.dirty_images[0] |= (1 << level);
    SAVAGE_CONTEXT(ctx)->new_state |= SAVAGE_NEW_TEXTURE;
 }
 
@@ -1528,10 +1318,10 @@ static void savageTexSubImage1D( GLcontext *ctx,
 				 struct gl_texture_object *texObj,
 				 struct gl_texture_image *texImage )
 {
-   savageTextureObjectPtr t = (savageTextureObjectPtr) texObj->DriverData;
+   savageTexObjPtr t = (savageTexObjPtr) texObj->DriverData;
    assert( t ); /* this _should_ be true */
    if (t) {
-      savageSwapOutTexObj( SAVAGE_CONTEXT(ctx), t );
+      driSwapOutTextureObject( &t->base );
    } else {
       t = savageAllocTexObj(texObj);
       if (!t) {
@@ -1542,7 +1332,7 @@ static void savageTexSubImage1D( GLcontext *ctx,
    _mesa_store_texsubimage1d(ctx, target, level, xoffset, width, 
 			     format, type, pixels, packing, texObj,
 			     texImage);
-   t->dirty_images |= (1 << level);
+   t->base.dirty_images[0] |= (1 << level);
    SAVAGE_CONTEXT(ctx)->new_state |= SAVAGE_NEW_TEXTURE;
 }
 
@@ -1554,9 +1344,9 @@ static void savageTexImage2D( GLcontext *ctx, GLenum target, GLint level,
 			      struct gl_texture_object *texObj,
 			      struct gl_texture_image *texImage )
 {
-   savageTextureObjectPtr t = (savageTextureObjectPtr) texObj->DriverData;
+   savageTexObjPtr t = (savageTexObjPtr) texObj->DriverData;
    if (t) {
-      savageSwapOutTexObj( SAVAGE_CONTEXT(ctx), t );
+      driSwapOutTextureObject( &t->base );
    } else {
       t = savageAllocTexObj(texObj);
       if (!t) {
@@ -1567,7 +1357,7 @@ static void savageTexImage2D( GLcontext *ctx, GLenum target, GLint level,
    _mesa_store_teximage2d( ctx, target, level, internalFormat,
 			   width, height, border, format, type,
 			   pixels, packing, texObj, texImage );
-   t->dirty_images |= (1 << level);
+   t->base.dirty_images[0] |= (1 << level);
    SAVAGE_CONTEXT(ctx)->new_state |= SAVAGE_NEW_TEXTURE;
 }
 
@@ -1582,10 +1372,10 @@ static void savageTexSubImage2D( GLcontext *ctx,
 				 struct gl_texture_object *texObj,
 				 struct gl_texture_image *texImage )
 {
-   savageTextureObjectPtr t = (savageTextureObjectPtr) texObj->DriverData;
+   savageTexObjPtr t = (savageTexObjPtr) texObj->DriverData;
    assert( t ); /* this _should_ be true */
    if (t) {
-      savageSwapOutTexObj( SAVAGE_CONTEXT(ctx), t );
+      driSwapOutTextureObject( &t->base );
    } else {
       t = savageAllocTexObj(texObj);
       if (!t) {
@@ -1596,7 +1386,7 @@ static void savageTexSubImage2D( GLcontext *ctx,
    _mesa_store_texsubimage2d(ctx, target, level, xoffset, yoffset, width, 
 			     height, format, type, pixels, packing, texObj,
 			     texImage);
-   t->dirty_images |= (1 << level);
+   t->base.dirty_images[0] |= (1 << level);
    SAVAGE_CONTEXT(ctx)->new_state |= SAVAGE_NEW_TEXTURE;
 }
 
@@ -1604,7 +1394,7 @@ static void savageTexParameter( GLcontext *ctx, GLenum target,
 			      struct gl_texture_object *tObj,
 			      GLenum pname, const GLfloat *params )
 {
-   savageTextureObjectPtr t = (savageTextureObjectPtr) tObj->DriverData;
+   savageTexObjPtr t = (savageTexObjPtr) tObj->DriverData;
    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
 
    if (!t || (target != GL_TEXTURE_1D && target != GL_TEXTURE_2D))
@@ -1645,34 +1435,18 @@ static void savageBindTexture( GLcontext *ctx, GLenum target,
 
 static void savageDeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
 {
-   savageTextureObjectPtr t = (savageTextureObjectPtr)tObj->DriverData;
+   driTextureObject *t = (driTextureObject *)tObj->DriverData;
    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
 
    if (t) {
-
       if (t->bound) {
-	 imesa->CurrentTexObj[t->bound-1] = 0;
-	 imesa->new_state |= SAVAGE_NEW_TEXTURE;
+	 FLUSH_BATCH(imesa);
       }
 
-      savageDestroyTexObj(imesa,t);
-      tObj->DriverData=0;
+      driDestroyTextureObject(t);
    }
    /* Free mipmap images and the texture object itself */
    _mesa_delete_texture_object(ctx, tObj);
-}
-
-
-static GLboolean savageIsTextureResident( GLcontext *ctx, 
-					struct gl_texture_object *t )
-{
-   savageTextureObjectPtr mt;
-
-/*     LOCK_HARDWARE; */
-   mt = (savageTextureObjectPtr)t->DriverData;
-/*     UNLOCK_HARDWARE; */
-
-   return mt && mt->MemBlock;
 }
 
 
@@ -1697,6 +1471,6 @@ void savageDDInitTextureFuncs( struct dd_function_table *functions )
    functions->BindTexture = savageBindTexture;
    functions->NewTextureObject = savageNewTextureObject;
    functions->DeleteTexture = savageDeleteTexture;
-   functions->IsTextureResident = savageIsTextureResident;
+   functions->IsTextureResident = driIsTextureResident;
    functions->TexParameter = savageTexParameter;
 }

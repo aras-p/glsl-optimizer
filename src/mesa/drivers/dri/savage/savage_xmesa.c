@@ -55,6 +55,8 @@
 
 #include "savage_dri.h"
 
+#include "texmem.h"
+
 #include "xmlpool.h"
 
 /* Driver-specific options
@@ -295,7 +297,6 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    savageScreenPrivate *savageScreen = (savageScreenPrivate *)sPriv->private;
    drm_savage_sarea_t *saPriv=(drm_savage_sarea_t *)(((char*)sPriv->pSAREA)+
 						 savageScreen->sarea_priv_offset);
-   GLuint maxTextureSize, minTextureSize, maxTextureLevels;
    int i;
    imesa = (savageContextPtr)Xcalloc(sizeof(savageContext), 1);
    if (!imesa) {
@@ -332,60 +333,6 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    imesa->float_depth = driQueryOptionb(&imesa->optionCache, "float_depth") &&
        savageScreen->chipset >= S3_SAVAGE4;
    imesa->no_rast = driQueryOptionb(&imesa->optionCache, "no_rast");
-   imesa->texture_depth = driQueryOptioni (&imesa->optionCache,
-					   "texture_depth");
-   if (imesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
-       imesa->texture_depth = ( savageScreen->cpp == 4 ) ?
-	   DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
-
-   if (savageScreen->chipset >= S3_SAVAGE4)
-       ctx->Const.MaxTextureUnits = 2;
-   else
-       ctx->Const.MaxTextureUnits = 1;
-   if (driQueryOptioni(&imesa->optionCache, "texture_units") <
-       ctx->Const.MaxTextureUnits)
-       ctx->Const.MaxTextureUnits =
-	   driQueryOptioni(&imesa->optionCache, "texture_units");
-   ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
-   ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
-
-   /* Set the maximum texture size small enough that we can guarentee
-    * that all texture units can bind a maximal texture and have them
-    * in memory at once.
-    */
-   if (savageScreen->textureSize[SAVAGE_CARD_HEAP] >
-       savageScreen->textureSize[SAVAGE_AGP_HEAP]) {
-       maxTextureSize = savageScreen->textureSize[SAVAGE_CARD_HEAP];
-       minTextureSize = savageScreen->textureSize[SAVAGE_AGP_HEAP];
-   } else {
-       maxTextureSize = savageScreen->textureSize[SAVAGE_AGP_HEAP];
-       minTextureSize = savageScreen->textureSize[SAVAGE_CARD_HEAP];
-   }
-   if (ctx->Const.MaxTextureUnits == 2) {
-       /* How to distribute two maximum sized textures to two texture heaps?
-	* If the smaller heap is less then half the size of the bigger one
-	* then the maximum size is half the size of the bigger heap.
-	* Otherwise it's the size of the smaller heap. */
-       if (minTextureSize < maxTextureSize / 2)
-	   maxTextureSize = maxTextureSize / 2;
-       else
-	   maxTextureSize = minTextureSize;
-   }
-   for (maxTextureLevels = 1; maxTextureLevels <= 11; ++maxTextureLevels) {
-       GLuint size = 1 << maxTextureLevels;
-       size *= size * 4;  /* 4 bytes per texel */
-       size = size * 4/3; /* all mipmap levels together take roughly
-		             4/3 the size of the biggest level */
-       if (size > maxTextureSize)
-	   break;
-   }
-   ctx->Const.MaxTextureLevels = maxTextureLevels;
-   if (ctx->Const.MaxTextureLevels <= 6) { /*spec requires at least 64x64*/
-       __driUtilMessage("Not enough texture memory. "
-			"Falling back to indirect rendering.");
-       Xfree(imesa);
-       return GL_FALSE;
-   }
 
 #if 0
    ctx->Const.MinLineWidth = 1.0;
@@ -419,19 +366,56 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    /* change texHeap initialize to support two kind of texture heap*/
    /* here is some parts of initialization, others in InitDriver() */
     
+   (void) memset( imesa->textureHeaps, 0, sizeof( imesa->textureHeaps ) );
+   make_empty_list( & imesa->swapped );
+
    imesa->lastTexHeap = savageScreen->texVirtual[SAVAGE_AGP_HEAP] ? 2 : 1;
-   
-   /*allocate texHeap for multi-tex*/ 
-   {
-     int i;
-     
-     for(i=0;i<imesa->lastTexHeap;i++)
-     {
-       imesa->texHeap[i] = mmInit( 0, savageScreen->textureSize[i] );
-       make_empty_list(&imesa->TexObjList[i]);
-     }
-     
-     make_empty_list(&imesa->SwappedOut);
+   for (i = 0; i < imesa->lastTexHeap; i++) {
+       imesa->textureHeaps[i] = driCreateTextureHeap(
+	   i, imesa,
+	   savageScreen->textureSize[i],
+	   11,					/* 2^11 = 2k alignment */
+	   SAVAGE_NR_TEX_REGIONS,
+	   (drmTextureRegionPtr)imesa->sarea->texList[i],
+	    &imesa->sarea->texAge[i],
+	    &imesa->swapped,
+	    sizeof( savageTexObj ),
+	    (destroy_texture_object_t *) savageDestroyTexObj );
+       driSetTextureSwapCounterLocation( imesa->textureHeaps[i],
+					 & imesa->c_textureSwaps );
+   }
+   imesa->texture_depth = driQueryOptioni (&imesa->optionCache,
+					   "texture_depth");
+   if (imesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
+       imesa->texture_depth = ( savageScreen->cpp == 4 ) ?
+	   DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
+
+   if (savageScreen->chipset >= S3_SAVAGE4)
+       ctx->Const.MaxTextureUnits = 2;
+   else
+       ctx->Const.MaxTextureUnits = 1;
+   if (driQueryOptioni(&imesa->optionCache, "texture_units") <
+       ctx->Const.MaxTextureUnits)
+       ctx->Const.MaxTextureUnits =
+	   driQueryOptioni(&imesa->optionCache, "texture_units");
+   ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
+   ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
+
+   driCalculateMaxTextureLevels( imesa->textureHeaps,
+				 imesa->lastTexHeap,
+				 & ctx->Const,
+				 4,
+				 11, /* max 2D texture size is 2048x2048 */
+				 0,  /* 3D textures unsupported. */
+				 0,  /* cube textures unsupported. */
+				 0,  /* texture rectangles unsupported. */
+				 12,
+				 GL_FALSE );
+   if (ctx->Const.MaxTextureLevels <= 6) { /*spec requires at least 64x64*/
+       __driUtilMessage("Not enough texture memory. "
+			"Falling back to indirect rendering.");
+       Xfree(imesa);
+       return GL_FALSE;
    }
 
    imesa->hw_stencil = mesaVis->stencilBits && mesaVis->depthBits == 24;
@@ -464,11 +448,8 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    imesa->RenderIndex = ~0;
    imesa->dirty = ~0;
    imesa->lostContext = GL_TRUE;
-   imesa->TextureMode = ctx->Texture.Unit[0].EnvMode;
    imesa->CurrentTexObj[0] = 0;
    imesa->CurrentTexObj[1] = 0;
-   imesa->texAge[SAVAGE_CARD_HEAP]=0;
-   imesa->texAge[SAVAGE_AGP_HEAP]=0;
 
    /* Initialize the software rasterizer and helper modules.
     */
@@ -529,25 +510,17 @@ static void
 savageDestroyContext(__DRIcontextPrivate *driContextPriv)
 {
    savageContextPtr imesa = (savageContextPtr) driContextPriv->driverPrivate;
+   GLuint i;
 
    assert (imesa); /* should never be NULL */
    if (imesa) {
-      savageTextureObjectPtr next_t, t;
-
       savageFlushVertices(imesa);
       savageReleaseIndexedVerts(imesa);
       savageFlushCmdBuf(imesa, GL_TRUE); /* release DMA buffer */
       WAIT_IDLE_EMPTY(imesa);
 
-      /* update for multi-tex*/ 
-      {
-       int i;
-       for(i=0;i<imesa->lastTexHeap;i++)
-          foreach_s (t, next_t, &(imesa->TexObjList[i]))
-	 savageDestroyTexObj(imesa, t);
-      }
-      foreach_s (t, next_t, &(imesa->SwappedOut))
-	 savageDestroyTexObj(imesa, t);
+      for (i = 0; i < imesa->lastTexHeap; i++)
+	 driDestroyTextureHeap(imesa->textureHeaps[i]);
 
       free(imesa->cmdBuf.base);
       free(imesa->clientVtxBuf.buf);
@@ -785,43 +758,10 @@ void savageGetLock( savageContextPtr imesa, GLuint flags )
       sarea->ctxOwner = me;
    }
 
-   /* Shared texture managment - if another client has played with
-    * texture space, figure out which if any of our textures have been
-    * ejected, and update our global LRU.
-    */
-   /*frank just for compiling,texAge,texList,AGP*/ 
-   
-   for(heap= 0 ;heap < imesa->lastTexHeap ; heap++)
-   {
-       if (sarea->texAge[heap] != imesa->texAge[heap]) {
-           int sz = 1 << (imesa->savageScreen->logTextureGranularity[heap]);
-           int idx, nr = 0;
+   for (heap = 0; heap < imesa->lastTexHeap; ++heap) {
+      DRI_AGE_TEXTURES( imesa->textureHeaps[heap] );
+   }
 
-      /* Have to go right round from the back to ensure stuff ends up
-       * LRU in our local list...
-       */
-           for (idx = sarea->texList[heap][SAVAGE_NR_TEX_REGIONS].prev ; 
-	       idx != SAVAGE_NR_TEX_REGIONS && nr < SAVAGE_NR_TEX_REGIONS ; 
-	       idx = sarea->texList[heap][idx].prev, nr++)
-           {
-	       if (sarea->texList[heap][idx].age > imesa->texAge[heap])
-	       {
-	           savageTexturesGone(imesa, heap ,idx * sz, sz, 
-	                              sarea->texList[heap][idx].in_use);
-	       }
-           }
-
-           if (nr == SAVAGE_NR_TEX_REGIONS) 
-           {
-	      savageTexturesGone(imesa, heap, 0, 
-	                         imesa->savageScreen->textureSize[heap], 0);
-	      savageResetGlobalLRU( imesa , heap );
-           }
-
-           imesa->texAge[heap] = sarea->texAge[heap];
-       }
-   } /* end of for loop */ 
-   
    if (dPriv->lastStamp != stamp)
       savageXMesaWindowMoved( imesa );
 

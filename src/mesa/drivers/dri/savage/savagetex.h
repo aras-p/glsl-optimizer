@@ -27,39 +27,11 @@
 #define SAVAGETEX_INC
 
 #include "mtypes.h"
-#include "mm.h"
 
 #include "savagecontext.h"
-#include "savage_3d_reg.h"
-
-#define VALID_SAVAGE_TEXTURE_OBJECT(tobj)  (tobj) 
+#include "texmem.h"
 
 #define SAVAGE_TEX_MAXLEVELS 11
-#define MIN_TILE_CHUNK       8
-#define MIPMAP_CHUNK         4
-
-
-
-/* For shared texture space managment, these texture objects may also
- * be used as proxies for regions of texture memory containing other
- * client's textures.  Such proxy textures (not to be confused with GL
- * proxy textures) are subject to the same LRU aging we use for our
- * own private textures, and thus we have a mechanism where we can
- * fairly decide between kicking out our own textures and those of
- * other clients.
- *
- * Non-local texture objects have a valid MemBlock to describe the
- * region managed by the other client, and can be identified by
- * 't->globj == 0' 
- */
-typedef struct  {
-    GLuint sWrapMode;
-    GLuint tWrapMode;
-    GLuint minFilter;
-    GLuint magFilter;
-    GLuint boarderColor;
-    GLuint hwPhysAddress;
-} savage_texture_parameter_t;
 
 /** \brief Texture tiling information */
 typedef struct savage_tileinfo_t {
@@ -69,36 +41,29 @@ typedef struct savage_tileinfo_t {
     GLuint tinyOffset[2];       /**< internal offsets size 1 and 2 images */
 } savageTileInfo, *savageTileInfoPtr;
 
-struct savage_texture_object_t {
-   struct savage_texture_object_t *next, *prev;
-   struct gl_texture_object *globj;
-   GLuint age;   
-   
-   const savageTileInfo *tileInfo;
-   GLuint texelBytes;
-   GLuint totalSize;
-   GLuint bound;
-   GLuint heap;
+typedef struct {
+    GLuint offset;
+    GLuint *dirtyTiles;		/* bit vector of dirty tiles (still unused) */
+} savageTexImage;
 
-   PMemBlock MemBlock;   
-   char *BufAddr;
-   
-   GLuint min_level;
-   GLuint max_level;
-   GLuint dirty_images;
+typedef struct {
+    driTextureObject base;
 
-   struct { 
-      const struct gl_texture_image *image;
-      GLuint offset;		/* into BufAddr */
-      GLuint height;
-      GLuint internalFormat;
-   } image[SAVAGE_TEX_MAXLEVELS];
+    GLubyte *bufAddr;
 
-   /* Support for multitexture.
-    */
-   GLuint current_unit;   
-   savage_texture_parameter_t texParams;
-};		
+    GLuint age;
+    savageTexImage image[SAVAGE_TEX_MAXLEVELS];
+
+    struct {
+	GLuint sWrapMode, tWrapMode;
+	GLuint minFilter, magFilter;
+	GLuint physAddr;
+    } setup;
+
+    GLuint hwFormat;
+    GLuint texelBytes;
+    const savageTileInfo *tileInfo;
+} savageTexObj, *savageTexObjPtr;
 
 #define SAVAGE_NO_PALETTE        0x0
 #define SAVAGE_USE_PALETTE       0x1
@@ -111,15 +76,6 @@ struct savage_texture_object_t {
 void savageUpdateTextureState( GLcontext *ctx );
 void savageDDInitTextureFuncs( struct dd_function_table *functions );
 
-void savageDestroyTexObj( savageContextPtr imesa, savageTextureObjectPtr t);
-int savageUploadTexImages( savageContextPtr imesa, savageTextureObjectPtr t );
-
-void savageResetGlobalLRU( savageContextPtr imesa , GLuint heap);
-void savageTexturesGone( savageContextPtr imesa, GLuint heap, 
-		       GLuint start, GLuint end, 
-		       GLuint in_use ); 
-
-void savagePrintLocalLRU( savageContextPtr imesa ,GLuint heap);
-void savagePrintGlobalLRU( savageContextPtr imesa ,GLuint heap);
+void savageDestroyTexObj( savageContextPtr imesa, driTextureObject *t );
 
 #endif

@@ -38,10 +38,11 @@ typedef struct savage_texture_object_t *savageTextureObjectPtr;
 #include "drm.h"
 #include "savage_drm.h"
 #include "savage_init.h"
+#include "savage_3d_reg.h"
 #include "mm.h"
 #include "tnl/t_vertex.h"
 
-#include "savagetex.h"
+#include "texmem.h"
 
 #include "xmlconfig.h"
 
@@ -153,18 +154,11 @@ struct savage_context_t {
     GLcontext *glCtx;
 
     int lastTexHeap;
-    savageTextureObjectPtr CurrentTexObj[2];
-   
-    struct savage_texture_object_t TexObjList[SAVAGE_NR_TEX_HEAPS];
-    struct savage_texture_object_t SwappedOut; 
-  
-    GLuint c_texupload;
-    GLuint c_texusage;
-    GLuint tex_thrash;
-   
-    GLuint TextureMode;
-   
-    
+    driTexHeap *textureHeaps[SAVAGE_NR_TEX_HEAPS];
+    driTextureObject swapped;
+
+    driTextureObject *CurrentTexObj[2];
+
     /* Hardware state
      */
 
@@ -192,7 +186,6 @@ struct savage_context_t {
     /* Manage hardware state */
     GLuint dirty;
     GLboolean lostContext;
-    memHeap_t *texHeap[SAVAGE_NR_TEX_HEAPS];
     GLuint bTexEn1;
     /* One of the few bits of hardware state that can't be calculated
      * completely on the fly:
@@ -275,9 +268,6 @@ struct savage_context_t {
     drm_clip_rect_t draw_rect;
     drm_clip_rect_t scissor_rect;
 
-    /*Texture aging and DMA based aging*/
-    unsigned int texAge[SAVAGE_NR_TEX_HEAPS]; 
-
     drm_context_t hHWContext;
     drm_hw_lock_t *driHwLock;
     GLuint driFd;
@@ -297,6 +287,10 @@ struct savage_context_t {
     drm_savage_sarea_t *sarea;
 
     GLboolean hw_stencil;
+
+    /* Performance counters
+     */
+    GLuint c_textureSwaps;
 
     /* Configuration cache
      */
