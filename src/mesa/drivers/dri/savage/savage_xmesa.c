@@ -34,6 +34,8 @@
 
 #include "simple_list.h"
 
+#include "utils.h"
+
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
@@ -54,6 +56,10 @@
 #include "savage_dri.h"
 
 #include "savagedma.h"
+
+#ifdef USE_NEW_INTERFACE
+static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
+#endif /* USE_NEW_INTERFACE */
 
 #ifndef SAVAGE_DEBUG
 int SAVAGE_DEBUG = (0
@@ -88,31 +94,6 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
   SAVAGEDRIPtr         gDRIPriv = (SAVAGEDRIPtr)sPriv->pDevPriv;
 
 
-  /* Check the DRI version */
-   {
-      int major, minor, patch;
-      if (XF86DRIQueryVersion(sPriv->display, &major, &minor, &patch)) {
-         if (major != 4 || minor < 0) {
-	    __driUtilMessage("savage DRI driver expected DRI version 4.0.x but got version %d.%d.%d", major, minor, patch);
-            return GL_FALSE;
-         }
-      }
-   }
-
-   /* Check that the DDX driver version is compatible */
-   if (sPriv->ddxMajor != 1 ||
-       sPriv->ddxMinor < 0) {
-      __driUtilMessage("savage DRI driver expected DDX driver version 1.0.x but got version %d.%d.%d", sPriv->ddxMajor, sPriv->ddxMinor, sPriv->ddxPatch);
-      return GL_FALSE;
-   }
-
-   /* Check that the DRM driver version is compatible */
-   if (sPriv->drmMajor != 1 ||
-       sPriv->drmMinor < 0) {
-      __driUtilMessage("savage DRI driver expected DRM driver version 1.1.x but got version %d.%d.%d", sPriv->drmMajor, sPriv->drmMinor, sPriv->drmPatch);
-      return GL_FALSE;
-   }
-	
    /* Allocate the private area */
    savageScreen = (savageScreenPrivate *)Xmalloc(sizeof(savageScreenPrivate));
    if (!savageScreen)
@@ -813,8 +794,9 @@ static const struct __DriverAPIRec savageAPI = {
 
 
 
+#ifndef DRI_NEW_INTERFACE_ONLY
 /*
- * This is the bootstrap function for the driver.
+ * This is the (old) bootstrap function for the driver.
  * The __driCreateScreen name is the symbol that libGL.so fetches.
  * Return:  pointer to a __DRIscreenPrivate.
  */
@@ -825,6 +807,147 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &savageAPI);
    return (void *) psp;
 }
+#endif /* DRI_NEW_INTERFACE_ONLY */
 
+
+
+#ifdef USE_NEW_INTERFACE
+static __GLcontextModes *
+savageFillInModes( unsigned pixel_bits, unsigned depth_bits,
+		   unsigned stencil_bits, GLboolean have_back_buffer )
+{
+    __GLcontextModes * modes;
+    __GLcontextModes * m;
+    unsigned num_modes;
+    unsigned depth_buffer_factor;
+    unsigned back_buffer_factor;
+    GLenum fb_format;
+    GLenum fb_type;
+
+    /* Right now GLX_SWAP_COPY_OML isn't supported, but it would be easy
+     * enough to add support.  Basically, if a context is created with an
+     * fbconfig where the swap method is GLX_SWAP_COPY_OML, pageflipping
+     * will never be used.
+     *
+     * FK: What about drivers that don't use page flipping? Could they
+     * just expose GLX_SWAP_COPY_OML?
+     */
+    static const GLenum back_buffer_modes[] = {
+	GLX_NONE, GLX_SWAP_UNDEFINED_OML /*, GLX_SWAP_COPY_OML */
+    };
+
+    uint8_t depth_bits_array[2];
+    uint8_t stencil_bits_array[2];
+
+
+    depth_bits_array[0] = depth_bits;
+    depth_bits_array[1] = depth_bits;
+    
+    /* Just like with the accumulation buffer, always provide some modes
+     * with a stencil buffer.  It will be a sw fallback, but some apps won't
+     * care about that.
+     */
+    stencil_bits_array[0] = 0;
+    stencil_bits_array[1] = (stencil_bits == 0) ? 8 : stencil_bits;
+
+    depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
+    back_buffer_factor  = (have_back_buffer) ? 2 : 1;
+
+    num_modes = depth_buffer_factor * back_buffer_factor * 4;
+
+    if ( pixel_bits == 16 ) {
+        fb_format = GL_RGB;
+        fb_type = GL_UNSIGNED_SHORT_5_6_5;
+    }
+    else {
+        fb_format = GL_BGR;
+        fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
+    }
+
+    modes = (*create_context_modes)( num_modes, sizeof( __GLcontextModes ) );
+    m = modes;
+    if ( ! driFillInModes( & m, fb_format, fb_type,
+			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
+			   back_buffer_modes, back_buffer_factor,
+			   GLX_TRUE_COLOR ) ) {
+	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
+		 __func__, __LINE__ );
+	return NULL;
+    }
+
+    if ( ! driFillInModes( & m, fb_format, fb_type,
+			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
+			   back_buffer_modes, back_buffer_factor,
+			   GLX_DIRECT_COLOR ) ) {
+	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
+		 __func__, __LINE__ );
+	return NULL;
+    }
+
+    /* Mark the visual as slow if there are "fake" stencil bits.
+     */
+    for ( m = modes ; m != NULL ; m = m->next ) {
+	if ( (m->stencilBits != 0) && (m->stencilBits != stencil_bits) ) {
+	    m->visualRating = GLX_SLOW_CONFIG;
+	}
+    }
+
+    return modes;
+}
+
+
+/**
+ * This is the bootstrap function for the driver.  libGL supplies all of the
+ * requisite information about the system, and the driver initializes itself.
+ * This routine also fills in the linked list pointed to by \c driver_modes
+ * with the \c __GLcontextModes that the driver can support for windows or
+ * pbuffers.
+ * 
+ * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
+ *         failure.
+ */
+void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+			     const __GLcontextModes * modes,
+			     const __DRIversion * ddx_version,
+			     const __DRIversion * dri_version,
+			     const __DRIversion * drm_version,
+			     const __DRIframebuffer * frame_buffer,
+			     drmAddress pSAREA, int fd, 
+			     int internal_api_version,
+			     __GLcontextModes ** driver_modes )
+			     
+{
+   __DRIscreenPrivate *psp;
+   static const __DRIversion ddx_expected = { 1, 0, 0 };
+   static const __DRIversion dri_expected = { 4, 0, 0 };
+   static const __DRIversion drm_expected = { 1, 0, 0 };
+
+
+   if ( ! driCheckDriDdxDrmVersions2( "Savage",
+				      dri_version, & dri_expected,
+				      ddx_version, & ddx_expected,
+				      drm_version, & drm_expected ) ) {
+      return NULL;
+   }
+      
+   psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
+				  ddx_version, dri_version, drm_version,
+				  frame_buffer, pSAREA, fd,
+				  internal_api_version, &savageAPI);
+   if ( psp != NULL ) {
+      create_context_modes = (PFNGLXCREATECONTEXTMODES)
+	  glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
+      if ( create_context_modes != NULL ) {
+	 SAVAGEDRIPtr dri_priv = (SAVAGEDRIPtr)psp->pDevPriv;
+	 *driver_modes = savageFillInModes( dri_priv->cpp*8,
+					    (dri_priv->cpp == 2) ? 16 : 24,
+					    (dri_priv->cpp == 2) ? 0  : 8,
+					    (dri_priv->backOffset != dri_priv->depthOffset) );
+      }
+   }
+
+   return (void *) psp;
+}
+#endif /* USE_NEW_INTERFACE */
 
 #endif

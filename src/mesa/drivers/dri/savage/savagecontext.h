@@ -37,7 +37,6 @@ typedef struct savage_texture_object_t *savageTextureObjectPtr;
 #include "xf86drm.h"
 #include "drm.h"
 #include "savage_drm.h"
-#include "savage_sarea.h"
 #include "savage_init.h"
 #include "mm.h"
 #include "tnl/t_vertex.h"
@@ -237,7 +236,7 @@ struct savage_context_t {
     unsigned int texAge[SAVAGE_NR_TEX_HEAPS]; 
 
     drm_context_t hHWContext;
-    drmLock *driHwLock;
+    drm_hw_lock_t *driHwLock;
     GLuint driFd;
 
     __DRIdrawablePrivate *driDrawable;

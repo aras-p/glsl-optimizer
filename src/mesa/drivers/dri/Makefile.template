@@ -37,6 +37,7 @@ SHARED_INCLUDES = \
 	-I$(TOP)/src/mesa/drivers/dri/common \
 	-Iserver \
 	-I$(DRM_SOURCE_PATH)/shared \
+	-I$(DRM_SOURCE_PATH)/linux \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa \
