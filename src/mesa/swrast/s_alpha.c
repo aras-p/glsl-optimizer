@@ -1,4 +1,4 @@
-/* $Id: s_alpha.c,v 1.12 2002/10/04 19:10:12 brianp Exp $ */
+/* $Id: s_alpha.c,v 1.13 2003/03/01 01:50:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,7 +33,6 @@
 #include "context.h"
 #include "colormac.h"
 #include "macros.h"
-#include "mmath.h"
 
 #include "s_alpha.h"
 #include "s_context.h"

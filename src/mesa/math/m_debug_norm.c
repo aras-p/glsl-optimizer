@@ -1,10 +1,10 @@
-/* $Id: m_debug_norm.c,v 1.12 2002/12/04 14:24:44 brianp Exp $ */
+/* $Id: m_debug_norm.c,v 1.13 2003/03/01 01:50:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,6 @@
 #include "context.h"
 #include "macros.h"
 #include "imports.h"
-#include "mmath.h"
 
 #include "m_matrix.h"
 #include "m_xform.h"

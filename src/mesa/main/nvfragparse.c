@@ -1,4 +1,4 @@
-/* $Id: nvfragparse.c,v 1.11 2003/02/26 01:28:15 brianp Exp $ */
+/* $Id: nvfragparse.c,v 1.12 2003/03/01 01:50:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,7 +36,6 @@
 #include "hash.h"
 #include "imports.h"
 #include "macros.h"
-#include "mmath.h"
 #include "mtypes.h"
 #include "nvfragprog.h"
 #include "nvfragparse.h"
@@ -201,7 +200,10 @@ MatchInstruction(const GLubyte *token)
 
 static GLboolean IsLetter(GLubyte b)
 {
-   return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b == '_');
+   return (b >= 'a' && b <= 'z') ||
+          (b >= 'A' && b <= 'Z') ||
+          (b == '_') ||
+          (b == '$');
 }
 
 
@@ -264,7 +266,7 @@ GetToken(const GLubyte *str, GLubyte *token)
       return i;
    }
 
-   /* punctuation */
+   /* punctuation character */
    if (str[i]) {
       token[0] = str[i++];
       token[1] = 0;
@@ -618,6 +620,9 @@ Parse_TextureImageId(struct parse_state *parseState,
 
    /* update record of referenced texture units */
    parseState->program->TexturesUsed[*texUnit] |= (1 << *texTargetIndex);
+   if (_mesa_bitcount(parseState->program->TexturesUsed[*texUnit]) > 1) {
+      RETURN_ERROR1("Only one texture target can be used per texture unit.");
+   }
 
    return GL_TRUE;
 }
@@ -840,6 +845,9 @@ Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
       if (_mesa_strcmp((const char *) token, OutputRegisters[j]) == 0) {
          *outputRegNum = FP_OUTPUT_REG_START + j;
          parseState->outputsWritten |= (1 << j);
+         if ((parseState->outputsWritten & 0x3) == 0x3) {
+            RETURN_ERROR1("Illegal to write to both o[COLR] and o[COLH]");
+         }
          break;
       }
    }
@@ -1138,6 +1146,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
          GLfloat value[7];  /* yes, 7 to be safe */
          if (!Parse_Identifier(parseState, id))
             RETURN_ERROR;
+         /* XXX make sure id is not a reserved identifer, like R9 */
          if (!Parse_String(parseState, "="))
             RETURN_ERROR1("Expected =");
          if (!Parse_VectorOrScalarConstant(parseState, value))
@@ -1154,6 +1163,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
          GLfloat value[7] = {0, 0, 0, 0, 0, 0, 0};  /* yes, to be safe */
          if (!Parse_Identifier(parseState, id))
             RETURN_ERROR;
+         /* XXX make sure id is not a reserved identifer, like R9 */
          if (Parse_String(parseState, "=")) {
             if (!Parse_VectorOrScalarConstant(parseState, value))
                RETURN_ERROR;

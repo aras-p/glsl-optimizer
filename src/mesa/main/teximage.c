@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.125 2003/01/08 16:24:05 brianp Exp $ */
+/* $Id: teximage.c,v 1.126 2003/03/01 01:50:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,6 @@
 #include "image.h"
 #include "imports.h"
 #include "macros.h"
-#include "mmath.h"
 #include "state.h"
 #include "texcompress.h"
 #include "texformat.h"

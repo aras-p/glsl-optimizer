@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  5.1
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,7 +39,6 @@
 #include "extensions.h"
 #include "macros.h"
 #include "matrix.h"
-#include "mmath.h"
 #include "texformat.h"
 #include "texstore.h"
 #include "array_cache/acache.h"

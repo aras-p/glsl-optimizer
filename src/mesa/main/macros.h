@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.30 2002/10/18 17:02:00 kschultz Exp $ */
+/* $Id: macros.h,v 1.31 2003/03/01 01:50:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,34 +29,79 @@
  * A collection of useful macros.
  */
 
-
 #ifndef MACROS_H
 #define MACROS_H
 
+#include "imports.h"
 
-#include "glheader.h"
-/* Do not reference mtypes.h from this file.
+
+/*
+ * Integer / float conversion for colors, normals, etc.
  */
 
+/* Convert GLubyte in [0,255] to GLfloat in [0.0,1.0] */
+extern GLfloat _mesa_ubyte_to_float_color_tab[256];
+#define UBYTE_TO_FLOAT(u) _mesa_ubyte_to_float_color_tab[(unsigned int)(u)]
 
-/* Limits: */
-#define MAX_GLUSHORT	0xffff
-#define MAX_GLUINT	0xffffffff
-
-
-/* Pi */
-#ifndef M_PI
-#define M_PI (3.1415926)
-#endif
+/* Convert GLfloat in [0.0,1.0] to GLubyte in [0,255] */
+#define FLOAT_TO_UBYTE(X)	((GLubyte) (GLint) ((X) * 255.0F))
 
 
-/* Degrees to radians conversion: */
-#define DEG2RAD (M_PI/180.0)
+/* Convert GLbyte in [-128,127] to GLfloat in [-1.0,1.0] */
+#define BYTE_TO_FLOAT(B)	((2.0F * (B) + 1.0F) * (1.0F/255.0F))
+
+/* Convert GLfloat in [-1.0,1.0] to GLbyte in [-128,127] */
+#define FLOAT_TO_BYTE(X)	( (((GLint) (255.0F * (X))) - 1) / 2 )
 
 
-#ifndef NULL
-#define NULL 0
-#endif
+/* Convert GLushort in [0,65536] to GLfloat in [0.0,1.0] */
+#define USHORT_TO_FLOAT(S)	((GLfloat) (S) * (1.0F / 65535.0F))
+
+/* Convert GLfloat in [0.0,1.0] to GLushort in [0,65536] */
+#define FLOAT_TO_USHORT(X)	((GLushort) (GLint) ((X) * 65535.0F))
+
+
+/* Convert GLshort in [-32768,32767] to GLfloat in [-1.0,1.0] */
+#define SHORT_TO_FLOAT(S)	((2.0F * (S) + 1.0F) * (1.0F/65535.0F))
+
+/* Convert GLfloat in [0.0,1.0] to GLshort in [-32768,32767] */
+#define FLOAT_TO_SHORT(X)	( (((GLint) (65535.0F * (X))) - 1) / 2 )
+
+
+/* Convert GLuint in [0,4294967295] to GLfloat in [0.0,1.0] */
+#define UINT_TO_FLOAT(U)	((GLfloat) (U) * (1.0F / 4294967295.0F))
+
+/* Convert GLfloat in [0.0,1.0] to GLuint in [0,4294967295] */
+#define FLOAT_TO_UINT(X)	((GLuint) ((X) * 4294967295.0))
+
+
+/* Convert GLint in [-2147483648,2147483647] to GLfloat in [-1.0,1.0] */
+#define INT_TO_FLOAT(I)		((2.0F * (I) + 1.0F) * (1.0F/4294967294.0F))
+
+/* Convert GLfloat in [-1.0,1.0] to GLint in [-2147483648,2147483647] */
+/* causes overflow:
+#define FLOAT_TO_INT(X)		( (((GLint) (4294967294.0F * (X))) - 1) / 2 )
+*/
+/* a close approximation: */
+#define FLOAT_TO_INT(X)		( (GLint) (2147483647.0 * (X)) )
+
+
+#define BYTE_TO_UBYTE(b)   ((GLubyte) ((b) < 0 ? 0 : (GLubyte) (b)))
+#define SHORT_TO_UBYTE(s)  ((GLubyte) ((s) < 0 ? 0 : (GLubyte) ((s) >> 7)))
+#define USHORT_TO_UBYTE(s) ((GLubyte) ((s) >> 8))
+#define INT_TO_UBYTE(i)    ((GLubyte) ((i) < 0 ? 0 : (GLubyte) ((i) >> 23)))
+#define UINT_TO_UBYTE(i)   ((GLubyte) ((i) >> 24))
+
+
+#define BYTE_TO_USHORT(b)  ((b) < 0 ? 0 : ((GLushort) (((b) * 65535) / 255)))
+#define UBYTE_TO_USHORT(b) (((GLushort) (b) << 8) | (GLushort) (b))
+#define SHORT_TO_USHORT(s) ((s) < 0 ? 0 : ((GLushort) (((s) * 65535 / 32767))))
+#define INT_TO_USHORT(i)   ((i) < 0 ? 0 : ((GLushort) ((i) >> 15)))
+#define UINT_TO_USHORT(i)  ((i) < 0 ? 0 : ((GLushort) ((i) >> 16)))
+#define UNCLAMPED_FLOAT_TO_USHORT(us, f)  \
+        us = ( (GLushort) IROUND( CLAMP((f), 0.0, 1.0) * 65535.0F) )
+#define CLAMPED_FLOAT_TO_USHORT(us, f)  \
+        us = ( (GLushort) IROUND( (f) * 65535.0F) )
 
 
 /* Stepping a GLfloat pointer by a byte stride
@@ -389,6 +434,79 @@ do {						\
 
 
 
+/*
+ * Linear interpolation
+ * NOTE:  OUT argument is evaluated twice!
+ * NOTE:  Be wary of using *coord++ as an argument to any of these macros!
+ */
+#define LINTERP(T, OUT, IN)	((OUT) + (T) * ((IN) - (OUT)))
+
+/* Can do better with integer math:
+ */
+#define INTERP_UB( t, dstub, outub, inub )	\
+do {						\
+   GLfloat inf = UBYTE_TO_FLOAT( inub );	\
+   GLfloat outf = UBYTE_TO_FLOAT( outub );	\
+   GLfloat dstf = LINTERP( t, outf, inf );	\
+   UNCLAMPED_FLOAT_TO_UBYTE( dstub, dstf );	\
+} while (0)
+
+#define INTERP_CHAN( t, dstc, outc, inc )	\
+do {						\
+   GLfloat inf = CHAN_TO_FLOAT( inc );		\
+   GLfloat outf = CHAN_TO_FLOAT( outc );	\
+   GLfloat dstf = LINTERP( t, outf, inf );	\
+   UNCLAMPED_FLOAT_TO_CHAN( dstc, dstf );	\
+} while (0)
+
+#define INTERP_UI( t, dstui, outui, inui )	\
+   dstui = (GLuint) (GLint) LINTERP( (t), (GLfloat) (outui), (GLfloat) (inui) )
+
+#define INTERP_F( t, dstf, outf, inf )		\
+   dstf = LINTERP( t, outf, inf )
+
+#define INTERP_4F( t, dst, out, in )		\
+do {						\
+   dst[0] = LINTERP( (t), (out)[0], (in)[0] );	\
+   dst[1] = LINTERP( (t), (out)[1], (in)[1] );	\
+   dst[2] = LINTERP( (t), (out)[2], (in)[2] );	\
+   dst[3] = LINTERP( (t), (out)[3], (in)[3] );	\
+} while (0)
+
+#define INTERP_3F( t, dst, out, in )		\
+do {						\
+   dst[0] = LINTERP( (t), (out)[0], (in)[0] );	\
+   dst[1] = LINTERP( (t), (out)[1], (in)[1] );	\
+   dst[2] = LINTERP( (t), (out)[2], (in)[2] );	\
+} while (0)
+
+#define INTERP_4CHAN( t, dst, out, in )			\
+do {							\
+   INTERP_CHAN( (t), (dst)[0], (out)[0], (in)[0] );	\
+   INTERP_CHAN( (t), (dst)[1], (out)[1], (in)[1] );	\
+   INTERP_CHAN( (t), (dst)[2], (out)[2], (in)[2] );	\
+   INTERP_CHAN( (t), (dst)[3], (out)[3], (in)[3] );	\
+} while (0)
+
+#define INTERP_3CHAN( t, dst, out, in )			\
+do {							\
+   INTERP_CHAN( (t), (dst)[0], (out)[0], (in)[0] );	\
+   INTERP_CHAN( (t), (dst)[1], (out)[1], (in)[1] );	\
+   INTERP_CHAN( (t), (dst)[2], (out)[2], (in)[2] );	\
+} while (0)
+
+#define INTERP_SZ( t, vec, to, out, in, sz )				\
+do {									\
+   switch (sz) {							\
+   case 4: vec[to][3] = LINTERP( (t), (vec)[out][3], (vec)[in][3] );	\
+   case 3: vec[to][2] = LINTERP( (t), (vec)[out][2], (vec)[in][2] );	\
+   case 2: vec[to][1] = LINTERP( (t), (vec)[out][1], (vec)[in][1] );	\
+   case 1: vec[to][0] = LINTERP( (t), (vec)[out][0], (vec)[in][0] );	\
+   }									\
+} while(0)
+
+
+
 /* Assign scalers to short vectors: */
 #define ASSIGN_2V( V, V0, V1 )	\
 do { 				\
@@ -411,22 +529,6 @@ do { 						\
     V[3] = V3; 					\
 } while(0)
 
-
-
-
-/* Absolute value (for Int, Float, Double): */
-#define ABSI(X)  ((X) < 0 ? -(X) : (X))
-#define ABSF(X)  ((X) < 0.0F ? -(X) : (X))
-#define ABSD(X)  ((X) < 0.0 ? -(X) : (X))
-
-
-
-/* Round a floating-point value to the nearest integer: */
-#define ROUNDF(X)  ( (X)<0.0F ? ((GLint) ((X)-0.5F)) : ((GLint) ((X)+0.5F)) )
-
-
-/* Compute ceiling of integer quotient of A divided by B: */
-#define CEILING( A, B )  ( (A) % (B) == 0 ? (A)/(B) : (A)/(B)+1 )
 
 
 /* Clamp X to [MIN,MAX]: */
@@ -465,63 +567,24 @@ do {						\
 } while (0)
 
 
+/* Normalize a 3-element vector to unit length. */
+#define NORMALIZE_3FV( V )			\
+do {						\
+   GLfloat len = (GLfloat) LEN_SQUARED_3FV(V);	\
+   if (len) {					\
+      len = (GLfloat) (1.0 / SQRTF(len));	\
+      (V)[0] = (GLfloat) ((V)[0] * len);	\
+      (V)[1] = (GLfloat) ((V)[1] * len);	\
+      (V)[2] = (GLfloat) ((V)[2] * len);	\
+   }						\
+} while(0)
 
-/* Generic color packing macros
- * XXX We may move these into texutil.h at some point.
- */
+#define LEN_3FV( V ) (SQRTF((V)[0]*(V)[0]+(V)[1]*(V)[1]+(V)[2]*(V)[2]))
+#define LEN_2FV( V ) (SQRTF((V)[0]*(V)[0]+(V)[1]*(V)[1]))
 
-#define PACK_COLOR_8888( a, b, c, d )					\
-   (((a) << 24) | ((b) << 16) | ((c) << 8) | (d))
+#define LEN_SQUARED_3FV( V ) ((V)[0]*(V)[0]+(V)[1]*(V)[1]+(V)[2]*(V)[2])
+#define LEN_SQUARED_2FV( V ) ((V)[0]*(V)[0]+(V)[1]*(V)[1])
 
-#define PACK_COLOR_888( a, b, c )					\
-   (((a) << 16) | ((b) << 8) | (c))
-
-#define PACK_COLOR_565( a, b, c )					\
-   ((((a) & 0xf8) << 8) | (((b) & 0xfc) << 3) | (((c) & 0xf8) >> 3))
-
-#define PACK_COLOR_1555( a, b, c, d )					\
-   ((((b) & 0xf8) << 7) | (((c) & 0xf8) << 2) | (((d) & 0xf8) >> 3) |	\
-    ((a) ? 0x8000 : 0))
-
-#define PACK_COLOR_4444( a, b, c, d )					\
-   ((((a) & 0xf0) << 8) | (((b) & 0xf0) << 4) | ((c) & 0xf0) | ((d) >> 4))
-
-#define PACK_COLOR_88( a, b )						\
-   (((a) << 8) | (b))
-
-#define PACK_COLOR_332( a, b, c )					\
-   (((a) & 0xe0) | (((b) & 0xe0) >> 3) | (((c) & 0xc0) >> 6))
-
-
-#ifdef MESA_BIG_ENDIAN
-
-#define PACK_COLOR_8888_LE( a, b, c, d )	PACK_COLOR_8888( d, c, b, a )
-
-#define PACK_COLOR_565_LE( a, b, c )					\
-   (((a) & 0xf8) | (((b) & 0xe0) >> 5) | (((b) & 0x1c) << 11) |		\
-   (((c) & 0xf8) << 5))
-
-#define PACK_COLOR_1555_LE( a, b, c, d )				\
-   ((((b) & 0xf8) >> 1) | (((c) & 0xc0) >> 6) | (((c) & 0x38) << 10) |	\
-    (((d) & 0xf8) << 5) | ((a) ? 0x80 : 0))
-
-#define PACK_COLOR_4444_LE( a, b, c, d )	PACK_COLOR_4444( c, d, a, b )
-
-#define PACK_COLOR_88_LE( a, b )		PACK_COLOR_88( b, a )
-
-#else	/* little endian */
-
-#define PACK_COLOR_8888_LE( a, b, c, d )	PACK_COLOR_8888( a, b, c, d )
-
-#define PACK_COLOR_565_LE( a, b, c )		PACK_COLOR_565( a, b, c )
-
-#define PACK_COLOR_1555_LE( a, b, c, d )	PACK_COLOR_1555( a, b, c, d )
-
-#define PACK_COLOR_4444_LE( a, b, c, d )	PACK_COLOR_4444( a, b, c, d )
-
-#define PACK_COLOR_88_LE( a, b )		PACK_COLOR_88( a, b )
-
-#endif	/* endianness */
 
 
 #endif

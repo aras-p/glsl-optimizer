@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.43 2003/01/30 15:47:06 kschultz Exp $ */
+/* $Id: wmesa.c,v 1.44 2003/03/01 01:50:24 brianp Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -39,7 +39,6 @@
 #include "imports.h"
 #include "macros.h"
 #include "matrix.h"
-#include "mmath.h"
 #include "mtypes.h"
 #include "texformat.h"
 #include "texstore.h"

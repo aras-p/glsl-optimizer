@@ -1,10 +1,10 @@
-/* $Id: t_imm_exec.c,v 1.43 2002/10/24 23:57:25 brianp Exp $ */
+/* $Id: t_imm_exec.c,v 1.44 2003/03/01 01:50:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,7 +37,6 @@
 #include "dlist.h"
 #include "macros.h"
 #include "imports.h"
-#include "mmath.h"
 #include "light.h"
 #include "state.h"
 #include "mtypes.h"

@@ -1,10 +1,10 @@
-/* $Id: glheader.h,v 1.29 2002/10/30 19:44:41 brianp Exp $ */
+/* $Id: glheader.h,v 1.30 2003/03/01 01:50:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,10 +35,9 @@
  * Other Mesa source files should _not_ directly include any system
  * headers.  This allows Mesa to be integrated into XFree86 and
  * allows system-dependent hacks/work-arounds to be collected in one place.
+ * XXX actually, a lot of system-dependent stuff is now in imports.[ch].
  *
  * If you touch this file, everything gets recompiled!
- *
- * This file should be included before any other header in the .c files.
  *
  * Put compiler/OS/assembly pragmas and macros here to avoid
  * cluttering other source files.

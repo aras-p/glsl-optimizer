@@ -34,7 +34,7 @@
 #ifndef INTERNAL_H_included
 #define INTERNAL_H_included
 
-#include "../mmath.h"
+#include "../macros.h"
 
 /*
  * general purpose defines, etc.

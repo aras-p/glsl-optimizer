@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.53 2003/02/17 16:35:56 brianp Exp $ */
+/* $Id: xm_api.c,v 1.54 2003/03/01 01:50:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,7 +71,6 @@
 #include "glthread.h"
 #include "imports.h"
 #include "matrix.h"
-#include "mmath.h"
 #include "mtypes.h"
 #include "macros.h"
 #include "texformat.h"

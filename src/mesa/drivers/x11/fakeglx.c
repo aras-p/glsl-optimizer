@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.79 2003/02/25 19:25:58 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.80 2003/03/01 01:50:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,7 +49,6 @@
 #include "config.h"
 #include "macros.h"
 #include "imports.h"
-#include "mmath.h"
 #include "mtypes.h"
 #include "xfonts.h"
 #include "xmesaP.h"

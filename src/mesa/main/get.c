@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.105 2003/01/26 14:37:16 brianp Exp $ */
+/* $Id: get.c,v 1.106 2003/03/01 01:50:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,7 +33,6 @@
 #include "extensions.h"
 #include "get.h"
 #include "macros.h"
-#include "mmath.h"
 #include "mtypes.h"
 #include "texcompress.h"
 #include "math/m_matrix.h"

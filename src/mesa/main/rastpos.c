@@ -1,10 +1,10 @@
-/* $Id: rastpos.c,v 1.39 2002/10/24 23:57:21 brianp Exp $ */
+/* $Id: rastpos.c,v 1.40 2003/03/01 01:50:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,7 +32,6 @@
 #include "feedback.h"
 #include "light.h"
 #include "macros.h"
-#include "mmath.h"
 #include "rastpos.h"
 #include "state.h"
 #include "simple_list.h"
@@ -321,8 +320,8 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
       ctx->Current.RasterDistance = ctx->Current.Attrib[VERT_ATTRIB_FOG][0];
    else
-      ctx->Current.RasterDistance = (GLfloat)
-                      GL_SQRT( eye[0]*eye[0] + eye[1]*eye[1] + eye[2]*eye[2] );
+      ctx->Current.RasterDistance =
+                      SQRTF( eye[0]*eye[0] + eye[1]*eye[1] + eye[2]*eye[2] );
 
    /* apply projection matrix:  clip = Proj * eye */
    TRANSFORM_POINT( clip, ctx->ProjectionMatrixStack.Top->m, eye );

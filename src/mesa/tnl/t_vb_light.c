@@ -1,10 +1,10 @@
-/* $Id: t_vb_light.c,v 1.19 2002/10/24 23:57:25 brianp Exp $ */
+/* $Id: t_vb_light.c,v 1.20 2003/03/01 01:50:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,6 @@
 #include "light.h"
 #include "macros.h"
 #include "imports.h"
-#include "mmath.h"
 #include "simple_list.h"
 #include "mtypes.h"
 

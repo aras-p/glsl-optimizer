@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.63 2002/10/24 23:57:20 brianp Exp $ */
+/* $Id: drawpix.c,v 1.64 2003/03/01 01:50:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,6 @@
 #include "drawpix.h"
 #include "feedback.h"
 #include "macros.h"
-#include "mmath.h"
 #include "state.h"
 #include "mtypes.h"
 

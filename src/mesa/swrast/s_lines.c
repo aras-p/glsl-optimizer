@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.34 2003/01/20 15:21:41 brianp Exp $ */
+/* $Id: s_lines.c,v 1.35 2003/03/01 01:50:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,7 +28,6 @@
 #include "glheader.h"
 #include "colormac.h"
 #include "macros.h"
-#include "mmath.h"
 #include "s_aaline.h"
 #include "s_context.h"
 #include "s_depth.h"

@@ -1,10 +1,10 @@
-/* $Id: t_pipeline.c,v 1.25 2002/10/29 20:29:03 brianp Exp $ */
+/* $Id: t_pipeline.c,v 1.26 2003/03/01 01:50:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,6 @@
 #include "glheader.h"
 #include "context.h"
 #include "imports.h"
-#include "mmath.h"
 #include "state.h"
 #include "mtypes.h"
 

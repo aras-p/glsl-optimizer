@@ -1,8 +1,8 @@
-/* $Id: s_span.c,v 1.55 2003/02/27 18:15:18 brianp Exp $ */
+/* $Id: s_span.c,v 1.56 2003/03/01 01:50:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.0.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
@@ -36,7 +36,6 @@
 #include "colormac.h"
 #include "context.h"
 #include "macros.h"
-#include "mmath.h"
 #include "imports.h"
 
 #include "s_alpha.h"

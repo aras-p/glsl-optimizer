@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.74 2003/01/26 14:37:16 brianp Exp $ */
+/* $Id: enable.c,v 1.75 2003/03/01 01:50:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,6 @@
 #include "enable.h"
 #include "light.h"
 #include "macros.h"
-#include "mmath.h"
 #include "simple_list.h"
 #include "mtypes.h"
 #include "enums.h"

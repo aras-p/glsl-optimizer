@@ -1,4 +1,4 @@
-/* $Id: s_zoom.c,v 1.22 2003/02/25 19:26:02 brianp Exp $ */
+/* $Id: s_zoom.c,v 1.23 2003/03/01 01:50:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -297,7 +297,7 @@ _mesa_write_zoomed_stencil_span( GLcontext *ctx,
    (void) skipPixels;  /* XXX this shouldn't be ignored */
 
    /* compute width of output row */
-   m = (GLint) ABSF( n * ctx->Pixel.ZoomX );
+   m = (GLint) FABSF( n * ctx->Pixel.ZoomX );
    if (m==0) {
       return;
    }

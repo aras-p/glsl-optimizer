@@ -1,4 +1,4 @@
-/* $Id: s_nvfragprog.c,v 1.4 2003/02/25 19:29:43 brianp Exp $ */
+/* $Id: s_nvfragprog.c,v 1.5 2003/03/01 01:50:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,6 @@
 #include "context.h"
 #include "nvfragprog.h"
 #include "macros.h"
-#include "mmath.h"
 
 #include "s_nvfragprog.h"
 
@@ -47,7 +46,7 @@ fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLuint unit,
    const GLfloat *lambda = NULL;
    GLchan rgba[4];
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const struct gl_texture_object *texObj;
+   const struct gl_texture_object *texObj = NULL;
 
    switch (targetIndex) {
       case TEXTURE_1D_INDEX:
@@ -147,20 +146,7 @@ fetch_vector1( const struct fp_src_register *source,
                const struct fp_machine *machine,
                GLfloat result[4] )
 {
-   const GLfloat *src;
-
-   /*
-   if (source->RelAddr) {
-      GLint reg = source->Register + machine->AddressReg;
-      if (reg < VP_PROG_REG_START || reg > VP_PROG_REG_END)
-         src = zero;
-      else
-         src = machine->Registers[reg];
-   }
-   else
-   */
-
-   src = machine->Registers[source->Register];
+   const GLfloat *src = machine->Registers[source->Register];
 
    result[0] = src[source->Swizzle[0]];
 
@@ -300,7 +286,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
             {
                GLfloat a[4], result[4];
                fetch_vector1( &inst->SrcReg[0], machine, a );
-               result[0] = result[1] = result[2] = result[3] = cos(a[0]);
+               result[0] = result[1] = result[2] = result[3] = _mesa_cos(a[0]);
                store_vector4( inst, machine, result );
             }
             break;
@@ -363,7 +349,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                GLfloat a[4], result[4];
                fetch_vector1( &inst->SrcReg[0], machine, a );
                result[0] = result[1] = result[2] = result[3] =
-                  (GLfloat) pow(2.0, a[0]);
+                  (GLfloat) _mesa_pow(2.0, a[0]);
                store_vector4( inst, machine, result );
             }
             break;
@@ -419,7 +405,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                   a[1] = 0.0F;
                result[0] = 1.0F;
                result[1] = a[0];
-               result[2] = (a[0] > 0.0) ? pow(2.0, a[3]) : 0.0F;
+               result[2] = (a[0] > 0.0) ? _mesa_pow(2.0, a[3]) : 0.0F;
                result[3] = 1.0F;
                store_vector4( inst, machine, result );
             }
@@ -561,7 +547,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                fetch_vector1( &inst->SrcReg[0], machine, a );
                fetch_vector1( &inst->SrcReg[1], machine, b );
                result[0] = result[1] = result[2] = result[3]
-                  = pow(a[0], b[0]);
+                  = _mesa_pow(a[0], b[0]);
                store_vector4( inst, machine, result );
             }
             break;
@@ -597,7 +583,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                GLfloat a[4], result[4];
                fetch_vector1( &inst->SrcReg[0], machine, a );
                result[0] = result[1] = result[2] = result[3]
-                  = 1.0F / GL_SQRT(a[0]);
+                  = 1.0F / SQRTF(a[0]);
                store_vector4( inst, machine, result );
             }
             break;
@@ -647,7 +633,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
             {
                GLfloat a[4], result[4];
                fetch_vector1( &inst->SrcReg[0], machine, a );
-               result[0] = result[1] = result[2] = result[3] = sin(a[0]);
+               result[0] = result[1] = result[2] = result[3] = _mesa_sin(a[0]);
                store_vector4( inst, machine, result );
             }
             break;

@@ -1,10 +1,10 @@
-/* $Id: t_vb_fog.c,v 1.19 2002/10/29 20:29:03 brianp Exp $ */
+/* $Id: t_vb_fog.c,v 1.20 2003/03/01 01:50:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,7 +33,6 @@
 #include "context.h"
 #include "macros.h"
 #include "imports.h"
-#include "mmath.h"
 #include "mtypes.h"
 
 #include "math/m_xform.h"
@@ -105,14 +104,14 @@ static void make_win_fog_coords( GLcontext *ctx, GLvector4f *out,
       else
          d = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
       for ( i = 0 ; i < n ; i++, STRIDE_F(v, stride)) {
-         GLfloat f = (end - ABSF(*v)) * d;
+         GLfloat f = (end - FABSF(*v)) * d;
 	 data[i][0] = CLAMP(f, 0.0F, 1.0F);
       }
       break;
    case GL_EXP:
       d = ctx->Fog.Density;
       for ( i = 0 ; i < n ; i++, STRIDE_F(v,stride))
-         NEG_EXP( data[i][0], d * ABSF(*v) );
+         NEG_EXP( data[i][0], d * FABSF(*v) );
       break;
    case GL_EXP2:
       d = ctx->Fog.Density*ctx->Fog.Density;

@@ -1,4 +1,4 @@
-/* $Id: t_vb_texmat.c,v 1.11 2003/01/14 04:55:47 brianp Exp $ */
+/* $Id: t_vb_texmat.c,v 1.12 2003/03/01 01:50:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,7 +33,6 @@
 #include "context.h"
 #include "macros.h"
 #include "imports.h"
-#include "mmath.h"
 #include "mtypes.h"
 
 #include "math/m_xform.h"

@@ -1,10 +1,10 @@
-/* $Id: fxdd.c,v 1.95 2003/01/08 21:32:36 brianp Exp $ */
+/* $Id: fxdd.c,v 1.96 2003/03/01 01:50:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,7 +45,7 @@
 #include "fxdrv.h"
 #include "enums.h"
 #include "extensions.h"
-#include "mmath.h"
+#include "macros.h"
 #include "texstore.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"

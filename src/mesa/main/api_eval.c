@@ -1,10 +1,10 @@
-/* $Id: api_eval.c,v 1.3 2002/10/29 20:28:42 brianp Exp $ */
+/* $Id: api_eval.c,v 1.4 2003/03/01 01:50:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,6 @@
 #include "api_eval.h"
 #include "context.h"
 #include "macros.h"
-#include "mmath.h"
 #include "math/m_eval.h"
 
 static void do_EvalCoord1f(GLcontext* ctx, GLfloat u)

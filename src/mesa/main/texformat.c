@@ -1,10 +1,10 @@
-/* $Id: texformat.c,v 1.18 2002/10/29 20:28:47 brianp Exp $ */
+/* $Id: texformat.c,v 1.19 2003/03/01 01:50:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,7 +32,6 @@
 #include "context.h"
 #include "image.h"
 #include "imports.h"
-#include "mmath.h"
 #include "mtypes.h"
 #include "texformat.h"
 #include "teximage.h"

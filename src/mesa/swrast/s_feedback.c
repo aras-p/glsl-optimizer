@@ -1,10 +1,10 @@
-/* $Id: s_feedback.c,v 1.9 2001/09/19 20:30:44 kschultz Exp $ */
+/* $Id: s_feedback.c,v 1.10 2003/03/01 01:50:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,6 @@
 #include "enums.h"
 #include "feedback.h"
 #include "macros.h"
-#include "mmath.h"
 
 #include "s_context.h"
 #include "s_feedback.h"

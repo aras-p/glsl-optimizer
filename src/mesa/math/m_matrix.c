@@ -1,4 +1,4 @@
-/* $Id: m_matrix.c,v 1.15 2003/01/08 16:42:47 brianp Exp $ */
+/* $Id: m_matrix.c,v 1.16 2003/03/01 01:50:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,7 +38,6 @@
 #include "imports.h"
 #include "macros.h"
 #include "imports.h"
-#include "mmath.h"
 
 #include "m_matrix.h"
 
@@ -606,7 +605,7 @@ _math_matrix_rotate( GLmatrix *mat,
    }
 
    if (!optimized) {
-      const GLfloat mag = (GLfloat) GL_SQRT(x * x + y * y + z * z);
+      const GLfloat mag = SQRTF(x * x + y * y + z * z);
 
       if (mag <= 1.0e-4) {
          /* no rotation, leave mat as-is */

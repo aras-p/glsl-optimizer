@@ -1,4 +1,4 @@
-/* $Id: nvvertexec.c,v 1.1 2003/01/14 04:55:46 brianp Exp $ */
+/* $Id: nvvertexec.c,v 1.2 2003/03/01 01:50:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,7 +37,6 @@
 #include "mtypes.h"
 #include "nvvertexec.h"
 #include "nvvertprog.h"
-#include "mmath.h"
 #include "math/m_matrix.h"
 
 

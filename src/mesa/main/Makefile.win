@@ -45,7 +45,6 @@ CORE_SRCS = \
 	light.c \
 	lines.c \
 	matrix.c \
-	mmath.c \
 	nvprogram.c \
 	nvfragparse.c \
 	nvvertexec.c \

@@ -1,8 +1,8 @@
-/* $Id: clip.c,v 1.26 2002/10/24 23:57:19 brianp Exp $ */
+/* $Id: clip.c,v 1.27 2003/03/01 01:50:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -29,7 +29,6 @@
 #include "clip.h"
 #include "context.h"
 #include "macros.h"
-#include "mmath.h"
 #include "mtypes.h"
 
 #include "math/m_xform.h"

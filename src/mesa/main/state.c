@@ -1,10 +1,10 @@
-/* $Id: state.c,v 1.98 2003/01/14 04:55:46 brianp Exp $ */
+/* $Id: state.c,v 1.99 2003/03/01 01:50:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -51,10 +51,10 @@
 #include "fog.h"
 #include "hint.h"
 #include "histogram.h"
+#include "imports.h"
 #include "light.h"
 #include "lines.h"
 #include "matrix.h"
-#include "mmath.h"
 #include "pixel.h"
 #include "points.h"
 #include "polygon.h"
@@ -601,9 +601,9 @@ update_modelview_scale( GLcontext *ctx )
       GLfloat f = m[2] * m[2] + m[6] * m[6] + m[10] * m[10];
       if (f < 1e-12) f = 1.0;
       if (ctx->_NeedEyeCoords)
-	 ctx->_ModelViewInvScale = (GLfloat) (1.0/GL_SQRT(f));
+	 ctx->_ModelViewInvScale = 1.0F / SQRTF(f);
       else
-	 ctx->_ModelViewInvScale = (GLfloat) GL_SQRT(f);
+	 ctx->_ModelViewInvScale = SQRTF(f);
    }
 }
 

@@ -1,10 +1,10 @@
-/* $Id: m_norm_tmp.h,v 1.12 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: m_norm_tmp.h,v 1.13 2003/03/01 01:50:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -69,7 +69,7 @@ TAG(transform_normalize_normals)( const GLmatrix *mat,
 	 {
 	    GLdouble len = tx*tx + ty*ty + tz*tz;
 	    if (len > 1e-20) {
-	       GLdouble scale = 1.0 / GL_SQRT(len);
+	       GLdouble scale = 1.0F / SQRTF(len);
 	       out[i][0] = (GLfloat) (tx * scale);
 	       out[i][1] = (GLfloat) (ty * scale);
 	       out[i][2] = (GLfloat) (tz * scale);
@@ -136,7 +136,7 @@ TAG(transform_normalize_normals_no_rot)( const GLmatrix *mat,
 	 {
 	    GLdouble len = tx*tx + ty*ty + tz*tz;
 	    if (len > 1e-20) {
-	       GLdouble scale = 1.0 / GL_SQRT(len);
+	       GLdouble scale = 1.0F / SQRTF(len);
 	       out[i][0] = (GLfloat) (tx * scale);
 	       out[i][1] = (GLfloat) (ty * scale);
 	       out[i][2] = (GLfloat) (tz * scale);
@@ -323,7 +323,7 @@ TAG(normalize_normals)( const GLmatrix *mat,
 	 const GLfloat x = from[0], y = from[1], z = from[2];
 	 GLdouble len = x * x + y * y + z * z;
 	 if (len > 1e-50) {
-	    len = 1.0 / GL_SQRT(len);
+	    len = 1.0F / SQRTF(len);
 	    out[i][0] = (GLfloat) (x * len);
 	    out[i][1] = (GLfloat) (y * len);
 	    out[i][2] = (GLfloat) (z * len);

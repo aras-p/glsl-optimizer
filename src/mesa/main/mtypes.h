@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.104 2003/02/23 04:07:28 brianp Exp $ */
+/* $Id: mtypes.h,v 1.105 2003/03/01 01:50:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -109,6 +109,33 @@ typedef GLuint GLdepth;  /* Must be 32-bits! */
  * Fixed point data type:
  */
 typedef int GLfixed;
+/*
+ * Fixed point arithmetic macros
+ */
+#ifdef FIXED_14
+#define FIXED_ONE       0x00004000
+#define FIXED_HALF      0x00002000
+#define FIXED_FRAC_MASK 0x00003FFF
+#define FIXED_SCALE     16384.0f
+#define FIXED_SHIFT     14
+#else
+#define FIXED_ONE       0x00000800
+#define FIXED_HALF      0x00000400
+#define FIXED_FRAC_MASK 0x000007FF
+#define FIXED_SCALE     2048.0f
+#define FIXED_SHIFT     11
+#endif
+#define FIXED_INT_MASK  (~FIXED_FRAC_MASK)
+#define FIXED_EPSILON   1
+#define FloatToFixed(X) (IROUND((X) * FIXED_SCALE))
+#define IntToFixed(I)   ((I) << FIXED_SHIFT)
+#define FixedToInt(X)   ((X) >> FIXED_SHIFT)
+#define FixedToUns(X)   (((unsigned int)(X)) >> FIXED_SHIFT)
+#define FixedCeil(X)    (((X) + FIXED_ONE - FIXED_EPSILON) & FIXED_INT_MASK)
+#define FixedFloor(X)   ((X) & FIXED_INT_MASK)
+#define FixedToFloat(X) ((X) * (1.0F / FIXED_SCALE))
+#define PosFloatToFixed(X)      FloatToFixed(X)
+#define SignedFloatToFixed(X)   FloatToFixed(X)
 
 
 

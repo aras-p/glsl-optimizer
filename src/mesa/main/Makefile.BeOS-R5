@@ -1,7 +1,7 @@
 # Mesa 3-D graphics library
-# Version:  4.1
+# Version:  5.1
 # 
-# Copyright (C) 1995-2002  Brian Paul   All Rights Reserved.
+# Copyright (C) 1995-2003  Brian Paul   All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -90,7 +90,6 @@ MESA_CORE_SRCS = \
 	light.c \
 	lines.c \
 	matrix.c \
-	mmath.c \
 	pixel.c \
 	points.c \
 	polygon.c \

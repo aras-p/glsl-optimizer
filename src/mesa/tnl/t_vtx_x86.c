@@ -32,7 +32,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "imports.h" 
-#include "mmath.h" 
 #include "simple_list.h" 
 #include "tnl_vtxfmt.h"
 

@@ -1,10 +1,10 @@
-/* $Id: t_vb_points.c,v 1.10 2002/10/29 20:29:04 brianp Exp $ */
+/* $Id: t_vb_points.c,v 1.11 2003/03/01 01:50:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -60,7 +60,7 @@ static GLboolean run_point_stage( GLcontext *ctx,
       /* XXX do threshold and min/max clamping here? */
       for (i = 0; i < VB->Count; i++) {
 	 const GLfloat dist = -eye[i][2];
-	 /* GLfloat dist = GL_SQRT(pos[0]*pos[0]+pos[1]*pos[1]+pos[2]*pos[2]);*/
+	 /* GLfloat dist = SQRTF(pos[0]*pos[0]+pos[1]*pos[1]+pos[2]*pos[2]);*/
 	 size[i][0] = pointSize / (p0 + dist * (p1 + dist * p2));
       }
    }

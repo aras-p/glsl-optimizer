@@ -1,10 +1,10 @@
-/* $Id: fxvb.c,v 1.16 2002/11/04 20:29:04 brianp Exp $ */
+/* $Id: fxvb.c,v 1.17 2003/03/01 01:50:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,6 @@
 #include "imports.h"
 #include "macros.h"
 #include "colormac.h"
-#include "mmath.h"
 
 #include "math/m_translate.h"
 #include "swrast_setup/swrast_setup.h"

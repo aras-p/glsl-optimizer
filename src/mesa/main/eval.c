@@ -1,10 +1,10 @@
-/* $Id: eval.c,v 1.24 2002/10/24 23:57:20 brianp Exp $ */
+/* $Id: eval.c,v 1.25 2003/03/01 01:50:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,7 +44,6 @@
 #include "context.h"
 #include "eval.h"
 #include "macros.h"
-#include "mmath.h"
 #include "mtypes.h"
 
 
@@ -705,7 +704,7 @@ _mesa_GetMapiv( GLenum target, GLenum query, GLint *v )
          }
 	 if (data) {
 	    for (i=0;i<n;i++) {
-	       v[i] = ROUNDF(data[i]);
+	       v[i] = IROUND(data[i]);
 	    }
 	 }
          break;
@@ -720,14 +719,14 @@ _mesa_GetMapiv( GLenum target, GLenum query, GLint *v )
          break;
       case GL_DOMAIN:
          if (map1d) {
-            v[0] = ROUNDF(map1d->u1);
-            v[1] = ROUNDF(map1d->u2);
+            v[0] = IROUND(map1d->u1);
+            v[1] = IROUND(map1d->u2);
          }
          else {
-            v[0] = ROUNDF(map2d->u1);
-            v[1] = ROUNDF(map2d->u2);
-            v[2] = ROUNDF(map2d->v1);
-            v[3] = ROUNDF(map2d->v2);
+            v[0] = IROUND(map2d->u1);
+            v[1] = IROUND(map2d->u2);
+            v[2] = IROUND(map2d->v1);
+            v[3] = IROUND(map2d->v2);
          }
          break;
       default:

@@ -1,10 +1,10 @@
-/* $Id: feedback.c,v 1.27 2002/10/24 23:57:20 brianp Exp $ */
+/* $Id: feedback.c,v 1.28 2003/03/01 01:50:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,6 @@
 #include "enums.h"
 #include "feedback.h"
 #include "macros.h"
-#include "mmath.h"
 #include "mtypes.h"
 
 

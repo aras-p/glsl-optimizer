@@ -1,4 +1,4 @@
-/* $Id: t_vb_cliptmp.h,v 1.16 2002/10/29 20:29:03 brianp Exp $ */
+/* $Id: t_vb_cliptmp.h,v 1.17 2003/03/01 01:50:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,7 +44,7 @@ do {									\
 	 GLfloat dp = CLIP_DOTPROD(idx, A, B, C, D );			\
 									\
          clipmask[idxPrev] |= PLANE;					\
-	 if (!NEGATIVE(dpPrev)) {					\
+	 if (!IS_NEGATIVE(dpPrev)) {					\
 	    outlist[outcount++] = idxPrev;				\
  	    clipmask[idxPrev] &= ~PLANE;				\
 	 }								\
@@ -53,7 +53,7 @@ do {									\
             GLuint newvert = VB->LastClipped++;				\
             VB->ClipMask[newvert] = 0;					\
             outlist[outcount++] = newvert;				\
-	    if (NEGATIVE(dp)) {						\
+	    if (IS_NEGATIVE(dp)) {					\
 	       /* Going out of bounds.  Avoid division by zero as we	\
 		* know dp != dpPrev from DIFFERENT_SIGNS, above.	\
 		*/							\
@@ -95,7 +95,7 @@ do {									\
       if (DIFFERENT_SIGNS(dpI, dpJ)) {					\
          GLuint newvert = VB->LastClipped++;				\
          VB->ClipMask[newvert] = 0;					\
-	 if (NEGATIVE(dpJ)) {						\
+	 if (IS_NEGATIVE(dpJ)) {					\
 	    GLfloat t = dpI / (dpI - dpJ);				\
             VB->ClipMask[jj] |= PLANE;					\
             INTERP_4F( t, coord[newvert], coord[ii], coord[jj] );	\
@@ -109,7 +109,7 @@ do {									\
             ii = newvert;						\
 	 }								\
       }									\
-      else if (NEGATIVE(dpI))						\
+      else if (IS_NEGATIVE(dpI))					\
 	 return;							\
   }									\
 } while (0)

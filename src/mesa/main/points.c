@@ -1,10 +1,10 @@
-/* $Id: points.c,v 1.34 2002/10/24 23:57:21 brianp Exp $ */
+/* $Id: points.c,v 1.35 2003/03/01 01:50:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,7 +28,6 @@
 #include "glheader.h"
 #include "context.h"
 #include "macros.h"
-#include "mmath.h"
 #include "points.h"
 #include "texstate.h"
 #include "mtypes.h"

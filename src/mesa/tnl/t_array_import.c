@@ -1,10 +1,10 @@
-/* $Id: t_array_import.c,v 1.27 2002/10/29 20:29:01 brianp Exp $ */
+/* $Id: t_array_import.c,v 1.28 2003/03/01 01:50:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,6 @@
 #include "context.h"
 #include "macros.h"
 #include "imports.h"
-#include "mmath.h"
 #include "state.h"
 #include "mtypes.h"
 

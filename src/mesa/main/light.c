@@ -1,10 +1,10 @@
-/* $Id: light.c,v 1.54 2002/10/25 21:06:29 brianp Exp $ */
+/* $Id: light.c,v 1.55 2003/03/01 01:50:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,7 +32,6 @@
 #include "enums.h"
 #include "light.h"
 #include "macros.h"
-#include "mmath.h"
 #include "simple_list.h"
 #include "mtypes.h"
 #include "math/m_xform.h"
@@ -963,12 +962,12 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
          params[3] = FLOAT_TO_INT( ctx->Light.Material[f].Emission[3] );
 	 break;
       case GL_SHININESS:
-         *params = ROUNDF( ctx->Light.Material[f].Shininess );
+         *params = IROUND( ctx->Light.Material[f].Shininess );
 	 break;
       case GL_COLOR_INDEXES:
-	 params[0] = ROUNDF( ctx->Light.Material[f].AmbientIndex );
-	 params[1] = ROUNDF( ctx->Light.Material[f].DiffuseIndex );
-	 params[2] = ROUNDF( ctx->Light.Material[f].SpecularIndex );
+	 params[0] = IROUND( ctx->Light.Material[f].AmbientIndex );
+	 params[1] = IROUND( ctx->Light.Material[f].DiffuseIndex );
+	 params[2] = IROUND( ctx->Light.Material[f].SpecularIndex );
 	 break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetMaterialfv(pname)" );

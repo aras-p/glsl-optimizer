@@ -1,4 +1,4 @@
-/* $Id: s_bitmap.c,v 1.20 2002/11/25 20:26:59 brianp Exp $ */
+/* $Id: s_bitmap.c,v 1.21 2003/03/01 01:50:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,7 +33,6 @@
 #include "glheader.h"
 #include "image.h"
 #include "macros.h"
-#include "mmath.h"
 #include "pixel.h"
 
 #include "s_context.h"

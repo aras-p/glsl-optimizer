@@ -1,10 +1,10 @@
-/* $Id: m_xform.c,v 1.18 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: m_xform.c,v 1.19 2003/03/01 01:50:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,7 +37,6 @@
 
 #include "glheader.h"
 #include "macros.h"
-#include "mmath.h"
 
 #include "m_eval.h"
 #include "m_matrix.h"

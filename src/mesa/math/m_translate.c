@@ -1,4 +1,4 @@
-/* $Id: m_translate.c,v 1.10 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: m_translate.c,v 1.11 2003/03/01 01:50:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,6 @@
 #include "glheader.h"
 #include "mtypes.h"		/* GLchan hack */
 #include "colormac.h"
-#include "mmath.h"
 
 #include "m_translate.h"
 

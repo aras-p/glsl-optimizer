@@ -1,10 +1,10 @@
-/* $Id: colormac.h,v 1.11 2002/04/04 16:51:52 brianp Exp $ */
+/* $Id: colormac.h,v 1.12 2003/03/01 01:50:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,12 +34,9 @@
 #define COLORMAC_H
 
 
-#include "glheader.h"
+#include "imports.h"
 #include "config.h"
 #include "macros.h"
-#include "mmath.h"
-/* Do not reference mtypes.h from this file.
- */
 
 
 #if CHAN_BITS == 8
@@ -131,6 +128,65 @@ do {						\
    UNCLAMPED_FLOAT_TO_CHAN(dst[2], f[2]);	\
    UNCLAMPED_FLOAT_TO_CHAN(dst[3], f[3]);	\
 } while (0)
+
+
+
+/* Generic color packing macros
+ * XXX We may move these into texutil.h at some point.
+ */
+
+#define PACK_COLOR_8888( a, b, c, d )					\
+   (((a) << 24) | ((b) << 16) | ((c) << 8) | (d))
+
+#define PACK_COLOR_888( a, b, c )					\
+   (((a) << 16) | ((b) << 8) | (c))
+
+#define PACK_COLOR_565( a, b, c )					\
+   ((((a) & 0xf8) << 8) | (((b) & 0xfc) << 3) | (((c) & 0xf8) >> 3))
+
+#define PACK_COLOR_1555( a, b, c, d )					\
+   ((((b) & 0xf8) << 7) | (((c) & 0xf8) << 2) | (((d) & 0xf8) >> 3) |	\
+    ((a) ? 0x8000 : 0))
+
+#define PACK_COLOR_4444( a, b, c, d )					\
+   ((((a) & 0xf0) << 8) | (((b) & 0xf0) << 4) | ((c) & 0xf0) | ((d) >> 4))
+
+#define PACK_COLOR_88( a, b )						\
+   (((a) << 8) | (b))
+
+#define PACK_COLOR_332( a, b, c )					\
+   (((a) & 0xe0) | (((b) & 0xe0) >> 3) | (((c) & 0xc0) >> 6))
+
+
+#ifdef MESA_BIG_ENDIAN
+
+#define PACK_COLOR_8888_LE( a, b, c, d )	PACK_COLOR_8888( d, c, b, a )
+
+#define PACK_COLOR_565_LE( a, b, c )					\
+   (((a) & 0xf8) | (((b) & 0xe0) >> 5) | (((b) & 0x1c) << 11) |		\
+   (((c) & 0xf8) << 5))
+
+#define PACK_COLOR_1555_LE( a, b, c, d )				\
+   ((((b) & 0xf8) >> 1) | (((c) & 0xc0) >> 6) | (((c) & 0x38) << 10) |	\
+    (((d) & 0xf8) << 5) | ((a) ? 0x80 : 0))
+
+#define PACK_COLOR_4444_LE( a, b, c, d )	PACK_COLOR_4444( c, d, a, b )
+
+#define PACK_COLOR_88_LE( a, b )		PACK_COLOR_88( b, a )
+
+#else	/* little endian */
+
+#define PACK_COLOR_8888_LE( a, b, c, d )	PACK_COLOR_8888( a, b, c, d )
+
+#define PACK_COLOR_565_LE( a, b, c )		PACK_COLOR_565( a, b, c )
+
+#define PACK_COLOR_1555_LE( a, b, c, d )	PACK_COLOR_1555( a, b, c, d )
+
+#define PACK_COLOR_4444_LE( a, b, c, d )	PACK_COLOR_4444( a, b, c, d )
+
+#define PACK_COLOR_88_LE( a, b )		PACK_COLOR_88( a, b )
+
+#endif	/* endianness */
 
 
 #endif /* COLORMAC_H */

@@ -1,4 +1,4 @@
-/* $Id: s_aaline.c,v 1.19 2003/02/28 15:08:49 brianp Exp $ */
+/* $Id: s_aaline.c,v 1.20 2003/03/01 01:50:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,12 +26,12 @@
 
 
 #include "glheader.h"
+#include "imports.h"
 #include "swrast/s_aaline.h"
 #include "swrast/s_context.h"
 #include "swrast/s_span.h"
 #include "swrast/swrast.h"
 #include "mtypes.h"
-#include "mmath.h"
 
 
 #define SUB_PIXEL 4

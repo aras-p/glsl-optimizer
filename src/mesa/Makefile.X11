@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.73 2003/01/14 04:55:45 brianp Exp $
+# $Id: Makefile.X11,v 1.74 2003/03/01 01:50:20 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -55,7 +55,6 @@ CORE_SOURCES = \
 	light.c \
 	lines.c \
 	matrix.c \
-	mmath.c \
 	nvprogram.c \
 	nvfragparse.c \
 	nvvertexec.c \

@@ -1,10 +1,10 @@
-/* $Id: t_vb_render.c,v 1.33 2002/10/29 20:29:04 brianp Exp $ */
+/* $Id: t_vb_render.c,v 1.34 2003/03/01 01:50:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,7 +46,6 @@
 #include "macros.h"
 #include "imports.h"
 #include "mtypes.h"
-#include "mmath.h"
 
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
@@ -58,18 +57,6 @@
 /**********************************************************************/
 /*                        Clip single primitives                      */
 /**********************************************************************/
-
-
-#if defined(USE_IEEE)
-#define NEGATIVE(x) (GET_FLOAT_BITS(x) & (1<<31))
-#define DIFFERENT_SIGNS(x,y) ((GET_FLOAT_BITS(x) ^ GET_FLOAT_BITS(y)) & (1<<31))
-#else
-#define NEGATIVE(x) (x < 0)
-#define DIFFERENT_SIGNS(x,y) (x * y <= 0 && x - y != 0)
-/* Could just use (x*y<0) except for the flatshading requirements.
- * Maybe there's a better way?
- */
-#endif
 
 
 #define W(i) coord[i][3]

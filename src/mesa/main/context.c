@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.193 2003/01/26 14:37:15 brianp Exp $ */
+/* $Id: context.c,v 1.194 2003/03/01 01:50:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,7 +41,6 @@
 #include "hash.h"
 #include "light.h"
 #include "macros.h"
-#include "mmath.h"
 #include "simple_list.h"
 #include "state.h"
 #include "teximage.h"
@@ -80,6 +79,9 @@ int MESA_VERBOSE = 0;
 int MESA_DEBUG_FLAGS = 0;
 #endif
 
+
+/* ubyte -> float conversion */
+GLfloat _mesa_ubyte_to_float_color_tab[256];
 
 static void
 free_shared_state( GLcontext *ctx, struct gl_shared_state *ss );
@@ -556,6 +558,8 @@ one_time_init( GLcontext *ctx )
    static GLboolean alreadyCalled = GL_FALSE;
    _glthread_LOCK_MUTEX(OneTimeLock);
    if (!alreadyCalled) {
+      GLuint i;
+
       /* do some implementation tests */
       assert( sizeof(GLbyte) == 1 );
       assert( sizeof(GLshort) >= 2 );
@@ -567,7 +571,10 @@ one_time_init( GLcontext *ctx )
       _mesa_init_lists();
 
       _math_init();
-      _mesa_init_math();
+
+      for (i = 0; i < 256; i++) {
+         _mesa_ubyte_to_float_color_tab[i] = (float) i / 255.0F;
+      }
 
 #ifdef USE_SPARC_ASM
       _mesa_init_sparc_glapi_relocs();

@@ -1,10 +1,10 @@
-/* $Id: t_eval_api.c,v 1.12 2002/10/24 23:57:25 brianp Exp $ */
+/* $Id: t_eval_api.c,v 1.13 2003/03/01 01:50:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,7 +34,6 @@
 #include "context.h"
 #include "macros.h"
 #include "imports.h"
-#include "mmath.h"
 #include "mtypes.h"
 #include "math/m_eval.h"
 

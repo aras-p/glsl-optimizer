@@ -1,4 +1,4 @@
-/* $Id: xm_line.c,v 1.22 2003/02/17 16:35:57 brianp Exp $ */
+/* $Id: xm_line.c,v 1.23 2003/03/01 01:50:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,7 +35,6 @@
 #include "glxheader.h"
 #include "depth.h"
 #include "macros.h"
-#include "mmath.h"
 #include "mtypes.h"
 #include "xmesaP.h"
 
