@@ -50,19 +50,48 @@
 
 
 #ifdef DEBUG
-static void PrintTexture(int w, int h, int c, const GLubyte *data)
+static void PrintTexture(const struct gl_texture_image *img)
 {
-  int i, j;
-  for (i = 0; i < h; i++) {
-    for (j = 0; j < w; j++) {
+  int i, j, c;
+  GLubyte *data = img->Data;
+
+  if (!data) {
+     printf("No texture data\n");
+     return;
+  }
+
+  switch (img->Format) {
+     case GL_ALPHA:
+     case GL_LUMINANCE:
+     case GL_INTENSITY:
+     case GL_COLOR_INDEX:
+        c = 1;
+        break;
+     case GL_LUMINANCE_ALPHA:
+        c = 2;
+        break;
+     case GL_RGB:
+        c = 3;
+        break;
+     case GL_RGBA:
+        c = 4;
+        break;
+     default:
+        gl_problem(NULL, "error in PrintTexture\n");
+        return;
+  }
+
+
+  for (i = 0; i < img->Height; i++) {
+    for (j = 0; j < img->Width; j++) {
       if (c==1)
         printf("%02x  ", data[0]);
       else if (c==2)
-        printf("%02x %02x  ", data[0], data[1]);
+        printf("%02x%02x  ", data[0], data[1]);
       else if (c==3)
-        printf("%02x %02x %02x  ", data[0], data[1], data[2]);
+        printf("%02x%02x%02x  ", data[0], data[1], data[2]);
       else if (c==4)
-        printf("%02x %02x %02x %02x  ", data[0], data[1], data[2], data[3]);
+        printf("%02x%02x%02x%02x  ", data[0], data[1], data[2], data[3]);
       data += c;
     }
     printf("\n");
