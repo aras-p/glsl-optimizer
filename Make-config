@@ -521,7 +521,7 @@ linux-ggi:
 	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DGGI -DCDECL=" \
 	"CXXFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DCDECL=" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -ggi -lX11 -lXext -lm -lpthread" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -lggi -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm"
@@ -539,7 +539,7 @@ linux-x86-ggi:
 	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DUSE_X86_ASM -DGGI -DCDECL=" \
 	"CXXFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DCDECL=" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -ggi -lX11 -lXext -lm -lpthread" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -lggi -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
@@ -900,7 +900,10 @@ solaris-x86-gcc:
 	"CFLAGS = -O3 -m486 -fPIC -I/usr/openwin/include -DUSE_XSHM" \
 	"CXXFLAGS = -O3 -m486 -fPIC" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"APP_LIB_DEPS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
+	"GL_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lm -lpthread" \
+	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/openwin/lib -lX11 -lXmu -lXt -lXi -lm" \
+	"APP_LIB_DEPS = -L/usr/openwin/lib -R/usr/openwin/lib -lglut -lGLU -lGL -lm"
 
 sunos4:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
