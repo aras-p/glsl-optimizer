@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.54 2001/06/18 17:26:08 brianp Exp $
+# $Id: Makefile.X11,v 1.55 2001/06/27 12:52:12 keithw Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -308,7 +308,7 @@ Trace/tr_wrapper.o: Trace/tr_wrapper.c
 #	@echo "Specify a target configuration"
 
 clean:
-	-rm *.o *~ */*.o */*~ *.lo *.la
+	-rm -f *.o *~ */*.o */*~ *.lo *.la
 	-rm -rf .libs
 
 targets: $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(OSMESA_LIB)
