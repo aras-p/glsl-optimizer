@@ -1,4 +1,4 @@
-/* $Id: fxapi.c,v 1.36 2003/07/17 14:50:12 brianp Exp $ */
+/* $Id: fxapi.c,v 1.37 2003/08/19 15:52:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,8 @@
  *    Brian Paul
  *    Daryll Strauss
  *    Keith Whitwell
+ *    Daniel Borca
+ *    Hiroshi Morii
  */
 
 
@@ -103,10 +105,29 @@ fxMesaSelectCurrentBoard(int n)
 }
 
 
-fxMesaContext GLAPIENTRY
-fxMesaGetCurrentContext(void)
+void * GLAPIENTRY fxMesaGetCurrentContext (void)
 {
-   return fxMesaCurrentCtx;
+ GET_CURRENT_CONTEXT(ctx);
+ return ctx;
+}
+
+
+void GLAPIENTRY fxGetScreenGeometry (GLint *w, GLint *h)
+{
+ GLint width = 0;
+ GLint height = 0;
+ 
+ if (fxMesaCurrentCtx != NULL) {
+    width = fxMesaCurrentCtx->screen_width;
+    height = fxMesaCurrentCtx->screen_height;
+ }
+
+ if (w != NULL) {
+    *w = width;
+ }
+ if (h != NULL) {
+    *h = height;
+ }
 }
 
 
@@ -133,11 +154,7 @@ gl3DfxSetPaletteEXT(GLuint * pal)
    if (fxMesa) {
       fxMesa->haveGlobalPaletteTexture = 1;
 
-      FX_grTexDownloadTable(GR_TMU0, GR_TEXTABLE_PALETTE,
-			    (GuTexPalette *) pal);
-      if (fxMesa->haveTwoTMUs)
-	 FX_grTexDownloadTable(GR_TMU1, GR_TEXTABLE_PALETTE,
-			       (GuTexPalette *) pal);
+      grTexDownloadTable(GR_TEXTABLE_PALETTE, (GuTexPalette *) pal);
    }
 }
 
@@ -169,16 +186,8 @@ fxBestResolution(int width, int height, int aux)
 
    fxQueryHardware();
 
-   if (glbHWConfig.SSTs[glbCurrentBoard].type == GR_SSTTYPE_VOODOO) {
-      fbmem = glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.fbRam;
-
-      if (glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.sliDetect)
-	 fbmem *= 2;
-   }
-   else if (glbHWConfig.SSTs[glbCurrentBoard].type == GR_SSTTYPE_SST96)
-      fbmem = glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config.fbRam;
-   else
-      fbmem = 2;
+   fbmem = glbHWConfig.SSTs[glbCurrentBoard].VoodooConfig.fbRam
+         * glbHWConfig.SSTs[glbCurrentBoard].VoodooConfig.numChips;
 
    /* A work around for BZFlag */
 
@@ -187,13 +196,14 @@ fxBestResolution(int width, int height, int aux)
       height = 480;
    }
 
-   for (i = 0; i < NUM_RESOLUTIONS; i++)
+   for (i = 0; i < NUM_RESOLUTIONS; i++) {
       if (resolutions[i][4 - aux] <= fbmem) {
-	 if ((width <= resolutions[i][0]) && (height <= resolutions[i][1]))
+	 if ((width <= resolutions[i][0]) && (height <= resolutions[i][1])) {
 	    return resolutions[i][2];
-
+	 }
 	 lastvalidres = resolutions[i][2];
       }
+   }
 
    return lastvalidres;
 }
@@ -282,7 +292,6 @@ fxMesaCreateContext(GLuint win,
    /*FX_GrContext_t glideContext = 0; */
    char *errorstr;
    GLboolean useBGR;
-   char *system = NULL;
    GLuint pixFmt, colDepth = 16;
    GLint redBits, greenBits, blueBits, alphaBits;
 
@@ -306,15 +315,15 @@ fxMesaCreateContext(GLuint win,
       case FXMESA_ALPHA_SIZE:
 	 i++;
 	 alphaBuffer = attribList[i] > 0;
-	 if (alphaBuffer)
+	 if (alphaBuffer) {
 	    aux = 1;
+         }
 	 break;
       case FXMESA_DEPTH_SIZE:
 	 i++;
 	 depthSize = attribList[i];
 	 if (depthSize) {
 	    aux = 1;
-	    depthSize = 16;
 	 }
 	 break;
       case FXMESA_STENCIL_SIZE:
@@ -337,11 +346,15 @@ fxMesaCreateContext(GLuint win,
 	 break;
       default:
 	 if (MESA_VERBOSE & VERBOSE_DRIVER) {
-	    fprintf(stderr, "fxmesa: fxMesaCreateContext() End (defualt)\n");
+	    fprintf(stderr, "fxmesa: bad FXMESA_* switch\n");
 	 }
 	 return NULL;
       }
       i++;
+   }
+
+   if (depthSize) {
+      depthSize = (colDepth == 32) ? 24 : 16;
    }
 
    /* A workaround for Linux GLQuake */
@@ -349,13 +362,9 @@ fxMesaCreateContext(GLuint win,
       alphaBuffer = 0;
 
    if ((type = fxQueryHardware()) < 0) {
-      fprintf(stderr,
-	      "fx Driver: ERROR no Voodoo1/2 Graphics or Voodoo Rush !\n");
+      fprintf(stderr, "fxmesa: ERROR no Voodoo hardware!\n");
       return NULL;
    }
-
-   if (type == GR_SSTTYPE_VOODOO)
-      win = 0;
 
    grSstSelect(glbCurrentBoard);
 
@@ -365,23 +374,14 @@ fxMesaCreateContext(GLuint win,
       goto errorhandler;
    }
 
-   if (glbHWConfig.SSTs[glbCurrentBoard].type == GR_SSTTYPE_VOODOO)
-      fxMesa->haveTwoTMUs =
-	 (glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.nTexelfx >
-	  1);
-   else if (glbHWConfig.SSTs[glbCurrentBoard].type == GR_SSTTYPE_SST96)
-      fxMesa->haveTwoTMUs =
-	 (glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config.nTexelfx >
-	  1);
-   else
-      fxMesa->haveTwoTMUs = GL_FALSE;
-
+   fxMesa->haveTwoTMUs = (glbHWConfig.SSTs[glbCurrentBoard].VoodooConfig.nTexelfx > 1);
    fxMesa->haveDoubleBuffer = doubleBuffer;
    fxMesa->haveAlphaBuffer = alphaBuffer;
    fxMesa->haveGlobalPaletteTexture = GL_FALSE;
    fxMesa->haveZBuffer = depthSize ? 1 : 0;
    fxMesa->verbose = verbose;
    fxMesa->board = glbCurrentBoard;
+   fxMesa->maxTextureSize = glbHWConfig.SSTs[glbCurrentBoard].VoodooConfig.maxTextureSize; /* [koolsmoky] */
 
 
    switch (fxMesa->colDepth = colDepth) {
@@ -390,21 +390,21 @@ fxMesaCreateContext(GLuint win,
                greenBits = 5;
                blueBits = 5;
                alphaBits = 1;
-               pixFmt = 4; /* GR_PIXFMT_ARGB_1555 */
+               pixFmt = GR_PIXFMT_ARGB_1555;
                break;
           case 16:
                redBits = 5;
                greenBits = 6;
                blueBits = 5;
                alphaBits = 0;
-               pixFmt = 3; /* GR_PIXFMT_ARGB_565 */
+               pixFmt = GR_PIXFMT_RGB_565;
                break;
           case 32:
                redBits = 8;
                greenBits = 8;
                blueBits = 8;
                alphaBits = 8;
-               pixFmt = 5; /* GR_PIXFMT_ARGB_8888 */
+               pixFmt = GR_PIXFMT_ARGB_8888;
                break;
           default:
                errorstr = "pixelFormat";
@@ -414,11 +414,7 @@ fxMesaCreateContext(GLuint win,
 
    fxMesa->glideContext = FX_grSstWinOpen(&glbHWConfig.SSTs[glbCurrentBoard],
                                           (FxU32)win, res, ref,
-#ifdef  FXMESA_USE_ARGB
-					  GR_COLORFORMAT_ARGB,
-#else
 					  GR_COLORFORMAT_ABGR,
-#endif
 					  pixFmt,
 					  GR_ORIGIN_LOWER_LEFT, 2, aux);
    if (!fxMesa->glideContext) {
@@ -428,87 +424,34 @@ fxMesaCreateContext(GLuint win,
 
    /*
     * Pixel tables are used during pixel read-back
-    * Either initialize them for RGB or BGR order.
+    * Either initialize them for RGB or BGR order;
+    * However, 32bit capable cards have the right order.
+    * As a consequence, 32bit read-back is not swizzled!
     * Also determine if we need vertex snapping.
     */
-
-   fxMesa->snapVertices = GL_TRUE; /* play it safe */
-
-#ifdef FXMESA_USE_ARGB
-   useBGR = GL_FALSE;		/* Force RGB pixel order */
-   system = "FXMESA_USE_ARGB";
-#else
-   if (glbHWConfig.SSTs[glbCurrentBoard].type == GR_SSTTYPE_VOODOO) {
-      /* jk991130 - Voodoo 3s don't use BGR. Query the # of TMUs
-       * as Voodoo3s have 2 TMUs on board, Banshee has only 1
-       * bk000413 - another suggestion from Joseph Kain is using
-       *  VendorID 0x121a for all 3dfx boards
-       *   DeviceID VG  1/V2  2/VB  3/V3  5
-       * For now we cehck for known BGR devices, and presume
-       *  everything else to be a V3/RGB.
-       */
-      GrVoodooConfig_t *voodoo;
-      voodoo = &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig;
-
-      if (voodoo->nTexelfx == 1) {
-	 /* Voodoo1 or Banshee */
-	 useBGR = GL_TRUE;
-	 system = "Voodoo1";
-      }
-      else if (voodoo->nTexelfx == 2 &&
-	       voodoo->fbiRev == 260 &&
-	       voodoo->tmuConfig[0].tmuRev == 4 &&
-	       (voodoo->tmuConfig[0].tmuRam == 2 ||
-		voodoo->tmuConfig[0].tmuRam == 4)) {
-	 /* Voodoo 2 */
-	 useBGR = GL_TRUE;
-	 system = "Voodoo2";
-         fxMesa->snapVertices = GL_FALSE;
-      }
-      else if (voodoo->nTexelfx == 2 &&
-	       voodoo->fbiRev == 2 &&
-	       voodoo->tmuConfig[0].tmuRev == 1 &&
-	       voodoo->tmuConfig[0].tmuRam == 4) {
-	 /* Quantum3D Obsidian 50/100 */
-	 useBGR = GL_TRUE;
-	 system = "Quantum3D Obsidian";
-      }
-      else
-	 /* Brian
-	  *       (voodoo->nTexelfx == 2 &&
-	  *        voodoo->fbiRev == 0 &&
-	  *        voodoo->tmuConfig[0].tmuRev == 148441048 &&
-	  *        voodoo->tmuConfig[0].tmuRam == 3)
-	  * Bernd 
-	  *       (voodoo->nTexelfx == 2 &&
-	  *        voodoo->fbiRev ==  69634 &&
-	  *        voodoo->tmuConfig[0].tmuRev == 69634 &&
-	  *        voodoo->tmuConfig[0].tmuRam == 2 )
-	  */
-      {
-	 /* Presumed Voodoo3 */
-	 useBGR = GL_FALSE;
-	 system = "Voodoo3";
-         fxMesa->snapVertices = GL_FALSE;
-      }
-      if (verbose) {
-	 fprintf(stderr,
-           "Voodoo: Texelfx: %d / FBI Rev.: %d / TMU Rev.: %d / TMU RAM: %d\n",
-                 voodoo->nTexelfx, voodoo->fbiRev, voodoo->tmuConfig[0].tmuRev,
-                 voodoo->tmuConfig[0].tmuRam);
-      }
+   switch (glbHWConfig.SSTs[glbCurrentBoard].type) {
+          case GR_SSTTYPE_VOODOO:
+          case GR_SSTTYPE_Banshee:
+               useBGR = GL_TRUE;
+               fxMesa->snapVertices = GL_TRUE;
+               break;
+          case GR_SSTTYPE_Voodoo2:
+               useBGR = GL_TRUE;
+               fxMesa->snapVertices = GL_FALSE;
+               break;
+          case GR_SSTTYPE_Voodoo3:
+          case GR_SSTTYPE_Voodoo4:
+          case GR_SSTTYPE_Voodoo5:
+          default:
+               useBGR = GL_FALSE;
+               fxMesa->snapVertices = GL_FALSE;
+               break;
    }
-   else {
-      useBGR = GL_FALSE;	/* use RGB pixel order otherwise */
-      system = "non-voodoo";
-      fxMesa->snapVertices = GL_FALSE;
-   }
-#endif /*FXMESA_USE_ARGB */
 
    if (verbose) {
-      fprintf(stderr, "Voodoo pixel order: %s (%s)\n",
-              useBGR ? "BGR" : "RGB", system);
-      fprintf(stderr, "Vertex snapping: %d\n", fxMesa->snapVertices);
+      fprintf(stderr, "Voodoo pixel order = %s, vertex snapping = %d\n",
+                      useBGR ? "BGR" : "RGB",
+                      fxMesa->snapVertices);
    }
 
    fxInitPixelTables(fxMesa, useBGR);
@@ -527,8 +470,8 @@ fxMesaCreateContext(GLuint win,
    fxMesa->new_state = ~0;
 
    if (verbose)
-      fprintf(stderr, "Voodoo Glide screen size: %dx%d\n",
-	      (int) FX_grSstScreenWidth(), (int) FX_grSstScreenHeight());
+      fprintf(stderr, "Voodoo screen: %dx%dx%d\n",
+	      (int)FX_grSstScreenWidth(), (int)FX_grSstScreenHeight(), colDepth);
 
    fxMesa->glVis = _mesa_create_visual(GL_TRUE,	/* RGB mode */
 				       doubleBuffer, GL_FALSE,	/* stereo */
@@ -594,7 +537,7 @@ fxMesaCreateContext(GLuint win,
  errorhandler:
    if (fxMesa) {
       if (fxMesa->glideContext)
-	 FX_grSstWinClose(fxMesa->glideContext);
+	 grSstWinClose(fxMesa->glideContext);
       fxMesa->glideContext = 0;
 
       if (fxMesa->state)
@@ -611,7 +554,7 @@ fxMesaCreateContext(GLuint win,
    }
 
    if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxMesaCreateContext() End (%s)\n", errorstr);
+      fprintf(stderr, "fxmesa: ERROR (%s)\n", errorstr);
    }
    return NULL;
 }
@@ -679,7 +622,7 @@ fxMesaDestroyContext(fxMesaContext fxMesa)
    _mesa_destroy_framebuffer(fxMesa->glBuffer);
 
    fxCloseHardware();
-   FX_grSstWinClose(fxMesa->glideContext);
+   grSstWinClose(fxMesa->glideContext);
 
    free(fxMesa);
 
@@ -784,7 +727,7 @@ fxMesaSwapBuffers(void)
 	 /*
 	  * Don't allow swap buffer commands to build up!
 	  */
-	 while (FX_grGetInteger(FX_PENDING_BUFFERSWAPS) >
+	 while (FX_grGetInteger(GR_PENDING_BUFFERSWAPS) >
 		fxMesaCurrentCtx->maxPendingSwapBuffers)
 	    /* The driver is able to sleep when waiting for the completation
 	       of multiple swapbuffer operations instead of wasting
@@ -817,38 +760,15 @@ fxQueryHardware(void)
 
 	 if (getenv("MESA_FX_INFO")) {
 	    char buf[80];
+            GrVoodooConfig_t *voodoo = &glbHWConfig.SSTs[glbCurrentBoard].VoodooConfig;
 
-	    FX_grGlideGetVersion(buf);
-	    fprintf(stderr, "Voodoo Using Glide V%s\n", buf);
-	    fprintf(stderr, "Voodoo Number of boards: %d\n",
-		    glbHWConfig.num_sst);
-
-	    if (glbHWConfig.SSTs[glbCurrentBoard].type == GR_SSTTYPE_VOODOO) {
-	       GrVoodooConfig_t *voodoo;
-	       voodoo =
-		  &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig;
-
-	       fprintf(stderr, "Voodoo Framebuffer RAM: %d\n",
-		       voodoo->sliDetect ? (voodoo->fbRam *
-					    2) : voodoo->fbRam);
-	       fprintf(stderr, "Voodoo Number of TMUs: %d\n",
-		       voodoo->nTexelfx);
-	       fprintf(stderr, "Voodoo fbRam: %d\n", voodoo->fbRam);
-	       fprintf(stderr, "Voodoo fbiRev: %d\n", voodoo->fbiRev);
-
-	       fprintf(stderr, "Voodoo SLI detected: %d\n",
-		       voodoo->sliDetect);
-	    }
-	    else if (glbHWConfig.SSTs[glbCurrentBoard].type ==
-		     GR_SSTTYPE_SST96) {
-	       GrSst96Config_t *sst96;
-	       sst96 =
-		  &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config;
-	       fprintf(stderr, "Voodoo Framebuffer RAM: %d\n", sst96->fbRam);
-	       fprintf(stderr, "Voodoo Number of TMUs: %d\n",
-		       sst96->nTexelfx);
-	    }
-
+            strcpy(buf, grGetString(GR_VERSION));
+	    fprintf(stderr, "Voodoo Using Glide %s\n", buf);
+	    fprintf(stderr, "Voodoo Number of boards: %d\n", glbHWConfig.num_sst);
+	    fprintf(stderr, "Voodoo Number of TMUs: %d\n", voodoo->nTexelfx);
+            fprintf(stderr, "Voodoo fbRam: %d\n", voodoo->fbRam);
+	    fprintf(stderr, "Voodoo fbiRev: %d\n", voodoo->fbiRev);
+	    fprintf(stderr, "Voodoo chips detected: %d\n", voodoo->numChips);
 	 }
       }
       else {
@@ -858,7 +778,7 @@ fxQueryHardware(void)
       glbGlideInitialized = 1;
 
 #if defined(__WIN32__)
-      onexit((_onexit_t) cleangraphics);
+      _onexit((_onexit_t) cleangraphics);
 #elif defined(__linux__)
       /* Only register handler if environment variable is not defined. */
       if (!getenv("MESA_FX_NO_SIGNALS")) {

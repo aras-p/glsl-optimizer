@@ -454,14 +454,14 @@ EXPORTS
  fxMesaMakeCurrent
  fxMesaGetCurrentContext
  fxMesaSwapBuffers
- fxMesaSetNearFar
+; fxMesaSetNearFar
  fxMesaUpdateScreenSize
  fxQueryHardware
  fxCloseHardware
- OSMesaCreateContext
- OSMesaDestroyContext
- OSMesaGetCurrentContext
- OSMesaGetDepthBuffer
- OSMesaGetIntegerv
- OSMesaMakeCurrent
- OSMesaPixelStore
+; OSMesaCreateContext
+; OSMesaDestroyContext
+; OSMesaGetCurrentContext
+; OSMesaGetDepthBuffer
+; OSMesaGetIntegerv
+; OSMesaMakeCurrent
+; OSMesaPixelStore

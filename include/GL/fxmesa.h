@@ -76,7 +76,7 @@ GLAPI GLboolean GLAPIENTRY fxMesaSelectCurrentBoard(int n);
 
 GLAPI void GLAPIENTRY fxMesaMakeCurrent(fxMesaContext ctx);
 
-GLAPI fxMesaContext GLAPIENTRY fxMesaGetCurrentContext(void);
+GLAPI void * GLAPIENTRY fxMesaGetCurrentContext(void);
 
 GLAPI void GLAPIENTRY fxMesaSwapBuffers(void);
 
@@ -87,6 +87,8 @@ GLAPI void GLAPIENTRY fxMesaUpdateScreenSize(fxMesaContext ctx);
 GLAPI int GLAPIENTRY fxQueryHardware(void);
 
 GLAPI void GLAPIENTRY fxCloseHardware(void);
+
+GLAPI void GLAPIENTRY fxGetScreenGeometry (GLint *w, GLint *h);
 
 
 #if defined (__BEOS__)

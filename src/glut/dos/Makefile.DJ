@@ -23,7 +23,7 @@
 # DOS/DJGPP glut makefile v1.4 for Mesa
 #
 #  Copyright (C) 2002 - Borca Daniel
-#  Email : dborca@yahoo.com
+#  Email : dborca@users.sourceforge.net
 #  Web   : http://www.geocities.com/dborca
 
 
@@ -53,10 +53,11 @@ GLUT_LIB = libglut.a
 GLUT_DXE = glut.dxe
 GLUT_IMP = libiglut.a
 
-export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH);$(LIBDIR)
+export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH);$(LIBDIR);$(GLIDE)/lib
 
 CC = gcc
 CFLAGS += -I- -I$(TOP)/include -I. -I$(MKGLUT) -IPC_HW
+CFLAGS += -DGLUT_IMPORT_LIB
 
 AR = ar
 ARFLAGS = rus
@@ -78,6 +79,7 @@ CORE_SOURCES = \
 	mouse.c \
 	overlay.c \
 	state.c \
+	util.c \
 	window.c
 
 PC_HW_SOURCES = \
@@ -119,13 +121,13 @@ OBJECTS = $(addsuffix .o,$(basename $(SOURCES)))
 all: $(LIBDIR)/$(GLUT_LIB) $(LIBDIR)/$(GLUT_DXE) $(LIBDIR)/$(GLUT_IMP)
 
 $(LIBDIR)/$(GLUT_LIB): $(OBJECTS)
-	$(AR) $(ARFLAGS) $(LIBDIR)/$(GLUT_LIB) $(OBJECTS)
+	$(AR) $(ARFLAGS) $@ $^
 
 $(LIBDIR)/$(GLUT_DXE) $(LIBDIR)/$(GLUT_IMP): $(OBJECTS)
 ifeq ($(HAVEDXE3),)
 	$(warning Missing DXE3 package... Skipping $(GLUT_DXE))
 else
-	-dxe3gen -o $(LIBDIR)/$(GLUT_DXE) -Y $(LIBDIR)/$(GLUT_IMP) -D "MesaGLUT DJGPP" -E _glut -P gl.dxe -P glu.dxe -U $(OBJECTS)
+	-dxe3gen -o $(LIBDIR)/$(GLUT_DXE) -Y $(LIBDIR)/$(GLUT_IMP) -D "MesaGLUT DJGPP" -E _glut -P gl.dxe -P glu.dxe -U $^
 endif
 
 clean:

@@ -31,12 +31,12 @@ Available options:
 
      Environment variables:
 	CPU		optimize for the given processor.
-			default = k6
+			default = pentium
 	GLU=[mesa|sgi]	specify GLU directory; can be `sgi' (requires GNU/C++)
 			or `mesa'.
 			default = mesa
-	GLIDE		path to Glide3 SDK include files; used with FX.
-			default = $(TOP)/include/glide3
+	GLIDE		path to Glide3 SDK; used with FX.
+			default = $(TOP)/glide3
 	FX=1		build for 3dfx Glide3. Note that this disables
 			compilation of most DMesa code and requires fxMesa.
 			As a consequence, you'll need the DJGPP Glide3
@@ -70,7 +70,7 @@ Tested on:
 	CPU:		AMD Athlon XP 1800+
 	Mainboard:	EP-8KTA3 w/ 128 MB SDRAM
 	Video card:	Voodoo5 5500 AGP w/ 64 MB SDRAM
-	DJGPP:		djdev 2.04 + gcc v3.2.2 + make v3.79.1
+	DJGPP:		djdev 2.04 + gcc v3.2.2 + make v3.80
 	OS:		DOS and Win98SE
 
 
@@ -118,12 +118,6 @@ FAQ:
    A) Another weird "feature" is that buffer width must be multiple of 8 (I'm a
       lazy programmer and I found that the easiest way to keep buffer handling
       at peak performance ;-).
-
-   Q) My demo doesn't display text. I know I used the GLUT font routines!
-   A) Then you probably use GLUT as a DXE. Well, there is no direct access to
-      variables due to the way DXE works. Read the documentation. The author of
-      GLUT took this into account for _WIN32 DLL's only; I don't want to modify
-      his headers. The only workaround is to link GLUT the old way :-(
 
    Q) The GLUT is incomplete.
    A) See below.
@@ -173,9 +167,12 @@ position far to the right (or way down); then you can move them back to any
 position right before the main loop.
 
 The following environment variables can customize GLUT behaviour:
+	GLUT_FPS		- print frames/second statistics to stderr
 	DMESA_GLUT_REFRESH	- set vertical screen refresh rate (VESA3)
 	DMESA_GLUT_BPP		- set default bits per pixel (VGA needs 8)
-	GLUT_FPS		- print frames/second statistics to stderr
+	DMESA_GLUT_DEPTH	- set default depth bits
+	DMESA_GLUT_STENCIL	- set default stencil bits
+	DMESA_GLUT_ACCUM	- set default accum bits
 
 
 
@@ -212,8 +209,11 @@ v1.3 (mar-2003)
 	* revamped GLUT
 	* switched to DXE3
 
-v1.4 (jun-2003)
+v1.4 (aug-2003)
+	+ enabled fonts with DXE
+	+ truly added multi-window support in GLUT
 	* accomodated makefiles with the new sourcetree
+	* hacked and slashed the 3dfx driver (w/ help from Hiroshi Morii)
 
 
 
@@ -221,5 +221,5 @@ Contact:
 ~~~~~~~~
 
 Name:   Borca Daniel
-E-mail: dborca@yahoo.com
+E-mail: dborca@users.sourceforge.net
 WWW:    http://www.geocities.com/dborca/

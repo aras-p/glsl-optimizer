@@ -1,4 +1,4 @@
-/* $Id: fxddtex.c,v 1.46 2001/11/06 16:01:19 brianp Exp $ */
+/* $Id: fxddtex.c,v 1.47 2003/08/19 15:52:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,8 @@
  *    Brian Paul
  *    Daryll Strauss
  *    Keith Whitwell
+ *    Daniel Borca
+ *    Hiroshi Morii
  */
 
 
@@ -172,10 +174,10 @@ fxDDTexEnv(GLcontext * ctx, GLenum target, GLenum pname,
 
    /* apply any lod biasing right now */
    if (pname == GL_TEXTURE_LOD_BIAS_EXT) {
-      FX_grTexLodBiasValue(GR_TMU0, *param);
+      grTexLodBiasValue(GR_TMU0, *param);
 
       if (fxMesa->haveTwoTMUs) {
-	 FX_grTexLodBiasValue(GR_TMU1, *param);
+	 grTexLodBiasValue(GR_TMU1, *param);
       }
 
    }
@@ -450,11 +452,7 @@ fxDDTexUseGlbPalette(GLcontext * ctx, GLboolean state)
    if (state) {
       fxMesa->haveGlobalPaletteTexture = 1;
 
-      FX_grTexDownloadTable(GR_TMU0, GR_TEXTABLE_PALETTE,
-			    &(fxMesa->glbPalette));
-      if (fxMesa->haveTwoTMUs)
-	 FX_grTexDownloadTable(GR_TMU1, GR_TEXTABLE_PALETTE,
-			       &(fxMesa->glbPalette));
+      grTexDownloadTable(GR_TEXTABLE_PALETTE, &(fxMesa->glbPalette));
    }
    else {
       fxMesa->haveGlobalPaletteTexture = 0;
@@ -504,8 +502,8 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
 	     float *sscale, float *tscale,
 	     int *i_sscale, int *i_tscale, int *wscale, int *hscale)
 {
-
-   static GrLOD_t lod[9] = { GR_LOD_256, GR_LOD_128, GR_LOD_64, GR_LOD_32,
+   /* [koolsmoky] */
+   static GrLOD_t lod[12] = { GR_LOD_2048, GR_LOD_1024, GR_LOD_512, GR_LOD_256, GR_LOD_128, GR_LOD_64, GR_LOD_32,
       GR_LOD_16, GR_LOD_8, GR_LOD_4, GR_LOD_2, GR_LOD_1
    };
 
@@ -521,14 +519,14 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
    switch (logw - logh) {
    case 0:
       aspectratio = GR_ASPECT_1x1;
-      l = lod[8 - logw];
+      l = lod[11 - logw];
       s = t = 256.0f;
       is = it = INT_TRICK(8);
       ws = hs = 1;
       break;
    case 1:
       aspectratio = GR_ASPECT_2x1;
-      l = lod[8 - logw];
+      l = lod[11 - logw];
       s = 256.0f;
       t = 128.0f;
       is = INT_TRICK(8);
@@ -538,7 +536,7 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
       break;
    case 2:
       aspectratio = GR_ASPECT_4x1;
-      l = lod[8 - logw];
+      l = lod[11 - logw];
       s = 256.0f;
       t = 64.0f;
       is = INT_TRICK(8);
@@ -548,7 +546,7 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
       break;
    case 3:
       aspectratio = GR_ASPECT_8x1;
-      l = lod[8 - logw];
+      l = lod[11 - logw];
       s = 256.0f;
       t = 32.0f;
       is = INT_TRICK(8);
@@ -558,7 +556,7 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
       break;
    case 4:
       aspectratio = GR_ASPECT_8x1;
-      l = lod[8 - logw];
+      l = lod[11 - logw];
       s = 256.0f;
       t = 32.0f;
       is = INT_TRICK(8);
@@ -568,7 +566,7 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
       break;
    case 5:
       aspectratio = GR_ASPECT_8x1;
-      l = lod[8 - logw];
+      l = lod[11 - logw];
       s = 256.0f;
       t = 32.0f;
       is = INT_TRICK(8);
@@ -578,7 +576,7 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
       break;
    case 6:
       aspectratio = GR_ASPECT_8x1;
-      l = lod[8 - logw];
+      l = lod[11 - logw];
       s = 256.0f;
       t = 32.0f;
       is = INT_TRICK(8);
@@ -588,7 +586,7 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
       break;
    case 7:
       aspectratio = GR_ASPECT_8x1;
-      l = lod[8 - logw];
+      l = lod[11 - logw];
       s = 256.0f;
       t = 32.0f;
       is = INT_TRICK(8);
@@ -598,7 +596,7 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
       break;
    case 8:
       aspectratio = GR_ASPECT_8x1;
-      l = lod[8 - logw];
+      l = lod[11 - logw];
       s = 256.0f;
       t = 32.0f;
       is = INT_TRICK(8);
@@ -606,9 +604,39 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
       ws = 1;
       hs = 32;
       break;
+   case 9:
+      aspectratio = GR_ASPECT_8x1;
+      l = lod[11 - logw];
+      s = 256.0f;
+      t = 32.0f;
+      is = INT_TRICK(8);
+      it = INT_TRICK(5);
+      ws = 1;
+      hs = 64;
+      break;
+   case 10:
+      aspectratio = GR_ASPECT_8x1;
+      l = lod[11 - logw];
+      s = 256.0f;
+      t = 32.0f;
+      is = INT_TRICK(8);
+      it = INT_TRICK(5);
+      ws = 1;
+      hs = 128;
+      break;
+   case 11:
+      aspectratio = GR_ASPECT_8x1;
+      l = lod[11 - logw];
+      s = 256.0f;
+      t = 32.0f;
+      is = INT_TRICK(8);
+      it = INT_TRICK(5);
+      ws = 1;
+      hs = 256;
+      break;
    case -1:
       aspectratio = GR_ASPECT_1x2;
-      l = lod[8 - logh];
+      l = lod[11 - logh];
       s = 128.0f;
       t = 256.0f;
       is = INT_TRICK(7);
@@ -618,7 +646,7 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
       break;
    case -2:
       aspectratio = GR_ASPECT_1x4;
-      l = lod[8 - logh];
+      l = lod[11 - logh];
       s = 64.0f;
       t = 256.0f;
       is = INT_TRICK(6);
@@ -628,7 +656,7 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
       break;
    case -3:
       aspectratio = GR_ASPECT_1x8;
-      l = lod[8 - logh];
+      l = lod[11 - logh];
       s = 32.0f;
       t = 256.0f;
       is = INT_TRICK(5);
@@ -638,7 +666,7 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
       break;
    case -4:
       aspectratio = GR_ASPECT_1x8;
-      l = lod[8 - logh];
+      l = lod[11 - logh];
       s = 32.0f;
       t = 256.0f;
       is = INT_TRICK(5);
@@ -648,7 +676,7 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
       break;
    case -5:
       aspectratio = GR_ASPECT_1x8;
-      l = lod[8 - logh];
+      l = lod[11 - logh];
       s = 32.0f;
       t = 256.0f;
       is = INT_TRICK(5);
@@ -658,7 +686,7 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
       break;
    case -6:
       aspectratio = GR_ASPECT_1x8;
-      l = lod[8 - logh];
+      l = lod[11 - logh];
       s = 32.0f;
       t = 256.0f;
       is = INT_TRICK(5);
@@ -668,7 +696,7 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
       break;
    case -7:
       aspectratio = GR_ASPECT_1x8;
-      l = lod[8 - logh];
+      l = lod[11 - logh];
       s = 32.0f;
       t = 256.0f;
       is = INT_TRICK(5);
@@ -678,12 +706,42 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
       break;
    case -8:
       aspectratio = GR_ASPECT_1x8;
-      l = lod[8 - logh];
+      l = lod[11 - logh];
       s = 32.0f;
       t = 256.0f;
       is = INT_TRICK(5);
       it = INT_TRICK(8);
       ws = 32;
+      hs = 1;
+      break;
+   case -9:
+      aspectratio = GR_ASPECT_1x8;
+      l = lod[11 - logh];
+      s = 32.0f;
+      t = 256.0f;
+      is = INT_TRICK(5);
+      it = INT_TRICK(8);
+      ws = 64;
+      hs = 1;
+      break;
+   case -10:
+      aspectratio = GR_ASPECT_1x8;
+      l = lod[11 - logh];
+      s = 32.0f;
+      t = 256.0f;
+      is = INT_TRICK(5);
+      it = INT_TRICK(8);
+      ws = 128;
+      hs = 1;
+      break;
+   case -11:
+      aspectratio = GR_ASPECT_1x8;
+      l = lod[11 - logh];
+      s = 32.0f;
+      t = 256.0f;
+      is = INT_TRICK(5);
+      it = INT_TRICK(8);
+      ws = 256;
       hs = 1;
       break;
    default:
@@ -724,8 +782,10 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
  * Glide internal texture format and base texture format.
  */
 void
-fxTexGetFormat(GLenum glformat, GrTextureFormat_t * tfmt, GLint * ifmt)
+fxTexGetFormat(GLcontext *ctx, GLenum glformat, GrTextureFormat_t * tfmt, GLint * ifmt) /* [koolsmoky] */
 {
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+
    switch (glformat) {
    case 1:
    case GL_LUMINANCE:
@@ -771,33 +831,61 @@ fxTexGetFormat(GLenum glformat, GrTextureFormat_t * tfmt, GLint * ifmt)
       if (ifmt)
 	 (*ifmt) = GL_ALPHA;
       break;
-   case 3:
-   case GL_RGB:
    case GL_R3_G3_B2:
    case GL_RGB4:
    case GL_RGB5:
-   case GL_RGB8:
-   case GL_RGB10:
-   case GL_RGB12:
-   case GL_RGB16:
       if (tfmt)
 	 (*tfmt) = GR_TEXFMT_RGB_565;
       if (ifmt)
 	 (*ifmt) = GL_RGB;
       break;
-   case 4:
-   case GL_RGBA:
+   case 3:
+   case GL_RGB:
+   case GL_RGB8:
+   case GL_RGB10:
+   case GL_RGB12:
+   case GL_RGB16:
+#if 0 /* [koolsmoky] getting ready for 32bpp textures */
+	  if (fxMesa->colDepth == 32) {
+		 if (tfmt) (*tfmt) = GR_TEXFMT_ARGB_8888;
+	  } else {
+		 if (tfmt) (*tfmt) = GR_TEXFMT_RGB_565;
+	  }
+	  if (ifmt) (*ifmt) = GL_RGB;
+#else
+      if (tfmt)
+	 (*tfmt) = GR_TEXFMT_RGB_565;
+      if (ifmt)
+	 (*ifmt) = GL_RGB;
+#endif
+      break;
    case GL_RGBA2:
    case GL_RGBA4:
-   case GL_RGBA8:
-   case GL_RGB10_A2:
-   case GL_RGBA12:
-   case GL_RGBA16:
       if (tfmt)
 	 (*tfmt) = GR_TEXFMT_ARGB_4444;
       if (ifmt)
 	 (*ifmt) = GL_RGBA;
       break;
+   case 4:
+   case GL_RGBA:
+   case GL_RGBA8:
+   case GL_RGB10_A2:
+   case GL_RGBA12:
+   case GL_RGBA16:
+#if 0 /* [koolsmoky] getting ready for 32bpp textures */
+	  if (fxMesa->colDepth == 32) {
+		 if (tfmt) (*tfmt) = GR_TEXFMT_ARGB_8888;
+	  } else {
+		 if (tfmt) (*tfmt) = GR_TEXFMT_ARGB_4444;
+	  }
+	  if (ifmt) (*ifmt) = GL_RGBA;
+#else
+      if (tfmt)
+	 (*tfmt) = GR_TEXFMT_ARGB_4444;
+      if (ifmt)
+	 (*ifmt) = GL_RGBA;
+#endif
+	  break;
    case GL_RGB5_A1:
       if (tfmt)
 	 (*tfmt) = GR_TEXFMT_ARGB_1555;
@@ -1008,6 +1096,27 @@ fetch_r5g5b5a1(const struct gl_texture_image *texImage,
 }
 
 
+#if 0 /* [koolsmoky] getting ready for 32bpp textures */
+static void
+fetch_a8r8g8b8(const struct gl_texture_image *texImage,
+	       GLint i, GLint j, GLint k, GLvoid * texelOut)
+{
+    GLchan *rgba = (GLchan *) texelOut;
+    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
+    const GLuint *texel;
+
+    i = i * mml->wScale;
+    j = j * mml->hScale;
+
+    texel = ((GLuint *) texImage->Data) + j * mml->width + i;
+    rgba[RCOMP] = (((*texel) >> 16) & 0xff);
+    rgba[GCOMP] = (((*texel) >> 8) & 0xff);
+    rgba[BCOMP] = (((*texel)) & 0xff);
+    rgba[ACOMP] = (((*texel) >> 24) & 0xff);
+}
+#endif
+
+
 static void
 PrintTexture(int w, int h, int c, const GLubyte * data)
 {
@@ -1029,6 +1138,8 @@ const struct gl_texture_format *
 fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
                          GLenum srcFormat, GLenum srcType )
 {
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+
    switch (internalFormat) {
    case GL_INTENSITY:
    case GL_INTENSITY4:
@@ -1066,25 +1177,37 @@ fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
       return &_mesa_texformat_al88;
-   case 3:
-   case GL_RGB:
    case GL_R3_G3_B2:
    case GL_RGB4:
    case GL_RGB5:
+      return &_mesa_texformat_rgb565;
+   case 3:
+   case GL_RGB:
    case GL_RGB8:
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
+#if 0 /* [koolsmoky] getting ready for 32bpp textures */
+      return (fxMesa->colDepth == 32) ? &_mesa_texformat_argb8888
+                                      : &_mesa_texformat_rgb565;
+#else
       return &_mesa_texformat_rgb565;
-   case 4:
-   case GL_RGBA:
+#endif
    case GL_RGBA2:
    case GL_RGBA4:
+      return &_mesa_texformat_argb4444;
+   case 4:
+   case GL_RGBA:
    case GL_RGBA8:
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
+#if 0 /* [koolsmoky] getting ready for 32bpp textures */
+      return (fxMesa->colDepth == 32) ? &_mesa_texformat_argb8888
+                                      : &_mesa_texformat_argb4444;
+#else
       return &_mesa_texformat_argb4444;
+#endif
    case GL_RGB5_A1:
       return &_mesa_texformat_argb1555;
    default:
@@ -1114,6 +1237,10 @@ fxGlideFormat(GLint mesaFormat)
       return GR_TEXFMT_ARGB_4444;
    case MESA_FORMAT_ARGB1555:
       return GR_TEXFMT_ARGB_1555;
+#if 0 /* [koolsmoky] getting ready for 32bpp textures */
+   case MESA_FORMAT_ARGB8888:
+      return GR_TEXFMT_ARGB_8888;
+#endif
    default:
       _mesa_problem(NULL, "Unexpected format in fxGlideFormat");
       return 0;
@@ -1141,6 +1268,10 @@ fxFetchFunction(GLint mesaFormat)
       return fetch_r4g4b4a4;
    case MESA_FORMAT_ARGB1555:
       return fetch_r5g5b5a1;
+#if 0 /* [koolsmoky] getting ready for 32bpp textures */
+   case MESA_FORMAT_ARGB8888:
+      return fetch_a8r8g8b8;
+#endif
    default:
       _mesa_problem(NULL, "Unexpected format in fxGlideFormat");
       return NULL;

@@ -1,4 +1,4 @@
-/* $Id: fxtexman.c,v 1.15 2001/09/23 16:50:01 brianp Exp $ */
+/* $Id: fxtexman.c,v 1.16 2003/08/19 15:52:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,8 @@
  *    Brian Paul
  *    Daryll Strauss
  *    Keith Whitwell
+ *    Daniel Borca
+ *    Hiroshi Morii
  */
 
 /* fxtexman.c - 3Dfx VooDoo texture memory functions */
@@ -137,11 +139,11 @@ fxTMUInit(fxMesaContext fxMesa, int tmu)
    MemRange *tmn, *last;
    FxU32 start, end, blockstart, blockend;
 
-   start = FX_grTexMinAddress(tmu);
-   end = FX_grTexMaxAddress(tmu);
+   start = grTexMinAddress(tmu);
+   end = grTexMaxAddress(tmu);
 
    if (fxMesa->verbose) {
-      fprintf(stderr, "Voodoo %s configuration:",
+      fprintf(stderr, "Voodoo %s configuration:\n",
 	      (tmu == FX_TMU0) ? "TMU0" : "TMU1");
       fprintf(stderr, "Voodoo  Lower texture memory address (%u)\n",
 	      (unsigned int) start);
@@ -308,7 +310,7 @@ static MemRange *
 fxTMAddObj(fxMesaContext fxMesa,
 	   struct gl_texture_object *tObj, GLint tmu, int texmemsize)
 {
-   FxU32 startAddr;
+   FxI32 startAddr;
    MemRange *range;
 
    startAddr = fxTMFindStartAddr(fxMesa, tmu, texmemsize);
@@ -363,16 +365,14 @@ fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj,
    switch (where) {
    case FX_TMU0:
    case FX_TMU1:
-      texmemsize =
-	 (int) FX_grTexTextureMemRequired_NoLock(GR_MIPMAPLEVELMASK_BOTH,
-						 &(ti->info));
+      texmemsize = (int)grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH, &(ti->info));
       ti->tm[where] = fxTMAddObj(fxMesa, tObj, where, texmemsize);
       fxMesa->stats.memTexUpload += texmemsize;
 
       for (i = FX_largeLodValue(ti->info), l = ti->minLevel;
 	   i <= FX_smallLodValue(ti->info); i++, l++) {
 	 struct gl_texture_image *texImage = tObj->Image[l];
-	 FX_grTexDownloadMipMapLevel_NoLock(where,
+	 grTexDownloadMipMapLevel(where,
 					    ti->tm[where]->startAddr,
 					    FX_valueToLod(i),
 					    FX_largeLodLog2(ti->info),
@@ -383,15 +383,11 @@ fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj,
       }
       break;
    case FX_TMU_SPLIT:
-      texmemsize =
-	 (int) FX_grTexTextureMemRequired_NoLock(GR_MIPMAPLEVELMASK_ODD,
-						 &(ti->info));
+      texmemsize = (int)grTexTextureMemRequired(GR_MIPMAPLEVELMASK_ODD, &(ti->info));
       ti->tm[FX_TMU0] = fxTMAddObj(fxMesa, tObj, FX_TMU0, texmemsize);
       fxMesa->stats.memTexUpload += texmemsize;
 
-      texmemsize =
-	 (int) FX_grTexTextureMemRequired_NoLock(GR_MIPMAPLEVELMASK_EVEN,
-						 &(ti->info));
+      texmemsize = (int)grTexTextureMemRequired(GR_MIPMAPLEVELMASK_EVEN, &(ti->info));
       ti->tm[FX_TMU1] = fxTMAddObj(fxMesa, tObj, FX_TMU1, texmemsize);
       fxMesa->stats.memTexUpload += texmemsize;
 
@@ -399,7 +395,7 @@ fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj,
 	   i <= FX_smallLodValue(ti->info); i++, l++) {
 	 struct gl_texture_image *texImage = tObj->Image[l];
 
-	 FX_grTexDownloadMipMapLevel_NoLock(GR_TMU0,
+	 grTexDownloadMipMapLevel(GR_TMU0,
 					    ti->tm[FX_TMU0]->startAddr,
 					    FX_valueToLod(i),
 					    FX_largeLodLog2(ti->info),
@@ -408,7 +404,7 @@ fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj,
 					    GR_MIPMAPLEVELMASK_ODD,
 					    texImage->Data);
 
-	 FX_grTexDownloadMipMapLevel_NoLock(GR_TMU1,
+	 grTexDownloadMipMapLevel(GR_TMU1,
 					    ti->tm[FX_TMU1]->startAddr,
 					    FX_valueToLod(i),
 					    FX_largeLodLog2(ti->info),
@@ -419,22 +415,18 @@ fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj,
       }
       break;
    case FX_TMU_BOTH:
-      texmemsize =
-	 (int) FX_grTexTextureMemRequired_NoLock(GR_MIPMAPLEVELMASK_BOTH,
-						 &(ti->info));
+      texmemsize = (int)grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH, &(ti->info));
       ti->tm[FX_TMU0] = fxTMAddObj(fxMesa, tObj, FX_TMU0, texmemsize);
       fxMesa->stats.memTexUpload += texmemsize;
 
-      texmemsize =
-	 (int) FX_grTexTextureMemRequired_NoLock(GR_MIPMAPLEVELMASK_BOTH,
-						 &(ti->info));
+      texmemsize = (int)grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH, &(ti->info));
       ti->tm[FX_TMU1] = fxTMAddObj(fxMesa, tObj, FX_TMU1, texmemsize);
       fxMesa->stats.memTexUpload += texmemsize;
 
       for (i = FX_largeLodValue(ti->info), l = ti->minLevel;
 	   i <= FX_smallLodValue(ti->info); i++, l++) {
 	 struct gl_texture_image *texImage = tObj->Image[l];
-	 FX_grTexDownloadMipMapLevel_NoLock(GR_TMU0,
+	 grTexDownloadMipMapLevel(GR_TMU0,
 					    ti->tm[FX_TMU0]->startAddr,
 					    FX_valueToLod(i),
 					    FX_largeLodLog2(ti->info),
@@ -443,7 +435,7 @@ fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj,
 					    GR_MIPMAPLEVELMASK_BOTH,
 					    texImage->Data);
 
-	 FX_grTexDownloadMipMapLevel_NoLock(GR_TMU1,
+	 grTexDownloadMipMapLevel(GR_TMU1,
 					    ti->tm[FX_TMU1]->startAddr,
 					    FX_valueToLod(i),
 					    FX_largeLodLog2(ti->info),
@@ -505,15 +497,11 @@ fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
    fxTexGetInfo(mml->width, mml->height,
 		&lodlevel, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
-#ifdef FX_GLIDE3
    lodlevel -= level;
-#else
-   lodlevel += level;
-#endif
    switch (tmu) {
    case FX_TMU0:
    case FX_TMU1:
-      FX_grTexDownloadMipMapLevel(tmu,
+      grTexDownloadMipMapLevel(tmu,
 				  ti->tm[tmu]->startAddr,
 				  FX_valueToLod(FX_lodToValue(lodlevel)),
 				  FX_largeLodLog2(ti->info),
@@ -522,7 +510,7 @@ fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
 				  GR_MIPMAPLEVELMASK_BOTH, texImage->Data);
       break;
    case FX_TMU_SPLIT:
-      FX_grTexDownloadMipMapLevel(GR_TMU0,
+      grTexDownloadMipMapLevel(GR_TMU0,
 				  ti->tm[GR_TMU0]->startAddr,
 				  FX_valueToLod(FX_lodToValue(lodlevel)),
 				  FX_largeLodLog2(ti->info),
@@ -530,7 +518,7 @@ fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
 				  ti->info.format,
 				  GR_MIPMAPLEVELMASK_ODD, texImage->Data);
 
-      FX_grTexDownloadMipMapLevel(GR_TMU1,
+      grTexDownloadMipMapLevel(GR_TMU1,
 				  ti->tm[GR_TMU1]->startAddr,
 				  FX_valueToLod(FX_lodToValue(lodlevel)),
 				  FX_largeLodLog2(ti->info),
@@ -539,7 +527,7 @@ fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
 				  GR_MIPMAPLEVELMASK_EVEN, texImage->Data);
       break;
    case FX_TMU_BOTH:
-      FX_grTexDownloadMipMapLevel(GR_TMU0,
+      grTexDownloadMipMapLevel(GR_TMU0,
 				  ti->tm[GR_TMU0]->startAddr,
 				  FX_valueToLod(FX_lodToValue(lodlevel)),
 				  FX_largeLodLog2(ti->info),
@@ -547,7 +535,7 @@ fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
 				  ti->info.format,
 				  GR_MIPMAPLEVELMASK_BOTH, texImage->Data);
 
-      FX_grTexDownloadMipMapLevel(GR_TMU1,
+      grTexDownloadMipMapLevel(GR_TMU1,
 				  ti->tm[GR_TMU1]->startAddr,
 				  FX_valueToLod(FX_lodToValue(lodlevel)),
 				  FX_largeLodLog2(ti->info),
@@ -602,7 +590,7 @@ fxTMReloadSubMipMapLevel(fxMesaContext fxMesa,
    switch (tmu) {
    case FX_TMU0:
    case FX_TMU1:
-      FX_grTexDownloadMipMapLevelPartial(tmu,
+      grTexDownloadMipMapLevelPartial(tmu,
 					 ti->tm[tmu]->startAddr,
 					 FX_valueToLod(FX_lodToValue(lodlevel)
 						       + level),
@@ -613,7 +601,7 @@ fxTMReloadSubMipMapLevel(fxMesaContext fxMesa,
 					 yoffset, yoffset + height - 1);
       break;
    case FX_TMU_SPLIT:
-      FX_grTexDownloadMipMapLevelPartial(GR_TMU0,
+      grTexDownloadMipMapLevelPartial(GR_TMU0,
 					 ti->tm[FX_TMU0]->startAddr,
 					 FX_valueToLod(FX_lodToValue(lodlevel)
 						       + level),
@@ -623,7 +611,7 @@ fxTMReloadSubMipMapLevel(fxMesaContext fxMesa,
 					 GR_MIPMAPLEVELMASK_ODD, data,
 					 yoffset, yoffset + height - 1);
 
-      FX_grTexDownloadMipMapLevelPartial(GR_TMU1,
+      grTexDownloadMipMapLevelPartial(GR_TMU1,
 					 ti->tm[FX_TMU1]->startAddr,
 					 FX_valueToLod(FX_lodToValue(lodlevel)
 						       + level),
@@ -634,7 +622,7 @@ fxTMReloadSubMipMapLevel(fxMesaContext fxMesa,
 					 yoffset, yoffset + height - 1);
       break;
    case FX_TMU_BOTH:
-      FX_grTexDownloadMipMapLevelPartial(GR_TMU0,
+      grTexDownloadMipMapLevelPartial(GR_TMU0,
 					 ti->tm[FX_TMU0]->startAddr,
 					 FX_valueToLod(FX_lodToValue(lodlevel)
 						       + level),
@@ -644,7 +632,7 @@ fxTMReloadSubMipMapLevel(fxMesaContext fxMesa,
 					 GR_MIPMAPLEVELMASK_BOTH, data,
 					 yoffset, yoffset + height - 1);
 
-      FX_grTexDownloadMipMapLevelPartial(GR_TMU1,
+      grTexDownloadMipMapLevelPartial(GR_TMU1,
 					 ti->tm[FX_TMU1]->startAddr,
 					 FX_valueToLod(FX_lodToValue(lodlevel)
 						       + level),

@@ -1,9 +1,11 @@
 /* Hack alert:
- * Depth32 functions won't compile with Glide2
+ * The performance hit is disastruous for SPAN functions.
+ * Should we use SpanRenderStart / SpanRenderFinish in `swrast.h'
+ * for locking / unlocking the LFB?
  * Optimize and check endianess for `read_R8G8B8_pixels'
  */
 
-/* $Id: fxddspan.c,v 1.23 2003/07/17 14:50:12 brianp Exp $ */
+/* $Id: fxddspan.c,v 1.24 2003/08/19 15:52:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +36,8 @@
  *    Brian Paul
  *    Daryll Strauss
  *    Keith Whitwell
+ *    Daniel Borca
+ *    Hiroshi Morii
  */
 
 
@@ -60,9 +64,6 @@
 #endif
 
 
-#if !defined(FXMESA_USE_ARGB)
-
-
 
 #define writeRegionClipped(fxm,dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data)		\
   FX_grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data)
@@ -85,42 +86,6 @@
 		   1,				\
 		   src_stride,			\
 		   src_data)			\
-
-
-#else /* !defined(FXMESA_USE_RGBA) */
-
-#define writeRegionClipped(fxm,dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data)		\
-  FX_grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data)
-
-
-#define MESACOLOR_TO_ARGB(c) (				\
-             ( ((unsigned int)(c[ACOMP]))<<24 ) |	\
-             ( ((unsigned int)(c[RCOMP]))<<16 ) |	\
-             ( ((unsigned int)(c[GCOMP]))<<8 )  |	\
-             (  (unsigned int)(c[BCOMP])) )
-
-inline void
-LFB_WRITE_SPAN_MESA(GrBuffer_t dst_buffer,
-		    FxU32 dst_x,
-		    FxU32 dst_y,
-		    FxU32 src_width, FxI32 src_stride, void *src_data)
-{
-   /* Covert to ARGB */
-   GLubyte(*rgba)[4] = src_data;
-   GLuint argb[MAX_WIDTH];
-   int i;
-
-   for (i = 0; i < src_width; i++) {
-      argb[i] = MESACOLOR_TO_ARGB(rgba[i]);
-   }
-   writeRegionClipped( /*fxMesa, */ NULL, dst_buffer,
-		      dst_x,
-		      dst_y,
-		      GR_LFB_SRC_FMT_8888,
-		      src_width, 1, src_stride, (void *) argb);
-}
-
-#endif /* !defined(FXMESA_USE_RGBA) */
 
 
 /************************************************************************/
@@ -412,7 +377,7 @@ static void read_R8G8B8_span (const GLcontext * ctx,
 {
    fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
    BEGIN_BOARD_LOCK();
-   FX_grLfbReadRegion(fxMesa->currentFB, x, fxMesa->height - 1 - y, n, 1, n * 4, rgba);
+   grLfbReadRegion(fxMesa->currentFB, x, fxMesa->height - 1 - y, n, 1, n * 4, rgba);
    END_BOARD_LOCK();
 }
 
@@ -602,6 +567,7 @@ fxDDWriteDepth32Span(GLcontext * ctx,
 {
    fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
    GLint bottom = fxMesa->height - 1;
+   GLint i;
 
    if (MESA_VERBOSE & VERBOSE_DRIVER) {
       fprintf(stderr, "fxmesa: fxDDWriteDepth32Span(...)\n");
@@ -609,17 +575,21 @@ fxDDWriteDepth32Span(GLcontext * ctx,
 
 
    if (mask) {
-      GLint i;
       for (i = 0; i < n; i++) {
 	 if (mask[i]) {
+            GLuint d = depth[i] << 8;
 	    writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, x + i, bottom - y,
-			       GR_LFBWRITEMODE_Z32, 1, 1, 0, (void *) &depth[i]);
+			       GR_LFBWRITEMODE_Z32, 1, 1, 0, (void *) &d);
 	 }
       }
    }
    else {
+      GLuint depth32[MAX_WIDTH];
+      for (i = 0; i < n; i++) {
+          depth32[i] = depth[i] << 8;
+      }
       writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, x, bottom - y,
-			 GR_LFBWRITEMODE_Z32, n, 1, 0, (void *) depth);
+			 GR_LFBWRITEMODE_Z32, n, 1, 0, (void *) depth32);
    }
 }
 
@@ -637,7 +607,7 @@ fxDDReadDepthSpan(GLcontext * ctx,
       fprintf(stderr, "fxmesa: fxDDReadDepthSpan(...)\n");
    }
 
-   FX_grLfbReadRegion(GR_BUFFER_AUXBUFFER, x, bottom - y, n, 1, 0, depth16);
+   grLfbReadRegion(GR_BUFFER_AUXBUFFER, x, bottom - y, n, 1, 0, depth16);
    for (i = 0; i < n; i++) {
       depth[i] = depth16[i];
    }
@@ -655,7 +625,7 @@ fxDDReadDepth32Span(GLcontext * ctx,
       fprintf(stderr, "fxmesa: fxDDReadDepth32Span(...)\n");
    }
 
-   FX_grLfbReadRegion(GR_BUFFER_AUXBUFFER, x, bottom - y, n, 1, 0, depth);
+   grLfbReadRegion(GR_BUFFER_AUXBUFFER, x, bottom - y, n, 1, 0, depth);
 }
 
 
@@ -702,8 +672,9 @@ fxDDWriteDepth32Pixels(GLcontext * ctx,
       if (mask[i]) {
 	 int xpos = x[i];
 	 int ypos = bottom - y[i];
+         GLuint d = depth[i] << 8;
 	 writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, xpos, ypos,
-			    GR_LFBWRITEMODE_Z32, 1, 1, 0, (void *) &depth[i]);
+			    GR_LFBWRITEMODE_Z32, 1, 1, 0, (void *) &d);
       }
    }
 }
@@ -725,7 +696,7 @@ fxDDReadDepthPixels(GLcontext * ctx, GLuint n,
       int xpos = x[i];
       int ypos = bottom - y[i];
       GLushort d;
-      FX_grLfbReadRegion(GR_BUFFER_AUXBUFFER, xpos, ypos, 1, 1, 0, &d);
+      grLfbReadRegion(GR_BUFFER_AUXBUFFER, xpos, ypos, 1, 1, 0, &d);
       depth[i] = d;
    }
 }
@@ -746,7 +717,7 @@ fxDDReadDepth32Pixels(GLcontext * ctx, GLuint n,
    for (i = 0; i < n; i++) {
       int xpos = x[i];
       int ypos = bottom - y[i];
-      FX_grLfbReadRegion(GR_BUFFER_AUXBUFFER, xpos, ypos, 1, 1, 0, &depth[i]);
+      grLfbReadRegion(GR_BUFFER_AUXBUFFER, xpos, ypos, 1, 1, 0, &depth[i]);
    }
 }
 
@@ -766,11 +737,11 @@ fxDDSetBuffer(GLcontext * ctx, GLframebuffer * buffer, GLuint bufferBit)
 
    if (bufferBit == FRONT_LEFT_BIT) {
       fxMesa->currentFB = GR_BUFFER_FRONTBUFFER;
-      FX_grRenderBuffer(fxMesa->currentFB);
+      grRenderBuffer(fxMesa->currentFB);
    }
    else if (bufferBit == BACK_LEFT_BIT) {
       fxMesa->currentFB = GR_BUFFER_BACKBUFFER;
-      FX_grRenderBuffer(fxMesa->currentFB);
+      grRenderBuffer(fxMesa->currentFB);
    }
 }
 

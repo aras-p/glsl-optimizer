@@ -19,10 +19,10 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.3 for Mesa
+ * DOS/DJGPP glut driver v1.4 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
- *  Email : dborca@yahoo.com
+ *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
 
@@ -31,11 +31,20 @@
 
 #include "glutint.h"
 
+#define DEFAULT_WIDTH  300
+#define DEFAULT_HEIGHT 300
+#define DEFAULT_BPP    16
+
+#define DEPTH_SIZE   16
+#define STENCIL_SIZE 8
+#define ACCUM_SIZE   16
 
 
-GLboolean g_redisplay = GL_FALSE;
 
 GLuint g_bpp = DEFAULT_BPP;
+GLuint g_depth = DEPTH_SIZE;
+GLuint g_stencil = STENCIL_SIZE;
+GLuint g_accum = ACCUM_SIZE;
 GLuint g_refresh = 0;
 GLuint g_screen_w, g_screen_h;
 GLint g_driver_caps;
@@ -57,6 +66,15 @@ void APIENTRY glutInit (int *argc, char **argv)
 
  if ((env = getenv("DMESA_GLUT_BPP")) != NULL) {
     g_bpp = atoi(env);
+ }
+ if ((env = getenv("DMESA_GLUT_DEPTH")) != NULL) {
+    g_depth = atoi(env);
+ }
+ if ((env = getenv("DMESA_GLUT_STENCIL")) != NULL) {
+    g_stencil = atoi(env);
+ }
+ if ((env = getenv("DMESA_GLUT_ACCUM")) != NULL) {
+    g_accum = atoi(env);
  }
  if ((env = getenv("DMESA_GLUT_REFRESH")) != NULL) {
     g_refresh = atoi(env);
@@ -109,6 +127,7 @@ void APIENTRY glutInitWindowSize (int width, int height)
 
 void APIENTRY glutMainLoop (void)
 {
+ int i;
  GLboolean idle;
  static int old_mouse_x = 0;
  static int old_mouse_y = 0;
@@ -125,29 +144,43 @@ void APIENTRY glutMainLoop (void)
  pc_install_keyb();
  __glutInitMouse();
 
- glutPostRedisplay();
- if (g_curwin->reshape) {
-    g_curwin->reshape(g_curwin->width, g_curwin->height);
- }
- if (g_curwin->visibility) {
-    g_curwin->visibility(GLUT_VISIBLE);
+ for (i = 0; i < MAX_WINDOWS; i++) {
+     if (g_windows[i] != NULL) {
+        GLUTwindow *w = g_windows[i];
+        glutSetWindow(w->num);
+        glutPostRedisplay();
+        if (w->reshape) {
+           w->reshape(w->width, w->height);
+        }
+        if (w->visibility) {
+           w->visibility(GLUT_VISIBLE);
+        }
+     }
  }
 
  while (GL_TRUE) {
        idle = GL_TRUE;
 
-       if (g_redisplay && g_curwin->display) {
-          idle        = GL_FALSE;
-          g_redisplay = GL_FALSE;
+       for (i = 0; i < MAX_WINDOWS; i++) {
+           if (g_windows[i] != NULL) {
+              GLUTwindow *w = g_windows[i];
+              if (w->redisplay && w->display) {
+                 idle         = GL_FALSE;
+                 w->redisplay = GL_FALSE;
 
-          if (g_curwin->show_mouse && !(g_display_mode & GLUT_DOUBLE)) {
-             /* XXX scare mouse */
-             g_curwin->display();
-             /* XXX unscare mouse */
-          } else {
-             g_curwin->display();
-          }
+                 if (DMesaMakeCurrent(w->context, w->buffer)) {
+                    if (w->show_mouse && !(g_display_mode & GLUT_DOUBLE)) {
+                       /* XXX scare mouse */
+                       w->display();
+                       /* XXX unscare mouse */
+                    } else {
+                       w->display();
+                    }
+                 }
+              }
+           }
        }
+       DMesaMakeCurrent(g_curwin->context, g_curwin->buffer);
 
        if (g_mouse) {
           int mouse_x;

@@ -26,14 +26,14 @@
  * DOS/DJGPP device driver v1.4 for Mesa
  *
  *  Copyright (c) 2003 - Borca Daniel
- *  Email : dborca@yahoo.com
+ *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
 
 
-#ifndef FX
 #include "glheader.h"
 #include "context.h"
+#ifndef FX
 #include "extensions.h"
 #include "macros.h"
 #include "matrix.h"
@@ -58,7 +58,7 @@
 #include "mga/mga.h"
 #endif /* MATROX */
 #else  /* FX */
-#include "../glide/fxdrv.h"
+#include "GL/fxmesa.h"
 #endif /* FX */
 
 #include "GL/dmesa.h"
@@ -1142,7 +1142,7 @@ static const GLubyte* get_string (GLcontext *ctx, GLenum name)
                                      #ifdef MATROX
                                      " (MGA)"
                                      #endif
-                                     "\0port (c) Borca Daniel mar-2003";
+                                     "\0port (c) Borca Daniel aug-2003";
         default:
              return NULL;
  }
@@ -1474,7 +1474,7 @@ void DMesaDestroyVisual (DMesaVisual v)
 #endif
 
 #else
- fxMesaDestroyContext((fxMesaContext)v);
+ fxMesaDestroyContext((tdfxContextPtr)v);
 #endif
 }
 
@@ -1645,7 +1645,7 @@ GLboolean DMesaMakeCurrent (DMesaContext c, DMesaBuffer b)
  }
 
 #else
- fxMesaMakeCurrent((fxMesaContext)c);
+ fxMesaMakeCurrent((tdfxContextPtr)c);
 #endif
 
  return GL_TRUE;
@@ -1682,13 +1682,13 @@ void DMesaSetCI (int ndx, GLfloat red, GLfloat green, GLfloat blue)
 
 
 
-DMesaContext DMesaGetCurrentContext (void)
+void *DMesaGetCurrentContext (void)
 {
 #ifndef FX
  GET_CURRENT_CONTEXT(ctx);
- return (DMesaContext)ctx;
+ return ctx;
 #else
- return (DMesaContext)fxMesaGetCurrentContext();
+ return fxMesaGetCurrentContext();
 #endif
 }
 
@@ -1696,14 +1696,7 @@ DMesaContext DMesaGetCurrentContext (void)
 
 int DMesaGetIntegerv (GLenum pname, GLint *params)
 {
-#ifndef FX
- GET_CURRENT_CONTEXT(ctx);
- const DMesaContext c = (DMesaContext)ctx;
-#else
- const fxMesaContext c = fxMesaGetCurrentContext();
-#endif
-
- if (c == NULL) {
+ if (DMesaGetCurrentContext() == NULL) {
     return -1;
  }
 
@@ -1716,8 +1709,7 @@ int DMesaGetIntegerv (GLenum pname, GLint *params)
              mga_get(MGA_GET_SCREEN_SIZE, params);
              #endif
              #else
-             params[0] = c->screen_width;
-             params[1] = c->screen_height;
+             fxGetScreenGeometry(&params[0], &params[1]);
              #endif
              break;
         case DMESA_GET_DRIVER_CAPS:

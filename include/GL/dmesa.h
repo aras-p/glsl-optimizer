@@ -23,10 +23,10 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.3 for Mesa
+ * DOS/DJGPP device driver v1.4 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
- *  Email : dborca@yahoo.com
+ *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
 
@@ -90,7 +90,7 @@ void DMesaDestroyContext (DMesaContext c);
 /*
  * Return a handle to the current context.
  */
-DMesaContext DMesaGetCurrentContext (void);
+void *DMesaGetCurrentContext (void);
 
 
 

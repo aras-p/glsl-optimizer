@@ -23,7 +23,7 @@
 # DOS/DJGPP samples makefile v1.4 for Mesa
 #
 #  Copyright (C) 2002 - Borca Daniel
-#  Email : dborca@yahoo.com
+#  Email : dborca@users.sourceforge.net
 #  Web   : http://www.geocities.com/dborca
 
 
@@ -32,9 +32,9 @@
 #
 #    Environment variables:
 #	CPU		optimize for the given processor.
-#			default = k6
-#	GLIDE		path to Glide3 SDK library files; used with FX.
-#			default = $(TOP)/lib/glide3
+#			default = pentium
+#	GLIDE		path to Glide3 SDK; used with FX.
+#			default = $(TOP)/glide3
 #	FX=1		build for 3dfx Glide3. Note that this disables
 #			compilation of most DMesa code and requires fxMesa.
 #			As a consequence, you'll need the DJGPP Glide3
@@ -53,13 +53,14 @@
 .SUFFIXES : .c .o .exe
 
 TOP = ../..
-CPU ?= k6
-GLIDE ?= $(TOP)/lib/glide3
+CPU ?= pentium
+GLIDE ?= $(TOP)/glide3
 
 CC = gcc
 CFLAGS = -Wall -W -pedantic
 CFLAGS += -O2 -ffast-math -mcpu=$(CPU)
 CFLAGS += -I$(TOP)/include -I../util
+CFLAGS += -DGLUT_IMPORT_LIB
 
 LD = gxx
 LDFLAGS = -s -L$(TOP)/lib
@@ -69,7 +70,7 @@ LDLIBS += -liglut -liglu -ligl
 else
 LDLIBS = -lglut -lglu -lgl
 ifeq ($(FX),1)
-LDFLAGS += -L$(GLIDE)
+LDFLAGS += -L$(GLIDE)/lib
 LDLIBS += -lglid3
 endif
 endif

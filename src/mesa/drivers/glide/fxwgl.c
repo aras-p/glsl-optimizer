@@ -1,4 +1,4 @@
-/* $Id: fxwgl.c,v 1.16 2002/10/24 23:57:23 brianp Exp $ */
+/* $Id: fxwgl.c,v 1.17 2003/08/19 15:52:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -43,9 +43,9 @@ extern "C"
 #endif
 
 #include <windows.h>
-#include "glheader.h"
-#include "fxdrv.h"
-#include "glapi.h"
+#define GL_GLEXT_PROTOTYPES
+#include "GL/gl.h"
+#include "GL/glext.h"
 
 #ifdef __cplusplus
 }
@@ -53,6 +53,9 @@ extern "C"
 
 #include <stdio.h>
 #include "GL/fxmesa.h"
+#include "glheader.h"
+#include "fxdrv.h"
+#include "glapi.h"
 
 #define MAX_MESA_ATTRS  20
 
@@ -71,6 +74,7 @@ struct __pixelformat__
 WINGDIAPI void GLAPIENTRY gl3DfxSetPaletteEXT(GLuint *);
 
 struct __pixelformat__ pix[] = {
+#if 0
    /* None */
    {
     {
@@ -78,8 +82,8 @@ struct __pixelformat__ pix[] = {
      PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
      PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
      PFD_TYPE_RGBA,
-     32,
-     8, 0, 8, 8, 8, 16, 0, 24,
+     16,
+     5, 11, 6, 5, 5, 0, 0, 0,
      0, 0, 0, 0, 0,
      0,
      0,
@@ -88,6 +92,88 @@ struct __pixelformat__ pix[] = {
      0, 0, 0, 0}
     ,
     {
+     FXMESA_COLORDEPTH, 16,
+     FXMESA_DOUBLEBUFFER,
+     FXMESA_ALPHA_SIZE, 0,
+     FXMESA_DEPTH_SIZE, 0,
+     FXMESA_STENCIL_SIZE, 0,
+     FXMESA_ACCUM_SIZE, 0,
+     FXMESA_NONE}
+    }
+   ,
+
+   /* Alpha */
+   {
+    {
+     sizeof(PIXELFORMATDESCRIPTOR), 1,
+     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
+     PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
+     PFD_TYPE_RGBA,
+     16,
+     5, 10, 5, 5, 5, 0, 1, 15,
+     0, 0, 0, 0, 0,
+     0,
+     0,
+     0,
+     PFD_MAIN_PLANE,
+     0, 0, 0, 0}
+    ,
+    {
+     FXMESA_COLORDEPTH, 15,
+     FXMESA_DOUBLEBUFFER,
+     FXMESA_ALPHA_SIZE, 1,
+     FXMESA_DEPTH_SIZE, 0,
+     FXMESA_STENCIL_SIZE, 0,
+     FXMESA_ACCUM_SIZE, 0,
+     FXMESA_NONE}
+    }
+   ,
+
+   /* Depth */
+   {
+    {
+     sizeof(PIXELFORMATDESCRIPTOR), 1,
+     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
+     PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
+     PFD_TYPE_RGBA,
+     16,
+     5, 11, 6, 5, 5, 0, 0, 0,
+     0, 0, 0, 0, 0,
+     16,
+     0,
+     0,
+     PFD_MAIN_PLANE,
+     0, 0, 0, 0}
+    ,
+    {
+     FXMESA_COLORDEPTH, 16,
+     FXMESA_DOUBLEBUFFER,
+     FXMESA_ALPHA_SIZE, 0,
+     FXMESA_DEPTH_SIZE, 16,
+     FXMESA_STENCIL_SIZE, 0,
+     FXMESA_ACCUM_SIZE, 0,
+     FXMESA_NONE}
+    }
+   ,
+
+   /* None */
+   {
+    {
+     sizeof(PIXELFORMATDESCRIPTOR), 1,
+     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
+     PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
+     PFD_TYPE_RGBA,
+     32,
+     8, 16, 8, 8, 8, 0, 0, 0,
+     0, 0, 0, 0, 0,
+     0,
+     0,
+     0,
+     PFD_MAIN_PLANE,
+     0, 0, 0, 0}
+    ,
+    {
+     FXMESA_COLORDEPTH, 32,
      FXMESA_DOUBLEBUFFER,
      FXMESA_ALPHA_SIZE, 0,
      FXMESA_DEPTH_SIZE, 0,
@@ -105,7 +191,7 @@ struct __pixelformat__ pix[] = {
      PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
      PFD_TYPE_RGBA,
      32,
-     8, 0, 8, 8, 8, 16, 8, 24,
+     8, 16, 8, 8, 8, 0, 8, 24,
      0, 0, 0, 0, 0,
      0,
      0,
@@ -114,6 +200,7 @@ struct __pixelformat__ pix[] = {
      0, 0, 0, 0}
     ,
     {
+     FXMESA_COLORDEPTH, 32,
      FXMESA_DOUBLEBUFFER,
      FXMESA_ALPHA_SIZE, 8,
      FXMESA_DEPTH_SIZE, 0,
@@ -131,7 +218,7 @@ struct __pixelformat__ pix[] = {
      PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
      PFD_TYPE_RGBA,
      32,
-     8, 0, 8, 8, 8, 16, 0, 24,
+     8, 16, 8, 8, 8, 0, 0, 0,
      0, 0, 0, 0, 0,
      16,
      0,
@@ -140,6 +227,7 @@ struct __pixelformat__ pix[] = {
      0, 0, 0, 0}
     ,
     {
+     FXMESA_COLORDEPTH, 32,
      FXMESA_DOUBLEBUFFER,
      FXMESA_ALPHA_SIZE, 0,
      FXMESA_DEPTH_SIZE, 16,
@@ -147,6 +235,78 @@ struct __pixelformat__ pix[] = {
      FXMESA_ACCUM_SIZE, 0,
      FXMESA_NONE}
     }
+#endif
+   /* 16bit RGB565 */
+   {
+    {sizeof(PIXELFORMATDESCRIPTOR), 1,
+     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
+     PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
+     PFD_TYPE_RGBA,
+     16,
+     5, 11, 6, 5, 5, 0, 0, 0,
+     0, 0, 0, 0, 0,
+     16,
+     0,
+     0,
+     PFD_MAIN_PLANE,
+     0, 0, 0, 0}
+    ,
+    {FXMESA_COLORDEPTH, 16,
+     FXMESA_DOUBLEBUFFER,
+     FXMESA_ALPHA_SIZE, 0,
+     FXMESA_DEPTH_SIZE, 16,
+     FXMESA_STENCIL_SIZE, 0,
+     FXMESA_ACCUM_SIZE, 0,
+     FXMESA_NONE}
+   }
+   ,
+   /* 16bit ARGB1555 */
+   {
+    {sizeof(PIXELFORMATDESCRIPTOR), 1,
+     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
+     PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
+     PFD_TYPE_RGBA,
+     16,
+     5, 10, 5, 5, 5, 0, 1, 15,
+     0, 0, 0, 0, 0,
+     16,
+     0,
+     0,
+     PFD_MAIN_PLANE,
+     0, 0, 0, 0}
+    ,
+    {FXMESA_COLORDEPTH, 15,
+     FXMESA_DOUBLEBUFFER,
+     FXMESA_ALPHA_SIZE, 1,
+     FXMESA_DEPTH_SIZE, 16,
+     FXMESA_STENCIL_SIZE, 0,
+     FXMESA_ACCUM_SIZE, 0,
+     FXMESA_NONE}
+   }
+   ,
+   /* 32bit ARGB8888 */
+   {
+    {sizeof(PIXELFORMATDESCRIPTOR), 1,
+     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
+     PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
+     PFD_TYPE_RGBA,
+     32,
+     8, 16, 8, 8, 8, 0, 8, 24,
+     0, 0, 0, 0, 0,
+     24,
+     0,
+     0,
+     PFD_MAIN_PLANE,
+     0, 0, 0, 0}
+    ,
+    {FXMESA_COLORDEPTH, 32,
+     FXMESA_DOUBLEBUFFER,
+     FXMESA_ALPHA_SIZE, 8,
+     FXMESA_DEPTH_SIZE, 24,
+     FXMESA_STENCIL_SIZE, 0,
+     FXMESA_ACCUM_SIZE, 0,
+     FXMESA_NONE}
+   }
 };
 static int qt_pix = sizeof(pix) / sizeof(pix[0]);
 
@@ -160,8 +320,12 @@ static GLboolean haveDualHead;
 
 /* For the in-window-rendering hack */
 
+#ifndef GR_CONTROL_RESIZE
+/* Apparently GR_CONTROL_RESIZE can be ignored. OK? */
+#define GR_CONTROL_RESIZE -1
+#endif
+
 static GLboolean gdiWindowHack;
-static GLboolean gdiWindowHackEna;
 static void *dibSurfacePtr;
 static BITMAPINFO *dibBMI;
 static HBITMAP dibHBM;
@@ -173,64 +337,39 @@ __wglMonitor(HWND hwnd, UINT message, UINT wParam, LONG lParam)
    long ret;			/* Now gives the resized window at the end to hWNDOldProc */
 
    if (ctx && hwnd == hWND) {
-      switch (message) {
-      case WM_PAINT:
-      case WM_MOVE:
-	 break;
-      case WM_DISPLAYCHANGE:
-      case WM_SIZE:
-	 if (wParam != SIZE_MINIMIZED) {
-	    static int moving = 0;
-	    if (!moving) {
-	       if (fxQueryHardware() != GR_SSTTYPE_VOODOO) {
-		  if (!FX_grSstControl(GR_CONTROL_RESIZE)) {
-		     moving = 1;
-		     SetWindowPos(hwnd, 0, 0, 0, 300, 300,
-				  SWP_NOMOVE | SWP_NOZORDER);
-		     moving = 0;
-		     if (!FX_grSstControl(GR_CONTROL_RESIZE)) {
-			/*MessageBox(0,_T("Error changing windowsize"),_T("fxMESA"),MB_OK); */
-			PostMessage(hWND, WM_CLOSE, 0, 0);
+     switch (message) {
+       case WM_PAINT:
+       case WM_MOVE:
+	   break;
+       case WM_DISPLAYCHANGE:
+       case WM_SIZE:
+       if (wParam != SIZE_MINIMIZED) {
+         static int moving = 0;
+         if (!moving) {
+           if (!FX_grSstControl(GR_CONTROL_RESIZE)) {
+             moving = 1;
+             SetWindowPos(hwnd, 0, 0, 0, 300, 300, SWP_NOMOVE | SWP_NOZORDER);
+             moving = 0;
+             if (!FX_grSstControl(GR_CONTROL_RESIZE)) {
+               /*MessageBox(0,_T("Error changing windowsize"),_T("fxMESA"),MB_OK); */
+               PostMessage(hWND, WM_CLOSE, 0, 0);
 		     }
-		  }
-	       }
-
+		   }
 	       /* Do the clipping in the glide library */
-	       FX_grClipWindow(0, 0, FX_grSstScreenWidth(),
-			       FX_grSstScreenHeight());
-	       /* And let the new size set in the context */
-	       fxMesaUpdateScreenSize(ctx);
-	    }
-	 }
-	 break;
-      case WM_ACTIVATE:
-	 if ((fxQueryHardware() == GR_SSTTYPE_VOODOO) &&
-	     (!gdiWindowHack) && (!haveDualHead)) {
-	    WORD fActive = LOWORD(wParam);
-	    BOOL fMinimized = (BOOL) HIWORD(wParam);
-
-	    if ((fActive == WA_INACTIVE) || fMinimized)
-	       FX_grSstControl(GR_CONTROL_DEACTIVATE);
-	    else
-	       FX_grSstControl(GR_CONTROL_ACTIVATE);
-	 }
-	 break;
-      case WM_SHOWWINDOW:
-	 break;
-      case WM_SYSKEYDOWN:
-      case WM_SYSCHAR:
-	 if (gdiWindowHackEna && (VK_RETURN == wParam)) {
-	    if (gdiWindowHack) {
-	       gdiWindowHack = GL_FALSE;
-	       FX_grSstControl(GR_CONTROL_ACTIVATE);
-	    }
-	    else {
-	       gdiWindowHack = GL_TRUE;
-	       FX_grSstControl(GR_CONTROL_DEACTIVATE);
-	    }
-	 }
-	 break;
-      }
+	       grClipWindow(0, 0, FX_grSstScreenWidth(), FX_grSstScreenHeight());
+           /* And let the new size set in the context */
+           fxMesaUpdateScreenSize(ctx);
+	     }
+	   }
+       break;
+       case WM_ACTIVATE:
+       break;
+       case WM_SHOWWINDOW:
+	   break;
+       case WM_SYSKEYDOWN:
+       case WM_SYSCHAR:
+	   break;
+     }
    }
 
    /* Finaly call the hWNDOldProc, which handles the resize witch the
@@ -277,85 +416,13 @@ wglCreateContext(HDC hdc)
    freopen("MESA.LOG", "w", stderr);
 #endif
 
-   ShowWindow(hWnd, SW_SHOWNORMAL);
-   SetForegroundWindow(hWnd);
-   Sleep(100);			/* an hack for win95 */
-
-   if (fxQueryHardware() == GR_SSTTYPE_VOODOO) {
-      RECT cliRect;
-
-      GetClientRect(hWnd, &cliRect);
-      error = !(ctx =
-		fxMesaCreateBestContext((GLuint) hWnd, cliRect.right,
-					cliRect.bottom,
-					pix[curPFD - 1].mesaAttr));
-
-      if (!error) {
-	 /* create the DIB section for windowed rendering */
-	 DWORD *p;
-
-	 dibWnd = hWnd;
-
-	 hDC = GetDC(dibWnd);
-
-	 dibBMI =
-	    (BITMAPINFO *) MALLOC(sizeof(BITMAPINFO) +
-				  (256 * sizeof(RGBQUAD)));
-
-	 memset(dibBMI, 0, sizeof(BITMAPINFO) + (256 * sizeof(RGBQUAD)));
-
-	 dibBMI->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	 dibBMI->bmiHeader.biWidth = ctx->width;
-	 dibBMI->bmiHeader.biHeight = -ctx->height;
-	 dibBMI->bmiHeader.biPlanes = (short) 1;
-	 dibBMI->bmiHeader.biBitCount = (short) 16;
-	 dibBMI->bmiHeader.biCompression = BI_BITFIELDS;
-	 dibBMI->bmiHeader.biSizeImage = 0;
-	 dibBMI->bmiHeader.biXPelsPerMeter = 0;
-	 dibBMI->bmiHeader.biYPelsPerMeter = 0;
-	 dibBMI->bmiHeader.biClrUsed = 3;
-	 dibBMI->bmiHeader.biClrImportant = 3;
-
-	 p = (DWORD *) dibBMI->bmiColors;
-	 p[0] = 0xF800;
-	 p[1] = 0x07E0;
-	 p[2] = 0x001F;
-
-	 dibHBM =
-	    CreateDIBSection(hDC, dibBMI, DIB_RGB_COLORS, &dibSurfacePtr,
-			     NULL, 0);
-
-	 ReleaseDC(dibWnd, hDC);
-
-	 gdiWindowHackEna = (dibHBM != NULL ? GL_TRUE : GL_FALSE);
-
-	 if (!getenv("MESA_WGL_FX")
-	     || !strcmp(getenv("MESA_WGL_FX"), "fullscreen"))
-	    gdiWindowHack = GL_FALSE;
-	 else {
-	    gdiWindowHack = GL_TRUE;
-	    FX_grSstControl(GR_CONTROL_DEACTIVATE);
-	 }
-      }
-   }
-   else {
-      /* For the Voodoo Rush */
-
-      if (getenv("MESA_WGL_FX")
-	  && !strcmp(getenv("MESA_WGL_FX"), "fullscreen")) {
-	 RECT cliRect;
-
-	 GetClientRect(hWnd, &cliRect);
-	 error = !(ctx =
-		   fxMesaCreateBestContext((GLuint) hWnd, cliRect.right,
-					   cliRect.bottom,
-					   pix[curPFD - 1].mesaAttr));
-      }
-      else
-	 error = !(ctx =
-		   fxMesaCreateContext((GLuint) hWnd, GR_RESOLUTION_NONE,
-				       GR_REFRESH_75Hz,
-				       pix[curPFD - 1].mesaAttr));
+   {
+     RECT cliRect;
+     ShowWindow(hWnd, SW_SHOWNORMAL);
+     SetForegroundWindow(hWnd);
+     Sleep(100); /* a hack for win95 */
+     GetClientRect(hWnd, &cliRect);
+     error = !(ctx = fxMesaCreateBestContext((GLuint) hWnd, cliRect.right, cliRect.bottom, pix[curPFD - 1].mesaAttr));
    }
 
    if (getenv("SST_DUALHEAD"))
@@ -389,15 +456,6 @@ BOOL GLAPIENTRY
 wglDeleteContext(HGLRC hglrc)
 {
    if (ctx && hglrc == (HGLRC) 1) {
-      if (gdiWindowHackEna) {
-	 DeleteObject(dibHBM);
-	 FREE(dibBMI);
-
-	 dibSurfacePtr = NULL;
-	 dibBMI = NULL;
-	 dibHBM = NULL;
-	 dibWnd = NULL;
-      }
 
       fxMesaDestroyContext(ctx);
 
@@ -505,7 +563,7 @@ wglUseFontBitmaps(HDC fontDevice, DWORD firstChar, DWORD numChars,
    // Place chars based on base line
    VERIFY(SetTextAlign(bitDevice, TA_BASELINE) >= 0 ? 1 : 0);
 
-   for (i = 0; i < numChars; i++) {
+   for (i = 0; i < (int)numChars; i++) {
       SIZE size;
       char curChar;
       int charWidth, charHeight, bmapWidth, bmapHeight, numBytes, res;
@@ -513,7 +571,7 @@ wglUseFontBitmaps(HDC fontDevice, DWORD firstChar, DWORD numChars,
       HGDIOBJ origBmap;
       unsigned char *bmap;
 
-      curChar = i + firstChar;
+      curChar = (char)(i + firstChar); // [koolsmoky] explicit cast
 
       // Find how high/wide this character is
       VERIFY(GetTextExtentPoint32(bitDevice, &curChar, 1, &size));
@@ -624,6 +682,9 @@ wglChoosePixelFormat(HDC hdc, CONST PIXELFORMATDESCRIPTOR * ppfd)
    }
 
    for (i = 0; i < qt_valid_pix; i++) {
+      if (ppfd->cColorBits > 0 && pix[i].pfd.cColorBits != ppfd->cColorBits) 
+		  continue;
+
       if ((ppfd->dwFlags & PFD_DRAW_TO_WINDOW)
 	  && !(pix[i].pfd.dwFlags & PFD_DRAW_TO_WINDOW)) continue;
       if ((ppfd->dwFlags & PFD_DRAW_TO_BITMAP)
@@ -736,53 +797,6 @@ wglSwapBuffers(HDC hdc)
    }
 
    fxMesaSwapBuffers();
-
-   if (gdiWindowHack) {
-      GLuint width = ctx->width;
-      GLuint height = ctx->height;
-
-      HDC hdcScreen = GetDC(dibWnd);
-      HDC hdcDIBSection = CreateCompatibleDC(hdcScreen);
-      HBITMAP holdBitmap = (HBITMAP) SelectObject(hdcDIBSection, dibHBM);
-
-      FX_grLfbReadRegion(GR_BUFFER_FRONTBUFFER, 0, 0,
-			 width, height, width * 2, dibSurfacePtr);
-
-      /* Since the hardware is configured for GR_COLORFORMAT_ABGR the pixel data is
-       * going to come out as BGR 565, which is reverse of what we need for blitting
-       * to screen, so we need to convert it here pixel-by-pixel (ick). This loop would NOT
-       * be required if the color format was changed to GR_COLORFORMAT_ARGB, but I do
-       * not know the ramifications of that, so this will work until that is resolved.
-       *
-       * This routine CRIES out for MMX implementation, however since that's not
-       * guaranteed to be running on MMX enabled hardware so I'm not going to do
-       * that. I'm just going to try to make a reasonably efficient C
-       * version. -TAJ
-       *
-       * This routine drops frame rate by <1 fps on a 200Mhz MMX processor with a 640x480
-       * display. Obviously, it's performance hit will be higher on larger displays and
-       * less on smaller displays. To support the window-hack display this is probably fine.
-       */
-#if  FXMESA_USE_ARGB
-      {
-	 unsigned long *pixel = dibSurfacePtr;
-	 unsigned long count = (width * height) / 2;
-
-	 while (count--) {
-	    *pixel++ = (*pixel & 0x07e007e0)	/* greens */
-	       |((*pixel & 0xf800f800) >> 11)	/* swap blues */
-	       |((*pixel & 0x001f001f) << 11)	/* swap reds */
-	       ;
-	 }
-      }
-#endif
-
-      BitBlt(hdcScreen, 0, 0, width, height, hdcDIBSection, 0, 0, SRCCOPY);
-
-      ReleaseDC(dibWnd, hdcScreen);
-      SelectObject(hdcDIBSection, holdBitmap);
-      DeleteDC(hdcDIBSection);
-   }
 
    return (TRUE);
 }

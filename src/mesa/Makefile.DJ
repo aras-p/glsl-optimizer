@@ -23,7 +23,7 @@
 # DOS/DJGPP core makefile v1.4 for Mesa
 #
 #  Copyright (C) 2002 - Borca Daniel
-#  Email : dborca@yahoo.com
+#  Email : dborca@users.sourceforge.net
 #  Web   : http://www.geocities.com/dborca
 
 
@@ -33,8 +33,8 @@
 #    Environment variables:
 #	CFLAGS
 #
-#	GLIDE		path to Glide3 SDK include files; used with FX.
-#			default = $(TOP)/include/glide3
+#	GLIDE		path to Glide3 SDK; used with FX.
+#			default = $(TOP)/glide3
 #	FX=1		build for 3dfx Glide3. Note that this disables
 #			compilation of most DMesa code and requires fxMesa.
 #			As a consequence, you'll need the DJGPP Glide3
@@ -65,19 +65,19 @@
 .INTERMEDIATE: x86/gen_matypes.exe
 
 TOP = ../..
-GLIDE ?= $(TOP)/include/glide3
+GLIDE ?= $(TOP)/glide3
 LIBDIR = $(TOP)/lib
 GL_LIB = libgl.a
 GL_DXE = gl.dxe
 GL_IMP = libigl.a
 
-export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH);$(LIBDIR)
+export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH);$(LIBDIR);$(GLIDE)/lib
 
 CC = gcc
 CFLAGS += -I$(TOP)/include -I. -Imain -Iglapi
 ifeq ($(FX),1)
 CFLAGS += -D__DOS__ -DH3
-CFLAGS += -I$(GLIDE) -DFX -DFX_GLIDE3 -DFXMESA_USE_ARGB
+CFLAGS += -I$(GLIDE)/include -DFX
 LIBNAME = "MesaGL/FX DJGPP"
 else
 ifeq ($(MATROX),1)
@@ -260,12 +260,12 @@ K3D_SOURCES = \
 	x86/3dnow_normal.S
 
 CORE_SOURCES = \
-	$(MAIN_SOURCES)		\
-	$(GLAPI_SOURCES)	\
-	$(MATH_SOURCES)		\
-	$(ARRAY_CACHE_SOURCES)	\
-	$(SWRAST_SOURCES)	\
-	$(SWRAST_SETUP_SOURCES)	\
+	$(MAIN_SOURCES) \
+	$(GLAPI_SOURCES) \
+	$(MATH_SOURCES) \
+	$(ARRAY_CACHE_SOURCES) \
+	$(SWRAST_SOURCES) \
+	$(SWRAST_SETUP_SOURCES) \
 	$(TNL_SOURCES)
 
 ifeq ($(HAVE_MMX),1)
@@ -336,16 +336,16 @@ X86_OBJECTS = $(addsuffix .o,$(basename $(X86_SOURCES)))
 all: $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GL_DXE) $(LIBDIR)/$(GL_IMP)
 
 $(LIBDIR)/$(GL_LIB): $(OBJECTS)
-	$(AR) $(ARFLAGS) $(LIBDIR)/$(GL_LIB) $(OBJECTS)
+	$(AR) $(ARFLAGS) $@ $^
 
 $(LIBDIR)/$(GL_DXE) $(LIBDIR)/$(GL_IMP): $(OBJECTS)
 ifeq ($(HAVEDXE3),)
 	$(warning Missing DXE3 package... Skipping $(GL_DXE))
 else
 ifeq ($(FX),1)
-	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -Y $(LIBDIR)/$(GL_IMP) -D $(LIBNAME) -E _gl -E _DMesa -P glid3.dxe -U $(OBJECTS)
+	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -Y $(LIBDIR)/$(GL_IMP) -D $(LIBNAME) -E _gl -E _DMesa -P glid3.dxe -U $^
 else
-	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -Y $(LIBDIR)/$(GL_IMP) -D $(LIBNAME) -E _gl -E _DMesa -U $(OBJECTS)
+	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -Y $(LIBDIR)/$(GL_IMP) -D $(LIBNAME) -E _gl -E _DMesa -U $^
 endif
 endif
 
@@ -369,5 +369,3 @@ clean:
 	-$(call UNLINK,drivers/dos/*.o)
 	-$(call UNLINK,drivers/dos/mga/*.o)
 	-$(call UNLINK,drivers/glide/*.o)
-
--include depend

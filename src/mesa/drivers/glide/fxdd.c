@@ -2,7 +2,7 @@
  * fxDDReadPixels888 does not convert 8A8R8G8B into 5R5G5B
  */
 
-/* $Id: fxdd.c,v 1.98 2003/07/17 14:50:12 brianp Exp $ */
+/* $Id: fxdd.c,v 1.99 2003/08/19 15:52:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,6 +33,8 @@
  *    Brian Paul
  *    Daryll Strauss
  *    Keith Whitwell
+ *    Daniel Borca
+ *    Hiroshi Morii
  */
 
 /* fxdd.c - 3Dfx VooDoo Mesa device driver functions */
@@ -167,7 +169,8 @@ fxDDClear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 {
    fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
    const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask);
-   const FxU16 clearD = (FxU16) (ctx->Depth.Clear * 0xffff);
+   /* [dBorca] should use an adequate scaler for 16 vs 32bit (GR_ZDEPTH_MIN_MAX) */
+   const FxU32 clearD = (FxU32) (ctx->Depth.Clear * 0x00ffffff);
    GLbitfield softwareMask = mask & (DD_STENCIL_BIT | DD_ACCUM_BIT);
 
    /* we can't clear stencil or accum buffers */
@@ -191,11 +194,11 @@ fxDDClear(GLcontext * ctx, GLbitfield mask, GLboolean all,
    switch (mask) {
    case DD_BACK_LEFT_BIT | DD_DEPTH_BIT:
       /* back buffer & depth */
-      FX_grDepthMask(FXTRUE);
-      FX_grRenderBuffer(GR_BUFFER_BACKBUFFER);
+      grDepthMask(FXTRUE);
+      grRenderBuffer(GR_BUFFER_BACKBUFFER);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
       if (!ctx->Depth.Mask) {
-	 FX_grDepthMask(FXFALSE);
+	 grDepthMask(FXFALSE);
       }
       break;
    case DD_FRONT_LEFT_BIT | DD_DEPTH_BIT:
@@ -204,70 +207,68 @@ fxDDClear(GLcontext * ctx, GLbitfield mask, GLboolean all,
        * This is a work-around/
        */
       /* clear depth */
-      FX_grDepthMask(FXTRUE);
-      FX_grRenderBuffer(GR_BUFFER_BACKBUFFER);
-      FX_grColorMask(FXFALSE, FXFALSE);
+      grDepthMask(FXTRUE);
+      grRenderBuffer(GR_BUFFER_BACKBUFFER);
+      grColorMask(FXFALSE, FXFALSE);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
       /* clear front */
-      FX_grColorMask(FXTRUE, ctx->Color.ColorMask[ACOMP]
-		     && fxMesa->haveAlphaBuffer);
-      FX_grRenderBuffer(GR_BUFFER_FRONTBUFFER);
+      grColorMask(FXTRUE, ctx->Color.ColorMask[ACOMP] && fxMesa->haveAlphaBuffer);
+      grRenderBuffer(GR_BUFFER_FRONTBUFFER);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
       break;
    case DD_BACK_LEFT_BIT:
       /* back buffer only */
-      FX_grDepthMask(FXFALSE);
-      FX_grRenderBuffer(GR_BUFFER_BACKBUFFER);
+      grDepthMask(FXFALSE);
+      grRenderBuffer(GR_BUFFER_BACKBUFFER);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
       if (ctx->Depth.Mask) {
-	 FX_grDepthMask(FXTRUE);
+	 grDepthMask(FXTRUE);
       }
       break;
    case DD_FRONT_LEFT_BIT:
       /* front buffer only */
-      FX_grDepthMask(FXFALSE);
-      FX_grRenderBuffer(GR_BUFFER_FRONTBUFFER);
+      grDepthMask(FXFALSE);
+      grRenderBuffer(GR_BUFFER_FRONTBUFFER);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
       if (ctx->Depth.Mask) {
-	 FX_grDepthMask(FXTRUE);
+	 grDepthMask(FXTRUE);
       }
       break;
    case DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT:
       /* front and back */
-      FX_grDepthMask(FXFALSE);
-      FX_grRenderBuffer(GR_BUFFER_BACKBUFFER);
+      grDepthMask(FXFALSE);
+      grRenderBuffer(GR_BUFFER_BACKBUFFER);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
-      FX_grRenderBuffer(GR_BUFFER_FRONTBUFFER);
+      grRenderBuffer(GR_BUFFER_FRONTBUFFER);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
       if (ctx->Depth.Mask) {
-	 FX_grDepthMask(FXTRUE);
+	 grDepthMask(FXTRUE);
       }
       break;
    case DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT | DD_DEPTH_BIT:
       /* clear front */
-      FX_grDepthMask(FXFALSE);
-      FX_grRenderBuffer(GR_BUFFER_FRONTBUFFER);
+      grDepthMask(FXFALSE);
+      grRenderBuffer(GR_BUFFER_FRONTBUFFER);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
       /* clear back and depth */
-      FX_grDepthMask(FXTRUE);
-      FX_grRenderBuffer(GR_BUFFER_BACKBUFFER);
+      grDepthMask(FXTRUE);
+      grRenderBuffer(GR_BUFFER_BACKBUFFER);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
       if (!ctx->Depth.Mask) {
-	 FX_grDepthMask(FXFALSE);
+	 grDepthMask(FXFALSE);
       }
       break;
    case DD_DEPTH_BIT:
       /* just the depth buffer */
-      FX_grRenderBuffer(GR_BUFFER_BACKBUFFER);
-      FX_grColorMask(FXFALSE, FXFALSE);
-      FX_grDepthMask(FXTRUE);
+      grRenderBuffer(GR_BUFFER_BACKBUFFER);
+      grColorMask(FXFALSE, FXFALSE);
+      grDepthMask(FXTRUE);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
-      FX_grColorMask(FXTRUE, ctx->Color.ColorMask[ACOMP]
-		     && fxMesa->haveAlphaBuffer);
+      grColorMask(FXTRUE, ctx->Color.ColorMask[ACOMP] && fxMesa->haveAlphaBuffer);
       if (ctx->Color._DrawDestMask & FRONT_LEFT_BIT)
-	 FX_grRenderBuffer(GR_BUFFER_FRONTBUFFER);
+	 grRenderBuffer(GR_BUFFER_FRONTBUFFER);
       if (!ctx->Depth.Test || !ctx->Depth.Mask)
-	 FX_grDepthMask(FXFALSE);
+	 grDepthMask(FXFALSE);
       break;
    default:
       /* error */
@@ -294,14 +295,14 @@ fxDDSetDrawBuffer(GLcontext * ctx, GLenum mode)
 
    if (mode == GL_FRONT_LEFT) {
       fxMesa->currentFB = GR_BUFFER_FRONTBUFFER;
-      FX_grRenderBuffer(fxMesa->currentFB);
+      grRenderBuffer(fxMesa->currentFB);
    }
    else if (mode == GL_BACK_LEFT) {
       fxMesa->currentFB = GR_BUFFER_BACKBUFFER;
-      FX_grRenderBuffer(fxMesa->currentFB);
+      grRenderBuffer(fxMesa->currentFB);
    }
    else if (mode == GL_NONE) {
-      FX_grColorMask(FXFALSE, FXFALSE);
+      grColorMask(FXFALSE, FXFALSE);
    }
    else {
       /* we'll need a software fallback */
@@ -404,10 +405,10 @@ fxDDDrawBitmap(GLcontext * ctx, GLint px, GLint py,
    }
 
    info.size = sizeof(info);
-   if (!FX_grLfbLock(GR_LFB_WRITE_ONLY,
-		     fxMesa->currentFB,
-		     GR_LFBWRITEMODE_565,
-		     GR_ORIGIN_UPPER_LEFT, FXFALSE, &info)) {
+   if (!grLfbLock(GR_LFB_WRITE_ONLY,
+		  fxMesa->currentFB,
+		  GR_LFBWRITEMODE_565,
+		  GR_ORIGIN_UPPER_LEFT, FXFALSE, &info)) {
 #ifndef FX_SILENT
       fprintf(stderr, "fx Driver: error locking the linear frame buffer\n");
 #endif
@@ -476,7 +477,7 @@ fxDDDrawBitmap(GLcontext * ctx, GLint px, GLint py,
       }
    }
 
-   FX_grLfbUnlock(GR_LFB_WRITE_ONLY, fxMesa->currentFB);
+   grLfbUnlock(GR_LFB_WRITE_ONLY, fxMesa->currentFB);
 }
 
 
@@ -783,7 +784,7 @@ static void fxDDReadPixels888 (GLcontext * ctx,
 static void
 fxDDFinish(GLcontext * ctx)
 {
-   FX_grFlush();
+   grFlush();
 }
 
 
@@ -797,43 +798,23 @@ fxDDFinish(GLcontext * ctx)
 static const GLubyte *
 fxDDGetString(GLcontext * ctx, GLenum name)
 {
-   switch (name) {
-   case GL_RENDERER:
-      {
-	 static char buf[80];
-
-	 if (glbHWConfig.SSTs[glbCurrentBoard].type == GR_SSTTYPE_VOODOO) {
-	    GrVoodooConfig_t *vc =
-	       &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig;
-
-	    sprintf(buf,
-		    "Mesa Glide v0.30 Voodoo_Graphics %d "
-		    "CARD/%d FB/%d TM/%d TMU/%s",
-		    glbCurrentBoard,
-		    (vc->sliDetect ? (vc->fbRam * 2) : vc->fbRam),
-		    (vc->tmuConfig[GR_TMU0].tmuRam +
-		     ((vc->nTexelfx > 1) ? vc->tmuConfig[GR_TMU1].
-		      tmuRam : 0)), vc->nTexelfx,
-		    (vc->sliDetect ? "SLI" : "NOSLI"));
-	 }
-	 else if (glbHWConfig.SSTs[glbCurrentBoard].type == GR_SSTTYPE_SST96) {
-	    GrSst96Config_t *sc =
-	       &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config;
-
-	    sprintf(buf,
-		    "Glide v0.30 Voodoo_Rush %d "
-		    "CARD/%d FB/%d TM/%d TMU/NOSLI",
-		    glbCurrentBoard,
-		    sc->fbRam, sc->tmuConfig.tmuRam, sc->nTexelfx);
-	 }
-	 else {
-	    strcpy(buf, "Glide v0.30 UNKNOWN");
-	 }
-	 return (GLubyte *) buf;
-      }
-   default:
-      return NULL;
-   }
+ switch (name) {
+        case GL_RENDERER:
+             {
+              static char buf[80];
+              GrVoodooConfig_t *vc = &glbHWConfig.SSTs[glbCurrentBoard].VoodooConfig;
+              sprintf(buf, "Mesa %s v0.31 %s %dMB FB, %dMB TM, %d TMU, %s",
+                           grGetString(GR_RENDERER),
+                           grGetString(GR_HARDWARE),
+                           vc->fbRam,
+                           (vc->tmuConfig[GR_TMU0].tmuRam + ((vc->nTexelfx > 1) ? vc->tmuConfig[GR_TMU1].tmuRam : 0)),
+                           (vc->nTexelfx * vc->numChips),
+                           (vc->numChips > 1) ? "SLI" : "NOSLI");
+              return (GLubyte *)buf;
+             }
+        default:
+             return NULL;
+ }
 }
 
 static const struct gl_pipeline_stage *fx_pipeline[] = {
@@ -909,18 +890,18 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    fxMesa->unitsState.depthMask = GL_TRUE;
    fxMesa->unitsState.depthTestFunc = GR_CMP_LESS;
 
-   FX_grColorMask(FXTRUE, fxMesa->haveAlphaBuffer ? FXTRUE : FXFALSE);
+   grColorMask(FXTRUE, fxMesa->haveAlphaBuffer ? FXTRUE : FXFALSE);
    if (fxMesa->haveDoubleBuffer) {
       fxMesa->currentFB = GR_BUFFER_BACKBUFFER;
-      FX_grRenderBuffer(GR_BUFFER_BACKBUFFER);
+      grRenderBuffer(GR_BUFFER_BACKBUFFER);
    }
    else {
       fxMesa->currentFB = GR_BUFFER_FRONTBUFFER;
-      FX_grRenderBuffer(GR_BUFFER_FRONTBUFFER);
+      grRenderBuffer(GR_BUFFER_FRONTBUFFER);
    }
 
-   fxMesa->state = malloc(FX_grGetInteger(FX_GLIDE_STATE_SIZE));
-   fxMesa->fogTable = (GrFog_t *) malloc(FX_grGetInteger(FX_FOG_TABLE_ENTRIES) *
+   fxMesa->state = malloc(FX_grGetInteger(GR_GLIDE_STATE_SIZE));
+   fxMesa->fogTable = (GrFog_t *) malloc(FX_grGetInteger(GR_FOG_TABLE_ENTRIES) *
 			     sizeof(GrFog_t));
 
    if (!fxMesa->state || !fxMesa->fogTable) {
@@ -932,14 +913,19 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    }
 
    if (fxMesa->haveZBuffer)
-      FX_grDepthBufferMode(GR_DEPTHBUFFER_ZBUFFER);
+      grDepthBufferMode(GR_DEPTHBUFFER_ZBUFFER);
 
-#ifndef FXMESA_USE_ARGB
-   FX_grLfbWriteColorFormat(GR_COLORFORMAT_ABGR);	/* Not every Glide has this */
-#endif
+   grLfbWriteColorFormat(GR_COLORFORMAT_ABGR);
 
-   fxMesa->textureAlign = FX_grGetInteger(FX_TEXTURE_ALIGN);
-   fxMesa->glCtx->Const.MaxTextureLevels = 9;
+   fxMesa->textureAlign = FX_grGetInteger(GR_TEXTURE_ALIGN);
+   /* [koolsmoky] */
+   {
+    int textureSize = ((fxMesa->maxTextureSize > 2048) ? 2048 : fxMesa->maxTextureSize);
+    fxMesa->glCtx->Const.MaxTextureLevels = 0;
+    do {
+        fxMesa->glCtx->Const.MaxTextureLevels++;
+    } while ((textureSize >>= 0x1) & 0x7ff);
+   }
    fxMesa->glCtx->Const.MaxTextureUnits = fxMesa->haveTwoTMUs ? 2 : 1;
    fxMesa->new_state = _NEW_ALL;
 
@@ -950,6 +936,7 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    _tnl_CreateContext(fxMesa->glCtx);
    _swsetup_CreateContext(fxMesa->glCtx);
 
+   /* Install customized pipeline */
    _tnl_destroy_pipeline(fxMesa->glCtx);
    _tnl_install_pipeline(fxMesa->glCtx, fx_pipeline);
 
@@ -970,7 +957,7 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
 
    fxDDInitExtensions(fxMesa->glCtx);
 
-   FX_grGlideGetState((GrState *) fxMesa->state);
+   grGlideGetState((GrState *) fxMesa->state);
 
    return 1;
 }

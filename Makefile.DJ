@@ -23,7 +23,7 @@
 # DOS/DJGPP makefile v1.4 for Mesa
 #
 #  Copyright (C) 2002 - Borca Daniel
-#  Email : dborca@yahoo.com
+#  Email : dborca@users.sourceforge.net
 #  Web   : http://www.geocities.com/dborca
 
 
@@ -32,12 +32,12 @@
 #
 #    Environment variables:
 #	CPU		optimize for the given processor.
-#			default = k6
+#			default = pentium
 #	GLU=[mesa|sgi]	specify GLU directory; can be `sgi' (requires GNU/C++)
 #			or `mesa'.
 #			default = mesa
-#	GLIDE		path to Glide3 SDK include files; used with FX.
-#			default = $(TOP)/include/glide3
+#	GLIDE		path to Glide3 SDK; used with FX.
+#			default = $(TOP)/glide3
 #	FX=1		build for 3dfx Glide3. Note that this disables
 #			compilation of most DMesa code and requires fxMesa.
 #			As a consequence, you'll need the DJGPP Glide3
@@ -70,7 +70,7 @@
 
 .PHONY : all libgl libglu libglut clean realclean
 
-CPU ?= k6
+CPU ?= pentium
 
 GLU ?= mesa
 

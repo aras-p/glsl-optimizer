@@ -15,7 +15,7 @@ glutStrokeWidth(GLUTstrokeFont font, int c)
   StrokeFontPtr fontinfo;
   const StrokeCharRec *ch;
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(GLUT_IMPORT_LIB)
   fontinfo = (StrokeFontPtr) __glutFont(font);
 #else
   fontinfo = (StrokeFontPtr) font;
@@ -37,7 +37,7 @@ glutStrokeLength(GLUTstrokeFont font, const unsigned char *string)
   StrokeFontPtr fontinfo;
   const StrokeCharRec *ch;
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(GLUT_IMPORT_LIB)
   fontinfo = (StrokeFontPtr) __glutFont(font);
 #else
   fontinfo = (StrokeFontPtr) font;

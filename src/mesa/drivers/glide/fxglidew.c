@@ -1,4 +1,4 @@
-/* $Id: fxglidew.c,v 1.20 2003/07/17 14:50:12 brianp Exp $ */
+/* $Id: fxglidew.c,v 1.21 2003/08/19 15:52:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,8 @@
  *    Brian Paul
  *    Daryll Strauss
  *    Keith Whitwell
+ *    Daniel Borca
+ *    Hiroshi Morii
  */
 
 /* fxsetup.c - 3Dfx VooDoo rendering mode setup functions */
@@ -49,111 +51,21 @@
 FxI32
 FX_grGetInteger_NoLock(FxU32 pname)
 {
-#if !defined(FX_GLIDE3)
-   switch (pname) {
-   case FX_FOG_TABLE_ENTRIES:
-      return GR_FOG_TABLE_SIZE;
-   case FX_GLIDE_STATE_SIZE:
-      return sizeof(GrState);
-   case FX_LFB_PIXEL_PIPE:
-      return FXFALSE;
-   case FX_PENDING_BUFFERSWAPS:
-      return grBufferNumPending();
-   case FX_TEXTURE_ALIGN:
-      /* This is a guess from reading the glide3 docs */
-      return 8;
-   default:
-      if (MESA_VERBOSE & VERBOSE_DRIVER) {
-	 fprintf(stderr, "Wrong parameter in FX_grGetInteger!\n");
-      }
-      return -1;
-   }
-#else
-   FxU32 grname;
-   FxI32 result;
+ FxI32 result;
 
-   switch (pname) {
-   case FX_FOG_TABLE_ENTRIES:
-   case FX_GLIDE_STATE_SIZE:
-   case FX_LFB_PIXEL_PIPE:
-   case FX_PENDING_BUFFERSWAPS:
-   case FX_TEXTURE_ALIGN:
-      grname = pname;
-      break;
-   default:
-      if (MESA_VERBOSE & VERBOSE_DRIVER) {
-	 fprintf(stderr, "Wrong parameter in FX_grGetInteger!\n");
-      }
-      return -1;
-   }
+ if (grGet(pname, 4, &result)) {
+    return result;
+ }
 
-   grGet(grname, 4, &result);
-   return result;
-#endif
-}
-
-FxI32
-FX_grGetInteger(FxU32 pname)
-{
-   int result;
-
-   BEGIN_BOARD_LOCK();
-   result = FX_grGetInteger_NoLock(pname);
-   END_BOARD_LOCK();
-   return result;
-}
-
-
-FxBool
-FX_grLfbLock(GrLock_t type, GrBuffer_t buffer,
-	     GrLfbWriteMode_t writeMode, GrOriginLocation_t origin,
-	     FxBool pixelPipeline, GrLfbInfo_t * info)
-{
-   FxBool result;
-
-   BEGIN_BOARD_LOCK();
-   result = grLfbLock(type, buffer, writeMode, origin, pixelPipeline, info);
-   END_BOARD_LOCK();
-   return result;
-}
-
-FxU32
-FX_grTexTextureMemRequired(FxU32 evenOdd, GrTexInfo * info)
-{
-   FxU32 result;
-
-   BEGIN_BOARD_LOCK();
-   result = grTexTextureMemRequired(evenOdd, info);
-   END_BOARD_LOCK();
-   return result;
-}
-
-FxU32
-FX_grTexMinAddress(GrChipID_t tmu)
-{
-   FxU32 result;
-
-   BEGIN_BOARD_LOCK();
-   result = grTexMinAddress(tmu);
-   END_BOARD_LOCK();
-   return result;
-}
-
-extern FxU32
-FX_grTexMaxAddress(GrChipID_t tmu)
-{
-   FxU32 result;
-
-   BEGIN_BOARD_LOCK();
-   result = grTexMaxAddress(tmu);
-   END_BOARD_LOCK();
-   return result;
+ if (MESA_VERBOSE & VERBOSE_DRIVER) {
+    fprintf(stderr, "Wrong parameter in FX_grGetInteger!\n");
+ }
+ return -1;
 }
 
 FxBool
 FX_grSstControl(FxU32 code)
 {
-#if defined(FX_GLIDE3)
    /* The glide 3 sources call for grEnable/grDisable to be called in exchange
     * for grSstControl. */
    switch (code) {
@@ -166,46 +78,8 @@ FX_grSstControl(FxU32 code)
    }
    /* Appearently GR_CONTROL_RESIZE can be ignored. */
    return 1;			/* OK? */
-#else
-   FxU32 result;
-   BEGIN_BOARD_LOCK();
-   result = grSstControl(code);
-   END_BOARD_LOCK();
-   return result;
-#endif
 }
 
-
-#if defined(FX_GLIDE3)
-
-void
-FX_grGammaCorrectionValue(float val)
-{
-   (void) val;
-/* ToDo */
-}
-
-int
-FX_getFogTableSize(void)
-{
-   int result;
-   BEGIN_BOARD_LOCK();
-   grGet(GR_FOG_TABLE_ENTRIES, sizeof(int), (void *) &result);
-   END_BOARD_LOCK();
-   return result;
-}
-
-int
-FX_getGrStateSize(void)
-{
-   int result;
-   BEGIN_BOARD_LOCK();
-   grGet(GR_GLIDE_STATE_SIZE, sizeof(int), (void *) &result);
-   END_BOARD_LOCK();
-
-   return result;
-
-}
 
 int
 FX_grSstScreenWidth()
@@ -229,14 +103,6 @@ FX_grSstScreenHeight()
    END_BOARD_LOCK();
 
    return result[3];
-}
-
-void
-FX_grGlideGetVersion(char *buf)
-{
-   BEGIN_BOARD_LOCK();
-   strcpy(buf, grGetString(GR_VERSION));
-   END_BOARD_LOCK();
 }
 
 void
@@ -269,14 +135,6 @@ FX_grAADrawPoint(GrVertex * a)
 {
    BEGIN_CLIP_LOOP();
    grDrawPoint(a);
-   END_CLIP_LOOP();
-}
-
-void
-FX_grDrawPolygonVertexList(int n, GrVertex * verts)
-{
-   BEGIN_CLIP_LOOP();
-   grDrawVertexArrayContiguous(GR_POLYGON, n, verts, sizeof(GrVertex));
    END_CLIP_LOOP();
 }
 
@@ -334,14 +192,6 @@ FX_grHints_NoLock(GrHint_t hintType, FxU32 hintMask)
    }
 }
 
-void
-FX_grHints(GrHint_t hintType, FxU32 hintMask)
-{
-   BEGIN_BOARD_LOCK();
-   FX_grHints_NoLock(hintType, hintMask);
-   END_BOARD_LOCK();
-}
-
 /*
  * Glide3 doesn't have the grSstQueryHardware function anymore.
  * Instead, we call grGet() and fill in the data structures ourselves.
@@ -360,81 +210,63 @@ FX_grSstQueryHardware(GrHwConfiguration * config)
 
    for (i = 0; i < config->num_sst; i++) {
       FxI32 result;
+      const char *extension;
 
-      config->SSTs[i].type = GR_SSTTYPE_VOODOO;
       grSstSelect(i);
 
+      extension = grGetString(GR_HARDWARE);
+      if (strstr(extension, "Voodoo Banshee")) {
+         config->SSTs[i].type = GR_SSTTYPE_Banshee;
+      } else if (strstr(extension, "Voodoo3")) {
+         config->SSTs[i].type = GR_SSTTYPE_Voodoo3;
+      } else if (strstr(extension, "Voodoo4")) {
+         config->SSTs[i].type = GR_SSTTYPE_Voodoo4;
+      } else if (strstr(extension, "Voodoo5")) {
+         config->SSTs[i].type = GR_SSTTYPE_Voodoo5;
+      } else { /* Voodoo1,2,rush */
+         /* ZZZ TO DO */
+         config->SSTs[i].type = GR_SSTTYPE_VOODOO;
+      }
+
       grGet(GR_MEMORY_FB, 4, &result);
-      config->SSTs[i].sstBoard.VoodooConfig.fbRam = result / (1024 * 1024);
+      config->SSTs[i].VoodooConfig.fbRam = result / (1024 * 1024);
 
       grGet(GR_NUM_TMU, 4, &result);
-      config->SSTs[i].sstBoard.VoodooConfig.nTexelfx = result;
+      config->SSTs[i].VoodooConfig.nTexelfx = result;
 
       grGet(GR_REVISION_FB, 4, &result);
-      config->SSTs[i].sstBoard.VoodooConfig.fbiRev = result;
+      config->SSTs[i].VoodooConfig.fbiRev = result;
 
-      grGet(GR_NUM_FB, 4, (void *) &numFB);
-      if (numFB > 1)
-	 config->SSTs[i].sstBoard.VoodooConfig.sliDetect = FXTRUE;
-      else
-	 config->SSTs[i].sstBoard.VoodooConfig.sliDetect = FXFALSE;
-
-      for (j = 0; j < config->SSTs[i].sstBoard.VoodooConfig.nTexelfx; j++) {
+      for (j = 0; j < config->SSTs[i].VoodooConfig.nTexelfx; j++) {
 	 grGet(GR_MEMORY_TMU, 4, &result);
-	 config->SSTs[i].sstBoard.VoodooConfig.tmuConfig[j].tmuRam =
-	    result / (1024 * 1024);
+	 config->SSTs[i].VoodooConfig.tmuConfig[j].tmuRam = result / (1024 * 1024);
 	 grGet(GR_REVISION_TMU, 4, &result);
-	 config->SSTs[i].sstBoard.VoodooConfig.tmuConfig[j].tmuRev = result;
+	 config->SSTs[i].VoodooConfig.tmuConfig[j].tmuRev = result;
       }
 
-      {
-       const char *extension = grGetString(GR_EXTENSION);
-       if (strstr(extension, " PIXEXT ")) {
-          config->SSTs[i].sstBoard.VoodooConfig.gExt.grSstWinOpen = grGetProcAddress("grSstWinOpenExt");
-       }
+      extension = grGetString(GR_EXTENSION);
+      if (strstr(extension, " PIXEXT ")) {
+         config->SSTs[i].VoodooConfig.grSstWinOpenExt = grGetProcAddress("grSstWinOpenExt");
       }
+
+      /* [koolsmoky] */
+      grGet(GR_MAX_TEXTURE_SIZE, 4, &result);
+      config->SSTs[i].VoodooConfig.maxTextureSize = result;
+
+      /* need to get the number of SLI units for napalm */
+      grGet(GR_NUM_FB, 4, (void *) &numFB);
+      config->SSTs[i].VoodooConfig.numChips = numFB;
+      /* this can only be useful for Voodoo2:
+       * sliDetect = ((config->SSTs[i].type == GR_SSTTYPE_Voodoo2) && (numFB > 1));
+       */
    }
    END_BOARD_LOCK();
    return 1;
 }
 
-#else
-
-int
-FX_grSstScreenWidth()
-{
-   int i;
-   BEGIN_BOARD_LOCK();
-   i = grSstScreenWidth();
-   END_BOARD_LOCK();
-   return i;
-}
-
-int
-FX_grSstScreenHeight()
-{
-   int i;
-   BEGIN_BOARD_LOCK();
-   i = grSstScreenHeight();
-   END_BOARD_LOCK();
-   return i;
-}
-
-int
-FX_grSstQueryHardware(GrHwConfiguration * c)
-{
-   int i;
-   BEGIN_BOARD_LOCK();
-   i = grSstQueryHardware(c);
-   END_BOARD_LOCK();
-   return i;
-}
-
-
-#endif /* FX_GLIDE3 */
 
 /* It appears to me that this function is needed either way. */
-FX_GrContext_t
+GrContext_t
 FX_grSstWinOpen(struct SstCard_St *c,
 		FxU32 hWnd,
 		GrScreenResolution_t screen_resolution,
@@ -444,15 +276,15 @@ FX_grSstWinOpen(struct SstCard_St *c,
 		GrOriginLocation_t origin_location,
 		int nColBuffers, int nAuxBuffers)
 {
-   FX_GrContext_t i;
+   GrContext_t i;
    BEGIN_BOARD_LOCK();
-   if ((c->type == GR_SSTTYPE_VOODOO) && c->sstBoard.VoodooConfig.gExt.grSstWinOpen) {
-      i = c->sstBoard.VoodooConfig.gExt.grSstWinOpen(hWnd,
-                       screen_resolution,
-                       refresh_rate,
-                       color_format, origin_location,
-                       pixel_format,
-                       nColBuffers, nAuxBuffers);
+   if (c->VoodooConfig.grSstWinOpenExt) {
+      i = c->VoodooConfig.grSstWinOpenExt(hWnd,
+                    screen_resolution,
+                    refresh_rate,
+                    color_format, origin_location,
+                    pixel_format,
+                    nColBuffers, nAuxBuffers);
    } else
    i = grSstWinOpen(hWnd,
 		    screen_resolution,

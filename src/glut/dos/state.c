@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.3 for Mesa
+ * DOS/DJGPP glut driver v1.4 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -60,9 +60,9 @@ int APIENTRY glutGet (GLenum type)
         case GLUT_WINDOW_HEIGHT:
              return g_curwin->height;
         case GLUT_WINDOW_STENCIL_SIZE:
-             return STENCIL_SIZE;
+             return g_stencil;
         case GLUT_WINDOW_DEPTH_SIZE:
-             return DEPTH_SIZE;
+             return g_depth;
         case GLUT_WINDOW_RGBA:
              return !(g_display_mode & GLUT_INDEX);
         case GLUT_WINDOW_COLORMAP_SIZE:

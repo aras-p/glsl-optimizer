@@ -19,10 +19,10 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.3 for Mesa
+ * DOS/DJGPP glut driver v1.4 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
- *  Email : dborca@yahoo.com
+ *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
 
@@ -38,8 +38,7 @@ GLUTwindow *g_curwin;
 static GLuint swaptime, swapcount;
 
 static DMesaVisual  visual  = NULL;
-static DMesaContext context = NULL;
-static GLUTwindow *windows[MAX_WINDOWS];
+GLUTwindow *g_windows[MAX_WINDOWS];
 
 
 
@@ -50,7 +49,6 @@ static void clean (void)
  for (i=1; i<=MAX_WINDOWS; i++) {
      glutDestroyWindow(i);
  }
- if (context) DMesaDestroyContext(context);
  if (visual)  DMesaDestroyVisual(visual);
 
  pc_close_stdout();
@@ -64,53 +62,72 @@ int APIENTRY glutCreateWindow (const char *title)
  int i;
  int m8width = (g_init_w + 7) & ~7;
 
+ /* We set the Visual once. This will be our desktop (graphic mode).
+  * We should do this in the `glutInit' code, but we don't have any idea
+  * about its geometry. Supposedly, when we are about to create one
+  * window, we have a slight idea about resolution.
+  */
  if (!visual) {
     if ((visual=DMesaCreateVisual(g_init_x + m8width, g_init_y + g_init_h, g_bpp, g_refresh,
                                   g_display_mode & GLUT_DOUBLE,
                                   !(g_display_mode & GLUT_INDEX),
                                   g_display_mode & GLUT_ALPHA,
-                                  g_display_mode & GLUT_DEPTH  ?DEPTH_SIZE  :0,
-                                  g_display_mode & GLUT_STENCIL?STENCIL_SIZE:0,
-                                  g_display_mode & GLUT_ACCUM  ?ACCUM_SIZE  :0))==NULL) {
+                                  g_display_mode & GLUT_DEPTH   ? g_depth  :0,
+                                  g_display_mode & GLUT_STENCIL ? g_stencil:0,
+                                  g_display_mode & GLUT_ACCUM   ? g_accum  :0))==NULL) {
        return 0;
     }
 
-    if ((context=DMesaCreateContext(visual, NULL))==NULL) {
-       DMesaDestroyVisual(visual);
-       return 0;
-    }
-
+    /* Also hook stdio/stderr once */
     pc_open_stdout();
     pc_open_stderr();
     pc_atexit(clean);
  }
 
+ /* Search for an empty slot.
+  * Each window has its own rendering Context and its own Buffer.
+  */
  for (i=0; i<MAX_WINDOWS; i++) {
-     if (windows[i] == NULL) {
+     if (g_windows[i] == NULL) {
+        DMesaContext c;
         DMesaBuffer b;
         GLUTwindow *w;
 
-        if ((w=(GLUTwindow *)calloc(1, sizeof(GLUTwindow))) == NULL) {
+        if ((w = (GLUTwindow *)calloc(1, sizeof(GLUTwindow))) == NULL) {
            return 0;
         }
 
-        if ((b=DMesaCreateBuffer(visual, g_init_x, g_init_y, m8width, g_init_h))==NULL) {
+        /* Allocate the rendering Context. */
+        if ((c = DMesaCreateContext(visual, NULL)) == NULL) {
            free(w);
            return 0;
         }
-        if (!DMesaMakeCurrent(context, b)) {
+
+        /* Allocate the Buffer (displayable area).
+         * We have to specify buffer size and position (inside the desktop).
+         */
+        if ((b = DMesaCreateBuffer(visual, g_init_x, g_init_y, m8width, g_init_h)) == NULL) {
+           DMesaDestroyContext(c);
+           free(w);
+           return 0;
+        }
+
+        /* Bind Buffer to Context and make the Context the current one. */
+        if (!DMesaMakeCurrent(c, b)) {
            DMesaDestroyBuffer(b);
+           DMesaDestroyContext(c);
            free(w);
            return 0;
         }
 
-        g_curwin = windows[i] = w;
+        g_curwin = g_windows[i] = w;
 
         w->num = ++i;
         w->xpos = g_init_x;
         w->ypos = g_init_y;
         w->width = m8width;
         w->height = g_init_h;
+        w->context = c;
         w->buffer = b;
 
         return i;
@@ -131,10 +148,13 @@ int APIENTRY glutCreateSubWindow (int win, int x, int y, int width, int height)
 
 void APIENTRY glutDestroyWindow (int win)
 {
- if (windows[--win]) {
-    DMesaDestroyBuffer(windows[win]->buffer);
-    free(windows[win]);
-    windows[win] = NULL;
+ if (g_windows[--win]) {
+    GLUTwindow *w = g_windows[win];
+    DMesaMakeCurrent(NULL, NULL);
+    DMesaDestroyBuffer(w->buffer);
+    DMesaDestroyContext(w->context);
+    free(w);
+    g_windows[win] = NULL;
  }
 }
 
@@ -142,7 +162,7 @@ void APIENTRY glutDestroyWindow (int win)
 
 void APIENTRY glutPostRedisplay (void)
 {
- g_redisplay = GL_TRUE;
+ g_curwin->redisplay = GL_TRUE;
 }
 
 
@@ -183,7 +203,8 @@ int APIENTRY glutGetWindow (void)
 
 void APIENTRY glutSetWindow (int win)
 {
- g_curwin = windows[win - 1];
+ g_curwin = g_windows[win - 1];
+ DMesaMakeCurrent(g_curwin->context, g_curwin->buffer);
 }
 
 

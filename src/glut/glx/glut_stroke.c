@@ -18,7 +18,7 @@ glutStrokeCharacter(GLUTstrokeFont font, int c)
   int i, j;
 
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(GLUT_IMPORT_LIB)
   fontinfo = (StrokeFontPtr) __glutFont(font);
 #else
   fontinfo = (StrokeFontPtr) font;

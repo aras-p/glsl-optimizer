@@ -23,7 +23,7 @@
 # DOS/DJGPP glu makefile v1.4 for Mesa
 #
 #  Copyright (C) 2002 - Borca Daniel
-#  Email : dborca@yahoo.com
+#  Email : dborca@users.sourceforge.net
 #  Web   : http://www.geocities.com/dborca
 
 
@@ -48,7 +48,7 @@ GLU_LIB = libglu.a
 GLU_DXE = glu.dxe
 GLU_IMP = libiglu.a
 
-export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH);$(LIBDIR)
+export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH);$(LIBDIR);$(GLIDE)/lib
 
 CC = gcc
 CFLAGS += -DNDEBUG -DLIBRARYBUILD -I$(TOP)/include -Iinclude
@@ -171,13 +171,13 @@ OBJECTS = $(addsuffix .o,$(basename $(SOURCES)))
 all: $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLU_DXE) $(LIBDIR)/$(GLU_IMP)
 
 $(LIBDIR)/$(GLU_LIB): $(OBJECTS)
-	$(AR) $(ARFLAGS) $(LIBDIR)/$(GLU_LIB) $(OBJECTS)
+	$(AR) $(ARFLAGS) $@ $^
 
 $(LIBDIR)/$(GLU_DXE) $(LIBDIR)/$(GLU_IMP): $(OBJECTS)
 ifeq ($(HAVEDXE3),)
 	$(warning Missing DXE3 package... Skipping $(GLU_DXE))
 else
-	-dxe3gen -o $(LIBDIR)/$(GLU_DXE) -Y $(LIBDIR)/$(GLU_IMP) -D "MesaGLU/SGI DJGPP" -E _glu -P gl.dxe -U $(OBJECTS)
+	-dxe3gen -o $(LIBDIR)/$(GLU_DXE) -Y $(LIBDIR)/$(GLU_IMP) -D "MesaGLU/SGI DJGPP" -E _glu -P gl.dxe -U $^
 endif
 
 clean:
@@ -186,5 +186,3 @@ clean:
 	-$(call UNLINK,libnurbs/interface/*.o)
 	-$(call UNLINK,libnurbs/internals/*.o)
 	-$(call UNLINK,libnurbs/nurbtess/*.o)
-
--include depend

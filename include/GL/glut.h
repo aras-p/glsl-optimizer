@@ -350,7 +350,7 @@ WGLAPI int   GLAPIENTRY SetPixelFormat(HDC,int,const PIXELFORMATDESCRIPTOR *);
 #define GLUT_NORMAL			0
 #define GLUT_OVERLAY			1
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined (GLUT_IMPORT_LIB)
 /* Stroke font constants (use these in GLUT program). */
 #define GLUT_STROKE_ROMAN		((void*)0)
 #define GLUT_STROKE_MONO_ROMAN		((void*)1)

@@ -19,10 +19,10 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.3 for Mesa
+ * DOS/DJGPP glut driver v1.4 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
- *  Email : dborca@yahoo.com
+ *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
 
@@ -64,9 +64,11 @@ typedef void (GLUTCALLBACK *GLUTjoystickCB) (unsigned int, int, int, int);
 typedef struct GLUTwindow {
         int num;                         /* window id */
 
+        DMesaContext context;
         DMesaBuffer buffer;
 
         int show_mouse;
+        GLboolean redisplay;
 
         /* GLUT settable or visible window state. */
         int xpos;
@@ -100,9 +102,10 @@ typedef struct GLUTwindow {
 extern GLUTidleCB g_idle_func;
 extern GLUTmenuStatusCB g_menu_status_func;
 
-extern GLboolean g_redisplay;
-
 extern GLuint g_bpp;                  /* HW: bits per pixel */
+extern GLuint g_depth;                /* HW: depth bits */
+extern GLuint g_stencil;              /* HW: stencil bits */
+extern GLuint g_accum;                /* HW: accum bits */
 extern GLuint g_refresh;              /* HW: vertical refresh rate */
 extern GLuint g_screen_w, g_screen_h; /* HW: physical screen size */
 extern GLint g_driver_caps;
@@ -117,6 +120,7 @@ extern int g_mouse;                   /* non-zero if mouse installed */
 extern int g_mouse_x, g_mouse_y;      /* mouse coords, relative to current win */
 
 extern GLUTwindow *g_curwin;          /* current window */
+extern GLUTwindow *g_windows[];
 
 extern char *__glutProgramName;       /* program name */
 
@@ -127,6 +131,10 @@ extern char * __glutStrdup(const char *string);
 extern void __glutWarning(char *format,...);
 extern void __glutFatalError(char *format,...);
 extern void __glutFatalUsage(char *format,...);
+/* Private routines from util.c */
+#ifdef GLUT_IMPORT_LIB
+extern void *__glutFont(void *font);
+#endif
 
 
 
@@ -136,14 +144,6 @@ extern void __glutFatalUsage(char *format,...);
 
 
 #define MAX_WINDOWS 2
-
-#define DEFAULT_WIDTH  300
-#define DEFAULT_HEIGHT 300
-#define DEFAULT_BPP    16
-
-#define DEPTH_SIZE   16
-#define STENCIL_SIZE 8
-#define ACCUM_SIZE   16
 
 #define RESERVED_COLORS 0
 

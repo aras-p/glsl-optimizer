@@ -1,4 +1,4 @@
-/* $Id: fxdrv.h,v 1.57 2003/07/17 14:50:12 brianp Exp $ */
+/* $Id: fxdrv.h,v 1.58 2003/08/19 15:52:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,8 @@
  *    Brian Paul
  *    Daryll Strauss
  *    Keith Whitwell
+ *    Daniel Borca
+ *    Hiroshi Morii
  */
 
 /* fxsetup.c - 3Dfx VooDoo rendering mode setup functions */
@@ -87,14 +89,6 @@ extern float gl_ubyte_to_float_255_color_tab[256];
 
 
 
-#if defined(FXMESA_USE_ARGB)
-#define FXCOLOR4( c ) (      \
-  ( ((unsigned int)(c[3]))<<24 ) | \
-  ( ((unsigned int)(c[0]))<<16 ) | \
-  ( ((unsigned int)(c[1]))<<8 )  | \
-  (  (unsigned int)(c[2])) )
-
-#else
 #ifdef __i386__
 #define FXCOLOR4( c )  (* (int *)c)
 #else
@@ -103,7 +97,6 @@ extern float gl_ubyte_to_float_255_color_tab[256];
   ( ((unsigned int)(c[2]))<<16 ) | \
   ( ((unsigned int)(c[1]))<<8 )  | \
   (  (unsigned int)(c[0])) )
-#endif
 #endif
 
 
@@ -433,7 +426,7 @@ struct tfxMesaContext
    GLint swapInterval;
    GLint maxPendingSwapBuffers;
 
-   FX_GrContext_t glideContext;
+   GrContext_t glideContext;
 
    int screen_width;
    int screen_height;
@@ -444,6 +437,7 @@ struct tfxMesaContext
    int clipMaxY;
 
    int colDepth;
+   int maxTextureSize; /* [koolsmoky] */
 };
 
 
@@ -527,7 +521,8 @@ extern void fxTMReloadSubMipMapLevel(fxMesaContext,
 				     struct gl_texture_object *, GLint, GLint,
 				     GLint);
 
-extern void fxTexGetFormat(GLenum, GrTextureFormat_t *, GLint *);
+extern void fxTexGetFormat(GLcontext *, GLenum, GrTextureFormat_t *, GLint *); /* [koolsmoky] */
+
 extern int fxTexGetInfo(int, int, GrLOD_t *, GrAspectRatio_t *,
 			float *, float *, int *, int *, int *, int *);
 
