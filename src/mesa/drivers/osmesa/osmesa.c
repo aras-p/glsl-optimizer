@@ -980,10 +980,15 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       {
 	 GLcontext *ctx = &osmesa->mesa;
 
-	 _swrast_CreateContext( ctx );
-	 _ac_CreateContext( ctx );
-	 _tnl_CreateContext( ctx );
-	 _swsetup_CreateContext( ctx );
+	 if (!_swrast_CreateContext( ctx ) ||
+             !_ac_CreateContext( ctx ) ||
+             !_tnl_CreateContext( ctx ) ||
+             !_swsetup_CreateContext( ctx )) {
+            _mesa_destroy_visual(osmesa->gl_visual);
+            _mesa_free_context_data(ctx);
+            _mesa_free(osmesa);
+            return NULL;
+         }
 	
 	 _swsetup_Wakeup( ctx );
          hook_in_driver_functions( ctx );
