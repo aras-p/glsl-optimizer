@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.20 2000/03/20 14:37:54 brianp Exp $ */
+/* $Id: teximage.c,v 1.21 2000/03/20 23:40:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -241,26 +241,6 @@ components_in_intformat( GLint format )
 
 
 
-struct gl_texture_image *
-gl_alloc_texture_image( void )
-{
-   return CALLOC_STRUCT(gl_texture_image);
-}
-
-
-
-void
-gl_free_texture_image( struct gl_texture_image *teximage )
-{
-   if (teximage->Data) {
-      FREE( teximage->Data );
-      teximage->Data = NULL;
-   }
-   FREE( teximage );
-}
-
-
-
 /*
  * Examine the texImage->Format field and set the Red, Green, Blue, etc
  * texel component sizes to default values.
@@ -370,6 +350,67 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
 }
 
 
+
+/*
+ * Return new gl_texture_image struct with all fields initialized to zero.
+ */
+struct gl_texture_image *
+gl_alloc_texture_image( void )
+{
+   return CALLOC_STRUCT(gl_texture_image);
+}
+
+
+
+/*
+ * Return a new gl_texture_image struct with most field initialized.
+ */
+static struct gl_texture_image *
+new_texture_image( GLsizei width, GLsizei height, GLsizei depth,
+                   GLint border, GLenum internalFormat )
+{
+   struct gl_texture_image *img = CALLOC_STRUCT(gl_texture_image);
+   if (!img)
+      return NULL;
+
+   img->Format = (GLenum) decode_internal_format(internalFormat);
+   set_teximage_component_sizes( img );
+   img->IntFormat = (GLenum) internalFormat;
+   img->Border = border;
+   img->Width = width;
+   img->Height = height;
+   img->Depth = depth;
+   img->WidthLog2 = logbase2(width - 2 * border);
+   if (height == 1)  /* 1-D texture */
+      img->HeightLog2 = 0;
+   else
+      img->HeightLog2 = logbase2(height - 2 * border);
+   if (depth == 1)   /* 2-D texture */
+      img->DepthLog2 = 0;
+   else
+      img->DepthLog2 = logbase2(depth - 2 * border);
+   img->Width2 = 1 << img->WidthLog2;
+   img->Height2 = 1 << img->HeightLog2;
+   img->Depth2 = 1 << img->DepthLog2;
+   img->MaxLog2 = MAX2(img->WidthLog2, img->HeightLog2);
+
+   return img;
+}
+
+
+
+void
+gl_free_texture_image( struct gl_texture_image *teximage )
+{
+   if (teximage->Data) {
+      FREE( teximage->Data );
+      teximage->Data = NULL;
+   }
+   FREE( teximage );
+}
+
+
+
 /* Need this to prevent an out-of-bounds memory access when using
  * X86 optimized code.
  */
@@ -408,30 +449,9 @@ make_texture_image( GLcontext *ctx, GLint internalFormat,
    /*
     * Allocate and initialize the texture_image struct
     */
-   texImage = gl_alloc_texture_image();
+   texImage = new_texture_image(width, height, depth, border, internalFormat);
    if (!texImage)
       return NULL;
-
-   texImage->Format = (GLenum) decode_internal_format(internalFormat);
-   set_teximage_component_sizes( texImage );
-   texImage->IntFormat = (GLenum) internalFormat;
-   texImage->Border = border;
-   texImage->Width = width;
-   texImage->Height = height;
-   texImage->Depth = depth;
-   texImage->WidthLog2 = logbase2(width - 2 * border);
-   if (height == 1)  /* 1-D texture */
-      texImage->HeightLog2 = 0;
-   else
-      texImage->HeightLog2 = logbase2(height - 2 * border);
-   if (depth == 1)   /* 2-D texture */
-      texImage->DepthLog2 = 0;
-   else
-      texImage->DepthLog2 = logbase2(depth - 2 * border);
-   texImage->Width2 = 1 << texImage->WidthLog2;
-   texImage->Height2 = 1 << texImage->HeightLog2;
-   texImage->Depth2 = 1 << texImage->DepthLog2;
-   texImage->MaxLog2 = MAX2(texImage->WidthLog2, texImage->HeightLog2);
 
    components = components_in_intformat(internalFormat);
    numPixels = texImage->Width * texImage->Height * texImage->Depth;
@@ -564,34 +584,11 @@ make_null_texture( GLcontext *ctx, GLenum internalFormat,
    components = components_in_intformat(internalFormat);
    numPixels = width * height * depth;
 
-   texImage = gl_alloc_texture_image();
-   if (!texImage)
-      return NULL;
+   texImage = new_texture_image(width, height, depth, border, internalFormat);
 
-   texImage->Format = (GLenum) decode_internal_format(internalFormat);
-   set_teximage_component_sizes( texImage );
-   texImage->IntFormat = internalFormat;
-   texImage->Border = border;
-   texImage->Width = width;
-   texImage->Height = height;
-   texImage->Depth = depth;
-   texImage->WidthLog2 = logbase2(width - 2*border);
-   if (height==1)  /* 1-D texture */
-      texImage->HeightLog2 = 0;
-   else
-      texImage->HeightLog2 = logbase2(height - 2*border);
-   if (depth==1)   /* 2-D texture */
-      texImage->DepthLog2 = 0;
-   else
-      texImage->DepthLog2 = logbase2(depth - 2*border);
-   texImage->Width2 = 1 << texImage->WidthLog2;
-   texImage->Height2 = 1 << texImage->HeightLog2;
-   texImage->Depth2 = 1 << texImage->DepthLog2;
-   texImage->MaxLog2 = MAX2( texImage->WidthLog2, texImage->HeightLog2 );
-
-   /* XXX should we really allocate memory for the image or let it be NULL? */
-   /*texImage->Data = NULL;*/
-
+   /* It's easier later if we really do have a texture image, rather than
+    * a NULL image pointer.
+    */
    texImage->Data = (GLubyte *) MALLOC( numPixels * components + EXTRA_BYTE );
 
    /*
