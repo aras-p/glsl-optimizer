@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.186 2002/10/24 23:57:20 brianp Exp $ */
+/* $Id: context.c,v 1.187 2002/10/29 15:04:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -369,6 +369,7 @@ _mesa_initialize_visual( GLvisual *vis,
    vis->rgbMode          = rgbFlag;
    vis->doubleBufferMode = dbFlag;
    vis->stereoMode       = stereoFlag;
+
    vis->redBits          = redBits;
    vis->greenBits        = greenBits;
    vis->blueBits         = blueBits;
@@ -381,6 +382,14 @@ _mesa_initialize_visual( GLvisual *vis,
    vis->accumBlueBits  = (accumBlueBits > 0) ? (8 * sizeof(GLaccum)) : 0;
    vis->accumAlphaBits = (accumAlphaBits > 0) ? (8 * sizeof(GLaccum)) : 0;
    vis->stencilBits    = (stencilBits > 0) ? (8 * sizeof(GLstencil)) : 0;
+
+   vis->haveAccumBuffer   = accumRedBits > 0;
+   vis->haveDepthBuffer   = depthBits > 0;
+   vis->haveStencilBuffer = stencilBits > 0;
+
+   vis->numAuxBuffers = 0;
+   vis->level = 0;
+   vis->pixmapMode = 0;
 
    return GL_TRUE;
 }
