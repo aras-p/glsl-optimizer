@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.9 2000/12/27 19:57:37 keithw Exp $ */
+/* $Id: s_context.c,v 1.10 2001/01/13 07:13:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -350,6 +350,11 @@ _swrast_Quad( GLcontext *ctx,
 	      const SWvertex *v0, const SWvertex *v1,
               const SWvertex *v2, const SWvertex *v3 )
 {
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+/*     _swrast_print_vertex( ctx, v0 ); */
+/*     _swrast_print_vertex( ctx, v1 ); */
+/*     _swrast_print_vertex( ctx, v2 ); */
+/*     _swrast_print_vertex( ctx, v3 ); */
    SWRAST_CONTEXT(ctx)->Quad( ctx, v0, v1, v2, v3 );
 }
 
@@ -385,13 +390,6 @@ void
 _swrast_InvalidateState( GLcontext *ctx, GLuint new_state )
 {
    SWRAST_CONTEXT(ctx)->InvalidateState( ctx, new_state );
-}
-
-
-GLuint *
-_swrast_get_stipple_counter_ref( GLcontext *ctx )
-{
-   return &SWRAST_CONTEXT(ctx)->StippleCounter;
 }
 
 void

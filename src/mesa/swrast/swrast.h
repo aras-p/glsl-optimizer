@@ -119,12 +119,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op,
 	       GLint width, GLint height );
 
 
-/* Get a pointer to the stipple counter.
- */
-extern GLuint *
-_swrast_get_stipple_counter_ref( GLcontext *ctx );
-
-/* Reset the stipple pointer via a function call
+/* Reset the stipple counter
  */
 extern void
 _swrast_ResetLineStipple( GLcontext *ctx );

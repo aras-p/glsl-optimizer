@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.8 2000/11/22 08:42:15 joukj Exp $ */
+/* $Id: s_lines.c,v 1.9 2001/01/13 07:13:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,7 +95,7 @@ static void flat_rgba_line( GLcontext *ctx,
                             const SWvertex *vert0,
 			    const SWvertex *vert1 )
 {
-   const GLchan *color = vert0->color;
+   const GLchan *color = vert1->color;
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    PB_SET_COLOR( PB, color[0], color[1], color[2], color[3] );
 
@@ -114,7 +114,7 @@ static void flat_rgba_z_line( GLcontext *ctx,
                               const SWvertex *vert0,
 			      const SWvertex *vert1 )
 {
-   const GLchan *color = vert0->color;
+   const GLchan *color = vert1->color;
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    PB_SET_COLOR( PB, color[0], color[1], color[2], color[3] );
 
@@ -534,7 +534,7 @@ static void general_flat_rgba_line( GLcontext *ctx,
 				    const SWvertex *vert1 )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
-   const GLchan *color = vert0->color;
+   const GLchan *color = vert1->color;
    PB_SET_COLOR( PB, color[0], color[1], color[2], color[3] );
 
    if (ctx->Line.StippleFlag) {
@@ -586,7 +586,7 @@ static void flat_textured_line( GLcontext *ctx,
    GLfloat *pbs = PB->s[0];
    GLfloat *pbt = PB->t[0];
    GLfloat *pbu = PB->u[0];
-   GLchan *color = (GLchan*) vert0->color;
+   GLchan *color = (GLchan*) vert1->color;
    PB_SET_COLOR( PB, color[0], color[1], color[2], color[3] );
    count = PB->count;
 
@@ -827,10 +827,10 @@ static void flat_multitextured_line( GLcontext *ctx,
    GLfixed *pbfog = PB->fog;
    GLchan (*pbrgba)[4] = PB->rgba;
    GLchan (*pbspec)[3] = PB->spec;
-   GLchan *color = (GLchan*) vert0->color;
-   GLchan sRed   = vert0->specular[0];
-   GLchan sGreen = vert0->specular[1];
-   GLchan sBlue  = vert0->specular[2];
+   GLchan *color = (GLchan*) vert1->color;
+   GLchan sRed   = vert1->specular[0];
+   GLchan sGreen = vert1->specular[1];
+   GLchan sBlue  = vert1->specular[2];
 
    PB->mono = GL_FALSE;
 
