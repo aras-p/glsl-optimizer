@@ -1,6 +1,6 @@
 #!/usr/bin/python2
 
-# (C) Copyright IBM Corporation 2004
+# (C) Copyright IBM Corporation 2004, 2005
 # All Rights Reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -40,7 +40,7 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		gl_XML.FilterGLAPISpecBase.__init__(self)
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
-(C) Copyright IBM Corporation 2004""", "BRIAN PAUL, IBM")
+(C) Copyright IBM Corporation 2004, 2005""", "BRIAN PAUL, IBM")
 
 
 	def get_stack_size(self, f):
@@ -125,6 +125,15 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		print '\tJMP(GL_OFFSET(off))'
 		print '#endif'
 		print ''
+		print '#ifdef HAVE_ALIAS'
+		print '#  define GL_STUB_ALIAS(fn,off,fn_alt,alias,alias_alt)\t\\'
+		print '\t.globl\tGL_PREFIX(fn, fn_alt) ;\t\t\t\\'
+		print '\t.set\tGL_PREFIX(fn, fn_alt), GL_PREFIX(alias, alias_alt)'
+		print '#else'
+		print '#  define GL_STUB_ALIAS(fn,off,fn_alt,alias,alias_alt)\t\\'
+		print '    GL_STUB(fn, off, fn_alt)'
+		print '#endif'
+		print ''
 		print 'SEG_TEXT'
 		print ''
 		print '#ifdef PTHREADS'
@@ -157,7 +166,12 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		stack = self.get_stack_size(f)
 
 		alt = "%s@%u" % (f.name, stack)
-		print '\tGL_STUB(%s, _gloffset_%s, %s)' % (f.name, f.real_name, alt)
+		if f.fn_alias == None:
+		    print '\tGL_STUB(%s, _gloffset_%s, %s)' % (f.name, f.real_name, alt)
+		else:
+		    alias_alt = "%s@%u" % (f.real_name, stack)
+		    print '\tGL_STUB_ALIAS(%s, _gloffset_%s, %s, %s, %s)' % \
+		        (f.name, f.real_name, alt, f.real_name, alias_alt)
 		return
 
 def show_usage():
