@@ -1,10 +1,10 @@
-/* $Id: 3dnow_normal.S,v 1.2 2001/10/22 01:21:16 brianp Exp $ */
+/* $Id: 3dnow_normal.S,v 1.3 2002/08/08 15:36:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -101,7 +101,7 @@ LLBL (G3TN_transform):
     PUNPCKLDQ  ( MM2, MM2 )             /*  x2              | x2           */
 
     PFMUL      ( MM3, MM0 )             /*  x1*m1           | x0*m0        */
-    ADD_L      ( CONST(12), EAX )       /*  next r                         */
+    ADD_L      ( CONST(16), EAX )       /*  next r                         */
 
     PREFETCHW  ( REGIND(EAX) )
 
@@ -112,7 +112,7 @@ LLBL (G3TN_transform):
     PFADD      ( MM2, MM0 )             /* x0*m4+x1*m5+x2*m6| x0*m0+...+x2**/
 
     MOVQ       ( REGIND (EDX), MM1 )    /*  x1           | x0              */
-    MOVQ       ( MM0, REGOFF(-12, EAX) ) /* write r0, r1                   */
+    MOVQ       ( MM0, REGOFF(-16, EAX) ) /* write r0, r1                   */
 
     PFMUL      ( MM6, MM1 )             /* x1*m9         | x0*m8           */
     MOVD       ( REGOFF (8, EDX), MM2 ) /*               | x2              */
@@ -125,7 +125,7 @@ LLBL (G3TN_transform):
 
     PREFETCH   ( REGIND(EDX) )
 
-    MOVD       ( MM1, REGOFF(-4, EAX) ) /*  write r2                       */
+    MOVD       ( MM1, REGOFF(-8, EAX) ) /*  write r2                       */
     DEC_L      ( EBP )                  /*  decrement normal counter       */
     JA         ( LLBL (G3TN_transform) )
 
@@ -160,7 +160,7 @@ LLBL (G3TN_norm_w_lengths):
     MOVQ       ( MM0, REGIND(EAX) )     /*  write new x0, x1               */
     MOVD       ( MM1, REGOFF(8, EAX) )  /*  write new x2                   */
 
-    ADD_L      ( CONST(12), EAX )       /*  next r                         */
+    ADD_L      ( CONST(16), EAX )       /*  next r                         */
     DEC_L      ( EBP )                  /*  decrement normal counter       */
 
     JA         ( LLBL (G3TN_norm_w_lengths) )
@@ -175,7 +175,7 @@ LLBL (G3TN_norm):
     MOVQ       ( MM1, MM4 )             /*                  | x2           */
 
     PFMUL      ( MM0, MM3 )             /*  x1*x1           | x0*x0        */
-    ADD_L      ( CONST(12), EAX )       /*  next r                         */
+    ADD_L      ( CONST(16), EAX )       /*  next r                         */
 
     PFMUL      ( MM1, MM4 )             /*                  | x2*x2        */
     PFADD      ( MM4, MM3 )             /*                  | x0*x0+x2*x2  */
@@ -194,10 +194,10 @@ LLBL (G3TN_norm):
 
     PFMUL      ( MM5, MM0 )             /*  x1 (normalized) | x0 (normalize*/
 
-    MOVQ       ( MM0, REGOFF(-12, EAX) ) /*  write new x0, x1              */
+    MOVQ       ( MM0, REGOFF(-16, EAX) ) /*  write new x0, x1              */
     PFMUL      ( MM5, MM1 )             /*                 | x2 (normalize*/
 
-    MOVD       ( MM1, REGOFF(-4, EAX) ) /*  write new x2                  */
+    MOVD       ( MM1, REGOFF(-8, EAX) ) /*  write new x2                  */
     MOVQ       ( REGIND (EAX), MM0 )    /*  x1             | x0           */
 
     MOVD       ( REGOFF(8, EAX), MM1 )  /*                 | x2           */
@@ -277,7 +277,7 @@ LLBL (G3TNNR_norm_w_lengths):           /* use precalculated lengths          */
     PREFETCH   ( REGIND(EDX) )
 
     PFMUL      ( MM2, MM7 )             /*               | x2*m10             */
-    ADD_L      ( CONST(12), EAX )       /* next r                             */
+    ADD_L      ( CONST(16), EAX )       /* next r                             */
 
     PFMUL      ( MM3, MM7 )             /*               | x2 (normalized)  */
     PUNPCKLDQ  ( MM3, MM3 )             /* length (x)    | length (x)       */
@@ -286,9 +286,9 @@ LLBL (G3TNNR_norm_w_lengths):           /* use precalculated lengths          */
     PFMUL      ( MM3, MM6 )             /* x1 (normalized) | x0 (normalized)  */
 
     DEC_L      ( EBP )                  /* decrement normal counter           */
-    MOVQ       ( MM6, REGOFF(-12, EAX) ) /* write r0, r1                      */
+    MOVQ       ( MM6, REGOFF(-16, EAX) ) /* write r0, r1                      */
 
-    MOVD       ( MM7, REGOFF(-4, EAX) ) /* write r2                           */
+    MOVD       ( MM7, REGOFF(-8, EAX) ) /* write r2                           */
     MOVD       ( REGIND(EDI), MM3 )     /*                 | length (x)       */
 
     JA         ( LLBL (G3TNNR_norm_w_lengths) )
@@ -303,7 +303,7 @@ LLBL (G3TNNR_norm):                     /* need to calculate lengths          */
     MOVD       ( REGOFF(8, EDX), MM7 )  /*                 | x2               */
 
     PFMUL      ( MM0, MM6 )             /* x1*m5           | x0*m0            */
-    ADD_L      ( CONST(12), EAX )       /* next r                             */
+    ADD_L      ( CONST(16), EAX )       /* next r                             */
 
     PFMUL      ( MM2, MM7 )             /*                 | x2*m10           */
     MOVQ       ( MM6, MM3 )             /* x1 (transformed)| x0 (transformed) */
@@ -332,10 +332,10 @@ LLBL (G3TNNR_norm):                     /* need to calculate lengths          */
     PFRCPIT2   ( MM4, MM5 )
     PFMUL      ( MM5, MM6 )             /* x1 (normalized) | x0 (normalized)  */
 
-    MOVQ       ( MM6, REGOFF(-12, EAX) ) /* write r0, r1                      */
+    MOVQ       ( MM6, REGOFF(-16, EAX) ) /* write r0, r1                      */
     PFMUL      ( MM5, MM7 )             /*                 | x2 (normalized)  */
 
-    MOVD       ( MM7, REGOFF(-4, EAX) ) /* write r2                           */
+    MOVD       ( MM7, REGOFF(-8, EAX) ) /* write r2                           */
     JA         ( LLBL (G3TNNR_norm) )
 
 
@@ -404,12 +404,12 @@ LLBL (G3TRNR_rescale):
     PREFETCH   ( REGIND(EDX) )
 
     PFMUL      ( MM2, MM5 )             /*               | x2*m10             */
-    ADD_L      ( CONST(12), EAX )       /* next r                             */
+    ADD_L      ( CONST(16), EAX )       /* next r                             */
 
     DEC_L      ( EBP )                  /* decrement normal counter           */
-    MOVQ       ( MM4, REGOFF(-12, EAX) ) /* write r0, r1                      */
+    MOVQ       ( MM4, REGOFF(-16, EAX) ) /* write r0, r1                      */
 
-    MOVD       ( MM5, REGOFF(-4, EAX) ) /* write r2                           */
+    MOVD       ( MM5, REGOFF(-8, EAX) ) /* write r2                           */
     JA         ( LLBL (G3TRNR_rescale) ) /* cnt > 0 ? -> process next normal  */
 
     FEMMS
@@ -481,7 +481,7 @@ LLBL (G3TR_rescale):
     PUNPCKLDQ  ( MM2, MM2 )             /* x2            | x2                 */
 
     PFMUL      ( MM3, MM0 )             /* x1*m1         | x0*m0              */
-    ADD_L      ( CONST(12), EAX )       /* next r                             */
+    ADD_L      ( CONST(16), EAX )       /* next r                             */
 
     PFMUL      ( MM4, MM1 )             /* x1*m5         | x0*m4              */
     PFACC      ( MM1, MM0 )             /* x0*m4+x1*m5   | x0*m0+x1*m1        */
@@ -496,14 +496,14 @@ LLBL (G3TR_rescale):
 
     PREFETCH   ( REGIND(EDX) )
 
-    MOVQ       ( MM0, REGOFF(-12, EAX) ) /* write r0, r1                      */
+    MOVQ       ( MM0, REGOFF(-16, EAX) ) /* write r0, r1                      */
     PFMUL      ( MM6, MM1 )             /* x1*m9         | x0*m8              */
 
     PFMUL      ( MM7, MM2 )             /*               | x2*m10             */
     PFACC      ( MM1, MM1 )             /* *not used*    | x0*m8+x1*m9        */
 
     PFADD      ( MM2, MM1 )             /* *not used*    | x0*m8+x1*m9+x2*m10 */
-    MOVD       ( MM1, REGOFF(-4, EAX) ) /* write r2                           */
+    MOVD       ( MM1, REGOFF(-8, EAX) ) /* write r2                           */
 
     DEC_L      ( EDI )                  /* decrement normal counter           */
     JA         ( LLBL (G3TR_rescale) )
@@ -565,12 +565,12 @@ LLBL (G3TNR_transform):
     PREFETCH   ( REGIND(EDX) )
 
     PFMUL      ( MM2, MM5 )             /*               | x2*m10             */
-    ADD_L      ( CONST(12), EAX )       /* next r                             */
+    ADD_L      ( CONST(16), EAX )       /* next r                             */
 
     DEC_L      ( EDI )                  /* decrement normal counter           */
-    MOVQ       ( MM4, REGOFF(-12, EAX) ) /* write r0, r1                      */
+    MOVQ       ( MM4, REGOFF(-16, EAX) ) /* write r0, r1                      */
 
-    MOVD       ( MM5, REGOFF(-4, EAX) ) /* write r2                           */
+    MOVD       ( MM5, REGOFF(-8, EAX) ) /* write r2                           */
     JA         ( LLBL (G3TNR_transform) )
 
     FEMMS
@@ -632,7 +632,7 @@ LLBL (G3T_transform):
     PUNPCKLDQ  ( MM2, MM2 )             /* x2            | x2                 */
 
     PFMUL      ( MM3, MM0 )             /* x1*m1         | x0*m0              */
-    ADD_L      ( CONST(12), EAX )       /* next r                             */
+    ADD_L      ( CONST(16), EAX )       /* next r                             */
 
     PFMUL      ( MM4, MM1 )             /* x1*m5         | x0*m4              */
     PFACC      ( MM1, MM0 )             /* x0*m4+x1*m5   | x0*m0+x1*m1        */
@@ -641,7 +641,7 @@ LLBL (G3T_transform):
     PFADD      ( MM2, MM0 )             /* x0*m4...+x2*m6| x0*m0+x1*m1+x2*m2  */
 
     MOVQ       ( REGIND(EDX), MM1 )     /* x1            | x0                 */
-    MOVQ       ( MM0, REGOFF(-12, EAX) ) /* write r0, r1                      */
+    MOVQ       ( MM0, REGOFF(-16, EAX) ) /* write r0, r1                      */
 
     PFMUL      ( MM6, MM1 )             /* x1*m9         | x0*m8              */
     MOVD       ( REGOFF(8, EDX), MM2 )  /*               | x2                 */
@@ -654,7 +654,7 @@ LLBL (G3T_transform):
     PFACC      ( MM1, MM1 )             /* *not used*    | x0*m8+x1*m9        */
     PFADD      ( MM2, MM1 )             /* *not used*    | x0*m8+x1*m9+x2*m10 */
 
-    MOVD       ( MM1, REGOFF(-4, EAX) ) /* write r2                           */
+    MOVD       ( MM1, REGOFF(-8, EAX) ) /* write r2                           */
     DEC_L      ( EDI )                  /* decrement normal counter           */
 
     JA         ( LLBL (G3T_transform) )
@@ -718,7 +718,7 @@ LLBL (G3N_norm1):                       /* use precalculated lengths          */
     MOVQ       ( MM0, REGIND(EAX) )     /* write new x0, x1                   */
 
     MOVD       ( MM1, REGOFF(8, EAX) )  /* write new x2                       */
-    ADD_L      ( CONST(12), EAX )       /* next r                             */
+    ADD_L      ( CONST(16), EAX )       /* next r                             */
 
     ADD_L      ( CONST(4), EDX )        /* next length                        */
     DEC_L      ( EBP )                  /* decrement normal counter           */
@@ -743,7 +743,7 @@ LLBL (G3N_norm2):                       /* need to calculate lengths          */
     PFMUL      ( MM0, MM3 )             /* x1*x1           | x0*x0            */
     MOVQ       ( MM1, MM4 )             /*                 | x2               */
 
-    ADD_L      ( CONST(12), EAX )       /* next r                             */
+    ADD_L      ( CONST(16), EAX )       /* next r                             */
     PFMUL      ( MM1, MM4 )             /*                 | x2*x2            */
 
     PFADD      ( MM4, MM3 )             /*                 | x0*x0+x2*x2      */
@@ -761,10 +761,10 @@ LLBL (G3N_norm2):                       /* need to calculate lengths          */
     PFRCPIT2   ( MM4, MM5 )
 
     PFMUL      ( MM5, MM0 )             /* x1 (normalized) | x0 (normalized)  */
-    MOVQ       ( MM0, REGOFF(-12, EAX) ) /* write new x0, x1                  */
+    MOVQ       ( MM0, REGOFF(-16, EAX) ) /* write new x0, x1                  */
 
     PFMUL      ( MM5, MM1 )             /*                 | x2 (normalized)  */
-    MOVD       ( MM1, REGOFF(-4, EAX) ) /* write new x2                       */
+    MOVD       ( MM1, REGOFF(-8, EAX) ) /* write new x2                       */
 
     JA         ( LLBL (G3N_norm2) )
 
@@ -820,10 +820,10 @@ LLBL (G3R_rescale):
     PREFETCH   ( REGIND(ECX) )
 
     PFMUL      ( MM0, MM2 )             /*               | x2*scale           */
-    ADD_L      ( CONST(12), EAX )       /* next r                             */
+    ADD_L      ( CONST(16), EAX )       /* next r                             */
 
-    MOVQ       ( MM1, REGOFF(-12, EAX) ) /* write r0, r1                      */
-    MOVD       ( MM2, REGOFF(-4, EAX) ) /* write r2                           */
+    MOVQ       ( MM1, REGOFF(-16, EAX) ) /* write r0, r1                      */
+    MOVD       ( MM2, REGOFF(-8, EAX) ) /* write r2                           */
 
     DEC_L      ( EDX )                  /* decrement normal counter           */
     JA         ( LLBL (G3R_rescale) )
