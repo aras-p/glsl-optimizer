@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.3 1999/10/08 09:27:11 keithw Exp $ */
+/* $Id: texobj.c,v 1.4 1999/10/09 20:17:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,6 +71,7 @@ gl_alloc_texture_object( struct gl_shared_state *shared, GLuint name,
                      calloc(1,sizeof(struct gl_texture_object));
    if (obj) {
       /* init the non-zero fields */
+      obj->RefCount = 1;
       obj->Name = name;
       obj->Dimensions = dimensions;
       obj->WrapS = GL_REPEAT;
@@ -382,8 +383,8 @@ void gl_DeleteTextures( GLcontext *ctx, GLsizei n, const GLuint *texName)
 	       GLuint d;
 	       for (d = 1 ; d <= 3 ; d++) {
 		  if (unit->CurrentD[d]==t) {
-		     unit->CurrentD[d] = ctx->Shared->DefaultD[d][u];
-		     ctx->Shared->DefaultD[d][u]->RefCount++;
+		     unit->CurrentD[d] = ctx->Shared->DefaultD[d];
+		     ctx->Shared->DefaultD[d]->RefCount++;
 		     t->RefCount--;
 		     assert( t->RefCount >= 0 );
 		  }
@@ -436,7 +437,7 @@ void gl_BindTexture( GLcontext *ctx, GLenum target, GLuint texName )
       return;
 
    if (texName == 0) 
-      newTexObj = ctx->Shared->DefaultD[unit][dim];
+      newTexObj = ctx->Shared->DefaultD[dim];
    else {
       struct HashTable *hash = ctx->Shared->TexObjects;
       newTexObj = (struct gl_texture_object *) HashLookup(hash, texName);
@@ -453,8 +454,8 @@ void gl_BindTexture( GLcontext *ctx, GLenum target, GLuint texName )
       }
    }
 
-   oldTexObj->RefCount--;
    newTexObj->RefCount++;
+
    texUnit->CurrentD[dim] = newTexObj;
 
    /* If we've changed the CurrentD[123] texture object then update the
@@ -481,6 +482,17 @@ void gl_BindTexture( GLcontext *ctx, GLenum target, GLuint texName )
    /* Pass BindTexture call to device driver */
    if (ctx->Driver.BindTexture) {
       (*ctx->Driver.BindTexture)( ctx, target, newTexObj );
+   }
+
+   if (oldTexObj->Name > 0) {
+      /* never delete default (id=0) texture objects */
+      oldTexObj->RefCount--;
+      if (oldTexObj->RefCount <= 0) {
+         if (ctx->Driver.DeleteTexture) {
+	    (*ctx->Driver.DeleteTexture)( ctx, oldTexObj );
+	 }
+         gl_free_texture_object(ctx->Shared, oldTexObj);
+      }
    }
 }
 

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.10 1999/10/08 09:27:10 keithw Exp $ */
+/* $Id: context.c,v 1.11 1999/10/09 20:17:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -327,7 +327,7 @@ static void one_time_init( void )
  */
 static struct gl_shared_state *alloc_shared_state( void )
 {
-   GLuint i;
+   GLuint d;
    struct gl_shared_state *ss;
    GLboolean outOfMemory;
 
@@ -341,16 +341,13 @@ static struct gl_shared_state *alloc_shared_state( void )
 
    /* Default Texture objects */
    outOfMemory = GL_FALSE;
-   for (i=0;i<MAX_TEXTURE_UNITS;i++) {
-      GLuint d;
-      for (d = 1 ; d <= 3 ; d++) {
-	 ss->DefaultD[d][i] = gl_alloc_texture_object(ss, 0, d);
-	 if (!ss->DefaultD[d][i]) {
-	    outOfMemory = GL_TRUE;
-	    break;
-	 }
-	 ss->DefaultD[d][i]->RefCount++; /* don't free if not in use */
+   for (d = 1 ; d <= 3 ; d++) {
+      ss->DefaultD[d] = gl_alloc_texture_object(ss, 0, d);
+      if (!ss->DefaultD[d]) {
+         outOfMemory = GL_TRUE;
+         break;
       }
+      ss->DefaultD[d]->RefCount++; /* don't free if not in use */
    }
 
    if (!ss->DisplayList || !ss->TexObjects || outOfMemory) {
@@ -359,14 +356,12 @@ static struct gl_shared_state *alloc_shared_state( void )
          DeleteHashTable(ss->DisplayList);
       if (ss->TexObjects)
          DeleteHashTable(ss->TexObjects);
-      for (i=0;i<MAX_TEXTURE_UNITS;i++) {
-         if (ss->DefaultD[1][i])
-            gl_free_texture_object(ss, ss->DefaultD[1][i]);
-         if (ss->DefaultD[2][i])
-            gl_free_texture_object(ss, ss->DefaultD[2][i]);
-         if (ss->DefaultD[3][i])
-            gl_free_texture_object(ss, ss->DefaultD[3][i]);
-      }
+      if (ss->DefaultD[1])
+         gl_free_texture_object(ss, ss->DefaultD[1]);
+      if (ss->DefaultD[2])
+         gl_free_texture_object(ss, ss->DefaultD[2]);
+      if (ss->DefaultD[3])
+         gl_free_texture_object(ss, ss->DefaultD[3]);
       free(ss);
       return NULL;
    }
@@ -486,9 +481,9 @@ static void init_texture_unit( GLcontext *ctx, GLuint unit )
    ASSIGN_4V( texUnit->EyePlaneR, 0.0, 0.0, 0.0, 0.0 );
    ASSIGN_4V( texUnit->EyePlaneQ, 0.0, 0.0, 0.0, 0.0 );
 
-   texUnit->CurrentD[1] = ctx->Shared->DefaultD[1][unit];
-   texUnit->CurrentD[2] = ctx->Shared->DefaultD[2][unit];
-   texUnit->CurrentD[3] = ctx->Shared->DefaultD[3][unit];
+   texUnit->CurrentD[1] = ctx->Shared->DefaultD[1];
+   texUnit->CurrentD[2] = ctx->Shared->DefaultD[2];
+   texUnit->CurrentD[3] = ctx->Shared->DefaultD[3];
 }
 
 
