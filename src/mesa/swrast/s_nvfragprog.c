@@ -1319,8 +1319,12 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
 }
 
 
+
+/**
+ * Execute the current fragment program, operating on the given span.
+ */
 void
-_swrast_exec_nv_fragment_program( GLcontext *ctx, struct sw_span *span )
+_swrast_exec_fragment_program( GLcontext *ctx, struct sw_span *span )
 {
    const struct fragment_program *program = ctx->FragmentProgram.Current;
    GLuint i;

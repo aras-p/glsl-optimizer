@@ -1016,7 +1016,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
       if (span->interpMask & SPAN_SPEC) {
          interpolate_specular(ctx, span);
       }
-      _swrast_exec_nv_fragment_program(ctx, span);
+      _swrast_exec_fragment_program(ctx, span);
       monoColor = GL_FALSE;
    }
 
@@ -1268,7 +1268,7 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
        * gives a potential speed-up.
        */
       if (ctx->FragmentProgram.Enabled)
-         _swrast_exec_nv_fragment_program( ctx, span );
+         _swrast_exec_fragment_program( ctx, span );
       else
          _swrast_texture_span( ctx, span );
 
@@ -1335,7 +1335,7 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
       }
 
       if (ctx->FragmentProgram.Enabled)
-         _swrast_exec_nv_fragment_program( ctx, span );
+         _swrast_exec_fragment_program( ctx, span );
       else
          _swrast_texture_span( ctx, span );
    }
