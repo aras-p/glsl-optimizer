@@ -790,6 +790,9 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
    ASSERT(xmesa->xm_visual->dithered_pf == PF_8R8G8B);
    ASSERT(xmesa->xm_visual->undithered_pf == PF_8R8G8B);
 
+   if (swrast->NewState)
+      _swrast_validate_derived( ctx );
+
    if (buffer &&   /* buffer != 0 means it's a Window or Pixmap */
        format == GL_BGRA &&
        type == GL_UNSIGNED_BYTE &&
@@ -861,6 +864,9 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
    ASSERT(gc);
    ASSERT(xmesa->xm_visual->undithered_pf == PF_5R6G5B);
 
+   if (swrast->NewState)
+      _swrast_validate_derived( ctx );
+
    if (buffer &&   /* buffer != 0 means it's a Window or Pixmap */
        format == GL_RGB &&
        type == GL_UNSIGNED_SHORT_5_6_5 &&
@@ -929,6 +935,9 @@ xmesa_CopyPixels( GLcontext *ctx,
 
    ASSERT(dpy);
    ASSERT(gc);
+
+   if (swrast->NewState)
+      _swrast_validate_derived( ctx );
 
    if (ctx->Color.DrawBuffer == GL_FRONT &&
        ctx->Pixel.ReadBuffer == GL_FRONT &&
