@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.28 2001/06/25 15:29:11 brianp Exp $ */
+/* $Id: glx.h,v 1.29 2001/07/27 14:26:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -126,6 +126,9 @@ extern "C" {
 #define GLX_MAX_PBUFFER_PIXELS		0x8018
 #define GLX_PRESERVED_CONTENTS		0x801B
 #define GLX_LARGEST_BUFFER		0x801C
+#define GLX_WIDTH			0x801D
+#define GLX_HEIGHT			0x801E
+#define GLX_EVENT_MASK			0x801F
 #define GLX_DRAWABLE_TYPE		0x8010
 #define GLX_FBCONFIG_ID			0x8013
 #define GLX_VISUAL_ID			0x800B
@@ -154,6 +157,7 @@ extern "C" {
 #define GLX_TRANSPARENT_INDEX		0x8009
 #define GLX_COLOR_INDEX_TYPE		0x8015
 #define GLX_COLOR_INDEX_BIT		0x00000002
+#define GLX_RGBA_BIT			0x00000001
 #define GLX_SCREEN			0x800C
 #define GLX_PBUFFER_CLOBBER_MASK	0x08000000
 #define GLX_DAMAGED			0x8020
