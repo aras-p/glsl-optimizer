@@ -46,6 +46,7 @@
 static GLfloat Xrot = 0, Yrot = 0;
 static GLfloat EyeDist = 10;
 static GLboolean use_vertex_arrays = GL_FALSE;
+static GLboolean anim = GL_TRUE;
 
 #define eps1 0.99
 #define br   20.0  /* box radius */
@@ -219,7 +220,6 @@ static void set_mode(GLuint mode)
 
 static void key(unsigned char k, int x, int y)
 {
-   static GLboolean anim = GL_TRUE;
    static GLuint mode = 0;
    (void) x;
    (void) y;
@@ -466,8 +466,9 @@ int main( int argc, char *argv[] )
    glutReshapeFunc( reshape );
    glutKeyboardFunc( key );
    glutSpecialFunc( specialkey );
-   glutIdleFunc( idle );
    glutDisplayFunc( draw );
+   if (anim)
+      glutIdleFunc(idle);
    usage();
    glutMainLoop();
    return 0;
