@@ -184,7 +184,7 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
                                  const GLubyte * str, GLsizei len,
                                  struct fragment_program *program)
 {
-   GLuint retval;
+   GLuint a, retval;
    struct arb_program ap;
 	
    retval = _mesa_parse_arb_program(ctx, str, len, &ap);
@@ -200,8 +200,8 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
 	
    program->InputsRead     = ap.InputsRead;
    program->OutputsWritten = ap.OutputsWritten;
-   for (retval=0; retval<MAX_TEXTURE_IMAGE_UNITS; retval++)
-      program->TexturesUsed[retval] = ap.TexturesUsed[retval];
+   for (a=0; a<MAX_TEXTURE_IMAGE_UNITS; a++)
+      program->TexturesUsed[a] = ap.TexturesUsed[a];
    program->NumAluInstructions = ap.NumAluInstructions;
    program->NumTexInstructions = ap.NumTexInstructions;
    program->NumTexIndirections = ap.NumTexIndirections;

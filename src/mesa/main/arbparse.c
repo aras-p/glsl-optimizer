@@ -42,7 +42,6 @@
 #include "nvfragprog.h"
 #include "arbparse.h"
 
-
 /* TODO:
  *    Fragment Program Stuff:
  *    -----------------------------------------------------
@@ -2726,7 +2725,7 @@ struct var_cache
    GLuint output_binding_idx;   /* This is the index into the result register file
                                  * corresponding to the bound result state         */
    struct var_cache *alias_binding;     /* For type vt_alias, points to the var_cache entry
-                                         * * that this is aliased to                         */
+                                         * that this is aliased to                         */
    GLuint param_binding_type;   /* {PROGRAM_STATE_VAR, PROGRAM_LOCAL_PARAM, 
                                  *    PROGRAM_ENV_PARAM}                           */
    GLuint param_binding_begin;  /* This is the offset into the program_parameter_list where
@@ -4116,41 +4115,40 @@ parse_alias (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
    struct var_cache *temp_var;
    char *error_msg;
 
-   while (**inst != 0) {
-      temp_var = parse_string (inst, vc_head, Program, &found);
-      Program->Position = parse_position (inst);
-      if (found) {
-         error_msg =
+	
+   temp_var = parse_string (inst, vc_head, Program, &found);
+   Program->Position = parse_position (inst);
+
+   if (found) {
+      error_msg =
+         _mesa_malloc (_mesa_strlen ((char *) temp_var->name) + 40);
+      _mesa_sprintf (error_msg, "Duplicate Varible Declaration: %s",
+                     temp_var->name);
+
+      _mesa_set_program_error (ctx, Program->Position, error_msg);
+      _mesa_error (ctx, GL_INVALID_OPERATION, error_msg);
+
+      _mesa_free (error_msg);
+      return 1;
+   }
+
+   temp_var->type = vt_alias;
+   temp_var->alias_binding =  parse_string (inst, vc_head, Program, &found);
+   Program->Position = parse_position (inst);
+
+   if (!found)
+   {
+       error_msg =
             _mesa_malloc (_mesa_strlen ((char *) temp_var->name) + 40);
-         _mesa_sprintf (error_msg, "Duplicate Varible Declaration: %s",
-                        temp_var->name);
+         _mesa_sprintf (error_msg, "Alias value %s is not defined",
+                        temp_var->alias_binding->name);
 
          _mesa_set_program_error (ctx, Program->Position, error_msg);
          _mesa_error (ctx, GL_INVALID_OPERATION, error_msg);
 
          _mesa_free (error_msg);
          return 1;
-      }
-
-      temp_var->type = vt_temp;
-
-      if (((Program->type == GL_FRAGMENT_PROGRAM_ARB) &&
-           (Program->Base.NumTemporaries >=
-            ctx->Const.MaxFragmentProgramTemps))
-          || ((Program->type == GL_VERTEX_PROGRAM_ARB)
-              && (Program->Base.NumTemporaries >=
-                  ctx->Const.MaxVertexProgramTemps))) {
-         _mesa_set_program_error (ctx, Program->Position,
-                                  "Too many TEMP variables declared");
-         _mesa_error (ctx, GL_INVALID_OPERATION,
-                      "Too many TEMP variables declared");
-         return 1;
-      }
-
-      temp_var->temp_binding = Program->Base.NumTemporaries;
-      Program->Base.NumTemporaries++;
    }
-   (*inst)++;
 
    return 0;
 }
@@ -4668,7 +4666,6 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
    /* The actual opcode name */
    code = *(*inst)++;
 
-
    /* Increment the correct count */
    switch (class) {
       case F_ALU_INST:
@@ -5015,7 +5012,7 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
          fp->TexSrcUnit = texcoord;
 
          /* texTarget */
-         switch (*(*inst)) {
+         switch (*(*inst)++) {
             case TEXTARGET_1D:
                fp->TexSrcBit = TEXTURE_1D_BIT;
                break;
