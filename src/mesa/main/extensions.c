@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.11 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: extensions.c,v 1.12 1999/11/12 02:05:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -132,6 +132,24 @@ int gl_extensions_disable( GLcontext *ctx, const char *name )
    return 1;
 }
       
+
+/*
+ * Test if the named extension is enabled in this context.
+ */
+GLboolean gl_extension_is_enabled( GLcontext *ctx, const char *name)
+{
+   struct extension *i;
+   foreach( i, ctx->Extensions.ext_list )
+      if (strncmp(i->name, name, MAX_EXT_NAMELEN) == 0) {
+         if (i->enabled)
+            return GL_TRUE;
+         else
+            return GL_FALSE;
+      }
+
+   return GL_FALSE;
+}
+
 
 void gl_extensions_dtr( GLcontext *ctx )
 {
