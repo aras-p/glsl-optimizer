@@ -561,7 +561,7 @@ __driUtilCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
 
 /* Test the version of the internal GLX API.  Returns a value like strcmp. */
 extern int
-driCompareGLXAPIVersion( GLuint required_version );
+driCompareGLXAPIVersion( GLint required_version );
 
 extern float
 driCalculateSwapUsage( __DRIdrawablePrivate *dPriv,

@@ -66,7 +66,7 @@ static void TAG(WriteStencilPixels)( GLcontext *ctx,
 {
    HW_WRITE_LOCK()
       {
-	 GLint i;
+	 GLuint i;
 	 LOCAL_STENCIL_VARS;
 
 	 if (DBG) fprintf(stderr, "WriteStencilPixels\n");
@@ -121,7 +121,7 @@ static void TAG(ReadStencilPixels)( GLcontext *ctx, GLuint n,
 {
    HW_READ_LOCK()
       {
-	 GLint i;
+	 GLuint i;
 	 LOCAL_STENCIL_VARS;
 
 	 if (DBG) fprintf(stderr, "ReadStencilPixels\n");

@@ -111,7 +111,7 @@ static void TAG(WriteDepthPixels)( GLcontext *ctx,
 {
    HW_WRITE_LOCK()
       {
-	 GLint i;
+	 GLuint i;
 	 LOCAL_DEPTH_VARS;
 
 	 if ( DBG ) fprintf( stderr, "WriteDepthPixels\n" );
@@ -178,7 +178,7 @@ static void TAG(ReadDepthPixels)( GLcontext *ctx, GLuint n,
 {
    HW_READ_LOCK()
       {
-	 GLint i;
+	 GLuint i;
 	 LOCAL_DEPTH_VARS;
 
 	 if ( DBG ) fprintf( stderr, "ReadDepthPixels\n" );

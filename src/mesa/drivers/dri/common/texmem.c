@@ -188,7 +188,7 @@ static void printLocalLRU( driTexHeap * heap, const char *callername  )
 static void printGlobalLRU( driTexHeap * heap, const char *callername )
 {
    drmTextureRegionPtr list = heap->global_regions;
-   int i, j;
+   unsigned int i, j;
 
    fprintf( stderr, "%s in %s:\nGlobal LRU, heap %d list %p:\n", 
 	    __FUNCTION__, callername, heap->heapId, (void *)list );

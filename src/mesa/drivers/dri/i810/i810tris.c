@@ -75,7 +75,7 @@ do {									\
 } while (0)
 #endif
 
-static void __inline__ i810_draw_triangle( i810ContextPtr imesa,
+static __inline__ void i810_draw_triangle( i810ContextPtr imesa,
 					   i810VertexPtr v0,
 					   i810VertexPtr v1,
 					   i810VertexPtr v2 )
@@ -90,7 +90,7 @@ static void __inline__ i810_draw_triangle( i810ContextPtr imesa,
 }
 
 
-static void __inline__ i810_draw_quad( i810ContextPtr imesa,
+static __inline__ void i810_draw_quad( i810ContextPtr imesa,
 				       i810VertexPtr v0,
 				       i810VertexPtr v1,
 				       i810VertexPtr v2,

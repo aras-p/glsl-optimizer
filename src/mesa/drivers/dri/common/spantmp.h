@@ -145,7 +145,7 @@ static void TAG(WriteRGBAPixels)( const GLcontext *ctx,
 {
    HW_WRITE_LOCK()
       {
-	 GLint i;
+	 GLuint i;
 	 LOCAL_VARS;
 
 	 if (DBG) fprintf(stderr, "WriteRGBAPixels\n");
@@ -229,7 +229,7 @@ static void TAG(WriteMonoRGBAPixels)( const GLcontext *ctx,
 {
    HW_WRITE_LOCK()
       {
-	 GLint i;
+	 GLuint i;
 	 LOCAL_VARS;
 	 INIT_MONO_PIXEL(p, color);
 
@@ -293,7 +293,7 @@ static void TAG(ReadRGBAPixels)( const GLcontext *ctx,
 {
    HW_READ_LOCK()
       {
-	 GLint i;
+	 GLuint i;
 	 LOCAL_VARS;
 
 	 if (DBG) fprintf(stderr, "ReadRGBAPixels\n");

@@ -331,7 +331,7 @@ i810DestroyContext(__DRIcontextPrivate *driContextPriv)
  	 /* This share group is about to go away, free our private
           * texture object data.
           */
-         int i;
+	 unsigned int i;
 
          for ( i = 0 ; i < imesa->nr_heaps ; i++ ) {
 	    driDestroyTextureHeap( imesa->texture_heaps[ i ] );

@@ -1573,7 +1573,7 @@ __driUtilCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
  *
  * \sa __glXGetInternalVersion().
  */
-int driCompareGLXAPIVersion( GLuint required_version )
+int driCompareGLXAPIVersion( GLint required_version )
 {
    if ( api_ver > required_version ) {
       return 1;
