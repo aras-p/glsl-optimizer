@@ -10,8 +10,7 @@ include $(TOP)/configs/current
 # support in libGL, we need to clean up both glxcmds.c and dri_interface.h.
 
 DEFINES += -DGLX_DIRECT_RENDERING -DGLXEXT -DXF86DRI -DGLX_USE_DLOPEN \
-	-DGLX_USE_MESA -DXF86VIDMODE -D_REENTRANT -UDRI_NEW_INTERFACE_ONLY \
-	-Werror
+	-DGLX_USE_MESA -DXF86VIDMODE -D_REENTRANT -UDRI_NEW_INTERFACE_ONLY
 
 C_SOURCES = \
 	  $(TOP)/src/mesa/glapi/glapi.c \
