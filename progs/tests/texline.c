@@ -1,4 +1,4 @@
-/* $Id: texline.c,v 1.1 2000/09/30 18:48:33 brianp Exp $ */
+/* $Id: texline.c,v 1.2 2001/01/23 23:44:39 brianp Exp $ */
 
 /*
  * Test textured lines.
@@ -45,11 +45,17 @@ static void Display( void )
    glRotatef(Yrot, 0.0, 1.0, 0.0);
    glRotatef(Zrot, 0.0, 0.0, 1.0);
 
-   glColor3f(1, 1, 1);
+   if (Texture)
+      glColor3f(1, 1, 1);
+
    glBegin(GL_LINES);
-   for (t = 0.0; t <= 1.0; t += 0.0125) {
+   for (t = 0.0; t <= 1.0; t += 0.025) {
       x = t * 2.0 - 1.0;
+      if (!Texture)
+         glColor3f(1, 0, 1);
       glTexCoord2f(t, 0.0);  glVertex2f(x, -1.0);
+      if (!Texture)
+         glColor3f(0, 1, 0);
       glTexCoord2f(t, 1.0);  glVertex2f(x, 1.0);
    }
    glEnd();
