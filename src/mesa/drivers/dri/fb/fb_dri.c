@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -300,7 +299,7 @@ fbCreateContext( const __GLcontextModes *glVisual,
    assert(driContextPriv);
 
    /* Allocate the Fb context */
-   fbmesa = (fbContextPtr) CALLOC( sizeof(*fbmesa) );
+   fbmesa = (fbContextPtr) _mesa_calloc( sizeof(*fbmesa) );
    if ( !fbmesa )
       return GL_FALSE;
 
@@ -318,7 +317,7 @@ fbCreateContext( const __GLcontextModes *glVisual,
    ctx = fbmesa->glCtx = _mesa_create_context(glVisual, shareCtx, 
 					      &functions, (void *) fbmesa);
    if (!fbmesa->glCtx) {
-      FREE(fbmesa);
+      _mesa_free(fbmesa);
       return GL_FALSE;
    }
    driContextPriv->driverPrivate = fbmesa;
@@ -429,7 +428,7 @@ fbDestroyContext( __DRIcontextPrivate *driContextPriv )
       fbmesa->glCtx->DriverCtx = NULL;
       _mesa_destroy_context( fbmesa->glCtx );
 
-      FREE( fbmesa );
+      _mesa_free( fbmesa );
    }
 }
 
@@ -465,7 +464,7 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
        * big speedup.
        */
       if (driDrawPriv->backBuffer)
-	 driDrawPriv->backBuffer = malloc(driDrawPriv->currentPitch * driDrawPriv->h);
+	 driDrawPriv->backBuffer = _mesa_malloc(driDrawPriv->currentPitch * driDrawPriv->h);
 
       return 1;
    }
@@ -476,7 +475,7 @@ static void
 fbDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
    _mesa_destroy_framebuffer((GLframebuffer *) (driDrawPriv->driverPrivate));
-   free(driDrawPriv->backBuffer);
+   _mesa_free(driDrawPriv->backBuffer);
 }
 
 
@@ -495,21 +494,22 @@ fbSwapBuffers( __DRIdrawablePrivate *dPriv )
       if (ctx->Visual.doubleBufferMode) {
 	 int i;
 	 int offset = 0;
-	 char *tmp = malloc( dPriv->currentPitch );
+	 char *tmp = _mesa_malloc(dPriv->currentPitch);
 
          _mesa_notifySwapBuffers( ctx );  /* flush pending rendering comands */
 
 	 ASSERT(dPriv->frontBuffer);
 	 ASSERT(dPriv->backBuffer);
 
-
-	 for (i = 0 ; i < dPriv->h ; i++ ) {
-	    memcpy( tmp, (char *)dPriv->frontBuffer + offset, dPriv->currentPitch );
-	    memcpy( (char *)dPriv->backBuffer + offset, tmp, dPriv->currentPitch );
+	 for (i = 0; i < dPriv->h; i++) {
+	    _mesa_memcpy(tmp, (char *) dPriv->backBuffer + offset,
+                         dPriv->currentPitch);
+	    _mesa_memcpy((char *) dPriv->frontBuffer + offset, tmp,
+                         dPriv->currentPitch);
 	    offset += dPriv->currentPitch;
 	 }
 	    
-	 free( tmp );
+	 _mesa_free(tmp);
       }
    }
    else {
