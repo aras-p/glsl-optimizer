@@ -18,10 +18,9 @@ Software.
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
-ATI, PRECISION INSIGHT AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-USE OR OTHER DEALINGS IN THE SOFTWARE.
+ERIC ANHOLT BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
@@ -85,6 +84,9 @@ sisCreateScreen( __DRIscreenPrivate *sPriv )
    }
 
    sisScreen->driScreen = sPriv;
+
+   /* parse information in __driConfigOptions */
+   driParseOptionInfo(&sisScreen->optionCache);
 
    return sisScreen;
 }
@@ -150,7 +152,7 @@ sis_bitblt_copy_cmd (sisContextPtr smesa, ENGPACKET * pkt)
       *lpdwDest++ = *lpdwSrc++;
 
    MMIO(REG_CMD0, *(GLint *)&pkt->stdwCmd);
-   MMIO(REG_QueueLen, -1);
+   MMIO(REG_CommandQueue, -1);
 }
 
 static void sisCopyBuffer( __DRIdrawablePrivate *dPriv )
@@ -266,7 +268,6 @@ static struct __DriverAPIRec sisAPI = {
  * The __driCreateScreen name is the symbol that libGL.so fetches.
  * Return:  pointer to a __DRIscreenPrivate.
  */
-#ifndef _SOLO
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
 {
@@ -274,12 +275,3 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    psp = __driUtilCreateScreen( dpy, scrn, psc, numConfigs, config, &sisAPI );
    return (void *)psp;
 }
-#else
-void *__driCreateScreen(struct DRIDriverRec *driver,
-                        struct DRIDriverContextRec *driverContext)
-{
-   __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreen(driver, driverContext, &sisAPI);
-   return (void *) psp;
-}
-#endif

@@ -18,7 +18,7 @@ Software.
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
-ATI, PRECISION INSIGHT AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
+ERIC ANHOLT OR SILICON INTEGRATED SYSTEMS CORP BE LIABLE FOR ANY CLAIM,
 DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -32,12 +32,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Eric Anholt <anholt@FreeBSD.org>
  */
 
-#include <assert.h>
-
 #include "sis_context.h"
 #include "sis_alloc.h"
 
 #include "sis_common.h"
+
+#include <unistd.h>
 
 #define Z_BUFFER_HW_ALIGNMENT 16
 #define Z_BUFFER_HW_PLUS (16 + 4)
@@ -46,15 +46,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define DRAW_BUFFER_HW_ALIGNMENT 16
 #define DRAW_BUFFER_HW_PLUS (16 + 4)
 
-#ifdef ROUNDUP
-#undef ROUNDUP
-#endif
-#define ROUNDUP(nbytes, pad) (((nbytes)+(pad-1))/(pad))
-
-#ifdef ALIGNMENT
-#undef ALIGNMENT
-#endif
-#define ALIGNMENT(value, align) (ROUNDUP((value),(align))*(align))
+#define ALIGNMENT(value, align) (((value) + (align) - 1) / (align) * (align))
 
 static int _total_video_memory_used = 0;
 static int _total_video_memory_count = 0;
@@ -172,6 +164,7 @@ sisAllocZStencilBuffer( sisContextPtr smesa )
 
    smesa->depthbuffer = (void *) addr;
    smesa->depthPitch = width2;
+   smesa->depthOffset = (unsigned long)addr - (unsigned long)smesa->FbBase;
 
    /* set pZClearPacket */
    memset( &smesa->zClearPacket, 0, sizeof(ENGPACKET) );

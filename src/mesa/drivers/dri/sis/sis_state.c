@@ -18,7 +18,7 @@ Software.
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
-ATI, PRECISION INSIGHT AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
+ERIC ANHOLT OR SILICON INTEGRATED SYSTEMS CORP BE LIABLE FOR ANY CLAIM,
 DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -366,10 +366,10 @@ static void sisDDColorMask( GLcontext *ctx,
       current->hwCapEnable2 |= (MASK_AlphaMaskWriteEnable |
                              MASK_ColorMaskWriteEnable);
 
-      current->hwDstMask = (r) ? GET_RMASK(smesa) : 0 |
-			   (g) ? GET_GMASK(smesa) : 0 |
-			   (b) ? GET_BMASK(smesa) : 0 |
-			   (a) ? GET_AMASK(smesa) : 0;
+      current->hwDstMask = (r) ? smesa->redMask : 0 |
+			   (g) ? smesa->greenMask : 0 |
+			   (b) ? smesa->blueMask : 0 |
+			   (a) ? smesa->alphaMask : 0;
    }
    
    if (current->hwDstMask != prev->hwDstMask) {
@@ -542,19 +542,6 @@ void sisDDDrawBuffer( GLcontext *ctx, GLenum mode )
    }
 }
 
-static void
-sisDDHint( GLcontext *ctx, GLenum target, GLenum mode )
-{
-   
-   switch (target) {
-   case GL_FOG_HINT:
-      /* Update fog mode setting */
-      sisDDFogfv(ctx, GL_FOG_MODE, NULL);
-      break;
-   }
-   
-}
-
 /* =============================================================
  * Polygon stipple
  */
@@ -713,27 +700,6 @@ sisUpdateHWState( GLcontext *ctx )
       smesa->GlobalFlag |= GFLAG_ENABLESETTING2;
    }
 
-  /* TODO: if fog disable, don't check */
-  if (current->hwCapEnable & MASK_FogEnable) {
-      /* fog setting */
-      if (current->hwFog != prev->hwFog) {
-	  prev->hwFog = current->hwFog;
-	  smesa->GlobalFlag |= GFLAG_FOGSETTING;
-	}
-      if (current->hwFogFar != prev->hwFogFar) {
-	  prev->hwFogFar = current->hwFogFar;
-	  smesa->GlobalFlag |= GFLAG_FOGSETTING;
-	}
-      if (current->hwFogInverse != prev->hwFogInverse) {
-	  prev->hwFogInverse = current->hwFogInverse;
-	  smesa->GlobalFlag |= GFLAG_FOGSETTING;
-	}
-      if (current->hwFogDensity != prev->hwFogDensity) {
-	  prev->hwFogDensity = current->hwFogDensity;
-	  smesa->GlobalFlag |= GFLAG_FOGSETTING;
-	}
-    }
-
    if (smesa->GlobalFlag & GFLAG_RENDER_STATES)
       sis_update_render_state( smesa );
 
@@ -808,11 +774,11 @@ void sisDDInitState( sisContextPtr smesa )
    prev->texture[0].hwTextureMip = 0;
 #endif
 
-   /* Texture Blending seeting */
-   prev->hwTexBlendClr0 = L_REPLACE__RGB_STAGE0;
-   prev->hwTexBlendClr1 = 0x294B4000;
-   prev->hwTexBlendAlpha0 = 0x333A0000;
-   prev->hwTexBlendAlpha1 = 0x333A0000;
+   /* Texture Blending setting -- use fragment color/alpha*/
+   prev->hwTexBlendColor0 = STAGE0_C_CF;
+   prev->hwTexBlendColor1 = STAGE1_C_CF;
+   prev->hwTexBlendAlpha0 = STAGE0_A_AF;
+   prev->hwTexBlendAlpha1 = STAGE1_A_AF;
    
    switch (smesa->bytesPerPixel)
    {
@@ -892,7 +858,7 @@ void sisDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.Enable		 = sisDDEnable;
    ctx->Driver.FrontFace	 = sisDDFrontFace;
    ctx->Driver.Fogfv		 = sisDDFogfv;
-   ctx->Driver.Hint		 = sisDDHint;
+   ctx->Driver.Hint		 = NULL;
    ctx->Driver.Lightfv		 = NULL;
    ctx->Driver.LogicOpcode	 = sisDDLogicOpCode;
    ctx->Driver.PolygonMode	 = NULL;

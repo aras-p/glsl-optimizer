@@ -18,7 +18,7 @@ Software.
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
-ATI, PRECISION INSIGHT AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
+ERIC ANHOLT OR SILICON INTEGRATED SYSTEMS CORP BE LIABLE FOR ANY CLAIM,
 DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -35,14 +35,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_context.h"
 #include "sis_state.h"
 #include "sis_lock.h"
-#include "macros.h"
-#include "swrast/swrast.h"
 
-#if 0
+#include "swrast/swrast.h"
+#include "macros.h"
+
 static GLbitfield sis_3D_Clear( GLcontext * ctx, GLbitfield mask,
 				GLint x, GLint y, GLint width,
 				GLint height );
-#endif
 static void sis_clear_color_buffer( GLcontext *ctx, GLenum mask, GLint x,
 				    GLint y, GLint width, GLint height );
 static void sis_clear_z_stencil_buffer( GLcontext * ctx,
@@ -55,7 +54,7 @@ set_color_pattern( sisContextPtr smesa, GLubyte red, GLubyte green,
 		   GLubyte blue, GLubyte alpha )
 {
    /* XXX only RGB565 and ARGB8888 */
-   switch (GET_ColorFormat(smesa))
+   switch (smesa->colorFormat)
    {
    case DST_FORMAT_ARGB_8888:
       smesa->clearColorPattern = (alpha << 24) +
@@ -76,24 +75,18 @@ sisUpdateZStencilPattern( sisContextPtr smesa, GLclampd z, GLint stencil )
 {
    GLuint zPattern;
 
-   if (z <= 0.0f)
-      zPattern = 0x0;
-   else if (z >= 1.0f)
-      zPattern = 0xFFFFFFFF;
-   else
-      zPattern = doFPtoFixedNoRound( z, 32 );
-
    switch (smesa->zFormat)
    {
    case SiS_ZFORMAT_Z16:
-      zPattern = zPattern >> 16;
+      zPattern = FLOAT_TO_USHORT(z);
       zPattern |= zPattern << 16;
       break;
    case SiS_ZFORMAT_S8Z24:
-      zPattern = zPattern >> 8;
+      zPattern = FLOAT_TO_UINT(z) >> 8;
       zPattern |= stencil << 24;
       break;
    case SiS_ZFORMAT_Z32:
+      zPattern = FLOAT_TO_UINT(z);
       break;
    default:
       assert(0);
@@ -122,20 +115,26 @@ sisDDClear( GLcontext * ctx, GLbitfield mask, GLboolean all,
       width1 = width;            
       height1 = height;
    }
+   /* XXX: Scissoring */
 
    LOCK_HARDWARE();
 
-#if 0
-   /* The 3d clear code is disabled because it appears to be slower, even
-    * in the case of being requested to clear Z and color buffers at the
-    * same time.
+   /* Mask out any non-existent buffers */
+   if (ctx->Visual.depthBits == 0 || !ctx->Depth.Mask)
+      mask &= ~DD_DEPTH_BIT;
+   if (ctx->Visual.stencilBits == 0)
+      mask &= ~DD_STENCIL_BIT;
+
+   /* The 3d clear code is use for masked clears because I don't know how to do
+    * masked clears with the 2d functions.  3d isn't used in general because
+    * it's slower, even in the case of clearing multiple buffers
     */
-   if (mask & (DD_BACK_LEFT_BIT | DD_DEPTH_BIT | DD_STENCIL_BIT))
+   if ((smesa->current.hwDstMask != 0xffffffff &&
+      (mask & (DD_BACK_LEFT_BIT | DD_FRONT_LEFT_BIT)) != 0) ||
+      (ctx->Stencil.WriteMask[0] < 0xff && (mask & DD_STENCIL_BIT) != 0) )
    {
-      /* only Clear either depth or stencil buffer */ 
       mask = sis_3D_Clear( ctx, mask, x1, y1, width1, height1 );
    }
-#endif
 
    if ( mask & DD_FRONT_LEFT_BIT || mask & DD_BACK_LEFT_BIT) {
       sis_clear_color_buffer( ctx, mask, x1, y1, width1, height1 );
@@ -185,7 +184,6 @@ sisDDClearStencil( GLcontext * ctx, GLint s )
    sisUpdateZStencilPattern( smesa, ctx->Depth.Clear, s );
 }
 
-#if 0
 static GLbitfield
 sis_3D_Clear( GLcontext * ctx, GLbitfield mask,
 	      GLint x, GLint y, GLint width, GLint height )
@@ -197,22 +195,19 @@ sis_3D_Clear( GLcontext * ctx, GLbitfield mask,
    float left, top, right, bottom, zClearVal;
    GLboolean bClrColor, bClrDepth, bClrStencil;
    GLint dwPrimitiveSet;
-   GLint dwEnable1 = 0, dwEnable2 = 0, dwDepthMask = 0, dwSten1 = 0, dwSten2 = 0;
+   GLint dwEnable1 = 0, dwEnable2 = MASK_ColorMaskWriteEnable;
+   GLint dwDepthMask = 0, dwSten1 = 0, dwSten2 = 0;
    GLint dirtyflags = GFLAG_ENABLESETTING | GFLAG_ENABLESETTING2 |
       GFLAG_CLIPPING | GFLAG_DESTSETTING;
-   
    int count;
    XF86DRIClipRectPtr pExtents;
 
-   bClrColor = ((mask & DD_BACK_LEFT_BIT) != 0);
-   bClrDepth = ((mask & DD_DEPTH_BIT) != 0) && (ctx->Visual.depthBits != 0);
-   bClrStencil = ((mask & DD_STENCIL_BIT) != 0) && (ctx->Visual.stencilBits != 0);
+   bClrColor = (mask & (DD_BACK_LEFT_BIT | DD_FRONT_LEFT_BIT)) != 0;
+   bClrDepth = (mask & DD_DEPTH_BIT) != 0;
+   bClrStencil = (mask & DD_STENCIL_BIT) != 0;
 
    if (smesa->GlobalFlag & GFLAG_RENDER_STATES)
       sis_update_render_state( smesa );
-
-   if (!bClrColor)
-      dwEnable2 |= MASK_ColorMaskWriteEnable;
 
    if (bClrStencil) {
       dwSten1 = STENCIL_FORMAT_8 | SiS_STENCIL_ALWAYS |
@@ -319,15 +314,19 @@ sis_3D_Clear( GLcontext * ctx, GLbitfield mask,
       MMIO(REG_3D_TSXb, *(GLint *) &right);
       MMIO(REG_3D_TSYb, *(GLint *) &bottom);
       MMIO(REG_3D_TSARGBb, smesa->clearColorPattern);
-    }
+   }
 
    mEndPrimitive();
 
+   /* If DD_FRONT_LEFT_BIT is set, we've only cleared the front buffer so far */
+   if ((mask & DD_FRONT_LEFT_BIT) != 0 && (mask & DD_BACK_LEFT_BIT) != 0)
+      sis_3D_Clear( ctx, DD_BACK_LEFT_BIT, x, y, width, height );
+
    smesa->GlobalFlag |= dirtyflags;
 
-   return (mask & ~(DD_BACK_LEFT_BIT | DD_DEPTH_BIT | DD_STENCIL_BIT));
+   return mask & ~(DD_DEPTH_BIT | DD_STENCIL_BIT | DD_BACK_LEFT_BIT |
+      DD_FRONT_LEFT_BIT);
 }
-#endif
 
 static void
 sis_bitblt_clear_cmd( sisContextPtr smesa, ENGPACKET * pkt )
@@ -348,7 +347,7 @@ sis_bitblt_clear_cmd( sisContextPtr smesa, ENGPACKET * pkt )
    }
 
    MMIO(REG_CMD0, *(GLint *) & pkt->stdwCmd);
-   MMIO(REG_QueueLen, -1);
+   MMIO(REG_CommandQueue, -1);
 }
 
 static void
@@ -358,7 +357,7 @@ sis_clear_color_buffer( GLcontext *ctx, GLenum mask, GLint x, GLint y,
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
    int count;
-   GLuint depth = GET_DEPTH (smesa);
+   GLuint depth = smesa->bytesPerPixel;
    XF86DRIClipRectPtr pExtents = NULL;
    GLint xx, yy;
    GLint x0, y0, width0, height0;
@@ -436,11 +435,6 @@ sis_clear_z_stencil_buffer( GLcontext * ctx, GLbitfield mask,
 			    GLint x, GLint y, GLint width, GLint height )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
-
-   /* TODO: check write mask */
-
-   if ( smesa->depthbuffer == NULL )
-      return;
 
    /* TODO: consider alignment of width, height? */
    smesa->zClearPacket.stdwDestPos.wY = y;
