@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -262,8 +262,8 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
       }
       ASSIGN_4V(ctx->FragmentProgram.Parameters[index], x, y, z, w);
    }
-   if (target == GL_VERTEX_PROGRAM_ARB
-       && ctx->Extensions.ARB_vertex_program) {
+   else if (target == GL_VERTEX_PROGRAM_ARB
+            && ctx->Extensions.ARB_vertex_program) {
       if (index >= ctx->Const.MaxVertexProgramEnvParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter(index)");
          return;
@@ -322,8 +322,8 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
       }
       COPY_4V(params, ctx->FragmentProgram.Parameters[index]);
    }
-   if (target == GL_VERTEX_PROGRAM_ARB
-       && ctx->Extensions.ARB_vertex_program) {
+   else if (target == GL_VERTEX_PROGRAM_ARB
+            && ctx->Extensions.ARB_vertex_program) {
       if (index >= ctx->Const.MaxVertexProgramEnvParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramEnvParameter(index)");
          return;
