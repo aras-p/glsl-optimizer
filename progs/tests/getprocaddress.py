@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-# $Id: getprocaddress.py,v 1.1 2002/11/08 15:35:47 brianp Exp $
+# $Id: getprocaddress.py,v 1.2 2002/11/08 15:49:31 brianp Exp $
 
 # Helper for the getprocaddress.c test.
 
 
 import re, string
+
 
 def PrintHead():
 	print """
@@ -46,7 +47,6 @@ def FindTestFunctions():
 		v = re.search("^test_([a-zA-Z0-9]+)", line)
 		if v:
 			func = v.group(1)
-			#print "Found -%s-" % func
 			functions.append(func)
 	f.close
 	return functions
@@ -72,7 +72,6 @@ def PrintFunctions(specFile, tests):
 						print '   { "-%s", NULL},' % category
 						prevCategory = category
 
-#					if HaveTest("gl" + funcName):
 					if funcName in tests:
 						test = "test_%s" % funcName
 					else:
