@@ -989,7 +989,8 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
       else if (voodoo->nTexelfx == 2 &&
                voodoo->fbiRev == 260 &&
                voodoo->tmuConfig[0].tmuRev == 4 &&
-               voodoo->tmuConfig[0].tmuRam == 2) {
+               (voodoo->tmuConfig[0].tmuRam == 2 ||
+                voodoo->tmuConfig[0].tmuRam == 4)) {
          /* Voodoo 2 */
          useBGR = GL_TRUE;
          system = "Voodoo2";
