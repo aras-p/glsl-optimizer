@@ -1,4 +1,4 @@
-/* $Id: fbdev_mode.c,v 1.4 2000/01/07 08:34:44 jtaylor Exp $
+/* $Id: fbdev_mode.c,v 1.5 2000/10/28 10:02:44 jtaylor Exp $
 ******************************************************************************
 
    display-fbdev-mesa
@@ -80,7 +80,7 @@ static int do_setmode(ggi_visual *vis)
 	priv->have_accel = 0;
 	for (id = 1; GGIMesa_fbdev_getapi(vis, id, libname, libargs) == 0; id++) 
 	{
-		if (_ggiOpenDL(vis, libname, libargs, NULL) == NULL) 
+		if (_ggiOpenDL(vis, libname, libargs, NULL) == 0) 
 		{
 			fprintf(stderr, "display-fbdev-mesa: Error opening the "
 				"%s (%s) library.\n", libname, libargs);
@@ -91,7 +91,7 @@ static int do_setmode(ggi_visual *vis)
 	}
 
 	if (priv->oldpriv->accel &&
-	    _ggiOpenDL(vis, priv->accel, NULL, NULL) != NULL) {
+	    _ggiOpenDL(vis, priv->accel, NULL, NULL) != 0) {
 		priv->have_accel = 1;
 	} 
 	else 

@@ -370,7 +370,7 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 	  _mesa_destroy_visual(ctx->gl_vis);
 
 	if (ctx->gl_buffer)
-	  gl_destroy_framebuffer(ctx->gl_buffer);
+	  _mesa_destroy_framebuffer(ctx->gl_buffer);
 
 	info.rgb_flag = rgb_flag;
 	info.db_flag = db_flag;
@@ -459,7 +459,7 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 	ctx->lfb[1] = malloc(ctx->stride * ctx->height);
 	ctx->bufsize = (ctx->stride * ctx->height);
 	
-	ctx->gl_ctx->Visual = ctx->gl_vis;
+	ctx->gl_ctx->Visual = *ctx->gl_vis;
 	ctx->gl_ctx->Pixel.ReadBuffer = 
 	ctx->gl_ctx->Color.DrawBuffer = (db_flag) ? GL_BACK : GL_FRONT;
 
