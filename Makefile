@@ -188,7 +188,6 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/NOTES.imm			\
 	$(DIRECTORY)/src/mesa/drivers/beos/*.cpp			\
-	$(DIRECTORY)/src/mesa/drivers/beos/*.h				\
 	$(DIRECTORY)/src/mesa/drivers/beos/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/common/descrip.mms		\
