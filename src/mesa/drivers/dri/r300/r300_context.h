@@ -212,11 +212,6 @@ struct r300_state_atom {
 #define R300_VPT_ZOFFSET	6
 #define R300_VPT_CMDSIZE	7
 
-#define R300_ZBS_CMD_0		0
-#define R300_ZBS_FACTOR		1
-#define R300_ZBS_CONSTANT	2
-#define R300_ZBS_CMDSIZE	3
-
 #define R300_VIR_CMD_0		0 /* vir is variable size (at least 1) */
 #define R300_VIR_CNTL_0		1
 #define R300_VIR_CNTL_1		2
@@ -260,6 +255,13 @@ struct r300_state_atom {
 #define R300_PS_CMD_0		0
 #define R300_PS_POINTSIZE	1
 #define R300_PS_CMDSIZE		2
+
+#define R300_ZBS_CMD_0		0
+#define R300_ZBS_T_FACTOR	1
+#define R300_ZBS_T_CONSTANT	2
+#define R300_ZBS_W_FACTOR	3
+#define R300_ZBS_W_CONSTANT	4
+#define R300_ZBS_CMDSIZE	5
 
 #define R300_CUL_CMD_0		0
 #define R300_CUL_CULL		1
@@ -379,7 +381,6 @@ struct r300_hw_state {
 	int		max_state_size;	/* in dwords */
 
 	struct r300_state_atom vpt;	/* viewport (1D98) */
-	struct r300_state_atom zbs;	/* zbias (1DB0) */
 	struct r300_state_atom unk2080;	/* (2080) */
 	struct r300_state_atom vof;     /* VAP output format register 0x2090 */
 	struct r300_state_atom vte;	/* (20B0) */
@@ -401,7 +402,8 @@ struct r300_hw_state {
 	struct r300_state_atom unk4260; /* (4260) */
 	struct r300_state_atom unk4274; /* (4274) */
 	struct r300_state_atom unk4288; /* (4288) */
-	struct r300_state_atom unk42A0; /* (42A0) */
+	struct r300_state_atom unk42A0;	/* (42A0) */
+	struct r300_state_atom zbs;	/* zbias (42A4) */
 	struct r300_state_atom unk42B4; /* (42B4) */
 	struct r300_state_atom cul;	/* cull cntl (42B8) */
 	struct r300_state_atom unk42C0; /* (42C0) */

@@ -498,8 +498,15 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 	case GL_CULL_FACE:
 		r300UpdateCulling(ctx);
 		break;
+		
+	case GL_POLYGON_OFFSET_POINT:
+	case GL_POLYGON_OFFSET_LINE:
+		WARN_ONCE("Don't know how to enable polygon offset point/line. Help me !\n");
+		break;
+		
 	case GL_POLYGON_OFFSET_FILL:
-		WARN_ONCE("Don't know how to enable polygon offset fill. Help me !\n");
+		R300_STATECHANGE(r300, unk42B4);
+		r300->hw.unk42B4.cmd[1] = 3;
 		break;
 	case GL_VERTEX_PROGRAM_ARB:
 		//TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, state);
@@ -809,18 +816,17 @@ static void r300DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
 static void r300PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	GLfloat constant = units * rmesa->state.depth.scale;
-
-/*    factor *= 2; */
-/*    constant *= 2; */
+	GLfloat constant = units * /*rmesa->state.depth.scale*/4;
+	
+	factor *= 12; 
 
 /*    fprintf(stderr, "%s f:%f u:%f\n", __FUNCTION__, factor, constant); */
 
-	WARN_ONCE("ZBIAS registers locations might not be correct\n");
-
-	R200_STATECHANGE(rmesa, zbs);
-	rmesa->hw.zbs.cmd[R300_ZBS_FACTOR] = r300PackFloat32(factor);
-	rmesa->hw.zbs.cmd[R300_ZBS_CONSTANT] = r300PackFloat32(constant);
+	R300_STATECHANGE(rmesa, zbs);
+	rmesa->hw.zbs.cmd[R300_ZBS_T_FACTOR] = r300PackFloat32(factor);
+	rmesa->hw.zbs.cmd[R300_ZBS_T_CONSTANT] = r300PackFloat32(constant);
+	rmesa->hw.zbs.cmd[R300_ZBS_W_FACTOR] = r300PackFloat32(factor);
+	rmesa->hw.zbs.cmd[R300_ZBS_W_CONSTANT] = r300PackFloat32(constant);
 }
 
 
@@ -1691,7 +1697,7 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk2134.cmd[2] = 0x00000000;
 #ifdef MESA_BIG_ENDIAN
 	r300->hw.unk2140.cmd[1] = 0x00000002;
-#elif
+#else
 	r300->hw.unk2140.cmd[1] = 0x00000000;
 #endif
 
@@ -1780,9 +1786,11 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4288.cmd[5] = 0x00000000;
 
 	r300->hw.unk42A0.cmd[1] = 0x00000000;
-
-	r300->hw.unk42B4.cmd[1] = 0x00000000;
 	
+#if 0
+	r300->hw.unk42B4.cmd[1] = 0x00000000;
+#endif
+		
 	r300->hw.unk42C0.cmd[1] = 0x4B7FFFFF;
 	r300->hw.unk42C0.cmd[2] = 0x00000000;
 

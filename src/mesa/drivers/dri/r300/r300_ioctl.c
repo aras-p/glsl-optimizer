@@ -68,7 +68,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	GLuint cboffset, cbpitch;
 	drm_r300_cmd_header_t* cmd2;
 	LOCAL_VARS;
-
+	
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s: %s buffer (%i,%i %ix%i)\n",
 			__FUNCTION__, buffer ? "back" : "front",
@@ -220,7 +220,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 		r300->hw.zs.cmd[R300_ZS_CNTL_0] = 0; // disable
 		r300->hw.zs.cmd[R300_ZS_CNTL_1] = 0;
 	}
-
+			
 	/* Make sure we have enough space */
 	r300EnsureCmdBufSpace(r300, r300->hw.max_state_size + 9+8, __FUNCTION__);
 
@@ -253,7 +253,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
    
    reg_start(0x4f18,0);
 	e32(0x00000003);
-         
+	
 }
 
 
@@ -268,6 +268,8 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	int flags = 0;
 	int bits = 0;
 	int swapped;
+	uint32_t unk42B4;
+	uint32_t zbs[4];
 
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s:  all=%d cx=%d cy=%d cw=%d ch=%d\n",
@@ -279,6 +281,23 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 		if (dPriv->numClipRects == 0)
 			return;
 	}
+	
+	/* When unk42B4==0 z-bias is still on for vb mode with points ... */
+	R300_STATECHANGE(r300, zbs);
+	zbs[0]=r300->hw.zbs.cmd[R300_ZBS_T_FACTOR];
+	zbs[1]=r300->hw.zbs.cmd[R300_ZBS_T_CONSTANT];
+	zbs[2]=r300->hw.zbs.cmd[R300_ZBS_W_FACTOR];
+	zbs[3]=r300->hw.zbs.cmd[R300_ZBS_W_CONSTANT];
+	
+	r300->hw.zbs.cmd[R300_ZBS_T_FACTOR] =
+	r300->hw.zbs.cmd[R300_ZBS_T_CONSTANT] =
+	r300->hw.zbs.cmd[R300_ZBS_W_FACTOR] =
+	r300->hw.zbs.cmd[R300_ZBS_W_CONSTANT] = r300PackFloat32(0.0);
+	
+	/* Make sure z-bias isnt on */
+	R300_STATECHANGE(r300, unk42B4);
+	unk42B4=r300->hw.unk42B4.cmd[1];
+	r300->hw.unk42B4.cmd[1]=3;
 
 	if (mask & DD_FRONT_LEFT_BIT) {
 		flags |= DD_FRONT_LEFT_BIT;
@@ -321,6 +340,17 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	 * but do keep it like this for now.
 	 */
 	r300ResetHwState(r300);
+	
+	R300_STATECHANGE(r300, unk42B4);
+	r300->hw.unk42B4.cmd[1]=unk42B4;
+	
+	/* Put real z-bias back */
+	R300_STATECHANGE(r300, zbs);
+	r300->hw.zbs.cmd[R300_ZBS_T_FACTOR] = zbs[0];
+	r300->hw.zbs.cmd[R300_ZBS_T_CONSTANT] = zbs[1];
+	r300->hw.zbs.cmd[R300_ZBS_W_FACTOR] = zbs[2];
+	r300->hw.zbs.cmd[R300_ZBS_W_CONSTANT] = zbs[3];
+
 	/* r300ClearBuffer has trampled all over the hardware state.. */
 	r300->hw.all_dirty=GL_TRUE;
 }

@@ -16,8 +16,12 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_SE_VPORT_ZSCALE                0x1DA8
 #define R300_SE_VPORT_ZOFFSET               0x1DAC
 
-#define R300_SE_ZBIAS_FACTOR                0x1DB0	/* guess */
-#define R300_SE_ZBIAS_CONSTANT              0x1DB4	/* guess */
+/*
+VB mode colorbuffer clears are broken with these too so these would
+probably work also. --aet
+*/
+#define R300_SE_ZBIAS_FACTOR                0x1DB0
+#define R300_SE_ZBIAS_CONSTANT              0x1DB4
 
 /* This register is written directly and also starts data section in many 3d CP_PACKET3's */
 #define R300_VAP_VF_CNTL	0x2084
@@ -421,9 +425,15 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_POINTSIZE_X_SHIFT            16
 #       define R300_POINTSIZE_X_MASK             (0xFFFF << 16) /* GUESS */
 
+#define R300_RE_ZBIAS_T_FACTOR                0x42A4
+#define R300_RE_ZBIAS_T_CONSTANT              0x42A8
+#define R300_RE_ZBIAS_W_FACTOR                0x42AC
+#define R300_RE_ZBIAS_W_CONSTANT              0x42B0
+
 /* This register needs to be set to (1<<1) for RV350 to correctly
    perform depth test (see --vb-triangles in r300_demo)
    Don't know about other chips. - Vladimir
+   This is set to 3 when GL_POLYGON_OFFSET_FILL is on.
     */
 #define R300_RE_OCCLUSION_CNTL		    0x42B4
 #	define R300_OCCLUSION_ON		(1<<1)
