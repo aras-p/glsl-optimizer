@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.15 2000/03/11 23:23:26 brianp Exp $ */
+/* $Id: get.c,v 1.16 2000/03/31 01:04:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,10 +75,16 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
+         *params = INT_TO_BOOL(ctx->Visual->AccumRedBits);
+         break;
       case GL_ACCUM_GREEN_BITS:
+         *params = INT_TO_BOOL(ctx->Visual->AccumGreenBits);
+         break;
       case GL_ACCUM_BLUE_BITS:
+         *params = INT_TO_BOOL(ctx->Visual->AccumBlueBits);
+         break;
       case GL_ACCUM_ALPHA_BITS:
-         *params = INT_TO_BOOL(ctx->Visual->AccumBits);
+         *params = INT_TO_BOOL(ctx->Visual->AccumAlphaBits);
          break;
       case GL_ACCUM_CLEAR_VALUE:
          params[0] = FLOAT_TO_BOOL(ctx->Accum.ClearColor[0]);
@@ -1055,10 +1061,16 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
+         *params = (GLdouble) ctx->Visual->AccumRedBits;
+         break;
       case GL_ACCUM_GREEN_BITS:
+         *params = (GLdouble) ctx->Visual->AccumGreenBits;
+         break;
       case GL_ACCUM_BLUE_BITS:
+         *params = (GLdouble) ctx->Visual->AccumBlueBits;
+         break;
       case GL_ACCUM_ALPHA_BITS:
-         *params = (GLdouble) ctx->Visual->AccumBits;
+         *params = (GLdouble) ctx->Visual->AccumAlphaBits;
          break;
       case GL_ACCUM_CLEAR_VALUE:
          params[0] = (GLdouble) ctx->Accum.ClearColor[0];
@@ -2036,10 +2048,16 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
+         *params = (GLfloat) ctx->Visual->AccumRedBits;
+         break;
       case GL_ACCUM_GREEN_BITS:
+         *params = (GLfloat) ctx->Visual->AccumGreenBits;
+         break;
       case GL_ACCUM_BLUE_BITS:
+         *params = (GLfloat) ctx->Visual->AccumBlueBits;
+         break;
       case GL_ACCUM_ALPHA_BITS:
-         *params = (GLfloat) ctx->Visual->AccumBits;
+         *params = (GLfloat) ctx->Visual->AccumAlphaBits;
          break;
       case GL_ACCUM_CLEAR_VALUE:
          params[0] = ctx->Accum.ClearColor[0];
@@ -2994,10 +3012,16 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
+         *params = (GLint) ctx->Visual->AccumRedBits;
+         break;
       case GL_ACCUM_GREEN_BITS:
+         *params = (GLint) ctx->Visual->AccumGreenBits;
+         break;
       case GL_ACCUM_BLUE_BITS:
+         *params = (GLint) ctx->Visual->AccumBlueBits;
+         break;
       case GL_ACCUM_ALPHA_BITS:
-         *params = (GLint) ctx->Visual->AccumBits;
+         *params = (GLint) ctx->Visual->AccumAlphaBits;
          break;
       case GL_ACCUM_CLEAR_VALUE:
          params[0] = FLOAT_TO_INT( ctx->Accum.ClearColor[0] );
