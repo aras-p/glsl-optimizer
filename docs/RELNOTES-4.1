@@ -101,6 +101,41 @@ DOS			needs updating
 
 
 
+New features in GLUT
+--------------------
+
+1. Frames per second printing
+
+   GLUT now looks for an environment variable called "GLUT_FPS".  If it's
+   set, GLUT will print out a frames/second statistic to stderr when
+   glutSwapBuffers() is called.  By default, frames/second is computed
+   and displayed once every 5 seconds.  You can specify a different
+   interval (in milliseconds) when you set the env var.  For example
+   'export GLUT_FPS=1000' or 'setenv GLUT_FPS 1000' will set the interval
+   to one second.
+
+   NOTE: the demo or application must call the glutInit() function for
+   this to work.  Otherwise, the env var will be ignored.
+
+   Finally, this feature may not be reliable in multi-window programs.
+
+
+2. glutGetProcAddress() function
+
+   The new function:
+
+        void *glutGetProcAddress(const char *procName)
+
+   is a wrapper for glXGetProcAddressARB() and wglGetProcAddress().  It
+   lets you dynamically get the address of an OpenGL function at runtime.
+   The GLUT_API_VERSION has been bumped to 5, but I haven't bumped the
+   GLUT version number from 3.7 since that's probably Mark Kilgard's role.
+
+   This function should probably also be able to return the address of
+   GLUT functions themselves, but it doesn't do that yet.
+
+
+
 XXX Things To Do Yet XXXX
 -------------------------
 
@@ -215,4 +250,4 @@ are some things to change:
 
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-4.1,v 1.14 2002/08/01 15:16:46 brianp Exp $
+$Id: RELNOTES-4.1,v 1.15 2002/08/17 00:23:19 brianp Exp $
