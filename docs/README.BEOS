@@ -52,11 +52,24 @@ In any case, you'll have to download and compile GLUT for BeOS and
 put libglut.so in the Mesa-3.x/lib/ directory before you can compile
 the demos/, samples/ and book/ programs.
 
-GLUT for BeOS can be found at:  ??? fill-in ???
+GLUT for BeOS can be found at
+http://home.beoscentral.com/jehamby/Glut-3.5-x86.zip
 
 This is a special version of GLUT adapted for the BeOS.  I don't
 believe Mark Kilgard's normal GLUT distribution includes BeOS
 support.
+
+
+
+Special Features
+
+Mesa's implementation of the BGLView class has an extra member
+function:  CopySubBufferMESA().  It basically works like SwapBuffers()
+but it only copies a sub region from the back buffer to the front
+buffer.  This is a useful optimization for some applications.
+If you use this method in your code be sure that you check at runtime
+that you're actually using Mesa (with glGetString) so you don't
+cause a fatal error when running with Be's OpenGL.
 
 
 
@@ -76,4 +89,4 @@ work with the new Mesa 3.1 BGLView implementation.
 
 
 ----------------------------------------------------------------------
-$Id: README.BEOS,v 1.3 1999/02/06 06:32:20 brianp Exp $
+$Id: README.BEOS,v 1.4 1999/02/11 03:52:24 brianp Exp $
