@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.43 2001/05/29 15:23:49 brianp Exp $ */
+/* $Id: mtypes.h,v 1.44 2001/05/30 15:22:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -312,6 +312,7 @@ struct gl_current_attrib {
    GLuint  RasterIndex;				/* Current raster index */
    GLfloat *RasterTexCoord;			/* Current raster texcoord*/
    GLfloat RasterMultiTexCoord[MAX_TEXTURE_UNITS][4];
+   GLfloat RasterFogCoord;
    GLboolean RasterPosValid;			/* Raster po valid flag */
 };
 
@@ -424,7 +425,7 @@ struct gl_fog_attrib {
    GLfloat Index;		/* Fog index */
    GLenum Mode;			/* Fog mode */
    GLboolean ColorSumEnabled;
-   GLenum FogCoordinateSource;
+   GLenum FogCoordinateSource;  /* GL_EXT_fog_coord */
 };
 
 

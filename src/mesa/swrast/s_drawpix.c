@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.19 2001/05/16 20:27:12 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.20 2001/05/30 15:22:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -490,15 +490,19 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
    const GLint desty = y;
    GLint row, drawWidth;
    GLdepth zspan[MAX_WIDTH];
+   GLfloat fogSpan[MAX_WIDTH];
 
    drawWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
 
    /* Fragment depth values */
    if (ctx->Depth.Test || ctx->Fog.Enabled) {
       GLdepth zval = (GLdepth) (ctx->Current.RasterPos[2] * ctx->DepthMaxF);
+      GLfloat fog = (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) ?
+         ctx->Current.RasterFogCoord : ctx->Current.RasterDistance;
       GLint i;
       for (i = 0; i < drawWidth; i++) {
 	 zspan[i] = zval;
+         fogSpan[i] = fog;
       }
    }
 
@@ -513,11 +517,11 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
                               type, source, &ctx->Unpack,
                               ctx->_ImageTransferState);
       if (zoom) {
-         _mesa_write_zoomed_index_span(ctx, drawWidth, x, y, zspan, 0,
+         _mesa_write_zoomed_index_span(ctx, drawWidth, x, y, zspan, fogSpan,
                                        indexes, desty);
       }
       else {
-         _mesa_write_index_span(ctx, drawWidth, x, y, zspan, 0, indexes,
+         _mesa_write_index_span(ctx, drawWidth, x, y, zspan, fogSpan, indexes,
                                 NULL, GL_BITMAP);
       }
    }
@@ -714,6 +718,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
    const GLint desty = y;
    GLdepth zspan[MAX_WIDTH];
+   GLfloat fogSpan[MAX_WIDTH];
    GLboolean quickDraw;
    GLfloat *convImage = NULL;
    GLuint transferOps = ctx->_ImageTransferState;
@@ -731,9 +736,12 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    if (ctx->Depth.Test || ctx->Fog.Enabled) {
       /* fill in array of z values */
       GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->DepthMaxF);
+      GLfloat fog = (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) ?
+         ctx->Current.RasterFogCoord : ctx->Current.RasterDistance;
       GLint i;
       for (i=0;i<width;i++) {
 	 zspan[i] = z;
+         fogSpan[i] = fog;
       }
    }
 
@@ -852,11 +860,11 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
                                             (CONST GLchan (*)[4]) rgba, NULL);
          }
          else if (zoom) {
-            _mesa_write_zoomed_rgba_span(ctx, width, x, y, zspan, 0,
+            _mesa_write_zoomed_rgba_span(ctx, width, x, y, zspan, fogSpan,
                                          (CONST GLchan (*)[4]) rgba, desty);
          }
          else {
-            _mesa_write_rgba_span(ctx, (GLuint) width, x, y, zspan, 0,
+            _mesa_write_rgba_span(ctx, (GLuint) width, x, y, zspan, fogSpan,
                                   rgba, NULL, GL_BITMAP);
          }
       }

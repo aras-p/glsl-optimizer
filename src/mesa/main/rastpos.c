@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.24 2001/05/01 07:25:41 keithw Exp $ */
+/* $Id: rastpos.c,v 1.25 2001/05/30 15:22:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -320,7 +320,7 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    ctx->Current.RasterPos[3] = clip[3];
    ctx->Current.RasterPosValid = GL_TRUE;
 
-   /* FOG??? */
+   ctx->Current.RasterFogCoord = ctx->Current.FogCoord;
 
    {
       GLuint texSet;

@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.18 2001/05/16 20:27:12 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.19 2001/05/30 15:22:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -98,6 +98,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLdepth zspan[MAX_WIDTH];
+   GLfloat fogSpan[MAX_WIDTH];
    GLboolean quick_draw;
    GLint row;
    GLboolean changeBuffer;
@@ -108,11 +109,13 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    if (ctx->Depth.Test || ctx->Fog.Enabled) {
       /* fill in array of z values */
-      GLdepth z = (GLdepth)
-         (ctx->Current.RasterPos[2] * ctx->DepthMax);
+      GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->DepthMax);
+      GLfloat fog = (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) ?
+         ctx->Current.RasterFogCoord : ctx->Current.RasterDistance;
       GLint i;
       for (i = 0; i < width; i++) {
          zspan[i] = z;
+         fogSpan[i] = fog;
       }
    }
 
@@ -282,11 +285,11 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 				       (const GLchan (*)[4])rgba, NULL );
       }
       else if (zoom) {
-         _mesa_write_zoomed_rgba_span( ctx, width, destx, dy, zspan, 0,
+         _mesa_write_zoomed_rgba_span( ctx, width, destx, dy, zspan, fogSpan,
 				    (const GLchan (*)[4])rgba, desty);
       }
       else {
-         _mesa_write_rgba_span( ctx, width, destx, dy, zspan, 0, rgba,
+         _mesa_write_rgba_span( ctx, width, destx, dy, zspan, fogSpan, rgba,
                                 NULL, GL_BITMAP );
       }
    }
@@ -304,6 +307,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLdepth zspan[MAX_WIDTH];
+   GLfloat fogSpan[MAX_WIDTH];
    GLchan rgba[MAX_WIDTH][4];
    GLchan *tmpImage,*p;
    GLboolean quick_draw;
@@ -340,8 +344,11 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (ctx->Depth.Test || ctx->Fog.Enabled) {
       /* fill in array of z values */
       GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->DepthMax);
+      GLfloat fog = (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) ?
+         ctx->Current.RasterFogCoord : ctx->Current.RasterDistance;
       for (i=0;i<width;i++) {
          zspan[i] = z;
+         fogSpan[i] = fog;
       }
    }
 
@@ -543,11 +550,11 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 				       (const GLchan (*)[4])rgba, NULL );
       }
       else if (zoom) {
-         _mesa_write_zoomed_rgba_span( ctx, width, destx, dy, zspan, 0,
+         _mesa_write_zoomed_rgba_span( ctx, width, destx, dy, zspan, fogSpan,
 				    (const GLchan (*)[4])rgba, desty);
       }
       else {
-         _mesa_write_rgba_span( ctx, width, destx, dy, zspan, 0, rgba,
+         _mesa_write_rgba_span( ctx, width, destx, dy, zspan, fogSpan, rgba,
                                 NULL, GL_BITMAP );
       }
    }
@@ -567,6 +574,7 @@ static void copy_ci_pixels( GLcontext *ctx,
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLdepth zspan[MAX_WIDTH];
+   GLfloat fogSpan[MAX_WIDTH];
    GLuint *tmpImage,*p;
    GLint sy, dy, stepy;
    GLint i, j;
@@ -595,8 +603,11 @@ static void copy_ci_pixels( GLcontext *ctx,
    if (ctx->Depth.Test || ctx->Fog.Enabled) {
       /* fill in array of z values */
       GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->DepthMax);
+      GLfloat fog = (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) ?
+         ctx->Current.RasterFogCoord : ctx->Current.RasterDistance;
       for (i=0;i<width;i++) {
          zspan[i] = z;
+         fogSpan[i] = fog;
       }
    }
 
@@ -658,11 +669,11 @@ static void copy_ci_pixels( GLcontext *ctx,
       }
 
       if (zoom) {
-         _mesa_write_zoomed_index_span(ctx, width, destx, dy, zspan, 0,
+         _mesa_write_zoomed_index_span(ctx, width, destx, dy, zspan, fogSpan,
                                        indexes, desty );
       }
       else {
-         _mesa_write_index_span(ctx, width, destx, dy, zspan, 0, indexes,
+         _mesa_write_index_span(ctx, width, destx, dy, zspan, fogSpan, indexes,
                                 NULL, GL_BITMAP);
       }
    }
@@ -686,6 +697,7 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 {
    GLfloat depth[MAX_WIDTH];
    GLdepth zspan[MAX_WIDTH];
+   GLfloat fogSpan[MAX_WIDTH];
    GLfloat *p, *tmpImage;
    GLuint indexes[MAX_WIDTH];
    GLint sy, dy, stepy;
@@ -732,6 +744,14 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       }
    }
 
+   if (ctx->Fog.Enabled) {
+      GLfloat fog = (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) ?
+         ctx->Current.RasterFogCoord : ctx->Current.RasterDistance;
+      for (i = 0; i < width; i++) {
+         fogSpan[i] = fog;
+      }
+   }
+
    if (overlapping) {
       GLint ssy = sy;
       tmpImage = (GLfloat *) MALLOC(width * height * sizeof(GLfloat));
@@ -768,22 +788,22 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
       if (ctx->Visual.rgbMode) {
          if (zoom) {
-            _mesa_write_zoomed_rgba_span( ctx, width, destx, dy, zspan, 0,
-				       (const GLchan (*)[4])rgba, desty );
+            _mesa_write_zoomed_rgba_span( ctx, width, destx, dy, zspan,
+                                   fogSpan, (const GLchan (*)[4])rgba, desty );
          }
          else {
-            _mesa_write_rgba_span( ctx, width, destx, dy, zspan, 0,
+            _mesa_write_rgba_span( ctx, width, destx, dy, zspan, fogSpan,
                                    rgba, NULL, GL_BITMAP);
          }
       }
       else {
          if (zoom) {
             _mesa_write_zoomed_index_span( ctx, width, destx, dy,
-                                           zspan, 0, indexes, desty );
+                                           zspan, fogSpan, indexes, desty );
          }
          else {
             _mesa_write_index_span( ctx, width, destx, dy,
-                                    zspan, 0, indexes, NULL, GL_BITMAP );
+                                    zspan, fogSpan, indexes, NULL, GL_BITMAP );
          }
       }
    }
