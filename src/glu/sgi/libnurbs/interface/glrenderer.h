@@ -35,8 +35,8 @@
 /*
  * glrenderer.h
  *
- * $Date: 2001/08/07 17:34:11 $ $Revision: 1.3 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glrenderer.h,v 1.3 2001/08/07 17:34:11 brianp Exp $
+ * $Date: 2004/02/26 14:58:11 $ $Revision: 1.4 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glrenderer.h,v 1.4 2004/02/26 14:58:11 brianp Exp $
  */
 
 #ifndef __gluglrenderer_h_
@@ -47,6 +47,10 @@
 #include "nurbstess.h"
 #include "glsurfeval.h"
 #include "glcurveval.h"
+
+extern "C" {
+      typedef void (APIENTRY *errorCallbackType)( GLenum );
+}
 
 class GLUnurbs : public NurbsTessellator {
 
@@ -70,7 +74,7 @@ public:
 		    }
     GLboolean	getautoloadmode( void ) { return autoloadmode; }
 
-    void	(APIENTRY *errorCallback)( GLenum );
+    errorCallbackType errorCallback;
     void	postError( int which ) 
 		    { if (errorCallback) (errorCallback)( (GLenum)which ); }
 #ifdef _WIN32
