@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.0.1
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -1302,7 +1302,7 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
       program->IsPositionInvariant = parseState.isPositionInvariant;
       program->IsNVProgram = GL_TRUE;
 
-#ifdef DEBUG
+#ifdef DEBUG_foo
       _mesa_printf("--- glLoadProgramNV result ---\n");
       _mesa_print_nv_vertex_program(program);
       _mesa_printf("------------------------------\n");

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.0
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -1487,7 +1487,7 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
       _mesa_assign_program_registers(&(program->SymbolTable));
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_foo
       _mesa_printf("--- glLoadProgramNV(%d) result ---\n", program->Base.Id);
       _mesa_print_nv_fragment_program(program);
       _mesa_printf("----------------------------------\n");
