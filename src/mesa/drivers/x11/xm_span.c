@@ -1,4 +1,4 @@
-/* $Id: xm_span.c,v 1.11 2001/03/19 02:25:36 keithw Exp $ */
+/* $Id: xm_span.c,v 1.12 2001/05/10 14:21:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2562,11 +2562,32 @@ static void write_span_mono_pixmap( MONO_SPAN_ARGS )
       XMesaFillRectangle( dpy, buffer, gc, (int) x, (int) y, n, 1 );
    }
    else {
+#if 0
       for (i=0;i<n;i++,x++) {
 	 if (mask[i]) {
 	    XMesaDrawPoint( dpy, buffer, gc, (int) x, (int) y );
 	 }
       }
+#else
+      /* This version is usually faster.  Contributed by Jeff Epler
+       * and cleaned up by Keith Whitwell.
+       */
+      for (i = 0; i < n; ) {
+         GLuint start = i;
+         /* Identify and emit contiguous rendered pixels
+          */
+         for( ; i < n && mask[i]; i++)
+            /* Nothing */;
+         if (start < i) 
+            XMesaFillRectangle( dpy, buffer, gc,
+                                (int)(x+start), (int) y,
+                                (int)(i-start), 1);
+         /* Eat up non-rendered pixels
+          */
+         for(; i < n && !mask[i]; i++)
+            /* Nothing */;
+      }
+#endif
    }
 }
 
