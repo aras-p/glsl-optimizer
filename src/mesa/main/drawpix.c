@@ -1,8 +1,8 @@
-/* $Id: drawpix.c,v 1.26 2000/06/30 22:19:41 brianp Exp $ */
+/* $Id: drawpix.c,v 1.27 2000/08/16 17:32:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.4
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -122,7 +122,7 @@ simple_DrawPixels( GLcontext *ctx, GLint x, GLint y,
        && ctx->ColorMatrix.type == MATRIX_IDENTITY
        && !ctx->Pixel.ColorTableEnabled
        && !ctx->Pixel.PostColorMatrixColorTableEnabled
-       && ctx->Pixel.PostConvolutionColorTableEnabled
+       && !ctx->Pixel.PostConvolutionColorTableEnabled
        && !ctx->Pixel.MinMaxEnabled
        && !ctx->Pixel.HistogramEnabled
        && ctx->Pixel.IndexShift==0 && ctx->Pixel.IndexOffset==0
