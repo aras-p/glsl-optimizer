@@ -699,6 +699,8 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMapBufferARB(access)");
    }
 
+   bufObj->Access = access;
+
    return bufObj->Pointer;
 }
 
@@ -710,7 +712,6 @@ _mesa_UnmapBufferARB(GLenum target)
    struct gl_buffer_object *bufObj;
    GLboolean status = GL_TRUE;
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
-
 
    bufObj = buffer_object_get_target( ctx, target, "UnmapBufferARB" );
    if ( bufObj == NULL ) {
@@ -727,6 +728,7 @@ _mesa_UnmapBufferARB(GLenum target)
       status = (*ctx->Driver.UnmapBuffer)( ctx, target, bufObj );
    }
 
+   bufObj->Access = GL_READ_WRITE_ARB; /* initial value, OK? */
    bufObj->Pointer = NULL;
 
    return status;
