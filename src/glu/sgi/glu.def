@@ -1,5 +1,5 @@
 DESCRIPTION 'Mesa GLU (OpenGL work-alike) for Win32'
-VERSION 4.0
+VERSION 4.1
 
 EXPORTS
 	gluBeginCurve
