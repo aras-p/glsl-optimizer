@@ -7,7 +7,7 @@ INCDIR = $(TOP)/include
 
 OSMESA_LIBS = -L$(LIB_DIR) -lglut -lOSMesa -lGLU -lGL $(APP_LIB_DEPS)
 
-LIB_DEP = $(LIB_DIR)/$(GL_LIB) $(LIB_DIR)/$(GLU_LIB) $(LIB_DIR)/$(GLUT_LIB)
+LIB_DEP = $(LIB_DIR)/$(GL_LIB_NAME) $(LIB_DIR)/$(GLU_LIB_NAME) $(LIB_DIR)/$(GLUT_LIB_NAME)
 
 PROGS = \
 	arbfplight \

@@ -68,7 +68,7 @@ INCLUDES = -I. -I$(TOP)/include
 
 ##### TARGETS #####
 
-default: depend $(PROGS)
+default: $(PROGS)
 
 clean:
 	rm -f $(PROGS)
@@ -100,9 +100,6 @@ readtex.c: $(TOP)/progs/util/readtex.c
 	ln -s $(TOP)/progs/util/readtex.c .
 
 
-# Update dependencies
-depend: $(SOURCES)
-	makedepend -fdepend -Y $(INCLUDES) $(SOURCES)
 
 
 # Emacs tags
