@@ -58,12 +58,28 @@ OBJECTS = \
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 
+# need some special rules here, unfortunately
 x86/matypes.h: main/mtypes.h tnl/t_context.h x86/gen_matypes.c
 	$(CC) $(INCLUDE_DIRS) $(CFLAGS) x86/gen_matypes.c -o x86/gen_matypes
 	./x86/gen_matypes > x86/matypes.h
-	rm -f x86/gen_matypes x86/*.o
+	#rm -f x86/gen_matypes x86/*.o
 
 x86/common_x86_asm.o: x86/matypes.h
+x86/3dnow_normal.o: x86/matypes.h
+x86/3dnow_xform1.o: x86/matypes.h
+x86/3dnow_xform2.o: x86/matypes.h
+x86/3dnow_xform3.o: x86/matypes.h
+x86/3dnow_xform4.o: x86/matypes.h
+x86/mmx_blend.o: x86/matypes.h
+x86/sse_normal.o: x86/matypes.h
+x86/sse_xform1.o: x86/matypes.h
+x86/sse_xform2.o: x86/matypes.h
+x86/sse_xform3.o: x86/matypes.h
+x86/sse_xform4.o: x86/matypes.h
+x86/x86_cliptest.o: x86/matypes.h
+x86/x86_xform2.o: x86/matypes.h
+x86/x86_xform3.o: x86/matypes.h
+x86/x86_xform4.o: x86/matypes.h
 
 
 
