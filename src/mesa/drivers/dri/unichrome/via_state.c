@@ -194,7 +194,7 @@ void viaEmitState(viaContextPtr vmesa)
 	 OUT_RING( HC_HEADER2 );
 	 OUT_RING( (HC_ParaType_Tex << 16) | (HC_SubType_TexGeneral << 24) );
 
-	 if (ctx->Texture._EnabledUnits > 1) {
+	 if (texUnit0->Enabled && texUnit1->Enabled) {
 	    if (VIA_DEBUG) fprintf(stderr, "multi texture\n");
 	    nDummyValue = (HC_SubA_HTXSMD << 24) | (1 << 3);
                 
@@ -355,6 +355,7 @@ void viaEmitState(viaContextPtr vmesa)
 	 struct gl_texture_object *texObj = texUnit1->_Current;
 	 viaTextureObjectPtr t = (viaTextureObjectPtr)texObj->DriverData;
 	 GLuint numLevels = t->lastLevel - t->firstLevel + 1;
+	 int texunit = (texUnit0->Enabled ? 1 : 0);
 	 if (VIA_DEBUG) {
 	    fprintf(stderr, "texture1 enabled\n");
 	    fprintf(stderr, "texture level %d\n", t->actualLevel);
@@ -362,7 +363,7 @@ void viaEmitState(viaContextPtr vmesa)
 	 if (numLevels == 8) {
 	    BEGIN_RING(27);
 	    OUT_RING( HC_HEADER2 );
-	    OUT_RING( (HC_ParaType_Tex << 16) |  (1 << 24) );
+	    OUT_RING( (HC_ParaType_Tex << 16) |  (texunit << 24) );
 	    OUT_RING( t->regTexFM );
 	    OUT_RING( (HC_SubA_HTXnL0OS << 24) |
 	       ((t->lastLevel) << HC_HTXnLVmax_SHIFT) | t->firstLevel );
@@ -394,7 +395,7 @@ void viaEmitState(viaContextPtr vmesa)
 	 else if (numLevels > 1) {
 	    BEGIN_RING(12 + numLevels * 2);
 	    OUT_RING( HC_HEADER2 );
-	    OUT_RING( (HC_ParaType_Tex << 16) |  (1 << 24) );
+	    OUT_RING( (HC_ParaType_Tex << 16) |  (texunit << 24) );
 	    OUT_RING( t->regTexFM );
 	    OUT_RING( (HC_SubA_HTXnL0OS << 24) |
 	       ((t->lastLevel) << HC_HTXnLVmax_SHIFT) | t->firstLevel );
@@ -428,7 +429,7 @@ void viaEmitState(viaContextPtr vmesa)
 	 else {
 	    BEGIN_RING(9);
 	    OUT_RING( HC_HEADER2 );
-	    OUT_RING( (HC_ParaType_Tex << 16) |  (1 << 24) );
+	    OUT_RING( (HC_ParaType_Tex << 16) |  (texunit << 24) );
 	    OUT_RING( t->regTexFM );
 	    OUT_RING( (HC_SubA_HTXnL0OS << 24) |
 	       ((t->lastLevel) << HC_HTXnLVmax_SHIFT) | t->firstLevel );
@@ -458,7 +459,7 @@ void viaEmitState(viaContextPtr vmesa)
 
 	    BEGIN_RING(2 + table->Size);
 	    OUT_RING( HC_HEADER2 );
-	    OUT_RING( (HC_ParaType_Palette << 16) | (1 << 24) );
+	    OUT_RING( (HC_ParaType_Palette << 16) | (texunit << 24) );
 	    for (j = 0; j < table->Size; j++) {
 	       OUT_RING( tableF[j] );
 	    }
@@ -967,6 +968,8 @@ static void viaChooseTextureState(GLcontext *ctx)
                 return;
             }
 
+            vmesa->regEnable |= HC_HenTXMP_MASK | HC_HenTXCH_MASK | HC_HenTXPP_MASK;
+
             switch (texObj->MinFilter) {
             case GL_NEAREST:
                 vmesa->regHTXnTB_1 = HC_HTXnFLSs_Nearest |
@@ -1001,13 +1004,13 @@ static void viaChooseTextureState(GLcontext *ctx)
             }
 
 	    switch(texObj->MagFilter) {
-	    case GL_NEAREST:
-	       vmesa->regHTXnTB_1 |= HC_HTXnFLSs_Nearest |
-		  HC_HTXnFLTs_Nearest;
-	       break;
 	    case GL_LINEAR:
-	       vmesa->regHTXnTB_1 |= HC_HTXnFLSs_Linear |
-		  HC_HTXnFLTs_Linear;
+               vmesa->regHTXnTB_1 |= HC_HTXnFLSe_Linear |
+                                     HC_HTXnFLTe_Linear;
+	       break;
+	    case GL_NEAREST:
+               vmesa->regHTXnTB_1 |= HC_HTXnFLSe_Nearest |
+                                     HC_HTXnFLTe_Nearest;
 	       break;
 	    default:
 	       break;
