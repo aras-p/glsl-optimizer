@@ -102,6 +102,10 @@ PostBuild_Cmds=if not exist ..\..\..\..\..\lib md ..\..\..\..\..\lib	copy Debug\
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=..\..\common\driverfuncs.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mesa.def
 # End Source File
 # Begin Source File
@@ -116,6 +120,10 @@ SOURCE=.\wmesa.c
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=..\..\common\driverfuncs.h
+# End Source File
 # Begin Source File
 
 SOURCE=.\wmesadef.h
