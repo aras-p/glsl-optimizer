@@ -93,6 +93,33 @@ _ALPHA(RGBA8888),
 static const struct {
 	GLuint format, filter;
 } tx_table[] = {
+#ifdef MESA_BIG_ENDIAN
+/*
+ * NOTE: As we can't do swapping (RBBM_GUI_CNTL doesn't seems to work
+ *       on r300) we declare the texture format in swapped form. We
+ *       should better find a way to ask the hardware to do the swapping.
+ *       Jerome Glisse
+ */
+	    {R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8), 0},
+	    {R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8), 0},
+	    {0xffffff02, 0},
+	    {0xffffff03, 0},
+	    {0xffffff04, 0},
+	    {0xffffff05, 0},
+	    {0xffffff06, 0},
+	    {0xffffff07, 0},
+	    {0xffffff08, 0},
+	    {0xffffff09, 0},
+	    {0xffffff10, 0},
+	    {0xffffff11, 0},
+	    {R300_EASY_TX_FORMAT(Y, Y, Y, X, Y8X8), 0},
+	    {0xffffff13, 0},
+	    {0xffffff14, 0},
+	    {0xffffff15,  0},
+	    {0xffffff16,  0},
+	    {0xffffff17, 0},
+	    };
+#elif
 	    {R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8), 0},
 	    {0xffffff01, 0},
 	    {0xffffff02, 0},
@@ -112,7 +139,7 @@ static const struct {
 	    {0xffffff16,  0},
 	    {0xffffff17, 0},
 	    };
-
+#endif
 
 #undef _COLOR
 #undef _ALPHA
