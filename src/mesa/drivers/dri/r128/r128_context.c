@@ -144,7 +144,7 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
    driParseConfigFiles (&rmesa->optionCache, &r128scrn->optionCache,
                         r128scrn->driScreen->myNum, "r128");
 
-   rmesa->sarea = (R128SAREAPrivPtr)((char *)sPriv->pSAREA +
+   rmesa->sarea = (drm_r128_sarea_t *)((char *)sPriv->pSAREA +
 				     r128scrn->sarea_priv_offset);
 
    rmesa->CurrentTexObj[0] = NULL;
@@ -159,9 +159,9 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
 	    r128scrn->texSize[i],
 	    12,
 	    R128_NR_TEX_REGIONS,
-	    rmesa->sarea->texList[i],
-	    & rmesa->sarea->texAge[i],
-	    & rmesa->swapped,
+	    (drmTextureRegionPtr)rmesa->sarea->tex_list[i],
+	    &rmesa->sarea->tex_age[i],
+	    &rmesa->swapped,
 	    sizeof( r128TexObj ),
 	    (destroy_texture_object_t *) r128DestroyTexObj );
 

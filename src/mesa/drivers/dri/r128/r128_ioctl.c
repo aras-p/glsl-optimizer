@@ -112,7 +112,7 @@ void r128FlushVerticesLocked( r128ContextPtr rmesa )
    int count = rmesa->num_verts;
    int prim = rmesa->hw_primitive;
    int fd = rmesa->driScreen->fd;
-   drmR128Vertex vertex;
+   drm_r128_vertex_t vertex;
    int i;
 
    rmesa->num_verts = 0;
@@ -142,7 +142,7 @@ void r128FlushVerticesLocked( r128ContextPtr rmesa )
       vertex.idx = buffer->idx;
       vertex.count = count;
       vertex.discard = 1;
-      drmCommandWrite( fd, DRM_R128_VERTEX, &vertex, sizeof(drmR128Vertex) );
+      drmCommandWrite( fd, DRM_R128_VERTEX, &vertex, sizeof(vertex) );
    }
    else
    {
@@ -168,7 +168,7 @@ void r128FlushVerticesLocked( r128ContextPtr rmesa )
          vertex.idx = buffer->idx;
          vertex.count = count;
          vertex.discard = discard;
-         drmCommandWrite( fd, DRM_R128_VERTEX, &vertex, sizeof(drmR128Vertex) );
+         drmCommandWrite( fd, DRM_R128_VERTEX, &vertex, sizeof(vertex) );
       }
    }
 
@@ -187,7 +187,7 @@ void r128FireBlitLocked( r128ContextPtr rmesa, drmBufPtr buffer,
 			 GLint offset, GLint pitch, GLint format,
 			 GLint x, GLint y, GLint width, GLint height )
 {
-   drmR128Blit blit;
+   drm_r128_blit_t blit;
    GLint ret;
 
    blit.idx = buffer->idx;
@@ -200,7 +200,7 @@ void r128FireBlitLocked( r128ContextPtr rmesa, drmBufPtr buffer,
    blit.height = height;
 
    ret = drmCommandWrite( rmesa->driFd, DRM_R128_BLIT, 
-                          &blit, sizeof(drmR128Blit) );
+                          &blit, sizeof(blit) );
 
    if ( ret ) {
       UNLOCK_HARDWARE( rmesa );
@@ -410,7 +410,7 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = rmesa->driDrawable;
-   drmR128Clear clear;
+   drm_r128_clear_t clear;
    GLuint flags = 0;
    GLint i;
    GLint ret;
@@ -433,17 +433,17 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    }
 
    if ( mask & DD_FRONT_LEFT_BIT ) {
-      flags |= DRM_R128_FRONT_BUFFER;
+      flags |= R128_FRONT;
       mask &= ~DD_FRONT_LEFT_BIT;
    }
 
    if ( mask & DD_BACK_LEFT_BIT ) {
-      flags |= DRM_R128_BACK_BUFFER;
+      flags |= R128_BACK;
       mask &= ~DD_BACK_LEFT_BIT;
    }
 
    if ( ( mask & DD_DEPTH_BIT ) && ctx->Depth.Mask ) {
-      flags |= DRM_R128_DEPTH_BUFFER;
+      flags |= R128_DEPTH;
       mask &= ~DD_DEPTH_BIT;
    }
 #if 0
@@ -520,7 +520,7 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
          clear.depth_mask = ~0;
 
          ret = drmCommandWrite( rmesa->driFd, DRM_R128_CLEAR,
-                                &clear, sizeof(drmR128Clear) );
+                                &clear, sizeof(clear) );
 
 	 if ( ret ) {
 	    UNLOCK_HARDWARE( rmesa );
@@ -549,7 +549,7 @@ void r128WriteDepthSpanLocked( r128ContextPtr rmesa,
 			       const GLubyte mask[] )
 {
    drm_clip_rect_t *pbox = rmesa->pClipRects;
-   drmR128Depth d;
+   drm_r128_depth_t d;
    int nbox = rmesa->numClipRects;
    int fd = rmesa->driScreen->fd;
    int i;
@@ -569,14 +569,14 @@ void r128WriteDepthSpanLocked( r128ContextPtr rmesa,
 	 rmesa->sarea->nbox = nbox;
       }
 
-      d.func = DRM_R128_WRITE_SPAN;
+      d.func = R128_WRITE_SPAN;
       d.n = n;
       d.x = (int*)&x;
       d.y = (int*)&y;
       d.buffer = (unsigned int *)depth;
       d.mask = (unsigned char *)mask;
 
-      drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(drmR128Depth));
+      drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(d));
 
    }
    else
@@ -592,14 +592,14 @@ void r128WriteDepthSpanLocked( r128ContextPtr rmesa,
 
 	 rmesa->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
 
-         d.func = DRM_R128_WRITE_SPAN;
+         d.func = R128_WRITE_SPAN;
          d.n = n;
          d.x = (int*)&x;
          d.y = (int*)&y;
          d.buffer = (unsigned int *)depth;
          d.mask = (unsigned char *)mask;
 
-         drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(drmR128Depth));
+         drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(d));
       }
    }
 
@@ -612,7 +612,7 @@ void r128WriteDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 				 const GLubyte mask[] )
 {
    drm_clip_rect_t *pbox = rmesa->pClipRects;
-   drmR128Depth d;
+   drm_r128_depth_t d;
    int nbox = rmesa->numClipRects;
    int fd = rmesa->driScreen->fd;
    int i;
@@ -632,14 +632,14 @@ void r128WriteDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 	 rmesa->sarea->nbox = nbox;
       }
 
-      d.func = DRM_R128_WRITE_PIXELS;
+      d.func = R128_WRITE_PIXELS;
       d.n = n;
       d.x = (int*)&x;
       d.y = (int*)&y;
       d.buffer = (unsigned int *)depth;
       d.mask = (unsigned char *)mask;
 
-      drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(drmR128Depth));
+      drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(d));
    }
    else
    {
@@ -654,14 +654,14 @@ void r128WriteDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 
 	 rmesa->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
 
-         d.func = DRM_R128_WRITE_PIXELS;
+         d.func = R128_WRITE_PIXELS;
          d.n = n;
          d.x = (int*)&x;
          d.y = (int*)&y;
          d.buffer = (unsigned int *)depth;
          d.mask = (unsigned char *)mask;
 
-         drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(drmR128Depth));
+         drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(d));
       }
    }
 
@@ -672,7 +672,7 @@ void r128ReadDepthSpanLocked( r128ContextPtr rmesa,
 			      GLuint n, GLint x, GLint y )
 {
    drm_clip_rect_t *pbox = rmesa->pClipRects;
-   drmR128Depth d;
+   drm_r128_depth_t d;
    int nbox = rmesa->numClipRects;
    int fd = rmesa->driScreen->fd;
    int i;
@@ -692,14 +692,14 @@ void r128ReadDepthSpanLocked( r128ContextPtr rmesa,
 	 rmesa->sarea->nbox = nbox;
       }
 
-      d.func = DRM_R128_READ_SPAN;
+      d.func = R128_READ_SPAN;
       d.n = n;
       d.x = (int*)&x;
       d.y = (int*)&y;
       d.buffer = NULL;
       d.mask = NULL;
 
-      drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(drmR128Depth));
+      drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(d));
    }
    else
    {
@@ -714,14 +714,14 @@ void r128ReadDepthSpanLocked( r128ContextPtr rmesa,
 
 	 rmesa->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
 
-         d.func = DRM_R128_READ_SPAN;
+         d.func = R128_READ_SPAN;
          d.n = n;
          d.x = (int*)&x;
          d.y = (int*)&y;
          d.buffer = NULL;
          d.mask = NULL;
 
-         drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(drmR128Depth));
+         drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(d));
       }
    }
 
@@ -732,7 +732,7 @@ void r128ReadDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 				const GLint x[], const GLint y[] )
 {
    drm_clip_rect_t *pbox = rmesa->pClipRects;
-   drmR128Depth d;
+   drm_r128_depth_t d;
    int nbox = rmesa->numClipRects;
    int fd = rmesa->driScreen->fd;
    int i;
@@ -752,14 +752,14 @@ void r128ReadDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 	 rmesa->sarea->nbox = nbox;
       }
 
-      d.func = DRM_R128_READ_PIXELS;
+      d.func = R128_READ_PIXELS;
       d.n = n;
       d.x = (int*)&x;
       d.y = (int*)&y;
       d.buffer = NULL;
       d.mask = NULL;
 
-      drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(drmR128Depth));
+      drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(d));
    }
    else
    {
@@ -774,14 +774,14 @@ void r128ReadDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 
 	 rmesa->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
 
-         d.func = DRM_R128_READ_PIXELS;
+         d.func = R128_READ_PIXELS;
          d.n = n;
          d.x = (int*)&x;
          d.y = (int*)&y;
          d.buffer = NULL;
          d.mask = NULL;
 
-         drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(drmR128Depth));
+         drmCommandWrite( fd, DRM_R128_DEPTH, &d, sizeof(d));
       }
    }
 

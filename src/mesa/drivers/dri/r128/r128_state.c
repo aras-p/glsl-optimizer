@@ -724,7 +724,7 @@ static void r128DDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint stipple[32], i;
-   drmR128Stipple stippleRec;
+   drm_r128_stipple_t stippleRec;
 
    for (i = 0; i < 32; i++) {
       stipple[31 - i] = ((mask[i*4+0] << 24) |
@@ -738,7 +738,7 @@ static void r128DDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
 
    stippleRec.mask = stipple;
    drmCommandWrite( rmesa->driFd, DRM_R128_STIPPLE, 
-                    &stippleRec, sizeof(drmR128Stipple) );
+                    &stippleRec, sizeof(stippleRec) );
 
    UNLOCK_HARDWARE( rmesa );
 
@@ -906,8 +906,8 @@ static void r128DDPrintDirty( const char *msg, GLuint state )
  */
 void r128EmitHwStateLocked( r128ContextPtr rmesa )
 {
-   R128SAREAPrivPtr sarea = rmesa->sarea;
-   r128_context_regs_t *regs = &(rmesa->setup);
+   drm_r128_sarea_t *sarea = rmesa->sarea;
+   drm_r128_context_regs_t *regs = &(rmesa->setup);
    const r128TexObjPtr t0 = rmesa->CurrentTexObj[0];
    const r128TexObjPtr t1 = rmesa->CurrentTexObj[1];
 
@@ -920,11 +920,11 @@ void r128EmitHwStateLocked( r128ContextPtr rmesa )
 			R128_UPLOAD_MASKS |
 			R128_UPLOAD_WINDOW |
 			R128_UPLOAD_CORE) ) {
-      memcpy( &sarea->ContextState, regs, sizeof(sarea->ContextState) );
+      memcpy( &sarea->context_state, regs, sizeof(sarea->context_state) );
    }
 
    if ( (rmesa->dirty & R128_UPLOAD_TEX0) && t0 ) {
-      r128_texture_regs_t *tex = &sarea->TexState[0];
+      drm_r128_texture_regs_t *tex = &sarea->tex_state[0];
 
       tex->tex_cntl		= t0->setup.tex_cntl;
       tex->tex_combine_cntl	= rmesa->tex_combine[0];
@@ -935,7 +935,7 @@ void r128EmitHwStateLocked( r128ContextPtr rmesa )
    }
 
    if ( (rmesa->dirty & R128_UPLOAD_TEX1) && t1 ) {
-      r128_texture_regs_t *tex = &sarea->TexState[1];
+      drm_r128_texture_regs_t *tex = &sarea->tex_state[1];
 
       tex->tex_cntl		= t1->setup.tex_cntl;
       tex->tex_combine_cntl	= rmesa->tex_combine[1];

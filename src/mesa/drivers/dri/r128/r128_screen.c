@@ -114,7 +114,7 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
    r128Screen->sarea_priv_offset = r128DRIPriv->sarea_priv_offset;
    
    if (sPriv->drmMinor >= 3) {
-      drmR128GetParam gp;
+      drm_r128_getparam_t gp;
       int ret;
 
       gp.param = R128_PARAM_IRQ_NR;
@@ -190,21 +190,21 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
    r128Screen->depthPitch	= r128DRIPriv->depthPitch;
    r128Screen->spanOffset	= r128DRIPriv->spanOffset;
 
-   r128Screen->texOffset[R128_CARD_HEAP] = r128DRIPriv->textureOffset;
-   r128Screen->texSize[R128_CARD_HEAP] = r128DRIPriv->textureSize;
-   r128Screen->logTexGranularity[R128_CARD_HEAP] = r128DRIPriv->log2TexGran;
+   r128Screen->texOffset[R128_LOCAL_TEX_HEAP] = r128DRIPriv->textureOffset;
+   r128Screen->texSize[R128_LOCAL_TEX_HEAP] = r128DRIPriv->textureSize;
+   r128Screen->logTexGranularity[R128_LOCAL_TEX_HEAP] = r128DRIPriv->log2TexGran;
 
    if ( r128Screen->IsPCI ) {
       r128Screen->numTexHeaps = R128_NR_TEX_HEAPS - 1;
-      r128Screen->texOffset[R128_AGP_HEAP] = 0;
-      r128Screen->texSize[R128_AGP_HEAP] = 0;
-      r128Screen->logTexGranularity[R128_AGP_HEAP] = 0;
+      r128Screen->texOffset[R128_AGP_TEX_HEAP] = 0;
+      r128Screen->texSize[R128_AGP_TEX_HEAP] = 0;
+      r128Screen->logTexGranularity[R128_AGP_TEX_HEAP] = 0;
    } else {
       r128Screen->numTexHeaps = R128_NR_TEX_HEAPS;
-      r128Screen->texOffset[R128_AGP_HEAP] =
+      r128Screen->texOffset[R128_AGP_TEX_HEAP] =
 	 r128DRIPriv->agpTexOffset + R128_AGP_TEX_OFFSET;
-      r128Screen->texSize[R128_AGP_HEAP] = r128DRIPriv->agpTexMapSize;
-      r128Screen->logTexGranularity[R128_AGP_HEAP] =
+      r128Screen->texSize[R128_AGP_TEX_HEAP] = r128DRIPriv->agpTexMapSize;
+      r128Screen->logTexGranularity[R128_AGP_TEX_HEAP] =
 	 r128DRIPriv->log2AGPTexGran;
    }
 

@@ -41,9 +41,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_reg.h"
 #include "r128_lock.h"
 
-#include "xf86drm.h"
-#include "r128_common.h"
-
 #define R128_BUFFER_MAX_DWORDS	(R128_BUFFER_SIZE / sizeof(CARD32))
 
 

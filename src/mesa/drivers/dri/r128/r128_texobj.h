@@ -36,7 +36,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _R128_TEXOBJ_H_
 #define _R128_TEXOBJ_H_
 
-#include "r128_sarea.h"
 #include "mm.h"
 
 /* Individual texture image information.
@@ -63,7 +62,7 @@ struct r128_tex_obj {
 
    CARD32 textureFormat;		/* Actual hardware format */
 
-   r128_texture_regs_t setup;		/* Setup regs for texture */
+   drm_r128_texture_regs_t setup;		/* Setup regs for texture */
 };
 
 #endif /* _R128_TEXOBJ_H_ */

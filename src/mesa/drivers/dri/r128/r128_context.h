@@ -39,9 +39,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifdef GLX_DIRECT_RENDERING
 
 #include "dri_util.h"
-
-#include "xf86drm.h"
-#include "r128_common.h"
+#include "drm.h"
+#include "r128_drm.h"
 
 #include "mtypes.h"
 
@@ -121,7 +120,7 @@ struct r128_context {
     */
    GLuint new_state;
    GLuint dirty;			/* Hardware state to be updated */
-   r128_context_regs_t setup;
+   drm_r128_context_regs_t setup;
 
    GLuint NewGLState;
    GLuint Fallback;
@@ -199,7 +198,7 @@ struct r128_context {
    int driFd;
 
    r128ScreenPtr r128Screen;		/* Screen private DRI data */
-   R128SAREAPrivPtr sarea;		/* Private SAREA data */
+   drm_r128_sarea_t *sarea;		/* Private SAREA data */
 
    /* Performance counters
     */

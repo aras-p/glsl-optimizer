@@ -38,7 +38,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #ifdef GLX_DIRECT_RENDERING
 
-#include "r128_sarea.h"
 #include "xmlconfig.h"
 
 typedef struct {
