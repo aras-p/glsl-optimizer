@@ -637,6 +637,7 @@
 
 #define TM0S2_PITCH_SHIFT               21
 #define TM0S2_CUBE_FACE_ENA_SHIFT       15
+#define TM0S2_CUBE_FACE_ENA_MASK        (1<<15)
 #define TM0S2_MAP_FORMAT                (1<<14)
 #define TM0S2_VERTICAL_LINE_STRIDE      (1<<13)
 #define TM0S2_VERITCAL_LINE_STRIDE_OFF  (1<<12)

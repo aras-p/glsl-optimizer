@@ -72,7 +72,7 @@ int prevLockLine;
  * Mesa's Driver Functions
  ***************************************/
 
-#define DRIVER_DATE                     "20040914"
+#define DRIVER_DATE                     "20040919"
 
 const GLubyte *intelGetString( GLcontext *ctx, GLenum name )
 {
@@ -144,6 +144,7 @@ static const char * const card_extensions[] =
    "GL_ARB_multitexture",
    "GL_ARB_point_parameters",
    "GL_ARB_texture_border_clamp",
+   "GL_ARB_texture_cube_map",
    "GL_ARB_texture_compression",
    "GL_ARB_texture_env_add",
    "GL_ARB_texture_env_combine",

@@ -99,7 +99,7 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
 				 4,
 				 11, /* max 2D texture size is 2048x2048 */
 				 8,  /* max 3D texture size is 256^3 */
-				 0,  /* max CUBE. not supported */
+				 10, /* max CUBE texture size is 1024x1024 */
 				 11, /* max RECT. supported */
 				 12,
 				 GL_FALSE );

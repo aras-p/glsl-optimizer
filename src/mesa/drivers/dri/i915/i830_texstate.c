@@ -42,6 +42,19 @@
 #include "i830_context.h"
 #include "i830_reg.h"
 
+static const GLint initial_offsets[6][2] = { {0,0},
+				       {0,2},
+				       {1,0},
+				       {1,2},
+				       {1,1},
+				       {1,3} };
+
+static const GLint step_offsets[6][2] = { {0,2},
+				    {0,2},
+				    {-1,2},
+				    {-1,2},
+				    {-1,1},
+				    {-1,1} };
 
 #define I830_TEX_UNIT_ENABLED(unit)		(1<<unit)
 
@@ -133,39 +146,72 @@ static GLboolean i830SetTexImages( i830ContextPtr i830,
    lastLevel = t->intel.base.lastLevel;
    numLevels = lastLevel - firstLevel + 1;
 
-   /* Pitch would be subject to additional rules if texture memory were
-    * tiled.  Currently it isn't. 
-    */
-   if (0) {
-      pitch = 128;
-      while (pitch < tObj->Image[0][firstLevel]->Width * t->intel.texelBytes)
-	 pitch *= 2;
-   }
-   else {
-      pitch = tObj->Image[0][firstLevel]->Width * t->intel.texelBytes;
-      pitch = (pitch + 3) & ~3;
-   }
-
 
    /* All images must be loaded at this pitch.  Count the number of
     * lines required:
     */
-   for ( total_height = i = 0 ; i < numLevels ; i++ ) {
-      t->intel.image[0][i].image = tObj->Image[0][firstLevel + i];
-      if (!t->intel.image[0][i].image) 
-	 break;
+   switch (tObj->Target) {
+   case GL_TEXTURE_CUBE_MAP: {
+      const GLuint dim = tObj->Image[0][firstLevel]->Width;
+      GLuint face;
+
+      pitch = dim * t->intel.texelBytes;
+      pitch *= 2;		/* double pitch for cube layouts */
+      pitch = (pitch + 3) & ~3;
       
-      t->intel.image[0][i].offset = total_height * pitch;
-      t->intel.image[0][i].internalFormat = baseImage->Format;
-      if (t->intel.image[0][i].image->IsCompressed)
-	{
-	  if (t->intel.image[0][i].image->Height > 4)
-	    total_height += t->intel.image[0][i].image->Height/4;
-	  else
-	    total_height += 1;
-	}
-      else
-	total_height += MAX2(2, t->intel.image[0][i].image->Height);
+      total_height = dim * 4;
+
+      for ( face = 0 ; face < 6 ; face++) {
+	 GLuint x = initial_offsets[face][0] * dim;
+	 GLuint y = initial_offsets[face][1] * dim;
+	 GLuint d = dim;
+	 
+	 t->intel.base.dirty_images[face] = ~0;
+
+	 assert(tObj->Image[face][firstLevel]->Width == dim);
+	 assert(tObj->Image[face][firstLevel]->Height == dim);
+
+	 for (i = 0; i < numLevels; i++) {
+	    t->intel.image[face][i].image = tObj->Image[face][firstLevel + i];
+	    if (!t->intel.image[face][i].image) {
+	       fprintf(stderr, "no image %d %d\n", face, i);
+	       break;		/* can't happen */
+	    }
+	 
+	    t->intel.image[face][i].offset = 
+	       y * pitch + x * t->intel.texelBytes;
+	    t->intel.image[face][i].internalFormat = baseImage->Format;
+
+	    d >>= 1;
+	    x += step_offsets[face][0] * d;
+	    y += step_offsets[face][1] * d;
+	 }
+      }
+      break;
+   }
+   default:
+      pitch = tObj->Image[0][firstLevel]->Width * t->intel.texelBytes;
+      pitch = (pitch + 3) & ~3;
+      t->intel.base.dirty_images[0] = ~0;
+
+      for ( total_height = i = 0 ; i < numLevels ; i++ ) {
+	 t->intel.image[0][i].image = tObj->Image[0][firstLevel + i];
+	 if (!t->intel.image[0][i].image) 
+	    break;
+	 
+	 t->intel.image[0][i].offset = total_height * pitch;
+	 t->intel.image[0][i].internalFormat = baseImage->Format;
+	 if (t->intel.image[0][i].image->IsCompressed)
+	 {
+	   if (t->intel.image[0][i].image->Height > 4)
+	     total_height += t->intel.image[0][i].image->Height/4;
+	   else
+	     total_height += 1;
+	 }
+	 else
+	   total_height += MAX2(2, t->intel.image[0][i].image->Height);
+      }
+      break;
    }
 
    t->intel.Pitch = pitch;
@@ -176,7 +222,8 @@ static GLboolean i830SetTexImages( i830ContextPtr i830,
        ((tObj->Image[0][firstLevel]->Width - 1) << TM0S1_WIDTH_SHIFT) |
        textureFormat);
    t->Setup[I830_TEXREG_TM0S2] = 
-      (((pitch / 4) - 1) << TM0S2_PITCH_SHIFT);
+      (((pitch / 4) - 1) << TM0S2_PITCH_SHIFT) |
+      TM0S2_CUBE_FACE_ENA_MASK;
    t->Setup[I830_TEXREG_TM0S3] &= ~TM0S3_MAX_MIP_MASK;
    t->Setup[I830_TEXREG_TM0S3] &= ~TM0S3_MIN_MIP_MASK;
    t->Setup[I830_TEXREG_TM0S3] |= ((numLevels - 1)*4) << TM0S3_MIN_MIP_SHIFT;
@@ -216,6 +263,7 @@ static void i830_import_tex_unit( i830ContextPtr i830,
    i830->state.Tex[unit][I830_TEXREG_TM0S4] = t->Setup[I830_TEXREG_TM0S4];
    i830->state.Tex[unit][I830_TEXREG_MCS] = (t->Setup[I830_TEXREG_MCS] & 
 					     ~MAP_UNIT_MASK);   
+   i830->state.Tex[unit][I830_TEXREG_CUBE] = t->Setup[I830_TEXREG_CUBE];
    i830->state.Tex[unit][I830_TEXREG_MCS] |= MAP_UNIT(unit);
 
    t->intel.dirty &= ~I830_UPLOAD_TEX(unit);
@@ -267,9 +315,11 @@ static GLboolean enable_tex_rect( GLcontext *ctx, GLuint unit )
    mcs &= ~TEXCOORDS_ARE_NORMAL;
    mcs |= TEXCOORDS_ARE_IN_TEXELUNITS;
 
-   if (mcs != i830->state.Tex[unit][I830_TEXREG_MCS]) {
+   if ((mcs != i830->state.Tex[unit][I830_TEXREG_MCS])
+       || (0 != i830->state.Tex[unit][I830_TEXREG_CUBE])) {
       I830_STATECHANGE(i830, I830_UPLOAD_TEX(unit));
       i830->state.Tex[unit][I830_TEXREG_MCS] = mcs;
+      i830->state.Tex[unit][I830_TEXREG_CUBE] = 0;
    }
 
    return GL_TRUE;
@@ -284,15 +334,61 @@ static GLboolean enable_tex_2d( GLcontext *ctx, GLuint unit )
    mcs &= ~TEXCOORDS_ARE_IN_TEXELUNITS;
    mcs |= TEXCOORDS_ARE_NORMAL;
 
-   if (mcs != i830->state.Tex[unit][I830_TEXREG_MCS]) {
+   if ((mcs != i830->state.Tex[unit][I830_TEXREG_MCS])
+       || (0 != i830->state.Tex[unit][I830_TEXREG_CUBE])) {
       I830_STATECHANGE(i830, I830_UPLOAD_TEX(unit));
       i830->state.Tex[unit][I830_TEXREG_MCS] = mcs;
+      i830->state.Tex[unit][I830_TEXREG_CUBE] = 0;
    }
 
    return GL_TRUE;
 }
 
  
+static GLboolean enable_tex_cube( GLcontext *ctx, GLuint unit )
+{
+   i830ContextPtr i830 = I830_CONTEXT(ctx);
+   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+   struct gl_texture_object *tObj = texUnit->_Current;
+   i830TextureObjectPtr t = (i830TextureObjectPtr)tObj->DriverData;
+   GLuint mcs = i830->state.Tex[unit][I830_TEXREG_MCS];
+   const GLuint cube = CUBE_NEGX_ENABLE | CUBE_POSX_ENABLE
+     | CUBE_NEGY_ENABLE | CUBE_POSY_ENABLE
+     | CUBE_NEGZ_ENABLE | CUBE_POSZ_ENABLE;
+   GLuint face;
+
+   mcs &= ~TEXCOORDS_ARE_IN_TEXELUNITS;
+   mcs |= TEXCOORDS_ARE_NORMAL;
+
+   if ((mcs != i830->state.Tex[unit][I830_TEXREG_MCS])
+       || (cube != i830->state.Tex[unit][I830_TEXREG_CUBE])) {
+      I830_STATECHANGE(i830, I830_UPLOAD_TEX(unit));
+      i830->state.Tex[unit][I830_TEXREG_MCS] = mcs;
+      i830->state.Tex[unit][I830_TEXREG_CUBE] = cube;
+   }
+
+   /* Upload teximages (not pipelined)
+    */
+   if ( t->intel.base.dirty_images[0] || t->intel.base.dirty_images[1] ||
+        t->intel.base.dirty_images[2] || t->intel.base.dirty_images[3] ||
+        t->intel.base.dirty_images[4] || t->intel.base.dirty_images[5] ) {
+      i830SetTexImages( i830, tObj );
+   }
+
+   /* upload (per face) */
+   for (face = 0; face < 6; face++) {
+      if (t->intel.base.dirty_images[face]) {
+	 if (!intelUploadTexImages( &i830->intel, &t->intel, face )) {
+	    return GL_FALSE;
+	 }
+      }
+   }
+
+
+   return GL_TRUE;
+}
+
+
 static GLboolean disable_tex( GLcontext *ctx, GLuint unit )
 {
    i830ContextPtr i830 = I830_CONTEXT(ctx);
@@ -324,20 +420,21 @@ static GLboolean i830UpdateTexUnit( GLcontext *ctx, GLuint unit )
        INTEL_CONTEXT(ctx)->intelScreen->textureSize < 2048 * 1024)
       return GL_FALSE;
 
-   if (texUnit->_ReallyEnabled == TEXTURE_1D_BIT ||
-       texUnit->_ReallyEnabled == TEXTURE_2D_BIT) {
+   switch(texUnit->_ReallyEnabled) {
+   case TEXTURE_1D_BIT:
+   case TEXTURE_2D_BIT:
       return (enable_tex_common( ctx, unit ) &&
 	      enable_tex_2d( ctx, unit ));
-   }
-   else if (texUnit->_ReallyEnabled == TEXTURE_RECT_BIT) {      
+   case TEXTURE_RECT_BIT:
       return (enable_tex_common( ctx, unit ) &&
 	      enable_tex_rect( ctx, unit ));
-   }
-   else if (texUnit->_ReallyEnabled) {
-      return GL_FALSE;
-   }
-   else {
+   case TEXTURE_CUBE_BIT:
+      return (enable_tex_common( ctx, unit ) &&
+	      enable_tex_cube( ctx, unit ));
+   case 0:
       return disable_tex( ctx, unit );
+   default:
+      return GL_FALSE;
    }
 }
 
