@@ -685,9 +685,6 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
 }
 
 
-
-
-
 /*
  * Analyze current blending parameters to pick fastest blending function.
  * Result: the ctx->Color.BlendFunc pointer is updated.
@@ -700,7 +697,27 @@ void _swrast_choose_blend_func( GLcontext *ctx )
    const GLenum srcA = ctx->Color.BlendSrcA;
    const GLenum dstA = ctx->Color.BlendDstA;
 
-   if (srcRGB != srcA || dstRGB != dstA) {
+   if (eq==GL_MIN_EXT) {
+      /* Note: GL_MIN ignores the blending weight factors */
+#if defined(USE_MMX_ASM)
+      if ( cpu_has_mmx ) {
+         SWRAST_CONTEXT(ctx)->BlendFunc = _mesa_mmx_blend_min;
+      }
+      else
+#endif
+         SWRAST_CONTEXT(ctx)->BlendFunc = blend_min;
+   }
+   else if (eq==GL_MAX_EXT) {
+      /* Note: GL_MAX ignores the blending weight factors */
+#if defined(USE_MMX_ASM)
+      if ( cpu_has_mmx ) {
+         SWRAST_CONTEXT(ctx)->BlendFunc = _mesa_mmx_blend_max;
+      }
+      else
+#endif
+         SWRAST_CONTEXT(ctx)->BlendFunc = blend_max;
+   }
+   else if (srcRGB != srcA || dstRGB != dstA) {
       SWRAST_CONTEXT(ctx)->BlendFunc = blend_general;
    }
    else if (eq==GL_FUNC_ADD_EXT && srcRGB==GL_SRC_ALPHA
@@ -734,24 +751,6 @@ void _swrast_choose_blend_func( GLcontext *ctx )
       else
 #endif
          SWRAST_CONTEXT(ctx)->BlendFunc = blend_modulate;
-   }
-   else if (eq==GL_MIN_EXT) {
-#if defined(USE_MMX_ASM)
-      if ( cpu_has_mmx ) {
-         SWRAST_CONTEXT(ctx)->BlendFunc = _mesa_mmx_blend_min;
-      }
-      else
-#endif
-         SWRAST_CONTEXT(ctx)->BlendFunc = blend_min;
-   }
-   else if (eq==GL_MAX_EXT) {
-#if defined(USE_MMX_ASM)
-      if ( cpu_has_mmx ) {
-         SWRAST_CONTEXT(ctx)->BlendFunc = _mesa_mmx_blend_max;
-      }
-      else
-#endif
-         SWRAST_CONTEXT(ctx)->BlendFunc = blend_max;
    }
    else if (eq==GL_FUNC_ADD_EXT && srcRGB == GL_ZERO && dstRGB == GL_ONE) {
       SWRAST_CONTEXT(ctx)->BlendFunc = blend_noop;
