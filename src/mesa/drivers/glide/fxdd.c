@@ -1572,7 +1572,7 @@ fxDDDrawPixels8888 (GLcontext * ctx, GLint x, GLint y,
          GLint row;
          for (row = 0; row < height; row++) {
 	     GLubyte *src = (GLubyte *) _mesa_image_address2d(finalUnpack,
-                               pixels, width, height, format, type, 0, row, 0);
+                               pixels, width, height, format, type, row, 0);
 	     GLint col;
 	     for (col = 0; col < width; col++) {
                  dst[col] = TDFXPACKCOLOR8888(src[2], src[1], src[0], 255);
