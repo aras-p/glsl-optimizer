@@ -1157,6 +1157,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_VPI_OUT_OP_MUL                     (2 << 0)
 #define R300_VPI_OUT_OP_ADD                     (3 << 0)
 #define R300_VPI_OUT_OP_MAD                     (4 << 0)
+#define R300_VPI_OUT_OP_DST                     (5 << 0)
 #define R300_VPI_OUT_OP_FRC                     (6 << 0)
 #define R300_VPI_OUT_OP_MAX                     (7 << 0)
 #define R300_VPI_OUT_OP_MIN                     (8 << 0)
