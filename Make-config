@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.59 2002/04/09 14:47:57 keithw Exp $
+# $Id: Make-config,v 1.60 2002/05/05 16:00:06 brianp Exp $
 
 MESA_MAJOR=4
 MESA_MINOR=1
@@ -7,7 +7,7 @@ VERSION=$(MESA_MAJOR).$(MESA_MINOR)
 
 # Mesa 3-D graphics library
 # 
-# Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+# Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -590,6 +590,32 @@ linux-x86:
 	"CC = gcc" \
 	"CPLUSPLUS = g++" \
 	"CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
+	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
+	"APP_LIB_DEPS = -lm" \
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
+		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform4.S \
+		X86/x86_cliptest.S \
+		X86/mmx_blend.S \
+		X86/3dnow_xform1.S X86/3dnow_xform2.S \
+		X86/3dnow_xform3.S X86/3dnow_xform4.S \
+		X86/3dnow_normal.S \
+		X86/sse_xform1.S X86/sse_xform2.S \
+		X86/sse_xform3.S X86/sse_xform4.S \
+		X86/sse_normal.S"
+
+linux-icc:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
+	"CC = icc" \
+	"CPLUSPLUS = g++" \
+	"CFLAGS = -O3 -tpp6 -xK -KPIC -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \

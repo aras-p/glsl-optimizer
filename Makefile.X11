@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.61 2002/03/11 14:59:50 brianp Exp $
+# $Id: Makefile.X11,v 1.62 2002/05/05 16:00:06 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -87,6 +87,7 @@ default:
 	@echo "  make linux-sparc-ultra    for UltraSparc systems, make ELF shared libs"
 	@echo "  make linux-osmesa16       for 16-bit/channel OSMesa"
 	@echo "  make linux-osmesa32       for 32-bit/channel OSMesa"
+	@echo "  make linux-icc            for Linux with the Intel C/C++ compiler"
 	@echo "  make lynxos               for LynxOS systems with GCC"
 	@echo "  make macintosh            for Macintosh"
 	@echo "  make machten-2.2          for Macs w/ MachTen 2.2 (68k w/ FPU)"
@@ -143,7 +144,7 @@ hpux9 hpux9-sl hpux9-gcc hpux9-gcc-sl \
 hpux10 hpux10-sl hpux10-gcc hpux10-gcc-sl \
 irix4 irix5 irix5-gcc irix5-dso \
 linux linux-static linux-debug linux-static-debug linux-prof \
-linux-x86 linux-x86-static linux-x86-debug \
+linux-x86 linux-icc linux-x86-static linux-x86-debug \
 linux-glide linux-386-glide linux-386-opt-glide \
 linux-x86-glide linux-glide-debug linux-glide-prof \
 linux-alpha-static linux-alpha \
@@ -400,6 +401,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/include/GL/xmesa_x.h				\
 	$(DIRECTORY)/include/GL/xmesa_xf86.h				\
 	$(DIRECTORY)/include/GLView.h					\
+	$(DIRECTORY)/include/dmesadxe.h					\
 	$(DIRECTORY)/include/Makefile.in				\
 	$(DIRECTORY)/include/Makefile.am				\
 	$(DIRECTORY)/src/Makefile*					\
