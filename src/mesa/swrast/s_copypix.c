@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -175,8 +175,6 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       return;
    }
 
-   dest = tmpImage;
-
    if (changeBuffer) {
       /* choose the read buffer */
       _swrast_use_read_buffer(ctx);
@@ -191,6 +189,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                              srcy + row, rgba);
       chan_span_to_float(width, (CONST GLchan (*)[4]) rgba,
                          (GLfloat (*)[4]) dest);
+      dest += 4 * width;
    }
 
    if (changeBuffer) {
