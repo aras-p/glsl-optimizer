@@ -5,7 +5,12 @@
    and is provided without guarantee or warrantee expressed or
    implied. This program is -not- in the public domain. */
 
+#include <stdio.h>
 #include "glutint.h"
+
+GLint __glutFPS = 0;
+GLint __glutSwapCount = 0;
+GLint __glutSwapTime = 0;
 
 /* CENTRY */
 void APIENTRY
@@ -43,5 +48,20 @@ glutSwapBuffers(void)
      glutPostRedisplay to trigger redraws.  If
      glutPostRedisplay were used, __glutSetWindow would be
      called and a glFinish to throttle buffering would occur. */
+
+  if (__glutFPS) {
+     GLint t = glutGet(GLUT_ELAPSED_TIME);
+     __glutSwapCount++;
+     if (__glutSwapTime == 0)
+        __glutSwapTime = t;
+     else if (t - __glutSwapTime > __glutFPS) {
+        float time = 0.001 * (t - __glutSwapTime);
+        float fps = (float) __glutSwapCount / time;
+        fprintf(stderr, "GLUT: %d frames in %.2f seconds = %.2f FPS\n",
+                __glutSwapCount, time, fps);
+        __glutSwapTime = t;
+        __glutSwapCount = 0;
+     }
+  }
 }
 /* ENDCENTRY */

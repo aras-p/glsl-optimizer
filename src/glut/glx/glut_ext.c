@@ -50,4 +50,19 @@ glutExtensionSupported(const char *extension)
   return 0;
 }
 
+
+/* XXX This isn't an official GLUT function, yet */
+void * APIENTRY 
+glutGetProcAddress(const char *procName)
+{
+#if defined(_WIN32)
+  return (void *) wglGetProcAddress((LPCSTR) procName);
+#elif defined(GLX_ARB_get_proc_address)
+  return (void *) glXGetProcAddressARB((const GLubyte *) procName);
+#else
+  return NULL;
+#endif
+}
+
+
 /* ENDCENTRY */

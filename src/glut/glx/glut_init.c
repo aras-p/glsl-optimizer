@@ -331,6 +331,16 @@ glutInit(int *argcp, char **argv)
     glutInitWindowPosition(__glutInitX, __glutInitY);
   }
   __glutInitTime(&unused);
+
+  /* check if GLUT_FPS env var is set */
+  {
+     const char *fps = getenv("GLUT_FPS");
+     if (fps) {
+        sscanf(fps, "%d", &__glutFPS);
+        if (__glutFPS <= 0)
+           __glutFPS = 5000;  /* 5000 milliseconds */
+     }
+  }
 }
 
 #ifdef _WIN32

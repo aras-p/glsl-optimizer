@@ -798,6 +798,11 @@ extern void __glutDetermineMesaSwapHackSupport(void);
 /* private routines from glut_gameglut.c */
 extern void GLUTAPIENTRYV __glutCloseDownGameMode(void);
 
+/* private variables from glut_swap.c (BrianP) */
+extern GLint __glutFPS;
+extern GLint __glutSwapCount;
+extern GLint __glutSwapTime;
+
 #if defined(_WIN32)
 /* private routines from win32_*.c */
 extern LONG WINAPI __glutWindowProc(HWND win, UINT msg, WPARAM w, LPARAM l);
