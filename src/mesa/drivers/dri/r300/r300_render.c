@@ -63,22 +63,40 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 * rasterization hardware for rendering.
 **********************************************************************/
 
-
-static void r300_render_primitive(r300ContextPtr rmesa, 
+static void r300_render_flat_primitive(r300ContextPtr rmesa, 
 	GLcontext *ctx,
 	int start,
 	int end,
-	int prim)
+	int type)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
    int k;
    ADAPTOR adaptor;
+   AOS_DATA vb_arrays[2];
    LOCAL_VARS
        	
    if(end<=start)return; /* do we need to watch for this ? */
    
+   /* setup array of structures data */
+
+   /* Note: immediate vertex data includes all coordinates.
+     To save bandwidth use either VBUF or state-based vertex generation */
+    /* xyz */
+   vb_arrays[0].element_size=4;
+   vb_arrays[0].stride=4;
+   vb_arrays[0].offset=0; /* Not used */
+   vb_arrays[0].format=AOS_FORMAT_FLOAT;
+   vb_arrays[0].ncomponents=4;
+
+    /* color */
+   vb_arrays[1].element_size=4;
+   vb_arrays[1].stride=4;
+   vb_arrays[1].offset=0; /* Not used */
+   vb_arrays[1].format=AOS_FORMAT_FLOAT_COLOR;
+   vb_arrays[1].ncomponents=4;
+
    adaptor=TWO_PIPE_ADAPTOR;
    
    adaptor.color_offset[0]=rmesa->radeon.radeonScreen->backOffset+rmesa->radeon.radeonScreen->fbLocation;
@@ -103,69 +121,142 @@ static void r300_render_primitive(r300ContextPtr rmesa,
    set_quad0(PASS_PREFIX 1.0,1.0,1.0,1.0);
    set_init21(PASS_PREFIX 0.0,1.0);
 
-	fprintf(stderr, "[%d-%d]", start, end);
-	switch (prim & PRIM_MODE_MASK) {
-		case GL_LINES:
-   		fprintf(stderr, "L ");
-      		break;
-		case GL_LINE_STRIP:
-   		fprintf(stderr, "LS ");
-      		break;
-		case GL_LINE_LOOP:
-   		fprintf(stderr, "LL ");
-      		break;
-    		case GL_TRIANGLES:
-   		fprintf(stderr, "T ");
-      		break;
-   		case GL_TRIANGLE_STRIP:
-   		fprintf(stderr, "TS ");
-      		break;
-   		case GL_TRIANGLE_FAN:
-   		fprintf(stderr, "TF ");
-      		break;
-		case GL_QUADS:
-   		fprintf(stderr, "Q ");
+   /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
+   setup_AOS(PASS_PREFIX vb_arrays, 2);
+
+
+   start_immediate_packet(end-start, type, 8);
+
+	for(i=start;i<end;i++){
+		#if 1
+		fprintf(stderr, "* (%f %f %f %f) (%f %f %f %f)\n", 
+			VEC_ELT(VB->ObjPtr, GLfloat, i)[0],
+			VEC_ELT(VB->ObjPtr, GLfloat, i)[1],
+			VEC_ELT(VB->ObjPtr, GLfloat, i)[2],
+			VEC_ELT(VB->ObjPtr, GLfloat, i)[3],
+			
+			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[0],
+			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[1],
+			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[2],
+			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[3]
+			);
+		#endif
 		
-		for(i=start+3;i<end;i+=4){
-			start_primitive(PASS_PREFIX R300_VAP_VF_CNTL__PRIM_QUADS);
-			for(k=-3;k<=0;k++){
-				#if 1
-				fprintf(stderr, "* (%f %f %f) (%f %f %f)\n", 
-					VEC_ELT(VB->ObjPtr, GLfloat, i+k)[0],
-					VEC_ELT(VB->ObjPtr, GLfloat, i+k)[1],
-					VEC_ELT(VB->ObjPtr, GLfloat, i+k)[2],
-					
-					VEC_ELT(VB->ColorPtr[0], GLfloat, i+k)[0],
-					VEC_ELT(VB->ColorPtr[0], GLfloat, i+k)[1],
-					VEC_ELT(VB->ColorPtr[0], GLfloat, i+k)[2]
-					);
-				#endif
-				emit_flat_vertex(PASS_PREFIX 
-					/* coordinates */
-					VEC_ELT(VB->ObjPtr, GLfloat, i+k)[0],
-					VEC_ELT(VB->ObjPtr, GLfloat, i+k)[1],
-					VEC_ELT(VB->ObjPtr, GLfloat, i+k)[2],
-					/* colors */
-					VEC_ELT(VB->ColorPtr[0], GLfloat, i+k)[0],
-					VEC_ELT(VB->ColorPtr[0], GLfloat, i+k)[1],
-					VEC_ELT(VB->ColorPtr[0], GLfloat, i+k)[2]
-					);
-				}
-			end_primitive(PASS_PREFIX_VOID);
-			}
-      		break;
-		case GL_QUAD_STRIP:
-   		fprintf(stderr, "QS ");
-      		break;
-   		default:
-   		fprintf(stderr, "%02x ", VB->Primitive[i].mode & PRIM_MODE_MASK);
-         	break;
-   		}
+		/* coordinates */
+		efloat(VEC_ELT(VB->ObjPtr, GLfloat, i)[0]);
+		efloat(VEC_ELT(VB->ObjPtr, GLfloat, i)[1]);
+		efloat(VEC_ELT(VB->ObjPtr, GLfloat, i)[2]);
+		#if 0
+		efloat(VEC_ELT(VB->ObjPtr, GLfloat, i)[3]);
+		#else
+		efloat(1.0);
+		#endif
+		
+		/* color components */
+		efloat(VEC_ELT(VB->ColorPtr[0], GLfloat, i)[0]);
+		efloat(VEC_ELT(VB->ColorPtr[0], GLfloat, i)[1]);
+		efloat(VEC_ELT(VB->ColorPtr[0], GLfloat, i)[2]);
+		#if 0
+		efloat(VEC_ELT(VB->ColorPtr[0], GLfloat, i)[3]);
+		#else
+		efloat(0.0);
+		#endif
+		}
+
    end_3d(PASS_PREFIX_VOID);
    
    start_packet3(RADEON_CP_PACKET3_NOP, 0);
    e32(0x0);
 }
+
+static void r300_render_primitive(r300ContextPtr rmesa, 
+	GLcontext *ctx,
+	int start,
+	int end,
+	int prim)
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   GLuint i;
+   int type=-1;
+   
+   if(end<=start)return; /* do we need to watch for this ? */
+   
+	fprintf(stderr, "[%d-%d]", start, end);
+	switch (prim & PRIM_MODE_MASK) {
+		case GL_LINES:
+   		fprintf(stderr, "L ");
+	        type=R300_VAP_VF_CNTL__PRIM_LINES;
+		if(end<start+2){
+			fprintf(stderr, "Not enough vertices\n");
+			return; /* need enough vertices for Q */
+			}
+      		break;
+		case GL_LINE_STRIP:
+   		fprintf(stderr, "LS ");
+	        type=R300_VAP_VF_CNTL__PRIM_LINE_STRIP;
+		if(end<start+2){
+			fprintf(stderr, "Not enough vertices\n");
+			return; /* need enough vertices for Q */
+			}
+      		break;
+		case GL_LINE_LOOP:
+   		fprintf(stderr, "LL ");
+		return;
+		if(end<start+2){
+			fprintf(stderr, "Not enough vertices\n");
+			return; /* need enough vertices for Q */
+			}
+      		break;
+    		case GL_TRIANGLES:
+   		fprintf(stderr, "T ");
+	        type=R300_VAP_VF_CNTL__PRIM_TRIANGLES;
+		if(end<start+3){
+			fprintf(stderr, "Not enough vertices\n");
+			return; /* need enough vertices for Q */
+			}
+      		break;
+   		case GL_TRIANGLE_STRIP:
+   		fprintf(stderr, "TS ");
+	        type=R300_VAP_VF_CNTL__PRIM_TRIANGLE_STRIP;
+		if(end<start+3){
+			fprintf(stderr, "Not enough vertices\n");
+			return; /* need enough vertices for Q */
+			}
+      		break;
+   		case GL_TRIANGLE_FAN:
+   		fprintf(stderr, "TF ");
+	        type=R300_VAP_VF_CNTL__PRIM_TRIANGLE_FAN;
+		if(end<start+3){
+			fprintf(stderr, "Not enough vertices\n");
+			return; /* need enough vertices for Q */
+			}
+      		break;
+		case GL_QUADS:
+   		fprintf(stderr, "Q ");
+	        type=R300_VAP_VF_CNTL__PRIM_QUADS;
+		if(end<start+4){
+			fprintf(stderr, "Not enough vertices\n");
+			return; /* need enough vertices for Q */
+			}
+      		break;
+		case GL_QUAD_STRIP:
+   		fprintf(stderr, "QS ");
+	        type=R300_VAP_VF_CNTL__PRIM_QUAD_STRIP;
+		if(end<start+4){
+			fprintf(stderr, "Not enough vertices\n");
+			return; /* need enough vertices for Q */
+			}
+      		break;
+   		default:
+   		fprintf(stderr, "Cannot handle primitive %02x ", prim & PRIM_MODE_MASK);
+		return;
+         	break;
+   		}
+   r300_render_flat_primitive(rmesa, ctx, start, end, type);
+	
+}
+
 
 /**
  * Called by the pipeline manager to render a batch of primitives.
