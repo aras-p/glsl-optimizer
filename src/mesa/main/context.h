@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.9 2000/01/05 04:36:17 brianp Exp $ */
+/* $Id: context.h,v 1.10 2000/01/14 04:45:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -97,11 +97,17 @@ extern GLcontext *gl_create_context( GLvisual *visual,
                                      void *driver_ctx,
                                      GLboolean direct);
 
+extern GLboolean gl_initialize_context_data( GLcontext *ctx,
+                                             GLvisual *visual,
+                                             GLcontext *share_list,
+                                             void *driver_ctx,
+                                             GLboolean direct );
+
+extern void gl_free_context_data( GLcontext *ctx );
+
 extern void gl_destroy_context( GLcontext *ctx );
 
-/* Called by the driver after both the context and driver are fully
- * initialized.  Currently just reads the config file.
- */
+
 extern void gl_context_initialize( GLcontext *ctx );
 
 
