@@ -73,8 +73,8 @@ aix-gcc:
 	"CXXFLAGS = -O2 -DAIXV3" \
 	"MKLIB_OPTIONS = -arch aix-gcc" \
 	"GL_LIB_DEPS = -lX11 -lXext -lm" \
-	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm -lXi -lXmu" \
-	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL" \
+	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lXi -lXmu" \
 	"APP_LIB_DEPS = -Wl,-brtl -lglut -lGLU -lGL -lm -lX11 -lXext -lXmu -lXi"
 
 beos-r4:
