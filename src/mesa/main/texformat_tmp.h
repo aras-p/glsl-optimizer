@@ -488,7 +488,7 @@ static void FETCH(rgb332)( const struct gl_texture_image *texImage,
    const GLubyte s = *src;
    texel[RCOMP] = UBYTE_TO_CHAN( ((s     ) & 0xe0) * 255 / 0xe0 );
    texel[GCOMP] = UBYTE_TO_CHAN( ((s << 3) & 0xe0) * 255 / 0xe0 );
-   texel[BCOMP] = UBYTE_TO_CHAN( ((s << 5) & 0xc0) * 255 / 0xc0 );
+   texel[BCOMP] = UBYTE_TO_CHAN( ((s << 6) & 0xc0) * 255 / 0xc0 );
    texel[ACOMP] = CHAN_MAX;
 }
 
@@ -500,7 +500,7 @@ static void FETCH(f_rgb332)( const struct gl_texture_image *texImage,
    const GLubyte s = *src;
    texel[RCOMP] = ((s     ) & 0xe0) * (1.0F / 224.0F);
    texel[GCOMP] = ((s << 3) & 0xe0) * (1.0F / 224.0F);
-   texel[BCOMP] = ((s << 5) & 0xc0) * (1.0F / 192.0F);
+   texel[BCOMP] = ((s << 6) & 0xc0) * (1.0F / 192.0F);
    texel[ACOMP] = CHAN_MAXF;
 }
 
