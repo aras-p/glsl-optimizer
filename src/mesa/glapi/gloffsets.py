@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: gloffsets.py,v 1.1 2000/02/22 22:45:20 brianp Exp $
+# $Id: gloffsets.py,v 1.2 2000/02/22 23:59:25 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -56,7 +56,7 @@ def PrintTail():
 
 
 def GenerateDefine(name, offset):
-	s = '#define _gloffset_' + name + ' ' + offset
+	s = '#define _gloffset_' + name + ' ' + str(offset)
 	return s;
 #enddef
 
@@ -66,6 +66,9 @@ def PrintDefines():
 	functionNamePattern = re.compile('^[a-zA-Z0-9]+')
 
 	funcName = ''
+
+	maxOffset = 0
+	offsetInfo = { }
 
 	f = open('gl.spec')
 	for line in f.readlines():
@@ -81,11 +84,18 @@ def PrintDefines():
 			if m[0] == 'param':
 				paramName = m[1]
 			if m[0] == 'offset':
-				funcOffset = m[1]
+				funcOffset = int(m[1])
+				if funcOffset > maxOffset:
+					maxOffset = funcOffset
 				s = GenerateDefine(funcName, funcOffset)
-				print s
+				offsetInfo[funcOffset] = s;
 		#endif
 	#endfor
+
+	# Now print the #defines in order of dispatch offset
+	for i in range(0, maxOffset + 1):
+		print offsetInfo[i]
+
 #enddef
 
 
