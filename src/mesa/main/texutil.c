@@ -1,4 +1,4 @@
-/* $Id: texutil.c,v 1.18 2001/03/22 06:23:56 gareth Exp $ */
+/* $Id: texutil.c,v 1.19 2001/03/27 19:18:02 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -411,6 +411,22 @@ CONVERT_ARGB4444( texsubimage3d )
 
 
 #define CONVERT_TEXEL( src )						\
+		({ GLushort s = *(GLushort *)src;			\
+		   s = (s >> 1) | ((s & 1) << 15); s; })
+
+#define CONVERT_TEXEL_DWORD( src )					\
+		({ GLuint s = *(GLuint *)src;				\
+		   s = (((s & 0xfffefffe) >> 1) |			\
+			((s & 0x00010001) << 15)); s; })
+
+#define SRC_TEXEL_BYTES		2
+
+#define TAG(x) x##_rgba5551_to_argb1555
+#define PRESERVE_DST_TYPE
+#include "texutil_tmp.h"
+
+
+#define CONVERT_TEXEL( src )						\
 		PACK_COLOR_1555( src[3], src[0], src[1], src[2] )
 
 #define CONVERT_TEXEL_DWORD( src )					\
@@ -434,6 +450,11 @@ convert_##name##_argb1555( struct gl_texture_convert *convert )		\
 	convert->type == GL_UNSIGNED_SHORT_1_5_5_5_REV )		\
    {									\
       tab = name##_tab_argb1555_direct;					\
+   }									\
+   else if ( convert->format == GL_RGBA &&				\
+	     convert->type == GL_UNSIGNED_SHORT_5_5_5_1 )		\
+   {									\
+      tab = name##_tab_rgba5551_to_argb1555;				\
    }									\
    else if ( convert->format == GL_RGBA &&				\
 	     convert->type == GL_UNSIGNED_BYTE )			\
@@ -497,6 +518,20 @@ CONVERT_ARGB1555( texsubimage3d )
 #define SRC_TEXEL_BYTES		1
 
 #define TAG(x) x##_l8_to_al88
+#define PRESERVE_DST_TYPE
+#include "texutil_tmp.h"
+
+
+#define CONVERT_TEXEL( src )						\
+		PACK_COLOR_88( src[3], src[0] )
+
+#define CONVERT_TEXEL_DWORD( src )					\
+		((PACK_COLOR_88( src[3], src[0] )) |			\
+		 (PACK_COLOR_88( src[7], src[1] ) << 16))
+
+#define SRC_TEXEL_BYTES		4
+
+#define TAG(x) x##_abgr8888_to_al88
 #include "texutil_tmp.h"
 
 
@@ -521,6 +556,11 @@ convert_##name##_al88( struct gl_texture_convert *convert )		\
 	     convert->type == GL_UNSIGNED_BYTE )			\
    {									\
       tab = name##_tab_l8_to_al88;					\
+   }									\
+   else if ( convert->format == GL_RGBA &&				\
+	     convert->type == GL_UNSIGNED_BYTE )			\
+   {									\
+      tab = name##_tab_abgr8888_to_al88;				\
    }									\
    else									\
    {									\

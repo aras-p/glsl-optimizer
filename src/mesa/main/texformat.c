@@ -1,4 +1,4 @@
-/* $Id: texformat.c,v 1.3 2001/03/18 13:31:52 gareth Exp $ */
+/* $Id: texformat.c,v 1.4 2001/03/27 19:18:02 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,6 +74,8 @@ static void fetch_null_texel( const struct gl_texture_image *texImage,
 
 const struct gl_texture_format _mesa_texformat_rgba = {
    MESA_FORMAT_RGBA,			/* IntFormat */
+   GL_RGBA,				/* BaseFormat */
+   CHAN_TYPE,				/* BaseType */
    CHAN_BITS,				/* RedBits */
    CHAN_BITS,				/* GreenBits */
    CHAN_BITS,				/* BlueBits */
@@ -90,6 +92,8 @@ const struct gl_texture_format _mesa_texformat_rgba = {
 
 const struct gl_texture_format _mesa_texformat_rgb = {
    MESA_FORMAT_RGBA,			/* IntFormat */
+   GL_RGB,				/* BaseFormat */
+   CHAN_TYPE,				/* BaseType */
    CHAN_BITS,				/* RedBits */
    CHAN_BITS,				/* GreenBits */
    CHAN_BITS,				/* BlueBits */
@@ -106,6 +110,8 @@ const struct gl_texture_format _mesa_texformat_rgb = {
 
 const struct gl_texture_format _mesa_texformat_alpha = {
    MESA_FORMAT_ALPHA,			/* IntFormat */
+   GL_ALPHA,				/* BaseFormat */
+   CHAN_TYPE,				/* BaseType */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -122,6 +128,8 @@ const struct gl_texture_format _mesa_texformat_alpha = {
 
 const struct gl_texture_format _mesa_texformat_luminance = {
    MESA_FORMAT_LUMINANCE,		/* IntFormat */
+   GL_LUMINANCE,			/* BaseFormat */
+   CHAN_TYPE,				/* BaseType */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -138,6 +146,8 @@ const struct gl_texture_format _mesa_texformat_luminance = {
 
 const struct gl_texture_format _mesa_texformat_luminance_alpha = {
    MESA_FORMAT_LUMINANCE_ALPHA,		/* IntFormat */
+   GL_LUMINANCE_ALPHA,			/* BaseFormat */
+   CHAN_TYPE,				/* BaseType */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -154,6 +164,8 @@ const struct gl_texture_format _mesa_texformat_luminance_alpha = {
 
 const struct gl_texture_format _mesa_texformat_intensity = {
    MESA_FORMAT_INTENSITY,		/* IntFormat */
+   GL_INTENSITY,			/* BaseFormat */
+   CHAN_TYPE,				/* BaseType */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -170,6 +182,8 @@ const struct gl_texture_format _mesa_texformat_intensity = {
 
 const struct gl_texture_format _mesa_texformat_color_index = {
    MESA_FORMAT_COLOR_INDEX,		/* IntFormat */
+   GL_COLOR_INDEX,			/* BaseFormat */
+   CHAN_TYPE,				/* BaseType */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -186,6 +200,8 @@ const struct gl_texture_format _mesa_texformat_color_index = {
 
 const struct gl_texture_format _mesa_texformat_depth_component = {
    MESA_FORMAT_DEPTH_COMPONENT,		/* IntFormat */
+   GL_DEPTH_COMPONENT,			/* BaseFormat */
+   GL_FLOAT,				/* BaseType */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -207,6 +223,8 @@ const struct gl_texture_format _mesa_texformat_depth_component = {
 
 const struct gl_texture_format _mesa_texformat_rgba8888 = {
    MESA_FORMAT_RGBA8888,		/* IntFormat */
+   GL_RGBA,				/* BaseFormat */
+   GL_UNSIGNED_BYTE,			/* BaseType */
    8,					/* RedBits */
    8,					/* GreenBits */
    8,					/* BlueBits */
@@ -223,6 +241,8 @@ const struct gl_texture_format _mesa_texformat_rgba8888 = {
 
 const struct gl_texture_format _mesa_texformat_argb8888 = {
    MESA_FORMAT_ARGB8888,		/* IntFormat */
+   GL_RGBA,				/* BaseFormat */
+   GL_UNSIGNED_BYTE, /* FIXME: ??? */	/* BaseType */
    8,					/* RedBits */
    8,					/* GreenBits */
    8,					/* BlueBits */
@@ -239,6 +259,8 @@ const struct gl_texture_format _mesa_texformat_argb8888 = {
 
 const struct gl_texture_format _mesa_texformat_rgb888 = {
    MESA_FORMAT_RGB888,			/* IntFormat */
+   GL_RGB,				/* BaseFormat */
+   GL_UNSIGNED_BYTE,			/* BaseType */
    8,					/* RedBits */
    8,					/* GreenBits */
    8,					/* BlueBits */
@@ -255,6 +277,8 @@ const struct gl_texture_format _mesa_texformat_rgb888 = {
 
 const struct gl_texture_format _mesa_texformat_rgb565 = {
    MESA_FORMAT_RGB565,			/* IntFormat */
+   GL_RGB,				/* BaseFormat */
+   GL_UNSIGNED_SHORT_5_6_5,		/* BaseType */
    5,					/* RedBits */
    6,					/* GreenBits */
    5,					/* BlueBits */
@@ -271,6 +295,8 @@ const struct gl_texture_format _mesa_texformat_rgb565 = {
 
 const struct gl_texture_format _mesa_texformat_argb4444 = {
    MESA_FORMAT_ARGB4444,		/* IntFormat */
+   GL_RGBA,				/* BaseFormat */
+   GL_UNSIGNED_SHORT_4_4_4_4_REV,	/* BaseType */
    4,					/* RedBits */
    4,					/* GreenBits */
    4,					/* BlueBits */
@@ -287,6 +313,8 @@ const struct gl_texture_format _mesa_texformat_argb4444 = {
 
 const struct gl_texture_format _mesa_texformat_argb1555 = {
    MESA_FORMAT_ARGB1555,		/* IntFormat */
+   GL_RGBA,				/* BaseFormat */
+   GL_UNSIGNED_SHORT_1_5_5_5_REV,	/* BaseType */
    5,					/* RedBits */
    5,					/* GreenBits */
    5,					/* BlueBits */
@@ -303,6 +331,8 @@ const struct gl_texture_format _mesa_texformat_argb1555 = {
 
 const struct gl_texture_format _mesa_texformat_al88 = {
    MESA_FORMAT_AL88,			/* IntFormat */
+   GL_LUMINANCE_ALPHA,			/* BaseFormat */
+   GL_UNSIGNED_BYTE,			/* BaseType */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -319,6 +349,8 @@ const struct gl_texture_format _mesa_texformat_al88 = {
 
 const struct gl_texture_format _mesa_texformat_rgb332 = {
    MESA_FORMAT_RGB332,			/* IntFormat */
+   GL_RGB,				/* BaseFormat */
+   GL_UNSIGNED_BYTE_3_3_2,		/* BaseType */
    3,					/* RedBits */
    3,					/* GreenBits */
    2,					/* BlueBits */
@@ -335,6 +367,8 @@ const struct gl_texture_format _mesa_texformat_rgb332 = {
 
 const struct gl_texture_format _mesa_texformat_a8 = {
    MESA_FORMAT_A8,			/* IntFormat */
+   GL_ALPHA,				/* BaseFormat */
+   GL_UNSIGNED_BYTE,			/* BaseType */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -351,6 +385,8 @@ const struct gl_texture_format _mesa_texformat_a8 = {
 
 const struct gl_texture_format _mesa_texformat_l8 = {
    MESA_FORMAT_L8,			/* IntFormat */
+   GL_LUMINANCE,			/* BaseFormat */
+   GL_UNSIGNED_BYTE,			/* BaseType */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -367,6 +403,8 @@ const struct gl_texture_format _mesa_texformat_l8 = {
 
 const struct gl_texture_format _mesa_texformat_i8 = {
    MESA_FORMAT_I8,			/* IntFormat */
+   GL_INTENSITY,			/* BaseFormat */
+   GL_UNSIGNED_BYTE,			/* BaseType */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -383,6 +421,8 @@ const struct gl_texture_format _mesa_texformat_i8 = {
 
 const struct gl_texture_format _mesa_texformat_ci8 = {
    MESA_FORMAT_CI8,			/* IntFormat */
+   GL_COLOR_INDEX,			/* BaseFormat */
+   GL_UNSIGNED_BYTE,			/* BaseType */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -404,6 +444,8 @@ const struct gl_texture_format _mesa_texformat_ci8 = {
 
 const struct gl_texture_format _mesa_null_texformat = {
    -1,					/* IntFormat */
+   0,					/* BaseFormat */
+   0,					/* BaseType */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -428,6 +470,8 @@ const struct gl_texture_format _mesa_null_texformat = {
 void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
 			    struct gl_texture_image *texImage )
 {
+   const struct gl_texture_format *texFormat;
+
    texImage->IntFormat = internalFormat;
 
    /* Ask the driver for the base format, if it doesn't know, it will
@@ -448,16 +492,12 @@ void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
        */
    case 4:				/* Quake3 uses this... */
    case GL_RGBA:
-      texImage->Format = GL_RGBA;
-      texImage->Type = CHAN_TYPE;
-      texImage->TexFormat = &_mesa_texformat_rgba;
+      texFormat = &_mesa_texformat_rgba;
       break;
 
    case 3:				/* ... and this. */
    case GL_RGB:
-      texImage->Format = GL_RGB;
-      texImage->Type = CHAN_TYPE;
-      texImage->TexFormat = &_mesa_texformat_rgb;
+      texFormat = &_mesa_texformat_rgb;
       break;
 
       /* GH: Okay, keep checking as normal.  Still test for GL_RGB,
@@ -470,9 +510,7 @@ void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
-      texImage->Format = GL_RGBA;
-      texImage->Type = CHAN_TYPE;
-      texImage->TexFormat = &_mesa_texformat_rgba;
+      texFormat = &_mesa_texformat_rgba;
       break;
 
    case GL_R3_G3_B2:
@@ -482,9 +520,7 @@ void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      texImage->Format = GL_RGB;
-      texImage->Type = CHAN_TYPE;
-      texImage->TexFormat = &_mesa_texformat_rgb;
+      texFormat = &_mesa_texformat_rgb;
       break;
 
    case GL_ALPHA:
@@ -492,9 +528,7 @@ void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
    case GL_ALPHA8:
    case GL_ALPHA12:
    case GL_ALPHA16:
-      texImage->Format = GL_ALPHA;
-      texImage->Type = CHAN_TYPE;
-      texImage->TexFormat = &_mesa_texformat_alpha;
+      texFormat = &_mesa_texformat_alpha;
       break;
 
    case 1:
@@ -503,9 +537,7 @@ void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
    case GL_LUMINANCE8:
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
-      texImage->Format = GL_LUMINANCE;
-      texImage->Type = CHAN_TYPE;
-      texImage->TexFormat = &_mesa_texformat_luminance;
+      texFormat = &_mesa_texformat_luminance;
       break;
 
    case 2:
@@ -516,9 +548,7 @@ void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
    case GL_LUMINANCE12_ALPHA4:
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
-      texImage->Format = GL_LUMINANCE_ALPHA;
-      texImage->Type = CHAN_TYPE;
-      texImage->TexFormat = &_mesa_texformat_luminance_alpha;
+      texFormat = &_mesa_texformat_luminance_alpha;
       break;
 
    case GL_INTENSITY:
@@ -526,9 +556,7 @@ void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
    case GL_INTENSITY8:
    case GL_INTENSITY12:
    case GL_INTENSITY16:
-      texImage->Format = GL_INTENSITY;
-      texImage->Type = CHAN_TYPE;
-      texImage->TexFormat = &_mesa_texformat_intensity;
+      texFormat = &_mesa_texformat_intensity;
       break;
 
    case GL_COLOR_INDEX:
@@ -538,28 +566,27 @@ void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
    case GL_COLOR_INDEX8_EXT:
    case GL_COLOR_INDEX12_EXT:
    case GL_COLOR_INDEX16_EXT:
-      texImage->Format = GL_COLOR_INDEX;
-      texImage->Type = CHAN_TYPE;
-      texImage->TexFormat = &_mesa_texformat_color_index;
+      texFormat = &_mesa_texformat_color_index;
       break;
 
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT16_SGIX:
    case GL_DEPTH_COMPONENT24_SGIX:
    case GL_DEPTH_COMPONENT32_SGIX:
-      if ( ctx->Extensions.SGIX_depth_texture ) {
-	 texImage->Format = GL_DEPTH_COMPONENT;
-	 texImage->Type = GL_FLOAT;	/* XXX or GL_UNSIGNED_INT? */
-	 texImage->TexFormat = &_mesa_texformat_depth_component;
-      } else {
-	 /* This error should have already been caught and dealt with.
-	  */
+      if ( !ctx->Extensions.SGIX_depth_texture )
 	 _mesa_problem( ctx, "depth format without GL_SGIX_depth_texture" );
-      }
+      texFormat = &_mesa_texformat_depth_component;
       break;
 
    default:
       _mesa_problem( ctx, "unexpected format in _mesa_init_tex_format" );
       return;
    }
+
+   /* Initialize the base format and type.
+    */
+   texImage->Format = texFormat->BaseFormat;
+   texImage->Type = texFormat->BaseType;
+
+   texImage->TexFormat = texFormat;
 }

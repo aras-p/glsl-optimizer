@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.18 2001/03/21 16:44:08 brianp Exp $ */
+/* $Id: texstore.c,v 1.19 2001/03/27 19:18:02 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -398,6 +398,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
                        struct gl_texture_image *texImage)
 {
    GLint postConvWidth = width;
+   GLint texelBytes;
 
    if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
       _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
@@ -407,9 +408,10 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
    _mesa_init_tex_format( ctx, internalFormat, texImage );
    texImage->FetchTexel = texImage->TexFormat->FetchTexel1D;
 
+   texelBytes = texImage->TexFormat->TexelBytes;
+
    /* allocate memory */
-   texImage->Data = (GLchan *) MALLOC(postConvWidth *
-				      texImage->TexFormat->TexelBytes);
+   texImage->Data = (GLchan *) MALLOC(postConvWidth * texelBytes);
    if (!texImage->Data)
       return;      /* out of memory */
 
@@ -484,13 +486,14 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
                        struct gl_texture_object *texObj,
                        struct gl_texture_image *texImage)
 {
+   const struct gl_texture_format *texFormat;
    GLint texelBytes;
 
    /* setup the teximage struct's fields */
    _mesa_init_tex_format( ctx, internalFormat, texImage );
-   texImage->FetchTexel = texImage->TexFormat->FetchTexel3D;
+   texImage->FetchTexel = texFormat->FetchTexel3D;
 
-   texelBytes = texImage->TexFormat->TexelBytes;
+   texelBytes = texFormat->TexelBytes;
 
    /* allocate memory */
    texImage->Data = (GLchan *) MALLOC(width * height * depth * texelBytes);
@@ -646,6 +649,7 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
+   const struct gl_texture_format *texFormat;
 
    (void) format;
    (void) type;
@@ -661,6 +665,10 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
     */
    /* setup the teximage struct's fields */
    _mesa_init_tex_format( ctx, internalFormat, texImage );
+
+   texFormat = texImage->TexFormat;
+   texImage->Format = texFormat->BaseFormat;
+   texImage->Type = texFormat->BaseType;
 
    return GL_TRUE;
 }

@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.32 2001/03/26 19:42:40 brianp Exp $ */
+/* $Id: mtypes.h,v 1.33 2001/03/27 19:18:02 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -778,6 +778,9 @@ typedef void (*FetchTexelFunc)( const struct gl_texture_image *texImage,
 /* Texture format record */
 struct gl_texture_format {
    GLint IntFormat;		/* One of the MESA_FORMAT_* values */
+
+   GLenum BaseFormat;
+   GLenum BaseType;
 
    GLubyte RedBits;		/* Bits per texel component */
    GLubyte GreenBits;
