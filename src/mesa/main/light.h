@@ -1,10 +1,10 @@
-/* $Id: light.h,v 1.2 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: light.h,v 1.3 2000/06/26 23:37:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -115,7 +115,7 @@ extern void gl_compute_light_positions( GLcontext *ctx );
 extern void gl_update_normal_transform( GLcontext *ctx );
 
 extern void gl_update_material( GLcontext *ctx, 
-				struct gl_material *m, 
+				const struct gl_material src[2], 
 				GLuint bitmask );
 
 extern void gl_update_color_material( GLcontext *ctx, const GLubyte rgba[4] );
