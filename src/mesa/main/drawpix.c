@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.7 1999/11/18 15:44:37 brianp Exp $ */
+/* $Id: drawpix.c,v 1.8 1999/11/22 22:21:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,6 +41,50 @@
 #include "types.h"
 #include "zoom.h"
 #endif
+
+
+
+/*
+ * Given the dest position, size and skipPixels and skipRows values
+ * for a glDrawPixels command, perform clipping of the image bounds
+ * so the result lies withing the context's buffer bounds.
+ * Return:  GL_TRUE if image is ready for drawing
+ *          GL_FALSE if image was completely clipped away (draw nothing)
+ */
+GLboolean
+_mesa_clip_pixelrect(const GLcontext *ctx,
+                     GLint *destX, GLint *destY,
+                     GLsizei *width, GLsizei *height,
+                     GLint *skipPixels, GLint *skipRows)
+{
+   /* left clipping */
+   if (*destX < ctx->Buffer->Xmin) {
+      *skipPixels += (ctx->Buffer->Xmin - *destX);
+      *width -= (ctx->Buffer->Xmin - *destX);
+      *destX = ctx->Buffer->Xmin;
+   }
+   /* right clipping */
+   if (*destX + *width > ctx->Buffer->Xmax)
+      *width -= (*destX + *width - ctx->Buffer->Xmax - 1);
+
+   if (*width <= 0)
+      return GL_FALSE;
+
+   /* bottom clipping */
+   if (*destY < ctx->Buffer->Ymin) {
+      *skipRows += (ctx->Buffer->Ymin - *destY);
+      *height -= (ctx->Buffer->Ymin - *destY);
+      *destY = ctx->Buffer->Ymin;
+   }
+   /* top clipping */
+   if (*destY + *height > ctx->Buffer->Ymax)
+      *height -= (*destY + *height - ctx->Buffer->Ymax - 1);
+
+   if (*height <= 0)
+      return GL_TRUE;
+
+   return GL_TRUE;
+}
 
 
 
