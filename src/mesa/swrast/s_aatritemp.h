@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.4 2000/11/19 23:10:26 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.5 2001/01/05 02:26:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -151,10 +151,10 @@
       compute_plane(p0, p1, p2, v0->color[3], v1->color[3], v2->color[3], aPlane);
    }
    else {
-      constant_plane(v0->color[RCOMP], rPlane);
-      constant_plane(v0->color[GCOMP], gPlane);
-      constant_plane(v0->color[BCOMP], bPlane);
-      constant_plane(v0->color[ACOMP], aPlane);
+      constant_plane(v2->color[RCOMP], rPlane);
+      constant_plane(v2->color[GCOMP], gPlane);
+      constant_plane(v2->color[BCOMP], bPlane);
+      constant_plane(v2->color[ACOMP], aPlane);
    }
 #endif
 #ifdef DO_INDEX
@@ -163,14 +163,20 @@
                     v1->index, v2->index, iPlane);
    }
    else {
-      constant_plane(v0->index, iPlane);
+      constant_plane(v2->index, iPlane);
    }
 #endif
 #ifdef DO_SPEC
-   {
+   if (ctx->Light.ShadeModel == GL_SMOOTH) {
       compute_plane(p0, p1, p2, v0->specular[0], v1->specular[0], v2->specular[0],srPlane);
       compute_plane(p0, p1, p2, v0->specular[1], v1->specular[1], v2->specular[1],sgPlane);
       compute_plane(p0, p1, p2, v0->specular[2], v1->specular[2], v2->specular[2],sbPlane);
+   }
+   else {
+      /* KW: added this */
+      constant_plane(v2->specular[RCOMP], srPlane);
+      constant_plane(v2->specular[GCOMP], sgPlane);
+      constant_plane(v2->specular[BCOMP], sbPlane);
    }
 #endif
 #ifdef DO_TEX

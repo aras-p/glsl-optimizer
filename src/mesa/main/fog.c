@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.31 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: fog.c,v 1.32 2001/01/05 02:26:48 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -89,8 +89,6 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
    switch (pname) {
       case GL_FOG_MODE:
          m = (GLenum) (GLint) *params;
-	 if (ctx->Fog.Mode == m)
-	    return;
 	 switch (m) {
 	 case GL_LINEAR:
 	 case GL_EXP:
@@ -100,6 +98,8 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
 	    gl_error( ctx, GL_INVALID_ENUM, "glFog" );
             return;
 	 }
+	 if (ctx->Fog.Mode == m)
+	    return;
 	 FLUSH_VERTICES(ctx, _NEW_FOG);
 	 ctx->Fog.Mode = m;
 	 break;
@@ -132,7 +132,7 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
  	 ctx->Fog.Index = *params;
 	 break;
       case GL_FOG_COLOR:
-	 if (TEST_EQ_4V(ctx->Fog.Color, params))
+	 if (TEST_EQ_4V(ctx->Fog.Color, params)) 
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_FOG);
 	 ctx->Fog.Color[0] = params[0];
@@ -142,12 +142,12 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
          break;
       case GL_FOG_COORDINATE_SOURCE_EXT: {
 	 GLenum p = (GLenum)(GLint) *params;
-	 if (ctx->Fog.FogCoordinateSource == p)
-	    return;
 	 if (p != GL_FOG_COORDINATE_EXT && p != GL_FRAGMENT_DEPTH_EXT) {
 	    gl_error( ctx, GL_INVALID_ENUM, "glFog" );
 	    return;
 	 }
+	 if (ctx->Fog.FogCoordinateSource == p)
+	    return;
 	 FLUSH_VERTICES(ctx, _NEW_FOG);
 	 ctx->Fog.FogCoordinateSource = p;
 	 break;
@@ -160,8 +160,6 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
    if (ctx->Driver.Fogfv) {
       (*ctx->Driver.Fogfv)( ctx, pname, params );
    }
-
-   ctx->NewState |= _NEW_FOG;
 }
 
 

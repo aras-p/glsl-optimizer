@@ -11,6 +11,7 @@
 #include "swrast_setup/swrast_setup.h"
 
 #include "tnl/t_context.h"
+#include "tnl/t_pipeline.h"
 
 #include "fxdrv.h"
 #include "fxglidew.h"
@@ -469,6 +470,56 @@ fx_null_tri( GLcontext *ctx,
 
 
 
+
+/**********************************************************************/
+/*                 Render whole begin/end objects                     */
+/**********************************************************************/
+
+
+/* Vertices, no clipping.
+ */
+#define RENDER_POINTS( start, count )		\
+   for ( ; start < count ; start++)		\
+      grDrawPoint( &v[ELT(start)].v );
+
+#define RENDER_LINE( i1, i )			\
+   grDrawLine( &v[i1].v, &v[i].v )
+
+#define RENDER_TRI( i2, i1, i )				\
+   grDrawTriangle( &v[i2].v, &v[i1].v, &v[i].v )
+
+#define RENDER_QUAD( i3, i2, i1, i )			\
+   grDrawTriangle( &v[i3].v, &v[i2].v, &v[i].v );	\
+   grDrawTriangle( &v[i2].v, &v[i1].v, &v[i].v )
+
+#define TAG(x) fx_##x##_verts
+#define LOCAL_VARS \
+    fxVertex *v = FX_CONTEXT(ctx)->verts;	
+
+/* Verts, no clipping.
+ */
+#define ELT(x) x
+#define RESET_STIPPLE 
+#define RESET_OCCLUSION 
+#define PRESERVE_VB_DEFS
+#include "tnl/t_vb_rendertmp.h"
+
+
+/* Elts, no clipping.
+ */
+#undef ELT
+#undef TAG
+#undef LOCAL_VARS
+#define TAG(x) fx_##x##_elts
+#define ELT(x) elt[x]
+#define LOCAL_VARS  				\
+    fxVertex *v = FX_CONTEXT(ctx)->verts;   \
+    const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;	
+#include "tnl/t_vb_rendertmp.h"
+
+
+
+
 /* Setup the Point, Line, Triangle and Quad functions based on the
  * current rendering state.  Wherever possible, use the hardware to
  * render the primitive.  Otherwise, fallback to software rendering.
@@ -487,6 +538,8 @@ void fxDDChooseRenderState( GLcontext *ctx )
       ctx->Driver.LineFunc = _swsetup_Line;
       ctx->Driver.TriangleFunc = _swsetup_Triangle;
       ctx->Driver.QuadFunc = _swsetup_Quad;
+      ctx->Driver.RenderTabVerts = _tnl_render_tab_verts;
+      ctx->Driver.RenderTabElts = _tnl_render_tab_elts;
 
       fxMesa->render_index = FX_FALLBACK_BIT;
       return;
@@ -549,7 +602,17 @@ void fxDDChooseRenderState( GLcontext *ctx )
    ctx->Driver.TriangleFunc = rast_tab[index].triangle;
    ctx->Driver.QuadFunc = rast_tab[index].quad;
    fxMesa->render_index = index;
+
+   if (fxMesa->render_index == 0) {
+      ctx->Driver.RenderTabVerts = fx_render_tab_verts;
+      ctx->Driver.RenderTabElts = fx_render_tab_elts;
+   } else {
+      ctx->Driver.RenderTabVerts = _tnl_render_tab_verts;
+      ctx->Driver.RenderTabElts = _tnl_render_tab_elts;
+   }
 }
+
+
 
 
 #else

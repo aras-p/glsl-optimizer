@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.8 2000/12/27 22:30:29 keithw Exp $ */
+/* $Id: t_context.h,v 1.9 2001/01/05 02:26:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -226,6 +226,12 @@ struct vertex_arrays
 
 typedef struct gl_material GLmaterial;
 
+typedef void (*interp_func)( GLcontext *ctx,
+			     GLfloat t, GLuint dst, GLuint in, GLuint out,
+			     GLboolean force_boundary );
+
+typedef void (*copy_pv_func)( GLcontext *ctx, GLuint dst, GLuint src );
+
 /* Contains the current state of a running pipeline.
  */
 typedef struct vertex_buffer
@@ -251,7 +257,7 @@ typedef struct vertex_buffer
    GLubyte     *ClipMask;		        /* VERT_CLIP (4) */
    GLvector3f  *NormalPtr;	                /* VERT_NORM */
    GLfloat     *NormalLengthPtr;                /* VERT_NORM (optional) */
-   GLvector1ub *EdgeFlagPtr;	                /* VERT_EDGE */
+   GLboolean   *EdgeFlag;	                /* VERT_EDGE */
    GLvector4f  *TexCoordPtr[MAX_TEXTURE_UNITS];	/* VERT_TEX_0..n */
    GLvector1ui *IndexPtr[2];	                /* VERT_INDEX */
    GLvector4ub *ColorPtr[2];	                /* VERT_RGBA */
@@ -276,9 +282,10 @@ typedef struct vertex_buffer
     */
 
    GLuint LastClipped;
-   void *interpfunc;
-   /* Two pieces of private data from _tnl_render_stage that have no
-    * business being in this struct.
+   interp_func interpfunc;
+   copy_pv_func copypvfunc;
+   /* Private data from _tnl_render_stage that has no business being
+    * in this struct.  
     */
 
 } TNLvertexbuffer;

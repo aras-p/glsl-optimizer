@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.36 2001/01/02 22:02:52 brianp Exp $ */
+/* $Id: osmesa.c,v 1.37 2001/01/05 02:26:48 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,6 +55,7 @@
 #include "swrast/s_lines.h"
 #include "swrast/s_triangle.h"
 #include "tnl/tnl.h"
+#include "array_cache/acache.h"
 #endif
 
 
@@ -313,6 +314,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
 	 GLcontext *ctx = &osmesa->gl_ctx;
 
 	 _swrast_CreateContext( ctx );
+	 _ac_CreateContext( ctx );
 	 _tnl_CreateContext( ctx );
 	 _swsetup_CreateContext( ctx );
 	
@@ -1752,5 +1754,6 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
 
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
+   _ac_InvalidateState( ctx, new_state );
    _tnl_InvalidateState( ctx, new_state );
 }

@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.4 2000/12/28 22:11:05 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.5 2001/01/05 02:26:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -198,7 +198,7 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
    VB->NormalPtr = 0;
    VB->NormalLengthPtr = 0;
    VB->FogCoordPtr = 0;
-   VB->EdgeFlagPtr = 0;
+   VB->EdgeFlag = 0;
    VB->IndexPtr[0] = 0;
    VB->IndexPtr[1] = 0;
    VB->ColorPtr[0] = 0;
@@ -259,10 +259,7 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
    }
 
    if (inputs & VERT_EDGE) {
-      tmp->EdgeFlag.data = IM->EdgeFlag + start;
-      tmp->EdgeFlag.start = IM->EdgeFlag + start;
-      tmp->EdgeFlag.count = count;
-      VB->EdgeFlagPtr = &tmp->EdgeFlag;
+      VB->EdgeFlag = IM->EdgeFlag + start;
    }
 
    if (inputs & VERT_RGBA) {
@@ -451,8 +448,8 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
     */
    _tnl_copy_immediate_vertices( ctx, IM );
 
-/*     if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1) */
-/*        ctx->Driver.NeedFlush &= ~FLUSH_STORED_VERTICES; */
+   if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1)
+      ctx->Driver.NeedFlush &= ~FLUSH_STORED_VERTICES;
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.3 2000/12/28 22:11:05 keithw Exp $ */
+/* $Id: t_array_import.c,v 1.4 2001/01/05 02:26:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -301,11 +301,6 @@ static void _tnl_upgrade_client_data( GLcontext *ctx,
 	    _tnl_import_texcoord( ctx, i, writeable, stride );
 	 }
    
-   if ((required & VERT_EDGE) && (VB->EdgeFlagPtr->flags & flags)) {
-      ASSERT(VB->EdgeFlagPtr == &inputs->EdgeFlag);
-      _tnl_import_edgeflag( ctx, writeable, stride );
-   }
-
    VB->importable_data &= ~required;
 }
 
@@ -386,11 +381,8 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
    }
     
    if (inputs & VERT_EDGE) {
-      if (imports & VERT_EDGE) {
-	 _tnl_import_edgeflag( ctx, 0, 0 ); 
-	 tmp->EdgeFlag.count = VB->Count;
-      }
-      VB->EdgeFlagPtr = &tmp->EdgeFlag;
+      _tnl_import_edgeflag( ctx, GL_TRUE, sizeof(GLboolean) ); 
+      VB->EdgeFlag = (GLboolean *) tmp->EdgeFlag.data;
    }
     
    if (inputs & VERT_SPEC_RGB) {

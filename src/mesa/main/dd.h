@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.44 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: dd.h,v 1.45 2001/01/05 02:26:48 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -126,13 +126,16 @@ struct gl_pixelstore_attrib;
  */
 typedef void (*points_func)( GLcontext *ctx, GLuint first, GLuint last );
 
-typedef void (*line_func)( GLcontext *ctx, GLuint v1, GLuint v2, GLuint pv );
+typedef void (*line_func)( GLcontext *ctx, GLuint v1, GLuint v2 );
 
 typedef void (*triangle_func)( GLcontext *ctx,
-                               GLuint v1, GLuint v2, GLuint v3, GLuint pv );
+                               GLuint v1, GLuint v2, GLuint v3 );
 
 typedef void (*quad_func)( GLcontext *ctx, GLuint v1, GLuint v2,
-                           GLuint v3, GLuint v4, GLuint pv );
+                           GLuint v3, GLuint v4 );
+
+typedef void (*render_func)( GLcontext *ctx, GLuint start, GLuint count, 
+			     GLuint flags );
 
 
 /*
@@ -758,19 +761,21 @@ struct dd_function_table {
    triangle_func         TriangleFunc;
    quad_func             QuadFunc;
 
+   render_func          *RenderTabVerts;
+   render_func          *RenderTabElts;
+
    void (*ResetLineStipple)( GLcontext *ctx );
    
-
    void (*BuildProjectedVertices)( GLcontext *ctx, 
 				   GLuint start, GLuint end,
 				   GLuint new_inputs);
-   /* This function, if not NULL, is called whenever new vertices are
-    * required for rendering.  The vertices in question are those n
-    * such that start <= n < end.  The new_inputs parameter indicates
-    * those fields of the vertex which need to be updated, if only a
-    * partial repair of the vertex is required.
+   /* This function is called whenever new vertices are required for
+    * rendering.  The vertices in question are those n such that start
+    * <= n < end.  The new_inputs parameter indicates those fields of
+    * the vertex which need to be updated, if only a partial repair of
+    * the vertex is required.
     *
-    * This function is called only from _tnl_render_stage in tnl/t_render.c.
+    * This function is called only from _tnl_render_stage in tnl/t_render.c.  
     */
 
 

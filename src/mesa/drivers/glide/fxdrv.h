@@ -509,7 +509,7 @@ struct tfxMesaContext {
    GLuint size;
 };
 
-typedef void (*tfxSetupFunc)(GLcontext *ctx, GLuint, GLuint, GLuint);
+typedef void (*tfxSetupFunc)(GLcontext *ctx, GLuint, GLuint );
 
 extern GrHwConfiguration glbHWConfig;
 extern int glbCurrentBoard;

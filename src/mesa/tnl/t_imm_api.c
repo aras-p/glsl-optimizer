@@ -292,7 +292,7 @@ _tnl_end( GLcontext *ctx )
 	 IM->FlushElt = 0;
       }
       
-      ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+/*        ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES; */
    }
 
    IM->BeginState = state;      

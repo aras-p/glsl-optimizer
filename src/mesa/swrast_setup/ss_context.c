@@ -1,4 +1,4 @@
-/* $Id: ss_context.c,v 1.5 2000/12/26 05:09:32 keithw Exp $ */
+/* $Id: ss_context.c,v 1.6 2001/01/05 02:26:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,25 +45,24 @@
  */
 static void 
 _swsetup_validate_quad( GLcontext *ctx, GLuint v0, GLuint v1, 
-			GLuint v2, GLuint v3, GLuint pv )
+			GLuint v2, GLuint v3 )
 {
    _swsetup_choose_trifuncs( ctx );
-   SWSETUP_CONTEXT(ctx)->Quad( ctx, v0, v1, v2, v3, pv );
+   SWSETUP_CONTEXT(ctx)->Quad( ctx, v0, v1, v2, v3 );
 }
 
 static void 
-_swsetup_validate_triangle( GLcontext *ctx, GLuint v0, GLuint v1, 
-			    GLuint v2, GLuint pv )
+_swsetup_validate_triangle( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2 )
 {
    _swsetup_choose_trifuncs( ctx );
-   SWSETUP_CONTEXT(ctx)->Triangle( ctx, v0, v1, v2, pv );
+   SWSETUP_CONTEXT(ctx)->Triangle( ctx, v0, v1, v2 );
 }
 
 static void 
-_swsetup_validate_line( GLcontext *ctx, GLuint v0, GLuint v1, GLuint pv )
+_swsetup_validate_line( GLcontext *ctx, GLuint v0, GLuint v1 )
 {
    _swsetup_choose_trifuncs( ctx );
-   SWSETUP_CONTEXT(ctx)->Line( ctx, v0, v1, pv );
+   SWSETUP_CONTEXT(ctx)->Line( ctx, v0, v1 );
 }
 
 
@@ -129,22 +128,22 @@ _swsetup_invalidate_state( GLcontext *ctx, GLuint new_state )
  */
 void 
 _swsetup_Quad( GLcontext *ctx, GLuint v0, GLuint v1, 
-	       GLuint v2, GLuint v3, GLuint pv )
+	       GLuint v2, GLuint v3 )
 {
-   SWSETUP_CONTEXT(ctx)->Quad( ctx, v0, v1, v2, v3, pv );
+   SWSETUP_CONTEXT(ctx)->Quad( ctx, v0, v1, v2, v3 );
 }
 
 void 
 _swsetup_Triangle( GLcontext *ctx, GLuint v0, GLuint v1, 
-		   GLuint v2, GLuint pv )
+		   GLuint v2 )
 {
-   SWSETUP_CONTEXT(ctx)->Triangle( ctx, v0, v1, v2, pv );
+   SWSETUP_CONTEXT(ctx)->Triangle( ctx, v0, v1, v2 );
 }
 
 void 
-_swsetup_Line( GLcontext *ctx, GLuint v0, GLuint v1, GLuint pv )
+_swsetup_Line( GLcontext *ctx, GLuint v0, GLuint v1 )
 {
-   SWSETUP_CONTEXT(ctx)->Line( ctx, v0, v1, pv );
+   SWSETUP_CONTEXT(ctx)->Line( ctx, v0, v1 );
 }
 
 

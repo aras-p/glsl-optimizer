@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.7 2000/12/12 00:31:45 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.8 2001/01/05 02:26:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -160,7 +160,7 @@ static void flat_rgba_triangle( GLcontext *ctx,
 		 fffog += fdfogdx;				\
 	      }							\
               gl_write_monocolor_span( ctx, n, LEFT, Y, zspan,	\
-                                       fogspan, v0->color,	\
+                                       fogspan, v2->color,	\
 			               GL_POLYGON );		\
 	   }							\
 	}
@@ -1613,10 +1613,10 @@ static void general_textured_triangle( GLcontext *ctx,
    GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);	\
    GLint r, g, b, a;						\
    if (flat_shade) {						\
-      r = v0->color[0];						\
-      g = v0->color[1];						\
-      b = v0->color[2];						\
-      a = v0->color[3];						\
+      r = v2->color[0];						\
+      g = v2->color[1];						\
+      b = v2->color[2];						\
+      a = v2->color[3];						\
    }
 #define INNER_LOOP( LEFT, RIGHT, Y )				\
 	{							\
@@ -1708,13 +1708,13 @@ static void general_textured_spec_triangle1( GLcontext *ctx,
    GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);	\
    GLint r, g, b, a, sr, sg, sb;				\
    if (flat_shade) {						\
-      r = v0->color[0];						\
-      g = v0->color[1];						\
-      b = v0->color[2];						\
-      a = v0->color[3];						\
-      sr = v0->specular[0]; 					\
-      sg = v0->specular[1]; 					\
-      sb = v0->specular[2]; 					\
+      r = v2->color[0];						\
+      g = v2->color[1];						\
+      b = v2->color[2];						\
+      a = v2->color[3];						\
+      sr = v2->specular[0]; 					\
+      sg = v2->specular[1]; 					\
+      sb = v2->specular[2]; 					\
    }
 #define INNER_LOOP( LEFT, RIGHT, Y )				\
 	{							\
@@ -1837,10 +1837,10 @@ static void lambda_textured_triangle1( GLcontext *ctx,
    const GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);	\
    GLint r, g, b, a;							\
    if (flat_shade) {							\
-      r = v0->color[0];							\
-      g = v0->color[1];							\
-      b = v0->color[2];							\
-      a = v0->color[3];							\
+      r = v2->color[0];							\
+      g = v2->color[1];							\
+      b = v2->color[2];							\
+      a = v2->color[3];							\
    }
 
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
@@ -1942,13 +1942,13 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
    const GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);	\
    GLint r, g, b, a, sr, sg, sb;					\
    if (flat_shade) {							\
-      r = v0->color[0];							\
-      g = v0->color[1];							\
-      b = v0->color[2];							\
-      a = v0->color[3];							\
-      sr = v0->specular[0];						\
-      sg = v0->specular[1];						\
-      sb = v0->specular[2];						\
+      r = v2->color[0];							\
+      g = v2->color[1];							\
+      b = v2->color[2];							\
+      a = v2->color[3];							\
+      sr = v2->specular[0];						\
+      sg = v2->specular[1];						\
+      sb = v2->specular[2];						\
    }
 
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
@@ -2055,10 +2055,10 @@ lambda_multitextured_triangle1( GLcontext *ctx,
    GLfloat twidth[MAX_TEXTURE_UNITS], theight[MAX_TEXTURE_UNITS];		\
    GLint r, g, b, a;								\
    if (flat_shade) {								\
-      r = v0->color[0];								\
-      g = v0->color[1];								\
-      b = v0->color[2];								\
-      a = v0->color[3];								\
+      r = v2->color[0];								\
+      g = v2->color[1];								\
+      b = v2->color[2];								\
+      a = v2->color[3];								\
    }										\
    {										\
       GLuint unit;								\

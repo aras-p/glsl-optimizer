@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.17 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: convolve.c,v 1.18 2001/01/05 02:26:48 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -268,7 +268,7 @@ _mesa_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat param)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint c;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    switch (target) {
       case GL_CONVOLUTION_1D:

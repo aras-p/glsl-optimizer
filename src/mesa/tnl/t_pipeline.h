@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.h,v 1.4 2000/12/26 05:09:33 keithw Exp $ */
+/* $Id: t_pipeline.h,v 1.5 2001/01/05 02:26:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,5 +61,11 @@ extern const struct gl_pipeline_stage _tnl_render_stage;
 /* Shorthand to plug in the default pipeline:
  */
 extern const struct gl_pipeline_stage *_tnl_default_pipeline[];
+
+
+/* Convenience routines provided by t_vb_render.c:
+ */
+extern render_func _tnl_render_tab_elts[];
+extern render_func _tnl_render_tab_verts[];
 
 #endif

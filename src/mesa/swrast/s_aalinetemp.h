@@ -1,4 +1,4 @@
-/* $Id: s_aalinetemp.h,v 1.3 2001/01/04 15:32:32 brianp Exp $ */
+/* $Id: s_aalinetemp.h,v 1.4 2001/01/05 02:26:48 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -195,10 +195,10 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
                     v0->color[ACOMP], v1->color[ACOMP], line.aPlane);
    }
    else {
-      constant_plane(v0->color[RCOMP], line.rPlane);
-      constant_plane(v0->color[GCOMP], line.gPlane);
-      constant_plane(v0->color[BCOMP], line.bPlane);
-      constant_plane(v0->color[ACOMP], line.aPlane);
+      constant_plane(v1->color[RCOMP], line.rPlane);
+      constant_plane(v1->color[GCOMP], line.gPlane);
+      constant_plane(v1->color[BCOMP], line.bPlane);
+      constant_plane(v1->color[ACOMP], line.aPlane);
    }
 #endif
 #ifdef DO_SPEC
@@ -211,9 +211,9 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
                     v0->specular[BCOMP], v1->specular[BCOMP], line.sbPlane);
    }
    else {
-      constant_plane(v0->specular[RCOMP], line.srPlane);
-      constant_plane(v0->specular[GCOMP], line.sgPlane);
-      constant_plane(v0->specular[BCOMP], line.sbPlane);
+      constant_plane(v1->specular[RCOMP], line.srPlane);
+      constant_plane(v1->specular[GCOMP], line.sgPlane);
+      constant_plane(v1->specular[BCOMP], line.sbPlane);
    }
 #endif
 #ifdef DO_INDEX
@@ -222,7 +222,7 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
                     v0->index, v1->index, line.iPlane);
    }
    else {
-      constant_plane(v0->index, line.iPlane);
+      constant_plane(v1->index, line.iPlane);
    }
 #endif
 #ifdef DO_TEX

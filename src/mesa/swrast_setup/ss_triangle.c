@@ -34,15 +34,13 @@
 #include "ss_triangle.h"
 #include "ss_context.h"
 
-#define SS_FLAT_BIT         0x1
+#define SS_RGBA_BIT         0x1 
 #define SS_OFFSET_BIT	    0x2	
 #define SS_TWOSIDE_BIT	    0x4	
-#define SS_UNFILLED_BIT	    0x10	
-#define SS_RGBA_BIT         0x20 
-#define SS_MAX_TRIFUNC      0x80
+#define SS_UNFILLED_BIT	    0x8	
+#define SS_MAX_TRIFUNC      0x10
 
 static triangle_func tri_tab[SS_MAX_TRIFUNC];
-static line_func     line_tab[SS_MAX_TRIFUNC];
 static quad_func     quad_tab[SS_MAX_TRIFUNC];
 
 
@@ -54,128 +52,64 @@ static quad_func     quad_tab[SS_MAX_TRIFUNC];
 #define TAG(x) x
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT)
-#define TAG(x) x##_flat
-#include "ss_tritmp.h"
-
 #define IND (SS_OFFSET_BIT)
 #define TAG(x) x##_offset
-#include "ss_tritmp.h"
-
-#define IND (SS_FLAT_BIT|SS_OFFSET_BIT)
-#define TAG(x) x##_flat_offset
 #include "ss_tritmp.h"
 
 #define IND (SS_TWOSIDE_BIT)
 #define TAG(x) x##_twoside
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT|SS_TWOSIDE_BIT)
-#define TAG(x) x##_flat_twoside
-#include "ss_tritmp.h"
-
 #define IND (SS_OFFSET_BIT|SS_TWOSIDE_BIT)
 #define TAG(x) x##_offset_twoside
-#include "ss_tritmp.h"
-
-#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_TWOSIDE_BIT)
-#define TAG(x) x##_flat_offset_twoside
 #include "ss_tritmp.h"
 
 #define IND (SS_UNFILLED_BIT)
 #define TAG(x) x##_unfilled
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT|SS_UNFILLED_BIT)
-#define TAG(x) x##_flat_unfilled
-#include "ss_tritmp.h"
-
 #define IND (SS_OFFSET_BIT|SS_UNFILLED_BIT)
 #define TAG(x) x##_offset_unfilled
-#include "ss_tritmp.h"
-
-#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_UNFILLED_BIT)
-#define TAG(x) x##_flat_offset_unfilled
 #include "ss_tritmp.h"
 
 #define IND (SS_TWOSIDE_BIT|SS_UNFILLED_BIT)
 #define TAG(x) x##_twoside_unfilled
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT|SS_TWOSIDE_BIT|SS_UNFILLED_BIT)
-#define TAG(x) x##_flat_twoside_unfilled
-#include "ss_tritmp.h"
-
 #define IND (SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_UNFILLED_BIT)
 #define TAG(x) x##_offset_twoside_unfilled
-#include "ss_tritmp.h"
-
-#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_UNFILLED_BIT)
-#define TAG(x) x##_flat_offset_twoside_unfilled
 #include "ss_tritmp.h"
 
 #define IND (0|SS_RGBA_BIT)
 #define TAG(x) x##_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT|SS_RGBA_BIT)
-#define TAG(x) x##_flat_rgba
-#include "ss_tritmp.h"
-
 #define IND (SS_OFFSET_BIT|SS_RGBA_BIT)
 #define TAG(x) x##_offset_rgba
-#include "ss_tritmp.h"
-
-#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_RGBA_BIT)
-#define TAG(x) x##_flat_offset_rgba
 #include "ss_tritmp.h"
 
 #define IND (SS_TWOSIDE_BIT|SS_RGBA_BIT)
 #define TAG(x) x##_twoside_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT|SS_TWOSIDE_BIT|SS_RGBA_BIT)
-#define TAG(x) x##_flat_twoside_rgba
-#include "ss_tritmp.h"
-
 #define IND (SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_RGBA_BIT)
 #define TAG(x) x##_offset_twoside_rgba
-#include "ss_tritmp.h"
-
-#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_RGBA_BIT)
-#define TAG(x) x##_flat_offset_twoside_rgba
 #include "ss_tritmp.h"
 
 #define IND (SS_UNFILLED_BIT|SS_RGBA_BIT)
 #define TAG(x) x##_unfilled_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT|SS_UNFILLED_BIT|SS_RGBA_BIT)
-#define TAG(x) x##_flat_unfilled_rgba
-#include "ss_tritmp.h"
-
 #define IND (SS_OFFSET_BIT|SS_UNFILLED_BIT|SS_RGBA_BIT)
 #define TAG(x) x##_offset_unfilled_rgba
-#include "ss_tritmp.h"
-
-#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_UNFILLED_BIT|SS_RGBA_BIT)
-#define TAG(x) x##_flat_offset_unfilled_rgba
 #include "ss_tritmp.h"
 
 #define IND (SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_RGBA_BIT)
 #define TAG(x) x##_twoside_unfilled_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT|SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_RGBA_BIT)
-#define TAG(x) x##_flat_twoside_unfilled_rgba
-#include "ss_tritmp.h"
-
 #define IND (SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_RGBA_BIT)
 #define TAG(x) x##_offset_twoside_unfilled_rgba
-#include "ss_tritmp.h"
-
-#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_RGBA_BIT)
-#define TAG(x) x##_flat_offset_twoside_unfilled_rgba
 #include "ss_tritmp.h"
 
 
@@ -184,38 +118,22 @@ void _swsetup_trifuncs_init( GLcontext *ctx )
    (void) ctx;
 
    init();
-   init_flat();
    init_offset();
-   init_flat_offset();
    init_twoside();
-   init_flat_twoside();
    init_offset_twoside();
-   init_flat_offset_twoside();
    init_unfilled();
-   init_flat_unfilled();
    init_offset_unfilled();
-   init_flat_offset_unfilled();
    init_twoside_unfilled();
-   init_flat_twoside_unfilled();
    init_offset_twoside_unfilled();
-   init_flat_offset_twoside_unfilled();
 
    init_rgba();
-   init_flat_rgba();
    init_offset_rgba();
-   init_flat_offset_rgba();
    init_twoside_rgba();
-   init_flat_twoside_rgba();
    init_offset_twoside_rgba();
-   init_flat_offset_twoside_rgba();
    init_unfilled_rgba();
-   init_flat_unfilled_rgba();
    init_offset_unfilled_rgba();
-   init_flat_offset_unfilled_rgba();
    init_twoside_unfilled_rgba();
-   init_flat_twoside_unfilled_rgba();
    init_offset_twoside_unfilled_rgba();
-   init_flat_offset_twoside_unfilled_rgba();
 }
 
 
@@ -236,13 +154,18 @@ static void swsetup_points( GLcontext *ctx, GLuint first, GLuint last )
    }
 }
 
+static void swsetup_line( GLcontext *ctx, GLuint v0, GLuint v1 )
+{
+   SWvertex *verts = SWSETUP_CONTEXT(ctx)->verts;
+   _swrast_Line( ctx, &verts[v0], &verts[v1] );
+}
+
+
+
 void _swsetup_choose_trifuncs( GLcontext *ctx )
 {
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
    GLuint ind = 0;
-
-   if (ctx->Light.ShadeModel == GL_FLAT)
-      ind |= SS_FLAT_BIT;
 
    if (ctx->Polygon._OffsetAny)
       ind |= SS_OFFSET_BIT;
@@ -257,8 +180,8 @@ void _swsetup_choose_trifuncs( GLcontext *ctx )
       ind |= SS_RGBA_BIT;
 
    swsetup->Triangle = tri_tab[ind];
-   swsetup->Line = line_tab[ind];
    swsetup->Quad = quad_tab[ind];
+   swsetup->Line = swsetup_line;
    swsetup->Points = swsetup_points;
 }
 

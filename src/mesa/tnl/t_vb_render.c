@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.5 2001/01/03 15:59:31 brianp Exp $ */
+/* $Id: t_vb_render.c,v 1.6 2001/01/05 02:26:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -22,6 +22,9 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Author:
+ *    Keith Whitwell <keithw@valinux.com>
  */
 
 
@@ -33,11 +36,16 @@
  * and triangle rasterizers via the function pointers:
  *
  *    context->Driver.BuildProjectedVertices()
+ *
  *    context->Driver.PointsFunc()
  *    context->Driver.LineFunc()
  *    context->Driver.TriangleFunc()
  *    context->Driver.QuadFunc() 
  *
+ *    context->Driver.RenderTabVerts[] 
+ *    context->Driver.RenderTabElts[]
+ *
+ * None of these may be null.
  */
 
 
@@ -55,9 +63,6 @@
 #include "t_pipeline.h"
 
 
-typedef GLuint (*interp_func)( GLcontext *ctx,
-			       GLfloat t, GLuint in, GLuint out,
-			       GLboolean force_boundary );
 
 typedef void (*clip_line_func)( GLcontext *ctx,
 				GLuint i, GLuint j,
@@ -65,13 +70,8 @@ typedef void (*clip_line_func)( GLcontext *ctx,
 
 typedef void (*clip_poly_func)( GLcontext *ctx,
 				GLuint n, GLuint vlist[],
-				GLuint pv, GLubyte mask );
+				GLubyte mask );
 
-
-typedef void (*render_func)( GLcontext *ctx, 
-			     GLuint start,
-			     GLuint count,
-			     GLuint flags );
 
 
 
@@ -79,31 +79,17 @@ struct render_stage_data {
 
    /* Clipping functions for current state.
     */
-   interp_func interp; /* Clip interpolation function */
-   GLuint _ClipInputs;		     /* Inputs referenced by interpfunc */
-
+   interp_func interp;		/* Clip interpolation function */
+   copy_pv_func copypv;		/* Flatshade fixup function */
+   GLuint _ClipInputs;		/* Inputs referenced by interpfunc */
 };
 
 #define RENDER_STAGE_DATA(stage) ((struct render_stage_data *)stage->private)
 
-static void render_poly_pv_raw_elts( GLcontext *ctx, 
-				     GLuint start,
-				     GLuint count,
-				     GLuint flags,
-				     GLuint pv );
 				  
 /**********************************************************************/
 /*           Interpolate between pairs of vertices                    */
 /**********************************************************************/
-
-
-#define INTERP_RGBA    0x1
-#define INTERP_TEX     0x2
-#define INTERP_INDEX   0x4
-#define INTERP_SPEC    0x8
-#define INTERP_FOG     0x10
-#define INTERP_EDGE    0x20
-#define MAX_INTERP     0x40
 
 
 #define LINTERP_SZ( t, vec, to, a, b, sz )			\
@@ -146,8 +132,50 @@ do {								\
 
 
 
-static interp_func interp_tab[0x80];
 
+#define INTERP_RGBA    0x1
+#define INTERP_TEX     0x2
+#define INTERP_INDEX   0x4
+#define INTERP_SPEC    0x8
+#define INTERP_FOG     0x10
+#define INTERP_EDGE    0x20
+#define MAX_INTERP     0x40
+
+static interp_func interp_tab[MAX_INTERP];
+static copy_pv_func copy_tab[MAX_INTERP];
+
+
+#define IND (0)
+#define NAME interp_none
+#include "t_vb_interptmp.h"
+
+#define IND (INTERP_FOG)
+#define NAME interp_FOG
+#include "t_vb_interptmp.h"
+
+#define IND (INTERP_TEX)
+#define NAME interp_TEX
+#include "t_vb_interptmp.h"
+
+#define IND (INTERP_FOG|INTERP_TEX)
+#define NAME interp_FOG_TEX
+#include "t_vb_interptmp.h"
+
+#define IND (INTERP_EDGE)
+#define NAME interp_EDGE
+#include "t_vb_interptmp.h"
+
+#define IND (INTERP_FOG|INTERP_EDGE)
+#define NAME interp_FOG_EDGE
+#include "t_vb_interptmp.h"
+
+#define IND (INTERP_TEX|INTERP_EDGE)
+#define NAME interp_TEX_EDGE
+#include "t_vb_interptmp.h"
+
+#define IND (INTERP_FOG|INTERP_TEX|INTERP_EDGE)
+#define NAME interp_FOG_TEX_EDGE
+#include "t_vb_interptmp.h"
 
 #define IND (INTERP_RGBA)
 #define NAME interp_RGBA
@@ -246,15 +274,34 @@ static interp_func interp_tab[0x80];
 #include "t_vb_interptmp.h"
 
 
+#define IND (INTERP_RGBA)
+#define NAME copy_RGBA
+#include "t_vb_flattmp.h"
 
-static GLuint interp_invalid( GLcontext *ctx,
-			      GLfloat t, 
-			      GLuint in, GLuint out,
-			      GLboolean boundary )
+#define IND (INTERP_RGBA|INTERP_SPEC)
+#define NAME copy_RGBA_SPEC
+#include "t_vb_flattmp.h"
+
+#define IND (INTERP_INDEX)
+#define NAME copy_INDEX
+#include "t_vb_flattmp.h"
+
+
+
+
+static void interp_invalid( GLcontext *ctx,
+			    GLfloat t, 
+			    GLuint dst, GLuint in, GLuint out,
+			    GLboolean boundary )
 {
    (void)(ctx && t && in && out && boundary);
    fprintf(stderr, "Invalid interpolation function in t_vbrender.c\n");
-   return in;
+}
+
+static void copy_invalid( GLcontext *ctx, GLuint dst, GLuint src )
+{
+   (void)(ctx && dst && src);
+   fprintf(stderr, "Invalid copy function in t_vbrender.c\n");
 }
 
 
@@ -266,8 +313,19 @@ static void interp_init( void )
     * the non-implemented combinations are reachable, but this gives
     * some safety from crashes.
     */
-   for (i = 0 ; i < Elements(interp_tab) ; i++)
+   for (i = 0 ; i < Elements(interp_tab) ; i++) {
       interp_tab[i] = interp_invalid;
+      copy_tab[i] = copy_invalid;
+   }
+
+   interp_tab[0] = interp_none;
+   interp_tab[INTERP_FOG] = interp_FOG;
+   interp_tab[INTERP_TEX] = interp_TEX;
+   interp_tab[INTERP_FOG|INTERP_TEX] = interp_FOG_TEX;
+   interp_tab[INTERP_EDGE] = interp_EDGE;
+   interp_tab[INTERP_FOG|INTERP_EDGE] = interp_FOG_EDGE;
+   interp_tab[INTERP_TEX|INTERP_EDGE] = interp_TEX_EDGE;
+   interp_tab[INTERP_FOG|INTERP_TEX|INTERP_EDGE] = interp_FOG_TEX_EDGE;
 
    interp_tab[INTERP_RGBA] = interp_RGBA;
    interp_tab[INTERP_RGBA|INTERP_SPEC] = interp_RGBA_SPEC;
@@ -276,7 +334,8 @@ static void interp_init( void )
    interp_tab[INTERP_RGBA|INTERP_TEX] = interp_RGBA_TEX;
    interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_TEX] = interp_RGBA_SPEC_TEX;
    interp_tab[INTERP_RGBA|INTERP_FOG|INTERP_TEX] = interp_RGBA_FOG_TEX;
-   interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_FOG|INTERP_TEX] = interp_RGBA_SPEC_FOG_TEX;
+   interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_FOG|INTERP_TEX] = 
+      interp_RGBA_SPEC_FOG_TEX;
    interp_tab[INTERP_INDEX] = interp_INDEX;
    interp_tab[INTERP_FOG|INTERP_INDEX] = interp_FOG_INDEX;
    interp_tab[INTERP_TEX|INTERP_INDEX] = interp_TEX_INDEX;
@@ -284,15 +343,26 @@ static void interp_init( void )
    interp_tab[INTERP_RGBA|INTERP_EDGE] = interp_RGBA_EDGE;
    interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_EDGE] = interp_RGBA_SPEC_EDGE;
    interp_tab[INTERP_RGBA|INTERP_FOG|INTERP_EDGE] = interp_RGBA_FOG_EDGE;
-   interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_FOG|INTERP_EDGE] = interp_RGBA_SPEC_FOG_EDGE;
+   interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_FOG|INTERP_EDGE] = 
+      interp_RGBA_SPEC_FOG_EDGE;
    interp_tab[INTERP_RGBA|INTERP_TEX|INTERP_EDGE] = interp_RGBA_TEX_EDGE;
-   interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_TEX|INTERP_EDGE] = interp_RGBA_SPEC_TEX_EDGE;
-   interp_tab[INTERP_RGBA|INTERP_FOG|INTERP_TEX|INTERP_EDGE] = interp_RGBA_FOG_TEX_EDGE;
-   interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_FOG|INTERP_TEX|INTERP_EDGE] = interp_RGBA_SPEC_FOG_TEX_EDGE;
+   interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_TEX|INTERP_EDGE] = 
+      interp_RGBA_SPEC_TEX_EDGE;
+   interp_tab[INTERP_RGBA|INTERP_FOG|INTERP_TEX|INTERP_EDGE] = 
+      interp_RGBA_FOG_TEX_EDGE;
+   interp_tab[INTERP_RGBA|INTERP_SPEC|INTERP_FOG|INTERP_TEX|INTERP_EDGE] = 
+      interp_RGBA_SPEC_FOG_TEX_EDGE;
    interp_tab[INTERP_INDEX|INTERP_EDGE] = interp_INDEX_EDGE;
    interp_tab[INTERP_FOG|INTERP_INDEX|INTERP_EDGE] = interp_FOG_INDEX_EDGE;
    interp_tab[INTERP_TEX|INTERP_INDEX|INTERP_EDGE] = interp_TEX_INDEX_EDGE;
-   interp_tab[INTERP_FOG|INTERP_TEX|INTERP_INDEX|INTERP_EDGE] = interp_FOG_TEX_INDEX_EDGE;
+   interp_tab[INTERP_FOG|INTERP_TEX|INTERP_INDEX|INTERP_EDGE] = 
+      interp_FOG_TEX_INDEX_EDGE;
+
+
+   copy_tab[INTERP_RGBA] = copy_RGBA;
+   copy_tab[INTERP_RGBA|INTERP_SPEC] = copy_RGBA_SPEC;
+   copy_tab[INTERP_INDEX] = copy_INDEX;
+
 }
 
 
@@ -301,12 +371,15 @@ static void interp_init( void )
 /**********************************************************************/
 
 
-#if 0
-#define NEGATIVE(x) ((*(int *)&x)<0)
-#define DIFFERENT_SIGNS(a,b) ((a*b) < 0)
+#if defined(USE_IEEE) 
+#define NEGATIVE(x) ((*(GLuint *)&x) & (1<<31))
+#define DIFFERENT_SIGNS(x,y) (((*(GLuint *)&x)^(*(GLuint *)&y)) & (1<<31))
 #else
 #define NEGATIVE(x) (x < 0)
-#define DIFFERENT_SIGNS(a,b) ((a*b) < 0)
+#define DIFFERENT_SIGNS(x,y) (x * y <= 0 && x - y != 0)
+/* Could just use (x*y<0) except for the flatshading requirements.
+ * Maybe there's a better way?
+ */
 #endif
 
 #define W(i) coord[i][3]
@@ -336,153 +409,84 @@ static void interp_init( void )
 static clip_poly_func clip_poly_tab[5] = {
    0,
    0,
-   viewclip_polygon_2,
-   viewclip_polygon_3,
-   viewclip_polygon_4
+   clip_polygon_2,
+   clip_polygon_3,
+   clip_polygon_4
 };
 
 static clip_line_func clip_line_tab[5] = {
    0,
    0,
-   viewclip_line_2,
-   viewclip_line_3,
-   viewclip_line_4
+   clip_line_2,
+   clip_line_3,
+   clip_line_4
 };
 
 
-
 /**********************************************************************/
-/*                 Clip and render single primitives                  */
-/**********************************************************************/
-
-
-
-static INLINE void draw_line(GLcontext *ctx, GLuint v1, GLuint v2 )
-{
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   GLubyte c1 = VB->ClipMask[v1], c2 = VB->ClipMask[v2];
-   GLubyte ormask = c1|c2; 
-   if (!ormask) 
-      ctx->Driver.LineFunc( ctx, v1, v2, v2 );
-   else if (!(c1 & c2 & 0x3f))
-      clip_line_tab[VB->ClipPtr->size]( ctx, v1, v2, ormask );
-}
-
-static INLINE void draw_triangle(GLcontext *ctx, 
-				 GLuint v1, GLuint v2, GLuint v3,
-				 GLuint pv )
-{
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   GLubyte c1 = VB->ClipMask[v1], c2 = VB->ClipMask[v2], c3 = VB->ClipMask[v3];
-   GLubyte ormask = c1|c2|c3; 
-   if (!ormask) 
-      ctx->Driver.TriangleFunc( ctx, v1, v2, v3, pv );
-   else if (!(c1 & c2 & c3 & 0x3f)) {
-      GLuint vlist[MAX_CLIPPED_VERTICES];
-      ASSIGN_3V(vlist, v1, v2, v3 );
-      clip_poly_tab[VB->ClipPtr->size]( ctx, 3, vlist, pv, ormask );
-   }
-}
-
-
-static INLINE void draw_quad( GLcontext *ctx, 
-			      GLuint v1, GLuint v2, GLuint v3,
-			      GLuint v4, GLuint pv )
-{
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;   
-   GLubyte c1 = VB->ClipMask[v1], c2 = VB->ClipMask[v2];
-   GLubyte c3 = VB->ClipMask[v3], c4 = VB->ClipMask[v4];
-   GLubyte ormask = c1|c2|c3|c4; 
-   if (!ormask) 
-      ctx->Driver.QuadFunc( ctx, v1, v2, v3, v4, pv );
-   else if (!(c1 & c2 & c3 & c4 & 0x3f)) {
-      GLuint vlist[MAX_CLIPPED_VERTICES];
-      ASSIGN_4V(vlist, v1, v2, v3, v4 );
-      clip_poly_tab[VB->ClipPtr->size]( ctx, 4, vlist, pv, ormask );
-   }
-}
-
-
-/**********************************************************************/
-/*            Clip and render whole begin/end objects                 */
+/*              Clip and render whole begin/end objects               */
 /**********************************************************************/
 
 #define NEED_EDGEFLAG_SETUP (ctx->_TriangleCaps & DD_TRI_UNFILLED)
-#define EDGEFLAG_GET(idx) VB->EdgeFlagPtr->data[idx]
-#define EDGEFLAG_SET(idx, val) VB->EdgeFlagPtr->data[idx] = val
-
-
-/* Vertices, no clipping.
- */
-#define RENDER_POINTS( start, count ) \
-   ctx->Driver.PointsFunc( ctx, start, count-1 )
-
-#define RENDER_LINE( i1, i ) \
-   ctx->Driver.LineFunc( ctx, i1, i, i )
-
-#define RENDER_TRI( i2, i1, i, pv, parity )		\
-do {							\
-   if (parity)						\
-      ctx->Driver.TriangleFunc( ctx, i1, i2, i, pv );	\
-   else							\
-      ctx->Driver.TriangleFunc( ctx, i2, i1, i, pv );	\
-} while (0)
-
-#define RENDER_QUAD( i3, i2, i1, i, pv )	\
-   ctx->Driver.QuadFunc( ctx, i3, i2, i1, i, pv );
-
-#define TAG(x) x##_raw
-
-#define LOCAL_VARS					\
-    struct vertex_buffer *VB = &(TNL_CONTEXT(ctx)->vb);	\
-    (void) VB;
-
-#define RESET_STIPPLE ctx->Driver.ResetLineStipple( ctx )
-#define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE;
-#define PRESERVE_VB_DEFS
-#include "t_vb_rendertmp.h"
-
-
-/* Elts, no clipping.
- */
-#undef ELT
-#undef TAG
-#undef LOCAL_VARS
-#define TAG(x) x##_raw_elts
-#define ELT(x) elt[x]
-#define LOCAL_VARS  				\
-    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb; \
-    const GLuint * const elt = VB->Elts;	\
-    (void) elt;
-#include "t_vb_rendertmp.h"
-
-
+#define EDGEFLAG_GET(idx) VB->EdgeFlag[idx]
+#define EDGEFLAG_SET(idx, val) VB->EdgeFlag[idx] = val
 
 
 /* Vertices, with the possibility of clipping.
  */
-#define RENDER_POINTS( start, count )			\
-   ctx->Driver.PointsFunc( ctx, start, count-1 )
+#define RENDER_POINTS( start, count ) \
+   ctx->Driver.PointsFunc( ctx, start, count )
 
-#define RENDER_LINE( i1, i )			\
-   draw_line( ctx, i1, i )
-
-#define RENDER_TRI( i2, i1, i, pv, parity)	\
+#define RENDER_LINE( v1, v2 )			\
 do {						\
-  GLuint e2=i2, e1=i1;				\
-  if (parity) { GLuint t=e2; e2=e1; e1=t; }	\
-  draw_triangle(ctx,e2,e1,i,pv);	\
+   GLubyte c1 = mask[v1], c2 = mask[v2];	\
+   GLubyte ormask = c1|c2;			\
+   if (!ormask)					\
+      LineFunc( ctx, v1, v2 );			\
+   else if (!(c1 & c2 & 0x3f))			\
+      clip_line_tab[sz]( ctx, v1, v2, ormask );	\
 } while (0)
 
-#define RENDER_QUAD( i3, i2, i1, i, pv)	\
-  draw_quad(ctx,i3,i2,i1,i,pv)
+#define RENDER_TRI( v1, v2, v3 )			\
+do {							\
+   GLubyte c1 = mask[v1], c2 = mask[v2], c3 = mask[v3];	\
+   GLubyte ormask = c1|c2|c3;				\
+   if (!ormask)						\
+      TriangleFunc( ctx, v1, v2, v3 );			\
+   else if (!(c1 & c2 & c3 & 0x3f)) {			\
+      GLuint vlist[MAX_CLIPPED_VERTICES];		\
+      ASSIGN_3V(vlist, v3, v1, v2 );			\
+      clip_poly_tab[sz]( ctx, 3, vlist, ormask );	\
+   }							\
+} while (0)
+
+#define RENDER_QUAD( v1, v2, v3, v4 )			\
+do {							\
+   GLubyte c1 = mask[v1], c2 = mask[v2];		\
+   GLubyte c3 = mask[v3], c4 = mask[v4];		\
+   GLubyte ormask = c1|c2|c3|c4;			\
+   if (!ormask)						\
+      QuadFunc( ctx, v1, v2, v3, v4 );			\
+   else if (!(c1 & c2 & c3 & c4 & 0x3f)) {		\
+      GLuint vlist[MAX_CLIPPED_VERTICES];		\
+      ASSIGN_4V(vlist, v4, v1, v2, v3 );		\
+      clip_poly_tab[sz]( ctx, 4, vlist, ormask );	\
+   }							\
+} while (0)
 
 
 #define LOCAL_VARS							\
-    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb; \
-    (void)VB;
+    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;			\
+    const GLuint * const elt = VB->Elts;				\
+    const GLubyte *mask = VB->ClipMask;					\
+    const GLuint sz = VB->ClipPtr->size;				\
+    const line_func LineFunc = ctx->Driver.LineFunc;			\
+    const triangle_func TriangleFunc = ctx->Driver.TriangleFunc;	\
+    const quad_func QuadFunc = ctx->Driver.QuadFunc;			\
+    (void) (LineFunc && TriangleFunc && QuadFunc);			\
+    (void) elt; (void) mask; (void) sz;
 
-#define TAG(x) x##_clipped
+#define TAG(x) clip_##x##_verts
 #define RESET_STIPPLE ctx->Driver.ResetLineStipple( ctx )
 #define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE;
 #define PRESERVE_VB_DEFS
@@ -494,15 +498,59 @@ do {						\
  */
 #undef ELT
 #undef TAG
-#undef LOCAL_VARS
 #define ELT(x) elt[x]
-#define LOCAL_VARS						\
-    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;		\
-    const GLuint * const elt = VB->Elts;			\
-    (void) elt;
-#define TAG(x) x##_clipped_elts
-
+#define TAG(x) clip_##x##_elts
 #include "t_vb_rendertmp.h"
+
+
+/**********************************************************************/
+/*                  Render whole begin/end objects                    */
+/**********************************************************************/
+
+#define NEED_EDGEFLAG_SETUP (ctx->_TriangleCaps & DD_TRI_UNFILLED)
+#define EDGEFLAG_GET(idx) VB->EdgeFlag[idx]
+#define EDGEFLAG_SET(idx, val) VB->EdgeFlag[idx] = val
+
+
+/* Vertices, no clipping.
+ */
+#define RENDER_POINTS( start, count ) \
+   ctx->Driver.PointsFunc( ctx, start, count )
+
+#define RENDER_LINE( v1, v2 ) \
+   LineFunc( ctx, v1, v2 )
+
+#define RENDER_TRI( v1, v2, v3 )		\
+   TriangleFunc( ctx, v1, v2, v3 )
+
+#define RENDER_QUAD( v1, v2, v3, v4 )	\
+   QuadFunc( ctx, v1, v2, v3, v4 )
+
+#define TAG(x) _tnl_##x##_verts
+
+#define LOCAL_VARS							\
+    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;			\
+    const GLuint * const elt = VB->Elts;				\
+    const line_func LineFunc = ctx->Driver.LineFunc;			\
+    const triangle_func TriangleFunc = ctx->Driver.TriangleFunc;	\
+    const quad_func QuadFunc = ctx->Driver.QuadFunc;			\
+    (void) (LineFunc && TriangleFunc && QuadFunc);			\
+    (void) elt;
+
+#define RESET_STIPPLE ctx->Driver.ResetLineStipple( ctx )
+#define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE;
+#define RENDER_TAB_QUALIFIER 
+#define PRESERVE_VB_DEFS
+#include "t_vb_rendertmp.h"
+
+
+/* Elts, no clipping.
+ */
+#undef ELT
+#define TAG(x) _tnl_##x##_elts
+#define ELT(x) elt[x]
+#include "t_vb_rendertmp.h"
+
 
 
 
@@ -520,40 +568,29 @@ static GLboolean run_render( GLcontext *ctx,
    render_func *tab;
    GLint pass = 0;
 
-/*     return GL_FALSE; */
+   VB->interpfunc = RENDER_STAGE_DATA(stage)->interp;
+   VB->copypvfunc = RENDER_STAGE_DATA(stage)->copypv;
 
-   VB->interpfunc = (void *)RENDER_STAGE_DATA(stage)->interp;
-   
-   if (new_inputs) {
-      GLuint importable = new_inputs & VB->importable_data;
-      GLuint interested = 0;
-
-      if (VB->ClipOrMask)
-	 interested = ~0;
-      
-      if (ctx->_TriangleCaps & DD_TRI_UNFILLED) 
-	 interested |= VERT_EDGE;
-      
-      importable &= interested;
-
-      if (importable) 
-	 VB->import_data( ctx, importable, VEC_NOT_WRITEABLE|VEC_BAD_STRIDE);
-
-      if (ctx->Driver.BuildProjectedVertices)
-	 ctx->Driver.BuildProjectedVertices( ctx, 0, VB->Count, new_inputs);
-   }
-
-   /* Rendering is considered a side-effect, and must be repeated each
-    * time the stage is run, even if no inputs have changed.
+   /* Allow the drivers to lock before projected verts are built so
+    * that window coordinates are guarenteed not to change before
+    * rendering.
     */
-   if (VB->Elts) { 
-      tab = VB->ClipOrMask ? render_tab_clipped_elts : render_tab_raw_elts;
-   } else {
-      tab = VB->ClipOrMask ? render_tab_clipped : render_tab_raw;
-   }
-
    if (ctx->Driver.RenderStart)
       ctx->Driver.RenderStart( ctx );
+   
+   if (VB->ClipOrMask) {
+      tab = VB->Elts ? clip_render_tab_elts : clip_render_tab_verts;
+
+      if (new_inputs & VB->importable_data) 
+	 VB->import_data( ctx,
+			  new_inputs & VB->importable_data,
+			  VEC_NOT_WRITEABLE|VEC_BAD_STRIDE);
+   }
+   else {
+      tab = VB->Elts ? ctx->Driver.RenderTabElts : ctx->Driver.RenderTabVerts;
+   } 
+
+   ctx->Driver.BuildProjectedVertices( ctx, 0, VB->Count, new_inputs );
 
    do
    {
@@ -564,9 +601,6 @@ static GLboolean run_render( GLcontext *ctx,
 	 length= VB->PrimitiveLength[i];	
 	 ASSERT(length || (flags & PRIM_LAST));
 	 ASSERT((flags & PRIM_MODE_MASK) <= GL_POLYGON+1);
-/*  	 fprintf(stderr, "render %s %d..%d\n",  */
-/*  		 _mesa_prim_name[flags & PRIM_MODE_MASK], */
-/*  		 i, i+length); */
 	 if (length)
 	    tab[flags & PRIM_MODE_MASK]( ctx, i, i + length, flags );
       }
@@ -595,6 +629,7 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
 {
    struct render_stage_data *store = RENDER_STAGE_DATA(stage);
    GLuint interp = 0;
+   GLuint copy = 0;
    GLuint inputs = VERT_CLIP;
    GLuint i;
 
@@ -643,6 +678,12 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
       inputs |= VERT_TEX_ANY;
    }
 
+   if (ctx->_TriangleCaps & DD_FLATSHADE) {
+      copy = interp & (INTERP_RGBA|INTERP_SPEC|INTERP_INDEX);
+      interp &= ~copy;
+   }
+
+   store->copypv = copy_tab[copy];
    store->interp = interp_tab[interp];
    stage->inputs = inputs;
 }
@@ -688,6 +729,7 @@ const struct gl_pipeline_stage _tnl_render_stage =
    "render",
    (_NEW_BUFFERS |
     _DD_NEW_SEPERATE_SPECULAR |
+    _DD_NEW_FLATSHADE |
     _NEW_TEXTURE|
     _NEW_LIGHT|
     _NEW_POINT|

@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.21 2000/12/26 05:09:27 keithw Exp $ */
+/* $Id: buffers.c,v 1.22 2001/01/05 02:26:48 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -373,8 +373,9 @@ void
 _mesa_ResizeBuffersMESA( void )
 {
    GLcontext *ctx = _mesa_get_current_context();
-
    GLuint buf_width, buf_height;
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx );
+
 
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glResizeBuffersMESA\n");

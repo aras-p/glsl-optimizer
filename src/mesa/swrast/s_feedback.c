@@ -1,4 +1,4 @@
-/* $Id: s_feedback.c,v 1.3 2000/11/19 23:10:26 brianp Exp $ */
+/* $Id: s_feedback.c,v 1.4 2001/01/05 02:26:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -100,9 +100,9 @@ void gl_feedback_triangle( GLcontext *ctx,
 	 feedback_vertex( ctx, v1, v1 );
 	 feedback_vertex( ctx, v2, v2 );
       } else {
-	 feedback_vertex( ctx, v0, v0 );
-	 feedback_vertex( ctx, v1, v0 );
-	 feedback_vertex( ctx, v2, v0 );
+	 feedback_vertex( ctx, v0, v2 );
+	 feedback_vertex( ctx, v1, v2 );
+	 feedback_vertex( ctx, v2, v2 );
       }
    }
 }
@@ -122,8 +122,8 @@ void gl_feedback_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
       feedback_vertex( ctx, v0, v0 );
       feedback_vertex( ctx, v1, v1 );
    } else {
-      feedback_vertex( ctx, v0, v0 );
-      feedback_vertex( ctx, v1, v0 );
+      feedback_vertex( ctx, v0, v1 );
+      feedback_vertex( ctx, v1, v1 );
    }
 
    swrast->StippleCounter++;

@@ -238,10 +238,10 @@ static tfxSetupFunc setupfuncs[MAX_SETUP];
 
 
 static void
-fxsetup_invalid( GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
+fxsetup_invalid( GLcontext *ctx, GLuint start, GLuint end )
 {
    fprintf(stderr, "fxMesa: invalid setup function\n");
-   (void) (ctx && start && end && newinputs);
+   (void) (ctx && start && end);
 }
 
 
@@ -334,42 +334,48 @@ void fx_BuildProjVerts( GLcontext *ctx, GLuint start, GLuint count,
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   GLuint ind = fxMesa->setup_gone;
 
-   fxMesa->setup_gone = 0;
+   if (newinputs == ~0) {
+      /* build interpolated vertices */
+      setupfuncs[fxMesa->setupindex]( ctx, start, count );   
+   } else {
+      GLuint ind = fxMesa->setup_gone;
+      fxMesa->setup_gone = 0;
    
-   if (newinputs & VERT_CLIP) 
-      ind = fxMesa->setupindex;	/* clipmask has changed - invalidated all */
-   else {
-      if (newinputs & VERT_TEX0)
-	 ind |= fxMesa->tex_dest[0];
+      if (newinputs & VERT_CLIP) 
+	 ind = fxMesa->setupindex;	/* clipmask has potentially changed */
+      else {
+	 if (newinputs & VERT_TEX0)
+	    ind |= fxMesa->tex_dest[0];
       
-      if (newinputs & VERT_TEX1)
-	 ind |= fxMesa->tex_dest[1];
+	 if (newinputs & VERT_TEX1)
+	    ind |= fxMesa->tex_dest[1];
 
-      if (newinputs & VERT_RGBA)
-	 ind |= SETUP_RGBA;
+	 if (newinputs & VERT_RGBA)
+	    ind |= SETUP_RGBA;
 
-      ind &= fxMesa->setupindex;
+	 ind &= fxMesa->setupindex;
+      }
+
+      if (0) {
+	 _tnl_print_vert_flags("newinputs", newinputs);
+	 fxPrintSetupFlags("setup function", ind); 
+      }
+
+      if (ind) {
+	 if (fxMesa->new_state) 
+	    fxSetupFXUnits( ctx );
+      
+	 if (VB->importable_data)
+	    VB->import_data( ctx, VB->importable_data & newinputs,
+			     (VB->ClipOrMask
+			      ? VEC_NOT_WRITEABLE|VEC_BAD_STRIDE
+			      : VEC_BAD_STRIDE));
+      
+	 setupfuncs[ind]( ctx, start, count );   
+      }
    }
-
-   if (0) {
-      _tnl_print_vert_flags("newinputs", newinputs);
-      fxPrintSetupFlags("setup function", ind); 
-   }
-
-   if (fxMesa->new_state) 
-      fxSetupFXUnits( ctx );
-
-   if (VB->importable_data)
-      VB->import_data( ctx, VB->importable_data & newinputs,
-		       (VB->ClipOrMask
-			? VEC_NOT_WRITEABLE|VEC_BAD_STRIDE
-			: VEC_BAD_STRIDE));
-
-   setupfuncs[ind]( ctx, start, count, newinputs );   
 }
-
 
 void fxAllocVB( GLcontext *ctx )
 {

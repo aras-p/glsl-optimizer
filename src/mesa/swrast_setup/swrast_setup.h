@@ -47,23 +47,16 @@ _swsetup_BuildProjectedVertices( GLcontext *ctx,
 				 GLuint new_inputs );
 
 extern void 
-_swsetup_Quad( GLcontext *ctx, GLuint v0, GLuint v1, 
-	       GLuint v2, GLuint v3, GLuint pv );
+_swsetup_Quad( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3 );
 
 extern void 
-_swsetup_Triangle( GLcontext *ctx, GLuint v0, GLuint v1, 
-		   GLuint v2, GLuint pv );
-
+_swsetup_Triangle( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2 );
 
 extern void 
-_swsetup_Line( GLcontext *ctx, GLuint v0, GLuint v1, GLuint pv );
-
+_swsetup_Line( GLcontext *ctx, GLuint v0, GLuint v1 );
 
 extern void 
 _swsetup_Points( GLcontext *ctx, GLuint first, GLuint last );
-
-extern void 
-_swsetup_IndexedPoints( GLcontext *ctx, GLuint first, GLuint last );
 
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: t_vb_rendertmp.h,v 1.3 2000/12/28 22:11:06 keithw Exp $ */
+/* $Id: t_vb_rendertmp.h,v 1.4 2001/01/05 02:26:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,6 +60,10 @@
 #define ELT(x) x
 #endif
 
+#ifndef RENDER_TAB_QUALIFIER
+#define RENDER_TAB_QUALIFIER static
+#endif
+
 static void TAG(render_points)( GLcontext *ctx,
 				GLuint start,
 				GLuint count,
@@ -68,7 +72,6 @@ static void TAG(render_points)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
-/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    RESET_OCCLUSION;
    INIT(GL_POINTS);
    RENDER_POINTS( start, count );
@@ -84,7 +87,6 @@ static void TAG(render_lines)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
-/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    RESET_OCCLUSION;
    INIT(GL_LINES);
    for (j=start+1; j<count; j+=2 ) {
@@ -104,7 +106,6 @@ static void TAG(render_line_strip)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
-/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    RESET_OCCLUSION;
    INIT(GL_LINES);
 
@@ -128,7 +129,6 @@ static void TAG(render_line_loop)( GLcontext *ctx,
 
    (void) flags;
 
-/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    RESET_OCCLUSION;
    INIT(GL_LINES);
 
@@ -160,18 +160,17 @@ static void TAG(render_triangles)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
-/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    INIT(GL_POLYGON);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+2; j<count; j+=3) {
 	 /* Leave the edgeflags as supplied by the user.
 	  */
-	 RENDER_TRI( ELT(j-2), ELT(j-1), ELT(j), ELT(j), 0 );
+	 RENDER_TRI( ELT(j-2), ELT(j-1), ELT(j) );
 	 RESET_STIPPLE;
       }
    } else {
       for (j=start+2; j<count; j+=3) {
-	 RENDER_TRI( ELT(j-2), ELT(j-1), ELT(j), ELT(j), 0 );
+	 RENDER_TRI( ELT(j-2), ELT(j-1), ELT(j) );
       }
    }
    POSTFIX;
@@ -191,15 +190,11 @@ static void TAG(render_tri_strip)( GLcontext *ctx,
    if (TEST_PRIM_PARITY(flags))
       parity = 1;
    
-/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    INIT(GL_POLYGON);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+2;j<count;j++,parity^=1) {
-	 /* All edges are boundary.  Set edgeflags to 1, draw the
-	  * triangle, and restore them to the original values.
-	  */
-	 GLuint ej2 = ELT(j-2);
-	 GLuint ej1 = ELT(j-1);
+	 GLuint ej2 = ELT(j-2+parity);
+	 GLuint ej1 = ELT(j-1-parity);
 	 GLuint ej = ELT(j);
 	 GLboolean ef2 = EDGEFLAG_GET( ej2 );
 	 GLboolean ef1 = EDGEFLAG_GET( ej1 );
@@ -207,15 +202,15 @@ static void TAG(render_tri_strip)( GLcontext *ctx,
 	 EDGEFLAG_SET( ej2, GL_TRUE );
 	 EDGEFLAG_SET( ej1, GL_TRUE );
 	 EDGEFLAG_SET( ej, GL_TRUE );
-	 RENDER_TRI( ej2, ej1, ej, ej, parity );
+	 RENDER_TRI( ej2, ej1, ej );
 	 EDGEFLAG_SET( ej2, ef2 );
 	 EDGEFLAG_SET( ej1, ef1 );
 	 EDGEFLAG_SET( ej, ef );
 	 RESET_STIPPLE;
       }
    } else {
-      for (j=start+2;j<count;j++,parity^=1) {
-	 RENDER_TRI( ELT(j-2), ELT(j-1), ELT(j), ELT(j), parity );
+      for (j=start+2; j<count ; j++, parity^=1) {
+	 RENDER_TRI( ELT(j-2+parity), ELT(j-1-parity), ELT(j) );
       }
    }
    POSTFIX;
@@ -231,7 +226,6 @@ static void TAG(render_tri_fan)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
-/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    INIT(GL_POLYGON);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+2;j<count;j++) {
@@ -246,7 +240,7 @@ static void TAG(render_tri_fan)( GLcontext *ctx,
 	 EDGEFLAG_SET( ejs, GL_TRUE );
 	 EDGEFLAG_SET( ej1, GL_TRUE );
 	 EDGEFLAG_SET( ej, GL_TRUE );
-	 RENDER_TRI( ejs, ej1, ej, ej, 0);
+	 RENDER_TRI( ejs, ej1, ej);
 	 EDGEFLAG_SET( ejs, efs );
 	 EDGEFLAG_SET( ej1, ef1 );
 	 EDGEFLAG_SET( ej, ef );
@@ -254,7 +248,7 @@ static void TAG(render_tri_fan)( GLcontext *ctx,
       }
    } else {
       for (j=start+2;j<count;j++) {
-	 RENDER_TRI( ELT(start), ELT(j-1), ELT(j), ELT(j), 0 );
+	 RENDER_TRI( ELT(start), ELT(j-1), ELT(j) );
       }
    }
 
@@ -262,22 +256,15 @@ static void TAG(render_tri_fan)( GLcontext *ctx,
 }
 
 
-/* This is a bit of a hack.  Clipping produces polygons and really
- * wants to use this function to render them (in particular to get the
- * edgeflags right).  However, the rule that pv==start for polys
- * doens't hold there, hence the extra arg and the wrapper below.  
- */
-static void TAG(render_poly_pv)( GLcontext *ctx,
-				 GLuint start,
-				 GLuint count,
-				 GLuint flags,
-				 GLuint pv )
+static void TAG(render_poly)( GLcontext *ctx,
+			      GLuint start,
+			      GLuint count,
+			      GLuint flags )
 {
    GLuint j = start+2;
    LOCAL_VARS;
    (void) flags;
 
-/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    INIT(GL_POLYGON);
    if (NEED_EDGEFLAG_SETUP) {
       GLboolean efstart = EDGEFLAG_GET( ELT(start) );
@@ -300,7 +287,7 @@ static void TAG(render_poly_pv)( GLcontext *ctx,
       if (j<count-1) {
 	 GLboolean ef = EDGEFLAG_GET( ELT(j) );
 	 EDGEFLAG_SET( ELT(j), GL_FALSE );
-	 RENDER_TRI( ELT(start), ELT(j-1), ELT(j), ELT(pv), 0 );
+	 RENDER_TRI( ELT(start), ELT(j-1), ELT(j) );
 	 EDGEFLAG_SET( ELT(j), ef );
 	 j++;
 	    
@@ -311,7 +298,7 @@ static void TAG(render_poly_pv)( GLcontext *ctx,
 	 for (;j<count-1;j++) {
 	    GLboolean efj = EDGEFLAG_GET( ELT(j) );
 	    EDGEFLAG_SET( ELT(j), GL_FALSE );
-	    RENDER_TRI( ELT(start), ELT(j-1), ELT(j), ELT(pv), 0 );
+	    RENDER_TRI( ELT(start), ELT(j-1), ELT(j) );
 	    EDGEFLAG_SET( ELT(j), efj );
 	 }
       }
@@ -319,7 +306,7 @@ static void TAG(render_poly_pv)( GLcontext *ctx,
       /* Draw the last or only triangle
        */
       if (j < count)
-	 RENDER_TRI( ELT(start), ELT(j-1), ELT(j), ELT(pv), 0 );
+	 RENDER_TRI( ELT(j-1), ELT(j), ELT(start) );
 
       /* Restore the first and last edgeflags:
        */
@@ -332,19 +319,10 @@ static void TAG(render_poly_pv)( GLcontext *ctx,
    }
    else {
       for (j=start+2;j<count;j++) {
-	 RENDER_TRI( ELT(start), ELT(j-1), ELT(j), ELT(start), 0 );
+	 RENDER_TRI( ELT(j-1), ELT(j), ELT(start) );
       }
    }
    POSTFIX;
-}
-
-static void TAG(render_poly)( GLcontext *ctx,
-			      GLuint start,
-			      GLuint count,
-			      GLuint flags )
-{
-/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
-   TAG(render_poly_pv)( ctx, start, count, flags, start );
 }
 
 static void TAG(render_quads)( GLcontext *ctx,
@@ -356,18 +334,17 @@ static void TAG(render_quads)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
-/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    INIT(GL_POLYGON);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+3; j<count; j+=4) {
 	 /* Use user-specified edgeflags for quads.
 	  */
-	 RENDER_QUAD( ELT(j-3), ELT(j-2), ELT(j-1), ELT(j), ELT(j) );
+	 RENDER_QUAD( ELT(j-3), ELT(j-2), ELT(j-1), ELT(j) );
 	 RESET_STIPPLE;
       }
    } else {
       for (j=start+3; j<count; j+=4) {
-	 RENDER_QUAD( ELT(j-3), ELT(j-2), ELT(j-1), ELT(j), ELT(j) );
+	 RENDER_QUAD( ELT(j-3), ELT(j-2), ELT(j-1), ELT(j) );
       }
    }
    POSTFIX;
@@ -382,7 +359,6 @@ static void TAG(render_quad_strip)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
-/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    INIT(GL_POLYGON);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+3;j<count;j+=2) {
@@ -397,7 +373,7 @@ static void TAG(render_quad_strip)( GLcontext *ctx,
 	 EDGEFLAG_SET( ELT(j-2), GL_TRUE );
 	 EDGEFLAG_SET( ELT(j-1), GL_TRUE );
 	 EDGEFLAG_SET( ELT(j), GL_TRUE );
-	 RENDER_QUAD( ELT(j-3), ELT(j-2), ELT(j), ELT(j-1), ELT(j) );
+	 RENDER_QUAD( ELT(j-1), ELT(j-3), ELT(j-2), ELT(j) );
 	 EDGEFLAG_SET( ELT(j-3), ef3 );
 	 EDGEFLAG_SET( ELT(j-2), ef2 );
 	 EDGEFLAG_SET( ELT(j-1), ef1 );
@@ -406,7 +382,7 @@ static void TAG(render_quad_strip)( GLcontext *ctx,
       }
    } else {
       for (j=start+3;j<count;j+=2) {
-	 RENDER_QUAD( ELT(j-3), ELT(j-2), ELT(j), ELT(j-1), ELT(j) );
+	 RENDER_QUAD( ELT(j-1), ELT(j-3), ELT(j-2), ELT(j) );
       }
    }
    POSTFIX;
@@ -417,14 +393,13 @@ static void TAG(render_noop)( GLcontext *ctx,
 			      GLuint count,
 			      GLuint flags )
 {
-/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    (void)(ctx && start && count && flags);
 }
 
-static void (*TAG(render_tab)[GL_POLYGON+2])(GLcontext *,
-					     GLuint,
-					     GLuint,
-					     GLuint) = 
+RENDER_TAB_QUALIFIER void (*TAG(render_tab)[GL_POLYGON+2])(GLcontext *,
+							   GLuint,
+							   GLuint,
+							   GLuint) = 
 {
    TAG(render_points),
    TAG(render_lines),
@@ -452,6 +427,7 @@ static void (*TAG(render_tab)[GL_POLYGON+2])(GLcontext *,
 #undef RESET_STIPPLE
 #undef DBG
 #undef ELT
+#undef RENDER_TAB_QUALIFIER
 #endif
 
 #ifndef PRESERVE_TAG

@@ -651,8 +651,7 @@ static const GLubyte *fxDDGetString(GLcontext *ctx, GLenum name)
 }
 
 static const struct gl_pipeline_stage *fx_pipeline[] = {
-   &_tnl_update_material_stage, 
-				/* TODO: Add the fastpath here */
+   &_tnl_update_material_stage, /* TODO: Add the fastpath here */
    &_tnl_vertex_transform_stage, 
    &_tnl_normal_transform_stage, 
    &_tnl_lighting_stage,	
@@ -660,8 +659,7 @@ static const struct gl_pipeline_stage *fx_pipeline[] = {
    &_tnl_texgen_stage, 
    &_tnl_texture_transform_stage, 
    &_tnl_point_attenuation_stage, 
-   &fx_render_stage,	        /* ADD:  render simple unclipped vb's */
-   &_tnl_render_stage,		/* KEEP: the old render stage for fallbacks */
+   &_tnl_render_stage,		
    0,
 };
 
@@ -680,7 +678,6 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
    if (firsttime) {
       fxDDSetupInit();
       fxDDTrifuncInit();
-/*     fxDDFastPathInit(); */
       firsttime = 0;
    }
 

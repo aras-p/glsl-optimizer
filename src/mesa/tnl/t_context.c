@@ -1,4 +1,4 @@
-/* $Id: t_context.c,v 1.7 2000/12/26 05:09:32 keithw Exp $ */
+/* $Id: t_context.c,v 1.8 2001/01/05 02:26:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -69,6 +69,9 @@ install_driver_callbacks( GLcontext *ctx )
    ctx->Driver.MakeCurrent = _tnl_MakeCurrent;
    ctx->Driver.BeginCallList = _tnl_BeginCallList;
    ctx->Driver.EndCallList = _tnl_EndCallList;
+
+   ctx->Driver.RenderTabElts = _tnl_render_tab_elts;
+   ctx->Driver.RenderTabVerts = _tnl_render_tab_verts;
 }
 
 
@@ -111,7 +114,7 @@ _tnl_CreateContext( GLcontext *ctx )
    /* Set a few default values in the driver struct.
     */
    install_driver_callbacks(ctx);
-   ctx->Driver.NeedFlush = FLUSH_UPDATE_CURRENT|FLUSH_STORED_VERTICES;
+   ctx->Driver.NeedFlush = FLUSH_UPDATE_CURRENT;
    ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
    ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
 

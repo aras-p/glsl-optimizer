@@ -27,7 +27,7 @@
  */
 
 
-static void NAME(GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs)
+static void NAME(GLcontext *ctx, GLuint start, GLuint end )
 {
    fxMesaContext fxMesa = (fxMesaContext)ctx->DriverCtx;
    fxVertex *verts = fxMesa->verts;

@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.9 2001/01/02 22:02:51 brianp Exp $ */
+/* $Id: mtypes.h,v 1.10 2001/01/05 02:26:48 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,7 +35,6 @@
 #include "glthread.h"
 
 #include "math/m_matrix.h"	/* GLmatrix */
-#include "math/m_translate.h"	/* trans_XXX_func */
 
 #if defined(MESA_TRACE)
 #include "Trace/tr_context.h"
