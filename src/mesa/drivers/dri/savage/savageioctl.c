@@ -94,7 +94,6 @@ static void savage_BCI_clear(GLcontext *ctx, drm_savage_clear_t *pclear)
 		
 		if ( pclear->flags & (SAVAGE_DEPTH |SAVAGE_STENCIL) ) {
 		        uint32_t writeMask = 0x0;
-#if HW_STENCIL		
 		        if(imesa->hw_stencil)
 		        {        
 		            if(pclear->flags & SAVAGE_STENCIL)
@@ -107,7 +106,6 @@ static void savage_BCI_clear(GLcontext *ctx, drm_savage_clear_t *pclear)
 		                 writeMask |= 0x00FFFFFF;
 		            }
                         }
-#endif
 		        if(imesa->IsFullScreen && imesa->NotFirstFrame &&
 			   imesa->savageScreen->chipset >= S3_SAVAGE4)
 		        {
@@ -122,7 +120,6 @@ static void savage_BCI_clear(GLcontext *ctx, drm_savage_clear_t *pclear)
 		            if(imesa->IsFullScreen)
 		                imesa->NotFirstFrame = GL_TRUE;
 		                
-#if HW_STENCIL
 			    if(imesa->hw_stencil)
 			    {
 				bciptr = savageDMAAlloc (imesa, 10);
@@ -133,7 +130,6 @@ static void savage_BCI_clear(GLcontext *ctx, drm_savage_clear_t *pclear)
                                 }
                             }
 			    else
-#endif              
 			    {
 				bciptr = savageDMAAlloc (imesa, 6);
 			    }
@@ -144,7 +140,6 @@ static void savage_BCI_clear(GLcontext *ctx, drm_savage_clear_t *pclear)
 			    WRITE_CMD((bciptr) , pclear->clear_depth,uint32_t);
 			    WRITE_CMD((bciptr) , (y <<16) | x,uint32_t);
 			    WRITE_CMD((bciptr) , (height << 16) | width,uint32_t);
-#if HW_STENCIL			    
 			    if(imesa->hw_stencil)
 			    {
 			        if(writeMask != 0xFFFFFFFF)
@@ -153,7 +148,6 @@ static void savage_BCI_clear(GLcontext *ctx, drm_savage_clear_t *pclear)
                                    WRITE_CMD((bciptr) , 0xFFFFFFFF,uint32_t);  
 			        }
 			    }
-#endif
 			    savageDMACommit (imesa, bciptr);
 			}
 		}

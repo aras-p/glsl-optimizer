@@ -286,12 +286,10 @@ void savageDDInitSpanFuncs( GLcontext *ctx )
        swdd->WriteDepthSpan = savageWriteDepthSpan_8_24;
        swdd->ReadDepthPixels = savageReadDepthPixels_8_24;
        swdd->WriteDepthPixels = savageWriteDepthPixels_8_24;    
-#if HW_STENCIL
        swdd->ReadStencilSpan = savageReadStencilSpan_8_24;
        swdd->WriteStencilSpan = savageWriteStencilSpan_8_24;
        swdd->ReadStencilPixels = savageReadStencilPixels_8_24;
        swdd->WriteStencilPixels = savageWriteStencilPixels_8_24;
-#endif       
        break;   
    
    }

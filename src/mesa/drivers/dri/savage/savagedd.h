@@ -28,6 +28,5 @@
 
 #include "context.h"
 
-void savageDDExtensionsInit( GLcontext *ctx );
 void savageDDInitDriverFuncs( GLcontext *ctx );
 #endif

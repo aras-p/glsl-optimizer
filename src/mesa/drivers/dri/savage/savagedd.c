@@ -39,9 +39,6 @@
 #include "extensions.h"
 
 
-extern int xf86VTSema;
-
-
 /***************************************
  * Mesa's Driver Functions
  ***************************************/
@@ -85,18 +82,6 @@ static void savageBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *heigh
    *height = imesa->driDrawable->h;
    UNLOCK_HARDWARE(imesa);
 }
-
-
-
-
-void savageDDExtensionsInit( GLcontext *ctx )
-{
-   _mesa_enable_extension( ctx, "GL_ARB_multitexture" );
-   _mesa_enable_extension( ctx, "GL_EXT_texture_lod_bias" );
-   _mesa_enable_extension( ctx, "GL_EXT_texture_env_add" );
-}
-
-
 
 
 void savageDDInitDriverFuncs( GLcontext *ctx )

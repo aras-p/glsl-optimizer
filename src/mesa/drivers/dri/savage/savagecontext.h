@@ -59,7 +59,6 @@ typedef struct savage_texture_object_t *savageTextureObjectPtr;
 #define SAVAGE_FALLBACK_BLEND_EQ       0x200
 
 
-#define HW_STENCIL 1
 #define HW_CULL    1
 
 /* for savagectx.new_state - manage GL->driver state changes

@@ -85,6 +85,14 @@ unsigned long time_sum=0;
 struct timeval tv_s1,tv_f1;
 #endif
 
+static const char *const card_extensions[] =
+{
+    "GL_ARB_multitexture",
+    "GL_EXT_texture_lod_bias",
+    "GL_EXT_texture_env_add",
+    NULL
+};
+
 /* this is first function called in dirver*/
 
 static GLboolean
@@ -404,10 +412,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
      make_empty_list(&imesa->SwappedOut);
    }
 
-   imesa->hw_stencil = GL_FALSE;
-#if HW_STENCIL
    imesa->hw_stencil = mesaVis->stencilBits && mesaVis->depthBits == 24;
-#endif
    imesa->depth_scale = (imesa->savageScreen->zpp == 2) ?
        (1.0F/0x10000):(1.0F/0x1000000);
 
@@ -457,7 +462,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    if (savageDMAInit(imesa) == GL_FALSE)
        return GL_FALSE;  
    
-   savageDDExtensionsInit( ctx );
+   driInitExtensions( ctx, card_extensions, GL_TRUE );
 
    savageDDInitStateFuncs( ctx );
    savageDDInitSpanFuncs( ctx );
@@ -518,11 +523,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       return GL_FALSE; /* not implemented */
    }
    else {
-#if HW_STENCIL
        GLboolean swStencil = mesaVis->stencilBits > 0 && mesaVis->depthBits != 24;
-#else
-       GLboolean swStencil = mesaVis->stencilBits > 0;
-#endif
       driDrawPriv->driverPrivate = (void *) 
          _mesa_create_framebuffer(mesaVis,
                                   GL_FALSE,  /* software depth buffer? */
