@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.18 2000/02/25 03:55:40 keithw Exp $ */
+/* $Id: extensions.c,v 1.19 2000/03/07 17:54:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,7 +41,7 @@
 
 struct extension {
    struct extension *next, *prev;
-   int enabled;
+   GLint enabled;
    char name[MAX_EXT_NAMELEN+1];
    void (*notify)( GLcontext *, GLboolean ); 
 };
@@ -77,7 +77,21 @@ static struct { int enabled; const char *name; } default_extensions[] = {
    { ALWAYS_ENABLED, "GL_ARB_tranpose_matrix" },
    { DEFAULT_OFF,    "GL_EXT_vertex_array_set" },
    { DEFAULT_OFF,    "GL_EXT_texture_env" },
+   { DEFAULT_ON,     "GL_EXT_texture_lod_bias" }
 };
+
+
+/*
+ * Update the boolean convenience flags in the Extensions struct.
+ */
+static void
+update_extension_flags( GLcontext *ctx )
+{
+   /* Update flags */
+   ctx->Extensions.HaveTextureEnvAdd = gl_extension_is_enabled(ctx, "GL_EXT_texture_env_add");
+   ctx->Extensions.HaveTextureLodBias = gl_extension_is_enabled(ctx, "GL_EXT_texture_lod_bias");
+}
+
 
 
 int gl_extensions_add( GLcontext *ctx, 
@@ -101,20 +115,25 @@ int gl_extensions_add( GLcontext *ctx,
 }
 
 
-static int set_extension( GLcontext *ctx, const char *name, GLuint state )
+/*
+ * Either enable or disable the named extension.
+ */
+static int set_extension( GLcontext *ctx, const char *name, GLint state )
 {
    struct extension *i;
    foreach( i, ctx->Extensions.ext_list ) 
       if (strncmp(i->name, name, MAX_EXT_NAMELEN) == 0) 
 	 break;
 
-   if (i == ctx->Extensions.ext_list) return 1;
+   if (i == ctx->Extensions.ext_list)
+      return 1;
 
-   if (i->enabled && !(i->enabled & ALWAYS_ENABLED))
-   {
+   if (i->enabled && !(i->enabled & ALWAYS_ENABLED)) {
       if (i->notify) i->notify( ctx, state );      
       i->enabled = state;
    }
+
+   update_extension_flags(ctx);
 
    return 0;
 }   
@@ -189,6 +208,7 @@ void gl_extensions_ctr( GLcontext *ctx )
 			 default_extensions[i].name,
 			 0 );
    }
+   update_extension_flags(ctx);
 }
 
 

@@ -172,6 +172,16 @@ void fxDDTexEnv(GLcontext *ctx, GLenum target, GLenum pname, const GLfloat *para
 	 fprintf(stderr,"fxmesa: texenv(%x)\n",pname);
    }
 
+   /* apply any lod biasing right now */
+   if (pname==GL_TEXTURE_LOD_BIAS_EXT) {
+     grTexLodBiasValue(GR_TMU0,*param);
+
+     if(fxMesa->haveTwoTMUs) {
+       grTexLodBiasValue(GR_TMU1,*param);
+     }
+
+   }
+
    fxMesa->new_state|=FX_NEW_TEXTURING;
    ctx->Driver.RenderStart = fxSetupFXUnits;
 }

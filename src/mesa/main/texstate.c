@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.8 2000/03/07 17:11:29 brianp Exp $ */
+/* $Id: texstate.c,v 1.9 2000/03/07 17:54:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -69,35 +69,24 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexEnv");
 
-   if (target!=GL_TEXTURE_ENV) {
-      gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(target)" );
-      return;
-   }
+   if (target==GL_TEXTURE_ENV) {
 
-   if (MESA_VERBOSE&(VERBOSE_API|VERBOSE_TEXTURE))
-      fprintf(stderr, "glTexEnv %s %s %.1f(%s) ...\n",  
-	      gl_lookup_enum_by_nr(target),
-	      gl_lookup_enum_by_nr(pname),
-	      *param,
-	      gl_lookup_enum_by_nr((GLenum) (GLint) *param));
-
-
-   if (pname==GL_TEXTURE_ENV_MODE) {
-      GLenum mode = (GLenum) (GLint) *param;
-      switch (mode) {
-         case GL_ADD:
-            if (!gl_extension_is_enabled(ctx, "GL_EXT_texture_env_add")) {
-               gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(param)");
-               return;
-            }
-            /* FALL-THROUGH */
-         case GL_MODULATE:
-         case GL_BLEND:
-         case GL_DECAL:
-         case GL_REPLACE:
+      if (pname==GL_TEXTURE_ENV_MODE) {
+	 GLenum mode = (GLenum) (GLint) *param;
+	 switch (mode) {
+	 case GL_ADD:
+	    if (!ctx->Extensions.HaveTextureEnvAdd) {
+	       gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(param)");
+	       return;
+	    }
+	    /* FALL-THROUGH */
+	 case GL_MODULATE:
+	 case GL_BLEND:
+	 case GL_DECAL:
+	 case GL_REPLACE:
 	    /* A small optimization for drivers */ 
 	    if (texUnit->EnvMode == mode)
-               return;
+	       return;
 
 	    if (MESA_VERBOSE & (VERBOSE_STATE|VERBOSE_TEXTURE))
 	       fprintf(stderr, "glTexEnv: old mode %s, new mode %s\n",
@@ -110,23 +99,53 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 default:
 	    gl_error( ctx, GL_INVALID_VALUE, "glTexEnv(param)" );
 	    return;
+	 }
       }
+      else if (pname==GL_TEXTURE_ENV_COLOR) {
+	 texUnit->EnvColor[0] = CLAMP( param[0], 0.0F, 1.0F );
+	 texUnit->EnvColor[1] = CLAMP( param[1], 0.0F, 1.0F );
+	 texUnit->EnvColor[2] = CLAMP( param[2], 0.0F, 1.0F );
+	 texUnit->EnvColor[3] = CLAMP( param[3], 0.0F, 1.0F );
+      }
+      else {
+	 gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(pname)" );
+	 return;
+      }
+
    }
-   else if (pname==GL_TEXTURE_ENV_COLOR) {
-      texUnit->EnvColor[0] = CLAMP( param[0], 0.0F, 1.0F );
-      texUnit->EnvColor[1] = CLAMP( param[1], 0.0F, 1.0F );
-      texUnit->EnvColor[2] = CLAMP( param[2], 0.0F, 1.0F );
-      texUnit->EnvColor[3] = CLAMP( param[3], 0.0F, 1.0F );
+   else if (target==GL_TEXTURE_FILTER_CONTROL_EXT) {
+
+      if (!ctx->Extensions.HaveTextureLodBias) {
+	 gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
+	 return;
+      }
+
+      if (pname==GL_TEXTURE_LOD_BIAS_EXT) {
+	 texUnit->LodBias = param[0];
+      }
+      else {
+	 gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(pname)" );
+	 return;
+      }
+
    }
    else {
-      gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(pname)" );
+      gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(target)" );
       return;
    }
+
+   if (MESA_VERBOSE&(VERBOSE_API|VERBOSE_TEXTURE))
+      fprintf(stderr, "glTexEnv %s %s %.1f(%s) ...\n",  
+	      gl_lookup_enum_by_nr(target),
+	      gl_lookup_enum_by_nr(pname),
+	      *param,
+	      gl_lookup_enum_by_nr((GLenum) (GLint) *param));
 
    /* Tell device driver about the new texture environment */
    if (ctx->Driver.TexEnv) {
       (*ctx->Driver.TexEnv)( ctx, target, pname, param );
    }
+
 }
 
 
