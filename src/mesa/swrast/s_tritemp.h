@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.8 2001/01/29 18:51:25 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.9 2001/02/06 21:42:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -286,7 +286,7 @@
 #error "Mipmapping without texturing doesn't make sense."
 #endif
       GLfloat lambda_nominator;
-#endif
+#endif /* INTERP_LAMBDA */
 
 
       /*

@@ -1,8 +1,8 @@
-/* $Id: dlist.c,v 1.63 2001/01/24 04:56:20 brianp Exp $ */
+/* $Id: dlist.c,v 1.64 2001/02/06 21:42:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -1062,7 +1062,8 @@ static void save_ColorTable( GLenum target, GLenum internalFormat,
    GET_CURRENT_CONTEXT(ctx);
    if (target == GL_PROXY_TEXTURE_1D ||
        target == GL_PROXY_TEXTURE_2D ||
-       target == GL_PROXY_TEXTURE_3D) {
+       target == GL_PROXY_TEXTURE_3D ||
+       target == GL_PROXY_TEXTURE_CUBE_MAP_ARB) {
       /* execute immediately */
       (*ctx->Exec->ColorTable)( target, internalFormat, width,
                                 format, type, table );

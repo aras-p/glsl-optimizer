@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.9 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: t_imm_exec.c,v 1.10 2001/02/06 21:42:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,7 +37,6 @@
 #include "mmath.h"
 #include "light.h"
 #include "state.h"
-#include "texture.h"
 #include "mtypes.h"
 
 #include "math/m_matrix.h"

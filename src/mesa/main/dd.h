@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.50 2001/02/06 04:06:34 keithw Exp $ */
+/* $Id: dd.h,v 1.51 2001/02/06 21:42:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -447,24 +447,27 @@ struct dd_function_table {
    /***
     *** Texture image functions:
     ***/
-   GLboolean (*TexImage1D)( GLcontext *ctx, GLenum target, GLint level,
-                            GLenum format, GLenum type, const GLvoid *pixels,
-                            const struct gl_pixelstore_attrib *packing,
-                            struct gl_texture_object *texObj,
-                            struct gl_texture_image *texImage,
-                            GLboolean *retainInternalCopy );
-   GLboolean (*TexImage2D)( GLcontext *ctx, GLenum target, GLint level,
-                            GLenum format, GLenum type, const GLvoid *pixels,
-                            const struct gl_pixelstore_attrib *packing,
-                            struct gl_texture_object *texObj,
-                            struct gl_texture_image *texImage,
-                            GLboolean *retainInternalCopy );
-   GLboolean (*TexImage3D)( GLcontext *ctx, GLenum target, GLint level,
-                            GLenum format, GLenum type, const GLvoid *pixels,
-                            const struct gl_pixelstore_attrib *packing,
-                            struct gl_texture_object *texObj,
-                            struct gl_texture_image *texImage,
-                            GLboolean *retainInternalCopy );
+   void (*TexImage1D)( GLcontext *ctx, GLenum target, GLint level,
+                       GLint internalFormat,
+                       GLint width, GLint border,
+                       GLenum format, GLenum type, const GLvoid *pixels,
+                       const struct gl_pixelstore_attrib *packing,
+                       struct gl_texture_object *texObj,
+                       struct gl_texture_image *texImage );
+   void (*TexImage2D)( GLcontext *ctx, GLenum target, GLint level,
+                       GLint internalFormat,
+                       GLint width, GLint height, GLint border,
+                       GLenum format, GLenum type, const GLvoid *pixels,
+                       const struct gl_pixelstore_attrib *packing,
+                       struct gl_texture_object *texObj,
+                       struct gl_texture_image *texImage );
+   void (*TexImage3D)( GLcontext *ctx, GLenum target, GLint level,
+                       GLint internalFormat,
+                       GLint width, GLint height, GLint depth, GLint border,
+                       GLenum format, GLenum type, const GLvoid *pixels,
+                       const struct gl_pixelstore_attrib *packing,
+                       struct gl_texture_object *texObj,
+                       struct gl_texture_image *texImage );
    /* Called by glTexImage1/2/3D.
     * Will not be called if any glPixelTransfer operations are enabled.
     * Arguments:
@@ -481,29 +484,29 @@ struct dd_function_table {
     * GLubytes.  It may be easier for the driver to handle then.
     */
 
-   GLboolean (*TexSubImage1D)( GLcontext *ctx, GLenum target, GLint level,
-                               GLint xoffset, GLsizei width,
-                               GLenum format, GLenum type,
-                               const GLvoid *pixels,
-                               const struct gl_pixelstore_attrib *packing,
-                               struct gl_texture_object *texObj,
-                               struct gl_texture_image *texImage );
-   GLboolean (*TexSubImage2D)( GLcontext *ctx, GLenum target, GLint level,
-                               GLint xoffset, GLint yoffset,
-                               GLsizei width, GLsizei height,
-                               GLenum format, GLenum type,
-                               const GLvoid *pixels,
-                               const struct gl_pixelstore_attrib *packing,
-                               struct gl_texture_object *texObj,
-                               struct gl_texture_image *texImage );
-   GLboolean (*TexSubImage3D)( GLcontext *ctx, GLenum target, GLint level,
-                               GLint xoffset, GLint yoffset, GLint zoffset,
-                               GLsizei width, GLsizei height, GLint depth,
-                               GLenum format, GLenum type,
-                               const GLvoid *pixels,
-                               const struct gl_pixelstore_attrib *packing,
-                               struct gl_texture_object *texObj,
-                               struct gl_texture_image *texImage );
+   void (*TexSubImage1D)( GLcontext *ctx, GLenum target, GLint level,
+                          GLint xoffset, GLsizei width,
+                          GLenum format, GLenum type,
+                          const GLvoid *pixels,
+                          const struct gl_pixelstore_attrib *packing,
+                          struct gl_texture_object *texObj,
+                          struct gl_texture_image *texImage );
+   void (*TexSubImage2D)( GLcontext *ctx, GLenum target, GLint level,
+                          GLint xoffset, GLint yoffset,
+                          GLsizei width, GLsizei height,
+                          GLenum format, GLenum type,
+                          const GLvoid *pixels,
+                          const struct gl_pixelstore_attrib *packing,
+                          struct gl_texture_object *texObj,
+                          struct gl_texture_image *texImage );
+   void (*TexSubImage3D)( GLcontext *ctx, GLenum target, GLint level,
+                          GLint xoffset, GLint yoffset, GLint zoffset,
+                          GLsizei width, GLsizei height, GLint depth,
+                          GLenum format, GLenum type,
+                          const GLvoid *pixels,
+                          const struct gl_pixelstore_attrib *packing,
+                          struct gl_texture_object *texObj,
+                          struct gl_texture_image *texImage );
    /* Called by glTexSubImage1/2/3D.
     * Will not be called if any glPixelTransfer operations are enabled.
     * Arguments:
@@ -547,22 +550,6 @@ struct dd_function_table {
     * should do the job.
     */
 
-   GLvoid *(*GetTexImage)( GLcontext *ctx, GLenum target, GLint level,
-                           const struct gl_texture_object *texObj,
-                           GLenum *formatOut, GLenum *typeOut,
-                           GLboolean *freeImageOut );
-   /* Called by glGetTexImage or by core Mesa when a texture image
-    * is needed for software fallback rendering.
-    * Return the address of the texture image or NULL if failure.
-    * The image must be tightly packed (i.e. row stride = image width)
-    * Return the image's format and type in formatOut and typeOut.
-    * The format and type must be values which are accepted by glTexImage.
-    * Set the freeImageOut flag if the returned image should be deallocated
-    * with FREE() when finished.
-    * The size of the image can be deduced from the target and level.
-    * Core Mesa will perform any image format/type conversions that are needed.
-    */
-
    GLboolean (*TestProxyTexImage)(GLcontext *ctx, GLenum target,
                                   GLint level, GLint internalFormat,
                                   GLenum format, GLenum type,
@@ -577,24 +564,25 @@ struct dd_function_table {
     *** Compressed texture functions:
     ***/
 
-   GLboolean (*CompressedTexImage1D)( GLcontext *ctx, GLenum target,
-                                      GLint level, GLsizei imageSize,
-                                      const GLvoid *data,
-                                      struct gl_texture_object *texObj,
-                                      struct gl_texture_image *texImage,
-                                      GLboolean *retainInternalCopy);
-   GLboolean (*CompressedTexImage2D)( GLcontext *ctx, GLenum target,
-                                      GLint level, GLsizei imageSize,
-                                      const GLvoid *data,
-                                      struct gl_texture_object *texObj,
-                                      struct gl_texture_image *texImage,
-                                      GLboolean *retainInternalCopy);
-   GLboolean (*CompressedTexImage3D)( GLcontext *ctx, GLenum target,
-                                      GLint level, GLsizei imageSize,
-                                      const GLvoid *data,
-                                      struct gl_texture_object *texObj,
-                                      struct gl_texture_image *texImage,
-                                      GLboolean *retainInternalCopy);
+   void (*CompressedTexImage1D)( GLcontext *ctx, GLenum target,
+                                 GLint level, GLint internalFormat,
+                                 GLsizei width, GLint border,
+                                 GLsizei imageSize, const GLvoid *data,
+                                 struct gl_texture_object *texObj,
+                                 struct gl_texture_image *texImage );
+   void (*CompressedTexImage2D)( GLcontext *ctx, GLenum target,
+                                 GLint level, GLint internalFormat,
+                                 GLsizei width, GLsizei height, GLint border,
+                                 GLsizei imageSize, const GLvoid *data,
+                                 struct gl_texture_object *texObj,
+                                 struct gl_texture_image *texImage );
+   void (*CompressedTexImage3D)( GLcontext *ctx, GLenum target,
+                                 GLint level, GLint internalFormat,
+                                 GLsizei width, GLsizei height, GLsizei depth,
+                                 GLint border,
+                                 GLsizei imageSize, const GLvoid *data,
+                                 struct gl_texture_object *texObj,
+                                 struct gl_texture_image *texImage );
    /* Called by glCompressedTexImage1/2/3D.
     * Arguments:
     *   <target>, <level>, <internalFormat>, <data> are user specified.
@@ -607,27 +595,26 @@ struct dd_function_table {
     * should do the job.
     */
 
-   GLboolean (*CompressedTexSubImage1D)( GLcontext *ctx, GLenum target,
-                                         GLint level, GLint xoffset,
-                                         GLsizei width, GLenum format,
-                                         GLsizei imageSize, const GLvoid *data,
-                                         struct gl_texture_object *texObj,
-                                         struct gl_texture_image *texImage );
-   GLboolean (*CompressedTexSubImage2D)( GLcontext *ctx, GLenum target,
-                                         GLint level, GLint xoffset,
-                                         GLint yoffset, GLsizei width,
-                                         GLint height, GLenum format,
-                                         GLsizei imageSize, const GLvoid *data,
-                                         struct gl_texture_object *texObj,
-                                         struct gl_texture_image *texImage );
-   GLboolean (*CompressedTexSubImage3D)( GLcontext *ctx, GLenum target,
-                                         GLint level, GLint xoffset,
-                                         GLint yoffset, GLint zoffset,
-                                         GLsizei width, GLint height,
-                                         GLint depth, GLenum format,
-                                         GLsizei imageSize, const GLvoid *data,
-                                         struct gl_texture_object *texObj,
-                                         struct gl_texture_image *texImage );
+   void (*CompressedTexSubImage1D)(GLcontext *ctx, GLenum target, GLint level,
+                                   GLint xoffset, GLsizei width,
+                                   GLenum format,
+                                   GLsizei imageSize, const GLvoid *data,
+                                   struct gl_texture_object *texObj,
+                                   struct gl_texture_image *texImage);
+   void (*CompressedTexSubImage2D)(GLcontext *ctx, GLenum target, GLint level,
+                                   GLint xoffset, GLint yoffset,
+                                   GLsizei width, GLint height,
+                                   GLenum format,
+                                   GLsizei imageSize, const GLvoid *data,
+                                   struct gl_texture_object *texObj,
+                                   struct gl_texture_image *texImage);
+   void (*CompressedTexSubImage3D)(GLcontext *ctx, GLenum target, GLint level,
+                                   GLint xoffset, GLint yoffset, GLint zoffset,
+                                   GLsizei width, GLint height, GLint depth,
+                                   GLenum format,
+                                   GLsizei imageSize, const GLvoid *data,
+                                   struct gl_texture_object *texObj,
+                                   struct gl_texture_image *texImage);
    /* Called by glCompressedTexSubImage1/2/3D.
     * Arguments:
     *   <target>, <level>, <x/z/zoffset>, <width>, <height>, <depth>,
@@ -639,11 +626,30 @@ struct dd_function_table {
     * should do the job.
     */
 
+   GLboolean (*IsCompressedFormat)(GLcontext *ctx, GLint internalFormat);
+   /* Called to tell if a format is a compressed format.
+    */
+
+   void (*GetCompressedTexImage)( GLcontext *ctx, GLenum target,
+                                  GLint lod, void *image,
+                                  const struct gl_texture_object *texObj,
+                                  struct gl_texture_image *texImage );
+   /* Called by glGetCompressedTexImageARB.
+    * <target>, <lod>, <image> are specified by user.
+    * <texObj> is the source texture object.
+    * <texImage> is the source texture image.
+    */
+
    GLint (*BaseCompressedTexFormat)(GLcontext *ctx,
                                     GLint internalFormat);
    /* Called to compute the base format for a specific compressed
     * format.  Return -1 if the internalFormat is not a specific
-    * compressed format that the driver recognizes.  Note the
+    * compressed format that the driver recognizes.
+    * Example: if internalFormat==GL_COMPRESSED_RGB_FXT1_3DFX, return GL_RGB.
+    */
+
+#if 000
+   /* ... Note the
     * return value differences between this function and
     * SpecificCompressedTexFormat below.
     */
@@ -668,10 +674,6 @@ struct dd_function_table {
     * do the right thing with it.
     */
 
-   GLboolean (*IsCompressedFormat)(GLcontext *ctx, GLint internalFormat);
-   /* Called to tell if a format is a compressed format.
-    */
-
    GLsizei (*CompressedImageSize)(GLcontext *ctx,
                                   GLenum internalFormat,
                                   GLuint numDimensions,
@@ -681,16 +683,7 @@ struct dd_function_table {
    /* Calculate the size of a compressed image, given the image's
     * format and dimensions.
     */
-
-   void (*GetCompressedTexImage)( GLcontext *ctx, GLenum target,
-                                  GLint lod, void *image,
-                                  const struct gl_texture_object *texObj,
-                                  struct gl_texture_image *texImage );
-   /* Called by glGetCompressedTexImageARB.
-    * <target>, <lod>, <image> are specified by user.
-    * <texObj> is the source texture object.
-    * <texImage> is the source texture image.
-    */
+#endif
 
    /***
     *** Texture object functions:

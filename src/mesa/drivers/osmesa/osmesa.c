@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.43 2001/01/29 20:56:32 keithw Exp $ */
+/* $Id: osmesa.c,v 1.44 2001/02/06 21:42:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,20 +35,19 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "GL/osmesa.h"
 #include "context.h"
 #include "colormac.h"
 #include "depth.h"
+#include "extensions.h"
 #include "macros.h"
-#include "mem.h"
 #include "matrix.h"
+#include "mem.h"
 #include "mmath.h"
 #include "mtypes.h"
-#include "extensions.h"
+#include "texstore.h"
+#include "array_cache/acache.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "swrast/s_context.h"
@@ -56,9 +55,6 @@
 #include "swrast/s_lines.h"
 #include "swrast/s_triangle.h"
 #include "tnl/tnl.h"
-#include "array_cache/acache.h"
-#endif
-
 
 
 
@@ -1783,6 +1779,14 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.ResizeBuffersMESA = _swrast_alloc_buffers;
 
    ctx->Driver.GetBufferSize = buffer_size;
+
+   ctx->Driver.TexImage1D = _mesa_store_teximage1d;
+   ctx->Driver.TexImage2D = _mesa_store_teximage2d;
+   ctx->Driver.TexImage3D = _mesa_store_teximage3d;
+   ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
+   ctx->Driver.TexSubImage2D = _mesa_store_texsubimage2d;
+   ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
+   ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
 
    ctx->Driver.PointsFunc = _swsetup_Points;
    ctx->Driver.LineFunc = _swsetup_Line;

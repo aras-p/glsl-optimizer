@@ -1108,12 +1108,11 @@ void fxSetupDDPointers(GLcontext *ctx)
 
    ctx->Driver.TexImage2D = fxDDTexImage2D;
    ctx->Driver.TexSubImage2D = fxDDTexSubImage2D;
-   ctx->Driver.GetTexImage = fxDDGetTexImage;
-   ctx->Driver.TexEnv=fxDDTexEnv;
-   ctx->Driver.TexParameter=fxDDTexParam;
-   ctx->Driver.BindTexture=fxDDTexBind;
-   ctx->Driver.DeleteTexture=fxDDTexDel;
-   ctx->Driver.UpdateTexturePalette=fxDDTexPalette;
+   ctx->Driver.TexEnv = fxDDTexEnv;
+   ctx->Driver.TexParameter = fxDDTexParam;
+   ctx->Driver.BindTexture = fxDDTexBind;
+   ctx->Driver.DeleteTexture = fxDDTexDel;
+   ctx->Driver.UpdateTexturePalette = fxDDTexPalette;
 
    ctx->Driver.AlphaFunc=fxDDAlphaFunc;
    ctx->Driver.BlendFunc=fxDDBlendFunc;

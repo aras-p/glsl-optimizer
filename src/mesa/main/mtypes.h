@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.17 2001/01/29 20:47:39 keithw Exp $ */
+/* $Id: mtypes.h,v 1.18 2001/02/06 21:42:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -116,6 +116,7 @@ typedef int GLfixed;
  * Some forward type declarations
  */
 struct _mesa_HashTable;
+struct gl_texture_image;
 struct gl_texture_object;
 typedef struct __GLcontextRec GLcontext;
 typedef struct __GLcontextModesRec GLvisual;
@@ -764,12 +765,21 @@ struct gl_stencil_attrib {
 #define ENABLE_TEXGEN(i) (ENABLE_TEXGEN0 << (i))
 #define ENABLE_TEXMAT(i) (ENABLE_TEXMAT0 << (i))
 
+
+typedef void (*FetchTexelFunc)( GLcontext *ctx,
+                                const struct gl_texture_object *texObject,
+                                const struct gl_texture_image *texImage,
+                                GLint col, GLint row, GLint img,
+                                GLchan texel[] );
+
+
 /* Texture image record */
 struct gl_texture_image {
    GLenum Format;		/* GL_ALPHA, GL_LUMINANCE, GL_LUMINANCE_ALPHA,
 				 * GL_INTENSITY, GL_RGB, GL_RGBA, or
 				 * GL_COLOR_INDEX only
 				 */
+   GLenum Type;			/* Texel type: GL_UNSIGNED_BYTE, etc. */
    GLenum IntFormat;		/* Internal format as given by the user */
    GLubyte RedBits;		/* Bits per texel component              */
    GLubyte GreenBits;		/*   These are initialized by Mesa but   */
@@ -789,7 +799,9 @@ struct gl_texture_image {
    GLuint HeightLog2;		/* = log2(Height2) */
    GLuint DepthLog2;		/* = log2(Depth2) */
    GLuint MaxLog2;		/* = MAX(WidthLog2, HeightLog2) */
-   GLchan *Data;		/* Image data as GLchan's */
+   GLvoid *Data;		/* Image data, accessed via FetchTexel() */
+
+   FetchTexelFunc FetchTexel;	/* texel fetch function pointer */
 
    GLboolean IsCompressed;	/* GL_ARB_texture_compression */
    GLuint CompressedSize;	/* GL_ARB_texture_compression */

@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.4 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: t_imm_fixup.c,v 1.5 2001/02/06 21:42:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,7 +39,6 @@
 #include "mem.h"
 #include "mmath.h"
 #include "state.h"
-#include "texture.h"
 #include "mtypes.h"
 
 #include "math/m_matrix.h"

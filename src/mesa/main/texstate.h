@@ -1,10 +1,10 @@
-/* $Id: texstate.h,v 1.5 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: texstate.h,v 1.6 2001/02/06 21:42:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,9 +23,6 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
-
-
 
 
 #ifndef TEXSTATE_H
@@ -113,8 +110,6 @@ extern void
 _mesa_TexGeniv( GLenum coord, GLenum pname, const GLint *params );
 
 
-
-extern void gl_SelectTextureTransform( GLcontext *ctx, GLenum target );
 
 
 /*

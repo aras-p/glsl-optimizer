@@ -1,10 +1,10 @@
-/* $Id: xm_dd.c,v 1.13 2001/01/29 20:56:32 keithw Exp $ */
+/* $Id: xm_dd.c,v 1.14 2001/02/06 21:42:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,18 +27,20 @@
 
 #include "glxheader.h"
 #include "context.h"
-#include "drawpix.h"
-#include "mem.h"
-#include "state.h"
 #include "depth.h"
-#include "macros.h"
-#include "mtypes.h"
-#include "xmesaP.h"
+#include "drawpix.h"
 #include "extensions.h"
+#include "macros.h"
+#include "mem.h"
+#include "mtypes.h"
+#include "state.h"
+#include "texstore.h"
+#include "xmesaP.h"
+#include "array_cache/acache.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
-#include "array_cache/acache.h"
+
 
 /*
  * Return the size (width,height of the current color buffer.
@@ -955,7 +957,16 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
    ctx->Driver.ReadPixels = _swrast_ReadPixels;
 
-   
+   /* Software texture functions:
+    */
+   ctx->Driver.TexImage1D = _mesa_store_teximage1d;
+   ctx->Driver.TexImage2D = _mesa_store_teximage2d;
+   ctx->Driver.TexImage3D = _mesa_store_teximage3d;
+   ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
+   ctx->Driver.TexSubImage2D = _mesa_store_texsubimage2d;
+   ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
+   ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
+
    /* 
     */
    ctx->Driver.SetDrawBuffer = set_draw_buffer;

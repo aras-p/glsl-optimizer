@@ -836,31 +836,29 @@ static void PrintTexture(int w, int h, int c, const GLubyte *data)
 }
 
 
-GLboolean fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
-                         GLenum format, GLenum type, const GLvoid *pixels,
-                         const struct gl_pixelstore_attrib *packing,
-                         struct gl_texture_object *texObj,
-                         struct gl_texture_image *texImage,
-                         GLboolean *retainInternalCopy)
+void
+fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
+               GLint internalFormat, GLint width, GLint height, GLint border,
+               GLenum format, GLenum type, const GLvoid *pixels,
+               const struct gl_pixelstore_attrib *packing,
+               struct gl_texture_object *texObj,
+               struct gl_texture_image *texImage)
 {
   fxMesaContext fxMesa = (fxMesaContext)ctx->DriverCtx;
-
-  if (target != GL_TEXTURE_2D)
-    return GL_FALSE;
 
   if (!texObj->DriverData)
     texObj->DriverData = fxAllocTexObjData(fxMesa);
 
-  if (fxIsTexSupported(target, texImage->IntFormat, texImage)) {
+  if (fxIsTexSupported(target, internalFormat, texImage)) {
     GrTextureFormat_t gldformat;
     tfxTexInfo *ti = fxTMGetTexInfo(texObj);
     tfxMipMapLevel *mml = &ti->mipmapLevel[level];
     GLint dstWidth, dstHeight, wScale, hScale, texelSize, dstStride;
     MesaIntTexFormat intFormat;
 
-    fxTexGetFormat(texImage->IntFormat, &gldformat, NULL);
+    fxTexGetFormat(internalFormat, &gldformat, NULL);
 
-    fxTexGetInfo(texImage->Width, texImage->Height, NULL,NULL,NULL,NULL,
+    fxTexGetInfo(width, height, NULL,NULL,NULL,NULL,
                  NULL,NULL, &wScale, &hScale);
     
     dstWidth = texImage->Width * wScale;
@@ -942,7 +940,7 @@ GLboolean fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
         break;
       default:
         gl_problem(NULL, "tdfx driver: texbuildimagemap() bad format");
-        return GL_FALSE;
+        return;
     }
 
     _mesa_set_teximage_component_sizes(intFormat, texImage);
@@ -955,7 +953,7 @@ GLboolean fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
         FREE(mml->data);
       mml->data = MALLOC(dstWidth * dstHeight * texelSize);
       if (!mml->data)
-        return GL_FALSE;
+        return;
       mml->glideFormat = gldformat;
       mml->width = dstWidth;
       mml->height = dstHeight;
@@ -967,9 +965,9 @@ GLboolean fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
     /* store the texture image */
     if (!_mesa_convert_teximage(intFormat, dstWidth, dstHeight, mml->data,
                                 dstStride,
-                                texImage->Width, texImage->Height,
+                                width, height,
                                 format, type, pixels, packing)) {
-      return GL_FALSE;
+      return;
     }
     
 
@@ -981,24 +979,21 @@ GLboolean fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
       /*printf("invalidate2\n");*/
       fxTexInvalidate(ctx,texObj);
     }
-
-    *retainInternalCopy = GL_FALSE;
-    return GL_TRUE;
   }
   else {
     gl_problem(NULL, "fx Driver: unsupported texture in fxDDTexImg()\n");
-    return GL_FALSE;
   }
 }
 
 
-GLboolean fxDDTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
-                            GLint xoffset, GLint yoffset,
-                            GLsizei width, GLsizei height,
-                            GLenum format, GLenum type, const GLvoid *pixels,
-                            const struct gl_pixelstore_attrib *packing,
-                            struct gl_texture_object *texObj,
-                            struct gl_texture_image *texImage)
+void
+fxDDTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
+                  GLint xoffset, GLint yoffset,
+                  GLsizei width, GLsizei height,
+                  GLenum format, GLenum type, const GLvoid *pixels,
+                  const struct gl_pixelstore_attrib *packing,
+                  struct gl_texture_object *texObj,
+                  struct gl_texture_image *texImage)
 {
   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
   tfxTexInfo *ti;
@@ -1006,11 +1001,10 @@ GLboolean fxDDTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
   tfxMipMapLevel *mml;
   GLboolean result;
 
-  if (target != GL_TEXTURE_2D)
-    return GL_FALSE;
-
-  if (!texObj->DriverData)
-    return GL_FALSE;
+  if (!texObj->DriverData) {
+     gl_problem(ctx, "problem in fxDDTexSubImage2D");
+     return;
+  }
 
   ti = fxTMGetTexInfo(texObj);
   mml = &ti->mipmapLevel[level];
@@ -1083,7 +1077,7 @@ GLboolean fxDDTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
   }
 
   if (!result) {
-    return GL_FALSE;
+     return;
   }
 
   if (ti->validated && ti->isInTM)
@@ -1091,11 +1085,10 @@ GLboolean fxDDTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
   else
     fxTexInvalidate(ctx, texObj);
 
-  return GL_TRUE;
 }
 
 
-
+#if 000
 GLvoid *fxDDGetTexImage(GLcontext *ctx, GLenum target, GLint level,
                         const struct gl_texture_object *texObj,
                         GLenum *formatOut, GLenum *typeOut,
@@ -1174,6 +1167,8 @@ GLvoid *fxDDGetTexImage(GLcontext *ctx, GLenum target, GLint level,
     return NULL;
   }
 }
+#endif
+
 
 
 #else

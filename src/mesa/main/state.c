@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.55 2001/01/24 04:56:20 brianp Exp $ */
+/* $Id: state.c,v 1.56 2001/02/06 21:42:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,7 +74,6 @@
 #include "teximage.h"
 #include "texobj.h"
 #include "texstate.h"
-#include "texture.h"
 #include "mtypes.h"
 #include "varray.h"
 #include "winpos.h"
@@ -697,6 +696,159 @@ update_image_transfer_state(GLcontext *ctx)
 }
 
 
+
+
+/* Note: This routine refers to derived texture attribute values to
+ * compute the ENABLE_TEXMAT flags, but is only called on
+ * _NEW_TEXTURE_MATRIX.  On changes to _NEW_TEXTURE, the ENABLE_TEXMAT
+ * flags are updated by _mesa_update_textures(), below.
+ *
+ * If both TEXTURE and TEXTURE_MATRIX change at once, these values
+ * will be computed twice.
+ */
+static void
+update_texture_matrices( GLcontext *ctx )
+{
+   GLuint i;
+
+   ctx->_Enabled &= ~ENABLE_TEXMAT_ANY;
+
+   for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
+      if (ctx->TextureMatrix[i].flags & MAT_DIRTY) {
+	 _math_matrix_analyse( &ctx->TextureMatrix[i] );
+
+	 if (ctx->Driver.TextureMatrix)
+	    ctx->Driver.TextureMatrix( ctx, i, &ctx->TextureMatrix[i] );
+
+	 if (ctx->Texture.Unit[i]._ReallyEnabled &&
+	     ctx->TextureMatrix[i].type != MATRIX_IDENTITY)
+	    ctx->_Enabled |= ENABLE_TEXMAT0 << i;
+      }
+   }
+}
+
+
+/* Note: This routine refers to derived texture matrix values to
+ * compute the ENABLE_TEXMAT flags, but is only called on
+ * _NEW_TEXTURE.  On changes to _NEW_TEXTURE_MATRIX, the ENABLE_TEXMAT
+ * flags are updated by _mesa_update_texture_matrices, above.
+ *
+ * If both TEXTURE and TEXTURE_MATRIX change at once, these values
+ * will be computed twice.
+ */
+static void
+update_texture_state( GLcontext *ctx )
+{
+   GLuint i;
+
+   ctx->Texture._ReallyEnabled = 0;
+   ctx->Texture._GenFlags = 0;
+   ctx->_NeedNormals &= ~NEED_NORMALS_TEXGEN;
+   ctx->_NeedEyeCoords &= ~NEED_EYE_TEXGEN;
+   ctx->_Enabled &= ~(ENABLE_TEXGEN_ANY |
+		      ENABLE_TEXMAT_ANY);
+
+   /* Update texture unit state.
+    */
+   for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
+      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+
+      texUnit->_ReallyEnabled = 0;
+      texUnit->_GenFlags = 0;
+
+      if (!texUnit->Enabled)
+	 continue;
+
+      /* Find the texture of highest dimensionality that is enabled
+       * and complete.  We'll use it for texturing.
+       */
+      if (texUnit->Enabled & TEXTURE0_CUBE) {
+         struct gl_texture_object *texObj = texUnit->CurrentCubeMap;
+         if (!texObj->Complete) {
+            _mesa_test_texobj_completeness(ctx, texObj);
+         }
+         if (texObj->Complete) {
+            texUnit->_ReallyEnabled = TEXTURE0_CUBE;
+            texUnit->_Current = texObj;
+         }
+      }
+
+      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE0_3D)) {
+         struct gl_texture_object *texObj = texUnit->Current3D;
+         if (!texObj->Complete) {
+            _mesa_test_texobj_completeness(ctx, texObj);
+         }
+         if (texObj->Complete) {
+            texUnit->_ReallyEnabled = TEXTURE0_3D;
+            texUnit->_Current = texObj;
+         }
+      }
+
+      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE0_2D)) {
+         struct gl_texture_object *texObj = texUnit->Current2D;
+         if (!texObj->Complete) {
+            _mesa_test_texobj_completeness(ctx, texObj);
+         }
+         if (texObj->Complete) {
+            texUnit->_ReallyEnabled = TEXTURE0_2D;
+            texUnit->_Current = texObj;
+         }
+      }
+
+      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE0_1D)) {
+         struct gl_texture_object *texObj = texUnit->Current1D;
+         if (!texObj->Complete) {
+            _mesa_test_texobj_completeness(ctx, texObj);
+         }
+         if (texObj->Complete) {
+            texUnit->_ReallyEnabled = TEXTURE0_1D;
+            texUnit->_Current = texObj;
+         }
+      }
+
+      if (!texUnit->_ReallyEnabled) {
+	 texUnit->_Current = NULL;
+	 continue;
+      }
+
+      {
+	 GLuint flag = texUnit->_ReallyEnabled << (i * 4);
+	 ctx->Texture._ReallyEnabled |= flag;
+      }
+
+      if (texUnit->TexGenEnabled) {
+	 if (texUnit->TexGenEnabled & S_BIT) {
+	    texUnit->_GenFlags |= texUnit->_GenBitS;
+	 }
+	 if (texUnit->TexGenEnabled & T_BIT) {
+	    texUnit->_GenFlags |= texUnit->_GenBitT;
+	 }
+	 if (texUnit->TexGenEnabled & Q_BIT) {
+	    texUnit->_GenFlags |= texUnit->_GenBitQ;
+	 }
+	 if (texUnit->TexGenEnabled & R_BIT) {
+	    texUnit->_GenFlags |= texUnit->_GenBitR;
+	 }
+
+	 ctx->_Enabled |= ENABLE_TEXGEN0 << i;
+	 ctx->Texture._GenFlags |= texUnit->_GenFlags;
+      }
+
+      if (ctx->TextureMatrix[i].type != MATRIX_IDENTITY)
+	 ctx->_Enabled |= ENABLE_TEXMAT0 << i;
+   }
+
+   if (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS) {
+      ctx->_NeedNormals |= NEED_NORMALS_TEXGEN;
+      ctx->_NeedEyeCoords |= NEED_EYE_TEXGEN;
+   }
+
+   if (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD) {
+      ctx->_NeedEyeCoords |= NEED_EYE_TEXGEN;
+   }
+}
+
+
 /*
  * If ctx->NewState is non-zero then this function MUST be called before
  * rendering any primitive.  Basically, function pointers and miscellaneous
@@ -729,7 +881,7 @@ void gl_update_state( GLcontext *ctx )
       update_projection( ctx );
 
    if (new_state & _NEW_TEXTURE_MATRIX)
-      _mesa_update_texture_matrices( ctx );
+      update_texture_matrices( ctx );
 
    if (new_state & _NEW_COLOR_MATRIX)
       _math_matrix_analyse( &ctx->ColorMatrix );
@@ -742,7 +894,7 @@ void gl_update_state( GLcontext *ctx )
    /* Contributes to NeedEyeCoords, NeedNormals.
     */
    if (new_state & _NEW_TEXTURE)
-      _mesa_update_texture_state( ctx );
+      update_texture_state( ctx );
 
    if (new_state & (_NEW_BUFFERS|_NEW_SCISSOR))
       update_drawbuffer( ctx );

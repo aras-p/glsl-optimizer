@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.119 2001/01/24 04:56:19 brianp Exp $ */
+/* $Id: context.c,v 1.120 2001/02/06 21:42:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,7 +51,6 @@
 #include "state.h"
 #include "teximage.h"
 #include "texobj.h"
-#include "texture.h"
 #include "mtypes.h"
 #include "varray.h"
 

@@ -1,4 +1,4 @@
-/* $Id: teximage.h,v 1.15 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: teximage.h,v 1.16 2001/02/06 21:42:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,13 +47,6 @@ extern void
 _mesa_free_texture_image( struct gl_texture_image *teximage );
 
 
-extern GLuint
-_mesa_compressed_image_size(GLcontext *ctx,
-                            GLenum internalFormat,
-                            GLint numDimensions,
-                            GLint width, GLint height, GLint depth);
-
-
 extern struct gl_texture_object *
 _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
                         GLenum target);
@@ -62,16 +55,6 @@ _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
 extern struct gl_texture_image *
 _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
                        GLenum target, GLint level);
-
-
-extern void
-_mesa_get_teximage_from_driver(GLcontext *ctx, GLenum target, GLint level,
-                               const struct gl_texture_object *texObj);
-
-
-extern GLboolean
-_mesa_get_teximages_from_driver(GLcontext *ctx,
-                                struct gl_texture_object *texObj);
 
 
 
