@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.13 2000/03/03 17:47:39 brianp Exp $ */
+/* $Id: depth.c,v 1.14 2000/03/17 15:31:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1483,10 +1483,9 @@ _mesa_alloc_depth_buffer( GLcontext *ctx )
    if (ctx->DrawBuffer->UseSoftwareDepthBuffer) {
       GLint bytesPerValue;
 
-      if (ctx->DrawBuffer->Depth) {
-         FREE(ctx->DrawBuffer->Depth);
+      if (ctx->DrawBuffer->DepthBuffer) {
+         FREE(ctx->DrawBuffer->DepthBuffer);
          ctx->DrawBuffer->DepthBuffer = NULL;
-         ctx->DrawBuffer->Depth = NULL;
       }
 
       /* allocate new depth buffer, but don't initialize it */
@@ -1498,9 +1497,8 @@ _mesa_alloc_depth_buffer( GLcontext *ctx )
       ctx->DrawBuffer->DepthBuffer = MALLOC( ctx->DrawBuffer->Width
                                              * ctx->DrawBuffer->Height
                                              * bytesPerValue );
-      ctx->DrawBuffer->Depth = (GLdepth *) ctx->DrawBuffer->DepthBuffer;
 
-      if (!ctx->DrawBuffer->Depth) {
+      if (!ctx->DrawBuffer->DepthBuffer) {
          /* out of memory */
          ctx->Depth.Test = GL_FALSE;
          ctx->NewState |= NEW_RASTER_OPS;

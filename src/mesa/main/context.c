@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.46 2000/03/11 23:23:26 brianp Exp $ */
+/* $Id: context.c,v 1.47 2000/03/17 15:31:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -405,8 +405,8 @@ GLframebuffer *gl_create_framebuffer( GLvisual *visual,
 void gl_destroy_framebuffer( GLframebuffer *buffer )
 {
    if (buffer) {
-      if (buffer->Depth) {
-         FREE( buffer->Depth );
+      if (buffer->DepthBuffer) {
+         FREE( buffer->DepthBuffer );
       }
       if (buffer->Accum) {
          FREE( buffer->Accum );

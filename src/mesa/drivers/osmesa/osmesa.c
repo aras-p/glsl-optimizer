@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.10 2000/03/03 17:50:09 brianp Exp $ */
+/* $Id: osmesa.c,v 1.11 2000/03/17 15:32:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -492,7 +492,7 @@ void GLAPIENTRY OSMesaGetBooleanv( GLint pname, GLboolean *value )
 GLboolean GLAPIENTRY OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
                                 GLint *bytesPerValue, void **buffer )
 {
-   if ((!c->gl_buffer) || (!c->gl_buffer->Depth)) {
+   if ((!c->gl_buffer) || (!c->gl_buffer->DepthBuffer)) {
       *width = 0;
       *height = 0;
       *bytesPerValue = 0;
@@ -503,7 +503,7 @@ GLboolean GLAPIENTRY OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint 
       *width = c->gl_buffer->Width;
       *height = c->gl_buffer->Height;
       *bytesPerValue = sizeof(GLdepth);
-      *buffer = c->gl_buffer->Depth;
+      *buffer = c->gl_buffer->DepthBuffer;
       return GL_TRUE;
    }
 }
@@ -1837,6 +1837,8 @@ static void osmesa_update_state( GLcontext *ctx )
        (ctx->Color.ColorMask[2] == 0) &&
        (ctx->Color.ColorMask[3] == 0) &&
        (ctx->Stencil.Enabled == GL_FALSE)) {
+
+      /* XXX depth.func == GL_LESS ? */
 
       ctx->Driver.WriteCI32Span = write_index32_span_occ;
       ctx->Driver.WriteCI8Span = write_index8_span_occ;
