@@ -200,10 +200,10 @@ static void Init( void )
       "DP4   o[HPOS].z, c[2], v[OPOS] ;\n"
       "DP4   o[HPOS].w, c[3], v[OPOS] ;\n"
       "# transform normal by inv transpose of modelview, put in tex0\n"
-      "DP4   o[TEX0].x, c[4], v[NRML] ;\n"
-      "DP4   o[TEX0].y, c[5], v[NRML] ;\n"
-      "DP4   o[TEX0].z, c[6], v[NRML] ;\n"
-      "DP4   o[TEX0].w, c[7], v[NRML] ;\n"
+      "DP3   o[TEX0].x, c[4], v[NRML] ;\n"
+      "DP3   o[TEX0].y, c[5], v[NRML] ;\n"
+      "DP3   o[TEX0].z, c[6], v[NRML] ;\n"
+      "DP3   o[TEX0].w, c[7], v[NRML] ;\n"
       "END\n";
    ;
 
