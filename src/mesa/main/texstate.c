@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.41 2001/03/28 21:36:31 gareth Exp $ */
+/* $Id: texstate.c,v 1.42 2001/03/30 21:14:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -933,7 +933,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    }
 
    img = _mesa_select_tex_image(ctx, texUnit, target, level);
-   if (!img) {
+   if (!img || !img->TexFormat) {
+      /* undefined texture image */
       if (pname == GL_TEXTURE_COMPONENTS)
          *params = 1;
       else
