@@ -1,4 +1,4 @@
-/* $Id: s_texture.h,v 1.14 2003/01/26 14:37:17 brianp Exp $ */
+/* $Id: s_texture.h,v 1.15 2003/02/23 04:10:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,9 +37,8 @@ extern void
 _swrast_texture_table_lookup( const struct gl_color_table *table,
                               GLuint n, GLchan rgba[][4] );
 
-extern void
+extern texture_sample_func
 _swrast_choose_texture_sample_func( GLcontext *ctx,
-				    GLuint texUnit,
 				    const struct gl_texture_object *tObj );
 
 

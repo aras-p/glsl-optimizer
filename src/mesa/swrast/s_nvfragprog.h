@@ -1,4 +1,4 @@
-/* $Id: s_nvfragprog.h,v 1.1 2003/01/14 04:57:47 brianp Exp $ */
+/* $Id: s_nvfragprog.h,v 1.2 2003/02/23 04:10:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,7 +29,7 @@
 #define S_NVFRAGPROG_H
 
 
-#include "swrast.h"
+#include "s_context.h"
 
 
 extern void

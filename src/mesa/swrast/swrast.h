@@ -1,10 +1,10 @@
-/* $Id: swrast.h,v 1.34 2003/01/14 04:55:47 brianp Exp $ */
+/* $Id: swrast.h,v 1.35 2003/02/23 04:10:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,7 +27,7 @@
 
 /**
  * \file swrast/swrast.h
- * \brief Defines basic structures for sw_rasterizer.
+ * \brief Public interface to the software rasterization functions.
  * \author Keith Whitwell <keith@tungstengraphics.com>
  */
 
@@ -73,154 +73,6 @@ typedef struct {
    GLuint index;
    GLfloat pointSize;
 } SWvertex;
-
-
-/**
- * \struct sw_span
- * \brief Contains data for either a horizontal line or a set of
- * pixels that are passed through a pipeline of functions before being
- * drawn.
- *
- * The sw_span structure describes the colors, Z, fogcoord, texcoords,
- * etc for either a horizontal run or a set of independent pixels.  We
- * can either specify a base/step to indicate interpolated values, or
- * fill in arrays of values.  The interpMask and arrayMask bitfields
- * indicate which are active.
- *
- * With this structure it's easy to hand-off span rasterization to
- * subroutines instead of doing it all inline in the triangle functions
- * like we used to do.
- * It also cleans up the local variable namespace a great deal.
- *
- * It would be interesting to experiment with multiprocessor rasterization
- * with this structure.  The triangle rasterizer could simply emit a
- * stream of these structures which would be consumed by one or more
- * span-processing threads which could run in parallel.
- */
-
-
-/**
- * \defgroup SpanFlags SPAN_XXX-flags
- * Bitmasks to indicate which span_arrays need to be computed
- * (sw_span::interpMask) or have already been filled
- * (sw_span::arrayMask)
- */
-/*@{*/
-#define SPAN_RGBA         0x001
-#define SPAN_SPEC         0x002
-#define SPAN_INDEX        0x004
-#define SPAN_Z            0x008
-#define SPAN_FOG          0x010
-#define SPAN_TEXTURE      0x020
-#define SPAN_INT_TEXTURE  0x040
-#define SPAN_LAMBDA       0x080
-#define SPAN_COVERAGE     0x100
-#define SPAN_FLAT         0x200  /**< flat shading? */
-/** sw_span::arrayMask only - for span_arrays::x, span_arrays::y */
-#define SPAN_XY           0x400
-#define SPAN_MASK         0x800  /**< sw_span::arrayMask only */
-/*@}*/
-
-
-/**
- * \struct span_arrays 
- * \brief Arrays of fragment values.
- *
- * These will either be computed from the x/xStep values above or
- * filled in by glDraw/CopyPixels, etc.
- */
-struct span_arrays {
-   GLchan  rgb[MAX_WIDTH][3];
-   GLchan  rgba[MAX_WIDTH][4];
-   GLuint  index[MAX_WIDTH];
-   GLchan  spec[MAX_WIDTH][4]; /* specular color */
-   GLint   x[MAX_WIDTH];  /**< X/Y used for point/line rendering only */
-   GLint   y[MAX_WIDTH];  /**< X/Y used for point/line rendering only */
-   GLdepth z[MAX_WIDTH];
-   GLfloat fog[MAX_WIDTH];
-   GLfloat texcoords[MAX_TEXTURE_COORD_UNITS][MAX_WIDTH][4];
-   GLfloat lambda[MAX_TEXTURE_COORD_UNITS][MAX_WIDTH];
-   GLfloat coverage[MAX_WIDTH];
-
-   /** This mask indicates if fragment is alive or culled */
-   GLubyte mask[MAX_WIDTH];
-};
-
-
-struct sw_span {
-   GLint x, y;
-
-   /** Only need to process pixels between start <= i < end */
-   /** At this time, start is always zero. */
-   GLuint start, end;
-
-   /** This flag indicates that mask[] array is effectively filled with ones */
-   GLboolean writeAll;
-
-   /** either GL_POLYGON, GL_LINE, GL_POLYGON, GL_BITMAP */
-   GLenum primitive;
-
-   /** 0 = front-facing span, 1 = back-facing span (for two-sided stencil) */
-   GLuint facing;
-
-   /**
-    * This bitmask (of  \link SpanFlags SPAN_* flags\endlink) indicates
-    * which of the x/xStep variables are relevant.
-    */
-   GLuint interpMask;
-
-#if CHAN_TYPE == GL_FLOAT
-   GLfloat red, redStep;
-   GLfloat green, greenStep;
-   GLfloat blue, blueStep;
-   GLfloat alpha, alphaStep;
-   GLfloat specRed, specRedStep;
-   GLfloat specGreen, specGreenStep;
-   GLfloat specBlue, specBlueStep;
-#else /* CHAN_TYPE == GL_UNSIGNED_BYTE or GL_UNSIGNED SHORT */
-   GLfixed red, redStep;
-   GLfixed green, greenStep;
-   GLfixed blue, blueStep;
-   GLfixed alpha, alphaStep;
-   GLfixed specRed, specRedStep;
-   GLfixed specGreen, specGreenStep;
-   GLfixed specBlue, specBlueStep;
-#endif
-   GLfixed index, indexStep;
-   GLfixed z, zStep;
-   GLfloat fog, fogStep;
-   GLfloat tex[MAX_TEXTURE_COORD_UNITS][4];  /* s, t, r, q */
-   GLfloat texStepX[MAX_TEXTURE_COORD_UNITS][4];
-   GLfloat texStepY[MAX_TEXTURE_COORD_UNITS][4];
-   GLfixed intTex[2], intTexStep[2];  /* s, t only */
-
-   /**
-    * This bitmask (of \link SpanFlags SPAN_* flags\endlink) indicates
-    * which of the fragment arrays in the span_arrays struct are relevant.
-    */
-   GLuint arrayMask;
-
-   /**
-    * We store the arrays of fragment values in a separate struct so
-    * that we can allocate sw_span structs on the stack without using
-    * a lot of memory.  The span_arrays struct is about 400KB while the
-    * sw_span struct is only about 512 bytes.
-    */
-   struct span_arrays *array;
-};
-
-
-#define INIT_SPAN(S, PRIMITIVE, END, INTERP_MASK, ARRAY_MASK)	\
-do {								\
-   (S).primitive = (PRIMITIVE);					\
-   (S).interpMask = (INTERP_MASK);				\
-   (S).arrayMask = (ARRAY_MASK);				\
-   (S).start = 0;						\
-   (S).end = (END);						\
-   (S).facing = 0;						\
-   (S).array = SWRAST_CONTEXT(ctx)->SpanArrays;			\
-} while (0)
-
 
 
 struct swrast_device_driver;

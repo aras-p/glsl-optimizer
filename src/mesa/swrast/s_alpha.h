@@ -1,4 +1,4 @@
-/* $Id: s_alpha.h,v 1.6 2002/02/02 21:40:33 brianp Exp $ */
+/* $Id: s_alpha.h,v 1.7 2003/02/23 04:10:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,7 @@
 
 
 #include "mtypes.h"
-#include "swrast.h"
+#include "s_context.h"
 
 
 extern GLint

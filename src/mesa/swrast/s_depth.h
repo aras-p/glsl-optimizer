@@ -1,4 +1,4 @@
-/* $Id: s_depth.h,v 1.6 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: s_depth.h,v 1.7 2003/02/23 04:10:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,7 @@
 
 
 #include "mtypes.h"
-#include "swrast.h"
+#include "s_context.h"
 
 
 extern GLvoid *

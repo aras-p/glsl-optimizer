@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.44 2003/01/26 14:37:16 brianp Exp $ */
+/* $Id: s_context.c,v 1.45 2003/02/23 04:10:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -267,6 +267,7 @@ _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
    swrast->Point( ctx, v0 );
 }
 
+
 static void
 _swrast_validate_blend_func( GLcontext *ctx, GLuint n,
 			     const GLubyte mask[],
@@ -285,13 +286,27 @@ _swrast_validate_blend_func( GLcontext *ctx, GLuint n,
 static void
 _swrast_validate_texture_sample( GLcontext *ctx, GLuint texUnit,
 				 const struct gl_texture_object *tObj,
-				 GLuint n, GLfloat texcoords[][4],
+				 GLuint n, const GLfloat texcoords[][4],
 				 const GLfloat lambda[], GLchan rgba[][4] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    _swrast_validate_derived( ctx );
-   _swrast_choose_texture_sample_func( ctx, texUnit, tObj );
+
+   /* Compute min/mag filter threshold */
+   if (tObj->MinFilter != tObj->MagFilter) {
+      if (tObj->MagFilter == GL_LINEAR
+          && (tObj->MinFilter == GL_NEAREST_MIPMAP_NEAREST ||
+              tObj->MinFilter == GL_NEAREST_MIPMAP_LINEAR)) {
+         swrast->_MinMagThresh[texUnit] = 0.5F;
+      }
+      else {
+         swrast->_MinMagThresh[texUnit] = 0.0F;
+      }
+   }
+
+   swrast->TextureSample[texUnit] =
+      _swrast_choose_texture_sample_func( ctx, tObj );
 
    swrast->TextureSample[texUnit]( ctx, texUnit, tObj, n, texcoords,
 				   lambda, rgba );
