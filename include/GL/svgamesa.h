@@ -1,9 +1,9 @@
-/* $Id: svgamesa.h,v 1.4 2000/02/09 19:03:28 brianp Exp $ */
+/* $Id: svgamesa.h,v 1.5 2001/06/20 19:52:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
- * Copyright (C) 1995-2000  Brian Paul
+ * Version:  3.5
+ * Copyright (C) 1995-2001  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -53,7 +53,7 @@
 
 
 #define SVGAMESA_MAJOR_VERSION 3
-#define SVGAMESA_MINOR_VERSION 3
+#define SVGAMESA_MINOR_VERSION 5
 
 
 #ifdef __cplusplus

@@ -1,9 +1,9 @@
-/* $Id: fxmesa.h,v 1.2 1999/11/24 18:44:53 brianp Exp $ */
+/* $Id: fxmesa.h,v 1.3 2001/06/20 19:52:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
- * Copyright (C) 1995-1999  Brian Paul
+ * Copyright (C) 1995-2001  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -41,7 +41,7 @@ extern "C" {
 
 
 #define FXMESA_MAJOR_VERSION 3
-#define FXMESA_MINOR_VERSION 3
+#define FXMESA_MINOR_VERSION 5
 
 
 /*
