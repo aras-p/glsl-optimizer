@@ -500,6 +500,9 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 	case GL_CULL_FACE:
 		r300UpdateCulling(ctx);
 		break;
+	case GL_VERTEX_PROGRAM_ARB:
+		//TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, state);
+	break;
 
 	default:
 		radeonEnable(ctx, cap, state);

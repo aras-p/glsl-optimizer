@@ -206,7 +206,12 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
 		#endif
    
    if(type<0)return;
-
+   
+   if(!VB->ObjPtr){
+   	fprintf(stderr, "FIXME: Dont know how to handle GL_ARB_vertex_buffer_object "
+			"correctly\n");
+   	return;
+   }
    /* A packet cannot have more than 16383 data words.. */
    if(((end-start)*8+4*rmesa->state.texture.tc_count)>16380){
    	fprintf(stderr, "%s:%s: Too many vertices to paint. Fix me !\n");
@@ -274,7 +279,7 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
    r300TexObjPtr t=to->DriverData;
    LOCAL_VARS
 	
-   
+  
    /* Update texture state - needs to be done only when actually changed..
       All the time for now.. */
 

@@ -35,6 +35,7 @@ DRIVER_SOURCES = \
 		 r300_texmem.c \
 		 r300_tex.c \
 		 r300_texstate.c \
+		 r300_vertexprog.c \
 		 \
 		 r200_context.c \
 		 r200_ioctl.c \

@@ -518,6 +518,12 @@ struct r300_vertex_shader_state {
 	int unknown_ptr2;  /* pointer within program space */
 	int unknown_ptr3;  /* pointer within program space */
 	};
+	
+struct r300_vertex_program {
+	struct vertex_program mesa_program; /* Must be first */
+	int translated;
+
+};
 
 /* 64 appears to be the maximum */
 #define PSF_MAX_PROGRAM_LENGTH 64
@@ -662,5 +668,6 @@ extern void r300DestroyContext(__DRIcontextPrivate * driContextPriv);
 extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 				   __DRIcontextPrivate * driContextPriv,
 				   void *sharedContextPrivate);
+extern void r300InitVertexProgFuncs(struct dd_function_table *functions);
 
 #endif				/* __R300_CONTEXT_H__ */

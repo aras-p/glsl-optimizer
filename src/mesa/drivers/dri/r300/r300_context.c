@@ -32,7 +32,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  *   Nicolai Haehnle <prefect_@gmx.net>
  */
-
 #include "glheader.h"
 #include "api_arrayelt.h"
 #include "context.h"
@@ -78,6 +77,7 @@ static const char *const card_extensions[] = {
 	"GL_ARB_texture_mirrored_repeat",
 	"GL_ARB_vertex_buffer_object",
 	"GL_ARB_vertex_program",
+	//"GL_ARB_fragment_program",
 	"GL_EXT_blend_equation_separate",
 	"GL_EXT_blend_func_separate",
 	"GL_EXT_blend_minmax",
@@ -136,7 +136,6 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 	0,
 };
 
-
 /* Create the device specific rendering context.
  */
 GLboolean r300CreateContext(const __GLcontextModes * glVisual,
@@ -173,7 +172,8 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitIoctlFuncs(&functions);
 	r300InitStateFuncs(&functions);
 	r300InitTextureFuncs(&functions);
-
+	r300InitVertexProgFuncs(&functions);
+	
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv, sharedContextPrivate)) {
 		FREE(r300);
@@ -261,11 +261,26 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	_tnl_allow_pixel_fog(ctx, GL_FALSE);
 	_tnl_allow_vertex_fog(ctx, GL_TRUE);
 
+#if 0
+	//if(driQueryOptionb(&rmesa->optionCache, "arb_vertex_program"))
+		_mesa_enable_extension( ctx, "GL_ARB_vertex_program");
+	//if(driQueryOptionb(&rmesa->optionCache, "nv_vertex_program"))
+		_mesa_enable_extension( ctx, "GL_NV_vertex_program");
+#endif
+	/* currently bogus data */
+	ctx->Const.MaxVertexProgramInstructions=128;
+	ctx->Const.MaxVertexProgramAttribs=64;
+	ctx->Const.MaxVertexProgramTemps=64;
+	ctx->Const.MaxVertexProgramLocalParams=64;
+	ctx->Const.MaxVertexProgramEnvParams=64;
+	ctx->Const.MaxVertexProgramAddressRegs=8;
+		
 	driInitExtensions(ctx, card_extensions, GL_TRUE);
-
+	
 	radeonInitSpanFuncs(ctx);
 	r300InitCmdBuf(r300);
 	r300InitState(r300);
+
 #if 0
 	/* plug in a few more device driver functions */
 	/* XXX these should really go right after _mesa_init_driver_functions() */
