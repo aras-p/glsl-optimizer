@@ -438,6 +438,7 @@ struct tfxMesaContext {
 
   GrBuffer_t currentFB;
 
+  GLboolean bgrOrder;
   GrColor_t color;
   GrColor_t clearC;
   GrAlpha_t clearA;
@@ -672,6 +673,6 @@ extern void fxTMMoveInTM_NoLock(fxMesaContext fxMesa,
 extern void fxSetupTexture_NoLock(GLcontext *ctx);
 extern void fxSetupTexture(GLcontext *ctx);
 
-extern void fxInitPixelTables(GLboolean bgrOrder);
+extern void fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder);
 
 #endif

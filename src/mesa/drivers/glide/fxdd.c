@@ -70,9 +70,11 @@ GLubyte FX_PixelToB[0x10000];
  * Initialize the FX_PixelTo{RGB} arrays.
  * Input: bgrOrder - if TRUE, pixels are in BGR order, else RGB order.
  */
-void fxInitPixelTables(GLboolean bgrOrder)
+void fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder)
 {
   GLuint pixel;
+
+  fxMesa->bgrOrder=bgrOrder;
   for (pixel = 0; pixel <= 0xffff; pixel++) {
     GLuint r, g, b;
     if (bgrOrder) {

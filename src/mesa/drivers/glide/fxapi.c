@@ -973,7 +973,7 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
 
    /* Pixel tables are use during pixel read-back */
 #if FXMESA_USE_ARGB 
-   fxInitPixelTables(GL_FALSE); /* Force RGB pixel order */	
+   fxInitPixelTables(fxMesa, GL_FALSE); /* Force RGB pixel order */	
 #else
    if (glbHWConfig.SSTs[glbCurrentBoard].type == GR_SSTTYPE_VOODOO) {
       /* jk991130 - GROSS HACK!!! - Voodoo 3s don't use BGR!!
@@ -983,14 +983,14 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
        * Thanks to Joseph Kain for that one
        */
       if (glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.nTexelfx == 2) {
-         fxInitPixelTables(GL_FALSE); /* use RGB pixel order (Voodoo3) */
+         fxInitPixelTables(fxMesa, GL_FALSE); /* use RGB pixel order (Voodoo3) */
       }
       else {
-         fxInitPixelTables(GL_TRUE); /* use BGR pixel order on Voodoo1/2 */
+         fxInitPixelTables(fxMesa, GL_TRUE); /* use BGR pixel order on Voodoo1/2 */
       }
    }
    else {
-      fxInitPixelTables(GL_FALSE); /* use RGB pixel order otherwise */
+      fxInitPixelTables(fxMesa, GL_FALSE); /* use RGB pixel order otherwise */
    }
 #endif
 
