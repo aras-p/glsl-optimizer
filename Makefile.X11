@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.93 2003/10/16 19:30:22 brianp Exp $
+# $Id: Makefile.X11,v 1.94 2003/10/20 16:28:00 kschultz Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -386,7 +386,9 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/descrip.mms				\
 	$(DIRECTORY)/src/mesa/depend					\
 	$(DIRECTORY)/src/mesa/main/*.[chS]				\
+	$(DIRECTORY)/src/mesa/main/main.dsp				\
 	$(DIRECTORY)/src/mesa/glapi/*.[chS]				\
+	$(DIRECTORY)/src/mesa/glapi/glapi.dsp				\
 	$(DIRECTORY)/src/mesa/array_cache/*.[ch]			\
 	$(DIRECTORY)/src/mesa/array_cache/array_cache.dsp		\
 	$(DIRECTORY)/src/mesa/math/*.[ch]				\
@@ -415,10 +417,12 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/drivers/ggi/include/ggi/mesa/*.h		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.win		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/osmesa.def			\
+	$(DIRECTORY)/src/mesa/drivers/osmesa/osmesa.dsp			\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/svga/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.def			\
+	$(DIRECTORY)/src/mesa/drivers/windows/*/*.dsp			\
 	$(DIRECTORY)/src/mesa/drivers/x11/*.[ch]			\
 	$(DIRECTORY)/src/mesa/sparc/*.[chS]				\
 	$(DIRECTORY)/src/mesa/x86/*.[ch]				\
@@ -480,6 +484,7 @@ DEMO_FILES =	\
 	$(DIRECTORY)/progs/demos/*.cxx			\
 	$(DIRECTORY)/progs/demos/*.dat			\
 	$(DIRECTORY)/progs/demos/README			\
+	$(DIRECTORY)/progs/demos/Windows/*		\
 	$(DIRECTORY)/progs/xdemos/Makefile*		\
 	$(DIRECTORY)/progs/xdemos/descrip.mms		\
 	$(DIRECTORY)/progs/xdemos/*.[chf]		\
@@ -500,6 +505,7 @@ SI_GLU_FILES = \
 	$(DIRECTORY)/bin/mklib*					\
 	$(DIRECTORY)/include/GL/glu.h				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.X11			\
+	$(DIRECTORY)/src/glu/sgi/cc*.txt			\
 	$(DIRECTORY)/src/glu/sgi/include/gluos.h		\
 	$(DIRECTORY)/src/glu/sgi/libnurbs/interface/*.h		\
 	$(DIRECTORY)/src/glu/sgi/libnurbs/interface/*.cc	\
