@@ -1,4 +1,4 @@
-/* $Id: polygon.c,v 1.22 2002/06/13 04:49:17 brianp Exp $ */
+/* $Id: polygon.c,v 1.23 2002/06/15 02:38:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,7 +47,7 @@ _mesa_CullFace( GLenum mode )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
-      _mesa_debug("glCullFace %s\n", _mesa_lookup_enum_by_nr(mode));
+      _mesa_debug(ctx, "glCullFace %s\n", _mesa_lookup_enum_by_nr(mode));
 
    if (mode!=GL_FRONT && mode!=GL_BACK && mode!=GL_FRONT_AND_BACK) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glCullFace" );
@@ -73,7 +73,7 @@ _mesa_FrontFace( GLenum mode )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
-      _mesa_debug("glFrontFace %s\n", _mesa_lookup_enum_by_nr(mode));
+      _mesa_debug(ctx, "glFrontFace %s\n", _mesa_lookup_enum_by_nr(mode));
 
    if (mode!=GL_CW && mode!=GL_CCW) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glFrontFace" );
@@ -101,7 +101,7 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
-      _mesa_debug("glPolygonMode %s %s\n",
+      _mesa_debug(ctx, "glPolygonMode %s %s\n",
                   _mesa_lookup_enum_by_nr(face),
                   _mesa_lookup_enum_by_nr(mode));
 
@@ -154,7 +154,7 @@ _mesa_PolygonStipple( const GLubyte *pattern )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
-      _mesa_debug("glPolygonStipple\n");
+      _mesa_debug(ctx, "glPolygonStipple\n");
 
    FLUSH_VERTICES(ctx, _NEW_POLYGONSTIPPLE);
    _mesa_unpack_polygon_stipple(pattern, ctx->PolygonStipple, &ctx->Unpack);
@@ -172,7 +172,7 @@ _mesa_GetPolygonStipple( GLubyte *dest )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
-      _mesa_debug("glGetPolygonStipple\n");
+      _mesa_debug(ctx, "glGetPolygonStipple\n");
 
    _mesa_pack_polygon_stipple(ctx->PolygonStipple, dest, &ctx->Pack);
 }
@@ -186,7 +186,7 @@ _mesa_PolygonOffset( GLfloat factor, GLfloat units )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
-      _mesa_debug("glPolygonOffset %f %f\n", factor, units);
+      _mesa_debug(ctx, "glPolygonOffset %f %f\n", factor, units);
 
    if (ctx->Polygon.OffsetFactor == factor &&
        ctx->Polygon.OffsetUnits == units)

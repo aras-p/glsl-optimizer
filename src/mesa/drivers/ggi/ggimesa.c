@@ -144,7 +144,7 @@ static void gl_ggiClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 }
 
 /* Set the buffer used for drawing */
-static GLboolean gl_ggiSetDrawBuffer(GLcontext *ctx, GLenum mode)
+static void gl_ggiSetDrawBuffer(GLcontext *ctx, GLenum mode)
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 
@@ -155,17 +155,15 @@ static GLboolean gl_ggiSetDrawBuffer(GLcontext *ctx, GLenum mode)
 	{
 		ggiSetWriteFrame(ggi_ctx->ggi_visual,
 				 ggiGetDisplayFrame(ggi_ctx->ggi_visual));
-		return GL_TRUE;
 	}
 	else if (mode == GL_BACK_LEFT) 
 	{
 		ggiSetWriteFrame(ggi_ctx->ggi_visual,
 				 ggiGetDisplayFrame(ggi_ctx->ggi_visual)?0 : 1);
-		return GL_TRUE;
 	}
 	else 
 	{
-		return GL_FALSE;
+		/* nothing since we don't have any point/line/triangle functions. */
 	}
 }
 

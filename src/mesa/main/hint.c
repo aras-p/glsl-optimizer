@@ -1,4 +1,4 @@
-/* $Id: hint.c,v 1.11 2002/06/13 04:28:29 brianp Exp $ */
+/* $Id: hint.c,v 1.12 2002/06/15 02:38:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,49 +42,43 @@ _mesa_Hint( GLenum target, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
-   (void) _mesa_try_Hint( ctx, target, mode );
-}
 
-
-GLboolean
-_mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
-{
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug("glHint %s %d\n", _mesa_lookup_enum_by_nr(target), mode);
 
    if (mode != GL_NICEST && mode != GL_FASTEST && mode != GL_DONT_CARE) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glHint(mode)");
-      return GL_FALSE;
+      return;
    }
 
    switch (target) {
       case GL_FOG_HINT:
          if (ctx->Hint.Fog == mode)
-	    return GL_TRUE;
+	    return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.Fog = mode;
          break;
       case GL_LINE_SMOOTH_HINT:
          if (ctx->Hint.LineSmooth == mode)
-	    return GL_TRUE;
+	    return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.LineSmooth = mode;
          break;
       case GL_PERSPECTIVE_CORRECTION_HINT:
          if (ctx->Hint.PerspectiveCorrection == mode)
-	    return GL_TRUE;
+	    return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.PerspectiveCorrection = mode;
          break;
       case GL_POINT_SMOOTH_HINT:
          if (ctx->Hint.PointSmooth == mode)
-	    return GL_TRUE;
+	    return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.PointSmooth = mode;
          break;
       case GL_POLYGON_SMOOTH_HINT:
          if (ctx->Hint.PolygonSmooth == mode)
-	    return GL_TRUE;
+	    return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.PolygonSmooth = mode;
          break;
@@ -92,7 +86,7 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
       /* GL_EXT_clip_volume_hint */
       case GL_CLIP_VOLUME_CLIPPING_HINT_EXT:
          if (ctx->Hint.ClipVolumeClipping == mode)
-	    return GL_TRUE;
+	    return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.ClipVolumeClipping = mode;
          break;
@@ -101,10 +95,10 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
          if (!ctx->Extensions.ARB_texture_compression) {
             _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
-	    return GL_FALSE;
+	    return;
          }
 	 if (ctx->Hint.TextureCompression == mode)
-	    return GL_TRUE;
+	    return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
 	 ctx->Hint.TextureCompression = mode;
          break;
@@ -113,22 +107,20 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
       case GL_GENERATE_MIPMAP_HINT_SGIS:
          if (!ctx->Extensions.SGIS_generate_mipmap) {
             _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
-	    return GL_FALSE;
+	    return;
          }
          if (ctx->Hint.GenerateMipmap == mode)
-            return GL_TRUE;
+            return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
 	 ctx->Hint.GenerateMipmap = mode;
          break;
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
-         return GL_FALSE;
+         return;
    }
 
    if (ctx->Driver.Hint) {
       (*ctx->Driver.Hint)( ctx, target, mode );
    }
-
-   return GL_TRUE;
 }

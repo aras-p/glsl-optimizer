@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.27 2002/06/13 04:28:29 brianp Exp $ */
+/* $Id: glheader.h,v 1.28 2002/06/15 02:38:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -66,14 +66,11 @@
 #endif
 #endif
 #include <float.h>
+#include <stdarg.h>
 
 
 #ifdef HAVE_CONFIG_H
 #include "conf.h"
-#endif
-
-#ifdef DEBUG
-#include <stdarg.h>  /* for _mesa_debug() only */
 #endif
 
 
@@ -256,6 +253,17 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #  define INLINE __inline
 #else
 #  define INLINE
+#endif
+
+
+/*
+ * Provide a reasonable replacement for __FUNCTION__ when using
+ * non-GNU C compilers.
+ */
+#if !defined(__GNUC__)
+#define STRINGIZE(x) #x
+#define STRINGIZE_EVAL(x) STRINGIZE(x)
+#define __FUNCTION__ STRINGIZE_EVAL(__FILE__) ", line " STRINGIZE_EVAL(__LINE__)
 #endif
 
 

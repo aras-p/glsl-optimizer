@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.28 2002/06/13 04:49:17 brianp Exp $ */
+/* $Id: t_imm_api.c,v 1.29 2002/06/15 02:38:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,7 +60,7 @@ void _tnl_flush_immediate( GLcontext *ctx, struct immediate *IM )
    }
 
    if (MESA_VERBOSE & VERBOSE_IMMEDIATE)
-      _mesa_debug("_tnl_flush_immediate IM: %d compiling: %d\n",
+      _mesa_debug(ctx, "_tnl_flush_immediate IM: %d compiling: %d\n",
                   IM->id, ctx->CompileFlag);
 
    if (IM->FlushElt == FLUSH_ELT_EAGER) {
@@ -86,12 +86,15 @@ void _tnl_flush_vertices( GLcontext *ctx, GLuint flags )
    struct immediate *IM = TNL_CURRENT_IM(ctx);
 
    if (MESA_VERBOSE & VERBOSE_IMMEDIATE)
-      _mesa_debug("_tnl_flush_vertices flags %x IM(%d) %d..%d Flag[%d]: %x\n", 
+      _mesa_debug(ctx,
+                  "_tnl_flush_vertices flags %x IM(%d) %d..%d Flag[%d]: %x\n", 
                   flags, IM->id, IM->Start, IM->Count, IM->Start,
                   IM->Flag[IM->Start]);
 
    if (IM->Flag[IM->Start])
-      if ((flags & FLUSH_UPDATE_CURRENT) || IM->Count > IM->Start)
+      if ((flags & FLUSH_UPDATE_CURRENT) || 
+	  IM->Count > IM->Start ||
+	  (IM->Flag[IM->Start] & (VERT_BEGIN|VERT_END)))
 	 _tnl_flush_immediate( ctx, IM );
 }
 
@@ -105,7 +108,7 @@ _tnl_save_Begin( GLenum mode )
    struct immediate *IM = TNL_CURRENT_IM(ctx);
    GLuint inflags, state;
 
-/*     _mesa_debug("%s: before: %x\n", __FUNCTION__, IM->BeginState); */
+/*     _mesa_debug(ctx, "%s: before: %x\n", __FUNCTION__, IM->BeginState); */
 
    if (mode > GL_POLYGON) {
       _mesa_compile_error( ctx, GL_INVALID_ENUM, "_tnl_Begin" );
@@ -115,12 +118,14 @@ _tnl_save_Begin( GLenum mode )
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
+#if 000
    /* if only a very few slots left, might as well flush now
     */
    if (IM->Count > IMM_MAXDATA-8) {
       _tnl_flush_immediate( ctx, IM );
       IM = TNL_CURRENT_IM(ctx);
    }
+#endif
 
    /* Check for and flush buffered vertices from internal operations.
     */
@@ -158,16 +163,9 @@ _tnl_save_Begin( GLenum mode )
    ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
    IM->BeginState = state;
 
-   if (ctx->ExecuteFlag) {
-      if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
-	 _mesa_error( ctx, GL_INVALID_OPERATION, "_tnl_Begin" );
-      }
-      else 
-	 ctx->Driver.CurrentExecPrimitive = mode;
-   }
-
-
-   /* Update save_primitive now.
+   /* Update save_primitive now.  Don't touch ExecPrimitive as this is
+    * updated in the replay of this cassette if we are in
+    * COMPILE_AND_EXECUTE mode.
     */
    if (ctx->Driver.CurrentSavePrimitive == PRIM_UNKNOWN)
       ctx->Driver.CurrentSavePrimitive = PRIM_INSIDE_UNKNOWN_PRIM;
@@ -203,8 +201,9 @@ _tnl_Begin( GLenum mode )
 
       if (IM->Start == IM->Count &&
 	  tnl->Driver.NotifyBegin &&
-	  tnl->Driver.NotifyBegin( ctx, mode )) 
+	  tnl->Driver.NotifyBegin( ctx, mode )) {
 	 return;
+      }
 
       assert( IM->SavedBeginState == 0 );
       assert( IM->BeginState == 0 );
@@ -223,7 +222,7 @@ _tnl_Begin( GLenum mode )
       IM->LastPrimitive = count;
       IM->BeginState = (VERT_BEGIN_0|VERT_BEGIN_1);
 
-/*        _mesa_debug("%s: %x\n", __FUNCTION__, IM->BeginState);  */
+/*        _mesa_debug(ctx, "%s: %x\n", __FUNCTION__, IM->BeginState);  */
 
       ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
       ctx->Driver.CurrentExecPrimitive = mode;
@@ -238,12 +237,12 @@ _tnl_Begin( GLenum mode )
 GLboolean
 _tnl_hard_begin( GLcontext *ctx, GLenum p )
 {
-/*     _mesa_debug("%s\n", __FUNCTION__); */
+/*     _mesa_debug(ctx, "%s\n", __FUNCTION__); */
 
    if (!ctx->CompileFlag) {
       /* If not compiling, treat as a normal begin().
        */
-/*        _mesa_debug("%s: treating as glBegin\n", __FUNCTION__); */
+/*        _mesa_debug(ctx, "%s: treating as glBegin\n", __FUNCTION__); */
       glBegin( p );
       return GL_TRUE;
    }
@@ -358,7 +357,7 @@ _tnl_end( GLcontext *ctx )
 
    IM->BeginState = state;
 
-   if (ctx->ExecuteFlag) {
+   if (!ctx->CompileFlag) {
       if (ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END) 
 	 _mesa_error( ctx, GL_INVALID_OPERATION, "_tnl_End" );
       else
@@ -368,8 +367,7 @@ _tnl_end( GLcontext *ctx )
    /* You can set this flag to get the old 'flush_vb on glEnd()'
     * behaviour.
     */
-   /* XXXX tempory change here */
-   if (1 /*(MESA_DEBUG_FLAGS&DEBUG_ALWAYS_FLUSH)*/ )
+   if (MESA_DEBUG_FLAGS & DEBUG_ALWAYS_FLUSH)
       _tnl_flush_immediate( ctx, IM );
 }
 
@@ -1205,7 +1203,7 @@ _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
       return;
    
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug("_tnl_Materialfv\n");
+      _mesa_debug(ctx, "_tnl_Materialfv\n");
 
    if (tnl->IsolateMaterials &&
        !(IM->BeginState & VERT_BEGIN_1)) /* heuristic */

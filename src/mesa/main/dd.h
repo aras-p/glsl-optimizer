@@ -1,10 +1,10 @@
-/* $Id: dd.h,v 1.68 2002/04/21 18:49:18 brianp Exp $ */
+/* $Id: dd.h,v 1.69 2002/06/15 02:38:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -77,7 +77,7 @@ struct dd_function_table {
     * settings!  Software Mesa can do masked clears if the device driver can't.
     */
 
-   GLboolean (*SetDrawBuffer)( GLcontext *ctx, GLenum buffer );
+   void (*SetDrawBuffer)( GLcontext *ctx, GLenum buffer );
    /*
     * Specifies the current buffer for writing.
     * The following values must be accepted when applicable:
@@ -85,16 +85,15 @@ struct dd_function_table {
     *    GL_BACK_LEFT - when double buffering
     *    GL_FRONT_RIGHT - when using stereo
     *    GL_BACK_RIGHT - when using stereo and double buffering
-    * The folowing values may optionally be accepted.  Return GL_TRUE
-    * if accepted, GL_FALSE if not accepted.  In practice, only drivers
-    * which can write to multiple color buffers at once should accept
-    * these values.
     *    GL_FRONT - write to front left and front right if it exists
     *    GL_BACK - write to back left and back right if it exists
     *    GL_LEFT - write to front left and back left if it exists
     *    GL_RIGHT - write to right left and back right if they exist
     *    GL_FRONT_AND_BACK - write to all four buffers if they exist
     *    GL_NONE - disable buffer write in device driver.
+    *
+    * Note the driver must organize fallbacks (eg with swrast) if it
+    * cannot implement the requested mode.
     */
 
    void (*GetBufferSize)( GLframebuffer *buffer,

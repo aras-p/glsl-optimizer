@@ -1,4 +1,4 @@
-/* $Id: fxdd.c,v 1.86 2002/06/13 04:28:30 brianp Exp $ */
+/* $Id: fxdd.c,v 1.87 2002/06/15 02:38:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -264,7 +264,7 @@ fxDDClear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 
 /* Set the buffer used for drawing */
 /* XXX support for separate read/draw buffers hasn't been tested */
-static GLboolean
+static void
 fxDDSetDrawBuffer(GLcontext * ctx, GLenum mode)
 {
    fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
@@ -276,19 +276,17 @@ fxDDSetDrawBuffer(GLcontext * ctx, GLenum mode)
    if (mode == GL_FRONT_LEFT) {
       fxMesa->currentFB = GR_BUFFER_FRONTBUFFER;
       FX_grRenderBuffer(fxMesa->currentFB);
-      return GL_TRUE;
    }
    else if (mode == GL_BACK_LEFT) {
       fxMesa->currentFB = GR_BUFFER_BACKBUFFER;
       FX_grRenderBuffer(fxMesa->currentFB);
-      return GL_TRUE;
    }
    else if (mode == GL_NONE) {
       FX_grColorMask(FXFALSE, FXFALSE);
-      return GL_TRUE;
    }
    else {
-      return GL_FALSE;
+      /* we'll need a software fallback */
+      /* XXX not implemented */
    }
 }
 

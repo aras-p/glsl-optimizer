@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.60 2002/05/09 21:54:16 brianp Exp $ */
+/* $Id: drawpix.c,v 1.61 2002/06/15 02:38:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -223,3 +223,68 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
    ctx->Current.RasterPos[0] += xmove;
    ctx->Current.RasterPos[1] += ymove;
 }
+
+
+
+#if 0  /* experimental */
+/*
+ * Execute glDrawDepthPixelsMESA().  This function accepts both a color
+ * image and depth (Z) image.  Rasterization produces fragments with
+ * color and Z taken from these images.  This function is intended for
+ * Z-compositing.  Normally, this operation requires two glDrawPixels
+ * calls with stencil testing.
+ */
+void
+_mesa_DrawDepthPixelsMESA( GLsizei width, GLsizei height,
+                           GLenum colorFormat, GLenum colorType,
+                           const GLvoid *colors,
+                           GLenum depthType, const GLvoid *depths )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (width < 0 || height < 0) {
+      _mesa_error( ctx, GL_INVALID_VALUE,
+                   "glDrawDepthPixelsMESA(width or height < 0" );
+      return;
+   }
+
+   if (ctx->RenderMode==GL_RENDER) {
+      GLint x, y;
+      if (!colors || !depths || !ctx->Current.RasterPosValid) {
+	 return;
+      }
+
+      if (ctx->NewState) {
+         _mesa_update_state(ctx);
+      }
+
+      /* Round, to satisfy conformance tests (matches SGI's OpenGL) */
+      x = IROUND(ctx->Current.RasterPos[0]);
+      y = IROUND(ctx->Current.RasterPos[1]);
+
+      ctx->OcclusionResult = GL_TRUE;
+      ctx->Driver.DrawDepthPixelsMESA(ctx, x, y, width, height,
+                                      colorFormat, colorType, colors,
+                                      depthType, depths, &ctx->Unpack);
+   }
+   else if (ctx->RenderMode==GL_FEEDBACK) {
+      /* Feedback the current raster pos info */
+      if (ctx->Current.RasterPosValid) {
+	 FLUSH_CURRENT( ctx, 0 );
+         FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_DRAW_PIXEL_TOKEN );
+         _mesa_feedback_vertex( ctx,
+				ctx->Current.RasterPos,
+				ctx->Current.RasterColor,
+				ctx->Current.RasterIndex,
+				ctx->Current.RasterTexCoords[0] );
+      }
+   }
+   else if (ctx->RenderMode==GL_SELECT) {
+      if (ctx->Current.RasterPosValid) {
+         _mesa_update_hitflag( ctx, ctx->Current.RasterPos[2] );
+      }
+   }
+}
+
+#endif

@@ -1,4 +1,4 @@
-/* $Id: s_accum.c,v 1.16 2002/03/19 16:47:05 brianp Exp $ */
+/* $Id: s_accum.c,v 1.17 2002/06/15 02:38:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -62,7 +62,7 @@
  */
 
 
-#if CHAN_BITS == 8
+#if CHAN_BITS == 8 && ACCUM_BITS < 32
 #define USE_OPTIMIZED_ACCUM   /* enable the optimization */
 #endif
 

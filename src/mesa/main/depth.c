@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.29 2002/06/13 04:28:29 brianp Exp $ */
+/* $Id: depth.c,v 1.30 2002/06/15 02:38:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -70,7 +70,7 @@ _mesa_DepthFunc( GLenum func )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
-      _mesa_debug("glDepthFunc %s\n", _mesa_lookup_enum_by_nr(func));
+      _mesa_debug(ctx, "glDepthFunc %s\n", _mesa_lookup_enum_by_nr(func));
 
    switch (func) {
    case GL_LESS:    /* (default) pass if incoming z < stored z */
@@ -106,7 +106,7 @@ _mesa_DepthMask( GLboolean flag )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
-      _mesa_debug("glDepthMask %d\n", flag);
+      _mesa_debug(ctx, "glDepthMask %d\n", flag);
 
    /*
     * GL_TRUE indicates depth buffer writing is enabled (default)

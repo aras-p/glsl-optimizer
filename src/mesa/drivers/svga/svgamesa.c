@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.18 2002/06/13 04:28:30 brianp Exp $ */
+/* $Id: svgamesa.c,v 1.19 2002/06/15 02:38:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -217,7 +217,7 @@ static void get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *heigh
    *height = SVGAMesa->height = vga_getydim();
 }
 
-static GLboolean set_draw_buffer( GLcontext *ctx, GLenum buffer )
+static void set_draw_buffer( GLcontext *ctx, GLenum buffer )
 {
    if (buffer == GL_FRONT_LEFT) {
       SVGABuffer.DrawBuffer = SVGABuffer.FrontBuffer;
@@ -229,7 +229,6 @@ static GLboolean set_draw_buffer( GLcontext *ctx, GLenum buffer )
       SVGABuffer.BackBuffer=SVGABuffer.FrontBuffer;
       SVGABuffer.FrontBuffer=tmpptr;
 #endif
-      return GL_TRUE;
    }
    else if (buffer == GL_BACK_LEFT) {
       SVGABuffer.DrawBuffer = SVGABuffer.BackBuffer;
@@ -237,10 +236,10 @@ static GLboolean set_draw_buffer( GLcontext *ctx, GLenum buffer )
       /*    vga_waitretrace(); */
       copy_buffer(SVGABuffer.BackBuffer);
 #endif
-      return GL_TRUE;
    }
-   else
-      return GL_FALSE;
+   else {
+      /* nothing since we don't have any point/line/triangle functions. */
+   }
 }
 
 

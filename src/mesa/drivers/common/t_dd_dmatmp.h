@@ -1,4 +1,4 @@
-/* $Id: t_dd_dmatmp.h,v 1.12 2002/02/13 00:53:20 keithw Exp $ */
+/* $Id: t_dd_dmatmp.h,v 1.13 2002/06/15 02:38:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,6 +49,7 @@
 #define ELTS_VARS
 #define ALLOC_ELTS( nr )
 #define EMIT_ELT( offset, elt )
+#define EMIT_TWO_ELTS( offset, elt0, elt1 )
 #define INCR_ELTS( nr )
 #define ELT_INIT(prim)
 #define GET_CURRENT_VB_MAX_ELTS() 0
@@ -480,7 +481,7 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
 	       NEW_PRIMITIVE();
 	       ALLOC_ELTS_NEW_PRIMITIVE( quads*6 );
 
-	       for ( i = 0 ; i < quads*2 ; i+=2 ) {
+	       for ( i = j-start ; i < j-start+quads*2 ; i+=2 ) {
 		  EMIT_TWO_ELTS( 0, (i+0), (i+1) );
 		  EMIT_TWO_ELTS( 2, (i+2), (i+1) );
 		  EMIT_TWO_ELTS( 4, (i+3), (i+2) );
@@ -601,7 +602,7 @@ static void TAG(render_quads_verts)( GLcontext *ctx,
 	    NEW_PRIMITIVE();
 	    ALLOC_ELTS_NEW_PRIMITIVE( quads*6 );
 
-	    for ( i = 0 ; i < quads*4 ; i+=4 ) {
+	    for ( i = j-start ; i < j-start+quads*4 ; i+=4 ) {
 	       EMIT_TWO_ELTS( 0, (i+0), (i+1) );
 	       EMIT_TWO_ELTS( 2, (i+3), (i+1) );
 	       EMIT_TWO_ELTS( 4, (i+2), (i+3) );
@@ -996,7 +997,7 @@ static void TAG(render_quad_strip_elts)( GLcontext *ctx,
 	       NEW_PRIMITIVE();
 	       ALLOC_ELTS_NEW_PRIMITIVE( quads*6 );
 
-	       for ( i = 0 ; i < quads ; i++, elts += 2 ) {
+	       for ( i = j-start ; i < j-start+quads ; i++, elts += 2 ) {
 		  EMIT_TWO_ELTS( 0, elts[0], elts[1] );
 		  EMIT_TWO_ELTS( 2, elts[2], elts[1] );
 		  EMIT_TWO_ELTS( 4, elts[3], elts[2] );
@@ -1064,7 +1065,7 @@ static void TAG(render_quads_elts)( GLcontext *ctx,
 	    NEW_PRIMITIVE();
 	    ALLOC_ELTS_NEW_PRIMITIVE( quads * 6 );
 
-	    for ( i = 0 ; i < quads ; i++, elts += 4 ) {
+	    for ( i = j-start ; i < j-start+quads ; i++, elts += 4 ) {
 	       EMIT_TWO_ELTS( 0, elts[0], elts[1] );
 	       EMIT_TWO_ELTS( 2, elts[3], elts[1] );
 	       EMIT_TWO_ELTS( 4, elts[2], elts[3] );

@@ -1,4 +1,4 @@
-/* $Id: t_dd_vbtmp.h,v 1.17 2002/06/03 16:06:35 brianp Exp $ */
+/* $Id: t_dd_vbtmp.h,v 1.18 2002/06/15 02:38:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -189,15 +189,28 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_SPEC) {
-      if (VB->SecondaryColorPtr[0]->Type != GL_UNSIGNED_BYTE)
-	 IMPORT_FLOAT_SPEC_COLORS( ctx );
-      spec = (GLubyte (*)[4])VB->SecondaryColorPtr[0]->Ptr;
-      spec_stride = VB->SecondaryColorPtr[0]->StrideB;
+      if (VB->SecondaryColorPtr[0]) {
+	 if (VB->SecondaryColorPtr[0]->Type != GL_UNSIGNED_BYTE)
+	    IMPORT_FLOAT_SPEC_COLORS( ctx );
+	 spec = (GLubyte (*)[4])VB->SecondaryColorPtr[0]->Ptr;
+	 spec_stride = VB->SecondaryColorPtr[0]->StrideB;
+      } else {
+	 GLubyte tmp[4];
+	 spec = &tmp;
+	 spec_stride = 0;
+      }
    }
 
    if (DO_FOG) {
-      fog = VB->FogCoordPtr->data;
-      fog_stride = VB->FogCoordPtr->stride;
+      if (VB->FogCoordPtr) {
+	 fog = VB->FogCoordPtr->data;
+	 fog_stride = VB->FogCoordPtr->stride;
+      }
+      else {
+	 GLfloat tmp = 0;
+	 fog = &tmp;
+	 fog_stride = 0;
+      }
    }
 
    if (VB->importable_data) {

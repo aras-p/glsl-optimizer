@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.31 2002/06/13 04:49:17 brianp Exp $ */
+/* $Id: context.h,v 1.32 2002/06/15 02:38:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -238,7 +238,10 @@ extern void
 _mesa_error( GLcontext *ctx, GLenum error, const char *s );
 
 extern void
-_mesa_debug( const char *fmtString, ... );
+_mesa_debug( const GLcontext *ctx, const char *fmtString, ... );
+
+extern void
+_mesa_printf( const GLcontext *ctx, const char *fmtString, ... );
 
 
 

@@ -526,13 +526,11 @@ static void set_read_buffer (GLcontext *ctx, GLframebuffer *buffer,
 /*
  * Set the destination/draw buffer.
  */
-static GLboolean set_draw_buffer (GLcontext *ctx, GLenum mode)
+static void set_draw_buffer (GLcontext *ctx, GLenum mode)
 {
- if (mode==GL_BACK_LEFT) {
-    return GL_TRUE;
- } else {
-    return GL_FALSE;
- }
+   /*
+     XXX this has to be fixed
+   */
 }
 
 

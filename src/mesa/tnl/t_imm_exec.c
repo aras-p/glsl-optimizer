@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.40 2002/06/13 04:49:17 brianp Exp $ */
+/* $Id: t_imm_exec.c,v 1.41 2002/06/15 02:38:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -72,7 +72,7 @@ static void reset_input( GLcontext *ctx,
       MEMSET(IM->Flag + start, 0, sizeof(GLuint) * (IM->Count+2-start));
 
    if (MESA_VERBOSE & VERBOSE_IMMEDIATE)
-      _mesa_debug("reset_input: IM(%d) new %x\n", IM->id, beginstate);
+      _mesa_debug(ctx, "reset_input: IM(%d) new %x\n", IM->id, beginstate);
 
    IM->Start = start;
    IM->Count = start;

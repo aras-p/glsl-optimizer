@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.66 2002/06/13 04:28:29 brianp Exp $ */
+/* $Id: attrib.c,v 1.67 2002/06/15 02:38:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -120,7 +120,7 @@ _mesa_PushAttrib(GLbitfield mask)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug("glPushAttrib %x\n", (int) mask);
+      _mesa_debug(ctx, "glPushAttrib %x\n", (int) mask);
 
    if (ctx->AttribStackDepth >= MAX_ATTRIB_STACK_DEPTH) {
       _mesa_error( ctx, GL_STACK_OVERFLOW, "glPushAttrib" );
@@ -802,7 +802,8 @@ _mesa_PopAttrib(void)
    while (attr) {
 
       if (MESA_VERBOSE & VERBOSE_API) {
-         _mesa_debug("glPopAttrib %s\n", _mesa_lookup_enum_by_nr(attr->kind));
+         _mesa_debug(ctx, "glPopAttrib %s\n",
+                     _mesa_lookup_enum_by_nr(attr->kind));
       }
 
       switch (attr->kind) {
@@ -1078,7 +1079,7 @@ _mesa_PopAttrib(void)
                      _mesa_set_enable(ctx, GL_CLIP_PLANE0 + i, GL_FALSE);
                   }
                   if (ctx->Driver.ClipPlane)
-                     ctx->Driver.ClipPlane( ctx, i, eyePlane );
+                     ctx->Driver.ClipPlane( ctx, GL_CLIP_PLANE0 + i, eyePlane );
                }
 
                /* normalize/rescale */

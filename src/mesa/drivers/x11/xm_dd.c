@@ -1,8 +1,8 @@
-/* $Id: xm_dd.c,v 1.31 2002/03/19 16:48:06 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.32 2002/06/15 02:38:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0.2
+ * Version:  4.0.3
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -115,9 +115,7 @@ flush( GLcontext *ctx )
 }
 
 
-
-
-static GLboolean
+static void
 set_draw_buffer( GLcontext *ctx, GLenum mode )
 {
    const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
@@ -125,7 +123,6 @@ set_draw_buffer( GLcontext *ctx, GLenum mode )
       /* write to front buffer */
       xmesa->xm_buffer->buffer = xmesa->xm_buffer->frontbuffer;
       xmesa_update_span_funcs(ctx);
-      return GL_TRUE;
    }
    else if (mode==GL_BACK_LEFT && xmesa->xm_buffer->db_state) {
       /* write to back buffer */
@@ -141,10 +138,11 @@ set_draw_buffer( GLcontext *ctx, GLenum mode )
          xmesa->xm_buffer->buffer = xmesa->xm_buffer->frontbuffer;
       }
       xmesa_update_span_funcs(ctx);
-      return GL_TRUE;
    }
    else {
-      return GL_FALSE;
+      /* the swrast->_RasterMask MULTI_DRAW_BIT will be set and
+       * we'll fall back to swrast to draw points/lines/triangles.
+       */
    }
 }
 

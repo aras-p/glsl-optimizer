@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.35 2002/06/13 04:28:29 brianp Exp $ */
+/* $Id: buffers.c,v 1.36 2002/06/15 02:38:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -97,7 +97,7 @@ _mesa_Clear( GLbitfield mask )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug("glClear 0x%x\n", mask);
+      _mesa_debug(ctx, "glClear 0x%x\n", mask);
 
    if (mask & ~(GL_COLOR_BUFFER_BIT |
                 GL_DEPTH_BUFFER_BIT |
@@ -146,7 +146,7 @@ _mesa_DrawBuffer( GLenum mode )
 
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug("glDrawBuffer %s\n", _mesa_lookup_enum_by_nr(mode));
+      _mesa_debug(ctx, "glDrawBuffer %s\n", _mesa_lookup_enum_by_nr(mode));
 
    switch (mode) {
       case GL_AUX0:
@@ -267,23 +267,11 @@ _mesa_DrawBuffer( GLenum mode )
    }
 
    /*
-    * If we get here there can't have been an error.
-    * Now see if device driver can implement the drawing to the target
-    * buffer(s).  The driver may not be able to do GL_FRONT_AND_BACK mode
-    * for example.  We'll take care of that in the core code by looping
-    * over the individual buffers.
+    * If we get here there can't have been an error.  Now tell the
+    * device driver about it.  
     */
    ASSERT(ctx->Driver.SetDrawBuffer);
-   if ( (*ctx->Driver.SetDrawBuffer)(ctx, ctx->Color.DriverDrawBuffer) ) {
-      /* All OK, the driver will do all buffer writes */
-      ctx->Color.MultiDrawBuffer = GL_FALSE;
-   }
-   else {
-      /* We'll have to loop over the multiple draw buffer targets */
-      ctx->Color.MultiDrawBuffer = GL_TRUE;
-      /* Set drawing buffer to front for now */
-      (void) (*ctx->Driver.SetDrawBuffer)(ctx, GL_FRONT_LEFT);
-   }
+   (*ctx->Driver.SetDrawBuffer)(ctx, ctx->Color.DriverDrawBuffer);
 
    ctx->Color.DrawBuffer = mode;
    ctx->NewState |= _NEW_COLOR;
@@ -298,7 +286,7 @@ _mesa_ReadBuffer( GLenum mode )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug("glReadBuffer %s\n", _mesa_lookup_enum_by_nr(mode));
+      _mesa_debug(ctx, "glReadBuffer %s\n", _mesa_lookup_enum_by_nr(mode));
 
    switch (mode) {
       case GL_AUX0:
@@ -360,7 +348,7 @@ _mesa_ResizeBuffersMESA( void )
    GLcontext *ctx = _mesa_get_current_context();
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug("glResizeBuffersMESA\n");
+      _mesa_debug(ctx, "glResizeBuffersMESA\n");
 
    if (ctx) {
       ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx );
@@ -416,7 +404,7 @@ _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
    }
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug("glScissor %d %d %d %d\n", x, y, width, height);
+      _mesa_debug(ctx, "glScissor %d %d %d %d\n", x, y, width, height);
 
    if (x == ctx->Scissor.X &&
        y == ctx->Scissor.Y &&

@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.38 2002/05/27 17:04:52 brianp Exp $ */
+/* $Id: config.h,v 1.39 2002/06/15 02:38:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -151,7 +151,7 @@
 /*
  * Bits per accumulation buffer color component:  8, 16 or 32
  */
-#define ACCUM_BITS 16
+#define ACCUM_BITS 32
 
 
 /*

@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.33 2002/06/13 04:49:17 brianp Exp $ */
+/* $Id: s_context.c,v 1.34 2002/06/15 02:38:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,6 +28,7 @@
  */
 
 #include "glheader.h"
+#include "context.h"
 #include "mtypes.h"
 #include "mem.h"
 
@@ -86,10 +87,8 @@ _swrast_update_rasterflags( GLcontext *ctx )
     * MULTI_DRAW_BIT flag.  Also set it if we're drawing to no
     * buffers or the RGBA or CI mask disables all writes.
     */
-   if (ctx->Color.MultiDrawBuffer) {
-      RasterMask |= MULTI_DRAW_BIT;
-   }
-   else if (ctx->Color.DrawBuffer==GL_NONE) {
+   if (ctx->Color.DrawBuffer == GL_FRONT_AND_BACK ||
+       ctx->Color.DrawBuffer == GL_NONE) {
       RasterMask |= MULTI_DRAW_BIT;
    }
    else if (ctx->Visual.rgbMode && *((GLuint *) ctx->Color.ColorMask) == 0) {
@@ -389,7 +388,7 @@ _swrast_Quad( GLcontext *ctx,
               const SWvertex *v2, const SWvertex *v3 )
 {
    if (SWRAST_DEBUG) {
-      _mesa_debug("_swrast_Quad\n");
+      _mesa_debug(ctx, "_swrast_Quad\n");
       _swrast_print_vertex( ctx, v0 );
       _swrast_print_vertex( ctx, v1 );
       _swrast_print_vertex( ctx, v2 );
@@ -404,7 +403,7 @@ _swrast_Triangle( GLcontext *ctx, const SWvertex *v0,
                   const SWvertex *v1, const SWvertex *v2 )
 {
    if (SWRAST_DEBUG) {
-      _mesa_debug("_swrast_Triangle\n");
+      _mesa_debug(ctx, "_swrast_Triangle\n");
       _swrast_print_vertex( ctx, v0 );
       _swrast_print_vertex( ctx, v1 );
       _swrast_print_vertex( ctx, v2 );
@@ -416,7 +415,7 @@ void
 _swrast_Line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 {
    if (SWRAST_DEBUG) {
-      _mesa_debug("_swrast_Line\n");
+      _mesa_debug(ctx, "_swrast_Line\n");
       _swrast_print_vertex( ctx, v0 );
       _swrast_print_vertex( ctx, v1 );
    }
@@ -427,7 +426,7 @@ void
 _swrast_Point( GLcontext *ctx, const SWvertex *v0 )
 {
    if (SWRAST_DEBUG) {
-      _mesa_debug("_swrast_Point\n");
+      _mesa_debug(ctx, "_swrast_Point\n");
       _swrast_print_vertex( ctx, v0 );
    }
    SWRAST_CONTEXT(ctx)->Point( ctx, v0 );
@@ -437,7 +436,7 @@ void
 _swrast_InvalidateState( GLcontext *ctx, GLuint new_state )
 {
    if (SWRAST_DEBUG) {
-      _mesa_debug("_swrast_InvalidateState\n");
+      _mesa_debug(ctx, "_swrast_InvalidateState\n");
    }
    SWRAST_CONTEXT(ctx)->InvalidateState( ctx, new_state );
 }
@@ -446,7 +445,7 @@ void
 _swrast_ResetLineStipple( GLcontext *ctx )
 {
    if (SWRAST_DEBUG) {
-      _mesa_debug("_swrast_ResetLineStipple\n");
+      _mesa_debug(ctx, "_swrast_ResetLineStipple\n");
    }
    SWRAST_CONTEXT(ctx)->StippleCounter = 0;
 }
@@ -455,7 +454,7 @@ void
 _swrast_allow_vertex_fog( GLcontext *ctx, GLboolean value )
 {
    if (SWRAST_DEBUG) {
-      _mesa_debug("_swrast_allow_vertex_fog %d\n", value);
+      _mesa_debug(ctx, "_swrast_allow_vertex_fog %d\n", value);
    }
    SWRAST_CONTEXT(ctx)->InvalidateState( ctx, _NEW_HINT );
    SWRAST_CONTEXT(ctx)->AllowVertexFog = value;
@@ -465,7 +464,7 @@ void
 _swrast_allow_pixel_fog( GLcontext *ctx, GLboolean value )
 {
    if (SWRAST_DEBUG) {
-      _mesa_debug("_swrast_allow_pixel_fog %d\n", value);
+      _mesa_debug(ctx, "_swrast_allow_pixel_fog %d\n", value);
    }
    SWRAST_CONTEXT(ctx)->InvalidateState( ctx, _NEW_HINT );
    SWRAST_CONTEXT(ctx)->AllowPixelFog = value;
@@ -479,7 +478,7 @@ _swrast_CreateContext( GLcontext *ctx )
    SWcontext *swrast = (SWcontext *)CALLOC(sizeof(SWcontext));
 
    if (SWRAST_DEBUG) {
-      _mesa_debug("_swrast_CreateContext\n");
+      _mesa_debug(ctx, "_swrast_CreateContext\n");
    }
 
    if (!swrast)
@@ -539,7 +538,7 @@ _swrast_DestroyContext( GLcontext *ctx )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    if (SWRAST_DEBUG) {
-      _mesa_debug("_swrast_DestroyContext\n");
+      _mesa_debug(ctx, "_swrast_DestroyContext\n");
    }
 
    FREE( swrast->span );
@@ -565,32 +564,32 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
    GLuint i;
 
    if (SWRAST_DEBUG_VERTICES) {
-      _mesa_debug("win %f %f %f %f\n",
+      _mesa_debug(ctx, "win %f %f %f %f\n",
                   v->win[0], v->win[1], v->win[2], v->win[3]);
 
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
 	 if (ctx->Texture.Unit[i]._ReallyEnabled)
-	    _mesa_debug("texcoord[%d] %f %f %f %f\n", i,
+	    _mesa_debug(ctx, "texcoord[%d] %f %f %f %f\n", i,
                         v->texcoord[i][0], v->texcoord[i][1],
                         v->texcoord[i][2], v->texcoord[i][3]);
 
 #if CHAN_TYPE == GL_FLOAT
-      _mesa_debug("color %f %f %f %f\n",
+      _mesa_debug(ctx, "color %f %f %f %f\n",
                   v->color[0], v->color[1], v->color[2], v->color[3]);
-      _mesa_debug("spec %f %f %f %f\n",
+      _mesa_debug(ctx, "spec %f %f %f %f\n",
                   v->specular[0], v->specular[1],
                   v->specular[2], v->specular[3]);
 #else
-      _mesa_debug("color %d %d %d %d\n",
+      _mesa_debug(ctx, "color %d %d %d %d\n",
                   v->color[0], v->color[1], v->color[2], v->color[3]);
-      _mesa_debug("spec %d %d %d %d\n",
+      _mesa_debug(ctx, "spec %d %d %d %d\n",
                   v->specular[0], v->specular[1],
                   v->specular[2], v->specular[3]);
 #endif
-      _mesa_debug("fog %f\n", v->fog);
-      _mesa_debug("index %d\n", v->index);
-      _mesa_debug("pointsize %f\n", v->pointSize);
-      _mesa_debug("\n");
+      _mesa_debug(ctx, "fog %f\n", v->fog);
+      _mesa_debug(ctx, "index %d\n", v->index);
+      _mesa_debug(ctx, "pointsize %f\n", v->pointSize);
+      _mesa_debug(ctx, "\n");
    }
 }
 

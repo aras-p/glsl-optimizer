@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.12 2002/06/13 08:27:32 joukj Exp $ */
+/* $Id: imports.c,v 1.13 2002/06/15 02:38:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,12 +39,20 @@
  * the renderer should use the XFree86-wrapped system calls.
  */
 
-#include <stdarg.h>
+/*
+ * XXX when we fully implement the __GLimports mechanism in Mesa, that
+ * should mean that we can remove <stdio.h>, <stdlib.h>, etc, from
+ * glheader.h.  Strictly speaking, all system includes should be done
+ * from this file, and not glheader to ensure that core Mesa has no
+ * dependencies on external libraries.  Someday...
+ */
+
+
 
 #include "glheader.h"
 #include "imports.h"
 #include "mem.h"
-#include "mtypes.h"
+
 
 static void *
 _mesa_Malloc(__GLcontext *gc, size_t size)

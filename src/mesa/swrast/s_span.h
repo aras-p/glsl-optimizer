@@ -1,4 +1,4 @@
-/* $Id: s_span.h,v 1.16 2002/04/12 15:39:59 brianp Exp $ */
+/* $Id: s_span.h,v 1.17 2002/06/15 02:38:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,6 +45,8 @@ _mesa_span_default_fog( GLcontext *ctx, struct sw_span *span );
 extern void
 _mesa_span_default_color( GLcontext *ctx, struct sw_span *span );
 
+extern void
+_mesa_span_default_texcoords( GLcontext *ctx, struct sw_span *span );
 
 extern void
 _mesa_write_index_span( GLcontext *ctx, struct sw_span *span);

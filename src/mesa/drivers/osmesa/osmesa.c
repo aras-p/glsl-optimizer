@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.80 2002/06/13 04:28:30 brianp Exp $ */
+/* $Id: osmesa.c,v 1.81 2002/06/15 02:38:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -707,15 +707,10 @@ do {									\
 
 
 
-static GLboolean set_draw_buffer( GLcontext *ctx, GLenum mode )
+static void set_draw_buffer( GLcontext *ctx, GLenum mode )
 {
    (void) ctx;
-   if (mode==GL_FRONT_LEFT) {
-      return GL_TRUE;
-   }
-   else {
-      return GL_FALSE;
-   }
+   (void) mode;
 }
 
 

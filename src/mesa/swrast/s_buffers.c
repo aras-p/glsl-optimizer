@@ -1,4 +1,4 @@
-/* $Id: s_buffers.c,v 1.10 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: s_buffers.c,v 1.11 2002/06/15 02:38:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -169,20 +169,20 @@ clear_color_buffers(GLcontext *ctx)
    for (bufferBit = 1; bufferBit <= 8; bufferBit = bufferBit << 1) {
       if (bufferBit & ctx->Color.DrawDestMask) {
          if (bufferBit == FRONT_LEFT_BIT) {
-            (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_FRONT_LEFT);
-            (void) (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_FRONT_LEFT);
+            (*ctx->Driver.SetDrawBuffer)( ctx, GL_FRONT_LEFT);
+            (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_FRONT_LEFT);
          }
          else if (bufferBit == FRONT_RIGHT_BIT) {
-            (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_FRONT_RIGHT);
-            (void) (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_FRONT_RIGHT);
+            (*ctx->Driver.SetDrawBuffer)( ctx, GL_FRONT_RIGHT);
+            (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_FRONT_RIGHT);
          }
          else if (bufferBit == BACK_LEFT_BIT) {
-            (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_BACK_LEFT);
-            (void) (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_BACK_LEFT);
+            (*ctx->Driver.SetDrawBuffer)( ctx, GL_BACK_LEFT);
+            (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_BACK_LEFT);
          }
          else {
-            (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_BACK_RIGHT);
-            (void) (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_BACK_RIGHT);
+            (*ctx->Driver.SetDrawBuffer)( ctx, GL_BACK_RIGHT);
+            (*swrast->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_BACK_RIGHT);
          }
 
          if (colorMask != 0xffffffff) {

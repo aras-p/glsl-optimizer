@@ -1,4 +1,4 @@
-/* $Id: texformat.h,v 1.8 2002/06/12 00:52:50 brianp Exp $ */
+/* $Id: texformat.h,v 1.9 2002/06/15 02:38:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,12 +33,15 @@
 #include "mtypes.h"
 
 
-/* The Mesa internal texture image types.  These will be set to their
- * default value, but may be changed by drivers as required.
+/*
+ * The Mesa internal texture image types.
+ * All texture images must be stored in one of these formats.
  */
 enum _format {
    /* Hardware-friendly formats.  Drivers can override the default
     * formats and convert texture images to one of these as required.
+    * The driver's ChooseTextureFormat() function will choose one of
+    * these formats.
     * These formats are all little endian, as shown below.  They will be
     * most useful for x86-based PC graphics card drivers.
     *
@@ -85,7 +88,7 @@ enum _format {
     *
     * NOTE: Because these are based on the GLchan datatype, one cannot
     * assume 8 bits per channel with these formats.  If you require
-    * GLubyte per channel, use one of the hardware formats above.
+    * GLubyte channels, use one of the hardware formats above.
     */
    MESA_FORMAT_RGBA,
    MESA_FORMAT_RGB,

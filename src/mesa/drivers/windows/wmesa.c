@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.29 2002/06/13 04:28:30 brianp Exp $ */
+/* $Id: wmesa.c,v 1.30 2002/06/15 02:38:17 brianp Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -569,15 +569,13 @@ static void enable( GLcontext* ctx, GLenum pname, GLboolean enable )
   }
 }
 
-static GLboolean set_draw_buffer( GLcontext* ctx, GLenum mode )
+static void set_draw_buffer( GLcontext* ctx, GLenum mode )
 {
-  /* TODO: this could be better */
-  if (mode==GL_FRONT_LEFT || mode==GL_BACK_LEFT) {
-    return GL_TRUE;
-  }
-  else {
-    return GL_FALSE;
-  }
+   /* XXX doing nothing for now */
+   /* if front buffer, fine */
+   /* if back buffer, fine */
+   /* else, check swrast->_RasterMask & MULTI_DRAW_BIT, if true, */
+   /* use a swrast fallback function */
 }
 
 
@@ -3205,6 +3203,8 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
     if (ctx->Polygon.SmoothFlag)     return NULL;
     if (ctx->Texture._ReallyEnabled)  return NULL;
     if (!wmesa->db_flag) return NULL;
+    if (ctx->swrast->_RasterMask & MULTI_DRAW_BIT) return NULL;
+
     /*if (wmesa->xm_buffer->buffer==XIMAGE)*/ {
     if (   ctx->Light.ShadeModel==GL_SMOOTH
         && ctx->_RasterMask==DEPTH_BIT

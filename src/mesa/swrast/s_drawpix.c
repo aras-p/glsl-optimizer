@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.33 2002/04/19 14:05:50 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.34 2002/06/15 02:38:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -629,6 +629,8 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
 
    if (ctx->Fog.Enabled)
       _mesa_span_default_fog(ctx, span);
+   if (ctx->Texture._ReallyEnabled)
+      _mesa_span_default_texcoords(ctx, span);
 
    if (type==GL_UNSIGNED_SHORT && ctx->Visual.depthBits == 16
        && !bias_or_scale && !zoom && ctx->Visual.rgbMode) {
@@ -732,6 +734,8 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       _mesa_span_default_z(ctx, span);
    if (ctx->Fog.Enabled)
       _mesa_span_default_fog(ctx, span);
+   if (ctx->Texture._ReallyEnabled)
+      _mesa_span_default_texcoords(ctx, span);
 
    if (SWRAST_CONTEXT(ctx)->_RasterMask == 0 && !zoom && x >= 0 && y >= 0
        && x + width <= (GLint) ctx->DrawBuffer->Width
@@ -859,11 +863,11 @@ _swrast_DrawPixels( GLcontext *ctx,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    (void) unpack;
 
-
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
    RENDER_START(swrast,ctx);
+
    switch (format) {
    case GL_STENCIL_INDEX:
       draw_stencil_pixels( ctx, x, y, width, height, type, pixels );
@@ -896,3 +900,55 @@ _swrast_DrawPixels( GLcontext *ctx,
 
    RENDER_FINISH(swrast,ctx);
 }
+
+
+
+#if 0  /* experimental */
+/*
+ * Execute glDrawDepthPixelsMESA().
+ */
+void
+_swrast_DrawDepthPixelsMESA( GLcontext *ctx,
+                             GLint x, GLint y,
+                             GLsizei width, GLsizei height,
+                             GLenum colorFormat, GLenum colorType,
+                             const GLvoid *colors,
+                             GLenum depthType, const GLvoid *depths,
+                             const struct gl_pixelstore_attrib *unpack )
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   (void) unpack;
+
+   if (swrast->NewState)
+      _swrast_validate_derived( ctx );
+
+   RENDER_START(swrast,ctx);
+
+   switch (colorFormat) {
+   case GL_COLOR_INDEX:
+      if (ctx->Visual.rgbMode)
+	 draw_rgba_pixels(ctx, x,y, width, height, colorFormat, colorType, colors);
+      else
+	 draw_index_pixels(ctx, x, y, width, height, colorType, colors);
+      break;
+   case GL_RED:
+   case GL_GREEN:
+   case GL_BLUE:
+   case GL_ALPHA:
+   case GL_LUMINANCE:
+   case GL_LUMINANCE_ALPHA:
+   case GL_RGB:
+   case GL_BGR:
+   case GL_RGBA:
+   case GL_BGRA:
+   case GL_ABGR_EXT:
+      draw_rgba_pixels(ctx, x, y, width, height, colorFormat, colorType, colors);
+      break;
+   default:
+      _mesa_error( ctx, GL_INVALID_ENUM,
+                   "glDrawDepthPixelsMESA(colorFormat)" );
+   }
+
+   RENDER_FINISH(swrast,ctx);
+}
+#endif

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.166 2002/06/13 04:49:17 brianp Exp $ */
+/* $Id: context.c,v 1.167 2002/06/15 02:38:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -232,12 +232,13 @@ __glCoreCreateContext(__GLimports *imports, __GLcontextModes *modes)
 {
     GLcontext *ctx;
 
-    ctx = (GLcontext *) (*imports->calloc)(0, 1, sizeof(GLcontext));
+    ctx = (GLcontext *) (*imports->calloc)(NULL, 1, sizeof(GLcontext));
     if (ctx == NULL) {
 	return NULL;
     }
     ctx->Driver.CurrentExecPrimitive=0;  /* XXX why is this here??? */
     ctx->imports = *imports;
+    _mesa_init_default_exports(&(ctx->exports));
 
     _mesa_initialize_visual(&ctx->Visual,
                             modes->rgbMode,
@@ -552,7 +553,7 @@ _glthread_DECLARE_STATIC_MUTEX(OneTimeLock);
  * This function just calls all the various one-time-init functions in Mesa.
  */
 static void
-one_time_init( void )
+one_time_init( GLcontext *ctx )
 {
    static GLboolean alreadyCalled = GL_FALSE;
    _glthread_LOCK_MUTEX(OneTimeLock);
@@ -573,7 +574,7 @@ one_time_init( void )
 #ifdef USE_SPARC_ASM
       _mesa_init_sparc_glapi_relocs();
 #endif
-      if (getenv("MESA_DEBUG")) {
+      if (ctx->imports.getenv(ctx, "MESA_DEBUG")) {
          _glapi_noop_enable_warnings(GL_TRUE);
       }
       else {
@@ -581,7 +582,7 @@ one_time_init( void )
       }
 
 #if defined(DEBUG) && defined(__DATE__) && defined(__TIME__)
-   fprintf(stderr, "Mesa DEBUG build %s %s\n", __DATE__, __TIME__);
+      fprintf(stderr, "Mesa DEBUG build %s %s\n", __DATE__, __TIME__);
 #endif
 
       alreadyCalled = GL_TRUE;
@@ -1456,13 +1457,13 @@ init_attrib_groups( GLcontext *ctx )
    ctx->OcclusionResultSaved = GL_FALSE;
 
    /* For debug/development only */
-   ctx->NoRaster = getenv("MESA_NO_RASTER") ? GL_TRUE : GL_FALSE;
+   ctx->NoRaster = ctx->imports.getenv(ctx, "MESA_NO_RASTER") ? GL_TRUE : GL_FALSE;
    ctx->FirstTimeCurrent = GL_TRUE;
 
    /* Dither disable */
-   ctx->NoDither = getenv("MESA_NO_DITHER") ? GL_TRUE : GL_FALSE;
+   ctx->NoDither = ctx->imports.getenv(ctx, "MESA_NO_DITHER") ? GL_TRUE : GL_FALSE;
    if (ctx->NoDither) {
-      if (getenv("MESA_DEBUG")) {
+      if (ctx->imports.getenv(ctx, "MESA_DEBUG")) {
          fprintf(stderr, "MESA_NO_DITHER set - dithering disabled\n");
       }
       ctx->Color.DitherFlag = GL_FALSE;
@@ -1602,11 +1603,14 @@ _mesa_initialize_context( GLcontext *ctx,
    ASSERT(imports);
    ASSERT(imports->other); /* other points to the device driver's context */
 
-   /* misc one-time initializations */
-   one_time_init();
+   /* assing imports */
+   ctx->imports = *imports;
 
    /* initialize the exports (Mesa functions called by the window system) */
-    _mesa_init_default_exports( &(ctx->exports) );
+   _mesa_init_default_exports( &(ctx->exports) );
+
+   /* misc one-time initializations */
+   one_time_init(ctx);
 
 #if 0
    /**
@@ -1756,11 +1760,11 @@ _mesa_initialize_context( GLcontext *ctx,
 #endif
 
 
-   if (getenv("MESA_DEBUG"))
-      add_debug_flags(getenv("MESA_DEBUG"));
+   if (ctx->imports.getenv(ctx, "MESA_DEBUG"))
+      add_debug_flags(ctx->imports.getenv(ctx, "MESA_DEBUG"));
 
-   if (getenv("MESA_VERBOSE"))
-      add_debug_flags(getenv("MESA_VERBOSE"));
+   if (ctx->imports.getenv(ctx, "MESA_VERBOSE"))
+      add_debug_flags(ctx->imports.getenv(ctx, "MESA_VERBOSE"));
 
    return GL_TRUE;
 }
@@ -1779,16 +1783,23 @@ _mesa_create_context( const GLvisual *visual,
                       GLcontext *share_list,
                       const __GLimports *imports )
 {
-   GLcontext *ctx = (GLcontext *) CALLOC( sizeof(GLcontext) );
-   if (!ctx) {
+   GLcontext *ctx;
+
+   ASSERT(visual);
+   ASSERT(imports);
+   ASSERT(imports->calloc);
+
+   ctx = (GLcontext *) imports->calloc(NULL, 1, sizeof(GLcontext));
+   if (!ctx)
       return NULL;
-   }
+
    ctx->Driver.CurrentExecPrimitive = 0;  /* XXX why is this here??? */
+
    if (_mesa_initialize_context(ctx, visual, share_list, imports)) {
       return ctx;
    }
    else {
-      FREE(ctx);
+      imports->free(NULL, ctx);
       return NULL;
    }
 }
@@ -2054,7 +2065,7 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
                      GLframebuffer *readBuffer )
 {
    if (MESA_VERBOSE)
-      fprintf(stderr, "_mesa_make_current2()\n");
+      _mesa_debug(newCtx, "_mesa_make_current2()\n");
 
    /* Check that the context's and framebuffer's visuals are compatible.
     * We could do a lot more checking here but this'll catch obvious
@@ -2102,7 +2113,7 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
        * information.
        */
       if (newCtx->FirstTimeCurrent) {
-	 if (getenv("MESA_INFO")) {
+	 if (newCtx->imports.getenv(newCtx, "MESA_INFO")) {
 	    print_info();
 	 }
 	 newCtx->FirstTimeCurrent = GL_FALSE;
@@ -2162,13 +2173,23 @@ _mesa_get_dispatch(GLcontext *ctx)
  */
 void _mesa_problem( const GLcontext *ctx, const char *s )
 {
-   fprintf( stderr, "Mesa implementation error: %s\n", s );
+   if (ctx) {
+      ctx->imports.fprintf((GLcontext *) ctx, stderr, "Mesa implementation error: %s\n", s);
 #ifdef XF86DRI
-   fprintf( stderr, "Please report to the DRI bug database at dri.sourceforge.net\n");
+      ctx->imports.fprintf((GLcontext *) ctx, stderr, "Please report to the DRI bug database at dri.sourceforge.net\n");
 #else
-   fprintf( stderr, "Please report to the Mesa bug database at www.mesa3d.org\n" );
+      ctx->imports.fprintf((GLcontext *) ctx, stderr, "Please report to the Mesa bug database at www.mesa3d.org\n" );
 #endif
-   (void) ctx;
+   }
+   else {
+      /* what can we do if we don't have a context???? */
+      fprintf( stderr, "Mesa implementation error: %s\n", s );
+#ifdef XF86DRI
+      fprintf( stderr, "Please report to the DRI bug database at dri.sourceforge.net\n");
+#else
+      fprintf( stderr, "Please report to the Mesa bug database at www.mesa3d.org\n" );
+#endif
+   }
 }
 
 
@@ -2198,8 +2219,14 @@ _mesa_warning( const GLcontext *ctx, const char *s )
 void
 _mesa_error( GLcontext *ctx, GLenum error, const char *where )
 {
-   const char *debugEnv = getenv("MESA_DEBUG");
+   const char *debugEnv;
    GLboolean debug;
+
+   if (ctx)
+      debugEnv = ctx->imports.getenv(ctx, "MESA_DEBUG");
+   else
+      /* what can we do??? */
+      debugEnv = "";
 
 #ifdef DEBUG
    if (debugEnv && strstr(debugEnv, "silent"))
@@ -2262,18 +2289,30 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *where )
 
 
 /*
- * Call this to report debug information.
+ * Call this to report debug information.  Uses stderr.
  */
 void
-_mesa_debug( const char *fmtString, ... )
+_mesa_debug( const GLcontext *ctx, const char *fmtString, ... )
 {
-#ifdef DEBUG
    va_list args;
    va_start( args, fmtString );  
-   (void) vfprintf( stderr, fmtString, args );
+   (void) ctx->imports.fprintf( (__GLcontext *) ctx, stderr, fmtString, args );
    va_end( args );
-#endif
 }
+
+
+/*
+ * A wrapper for printf.  Uses stdout.
+ */
+void
+_mesa_printf( const GLcontext *ctx, const char *fmtString, ... )
+{
+   va_list args;
+   va_start( args, fmtString );  
+   (void) ctx->imports.fprintf( (__GLcontext *) ctx, stdout, fmtString, args );
+   va_end( args );
+}
+
 
 
 void

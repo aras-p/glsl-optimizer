@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.41 2002/06/13 04:28:29 brianp Exp $ */
+/* $Id: matrix.c,v 1.42 2002/06/15 02:38:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -157,8 +157,8 @@ _mesa_PushMatrix( void )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
-      _mesa_debug("glPushMatrix %s\n",
-	      _mesa_lookup_enum_by_nr(ctx->Transform.MatrixMode));
+      _mesa_debug(ctx, "glPushMatrix %s\n",
+                  _mesa_lookup_enum_by_nr(ctx->Transform.MatrixMode));
 
    if (stack->Depth + 1 >= stack->MaxDepth) {
       _mesa_error( ctx,  GL_STACK_OVERFLOW, "glPushMatrix" );
@@ -181,8 +181,8 @@ _mesa_PopMatrix( void )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
-      _mesa_debug("glPopMatrix %s\n",
-	      _mesa_lookup_enum_by_nr(ctx->Transform.MatrixMode));
+      _mesa_debug(ctx, "glPopMatrix %s\n",
+                  _mesa_lookup_enum_by_nr(ctx->Transform.MatrixMode));
 
    if (stack->Depth == 0) {
       _mesa_error( ctx,  GL_STACK_UNDERFLOW, "glPopMatrix" );
@@ -390,7 +390,7 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
    }
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug("glViewport %d %d %d %d\n", x, y, width, height);
+      _mesa_debug(ctx, "glViewport %d %d %d %d\n", x, y, width, height);
 
    /* clamp width, and height to implementation dependent range */
    width  = CLAMP( width,  1, MAX_WIDTH );
@@ -446,7 +446,7 @@ _mesa_DepthRange( GLclampd nearval, GLclampd farval )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
-      _mesa_debug("glDepthRange %f %f\n", nearval, farval);
+      _mesa_debug(ctx, "glDepthRange %f %f\n", nearval, farval);
 
    n = (GLfloat) CLAMP( nearval, 0.0, 1.0 );
    f = (GLfloat) CLAMP( farval, 0.0, 1.0 );

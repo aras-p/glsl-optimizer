@@ -1,4 +1,4 @@
-/* $Id: texformat.c,v 1.11 2001/06/15 14:18:46 brianp Exp $ */
+/* $Id: texformat.c,v 1.12 2002/06/15 02:38:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -438,6 +438,153 @@ const struct gl_texture_format _mesa_texformat_ci8 = {
 };
 
 
+/* Big-endian */
+#if 0
+const struct gl_texture_format _mesa_texformat_abgr8888 = {
+   MESA_FORMAT_ABGR8888,		/* MesaFormat */
+   GL_RGBA,				/* BaseFormat */
+   GL_UNSIGNED_INT_8_8_8_8,		/* Type */
+   8,					/* RedBits */
+   8,					/* GreenBits */
+   8,					/* BlueBits */
+   8,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   4,					/* TexelBytes */
+   fetch_1d_texel_abgr8888,		/* FetchTexel1D */
+   fetch_2d_texel_abgr8888,		/* FetchTexel2D */
+   fetch_3d_texel_abgr8888,		/* FetchTexel3D */
+};
+
+const struct gl_texture_format _mesa_texformat_bgra8888 = {
+   MESA_FORMAT_BGRA8888,		/* MesaFormat */
+   GL_RGBA,				/* BaseFormat */
+   GL_UNSIGNED_INT_8_8_8_8,		/* Type */
+   8,					/* RedBits */
+   8,					/* GreenBits */
+   8,					/* BlueBits */
+   8,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   4,					/* TexelBytes */
+   fetch_1d_texel_bgra8888,		/* FetchTexel1D */
+   fetch_2d_texel_bgra8888,		/* FetchTexel2D */
+   fetch_3d_texel_bgra8888,		/* FetchTexel3D */
+};
+
+const struct gl_texture_format _mesa_texformat_bgr888 = {
+   MESA_FORMAT_BGR888,			/* MesaFormat */
+   GL_RGB,				/* BaseFormat */
+   GL_UNSIGNED_BYTE,			/* Type */
+   8,					/* RedBits */
+   8,					/* GreenBits */
+   8,					/* BlueBits */
+   0,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   3,					/* TexelBytes */
+   fetch_1d_texel_bgr888,		/* FetchTexel1D */
+   fetch_2d_texel_bgr888,		/* FetchTexel2D */
+   fetch_3d_texel_bgr888,		/* FetchTexel3D */
+};
+
+const struct gl_texture_format _mesa_texformat_bgr565 = {
+   MESA_FORMAT_BGR565,			/* MesaFormat */
+   GL_RGB,				/* BaseFormat */
+   GL_UNSIGNED_SHORT_5_6_5,		/* Type */
+   5,					/* RedBits */
+   6,					/* GreenBits */
+   5,					/* BlueBits */
+   0,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   2,					/* TexelBytes */
+   fetch_1d_texel_bgr565,		/* FetchTexel1D */
+   fetch_2d_texel_bgr565,		/* FetchTexel2D */
+   fetch_3d_texel_bgr565,		/* FetchTexel3D */
+};
+
+const struct gl_texture_format _mesa_texformat_bgra4444 = {
+   MESA_FORMAT_BGRA4444,		/* MesaFormat */
+   GL_RGBA,				/* BaseFormat */
+   GL_UNSIGNED_SHORT_4_4_4_4_REV,	/* Type */
+   4,					/* RedBits */
+   4,					/* GreenBits */
+   4,					/* BlueBits */
+   4,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   2,					/* TexelBytes */
+   fetch_1d_texel_bgra4444,		/* FetchTexel1D */
+   fetch_2d_texel_bgra4444,		/* FetchTexel2D */
+   fetch_3d_texel_bgra4444,		/* FetchTexel3D */
+};
+
+const struct gl_texture_format _mesa_texformat_bgra5551 = {
+   MESA_FORMAT_BGRA5551,		/* MesaFormat */
+   GL_RGBA,				/* BaseFormat */
+   GL_UNSIGNED_SHORT_1_5_5_5_REV,	/* Type */
+   5,					/* RedBits */
+   5,					/* GreenBits */
+   5,					/* BlueBits */
+   1,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   2,					/* TexelBytes */
+   fetch_1d_texel_bgra1555,		/* FetchTexel1D */
+   fetch_2d_texel_bgra1555,		/* FetchTexel2D */
+   fetch_3d_texel_bgra1555,		/* FetchTexel3D */
+};
+
+const struct gl_texture_format _mesa_texformat_la88 = {
+   MESA_FORMAT_LA88,			/* MesaFormat */
+   GL_LUMINANCE_ALPHA,			/* BaseFormat */
+   GL_UNSIGNED_BYTE,			/* Type */
+   0,					/* RedBits */
+   0,					/* GreenBits */
+   0,					/* BlueBits */
+   8,					/* AlphaBits */
+   8,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   2,					/* TexelBytes */
+   fetch_1d_texel_la88,			/* FetchTexel1D */
+   fetch_2d_texel_la88,			/* FetchTexel2D */
+   fetch_3d_texel_la88,			/* FetchTexel3D */
+};
+
+const struct gl_texture_format _mesa_texformat_bgr233 = {
+   MESA_FORMAT_BGR233,			/* MesaFormat */
+   GL_RGB,				/* BaseFormat */
+   GL_UNSIGNED_BYTE_3_3_2,		/* Type */
+   3,					/* RedBits */
+   3,					/* GreenBits */
+   2,					/* BlueBits */
+   0,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   1,					/* TexelBytes */
+   fetch_1d_texel_bgr233,		/* FetchTexel1D */
+   fetch_2d_texel_bgr233,		/* FetchTexel2D */
+   fetch_3d_texel_bgr233,		/* FetchTexel3D */
+};
+#endif
+
 /* =============================================================
  * Null format:
  */
@@ -472,8 +619,8 @@ _mesa_is_hardware_tex_format( const struct gl_texture_format *format )
 /* Given an internal texture format (or 1, 2, 3, 4) return a pointer
  * to a gl_texture_format which which to store the texture.
  * This is called via ctx->Driver.ChooseTextureFormat().
- * Hardware drivers should not use this function, but instead a 
- * specialized function.
+ * Hardware drivers typically override this function with a specialized
+ * version.
  */
 const struct gl_texture_format *
 _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
