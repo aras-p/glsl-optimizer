@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.169 2002/06/16 01:10:41 brianp Exp $ */
+/* $Id: context.c,v 1.170 2002/06/17 23:36:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,6 +49,7 @@
 #include "state.h"
 #include "teximage.h"
 #include "texobj.h"
+#include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
 #include "vpstate.h"
@@ -460,6 +461,8 @@ _mesa_initialize_framebuffer( GLframebuffer *buffer,
 {
    assert(buffer);
    assert(visual);
+
+   BZERO(buffer, sizeof(GLframebuffer));
 
    /* sanity checks */
    if (softwareDepth ) {
@@ -1978,72 +1981,104 @@ void
 _mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
 {
    if (mask & GL_ACCUM_BUFFER_BIT) {
-      MEMCPY( &dst->Accum, &src->Accum, sizeof(struct gl_accum_attrib) );
+      /* OK to memcpy */
+      dst->Accum = src->Accum;
    }
    if (mask & GL_COLOR_BUFFER_BIT) {
-      MEMCPY( &dst->Color, &src->Color, sizeof(struct gl_colorbuffer_attrib) );
+      /* OK to memcpy */
+      dst->Color = src->Color;
    }
    if (mask & GL_CURRENT_BIT) {
-      MEMCPY( &dst->Current, &src->Current, sizeof(struct gl_current_attrib) );
+      /* OK to memcpy */
+      dst->Current = src->Current;
    }
    if (mask & GL_DEPTH_BUFFER_BIT) {
-      MEMCPY( &dst->Depth, &src->Depth, sizeof(struct gl_depthbuffer_attrib) );
+      /* OK to memcpy */
+      dst->Depth = src->Depth;
    }
    if (mask & GL_ENABLE_BIT) {
       /* no op */
    }
    if (mask & GL_EVAL_BIT) {
-      MEMCPY( &dst->Eval, &src->Eval, sizeof(struct gl_eval_attrib) );
+      /* OK to memcpy */
+      dst->Eval = src->Eval;
    }
    if (mask & GL_FOG_BIT) {
-      MEMCPY( &dst->Fog, &src->Fog, sizeof(struct gl_fog_attrib) );
+      /* OK to memcpy */
+      dst->Fog = src->Fog;
    }
    if (mask & GL_HINT_BIT) {
-      MEMCPY( &dst->Hint, &src->Hint, sizeof(struct gl_hint_attrib) );
+      /* OK to memcpy */
+      dst->Hint = src->Hint;
    }
    if (mask & GL_LIGHTING_BIT) {
-      MEMCPY( &dst->Light, &src->Light, sizeof(struct gl_light_attrib) );
-      /*       gl_reinit_light_attrib( &dst->Light ); */
+      GLuint i;
+      /* begin with memcpy */
+      MEMCPY( &dst->Light, &src->Light, sizeof(struct gl_light) );
+      /* fixup linked lists to prevent pointer insanity */
+      make_empty_list( &(dst->Light.EnabledList) );
+      for (i = 0; i < MAX_LIGHTS; i++) {
+         if (dst->Light.Light[i].Enabled) {
+            insert_at_tail(&(dst->Light.EnabledList), &(dst->Light.Light[i]));
+         }
+      }
    }
    if (mask & GL_LINE_BIT) {
-      MEMCPY( &dst->Line, &src->Line, sizeof(struct gl_line_attrib) );
+      /* OK to memcpy */
+      dst->Line = src->Line;
    }
    if (mask & GL_LIST_BIT) {
-      MEMCPY( &dst->List, &src->List, sizeof(struct gl_list_attrib) );
+      /* OK to memcpy */
+      dst->List = src->List;
    }
    if (mask & GL_PIXEL_MODE_BIT) {
-      MEMCPY( &dst->Pixel, &src->Pixel, sizeof(struct gl_pixel_attrib) );
+      /* OK to memcpy */
+      dst->Pixel = src->Pixel;
    }
    if (mask & GL_POINT_BIT) {
-      MEMCPY( &dst->Point, &src->Point, sizeof(struct gl_point_attrib) );
+      /* OK to memcpy */
+      dst->Point = src->Point;
    }
    if (mask & GL_POLYGON_BIT) {
-      MEMCPY( &dst->Polygon, &src->Polygon, sizeof(struct gl_polygon_attrib) );
+      /* OK to memcpy */
+      dst->Polygon = src->Polygon;
    }
    if (mask & GL_POLYGON_STIPPLE_BIT) {
       /* Use loop instead of MEMCPY due to problem with Portland Group's
        * C compiler.  Reported by John Stone.
        */
-      int i;
-      for (i=0;i<32;i++) {
+      GLuint i;
+      for (i = 0; i < 32; i++) {
          dst->PolygonStipple[i] = src->PolygonStipple[i];
       }
    }
    if (mask & GL_SCISSOR_BIT) {
-      MEMCPY( &dst->Scissor, &src->Scissor, sizeof(struct gl_scissor_attrib) );
+      /* OK to memcpy */
+      dst->Scissor = src->Scissor;
    }
    if (mask & GL_STENCIL_BUFFER_BIT) {
-      MEMCPY( &dst->Stencil, &src->Stencil, sizeof(struct gl_stencil_attrib) );
+      /* OK to memcpy */
+      dst->Stencil = src->Stencil;
    }
    if (mask & GL_TEXTURE_BIT) {
-      MEMCPY( &dst->Texture, &src->Texture, sizeof(struct gl_texture_attrib) );
+      /* Cannot memcpy because of pointers */
+      _mesa_copy_texture_state(src, dst);
    }
    if (mask & GL_TRANSFORM_BIT) {
-      MEMCPY( &dst->Transform, &src->Transform, sizeof(struct gl_transform_attrib) );
+      /* OK to memcpy */
+      dst->Transform = src->Transform;
    }
    if (mask & GL_VIEWPORT_BIT) {
-      MEMCPY( &dst->Viewport, &src->Viewport, sizeof(struct gl_viewport_attrib) );
+      /* Cannot use memcpy, because of pointers in GLmatrix _WindowMap */
+      dst->Viewport.X = src->Viewport.X;
+      dst->Viewport.Y = src->Viewport.Y;
+      dst->Viewport.Width = src->Viewport.Width;
+      dst->Viewport.Height = src->Viewport.Height;
+      dst->Viewport.Near = src->Viewport.Near;
+      dst->Viewport.Far = src->Viewport.Far;
+      _math_matrix_copy(&dst->Viewport._WindowMap, &src->Viewport._WindowMap);
    }
+
    /* XXX FIXME:  Call callbacks?
     */
    dst->NewState = _NEW_ALL;
@@ -2134,7 +2169,7 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
 	 newCtx->DrawBuffer = drawBuffer;
 	 newCtx->ReadBuffer = readBuffer;
 	 newCtx->NewState |= _NEW_BUFFERS;
-	 /* _mesa_update_state( newCtx ); */
+         /* _mesa_update_state( newCtx ); */
       }
 
       /* This is only for T&L - a bit out of place, or misnamed (BP) */

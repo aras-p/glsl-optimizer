@@ -1,4 +1,4 @@
-/* $Id: texobj.h,v 1.7 2002/06/15 03:03:09 brianp Exp $ */
+/* $Id: texobj.h,v 1.8 2002/06/17 23:36:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,6 +45,11 @@ _mesa_alloc_texture_object( struct gl_shared_state *shared, GLuint name,
 extern void
 _mesa_free_texture_object( struct gl_shared_state *shared,
                            struct gl_texture_object *t );
+
+
+extern void
+_mesa_copy_texture_object( struct gl_texture_object *dest,
+                           const struct gl_texture_object *src );
 
 
 extern void
