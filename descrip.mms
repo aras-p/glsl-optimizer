@@ -17,5 +17,4 @@ all :
 	$(MMS)$(MMSQUALIFIERS)
 	set default [-.xdemos]
 	$(MMS)$(MMSQUALIFIERS)
-	set default [-.tests]
-	$(MMS)$(MMSQUALIFIERS)
+	if f$search("[-]test.DIR") .nes. "" then pipe set default [-.test] ; $(MMS)$(MMSQUALIFIERS)
