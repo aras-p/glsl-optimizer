@@ -835,7 +835,7 @@ void radeonCopyBuffer( const __DRIdrawablePrivate *dPriv )
    radeonContextPtr rmesa;
    GLint nbox, i, ret;
    GLboolean   missed_target;
-   int64_t     ust;
+   uint64_t ust;
 
    assert(dPriv);
    assert(dPriv->driContextPriv);
