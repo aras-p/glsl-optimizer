@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.7 2000/11/19 23:10:26 brianp Exp $ */
+/* $Id: s_lines.c,v 1.8 2000/11/22 08:42:15 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -586,7 +586,7 @@ static void flat_textured_line( GLcontext *ctx,
    GLfloat *pbs = PB->s[0];
    GLfloat *pbt = PB->t[0];
    GLfloat *pbu = PB->u[0];
-   GLchan *color = vert0->color;
+   GLchan *color = (GLchan*) vert0->color;
    PB_SET_COLOR( PB, color[0], color[1], color[2], color[3] );
    count = PB->count;
 
@@ -827,7 +827,7 @@ static void flat_multitextured_line( GLcontext *ctx,
    GLfixed *pbfog = PB->fog;
    GLchan (*pbrgba)[4] = PB->rgba;
    GLchan (*pbspec)[3] = PB->spec;
-   GLchan *color = vert0->color;
+   GLchan *color = (GLchan*) vert0->color;
    GLchan sRed   = vert0->specular[0];
    GLchan sGreen = vert0->specular[1];
    GLchan sBlue  = vert0->specular[2];

@@ -520,4 +520,3 @@ imports.obj : imports.c
 [.math]m_xform.obj : [.math]m_xform.c
 	$(CC) $(CFLAGS) /obj=[.math]m_xform.obj [.math]m_xform.c
 
-.include mms_depend.
