@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.25 2000/10/31 18:09:44 keithw Exp $ */
+/* $Id: colortab.c,v 1.26 2000/11/10 17:45:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,7 @@
 #include "macros.h"
 #include "mem.h"
 #include "mmath.h"
+#include "swrast/s_span.h" /* XXX SWRAST hack */
 #endif
 
 

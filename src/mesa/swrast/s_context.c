@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_context.c,v 1.3 2000/11/10 17:45:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -196,7 +196,7 @@ _swrast_validate_point( GLcontext *ctx, SWvertex *v0 )
    swrast->Point( ctx, v0 );
 }
 
-void 
+static void 
 _swrast_validate_blend_func( GLcontext *ctx, GLuint n,
 			     const GLubyte mask[],
 			     GLchan src[][4], 
@@ -211,7 +211,7 @@ _swrast_validate_blend_func( GLcontext *ctx, GLuint n,
 }
 
 
-void 
+static void 
 _swrast_validate_texture_sample( GLcontext *ctx, GLuint texUnit,
 				 const struct gl_texture_object *tObj,
 				 GLuint n,

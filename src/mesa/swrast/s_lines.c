@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.3 2000/11/05 23:18:36 brianp Exp $ */
+/* $Id: s_lines.c,v 1.4 2000/11/10 17:45:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -912,6 +912,8 @@ static void flat_multitextured_line( GLcontext *ctx,
 
 
 #ifdef DEBUG
+extern void
+_mesa_print_line_function(GLcontext *ctx);  /* silence compiler warning */
 void
 _mesa_print_line_function(GLcontext *ctx)
 {

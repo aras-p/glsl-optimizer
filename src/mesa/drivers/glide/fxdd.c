@@ -57,6 +57,7 @@
 #include "enums.h"
 #include "extensions.h"
 #include "swrast/swrast.h"
+#include "swrast_setup/swrast_setup.h"
 
 /* These lookup table are used to extract RGB values in [0,255] from
  * 16-bit pixel values.

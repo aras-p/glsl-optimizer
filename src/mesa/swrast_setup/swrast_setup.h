@@ -31,39 +31,39 @@
 #ifndef SWRAST_SETUP_H
 #define SWRAST_SETUP_H
 
-GLboolean 
+extern GLboolean 
 _swsetup_CreateContext( GLcontext *ctx );
 
-void 
+extern void 
 _swsetup_DestroyContext( GLcontext *ctx );
 
-GLboolean 
+extern void
 _swsetup_RegisterVB( struct vertex_buffer *VB );
 
-void 
+extern void 
 _swsetup_UnregisterVB( struct vertex_buffer *VB );
 
-void 
+extern void 
 _swsetup_InvalidateState( GLcontext *ctx, GLuint new_state );
 
-void 
+extern void 
 _swsetup_RasterSetup( struct vertex_buffer *VB, 
 		     GLuint start, GLuint end );
 
-void 
+extern void 
 _swsetup_Quad( GLcontext *ctx, GLuint v0, GLuint v1, 
 	       GLuint v2, GLuint v3, GLuint pv );
 
-void 
+extern void 
 _swsetup_Triangle( GLcontext *ctx, GLuint v0, GLuint v1, 
 		   GLuint v2, GLuint pv );
 
 
-void 
+extern void 
 _swsetup_Line( GLcontext *ctx, GLuint v0, GLuint v1, GLuint pv );
 
 
-void 
+extern void 
 _swsetup_Points( GLcontext *ctx, GLuint first, GLuint last );
 
 

@@ -1,4 +1,4 @@
-/* $Id: s_points.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_points.c,v 1.3 2000/11/10 17:45:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -852,6 +852,8 @@ dist_atten_antialiased_rgba_point( GLcontext *ctx, SWvertex *vert )
 
 
 #ifdef DEBUG
+extern void
+_mesa_print_point_function(GLcontext *ctx);  /* silence compiler warning */
 void
 _mesa_print_point_function(GLcontext *ctx)
 {

@@ -1,4 +1,4 @@
-/* $Id: ss_context.c,v 1.1 2000/11/05 18:20:18 keithw Exp $ */
+/* $Id: ss_context.c,v 1.2 2000/11/10 17:45:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -201,7 +201,7 @@ _swsetup_DestroyContext( GLcontext *ctx )
    }
 }
 
-GLboolean 
+void
 _swsetup_RegisterVB( struct vertex_buffer *VB )
 {
    SSvertexbuffer *ssvb = (SSvertexbuffer *)CALLOC(sizeof(SSvertexbuffer) );
@@ -209,11 +209,11 @@ _swsetup_RegisterVB( struct vertex_buffer *VB )
    ssvb->verts = ALIGN_MALLOC( sizeof(SWvertex) * VB->Size, 32);
    if (!ssvb->verts) {
       FREE(ssvb);
-      return GL_FALSE;
+      /*return GL_FALSE;*/
    }
 
    VB->swsetup_vb = ssvb;
-   return GL_TRUE;
+   /*return GL_TRUE;*/
 }
 
 

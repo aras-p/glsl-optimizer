@@ -30,6 +30,8 @@
 
 #include "types.h"
 
+
+
 /* The software rasterizer now uses this format for vertices.  Thus a
  * 'RasterSetup' stage or other translation is required between the
  * tnl module and the swrast rasterization functions.  This serves to
@@ -67,33 +69,32 @@ typedef struct {
 
 /* These are the public-access functions exported from swrast.  
  */
-void
+extern void
 _swrast_alloc_buffers( GLcontext *ctx );
 
-GLboolean
+extern GLboolean
 _swrast_CreateContext( GLcontext *ctx );
 
-void
+extern void
 _swrast_DestroyContext( GLcontext *ctx );
 
 
 
-
-void 
+extern void 
 _swrast_Bitmap( GLcontext *ctx, 
 		GLint px, GLint py,
 		GLsizei width, GLsizei height,
 		const struct gl_pixelstore_attrib *unpack,
 		const GLubyte *bitmap );
 
-void
+extern void
 _swrast_CopyPixels( GLcontext *ctx, 
 		    GLint srcx, GLint srcy, 
 		    GLint destx, GLint desty, 
 		    GLsizei width, GLsizei height,
 		    GLenum type );
 
-void
+extern void
 _swrast_DrawPixels( GLcontext *ctx, 
 		    GLint x, GLint y,
 		    GLsizei width, GLsizei height,
@@ -101,51 +102,53 @@ _swrast_DrawPixels( GLcontext *ctx,
 		    const struct gl_pixelstore_attrib *unpack,
 		    const GLvoid *pixels );
 
-void
+extern void
 _swrast_ReadPixels( GLcontext *ctx,
 		    GLint x, GLint y, GLsizei width, GLsizei height,
 		    GLenum format, GLenum type,
 		    const struct gl_pixelstore_attrib *unpack,
 		    GLvoid *pixels );
 
-void 
+extern void 
 _swrast_Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	       GLint x, GLint y, GLint width, GLint height );
 
-void
+extern void
 _swrast_Accum( GLcontext *ctx, GLenum op, 
 	       GLfloat value, GLint xpos, GLint ypos, 
 	       GLint width, GLint height );
 
+
 /* Get a pointer to the stipple counter.
  */
-GLuint *
+extern GLuint *
 _swrast_get_stipple_counter_ref( GLcontext *ctx );
 
 
 /* These will always render the correct point/line/triangle for the
  * current state.
  */
-void
+extern void
 _swrast_Point( GLcontext *ctx, SWvertex *v );
 
-void
+extern void
 _swrast_Line( GLcontext *ctx, SWvertex *v0, SWvertex *v1 );
 
-void
+extern void
 _swrast_Triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1, SWvertex *v2 );
 
-void
+extern void
 _swrast_Quad( GLcontext *ctx, SWvertex *v0, SWvertex *v1, SWvertex *v2, 
 	      SWvertex *v3);
 
-void 
+extern void 
 _swrast_flush( GLcontext *ctx );
 
 
 /* Tell the software rasterizer about core state changes.
  */
-void
+extern void
 _swrast_InvalidateState( GLcontext *ctx, GLuint new_state );
+
 
 #endif
