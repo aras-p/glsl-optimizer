@@ -1473,6 +1473,8 @@ static void savageEmitContiguousRegs (savageContextPtr imesa,
      * this update is done *after* savageAllocCmdBuf. */
     for (i = first - SAVAGE_FIRST_REG; i <= last - SAVAGE_FIRST_REG; ++i)
 	imesa->oldRegs.ui[i] = imesa->regs.ui[i];
+    if (SAVAGE_DEBUG & DEBUG_STATE)
+	fprintf (stderr, "Emitting regs 0x%02x-0x%02x\n", first, last);
 }
 static void savageEmitChangedRegs (savageContextPtr imesa,
 				   GLuint first, GLuint last) {
@@ -1530,7 +1532,7 @@ static void savageUpdateRegister_s4(savageContextPtr imesa)
 
     /* the savage4 uses the contiguous range of BCI registers 0x1e-0x39
      * 0x1e-0x27 are local, no need to check them for global changes */
-    savageEmitContiguousRegs (imesa, 0x1e, 0x39);
+    savageEmitChangedRegs (imesa, 0x1e, 0x39);
 
     imesa->dirty=0;
 }

@@ -86,6 +86,7 @@ static const struct dri_debug_control debug_control[] =
     { "lru",   DEBUG_VERBOSE_LRU },
     { "verb",  DEBUG_VERBOSE_MSG },
     { "dma",   DEBUG_DMA },
+    { "state", DEBUG_STATE },
     { NULL,    0 }
 };
 #ifndef SAVAGE_DEBUG
