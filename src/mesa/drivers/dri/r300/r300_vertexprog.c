@@ -1,3 +1,34 @@
+/**************************************************************************
+
+Copyright (C) 2005 Aapo Tahkola.
+
+All Rights Reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+on the rights to use, copy, modify, merge, publish, distribute, sub
+license, and/or sell copies of the Software, and to permit persons to whom
+the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice (including the next
+paragraph) shall be included in all copies or substantial portions of the
+Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
+ATI, VA LINUX SYSTEMS AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+**************************************************************************/
+
+/*
+ * Authors:
+ *   Aapo Tahkola <aet@rasterburn.org>
+ */
 #include "glheader.h"
 #include "macros.h"
 #include "enums.h"
@@ -99,7 +130,7 @@ char *dst_mask_names[4]={ "X", "Y", "Z", "W" };
       XPD            v,v     v        cross product
 */
 
-void dump_program_params(struct vertex_program *vp)
+void dump_program_params(GLcontext *ctx, struct vertex_program *vp)
 {
 	int i;
 	int pi;
@@ -110,6 +141,8 @@ void dump_program_params(struct vertex_program *vp)
 	fprintf(stderr, "NumAttributes=%d\n", vp->Base.NumAttributes);
 	fprintf(stderr, "NumAddressRegs=%d\n", vp->Base.NumAddressRegs);
 	
+	_mesa_load_state_parameters(ctx, vp->Parameters);
+			
 #if 0	
 	for(pi=0; pi < vp->Base.NumParameters; pi++){
 		fprintf(stderr, "{ ");
@@ -134,8 +167,6 @@ void dump_program_params(struct vertex_program *vp)
 		
 		case STATE:
 			fprintf(stderr, "(STATE)\n");
-			/* fetch state info */
-			continue;
 		break;
 
 		}
@@ -148,13 +179,13 @@ void dump_program_params(struct vertex_program *vp)
 	}
 }
 
-static void debug_vp(struct vertex_program *vp)
+static void debug_vp(GLcontext *ctx, struct vertex_program *vp)
 {
 	struct vp_instruction *vpi;
 	int i, operand_index;
 	int operator_index;
 	
-	dump_program_params(vp);
+	dump_program_params(ctx, vp);
 
 	vpi=vp->Instructions;
 	
@@ -209,42 +240,39 @@ static void debug_vp(struct vertex_program *vp)
 	
 }
 
-void update_params(struct r300_vertex_program *vp)
+void r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp)
 {
 	int pi;
 	struct vertex_program *mesa_vp=(void *)vp;
+	int dst_index;
 	
-	vp->params.length=0;
+	_mesa_load_state_parameters(ctx, mesa_vp->Parameters);
 	
-	/* Temporary solution */
+	//debug_vp(ctx, mesa_vp);
 	
+	dst_index=0;
 	for(pi=0; pi < mesa_vp->Parameters->NumParameters; pi++){
 		switch(mesa_vp->Parameters->Parameters[pi].Type){
 			
+		case STATE:
 		case NAMED_PARAMETER:
 			//fprintf(stderr, "%s", vp->Parameters->Parameters[pi].Name);
 		case CONSTANT:
-			vp->params.body.f[pi*4+0]=mesa_vp->Parameters->Parameters[pi].Values[0];
-			vp->params.body.f[pi*4+1]=mesa_vp->Parameters->Parameters[pi].Values[1];
-			vp->params.body.f[pi*4+2]=mesa_vp->Parameters->Parameters[pi].Values[2];
-			vp->params.body.f[pi*4+3]=mesa_vp->Parameters->Parameters[pi].Values[3];
-			vp->params.length+=4;
+			vp->params.body.f[dst_index++]=mesa_vp->Parameters->Parameters[pi].Values[0];
+			vp->params.body.f[dst_index++]=mesa_vp->Parameters->Parameters[pi].Values[1];
+			vp->params.body.f[dst_index++]=mesa_vp->Parameters->Parameters[pi].Values[2];
+			vp->params.body.f[dst_index++]=mesa_vp->Parameters->Parameters[pi].Values[3];
 		break;
-
-		case STATE:
-			fprintf(stderr, "State found! bailing out.\n");
-			exit(0);
-			/* fetch state info */
-			continue;
-		break;
+		
 		default: _mesa_problem(NULL, "Bad param type in %s", __FUNCTION__);
 		}
 	
 	}
 	
+	vp->params.length=dst_index;
 }
 		
-unsigned long translate_dst_mask(GLboolean *mask)
+static unsigned long t_dst_mask(GLboolean *mask)
 {
 	unsigned long flags=0;
 	
@@ -256,14 +284,14 @@ unsigned long translate_dst_mask(GLboolean *mask)
 	return flags;
 }
 
-unsigned long translate_dst_class(enum register_file file)
+static unsigned long t_dst_class(enum register_file file)
 {
 	
 	switch(file){
 		case PROGRAM_TEMPORARY:
-			return R300_VPI_OUT_REG_CLASS_TEMPORARY;
+			return VSF_OUT_CLASS_TMP;
 		case PROGRAM_OUTPUT:
-			return R300_VPI_OUT_REG_CLASS_RESULT;
+			return VSF_OUT_CLASS_RESULT;
 		/*	
 		case PROGRAM_INPUT:
 		case PROGRAM_LOCAL_PARAM:
@@ -279,20 +307,21 @@ unsigned long translate_dst_class(enum register_file file)
 	}
 }
 
-unsigned long translate_src_class(enum register_file file)
+static unsigned long t_src_class(enum register_file file)
 {
 	
 	switch(file){
 		case PROGRAM_TEMPORARY:
-			return R300_VPI_IN_REG_CLASS_TEMPORARY;
-			
+			return VSF_IN_CLASS_TMP;
 			
 		case PROGRAM_INPUT:
+			return VSF_IN_CLASS_ATTR;
+			
 		case PROGRAM_LOCAL_PARAM:
 		case PROGRAM_ENV_PARAM:
 		case PROGRAM_NAMED_PARAM:
 		case PROGRAM_STATE_VAR:
-			return R300_VPI_IN_REG_CLASS_PARAMETER;
+			return VSF_IN_CLASS_PARAM;
 		/*	
 		case PROGRAM_OUTPUT:
 		case PROGRAM_WRITE_ONLY:
@@ -304,7 +333,7 @@ unsigned long translate_src_class(enum register_file file)
 	}
 }
 
-unsigned long translate_swizzle(GLubyte swizzle)
+static unsigned long t_swizzle(GLubyte swizzle)
 {
 	switch(swizzle){
 		case 0: return VSF_IN_COMPONENT_X;
@@ -319,19 +348,52 @@ unsigned long translate_swizzle(GLubyte swizzle)
 			exit(0);
 	}
 }
-
-unsigned long translate_src(struct vp_src_register *src)
+		
+static unsigned long t_src_index(struct r300_vertex_program *vp, struct vp_src_register *src)
 {
-	return MAKE_VSF_SOURCE(src->Index,
-				translate_swizzle(src->Swizzle[0]),
-				translate_swizzle(src->Swizzle[1]),
-				translate_swizzle(src->Swizzle[2]),
-				translate_swizzle(src->Swizzle[3]),
-				translate_src_class(src->File),
+	int i;
+	int max_reg=-1;
+	
+	if(src->File == PROGRAM_INPUT){
+		/*
+		switch(src->Index){
+			case 0: return 0;
+			case 3: return 1;
+			
+			case 2: return 2;
+			case 8: return 8;
+			
+		default: printf("unknown input index %d\n", src->Index); exit(0); break;
+		}*/
+				
+		if(vp->inputs[src->Index] != -1)
+			return vp->inputs[src->Index];
+		
+		for(i=0; i < VERT_ATTRIB_MAX; i++)
+			if(vp->inputs[i] > max_reg)
+				max_reg=vp->inputs[i];
+		
+		vp->inputs[src->Index]=max_reg+1;
+		
+		return vp->inputs[src->Index];
+	}else{
+		return src->Index;
+	}
+}
+
+static unsigned long t_src(struct r300_vertex_program *vp, struct vp_src_register *src)
+{
+	
+	return MAKE_VSF_SOURCE(t_src_index(vp, src),
+				t_swizzle(src->Swizzle[0]),
+				t_swizzle(src->Swizzle[1]),
+				t_swizzle(src->Swizzle[2]),
+				t_swizzle(src->Swizzle[3]),
+				t_src_class(src->File),
 				src->Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 }
 
-unsigned long translate_opcode(enum vp_opcode opcode)
+static unsigned long t_opcode(enum vp_opcode opcode)
 {
 
 	switch(opcode){
@@ -352,55 +414,105 @@ unsigned long translate_opcode(enum vp_opcode opcode)
 		case VP_OPCODE_RSQ: return R300_VPI_OUT_OP_RSQ;
 		case VP_OPCODE_SGE: return R300_VPI_OUT_OP_SGE;
 		case VP_OPCODE_SLT: return R300_VPI_OUT_OP_SLT;
-		/* these ops need special handling */
-		case VP_OPCODE_ABS: 
-		case VP_OPCODE_ARL:
-		case VP_OPCODE_DP3:
-		case VP_OPCODE_DP4:
-		case VP_OPCODE_DPH:
-		case VP_OPCODE_FLR:
-		case VP_OPCODE_MOV:
-		case VP_OPCODE_SUB:
-		case VP_OPCODE_SWZ:
-		case VP_OPCODE_XPD:
-		case VP_OPCODE_RCC:
-		case VP_OPCODE_PRINT:
-		case VP_OPCODE_END:
-			fprintf(stderr, "%s should not be called with opcode %d", __FUNCTION__, opcode);
-		break;
+		case VP_OPCODE_DP4: return R300_VPI_OUT_OP_DOT;
+		
 		default: 
-			fprintf(stderr, "%s unknown opcode %d", __FUNCTION__, opcode);
+			fprintf(stderr, "%s: Should not be called with opcode %d!", __FUNCTION__, opcode);
 	}
 	exit(-1);
 	return 0;
 }
-		
+
+static unsigned long op_operands(enum vp_opcode opcode)
+{
+	int i;
+	
+	/* Can we trust mesas opcodes to be in order ? */
+	for(i=0; i < sizeof(op_names) / sizeof(*op_names); i++)
+		if(op_names[i].opcode == opcode)
+			return op_names[i].ip;
+	
+	fprintf(stderr, "op %d not found in op_names\n", opcode);
+	exit(-1);
+	return 0;
+}
+	
 static void translate_program(struct r300_vertex_program *vp)
 {
 	struct vertex_program *mesa_vp=(void *)vp;
 	struct vp_instruction *vpi;
-	int inst_index=0;
 	int operand_index, i;
-	int op_found;	
-	update_params(vp);
+	VERTEX_SHADER_INSTRUCTION t2rs[1024];
+	VERTEX_SHADER_INSTRUCTION *o_inst;
+	unsigned long operands;
 	
+	vp->t2rs=0;
 	vp->program.length=0;
+	vp->num_temporaries=mesa_vp->Base.NumTemporaries;
 	
-	for(vpi=mesa_vp->Instructions; vpi->Opcode != VP_OPCODE_END; vpi++, inst_index++){
+	for(i=0; i < VERT_ATTRIB_MAX; i++)
+		vp->inputs[i]=-1;
+	
+	o_inst=vp->program.body.i;
+	for(vpi=mesa_vp->Instructions; vpi->Opcode != VP_OPCODE_END; vpi++, o_inst++){
+		
+		operands=op_operands(vpi->Opcode);
+		
+		/* these ops need special handling.
+		   Ops that need temp vars should probably be given reg indexes starting at the end of tmp area. */
 		switch(vpi->Opcode){
-		case VP_OPCODE_ABS: 
+		case VP_OPCODE_MOV://ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO} 
+			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, vpi->DstReg.Index,
+					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
+			o_inst->src1=t_src(vp, &vpi->SrcReg[0]);
+			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &vpi->SrcReg[0]),
+					SWIZZLE_ZERO, SWIZZLE_ZERO,
+					SWIZZLE_ZERO, SWIZZLE_ZERO,
+					t_src_class(vpi->SrcReg[0].File), VSF_FLAG_NONE);
+
+			o_inst->src3=0;
+			goto next;
+			
+		case VP_OPCODE_DP3://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ZERO} PARAM 0{} {X Y Z ZERO} 
+			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_DOT, vpi->DstReg.Index,
+					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
+			
+			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &vpi->SrcReg[0]),
+					t_swizzle(vpi->SrcReg[0].Swizzle[0]),
+					t_swizzle(vpi->SrcReg[0].Swizzle[1]),
+					t_swizzle(vpi->SrcReg[0].Swizzle[2]),
+					SWIZZLE_ZERO,
+					t_src_class(vpi->SrcReg[0].File),
+					vpi->SrcReg[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+			
+			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &vpi->SrcReg[1]),
+					t_swizzle(vpi->SrcReg[1].Swizzle[0]),
+					t_swizzle(vpi->SrcReg[1].Swizzle[1]),
+					t_swizzle(vpi->SrcReg[1].Swizzle[2]),
+					SWIZZLE_ZERO,
+					t_src_class(vpi->SrcReg[1].File),
+					vpi->SrcReg[1].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+
+			o_inst->src3=0;
+			goto next;
+			
+		case VP_OPCODE_ABS://MAX RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
 		case VP_OPCODE_ARL:
-		case VP_OPCODE_DP3:
-		case VP_OPCODE_DP4:
-		case VP_OPCODE_DPH:
-		case VP_OPCODE_DST:
+		case VP_OPCODE_DPH://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ONE} PARAM 0{} {X Y Z W} 
 		case VP_OPCODE_FLR:
-		case VP_OPCODE_MOV:
-		case VP_OPCODE_SUB:
+		/* FRC TMP 0.X Y Z W PARAM 0{} {X Y Z W} 
+		   ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} TMP 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W */
+
+		case VP_OPCODE_SUB://ADD RESULT 1.X Y Z W TMP 0{} {X Y Z W} PARAM 1{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
 		case VP_OPCODE_SWZ:
 		case VP_OPCODE_XPD:
+		/* ADD TMP 0.X Y Z PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO} 
+		   MUL TMP 1.X Y Z W TMP 0{} {Z X Y ZERO} PARAM 1{} {Y Z X ZERO} 
+		   MAD RESULT 1.X Y Z W TMP 0{} {Y Z X ONE} PARAM 1{} {Z X Y ONE} TMP 1{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W*/
+
 		case VP_OPCODE_RCC:
 		case VP_OPCODE_PRINT:
+			//vp->num_temporaries++;
 			fprintf(stderr, "Dont know how to handle op %d yet\n", vpi->Opcode);
 			exit(-1);
 		break;
@@ -409,37 +521,27 @@ static void translate_program(struct r300_vertex_program *vp)
 		default:
 			break;
 		}
-		vp->program.body.i[inst_index].op=MAKE_VSF_OP(translate_opcode(vpi->Opcode), vpi->DstReg.Index,
-				translate_dst_mask(vpi->DstReg.WriteMask), translate_dst_class(vpi->DstReg.File));
-		
-		op_found=0;
-		for(i=0; i < sizeof(op_names) / sizeof(*op_names); i++)
-			if(op_names[i].opcode == vpi->Opcode){
-				op_found=1;
-				break;
-			}
-		if(!op_found){
-			fprintf(stderr, "op %d not found in op_names\n", vpi->Opcode);
-			exit(-1);
-		}
-			
-		switch(op_names[i].ip){
+	
+		o_inst->op=MAKE_VSF_OP(t_opcode(vpi->Opcode), vpi->DstReg.Index,
+				t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
+
+		switch(operands){
 			case 1:
-				vp->program.body.i[inst_index].src1=translate_src(&vpi->SrcReg[0]);
-				vp->program.body.i[inst_index].src2=0;
-				vp->program.body.i[inst_index].src3=0;
+				o_inst->src1=t_src(vp, &vpi->SrcReg[0]);
+				o_inst->src2=0;
+				o_inst->src3=0;
 			break;
 			
 			case 2:
-				vp->program.body.i[inst_index].src1=translate_src(&vpi->SrcReg[0]);
-				vp->program.body.i[inst_index].src2=translate_src(&vpi->SrcReg[1]);
-				vp->program.body.i[inst_index].src3=0;
+				o_inst->src1=t_src(vp, &vpi->SrcReg[0]);
+				o_inst->src2=t_src(vp, &vpi->SrcReg[1]);
+				o_inst->src3=0;
 			break;
 			
 			case 3:
-				vp->program.body.i[inst_index].src1=translate_src(&vpi->SrcReg[0]);
-				vp->program.body.i[inst_index].src2=translate_src(&vpi->SrcReg[1]);
-				vp->program.body.i[inst_index].src3=translate_src(&vpi->SrcReg[2]);
+				o_inst->src1=t_src(vp, &vpi->SrcReg[0]);
+				o_inst->src2=t_src(vp, &vpi->SrcReg[1]);
+				o_inst->src3=t_src(vp, &vpi->SrcReg[2]);
 			break;
 			
 			default:
@@ -447,14 +549,38 @@ static void translate_program(struct r300_vertex_program *vp)
 				exit(-1);
 			break;
 		}
+		next:
+				
+		/* If instruction writes to result and one of the inputs is tmp, we move it at the end of program */
+		if(vpi->DstReg.File == PROGRAM_OUTPUT){
+			for(operand_index=0; operand_index < operands; operand_index++)
+				if(vpi->SrcReg[operand_index].File == PROGRAM_TEMPORARY){
+					t2rs[vp->t2rs++]=*o_inst;
+					o_inst--; /* FIXME */
+					break;
+				}
+		}
+		
 	}
-	vp->program.length=inst_index*4;
-
+	/* Put "tmp to result" instructions in */
+	for(i=0; i < vp->t2rs; i++, o_inst++)
+		*o_inst=t2rs[i];
+		
+	vp->program.length=(o_inst - vp->program.body.i) * 4;
+	vp->translated=GL_TRUE;
 }
 
 static void r300BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
 {
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	struct r300_vertex_program *vp=(void *)prog;
+#if 0			
 	fprintf(stderr, "r300BindProgram\n");
+#endif	
+	if(rmesa->current_vp == vp)
+		return ;
+	
+	rmesa->current_vp = vp;
 }
 
 /* Mesa doesnt seem to have prototype for this */
@@ -464,34 +590,26 @@ _mesa_init_ati_fragment_shader( GLcontext *ctx, struct ati_fragment_shader *prog
 
 static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct r300_vertex_program *vp;
 	struct fragment_program *fp;
 	struct ati_fragment_shader *afs;
-
+#if 0
 	fprintf(stderr, "r300NewProgram, target=%d, id=%d\n", target, id);
-
+#endif
 	switch(target){
 		case GL_VERTEX_PROGRAM_ARB:
-			fprintf(stderr, "vertex prog\n");
 			vp=CALLOC_STRUCT(r300_vertex_program);
-		
-		/* note that vp points to mesa_program since its first on the struct
-		*/
 		return _mesa_init_vertex_program(ctx, &vp->mesa_program, target, id);
 		
 		case GL_FRAGMENT_PROGRAM_ARB:
-			fprintf(stderr, "fragment prog\n");
 			fp=CALLOC_STRUCT(fragment_program);
 		return _mesa_init_fragment_program(ctx, fp, target, id);
 		
 		case GL_FRAGMENT_PROGRAM_NV:
-			fprintf(stderr, "nv fragment prog\n");
 			fp=CALLOC_STRUCT(fragment_program);
 		return _mesa_init_fragment_program(ctx, fp, target, id);
 		
 		case GL_FRAGMENT_SHADER_ATI:
-			fprintf(stderr, "ati fragment prog\n");
 			afs=CALLOC_STRUCT(ati_fragment_shader);
 		return _mesa_init_ati_fragment_shader(ctx, afs, target, id);
 	}
@@ -502,9 +620,14 @@ static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 
 static void r300DeleteProgram(GLcontext *ctx, struct program *prog)
 {
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	struct r300_vertex_program *vp=(void *)prog;
+#if 0			
 	fprintf(stderr, "r300DeleteProgram\n");
+#endif	
+	if(rmesa->current_vp == vp)
+		rmesa->current_vp = NULL;
 	
-	/* check that not active */
 	_mesa_delete_program(ctx, prog);
 }
      
@@ -515,38 +638,44 @@ static void r300ProgramStringNotify(GLcontext *ctx, GLenum target,
 				struct program *prog)
 {
 	struct r300_vertex_program *vp=(void *)prog;
-	
+#if 0			
 	fprintf(stderr, "r300ProgramStringNotify\n");
-	/* XXX: There is still something wrong as mesa doesnt call r300IsProgramNative at all */
-	(void)r300IsProgramNative(ctx, target, prog);
-
+#endif
+		
 	switch(target) {
 	case GL_VERTEX_PROGRAM_ARB:
 		vp->translated=GL_FALSE;
 		break;
 	}
 	
+	/* XXX: There is still something wrong as mesa doesnt call r300IsProgramNative at all */
+	(void)r300IsProgramNative(ctx, target, prog);
+
 }
 
 static GLboolean r300IsProgramNative(GLcontext *ctx, GLenum target,
 				struct program *prog)
 {
+	struct r300_vertex_program *vp=(void *)prog;
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	
+#if 0			
 	fprintf(stderr, "r300IsProgramNative\n");
 	//exit(0);
-	debug_vp((struct vertex_program *)prog);
-	
+	debug_vp(ctx, vp);
+#endif
+	translate_program(vp);
+	//r300VertexProgUpdateParams(ctx, vp);
+
 	return 1;
 }
 
 /* This is misnamed and shouldnt be here since fragment programs use these functions too */		
 void r300InitVertexProgFuncs(struct dd_function_table *functions)
 {
-#if 1
 	functions->NewProgram=r300NewProgram;
 	functions->BindProgram=r300BindProgram;
 	functions->DeleteProgram=r300DeleteProgram;
 	functions->ProgramStringNotify=r300ProgramStringNotify;
 	functions->IsProgramNative=r300IsProgramNative;
-#endif	
 }

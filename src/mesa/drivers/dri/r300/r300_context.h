@@ -538,7 +538,10 @@ struct r300_vertex_program {
 	
 	struct r300_vertex_shader_fragment program;
 	struct r300_vertex_shader_fragment params;
-
+	
+	int t2rs;
+	unsigned long num_temporaries; /* Number of temp vars used by program */
+	int inputs[VERT_ATTRIB_MAX];
 };
 
 /* 64 appears to be the maximum */
@@ -686,6 +689,8 @@ extern void r300DestroyContext(__DRIcontextPrivate * driContextPriv);
 extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 				   __DRIcontextPrivate * driContextPriv,
 				   void *sharedContextPrivate);
+
 extern void r300InitVertexProgFuncs(struct dd_function_table *functions);
+extern void r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp);
 
 #endif				/* __R300_CONTEXT_H__ */

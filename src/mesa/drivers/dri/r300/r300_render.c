@@ -626,7 +626,6 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	for (i = 1; i < ctx->Const.MaxTextureUnits; i++)
 		FALLBACK_IF(ctx->Texture.Unit[i].Enabled);
 
-
 	/* let r300_run_render do its job */
 	#if 0  
 	stage->active = GL_FALSE;

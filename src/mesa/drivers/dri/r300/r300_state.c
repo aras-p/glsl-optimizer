@@ -844,28 +844,80 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 
 		/* All offsets are 0 - for use by immediate mode.
 		Should change later to handle vertex buffers */
+	if(r300->current_vp){
+
+	/* VERT_ATTRIB_WEIGHT, VERT_ATTRIB_SIX, VERT_ATTRIB_SEVEN, VERT_ATTRIB_GENERIC0,
+	   VERT_ATTRIB_GENERIC1, VERT_ATTRIB_GENERIC2, VERT_ATTRIB_GENERIC3 */
+	
+	if(r300->current_vp->inputs[VERT_ATTRIB_POS] != -1){
+	   	if(tnl->render_inputs & _TNL_BIT_POS){
+			reg=r300->current_vp->inputs[VERT_ATTRIB_POS];
+			CONFIGURE_AOS(VB->ObjPtr, 0, i_coords, AOS_FORMAT_FLOAT);
+		}else fprintf(stderr, "vp expects pos but none was given\n");
+	}
+	if(r300->current_vp->inputs[VERT_ATTRIB_NORMAL] != -1){
+		if(tnl->render_inputs & _TNL_BIT_NORMAL){
+			reg=r300->current_vp->inputs[VERT_ATTRIB_NORMAL];
+			CONFIGURE_AOS(VB->NormalPtr, 0, i_normal, AOS_FORMAT_FLOAT);
+		}else fprintf(stderr, "vp expects normal but none was given\n");
+	}
+	if(r300->current_vp->inputs[VERT_ATTRIB_COLOR0] != -1){
+		if(tnl->render_inputs & _TNL_BIT_COLOR0){
+			reg=r300->current_vp->inputs[VERT_ATTRIB_COLOR0];
+			CONFIGURE_AOS(VB->ColorPtr[0], 0, i_color[0], AOS_FORMAT_FLOAT_COLOR);
+		}else fprintf(stderr, "vp expects primary color but none was given\n");
+	}
+	if(r300->current_vp->inputs[VERT_ATTRIB_COLOR1] != -1){
+		if(tnl->render_inputs & _TNL_BIT_COLOR1){
+			reg=r300->current_vp->inputs[VERT_ATTRIB_COLOR1];
+			CONFIGURE_AOS(VB->SecondaryColorPtr[0], 0, i_color[1], AOS_FORMAT_FLOAT_COLOR);
+		}else fprintf(stderr, "vp expects secondary color but none was given\n");
+	}
+	if(r300->current_vp->inputs[VERT_ATTRIB_FOG] != -1){
+		if(tnl->render_inputs & _TNL_BIT_FOG){
+			reg=r300->current_vp->inputs[VERT_ATTRIB_FOG];
+			CONFIGURE_AOS(VB->FogCoordPtr, 0, i_fog, AOS_FORMAT_FLOAT);
+		}else fprintf(stderr, "vp expects fog but none was given\n");
+	}
+	for(i=0;i < ctx->Const.MaxTextureUnits;i++) // tex 7 is last 
+		if(r300->current_vp->inputs[VERT_ATTRIB_TEX0+i] != -1){
+			if(tnl->render_inputs & (_TNL_BIT_TEX0<<i)){
+				reg=r300->current_vp->inputs[VERT_ATTRIB_TEX0+i];
+				CONFIGURE_AOS(VB->TexCoordPtr[i], 0, i_tex[i], AOS_FORMAT_FLOAT);
+			}else fprintf(stderr, "vp expects tex%d but none was given\n", i);
+		}
+#if 0
+	if((tnl->render_inputs & _TNL_BIT_INDEX))
+		CONFIGURE_AOS(VB->IndexPtr[0], 0, i_index, AOS_FORMAT_FLOAT);
+	
+	if((tnl->render_inputs & _TNL_BIT_POINTSIZE))
+		CONFIGURE_AOS(VB->PointSizePtr, 0, i_pointsize, AOS_FORMAT_FLOAT);
+#endif	
+	}else{
+	
 	if(tnl->render_inputs & _TNL_BIT_POS)
 		CONFIGURE_AOS(VB->ObjPtr, 0, i_coords, AOS_FORMAT_FLOAT);
 	if(tnl->render_inputs & _TNL_BIT_NORMAL)
 		CONFIGURE_AOS(VB->NormalPtr, 0, i_normal, AOS_FORMAT_FLOAT);
-
+	
 	if(tnl->render_inputs & _TNL_BIT_COLOR0)
 		CONFIGURE_AOS(VB->ColorPtr[0], 0, i_color[0], AOS_FORMAT_FLOAT_COLOR);
 	if(tnl->render_inputs & _TNL_BIT_COLOR1)
 		CONFIGURE_AOS(VB->SecondaryColorPtr[0], 0, i_color[1], AOS_FORMAT_FLOAT_COLOR);
-
+	
 	if(tnl->render_inputs & _TNL_BIT_FOG)
 		CONFIGURE_AOS(VB->FogCoordPtr, 0, i_fog, AOS_FORMAT_FLOAT);
-
+	
 	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
 		if(tnl->render_inputs & (_TNL_BIT_TEX0<<i))
 			CONFIGURE_AOS(VB->TexCoordPtr[i], 0, i_tex[i], AOS_FORMAT_FLOAT);
-
+	
 	if(tnl->render_inputs & _TNL_BIT_INDEX)
 		CONFIGURE_AOS(VB->IndexPtr[0], 0, i_index, AOS_FORMAT_FLOAT);
 	if(tnl->render_inputs & _TNL_BIT_POINTSIZE)
 		CONFIGURE_AOS(VB->PointSizePtr, 0, i_pointsize, AOS_FORMAT_FLOAT);
-
+	}
+	
 	r300->state.aos_count=count;
 
 	if (RADEON_DEBUG & DEBUG_STATE)
@@ -1245,11 +1297,16 @@ void static inline setup_vertex_shader_fragment(r300ContextPtr r300, int dest, s
 	}
 }
 
+void r300SetupVertexProgram(r300ContextPtr rmesa);
 
 void r300SetupVertexShader(r300ContextPtr rmesa)
 {
 	GLcontext* ctx = rmesa->radeon.glCtx;
-
+	
+	if(rmesa->current_vp){
+		r300SetupVertexProgram(rmesa);
+		return ;
+	}	
 	/* Reset state, in case we don't use something */
 	((drm_r300_cmd_header_t*)rmesa->hw.vpp.cmd)->vpu.count = 0;
 	((drm_r300_cmd_header_t*)rmesa->hw.vpi.cmd)->vpu.count = 0;
@@ -1306,27 +1363,15 @@ void r300SetupVertexShader(r300ContextPtr rmesa)
 void r300SetupVertexProgram(r300ContextPtr rmesa)
 {
 	GLcontext* ctx = rmesa->radeon.glCtx;
+	int inst_count;
+	int param_count;
 
 	/* Reset state, in case we don't use something */
 	((drm_r300_cmd_header_t*)rmesa->hw.vpp.cmd)->vpu.count = 0;
 	((drm_r300_cmd_header_t*)rmesa->hw.vpi.cmd)->vpu.count = 0;
 	((drm_r300_cmd_header_t*)rmesa->hw.vps.cmd)->vpu.count = 0;
 
-#if 0
-/* This needs to be replaced by vertex shader generation code */
-
-
-	/* textures enabled ? */
-	if(rmesa->state.texture.tc_count>0){
-		rmesa->state.vertex_shader=SINGLE_TEXTURE_VERTEX_SHADER;
-		} else {
-		rmesa->state.vertex_shader=FLAT_COLOR_VERTEX_SHADER;
-		}
-
-
-        rmesa->state.vertex_shader.matrix[0].length=16;
-        memcpy(rmesa->state.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
-#endif
+	r300VertexProgUpdateParams(ctx, rmesa->current_vp);
 	
 	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(rmesa->current_vp->program));
 
@@ -1336,15 +1381,18 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1, &(rmesa->state.vertex_shader.unknown1));
 	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN2, &(rmesa->state.vertex_shader.unknown2));
 	#endif
-
+	
+	inst_count=rmesa->current_vp->program.length/4 - 1;
+	param_count=rmesa->current_vp->params.length/4;
+					
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1]=(0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT)
-		| (rmesa->state.vertex_shader.unknown_ptr1 << R300_PVS_CNTL_1_UNKNOWN_SHIFT)
-		| (rmesa->current_vp->program.length/4 << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
+		| (inst_count/*0*/ << R300_PVS_CNTL_1_UNKNOWN_SHIFT)
+		| (inst_count << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2]=(0 << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT)
-		| (rmesa->current_vp->params.length/4 << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
+		| (param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3]=(0/*rmesa->state.vertex_shader.unknown_ptr2*/ << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT)
-	| (rmesa->current_vp->program.length/4/*rmesa->state.vertex_shader.unknown_ptr3*/ << 0);
+	| ((inst_count-rmesa->current_vp->t2rs) /*rmesa->state.vertex_shader.unknown_ptr3*/ << 0);
 
 	/* This is done for vertex shader fragments, but also needs to be done for vap_pvs,
 	so I leave it as a reminder */
