@@ -101,12 +101,9 @@ static const char * const card_extensions[] =
    "GL_ARB_texture_mirrored_repeat",
    "GL_EXT_stencil_wrap",
    "GL_EXT_texture_edge_clamp",
-   "GL_EXT_texture_env_add",
    "GL_EXT_texture_lod_bias",
-   "GL_IBM_texture_mirrored_repeat",
    "GL_MESA_ycbcr_texture",
    "GL_SGIS_generate_mipmap",
-   "GL_SGIS_texture_edge_clamp",
    NULL
 };
 

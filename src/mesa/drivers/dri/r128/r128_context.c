@@ -71,10 +71,7 @@ static const char * const card_extensions[] =
    "GL_ARB_texture_env_add",
    "GL_ARB_texture_mirrored_repeat",
    "GL_EXT_texture_edge_clamp",
-   "GL_EXT_texture_env_add",
-   "GL_IBM_texture_mirrored_repeat",
    "GL_SGIS_generate_mipmap",
-   "GL_SGIS_texture_edge_clamp",
    NULL
 };
 

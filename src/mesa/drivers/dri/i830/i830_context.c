@@ -155,18 +155,13 @@ static const char * const card_extensions[] =
    "GL_EXT_secondary_color",
    "GL_EXT_stencil_wrap",
    "GL_EXT_texture_edge_clamp",
-   "GL_EXT_texture_env_add",
    "GL_EXT_texture_env_combine",
    "GL_EXT_texture_env_dot3",
    "GL_EXT_texture_filter_anisotropic",
    "GL_EXT_texture_lod_bias",
-   "GL_IBM_texture_mirrored_repeat",
-   "GL_INGR_blend_func_separate",
+   "GL_EXT_texture_rectangle",
    "GL_MESA_ycbcr_texture",
-   "GL_NV_texture_rectangle",
    "GL_SGIS_generate_mipmap",
-   "GL_SGIS_texture_border_clamp",
-   "GL_SGIS_texture_edge_clamp",
    NULL
 };
 

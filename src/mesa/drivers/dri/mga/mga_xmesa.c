@@ -289,13 +289,11 @@ static const char * const g400_extensions[] =
 {
    "GL_ARB_multitexture",
    "GL_ARB_texture_env_add",
-   "GL_EXT_texture_env_add",
    "GL_ARB_texture_env_combine",
-   "GL_EXT_texture_env_combine",
    "GL_ARB_texture_env_crossbar",
-   "GL_ATI_texture_env_combine3",
+   "GL_EXT_texture_env_combine",
    "GL_EXT_texture_edge_clamp",
-   "GL_SGIS_texture_edge_clamp",
+   "GL_ATI_texture_env_combine3",
 #if defined (MESA_packed_depth_stencil)
    "GL_MESA_packed_depth_stencil",
 #endif
@@ -315,10 +313,10 @@ static const char * const card_extensions[] =
 #endif
    "GL_EXT_secondary_color",
    "GL_EXT_stencil_wrap",
+   "GL_EXT_texture_rectangle",
    "GL_MESA_ycbcr_texture",
    "GL_SGIS_generate_mipmap",
    "GL_SGIS_texture_lod",
-   "GL_NV_texture_rectangle",
    NULL
 };
 
