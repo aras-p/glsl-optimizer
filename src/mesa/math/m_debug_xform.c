@@ -1,4 +1,4 @@
-/* $Id: m_debug_xform.c,v 1.11 2002/12/04 14:24:44 brianp Exp $ */
+/* $Id: m_debug_xform.c,v 1.12 2003/02/25 19:27:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -106,7 +106,7 @@ static int *templates[7] = {
    m_2d_no_rot,
    m_3d
 };
-static int mtypes[7] = {
+static enum matrix_type mtypes[7] = {
    MATRIX_GENERAL,
    MATRIX_IDENTITY,
    MATRIX_3D_NO_ROT,

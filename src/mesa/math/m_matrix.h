@@ -1,4 +1,4 @@
-/* $Id: m_matrix.h,v 1.5 2003/02/17 16:36:06 brianp Exp $ */
+/* $Id: m_matrix.h,v 1.6 2003/02/25 19:27:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -98,20 +98,23 @@
     ((MAT_FLAGS_GEOMETRY & (~(a)) & ((mat)->flags) ) == 0)
 
 
+enum matrix_type {
+   MATRIX_GENERAL,	/**< general 4x4 matrix */
+   MATRIX_IDENTITY,   /**< identity matrix */
+   MATRIX_3D_NO_ROT,	/**< ortho projection and others... */
+   MATRIX_PERSPECTIVE,/**< perspective projection matrix */
+   MATRIX_2D, 	/**< 2-D transformation */
+   MATRIX_2D_NO_ROT,	/**< 2-D scale & translate only */
+   MATRIX_3D  	/**< 3-D transformation */
+};
+
 typedef struct {
    GLfloat *m;		/* 16-byte aligned */
    GLfloat *inv;	/* optional, 16-byte aligned */
    GLuint flags;        /**< possible values determined by (of \link
 			   MatFlags MAT_FLAG_* flags\endlink) */
-   enum {
-     MATRIX_GENERAL,	/**< general 4x4 matrix */
-     MATRIX_IDENTITY,   /**< identity matrix */
-     MATRIX_3D_NO_ROT,	/**< ortho projection and others... */
-     MATRIX_PERSPECTIVE,/**< perspective projection matrix */
-     MATRIX_2D, 	/**< 2-D transformation */
-     MATRIX_2D_NO_ROT,	/**< 2-D scale & translate only */
-     MATRIX_3D  	/**< 3-D transformation */
-   } type;
+
+   enum matrix_type type;
 } GLmatrix;
 
 
