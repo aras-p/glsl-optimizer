@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: depth.c,v 1.2 1999/09/10 14:24:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,9 +71,7 @@ void gl_DepthFunc( GLcontext* ctx, GLenum func )
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "glDepthFunc %s\n", gl_lookup_enum_by_nr(func));
 
-
    switch (func) {
-      case GL_NEVER:
       case GL_LESS:    /* (default) pass if incoming z < stored z */
       case GL_GEQUAL:
       case GL_LEQUAL:
@@ -84,6 +82,17 @@ void gl_DepthFunc( GLcontext* ctx, GLenum func )
 	 if (ctx->Depth.Func != func) {
 	    ctx->Depth.Func = func;
 	    ctx->NewState |= NEW_RASTER_OPS;
+	    ctx->TriangleCaps &= ~DD_Z_NEVER;
+	    if (ctx->Driver.DepthFunc) {
+	       (*ctx->Driver.DepthFunc)( ctx, func );
+	    }
+	 }
+         break;
+      case GL_NEVER:
+	 if (ctx->Depth.Func != func) {
+	    ctx->Depth.Func = func;
+	    ctx->NewState |= NEW_RASTER_OPS;
+	    ctx->TriangleCaps |= DD_Z_NEVER;
 	    if (ctx->Driver.DepthFunc) {
 	       (*ctx->Driver.DepthFunc)( ctx, func );
 	    }
