@@ -515,7 +515,7 @@ static void viaResetLineStipple( GLcontext *ctx )
     const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;       \
    const GLboolean stipple = ctx->Line.StippleFlag;		\
    (void) elt; (void) stipple;
-#define RESET_STIPPLE	if ( stipple ) { printf("RESET\n"); viaResetLineStipple( ctx ); }
+#define RESET_STIPPLE	if ( stipple ) viaResetLineStipple( ctx );
 #define RESET_OCCLUSION
 #define PRESERVE_VB_DEFS
 #define ELT(x) x
