@@ -791,7 +791,7 @@ _mesa_load_state_parameters(GLcontext *ctx,
  * \note Called from the GL API dispatcher by both glBindProgramNV
  * and glBindProgramARB.
  */
-void
+void GLAPIENTRY
 _mesa_BindProgram(GLenum target, GLuint id)
 {
    struct program *prog;
@@ -945,7 +945,7 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
  * \note Not compiled into display lists.
  * \note Called by both glGenProgramsNV and glGenProgramsARB.
  */
-void
+void GLAPIENTRY
 _mesa_GenPrograms(GLsizei n, GLuint *ids)
 {
    GLuint first;
@@ -990,7 +990,7 @@ _mesa_GenPrograms(GLsizei n, GLuint *ids)
  * \param id is the program identifier
  * \return GL_TRUE if id is a program, else GL_FALSE.
  */
-GLboolean
+GLboolean GLAPIENTRY
 _mesa_IsProgram(GLuint id)
 {
    struct program *prog;
