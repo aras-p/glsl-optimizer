@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.58 2001/11/30 19:42:10 kschultz Exp $
+# $Id: Makefile.X11,v 1.59 2001/12/14 17:14:45 kschultz Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -141,7 +141,7 @@ default:
 aix aix-sl amix bsdos bsdos4 darwin dgux freebsd freebsd-386 gcc \
 hpux9 hpux9-sl hpux9-gcc hpux9-gcc-sl \
 hpux10 hpux10-sl hpux10-gcc hpux10-gcc-sl \
-irix4 irix5 irix5-gcc irix5-dso irix6-o32 irix6-o32-dso \
+irix4 irix5 irix5-gcc irix5-dso \
 linux linux-static linux-debug linux-static-debug linux-prof \
 linux-x86 linux-x86-static linux-x86-debug \
 linux-glide linux-386-glide linux-386-opt-glide \
@@ -172,11 +172,10 @@ sunos5-x11r6-gcc-sl ultrix-gcc unicos unixware uwin vistra:
 	if [ -d book     ] ; then cd book     ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d widgets-sgi ] ; then cd widgets-sgi; $(MAKE) -f Makefile.X11 $@ ; fi
 
-irix6-n32 irix6-n32-dso irix6-gcc-n32-sl irix-debug:
+irix6-o32 irix6-o32-dso irix6-n32 irix6-n32-dso irix6-gcc-n32-sl irix-debug:
 	-mkdir lib32
 	if [ -d src      ] ; then touch src/depend      ; fi
 	if [ -d src-glu  ] ; then touch src-glu/depend  ; fi
-	if [ -d src-glut ] ; then touch src-glut/depend ; fi
 	if [ -d src-glut ] ; then touch src-glut/depend ; fi
 	if [ -d widgets-sgi ] ; then touch widgets-sgi/depend ; fi
 	if [ -d src      ] ; then cd src      ; $(MAKE) -f Makefile.X11 $@ ; fi
@@ -323,13 +322,11 @@ clean:
 
 # Remove everything that can be remade
 realclean: clean
-	-rm -f lib/*
+	-rm -fr lib lib32 lib64
 	cd demos       && $(MAKE) -f Makefile.X11 realclean || true
 	cd xdemos      && $(MAKE) -f Makefile.X11 realclean || true
 	cd book        && $(MAKE) -f Makefile.X11 realclean || true
 	cd samples     && $(MAKE) -f Makefile.X11 realclean || true
-	cd ggi/demos   && $(MAKE) -f Makefile.X11 realclean || true
-	cd src/GGI/default && $(MAKE) -f Makefile.X11 realclean || true
 
 
 
