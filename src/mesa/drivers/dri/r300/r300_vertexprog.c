@@ -492,7 +492,7 @@ static void translate_program(struct r300_vertex_program *vp)
 		
 		for(i=0; i < operands; i++)
 			src[i]=vpi->SrcReg[i];
-		
+#if 1
 		if(operands == 3){ /* TODO: scalars */
 			if( CMP_SRCS(src[1], src[2]) || CMP_SRCS(src[0], src[2]) ){
 				o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, u_temp_i,
@@ -538,7 +538,7 @@ static void translate_program(struct r300_vertex_program *vp)
 				u_temp_i--;
 			}
 		}
-		
+#endif		
 		/* these ops need special handling.
 		   Ops that need temp vars should probably be given reg indexes starting at the end of tmp area. */
 		switch(vpi->Opcode){
@@ -759,8 +759,8 @@ static void translate_program(struct r300_vertex_program *vp)
 				exit(-1);
 			break;
 		}
-		next:
-				
+		next: ;
+#if 0				
 		/* If instruction writes to result and one of the inputs is tmp, we move it at the end of program */
 		if(vpi->DstReg.File == PROGRAM_OUTPUT){
 			for(operand_index=0; operand_index < operands; operand_index++)
@@ -770,13 +770,13 @@ static void translate_program(struct r300_vertex_program *vp)
 					break;
 				}
 		}
-		
+#endif		
 	}
-	
+#if 0	
 	/* Put "tmp to result" instructions in */
 	for(i=0; i < vp->t2rs; i++, o_inst++)
 		*o_inst=t2rs[i];
-		
+#endif		
 	vp->program.length=(o_inst - vp->program.body.i) * 4;
 	
 	if(u_temp_i < vp->num_temporaries)

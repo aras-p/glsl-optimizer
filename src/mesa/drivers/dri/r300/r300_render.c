@@ -513,6 +513,7 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 	}
 	
 	if(num_verts > 65535){ /* not implemented yet */
+		WARN_ONCE("Too many elts\n");
 		return;
 	}
 	r300EmitElts(ctx, rmesa->state.Elts+start, num_verts);

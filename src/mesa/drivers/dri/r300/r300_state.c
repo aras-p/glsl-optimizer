@@ -459,12 +459,12 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 		break;
 
 	case GL_ALPHA_TEST:
-		R200_STATECHANGE(r300, at);
+		R300_STATECHANGE(r300, at);
 		if (state) {
 			r300->hw.at.cmd[R300_AT_ALPHA_TEST] |=
 			    R300_ALPHA_TEST_ENABLE;
 		} else {
-			r300->hw.at.cmd[R300_AT_ALPHA_TEST] |=
+			r300->hw.at.cmd[R300_AT_ALPHA_TEST] &=
 			    ~R300_ALPHA_TEST_ENABLE;
 		}
 		break;
@@ -1353,7 +1353,8 @@ void r300_setup_textures(GLcontext *ctx)
 	}
 	
 	for(i=0; i < mtu; i++) {
-		
+		/*if(ctx->Texture.Unit[i].Enabled == 0)
+			continue;*/
 		if( ((r300->state.render_inputs & (_TNL_BIT_TEX0<<i))!=0) != ((ctx->Texture.Unit[i].Enabled)!=0) ) {
 			WARN_ONCE("Mismatch between render_inputs and ctx->Texture.Unit[i].Enabled value.\n");
 		}
@@ -1998,10 +1999,8 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300_set_blend_state(ctx);
 
-	r300->hw.at.cmd[R300_AT_ALPHA_TEST] = 0;
 	r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
-	if(ctx->Color.AlphaEnabled)
-		r300->hw.at.cmd[R300_AT_ALPHA_TEST] |= R300_ALPHA_TEST_ENABLE;
+	r300Enable(ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled);
 		
 		/* Initialize magic registers
 		 TODO : learn what they really do, or get rid of
@@ -2171,10 +2170,6 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4BC8.cmd[2] = 0;
 	r300->hw.unk4BC8.cmd[3] = 0;
 
-	//r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
-#if 0
-	r300->hw.at.cmd[R300_AT_ALPHA_TEST] = 0;
-#endif
 
 	r300->hw.at.cmd[R300_AT_UNKNOWN] = 0;
 	r300->hw.unk4BD8.cmd[1] = 0;

@@ -634,7 +634,7 @@ void r300EmitWait(r300ContextPtr rmesa, GLuint flags)
 								1 * sizeof(int),
 								__FUNCTION__);
 		cmd[0].i = 0;
-		cmd[0].wait.cmd_type = RADEON_CMD_WAIT;
+		cmd[0].wait.cmd_type = R300_CMD_WAIT;
 		cmd[0].wait.flags = flags;
 	}
 }
