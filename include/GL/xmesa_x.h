@@ -30,7 +30,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Authors:
  *   Kevin E. Martin <kevin@precisioninsight.com>
  *
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/include/GL/xmesa_x.h,v 1.1 1999/08/19 00:55:40 jtg Exp $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/include/GL/xmesa_x.h,v 1.2 2000/02/25 20:31:11 brianp Exp $
  */
 
 #ifndef _XMESA_X_H_
@@ -78,7 +78,6 @@ typedef XColor       XMesaColor;
 #define GET_REDMASK(__v)        __v->visinfo->red_mask
 #define GET_GREENMASK(__v)      __v->visinfo->green_mask
 #define GET_BLUEMASK(__v)       __v->visinfo->blue_mask
-#define GET_BITS_PER_PIXEL(__v) bits_per_pixel(__v->display, __v->visinfo)
 #if defined(__cplusplus) || defined(c_plusplus)
 #define GET_VISUAL_CLASS(__v)   __v->visinfo->c_class
 #else

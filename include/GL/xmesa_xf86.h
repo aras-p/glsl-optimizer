@@ -30,7 +30,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Authors:
  *   Kevin E. Martin <kevin@precisioninsight.com>
  *
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/include/GL/xmesa_xf86.h,v 1.3 2000/01/17 23:22:57 brianp Exp $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/include/GL/xmesa_xf86.h,v 1.4 2000/02/25 20:31:11 brianp Exp $
  */
 
 #ifndef _XMESA_XF86_H_
@@ -179,13 +179,6 @@ do { \
 #define GET_REDMASK(__v)        __v->visinfo->redMask
 #define GET_GREENMASK(__v)      __v->visinfo->greenMask
 #define GET_BLUEMASK(__v)       __v->visinfo->blueMask
-
-/*XXX this was wrong.  However, using nplanes instead may fail when
- * we have overlay planes in the future!
- */
-/*#define GET_BITS_PER_PIXEL(__v) __v->visinfo->bitsPerRGBValue*/
-#define GET_BITS_PER_PIXEL(__v) __v->visinfo->nplanes
-
 #define GET_VISUAL_CLASS(__v)   __v->visinfo->class
 #define GET_VISUAL_DEPTH(__v)   __v->visinfo->nplanes
 #define GET_BLACK_PIXEL(__v)    __v->display->blackPixel
