@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.11 2001/02/06 21:42:49 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.12 2001/02/07 18:44:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1618,7 +1618,7 @@ static void general_textured_triangle( GLcontext *ctx,
 	   if (n>0) {						\
               if (flat_shade) {					\
                  for (i=0;i<n;i++) {				\
-		    GLdouble invQ = 1.0 / vv;			\
+		    GLdouble invQ = vv ? (1.0 / vv) : 1.0;	\
 		    zspan[i] = FixedToDepth(ffz);		\
 		    fogspan[i] = fffog / 256;          		\
 		    rgba[i][RCOMP] = r;				\
@@ -1638,7 +1638,7 @@ static void general_textured_triangle( GLcontext *ctx,
               }							\
               else {						\
                  for (i=0;i<n;i++) {				\
-		    GLdouble invQ = 1.0 / vv;			\
+		    GLdouble invQ = vv ? (1.0 / vv) : 1.0;	\
 		    zspan[i] = FixedToDepth(ffz);		\
 		    rgba[i][RCOMP] = FixedToInt(ffr);		\
 		    rgba[i][GCOMP] = FixedToInt(ffg);		\
@@ -1713,7 +1713,7 @@ static void general_textured_spec_triangle1( GLcontext *ctx,
 	   if (n>0) {						\
               if (flat_shade) {					\
                  for (i=0;i<n;i++) {				\
-		    GLdouble invQ = 1.0 / vv;			\
+		    GLdouble invQ = vv ? (1.0 / vv) : 1.0;	\
 		    zspan[i] = FixedToDepth(ffz);		\
 		    fogspan[i] = fffog / 256;			\
 		    rgba[i][RCOMP] = r;				\
@@ -1736,7 +1736,7 @@ static void general_textured_spec_triangle1( GLcontext *ctx,
               }							\
               else {						\
                  for (i=0;i<n;i++) {				\
-		    GLdouble invQ = 1.0 / vv;			\
+		    GLdouble invQ = vv ? (1.0 / vv) : 1.0;	\
 		    zspan[i] = FixedToDepth(ffz);		\
 		    fogspan[i] = fffog / 256;			\
 		    rgba[i][RCOMP] = FixedToInt(ffr);		\
@@ -1844,7 +1844,7 @@ static void lambda_textured_triangle1( GLcontext *ctx,
 	   if (n>0) {							\
 	      if (flat_shade) {						\
 		 for (i=0;i<n;i++) {					\
-		    GLdouble invQ = 1.0 / vv;				\
+		    GLdouble invQ = vv ? (1.0 / vv) : 1.0;		\
 		    zspan[i] = FixedToDepth(ffz);			\
 		    fogspan[i] = fffog / 256;          			\
 		    rgba[i][RCOMP] = r;					\
@@ -1865,7 +1865,7 @@ static void lambda_textured_triangle1( GLcontext *ctx,
               }								\
               else {							\
 		 for (i=0;i<n;i++) {					\
-		    GLdouble invQ = 1.0 / vv;				\
+		    GLdouble invQ = vv ? (1.0 / vv) : 1.0;		\
 		    zspan[i] = FixedToDepth(ffz);			\
 		    fogspan[i] = fffog / 256;          			\
 		    rgba[i][RCOMP] = FixedToInt(ffr);			\
@@ -1952,7 +1952,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
 	   if (n>0) {							\
 	      if (flat_shade) {						\
 		 for (i=0;i<n;i++) {					\
-		    GLdouble invQ = 1.0 / vv;				\
+		    GLdouble invQ = vv ? (1.0 / vv) : 1.0;		\
 		    zspan[i] = FixedToDepth(ffz);			\
 		    fogspan[i] = fffog / 256;				\
 		    rgba[i][RCOMP] = r;					\
@@ -1976,7 +1976,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
               }								\
               else {							\
 		 for (i=0;i<n;i++) {					\
-		    GLdouble invQ = 1.0 / vv;				\
+		    GLdouble invQ = vv ? (1.0 / vv) : 1.0;		\
 		    zspan[i] = FixedToDepth(ffz);			\
 		    fogspan[i] = fffog / 256;				\
 		    rgba[i][RCOMP] = FixedToInt(ffr);			\
