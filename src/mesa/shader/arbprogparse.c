@@ -3872,11 +3872,9 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
 #endif
    err = grammar_check (arbprogram_syn_id, strz, &parsed, &parsed_len);
 
-   _mesa_free (strz);
-   strz = NULL;
-
    /* Syntax parse error */
    if (err == 0) {
+      _mesa_free (strz);
       grammar_get_last_error ((GLubyte *) error_msg, 300, &error_pos);
       _mesa_set_program_error (ctx, error_pos, error_msg);
       _mesa_error (ctx, GL_INVALID_OPERATION, "Parse Error");
@@ -3891,6 +3889,7 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    grammar_destroy (arbprogram_syn_id);
 
    /* Initialize the arb_program struct */
+   program->Base.String = strz;
    program->Base.NumInstructions =
    program->Base.NumTemporaries =
    program->Base.NumParameters =

@@ -192,9 +192,19 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
 
    retval = _mesa_parse_arb_program(ctx, str, len, &ap);
 
+   /* XXX: Parse error. Cleanup things and return */
+   if (retval)
+   {
+      program->Instructions = (struct fp_instruction *) _mesa_malloc (
+                                     sizeof(struct fp_instruction) );
+      program->Instructions[0].Opcode = FP_OPCODE_END;
+      return;
+   }
+
    /* copy the relvant contents of the arb_program struct into the
     * fragment_program struct
     */
+   program->Base.String          = ap.Base.String;
    program->Base.NumInstructions = ap.Base.NumInstructions;
    program->Base.NumTemporaries  = ap.Base.NumTemporaries;
    program->Base.NumParameters   = ap.Base.NumParameters;
@@ -210,15 +220,6 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
    program->NumTexIndirections = ap.NumTexIndirections;
    program->Parameters         = ap.Parameters;
    program->FogOption          = ap.FogOption;
-
-   /* XXX: Parse error. Cleanup things and return */
-   if (retval)
-   {
-      program->Instructions = (struct fp_instruction *) _mesa_malloc (
-                                     sizeof(struct fp_instruction) );
-      program->Instructions[0].Opcode = FP_OPCODE_END;
-      return;
-   }
 
    /* XXX: Eh.. we parsed something that wasn't a fragment program. doh! */
    /* this wont happen any more */
