@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.6 2000/04/11 21:36:29 brianp Exp $ */
+/* $Id: buffers.c,v 1.7 2000/04/22 01:03:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -240,9 +240,6 @@ void
 _mesa_Clear( GLbitfield mask )
 {
    GET_CURRENT_CONTEXT(ctx);
-#ifdef PROFILE
-   GLdouble t0 = gl_time();
-#endif
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glClear");
 
    if (MESA_VERBOSE & VERBOSE_API)
@@ -302,11 +299,6 @@ _mesa_Clear( GLbitfield mask )
            && ctx->Color.ColorMask[RCOMP]) {
          _mesa_clear_alpha_buffers( ctx );
       }
-
-#ifdef PROFILE
-      ctx->ClearTime += gl_time() - t0;
-      ctx->ClearCount++;
-#endif
    }
 }
 
