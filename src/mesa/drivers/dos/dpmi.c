@@ -140,7 +140,7 @@ int
 _can_mmx (void)
 {
 #ifdef USE_MMX_ASM
-   static int x86_cpu_features = 0;
+   int x86_cpu_features = 0;
    __asm("\n\
 		pushfl			\n\
 		popl	%%eax		\n\
