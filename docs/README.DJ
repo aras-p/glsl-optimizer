@@ -1,4 +1,4 @@
-		    Mesa 4.0.1 DOS/DJGPP Port version 0.2
+		    Mesa 4.0.1 DOS/DJGPP Port version 0.3
 		    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -6,13 +6,7 @@
 Description:
 ~~~~~~~~~~~~
 
-This is the DOS port of MESA 4.0, for DJGPP programmers... It features some
-sort of hardware acceleration, but it's pretty thin: it is entirely based on
-VBEAF.DRV from the FreeBE/AF project (http://www.talula.demon.co.uk/freebe/).
-Note that SciTech's driver isn't supported because I hate the `nearptr' hack.
-Anyway, these drivers don't provide ANY 3D function :-( Moreover, it seems to
-me the FreeBE/AF project is not really up to date... Well, it's not much, my
-intention was to open the door ;-)
+Well, guess what... this is the DOS port of MESA 4.0, for DJGPP fans... Whoa!
 
 
 
@@ -54,17 +48,11 @@ style :-( Sorry!
 Pitfalls:
 1. The current version supports only RGB[A] modes, for it made no sense to me
    to endorse color-index (aka palette) modes.
-2. Double-buffered uses page flipping if acceleration is available, else falls
-   back to virtual buffer.
-3. Single-buffered is not allowed with 24-bit modes, because direct access was
-   wrong and fixing it would mean to slow down the other routines; until this
-   is really, really necessary, it won't get reimplemented.
-4. Another weird "feature" is that buffer width must be multiple of 4 (I'm a
+2. Single-buffered is not allowed at all. Until I can find a way to use *REAL*
+   hardware acceleration, it won't get implemented.
+3. Another weird "feature" is that buffer width must be multiple of 4 (I'm a
    lazy programmer and I found that the easiest way to keep buffer handling at
    peak performance ;-).
-5. The FreeBE/AF driver is searched in the current directory only; therefore,
-   to disable hardware acceleration, make sure you don't have VBEAF.DRV where
-   your application resides.
 
 
 
@@ -123,6 +111,8 @@ v0.2	feb-2002	+ fast triangle rasterizers
 			+ glut has now an internal timer
 			* glut changed to support multi-window (unfinished)
 			! minor PC_HW corrections
+v0.3	mar-2002	- removed FreeBE/AF code
+			- removed single-buffer modes
 
 
 

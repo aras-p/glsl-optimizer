@@ -157,7 +157,7 @@ CORE_SOURCES = \
 	tnl/t_vb_texmat.c \
 	tnl/t_vb_vertex.c
 
-DRIVER_SOURCES = DOS/dmesa.c DOS/video.c DOS/vbeaf.c DOS/dpmi.c
+DRIVER_SOURCES = DOS/dmesa.c DOS/video.c DOS/dpmi.c
 
 SOURCES = $(CORE_SOURCES) $(DRIVER_SOURCES)
 
@@ -184,6 +184,5 @@ DOS/dmesa.o: DOS/dmesa.c glheader.h ../include/GL/gl.h context.h glapi.h \
   swrast/s_depth.h swrast/s_lines.h swrast/s_triangle.h swrast/s_trispan.h \
   swrast_setup/swrast_setup.h tnl/tnl.h tnl/t_context.h math/m_vector.h \
   math/m_xform.h tnl/t_pipeline.h DOS/video.h swrast/s_tritemp.h
-DOS/dpmi.o: DOS/dpmi.c DOS/vbeaf.h DOS/dpmiint.h
-DOS/vbeaf.o: DOS/vbeaf.c DOS/dpmiint.h DOS/vbeaf.h DOS/video.h
-DOS/video.o: DOS/video.c DOS/video.h DOS/dpmiint.h DOS/vbeafint.h DOS/vbeaf.h
+DOS/dpmi.o: DOS/dpmi.c DOS/dpmiint.h
+DOS/video.o: DOS/video.c DOS/video.h DOS/dpmiint.h
