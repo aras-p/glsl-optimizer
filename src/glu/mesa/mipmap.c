@@ -1,4 +1,4 @@
-/* $Id: mipmap.c,v 1.5 2000/02/28 14:51:43 brianp Exp $ */
+/* $Id: mipmap.c,v 1.6 2000/06/05 16:27:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -555,6 +555,7 @@ static GLint bytes_per_pixel( GLenum format, GLenum type )
 	 n = 3;
 	 break;
       case GL_RGBA:
+      case GL_BGRA:
 #ifdef GL_EXT_abgr
       case GL_ABGR_EXT:
 #endif
