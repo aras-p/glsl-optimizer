@@ -1,4 +1,4 @@
-/* $Id: s_context.h,v 1.24 2003/02/23 04:10:54 brianp Exp $ */
+/* $Id: s_context.h,v 1.25 2003/02/28 15:09:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -141,7 +141,7 @@ struct sw_span {
    GLfloat specRed, specRedStep;
    GLfloat specGreen, specGreenStep;
    GLfloat specBlue, specBlueStep;
-#else /* CHAN_TYPE == GL_UNSIGNED_BYTE or GL_UNSIGNED SHORT */
+#else /* CHAN_TYPE == GL_UNSIGNED_BYTE or GL_UNSIGNED_SHORT */
    GLfixed red, redStep;
    GLfixed green, greenStep;
    GLfixed blue, blueStep;
