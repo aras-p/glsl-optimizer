@@ -273,7 +273,7 @@ _tnl_DrawRangeElements(GLenum mode,
                        "DrawRangeElements with empty vertex elements buffer!");
          return;
       }
-      indices = (GLuint *) ctx->Array.ElementArrayBufferObj->Data;
+      indices = (GLvoid *) ctx->Array.ElementArrayBufferObj->Data;
    }
 
    /* Check arguments, etc.
