@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.8 2000/05/07 23:18:54 brianp Exp $ */
+/* $Id: points.c,v 1.9 2000/05/10 22:36:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -156,7 +156,7 @@ size1_ci_points( GLcontext *ctx, GLuint first, GLuint last )
    GLfloat *win;
    GLint *pbx = PB->x, *pby = PB->y;
    GLdepth *pbz = PB->z;
-   GLuint *pbi = PB->i;
+   GLuint *pbi = PB->index;
    GLuint pbcount = PB->count;
    GLuint i;
 
@@ -245,7 +245,7 @@ general_ci_points( GLcontext *ctx, GLuint first, GLuint last )
             y1 = y0 + isize - 1;
          }
 
-         PB_SET_INDEX( ctx, PB, VB->IndexPtr->data[i] );
+         PB_SET_INDEX( PB, VB->IndexPtr->data[i] );
 
          for (iy = y0; iy <= y1; iy++) {
             for (ix = x0; ix <= x1; ix++) {
@@ -294,7 +294,7 @@ general_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             y1 = y0 + isize - 1;
          }
 
-         PB_SET_COLOR( ctx, PB,
+         PB_SET_COLOR( PB,
                        VB->ColorPtr->data[i][0],
                        VB->ColorPtr->data[i][1],
                        VB->ColorPtr->data[i][2],
@@ -832,7 +832,7 @@ dist_atten_general_ci_points( GLcontext *ctx, GLuint first, GLuint last )
             y1 = y0 + isize - 1;
          }
 
-         PB_SET_INDEX( ctx, PB, VB->IndexPtr->data[i] );
+         PB_SET_INDEX( PB, VB->IndexPtr->data[i] );
 
          for (iy=y0;iy<=y1;iy++) {
             for (ix=x0;ix<=x1;ix++) {
@@ -898,7 +898,7 @@ dist_atten_general_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             y1 = y0 + isize - 1;
          }
 
-         PB_SET_COLOR( ctx, PB,
+         PB_SET_COLOR( PB,
                        VB->ColorPtr->data[i][0],
                        VB->ColorPtr->data[i][1],
                        VB->ColorPtr->data[i][2],
@@ -1264,6 +1264,43 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
 }
 
 
+#ifdef DEBUG
+void
+_mesa_print_points_function(GLcontext *ctx)
+{
+   printf("Point Func == ");
+   if (ctx->Driver.PointsFunc == size1_ci_points)
+      printf("size1_ci_points\n");
+   else if (ctx->Driver.PointsFunc == size1_rgba_points)
+      printf("size1_rgba_points\n");
+   else if (ctx->Driver.PointsFunc == general_ci_points)
+      printf("general_ci_points\n");
+   else if (ctx->Driver.PointsFunc == general_rgba_points)
+      printf("general_rgba_points\n");
+   else if (ctx->Driver.PointsFunc == textured_rgba_points)
+      printf("textured_rgba_points\n");
+   else if (ctx->Driver.PointsFunc == multitextured_rgba_points)
+      printf("multitextured_rgba_points\n");
+   else if (ctx->Driver.PointsFunc == antialiased_rgba_points)
+      printf("antialiased_rgba_points\n");
+   else if (ctx->Driver.PointsFunc == null_points)
+      printf("null_points\n");
+   else if (ctx->Driver.PointsFunc == dist_atten_general_ci_points)
+      printf("dist_atten_general_ci_points\n");
+   else if (ctx->Driver.PointsFunc == dist_atten_general_rgba_points)
+      printf("dist_atten_general_rgba_points\n");
+   else if (ctx->Driver.PointsFunc == dist_atten_textured_rgba_points)
+      printf("dist_atten_textured_rgba_points\n");
+   else if (ctx->Driver.PointsFunc == dist_atten_antialiased_rgba_points)
+      printf("dist_atten_antialiased_rgba_points\n");
+   else if (!ctx->Driver.PointsFunc)
+      printf("NULL\n");
+   else
+      printf("Driver func %p\n", ctx->Driver.PointsFunc);
+}
+#endif
+
+
 /*
  * Examine the current context to determine which point drawing function
  * should be used.
@@ -1332,5 +1369,6 @@ void gl_set_point_function( GLcontext *ctx )
       ctx->Driver.PointsFunc = gl_select_points;
    }
 
+   /*_mesa_print_points_function(ctx);*/
 }
 

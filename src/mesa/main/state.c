@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.11 2000/05/04 14:09:41 brianp Exp $ */
+/* $Id: state.c,v 1.12 2000/05/10 22:36:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -798,6 +798,7 @@ static void update_rasterflags( GLcontext *ctx )
    if (ctx->Scissor.Enabled)		ctx->RasterMask |= SCISSOR_BIT;
    if (ctx->Stencil.Enabled)		ctx->RasterMask |= STENCIL_BIT;
    if (ctx->Color.SWmasking)		ctx->RasterMask |= MASKING_BIT;
+   if (ctx->Texture.ReallyEnabled)	ctx->RasterMask |= TEXTURE_BIT;
 
    if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
        && ctx->Color.ColorMask[ACOMP]
@@ -968,10 +969,9 @@ void gl_update_state( GLcontext *ctx )
       ctx->NeedNormals = (ctx->Light.Enabled || ctx->Texture.NeedNormals);
    }
 
-   if (ctx->NewState & (NEW_RASTER_OPS | NEW_LIGHTING | NEW_FOG)) {
+   if (ctx->NewState & (NEW_RASTER_OPS | NEW_LIGHTING | NEW_FOG | NEW_TEXTURE_ENABLE)) {
 
-
-      if (ctx->NewState & NEW_RASTER_OPS) {
+      if (ctx->NewState & (NEW_RASTER_OPS | NEW_TEXTURE_ENABLE)) {
 	 update_pixel_logic(ctx);
 	 update_pixel_masking(ctx);
 	 update_fog_mode(ctx);
@@ -980,20 +980,7 @@ void gl_update_state( GLcontext *ctx )
 	    (*ctx->Driver.Dither)( ctx, ctx->Color.DitherFlag );
 	 }
 
-	 /* Check if incoming colors can be modified during rasterization */
-	 if (ctx->Fog.Enabled ||
-	     ctx->Texture.Enabled ||
-	     ctx->Color.BlendEnabled ||
-	     ctx->Color.SWmasking ||
-	     ctx->Color.SWLogicOpEnabled) {
-	    ctx->MutablePixels = GL_TRUE;
-	 }
-	 else {
-	    ctx->MutablePixels = GL_FALSE;
-	 }
-
 	 /* update scissor region */
-
 	 ctx->DrawBuffer->Xmin = 0;
 	 ctx->DrawBuffer->Ymin = 0;
 	 ctx->DrawBuffer->Xmax = ctx->DrawBuffer->Width-1;
