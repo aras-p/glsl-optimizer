@@ -91,7 +91,6 @@ RASTER_SOURCES = [.swrast]s_aatriangle.c \
 [.swrast]s_alphabuf.c \
 [.swrast]s_bitmap.c \
 [.swrast]s_blend.c \
-[.swrast]s_bufferobj.c \
 [.swrast]s_buffers.c \
 [.swrast]s_copypix.c \
 [.swrast]s_context.c \
@@ -162,6 +161,7 @@ api_noop.obj,\
 api_validate.obj,\
 attrib.obj,\
 blend.obj,\
+bufferobj.obj,\
 buffers.obj,\
 clip.obj,\
 colortab.obj,\
