@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.12 2000/02/25 12:35:57 joukj Exp $ */
+/* $Id: glx.h,v 1.13 2000/02/27 18:26:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -225,7 +225,7 @@ extern Bool glXMakeCurrent( Display *dpy, GLXDrawable drawable,
 			    GLXContext ctx);
 
 extern void glXCopyContext( Display *dpy, GLXContext src, GLXContext dst,
-			    GLuint mask );
+			    unsigned long mask );
 
 extern void glXSwapBuffers( Display *dpy, GLXDrawable drawable );
 

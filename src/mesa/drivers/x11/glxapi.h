@@ -1,4 +1,4 @@
-/* $Id: glxapi.h,v 1.3 2000/02/25 17:04:42 brianp Exp $ */
+/* $Id: glxapi.h,v 1.4 2000/02/27 18:26:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,7 +56,7 @@
 struct _glxapi_table {
    /* GLX 1.0 functions */
    XVisualInfo *(*ChooseVisual)(Display *dpy, int screen, int *list);
-   void (*CopyContext)(Display *dpy, GLXContext src, GLXContext dst, GLuint mask);
+   void (*CopyContext)(Display *dpy, GLXContext src, GLXContext dst, unsigned long mask);
    GLXContext (*CreateContext)(Display *dpy, XVisualInfo *visinfo, GLXContext shareList, Bool direct);
    GLXPixmap (*CreateGLXPixmap)(Display *dpy, XVisualInfo *visinfo, Pixmap pixmap);
    void (*DestroyContext)(Display *dpy, GLXContext ctx);
