@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.43 2001/12/19 01:08:49 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.44 2001/12/19 01:09:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1148,7 +1148,7 @@ static void nodraw_triangle( GLcontext *ctx,
 
 /*
  * This is used when separate specular color is enabled, but not
- * texturing.  We cadd the specular color to the primary color,
+ * texturing.  We add the specular color to the primary color,
  * draw the triangle, then restore the original primary color.
  * Inefficient, but seldom needed.
  */
