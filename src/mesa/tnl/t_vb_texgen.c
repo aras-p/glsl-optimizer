@@ -449,7 +449,7 @@ static void texgen( GLcontext *ctx,
 	 break;
       case GL_REFLECTION_MAP_NV:
 	 for (i=0;i<count;i++)
-	     texcoord[i][0] = f[i][0];
+	     texcoord[i][1] = f[i][1];
 	 break;
       case GL_NORMAL_MAP_NV: {
 	 const GLfloat *norm = normal->start;
