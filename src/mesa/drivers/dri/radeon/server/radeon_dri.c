@@ -454,7 +454,8 @@ static int RADEONDRIKernelInit( const DRIDriverContext *ctx,
 
    if ( (info->ChipFamily == CHIP_FAMILY_R200) ||
 	(info->ChipFamily == CHIP_FAMILY_RV250) ||
-	(info->ChipFamily == CHIP_FAMILY_M9) )
+	(info->ChipFamily == CHIP_FAMILY_M9) ||
+	(info->ChipFamily == CHIP_FAMILY_RV280) )
       drmInfo.func             = DRM_RADEON_INIT_R200_CP;
    else
       drmInfo.func             = DRM_RADEON_INIT_CP;
@@ -1001,6 +1002,13 @@ static int get_chipfamily_from_chipset( RADEONInfoPtr info )
     case PCI_CHIP_RV250_Lg:
 	info->ChipFamily = CHIP_FAMILY_M9;
 	break;
+
+    case PCI_CHIP_RV280_Y_:
+    case PCI_CHIP_RV280_Ya:
+    case PCI_CHIP_RV280_Yb:
+    case PCI_CHIP_RV280_Yc:
+	info->ChipFamily = CHIP_FAMILY_RV280;
+        break;
 
     case PCI_CHIP_R300_ND:
     case PCI_CHIP_R300_NE:

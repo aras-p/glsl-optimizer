@@ -67,6 +67,10 @@
 #define PCI_CHIP_RADEON_QY		0x5159
 #define PCI_CHIP_RADEON_QZ		0x515A
 #define PCI_CHIP_R200_Ql		0x516C
+#define PCI_CHIP_RV280_Y_		0x5960
+#define PCI_CHIP_RV280_Ya		0x5961
+#define PCI_CHIP_RV280_Yb		0x5962
+#define PCI_CHIP_RV280_Yc		0x5963
 
 /**
  * \brief Chip families.
@@ -84,6 +88,7 @@ typedef enum {
     CHIP_FAMILY_R200,
     CHIP_FAMILY_RV250,
     CHIP_FAMILY_M9,
+    CHIP_FAMILY_RV280,
     CHIP_FAMILY_R300
 } RADEONChipFamily;
 
