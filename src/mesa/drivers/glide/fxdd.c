@@ -770,7 +770,6 @@ void fxDDInitExtensions( GLcontext *ctx )
    gl_extensions_disable(ctx, "GL_EXT_paletted_texture");
 
    gl_extensions_add(ctx, DEFAULT_ON, "3DFX_set_global_palette", 0);
-   gl_extensions_add(ctx, DEFAULT_ON, "GL_FXMESA_global_texture_lod_bias", 0);
    
    if (!fxMesa->haveTwoTMUs)
       gl_extensions_disable(ctx, "GL_EXT_texture_env_add");

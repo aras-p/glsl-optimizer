@@ -694,20 +694,6 @@ void GLAPIENTRY fxMesaSetNearFar(GLfloat n, GLfloat f)
 
 
 /*
- * The extension GL_FXMESA_global_texture_lod_bias
- */
-/* XXX this function may soon go away in favor of GL_EXT_texture_lod_bias */
-extern void GLAPIENTRY glGlobalTextureLODBiasFXMESA(GLfloat biasVal);
-void GLAPIENTRY glGlobalTextureLODBiasFXMESA(GLfloat biasVal)
-{
-  grTexLodBiasValue(GR_TMU0,biasVal);
-
-  if(fxMesaCurrentCtx->haveTwoTMUs)
-    grTexLodBiasValue(GR_TMU1,biasVal);
-}
-
-
-/*
  * The 3Dfx Global Palette extension for GLQuake.
  * More a trick than a real extesion, use the shared global
  * palette extension. 
