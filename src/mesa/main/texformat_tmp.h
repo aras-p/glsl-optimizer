@@ -362,6 +362,27 @@ static void FETCH(ycbcr_rev)( const struct gl_texture_image *texImage,
 
 
 #if DIM == 2
+static void FETCH(rgb_fxt1)( const struct gl_texture_image *texImage,
+                             GLint i, GLint j, GLint k, GLvoid *texel )
+{
+   /* Extract the (i,j) pixel from texImage->Data and return it
+    * in texel[RCOMP], texel[GCOMP], texel[BCOMP], texel[ACOMP].
+    */
+}
+#endif
+
+#if DIM == 2
+static void FETCH(rgba_fxt1)( const struct gl_texture_image *texImage,
+                              GLint i, GLint j, GLint k, GLvoid *texel )
+{
+   /* Extract the (i,j) pixel from texImage->Data and return it
+    * in texel[RCOMP], texel[GCOMP], texel[BCOMP], texel[ACOMP].
+    */
+}
+#endif
+
+
+#if DIM == 2
 static void FETCH(rgb_dxt1)( const struct gl_texture_image *texImage,
                              GLint i, GLint j, GLint k, GLvoid *texel )
 {

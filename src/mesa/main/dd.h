@@ -480,6 +480,17 @@ struct dd_function_table {
                                    GLsizei imageSize, const GLvoid *data,
                                    struct gl_texture_object *texObj,
                                    struct gl_texture_image *texImage);
+   /**
+    * Called to validate a certain compressed format.
+    */
+   GLboolean (*IsCompressedFormat)( GLcontext *ctx, GLenum internalFormat );
+   /**
+    * Called to get bytes of storage needed for the given texture size and
+    * compressed format.
+    */
+   GLuint (*CompressedTextureSize)( GLcontext *ctx,
+                                    GLsizei width, GLsizei height, GLsizei depth,
+                                    GLenum format );
    /*@}*/
 
    /**

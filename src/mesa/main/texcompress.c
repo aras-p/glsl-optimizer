@@ -96,11 +96,20 @@ _mesa_compressed_texture_size( GLcontext *ctx,
 {
    GLuint size;
 
+   if (ctx->Driver.CompressedTextureSize) {
+      return ctx->Driver.CompressedTextureSize(ctx, width, height, depth, format);
+   }
+
    switch (format) {
    case GL_COMPRESSED_RGB_FXT1_3DFX:
    case GL_COMPRESSED_RGBA_FXT1_3DFX:
       /* round up to multiple of 4 */
       size = ((width + 7) / 8) * ((height + 3) / 4) * 16;
+      /* Textures smaller than 4x4 will effectively be made into 4x4 and
+       * take 8 bytes.
+       */
+      if (size < 16)
+         size = 16;
       return size;
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
@@ -150,6 +159,10 @@ _mesa_compressed_row_stride(GLenum format, GLsizei width)
    GLint bytesPerTile, stride;
 
    switch (format) {
+   case GL_COMPRESSED_RGB_FXT1_3DFX:
+   case GL_COMPRESSED_RGBA_FXT1_3DFX:
+      bytesPerTile = 8;
+      break;
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
       bytesPerTile = 8;
@@ -193,6 +206,10 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
    (void) img;
 
    switch (format) {
+   case GL_COMPRESSED_RGB_FXT1_3DFX:
+   case GL_COMPRESSED_RGBA_FXT1_3DFX:
+      bytesPerTile = 8;
+      break;
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
       bytesPerTile = 8;

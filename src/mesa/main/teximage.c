@@ -262,6 +262,18 @@ _mesa_base_tex_format( GLcontext *ctx, GLint format )
             return GL_RGBA;
          else
             return -1;
+      case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+         if (ctx->Extensions.EXT_texture_compression_s3tc)
+            return GL_RGB;
+         else
+            return -1;
+      case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+      case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+      case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+         if (ctx->Extensions.EXT_texture_compression_s3tc)
+            return GL_RGBA;
+         else
+            return -1;
 
       case GL_YCBCR_MESA:
          if (ctx->Extensions.MESA_ycbcr_texture)
@@ -366,13 +378,20 @@ is_index_format(GLenum format)
  * are supported.
  */
 static GLboolean
-is_compressed_format(GLenum internalFormat)
+is_compressed_format(GLcontext *ctx, GLenum internalFormat)
 {
    switch (internalFormat) {
       case GL_COMPRESSED_RGB_FXT1_3DFX:
       case GL_COMPRESSED_RGBA_FXT1_3DFX:
+      case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+      case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+      case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+      case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
          return GL_TRUE;
       default:
+         if (ctx->Driver.IsCompressedFormat) {
+            return ctx->Driver.IsCompressedFormat(ctx, internalFormat);
+         }
          return GL_FALSE;
    }
 }
@@ -916,7 +935,7 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
    img->Height2 = height - 2 * border; /*1 << img->HeightLog2;*/
    img->Depth2 = depth - 2 * border; /*1 << img->DepthLog2;*/
    img->MaxLog2 = MAX2(img->WidthLog2, img->HeightLog2);
-   img->IsCompressed = is_compressed_format(internalFormat);
+   img->IsCompressed = is_compressed_format(ctx, internalFormat);
    if (img->IsCompressed)
       img->CompressedSize = _mesa_compressed_texture_size(ctx, width, height,
                                                        depth, internalFormat);
@@ -1236,7 +1255,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
       }
    }
 
-   if (is_compressed_format(internalFormat)) {
+   if (is_compressed_format(ctx, internalFormat)) {
       if (target == GL_TEXTURE_2D || target == GL_PROXY_TEXTURE_2D) {
          /* OK */
       }
@@ -1569,7 +1588,7 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   if (is_compressed_format(internalFormat)) {
+   if (is_compressed_format(ctx, internalFormat)) {
       if (target != GL_TEXTURE_2D) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glCopyTexImage%d(target)", dimensions);
@@ -2612,7 +2631,7 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
 
    maxTextureSize = 1 << (maxLevels - 1);
 
-   if (!is_compressed_format(internalFormat))
+   if (!is_compressed_format(ctx, internalFormat))
       return GL_INVALID_ENUM;
 
    if (border != 0)
@@ -2701,7 +2720,7 @@ compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
 
    maxTextureSize = 1 << (maxLevels - 1);
 
-   if (!is_compressed_format(format))
+   if (!is_compressed_format(ctx, format))
       return GL_INVALID_ENUM;
 
    if (width < 1 || width > maxTextureSize)

@@ -453,6 +453,40 @@ const struct gl_texture_format _mesa_texformat_ycbcr_rev = {
    fetch_3d_texel_ycbcr_rev,		/* FetchTexel3D */
 };
 
+const struct gl_texture_format _mesa_texformat_rgb_fxt1 = {
+   MESA_FORMAT_RGB_FXT1,		/* MesaFormat */
+   GL_RGB,				/* BaseFormat */
+   4, /*approx*/			/* RedBits */
+   4, /*approx*/			/* GreenBits */
+   4, /*approx*/			/* BlueBits */
+   0,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   0,					/* TexelBytes */
+   NULL, /*impossible*/ 		/* FetchTexel1D */
+   fetch_2d_texel_rgb_fxt1, 		/* FetchTexel2D */
+   NULL, /*impossible*/ 		/* FetchTexel3D */
+};
+
+const struct gl_texture_format _mesa_texformat_rgba_fxt1 = {
+   MESA_FORMAT_RGBA_FXT1,		/* MesaFormat */
+   GL_RGBA,				/* BaseFormat */
+   4, /*approx*/			/* RedBits */
+   4, /*approx*/			/* GreenBits */
+   4, /*approx*/			/* BlueBits */
+   1, /*approx*/			/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   0,					/* TexelBytes */
+   NULL, /*impossible*/ 		/* FetchTexel1D */
+   fetch_2d_texel_rgba_fxt1, 		/* FetchTexel2D */
+   NULL, /*impossible*/ 		/* FetchTexel3D */
+};
+
 const struct gl_texture_format _mesa_texformat_rgb_dxt1 = {
    MESA_FORMAT_RGB_DXT1,		/* MesaFormat */
    GL_RGB,				/* BaseFormat */
@@ -838,13 +872,17 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
    case GL_COMPRESSED_RGB_ARB:
       if (!ctx->Extensions.ARB_texture_compression)
 	 _mesa_problem(ctx, "texture compression extension not enabled");
-      if (ctx->Extensions.EXT_texture_compression_s3tc)
+      if (ctx->Extensions.TDFX_texture_compression_FXT1)
+         return &_mesa_texformat_rgb_fxt1;
+      else if (ctx->Extensions.EXT_texture_compression_s3tc)
          return &_mesa_texformat_rgb_dxt1;
       return &_mesa_texformat_rgb;
    case GL_COMPRESSED_RGBA_ARB:
       if (!ctx->Extensions.ARB_texture_compression)
 	 _mesa_problem(ctx, "texture compression extension not enabled");
-      if (ctx->Extensions.EXT_texture_compression_s3tc)
+      if (ctx->Extensions.TDFX_texture_compression_FXT1)
+         return &_mesa_texformat_rgba_fxt1;
+      else if (ctx->Extensions.EXT_texture_compression_s3tc)
          return &_mesa_texformat_rgba_dxt3;  /* Not rgba_dxt1!  See the spec */
       return &_mesa_texformat_rgba;
 
@@ -854,6 +892,18 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
          return &_mesa_texformat_ycbcr;
       else
          return &_mesa_texformat_ycbcr_rev;
+
+   /* GL_3DFX_texture_compression_FXT1 */
+   case GL_COMPRESSED_RGB_FXT1_3DFX:
+      if (ctx->Extensions.TDFX_texture_compression_FXT1)
+         return &_mesa_texformat_rgb_fxt1;
+      else
+         return NULL;
+   case GL_COMPRESSED_RGBA_FXT1_3DFX:
+      if (ctx->Extensions.TDFX_texture_compression_FXT1)
+         return &_mesa_texformat_rgba_fxt1;
+      else
+         return NULL;
 
    /* GL_EXT_texture_compression_s3tc */
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:

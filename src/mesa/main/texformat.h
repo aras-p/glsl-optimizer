@@ -75,6 +75,8 @@ enum _format {
    MESA_FORMAT_YCBCR_REV,	/*                     UorV UorV YYYY YYYY */
    /*@}*/
 
+   MESA_FORMAT_RGB_FXT1,
+   MESA_FORMAT_RGBA_FXT1,
    MESA_FORMAT_RGB_DXT1,
    MESA_FORMAT_RGBA_DXT1,
    MESA_FORMAT_RGBA_DXT3,
@@ -162,6 +164,8 @@ extern const struct gl_texture_format _mesa_texformat_i8;
 extern const struct gl_texture_format _mesa_texformat_ci8;
 extern const struct gl_texture_format _mesa_texformat_ycbcr;
 extern const struct gl_texture_format _mesa_texformat_ycbcr_rev;
+extern const struct gl_texture_format _mesa_texformat_rgb_fxt1;
+extern const struct gl_texture_format _mesa_texformat_rgba_fxt1;
 extern const struct gl_texture_format _mesa_texformat_rgb_dxt1;
 extern const struct gl_texture_format _mesa_texformat_rgba_dxt1;
 extern const struct gl_texture_format _mesa_texformat_rgba_dxt3;
