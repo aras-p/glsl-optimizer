@@ -1,10 +1,10 @@
-/* $Id: blend.c,v 1.27 2000/12/26 05:09:27 keithw Exp $ */
+/* $Id: blend.c,v 1.28 2001/02/26 22:07:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,6 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 
 
 #ifdef PC_HEADER
@@ -272,18 +271,26 @@ _mesa_BlendEquation( GLenum mode )
 	      gl_lookup_enum_by_nr(mode));
 
    switch (mode) {
+      case GL_FUNC_ADD_EXT:
+         break;
       case GL_MIN_EXT:
       case GL_MAX_EXT:
-      case GL_FUNC_ADD_EXT:
-         if (!ctx->Extensions.EXT_blend_minmax) {
+         if (!ctx->Extensions.EXT_blend_minmax &&
+             !ctx->Extensions.ARB_imaging) {
             gl_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
             return;
          }
+         break;
       case GL_LOGIC_OP:
+         if (!ctx->Extensions.EXT_blend_logic_op) {
+            gl_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
+            return;
+         }
          break;
       case GL_FUNC_SUBTRACT_EXT:
       case GL_FUNC_REVERSE_SUBTRACT_EXT:
-         if (!ctx->Extensions.EXT_blend_subtract) {
+         if (!ctx->Extensions.EXT_blend_subtract &&
+             !ctx->Extensions.ARB_imaging) {
             gl_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
             return;
          }
