@@ -69,7 +69,7 @@ dxtFetchTexelFuncExt fetch_ext_rgba_dxt1 = NULL;
 dxtFetchTexelFuncExt fetch_ext_rgba_dxt3 = NULL;
 dxtFetchTexelFuncExt fetch_ext_rgba_dxt5 = NULL;
 
-typedef void (*dxtCompressTexFuncExt)(GLint srccomps, GLint width, GLint height, const GLubyte *srcPixData, GLenum destformat, GLubyte *dest);
+typedef void (*dxtCompressTexFuncExt)(GLint srccomps, GLint width, GLint height, const GLubyte *srcPixData, GLenum destformat, GLubyte *dest, GLint dstRowStride);
 dxtCompressTexFuncExt ext_tx_compress_dxtn = NULL;
 
 void *dxtlibhandle = NULL;
@@ -172,7 +172,7 @@ texstore_rgb_dxt1(STORE_PARAMS)
                                         texWidth, (GLubyte *) dstAddr);
 
    if (ext_tx_compress_dxtn) {
-      (*ext_tx_compress_dxtn)(3, srcWidth, srcHeight, pixels,  GL_COMPRESSED_RGB_S3TC_DXT1_EXT, dst);
+      (*ext_tx_compress_dxtn)(3, srcWidth, srcHeight, pixels,  GL_COMPRESSED_RGB_S3TC_DXT1_EXT, dst, dstRowStride);
    }
    else {
       _mesa_problem(ctx, "external dxt library not available");
@@ -231,7 +231,7 @@ texstore_rgba_dxt1(STORE_PARAMS)
                                         GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
                                         texWidth, (GLubyte *) dstAddr);
    if (ext_tx_compress_dxtn) {
-      (*ext_tx_compress_dxtn)(4, srcWidth, srcHeight, pixels,  GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, dst);
+      (*ext_tx_compress_dxtn)(4, srcWidth, srcHeight, pixels,  GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, dst, dstRowStride);
    }
    else {
       _mesa_problem(ctx, "external dxt library not available");
@@ -289,7 +289,7 @@ texstore_rgba_dxt3(STORE_PARAMS)
                                         GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,
                                         texWidth, (GLubyte *) dstAddr);
    if (ext_tx_compress_dxtn) {
-      (*ext_tx_compress_dxtn)(4, srcWidth, srcHeight, pixels,  GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, dst);
+      (*ext_tx_compress_dxtn)(4, srcWidth, srcHeight, pixels,  GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, dst, dstRowStride);
    }
    else {
       _mesa_problem(ctx, "external dxt library not available");
@@ -347,7 +347,7 @@ texstore_rgba_dxt5(STORE_PARAMS)
                                         GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,
                                         texWidth, (GLubyte *) dstAddr);
    if (ext_tx_compress_dxtn) {
-      (*ext_tx_compress_dxtn)(4, srcWidth, srcHeight, pixels,  GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, dst);
+      (*ext_tx_compress_dxtn)(4, srcWidth, srcHeight, pixels,  GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, dst, dstRowStride);
    }
    else {
       _mesa_problem(ctx, "external dxt library not available");
