@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  6.0
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,7 +52,10 @@ extern void _ASMAPI _mesa_sse_transform_rescale_normals_no_rot( NORM_ARGS );
 
 extern void _ASMAPI _mesa_sse_transform_points4_general( XFORM_ARGS );
 extern void _ASMAPI _mesa_sse_transform_points4_3d( XFORM_ARGS );
+/* XXX this function segfaults, see below */
 extern void _ASMAPI _mesa_sse_transform_points4_identity( XFORM_ARGS );
+/* XXX this one works, see below */
+extern void _ASMAPI _mesa_x86_transform_points4_identity( XFORM_ARGS );
 #else
 DECLARE_NORM_GROUP( sse )
 #endif
@@ -94,8 +96,11 @@ void _mesa_init_sse_transform_asm( void )
       _mesa_sse_transform_points4_general;
    _mesa_transform_tab[4][MATRIX_3D] =
       _mesa_sse_transform_points4_3d;
+   /* XXX NOTE: _mesa_sse_transform_points4_identity segfaults with the
+      conformance tests, so use the x86 version.
+   */
    _mesa_transform_tab[4][MATRIX_IDENTITY] =
-      _mesa_sse_transform_points4_identity;
+      _mesa_x86_transform_points4_identity;/*_mesa_sse_transform_points4_identity;*/
 
    _mesa_normal_tab[NORM_TRANSFORM_NO_ROT] =
       _mesa_sse_transform_normals_no_rot;
