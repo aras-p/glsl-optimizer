@@ -1,4 +1,4 @@
-/* $Id: texformat.c,v 1.8 2001/04/04 21:54:21 brianp Exp $ */
+/* $Id: texformat.c,v 1.9 2001/04/04 23:56:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -241,7 +241,7 @@ const struct gl_texture_format _mesa_texformat_rgba8888 = {
 
 const struct gl_texture_format _mesa_texformat_argb8888 = {
    MESA_FORMAT_ARGB8888,		/* MesaFormat */
-   GL_BGRA,				/* IntFormat */
+   GL_RGBA,				/* IntFormat */
    GL_UNSIGNED_INT_8_8_8_8_REV,		/* Type */
    8,					/* RedBits */
    8,					/* GreenBits */
@@ -295,7 +295,7 @@ const struct gl_texture_format _mesa_texformat_rgb565 = {
 
 const struct gl_texture_format _mesa_texformat_argb4444 = {
    MESA_FORMAT_ARGB4444,		/* MesaFormat */
-   GL_BGRA,				/* IntFormat */
+   GL_RGBA,				/* IntFormat */
    GL_UNSIGNED_SHORT_4_4_4_4_REV,	/* Type */
    4,					/* RedBits */
    4,					/* GreenBits */
@@ -313,7 +313,7 @@ const struct gl_texture_format _mesa_texformat_argb4444 = {
 
 const struct gl_texture_format _mesa_texformat_argb1555 = {
    MESA_FORMAT_ARGB1555,		/* MesaFormat */
-   GL_BGRA,				/* IntFormat */
+   GL_RGBA,				/* IntFormat */
    GL_UNSIGNED_SHORT_1_5_5_5_REV,	/* Type */
    5,					/* RedBits */
    5,					/* GreenBits */
