@@ -5067,7 +5067,7 @@ typedef long int GLintptrARB;
 GLAPI void APIENTRY glBindBufferARB(GLenum target, GLuint buffer);
 GLAPI void APIENTRY glDeleteBuffersARB(GLsizei n, const GLuint * buffer);
 GLAPI void APIENTRY glGenBuffersARB(GLsizei n, GLuint * buffer);
-extern GLboolean glIsBufferARB(GLuint buffer);
+GLAPI GLboolean APIENTRY glIsBufferARB(GLuint buffer);
 GLAPI void APIENTRY glBufferDataARB(GLenum target, GLsizeiptrARB size, const GLvoid * data, GLenum usage);
 GLAPI void APIENTRY glBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid * data);
 GLAPI void APIENTRY glGetBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data);
