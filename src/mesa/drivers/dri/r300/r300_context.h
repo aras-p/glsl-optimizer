@@ -326,10 +326,11 @@ struct r300_state_atom {
 #define R300_CB_PITCH		3
 #define R300_CB_CMDSIZE		4
 
-#define R300_ZC_CMD_0		0
-#define R300_ZC_CNTL_0		1
-#define R300_ZC_CNTL_1		2
-#define R300_ZC_CMDSIZE		3
+#define R300_ZS_CMD_0		0
+#define R300_ZS_CNTL_0		1
+#define R300_ZS_CNTL_1		2
+#define R300_ZS_CNTL_2		3
+#define R300_ZS_CMDSIZE		4
 
 #define R300_ZB_CMD_0		0
 #define R300_ZB_OFFSET		1
@@ -370,6 +371,7 @@ struct r300_hw_state {
 
 	struct r300_state_atom vpt;	/* viewport (1D98) */
 	struct r300_state_atom unk2080;	/* (2080) */
+	struct r300_state_atom vof;     /* VAP output format register 0x2090 */
 	struct r300_state_atom vte;	/* (20B0) */
 	struct r300_state_atom unk2134;	/* (2134) */
 	struct r300_state_atom unk2140;	/* (2140) */
@@ -380,7 +382,6 @@ struct r300_hw_state {
 	struct r300_state_atom unk2220; /* (2220) */
 	struct r300_state_atom unk2288; /* (2288) */
 	struct r300_state_atom pvs;	/* pvs_cntl (22D0) */
-	struct r300_state_atom vof;     /* VAP output format register 0x2090 */
 	struct r300_state_atom gb_enable; /* (4008) */
 	struct r300_state_atom gb_misc; /* Multisampling position shifts ? (4010) */
 	struct r300_state_atom unk4200; /* (4200) */
@@ -416,8 +417,7 @@ struct r300_hw_state {
 	struct r300_state_atom unk4E50;	/* (4E50) */
 	struct r300_state_atom unk4E88;	/* (4E88) */
 	struct r300_state_atom unk4EA0;	/* (4E88) I saw it only written on RV350 hardware..  */
-	struct r300_state_atom zc;	/* z control (4F00) */
-	struct r300_state_atom unk4F08;	/* (4F08) */
+	struct r300_state_atom zs;	/* zstencil control (4F00) */
 	struct r300_state_atom unk4F10;	/* (4F10) */
 	struct r300_state_atom zb;	/* z buffer (4F20) */
 	struct r300_state_atom unk4F28;	/* (4F28) */

@@ -317,6 +317,13 @@ static const struct gl_texture_format *r300ChooseTextureFormat(GLcontext * ctx,
 	    (rmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FORCE_16);
 	(void)format;
 	
+	#if 0
+	fprintf(stderr, "InternalFormat=%s type=%s format=%s\n", 
+		_mesa_lookup_enum_by_nr(internalFormat),
+		_mesa_lookup_enum_by_nr(type),
+		_mesa_lookup_enum_by_nr(format));
+	#endif
+	
 	switch (internalFormat) {
 	case 4:
 	case GL_RGBA:

@@ -48,6 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast_setup/swrast_setup.h"
 #include "array_cache/acache.h"
 #include "tnl/tnl.h"
+#include "texformat.h"
 
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
@@ -457,7 +458,7 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 		break;
 
 	case GL_DEPTH_TEST:
-		R300_STATECHANGE(r300, zc);
+		R300_STATECHANGE(r300, zs);
 
 		if (state) {
 			if (ctx->Depth.Mask)
@@ -467,7 +468,7 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 		} else
 			newval = 0;
 
-		r300->hw.zc.cmd[R300_ZC_CNTL_0] = newval;
+		r300->hw.zs.cmd[R300_ZS_CNTL_0] = newval;
 		break;
 
 	case GL_CULL_FACE:
@@ -516,34 +517,38 @@ static void r300DepthFunc(GLcontext* ctx, GLenum func)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
-	R300_STATECHANGE(r300, zc);
+	R300_STATECHANGE(r300, zs);
 
+	r300->hw.zs.cmd[R300_ZS_CNTL_1] &= ~(R300_ZS_MASK << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
+	
 	switch(func) {
 	case GL_NEVER:
-		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_NEVER;
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_NEVER << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
 		break;
 	case GL_LESS:
-		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_LESS;
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_LESS << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
 		break;
 	case GL_EQUAL:
-		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_EQUAL;
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_EQUAL << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
 		break;
 	case GL_LEQUAL:
-		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_LEQUAL;
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_LEQUAL << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
 		break;
 	case GL_GREATER:
-		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_GREATER;
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_GREATER << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
 		break;
 	case GL_NOTEQUAL:
-		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_NEQUAL;
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_NOTEQUAL << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
 		break;
 	case GL_GEQUAL:
-		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_GEQUAL;
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_GEQUAL << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
 		break;
 	case GL_ALWAYS:
-		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_ALWAYS;
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= R300_ZS_ALWAYS << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
 		break;
 	}
+
+	fprintf(stderr, "ZS_CNTL_1=%08x\n", r300->hw.zs.cmd[R300_ZS_CNTL_1]);
 }
 
 
@@ -559,8 +564,8 @@ static void r300DepthMask(GLcontext* ctx, GLboolean mask)
 	if (!ctx->Depth.Test)
 		return;
 
-	R300_STATECHANGE(r300, zc);
-	r300->hw.zc.cmd[R300_ZC_CNTL_0] = mask
+	R300_STATECHANGE(r300, zs);
+	r300->hw.zs.cmd[R300_ZS_CNTL_0] = mask
 		? R300_RB3D_Z_TEST_AND_WRITE : R300_RB3D_Z_TEST;
 }
 
@@ -849,7 +854,8 @@ static int inline translate_src(int src)
 	)
 
 	   
-static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint format, GLint IntFormat)
+static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint format, GLint IntFormat, 
+	struct gl_texture_format *tex_format)
 {
 	const struct gl_texture_unit *texUnit= &ctx->Texture.Unit[tex_unit];
 	int i=0; /* number of alpha args .. */
@@ -860,21 +866,33 @@ static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint fo
 		texUnit->_ReallyEnabled, 
 		_mesa_lookup_enum_by_nr(texUnit->EnvMode));
 	#endif
-		
+	
+	if(tex_format==NULL){
+		fprintf(stderr, "Aeiii ! tex_format==NULL !!\n");
+		return 0;
+		}
+	
+	switch(tex_format->MesaFormat){
+		case MESA_FORMAT_RGBA8888:
+			return R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8);
+		default:
+			fprintf(stderr, "Do not know format %s\n", _mesa_lookup_enum_by_nr(tex_format->MesaFormat));
+			return 0;
+		}
+	
 	switch(IntFormat){
 		case 4:
 		case GL_RGBA:
 		case GL_RGBA8:
-			fmt=R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8);
 			break;
 		case 3:
 		case GL_RGB8:
-			fmt=R300_EASY_TX_FORMAT(Z, Y, X, ONE, W8Z8Y8X8);
+			fmt=R300_EASY_TX_FORMAT(Y, Z, W, ONE, W8Z8Y8X8);
 			break;
 		default:
 			return 0;
 		}
-	#if 0
+	#if 1
 	//fmt &= 0x00fff;
 	//fmt |= ((format) & 0xff00)<<4;
 	fprintf(stderr, "NumArgsRGB=%d NumArgsA=%d\n", 
@@ -883,7 +901,7 @@ static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint fo
 	
 	fprintf(stderr, "fmt=%08x\n", fmt);
 	#endif
-	//return fmt;
+	return fmt;
 	/* Size field in format specific first */
 	switch(FORMAT_HASH(							
 		texUnit->_CurrentCombine->OperandRGB[i] -GL_SRC_COLOR,
@@ -1001,6 +1019,7 @@ void r300_setup_textures(GLcontext *ctx)
 	for(i=0;i<mtu;i++){
 		if(ctx->Texture.Unit[i].Enabled){
 			t=r300->state.texture.unit[i].texobj;
+			fprintf(stderr, "format=%08x\n", r300->state.texture.unit[i].format);
 			r300->state.texture.tc_count++;
 			if(t==NULL){
 				fprintf(stderr, "Texture unit %d enabled, but corresponding texobj is NULL, using default object.\n", i);
@@ -1023,6 +1042,7 @@ void r300_setup_textures(GLcontext *ctx)
 			/*r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=(rand()%0xffffffff) & (~0x1fff);*/
 			r300->hw.tex.size.cmd[R300_TEX_VALUE_0+i]=t->size;
 			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=t->format;
+			//fprintf(stderr, "t->format=%08x\n", t->format);
 			r300->hw.tex.offset.cmd[R300_TEX_VALUE_0+i]=r300->radeon.radeonScreen->fbLocation+t->offset;
 			r300->hw.tex.unknown4.cmd[R300_TEX_VALUE_0+i]=0x0;
 			r300->hw.tex.unknown5.cmd[R300_TEX_VALUE_0+i]=0x0;
@@ -1031,9 +1051,11 @@ void r300_setup_textures(GLcontext *ctx)
 			/* We don't know how to set this yet */
 			//value from r300_lib.c for RGB24
 			//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x88a0c; 
+			#if 0
 			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=translate_texture_format(ctx, i, t->format,
-			 	r300->state.texture.unit[i].texobj!=NULL?t->base.tObj->Image[0][0]->IntFormat:3);
-			
+			 	r300->state.texture.unit[i].texobj!=NULL?t->base.tObj->Image[0][0]->IntFormat:3,
+				r300->state.texture.unit[i].texobj!=NULL?t->base.tObj->Image[0][0]->TexFormat:NULL);
+			#endif
 			
 			#if 0
 			fprintf(stderr, "Format=%s IntFormat=%08x MesaFormat=%08x BaseFormat=%s IsCompressed=%d Target=%s\n",
@@ -1051,7 +1073,7 @@ void r300_setup_textures(GLcontext *ctx)
 			/* Use the code below to quickly find matching texture
 			   formats. Requires an app that displays the same texture
 			   repeatedly  */
-			      #if 1
+			      #if 0
 				if(r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]==0){ 
 					static int fmt=0x0;
 					static int k=0;
@@ -1353,6 +1375,17 @@ void r300ResetHwState(r300ContextPtr r300)
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
+		/* This is a place to initialize registers which
+		   have bitfields accessed by different functions
+		   and not all bits are used */
+	#if 0
+	r300->hw.zs.cmd[R300_ZS_CNTL_0] = 0;
+	r300->hw.zs.cmd[R300_ZS_CNTL_1] = 0;
+	r300->hw.zs.cmd[R300_ZS_CNTL_2] = 0xffff00;
+	#endif
+	
+		/* go and compute register values from GL state */
+		
 	r300UpdateWindow(ctx);
 	
 	r300ColorMask(ctx,
@@ -1379,7 +1412,9 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300_set_blend_state(ctx);
 	r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
 
-//BEGIN: TODO
+		/* Initialize magic registers
+		 TODO : learn what they really do, or get rid of
+		 those we don't have to touch */
 	r300->hw.unk2080.cmd[1] = 0x0030045A;
 
 	r300->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
@@ -1562,8 +1597,6 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk4EA0.cmd[1] = 0x00000000;
 	r300->hw.unk4EA0.cmd[2] = 0xffffffff;
-
-	r300->hw.unk4F08.cmd[1] = 0x00FFFF00;
 
 	r300->hw.unk4F10.cmd[1] = 0x00000002; // depthbuffer format?
 	r300->hw.unk4F10.cmd[2] = 0x00000000;

@@ -200,10 +200,10 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	r300->hw.vpi.cmd[7] = VP_ZERO();
 	r300->hw.vpi.cmd[8] = 0;
 
-	R300_STATECHANGE(r300, zc);
+	R300_STATECHANGE(r300, zs);
 	if (flags & CLEARBUFFER_DEPTH) {
-		r300->hw.zc.cmd[R300_ZC_CNTL_0] = 0x6; // test and write
-		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_Z_TEST_ALWAYS;
+		r300->hw.zs.cmd[R300_ZS_CNTL_0] = 0x6; // test and write
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] = (R300_ZS_ALWAYS<<R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
 /*
 		R300_STATECHANGE(r300, zb);
 		r300->hw.zb.cmd[R300_ZB_OFFSET] =
@@ -214,8 +214,8 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 			r300->radeon.radeonScreen->depthPitch;
 */
 	} else {
-		r300->hw.zc.cmd[R300_ZC_CNTL_0] = 0; // disable
-		r300->hw.zc.cmd[R300_ZC_CNTL_1] = 0;
+		r300->hw.zs.cmd[R300_ZS_CNTL_0] = 0; // disable
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] = 0;
 	}
 
 	/* Make sure we have enough space */

@@ -1063,22 +1063,52 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 /* gap */
 /* There seems to be no "write only" setting, so use Z-test = ALWAYS for this. */
 /* Bit (1<<8) is the "test" bit. so plain write is 6  - vd */
-#define R300_RB3D_ZCNTL_0                   0x4F00
+#define R300_RB3D_ZSTENCIL_CNTL_0                   0x4F00
 #       define R300_RB3D_Z_DISABLED_1            0x00000010 /* GUESS */
 #       define R300_RB3D_Z_DISABLED_2            0x00000014 /* GUESS */
 #       define R300_RB3D_Z_TEST                  0x00000012
 #       define R300_RB3D_Z_TEST_AND_WRITE        0x00000016
 #       define R300_RB3D_Z_WRITE_ONLY        	 0x00000006
-#define R300_RB3D_ZCNTL_1                   0x4F04
-#       define R300_Z_TEST_NEVER                 (0 << 0) /* GUESS (based on R200) */
-#       define R300_Z_TEST_LESS                  (1 << 0)
-#       define R300_Z_TEST_LEQUAL                (2 << 0)
-#       define R300_Z_TEST_EQUAL                 (3 << 0) /* GUESS */
-#       define R300_Z_TEST_GEQUAL                (4 << 0) /* GUESS */
-#       define R300_Z_TEST_GREATER               (5 << 0) /* GUESS */
-#       define R300_Z_TEST_NEQUAL                (6 << 0)
-#       define R300_Z_TEST_ALWAYS                (7 << 0)
-#       define R300_Z_TEST_MASK                  (7 << 0)
+
+#define R300_RB3D_ZSTENCILCNTL_1                   0x4F04
+		/* functions */
+#	define R300_ZS_NEVER			0
+#	define R300_ZS_LESS			1
+#	define R300_ZS_LEQUAL			2
+#	define R300_ZS_EQUAL			3
+#	define R300_ZS_GEQUAL			4
+#	define R300_ZS_GREATER			5
+#	define R300_ZS_NOTEQUAL			6
+#	define R300_ZS_ALWAYS			7
+#	define R300_ZS_MASK			7
+		/* operations */
+#	define R300_ZS_KEEP			0
+#	define R300_ZS_ZERO			1
+#	define R300_ZS_REPLACE			2
+#	define R300_ZS_INCR			3
+#	define R300_ZS_DECR			4
+#	define R300_ZS_INVERT			5
+#	define R300_ZS_INCR_WRAP		6
+#	define R300_ZS_DECR_WRAP		7
+
+
+#	define	R300_RB3D_ZS1_DEPTH_FUNC_SHIFT		0
+#	define	R300_RB3D_ZS1_FRONT_FUNC_SHIFT		3
+#	define	R300_RB3D_ZS1_FRONT_FAIL_OP_SHIFT	6
+#	define	R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT	9
+#	define	R300_RB3D_ZS1_FRONT_ZFAIL_OP_SHIFT	12
+#	define	R300_RB3D_ZS1_STENCIL_FUNC_SHIFT	15
+#	define	R300_RB3D_ZS1_STENCIL_FAIL_OP_SHIFT	18
+#	define	R300_RB3D_ZS1_STENCIL_ZPASS_OP_SHIFT	21
+#	define	R300_RB3D_ZS1_STENCIL_ZFAIL_OP_SHIFT	24
+
+
+
+#define R300_RB3D_ZSTENCIL_CNTL_2                   0x4F08
+#	define	R300_RB3D_ZS2_STENCIL_REF_SHIFT		0
+#	define	R300_RB3D_ZS2_STENCIL_MASK_SHIFT	8
+#	define	R300_RB3D_ZS2_STENCIL_WRITE_MASK_SHIFT	16
+
 /* gap */
 #define R300_RB3D_DEPTHOFFSET               0x4F20
 #define R300_RB3D_DEPTHPITCH                0x4F24

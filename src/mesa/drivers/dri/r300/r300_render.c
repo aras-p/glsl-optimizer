@@ -293,6 +293,7 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
    R300_STATECHANGE(rmesa, vte);
 	#endif
    
+	
       
    /* Magic register - note it is right after 20b0 */
 
@@ -302,14 +303,25 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 		e32(0x0000000c);
    
 	}
-	
+		
    r300EmitState(rmesa);
    
    #if 0
    reg_start(R300_RB3D_COLORMASK, 0);
    	e32(0xf);
+   
+   vsf_start_fragment(0x406, 4);
+   efloat(0.0);
+   efloat(0.0);
+   efloat(0.0);
+   efloat(1.0);
+
+   vsf_start_fragment(0x400, 4);
+   efloat(0.0);
+   efloat(0.0);
+   efloat(0.0);
+   efloat(1.0);
    #endif
-   /* ----------------------------------- */
    
    /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
    r300EmitLOAD_VBPNTR(rmesa, 0);

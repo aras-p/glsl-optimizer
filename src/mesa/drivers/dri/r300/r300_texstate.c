@@ -71,7 +71,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 static const struct {
 	GLuint format, filter;
-} tx_table[] = {
+} tx_table0[] = {
 _ALPHA(RGBA8888),
 	    _ALPHA_REV(RGBA8888),
 	    _ALPHA(ARGB8888),
@@ -89,9 +89,35 @@ _ALPHA(RGBA8888),
 	    _COLOR(L8),
 	    _ALPHA(I8), _INVALID(CI8), _YUV(YCBCR), _YUV(YCBCR_REV),};
 
+static const struct {
+	GLuint format, filter;
+} tx_table[] = {
+	    {R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8), 0},
+	    {1, 0},
+	    {2, 0},
+	    {3, 0},
+	    {4, 0},
+	    {5, 0},
+	    {6, 0},
+	    {7, 0},
+	    {8, 0},
+	    {9, 0},
+	    {10, 0},
+	    {11, 0},
+	    {12, 0},
+	    {13, 0},
+	    {14, 0},
+	    {15,  0},
+	    {16,  0},
+	    {17, 0},
+	    };
+
+
 #undef _COLOR
 #undef _ALPHA
 #undef _INVALID
+
+
 
 /**
  * This function computes the number of bytes of storage needed for
@@ -124,9 +150,9 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	t->filter &= ~R200_YUV_TO_RGB;
 #endif
 	if (VALID_FORMAT(baseImage->TexFormat->MesaFormat)) {
-		t->format |=
+		t->format =
 		    tx_table[baseImage->TexFormat->MesaFormat].format;
-#if 0	
+#if 1	
 		t->filter |=
 		    tx_table[baseImage->TexFormat->MesaFormat].filter;
 #endif		
@@ -248,6 +274,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	t->filter &= ~R200_MAX_MIP_LEVEL_MASK;
 	t->filter |= (numLevels - 1) << R200_MAX_MIP_LEVEL_SHIFT;
 #endif
+	#if 0
 	t->format &= ~(R200_TXFORMAT_WIDTH_MASK |
 			    R200_TXFORMAT_HEIGHT_MASK |
 			    R200_TXFORMAT_CUBIC_MAP_ENABLE |
@@ -255,7 +282,8 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 			    R200_TXFORMAT_F5_HEIGHT_MASK);
 	t->format |= ((log2Width << R200_TXFORMAT_WIDTH_SHIFT) |
 			   (log2Height << R200_TXFORMAT_HEIGHT_SHIFT));
-
+	#endif
+			   
 	t->format_x &= ~(R200_DEPTH_LOG2_MASK | R200_TEXCOORD_MASK);
 	if (tObj->Target == GL_TEXTURE_3D) {
 		t->format_x |= (log2Depth << R200_DEPTH_LOG2_SHIFT);
@@ -440,7 +468,10 @@ static GLboolean r300UpdateTextureEnv(GLcontext * ctx, int unit)
 	    ~(R200_TXC_SCALE_MASK);
 	GLuint alpha_scale = rmesa->hw.pix[unit].cmd[PIX_PP_TXABLEND2] &
 	    ~(R200_TXA_DOT_ALPHA | R200_TXA_SCALE_MASK);
-
+	#endif
+	
+	GLuint color_scale=0, alpha_scale=0;
+	    
 	/* texUnit->_Current can be NULL if and only if the texture unit is
 	 * not actually enabled.
 	 */
@@ -460,9 +491,12 @@ static GLboolean r300UpdateTextureEnv(GLcontext * ctx, int unit)
 	 */
 	/* Don't cache these results.
 	 */
+	#if 0
 	rmesa->state.texture.unit[unit].format = 0;
+	#endif
 	rmesa->state.texture.unit[unit].envMode = 0;
 
+	
 	if (!texUnit->_ReallyEnabled) {
 		if (unit == 0) {
 			color_combine =
@@ -733,6 +767,9 @@ static GLboolean r300UpdateTextureEnv(GLcontext * ctx, int unit)
 		 */
 	}
 
+	fprintf(stderr, "color_combine=%08x alpha_combine=%08x color_scale=%08x alpha_scale=%08x\n");
+	
+	#if 0
 	if (rmesa->hw.pix[unit].cmd[PIX_PP_TXCBLEND] != color_combine ||
 	    rmesa->hw.pix[unit].cmd[PIX_PP_TXABLEND] != alpha_combine ||
 	    rmesa->hw.pix[unit].cmd[PIX_PP_TXCBLEND2] != color_scale ||
@@ -1228,17 +1265,17 @@ static GLboolean update_tex_common(GLcontext * ctx, int unit)
 		rmesa->recheck_texgen[unit] = 0;
 		rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
 	}
+	#endif
 
 	format = tObj->Image[0][tObj->BaseLevel]->Format;
 	if (rmesa->state.texture.unit[unit].format != format ||
 	    rmesa->state.texture.unit[unit].envMode != texUnit->EnvMode) {
-		rmesa->state.texture.unit[unit].format = format;
+		//rmesa->state.texture.unit[unit].format = format;
 		rmesa->state.texture.unit[unit].envMode = texUnit->EnvMode;
 		if (!r300UpdateTextureEnv(ctx, unit)) {
 			return GL_FALSE;
 		}
 	}
-	#endif
 	
 	FALLBACK(&rmesa->radeon, RADEON_FALLBACK_BORDER_MODE, t->border_fallback);
 	return !t->border_fallback;
