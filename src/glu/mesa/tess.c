@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.8 1999/09/17 03:07:28 tjump Exp $ */
+/* $Id: tess.c,v 1.9 1999/09/17 06:34:46 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,9 @@
 
 /*
  * $Log: tess.c,v $
+ * Revision 1.9  1999/09/17 06:34:46  gareth
+ * Winding rule updates.
+ *
  * Revision 1.8  1999/09/17 03:07:28  tjump
  * Win32 build req't updates
  *
@@ -120,6 +123,7 @@ GLUtesselator* GLAPIENTRY gluNewTess( void )
 #if 0
     tobj->grid = NULL;
 #endif
+    tobj->cvc_lists = NULL;
 
     tobj->error = GLU_NO_ERROR;
 
@@ -265,6 +269,9 @@ void GLAPIENTRY gluTessVertex( GLUtesselator *tobj, GLdouble coords[3],
 	last_vertex->coords[Y] = coords[Y];
 	last_vertex->coords[Z] = coords[Z];
 
+	last_vertex->angle = 0.0;
+	last_vertex->label = 0;
+
 	last_vertex->next = NULL;
 	last_vertex->previous = NULL;
 
@@ -288,6 +295,9 @@ void GLAPIENTRY gluTessVertex( GLUtesselator *tobj, GLdouble coords[3],
 	vertex->coords[X] = coords[X];
 	vertex->coords[Y] = coords[Y];
 	vertex->coords[Z] = coords[Z];
+
+	vertex->angle = 0.0;
+	vertex->label = 0;
 
 	vertex->next = NULL;
 	vertex->previous = last_vertex;

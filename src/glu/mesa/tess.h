@@ -1,4 +1,4 @@
-/* $Id: tess.h,v 1.7 1999/09/16 06:42:01 gareth Exp $ */
+/* $Id: tess.h,v 1.8 1999/09/17 06:31:02 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,9 @@
 
 /*
  * $Log: tess.h,v $
+ * Revision 1.8  1999/09/17 06:31:02  gareth
+ * Winding rule updates.
+ *
  * Revision 1.7  1999/09/16 06:42:01  gareth
  * Misc winding rule bug fixes.
  *
@@ -55,6 +58,7 @@
 #include "gluP.h"
 
 #include "tess_typedefs.h"
+#include "tess_hash.h"
 #include "tess_heap.h"
 #if 0
 #include "tess_grid.h"
@@ -84,6 +88,7 @@ struct GLUtesselator
     tess_grid_t		*grid;			/* Not currently used... */
 #endif
     heap_t		*ears;
+    hashtable_t		*cvc_lists;
     GLenum		error;
 };
 
