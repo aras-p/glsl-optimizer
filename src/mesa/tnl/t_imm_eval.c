@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.7 2001/04/26 14:53:48 keithw Exp $ */
+/* $Id: t_imm_eval.c,v 1.8 2001/04/28 08:39:18 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,10 +85,10 @@ static const GLubyte dirty_flags[5] = {
 
 
 static void eval1_4f( GLvector4f *dest,
-			     GLfloat coord[][4],
-			     const GLuint *flags,
-			     GLuint dimension,
-			     struct gl_1d_map *map )
+		      GLfloat coord[][4],
+		      const GLuint *flags,
+		      GLuint dimension,
+		      struct gl_1d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -105,6 +105,31 @@ static void eval1_4f( GLvector4f *dest,
 
    dest->size = MAX2(dest->size, dimension);
    dest->flags |= dirty_flags[dimension];
+}
+
+static void eval1_4f_ca( struct gl_client_array *dest,
+			 GLfloat coord[][4],
+			 const GLuint *flags,
+			 GLuint dimension,
+			 struct gl_1d_map *map )
+{
+   const GLfloat u1 = map->u1;
+   const GLfloat du = map->du;
+   GLfloat (*to)[4] = (GLfloat (*)[4])dest->Ptr;
+   GLuint i;
+
+   ASSERT(dest->Type == GL_FLOAT);
+   ASSERT(dest->StrideB == 4 * sizeof(GLfloat));
+
+   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
+      if (flags[i] & (VERT_EVAL_C1|VERT_EVAL_P1)) {
+	 GLfloat u = (coord[i][0] - u1) * du;
+	 ASSIGN_4V(to[i], 0,0,0,1);
+	 _math_horner_bezier_curve(map->Points, to[i], u,
+				   dimension, map->Order);
+      }
+
+   dest->Size = MAX2(dest->Size, dimension);
 }
 
 
@@ -145,25 +170,6 @@ static void eval1_norm( GLvector3f *dest,
       }
 }
 
-static void eval1_color( GLvector4chan *dest,
-			 GLfloat coord[][4],
-			 const GLuint *flags,
-			 struct gl_1d_map *map )
-{
-   const GLfloat u1 = map->u1;
-   const GLfloat du = map->du;
-   GLchan (*to)[4] = dest->data;
-   GLuint i;
-
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++) {
-      if (flags[i] & (VERT_EVAL_C1|VERT_EVAL_P1)) {
-	 GLfloat u = (coord[i][0] - u1) * du;
-	 GLfloat fcolor[4];
-	 _math_horner_bezier_curve(map->Points, fcolor, u, 4, map->Order);
-         UNCLAMPED_FLOAT_TO_RGBA_CHAN(to[i], fcolor);
-      }
-   }
-}
 
 
 
@@ -227,6 +233,33 @@ static void eval2_4f( GLvector4f *dest,
    dest->flags |= dirty_flags[dimension];
 }
 
+static void eval2_4f_ca( struct gl_client_array *dest,
+			 GLfloat coord[][4],
+			 const GLuint *flags,
+			 GLuint dimension,
+			 struct gl_2d_map *map )
+{
+   const GLfloat u1 = map->u1;
+   const GLfloat du = map->du;
+   const GLfloat v1 = map->v1;
+   const GLfloat dv = map->dv;
+   GLfloat (*to)[4] = (GLfloat (*)[4])dest->Ptr;
+   GLuint i;
+
+   ASSERT(dest->Type == GL_FLOAT);
+   ASSERT(dest->StrideB == 4 * sizeof(GLfloat));
+
+   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
+      if (flags[i] & (VERT_EVAL_C2|VERT_EVAL_P2)) {
+	 GLfloat u = (coord[i][0] - u1) * du;
+	 GLfloat v = (coord[i][1] - v1) * dv;
+	 _math_horner_bezier_surf(map->Points, to[i], u, v, dimension,
+				  map->Uorder, map->Vorder);
+      }
+
+   dest->Size = MAX2(dest->Size, dimension);
+}
+
 
 static void eval2_norm( GLvector3f *dest,
 			GLfloat coord[][4],
@@ -277,29 +310,6 @@ static void eval2_1ui( GLvector1ui *dest,
 
 
 
-static void eval2_color( GLvector4chan *dest,
-			 GLfloat coord[][4],
-			 GLuint *flags,
-			 struct gl_2d_map *map )
-{
-   const GLfloat u1 = map->u1;
-   const GLfloat du = map->du;
-   const GLfloat v1 = map->v1;
-   const GLfloat dv = map->dv;
-   GLchan (*to)[4] = dest->data;
-   GLuint i;
-
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++) {
-      if (flags[i] & (VERT_EVAL_C2|VERT_EVAL_P2)) {
-	 GLfloat u = (coord[i][0] - u1) * du;
-	 GLfloat v = (coord[i][1] - v1) * dv;
-	 GLfloat fcolor[4];
-	 _math_horner_bezier_surf(map->Points, fcolor, u, v, 4,
-				  map->Uorder, map->Vorder);
-         UNCLAMPED_FLOAT_TO_RGBA_CHAN(to[i], fcolor);
-      }
-   }
-}
 
 
 
@@ -313,10 +323,6 @@ static void copy_3f( GLfloat to[][3], GLfloat from[][3], GLuint count )
    MEMCPY( to, from, (count) * sizeof(to[0]));
 }
 
-static void copy_4chan( GLchan to[][4], GLchan from[][4], GLuint count )
-{
-   MEMCPY( to, from, (count) * sizeof(to[0]));
-}
 
 static void copy_1ui( GLuint to[], GLuint from[], GLuint count )
 {
@@ -496,18 +502,17 @@ void _tnl_eval_vb( GLcontext *ctx,
       GLuint generated = 0;
 
       if (!all_eval)
-	 copy_4chan( store->Color, tmp->Color.data, count );
+	 copy_4f( store->Color, (GLfloat (*)[4])tmp->Color.Ptr, count );
 
-      tmp->Color.data = store->Color;
-      tmp->Color.start = (GLchan *) store->Color;
+      tmp->Color.Ptr = store->Color;
 
       if (ctx->Eval.Map1Color4 && any_eval1) {
-	 eval1_color( &tmp->Color, coord, flags, &ctx->EvalMap.Map1Color4 );
+	 eval1_4f_ca( &tmp->Color, coord, flags, 4, &ctx->EvalMap.Map1Color4 );
 	 generated |= VERT_EVAL_C1|VERT_EVAL_P1;
       }
 
       if (ctx->Eval.Map2Color4 && any_eval2) {
-	 eval2_color( &tmp->Color, coord, flags, &ctx->EvalMap.Map2Color4 );
+	 eval2_4f_ca( &tmp->Color, coord, flags, 4, &ctx->EvalMap.Map2Color4 );
 	 generated |= VERT_EVAL_C2|VERT_EVAL_P2;
       }
 
@@ -515,11 +520,11 @@ void _tnl_eval_vb( GLcontext *ctx,
        * maps are disabled.
        */
       if (purge_flags & generated)
-	 _tnl_fixup_4chan( store->Color, flags, 0, 
-			   VERT_RGBA|
-			   VERT_OBJ|
-			   generated|
-			   (VERT_EVAL_ANY&~purge_flags) );
+	 _tnl_fixup_4f( store->Color, flags, 0, 
+			VERT_RGBA|
+			VERT_OBJ|
+			generated|
+			(VERT_EVAL_ANY&~purge_flags) );
    }
 
 

@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.18 2001/04/26 14:53:48 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.19 2001/04/28 08:39:18 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -79,27 +79,6 @@
  */
 #endif
 
-#define LINTERP_SZ( t, vec, to, a, b, sz )			\
-do {								\
-   switch (sz) {						\
-   case 2: vec[to][2] = 0.0;					\
-   case 3: vec[to][3] = 1.0;					\
-   }      							\
-   switch (sz) {						\
-   case 4: vec[to][3] = LINTERP( t, vec[a][3], vec[b][3] );	\
-   case 3: vec[to][2] = LINTERP( t, vec[a][2], vec[b][2] );	\
-   case 2: vec[to][1] = LINTERP( t, vec[a][1], vec[b][1] );	\
-           vec[to][0] = LINTERP( t, vec[a][0], vec[b][0] );	\
-   }								\
-} while(0)
-
-#define LINTERP_4F( t, vec, to, a, b, sz )		\
-do {							\
-   vec[to][3] = LINTERP( t, vec[a][3], vec[b][3] );	\
-   vec[to][2] = LINTERP( t, vec[a][2], vec[b][2] );	\
-   vec[to][1] = LINTERP( t, vec[a][1], vec[b][1] );	\
-   vec[to][0] = LINTERP( t, vec[a][0], vec[b][0] );	\
-} while (0)
 
 #define W(i) coord[i][3]
 #define Z(i) coord[i][2]

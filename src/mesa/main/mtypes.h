@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.40 2001/04/20 16:46:04 brianp Exp $ */
+/* $Id: mtypes.h,v 1.41 2001/04/28 08:39:17 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -297,8 +297,8 @@ struct gl_current_attrib {
    /* These values valid only when FLUSH_VERTICES has been called.
     */
    GLfloat Normal[3];				/* Current vertex normal */
-   GLchan Color[4];				/* Current RGBA color */
-   GLchan SecondaryColor[4];			/* Current secondary color */
+   GLfloat Color[4];				/* Current RGBA color */
+   GLfloat SecondaryColor[4];			/* Current secondary color */
    GLfloat FogCoord;			        /* Current Fog coord */
    GLuint Index;				/* Current color index */
    GLboolean EdgeFlag;				/* Current edge flag */
@@ -489,7 +489,7 @@ struct gl_light_attrib {
    GLboolean _NeedVertices;		/* Use fast shader? */
    GLuint  _Flags;		        /* LIGHT_* flags, see below */
    GLfloat _BaseColor[2][3];
-   GLchan _BaseAlpha[2];
+   GLfloat _BaseAlpha[2];
 };
 
 
@@ -970,6 +970,9 @@ struct gl_pixelstore_attrib {
 };
 
 
+#define CA_CLIENT_DATA     0x1	/* Data not alloced by mesa */
+
+
 /*
  * Client vertex array attributes
  */
@@ -979,6 +982,7 @@ struct gl_client_array {
    GLsizei Stride;		/* user-specified stride */
    GLsizei StrideB;		/* actual stride in bytes */
    void *Ptr;
+   GLuint Flags;
    GLboolean Enabled;
 };
 

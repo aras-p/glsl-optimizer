@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.11 2001/04/26 14:51:06 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.12 2001/04/28 08:39:18 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -417,9 +417,9 @@ void _tnl_array_init( GLcontext *ctx )
    /* Setup vector pointers that will be used to bind arrays to VB's.
     */
    _mesa_vector4f_init( &tmp->Obj, 0, 0 );
-   _mesa_vector3f_init( &tmp->Normal, 0, 0 );
-   _mesa_vector4chan_init( &tmp->Color, 0, 0 );
-   _mesa_vector4chan_init( &tmp->SecondaryColor, 0, 0 );
+   _mesa_vector3f_init( &tmp->Normal, 0, 0 );   
+/*     _mesa_vector4chan_init( &tmp->Color, 0, 0 ); */
+/*     _mesa_vector4chan_init( &tmp->SecondaryColor, 0, 0 ); */
    _mesa_vector1f_init( &tmp->FogCoord, 0, 0 );
    _mesa_vector1ui_init( &tmp->Index, 0, 0 );
    _mesa_vector1ub_init( &tmp->EdgeFlag, 0, 0 );

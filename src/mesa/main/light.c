@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.42 2001/03/29 16:50:32 brianp Exp $ */
+/* $Id: light.c,v 1.43 2001/04/28 08:39:17 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -745,16 +745,10 @@ void _mesa_update_material( GLcontext *ctx,
  * set by glColorMaterial().
  */
 void _mesa_update_color_material( GLcontext *ctx,
-			       const GLchan rgba[4] )
+				  const GLfloat color[4] )
 {
    struct gl_light *light, *list = &ctx->Light.EnabledList;
    GLuint bitmask = ctx->Light.ColorMaterialBitmask;
-   GLfloat color[4];
-
-   color[0] = CHAN_TO_FLOAT(rgba[0]);
-   color[1] = CHAN_TO_FLOAT(rgba[1]);
-   color[2] = CHAN_TO_FLOAT(rgba[2]);
-   color[3] = CHAN_TO_FLOAT(rgba[3]);
 
    if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
       fprintf(stderr, "_mesa_update_color_material, mask 0x%x\n", bitmask);

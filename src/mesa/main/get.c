@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.57 2001/03/18 08:53:49 gareth Exp $ */
+/* $Id: get.c,v 1.58 2001/04/28 08:39:17 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -228,10 +228,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_CURRENT_COLOR:
 	 FLUSH_CURRENT(ctx, 0);
-         params[0] = INT_TO_BOOL(ctx->Current.Color[0]);
-         params[1] = INT_TO_BOOL(ctx->Current.Color[1]);
-         params[2] = INT_TO_BOOL(ctx->Current.Color[2]);
-         params[3] = INT_TO_BOOL(ctx->Current.Color[3]);
+         params[0] = FLOAT_TO_BOOL(ctx->Current.Color[0]);
+         params[1] = FLOAT_TO_BOOL(ctx->Current.Color[1]);
+         params[2] = FLOAT_TO_BOOL(ctx->Current.Color[2]);
+         params[3] = FLOAT_TO_BOOL(ctx->Current.Color[3]);
          break;
       case GL_CURRENT_INDEX:
 	 FLUSH_CURRENT(ctx, 0);
@@ -1427,10 +1427,10 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          break;
       case GL_CURRENT_COLOR:
 	 FLUSH_CURRENT(ctx, 0);
-         params[0] = CHAN_TO_FLOAT(ctx->Current.Color[0]);
-         params[1] = CHAN_TO_FLOAT(ctx->Current.Color[1]);
-         params[2] = CHAN_TO_FLOAT(ctx->Current.Color[2]);
-         params[3] = CHAN_TO_FLOAT(ctx->Current.Color[3]);
+         params[0] = (ctx->Current.Color[0]);
+         params[1] = (ctx->Current.Color[1]);
+         params[2] = (ctx->Current.Color[2]);
+         params[3] = (ctx->Current.Color[3]);
          break;
       case GL_CURRENT_INDEX:
 	 FLUSH_CURRENT(ctx, 0);
@@ -2420,9 +2420,9 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
 	 FLUSH_CURRENT(ctx, 0);
-         params[0] = CHAN_TO_FLOAT(ctx->Current.SecondaryColor[0]);
-         params[1] = CHAN_TO_FLOAT(ctx->Current.SecondaryColor[1]);
-         params[2] = CHAN_TO_FLOAT(ctx->Current.SecondaryColor[2]);
+         params[0] = (ctx->Current.SecondaryColor[0]);
+         params[1] = (ctx->Current.SecondaryColor[1]);
+         params[2] = (ctx->Current.SecondaryColor[2]);
 	 break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          *params = (GLdouble) ctx->Array.SecondaryColor.Enabled;
@@ -2626,10 +2626,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_CURRENT_COLOR:
 	 FLUSH_CURRENT(ctx, 0);
-         params[0] = CHAN_TO_FLOAT(ctx->Current.Color[0]);
-         params[1] = CHAN_TO_FLOAT(ctx->Current.Color[1]);
-         params[2] = CHAN_TO_FLOAT(ctx->Current.Color[2]);
-         params[3] = CHAN_TO_FLOAT(ctx->Current.Color[3]);
+         params[0] = (ctx->Current.Color[0]);
+         params[1] = (ctx->Current.Color[1]);
+         params[2] = (ctx->Current.Color[2]);
+         params[3] = (ctx->Current.Color[3]);
          break;
       case GL_CURRENT_INDEX:
 	 FLUSH_CURRENT(ctx, 0);
@@ -3593,9 +3593,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
 	 FLUSH_CURRENT(ctx, 0);
-         params[0] = CHAN_TO_FLOAT(ctx->Current.SecondaryColor[0]);
-         params[1] = CHAN_TO_FLOAT(ctx->Current.SecondaryColor[1]);
-         params[2] = CHAN_TO_FLOAT(ctx->Current.SecondaryColor[2]);
+         params[0] = (ctx->Current.SecondaryColor[0]);
+         params[1] = (ctx->Current.SecondaryColor[1]);
+         params[2] = (ctx->Current.SecondaryColor[2]);
 	 break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          *params = (GLfloat) ctx->Array.SecondaryColor.Enabled;
@@ -3773,10 +3773,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Transform.ClipEnabled[i];
          break;
       case GL_COLOR_CLEAR_VALUE:
-         params[0] = FLOAT_TO_INT( CHAN_TO_FLOAT(ctx->Color.ClearColor[0]) );
-         params[1] = FLOAT_TO_INT( CHAN_TO_FLOAT(ctx->Color.ClearColor[1]) );
-         params[2] = FLOAT_TO_INT( CHAN_TO_FLOAT(ctx->Color.ClearColor[2]) );
-         params[3] = FLOAT_TO_INT( CHAN_TO_FLOAT(ctx->Color.ClearColor[3]) );
+         params[0] = FLOAT_TO_INT( (ctx->Color.ClearColor[0]) );
+         params[1] = FLOAT_TO_INT( (ctx->Color.ClearColor[1]) );
+         params[2] = FLOAT_TO_INT( (ctx->Color.ClearColor[2]) );
+         params[3] = FLOAT_TO_INT( (ctx->Color.ClearColor[3]) );
          break;
       case GL_COLOR_MATERIAL:
          *params = (GLint) ctx->Light.ColorMaterialEnabled;
@@ -3801,10 +3801,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_CURRENT_COLOR:
 	 FLUSH_CURRENT(ctx, 0);
-         params[0] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.Color[0] ) );
-         params[1] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.Color[1] ) );
-         params[2] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.Color[2] ) );
-         params[3] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.Color[3] ) );
+         params[0] = FLOAT_TO_INT( ( ctx->Current.Color[0] ) );
+         params[1] = FLOAT_TO_INT( ( ctx->Current.Color[1] ) );
+         params[2] = FLOAT_TO_INT( ( ctx->Current.Color[2] ) );
+         params[3] = FLOAT_TO_INT( ( ctx->Current.Color[3] ) );
          break;
       case GL_CURRENT_INDEX:
 	 FLUSH_CURRENT(ctx, 0);
@@ -4795,9 +4795,9 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
 	 FLUSH_CURRENT(ctx, 0);
-         params[0] = FLOAT_TO_INT( CHAN_TO_FLOAT(ctx->Current.SecondaryColor[0]) );
-         params[1] = FLOAT_TO_INT( CHAN_TO_FLOAT(ctx->Current.SecondaryColor[1]) );
-         params[2] = FLOAT_TO_INT( CHAN_TO_FLOAT(ctx->Current.SecondaryColor[2]) );
+         params[0] = FLOAT_TO_INT( (ctx->Current.SecondaryColor[0]) );
+         params[1] = FLOAT_TO_INT( (ctx->Current.SecondaryColor[1]) );
+         params[2] = FLOAT_TO_INT( (ctx->Current.SecondaryColor[2]) );
 	 break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          *params = (GLint) ctx->Array.SecondaryColor.Enabled;

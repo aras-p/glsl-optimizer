@@ -1,4 +1,4 @@
-/* $Id: t_vb_light.c,v 1.13 2001/04/26 14:53:48 keithw Exp $ */
+/* $Id: t_vb_light.c,v 1.14 2001/04/28 08:39:18 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,8 +49,8 @@ typedef void (*light_func)( GLcontext *ctx,
 			    GLvector4f *input );
 
 struct light_stage_data {
-   GLvector4chan LitColor[2];
-   GLvector4chan LitSecondary[2];
+   struct gl_client_array LitColor[2];
+   struct gl_client_array LitSecondary[2];
    GLvector1ui LitIndex[2];
    light_func *light_func_tab;
 };
@@ -149,8 +149,8 @@ static GLboolean run_lighting( GLcontext *ctx, struct gl_pipeline_stage *stage )
    else
       ind = 0;
 
-   /* The individual tabs know about replaying side-effects vs. full
-    * re-execution.
+   /* The individual functions know about replaying side-effects
+    * vs. full re-execution. 
     */
    store->light_func_tab[ind]( ctx, VB, stage, input );
 
@@ -201,6 +201,22 @@ static GLboolean run_validate_lighting( GLcontext *ctx,
    return stage->run( ctx, stage );
 }
 
+static void alloc_4f( struct gl_client_array *a, GLuint sz )
+{
+   a->Ptr = ALIGN_MALLOC( sz * sizeof(GLfloat) * 4, 32 );
+   a->Size = 4;
+   a->Type = GL_FLOAT;
+   a->Stride = 0;
+   a->StrideB = sizeof(GLfloat) * 4;
+   a->Enabled = 0;
+   a->Flags = 0;
+}
+
+static void free_4f( struct gl_client_array *a )
+{
+   ALIGN_FREE( a->Ptr );
+}
+
 /* Called the first time stage->run is called.  In effect, don't
  * allocate data until the first time the stage is run.
  */
@@ -220,10 +236,11 @@ static GLboolean run_init_lighting( GLcontext *ctx,
     */
    init_lighting();
 
-   _mesa_vector4chan_alloc( &store->LitColor[0], 0, size, 32 );
-   _mesa_vector4chan_alloc( &store->LitColor[1], 0, size, 32 );
-   _mesa_vector4chan_alloc( &store->LitSecondary[0], 0, size, 32 );
-   _mesa_vector4chan_alloc( &store->LitSecondary[1], 0, size, 32 );
+   alloc_4f( &store->LitColor[0], size );
+   alloc_4f( &store->LitColor[1], size );
+   alloc_4f( &store->LitSecondary[0], size );
+   alloc_4f( &store->LitSecondary[1], size );
+
    _mesa_vector1ui_alloc( &store->LitIndex[0], 0, size, 32 );
    _mesa_vector1ui_alloc( &store->LitIndex[1], 0, size, 32 );
 
@@ -263,10 +280,10 @@ static void dtr( struct gl_pipeline_stage *stage )
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
 
    if (store) {
-      _mesa_vector4chan_free( &store->LitColor[0] );
-      _mesa_vector4chan_free( &store->LitColor[1] );
-      _mesa_vector4chan_free( &store->LitSecondary[0] );
-      _mesa_vector4chan_free( &store->LitSecondary[1] );
+      free_4f( &store->LitColor[0] );
+      free_4f( &store->LitColor[1] );
+      free_4f( &store->LitSecondary[0] );
+      free_4f( &store->LitSecondary[1] );
       _mesa_vector1ui_free( &store->LitIndex[0] );
       _mesa_vector1ui_free( &store->LitIndex[1] );
       FREE( store );

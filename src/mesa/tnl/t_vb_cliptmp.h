@@ -1,4 +1,4 @@
-/* $Id: t_vb_cliptmp.h,v 1.10 2001/03/19 02:25:37 keithw Exp $ */
+/* $Id: t_vb_cliptmp.h,v 1.11 2001/04/28 08:39:18 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -58,13 +58,13 @@ do {									\
 		* know dp != dpPrev from DIFFERENT_SIGNS, above.	\
 		*/							\
 	       GLfloat t = dp / (dp - dpPrev);				\
-               LINTERP_4F( t, coord, newvert, idx, idxPrev, SIZE );	\
+               INTERP_4F( t, coord[newvert], coord[idx], coord[idxPrev]); \
       	       interp( ctx, t, newvert, idx, idxPrev, GL_TRUE );	\
 	    } else {							\
 	       /* Coming back in.					\
 		*/							\
 	       GLfloat t = dpPrev / (dpPrev - dp);			\
-               LINTERP_4F( t, coord, newvert, idxPrev, idx, SIZE );	\
+               INTERP_4F( t, coord[newvert], coord[idxPrev], coord[idx]); \
 	       interp( ctx, t, newvert, idxPrev, idx, GL_FALSE );	\
 	    }								\
 	 }								\
@@ -86,32 +86,32 @@ do {									\
 } while (0)
 
 
-#define LINE_CLIP(PLANE, A, B, C, D )				\
-do {								\
-   if (mask & PLANE) {						\
-      GLfloat dpI = CLIP_DOTPROD( ii, A, B, C, D );		\
-      GLfloat dpJ = CLIP_DOTPROD( jj, A, B, C, D );		\
-								\
-      if (DIFFERENT_SIGNS(dpI, dpJ)) {				\
-         GLuint newvert = VB->LastClipped++;			\
-         VB->ClipMask[newvert] = 0;				\
-	 if (NEGATIVE(dpJ)) {					\
-	    GLfloat t = dpI / (dpI - dpJ);			\
-            VB->ClipMask[jj] |= PLANE;				\
-            LINTERP_4F( t, coord, newvert, ii, jj, SIZE );	\
-	    interp( ctx, t, newvert, ii, jj, GL_FALSE );	\
-            jj = newvert;					\
-	 } else {						\
-  	    GLfloat t = dpJ / (dpJ - dpI);			\
-            VB->ClipMask[ii] |= PLANE;				\
-            LINTERP_4F( t, coord, newvert, jj, ii, SIZE );	\
-	    interp( ctx, t, newvert, jj, ii, GL_FALSE );	\
-            ii = newvert;					\
-	 }							\
-      }								\
-      else if (NEGATIVE(dpI))					\
-	 return;						\
-  }								\
+#define LINE_CLIP(PLANE, A, B, C, D )					\
+do {									\
+   if (mask & PLANE) {							\
+      GLfloat dpI = CLIP_DOTPROD( ii, A, B, C, D );			\
+      GLfloat dpJ = CLIP_DOTPROD( jj, A, B, C, D );			\
+									\
+      if (DIFFERENT_SIGNS(dpI, dpJ)) {					\
+         GLuint newvert = VB->LastClipped++;				\
+         VB->ClipMask[newvert] = 0;					\
+	 if (NEGATIVE(dpJ)) {						\
+	    GLfloat t = dpI / (dpI - dpJ);				\
+            VB->ClipMask[jj] |= PLANE;					\
+            INTERP_4F( t, coord[newvert], coord[ii], coord[jj] );	\
+	    interp( ctx, t, newvert, ii, jj, GL_FALSE );		\
+            jj = newvert;						\
+	 } else {							\
+  	    GLfloat t = dpJ / (dpJ - dpI);				\
+            VB->ClipMask[ii] |= PLANE;					\
+            INTERP_4F( t, coord[newvert], coord[jj], coord[ii] );	\
+	    interp( ctx, t, newvert, jj, ii, GL_FALSE );		\
+            ii = newvert;						\
+	 }								\
+      }									\
+      else if (NEGATIVE(dpI))						\
+	 return;							\
+  }									\
 } while (0)
 
 

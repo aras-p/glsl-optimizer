@@ -1,4 +1,4 @@
-/* $Id: ss_vbtmp.h,v 1.13 2001/03/29 16:50:33 brianp Exp $ */
+/* $Id: ss_vbtmp.h,v 1.14 2001/04/28 08:39:18 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,8 +35,8 @@ static void TAG(rs)(GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
    SWvertex *v;
    GLfloat (*proj)[4];		/* projected clip coordinates */
    GLfloat (*tc[MAX_TEXTURE_UNITS])[4];
-   GLchan (*color)[4];
-   GLchan (*spec)[4];
+   GLfloat (*color)[4];
+   GLfloat (*spec)[4];
    GLuint *index;
    GLfloat *fog;
    GLfloat *pointSize;
@@ -57,6 +57,10 @@ static void TAG(rs)(GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
    }
 
    /* TODO:  Get import_client_data to pad vectors out to 4 cleanly.
+    *
+    * NOTE: This has the effect of converting any remaining ubyte
+    *       colors to floats...  As they're already there 90% of the
+    *       time, this isn't a bad thing.  
     */
    if (VB->importable_data)
       VB->import_data( ctx, VB->importable_data & newinputs,
@@ -92,9 +96,9 @@ static void TAG(rs)(GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
    if (IND & FOG)
       fog = VB->FogCoordPtr->data;
    if (IND & COLOR)
-      color = VB->ColorPtr[0]->data;
+      color = (GLfloat (*)[4])VB->ColorPtr[0]->Ptr;
    if (IND & SPEC)
-      spec = VB->SecondaryColorPtr[0]->data;
+      spec = (GLfloat (*)[4])VB->SecondaryColorPtr[0]->Ptr;
    if (IND & INDEX)
       index = VB->IndexPtr[0]->data;
    if (IND & POINT)
@@ -120,10 +124,10 @@ static void TAG(rs)(GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
 	 }
 
 	 if (IND & COLOR)
-	    COPY_CHAN4(v->color, color[i]);
+	    UNCLAMPED_FLOAT_TO_RGBA_CHAN(v->color, color[i]);
 
 	 if (IND & SPEC)
-	    COPY_CHAN4(v->specular, spec[i]);
+	    UNCLAMPED_FLOAT_TO_RGBA_CHAN(v->specular, spec[i]);
 
 	 if (IND & FOG)
 	    v->fog = fog[i];

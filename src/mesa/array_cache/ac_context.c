@@ -1,4 +1,4 @@
-/* $Id: ac_context.c,v 1.3 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: ac_context.c,v 1.4 2001/04/28 08:39:18 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,22 +48,25 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->StrideB = 0;
    cl->Ptr = (void *) ctx->Current.Normal;
    cl->Enabled = 1;
+   cl->Flags = CA_CLIENT_DATA;	/* hack */
 
    cl = &ac->Fallback.Color;
    cl->Size = 4;
-   cl->Type = GL_UNSIGNED_BYTE;
+   cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 0;
    cl->Ptr = (void *) ctx->Current.Color;
    cl->Enabled = 1;
+   cl->Flags = CA_CLIENT_DATA;	/* hack */
 
    cl = &ac->Fallback.SecondaryColor;
    cl->Size = 3;
-   cl->Type = GL_UNSIGNED_BYTE;
+   cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 0;
    cl->Ptr = (void *) ctx->Current.SecondaryColor;
    cl->Enabled = 1;
+   cl->Flags = CA_CLIENT_DATA;	/* hack */
 
    cl = &ac->Fallback.FogCoord;
    cl->Size = 1;
@@ -72,6 +75,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->StrideB = 0;
    cl->Ptr = (void *) &ctx->Current.FogCoord;
    cl->Enabled = 1;
+   cl->Flags = CA_CLIENT_DATA;	/* hack */
 
    cl = &ac->Fallback.Index;
    cl->Size = 1;
@@ -80,6 +84,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->StrideB = 0;
    cl->Ptr = (void *) &ctx->Current.Index;
    cl->Enabled = 1;
+   cl->Flags = CA_CLIENT_DATA;	/* hack */
 
    for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++) {
       cl = &ac->Fallback.TexCoord[i];
@@ -89,6 +94,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
       cl->StrideB = 0;
       cl->Ptr = (void *) ctx->Current.Texcoord[i];
       cl->Enabled = 1;
+      cl->Flags = CA_CLIENT_DATA;	/* hack */
    }
 
    cl = &ac->Fallback.EdgeFlag;
@@ -98,6 +104,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->StrideB = 0;
    cl->Ptr = (void *) &ctx->Current.EdgeFlag;
    cl->Enabled = 1;
+   cl->Flags = CA_CLIENT_DATA;	/* hack */
 }
 
 
@@ -115,6 +122,7 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->StrideB = 4 * sizeof(GLfloat);
    cl->Ptr = MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
+   cl->Flags = 0;
 
    cl = &ac->Cache.Normal;
    cl->Size = 3;
@@ -123,22 +131,25 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->StrideB = 3 * sizeof(GLfloat);
    cl->Ptr = MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
+   cl->Flags = 0;
 
    cl = &ac->Cache.Color;
    cl->Size = 4;
-   cl->Type = GL_UNSIGNED_BYTE;
+   cl->Type = GL_FLOAT;
    cl->Stride = 0;
-   cl->StrideB = 4 * sizeof(GLubyte);
+   cl->StrideB = 4 * sizeof(GLfloat);
    cl->Ptr = MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
+   cl->Flags = 0;
 
    cl = &ac->Cache.SecondaryColor;
    cl->Size = 3;
-   cl->Type = GL_UNSIGNED_BYTE;
+   cl->Type = GL_FLOAT;
    cl->Stride = 0;
-   cl->StrideB = 4 * sizeof(GLubyte);
+   cl->StrideB = 4 * sizeof(GLfloat);
    cl->Ptr = MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
+   cl->Flags = 0;
 
    cl = &ac->Cache.FogCoord;
    cl->Size = 1;
@@ -147,6 +158,7 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->StrideB = sizeof(GLfloat);
    cl->Ptr = MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
+   cl->Flags = 0;
 
    cl = &ac->Cache.Index;
    cl->Size = 1;
@@ -155,6 +167,7 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->StrideB = sizeof(GLuint);
    cl->Ptr = MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
+   cl->Flags = 0;
 
    for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++) {
       cl = &ac->Cache.TexCoord[i];
@@ -164,6 +177,7 @@ static void _ac_cache_init( GLcontext *ctx )
       cl->StrideB = 4 * sizeof(GLfloat);
       cl->Ptr = MALLOC( cl->StrideB * size );
       cl->Enabled = 1;
+      cl->Flags = 0;
    }
 
    cl = &ac->Cache.EdgeFlag;
@@ -173,6 +187,7 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->StrideB = sizeof(GLubyte);
    cl->Ptr = MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
+   cl->Flags = 0;
 }
 
 

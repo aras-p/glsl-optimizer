@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.52 2001/04/10 15:25:45 brianp Exp $ */
+/* $Id: drawpix.c,v 1.53 2001/04/28 08:39:17 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -73,14 +73,9 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
    }
    else if (ctx->RenderMode==GL_FEEDBACK) {
       if (ctx->Current.RasterPosValid) {
-         GLfloat color[4];
 	 GLfloat texcoord[4], invq;
 
 	 FLUSH_CURRENT(ctx, 0);
-         color[0] = CHAN_TO_FLOAT(ctx->Current.Color[0]);
-         color[1] = CHAN_TO_FLOAT(ctx->Current.Color[1]);
-         color[2] = CHAN_TO_FLOAT(ctx->Current.Color[2]);
-         color[3] = CHAN_TO_FLOAT(ctx->Current.Color[3]);
          invq = 1.0F / ctx->Current.Texcoord[0][3];
          texcoord[0] = ctx->Current.Texcoord[0][0] * invq;
          texcoord[1] = ctx->Current.Texcoord[0][1] * invq;
@@ -88,8 +83,10 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
          texcoord[3] = ctx->Current.Texcoord[0][3];
          FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_DRAW_PIXEL_TOKEN );
          _mesa_feedback_vertex( ctx,
-                             ctx->Current.RasterPos,
-                             color, ctx->Current.Index, texcoord );
+				ctx->Current.RasterPos,
+				ctx->Current.Color,
+				ctx->Current.Index, 
+				texcoord );
       }
    }
    else if (ctx->RenderMode==GL_SELECT) {

@@ -1,4 +1,4 @@
-/* $Id: ss_tritmp.h,v 1.11 2001/03/21 17:11:32 pesco Exp $ */
+/* $Id: ss_tritmp.h,v 1.12 2001/04/28 08:39:18 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,8 +61,8 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	 if (facing == 1) {
 	    if (IND & SS_TWOSIDE_BIT) {
 	       if (IND & SS_RGBA_BIT) {
-		  GLchan (*vbcolor)[4] = VB->ColorPtr[1]->data;
-		  GLchan (*vbspec)[4] = VB->SecondaryColorPtr[1]->data;
+		  GLfloat (*vbcolor)[4] = (GLfloat (*)[4])VB->ColorPtr[1]->Ptr;
+		  GLfloat (*vbspec)[4] = (GLfloat (*)[4])VB->SecondaryColorPtr[1]->Ptr;
 		  SS_COLOR(v[0]->color, vbcolor[e0]);
 		  SS_COLOR(v[1]->color, vbcolor[e1]);
 		  SS_COLOR(v[2]->color, vbcolor[e2]);
@@ -134,8 +134,8 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    if (IND & SS_TWOSIDE_BIT) {
       if (facing == 1) {
 	 if (IND & SS_RGBA_BIT) {
-	    GLchan (*vbcolor)[4] = VB->ColorPtr[0]->data;
-	    GLchan (*vbspec)[4] = VB->SecondaryColorPtr[0]->data;
+	    GLfloat (*vbcolor)[4] = (GLfloat (*)[4])VB->ColorPtr[0]->Ptr;
+	    GLfloat (*vbspec)[4] = (GLfloat (*)[4])VB->SecondaryColorPtr[0]->Ptr;
 	    SS_COLOR(v[0]->color, vbcolor[e0]);
 	    SS_COLOR(v[1]->color, vbcolor[e1]);
 	    SS_COLOR(v[2]->color, vbcolor[e2]);

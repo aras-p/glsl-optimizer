@@ -1,4 +1,4 @@
-/* $Id: t_imm_debug.c,v 1.2 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_imm_debug.c,v 1.3 2001/04/28 08:39:18 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -125,12 +125,12 @@ void _tnl_print_cassette( struct immediate *IM )
       }
 
       if (req & flags[i] & VERT_RGBA)
-	 fprintf(stderr, " Rgba %d %d %d %d ",
+	 fprintf(stderr, " Rgba %f %f %f %f ",
 		IM->Color[i][0], IM->Color[i][1],
 		IM->Color[i][2], IM->Color[i][3]);
 
       if (req & flags[i] & VERT_SPEC_RGB)
-	 fprintf(stderr, " Spec %d %d %d ",
+	 fprintf(stderr, " Spec %f %f %f ",
 		IM->SecondaryColor[i][0], IM->SecondaryColor[i][1],
 		IM->SecondaryColor[i][2]);
 

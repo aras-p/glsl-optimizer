@@ -1,4 +1,4 @@
-/* $Id: ac_import.c,v 1.13 2001/04/17 21:08:32 brianp Exp $ */
+/* $Id: ac_import.c,v 1.14 2001/04/28 08:39:18 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -178,6 +178,65 @@ static void reset_edgeflag( GLcontext *ctx )
 }
 
 
+
+static void import( GLcontext *ctx,
+		    GLenum type,
+		    struct gl_client_array *to,
+		    struct gl_client_array *from )
+{
+   ACcontext *ac = AC_CONTEXT(ctx);
+
+   if (type == 0) 
+      type = from->Type;
+
+   switch (type) {
+   case GL_FLOAT:
+      _math_trans_4f( (GLfloat (*)[4]) to->Ptr,
+		      from->Ptr,
+		      from->StrideB,
+		      from->Type,
+		      from->Size,
+		      0,
+		      ac->count - ac->start);
+
+      to->StrideB = 4 * sizeof(GLfloat);
+      to->Type = GL_FLOAT;
+      break;
+      
+   case GL_UNSIGNED_BYTE:
+      _math_trans_4ub( (GLubyte (*)[4]) to->Ptr,
+		       from->Ptr,
+		       from->StrideB,
+		       from->Type,
+		       from->Size,
+		       0,
+		       ac->count - ac->start);
+
+      to->StrideB = 4 * sizeof(GLubyte);
+      to->Type = GL_UNSIGNED_BYTE;
+      break;
+
+   case GL_UNSIGNED_SHORT:
+      _math_trans_4us( (GLushort (*)[4]) to->Ptr,
+		       from->Ptr,
+		       from->StrideB,
+		       from->Type,
+		       from->Size,
+		       0,
+		       ac->count - ac->start);
+
+      to->StrideB = 4 * sizeof(GLushort);
+      to->Type = GL_UNSIGNED_SHORT;
+      break;
+      
+   default:
+      ASSERT(0);
+      break;
+   }
+}
+
+
+
 /* Functions to import array ranges with specified types and strides.
  */
 static void import_texcoord( GLcontext *ctx, GLuint unit,
@@ -257,6 +316,9 @@ static void import_normal( GLcontext *ctx,
    ac->IsCached.Normal = GL_TRUE;
 }
 
+		    
+
+
 static void import_color( GLcontext *ctx,
 			  GLenum type, GLuint stride )
 {
@@ -264,22 +326,8 @@ static void import_color( GLcontext *ctx,
    struct gl_client_array *from = &ac->Raw.Color;
    struct gl_client_array *to = &ac->Cache.Color;
 
-   /* Limited choices at this stage:
-    */
-   ASSERT(type == CHAN_TYPE);
-   ASSERT(stride == 4 * sizeof(GLchan) || stride == 0);
-
-   _math_trans_4chan( (GLchan (*)[4]) to->Ptr,
-		      from->Ptr,
-		      from->StrideB,
-		      from->Type,
-		      from->Size,
-		      0,
-		      ac->count - ac->start);
-
-   to->Size = from->Size;
-   to->StrideB = 4 * sizeof(GLchan);
-   to->Type = CHAN_TYPE;
+   import( ctx, type, to, from );
+   
    ac->IsCached.Color = GL_TRUE;
 }
 
@@ -314,21 +362,8 @@ static void import_secondarycolor( GLcontext *ctx,
    struct gl_client_array *from = &ac->Raw.SecondaryColor;
    struct gl_client_array *to = &ac->Cache.SecondaryColor;
 
-   /* Limited choices at this stage:
-    */
-   ASSERT(type == CHAN_TYPE);
-   ASSERT(stride == 4 * sizeof(GLchan) || stride == 0);
+   import( ctx, type, to, from );
 
-   _math_trans_4chan( (GLchan (*)[4]) to->Ptr,
-		      from->Ptr,
-		      from->StrideB,
-		      from->Type,
-		      from->Size,
-		      0,
-		      ac->count - ac->start);
-
-   to->StrideB = 4 * sizeof(GLchan);
-   to->Type = CHAN_TYPE;
    ac->IsCached.SecondaryColor = GL_TRUE;
 }
 
@@ -509,7 +544,7 @@ struct gl_client_array *_ac_import_color( GLcontext *ctx,
 
    /* Do we need to pull in a copy of the client data:
     */
-   if (ac->Raw.Color.Type != type ||
+   if ((type != 0 && ac->Raw.Color.Type != type) ||
        (reqstride != 0 && ac->Raw.Color.StrideB != (GLint) reqstride) ||
        reqwriteable)
    {
@@ -576,7 +611,7 @@ struct gl_client_array *_ac_import_secondarycolor( GLcontext *ctx,
 
    /* Do we need to pull in a copy of the client data:
     */
-   if (ac->Raw.SecondaryColor.Type != type ||
+   if ((type != 0 && ac->Raw.SecondaryColor.Type != type) ||
        (reqstride != 0 && ac->Raw.SecondaryColor.StrideB != (GLint)reqstride) ||
        reqwriteable)
    {

@@ -1,4 +1,4 @@
-/* $Id: t_dd_vbtmp.h,v 1.10 2001/04/09 10:16:01 alanh Exp $ */
+/* $Id: t_dd_vbtmp.h,v 1.11 2001/04/28 08:39:18 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -175,13 +175,17 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_RGBA) {
-      col = VB->ColorPtr[0]->data;
-      col_stride = VB->ColorPtr[0]->stride;
+      if (VB->ColorPtr[0]->Type != GL_UNSIGNED_BYTE)
+	 IMPORT_FLOAT_COLORS( ctx );
+      col = (GLubyte (*)[4])VB->ColorPtr[0]->Ptr;
+      col_stride = VB->ColorPtr[0]->StrideB;
    }
 
    if (DO_SPEC) {
-      spec = VB->SecondaryColorPtr[0]->data;
-      spec_stride = VB->SecondaryColorPtr[0]->stride;
+      if (VB->SecondaryColorPtr[0]->Type != GL_UNSIGNED_BYTE)
+	 IMPORT_FLOAT_SPEC_COLORS( ctx );
+      spec = (GLubyte (*)[4])VB->SecondaryColorPtr[0]->Ptr;
+      spec_stride = VB->SecondaryColorPtr[0]->StrideB;
    }
 
    if (DO_FOG) {
@@ -389,8 +393,8 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 {
    LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   GLubyte (*col)[4] = VB->ColorPtr[0]->data;
-   GLuint col_stride = VB->ColorPtr[0]->stride;
+   GLubyte (*col)[4];
+   GLuint col_stride;
    GLfloat (*coord)[4] = VB->ProjectedClipPtr->data;
    GLuint coord_stride = VB->ProjectedClipPtr->stride;
    GLfloat *v = (GLfloat *)dest;
@@ -401,6 +405,16 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
    (void) s;
 
    ASSERT(stride == 4);
+
+   if (VB->ColorPtr[0]->Type != GL_UNSIGNED_BYTE)
+      IMPORT_FLOAT_COLORS( ctx );
+
+   col = (GLubyte (*)[4])VB->ColorPtr[0]->Ptr;
+   col_stride = VB->ColorPtr[0]->StrideB;
+   ASSERT(VB->ColorPtr[0]->Type == GL_UNSIGNED_BYTE);
+
+/*     fprintf(stderr, "%s stride %d importable %d\n",  */
+/*  	   __FUNCTION__, col_stride, VB->importable_data); */
 
    /* Pack what's left into a 4-dword vertex.  Color is in a different
     * place, and there is no 'w' coordinate.
@@ -461,10 +475,16 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 {
    LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   GLubyte (*col)[4] = VB->ColorPtr[0]->data;
-   GLuint col_stride = VB->ColorPtr[0]->stride;
+   GLubyte (*col)[4];
+   GLuint col_stride;
    GLfloat *v = (GLfloat *)dest;
    int i;
+
+   if (VB->ColorPtr[0]->Type != GL_UNSIGNED_BYTE)
+      IMPORT_FLOAT_COLORS( ctx );
+
+   col = VB->ColorPtr[0]->data;
+   col_stride = VB->ColorPtr[0]->stride;
 
    if (start)
       STRIDE_4UB(col, col_stride * start);
@@ -579,8 +599,8 @@ static void TAG(interp)( GLcontext *ctx,
    const GLfloat *s = GET_VIEWPORT_MAT();
 
    VERTEX *dst = (VERTEX *)(ddverts + (edst << shift));
-   VERTEX *in  = (VERTEX *)(ddverts + (eout << shift));
-   VERTEX *out = (VERTEX *)(ddverts + (ein << shift));
+   VERTEX *in  = (VERTEX *)(ddverts + (ein << shift));
+   VERTEX *out = (VERTEX *)(ddverts + (eout << shift));
 
    (void)s;
 

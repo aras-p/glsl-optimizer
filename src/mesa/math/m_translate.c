@@ -1,4 +1,4 @@
-/* $Id: m_translate.c,v 1.6 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: m_translate.c,v 1.7 2001/04/28 08:39:18 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -167,19 +167,27 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
  */
 #define SRC GLubyte
 #define SRC_IDX TYPE_IDX(GL_UNSIGNED_BYTE)
-#define TRX_3F(f,n)		/* unused */
-#define TRX_4F(f,n)		/* unused */
+#define TRX_3F(f,n)	     UBYTE_TO_FLOAT(PTR_ELT(f,n))
+#define TRX_4F(f,n)	     UBYTE_TO_FLOAT(PTR_ELT(f,n))
 #define TRX_UB(ub, f,n)	     ub = PTR_ELT(f,n)
 #define TRX_US(us, f,n)      us = UBYTE_TO_USHORT(PTR_ELT(f,n))
 #define TRX_UI(f,n)          (GLuint)PTR_ELT(f,n)
 
 /* 4ub->4ub handled in special case below.
  */
+#define SZ 4
+#define INIT init_trans_4_GLubyte_raw
+#define DEST_4F trans_4_GLubyte_4f_raw
+#define DEST_4US trans_4_GLubyte_4us_raw
+#include "m_trans_tmp.h"
+
 
 #define SZ 3
 #define INIT init_trans_3_GLubyte_raw
 #define DEST_4UB trans_3_GLubyte_4ub_raw
 #define DEST_4US trans_3_GLubyte_4us_raw
+#define DEST_3F trans_3_GLubyte_3f_raw
+#define DEST_4F trans_3_GLubyte_4f_raw
 #include "m_trans_tmp.h"
 
 
@@ -507,14 +515,13 @@ static void init_translate_raw(void)
    MEMSET( TAB(_4us), 0, sizeof(TAB(_4us)) );
    MEMSET( TAB(_4f),  0, sizeof(TAB(_4f)) );
 
-   TAB(_4ub)[4][TYPE_IDX(GL_UNSIGNED_BYTE)] = trans_4_GLubyte_4ub_raw;
-
    init_trans_4_GLbyte_raw();
    init_trans_3_GLbyte_raw();
    init_trans_2_GLbyte_raw();
    init_trans_1_GLbyte_raw();
    init_trans_1_GLubyte_raw();
    init_trans_3_GLubyte_raw();
+   init_trans_4_GLubyte_raw();
    init_trans_4_GLshort_raw();
    init_trans_3_GLshort_raw();
    init_trans_2_GLshort_raw();
@@ -539,6 +546,8 @@ static void init_translate_raw(void)
    init_trans_3_GLfloat_raw();
    init_trans_2_GLfloat_raw();
    init_trans_1_GLfloat_raw();
+
+   TAB(_4ub)[4][TYPE_IDX(GL_UNSIGNED_BYTE)] = trans_4_GLubyte_4ub_raw;
 }
 
 

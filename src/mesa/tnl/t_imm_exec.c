@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.17 2001/04/09 14:47:34 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.18 2001/04/28 08:39:18 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -109,7 +109,7 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
       ctx->Current.EdgeFlag = IM->EdgeFlag[count];
 
    if (flag & VERT_RGBA) {
-      COPY_CHAN4(ctx->Current.Color, IM->Color[count]);
+      COPY_4FV(ctx->Current.Color, IM->Color[count]);
       if (ctx->Light.ColorMaterialEnabled) {
 	 _mesa_update_color_material( ctx, ctx->Current.Color );
 	 _mesa_validate_all_lighting_tables( ctx );
@@ -117,7 +117,7 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
    }
 
    if (flag & VERT_SPEC_RGB)
-      COPY_CHAN4(ctx->Current.SecondaryColor, IM->SecondaryColor[count]);
+      COPY_4FV(ctx->Current.SecondaryColor, IM->SecondaryColor[count]);
 
    if (flag & VERT_FOG_COORD)
       ctx->Current.FogCoord = IM->FogCoord[count];
@@ -174,6 +174,9 @@ void _tnl_compute_orflag( struct immediate *IM )
    IM->CopyAndFlag = IM->AndFlag = andflag;
    IM->CopyOrFlag = IM->OrFlag = orflag;
 }
+
+
+
 
 
 
@@ -268,9 +271,7 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
    }
 
    if (inputs & VERT_SPEC_RGB) {
-      tmp->SecondaryColor.data = IM->SecondaryColor + start;
-      tmp->SecondaryColor.start = (GLchan *)(IM->SecondaryColor + start);
-      tmp->SecondaryColor.count = count;
+      tmp->SecondaryColor.Ptr = IM->SecondaryColor + start;
       VB->SecondaryColorPtr[0] = &tmp->SecondaryColor;
    }
 
@@ -279,9 +280,17 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
    }
 
    if (inputs & VERT_RGBA) {
-      tmp->Color.data = IM->Color + start;
-      tmp->Color.start = (GLchan *)(IM->Color + start);
-      tmp->Color.count = count;
+      if (IM->CopyOrFlag & VERT_RGBA) {
+	 tmp->Color.Ptr = IM->Color + start;
+	 tmp->Color.StrideB = 4 * sizeof(GLfloat);
+	 tmp->Color.Flags = 0;
+      } else {
+	 tmp->Color.Ptr = ctx->Current.Color;
+	 tmp->Color.StrideB = 0;
+	 tmp->Color.Flags = CA_CLIENT_DATA; /* hack */
+	 VB->importable_data |= VERT_RGBA;
+	 VB->import_data = _tnl_upgrade_current_data;
+      }
       VB->ColorPtr[0] = &tmp->Color;
    }
 
@@ -308,6 +317,10 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
       VB->MaterialMask = IM->MaterialMask + start;
       VB->Material = IM->Material + start;
    }
+
+/*    _tnl_print_vert_flags("_tnl_vb_bind_immediate: importable",  */
+/*  			VB->importable_data);  */
+
 }
 
 
@@ -477,8 +490,21 @@ void _tnl_imm_init( GLcontext *ctx )
 
    _mesa_vector4f_init( &tmp->Obj, 0, 0 );
    _mesa_vector3f_init( &tmp->Normal, 0, 0 );
-   _mesa_vector4chan_init( &tmp->Color, 0, 0 );
-   _mesa_vector4chan_init( &tmp->SecondaryColor, 0, 0 );
+
+   tmp->Color.Ptr = 0;
+   tmp->Color.Type = GL_FLOAT;
+   tmp->Color.Size = 4;
+   tmp->Color.Stride = 0;
+   tmp->Color.StrideB = 4 * sizeof(GLfloat);
+   tmp->Color.Flags = 0;
+
+   tmp->SecondaryColor.Ptr = 0;
+   tmp->SecondaryColor.Type = GL_FLOAT;
+   tmp->SecondaryColor.Size = 4;
+   tmp->SecondaryColor.Stride = 0;
+   tmp->SecondaryColor.StrideB = 4 * sizeof(GLfloat);
+   tmp->SecondaryColor.Flags = 0;
+
    _mesa_vector1f_init( &tmp->FogCoord, 0, 0 );
    _mesa_vector1ui_init( &tmp->Index, 0, 0 );
    _mesa_vector1ub_init( &tmp->EdgeFlag, 0, 0 );

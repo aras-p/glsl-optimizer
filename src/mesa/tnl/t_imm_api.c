@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.10 2001/04/09 14:47:34 keithw Exp $ */
+/* $Id: t_imm_api.c,v 1.11 2001/04/28 08:39:18 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -348,56 +348,29 @@ _tnl_End(void)
    IM->Color[count][3] = a;			\
 }
 
-#define COLORV( IM, v )				\
-{						\
-   GLuint count = IM->Count;			\
-   IM->Flag[count] |= VERT_RGBA;		\
-   COPY_CHAN4(IM->Color[count], v);		\
-}
-
-
 static void
 _tnl_Color3f( GLfloat red, GLfloat green, GLfloat blue )
 {
-   GLchan col[4];
    GET_IMMEDIATE;
-   UNCLAMPED_FLOAT_TO_CHAN(col[0], red);
-   UNCLAMPED_FLOAT_TO_CHAN(col[1], green);
-   UNCLAMPED_FLOAT_TO_CHAN(col[2], blue);
-   col[3] = CHAN_MAX;
-   COLORV( IM, col );
+   COLOR( IM, red, green, blue, 1.0 );
 }
-
 
 static void
 _tnl_Color3ub( GLubyte red, GLubyte green, GLubyte blue )
 {
-#if CHAN_BITS == 8
-   GET_IMMEDIATE;
-   COLOR( IM, red, green, blue, CHAN_MAX );
-#else
    GET_IMMEDIATE;
    COLOR(IM,
-         UBYTE_TO_CHAN(red),
-         UBYTE_TO_CHAN(green),
-         UBYTE_TO_CHAN(blue),
-         CHAN_MAX);
-#endif
+         UBYTE_TO_FLOAT(red),
+         UBYTE_TO_FLOAT(green),
+         UBYTE_TO_FLOAT(blue),
+         1.0);
 }
-
-
-
 
 static void
 _tnl_Color4f( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
 {
-   GLchan col[4];
    GET_IMMEDIATE;
-   UNCLAMPED_FLOAT_TO_CHAN(col[0], red);
-   UNCLAMPED_FLOAT_TO_CHAN(col[1], green);
-   UNCLAMPED_FLOAT_TO_CHAN(col[2], blue);
-   UNCLAMPED_FLOAT_TO_CHAN(col[3], alpha);
-   COLORV( IM, col );
+   COLOR( IM, red, green, blue, alpha );
 }
 
 static void
@@ -405,61 +378,46 @@ _tnl_Color4ub( GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha )
 {
    GET_IMMEDIATE;
    COLOR(IM,
-         UBYTE_TO_CHAN(red),
-         UBYTE_TO_CHAN(green),
-         UBYTE_TO_CHAN(blue),
-         UBYTE_TO_CHAN(alpha));
+         UBYTE_TO_FLOAT(red),
+         UBYTE_TO_FLOAT(green),
+         UBYTE_TO_FLOAT(blue),
+         UBYTE_TO_FLOAT(alpha));
 }
-
 
 static void
 _tnl_Color3fv( const GLfloat *v )
 {
-   GLchan col[4];
    GET_IMMEDIATE;
-   UNCLAMPED_FLOAT_TO_CHAN(col[0], v[0]);
-   UNCLAMPED_FLOAT_TO_CHAN(col[1], v[1]);
-   UNCLAMPED_FLOAT_TO_CHAN(col[2], v[2]);
-   col[3] = CHAN_MAX;
-   COLORV( IM, col );
+   COLOR( IM, v[0], v[1], v[2], 1.0 );
 }
-
-
 
 static void
 _tnl_Color3ubv( const GLubyte *v )
 {
    GET_IMMEDIATE;
    COLOR(IM,
-         UBYTE_TO_CHAN(v[0]),
-         UBYTE_TO_CHAN(v[1]),
-         UBYTE_TO_CHAN(v[2]),
-         CHAN_MAX );
+         UBYTE_TO_FLOAT(v[0]),
+         UBYTE_TO_FLOAT(v[1]),
+         UBYTE_TO_FLOAT(v[2]),
+         1.0 );
 }
 
 static void
 _tnl_Color4fv( const GLfloat *v )
 {
-   GLchan col[4];
    GET_IMMEDIATE;
-   UNCLAMPED_FLOAT_TO_CHAN(col[0], v[0]);
-   UNCLAMPED_FLOAT_TO_CHAN(col[1], v[1]);
-   UNCLAMPED_FLOAT_TO_CHAN(col[2], v[2]);
-   UNCLAMPED_FLOAT_TO_CHAN(col[3], v[3]);
-   COLORV( IM, col );
+   COLOR( IM, v[0], v[1], v[2], v[3] );
 }
-
-
 
 static void
 _tnl_Color4ubv( const GLubyte *v)
 {
    GET_IMMEDIATE;
    COLOR(IM,
-         UBYTE_TO_CHAN(v[0]),
-         UBYTE_TO_CHAN(v[1]),
-         UBYTE_TO_CHAN(v[2]),
-         UBYTE_TO_CHAN(v[3]));
+         UBYTE_TO_FLOAT(v[0]),
+         UBYTE_TO_FLOAT(v[1]),
+         UBYTE_TO_FLOAT(v[2]),
+         UBYTE_TO_FLOAT(v[3]));
 }
 
 
@@ -474,65 +432,38 @@ _tnl_Color4ubv( const GLubyte *v)
    IM->SecondaryColor[count][2] = b;		\
 }
 
-#define SECONDARY_COLORV( IM, v )		\
-{						\
-   GLuint count = IM->Count;			\
-   IM->Flag[count] |= VERT_SPEC_RGB;		\
-   IM->SecondaryColor[count][0] = v[0];		\
-   IM->SecondaryColor[count][1] = v[1];		\
-   IM->SecondaryColor[count][2] = v[2];		\
-}
-
-
-
-
 static void
 _tnl_SecondaryColor3fEXT( GLfloat red, GLfloat green, GLfloat blue )
 {
-   GLchan col[3];
    GET_IMMEDIATE;
-   UNCLAMPED_FLOAT_TO_CHAN(col[0], red);
-   UNCLAMPED_FLOAT_TO_CHAN(col[1], green);
-   UNCLAMPED_FLOAT_TO_CHAN(col[2], blue);
-   SECONDARY_COLORV( IM, col );
+   SECONDARY_COLOR( IM, red, green, blue );
 }
-
-
 
 static void
 _tnl_SecondaryColor3ubEXT( GLubyte red, GLubyte green, GLubyte blue )
 {
    GET_IMMEDIATE;
    SECONDARY_COLOR(IM,
-                   UBYTE_TO_CHAN(red),
-                   UBYTE_TO_CHAN(green),
-                   UBYTE_TO_CHAN(blue));
+                   UBYTE_TO_FLOAT(red),
+                   UBYTE_TO_FLOAT(green),
+                   UBYTE_TO_FLOAT(blue));
 }
-
-
-
 
 static void
 _tnl_SecondaryColor3fvEXT( const GLfloat *v )
 {
-   GLchan col[3];
    GET_IMMEDIATE;
-   UNCLAMPED_FLOAT_TO_CHAN(col[0], v[0]);
-   UNCLAMPED_FLOAT_TO_CHAN(col[1], v[1]);
-   UNCLAMPED_FLOAT_TO_CHAN(col[2], v[2]);
-   SECONDARY_COLORV( IM, col );
+   SECONDARY_COLOR( IM, v[0], v[1], v[2] );
 }
-
-
 
 static void
 _tnl_SecondaryColor3ubvEXT( const GLubyte *v )
 {
    GET_IMMEDIATE;
    SECONDARY_COLOR(IM,
-                   UBYTE_TO_CHAN(v[0]),
-                   UBYTE_TO_CHAN(v[1]),
-                   UBYTE_TO_CHAN(v[2]));
+                   UBYTE_TO_FLOAT(v[0]),
+                   UBYTE_TO_FLOAT(v[1]),
+                   UBYTE_TO_FLOAT(v[2]));
 }
 
 

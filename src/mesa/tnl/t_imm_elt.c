@@ -1,4 +1,4 @@
-/* $Id: t_imm_elt.c,v 1.7 2001/04/26 14:53:48 keithw Exp $ */
+/* $Id: t_imm_elt.c,v 1.8 2001/04/28 08:39:18 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -647,6 +647,7 @@ static void _tnl_trans_elt_1ub(GLubyte *to,
 }
 
 
+#if 0
 static void _tnl_trans_elt_4ub(GLubyte (*to)[4],
                                const struct gl_client_array *from,
                                GLuint *flags,
@@ -665,7 +666,9 @@ static void _tnl_trans_elt_4ub(GLubyte (*to)[4],
                                                              n );
 
 }
+#endif
 
+#if 0
 static void _tnl_trans_elt_4us(GLushort (*to)[4],
                                const struct gl_client_array *from,
                                GLuint *flags,
@@ -684,6 +687,7 @@ static void _tnl_trans_elt_4us(GLushort (*to)[4],
                                                              n );
 
 }
+#endif
 
 static void _tnl_trans_elt_4f(GLfloat (*to)[4],
                               const struct gl_client_array *from,
@@ -702,25 +706,6 @@ static void _tnl_trans_elt_4f(GLfloat (*to)[4],
 					      start,
 					      n );
 
-}
-
-static void _tnl_trans_elt_4chan(GLchan (*to)[4],
-                               const struct gl_client_array *from,
-                               GLuint *flags,
-                               GLuint *elts,
-                               GLuint match,
-                               GLuint start,
-                               GLuint n )
-{
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-      _tnl_trans_elt_4ub( to, from, flags, elts, match, start, n );
-      (void)_tnl_trans_elt_4us;
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-      _tnl_trans_elt_4us( to, from, flags, elts, match, start, n );
-#elif CHAN_TYPE == GL_FLOAT
-      _tnl_trans_elt_4f( to, from, flags, elts, match, start, n );
-      (void)_tnl_trans_elt_4us;
-#endif
 }
 
 
@@ -789,17 +774,17 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
 			  start, count);
 
    if (translate & VERT_RGBA) {
-      _tnl_trans_elt_4chan( IM->Color,
-                          &ctx->Array.Color,
-                          flags, elts, (VERT_ELT|VERT_RGBA),
-                          start, count);
+      _tnl_trans_elt_4f( IM->Color,
+			 &ctx->Array.Color,
+			 flags, elts, (VERT_ELT|VERT_RGBA),
+			 start, count);
    }
 
    if (translate & VERT_SPEC_RGB) {
-      _tnl_trans_elt_4chan( IM->SecondaryColor,
-			    &ctx->Array.SecondaryColor,
-			    flags, elts, (VERT_ELT|VERT_SPEC_RGB),
-			    start, count);
+      _tnl_trans_elt_4f( IM->SecondaryColor,
+			 &ctx->Array.SecondaryColor,
+			 flags, elts, (VERT_ELT|VERT_SPEC_RGB),
+			 start, count);
    }
 
    if (translate & VERT_FOG_COORD)
