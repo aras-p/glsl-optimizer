@@ -30,10 +30,6 @@ DRIVER_DIRS = dri
 PROGRAM_DIRS = 
 WINDOW_SYSTEM=dri
 
-# This kindof sucks - we only need the header files from here:
-# 
-DRM_SOURCE_PATH=/home/progs/drm
-
 # Only savage missing:
 #
 DRI_DIRS = dri_client ffb gamma i810 i830 mach64 mga r128 r200 radeon sis tdfx unichrome
