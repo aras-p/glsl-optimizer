@@ -64,6 +64,15 @@
 #define FRAG_BIT_TEX6  (1 << FRAG_ATTRIB_TEX6)
 #define FRAG_BIT_TEX7  (1 << FRAG_ATTRIB_TEX7)
 
+#define FRAG_BITS_TEX_ANY (FRAG_BIT_TEX0|	\
+			   FRAG_BIT_TEX1|	\
+			   FRAG_BIT_TEX2|	\
+			   FRAG_BIT_TEX3|	\
+			   FRAG_BIT_TEX4|	\
+			   FRAG_BIT_TEX5|	\
+			   FRAG_BIT_TEX6|	\
+			   FRAG_BIT_TEX7)
+
 /* output registers */
 #define FRAG_OUTPUT_COLR  0
 #define FRAG_OUTPUT_COLH  1

@@ -4649,16 +4649,16 @@ parse_extended_swizzle_mask (GLubyte ** inst, GLubyte * mask, GLboolean * Negate
             mask[a] = SWIZZLE_ONE;
             break;
          case COMPONENT_X:
-            mask[a] = 0;
+            mask[a] = SWIZZLE_X;
             break;
          case COMPONENT_Y:
-            mask[a] = 1;
+            mask[a] = SWIZZLE_Y;
             break;
          case COMPONENT_Z:
-            mask[a] = 2;
+            mask[a] = SWIZZLE_Z;
             break;
          case COMPONENT_W:
-            mask[a] = 3;
+            mask[a] = SWIZZLE_W;
             break;
 
       }
