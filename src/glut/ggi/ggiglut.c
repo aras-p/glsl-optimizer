@@ -38,7 +38,6 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
-#include <malloc.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -404,8 +403,8 @@ void glutPostWindowRedisplay(int win)
 void glutSwapBuffers(void)
 {
 	GGIGLUTDPRINT_CORE("glutSwapBuffers() called\n");
-	
-	GGIMesaSwapBuffers();
+
+	ggiMesaSwapBuffers();
 }
 
 void glutIdleFunc(void (*idle)(void))
