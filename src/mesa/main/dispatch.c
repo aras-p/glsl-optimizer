@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.4 1999/11/27 21:40:28 brianp Exp $ */
+/* $Id: dispatch.c,v 1.5 1999/11/27 21:42:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -86,11 +86,17 @@ generic_noop(void)
 void
 _mesa_init_no_op_table(struct _glapi_table *exec)
 {
-   const GLuint n = _glapi_get_dispatch_table_size();
-   GLuint i;
-   void **dispatch = (void **) exec;
-   for (i = 0; i < n; i++) {
-      dispatch[i] = (void *) generic_noop;
+   /* Check to be sure the dispatcher's table is at least as big as Mesa's. */
+   const GLuint size = sizeof(struct _glapi_table) / sizeof(void *);
+   assert(_glapi_get_dispatch_table_size() >= size);
+
+   {
+      const GLuint n = _glapi_get_dispatch_table_size();
+      GLuint i;
+      void **dispatch = (void **) exec;
+      for (i = 0; i < n; i++) {
+         dispatch[i] = (void *) generic_noop;
+      }
    }
 }
 
@@ -102,11 +108,6 @@ _mesa_init_no_op_table(struct _glapi_table *exec)
 void
 _mesa_init_exec_table(struct _glapi_table *exec)
 {
-   /* Check to be sure the dispatcher's table is at least as big as Mesa's. */
-   const GLuint size = sizeof(struct _glapi_table) / sizeof(void *);
-   assert(_glapi_get_dispatch_table_size() >= size);
-
-
    /* first initialize all dispatch slots to no-op */
    _mesa_init_no_op_table(exec);
 
