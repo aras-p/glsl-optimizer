@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Brian Paul
+ *    Michal Krol
  */
 
 
@@ -42,33 +42,28 @@
  */
 struct arb_program
 {
-	GLuint type; /* FRAGMENT_PROGRAM_ARB or VERTEX_PROGRAM_ARB */
-
-	struct program Base;
+   struct program Base;
    struct program_parameter_list *Parameters; 
-	GLuint InputsRead;
-	GLuint OutputsWritten;
+   GLuint InputsRead;
+   GLuint OutputsWritten;
 
-	GLuint Position;       /* Just used for error reporting while parsing */
-	GLuint MajorVersion;
-	GLuint MinorVersion;
+   GLuint Position;       /* Just used for error reporting while parsing */
+   GLuint MajorVersion;
+   GLuint MinorVersion;
 
-	/* ARB_vertex_program specifics */ 
-	struct vp_instruction *VPInstructions;
+   /* ARB_vertex_program specifics */ 
+   struct vp_instruction *VPInstructions;
 
-	/* Options currently recognized by the parser */
-	/* ARB_fp */
-	GLboolean HintPrecisionFastest;
-	GLboolean HintPrecisionNicest;
-	GLboolean HintFogExp2;
-	GLboolean HintFogExp;
-	GLboolean HintFogLinear;
+   /* Options currently recognized by the parser */
+   /* ARB_fp */
+   GLenum PrecisionOption; /* GL_DONT_CARE, GL_NICEST or GL_FASTEST */
+   GLenum FogOption;       /* GL_NONE, GL_LINEAR, GL_EXP or GL_EXP2 */
 
-	/* ARB_fp & _vp */
-	GLboolean HintPositionInvariant;
+   /* ARB_fp & _vp */
+   GLboolean HintPositionInvariant;
 
-	/* ARB_fragment_program sepecifics */
-	struct fp_instruction *FPInstructions;
+   /* ARB_fragment_program sepecifics */
+   struct fp_instruction *FPInstructions;
    GLuint TexturesUsed[MAX_TEXTURE_IMAGE_UNITS]; 
    GLuint NumAluInstructions; 
    GLuint NumTexInstructions;
@@ -77,7 +72,6 @@ struct arb_program
 
 extern GLuint 
 _mesa_parse_arb_program( GLcontext *ctx, const GLubyte *str, GLsizei len, 
-                                 struct arb_program *Program );
+                         struct arb_program *Program );
                           
-
 #endif

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -202,7 +202,7 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
    }
 
    /* Eh.. we parsed something that wasn't a vertex program. doh! */
-   if (ap.type != GL_VERTEX_PROGRAM_ARB)
+   if (ap.Base.Target != GL_VERTEX_PROGRAM_ARB)
    {
       program->Instructions = (struct vp_instruction *) _mesa_malloc (
                                      sizeof(struct vp_instruction) );			  
