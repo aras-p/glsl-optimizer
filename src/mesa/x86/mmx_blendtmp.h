@@ -41,7 +41,7 @@ GLNAME( TAG(_mesa_mmx_blend) ):
     /* runin */
 #define ONE(x)	x
 #define TWO(x)  
-    MAIN
+    MAIN       ( EDI, ESI )
 #undef ONE
 #undef TWO
 
@@ -66,7 +66,7 @@ LLBL ( TAG(GMB_loop_begin) ):
     /* main loop */
 #define ONE(x)
 #define TWO(x)	x
-    MAIN
+    MAIN       ( EDI, ESI )
 #undef ONE
 #undef TWO
 
@@ -91,7 +91,7 @@ LLBL ( TAG(GMB_loop_end) ):
     /* runout */
 #define ONE(x)	x
 #define TWO(x)
-    MAIN
+    MAIN       ( EDI, ESI )
 #undef ONE
 #undef TWO
 

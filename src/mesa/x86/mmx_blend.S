@@ -203,47 +203,29 @@ TWO(PADDW      ( MQ2, MA2 ))			/*              (t2/255 + q2) << 8               
 TWO(PSRLW      ( CONST(8), MA2 ))		/*    sa2    |    sb2    |    sg2    |    sr2    */
 
 
-/* common blending initialization code
- */
-#if 0	/* rounding not used */
-    SEG_DATA
-
-ALIGNDATA8
-const_80:
-	D_LONG 0x00800080, 0x00800080
-
-#define GMB_INIT( M00, M80 ) \
-    PXOR       ( M00, M00 )			/*   0x0000  |   0x0000  |   0x0000  |   0x0000  */
-    MOVQ       ( CONTENT(const_80), M80 )	/*   0xffff  |   0xffff  |   0xffff  |   0xffff  */
-
-#else
-
-#define GMB_INIT( M00 ) \
-    PXOR       ( M00, M00 )			/*   0x0000  |   0x0000  |   0x0000  |   0x0000  */
-
-#endif
-
-/* common blending loading code
+/* common blending setup code
  *
  * note that M00 is a register with 0x0000000000000000 constant which can be easily obtained making
  *
  *   PXOR      ( M00, M00 )
  */
-#define GMB_LOAD(rgba, dest, MP1, MQ1, MA1, MP2, MQ2, MA2, M00) \
-ONE(MOVD       ( REGIND(rgba), MP1 ))		/*     |     |     |     | qa1 | qb1 | qg1 | qr1 */	;\
-ONE(MOVD       ( REGIND(dest), MQ1 ))		/*     |     |     |     | pa1 | pb1 | pg1 | pr1 */	;\
+#define GMB_LOAD(rgba, dest, MPP, MQQ) \
+ONE(MOVD       ( REGIND(rgba), MPP ))		/*     |     |     |     | qa1 | qb1 | qg1 | qr1 */	;\
+ONE(MOVD       ( REGIND(dest), MQQ ))		/*     |     |     |     | pa1 | pb1 | pg1 | pr1 */	;\
 													;\
-TWO(MOVQ       ( REGIND(rgba), MP1 ))		/* qa2 | qb2 | qg2 | qr2 | qa1 | qb1 | qg1 | qr1 */	;\
-TWO(MOVQ       ( REGIND(dest), MQ1 ))		/* pa2 | pb2 | pg2 | pr2 | pa1 | pb1 | pg1 | pr1 */	;\
-													;\
+TWO(MOVQ       ( REGIND(rgba), MPP ))		/* qa2 | qb2 | qg2 | qr2 | qa1 | qb1 | qg1 | qr1 */	;\
+TWO(MOVQ       ( REGIND(dest), MQQ ))		/* pa2 | pb2 | pg2 | pr2 | pa1 | pb1 | pg1 | pr1 */
+
+#define GMB_UNPACK(MP1, MQ1, MP2, MQ2, M00) \
 TWO(MOVQ       ( MP1, MP2 ))										;\
 TWO(MOVQ       ( MQ1, MQ2 ))										;\
 													;\
     PUNPCKLBW  ( M00, MQ1 )			/*    qa1    |    qb1    |    qg1    |    qr1    */	;\
 TWO(PUNPCKHBW  ( M00, MQ2 ))                    /*    qa2    |    qb2    |    qg2    |    qr2    */	;\
     PUNPCKLBW  ( M00, MP1 )			/*    pa1    |    pb1    |    pg1    |    pr1    */	;\
-TWO(PUNPCKHBW  ( M00, MP2 ))                    /*    pa2    |    pb2    |    pg2    |    pr2    */	;\
-													;\
+TWO(PUNPCKHBW  ( M00, MP2 ))                    /*    pa2    |    pb2    |    pg2    |    pr2    */
+
+#define GMB_ALPHA(MP1, MA1, MP2, MA2) \
     MOVQ       ( MP1, MA1 )										;\
 TWO(MOVQ       ( MP2, MA2 ))										;\
 													;\
@@ -252,17 +234,21 @@ TWO(PUNPCKHWD  ( MA2, MA2 ))			/*    pa2    |    pa2    |           |           
     PUNPCKHDQ  ( MA1, MA1 )                     /*    pa1    |    pa1    |    pa1    |    pa1    */	;\
 TWO(PUNPCKHDQ  ( MA2, MA2 ))                    /*    pa2    |    pa2    |    pa2    |    pa2    */
 
- 
-/* common blending storing code
- */
-#define GMB_STORE(rgba, MA1, MA2) \
-    PACKUSWB   ( MA2, MA1 )			/* sa2 | sb2 | sg2 | sr2 | sa1 | sb1 | sg1 | sr1 */	;\
-													;\
-ONE(MOVD       ( MA1, REGIND(rgba) ))									;\
-TWO(MOVQ       ( MA1, REGIND(rgba) ))
+#define GMB_PACK( MS1, MS2 ) \
+    PACKUSWB   ( MS2, MS1 )			/* sa2 | sb2 | sg2 | sr2 | sa1 | sb1 | sg1 | sr1 */	;\
+
+#define GMB_STORE(rgba, MSS ) \
+ONE(MOVD       ( MSS, REGIND(rgba) ))									;\
+TWO(MOVQ       ( MSS, REGIND(rgba) ))
 
 
-   SEG_TEXT
+    SEG_DATA
+
+ALIGNDATA8
+const_80:
+	D_LONG 0x00800080, 0x00800080
+
+    SEG_TEXT
 
 
 /* common transparency blending mode
@@ -271,12 +257,34 @@ TWO(MOVQ       ( MA1, REGIND(rgba) ))
 #define TAG(x) x##_transparency
 
 #define INIT \
-	GMB_INIT( MM0 )
+    PXOR       ( MM0, MM0 )			/*   0x0000  |   0x0000  |   0x0000  |   0x0000  */
 
-#define MAIN \
-	GMB_LOAD( EDI, ESI, MM1, MM2, MM3, MM4, MM5, MM6, MM0)						;\
-	GMB_LERP_GSC( MM1, MM2, MM3, MM4, MM5, MM6 )							;\
-	GMB_STORE( EDI, MM3, MM6 )
+#define MAIN( rgba, dest ) \
+    GMB_LOAD( rgba, dest, MM1, MM2 )									;\
+    GMB_UNPACK( MM1, MM2, MM4, MM5, MM0 )								;\
+    GMB_ALPHA( MM1, MM3, MM4, MM6 )									;\
+    GMB_LERP_GSC( MM1, MM2, MM3, MM4, MM5, MM6 )							;\
+    GMB_PACK( MM3, MM6 )										;\
+    GMB_STORE( rgba, MM3 )
+
+#include "mmx_blendtmp.h"
+
+
+/* modulate
+ */
+
+#define TAG(x) x##_modulate
+
+#define INIT \
+    PXOR       ( MM0, MM0 )			/*   0x0000  |   0x0000  |   0x0000  |   0x0000  */	;\
+    MOVQ       ( CONTENT(const_80), MM7 )	/*   0xffff  |   0xffff  |   0xffff  |   0xffff  */
+
+#define MAIN( rgba, dest ) \
+    GMB_LOAD( rgba, dest, MM1, MM2 )									;\
+    GMB_UNPACK( MM1, MM2, MM4, MM5, MM0 )								;\
+    GMB_MULT_GSR( MM1, MM2, MM4, MM5, MM7 )								;\
+    GMB_PACK( MM2, MM5 )										;\
+    GMB_STORE( rgba, MM2 )
 
 #include "mmx_blendtmp.h"
 
