@@ -152,8 +152,8 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
       */
       fallback_drawarrays( ctx, mode, start, start + count );
    } 
-   else if (start >= ctx->Array.LockFirst &&
-	    start + count <= ctx->Array.LockFirst + ctx->Array.LockCount) {
+   else if (start >= (GLint) ctx->Array.LockFirst &&
+	    start + count <= (GLint)(ctx->Array.LockFirst + ctx->Array.LockCount)) {
       
       struct tnl_prim prim;
 
