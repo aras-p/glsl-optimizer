@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.8 2000/03/07 17:40:34 brianp Exp $ */
+/* $Id: fog.c,v 1.9 2000/06/05 14:33:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,6 +85,8 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLenum m;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glFog");
 
    switch (pname) {
       case GL_FOG_MODE:
