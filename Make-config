@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.52 2001/11/18 23:03:53 brianp Exp $
+# $Id: Make-config,v 1.53 2001/11/18 23:11:45 brianp Exp $
 
 MESA_MAJOR=4
 MESA_MINOR=1
@@ -1452,7 +1452,7 @@ linux-debug:
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CPLUSPLUS = g++" \
-	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DMESA_TRACE" \
+	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG" \
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
