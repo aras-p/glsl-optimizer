@@ -38,6 +38,7 @@
 #ifndef _RADEON_COMMON_H_
 #define _RADEON_COMMON_H_
 
+#include <inttypes.h>
 #include "xf86drm.h"
 
 /* WARNING: If you change any of these defines, make sure to change
@@ -71,6 +72,7 @@
 #define DRM_RADEON_IRQ_EMIT               0x16
 #define DRM_RADEON_IRQ_WAIT               0x17
 #define DRM_RADEON_CP_RESUME              0x18
+#define DRM_RADEON_SETPARAM               0x19
 #define DRM_RADEON_MAX_DRM_COMMAND_INDEX  0x39
 
 
@@ -159,7 +161,7 @@ typedef struct {
 } drmRadeonTexImage;
 
 typedef struct {
-        int offset;
+        unsigned int offset;
         int pitch;
         int format;
         int width;                      /* Texture image coordinates */
@@ -400,17 +402,27 @@ typedef union {
 #define RADEON_WAIT_3D  0x2
 
 
+/* 1.3: An ioctl to get parameters that aren't available to the 3d
+ * client any other way.  
+ */
+#define RADEON_PARAM_GART_BUFFER_OFFSET    1 /* card offset of 1st GART buffer */
+#define RADEON_PARAM_LAST_FRAME            2
+#define RADEON_PARAM_LAST_DISPATCH         3
+#define RADEON_PARAM_LAST_CLEAR            4
+/* Added with DRM version 1.6. */
+#define RADEON_PARAM_IRQ_NR                5
+#define RADEON_PARAM_GART_BASE             6 /* card offset of GART base */
+/* Added with DRM version 1.8. */
+#define RADEON_PARAM_REGISTER_HANDLE       7 /* for drmMap() */
+#define RADEON_PARAM_STATUS_HANDLE         8
+#define RADEON_PARAM_SAREA_HANDLE          9
+#define RADEON_PARAM_GART_TEX_HANDLE       10
+#define RADEON_PARAM_SCRATCH_OFFSET        11
+
 typedef struct drm_radeon_getparam {
 	int param;
-	void *value;
+	int *value;
 } drmRadeonGetParam;
-
-#define RADEON_PARAM_GART_BUFFER_OFFSET 1
-#define RADEON_PARAM_LAST_FRAME         2
-#define RADEON_PARAM_LAST_DISPATCH      3
-#define RADEON_PARAM_LAST_CLEAR         4
-#define RADEON_PARAM_IRQ_NR             5
-#define RADEON_PARAM_GART_BASE          6
 
 
 #define RADEON_MEM_REGION_GART 1
@@ -443,6 +455,18 @@ typedef struct drm_radeon_irq_emit {
 typedef struct drm_radeon_irq_wait {
 	int irq_seq;
 } drmRadeonIrqWait;
+
+
+/* 1.10: Clients tell the DRM where they think the framebuffer is located in
+ * the card's address space, via a new generic ioctl to set parameters
+ */
+
+typedef struct drm_radeon_set_param {
+	unsigned int param;
+	int64_t      value;
+} drmRadeonSetParam;
+
+#define RADEON_SETPARAM_FB_LOCATION     1
 
 
 #endif
