@@ -515,26 +515,20 @@ logbase2(int n)
 }
 
 
+/* fxTexGetInfo
+ * w, h     - source texture width and height
+ * lodlevel - Glide lod level token for the larger texture dimension
+ * ar       - Glide aspect ratio token
+ * sscale   - S scale factor used during triangle setup
+ * tscale   - T scale factor used during triangle setup
+ * wscale   - OpenGL -> Glide image width scale factor
+ * hscale   - OpenGL -> Glide image height scale factor
+ */
 int
 fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
 	     float *sscale, float *tscale,
 	     int *wscale, int *hscale)
 {
-   static GrLOD_t lod[12] = {
-          GR_LOD_LOG2_1,
-          GR_LOD_LOG2_2,
-          GR_LOD_LOG2_4,
-          GR_LOD_LOG2_8,
-          GR_LOD_LOG2_16,
-          GR_LOD_LOG2_32,
-          GR_LOD_LOG2_64,
-          GR_LOD_LOG2_128,
-          GR_LOD_LOG2_256,
-          GR_LOD_LOG2_512,
-          GR_LOD_LOG2_1024,
-          GR_LOD_LOG2_2048
-   };
-
    int logw, logh, ws, hs;
    GrLOD_t l;
    GrAspectRatio_t aspectratio;
@@ -543,76 +537,69 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
    logw = logbase2(w);
    logh = logbase2(h);
 
-   switch (logw - logh) {
+   l = MAX2(logw, logh);
+   aspectratio = logw - logh;
+
+   /* hardware only allows a maximum aspect ratio of 8x1, so handle
+    * |aspectratio| > 3 by scaling the image and using an 8x1 aspect
+    * ratio
+    */
+   switch (aspectratio) {
    case 0:
-      aspectratio = GR_ASPECT_LOG2_1x1;
-      l = lod[logw];
-      s = t = 256.0f;
-      ws = hs = 1;
+      s = 256.0f;
+      t = 256.0f;
+      ws = 1;
+      hs = 1;
       break;
    case 1:
-      aspectratio = GR_ASPECT_LOG2_2x1;
-      l = lod[logw];
       s = 256.0f;
       t = 128.0f;
       ws = 1;
       hs = 1;
       break;
    case 2:
-      aspectratio = GR_ASPECT_LOG2_4x1;
-      l = lod[logw];
       s = 256.0f;
       t = 64.0f;
       ws = 1;
       hs = 1;
       break;
    case 3:
-      aspectratio = GR_ASPECT_LOG2_8x1;
-      l = lod[logw];
       s = 256.0f;
       t = 32.0f;
       ws = 1;
       hs = 1;
       break;
    case -1:
-      aspectratio = GR_ASPECT_LOG2_1x2;
-      l = lod[logh];
       s = 128.0f;
       t = 256.0f;
       ws = 1;
       hs = 1;
       break;
    case -2:
-      aspectratio = GR_ASPECT_LOG2_1x4;
-      l = lod[logh];
       s = 64.0f;
       t = 256.0f;
       ws = 1;
       hs = 1;
       break;
    case -3:
-      aspectratio = GR_ASPECT_LOG2_1x8;
-      l = lod[logh];
       s = 32.0f;
       t = 256.0f;
       ws = 1;
       hs = 1;
       break;
    default:
-      if ((logw - logh) > 3) {
-         aspectratio = GR_ASPECT_LOG2_8x1;
-         l = lod[logw];
+      if (aspectratio > 3) {
          s = 256.0f;
          t = 32.0f;
          ws = 1;
-         hs = 1 << (logw - logh - 3);
-      } else /*if ((logw - logh) < -3)*/ {
-         aspectratio = GR_ASPECT_LOG2_1x8;
-         l = lod[logh];
+         hs = 1 << (aspectratio - 3);
+         aspectratio = GR_ASPECT_LOG2_8x1;
+      } else /*if (aspectratio < -3)*/ {
          s = 32.0f;
          t = 256.0f;
-         ws = 1 << (logh - logw - 3);
+         ws = 1 << (-aspectratio - 3);
          hs = 1;
+         aspectratio = GR_ASPECT_LOG2_1x8;
       }
    }
 
@@ -865,7 +852,7 @@ GLboolean fxDDIsCompressedFormat ( GLcontext *ctx, GLenum internalFormat )
 /* [dBorca]
  * we are handling differently the above formats from the generic
  * GL_COMPRESSED_RGB[A]. For this, we will always have to separately
- * check the below formats...
+ * check for the ones below!
  */
 
 #if FX_TC_NCC || FX_TC_NAPALM
@@ -902,10 +889,10 @@ GLuint fxDDCompressedTextureSize (GLcontext *ctx,
  switch (format) {
  case GL_COMPRESSED_RGB_FXT1_3DFX:
  case GL_COMPRESSED_RGBA_FXT1_3DFX:
-    /* round up to multiple of 4 */
+    /* round up to multiples of 8, 4 */
     size = ((width + 7) / 8) * ((height + 3) / 4) * 16;
-    /* Textures smaller than 4x4 will effectively be made into 4x4 and
-     * take 8 bytes.
+    /* Textures smaller than 8x4 will effectively be made into 8x4 and
+     * take 16 bytes.
      */
     if (size < 16)
        size = 16;
