@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.c,v 1.16 2001/04/19 12:23:07 keithw Exp $ */
+/* $Id: t_pipeline.c,v 1.17 2001/04/30 09:04:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -132,6 +132,9 @@ void _tnl_run_pipeline( GLcontext *ctx )
     */
    ASSERT(pipe->build_state_changes == 0);
 
+/*     _tnl_print_vert_flags( "run_pipeline, new inputs", changed_inputs ); */
+/*     _mesa_print_state( "run_pipeline, new state", changed_state ); */
+   
    START_FAST_MATH(__tmp);
    if (tnl->Driver.PipelineStart)
       tnl->Driver.PipelineStart( ctx );
@@ -154,8 +157,12 @@ void _tnl_run_pipeline( GLcontext *ctx )
 	    if (s->changed_inputs)
 	       changed_inputs |= s->outputs;
 
-/*  	    fprintf(stderr, "run %s\n", s->name); */
+  	    if (0)
+	       fprintf(stderr, "run %s inputs %x\n", 
+		       s->name, s->changed_inputs); 
+
 	    running = s->run( ctx, s );
+	    s->changed_inputs = 0;             /* readded this apr 30  */
 	    VB->importable_data &= ~s->outputs;
 	 }
       }

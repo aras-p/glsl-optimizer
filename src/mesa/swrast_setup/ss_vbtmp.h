@@ -1,4 +1,4 @@
-/* $Id: ss_vbtmp.h,v 1.14 2001/04/28 08:39:18 keithw Exp $ */
+/* $Id: ss_vbtmp.h,v 1.15 2001/04/30 09:04:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,10 +51,10 @@ static void TAG(rs)(GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
    const GLfloat tz = m[14];
    GLuint maxtex = 0;
 
-   if (!newinputs) {
-      fprintf(stderr, "no new inputs\n");
+   /* Only the most basic optimization for cva:
+    */
+   if (!newinputs) 
       return;
-   }
 
    /* TODO:  Get import_client_data to pad vectors out to 4 cleanly.
     *

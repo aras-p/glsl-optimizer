@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.13 2001/04/26 14:53:48 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.14 2001/04/30 09:04:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -314,6 +314,7 @@ _tnl_EndList( GLcontext *ctx )
 
    ASSERT(IM->ref_count == 0);
 
+   tnl->ExecCopyCount = 0;
    tnl->ExecCopySource = IM;
    IM->ref_count++;
 
