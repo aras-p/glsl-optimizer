@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.9 2002/09/06 02:46:44 brianp Exp $
+# $Id: APIspec,v 1.10 2002/09/06 03:19:36 brianp Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -6562,44 +6562,31 @@ offset		?
 
 # GL_NV_fence
 
-name		GenFencesNV
-return		void
-param		n		GLsizei
-param		fences		GLuint *
-category	GL_NV_fence
-offset		?
-
 name		DeleteFencesNV
 return		void
 param		n		GLsizei
 param		fences		const GLuint *
 category	GL_NV_fence
-offset		?
+offset		647
 
-name		SetFenceNV
+name		GenFencesNV
 return		void
-param		fence		GLuint
-param		condition	GLenum
+param		n		GLsizei
+param		fences		GLuint *
 category	GL_NV_fence
-offset		?
-
-name		TestFenceNV
-return		GLboolean
-param		fence		GLuint
-category	GL_NV_fence
-offset		?
-
-name		FinishFenceNV
-return		void
-param		fence		GLuint
-category	GL_NV_fence
-offset		?
+offset		648
 
 name		IsFenceNV
 return		GLboolean
 param		fence		GLuint
 category	GL_NV_fence
-offset		?
+offset		649
+
+name		TestFenceNV
+return		GLboolean
+param		fence		GLuint
+category	GL_NV_fence
+offset		650
 
 name		GetFenceivNV
 return		void
@@ -6607,7 +6594,21 @@ param		fence		GLuint
 param		pname		GLenum
 param		params		GLint *
 category	GL_NV_fence
-offset		?
+offset		651
+
+name		FinishFenceNV
+return		void
+param		fence		GLuint
+category	GL_NV_fence
+offset		652
+
+name		SetFenceNV
+return		void
+param		fence		GLuint
+param		condition	GLenum
+category	GL_NV_fence
+offset		653
+
 
 
 # GL_NV_evaluators
@@ -7620,6 +7621,16 @@ return		void
 param		v		const GLshort *
 category	1.4
 alias		WindowPos3svMESA
+
+
+# GL_EXT_stencil_two_side
+
+name ActiveStencilFaceEXT
+return		void
+param		face		GLenum
+category	EXT_stencil_two_side
+offset		646
+
 
 
 

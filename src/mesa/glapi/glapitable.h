@@ -652,6 +652,14 @@ struct _glapi_table
    void (*PointParameterivNV)(GLenum pname, const GLint * params); /* 643 */
    void (*MultiDrawArraysEXT)(GLenum mode, GLint * first, GLsizei * count, GLsizei primcount); /* 644 */
    void (*MultiDrawElementsEXT)(GLenum mode, const GLsizei * count, GLenum type, const GLvoid ** indices, GLsizei primcount); /* 645 */
+   void (*ActiveStencilFaceEXT)(GLenum face); /* 646 */
+   void (*DeleteFencesNV)(GLsizei n, const GLuint * fences); /* 647 */
+   void (*GenFencesNV)(GLsizei n, GLuint * fences); /* 648 */
+   GLboolean (*IsFenceNV)(GLuint fence); /* 649 */
+   GLboolean (*TestFenceNV)(GLuint fence); /* 650 */
+   void (*GetFenceivNV)(GLuint fence, GLenum pname, GLint * params); /* 651 */
+   void (*FinishFenceNV)(GLuint fence); /* 652 */
+   void (*SetFenceNV)(GLuint fence, GLenum condition); /* 653 */
 };
 
 #endif

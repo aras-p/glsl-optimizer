@@ -14091,6 +14091,153 @@ glSamplePatternEXT:
 	jmpl	%g3, %g0
 	nop
 
+.globl glDeleteFencesNV
+.type glDeleteFencesNV,#function
+glDeleteFencesNV:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_DeleteFencesNV), %g2
+	or	%g2, %lo(8 * _gloffset_DeleteFencesNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_DeleteFencesNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glGenFencesNV
+.type glGenFencesNV,#function
+glGenFencesNV:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GenFencesNV), %g2
+	or	%g2, %lo(8 * _gloffset_GenFencesNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GenFencesNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glIsFenceNV
+.type glIsFenceNV,#function
+glIsFenceNV:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_IsFenceNV), %g2
+	or	%g2, %lo(8 * _gloffset_IsFenceNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_IsFenceNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glTestFenceNV
+.type glTestFenceNV,#function
+glTestFenceNV:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_TestFenceNV), %g2
+	or	%g2, %lo(8 * _gloffset_TestFenceNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_TestFenceNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glGetFenceivNV
+.type glGetFenceivNV,#function
+glGetFenceivNV:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetFenceivNV), %g2
+	or	%g2, %lo(8 * _gloffset_GetFenceivNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetFenceivNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glFinishFenceNV
+.type glFinishFenceNV,#function
+glFinishFenceNV:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_FinishFenceNV), %g2
+	or	%g2, %lo(8 * _gloffset_FinishFenceNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_FinishFenceNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glSetFenceNV
+.type glSetFenceNV,#function
+glSetFenceNV:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_SetFenceNV), %g2
+	or	%g2, %lo(8 * _gloffset_SetFenceNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_SetFenceNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
 .globl glWindowPos2dARB
 .type glWindowPos2dARB,#function
 glWindowPos2dARB:
@@ -16586,6 +16733,27 @@ glWindowPos3sv:
 	sethi	%hi(0x00000000), %g1
 	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos3svMESA)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glActiveStencilFaceEXT
+.type glActiveStencilFaceEXT,#function
+glActiveStencilFaceEXT:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_ActiveStencilFaceEXT), %g2
+	or	%g2, %lo(8 * _gloffset_ActiveStencilFaceEXT), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_ActiveStencilFaceEXT)], %g3
 #endif
 	jmpl	%g3, %g0
 	nop

@@ -4042,6 +4042,48 @@ GL_PREFIX(SamplePatternEXT):
 	JMP(GL_OFFSET(_gloffset_SamplePatternSGIS))
 
 ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(DeleteFencesNV))
+GL_PREFIX(DeleteFencesNV):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_DeleteFencesNV))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GenFencesNV))
+GL_PREFIX(GenFencesNV):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GenFencesNV))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(IsFenceNV))
+GL_PREFIX(IsFenceNV):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_IsFenceNV))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(TestFenceNV))
+GL_PREFIX(TestFenceNV):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_TestFenceNV))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetFenceivNV))
+GL_PREFIX(GetFenceivNV):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GetFenceivNV))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(FinishFenceNV))
+GL_PREFIX(FinishFenceNV):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_FinishFenceNV))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SetFenceNV))
+GL_PREFIX(SetFenceNV):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_SetFenceNV))
+
+ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(WindowPos2dARB))
 GL_PREFIX(WindowPos2dARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
@@ -4754,6 +4796,12 @@ GLOBL_FN(GL_PREFIX(WindowPos3sv))
 GL_PREFIX(WindowPos3sv):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3svMESA))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(ActiveStencilFaceEXT))
+GL_PREFIX(ActiveStencilFaceEXT):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_ActiveStencilFaceEXT))
 
 
 #endif  /* __WIN32__ */

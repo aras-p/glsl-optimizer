@@ -648,5 +648,13 @@
 #define _gloffset_PointParameterivNV 643
 #define _gloffset_MultiDrawArraysEXT 644
 #define _gloffset_MultiDrawElementsEXT 645
+#define _gloffset_ActiveStencilFaceEXT 646
+#define _gloffset_DeleteFencesNV 647
+#define _gloffset_GenFencesNV 648
+#define _gloffset_IsFenceNV 649
+#define _gloffset_TestFenceNV 650
+#define _gloffset_GetFenceivNV 651
+#define _gloffset_FinishFenceNV 652
+#define _gloffset_SetFenceNV 653
 
 #endif

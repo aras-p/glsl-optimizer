@@ -674,6 +674,13 @@ static struct name_address_offset static_functions[] = {
    { "glTbufferMask3DFX", (GLvoid *) glTbufferMask3DFX, _gloffset_TbufferMask3DFX },
    { "glSampleMaskEXT", (GLvoid *) glSampleMaskEXT, _gloffset_SampleMaskSGIS },
    { "glSamplePatternEXT", (GLvoid *) glSamplePatternEXT, _gloffset_SamplePatternSGIS },
+   { "glDeleteFencesNV", (GLvoid *) glDeleteFencesNV, _gloffset_DeleteFencesNV },
+   { "glGenFencesNV", (GLvoid *) glGenFencesNV, _gloffset_GenFencesNV },
+   { "glIsFenceNV", (GLvoid *) glIsFenceNV, _gloffset_IsFenceNV },
+   { "glTestFenceNV", (GLvoid *) glTestFenceNV, _gloffset_TestFenceNV },
+   { "glGetFenceivNV", (GLvoid *) glGetFenceivNV, _gloffset_GetFenceivNV },
+   { "glFinishFenceNV", (GLvoid *) glFinishFenceNV, _gloffset_FinishFenceNV },
+   { "glSetFenceNV", (GLvoid *) glSetFenceNV, _gloffset_SetFenceNV },
    { "glWindowPos2dARB", (GLvoid *) glWindowPos2dARB, _gloffset_WindowPos2dMESA },
    { "glWindowPos2fARB", (GLvoid *) glWindowPos2fARB, _gloffset_WindowPos2fMESA },
    { "glWindowPos2iARB", (GLvoid *) glWindowPos2iARB, _gloffset_WindowPos2iMESA },
@@ -793,5 +800,6 @@ static struct name_address_offset static_functions[] = {
    { "glWindowPos3iv", (GLvoid *) glWindowPos3iv, _gloffset_WindowPos3ivMESA },
    { "glWindowPos3s", (GLvoid *) glWindowPos3s, _gloffset_WindowPos3sMESA },
    { "glWindowPos3sv", (GLvoid *) glWindowPos3sv, _gloffset_WindowPos3svMESA },
+   { "glActiveStencilFaceEXT", (GLvoid *) glActiveStencilFaceEXT, _gloffset_ActiveStencilFaceEXT },
    { NULL, NULL }  /* end of list marker */
 };

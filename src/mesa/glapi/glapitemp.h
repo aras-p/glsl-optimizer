@@ -3534,13 +3534,41 @@ KEYWORD1 void KEYWORD2 NAME(SamplePatternEXT)(GLenum pattern)
 
 /* No dispatch for TextureColorMaskSGIS() */
 /* No dispatch for IglooInterfaceSGIX() */
-/* No dispatch for GenFencesNV() */
-/* No dispatch for DeleteFencesNV() */
-/* No dispatch for SetFenceNV() */
-/* No dispatch for TestFenceNV() */
-/* No dispatch for FinishFenceNV() */
-/* No dispatch for IsFenceNV() */
-/* No dispatch for GetFenceivNV() */
+KEYWORD1 void KEYWORD2 NAME(DeleteFencesNV)(GLsizei n, const GLuint * fences)
+{
+   DISPATCH(DeleteFencesNV, (n, fences), (F, "glDeleteFencesNV(%d, %p);\n", n, (void *) fences));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GenFencesNV)(GLsizei n, GLuint * fences)
+{
+   DISPATCH(GenFencesNV, (n, fences), (F, "glGenFencesNV(%d, %p);\n", n, (void *) fences));
+}
+
+KEYWORD1 GLboolean KEYWORD2 NAME(IsFenceNV)(GLuint fence)
+{
+   RETURN_DISPATCH(IsFenceNV, (fence), (F, "glIsFenceNV(%d);\n", fence));
+}
+
+KEYWORD1 GLboolean KEYWORD2 NAME(TestFenceNV)(GLuint fence)
+{
+   RETURN_DISPATCH(TestFenceNV, (fence), (F, "glTestFenceNV(%d);\n", fence));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetFenceivNV)(GLuint fence, GLenum pname, GLint * params)
+{
+   DISPATCH(GetFenceivNV, (fence, pname, params), (F, "glGetFenceivNV(%d, 0x%x, %p);\n", fence, pname, (void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(FinishFenceNV)(GLuint fence)
+{
+   DISPATCH(FinishFenceNV, (fence), (F, "glFinishFenceNV(%d);\n", fence));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SetFenceNV)(GLuint fence, GLenum condition)
+{
+   DISPATCH(SetFenceNV, (fence, condition), (F, "glSetFenceNV(%d, 0x%x);\n", fence, condition));
+}
+
 /* No dispatch for MapControlPointsNV() */
 /* No dispatch for MapParameterivNV() */
 /* No dispatch for MapParameterfvNV() */
@@ -4145,6 +4173,11 @@ KEYWORD1 void KEYWORD2 NAME(WindowPos3s)(GLshort x, GLshort y, GLshort z)
 KEYWORD1 void KEYWORD2 NAME(WindowPos3sv)(const GLshort * v)
 {
    DISPATCH(WindowPos3svMESA, (v), (F, "glWindowPos3sv(%p);\n", (void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ActiveStencilFaceEXT)(GLenum face)
+{
+   DISPATCH(ActiveStencilFaceEXT, (face), (F, "glActiveStencilFaceEXT(0x%x);\n", face));
 }
 
 
@@ -4806,6 +4839,14 @@ void *DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(PointParameterivNV),
    TABLE_ENTRY(MultiDrawArraysEXT),
    TABLE_ENTRY(MultiDrawElementsEXT),
+   TABLE_ENTRY(ActiveStencilFaceEXT),
+   TABLE_ENTRY(DeleteFencesNV),
+   TABLE_ENTRY(GenFencesNV),
+   TABLE_ENTRY(IsFenceNV),
+   TABLE_ENTRY(TestFenceNV),
+   TABLE_ENTRY(GetFenceivNV),
+   TABLE_ENTRY(FinishFenceNV),
+   TABLE_ENTRY(SetFenceNV),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.
