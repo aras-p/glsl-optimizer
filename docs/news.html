@@ -7,6 +7,33 @@
 <H1>News</H1>
 
 
+<h2>January 16, 2004</h2>
+
+<p>
+Mesa 6.0 has been released.  This is a stabilization of the 5.1 release
+and primarily just incorporates bug fixes.
+</p>
+<pre>
+    New:
+	- full OpenGL 1.5 support
+	- updated GL/glext.h file to version 21
+    Changes:
+	- changed max framebuffer size to 4Kx4K (MAX_WIDTH/HEIGHT in config.h)
+    Bug fixes:
+	- fixed bug in UNCLAMPED_FLOAT_TO_UBYTE macro; solves a color
+	  clamping issue
+	- updated suno5-gcc configs
+	- glColor3 functions sometimes resulted in undefined alpha values
+	- fixed FP divide by zero error seen on VMS with xlockmore, others
+	- fixed vertex/fragment program debug problem (bug 873011)
+	- building on AIX with gcc works now
+	- glDeleteProgramsARB failed for ARB fragment programs (bug 876160)
+	- glDrawRangeElements tried to modify potentially read-only storage
+	- updated files for building on Windows
+</pre>
+
+
+
 <h2>December 28, 2003</h2>
 
 <p>
@@ -753,6 +780,6 @@ source code</a>.</p>
 
 
 <hr>
-$Id: news.html,v 3.11 2003/12/31 20:47:37 brianp Exp $
+$Id: news.html,v 3.12 2004/01/15 15:47:57 brianp Exp $
 </body>
 </html>
