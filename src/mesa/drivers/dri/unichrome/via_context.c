@@ -674,8 +674,7 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
                             (GLframebuffer *)driReadPriv->driverPrivate);
 	if (VIA_DEBUG) fprintf(stderr, "Context %d MakeCurrent\n", vmesa->hHWContext);
 	
-	_mesa_update_state(vmesa->glCtx);
-	viaValidateState(vmesa->glCtx);
+        viaXMesaWindowMoved(vmesa);
 	ctx->Driver.Scissor(vmesa->glCtx,
 			    vmesa->glCtx->Scissor.X,
 			    vmesa->glCtx->Scissor.Y,
