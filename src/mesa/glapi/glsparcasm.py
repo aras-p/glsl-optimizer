@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: glsparcasm.py,v 1.1 2001/06/05 04:30:03 davem69 Exp $
+# $Id: glsparcasm.py,v 1.2 2001/06/05 23:54:00 davem69 Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -51,14 +51,20 @@ def PrintHead():
 	print ' * sethi/or instruction sequences below at library init time.'
 	print ' */'
 	print ''
-	print '.text'
+	print '.data'
 	print '.align 64'
+	print ''
+	print '.globl _mesa_sparc_glapi_begin'
+	print '_mesa_sparc_glapi_begin:'
 	print ''
 	return
 #endif
 
 def PrintTail():
 	print '\t nop'
+	print ''
+	print '.globl _mesa_sparc_glapi_end'
+	print '_mesa_sparc_glapi_end:'
 	print ''
 #endif
 
@@ -73,13 +79,13 @@ def GenerateDispatchCode(name, offset):
 	print '\tor\t%g2, %lo(0x00000000), %g2'
 	print '\tor\t%g1, %lo(0x00000000), %g1'
 	print '\tsllx\t%g2, 32, %g2'
-	print '\tor\t%g1, %g2, %g1'
+	print '\tldx\t[%g1 + %g2], %g1'
 	print "\tsethi\t%%hi(8 * _gloffset_%s), %%g2" % (offset)
 	print "\tor\t%%g2, %%lo(8 * _gloffset_%s), %%g2" % (offset)
 	print '\tldx\t[%g1 + %g2], %g3'
 	print '#else'
 	print '\tsethi\t%hi(0x00000000), %g1'
-	print '\tor\t%g1, %lo(0x00000000), %g1'
+	print '\tld\t[%g1 + %lo(0x00000000)], %g1'
 	print "\tld\t[%%g1 + (4 * _gloffset_%s)], %%g3" % (offset)
 	print '#endif'
 	print '\tjmpl\t%g3, %g0'

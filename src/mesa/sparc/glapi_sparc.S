@@ -8,8 +8,11 @@
  * sethi/or instruction sequences below at library init time.
  */
 
-.text
+.data
 .align 64
+
+.globl _mesa_sparc_glapi_begin
+_mesa_sparc_glapi_begin:
 
 GLOBL_FN(GL_PREFIX(NewList))
 GL_PREFIX(NewList):
@@ -19,13 +22,13 @@ GL_PREFIX(NewList):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_NewList), %g2
 	or	%g2, %lo(8 * _gloffset_NewList), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_NewList)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -38,13 +41,13 @@ GL_PREFIX(EndList):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EndList), %g2
 	or	%g2, %lo(8 * _gloffset_EndList), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EndList)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -57,13 +60,13 @@ GL_PREFIX(CallList):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CallList), %g2
 	or	%g2, %lo(8 * _gloffset_CallList), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CallList)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -76,13 +79,13 @@ GL_PREFIX(CallLists):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CallLists), %g2
 	or	%g2, %lo(8 * _gloffset_CallLists), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CallLists)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -95,13 +98,13 @@ GL_PREFIX(DeleteLists):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_DeleteLists), %g2
 	or	%g2, %lo(8 * _gloffset_DeleteLists), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_DeleteLists)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -114,13 +117,13 @@ GL_PREFIX(GenLists):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GenLists), %g2
 	or	%g2, %lo(8 * _gloffset_GenLists), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GenLists)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -133,13 +136,13 @@ GL_PREFIX(ListBase):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ListBase), %g2
 	or	%g2, %lo(8 * _gloffset_ListBase), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ListBase)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -152,13 +155,13 @@ GL_PREFIX(Begin):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Begin), %g2
 	or	%g2, %lo(8 * _gloffset_Begin), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Begin)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -171,13 +174,13 @@ GL_PREFIX(Bitmap):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Bitmap), %g2
 	or	%g2, %lo(8 * _gloffset_Bitmap), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Bitmap)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -190,13 +193,13 @@ GL_PREFIX(Color3b):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3b), %g2
 	or	%g2, %lo(8 * _gloffset_Color3b), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3b)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -209,13 +212,13 @@ GL_PREFIX(Color3bv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3bv), %g2
 	or	%g2, %lo(8 * _gloffset_Color3bv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3bv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -228,13 +231,13 @@ GL_PREFIX(Color3d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3d), %g2
 	or	%g2, %lo(8 * _gloffset_Color3d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -247,13 +250,13 @@ GL_PREFIX(Color3dv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3dv), %g2
 	or	%g2, %lo(8 * _gloffset_Color3dv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3dv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -266,13 +269,13 @@ GL_PREFIX(Color3f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3f), %g2
 	or	%g2, %lo(8 * _gloffset_Color3f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -285,13 +288,13 @@ GL_PREFIX(Color3fv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3fv), %g2
 	or	%g2, %lo(8 * _gloffset_Color3fv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3fv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -304,13 +307,13 @@ GL_PREFIX(Color3i):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3i), %g2
 	or	%g2, %lo(8 * _gloffset_Color3i), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3i)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -323,13 +326,13 @@ GL_PREFIX(Color3iv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3iv), %g2
 	or	%g2, %lo(8 * _gloffset_Color3iv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3iv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -342,13 +345,13 @@ GL_PREFIX(Color3s):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3s), %g2
 	or	%g2, %lo(8 * _gloffset_Color3s), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3s)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -361,13 +364,13 @@ GL_PREFIX(Color3sv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3sv), %g2
 	or	%g2, %lo(8 * _gloffset_Color3sv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3sv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -380,13 +383,13 @@ GL_PREFIX(Color3ub):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3ub), %g2
 	or	%g2, %lo(8 * _gloffset_Color3ub), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3ub)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -399,13 +402,13 @@ GL_PREFIX(Color3ubv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3ubv), %g2
 	or	%g2, %lo(8 * _gloffset_Color3ubv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3ubv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -418,13 +421,13 @@ GL_PREFIX(Color3ui):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3ui), %g2
 	or	%g2, %lo(8 * _gloffset_Color3ui), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3ui)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -437,13 +440,13 @@ GL_PREFIX(Color3uiv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3uiv), %g2
 	or	%g2, %lo(8 * _gloffset_Color3uiv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3uiv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -456,13 +459,13 @@ GL_PREFIX(Color3us):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3us), %g2
 	or	%g2, %lo(8 * _gloffset_Color3us), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3us)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -475,13 +478,13 @@ GL_PREFIX(Color3usv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color3usv), %g2
 	or	%g2, %lo(8 * _gloffset_Color3usv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color3usv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -494,13 +497,13 @@ GL_PREFIX(Color4b):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4b), %g2
 	or	%g2, %lo(8 * _gloffset_Color4b), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4b)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -513,13 +516,13 @@ GL_PREFIX(Color4bv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4bv), %g2
 	or	%g2, %lo(8 * _gloffset_Color4bv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4bv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -532,13 +535,13 @@ GL_PREFIX(Color4d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4d), %g2
 	or	%g2, %lo(8 * _gloffset_Color4d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -551,13 +554,13 @@ GL_PREFIX(Color4dv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4dv), %g2
 	or	%g2, %lo(8 * _gloffset_Color4dv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4dv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -570,13 +573,13 @@ GL_PREFIX(Color4f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4f), %g2
 	or	%g2, %lo(8 * _gloffset_Color4f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -589,13 +592,13 @@ GL_PREFIX(Color4fv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4fv), %g2
 	or	%g2, %lo(8 * _gloffset_Color4fv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4fv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -608,13 +611,13 @@ GL_PREFIX(Color4i):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4i), %g2
 	or	%g2, %lo(8 * _gloffset_Color4i), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4i)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -627,13 +630,13 @@ GL_PREFIX(Color4iv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4iv), %g2
 	or	%g2, %lo(8 * _gloffset_Color4iv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4iv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -646,13 +649,13 @@ GL_PREFIX(Color4s):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4s), %g2
 	or	%g2, %lo(8 * _gloffset_Color4s), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4s)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -665,13 +668,13 @@ GL_PREFIX(Color4sv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4sv), %g2
 	or	%g2, %lo(8 * _gloffset_Color4sv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4sv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -684,13 +687,13 @@ GL_PREFIX(Color4ub):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4ub), %g2
 	or	%g2, %lo(8 * _gloffset_Color4ub), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4ub)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -703,13 +706,13 @@ GL_PREFIX(Color4ubv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4ubv), %g2
 	or	%g2, %lo(8 * _gloffset_Color4ubv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4ubv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -722,13 +725,13 @@ GL_PREFIX(Color4ui):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4ui), %g2
 	or	%g2, %lo(8 * _gloffset_Color4ui), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4ui)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -741,13 +744,13 @@ GL_PREFIX(Color4uiv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4uiv), %g2
 	or	%g2, %lo(8 * _gloffset_Color4uiv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4uiv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -760,13 +763,13 @@ GL_PREFIX(Color4us):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4us), %g2
 	or	%g2, %lo(8 * _gloffset_Color4us), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4us)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -779,13 +782,13 @@ GL_PREFIX(Color4usv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Color4usv), %g2
 	or	%g2, %lo(8 * _gloffset_Color4usv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Color4usv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -798,13 +801,13 @@ GL_PREFIX(EdgeFlag):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EdgeFlag), %g2
 	or	%g2, %lo(8 * _gloffset_EdgeFlag), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EdgeFlag)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -817,13 +820,13 @@ GL_PREFIX(EdgeFlagv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EdgeFlagv), %g2
 	or	%g2, %lo(8 * _gloffset_EdgeFlagv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EdgeFlagv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -836,13 +839,13 @@ GL_PREFIX(End):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_End), %g2
 	or	%g2, %lo(8 * _gloffset_End), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_End)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -855,13 +858,13 @@ GL_PREFIX(Indexd):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Indexd), %g2
 	or	%g2, %lo(8 * _gloffset_Indexd), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Indexd)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -874,13 +877,13 @@ GL_PREFIX(Indexdv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Indexdv), %g2
 	or	%g2, %lo(8 * _gloffset_Indexdv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Indexdv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -893,13 +896,13 @@ GL_PREFIX(Indexf):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Indexf), %g2
 	or	%g2, %lo(8 * _gloffset_Indexf), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Indexf)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -912,13 +915,13 @@ GL_PREFIX(Indexfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Indexfv), %g2
 	or	%g2, %lo(8 * _gloffset_Indexfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Indexfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -931,13 +934,13 @@ GL_PREFIX(Indexi):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Indexi), %g2
 	or	%g2, %lo(8 * _gloffset_Indexi), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Indexi)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -950,13 +953,13 @@ GL_PREFIX(Indexiv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Indexiv), %g2
 	or	%g2, %lo(8 * _gloffset_Indexiv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Indexiv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -969,13 +972,13 @@ GL_PREFIX(Indexs):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Indexs), %g2
 	or	%g2, %lo(8 * _gloffset_Indexs), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Indexs)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -988,13 +991,13 @@ GL_PREFIX(Indexsv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Indexsv), %g2
 	or	%g2, %lo(8 * _gloffset_Indexsv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Indexsv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1007,13 +1010,13 @@ GL_PREFIX(Normal3b):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Normal3b), %g2
 	or	%g2, %lo(8 * _gloffset_Normal3b), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Normal3b)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1026,13 +1029,13 @@ GL_PREFIX(Normal3bv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Normal3bv), %g2
 	or	%g2, %lo(8 * _gloffset_Normal3bv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Normal3bv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1045,13 +1048,13 @@ GL_PREFIX(Normal3d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Normal3d), %g2
 	or	%g2, %lo(8 * _gloffset_Normal3d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Normal3d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1064,13 +1067,13 @@ GL_PREFIX(Normal3dv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Normal3dv), %g2
 	or	%g2, %lo(8 * _gloffset_Normal3dv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Normal3dv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1083,13 +1086,13 @@ GL_PREFIX(Normal3f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Normal3f), %g2
 	or	%g2, %lo(8 * _gloffset_Normal3f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Normal3f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1102,13 +1105,13 @@ GL_PREFIX(Normal3fv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Normal3fv), %g2
 	or	%g2, %lo(8 * _gloffset_Normal3fv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Normal3fv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1121,13 +1124,13 @@ GL_PREFIX(Normal3i):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Normal3i), %g2
 	or	%g2, %lo(8 * _gloffset_Normal3i), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Normal3i)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1140,13 +1143,13 @@ GL_PREFIX(Normal3iv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Normal3iv), %g2
 	or	%g2, %lo(8 * _gloffset_Normal3iv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Normal3iv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1159,13 +1162,13 @@ GL_PREFIX(Normal3s):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Normal3s), %g2
 	or	%g2, %lo(8 * _gloffset_Normal3s), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Normal3s)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1178,13 +1181,13 @@ GL_PREFIX(Normal3sv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Normal3sv), %g2
 	or	%g2, %lo(8 * _gloffset_Normal3sv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Normal3sv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1197,13 +1200,13 @@ GL_PREFIX(RasterPos2d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos2d), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos2d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos2d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1216,13 +1219,13 @@ GL_PREFIX(RasterPos2dv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos2dv), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos2dv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos2dv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1235,13 +1238,13 @@ GL_PREFIX(RasterPos2f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos2f), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos2f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos2f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1254,13 +1257,13 @@ GL_PREFIX(RasterPos2fv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos2fv), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos2fv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos2fv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1273,13 +1276,13 @@ GL_PREFIX(RasterPos2i):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos2i), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos2i), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos2i)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1292,13 +1295,13 @@ GL_PREFIX(RasterPos2iv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos2iv), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos2iv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos2iv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1311,13 +1314,13 @@ GL_PREFIX(RasterPos2s):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos2s), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos2s), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos2s)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1330,13 +1333,13 @@ GL_PREFIX(RasterPos2sv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos2sv), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos2sv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos2sv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1349,13 +1352,13 @@ GL_PREFIX(RasterPos3d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos3d), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos3d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos3d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1368,13 +1371,13 @@ GL_PREFIX(RasterPos3dv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos3dv), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos3dv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos3dv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1387,13 +1390,13 @@ GL_PREFIX(RasterPos3f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos3f), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos3f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos3f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1406,13 +1409,13 @@ GL_PREFIX(RasterPos3fv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos3fv), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos3fv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos3fv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1425,13 +1428,13 @@ GL_PREFIX(RasterPos3i):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos3i), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos3i), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos3i)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1444,13 +1447,13 @@ GL_PREFIX(RasterPos3iv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos3iv), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos3iv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos3iv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1463,13 +1466,13 @@ GL_PREFIX(RasterPos3s):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos3s), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos3s), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos3s)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1482,13 +1485,13 @@ GL_PREFIX(RasterPos3sv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos3sv), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos3sv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos3sv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1501,13 +1504,13 @@ GL_PREFIX(RasterPos4d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos4d), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos4d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos4d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1520,13 +1523,13 @@ GL_PREFIX(RasterPos4dv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos4dv), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos4dv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos4dv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1539,13 +1542,13 @@ GL_PREFIX(RasterPos4f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos4f), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos4f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos4f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1558,13 +1561,13 @@ GL_PREFIX(RasterPos4fv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos4fv), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos4fv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos4fv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1577,13 +1580,13 @@ GL_PREFIX(RasterPos4i):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos4i), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos4i), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos4i)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1596,13 +1599,13 @@ GL_PREFIX(RasterPos4iv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos4iv), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos4iv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos4iv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1615,13 +1618,13 @@ GL_PREFIX(RasterPos4s):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos4s), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos4s), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos4s)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1634,13 +1637,13 @@ GL_PREFIX(RasterPos4sv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RasterPos4sv), %g2
 	or	%g2, %lo(8 * _gloffset_RasterPos4sv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RasterPos4sv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1653,13 +1656,13 @@ GL_PREFIX(Rectd):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Rectd), %g2
 	or	%g2, %lo(8 * _gloffset_Rectd), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Rectd)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1672,13 +1675,13 @@ GL_PREFIX(Rectdv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Rectdv), %g2
 	or	%g2, %lo(8 * _gloffset_Rectdv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Rectdv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1691,13 +1694,13 @@ GL_PREFIX(Rectf):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Rectf), %g2
 	or	%g2, %lo(8 * _gloffset_Rectf), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Rectf)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1710,13 +1713,13 @@ GL_PREFIX(Rectfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Rectfv), %g2
 	or	%g2, %lo(8 * _gloffset_Rectfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Rectfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1729,13 +1732,13 @@ GL_PREFIX(Recti):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Recti), %g2
 	or	%g2, %lo(8 * _gloffset_Recti), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Recti)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1748,13 +1751,13 @@ GL_PREFIX(Rectiv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Rectiv), %g2
 	or	%g2, %lo(8 * _gloffset_Rectiv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Rectiv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1767,13 +1770,13 @@ GL_PREFIX(Rects):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Rects), %g2
 	or	%g2, %lo(8 * _gloffset_Rects), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Rects)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1786,13 +1789,13 @@ GL_PREFIX(Rectsv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Rectsv), %g2
 	or	%g2, %lo(8 * _gloffset_Rectsv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Rectsv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1805,13 +1808,13 @@ GL_PREFIX(TexCoord1d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord1d), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord1d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord1d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1824,13 +1827,13 @@ GL_PREFIX(TexCoord1dv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord1dv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord1dv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord1dv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1843,13 +1846,13 @@ GL_PREFIX(TexCoord1f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord1f), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord1f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord1f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1862,13 +1865,13 @@ GL_PREFIX(TexCoord1fv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord1fv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord1fv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord1fv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1881,13 +1884,13 @@ GL_PREFIX(TexCoord1i):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord1i), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord1i), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord1i)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1900,13 +1903,13 @@ GL_PREFIX(TexCoord1iv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord1iv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord1iv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord1iv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1919,13 +1922,13 @@ GL_PREFIX(TexCoord1s):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord1s), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord1s), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord1s)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1938,13 +1941,13 @@ GL_PREFIX(TexCoord1sv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord1sv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord1sv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord1sv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1957,13 +1960,13 @@ GL_PREFIX(TexCoord2d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord2d), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord2d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord2d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1976,13 +1979,13 @@ GL_PREFIX(TexCoord2dv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord2dv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord2dv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord2dv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -1995,13 +1998,13 @@ GL_PREFIX(TexCoord2f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord2f), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord2f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord2f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2014,13 +2017,13 @@ GL_PREFIX(TexCoord2fv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord2fv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord2fv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord2fv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2033,13 +2036,13 @@ GL_PREFIX(TexCoord2i):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord2i), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord2i), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord2i)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2052,13 +2055,13 @@ GL_PREFIX(TexCoord2iv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord2iv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord2iv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord2iv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2071,13 +2074,13 @@ GL_PREFIX(TexCoord2s):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord2s), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord2s), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord2s)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2090,13 +2093,13 @@ GL_PREFIX(TexCoord2sv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord2sv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord2sv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord2sv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2109,13 +2112,13 @@ GL_PREFIX(TexCoord3d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord3d), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord3d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord3d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2128,13 +2131,13 @@ GL_PREFIX(TexCoord3dv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord3dv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord3dv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord3dv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2147,13 +2150,13 @@ GL_PREFIX(TexCoord3f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord3f), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord3f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord3f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2166,13 +2169,13 @@ GL_PREFIX(TexCoord3fv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord3fv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord3fv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord3fv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2185,13 +2188,13 @@ GL_PREFIX(TexCoord3i):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord3i), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord3i), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord3i)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2204,13 +2207,13 @@ GL_PREFIX(TexCoord3iv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord3iv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord3iv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord3iv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2223,13 +2226,13 @@ GL_PREFIX(TexCoord3s):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord3s), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord3s), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord3s)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2242,13 +2245,13 @@ GL_PREFIX(TexCoord3sv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord3sv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord3sv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord3sv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2261,13 +2264,13 @@ GL_PREFIX(TexCoord4d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord4d), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord4d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord4d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2280,13 +2283,13 @@ GL_PREFIX(TexCoord4dv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord4dv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord4dv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord4dv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2299,13 +2302,13 @@ GL_PREFIX(TexCoord4f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord4f), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord4f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord4f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2318,13 +2321,13 @@ GL_PREFIX(TexCoord4fv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord4fv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord4fv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord4fv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2337,13 +2340,13 @@ GL_PREFIX(TexCoord4i):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord4i), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord4i), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord4i)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2356,13 +2359,13 @@ GL_PREFIX(TexCoord4iv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord4iv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord4iv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord4iv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2375,13 +2378,13 @@ GL_PREFIX(TexCoord4s):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord4s), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord4s), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord4s)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2394,13 +2397,13 @@ GL_PREFIX(TexCoord4sv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoord4sv), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoord4sv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoord4sv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2413,13 +2416,13 @@ GL_PREFIX(Vertex2d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex2d), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex2d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex2d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2432,13 +2435,13 @@ GL_PREFIX(Vertex2dv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex2dv), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex2dv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex2dv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2451,13 +2454,13 @@ GL_PREFIX(Vertex2f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex2f), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex2f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex2f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2470,13 +2473,13 @@ GL_PREFIX(Vertex2fv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex2fv), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex2fv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex2fv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2489,13 +2492,13 @@ GL_PREFIX(Vertex2i):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex2i), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex2i), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex2i)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2508,13 +2511,13 @@ GL_PREFIX(Vertex2iv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex2iv), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex2iv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex2iv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2527,13 +2530,13 @@ GL_PREFIX(Vertex2s):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex2s), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex2s), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex2s)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2546,13 +2549,13 @@ GL_PREFIX(Vertex2sv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex2sv), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex2sv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex2sv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2565,13 +2568,13 @@ GL_PREFIX(Vertex3d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex3d), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex3d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex3d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2584,13 +2587,13 @@ GL_PREFIX(Vertex3dv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex3dv), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex3dv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex3dv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2603,13 +2606,13 @@ GL_PREFIX(Vertex3f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex3f), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex3f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex3f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2622,13 +2625,13 @@ GL_PREFIX(Vertex3fv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex3fv), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex3fv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex3fv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2641,13 +2644,13 @@ GL_PREFIX(Vertex3i):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex3i), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex3i), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex3i)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2660,13 +2663,13 @@ GL_PREFIX(Vertex3iv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex3iv), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex3iv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex3iv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2679,13 +2682,13 @@ GL_PREFIX(Vertex3s):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex3s), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex3s), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex3s)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2698,13 +2701,13 @@ GL_PREFIX(Vertex3sv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex3sv), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex3sv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex3sv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2717,13 +2720,13 @@ GL_PREFIX(Vertex4d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex4d), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex4d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex4d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2736,13 +2739,13 @@ GL_PREFIX(Vertex4dv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex4dv), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex4dv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex4dv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2755,13 +2758,13 @@ GL_PREFIX(Vertex4f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex4f), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex4f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex4f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2774,13 +2777,13 @@ GL_PREFIX(Vertex4fv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex4fv), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex4fv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex4fv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2793,13 +2796,13 @@ GL_PREFIX(Vertex4i):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex4i), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex4i), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex4i)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2812,13 +2815,13 @@ GL_PREFIX(Vertex4iv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex4iv), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex4iv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex4iv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2831,13 +2834,13 @@ GL_PREFIX(Vertex4s):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex4s), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex4s), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex4s)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2850,13 +2853,13 @@ GL_PREFIX(Vertex4sv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Vertex4sv), %g2
 	or	%g2, %lo(8 * _gloffset_Vertex4sv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Vertex4sv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2869,13 +2872,13 @@ GL_PREFIX(ClipPlane):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ClipPlane), %g2
 	or	%g2, %lo(8 * _gloffset_ClipPlane), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ClipPlane)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2888,13 +2891,13 @@ GL_PREFIX(ColorMaterial):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ColorMaterial), %g2
 	or	%g2, %lo(8 * _gloffset_ColorMaterial), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ColorMaterial)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2907,13 +2910,13 @@ GL_PREFIX(CullFace):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CullFace), %g2
 	or	%g2, %lo(8 * _gloffset_CullFace), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CullFace)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2926,13 +2929,13 @@ GL_PREFIX(Fogf):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Fogf), %g2
 	or	%g2, %lo(8 * _gloffset_Fogf), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Fogf)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2945,13 +2948,13 @@ GL_PREFIX(Fogfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Fogfv), %g2
 	or	%g2, %lo(8 * _gloffset_Fogfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Fogfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2964,13 +2967,13 @@ GL_PREFIX(Fogi):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Fogi), %g2
 	or	%g2, %lo(8 * _gloffset_Fogi), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Fogi)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -2983,13 +2986,13 @@ GL_PREFIX(Fogiv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Fogiv), %g2
 	or	%g2, %lo(8 * _gloffset_Fogiv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Fogiv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3002,13 +3005,13 @@ GL_PREFIX(FrontFace):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FrontFace), %g2
 	or	%g2, %lo(8 * _gloffset_FrontFace), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FrontFace)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3021,13 +3024,13 @@ GL_PREFIX(Hint):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Hint), %g2
 	or	%g2, %lo(8 * _gloffset_Hint), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Hint)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3040,13 +3043,13 @@ GL_PREFIX(Lightf):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Lightf), %g2
 	or	%g2, %lo(8 * _gloffset_Lightf), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Lightf)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3059,13 +3062,13 @@ GL_PREFIX(Lightfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Lightfv), %g2
 	or	%g2, %lo(8 * _gloffset_Lightfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Lightfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3078,13 +3081,13 @@ GL_PREFIX(Lighti):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Lighti), %g2
 	or	%g2, %lo(8 * _gloffset_Lighti), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Lighti)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3097,13 +3100,13 @@ GL_PREFIX(Lightiv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Lightiv), %g2
 	or	%g2, %lo(8 * _gloffset_Lightiv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Lightiv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3116,13 +3119,13 @@ GL_PREFIX(LightModelf):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_LightModelf), %g2
 	or	%g2, %lo(8 * _gloffset_LightModelf), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_LightModelf)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3135,13 +3138,13 @@ GL_PREFIX(LightModelfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_LightModelfv), %g2
 	or	%g2, %lo(8 * _gloffset_LightModelfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_LightModelfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3154,13 +3157,13 @@ GL_PREFIX(LightModeli):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_LightModeli), %g2
 	or	%g2, %lo(8 * _gloffset_LightModeli), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_LightModeli)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3173,13 +3176,13 @@ GL_PREFIX(LightModeliv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_LightModeliv), %g2
 	or	%g2, %lo(8 * _gloffset_LightModeliv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_LightModeliv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3192,13 +3195,13 @@ GL_PREFIX(LineStipple):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_LineStipple), %g2
 	or	%g2, %lo(8 * _gloffset_LineStipple), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_LineStipple)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3211,13 +3214,13 @@ GL_PREFIX(LineWidth):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_LineWidth), %g2
 	or	%g2, %lo(8 * _gloffset_LineWidth), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_LineWidth)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3230,13 +3233,13 @@ GL_PREFIX(Materialf):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Materialf), %g2
 	or	%g2, %lo(8 * _gloffset_Materialf), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Materialf)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3249,13 +3252,13 @@ GL_PREFIX(Materialfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Materialfv), %g2
 	or	%g2, %lo(8 * _gloffset_Materialfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Materialfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3268,13 +3271,13 @@ GL_PREFIX(Materiali):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Materiali), %g2
 	or	%g2, %lo(8 * _gloffset_Materiali), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Materiali)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3287,13 +3290,13 @@ GL_PREFIX(Materialiv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Materialiv), %g2
 	or	%g2, %lo(8 * _gloffset_Materialiv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Materialiv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3306,13 +3309,13 @@ GL_PREFIX(PointSize):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PointSize), %g2
 	or	%g2, %lo(8 * _gloffset_PointSize), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PointSize)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3325,13 +3328,13 @@ GL_PREFIX(PolygonMode):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PolygonMode), %g2
 	or	%g2, %lo(8 * _gloffset_PolygonMode), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PolygonMode)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3344,13 +3347,13 @@ GL_PREFIX(PolygonStipple):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PolygonStipple), %g2
 	or	%g2, %lo(8 * _gloffset_PolygonStipple), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PolygonStipple)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3363,13 +3366,13 @@ GL_PREFIX(Scissor):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Scissor), %g2
 	or	%g2, %lo(8 * _gloffset_Scissor), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Scissor)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3382,13 +3385,13 @@ GL_PREFIX(ShadeModel):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ShadeModel), %g2
 	or	%g2, %lo(8 * _gloffset_ShadeModel), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ShadeModel)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3401,13 +3404,13 @@ GL_PREFIX(TexParameterf):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexParameterf), %g2
 	or	%g2, %lo(8 * _gloffset_TexParameterf), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexParameterf)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3420,13 +3423,13 @@ GL_PREFIX(TexParameterfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexParameterfv), %g2
 	or	%g2, %lo(8 * _gloffset_TexParameterfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexParameterfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3439,13 +3442,13 @@ GL_PREFIX(TexParameteri):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexParameteri), %g2
 	or	%g2, %lo(8 * _gloffset_TexParameteri), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexParameteri)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3458,13 +3461,13 @@ GL_PREFIX(TexParameteriv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexParameteriv), %g2
 	or	%g2, %lo(8 * _gloffset_TexParameteriv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexParameteriv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3477,13 +3480,13 @@ GL_PREFIX(TexImage1D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexImage1D), %g2
 	or	%g2, %lo(8 * _gloffset_TexImage1D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexImage1D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3496,13 +3499,13 @@ GL_PREFIX(TexImage2D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexImage2D), %g2
 	or	%g2, %lo(8 * _gloffset_TexImage2D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexImage2D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3515,13 +3518,13 @@ GL_PREFIX(TexEnvf):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexEnvf), %g2
 	or	%g2, %lo(8 * _gloffset_TexEnvf), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexEnvf)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3534,13 +3537,13 @@ GL_PREFIX(TexEnvfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexEnvfv), %g2
 	or	%g2, %lo(8 * _gloffset_TexEnvfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexEnvfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3553,13 +3556,13 @@ GL_PREFIX(TexEnvi):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexEnvi), %g2
 	or	%g2, %lo(8 * _gloffset_TexEnvi), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexEnvi)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3572,13 +3575,13 @@ GL_PREFIX(TexEnviv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexEnviv), %g2
 	or	%g2, %lo(8 * _gloffset_TexEnviv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexEnviv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3591,13 +3594,13 @@ GL_PREFIX(TexGend):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexGend), %g2
 	or	%g2, %lo(8 * _gloffset_TexGend), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexGend)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3610,13 +3613,13 @@ GL_PREFIX(TexGendv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexGendv), %g2
 	or	%g2, %lo(8 * _gloffset_TexGendv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexGendv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3629,13 +3632,13 @@ GL_PREFIX(TexGenf):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexGenf), %g2
 	or	%g2, %lo(8 * _gloffset_TexGenf), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexGenf)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3648,13 +3651,13 @@ GL_PREFIX(TexGenfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexGenfv), %g2
 	or	%g2, %lo(8 * _gloffset_TexGenfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexGenfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3667,13 +3670,13 @@ GL_PREFIX(TexGeni):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexGeni), %g2
 	or	%g2, %lo(8 * _gloffset_TexGeni), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexGeni)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3686,13 +3689,13 @@ GL_PREFIX(TexGeniv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexGeniv), %g2
 	or	%g2, %lo(8 * _gloffset_TexGeniv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexGeniv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3705,13 +3708,13 @@ GL_PREFIX(FeedbackBuffer):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FeedbackBuffer), %g2
 	or	%g2, %lo(8 * _gloffset_FeedbackBuffer), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FeedbackBuffer)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3724,13 +3727,13 @@ GL_PREFIX(SelectBuffer):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SelectBuffer), %g2
 	or	%g2, %lo(8 * _gloffset_SelectBuffer), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SelectBuffer)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3743,13 +3746,13 @@ GL_PREFIX(RenderMode):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_RenderMode), %g2
 	or	%g2, %lo(8 * _gloffset_RenderMode), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_RenderMode)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3762,13 +3765,13 @@ GL_PREFIX(InitNames):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_InitNames), %g2
 	or	%g2, %lo(8 * _gloffset_InitNames), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_InitNames)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3781,13 +3784,13 @@ GL_PREFIX(LoadName):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_LoadName), %g2
 	or	%g2, %lo(8 * _gloffset_LoadName), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_LoadName)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3800,13 +3803,13 @@ GL_PREFIX(PassThrough):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PassThrough), %g2
 	or	%g2, %lo(8 * _gloffset_PassThrough), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PassThrough)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3819,13 +3822,13 @@ GL_PREFIX(PopName):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PopName), %g2
 	or	%g2, %lo(8 * _gloffset_PopName), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PopName)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3838,13 +3841,13 @@ GL_PREFIX(PushName):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PushName), %g2
 	or	%g2, %lo(8 * _gloffset_PushName), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PushName)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3857,13 +3860,13 @@ GL_PREFIX(DrawBuffer):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_DrawBuffer), %g2
 	or	%g2, %lo(8 * _gloffset_DrawBuffer), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_DrawBuffer)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3876,13 +3879,13 @@ GL_PREFIX(Clear):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Clear), %g2
 	or	%g2, %lo(8 * _gloffset_Clear), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Clear)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3895,13 +3898,13 @@ GL_PREFIX(ClearAccum):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ClearAccum), %g2
 	or	%g2, %lo(8 * _gloffset_ClearAccum), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ClearAccum)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3914,13 +3917,13 @@ GL_PREFIX(ClearIndex):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ClearIndex), %g2
 	or	%g2, %lo(8 * _gloffset_ClearIndex), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ClearIndex)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3933,13 +3936,13 @@ GL_PREFIX(ClearColor):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ClearColor), %g2
 	or	%g2, %lo(8 * _gloffset_ClearColor), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ClearColor)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3952,13 +3955,13 @@ GL_PREFIX(ClearStencil):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ClearStencil), %g2
 	or	%g2, %lo(8 * _gloffset_ClearStencil), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ClearStencil)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3971,13 +3974,13 @@ GL_PREFIX(ClearDepth):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ClearDepth), %g2
 	or	%g2, %lo(8 * _gloffset_ClearDepth), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ClearDepth)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -3990,13 +3993,13 @@ GL_PREFIX(StencilMask):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_StencilMask), %g2
 	or	%g2, %lo(8 * _gloffset_StencilMask), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_StencilMask)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4009,13 +4012,13 @@ GL_PREFIX(ColorMask):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ColorMask), %g2
 	or	%g2, %lo(8 * _gloffset_ColorMask), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ColorMask)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4028,13 +4031,13 @@ GL_PREFIX(DepthMask):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_DepthMask), %g2
 	or	%g2, %lo(8 * _gloffset_DepthMask), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_DepthMask)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4047,13 +4050,13 @@ GL_PREFIX(IndexMask):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_IndexMask), %g2
 	or	%g2, %lo(8 * _gloffset_IndexMask), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_IndexMask)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4066,13 +4069,13 @@ GL_PREFIX(Accum):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Accum), %g2
 	or	%g2, %lo(8 * _gloffset_Accum), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Accum)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4085,13 +4088,13 @@ GL_PREFIX(Disable):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Disable), %g2
 	or	%g2, %lo(8 * _gloffset_Disable), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Disable)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4104,13 +4107,13 @@ GL_PREFIX(Enable):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Enable), %g2
 	or	%g2, %lo(8 * _gloffset_Enable), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Enable)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4123,13 +4126,13 @@ GL_PREFIX(Finish):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Finish), %g2
 	or	%g2, %lo(8 * _gloffset_Finish), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Finish)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4142,13 +4145,13 @@ GL_PREFIX(Flush):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Flush), %g2
 	or	%g2, %lo(8 * _gloffset_Flush), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Flush)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4161,13 +4164,13 @@ GL_PREFIX(PopAttrib):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PopAttrib), %g2
 	or	%g2, %lo(8 * _gloffset_PopAttrib), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PopAttrib)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4180,13 +4183,13 @@ GL_PREFIX(PushAttrib):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PushAttrib), %g2
 	or	%g2, %lo(8 * _gloffset_PushAttrib), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PushAttrib)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4199,13 +4202,13 @@ GL_PREFIX(Map1d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Map1d), %g2
 	or	%g2, %lo(8 * _gloffset_Map1d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Map1d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4218,13 +4221,13 @@ GL_PREFIX(Map1f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Map1f), %g2
 	or	%g2, %lo(8 * _gloffset_Map1f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Map1f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4237,13 +4240,13 @@ GL_PREFIX(Map2d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Map2d), %g2
 	or	%g2, %lo(8 * _gloffset_Map2d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Map2d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4256,13 +4259,13 @@ GL_PREFIX(Map2f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Map2f), %g2
 	or	%g2, %lo(8 * _gloffset_Map2f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Map2f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4275,13 +4278,13 @@ GL_PREFIX(MapGrid1d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MapGrid1d), %g2
 	or	%g2, %lo(8 * _gloffset_MapGrid1d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MapGrid1d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4294,13 +4297,13 @@ GL_PREFIX(MapGrid1f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MapGrid1f), %g2
 	or	%g2, %lo(8 * _gloffset_MapGrid1f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MapGrid1f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4313,13 +4316,13 @@ GL_PREFIX(MapGrid2d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MapGrid2d), %g2
 	or	%g2, %lo(8 * _gloffset_MapGrid2d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MapGrid2d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4332,13 +4335,13 @@ GL_PREFIX(MapGrid2f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MapGrid2f), %g2
 	or	%g2, %lo(8 * _gloffset_MapGrid2f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MapGrid2f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4351,13 +4354,13 @@ GL_PREFIX(EvalCoord1d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EvalCoord1d), %g2
 	or	%g2, %lo(8 * _gloffset_EvalCoord1d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EvalCoord1d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4370,13 +4373,13 @@ GL_PREFIX(EvalCoord1dv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EvalCoord1dv), %g2
 	or	%g2, %lo(8 * _gloffset_EvalCoord1dv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EvalCoord1dv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4389,13 +4392,13 @@ GL_PREFIX(EvalCoord1f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EvalCoord1f), %g2
 	or	%g2, %lo(8 * _gloffset_EvalCoord1f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EvalCoord1f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4408,13 +4411,13 @@ GL_PREFIX(EvalCoord1fv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EvalCoord1fv), %g2
 	or	%g2, %lo(8 * _gloffset_EvalCoord1fv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EvalCoord1fv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4427,13 +4430,13 @@ GL_PREFIX(EvalCoord2d):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EvalCoord2d), %g2
 	or	%g2, %lo(8 * _gloffset_EvalCoord2d), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EvalCoord2d)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4446,13 +4449,13 @@ GL_PREFIX(EvalCoord2dv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EvalCoord2dv), %g2
 	or	%g2, %lo(8 * _gloffset_EvalCoord2dv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EvalCoord2dv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4465,13 +4468,13 @@ GL_PREFIX(EvalCoord2f):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EvalCoord2f), %g2
 	or	%g2, %lo(8 * _gloffset_EvalCoord2f), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EvalCoord2f)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4484,13 +4487,13 @@ GL_PREFIX(EvalCoord2fv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EvalCoord2fv), %g2
 	or	%g2, %lo(8 * _gloffset_EvalCoord2fv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EvalCoord2fv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4503,13 +4506,13 @@ GL_PREFIX(EvalMesh1):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EvalMesh1), %g2
 	or	%g2, %lo(8 * _gloffset_EvalMesh1), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EvalMesh1)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4522,13 +4525,13 @@ GL_PREFIX(EvalPoint1):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EvalPoint1), %g2
 	or	%g2, %lo(8 * _gloffset_EvalPoint1), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EvalPoint1)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4541,13 +4544,13 @@ GL_PREFIX(EvalMesh2):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EvalMesh2), %g2
 	or	%g2, %lo(8 * _gloffset_EvalMesh2), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EvalMesh2)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4560,13 +4563,13 @@ GL_PREFIX(EvalPoint2):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EvalPoint2), %g2
 	or	%g2, %lo(8 * _gloffset_EvalPoint2), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EvalPoint2)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4579,13 +4582,13 @@ GL_PREFIX(AlphaFunc):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_AlphaFunc), %g2
 	or	%g2, %lo(8 * _gloffset_AlphaFunc), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_AlphaFunc)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4598,13 +4601,13 @@ GL_PREFIX(BlendFunc):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_BlendFunc), %g2
 	or	%g2, %lo(8 * _gloffset_BlendFunc), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_BlendFunc)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4617,13 +4620,13 @@ GL_PREFIX(LogicOp):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_LogicOp), %g2
 	or	%g2, %lo(8 * _gloffset_LogicOp), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_LogicOp)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4636,13 +4639,13 @@ GL_PREFIX(StencilFunc):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_StencilFunc), %g2
 	or	%g2, %lo(8 * _gloffset_StencilFunc), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_StencilFunc)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4655,13 +4658,13 @@ GL_PREFIX(StencilOp):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_StencilOp), %g2
 	or	%g2, %lo(8 * _gloffset_StencilOp), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_StencilOp)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4674,13 +4677,13 @@ GL_PREFIX(DepthFunc):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_DepthFunc), %g2
 	or	%g2, %lo(8 * _gloffset_DepthFunc), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_DepthFunc)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4693,13 +4696,13 @@ GL_PREFIX(PixelZoom):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PixelZoom), %g2
 	or	%g2, %lo(8 * _gloffset_PixelZoom), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PixelZoom)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4712,13 +4715,13 @@ GL_PREFIX(PixelTransferf):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PixelTransferf), %g2
 	or	%g2, %lo(8 * _gloffset_PixelTransferf), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PixelTransferf)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4731,13 +4734,13 @@ GL_PREFIX(PixelTransferi):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PixelTransferi), %g2
 	or	%g2, %lo(8 * _gloffset_PixelTransferi), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PixelTransferi)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4750,13 +4753,13 @@ GL_PREFIX(PixelStoref):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PixelStoref), %g2
 	or	%g2, %lo(8 * _gloffset_PixelStoref), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PixelStoref)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4769,13 +4772,13 @@ GL_PREFIX(PixelStorei):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PixelStorei), %g2
 	or	%g2, %lo(8 * _gloffset_PixelStorei), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PixelStorei)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4788,13 +4791,13 @@ GL_PREFIX(PixelMapfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PixelMapfv), %g2
 	or	%g2, %lo(8 * _gloffset_PixelMapfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PixelMapfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4807,13 +4810,13 @@ GL_PREFIX(PixelMapuiv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PixelMapuiv), %g2
 	or	%g2, %lo(8 * _gloffset_PixelMapuiv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PixelMapuiv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4826,13 +4829,13 @@ GL_PREFIX(PixelMapusv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PixelMapusv), %g2
 	or	%g2, %lo(8 * _gloffset_PixelMapusv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PixelMapusv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4845,13 +4848,13 @@ GL_PREFIX(ReadBuffer):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ReadBuffer), %g2
 	or	%g2, %lo(8 * _gloffset_ReadBuffer), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ReadBuffer)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4864,13 +4867,13 @@ GL_PREFIX(CopyPixels):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyPixels), %g2
 	or	%g2, %lo(8 * _gloffset_CopyPixels), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyPixels)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4883,13 +4886,13 @@ GL_PREFIX(ReadPixels):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ReadPixels), %g2
 	or	%g2, %lo(8 * _gloffset_ReadPixels), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ReadPixels)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4902,13 +4905,13 @@ GL_PREFIX(DrawPixels):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_DrawPixels), %g2
 	or	%g2, %lo(8 * _gloffset_DrawPixels), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_DrawPixels)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4921,13 +4924,13 @@ GL_PREFIX(GetBooleanv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetBooleanv), %g2
 	or	%g2, %lo(8 * _gloffset_GetBooleanv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetBooleanv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4940,13 +4943,13 @@ GL_PREFIX(GetClipPlane):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetClipPlane), %g2
 	or	%g2, %lo(8 * _gloffset_GetClipPlane), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetClipPlane)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4959,13 +4962,13 @@ GL_PREFIX(GetDoublev):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetDoublev), %g2
 	or	%g2, %lo(8 * _gloffset_GetDoublev), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetDoublev)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4978,13 +4981,13 @@ GL_PREFIX(GetError):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetError), %g2
 	or	%g2, %lo(8 * _gloffset_GetError), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetError)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -4997,13 +5000,13 @@ GL_PREFIX(GetFloatv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetFloatv), %g2
 	or	%g2, %lo(8 * _gloffset_GetFloatv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetFloatv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5016,13 +5019,13 @@ GL_PREFIX(GetIntegerv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetIntegerv), %g2
 	or	%g2, %lo(8 * _gloffset_GetIntegerv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetIntegerv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5035,13 +5038,13 @@ GL_PREFIX(GetLightfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetLightfv), %g2
 	or	%g2, %lo(8 * _gloffset_GetLightfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetLightfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5054,13 +5057,13 @@ GL_PREFIX(GetLightiv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetLightiv), %g2
 	or	%g2, %lo(8 * _gloffset_GetLightiv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetLightiv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5073,13 +5076,13 @@ GL_PREFIX(GetMapdv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetMapdv), %g2
 	or	%g2, %lo(8 * _gloffset_GetMapdv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetMapdv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5092,13 +5095,13 @@ GL_PREFIX(GetMapfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetMapfv), %g2
 	or	%g2, %lo(8 * _gloffset_GetMapfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetMapfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5111,13 +5114,13 @@ GL_PREFIX(GetMapiv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetMapiv), %g2
 	or	%g2, %lo(8 * _gloffset_GetMapiv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetMapiv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5130,13 +5133,13 @@ GL_PREFIX(GetMaterialfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetMaterialfv), %g2
 	or	%g2, %lo(8 * _gloffset_GetMaterialfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetMaterialfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5149,13 +5152,13 @@ GL_PREFIX(GetMaterialiv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetMaterialiv), %g2
 	or	%g2, %lo(8 * _gloffset_GetMaterialiv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetMaterialiv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5168,13 +5171,13 @@ GL_PREFIX(GetPixelMapfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetPixelMapfv), %g2
 	or	%g2, %lo(8 * _gloffset_GetPixelMapfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetPixelMapfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5187,13 +5190,13 @@ GL_PREFIX(GetPixelMapuiv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetPixelMapuiv), %g2
 	or	%g2, %lo(8 * _gloffset_GetPixelMapuiv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetPixelMapuiv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5206,13 +5209,13 @@ GL_PREFIX(GetPixelMapusv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetPixelMapusv), %g2
 	or	%g2, %lo(8 * _gloffset_GetPixelMapusv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetPixelMapusv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5225,13 +5228,13 @@ GL_PREFIX(GetPolygonStipple):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetPolygonStipple), %g2
 	or	%g2, %lo(8 * _gloffset_GetPolygonStipple), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetPolygonStipple)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5244,13 +5247,13 @@ GL_PREFIX(GetString):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetString), %g2
 	or	%g2, %lo(8 * _gloffset_GetString), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetString)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5263,13 +5266,13 @@ GL_PREFIX(GetTexEnvfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetTexEnvfv), %g2
 	or	%g2, %lo(8 * _gloffset_GetTexEnvfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetTexEnvfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5282,13 +5285,13 @@ GL_PREFIX(GetTexEnviv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetTexEnviv), %g2
 	or	%g2, %lo(8 * _gloffset_GetTexEnviv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetTexEnviv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5301,13 +5304,13 @@ GL_PREFIX(GetTexGendv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetTexGendv), %g2
 	or	%g2, %lo(8 * _gloffset_GetTexGendv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetTexGendv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5320,13 +5323,13 @@ GL_PREFIX(GetTexGenfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetTexGenfv), %g2
 	or	%g2, %lo(8 * _gloffset_GetTexGenfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetTexGenfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5339,13 +5342,13 @@ GL_PREFIX(GetTexGeniv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetTexGeniv), %g2
 	or	%g2, %lo(8 * _gloffset_GetTexGeniv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetTexGeniv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5358,13 +5361,13 @@ GL_PREFIX(GetTexImage):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetTexImage), %g2
 	or	%g2, %lo(8 * _gloffset_GetTexImage), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetTexImage)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5377,13 +5380,13 @@ GL_PREFIX(GetTexParameterfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetTexParameterfv), %g2
 	or	%g2, %lo(8 * _gloffset_GetTexParameterfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetTexParameterfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5396,13 +5399,13 @@ GL_PREFIX(GetTexParameteriv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetTexParameteriv), %g2
 	or	%g2, %lo(8 * _gloffset_GetTexParameteriv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetTexParameteriv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5415,13 +5418,13 @@ GL_PREFIX(GetTexLevelParameterfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetTexLevelParameterfv), %g2
 	or	%g2, %lo(8 * _gloffset_GetTexLevelParameterfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetTexLevelParameterfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5434,13 +5437,13 @@ GL_PREFIX(GetTexLevelParameteriv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetTexLevelParameteriv), %g2
 	or	%g2, %lo(8 * _gloffset_GetTexLevelParameteriv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetTexLevelParameteriv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5453,13 +5456,13 @@ GL_PREFIX(IsEnabled):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_IsEnabled), %g2
 	or	%g2, %lo(8 * _gloffset_IsEnabled), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_IsEnabled)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5472,13 +5475,13 @@ GL_PREFIX(IsList):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_IsList), %g2
 	or	%g2, %lo(8 * _gloffset_IsList), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_IsList)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5491,13 +5494,13 @@ GL_PREFIX(DepthRange):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_DepthRange), %g2
 	or	%g2, %lo(8 * _gloffset_DepthRange), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_DepthRange)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5510,13 +5513,13 @@ GL_PREFIX(Frustum):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Frustum), %g2
 	or	%g2, %lo(8 * _gloffset_Frustum), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Frustum)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5529,13 +5532,13 @@ GL_PREFIX(LoadIdentity):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_LoadIdentity), %g2
 	or	%g2, %lo(8 * _gloffset_LoadIdentity), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_LoadIdentity)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5548,13 +5551,13 @@ GL_PREFIX(LoadMatrixf):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_LoadMatrixf), %g2
 	or	%g2, %lo(8 * _gloffset_LoadMatrixf), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_LoadMatrixf)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5567,13 +5570,13 @@ GL_PREFIX(LoadMatrixd):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_LoadMatrixd), %g2
 	or	%g2, %lo(8 * _gloffset_LoadMatrixd), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_LoadMatrixd)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5586,13 +5589,13 @@ GL_PREFIX(MatrixMode):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MatrixMode), %g2
 	or	%g2, %lo(8 * _gloffset_MatrixMode), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MatrixMode)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5605,13 +5608,13 @@ GL_PREFIX(MultMatrixf):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultMatrixf), %g2
 	or	%g2, %lo(8 * _gloffset_MultMatrixf), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultMatrixf)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5624,13 +5627,13 @@ GL_PREFIX(MultMatrixd):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultMatrixd), %g2
 	or	%g2, %lo(8 * _gloffset_MultMatrixd), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultMatrixd)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5643,13 +5646,13 @@ GL_PREFIX(Ortho):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Ortho), %g2
 	or	%g2, %lo(8 * _gloffset_Ortho), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Ortho)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5662,13 +5665,13 @@ GL_PREFIX(PopMatrix):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PopMatrix), %g2
 	or	%g2, %lo(8 * _gloffset_PopMatrix), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PopMatrix)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5681,13 +5684,13 @@ GL_PREFIX(PushMatrix):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PushMatrix), %g2
 	or	%g2, %lo(8 * _gloffset_PushMatrix), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PushMatrix)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5700,13 +5703,13 @@ GL_PREFIX(Rotated):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Rotated), %g2
 	or	%g2, %lo(8 * _gloffset_Rotated), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Rotated)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5719,13 +5722,13 @@ GL_PREFIX(Rotatef):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Rotatef), %g2
 	or	%g2, %lo(8 * _gloffset_Rotatef), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Rotatef)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5738,13 +5741,13 @@ GL_PREFIX(Scaled):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Scaled), %g2
 	or	%g2, %lo(8 * _gloffset_Scaled), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Scaled)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5757,13 +5760,13 @@ GL_PREFIX(Scalef):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Scalef), %g2
 	or	%g2, %lo(8 * _gloffset_Scalef), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Scalef)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5776,13 +5779,13 @@ GL_PREFIX(Translated):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Translated), %g2
 	or	%g2, %lo(8 * _gloffset_Translated), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Translated)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5795,13 +5798,13 @@ GL_PREFIX(Translatef):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Translatef), %g2
 	or	%g2, %lo(8 * _gloffset_Translatef), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Translatef)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5814,13 +5817,13 @@ GL_PREFIX(Viewport):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Viewport), %g2
 	or	%g2, %lo(8 * _gloffset_Viewport), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Viewport)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5833,13 +5836,13 @@ GL_PREFIX(ArrayElement):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ArrayElement), %g2
 	or	%g2, %lo(8 * _gloffset_ArrayElement), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ArrayElement)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5852,13 +5855,13 @@ GL_PREFIX(ColorPointer):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ColorPointer), %g2
 	or	%g2, %lo(8 * _gloffset_ColorPointer), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ColorPointer)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5871,13 +5874,13 @@ GL_PREFIX(DisableClientState):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_DisableClientState), %g2
 	or	%g2, %lo(8 * _gloffset_DisableClientState), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_DisableClientState)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5890,13 +5893,13 @@ GL_PREFIX(DrawArrays):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_DrawArrays), %g2
 	or	%g2, %lo(8 * _gloffset_DrawArrays), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_DrawArrays)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5909,13 +5912,13 @@ GL_PREFIX(DrawElements):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_DrawElements), %g2
 	or	%g2, %lo(8 * _gloffset_DrawElements), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_DrawElements)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5928,13 +5931,13 @@ GL_PREFIX(EdgeFlagPointer):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EdgeFlagPointer), %g2
 	or	%g2, %lo(8 * _gloffset_EdgeFlagPointer), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EdgeFlagPointer)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5947,13 +5950,13 @@ GL_PREFIX(EnableClientState):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EnableClientState), %g2
 	or	%g2, %lo(8 * _gloffset_EnableClientState), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EnableClientState)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5966,13 +5969,13 @@ GL_PREFIX(GetPointerv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetPointerv), %g2
 	or	%g2, %lo(8 * _gloffset_GetPointerv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetPointerv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -5985,13 +5988,13 @@ GL_PREFIX(IndexPointer):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_IndexPointer), %g2
 	or	%g2, %lo(8 * _gloffset_IndexPointer), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_IndexPointer)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6004,13 +6007,13 @@ GL_PREFIX(InterleavedArrays):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_InterleavedArrays), %g2
 	or	%g2, %lo(8 * _gloffset_InterleavedArrays), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_InterleavedArrays)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6023,13 +6026,13 @@ GL_PREFIX(NormalPointer):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_NormalPointer), %g2
 	or	%g2, %lo(8 * _gloffset_NormalPointer), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_NormalPointer)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6042,13 +6045,13 @@ GL_PREFIX(TexCoordPointer):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoordPointer), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoordPointer), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoordPointer)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6061,13 +6064,13 @@ GL_PREFIX(VertexPointer):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_VertexPointer), %g2
 	or	%g2, %lo(8 * _gloffset_VertexPointer), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_VertexPointer)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6080,13 +6083,13 @@ GL_PREFIX(PolygonOffset):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PolygonOffset), %g2
 	or	%g2, %lo(8 * _gloffset_PolygonOffset), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PolygonOffset)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6099,13 +6102,13 @@ GL_PREFIX(CopyTexImage1D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyTexImage1D), %g2
 	or	%g2, %lo(8 * _gloffset_CopyTexImage1D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyTexImage1D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6118,13 +6121,13 @@ GL_PREFIX(CopyTexImage2D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyTexImage2D), %g2
 	or	%g2, %lo(8 * _gloffset_CopyTexImage2D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyTexImage2D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6137,13 +6140,13 @@ GL_PREFIX(CopyTexSubImage1D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyTexSubImage1D), %g2
 	or	%g2, %lo(8 * _gloffset_CopyTexSubImage1D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyTexSubImage1D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6156,13 +6159,13 @@ GL_PREFIX(CopyTexSubImage2D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyTexSubImage2D), %g2
 	or	%g2, %lo(8 * _gloffset_CopyTexSubImage2D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyTexSubImage2D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6175,13 +6178,13 @@ GL_PREFIX(TexSubImage1D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexSubImage1D), %g2
 	or	%g2, %lo(8 * _gloffset_TexSubImage1D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexSubImage1D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6194,13 +6197,13 @@ GL_PREFIX(TexSubImage2D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexSubImage2D), %g2
 	or	%g2, %lo(8 * _gloffset_TexSubImage2D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexSubImage2D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6213,13 +6216,13 @@ GL_PREFIX(AreTexturesResident):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_AreTexturesResident), %g2
 	or	%g2, %lo(8 * _gloffset_AreTexturesResident), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_AreTexturesResident)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6232,13 +6235,13 @@ GL_PREFIX(BindTexture):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_BindTexture), %g2
 	or	%g2, %lo(8 * _gloffset_BindTexture), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_BindTexture)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6251,13 +6254,13 @@ GL_PREFIX(DeleteTextures):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_DeleteTextures), %g2
 	or	%g2, %lo(8 * _gloffset_DeleteTextures), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_DeleteTextures)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6270,13 +6273,13 @@ GL_PREFIX(GenTextures):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GenTextures), %g2
 	or	%g2, %lo(8 * _gloffset_GenTextures), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GenTextures)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6289,13 +6292,13 @@ GL_PREFIX(IsTexture):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_IsTexture), %g2
 	or	%g2, %lo(8 * _gloffset_IsTexture), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_IsTexture)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6308,13 +6311,13 @@ GL_PREFIX(PrioritizeTextures):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PrioritizeTextures), %g2
 	or	%g2, %lo(8 * _gloffset_PrioritizeTextures), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PrioritizeTextures)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6327,13 +6330,13 @@ GL_PREFIX(Indexub):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Indexub), %g2
 	or	%g2, %lo(8 * _gloffset_Indexub), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Indexub)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6346,13 +6349,13 @@ GL_PREFIX(Indexubv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Indexubv), %g2
 	or	%g2, %lo(8 * _gloffset_Indexubv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Indexubv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6365,13 +6368,13 @@ GL_PREFIX(PopClientAttrib):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PopClientAttrib), %g2
 	or	%g2, %lo(8 * _gloffset_PopClientAttrib), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PopClientAttrib)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6384,13 +6387,13 @@ GL_PREFIX(PushClientAttrib):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PushClientAttrib), %g2
 	or	%g2, %lo(8 * _gloffset_PushClientAttrib), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PushClientAttrib)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6403,13 +6406,13 @@ GL_PREFIX(BlendColor):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_BlendColor), %g2
 	or	%g2, %lo(8 * _gloffset_BlendColor), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_BlendColor)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6422,13 +6425,13 @@ GL_PREFIX(BlendEquation):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_BlendEquation), %g2
 	or	%g2, %lo(8 * _gloffset_BlendEquation), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_BlendEquation)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6441,13 +6444,13 @@ GL_PREFIX(DrawRangeElements):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_DrawRangeElements), %g2
 	or	%g2, %lo(8 * _gloffset_DrawRangeElements), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_DrawRangeElements)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6460,13 +6463,13 @@ GL_PREFIX(ColorTable):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ColorTable), %g2
 	or	%g2, %lo(8 * _gloffset_ColorTable), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ColorTable)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6479,13 +6482,13 @@ GL_PREFIX(ColorTableParameterfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ColorTableParameterfv), %g2
 	or	%g2, %lo(8 * _gloffset_ColorTableParameterfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ColorTableParameterfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6498,13 +6501,13 @@ GL_PREFIX(ColorTableParameteriv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ColorTableParameteriv), %g2
 	or	%g2, %lo(8 * _gloffset_ColorTableParameteriv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ColorTableParameteriv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6517,13 +6520,13 @@ GL_PREFIX(CopyColorTable):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyColorTable), %g2
 	or	%g2, %lo(8 * _gloffset_CopyColorTable), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyColorTable)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6536,13 +6539,13 @@ GL_PREFIX(GetColorTable):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetColorTable), %g2
 	or	%g2, %lo(8 * _gloffset_GetColorTable), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetColorTable)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6555,13 +6558,13 @@ GL_PREFIX(GetColorTableParameterfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetColorTableParameterfv), %g2
 	or	%g2, %lo(8 * _gloffset_GetColorTableParameterfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetColorTableParameterfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6574,13 +6577,13 @@ GL_PREFIX(GetColorTableParameteriv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetColorTableParameteriv), %g2
 	or	%g2, %lo(8 * _gloffset_GetColorTableParameteriv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetColorTableParameteriv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6593,13 +6596,13 @@ GL_PREFIX(ColorSubTable):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ColorSubTable), %g2
 	or	%g2, %lo(8 * _gloffset_ColorSubTable), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ColorSubTable)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6612,13 +6615,13 @@ GL_PREFIX(CopyColorSubTable):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyColorSubTable), %g2
 	or	%g2, %lo(8 * _gloffset_CopyColorSubTable), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyColorSubTable)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6631,13 +6634,13 @@ GL_PREFIX(ConvolutionFilter1D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ConvolutionFilter1D), %g2
 	or	%g2, %lo(8 * _gloffset_ConvolutionFilter1D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ConvolutionFilter1D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6650,13 +6653,13 @@ GL_PREFIX(ConvolutionFilter2D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ConvolutionFilter2D), %g2
 	or	%g2, %lo(8 * _gloffset_ConvolutionFilter2D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ConvolutionFilter2D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6669,13 +6672,13 @@ GL_PREFIX(ConvolutionParameterf):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ConvolutionParameterf), %g2
 	or	%g2, %lo(8 * _gloffset_ConvolutionParameterf), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ConvolutionParameterf)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6688,13 +6691,13 @@ GL_PREFIX(ConvolutionParameterfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ConvolutionParameterfv), %g2
 	or	%g2, %lo(8 * _gloffset_ConvolutionParameterfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ConvolutionParameterfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6707,13 +6710,13 @@ GL_PREFIX(ConvolutionParameteri):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ConvolutionParameteri), %g2
 	or	%g2, %lo(8 * _gloffset_ConvolutionParameteri), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ConvolutionParameteri)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6726,13 +6729,13 @@ GL_PREFIX(ConvolutionParameteriv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ConvolutionParameteriv), %g2
 	or	%g2, %lo(8 * _gloffset_ConvolutionParameteriv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ConvolutionParameteriv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6745,13 +6748,13 @@ GL_PREFIX(CopyConvolutionFilter1D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyConvolutionFilter1D), %g2
 	or	%g2, %lo(8 * _gloffset_CopyConvolutionFilter1D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyConvolutionFilter1D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6764,13 +6767,13 @@ GL_PREFIX(CopyConvolutionFilter2D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyConvolutionFilter2D), %g2
 	or	%g2, %lo(8 * _gloffset_CopyConvolutionFilter2D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyConvolutionFilter2D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6783,13 +6786,13 @@ GL_PREFIX(GetConvolutionFilter):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetConvolutionFilter), %g2
 	or	%g2, %lo(8 * _gloffset_GetConvolutionFilter), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetConvolutionFilter)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6802,13 +6805,13 @@ GL_PREFIX(GetConvolutionParameterfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetConvolutionParameterfv), %g2
 	or	%g2, %lo(8 * _gloffset_GetConvolutionParameterfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetConvolutionParameterfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6821,13 +6824,13 @@ GL_PREFIX(GetConvolutionParameteriv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetConvolutionParameteriv), %g2
 	or	%g2, %lo(8 * _gloffset_GetConvolutionParameteriv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetConvolutionParameteriv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6840,13 +6843,13 @@ GL_PREFIX(GetSeparableFilter):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetSeparableFilter), %g2
 	or	%g2, %lo(8 * _gloffset_GetSeparableFilter), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetSeparableFilter)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6859,13 +6862,13 @@ GL_PREFIX(SeparableFilter2D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SeparableFilter2D), %g2
 	or	%g2, %lo(8 * _gloffset_SeparableFilter2D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SeparableFilter2D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6878,13 +6881,13 @@ GL_PREFIX(GetHistogram):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetHistogram), %g2
 	or	%g2, %lo(8 * _gloffset_GetHistogram), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetHistogram)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6897,13 +6900,13 @@ GL_PREFIX(GetHistogramParameterfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetHistogramParameterfv), %g2
 	or	%g2, %lo(8 * _gloffset_GetHistogramParameterfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetHistogramParameterfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6916,13 +6919,13 @@ GL_PREFIX(GetHistogramParameteriv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetHistogramParameteriv), %g2
 	or	%g2, %lo(8 * _gloffset_GetHistogramParameteriv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetHistogramParameteriv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6935,13 +6938,13 @@ GL_PREFIX(GetMinmax):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetMinmax), %g2
 	or	%g2, %lo(8 * _gloffset_GetMinmax), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetMinmax)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6954,13 +6957,13 @@ GL_PREFIX(GetMinmaxParameterfv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetMinmaxParameterfv), %g2
 	or	%g2, %lo(8 * _gloffset_GetMinmaxParameterfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetMinmaxParameterfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6973,13 +6976,13 @@ GL_PREFIX(GetMinmaxParameteriv):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetMinmaxParameteriv), %g2
 	or	%g2, %lo(8 * _gloffset_GetMinmaxParameteriv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetMinmaxParameteriv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -6992,13 +6995,13 @@ GL_PREFIX(Histogram):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Histogram), %g2
 	or	%g2, %lo(8 * _gloffset_Histogram), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Histogram)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7011,13 +7014,13 @@ GL_PREFIX(Minmax):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Minmax), %g2
 	or	%g2, %lo(8 * _gloffset_Minmax), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Minmax)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7030,13 +7033,13 @@ GL_PREFIX(ResetHistogram):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ResetHistogram), %g2
 	or	%g2, %lo(8 * _gloffset_ResetHistogram), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ResetHistogram)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7049,13 +7052,13 @@ GL_PREFIX(ResetMinmax):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ResetMinmax), %g2
 	or	%g2, %lo(8 * _gloffset_ResetMinmax), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ResetMinmax)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7068,13 +7071,13 @@ GL_PREFIX(TexImage3D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexImage3D), %g2
 	or	%g2, %lo(8 * _gloffset_TexImage3D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexImage3D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7087,13 +7090,13 @@ GL_PREFIX(TexSubImage3D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexSubImage3D), %g2
 	or	%g2, %lo(8 * _gloffset_TexSubImage3D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexSubImage3D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7106,13 +7109,13 @@ GL_PREFIX(CopyTexSubImage3D):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyTexSubImage3D), %g2
 	or	%g2, %lo(8 * _gloffset_CopyTexSubImage3D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyTexSubImage3D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7125,13 +7128,13 @@ GL_PREFIX(ActiveTextureARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ActiveTextureARB), %g2
 	or	%g2, %lo(8 * _gloffset_ActiveTextureARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ActiveTextureARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7144,13 +7147,13 @@ GL_PREFIX(ClientActiveTextureARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ClientActiveTextureARB), %g2
 	or	%g2, %lo(8 * _gloffset_ClientActiveTextureARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ClientActiveTextureARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7163,13 +7166,13 @@ GL_PREFIX(MultiTexCoord1dARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord1dARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord1dARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord1dARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7182,13 +7185,13 @@ GL_PREFIX(MultiTexCoord1dvARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord1dvARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord1dvARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord1dvARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7201,13 +7204,13 @@ GL_PREFIX(MultiTexCoord1fARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord1fARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord1fARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord1fARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7220,13 +7223,13 @@ GL_PREFIX(MultiTexCoord1fvARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord1fvARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord1fvARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord1fvARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7239,13 +7242,13 @@ GL_PREFIX(MultiTexCoord1iARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord1iARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord1iARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord1iARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7258,13 +7261,13 @@ GL_PREFIX(MultiTexCoord1ivARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord1ivARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord1ivARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord1ivARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7277,13 +7280,13 @@ GL_PREFIX(MultiTexCoord1sARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord1sARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord1sARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord1sARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7296,13 +7299,13 @@ GL_PREFIX(MultiTexCoord1svARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord1svARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord1svARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord1svARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7315,13 +7318,13 @@ GL_PREFIX(MultiTexCoord2dARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord2dARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord2dARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord2dARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7334,13 +7337,13 @@ GL_PREFIX(MultiTexCoord2dvARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord2dvARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord2dvARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord2dvARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7353,13 +7356,13 @@ GL_PREFIX(MultiTexCoord2fARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord2fARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord2fARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord2fARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7372,13 +7375,13 @@ GL_PREFIX(MultiTexCoord2fvARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord2fvARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord2fvARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord2fvARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7391,13 +7394,13 @@ GL_PREFIX(MultiTexCoord2iARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord2iARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord2iARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord2iARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7410,13 +7413,13 @@ GL_PREFIX(MultiTexCoord2ivARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord2ivARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord2ivARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord2ivARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7429,13 +7432,13 @@ GL_PREFIX(MultiTexCoord2sARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord2sARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord2sARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord2sARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7448,13 +7451,13 @@ GL_PREFIX(MultiTexCoord2svARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord2svARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord2svARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord2svARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7467,13 +7470,13 @@ GL_PREFIX(MultiTexCoord3dARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord3dARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord3dARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord3dARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7486,13 +7489,13 @@ GL_PREFIX(MultiTexCoord3dvARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord3dvARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord3dvARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord3dvARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7505,13 +7508,13 @@ GL_PREFIX(MultiTexCoord3fARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord3fARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord3fARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord3fARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7524,13 +7527,13 @@ GL_PREFIX(MultiTexCoord3fvARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord3fvARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord3fvARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord3fvARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7543,13 +7546,13 @@ GL_PREFIX(MultiTexCoord3iARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord3iARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord3iARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord3iARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7562,13 +7565,13 @@ GL_PREFIX(MultiTexCoord3ivARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord3ivARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord3ivARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord3ivARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7581,13 +7584,13 @@ GL_PREFIX(MultiTexCoord3sARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord3sARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord3sARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord3sARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7600,13 +7603,13 @@ GL_PREFIX(MultiTexCoord3svARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord3svARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord3svARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord3svARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7619,13 +7622,13 @@ GL_PREFIX(MultiTexCoord4dARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord4dARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord4dARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord4dARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7638,13 +7641,13 @@ GL_PREFIX(MultiTexCoord4dvARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord4dvARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord4dvARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord4dvARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7657,13 +7660,13 @@ GL_PREFIX(MultiTexCoord4fARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord4fARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord4fARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord4fARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7676,13 +7679,13 @@ GL_PREFIX(MultiTexCoord4fvARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord4fvARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord4fvARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord4fvARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7695,13 +7698,13 @@ GL_PREFIX(MultiTexCoord4iARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord4iARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord4iARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord4iARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7714,13 +7717,13 @@ GL_PREFIX(MultiTexCoord4ivARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord4ivARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord4ivARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord4ivARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7733,13 +7736,13 @@ GL_PREFIX(MultiTexCoord4sARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord4sARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord4sARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord4sARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7752,13 +7755,13 @@ GL_PREFIX(MultiTexCoord4svARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultiTexCoord4svARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultiTexCoord4svARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultiTexCoord4svARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7771,13 +7774,13 @@ GL_PREFIX(LoadTransposeMatrixfARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_LoadTransposeMatrixfARB), %g2
 	or	%g2, %lo(8 * _gloffset_LoadTransposeMatrixfARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_LoadTransposeMatrixfARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7790,13 +7793,13 @@ GL_PREFIX(LoadTransposeMatrixdARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_LoadTransposeMatrixdARB), %g2
 	or	%g2, %lo(8 * _gloffset_LoadTransposeMatrixdARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_LoadTransposeMatrixdARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7809,13 +7812,13 @@ GL_PREFIX(MultTransposeMatrixfARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultTransposeMatrixfARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultTransposeMatrixfARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultTransposeMatrixfARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7828,13 +7831,13 @@ GL_PREFIX(MultTransposeMatrixdARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_MultTransposeMatrixdARB), %g2
 	or	%g2, %lo(8 * _gloffset_MultTransposeMatrixdARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_MultTransposeMatrixdARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7847,13 +7850,13 @@ GL_PREFIX(SampleCoverageARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SampleCoverageARB), %g2
 	or	%g2, %lo(8 * _gloffset_SampleCoverageARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SampleCoverageARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7866,13 +7869,13 @@ GL_PREFIX(CompressedTexImage3DARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CompressedTexImage3DARB), %g2
 	or	%g2, %lo(8 * _gloffset_CompressedTexImage3DARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CompressedTexImage3DARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7885,13 +7888,13 @@ GL_PREFIX(CompressedTexImage2DARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CompressedTexImage2DARB), %g2
 	or	%g2, %lo(8 * _gloffset_CompressedTexImage2DARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CompressedTexImage2DARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7904,13 +7907,13 @@ GL_PREFIX(CompressedTexImage1DARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CompressedTexImage1DARB), %g2
 	or	%g2, %lo(8 * _gloffset_CompressedTexImage1DARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CompressedTexImage1DARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7923,13 +7926,13 @@ GL_PREFIX(CompressedTexSubImage3DARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CompressedTexSubImage3DARB), %g2
 	or	%g2, %lo(8 * _gloffset_CompressedTexSubImage3DARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CompressedTexSubImage3DARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7942,13 +7945,13 @@ GL_PREFIX(CompressedTexSubImage2DARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CompressedTexSubImage2DARB), %g2
 	or	%g2, %lo(8 * _gloffset_CompressedTexSubImage2DARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CompressedTexSubImage2DARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7961,13 +7964,13 @@ GL_PREFIX(CompressedTexSubImage1DARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CompressedTexSubImage1DARB), %g2
 	or	%g2, %lo(8 * _gloffset_CompressedTexSubImage1DARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CompressedTexSubImage1DARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7980,13 +7983,13 @@ GL_PREFIX(GetCompressedTexImageARB):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetCompressedTexImageARB), %g2
 	or	%g2, %lo(8 * _gloffset_GetCompressedTexImageARB), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetCompressedTexImageARB)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -7999,13 +8002,13 @@ GL_PREFIX(BlendColorEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_BlendColor), %g2
 	or	%g2, %lo(8 * _gloffset_BlendColor), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_BlendColor)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8018,13 +8021,13 @@ GL_PREFIX(PolygonOffsetEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PolygonOffsetEXT), %g2
 	or	%g2, %lo(8 * _gloffset_PolygonOffsetEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PolygonOffsetEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8037,13 +8040,13 @@ GL_PREFIX(TexImage3DEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexImage3D), %g2
 	or	%g2, %lo(8 * _gloffset_TexImage3D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexImage3D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8056,13 +8059,13 @@ GL_PREFIX(TexSubImage3DEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexSubImage3D), %g2
 	or	%g2, %lo(8 * _gloffset_TexSubImage3D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexSubImage3D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8075,13 +8078,13 @@ GL_PREFIX(GetTexFilterFuncSGIS):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetTexFilterFuncSGIS), %g2
 	or	%g2, %lo(8 * _gloffset_GetTexFilterFuncSGIS), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetTexFilterFuncSGIS)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8094,13 +8097,13 @@ GL_PREFIX(TexFilterFuncSGIS):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexFilterFuncSGIS), %g2
 	or	%g2, %lo(8 * _gloffset_TexFilterFuncSGIS), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexFilterFuncSGIS)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8113,13 +8116,13 @@ GL_PREFIX(TexSubImage1DEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexSubImage1D), %g2
 	or	%g2, %lo(8 * _gloffset_TexSubImage1D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexSubImage1D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8132,13 +8135,13 @@ GL_PREFIX(TexSubImage2DEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexSubImage2D), %g2
 	or	%g2, %lo(8 * _gloffset_TexSubImage2D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexSubImage2D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8151,13 +8154,13 @@ GL_PREFIX(CopyTexImage1DEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyTexImage1D), %g2
 	or	%g2, %lo(8 * _gloffset_CopyTexImage1D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyTexImage1D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8170,13 +8173,13 @@ GL_PREFIX(CopyTexImage2DEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyTexImage2D), %g2
 	or	%g2, %lo(8 * _gloffset_CopyTexImage2D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyTexImage2D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8189,13 +8192,13 @@ GL_PREFIX(CopyTexSubImage1DEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyTexSubImage1D), %g2
 	or	%g2, %lo(8 * _gloffset_CopyTexSubImage1D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyTexSubImage1D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8208,13 +8211,13 @@ GL_PREFIX(CopyTexSubImage2DEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyTexSubImage2D), %g2
 	or	%g2, %lo(8 * _gloffset_CopyTexSubImage2D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyTexSubImage2D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8227,13 +8230,13 @@ GL_PREFIX(CopyTexSubImage3DEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyTexSubImage3D), %g2
 	or	%g2, %lo(8 * _gloffset_CopyTexSubImage3D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyTexSubImage3D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8246,13 +8249,13 @@ GL_PREFIX(GetHistogramEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetHistogramEXT), %g2
 	or	%g2, %lo(8 * _gloffset_GetHistogramEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetHistogramEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8265,13 +8268,13 @@ GL_PREFIX(GetHistogramParameterfvEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetHistogramParameterfvEXT), %g2
 	or	%g2, %lo(8 * _gloffset_GetHistogramParameterfvEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetHistogramParameterfvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8284,13 +8287,13 @@ GL_PREFIX(GetHistogramParameterivEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetHistogramParameterivEXT), %g2
 	or	%g2, %lo(8 * _gloffset_GetHistogramParameterivEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetHistogramParameterivEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8303,13 +8306,13 @@ GL_PREFIX(GetMinmaxEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetMinmaxEXT), %g2
 	or	%g2, %lo(8 * _gloffset_GetMinmaxEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetMinmaxEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8322,13 +8325,13 @@ GL_PREFIX(GetMinmaxParameterfvEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetMinmaxParameterfvEXT), %g2
 	or	%g2, %lo(8 * _gloffset_GetMinmaxParameterfvEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetMinmaxParameterfvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8341,13 +8344,13 @@ GL_PREFIX(GetMinmaxParameterivEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetMinmaxParameterivEXT), %g2
 	or	%g2, %lo(8 * _gloffset_GetMinmaxParameterivEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetMinmaxParameterivEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8360,13 +8363,13 @@ GL_PREFIX(HistogramEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Histogram), %g2
 	or	%g2, %lo(8 * _gloffset_Histogram), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Histogram)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8379,13 +8382,13 @@ GL_PREFIX(MinmaxEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_Minmax), %g2
 	or	%g2, %lo(8 * _gloffset_Minmax), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_Minmax)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8398,13 +8401,13 @@ GL_PREFIX(ResetHistogramEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ResetHistogram), %g2
 	or	%g2, %lo(8 * _gloffset_ResetHistogram), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ResetHistogram)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8417,13 +8420,13 @@ GL_PREFIX(ResetMinmaxEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ResetMinmax), %g2
 	or	%g2, %lo(8 * _gloffset_ResetMinmax), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ResetMinmax)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8436,13 +8439,13 @@ GL_PREFIX(ConvolutionFilter1DEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ConvolutionFilter1D), %g2
 	or	%g2, %lo(8 * _gloffset_ConvolutionFilter1D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ConvolutionFilter1D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8455,13 +8458,13 @@ GL_PREFIX(ConvolutionFilter2DEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ConvolutionFilter2D), %g2
 	or	%g2, %lo(8 * _gloffset_ConvolutionFilter2D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ConvolutionFilter2D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8474,13 +8477,13 @@ GL_PREFIX(ConvolutionParameterfEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ConvolutionParameterf), %g2
 	or	%g2, %lo(8 * _gloffset_ConvolutionParameterf), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ConvolutionParameterf)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8493,13 +8496,13 @@ GL_PREFIX(ConvolutionParameterfvEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ConvolutionParameterfv), %g2
 	or	%g2, %lo(8 * _gloffset_ConvolutionParameterfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ConvolutionParameterfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8512,13 +8515,13 @@ GL_PREFIX(ConvolutionParameteriEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ConvolutionParameteri), %g2
 	or	%g2, %lo(8 * _gloffset_ConvolutionParameteri), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ConvolutionParameteri)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8531,13 +8534,13 @@ GL_PREFIX(ConvolutionParameterivEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ConvolutionParameteriv), %g2
 	or	%g2, %lo(8 * _gloffset_ConvolutionParameteriv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ConvolutionParameteriv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8550,13 +8553,13 @@ GL_PREFIX(CopyConvolutionFilter1DEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyConvolutionFilter1D), %g2
 	or	%g2, %lo(8 * _gloffset_CopyConvolutionFilter1D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyConvolutionFilter1D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8569,13 +8572,13 @@ GL_PREFIX(CopyConvolutionFilter2DEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyConvolutionFilter2D), %g2
 	or	%g2, %lo(8 * _gloffset_CopyConvolutionFilter2D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyConvolutionFilter2D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8588,13 +8591,13 @@ GL_PREFIX(GetConvolutionFilterEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetConvolutionFilterEXT), %g2
 	or	%g2, %lo(8 * _gloffset_GetConvolutionFilterEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetConvolutionFilterEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8607,13 +8610,13 @@ GL_PREFIX(GetConvolutionParameterfvEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetConvolutionParameterfvEXT), %g2
 	or	%g2, %lo(8 * _gloffset_GetConvolutionParameterfvEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetConvolutionParameterfvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8626,13 +8629,13 @@ GL_PREFIX(GetConvolutionParameterivEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetConvolutionParameterivEXT), %g2
 	or	%g2, %lo(8 * _gloffset_GetConvolutionParameterivEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetConvolutionParameterivEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8645,13 +8648,13 @@ GL_PREFIX(GetSeparableFilterEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetSeparableFilterEXT), %g2
 	or	%g2, %lo(8 * _gloffset_GetSeparableFilterEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetSeparableFilterEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8664,13 +8667,13 @@ GL_PREFIX(SeparableFilter2DEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SeparableFilter2D), %g2
 	or	%g2, %lo(8 * _gloffset_SeparableFilter2D), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SeparableFilter2D)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8683,13 +8686,13 @@ GL_PREFIX(ColorTableSGI):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ColorTable), %g2
 	or	%g2, %lo(8 * _gloffset_ColorTable), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ColorTable)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8702,13 +8705,13 @@ GL_PREFIX(ColorTableParameterfvSGI):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ColorTableParameterfv), %g2
 	or	%g2, %lo(8 * _gloffset_ColorTableParameterfv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ColorTableParameterfv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8721,13 +8724,13 @@ GL_PREFIX(ColorTableParameterivSGI):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ColorTableParameteriv), %g2
 	or	%g2, %lo(8 * _gloffset_ColorTableParameteriv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ColorTableParameteriv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8740,13 +8743,13 @@ GL_PREFIX(CopyColorTableSGI):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyColorTable), %g2
 	or	%g2, %lo(8 * _gloffset_CopyColorTable), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyColorTable)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8759,13 +8762,13 @@ GL_PREFIX(GetColorTableSGI):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetColorTableSGI), %g2
 	or	%g2, %lo(8 * _gloffset_GetColorTableSGI), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetColorTableSGI)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8778,13 +8781,13 @@ GL_PREFIX(GetColorTableParameterfvSGI):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetColorTableParameterfvSGI), %g2
 	or	%g2, %lo(8 * _gloffset_GetColorTableParameterfvSGI), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetColorTableParameterfvSGI)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8797,13 +8800,13 @@ GL_PREFIX(GetColorTableParameterivSGI):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetColorTableParameterivSGI), %g2
 	or	%g2, %lo(8 * _gloffset_GetColorTableParameterivSGI), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetColorTableParameterivSGI)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8816,13 +8819,13 @@ GL_PREFIX(PixelTexGenSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PixelTexGenSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_PixelTexGenSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PixelTexGenSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8835,13 +8838,13 @@ GL_PREFIX(PixelTexGenParameteriSGIS):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PixelTexGenParameteriSGIS), %g2
 	or	%g2, %lo(8 * _gloffset_PixelTexGenParameteriSGIS), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PixelTexGenParameteriSGIS)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8854,13 +8857,13 @@ GL_PREFIX(PixelTexGenParameterivSGIS):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PixelTexGenParameterivSGIS), %g2
 	or	%g2, %lo(8 * _gloffset_PixelTexGenParameterivSGIS), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PixelTexGenParameterivSGIS)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8873,13 +8876,13 @@ GL_PREFIX(PixelTexGenParameterfSGIS):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PixelTexGenParameterfSGIS), %g2
 	or	%g2, %lo(8 * _gloffset_PixelTexGenParameterfSGIS), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PixelTexGenParameterfSGIS)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8892,13 +8895,13 @@ GL_PREFIX(PixelTexGenParameterfvSGIS):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PixelTexGenParameterfvSGIS), %g2
 	or	%g2, %lo(8 * _gloffset_PixelTexGenParameterfvSGIS), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PixelTexGenParameterfvSGIS)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8911,13 +8914,13 @@ GL_PREFIX(GetPixelTexGenParameterivSGIS):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetPixelTexGenParameterivSGIS), %g2
 	or	%g2, %lo(8 * _gloffset_GetPixelTexGenParameterivSGIS), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetPixelTexGenParameterivSGIS)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8930,13 +8933,13 @@ GL_PREFIX(GetPixelTexGenParameterfvSGIS):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetPixelTexGenParameterfvSGIS), %g2
 	or	%g2, %lo(8 * _gloffset_GetPixelTexGenParameterfvSGIS), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetPixelTexGenParameterfvSGIS)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8949,13 +8952,13 @@ GL_PREFIX(TexImage4DSGIS):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexImage4DSGIS), %g2
 	or	%g2, %lo(8 * _gloffset_TexImage4DSGIS), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexImage4DSGIS)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8968,13 +8971,13 @@ GL_PREFIX(TexSubImage4DSGIS):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexSubImage4DSGIS), %g2
 	or	%g2, %lo(8 * _gloffset_TexSubImage4DSGIS), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexSubImage4DSGIS)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -8987,13 +8990,13 @@ GL_PREFIX(AreTexturesResidentEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_AreTexturesResidentEXT), %g2
 	or	%g2, %lo(8 * _gloffset_AreTexturesResidentEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_AreTexturesResidentEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9006,14 +9009,33 @@ GL_PREFIX(BindTextureEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_BindTexture), %g2
 	or	%g2, %lo(8 * _gloffset_BindTexture), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_BindTexture)], %g3
+#endif
+	jmpl	%g3, %g0
+
+GLOBL_FN(GL_PREFIX(DeleteTexturesEXT))
+GL_PREFIX(DeleteTexturesEXT):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_DeleteTextures), %g2
+	or	%g2, %lo(8 * _gloffset_DeleteTextures), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_DeleteTextures)], %g3
 #endif
 	jmpl	%g3, %g0
 
@@ -9025,13 +9047,13 @@ GL_PREFIX(GenTexturesEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GenTexturesEXT), %g2
 	or	%g2, %lo(8 * _gloffset_GenTexturesEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GenTexturesEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9044,13 +9066,13 @@ GL_PREFIX(IsTextureEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_IsTextureEXT), %g2
 	or	%g2, %lo(8 * _gloffset_IsTextureEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_IsTextureEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9063,13 +9085,13 @@ GL_PREFIX(PrioritizeTexturesEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PrioritizeTextures), %g2
 	or	%g2, %lo(8 * _gloffset_PrioritizeTextures), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PrioritizeTextures)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9082,13 +9104,13 @@ GL_PREFIX(DetailTexFuncSGIS):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_DetailTexFuncSGIS), %g2
 	or	%g2, %lo(8 * _gloffset_DetailTexFuncSGIS), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_DetailTexFuncSGIS)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9101,13 +9123,13 @@ GL_PREFIX(GetDetailTexFuncSGIS):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetDetailTexFuncSGIS), %g2
 	or	%g2, %lo(8 * _gloffset_GetDetailTexFuncSGIS), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetDetailTexFuncSGIS)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9120,13 +9142,13 @@ GL_PREFIX(SharpenTexFuncSGIS):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SharpenTexFuncSGIS), %g2
 	or	%g2, %lo(8 * _gloffset_SharpenTexFuncSGIS), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SharpenTexFuncSGIS)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9139,13 +9161,13 @@ GL_PREFIX(GetSharpenTexFuncSGIS):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetSharpenTexFuncSGIS), %g2
 	or	%g2, %lo(8 * _gloffset_GetSharpenTexFuncSGIS), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetSharpenTexFuncSGIS)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9158,13 +9180,13 @@ GL_PREFIX(ArrayElementEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ArrayElement), %g2
 	or	%g2, %lo(8 * _gloffset_ArrayElement), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ArrayElement)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9177,13 +9199,13 @@ GL_PREFIX(ColorPointerEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ColorPointerEXT), %g2
 	or	%g2, %lo(8 * _gloffset_ColorPointerEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ColorPointerEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9196,13 +9218,13 @@ GL_PREFIX(DrawArraysEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_DrawArrays), %g2
 	or	%g2, %lo(8 * _gloffset_DrawArrays), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_DrawArrays)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9215,13 +9237,13 @@ GL_PREFIX(EdgeFlagPointerEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_EdgeFlagPointerEXT), %g2
 	or	%g2, %lo(8 * _gloffset_EdgeFlagPointerEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_EdgeFlagPointerEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9234,13 +9256,13 @@ GL_PREFIX(GetPointervEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetPointerv), %g2
 	or	%g2, %lo(8 * _gloffset_GetPointerv), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetPointerv)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9253,13 +9275,13 @@ GL_PREFIX(IndexPointerEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_IndexPointerEXT), %g2
 	or	%g2, %lo(8 * _gloffset_IndexPointerEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_IndexPointerEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9272,13 +9294,13 @@ GL_PREFIX(NormalPointerEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_NormalPointerEXT), %g2
 	or	%g2, %lo(8 * _gloffset_NormalPointerEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_NormalPointerEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9291,13 +9313,13 @@ GL_PREFIX(TexCoordPointerEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TexCoordPointerEXT), %g2
 	or	%g2, %lo(8 * _gloffset_TexCoordPointerEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TexCoordPointerEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9310,13 +9332,13 @@ GL_PREFIX(VertexPointerEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_VertexPointerEXT), %g2
 	or	%g2, %lo(8 * _gloffset_VertexPointerEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_VertexPointerEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9329,13 +9351,13 @@ GL_PREFIX(BlendEquationEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_BlendEquation), %g2
 	or	%g2, %lo(8 * _gloffset_BlendEquation), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_BlendEquation)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9348,13 +9370,13 @@ GL_PREFIX(SpriteParameterfSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SpriteParameterfSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_SpriteParameterfSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SpriteParameterfSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9367,13 +9389,13 @@ GL_PREFIX(SpriteParameterfvSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SpriteParameterfvSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_SpriteParameterfvSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SpriteParameterfvSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9386,13 +9408,13 @@ GL_PREFIX(SpriteParameteriSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SpriteParameteriSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_SpriteParameteriSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SpriteParameteriSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9405,14 +9427,90 @@ GL_PREFIX(SpriteParameterivSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SpriteParameterivSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_SpriteParameterivSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SpriteParameterivSGIX)], %g3
+#endif
+	jmpl	%g3, %g0
+
+GLOBL_FN(GL_PREFIX(PointParameterfEXT))
+GL_PREFIX(PointParameterfEXT):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_PointParameterfEXT), %g2
+	or	%g2, %lo(8 * _gloffset_PointParameterfEXT), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_PointParameterfEXT)], %g3
+#endif
+	jmpl	%g3, %g0
+
+GLOBL_FN(GL_PREFIX(PointParameterfvEXT))
+GL_PREFIX(PointParameterfvEXT):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_PointParameterfvEXT), %g2
+	or	%g2, %lo(8 * _gloffset_PointParameterfvEXT), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_PointParameterfvEXT)], %g3
+#endif
+	jmpl	%g3, %g0
+
+GLOBL_FN(GL_PREFIX(PointParameterfSGIS))
+GL_PREFIX(PointParameterfSGIS):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_PointParameterfEXT), %g2
+	or	%g2, %lo(8 * _gloffset_PointParameterfEXT), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_PointParameterfEXT)], %g3
+#endif
+	jmpl	%g3, %g0
+
+GLOBL_FN(GL_PREFIX(PointParameterfvSGIS))
+GL_PREFIX(PointParameterfvSGIS):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_PointParameterfvEXT), %g2
+	or	%g2, %lo(8 * _gloffset_PointParameterfvEXT), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_PointParameterfvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
 
@@ -9424,13 +9522,13 @@ GL_PREFIX(GetInstrumentsSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetInstrumentsSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_GetInstrumentsSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetInstrumentsSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9443,13 +9541,13 @@ GL_PREFIX(InstrumentsBufferSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_InstrumentsBufferSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_InstrumentsBufferSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_InstrumentsBufferSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9462,13 +9560,13 @@ GL_PREFIX(PollInstrumentsSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_PollInstrumentsSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_PollInstrumentsSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_PollInstrumentsSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9481,13 +9579,13 @@ GL_PREFIX(ReadInstrumentsSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ReadInstrumentsSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_ReadInstrumentsSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ReadInstrumentsSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9500,13 +9598,13 @@ GL_PREFIX(StartInstrumentsSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_StartInstrumentsSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_StartInstrumentsSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_StartInstrumentsSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9519,13 +9617,13 @@ GL_PREFIX(StopInstrumentsSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_StopInstrumentsSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_StopInstrumentsSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_StopInstrumentsSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9538,13 +9636,13 @@ GL_PREFIX(FrameZoomSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FrameZoomSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_FrameZoomSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FrameZoomSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9557,13 +9655,13 @@ GL_PREFIX(TagSampleBufferSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TagSampleBufferSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_TagSampleBufferSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TagSampleBufferSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9576,13 +9674,13 @@ GL_PREFIX(ReferencePlaneSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ReferencePlaneSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_ReferencePlaneSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ReferencePlaneSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9595,13 +9693,13 @@ GL_PREFIX(FlushRasterSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FlushRasterSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_FlushRasterSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FlushRasterSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9614,13 +9712,13 @@ GL_PREFIX(ColorSubTableEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ColorSubTable), %g2
 	or	%g2, %lo(8 * _gloffset_ColorSubTable), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ColorSubTable)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9633,13 +9731,13 @@ GL_PREFIX(CopyColorSubTableEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CopyColorSubTable), %g2
 	or	%g2, %lo(8 * _gloffset_CopyColorSubTable), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CopyColorSubTable)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9652,13 +9750,13 @@ GL_PREFIX(HintPGI):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_HintPGI), %g2
 	or	%g2, %lo(8 * _gloffset_HintPGI), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_HintPGI)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9671,13 +9769,13 @@ GL_PREFIX(ColorTableEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ColorTable), %g2
 	or	%g2, %lo(8 * _gloffset_ColorTable), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ColorTable)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9690,13 +9788,13 @@ GL_PREFIX(GetColorTableEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetColorTableEXT), %g2
 	or	%g2, %lo(8 * _gloffset_GetColorTableEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetColorTableEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9709,13 +9807,13 @@ GL_PREFIX(GetColorTableParameterivEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetColorTableParameterivEXT), %g2
 	or	%g2, %lo(8 * _gloffset_GetColorTableParameterivEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetColorTableParameterivEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9728,13 +9826,13 @@ GL_PREFIX(GetColorTableParameterfvEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetColorTableParameterfvEXT), %g2
 	or	%g2, %lo(8 * _gloffset_GetColorTableParameterfvEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetColorTableParameterfvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9747,13 +9845,13 @@ GL_PREFIX(GetListParameterfvSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetListParameterfvSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_GetListParameterfvSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetListParameterfvSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9766,13 +9864,13 @@ GL_PREFIX(GetListParameterivSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetListParameterivSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_GetListParameterivSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetListParameterivSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9785,13 +9883,13 @@ GL_PREFIX(ListParameterfSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ListParameterfSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_ListParameterfSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ListParameterfSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9804,13 +9902,13 @@ GL_PREFIX(ListParameterfvSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ListParameterfvSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_ListParameterfvSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ListParameterfvSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9823,13 +9921,13 @@ GL_PREFIX(ListParameteriSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ListParameteriSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_ListParameteriSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ListParameteriSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9842,13 +9940,13 @@ GL_PREFIX(ListParameterivSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ListParameterivSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_ListParameterivSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ListParameterivSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9861,13 +9959,13 @@ GL_PREFIX(IndexMaterialEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_IndexMaterialEXT), %g2
 	or	%g2, %lo(8 * _gloffset_IndexMaterialEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_IndexMaterialEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9880,13 +9978,13 @@ GL_PREFIX(IndexFuncEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_IndexFuncEXT), %g2
 	or	%g2, %lo(8 * _gloffset_IndexFuncEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_IndexFuncEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9899,13 +9997,13 @@ GL_PREFIX(LockArraysEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_LockArraysEXT), %g2
 	or	%g2, %lo(8 * _gloffset_LockArraysEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_LockArraysEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9918,13 +10016,13 @@ GL_PREFIX(UnlockArraysEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_UnlockArraysEXT), %g2
 	or	%g2, %lo(8 * _gloffset_UnlockArraysEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_UnlockArraysEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9937,13 +10035,13 @@ GL_PREFIX(CullParameterdvEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CullParameterdvEXT), %g2
 	or	%g2, %lo(8 * _gloffset_CullParameterdvEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CullParameterdvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9956,13 +10054,13 @@ GL_PREFIX(CullParameterfvEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CullParameterfvEXT), %g2
 	or	%g2, %lo(8 * _gloffset_CullParameterfvEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CullParameterfvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9975,13 +10073,13 @@ GL_PREFIX(FragmentColorMaterialSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FragmentColorMaterialSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_FragmentColorMaterialSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FragmentColorMaterialSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -9994,13 +10092,13 @@ GL_PREFIX(FragmentLightfSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FragmentLightfSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_FragmentLightfSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FragmentLightfSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10013,13 +10111,13 @@ GL_PREFIX(FragmentLightfvSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FragmentLightfvSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_FragmentLightfvSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FragmentLightfvSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10032,13 +10130,13 @@ GL_PREFIX(FragmentLightiSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FragmentLightiSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_FragmentLightiSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FragmentLightiSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10051,13 +10149,13 @@ GL_PREFIX(FragmentLightivSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FragmentLightivSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_FragmentLightivSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FragmentLightivSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10070,13 +10168,13 @@ GL_PREFIX(FragmentLightModelfSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FragmentLightModelfSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_FragmentLightModelfSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FragmentLightModelfSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10089,13 +10187,13 @@ GL_PREFIX(FragmentLightModelfvSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FragmentLightModelfvSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_FragmentLightModelfvSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FragmentLightModelfvSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10108,13 +10206,13 @@ GL_PREFIX(FragmentLightModeliSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FragmentLightModeliSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_FragmentLightModeliSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FragmentLightModeliSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10127,13 +10225,13 @@ GL_PREFIX(FragmentLightModelivSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FragmentLightModelivSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_FragmentLightModelivSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FragmentLightModelivSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10146,13 +10244,13 @@ GL_PREFIX(FragmentMaterialfSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FragmentMaterialfSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_FragmentMaterialfSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FragmentMaterialfSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10165,13 +10263,13 @@ GL_PREFIX(FragmentMaterialfvSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FragmentMaterialfvSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_FragmentMaterialfvSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FragmentMaterialfvSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10184,13 +10282,13 @@ GL_PREFIX(FragmentMaterialiSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FragmentMaterialiSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_FragmentMaterialiSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FragmentMaterialiSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10203,13 +10301,13 @@ GL_PREFIX(FragmentMaterialivSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FragmentMaterialivSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_FragmentMaterialivSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FragmentMaterialivSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10222,13 +10320,13 @@ GL_PREFIX(GetFragmentLightfvSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetFragmentLightfvSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_GetFragmentLightfvSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetFragmentLightfvSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10241,13 +10339,13 @@ GL_PREFIX(GetFragmentLightivSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetFragmentLightivSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_GetFragmentLightivSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetFragmentLightivSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10260,13 +10358,13 @@ GL_PREFIX(GetFragmentMaterialfvSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetFragmentMaterialfvSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_GetFragmentMaterialfvSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetFragmentMaterialfvSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10279,13 +10377,13 @@ GL_PREFIX(GetFragmentMaterialivSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetFragmentMaterialivSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_GetFragmentMaterialivSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetFragmentMaterialivSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10298,13 +10396,13 @@ GL_PREFIX(LightEnviSGIX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_LightEnviSGIX), %g2
 	or	%g2, %lo(8 * _gloffset_LightEnviSGIX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_LightEnviSGIX)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10317,13 +10415,13 @@ GL_PREFIX(DrawRangeElementsEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_DrawRangeElements), %g2
 	or	%g2, %lo(8 * _gloffset_DrawRangeElements), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_DrawRangeElements)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10336,13 +10434,13 @@ GL_PREFIX(SecondaryColor3bEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3bEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3bEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3bEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10355,13 +10453,13 @@ GL_PREFIX(SecondaryColor3bvEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3bvEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3bvEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3bvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10374,13 +10472,13 @@ GL_PREFIX(SecondaryColor3dEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3dEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3dEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3dEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10393,13 +10491,13 @@ GL_PREFIX(SecondaryColor3dvEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3dvEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3dvEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3dvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10412,13 +10510,13 @@ GL_PREFIX(SecondaryColor3fEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3fEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3fEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3fEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10431,13 +10529,13 @@ GL_PREFIX(SecondaryColor3fvEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3fvEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3fvEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3fvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10450,13 +10548,13 @@ GL_PREFIX(SecondaryColor3iEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3iEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3iEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3iEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10469,13 +10567,13 @@ GL_PREFIX(SecondaryColor3ivEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3ivEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3ivEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3ivEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10488,13 +10586,13 @@ GL_PREFIX(SecondaryColor3sEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3sEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3sEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3sEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10507,13 +10605,13 @@ GL_PREFIX(SecondaryColor3svEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3svEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3svEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3svEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10526,13 +10624,13 @@ GL_PREFIX(SecondaryColor3ubEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3ubEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3ubEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3ubEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10545,13 +10643,13 @@ GL_PREFIX(SecondaryColor3ubvEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3ubvEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3ubvEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3ubvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10564,13 +10662,13 @@ GL_PREFIX(SecondaryColor3uiEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3uiEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3uiEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3uiEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10583,13 +10681,13 @@ GL_PREFIX(SecondaryColor3uivEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3uivEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3uivEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3uivEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10602,13 +10700,13 @@ GL_PREFIX(SecondaryColor3usEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3usEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3usEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3usEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10621,13 +10719,13 @@ GL_PREFIX(SecondaryColor3usvEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColor3usvEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColor3usvEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColor3usvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10640,13 +10738,13 @@ GL_PREFIX(SecondaryColorPointerEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_SecondaryColorPointerEXT), %g2
 	or	%g2, %lo(8 * _gloffset_SecondaryColorPointerEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_SecondaryColorPointerEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10659,13 +10757,13 @@ GL_PREFIX(FogCoordfEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FogCoordfEXT), %g2
 	or	%g2, %lo(8 * _gloffset_FogCoordfEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FogCoordfEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10678,13 +10776,13 @@ GL_PREFIX(FogCoordfvEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FogCoordfvEXT), %g2
 	or	%g2, %lo(8 * _gloffset_FogCoordfvEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FogCoordfvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10697,13 +10795,13 @@ GL_PREFIX(FogCoorddEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FogCoorddEXT), %g2
 	or	%g2, %lo(8 * _gloffset_FogCoorddEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FogCoorddEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10716,13 +10814,13 @@ GL_PREFIX(FogCoorddvEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FogCoorddvEXT), %g2
 	or	%g2, %lo(8 * _gloffset_FogCoorddvEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FogCoorddvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10735,13 +10833,13 @@ GL_PREFIX(FogCoordPointerEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FogCoordPointerEXT), %g2
 	or	%g2, %lo(8 * _gloffset_FogCoordPointerEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FogCoordPointerEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10754,13 +10852,13 @@ GL_PREFIX(BlendFuncSeparateEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_BlendFuncSeparateEXT), %g2
 	or	%g2, %lo(8 * _gloffset_BlendFuncSeparateEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_BlendFuncSeparateEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10773,13 +10871,13 @@ GL_PREFIX(BlendFuncSeparateINGR):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_BlendFuncSeparateEXT), %g2
 	or	%g2, %lo(8 * _gloffset_BlendFuncSeparateEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_BlendFuncSeparateEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10792,13 +10890,13 @@ GL_PREFIX(VertexWeightfEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_VertexWeightfEXT), %g2
 	or	%g2, %lo(8 * _gloffset_VertexWeightfEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_VertexWeightfEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10811,13 +10909,13 @@ GL_PREFIX(VertexWeightfvEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_VertexWeightfvEXT), %g2
 	or	%g2, %lo(8 * _gloffset_VertexWeightfvEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_VertexWeightfvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10830,13 +10928,13 @@ GL_PREFIX(VertexWeightPointerEXT):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_VertexWeightPointerEXT), %g2
 	or	%g2, %lo(8 * _gloffset_VertexWeightPointerEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_VertexWeightPointerEXT)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10849,13 +10947,13 @@ GL_PREFIX(FlushVertexArrayRangeNV):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FlushVertexArrayRangeNV), %g2
 	or	%g2, %lo(8 * _gloffset_FlushVertexArrayRangeNV), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FlushVertexArrayRangeNV)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10868,13 +10966,13 @@ GL_PREFIX(VertexArrayRangeNV):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_VertexArrayRangeNV), %g2
 	or	%g2, %lo(8 * _gloffset_VertexArrayRangeNV), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_VertexArrayRangeNV)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10887,13 +10985,13 @@ GL_PREFIX(CombinerParameterfvNV):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CombinerParameterfvNV), %g2
 	or	%g2, %lo(8 * _gloffset_CombinerParameterfvNV), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CombinerParameterfvNV)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10906,13 +11004,13 @@ GL_PREFIX(CombinerParameterfNV):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CombinerParameterfNV), %g2
 	or	%g2, %lo(8 * _gloffset_CombinerParameterfNV), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CombinerParameterfNV)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10925,13 +11023,13 @@ GL_PREFIX(CombinerParameterivNV):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CombinerParameterivNV), %g2
 	or	%g2, %lo(8 * _gloffset_CombinerParameterivNV), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CombinerParameterivNV)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10944,13 +11042,13 @@ GL_PREFIX(CombinerParameteriNV):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CombinerParameteriNV), %g2
 	or	%g2, %lo(8 * _gloffset_CombinerParameteriNV), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CombinerParameteriNV)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10963,13 +11061,13 @@ GL_PREFIX(CombinerInputNV):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CombinerInputNV), %g2
 	or	%g2, %lo(8 * _gloffset_CombinerInputNV), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CombinerInputNV)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -10982,13 +11080,13 @@ GL_PREFIX(CombinerOutputNV):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_CombinerOutputNV), %g2
 	or	%g2, %lo(8 * _gloffset_CombinerOutputNV), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_CombinerOutputNV)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11001,13 +11099,13 @@ GL_PREFIX(FinalCombinerInputNV):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_FinalCombinerInputNV), %g2
 	or	%g2, %lo(8 * _gloffset_FinalCombinerInputNV), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_FinalCombinerInputNV)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11020,13 +11118,13 @@ GL_PREFIX(GetCombinerInputParameterfvNV):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetCombinerInputParameterfvNV), %g2
 	or	%g2, %lo(8 * _gloffset_GetCombinerInputParameterfvNV), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetCombinerInputParameterfvNV)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11039,13 +11137,13 @@ GL_PREFIX(GetCombinerInputParameterivNV):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetCombinerInputParameterivNV), %g2
 	or	%g2, %lo(8 * _gloffset_GetCombinerInputParameterivNV), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetCombinerInputParameterivNV)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11058,13 +11156,13 @@ GL_PREFIX(GetCombinerOutputParameterfvNV):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetCombinerOutputParameterfvNV), %g2
 	or	%g2, %lo(8 * _gloffset_GetCombinerOutputParameterfvNV), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetCombinerOutputParameterfvNV)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11077,13 +11175,13 @@ GL_PREFIX(GetCombinerOutputParameterivNV):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetCombinerOutputParameterivNV), %g2
 	or	%g2, %lo(8 * _gloffset_GetCombinerOutputParameterivNV), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetCombinerOutputParameterivNV)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11096,13 +11194,13 @@ GL_PREFIX(GetFinalCombinerInputParameterfvNV):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetFinalCombinerInputParameterfvNV), %g2
 	or	%g2, %lo(8 * _gloffset_GetFinalCombinerInputParameterfvNV), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetFinalCombinerInputParameterfvNV)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11115,13 +11213,13 @@ GL_PREFIX(GetFinalCombinerInputParameterivNV):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_GetFinalCombinerInputParameterivNV), %g2
 	or	%g2, %lo(8 * _gloffset_GetFinalCombinerInputParameterivNV), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetFinalCombinerInputParameterivNV)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11134,13 +11232,13 @@ GL_PREFIX(ResizeBuffersMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_ResizeBuffersMESA), %g2
 	or	%g2, %lo(8 * _gloffset_ResizeBuffersMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_ResizeBuffersMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11153,13 +11251,13 @@ GL_PREFIX(WindowPos2dMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos2dMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos2dMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos2dMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11172,13 +11270,13 @@ GL_PREFIX(WindowPos2dvMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos2dvMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos2dvMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos2dvMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11191,13 +11289,13 @@ GL_PREFIX(WindowPos2fMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos2fMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos2fMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos2fMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11210,13 +11308,13 @@ GL_PREFIX(WindowPos2fvMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos2fvMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos2fvMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos2fvMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11229,13 +11327,13 @@ GL_PREFIX(WindowPos2iMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos2iMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos2iMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos2iMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11248,13 +11346,13 @@ GL_PREFIX(WindowPos2ivMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos2ivMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos2ivMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos2ivMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11267,13 +11365,13 @@ GL_PREFIX(WindowPos2sMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos2sMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos2sMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos2sMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11286,13 +11384,13 @@ GL_PREFIX(WindowPos2svMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos2svMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos2svMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos2svMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11305,13 +11403,13 @@ GL_PREFIX(WindowPos3dMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos3dMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos3dMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos3dMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11324,13 +11422,13 @@ GL_PREFIX(WindowPos3dvMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos3dvMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos3dvMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos3dvMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11343,13 +11441,13 @@ GL_PREFIX(WindowPos3fMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos3fMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos3fMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos3fMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11362,13 +11460,13 @@ GL_PREFIX(WindowPos3fvMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos3fvMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos3fvMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos3fvMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11381,13 +11479,13 @@ GL_PREFIX(WindowPos3iMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos3iMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos3iMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos3iMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11400,13 +11498,13 @@ GL_PREFIX(WindowPos3ivMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos3ivMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos3ivMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos3ivMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11419,13 +11517,13 @@ GL_PREFIX(WindowPos3sMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos3sMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos3sMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos3sMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11438,13 +11536,13 @@ GL_PREFIX(WindowPos3svMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos3svMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos3svMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos3svMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11457,13 +11555,13 @@ GL_PREFIX(WindowPos4dMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos4dMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos4dMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos4dMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11476,13 +11574,13 @@ GL_PREFIX(WindowPos4dvMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos4dvMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos4dvMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos4dvMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11495,13 +11593,13 @@ GL_PREFIX(WindowPos4fMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos4fMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos4fMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos4fMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11514,13 +11612,13 @@ GL_PREFIX(WindowPos4fvMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos4fvMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos4fvMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos4fvMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11533,13 +11631,13 @@ GL_PREFIX(WindowPos4iMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos4iMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos4iMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos4iMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11552,13 +11650,13 @@ GL_PREFIX(WindowPos4ivMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos4ivMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos4ivMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos4ivMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11571,13 +11669,13 @@ GL_PREFIX(WindowPos4sMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos4sMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos4sMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos4sMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11590,13 +11688,13 @@ GL_PREFIX(WindowPos4svMESA):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_WindowPos4svMESA), %g2
 	or	%g2, %lo(8 * _gloffset_WindowPos4svMESA), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos4svMESA)], %g3
 #endif
 	jmpl	%g3, %g0
@@ -11609,14 +11707,56 @@ GL_PREFIX(TbufferMask3DFX):
 	or	%g2, %lo(0x00000000), %g2
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
-	or	%g1, %g2, %g1
+	ldx	[%g1 + %g2], %g1
 	sethi	%hi(8 * _gloffset_TbufferMask3DFX), %g2
 	or	%g2, %lo(8 * _gloffset_TbufferMask3DFX), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
-	or	%g1, %lo(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_TbufferMask3DFX)], %g3
 #endif
 	jmpl	%g3, %g0
+
+GLOBL_FN(GL_PREFIX(SampleMaskSGIS))
+GL_PREFIX(SampleMaskSGIS):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_SampleMaskSGIS), %g2
+	or	%g2, %lo(8 * _gloffset_SampleMaskSGIS), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_SampleMaskSGIS)], %g3
+#endif
+	jmpl	%g3, %g0
+
+GLOBL_FN(GL_PREFIX(SamplePatternSGIS))
+GL_PREFIX(SamplePatternSGIS):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_SamplePatternSGIS), %g2
+	or	%g2, %lo(8 * _gloffset_SamplePatternSGIS), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_SamplePatternSGIS)], %g3
+#endif
+	jmpl	%g3, %g0
 	 nop
+
+.globl _mesa_sparc_glapi_end
+_mesa_sparc_glapi_end:
+

@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.22 2001/03/28 17:20:20 brianp Exp $ */
+/* $Id: dispatch.c,v 1.23 2001/06/05 23:54:00 davem69 Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,7 +48,7 @@
 #include "glthread.h"
 #endif
 
-#if !defined(USE_X86_ASM)
+#if !(defined(USE_X86_ASM) || defined(USE_SPARC_ASM))
 
 #define KEYWORD1
 #define KEYWORD2 GLAPIENTRY

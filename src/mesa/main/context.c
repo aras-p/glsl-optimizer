@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.140 2001/06/05 03:58:20 davem69 Exp $ */
+/* $Id: context.c,v 1.141 2001/06/05 23:54:00 davem69 Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -66,6 +66,9 @@
 #include "Trace/tr_wrapper.h"
 #endif
 
+#ifdef USE_SPARC_ASM
+#include "SPARC/sparc.h"
+#endif
 
 #ifndef MESA_VERBOSE
 int MESA_VERBOSE = 0
@@ -453,6 +456,9 @@ one_time_init( void )
       _math_init();
       _mesa_init_math();
 
+#ifdef USE_SPARC_ASM
+      _mesa_init_sparc_glapi_relocs();
+#endif
       if (getenv("MESA_DEBUG")) {
          _glapi_noop_enable_warnings(GL_TRUE);
       }

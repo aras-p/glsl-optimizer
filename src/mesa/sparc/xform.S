@@ -1,4 +1,4 @@
-/* $Id: xform.S,v 1.1 2001/05/23 14:27:03 brianp Exp $ */
+/* $Id: xform.S,v 1.2 2001/06/05 23:54:01 davem69 Exp $ */
 
 	/* TODO
 	 *
@@ -16,28 +16,7 @@
 	 *    tricky and not much of a gain though.
 	 */
 
-#ifdef __sparc_v9__
-#define LDPTR		ldx
-#define V4F_DATA	0x00
-#define V4F_START	0x08
-#define V4F_COUNT	0x10
-#define V4F_STRIDE	0x14
-#define V4F_SIZE	0x18
-#define V4F_FLAGS	0x1c
-#else
-#define LDPTR		ld
-#define V4F_DATA	0x00
-#define V4F_START	0x04
-#define V4F_COUNT	0x08
-#define V4F_STRIDE	0x0c
-#define V4F_SIZE	0x10
-#define V4F_FLAGS	0x14
-#endif
-
-#define VEC_SIZE_1   	1
-#define VEC_SIZE_2   	3
-#define VEC_SIZE_3   	7
-#define VEC_SIZE_4   	15
+#include "sparc_matrix.h"
 
 	.text
 	.align	64
@@ -70,8 +49,6 @@ __set_v4f_4:
 	or	%g2, VEC_SIZE_4, %g2
 	retl
 	 st	%g2, [%o0 + V4F_FLAGS]
-
-#include "sparc_matrix.h"
 
 	/* First the raw versions. */
 
