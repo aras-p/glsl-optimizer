@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.32 2000/10/23 19:43:36 brianp Exp $
+# $Id: Make-config,v 1.33 2000/11/03 01:37:10 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=5
@@ -641,7 +641,7 @@ linux-386-glide:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
 		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
 		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
@@ -661,7 +661,7 @@ linux-386-opt-glide:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
 		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
 		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
@@ -681,7 +681,7 @@ linux-386-opt-V2-glide:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
 		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
 		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
