@@ -1,4 +1,4 @@
-/* $Id: readpix.c,v 1.1 2000/03/01 16:23:14 brianp Exp $ */
+/* $Id: readpix.c,v 1.2 2000/03/23 19:47:25 brianp Exp $ */
 
 /*
  * glReadPixels and glCopyPixels test
@@ -8,6 +8,9 @@
 
 /*
  * $Log: readpix.c,v $
+ * Revision 1.2  2000/03/23 19:47:25  brianp
+ * added benchmarking
+ *
  * Revision 1.1  2000/03/01 16:23:14  brianp
  * test glDraw/Read/CopyPixels()
  *
@@ -34,7 +37,7 @@ static int CPosX, CPosY;  /* copypixels */
 
 static GLboolean DrawFront = GL_FALSE;
 static GLboolean ScaleAndBias = GL_FALSE;
-
+static GLboolean Benchmark = GL_FALSE;
 static GLubyte *TempImage = NULL;
 
 
@@ -85,7 +88,7 @@ Display( void )
    glClear( GL_COLOR_BUFFER_BIT );
 
    glRasterPos2i(5, ImgHeight+25);
-   PrintString("f = toggle front/back  b = toggle scale/bias");
+   PrintString("f = toggle front/back  s = toggle scale/bias  b = benchmark");
 
    /* draw original image */
    glRasterPos2i(APosX, 5);
@@ -99,8 +102,28 @@ Display( void )
    glRasterPos2i(BPosX, 5);
    PrintString("Read/DrawPixels");
    SetupPixelTransfer(ScaleAndBias);
-   glReadPixels(APosX, APosY, ImgWidth, ImgHeight,
-                ImgFormat, GL_UNSIGNED_BYTE, TempImage);
+   if (Benchmark) {
+      GLint reads = 0;
+      GLint endTime;
+      GLint startTime = glutGet(GLUT_ELAPSED_TIME);
+      GLdouble seconds, pixelsPerSecond;
+      printf("Benchmarking...\n");
+      do {
+         glReadPixels(APosX, APosY, ImgWidth, ImgHeight,
+                      ImgFormat, GL_UNSIGNED_BYTE, TempImage);
+         reads++;
+         endTime = glutGet(GLUT_ELAPSED_TIME);
+      } while (endTime - startTime < 4000);   /* 4 seconds */
+      seconds = (double) (endTime - startTime) / 1000.0;
+      pixelsPerSecond = reads * ImgWidth * ImgHeight / seconds;
+      printf("Result:  %d reads in %f seconds = %f pixels/sec\n",
+             reads, seconds, pixelsPerSecond);
+      Benchmark = GL_FALSE;
+   }
+   else {
+      glReadPixels(APosX, APosY, ImgWidth, ImgHeight,
+                   ImgFormat, GL_UNSIGNED_BYTE, TempImage);
+   }
    glRasterPos2i(BPosX, BPosY);
    glDisable(GL_DITHER);
    SetupPixelTransfer(GL_FALSE);
@@ -119,7 +142,8 @@ Display( void )
 }
 
 
-static void Reshape( int width, int height )
+static void
+Reshape( int width, int height )
 {
    glViewport( 0, 0, width, height );
    glMatrixMode( GL_PROJECTION );
@@ -130,50 +154,34 @@ static void Reshape( int width, int height )
 }
 
 
-static void Key( unsigned char key, int x, int y )
+static void
+Key( unsigned char key, int x, int y )
 {
    (void) x;
    (void) y;
    switch (key) {
       case 'b':
+         Benchmark = GL_TRUE;
+         break;
+      case 's':
          ScaleAndBias = !ScaleAndBias;
          break;
       case 'f':
          DrawFront = !DrawFront;
-         if (DrawFront)
+         if (DrawFront) {
             glDrawBuffer(GL_FRONT);
-         else
+            glReadBuffer(GL_FRONT);
+         }
+         else {
             glDrawBuffer(GL_BACK);
+            glReadBuffer(GL_BACK);
+         }
          printf("glDrawBuffer(%s)\n", DrawFront ? "GL_FRONT" : "GL_BACK");
          break;
       case 27:
          exit(0);
          break;
    }
-   glutPostRedisplay();
-}
-
-
-static void SpecialKey( int key, int x, int y )
-{
-   (void) x;
-   (void) y;
-#if 0
-   switch (key) {
-      case GLUT_KEY_UP:
-         Ypos += 1;
-         break;
-      case GLUT_KEY_DOWN:
-         Ypos -= 1;
-         break;
-      case GLUT_KEY_LEFT:
-         Xpos -= 1;
-         break;
-      case GLUT_KEY_RIGHT:
-         Xpos += 1;
-         break;
-   }
-#endif
    glutPostRedisplay();
 }
 
@@ -222,32 +230,25 @@ Init( GLboolean ciMode )
 }
 
 
-int main( int argc, char *argv[] )
+int
+main( int argc, char *argv[] )
 {
    GLboolean ciMode = GL_FALSE;
-
    if (argc > 1 && strcmp(argv[1], "-ci")==0) {
       ciMode = GL_TRUE;
    }
-
    glutInit( &argc, argv );
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( 750, 250 );
-
    if (ciMode)
       glutInitDisplayMode( GLUT_INDEX | GLUT_DOUBLE );
    else
       glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
-
    glutCreateWindow(argv[0]);
-
    Init(ciMode);
-
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
-   glutSpecialFunc( SpecialKey );
    glutDisplayFunc( Display );
-
    glutMainLoop();
    return 0;
 }
