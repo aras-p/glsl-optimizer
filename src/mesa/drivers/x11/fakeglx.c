@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.7 1999/09/16 15:53:51 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.8 1999/09/16 16:44:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1406,10 +1406,10 @@ static const char *get_extensions( void )
 #ifdef FX
    const char *fx = getenv("MESA_GLX_FX");
    if (fx && fx[0] != 'd') {
-      return "GLX_MESA_pixmap_colormap GLX_EXT_visual_info GLX_MESA_release_buffers GLX_MESA_copy_sub_buffer GLX_SGI_video_sync GLX_MESA_set_3dfx_mode";
+      return "GLX_MESA_pixmap_colormap GLX_EXT_visual_info GLX_MESA_release_buffers GLX_MESA_copy_sub_buffer GLX_SGI_video_sync GLX_EXT_get_proc_address GLX_MESA_set_3dfx_mode";
    }
 #endif
-   return "GLX_MESA_pixmap_colormap GLX_EXT_visual_info GLX_MESA_release_buffers GLX_MESA_copy_sub_buffer GLX_SGI_video_sync";
+   return "GLX_MESA_pixmap_colormap GLX_EXT_visual_info GLX_MESA_release_buffers GLX_MESA_copy_sub_buffer GLX_SGI_video_sync GL_EXT_get_proc_address";
 }
 
 
