@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.53 2000/12/26 05:09:29 keithw Exp $ */
+/* $Id: state.c,v 1.54 2001/01/08 17:42:13 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -501,8 +501,8 @@ update_polygon( GLcontext *ctx )
 {
    ctx->_TriangleCaps &= ~(DD_TRI_CULL_FRONT_BACK | DD_TRI_OFFSET);
 
-/*     if (ctx->Polygon.CullFlag && ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK) */
-/*        ctx->_TriangleCaps |= DD_TRI_CULL_FRONT_BACK; */
+   if (ctx->Polygon.CullFlag && ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
+      ctx->_TriangleCaps |= DD_TRI_CULL_FRONT_BACK;
 
    /* Any Polygon offsets enabled? */
    ctx->Polygon._OffsetAny = GL_FALSE;
