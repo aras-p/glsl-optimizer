@@ -429,8 +429,8 @@ static INLINE int iceil(float f)
    fi_type u;
    af = (3 << 22) + 0.5 + (double)f;
    bf = (3 << 22) + 0.5 - (double)f;
-   u.f = af; ai = u.i;
-   u.f = bf; bi = u.i;
+   u.f = (float) af; ai = u.i;
+   u.f = (float) bf; bi = u.i;
    return (ai - bi + 1) >> 1;
 }
 #define ICEIL(x)  iceil(x)
