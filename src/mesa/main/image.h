@@ -1,10 +1,10 @@
-/* $Id: image.h,v 1.17 2001/03/07 05:06:12 brianp Exp $ */
+/* $Id: image.h,v 1.18 2002/03/13 04:34:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -68,6 +68,11 @@ extern GLint
 _mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
                         GLint width, GLenum format, GLenum type );
 
+
+extern GLint
+_mesa_image_image_stride( const struct gl_pixelstore_attrib *packing,
+                          GLint width, GLint height,
+                          GLenum format, GLenum type );
 
 extern void
 _mesa_unpack_polygon_stipple( const GLubyte *pattern, GLuint dest[32],

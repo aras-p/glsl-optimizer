@@ -1,10 +1,10 @@
-/* $Id: image.c,v 1.63 2001/07/14 17:53:04 brianp Exp $ */
+/* $Id: image.c,v 1.64 2002/03/13 04:34:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -541,6 +541,46 @@ _mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
       return bytesPerRow;
    }
 }
+
+
+
+/*
+ * Compute the stride between images in a 3D texture (in bytes) for the given
+ * pixel packing parameters and image width, format and type.
+ */
+GLint
+_mesa_image_image_stride( const struct gl_pixelstore_attrib *packing,
+                          GLint width, GLint height,
+                          GLenum format, GLenum type )
+{
+   ASSERT(packing);
+   ASSERT(type != GL_BITMAP);
+
+   {
+      const GLint bytesPerPixel = _mesa_bytes_per_pixel(format, type);
+      GLint bytesPerRow, bytesPerImage, remainder;
+
+      if (bytesPerPixel <= 0)
+         return -1;  /* error */
+      if (packing->RowLength == 0) {
+         bytesPerRow = bytesPerPixel * width;
+      }
+      else {
+         bytesPerRow = bytesPerPixel * packing->RowLength;
+      }
+      remainder = bytesPerRow % packing->Alignment;
+      if (remainder > 0)
+         bytesPerRow += (packing->Alignment - remainder);
+
+      if (packing->ImageHeight == 0)
+         bytesPerImage = bytesPerRow * height;
+      else
+         bytesPerImage = bytesPerRow * packing->ImageHeight;
+
+      return bytesPerImage;
+   }
+}
+
 
 
 
