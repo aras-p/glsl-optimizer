@@ -792,6 +792,22 @@ static int inline translate_src(int src)
 	}
 }
 	   
+static int known_formats[]={
+	0x0,
+	0xAA06,
+	0xA60E,
+	0xA60E,
+	0xA60A,
+	0x8860C,
+	0x88A0C,
+	0xA00,
+	0xA61D,
+	0xA61D,
+	0xA61A,
+	0xA61A,
+	-1
+	};
+	   
 /* I think 357 and 457 are prime numbers.. wiggle them if you get coincidences */
 #define FORMAT_HASH(opRGB, srcRGB, modeRGB, opA, srcA, modeA, format, intFormat)	( \
 	(\
@@ -803,12 +819,37 @@ static int inline translate_src(int src)
 	^ (((format)) *457) \
 	^ ((intFormat) * 7) \
 	)
+
 	   
 static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint format, GLint IntFormat)
 {
 	const struct gl_texture_unit *texUnit= &ctx->Texture.Unit[tex_unit];
 	int i=0; /* number of alpha args .. */
+	GLuint fmt;
 	
+	switch(IntFormat){
+		case 4:
+		case GL_RGBA:
+		case GL_RGBA8:
+			fmt=R300_EASY_TX_FORMAT(Z, Y, X, W, R8G8B8A8);
+			break;
+		case 3:
+		case GL_RGB8:
+			fmt=R300_EASY_TX_FORMAT(Z, Y, X, ONE, R8G8B8A8);
+			break;
+		default:
+			return 0;
+		}
+	#if 0
+	//fmt &= 0x00fff;
+	//fmt |= ((format) & 0xff00)<<4;
+	fprintf(stderr, "NumArgsRGB=%d NumArgsA=%d\n", 
+		texUnit->_CurrentCombine->_NumArgsRGB,
+		texUnit->_CurrentCombine->_NumArgsA);
+	
+	fprintf(stderr, "fmt=%08x\n", fmt);
+	#endif
+	//return fmt;
 	/* Size field in format specific first */
 	switch(FORMAT_HASH(							
 		texUnit->_CurrentCombine->OperandRGB[i] -GL_SRC_COLOR,
@@ -820,84 +861,73 @@ static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint fo
 		format,
 		IntFormat
 		)){
-	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00088047, 0x1908):
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x0008847, GL_RGBA):
 		/* tested with:
 			kfiresaver.kss 
 			*/
-		return 0x7a0c; /* kfiresaver.kss */
-	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00088047, 0x8058):
+		return 0x760c; /* kfiresaver.kss */
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x0008847, GL_RGBA8):
 		/* tested with:
 			Quake3demo 
 			*/
-		return 0x8a0c; /* Quake3demo -small font on the bottom */
-	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00077047, 4):
+		return fmt;
+		return 0x860c; /* Quake3demo -small font on the bottom */
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00005547, GL_RGBA8):
+		return fmt;
+		return 0x4860c;
+		return 0;
+		return 0x8a0c; /* Quake3demo - mouse cursor*/
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00007747, 4):
 		/* tested with:
 			kfiresaver.kss 
 			*/
-		return 0x4ba0c;
-	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00055047, 4):
+		return R300_EASY_TX_FORMAT(Y, Z, W, ONE, R8G8B8A8);
+		return 0x4b60c;
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00005547, 4):
 		/* tested with:
 			kfiresaver.kss
 			kfountain.kss
 			*/
+		return R300_EASY_TX_FORMAT(Y, Z, W, ONE, R8G8B8A8);
 		return 0x51a0c;	
-	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00088047, 3):
+	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00008847, 3):
 		/* tested with
 			lesson 06
 			lesson 07
 			*/
-		return 0x53a0c;
-	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00077047, 0x00000003):
+	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00007747, 0x00000003):
 		/* Tested with NeHe lesson 08 */
-		return 0x53a0c;
-	//case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00055047, 0):
+	//case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x0005547, 0):
 		/* Can't remember what I tested this with.. 
 		   try putting return 0 of you see broken textures which 
 		   are not being complained about */
-		return 0x53a0c;	
-	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00099047, 0x8051):
-	//case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00089047, 0x8058):
-	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00077047, 0x8051):
+	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00009947, GL_RGB8):
+	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00007747, GL_RGB8):
+	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00003347, GL_RGB8):
+	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00008947, 3):
 		/* Tested with:
 			Quake3demo
 			*/
+		return R300_EASY_TX_FORMAT(Y, Z, W, ONE, R8G8B8A8);
 		return 0x53a0c;	
-	case  FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00055045, 0x00008056):
-	case  FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00088045, 0x00008056):
-		return 0x53a23;
-	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00099004, 0x00008050):
-		return 0;
-		return 0x2a0b;
-	}
-	//	return 0x53a0c;	
-	
-	/* Just key on internal format  - useful for quick tryouts*/
-	
-		return 0;
-	#if 1
-	switch(IntFormat
-		){
-	case 0x3:
-		return 0x53a0c;
-	case 0x8050:
-		return 0x2a0b;
-	case 0x8056:
-	
-		return 0x53a23;
-	case 0x8058:
-		return 0;
-		return 0x8a0c;
-		//fprintf(stderr, "%08x\n", format);
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00007847, GL_RGBA8):
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00006747, GL_RGBA8):
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00006647, GL_RGBA8):
+	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00008947, GL_RGBA8):
 		/* Tested with:
 			Quake3demo
 			*/
-		return 0x53a0c;	
-	default:
-		return 0x53a0c;
+		return R300_EASY_TX_FORMAT(Y, Z, W, W, R8G8B8A8);
+		return 0x5360c;	
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00007747, GL_RGBA8):
+		return R300_EASY_TX_FORMAT(Z, Y, X, W, R8G8B8A8) ;
+	case  FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x0008845, 0x00008056):
+		//return 0;
+		fprintf(stderr, "***\n");
+		return R300_EASY_TX_FORMAT(Y, Z, W, W, R8G8B8A8);
+		return 0x53a23;
 	}
-	#endif
-	
-	
+		
 	
 	{
 		static int warn_once=1;
@@ -966,14 +996,19 @@ void r300_setup_textures(GLcontext *ctx)
 			r300->hw.tex.offset.cmd[R300_TEX_VALUE_0+i]=r300->radeon.radeonScreen->fbLocation+t->offset;
 			r300->hw.tex.unknown4.cmd[R300_TEX_VALUE_0+i]=0x0;
 			r300->hw.tex.unknown5.cmd[R300_TEX_VALUE_0+i]=0x0;
-			
-			
-			
+
 			/* We don't know how to set this yet */
 			//value from r300_lib.c for RGB24
 			//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x88a0c; 
 			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=translate_texture_format(ctx, i, t->format,
 			 	r300->state.texture.unit[i].texobj!=NULL?t->base.tObj->Image[0][0]->IntFormat:3);
+			
+			
+			#if 0
+			fprintf(stderr, "pitch=%08x filter=%08x format=%08x\n", t->pitch, t->filter, r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]);
+			fprintf(stderr, "unknown1=%08x size=%08x\n", r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i],
+				r300->hw.tex.size.cmd[R300_TEX_VALUE_0+i]);
+			#endif
 			/* Use the code below to quickly find matching texture
 			   formats. Requires an app that displays the same texture
 			   repeatedly  */
@@ -982,11 +1017,11 @@ void r300_setup_textures(GLcontext *ctx)
 					static int fmt=0x0;
 					static int k=0;
 					k++;
-					if(k>400){
+					if(k>20){
 						k=0;
 						fmt++;
 						texUnit = &ctx->Texture.Unit[i];
-						fprintf(stderr, "Want to set FORMAT_HASH(%d, %d, 0x%04x, %d, %d, 0x%04x, 0x%08x, 0x%08x)\n",
+						fprintf(stderr, "Want to set FORMAT_HASH(%d, %d, 0x%04x, %d, %d, 0x%04x, 0x%08x, %s(%08x))\n",
 							texUnit->_CurrentCombine->OperandRGB[0] -GL_SRC_COLOR,
 							translate_src(texUnit->_CurrentCombine->SourceRGB[0]),
 							texUnit->_CurrentCombine->ModeRGB,
@@ -994,21 +1029,24 @@ void r300_setup_textures(GLcontext *ctx)
 							translate_src(texUnit->_CurrentCombine->SourceA[0]),
 							texUnit->_CurrentCombine->ModeA,
 							t->format,
+							_mesa_lookup_enum_by_nr(t->base.tObj->Image[0][0]->IntFormat),
 							t->base.tObj->Image[0][0]->IntFormat
 							);
 						fprintf(stderr, "Also known: format_x=%08x border_color=%08x cubic_faces=%08x\n", t->format_x, t->pp_border_color, t->pp_cubic_faces);
 						fprintf(stderr, "\t_ReallyEnabled=%08x EnvMode=%08x IntFormat=%08x\n", texUnit->_ReallyEnabled, texUnit->EnvMode,  t->base.tObj->Image[0][0]->IntFormat);
-						if(fmt>0xff){
-							//exit(-1);
+						if(fmt>0xfff){
 							fmt=0;
 							}
 						//sleep(1);
 						fprintf(stderr, "Now trying format %08x\n", 
-							0x00a0c | (fmt<<12));
+							fmt);
 						fprintf(stderr, "size=%08x\n", t->size);
 						}
-					r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x00a0c | (fmt<<12);
-					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x51a00 | (fmt);
+					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=known_formats[fmt];
+					r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=
+						R300_EASY_TX_FORMAT(Z, Y, X, W, R8G8B8A8)  | (fmt<<21);
+					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x08a0c | (fmt<<16);
+					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x58a00 | (fmt);
 					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x53a0c | (fmt<<24);
 					}
 			      #endif

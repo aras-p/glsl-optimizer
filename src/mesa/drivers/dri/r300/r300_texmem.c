@@ -366,9 +366,13 @@ static void uploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
 	 * width to dictate the blit width - but that won't work for compressed
 	 * textures. (Brian)
 	 */
+
 	tex.offset = offset;
 	tex.pitch = BLIT_WIDTH_BYTES / 64;
 	tex.format = R200_TXFORMAT_I8;	/* any 1-byte texel format */
+	#if 0 /* I am not sure HOSTDATA_BLT actually works.. Experiment here  - V.D */
+	tex.format = R200_TXFORMAT_RGBA8888;	/* any 4-byte texel format */
+	#endif
 	if (texImage->TexFormat->TexelBytes) {
 		tex.width = imageWidth * texImage->TexFormat->TexelBytes;	/* in bytes */
 		tex.height = imageHeight;
@@ -379,9 +383,15 @@ static void uploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
 			tex.height = 4;
 	}
 	tex.image = &tmp;
+	#if 0
+	tex.width /= 4;
+	#endif
 
 	/* copy (x,y,width,height,data) */
 	memcpy(&tmp, &t->image[face][hwlevel], sizeof(tmp));
+	#if 0
+	tex.image->width /=4;
+	#endif
 
 	LOCK_HARDWARE(&rmesa->radeon);
 	do {

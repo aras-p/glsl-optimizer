@@ -248,13 +248,13 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	t->filter &= ~R200_MAX_MIP_LEVEL_MASK;
 	t->filter |= (numLevels - 1) << R200_MAX_MIP_LEVEL_SHIFT;
 #endif
-	t->format &= ~(R300_TX_FORMAT_WIDTH_MASK |
-			    R300_TX_FORMAT_HEIGHT_MASK |
+	t->format &= ~(R200_TXFORMAT_WIDTH_MASK |
+			    R200_TXFORMAT_HEIGHT_MASK |
 			    R200_TXFORMAT_CUBIC_MAP_ENABLE |
 			    R200_TXFORMAT_F5_WIDTH_MASK |
 			    R200_TXFORMAT_F5_HEIGHT_MASK);
-	t->format |= ((log2Width << R300_TX_FORMAT_WIDTH_SHIFT) |
-			   (log2Height << R300_TX_FORMAT_HEIGHT_SHIFT));
+	t->format |= ((log2Width << R200_TXFORMAT_WIDTH_SHIFT) |
+			   (log2Height << R200_TXFORMAT_HEIGHT_SHIFT));
 
 	t->format_x &= ~(R200_DEPTH_LOG2_MASK | R200_TEXCOORD_MASK);
 	if (tObj->Target == GL_TEXTURE_3D) {

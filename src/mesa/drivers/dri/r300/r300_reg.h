@@ -598,11 +598,60 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_TX_SIZE_SHIFT                26 /* largest of width, height */
 #       define R300_TX_SIZE_MASK                 (15 << 26)
 #define R300_TX_FORMAT_0                    0x44C0
-	/* Note - other bits are not known yet.. */
-#	define R300_TX_FORMAT_WIDTH_SHIFT	12
-#	define R300_TX_FORMAT_WIDTH_MASK	(0xf<<R300_TX_FORMAT_WIDTH_SHIFT)
-#	define R300_TX_FORMAT_HEIGHT_SHIFT	16
-#	define R300_TX_FORMAT_HEIGHT_MASK	(0xf<<R300_TX_FORMAT_HEIGHT_SHIFT)
+	/* The interpretation of the format word by Wladimir van der Laan */
+#	define R300_TX_FORMAT_I8		    0x0
+#	define R300_TX_FORMAT_I16		    0x1
+	/* gap */
+#	define R300_TX_FORMAT_I8A8		    0x3
+#	define R300_TX_FORMAT_I16A16		    0x4
+	/* gap */
+#	define R300_TX_FORMAT_R5G5B5		    0x6
+	/* gap */
+#	define R300_TX_FORMAT_A4R4G4B4		    0xA
+#	define R300_TX_FORMAT_A1R5G5B5		    0xB
+#	define R300_TX_FORMAT_R8G8B8A8		    0xC
+#	define R300_TX_FORMAT_R10G10B10A2	    0xD
+#	define R300_TX_FORMAT_R16G16B16A16	    0xE
+#	define R300_TX_FORMAT_DXT1	    	    0xF
+#	define R300_TX_FORMAT_DXT3	    	    0x10
+#	define R300_TX_FORMAT_DXT5	    	    0x15
+	/* gap */
+	/* Floating point formats */
+	/* Note - hardware supports both 16 and 32 bit floating point */
+#	define R300_TX_FORMAT_FL_I16	    	    0x18
+#	define R300_TX_FORMAT_FL_I16A16	    	    0x19
+#	define R300_TX_FORMAT_FL_R16G16B16A16	    0x1A
+#	define R300_TX_FORMAT_FL_I32	    	    0x1B
+#	define R300_TX_FORMAT_FL_I32A32	    	    0x1C
+#	define R300_TX_FORMAT_FL_R32G32B32A32	    0x1D
+	/* alpha modes, convenience mostly */
+	/* if you have alpha, pick constant appropriate to the 
+	   number of channels (1 for I8, 2 for I8A8, 4 for R8G8B8A8, etc */
+# 	define R300_TX_FORMAT_ALPHA_1CH		    0x000
+# 	define R300_TX_FORMAT_ALPHA_2CH		    0x200
+# 	define R300_TX_FORMAT_ALPHA_4CH		    0x600
+# 	define R300_TX_FORMAT_ALPHA_NONE	    0xA00
+	/* Swizzling */
+	/* constats */
+#	define R300_TX_FORMAT_X		0
+#	define R300_TX_FORMAT_Y		1
+#	define R300_TX_FORMAT_Z		2
+#	define R300_TX_FORMAT_W		3
+#	define R300_TX_FORMAT_ZERO	4
+#	define R300_TX_FORMAT_ONE	5
+
+#	define R300_TX_FORMAT_R_SHIFT	18
+#	define R300_TX_FORMAT_G_SHIFT	15
+#	define R300_TX_FORMAT_B_SHIFT	12
+#	define R300_TX_FORMAT_A_SHIFT	9
+#	define R300_EASY_TX_FORMAT(R, G, B, A, FMT)	(\
+	  ((R300_TX_FORMAT_##R)<<R300_TX_FORMAT_R_SHIFT) \
+	| ((R300_TX_FORMAT_##G)<<R300_TX_FORMAT_G_SHIFT) \
+	| ((R300_TX_FORMAT_##B)<<R300_TX_FORMAT_B_SHIFT) \
+	| ((R300_TX_FORMAT_##A)<<R300_TX_FORMAT_A_SHIFT) \
+	| (R300_TX_FORMAT_##FMT) \
+	  )
+	
 #define R300_TX_OFFSET_0                    0x4540
 /* BEGIN: Guess from R200 */
 #       define R300_TXO_ENDIAN_NO_SWAP           (0 << 0)
