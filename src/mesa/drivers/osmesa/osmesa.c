@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.57 2001/06/14 18:30:14 brianp Exp $ */
+/* $Id: osmesa.c,v 1.58 2001/06/15 13:41:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -884,13 +884,13 @@ write_rgb_span( const GLcontext *ctx, GLuint n, GLint x, GLint y,
    if (mask) {
       for (i = 0; i < n; i++, p+=4) {
          if (mask[i]) {
-            PACK_RGBA(p, rgb[i][RCOMP], rgb[i][GCOMP], rgb[i][BCOMP], 255);
+            PACK_RGBA(p, rgb[i][RCOMP], rgb[i][GCOMP], rgb[i][BCOMP], CHAN_MAX);
          }
       }
    }
    else {
       for (i = 0; i < n; i++, p+=4) {
-         PACK_RGBA(p, rgb[i][RCOMP], rgb[i][GCOMP], rgb[i][BCOMP], 255);
+         PACK_RGBA(p, rgb[i][RCOMP], rgb[i][GCOMP], rgb[i][BCOMP], CHAN_MAX);
       }
    }
 }
@@ -1184,7 +1184,7 @@ read_rgba_span3( const GLcontext *ctx, GLuint n, GLint x, GLint y,
       rgba[i][RCOMP] = UNPACK_RED(p);
       rgba[i][GCOMP] = UNPACK_GREEN(p);
       rgba[i][BCOMP] = UNPACK_BLUE(p);
-      rgba[i][ACOMP] = 255;
+      rgba[i][ACOMP] = CHAN_MAX;
    }
 }
 
@@ -1201,7 +1201,7 @@ read_rgba_pixels3( const GLcontext *ctx,
          rgba[i][RCOMP] = UNPACK_RED(p);
          rgba[i][GCOMP] = UNPACK_GREEN(p);
          rgba[i][BCOMP] = UNPACK_BLUE(p);
-         rgba[i][ACOMP] = 255;
+         rgba[i][ACOMP] = CHAN_MAX;
       }
    }
 }
@@ -1407,7 +1407,7 @@ flat_blend_rgba_line( GLcontext *ctx,
    const GLint gshift = osmesa->gshift;
    const GLint bshift = osmesa->bshift;
    const GLint avalue = vert0->color[3];
-   const GLint msavalue = 255 - avalue;
+   const GLint msavalue = CHAN_MAX - avalue;
    const GLint rvalue = vert0->color[0]*avalue;
    const GLint gvalue = vert0->color[1]*avalue;
    const GLint bvalue = vert0->color[2]*avalue;
@@ -1415,7 +1415,7 @@ flat_blend_rgba_line( GLcontext *ctx,
 #define INTERP_XY 1
 #define CLIP_HACK 1
 #define PLOT(X,Y)					\
-   { GLuint *ptr4 = (GLuint *) PIXELADDR4(X, Y);		\
+   { GLuint *ptr4 = (GLuint *) PIXELADDR4(X, Y);	\
      GLuint  pixel = 0;					\
      pixel |=((((((*ptr4) >> rshift) & 0xff)*msavalue+rvalue)>>8) << rshift);\
      pixel |=((((((*ptr4) >> gshift) & 0xff)*msavalue+gvalue)>>8) << gshift);\
