@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.109 2004/01/22 15:02:17 joukj Exp $
+# $Id: Makefile.X11,v 1.110 2004/01/28 22:00:13 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  6.1
@@ -182,7 +182,7 @@ irix6-o32 irix6-o32-dso irix6-n32 irix6-n32-dso irix6-gcc-n32-sl:
 	fi
 	if [ -d src/glw ] ; then \
 		cd src/glw ; \
-		touch src/glw/depend ; \
+		touch depend ; \
 		$(MAKE) -f Makefile.X11 $@ ; \
 	fi
 	if [ -d progs/demos ] ; then \
@@ -221,7 +221,7 @@ irix6-64 irix6-64-dso:
 	fi
 	if [ -d src/glw ] ; then \
 		cd src/glw ; \
-		touch src/glw/depend ; \
+		touch depend ; \
 		$(MAKE) -f Makefile.X11 $@ ; \
 	fi
 	if [ -d progs/demos ] ; then \
@@ -303,7 +303,7 @@ linux-ggi linux-x86-ggi:
 	fi
 	if [ -d src/glw ] ; then \
 		cd src/glw ; \
-		touch src/glw/depend ; \
+		touch depend ; \
 		$(MAKE) -f Makefile.X11 $@ ; \
 	fi
 	if [ -d progs/demos ] ; then \
