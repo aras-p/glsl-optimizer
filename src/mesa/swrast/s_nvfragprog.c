@@ -978,8 +978,8 @@ execute_program( GLcontext *ctx,
             {
                GLfloat a[4], result[4];
                fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
-               result[0] = cos(a[0]);
-               result[1] = sin(a[0]);
+               result[0] = (GLfloat)cos(a[0]);
+               result[1] = (GLfloat)sin(a[0]);
                result[2] = 0.0;  /* undefined! */
                result[3] = 0.0;  /* undefined! */
                store_vector4( inst, machine, result );
