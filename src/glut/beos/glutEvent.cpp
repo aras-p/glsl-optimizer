@@ -1,5 +1,10 @@
 /***********************************************************
- *	Copyright (C) 1997, Be Inc.  All rights reserved.
+ *      Copyright (C) 1997, Be Inc.  Copyright (C) 1999, Jake Hamby.
+ *
+ * This program is freely distributable without licensing fees
+ * and is provided without guarantee or warrantee expressed or
+ * implied. This program is -not- in the public domain.
+ *
  *
  *  FILE:	glutEvent.cpp
  *
@@ -111,12 +116,14 @@ processEventsAndTimeouts(void)
 							// immediately, otherwise wait forever
 	gBlock.ClearEvents();
 	
+	if(gState.quitAll)
+		exit(0);		// exit handler cleans up windows and quits nicely
+	
 	if (gState.currentWindow)
 		gState.currentWindow->LockGL();
 	for(int i=0; i<gState.windowListSize; i++) {
 		if (gState.windowList[i]) {
 			GlutWindow *win = gState.windowList[i];
-			win->Window()->Lock();
 			// NOTE: we can use win as a shortcut for gState.windowList[i]
 			// in callbacks, EXCEPT we need to check the original variable
 			// after each callback to make sure the window hasn't been destroyed
@@ -134,11 +141,6 @@ processEventsAndTimeouts(void)
 					win->displayEvent = false;
 					__glutSetWindow(win);
 					win->display();
-					if (gState.windowList[i] && win->swapHack) {
-						// fake single buffering by swapping buffers
-						__glutSetWindow(win);
-						win->SwapBuffers();
-					}
 				}
 				if (!gState.windowList[i])
 					continue;	// window was destroyed by callback!
@@ -229,17 +231,15 @@ processEventsAndTimeouts(void)
 				if (!gState.windowList[i])
 					continue;	// window was destroyed by callback!
 
-				if (win->visEvent) {
-					win->visEvent = false;
+				if (win->windowStatusEvent) {
+					win->windowStatusEvent = false;
 					__glutSetWindow(win);
-					if (win->visibility)
-						win->visibility(win->visState);
+					if (win->windowStatus)
+						win->windowStatus(win->visState);
 				}
 				if (!gState.windowList[i])
 					continue;	// window was destroyed by callback!
 			}
-			if(gState.windowList[i])	// window hasn't been destroyed
-				win->Window()->Unlock();
 		}
 	}
 	if (gState.currentWindow)
@@ -304,8 +304,9 @@ idleWait(void)
   /* Make sure idle func still exists! */
   if(gState.currentWindow)
 	  gState.currentWindow->LockGL();
-  if (gState.idle)
+  if (gState.idle) {
     gState.idle();
+  }
   if(gState.currentWindow)
 	  gState.currentWindow->UnlockGL();
 }
@@ -604,7 +605,7 @@ void GlutWindow::MouseMoved(BPoint point,
 void GlutWindow::FrameResized(float width, float height)
 {
 	BGLView::FrameResized(width, height);
-	if (visState == GLUT_VISIBLE) {
+	if (visible) {
 		anyevents = reshapeEvent = true;
 		m_width = (int)(width)+1;
 		m_height = (int)(height)+1;
@@ -626,39 +627,12 @@ void GlutWindow::Draw(BRect updateRect)
 	if (m_width != (frame.Width()+1) || m_height != (frame.Height()+1)) {
 		FrameResized(frame.Width(), frame.Height());
 	}
-	if (visState == GLUT_VISIBLE) {
+	Window()->Lock();
+	if (visible) {
 		anyevents = displayEvent = true;
 		gBlock.NewEvent();
 	}
-}
-
-/***********************************************************
- *	CLASS:		GlutWindow
- *
- *	FUNCTION:	Hide
- *				Show
- *
- *	DESCRIPTION:  handles visibility event
- ***********************************************************/
-void GlutWindow::Hide()
-{
-	BGLView::Hide();
-	if (visibility) {
-		anyevents = visEvent = true;
-		visState = GLUT_NOT_VISIBLE;
-		displayEvent = false;	// display callbacks not allowed when hidden
-		gBlock.NewEvent();
-	}
-}
-
-void GlutWindow::Show()
-{
-	BGLView::Show();
-	if (visibility) {
-		anyevents = visEvent = true;
-		visState = GLUT_VISIBLE;
-		gBlock.NewEvent();
-	}
+	Window()->Unlock();
 }
 
 /***********************************************************

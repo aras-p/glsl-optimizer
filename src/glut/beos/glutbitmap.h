@@ -7,12 +7,7 @@
    and is provided without guarantee or warrantee expressed or 
    implied. This program is -not- in the public domain. */
 
-
-#if defined(WIN32)
-#include <windows.h>
-#pragma warning(disable:4244)
-#endif /* WIN32 */
-#include <GL/gl.h>
+#include <GL/glut.h>
 
 typedef struct {
   const GLsizei width;

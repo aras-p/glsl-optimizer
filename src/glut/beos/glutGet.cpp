@@ -1,5 +1,10 @@
 /***********************************************************
- *	Copyright (C) 1997, Be Inc.  All rights reserved.
+ *      Copyright (C) 1997, Be Inc.  Copyright (C) 1999, Jake Hamby.
+ *
+ * This program is freely distributable without licensing fees
+ * and is provided without guarantee or warrantee expressed or
+ * implied. This program is -not- in the public domain.
+ *
  *
  *  FILE:	glutGet.cpp
  *
@@ -12,6 +17,8 @@
 #include <GL/glut.h>
 #include <string.h>
 #include <Autolock.h>
+#include <Screen.h>
+
 #include "glutint.h"
 #include "glutState.h"
 

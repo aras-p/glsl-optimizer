@@ -1,5 +1,10 @@
 /***********************************************************
- *	Copyright (C) 1997, Be Inc.  All rights reserved.
+ *      Copyright (C) 1997, Be Inc.  Copyright (C) 1999, Jake Hamby.
+ *
+ * This program is freely distributable without licensing fees
+ * and is provided without guarantee or warrantee expressed or
+ * implied. This program is -not- in the public domain.
+ *
  *
  *  FILE:	glutDstr.cpp
  *
@@ -46,8 +51,7 @@ glutInitDisplayString(const char *string)
  *	RETURNS:	1 if the current display mode is possible, else 0
  ***********************************************************/
 int __glutConvertDisplayModeFromString(unsigned long *options) {
-	ulong newoptions = BGL_DOUBLE;
-	gState.swapHack = true;		// assume single buffered
+	ulong newoptions = 0;
 	
 	char *word = strtok(gState.displayString, " \t");
 	do {
@@ -66,7 +70,7 @@ int __glutConvertDisplayModeFromString(unsigned long *options) {
 		} else if(!strcmp(word, "depth")) {
 			newoptions |= BGL_DEPTH;
 		} else if(!strcmp(word, "double")) {
-			gState.swapHack = false;
+			newoptions |= BGL_DOUBLE;
 		} else if(!strcmp(word, "stencil")) {
 			newoptions |= BGL_STENCIL;
 		}

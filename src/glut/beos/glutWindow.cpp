@@ -1,5 +1,10 @@
 /***********************************************************
- *	Copyright (C) 1997, Be Inc.  All rights reserved.
+ *      Copyright (C) 1997, Be Inc.  Copyright (C) 1999, Jake Hamby.
+ *
+ * This program is freely distributable without licensing fees
+ * and is provided without guarantee or warrantee expressed or
+ * implied. This program is -not- in the public domain.
+ *
  *
  *  FILE:	glutWindow.cpp
  *
@@ -117,10 +122,8 @@ GlutWindow::GlutWindow(GlutWindow *nparent, char *name,
 	keyboard = 0;
 	visibility = 0;
 	special = 0;
-	
-	// faked out single buffering
-	swapHack = gState.swapHack;
-	
+	windowStatus = 0;
+		
 	// clear event counters
 	anyevents = 1;
 	displayEvent = 1;	// get a reshape and a display event right away
@@ -130,11 +133,12 @@ GlutWindow::GlutWindow(GlutWindow *nparent, char *name,
 	passiveEvent = 0;
 	entryEvent = 0;
 	keybEvent = 0;
-	visEvent = 1;		// we also get a visibility event
-	visState = GLUT_VISIBLE;
+	windowStatusEvent = 0; // DirectConnected() will report change in 
+	visState = -1;         // visibility
 	specialEvent = 0;
 	statusEvent = 0;
 	menuEvent = 0;
+	visible = true;
 	gBlock.QuickNewEvent();
 	
 	// if i'm a subwindow, add me to my parent view
@@ -147,6 +151,7 @@ GlutWindow::GlutWindow(GlutWindow *nparent, char *name,
 		GlutBWindow *mybwindow = new GlutBWindow(
 			BRect(x,y,x+width-1,y+height-1), name);
 		mybwindow->AddChild(this);
+		mybwindow->bgl = this;
 		mybwindow->Show();
 	}
 	
@@ -291,22 +296,27 @@ __glutDestroyWindow(GlutWindow *window, GlutWindow *initialWindow) {
  ***********************************************************/
 void glutDestroyWindow(int win) {
 	// can't destroy a window if another window has the GL context
-	gState.currentWindow->UnlockGL();
-	
+	if (gState.currentWindow)
+		gState.currentWindow->UnlockGL();
+
 	// lock the window
 	GlutWindow *window = gState.windowList[win-1];
 	BWindow *bwindow = window->Window();
 	bwindow->Lock();
 
-	// if win is the current window, set current window to 0 and unlock GL
+	// if win is the current window, set current window to 0
 	if (gState.currentWindow == window) {
-		
 		gState.currentWindow = 0;
 	}
 
 	// recursively set child entries to 0
 	__glutDestroyWindow(window, window);
-  
+
+	// try flushing OpenGL
+	window->LockGL();
+	glFlush();
+	window->UnlockGL();
+
 	// now, if the window was top-level, delete its BWindow
 	if(!window->parent) {
 		bwindow->Quit();
@@ -316,10 +326,28 @@ void glutDestroyWindow(int win) {
 		delete window;
 		bwindow->Unlock();
 	}
-	
 	// relock GL if the current window is still valid
 	if(gState.currentWindow)
 		gState.currentWindow->LockGL();
+}
+
+/***********************************************************
+ *	FUNCTION:	__glutDestroyAllWindows
+ *
+ *	DESCRIPTION:  destroy all windows when exit() is called
+ *                this seems to be necessary to avoid delays
+ *                and crashes when using BDirectWindow
+ ***********************************************************/
+void __glutDestroyAllWindows() {
+	for(int i=0; i<gState.windowListSize; i++) {
+		if (gState.windowList[i]) {
+			glutDestroyWindow(i + 1);
+		}
+	}
+	gState.display->Lock();
+	gState.display->Quit();
+	status_t ignored;
+	wait_for_thread(gState.appthread, &ignored);
 }
 
 /***********************************************************
@@ -332,6 +360,20 @@ void glutPostRedisplay() {
 	gState.currentWindow->anyevents = true;
 	gState.currentWindow->displayEvent = true;
 	gState.currentWindow->Window()->Unlock();
+	gBlock.QuickNewEvent();
+}
+
+/***********************************************************
+ *	FUNCTION:	glutPostWindowRedisplay
+ *
+ *	DESCRIPTION:  mark window as needing redisplay
+ ***********************************************************/
+void glutPostWindowRedisplay(int win) {
+	GlutWindow *gwin = gState.windowList[win - 1];
+	gwin->Window()->Lock();
+	gwin->anyevents = true;
+	gwin->displayEvent = true;
+	gwin->Window()->Unlock();
 	gBlock.QuickNewEvent();
 }
 
@@ -350,12 +392,17 @@ void glutSwapBuffers() {
  *	DESCRIPTION:  move window
  ***********************************************************/
 void glutPositionWindow(int x, int y) {
-	gState.currentWindow->Window()->Lock();
+	BDirectWindow *win = dynamic_cast<BDirectWindow*>(gState.currentWindow->Window());
+	win->Lock();
 	if (gState.currentWindow->parent)
 		gState.currentWindow->MoveTo(x, y);	// move the child view
-	else
-		gState.currentWindow->Window()->MoveTo(x, y);  // move the window
-	gState.currentWindow->Window()->Unlock();
+	else {
+		if(win->IsFullScreen()) {
+			win->SetFullScreen(false);
+		}
+		win->MoveTo(x, y);  // move the window
+	}
+	win->Unlock();
 }
 
 /***********************************************************
@@ -365,26 +412,29 @@ void glutPositionWindow(int x, int y) {
  *				when the view gets a Draw() message
  ***********************************************************/
 void glutReshapeWindow(int width, int height) {
-	gState.currentWindow->Window()->Lock();
+	BDirectWindow *win = dynamic_cast<BDirectWindow*>(gState.currentWindow->Window());
+	win->Lock();
 	if (gState.currentWindow->parent)
 		gState.currentWindow->ResizeTo(width-1, height-1);		// resize the child
-	else
-		gState.currentWindow->Window()->ResizeTo(width-1, height-1);  // resize the parent
-	gState.currentWindow->Window()->Unlock();
+	else {
+		if(win->IsFullScreen()) {
+			win->SetFullScreen(false);
+		}
+		win->ResizeTo(width-1, height-1);  // resize the parent
+	}
+	win->Unlock();
 }
 
 /***********************************************************
  *	FUNCTION:	glutFullScreen (4.9)
  *
  *	DESCRIPTION:  makes the window full screen
- *		NOTE:		we could add Game Kit support later?
  ***********************************************************/
 void glutFullScreen() {
-	gState.currentWindow->Window()->Lock();
-	BRect frame = BScreen(gState.currentWindow->Window()).Frame();
-	glutPositionWindow(0, 0);
-	glutReshapeWindow((int)(frame.Width()) + 1, (int)(frame.Height()) + 1);
-	gState.currentWindow->Window()->Unlock();
+	BDirectWindow *win = dynamic_cast<BDirectWindow*>(gState.currentWindow->Window());
+	win->Lock();
+	win->SetFullScreen(true);
+	win->Unlock();
 }
 
 /***********************************************************
@@ -411,7 +461,8 @@ void glutShowWindow() {
 	if (gState.currentWindow->parent)	// subwindow
 		gState.currentWindow->Show();
 	else {
-		gState.currentWindow->Window()->Show();	// show the actual BWindow
+		if(gState.currentWindow->Window()->IsHidden())
+			gState.currentWindow->Window()->Show();	// show the actual BWindow
 		gState.currentWindow->Window()->Minimize(false);
 	}
 	gState.currentWindow->Window()->Unlock();
@@ -476,20 +527,19 @@ int __glutConvertDisplayMode(unsigned long *options) {
     }
 
 	if(options) {
-		ulong newoptions = BGL_DOUBLE;
+		ulong newoptions = 0;
 		if(gState.displayMode & GLUT_ACCUM)
 			newoptions |= BGL_ACCUM;
 		if(gState.displayMode & GLUT_ALPHA)
 			newoptions |= BGL_ALPHA;
 		if(gState.displayMode & GLUT_DEPTH)
 			newoptions |= BGL_DEPTH;
+		if(gState.displayMode & GLUT_DOUBLE)
+			newoptions |= BGL_DOUBLE;
 		if(gState.displayMode & GLUT_STENCIL)
 			newoptions |= BGL_STENCIL;
 		*options = newoptions;
 	}
-	
-	// if not GLUT_DOUBLE, turn on the swap hack bit
-	gState.swapHack = !(gState.displayMode & GLUT_DOUBLE);
 	
 	if(gState.displayMode & GLUT_INDEX) {
 		__glutWarning("BeOS doesn't support indexed color");
@@ -515,11 +565,69 @@ int __glutConvertDisplayMode(unsigned long *options) {
  *	DESCRIPTION:  very thin wrapper around BWindow
  ***********************************************************/
 GlutBWindow::GlutBWindow(BRect frame, char *name) :
-			BWindow(frame, name, B_TITLED_WINDOW, 0) {
+			BDirectWindow(frame, name, B_TITLED_WINDOW, 0) {
+	fConnectionDisabled = false;
+	bgl = 0;
 	SetPulseRate(100000);
+	
+	if (!SupportsWindowMode()) {
+		__glutFatalError("video card doesn't support windowed operation");
+	}
 }
 
+void GlutBWindow::DirectConnected( direct_buffer_info *info ) {
+	bgl->DirectConnected(info);
+	if(bgl && !fConnectionDisabled) {
+		bgl->EnableDirectMode(true);
+	}
+	int newVisState;
+	if((info->buffer_state & B_DIRECT_MODE_MASK) == B_DIRECT_START) {
+		bgl->visible = true;
+	}
+	if(!bgl->visible || info->buffer_state == B_DIRECT_STOP)
+		newVisState = GLUT_HIDDEN;
+	else {
+		if (info->clip_list_count == 0)
+			newVisState = GLUT_FULLY_COVERED;
+		else if (info->clip_list_count == 1)
+			newVisState = GLUT_FULLY_RETAINED;
+		else
+			newVisState = GLUT_PARTIALLY_RETAINED;
+	}
+	if(newVisState != bgl->visState) {
+		bgl->visState = newVisState;
+		bgl->anyevents = bgl->windowStatusEvent = true;
+		gBlock.NewEvent();
+	}
+}
+
+GlutBWindow::~GlutBWindow() {
+	fConnectionDisabled = true;
+	if(bgl) {
+		bgl->EnableDirectMode(false);
+	}
+	if(!IsHidden())
+		Hide();
+	Sync();
+}	
+
 bool GlutBWindow::QuitRequested() {
-	exit(0);	// exit program completely on quit
-	return true;	// UNREACHED
+	gState.quitAll = true;
+	gBlock.NewEvent();
+	return false;	// don't quit now, wait for main thread to do it
+}
+
+void GlutBWindow::Minimize(bool minimize) {
+	bgl->visible = !minimize;
+	BWindow::Minimize(minimize);
+}
+
+void GlutBWindow::Hide() {
+	BWindow::Hide();
+	bgl->visible = false;
+}
+
+void GlutBWindow::Show() {
+	BWindow::Show();
+	bgl->visible = true;
 }

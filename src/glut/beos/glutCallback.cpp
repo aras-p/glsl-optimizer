@@ -1,5 +1,10 @@
 /***********************************************************
- *	Copyright (C) 1997, Be Inc.  All rights reserved.
+ *      Copyright (C) 1997, Be Inc.  Copyright (C) 1999, Jake Hamby.
+ *
+ * This program is freely distributable without licensing fees
+ * and is provided without guarantee or warrantee expressed or
+ * implied. This program is -not- in the public domain.
+ *
  *
  *  FILE:	glutCallback.cpp
  *
@@ -65,10 +70,29 @@ glutEntryFunc(GLUTentryCB entryFunc)
   }
 }
 
+void APIENTRY
+glutWindowStatusFunc(GLUTwindowStatusCB windowStatusFunc)
+{
+  gState.currentWindow->windowStatus = windowStatusFunc;
+}
+
+static void
+visibilityHelper(int status)
+{
+  if (status == GLUT_HIDDEN || status == GLUT_FULLY_COVERED)
+    gState.currentWindow->visibility(GLUT_NOT_VISIBLE);
+  else
+    gState.currentWindow->visibility(GLUT_VISIBLE);
+}
+
 void APIENTRY 
 glutVisibilityFunc(GLUTvisibilityCB visibilityFunc)
 {
   gState.currentWindow->visibility = visibilityFunc;
+  if (visibilityFunc)
+    glutWindowStatusFunc(visibilityHelper);
+  else
+    glutWindowStatusFunc(NULL);
 }
 
 void APIENTRY 

@@ -1,5 +1,10 @@
 /***********************************************************
- *	Copyright (C) 1997, Be Inc.  All rights reserved.
+ *      Copyright (C) 1997, Be Inc.  Copyright (C) 1999, Jake Hamby.
+ *
+ * This program is freely distributable without licensing fees
+ * and is provided without guarantee or warrantee expressed or
+ * implied. This program is -not- in the public domain.
+ *
  *
  *  FILE:	glutWindow.h
  *
@@ -32,8 +37,6 @@ public:
 	void MouseMoved(BPoint point, uint32 transit, const BMessage *message);
 	void FrameResized(float width, float height);
 	void Draw(BRect updateRect);
-	void Hide();
-	void Show();
 	void Pulse();		// needed since MouseUp() is broken
 	void MouseCheck();	// check for button state changes
 	void ErrorCallback(GLenum errorCode);
@@ -62,6 +65,7 @@ public:
   GLUTkeyboardCB keyboard;  /* keyboard  (ASCII,x,y) */
   GLUTvisibilityCB visibility;  /* visibility  */
   GLUTspecialCB special;  /* special key  */
+  GLUTwindowStatusCB windowStatus;  /* window status */
 
 	bool anyevents;		// were any events received?
 	bool displayEvent;		// call display
@@ -71,12 +75,10 @@ public:
 	bool passiveEvent;		// call passive
 	bool entryEvent;		// call entry
 	bool keybEvent;			// call keyboard
-	bool visEvent;			// call visibility
+	bool windowStatusEvent;		// call visibility
 	bool specialEvent;		// call special
 	bool statusEvent;		// menu status changed
 	bool menuEvent;			// menu selected
-	
-	bool swapHack;			// faked out single buffering
 	
 	int button, mouseState; // for mouse callback
 	int mouseX, mouseY; // for mouse callback
@@ -93,17 +95,25 @@ public:
 	int statusX, statusY;	// for status callback
 	int menuNumber;		// for menu and status callbacks
 	int menuValue;		// for menu callback
+	bool visible;		// for visibility callback
 };
 
 /***********************************************************
  *	CLASS:	GlutBWindow
  *
- *  INHERITS FROM:	BWindow
+ *  INHERITS FROM:	BDirectWindow
  *
  *	DESCRIPTION:  basically a BWindow that won't quit
  ***********************************************************/
-class GlutBWindow : public BWindow {
+class GlutBWindow : public BDirectWindow {
 public:
 	GlutBWindow(BRect frame, char *name);
+	~GlutBWindow();
+	void DirectConnected(direct_buffer_info *info);
 	bool QuitRequested();	// exits app
+	void Minimize(bool minimized);  // minimized windows are not visible
+	void Hide();
+	void Show();
+	GlutWindow *bgl;
+	bool fConnectionDisabled;
 };

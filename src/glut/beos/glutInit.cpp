@@ -1,5 +1,10 @@
 /***********************************************************
- *	Copyright (C) 1997, Be Inc.  All rights reserved.
+ *      Copyright (C) 1997, Be Inc.  Copyright (C) 1999, Jake Hamby.
+ *
+ * This program is freely distributable without licensing fees
+ * and is provided without guarantee or warrantee expressed or
+ * implied. This program is -not- in the public domain.
+ *
  *
  *  FILE:	glutInit.cpp
  *
@@ -12,14 +17,17 @@
 #include <GL/glut.h>
 #include <string.h>
 #include <stdlib.h>
+#include <signal.h>
 #include "glutint.h"
 #include "glutState.h"
+#include "glutBlocker.h"
 #include "beos_x11.h"
 
 /***********************************************************
  *	Global variables
  ***********************************************************/
 GlutState gState;
+char *__glutProgramName = NULL;
 
 /***********************************************************
  *	Private variables
@@ -73,6 +81,16 @@ static int32 bAppThread(void *arg) {
 }
 
 /***********************************************************
+ *	FUNCTION:	sigHandler
+ *
+ *	DESCRIPTION:  shuts down the app on CTRL-C
+ ***********************************************************/
+static void sigHandler(int) {
+  gState.quitAll = true;
+  gBlock.NewEvent();
+}
+
+/***********************************************************
  *	FUNCTION:	glutInit (2.1)
  *
  *	DESCRIPTION:  create BApplication, parse cmd-line arguments,
@@ -89,9 +107,9 @@ void glutInit(int *argcp, char **argv) {
   /* Determine temporary program name. */
   str = strrchr(argv[0], '/');
   if (str == NULL) {
-    gState.programName = argv[0];
+    __glutProgramName = argv[0];
   } else {
-    gState.programName = str + 1;
+    __glutProgramName = str + 1;
   }
 
   /* Make private copy of command line arguments. */
@@ -108,9 +126,9 @@ void glutInit(int *argcp, char **argv) {
   /* determine permanent program name */
   str = strrchr(__glutArgv[0], '/');
   if (str == NULL) {
-    gState.programName = __glutArgv[0];
+    __glutProgramName = __glutArgv[0];
   } else {
-    gState.programName = str + 1;
+    __glutProgramName = str + 1;
   }
 
   /* parse arguments for standard options */
@@ -201,11 +219,18 @@ void __glutInit() {
   // open BApplication
   gState.display = new BApplication("application/x-glut-demo");
   be_app->Unlock();
-  thread_id appthread = spawn_thread(bAppThread, "BApplication", B_NORMAL_PRIORITY, 0);
-  resume_thread(appthread);
+  gState.appthread = spawn_thread(bAppThread, "BApplication", B_NORMAL_PRIORITY, 0);
+  resume_thread(gState.appthread);
 
   bigtime_t unused;
   __glutInitTime(&unused);
+
+  /* set atexit() function to destroy all windows before exiting */
+  if(atexit(__glutDestroyAllWindows))
+  	__glutFatalError("can't set exit handler");
+  
+  /* similarly, destroy all windows on CTRL-C */
+  signal(SIGINT, sigHandler);
 }
 
 /***********************************************************

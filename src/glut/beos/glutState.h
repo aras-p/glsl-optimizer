@@ -1,5 +1,10 @@
 /***********************************************************
- *	Copyright (C) 1997, Be Inc.  All rights reserved.
+ *      Copyright (C) 1997, Be Inc.  Copyright (C) 1999, Jake Hamby.
+ *
+ * This program is freely distributable without licensing fees
+ * and is provided without guarantee or warrantee expressed or
+ * implied. This program is -not- in the public domain.
+ *
  *
  *  FILE:	glutState.h
  *
@@ -22,7 +27,8 @@
  ***********************************************************/
 struct GlutState {
 	BApplication *display;
-	char *programName;			// used in error messages
+	thread_id appthread;
+	
 	int initX, initY;			// initial window position
 	int initWidth, initHeight;	// initial window size
 	unsigned int displayMode;	// initial display mode
@@ -39,11 +45,11 @@ struct GlutState {
 	int modifierKeys;				// only valid during keyboard callback
 	
 	bool debug;					// call glGetError
-	bool swapHack;
+	bool quitAll;				// quit 
 	
 	GlutState() {
 		display = 0;
-		programName = 0;
+		appthread = 0;
 		initX = initY = -1;
 		initWidth = initHeight = 300;
 		displayMode = GLUT_RGB | GLUT_SINGLE | GLUT_DEPTH;
@@ -55,7 +61,7 @@ struct GlutState {
 		idle = 0;
 		menuStatus = 0;
 		modifierKeys = ~0;
-		debug = swapHack = false;
+		debug = quitAll = false;
 	}
 };
 

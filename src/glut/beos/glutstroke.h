@@ -7,8 +7,9 @@
    and is provided without guarantee or warrantee expressed or 
    implied. This program is -not- in the public domain. */
 
-#if defined(WIN32)
-#pragma warning (disable:4244)
+#if defined(_WIN32)
+#pragma warning (disable:4244)  /* disable bogus conversion warnings */
+#pragma warning (disable:4305)  /* VC++ 5.0 version of above warning. */
 #endif
 
 typedef struct {

@@ -37,6 +37,8 @@ suitability of this software for any purpose.  It is provided "as is"
 without express or implied warranty.
 */
 
+#if 0	// Not used currently...
+
 /* 
  *Returns pointer to first char ins search which is also in what, else NULL.
  */
@@ -45,12 +47,15 @@ static char *strscan (char *search, char *what)
 	int i, len = strlen (what);
 	char c;
 
-	while ((c = *(search++)) != (int)NULL)
+	while ((c = *(search++))) {
 		for (i = 0; i < len; i++)
 			if (c == what [i])
 				return (--search);
+	}
 	return (NULL);
 }
+
+#endif
 
 /*
  *    XParseGeometry parses strings of the form
