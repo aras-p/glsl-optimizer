@@ -29,28 +29,18 @@
 #include <math.h>
 #include <stdlib.h>
 #include <GL/glut.h>
+#include "../util/readtex.c"
 
 
-#define FALSE 0
-#define TRUE  1
 #ifndef PI
 #define PI    3.14159265358979323846
 #endif
 
 
-#include "loadppm.c"
-
-int rgb;	/* unused */
-
-#include "tkmap.c"
-
 GLenum doubleBuffer;
 int W = 400, H = 400;
 
-char *imageFileName = 0;
-PPMImage *image;
-
-int numComponents;
+char *imageFileName = "../images/reflect.rgb";
 
 float *minFilter, *magFilter, *sWrapMode, *tWrapMode;
 float decal[] = {GL_DECAL};
@@ -66,17 +56,12 @@ float linear_mipmap_linear[] = {GL_LINEAR_MIPMAP_LINEAR};
 GLint sphereMap[] = {GL_SPHERE_MAP};
 
 float xRotation = 0.0, yRotation = 0.0;
-float zTranslate = -4.0;
-GLenum autoRotate = TRUE;
-GLenum deepestColor = COLOR_GREEN;
-GLenum isLit = TRUE;
-GLenum isFogged = FALSE;
+float zTranslate = -3.0;
+GLenum autoRotate = GL_TRUE;
+GLboolean isLit = GL_TRUE;
+GLboolean isFogged = GL_FALSE;
+GLboolean doTexture = GL_TRUE;
 float *textureEnvironment = modulate;
-
-struct MipMap {
-    int width, height;
-    unsigned char *data;
-};
 
 int cube, cage, cylinder, torus, genericObject;
 
@@ -661,18 +646,6 @@ void BuildLists(void)
     genericObject = torus;
 }
 
-void SetDeepestColor(void)
-{
-    GLint redBits, greenBits, blueBits;
-
-    glGetIntegerv(GL_RED_BITS, &redBits);
-    glGetIntegerv(GL_GREEN_BITS, &greenBits);
-    glGetIntegerv(GL_BLUE_BITS, &blueBits);
-
-    deepestColor = (redBits >= greenBits) ? COLOR_RED : COLOR_GREEN;
-    deepestColor = (deepestColor >= blueBits) ? deepestColor : COLOR_BLUE;
-}
-
 void SetDefaultSettings(void)
 {
 
@@ -681,7 +654,7 @@ void SetDefaultSettings(void)
     sWrapMode = repeat;
     tWrapMode = repeat;
     textureEnvironment = modulate;
-    autoRotate = TRUE;
+    autoRotate = GL_TRUE;
 }
 
 unsigned char *AlphaPadImage(int bufSize, unsigned char *inData, int alpha)
@@ -707,46 +680,46 @@ unsigned char *AlphaPadImage(int bufSize, unsigned char *inData, int alpha)
 void Init(void)
 {
     float ambient[] = {0.0, 0.0, 0.0, 1.0};
-    float diffuse[] = {0.0, 1.0, 0.0, 1.0};
+    float diffuse[] = {1.0, 1.0, 1.0, 1.0};
     float specular[] = {1.0, 1.0, 1.0, 1.0};
-    float position[] = {2.0, 2.0,  0.0, 1.0};
+    float position[] = {0.0, 0.0,  4.0, 0.0};
     float fog_color[] = {0.0, 0.0, 0.0, 1.0};
     float mat_ambient[] = {0.0, 0.0, 0.0, 1.0};
     float mat_shininess[] = {90.0};
     float mat_specular[] = {1.0, 1.0, 1.0, 1.0};
-    float mat_diffuse[] = {1.0, 1.0, 1.0, 1.0};
-    float lmodel_ambient[] = {0.0, 0.0, 0.0, 1.0};
+    float mat_diffuse[] = {0.8, 0.8, 0.8, 1.0};
+    float lmodel_ambient[] = {0.2, 0.2, 0.2, 1.0};
     float lmodel_twoside[] = {GL_TRUE};
+    int w, h;
+    GLenum format;
+    char *image;
 
-    SetDeepestColor();
+    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
+
     SetDefaultSettings();
 
-    if (numComponents == 4) {
-	image = LoadPPM(imageFileName);
-	image->data = AlphaPadImage(image->sizeX*image->sizeY,
-                                    image->data, 128);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	gluBuild2DMipmaps(GL_TEXTURE_2D, numComponents,
-			  image->sizeX, image->sizeY,
-			  GL_RGBA, GL_UNSIGNED_BYTE, image->data);
-    } else {
-	image = LoadPPM(imageFileName);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	gluBuild2DMipmaps(GL_TEXTURE_2D, numComponents,
-			  image->sizeX, image->sizeY,
-			  GL_RGB, GL_UNSIGNED_BYTE, image->data);
+    image = LoadRGBImage(imageFileName, &w, &h, &format);
+    if (!image) {
+       printf("Error: couldn't load %s\n", imageFileName);
+       exit(1);
     }
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    gluBuild2DMipmaps(GL_TEXTURE_2D, format, w, h,
+                      GL_RGB, GL_UNSIGNED_BYTE, image);
+
+    free(image);
 
     glFogf(GL_FOG_DENSITY, 0.125);
     glFogi(GL_FOG_MODE, GL_LINEAR);
     glFogf(GL_FOG_START, 4.0);
-    glFogf(GL_FOG_END, 9.0);
+    glFogf(GL_FOG_END, 8.5);
     glFogfv(GL_FOG_COLOR, fog_color);
 
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
     glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
     glLightfv(GL_LIGHT0, GL_POSITION, position);
+    glEnable(GL_LIGHT0);
 
     glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
@@ -757,18 +730,14 @@ void Init(void)
     glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
     glShadeModel(GL_SMOOTH);
 
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
 
     glClearColor(0.0, 0.0, 0.0, 0.0);
-    glViewport(0, 0, W, H);
     glEnable(GL_DEPTH_TEST);
 
     glFrontFace(GL_CW);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    glEnable(GL_TEXTURE_2D);
     glTexGeniv(GL_S, GL_TEXTURE_GEN_MODE, sphereMap);
     glTexGeniv(GL_T, GL_TEXTURE_GEN_MODE, sphereMap);
     glEnable(GL_TEXTURE_GEN_S);
@@ -786,15 +755,18 @@ void Init(void)
 
 void ReInit(void)
 {
-
     if (genericObject == torus) {
 	glEnable(GL_DEPTH_TEST);
     } else  {
 	glDisable(GL_DEPTH_TEST);
     }
+	glEnable(GL_DEPTH_TEST);
+
+#if 0
     if (isFogged) {
 	textureEnvironment = modulate;
     }
+#endif
 
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
@@ -803,59 +775,54 @@ void ReInit(void)
 
 void Draw(void)
 {
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glFrustum(-0.2, 0.2, -0.2, 0.2, 0.15, 9.0);
-    glMatrixMode(GL_MODELVIEW);
-
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    if (isFogged) {
+
+    /* draw cage */
+    if (isFogged)
 	glEnable(GL_FOG);
-	glColor3fv(RGBMap[deepestColor]);
-    } else {
-	glColor3fv(RGBMap[COLOR_WHITE]);
-    }
+    else
+	glDisable(GL_FOG);
+    glColor3f(1, 1, 1);
     glDisable(GL_LIGHTING);
-    glDisable(GL_LIGHT0);
     glDisable(GL_TEXTURE_2D);
     glCallList(cage);
 
-    glPushMatrix();
-    glTranslatef(0.0, 0.0, zTranslate);
-    glRotatef(xRotation, 1, 0, 0);
-    glRotatef(yRotation, 0, 1, 0);
-
-    if (isLit == TRUE) {
+    /* draw object */
+    if (isLit)
 	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-    }
+    else
+       glColor3f(1.0, 0.5, 0.2);
+    if (doTexture)
+       glEnable(GL_TEXTURE_2D);
 
-    glEnable(GL_TEXTURE_2D);
-    if (isFogged) {
-	glDisable(GL_FOG);
-    }
-    glPolygonMode(GL_FRONT, GL_FILL);
-    glColor3fv(RGBMap[deepestColor]);
-    glCallList(genericObject);
-
+    glPushMatrix();
+        glTranslatef(0.0, 0.0, zTranslate);
+        glRotatef(xRotation, 1, 0, 0);
+        glRotatef(yRotation, 0, 1, 0);
+        glCallList(genericObject);
     glPopMatrix();
-    glFlush();
 
-    if (autoRotate) {
-	xRotation += .75;
-	yRotation += .375;
-    }
+    glFlush();
     glutSwapBuffers();
 }
 
 void Reshape(int width, int height)
 {
-
     W = width;
     H = height;
     ReInit();
     glViewport( 0, 0, width, height );  /*new*/
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glFrustum(-0.2, 0.2, -0.2, 0.2, 0.15, 9.0);
+    glMatrixMode(GL_MODELVIEW);
+}
+
+void Idle(void)
+{
+   xRotation += .75;
+   yRotation += .375;
+   glutPostRedisplay();
 }
 
 void Key2(int key, int x, int y)
@@ -864,27 +831,28 @@ void Key2(int key, int x, int y)
     switch (key) {
       case GLUT_KEY_LEFT:
 	yRotation -= 0.5;
-	autoRotate = FALSE;
+	autoRotate = GL_FALSE;
 	ReInit();
 	break;
       case GLUT_KEY_RIGHT:
 	yRotation += 0.5;
-	autoRotate = FALSE;
+	autoRotate = GL_FALSE;
 	ReInit();
 	break;
       case GLUT_KEY_UP:
 	xRotation -= 0.5;
-	autoRotate = FALSE;
+	autoRotate = GL_FALSE;
 	ReInit();
 	break;
       case GLUT_KEY_DOWN:
 	xRotation += 0.5;
-	autoRotate = FALSE;
+	autoRotate = GL_FALSE;
 	ReInit();
 	break;
       default:
 	return;
     }
+    glutPostRedisplay();
 }
 
 void Key(unsigned char key, int x, int y)
@@ -892,15 +860,28 @@ void Key(unsigned char key, int x, int y)
 
     switch (key) {
       case 27:
-	free(image->data);
+         /*	free(image->data);*/
 	exit(1);
 
       case 'a':
 	autoRotate = !autoRotate;
+        if (autoRotate)
+           glutIdleFunc(Idle);
+        else
+           glutIdleFunc(NULL);
+
 	ReInit();
 	break;
-      case 'c':
-	genericObject = (genericObject == cube) ? cylinder : cube;
+      case 'o':
+        if (genericObject == cube) {
+          genericObject = cylinder;
+        }
+        else if (genericObject == cylinder) {
+          genericObject = torus;
+        }
+        else {
+          genericObject = cube;
+        }
 	ReInit();
 	break;
       case 'd':
@@ -913,6 +894,7 @@ void Key(unsigned char key, int x, int y)
 	break;
       case 'l':
 	isLit = !isLit;
+        printf("lit %d\n", isLit);
 	ReInit();
 	break;
       case 'f':
@@ -920,7 +902,7 @@ void Key(unsigned char key, int x, int y)
 	ReInit();
 	break;
       case 't':
-	genericObject = torus;
+        doTexture = !doTexture;
 	ReInit();
 	break;
       case '0':
@@ -958,6 +940,7 @@ void Key(unsigned char key, int x, int y)
       default:
 	return;
     }
+    glutPostRedisplay();
 }
 
 GLenum Args(int argc, char **argv)
@@ -965,7 +948,6 @@ GLenum Args(int argc, char **argv)
     GLint i;
 
     doubleBuffer = GL_TRUE;
-    numComponents = 4;
 
     for (i = 1; i < argc; i++) {
 	if (strcmp(argv[i], "-sb") == 0) {
@@ -979,21 +961,12 @@ GLenum Args(int argc, char **argv)
 	    } else {
 		imageFileName = argv[++i];
 	    }
-	} else if (strcmp(argv[i], "-4") == 0) {
-	    numComponents = 4;
-	} else if (strcmp(argv[i], "-3") == 0) {
-	    numComponents = 3;
 	} else {
 	    printf("%s (Bad option).\n", argv[i]);
 	    return GL_FALSE;
 	}
     }
     return GL_TRUE;
-}
-
-void GLUTCALLBACK glut_post_redisplay_p(void)
-{
-      glutPostRedisplay();
 }
 
 int main(int argc, char **argv)
@@ -1027,7 +1000,7 @@ int main(int argc, char **argv)
     glutKeyboardFunc(Key);
     glutSpecialFunc(Key2);
     glutDisplayFunc(Draw);
-    glutIdleFunc(glut_post_redisplay_p);
+    glutIdleFunc(Idle);
 
     glutMainLoop();
 	return 0;
