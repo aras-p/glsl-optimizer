@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.5 2000/02/02 22:21:39 brianp Exp $ */
+/* $Id: fog.c,v 1.6 2000/02/02 22:22:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -72,7 +72,7 @@ _mesa_Fogiv(GLenum pname, const GLint *params )
 	 p[3] = INT_TO_FLOAT( params[3] );
 	 break;
       default:
-         /* Error will be caught later in gl_Fogfv */
+         /* Error will be caught later in _mesa_Fogfv */
          ;
    }
    _mesa_Fogfv(pname, p);
@@ -288,7 +288,7 @@ _mesa_fog_rgba_pixels( const GLcontext *ctx,
          }
 	 break;
       default:
-         gl_problem(ctx, "Bad fog mode in gl_fog_rgba_pixels");
+         gl_problem(ctx, "Bad fog mode in _mesa_fog_rgba_pixels");
          return;
    }
 }
@@ -365,7 +365,7 @@ _mesa_fog_ci_pixels( const GLcontext *ctx,
 	 }
 	 break;
       default:
-         gl_problem(ctx, "Bad fog mode in gl_fog_ci_pixels");
+         gl_problem(ctx, "Bad fog mode in _mesa_fog_ci_pixels");
          return;
    }
 }
