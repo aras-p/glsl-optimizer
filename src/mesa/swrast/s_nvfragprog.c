@@ -181,7 +181,8 @@ fetch_vector4( GLcontext *ctx,
  * need to execute another instance of the program (ugh)!
  */
 static GLboolean
-fetch_vector4_deriv( const struct fp_src_register *source,
+fetch_vector4_deriv( GLcontext *ctx,
+                     const struct fp_src_register *source,
                      const struct sw_span *span,
                      char xOrY, GLint column, GLfloat result[4] )
 {
@@ -640,7 +641,8 @@ execute_program( GLcontext *ctx,
             {
                GLfloat a[4], aNext[4], result[4];
                struct fp_machine dMachine;
-               if (!fetch_vector4_deriv(&inst->SrcReg[0], span, 'X', column, result)) {
+               if (!fetch_vector4_deriv(ctx, &inst->SrcReg[0], span, 'X',
+                                        column, result)) {
                   /* This is tricky.  Make a copy of the current machine state,
                    * increment the input registers by the dx or dy partial
                    * derivatives, then re-execute the program up to the
@@ -665,7 +667,8 @@ execute_program( GLcontext *ctx,
             {
                GLfloat a[4], aNext[4], result[4];
                struct fp_machine dMachine;
-               if (!fetch_vector4_deriv(&inst->SrcReg[0], span, 'Y', column, result)) {
+               if (!fetch_vector4_deriv(ctx, &inst->SrcReg[0], span, 'Y',
+                                        column, result)) {
                   init_machine_deriv(ctx, machine, program, span,
                                      'Y', &dMachine);
                   fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a);
