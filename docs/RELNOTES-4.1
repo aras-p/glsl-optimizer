@@ -1,7 +1,7 @@
 
                             Mesa 4.1 release notes
 
-                            <month>, <day>, 2002
+                            October, <day>, 2002
 
                                PLEASE READ!!!!
 
@@ -65,7 +65,7 @@ GL_NV_point_sprite
 
     For rendering points as textured quads.  Useful for particle effects.
 
-GL_NV_texture_rectangle
+GL_NV_texture_rectangle  (new in 4.0.4 actually)
 
     Allows one to use textures with sizes that are not powers of two.
     Note that mipmapping and several texture wrap modes are not allowed.
@@ -142,15 +142,6 @@ New features in GLUT
 
 XXX Things To Do Yet XXXX
 -------------------------
-
-Verify x86 code for normal transformation works with new 4-element normal
-vector arrays.  Pretty sure the SSE code is wrong.
-
-Allow multiple points to be rendered into one sw_span.
-
-improve point/line rendering speed.
-
-glVertexAttrib*NV(index>15) should cause an error.
 
 isosurf with vertex program exhibits some missing triangles (probably
 when recycling the vertex buffer for long prims).
@@ -267,5 +258,21 @@ are some things to change:
    is enabled.
 
 
+7. Removed ctx->Polygon._OffsetAny.  Removed ctx->Polygon.OffsetMRD.
+
+
+8. GLfloat / GLchan changes:
+
+     Changed ctx->Driver.ClearColor() to take GLfloat[4] instead of GLchan[4].
+     ctx->Color.ClearColor is now GLfloat[4] too.
+     Changed ctx->Driver.AlphaRef() to take GLfloat instead of GLchan.
+     ctx->Color.AlphaRef is now GLfloat.
+     texObj->BorderColor is now GLfloat[4].  texObj->_BorderChan is GLchan[4].
+
+   This is part of an effort to remove all GLchan types from core Mesa so
+   that someday we can support 8, 16 and 32-bit color channels dynamically
+   at runtime, instead of at compile-time.
+
+
 ----------------------------------------------------------------------
-$Id: RELNOTES-4.1,v 1.16 2002/09/19 16:34:29 brianp Exp $
+$Id: RELNOTES-4.1,v 1.17 2002/10/04 19:10:27 brianp Exp $
