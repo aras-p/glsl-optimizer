@@ -207,7 +207,7 @@ static GLboolean r128UpdateTextureEnv( GLcontext *ctx, int unit )
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "%s( %p, %d )\n",
-	       __FUNCTION__, (void *) ctx, (void *) unit );
+	       __FUNCTION__, (void *) ctx, unit );
    }
 
    if ( unit == 0 ) {
