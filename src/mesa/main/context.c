@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.29 1999/12/17 14:52:35 brianp Exp $ */
+/* $Id: context.c,v 1.30 1999/12/17 17:00:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1630,6 +1630,11 @@ void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
          fprintf(stderr, "Mesa GL_RENDERER = %s\n", (char *) _mesa_GetString(GL_RENDERER));
          fprintf(stderr, "Mesa GL_VENDOR = %s\n", (char *) _mesa_GetString(GL_VENDOR));
          fprintf(stderr, "Mesa GL_EXTENSIONS = %s\n", (char *) _mesa_GetString(GL_EXTENSIONS));
+#if defined(THREADS)
+         fprintf(stderr, "Mesa thread-safe: YES\n");
+#else
+         fprintf(stderr, "Mesa thread-safe: NO\n");
+#endif
       }
       newCtx->FirstTimeCurrent = GL_FALSE;
    }
