@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.39 2002/04/19 00:38:27 brianp Exp $ */
+/* $Id: s_span.c,v 1.40 2002/04/19 01:08:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1018,7 +1018,6 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span)
          monoColor = GL_FALSE;
       }
       else if (ctx->Color.BlendEnabled) {
-         printf("blending\n");
          _mesa_blend_span(ctx, span, span->color.rgba);
          monoColor = GL_FALSE;
       }
