@@ -1,4 +1,4 @@
-/nologo /W2 /GX /ZI /Od /c /TP 
+/nologo /W2 /GX- /ZI /Od /c /TP 
 /I "../../../include" 
 /I "./include" 
 /I "./libnurbs/interface"
