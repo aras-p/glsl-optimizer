@@ -1,4 +1,4 @@
-/* $Id: t_imm_elt.c,v 1.9 2001/04/30 21:08:52 keithw Exp $ */
+/* $Id: t_imm_elt.c,v 1.10 2001/05/09 14:12:34 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -148,7 +148,7 @@ static trans_elt_4f_func  _tnl_trans_elt_4f_tab[5][MAX_TYPES];
 #define SRC GLbyte
 #define SRC_IDX TYPE_IDX(GL_BYTE)
 #define TRX_3F(f,n)   BYTE_TO_FLOAT( PTR_ELT(f,n) )
-#define TRX_4F(f,n)   (GLfloat)( PTR_ELT(f,n) )
+#define TRX_4F(f,n)   BYTE_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_UB(ub, f,n)  ub = BYTE_TO_UBYTE( PTR_ELT(f,n) )
 #define TRX_US(us, f,n)  us = BYTE_TO_USHORT( PTR_ELT(f,n) )
 #define TRX_UI(f,n)  (PTR_ELT(f,n) < 0 ? 0 : (GLuint)  PTR_ELT(f,n))
@@ -158,6 +158,7 @@ static trans_elt_4f_func  _tnl_trans_elt_4f_tab[5][MAX_TYPES];
 #define INIT init_trans_4_GLbyte_elt
 #define DEST_4F trans_4_GLbyte_4f_elt
 #define DEST_4UB trans_4_GLbyte_4ub_elt
+#define DEST_4US trans_4_GLbyte_4us_elt
 #include "math/m_trans_tmp.h"
 
 #define SZ 3
@@ -192,17 +193,24 @@ static trans_elt_4f_func  _tnl_trans_elt_4f_tab[5][MAX_TYPES];
  */
 #define SRC GLubyte
 #define SRC_IDX TYPE_IDX(GL_UNSIGNED_BYTE)
-#define TRX_3F(f,n)		/* unused */
-#define TRX_4F(f,n)		/* unused */
+#define TRX_3F(f,n)	     UBYTE_TO_FLOAT( PTR_ELT(f,n) )
+#define TRX_4F(f,n)	     UBYTE_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_UB(ub, f,n)	     ub = PTR_ELT(f,n)
 #define TRX_US(us, f,n)	     us = PTR_ELT(f,n)
 #define TRX_UI(f,n)          (GLuint)PTR_ELT(f,n)
 
 /* 4ub->4ub handled in special case below.
  */
+#define SZ 4
+#define INIT init_trans_4_GLubyte_elt
+#define DEST_4F trans_4_GLubyte_4f_elt
+#define DEST_4US trans_4_GLubyte_4us_elt
+#include "math/m_trans_tmp.h"
 
 #define SZ 3
 #define INIT init_trans_3_GLubyte_elt
+#define DEST_4F trans_3_GLubyte_4f_elt
+#define DEST_3F trans_3_GLubyte_3f_elt
 #define DEST_4UB trans_3_GLubyte_4ub_elt
 #define DEST_4US trans_3_GLubyte_4us_elt
 #include "math/m_trans_tmp.h"
@@ -546,6 +554,7 @@ static void init_translate_elt(void)
    init_trans_1_GLbyte_elt();
    init_trans_1_GLubyte_elt();
    init_trans_3_GLubyte_elt();
+   init_trans_4_GLubyte_elt();
    init_trans_4_GLshort_elt();
    init_trans_3_GLshort_elt();
    init_trans_2_GLshort_elt();
