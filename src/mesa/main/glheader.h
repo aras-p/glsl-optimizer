@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.16 2001/01/08 04:09:41 keithw Exp $ */
+/* $Id: glheader.h,v 1.17 2001/02/09 23:39:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,7 +39,11 @@
  * If you touch this file, everything gets recompiled!
  *
  * This file should be included before any other header in the .c files.
+ *
+ * Put compiler/OS/assembly pragmas and macros here to avoid
+ * cluttering other source files.
  */
+
 
 
 #ifdef XFree86LOADER
@@ -70,24 +74,11 @@
 
 
 
-
-/*
- * Put compiler/OS/assembly pragmas and macros here to avoid
- * cluttering other source files.
- */
-
-
-
-/*
- * XXX move as many of these pragma's and MS Windows-isms into
- * the new src/glheader.h file.
- */
-
-#if defined(_WIN32) && !defined(__WIN32__)
+#if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__)
 #	define __WIN32__
 #endif
 
-#if !defined(OPENSTEP) && (defined(__WIN32__) || defined(__CYGWIN__))
+#if !defined(OPENSTEP) && (defined(__WIN32__) && !defined(__CYGWIN__))
 #  pragma warning( disable : 4068 ) /* unknown pragma */
 #  pragma warning( disable : 4710 ) /* function 'foo' not inlined */
 #  pragma warning( disable : 4711 ) /* function 'foo' selected for automatic inline expansion */
@@ -134,7 +125,7 @@
 
 /* compatability guard so we don't need to change client code */
 
-#if defined(_WIN32) && !defined(_WINDEF_) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP)
+#if defined(_WIN32) && !defined(_WINDEF_) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP) && !defined(__CYGWIN__)
 #if 0
 #	define CALLBACK GLCALLBACK
 typedef void *HGLRC;
@@ -164,7 +155,9 @@ typedef unsigned long COLORREF;
 typedef struct tagLAYERPLANEDESCRIPTOR LAYERPLANEDESCRIPTOR, *PLAYERPLANEDESCRIPTOR, *LPLAYERPLANEDESCRIPTOR;
 typedef struct _GLYPHMETRICSFLOAT GLYPHMETRICSFLOAT, *PGLYPHMETRICSFLOAT, *LPGLYPHMETRICSFLOAT;
 typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESCRIPTOR, *LPPIXELFORMATDESCRIPTOR;
+#if !defined(GLX_USE_MESA)
 #include <gl/mesa_wgl.h>
+#endif
 #endif
 
 
