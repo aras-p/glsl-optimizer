@@ -49,7 +49,7 @@ Available options:
 			default = no
 	HAVE_MMX=1	allow MMX specializations, provided your assembler
 			supports MMX instruction set. However, the true CPU
-			capabilities are checked at run-time to avoid crashes.
+			capabilities are checked at run-time to avoid lockups.
 			default = no
 	HAVE_SSE=1	(see HAVE_MMX)
 			default = no
@@ -80,8 +80,7 @@ FAQ:
 
 1. Compilation
 
-   Q) I tried to run `make' and it exits because `gcc' complains it cannot find
-      some stupid file.
+   Q) `make' barfs and exits because it cannot find some stupid file.
    A) You need LFN support.
    A) When compiling for Glide (FX=1), pay attention to Glide path.
 
@@ -89,10 +88,10 @@ FAQ:
       compile some demo.
    A) Upgrade to DJGPP 2.04.
    A) Add `vsnprintf.c' to the CORE_SOURCES in `src/Makefile.DJ' (untested!).
-   A) The following hack should be safe in 90% of the cases, but if anything
-      goes wrong, don't come back to me crying. Anyway, patch `src/imports.c'
-      with the following line:
+   A) Patch `src/mesa/main/imports.c' with the following line:
 	#define vsnprintf(buf, max, fmt, arg) vsprintf(buf, fmt, arg)
+      This hack should be safe in 90% of the cases, but if anything goes wrong,
+      don't come back to me crying.
 
    Q) `make' complains about DXE3 or something, yet it builds the libraries.
    A) DXE3 refers to the DJGPP dynamic modules. You'll need either the latest

@@ -58,9 +58,9 @@ int vl_current_offset, vl_current_delta;
 /* These lookup tables are used to extract RGB values in [0,255]
  * from 15/16-bit pixel values.
  */
-static unsigned char pix15r[0x10000];
-static unsigned char pix15g[0x10000];
-static unsigned char pix15b[0x10000];
+static unsigned char pix15r[0x8000];
+static unsigned char pix15g[0x8000];
+static unsigned char pix15b[0x8000];
 static unsigned char pix16r[0x10000];
 static unsigned char pix16g[0x10000];
 static unsigned char pix16b[0x10000];
@@ -226,6 +226,7 @@ static void v_getrgba15 (unsigned int offset, unsigned char rgba[4])
 {
  word32 c = ((word16 *)vl_current_read_buffer)[offset];
 #if HUGE_LOOKUP
+ c &= 0x7fff;
  rgba[0] = pix15r[c];
  rgba[1] = pix15g[c];
  rgba[2] = pix15b[c];
@@ -378,18 +379,20 @@ void v_init_pixeltables (void)
  for (pixel = 0; pixel <= 0xffff; pixel++) {
      unsigned int r, g, b;
 
-     /* 15bit */
-     r = (pixel & 0x7c00) >> 8;
-     g = (pixel & 0x03E0) >> 3;
-     b = (pixel & 0x001F) << 2;
+     if (pixel <= 0x7fff) {
+        /* 15bit */
+        r = (pixel & 0x7c00) >> 8;
+        g = (pixel & 0x03E0) >> 3;
+        b = (pixel & 0x001F) << 2;
 
-     r = (unsigned int)(((double)r * 255. / 0x7c) + 0.5);
-     g = (unsigned int)(((double)g * 255. / 0x7c) + 0.5);
-     b = (unsigned int)(((double)b * 255. / 0x7c) + 0.5);
+        r = (unsigned int)(((double)r * 255. / 0x7c) + 0.5);
+        g = (unsigned int)(((double)g * 255. / 0x7c) + 0.5);
+        b = (unsigned int)(((double)b * 255. / 0x7c) + 0.5);
 
-     pix15r[pixel] = r;
-     pix15g[pixel] = g;
-     pix15b[pixel] = b;
+        pix15r[pixel] = r;
+        pix15g[pixel] = g;
+        pix15b[pixel] = b;
+     }
 
      /* 16bit */
      r = (pixel & 0xF800) >> 8;
