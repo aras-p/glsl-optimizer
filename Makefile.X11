@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.29 2000/07/18 01:30:36 brianp Exp $
+# $Id: Makefile.X11,v 1.30 2000/07/18 14:31:59 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -162,6 +162,7 @@ sunos5-x11r6-gcc-sl ultrix-gcc unicos unixware uwin vistra:
 	if [ -d src      ] ; then touch src/depend      ; fi
 	if [ -d src-glu  ] ; then touch src-glu/depend  ; fi
 	if [ -d src-glut ] ; then touch src-glut/depend ; fi
+	if [ -d widgets-sgi ] ; then touch widgets-sgi/depend ; fi
 	if [ -d src      ] ; then cd src      ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src-glu  ] ; then cd src-glu  ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src-glut ] ; then cd src-glut ; $(MAKE) -f Makefile.X11 $@ ; fi
@@ -177,6 +178,7 @@ irix6-n32 irix6-n32-dso irix6-gcc-n32-sl irix-debug:
 	if [ -d src-glu  ] ; then touch src-glu/depend  ; fi
 	if [ -d src-glut ] ; then touch src-glut/depend ; fi
 	if [ -d src-glut ] ; then touch src-glut/depend ; fi
+	if [ -d widgets-sgi ] ; then touch widgets-sgi/depend ; fi
 	if [ -d src      ] ; then cd src      ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src-glu  ] ; then cd src-glu  ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src-glut ] ; then cd src-glut ; $(MAKE) -f Makefile.X11 $@ ; fi
@@ -192,6 +194,7 @@ irix6-64 irix6-64-dso:
 	touch src/depend
 	touch src-glu/depend
 	if [ -d src-glut ] ; then touch src-glut/depend ; fi
+	if [ -d widgets-sgi ] ; then touch widgets-sgi/depend ; fi
 	if [ -d src      ] ; then cd src      ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src-glu  ] ; then cd src-glu  ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src-glut ] ; then cd src-glut ; $(MAKE) -f Makefile.X11 $@ ; fi
@@ -226,6 +229,7 @@ cygnus cygnus-linux:
 	-mkdir lib
 	touch src/depend
 	touch src-glu/depend
+	if [ -d widgets-sgi ] ; then touch widgets-sgi/depend ; fi
 	if [ -d src      ] ; then cd src      ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src-glu  ] ; then cd src-glu  ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src-glut ] ; then cd src-glut ; $(MAKE) -f Makefile.X11 $@ ; fi
@@ -264,6 +268,7 @@ linux-ggi linux-386-ggi:
 	touch src/depend
 	touch src-glu/depend
 	if [ -d src-glut        ] ; then touch src-glut/depend ; fi
+	if [ -d widgets-sgi     ] ; then touch widgets-sgi/depend ; fi
 	if [ -d ggi             ] ; then touch ggi/depend      ; fi
 	if [ -d src             ] ; then cd src ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src/GGI/default ] ; then cd src/GGI/default ; $(MAKE)      ; fi
