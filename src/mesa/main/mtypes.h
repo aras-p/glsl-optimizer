@@ -473,7 +473,7 @@ struct gl_current_attrib {
  */
 struct gl_depthbuffer_attrib {
    GLenum Func;			/**< Function for depth buffer compare */
-   GLfloat Clear;		/**< Value to clear depth buffer to */
+   GLclampd Clear;		/**< Value to clear depth buffer to */
    GLboolean Test;		/**< Depth buffering enabled flag */
    GLboolean Mask;		/**< Depth buffer writable? */
    GLboolean OcclusionTest;	/**< GL_HP_occlusion_test */

@@ -43,14 +43,15 @@ void
 _mesa_ClearDepth( GLclampd depth )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLfloat tmp = (GLfloat) CLAMP( depth, 0.0, 1.0 );
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (ctx->Depth.Clear == tmp)
+   depth = CLAMP( depth, 0.0, 1.0 );
+
+   if (ctx->Depth.Clear == depth)
       return;
 
    FLUSH_VERTICES(ctx, _NEW_DEPTH);
-   ctx->Depth.Clear = tmp;
+   ctx->Depth.Clear = depth;
    if (ctx->Driver.ClearDepth)
       (*ctx->Driver.ClearDepth)( ctx, ctx->Depth.Clear );
 }
