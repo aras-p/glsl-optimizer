@@ -32,7 +32,6 @@
 #define __MACH64_DRI_H__ 1
 
 #include "xf86drm.h"
-#include "mach64_common.h"
 
 typedef struct {
    drmHandle fbHandle;
