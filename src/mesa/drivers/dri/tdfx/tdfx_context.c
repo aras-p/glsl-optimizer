@@ -561,14 +561,6 @@ tdfxDestroyContext( __DRIcontextPrivate *driContextPriv )
          /* This share group is about to go away, free our private
           * texture object data.
           */
-#if 0
-         struct gl_texture_object *tObj;
-         tObj = fxMesa->glCtx->Shared->TexObjectList;
-         while (tObj) {
-            tdfxTMFreeTexture(fxMesa, tObj);
-            tObj = tObj->Next;
-         }
-#else
          struct _mesa_HashTable *textures = fxMesa->glCtx->Shared->TexObjects;
          GLuint id;
          for (id = _mesa_HashFirstEntry(textures);
@@ -578,7 +570,6 @@ tdfxDestroyContext( __DRIcontextPrivate *driContextPriv )
                = (struct gl_texture_object *) _mesa_HashLookup(textures, id);
             tdfxTMFreeTexture(fxMesa, tObj);
          }
-#endif
       }
 
       tdfxTMClose(fxMesa);  /* free texture memory */
