@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.83 2002/03/16 18:03:40 brianp Exp $
+$Id: VERSIONS,v 1.84 2002/03/23 02:38:10 brianp Exp $
 
 
 Mesa Version History
@@ -926,6 +926,31 @@ Mesa Version History
 	- feedback attributes for glDraw/CopyPixels and glBitmap were wrong
 	- fixed bug in normal length caching (ParaView lighting bug)
 	- fixed separate_specular color bug found in Chimera (18 Dec 2001)
+
+
+4.0.2  March 25, 2002
+    New:
+	- New DOS (DJGPP) driver written by Daniel Borca
+	- New driver interface functions for TCL drivers (such as Radeon DRI)
+	- GL_RENDERER string returns "Mesa Offscreen16" or "Mesa Offscreen32"
+	  if using deep color channels
+	- latest GL/glext.h and GL/glxext.h headers from SGI
+    Bug fixes:
+	- GL_BLEND with non-black texture env color wasn't always correct
+	- GL_REPLACE with GL_RGB texture format wasn't always correct (alpha)
+	- glTexEnviv( pname != GL_TEXTURE_ENV_COLOR ) was broken
+	- glReadPixels was sometimes mistakenly clipped by the scissor box
+	- glDraw/ReadPixels didn't catch all the errors that they should have
+	- Fixed 24bpp rendering problem in Windows driver (Karl Schultz)
+	- 16-bit GLchan mode fixes (m_trans_tmp.h, s_triangle.c)
+	- Fixed 1-bit float->int conversion bug in glDrawPixels(GL_DEPTH_COMP)
+	- glColorMask as sometimes effecting glXSwapBuffers()
+	- fixed a potential bug in XMesaGarbageCollect()
+	- N threads rendering into one window didn't work reliably
+	- glCopyPixels didn't work for deep color channels
+	- improved 8 -> 16bit/channel texture image conversion (Gerk Huisma)
+    Known bugs:
+	- mipmap LOD computation
 
 
 4.1  Month, ??, 2002
