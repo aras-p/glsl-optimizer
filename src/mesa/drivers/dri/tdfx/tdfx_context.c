@@ -75,6 +75,7 @@ static void tdfxDDInitExtensions( GLcontext *ctx )
    _mesa_enable_extension( ctx, "GL_EXT_texture_lod_bias" );
    _mesa_enable_extension( ctx, "GL_EXT_blend_func_separate" );
    _mesa_enable_extension( ctx, "GL_EXT_fog_coord" );
+   _mesa_enable_extension( ctx, "GL_EXT_texture_env_add" );
 
 #if 0
    _mesa_enable_extension(ctx, "GL_EXT_secondary_color");
@@ -83,7 +84,6 @@ static void tdfxDDInitExtensions( GLcontext *ctx )
 #endif
 
    if ( fxMesa->haveTwoTMUs ) {
-      _mesa_enable_extension( ctx, "GL_EXT_texture_env_add" );
       _mesa_enable_extension( ctx, "GL_ARB_multitexture" );
    }
 
@@ -97,9 +97,7 @@ static void tdfxDDInitExtensions( GLcontext *ctx )
       _mesa_enable_extension( ctx, "GL_EXT_blend_subtract" );
       _mesa_enable_extension( ctx, "GL_EXT_blend_equation_separate" );
    } else {
-#if 0 /*[dBorca] cannot handle 565. badbad! revise*/
       _mesa_enable_extension( ctx, "GL_SGIS_generate_mipmap" );
-#endif
    }
 
    if (fxMesa->haveHwStencil) {
@@ -112,6 +110,7 @@ static void tdfxDDInitExtensions( GLcontext *ctx )
 
    if (TDFX_IS_NAPALM(fxMesa)/*fxMesa->Glide.HaveCombineExt - JJJ*/) {
       _mesa_enable_extension( ctx, "GL_EXT_texture_env_combine" );
+      _mesa_enable_extension( ctx, "GL_ARB_texture_env_combine" );
    }
 
    /* core-level extensions */
