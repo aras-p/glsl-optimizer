@@ -38,7 +38,7 @@
 LIBNAME=""
 MAJOR=1
 MINOR=0
-PATCH=0
+PATCH=""
 DEPS=""
 CPLUSPLUS=0
 STATIC=0
@@ -116,18 +116,23 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
             echo "mklib: Making" $ARCH "static library: " ${LIBNAME}.a
             LINK="ar"
-            OPTS="-ruv"
+            OPTS="-ru"
             # make lib
             ${LINK} ${OPTS} ${LIBNAME}.a ${OBJECTS}
+	    ranlib ${LIBNAME}.a
             # finish up
-            FINAL_LIBS=${LIBNAME}
+            FINAL_LIBS=${LIBNAME}.a
         else
 	    if [ $ARCH = 'Linux' ] ; then
 		OPTS="-Xlinker -Bsymbolic -shared -Wl,-soname,${LIBNAME}.so.${MAJOR}"
 	    else
 		OPTS="-shared -Wl,-soname,${LIBNAME}.so.${MAJOR}"
 	    fi
-            VERSION="${MAJOR}.${MINOR}.${PATCH}"
+	    if [ x${PATCH} = "x" ] ; then
+		VERSION="${MAJOR}.${MINOR}"
+	    else
+		VERSION="${MAJOR}.${MINOR}.${PATCH}"
+	    fi
 
             echo "mklib: Making" $ARCH "shared library: " ${LIBNAME}.so.${VERSION}
 
@@ -325,7 +330,7 @@ case $ARCH in
 	;;
 
     'Darwin')
-	VERSION="${MAJOR}.${MINOR}.${TINY}"
+	VERSION="${MAJOR}.${MINOR}.${PATCH}"
 	LIBNAME="lib${LIBNAME}.dylib"
 	ARNAME="lib${LIBNAME}.dylib.a"
 	echo "mklib: Making Darwin libraries: " ${LIBNAME} ${ARNAME}
