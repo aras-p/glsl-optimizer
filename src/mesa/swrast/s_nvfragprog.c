@@ -1,5 +1,3 @@
-/* $Id: s_nvfragprog.c,v 1.15 2003/04/11 01:20:15 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -556,6 +554,7 @@ execute_program( GLcontext *ctx,
                    * Finally, find the difference in the register values for
                    * the original and derivative runs.
                    */
+                  fetch_vector4( &inst->SrcReg[0], machine, program, a);
                   init_machine_deriv(ctx, machine, program, span,
                                      'X', &dMachine);
                   execute_program(ctx, program, pc, &dMachine, span, column);
@@ -575,6 +574,7 @@ execute_program( GLcontext *ctx,
                if (!fetch_vector4_deriv(&inst->SrcReg[0], span, 'Y', result)) {
                   init_machine_deriv(ctx, machine, program, span,
                                      'Y', &dMachine);
+                  fetch_vector4( &inst->SrcReg[0], machine, program, a);
                   execute_program(ctx, program, pc, &dMachine, span, column);
                   fetch_vector4( &inst->SrcReg[0], &dMachine, program, aNext );
                   result[0] = aNext[0] - a[0];
