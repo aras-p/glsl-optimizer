@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.17 2001/05/17 09:32:17 keithw Exp $ */
+/* $Id: s_lines.c,v 1.18 2001/05/21 18:13:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -780,10 +780,9 @@ static void smooth_multitextured_line( GLcontext *ctx,
 	   pbspec[count][BCOMP] = FixedToInt(sb0);		\
 	   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {	\
 	      if (ctx->Texture.Unit[u]._ReallyEnabled) {	\
-	         PB->s[u][0] = fragTexcoord[u][0];		\
-	         PB->s[u][1] = fragTexcoord[u][1];		\
-	         PB->s[u][2] = fragTexcoord[u][2];		\
-	         PB->s[u][3] = fragTexcoord[u][3];		\
+	         PB->s[u][count] = fragTexcoord[u][0];		\
+	         PB->t[u][count] = fragTexcoord[u][1];		\
+	         PB->u[u][count] = fragTexcoord[u][2];		\
 	      }							\
 	   }							\
 	   count++;						\
@@ -817,10 +816,9 @@ static void smooth_multitextured_line( GLcontext *ctx,
 	   pbspec[count][BCOMP] = FixedToInt(sb0);		\
 	   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {	\
 	      if (ctx->Texture.Unit[u]._ReallyEnabled) {	\
-	         PB->s[u][0] = fragTexcoord[u][0];		\
-	         PB->s[u][1] = fragTexcoord[u][1];		\
-	         PB->s[u][2] = fragTexcoord[u][2];		\
-	         PB->s[u][3] = fragTexcoord[u][3];		\
+	         PB->s[u][count] = fragTexcoord[u][0];		\
+	         PB->t[u][count] = fragTexcoord[u][1];		\
+	         PB->u[u][count] = fragTexcoord[u][2];		\
 	      }							\
 	   }							\
 	   count++;						\
@@ -881,10 +879,9 @@ static void flat_multitextured_line( GLcontext *ctx,
 	   pbspec[count][BCOMP] = sBlue;			\
 	   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {	\
 	      if (ctx->Texture.Unit[u]._ReallyEnabled) {	\
-	         PB->s[u][0] = fragTexcoord[u][0];		\
-	         PB->s[u][1] = fragTexcoord[u][1];		\
-	         PB->s[u][2] = fragTexcoord[u][2];		\
-	         PB->s[u][3] = fragTexcoord[u][3];		\
+	         PB->s[u][count] = fragTexcoord[u][0];		\
+	         PB->t[u][count] = fragTexcoord[u][1];		\
+	         PB->u[u][count] = fragTexcoord[u][2];		\
 	      }							\
 	   }							\
 	   count++;						\
@@ -916,10 +913,9 @@ static void flat_multitextured_line( GLcontext *ctx,
 	   pbspec[count][BCOMP] = sBlue;			\
 	   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {	\
 	      if (ctx->Texture.Unit[u]._ReallyEnabled) {	\
-	         PB->s[u][0] = fragTexcoord[u][0];		\
-	         PB->s[u][1] = fragTexcoord[u][1];		\
-	         PB->s[u][2] = fragTexcoord[u][2];		\
-	         PB->s[u][3] = fragTexcoord[u][3];		\
+	         PB->s[u][count] = fragTexcoord[u][0];		\
+	         PB->t[u][count] = fragTexcoord[u][1];		\
+	         PB->u[u][count] = fragTexcoord[u][2];		\
 	      }							\
 	   }							\
 	   count++;						\

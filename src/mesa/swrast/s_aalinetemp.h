@@ -1,4 +1,4 @@
-/* $Id: s_aalinetemp.h,v 1.11 2001/05/17 14:49:38 brianp Exp $ */
+/* $Id: s_aalinetemp.h,v 1.12 2001/05/21 18:13:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -122,7 +122,7 @@ NAME(plot)(GLcontext *ctx, const struct LineInfo *line,
    PB_WRITE_MULTITEX_SPEC_PIXEL(pb, ix, iy, z, fog, red, green, blue, alpha,
                                 specRed, specGreen, specBlue, tex);
 #else
-   PB_WRITE_MULTITEX_PIXEL(pb, ix, iy, z, fog, red, green, blue, alpha, texcoords);
+   PB_WRITE_MULTITEX_PIXEL(pb, ix, iy, z, fog, red, green, blue, alpha, tex);
 #endif
 #elif defined(DO_TEX)
    PB_WRITE_TEX_PIXEL(pb, ix, iy, z, fog, red, green, blue, alpha,
@@ -239,16 +239,15 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
       line.texWidth[0] = (GLfloat) texImage->Width;
       line.texHeight[0] = (GLfloat) texImage->Height;
    }
-#elif defined(DO_MULITEX)
+#elif defined(DO_MULTITEX)
    {
       GLuint u;
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-         if (ctx->Texture.Unit[u].ReallyEnabled) {
-            const struct gl_texture_object *obj = ctx->Texture.Unit[u].Current;
+         if (ctx->Texture.Unit[u]._ReallyEnabled) {
+            const struct gl_texture_object *obj = ctx->Texture.Unit[u]._Current;
             const struct gl_texture_image *texImage = obj->Image[obj->BaseLevel];
             const GLfloat invW0 = v0->win[3];
             const GLfloat invW1 = v1->win[3];
-            GLfloat (*texCoord)[4] = VB->TexCoordPtr[u]->data;
             const GLfloat s0 = v0->texcoord[u][0] * invW0;
             const GLfloat s1 = v1->texcoord[u][0] * invW1;
             const GLfloat t0 = v0->texcoord[u][1] * invW0;
@@ -259,8 +258,8 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
             const GLfloat q1 = v1->texcoord[u][3] * invW0;
             compute_plane(line.x0, line.y0, line.x1, line.y1, s0, s1, line.sPlane[u]);
             compute_plane(line.x0, line.y0, line.x1, line.y1, t0, t1, line.tPlane[u]);
-            compute_plane(line.x0, line.y0, line.x1, line.y1, u0, u1, line.uPlane[u]);
-            compute_plane(line.x0, line.y0, line.x1, line.y1, v0, v1, line.vPlane[u]);
+            compute_plane(line.x0, line.y0, line.x1, line.y1, r0, r1, line.uPlane[u]);
+            compute_plane(line.x0, line.y0, line.x1, line.y1, q0, q1, line.vPlane[u]);
             line.texWidth[u]  = (GLfloat) texImage->Width;
             line.texHeight[u] = (GLfloat) texImage->Height;
          }
