@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.32 2001/01/02 22:02:51 brianp Exp $ */
+/* $Id: light.c,v 1.33 2001/01/04 16:22:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1072,7 +1072,10 @@ static void validate_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
       }
       else {
 	 for (i = 1 ; i < SHINE_TABLE_SIZE ; i++) {
-	    GLdouble t = pow(i / (GLfloat)(SHINE_TABLE_SIZE-1), shininess);
+            GLdouble t, x = i / (GLfloat) (SHINE_TABLE_SIZE - 1);
+            if (x < 0.005) /* underflow check */
+               x = 0.005;
+            t = pow(x, shininess);
 	    if (t > 1e-20)
 	       m[i] = t;
 	    else
