@@ -8,7 +8,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -127,6 +127,7 @@
 #include "math/m_xform.h"
 #include "math/mathmod.h"
 #endif
+#include "shaderobjects.h"
 
 #ifdef USE_SPARC_ASM
 #include "sparc/sparc.h"
@@ -867,6 +868,8 @@ alloc_shared_state( GLcontext *ctx )
 
    ss->BufferObjects = _mesa_NewHashTable();
 
+   ss->GL2Objects = _mesa_NewHashTable ();
+
    ss->Default1D = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_1D);
    if (!ss->Default1D)
       goto cleanup;
@@ -922,6 +925,9 @@ alloc_shared_state( GLcontext *ctx )
    if (ss->BufferObjects)
       _mesa_DeleteHashTable(ss->BufferObjects);
 #endif
+
+   if (ss->GL2Objects)
+      _mesa_DeleteHashTable (ss->GL2Objects);
 
    if (ss->Default1D)
       (*ctx->Driver.DeleteTexture)(ctx, ss->Default1D);
@@ -1019,6 +1025,9 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
 #if FEATURE_ARB_vertex_buffer_object
    _mesa_DeleteHashTable(ss->BufferObjects);
 #endif
+
+   _mesa_DeleteHashTable (ss->GL2Objects);
+
    _glthread_DESTROY_MUTEX(ss->Mutex);
 
    FREE(ss);
@@ -1179,6 +1188,7 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_polygon( ctx );
    _mesa_init_program( ctx );
    _mesa_init_rastpos( ctx );
+   _mesa_init_shaderobjects (ctx);
    _mesa_init_stencil( ctx );
    _mesa_init_transform( ctx );
    _mesa_init_varray( ctx );
