@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.11 1999/10/17 20:18:15 brianp Exp $ */
+/* $Id: gl.h,v 1.12 1999/10/17 21:42:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2096,15 +2096,25 @@ GLAPI void GLAPIENTRY glColorSubTable( GLenum target,
                                        GLenum format, GLenum type,
                                        const GLvoid *data );
 
+GLAPI void GLAPIENTRY glColorTableParameteriv(GLenum target, GLenum pname,
+                                              const GLint *params);
+
+GLAPI void GLAPIENTRY glColorTableParameterfv(GLenum target, GLenum pname,
+                                              const GLfloat *params);
+
+GLAPI void GLAPIENTRY glCopyColorSubTable( GLenum target, GLsizei start,
+                                           GLint x, GLint y, GLsizei width );
+
+GLAPI void GLAPIENTRY glCopyColorTable( GLenum target, GLenum internalformat,
+                                        GLint x, GLint y, GLsizei width );
+
 GLAPI void GLAPIENTRY glGetColorTable( GLenum target, GLenum format,
                                        GLenum type, GLvoid *table );
 
-GLAPI void GLAPIENTRY glGetColorTableParameterfv( GLenum target,
-                                                  GLenum pname,
+GLAPI void GLAPIENTRY glGetColorTableParameterfv( GLenum target, GLenum pname,
                                                   GLfloat *params );
 
-GLAPI void GLAPIENTRY glGetColorTableParameteriv( GLenum target,
-                                                  GLenum pname,
+GLAPI void GLAPIENTRY glGetColorTableParameteriv( GLenum target, GLenum pname,
                                                   GLint *params );
 
 GLAPI void GLAPIENTRY glBlendEquation( GLenum mode );
@@ -2184,12 +2194,6 @@ GLAPI void GLAPIENTRY glSeparableFilter2D( GLenum target,
 
 GLAPI void GLAPIENTRY glGetSeparableFilter( GLenum target, GLenum format,
 	GLenum type, GLvoid *row, GLvoid *column, GLvoid *span );
-
-GLAPI void GLAPIENTRY glCopyColorSubTable( GLenum target, GLsizei start,
-	GLint x, GLint y, GLsizei width );
-
-GLAPI void GLAPIENTRY glCopyColorTable( GLenum target, GLenum internalformat,
-	GLint x, GLint y, GLsizei width );
 
 
 
