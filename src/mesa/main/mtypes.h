@@ -1245,8 +1245,7 @@ struct gl_texture_object
 {
    _glthread_Mutex Mutex;	/**< for thread safety */
    GLint RefCount;		/**< reference count */
-   GLboolean DeletePending;	/**< Has glDeleteTexture been called? */
-   GLuint Name;			/**< an unsigned integer */
+   GLuint Name;			/**< the user-visible texture object ID */
    GLenum Target;               /**< GL_TEXTURE_1D, GL_TEXTURE_2D, etc. */
    GLfloat Priority;		/**< in [0,1] */
    GLfloat BorderColor[4];	/**< unclamped */
