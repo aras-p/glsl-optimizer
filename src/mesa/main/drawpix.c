@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.6 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: drawpix.c,v 1.7 1999/11/18 15:44:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -129,6 +129,8 @@ simple_DrawPixels( GLcontext *ctx, GLint x, GLint y,
             drawHeight -= (destY + drawHeight - ctx->Buffer->Ymax - 1);
          if (drawHeight <= 0)
             return GL_TRUE;
+
+         zoomY0 = 0;  /* not used - silence compiler warning */
       }
       else {
          /* setup array of fragment Z value to pass to zoom function */
