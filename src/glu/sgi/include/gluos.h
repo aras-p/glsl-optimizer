@@ -1,7 +1,6 @@
 /*
 ** gluos.h - operating system dependencies for GLU
 **
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/include/gluos.h,v 1.6 2003/10/14 23:48:57 kendallb Exp $
 */
 #ifdef __VMS
 #ifdef __cplusplus

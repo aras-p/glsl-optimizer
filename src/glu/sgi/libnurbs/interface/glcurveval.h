@@ -35,8 +35,6 @@
 /*
  * glcurveval.h
  *
- * $Date: 2003/10/15 21:11:13 $ $Revision: 1.6 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glcurveval.h,v 1.6 2003/10/15 21:11:13 brianp Exp $
  */
 
 #ifndef __gluglcurveval_h_

@@ -31,8 +31,6 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2003/10/14 23:48:58 $ $Revision: 1.4 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/mipmap.c,v 1.4 2003/10/14 23:48:58 kendallb Exp $
 */
 
 #include "gluos.h"

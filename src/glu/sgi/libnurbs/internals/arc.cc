@@ -35,8 +35,6 @@
 /*
  * arc.c++
  *
- * $Date: 2003/10/14 23:48:57 $ $Revision: 1.3 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/arc.cc,v 1.3 2003/10/14 23:48:57 kendallb Exp $
  */
 
 #include <stdio.h>

@@ -31,10 +31,8 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2003/10/14 23:48:57 $ $Revision: 1.3 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/directedLine.cc,v 1.3 2003/10/14 23:48:57 kendallb Exp $
 */
 
 #include <stdlib.h>

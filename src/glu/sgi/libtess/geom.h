@@ -35,8 +35,6 @@
 /*
 ** Author: Eric Veach, July 1994.
 **
-** $Date: 2003/10/14 23:48:57 $ $Revision: 1.2 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libtess/geom.h,v 1.2 2003/10/14 23:48:57 kendallb Exp $
 */
 
 #ifndef __geom_h_

@@ -35,8 +35,6 @@
 /*
  * mymath.h
  *
- * $Date: 2003/10/15 21:11:13 $ $Revision: 1.3 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/mymath.h,v 1.3 2003/10/15 21:11:13 brianp Exp $
  */
 
 #ifndef __glumymath_h_

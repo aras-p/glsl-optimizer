@@ -35,8 +35,6 @@
 /*
  * basiccrveval.c++
  *
- * $Date: 2003/10/14 23:48:57 $ $Revision: 1.2 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/basiccrveval.cc,v 1.2 2003/10/14 23:48:57 kendallb Exp $
  */
 
 #include "mystdio.h"

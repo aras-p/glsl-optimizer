@@ -35,8 +35,6 @@
 /*
  * glsurfeval.h
  *
- * $Date: 2003/10/15 21:11:13 $ $Revision: 1.5 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glsurfeval.h,v 1.5 2003/10/15 21:11:13 brianp Exp $
  */
 
 #ifndef __gluglsurfeval_h_

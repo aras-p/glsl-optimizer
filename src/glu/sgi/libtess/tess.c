@@ -35,8 +35,6 @@
 /*
 ** Author: Eric Veach, July 1994.
 **
-** $Date: 2003/10/14 23:48:57 $ $Revision: 1.4 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libtess/tess.c,v 1.4 2003/10/14 23:48:57 kendallb Exp $
 */
 
 #include "gluos.h"

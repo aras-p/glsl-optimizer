@@ -35,8 +35,6 @@
 /*
  * nurbsinterfac.c++
  *
- * $Date: 2003/10/15 21:11:13 $ $Revision: 1.2 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/nurbsinterfac.cc,v 1.2 2003/10/15 21:11:13 brianp Exp $
  */
 
 #include "glimports.h"
