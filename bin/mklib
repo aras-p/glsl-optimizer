@@ -162,7 +162,7 @@ case $ARCH in
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making SunOS static library: " ${LIBNAME}
 	    rm -f ${LIBNAME}
-	    ar ru ${LIBNAME} ${OBJECTS}
+	    ar -ruv ${LIBNAME} ${OBJECTS}
 	    FINAL_LIBS=${LIBNAME}
 	else
 	    LIBNAME="lib${LIBNAME}.so"
@@ -287,12 +287,12 @@ case $ARCH in
 	FINAL_LIBS=${LIBNAME}
 	;;
 
-    'HPUX')
+    'HP-UX')
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making HPUX static library: " ${LIBNAME}
 	    rm -f ${LIBNAME}
-	    ar ru ${LIBNAME} ${OBJECTS}
+	    ar -ruv ${LIBNAME} ${OBJECTS}
 	    FINAL_LIBS=${LIBNAME}
 	else
 	    RUNLIB="lib${LIBNAME}.${MAJOR}"
@@ -303,6 +303,28 @@ case $ARCH in
 	    FINAL_LIBS="{RUNLIB} ${DEVLIB}"
 	fi
 	;;
+
+    'AIX')
+        if [ $STATIC = 1 ] ; then
+            LIBNAME="lib${LIBNAME}.a"
+            echo "mklib: Making AIX static library: " ${LIBNAME}
+            ar -ruv ${LIBNAME} ${OBJECTS}
+            FINAL_LIBS=${LIBNAME}
+        else
+            echo "mklib: PROBLEM: AIX shared libs not supported!!!"
+        fi
+        ;;
+
+    'AIX64')
+        if [ $STATIC = 1 ] ; then
+            LIBNAME="lib${LIBNAME}.a"
+            echo "mklib: Making AIX static library: " ${LIBNAME}
+            ar -X64 -ruv ${LIBNAME} ${OBJECTS}
+            FINAL_LIBS=${LIBNAME}
+        else
+            echo "mklib: PROBLEM: AIX64 shared libs not supported!!!"
+        fi
+        ;;
 
     'OpenSTEP')
 	LIBNAME="lib${LIBNAME}.a"
@@ -316,7 +338,7 @@ case $ARCH in
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making OSF/1 static library: " ${LIBNAME}
 	    rm -f ${LIBNAME}
-	    ar clqz ${LIBNAME} ${OBJECTS}
+	    ar -ruv ${LIBNAME} ${OBJECTS}
 	    FINAL_LIBS=${LIBNAME}
 	else
 	    VERSION="${MAJOR}.${MINOR}"
@@ -330,19 +352,27 @@ case $ARCH in
 	;;
 
     'Darwin')
-	VERSION="${MAJOR}.${MINOR}.${PATCH}"
-	ARNAME="lib${LIBNAME}.dylib.a"
-	LIBNAME="lib${LIBNAME}.dylib"
-	echo "mklib: Making Darwin libraries: " ${LIBNAME} ${ARNAME}
-	FLAGS="-dynamiclib -multiply_defined suppress"
-	cc ${FLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
-	# also make regular .a files,
-	# provided by Danek Duvall (duvall@dhduvall.student.princeton.edu)
-	rm -f ${ARNAME}
-	ar ruv ${ARNAME} ${OBJECTS}
-	ranlib ${ARNAME}
-	FINAL_LIBS="${ARNAME} ${LIBNAME}"
-	;;
+        if [ $STATIC = 1 ] ; then
+            LIBNAME="lib${LIBNAME}.a"
+            echo "mklib: Making Darwin static library: " ${LIBNAME}
+            LINK="ar"
+            OPTS="-ruv"
+            ${LINK} ${OPTS} ${LIBNAME} ${OBJECTS}
+            FINAL_LIBS=${LIBNAME}
+        else
+            VERSION="${MAJOR}.${MINOR}.${PATCH}"
+            LIBNAME="${LIBNAME}.dylib"
+            ARNAME="${LIBNAME}.dylib.a"
+            echo "mklib: Making Darwin libraries: " ${LIBNAME} ${ARNAME}
+            FLAGS="-dynamiclib -multiply_defined suppress"
+            cc ${FLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+            # also make regular .a files,
+            # provided by Danek Duvall (duvall@dhduvall.student.princeton.edu)
+            ar ruv ${ARNAME} ${OBJECTS}
+            ranlib ${ARNAME}
+            FINAL_LIBS="${ARNAME} ${LIBNAME}"
+        fi
+        ;;
 
     'LynxOS')
 	LIBNAME="lib${LIBNAME}.a"
@@ -388,7 +418,6 @@ case $ARCH in
         else
             OPTS="-shared"
             VERSION="${MAJOR}.${MINOR}.${PATCH}"
-
             echo "mklib: Making Intel ICC shared library: " ${LIBNAME}.so.${VERSION}
 
             if [ $CPLUSPLUS = 1 ] ; then
@@ -396,12 +425,10 @@ case $ARCH in
             else
                 LINK="icc"
             fi
-
             # rm any old libs
             rm -f ${LIBNAME}.so.${VERSION}
             rm -f ${LIBNAME}.so.${MAJOR}
             rm -f ${LIBNAME}.so
-
             # make lib
             ${LINK} ${OPTS} -o ${LIBNAME}.so.${VERSION} ${OBJECTS} ${DEPS}
             # make usual symlinks
@@ -427,10 +454,8 @@ case $ARCH in
 	    rm -f ${LIBNAME}
 	    # make the lib
 	    gcc -shared -Wl,-G ${OBJECTS} ${DEPS} -o ${LIBNAME}
-
 	    # NOTE: the application linking with this library must specify
 	    # the -Wl,-brtl flags to gcc
-
 	    FINAL_LIBS=${LIBNAME}
 	fi
 	;;
