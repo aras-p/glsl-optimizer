@@ -484,8 +484,8 @@ static void extract_3f_xyw( const struct tnl_clipspace_attr *a, GLfloat *out, co
    
    out[0] = in[0];
    out[1] = in[1];
-   out[2] = in[3];
-   out[3] = 1;
+   out[2] = 0;
+   out[3] = in[2];
 }
 
 
