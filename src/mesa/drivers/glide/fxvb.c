@@ -17,9 +17,9 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * KEITH WHITWELL, OR ANY OTHER CONTRIBUTORS BE LIABLE FOR ANY CLAIM, 
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+ * KEITH WHITWELL, OR ANY OTHER CONTRIBUTORS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
@@ -86,10 +86,10 @@ static void copy_pv2( GLcontext *ctx, GLuint edst, GLuint esrc )
 }
 
 static struct {
-   tnl_emit_func	emit;
+   void		      (*emit) (GLcontext *ctx, GLuint start, GLuint end, void *dest);
    tnl_copy_pv_func	copy_pv;
    tnl_interp_func	interp;
-   GLboolean	      (*check_tex_sizes)( GLcontext *ctx );
+   GLboolean	      (*check_tex_sizes) (GLcontext *ctx);
    GLuint		vertex_format;
 } setup_tab[MAX_SETUP];
 
@@ -657,8 +657,8 @@ void fxPrintSetupFlags(char *msg, GLuint flags )
    fprintf(stderr, "%s(%x): %s%s%s%s%s%s%s%s\n",
 	   msg,
 	   (int)flags,
-	   (flags & SETUP_XYZW)     ? " xyzw," : "", 
-	   (flags & SETUP_SNAP)     ? " snap," : "", 
+	   (flags & SETUP_XYZW)     ? " xyzw," : "",
+	   (flags & SETUP_SNAP)     ? " snap," : "",
 	   (flags & SETUP_RGBA)     ? " rgba," : "",
 	   (flags & SETUP_TMU0)     ? " tex-0," : "",
 	   (flags & SETUP_TMU1)     ? " tex-1," : "",
@@ -698,7 +698,7 @@ void fxCheckTexSizes( GLcontext *ctx )
 }
 
 
-void fxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
+void fxBuildVertices( GLcontext *ctx, GLuint start, GLuint end,
 			GLuint newinputs )
 {
    fxMesaContext fxMesa = FX_CONTEXT( ctx );
@@ -708,20 +708,20 @@ void fxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
       return;
 
    if (newinputs & VERT_BIT_POS) {
-      setup_tab[fxMesa->SetupIndex].emit( ctx, start, count, v );   
+      setup_tab[fxMesa->SetupIndex].emit( ctx, start, end, v );
    } else {
       GLuint ind = 0;
 
       if (newinputs & VERT_BIT_COLOR0)
 	 ind |= SETUP_RGBA;
-      
+
       if (newinputs & VERT_BIT_COLOR1)
 	 ind |= SETUP_SPEC;
 
       if (newinputs & VERT_BIT_FOG)
 	 ind |= SETUP_FOGC;
 
-      if (newinputs & VERT_BIT_TEX0) 
+      if (newinputs & VERT_BIT_TEX0)
 	 ind |= SETUP_TMU0;
 
       if (newinputs & VERT_BIT_TEX1)
@@ -733,7 +733,7 @@ void fxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
       ind &= fxMesa->SetupIndex;
 
       if (ind) {
-	 setup_tab[ind].emit( ctx, start, count, v );   
+	 setup_tab[ind].emit( ctx, start, end, v );
       }
    }
 }
