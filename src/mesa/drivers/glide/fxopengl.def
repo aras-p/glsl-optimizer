@@ -916,6 +916,7 @@ EXPORTS
  wglDescribePixelFormat
  wglGetCurrentContext
  wglGetCurrentDC
+ wglGetDefaultProcAddress
  wglGetLayerPaletteEntries
  wglGetPixelFormat
  wglGetProcAddress

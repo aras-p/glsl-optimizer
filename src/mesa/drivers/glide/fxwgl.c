@@ -504,6 +504,13 @@ wglGetProcAddress(LPCSTR lpszProc)
    return (NULL);
 }
 
+GLAPI PROC GLAPIENTRY
+wglGetDefaultProcAddress(LPCSTR lpszProc)
+{ 
+   SetLastError(0);
+   return (NULL);
+}
+
 GLAPI BOOL GLAPIENTRY
 wglMakeCurrent(HDC hdc, HGLRC hglrc)
 {
