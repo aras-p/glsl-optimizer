@@ -818,6 +818,14 @@ _mesa_BindTexture( GLenum target, GLuint texName )
             newTexObj->WrapT = GL_CLAMP_TO_EDGE;
             newTexObj->WrapR = GL_CLAMP_TO_EDGE;
             newTexObj->MinFilter = GL_LINEAR;
+            if (ctx->Driver.TexParameter) {
+               static const GLfloat fparam_wrap[1] = {(GLfloat) GL_CLAMP_TO_EDGE};
+               static const GLfloat fparam_filter[1] = {(GLfloat) GL_LINEAR};
+               (*ctx->Driver.TexParameter)( ctx, target, newTexObj, GL_TEXTURE_WRAP_S, fparam_wrap );
+               (*ctx->Driver.TexParameter)( ctx, target, newTexObj, GL_TEXTURE_WRAP_T, fparam_wrap );
+               (*ctx->Driver.TexParameter)( ctx, target, newTexObj, GL_TEXTURE_WRAP_R, fparam_wrap );
+               (*ctx->Driver.TexParameter)( ctx, target, newTexObj, GL_TEXTURE_MIN_FILTER, fparam_filter );
+            }
          }
       }
       else {
