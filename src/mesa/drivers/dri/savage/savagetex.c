@@ -269,7 +269,16 @@ static void savageUploadTexLevel( savageTexObjPtr t, int level )
 	    GLuint wInTiles = width / tileInfo->width;
 	    GLubyte *src = image->Data;
 	    GLubyte *dest = (GLubyte *)(t->bufAddr + t->image[level].offset);
+	    GLuint tileStride = tileInfo->width * bpp * height;
+	    savageContextPtr imesa = (savageContextPtr)t->base.heap->driverContext;
 	    GLuint x;
+	    /* Savage3D-based chips seem so use a constant tile stride
+	     * of 2048 for vertically incomplete tiles, but only if
+	     * the color depth is 32bpp. Nobody said this was supposed
+	     * to be logical!
+	     */
+	    if (bpp == 4 && imesa->savageScreen->chipset < S3_SAVAGE4)
+		tileStride = 2048;
 	    for (x = 0; x < wInTiles; ++x) {
 		if (*dirtyPtr & dirtyMask) {
 		    savageUploadTile (tileInfo,
@@ -278,7 +287,7 @@ static void savageUploadTexLevel( savageTexObjPtr t, int level )
 				      bpp, src, width * bpp, dest);
 		}
 		src += tileInfo->width * bpp;
-		dest += tileInfo->width * bpp * height;
+		dest += tileStride;
 		if (dirtyMask == 1<<31) {
 		    dirtyMask = 1;
 		    dirtyPtr++;
