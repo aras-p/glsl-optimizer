@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -74,16 +74,19 @@ _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
 
 
 extern struct program * 
-_mesa_init_vertex_program( GLcontext *ctx, 
-			   struct vertex_program *prog, 
-			   GLenum target,
-			   GLuint id );
+_mesa_init_vertex_program(GLcontext *ctx, 
+                          struct vertex_program *prog, 
+                          GLenum target, GLuint id);
 
 extern struct program * 
-_mesa_init_fragment_program( GLcontext *ctx, 
-			     struct fragment_program *prog,
-			     GLenum target, 
-			     GLuint id );
+_mesa_init_fragment_program(GLcontext *ctx, 
+                            struct fragment_program *prog,
+                            GLenum target, GLuint id);
+
+extern struct program *
+_mesa_init_ati_fragment_shader(GLcontext *ctx,
+                               struct ati_fragment_shader *prog,
+                               GLenum target, GLuint id );
 
 extern struct program *
 _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id);

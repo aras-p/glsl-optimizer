@@ -234,8 +234,9 @@ _mesa_init_vertex_program( GLcontext *ctx, struct vertex_program *prog,
  * Initialize a new ATI fragment shader object.
  */
 struct program *
-_mesa_init_ati_fragment_shader( GLcontext *ctx, struct ati_fragment_shader *prog,
-                           GLenum target, GLuint id)
+_mesa_init_ati_fragment_shader( GLcontext *ctx,
+                                struct ati_fragment_shader *prog,
+                                GLenum target, GLuint id )
 {
    if (prog) 
       return _mesa_init_program_struct( ctx, &prog->Base, target, id );
