@@ -114,7 +114,7 @@ key(unsigned char k, int x, int y)
     exit(0);
     break;
   default:
-    return;
+    break;
   }
   glutPostRedisplay();
 }
