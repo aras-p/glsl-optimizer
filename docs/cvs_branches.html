@@ -7,30 +7,42 @@
 <H1>CVS Branch Information</H1>
 
 <p>
-The Mesa3d sources are split up into two branches. A branch that is to
-remain as stable as possible, and an unstable branch where development
-work for new versions will be done. The current stable branch is
-tagged <code>mesa_3_4_branch</code> while the unstable branch is just
-the default. The goal is to adopt and even/odd stable/unstable
-versioning scheme similar to the Linux kernel. Hence releases of Mesa
-3.2.X should be more stable than Mesa 3.3.X.<p></p> <p>All versions of
-Mesa after 3.0 will also be tagged with a branch id. Mesa 3.1 has the
-tag <code>mesa_3_1</code>, Mesa 3.2 will be <code>mesa_3_2</code>,
-Mesa 3.3 <code>mesa_3_3</code>, etc..</p>
+At any given time, there may be several active branches in Mesa's
+CVS repository.
 
-<p>
-To checkout a specific branch of mesa just pass <code>-r</code> and
-the branch tag after your cvs command. For example <code>cvs checkout
--r mesa_3_4_branch Mesa</code> will checkout the 3.4 branch and
-<code>cvs update -r mesa_3_4_branch</code> will convert your current
-branch to the 3.4 dev branch.
-Consult <a href="http://www.durak.org/cvswebsites/doc/cvs_5.php3#SEC54"
-target="_parent">http://www.durak.org/cvswebsites/doc/cvs_5.php3#SEC54</a>
-for more on branching in cvs.
+Generally, the CVS trunk contains the latest development (unstable)
+code while a CVS branch has the latest stable code.
 </p>
 
 <p>
-To see a list of all the CVS branchs run <code>cvs log README</code> (or any
+Currently (Nov 2003), the trunk is the Mesa 5.1 development code
+while the mesa_5_0_branch branch has the stable Mesa 5.0.x code.
+</p>
+
+<p>
+Mesa releases use an even/odd numbering scheme to represent stable/development
+releases.
+
+For example, Mesa 5.0.x (0 is considered even) is a stable release while
+Mesa 5.1.x is a development release.
+</p>
+
+<p>
+To checkout a specific CVS branch pass <code>-r</code> and
+the branch tag after your CVS command.
+
+For example <code>cvs checkout -r mesa_5_0_branch Mesa</code> will
+checkout the 5.0.x branch and <code>cvs update -r
+mesa_5_0_branch</code> will convert your current CVS tree to the 5.0.x
+branch.
+
+Consult <a href="http://www.durak.org/cvswebsites/doc/cvs_5.php3#SEC54"
+target="_parent">http://www.durak.org/cvswebsites/doc/cvs_5.php3#SEC54</a>
+for more on branching in CVS.
+</p>
+
+<p>
+To see a list of all the CVS branches run <code>cvs log README</code> (or any
 other file) and look for the section labeled <code>symbolic names</code>.
 You'll see something like this:
 </p>
@@ -54,6 +66,13 @@ You'll see something like this:
         start: 1.1.1.1
         mesa: 1.1.1
 </pre>
+
+<p>
+Most will be obsolete branches.  Generally, the newer branches are at
+the top.  Ask on the mesa3d-dev mailing list to learn which branches
+are active.
+</p>
+
 
 </body>
 </html>
