@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.59 2001/03/19 02:25:35 keithw Exp $ */
+/* $Id: dd.h,v 1.60 2001/03/22 00:36:27 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -439,7 +439,7 @@ struct dd_function_table {
    /***
     *** Imaging functionality:
     ***/
-   void (*CopyColorTable)( GLcontext *ctx, 
+   void (*CopyColorTable)( GLcontext *ctx,
 			   GLenum target, GLenum internalformat,
 			   GLint x, GLint y, GLsizei width );
 
@@ -447,13 +447,13 @@ struct dd_function_table {
 			      GLenum target, GLsizei start,
 			      GLint x, GLint y, GLsizei width );
 
-   void (*CopyConvolutionFilter1D)( GLcontext *ctx, GLenum target, 
-				    GLenum internalFormat, 
+   void (*CopyConvolutionFilter1D)( GLcontext *ctx, GLenum target,
+				    GLenum internalFormat,
 				    GLint x, GLint y, GLsizei width );
-   
-   void (*CopyConvolutionFilter2D)( GLcontext *ctx, GLenum target, 
-				    GLenum internalFormat, 
-				    GLint x, GLint y, 
+
+   void (*CopyConvolutionFilter2D)( GLcontext *ctx, GLenum target,
+				    GLenum internalFormat,
+				    GLint x, GLint y,
 				    GLsizei width, GLsizei height );
 
 
@@ -498,6 +498,7 @@ struct dd_function_table {
                             const GLfloat *params);
    void (*PointSize)(GLcontext *ctx, GLfloat size);
    void (*PolygonMode)(GLcontext *ctx, GLenum face, GLenum mode);
+   void (*PolygonOffset)(GLcontext *ctx, GLfloat factor, GLfloat units);
    void (*PolygonStipple)(GLcontext *ctx, const GLubyte *mask );
    void (*RenderMode)(GLcontext *ctx, GLenum mode );
    void (*Scissor)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);

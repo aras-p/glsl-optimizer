@@ -1,4 +1,4 @@
-/* $Id: polygon.c,v 1.20 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: polygon.c,v 1.21 2001/03/22 00:36:27 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -196,6 +196,9 @@ _mesa_PolygonOffset( GLfloat factor, GLfloat units )
    ctx->Polygon.OffsetFactor = factor;
    ctx->Polygon.OffsetUnits = units;
    ctx->Polygon.OffsetMRD = units * ctx->MRD;
+
+   if (ctx->Driver.PolygonOffset)
+      ctx->Driver.PolygonOffset( ctx, factor, units );
 }
 
 
