@@ -535,55 +535,31 @@ void r200InitState( r200ContextPtr rmesa )
          rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F5] =
          rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+
+      rmesa->hw.pix[i].cmd[PIX_PP_TXCBLEND] =
+         (R200_TXC_ARG_A_ZERO |
+          R200_TXC_ARG_B_ZERO |
+          R200_TXC_ARG_C_DIFFUSE_COLOR |
+          R200_TXC_OP_MADD);
+
+      rmesa->hw.pix[i].cmd[PIX_PP_TXCBLEND2] =
+         ((i << R200_TXC_TFACTOR_SEL_SHIFT) |
+          R200_TXC_SCALE_1X |
+          R200_TXC_CLAMP_0_1 |
+          R200_TXC_OUTPUT_REG_R0);
+
+      rmesa->hw.pix[i].cmd[PIX_PP_TXABLEND] =
+         (R200_TXA_ARG_A_ZERO |
+          R200_TXA_ARG_B_ZERO |
+          R200_TXA_ARG_C_DIFFUSE_ALPHA |
+          R200_TXA_OP_MADD);
+
+      rmesa->hw.pix[i].cmd[PIX_PP_TXABLEND2] =
+         ((i << R200_TXA_TFACTOR_SEL_SHIFT) |
+          R200_TXA_SCALE_1X |
+          R200_TXA_CLAMP_0_1 |
+          R200_TXA_OUTPUT_REG_R0);
    }
-
-   rmesa->hw.pix[0].cmd[PIX_PP_TXCBLEND] =  
-      (R200_TXC_ARG_A_ZERO |
-       R200_TXC_ARG_B_ZERO |
-       R200_TXC_ARG_C_DIFFUSE_COLOR |
-       R200_TXC_OP_MADD);
-
-   rmesa->hw.pix[0].cmd[PIX_PP_TXCBLEND2] =  
-      ((0 << R200_TXC_TFACTOR_SEL_SHIFT) | 
-       R200_TXC_SCALE_1X |
-       R200_TXC_CLAMP_0_1 |
-       R200_TXC_OUTPUT_REG_R0);
-
-   rmesa->hw.pix[0].cmd[PIX_PP_TXABLEND] =  
-      (R200_TXA_ARG_A_ZERO |
-       R200_TXA_ARG_B_ZERO |
-       R200_TXA_ARG_C_DIFFUSE_ALPHA |
-       R200_TXA_OP_MADD);
-
-   rmesa->hw.pix[0].cmd[PIX_PP_TXABLEND2] =  
-      ((0 << R200_TXA_TFACTOR_SEL_SHIFT) | 
-       R200_TXA_SCALE_1X |
-       R200_TXA_CLAMP_0_1 |
-       R200_TXA_OUTPUT_REG_R0);
-
-   rmesa->hw.pix[1].cmd[PIX_PP_TXCBLEND] =  
-      (R200_TXC_ARG_A_ZERO |
-       R200_TXC_ARG_B_ZERO |
-       R200_TXC_ARG_C_DIFFUSE_COLOR |
-       R200_TXC_OP_MADD);
-
-   rmesa->hw.pix[1].cmd[PIX_PP_TXCBLEND2] =  
-      ((0 << R200_TXC_TFACTOR_SEL_SHIFT) | 
-       R200_TXC_SCALE_1X |
-       R200_TXC_CLAMP_0_1 |
-       R200_TXC_OUTPUT_REG_R0);
-
-   rmesa->hw.pix[1].cmd[PIX_PP_TXABLEND] =  
-      (R200_TXA_ARG_A_ZERO |
-       R200_TXA_ARG_B_ZERO |
-       R200_TXA_ARG_C_DIFFUSE_ALPHA |
-       R200_TXA_OP_MADD);
-
-   rmesa->hw.pix[1].cmd[PIX_PP_TXABLEND2] =  
-      ((0 << R200_TXA_TFACTOR_SEL_SHIFT) | 
-       R200_TXA_SCALE_1X |
-       R200_TXA_CLAMP_0_1 |
-       R200_TXA_OUTPUT_REG_R0);
 
    rmesa->hw.tf.cmd[TF_TFACTOR_0] = 0;
    rmesa->hw.tf.cmd[TF_TFACTOR_1] = 0;
