@@ -613,8 +613,8 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = INT_TO_BOOLEAN(MAX_TEXTURE_STACK_DEPTH);
          break;
       case GL_MAX_VIEWPORT_DIMS:
-         params[0] = INT_TO_BOOLEAN(MAX_WIDTH);
-         params[1] = INT_TO_BOOLEAN(MAX_HEIGHT);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxViewportWidth);
+         params[1] = INT_TO_BOOLEAN(ctx->Const.MaxViewportHeight);
          break;
       case GL_MODELVIEW_MATRIX:
          {
@@ -2416,8 +2416,8 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)(MAX_TEXTURE_STACK_DEPTH);
          break;
       case GL_MAX_VIEWPORT_DIMS:
-         params[0] = (GLfloat)(MAX_WIDTH);
-         params[1] = (GLfloat)(MAX_HEIGHT);
+         params[0] = (GLfloat)(ctx->Const.MaxViewportWidth);
+         params[1] = (GLfloat)(ctx->Const.MaxViewportHeight);
          break;
       case GL_MODELVIEW_MATRIX:
          {
@@ -4219,8 +4219,8 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = MAX_TEXTURE_STACK_DEPTH;
          break;
       case GL_MAX_VIEWPORT_DIMS:
-         params[0] = MAX_WIDTH;
-         params[1] = MAX_HEIGHT;
+         params[0] = ctx->Const.MaxViewportWidth;
+         params[1] = ctx->Const.MaxViewportHeight;
          break;
       case GL_MODELVIEW_MATRIX:
          {
