@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.13 2000/10/17 00:42:02 brianp Exp $ */
+/* $Id: buffers.c,v 1.14 2000/10/19 18:17:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -211,15 +211,19 @@ clear_color_buffers(GLcontext *ctx)
       if (bufferBit & ctx->Color.DrawDestMask) {
          if (bufferBit == FRONT_LEFT_BIT) {
             (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_FRONT_LEFT);
+            (void) (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_FRONT_LEFT);
          }
          else if (bufferBit == FRONT_RIGHT_BIT) {
             (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_FRONT_RIGHT);
+            (void) (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_FRONT_RIGHT);
          }
          else if (bufferBit == BACK_LEFT_BIT) {
             (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_BACK_LEFT);
+            (void) (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_BACK_LEFT);
          }
          else {
             (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_BACK_RIGHT);
+            (void) (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer, GL_BACK_RIGHT);
          }
          
          if (colorMask != 0xffffffff) {
@@ -231,8 +235,9 @@ clear_color_buffers(GLcontext *ctx)
       }
    }
 
-   /* restore default dest buffer */
+   /* restore default read/draw buffers */
    (void) (*ctx->Driver.SetDrawBuffer)( ctx, ctx->Color.DriverDrawBuffer );
+   (void) (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer, ctx->Pixel.DriverReadBuffer );
 }
 
 
