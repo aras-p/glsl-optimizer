@@ -978,12 +978,12 @@ void i915ValidateFragmentProgram( i915ContextPtr i915 )
 
    if (inputsRead & FRAG_BIT_COL0) {
       intel->coloroffset = offset / 4;
-      EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA, S4_VFMT_COLOR, 4 );
+      EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, S4_VFMT_COLOR, 4 );
    }
    
    if (inputsRead & FRAG_BIT_COL1) {
       intel->specoffset = offset / 4;
-      EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB, S4_VFMT_SPEC_FOG, 3 );
+      EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, S4_VFMT_SPEC_FOG, 3 );
       EMIT_PAD( 1 );
    }
 

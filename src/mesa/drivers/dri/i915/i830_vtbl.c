@@ -87,13 +87,13 @@ static void i830_render_start( intelContextPtr intel )
       intel->coloroffset = 3;
    }
 
-   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA, VFT0_DIFFUSE );
+   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, VFT0_DIFFUSE );
       
    intel->specoffset = 0;
    if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
       if (index & _TNL_BIT_COLOR1) {
 	 intel->specoffset = intel->coloroffset + 1;
-	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB, VFT0_SPEC );
+	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, VFT0_SPEC );
       }
       else 
 	 EMIT_PAD( 3 );

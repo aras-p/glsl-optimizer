@@ -593,12 +593,12 @@ void i915ValidateTextureProgram( i915ContextPtr i915 )
    }
       
    intel->coloroffset = offset / 4;
-   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA, S4_VFMT_COLOR, 4 );
+   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, S4_VFMT_COLOR, 4 );
             
    if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
       if (index & _TNL_BIT_COLOR1) {
 	 intel->specoffset = offset / 4;
-	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB, S4_VFMT_SPEC_FOG, 3 );
+	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, S4_VFMT_SPEC_FOG, 3 );
       } else 
 	 EMIT_PAD( 3 );
       
