@@ -96,7 +96,7 @@ INCLUDE_DIRS = \
 targets: depend mga_dri.so
 
 mga_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.solo
-	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc -lm
+	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc $(GL_LIB_DEPS)
 	rm -f $(TOP)/lib/mga_dri.so && \
 	install mga_dri.so $(TOP)/lib/mga_dri.so
 

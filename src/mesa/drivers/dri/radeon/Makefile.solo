@@ -128,7 +128,7 @@ INCLUDE_DIRS = \
 targets: depend $(TARGET)
 
 $(TARGET):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.solo
-	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc -lm
+	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc $(GL_LIB_DEPS)
 	rm -f $(TOP)/lib/$(TARGET) && \
 	install $(TARGET) $(TOP)/lib/$(TARGET)
 
