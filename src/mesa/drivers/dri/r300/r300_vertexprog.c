@@ -14,10 +14,10 @@ static void r300BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
 
 static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 {
-r300ContextPtr rmesa = R300_CONTEXT(ctx);
-struct r300_vertex_program *vp;
-struct fragment_program *fp;
-struct ati_fragment_shader *afs;
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	struct r300_vertex_program *vp;
+	struct fragment_program *fp;
+	struct ati_fragment_shader *afs;
 
 	fprintf(stderr, "r300NewProgram, target=%d, id=%d\n", target, id);
 
@@ -89,8 +89,8 @@ static void r300ProgramStringNotify(GLcontext *ctx, GLenum target,
 struct{
 	char *name;
 	int opcode;
-	unsigned long ip; /* input reg index */
-	unsigned long op; /* output reg index */
+	unsigned long ip; /* number of input operands and flags */
+	unsigned long op;
 }op_names[]={
 	OPN(ABS, 1, 1),
 	OPN(ADD, 2, 1),
