@@ -420,8 +420,9 @@ int pc_readkey (void)
  if (keyboard_installed) {
     int key;
 
-    do {
-    } while (key_buffer.start==key_buffer.end);
+    while (key_buffer.start==key_buffer.end) {
+          __dpmi_yield();
+    }
 
     DISABLE();
     key = key_buffer.key[key_buffer.start++];

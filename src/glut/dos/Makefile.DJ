@@ -59,11 +59,13 @@ CFLAGS += -I- -I$(TOP)/include -I. -I$(MKGLUT) -IPC_HW
 AR = ar
 ARFLAGS = rus
 
-ifneq ($(wildcard $(DJDIR)/lib/dxe3.ld),)
-DXE3GEN = $(wildcard $(addsuffix /dxe3gen.exe,$(subst ;, ,$(PATH))))
-endif
+HAVEDXE3 = $(wildcard $(DJDIR)/bin/dxe3gen.exe)
 
-RM = del
+ifeq ($(wildcard $(addsuffix /rm.exe,$(subst ;, ,$(PATH)))),)
+UNLINK = del $(subst /,\,$(1))
+else
+UNLINK = $(RM) $(1)
+endif
 
 CORE_SOURCES = \
 	callback.c \
@@ -118,16 +120,15 @@ $(LIBDIR)/$(GLUT_LIB): $(OBJECTS)
 	$(AR) $(ARFLAGS) $(LIBDIR)/$(GLUT_LIB) $(OBJECTS)
 
 $(LIBDIR)/$(GLUT_DXE) $(LIBDIR)/$(GLUT_IMP): $(OBJECTS)
-ifeq ($(DXE3GEN),)
-	$(warning Missing DXE3GEN and/or DXE3.LD! You must have DXE3GEN)
-	$(warning somewhere in PATH, and DXE3.LD in DJGPP/LIB directory.)
+ifeq ($(HAVEDXE3),)
+	$(warning Missing DXE3 package... Skipping $(GLUT_DXE))
 else
 	-dxe3gen -o $(LIBDIR)/$(GLUT_DXE) -I $(LIBDIR)/$(GLUT_IMP) -D "MesaGLUT DJGPP" -E _glut -P gl.dxe -P glu.dxe -U $(OBJECTS)
 endif
 
 clean:
-	-$(RM) $(subst /,\,*.o)
-	-$(RM) $(subst /,\,PC_HW/*.o)
-	-$(RM) $(subst /,\,$(MKGLUT)/*.o)
+	-$(call UNLINK,*.o)
+	-$(call UNLINK,PC_HW/*.o)
+	-$(call UNLINK,$(MKGLUT)/*.o)
 
 -include depend

@@ -70,7 +70,7 @@ Tested on:
 	CPU:		K6-2 (CXT) @500(412.5) MHz
 	Mainboard:	ViA Apollo VP2/97 w/ 128 MB SDRAM
 	Video card:	PowerColor EvilKing3 (Voodoo3 3000 PCI) w/ 16 MB SDRAM
-	DJGPP:		djdev 2.04 + gcc v3.2.1 + make v3.79.1
+	DJGPP:		djdev 2.04 + gcc v3.2.2 + make v3.79.1
 	OS:		DOS and Win9x
 
 
@@ -94,26 +94,16 @@ FAQ:
       with the following line:
 	#define vsnprintf(buf, max, fmt, arg) vsprintf(buf, fmt, arg)
 
-2. Dynamic modules
+   Q) `make' complains about DXE3 or something, yet it builds the libraries.
+   A) DXE3 refers to the DJGPP dynamic modules. You'll need either the latest
+      DJGPP distro, or download the separate package from my web page. Read the
+      DXE3 documentation on how to use them. Hint: build your export object
+      file; then link it with your application. For example:
+	dxe3res -o dxe3tbl.c gl.dxe glu.dxe glut.dxe
+	gcc -o dxe3tbl.o -c dxe3tbl.c
+	gcc -o OUT.exe dxe3tbl.o IN.c -liglut -liglu -ligl -ldl
 
-   Q) What are you mumbling about dynamic modules?
-   A) You must have the DXE3 package (available on my site) installed in order
-      to build the dynamic modules.
-
-   Q) DXE3 modules give me headaches...
-   A) The DXE3 modules are not compulsory. The static libraries are still built
-      and you can use them in the old-fashioned, classic way... and learn to
-      live with your huge executable size. For example:
-	gcc -o OUT.exe IN.c -lglut -lglu -lgl
-
-   Q) Okay, DXE3 modules are built. How can I use them?
-   A) Build your export object file; then link it with your application.
-      For example:
-	dxe3res -o dmesadxe.c gl.dxe glu.dxe glut.dxe
-	gcc -o dmesadxe.o -c dmesadxe.c
-	gcc -o OUT.exe dmesadxe.o IN.c -liglut -liglu -ligl -ldl
-
-3. Using Mesa for DJGPP
+2. Using Mesa for DJGPP
 
    Q) DMesa is so SLOOOW! The Win32 OpenGL performs so much better...
    A) Is that a question? If you have a Voodoo3/Banshee card, you're lucky (the
@@ -188,6 +178,7 @@ position right before the main loop.
 The following environment variables can customize GLUT behaviour:
 	DMESA_GLUT_REFRESH	- set vertical screen refresh rate (VESA3)
 	DMESA_GLUT_BPP		- set default bits per pixel (VGA needs 8)
+	GLUT_FPS		- print frames/second statistics to stderr
 
 
 
@@ -217,7 +208,8 @@ v1.3 (mar-2003)
 	+ added Matrox Millennium MGA2064W driver
 	+ added 8bit FakeColor (thanks to Neil Funk)
 	+ added VGA support (to keep Ben Decker happy)
-	! fixed GLUT compilation error (reported by Chan Kar Heng)
+	! fixed some compilation errors (reported by Chan Kar Heng)
+	* optimized driver for faster callback access... yeah, right :)
 	* overhauled virtual buffer and internal video drivers
 	* better fxMesa integration
 	* revamped GLUT

@@ -67,7 +67,7 @@ LD = gxx
 LDFLAGS = -s -L$(TOP)/lib
 
 ifeq ($(DXE),1)
-DMESADXE = $(TOP)/lib/dmesadxe.o
+DXE3TABLE = $(TOP)/lib/dxe3tbl.o
 LDLIBS += -liglut -liglu -ligl -ldl
 else
 LDLIBS = -lglut -lglu -lgl
@@ -80,7 +80,7 @@ endif
 .c.o:
 	$(CC) -o $@ $(CFLAGS) -c $<
 .o.exe:
-	$(LD) -o $@ $(LDFLAGS) $(DMESADXE) $< $(LDLIBS)
+	$(LD) -o $@ $(LDFLAGS) $(DXE3TABLE) $< $(LDLIBS)
 
 all:
 	$(error Must specify <filename.exe> to build)

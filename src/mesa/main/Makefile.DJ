@@ -89,11 +89,13 @@ endif
 AR = ar
 ARFLAGS = rus
 
-ifneq ($(wildcard $(DJDIR)/lib/dxe3.ld),)
-DXE3GEN = $(wildcard $(addsuffix /dxe3gen.exe,$(subst ;, ,$(PATH))))
-endif
+HAVEDXE3 = $(wildcard $(DJDIR)/bin/dxe3gen.exe)
 
-RM = del
+ifeq ($(wildcard $(addsuffix /rm.exe,$(subst ;, ,$(PATH)))),)
+UNLINK = del $(subst /,\,$(1))
+else
+UNLINK = $(RM) $(1)
+endif
 
 CORE_SOURCES = \
 	api_arrayelt.c \
@@ -173,6 +175,7 @@ CORE_SOURCES = \
 	swrast/s_drawpix.c \
 	swrast/s_feedback.c \
 	swrast/s_fog.c \
+	swrast/s_histogram.c \
 	swrast/s_imaging.c \
 	swrast/s_lines.c \
 	swrast/s_logic.c \
@@ -310,9 +313,8 @@ $(LIBDIR)/$(GL_LIB): $(OBJECTS)
 	$(AR) $(ARFLAGS) $(LIBDIR)/$(GL_LIB) $(OBJECTS)
 
 $(LIBDIR)/$(GL_DXE) $(LIBDIR)/$(GL_IMP): $(OBJECTS)
-ifeq ($(DXE3GEN),)
-	$(warning Missing DXE3GEN and/or DXE3.LD! You must have DXE3GEN)
-	$(warning somewhere in PATH, and DXE3.LD in DJGPP/LIB directory.)
+ifeq ($(HAVEDXE3),)
+	$(warning Missing DXE3 package... Skipping $(GL_DXE))
 else
 ifeq ($(FX),1)
 	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) -D $(LIBNAME) -E _gl -E _DMesa -P glid3.dxe -U $(OBJECTS)
@@ -330,15 +332,15 @@ X86/gen_matypes.exe: X86/gen_matypes.c
 	$(CC) -o $@ $(CFLAGS) -s $<
 
 clean:
-	-$(RM) $(subst /,\,*.o)
-	-$(RM) $(subst /,\,array_cache/*.o)
-	-$(RM) $(subst /,\,math/*.o)
-	-$(RM) $(subst /,\,swrast/*.o)
-	-$(RM) $(subst /,\,swrast_setup/*.o)
-	-$(RM) $(subst /,\,tnl/*.o)
-	-$(RM) $(subst /,\,X86/*.o)
-	-$(RM) $(subst /,\,DOS/*.o)
-	-$(RM) $(subst /,\,DOS/mga/*.o)
-	-$(RM) $(subst /,\,FX/*.o)
+	-$(call UNLINK,*.o)
+	-$(call UNLINK,array_cache/*.o)
+	-$(call UNLINK,math/*.o)
+	-$(call UNLINK,swrast/*.o)
+	-$(call UNLINK,swrast_setup/*.o)
+	-$(call UNLINK,tnl/*.o)
+	-$(call UNLINK,X86/*.o)
+	-$(call UNLINK,DOS/*.o)
+	-$(call UNLINK,DOS/mga/*.o)
+	-$(call UNLINK,FX/*.o)
 
 -include depend

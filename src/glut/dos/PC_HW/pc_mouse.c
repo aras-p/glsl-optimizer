@@ -274,6 +274,5 @@ _mouse_wrap:					\n\
 		movl	%esi, %esp		\n\
 		popl	%es			\n\
 		iret				\n\
-		.balign	4			\n\
 		.global	_mouse_wrap_end		\n\
 _mouse_wrap_end:.long	0, 0");
