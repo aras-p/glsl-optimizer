@@ -122,12 +122,12 @@ static __GLcontextModes * fill_in_modes( __GLcontextModes * modes,
 {
     static const uint8_t bits[2][4] = {
 	{          5,          6,          5,          0 },
-	{          8,          8,          8,          0 }
+	{          8,          8,          8,          8 }
     };
 
     static const uint32_t masks[2][4] = {
 	{ 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 },
-	{ 0x00FF0000, 0x0000FF00, 0x000000FF, 0x00000000 }
+	{ 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000 }
     };
 
     unsigned   i;
@@ -146,12 +146,12 @@ static __GLcontextModes * fill_in_modes( __GLcontextModes * modes,
 	    modes->blueMask  = masks[index][2];
 	    modes->alphaMask = masks[index][3];
 	    modes->rgbBits   = modes->redBits + modes->greenBits
-		+ modes->blueBits;
+		+ modes->blueBits + modes->alphaBits;
 
 	    modes->accumRedBits   = 16 * j;
 	    modes->accumGreenBits = 16 * j;
 	    modes->accumBlueBits  = 16 * j;
-	    modes->accumAlphaBits = 0;
+	    modes->accumAlphaBits = 16 * j;
 	    modes->visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
 
 	    modes->stencilBits = stencil_bits;
@@ -205,6 +205,7 @@ r200FillInModes( unsigned pixel_bits, unsigned depth_bits,
 	{ 0, 0 }
     };
 
+    depth_buffer_modes[0][0] = depth_bits;
     depth_buffer_modes[1][0] = depth_bits;
     depth_buffer_modes[1][1] = stencil_bits;
 
