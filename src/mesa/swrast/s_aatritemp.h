@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.32 2003/01/20 00:25:17 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.33 2003/01/20 15:20:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -464,10 +464,10 @@
             GLint j;
             for (j = 0; j < (GLint) n; j++) {
 #ifdef DO_RGBA
-               COPY_4V(array->rgba[j], array->rgba[j + left]);
+               COPY_CHAN4(array->rgba[j], array->rgba[j + left]);
 #endif
 #ifdef DO_SPEC
-               COPY_4V(array->spec[j], array->spec[j + left]);
+               COPY_CHAN4(array->spec[j], array->spec[j + left]);
 #endif
 #ifdef DO_INDEX
                array->index[j] = array->index[j + left];
