@@ -7,7 +7,7 @@
 
 <center>
 <h1>Mesa Frequently Asked Questions</h1>
-Last updated: 26 November 2003
+Last updated: 31 December 2003
 </center>
 
 <br>
@@ -203,8 +203,8 @@ package and unpack it before compiling Mesa.
 <h2><a name="part2">2.6 What's the proper place for the libraries and headers?</a></h2>
 <p>
 <a name="part2">On Linux-based systems you'll want to follow the
-</a><a href="http://oss.sgi.com/projects/ogl-sample/ABI/index.html">Linux ABI</a>
-standard.
+</a><a href="http://oss.sgi.com/projects/ogl-sample/ABI/index.html"
+target="_parent">Linux ABI</a> standard.
 Basically you'll want the following:
 </p>
 <ul>
@@ -260,7 +260,7 @@ hardware it has detected.
 </a></p>
 <p>
 <a name="part3">If your DRI-based driver isn't working, go to the
-</a><a href="http://dri.sf.net/">DRI website</a> for trouble-shooting information.
+</a><a href="http://dri.sf.net/" target="_parent">DRI website</a> for trouble-shooting information.
 </p>
 
 
@@ -268,7 +268,8 @@ hardware it has detected.
 <p>
 Make sure the ratio of the far to near clipping planes isn't too great.
 Look
-<a href="http://www.sgi.com/software/opengl/advanced97/notes/node18.html">
+<a href="http://www.sgi.com/software/opengl/advanced97/notes/node18.html"
+target="_parent">
 here</a> for details.
 </p>
 <p>
@@ -324,7 +325,7 @@ will fix the problem.
 is discussed.
 </a></p>
 <p>
-<a name="part4">The </a><a href="http://www.opengl.org/developers/documentation/specs.html">
+<a name="part4">The </a><a href="http://www.opengl.org/developers/documentation/specs.html" target="_parent">
 OpenGL Specification</a> is the bible for OpenGL implemention work.
 You should read it.
 </p>
@@ -353,6 +354,23 @@ That being said, many people have managed to figure out the process.
 <p>
 Joining the appropriate mailing lists and asking questions (and searching
 the archives) is a good way to get information.
+</p>
+
+
+<h2>4.3 Why isn't GL_EXT_texture_compression_s3tc implemented in Mesa and/or the DRI drivers?</h2>
+<p>
+The <a href="http://oss.sgi.com/projects/ogl-sample/registry/EXT/texture_compression_s3tc.txt" target="_parent">specification for the extension</a>
+indicates that there are intellectual property (IP) and/or patent issues
+to be dealt with.
+</p>
+<p>We've been unsucessful in getting a response from S3 (or whoever owns
+the IP nowadays) to indicate whether or not an open source project can
+implement the extension (specifically the compression/decompression
+algorithms).
+</p>
+<p>
+Until we can get official permission to do so, this extension will not
+be implemented in Mesa.
 </p>
 
 
