@@ -109,7 +109,7 @@ static void mgaDmaPrimitive( GLcontext *ctx, GLenum prim )
 
 
 #define ALLOC_VERTS( nr ) \
-   mgaAllocDmaLow( mmesa, nr * mmesa->vertex_size * 4)
+  mgaAllocDmaLow( mmesa, (nr) * mmesa->vertex_size * 4)
 #define EMIT_VERTS( ctx, j, nr, buf ) \
    mga_emit_contiguous_verts(ctx, j, (j)+(nr), buf)
 

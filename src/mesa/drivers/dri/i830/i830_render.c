@@ -124,7 +124,7 @@ static const int scale_prim[GL_POLYGON+1] = {
   
 
 #define ALLOC_VERTS( nr ) \
-  i830AllocDmaLow( imesa, nr * imesa->vertex_size * 4)
+  i830AllocDmaLow( imesa, (nr) * imesa->vertex_size * 4)
 #define EMIT_VERTS( ctx, j, nr, buf ) \
   _tnl_emit_vertices_to_buffer(ctx, j, (j)+(nr), buf)
   

@@ -107,7 +107,7 @@ static const GLenum reduced_prim[GL_POLYGON+1] = {
   (I810_DMA_BUF_SZ-4) / (imesa->vertex_size * 4)
 
 #define ALLOC_VERTS( nr ) \
-  i810AllocDmaLow( imesa, nr * imesa->vertex_size * 4)
+  i810AllocDmaLow( imesa, (nr) * imesa->vertex_size * 4)
 #define EMIT_VERTS( ctx, j, nr, buf ) \
   i810_emit_contiguous_verts(ctx, j, (j)+(nr), buf)
 
