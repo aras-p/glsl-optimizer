@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  * 
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  * 
@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.6 for Mesa
+ * DOS/DJGPP device driver v1.7 for Mesa
  *
  *  Copyright (c) 2003 - Daniel Borca
  *  Email : dborca@users.sourceforge.net
@@ -61,6 +61,8 @@
 
 #include "GL/dmesa.h"
 
+
+#define SWTC 1 /* SW texture compression */
 
 
 /*
@@ -713,6 +715,21 @@ static void dmesa_choose_line (GLcontext *ctx)
 /****************************************************************************
  * Miscellaneous device driver funcs
  ***************************************************************************/
+static const struct gl_texture_format *
+choose_tex_format( GLcontext *ctx, GLint internalFormat,
+                   GLenum format, GLenum type )
+{
+   switch (internalFormat) {
+      case GL_COMPRESSED_RGB_ARB:
+         return &_mesa_texformat_rgb;
+      case GL_COMPRESSED_RGBA_ARB:
+         return &_mesa_texformat_rgba;
+      default:
+         return _mesa_choose_tex_format(ctx, internalFormat, format, type);
+   }
+}
+
+
 
 static void clear_index (GLcontext *ctx, GLuint index)
 {
@@ -892,6 +909,9 @@ static void dmesa_init_driver_functions (DMesaVisual visual,
  driver->Clear = clear;
  driver->ClearColor = clear_color;
  driver->ClearIndex = clear_index;
+#if SWTC
+ driver->ChooseTextureFormat = choose_tex_format;
+#endif
 }
 
 
@@ -1158,6 +1178,13 @@ DMesaContext DMesaCreateContext (DMesaVisual visual,
     _mesa_enable_1_4_extensions(c);
     _mesa_enable_1_5_extensions(c);
     _mesa_enable_2_0_extensions(c);
+#if SWTC
+    if (c->Mesa_DXTn) {
+       _mesa_enable_extension(c, "GL_EXT_texture_compression_s3tc");
+       _mesa_enable_extension(c, "GL_S3_s3tc");
+    }
+    _mesa_enable_extension(c, "GL_3DFX_texture_compression_FXT1");
+#endif
 
     /* you probably have to do a bunch of other initializations here. */
     ((DMesaContext)c)->visual = visual;
@@ -1383,3 +1410,18 @@ int DMesaGetIntegerv (GLenum pname, GLint *params)
 
  return 0;
 }
+
+
+#if USE_EXTERNAL_DXTN_LIB
+#include <sys/dxe.h>
+
+extern_asm(___dj_assert);
+extern_asm(_free);
+extern_asm(_malloc);
+
+DXE_EXPORT_TABLE_AUTO (___dxe_eta___dxtn)
+	DXE_EXPORT_ASM (___dj_assert)
+	DXE_EXPORT_ASM (_free)
+	DXE_EXPORT_ASM (_malloc)
+DXE_EXPORT_END
+#endif
