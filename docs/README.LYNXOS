@@ -1,24 +1,64 @@
 
-LynxOS Notes
-------------
+Mesa 3.0 for LynxOS builds in the following way:
 
-The LynxOS make instructions are really a copy of the Linux make with
-the addition of a -lbsd flag for the networking. Everything else seems
-to work fine. Just go to the root directory and type "make lynxos" and 
-the whole mess builds and works without any problems. 
+make lynxos
 
-There is an important note though: Since we don't have shared C libraries yet, 
-this distribution of Mesa becomes quite fat. Around 7 megs of source becomes
-145 Megs of executable. Most of this is in the demo code, but you should 
-be aware of the total disk space being used. When we add shared C libraries, I
-will attempt to build this distribution with shared libraries to conserve 
-space.
+This will build all the libraries and demo applications. You should have 
+around 400 megabytes free for everything since everything is done with 
+static
+libraries.
 
-This build was done under LynxOS 2.5G (an internal release). It should build 
-under 2.4 and 2.5 final. If you have problems, please email me at vik@lynx.com
+Before using this make file however, you should perform the following 
+actions:
+0) cd to the Mesa-3.0 directory
+1) Copy the GL directory under the include directory to /usr/include.
+2) Copy the files in the lib directory to /lib.
+3) Make links so that the Mesa libraries look like ordinary OpenGL 
+libraries
+in /lib. This is important for compatibility with other OpenGL apps. This
+is done as follows:
+
+cd /lib
+ln -s libMesaGL.a libGL.a
+ln -s libMesaGLU.a libGLU.a
+
+Mesa 3.0 includes the GLUT (GL Utility Toolkit) by default.
+The demo applications are done using this toolkit.
+
+Mesa makefiles for building their apps could be used as well, but the
+following one is much more concise. Note that the order of the X libraries
+is important to the linker so that all symbols get resolved correctly.
+Changing the order may result in having to list a library twice to make
+sure all linkages are made correctly.
+
+----cut here for Makefile -----
+
+FILES = your_app.x
+
+SPECIAL_INCLUDES = -I/usr/include/GL
+
+SPECIAL_CFLAGS = -g  -ansi -pedantic -funroll-loops -ffast-math -DSHM
+
+SPECIAL_LIBS = -lglut -lGLU -lGL -lm -L/usr/X11/lib -lXext -lXmu -lXi \
+-lX11 -lbsd -g
+
+STANDARD_OFILES = $(FILES:.x=.o)
+
+%.o: %.c
+	gcc -c $(SPECIAL_CFLAGS) $(SPECIAL_INCLUDES) $< -o $@
+
+all: $(STANDARD_OFILES)
+	gcc -o your_app $(STANDARD_OFILES) $(SPECIAL_LIBS)
+
+
+----cut here for Makefile-----
+
+I have tested Mesa under LynxOS 3.0 and 3.01. It should build fine under 
+other
+versions as well. Note, however, that LynxOS versions prior to 3.0 are not
+binary compatible, so you will have to rebuild from source.
+
 
 Vik Sohal
 vik@lynx.com
-
-April 2nd, 1997
-
+January 13, 1999
