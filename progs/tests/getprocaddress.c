@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  * 
@@ -33,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 
 #define EQUAL(X, Y)  (fabs((X) - (Y)) < 0.001)
