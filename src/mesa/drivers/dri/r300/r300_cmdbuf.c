@@ -92,22 +92,15 @@ int r300FlushCmdBufLocked(r300ContextPtr r300, const char* caller)
 		cmd.boxes = (drm_clip_rect_t *)r300->radeon.pClipRects;
 	}
 
-	if (cmd.nbox) {
-		ret = drmCommandWrite(r300->radeon.dri.fd,
-				DRM_RADEON_CMDBUF, &cmd, sizeof(cmd));
+	ret = drmCommandWrite(r300->radeon.dri.fd,
+			DRM_RADEON_CMDBUF, &cmd, sizeof(cmd));
 
-		if (RADEON_DEBUG & DEBUG_SYNC) {
-			fprintf(stderr, "Syncing in %s\n\n", __FUNCTION__);
-			radeonWaitForIdleLocked(&r300->radeon);
-		}
-
-		r300->dma.nr_released_bufs = 0;
-	} else {
-		ret = 0;
-		if (RADEON_DEBUG & DEBUG_IOCTL)
-			fprintf(stderr, "%s: No cliprects\n", __FUNCTION__);
+	if (RADEON_DEBUG & DEBUG_SYNC) {
+		fprintf(stderr, "Syncing in %s\n\n", __FUNCTION__);
+		radeonWaitForIdleLocked(&r300->radeon);
 	}
 
+	r300->dma.nr_released_bufs = 0;
 	r300->cmdbuf.count_used = 0;
 	r300->cmdbuf.count_reemit = 0;
 
