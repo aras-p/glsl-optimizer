@@ -1,4 +1,4 @@
-/* $Id: glthread.h,v 1.8 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: glthread.h,v 1.9 2001/11/12 23:50:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -200,6 +200,39 @@ typedef xmutex_rec _glthread_Mutex;
 
 #endif /* XTHREADS */
 
+
+
+/*
+ * BeOS threads. R5.x required.
+ */
+#ifdef BEOS_THREADS
+#include <kernel/OS.h>
+#include <support/TLS.h>
+
+typedef struct {
+   int32        key;
+   int          initMagic;
+} _glthread_TSD;
+
+typedef thread_id _glthread_Thread;
+
+/* Use Benaphore, aka speeder semaphore */
+typedef struct {
+    int32   lock;
+    sem_id  sem;
+} benaphore;
+typedef benaphore _glthread_Mutex;
+
+#define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = { 0,
+create_sem(0, #name"_benaphore") }
+#define _glthread_INIT_MUTEX(name)    name.sem = create_sem(0,
+#name"_benaphore"), name.lock = 0
+#define _glthread_LOCK_MUTEX(name)    if((atomic_add(&(name.lock), 1)) >= 1)
+acquire_sem(name.sem)
+#define _glthread_UNLOCK_MUTEX(name)  if((atomic_add(&(name.lock), -1)) > 1)
+release_sem(name.sem)
+
+#endif /* BEOS_THREADS */
 
 
 
