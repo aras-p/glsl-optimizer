@@ -1,4 +1,4 @@
-/* $Id: geartrain.c,v 1.1 2000/03/06 23:34:42 brianp Exp $ */
+/* $Id: geartrain.c,v 1.2 2000/03/22 23:14:54 brianp Exp $ */
 
 /*
  * Geartrain simulation 
@@ -18,7 +18,7 @@
 #ifndef M_PI
 #define M_PI 3.14159265
 #endif	/*  */
-typedef GLfloat TDA[3];
+typedef GLfloat TDA[4];
 
 TDA background;
 
