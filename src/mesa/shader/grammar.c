@@ -2772,7 +2772,9 @@ void grammar_get_last_error (byte *text, unsigned int size, int *pos)
                             }
 
     if (p)
-        while (*p)
+	{
+		while (*p)
+		{
             if (*p == '$')
             {
                 const byte *r = error_param;
@@ -2790,7 +2792,8 @@ void grammar_get_last_error (byte *text, unsigned int size, int *pos)
                 APPEND_CHARACTER(*p)
                 p++;
             }
-
+		}
+	}
     *pos = error_position;
 
 #undef APPEND_CHARACTER
