@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.3 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_copypix.c,v 1.4 2000/11/10 18:29:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,7 +37,7 @@
 
 #include "s_context.h"
 #include "s_depth.h"
-#include "s_imaging.h"
+#include "s_histogram.h"
 #include "s_pixeltex.h"
 #include "s_span.h"
 #include "s_stencil.h"
