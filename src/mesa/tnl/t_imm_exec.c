@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.10 2001/02/06 21:42:49 brianp Exp $ */
+/* $Id: t_imm_exec.c,v 1.11 2001/02/15 01:33:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -84,8 +84,8 @@ void _tnl_reset_input( GLcontext *ctx,
 
 
 
-static void copy_to_current( GLcontext *ctx, struct immediate *IM,
-			     GLuint flag )
+void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
+			   GLuint flag )
 {
    GLuint count = IM->LastData;
 
@@ -101,8 +101,13 @@ static void copy_to_current( GLcontext *ctx, struct immediate *IM,
    if (flag & VERT_EDGE)
       ctx->Current.EdgeFlag = IM->EdgeFlag[count];
 
-   if (flag & VERT_RGBA) 
+   if (flag & VERT_RGBA) {
       COPY_4UBV(ctx->Current.Color, IM->Color[count]);
+      if (ctx->Light.ColorMaterialEnabled) {
+	 gl_update_color_material( ctx, ctx->Current.Color );
+	 gl_validate_all_lighting_tables( ctx );
+      }
+   }
 
    if (flag & VERT_SPEC_RGB)
       COPY_4UBV(ctx->Current.SecondaryColor, IM->SecondaryColor[count]);
@@ -117,6 +122,14 @@ static void copy_to_current( GLcontext *ctx, struct immediate *IM,
 	    COPY_4FV( ctx->Current.Texcoord[0], IM->TexCoord[0][count]);
 	 }
       }
+   }
+
+   if (flag & VERT_MATERIAL) {
+      gl_update_material( ctx, 
+			  IM->Material[IM->LastMaterial], 
+			  IM->MaterialOrMask );
+      
+      gl_validate_all_lighting_tables( ctx );
    }
 }
 
@@ -142,8 +155,8 @@ void _tnl_compute_orflag( struct immediate *IM )
    /* It is possible there will be data in the buffer arising from
     * calls like 'glNormal', 'glMaterial' that occur after the final
     * glVertex, glEval, etc.  Additionally, a buffer can consist of
-    * only a single glMaterial call, in which case IM->Start ==
-    * IM->Count, but the buffer is definitely not empty.
+    * eg. a single glMaterial call, in which case IM->Start ==
+    * IM->Count, but the buffer is definitely not empty.  
     */
    if (IM->Flag[i] & VERT_DATA) {
       IM->LastData++;
@@ -195,7 +208,6 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
    /* TexCoordPtr's are zeroed in loop below.
     */
    VB->NormalPtr = 0;
-   VB->NormalLengthPtr = 0;
    VB->FogCoordPtr = 0;
    VB->EdgeFlag = 0;
    VB->IndexPtr[0] = 0;
@@ -232,8 +244,6 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
       tmp->Normal.start = (GLfloat *)(IM->Normal + start);
       tmp->Normal.count = count;
       VB->NormalPtr = &tmp->Normal;
-      if (IM->NormalLengths)
-	 VB->NormalLengthPtr = IM->NormalLengths + start;
    }
 
    if (inputs & VERT_INDEX) {
@@ -317,7 +327,7 @@ void _tnl_run_cassette( GLcontext *ctx, struct immediate *IM )
    _tnl_run_pipeline( ctx );      
    tnl->pipeline.run_input_changes |= tnl->pipeline.inputs;
 
-   copy_to_current( ctx, IM, IM->OrFlag ); 
+   _tnl_copy_to_current( ctx, IM, IM->OrFlag ); 
 }
 
 
@@ -347,31 +357,10 @@ static void exec_elt_cassette( GLcontext *ctx, struct immediate *IM )
     */
    if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1) {
       _tnl_translate_array_elts( ctx, IM, IM->LastData, IM->LastData ); 
-      copy_to_current( ctx, IM, ctx->Array._Enabled );
+      _tnl_copy_to_current( ctx, IM, ctx->Array._Enabled );
    }
 }
 
-/* Called for cassettes where CopyStart == Count -- no need to run the
- * pipeline.
- */
-void _tnl_run_empty_cassette( GLcontext *ctx, struct immediate *IM )
-{
-   copy_to_current( ctx, IM, IM->OrFlag ); 
-
-   if (IM->OrFlag & (VERT_RGBA|VERT_MATERIAL)) {
-      GLuint start = IM->CopyStart;
-
-      if (IM->OrFlag & VERT_MATERIAL) 
-	 gl_update_material( ctx, IM->Material[start], 
-			     IM->MaterialMask[start] );
-      
-      if (IM->OrFlag & VERT_RGBA) 
-	 if (ctx->Light.ColorMaterialEnabled)
-	    gl_update_color_material( ctx, ctx->Current.Color );
-
-      gl_validate_all_lighting_tables( ctx );
-   }
-}
 
 
 /* Called for regular vertex cassettes. 
@@ -413,13 +402,10 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
 
    _tnl_compute_orflag( IM );
 
-/*     _tnl_print_cassette( IM ); */
-
    /* Mark the last primitive:
     */
    IM->PrimitiveLength[IM->LastPrimitive] = IM->Count - IM->LastPrimitive;
    ASSERT(IM->Primitive[IM->LastPrimitive] & PRIM_LAST);
-
 
    if (tnl->pipeline.build_state_changes)
       _tnl_validate_pipeline( ctx );
@@ -430,8 +416,7 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
       if (IM->OrFlag & VERT_ELT) 
 	 _tnl_translate_array_elts( ctx, IM, IM->CopyStart, IM->CopyStart ); 
 
-      _tnl_fixup_input( ctx, IM );	/* shouldn't be needed? (demos/fire) */
-      _tnl_run_empty_cassette( ctx, IM );
+      _tnl_copy_to_current( ctx, IM, IM->OrFlag );
    }
    else if ((IM->OrFlag & VERT_DATA) == VERT_ELT && 
 	    ctx->Array.LockCount &&

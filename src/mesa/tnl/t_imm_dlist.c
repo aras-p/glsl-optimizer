@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.7 2001/02/13 23:51:34 brianp Exp $ */
+/* $Id: t_imm_dlist.c,v 1.8 2001/02/15 01:33:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,7 +57,8 @@ typedef struct {
    GLuint TexSize;
    GLuint LastData;
    GLuint LastPrimitive;
-   GLboolean have_normal_lengths;
+   GLuint LastMaterial;
+   GLuint MaterialOrMask;
 } TNLvertexcassette;
 
 static void execute_compiled_cassette( GLcontext *ctx, void *data );
@@ -121,7 +122,8 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
    node->AndFlag = im->AndFlag;
    node->LastData = im->LastData;
    node->LastPrimitive = im->LastPrimitive;
-   node->have_normal_lengths = GL_FALSE;
+   node->LastMaterial = im->LastMaterial;
+   node->MaterialOrMask = im->MaterialOrMask;
 
    if (ctx->ExecuteFlag) {
       execute_compiled_cassette( ctx, (void *)node );
@@ -153,34 +155,6 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
 			new_beginstate, node->SavedBeginState);
    }   
 }
-
-
-
-#if 0
-/* Drivers to turn this on?
- */
-static void calc_normal_lengths( GLfloat *dest,
-				 CONST GLfloat (*data)[3],
-				 GLuint *flags,
-				 GLuint count )
-{
-   GLuint i;
-   GLint tmpflag = flags[0];
-
-   flags[0] |= VERT_NORM;
-
-   for (i = 0 ; i < count ; i++ )
-      if (flags[i] & VERT_NORM) {
-	 GLfloat tmp = (GLfloat) LEN_3FV( data[i] );
-	 dest[i] = 0;
-	 if (tmp > 0)
-	    dest[i] = 1.0F / tmp;
-      } else
-	 dest[i] = dest[i-1];
-
-   flags[0] = tmpflag;
-}
-#endif
 
 
 static void 
@@ -219,7 +193,7 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
    }
 
    if (IM->Count == IM->Start) {
-      _tnl_run_empty_cassette( ctx, IM );
+      _tnl_copy_to_current( ctx, IM, IM->OrFlag );
       return;
    }
 
@@ -227,39 +201,15 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
       if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1)
 	 tnl->ReplayHardBeginEnd = 1;
       if (!tnl->ReplayHardBeginEnd) {
-         /* XXX is this really an OpenGL error or an implementation problem? */
+	 /* This is a user error.  Whatever operation (like glRectf)
+	  * decomposed to this hard begin/end pair is now being run
+	  * inside a begin/end object -- illegally.  Reject it and
+	  * raise an error.
+	  */
 	 gl_error(ctx, GL_INVALID_OPERATION, "hard replay");
 	 return;
       }
    }
-
-
-   /* Lazy optimization of the cassette.  Need to make these switchable
-    * or otherwise more useful for t&l cards.
-    */
-#if 0
-   if (ctx->Transform.Normalize && !node->have_normal_lengths) {
-
-      if (!IM->NormalLengths)
-	 IM->NormalLengths = (GLfloat *)MALLOC(sizeof(GLfloat) * IMM_SIZE);
-
-      calc_normal_lengths( IM->NormalLengths + IM->Start,
-			   (const GLfloat (*)[3])(IM->Normal + IM->Start),
-			   IM->Flag + IM->Start,
-			   IM->Count - IM->Start);
-
-      node->have_normal_lengths = GL_TRUE;
-   }
-#endif
-
-
-#if 0
-   if (0 && im->v.Obj.size < 4 && im->Count > 15) {
-      im->Bounds = (GLfloat (*)[3]) MALLOC(6 * sizeof(GLfloat));
-      (_tnl_calc_bound_tab[im->v.Obj.size])( im->Bounds, &im->v.Obj );
-   }
-#endif
-
 
    _tnl_fixup_compiled_cassette( ctx, IM );
    _tnl_get_exec_copy_verts( ctx, IM );
@@ -274,10 +224,6 @@ static void
 destroy_compiled_cassette( GLcontext *ctx, void *data )
 {
    TNLvertexcassette *node = (TNLvertexcassette *)data;
-
-/*     fprintf(stderr, "destroy_compiled_cassette node->IM id %d ref_count: %d\n", */
-/*  	   node->IM->id, */
-/*  	   node->IM->ref_count-1); */
 
    if ( --node->IM->ref_count == 0 )
       _tnl_free_immediate( node->IM );
@@ -301,6 +247,8 @@ print_compiled_cassette( GLcontext *ctx, void *data )
    IM->AndFlag = node->AndFlag;
    IM->LastData = node->LastData;
    IM->LastPrimitive = node->LastPrimitive;
+   IM->LastMaterial = node->LastMaterial;
+   IM->MaterialOrMask = node->MaterialOrMask;
 
    _tnl_print_cassette( node->IM );
 }
@@ -358,7 +306,6 @@ _tnl_EndList( GLcontext *ctx )
 
    tnl->ExecCopySource = IM;
    IM->ref_count++;
-
 
    SET_IMMEDIATE( ctx, IM );
    IM->ref_count++;

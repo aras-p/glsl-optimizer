@@ -1,4 +1,4 @@
-/* $Id: t_vb_normals.c,v 1.2 2000/12/27 19:57:37 keithw Exp $ */
+/* $Id: t_vb_normals.c,v 1.3 2001/02/15 01:33:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,18 +61,11 @@ static GLboolean run_normal_stage( GLcontext *ctx,
 
    ASSERT(store->NormalTransform);
 
-   if (VB->NormalLengthPtr) {
-      GLfloat diff = VB->NormalLengthPtr[0] - 
-	 1.0/LEN_3FV(VB->NormalPtr->data[0]);
-      (void)diff;
-      ASSERT((diff*diff) < .01);
-   }
-
    if (stage->changed_inputs)
       (store->NormalTransform[0])(&ctx->ModelView,
 				  ctx->_ModelViewInvScale,
 				  VB->NormalPtr,
-				  VB->NormalLengthPtr, 
+				  0, 
 				  0,
 				  &store->normal);
 

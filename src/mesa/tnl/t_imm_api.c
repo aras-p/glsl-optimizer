@@ -1229,17 +1229,24 @@ _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
    if (bitmask == 0)
       return;
 
-   if (!IM->Material) {
-      IM->Material = (GLmaterial (*)[2]) MALLOC( sizeof(GLmaterial) *
-						 IMM_SIZE * 2 );
-      IM->MaterialMask = (GLuint *) MALLOC( sizeof(GLuint) * IMM_SIZE );
-   }
-
    if (!(IM->Flag[count] & VERT_MATERIAL)) {
+      if (!IM->Material) {
+	 IM->Material = (GLmaterial (*)[2]) MALLOC( sizeof(GLmaterial) *
+						    IMM_SIZE * 2 );
+	 IM->MaterialMask = (GLuint *) MALLOC( sizeof(GLuint) * IMM_SIZE ); 
+      }
+      else if (IM->MaterialOrMask & ~bitmask) {
+	 gl_copy_material_pairs( IM->Material[count], 
+				 IM->Material[IM->LastMaterial],
+				 IM->MaterialOrMask & ~bitmask );
+      }
+
       IM->Flag[count] |= VERT_MATERIAL;
+      IM->LastMaterial = count;
       IM->MaterialMask[count] = 0;
    }
-
+   
+   IM->MaterialOrMask |= bitmask;
    IM->MaterialMask[count] |= bitmask;
    mat = IM->Material[count];
 

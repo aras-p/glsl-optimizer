@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.51 2001/02/06 21:42:48 brianp Exp $ */
+/* $Id: dd.h,v 1.52 2001/02/15 01:33:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -815,6 +815,15 @@ struct dd_function_table {
    void (*EdgeFlagPointer)(GLcontext *ctx, GLsizei stride, const GLvoid *ptr);
 
 
+   /***
+    *** TNL Pipeline
+    ***/
+
+   void (*PipelineStart)(GLcontext *ctx);
+   void (*PipelineFinish)(GLcontext *ctx);
+   /* Called before and after all pipeline stages.
+    * These are a suitable place for grabbing/releasing hardware locks.
+    */
 
    /***
     *** Rendering

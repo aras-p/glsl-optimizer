@@ -1,4 +1,4 @@
-/* $Id: t_imm_alloc.c,v 1.2 2000/12/28 22:11:05 keithw Exp $ */
+/* $Id: t_imm_alloc.c,v 1.3 2001/02/15 01:33:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,7 +47,6 @@ struct immediate *_tnl_alloc_immediate( GLcontext *ctx )
    IM->id = id++;
    IM->ref_count = 0;
    IM->backref = ctx;
-   IM->NormalLengths = 0;
    IM->FlushElt = 0;
    IM->LastPrimitive = IMM_MAX_COPIED_VERTS;
    IM->Count = IMM_MAX_COPIED_VERTS;
@@ -82,11 +81,6 @@ void _tnl_free_immediate( struct immediate *IM )
 {
    static int freed = 0;
    GLuint j;
-
-   if (IM->NormalLengths) {
-      FREE( IM->NormalLengths );
-      IM->NormalLengths = 0;
-   }
 
    if (IM->Material) {
       FREE( IM->Material );

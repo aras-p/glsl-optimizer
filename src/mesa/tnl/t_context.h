@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.13 2001/01/29 20:47:39 keithw Exp $ */
+/* $Id: t_context.h,v 1.14 2001/02/15 01:33:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -192,7 +192,9 @@ struct immediate
     */
    struct gl_material (*Material)[2];
    GLuint *MaterialMask;
-   GLfloat *NormalLengths;	
+   GLuint LastMaterial;
+   GLuint MaterialOrMask;
+
    GLfloat (*TexCoord[MAX_TEXTURE_UNITS])[4];
 
    GLuint  Primitive[IMM_SIZE];	    /* BEGIN/END */
@@ -258,7 +260,6 @@ typedef struct vertex_buffer
    GLubyte     ClipOrMask;	                /* VERT_CLIP (3) */
    GLubyte     *ClipMask;		        /* VERT_CLIP (4) */
    GLvector3f  *NormalPtr;	                /* VERT_NORM */
-   GLfloat     *NormalLengthPtr;                /* VERT_NORM (optional) */
    GLboolean   *EdgeFlag;	                /* VERT_EDGE */
    GLvector4f  *TexCoordPtr[MAX_TEXTURE_UNITS];	/* VERT_TEX_0..n */
    GLvector1ui *IndexPtr[2];	                /* VERT_INDEX */

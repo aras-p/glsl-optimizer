@@ -1,4 +1,4 @@
-/* $Id: light.h,v 1.9 2001/02/06 04:06:35 keithw Exp $ */
+/* $Id: light.h,v 1.10 2001/02/15 01:33:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -113,6 +113,10 @@ extern void gl_compute_light_positions( GLcontext *ctx );
 extern void gl_update_material( GLcontext *ctx,
 				const struct gl_material src[2],
 				GLuint bitmask );
+
+extern void gl_copy_material_pairs( struct gl_material dst[2],
+				    const struct gl_material src[2],
+				    GLuint bitmask );
 
 extern void gl_update_color_material( GLcontext *ctx, const GLchan rgba[4] );
 
