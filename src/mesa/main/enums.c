@@ -1,4 +1,4 @@
-/* $Id: enums.c,v 1.22 2002/10/24 23:57:20 brianp Exp $ */
+/* $Id: enums.c,v 1.23 2002/10/25 21:06:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -853,7 +853,7 @@ static int sorted = 0;
 
 static int compar_name( const enum_elt *a, const enum_elt *b )
 {
-   return strcmp(a->c, b->c);
+   return _mesa_strcmp(a->c, b->c);
 }
 
 

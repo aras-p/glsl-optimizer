@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.46 2002/10/24 23:57:23 brianp Exp $ */
+/* $Id: xm_api.c,v 1.47 2002/10/25 21:06:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -167,7 +167,7 @@ static void error( const char *msg )
 {
    (void)DitherValues;		/* Muffle compiler */
 
-   if (getenv("MESA_DEBUG"))
+   if (_mesa_getenv("MESA_DEBUG"))
       fprintf( stderr, "X/Mesa error: %s\n", msg );
 }
 
@@ -266,7 +266,7 @@ static GLint gamma_adjust( GLfloat gamma, GLint value, GLint max )
    }
    else {
       double x = (double) value / (double) max;
-      return IROUND_POS((GLfloat) max * pow(x, 1.0F/gamma));
+      return IROUND_POS((GLfloat) max * _mesa_pow(x, 1.0F/gamma));
    }
 }
 
@@ -504,7 +504,7 @@ static GLboolean alloc_shm_back_buffer( XMesaBuffer b )
    b->shminfo.shmid = shmget( IPC_PRIVATE, b->backimage->bytes_per_line
 			     * b->backimage->height, IPC_CREAT|0777 );
    if (b->shminfo.shmid < 0) {
-      if (getenv("MESA_DEBUG"))
+      if (_mesa_getenv("MESA_DEBUG"))
           perror("alloc_back_buffer");
       XDestroyImage( b->backimage );
       b->backimage = NULL;
@@ -516,7 +516,7 @@ static GLboolean alloc_shm_back_buffer( XMesaBuffer b )
    b->shminfo.shmaddr = b->backimage->data
                       = (char*)shmat( b->shminfo.shmid, 0, 0 );
    if (b->shminfo.shmaddr == (char *) -1) {
-      if (getenv("MESA_DEBUG"))
+      if (_mesa_getenv("MESA_DEBUG"))
           perror("alloc_back_buffer");
       XDestroyImage( b->backimage );
       shmctl( b->shminfo.shmid, IPC_RMID, 0 );
@@ -872,7 +872,7 @@ static GLboolean setup_grayscale( int client, XMesaVisual v,
             buffer->pixel_to_b[xcol.pixel] = gray;
          }
 
-         if (colorsfailed && getenv("MESA_DEBUG")) {
+         if (colorsfailed && _mesa_getenv("MESA_DEBUG")) {
             fprintf( stderr,
                   "Note: %d out of 256 needed colors do not match exactly.\n",
                   colorsfailed );
@@ -952,7 +952,7 @@ static GLboolean setup_dithered_color( int client, XMesaVisual v,
             }
          }
 
-         if (colorsfailed && getenv("MESA_DEBUG")) {
+         if (colorsfailed && _mesa_getenv("MESA_DEBUG")) {
             fprintf( stderr,
                   "Note: %d out of %d needed colors do not match exactly.\n",
                   colorsfailed, _R*_G*_B );
@@ -986,19 +986,19 @@ static void setup_8bit_hpcr( XMesaVisual v )
 
    g = 1.0 / v->RedGamma;
    for (i=0; i<256; i++) {
-      GLint red = IROUND_POS(255.0 * pow( hpcr_rgbTbl[0][i]/255.0, g ));
+      GLint red = IROUND_POS(255.0 * _mesa_pow( hpcr_rgbTbl[0][i]/255.0, g ));
       v->hpcr_rgbTbl[0][i] = CLAMP( red, 16, 239 );
    }
 
    g = 1.0 / v->GreenGamma;
    for (i=0; i<256; i++) {
-      GLint green = IROUND_POS(255.0 * pow( hpcr_rgbTbl[1][i]/255.0, g ));
+      GLint green = IROUND_POS(255.0 * _mesa_pow( hpcr_rgbTbl[1][i]/255.0, g ));
       v->hpcr_rgbTbl[1][i] = CLAMP( green, 16, 239 );
    }
 
    g = 1.0 / v->BlueGamma;
    for (i=0; i<256; i++) {
-      GLint blue = IROUND_POS(255.0 * pow( hpcr_rgbTbl[2][i]/255.0, g ));
+      GLint blue = IROUND_POS(255.0 * _mesa_pow( hpcr_rgbTbl[2][i]/255.0, g ));
       v->hpcr_rgbTbl[2][i] = CLAMP( blue, 32, 223 );
    }
    v->undithered_pf = PF_HPCR;  /* can't really disable dithering for now */
@@ -1007,7 +1007,7 @@ static void setup_8bit_hpcr( XMesaVisual v )
    /* which method should I use to clear */
    /* GL_FALSE: keep the ordinary method  */
    /* GL_TRUE : clear with dither pattern */
-   v->hpcr_clear_flag = getenv("MESA_HPCR_CLEAR") ? GL_TRUE : GL_FALSE;
+   v->hpcr_clear_flag = _mesa_getenv("MESA_HPCR_CLEAR") ? GL_TRUE : GL_FALSE;
 
    if (v->hpcr_clear_flag) {
       v->hpcr_clear_pixmap = XMesaCreatePixmap(v->display,
@@ -1242,7 +1242,7 @@ static GLboolean initialize_visual_and_buffer( int client,
       }
       v->index_bits = 0;
 
-      if (getenv("MESA_NO_DITHER")) {
+      if (_mesa_getenv("MESA_NO_DITHER")) {
 	 v->dithered_pf = v->undithered_pf;
       }
    }
@@ -1253,7 +1253,7 @@ static GLboolean initialize_visual_and_buffer( int client,
     * which can help Brian figure out what's going on when a user
     * reports bugs.
     */
-   if (getenv("MESA_INFO")) {
+   if (_mesa_getenv("MESA_INFO")) {
       fprintf(stderr, "X/Mesa visual = %p\n", (void *) v);
       fprintf(stderr, "X/Mesa dithered pf = %u\n", v->dithered_pf);
       fprintf(stderr, "X/Mesa undithered pf = %u\n", v->undithered_pf);
@@ -1471,7 +1471,7 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
    GLint red_bits, green_bits, blue_bits, alpha_bits;
 
    /* For debugging only */
-   if (getenv("MESA_XSYNC")) {
+   if (_mesa_getenv("MESA_XSYNC")) {
       /* This makes debugging X easier.
        * In your debugger, set a breakpoint on _XError to stop when an
        * X protocol error is generated.
@@ -1529,7 +1529,7 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
 #endif
 
    /* check for MESA_GAMMA environment variable */
-   gamma = getenv("MESA_GAMMA");
+   gamma = _mesa_getenv("MESA_GAMMA");
    if (gamma) {
       v->RedGamma = v->GreenGamma = v->BlueGamma = 0.0;
       sscanf( gamma, "%f %f %f", &v->RedGamma, &v->GreenGamma, &v->BlueGamma );
@@ -1732,7 +1732,7 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
 
    if (GET_VISUAL_DEPTH(v) != attr.depth) {
 #endif
-      if (getenv("MESA_DEBUG")) {
+      if (_mesa_getenv("MESA_DEBUG")) {
          fprintf(stderr, "XMesaCreateWindowBuffer: depth mismatch between visual and window!\n");
       }
       return NULL;
@@ -1748,7 +1748,7 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
       b->cmap = attr.colormap;
    }
    else {
-      if (getenv("MESA_DEBUG")) {
+      if (_mesa_getenv("MESA_DEBUG")) {
          fprintf(stderr, "Window %u has no colormap!\n", (unsigned int) w);
       }
       /* this is weird, a window w/out a colormap!? */
@@ -1784,7 +1784,7 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
    }
 
 #ifdef FX
-   fxEnvVar = getenv("MESA_GLX_FX");
+   fxEnvVar = _mesa_getenv("MESA_GLX_FX");
    if (fxEnvVar) {
      if (fxEnvVar[0]!='d') {
        int attribs[100];
@@ -2181,7 +2181,7 @@ GLboolean XMesaLoseCurrent(XMesaContext c)
 GLboolean XMesaSetFXmode( GLint mode )
 {
 #ifdef FX
-   const char *fx = getenv("MESA_GLX_FX");
+   const char *fx = _mesa_getenv("MESA_GLX_FX");
    if (fx && fx[0] != 'd') {
       GET_CURRENT_CONTEXT(ctx);
       GrHwConfiguration hw;

@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.53 2002/10/24 23:57:21 brianp Exp $ */
+/* $Id: light.c,v 1.54 2002/10/25 21:06:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -156,7 +156,7 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 	 return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       l->SpotCutoff = params[0];
-      l->_CosCutoff = (GLfloat) cos(params[0]*DEG2RAD);
+      l->_CosCutoff = (GLfloat) _mesa_cos(params[0]*DEG2RAD);
       if (l->_CosCutoff < 0)
 	 l->_CosCutoff = 0;
       if (l->SpotCutoff != 180.0F)
@@ -1038,7 +1038,7 @@ static void validate_spot_exp_table( struct gl_light *l )
 
    for (i = EXP_TABLE_SIZE - 1; i > 0 ;i--) {
       if (clamp == 0) {
-	 tmp = pow(i / (GLdouble) (EXP_TABLE_SIZE - 1), exponent);
+	 tmp = _mesa_pow(i / (GLdouble) (EXP_TABLE_SIZE - 1), exponent);
 	 if (tmp < FLT_MIN * 100.0) {
 	    tmp = 0.0;
 	    clamp = 1;
@@ -1096,7 +1096,7 @@ static void validate_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
             GLdouble t, x = j / (GLfloat) (SHINE_TABLE_SIZE - 1);
             if (x < 0.005) /* underflow check */
                x = 0.005;
-            t = pow(x, shininess);
+            t = _mesa_pow(x, shininess);
 	    if (t > 1e-20)
 	       m[j] = (GLfloat) t;
 	    else

@@ -1,4 +1,4 @@
-/* $Id: imports.h,v 1.6 2002/10/24 23:57:21 brianp Exp $ */
+/* $Id: imports.h,v 1.7 2002/10/25 21:06:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -127,11 +127,42 @@ extern void
 _mesa_bzero( void *dst, size_t n );
 
 
+extern double
+_mesa_sin(double a);
+
+extern double
+_mesa_cos(double a);
+
+extern double
+_mesa_sqrt(double x);
+
+extern double
+_mesa_pow(double x, double y);
+
+
 extern char *
 _mesa_getenv( const char *var );
 
 extern char *
 _mesa_strstr( const char *haystack, const char *needle );
+
+extern char *
+_mesa_strncat( char *dest, const char *src, size_t n );
+
+extern char *
+_mesa_strcpy( char *dest, const char *src );
+
+extern char *
+_mesa_strncpy( char *dest, const char *src, size_t n );
+
+extern size_t
+_mesa_strlen( const char *s );
+
+extern int
+_mesa_strcmp( const char *s1, const char *s2 );
+
+extern int
+_mesa_strncmp( const char *s1, const char *s2, size_t n );
 
 extern int
 _mesa_atoi( const char *s );

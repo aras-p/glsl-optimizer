@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.93 2002/10/24 23:57:23 brianp Exp $ */
+/* $Id: osmesa.c,v 1.94 2002/10/25 21:06:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -653,7 +653,7 @@ OSMesaGetProcAddress( const char *funcName )
 {
    int i;
    for (i = 0; functions[i].Name; i++) {
-      if (strcmp(functions[i].Name, funcName) == 0)
+      if (_mesa_strcmp(functions[i].Name, funcName) == 0)
          return (void *) functions[i].Address;
    }
    return (void *) _glapi_get_proc_address(funcName);

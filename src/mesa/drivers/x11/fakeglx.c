@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.70 2002/10/24 23:57:23 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.71 2002/10/25 21:06:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -271,7 +271,7 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
 
    if (dbFlag) {
       /* Check if the MESA_BACK_BUFFER env var is set */
-      char *backbuffer = getenv("MESA_BACK_BUFFER");
+      char *backbuffer = _mesa_getenv("MESA_BACK_BUFFER");
       if (backbuffer) {
          if (backbuffer[0]=='p' || backbuffer[0]=='P') {
             ximageFlag = GL_FALSE;
@@ -287,7 +287,7 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
 
    /* Comparing IDs uses less memory but sometimes fails. */
    /* XXX revisit this after 3.0 is finished. */
-   if (getenv("MESA_GLX_VISUAL_HACK"))
+   if (_mesa_getenv("MESA_GLX_VISUAL_HACK"))
       comparePointers = GL_TRUE;
    else
       comparePointers = GL_FALSE;
@@ -366,7 +366,7 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
                             );
    }
    else if (is_usable_visual( visinfo )) {
-      if (getenv("MESA_GLX_FORCE_CI")) {
+      if (_mesa_getenv("MESA_GLX_FORCE_CI")) {
          /* Configure this visual as a COLOR INDEX visual. */
          return save_glx_visual( dpy, visinfo,
                                  GL_FALSE,   /* rgb */
@@ -565,21 +565,21 @@ static XVisualInfo *get_env_visual(Display *dpy, int scr, const char *varname)
    int depth, xclass = -1;
    XVisualInfo *vis;
 
-   if (!getenv( varname )) {
+   if (!_mesa_getenv( varname )) {
       return NULL;
    }
 
-   strncpy( value, getenv(varname), 100 );
+   _mesa_strncpy( value, _mesa_getenv(varname), 100 );
    value[99] = 0;
 
    sscanf( value, "%s %d", type, &depth );
 
-   if (strcmp(type,"TrueColor")==0)          xclass = TrueColor;
-   else if (strcmp(type,"DirectColor")==0)   xclass = DirectColor;
-   else if (strcmp(type,"PseudoColor")==0)   xclass = PseudoColor;
-   else if (strcmp(type,"StaticColor")==0)   xclass = StaticColor;
-   else if (strcmp(type,"GrayScale")==0)     xclass = GrayScale;
-   else if (strcmp(type,"StaticGray")==0)    xclass = StaticGray;
+   if (_mesa_strcmp(type,"TrueColor")==0)          xclass = TrueColor;
+   else if (_mesa_strcmp(type,"DirectColor")==0)   xclass = DirectColor;
+   else if (_mesa_strcmp(type,"PseudoColor")==0)   xclass = PseudoColor;
+   else if (_mesa_strcmp(type,"StaticColor")==0)   xclass = StaticColor;
+   else if (_mesa_strcmp(type,"GrayScale")==0)     xclass = GrayScale;
+   else if (_mesa_strcmp(type,"StaticGray")==0)    xclass = StaticGray;
 
    if (xclass>-1 && depth>0) {
       vis = get_visual( dpy, scr, depth, xclass );
@@ -1383,7 +1383,7 @@ Fake_glXDestroyGLXPixmap( Display *dpy, GLXPixmap pixmap )
    if (b) {
       XMesaDestroyBuffer(b);
    }
-   else if (getenv("MESA_DEBUG")) {
+   else if (_mesa_getenv("MESA_DEBUG")) {
       _mesa_warning(NULL, "Mesa: glXDestroyGLXPixmap: invalid pixmap\n");
    }
 }
@@ -1457,7 +1457,7 @@ Fake_glXSwapBuffers( Display *dpy, GLXDrawable drawable )
    if (buffer) {
       XMesaSwapBuffers(buffer);
    }
-   else if (getenv("MESA_DEBUG")) {
+   else if (_mesa_getenv("MESA_DEBUG")) {
       _mesa_warning(NULL, "Mesa: glXSwapBuffers: invalid drawable\n");
    }
 }
@@ -1474,7 +1474,7 @@ Fake_glXCopySubBufferMESA( Display *dpy, GLXDrawable drawable,
    if (buffer) {
       XMesaCopySubBuffer(buffer, x, y, width, height);
    }
-   else if (getenv("MESA_DEBUG")) {
+   else if (_mesa_getenv("MESA_DEBUG")) {
       _mesa_warning(NULL, "Mesa: glXCopySubBufferMESA: invalid drawable\n");
    }
 }
@@ -1742,7 +1742,7 @@ static const char *
 get_extensions( void )
 {
 #ifdef FX
-   const char *fx = getenv("MESA_GLX_FX");
+   const char *fx = _mesa_getenv("MESA_GLX_FX");
    if (fx && fx[0] != 'd') {
       return EXTENSIONS;
    }

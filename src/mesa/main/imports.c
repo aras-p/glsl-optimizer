@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.21 2002/10/24 23:57:21 brianp Exp $ */
+/* $Id: imports.c,v 1.22 2002/10/25 21:06:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -208,6 +208,50 @@ _mesa_bzero( void *dst, size_t n )
 }
 
 
+double
+_mesa_sin(double a)
+{
+#ifdef XFree86LOADER
+   return xf86sin(a);
+#else
+   return sin(a);
+#endif
+}
+
+
+double
+_mesa_cos(double a)
+{
+#ifdef XFree86LOADER
+   return xf86cos(a);
+#else
+   return cos(a);
+#endif
+}
+
+
+double
+_mesa_sqrt(double x)
+{
+#ifdef XFree86LOADER
+   return xf86sqrt(x);
+#else
+   return sqrt(x);
+#endif
+}
+
+
+double
+_mesa_pow(double x, double y)
+{
+#ifdef XFree86LOADER
+   return xf86pow(x, y);
+#else
+   return pow(x, y);
+#endif
+}
+
+
 char *
 _mesa_getenv( const char *var )
 {
@@ -226,6 +270,72 @@ _mesa_strstr( const char *haystack, const char *needle )
    return xf86strstr(haystack, needle);
 #else
    return strstr(haystack, needle);
+#endif
+}
+
+
+char *
+_mesa_strncat( char *dest, const char *src, size_t n )
+{
+#ifdef XFree86LOADER
+   return xf86strncat(dest, src, n);
+#else
+   return strncat(dest, src, n);
+#endif
+}
+
+
+char *
+_mesa_strcpy( char *dest, const char *src )
+{
+#ifdef XFree86LOADER
+   return xf86strcpy(dest, src);
+#else
+   return strcpy(dest, src);
+#endif
+}
+
+
+char *
+_mesa_strncpy( char *dest, const char *src, size_t n )
+{
+#ifdef XFree86LOADER
+   return xf86strncpy(dest, src, n);
+#else
+   return strncpy(dest, src, n);
+#endif
+}
+
+
+size_t
+_mesa_strlen( const char *s )
+{
+#ifdef XFree86LOADER
+   return xf86strlen(s);
+#else
+   return strlen(s);
+#endif
+}
+
+
+int
+_mesa_strcmp( const char *s1, const char *s2 )
+{
+#ifdef XFree86LOADER
+   return xf86strcmp(s1, s2);
+#else
+   return strcmp(s1, s2);
+#endif
+}
+
+
+int
+_mesa_strncmp( const char *s1, const char *s2, size_t n )
+{
+#ifdef XFree86LOADER
+   return xf86strncmp(s1, s2, n);
+#else
+   return strncmp(s1, s2, n);
 #endif
 }
 

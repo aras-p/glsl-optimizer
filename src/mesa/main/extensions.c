@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.84 2002/10/24 23:57:20 brianp Exp $ */
+/* $Id: extensions.c,v 1.85 2002/10/25 21:06:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -315,7 +315,7 @@ _mesa_add_extension( GLcontext *ctx,
    {
       struct extension *t = MALLOC_STRUCT(extension);
       t->enabled = enabled;
-      strncpy(t->name, name, MAX_EXT_NAMELEN);
+      _mesa_strncpy(t->name, name, MAX_EXT_NAMELEN);
       t->name[MAX_EXT_NAMELEN] = 0;
       t->flag = flag_ptr;
       if (t->flag)
@@ -337,7 +337,7 @@ set_extension( GLcontext *ctx, const char *name, GLint state )
     */
    struct extension *i;
    foreach( i, ctx->Extensions.ext_list )
-      if (strncmp(i->name, name, MAX_EXT_NAMELEN) == 0)
+      if (_mesa_strncmp(i->name, name, MAX_EXT_NAMELEN) == 0)
 	 break;
 
    if (i == ctx->Extensions.ext_list) {
@@ -379,7 +379,7 @@ _mesa_extension_is_enabled( GLcontext *ctx, const char *name)
 {
    struct extension *i;
    foreach( i, ctx->Extensions.ext_list )
-      if (strncmp(i->name, name, MAX_EXT_NAMELEN) == 0) {
+      if (_mesa_strncmp(i->name, name, MAX_EXT_NAMELEN) == 0) {
          if (i->enabled)
             return GL_TRUE;
          else
@@ -446,18 +446,18 @@ _mesa_extensions_get_string( GLcontext *ctx )
       GLuint len = 0;
       foreach (i, ctx->Extensions.ext_list)
 	 if (i->enabled)
-	    len += strlen(i->name) + 1;
+	    len += _mesa_strlen(i->name) + 1;
 
       if (len == 0)
 	 return "";
 
-      str = (char *)MALLOC(len * sizeof(char));
+      str = (char *) _mesa_malloc(len * sizeof(char));
       ctx->Extensions.ext_string = str;
 
       foreach (i, ctx->Extensions.ext_list)
 	 if (i->enabled) {
-	    strcpy(str, i->name);
-	    str += strlen(str);
+	    _mesa_strcpy(str, i->name);
+	    str += _mesa_strlen(str);
 	    *str++ = ' ';
 	 }
 
