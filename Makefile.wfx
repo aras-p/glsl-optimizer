@@ -1,0 +1,87 @@
+# Mesa 3-D graphics library
+# Version:  5.1
+#
+# Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+# AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# Win32/FX makefile for Mesa
+#
+#  Copyright (c) 2003 - Hiroshi Morii
+#  Email : koolsmoky@users.sourceforge.net
+#  URL   : http://www.3dfxzone.it/koolsmoky
+
+# Debug build                : nmake -f Makefile.wfx debug
+# Optimized build            : nmake -f Makefile.wfx
+# Remove objects             : nmake -f Makefile.wfx clean
+# Remove files in bin, lib   : nmake -f Makefile.wfx clobber
+# Remove all generated files : nmake -f Makefile.wfx realclean
+
+# Build the libs
+SUBDIRS	  = src\mesa.dir
+DBGBUILD  = $(SUBDIRS:.dir=.debug)
+CLEAN	  = $(SUBDIRS:.dir=.clean)
+CLOBBER	  = $(SUBDIRS:.dir=.clobber)
+REALCLEAN = $(SUBDIRS:.dir=.realclean)
+LIBDIR    = lib
+
+# default rule
+default	  : $(LIBDIR) $(SUBDIRS)
+
+# debug build rules
+debug     : $(LIBDIR) $(DBGBUILD)
+
+# cleanup rules
+clean	  : $(CLEAN)
+clobber	  : $(CLOBBER)
+realclean : $(REALCLEAN)
+
+# inference rules
+$(LIBDIR):
+	@echo.
+	@mkdir $(LIBDIR)
+
+$(SUBDIRS):
+	@echo.
+	@cd $*
+	@nmake -f Makefile.wfx
+	@cd ..
+
+$(DBGBUILD):
+	@echo.
+	@cd $*
+	@nmake -f Makefile.wfx DEBUG=1
+	@cd ..
+
+$(CLEAN):
+	@echo.
+	@cd $*
+	@nmake -f Makefile.wfx clean
+	@cd ..
+
+$(CLOBBER):
+	@echo.
+	@cd $*
+	@nmake -f Makefile.wfx clobber
+	@cd ..
+
+$(REALCLEAN):
+	@echo.
+	@cd $*
+	@nmake -f Makefile.wfx realclean
+	@cd ..

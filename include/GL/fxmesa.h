@@ -22,7 +22,7 @@
 /*
  * FXMesa - 3Dfx Glide driver for Mesa.  Contributed by David Bucciarelli
  *
- * NOTE: This version requires Glide 2.3 or later.
+ * NOTE: This version requires Glide3 (http://sourceforge.net/projects/glide)
  */
 
 

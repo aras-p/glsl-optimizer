@@ -9,15 +9,56 @@ Mesa-5.1 release notes:
 1) Glide2 support has been ceased; in order to keep Voodoo Graphics, Voodoo2
    and Voodoo Rush compatibility, please visit the Glide SourceForge and help
    us to fix Glide3 for those cards.
-2) The non-DRI Linux build is currently broken. Any help will be appreciated.
+2) The current release is a WIP; among other things, the Linux build works
+   only to some extent. Any help will be appreciated.
 3) Glide3 can be found at http://sourceforge.net/projects/glide/
 
-Known supported HW: Voodoo Banshee, Voodoo3, Voodoo4, Voodoo5 5500
-Known supported OS: DOS (DJGPP), Windows9x/2k (MinGW/MSVC), Linux+DRI
 
-Comments, notes, flames:
+
+Known supported HW/OS:
+----------------------
+
+Voodoo Banshee, Voodoo3, Voodoo4, Voodoo5 5500
+DOS (DJGPP), Windows9x/2k (MinGW/MSVC), Linux
+
+
+
+How to compile:
+---------------
+
+DJGPP/MinGW/MSVC:
+   Place the Glide3 SDK in the top Mesa directory:
+	$(MESA)/glide3/include/*.h
+	$(MESA)/glide3/lib/
+   Required headers:
+	3dfx.h, g3ext.h, glide.h, glidesys.h, glideutl.h, sst1vid.h
+   Required libraries:
+	OS specific
+   Type:
+	make -f Makefile.DJ HAVE_MMX=1 HAVE_3DNOW=1 FX=1
+	or
+	make -f Makefile.mgw HAVE_MMX=1 HAVE_3DNOW=1 FX=1
+	or
+	nmake -f Makefile.wfx
+   Look into the corresponding makefiles for further information.
+
+Linux:
+   Place the Glide3 SDK in /usr/local/glide
+   Type:
+	make linux-glide
+
+
+
+Contact:
+--------
+
 Daniel Borca <dborca@users.sourceforge.net>
 Hiroshi Morii <koolsmoky@users.sourceforge.net>
+
+
+
+The info below this line is outdated. You have been warned...
+*************************************************************
 
 
 

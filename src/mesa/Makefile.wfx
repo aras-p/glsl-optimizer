@@ -1,0 +1,433 @@
+# Mesa 3-D graphics library
+# Version:  5.1
+#
+# Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+# AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# Win32/FX core makefile for Mesa
+#
+#  Copyright (c) 2003 - Hiroshi Morii
+#  Email : koolsmoky@users.sourceforge.net
+#  URL   : http://www.3dfxzone.it/koolsmoky
+
+# Debug build                : nmake -f Makefile.fx.win32 DEBUG=1
+# Optimized build            : nmake -f Makefile.fx.win32
+# Remove objects             : nmake -f Makefile.fx.win32 clean
+# Remove files in bin, lib   : nmake -f Makefile.fx.win32 clobber
+# Remove all generated files : nmake -f Makefile.fx.win32 realclean
+
+.SUFFIXES: .S
+##################################
+# general
+##################################
+BUILDROOT = ..\..
+
+!if "$(GLIDE3SDK)"==""
+GLIDE3SDK = $(BUILDROOT)\glide3
+!endif
+
+!if "$(GLIDE3SDK)"==""
+!error GLIDE3SDK undefined! Need to specify Glide3x SDK path!
+!endif
+
+GLIDE3LIB = $(GLIDE3SDK)\lib\glide3x.lib
+TEXUS2LIB = #$(GLIDE3SDK)\lib\texus2.lib
+LIBDIR    = $(BUILDROOT)\lib
+GL_DLL    = Mesa.dll
+
+HAVE_X86   = 1
+HAVE_MMX   = 1
+HAVE_SSE   =
+HAVE_3DNOW = 1
+
+##################################
+# build flags
+##################################
+FLAGS = -DH3 -DFX_GLIDE_NAPALM=1 -DH4=1 -DFX_GLIDE_H5_CSIM=1 -DGLIDE3=1 -DGLIDE3_ALPHA=1 -DBUILD_GL32 -DFX #-DGLX_DIRECT_RENDERING
+
+!if "$(USE_IEEE)"=="1"
+FLAGS = $(FLAGS) -D__i386__
+!endif
+
+!if "$(HAVE_MMX)"=="1"
+FLAGS = $(FLAGS) -DUSE_MMX_ASM
+!endif
+!if "$(HAVE_SSE)"=="1"
+FLAGS = $(FLAGS) -DUSE_SSE_ASM
+!endif
+!if "$(HAVE_3DNOW)"=="1"
+FLAGS = $(FLAGS) -DUSE_3DNOW_ASM
+!endif
+!if "$(HAVE_X86)"=="1"
+FLAGS = $(FLAGS) -DUSE_X86_ASM
+!endif
+
+!if "$(DEBUG)" == "1"
+FLAGS = $(FLAGS) -DMESA_DEBUG -DFX_DEBUG
+!endif
+
+##################################
+# compiler setup
+##################################
+CC   = cl
+LINK = link
+AR   = lib
+AS   = nasm
+
+CFLAGS  = -G6 -c -D__MSC__ -D_MSC_VER=1200 -D_WIN32 -DWIN32 -DSTRICT -W3 #-WX -D__WIN32__
+LFLAGS  = -nologo /DLL /OPT:WIN98 /MACHINE:IX86 /NODEFAULTLIB #/SUBSYSTEM:WINDOWS,4.00
+ARFLAGS = -nologo
+ASFLAGS = -O2 -fwin32
+
+!if "$(DEBUG)"== "1"
+CFLAGS  = $(CFLAGS) -Od -MDd -DDEBUG=1 -D_DEBUG -D_MT -Zi #-D_DLL conflicts with BUILD_GL32
+LFLAGS  = $(LFLAGS) -debugtype:both /DEBUG
+ARFLAGS = $(ARFLAGS) -debugtype:both
+ASFLAGS = $(ASFLAGS) -g -DDEBUG=1
+!else
+CFLAGS  = $(CFLAGS) -Ox -MD -D_MT
+!endif
+
+#################################
+# OS commands
+#################################
+RM = @del
+MV = mv
+
+#################################
+# sources
+#################################
+MAIN_SOURCES = \
+	main\api_arrayelt.c \
+	main\api_loopback.c \
+	main\api_noop.c \
+	main\api_validate.c \
+	main\accum.c \
+	main\arbprogram.c \
+	main\arbfragparse.c \
+	main\arbvertparse.c \
+	main\attrib.c \
+	main\blend.c \
+	main\bufferobj.c \
+	main\buffers.c \
+	main\clip.c \
+	main\colortab.c \
+	main\context.c \
+	main\convolve.c \
+	main\debug.c \
+	main\depth.c \
+	main\dispatch.c \
+	main\dlist.c \
+	main\drawpix.c \
+	main\enable.c \
+	main\enums.c \
+	main\eval.c \
+	main\extensions.c \
+	main\feedback.c \
+	main\fog.c \
+	main\get.c \
+	main\hash.c \
+	main\hint.c \
+	main\histogram.c \
+	main\image.c \
+	main\imports.c \
+	main\light.c \
+	main\lines.c \
+	main\matrix.c \
+	main\nvprogram.c \
+	main\nvfragparse.c \
+	main\nvvertexec.c \
+	main\nvvertparse.c \
+	main\occlude.c \
+	main\pixel.c \
+	main\points.c \
+	main\polygon.c \
+	main\program.c \
+	main\rastpos.c \
+	main\state.c \
+	main\stencil.c \
+	main\texcompress.c \
+	main\texformat.c \
+	main\teximage.c \
+	main\texobj.c \
+	main\texstate.c \
+	main\texstore.c \
+	main\texutil.c \
+	main\varray.c \
+	main\vtxfmt.c
+
+GLAPI_SOURCES = \
+	glapi\glapi.c \
+	glapi\glthread.c
+
+MATH_SOURCES = \
+	math\m_debug_clip.c \
+	math\m_debug_norm.c \
+	math\m_debug_xform.c \
+	math\m_eval.c \
+	math\m_matrix.c \
+	math\m_translate.c \
+	math\m_vector.c \
+	math\m_xform.c
+
+ARRAY_CACHE_SOURCES = \
+	array_cache\ac_context.c \
+	array_cache\ac_import.c
+
+SWRAST_SOURCES = \
+	swrast\s_aaline.c \
+	swrast\s_aatriangle.c \
+	swrast\s_accum.c \
+	swrast\s_alpha.c \
+	swrast\s_alphabuf.c \
+	swrast\s_bitmap.c \
+	swrast\s_blend.c \
+	swrast\s_buffers.c \
+	swrast\s_copypix.c \
+	swrast\s_context.c \
+	swrast\s_depth.c \
+	swrast\s_drawpix.c \
+	swrast\s_feedback.c \
+	swrast\s_fog.c \
+	swrast\s_imaging.c \
+	swrast\s_lines.c \
+	swrast\s_logic.c \
+	swrast\s_masking.c \
+	swrast\s_nvfragprog.c \
+	swrast\s_pixeltex.c \
+	swrast\s_points.c \
+	swrast\s_readpix.c \
+	swrast\s_span.c \
+	swrast\s_stencil.c \
+	swrast\s_texture.c \
+	swrast\s_texstore.c \
+	swrast\s_triangle.c \
+	swrast\s_zoom.c
+
+SWRAST_SETUP_SOURCES = \
+	swrast_setup\ss_context.c \
+	swrast_setup\ss_triangle.c \
+	swrast_setup\ss_vb.c
+
+TNL_SOURCES = \
+	tnl\t_array_api.c \
+	tnl\t_array_import.c \
+	tnl\t_context.c \
+	tnl\t_eval_api.c \
+	tnl\t_imm_alloc.c \
+	tnl\t_imm_api.c \
+	tnl\t_imm_debug.c \
+	tnl\t_imm_dlist.c \
+	tnl\t_imm_elt.c \
+	tnl\t_imm_eval.c \
+	tnl\t_imm_exec.c \
+	tnl\t_imm_fixup.c \
+	tnl\t_pipeline.c \
+	tnl\t_vb_fog.c \
+	tnl\t_vb_light.c \
+	tnl\t_vb_normals.c \
+	tnl\t_vb_points.c \
+	tnl\t_vb_program.c \
+	tnl\t_vb_render.c \
+	tnl\t_vb_texgen.c \
+	tnl\t_vb_texmat.c \
+	tnl\t_vb_vertex.c
+
+DRIVER_SOURCES = \
+	drivers\glide\fxapi.c \
+	drivers\glide\fxdd.c \
+	drivers\glide\fxddspan.c \
+	drivers\glide\fxddtex.c \
+	drivers\glide\fxsetup.c \
+	drivers\glide\fxtexman.c \
+	drivers\glide\fxtris.c \
+	drivers\glide\fxvb.c \
+	drivers\glide\fxglidew.c \
+	drivers\glide\fxwgl.c \
+	drivers\glide\fxg.c
+
+X86_SOURCES = \
+	x86\x86.c \
+	x86\glapi_x86.S \
+	x86\common_x86.c \
+	x86\common_x86_asm.S \
+	x86\x86_xform2.S \
+	x86\x86_xform3.S \
+	x86\x86_xform4.S \
+	x86\x86_cliptest.S
+
+MMX_SOURCES = \
+	x86\mmx_blend.S
+
+SSE_SOURCES = \
+	x86\sse.c \
+	x86\sse_xform2.S \
+	x86\sse_xform3.S \
+	x86\sse_xform4.S \
+	x86\sse_normal.S
+
+K3D_SOURCES = \
+	x86\3dnow.c \
+	x86\3dnow_xform2.S \
+	x86\3dnow_xform3.S \
+	x86\3dnow_xform4.S \
+	x86\3dnow_normal.S
+
+!if "$(HAVE_MMX)"=="1"
+X86_SOURCES = $(X86_SOURCES) $(MMX_SOURCES)
+HAVE_X86 = 1
+!endif
+!if "$(HAVE_SSE)"=="1"
+X86_SOURCES = $(X86_SOURCES) $(SSE_SOURCES)
+HAVE_X86 = 1
+!endif
+!if "$(HAVE_3DNOW)"=="1"
+X86_SOURCES = $(X86_SOURCES) $(K3D_SOURCES)
+HAVE_X86 = 1
+!endif
+!if "$(HAVE_X86)"=="1"
+!else
+X86_SOURCES =
+!endif
+
+EXPORTS = drivers\glide\fxopengl.def
+
+MAIN_OBJS         = $(MAIN_SOURCES:.c=.obj)
+GLAPI_OBJS        = $(GLAPI_SOURCES:.c=.obj)
+MATH_OBJS         = $(MATH_SOURCES:.c=.obj)
+ARRAY_CACHE_OBJS  = $(ARRAY_CACHE_SOURCES:.c=.obj)
+SWRAST_OBJS       = $(SWRAST_SOURCES:.c=.obj)
+SWRAST_SETUP_OBJS = $(SWRAST_SETUP_SOURCES:.c=.obj)
+TNL_OBJS          = $(TNL_SOURCES:.c=.obj)
+DRIVER_OBJS       = $(DRIVER_SOURCES:.c=.obj)
+X86_OBJS          = $(X86_SOURCES:.c=.obj)
+X86_OBJS          = $(X86_OBJS:.S=.obj)
+
+RES = drivers\glide\fx.res
+
+CORE_LIBS = \
+	$(LIBDIR)\main.lib \
+	$(LIBDIR)\glapi.lib \
+	$(LIBDIR)\math.lib \
+	$(LIBDIR)\array_cache.lib \
+	$(LIBDIR)\swrast.lib \
+	$(LIBDIR)\swarst_setup.lib \
+	$(LIBDIR)\tnl.lib
+
+!if "$(X86_SOURCES)"!=""
+X86_LIB = $(LIBDIR)\x86.lib
+!else
+X86_LIB =
+!endif
+
+INCS  = -I$(BUILDROOT)\include \
+        -I. \
+        -I.\drivers\glide \
+        -I.\main \
+        -I.\glapi \
+        -I$(GLIDE3SDK)\include
+
+DEP_LIB = user32.lib gdi32.lib kernel32.lib
+
+!if "$(DEBUG)" == "1"
+STD_LIB = MSVCRTD.lib
+!else
+STD_LIB = MSVCRT.lib
+!endif
+
+#################################
+# build rules
+#################################
+default:: all
+
+all: $(X86_LIB) $(CORE_LIBS) $(LIBDIR)\$(GL_DLL)
+
+$(LIBDIR)\$(GL_DLL): $(DRIVER_OBJS) $(CORE_LIBS) $(X86_LIB) $(RES)
+	$(LINK) -out:$@ -def:$(EXPORTS) $(LFLAGS) $(DRIVER_OBJS) $(CORE_LIBS) $(X86_LIB) $(DEP_LIB) $(STD_LIB) $(TEXUS2LIB) $(GLIDE3LIB) $(RES)
+
+$(LIBDIR)\main.lib: $(MAIN_OBJS)
+	$(AR) -out:$@ $(ARFLAGS) $(MAIN_OBJS)
+
+$(LIBDIR)\glapi.lib: $(GLAPI_OBJS)
+	$(AR) -out:$@ $(ARFLAGS) $(GLAPI_OBJS)
+
+$(LIBDIR)\math.lib: $(MATH_OBJS)
+	$(AR) -out:$@ $(ARFLAGS) $(MATH_OBJS)
+
+$(LIBDIR)\array_cache.lib: $(ARRAY_CACHE_OBJS)
+	$(AR) -out:$@ $(ARFLAGS) $(ARRAY_CACHE_OBJS)
+
+$(LIBDIR)\swrast.lib: $(SWRAST_OBJS)
+	$(AR) -out:$@ $(ARFLAGS) $(SWRAST_OBJS)
+
+$(LIBDIR)\swarst_setup.lib: $(SWRAST_SETUP_OBJS)
+	$(AR) -out:$@ $(ARFLAGS) $(SWRAST_SETUP_OBJS)
+
+$(LIBDIR)\tnl.lib: $(TNL_OBJS)
+	$(AR) -out:$@ $(ARFLAGS) $(TNL_OBJS)
+
+x86\matypes.h: x86\gen_matypes.exe
+	x86\gen_matypes.exe > $@
+
+x86\gen_matypes.exe: x86\gen_matypes.obj
+	$(CC) -o $@ x86\gen_matypes.obj
+
+$(LIBDIR)\x86.lib: x86\matypes.h $(X86_OBJS)
+	$(AR) -out:$@ $(ARFLAGS) $(X86_OBJS)
+
+.c.obj:
+	$(CC) $(CFLAGS) $(FLAGS) $(INCS) $< /Fo$*.obj
+
+.S.obj:
+	$(CC) $(CFLAGS) $(FLAGS) $(INCS) $< -D__WIN32__ -DNASM_ASSEMBLER -EP > $*.i
+	$(AS) $(ASFLAGS) $(INCS) $*.i -o $*.obj
+	$(RM) $*.i
+
+.rc.res:
+	$(RC) -Fo$@ $(INCS) $(FLAGS) -D__WIN32__ $<
+
+# [dBorca] Hack alert:
+# use standard API, to work around Win32 @x names
+# also glapi_x86.S is protected against __WIN32__
+main\dispatch.obj: main\dispatch.c
+	$(CC) $(CFLAGS) $(FLAGS) $(INCS) -UUSE_X86_ASM main\dispatch.c /Fo$*.obj
+
+#################################
+# cleanup rules
+#################################
+realclean: clean clobber
+
+clean::
+	$(RM) array_cache\*.obj
+	$(RM) glapi\*.obj
+	$(RM) main\*.obj
+	$(RM) math\*.obj
+	$(RM) swrast\*.obj
+	$(RM) swrast_setup\*.obj
+	$(RM) tnl\*.obj
+	$(RM) x86\*.obj
+	$(RM) drivers\glide\*.obj
+        $(RM) drivers\glide\*.res
+        $(RM) $(LIBDIR)\*.pdb
+        $(RM) *.pdb
+
+clobber::
+	$(RM) $(LIBDIR)\*.lib
+	$(RM) $(LIBDIR)\*.exp
+	$(RM) $(LIBDIR)\*.dll
