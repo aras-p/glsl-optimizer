@@ -1,4 +1,4 @@
-/* $Id: xm_span.c,v 1.19 2003/02/17 16:35:59 brianp Exp $ */
+/* $Id: xm_span.c,v 1.20 2003/04/01 17:28:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -182,7 +182,7 @@ static unsigned long read_pixel( XMesaDisplay *dpy,
  */
 static void write_span_TRUECOLOR_pixmap( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -219,7 +219,7 @@ static void write_span_TRUECOLOR_pixmap( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_TRUECOLOR_pixmap( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -253,7 +253,7 @@ static void write_span_rgb_TRUECOLOR_pixmap( RGB_SPAN_ARGS )
  */
 static void write_span_TRUEDITHER_pixmap( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -286,7 +286,7 @@ static void write_span_TRUEDITHER_pixmap( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_TRUEDITHER_pixmap( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -320,7 +320,7 @@ static void write_span_rgb_TRUEDITHER_pixmap( RGB_SPAN_ARGS )
  */
 static void write_span_8A8B8G8R_pixmap( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -352,7 +352,7 @@ static void write_span_8A8B8G8R_pixmap( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_8A8B8G8R_pixmap( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -384,7 +384,7 @@ static void write_span_rgb_8A8B8G8R_pixmap( RGB_SPAN_ARGS )
  */
 static void write_span_8R8G8B_pixmap( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -415,7 +415,7 @@ static void write_span_8R8G8B_pixmap( RGBA_SPAN_ARGS )
  */
 static void write_span_8R8G8B24_pixmap( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -509,7 +509,7 @@ static void write_span_8R8G8B24_pixmap( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_8R8G8B_pixmap( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -540,7 +540,7 @@ static void write_span_rgb_8R8G8B_pixmap( RGB_SPAN_ARGS )
  */
 static void write_span_rgb_8R8G8B24_pixmap( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -639,7 +639,7 @@ static void write_span_rgb_8R8G8B24_pixmap( RGB_SPAN_ARGS )
  */
 static void write_span_5R6G5B_pixmap( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -670,7 +670,7 @@ static void write_span_5R6G5B_pixmap( RGBA_SPAN_ARGS )
  */
 static void write_span_DITHER_5R6G5B_pixmap( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -703,7 +703,7 @@ static void write_span_DITHER_5R6G5B_pixmap( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_5R6G5B_pixmap( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -734,7 +734,7 @@ static void write_span_rgb_5R6G5B_pixmap( RGB_SPAN_ARGS )
  */
 static void write_span_rgb_DITHER_5R6G5B_pixmap( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -768,7 +768,7 @@ static void write_span_rgb_DITHER_5R6G5B_pixmap( RGB_SPAN_ARGS )
  */
 static void write_span_DITHER_pixmap( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -799,7 +799,7 @@ static void write_span_DITHER_pixmap( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_DITHER_pixmap( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -830,7 +830,7 @@ static void write_span_rgb_DITHER_pixmap( RGB_SPAN_ARGS )
  */
 static void write_span_1BIT_pixmap( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -863,7 +863,7 @@ static void write_span_1BIT_pixmap( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_1BIT_pixmap( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -896,7 +896,7 @@ static void write_span_rgb_1BIT_pixmap( RGB_SPAN_ARGS )
  */
 static void write_span_HPCR_pixmap( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -927,7 +927,7 @@ static void write_span_HPCR_pixmap( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_HPCR_pixmap( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -958,7 +958,7 @@ static void write_span_rgb_HPCR_pixmap( RGB_SPAN_ARGS )
  */
 static void write_span_LOOKUP_pixmap( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -988,7 +988,7 @@ static void write_span_LOOKUP_pixmap( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_LOOKUP_pixmap( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -1019,7 +1019,7 @@ static void write_span_rgb_LOOKUP_pixmap( RGB_SPAN_ARGS )
  */
 static void write_span_GRAYSCALE_pixmap( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -1048,7 +1048,7 @@ static void write_span_GRAYSCALE_pixmap( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_GRAYSCALE_pixmap( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -1077,7 +1077,7 @@ static void write_span_rgb_GRAYSCALE_pixmap( RGB_SPAN_ARGS )
  */
 static void write_span_TRUECOLOR_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    y = FLIP(xmesa->xm_buffer, y);
@@ -1106,7 +1106,7 @@ static void write_span_TRUECOLOR_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_TRUECOLOR_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    y = FLIP(xmesa->xm_buffer, y);
@@ -1135,7 +1135,7 @@ static void write_span_rgb_TRUECOLOR_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_TRUEDITHER_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    y = FLIP(xmesa->xm_buffer, y);
@@ -1164,7 +1164,7 @@ static void write_span_TRUEDITHER_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_TRUEDITHER_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    y = FLIP(xmesa->xm_buffer, y);
@@ -1193,7 +1193,7 @@ static void write_span_rgb_TRUEDITHER_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_8A8B8G8R_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
    if (mask) {
@@ -1217,7 +1217,7 @@ static void write_span_8A8B8G8R_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_8A8B8G8R_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
    if (mask) {
@@ -1241,7 +1241,7 @@ static void write_span_rgb_8A8B8G8R_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_8R8G8B_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
    if (mask) {
@@ -1264,7 +1264,7 @@ static void write_span_8R8G8B_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_8R8G8B24_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLubyte *ptr = (GLubyte *) PIXELADDR3( xmesa->xm_buffer, x, y );
    if (mask) {
@@ -1414,7 +1414,7 @@ static void write_span_8R8G8B24_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_8R8G8B_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
    if (mask) {
@@ -1438,7 +1438,7 @@ static void write_span_rgb_8R8G8B_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_rgb_8R8G8B24_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLubyte *ptr = (GLubyte *) PIXELADDR3( xmesa->xm_buffer, x, y );
    if (mask) {
@@ -1469,7 +1469,7 @@ static void write_span_rgb_8R8G8B24_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_5R6G5B_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLushort *ptr = PIXELADDR2( xmesa->xm_buffer, x, y );
    if (mask) {
@@ -1508,7 +1508,7 @@ static void write_span_5R6G5B_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_DITHER_5R6G5B_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLushort *ptr = PIXELADDR2( xmesa->xm_buffer, x, y );
    const GLint y2 = FLIP(xmesa->xm_buffer, y);
@@ -1548,7 +1548,7 @@ static void write_span_DITHER_5R6G5B_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_5R6G5B_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLushort *ptr = PIXELADDR2( xmesa->xm_buffer, x, y );
    if (mask) {
@@ -1587,7 +1587,7 @@ static void write_span_rgb_5R6G5B_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_rgb_DITHER_5R6G5B_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLushort *ptr = PIXELADDR2( xmesa->xm_buffer, x, y );
    if (mask) {
@@ -1626,7 +1626,7 @@ static void write_span_rgb_DITHER_5R6G5B_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_DITHER_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    int yy = FLIP(xmesa->xm_buffer, y);
@@ -1652,7 +1652,7 @@ static void write_span_DITHER_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_DITHER_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    int yy = FLIP(xmesa->xm_buffer, y);
@@ -1679,7 +1679,7 @@ static void write_span_rgb_DITHER_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_DITHER8_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
    XDITHER_SETUP(y);
@@ -1700,7 +1700,7 @@ static void write_span_DITHER8_ximage( RGBA_SPAN_ARGS )
 
 static void write_span_rgb_DITHER8_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
    XDITHER_SETUP(y);
@@ -1727,7 +1727,7 @@ static void write_span_rgb_DITHER8_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_1BIT_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    SETUP_1BIT;
@@ -1752,7 +1752,7 @@ static void write_span_1BIT_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_1BIT_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    SETUP_1BIT;
@@ -1777,7 +1777,7 @@ static void write_span_rgb_1BIT_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_HPCR_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
    if (mask) {
@@ -1801,7 +1801,7 @@ static void write_span_HPCR_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_HPCR_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
    if (mask) {
@@ -1825,7 +1825,7 @@ static void write_span_rgb_HPCR_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_LOOKUP_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    LOOKUP_SETUP;
@@ -1851,7 +1851,7 @@ static void write_span_LOOKUP_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_LOOKUP_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    LOOKUP_SETUP;
@@ -1877,7 +1877,7 @@ static void write_span_rgb_LOOKUP_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_LOOKUP8_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
    LOOKUP_SETUP;
@@ -1902,7 +1902,7 @@ static void write_rgb_LOOKUP8_ximage( const GLcontext *ctx,
                                       CONST GLubyte rgb[][3],
                                       const GLubyte mask[] )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
    LOOKUP_SETUP;
@@ -1929,7 +1929,7 @@ static void write_rgb_LOOKUP8_ximage( const GLcontext *ctx,
  */
 static void write_span_GRAYSCALE_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    y = FLIP(xmesa->xm_buffer, y);
@@ -1954,7 +1954,7 @@ static void write_span_GRAYSCALE_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_GRAYSCALE_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    y = FLIP(xmesa->xm_buffer, y);
@@ -1979,7 +1979,7 @@ static void write_span_rgb_GRAYSCALE_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_GRAYSCALE8_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
    if (mask) {
@@ -2003,7 +2003,7 @@ static void write_span_GRAYSCALE8_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_GRAYSCALE8_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
    if (mask) {
@@ -2039,7 +2039,7 @@ static void write_span_rgb_GRAYSCALE8_ximage( RGB_SPAN_ARGS )
  */
 static void write_pixels_TRUECOLOR_pixmap( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2060,7 +2060,7 @@ static void write_pixels_TRUECOLOR_pixmap( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_TRUEDITHER_pixmap( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2081,7 +2081,7 @@ static void write_pixels_TRUEDITHER_pixmap( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_8A8B8G8R_pixmap( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2101,7 +2101,7 @@ static void write_pixels_8A8B8G8R_pixmap( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_8R8G8B_pixmap( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2120,7 +2120,7 @@ static void write_pixels_8R8G8B_pixmap( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_8R8G8B24_pixmap( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2139,7 +2139,7 @@ static void write_pixels_8R8G8B24_pixmap( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_5R6G5B_pixmap( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2158,7 +2158,7 @@ static void write_pixels_5R6G5B_pixmap( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_DITHER_5R6G5B_pixmap( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2179,7 +2179,7 @@ static void write_pixels_DITHER_5R6G5B_pixmap( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_DITHER_pixmap( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2200,7 +2200,7 @@ static void write_pixels_DITHER_pixmap( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_1BIT_pixmap( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2221,7 +2221,7 @@ static void write_pixels_1BIT_pixmap( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_HPCR_pixmap( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2241,7 +2241,7 @@ static void write_pixels_HPCR_pixmap( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_LOOKUP_pixmap( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2261,7 +2261,7 @@ static void write_pixels_LOOKUP_pixmap( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_GRAYSCALE_pixmap( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2280,7 +2280,7 @@ static void write_pixels_GRAYSCALE_pixmap( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_TRUECOLOR_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    for (i=0;i<n;i++) {
@@ -2298,7 +2298,7 @@ static void write_pixels_TRUECOLOR_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_TRUEDITHER_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    for (i=0;i<n;i++) {
@@ -2316,7 +2316,7 @@ static void write_pixels_TRUEDITHER_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_8A8B8G8R_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
@@ -2332,7 +2332,7 @@ static void write_pixels_8A8B8G8R_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_8R8G8B_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
@@ -2348,7 +2348,7 @@ static void write_pixels_8R8G8B_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_8R8G8B24_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
@@ -2366,7 +2366,7 @@ static void write_pixels_8R8G8B24_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_5R6G5B_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
@@ -2382,7 +2382,7 @@ static void write_pixels_5R6G5B_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_DITHER_5R6G5B_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
@@ -2398,7 +2398,7 @@ static void write_pixels_DITHER_5R6G5B_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_DITHER_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    DITHER_SETUP;
@@ -2416,7 +2416,7 @@ static void write_pixels_DITHER_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_DITHER8_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    DITHER_SETUP;
    for (i=0;i<n;i++) {
@@ -2433,7 +2433,7 @@ static void write_pixels_DITHER8_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_1BIT_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    SETUP_1BIT;
@@ -2451,7 +2451,7 @@ static void write_pixels_1BIT_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_HPCR_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
@@ -2467,7 +2467,7 @@ static void write_pixels_HPCR_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_LOOKUP_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    LOOKUP_SETUP;
@@ -2484,7 +2484,7 @@ static void write_pixels_LOOKUP_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_LOOKUP8_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    LOOKUP_SETUP;
    for (i=0;i<n;i++) {
@@ -2501,7 +2501,7 @@ static void write_pixels_LOOKUP8_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_GRAYSCALE_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    for (i=0;i<n;i++) {
@@ -2518,7 +2518,7 @@ static void write_pixels_GRAYSCALE_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_GRAYSCALE8_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
@@ -2545,7 +2545,7 @@ static void write_pixels_GRAYSCALE8_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_span_mono_pixmap( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2584,7 +2584,7 @@ static void write_span_mono_index_pixmap( const GLcontext *ctx, GLuint n,
                                           GLint x, GLint y, GLuint colorIndex,
                                           const GLubyte mask[] )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2619,7 +2619,7 @@ static void write_span_mono_index_pixmap( const GLcontext *ctx, GLuint n,
  */
 static void write_span_mono_TRUEDITHER_pixmap( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2642,7 +2642,7 @@ static void write_span_mono_TRUEDITHER_pixmap( MONO_SPAN_ARGS )
  */
 static void write_span_mono_DITHER_pixmap( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2664,7 +2664,7 @@ static void write_span_mono_DITHER_pixmap( MONO_SPAN_ARGS )
  */
 static void write_span_mono_1BIT_pixmap( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2686,7 +2686,7 @@ static void write_span_mono_1BIT_pixmap( MONO_SPAN_ARGS )
  */
 static void write_span_mono_ximage( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    const unsigned long pixel = xmesa_color_to_pixel(xmesa, color[RCOMP],
@@ -2705,7 +2705,7 @@ static void write_span_mono_index_ximage( const GLcontext *ctx, GLuint n,
                                           GLuint colorIndex,
                                           const GLubyte mask[] )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    y = FLIP(xmesa->xm_buffer, y);
@@ -2722,7 +2722,7 @@ static void write_span_mono_index_ximage( const GLcontext *ctx, GLuint n,
  */
 static void write_span_mono_TRUEDITHER_ximage( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    const GLint r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    GLuint i;
@@ -2742,7 +2742,7 @@ static void write_span_mono_TRUEDITHER_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_8A8B8G8R_ximage( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    GLuint i, *ptr;
    const unsigned long pixel = xmesa_color_to_pixel(xmesa, color[RCOMP],
                color[GCOMP], color[BCOMP], color[ACOMP], xmesa->pixelformat);
@@ -2760,7 +2760,7 @@ static void write_span_mono_8A8B8G8R_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_8R8G8B_ximage( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLuint pixel = PACK_8R8G8B(color[RCOMP], color[GCOMP], color[BCOMP]);
    GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
    GLuint i;
@@ -2777,7 +2777,7 @@ static void write_span_mono_8R8G8B_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_8R8G8B24_ximage( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = color[RCOMP];
    const GLubyte g = color[GCOMP];
    const GLubyte b = color[BCOMP];
@@ -2798,7 +2798,7 @@ static void write_span_mono_8R8G8B24_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_DITHER_ximage( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    XMesaImage *img = xmesa->xm_buffer->backimage;
    int yy = FLIP(xmesa->xm_buffer, y);
@@ -2817,7 +2817,7 @@ static void write_span_mono_DITHER_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_DITHER8_ximage( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer,x,y);
    register GLuint i;
@@ -2835,7 +2835,7 @@ static void write_span_mono_DITHER8_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_LOOKUP8_ximage( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer,x,y);
    GLubyte pixel;
@@ -2854,7 +2854,7 @@ static void write_span_mono_LOOKUP8_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_1BIT_ximage( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
@@ -2873,7 +2873,7 @@ static void write_span_mono_1BIT_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_HPCR_ximage( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer,x,y);
    register GLuint i;
@@ -2890,7 +2890,7 @@ static void write_span_mono_HPCR_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_GRAYSCALE8_ximage( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte p = GRAY_RGB(color[RCOMP], color[GCOMP], color[BCOMP]);
    GLubyte *ptr = (GLubyte *) PIXELADDR1( xmesa->xm_buffer,x,y);
    GLuint i;
@@ -2908,7 +2908,7 @@ static void write_span_mono_GRAYSCALE8_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_DITHER_5R6G5B_ximage( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLushort *ptr = PIXELADDR2( xmesa->xm_buffer, x, y );
    const GLint r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    GLuint i;
@@ -2935,7 +2935,7 @@ static void write_span_mono_DITHER_5R6G5B_ximage( MONO_SPAN_ARGS )
  */
 static void write_pixels_mono_pixmap( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2958,7 +2958,7 @@ static void write_pixels_mono_index_pixmap(const GLcontext *ctx,
                                            GLuint colorIndex,
                                            const GLubyte mask[] )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2978,7 +2978,7 @@ static void write_pixels_mono_index_pixmap(const GLcontext *ctx,
  */
 static void write_pixels_mono_TRUEDITHER_pixmap( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -3001,7 +3001,7 @@ static void write_pixels_mono_TRUEDITHER_pixmap( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_DITHER_pixmap( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -3022,7 +3022,7 @@ static void write_pixels_mono_DITHER_pixmap( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_1BIT_pixmap( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -3043,7 +3043,7 @@ static void write_pixels_mono_1BIT_pixmap( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    const unsigned long pixel = xmesa_color_to_pixel(xmesa, color[RCOMP],
@@ -3061,7 +3061,7 @@ static void write_pixels_mono_index_ximage( const GLcontext *ctx, GLuint n,
                                             GLuint colorIndex,
                                             const GLubyte mask[] )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    for (i=0;i<n;i++) {
@@ -3077,7 +3077,7 @@ static void write_pixels_mono_index_ximage( const GLcontext *ctx, GLuint n,
  */
 static void write_pixels_mono_TRUEDITHER_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    const int r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
@@ -3097,7 +3097,7 @@ static void write_pixels_mono_TRUEDITHER_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_8A8B8G8R_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLuint p = PACK_8A8B8G8R(color[RCOMP], color[GCOMP],
                                   color[BCOMP], color[ACOMP]);
    register GLuint i;
@@ -3115,7 +3115,7 @@ static void write_pixels_mono_8A8B8G8R_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_8R8G8B_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    const GLuint p = PACK_8R8G8B(color[RCOMP], color[GCOMP], color[BCOMP]);
    for (i=0;i<n;i++) {
@@ -3132,7 +3132,7 @@ static void write_pixels_mono_8R8G8B_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_8R8G8B24_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    register GLuint i;
    for (i=0;i<n;i++) {
@@ -3151,7 +3151,7 @@ static void write_pixels_mono_8R8G8B24_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_DITHER_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
@@ -3169,7 +3169,7 @@ static void write_pixels_mono_DITHER_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_DITHER8_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    register GLuint i;
    DITHER_SETUP;
@@ -3187,7 +3187,7 @@ static void write_pixels_mono_DITHER8_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_LOOKUP8_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    GLubyte pixel;
    LOOKUP_SETUP;
@@ -3207,7 +3207,7 @@ static void write_pixels_mono_LOOKUP8_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_1BIT_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
@@ -3226,7 +3226,7 @@ static void write_pixels_mono_1BIT_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_HPCR_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    register GLuint i;
    for (i=0;i<n;i++) {
@@ -3243,7 +3243,7 @@ static void write_pixels_mono_HPCR_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_GRAYSCALE8_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLubyte p = GRAY_RGB(color[RCOMP], color[GCOMP], color[BCOMP]);
    for (i=0;i<n;i++) {
@@ -3260,7 +3260,7 @@ static void write_pixels_mono_GRAYSCALE8_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_DITHER_5R6G5B_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const int r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    register GLuint i;
    for (i=0;i<n;i++) {
@@ -3291,7 +3291,7 @@ static void write_pixels_mono_DITHER_5R6G5B_ximage( MONO_PIXEL_ARGS )
  */
 static void write_span_index_pixmap( INDEX_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -3319,7 +3319,7 @@ static void write_span_index_pixmap( INDEX_SPAN_ARGS )
  */
 static void write_span_index8_pixmap( INDEX8_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -3347,7 +3347,7 @@ static void write_span_index8_pixmap( INDEX8_SPAN_ARGS )
  */
 static void write_span_index_ximage( INDEX_SPAN_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    y = FLIP(xmesa->xm_buffer, y);
@@ -3373,7 +3373,7 @@ static void write_span_index8_ximage( const GLcontext *ctx, GLuint n,
                                       GLint x, GLint y, const GLubyte index[],
                                       const GLubyte mask[] )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    if (mask) {
       GLuint i;
       for (i=0;i<n;i++) {
@@ -3397,7 +3397,7 @@ static void write_span_index8_ximage8( const GLcontext *ctx, GLuint n,
                                       GLint x, GLint y, const GLubyte index[],
                                       const GLubyte mask[] )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    GLubyte *dst = PIXELADDR1( xmesa->xm_buffer,x,y);
    if (mask) {
       GLuint i;
@@ -3428,7 +3428,7 @@ static void write_span_index8_ximage8( const GLcontext *ctx, GLuint n,
  */
 static void write_pixels_index_pixmap( INDEX_PIXELS_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -3447,7 +3447,7 @@ static void write_pixels_index_pixmap( INDEX_PIXELS_ARGS )
  */
 static void write_pixels_index_ximage( INDEX_PIXELS_ARGS )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    for (i=0;i<n;i++) {
@@ -3472,7 +3472,7 @@ static void write_pixels_index_ximage( INDEX_PIXELS_ARGS )
 static void read_index_span( const GLcontext *ctx,
 			     GLuint n, GLint x, GLint y, GLuint index[] )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaBuffer source = xmesa->xm_buffer;
    GLuint i;
 
@@ -3523,7 +3523,7 @@ static void read_color_span( const GLcontext *ctx,
 			     GLuint n, GLint x, GLint y,
                              GLubyte rgba[][4] )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaBuffer source = xmesa->xm_buffer;
 
    if (source->buffer) {
@@ -3891,7 +3891,7 @@ static void read_index_pixels( const GLcontext *ctx,
 			       GLuint n, const GLint x[], const GLint y[],
                                GLuint indx[], const GLubyte mask[] )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    XMesaBuffer source = xmesa->xm_buffer;
 
@@ -3920,7 +3920,7 @@ static void read_color_pixels( const GLcontext *ctx,
 			       GLuint n, const GLint x[], const GLint y[],
                                GLubyte rgba[][4], const GLubyte mask[] )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    register GLuint i;
    XMesaBuffer source = xmesa->xm_buffer;
@@ -4167,7 +4167,7 @@ static void
 clear_color_HPCR_ximage( GLcontext *ctx, const GLfloat color[4] )
 {
    int i;
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
    CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[0], color[0]);
    CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[1], color[1]);
@@ -4201,7 +4201,7 @@ static void
 clear_color_HPCR_pixmap( GLcontext *ctx, const GLfloat color[4] )
 {
    int i;
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
    CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[0], color[0]);
    CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[1], color[1]);
@@ -4240,7 +4240,7 @@ clear_color_HPCR_pixmap( GLcontext *ctx, const GLfloat color[4] )
 
 void xmesa_update_span_funcs( GLcontext *ctx )
 {
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
    int depth=GET_VISUAL_DEPTH(xmesa->xm_visual);
    struct swrast_device_driver *dd = _swrast_GetDeviceDriverReference( ctx );
 

@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.32 2003/03/01 01:50:24 brianp Exp $ */
+/* $Id: xm_tri.c,v 1.33 2003/04/01 17:28:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,7 +60,7 @@
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    XMesaImage *img = xmesa->xm_buffer->backimage;
 
 #define RENDER_SPAN( span )					\
@@ -97,7 +97,7 @@
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
@@ -129,7 +129,7 @@
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
@@ -161,7 +161,7 @@
 #define PIXEL_TYPE bgr_t
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 #define RENDER_SPAN( span ) 					\
    GLuint i;							\
    for (i = 0; i < span.end; i++) {				\
@@ -190,7 +190,7 @@
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    XMesaImage *img = xmesa->xm_buffer->backimage;
 #define RENDER_SPAN( span )					\
    GLuint i;							\
@@ -224,7 +224,7 @@
 #define PIXEL_TYPE GLushort
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    for (i = 0; i < span.end; i++) {				\
@@ -254,7 +254,7 @@
 #define PIXEL_TYPE GLushort
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
@@ -285,7 +285,7 @@
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
@@ -314,7 +314,7 @@
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    XMesaImage *img = xmesa->xm_buffer->backimage;
 #define RENDER_SPAN( span )					\
    GLuint i;							\
@@ -348,7 +348,7 @@
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    LOOKUP_SETUP;						\
@@ -379,7 +379,7 @@
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
@@ -406,7 +406,7 @@
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    XMesaImage *img = xmesa->xm_buffer->backimage;		\
    unsigned long pixel;						\
    PACK_TRUECOLOR(pixel, v2->color[0], v2->color[1], v2->color[2]);
@@ -435,7 +435,7 @@
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE					\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);		\
    unsigned long p = PACK_8B8G8R( v2->color[0],		\
 		 v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )				\
@@ -462,7 +462,7 @@
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE					\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);		\
    unsigned long p = PACK_8R8G8B( v2->color[0],		\
 		 v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )			\
@@ -489,7 +489,7 @@
 #define PIXEL_TYPE bgr_t
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE					\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);		\
    const GLubyte *color = v2->color;
 #define RENDER_SPAN( span )				\
    GLuint i;						\
@@ -515,7 +515,7 @@
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    XMesaImage *img = xmesa->xm_buffer->backimage;
 #define RENDER_SPAN( span )					\
    GLuint i;							\
@@ -545,7 +545,7 @@
 #define PIXEL_TYPE GLushort
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE					\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);		\
    unsigned long p = PACK_5R6G5B( v2->color[0],		\
             v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )				\
@@ -572,7 +572,7 @@
 #define PIXEL_TYPE GLushort
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = v2->color;
 #define RENDER_SPAN( span )					\
    GLuint i;							\
@@ -600,7 +600,7 @@
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    FLAT_DITHER_SETUP( v2->color[0], v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )					\
    GLuint i;							\
@@ -625,7 +625,7 @@
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    XMesaImage *img = xmesa->xm_buffer->backimage;		\
    FLAT_DITHER_SETUP( v2->color[0], v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )					\
@@ -655,7 +655,7 @@
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    GLubyte r = v2->color[0];					\
    GLubyte g = v2->color[1];					\
    GLubyte b = v2->color[2];
@@ -684,7 +684,7 @@
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE					\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);		\
    LOOKUP_SETUP;					\
    GLubyte r = v2->color[0];				\
    GLubyte g = v2->color[1];				\
@@ -710,7 +710,7 @@
 #define NAME smooth_TRUECOLOR_triangle
 #define INTERP_RGB 1
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    XMesaImage *img = xmesa->xm_buffer->backimage;
 #define RENDER_SPAN( span )					\
    GLuint i;							\
@@ -737,7 +737,7 @@
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    for (i = 0; i < span.end; i++) {				\
@@ -760,7 +760,7 @@
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    for (i = 0; i < span.end; i++) {				\
@@ -783,7 +783,7 @@
 #define PIXEL_TYPE bgr_t
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE					\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 #define RENDER_SPAN( span )				\
    GLuint i;						\
    PIXEL_TYPE *pixel = pRow;				\
@@ -805,7 +805,7 @@
 #define NAME smooth_TRUEDITHER_triangle
 #define INTERP_RGB 1
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    XMesaImage *img = xmesa->xm_buffer->backimage;
 #define RENDER_SPAN( span )					\
    GLuint i;							\
@@ -832,7 +832,7 @@
 #define PIXEL_TYPE GLushort
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    for (i = 0; i < span.end; i++) {				\
@@ -855,7 +855,7 @@
 #define PIXEL_TYPE GLushort
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
@@ -879,7 +879,7 @@
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
@@ -901,7 +901,7 @@
 #define NAME smooth_DITHER_triangle
 #define INTERP_RGB 1
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    XMesaImage *img = xmesa->xm_buffer->backimage;
 #define RENDER_SPAN( span )					\
    GLuint i;							\
@@ -928,7 +928,7 @@
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    LOOKUP_SETUP;						\
@@ -952,7 +952,7 @@
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
@@ -972,7 +972,7 @@
  */
 #define NAME flat_TRUECOLOR_triangle
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    XMesaImage *img = xmesa->xm_buffer->backimage;		\
    unsigned long pixel;						\
    PACK_TRUECOLOR(pixel, v2->color[0], v2->color[1], v2->color[2]);
@@ -994,7 +994,7 @@
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE					\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);		\
    unsigned long p = PACK_8B8G8R( v2->color[0],		\
 		 v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )				\
@@ -1014,7 +1014,7 @@
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE					\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);		\
    unsigned long p = PACK_8R8G8B( v2->color[0],		\
 		 v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )				\
@@ -1034,7 +1034,7 @@
 #define PIXEL_TYPE bgr_t
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE					\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);		\
    const GLubyte *color = v2->color;
 #define RENDER_SPAN( span )				\
    GLuint i;						\
@@ -1053,7 +1053,7 @@
  */
 #define NAME flat_TRUEDITHER_triangle
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    XMesaImage *img = xmesa->xm_buffer->backimage;
 #define RENDER_SPAN( span )					\
    GLuint i;							\
@@ -1076,7 +1076,7 @@
 #define PIXEL_TYPE GLushort
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE					\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);		\
    unsigned long p = PACK_5R6G5B( v2->color[0],		\
 		 v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )				\
@@ -1096,7 +1096,7 @@
 #define PIXEL_TYPE GLushort
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = v2->color;
 #define RENDER_SPAN( span )					\
    GLuint i;							\
@@ -1117,7 +1117,7 @@
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    FLAT_DITHER_SETUP( v2->color[0], v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )					\
    GLuint i;							\
@@ -1135,7 +1135,7 @@
  */
 #define NAME flat_DITHER_triangle
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    XMesaImage *img = xmesa->xm_buffer->backimage;		\
    FLAT_DITHER_SETUP( v2->color[0], v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )					\
@@ -1158,7 +1158,7 @@
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    GLubyte r = v2->color[0];					\
    GLubyte g = v2->color[1];					\
    GLubyte b = v2->color[2];
@@ -1180,7 +1180,7 @@
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define SETUP_CODE					\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);		\
    LOOKUP_SETUP;					\
    GLubyte r = v2->color[0];				\
    GLubyte g = v2->color[1];				\
@@ -1307,7 +1307,7 @@ do {                                   \
 static swrast_tri_func get_triangle_func( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
    int depth = GET_VISUAL_DEPTH(xmesa->xm_visual);
 
    (void) kernel1;

@@ -1,4 +1,4 @@
-/* $Id: xm_line.c,v 1.23 2003/03/01 01:50:24 brianp Exp $ */
+/* $Id: xm_line.c,v 1.24 2003/04/01 17:28:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -58,7 +58,7 @@
 /* XXX don't use this, it doesn't dither correctly */
 static void draw_points_ANY_pixmap( GLcontext *ctx, const SWvertex *vert )
 {
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -94,7 +94,7 @@ static void draw_points_ANY_pixmap( GLcontext *ctx, const SWvertex *vert )
 void xmesa_choose_point( GLcontext *ctx )
 {
 #if 0
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    if (ctx->RenderMode == GL_RENDER
@@ -124,7 +124,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_TRUECOLOR_line
 #define SETUP_CODE					\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);		\
    const GLubyte *color = vert1->color;			\
    XMesaImage *img = xmesa->xm_buffer->backimage;	\
    unsigned long pixel;					\
@@ -140,7 +140,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_8A8B8G8R_line
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;				\
    GLuint pixel = PACK_8B8G8R( color[0], color[1], color[2] );
 #define PIXEL_TYPE GLuint
@@ -157,7 +157,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_8R8G8B_line
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;				\
    GLuint pixel = PACK_8R8G8B( color[0], color[1], color[2] );
 #define PIXEL_TYPE GLuint
@@ -174,7 +174,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_8R8G8B24_line
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;
 #define PIXEL_TYPE bgr_t
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
@@ -194,7 +194,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_5R6G5B_line
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;				\
    GLushort pixel = PACK_5R6G5B( color[0], color[1], color[2] );
 #define PIXEL_TYPE GLushort
@@ -211,7 +211,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_DITHER_5R6G5B_line
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;
 #define PIXEL_TYPE GLushort
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
@@ -228,7 +228,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_DITHER8_line
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;				\
    GLint r = color[0], g = color[1], b = color[2];		\
    DITHER_SETUP;
@@ -246,7 +246,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_LOOKUP8_line
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;				\
    GLubyte pixel;						\
    LOOKUP_SETUP;						\
@@ -265,7 +265,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_HPCR_line
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;				\
    GLint r = color[0], g = color[1], b = color[2];
 #define PIXEL_TYPE GLubyte
@@ -283,7 +283,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_TRUECOLOR_z_line
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;				\
    XMesaImage *img = xmesa->xm_buffer->backimage;		\
    unsigned long pixel;						\
@@ -305,7 +305,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_8A8B8G8R_z_line
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;				\
    GLuint pixel = PACK_8B8G8R( color[0], color[1], color[2] );
 #define INTERP_Z 1
@@ -328,7 +328,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_8R8G8B_z_line
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;				\
    GLuint pixel = PACK_8R8G8B( color[0], color[1], color[2] );
 #define INTERP_Z 1
@@ -351,7 +351,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_8R8G8B24_z_line
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
@@ -375,7 +375,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_5R6G5B_z_line
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;				\
    GLushort pixel = PACK_5R6G5B( color[0], color[1], color[2] );
 #define INTERP_Z 1
@@ -398,7 +398,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_DITHER_5R6G5B_z_line
 #define SETUP_CODE					\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);		\
    const GLubyte *color = vert1->color;
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
@@ -420,7 +420,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_DITHER8_z_line
 #define SETUP_CODE					\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);		\
    const GLubyte *color = vert1->color;			\
    GLint r = color[0], g = color[1], b = color[2];	\
    DITHER_SETUP;
@@ -444,7 +444,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_LOOKUP8_z_line
 #define SETUP_CODE						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;				\
    GLubyte pixel;						\
    LOOKUP_SETUP;						\
@@ -469,7 +469,7 @@ void xmesa_choose_point( GLcontext *ctx )
  */
 #define NAME flat_HPCR_z_line
 #define SETUP_CODE 						\
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;				\
    GLint r = color[0], g = color[1], b = color[2];
 #define INTERP_Z 1
@@ -489,7 +489,7 @@ void xmesa_choose_point( GLcontext *ctx )
 
 static swrast_line_func get_line_func( GLcontext *ctx )
 {
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    int depth = GET_VISUAL_DEPTH(xmesa->xm_visual);
 

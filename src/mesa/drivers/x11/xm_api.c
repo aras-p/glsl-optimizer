@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.54 2003/03/01 01:50:24 brianp Exp $ */
+/* $Id: xm_api.c,v 1.55 2003/04/01 17:28:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,6 +74,7 @@
 #include "mtypes.h"
 #include "macros.h"
 #include "texformat.h"
+#include "texobj.h"
 #include "texstore.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -1594,8 +1595,8 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
    static GLboolean firstTime = GL_TRUE;
    XMesaContext c;
-   GLcontext *ctx;
    GLboolean direct = GL_TRUE; /* not really */
+   GLcontext *mesaCtx;
 
    if (firstTime) {
       _glthread_INIT_MUTEX(_xmesa_lock);
@@ -1607,17 +1608,26 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       return NULL;
    }
 
-   ctx = c->gl_ctx = _mesa_create_context( &v->mesa_visual,
-                      share_list ? share_list->gl_ctx : (GLcontext *) NULL,
-                      (void *) c, direct);
-   if (!c->gl_ctx) {
+   mesaCtx = &(c->mesa);
+
+   /* Setup these pointers here since they're using for making the default
+    * and proxy texture objects.  Actually, we don't really need to do
+    * this since we're using the default fallback functions which
+    * _mesa_initialize_context() would plug in if needed.
+    */
+   mesaCtx->Driver.NewTextureObject = _mesa_new_texture_object;
+   mesaCtx->Driver.DeleteTexture = _mesa_delete_texture_object;
+
+   if (!_mesa_initialize_context(mesaCtx, &v->mesa_visual,
+                      share_list ? &(share_list->mesa) : (GLcontext *) NULL,
+                      (void *) c, direct)) {
       FREE(c);
       return NULL;
    }
 
-   _mesa_enable_sw_extensions(ctx);
-   _mesa_enable_1_3_extensions(ctx);
-   _mesa_enable_1_4_extensions(ctx);
+   _mesa_enable_sw_extensions(mesaCtx);
+   _mesa_enable_1_3_extensions(mesaCtx);
+   _mesa_enable_1_4_extensions(mesaCtx);
 
    if (CHECK_BYTE_ORDER(v)) {
       c->swapbytes = GL_FALSE;
@@ -1633,20 +1643,20 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    c->display = v->display;
    c->pixelformat = v->dithered_pf;      /* Dithering is enabled by default */
 
-   ctx->Driver.UpdateState = xmesa_update_state;
+   mesaCtx->Driver.UpdateState = xmesa_update_state;
 
    /* Initialize the software rasterizer and helper modules.
     */
-   _swrast_CreateContext( ctx );
-   _ac_CreateContext( ctx );
-   _tnl_CreateContext( ctx );
-   _swsetup_CreateContext( ctx );
+   _swrast_CreateContext( mesaCtx );
+   _ac_CreateContext( mesaCtx );
+   _tnl_CreateContext( mesaCtx );
+   _swsetup_CreateContext( mesaCtx );
 
-   xmesa_register_swrast_functions( ctx );
+   xmesa_register_swrast_functions( mesaCtx );
 
    /* Set up some constant pointers:
     */
-   xmesa_init_pointers( ctx );
+   xmesa_init_pointers( mesaCtx );
 
    return c;
 }
@@ -1656,17 +1666,16 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
 void XMesaDestroyContext( XMesaContext c )
 {
+   GLcontext *mesaCtx = &c->mesa;
 #ifdef FX
    if (c->xm_draw_buffer && c->xm_buffer->FXctx)
       fxMesaDestroyContext(c->xm_draw_buffer->FXctx);
 #endif
-   if (c->gl_ctx) {
-      _swsetup_DestroyContext( c->gl_ctx );
-      _swrast_DestroyContext( c->gl_ctx );
-      _tnl_DestroyContext( c->gl_ctx );
-      _ac_DestroyContext( c->gl_ctx );
-      _mesa_destroy_context( c->gl_ctx );
-   }
+   _swsetup_DestroyContext( mesaCtx );
+   _swrast_DestroyContext( mesaCtx );
+   _tnl_DestroyContext( mesaCtx );
+   _ac_DestroyContext( mesaCtx );
+   _mesa_destroy_context( mesaCtx );
 
    FREE( c );
 }
@@ -1785,10 +1794,10 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
          attribs[numAttribs++] = FXMESA_ALPHA_SIZE;
          attribs[numAttribs++] = 1;
        }
-       if (c->gl_ctx) {
+       if (1) {
 #define FXMESA_SHARE_CONTEXT 990099  /* keep in sync with fxapi.c! */
          attribs[numAttribs++] = FXMESA_SHARE_CONTEXT;
-         attribs[numAttribs++] = (int) c->gl_ctx;
+         attribs[numAttribs++] = (int) &(c->mesa);
        }
        attribs[numAttribs++] = FXMESA_NONE;
 
@@ -2031,7 +2040,7 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
          return GL_TRUE;
       }
 #endif
-      if (c->gl_ctx == _mesa_get_current_context()
+      if (&(c->mesa) == _mesa_get_current_context()
           && c->xm_draw_buffer == drawBuffer
           && c->xm_read_buffer == readBuffer
           && c->xm_draw_buffer->wasCurrent) {
@@ -2043,15 +2052,15 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
       c->xm_read_buffer = readBuffer;
       c->xm_buffer = drawBuffer;
 
-      _mesa_make_current2(c->gl_ctx,
+      _mesa_make_current2(&(c->mesa),
                           &drawBuffer->mesa_buffer,
                           &readBuffer->mesa_buffer);
 
-      if (c->gl_ctx->Viewport.Width == 0) {
+      if (c->mesa.Viewport.Width == 0) {
 	 /* initialize viewport to window size */
 	 _mesa_Viewport( 0, 0, drawBuffer->width, drawBuffer->height );
-	 c->gl_ctx->Scissor.Width = drawBuffer->width;
-	 c->gl_ctx->Scissor.Height = drawBuffer->height;
+	 c->mesa.Scissor.Width = drawBuffer->width;
+	 c->mesa.Scissor.Height = drawBuffer->height;
       }
 
       if (c->xm_visual->mesa_visual.rgbMode) {
@@ -2093,7 +2102,7 @@ XMesaContext XMesaGetCurrentContext( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    if (ctx) {
-      XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+      XMesaContext xmesa = XMESA_CONTEXT(ctx);
       return xmesa;
    }
    else {
@@ -2106,7 +2115,7 @@ XMesaBuffer XMesaGetCurrentBuffer( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    if (ctx) {
-      XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+      XMesaContext xmesa = XMESA_CONTEXT(ctx);
       return xmesa->xm_draw_buffer;
    }
    else {
@@ -2120,7 +2129,7 @@ XMesaBuffer XMesaGetCurrentReadBuffer( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    if (ctx) {
-      XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+      XMesaContext xmesa = XMESA_CONTEXT(ctx);
       return xmesa->xm_read_buffer;
    }
    else {
@@ -2132,8 +2141,8 @@ XMesaBuffer XMesaGetCurrentReadBuffer( void )
 GLboolean XMesaForceCurrent(XMesaContext c)
 {
    if (c) {
-      if (c->gl_ctx != _mesa_get_current_context()) {
-	 _mesa_make_current(c->gl_ctx, &c->xm_draw_buffer->mesa_buffer);
+      if (&(c->mesa) != _mesa_get_current_context()) {
+	 _mesa_make_current(&(c->mesa), &c->xm_draw_buffer->mesa_buffer);
       }
    }
    else {
@@ -2170,7 +2179,7 @@ GLboolean XMesaSetFXmode( GLint mode )
          return GL_FALSE;
       }
       if (ctx) {
-         XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+         XMesaContext xmesa = XMESA_CONTEXT(ctx);
          if (mode == XMESA_FX_WINDOW) {
 	    if (xmesa->xm_draw_buffer->FXisHackUsable) {
 	       FX_grSstControl(GR_CONTROL_DEACTIVATE);
@@ -2209,7 +2218,7 @@ static void FXgetImage( XMesaBuffer b )
    int xpos, ypos;
    XMesaWindow root;
    unsigned int bw, depth, width, height;
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
 #ifdef XFree86Server
    x = b->frontbuffer->x;

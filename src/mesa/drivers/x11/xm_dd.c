@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.46 2003/04/01 16:41:58 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.47 2003/04/01 17:28:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -98,7 +98,7 @@ finish( GLcontext *ctx )
 #ifdef XFree86Server
       /* NOT_NEEDED */
 #else
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    if (xmesa) {
       _glthread_LOCK_MUTEX(_xmesa_lock);
       XSync( xmesa->display, False );
@@ -114,7 +114,7 @@ flush( GLcontext *ctx )
 #ifdef XFree86Server
       /* NOT_NEEDED */
 #else
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    if (xmesa) {
       _glthread_LOCK_MUTEX(_xmesa_lock);
       XFlush( xmesa->display );
@@ -136,7 +136,7 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
     * GLframebuffer is the first member in a XMesaBuffer struct.
     */
    XMesaBuffer target = (XMesaBuffer) buffer;
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
    /* This assignment tells the span/point/line/triangle functions
     * which XMesaBuffer to use.
@@ -176,7 +176,7 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
 static void
 clear_index( GLcontext *ctx, GLuint index )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    xmesa->clearpixel = (unsigned long) index;
    XMesaSetForeground( xmesa->display, xmesa->xm_draw_buffer->cleargc,
                        (unsigned long) index );
@@ -186,7 +186,7 @@ clear_index( GLcontext *ctx, GLuint index )
 static void
 clear_color( GLcontext *ctx, const GLfloat color[4] )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[0], color[0]);
    CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[1], color[1]);
    CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[2], color[2]);
@@ -209,7 +209,7 @@ clear_color( GLcontext *ctx, const GLfloat color[4] )
 static void
 index_mask( GLcontext *ctx, GLuint mask )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    if (xmesa->xm_draw_buffer->buffer != XIMAGE) {
       unsigned long m;
       if (mask==0xffffffff) {
@@ -229,7 +229,7 @@ static void
 color_mask(GLcontext *ctx,
            GLboolean rmask, GLboolean gmask, GLboolean bmask, GLboolean amask)
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    int xclass = GET_VISUAL_CLASS(xmesa->xm_visual);
    (void) amask;
 
@@ -260,7 +260,7 @@ static void
 clear_front_pixmap( GLcontext *ctx, GLboolean all,
                     GLint x, GLint y, GLint width, GLint height )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    if (all) {
       XMesaFillRectangle( xmesa->display, xmesa->xm_draw_buffer->frontbuffer,
                           xmesa->xm_draw_buffer->cleargc,
@@ -281,7 +281,7 @@ static void
 clear_back_pixmap( GLcontext *ctx, GLboolean all,
                    GLint x, GLint y, GLint width, GLint height )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    if (all) {
       XMesaFillRectangle( xmesa->display, xmesa->xm_draw_buffer->backpixmap,
                           xmesa->xm_draw_buffer->cleargc,
@@ -302,7 +302,7 @@ static void
 clear_8bit_ximage( GLcontext *ctx, GLboolean all,
                    GLint x, GLint y, GLint width, GLint height )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    if (all) {
       size_t n = xmesa->xm_draw_buffer->backimage->bytes_per_line
          * xmesa->xm_draw_buffer->backimage->height;
@@ -322,7 +322,7 @@ static void
 clear_HPCR_ximage( GLcontext *ctx, GLboolean all,
                    GLint x, GLint y, GLint width, GLint height )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    if (all) {
       GLint i, c16 = (xmesa->xm_draw_buffer->backimage->bytes_per_line>>4)<<4;
       GLubyte *ptr  = (GLubyte *)xmesa->xm_draw_buffer->backimage->data;
@@ -379,7 +379,7 @@ static void
 clear_16bit_ximage( GLcontext *ctx, GLboolean all,
                     GLint x, GLint y, GLint width, GLint height )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint pixel = (GLuint) xmesa->clearpixel;
    if (xmesa->swapbytes) {
       pixel = ((pixel >> 8) & 0x00ff) | ((pixel << 8) & 0xff00);
@@ -424,7 +424,7 @@ static void
 clear_24bit_ximage( GLcontext *ctx, GLboolean all,
                     GLint x, GLint y, GLint width, GLint height )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = xmesa->clearcolor[0];
    const GLubyte g = xmesa->clearcolor[1];
    const GLubyte b = xmesa->clearcolor[2];
@@ -634,7 +634,7 @@ static void
 clear_32bit_ximage( GLcontext *ctx, GLboolean all,
                     GLint x, GLint y, GLint width, GLint height )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint pixel = (GLuint) xmesa->clearpixel;
    if (xmesa->swapbytes) {
       pixel = ((pixel >> 24) & 0x000000ff)
@@ -671,7 +671,7 @@ static void
 clear_nbit_ximage( GLcontext *ctx, GLboolean all,
                    GLint x, GLint y, GLint width, GLint height )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaImage *img = xmesa->xm_draw_buffer->backimage;
    if (all) {
       register int i, j;
@@ -701,7 +701,7 @@ static void
 clear_buffers( GLcontext *ctx, GLbitfield mask,
                GLboolean all, GLint x, GLint y, GLint width, GLint height )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask;
 
    if ((mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) &&
@@ -790,7 +790,7 @@ drawpixels_8R8G8B( GLcontext *ctx,
                    const struct gl_pixelstore_attrib *unpack,
                    const GLvoid *pixels )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_draw_buffer->buffer;
    XMesaGC gc = xmesa->xm_draw_buffer->gc;
@@ -860,7 +860,7 @@ get_string( GLcontext *ctx, GLenum name )
 static void
 enable( GLcontext *ctx, GLenum pname, GLboolean state )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
    switch (pname) {
       case GL_DITHER:
@@ -877,7 +877,7 @@ enable( GLcontext *ctx, GLenum pname, GLboolean state )
 
 void xmesa_update_state( GLcontext *ctx, GLuint new_state )
 {
-   const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
    /* Propogate statechange information to swrast and swrast_setup
     * modules.  The X11 driver has no internal GL-dependent state.
@@ -964,9 +964,6 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
    ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
    ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
-
-   ctx->Driver.NewTextureObject = _mesa_new_texture_object;
-   ctx->Driver.DeleteTexture = _mesa_delete_texture_object;
 
    ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
    ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;

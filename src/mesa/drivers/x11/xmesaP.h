@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.35 2003/02/25 19:26:30 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.36 2003/04/01 17:28:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -137,7 +137,7 @@ struct xmesa_visual {
  * "Derived" from __GLcontextRec.  Basically corresponds to a GLXContext.
  */
 struct xmesa_context {
-   GLcontext *gl_ctx;		/* the core library context */
+   GLcontext mesa;		/* the core library context (containment) */
    XMesaVisual xm_visual;	/* Describes the buffers */
    XMesaBuffer xm_draw_buffer;	/* current draw framebuffer */
    XMesaBuffer xm_read_buffer;	/* current read framebuffer */
@@ -491,6 +491,15 @@ static int const kernel1[16] = {
 
 #define PIXELADDR4( BUFFER, X, Y )  \
    ( (BUFFER)->ximage_origin4 - (Y) * (BUFFER)->ximage_width4 + (X) )
+
+
+
+
+/*
+ * Return pointer to XMesaContext corresponding to a Mesa GLcontext.
+ * Since we're using structure containment, it's just a cast!.
+ */
+#define XMESA_CONTEXT(MESACTX)  (XMesaContext) (MESACTX)
 
 
 
