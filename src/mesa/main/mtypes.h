@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.70 2002/04/09 16:56:50 keithw Exp $ */
+/* $Id: mtypes.h,v 1.71 2002/04/19 15:49:40 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1849,7 +1849,15 @@ enum _debug {
 
 #define Elements(x) sizeof(x)/sizeof(*(x))
 
-
+/*
+ * Provide a reasonable replacement for __FUNCTION__ when using
+ * non-GNU C compilers.
+ */
+#if !defined(__GNUC__)
+#define STRINGIZE(x) #x
+#define STRINGIZE_EVAL(x) STRINGIZE(x)
+#define __FUNCTION__ STRINGIZE_EVAL(__FILE__) ", line " STRINGIZE_EVAL(__LINE__)
+#endif
 
 /* Eventually let the driver specify what statechanges require a flush:
  */
