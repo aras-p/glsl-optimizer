@@ -25,6 +25,7 @@
  *
  * Command line options:
  *    -info      print GL implementation information
+ *    -stereo    use stereo enabled GLX visual
  *
  */
 
@@ -83,6 +84,11 @@ current_time(void)
 static GLfloat view_rotx = 20.0, view_roty = 30.0, view_rotz = 0.0;
 static GLint gear1, gear2, gear3;
 static GLfloat angle = 0.0;
+
+static GLboolean stereo = GL_FALSE;	/* Enable stereo.  */
+static GLfloat eyesep = 5.0;		/* Eye separation. */
+static GLfloat fix_point = 40.0;	/* Fixation point distance.  */
+static GLfloat left, right, asp;	/* Stereo frustum params.  */
 
 
 /*
@@ -225,7 +231,7 @@ gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 
 
 static void
-draw(void)
+do_draw(void)
 {
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -255,21 +261,69 @@ draw(void)
    glPopMatrix();
 }
 
+static void
+draw(void)
+{
+   if (stereo) {
+      /* First left eye.  */
+      glDrawBuffer(GL_BACK_LEFT);
+
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glFrustum(left, right, -asp, asp, 5.0, 60.0);
+
+      glMatrixMode(GL_MODELVIEW);
+
+      glPushMatrix();
+      glTranslated(+0.5 * eyesep, 0.0, 0.0);
+      do_draw();
+      glPopMatrix();
+
+      /* Then right eye.  */
+      glDrawBuffer(GL_BACK_RIGHT);
+
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glFrustum(-right, -left, -asp, asp, 5.0, 60.0);
+
+      glMatrixMode(GL_MODELVIEW);
+
+      glPushMatrix();
+      glTranslated(-0.5 * eyesep, 0.0, 0.0);
+      do_draw();
+      glPopMatrix();
+   } else
+      do_draw();
+}
+
 
 /* new window size or exposure */
 static void
 reshape(int width, int height)
 {
-   GLfloat h = (GLfloat) height / (GLfloat) width;
-
    glViewport(0, 0, (GLint) width, (GLint) height);
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   glFrustum(-1.0, 1.0, -h, h, 5.0, 60.0);
+
+   if (stereo) {
+      GLfloat w;
+
+      asp = (GLfloat) height / (GLfloat) width;
+      w = fix_point * (1.0 / 5.0);
+
+      left = -5.0 * ((w - 0.5 * eyesep) / fix_point);
+      right = 5.0 * ((w + 0.5 * eyesep) / fix_point);
+   } else {
+      GLfloat h = (GLfloat) height / (GLfloat) width;
+
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glFrustum(-1.0, 1.0, -h, h, 5.0, 60.0);
+   }
+   
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
    glTranslatef(0.0, 0.0, -40.0);
 }
+   
 
 
 static void
@@ -318,13 +372,21 @@ make_window( Display *dpy, const char *name,
              int x, int y, int width, int height,
              Window *winRet, GLXContext *ctxRet)
 {
-   int attrib[] = { GLX_RGBA,
-		    GLX_RED_SIZE, 1,
-		    GLX_GREEN_SIZE, 1,
-		    GLX_BLUE_SIZE, 1,
-		    GLX_DOUBLEBUFFER,
-		    GLX_DEPTH_SIZE, 1,
-		    None };
+   int attribs[] = { GLX_RGBA,
+                     GLX_RED_SIZE, 1,
+                     GLX_GREEN_SIZE, 1,
+                     GLX_BLUE_SIZE, 1,
+                     GLX_DOUBLEBUFFER,
+                     GLX_DEPTH_SIZE, 1,
+                     None };
+   int stereoAttribs[] = { GLX_RGBA,
+                           GLX_RED_SIZE, 1,
+                           GLX_GREEN_SIZE, 1,
+                           GLX_BLUE_SIZE, 1,
+                           GLX_DOUBLEBUFFER,
+                           GLX_DEPTH_SIZE, 1,
+                           GLX_STEREO,
+                           None };
    int scrnum;
    XSetWindowAttributes attr;
    unsigned long mask;
@@ -336,9 +398,16 @@ make_window( Display *dpy, const char *name,
    scrnum = DefaultScreen( dpy );
    root = RootWindow( dpy, scrnum );
 
-   visinfo = glXChooseVisual( dpy, scrnum, attrib );
+   if (stereo)
+      visinfo = glXChooseVisual( dpy, scrnum, stereoAttribs );
+   else
+      visinfo = glXChooseVisual( dpy, scrnum, attribs );
    if (!visinfo) {
-      printf("Error: couldn't get an RGB, Double-buffered visual\n");
+      if (stereo) {
+         printf("Error: couldn't get an RGB, "
+                "Double-buffered, Stereo visual\n");
+      } else
+         printf("Error: couldn't get an RGB, Double-buffered visual\n");
       exit(1);
    }
 
@@ -460,7 +529,7 @@ main(int argc, char *argv[])
    Display *dpy;
    Window win;
    GLXContext ctx;
-   char *dpyName = ":0";
+   char *dpyName = NULL;
    GLboolean printInfo = GL_FALSE;
    int i;
 
@@ -472,11 +541,17 @@ main(int argc, char *argv[])
       else if (strcmp(argv[i], "-info") == 0) {
          printInfo = GL_TRUE;
       }
+      else if (strcmp(argv[i], "-stereo") == 0) {
+         stereo = GL_TRUE;
+      }
+      else
+	 printf("Warrning: unknown parameter: %s\n", argv[i]);
    }
 
    dpy = XOpenDisplay(dpyName);
    if (!dpy) {
-      printf("Error: couldn't open display %s\n", dpyName);
+      printf("Error: couldn't open display %s\n",
+	     dpyName ? dpyName : getenv("DISPLAY"));
       return -1;
    }
 
