@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.54 2001/03/22 04:54:58 brianp Exp $ */
+/* $Id: extensions.c,v 1.55 2001/03/22 14:42:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -129,6 +129,8 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_ARB_multitexture",
       "GL_ARB_texture_cube_map",
       "GL_ARB_texture_env_add",
+      "GL_ARB_texture_env_combine",
+      "GL_ARB_texture_env_dot3",
       "GL_EXT_blend_color",
       "GL_EXT_blend_func_separate",
       "GL_EXT_blend_logic_op",
