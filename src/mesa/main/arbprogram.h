@@ -125,12 +125,4 @@ extern void
 _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string);
 
 
-extern void
-_mesa_ProgramCallbackMESA(GLenum target, GLprogramcallbackMESA callback,
-                          GLvoid *data);
-
-extern void
-_mesa_GetProgramRegisterfvMESA(GLenum target, GLsizei len,
-                               const GLubyte *registerName, GLfloat *v);
-
 #endif
