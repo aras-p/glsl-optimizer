@@ -46,6 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //#include "r300_swtcl.h"
 #include "r300_tex.h"
 //#include "r300_tcl.h"
+#include "r300_reg.h"
 
 #define R200_TXFORMAT_A8        R200_TXFORMAT_I8
 #define R200_TXFORMAT_L8        R200_TXFORMAT_I8
@@ -246,7 +247,6 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	t->format |= ((log2Width << R200_TXFORMAT_WIDTH_SHIFT) |
 			   (log2Height << R200_TXFORMAT_HEIGHT_SHIFT));
 
-	#if 0
 	t->format_x &= ~(R200_DEPTH_LOG2_MASK | R200_TEXCOORD_MASK);
 	if (tObj->Target == GL_TEXTURE_3D) {
 		t->format_x |= (log2Depth << R200_DEPTH_LOG2_SHIFT);
@@ -266,11 +266,10 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 				     (log2Width << R200_FACE_WIDTH_4_SHIFT) |
 				     (log2Height << R200_FACE_HEIGHT_4_SHIFT));
 	}
-	#endif
 	
-	t->size = (((tObj->Image[0][t->base.firstLevel]->Width - 1) << 0) |
-			((tObj->Image[0][t->base.firstLevel]->Height -
-			  1) << 16));
+	t->size = (((tObj->Image[0][t->base.firstLevel]->Width - 1) << R300_TX_WIDTHMASK_SHIFT)
+			|((tObj->Image[0][t->base.firstLevel]->Height - 1) << R300_TX_HEIGHTMASK_SHIFT)
+		        |((log2Width>log2Height)?log2Width:log2Height)<<R300_TX_SIZE_SHIFT);
 
 	/* Only need to round to nearest 32 for textures, but the blitter
 	 * requires 64-byte aligned pitches, and we may/may not need the

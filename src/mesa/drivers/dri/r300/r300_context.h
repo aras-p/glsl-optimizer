@@ -149,6 +149,15 @@ struct r300_tex_obj {
 	GLuint unknown5; 
 	/* end hardware registers */
 	
+	/* registers computed by r200 code - keep them here to 
+	   compare against what is actually written.
+	   
+	   to be removed later.. */
+	GLuint pp_border_color;
+	GLuint pp_cubic_faces;	/* cube face 1,2,3,4 log2 sizes */
+	GLuint format_x;
+	
+	
 	GLboolean border_fallback;
 };
 

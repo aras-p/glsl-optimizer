@@ -585,11 +585,14 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
 
    /* Use actual texture offset */
    
+   fprintf(stderr,"pp_border_color=%08x pp_cubic_faces=%08x format=%08x size=%08x format_x=%08x\n", 
+   	t->pp_border_color, t->pp_cubic_faces, t->format, t->size, t->format_x);
+   
    SINGLE_TEXTURE_PIPELINE.texture_unit[0].offset=rmesa->radeon.radeonScreen->fbLocation+t->offset;
    #if 0
    SINGLE_TEXTURE_PIPELINE.texture_unit[0].format=t->format;
-   SINGLE_TEXTURE_PIPELINE.texture_unit[0].size=t->size;
    #endif
+   SINGLE_TEXTURE_PIPELINE.texture_unit[0].size=t->size;
    SINGLE_TEXTURE_PIPELINE.texture_unit[0].filter=t->filter;
    SINGLE_TEXTURE_PIPELINE.texture_unit[0].unknown1=t->pitch; /* Unknown 1 is pitch ! */
    SINGLE_TEXTURE_PIPELINE.texture_unit[0].filter=t->filter;

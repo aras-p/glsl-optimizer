@@ -136,42 +136,40 @@ static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 		_mesa_problem(NULL, "bad T wrap mode in %s", __FUNCTION__);
 	}
 
-	#if 0 /* Which field is this ? */
-	t->pp_txformat_x &= ~R200_CLAMP_Q_MASK;
+	t->format_x &= ~R200_CLAMP_Q_MASK;
 
 	switch (rwrap) {
 	case GL_REPEAT:
-		t->pp_txformat_x |= R200_CLAMP_Q_WRAP;
+		t->format_x |= R200_CLAMP_Q_WRAP;
 		break;
 	case GL_CLAMP:
-		t->pp_txformat_x |= R200_CLAMP_Q_CLAMP_GL;
+		t->format_x |= R200_CLAMP_Q_CLAMP_GL;
 		is_clamp = GL_TRUE;
 		break;
 	case GL_CLAMP_TO_EDGE:
-		t->pp_txformat_x |= R200_CLAMP_Q_CLAMP_LAST;
+		t->format_x |= R200_CLAMP_Q_CLAMP_LAST;
 		break;
 	case GL_CLAMP_TO_BORDER:
-		t->pp_txformat_x |= R200_CLAMP_Q_CLAMP_GL;
+		t->format_x |= R200_CLAMP_Q_CLAMP_GL;
 		is_clamp_to_border = GL_TRUE;
 		break;
 	case GL_MIRRORED_REPEAT:
-		t->pp_txformat_x |= R200_CLAMP_Q_MIRROR;
+		t->format_x |= R200_CLAMP_Q_MIRROR;
 		break;
 	case GL_MIRROR_CLAMP_EXT:
-		t->pp_txformat_x |= R200_CLAMP_Q_MIRROR_CLAMP_GL;
+		t->format_x |= R200_CLAMP_Q_MIRROR_CLAMP_GL;
 		is_clamp = GL_TRUE;
 		break;
 	case GL_MIRROR_CLAMP_TO_EDGE_EXT:
-		t->pp_txformat_x |= R200_CLAMP_Q_MIRROR_CLAMP_LAST;
+		t->format_x |= R200_CLAMP_Q_MIRROR_CLAMP_LAST;
 		break;
 	case GL_MIRROR_CLAMP_TO_BORDER_EXT:
-		t->pp_txformat_x |= R200_CLAMP_Q_MIRROR_CLAMP_GL;
+		t->format_x |= R200_CLAMP_Q_MIRROR_CLAMP_GL;
 		is_clamp_to_border = GL_TRUE;
 		break;
 	default:
 		_mesa_problem(NULL, "bad R wrap mode in %s", __FUNCTION__);
 	}
-	#endif
 	
 	if (is_clamp_to_border) {
 		t->filter |= R200_BORDER_MODE_D3D;
@@ -210,9 +208,7 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
 	GLuint anisotropy = (t->filter & R200_MAX_ANISO_MASK);
 
 	t->filter &= ~(R200_MIN_FILTER_MASK | R200_MAG_FILTER_MASK);
-	#if 0
-	t->pp_txformat_x &= ~R200_VOLUME_FILTER_MASK;
-	#endif
+	t->format_x &= ~R200_VOLUME_FILTER_MASK;
 	
 	if (anisotropy == R200_MAX_ANISO_1_TO_1) {
 		switch (minf) {
@@ -262,24 +258,18 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
 	switch (magf) {
 	case GL_NEAREST:
 		t->filter |= R200_MAG_FILTER_NEAREST;
-		#if 0
-		t->pp_txformat_x |= R200_VOLUME_FILTER_NEAREST;
-		#endif
+		t->format_x |= R200_VOLUME_FILTER_NEAREST;
 		break;
 	case GL_LINEAR:
 		t->filter |= R200_MAG_FILTER_LINEAR;
-		#if 0
-		t->pp_txformat_x |= R200_VOLUME_FILTER_LINEAR;
-		#endif
+		t->format_x |= R200_VOLUME_FILTER_LINEAR;
 		break;
 	}
 }
 
 static void r300SetTexBorderColor(r300TexObjPtr t, GLubyte c[4])
 {
-	#if 0
 	t->pp_border_color = radeonPackColor(4, c[0], c[1], c[2], c[3]);
-	#endif
 }
 
 /**
@@ -1039,7 +1029,7 @@ void r300InitTextureFuncs(struct dd_function_table *functions)
 
 	driInitTextureFormats();
 
-#if 000
+#if 0
 	/* moved or obsolete code */
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	driInitTextureObjects(ctx, &rmesa->swapped,
