@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: getprocaddress.py,v 1.5 2004/10/29 19:31:52 brianp Exp $
+# $Id: getprocaddress.py,v 1.6 2004/11/27 19:57:46 brianp Exp $
 
 # Helper for the getprocaddress.c test.
 
@@ -45,7 +45,7 @@ class PrintExports(gl_XML.FilterGLAPISpecBase):
 		print """
 struct name_test_pair {
    const char *name;
-   GLboolean (*test)(void *);
+   GLboolean (*test)(generic_func);
 };
    
 static struct name_test_pair functions[] = {"""

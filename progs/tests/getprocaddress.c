@@ -35,10 +35,12 @@
 #include <math.h>
 
 
+typedef void (*generic_func)();
+
 #define EQUAL(X, Y)  (fabs((X) - (Y)) < 0.001)
 
 static GLboolean
-test_ActiveTextureARB(void *func)
+test_ActiveTextureARB(generic_func func)
 {
    PFNGLACTIVETEXTUREARBPROC activeTexture = (PFNGLACTIVETEXTUREARBPROC) func;
    GLint t;
@@ -52,7 +54,7 @@ test_ActiveTextureARB(void *func)
 
 
 static GLboolean
-test_SecondaryColor3fEXT(void *func)
+test_SecondaryColor3fEXT(generic_func func)
 {
    PFNGLSECONDARYCOLOR3FEXTPROC secColor3f = (PFNGLSECONDARYCOLOR3FEXTPROC) func;
    GLfloat color[4];
@@ -66,7 +68,7 @@ test_SecondaryColor3fEXT(void *func)
 
 
 static GLboolean
-test_ActiveStencilFaceEXT(void *func)
+test_ActiveStencilFaceEXT(generic_func func)
 {
    PFNGLACTIVESTENCILFACEEXTPROC activeFace = (PFNGLACTIVESTENCILFACEEXTPROC) func;
    GLint face;
@@ -80,7 +82,7 @@ test_ActiveStencilFaceEXT(void *func)
 
 
 static GLboolean
-test_VertexAttrib1fvARB(void *func)
+test_VertexAttrib1fvARB(generic_func func)
 {
    PFNGLVERTEXATTRIB1FVARBPROC vertexAttrib1fvARB = (PFNGLVERTEXATTRIB1FVARBPROC) func;
    PFNGLGETVERTEXATTRIBFVARBPROC getVertexAttribfvARB = (PFNGLGETVERTEXATTRIBFVARBPROC) glXGetProcAddressARB((const GLubyte *) "glGetVertexAttribfvARB");
@@ -97,7 +99,7 @@ test_VertexAttrib1fvARB(void *func)
 }
 
 static GLboolean
-test_VertexAttrib4NubvARB(void *func)
+test_VertexAttrib4NubvARB(generic_func func)
 {
    PFNGLVERTEXATTRIB4NUBVARBPROC vertexAttrib4NubvARB = (PFNGLVERTEXATTRIB4NUBVARBPROC) func;
    PFNGLGETVERTEXATTRIBFVARBPROC getVertexAttribfvARB = (PFNGLGETVERTEXATTRIBFVARBPROC) glXGetProcAddressARB((const GLubyte *) "glGetVertexAttribfvARB");
@@ -115,7 +117,7 @@ test_VertexAttrib4NubvARB(void *func)
 
 
 static GLboolean
-test_VertexAttrib4NuivARB(void *func)
+test_VertexAttrib4NuivARB(generic_func func)
 {
    PFNGLVERTEXATTRIB4NUIVARBPROC vertexAttrib4NuivARB = (PFNGLVERTEXATTRIB4NUIVARBPROC) func;
    PFNGLGETVERTEXATTRIBFVARBPROC getVertexAttribfvARB = (PFNGLGETVERTEXATTRIBFVARBPROC) glXGetProcAddressARB((const GLubyte *) "glGetVertexAttribfvARB");
@@ -133,7 +135,7 @@ test_VertexAttrib4NuivARB(void *func)
 
 
 static GLboolean
-test_VertexAttrib4ivARB(void *func)
+test_VertexAttrib4ivARB(generic_func func)
 {
    PFNGLVERTEXATTRIB4IVARBPROC vertexAttrib4ivARB = (PFNGLVERTEXATTRIB4IVARBPROC) func;
    PFNGLGETVERTEXATTRIBFVARBPROC getVertexAttribfvARB = (PFNGLGETVERTEXATTRIBFVARBPROC) glXGetProcAddressARB((const GLubyte *) "glGetVertexAttribfvARB");
@@ -151,7 +153,7 @@ test_VertexAttrib4ivARB(void *func)
 
 
 static GLboolean
-test_VertexAttrib4NsvARB(void *func)
+test_VertexAttrib4NsvARB(generic_func func)
 {
    PFNGLVERTEXATTRIB4NSVARBPROC vertexAttrib4NsvARB = (PFNGLVERTEXATTRIB4NSVARBPROC) func;
    PFNGLGETVERTEXATTRIBFVARBPROC getVertexAttribfvARB = (PFNGLGETVERTEXATTRIBFVARBPROC) glXGetProcAddressARB((const GLubyte *) "glGetVertexAttribfvARB");
@@ -169,7 +171,7 @@ test_VertexAttrib4NsvARB(void *func)
 
 
 static GLboolean
-test_VertexAttrib4NusvARB(void *func)
+test_VertexAttrib4NusvARB(generic_func func)
 {
    PFNGLVERTEXATTRIB4NUSVARBPROC vertexAttrib4NusvARB = (PFNGLVERTEXATTRIB4NUSVARBPROC) func;
    PFNGLGETVERTEXATTRIBFVARBPROC getVertexAttribfvARB = (PFNGLGETVERTEXATTRIBFVARBPROC) glXGetProcAddressARB((const GLubyte *) "glGetVertexAttribfvARB");
@@ -187,7 +189,7 @@ test_VertexAttrib4NusvARB(void *func)
 
 
 static GLboolean
-test_VertexAttrib4ubNV(void *func)
+test_VertexAttrib4ubNV(generic_func func)
 {
    PFNGLVERTEXATTRIB4UBNVPROC vertexAttrib4ubNV = (PFNGLVERTEXATTRIB4UBNVPROC) func;
    PFNGLGETVERTEXATTRIBFVNVPROC getVertexAttribfvNV = (PFNGLGETVERTEXATTRIBFVNVPROC) glXGetProcAddressARB((const GLubyte *) "glGetVertexAttribfvNV");
@@ -205,7 +207,7 @@ test_VertexAttrib4ubNV(void *func)
 
 
 static GLboolean
-test_VertexAttrib2sNV(void *func)
+test_VertexAttrib2sNV(generic_func func)
 {
    PFNGLVERTEXATTRIB2SNVPROC vertexAttrib2sNV = (PFNGLVERTEXATTRIB2SNVPROC) func;
    PFNGLGETVERTEXATTRIBFVNVPROC getVertexAttribfvNV = (PFNGLGETVERTEXATTRIBFVNVPROC) glXGetProcAddressARB((const GLubyte *) "glGetVertexAttribfvNV");
@@ -223,7 +225,7 @@ test_VertexAttrib2sNV(void *func)
 
 
 static GLboolean
-test_VertexAttrib3fNV(void *func)
+test_VertexAttrib3fNV(generic_func func)
 {
    PFNGLVERTEXATTRIB3FNVPROC vertexAttrib3fNV = (PFNGLVERTEXATTRIB3FNVPROC) func;
    PFNGLGETVERTEXATTRIBFVNVPROC getVertexAttribfvNV = (PFNGLGETVERTEXATTRIBFVNVPROC) glXGetProcAddressARB((const GLubyte *) "glGetVertexAttribfvNV");
@@ -241,7 +243,7 @@ test_VertexAttrib3fNV(void *func)
 
 
 static GLboolean
-test_VertexAttrib4dvNV(void *func)
+test_VertexAttrib4dvNV(generic_func func)
 {
    PFNGLVERTEXATTRIB4DVNVPROC vertexAttrib4dvNV = (PFNGLVERTEXATTRIB4DVNVPROC) func;
    PFNGLGETVERTEXATTRIBFVNVPROC getVertexAttribfvNV = (PFNGLGETVERTEXATTRIBFVNVPROC) glXGetProcAddressARB((const GLubyte *) "glGetVertexAttribfvNV");
@@ -308,7 +310,7 @@ check_functions( const char *extensions )
          passes = 0;
       }
       else if (doTests) {
-         void *funcPtr = (void *) glXGetProcAddressARB((const GLubyte *) entry->name);
+         generic_func funcPtr = (generic_func) glXGetProcAddressARB((const GLubyte *) entry->name);
          if (funcPtr) {
             if (entry->test) {
                GLboolean b;
