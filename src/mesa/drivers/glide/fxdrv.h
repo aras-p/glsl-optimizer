@@ -68,6 +68,7 @@
 #include "context.h"
 #include "macros.h"
 #include "matrix.h"
+#include "mem.h"
 #include "texture.h"
 #include "types.h"
 #include "vb.h"
