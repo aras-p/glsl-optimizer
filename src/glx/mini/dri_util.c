@@ -476,16 +476,6 @@ __driUtilCreateScreen(struct DRIDriverRec *driver,
 	}
     }
     
-    /*
-    * Fake various version numbers.
-    */
-    psp->ddxMajor = 4;
-    psp->ddxMinor = 0;
-    psp->ddxPatch = 1;
-    psp->driMajor = 4;
-    psp->driMinor = 1;
-    psp->driPatch = 0;
-    
     /* install driver's callback functions */
     psp->DriverAPI = *driverAPI;
     
