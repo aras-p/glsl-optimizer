@@ -891,7 +891,7 @@ fxIsInHardware(GLcontext * ctx)
       if (ctx->Texture._ReallyEnabled & TEXTURE1_2D) {
 	 if (ctx->Texture.Unit[1].EnvMode == GL_BLEND)
 	    return GL_FALSE;
-	 if (ctx->Texture.Unit[0]._Current->Image[0]->Border > 0)
+	 if (ctx->Texture.Unit[1]._Current->Image[0]->Border > 0)
 	    return GL_FALSE;
       }
 
