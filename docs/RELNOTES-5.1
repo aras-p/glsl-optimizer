@@ -24,6 +24,15 @@ See the VERSIONS file for a list of bugs fixed in this release.
 New Features in Mesa 5.1
 ------------------------
 
+New directory tree
+   The whole Mesa directory tree has been cleaned up and reorganized.
+   Some old stuff has been abandoned.  Lots of non-Unix makefiles will
+   have to be updated.
+
+   For now, autoconf/automake support has been removed.  New autoconf/automake
+   files will added if they meet certain criteria.
+
+
 GL_ATI_texture_env_combine3 extension
    This adds a few new texture combine modes.
    Contributed by Ian Romanick.
@@ -48,6 +57,9 @@ GL_EXT_depth_bounds_test
 GL_NV_light_max_exponent
    Lifts the 128 limit for max light exponent.
 
+GL_EXT_texture_rectangle
+   Identical to GL_NV_texture_rectangle
+
 
 
 Build System Changes
@@ -60,10 +72,6 @@ The "old style" makefile system has been updated:
       bugs in it, but it's been tested on Linux, SunOS 5.8 and IRIX 6.5.
       Improvements/contributes are greatly appreciated.
    3. The Makefile.X11 files have been cleaned up in various ways
-
-NOTE: there are plans to completely reorganize the Mesa directory tree
-structure.  At that time, the GNU autoconf/autoconfig support will be
-removed.
 
 
 
@@ -151,4 +159,3 @@ driver call the _mesa_enable_1_4_extensions() function.
 
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-5.1,v 1.10 2003/06/01 16:27:37 brianp Exp $

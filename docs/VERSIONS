@@ -1,4 +1,3 @@
-$Id: VERSIONS,v 1.126 2003/05/30 22:30:31 brianp Exp $
 
 
 Mesa Version History
@@ -1121,10 +1120,12 @@ Mesa Version History
 
 5.1  Month day, 2003  (NOT RELEASED YET)
     New:
+	- reorganized directory tree
 	- GL_ATI_texture_env_combine3 extension (Ian Romanick)
 	- GL_SGI_texture_color_table extension (Eric Plante)
 	- GL_NV_fragment_program extension
 	- GL_NV_light_max_exponent
+	- GL_EXT_texture_rectangle (identical to GL_NV_texture_rectangle)
 	- new X86 feature detection code (Petr Sebor)
 	- less memory used for display lists and vertex buffers
 	- demo of per-pixel lighting with a fragment program (demos/fplight.c)
