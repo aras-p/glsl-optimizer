@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.24 2000/07/05 22:26:43 brianp Exp $ */
+/* $Id: attrib.c,v 1.25 2000/07/19 18:34:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -475,11 +475,14 @@ _mesa_PopAttrib(void)
             break;
          case GL_DEPTH_BUFFER_BIT:
             {
+               GLboolean oldDepthTest = ctx->Depth.Test;
                GLenum oldDepthFunc = ctx->Depth.Func;
                GLboolean oldDepthMask = ctx->Depth.Mask;
                GLfloat oldDepthClear = ctx->Depth.Clear;
                MEMCPY( &ctx->Depth, attr->data,
                        sizeof(struct gl_depthbuffer_attrib) );
+               if (ctx->Depth.Test != oldDepthTest && ctx->Driver.Enable)
+                  (*ctx->Driver.Enable)( ctx, GL_DEPTH_TEST, ctx->Depth.Test);
                if (ctx->Depth.Func != oldDepthFunc && ctx->Driver.DepthFunc)
                   (*ctx->Driver.DepthFunc)( ctx, ctx->Depth.Func );
                if (ctx->Depth.Mask != oldDepthMask && ctx->Driver.DepthMask)
