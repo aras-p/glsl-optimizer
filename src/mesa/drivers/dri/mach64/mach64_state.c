@@ -729,7 +729,7 @@ static void mach64DDDrawBuffer( GLcontext *ctx, GLenum mode )
    /*
     * _DrawDestMask is easier to cope with than <mode>.
     */
-   switch ( ctx->Color._DrawDestMask ) {
+   switch ( ctx->Color._DrawDestMask[0] ) {
    case DD_FRONT_LEFT_BIT:
       FALLBACK( mmesa, MACH64_FALLBACK_DRAW_BUFFER, GL_FALSE );
       mach64SetCliprects( ctx, GL_FRONT_LEFT );

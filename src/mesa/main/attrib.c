@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -830,7 +830,8 @@ _mesa_PopAttrib(void)
                                (GLboolean) (color->ColorMask[1] != 0),
                                (GLboolean) (color->ColorMask[2] != 0),
                                (GLboolean) (color->ColorMask[3] != 0));
-               _mesa_DrawBuffer(color->DrawBuffer);
+               _mesa_DrawBuffersARB(ctx->Const.MaxDrawBuffers,
+                                    color->DrawBuffer);
                _mesa_set_enable(ctx, GL_ALPHA_TEST, color->AlphaEnabled);
                _mesa_AlphaFunc(color->AlphaFunc, color->AlphaRef);
                _mesa_set_enable(ctx, GL_BLEND, color->BlendEnabled);
@@ -928,9 +929,8 @@ _mesa_PopAttrib(void)
                /* lighting enable */
                _mesa_set_enable(ctx, GL_LIGHTING, light->Enabled);
                /* per-light state */
-
-	       if (ctx->ModelviewMatrixStack.Top->flags & MAT_DIRTY_INVERSE) 
-		  _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
+               if (ctx->ModelviewMatrixStack.Top->flags & MAT_DIRTY_INVERSE) 
+                  _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
 	       
                for (i = 0; i < MAX_LIGHTS; i++) {
                   GLenum lgt = (GLenum) (GL_LIGHT0 + i);
@@ -1079,7 +1079,6 @@ _mesa_PopAttrib(void)
                const struct gl_transform_attrib *xform;
                xform = (const struct gl_transform_attrib *) attr->data;
                _mesa_MatrixMode(xform->MatrixMode);
-
                if (ctx->ProjectionMatrixStack.Top->flags & MAT_DIRTY)
                   _math_matrix_analyse( ctx->ProjectionMatrixStack.Top );
 

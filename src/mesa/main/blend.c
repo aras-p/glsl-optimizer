@@ -549,7 +549,6 @@ void _mesa_init_color( GLcontext * ctx )
    ctx->Color.ColorMask[3] = 0xff;
    ctx->Color.ClearIndex = 0;
    ASSIGN_4V( ctx->Color.ClearColor, 0, 0, 0, 0 );
-   ctx->Color.DrawBuffer = GL_FRONT;
    ctx->Color.AlphaEnabled = GL_FALSE;
    ctx->Color.AlphaFunc = GL_ALWAYS;
    ctx->Color.AlphaRef = 0;
@@ -568,12 +567,12 @@ void _mesa_init_color( GLcontext * ctx )
    ctx->Color.DitherFlag = GL_TRUE;
 
    if (ctx->Visual.doubleBufferMode) {
-      ctx->Color.DrawBuffer = GL_BACK;
-      ctx->Color._DrawDestMask = DD_BACK_LEFT_BIT;
+      ctx->Color.DrawBuffer[0] = GL_BACK;
+      ctx->Color._DrawDestMask[0] = DD_BACK_LEFT_BIT;
    }
    else {
-      ctx->Color.DrawBuffer = GL_FRONT;
-      ctx->Color._DrawDestMask = DD_FRONT_LEFT_BIT;
+      ctx->Color.DrawBuffer[0] = GL_FRONT;
+      ctx->Color._DrawDestMask[0] = DD_FRONT_LEFT_BIT;
    }
 }
 

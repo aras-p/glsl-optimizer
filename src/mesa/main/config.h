@@ -202,6 +202,13 @@
 /*@}*/
 
 
+/** For GL_ARB_draw_buffers */
+/*@{*/
+#define MAX_DRAW_BUFFERS 1
+/*@}*/
+
+
+
 /**
  * \name Mesa-specific parameters
  */
@@ -281,6 +288,14 @@
 #define FEATURE_windowpos  _HAVE_FULL_GL
 
 /*@}*/
+
+
+/**
+ * Maximum number of temporary vertices required for clipping.  
+ *
+ * Used in array_cache and tnl modules.
+ */
+#define MAX_CLIPPED_VERTICES ((2 * (6 + MAX_CLIP_PLANES))+1)
 
 
 #endif /* CONFIG_H */

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -986,7 +986,7 @@ xmesa_CopyPixels( GLcontext *ctx,
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-   if (ctx->Color.DrawBuffer == GL_FRONT &&
+   if (ctx->Color.DrawBuffer[0] == GL_FRONT &&
        ctx->Pixel.ReadBuffer == GL_FRONT &&
        drawBuffer &&  /* buffer != 0 means it's a Window or Pixmap */
        readBuffer &&
@@ -1104,7 +1104,7 @@ void xmesa_update_state( GLcontext *ctx, GLuint new_state )
       break;
    }
 
-   if (ctx->Color._DrawDestMask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) {
+   if (ctx->Color._DrawDestMask[0] & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) {
       xmesa_update_span_funcs(ctx);
    }
 }

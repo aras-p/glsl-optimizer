@@ -805,7 +805,7 @@ static void sisRenderStart( GLcontext *ctx )
    GLuint AGPParseSet = smesa->AGPParseSet;
    GLboolean tex_fallback = GL_FALSE;
 
-   if (ctx->Color._DrawDestMask == DD_FRONT_LEFT_BIT && 
+   if (ctx->Color._DrawDestMask[0] == DD_FRONT_LEFT_BIT && 
       smesa->driDrawable->numClipRects != 0)
    {
       multipass_cliprect(ctx, 0);

@@ -49,7 +49,7 @@
 #define LOCAL_VARS							\
    __DRIdrawablePrivate *dPriv = fxMesa->driDrawable;			\
    tdfxScreenPrivate *fxPriv = fxMesa->fxScreen;			\
-   GLuint pitch = (fxMesa->glCtx->Color.DrawBuffer == GL_FRONT)         \
+   GLuint pitch = (fxMesa->glCtx->Color.DrawBuffer[0] == GL_FRONT)         \
                ? (fxMesa->screen_width * BYTESPERPIXEL) :               \
                (info.strideInBytes);                                    \
    GLuint height = fxMesa->height;					\

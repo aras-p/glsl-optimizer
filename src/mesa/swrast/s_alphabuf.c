@@ -112,7 +112,7 @@ _swrast_clear_alpha_buffers( GLcontext *ctx )
 
    /* loop over four possible alpha buffers */
    for (bufferBit = 1; bufferBit <= 8; bufferBit = bufferBit << 1) {
-      if (bufferBit & ctx->Color._DrawDestMask) {
+      if (bufferBit & ctx->Color._DrawDestMask[0]) {
          GLchan *buffer;
          if (bufferBit == DD_FRONT_LEFT_BIT) {
             buffer = ctx->DrawBuffer->FrontLeftAlpha;

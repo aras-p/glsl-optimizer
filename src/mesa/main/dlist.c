@@ -314,6 +314,8 @@ typedef enum {
         /* GL_ARB_occlusion_query */
         OPCODE_BEGIN_QUERY_ARB,
         OPCODE_END_QUERY_ARB,
+	/* GL_ARB_draw_buffers */
+        OPCODE_DRAW_BUFFERS_ARB,
 
 	/* Vertex attributes -- fallback for when optimized display
 	 * list build isn't active.
@@ -782,6 +784,7 @@ _mesa_init_lists( void )
       InstSize[OPCODE_BEGIN_QUERY_ARB] = 3;
       InstSize[OPCODE_END_QUERY_ARB] = 2;
 #endif
+      InstSize[OPCODE_DRAW_BUFFERS_ARB] = 2 + MAX_DRAW_BUFFERS;
       InstSize[OPCODE_ATTR_1F] = 3;
       InstSize[OPCODE_ATTR_2F] = 4;
       InstSize[OPCODE_ATTR_3F] = 5;
@@ -4683,6 +4686,27 @@ save_EndQueryARB(GLenum target)
 #endif /* FEATURE_ARB_occlusion_query */
 
 
+static void GLAPIENTRY
+save_DrawBuffersARB(GLsizei count, const GLenum *buffers)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_DRAW_BUFFERS_ARB, 1 + MAX_DRAW_BUFFERS );
+   if (n) {
+      GLint i;
+      n[1].i = count;
+      if (count > MAX_DRAW_BUFFERS)
+	 count = MAX_DRAW_BUFFERS;
+      for (i = 0; i < count; i++) {
+	 n[2 + i].e = buffers[i];
+      }
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->DrawBuffersARB)(count, buffers);
+   }
+}
+
 
 static void save_Attr1f( GLenum attr, GLfloat x )
 {
@@ -6043,6 +6067,15 @@ execute_list( GLcontext *ctx, GLuint list )
             ctx->Exec->EndQueryARB(n[1].e);
             break;
 #endif
+         case OPCODE_DRAW_BUFFERS_ARB:
+	    {
+	       GLenum buffers[MAX_DRAW_BUFFERS];
+	       GLint i, count = MIN2(n[1].i, MAX_DRAW_BUFFERS);
+	       for (i = 0; i < count; i++)
+		  buffers[i] = n[2 + i].e;
+	       ctx->Exec->DrawBuffersARB(n[1].i, buffers);
+	    }
+            break;
 	 case OPCODE_ATTR_1F:
 	    (*ctx->Exec->VertexAttrib1fNV)(n[1].e, n[2].f);
 	    break;
@@ -7635,6 +7668,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->GetQueryObjectivARB = _mesa_GetQueryObjectivARB;
    table->GetQueryObjectuivARB = _mesa_GetQueryObjectuivARB;
 #endif
+   table->DrawBuffersARB = save_DrawBuffersARB;
 
    /* 299. GL_EXT_blend_equation_separate */
    table->BlendEquationSeparateEXT = save_BlendEquationSeparateEXT;

@@ -50,6 +50,9 @@ extern void GLAPIENTRY
 _mesa_DrawBuffer( GLenum mode );
 
 extern void GLAPIENTRY
+_mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers);
+
+extern void GLAPIENTRY
 _mesa_ReadBuffer( GLenum mode );
 
 extern void GLAPIENTRY

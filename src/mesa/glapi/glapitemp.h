@@ -2136,9 +2136,9 @@ KEYWORD1 void KEYWORD2 NAME(SampleCoverageARB)(GLclampf value, GLboolean invert)
    DISPATCH(SampleCoverageARB, (value, invert), (F, "glSampleCoverageARB(%f, %d);\n", value, invert));
 }
 
-KEYWORD1 void KEYWORD2 NAME(__unused413)(void)
+KEYWORD1 void KEYWORD2 NAME(DrawBuffersARB)(GLsizei n, const GLenum * bufs)
 {
-   DISPATCH(__unused413, (), (F, "gl__unused413();\n"));
+   DISPATCH(DrawBuffersARB, (n, bufs), (F, "glDrawBuffersARB(%d, %p);\n", n, (const void *) bufs));
 }
 
 KEYWORD1 void KEYWORD2 NAME(PolygonOffsetEXT)(GLfloat factor, GLfloat bias)
@@ -4636,6 +4636,11 @@ KEYWORD1 void KEYWORD2 NAME(SamplePatternEXT)(GLenum pattern)
    DISPATCH(SamplePatternSGIS, (pattern), (F, "glSamplePatternEXT(0x%x);\n", pattern));
 }
 
+KEYWORD1 void KEYWORD2 NAME(DrawBuffersATI)(GLsizei n, const GLenum * bufs)
+{
+   DISPATCH(DrawBuffersARB, (n, bufs), (F, "glDrawBuffersATI(%d, %p);\n", n, (const void *) bufs));
+}
+
 KEYWORD1 void KEYWORD2 NAME(BlendEquationSeparateATI)(GLenum modeRGB, GLenum modeA)
 {
    DISPATCH(BlendEquationSeparateEXT, (modeRGB, modeA), (F, "glBlendEquationSeparateATI(0x%x, 0x%x);\n", modeRGB, modeA));
@@ -5083,7 +5088,7 @@ static void * DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(MultTransposeMatrixfARB),
    TABLE_ENTRY(MultTransposeMatrixdARB),
    TABLE_ENTRY(SampleCoverageARB),
-   TABLE_ENTRY(__unused413),
+   TABLE_ENTRY(DrawBuffersARB),
    TABLE_ENTRY(PolygonOffsetEXT),
    TABLE_ENTRY(GetTexFilterFuncSGIS),
    TABLE_ENTRY(TexFilterFuncSGIS),
@@ -5696,6 +5701,7 @@ static const void * const UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(DrawRangeElementsEXT),
    TABLE_ENTRY(SampleMaskEXT),
    TABLE_ENTRY(SamplePatternEXT),
+   TABLE_ENTRY(DrawBuffersATI),
    TABLE_ENTRY(BlendEquationSeparateATI),
    TABLE_ENTRY(BlendFuncSeparateINGR),
    TABLE_ENTRY(PointParameterfSGIS),

@@ -384,7 +384,7 @@ void i810XMesaSetBackClipRects( i810ContextPtr imesa )
 
 static void i810XMesaWindowMoved( i810ContextPtr imesa )
 {
-   switch (imesa->glCtx->Color._DrawDestMask) {
+   switch (imesa->glCtx->Color._DrawDestMask[0]) {
    case DD_FRONT_LEFT_BIT:
       i810XMesaSetFrontClipRects( imesa );
       break;
@@ -448,7 +448,7 @@ i810UpdatePageFlipping( i810ContextPtr imesa )
    GLcontext *ctx = imesa->glCtx;
    int front = 0;
 
-   switch (ctx->Color._DrawDestMask) {
+   switch (ctx->Color._DrawDestMask[0]) {
    case DD_FRONT_LEFT_BIT:
       front = 1;
       break;

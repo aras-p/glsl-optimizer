@@ -491,7 +491,7 @@ void intelSetBackClipRects( intelContextPtr intel )
 
 void intelWindowMoved( intelContextPtr intel )
 {
-   switch (intel->ctx.Color._DrawDestMask) {
+   switch (intel->ctx.Color._DrawDestMask[0]) {
    case DD_FRONT_LEFT_BIT:
       intelSetFrontClipRects( intel );
       break;
@@ -683,5 +683,5 @@ void intelInitState( GLcontext *ctx )
 			  ctx->Stencil.ZPassFunc[0]);
 
 
-   ctx->Driver.DrawBuffer( ctx, ctx->Color.DrawBuffer );
+   ctx->Driver.DrawBuffer( ctx, ctx->Color.DrawBuffer[0] );
 }

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -139,6 +139,10 @@ _swrast_Accum( GLcontext *ctx, GLenum op,
 
 extern void
 _swrast_DrawBuffer( GLcontext *ctx, GLenum mode );
+
+
+extern void
+_swrast_DrawBuffers( GLcontext *ctx, GLsizei n, const GLenum *buffers );
 
 
 /* Reset the stipple counter

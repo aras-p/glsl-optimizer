@@ -7,7 +7,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -150,71 +150,89 @@ struct gl_texture_format;
 
 
 /**
- * These define the aliases between numbered vertex attributes and
- * conventional OpenGL vertex attributes.  We use these values in
- * quite a few places.  
- *
- * New in Mesa 4.1.
+ * Indexes for vertex program attributes.
+ * GL_NV_vertex_program aliases generic attributes over the conventional
+ * attributes.  In GL_ARB_vertex_program shader the aliasing is optional.
+ * In GL_ARB_vertex_shader / OpenGL 2.0 the aliasing is disallowed (the
+ * generic attributes are distinct/separate).
  */
 enum {
-	VERT_ATTRIB_POS = 0,
-	VERT_ATTRIB_WEIGHT = 1,
-	VERT_ATTRIB_NORMAL = 2,
-	VERT_ATTRIB_COLOR0 = 3,
-	VERT_ATTRIB_COLOR1 = 4,
-	VERT_ATTRIB_FOG = 5,
-	VERT_ATTRIB_SIX = 6,
-	VERT_ATTRIB_SEVEN = 7,
-	VERT_ATTRIB_TEX0 = 8,
-	VERT_ATTRIB_TEX1 = 9,
-	VERT_ATTRIB_TEX2 = 10,
-	VERT_ATTRIB_TEX3 = 11,
-	VERT_ATTRIB_TEX4 = 12,
-	VERT_ATTRIB_TEX5 = 13,
-	VERT_ATTRIB_TEX6 = 14,
-	VERT_ATTRIB_TEX7 = 15,
-	VERT_ATTRIB_MAX = 16
-} ;
+   VERT_ATTRIB_POS = 0,
+   VERT_ATTRIB_WEIGHT = 1,
+   VERT_ATTRIB_NORMAL = 2,
+   VERT_ATTRIB_COLOR0 = 3,
+   VERT_ATTRIB_COLOR1 = 4,
+   VERT_ATTRIB_FOG = 5,
+   VERT_ATTRIB_SIX = 6,
+   VERT_ATTRIB_SEVEN = 7,
+   VERT_ATTRIB_TEX0 = 8,
+   VERT_ATTRIB_TEX1 = 9,
+   VERT_ATTRIB_TEX2 = 10,
+   VERT_ATTRIB_TEX3 = 11,
+   VERT_ATTRIB_TEX4 = 12,
+   VERT_ATTRIB_TEX5 = 13,
+   VERT_ATTRIB_TEX6 = 14,
+   VERT_ATTRIB_TEX7 = 15,
+   VERT_ATTRIB_GENERIC0 = 16,
+   VERT_ATTRIB_GENERIC1 = 17,
+   VERT_ATTRIB_GENERIC2 = 18,
+   VERT_ATTRIB_GENERIC3 = 19,
+   VERT_ATTRIB_MAX = 16
+};
 
-/* These are used in bitfields in many places */
-#define VERT_BIT_POS     (1 << VERT_ATTRIB_POS)
-#define VERT_BIT_WEIGHT  (1 << VERT_ATTRIB_WEIGHT)
-#define VERT_BIT_NORMAL  (1 << VERT_ATTRIB_NORMAL)
-#define VERT_BIT_COLOR0  (1 << VERT_ATTRIB_COLOR0)
-#define VERT_BIT_COLOR1  (1 << VERT_ATTRIB_COLOR1)
-#define VERT_BIT_FOG     (1 << VERT_ATTRIB_FOG)
-#define VERT_BIT_SIX     (1 << VERT_ATTRIB_SIX)
-#define VERT_BIT_SEVEN   (1 << VERT_ATTRIB_SEVEN)
-#define VERT_BIT_TEX0    (1 << VERT_ATTRIB_TEX0)
-#define VERT_BIT_TEX1    (1 << VERT_ATTRIB_TEX1)
-#define VERT_BIT_TEX2    (1 << VERT_ATTRIB_TEX2)
-#define VERT_BIT_TEX3    (1 << VERT_ATTRIB_TEX3)
-#define VERT_BIT_TEX4    (1 << VERT_ATTRIB_TEX4)
-#define VERT_BIT_TEX5    (1 << VERT_ATTRIB_TEX5)
-#define VERT_BIT_TEX6    (1 << VERT_ATTRIB_TEX6)
-#define VERT_BIT_TEX7    (1 << VERT_ATTRIB_TEX7)
+/**
+ * Bitflags for vertex attributes.
+ * These are used in bitfields in many places.
+ */
+/*@{*/
+#define VERT_BIT_POS      (1 << VERT_ATTRIB_POS)
+#define VERT_BIT_WEIGHT   (1 << VERT_ATTRIB_WEIGHT)
+#define VERT_BIT_NORMAL   (1 << VERT_ATTRIB_NORMAL)
+#define VERT_BIT_COLOR0   (1 << VERT_ATTRIB_COLOR0)
+#define VERT_BIT_COLOR1   (1 << VERT_ATTRIB_COLOR1)
+#define VERT_BIT_FOG      (1 << VERT_ATTRIB_FOG)
+#define VERT_BIT_SIX      (1 << VERT_ATTRIB_SIX)
+#define VERT_BIT_SEVEN    (1 << VERT_ATTRIB_SEVEN)
+#define VERT_BIT_TEX0     (1 << VERT_ATTRIB_TEX0)
+#define VERT_BIT_TEX1     (1 << VERT_ATTRIB_TEX1)
+#define VERT_BIT_TEX2     (1 << VERT_ATTRIB_TEX2)
+#define VERT_BIT_TEX3     (1 << VERT_ATTRIB_TEX3)
+#define VERT_BIT_TEX4     (1 << VERT_ATTRIB_TEX4)
+#define VERT_BIT_TEX5     (1 << VERT_ATTRIB_TEX5)
+#define VERT_BIT_TEX6     (1 << VERT_ATTRIB_TEX6)
+#define VERT_BIT_TEX7     (1 << VERT_ATTRIB_TEX7)
+#define VERT_BIT_GENERIC0 (1 << VERT_ATTRIB_GENERIC0)
+#define VERT_BIT_GENERIC1 (1 << VERT_ATTRIB_GENERIC1)
+#define VERT_BIT_GENERIC2 (1 << VERT_ATTRIB_GENERIC2)
+#define VERT_BIT_GENERIC3 (1 << VERT_ATTRIB_GENERIC3)
 
 #define VERT_BIT_TEX(u)  (1 << (VERT_ATTRIB_TEX0 + (u)))
+#define VERT_BIT_GENERIC(g)  (1 << (VERT_ATTRIB_GENERIC0 + (g)))
+/*@}*/
 
 
-/* Fragment programs use a different but related set of attributes:
+/**
+ * Indexes for fragment program input attributes.
  */
+enum {
+   FRAG_ATTRIB_WPOS = 0,
+   FRAG_ATTRIB_COL0 = 1,
+   FRAG_ATTRIB_COL1 = 2,
+   FRAG_ATTRIB_FOGC = 3,
+   FRAG_ATTRIB_TEX0 = 4,
+   FRAG_ATTRIB_TEX1 = 5,
+   FRAG_ATTRIB_TEX2 = 6,
+   FRAG_ATTRIB_TEX3 = 7,
+   FRAG_ATTRIB_TEX4 = 8,
+   FRAG_ATTRIB_TEX5 = 9,
+   FRAG_ATTRIB_TEX6 = 10,
+   FRAG_ATTRIB_TEX7 = 11
+};
 
-/* Fragment input registers / attributes */
-#define FRAG_ATTRIB_WPOS  0
-#define FRAG_ATTRIB_COL0  1
-#define FRAG_ATTRIB_COL1  2
-#define FRAG_ATTRIB_FOGC  3
-#define FRAG_ATTRIB_TEX0  4
-#define FRAG_ATTRIB_TEX1  5
-#define FRAG_ATTRIB_TEX2  6
-#define FRAG_ATTRIB_TEX3  7
-#define FRAG_ATTRIB_TEX4  8
-#define FRAG_ATTRIB_TEX5  9
-#define FRAG_ATTRIB_TEX6  10
-#define FRAG_ATTRIB_TEX7  11
-
-/* Bitmasks for the above */
+/*
+ * Bitflags for fragment attributes.
+ */
+/*@{*/
 #define FRAG_BIT_WPOS  (1 << FRAG_ATTRIB_WPOS)
 #define FRAG_BIT_COL0  (1 << FRAG_ATTRIB_COL0)
 #define FRAG_BIT_COL1  (1 << FRAG_ATTRIB_COL1)
@@ -236,6 +254,7 @@ enum {
 			   FRAG_BIT_TEX5|	\
 			   FRAG_BIT_TEX6|	\
 			   FRAG_BIT_TEX7)
+/*@}*/
 
 
 /**
@@ -258,14 +277,6 @@ enum {
 #define DD_ACCUM_BIT       GL_ACCUM_BUFFER_BIT    /* 0x00000200 */
 #define DD_STENCIL_BIT     GL_STENCIL_BUFFER_BIT  /* 0x00000400 */
 /*@}*/
-
-
-/**
- * Maximum number of temporary vertices required for clipping.  
- *
- * Used in array_cache and tnl modules.
- */
-#define MAX_CLIPPED_VERTICES ((2 * (6 + MAX_CLIP_PLANES))+1)
 
 
 /**
@@ -433,7 +444,7 @@ struct gl_accum_attrib {
 
 
 /**
- * Color buffers attributes.
+ * Color buffer attributes.
  */
 struct gl_colorbuffer_attrib {
    GLuint ClearIndex;			/**< Index to use for glClear */
@@ -442,8 +453,8 @@ struct gl_colorbuffer_attrib {
    GLuint IndexMask;			/**< Color index write mask */
    GLubyte ColorMask[4];		/**< Each flag is 0xff or 0x0 */
 
-   GLenum DrawBuffer;			/**< Which buffer to draw into */
-   GLbitfield _DrawDestMask;		/**< bitmask of DD_*_BIT bits */
+   GLenum DrawBuffer[MAX_DRAW_BUFFERS];	/**< Which buffer to draw into */
+   GLbitfield _DrawDestMask[MAX_DRAW_BUFFERS];/**< bitmask of DD_*_BIT bits */
 
    /** 
     * \name alpha testing
@@ -698,6 +709,9 @@ struct gl_histogram_attrib {
 };
 
 
+/**
+ * Color Min/max state.
+ */
 struct gl_minmax_attrib {
    GLenum Format;
    GLboolean Sink;
@@ -705,6 +719,9 @@ struct gl_minmax_attrib {
 };
 
 
+/**
+ * Image convolution state.
+ */
 struct gl_convolution_attrib {
    GLenum Format;
    GLenum InternalFormat;
@@ -714,10 +731,16 @@ struct gl_convolution_attrib {
 };
 
 
+/**
+ * Light state flags.
+ */
+/*@{*/
 #define LIGHT_SPOT         0x1
 #define LIGHT_LOCAL_VIEWER 0x2
 #define LIGHT_POSITIONAL   0x4
 #define LIGHT_NEED_VERTICES (LIGHT_POSITIONAL|LIGHT_LOCAL_VIEWER)
+/*@}*/
+
 
 /**
  * Lighting attributes.
@@ -767,6 +790,9 @@ struct gl_line_attrib {
 };
 
 
+/**
+ * Display list state.
+ */
 struct gl_list_attrib {
    GLuint ListBase;
 };
@@ -787,6 +813,9 @@ struct gl_list_extensions {
 };
 
 
+/**
+ * Multisample state
+ */
 struct gl_multisample_attrib {
    GLboolean Enabled;
    GLboolean SampleAlphaToCoverage;
@@ -944,27 +973,45 @@ struct gl_stencil_attrib {
 
 #define NUM_TEXTURE_TARGETS 5   /* 1D, 2D, 3D, CUBE and RECT */
 
+/**
+ * An index for each type of texture object
+ */
+/*@{*/
 #define TEXTURE_1D_INDEX    0
 #define TEXTURE_2D_INDEX    1
 #define TEXTURE_3D_INDEX    2
 #define TEXTURE_CUBE_INDEX  3
 #define TEXTURE_RECT_INDEX  4
+/*@}*/
 
-/* Texture.Unit[]._ReallyEnabled flags: */
+/**
+ * Bit flags for each type of texture object
+ * Used for Texture.Unit[]._ReallyEnabled flags.
+ */
+/*@{*/
 #define TEXTURE_1D_BIT   (1 << TEXTURE_1D_INDEX)
 #define TEXTURE_2D_BIT   (1 << TEXTURE_2D_INDEX)
 #define TEXTURE_3D_BIT   (1 << TEXTURE_3D_INDEX)
 #define TEXTURE_CUBE_BIT (1 << TEXTURE_CUBE_INDEX)
 #define TEXTURE_RECT_BIT (1 << TEXTURE_RECT_INDEX)
+/*@}*/
 
 
-/* TexGenEnabled flags */
+/**
+ * TexGenEnabled flags.
+ */
+/*@{*/
 #define S_BIT 1
 #define T_BIT 2
 #define R_BIT 4
 #define Q_BIT 8
+/*@}*/
 
-/* Bitmap versions of the GL_ constants. */
+
+/**
+ * Bit flag versions of the corresponding GL_ constants.
+ */
+/*@{*/
 #define TEXGEN_SPHERE_MAP        0x1
 #define TEXGEN_OBJ_LINEAR        0x2
 #define TEXGEN_EYE_LINEAR        0x4
@@ -978,6 +1025,8 @@ struct gl_stencil_attrib {
 				  TEXGEN_REFLECTION_MAP_NV | \
 				  TEXGEN_NORMAL_MAP_NV     | \
 				  TEXGEN_EYE_LINEAR)
+/*@}*/
+
 
 /* A selection of state flags to make driver and module's lives easier. */
 #define ENABLE_TEXGEN0        0x1
@@ -1133,6 +1182,11 @@ struct gl_texture_image {
    /*@}*/
 };
 
+
+/**
+ * Indexes for cube map faces.
+ */
+/*@{*/
 #define FACE_POS_X   0
 #define FACE_NEG_X   1
 #define FACE_POS_Y   2
@@ -1140,6 +1194,8 @@ struct gl_texture_image {
 #define FACE_POS_Z   4
 #define FACE_NEG_Z   5
 #define MAX_FACES  6
+/*@}*/
+
 
 /**
  * Texture object record
@@ -1195,6 +1251,7 @@ struct gl_texture_object {
    /*@}*/
 };
 
+
 /**
  * Texture combine environment state.
  * 
@@ -1214,6 +1271,7 @@ struct gl_tex_env_combine_state {
    GLuint _NumArgsRGB;   /**< Number of inputs used for the combine mode. */
    GLuint _NumArgsA;     /**< Number of inputs used for the combine mode. */
 };
+
 
 /**
  * Texture unit record 
@@ -1414,7 +1472,7 @@ struct gl_client_array {
 
 
 /**
- * Array attributes.
+ * Vertex array state
  */
 struct gl_array_attrib {
    struct gl_client_array Vertex;	     /**< client data descriptors */
@@ -1444,6 +1502,9 @@ struct gl_array_attrib {
 };
 
 
+/**
+ * Feedback buffer state
+ */
 struct gl_feedback {
    GLenum Type;
    GLuint _Mask;		/* FB_* bits */
@@ -1454,7 +1515,7 @@ struct gl_feedback {
 
 
 /**
- * Selection attributes.
+ * Selection buffer state
  */
 struct gl_selection {
    GLuint *Buffer;	/**< selection buffer */
@@ -1494,7 +1555,7 @@ struct gl_2d_map
 
 
 /**
- * All evaluator control points
+ * All evaluator control point state
  */
 struct gl_evaluators
 {
@@ -1561,7 +1622,7 @@ enum register_file
 };
 
 
-/* Vertex and fragment instructions */
+/** Vertex and fragment instructions */
 struct vp_instruction;
 struct fp_instruction;
 
@@ -1633,7 +1694,7 @@ struct program_state {
 
 
 /**
- * State vars for GL_NV_vertex_program
+ * State vars for GL_ARB/GL_NV_vertex_program
  */
 struct vertex_program_state
 {
@@ -1650,6 +1711,7 @@ struct vertex_program_state
    /* Only used during program execution (may be moved someday): */
    GLfloat Temporaries[MAX_NV_VERTEX_PROGRAM_TEMPS][4];
    GLfloat Inputs[MAX_NV_VERTEX_PROGRAM_INPUTS][4];
+   GLuint InputsSize[MAX_NV_VERTEX_PROGRAM_INPUTS];
    GLfloat Outputs[MAX_NV_VERTEX_PROGRAM_OUTPUTS][4];
    GLint AddressReg[4];
 
@@ -1826,6 +1888,7 @@ struct gl_constants
    GLuint MaxLights;
    GLfloat MaxShininess;			/* GL_NV_light_max_exponent */
    GLfloat MaxSpotExponent;			/* GL_NV_light_max_exponent */
+   GLuint MaxViewportWidth, MaxViewportHeight;
    /* GL_ARB_vertex_program */
    GLuint MaxVertexProgramInstructions;
    GLuint MaxVertexProgramAttribs;
@@ -1848,6 +1911,8 @@ struct gl_constants
    GLuint MaxProgramMatrixStackDepth;
    /* vertex array / buffer object bounds checking */
    GLboolean CheckArrayBounds;
+   /* GL_ARB_draw_buffers */
+   GLuint MaxDrawBuffers;
 };
 
 
@@ -1864,6 +1929,7 @@ struct gl_extensions
    /*@{*/
    GLboolean dummy;  /* don't remove this! */
    GLboolean ARB_depth_texture;
+   GLboolean ARB_draw_buffers;
    GLboolean ARB_fragment_program;
    GLboolean ARB_half_float_pixel;
    GLboolean ARB_imaging;

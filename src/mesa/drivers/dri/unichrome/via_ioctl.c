@@ -463,7 +463,7 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
     
     if(vmesa->currentPage) {
 	vmesa->currentPage = 0;
-	if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
+	if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {
 		ctx->Driver.DrawBuffer(ctx, GL_BACK);
 	}
 	else {
@@ -472,7 +472,7 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
     }
     else {
 	vmesa->currentPage = 1;
-	if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
+	if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {
 		ctx->Driver.DrawBuffer(ctx, GL_BACK);
 	}
 	else {
@@ -1112,7 +1112,7 @@ void viaFillStencilDepthBuffer(viaContextPtr vmesa, GLuint pixel)
 	}
     }
 
-    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
+    if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {
 	viaFlushPrimsLocked(vmesa);
     }
 }
@@ -1180,7 +1180,7 @@ void viaFillStencilBuffer(viaContextPtr vmesa, GLuint pixel)
 	}
     }
 
-    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
+    if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {
 	viaFlushPrimsLocked(vmesa);
     }
 }
@@ -1265,7 +1265,7 @@ void viaFillDepthBuffer(viaContextPtr vmesa, GLuint pixel)
 	}
     }
     
-    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
+    if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {
 	viaFlushPrimsLocked(vmesa);
     }
 }
@@ -1556,9 +1556,9 @@ int flush_agp(viaContextPtr vmesa, drm_via_flush_agp_t* agpCmd)
 
     /*=* [DBG] make draw to front buffer *=*/
     if(DRAW_FRONT)
-	vmesa->glCtx->Color._DrawDestMask = __GL_FRONT_BUFFER_MASK;
+	vmesa->glCtx->Color._DrawDestMask[0] = __GL_FRONT_BUFFER_MASK;
     
-    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
+    if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {
 	
 	*vb++ = HC_HEADER2;
 	*vb++ = (HC_ParaType_NotTex << 16);
@@ -1807,9 +1807,9 @@ int flush_agp_saam(viaContextPtr vmesa, drm_via_flush_agp_t* agpCmd)
 
     /*=* [DBG] make draw to front buffer *=*/
     if(DRAW_FRONT)
-	vmesa->glCtx->Color._DrawDestMask = __GL_FRONT_BUFFER_MASK;
+	vmesa->glCtx->Color._DrawDestMask[0] = __GL_FRONT_BUFFER_MASK;
     
-    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
+    if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {
 	
 	*vb++ = HC_HEADER2;
 	*vb++ = (HC_ParaType_NotTex << 16);
@@ -2035,7 +2035,7 @@ int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf)
     
     /*=* [DBG] make draw to front buffer *=*/
     if(DRAW_FRONT)
-	vmesa->glCtx->Color._DrawDestMask = __GL_FRONT_BUFFER_MASK;
+	vmesa->glCtx->Color._DrawDestMask[0] = __GL_FRONT_BUFFER_MASK;
     
     
     /*=* John Sheng [2003.6.20] fix pci *=*/
@@ -2064,7 +2064,7 @@ int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf)
 	*vmesa->regTranSpace = 0x46800408;
 	vmesa->VQEnable = 0;
     }
-    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
+    if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {
 	*vb++ = HC_HEADER2;
 	*vb++ = (HC_ParaType_NotTex << 16);
 	

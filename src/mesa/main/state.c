@@ -724,6 +724,7 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->UnmapBufferARB = _mesa_UnmapBufferARB;
 #endif
 
+   /* ARB 29. GL_ARB_occlusion_query */
 #if FEATURE_ARB_occlusion_query
    exec->GenQueriesARB = _mesa_GenQueriesARB;
    exec->DeleteQueriesARB = _mesa_DeleteQueriesARB;
@@ -734,6 +735,9 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->GetQueryObjectivARB = _mesa_GetQueryObjectivARB;
    exec->GetQueryObjectuivARB = _mesa_GetQueryObjectuivARB;
 #endif
+
+   /* ARB 37. GL_ARB_draw_buffers */
+   exec->DrawBuffersARB = _mesa_DrawBuffersARB;
 }
 
 /*@}*/

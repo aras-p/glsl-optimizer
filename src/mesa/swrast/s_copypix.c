@@ -158,7 +158,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    /* If read and draw buffer are different we must do buffer switching */
-   changeBuffer = ctx->Pixel.ReadBuffer != ctx->Color.DrawBuffer
+   changeBuffer = ctx->Pixel.ReadBuffer != ctx->Color.DrawBuffer[0]
                || ctx->DrawBuffer != ctx->ReadBuffer;
 
 
@@ -326,7 +326,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    /* If read and draw buffer are different we must do buffer switching */
-   changeBuffer = ctx->Pixel.ReadBuffer != ctx->Color.DrawBuffer
+   changeBuffer = ctx->Pixel.ReadBuffer != ctx->Color.DrawBuffer[0]
                   || ctx->DrawBuffer != ctx->ReadBuffer;
 
    if (overlapping) {
@@ -466,7 +466,7 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       _swrast_span_default_fog(ctx, &span);
 
    /* If read and draw buffer are different we must do buffer switching */
-   changeBuffer = ctx->Pixel.ReadBuffer != ctx->Color.DrawBuffer
+   changeBuffer = ctx->Pixel.ReadBuffer != ctx->Color.DrawBuffer[0]
                || ctx->DrawBuffer != ctx->ReadBuffer;
 
    if (overlapping) {

@@ -822,7 +822,7 @@ static void mgaDDDrawBuffer(GLcontext *ctx, GLenum mode )
    /*
     * _DrawDestMask is easier to cope with than <mode>.
     */
-   switch ( ctx->Color._DrawDestMask ) {
+   switch ( ctx->Color._DrawDestMask[0] ) {
    case DD_FRONT_LEFT_BIT:
       mmesa->setup.dstorg = mmesa->mgaScreen->frontOffset;
       mmesa->dirty |= MGA_UPLOAD_CONTEXT;

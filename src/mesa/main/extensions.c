@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -45,6 +45,7 @@ static const struct {
    int flag_offset;
 } default_extensions[] = {
    { OFF, "GL_ARB_depth_texture",              F(ARB_depth_texture) },
+   { OFF, "GL_ARB_draw_buffers",               F(ARB_draw_buffers) },
    { OFF, "GL_ARB_fragment_program",           F(ARB_fragment_program) },
    { OFF, "GL_MESAX_half_float_pixel",         F(ARB_half_float_pixel) },
    { OFF, "GL_ARB_imaging",                    F(ARB_imaging) },
@@ -166,6 +167,7 @@ void
 _mesa_enable_sw_extensions(GLcontext *ctx)
 {
    ctx->Extensions.ARB_depth_texture = GL_TRUE;
+   ctx->Extensions.ARB_draw_buffers = GL_TRUE;
 #if FEATURE_ARB_fragment_program
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
 #endif
@@ -328,6 +330,22 @@ _mesa_enable_1_5_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
    ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
 }
+
+
+/**
+ * Enable all OpenGL 2.0 features and extensions.
+ * A convenience function to be called by drivers.
+ */
+void
+_mesa_enable_2_0_extensions(GLcontext *ctx)
+{
+   ctx->Extensions.ARB_draw_buffers = GL_TRUE;
+   ctx->Extensions.ARB_point_sprite = GL_TRUE;
+   ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
+   ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
+   /* Also, shading language */
+}
+
 
 
 /**

@@ -1944,8 +1944,8 @@ fx_check_IsInHardware(GLcontext * ctx)
       return FX_FALLBACK_STENCIL;
    }
 
-   if (ctx->Color._DrawDestMask != DD_FRONT_LEFT_BIT &&
-       ctx->Color._DrawDestMask != DD_BACK_LEFT_BIT) {
+   if (ctx->Color._DrawDestMask[0] != DD_FRONT_LEFT_BIT &&
+       ctx->Color._DrawDestMask[0] != DD_BACK_LEFT_BIT) {
       return FX_FALLBACK_DRAW_BUFFER;
    }
 

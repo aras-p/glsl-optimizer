@@ -749,7 +749,7 @@ multi_write_index_span( GLcontext *ctx, struct sw_span *span )
 
    /* loop over four possible dest color buffers */
    for (bufferBit = 1; bufferBit <= 8; bufferBit <<= 1) {
-      if (bufferBit & ctx->Color._DrawDestMask) {
+      if (bufferBit & ctx->Color._DrawDestMask[0]) {
          GLuint indexTmp[MAX_WIDTH];
          ASSERT(span->end < MAX_WIDTH);
 
@@ -806,7 +806,7 @@ multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
 
    /* loop over four possible dest color buffers */
    for (bufferBit = 1; bufferBit <= 8; bufferBit <<= 1) {
-      if (bufferBit & ctx->Color._DrawDestMask) {
+      if (bufferBit & ctx->Color._DrawDestMask[0]) {
          GLchan rgbaTmp[MAX_WIDTH][4];
          ASSERT(span->end < MAX_WIDTH);
 

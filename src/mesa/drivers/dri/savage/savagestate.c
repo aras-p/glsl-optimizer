@@ -638,7 +638,7 @@ static void savageDDDrawBuffer(GLcontext *ctx, GLenum mode )
     /*
      * _DrawDestMask is easier to cope with than <mode>.
      */
-    switch ( ctx->Color._DrawDestMask ) {
+    switch ( ctx->Color._DrawDestMask[0] ) {
     case DD_FRONT_LEFT_BIT:
         imesa->IsDouble = GL_FALSE;
       
@@ -1768,7 +1768,7 @@ void savageDDInitState( savageContextPtr imesa ) {
         imesa->regs.s4.zBufOffset.ni.zDepthSelect = 1;      
     }
  
-    if (imesa->glCtx->Color._DrawDestMask == DD_BACK_LEFT_BIT) {
+    if (imesa->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT) {
         if(imesa->IsFullScreen)
         {
             imesa->toggle = TARGET_BACK;

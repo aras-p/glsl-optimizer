@@ -246,10 +246,14 @@ typedef GLushort GLhalfARB;
 #endif
 
 /* XXX temporary hack - remove when glext.h is updated */
-#ifndef GL_POINT_SPRITE_COORD_ORIGIN
-#define GL_POINT_SPRITE_COORD_ORIGIN        0x10000
-#define GL_LOWER_LEFT                       0x10001
-#define GL_UPPER_LEFT                       0x10002
+#ifndef GL_CURRENT_PROGRAM
+#define GL_CURRENT_PROGRAM		0x8B8D
+#define GL_POINT_SPRITE_COORD_ORIGIN	0x8CA0
+#define GL_LOWER_LEFT			0x8CA1
+#define GL_UPPER_LEFT			0x8CA2
+#define GL_STENCIL_BACK_REF		0x8CA3
+#define GL_STENCIL_BACK_VALUE_MASK	0x8CA4
+#define GL_STENCIL_BACK_WRITEMASK	0x8CA5
 #endif
 
 

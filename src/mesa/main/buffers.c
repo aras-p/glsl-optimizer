@@ -149,7 +149,7 @@ _mesa_Clear( GLbitfield mask )
        */
       ddMask = 0;
       if (mask & GL_COLOR_BUFFER_BIT)
-         ddMask |= ctx->Color._DrawDestMask;
+         ddMask |= ctx->Color._DrawDestMask[0];
       if ((mask & GL_DEPTH_BUFFER_BIT) && ctx->Visual.depthBits > 0)
          ddMask |= GL_DEPTH_BUFFER_BIT;
       if ((mask & GL_STENCIL_BUFFER_BIT) && ctx->Visual.stencilBits > 0)
@@ -162,6 +162,121 @@ _mesa_Clear( GLbitfield mask )
 			 x, y, width, height );
    }
 }
+
+
+
+/**
+ * Return bitmask of DD_* flags indicating which color buffers are
+ * available to the rendering context;
+ */
+static GLuint
+supported_buffer_bitmask(const GLcontext *ctx)
+{
+   GLuint mask = DD_FRONT_LEFT_BIT; /* always have this */
+   GLuint i;
+
+   if (ctx->Visual.stereoMode) {
+      mask |= DD_FRONT_RIGHT_BIT;
+      if (ctx->Visual.doubleBufferMode) {
+         mask |= DD_BACK_LEFT_BIT | DD_BACK_RIGHT_BIT;
+      }
+   }
+   else if (ctx->Visual.doubleBufferMode) {
+      mask |= DD_BACK_LEFT_BIT;
+   }
+
+   for (i = 0; i < ctx->Visual.numAuxBuffers; i++) {
+      mask |= (DD_AUX0_BIT << i);
+   }
+
+   return mask;
+}
+
+
+/**
+ * Helper routine used by glDrawBuffer and glDrawBuffersARB.
+ * Given a GLenum naming (a) color buffer(s), return the corresponding
+ * bitmask of DD_* flags.
+ */
+static GLuint
+draw_buffer_enum_to_bitmask(GLenum buffer)
+{
+   switch (buffer) {
+      case GL_FRONT:
+         return DD_FRONT_LEFT_BIT | DD_FRONT_RIGHT_BIT;
+      case GL_BACK:
+         return DD_BACK_LEFT_BIT | DD_BACK_RIGHT_BIT;
+      case GL_NONE:
+         return 0;
+      case GL_RIGHT:
+         return DD_FRONT_RIGHT_BIT | DD_BACK_RIGHT_BIT;
+      case GL_FRONT_RIGHT:
+         return DD_FRONT_RIGHT_BIT;
+      case GL_BACK_RIGHT:
+         return DD_BACK_RIGHT_BIT;
+      case GL_BACK_LEFT:
+         return DD_BACK_LEFT_BIT;
+      case GL_FRONT_AND_BACK:
+         return DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT
+              | DD_FRONT_RIGHT_BIT | DD_BACK_RIGHT_BIT;
+      case GL_LEFT:
+         return DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT;
+      case GL_FRONT_LEFT:
+         return DD_FRONT_LEFT_BIT;
+      case GL_AUX0:
+         return DD_AUX0_BIT;
+      case GL_AUX1:
+         return DD_AUX1_BIT;
+      case GL_AUX2:
+         return DD_AUX2_BIT;
+      case GL_AUX3:
+         return DD_AUX3_BIT;
+      default:
+         /* error */
+         return ~0;
+   }
+}
+
+
+/**
+ * Helper routine used by glReadBuffer.
+ * Given a GLenum naming (a) color buffer(s), return the corresponding
+ * bitmask of DD_* flags.
+ */
+static GLuint
+read_buffer_enum_to_bitmask(GLenum buffer)
+{
+   switch (buffer) {
+      case GL_FRONT:
+         return DD_FRONT_LEFT_BIT;
+      case GL_BACK:
+         return DD_BACK_LEFT_BIT;
+      case GL_RIGHT:
+         return DD_FRONT_RIGHT_BIT;
+      case GL_FRONT_RIGHT:
+         return DD_FRONT_RIGHT_BIT;
+      case GL_BACK_RIGHT:
+         return DD_BACK_RIGHT_BIT;
+      case GL_BACK_LEFT:
+         return DD_BACK_LEFT_BIT;
+      case GL_LEFT:
+         return DD_FRONT_LEFT_BIT;
+      case GL_FRONT_LEFT:
+         return DD_FRONT_LEFT_BIT;
+      case GL_AUX0:
+         return DD_AUX0_BIT;
+      case GL_AUX1:
+         return DD_AUX1_BIT;
+      case GL_AUX2:
+         return DD_AUX2_BIT;
+      case GL_AUX3:
+         return DD_AUX3_BIT;
+      default:
+         /* error */
+         return ~0;
+   }
+}
+
 
 
 /**
@@ -179,6 +294,7 @@ _mesa_Clear( GLbitfield mask )
 void GLAPIENTRY
 _mesa_DrawBuffer( GLenum mode )
 {
+   GLenum destMask, supportedMask;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* too complex... */
 
@@ -188,124 +304,22 @@ _mesa_DrawBuffer( GLenum mode )
    /*
     * Do error checking and compute the _DrawDestMask bitfield.
     */
-   switch (mode) {
-      case GL_FRONT:
-         /* never an error */
-         if (ctx->Visual.stereoMode)
-            ctx->Color._DrawDestMask = DD_FRONT_LEFT_BIT | DD_FRONT_RIGHT_BIT;
-         else
-            ctx->Color._DrawDestMask = DD_FRONT_LEFT_BIT;
-         break;
-      case GL_BACK:
-         if (!ctx->Visual.doubleBufferMode) {
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawBuffer(GL_BACK)");
-            return;
-         }
-         if (ctx->Visual.stereoMode)
-            ctx->Color._DrawDestMask = DD_BACK_LEFT_BIT | DD_BACK_RIGHT_BIT;
-         else
-            ctx->Color._DrawDestMask = DD_BACK_LEFT_BIT;
-         break;
-      case GL_NONE:
-         /* never an error */
-         ctx->Color._DrawDestMask = 0;
-         break;
-#if _HAVE_FULL_GL
-      case GL_RIGHT:
-         if (!ctx->Visual.stereoMode) {
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawBuffer(GL_RIGHT)");
-            return;}
-         if (ctx->Visual.doubleBufferMode)
-            ctx->Color._DrawDestMask = DD_FRONT_RIGHT_BIT | DD_BACK_RIGHT_BIT;
-         else
-            ctx->Color._DrawDestMask = DD_FRONT_RIGHT_BIT;
-         break;
-      case GL_FRONT_RIGHT:
-         if (!ctx->Visual.stereoMode) {
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawBuffer(GL_FRONT_RIGHT)");
-            return;
-         }
-         ctx->Color._DrawDestMask = DD_FRONT_RIGHT_BIT;
-         break;
-      case GL_BACK_RIGHT:
-         if (!ctx->Visual.stereoMode || !ctx->Visual.doubleBufferMode) {
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawBuffer(GL_BACK_RIGHT)");
-            return;
-         }
-         ctx->Color._DrawDestMask = DD_BACK_RIGHT_BIT;
-         break;
-      case GL_BACK_LEFT:
-         if (!ctx->Visual.doubleBufferMode) {
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawBuffer(GL_BACK_LEFT)");
-            return;
-         }
-         ctx->Color._DrawDestMask = DD_BACK_LEFT_BIT;
-         break;
-      case GL_FRONT_AND_BACK:
-         if (!ctx->Visual.doubleBufferMode) {
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawBuffer(GL_FRONT_AND_BACK)");
-            return;
-         }
-         if (ctx->Visual.stereoMode)
-            ctx->Color._DrawDestMask = DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT
-                                    | DD_FRONT_RIGHT_BIT | DD_BACK_RIGHT_BIT;
-         else
-            ctx->Color._DrawDestMask = DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT;
-         break;
-      case GL_LEFT:
-         /* never an error */
-         if (ctx->Visual.doubleBufferMode)
-            ctx->Color._DrawDestMask = DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT;
-         else
-            ctx->Color._DrawDestMask = DD_FRONT_LEFT_BIT;
-         break;
-      case GL_FRONT_LEFT:
-         /* never an error */
-         ctx->Color._DrawDestMask = DD_FRONT_LEFT_BIT;
-         break;
-      case GL_AUX0:
-         if (ctx->Visual.numAuxBuffers >= 1) {
-            ctx->Color._DrawDestMask = DD_AUX0_BIT;
-         }
-         else {
-            _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer(GL_AUX0)" );
-            return;
-         }
-         break;
-      case GL_AUX1:
-         if (ctx->Visual.numAuxBuffers >= 2) {
-            ctx->Color._DrawDestMask = DD_AUX1_BIT;
-         }
-         else {
-            _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer(GL_AUX1)" );
-            return;
-         }
-         break;
-      case GL_AUX2:
-         if (ctx->Visual.numAuxBuffers >= 3) {
-            ctx->Color._DrawDestMask = DD_AUX2_BIT;
-         }
-         else {
-            _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer(GL_AUX2)" );
-            return;
-         }
-         break;
-      case GL_AUX3:
-         if (ctx->Visual.numAuxBuffers >= 4) {
-            ctx->Color._DrawDestMask = DD_AUX3_BIT;
-         }
-         else {
-            _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer(GL_AUX3)" );
-            return;
-         }
-         break;
-#endif
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glDrawBuffer" );
-         return;
+   destMask = draw_buffer_enum_to_bitmask(mode);
+   if (destMask == ~0) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawBuffer(mode)");
+      return;
    }
 
-   ctx->Color.DrawBuffer = mode;
+   supportedMask = supported_buffer_bitmask(ctx);
+   destMask &= supportedMask;
+
+   if (destMask == 0) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawBuffer(mode)");
+      return;
+   }
+
+   ctx->Color.DrawBuffer[0] = mode;
+   ctx->Color._DrawDestMask[0] = destMask;
    ctx->NewState |= _NEW_COLOR;
 
    /*
@@ -313,6 +327,60 @@ _mesa_DrawBuffer( GLenum mode )
     */
    if (ctx->Driver.DrawBuffer)
       (*ctx->Driver.DrawBuffer)(ctx, mode);
+}
+
+
+/**
+ * Called by glDrawBuffersARB; specifies the destination color buffers
+ * for N fragment program color outputs.
+ */
+void GLAPIENTRY
+_mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
+{
+   GLint i;
+   GLuint usedBufferMask, supportedMask;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (n < 1 || n > ctx->Const.MaxDrawBuffers) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glDrawBuffersARB(n)" );
+      return;
+   }
+
+   supportedMask = supported_buffer_bitmask(ctx);
+   usedBufferMask = 0;
+   for (i = 0; i < n; i++) {
+      GLuint destMask = draw_buffer_enum_to_bitmask(buffers[i]);
+      if (destMask == ~0) {
+         _mesa_error(ctx, GL_INVALID_ENUM, "glDrawBuffersARB(buffer)");
+         return;
+      }         
+      destMask &= supportedMask;
+      if (destMask == 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glDrawBuffersARB(unsupported buffer)");
+         return;
+      }
+      if (destMask & usedBufferMask) {
+         /* can't use a dest buffer more than once! */
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glDrawBuffersARB(duplicated buffer)");
+         return;
+      }
+      /* update bitmask */
+      usedBufferMask |= destMask;
+      /* save state */
+      ctx->Color.DrawBuffer[i] = buffers[i];
+      ctx->Color._DrawDestMask[i] = destMask;
+   }
+
+   ctx->NewState |= _NEW_COLOR;
+
+   /*
+    * Call device driver function.
+    */
+   if (ctx->Driver.DrawBuffers)
+      (*ctx->Driver.DrawBuffers)(ctx, n, buffers);
 }
 
 
@@ -330,89 +398,24 @@ _mesa_DrawBuffer( GLenum mode )
 void GLAPIENTRY
 _mesa_ReadBuffer( GLenum mode )
 {
+   GLuint srcMask, supportedMask;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glReadBuffer %s\n", _mesa_lookup_enum_by_nr(mode));
 
-   /*
-    * Do error checking and compute ctx->Pixel._ReadSrcMask.
-    */
-   switch (mode) {
-      case GL_LEFT:
-      case GL_FRONT:
-      case GL_FRONT_LEFT:
-         /* Front-Left buffer, always exists */
-         ctx->Pixel._ReadSrcMask = DD_FRONT_LEFT_BIT;
-         break;
-      case GL_BACK:
-      case GL_BACK_LEFT:
-         /* Back-Left buffer, requires double buffering */
-         if (!ctx->Visual.doubleBufferMode) {
-            _mesa_error( ctx, GL_INVALID_OPERATION, "glReadBuffer" );
-            return;
-         }
-         ctx->Pixel._ReadSrcMask = DD_BACK_LEFT_BIT;
-         break;
-#if _HAVE_FULL_GL
-      case GL_FRONT_RIGHT:
-      case GL_RIGHT:
-         if (!ctx->Visual.stereoMode) {
-            _mesa_error( ctx, GL_INVALID_OPERATION, "glReadBuffer" );
-            return;
-         }
-         ctx->Pixel._ReadSrcMask = DD_FRONT_RIGHT_BIT;
-         break;
-      case GL_BACK_RIGHT:
-         if (!ctx->Visual.stereoMode || !ctx->Visual.doubleBufferMode) {
-            _mesa_error( ctx, GL_INVALID_OPERATION, "glReadBuffer" );
-            return;
-         }
-         ctx->Pixel._ReadSrcMask = DD_BACK_RIGHT_BIT;
-         break;
-      case GL_AUX0:
-         if (ctx->Visual.numAuxBuffers >= 1) {
-            ctx->Pixel._ReadSrcMask = DD_AUX0_BIT;
-         }
-         else {
-            _mesa_error( ctx, GL_INVALID_OPERATION, "glReadBuffer(GL_AUX0)" );
-            return;
-         }
-         break;
-      case GL_AUX1:
-         if (ctx->Visual.numAuxBuffers >= 2) {
-            ctx->Pixel._ReadSrcMask = DD_AUX1_BIT;
-         }
-         else {
-            _mesa_error( ctx, GL_INVALID_OPERATION, "glReadBuffer(GL_AUX1)" );
-            return;
-         }
-         break;
-      case GL_AUX2:
-         if (ctx->Visual.numAuxBuffers >= 3) {
-            ctx->Pixel._ReadSrcMask = DD_AUX2_BIT;
-         }
-         else {
-            _mesa_error( ctx, GL_INVALID_OPERATION, "glReadBuffer(GL_AUX2)" );
-            return;
-         }
-         break;
-      case GL_AUX3:
-         if (ctx->Visual.numAuxBuffers >= 4) {
-            ctx->Pixel._ReadSrcMask = DD_AUX3_BIT;
-         }
-         else {
-            _mesa_error( ctx, GL_INVALID_OPERATION, "glReadBuffer(GL_AUX3)" );
-            return;
-         }
-         break;
-#endif
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glReadBuffer" );
-         return;
+   srcMask = read_buffer_enum_to_bitmask(mode);
+   if (srcMask == ~0) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glReadBuffer(mode)");
+      return;
    }
-
+   supportedMask = supported_buffer_bitmask(ctx);
+   if ((srcMask & supportedMask) == 0) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glReadBuffer(mode)");
+      return;
+   }
+   ctx->Pixel._ReadSrcMask = srcMask;
    ctx->Pixel.ReadBuffer = mode;
    ctx->NewState |= _NEW_PIXEL;
 
@@ -422,6 +425,7 @@ _mesa_ReadBuffer( GLenum mode )
    if (ctx->Driver.ReadBuffer)
       (*ctx->Driver.ReadBuffer)(ctx, mode);
 }
+
 
 #if _HAVE_FULL_GL
 
@@ -484,6 +488,7 @@ _mesa_ResizeBuffersMESA( void )
       ctx->NewState |= _NEW_BUFFERS;  /* to update scissor / window bounds */
    }
 }
+
 
 /*
  * XXX move somewhere else someday?
@@ -549,6 +554,8 @@ _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
    if (ctx->Driver.Scissor)
       ctx->Driver.Scissor( ctx, x, y, width, height );
 }
+
+
 
 /**********************************************************************/
 /** \name State management */

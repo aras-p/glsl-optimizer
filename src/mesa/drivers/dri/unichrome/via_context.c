@@ -719,7 +719,7 @@ void viaXMesaWindowMoved(viaContextPtr vmesa)
     GLuint side = 0;
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
     
-    switch (vmesa->glCtx->Color._DrawDestMask) {
+    switch (vmesa->glCtx->Color._DrawDestMask[0]) {
     case __GL_FRONT_BUFFER_MASK: 
         viaXMesaSetFrontClipRects(vmesa);
         break;

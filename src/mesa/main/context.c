@@ -1050,7 +1050,7 @@ _mesa_init_constants( GLcontext *ctx )
    assert(MAX_TEXTURE_LEVELS >= MAX_3D_TEXTURE_LEVELS);
    assert(MAX_TEXTURE_LEVELS >= MAX_CUBE_TEXTURE_LEVELS);
 
-   /* Constants, may be overriden by device drivers */
+   /* Constants, may be overriden (usually only reduced) by device drivers */
    ctx->Const.MaxTextureLevels = MAX_TEXTURE_LEVELS;
    ctx->Const.Max3DTextureLevels = MAX_3D_TEXTURE_LEVELS;
    ctx->Const.MaxCubeTextureLevels = MAX_CUBE_TEXTURE_LEVELS;
@@ -1077,8 +1077,10 @@ _mesa_init_constants( GLcontext *ctx )
    ctx->Const.MaxConvolutionHeight = MAX_CONVOLUTION_HEIGHT;
    ctx->Const.MaxClipPlanes = MAX_CLIP_PLANES;
    ctx->Const.MaxLights = MAX_LIGHTS;
-   ctx->Const.MaxSpotExponent = 128.0;
    ctx->Const.MaxShininess = 128.0;
+   ctx->Const.MaxSpotExponent = 128.0;
+   ctx->Const.MaxViewportWidth = MAX_WIDTH;
+   ctx->Const.MaxViewportHeight = MAX_HEIGHT;
 #if FEATURE_ARB_vertex_program
    ctx->Const.MaxVertexProgramInstructions = MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS;
    ctx->Const.MaxVertexProgramAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
@@ -1110,6 +1112,9 @@ _mesa_init_constants( GLcontext *ctx )
    ctx->Const.CheckArrayBounds = GL_FALSE;
 #endif
 
+   ctx->Const.MaxDrawBuffers = MAX_DRAW_BUFFERS;
+
+   /* sanity checks */
    ASSERT(ctx->Const.MaxTextureUnits == MAX2(ctx->Const.MaxTextureImageUnits, ctx->Const.MaxTextureCoordUnits));
 }
 

@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1313,7 +1312,7 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
    triFuncName = NULL;
 #endif
 
-   if ((ctx->Color._DrawDestMask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) ==0)
+   if ((ctx->Color._DrawDestMask[0] & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) ==0)
       return (swrast_tri_func) NULL;
    if (ctx->RenderMode != GL_RENDER)  return (swrast_tri_func) NULL;
    if (ctx->Polygon.SmoothFlag)       return (swrast_tri_func) NULL;

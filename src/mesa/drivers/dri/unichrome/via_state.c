@@ -336,7 +336,7 @@ static void viaBitmap( GLcontext *ctx, GLint px, GLint py,
     /*=* John Sheng [2003.7.18] texenv *=*/
     /*if (!vmesa->drawMap && !vmesa->readMap) {*/
     if (1) {
-	if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
+	if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {
 	    viaDrawBuffer(ctx, GL_BACK);
 	}
 	else {
@@ -497,7 +497,7 @@ void viaInitState(GLcontext *ctx)
     vmesa->regCmdB = HC_ACMD_HCmdB | HC_HVPMSK_X | HC_HVPMSK_Y | HC_HVPMSK_Z;
     vmesa->regEnable = HC_HenCW_MASK;
 
-    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
+    if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {
         vmesa->drawMap = vmesa->back.map;
         vmesa->readMap = vmesa->back.map;
     }

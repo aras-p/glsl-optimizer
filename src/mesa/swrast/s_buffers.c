@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -147,7 +147,7 @@ clear_color_buffers(GLcontext *ctx)
 
    /* loop over four possible dest color buffers */
    for (bufferBit = 1; bufferBit <= DD_AUX3_BIT; bufferBit <<= 1) {
-      if (bufferBit & ctx->Color._DrawDestMask) {
+      if (bufferBit & ctx->Color._DrawDestMask[0]) {
          (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, bufferBit);
 
          if (colorMask != 0xffffffff) {
@@ -199,7 +199,7 @@ _swrast_Clear( GLcontext *ctx, GLbitfield mask,
 
    /* do software clearing here */
    if (mask) {
-      if (mask & ctx->Color._DrawDestMask) {
+      if (mask & ctx->Color._DrawDestMask[0]) {
          clear_color_buffers(ctx);
          /* clear software-based alpha buffer(s) */
          if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
@@ -261,6 +261,16 @@ _swrast_DrawBuffer( GLcontext *ctx, GLenum mode )
 
 
 /*
+ * Fallback for ctx->Driver.DrawBuffers()
+ */
+void
+_swrast_DrawBuffers( GLcontext *ctx, GLsizei n, const GLenum *buffers )
+{
+   _swrast_use_draw_buffer(ctx);
+}
+
+
+/*
  * Setup things so that we read/write spans from the user-designated
  * read buffer (set via glReadPixels).  We usually just have to call
  * this for glReadPixels, glCopyPixels, etc.
@@ -297,21 +307,21 @@ _swrast_use_draw_buffer( GLcontext *ctx )
     * we loop over multiple color buffers when needed.
     */
 
-   if (ctx->Color._DrawDestMask & DD_FRONT_LEFT_BIT)
+   if (ctx->Color._DrawDestMask[0] & DD_FRONT_LEFT_BIT)
       swrast->CurrentBufferBit = DD_FRONT_LEFT_BIT;
-   else if (ctx->Color._DrawDestMask & DD_BACK_LEFT_BIT)
+   else if (ctx->Color._DrawDestMask[0] & DD_BACK_LEFT_BIT)
       swrast->CurrentBufferBit = DD_BACK_LEFT_BIT;
-   else if (ctx->Color._DrawDestMask & DD_FRONT_RIGHT_BIT)
+   else if (ctx->Color._DrawDestMask[0] & DD_FRONT_RIGHT_BIT)
       swrast->CurrentBufferBit = DD_FRONT_RIGHT_BIT;
-   else if (ctx->Color._DrawDestMask & DD_BACK_RIGHT_BIT)
+   else if (ctx->Color._DrawDestMask[0] & DD_BACK_RIGHT_BIT)
       swrast->CurrentBufferBit = DD_BACK_RIGHT_BIT;
-   else if (ctx->Color._DrawDestMask & DD_AUX0_BIT)
+   else if (ctx->Color._DrawDestMask[0] & DD_AUX0_BIT)
       swrast->CurrentBufferBit = DD_AUX0_BIT;
-   else if (ctx->Color._DrawDestMask & DD_AUX1_BIT)
+   else if (ctx->Color._DrawDestMask[0] & DD_AUX1_BIT)
       swrast->CurrentBufferBit = DD_AUX1_BIT;
-   else if (ctx->Color._DrawDestMask & DD_AUX2_BIT)
+   else if (ctx->Color._DrawDestMask[0] & DD_AUX2_BIT)
       swrast->CurrentBufferBit = DD_AUX2_BIT;
-   else if (ctx->Color._DrawDestMask & DD_AUX3_BIT)
+   else if (ctx->Color._DrawDestMask[0] & DD_AUX3_BIT)
       swrast->CurrentBufferBit = DD_AUX3_BIT;
    else
       /* glDrawBuffer(GL_NONE) */

@@ -225,7 +225,7 @@ void i810PageFlip( const __DRIdrawablePrivate *dPriv )
    }
 
   /*  i810SetDrawBuffer( imesa->glCtx, imesa->glCtx->Color.DriverDrawBuffer );*/
-  i810DrawBuffer( imesa->glCtx, imesa->glCtx->Color.DrawBuffer );
+  i810DrawBuffer( imesa->glCtx, imesa->glCtx->Color.DrawBuffer[0] );
   imesa->upload_cliprects = GL_TRUE;
   imesa->lastSwap = tmp;
   return;

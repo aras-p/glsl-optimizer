@@ -5560,6 +5560,31 @@
     <!-- No new functions, types, enums. -->
 </category>
 
+<category name="GL_ARB_draw_buffers" number="37">
+    <enum name="MAX_DRAW_BUFFERS_ARB"                     value="0x8824"/>
+    <enum name="DRAW_BUFFER0_ARB"                         value="0x8825"/>
+    <enum name="DRAW_BUFFER1_ARB"                         value="0x8826"/>
+    <enum name="DRAW_BUFFER2_ARB"                         value="0x8827"/>
+    <enum name="DRAW_BUFFER3_ARB"                         value="0x8828"/>
+    <enum name="DRAW_BUFFER4_ARB"                         value="0x8829"/>
+    <enum name="DRAW_BUFFER5_ARB"                         value="0x882A"/>
+    <enum name="DRAW_BUFFER6_ARB"                         value="0x882B"/>
+    <enum name="DRAW_BUFFER7_ARB"                         value="0x882C"/>
+    <enum name="DRAW_BUFFER8_ARB"                         value="0x882D"/>
+    <enum name="DRAW_BUFFER9_ARB"                         value="0x882E"/>
+    <enum name="DRAW_BUFFER10_ARB"                        value="0x882F"/>
+    <enum name="DRAW_BUFFER11_ARB"                        value="0x8830"/>
+    <enum name="DRAW_BUFFER12_ARB"                        value="0x8831"/>
+    <enum name="DRAW_BUFFER13_ARB"                        value="0x8832"/>
+    <enum name="DRAW_BUFFER14_ARB"                        value="0x8833"/>
+    <enum name="DRAW_BUFFER15_ARB"                        value="0x8834"/>
+
+    <function name="DrawBuffersARB" offset="413">
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="bufs" type="const GLenum *" count="n"/>
+        <!-- no GLX yet -->
+    </function>
+</category>
 
 
 <!-- Non-ARB extensions sorted by extension number. -->
@@ -8601,7 +8626,7 @@
 </category>
 
 <category name="GL_ATI_draw_buffers" number="277">
-    <function name="DrawBuffersATI" offset="?">
+    <function name="DrawBuffersATI" alias="DrawBuffersARB">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="bufs" type="const GLenum *" count="n"/>
 	<!-- GLX protocol is not fully defined for this extension. -->
@@ -8760,12 +8785,6 @@
 
     <function name="LoadIdentityDeformationMapSGIX" offset="?">
         <param name="mask" type="GLenum"/>
-    </function>
-</category>
-
-<category name="unused">
-    <function name="__unused413" offset="413">
-        <glx ignore="true"/>
     </function>
 </category>
 
