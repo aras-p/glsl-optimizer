@@ -677,100 +677,101 @@ int fxTexGetInfo(int w, int h, GrLOD_t *lodlevel, GrAspectRatio_t *ar,
 void fxTexGetFormat(GLenum glformat, GrTextureFormat_t *tfmt, GLint *ifmt)
 {
   switch(glformat) {
-  case 1:
-  case GL_LUMINANCE:
-  case GL_LUMINANCE4:
-  case GL_LUMINANCE8:
-  case GL_LUMINANCE12:
-  case GL_LUMINANCE16:
-    if(tfmt)
-      (*tfmt)=GR_TEXFMT_INTENSITY_8;
-    if(ifmt)
-      (*ifmt)=GL_LUMINANCE;
-    break;
-  case 2:
-  case GL_LUMINANCE_ALPHA:
-  case GL_LUMINANCE4_ALPHA4:
-  case GL_LUMINANCE6_ALPHA2:
-  case GL_LUMINANCE8_ALPHA8:
-  case GL_LUMINANCE12_ALPHA4:
-  case GL_LUMINANCE12_ALPHA12:
-  case GL_LUMINANCE16_ALPHA16:
-    if(tfmt)
-      (*tfmt)=GR_TEXFMT_ALPHA_INTENSITY_88;
-    if(ifmt)
-      (*ifmt)=GL_LUMINANCE_ALPHA;
-    break;
-  case GL_INTENSITY:
-  case GL_INTENSITY4:
-  case GL_INTENSITY8:
-  case GL_INTENSITY12:
-  case GL_INTENSITY16:
-    if(tfmt)
-      (*tfmt)=GR_TEXFMT_ALPHA_8;
-    if(ifmt)
-      (*ifmt)=GL_INTENSITY;
-    break;
-  case GL_ALPHA:
-  case GL_ALPHA4:
-  case GL_ALPHA8:
-  case GL_ALPHA12:
-  case GL_ALPHA16:
-    if(tfmt)
-      (*tfmt)=GR_TEXFMT_ALPHA_8;
-    if(ifmt)
-      (*ifmt)=GL_ALPHA;
-    break;
-  case 3:
-  case GL_RGB:
-  case GL_R3_G3_B2:
-  case GL_RGB4:
-  case GL_RGB5:
-  case GL_RGB8:
-  case GL_RGB10:
-  case GL_RGB12:
-  case GL_RGB16:
-    if(tfmt)
-      (*tfmt)=GR_TEXFMT_RGB_565;
-    if(ifmt)
-      (*ifmt)=GL_RGB;
-    break;
-  case 4:
-  case GL_RGBA:
-  case GL_RGBA2:
-  case GL_RGBA4:
-  case GL_RGBA8:
-  case GL_RGB10_A2:
-  case GL_RGBA12:
-  case GL_RGBA16:
-    if(tfmt)
-      (*tfmt)=GR_TEXFMT_ARGB_4444;
-    if(ifmt)
-      (*ifmt)=GL_RGBA;
-    break;
-  case GL_RGB5_A1:
-     if(tfmt)
-       (*tfmt)=GR_TEXFMT_ARGB_1555;
-     if(ifmt)
-       (*ifmt)=GL_RGBA;
-     break;
-  case GL_COLOR_INDEX:
-  case GL_COLOR_INDEX1_EXT:
-  case GL_COLOR_INDEX2_EXT:
-  case GL_COLOR_INDEX4_EXT:
-  case GL_COLOR_INDEX8_EXT:
-  case GL_COLOR_INDEX12_EXT:
-  case GL_COLOR_INDEX16_EXT:
-    if(tfmt)
-      (*tfmt)=GR_TEXFMT_P_8;
-    if(ifmt)
-      (*ifmt)=GL_RGBA;
-    break;
-  default:
-    fprintf(stderr,"fx Driver: unsupported internalFormat in fxTexGetFormat()\n");
-    fxCloseHardware();
-    exit(-1);
-    break;
+    case 1:
+    case GL_LUMINANCE:
+    case GL_LUMINANCE4:
+    case GL_LUMINANCE8:
+    case GL_LUMINANCE12:
+    case GL_LUMINANCE16:
+      if(tfmt)
+        (*tfmt)=GR_TEXFMT_INTENSITY_8;
+      if(ifmt)
+        (*ifmt)=GL_LUMINANCE;
+      break;
+    case 2:
+    case GL_LUMINANCE_ALPHA:
+    case GL_LUMINANCE4_ALPHA4:
+    case GL_LUMINANCE6_ALPHA2:
+    case GL_LUMINANCE8_ALPHA8:
+    case GL_LUMINANCE12_ALPHA4:
+    case GL_LUMINANCE12_ALPHA12:
+    case GL_LUMINANCE16_ALPHA16:
+      if(tfmt)
+        (*tfmt)=GR_TEXFMT_ALPHA_INTENSITY_88;
+      if(ifmt)
+        (*ifmt)=GL_LUMINANCE_ALPHA;
+      break;
+    case GL_INTENSITY:
+    case GL_INTENSITY4:
+    case GL_INTENSITY8:
+    case GL_INTENSITY12:
+    case GL_INTENSITY16:
+      if(tfmt)
+        (*tfmt)=GR_TEXFMT_ALPHA_8;
+      if(ifmt)
+        (*ifmt)=GL_INTENSITY;
+      break;
+    case GL_ALPHA:
+    case GL_ALPHA4:
+    case GL_ALPHA8:
+    case GL_ALPHA12:
+    case GL_ALPHA16:
+      if(tfmt)
+        (*tfmt)=GR_TEXFMT_ALPHA_8;
+      if(ifmt)
+        (*ifmt)=GL_ALPHA;
+      break;
+    case 3:
+    case GL_RGB:
+    case GL_R3_G3_B2:
+    case GL_RGB4:
+    case GL_RGB5:
+    case GL_RGB8:
+    case GL_RGB10:
+    case GL_RGB12:
+    case GL_RGB16:
+      if(tfmt)
+        (*tfmt)=GR_TEXFMT_RGB_565;
+      if(ifmt)
+        (*ifmt)=GL_RGB;
+      break;
+    case 4:
+    case GL_RGBA:
+    case GL_RGBA2:
+    case GL_RGBA4:
+    case GL_RGBA8:
+    case GL_RGB10_A2:
+    case GL_RGBA12:
+    case GL_RGBA16:
+      if(tfmt)
+        (*tfmt)=GR_TEXFMT_ARGB_4444;
+      if(ifmt)
+        (*ifmt)=GL_RGBA;
+      break;
+    case GL_RGB5_A1:
+       if(tfmt)
+         (*tfmt)=GR_TEXFMT_ARGB_1555;
+       if(ifmt)
+         (*ifmt)=GL_RGBA;
+       break;
+    case GL_COLOR_INDEX:
+    case GL_COLOR_INDEX1_EXT:
+    case GL_COLOR_INDEX2_EXT:
+    case GL_COLOR_INDEX4_EXT:
+    case GL_COLOR_INDEX8_EXT:
+    case GL_COLOR_INDEX12_EXT:
+    case GL_COLOR_INDEX16_EXT:
+      if(tfmt)
+        (*tfmt)=GR_TEXFMT_P_8;
+      if(ifmt)
+        (*ifmt)=GL_RGBA;   /* XXX why is this RGBA? */
+      break;
+    default:
+      fprintf(stderr,
+              "fx Driver: unsupported internalFormat in fxTexGetFormat()\n");
+      fxCloseHardware();
+      exit(-1);
+      break;
   }
 }
 
@@ -781,58 +782,58 @@ static int fxIsTexSupported(GLenum target, GLint internalFormat,
     return GL_FALSE;
 
   switch(internalFormat) {
-  case GL_INTENSITY:
-  case GL_INTENSITY4:
-  case GL_INTENSITY8:
-  case GL_INTENSITY12:
-  case GL_INTENSITY16:
-  case 1:
-  case GL_LUMINANCE:
-  case GL_LUMINANCE4:
-  case GL_LUMINANCE8:
-  case GL_LUMINANCE12:
-  case GL_LUMINANCE16:
-  case 2:
-  case GL_LUMINANCE_ALPHA:
-  case GL_LUMINANCE4_ALPHA4:
-  case GL_LUMINANCE6_ALPHA2:
-  case GL_LUMINANCE8_ALPHA8:
-  case GL_LUMINANCE12_ALPHA4:
-  case GL_LUMINANCE12_ALPHA12:
-  case GL_LUMINANCE16_ALPHA16:
-  case GL_ALPHA:
-  case GL_ALPHA4:
-  case GL_ALPHA8:
-  case GL_ALPHA12:
-  case GL_ALPHA16:
-  case 3:
-  case GL_RGB:
-  case GL_R3_G3_B2:
-  case GL_RGB4:
-  case GL_RGB5:
-  case GL_RGB8:
-  case GL_RGB10:
-  case GL_RGB12:
-  case GL_RGB16:
-  case 4:
-  case GL_RGBA:
-  case GL_RGBA2:
-  case GL_RGBA4:
-  case GL_RGB5_A1:
-  case GL_RGBA8:
-  case GL_RGB10_A2:
-  case GL_RGBA12:
-  case GL_RGBA16:
-  case GL_COLOR_INDEX:
-  case GL_COLOR_INDEX1_EXT:
-  case GL_COLOR_INDEX2_EXT:
-  case GL_COLOR_INDEX4_EXT:
-  case GL_COLOR_INDEX8_EXT:
-  case GL_COLOR_INDEX12_EXT:
-  case GL_COLOR_INDEX16_EXT:
-    break;
-  default:
-    return GL_FALSE;
+    case GL_INTENSITY:
+    case GL_INTENSITY4:
+    case GL_INTENSITY8:
+    case GL_INTENSITY12:
+    case GL_INTENSITY16:
+    case 1:
+    case GL_LUMINANCE:
+    case GL_LUMINANCE4:
+    case GL_LUMINANCE8:
+    case GL_LUMINANCE12:
+    case GL_LUMINANCE16:
+    case 2:
+    case GL_LUMINANCE_ALPHA:
+    case GL_LUMINANCE4_ALPHA4:
+    case GL_LUMINANCE6_ALPHA2:
+    case GL_LUMINANCE8_ALPHA8:
+    case GL_LUMINANCE12_ALPHA4:
+    case GL_LUMINANCE12_ALPHA12:
+    case GL_LUMINANCE16_ALPHA16:
+    case GL_ALPHA:
+    case GL_ALPHA4:
+    case GL_ALPHA8:
+    case GL_ALPHA12:
+    case GL_ALPHA16:
+    case 3:
+    case GL_RGB:
+    case GL_R3_G3_B2:
+    case GL_RGB4:
+    case GL_RGB5:
+    case GL_RGB8:
+    case GL_RGB10:
+    case GL_RGB12:
+    case GL_RGB16:
+    case 4:
+    case GL_RGBA:
+    case GL_RGBA2:
+    case GL_RGBA4:
+    case GL_RGB5_A1:
+    case GL_RGBA8:
+    case GL_RGB10_A2:
+    case GL_RGBA12:
+    case GL_RGBA16:
+    case GL_COLOR_INDEX:
+    case GL_COLOR_INDEX1_EXT:
+    case GL_COLOR_INDEX2_EXT:
+    case GL_COLOR_INDEX4_EXT:
+    case GL_COLOR_INDEX8_EXT:
+    case GL_COLOR_INDEX12_EXT:
+    case GL_COLOR_INDEX16_EXT:
+      break;
+    default:
+      return GL_FALSE;
   }
 
   if(image->Width>256)
@@ -1423,6 +1424,36 @@ void fxDDTexSubImg(GLcontext *ctx, GLenum target,
     fxTMReloadSubMipMapLevel(fxMesa,tObj,level,yoffset,height);
   else
     fxTexInvalidate(ctx,tObj);
+}
+
+
+
+/**********************************************************************/
+/**** NEW TEXTURE IMAGE FUNCTIONS                                  ****/
+/**********************************************************************/
+
+GLboolean fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
+                         GLenum format, GLenum type, const GLvoid *pixels,
+                         const struct gl_pixelstore_attrib *packing,
+                         struct gl_texture_object *texObj,
+                         struct gl_texture_image *texImage,
+                         GLboolean *retainInternalCopy)
+{
+  *retainInternalCopy = GL_TRUE;
+  return GL_FALSE;
+}
+
+
+GLboolean fxDDTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
+                            GLint xoffset, GLint yoffset,
+                            GLsizei width, GLsizei height,
+                            GLenum format, GLenum type, const GLvoid *pixels,
+                            const struct gl_pixelstore_attrib *packing,
+                            struct gl_texture_object *texObj,
+                            struct gl_texture_image *texImage)
+{
+
+  return GL_FALSE;
 }
 
 
