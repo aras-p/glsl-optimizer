@@ -635,7 +635,7 @@ static GLboolean r200_run_render( GLcontext *ctx,
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint i, length, flags = 0;
+   GLuint i;
    render_func *tab = TAG(render_tab_verts);
 
    if (rmesa->swtcl.indexed_verts.buf && (!VB->Elts || stage->changed_inputs)) 
@@ -672,7 +672,7 @@ static GLboolean r200_run_render( GLcontext *ctx,
 		 _mesa_lookup_enum_by_nr(prim & PRIM_MODE_MASK), 
 		 start, start+length);
 
-      tab[prim & PRIM_MODE_MASK]( ctx, start, start + length, flags );
+      tab[prim & PRIM_MODE_MASK]( ctx, start, start + length, prim );
    }
 
    tnl->Driver.Render.Finish( ctx );
@@ -830,21 +830,41 @@ static struct {
 #define AREA_IS_CCW( a ) (a < 0)
 #define GET_VERTEX(e) (rmesa->swtcl.verts + (e<<rmesa->swtcl.vertex_stride_shift))
 
-#define VERT_SET_RGBA( v, c )    v->ui[coloroffset] = LE32_TO_CPU(*(GLuint *)c)
-#define VERT_COPY_RGBA( v0, v1 ) v0->ui[coloroffset] = v1->ui[coloroffset]
-#define VERT_SAVE_RGBA( idx )    color[idx] = CPU_TO_LE32(v[idx]->ui[coloroffset])
-#define VERT_RESTORE_RGBA( idx ) v[idx]->ui[coloroffset] = LE32_TO_CPU(color[idx])
+#define VERT_SET_RGBA( v, c )  					\
+do {								\
+   r200_color_t *color = (r200_color_t *)&((v)->ui[coloroffset]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->red, (c)[0]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->green, (c)[1]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->blue, (c)[2]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->alpha, (c)[3]);		\
+} while (0)
 
-#define VERT_SET_SPEC( v0, c )   if (havespec) {			\
-					v0->v.specular.red   = (c)[0];	\
-					v0->v.specular.green = (c)[1];	\
-					v0->v.specular.blue  = (c)[2]; }
-#define VERT_COPY_SPEC( v0, v1 ) if (havespec) {					\
-					v0->v.specular.red   = v1->v.specular.red;	\
-					v0->v.specular.green = v1->v.specular.green;	\
-					v0->v.specular.blue  = v1->v.specular.blue; }
-#define VERT_SAVE_SPEC( idx )    if (havespec) spec[idx] = CPU_TO_LE32(v[idx]->ui[5])
-#define VERT_RESTORE_SPEC( idx ) if (havespec) v[idx]->ui[5] = LE32_TO_CPU(spec[idx])
+#define VERT_COPY_RGBA( v0, v1 ) v0->ui[coloroffset] = v1->ui[coloroffset]
+
+#define VERT_SET_SPEC( v0, c )					\
+do {								\
+   if (havespec) {						\
+      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.red, (c)[0]);	\
+      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.green, (c)[1]);	\
+      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.blue, (c)[2]);	\
+   }								\
+} while (0)
+#define VERT_COPY_SPEC( v0, v1 )			\
+do {							\
+   if (havespec) {					\
+      v0->v.specular.red   = v1->v.specular.red;	\
+      v0->v.specular.green = v1->v.specular.green;	\
+      v0->v.specular.blue  = v1->v.specular.blue; 	\
+   }							\
+} while (0)
+
+/* These don't need LE32_TO_CPU() as they used to save and restore
+ * colors which are already in the correct format.
+ */
+#define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->ui[coloroffset]
+#define VERT_RESTORE_RGBA( idx ) v[idx]->ui[coloroffset] = color[idx]
+#define VERT_SAVE_SPEC( idx )    if (havespec) spec[idx] = v[idx]->ui[5]
+#define VERT_RESTORE_SPEC( idx ) if (havespec) v[idx]->ui[5] = spec[idx]
 
 #undef LOCAL_VARS
 #undef TAG
