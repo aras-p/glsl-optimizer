@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.62 2001/12/05 22:01:13 brianp Exp $ */
+/* $Id: gl.h,v 1.63 2002/02/15 16:41:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2529,7 +2529,6 @@ GLAPI void GLAPIENTRY glWindowPos3svARB(const GLshort *p);
 /* XXX not finalized yet - just testing */
 #define GL_TEXTURE_COMPARE_MODE_ARB    0x9990
 #define GL_TEXTURE_COMPARE_FUNC_ARB    0x9991
-#define GL_TEXTURE_COMPARE_RESULT_ARB  0x9992
 #define GL_COMPARE_R_TO_TEXTURE_ARB    0x9993
 
 #endif
@@ -2551,6 +2550,8 @@ GLAPI void GLAPIENTRY glWindowPos3svARB(const GLshort *p);
 #define GL_DEPTH_COMPONENT16_ARB         0x81A5
 #define GL_DEPTH_COMPONENT24_ARB         0x81A6
 #define GL_DEPTH_COMPONENT32_ARB         0x81A7
+#define GL_TEXTURE_DEPTH_SIZE_ARB        0x7776
+#define GL_DEPTH_TEXTURE_MODE_ARB        0x7777
 
 #endif
 
