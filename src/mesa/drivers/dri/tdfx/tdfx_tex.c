@@ -442,7 +442,7 @@ tdfxTexParameter(GLcontext * ctx, GLenum target,
  * Called via glDeleteTextures to delete a texture object.
  * Here, we delete the Glide data associated with the texture.
  */
-void
+static void
 tdfxDeleteTexture(GLcontext * ctx, struct gl_texture_object *tObj)
 {
     if (ctx && ctx->DriverCtx) {
@@ -458,7 +458,7 @@ tdfxDeleteTexture(GLcontext * ctx, struct gl_texture_object *tObj)
 /*
  * Return true if texture is resident, false otherwise.
  */
-GLboolean
+static GLboolean
 tdfxIsTextureResident(GLcontext *ctx, struct gl_texture_object *tObj)
 {
     tdfxTexInfo *ti = TDFX_TEXTURE_DATA(tObj);
@@ -859,7 +859,7 @@ fetch_a8r8g8b8(const struct gl_texture_image *texImage,
 }
 
 
-static FetchTexelFunc
+static FetchTexelFuncC
 fxFetchFunction(GLint mesaFormat)
 {
    switch (mesaFormat) {
@@ -951,7 +951,7 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
     assert(texImage->TexFormat);
     mml->glideFormat = fxGlideFormat(texImage->TexFormat->MesaFormat);
     ti->info.format = mml->glideFormat;
-    texImage->FetchTexel = fxFetchFunction(texImage->TexFormat->MesaFormat);
+    texImage->FetchTexelc = fxFetchFunction(texImage->TexFormat->MesaFormat);
     texelBytes = texImage->TexFormat->TexelBytes;
 
     if (mml->width != width || mml->height != height) {
@@ -1497,5 +1497,7 @@ void tdfxInitTextureFuncs( struct dd_function_table *functions )
    functions->ChooseTextureFormat       = tdfxChooseTextureFormat;
    functions->TexImage2D		= tdfxTexImage2D;
    functions->TexSubImage2D		= tdfxTexSubImage2D;
+   functions->IsTextureResident		= tdfxIsTextureResident;
+   functions->UpdateTexturePalette      = tdfxTexturePalette;
 }
 

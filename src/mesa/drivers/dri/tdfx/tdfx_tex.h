@@ -69,7 +69,7 @@ fxDDTexUseGlobalPalette(GLcontext * ctx, GLboolean state);
 #endif
 
 extern GLboolean
-tdfxDDTestProxyTexImage(GLcontext *ctx, GLenum target,
+tdfxTestProxyTexImage(GLcontext *ctx, GLenum target,
                         GLint level, GLint internalFormat,
                         GLenum format, GLenum type,
                         GLint width, GLint height,
@@ -88,12 +88,12 @@ tdfxDDGetCompressedTexImage( GLcontext *ctx, GLenum target,
                              struct gl_texture_image *texImage );
 
 extern GLint
-tdfxDDSpecificCompressedTexFormat(GLcontext *ctx,
+tdfxSpecificCompressedTexFormat(GLcontext *ctx,
                                   GLint internalFormat,
                                   GLint numDimensions);
 
 extern GLint
-tdfxDDBaseCompressedTexFormat(GLcontext *ctx,
+tdfxBaseCompressedTexFormat(GLcontext *ctx,
                               GLint internalFormat);
 
 extern GLboolean
