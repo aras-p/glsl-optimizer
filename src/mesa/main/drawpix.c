@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.9 1999/11/24 18:48:31 brianp Exp $ */
+/* $Id: drawpix.c,v 1.10 1999/11/26 16:27:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -417,7 +417,7 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
    drawWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
 
    /* Fragment depth values */
-   if (ctx->Depth.Test) {
+   if (ctx->Depth.Test || ctx->Fog.Enabled) {
       GLdepth zval = (GLdepth) (ctx->Current.RasterPos[2] * DEPTH_SCALE);
       GLint i;
       for (i = 0; i < drawWidth; i++) {
@@ -623,7 +623,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       return;
 
    /* Fragment depth values */
-   if (ctx->Depth.Test) {
+   if (ctx->Depth.Test || ctx->Fog.Enabled) {
       /* fill in array of z values */
       GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * DEPTH_SCALE);
       GLint i;
