@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.1 2003/07/24 03:47:46 kschultz Exp $ */
+/* $Id: wmesa.c,v 1.2 2003/11/04 23:37:53 brianp Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -2247,7 +2247,14 @@ void RemoveContext(HWND hWnd)
 
 static LRESULT CALLBACK MyWndProc(HWND hwnd,UINT message,WPARAM wParam, LPARAM lParam)
 {
-	WMesaContext wc = Current->hwnd == hwnd ? Current : FindContext(hwnd);
+	WMesaContext wc;
+
+	if (Current==0 || Current->hwnd != hwnd)
+		wc=FindContext(hwnd);
+	else
+		wc=Current;
+
+
 	 if( wc )
 	 {
 		LRESULT lret = CallWindowProc((WNDPROC)(wc->oldWndProc),hwnd,message,wParam,lParam);
