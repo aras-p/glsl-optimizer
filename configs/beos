@@ -42,11 +42,10 @@ ifeq ($(CPU), x86)
 
 	ifdef DEBUG
 		CFLAGS   += -g -O0
-		CXXFLAGS += -g -O0
 		LDFLAGS += -g
+		DEFINES += -DDEBUG
 	else
 		CFLAGS   += -O3
-		CXXFLAGS += -O3
 	endif
 
 	GLUT_CFLAGS = -fexceptions
