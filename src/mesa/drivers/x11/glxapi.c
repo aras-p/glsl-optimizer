@@ -1,8 +1,8 @@
-/* $Id: glxapi.c,v 1.28 2001/09/14 02:43:03 brianp Exp $ */
+/* $Id: glxapi.c,v 1.29 2002/03/15 18:33:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.0.2
  * 
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
@@ -28,6 +28,7 @@
 /*
  * This is the GLX API dispatcher.  Calls to the glX* functions are
  * either routed to the real GLX encoders or to Mesa's pseudo-GLX functions.
+ * See the glxapi.h file for more details.
  */
 
 
@@ -35,7 +36,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-/*#include <dlfcn.h>*/ /* XXX not portable? */
 #include "glapi.h"
 #include "glxapi.h"
 
@@ -1062,143 +1062,6 @@ _glxapi_set_no_op_table(struct _glxapi_table *t)
       dispatch[i] = (void *) generic_no_op_func;
    }
 }
-
-
-#if 00
-/*
- * Open the named library and use dlsym() to populate the given dispatch
- * table with GLX function pointers.
- * Return: true = all OK
- *         false = can't open libName or can't get required GLX function
- */
-GLboolean
-_glxapi_load_library_table(const char *libName, struct _glxapi_table *t)
-{
-   void *libHandle;
-   void **entry;   /* used to avoid a lot of cast/type warnings */
-
-   libHandle = dlopen(libName, 0);
-   if (!libHandle) {
-      return GL_FALSE;
-   }
-
-#define GET_REQ_FUNCTION(ENTRY, NAME)					\
-   entry = (void **) &(t->ENTRY);					\
-   *entry = dlsym(libHandle, NAME);					\
-   if (!*entry) {							\
-      fprintf(stderr, "libGL Error: couldn't load %s from %s\n",	\
-              NAME, libName);						\
-      dlclose(libHandle);						\
-      return GL_FALSE;							\
-   }
-
-   /* 1.0 and 1.1 functions */
-   GET_REQ_FUNCTION(ChooseVisual, "glXChooseVisual");
-   GET_REQ_FUNCTION(CopyContext, "glXCopyContext");
-   GET_REQ_FUNCTION(CreateContext, "glXCreateContext");
-   GET_REQ_FUNCTION(CreateGLXPixmap, "glXCreateGLXPixmap");
-   GET_REQ_FUNCTION(DestroyContext, "glXDestroyContext");
-   GET_REQ_FUNCTION(GetConfig, "glXGetConfig");
-   GET_REQ_FUNCTION(IsDirect, "glXIsDirect");
-   GET_REQ_FUNCTION(MakeCurrent, "glXMakeCurrent");
-   GET_REQ_FUNCTION(QueryExtension, "glXQueryExtension");
-   GET_REQ_FUNCTION(QueryVersion, "glXQueryVersion");
-   GET_REQ_FUNCTION(SwapBuffers, "glXSwapBuffers");
-   GET_REQ_FUNCTION(UseXFont, "glXUseXFont");
-   GET_REQ_FUNCTION(WaitGL, "glXWaitGL");
-   GET_REQ_FUNCTION(WaitX, "glXWaitX");
-   GET_REQ_FUNCTION(GetClientString, "glXGetClientString");
-   GET_REQ_FUNCTION(QueryExtensionsString, "glXQueryExtensionsString");
-   GET_REQ_FUNCTION(QueryServerString, "glXQueryServerString");
-
-#define GET_OPT_FUNCTION(ENTRY, NAME)					\
-   entry = (void **) &(t->ENTRY);					\
-   *entry = dlsym(libHandle, NAME);					\
-   if (!*entry) {							\
-      *entry = (void *) generic_no_op_func;				\
-   }
-
-   /* 1.2, 1.3 and extensions */
-   GET_OPT_FUNCTION(ChooseFBConfig, "glXChooseFBConfig");
-   GET_OPT_FUNCTION(CreateNewContext, "glXCreateNewContext");
-   GET_OPT_FUNCTION(CreatePbuffer, "glXCreatePbuffer");
-   GET_OPT_FUNCTION(CreatePixmap, "glXCreatePixmap");
-   GET_OPT_FUNCTION(CreateWindow, "glXCreateWindow");
-   GET_OPT_FUNCTION(DestroyPbuffer, "glXDestroyPbuffer");
-   GET_OPT_FUNCTION(DestroyPixmap, "glXDestroyPixmap");
-   GET_OPT_FUNCTION(DestroyWindow, "glXDestroyWindow");
-   GET_OPT_FUNCTION(GetFBConfigAttrib, "glXGetFBConfigAttrib");
-   GET_OPT_FUNCTION(GetFBConfigs, "glXGetFBConfigs");
-   GET_OPT_FUNCTION(GetSelectedEvent, "glXGetSelectedEvent");
-   GET_OPT_FUNCTION(GetVisualFromFBConfig, "glXGetVisualFromFBConfig");
-   GET_OPT_FUNCTION(MakeContextCurrent, "glXMakeContextCurrent");
-   GET_OPT_FUNCTION(QueryContext, "glXQueryContext");
-   GET_OPT_FUNCTION(QueryDrawable, "glXQueryDrawable");
-   GET_OPT_FUNCTION(SelectEvent, "glXSelectEvent");
-   /*** GLX_SGI_swap_control ***/
-   GET_OPT_FUNCTION(SwapIntervalSGI, "glXSwapIntervalSGI");
-   /*** GLX_SGI_video_sync ***/
-   GET_OPT_FUNCTION(GetVideoSyncSGI, "glXGetVideoSyncSGI");
-   GET_OPT_FUNCTION(WaitVideoSyncSGI, "glXWaitVideoSyncSGI");
-   /*** GLX_SGI_make_current_read ***/
-   GET_OPT_FUNCTION(MakeCurrentReadSGI, "glXMakeCurrentReadSGI");
-   GET_OPT_FUNCTION(GetCurrentReadDrawableSGI, "glXGetCurrentReadDrawableSGI");
-   /*** GLX_SGIX_video_source ***/
-#if defined(_VL_H)
-   GET_OPT_FUNCTION(CreateGLXVideoSourceSGIX, "glXCreateGLXVideoSourceSGIX");
-   GET_OPT_FUNCTION(DestroyGLXVideoSourceSGIX, "glXDestroyGLXVideoSourceSGIX");
-#endif
-   /*** GLX_EXT_import_context ***/
-   GET_OPT_FUNCTION(FreeContextEXT, "glXFreeContextEXT");
-   GET_OPT_FUNCTION(GetContextIDEXT, "glXGetContextIDEXT");
-   GET_OPT_FUNCTION(GetCurrentDisplayEXT, "glXGetCurrentDisplayEXT");
-   GET_OPT_FUNCTION(ImportContextEXT, "glXImportContextEXT");
-   GET_OPT_FUNCTION(QueryContextInfoEXT, "glXQueryContextInfoEXT");
-   /*** GLX_SGIX_fbconfig ***/
-   GET_OPT_FUNCTION(GetFBConfigAttribSGIX, "glXGetFBConfigAttribSGIX");
-   GET_OPT_FUNCTION(ChooseFBConfigSGIX, "glXChooseFBConfigSGIX");
-   GET_OPT_FUNCTION(CreateGLXPixmapWithConfigSGIX, "glXCreateGLXPixmapWithConfigSGIX");
-   GET_OPT_FUNCTION(CreateContextWithConfigSGIX, "glXCreateContextWithConfigSGIX");
-   GET_OPT_FUNCTION(GetVisualFromFBConfigSGIX, "glXGetVisualFromFBConfigSGIX");
-   GET_OPT_FUNCTION(GetFBConfigFromVisualSGIX, "glXGetFBConfigFromVisualSGIX");
-   /*** GLX_SGIX_pbuffer ***/
-   GET_OPT_FUNCTION(CreateGLXPbufferSGIX, "glXCreateGLXPbufferSGIX");
-   GET_OPT_FUNCTION(DestroyGLXPbufferSGIX, "glXDestroyGLXPbufferSGIX");
-   GET_OPT_FUNCTION(QueryGLXPbufferSGIX, "glXQueryGLXPbufferSGIX");
-   GET_OPT_FUNCTION(SelectEventSGIX, "glXSelectEventSGIX");
-   GET_OPT_FUNCTION(GetSelectedEventSGIX, "glXGetSelectedEventSGIX");
-   /*** GLX_SGI_cushion ***/
-   GET_OPT_FUNCTION(CushionSGI, "glXCushionSGI");
-   /*** GLX_SGIX_video_resize ***/
-   GET_OPT_FUNCTION(BindChannelToWindowSGIX, "glXBindChannelToWindowSGIX");
-   GET_OPT_FUNCTION(ChannelRectSGIX, "glXChannelRectSGIX");
-   GET_OPT_FUNCTION(QueryChannelRectSGIX, "glXQueryChannelRectSGIX");
-   GET_OPT_FUNCTION(QueryChannelDeltasSGIX, "glXQueryChannelDeltasSGIX");
-   GET_OPT_FUNCTION(ChannelRectSyncSGIX, "glXChannelRectSyncSGIX");
-   /*** GLX_SGIX_dmbuffer ***/
-#if defined (_DM_BUFFER_H_)
-   GET_OPT_FUNCTION(AssociateDMPbufferSGIX, "glXAssociateDMPbufferSGIX");
-#endif
-   /*** GLX_SGIX_swap_group ***/
-   GET_OPT_FUNCTION(JoinSwapGroupSGIX, "glXJoinSwapGroupSGIX");
-   /*** GLX_SGIX_swap_barrier ***/
-   GET_OPT_FUNCTION(BindSwapBarrierSGIX, "glXBindSwapBarrierSGIX");
-   GET_OPT_FUNCTION(QueryMaxSwapBarriersSGIX, "glXQueryMaxSwapBarriersSGIX");
-   /*** GLX_SUN_get_transparent_index ***/
-   GET_OPT_FUNCTION(GetTransparentIndexSUN, "glXGetTransparentIndexSUN");
-   /*** GLX_MESA_copy_sub_buffer ***/
-   GET_OPT_FUNCTION(CopySubBufferMESA, "glXCopySubBufferMESA");
-   /*** GLX_MESA_release_buffers ***/
-   GET_OPT_FUNCTION(ReleaseBuffersMESA, "glXReleaseBuffersMESA");
-   /*** GLX_MESA_pixmap_colormap ***/
-   GET_OPT_FUNCTION(CreateGLXPixmapMESA, "glXCreateGLXPixmapMESA");
-   /*** GLX_MESA_set_3dfx_mode ***/
-   GET_OPT_FUNCTION(Set3DfxModeMESA, "glXSet3DfxModeMESA");
-
-   return GL_TRUE;
-}
-#endif
-
 
 
 struct name_address_pair {

@@ -1,8 +1,8 @@
-/* $Id: glxapi.h,v 1.11 2001/05/29 23:15:07 brianp Exp $ */
+/* $Id: glxapi.h,v 1.12 2002/03/15 18:33:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.0.2 
  * 
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
@@ -34,10 +34,16 @@
 
 
 #ifdef GLX_BUILT_IN_XMESA
-/* The GLX API dispatcher is being built into XFree86's libGL */
+/* The GLX API dispatcher (i.e. this code) is being built into XFree86's
+ * libGL so we'll use the __GLXContextRec defined in xc/lib/GL/glx/glxclient.h
+*/
 #include "glxclient.h"
 #else
-/* The GLX API dispatcher is being built into stand-alone Mesa */
+/* The GLX API dispatcher (i.e. this code) is being built into stand-alone
+ * Mesa.  We don't know anything about XFree86 or real GLX so we define a
+ * minimal __GLXContextRec here so some of the functions in this file can
+ * work properly.
+ */
 typedef struct __GLXcontextRec {
    Display *currentDpy;
    GLboolean isDirect;
@@ -57,8 +63,10 @@ typedef struct __GLXcontextRec {
  * pseudo-GLX can be present at the same time.  The former being used on
  * GLX-enabled X servers and the later on non-GLX X servers.
  *
- * XXX Note that this hasn't actually been fully used yet in either Mesa or
- * the DRI.  Red Hat, however, has used it for their custom libGL.
+ * Red Hat has been using this since Red Hat Linux 7.0 (I think).
+ * This'll be a standard feature in XFree86 4.3.  It basically allows one
+ * libGL to do both DRI-rendering and "fake GLX" rendering to X displays
+ * that lack the GLX extension.
  */
 struct _glxapi_table {
    /*** GLX_VERSION_1_0 ***/
