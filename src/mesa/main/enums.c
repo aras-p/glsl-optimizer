@@ -925,6 +925,12 @@ static enum_elt all_enums[] =
    { "SWIZZLE_STQ_ATI", 0x8977 },
    { "SWIZZLE_STR_DR_ATI", 0x8978 },
    { "SWIZZLE_STQ_DQ_ATI", 0x8979 },
+
+   /* GL_ARB_texture_rectangle */
+   { "GL_TEXTURE_RECTANGLE_ARB", 0x84F5 },
+   { "GL_TEXTURE_BINDING_RECTANGLE_ARB", 0x84F6 },
+   { "GL_PROXY_TEXTURE_RECTANGLE_ARB", 0x84F7 },
+   { "GL_MAX_RECTANGLE_TEXTURE_SIZE_ARB", 0x84F8 },
 };
 
 #define Elements(x) sizeof(x)/sizeof(*x)
