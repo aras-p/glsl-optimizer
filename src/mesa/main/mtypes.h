@@ -1250,13 +1250,9 @@ struct gl_texture_object
    GLfloat Priority;		/**< in [0,1] */
    GLfloat BorderColor[4];	/**< unclamped */
    GLchan _BorderChan[4];	/**< clamped, as GLchan */
-   /** \name Wrap modes
-    * Are GL_CLAMP, REPEAT, GL_CLAMP_TO_EDGE, and GL_CLAMP_TO_BORDER_ARB. */
-   /*@{*/
-   GLenum WrapS;
-   GLenum WrapT;
-   GLenum WrapR;
-   /*@}*/
+   GLenum WrapS;		/**< S-axis texture image wrap mode */
+   GLenum WrapT;		/**< T-axis texture image wrap mode */
+   GLenum WrapR;		/**< R-axis texture image wrap mode */
    GLenum MinFilter;		/**< minification filter */
    GLenum MagFilter;		/**< magnification filter */
    GLfloat MinLod;		/**< min lambda, OpenGL 1.2 */
@@ -1267,7 +1263,7 @@ struct gl_texture_object
    GLfloat MaxAnisotropy;	/**< GL_EXT_texture_filter_anisotropic */
    GLboolean CompareFlag;	/**< GL_SGIX_shadow */
    GLenum CompareOperator;	/**< GL_SGIX_shadow */
-   GLfloat ShadowAmbient;
+   GLfloat ShadowAmbient;       /**< GL_ARB_shadow_ambient */
    GLenum CompareMode;		/**< GL_ARB_shadow */
    GLenum CompareFunc;		/**< GL_ARB_shadow */
    GLenum DepthMode;		/**< GL_ARB_depth_texture */
@@ -1275,21 +1271,23 @@ struct gl_texture_object
    GLfloat _MaxLambda;		/**< = _MaxLevel - BaseLevel (q - b in spec) */
    GLboolean GenerateMipmap;    /**< GL_SGIS_generate_mipmap */
    GLboolean _IsPowerOfTwo;	/**< Are all image dimensions powers of two? */
+   GLboolean Complete;		/**< Is texture object complete? */
 
+   /** Actual texture images, indexed by [cube face] and [mipmap level] */
    struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
 
    /** GL_EXT_paletted_texture */
    struct gl_color_table Palette;
 
-   GLboolean Complete;			/**< Is texture object complete? */
-   struct gl_texture_object *Next;	/**< Next in linked list */
 
    /**
-    * \name For device driver
+    * \name For device driver.
+    * Note: instead of attaching driver data to this pointer, it's preferable
+    * to instead use this struct as a base class for your own texture object
+    * class.  Driver->NewTextureObject() can be used to implement the
+    * allocation.
     */
-   /*@{*/
    void *DriverData;	/**< Arbitrary device driver data */
-   /*@}*/
 };
 
 
@@ -1935,7 +1933,6 @@ struct gl_shared_state
    GLint RefCount;			   /**< Reference count */
    struct _mesa_HashTable *DisplayList;	   /**< Display lists hash table */
    struct _mesa_HashTable *TexObjects;	   /**< Texture objects hash table */
-   struct gl_texture_object *TexObjectList;/**< Linked list of texture objects */
 
    /**
     * \name Default texture objects (shared by all multi-texture units)
