@@ -1,10 +1,10 @@
-/* $Id: gl.h,v 1.63 2002/02/15 16:41:36 brianp Exp $ */
+/* $Id: gl.h,v 1.64 2002/02/25 22:18:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2526,10 +2526,10 @@ GLAPI void GLAPIENTRY glWindowPos3svARB(const GLshort *p);
 #ifndef GL_ARB_shadow
 #define GL_ARB_shadow 1
 
-/* XXX not finalized yet - just testing */
-#define GL_TEXTURE_COMPARE_MODE_ARB    0x9990
-#define GL_TEXTURE_COMPARE_FUNC_ARB    0x9991
-#define GL_COMPARE_R_TO_TEXTURE_ARB    0x9993
+/* XXX move to glext.h */
+#define GL_TEXTURE_COMPARE_MODE_ARB    0x884C
+#define GL_TEXTURE_COMPARE_FUNC_ARB    0x884D
+#define GL_COMPARE_R_TO_TEXTURE_ARB    0x884E
 
 #endif
 
@@ -2537,7 +2537,7 @@ GLAPI void GLAPIENTRY glWindowPos3svARB(const GLshort *p);
 #ifndef GL_ARB_shadow_ambient
 #define GL_ARB_shadow_ambient 1
 
-/* XXX not finalized yet - just testing */
+/* XXX move to glext.h */
 #define GL_TEXTURE_COMPARE_FAIL_VALUE_ARB    0x80BF
 
 #endif
@@ -2546,12 +2546,12 @@ GLAPI void GLAPIENTRY glWindowPos3svARB(const GLshort *p);
 #ifndef GL_ARB_depth_texture
 #define GL_ARB_depth_texture 1
 
-/* XXX not finalized yet - just testing */
+/* XXX move to glext.h */
 #define GL_DEPTH_COMPONENT16_ARB         0x81A5
 #define GL_DEPTH_COMPONENT24_ARB         0x81A6
 #define GL_DEPTH_COMPONENT32_ARB         0x81A7
-#define GL_TEXTURE_DEPTH_SIZE_ARB        0x7776
-#define GL_DEPTH_TEXTURE_MODE_ARB        0x7777
+#define GL_TEXTURE_DEPTH_SIZE_ARB        0x884A
+#define GL_DEPTH_TEXTURE_MODE_ARB        0x884B
 
 #endif
 
