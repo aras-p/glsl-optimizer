@@ -1,4 +1,4 @@
-/* $Id: mesa_wgl.h,v 1.4 1999/11/22 14:05:44 brianp Exp $ */
+/* $Id: mesa_wgl.h,v 1.5 2000/05/22 16:21:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,6 +36,41 @@
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+
+#if !defined(OPENSTEP) && (defined(__WIN32__) || defined(__CYGWIN32__))
+#  if defined(_MSC_VER) && defined(BUILD_GL32) /* tag specify we're building mesa as a DLL */
+#    define GLAPI __declspec(dllexport)
+#    define WGLAPI __declspec(dllexport)
+#  elif defined(_MSC_VER) && defined(_DLL) /* tag specifying we're building for DLL runtime support */
+#    define GLAPI __declspec(dllimport)
+#    define WGLAPI __declspec(dllimport)
+#  else /* for use with static link lib build of Win32 edition only */
+#    define GLAPI extern
+#    define WGLAPI __declspec(dllimport)
+#  endif /* _STATIC_MESA support */
+#  define GLAPIENTRY __stdcall
+#else
+/* non-Windows compilation */
+#  define GLAPI extern
+#  define GLAPIENTRY
+#endif /* WIN32 / CYGWIN32 bracket */
+
+
+#if defined(_WIN32) && !defined(_WINGDI_) && !defined(_GNU_H_WINDOWS32_DEFINES) && !defined(OPENSTEP)
+#ifndef _GNU_H_WINDOWS32_FUNCTIONS
+#	ifdef UNICODE
+#		define wglUseFontBitmaps  wglUseFontBitmapsW
+#		define wglUseFontOutlines  wglUseFontOutlinesW
+#	else
+#		define wglUseFontBitmaps  wglUseFontBitmapsA
+#		define wglUseFontOutlines  wglUseFontOutlinesA
+#	endif /* !UNICODE */
+#endif /* _GNU_H_WINDOWS32_FUNCTIONS */
+typedef struct tagLAYERPLANEDESCRIPTOR LAYERPLANEDESCRIPTOR, *PLAYERPLANEDESCRIPTOR, *LPLAYERPLANEDESCRIPTOR;
+typedef struct _GLYPHMETRICSFLOAT GLYPHMETRICSFLOAT, *PGLYPHMETRICSFLOAT, *LPGLYPHMETRICSFLOAT;
+typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESCRIPTOR, *LPPIXELFORMATDESCRIPTOR;
 #endif
 
 

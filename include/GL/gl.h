@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.38 2000/05/18 18:09:38 brianp Exp $ */
+/* $Id: gl.h,v 1.39 2000/05/22 16:21:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,108 +33,51 @@
 #endif
 
 
+/**********************************************************************
+ * Begin system-specific stuff.
+ */
 #if defined(__BEOS__)
 #include <stdlib.h>     /* to get some BeOS-isms */
 #endif
-
 
 #if !defined(OPENSTEP) && (defined(NeXT) || defined(NeXT_PDO))
 #define OPENSTEP
 #endif
 
-
-/*
- * XXX move as many of these pragma's and MS Windows-isms into
- * the new src/glheader.h file.
- */
-
 #if defined(_WIN32) && !defined(__WIN32__)
-#	define __WIN32__
+#define __WIN32__
 #endif
 
 #if !defined(OPENSTEP) && (defined(__WIN32__) || defined(__CYGWIN32__))
-#  pragma warning( disable : 4068 ) /* unknown pragma */
-#  pragma warning( disable : 4710 ) /* function 'foo' not inlined */
-#  pragma warning( disable : 4711 ) /* function 'foo' selected for automatic inline expansion */
-#  pragma warning( disable : 4127 ) /* conditional expression is constant */
-#  if defined(MESA_MINWARN)
-#    pragma warning( disable : 4244 ) /* '=' : conversion from 'const double ' to 'float ', possible loss of data */
-#    pragma warning( disable : 4018 ) /* '<' : signed/unsigned mismatch */
-#    pragma warning( disable : 4305 ) /* '=' : truncation from 'const double ' to 'float ' */
-#    pragma warning( disable : 4550 ) /* 'function' undefined; assuming extern returning int */
-#    pragma warning( disable : 4761 ) /* integral size mismatch in argument; conversion supplied */
-#  endif
 #  if defined(_MSC_VER) && defined(BUILD_GL32) /* tag specify we're building mesa as a DLL */
 #    define GLAPI __declspec(dllexport)
-#    define WGLAPI __declspec(dllexport)
 #  elif defined(_MSC_VER) && defined(_DLL) /* tag specifying we're building for DLL runtime support */
 #    define GLAPI __declspec(dllimport)
-#    define WGLAPI __declspec(dllimport)
 #  else /* for use with static link lib build of Win32 edition only */
 #    define GLAPI extern
-#    define WGLAPI __declspec(dllimport)
 #  endif /* _STATIC_MESA support */
 #  define GLAPIENTRY __stdcall
-#  define GLAPIENTRYP __stdcall *
-#  define GLCALLBACK __stdcall
-#  define GLCALLBACKP __stdcall *
-#  if defined(__CYGWIN32__)
-#    define GLCALLBACKPCAST *
-#  else
-#    define GLCALLBACKPCAST __stdcall *
-#  endif
-#  define GLWINAPI __stdcall
-#  define GLWINAPIV __cdecl
 #else
 /* non-Windows compilation */
 #  define GLAPI extern
 #  define GLAPIENTRY
-#  define GLAPIENTRYP *
-#  define GLCALLBACK
-#  define GLCALLBACKP *
-#  define GLCALLBACKPCAST *
-#  define GLWINAPI
-#  define GLWINAPIV
 #endif /* WIN32 / CYGWIN32 bracket */
 
-/* compatability guard so we don't need to change client code */
-
-#if defined(_WIN32) && !defined(_WINDEF_) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP)
-#	define CALLBACK GLCALLBACK
-typedef int (GLAPIENTRY *PROC)();
-typedef void *HGLRC;
-typedef void *HDC;
-typedef unsigned long COLORREF;
-#endif
-
 #if defined(_WIN32) && !defined(_WINGDI_) && !defined(_GNU_H_WINDOWS32_DEFINES) && !defined(OPENSTEP)
-#	define WGL_FONT_LINES      0
-#	define WGL_FONT_POLYGONS   1
-#ifndef _GNU_H_WINDOWS32_FUNCTIONS
-#	ifdef UNICODE
-#		define wglUseFontBitmaps  wglUseFontBitmapsW
-#		define wglUseFontOutlines  wglUseFontOutlinesW
-#	else
-#		define wglUseFontBitmaps  wglUseFontBitmapsA
-#		define wglUseFontOutlines  wglUseFontOutlinesA
-#	endif /* !UNICODE */
-#endif /* _GNU_H_WINDOWS32_FUNCTIONS */
-typedef struct tagLAYERPLANEDESCRIPTOR LAYERPLANEDESCRIPTOR, *PLAYERPLANEDESCRIPTOR, *LPLAYERPLANEDESCRIPTOR;
-typedef struct _GLYPHMETRICSFLOAT GLYPHMETRICSFLOAT, *PGLYPHMETRICSFLOAT, *LPGLYPHMETRICSFLOAT;
-typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESCRIPTOR, *LPPIXELFORMATDESCRIPTOR;
 #include <gl/mesa_wgl.h>
 #endif
 
+#if defined(macintosh) && PRAGMA_IMPORT_SUPPORTED
+#pragma import on
+#endif
+/*
+ * End system-specific stuff.
+ **********************************************************************/
+
+
+
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-
-#ifdef macintosh
-	#pragma enumsalwaysint on
-	#if PRAGMA_IMPORT_SUPPORTED
-	#pragma import on
-	#endif
 #endif
 
 
@@ -1782,11 +1725,6 @@ GLAPI void GLAPIENTRY glGetSeparableFilter( GLenum target, GLenum format,
 
 
 /*
- * XXX these extensions may eventually be moved into glext.h
- */
-
-
-/*
  * GL_EXT_abgr (number 1)
  */
 #ifndef GL_EXT_abgr
@@ -2286,17 +2224,19 @@ GLAPI void GLAPIENTRY glResizeBuffersMESA( void );
 
 
 
+/**********************************************************************
+ * Begin system-specific stuff
+ */
 #if defined(__BEOS__) || defined(__QUICKDRAW__)
 #pragma export off
 #endif
 
-
-#ifdef macintosh
-	#pragma enumsalwaysint reset
-	#if PRAGMA_IMPORT_SUPPORTED
-	#pragma import off
-	#endif
+#if defined(macintosh) && PRAGMA_IMPORT_SUPPORTED
+#pragma import off
 #endif
+/*
+ * End system-specific stuff
+ **********************************************************************/
 
 
 #ifdef __cplusplus

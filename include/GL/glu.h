@@ -1,4 +1,4 @@
-/* $Id: glu.h,v 1.19 1999/11/24 13:06:48 brianp Exp $ */
+/* $Id: glu.h,v 1.20 2000/05/22 16:21:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,9 +47,20 @@ extern "C" {
 #	else /* for use with static link lib build of Win32 edition only */
 #		define GLUAPI extern
 #	endif /* _STATIC_MESA support */
+#	define GLCALLBACK __stdcall
+#	define GLCALLBACKP __stdcall *
 #else
 #	define GLUAPI extern
+#	define GLCALLBACK
+#	define GLCALLBACKP *
 #endif /* WIN32 / CYGWIN32 bracket */
+
+/* compatability guard so we don't need to change client code */
+#if defined(_WIN32) && !defined(_WINDEF_) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP)
+#	define CALLBACK GLCALLBACK
+#endif
+
+
 
 #ifdef macintosh
 	#pragma enumsalwaysint on
