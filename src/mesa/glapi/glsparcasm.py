@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: glsparcasm.py,v 1.3 2001/06/06 22:55:28 davem69 Exp $
+# $Id: glsparcasm.py,v 1.4 2001/08/03 13:16:31 davem69 Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -45,7 +45,7 @@ def PrintHead():
 	print '#include "glapioffsets.h"'
 	print ''
 	print '#define GL_PREFIX(n) gl##n'
-	print '#define GLOBL_FN(x) .globl x ; .type x,@function'
+	print '#define GLOBL_FN(x) .globl x ; .type x,#function'
 	print ''
 	print '/* The _glapi_Dispatch symbol addresses get relocated into the'
 	print ' * sethi/or instruction sequences below at library init time.'
@@ -64,7 +64,7 @@ def PrintHead():
 	print '.align 64'
 	print ''
 	print '.globl _mesa_sparc_glapi_begin'
-	print '.type _mesa_sparc_glapi_begin,@function'
+	print '.type _mesa_sparc_glapi_begin,#function'
 	print '_mesa_sparc_glapi_begin:'
 	print ''
 	return
@@ -74,7 +74,7 @@ def PrintTail():
 	print '\t nop'
 	print ''
 	print '.globl _mesa_sparc_glapi_end'
-	print '.type _mesa_sparc_glapi_end,@function'
+	print '.type _mesa_sparc_glapi_end,#function'
 	print '_mesa_sparc_glapi_end:'
 	print ''
 #endif
