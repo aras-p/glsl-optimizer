@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.8 1999/11/22 18:57:56 brianp Exp $ */
+/* $Id: macros.h,v 1.9 2000/09/17 21:56:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -109,7 +109,6 @@ do {						\
    (DST)[1] = (SRC)[1];				\
 } while (0)
 
-
 #define COPY_3V( DST, SRC )			\
 do {						\
    (DST)[0] = (SRC)[0];				\
@@ -132,7 +131,6 @@ do {						\
    (DST)[0] = _tmp[0];				\
    (DST)[1] = _tmp[1];				\
 } while (0)
-
 
 #define COPY_3FV( DST, SRC )			\
 do {						\
@@ -371,11 +369,18 @@ do {						\
 
 
 /* Assign scalers to short vectors: */
-#define ASSIGN_2V( V, V0, V1 )  \
-do { V[0] = V0;  V[1] = V1; } while(0)
+#define ASSIGN_2V( V, V0, V1 )	\
+do { 				\
+    V[0] = V0; 			\
+    V[1] = V1; 			\
+} while(0)
 
-#define ASSIGN_3V( V, V0, V1, V2 )  \
-do { V[0] = V0;  V[1] = V1;  V[2] = V2; } while(0)
+#define ASSIGN_3V( V, V0, V1, V2 )	\
+do { 				 	\
+    V[0] = V0; 				\
+    V[1] = V1; 				\
+    V[2] = V2; 				\
+} while(0)
 
 #define ASSIGN_4V( V, V0, V1, V2, V3 ) 		\
 do { 						\
@@ -415,7 +420,6 @@ do { 						\
 /* Min of two values: */
 #define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )
 
-
 /* MAX of two values: */
 #define MAX2( A, B )   ( (A)>(B) ? (A) : (B) )
 
@@ -424,7 +428,6 @@ do { 						\
 
 /* Dot product of two 3-element vectors */
 #define DOT3( a, b )  ( (a)[0]*(b)[0] + (a)[1]*(b)[1] + (a)[2]*(b)[2] )
-
 
 /* Dot product of two 4-element vectors */
 #define DOT4( a, b )  ( (a)[0]*(b)[0] + (a)[1]*(b)[1] + \
@@ -497,4 +500,4 @@ do {						\
 #define FLOAT_TO_INT(X)		( (GLint) (2147483647.0 * (X)) )
 
 
-#endif /*MACROS_H*/
+#endif

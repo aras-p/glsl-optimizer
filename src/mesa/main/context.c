@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.87 2000/09/15 19:45:40 brianp Exp $ */
+/* $Id: context.c,v 1.88 2000/09/17 21:56:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -423,7 +423,6 @@ one_time_init( void )
       gl_init_translate();
       gl_init_vbrender();
       gl_init_vbxform();
-      gl_init_vertices();
 
       if (getenv("MESA_DEBUG")) {
          _glapi_noop_enable_warnings(GL_TRUE);
@@ -2070,3 +2069,16 @@ const char *_mesa_prim_name[GL_POLYGON+2] = {
    "culled primitive"
 };
 
+
+GLenum gl_reduce_prim[GL_POLYGON+1] = {
+   GL_POINTS,
+   GL_LINES,
+   GL_LINES,
+   GL_LINES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+};  
