@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.30 2002/10/11 17:41:06 brianp Exp $ */
+/* $Id: swrast.h,v 1.31 2002/10/21 15:06:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,6 +63,8 @@
  *     primitives unaccelerated), hook in swrast_setup instead.
  */
 typedef struct {
+   /** win[0], win[1] are the screen-coords of SWvertex. win[2] is the
+    * z-coord. what is win[3]? */
    GLfloat win[4];
    GLfloat texcoord[MAX_TEXTURE_UNITS][4];
    GLchan color[4];
@@ -97,7 +99,13 @@ typedef struct {
  */
 
 
-/* Values for interpMask and arrayMask */
+/**
+ * \defgroup SpanFlags SPAN_XXX-flags
+ * Bitmasks to indicate which span_arrays need to be computed
+ * (sw_span::interpMask) or have already been filled
+ * (sw_span::arrayMask)
+ */
+/*@{*/
 #define SPAN_RGBA         0x001
 #define SPAN_SPEC         0x002
 #define SPAN_INDEX        0x004
@@ -107,16 +115,21 @@ typedef struct {
 #define SPAN_INT_TEXTURE  0x040
 #define SPAN_LAMBDA       0x080
 #define SPAN_COVERAGE     0x100
-#define SPAN_FLAT         0x200  /* flat shading? */
-#define SPAN_XY           0x400  /* arrayMask only - for xArray, yArray */
-#define SPAN_MASK         0x800  /* arrayMask only */
+#define SPAN_FLAT         0x200  /**< flat shading? */
+/** sw_span::arrayMask only - for span_arrays::x, span_arrays::y */
+#define SPAN_XY           0x400
+#define SPAN_MASK         0x800  /**< sw_span::arrayMask only */
+/*@}*/
 
 
+/**
+ * \struct span_arrays 
+ * \brief Arrays of fragment values.
+ *
+ * These will either be computed from the x/xStep values above or
+ * filled in by glDraw/CopyPixels, etc.
+ */
 struct span_arrays {
-   /**
-    * Arrays of fragment values.  These will either be computed from the
-    * x/xStep values above or filled in by glDraw/CopyPixels, etc.
-    */
    GLchan  rgb[MAX_WIDTH][3];
    GLchan  rgba[MAX_WIDTH][4];
    GLuint  index[MAX_WIDTH];
@@ -151,8 +164,8 @@ struct sw_span {
    GLuint facing;
 
    /**
-    * This bitmask (of SPAN_* flags) indicates which of the x/xStep
-    * variables are relevant.
+    * This bitmask (of  \link SpanFlags SPAN_* flags\endlink) indicates
+    * which of the x/xStep variables are relevant.
     */
    GLuint interpMask;
 
@@ -182,8 +195,8 @@ struct sw_span {
    GLfixed intTex[2], intTexStep[2];
 
    /**
-    * This bitmask (of SPAN_* flags) indicates which of the fragment arrays
-    * in the span_arrays struct are relevant.
+    * This bitmask (of \link SpanFlags SPAN_* flags\endlink) indicates
+    * which of the fragment arrays in the span_arrays struct are relevant.
     */
    GLuint arrayMask;
 
