@@ -1,4 +1,4 @@
-/* $Id: texformat.h,v 1.4 2001/03/22 06:25:23 gareth Exp $ */
+/* $Id: texformat.h,v 1.5 2001/03/22 06:26:18 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -102,10 +102,8 @@ extern const struct gl_texture_format _mesa_texformat_depth_component;
 /* The hardware-friendly formats:
  */
 extern const struct gl_texture_format _mesa_texformat_rgba8888;
-extern const struct gl_texture_format _mesa_texformat_abgr8888;
 extern const struct gl_texture_format _mesa_texformat_argb8888;
 extern const struct gl_texture_format _mesa_texformat_rgb888;
-extern const struct gl_texture_format _mesa_texformat_bgr888;
 extern const struct gl_texture_format _mesa_texformat_rgb565;
 extern const struct gl_texture_format _mesa_texformat_argb4444;
 extern const struct gl_texture_format _mesa_texformat_argb1555;
