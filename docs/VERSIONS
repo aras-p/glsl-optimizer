@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.21 2000/03/07 17:59:54 brianp Exp $
+$Id: VERSIONS,v 1.22 2000/03/20 00:29:24 brianp Exp $
 
 
 Mesa Version History
@@ -690,6 +690,7 @@ Mesa Version History
 	- glext.h header file
 	- demos/geartrain program
 	- GL_EXT_texture_lod_bias extension
+	- antialiased triangles now implemented
     Bug Fixes:
 	- 
     Changes:
