@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.16 2001/08/02 19:58:07 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.17 2001/08/02 21:30:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,7 +56,9 @@ static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
     * operations: producing the flag array and computing the orflag
     * of the flag array.
     */
-#if 1
+#if 0
+   /* Buggy - see sgl testGeoSets.exe polygon mode
+    */
    if (_tnl_hard_begin( ctx, mode )) {
       GLint i;
       for (i = 0 ; i < count ; ) {
@@ -95,9 +97,11 @@ static void fallback_drawelements( GLcontext *ctx, GLenum mode, GLsizei count,
 {
 /*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
-#if 1
+#if 0
    /* Optimized code that fakes the effect of calling
     * _tnl_array_element for each index in the list.
+    *
+    * Possibly buggy, see above.
     */
    if (_tnl_hard_begin( ctx, mode )) {
       GLint i, j;
@@ -172,7 +176,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+/*     fprintf(stderr, "%s %d %d\n", __FUNCTION__, start, count); */
    
    /* Check arguments, etc.
     */
@@ -183,9 +187,9 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
       _tnl_validate_pipeline( ctx );
 
    if (ctx->CompileFlag) {
-      fallback_drawarrays( ctx, mode, start, count );
+      fallback_drawarrays( ctx, mode, start, start + count );
    }    
-   else if (count - start < (GLint) ctx->Const.MaxArrayLockSize) {
+   else if (count < (GLint) ctx->Const.MaxArrayLockSize) {
 
       /* Small primitives which can fit in a single vertex buffer:
        */
@@ -195,8 +199,8 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
       {
 	 if (start < (GLint) ctx->Array.LockFirst)
             start = ctx->Array.LockFirst;
-	 if (count > (GLint) ctx->Array.LockCount)
-            count = ctx->Array.LockCount;
+	 if (start + count > (GLint) ctx->Array.LockCount)
+            count = ctx->Array.LockCount - start;
 	 if (start >= count)
             return;
 
@@ -205,7 +209,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 _tnl_vb_bind_arrays( ctx, ctx->Array.LockFirst, ctx->Array.LockCount );
 	 VB->FirstPrimitive = start;
 	 VB->Primitive[start] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;
-	 VB->PrimitiveLength[start] = count - start;
+	 VB->PrimitiveLength[start] = count;
 	 tnl->Driver.RunPipeline( ctx );
       } else {
 	 /* The arrays are small enough to fit in a single VB; just bind
@@ -214,10 +218,10 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	  *
 	  * Invalidate any cached data dependent on these arrays.
 	  */
-	 _tnl_vb_bind_arrays( ctx, start, count );
+	 _tnl_vb_bind_arrays( ctx, start, start + count );
 	 VB->FirstPrimitive = 0;
 	 VB->Primitive[0] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;
-	 VB->PrimitiveLength[0] = count - start;
+	 VB->PrimitiveLength[0] = count;
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
 	 tnl->Driver.RunPipeline( ctx );
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
@@ -272,7 +276,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 /* Primitives requiring a copied vertex (fan-like primitives)
 	  * must use the slow path:
 	  */
-	 fallback_drawarrays( ctx, mode, start, count );
+	 fallback_drawarrays( ctx, mode, start, start + count );
 	 return;
       }
 
@@ -284,6 +288,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
       
       bufsz -= bufsz % modulo;
       bufsz -= minimum;
+      count += start;
 
       for (j = start + minimum ; j < count ; j += nr + skip ) {
 
@@ -312,6 +317,8 @@ _tnl_DrawRangeElements(GLenum mode,
    GET_CURRENT_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint *ui_indices;
+   
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    /* Check arguments, etc.
     */
