@@ -638,12 +638,14 @@ static void viaUpdateTexEnv(GLcontext *ctx, GLuint unit)
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
 }
 
-static void viaUpdateTexUnit(GLcontext *ctx, GLuint unit)
+static GLboolean viaUpdateTexUnit(GLcontext *ctx, GLuint unit)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);     
-    if (texUnit->_ReallyEnabled) {
+
+    if (texUnit->_ReallyEnabled == TEXTURE_2D_BIT || 
+	texUnit->_ReallyEnabled == TEXTURE_1D_BIT) {
+
         struct gl_texture_object *tObj = texUnit->_Current;
         viaTextureObjectPtr t = (viaTextureObjectPtr)tObj->DriverData;
 
@@ -653,14 +655,12 @@ static void viaUpdateTexUnit(GLcontext *ctx, GLuint unit)
             VIA_FLUSH_DMA(vmesa);
             viaSetTexImages(vmesa, tObj);
             if (!t->bufAddr) {
-                FALLBACK(vmesa, VIA_FALLBACK_TEXTURE, GL_TRUE);
-                return;
+                return GL_FALSE;
             }
         }
 
         if (tObj->Image[0][tObj->BaseLevel]->Border > 0) {
-            FALLBACK(vmesa, VIA_FALLBACK_TEXTURE, GL_TRUE);
-            return;
+            return GL_FALSE;
         }
 
         /* Update state if this is a different texture object to last
@@ -679,22 +679,27 @@ static void viaUpdateTexUnit(GLcontext *ctx, GLuint unit)
             vmesa->TexEnvImageFmt[unit] = tObj->Image[0][tObj->BaseLevel]->Format;
             viaUpdateTexEnv(ctx, unit);
         }
+
+	return GL_TRUE;
     }
+    else if (texUnit->_ReallyEnabled) {
+       return GL_FALSE;
+    } 
     else {
         vmesa->CurrentTexObj[unit] = 0;
         vmesa->TexEnvImageFmt[unit] = 0;
         VIA_FLUSH_DMA(vmesa);
+	return GL_TRUE;
     }
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
 }
 
 void viaUpdateTextureState(GLcontext *ctx)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__); 
-    FALLBACK(vmesa, VIA_FALLBACK_TEXTURE, GL_FALSE);
-    viaUpdateTexUnit(ctx, 0);
-    viaUpdateTexUnit(ctx, 1);
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
+
+    GLuint ok = (viaUpdateTexUnit(ctx, 0) &&
+		 viaUpdateTexUnit(ctx, 1));
+
+    FALLBACK(vmesa, VIA_FALLBACK_TEXTURE, !ok);
 }
 
