@@ -54,6 +54,7 @@ typedef struct {
 #define RADEON_CHIP_REAL_R200		1
 #define RADEON_CHIP_R300		2
 #define RADEON_CHIP_RV350		3
+#define RADEON_CHIP_R420		4
 #define RADEON_CHIP_MASK		0x0f
 
 #define RADEON_CHIPSET_TCL		(1 << 8)
