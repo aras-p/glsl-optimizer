@@ -1,4 +1,4 @@
-/* $Id: api_loopback.c,v 1.13 2001/12/20 15:30:45 keithw Exp $ */
+/* $Id: api_loopback.c,v 1.14 2001/12/21 15:48:23 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -64,6 +64,7 @@
 #define MATERIALFV(a,b,c)           glMaterialfv(a,b,c)
 #define RECTF(a,b,c,d)              glRectf(a,b,c,d)
 
+#define ATTRIB(index, x, y, z, w)   _compat_VertexAttrib4fNV(index, x, y, z, w)
 
 
 #define FOGCOORDF(x)                _compat_FogCoordfEXT(x)
