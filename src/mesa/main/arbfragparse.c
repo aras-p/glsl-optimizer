@@ -189,24 +189,6 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
 	
    retval = _mesa_parse_arb_program(ctx, str, len, &ap);
 
-   /* XXX: Parse error. Cleanup things and return */	
-   if (retval)
-   {
-      return;
-   }
-
-   /* XXX: Eh.. we parsed something that wasn't a fragment program. doh! */
-   if (ap.type != GL_FRAGMENT_PROGRAM_ARB)
-   {
-      return;      
-   }
-
-#if DEBUG_FP
-   debug_fp_inst(ap.Base.NumInstructions, ap.FPInstructions);
-#else
-   (void) debug_fp_inst;
-#endif
-
    /* copy the relvant contents of the arb_program struct into the 
     * fragment_program struct
     */
@@ -216,7 +198,6 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
    program->Base.NumAttributes   = ap.Base.NumAttributes;
    program->Base.NumAddressRegs  = ap.Base.NumAddressRegs;
 	
-   program->Instructions   = ap.FPInstructions;
    program->InputsRead     = ap.InputsRead;
    program->OutputsWritten = ap.OutputsWritten;
    for (retval=0; retval<MAX_TEXTURE_IMAGE_UNITS; retval++)
@@ -225,4 +206,32 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
    program->NumTexInstructions = ap.NumTexInstructions;
    program->NumTexIndirections = ap.NumTexIndirections;
    program->Parameters         = ap.Parameters;
+
+   /* XXX: Parse error. Cleanup things and return */	
+   if (retval)
+   {
+      program->Instructions = (struct fp_instruction *) _mesa_malloc (
+                                     sizeof(struct fp_instruction) );			  
+      program->Instructions[0].Opcode = FP_OPCODE_END;
+      return;
+   }
+
+   /* XXX: Eh.. we parsed something that wasn't a fragment program. doh! */
+   if (ap.type != GL_FRAGMENT_PROGRAM_ARB)
+   {
+      program->Instructions = (struct fp_instruction *) _mesa_malloc (
+                                     sizeof(struct fp_instruction) );			  
+      program->Instructions[0].Opcode = FP_OPCODE_END;
+
+      _mesa_error (ctx, GL_INVALID_OPERATION, "Parsed a non-fragment program as a fragment program");
+      return;      
+   }
+
+#if DEBUG_FP
+   debug_fp_inst(ap.Base.NumInstructions, ap.FPInstructions);
+#else
+   (void) debug_fp_inst;
+#endif
+
+   program->Instructions   = ap.FPInstructions;
 }

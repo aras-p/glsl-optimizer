@@ -87,7 +87,7 @@
  *
  *    Cosmetic Stuff
  *    -----------------------------------------------------
- *      - fix compiler warnings 
+ *    - fix compiler warnings 
  * 	- remove any leftover unused grammer.c stuff (dict_ ?)
  * 	- fix grammer.c error handling so its not static
  * 	- #ifdef around stuff pertaining to extentions
@@ -107,6 +107,21 @@
  *         " exponent .or .true .emit '1' .emit 0x00 .emit $;\n"
  *
  *    - XXX: need to recognize "1" as a valid float ?
+ *    - XXX: this fails:
+ *               "MUL   result.color.xyz, R0, program.local[35] ;"
+ *           but this works:        
+ *               "MUL   result.color.primary.xyz, R0, program.local[35] ;"
+ *             -> see progs/tests/arbvptorus.c
+ *
+ *    - changed "progLocalParam\n" changed from:
+ *         " \"local\" .emit PROGRAM_PARAM_LOCAL .and lbracket .and progLocalParamNum 
+ *                  .and rbracket;\n"
+ *      to:                   
+ *         " \"local\" .emit PROGRAM_PARAM_LOCAL .and lbracket .and progLocalParamNum 
+ *                  .and rbracket .emit 0x00;\n"
+ *      so we can distinguish between the progLocalParam and progLocalParams rules                  
+ *
+ *    - made the same change as above to the progEnvParam rule  
  */
 
 typedef GLubyte *production;
@@ -3437,6 +3452,7 @@ parse_program_single_item (GLcontext * ctx, GLubyte ** inst,
       case PROGRAM_PARAM_ENV:
          state_tokens[1] = STATE_ENV;
          state_tokens[2] = parse_integer (inst, Program);
+
          /* Check state_tokens[2] against the number of ENV parameters available */
          if (((Program->type == GL_FRAGMENT_PROGRAM_ARB) &&
               (state_tokens[2] >= ctx->Const.MaxFragmentProgramEnvParams))
@@ -3456,6 +3472,7 @@ parse_program_single_item (GLcontext * ctx, GLubyte ** inst,
       case PROGRAM_PARAM_LOCAL:
          state_tokens[1] = STATE_LOCAL;
          state_tokens[2] = parse_integer (inst, Program);
+
          /* Check state_tokens[2] against the number of LOCAL parameters available */
          if (((Program->type == GL_FRAGMENT_PROGRAM_ARB) &&
               (state_tokens[2] >= ctx->Const.MaxFragmentProgramLocalParams))
@@ -3764,6 +3781,7 @@ parse_param_elements (GLcontext * ctx, GLubyte ** inst,
 
    switch (*(*inst)++) {
       case PARAM_STATE_ELEMENT:
+
          if (parse_state_single_item (ctx, inst, Program, state_tokens))
             return 1;
 
@@ -3799,6 +3817,7 @@ parse_param_elements (GLcontext * ctx, GLubyte ** inst,
          break;
 
       case PARAM_PROGRAM_ELEMENT:
+
          if (parse_program_single_item (ctx, inst, Program, state_tokens))
             return 1;
          idx = _mesa_add_state_reference (Program->Parameters, state_tokens);
@@ -3847,6 +3866,10 @@ parse_param_elements (GLcontext * ctx, GLubyte ** inst,
                Program->Base.NumParameters++;
             }
          }
+			else
+			{
+				(*(*inst)++);
+			}
          break;
 
       case PARAM_CONSTANT:
@@ -3982,7 +4005,6 @@ parse_param_use (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
     * param_var->param_binding_begin  = 0;
     */
    param_var->param_binding_type = PROGRAM_STATE_VAR;
-
 
    var_cache_append (vc_head, param_var);
 
@@ -4257,8 +4279,8 @@ parse_masked_dst_reg (GLcontext * ctx, GLubyte ** inst,
          /* If the name has never been added to our symbol table, we're hosed */
          if (!result) {
             _mesa_set_program_error (ctx, Program->Position,
-                                     "Undefined variable");
-            _mesa_error (ctx, GL_INVALID_OPERATION, "Undefined variable: %s",
+                                     "0: Undefined variable");
+            _mesa_error (ctx, GL_INVALID_OPERATION, "0: Undefined variable: %s",
                          dst->name);
             return 1;
          }
@@ -4329,10 +4351,10 @@ parse_masked_address_reg (GLcontext * ctx, GLubyte ** inst,
    dst = parse_string (inst, vc_head, Program, &result);
    Program->Position = parse_position (inst);
 
-   /* If the name has never been added to our symbol table, we're hosed */
+	/* If the name has never been added to our symbol table, we're hosed */
    if (!result) {
-      _mesa_set_program_error (ctx, Program->Position, "Undefined variable");
-      _mesa_error (ctx, GL_INVALID_OPERATION, "Undefined variable: %s",
+      _mesa_set_program_error (ctx, Program->Position, "1: Undefined variable");
+      _mesa_error (ctx, GL_INVALID_OPERATION, "1: Undefined variable: %s",
                    dst->name);
       return 1;
    }
@@ -4470,7 +4492,6 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
          break;
 
       case REGISTER_PARAM:
-
          switch (**inst) {
             case PARAM_ARRAY_ELEMENT:
                *(*inst)++;
@@ -4479,9 +4500,9 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
 
                if (!found) {
                   _mesa_set_program_error (ctx, Program->Position,
-                                           "Undefined variable");
+                                           "2: Undefined variable");
                   _mesa_error (ctx, GL_INVALID_OPERATION,
-                               "Undefined variable: %s", src->name);
+                               "2: Undefined variable: %s", src->name);
                   return 1;
                }
 
@@ -4511,6 +4532,7 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
                break;
 
             default:
+
                if (parse_param_use (ctx, inst, vc_head, Program, &src))
                   return 1;
 
@@ -4521,14 +4543,15 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
          break;
 
       case REGISTER_ESTABLISHED_NAME:
+
          src = parse_string (inst, vc_head, Program, &found);
          Program->Position = parse_position (inst);
 
          /* If the name has never been added to our symbol table, we're hosed */
          if (!found) {
             _mesa_set_program_error (ctx, Program->Position,
-                                     "Undefined variable");
-            _mesa_error (ctx, GL_INVALID_OPERATION, "Undefined variable: %s",
+                                     "3: Undefined variable");
+            _mesa_error (ctx, GL_INVALID_OPERATION, "3: Undefined variable: %s",
                          src->name);
             return 1;
          }
@@ -4589,7 +4612,7 @@ parse_vector_src_reg (GLcontext * ctx, GLubyte ** inst,
 
    /* finally, the swizzle */
    parse_swizzle_mask (inst, Swizzle, 4);
-
+   
    return 0;
 }
 
