@@ -43,17 +43,34 @@
 #include "texstore.h"
 
 #if USE_EXTERNAL_DXTN_LIB
+#ifdef __MINGW32__
+/* no dlopen */
+#define DXTN_EXT "dxtn.dll"
+#define DXTN_PREFIX ""
+#define dlopen(name, mode) LoadLibrary(name)
+#define dlsym(hndl, proc) GetProcAddress(hndl, proc)
+#define dlclose(hndl) FreeLibrary(hndl)
+#elif defined(__DJGPP__)
+/* has dlopen, but doesn't like the names */
 #include <dlfcn.h>
+#define DXTN_EXT "dxtn.dxe"
+#define DXTN_PREFIX "_"
+#else
+/* happiness */
+#include <dlfcn.h>
+#define DXTN_EXT "libtxc_dxtn.so"
+#define DXTN_PREFIX ""
 #endif
+#endif /* USE_EXTERNAL_DXTN_LIB */
 
 typedef void (*dxtFetchTexelFuncExt)( GLint srcRowstride, GLubyte *pixdata, GLint col, GLint row, GLvoid *texelOut );
-dxtFetchTexelFuncExt fetch_ext_rgb_dxt1;
-dxtFetchTexelFuncExt fetch_ext_rgba_dxt1;
-dxtFetchTexelFuncExt fetch_ext_rgba_dxt3;
-dxtFetchTexelFuncExt fetch_ext_rgba_dxt5;
+dxtFetchTexelFuncExt fetch_ext_rgb_dxt1 = NULL;
+dxtFetchTexelFuncExt fetch_ext_rgba_dxt1 = NULL;
+dxtFetchTexelFuncExt fetch_ext_rgba_dxt3 = NULL;
+dxtFetchTexelFuncExt fetch_ext_rgba_dxt5 = NULL;
 
 typedef void (*dxtCompressTexFuncExt)(GLint srccomps, GLint width, GLint height, const GLubyte *srcPixData, GLenum destformat, GLubyte *dest);
-dxtCompressTexFuncExt ext_tx_compress_dxtn;
+dxtCompressTexFuncExt ext_tx_compress_dxtn = NULL;
 
 void *dxtlibhandle = NULL;
 
@@ -64,37 +81,30 @@ _mesa_init_texture_s3tc( GLcontext *ctx )
    ctx->Mesa_DXTn = GL_FALSE;
 #if USE_EXTERNAL_DXTN_LIB
    if (!dxtlibhandle) {
-      char *error;
-
-      dxtlibhandle = dlopen ("libtxc_dxtn.so", RTLD_LAZY | RTLD_GLOBAL);
+      dxtlibhandle = dlopen (DXTN_EXT, RTLD_LAZY | RTLD_GLOBAL);
       if (!dxtlibhandle) {
-	 _mesa_warning(ctx, "couldn't open libtxc_dxtn.so, software DXTn"
+	 _mesa_warning(ctx, "couldn't open " DXTN_EXT ", software DXTn "
 	    "compression/decompression unavailable\n");
       }
       else {
          /* the fetch functions are not per context! Might be problematic... */
-         fetch_ext_rgb_dxt1 = dlsym(dxtlibhandle, "fetch_2d_texel_rgb_dxt1");
-         error = dlerror();
-         if (error == NULL) {
-            fetch_ext_rgba_dxt1 = dlsym(dxtlibhandle, "fetch_2d_texel_rgba_dxt1");
-            error = dlerror();
+         fetch_ext_rgb_dxt1 = (dxtFetchTexelFuncExt)dlsym(dxtlibhandle, DXTN_PREFIX "fetch_2d_texel_rgb_dxt1");
+         if (fetch_ext_rgb_dxt1 != NULL) {
+            fetch_ext_rgba_dxt1 = (dxtFetchTexelFuncExt)dlsym(dxtlibhandle, DXTN_PREFIX "fetch_2d_texel_rgba_dxt1");
          }
-         if (error == NULL) {
-            fetch_ext_rgba_dxt3 = dlsym(dxtlibhandle, "fetch_2d_texel_rgba_dxt3");
-            error = dlerror();
+         if (fetch_ext_rgba_dxt1 != NULL) {
+            fetch_ext_rgba_dxt3 = (dxtFetchTexelFuncExt)dlsym(dxtlibhandle, DXTN_PREFIX "fetch_2d_texel_rgba_dxt3");
          }
-         if (error == NULL) {
-            fetch_ext_rgba_dxt5 = dlsym(dxtlibhandle, "fetch_2d_texel_rgba_dxt5");
-            error = dlerror();
+         if (fetch_ext_rgba_dxt3 != NULL) {
+            fetch_ext_rgba_dxt5 = (dxtFetchTexelFuncExt)dlsym(dxtlibhandle, DXTN_PREFIX "fetch_2d_texel_rgba_dxt5");
          }
-         if (error == NULL) {
-            ext_tx_compress_dxtn = dlsym(dxtlibhandle, "tx_compress_dxtn");
-            error = dlerror();
+         if (fetch_ext_rgba_dxt5 != NULL) {
+            ext_tx_compress_dxtn = (dxtCompressTexFuncExt)dlsym(dxtlibhandle, DXTN_PREFIX "tx_compress_dxtn");
          }
 
-         if (error) {
+         if (ext_tx_compress_dxtn == NULL) {
 	    _mesa_warning(ctx, "couldn't reference all symbols in "
-	       "libtxc_dxtn.so, software DXTn compression/decompression "
+	       DXTN_EXT ", software DXTn compression/decompression "
 	       "unavailable\n");
             fetch_ext_rgb_dxt1 = NULL;
             fetch_ext_rgba_dxt1 = NULL;
