@@ -498,6 +498,46 @@ case $ARCH in
 	FINAL_LIBS="${LIBNAME}"
 	;;
 
+     CYGWIN*)
+	# GCC-based environment
+	CYGNAME="cyg${LIBNAME}"     # prefix with "cyg"
+	LIBNAME="lib${LIBNAME}"     # prefix with "lib"
+
+        if [ $STATIC = 1 ] ; then
+            echo "mklib: Making" $ARCH "static library: " ${LIBNAME}.a
+            LINK="ar"
+            OPTS="-ru"
+            # make lib
+            ${LINK} ${OPTS} ${LIBNAME}.a ${OBJECTS}
+	    ranlib ${LIBNAME}.a
+            # finish up
+            FINAL_LIBS=${LIBNAME}.a
+        else
+	    OPTS="-shared -Wl,-export-all -Wl,--out-implib=${LIBNAME}-${MAJOR}.dll.a"
+            echo "mklib: Making" $ARCH "shared library: " ${LIBNAME}-${MAJOR}.dll
+
+            if [ $CPLUSPLUS = 1 ] ; then
+                LINK="g++"
+            else
+                LINK="gcc"
+            fi
+
+            # rm any old libs
+            rm -f ${LIBNAME}-${MAJOR}.dll
+            rm -f ${LIBNAME}.dll.a
+            rm -f ${LIBNAME}.a
+
+            # make lib
+            ${LINK} ${OPTS} -o ${CYGNAME}-${MAJOR}.dll ${OBJECTS} ${DEPS}
+            # make usual symlinks
+            ln -s ${LIBNAME}-${MAJOR}.dll.a ${LIBNAME}.dll.a
+            # finish up
+            FINAL_LIBS="${LIBNAME}-${MAJOR}.dll.a ${LIBNAME}.dll.a"
+	    # special case for installing in bin
+            FINAL_BINS="${CYGNAME}-${MAJOR}.dll"
+        fi
+	;;
+
     'example')
 	# If you're adding support for a new architecture, you can
 	# start with this:
