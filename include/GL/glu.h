@@ -41,7 +41,7 @@
 #endif
 
 #ifndef GLAPIENTRYP
-#define GLAPIENTRYP
+#define GLAPIENTRYP GLAPIENTRY *
 #endif
 
 #ifndef GLAPI
