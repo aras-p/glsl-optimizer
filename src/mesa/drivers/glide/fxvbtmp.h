@@ -52,7 +52,7 @@ static void TAG(emit)( GLcontext *ctx,
    GLuint fog_stride;
    GrVertex *v = (GrVertex *)dest;
    GLfloat u0scale,v0scale,u1scale,v1scale;
-   /*const GLubyte *mask = VB->ClipMask;*/ /* XXX dangerous? */
+   const GLubyte *mask = VB->ClipMask;
    const GLfloat *const s = ctx->Viewport._WindowMap.m;
    int i;
 
@@ -118,29 +118,29 @@ static void TAG(emit)( GLcontext *ctx,
       }
    
       if (IND & SETUP_XYZW) {
-         if (1/*mask[i] == 0*/) {
+         if (mask[i] == 0) {
 	    /* unclipped */
 	    VIEWPORT_X(v->x,   proj[0][0]);
 	    VIEWPORT_Y(v->y,   proj[0][1]);
 	    VIEWPORT_Z(v->ooz, proj[0][2]);
 	    v->oow = proj[0][3];
+
+	    if (IND & SETUP_SNAP) {
+#if defined(USE_IEEE)
+	       const float snapper = (3L << 18);
+	       v->x += snapper;
+	       v->x -= snapper;
+	       v->y += snapper;
+	       v->y -= snapper;
+#else
+	       v->x = ((int) (v->x * 16.0f)) * (1.0f / 16.0f);
+	       v->y = ((int) (v->y * 16.0f)) * (1.0f / 16.0f);
+#endif
+	    }
          } else {
             /* clipped */
             v->oow = 1.0;
          }
-
-	 if (IND & SETUP_SNAP) {
-#if defined(USE_IEEE)
-	    const float snapper = (3L << 18);
-	    v->x += snapper;
-	    v->x -= snapper;
-	    v->y += snapper;
-	    v->y -= snapper;
-#else
-	    v->x = ((int) (v->x * 16.0f)) * (1.0f / 16.0f);
-	    v->y = ((int) (v->y * 16.0f)) * (1.0f / 16.0f);
-#endif
-	 }
 
 	 proj =  (GLfloat (*)[4])((GLubyte *)proj +  proj_stride);
       }
