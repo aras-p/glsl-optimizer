@@ -1,10 +1,10 @@
-/* $Id: colormac.h,v 1.6 2001/01/03 15:59:30 brianp Exp $ */
+/* $Id: colormac.h,v 1.7 2001/03/07 03:20:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -63,8 +63,8 @@
 
 #elif CHAN_BITS == 16
 
-#define BYTE_TO_CHAN(b)   ((b) < 0 ? 0 : (GLchan) ((b) * 516))
-#define UBYTE_TO_CHAN(b)  ((GLchan) (((b) << 8) | (b)))
+#define BYTE_TO_CHAN(b)   ((b) < 0 ? 0 : (((GLchan) (b)) * 516))
+#define UBYTE_TO_CHAN(b)  ((((GLchan) (b)) << 8) | ((GLchan) (b)))
 #define SHORT_TO_CHAN(s)  ((s) < 0 ? 0 : (GLchan) (s))
 #define USHORT_TO_CHAN(s) (s)
 #define INT_TO_CHAN(i)    ((i) < 0 ? 0 : (GLchan) ((i) >> 15))
