@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.61 2001/06/26 01:33:15 brianp Exp $
+$Id: VERSIONS,v 1.62 2001/07/14 16:30:56 brianp Exp $
 
 
 Mesa Version History
@@ -874,3 +874,6 @@ Mesa Version History
 	- GL_IBM_rasterpos_clip extension
     Bug fixes:
 	- GLX_PBUFFER_WIDTH/HEIGHT were missing from glx.h
+	- GL_COLOR_MATRIX changes weren't recognized by teximage functions
+	- glCopyPixels with scale and bias was broken
+	- glRasterPos with lighting could segfault
