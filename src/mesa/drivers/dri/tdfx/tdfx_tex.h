@@ -55,13 +55,7 @@ tdfxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj);
 
 
 extern void
-tdfxDDDeleteTexture(GLcontext * ctx, struct gl_texture_object *tObj);
-
-extern GLboolean
-tdfxDDIsTextureResident(GLcontext *ctx, struct gl_texture_object *tObj);
-
-extern void
-tdfxDDTexturePalette(GLcontext * ctx, struct gl_texture_object *tObj);
+tdfxTexturePalette(GLcontext * ctx, struct gl_texture_object *tObj);
 
 #if 000 /* DEAD? */
 extern void
