@@ -128,7 +128,7 @@ static void Animate(void)
 		    glColor3fv(facet->color);
 		} else {
 		    thisColor = facet->color;
-		    glMaterialfv(GL_FRONT_AND_BACK, GL_COLOR_INDEXES, 
+		    glMaterialfv(GL_FRONT_AND_BACK, GL_COLOR_INDEXES,
 				 facet->color);
 		}
 	    } else {
@@ -182,7 +182,7 @@ static void Animate(void)
     }
 }
 
-static void SetColorMap(void) 
+static void SetColorMap(void)
 {
     static float green[3] = {0.2, 1.0, 0.2};
     static float red[3] = {1.0, 0.2, 0.2};
@@ -360,7 +360,7 @@ static void InitMaterials(void)
     glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-    
+
     glMaterialfv(GL_FRONT, GL_SHININESS, front_mat_shininess);
     glMaterialfv(GL_FRONT, GL_SPECULAR, front_mat_specular);
     glMaterialfv(GL_FRONT, GL_DIFFUSE, front_mat_diffuse);
@@ -394,7 +394,7 @@ static void Init(void)
     glClearColor(0.0, 0.0, 0.0, 0.0);
 
     glShadeModel(GL_FLAT);
-    
+
     glFrontFace(GL_CW);
 
     glEnable(GL_DEPTH_TEST);
@@ -515,7 +515,7 @@ static GLenum Args(int argc, char **argv)
     GLint i;
 
     rgb = GL_TRUE;
-    doubleBuffer = GL_FALSE;
+    doubleBuffer = GL_TRUE;
     frames = 10;
     widthX = 10;
     widthY = 10;

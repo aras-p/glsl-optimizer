@@ -123,7 +123,7 @@ static void Draw(void)
     } else {
 	glDisable(GL_LINE_STIPPLE);
     }
-    
+
     if (mode2) {
 	ci = CI_OFFSET;
 	glEnable(GL_LINE_SMOOTH);
@@ -170,7 +170,7 @@ static GLenum Args(int argc, char **argv)
     GLint i;
 
     rgb = GL_TRUE;
-    doubleBuffer = GL_FALSE;
+    doubleBuffer = GL_TRUE;
 
     for (i = 1; i < argc; i++) {
 	if (strcmp(argv[i], "-ci") == 0) {

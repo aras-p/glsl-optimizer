@@ -41,55 +41,55 @@ GLint cubeList = 1;
 float scp[18][3] = {
     {
 	1.000000, 0.000000, 0.000000
-    },	
+    },
     {
 	1.000000, 0.000000, 5.000000
     },
     {
 	0.707107, 0.707107, 0.000000
-    },	
+    },
     {
 	0.707107, 0.707107, 5.000000
     },
     {
 	0.000000, 1.000000, 0.000000
-    },	
+    },
     {
 	0.000000, 1.000000, 5.000000
     },
     {
 	-0.707107, 0.707107, 0.000000
-    },	
+    },
     {
 	-0.707107, 0.707107, 5.000000
     },
     {
 	-1.000000, 0.000000, 0.000000
-    },	
+    },
     {
 	-1.000000, 0.000000, 5.000000
     },
     {
 	-0.707107, -0.707107, 0.000000
-    },	
+    },
     {
 	-0.707107, -0.707107, 5.000000
     },
     {
 	0.000000, -1.000000, 0.000000
-    },	
+    },
     {
 	0.000000, -1.000000, 5.000000
     },
     {
 	0.707107, -0.707107, 0.000000
-    },	
+    },
     {
 	0.707107, -0.707107, 5.000000
     },
     {
 	1.000000, 0.000000, 0.000000
-    },	
+    },
     {
 	1.000000, 0.000000, 5.000000
     },
@@ -136,7 +136,7 @@ static void Init(void)
     static float back_mat_diffuse[] = {1.0, 0.0, 0.0, 1.0};
     static float lmodel_ambient[] = {0.0, 0.0, 0.0, 1.0};
     static float fog_color[] = {0.8, 0.8, 0.8, 1.0};
-    
+
     glFrontFace(GL_CW);
 
     glEnable(GL_DEPTH_TEST);
@@ -148,7 +148,7 @@ static void Init(void)
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-    
+
     glMaterialfv(GL_FRONT, GL_SHININESS, front_mat_shininess);
     glMaterialfv(GL_FRONT, GL_SPECULAR, front_mat_specular);
     glMaterialfv(GL_FRONT, GL_DIFFUSE, front_mat_diffuse);
@@ -258,7 +258,7 @@ static GLenum Args(int argc, char **argv)
     GLint i;
 
     rgb = GL_TRUE;
-    doubleBuffer = GL_FALSE;
+    doubleBuffer = GL_TRUE;
 
     for (i = 1; i < argc; i++) {
 	if (strcmp(argv[i], "-ci") == 0) {

@@ -281,7 +281,7 @@ static GLenum Args(int argc, char **argv)
 {
     GLint i;
 
-    doubleBuffer = GL_FALSE;
+    doubleBuffer = GL_TRUE;
 
     for (i = 1; i < argc; i++) {
 	if (strcmp(argv[i], "-sb") == 0) {

@@ -26,7 +26,7 @@
  * Nov 20, 1995 use stdlib's rand()/srand() instead of random()/srand48(), etc.
  */
 
-/* 
+/*
  * Modified by Li Wei(liwei@aiar.xjtu.edu.cn) to be able to run in Windows
  * 6/13
  *
@@ -83,7 +83,7 @@ void FillTorus(float rc, int numc, float rt, int numt)
 
     pi = 3.14159265358979323846;
     twopi = 2 * pi;
- 
+
     for (i = 0; i < numc; i++) {
 	glBegin(GL_QUAD_STRIP);
         for (j = 0; j <= numt; j++) {
@@ -136,7 +136,7 @@ void DrawScene(void)
     }
 
     glPushMatrix();
-    
+
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     gluLookAt(0,0,10, 0,0,0, 0,1,0);
 
@@ -252,7 +252,7 @@ void Init(void)
     dests[GREENRING][1] = bottom_y;
     dests[GREENRING][2] = bottom_z;
 
-    base = 2.0; 
+    base = 2.0;
     height = 2.0;
     theTorus = glGenLists(1);
     glNewList(theTorus, GL_COMPILE);
@@ -321,7 +321,7 @@ GLenum Args(int argc, char **argv)
     GLint i;
 
     rgb = GL_TRUE;
-    doubleBuffer = GL_FALSE;
+    doubleBuffer = GL_TRUE;
 
     for (i = 1; i < argc; i++) {
 	if (strcmp(argv[i], "-ci") == 0) {
