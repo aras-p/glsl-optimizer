@@ -107,6 +107,25 @@ static __inline__ uint32_t cmdcpdelay(unsigned short count)
 	return cmd.u;
 }
 
+static __inline__ uint32_t cmdwait(unsigned char flags)
+{
+	drm_r300_cmd_header_t cmd;
+
+	cmd.wait.cmd_type = R300_CMD_WAIT;
+	cmd.wait.flags = flags;
+
+	return cmd.u;
+}
+
+static __inline__ uint32_t cmdpacify(void)
+{
+	drm_r300_cmd_header_t cmd;
+
+	cmd.header.cmd_type = R300_CMD_END3D;
+
+	return cmd.u;
+}
+
 /* Prepare to write a register value to register at address reg.
    If num_extra > 0 then the following extra values are written
    to registers with address +4, +8 and so on.. */
