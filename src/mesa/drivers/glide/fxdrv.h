@@ -1,26 +1,47 @@
-/* -*- mode: C; tab-width:8;  -*-
-
-             fxdrv.h - 3Dfx VooDoo driver types
-*/
+/* -*- mode: C; tab-width:8; c-basic-offset:2 -*- */
 
 /*
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Library General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * Mesa 3-D graphics library
+ * Version:  3.1
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Library General Public License for more details.
+ * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  *
- * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * See the file fxapi.c for more informations about authors
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *
+ * Original Mesa / 3Dfx device driver (C) 1999 David Bucciarelli, by the
+ * terms stated above.
+ *
+ * Thank you for your contribution, David!
+ *
+ * Please make note of the above copyright/license statement.  If you
+ * contributed code or bug fixes to this code under the previous (GNU
+ * Library) license and object to the new license, your code will be
+ * removed at your request.  Please see the Mesa docs/COPYRIGHT file
+ * for more information.
+ *
+ * Additional Mesa/3Dfx driver developers:
+ *   Daryll Strauss <daryll@precisioninsight.com>
+ *   Keith Whitwell <keith@precisioninsight.com>
+ *
+ * See fxapi.h for more revision/author details.
  */
+
 
 #ifndef FXDRV_H
 #define FXDRV_H
@@ -54,14 +75,18 @@
 #include "clip.h"
 #include "vbrender.h"
 
+#ifdef XF86DRI
+typedef struct tfxMesaContext *fxMesaContext;
+#else
 #include "GL/fxmesa.h"
+#endif
 #include "fxglidew.h"
 /* use gl/gl.h GLAPI/GLAPIENTRY/GLCALLBACK in place of WINGDIAPI/APIENTRY/CALLBACK, */
 /* these are defined in mesa gl/gl.h - tjump@spgs.com */
 
 
 
-#if 0
+#if defined(MESA_DEBUG) && 0
 extern void fx_sanity_triangle( GrVertex *, GrVertex *, GrVertex * );
 #define grDrawTriangle fx_sanity_triangle
 #endif
@@ -140,17 +165,17 @@ typedef struct {
 #endif
 #endif
 
-#define FX_VB_COLOR(fxm, color)			\
-do {						\
-  if (sizeof(GLint) == 4*sizeof(GLubyte)) {	\
-     if (fxm->constColor != *(GLuint*)color) {	\
-	fxm->constColor = *(GLuint*)color;	\
-	grConstantColorValue(FXCOLOR4(color));	\
-     }						\
-  } else {					\
-     grConstantColorValue(FXCOLOR4(color));	\
-  }						\
-} while (0)
+#define FX_VB_COLOR(fxm, color)				\
+  do {							\
+    if (sizeof(GLint) == 4*sizeof(GLubyte)) {		\
+      if (fxm->constColor != *(GLuint*)color) {		\
+	fxm->constColor = *(GLuint*)color;		\
+	FX_grConstantColorValue(FXCOLOR4(color));	\
+      }							\
+    } else {						\
+      FX_grConstantColorValue(FXCOLOR4(color));		\
+    }							\
+  } while (0)
 
 #define GOURAUD(x) {					\
   GLubyte *col = VB->ColorPtr->data[(x)];		\
@@ -390,7 +415,20 @@ struct tfxMesaVertexBuffer {
 #include "tdfx_init.h"
 #else
 #define DRI_FX_CONTEXT
+#define BEGIN_BOARD_LOCK()
+#define END_BOARD_LOCK()
+#define BEGIN_CLIP_LOOP()
+#define END_CLIP_LOOP()
 #endif
+
+
+/* These lookup table are used to extract RGB values in [0,255] from
+ * 16-bit pixel values.
+ */
+extern GLubyte FX_PixelToR[0x10000];
+extern GLubyte FX_PixelToG[0x10000];
+extern GLubyte FX_PixelToB[0x10000];
+
 
 struct tfxMesaContext {
   GuTexPalette glbPalette;
@@ -411,7 +449,6 @@ struct tfxMesaContext {
 
   tfxUnitsState unitsState;
   tfxUnitsState restoreUnitsState; /* saved during multipass */
-
 
   GLuint tmu_source[FX_NUM_TMU];
   GLuint tex_dest[MAX_TEXTURE_UNITS];
@@ -477,8 +514,21 @@ struct tfxMesaContext {
   
   FX_GrContext_t glideContext;
 
-  GLfloat wscale;
-
+  int x_offset;
+  int y_offset;
+  int y_delta;
+  int screen_width;
+  int screen_height;
+  int initDone;
+  int clipMinX;
+  int clipMaxX;
+  int clipMinY;
+  int clipMaxY;
+  int needClip;
+  int numClipRects;
+#ifdef FX86DRI
+  XF86DRIClipRectPtr pClipRects;
+#endif
   DRI_FX_CONTEXT
 
 };
@@ -621,5 +671,17 @@ extern void fxPrintHintState( const char *msg, GLuint state );
 extern void fxDDDoRenderVB( struct vertex_buffer *VB );
 
 extern int fxDDInitFxMesaContext( fxMesaContext fxMesa );
+
+
+extern void fxCloseHardware(void);
+extern tfxTMFreeNode *fxTMNewTMFreeNode(FxU32 start, FxU32 end);
+extern void fxSetScissorValues(GLcontext *ctx);
+extern void fxTMMoveInTM_NoLock(fxMesaContext fxMesa, 
+				struct gl_texture_object *tObj, 
+				GLint where);
+extern void fxSetupTexture_NoLock(GLcontext *ctx);
+extern void fxSetupTexture(GLcontext *ctx);
+
+extern void fxInitPixelTables(GLboolean bgrOrder);
 
 #endif

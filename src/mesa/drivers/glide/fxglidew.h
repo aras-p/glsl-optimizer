@@ -1,26 +1,48 @@
+/* -*- mode: C; tab-width:8; c-basic-offset:2 -*- */
+
 /*
  * Mesa 3-D graphics library
  * Version:  3.1
- * 
+ *
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *
+ * Original Mesa / 3Dfx device driver (C) 1999 David Bucciarelli, by the
+ * terms stated above.
+ *
+ * Thank you for your contribution, David!
+ *
+ * Please make note of the above copyright/license statement.  If you
+ * contributed code or bug fixes to this code under the previous (GNU
+ * Library) license and object to the new license, your code will be
+ * removed at your request.  Please see the Mesa docs/COPYRIGHT file
+ * for more information.
+ *
+ * Additional Mesa/3Dfx driver developers:
+ *   Daryll Strauss <daryll@precisioninsight.com>
+ *   Keith Whitwell <keith@precisioninsight.com>
+ *
+ * See fxapi.h for more revision/author details.
  */
+
+
 #ifndef __FX_GLIDE_WARPER__
 #define __FX_GLIDE_WARPER__
 
@@ -54,6 +76,7 @@
 /*
  * Genral warper functions for Glide2/Glide3:
  */ 
+extern FxI32 grGetInteger(FxU32 pname);
 extern FxI32 FX_grGetInteger(FxU32 pname);
 
 /*
@@ -233,29 +256,97 @@ typedef struct
  * Glide2 functions for Glide3
  */
 #if defined(FX_GLIDE3)
-#define FX_grTexDownloadTable(TMU,type,data)		grTexDownloadTable(type,data)
+#define FX_grTexDownloadTable(TMU,type,data)	\
+  do { 						\
+    BEGIN_BOARD_LOCK(); 			\
+    grTexDownloadTable(type,data); 		\
+    END_BOARD_LOCK(); 				\
+  } while (0);
+#define FX_grTexDownloadTable_NoLock(TMU,type,data) \
+  grTexDownloadTable(type, data)
 #else
-#define FX_grTexDownloadTable(TMU,type,data) 		grTexDownloadTable(TMU,type,data)
+#define FX_grTexDownloadTable(TMU,type,data) 	\
+  do {						\
+    BEGIN_BOARD_LOCK();				\
+    grTexDownloadTable(TMU,type,data);		\
+    END_BOARD_LOCK();				\
+  } while (0);
+#define FX_grTexDownloadTable_NoLock grTexDownloadTable
 #endif
 
 /*
  * Flush
  */
 #if defined(FX_GLIDE3)
-#define FX_grFlush		grFlush
+#define FX_grFlush()	\
+  do {			\
+    BEGIN_BOARD_LOCK(); \
+    grFlush();		\
+    END_BOARD_LOCK();	\
+  } while (0)
 #else
-#define FX_grFlush		grSstIdle
+#define FX_grFlush()	\
+  do {			\
+    BEGIN_BOARD_LOCK(); \
+    grSstIdle();	\
+    END_BOARD_LOCK();	\
+  } while (0)
 #endif	
+
+#define FX_grFinish()	\
+  do {			\
+    BEGIN_BOARD_LOCK(); \
+    grFinish();		\
+    END_BOARD_LOCK();	\
+  } while (0)
+
 /*
  * Write region: ToDo possible exploit the PixelPipe parameter.
  */
 #if defined(FX_GLIDE3)
-#define FX_grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data)	\
-	grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_format,src_width,src_height,FXFALSE,src_stride,src_data)
+#define FX_grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data)		\
+  do {				\
+    BEGIN_BOARD_LOCK();		\
+    grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_format,src_width,src_height,FXFALSE,src_stride,src_data);	\
+    END_BOARD_LOCK();		\
+  } while(0)
 #else
-#define FX_grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data)	\
-	grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data)
+#define FX_grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data)		\
+  do {				\
+    BEGIN_BOARD_LOCK();		\
+    grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data);		\
+    END_BOARD_LOCK();		\
+  } while (0)
 #endif
+
+/*
+ * Read region
+ */
+#define FX_grLfbReadRegion(src_buffer,src_x,src_y,src_width,src_height,dst_stride,dst_data)			\
+  do {				\
+    BEGIN_BOARD_LOCK();		\
+    grLfbReadRegion(src_buffer,src_x,src_y,src_width,src_height,dst_stride,dst_data);				\
+    END_BOARD_LOCK();		\
+  } while (0);
+
+/*
+ * Draw triangle
+ */
+#define FX_grDrawTriangle(a,b,c)	\
+  do {					\
+    /* int big=0; */				\
+    BEGIN_CLIP_LOOP();			\
+    /* if (((GrVertex*)a)->x>2000 || ((GrVertex*)a)->x<-2000 || \
+        ((GrVertex*)a)->y>2000 || ((GrVertex*)a)->y<-2000 || \
+        ((GrVertex*)a)->z>65000 || ((GrVertex*)a)->z<-65000) { \
+	  fprintf(stderr, "Extreme triangle (%f,%f,%f)\n", \
+	  ((GrVertex*)a)->x, ((GrVertex*)a)->y, ((GrVertex*)a)->z); \
+        big=1; \
+	} else */ \
+    grDrawTriangle(a,b,c);		\
+    END_CLIP_LOOP();			\
+  } while (0)
+
 /*
  * For Lod/LodLog2 conversion.
  */
@@ -288,12 +379,14 @@ typedef struct
 #else
 	#define FX_largeLodValue(info)		((int)(info).largeLod)
 #endif
+#define FX_largeLodValue_NoLock FX_largeLodValue
 
 #if defined(FX_GLIDE3)
 	#define FX_smallLodValue(info)		((int)(GR_LOD_256-(info).smallLodLog2))
 #else
 	#define FX_smallLodValue(info)		((int)(info).smallLod)
 #endif
+#define FX_smallLodValue_NoLock FX_smallLodValue
 
 #if defined(FX_GLIDE3)
 	#define FX_valueToLod(val)		((GrLOD_t)(GR_LOD_256-val))
@@ -304,13 +397,9 @@ typedef struct
 /*
  * ScreenWidth/Height stuff.
  */
-#if defined(FX_GLIDE3)
-	extern int FX_grSstScreenWidth();
-	extern int FX_grSstScreenHeight();
-#else
-	#define FX_grSstScreenWidth()		grSstScreenWidth()
-	#define FX_grSstScreenHeight()		grSstScreenHeight()
-#endif
+	extern int FX_grSstScreenWidth(void);
+	extern int FX_grSstScreenHeight(void);
+
 
 
 /*
@@ -319,7 +408,12 @@ typedef struct
 #if defined(FX_GLIDE3)
 	extern void FX_grGlideGetVersion(char *buf);
 #else
-	#define FX_grGlideGetVersion		grGlideGetVersion	
+	#define FX_grGlideGetVersion(b)	\
+	do {				\
+	  BEGIN_BOARD_LOCK();		\
+	  grGlideGetVersion(b);		\
+	  END_BOARD_LOCK();		\
+	} while (0)
 #endif
 /*
  * Performance statistics
@@ -327,25 +421,33 @@ typedef struct
 #if defined(FX_GLIDE3)
         extern void FX_grSstPerfStats(GrSstPerfStats_t *st);
 #else
-	#define FX_grSstPerfStats		grSstPerfStats
+	#define FX_grSstPerfStats(s)	\
+	do {				\
+	  BEGIN_BOARD_LOCK();		\
+	  grSstPerfStats(s);		\
+	  END_BOARD_LOCK();		\
+	} while (0)
 #endif
 
 /*
  * Hardware Query
  */
-#if defined(FX_GLIDE3)
        extern int FX_grSstQueryHardware(GrHwConfiguration *config);
-#else
-       #define FX_grSstQueryHardware		grSstQueryHardware		
-#endif
 
 /*
  * GrHints
  */
 #if defined(FX_GLIDE3)
+        extern void FX_grHints_NoLock(GrHint_t hintType, FxU32 hintMask);
 	extern void FX_grHints(GrHint_t hintType, FxU32 hintMask);
 #else
-	#define FX_grHints			grHints
+	#define FX_grHints(t,m)		\
+	do {				\
+	  BEGIN_BOARD_LOCK();		\
+	  grHints(t, m);		\
+	  END_BOARD_LOCK();		\
+	} while(0)
+        #define FX_grHints_NoLock grHints
 #endif
 /*
  * Antialiashed line+point drawing.
@@ -353,13 +455,23 @@ typedef struct
 #if defined(FX_GLIDE3)
 	extern void FX_grAADrawLine(GrVertex *a,GrVertex *b);
 #else
-	#define FX_grAADrawLine			grAADrawLine
+	#define FX_grAADrawLine(a,b)	\
+	do {				\
+	  BEGIN_CLIP_LOOP();		\
+	  grAADrawLine(a,b);		\
+	  END_CLIP_LOOP();		\
+	} while (0)
 #endif
 
 #if defined(FX_GLIDE3)
 	extern void FX_grAADrawPoint(GrVertex *a);
 #else
-	#define FX_grAADrawPoint		grAADrawPoint
+	#define FX_grAADrawPoint(a)	\
+	do {				\
+	  BEGIN_CLIP_LOOP();		\
+	  grAADrawPoint(a);		\
+	  END_CLIP_LOOP();		\
+	} while (0)
 #endif
 
 /*
@@ -376,7 +488,12 @@ typedef struct
 #if defined(FX_GLIDE3)
 	extern void FX_grSstControl(int par);
 #else
-	#define FX_grSstControl				grSstControl
+	#define FX_grSstControl(p)	\
+	do {				\
+	  BEGIN_BOARD_LOCK();		\
+	  grSstControl(p);		\
+	  END_BOARD_LOCK();		\
+	} while (0)
 #endif
 /*
  * grGammaCorrectionValue
@@ -384,20 +501,337 @@ typedef struct
 #if defined(FX_GLIDE3)
       extern void FX_grGammaCorrectionValue(float val);
 #else
-      #define FX_grGammaCorrectionValue			grGammaCorrectionValue
+      #define FX_grGammaCorrectionValue(v)	\
+      do {					\
+        BEGIN_BOARD_LOCK();			\
+	grGammaCorrectionValue(v)		\
+        END_BOARD_LOCK();			\
+      } while (0)
 #endif
 
-/*
- * WinOpen/Close.
- */
 #if defined(FX_GLIDE3)
-       #define FX_grSstWinOpen(hWnd,screen_resolution,refresh_rate,color_format,origin_location,nColBuffers,nAuxBuffers) \
-      		  grSstWinOpen(-1,screen_resolution,refresh_rate,color_format,origin_location,nColBuffers,nAuxBuffers)
-       #define FX_grSstWinClose		grSstWinClose
+#define FX_grSstWinClose(w)	\
+  do { 				\
+    BEGIN_BOARD_LOCK();		\
+    grSstWinClose(w);		\
+    END_BOARD_LOCK();		\
+  } while (0)
 #else
-       #define FX_grSstWinOpen		grSstWinOpen
-       #define FX_grSstWinClose(win)	grSstWinClose()
+#define FX_grSstWinClose(w)	\
+  do { 				\
+    BEGIN_BOARD_LOCK();		\
+    grSstWinClose();		\
+    END_BOARD_LOCK();		\
+  } while (0)
 #endif
 
+
+extern FX_GrContext_t FX_grSstWinOpen( FxU32                hWnd,
+                                       GrScreenResolution_t screen_resolution,
+                                       GrScreenRefresh_t    refresh_rate,
+                                       GrColorFormat_t      color_format,
+                                       GrOriginLocation_t   origin_location,
+                                       int                  nColBuffers,
+                                       int                  nAuxBuffers);
+
+
+#define FX_grDrawLine(v1, v2)	\
+  do {				\
+    BEGIN_CLIP_LOOP();		\
+    grDrawLine(v1, v2);		\
+    END_CLIP_LOOP();		\
+  } while (0)
+
+#define FX_grDrawPoint(p)	\
+  do {				\
+    BEGIN_CLIP_LOOP();		\
+    grDrawPoint(p);		\
+    END_CLIP_LOOP();		\
+  } while (0)
+
+#define FX_grDitherMode(m)	\
+  do {				\
+    BEGIN_BOARD_LOCK();		\
+    grDitherMode(m);		\
+    END_BOARD_LOCK();		\
+  } while (0)
+
+#define FX_grRenderBuffer(b)	\
+  do {				\
+    BEGIN_BOARD_LOCK();		\
+    grRenderBuffer(b);		\
+    END_BOARD_LOCK();		\
+  } while (0)
+
+#define FX_grBufferClear(c, a, d)	\
+  do {					\
+    BEGIN_CLIP_LOOP();			\
+    grBufferClear(c, a, d);		\
+    END_CLIP_LOOP();			\
+  } while (0)
+
+#define FX_grDepthMask(m)	\
+  do {				\
+    BEGIN_BOARD_LOCK();		\
+    grDepthMask(m);		\
+    END_BOARD_LOCK();		\
+  } while (0)
+
+#define FX_grColorMask(c, a)	\
+  do {				\
+    BEGIN_BOARD_LOCK();		\
+    grColorMask(c, a);		\
+    END_BOARD_LOCK();		\
+  } while (0)
+
+extern FxBool FX_grLfbLock(GrLock_t type, GrBuffer_t buffer, 
+			   GrLfbWriteMode_t writeMode, 
+			   GrOriginLocation_t origin, FxBool pixelPipeline, 
+			   GrLfbInfo_t *info );
+
+#define FX_grLfbUnlock(t, b)	\
+  do {				\
+    BEGIN_BOARD_LOCK();		\
+    grLfbUnlock(t, b);		\
+    END_BOARD_LOCK();		\
+  } while (0)
+
+#define FX_grConstantColorValue(v)	\
+  do {					\
+    BEGIN_BOARD_LOCK();			\
+    grConstantColorValue(v);		\
+    END_BOARD_LOCK();			\
+  } while (0)
+
+#define FX_grConstantColorValue_NoLock grConstantColorValue
+
+#define FX_grAADrawTriangle(a, b, c, ab, bc, ca)	\
+  do {							\
+    BEGIN_CLIP_LOOP();					\
+    grAADrawTriangle(a, b, c, ab, bc, ca);		\
+    END_CLIP_LOOP();					\
+  } while (0)
+
+#define FX_grAlphaBlendFunction(rs, rd, as, ad)	\
+  do {						\
+    BEGIN_BOARD_LOCK();				\
+    grAlphaBlendFunction(rs, rd, as, ad);	\
+    END_BOARD_LOCK();				\
+  } while (0)
+
+#define FX_grAlphaCombine(func, fact, loc, oth, inv)	\
+  do {							\
+    BEGIN_BOARD_LOCK();					\
+    grAlphaCombine(func, fact, loc, oth, inv);		\
+    END_BOARD_LOCK();					\
+  } while (0)
+
+#define FX_grAlphaCombine_NoLock grAlphaCombine
+
+#define FX_grAlphaTestFunction(f)	\
+  do {					\
+    BEGIN_BOARD_LOCK();			\
+    grAlphaTestFunction(f);		\
+    END_BOARD_LOCK();			\
+  } while (0)
+
+#define FX_grAlphaTestReferenceValue(v)	\
+  do {					\
+    BEGIN_BOARD_LOCK();			\
+    grAlphaTestReferenceValue(v);	\
+    END_BOARD_LOCK();			\
+  } while (0)
+
+#define FX_grClipWindow(minx, miny, maxx, maxy)	\
+  do {						\
+    BEGIN_BOARD_LOCK();				\
+    grClipWindow(minx, miny, maxx, maxy);	\
+    END_BOARD_LOCK();				\
+  } while (0)
+
+#define FX_grClipWindow_NoLock grClipWindow
+
+#define FX_grColorCombine(func, fact, loc, oth, inv)	\
+  do {							\
+    BEGIN_BOARD_LOCK();					\
+    grColorCombine(func, fact, loc, oth, inv);		\
+    END_BOARD_LOCK();					\
+  } while (0)
+
+#define FX_grColorCombine_NoLock grColorCombine
+
+#define FX_grCullMode(m)	\
+  do {				\
+    BEGIN_BOARD_LOCK();		\
+    grCullMode(m);		\
+    END_BOARD_LOCK();		\
+  } while (0)
+
+#define FX_grDepthBiasLevel(lev)	\
+  do {					\
+    BEGIN_BOARD_LOCK();			\
+    grDepthBiasLevel(lev);		\
+    END_BOARD_LOCK();			\
+  } while (0)
+
+#define FX_grDepthBufferFunction(func)	\
+  do {					\
+    BEGIN_BOARD_LOCK();			\
+    grDepthBufferFunction(func);	\
+    END_BOARD_LOCK();			\
+  } while (0)
+
+#define FX_grFogColorValue(c)		\
+  do {					\
+    BEGIN_BOARD_LOCK();			\
+    grFogColorValue(c);			\
+    END_BOARD_LOCK();			\
+  } while (0)
+
+#define FX_grFogMode(m)	\
+  do {			\
+    BEGIN_BOARD_LOCK(); \
+    grFogMode(m);	\
+    END_BOARD_LOCK();	\
+  } while (0)
+
+#define FX_grFogTable(t)	\
+  do {				\
+    BEGIN_BOARD_LOCK();		\
+    grFogTable(t);		\
+    END_BOARD_LOCK();		\
+  } while (0)
+
+#define FX_grTexClampMode(t, sc, tc)	\
+  do {					\
+    BEGIN_BOARD_LOCK();			\
+    grTexClampMode(t, sc, tc);		\
+    END_BOARD_LOCK();			\
+  } while (0)
+
+#define FX_grTexClampMode_NoLock grTexClampMode
+
+#define FX_grTexCombine(t, rfunc, rfact, afunc, afact, rinv, ainv)	\
+  do {									\
+    BEGIN_BOARD_LOCK();							\
+    grTexCombine(t, rfunc, rfact, afunc, afact, rinv, ainv);		\
+    END_BOARD_LOCK();							\
+  } while (0)
+
+#define FX_grTexCombine_NoLock grTexCombine
+
+#define FX_grTexDownloadMipMapLevel(t, sa, tlod, llod, ar, f, eo, d)	\
+  do {									\
+    BEGIN_BOARD_LOCK();							\
+    grTexDownloadMipMapLevel(t, sa, tlod, llod, ar, f, eo, d);		\
+    END_BOARD_LOCK();							\
+  } while (0)
+
+#define FX_grTexDownloadMipMapLevel_NoLock grTexDownloadMipMapLevel
+
+#define FX_grTexDownloadMipMapLevelPartial(t, sa, tlod, llod, ar, f, eo, d, s, e);	\
+  do {									    \
+    BEGIN_BOARD_LOCK();							    \
+    grTexDownloadMipMapLevelPartial(t, sa, tlod, llod, ar, f, eo, d, s, e); \
+    END_BOARD_LOCK();							    \
+  } while (0)
+
+#define FX_grTexFilterMode(t, minf, magf)	\
+  do {						\
+    BEGIN_BOARD_LOCK();				\
+    grTexFilterMode(t, minf, magf);		\
+    END_BOARD_LOCK();				\
+  } while (0)
+
+#define FX_grTexFilterMode_NoLock grTexFilterMode
+
+extern FxU32 FX_grTexMinAddress(GrChipID_t tmu);
+extern FxU32 FX_grTexMaxAddress(GrChipID_t tmu);
+
+#define FX_grTexMipMapMode(t, m, lod)	\
+  do {					\
+    BEGIN_BOARD_LOCK();			\
+    grTexMipMapMode(t, m, lod);		\
+    END_BOARD_LOCK();			\
+  } while (0)
+
+#define FX_grTexMipMapMode_NoLock grTexMipMapMode
+
+#define FX_grTexSource(t, sa, eo, i)	\
+  do {					\
+    BEGIN_BOARD_LOCK();			\
+    grTexSource(t, sa, eo, i);		\
+    END_BOARD_LOCK();			\
+  } while (0)
+
+#define FX_grTexSource_NoLock grTexSource
+
+extern FxU32 FX_grTexTextureMemRequired(FxU32 evenOdd, GrTexInfo *info);
+#define FX_grTexTextureMemRequired_NoLock grTexTextureMemRequired
+
+#define FX_grGlideGetState(s)	\
+  do {				\
+    BEGIN_BOARD_LOCK();		\
+    grGlideGetState(s);		\
+    END_BOARD_LOCK();		\
+  } while (0)
+
+#define FX_grDRIBufferSwap(i)	\
+  do {				\
+    BEGIN_BOARD_LOCK();		\
+    grDRIBufferSwap(i);		\
+    END_BOARD_LOCK();		\
+  } while (0)
+
+#define FX_grSstSelect(b)	\
+  do {				\
+    BEGIN_BOARD_LOCK();		\
+    grSstSelect(b);		\
+    END_BOARD_LOCK();		\
+  } while (0)
+
+#define FX_grSstSelect_NoLock grSstSelect
+
+#define FX_grGlideSetState(s)	\
+  do {				\
+    BEGIN_BOARD_LOCK();		\
+    grGlideSetState(s);		\
+    END_BOARD_LOCK();		\
+  } while (0)
+
+#define FX_grDepthBufferMode(m)	\
+  do {				\
+    BEGIN_BOARD_LOCK();		\
+    grDepthBufferMode(m);	\
+    END_BOARD_LOCK();		\
+  } while (0)
+
+#define FX_grLfbWriteColorFormat(f)	\
+  do {					\
+    BEGIN_BOARD_LOCK();			\
+    grLfbWriteColorFormat(f);		\
+    END_BOARD_LOCK();			\
+  } while (0)
+
+#define FX_grDrawVertexArray(m, c, p)	\
+  do {					\
+    BEGIN_CLIP_LOOP();			\
+    grDrawVertexArray(m, c, p);		\
+    END_CLIP_LOOP();			\
+  } while (0)
+
+#define FX_grGlideShutdown()		\
+  do {					\
+    BEGIN_CLIP_LOOP();			\
+    grGlideShutdown();			\
+    END_CLIP_LOOP();			\
+  } while (0)
+
+#define FX_grGlideInit_NoLock grGlideInit
+#define FX_grSstWinOpen_NoLock grSstWinOpen
+
+extern int FX_getFogTableSize(void);
+extern int FX_getGrStateSize(void);
 
 #endif /* __FX_GLIDE_WARPER__ */
+

@@ -1,26 +1,50 @@
-/* -*- mode: C; tab-width:8;  -*-
-
-             fxddtex.c - 3Dfx VooDoo Texture mapping functions
-*/
+/* -*- mode: C; tab-width:8; c-basic-offset:2 -*- */
 
 /*
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Library General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * Mesa 3-D graphics library
+ * Version:  3.1
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Library General Public License for more details.
+ * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  *
- * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * See the file fxapi.c for more informations about authors
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *
+ * Original Mesa / 3Dfx device driver (C) 1999 David Bucciarelli, by the
+ * terms stated above.
+ *
+ * Thank you for your contribution, David!
+ *
+ * Please make note of the above copyright/license statement.  If you
+ * contributed code or bug fixes to this code under the previous (GNU
+ * Library) license and object to the new license, your code will be
+ * removed at your request.  Please see the Mesa docs/COPYRIGHT file
+ * for more information.
+ *
+ * Additional Mesa/3Dfx driver developers:
+ *   Daryll Strauss <daryll@precisioninsight.com>
+ *   Keith Whitwell <keith@precisioninsight.com>
+ *
+ * See fxapi.h for more revision/author details.
  */
+
+
+/* fxddtex.c - 3Dfx VooDoo Texture mapping functions */
+
 
 #ifdef HAVE_CONFIG_H
 #include "conf.h"
@@ -219,7 +243,6 @@ void fxDDTexParam(GLcontext *ctx, GLenum target, struct gl_texture_object *tObj,
       ti->sClamp=GR_TEXTURECLAMP_WRAP;
       break;
     default:
-       fprintf(stderr, "BAD CLAMP\n");
       break;
     }
     fxMesa->new_state|=FX_NEW_TEXTURING;

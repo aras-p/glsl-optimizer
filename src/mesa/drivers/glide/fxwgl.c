@@ -1,25 +1,53 @@
+/* -*- mode: C; tab-width:8; c-basic-offset:2 -*- */
+
+/*
+ * Mesa 3-D graphics library
+ * Version:  3.1
+ *
+ * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *
+ * Original Mesa / 3Dfx device driver (C) 1999 David Bucciarelli, by the
+ * terms stated above.
+ *
+ * Thank you for your contribution, David!
+ *
+ * Please make note of the above copyright/license statement.  If you
+ * contributed code or bug fixes to this code under the previous (GNU
+ * Library) license and object to the new license, your code will be
+ * removed at your request.  Please see the Mesa docs/COPYRIGHT file
+ * for more information.
+ *
+ * Additional Mesa/3Dfx driver developers:
+ *   Daryll Strauss <daryll@precisioninsight.com>
+ *   Keith Whitwell <keith@precisioninsight.com>
+ *
+ * See fxapi.h for more revision/author details.
+ */
+
+
+
 /* fxwgl.c - Microsoft wgl functions emulation for
  *           3Dfx VooDoo/Mesa interface
  */
 
-/*
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Library General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Library General Public License for more details.
- *
- * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- * See the file fxapi.c for more informations about authors
- *
- */
 
 #ifdef __WIN32__
 
@@ -243,11 +271,11 @@ LONG GLAPIENTRY __wglMonitor(HWND hwnd,UINT message,UINT wParam,LONG lParam)
         static int moving = 0;
         if (!moving) {
           if(fxQueryHardware()!=GR_SSTTYPE_VOODOO) {
-            if(!grSstControl(GR_CONTROL_RESIZE)) {
+            if(!FX_grSstControl(GR_CONTROL_RESIZE)) {
               moving = 1;
               SetWindowPos(hwnd, 0, 0, 0, 300, 300, SWP_NOMOVE|SWP_NOZORDER);
               moving = 0;
-              if(!grSstControl(GR_CONTROL_RESIZE)) {
+              if(!FX_grSstControl(GR_CONTROL_RESIZE)) {
                 /*MessageBox(0,_T("Error changing windowsize"),_T("fxMESA"),MB_OK);*/
                 PostMessage(hWND,WM_CLOSE,0,0);
               }
@@ -255,7 +283,7 @@ LONG GLAPIENTRY __wglMonitor(HWND hwnd,UINT message,UINT wParam,LONG lParam)
           }
 
           /* Do the clipping in the glide library */
-          grClipWindow(0,0,grSstScreenWidth(),grSstScreenHeight());
+          FX_grClipWindow(0,0,FX_grSstScreenWidth(),FX_grSstScreenHeight());
           /* And let the new size set in the context */
           fxMesaUpdateScreenSize(ctx);
         }
@@ -269,9 +297,9 @@ LONG GLAPIENTRY __wglMonitor(HWND hwnd,UINT message,UINT wParam,LONG lParam)
         BOOL fMinimized = (BOOL) HIWORD(wParam);
 
         if((fActive == WA_INACTIVE) || fMinimized)
-          grSstControl(GR_CONTROL_DEACTIVATE);
+          FX_grSstControl(GR_CONTROL_DEACTIVATE);
         else
-          grSstControl(GR_CONTROL_ACTIVATE);
+          FX_grSstControl(GR_CONTROL_ACTIVATE);
       }
       break;
     case WM_SHOWWINDOW:
@@ -280,10 +308,10 @@ LONG GLAPIENTRY __wglMonitor(HWND hwnd,UINT message,UINT wParam,LONG lParam)
       if(gdiWindowHackEna && (VK_RETURN == wParam)) {
         if(gdiWindowHack) {
           gdiWindowHack = GL_FALSE;
-          grSstControl(GR_CONTROL_ACTIVATE);
+          FX_grSstControl(GR_CONTROL_ACTIVATE);
         } else {
           gdiWindowHack = GL_TRUE;
-          grSstControl(GR_CONTROL_DEACTIVATE);
+          FX_grSstControl(GR_CONTROL_DEACTIVATE);
         }
       }
       break;
@@ -382,7 +410,7 @@ HGLRC GLAPIENTRY wglCreateContext(HDC hdc)
         gdiWindowHack = GL_FALSE;
       else {
         gdiWindowHack = GL_TRUE;
-        grSstControl(GR_CONTROL_DEACTIVATE);
+        FX_grSstControl(GR_CONTROL_DEACTIVATE);
       }
     }
   } else {
@@ -779,7 +807,7 @@ BOOL GLAPIENTRY wglSwapBuffers(HDC hdc)
     HDC hdcDIBSection  = CreateCompatibleDC(hdcScreen);
     HBITMAP holdBitmap = (HBITMAP) SelectObject(hdcDIBSection, dibHBM);
 
-    grLfbReadRegion(GR_BUFFER_FRONTBUFFER, 0, 0,
+    FX_grLfbReadRegion(GR_BUFFER_FRONTBUFFER, 0, 0,
                     width, height,
                     width * 2,
                     dibSurfacePtr);

@@ -1,26 +1,50 @@
-/* -*- mode: C; tab-width:8;  -*-
-
-             fxtexman.c - 3Dfx VooDoo texture memory functions
-*/
+/* -*- mode: C; tab-width:8; c-basic-offset:2 -*- */
 
 /*
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Library General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * Mesa 3-D graphics library
+ * Version:  3.1
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Library General Public License for more details.
+ * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  *
- * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * See the file fxapi.c for more informations about authors
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *
+ * Original Mesa / 3Dfx device driver (C) 1999 David Bucciarelli, by the
+ * terms stated above.
+ *
+ * Thank you for your contribution, David!
+ *
+ * Please make note of the above copyright/license statement.  If you
+ * contributed code or bug fixes to this code under the previous (GNU
+ * Library) license and object to the new license, your code will be
+ * removed at your request.  Please see the Mesa docs/COPYRIGHT file
+ * for more information.
+ *
+ * Additional Mesa/3Dfx driver developers:
+ *   Daryll Strauss <daryll@precisioninsight.com>
+ *   Keith Whitwell <keith@precisioninsight.com>
+ *
+ * See fxapi.h for more revision/author details.
  */
+
+
+/* fxtexman.c - 3Dfx VooDoo texture memory functions */
+
 
 #ifdef HAVE_CONFIG_H
 #include "conf.h"
@@ -47,13 +71,15 @@ static tfxTMFreeNode *fxTMNewTMFreeNode(FxU32 start, FxU32 end)
   return tmn;
 }
 
+/* Notice this uses grTex{Min,Max}Address directly with FX_ because it
+   is only used during initialization where the lock is already held. */
 static void fxTMUInit(fxMesaContext fxMesa, int tmu)
 {
   tfxTMFreeNode *tmn,*tmntmp;
   FxU32 start,end,blockstart,blockend;
 
-  start=grTexMinAddress(tmu);
-  end=grTexMaxAddress(tmu);
+  start=FX_grTexMinAddress(tmu);
+  end=FX_grTexMaxAddress(tmu);
 
   if(fxMesa->verbose) {
     fprintf(stderr,"%s configuration:",(tmu==FX_TMU0) ? "TMU0" : "TMU1");
@@ -224,7 +250,7 @@ static tfxTMAllocNode *fxTMGetTMBlock(fxMesaContext fxMesa, struct gl_texture_ob
   }
 }
 
-void fxTMMoveInTM(fxMesaContext fxMesa, struct gl_texture_object *tObj, GLint where)
+void fxTMMoveInTM_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj, GLint where)
 {
   tfxTexInfo *ti=(tfxTexInfo *)tObj->DriverData;
   int i,l;
@@ -254,36 +280,50 @@ void fxTMMoveInTM(fxMesaContext fxMesa, struct gl_texture_object *tObj, GLint wh
   switch(where) {
   case FX_TMU0:
   case FX_TMU1:
-    texmemsize=(int)grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH,&(ti->info));
+    texmemsize=(int)FX_grTexTextureMemRequired_NoLock(GR_MIPMAPLEVELMASK_BOTH,
+						      &(ti->info));
     ti->tmi.tm[where]=fxTMGetTMBlock(fxMesa,tObj,where,texmemsize);
     fxMesa->stats.memTexUpload+=texmemsize;
 
     for(i=FX_largeLodValue(ti->info),l=ti->minLevel;i<=FX_smallLodValue(ti->info);i++,l++)
-      grTexDownloadMipMapLevel(where,
-			       ti->tmi.tm[where]->startAddress,FX_valueToLod(i),
-			       FX_largeLodLog2(ti->info),FX_aspectRatioLog2(ti->info),
-			       ti->info.format,GR_MIPMAPLEVELMASK_BOTH,
-			       ti->tmi.mipmapLevel[l].data);
+      FX_grTexDownloadMipMapLevel_NoLock(where,
+					 ti->tmi.tm[where]->startAddress,
+					 FX_valueToLod(i),
+					 FX_largeLodLog2(ti->info),
+					 FX_aspectRatioLog2(ti->info),
+					 ti->info.format,
+					 GR_MIPMAPLEVELMASK_BOTH,
+					 ti->tmi.mipmapLevel[l].data);
     break;
   case FX_TMU_SPLIT: /* TO DO: alternate even/odd TMU0/TMU1 */
-    texmemsize=(int)grTexTextureMemRequired(GR_MIPMAPLEVELMASK_ODD,&(ti->info));
+    texmemsize=(int)FX_grTexTextureMemRequired_NoLock(GR_MIPMAPLEVELMASK_ODD,
+						      &(ti->info));
     ti->tmi.tm[FX_TMU0]=fxTMGetTMBlock(fxMesa,tObj,FX_TMU0,texmemsize);
     fxMesa->stats.memTexUpload+=texmemsize;
 
-    texmemsize=(int)grTexTextureMemRequired(GR_MIPMAPLEVELMASK_EVEN,&(ti->info));
+    texmemsize=(int)FX_grTexTextureMemRequired_NoLock(GR_MIPMAPLEVELMASK_EVEN,
+						      &(ti->info));
     ti->tmi.tm[FX_TMU1]=fxTMGetTMBlock(fxMesa,tObj,FX_TMU1,texmemsize);
     fxMesa->stats.memTexUpload+=texmemsize;
 
     for(i=FX_largeLodValue(ti->info),l=ti->minLevel;i<=FX_smallLodValue(ti->info);i++,l++) {
-      grTexDownloadMipMapLevel(GR_TMU0,ti->tmi.tm[FX_TMU0]->startAddress,FX_valueToLod(i),
-			       FX_largeLodLog2(ti->info),FX_aspectRatioLog2(ti->info),
-			       ti->info.format,GR_MIPMAPLEVELMASK_ODD,
-			       ti->tmi.mipmapLevel[l].data);
+      FX_grTexDownloadMipMapLevel_NoLock(GR_TMU0,
+					 ti->tmi.tm[FX_TMU0]->startAddress,
+					 FX_valueToLod(i),
+					 FX_largeLodLog2(ti->info),
+					 FX_aspectRatioLog2(ti->info),
+					 ti->info.format,
+					 GR_MIPMAPLEVELMASK_ODD,
+					 ti->tmi.mipmapLevel[l].data);
 
-      grTexDownloadMipMapLevel(GR_TMU1,ti->tmi.tm[FX_TMU1]->startAddress,FX_valueToLod(i),
-			       FX_largeLodLog2(ti->info),FX_aspectRatioLog2(ti->info),
-			       ti->info.format,GR_MIPMAPLEVELMASK_EVEN,
-			       ti->tmi.mipmapLevel[l].data);
+      FX_grTexDownloadMipMapLevel_NoLock(GR_TMU1,
+					 ti->tmi.tm[FX_TMU1]->startAddress,
+					 FX_valueToLod(i),
+					 FX_largeLodLog2(ti->info),
+					 FX_aspectRatioLog2(ti->info),
+					 ti->info.format,
+					 GR_MIPMAPLEVELMASK_EVEN,
+					 ti->tmi.mipmapLevel[l].data);
     }
     break;
   default:
@@ -295,6 +335,12 @@ void fxTMMoveInTM(fxMesaContext fxMesa, struct gl_texture_object *tObj, GLint wh
   fxMesa->stats.texUpload++;
 
   ti->tmi.isInTM=GL_TRUE;
+}
+
+void fxTMMoveInTM(fxMesaContext fxMesa, struct gl_texture_object *tObj, GLint where) {
+  BEGIN_BOARD_LOCK();
+  fxTMMoveInTM_NoLock(fxMesa, tObj, where);
+  END_BOARD_LOCK();
 }
 
 void fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj, GLint level)
@@ -318,20 +364,20 @@ void fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
   switch(tmu) {
   case FX_TMU0:
   case FX_TMU1:
-    grTexDownloadMipMapLevel(tmu,
+    FX_grTexDownloadMipMapLevel(tmu,
 			     ti->tmi.tm[tmu]->startAddress,FX_valueToLod(FX_lodToValue(lodlevel)+level),
 			     FX_largeLodLog2(ti->info),FX_aspectRatioLog2(ti->info),
 			     ti->info.format,GR_MIPMAPLEVELMASK_BOTH,
 			     ti->tmi.mipmapLevel[level].data);
     break;
   case FX_TMU_SPLIT: /* TO DO: alternate even/odd TMU0/TMU1 */
-    grTexDownloadMipMapLevel(GR_TMU0,
+    FX_grTexDownloadMipMapLevel(GR_TMU0,
 			     ti->tmi.tm[GR_TMU0]->startAddress,FX_valueToLod(FX_lodToValue(lodlevel)+level),
 			     FX_largeLodLog2(ti->info),FX_aspectRatioLog2(ti->info),
 			     ti->info.format,GR_MIPMAPLEVELMASK_ODD,
 			     ti->tmi.mipmapLevel[level].data);
     
-    grTexDownloadMipMapLevel(GR_TMU1,
+    FX_grTexDownloadMipMapLevel(GR_TMU1,
 			     ti->tmi.tm[GR_TMU1]->startAddress,FX_valueToLod(FX_lodToValue(lodlevel)+level),
 			     FX_largeLodLog2(ti->info),FX_aspectRatioLog2(ti->info),
 			     ti->info.format,GR_MIPMAPLEVELMASK_EVEN,
@@ -374,7 +420,7 @@ void fxTMReloadSubMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tO
   switch(tmu) {
   case FX_TMU0:
   case FX_TMU1:
-    grTexDownloadMipMapLevelPartial(tmu,
+    FX_grTexDownloadMipMapLevelPartial(tmu,
 				    ti->tmi.tm[tmu]->startAddress,FX_valueToLod(FX_lodToValue(lodlevel)+level),
 				    FX_largeLodLog2(ti->info),FX_aspectRatioLog2(ti->info),
 				    ti->info.format,GR_MIPMAPLEVELMASK_BOTH,
@@ -382,14 +428,14 @@ void fxTMReloadSubMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tO
 				    yoffset,yoffset+height-1);
     break;
   case FX_TMU_SPLIT: /* TO DO: alternate even/odd TMU0/TMU1 */
-    grTexDownloadMipMapLevelPartial(GR_TMU0,
+    FX_grTexDownloadMipMapLevelPartial(GR_TMU0,
 				    ti->tmi.tm[FX_TMU0]->startAddress,FX_valueToLod(FX_lodToValue(lodlevel)+level),
 				    FX_largeLodLog2(ti->info),FX_aspectRatioLog2(ti->info),
 				    ti->info.format,GR_MIPMAPLEVELMASK_ODD,
 				    data,
 				    yoffset,yoffset+height-1);
 
-    grTexDownloadMipMapLevelPartial(GR_TMU1,
+    FX_grTexDownloadMipMapLevelPartial(GR_TMU1,
 				    ti->tmi.tm[FX_TMU1]->startAddress,FX_valueToLod(FX_lodToValue(lodlevel)+level),
 				    FX_largeLodLog2(ti->info),FX_aspectRatioLog2(ti->info),
 				    ti->info.format,GR_MIPMAPLEVELMASK_EVEN,
@@ -563,6 +609,98 @@ void fxTMClose(fxMesaContext fxMesa)
   }
 }
 
+void fxTMRestore_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
+{
+  tfxTexInfo *ti=(tfxTexInfo *)tObj->DriverData;
+  int i,l, where;
+
+  if (MESA_VERBOSE&VERBOSE_DRIVER) {
+     fprintf(stderr,"fxmesa: fxRestore(%d)\n",tObj->Name);
+  }
+
+  if (!ti->validated) {
+    fprintf(stderr,"fxDriver: internal error in fxRestore -> not validated\n");
+    fxCloseHardware();
+    exit(-1);
+  }
+
+  where=ti->tmi.whichTMU;
+  if (MESA_VERBOSE&(VERBOSE_DRIVER|VERBOSE_TEXTURE)) {
+    fprintf(stderr,"fxmesa: reloading %x (%d) in texture memory in %d\n",(GLuint)tObj,tObj->Name,where);
+  }
+
+  switch(where) {
+  case FX_TMU0:
+  case FX_TMU1:
+    for (i=FX_largeLodValue_NoLock(ti->info), l=ti->minLevel;
+	 i<=FX_smallLodValue_NoLock(ti->info);
+	 i++,l++)
+      if (ti->tmi.mipmapLevel[l].data)
+	FX_grTexDownloadMipMapLevel_NoLock(where,
+					   ti->tmi.tm[where]->startAddress,
+					   FX_valueToLod(i),
+					   FX_largeLodLog2(ti->info),
+					   FX_aspectRatioLog2(ti->info),
+					   ti->info.format,
+					   GR_MIPMAPLEVELMASK_BOTH,
+					   ti->tmi.mipmapLevel[l].data);
+    break;
+  case FX_TMU_SPLIT: /* TO DO: alternate even/odd TMU0/TMU1 */
+    for (i=FX_largeLodValue_NoLock(ti->info),l=ti->minLevel;
+	 i<=FX_smallLodValue_NoLock(ti->info);
+	 i++,l++) {
+      if (ti->tmi.mipmapLevel[l].data)
+	FX_grTexDownloadMipMapLevel_NoLock(GR_TMU0,
+					   ti->tmi.tm[FX_TMU0]->startAddress,
+					   FX_valueToLod(i),
+					   FX_largeLodLog2(ti->info),
+					   FX_aspectRatioLog2(ti->info),
+					   ti->info.format,
+					   GR_MIPMAPLEVELMASK_ODD,
+					   ti->tmi.mipmapLevel[l].data);
+      if (ti->tmi.mipmapLevel[l].data)
+	FX_grTexDownloadMipMapLevel_NoLock(GR_TMU1,
+					   ti->tmi.tm[FX_TMU1]->startAddress,
+					   FX_valueToLod(i),
+					   FX_largeLodLog2(ti->info),
+					   FX_aspectRatioLog2(ti->info),
+					   ti->info.format,
+					   GR_MIPMAPLEVELMASK_EVEN,
+					   ti->tmi.mipmapLevel[l].data);
+    }
+    break;
+  default:
+    fprintf(stderr,"fxDriver: internal error in fxRestore -> bad tmu (%d)\n",
+	    where);
+    fxCloseHardware();
+    exit(-1);
+  }
+}
+
+void
+fxTMRestoreTextures(fxMesaContext ctx) {
+  tfxTexInfo *ti;
+  struct gl_texture_object *tObj;
+  int i;
+
+  tObj=ctx->glCtx->Shared->TexObjectList;
+  while (tObj) {
+    ti=(tfxTexInfo*)tObj->DriverData;
+    if (ti && ti->tmi.isInTM) {
+      for (i=0; i<MAX_TEXTURE_UNITS; i++)
+	if (ctx->glCtx->Texture.Unit[i].Current==tObj) {
+	  /* Force the texture onto the board, as it could be in use */
+	  fxTMRestore_NoLock(ctx, tObj);
+	  break;
+	}
+      if (i==MAX_TEXTURE_UNITS) /* Mark the texture as off the board */
+	fxTMMoveOutTM(ctx, tObj);
+    }
+    tObj=tObj->Next;
+  }
+  ctx->lastUnitsMode=0;
+  fxSetupTexture_NoLock(ctx->glCtx);
+}
 
 #else
 
