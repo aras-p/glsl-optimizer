@@ -1399,6 +1399,14 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             return;
          }
          break;
+      case GL_TEXTURE_LOD_BIAS:
+         /* NOTE: this is really part of OpenGL 1.4, not EXT_texture_lod_bias*/
+         if (ctx->Extensions.EXT_texture_lod_bias) {
+            texObj->LodBias = CLAMP(params[0],
+                                    -ctx->Const.MaxTextureLodBias,
+                                    ctx->Const.MaxTextureLodBias);
+         }
+         break;
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1775,6 +1783,12 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
             return;
          }
          break;
+      case GL_TEXTURE_LOD_BIAS:
+         if (ctx->Extensions.EXT_texture_lod_bias) {
+            *params = obj->LodBias;
+            break;
+         }
+         break;
       default:
          ; /* silence warnings */
    }
@@ -1801,6 +1815,12 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
    switch (pname) {
       case GL_TEXTURE_MAG_FILTER:
          *params = (GLint) obj->MagFilter;
+      case GL_TEXTURE_LOD_BIAS:
+         if (ctx->Extensions.EXT_texture_lod_bias) {
+            *params = (GLint) obj->LodBias;
+            break;
+         }
+         break;
          return;
       case GL_TEXTURE_MIN_FILTER:
          *params = (GLint) obj->MinFilter;

@@ -4198,11 +4198,11 @@ _swrast_texture_span( GLcontext *ctx, struct sw_span *span )
 
          /* adjust texture lod (lambda) */
          if (span->arrayMask & SPAN_LAMBDA) {
-            if (texUnit->LodBias != 0.0F) {
+            if (texUnit->LodBias + curObj->LodBias != 0.0F) {
                /* apply LOD bias, but don't clamp yet */
                GLuint i;
                for (i = 0; i < span->end; i++) {
-                  lambda[i] += texUnit->LodBias;
+                  lambda[i] += (texUnit->LodBias + curObj->LodBias);
                }
             }
 

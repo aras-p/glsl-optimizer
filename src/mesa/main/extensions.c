@@ -290,6 +290,7 @@ _mesa_enable_1_4_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_point_parameters = GL_TRUE;
    ctx->Extensions.EXT_secondary_color = GL_TRUE;
    ctx->Extensions.EXT_stencil_wrap = GL_TRUE;
+   ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
    ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;
 }
 

@@ -114,6 +114,7 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
    obj->MagFilter = GL_LINEAR;
    obj->MinLod = -1000.0;
    obj->MaxLod = 1000.0;
+   obj->LodBias = 0.0;
    obj->BaseLevel = 0;
    obj->MaxLevel = 1000;
    obj->MaxAnisotropy = 1.0;
@@ -242,6 +243,7 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
    dest->MagFilter = src->MagFilter;
    dest->MinLod = src->MinLod;
    dest->MaxLod = src->MaxLod;
+   dest->LodBias = src->LodBias;
    dest->BaseLevel = src->BaseLevel;
    dest->MaxLevel = src->MaxLevel;
    dest->MaxAnisotropy = src->MaxAnisotropy;

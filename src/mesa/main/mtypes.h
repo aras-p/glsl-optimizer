@@ -1073,6 +1073,7 @@ struct gl_texture_object {
    GLenum MagFilter;		/**< magnification filter */
    GLfloat MinLod;		/**< min lambda, OpenGL 1.2 */
    GLfloat MaxLod;		/**< max lambda, OpenGL 1.2 */
+   GLfloat LodBias;		/**< OpenGL 1.4 */
    GLint BaseLevel;		/**< min mipmap level, OpenGL 1.2 */
    GLint MaxLevel;		/**< max mipmap level, OpenGL 1.2 */
    GLfloat MaxAnisotropy;	/**< GL_EXT_texture_filter_anisotropic */

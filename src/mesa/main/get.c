@@ -6428,6 +6428,7 @@ _mesa_GetString( GLenum name )
                    ctx->Extensions.EXT_point_parameters && /*aka ARB*/
                    ctx->Extensions.EXT_secondary_color &&
                    ctx->Extensions.EXT_stencil_wrap &&
+                   ctx->Extensions.EXT_texture_lod_bias &&
                    ctx->Extensions.SGIS_generate_mipmap) {
                   if (ctx->Extensions.ARB_occlusion_query &&
                       ctx->Extensions.ARB_point_sprite &&
