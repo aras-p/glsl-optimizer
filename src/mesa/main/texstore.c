@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.50 2003/01/24 21:38:19 brianp Exp $ */
+/* $Id: texstore.c,v 1.51 2003/01/28 00:10:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -980,7 +980,7 @@ _mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
       GLubyte *dest = _mesa_compressed_image_address(xoffset, 0, 0,
                                                      texImage->IntFormat,
                                                      texImage->Width,
-                                                     texImage->Data);
+                                          (GLubyte*) texImage->Data);
       transfer_compressed_teximage(ctx, 1,             /* dimensions */
                                    width, 1, 1,        /* size to replace */
                                    format, type,       /* source format/type */
@@ -1029,7 +1029,7 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
       GLubyte *dest = _mesa_compressed_image_address(xoffset, yoffset, 0,
                                                      texImage->IntFormat,
                                                      texImage->Width,
-                                                     texImage->Data);
+                                          (GLubyte*) texImage->Data);
       transfer_compressed_teximage(ctx, 2,             /* dimensions */
                                    width, height, 1,   /* size to replace */
                                    format, type,       /* source format/type */
@@ -1077,7 +1077,7 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
       GLubyte *dest = _mesa_compressed_image_address(xoffset, yoffset, zoffset,
                                                      texImage->IntFormat,
                                                      texImage->Width,
-                                                     texImage->Data);
+                                          (GLubyte*) texImage->Data);
       transfer_compressed_teximage(ctx, 3,              /* dimensions */
                                    width, height, depth,/* size to replace */
                                    format, type,       /* source format/type */
@@ -1231,7 +1231,8 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
                                                texImage->Width);
    dest = _mesa_compressed_image_address(xoffset, yoffset, 0,
                                          texImage->IntFormat,
-                                         texImage->Width, texImage->Data);
+                                         texImage->Width,
+                              (GLubyte*) texImage->Data);
 
    bytesPerRow = srcRowStride;
    rows = height / 4;
@@ -1933,12 +1934,12 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       size = _mesa_bytes_per_pixel(srcImage->Format, CHAN_TYPE)
          * srcImage->Width * srcImage->Height * srcImage->Depth + 20;
       /* 20 extra bytes, just be safe when calling last FetchTexel */
-      srcData = MALLOC(size);
+      srcData = (GLubyte *) MALLOC(size);
       if (!srcData) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
          return;
       }
-      dstData = MALLOC(size / 2);  /* 1/4 would probably be OK */
+      dstData = (GLubyte *) MALLOC(size / 2);  /* 1/4 would probably be OK */
       if (!dstData) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
          FREE((void *) srcData);
@@ -2105,7 +2106,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
                                  dstData,             /* source buffer */
                                  dstWidth,            /* source row stride */
                                  dstImage->TexFormat, /* dest format */
-                                 dstImage->Data,      /* dest buffer */
+                      (GLubyte*) dstImage->Data,      /* dest buffer */
                                  dstRowStride );      /* dest row stride */
 
          /* swap src and dest pointers */
