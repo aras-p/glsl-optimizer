@@ -56,12 +56,13 @@
 #include "fxdrv.h"
 #include "enums.h"
 #include "extensions.h"
+#include "texstore.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
+#include "tnl/t_pipeline.h"
 #include "array_cache/acache.h"
 
-#include "tnl/t_pipeline.h"
 
 
 float gl_ubyte_to_float_255_color_tab[256];
@@ -1102,8 +1103,19 @@ void fxSetupDDPointers(GLcontext *ctx)
    ctx->Driver.RenderClippedLine = _swsetup_RenderClippedLine;
    ctx->Driver.RenderClippedPolygon = _swsetup_RenderClippedPolygon;
 
+   ctx->Driver.TexImage1D = _mesa_store_teximage1d;
    ctx->Driver.TexImage2D = fxDDTexImage2D;
+   ctx->Driver.TexImage3D = _mesa_store_teximage3d;
+   ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
    ctx->Driver.TexSubImage2D = fxDDTexSubImage2D;
+   ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
+   ctx->Driver.CopyTexImage1D = _mesa_copy_teximage1d;
+   ctx->Driver.CopyTexImage2D = _mesa_copy_teximage2d;
+   ctx->Driver.CopyTexSubImage1D = _mesa_copy_texsubimage1d;
+   ctx->Driver.CopyTexSubImage2D = _mesa_copy_texsubimage2d;
+   ctx->Driver.CopyTexSubImage3D = _mesa_copy_texsubimage3d;
+   ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
+
    ctx->Driver.TexEnv = fxDDTexEnv;
    ctx->Driver.TexParameter = fxDDTexParam;
    ctx->Driver.BindTexture = fxDDTexBind;
