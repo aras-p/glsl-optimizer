@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: get.c,v 1.2 1999/09/09 23:47:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +34,7 @@
 #include "context.h"
 #include "enable.h"
 #include "enums.h"
+#include "extensions.h"
 #include "get.h"
 #include "macros.h"
 #include "mmath.h"
@@ -3688,5 +3689,53 @@ void gl_GetPointerv( GLcontext *ctx, GLenum pname, GLvoid **params )
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetPointerv" );
          return;
+   }
+}
+
+
+
+const GLubyte *gl_GetString( GLcontext *ctx, GLenum name )
+{
+   static char result[1000];
+   static char *vendor = "Brian Paul";
+   static char *version = "1.2.1 Mesa 3.1 beta";
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, "glGetString", 0);
+
+   /* First see if device driver can satisfy this call */
+   switch (name) {
+      case GL_VENDOR:
+      case GL_RENDERER:
+      case GL_VERSION:
+         if (ctx->Driver.GetString) {
+            const GLubyte *str = (*ctx->Driver.GetString)(ctx, name);
+            if (str && str[0])
+               return str;
+         }
+         break;
+      /* Extensions always handled by extensions.c */
+      case GL_EXTENSIONS:
+	 return (GLubyte *) gl_extensions_get_string( ctx );
+      default:
+         gl_error( ctx, GL_INVALID_ENUM, "glGetString" );
+         return (GLubyte *) 0;
+   }
+
+   /* If we get here, device driver didn't return a string */
+   switch (name) {
+      case GL_VENDOR:
+         return (GLubyte *) vendor;
+      case GL_RENDERER:
+         strcpy(result, "Mesa");
+         if (ctx->Driver.RendererString) {
+            strcat(result, " ");
+            strcat(result, (*ctx->Driver.RendererString)());
+         }
+         return (GLubyte *) result;
+      case GL_VERSION:
+         return (GLubyte *) version;
+      default:
+         /* caught above */
+         return NULL;
    }
 }
