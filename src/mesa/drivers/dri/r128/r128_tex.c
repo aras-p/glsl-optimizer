@@ -48,6 +48,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "texstore.h"
 #include "texformat.h"
 #include "teximage.h"
+#include "texobj.h"
 #include "imports.h"
 #include "colormac.h"
 #include "texobj.h"

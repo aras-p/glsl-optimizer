@@ -23,7 +23,4 @@ extern void ffbChooseTriangleState(GLcontext *ctx);
 extern void ffbFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 #define FALLBACK( ctx, bit, mode ) ffbFallback( ctx, bit, mode )
 
-extern void ffb_fallback_line(GLcontext *, ffb_vertex *, ffb_vertex *);
-extern void ffb_fallback_point(GLcontext *, ffb_vertex *);
-
 #endif /* !(_FFB_TRIS_H) */

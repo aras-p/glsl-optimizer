@@ -32,6 +32,7 @@
 #include "texformat.h"
 #include "teximage.h"
 #include "texmem.h"
+#include "texobj.h"
 #include "swrast/swrast.h"
 #include "colormac.h"
 #include "texobj.h"

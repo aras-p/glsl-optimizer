@@ -27,7 +27,6 @@
  */
 /* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgapixel.c,v 1.9 2002/11/05 17:46:08 tsi Exp $ */
 
-#include "enums.h"
 #include "mtypes.h"
 #include "macros.h"
 #include "texutil.h"

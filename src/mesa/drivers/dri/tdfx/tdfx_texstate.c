@@ -1478,6 +1478,7 @@ selectSingleTMUSrc(tdfxContextPtr fxMesa, GLint tmu, FxBool LODblend)
    fxMesa->dirty |= TDFX_UPLOAD_TEXTURE_ENV;
 }
 
+#if 0
 static void print_state(tdfxContextPtr fxMesa)
 {
    GLcontext *ctx = fxMesa->glCtx;
@@ -1499,7 +1500,7 @@ static void print_state(tdfxContextPtr fxMesa)
           fxMesa->TexState.EnvMode[1]);
    printf("   BaseFmt: GL=0x%x  Gr:0x%x\n", base1, fxMesa->TexState.TexFormat[1]);
 }
-
+#endif
 
 /*
  * When we're only using a single texture unit, we always use the 0th

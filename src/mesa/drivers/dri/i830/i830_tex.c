@@ -44,6 +44,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "teximage.h"
 #include "texformat.h"
 #include "texmem.h"
+#include "texobj.h"
 #include "swrast/swrast.h"
 #include "texobj.h"
 #include "mm.h"

@@ -282,7 +282,7 @@ static GLboolean radeon_run_tcl_render( GLcontext *ctx,
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint i,flags = 0,length;
+   GLuint i;
 
    /* TODO: separate this from the swtnl pipeline 
     */

@@ -582,6 +582,7 @@ static void gammaUpdateFogAttrib( GLcontext *ctx )
    }
 }
 
+#if 0
 static void gammaDDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
 {
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);
@@ -589,6 +590,7 @@ static void gammaDDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
    FLUSH_BATCH( gmesa );
    gmesa->new_state |= GAMMA_NEW_FOG;
 }
+#endif
 
 /* =============================================================
  * Lines

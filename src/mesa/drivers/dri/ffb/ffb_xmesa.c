@@ -156,7 +156,7 @@ ffbDestroyScreen(__DRIscreenPrivate *sPriv)
 	Xfree(ffbScreen);
 }
 
-static const struct gl_pipeline_stage *ffb_pipeline[] = {
+static const struct tnl_pipeline_stage *ffb_pipeline[] = {
    &_tnl_vertex_transform_stage, 
    &_tnl_normal_transform_stage, 
    &_tnl_lighting_stage,
