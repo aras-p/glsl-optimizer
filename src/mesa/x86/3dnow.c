@@ -1,10 +1,10 @@
-/* $Id: 3dnow.c,v 1.22 2002/08/21 13:07:17 brianp Exp $ */
+/* $Id: 3dnow.c,v 1.23 2003/03/29 16:38:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -79,7 +79,10 @@ void _mesa_init_3dnow_transform_asm( void )
    ASSIGN_XFORM_GROUP( 3dnow, 3 );
    ASSIGN_XFORM_GROUP( 3dnow, 4 );
 
+   /* There's a bug somewhere in the 3dnow_normal.S file that causes
+    * bad shading.  Disable for now.
    ASSIGN_NORM_GROUP( 3dnow );
+   */
 
 #ifdef DEBUG
    _math_test_all_transform_functions( "3DNow!" );
