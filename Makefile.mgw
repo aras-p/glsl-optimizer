@@ -20,9 +20,9 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# MinGW makefile v1.1 for Mesa
+# MinGW makefile v1.2 for Mesa
 #
-#  Copyright (C) 2002 - Borca Daniel
+#  Copyright (C) 2002 - Daniel Borca
 #  Email : dborca@users.sourceforge.net
 #  Web   : http://www.geocities.com/dborca
 
@@ -66,7 +66,7 @@ else
   # I love c89
   CFLAGS = -Wall -W -pedantic
 endif
-CFLAGS += -O2 -ffast-math -mcpu=$(CPU)
+CFLAGS += -O2 -ffast-math -mtune=$(CPU)
 
 export CFLAGS
 

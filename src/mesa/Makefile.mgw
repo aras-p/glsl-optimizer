@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# MinGW core makefile v1.3 for Mesa
+# MinGW core makefile v1.4 for Mesa
 #
 #  Copyright (C) 2002 - Daniel Borca
 #  Email : dborca@users.sourceforge.net
@@ -89,7 +89,7 @@ else
 endif
 
 AR = ar
-ARFLAGS = rus
+ARFLAGS = crus
 
 ifeq ($(wildcard $(addsuffix /rm.exe,$(subst ;, ,$(PATH)))),)
 UNLINK = del $(subst /,\,$(1))
