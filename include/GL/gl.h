@@ -2232,17 +2232,6 @@ typedef void (APIENTRYP PFNGLBLENDEQUATIONSEPARATEATIPROC) (GLenum modeRGB, GLen
 #endif /* GL_ATI_blend_equation_separate */
 
 
-/* As soon as the official glext.h is updated to include this, it will be 
- * removed from here.
- */
-#ifndef GL_OES_read_format
-#define GL_OES_read_format 1
-
-#define GL_IMPLEMENTATION_COLOR_READ_TYPE_OES   0x8B9A
-#define GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES 0x8B9B
-
-#endif /* GL_OES_read_format */
-
 /**
  ** NOTE!!!!!  If you add new functions to this file, or update
  ** glext.h be sure to regenerate the gl_mangle.h file.  See comments
