@@ -36,6 +36,12 @@
 #include "texstore.h"
 
 
+/*
+ * When glGenRender/FramebuffersEXT() is called we insert pointers to
+ * these placeholder objects into the hash table.
+ * Later, when the object ID is first bound, we replace the placeholder
+ * with the real frame/renderbuffer.
+ */
 static struct gl_frame_buffer_object DummyFramebuffer;
 static struct gl_render_buffer_object DummyRenderbuffer;
 
@@ -526,6 +532,7 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    if (framebuffer) {
       newFb = lookup_framebuffer(ctx, framebuffer);
       if (newFb == &DummyFramebuffer) {
+         /* ID was reserved, but no real framebuffer object made yet */
          newFb = NULL;
       }
       if (!newFb) {
