@@ -1,4 +1,4 @@
-/* $Id: isosurf.c,v 1.12 2001/06/04 15:34:31 keithw Exp $ */
+/* $Id: isosurf.c,v 1.13 2001/10/04 19:14:26 kschultz Exp $ */
 
 /*
  * Display an isosurface of 3-D wind speed volume.
@@ -30,6 +30,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #define GL_GLEXT_LEGACY
 #include "GL/glut.h"
 

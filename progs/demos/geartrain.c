@@ -1,4 +1,4 @@
-/* $Id: geartrain.c,v 1.7 2000/11/30 01:44:24 gareth Exp $ */
+/* $Id: geartrain.c,v 1.8 2001/10/04 19:14:26 kschultz Exp $ */
 
 /*
  * GearTrain Simulator * Version:  1.00
@@ -32,7 +32,9 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifndef min
 #define min(x, y) ( x < y ? x : y )
+#endif
 
 #ifndef M_PI
 #define M_PI 3.14159265
@@ -103,6 +105,7 @@ static GLint T0 = 0;
 static GLint Frames = 0;
 
 
+#ifndef _WIN32
 static void
 strset (char buf[], char ch)
 {
@@ -110,6 +113,7 @@ strset (char buf[], char ch)
     for (i = 0; i < strlen (buf); i++)
       buf[i] = ch;
 }
+#endif
 
 
 static void
