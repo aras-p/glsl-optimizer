@@ -39,13 +39,9 @@
 #define DRI_INTERFACE_H
 
 #ifndef DRI_NEW_INTERFACE_ONLY
-/* FIXME: With a small amount of work, these two includes can be removed. */
-#include <X11/Xlib.h>
-#include <GL/glx.h>
-#endif
-
-#ifndef DRI_NEW_INTERFACE_ONLY
-#include <GL/glxint.h>
+# include <X11/X.h>
+# include <GL/glx.h>
+# include "GL/glxint.h"
 #endif
 
 #include <GL/internal/glcore.h>
@@ -152,6 +148,15 @@ typedef Bool (* PFNGLXGETDRAWABLEINFOPROC) ( __DRInativeDisplay *dpy, int scrn,
     int * numClipRects, drm_clip_rect_t ** pClipRects,
     int * backX, int * backY,
     int * numBackClipRects, drm_clip_rect_t ** pBackClipRects );
+
+extern Bool XF86DRIDestroyContext( __DRInativeDisplay *dpy, int screen,
+    __DRIid context_id );
+
+extern Bool XF86DRICreateDrawable( __DRInativeDisplay *dpy, int screen,
+    __DRIid drawable, drm_drawable_t *hHWDrawable );
+
+extern Bool XF86DRIDestroyDrawable( __DRInativeDisplay *dpy, int screen, 
+    __DRIid drawable);
 /*@}*/
 
 

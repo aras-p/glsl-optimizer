@@ -37,11 +37,11 @@
 #include <extutil.h>
 #include <stdio.h>
 #include "dri_util.h"
-#include "xf86dri.h"
+#ifndef DRI_NEW_INTERFACE_ONLY
+# include "xf86dri.h"
+#endif /* DRI_NEW_INTERFACE_ONLY */
 #include "sarea.h"
 #include "glcontextmodes.h"
-
-/*#define DRI_NEW_INTERFACE_ONLY*/
 
 #ifndef GLX_OML_sync_control
 typedef Bool ( * PFNGLXGETMSCRATEOMLPROC) (__DRInativeDisplay *dpy, __DRIid drawable, int32_t *numerator, int32_t *denominator);
