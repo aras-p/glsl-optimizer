@@ -69,10 +69,10 @@ static void copy_pv2( GLcontext *ctx, GLuint edst, GLuint esrc )
 }
 
 static struct {
-   void               (*emit)( GLcontext *, GLuint, GLuint, void * );
+   tnl_emit_func	emit;
    tnl_copy_pv_func	copy_pv;
    tnl_interp_func	interp;
-   GLboolean          (*check_tex_sizes)( GLcontext *ctx );
+   GLboolean	      (*check_tex_sizes)( GLcontext *ctx );
    GLuint               vertex_format;
 } setup_tab[MAX_SETUP];
 
