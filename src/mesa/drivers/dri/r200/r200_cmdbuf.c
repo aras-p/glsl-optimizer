@@ -63,11 +63,15 @@ static void r200_emit_state_list( r200ContextPtr rmesa,
 {
    struct r200_state_atom *state, *tmp;
    char *dest;
+   int i, size;
 
+   size = 0;
    foreach_s( state, tmp, list ) {
       if (state->check( rmesa->glCtx, state->idx )) {
-	 dest = r200AllocCmdBuf( rmesa, state->cmd_size * 4, __FUNCTION__);
-	 memcpy( dest, state->cmd, state->cmd_size * 4);
+/*	 dest = r200AllocCmdBuf( rmesa, state->cmd_size * 4, __FUNCTION__);
+	 memcpy( dest, state->cmd, state->cmd_size * 4);*/
+         size += state->cmd_size;
+         state->dirty = GL_TRUE;
 	 move_to_head( &(rmesa->hw.clean), state );
 	 if (R200_DEBUG & DEBUG_STATE) 
 	    print_state_atom( state );
@@ -75,6 +79,61 @@ static void r200_emit_state_list( r200ContextPtr rmesa,
       else if (R200_DEBUG & DEBUG_STATE)
 	 fprintf(stderr, "skip state %s\n", state->name);
    }
+
+   if (!size)
+      return;
+
+   dest = r200AllocCmdBuf( rmesa, size * 4, __FUNCTION__);
+
+#define EMIT_ATOM(ATOM) \
+do { \
+   if (rmesa->hw.ATOM.dirty) { \
+      rmesa->hw.ATOM.dirty = GL_FALSE; \
+      memcpy( dest, rmesa->hw.ATOM.cmd, rmesa->hw.ATOM.cmd_size * 4); \
+      dest += rmesa->hw.ATOM.cmd_size * 4; \
+   } \
+} while (0)
+
+   EMIT_ATOM (ctx);
+   EMIT_ATOM (set);
+   EMIT_ATOM (lin);
+   EMIT_ATOM (msk);
+   EMIT_ATOM (vpt);
+   EMIT_ATOM (vtx);
+   EMIT_ATOM (vap);
+   EMIT_ATOM (vte);
+   EMIT_ATOM (msc);
+   EMIT_ATOM (cst);
+   EMIT_ATOM (zbs);
+   EMIT_ATOM (tcl);
+   EMIT_ATOM (msl);
+   EMIT_ATOM (tcg);
+   EMIT_ATOM (grd);
+   EMIT_ATOM (fog);
+   EMIT_ATOM (tam);
+   EMIT_ATOM (tf);
+   for (i = 0; i < 2; ++i) {
+       EMIT_ATOM (tex[i]);
+   }
+   for (i = 0; i < 2; ++i) {
+       EMIT_ATOM (cube[i]);
+   }
+   for (i = 0; i < 5; ++i)
+       EMIT_ATOM (mat[i]);
+   EMIT_ATOM (eye);
+   EMIT_ATOM (glt);
+   for (i = 0; i < 2; ++i) {
+      EMIT_ATOM (mtl[i]);
+   }
+   for (i = 0; i < 8; ++i)
+       EMIT_ATOM (lit[i]);
+   for (i = 0; i < 6; ++i)
+       EMIT_ATOM (ucp[i]);
+   for (i = 0; i < 6; ++i)
+       EMIT_ATOM (pix[i]);
+
+#undef EMIT_ATOM
+
 }
 
 
@@ -96,10 +155,10 @@ void r200EmitState( r200ContextPtr rmesa )
 
       rmesa->lost_context = 0;
    }
-   else {
-      move_to_tail( &rmesa->hw.dirty, &rmesa->hw.mtl[0] ); 
+/*   else {
+      move_to_tail( &rmesa->hw.dirty, &rmesa->hw.mtl[0] );*/
       /* odd bug? -- isosurf, cycle between reflect & lit */
-   }
+/*   }*/
 
    r200_emit_state_list( rmesa, &rmesa->hw.dirty );
 }

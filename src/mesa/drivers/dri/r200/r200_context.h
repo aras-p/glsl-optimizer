@@ -186,6 +186,7 @@ struct r200_state_atom {
    GLuint idx;
    int *cmd;			         /* one or more cmd's */
    int *lastcmd;			 /* one or more cmd's */
+   GLboolean dirty;
    GLboolean (*check)( GLcontext *, int );    /* is this state active? */
 };
    
