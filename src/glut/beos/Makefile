@@ -26,12 +26,35 @@ TYPE= SHARED
 #	if two source files with the same name (source.c or source.cpp)
 #	are included from different directories.  Also note that spaces
 #	in folder names do not work well with this makefile.
-SRCS= glut_util.cpp glutBlocker.cpp glutInit.cpp glutWindow.cpp \
-glutEvent.cpp glutCallback.cpp glutOverlay.cpp glutGet.cpp glutColor.cpp \
-glutCursor.cpp glutMenu.cpp glutDstr.cpp glut_bitmap.cpp glut_bwidth.cpp \
-glut_8x13.cpp glut_9x15.cpp glut_hel10.cpp glut_hel12.cpp glut_hel18.cpp \
-glut_tr10.cpp glut_tr24.cpp glut_mroman.cpp glut_roman.cpp glut_stroke.cpp \
-glut_swidth.cpp glut_shapes.cpp glut_teapot.cpp beos_x11.cpp
+SRCS= \
+	glut_util.cpp \
+	glutBlocker.cpp \
+	glutInit.cpp \
+	glutWindow.cpp \
+	glutEvent.cpp \
+	glutCallback.cpp \
+	glutOverlay.cpp \
+	glutGet.cpp \
+	glutColor.cpp \
+	glutCursor.cpp \
+	glutMenu.cpp \
+	glutDstr.cpp \
+	glut_bitmap.cpp \
+	glut_bwidth.cpp \
+	glut_8x13.cpp \
+	glut_9x15.cpp \
+	glut_hel10.cpp \
+	glut_hel12.cpp \
+	glut_hel18.cpp \
+	glut_tr10.cpp \
+	glut_tr24.cpp \
+	glut_mroman.cpp \
+	glut_roman.cpp \
+	glut_stroke.cpp \
+	glut_swidth.cpp \
+	glut_shapes.cpp \
+	glut_teapot.cpp \
+	beos_x11.cpp
 
 #	specify the resource files to use
 #	full path or a relative path to the resource file can be used.
@@ -60,7 +83,7 @@ LIBPATHS= ../lib
 #	additional paths to look for system headers
 #	thes use the form: #include <header>
 #	source file directories are NOT auto-included here
-SYSTEM_INCLUDE_PATHS = ../../include /boot/develop/headers/be/opengl
+SYSTEM_INCLUDE_PATHS = ../../../include /boot/develop/headers/be/opengl
 
 #	additional paths to look for local headers
 #	thes use the form: #include "header"

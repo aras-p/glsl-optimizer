@@ -1,4 +1,4 @@
-/* $Id: GLView.cpp,v 1.9 2003/03/30 15:49:01 brianp Exp $ */
+/* $Id: GLView.cpp,v 1.10 2003/12/13 01:26:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,22 +25,24 @@
  */
 
 
-#include "glheader.h"
-
 #include <assert.h>
 #include <stdio.h>
 
 extern "C" {
 
+#include "glheader.h"
+#include "buffers.h"
+#include "bufferobj.h"
 #include "context.h"
 #include "colormac.h"
 #include "depth.h"
 #include "extensions.h"
 #include "macros.h"
 #include "matrix.h"
-#include "mmath.h"
 #include "mtypes.h"
 #include "texformat.h"
+#include "texobj.h"
+#include "teximage.h"
 #include "texstore.h"
 #include "array_cache/acache.h"
 #include "swrast/swrast.h"
@@ -56,7 +58,7 @@ extern "C" {
 
 }	// extern "C"
 
-#include <GLView.h>
+#include "GLView.h"
 
 // BeOS component ordering for B_RGBA32 bitmap format
 #define BE_RCOMP 2
@@ -277,6 +279,17 @@ BGLView::BGLView(BRect rect, char *name,
    // create core context
    GLcontext * ctx = _mesa_create_context(visual, NULL, md, GL_FALSE);
 
+   ctx->Driver.NewTextureObject = _mesa_new_texture_object;
+   ctx->Driver.DeleteTexture = _mesa_delete_texture_object;
+
+   _mesa_initialize_context(ctx, visual, NULL, md, GL_FALSE);
+
+   _mesa_enable_sw_extensions(ctx);
+   _mesa_enable_1_3_extensions(ctx);
+   _mesa_enable_1_4_extensions(ctx);
+   _mesa_enable_1_5_extensions(ctx);
+
+
 
    // create core framebuffer
    GLframebuffer * buffer = _mesa_create_framebuffer(visual,
@@ -285,10 +298,6 @@ BGLView::BGLView(BRect rect, char *name,
                                               accum > 0 ? GL_TRUE : GL_FALSE,
                                               alphaFlag
                                               );
-
-   _mesa_enable_sw_extensions(ctx);
-   _mesa_enable_1_3_extensions(ctx);
-   _mesa_enable_1_4_extensions(ctx);
 
    /* Initialize the software rasterizer and helper modules.
     */
@@ -578,19 +587,23 @@ void MesaDriver::Init(BGLView * bglview, GLcontext * ctx, GLvisual * visual, GLf
 
 	assert(md->m_glcontext == ctx );
 
+	// Use default TCL pipeline
+	tnl->Driver.RunPipeline = _tnl_run_pipeline;
+
 	ctx->Driver.GetString = MesaDriver::GetString;
 	ctx->Driver.UpdateState = MesaDriver::UpdateState;
-	ctx->Driver.GetBufferSize = MesaDriver::GetBufferSize;
 	ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
+	ctx->Driver.GetBufferSize = MesaDriver::GetBufferSize;
 
 	ctx->Driver.Accum = _swrast_Accum;
 	ctx->Driver.Bitmap = _swrast_Bitmap;
-	ctx->Driver.ClearIndex = MesaDriver::ClearIndex;
-	ctx->Driver.ClearColor = MesaDriver::ClearColor;
 	ctx->Driver.Clear = MesaDriver::Clear;
+	// ctx->Driver.ClearIndex = MesaDriver::ClearIndex;
+	// ctx->Driver.ClearColor = MesaDriver::ClearColor;
 	ctx->Driver.CopyPixels = _swrast_CopyPixels;
    	ctx->Driver.DrawPixels = _swrast_DrawPixels;
    	ctx->Driver.ReadPixels = _swrast_ReadPixels;
+   	ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
 
    	ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
    	ctx->Driver.TexImage1D = _mesa_store_teximage1d;
@@ -601,7 +614,14 @@ void MesaDriver::Init(BGLView * bglview, GLcontext * ctx, GLvisual * visual, GLf
    	ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
    	ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
 
-   	ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
+    ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
+    ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
+	ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
+	ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
+	ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
+	ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
+
+  	ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
    	ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
    	ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
    	ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
@@ -610,19 +630,8 @@ void MesaDriver::Init(BGLView * bglview, GLcontext * ctx, GLvisual * visual, GLf
    	ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
    	ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
    	ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
-
-        ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
-        ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
-        ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
-        ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
-        ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
-        ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
-
+ 
 	swdd->SetBuffer = MesaDriver::SetBuffer;
-
-	tnl->Driver.RunPipeline = _tnl_run_pipeline;
-
-	_swsetup_Wakeup(ctx);
 }
 
 
@@ -898,7 +907,7 @@ const GLubyte *MesaDriver::GetString(GLcontext *ctx, GLenum name)
 
 // Plot a pixel.  (0,0) is upper-left corner
 // This is only used when drawing to the front buffer.
-static void Plot(BGLView *bglview, int x, int y)
+inline void Plot(BGLView *bglview, int x, int y)
 {
    // XXX There's got to be a better way!
    BPoint p(x, y), q(x+1, y);
