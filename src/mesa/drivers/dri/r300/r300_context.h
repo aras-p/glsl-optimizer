@@ -403,6 +403,11 @@ struct r300_hw_state {
 	struct r300_state_atom unk4214; /* (4214) */
 	struct r300_state_atom ps;	/* pointsize (421C) */
 	struct r300_state_atom unk4230; /* (4230) */
+	struct r300_state_atom lcntl;	/* line control */
+#ifdef EXP_C
+	struct r300_state_atom lsf;	/* line stipple factor */
+#endif
+	struct r300_state_atom dummy[4];
 	struct r300_state_atom unk4260; /* (4260) */
 	struct r300_state_atom unk4274; /* (4274) */
 	struct r300_state_atom unk4288; /* (4288) */
@@ -415,6 +420,9 @@ struct r300_hw_state {
 	struct r300_state_atom ri;	/* rs interpolators (4310) */
 	struct r300_state_atom rr;	/* rs route (4330) */
 	struct r300_state_atom unk43A4;	/* (43A4) */
+#ifdef EXP_C
+	struct r300_state_atom lsp;	/* line stipple pattern */
+#endif	
 	struct r300_state_atom unk43E8;	/* (43E8) */
 	struct r300_state_atom fp;	/* fragment program cntl + nodes (4600) */
 	struct r300_state_atom fpt;     /* texi - (4620) */

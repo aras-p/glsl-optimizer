@@ -424,6 +424,21 @@ probably work also. --aet
 #       define R300_POINTSIZE_Y_MASK             (0xFFFF << 0) /* GUESS */
 #       define R300_POINTSIZE_X_SHIFT            16
 #       define R300_POINTSIZE_X_MASK             (0xFFFF << 16) /* GUESS */
+#       define R300_POINTSIZE_MAX             (R300_POINTSIZE_Y_MASK / 6)
+
+/* The line width is given in multiples of 6.
+   00020018 == 4.0, 0002001e == 5.0  */
+#define R300_RE_LINE_CNT                      0x4234
+#       define R300_LINESIZE_SHIFT            0
+#       define R300_LINESIZE_MASK             (0xFFFF << 0) /* GUESS */
+#       define R300_LINESIZE_MAX             (R300_LINESIZE_MASK / 6)
+#       define R300_LINE_CNT_UNK1           (1 << 17)
+
+/* Linestipple factor. 3a088889 == 1.0, 3baaaaa9 == 10.0 */
+#define R300_RE_LINE_STIPPLE_FACTOR           0x4238
+#define R300_RE_LINE_STIPPLE_PTRN1            0x43E0
+#define R300_RE_LINE_STIPPLE_PTRN2            0x43E4
+
 
 #define R300_RE_ZBIAS_T_FACTOR                0x42A4
 #define R300_RE_ZBIAS_T_CONSTANT              0x42A8

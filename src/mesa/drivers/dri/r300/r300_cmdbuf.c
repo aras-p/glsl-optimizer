@@ -341,6 +341,12 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.ps.cmd[0] = cmducs(R300_RE_POINTSIZE, 1);
 	ALLOC_STATE( unk4230, always, 4, "unk4230", 0 );
 		r300->hw.unk4230.cmd[0] = cmducs(0x4230, 3);
+	ALLOC_STATE( lcntl, always, 2, "lcntl", 0 );
+		r300->hw.lcntl.cmd[0] = cmducs(R300_RE_LINE_CNT, 1);
+#ifdef EXP_C		
+	ALLOC_STATE( lsf, always, 2, "lsf", 0 );
+		r300->hw.lsf.cmd[0] = cmducs(R300_RE_LINE_STIPPLE_FACTOR, 1);
+#endif		
 	ALLOC_STATE( unk4260, always, 4, "unk4260", 0 );
 		r300->hw.unk4260.cmd[0] = cmducs(0x4260, 3);
 	ALLOC_STATE( unk4274, always, 5, "unk4274", 0 );
@@ -365,6 +371,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.rr.cmd[R300_RR_CMD_0] = cmducs(R300_RS_ROUTE_0, 1);
 	ALLOC_STATE( unk43A4, always, 3, "unk43A4", 0 );
 		r300->hw.unk43A4.cmd[0] = cmducs(0x43A4, 2);
+#ifdef EXP_C		
+	ALLOC_STATE( lsp, always, 3, "lsp", 0 );
+		r300->hw.lsp.cmd[0] = cmducs(R300_RE_LINE_STIPPLE_PTRN1, 2);
+#endif		
 	ALLOC_STATE( unk43E8, always, 2, "unk43E8", 0 );
 		r300->hw.unk43E8.cmd[0] = cmducs(0x43E8, 1);
 	ALLOC_STATE( fp, always, R300_FP_CMDSIZE, "fp", 0 );
@@ -482,6 +492,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4214);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.ps);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4230);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.lcntl);
+#ifdef EXP_C		
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.lsf);
+#endif	
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4260);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4274);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4288);
@@ -494,6 +508,9 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.ri);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.rr);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk43A4);
+#ifdef EXP_C		
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.lsp);
+#endif	
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk43E8);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.fp);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpt);

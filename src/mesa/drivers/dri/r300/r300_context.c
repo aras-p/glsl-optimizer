@@ -225,17 +225,15 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 					  ctx->Const.MaxTextureCoordUnits);
 	ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 
-	/* No wide points.
-	 */
 	ctx->Const.MinPointSize = 1.0;
 	ctx->Const.MinPointSizeAA = 1.0;
-	ctx->Const.MaxPointSize = 1.0;
-	ctx->Const.MaxPointSizeAA = 1.0;
+	ctx->Const.MaxPointSize = R300_POINTSIZE_MAX;
+	ctx->Const.MaxPointSizeAA = R300_POINTSIZE_MAX;
 
 	ctx->Const.MinLineWidth = 1.0;
 	ctx->Const.MinLineWidthAA = 1.0;
-	ctx->Const.MaxLineWidth = 1.0;
-	ctx->Const.MaxLineWidthAA = 1.0;
+	ctx->Const.MaxLineWidth = R300_LINESIZE_MAX;
+	ctx->Const.MaxLineWidthAA = R300_LINESIZE_MAX;
 
 	/* Initialize the software rasterizer and helper modules.
 	 */

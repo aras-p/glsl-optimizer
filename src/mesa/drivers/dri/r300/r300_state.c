@@ -653,6 +653,24 @@ static void r300PointSize(GLcontext * ctx, GLfloat size)
 	r300->hw.vps.cmd[R300_VPS_POINTSIZE] = r300PackFloat32(1.0);
 #endif	
 }
+
+/* =============================================================
+ * Line state
+ */
+static void r300LineWidth(GLcontext *ctx, GLfloat widthf)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	/* IMHO mesa isnt clamping line widths according to ctx->Const.*LineWidth
+	   before calling this from the dd function table.
+	   Since r300ResetHwState calls these with clamped values,
+	   they must be set properly. */
+	
+	R300_STATECHANGE(r300, lcntl);
+	r300->hw.lcntl.cmd[1] = (int)(widthf * 6.0);
+	/* Doesnt look very good without this... */
+	r300->hw.lcntl.cmd[1] |= R300_LINE_CNT_UNK1;
+}
+
 /* =============================================================
  * Stencil
  */
@@ -1783,7 +1801,7 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk4214.cmd[1] = 0x00050005;
 
-	r300PointSize(ctx, ctx->Point.Size);
+	r300PointSize(ctx, ctx->Point._Size);
 #if 0	
 	r300->hw.ps.cmd[R300_PS_POINTSIZE] = (6 << R300_POINTSIZE_X_SHIFT) |
 					     (6 << R300_POINTSIZE_Y_SHIFT);
@@ -1792,7 +1810,13 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4230.cmd[1] = 0x01800000;
 	r300->hw.unk4230.cmd[2] = 0x00020006;
 	r300->hw.unk4230.cmd[3] = r300PackFloat32(1.0 / 192.0);
-
+	
+	r300LineWidth(ctx, ctx->Line._Width);
+	
+#ifdef EXP_C
+	static int foobar=0;
+	r300->hw.lsf.cmd[1] = foobar++; //0x3a088889;
+#endif
 	r300->hw.unk4260.cmd[1] = 0;
 	r300->hw.unk4260.cmd[2] = r300PackFloat32(0.0);
 	r300->hw.unk4260.cmd[3] = r300PackFloat32(1.0);
@@ -1820,7 +1844,12 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk43A4.cmd[1] = 0x0000001C;
 	r300->hw.unk43A4.cmd[2] = 0x2DA49525;
-
+	
+#ifdef EXP_C
+	r300->hw.lsp.cmd[1] = rand()%(~0); //0x00b405a0;
+	r300->hw.lsp.cmd[2] = foobar++;// 0x00efe81f;
+#endif
+		
 	r300->hw.unk43E8.cmd[1] = 0x00FFFFFF;
 
 	#if 0
@@ -2011,6 +2040,7 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	functions->Viewport = r300Viewport;
 	functions->DepthRange = r300DepthRange;
 	functions->PointSize = r300PointSize;
+	functions->LineWidth = r300LineWidth;
 	
 	functions->PolygonOffset = r300PolygonOffset;
 }
