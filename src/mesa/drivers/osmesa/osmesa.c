@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.30 2000/11/14 17:50:07 brianp Exp $ */
+/* $Id: osmesa.c,v 1.31 2000/11/16 21:05:38 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -311,11 +311,11 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       {
 	 GLcontext *ctx = &osmesa->gl_ctx;
 
+	 ctx->Driver.RegisterVB = _swsetup_RegisterVB;
+
 	 _swrast_CreateContext( ctx );
 	 _swsetup_CreateContext( ctx );
-
-	 if (ctx->VB) 
-	    _swsetup_RegisterVB( ctx->VB );
+	 _tnl_CreateContext( ctx );
 	 
 	 osmesa_register_swrast_functions( ctx );
       }
@@ -1690,7 +1690,6 @@ static void osmesa_update_state( GLcontext *ctx )
    ASSERT((void *) osmesa == (void *) ctx->DriverCtx);
 
    ctx->Driver.GetString = get_string;
-   ctx->Driver.UpdateStateNotify = ~0;
    ctx->Driver.UpdateState = osmesa_update_state;
 
    ctx->Driver.SetDrawBuffer = set_draw_buffer;
@@ -1747,4 +1746,8 @@ static void osmesa_update_state( GLcontext *ctx )
    ctx->Driver.WriteMonoCIPixels = write_monoindex_pixels;
    ctx->Driver.ReadCI32Span = read_index_span;
    ctx->Driver.ReadCI32Pixels = read_index_pixels;
+
+   _swrast_InvalidateState( ctx, ctx->NewState );
+   _swsetup_InvalidateState( ctx, ctx->NewState );
+   _tnl_InvalidateState( ctx, ctx->NewState );
 }

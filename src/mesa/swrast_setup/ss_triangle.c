@@ -29,6 +29,8 @@
 #include "macros.h"
 #include "types.h"
 
+#include "tnl/t_context.h"
+
 #include "ss_triangle.h"
 #include "ss_context.h"
 

@@ -1,4 +1,4 @@
-/* $Id: colormac.h,v 1.2 2000/10/29 18:12:14 brianp Exp $ */
+/* $Id: colormac.h,v 1.3 2000/11/16 21:05:34 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,7 +38,8 @@
 #include "config.h"
 #include "macros.h"
 #include "mmath.h"
-
+/* Do not reference types.h from this file.
+ */
 
 
 /*

@@ -1,4 +1,4 @@
-/* $Id: light.h,v 1.4 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: light.h,v 1.5 2000/11/16 21:05:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,13 +30,6 @@
 
 
 #include "types.h"
-
-struct gl_shine_tab {
-   struct gl_shine_tab *next, *prev;
-   GLfloat tab[SHINE_TABLE_SIZE+1];
-   GLfloat shininess;
-   GLuint refcount;
-};
 
 
 extern void
@@ -94,6 +87,23 @@ extern void
 _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params );
 
 
+/* Lerp between adjacent values in the f(x) lookup table, giving a
+ * continuous function, with adequeate overall accuracy.  (Though
+ * still pretty good compared to a straight lookup). 
+ */
+#define GET_SHINE_TAB_ENTRY( table, dp, result )			\
+do {									\
+   struct gl_shine_tab *_tab = table;					\
+   if (dp>1.0)								\
+      result = pow( dp, _tab->shininess );				\
+   else {								\
+      float f = (dp * (SHINE_TABLE_SIZE-1));				\
+      int k = (int) f;							\
+      result = _tab->tab[k] + (f-k)*(_tab->tab[k+1]-_tab->tab[k]);	\
+   }									\
+} while (0)
+
+
 
 extern GLuint gl_material_bitmask( GLcontext *ctx, 
 				   GLenum face, GLenum pname, 
@@ -111,8 +121,6 @@ extern void gl_compute_shine_table( GLcontext *ctx, GLuint i,
 extern void gl_update_lighting( GLcontext *ctx );
 
 extern void gl_compute_light_positions( GLcontext *ctx );
-
-extern void gl_update_normal_transform( GLcontext *ctx );
 
 extern void gl_update_material( GLcontext *ctx, 
 				const struct gl_material src[2], 

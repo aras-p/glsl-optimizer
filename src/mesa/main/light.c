@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.25 2000/11/15 16:38:59 brianp Exp $ */
+/* $Id: light.c,v 1.26 2000/11/16 21:05:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,14 +34,13 @@
 #include "enums.h"
 #include "light.h"
 #include "macros.h"
-#include "matrix.h"
 #include "mem.h"
 #include "mmath.h"
-#include "shade.h"
 #include "simple_list.h"
 #include "types.h"
-#include "vb.h"
-#include "xform.h"
+
+#include "math/m_xform.h"
+#include "math/m_matrix.h"
 #endif
 
 
@@ -123,7 +122,7 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
       case GL_SPOT_DIRECTION:
 	 /* transform direction by inverse modelview */
 	 if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
-	    gl_matrix_analyze( &ctx->ModelView );
+	    _math_matrix_analyze( &ctx->ModelView );
 	 }
 	 TRANSFORM_NORMAL( l->EyeDirection, params, ctx->ModelView.inv );
          break;
@@ -533,7 +532,7 @@ void gl_update_material( GLcontext *ctx,
    if (ctx->Light.ColorMaterialEnabled)
       bitmask &= ~ctx->Light.ColorMaterialBitmask;
 
-   if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
+   if (MESA_VERBOSE&VERBOSE_IMMEDIATE) 
       fprintf(stderr, "gl_update_material, mask 0x%x\n", bitmask);
 
    if (!bitmask) 
@@ -829,8 +828,10 @@ _mesa_ColorMaterial( GLenum face, GLenum mode )
       ctx->Light.ColorMaterialMode = mode;
    }
 
-   if (ctx->Light.ColorMaterialEnabled)
+   if (ctx->Light.ColorMaterialEnabled) {
+      FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
       gl_update_color_material( ctx, ctx->Current.Color );
+   }
 
    ctx->NewState |= _NEW_LIGHT;
 }
@@ -844,86 +845,6 @@ _mesa_Materialf( GLenum face, GLenum pname, GLfloat param )
    _mesa_Materialfv( face, pname, &param );
 }
 
-
-/* KW:  This is now called directly (ie by name) from the glMaterial* 
- *      API functions.
- */
-void
-_mesa_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   struct immediate *IM;
-   struct gl_material *mat;
-   GLuint bitmask;
-   GLuint count;
-
-   bitmask = gl_material_bitmask( ctx, face, pname, ~0, "gl_Materialfv" );
-   if (bitmask == 0)
-      return;
-
-   IM = ctx->input;
-   count = IM->Count;
-
-   if (!IM->Material) {
-      IM->Material = 
-	 (struct gl_material (*)[2]) MALLOC( sizeof(struct gl_material) * 
-					     VB_SIZE * 2 );
-      IM->MaterialMask = (GLuint *) MALLOC( sizeof(GLuint) * VB_SIZE );
-   }
-
-
-   if (!(IM->Flag[count] & VERT_MATERIAL)) {
-      IM->Flag[count] |= VERT_MATERIAL;
-      IM->MaterialMask[count] = 0;      
-   }
-
-
-   IM->MaterialMask[count] |= bitmask;
-   mat = IM->Material[count];
-
-   if (bitmask & FRONT_AMBIENT_BIT) {
-      COPY_4FV( mat[0].Ambient, params );
-   }
-   if (bitmask & BACK_AMBIENT_BIT) {
-      COPY_4FV( mat[1].Ambient, params );
-   }
-   if (bitmask & FRONT_DIFFUSE_BIT) {
-      COPY_4FV( mat[0].Diffuse, params );
-   }
-   if (bitmask & BACK_DIFFUSE_BIT) {
-      COPY_4FV( mat[1].Diffuse, params );
-   }
-   if (bitmask & FRONT_SPECULAR_BIT) {
-      COPY_4FV( mat[0].Specular, params );
-   }
-   if (bitmask & BACK_SPECULAR_BIT) {
-      COPY_4FV( mat[1].Specular, params );
-   }
-   if (bitmask & FRONT_EMISSION_BIT) {
-      COPY_4FV( mat[0].Emission, params );
-   }
-   if (bitmask & BACK_EMISSION_BIT) {
-      COPY_4FV( mat[1].Emission, params );
-   }
-   if (bitmask & FRONT_SHININESS_BIT) {
-      GLfloat shininess = CLAMP( params[0], 0.0F, 128.0F );
-      mat[0].Shininess = shininess;
-   }
-   if (bitmask & BACK_SHININESS_BIT) {
-      GLfloat shininess = CLAMP( params[0], 0.0F, 128.0F );
-      mat[1].Shininess = shininess;
-   }
-   if (bitmask & FRONT_INDEXES_BIT) {
-      mat[0].AmbientIndex = params[0];
-      mat[0].DiffuseIndex = params[1];
-      mat[0].SpecularIndex = params[2];
-   }
-   if (bitmask & BACK_INDEXES_BIT) {
-      mat[1].AmbientIndex = params[0];
-      mat[1].DiffuseIndex = params[1];
-      mat[1].SpecularIndex = params[2];
-   }
-}
 
 
 void
@@ -1281,8 +1202,6 @@ gl_update_lighting( GLcontext *ctx )
 	 light->_sli = DOT3(ci, light->Specular);
       }
    }
-
-   gl_update_lighting_function(ctx);
 }
 
 
@@ -1364,54 +1283,3 @@ gl_compute_light_positions( GLcontext *ctx )
 }
 
 
-/* _NEW_TRANSFORM
- * _NEW_MODELVIEW
- * _TNL_NEW_NEED_NORMALS    
- * _TNL_NEW_NEED_EYE_COORDS
- *
- * Update on (_NEW_TRANSFORM|_NEW_MODELVIEW)
- * And also on NewLightingSpaces() callback.
- */
-void
-gl_update_normal_transform( GLcontext *ctx )
-{
-
-   if (!ctx->_NeedNormals) {
-      ctx->_NormalTransform = 0;
-      return;
-   }
-
-   if (ctx->_NeedEyeCoords) {
-      GLuint transform = NORM_TRANSFORM_NO_ROT;
-
-      if (ctx->ModelView.flags & (MAT_FLAG_GENERAL |
-				  MAT_FLAG_ROTATION |
-				  MAT_FLAG_GENERAL_3D |
-				  MAT_FLAG_PERSPECTIVE)) 
-	 transform = NORM_TRANSFORM;
-	    
-	       
-      if (ctx->Transform.Normalize) {
-	 ctx->_NormalTransform = gl_normal_tab[transform | NORM_NORMALIZE];
-      } 
-      else if (ctx->Transform.RescaleNormals &&
-	       ctx->_ModelViewInvScale != 1.0) {
-	 ctx->_NormalTransform = gl_normal_tab[transform | NORM_RESCALE];
-      }
-      else {
-	 ctx->_NormalTransform = gl_normal_tab[transform];
-      }
-   }
-   else {
-      if (ctx->Transform.Normalize) {
-	 ctx->_NormalTransform = gl_normal_tab[NORM_NORMALIZE];
-      }
-      else if (!ctx->Transform.RescaleNormals &&
-	       ctx->_ModelViewInvScale != 1.0) {
-	 ctx->_NormalTransform = gl_normal_tab[NORM_RESCALE];
-      }
-      else {
-	 ctx->_NormalTransform = 0;
-      }
-   }
-}

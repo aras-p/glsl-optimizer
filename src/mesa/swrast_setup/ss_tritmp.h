@@ -30,7 +30,7 @@ static void TAG(triangle)(GLcontext *ctx,
 			  GLuint e0, GLuint e1, GLuint e2,
 			  GLuint pv)
 {
-   struct vertex_buffer *VB = ctx->VB;
+   struct vertex_buffer *VB = TNL_VB(ctx);
    SWvertex *verts = SWSETUP_VB(VB)->verts;
    SWvertex *v[3];
    GLfloat offset;
@@ -224,7 +224,7 @@ static void TAG(quad)( GLcontext *ctx, GLuint v0,
 
 static void TAG(line)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint pv )
 {
-   struct vertex_buffer *VB = ctx->VB;
+   struct vertex_buffer *VB = TNL_VB(ctx);
    SWvertex *verts = SWSETUP_VB(VB)->verts;
    GLubyte c[2][4], s[2][4];
    GLuint i[2];
@@ -264,7 +264,7 @@ static void TAG(line)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint pv )
 
 static void TAG(points)( GLcontext *ctx, GLuint first, GLuint last )
 {
-   struct vertex_buffer *VB = ctx->VB;
+   struct vertex_buffer *VB = TNL_VB(ctx);
    SWvertex *verts = SWSETUP_VB(VB)->verts;
    int i;
    

@@ -1,4 +1,4 @@
-/* $Id: eval.h,v 1.2 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: eval.h,v 1.3 2000/11/16 21:05:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,8 +61,6 @@ extern GLfloat *gl_copy_map_points2d(GLenum target,
                                      const GLdouble *points );
 
 
-extern void gl_eval_vb( struct vertex_buffer *VB );
-
 
 extern void
 _mesa_Map1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride,
@@ -107,40 +105,5 @@ _mesa_GetMapfv( GLenum target, GLenum query, GLfloat *v );
 extern void
 _mesa_GetMapiv( GLenum target, GLenum query, GLint *v );
 
-extern void
-_mesa_EvalMesh1( GLenum mode, GLint i1, GLint i2 );
-
-extern void
-_mesa_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 );
-
-extern void
-_mesa_EvalCoord1d( GLdouble u );
-
-extern void
-_mesa_EvalCoord1f( GLfloat u );
-
-extern void
-_mesa_EvalCoord1dv( const GLdouble *u );
-
-extern void
-_mesa_EvalCoord1fv( const GLfloat *u );
-
-extern void
-_mesa_EvalCoord2d( GLdouble u, GLdouble v );
-
-extern void
-_mesa_EvalCoord2f( GLfloat u, GLfloat v );
-
-extern void
-_mesa_EvalCoord2dv( const GLdouble *u );
-
-extern void
-_mesa_EvalCoord2fv( const GLfloat *u );
-
-extern void
-_mesa_EvalPoint1( GLint i );
-
-extern void
-_mesa_EvalPoint2( GLint i, GLint j );
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.41 2000/11/14 17:40:13 brianp Exp $ */
+/* $Id: dd.h,v 1.42 2000/11/16 21:05:34 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,7 +34,6 @@
 
 struct gl_pixelstore_attrib;
 struct vertex_buffer;
-struct immediate;
 struct gl_pipeline;
 struct gl_pipeline_stage;
 
@@ -122,6 +121,30 @@ struct gl_pipeline_stage;
 
 
 
+
+
+
+
+/* Point, line, triangle, quadrilateral and rectangle rasterizer
+ * functions.  These are specific to the tnl module and will shortly
+ * move to a driver interface specific to that module.
+ */
+typedef void (*points_func)( GLcontext *ctx, GLuint first, GLuint last );
+
+typedef void (*line_func)( GLcontext *ctx, GLuint v1, GLuint v2, GLuint pv );
+
+typedef void (*triangle_func)( GLcontext *ctx,
+                               GLuint v1, GLuint v2, GLuint v3, GLuint pv );
+
+typedef void (*quad_func)( GLcontext *ctx, GLuint v1, GLuint v2,
+                           GLuint v3, GLuint v4, GLuint pv );
+
+typedef void (*render_func)( struct vertex_buffer *VB, 
+			     GLuint start,
+			     GLuint count,
+			     GLuint parity );
+
+
 /*
  * Device Driver function table.
  */
@@ -138,12 +161,6 @@ struct dd_function_table {
     * NULL can be returned.
     */
 
-   GLuint UpdateStateNotify;
-   /*
-    * Tell mesa exactly when to call UpdateState.  This is a bitwise
-    * or of the _NEW_* flags defined in types.h. 
-    */
-   
    void (*UpdateState)( GLcontext *ctx );
    /*
     * UpdateState() is called whenver Mesa thinks the device driver should
@@ -325,13 +342,6 @@ struct dd_function_table {
    /*
     * Called whenever an error is generated.  ctx->ErrorValue contains
     * the error value.
-    */
-
-   void (*NearFar)( GLcontext *ctx, GLfloat nearVal, GLfloat farVal );
-   /*
-    * Called from glFrustum and glOrtho to tell device driver the
-    * near and far clipping plane Z values.  The 3Dfx driver, for example,
-    * uses this.
     */
 
 
@@ -744,14 +754,13 @@ struct dd_function_table {
 
 
    /***
-    *** Accelerated point, line, polygon, quad and rect functions:
+    *** Accelerated point, line, polygon and quad functions:
     ***/
 
    points_func   PointsFunc;
    line_func     LineFunc;
    triangle_func TriangleFunc;
    quad_func     QuadFunc;
-   rect_func     RectFunc;    
    
 
    /***
@@ -798,12 +807,7 @@ struct dd_function_table {
    /***
     *** NEW in Mesa 3.x
     ***/
-   void (*LightingSpaceChange)( GLcontext *ctx );
-   /* Notify driver that the special derived value _NeedEyeCoords has
-    * changed.  
-    */
    
-
    void (*RegisterVB)( struct vertex_buffer *VB );
    void (*UnregisterVB)( struct vertex_buffer *VB );
    /* When Mesa creates a new vertex buffer it calls Driver.RegisterVB()
@@ -814,24 +818,6 @@ struct dd_function_table {
     */
 
 
-   void (*ResetVB)( struct vertex_buffer *VB );
-   void (*ResetCvaVB)( struct vertex_buffer *VB, GLuint stages );
-   /* Do any reset operations necessary to the driver data associated
-    * with these vertex buffers.
-    */
-
-   GLuint RenderVectorFlags;
-   /* What do the render tables require of the vectors they deal
-    * with?  
-    */
-
-   GLuint (*RegisterPipelineStages)( struct gl_pipeline_stage *out,
-				     const struct gl_pipeline_stage *in,
-				     GLuint nr );
-   /* Register new pipeline stages, or modify existing ones.  See also
-    * the OptimizePipeline() functions.
-    */
-
 
    GLboolean (*BuildPrecalcPipeline)( GLcontext *ctx );
    GLboolean (*BuildEltPipeline)( GLcontext *ctx );
@@ -839,10 +825,50 @@ struct dd_function_table {
     */
 
 
-   void (*OptimizePrecalcPipeline)( GLcontext *ctx, struct gl_pipeline *pipe );
-   void (*OptimizeImmediatePipeline)( GLcontext *ctx, struct gl_pipeline *pipe);
-   /* Check to see if a fast path exists for this combination of stages 
-    * in the precalc and immediate (elt) pipelines.
+   /***
+    *** Support for multiple t&l engines
+    ***/
+
+#define FLUSH_INSIDE_BEGIN_END 0x1
+#define FLUSH_STORED_VERTICES  0x2
+#define FLUSH_UPDATE_CURRENT   0x4
+
+   GLuint NeedFlush;
+   /* Set by the driver-supplied t&l engine.  
+    * Bitflags defined above are set whenever 
+    *     - the engine *might* be inside a begin/end object.
+    *     - there *might* be buffered vertices to be flushed.
+    *     - the ctx->Current values *might* not be uptodate.
+    *
+    * The FlushVertices() call below may be used to resolve 
+    * these conditions.
+    */
+
+   GLboolean (*FlushVertices)( GLcontext *ctx, GLuint flags );
+   /* If inside begin/end, returns GL_FALSE.  
+    * Otherwise, 
+    *   if (flags & FLUSH_STORED_VERTICES) flushes any buffered vertices,
+    *   if (flags & FLUSH_UPDATE_CURRENT) updates ctx->Current,
+    *   returns GL_TRUE. 
+    *
+    * Note that the default t&l engine never clears the
+    * FLUSH_UPDATE_CURRENT bit, even after performing the update.
+    */
+
+   void (*LightingSpaceChange)( GLcontext *ctx );
+   /* Notify driver that the special derived value _NeedEyeCoords has
+    * changed.  
+    */
+
+   void (*NewList)( GLcontext *ctx, GLuint list, GLenum mode );
+   void (*EndList)( GLcontext *ctx );
+   /* Let the t&l component know what is going on with display lists
+    * in time to make changes to dispatch tables, etc.
+    */
+
+   void (*MakeCurrent)( GLcontext *ctx, GLframebuffer *drawBuffer, 
+			GLframebuffer *readBuffer );
+   /* Let the t&l component know when the context becomes current.
     */
 
 
@@ -898,6 +924,23 @@ struct dd_function_table {
    GLboolean (*GetFloatv)(GLcontext *ctx, GLenum pname, GLfloat *result);
    GLboolean (*GetIntegerv)(GLcontext *ctx, GLenum pname, GLint *result);
    GLboolean (*GetPointerv)(GLcontext *ctx, GLenum pname, GLvoid **result);
+
+
+   void (*VertexPointer)(GLcontext *ctx, GLint size, GLenum type, 
+			 GLsizei stride, const GLvoid *ptr);
+   void (*NormalPointer)(GLcontext *ctx, GLenum type, 
+			 GLsizei stride, const GLvoid *ptr);
+   void (*ColorPointer)(GLcontext *ctx, GLint size, GLenum type, 
+			GLsizei stride, const GLvoid *ptr);
+   void (*FogCoordPointer)(GLcontext *ctx, GLenum type, 
+			   GLsizei stride, const GLvoid *ptr);
+   void (*IndexPointer)(GLcontext *ctx, GLenum type, 
+			GLsizei stride, const GLvoid *ptr);
+   void (*SecondaryColorPointer)(GLcontext *ctx, GLint size, GLenum type, 
+				 GLsizei stride, const GLvoid *ptr);
+   void (*TexCoordPointer)(GLcontext *ctx, GLint size, GLenum type, 
+			   GLsizei stride, const GLvoid *ptr);
+   void (*EdgeFlagPointer)(GLcontext *ctx, GLsizei stride, const GLvoid *ptr);
 };
 
 

@@ -1,4 +1,4 @@
-/* $Id: xm_span.c,v 1.2 2000/11/14 17:40:15 brianp Exp $ */
+/* $Id: xm_span.c,v 1.3 2000/11/16 21:05:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,6 @@
 #include "state.h"
 #include "depth.h"
 #include "macros.h"
-#include "vb.h"
 #include "types.h"
 #include "xmesaP.h"
 #include "extensions.h"

@@ -1,4 +1,4 @@
-/* $Id: 3dnow.h,v 1.2 2000/10/23 00:16:28 gareth Exp $ */
+/* $Id: 3dnow.h,v 1.3 2000/11/16 21:05:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,7 @@
 #ifndef __3DNOW_H__
 #define __3DNOW_H__
 
-#include "xform.h"
+#include "math/m_xform.h"
 
 void gl_init_3dnow_transform_asm( void );
 void gl_init_3dnow_vertex_asm( void );

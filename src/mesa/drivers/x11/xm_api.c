@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.7 2000/11/14 17:40:15 brianp Exp $ */
+/* $Id: xm_api.c,v 1.8 2000/11/16 21:05:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -78,6 +78,7 @@
 #include "macros.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
+#include "tnl/tnl.h"
 
 #ifndef GLX_NONE_EXT
 #define GLX_NONE_EXT 0x8000
@@ -1654,7 +1655,6 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    c->pixelformat = v->dithered_pf;      /* Dithering is enabled by default */
 
    ctx->Driver.UpdateState = xmesa_update_state;
-   ctx->Driver.UpdateStateNotify = ~0;
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
    c->driContextPriv = driContextPriv;
@@ -1664,14 +1664,11 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
     */
    xmesa_init_pointers( ctx );
 
-   if (ctx->VB) 
-      _swsetup_RegisterVB( ctx->VB );
-
-
    /* Initialize the software rasterizer and helper modules.
     */
    _swrast_CreateContext( ctx );
    _swsetup_CreateContext( ctx );
+   _tnl_CreateContext( ctx );
 
    xmesa_register_swrast_functions( ctx );
 

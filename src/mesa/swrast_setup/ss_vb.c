@@ -27,10 +27,13 @@
 
 #include "glheader.h"
 #include "macros.h"
-#include "stages.h"
 
 #include "swrast/swrast.h"
 
+#include "tnl/t_context.h"
+#include "tnl/t_stages.h"
+
+#include "math/m_vector.h"
 #include "ss_context.h"
 #include "ss_vb.h"
 

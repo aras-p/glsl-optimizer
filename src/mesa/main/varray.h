@@ -1,4 +1,4 @@
-/* $Id: varray.h,v 1.8 2000/10/27 16:44:41 keithw Exp $ */
+/* $Id: varray.h,v 1.9 2000/11/16 21:05:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -96,52 +96,8 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
 
 
 extern void
-_mesa_ArrayElement( GLint );
-
-
-extern void
-_mesa_DrawArrays(GLenum mode, GLint first, GLsizei count);
-
-
-extern void
-_mesa_save_DrawArrays(GLenum mode, GLint first, GLsizei count);
-
-
-extern void
-_mesa_DrawElements(GLenum mode, GLsizei count, GLenum type,
-                   const GLvoid *indices);
-
-
-extern void
-_mesa_save_DrawElements(GLenum mode, GLsizei count,
-                        GLenum type, const GLvoid *indices);
-
-
-extern void
 _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer);
 
-extern void
-_mesa_save_InterleavedArrays(GLenum format, GLsizei stride,
-                             const GLvoid *pointer);
-
-
-extern void
-_mesa_DrawRangeElements(GLenum mode, GLuint start,
-                        GLuint end, GLsizei count, GLenum type,
-                        const GLvoid *indices);
-
-extern void
-_mesa_save_DrawRangeElements(GLenum mode,
-                             GLuint start, GLuint end, GLsizei count,
-                             GLenum type, const GLvoid *indices );
-
-
-extern void gl_exec_array_elements( GLcontext *ctx, 
-				    struct immediate *IM,
-				    GLuint start, 
-				    GLuint end );
-
-extern void gl_update_client_state( GLcontext *ctx );
 
 
 #endif

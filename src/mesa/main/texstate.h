@@ -1,4 +1,4 @@
-/* $Id: texstate.h,v 1.2 1999/11/11 01:22:28 brianp Exp $ */
+/* $Id: texstate.h,v 1.3 2000/11/16 21:05:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -140,8 +140,6 @@ extern void
 gl_remove_texobj_from_dirty_list( struct gl_shared_state *shared,
                                   struct gl_texture_object *tObj );
 
-extern void
-gl_update_dirty_texobjs( GLcontext *ctx );
 
 
 #endif

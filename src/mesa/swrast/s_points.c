@@ -1,4 +1,4 @@
-/* $Id: s_points.c,v 1.5 2000/11/15 16:38:40 brianp Exp $ */
+/* $Id: s_points.c,v 1.6 2000/11/16 21:05:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,6 @@
 #include "macros.h"
 #include "mmath.h"
 #include "texstate.h"
-#include "vb.h"
 
 #include "s_context.h"
 #include "s_feedback.h"

@@ -54,6 +54,8 @@
 #include "fxdrv.h"
 #include "enums.h"
 
+#include "tnl/t_context.h"
+
 static GLuint fxGetTexSetConfiguration(GLcontext *ctx,
 				struct gl_texture_object *tObj0,
 				struct gl_texture_object *tObj1);

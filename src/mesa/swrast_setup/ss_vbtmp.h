@@ -29,6 +29,7 @@
 static void TAG(rs)(struct vertex_buffer *VB, GLuint start, GLuint end)
 {
    GLcontext *ctx = VB->ctx;
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
    SWvertex *v;
    GLfloat (*eye)[4];
    GLfloat (*win)[4];
@@ -54,7 +55,7 @@ static void TAG(rs)(struct vertex_buffer *VB, GLuint start, GLuint end)
 
    /* TODO:  Get import_client_data to pad vectors out to 4 cleanly.
     */
-   gl_import_client_data( VB, ctx->_RenderFlags,
+   gl_import_client_data( VB, tnl->_RenderFlags,
 			  (VB->ClipOrMask
 			   ? /*  VEC_CLEAN| */VEC_WRITABLE|VEC_GOOD_STRIDE
 			   : /*  VEC_CLEAN| */VEC_GOOD_STRIDE));

@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.13 2000/11/13 20:02:56 keithw Exp $ */
+/* $Id: rastpos.c,v 1.14 2000/11/16 21:05:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,15 +35,204 @@
 #include "feedback.h"
 #include "light.h"
 #include "macros.h"
-#include "matrix.h"
 #include "mmath.h"
 #include "rastpos.h"
-#include "shade.h"
 #include "state.h"
+#include "simple_list.h"
 #include "types.h"
-#include "xform.h"
+
+#include "math/m_matrix.h"
+#include "math/m_xform.h"
 #endif
 
+
+/*
+ * Clip a point against the view volume.
+ * Input:  v - vertex-vector describing the point to clip
+ * Return:  0 = outside view volume
+ *          1 = inside view volume
+ */
+static GLuint gl_viewclip_point( const GLfloat v[] )
+{
+   if (   v[0] > v[3] || v[0] < -v[3]
+       || v[1] > v[3] || v[1] < -v[3]
+       || v[2] > v[3] || v[2] < -v[3] ) {
+      return 0;
+   }
+   else {
+      return 1;
+   }
+}
+
+/*
+ * Clip a point against the user clipping planes.
+ * Input:  v - vertex-vector describing the point to clip.
+ * Return:  0 = point was clipped
+ *          1 = point not clipped
+ */
+static GLuint gl_userclip_point( GLcontext* ctx, const GLfloat v[] )
+{
+   GLuint p;
+
+   for (p=0;p<MAX_CLIP_PLANES;p++) {
+      if (ctx->Transform.ClipEnabled[p]) {
+	 GLfloat dot = v[0] * ctx->Transform._ClipUserPlane[p][0]
+		     + v[1] * ctx->Transform._ClipUserPlane[p][1]
+		     + v[2] * ctx->Transform._ClipUserPlane[p][2]
+		     + v[3] * ctx->Transform._ClipUserPlane[p][3];
+         if (dot < 0.0F) {
+            return 0;
+         }
+      }
+   }
+
+   return 1;
+}
+
+
+/* This has been split off to allow the normal shade routines to
+ * get a little closer to the vertex buffer, and to use the 
+ * GLvector objects directly.
+ */
+static void gl_shade_rastpos( GLcontext *ctx,
+			      GLfloat vertex[4],
+			      GLfloat normal[3],
+			      GLfloat Rcolor[4],
+			      GLuint *index )
+{
+   GLfloat (*base)[3] = ctx->Light._BaseColor;
+   const GLchan *sumA = ctx->Light._BaseAlpha;
+   struct gl_light *light;
+   GLfloat color[4];
+   GLfloat diffuse = 0, specular = 0;
+
+   COPY_3V(color, base[0]);
+   color[3] = CHAN_TO_FLOAT( sumA[0] );
+
+   foreach (light, &ctx->Light.EnabledList) {
+      GLfloat n_dot_h;
+      GLfloat attenuation = 1.0;
+      GLfloat VP[3];  
+      GLfloat n_dot_VP;
+      GLfloat *h;
+      GLfloat contrib[3];
+      GLboolean normalized;
+
+      if (!(light->_Flags & LIGHT_POSITIONAL)) {
+	 COPY_3V(VP, light->_VP_inf_norm);
+	 attenuation = light->_VP_inf_spot_attenuation;
+      }
+      else {
+	 GLfloat d; 
+	 
+	 SUB_3V(VP, light->_Position, vertex);
+	 d = LEN_3FV( VP );
+	 
+	 if ( d > 1e-6) {
+	    GLfloat invd = 1.0F / d;
+	    SELF_SCALE_SCALAR_3V(VP, invd);
+	 }
+	 attenuation = 1.0F / (light->ConstantAttenuation + d * 
+			       (light->LinearAttenuation + d * 
+				light->QuadraticAttenuation));
+	 
+	 if (light->_Flags & LIGHT_SPOT) 
+	 {
+	    GLfloat PV_dot_dir = - DOT3(VP, light->_NormDirection);
+	    
+	    if (PV_dot_dir<light->_CosCutoff) {
+	       continue; 
+	    }
+	    else 
+	    {
+	       double x = PV_dot_dir * (EXP_TABLE_SIZE-1);
+	       int k = (int) x;
+	       GLfloat spot = (GLfloat) (light->_SpotExpTable[k][0]
+			       + (x-k)*light->_SpotExpTable[k][1]);
+	       attenuation *= spot;
+	    }
+	 }
+      }
+
+      if (attenuation < 1e-3) 
+	 continue;
+
+      n_dot_VP = DOT3( normal, VP );
+
+      if (n_dot_VP < 0.0F) {
+	 ACC_SCALE_SCALAR_3V(color, attenuation, light->_MatAmbient[0]);
+	 continue;
+      } 
+
+      COPY_3V(contrib, light->_MatAmbient[0]);
+      ACC_SCALE_SCALAR_3V(contrib, n_dot_VP, light->_MatDiffuse[0]);
+      diffuse += n_dot_VP * light->_dli * attenuation;
+
+      if (light->_IsMatSpecular[0]) {
+	 if (ctx->Light.Model.LocalViewer) {
+	    GLfloat v[3];
+	    COPY_3V(v, vertex);
+	    NORMALIZE_3FV(v);
+	    SUB_3V(VP, VP, v);
+	    h = VP;
+	    normalized = 0;
+	 }
+	 else if (light->_Flags & LIGHT_POSITIONAL) {
+	    h = VP;
+	    ACC_3V(h, ctx->_EyeZDir);
+	    normalized = 0;
+	 }
+         else {
+	    h = light->_h_inf_norm;
+	    normalized = 1;
+	 }
+	 
+	 n_dot_h = DOT3(normal, h);
+
+	 if (n_dot_h > 0.0F) {
+	    struct gl_material *mat = &ctx->Light.Material[0];
+	    GLfloat spec_coef;
+	    GLfloat shininess = mat->Shininess;
+
+	    if (!normalized) {
+	       n_dot_h *= n_dot_h;
+	       n_dot_h /= LEN_SQUARED_3FV( h );
+	       shininess *= .5;
+	    }
+	    
+	    GET_SHINE_TAB_ENTRY( ctx->_ShineTable[0], n_dot_h, spec_coef );
+
+	    if (spec_coef > 1.0e-10) {
+	       ACC_SCALE_SCALAR_3V( contrib, spec_coef,
+				    light->_MatSpecular[0]);
+	       specular += spec_coef * light->_sli * attenuation;
+	    }
+	 }
+      }
+
+      ACC_SCALE_SCALAR_3V( color, attenuation, contrib );
+   } 
+
+   if (ctx->Visual.RGBAflag) {
+      Rcolor[0] = CLAMP(color[0], 0.0F, 1.0F);
+      Rcolor[1] = CLAMP(color[1], 0.0F, 1.0F);
+      Rcolor[2] = CLAMP(color[2], 0.0F, 1.0F);
+      Rcolor[3] = CLAMP(color[3], 0.0F, 1.0F);
+   }
+   else {
+      struct gl_material *mat = &ctx->Light.Material[0];
+      GLfloat d_a = mat->DiffuseIndex - mat->AmbientIndex;
+      GLfloat s_a = mat->SpecularIndex - mat->AmbientIndex;
+      GLfloat ind = mat->AmbientIndex
+                  + diffuse * (1.0F-specular) * d_a
+                  + specular * s_a;
+      if (ind > mat->SpecularIndex) {
+	 ind = mat->SpecularIndex;
+      }
+      *index = (GLuint) (GLint) ind;
+   }
+
+}
 
 /*
  * Caller:  context->API.RasterPos4f
@@ -54,10 +243,12 @@ static void raster_pos4f( GLcontext *ctx,
    GLfloat v[4], eye[4], clip[4], ndc[3], d;
 
    /* KW: Added this test, which is in the spec.  We can't do this
-    *     outside begin/end any more because the ctx->Current values
+    *     inside begin/end any more because the ctx->Current values
     *     aren't uptodate during that period. 
     */
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx, "glRasterPos" );
+   FLUSH_TNL_RETURN(ctx, (FLUSH_INSIDE_BEGIN_END|
+			  FLUSH_STORED_VERTICES|
+			  FLUSH_UPDATE_CURRENT), "raster_pos4f");
 
    if (ctx->NewState)
       gl_update_state( ctx );

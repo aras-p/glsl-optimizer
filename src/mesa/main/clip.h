@@ -1,4 +1,4 @@
-/* $Id: clip.h,v 1.3 1999/11/11 01:22:25 brianp Exp $ */
+/* $Id: clip.h,v 1.4 2000/11/16 21:05:34 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,65 +31,10 @@
 #ifndef CLIP_H
 #define CLIP_H
 
-
 #include "types.h"
-
-
-
-#ifdef DEBUG
-#  define GL_VIEWCLIP_POINT( V )   gl_viewclip_point( V )
-#else
-#  define GL_VIEWCLIP_POINT( V )			\
-     (    (V)[0] <= (V)[3] && (V)[0] >= -(V)[3]		\
-       && (V)[1] <= (V)[3] && (V)[1] >= -(V)[3]		\
-       && (V)[2] <= (V)[3] && (V)[2] >= -(V)[3] )
-#endif
-
-
-
-
-#define CLIP_TAB_EDGEFLAG 1
-
-extern void gl_init_clip(void);
-
-
-extern GLuint gl_viewclip_point( const GLfloat v[] );
-
-
-
-extern GLuint gl_userclip_point( GLcontext* ctx, const GLfloat v[] );
-
-
-extern void gl_user_cliptest( struct vertex_buffer *VB );
-
 
 extern void _mesa_ClipPlane( GLenum plane, const GLdouble *equation );
 
 extern void _mesa_GetClipPlane( GLenum plane, GLdouble *equation );
-
-
-/*
- * Clipping interpolation functions
- */
-
-extern void gl_clip_interp_all( struct vertex_buffer *VB, 
-                                GLuint dst, GLfloat t, GLuint in, GLuint out );
-
-extern void gl_clip_interp_color_tex( struct vertex_buffer *VB,
-                                GLuint dst, GLfloat t, GLuint in, GLuint out );
-
-extern void gl_clip_interp_tex( struct vertex_buffer *VB, 
-                                GLuint dst, GLfloat t, GLuint in, GLuint out );
-
-extern void gl_clip_interp_color( struct vertex_buffer *VB,
-                                GLuint dst, GLfloat t, GLuint in, GLuint out );
-
-extern void gl_clip_interp_none( struct vertex_buffer *VB,
-                                GLuint dst, GLfloat t, GLuint in, GLuint out );
-
-
-extern void gl_update_userclip( GLcontext *ctx );
-
-extern void gl_update_clipmask( GLcontext *ctx );
 
 #endif

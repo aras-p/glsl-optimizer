@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.44 2000/11/15 16:38:59 brianp Exp $ */
+/* $Id: state.c,v 1.45 2000/11/16 21:05:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,7 +46,6 @@
 #include "context.h"
 #include "convolve.h"
 #include "copypix.h"
-#include "cva.h"
 #include "depth.h"
 #include "dlist.h"
 #include "drawpix.h"
@@ -63,7 +62,6 @@
 #include "masking.h"
 #include "matrix.h"
 #include "mmath.h"
-#include "pipeline.h"
 #include "pixel.h"
 #include "pixeltex.h"
 #include "points.h"
@@ -72,7 +70,6 @@
 #include "readpix.h"
 #include "rect.h"
 #include "scissor.h"
-#include "shade.h"
 #include "state.h"
 #include "stencil.h"
 #include "teximage.h"
@@ -81,11 +78,15 @@
 #include "texture.h"
 #include "types.h"
 #include "varray.h"
-#include "vbfill.h"
-#include "vbrender.h"
 #include "winpos.h"
-#include "xform.h"
+
 #include "swrast/swrast.h"
+#include "math/m_matrix.h"
+#include "math/m_xform.h"
+#include "tnl/t_eval.h"
+#include "tnl/t_vbfill.h"
+#include "tnl/t_varray.h"
+#include "tnl/t_rect.h"
 #endif
 
 
@@ -690,150 +691,6 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 /**********************************************************************/
 
 
-
-
-
-void gl_print_state( const char *msg, GLuint state )
-{
-   fprintf(stderr,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
-	   msg,
-	   state,
-	   (state & _NEW_MODELVIEW)       ? "ctx->ModelView, " : "",
-	   (state & _NEW_PROJECTION)      ? "ctx->Projection, " : "",
-	   (state & _NEW_TEXTURE_MATRIX)  ? "ctx->TextureMatrix, " : "",
-	   (state & _NEW_COLOR_MATRIX)    ? "ctx->ColorMatrix, " : "",
-	   (state & _NEW_ACCUM)           ? "ctx->Accum, " : "",
-	   (state & _NEW_COLOR)           ? "ctx->Color, " : "",
-	   (state & _NEW_DEPTH)           ? "ctx->Depth, " : "",
-	   (state & _NEW_EVAL)            ? "ctx->Eval/EvalMap, " : "",
-	   (state & _NEW_FOG)             ? "ctx->Fog, " : "",
-	   (state & _NEW_HINT)            ? "ctx->Hint, " : "",
-	   (state & _NEW_LIGHT)           ? "ctx->Light, " : "",
-	   (state & _NEW_LINE)            ? "ctx->Line, " : "",
-	   (state & _NEW_FEEDBACK_SELECT) ? "ctx->Feedback/Select, " : "",
-	   (state & _NEW_PIXEL)           ? "ctx->Pixel, " : "",
-	   (state & _NEW_POINT)           ? "ctx->Point, " : "",
-	   (state & _NEW_POLYGON)         ? "ctx->Polygon, " : "",
-	   (state & _NEW_POLYGONSTIPPLE)  ? "ctx->PolygonStipple, " : "",
-	   (state & _NEW_SCISSOR)         ? "ctx->Scissor, " : "",
-	   (state & _NEW_TEXTURE)         ? "ctx->Texture, " : "",
-	   (state & _NEW_TRANSFORM)       ? "ctx->Transform, " : "",
-	   (state & _NEW_VIEWPORT)        ? "ctx->Viewport, " : "",
-	   (state & _NEW_PACKUNPACK)      ? "ctx->Pack/Unpack, " : "",
-	   (state & _NEW_ARRAY)           ? "ctx->Array, " : "",
-	   (state & _NEW_COLORTABLE)      ? "ctx->{*}ColorTable, " : "",
-	   (state & _NEW_RENDERMODE)      ? "ctx->RenderMode, " : "",
-	   (state & _NEW_BUFFERS)         ? "ctx->Visual, ctx->DrawBuffer,, " : "");
-}
-
-
-void gl_print_enable_flags( const char *msg, GLuint flags )
-{
-   fprintf(stderr,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s\n",
-	   msg,
-	   flags,
-	   (flags & ENABLE_TEX0)       ? "tex-0, " : "",
-	   (flags & ENABLE_TEX1)       ? "tex-1, " : "",
-	   (flags & ENABLE_LIGHT)      ? "light, " : "",
-	   (flags & ENABLE_FOG)        ? "fog, " : "",
-	   (flags & ENABLE_USERCLIP)   ? "userclip, " : "",
-	   (flags & ENABLE_TEXGEN0)    ? "tex-gen-0, " : "",
-	   (flags & ENABLE_TEXGEN1)    ? "tex-gen-1, " : "",
-	   (flags & ENABLE_TEXMAT0)    ? "tex-mat-0, " : "",
-	   (flags & ENABLE_TEXMAT1)    ? "tex-mat-1, " : "",
-	   (flags & ENABLE_NORMALIZE)  ? "normalize, " : "",
-	   (flags & ENABLE_RESCALE)    ? "rescale, " : "");
-}
-
-
-/* Note: This routine refers to derived texture attribute values to
- * compute the ENABLE_TEXMAT flags, but is only called on
- * _NEW_TEXTURE_MATRIX.  On changes to _NEW_TEXTURE, the ENABLE_TEXMAT
- * flags are updated by _mesa_update_textures(), below.  
- * 
- * If both TEXTURE and TEXTURE_MATRIX change at once, these values
- * will be computed twice. 
- */
-static void
-_mesa_update_texture_matrices( GLcontext *ctx )
-{
-   GLuint i;
-
-   ctx->_Enabled &= ~(ENABLE_TEXMAT0 | ENABLE_TEXMAT1 | ENABLE_TEXMAT2);
-
-   for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
-      if (ctx->TextureMatrix[i].flags & MAT_DIRTY_ALL_OVER) {
-	 gl_matrix_analyze( &ctx->TextureMatrix[i] );
-	 ctx->TextureMatrix[i].flags &= ~MAT_DIRTY_DEPENDENTS;
-
-	 if (ctx->Texture.Unit[i]._ReallyEnabled &&
-	     ctx->TextureMatrix[i].type != MATRIX_IDENTITY)
-	    ctx->_Enabled |= ENABLE_TEXMAT0 << i;
-      }
-   }
-}
-
-
-/* Note: This routine refers to derived texture matrix values to
- * compute the ENABLE_TEXMAT flags, but is only called on
- * _NEW_TEXTURE.  On changes to _NEW_TEXTURE_MATRIX, the ENABLE_TEXMAT
- * flags are updated by _mesa_update_texture_matrices, above.  
- * 
- * If both TEXTURE and TEXTURE_MATRIX change at once, these values
- * will be computed twice.  
- */
-static void
-_mesa_update_textures( GLcontext *ctx )
-{
-   GLuint i;
-
-   ctx->Texture._ReallyEnabled = 0;
-   ctx->_Enabled &= ~(ENABLE_TEXGEN0 | ENABLE_TEXGEN1 | ENABLE_TEXGEN2 |
-		      ENABLE_TEXMAT0 | ENABLE_TEXMAT1 | ENABLE_TEXMAT2 |
-		      ENABLE_TEX0 | ENABLE_TEX1 | ENABLE_TEX2);
-
-   gl_update_dirty_texobjs(ctx);
-
-   for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
-      
-      ctx->Texture.Unit[i]._ReallyEnabled = 0;
-
-      if (ctx->Texture.Unit[i].Enabled) {
-
-	 gl_update_texture_unit( ctx, &ctx->Texture.Unit[i] );
-
-	 if (ctx->Texture.Unit[i]._ReallyEnabled) {
-	    GLuint flag = ctx->Texture.Unit[i]._ReallyEnabled << (i * 4);
-
-	    ctx->Texture._ReallyEnabled |= flag;
-	    ctx->_Enabled |= flag;
-
-	    if (ctx->Texture.Unit[i]._GenFlags) {
-	       ctx->_Enabled |= ENABLE_TEXGEN0 << i;
-	       ctx->Texture._GenFlags |= ctx->Texture.Unit[i]._GenFlags;
-	    }
-
-	    if (ctx->TextureMatrix[i].type != MATRIX_IDENTITY)
-	       ctx->_Enabled |= ENABLE_TEXMAT0 << i;
-	 }
-      }
-   }
-
-   ctx->_NeedNormals &= ~NEED_NORMALS_TEXGEN;
-   ctx->_NeedEyeCoords &= ~NEED_EYE_TEXGEN;
-
-   if (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS) {
-      ctx->_NeedNormals |= NEED_NORMALS_TEXGEN;
-      ctx->_NeedEyeCoords |= NEED_EYE_TEXGEN;
-   }
-   
-   if (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD) {
-      ctx->_NeedEyeCoords |= NEED_EYE_TEXGEN;
-   }
-}
-
 static void
 _mesa_update_polygon( GLcontext *ctx )
 {
@@ -872,11 +729,11 @@ static void
 _mesa_calculate_model_project_matrix( GLcontext *ctx )
 {
    if (!ctx->_NeedEyeCoords) {
-      gl_matrix_mul( &ctx->_ModelProjectMatrix,
-		     &ctx->ProjectionMatrix,
-		     &ctx->ModelView );
+      _math_matrix_mul_matrix( &ctx->_ModelProjectMatrix,
+			       &ctx->ProjectionMatrix,
+			       &ctx->ModelView );
 
-      gl_matrix_analyze( &ctx->_ModelProjectMatrix );
+      _math_matrix_analyze( &ctx->_ModelProjectMatrix );
    }
 }
 
@@ -913,7 +770,6 @@ _mesa_update_tnl_spaces( GLcontext *ctx, GLuint oldneedeyecoords )
        */
       _mesa_update_modelview_scale(ctx);
       _mesa_calculate_model_project_matrix(ctx);
-      gl_update_normal_transform( ctx ); 
       gl_compute_light_positions( ctx );
 
       if (ctx->Driver.LightingSpaceChange)
@@ -932,9 +788,6 @@ _mesa_update_tnl_spaces( GLcontext *ctx, GLuint oldneedeyecoords )
       if (new_state & (_NEW_MODELVIEW|_NEW_PROJECTION)) 
 	 _mesa_calculate_model_project_matrix(ctx);
 	    
-      if (new_state & _TNL_NEW_NORMAL_TRANSFORM)
-	 gl_update_normal_transform( ctx ); /* references _ModelViewInvScale */
-	     
       if (new_state & (_NEW_LIGHT|_NEW_MODELVIEW))
 	 gl_compute_light_positions( ctx );
    }
@@ -973,7 +826,7 @@ _mesa_update_drawbuffer( GLcontext *ctx )
 static void
 _mesa_update_projection( GLcontext *ctx )
 {
-   gl_matrix_analyze( &ctx->ProjectionMatrix );
+   _math_matrix_analyze( &ctx->ProjectionMatrix );
       
    /* Recompute clip plane positions in clipspace.  This is also done
     * in _mesa_ClipPlane().
@@ -1015,7 +868,7 @@ void gl_update_state( GLcontext *ctx )
       gl_print_state("", new_state);
 
    if (new_state & _NEW_MODELVIEW) 
-      gl_matrix_analyze( &ctx->ModelView );
+      _math_matrix_analyze( &ctx->ModelView );
 
    if (new_state & _NEW_PROJECTION) 
       _mesa_update_projection( ctx );
@@ -1024,15 +877,12 @@ void gl_update_state( GLcontext *ctx )
       _mesa_update_texture_matrices( ctx );
 
    if (new_state & _NEW_COLOR_MATRIX) 
-      gl_matrix_analyze( &ctx->ColorMatrix );
+      _math_matrix_analyze( &ctx->ColorMatrix );
    
    /* References ColorMatrix.type (derived above).
     */
    if (new_state & (_NEW_PIXEL|_NEW_COLOR_MATRIX))
       _mesa_update_image_transfer_state(ctx);
-
-   if (new_state & _NEW_ARRAY)
-      gl_update_client_state( ctx );
 
    /* Contributes to NeedEyeCoords, NeedNormals.
     */
@@ -1049,12 +899,6 @@ void gl_update_state( GLcontext *ctx )
     */
    if (new_state & _NEW_LIGHT) 
       gl_update_lighting( ctx );
-
-   if (new_state & (_NEW_LIGHT|_NEW_TEXTURE|_NEW_FOG|
-		    _DD_NEW_TRI_LIGHT_TWOSIDE |
-		    _DD_NEW_SEPERATE_SPECULAR |
-		    _DD_NEW_TRI_UNFILLED ))
-      gl_update_clipmask(ctx);
 
    /* We can light in object space if the modelview matrix preserves
     * lengths and relative angles.
@@ -1082,17 +926,13 @@ void gl_update_state( GLcontext *ctx )
 		    _TNL_NEW_NEED_EYE_COORDS)) 
       _mesa_update_tnl_spaces( ctx, oldneedeyecoords );
 
-   if (new_state & ctx->Driver.UpdateStateNotify)
-   {
-      /*
-       * Here the driver sets up all the ctx->Driver function pointers to
-       * it's specific, private functions.
-       */
-      ctx->Driver.UpdateState(ctx);
-      gl_set_render_vb_function(ctx); /* XXX: remove this mechanism */
-   }
-
-   gl_update_pipelines(ctx);
+   /*
+    * Here the driver sets up all the ctx->Driver function pointers
+    * to it's specific, private functions, and performs any
+    * internal state management necessary, including invalidating
+    * state of active modules.
+    */
+   ctx->Driver.UpdateState(ctx);
    ctx->NewState = 0;
 }
 

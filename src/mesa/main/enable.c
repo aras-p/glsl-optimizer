@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.31 2000/11/05 18:40:57 keithw Exp $ */
+/* $Id: enable.c,v 1.32 2000/11/16 21:05:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,13 +33,14 @@
 #include "enable.h"
 #include "light.h"
 #include "macros.h"
-#include "matrix.h"
 #include "mmath.h"
 #include "simple_list.h"
 #include "types.h"
-#include "vbfill.h"
-#include "xform.h"
 #include "enums.h"
+
+#include "math/m_matrix.h"
+#include "math/m_xform.h"
+
 #endif
 
 
@@ -98,10 +99,14 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	       ctx->_Enabled |= ENABLE_USERCLIP;
 	       ctx->Transform._AnyClip++;
 	       
-	       if (ctx->ProjectionMatrix.flags & MAT_DIRTY_ALL_OVER) {
-		  gl_matrix_analyze( &ctx->ProjectionMatrix );
+	       if (ctx->ProjectionMatrix.flags & MAT_DIRTY) {
+ 		  _math_matrix_analyze( &ctx->ProjectionMatrix );
 	       }
 	       
+	       /* This derived state also calculated in clip.c and
+		* from gl_update_state() on changes to EyeUserPlane
+		* and ctx->ProjectionMatrix respectively.
+		*/
 	       gl_transform_vector( ctx->Transform._ClipUserPlane[p],
 				    ctx->Transform.EyeUserPlane[p],
 				    ctx->ProjectionMatrix.inv );
@@ -113,10 +118,13 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 break;
       case GL_COLOR_MATERIAL:
          if (ctx->Light.ColorMaterialEnabled!=state) {
-            ctx->Light.ColorMaterialEnabled = state;
+	    ctx->Light.ColorMaterialEnabled = state;
 	    ctx->NewState |= _NEW_LIGHT;
-            if (state)
+
+            if (state) {
+	       FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
                gl_update_color_material( ctx, ctx->Current.Color );
+	    }
          }
 	 break;
       case GL_CULL_FACE:

@@ -1,4 +1,4 @@
-/* $Id: matrix.h,v 1.8 2000/10/29 18:12:15 brianp Exp $ */
+/* $Id: matrix.h,v 1.9 2000/11/16 21:05:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,38 +38,7 @@
 
 
 extern void
-gl_matrix_transposef( GLfloat to[16], const GLfloat from[16] );
-
-extern void
-gl_matrix_transposed( GLdouble to[16], const GLdouble from[16] );
-
-
-extern void
-gl_rotation_matrix( GLfloat angle, GLfloat x, GLfloat y, GLfloat z,
-                    GLfloat m[] );
-
-
-extern void
 gl_calculate_model_project_matrix( GLcontext *ctx );
-
-extern void
-gl_matrix_ctr( GLmatrix *m );
-
-extern void
-gl_matrix_dtr( GLmatrix *m );
-
-extern void
-gl_matrix_alloc_inv( GLmatrix *m );
-
-extern void
-gl_matrix_mul( GLmatrix *dest, const GLmatrix *a, const GLmatrix *b );
-
-extern void
-gl_matrix_analyze( GLmatrix *mat );
-
-extern void
-gl_print_matrix( const GLmatrix *m );
-
 
 
 extern void

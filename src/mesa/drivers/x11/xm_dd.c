@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.5 2000/11/14 17:40:15 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.6 2000/11/16 21:05:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,12 +32,12 @@
 #include "state.h"
 #include "depth.h"
 #include "macros.h"
-#include "vb.h"
 #include "types.h"
 #include "xmesaP.h"
 #include "extensions.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
+#include "tnl/tnl.h"
 
 /*
  * Return the size (width,height of the current color buffer.
@@ -871,6 +871,7 @@ void xmesa_update_state( GLcontext *ctx )
     */
    _swrast_InvalidateState( ctx, ctx->NewState );
    _swsetup_InvalidateState( ctx, ctx->NewState );
+   _tnl_InvalidateState( ctx, ctx->NewState );
 
 
    /* setup pointers to front and back buffer clear functions */

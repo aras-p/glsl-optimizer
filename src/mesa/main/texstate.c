@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.21 2000/11/05 18:40:58 keithw Exp $ */
+/* $Id: texstate.c,v 1.22 2000/11/16 21:05:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,13 +34,13 @@
 #include "enums.h"
 #include "extensions.h"
 #include "macros.h"
-#include "matrix.h"
 #include "texobj.h"
 #include "teximage.h"
 #include "texstate.h"
 #include "texture.h"
 #include "types.h"
-#include "xform.h"
+#include "math/m_xform.h"
+#include "math/m_matrix.h"
 #include "swrast/swrast.h"
 #endif
 
@@ -1116,7 +1116,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	 else if (pname==GL_EYE_PLANE) {
             /* Transform plane equation by the inverse modelview matrix */
             if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
-               gl_matrix_analyze( &ctx->ModelView );
+               _math_matrix_analyze( &ctx->ModelView );
             }
             gl_transform_vector( texUnit->EyePlaneS, params,
                                  ctx->ModelView.inv );
@@ -1164,7 +1164,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	 else if (pname==GL_EYE_PLANE) {
             /* Transform plane equation by the inverse modelview matrix */
             if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
-               gl_matrix_analyze( &ctx->ModelView );
+               _math_matrix_analyze( &ctx->ModelView );
             }
             gl_transform_vector( texUnit->EyePlaneT, params,
                                  ctx->ModelView.inv );
@@ -1208,7 +1208,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	 else if (pname==GL_EYE_PLANE) {
             /* Transform plane equation by the inverse modelview matrix */
             if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
-               gl_matrix_analyze( &ctx->ModelView );
+               _math_matrix_analyze( &ctx->ModelView );
             }
             gl_transform_vector( texUnit->EyePlaneR, params,
                                  ctx->ModelView.inv );
@@ -1244,7 +1244,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	 else if (pname==GL_EYE_PLANE) {
             /* Transform plane equation by the inverse modelview matrix */
             if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
-               gl_matrix_analyze( &ctx->ModelView );
+               _math_matrix_analyze( &ctx->ModelView );
             }
             gl_transform_vector( texUnit->EyePlaneQ, params,
                                  ctx->ModelView.inv );
@@ -1674,18 +1674,3 @@ void gl_remove_texobj_from_dirty_list( struct gl_shared_state *shared,
 }
 
 
-/*
- * This is called by gl_update_state() if the _NEW_TEXTURE bit in
- * ctx->NewState is set.
- */
-void gl_update_dirty_texobjs( GLcontext *ctx )
-{
-   struct gl_texture_object *t, *next;
-   for (t = ctx->Shared->DirtyTexObjList; t; t = next) {
-      next = t->NextDirty;
-      _mesa_test_texobj_completeness(ctx, t);
-      t->NextDirty = NULL;
-      t->Dirty = GL_FALSE;
-   }
-   ctx->Shared->DirtyTexObjList = NULL;
-}

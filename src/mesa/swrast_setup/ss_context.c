@@ -1,4 +1,4 @@
-/* $Id: ss_context.c,v 1.3 2000/11/13 20:02:58 keithw Exp $ */
+/* $Id: ss_context.c,v 1.4 2000/11/16 21:05:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,6 +38,7 @@
 
 #include "swrast_setup.h"
 
+#include "tnl/t_context.h"
 
 /* Stub for swsetup->Triangle to select a true triangle function 
  * after a state change.

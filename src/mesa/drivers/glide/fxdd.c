@@ -58,6 +58,7 @@
 #include "extensions.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
+#include "tnl/tnl.h"
 
 /* These lookup table are used to extract RGB values in [0,255] from
  * 16-bit pixel values.
@@ -611,11 +612,6 @@ static void fxDDFinish(GLcontext *ctx)
 
 
 
-void fxDDSetNearFar(GLcontext *ctx, GLfloat n, GLfloat f)
-{
-   FX_CONTEXT(ctx)->new_state |= FX_NEW_FOG;
-   ctx->Driver.RenderStart = fxSetupFXUnits;
-}
 
 /* KW: Put the word Mesa in the render string because quakeworld
  * checks for this rather than doing a glGet(GL_MAX_TEXTURE_SIZE).
@@ -763,35 +759,28 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
 
    /* Initialize the software rasterizer and helper modules.
     */
+   fxMesa->glCtx->Driver.RegisterVB = fxDDRegisterVB;
+
    _swrast_CreateContext( fxMesa->glCtx );
    _swsetup_CreateContext( fxMesa->glCtx );
+   _tnl_CreateContext( fxMesa->glCtx );
+
+   fxSetupDDPointers(fxMesa->glCtx);
 
    /* Tell the software rasterizer to use pixel fog always.
     */
    _swrast_allow_vertex_fog( fxMesa->glCtx, GL_FALSE );
    _swrast_allow_pixel_fog( fxMesa->glCtx, GL_TRUE );
 
-   fxSetupDDPointers(fxMesa->glCtx);
    fxDDInitExtensions(fxMesa->glCtx);  
 
-   fxDDSetNearFar(fxMesa->glCtx,1.0,100.0);
-  
    FX_grGlideGetState((GrState*)fxMesa->state);
 
-   /* XXX Fix me: callback not registered when main VB is created.
-    */
-   if (fxMesa->glCtx->VB) 
-      fxDDRegisterVB( fxMesa->glCtx->VB );
-  
    /* XXX Fix me too: need to have the 'struct dd' prepared prior to
     * creating the context... The below is broken if you try to insert
     * new stages.  
     */
-   if (fxMesa->glCtx->NrPipelineStages)
-      fxMesa->glCtx->NrPipelineStages = fxDDRegisterPipelineStages( 
-	 fxMesa->glCtx->PipelineStage,
-	 fxMesa->glCtx->PipelineStage,
-	 fxMesa->glCtx->NrPipelineStages);
+   fxDDRegisterPipelineStages( fxMesa->glCtx );
 
    /* Run the config file */
    _mesa_context_initialize( fxMesa->glCtx );
@@ -936,6 +925,15 @@ static void fxDDUpdateDDPointers(GLcontext *ctx)
 
   _swrast_InvalidateState( ctx, new_state );
   _swsetup_InvalidateState( ctx, new_state );
+  _tnl_InvalidateState( ctx, new_state );
+
+  /* Recalculate fog table on projection matrix changes.  This used to
+   * be triggered by the NearFar callback.
+   */
+  if (new_state & _NEW_PROJECTION) {
+     FX_CONTEXT(ctx)->new_state |= FX_NEW_FOG;
+     ctx->Driver.RenderStart = fxSetupFXUnits;
+  }
 
   if (new_state & (_FX_NEW_IS_IN_HARDWARE |
 		   _FX_NEW_RENDERSTATE |
@@ -965,7 +963,6 @@ void fxSetupDDPointers(GLcontext *ctx)
     fprintf(stderr,"fxmesa: fxSetupDDPointers()\n");
   }
 
-  ctx->Driver.UpdateStateNotify = ~0;
   ctx->Driver.UpdateState=fxDDUpdateDDPointers;
 
   ctx->Driver.WriteDepthSpan=fxDDWriteDepthSpan;
@@ -974,8 +971,6 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.ReadDepthPixels=fxDDReadDepthPixels;
          
   ctx->Driver.GetString=fxDDGetString;
-
-  ctx->Driver.NearFar=fxDDSetNearFar;
 
   ctx->Driver.ClearIndex=NULL;
   ctx->Driver.ClearColor=fxDDClearColor;
@@ -1009,8 +1004,6 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.DeleteTexture=fxDDTexDel;
   ctx->Driver.UpdateTexturePalette=fxDDTexPalette;
 
-  ctx->Driver.RectFunc=NULL;
-
   ctx->Driver.AlphaFunc=fxDDAlphaFunc;
   ctx->Driver.BlendFunc=fxDDBlendFunc;
   ctx->Driver.DepthFunc=fxDDDepthFunc;
@@ -1025,8 +1018,6 @@ void fxSetupDDPointers(GLcontext *ctx)
 
   ctx->Driver.RegisterVB=fxDDRegisterVB;
   ctx->Driver.UnregisterVB=fxDDUnregisterVB;
-
-  ctx->Driver.RegisterPipelineStages = fxDDRegisterPipelineStages;
 
   if (!getenv("FX_NO_FAST")) 
       ctx->Driver.BuildPrecalcPipeline = fxDDBuildPrecalcPipeline; 

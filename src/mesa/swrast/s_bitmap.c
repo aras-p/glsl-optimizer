@@ -1,4 +1,4 @@
-/* $Id: s_bitmap.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_bitmap.c,v 1.3 2000/11/16 21:05:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,11 +55,6 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
 
    if (SWRAST_CONTEXT(ctx)->NewState)
       _swrast_validate_derived( ctx );
-
-   if (PB->primitive != GL_BITMAP) {
-      gl_flush_pb( ctx );
-      PB->primitive = GL_BITMAP;
-   }
 
    /* Set bitmap drawing color */
    if (ctx->Visual.RGBAflag) {

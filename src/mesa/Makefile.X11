@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.32 2000/11/11 19:09:29 brianp Exp $
+# $Id: Makefile.X11,v 1.33 2000/11/16 21:05:34 keithw Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -21,10 +21,31 @@ LIBDIR = ../lib
 
 
 CORE_SOURCES = \
+	tnl/t_bbox.c \
+	tnl/t_clip.c \
+	tnl/t_context.c \
+	tnl/t_cva.c \
+	tnl/t_debug.c \
+	tnl/t_dlist.c \
+	tnl/t_eval.c \
+	tnl/t_fog.c \
+	tnl/t_light.c \
+	tnl/t_pipeline.c \
+	tnl/t_rect.c \
+	tnl/t_shade.c \
+	tnl/t_stages.c \
+	tnl/t_texture.c \
+	tnl/t_trans_elt.c \
+	tnl/t_varray.c \
+	tnl/t_vb.c \
+	tnl/t_vbcull.c \
+	tnl/t_vbfill.c \
+	tnl/t_vbindirect.c \
+	tnl/t_vbrender.c \
+	tnl/t_vbxform.c \
 	accum.c \
 	alpha.c \
 	attrib.c \
-	bbox.c \
 	bitmap.c \
 	blend.c \
 	buffers.c \
@@ -34,8 +55,7 @@ CORE_SOURCES = \
 	context.c \
 	convolve.c \
 	copypix.c \
-	cva.c \
-	debug_xform.c \
+	debug.c \
 	depth.c \
 	dispatch.c \
 	dlist.c \
@@ -64,7 +84,6 @@ CORE_SOURCES = \
 	matrix.c \
 	mem.c \
 	mmath.c \
-	pipeline.c \
 	pixel.c \
 	pixeltex.c \
 	points.c \
@@ -73,8 +92,6 @@ CORE_SOURCES = \
 	readpix.c \
 	rect.c \
 	scissor.c \
-	shade.c \
-	stages.c \
 	state.c \
 	stencil.c \
 	teximage.c \
@@ -82,18 +99,8 @@ CORE_SOURCES = \
 	texstate.c \
 	texture.c \
 	texutil.c \
-	translate.c \
 	varray.c \
-	vb.c \
-	vbcull.c \
-	vbfill.c \
-	vbindirect.c \
-	vbrender.c \
-	vbxform.c \
-	vector.c \
-	vertices.c \
 	winpos.c \
-	xform.c \
 	X86/x86.c \
 	X86/common_x86.c \
 	X86/3dnow.c \
@@ -129,9 +136,13 @@ CORE_SOURCES = \
 	swrast/s_zoom.c \
 	swrast_setup/ss_context.c \
 	swrast_setup/ss_triangle.c \
-	swrast_setup/ss_vb.c 
-
-
+	swrast_setup/ss_vb.c \
+	math/m_debug_xform.c \
+	math/m_matrix.c \
+	math/m_translate.c \
+	math/m_vector.c \
+	math/m_vertices.c \
+	math/m_xform.c  
 
 
 

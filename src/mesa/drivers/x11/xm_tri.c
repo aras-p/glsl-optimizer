@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.9 2000/11/14 17:40:15 brianp Exp $ */
+/* $Id: xm_tri.c,v 1.10 2000/11/16 21:05:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,7 +35,6 @@
 #include "glxheader.h"
 #include "depth.h"
 #include "macros.h"
-#include "vb.h"
 #include "types.h"
 #include "xmesaP.h"
 
@@ -1411,7 +1410,7 @@ static void flat_LOOKUP8_triangle( GLcontext *ctx,
 
 
 #ifdef DEBUG
-void
+static void
 _xmesa_print_triangle_func( swrast_tri_func triFunc )
 {
    printf("XMesa tri func = ");

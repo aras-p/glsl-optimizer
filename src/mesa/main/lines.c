@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.21 2000/11/05 18:40:58 keithw Exp $ */
+/* $Id: lines.c,v 1.22 2000/11/16 21:05:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,7 +37,6 @@
 #include "mmath.h"
 #include "texstate.h"
 #include "types.h"
-#include "vb.h"
 #endif
 
 

@@ -62,13 +62,11 @@
 #include "mem.h"
 #include "texture.h"
 #include "types.h"
-#include "vb.h"
-#include "xform.h"
-#include "clip.h"
-#include "vbrender.h"
 
 #include "GL/fxmesa.h"
 #include "fxglidew.h"
+
+#include "math/m_vector.h"
 
 /* use gl/gl.h GLAPI/GLAPIENTRY/GLCALLBACK in place of
  * WINGDIAPI/APIENTRY/CALLBACK, these are defined in mesa gl/gl.h -
@@ -476,7 +474,6 @@ extern int glbCurrentBoard;
 extern void fxPrintSetupFlags( const char *msg, GLuint flags );
 extern void fxSetupFXUnits(GLcontext *);
 extern void fxSetupDDPointers(GLcontext *);
-extern void fxDDSetNearFar(GLcontext *, GLfloat, GLfloat);
 
 extern void fxDDSetupInit(void);
 extern void fxDDCvaInit(void);
@@ -533,9 +530,7 @@ extern void fxDDPartialRasterSetup( struct vertex_buffer *VB );
 
 extern void fxDDDoRasterSetup( struct vertex_buffer *VB );
 
-extern GLuint fxDDRegisterPipelineStages( struct gl_pipeline_stage *out,
-					  const struct gl_pipeline_stage *in,
-					  GLuint nr );
+extern void fxDDRegisterPipelineStages( GLcontext *ctx );
 
 extern GLboolean fxDDBuildPrecalcPipeline( GLcontext *ctx );
 

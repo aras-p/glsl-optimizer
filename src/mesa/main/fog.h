@@ -1,4 +1,4 @@
-/* $Id: fog.h,v 1.9 2000/10/31 18:09:44 keithw Exp $ */
+/* $Id: fog.h,v 1.10 2000/11/16 21:05:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,10 +47,6 @@ _mesa_Fogfv(GLenum pname, const GLfloat *params );
 
 extern void
 _mesa_Fogiv(GLenum pname, const GLint *params );
-
-
-extern void 
-_mesa_make_win_fog_coords( struct vertex_buffer *VB );
 
 
 #endif

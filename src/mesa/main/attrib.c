@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.33 2000/11/05 18:40:57 keithw Exp $ */
+/* $Id: attrib.c,v 1.34 2000/11/16 21:05:34 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -136,6 +136,9 @@ _mesa_PushAttrib(GLbitfield mask)
 
    if (mask & GL_CURRENT_BIT) {
       struct gl_current_attrib *attr;
+
+      FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+
       attr = MALLOC_STRUCT( gl_current_attrib );
       MEMCPY( attr, &ctx->Current, sizeof(struct gl_current_attrib) );
       newnode = new_attrib_node( GL_CURRENT_BIT );
@@ -612,6 +615,7 @@ _mesa_PopAttrib(void)
             }
             break;
          case GL_CURRENT_BIT:
+	    FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
             MEMCPY( &ctx->Current, attr->data,
 		    sizeof(struct gl_current_attrib) );
             break;

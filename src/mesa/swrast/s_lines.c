@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.5 2000/11/13 20:02:57 keithw Exp $ */
+/* $Id: s_lines.c,v 1.6 2000/11/16 21:05:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,7 +28,6 @@
 #include "glheader.h"
 #include "macros.h"
 #include "mmath.h"
-#include "vb.h"
 #include "s_aaline.h"
 #include "s_pb.h"
 #include "s_context.h"

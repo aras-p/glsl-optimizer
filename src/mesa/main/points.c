@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.22 2000/11/15 16:38:40 brianp Exp $ */
+/* $Id: points.c,v 1.23 2000/11/16 21:05:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,7 +36,6 @@
 #include "points.h"
 #include "texstate.h"
 #include "types.h"
-#include "vb.h"
 #endif
 
 

@@ -508,7 +508,7 @@ void GGIMesaSwapBuffers(void)
 {
 	GGIMESADPRINT_CORE("GGIMesaSwapBuffers\n");
 	
-	FLUSH_VB(GGIMesa->gl_ctx, "swap buffers");
+	_mesa_swapbuffers( GGIMesa->gl_ctx );
 	gl_ggiFlush(GGIMesa->gl_ctx);
 	
 	if (GGIMesa->gl_vis->DBflag)

@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.50 2000/11/10 18:06:14 brianp Exp $ */
+/* $Id: dlist.c,v 1.51 2000/11/16 21:05:34 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,6 @@
 #include "accum.h"
 #include "attrib.h"
 #include "bitmap.h"
-#include "bbox.h"
 #include "blend.h"
 #include "buffers.h"
 #include "clip.h"
@@ -41,7 +40,6 @@
 #include "context.h"
 #include "convolve.h"
 #include "copypix.h"
-#include "cva.h"
 #include "depth.h"
 #include "enable.h"
 #include "enums.h"
@@ -59,7 +57,6 @@
 #include "macros.h"
 #include "matrix.h"
 #include "mem.h"
-#include "pipeline.h"
 #include "pixel.h"
 #include "pixeltex.h"
 #include "points.h"
@@ -72,10 +69,13 @@
 #include "texstate.h"
 #include "types.h"
 #include "varray.h"
-#include "vb.h"
-#include "vbfill.h"
-#include "vbxform.h"
-#include "xform.h"
+
+#include "math/m_matrix.h"
+#include "math/m_xform.h"
+
+#include "tnl/t_vbfill.h"
+#include "tnl/t_eval.h"
+#include "tnl/t_varray.h"
 #endif
 
 
@@ -121,7 +121,6 @@ Functions which cause errors if called while compiling a display list:
  * The fact that these identifiers are assigned consecutive
  * integer values starting at 0 is very important, see InstSize array usage)
  *
- * KW: Commented out opcodes now handled by vertex-cassettes.
  */
 typedef enum {
 	OPCODE_ACCUM,
@@ -221,6 +220,7 @@ typedef enum {
 	OPCODE_READ_BUFFER,
         OPCODE_RESET_HISTOGRAM,
         OPCODE_RESET_MIN_MAX,
+        OPCODE_ROTATE,
         OPCODE_SCALE,
 	OPCODE_SCISSOR,
 	OPCODE_SELECT_TEXTURE_SGIS,
@@ -256,9 +256,9 @@ typedef enum {
         OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D,
 	/* The following three are meta instructions */
 	OPCODE_ERROR,	        /* raise compiled-in error */
-	OPCODE_VERTEX_CASSETTE,	/* render prebuilt vertex buffer */
 	OPCODE_CONTINUE,
-	OPCODE_END_OF_LIST
+	OPCODE_END_OF_LIST,
+	OPCODE_DRV_0
 } OpCode;
 
 
@@ -284,7 +284,9 @@ union node {
 
 
 
-/* Number of nodes of storage needed for each instruction: */
+/* Number of nodes of storage needed for each instruction.  Sizes for
+ * dynamically allocated opcodes are stored in the context struct.
+ */
 static GLuint InstSize[ OPCODE_END_OF_LIST+1 ];
 
 void mesa_print_display_list( GLuint list );
@@ -295,40 +297,6 @@ void mesa_print_display_list( GLuint list );
 /**********************************************************************/
 
 
-/*
- * Allocate space for a display list instruction.
- * Input:  opcode - type of instruction
- *         argcount - number of arguments following the instruction
- * Return: pointer to first node in the instruction
- */
-static Node *alloc_instruction( GLcontext *ctx, OpCode opcode, GLint argcount )
-{
-   Node *n, *newblock;
-   GLuint count = InstSize[opcode];
-
-   assert( (GLint) count == argcount+1 );
-
-   if (ctx->CurrentPos + count + 2 > BLOCK_SIZE) {
-      /* This block is full.  Allocate a new block and chain to it */
-      n = ctx->CurrentBlock + ctx->CurrentPos;
-      n[0].opcode = OPCODE_CONTINUE;
-      newblock = (Node *) MALLOC( sizeof(Node) * BLOCK_SIZE );
-      if (!newblock) {
-         gl_error( ctx, GL_OUT_OF_MEMORY, "Building display list" );
-         return NULL;
-      }
-      n[1].next = (Node *) newblock;
-      ctx->CurrentBlock = newblock;
-      ctx->CurrentPos = 0;
-   }
-
-   n = ctx->CurrentBlock + ctx->CurrentPos;
-   ctx->CurrentPos += count;
-
-   n[0].opcode = opcode;
-
-   return n;
-}
 
 
 
@@ -362,13 +330,16 @@ void gl_destroy_list( GLcontext *ctx, GLuint list )
 
    done = block ? GL_FALSE : GL_TRUE;
    while (!done) {
-      switch (n[0].opcode) {
-	 /* special cases first */
-         case OPCODE_VERTEX_CASSETTE: 
-	    if ( ! -- ((struct immediate *) n[1].data)->ref_count )
-	       gl_immediate_free( (struct immediate *) n[1].data );
-	    n += InstSize[n[0].opcode];
-	    break;
+
+      /* check for extension opcodes first */
+
+      int i = (int)n[0].opcode - (int)OPCODE_DRV_0;
+      if (i >= 0 && i < ctx->listext.nr_opcodes) {
+	 ctx->listext.opcode[i].destroy(ctx, &n[1]);
+	 n += ctx->listext.opcode[i].size;
+      }
+      else {
+	 switch (n[0].opcode) {
 	 case OPCODE_MAP1:
             FREE(n[6].data);
 	    n += InstSize[n[0].opcode];
@@ -466,9 +437,10 @@ void gl_destroy_list( GLcontext *ctx, GLuint list )
 	    /* Most frequent case */
 	    n += InstSize[n[0].opcode];
 	    break;
+	 }
       }
    }
-
+   
    _mesa_HashRemove(ctx->Shared->DisplayList, list);
 }
 
@@ -637,6 +609,7 @@ void gl_init_lists( void )
       InstSize[OPCODE_READ_BUFFER] = 2;
       InstSize[OPCODE_RESET_HISTOGRAM] = 2;
       InstSize[OPCODE_RESET_MIN_MAX] = 2;
+      InstSize[OPCODE_ROTATE] = 5;
       InstSize[OPCODE_SCALE] = 4;
       InstSize[OPCODE_SCISSOR] = 5;
       InstSize[OPCODE_STENCIL_FUNC] = 4;
@@ -657,7 +630,6 @@ void gl_init_lists( void )
       InstSize[OPCODE_WINDOW_POS] = 5;
       InstSize[OPCODE_CONTINUE] = 2;
       InstSize[OPCODE_ERROR] = 3;
-      InstSize[OPCODE_VERTEX_CASSETTE] = 9;
       InstSize[OPCODE_END_OF_LIST] = 1;
       /* GL_SGIX/SGIS_pixel_texture */
       InstSize[OPCODE_PIXEL_TEXGEN_SGIX] = 2;
@@ -678,17 +650,88 @@ void gl_init_lists( void )
 
 
 /*
+ * Allocate space for a display list instruction.
+ * Input:  opcode - type of instruction
+ *         argcount - size in bytes of data required.
+ * Return: pointer to the usable data area (not including the internal
+ *         opcode).
+ */
+void *
+_mesa_alloc_instruction( GLcontext *ctx, int opcode, GLint sz )
+{
+   Node *n, *newblock;
+   GLuint count = 1 + (sz + sizeof(Node) - 1) / sizeof(Node);
+
+#ifdef DEBUG
+   if (opcode < (int) OPCODE_DRV_0) {
+      assert( (GLint) count == InstSize[opcode] );
+   }
+#endif
+
+   if (ctx->CurrentPos + count + 2 > BLOCK_SIZE) {
+      /* This block is full.  Allocate a new block and chain to it */
+      n = ctx->CurrentBlock + ctx->CurrentPos;
+      n[0].opcode = OPCODE_CONTINUE;
+      newblock = (Node *) MALLOC( sizeof(Node) * BLOCK_SIZE );
+      if (!newblock) {
+         gl_error( ctx, GL_OUT_OF_MEMORY, "Building display list" );
+         return NULL;
+      }
+      n[1].next = (Node *) newblock;
+      ctx->CurrentBlock = newblock;
+      ctx->CurrentPos = 0;
+   }
+
+   n = ctx->CurrentBlock + ctx->CurrentPos;
+   ctx->CurrentPos += count;
+
+   n[0].opcode = (OpCode) opcode;
+
+   return (void *)&n[1];
+}
+
+
+/* Allow modules and drivers to get their own opcodes.
+ */
+int
+_mesa_alloc_opcode( GLcontext *ctx,
+		    GLuint sz, 
+		    void (*execute)( GLcontext *, void * ),
+		    void (*destroy)( GLcontext *, void * ),
+		    void (*print)( GLcontext *, void * ) )
+{
+   if (ctx->listext.nr_opcodes < GL_MAX_EXT_OPCODES) {
+      GLuint i = ctx->listext.nr_opcodes++;
+      ctx->listext.opcode[i].size = 1 + (sz + sizeof(Node) - 1)/sizeof(Node);
+      ctx->listext.opcode[i].execute = execute;
+      ctx->listext.opcode[i].destroy = destroy;
+      ctx->listext.opcode[i].print = print;
+      return i + OPCODE_DRV_0;
+   }
+   return -1;
+}
+
+
+
+/* Mimic the old behaviour of alloc_instruction:  
+ *   - sz is in units of sizeof(Node)
+ *   - return value a pointer to sizeof(Node) before the actual
+ *     usable data area.
+ */
+#define ALLOC_INSTRUCTION(ctx, opcode, sz) \
+        ((Node *)_mesa_alloc_instruction(ctx, opcode, sz*sizeof(Node)) - 1)
+
+
+
+/*
  * Display List compilation functions
  */
-
-
-
 static void save_Accum( GLenum op, GLfloat value )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_ACCUM, 2 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ACCUM, 2 );
    if (n) {
       n[1].e = op;
       n[2].f = value;
@@ -703,8 +746,8 @@ static void save_AlphaFunc( GLenum func, GLclampf ref )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_ALPHA_FUNC, 2 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ALPHA_FUNC, 2 );
    if (n) {
       n[1].e = func;
       n[2].f = (GLfloat) ref;
@@ -715,18 +758,12 @@ static void save_AlphaFunc( GLenum func, GLclampf ref )
 }
 
 
-static void save_Begin( GLenum mode )
-{
-   _mesa_Begin(mode);  /* special case */
-}
-
-
 static void save_BindTexture( GLenum target, GLuint texture )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_BIND_TEXTURE, 2 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_BIND_TEXTURE, 2 );
    if (n) {
       n[1].e = target;
       n[2].ui = texture;
@@ -745,8 +782,8 @@ static void save_Bitmap( GLsizei width, GLsizei height,
    GET_CURRENT_CONTEXT(ctx);
    GLvoid *image = _mesa_unpack_bitmap( width, height, pixels, &ctx->Unpack );
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_BITMAP, 7 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_BITMAP, 7 );
    if (n) {
       n[1].i = (GLint) width;
       n[2].i = (GLint) height;
@@ -770,8 +807,8 @@ static void save_BlendEquation( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_BLEND_EQUATION, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_BLEND_EQUATION, 1 );
    if (n) {
       n[1].e = mode;
    }
@@ -785,8 +822,8 @@ static void save_BlendFunc( GLenum sfactor, GLenum dfactor )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_BLEND_FUNC, 2 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_BLEND_FUNC, 2 );
    if (n) {
       n[1].e = sfactor;
       n[2].e = dfactor;
@@ -802,8 +839,8 @@ static void save_BlendFuncSeparateEXT(GLenum sfactorRGB, GLenum dfactorRGB,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_BLEND_FUNC_SEPARATE, 4 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_BLEND_FUNC_SEPARATE, 4 );
    if (n) {
       n[1].e = sfactorRGB;
       n[2].e = dfactorRGB;
@@ -822,8 +859,8 @@ static void save_BlendColor( GLfloat red, GLfloat green,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_BLEND_COLOR, 4 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_BLEND_COLOR, 4 );
    if (n) {
       n[1].f = red;
       n[2].f = green;
@@ -840,8 +877,8 @@ static void save_CallList( GLuint list )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CALL_LIST, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CALL_LIST, 1 );
    if (n) {
       n[1].ui = list;
    }
@@ -855,11 +892,11 @@ static void save_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
-   FLUSH_VB(ctx, "dlist");
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
 
    for (i=0;i<n;i++) {
       GLuint list = translate_id( i, type, lists );
-      Node *n = alloc_instruction( ctx, OPCODE_CALL_LIST_OFFSET, 1 );
+      Node *n = ALLOC_INSTRUCTION( ctx, OPCODE_CALL_LIST_OFFSET, 1 );
       if (n) {
          n[1].ui = list;
       }
@@ -874,8 +911,8 @@ static void save_Clear( GLbitfield mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CLEAR, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CLEAR, 1 );
    if (n) {
       n[1].bf = mask;
    }
@@ -890,8 +927,8 @@ static void save_ClearAccum( GLfloat red, GLfloat green,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CLEAR_ACCUM, 4 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CLEAR_ACCUM, 4 );
    if (n) {
       n[1].f = red;
       n[2].f = green;
@@ -909,8 +946,8 @@ static void save_ClearColor( GLclampf red, GLclampf green,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CLEAR_COLOR, 4 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CLEAR_COLOR, 4 );
    if (n) {
       n[1].f = red;
       n[2].f = green;
@@ -927,8 +964,8 @@ static void save_ClearDepth( GLclampd depth )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CLEAR_DEPTH, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CLEAR_DEPTH, 1 );
    if (n) {
       n[1].f = (GLfloat) depth;
    }
@@ -942,8 +979,8 @@ static void save_ClearIndex( GLfloat c )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CLEAR_INDEX, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CLEAR_INDEX, 1 );
    if (n) {
       n[1].f = c;
    }
@@ -957,8 +994,8 @@ static void save_ClearStencil( GLint s )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CLEAR_STENCIL, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CLEAR_STENCIL, 1 );
    if (n) {
       n[1].i = s;
    }
@@ -972,8 +1009,8 @@ static void save_ClipPlane( GLenum plane, const GLdouble *equ )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CLIP_PLANE, 5 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CLIP_PLANE, 5 );
    if (n) {
       n[1].e = plane;
       n[2].f = equ[0];
@@ -993,8 +1030,8 @@ static void save_ColorMask( GLboolean red, GLboolean green,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_COLOR_MASK, 4 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COLOR_MASK, 4 );
    if (n) {
       n[1].b = red;
       n[2].b = green;
@@ -1011,8 +1048,8 @@ static void save_ColorMaterial( GLenum face, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_COLOR_MATERIAL, 2 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COLOR_MATERIAL, 2 );
    if (n) {
       n[1].e = face;
       n[2].e = mode;
@@ -1039,8 +1076,8 @@ static void save_ColorTable( GLenum target, GLenum internalFormat,
       GLvoid *image = _mesa_unpack_image(width, 1, 1, format, type, table,
                                          &ctx->Unpack);
       Node *n;
-      FLUSH_VB(ctx, "dlist");
-      n = alloc_instruction( ctx, OPCODE_COLOR_TABLE, 6 );
+      FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+      n = ALLOC_INSTRUCTION( ctx, OPCODE_COLOR_TABLE, 6 );
       if (n) {
          n[1].e = target;
          n[2].e = internalFormat;
@@ -1068,9 +1105,9 @@ save_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
    Node *n;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx, "glColorTableParameterfv");
-   FLUSH_VB(ctx, "dlist");
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
 
-   n = alloc_instruction( ctx, OPCODE_COLOR_TABLE_PARAMETER_FV, 6 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COLOR_TABLE_PARAMETER_FV, 6 );
    if (n) {
       n[1].e = target;
       n[2].e = pname;
@@ -1097,9 +1134,9 @@ save_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
    Node *n;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx, "glColorTableParameterfv");
-   FLUSH_VB(ctx, "dlist");
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
 
-   n = alloc_instruction( ctx, OPCODE_COLOR_TABLE_PARAMETER_IV, 6 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COLOR_TABLE_PARAMETER_IV, 6 );
    if (n) {
       n[1].e = target;
       n[2].e = pname;
@@ -1128,8 +1165,8 @@ static void save_ColorSubTable( GLenum target, GLsizei start, GLsizei count,
    GLvoid *image = _mesa_unpack_image(count, 1, 1, format, type, table,
                                       &ctx->Unpack);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_COLOR_SUB_TABLE, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COLOR_SUB_TABLE, 6 );
    if (n) {
       n[1].e = target;
       n[2].i = start;
@@ -1154,8 +1191,8 @@ save_CopyColorSubTable(GLenum target, GLsizei start,
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
 
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_COPY_COLOR_SUB_TABLE, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_COLOR_SUB_TABLE, 6 );
    if (n) {
       n[1].e = target;
       n[2].i = start;
@@ -1176,8 +1213,8 @@ save_CopyColorTable(GLenum target, GLenum internalformat,
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
 
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_COPY_COLOR_TABLE, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_COLOR_TABLE, 6 );
    if (n) {
       n[1].e = target;
       n[2].e = internalformat;
@@ -1199,8 +1236,8 @@ save_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width,
    GLvoid *image = _mesa_unpack_image(width, 1, 1, format, type, filter,
                                       &ctx->Unpack);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CONVOLUTION_FILTER_1D, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_FILTER_1D, 6 );
    if (n) {
       n[1].e = target;
       n[2].e = internalFormat;
@@ -1228,8 +1265,8 @@ save_ConvolutionFilter2D(GLenum target, GLenum internalFormat,
    GLvoid *image = _mesa_unpack_image(width, height, 1, format, type, filter,
                                       &ctx->Unpack);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CONVOLUTION_FILTER_2D, 7 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_FILTER_2D, 7 );
    if (n) {
       n[1].e = target;
       n[2].e = internalFormat;
@@ -1254,8 +1291,8 @@ save_ConvolutionParameteri(GLenum target, GLenum pname, GLint param)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CONVOLUTION_PARAMETER_I, 3 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_PARAMETER_I, 3 );
    if (n) {
       n[1].e = target;
       n[2].e = pname;
@@ -1272,8 +1309,8 @@ save_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CONVOLUTION_PARAMETER_IV, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_PARAMETER_IV, 6 );
    if (n) {
       n[1].e = target;
       n[2].e = pname;
@@ -1300,8 +1337,8 @@ save_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat param)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CONVOLUTION_PARAMETER_F, 3 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_PARAMETER_F, 3 );
    if (n) {
       n[1].e = target;
       n[2].e = pname;
@@ -1318,8 +1355,8 @@ save_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CONVOLUTION_PARAMETER_IV, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_PARAMETER_IV, 6 );
    if (n) {
       n[1].e = target;
       n[2].e = pname;
@@ -1346,8 +1383,8 @@ static void save_CopyPixels( GLint x, GLint y,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_COPY_PIXELS, 5 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_PIXELS, 5 );
    if (n) {
       n[1].i = x;
       n[2].i = y;
@@ -1368,8 +1405,8 @@ save_CopyTexImage1D( GLenum target, GLint level, GLenum internalformat,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_COPY_TEX_IMAGE1D, 7 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_TEX_IMAGE1D, 7 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -1394,8 +1431,8 @@ save_CopyTexImage2D( GLenum target, GLint level,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_COPY_TEX_IMAGE2D, 8 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_TEX_IMAGE2D, 8 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -1421,8 +1458,8 @@ save_CopyTexSubImage1D( GLenum target, GLint level,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_COPY_TEX_SUB_IMAGE1D, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_TEX_SUB_IMAGE1D, 6 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -1445,8 +1482,8 @@ save_CopyTexSubImage2D( GLenum target, GLint level,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_COPY_TEX_SUB_IMAGE2D, 8 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_TEX_SUB_IMAGE2D, 8 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -1472,8 +1509,8 @@ save_CopyTexSubImage3D( GLenum target, GLint level,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_COPY_TEX_SUB_IMAGE3D, 9 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_TEX_SUB_IMAGE3D, 9 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -1497,8 +1534,8 @@ static void save_CullFace( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CULL_FACE, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CULL_FACE, 1 );
    if (n) {
       n[1].e = mode;
    }
@@ -1512,8 +1549,8 @@ static void save_DepthFunc( GLenum func )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_DEPTH_FUNC, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_DEPTH_FUNC, 1 );
    if (n) {
       n[1].e = func;
    }
@@ -1527,8 +1564,8 @@ static void save_DepthMask( GLboolean mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_DEPTH_MASK, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_DEPTH_MASK, 1 );
    if (n) {
       n[1].b = mask;
    }
@@ -1542,8 +1579,8 @@ static void save_DepthRange( GLclampd nearval, GLclampd farval )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_DEPTH_RANGE, 2 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_DEPTH_RANGE, 2 );
    if (n) {
       n[1].f = (GLfloat) nearval;
       n[2].f = (GLfloat) farval;
@@ -1558,8 +1595,8 @@ static void save_Disable( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_DISABLE, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_DISABLE, 1 );
    if (n) {
       n[1].e = cap;
    }
@@ -1573,8 +1610,8 @@ static void save_DrawBuffer( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_DRAW_BUFFER, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_DRAW_BUFFER, 1 );
    if (n) {
       n[1].e = mode;
    }
@@ -1592,8 +1629,8 @@ static void save_DrawPixels( GLsizei width, GLsizei height,
    GLvoid *image = _mesa_unpack_image(width, height, 1, format, type,
                                       pixels, &ctx->Unpack);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_DRAW_PIXELS, 5 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_DRAW_PIXELS, 5 );
    if (n) {
       n[1].i = width;
       n[2].i = height;
@@ -1615,8 +1652,8 @@ static void save_Enable( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_ENABLE, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ENABLE, 1 );
    if (n) {
       n[1].e = cap;
    }
@@ -1631,8 +1668,8 @@ static void save_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_EVALMESH1, 3 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_EVALMESH1, 3 );
    if (n) {
       n[1].e = mode;
       n[2].i = i1;
@@ -1649,8 +1686,8 @@ static void save_EvalMesh2(
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_EVALMESH2, 5 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_EVALMESH2, 5 );
    if (n) {
       n[1].e = mode;
       n[2].i = i1;
@@ -1670,8 +1707,8 @@ static void save_Fogfv( GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_FOG, 5 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_FOG, 5 );
    if (n) {
       n[1].e = pname;
       n[2].f = params[0];
@@ -1726,8 +1763,8 @@ static void save_FrontFace( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_FRONT_FACE, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_FRONT_FACE, 1 );
    if (n) {
       n[1].e = mode;
    }
@@ -1743,8 +1780,8 @@ static void save_Frustum( GLdouble left, GLdouble right,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_FRUSTUM, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_FRUSTUM, 6 );
    if (n) {
       n[1].f = left;
       n[2].f = right;
@@ -1763,8 +1800,8 @@ static void save_Hint( GLenum target, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_HINT, 2 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_HINT, 2 );
    if (n) {
       n[1].e = target;
       n[2].e = mode;
@@ -1780,8 +1817,8 @@ static void save_HintPGI( GLenum target, GLint mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_HINT_PGI, 2 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_HINT_PGI, 2 );
    if (n) {
       n[1].e = target;
       n[2].i = mode;
@@ -1798,8 +1835,8 @@ save_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean si
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
 
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_HISTOGRAM, 4 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_HISTOGRAM, 4 );
    if (n) {
       n[1].e = target;
       n[2].i = width;
@@ -1816,8 +1853,8 @@ static void save_IndexMask( GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_INDEX_MASK, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_INDEX_MASK, 1 );
    if (n) {
       n[1].ui = mask;
    }
@@ -1830,8 +1867,8 @@ static void save_IndexMask( GLuint mask )
 static void save_InitNames( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VB(ctx, "dlist");
-   (void) alloc_instruction( ctx, OPCODE_INIT_NAMES, 0 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   (void) ALLOC_INSTRUCTION( ctx, OPCODE_INIT_NAMES, 0 );
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->InitNames)();
    }
@@ -1842,8 +1879,8 @@ static void save_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_LIGHT, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_LIGHT, 6 );
    if (OPCODE_LIGHT) {
       GLint i, nParams;
       n[1].e = light;
@@ -1946,8 +1983,8 @@ static void save_LightModelfv( GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_LIGHT_MODEL, 5 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_LIGHT_MODEL, 5 );
    if (n) {
       n[1].e = pname;
       n[2].f = params[0];
@@ -2000,8 +2037,8 @@ static void save_LineStipple( GLint factor, GLushort pattern )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_LINE_STIPPLE, 2 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_LINE_STIPPLE, 2 );
    if (n) {
       n[1].i = factor;
       n[2].us = pattern;
@@ -2016,8 +2053,8 @@ static void save_LineWidth( GLfloat width )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_LINE_WIDTH, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_LINE_WIDTH, 1 );
    if (n) {
       n[1].f = width;
    }
@@ -2031,8 +2068,8 @@ static void save_ListBase( GLuint base )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_LIST_BASE, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_LIST_BASE, 1 );
    if (n) {
       n[1].ui = base;
    }
@@ -2045,8 +2082,8 @@ static void save_ListBase( GLuint base )
 static void save_LoadIdentity( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VB(ctx, "dlist");
-   (void) alloc_instruction( ctx, OPCODE_LOAD_IDENTITY, 0 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   (void) ALLOC_INSTRUCTION( ctx, OPCODE_LOAD_IDENTITY, 0 );
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->LoadIdentity)();
    }
@@ -2057,8 +2094,8 @@ static void save_LoadMatrixf( const GLfloat *m )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_LOAD_MATRIX, 16 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_LOAD_MATRIX, 16 );
    if (n) {
       GLuint i;
       for (i=0;i<16;i++) {
@@ -2086,8 +2123,8 @@ static void save_LoadName( GLuint name )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_LOAD_NAME, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_LOAD_NAME, 1 );
    if (n) {
       n[1].ui = name;
    }
@@ -2101,8 +2138,8 @@ static void save_LogicOp( GLenum opcode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_LOGIC_OP, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_LOGIC_OP, 1 );
    if (n) {
       n[1].e = opcode;
    }
@@ -2117,8 +2154,8 @@ static void save_Map1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_MAP1, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_MAP1, 6 );
    if (n) {
       GLfloat *pnts = gl_copy_map_points1d( target, stride, order, points );
       n[1].e = target;
@@ -2138,8 +2175,8 @@ static void save_Map1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_MAP1, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_MAP1, 6 );
    if (n) {
       GLfloat *pnts = gl_copy_map_points1f( target, stride, order, points );
       n[1].e = target;
@@ -2162,8 +2199,8 @@ static void save_Map2d( GLenum target,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_MAP2, 10 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_MAP2, 10 );
    if (n) {
       GLfloat *pnts = gl_copy_map_points2d( target, ustride, uorder,
                                             vstride, vorder, points );
@@ -2194,8 +2231,8 @@ static void save_Map2f( GLenum target,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_MAP2, 10 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_MAP2, 10 );
    if (n) {
       GLfloat *pnts = gl_copy_map_points2f( target, ustride, uorder,
                                             vstride, vorder, points );
@@ -2222,8 +2259,8 @@ static void save_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_MAPGRID1, 3 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_MAPGRID1, 3 );
    if (n) {
       n[1].i = un;
       n[2].f = u1;
@@ -2246,8 +2283,8 @@ static void save_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_MAPGRID2, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_MAPGRID2, 6 );
    if (n) {
       n[1].i = un;
       n[2].f = u1;
@@ -2274,8 +2311,8 @@ static void save_MatrixMode( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_MATRIX_MODE, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_MATRIX_MODE, 1 );
    if (n) {
       n[1].e = mode;
    }
@@ -2291,8 +2328,8 @@ save_Minmax(GLenum target, GLenum internalFormat, GLboolean sink)
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
 
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_MIN_MAX, 3 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_MIN_MAX, 3 );
    if (n) {
       n[1].e = target;
       n[2].e = internalFormat;
@@ -2308,8 +2345,8 @@ static void save_MultMatrixf( const GLfloat *m )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_MULT_MATRIX, 16 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_MULT_MATRIX, 16 );
    if (n) {
       GLuint i;
       for (i=0;i<16;i++) {
@@ -2350,8 +2387,8 @@ static void save_Ortho( GLdouble left, GLdouble right,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_ORTHO, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ORTHO, 6 );
    if (n) {
       n[1].f = left;
       n[2].f = right;
@@ -2370,8 +2407,8 @@ static void save_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_PIXEL_MAP, 3 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_PIXEL_MAP, 3 );
    if (n) {
       n[1].e = map;
       n[2].i = mapsize;
@@ -2424,8 +2461,8 @@ static void save_PixelTransferf( GLenum pname, GLfloat param )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_PIXEL_TRANSFER, 2 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_PIXEL_TRANSFER, 2 );
    if (n) {
       n[1].e = pname;
       n[2].f = param;
@@ -2446,8 +2483,8 @@ static void save_PixelZoom( GLfloat xfactor, GLfloat yfactor )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_PIXEL_ZOOM, 2 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_PIXEL_ZOOM, 2 );
    if (n) {
       n[1].f = xfactor;
       n[2].f = yfactor;
@@ -2462,8 +2499,8 @@ static void save_PointParameterfvEXT( GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_POINT_PARAMETERS, 4 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_POINT_PARAMETERS, 4 );
    if (n) {
       n[1].e = pname;
       n[2].f = params[0];
@@ -2486,8 +2523,8 @@ static void save_PointSize( GLfloat size )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_POINT_SIZE, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_POINT_SIZE, 1 );
    if (n) {
       n[1].f = size;
    }
@@ -2501,8 +2538,8 @@ static void save_PolygonMode( GLenum face, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_POLYGON_MODE, 2 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_POLYGON_MODE, 2 );
    if (n) {
       n[1].e = face;
       n[2].e = mode;
@@ -2520,8 +2557,8 @@ static void save_PolygonStipple( const GLubyte *pattern )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_POLYGON_STIPPLE, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_POLYGON_STIPPLE, 1 );
    if (n) {
       void *data;
       n[1].data = MALLOC( 32 * 4 );
@@ -2538,8 +2575,8 @@ static void save_PolygonOffset( GLfloat factor, GLfloat units )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_POLYGON_OFFSET, 2 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_POLYGON_OFFSET, 2 );
    if (n) {
       n[1].f = factor;
       n[2].f = units;
@@ -2560,8 +2597,8 @@ static void save_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
 static void save_PopAttrib( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VB(ctx, "dlist");
-   (void) alloc_instruction( ctx, OPCODE_POP_ATTRIB, 0 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   (void) ALLOC_INSTRUCTION( ctx, OPCODE_POP_ATTRIB, 0 );
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->PopAttrib)();
    }
@@ -2571,8 +2608,8 @@ static void save_PopAttrib( void )
 static void save_PopMatrix( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VB(ctx, "dlist");
-   (void) alloc_instruction( ctx, OPCODE_POP_MATRIX, 0 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   (void) ALLOC_INSTRUCTION( ctx, OPCODE_POP_MATRIX, 0 );
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->PopMatrix)();
    }
@@ -2582,8 +2619,8 @@ static void save_PopMatrix( void )
 static void save_PopName( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VB(ctx, "dlist");
-   (void) alloc_instruction( ctx, OPCODE_POP_NAME, 0 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   (void) ALLOC_INSTRUCTION( ctx, OPCODE_POP_NAME, 0 );
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->PopName)();
    }
@@ -2595,11 +2632,11 @@ static void save_PrioritizeTextures( GLsizei num, const GLuint *textures,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
-   FLUSH_VB(ctx, "dlist");
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
 
    for (i=0;i<num;i++) {
       Node *n;
-      n = alloc_instruction( ctx,  OPCODE_PRIORITIZE_TEXTURE, 2 );
+      n = ALLOC_INSTRUCTION( ctx,  OPCODE_PRIORITIZE_TEXTURE, 2 );
       if (n) {
          n[1].ui = textures[i];
          n[2].f = priorities[i];
@@ -2615,8 +2652,8 @@ static void save_PushAttrib( GLbitfield mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_PUSH_ATTRIB, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_PUSH_ATTRIB, 1 );
    if (n) {
       n[1].bf = mask;
    }
@@ -2629,8 +2666,8 @@ static void save_PushAttrib( GLbitfield mask )
 static void save_PushMatrix( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VB(ctx, "dlist");
-   (void) alloc_instruction( ctx, OPCODE_PUSH_MATRIX, 0 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   (void) ALLOC_INSTRUCTION( ctx, OPCODE_PUSH_MATRIX, 0 );
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->PushMatrix)();
    }
@@ -2641,8 +2678,8 @@ static void save_PushName( GLuint name )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_PUSH_NAME, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_PUSH_NAME, 1 );
    if (n) {
       n[1].ui = name;
    }
@@ -2656,8 +2693,8 @@ static void save_RasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_RASTER_POS, 4 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_RASTER_POS, 4 );
    if (n) {
       n[1].f = x;
       n[2].f = y;
@@ -2789,8 +2826,8 @@ static void save_PassThrough( GLfloat token )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_PASSTHROUGH, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_PASSTHROUGH, 1 );
    if (n) {
       n[1].f = token;
    }
@@ -2804,8 +2841,8 @@ static void save_ReadBuffer( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_READ_BUFFER, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_READ_BUFFER, 1 );
    if (n) {
       n[1].e = mode;
    }
@@ -2819,8 +2856,8 @@ static void save_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_RECTF, 4 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_RECTF, 4 );
    if (n) {
       n[1].f = x1;
       n[2].f = y1;
@@ -2873,8 +2910,8 @@ save_ResetHistogram(GLenum target)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_RESET_HISTOGRAM, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_RESET_HISTOGRAM, 1 );
    if (n) {
       n[1].e = target;
    }
@@ -2889,8 +2926,8 @@ save_ResetMinmax(GLenum target)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_RESET_MIN_MAX, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_RESET_MIN_MAX, 1 );
    if (n) {
       n[1].e = target;
    }
@@ -2902,9 +2939,19 @@ save_ResetMinmax(GLenum target)
 
 static void save_Rotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
 {
-   GLfloat m[16];
-   gl_rotation_matrix( angle, x, y, z, m );
-   save_MultMatrixf( m );  /* save and maybe execute */
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ROTATE, 4 );
+   if (n) {
+      n[1].f = angle;
+      n[2].f = x;
+      n[3].f = y;
+      n[4].f = z;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->Rotatef)( angle, x, y, z );
+   }
 }
 
 
@@ -2918,8 +2965,8 @@ static void save_Scalef( GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_SCALE, 3 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_SCALE, 3 );
    if (n) {
       n[1].f = x;
       n[2].f = y;
@@ -2941,8 +2988,8 @@ static void save_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_SCISSOR, 4 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_SCISSOR, 4 );
    if (n) {
       n[1].i = x;
       n[2].i = y;
@@ -2959,8 +3006,8 @@ static void save_ShadeModel( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_SHADE_MODEL, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_SHADE_MODEL, 1 );
    if (n) {
       n[1].e = mode;
    }
@@ -2974,8 +3021,8 @@ static void save_StencilFunc( GLenum func, GLint ref, GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_STENCIL_FUNC, 3 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_STENCIL_FUNC, 3 );
    if (n) {
       n[1].e = func;
       n[2].i = ref;
@@ -2991,8 +3038,8 @@ static void save_StencilMask( GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_STENCIL_MASK, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_STENCIL_MASK, 1 );
    if (n) {
       n[1].ui = mask;
    }
@@ -3006,8 +3053,8 @@ static void save_StencilOp( GLenum fail, GLenum zfail, GLenum zpass )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_STENCIL_OP, 3 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_STENCIL_OP, 3 );
    if (n) {
       n[1].e = fail;
       n[2].e = zfail;
@@ -3023,8 +3070,8 @@ static void save_TexEnvfv( GLenum target, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_TEXENV, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_TEXENV, 6 );
    if (n) {
       n[1].e = target;
       n[2].e = pname;
@@ -3069,8 +3116,8 @@ static void save_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_TEXGEN, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_TEXGEN, 6 );
    if (n) {
       n[1].e = coord;
       n[2].e = pname;
@@ -3131,8 +3178,8 @@ static void save_TexParameterfv( GLenum target,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_TEXPARAMETER, 6 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_TEXPARAMETER, 6 );
    if (n) {
       n[1].e = target;
       n[2].e = pname;
@@ -3187,8 +3234,8 @@ static void save_TexImage1D( GLenum target,
       GLvoid *image = _mesa_unpack_image(width, 1, 1, format, type,
                                          pixels, &ctx->Unpack);
       Node *n;
-      FLUSH_VB(ctx, "dlist");
-      n = alloc_instruction( ctx, OPCODE_TEX_IMAGE1D, 8 );
+      FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+      n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_IMAGE1D, 8 );
       if (n) {
          n[1].e = target;
          n[2].i = level;
@@ -3226,8 +3273,8 @@ static void save_TexImage2D( GLenum target,
       GLvoid *image = _mesa_unpack_image(width, height, 1, format, type,
                                          pixels, &ctx->Unpack);
       Node *n;
-      FLUSH_VB(ctx, "dlist");
-      n = alloc_instruction( ctx, OPCODE_TEX_IMAGE2D, 9 );
+      FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+      n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_IMAGE2D, 9 );
       if (n) {
          n[1].e = target;
          n[2].i = level;
@@ -3267,8 +3314,8 @@ static void save_TexImage3D( GLenum target,
       Node *n;
       GLvoid *image = _mesa_unpack_image(width, height, depth, format, type,
                                          pixels, &ctx->Unpack);
-      FLUSH_VB(ctx, "dlist");
-      n = alloc_instruction( ctx, OPCODE_TEX_IMAGE3D, 10 );
+      FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+      n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_IMAGE3D, 10 );
       if (n) {
          n[1].e = target;
          n[2].i = level;
@@ -3300,8 +3347,8 @@ static void save_TexSubImage1D( GLenum target, GLint level, GLint xoffset,
    Node *n;
    GLvoid *image = _mesa_unpack_image(width, 1, 1, format, type,
                                       pixels, &ctx->Unpack);
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_TEX_SUB_IMAGE1D, 7 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_SUB_IMAGE1D, 7 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -3331,8 +3378,8 @@ static void save_TexSubImage2D( GLenum target, GLint level,
    Node *n;
    GLvoid *image = _mesa_unpack_image(width, height, 1, format, type,
                                       pixels, &ctx->Unpack);
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_TEX_SUB_IMAGE2D, 9 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_SUB_IMAGE2D, 9 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -3364,8 +3411,8 @@ static void save_TexSubImage3D( GLenum target, GLint level,
    Node *n;
    GLvoid *image = _mesa_unpack_image(width, height, depth, format, type,
                                       pixels, &ctx->Unpack);
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_TEX_SUB_IMAGE3D, 11 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_SUB_IMAGE3D, 11 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -3394,8 +3441,8 @@ static void save_Translatef( GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx,  OPCODE_TRANSLATE, 3 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx,  OPCODE_TRANSLATE, 3 );
    if (n) {
       n[1].f = x;
       n[2].f = y;
@@ -3418,8 +3465,8 @@ static void save_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx,  OPCODE_VIEWPORT, 4 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx,  OPCODE_VIEWPORT, 4 );
    if (n) {
       n[1].i = x;
       n[2].i = y;
@@ -3436,8 +3483,8 @@ static void save_WindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx,  OPCODE_WINDOW_POS, 4 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx,  OPCODE_WINDOW_POS, 4 );
    if (n) {
       n[1].f = x;
       n[2].f = y;
@@ -3571,8 +3618,8 @@ static void save_ActiveTextureARB( GLenum target )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_ACTIVE_TEXTURE, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ACTIVE_TEXTURE, 1 );
    if (n) {
       n[1].e = target;
    }
@@ -3587,8 +3634,8 @@ static void save_ClientActiveTextureARB( GLenum target )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_CLIENT_ACTIVE_TEXTURE, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CLIENT_ACTIVE_TEXTURE, 1 );
    if (n) {
       n[1].e = target;
    }
@@ -3603,32 +3650,32 @@ static void save_ClientActiveTextureARB( GLenum target )
 
 static void save_LoadTransposeMatrixdARB( const GLdouble m[16] )
 {
-   GLdouble tm[16];
-   gl_matrix_transposed(tm, m);
-   save_LoadMatrixd(tm);
+   GLfloat tm[16];
+   _math_transposefd(tm, m);
+   save_LoadMatrixf(tm);
 }
 
 
 static void save_LoadTransposeMatrixfARB( const GLfloat m[16] )
 {
    GLfloat tm[16];
-   gl_matrix_transposef(tm, m);
+   _math_transposef(tm, m);
    save_LoadMatrixf(tm);
 }
 
 
 static void save_MultTransposeMatrixdARB( const GLdouble m[16] )
 {
-   GLdouble tm[16];
-   gl_matrix_transposed(tm, m);
-   save_MultMatrixd(tm);
+   GLfloat tm[16];
+   _math_transposefd(tm, m);
+   save_MultMatrixf(tm);
 }
 
 
 static void save_MultTransposeMatrixfARB( const GLfloat m[16] )
 {
    GLfloat tm[16];
-   gl_matrix_transposef(tm, m);
+   _math_transposef(tm, m);
    save_MultMatrixf(tm);
 }
 
@@ -3637,8 +3684,8 @@ static void save_PixelTexGenSGIX(GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_PIXEL_TEXGEN_SGIX, 1 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_PIXEL_TEXGEN_SGIX, 1 );
    if (n) {
       n[1].e = mode;
    }
@@ -3664,7 +3711,7 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
    else {
       Node *n;
       GLvoid *image;
-      FLUSH_VB(ctx, "dlist");
+      FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
       /* make copy of image */
       image = MALLOC(imageSize);
       if (!image) {
@@ -3672,7 +3719,7 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
          return;
       }
       MEMCPY(image, data, imageSize);
-      n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_IMAGE_1D, 8 );
+      n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_IMAGE_1D, 8 );
       if (n) {
          n[1].e = target;
          n[2].i = level;
@@ -3708,7 +3755,7 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
    else {
       Node *n;
       GLvoid *image;
-      FLUSH_VB(ctx, "dlist");
+      FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
       /* make copy of image */
       image = MALLOC(imageSize);
       if (!image) {
@@ -3716,7 +3763,7 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
          return;
       }
       MEMCPY(image, data, imageSize);
-      n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_IMAGE_2D, 9 );
+      n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_IMAGE_2D, 9 );
       if (n) {
          n[1].e = target;
          n[2].i = level;
@@ -3753,7 +3800,7 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
    else {
       Node *n;
       GLvoid *image;
-      FLUSH_VB(ctx, "dlist");
+      FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
       /* make copy of image */
       image = MALLOC(imageSize);
       if (!image) {
@@ -3761,7 +3808,7 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
          return;
       }
       MEMCPY(image, data, imageSize);
-      n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_IMAGE_3D, 10 );
+      n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_IMAGE_3D, 10 );
       if (n) {
          n[1].e = target;
          n[2].i = level;
@@ -3793,7 +3840,7 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
    GLvoid *image;
 
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VB(ctx, "dlist");
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
 
    /* make copy of image */
    image = MALLOC(imageSize);
@@ -3802,7 +3849,7 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
       return;
    }
    MEMCPY(image, data, imageSize);
-   n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D, 8 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D, 8 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -3832,7 +3879,7 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
    GLvoid *image;
 
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VB(ctx, "dlist");
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
 
    /* make copy of image */
    image = MALLOC(imageSize);
@@ -3841,7 +3888,7 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
       return;
    }
    MEMCPY(image, data, imageSize);
-   n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D, 10 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D, 10 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -3873,7 +3920,7 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
    GLvoid *image;
 
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VB(ctx, "dlist");
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
 
    /* make copy of image */
    image = MALLOC(imageSize);
@@ -3882,7 +3929,7 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
       return;
    }
    MEMCPY(image, data, imageSize);
-   n = alloc_instruction( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D, 12 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D, 12 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -3912,8 +3959,8 @@ static void save_PixelTexGenParameteriSGIS(GLenum target, GLint value)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS, 2 );
+   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS, 2 );
    if (n) {
       n[1].e = target;
       n[2].i = value;
@@ -3941,56 +3988,6 @@ static void save_PixelTexGenParameterfvSGIS(GLenum target, const GLfloat *value)
    save_PixelTexGenParameteriSGIS(target, (GLint) *value);
 }
 
-void gl_compile_cassette( GLcontext *ctx )
-{
-   Node *n = alloc_instruction( ctx, OPCODE_VERTEX_CASSETTE, 8 );
-   struct immediate *im = ctx->input;   
-
-   if (!n) 
-      return;
-   
-
-   /* Do some easy optimizations of the cassette.  
-    */
-#if 0
-   if (0 && im->v.Obj.size < 4 && im->Count > 15) {
-      im->Bounds = (GLfloat (*)[3]) MALLOC(6 * sizeof(GLfloat));
-      (gl_calc_bound_tab[im->v.Obj.size])( im->Bounds, &im->v.Obj );
-   }
-#endif
-
-   n[1].data = (void *)im;   
-   n[2].ui = im->Start;
-   n[3].ui = im->Count;
-   n[4].ui = im->BeginState;
-   n[5].ui = im->OrFlag;
-   n[6].ui = im->AndFlag;
-   n[7].ui = im->LastData;
-   n[8].ui = im->LastPrimitive;
-
-   if (im->Count > VB_MAX - 4) {
-
-      struct immediate *new_im = gl_immediate_alloc(ctx);      
-      if (!new_im) return;
-      SET_IMMEDIATE( ctx, new_im );
-      gl_reset_input( ctx );
-
-   } else {
-      im->Count++;;
-      im->Start = im->Count;	/* don't clear anything in reset_input */
-      im->ref_count++;
-
-      im->Primitive[im->Start] = ctx->Current.Primitive;
-      im->LastPrimitive = im->Start;
-      im->BeginState = VERT_BEGIN_0;
-      im->OrFlag = 0;
-      im->AndFlag = ~0;
-
-      if (0)
-	 fprintf(stderr, "in compile_cassette, BeginState is %x\n", 
-	      im->BeginState);
-   }   
-}
 
 /* KW: Compile commands  
  * 
@@ -4000,7 +3997,7 @@ void gl_compile_cassette( GLcontext *ctx )
 void gl_save_error( GLcontext *ctx, GLenum error, const char *s )
 {
    Node *n;
-   n = alloc_instruction( ctx, OPCODE_ERROR, 2 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ERROR, 2 );
    if (n) {
       n[1].e = error;
       n[2].data = (void *) s;
@@ -4037,12 +4034,11 @@ static void execute_list( GLcontext *ctx, GLuint list )
 {
    Node *n;
    GLboolean done;
-   OpCode opcode;
 
    if (!islist(ctx,list))
       return;
 
-/*    mesa_print_display_list( list ); */
+/*     mesa_print_display_list( list );  */
 
    ctx->CallDepth++;
 
@@ -4050,49 +4046,18 @@ static void execute_list( GLcontext *ctx, GLuint list )
 
    done = GL_FALSE;
    while (!done) {
-      opcode = n[0].opcode;
+      OpCode opcode = n[0].opcode;
+      int i = (int)n[0].opcode - (int)OPCODE_DRV_0;
 
-      switch (opcode) {
-         case OPCODE_ERROR:
- 	    gl_error( ctx, n[1].e, (const char *) n[2].data ); 
-            break;
-         case OPCODE_VERTEX_CASSETTE: {
-	    struct immediate *IM;
-	    
-	    if (ctx->NewState)
-	       gl_update_state(ctx);
-	    if (ctx->CompileCVAFlag) {
-	       ctx->CompileCVAFlag = 0;
-	       ctx->CVA.elt.pipeline_valid = 0;
-	    }
-	    if (!ctx->CVA.elt.pipeline_valid)
-	       gl_build_immediate_pipeline( ctx );
-
-	    
-	    IM = (struct immediate *) n[1].data;
-	    IM->Start = n[2].ui;
-	    IM->Count = n[3].ui;
-	    IM->BeginState = n[4].ui;
-	    IM->OrFlag = n[5].ui;
-	    IM->AndFlag = n[6].ui;
-	    IM->LastData = n[7].ui;
-	    IM->LastPrimitive = n[8].ui;
-
-	    if ((MESA_VERBOSE & VERBOSE_DISPLAY_LIST) &&
-		(MESA_VERBOSE & VERBOSE_IMMEDIATE))
-	       gl_print_cassette( (struct immediate *) n[1].data );
-
-	    if (MESA_VERBOSE & VERBOSE_DISPLAY_LIST) {
-	       fprintf(stderr, "Run cassette %d, rows %d..%d, beginstate %x ",
-		       IM->id,
-		       IM->Start, IM->Count, IM->BeginState);
-	       gl_print_vert_flags("orflag", IM->OrFlag);
-	    }
-
-	    gl_fixup_cassette( ctx, (struct immediate *) n[1].data ); 
-	    gl_execute_cassette( ctx, (struct immediate *) n[1].data ); 
-            break;
-	 }
+      if (i >= 0 && i < ctx->listext.nr_opcodes) {
+	 ctx->listext.opcode[i].execute(ctx, &n[1]);
+	 n += ctx->listext.opcode[i].size;
+      }
+      else {
+	 switch (opcode) {
+	 case OPCODE_ERROR:
+	    gl_error( ctx, n[1].e, (const char *) n[2].data ); 
+	    break;
          case OPCODE_ACCUM:
 	    (*ctx->Exec->Accum)( n[1].e, n[2].f );
 	    break;
@@ -4518,13 +4483,16 @@ static void execute_list( GLcontext *ctx, GLuint list )
 	    break;
          case OPCODE_RECTF:
             (*ctx->Exec->Rectf)( n[1].f, n[2].f, n[3].f, n[4].f );
-	    FLUSH_VB( ctx, "dlist rectf" );
+	    FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
             break;
          case OPCODE_RESET_HISTOGRAM:
             (*ctx->Exec->ResetHistogram)( n[1].e );
             break;
          case OPCODE_RESET_MIN_MAX:
             (*ctx->Exec->ResetMinmax)( n[1].e );
+            break;
+         case OPCODE_ROTATE:
+            (*ctx->Exec->Rotatef)( n[1].f, n[2].f, n[3].f, n[4].f );
             break;
          case OPCODE_SCALE:
             (*ctx->Exec->Scalef)( n[1].f, n[2].f, n[3].f );
@@ -4716,13 +4684,13 @@ static void execute_list( GLcontext *ctx, GLuint list )
                gl_problem( ctx, msg );
             }
             done = GL_TRUE;
-      }
+	 }
 
-      /* increment n to point to next compiled command */
-      if (opcode!=OPCODE_CONTINUE) {
-	 n += InstSize[opcode];
+	 /* increment n to point to next compiled command */
+	 if (opcode!=OPCODE_CONTINUE) {
+	    n += InstSize[opcode];
+	 }
       }
-
    }
    ctx->CallDepth--;
 }
@@ -4817,8 +4785,8 @@ void
 _mesa_NewList( GLuint list, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct immediate *IM;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glNewList");
+   FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
 
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glNewList %u %s\n", list, gl_lookup_enum_by_nr(mode));
@@ -4844,14 +4812,10 @@ _mesa_NewList( GLuint list, GLenum mode )
    ctx->CurrentBlock = (Node *) MALLOC( sizeof(Node) * BLOCK_SIZE );
    ctx->CurrentListPtr = ctx->CurrentBlock;
    ctx->CurrentPos = 0;
-
-   IM = gl_immediate_alloc( ctx );
-   SET_IMMEDIATE( ctx, IM );
-   gl_reset_input( ctx );
-
    ctx->CompileFlag = GL_TRUE;
-   ctx->CompileCVAFlag = GL_FALSE;
    ctx->ExecuteFlag = (mode == GL_COMPILE_AND_EXECUTE);
+
+   ctx->Driver.NewList( ctx, list, mode );
 
    ctx->CurrentDispatch = ctx->Save;
    _glapi_set_dispatch( ctx->CurrentDispatch );
@@ -4870,6 +4834,8 @@ _mesa_EndList( void )
       fprintf(stderr, "glEndList\n");
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx, "glEndList" );
+   FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+
 
    /* Check that a list is under construction */
    if (!ctx->CurrentListPtr) {
@@ -4877,7 +4843,7 @@ _mesa_EndList( void )
       return;
    }
 
-   (void) alloc_instruction( ctx, OPCODE_END_OF_LIST, 0 );
+   (void) ALLOC_INSTRUCTION( ctx, OPCODE_END_OF_LIST, 0 );
 
    /* Destroy old list, if any */
    gl_destroy_list(ctx, ctx->CurrentListNum);
@@ -4892,15 +4858,8 @@ _mesa_EndList( void )
    ctx->CurrentListPtr = NULL;
    ctx->ExecuteFlag = GL_TRUE;
    ctx->CompileFlag = GL_FALSE;
-   /* ctx->CompileCVAFlag = ...; */
 
-   /* KW: Put back the old input pointer.
-    */
-   if (--ctx->input->ref_count == 0)
-      gl_immediate_free( ctx->input );
-
-   SET_IMMEDIATE( ctx, ctx->VB->IM );
-   gl_reset_input( ctx );
+   ctx->Driver.EndList( ctx );
 
    /* Haven't tracked down why this is needed.
     */
@@ -4928,7 +4887,7 @@ _mesa_CallList( GLuint list )
    save_compile_flag = ctx->CompileFlag;   
    ctx->CompileFlag = GL_FALSE;
    
-   FLUSH_VB( ctx, "call list" );
+   FLUSH_TNL( ctx, (FLUSH_STORED_VERTICES | FLUSH_UPDATE_CURRENT) );
    execute_list( ctx, list );
    ctx->CompileFlag = save_compile_flag;
 
@@ -4958,7 +4917,7 @@ _mesa_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
    save_compile_flag = ctx->CompileFlag;
    ctx->CompileFlag = GL_FALSE;
 
-   FLUSH_VB( ctx, "call lists" );
+   FLUSH_TNL( ctx, (FLUSH_STORED_VERTICES | FLUSH_UPDATE_CURRENT) );
 
    for (i=0;i<n;i++) {
       list = translate_id( i, type, lists );
@@ -5002,7 +4961,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    /* GL 1.0 */
    table->Accum = save_Accum;
    table->AlphaFunc = save_AlphaFunc;
-   table->Begin = save_Begin;
+   table->Begin = _mesa_Begin;
    table->Bitmap = save_Bitmap;
    table->BlendFunc = save_BlendFunc;
    table->CallList = save_CallList;
@@ -5565,7 +5524,6 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
 {
    Node *n;
    GLboolean done;
-   OpCode opcode;
 
    if (!glIsList(list)) {
       fprintf(f,"%u is not a display list ID\n",list);
@@ -5578,9 +5536,14 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
 
    done = n ? GL_FALSE : GL_TRUE;
    while (!done) {
-      opcode = n[0].opcode;
+      OpCode opcode = n[0].opcode;
+      int i = (int)n[0].opcode - (int)OPCODE_DRV_0;
 
-      switch (opcode) {
+      if (i >= 0 && i < ctx->listext.nr_opcodes) {
+	 ctx->listext.opcode[i].print(ctx, &n[1]);
+	 n += ctx->listext.opcode[i].size;
+      } else {
+	 switch (opcode) {
          case OPCODE_ACCUM:
             fprintf(f,"accum %s %g\n", enum_string(n[1].e), n[2].f );
 	    break;
@@ -5663,6 +5626,9 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
          case OPCODE_RECTF:
             fprintf( f, "Rectf %g %g %g %g\n", n[1].f, n[2].f, n[3].f, n[4].f);
             break;
+         case OPCODE_ROTATE:
+            fprintf(f,"Rotate %g %g %g %g\n", n[1].f, n[2].f, n[3].f, n[4].f );
+            break;
          case OPCODE_SCALE:
             fprintf(f,"Scale %g %g %g\n", n[1].f, n[2].f, n[3].f );
             break;
@@ -5683,13 +5649,6 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
          case OPCODE_ERROR:
             fprintf(f,"Error: %s %s\n", enum_string(n[1].e), (const char *)n[2].data );
             break;
-	 case OPCODE_VERTEX_CASSETTE:
-            fprintf(f,"VERTEX-CASSETTE, id %u, rows %u..%u\n", 
-		    ((struct immediate *) n[1].data)->id,
-		    n[2].ui,
-		    n[3].ui);
-	    gl_print_cassette( (struct immediate *) n[1].data );
-	    break;
 	 case OPCODE_CONTINUE:
             fprintf(f,"DISPLAY-LIST-CONTINUE\n");
 	    n = (Node *) n[1].next;
@@ -5707,11 +5666,11 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
             else {
                fprintf(f,"command %d, %u operands\n",opcode,InstSize[opcode]);
             }
-      }
-
-      /* increment n to point to next compiled command */
-      if (opcode!=OPCODE_CONTINUE) {
-	 n += InstSize[opcode];
+	 }
+	 /* increment n to point to next compiled command */
+	 if (opcode!=OPCODE_CONTINUE) {
+	    n += InstSize[opcode];
+	 }
       }
    }
 }
