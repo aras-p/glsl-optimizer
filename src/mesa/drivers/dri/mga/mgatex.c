@@ -495,7 +495,6 @@ mgaDeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    driTextureObject * t = (driTextureObject *) tObj->DriverData;
 
-   assert(t);
    if ( t ) {
       if ( mmesa ) {
 	 FLUSH_BATCH( mmesa );

@@ -691,7 +691,6 @@ static void radeonDeleteTexture( GLcontext *ctx,
 	       _mesa_lookup_enum_by_nr( texObj->Target ) );
    }
 
-   assert(t);
    if ( t != NULL ) {
       if ( rmesa ) {
          RADEON_FIREVERTICES( rmesa );

@@ -959,8 +959,6 @@ static void r200DeleteTexture( GLcontext *ctx,
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
-   assert(t);
-
    if ( R200_DEBUG & (DEBUG_STATE|DEBUG_TEXTURE) ) {
       fprintf( stderr, "%s( %p (target = %s) )\n", __FUNCTION__, (void *)texObj,
 	       _mesa_lookup_enum_by_nr( texObj->Target ) );

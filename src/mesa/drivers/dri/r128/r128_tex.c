@@ -572,7 +572,6 @@ static void r128DeleteTexture( GLcontext *ctx,
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    driTextureObject * t = (driTextureObject *) tObj->DriverData;
 
-   assert(t);
    if ( t ) {
       if ( t->bound && rmesa ) {
 	 FLUSH_BATCH( rmesa );

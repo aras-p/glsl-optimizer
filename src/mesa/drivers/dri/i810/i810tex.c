@@ -419,7 +419,6 @@ static void i810BindTexture( GLcontext *ctx, GLenum target,
 static void i810DeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
 {
    driTextureObject * t = (driTextureObject *) tObj->DriverData;
-   assert(t);
    if (t) {
       i810ContextPtr imesa = I810_CONTEXT( ctx );
       if (imesa)
