@@ -1472,7 +1472,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #else
 #define P_ARG1(a) 	a
 #define P_ARG2(a, b) 	a, b
-#define P_ARG3(a, b) 	a, b, c
+#define P_ARG3(a, b, c) 	a, b, c
 #endif
 
 /* MMX */
@@ -1578,22 +1578,22 @@ SECTION _DATA public align=16 class=DATA use32 flat
 	#define CMPPS(a, b, c)	cmpps P_ARG3(a, b, c)
 	#define CMPSS(a, b, c)	cmpss P_ARG3(a, b, c)
 */
-#define CMPEQPS(a, b)	cmpeqps P_ARG3(a, b)
-#define CMPLTPS(a, b)	cmpltps P_ARG3(a, b)
-#define CMPLEPS(a, b)	cmpleps P_ARG3(a, b)
-#define CMPUNORDPS(a, b)	cmpunordps P_ARG3(a, b)
-#define CMPNEQPS(a, b)	cmpneqps P_ARG3(a, b)
-#define CMPNLTPS(a, b)	cmpnltps P_ARG3(a, b)
-#define CMPNLEPS(a, b)	cmpnleps P_ARG3(a, b)
-#define CMPORDPS(a, b)	cmpordps P_ARG3(a, b)
-#define CMPEQSS(a, b)	cmpeqss P_ARG3(a, b)
-#define CMPLTSS(a, b)	cmpltss P_ARG3(a, b)
-#define CMPLESS(a, b)	cmpless P_ARG3(a, b)
-#define CMPUNORDSS(a, b)	cmpunordss P_ARG3(a, b)
-#define CMPNEQSS(a, b)	cmpneqss P_ARG3(a, b)
-#define CMPNLTSS(a, b)	cmpnltss P_ARG3(a, b)
-#define CMPNLESS(a, b)	cmpnless P_ARG3(a, b)
-#define CMPORDSS(a, b)	cmpordss P_ARG3(a, b)
+#define CMPEQPS(a, b)	cmpeqps P_ARG2(a, b)
+#define CMPLTPS(a, b)	cmpltps P_ARG2(a, b)
+#define CMPLEPS(a, b)	cmpleps P_ARG2(a, b)
+#define CMPUNORDPS(a, b)	cmpunordps P_ARG2(a, b)
+#define CMPNEQPS(a, b)	cmpneqps P_ARG2(a, b)
+#define CMPNLTPS(a, b)	cmpnltps P_ARG2(a, b)
+#define CMPNLEPS(a, b)	cmpnleps P_ARG2(a, b)
+#define CMPORDPS(a, b)	cmpordps P_ARG2(a, b)
+#define CMPEQSS(a, b)	cmpeqss P_ARG2(a, b)
+#define CMPLTSS(a, b)	cmpltss P_ARG2(a, b)
+#define CMPLESS(a, b)	cmpless P_ARG2(a, b)
+#define CMPUNORDSS(a, b)	cmpunordss P_ARG2(a, b)
+#define CMPNEQSS(a, b)	cmpneqss P_ARG2(a, b)
+#define CMPNLTSS(a, b)	cmpnltss P_ARG2(a, b)
+#define CMPNLESS(a, b)	cmpnless P_ARG2(a, b)
+#define CMPORDSS(a, b)	cmpordss P_ARG2(a, b)
 #define COMISS(a, b)	comiss P_ARG2(a, b)
 #define CVTPI2PS(a, b)	cvtpi2ps P_ARG2(a, b)
 #define CVTPS2PI(a, b)	cvtps2pi P_ARG2(a, b)
