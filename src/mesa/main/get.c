@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.6 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: get.c,v 1.7 1999/12/10 20:01:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,7 @@
 #include "extensions.h"
 #include "get.h"
 #include "macros.h"
+#include "matrix.h"
 #include "mmath.h"
 #include "types.h"
 #include "vb.h"
@@ -963,6 +964,42 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_NATIVE_GRAPHICS_HANDLE_PGI:
 	 *params = 0;
 	 break;
+
+      /* GL_ARB_transpose_matrix */
+      case GL_TRANSPOSE_COLOR_MATRIX_ARB:
+         /* don't have a color matrix */
+         break;
+      case GL_TRANSPOSE_MODELVIEW_MATRIX_ARB:
+         {
+            GLfloat tm[16];
+            GLuint i;
+            gl_matrix_transposef(tm, ctx->ModelView.m);
+            for (i=0;i<16;i++) {
+               params[i] = FLOAT_TO_BOOL(tm[i]);
+            }
+         }
+         break;
+      case GL_TRANSPOSE_PROJECTION_MATRIX_ARB:
+         {
+            GLfloat tm[16];
+            GLuint i;
+            gl_matrix_transposef(tm, ctx->ProjectionMatrix.m);
+            for (i=0;i<16;i++) {
+               params[i] = FLOAT_TO_BOOL(tm[i]);
+            }
+         }
+         break;
+      case GL_TRANSPOSE_TEXTURE_MATRIX_ARB:
+         {
+            GLfloat tm[16];
+            GLuint i;
+            gl_matrix_transposef(tm, ctx->TextureMatrix[texTransformUnit].m);
+            for (i=0;i<16;i++) {
+               params[i] = FLOAT_TO_BOOL(tm[i]);
+            }
+         }
+         break;
+
       default:
 	 printf("invalid enum: %x\n", pname);
          gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
@@ -1878,7 +1915,40 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = 0;
 	 break;
 
-
+      /* GL_ARB_transpose_matrix */
+      case GL_TRANSPOSE_COLOR_MATRIX_ARB:
+         /* don't have a color matrix */
+         break;
+      case GL_TRANSPOSE_MODELVIEW_MATRIX_ARB:
+         {
+            GLfloat tm[16];
+            GLuint i;
+            gl_matrix_transposef(tm, ctx->ModelView.m);
+            for (i=0;i<16;i++) {
+               params[i] = (GLdouble) tm[i];
+            }
+         }
+         break;
+      case GL_TRANSPOSE_PROJECTION_MATRIX_ARB:
+         {
+            GLfloat tm[16];
+            GLuint i;
+            gl_matrix_transposef(tm, ctx->ProjectionMatrix.m);
+            for (i=0;i<16;i++) {
+               params[i] = (GLdouble) tm[i];
+            }
+         }
+         break;
+      case GL_TRANSPOSE_TEXTURE_MATRIX_ARB:
+         {
+            GLfloat tm[16];
+            GLuint i;
+            gl_matrix_transposef(tm, ctx->TextureMatrix[texTransformUnit].m);
+            for (i=0;i<16;i++) {
+               params[i] = (GLdouble) tm[i];
+            }
+         }
+         break;
 
       default:
 	 printf("invalid enum: %x\n", pname);
@@ -2790,6 +2860,20 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_NATIVE_GRAPHICS_HANDLE_PGI:
 	 *params = 0;
 	 break;
+
+      /* GL_ARB_transpose_matrix */
+      case GL_TRANSPOSE_COLOR_MATRIX_ARB:
+         /* don't have a color matrix */
+         break;
+      case GL_TRANSPOSE_MODELVIEW_MATRIX_ARB:
+         gl_matrix_transposef(params, ctx->ModelView.m);
+         break;
+      case GL_TRANSPOSE_PROJECTION_MATRIX_ARB:
+         gl_matrix_transposef(params, ctx->ProjectionMatrix.m);
+         break;
+      case GL_TRANSPOSE_TEXTURE_MATRIX_ARB:
+         gl_matrix_transposef(params, ctx->TextureMatrix[texTransformUnit].m);
+         break;
 
       default:
 	 printf("invalid enum: %x\n", pname);
@@ -3717,6 +3801,41 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 *params = ctx->Array.LockCount;
 	 break;
 	 
+      /* GL_ARB_transpose_matrix */
+      case GL_TRANSPOSE_COLOR_MATRIX_ARB:
+         /* don't have a color matrix */
+         break;
+      case GL_TRANSPOSE_MODELVIEW_MATRIX_ARB:
+         {
+            GLfloat tm[16];
+            GLuint i;
+            gl_matrix_transposef(tm, ctx->ModelView.m);
+            for (i=0;i<16;i++) {
+               params[i] = (GLint) tm[i];
+            }
+         }
+         break;
+      case GL_TRANSPOSE_PROJECTION_MATRIX_ARB:
+         {
+            GLfloat tm[16];
+            GLuint i;
+            gl_matrix_transposef(tm, ctx->ProjectionMatrix.m);
+            for (i=0;i<16;i++) {
+               params[i] = (GLint) tm[i];
+            }
+         }
+         break;
+      case GL_TRANSPOSE_TEXTURE_MATRIX_ARB:
+         {
+            GLfloat tm[16];
+            GLuint i;
+            gl_matrix_transposef(tm, ctx->TextureMatrix[texTransformUnit].m);
+            for (i=0;i<16;i++) {
+               params[i] = (GLint) tm[i];
+            }
+         }
+         break;
+
       default:
 	 printf("invalid enum: %x\n", pname);
          gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );

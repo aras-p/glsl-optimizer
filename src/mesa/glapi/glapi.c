@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.10 1999/11/27 21:30:40 brianp Exp $ */
+/* $Id: glapi.c,v 1.11 1999/12/10 20:01:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -652,6 +652,13 @@ static struct name_address_pair static_functions[] = {
 	{ "glResizeBuffersMESA", (GLvoid *) glResizeBuffersMESA },
 #endif
 
+#ifdef _GLAPI_ARB_transpose_matrix
+        { "glLoadTransposeMatrixdARB", (GLvoid *) glLoadTransposeMatrixdARB },
+        { "glLoadTransposeMatrixfARB", (GLvoid *) glLoadTransposeMatrixfARB },
+        { "glMultTransposeMatrixdARB", (GLvoid *) glMultTransposeMatrixdARB },
+        { "glMultTransposeMatrixfARB", (GLvoid *) glMultTransposeMatrixfARB },
+#endif
+
       { NULL, NULL }  /* end of list marker */
 };
 
@@ -1260,6 +1267,13 @@ _glapi_check_table(const struct _glapi_table *table)
 
 #ifdef _GLAPI_MESA_resize_buffers
    assert(table->ResizeBuffersMESA);
+#endif
+
+#ifdef _GLAPI_ARB_transpose_matrix
+   assert(table->LoadTransposeMatrixdARB);
+   assert(table->LoadTransposeMatrixfARB);
+   assert(table->MultTransposeMatrixdARB);
+   assert(table->MultTransposeMatrixfARB);
 #endif
 }
 

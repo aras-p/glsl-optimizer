@@ -1,4 +1,4 @@
-/* $Id: glapitable.h,v 1.2 1999/11/27 21:30:10 brianp Exp $ */
+/* $Id: glapitable.h,v 1.3 1999/12/10 20:01:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,6 +63,7 @@
 #define _GLAPI_INGR_blend_func_separate  1
 #define _GLAPI_MESA_window_pos  1
 #define _GLAPI_MESA_resize_buffers  1
+#define _GLAPI_ARB_transpose_matrix  1
 
 
 
@@ -553,6 +554,12 @@ struct _glapi_table
    void (*ResizeBuffersMESA)(void);
 #endif
 
+#ifdef _GLAPI_ARB_transpose_matrix
+   void (*LoadTransposeMatrixdARB)(const GLdouble m[16]);
+   void (*LoadTransposeMatrixfARB)(const GLfloat m[16]);
+   void (*MultTransposeMatrixdARB)(const GLdouble m[16]);
+   void (*MultTransposeMatrixfARB)(const GLfloat m[16]);
+#endif
 
    void *ExtensionFuncs[_GLAPI_EXTRA_SLOTS];
 };

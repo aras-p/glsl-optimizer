@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.20 1999/11/27 21:40:42 brianp Exp $ */
+/* $Id: dlist.c,v 1.21 1999/12/10 20:01:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3068,6 +3068,39 @@ static void save_ClientActiveTextureARB( GLenum target )
 
 
 
+static void save_LoadTransposeMatrixdARB( const GLdouble m[16] )
+{
+   GLdouble tm[16];
+   gl_matrix_transposed(tm, m);
+   save_LoadMatrixd(tm);
+}
+
+
+static void save_LoadTransposeMatrixfARB( const GLfloat m[16] )
+{
+   GLfloat tm[16];
+   gl_matrix_transposef(tm, m);
+   save_LoadMatrixf(tm);
+}
+
+
+static void save_MultTransposeMatrixdARB( const GLdouble m[16] )
+{
+   GLdouble tm[16];
+   gl_matrix_transposed(tm, m);
+   save_MultMatrixd(tm);
+}
+
+
+static void save_MultTransposeMatrixfARB( const GLfloat m[16] )
+{
+   GLfloat tm[16];
+   gl_matrix_transposef(tm, m);
+   save_MultMatrixf(tm);
+}
+
+
+
 void gl_compile_cassette( GLcontext *ctx )
 {
    Node *n = alloc_instruction( ctx, OPCODE_VERTEX_CASSETTE, 8 );
@@ -4462,6 +4495,14 @@ _mesa_init_dlist_table( struct _glapi_table *table )
 #ifdef _GLAPI_MESA_resize_buffers
    table->ResizeBuffersMESA = _mesa_ResizeBuffersMESA;
 #endif
+
+#ifdef _GLAPI_ARB_transpose_matrix
+   table->LoadTransposeMatrixdARB = save_LoadTransposeMatrixdARB;
+   table->LoadTransposeMatrixfARB = save_LoadTransposeMatrixfARB;
+   table->MultTransposeMatrixdARB = save_MultTransposeMatrixdARB;
+   table->MultTransposeMatrixfARB = save_MultTransposeMatrixfARB;
+#endif
+
 }
 
 

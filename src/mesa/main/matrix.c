@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.11 1999/11/24 18:48:31 brianp Exp $ */
+/* $Id: matrix.c,v 1.12 1999/12/10 20:01:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -533,6 +533,50 @@ GLboolean gl_matrix_invert( GLmatrix *mat )
       MEMCPY( mat->inv, Identity, sizeof(Identity) );
       return GL_FALSE;
    }  
+}
+
+
+
+void gl_matrix_transposef( GLfloat to[16], const GLfloat from[16] )
+{
+   to[0] = from[0];
+   to[1] = from[4];
+   to[2] = from[8];
+   to[3] = from[12];
+   to[4] = from[1];
+   to[5] = from[5];
+   to[6] = from[9];
+   to[7] = from[13];
+   to[8] = from[2];
+   to[9] = from[6];
+   to[10] = from[10];
+   to[11] = from[14];
+   to[12] = from[3];
+   to[13] = from[7];
+   to[14] = from[11];
+   to[15] = from[15];
+}
+
+
+
+void gl_matrix_transposed( GLdouble to[16], const GLdouble from[16] )
+{
+   to[0] = from[0];
+   to[1] = from[4];
+   to[2] = from[8];
+   to[3] = from[12];
+   to[4] = from[1];
+   to[5] = from[5];
+   to[6] = from[9];
+   to[7] = from[13];
+   to[8] = from[2];
+   to[9] = from[6];
+   to[10] = from[10];
+   to[11] = from[14];
+   to[12] = from[3];
+   to[13] = from[7];
+   to[14] = from[11];
+   to[15] = from[15];
 }
 
 
@@ -1329,6 +1373,42 @@ _mesa_Translated( GLdouble x, GLdouble y, GLdouble z )
    _mesa_Translatef(x, y, z);
 }
 
+
+
+void
+_mesa_LoadTransposeMatrixfARB( const GLfloat *m )
+{
+   GLfloat tm[16];
+   gl_matrix_transposef(tm, m);
+   _mesa_LoadMatrixf(tm);
+}
+
+
+void
+_mesa_LoadTransposeMatrixdARB( const GLdouble *m )
+{
+   GLdouble tm[16];
+   gl_matrix_transposed(tm, m);
+   _mesa_LoadMatrixd(tm);
+}
+
+
+void
+_mesa_MultTransposeMatrixfARB( const GLfloat *m )
+{
+   GLfloat tm[16];
+   gl_matrix_transposef(tm, m);
+   _mesa_MultMatrixf(tm);
+}
+
+
+void
+_mesa_MultTransposeMatrixdARB( const GLdouble *m )
+{
+   GLdouble tm[16];
+   gl_matrix_transposed(tm, m);
+   _mesa_MultMatrixd(tm);
+}
 
 
 /*

@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.5 1999/11/27 21:42:12 brianp Exp $ */
+/* $Id: dispatch.c,v 1.6 1999/12/10 20:01:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -575,5 +575,13 @@ _mesa_init_exec_table(struct _glapi_table *exec)
 #ifdef _GLAPI_MESA_resize_buffers
    exec->ResizeBuffersMESA = _mesa_ResizeBuffersMESA;
 #endif
+
+#ifdef _GLAPI_ARB_transpose_matrix
+   exec->LoadTransposeMatrixdARB = _mesa_LoadTransposeMatrixdARB;
+   exec->LoadTransposeMatrixfARB = _mesa_LoadTransposeMatrixfARB;
+   exec->MultTransposeMatrixdARB = _mesa_MultTransposeMatrixdARB;
+   exec->MultTransposeMatrixfARB = _mesa_MultTransposeMatrixfARB;
+#endif
+
 }
 

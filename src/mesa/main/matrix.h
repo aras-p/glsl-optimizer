@@ -1,4 +1,4 @@
-/* $Id: matrix.h,v 1.4 1999/11/12 18:10:47 brianp Exp $ */
+/* $Id: matrix.h,v 1.5 1999/12/10 20:01:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,6 +46,11 @@ typedef struct {
 #endif
 
 
+extern void gl_matrix_transposef( GLfloat to[16], const GLfloat from[16] );
+
+extern void gl_matrix_transposed( GLdouble to[16], const GLdouble from[16] );
+
+
 extern void gl_rotation_matrix( GLfloat angle, GLfloat x, GLfloat y, GLfloat z,
                                 GLfloat m[] );
 
@@ -56,13 +61,13 @@ extern void gl_mat_mul_mat( GLmatrix *mat, const GLmatrix *mat2 );
 
 extern void gl_calculate_model_project_matrix( GLcontext *ctx );
 
+extern void gl_matrix_copy( GLmatrix *to, const GLmatrix *from );
+
 extern void gl_matrix_ctr( GLmatrix *m );
 
 extern void gl_matrix_dtr( GLmatrix *m );
 
 extern void gl_matrix_alloc_inv( GLmatrix *m );
-
-extern void gl_matrix_copy( GLmatrix *to, const GLmatrix *from );
 
 extern void gl_matrix_mul( GLmatrix *dest, 
 			   const GLmatrix *a, 
@@ -127,6 +132,18 @@ _mesa_Translatef( GLfloat x, GLfloat y, GLfloat z );
 
 extern void
 _mesa_Translated( GLdouble x, GLdouble y, GLdouble z );
+
+extern void
+_mesa_LoadTransposeMatrixfARB( const GLfloat *m );
+
+extern void
+_mesa_LoadTransposeMatrixdARB( const GLdouble *m );
+
+extern void
+_mesa_MultTransposeMatrixfARB( const GLfloat *m );
+
+extern void
+_mesa_MultTransposeMatrixdARB( const GLdouble *m );
 
 extern void
 _mesa_Viewport( GLint x, GLint y, GLsizei width, GLsizei height );

@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.1 1999/11/25 18:16:13 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.2 1999/12/10 20:01:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2945,6 +2945,34 @@ KEYWORD1 void KEYWORD2 NAME(ResizeBuffersMESA)(void)
    DISPATCH(ResizeBuffersMESA, ());
 }
 #endif  /* GL_MESA_resize_buffers */
+
+
+#ifdef _GLAPI_ARB_transpose_matrix
+KEYWORD1 void KEYWORD2 NAME(LoadTransposeMatrixdARB)(const GLdouble m[16])
+{
+   DISPATCH_SETUP;
+   DISPATCH(LoadTransposeMatrixdARB, (m));
+}
+
+KEYWORD1 void KEYWORD2 NAME(LoadTransposeMatrixfARB)(const GLfloat m[16])
+{
+   DISPATCH_SETUP;
+   DISPATCH(LoadTransposeMatrixfARB, (m));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultTransposeMatrixdARB)(const GLdouble m[16])
+{
+   DISPATCH_SETUP;
+   DISPATCH(MultTransposeMatrixdARB, (m));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultTransposeMatrixfARB)(const GLfloat m[16])
+{
+   DISPATCH_SETUP;
+   DISPATCH(MultTransposeMatrixfARB, (m));
+}
+
+#endif
 
 
 
