@@ -1,4 +1,4 @@
-/* $Id: s_depth.h,v 1.3 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: s_depth.h,v 1.4 2001/12/17 04:54:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,8 +38,10 @@ _mesa_zbuffer_address(GLcontext *ctx, GLint x, GLint y);
 
 
 extern GLuint
-_mesa_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                       const GLdepth z[], GLubyte mask[] );
+_old_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+		      const GLdepth z[], GLubyte mask[] );
+extern GLuint
+_mesa_depth_test_span( GLcontext *ctx, struct sw_span *span);
 
 extern void
 _mesa_depth_test_pixels( GLcontext *ctx,

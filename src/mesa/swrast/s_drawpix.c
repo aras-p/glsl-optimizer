@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.22 2001/06/26 21:15:36 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.23 2001/12/17 04:54:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -527,7 +527,7 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
                                        indexes, desty);
       }
       else {
-         _mesa_write_index_span(ctx, drawWidth, x, y, zspan, fogSpan, indexes,
+         _old_write_index_span(ctx, drawWidth, x, y, zspan, fogSpan, indexes,
                                 NULL, GL_BITMAP);
       }
    }
@@ -650,7 +650,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          GLint i;
          for (i = 0; i < width; i++)
             zspan[i] = zptr[i];
-         _mesa_write_rgba_span(ctx, width, x, y, zspan, 0, rgba,
+         _old_write_rgba_span(ctx, width, x, y, zspan, 0, rgba,
                                NULL, GL_BITMAP);
       }
    }
@@ -662,7 +662,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          const GLuint *zptr = (const GLuint *)
             _mesa_image_address(&ctx->Unpack, pixels, width, height,
                                 GL_DEPTH_COMPONENT, type, 0, row, 0);
-         _mesa_write_rgba_span(ctx, width, x, y, zptr, 0, rgba,
+         _old_write_rgba_span(ctx, width, x, y, zptr, 0, rgba,
                                NULL, GL_BITMAP);
       }
    }
@@ -691,7 +691,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
                                             (const GLchan (*)[4]) rgba, desty);
             }
             else {
-               _mesa_write_rgba_span(ctx, width, x, y, zspan, 0,
+               _old_write_rgba_span(ctx, width, x, y, zspan, 0,
                                      rgba, NULL, GL_BITMAP);
             }
          }
@@ -701,7 +701,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
                                              ispan, GL_BITMAP);
             }
             else {
-               _mesa_write_index_span(ctx, width, x, y, zspan, 0,
+               _old_write_index_span(ctx, width, x, y, zspan, 0,
                                       ispan, NULL, GL_BITMAP);
             }
          }
@@ -839,6 +839,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
          if (ctx->Texture._ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
             GLchan primary_rgba[MAX_WIDTH][4];
             GLuint unit;
+	    GLfloat texcoord[MAX_WIDTH][3];
             DEFARRAY(GLfloat, s, MAX_WIDTH);  /* mac 32k limitation */
             DEFARRAY(GLfloat, t, MAX_WIDTH);
             DEFARRAY(GLfloat, r, MAX_WIDTH);
@@ -853,11 +854,21 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
 
             for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
                if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+		  GLint i;
                   _mesa_pixeltexgen(ctx, width, (const GLchan (*)[4]) rgba,
                                     s, t, r, q);
-                  _swrast_texture_fragments(ctx, unit, width, s, t, r, NULL,
-                                            (CONST GLchan (*)[4]) primary_rgba,
-                                            rgba);
+		  /* this is an ugly work-around. s,t,r has to be
+		     copied to texcoords, because the functions need
+		     different input. */
+		  for (i=0; i<width; i++) {
+		    texcoord[i][0] = s[i],
+		      texcoord[i][1] = t[i],
+		      texcoord[i][2] = r[i];
+		  }
+                  _old_swrast_texture_fragments( ctx, unit, width,
+					     texcoord, NULL,
+					     (CONST GLchan (*)[4]) primary_rgba,
+					     rgba);
                }
             }
             UNDEFARRAY(s);  /* mac 32k limitation */
@@ -875,7 +886,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
                                          (CONST GLchan (*)[4]) rgba, desty);
          }
          else {
-            _mesa_write_rgba_span(ctx, (GLuint) width, x, y, zspan, fogSpan,
+            _old_write_rgba_span(ctx, (GLuint) width, x, y, zspan, fogSpan,
                                   rgba, NULL, GL_BITMAP);
          }
       }

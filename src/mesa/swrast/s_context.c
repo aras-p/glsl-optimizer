@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.25 2001/07/28 19:28:49 keithw Exp $ */
+/* $Id: s_context.c,v 1.26 2001/12/17 04:54:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -263,17 +263,15 @@ _swrast_validate_blend_func( GLcontext *ctx, GLuint n,
 static void
 _swrast_validate_texture_sample( GLcontext *ctx, GLuint texUnit,
 				 const struct gl_texture_object *tObj,
-				 GLuint n,
-				 const GLfloat s[], const GLfloat t[],
-				 const GLfloat u[], const GLfloat lambda[],
-				 GLchan rgba[][4] )
+				 GLuint n, GLfloat texcoords[][3],
+				 const GLfloat lambda[], GLchan rgba[][4] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    _swrast_validate_derived( ctx );
    _swrast_choose_texture_sample_func( ctx, texUnit, tObj );
 
-   swrast->TextureSample[texUnit]( ctx, texUnit, tObj, n, s, t, u,
+   swrast->TextureSample[texUnit]( ctx, texUnit, tObj, n, texcoords,
 				   lambda, rgba );
 }
 

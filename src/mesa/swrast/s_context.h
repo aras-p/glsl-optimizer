@@ -1,4 +1,4 @@
-/* $Id: s_context.h,v 1.12 2001/08/14 14:08:44 brianp Exp $ */
+/* $Id: s_context.h,v 1.13 2001/12/17 04:54:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,10 +38,8 @@
  */
 typedef void (*TextureSampleFunc)( GLcontext *ctx, GLuint texUnit,
 				   const struct gl_texture_object *tObj,
-                                   GLuint n,
-                                   const GLfloat s[], const GLfloat t[],
-                                   const GLfloat u[], const GLfloat lambda[],
-                                   GLchan rgba[][4] );
+                                   GLuint n, GLfloat texcoords[][3],
+                                   const GLfloat lambda[], GLchan rgba[][4] );
 
 
 
@@ -130,6 +128,7 @@ typedef struct
    GLuint StippleCounter;    /* Line stipple counter */
    GLuint NewState;
    GLuint StateChanges;
+
 
    /* Mechanism to allow driver (like X11) to register further
     * software rasterization routines.

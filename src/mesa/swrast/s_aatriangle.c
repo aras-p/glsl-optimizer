@@ -1,4 +1,4 @@
-/* $Id: s_aatriangle.c,v 1.20 2001/11/13 00:26:39 brianp Exp $ */
+/* $Id: s_aatriangle.c,v 1.21 2001/12/17 04:54:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -40,6 +40,7 @@
 /*
  * Compute coefficients of a plane using the X,Y coords of the v0, v1, v2
  * vertices and the given Z values.
+ * A point (x,y,z) lies on plane iff a*x+b*y+c*z+d = 0.
  */
 static INLINE void
 compute_plane(const GLfloat v0[], const GLfloat v1[], const GLfloat v2[],
@@ -53,9 +54,15 @@ compute_plane(const GLfloat v0[], const GLfloat v1[], const GLfloat v2[],
    const GLfloat qy = v2[1] - v0[1];
    const GLfloat qz = z2 - z0;
 
+   /* Crossproduct "(a,b,c):= dv1 x dv2" is orthogonal to plane. */
    const GLfloat a = py * qz - pz * qy;
    const GLfloat b = pz * qx - px * qz;
    const GLfloat c = px * qy - py * qx;
+   /* Point on the plane = "r*(a,b,c) + w", with fixed "r" depending
+      on the distance of plane from origin and arbitrary "w" parallel
+      to the plane. */
+   /* The scalar product "(r*(a,b,c)+w)*(a,b,c)" is "r*(a^2+b^2+c^2)",
+      which is equal to "-d" below. */
    const GLfloat d = -(a * v0[0] + b * v0[1] + c * z0);
 
    plane[0] = a;
@@ -93,8 +100,8 @@ do {					\
 static INLINE GLfloat
 solve_plane(GLfloat x, GLfloat y, const GLfloat plane[4])
 {
-   const GLfloat z = (plane[3] + plane[0] * x + plane[1] * y) / -plane[2];
-   return z;
+   ASSERT(plane[2] != 0.0F);
+   return (plane[3] + plane[0] * x + plane[1] * y) / -plane[2];
 }
 
 
@@ -193,7 +200,7 @@ compute_coveragef(const GLfloat v0[3], const GLfloat v1[3],
 #ifdef DEBUG
    {
       const GLfloat area = dx0 * dy1 - dx1 * dy0;
-      assert(area >= 0.0);
+      ASSERT(area >= 0.0);
    }
 #endif
 
@@ -276,7 +283,7 @@ compute_coveragei(const GLfloat v0[3], const GLfloat v1[3],
 #ifdef DEBUG
    {
       const GLfloat area = dx0 * dy1 - dx1 * dy0;
-      assert(area >= 0.0);
+      ASSERT(area >= 0.0);
    }
 #endif
 

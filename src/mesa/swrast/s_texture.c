@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.43 2001/12/04 23:44:56 brianp Exp $ */
+/* $Id: s_texture.c,v 1.44 2001/12/17 04:54:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -495,17 +495,14 @@ sample_1d_linear_mipmap_linear(GLcontext *ctx,
 static void
 sample_nearest_1d( GLcontext *ctx, GLuint texUnit,
                    const struct gl_texture_object *tObj, GLuint n,
-                   const GLfloat s[], const GLfloat t[],
-                   const GLfloat u[], const GLfloat lambda[],
+                   GLfloat texcoords[][3], const GLfloat lambda[],
                    GLchan rgba[][4] )
 {
    GLuint i;
    struct gl_texture_image *image = tObj->Image[tObj->BaseLevel];
-   (void) t;
-   (void) u;
    (void) lambda;
    for (i=0;i<n;i++) {
-      sample_1d_nearest(ctx, tObj, image, s[i], rgba[i]);
+      sample_1d_nearest(ctx, tObj, image, texcoords[i][0], rgba[i]);
    }
 }
 
@@ -514,17 +511,14 @@ sample_nearest_1d( GLcontext *ctx, GLuint texUnit,
 static void
 sample_linear_1d( GLcontext *ctx, GLuint texUnit,
                   const struct gl_texture_object *tObj, GLuint n,
-                  const GLfloat s[], const GLfloat t[],
-                  const GLfloat u[], const GLfloat lambda[],
+                  GLfloat texcoords[][3], const GLfloat lambda[],
                   GLchan rgba[][4] )
 {
    GLuint i;
    struct gl_texture_image *image = tObj->Image[tObj->BaseLevel];
-   (void) t;
-   (void) u;
    (void) lambda;
    for (i=0;i<n;i++) {
-      sample_1d_linear(ctx, tObj, image, s[i], rgba[i]);
+      sample_1d_linear(ctx, tObj, image, texcoords[i][0], rgba[i]);
    }
 }
 
@@ -537,15 +531,11 @@ sample_linear_1d( GLcontext *ctx, GLuint texUnit,
 static void
 sample_lambda_1d( GLcontext *ctx, GLuint texUnit,
                   const struct gl_texture_object *tObj, GLuint n,
-                  const GLfloat s[], const GLfloat t[],
-                  const GLfloat u[], const GLfloat lambda[],
-                  GLchan rgba[][4] )
+                  GLfloat texcoords[][3],
+                  const GLfloat lambda[], GLchan rgba[][4] )
 {
    GLfloat MinMagThresh = SWRAST_CONTEXT(ctx)->_MinMagThresh[texUnit];
    GLuint i;
-
-   (void) t;
-   (void) u;
 
    for (i=0;i<n;i++) {
       if (lambda[i] > MinMagThresh) {
@@ -553,26 +543,26 @@ sample_lambda_1d( GLcontext *ctx, GLuint texUnit,
          switch (tObj->MinFilter) {
             case GL_NEAREST:
                sample_1d_nearest(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                 s[i], rgba[i]);
+                                 texcoords[i][0], rgba[i]);
                break;
             case GL_LINEAR:
                sample_1d_linear(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                s[i], rgba[i]);
+                                texcoords[i][0], rgba[i]);
                break;
             case GL_NEAREST_MIPMAP_NEAREST:
-               sample_1d_nearest_mipmap_nearest(ctx, tObj, lambda[i], s[i],
+               sample_1d_nearest_mipmap_nearest(ctx, tObj, lambda[i], texcoords[i][0],
                                                 rgba[i]);
                break;
             case GL_LINEAR_MIPMAP_NEAREST:
-               sample_1d_linear_mipmap_nearest(ctx, tObj, s[i], lambda[i],
+               sample_1d_linear_mipmap_nearest(ctx, tObj, texcoords[i][0], lambda[i],
                                                rgba[i]);
                break;
             case GL_NEAREST_MIPMAP_LINEAR:
-               sample_1d_nearest_mipmap_linear(ctx, tObj, s[i], lambda[i],
+               sample_1d_nearest_mipmap_linear(ctx, tObj, texcoords[i][0], lambda[i],
                                                rgba[i]);
                break;
             case GL_LINEAR_MIPMAP_LINEAR:
-               sample_1d_linear_mipmap_linear(ctx, tObj, s[i], lambda[i],
+               sample_1d_linear_mipmap_linear(ctx, tObj, texcoords[i][0], lambda[i],
                                               rgba[i]);
                break;
             default:
@@ -585,11 +575,11 @@ sample_lambda_1d( GLcontext *ctx, GLuint texUnit,
          switch (tObj->MagFilter) {
             case GL_NEAREST:
                sample_1d_nearest(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                 s[i], rgba[i]);
+                                 texcoords[i][0], rgba[i]);
                break;
             case GL_LINEAR:
                sample_1d_linear(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                s[i], rgba[i]);
+                                texcoords[i][0], rgba[i]);
                break;
             default:
                _mesa_problem(NULL, "Bad mag filter in sample_1d_texture");
@@ -847,16 +837,15 @@ sample_2d_linear_mipmap_linear(GLcontext *ctx,
 static void
 sample_nearest_2d( GLcontext *ctx, GLuint texUnit,
                    const struct gl_texture_object *tObj, GLuint n,
-                   const GLfloat s[], const GLfloat t[],
-                   const GLfloat u[], const GLfloat lambda[],
-                   GLchan rgba[][4] )
+                   GLfloat texcoords[][3],
+                   const GLfloat lambda[], GLchan rgba[][4] )
 {
    GLuint i;
    struct gl_texture_image *image = tObj->Image[tObj->BaseLevel];
-   (void) u;
    (void) lambda;
    for (i=0;i<n;i++) {
-      sample_2d_nearest(ctx, tObj, image, s[i], t[i], rgba[i]);
+      sample_2d_nearest(ctx, tObj, image, texcoords[i][0],
+			texcoords[i][1], rgba[i]);
    }
 }
 
@@ -865,16 +854,15 @@ sample_nearest_2d( GLcontext *ctx, GLuint texUnit,
 static void
 sample_linear_2d( GLcontext *ctx, GLuint texUnit,
                   const struct gl_texture_object *tObj, GLuint n,
-                  const GLfloat s[], const GLfloat t[],
-                  const GLfloat u[], const GLfloat lambda[],
-                  GLchan rgba[][4] )
+                  GLfloat texcoords[][3],
+                  const GLfloat lambda[], GLchan rgba[][4] )
 {
    GLuint i;
    struct gl_texture_image *image = tObj->Image[tObj->BaseLevel];
-   (void) u;
    (void) lambda;
    for (i=0;i<n;i++) {
-      sample_2d_linear(ctx, tObj, image, s[i], t[i], rgba[i]);
+      sample_2d_linear(ctx, tObj, image, texcoords[i][0],
+		       texcoords[i][1], rgba[i]);
    }
 }
 
@@ -889,8 +877,8 @@ sample_linear_2d( GLcontext *ctx, GLuint texUnit,
 static void
 opt_sample_rgb_2d( GLcontext *ctx, GLuint texUnit,
                    const struct gl_texture_object *tObj,
-                   GLuint n, const GLfloat s[], const GLfloat t[],
-                   const GLfloat u[], const GLfloat lambda[],
+                   GLuint n, GLfloat texcoords[][3],
+                   const GLfloat lambda[],
                    GLchan rgba[][4] )
 {
    const struct gl_texture_image *img = tObj->Image[tObj->BaseLevel];
@@ -900,7 +888,6 @@ opt_sample_rgb_2d( GLcontext *ctx, GLuint texUnit,
    const GLint rowMask = img->Height - 1;
    const GLint shift = img->WidthLog2;
    GLuint k;
-   (void) u;
    (void) lambda;
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
@@ -908,8 +895,8 @@ opt_sample_rgb_2d( GLcontext *ctx, GLuint texUnit,
    ASSERT(img->Format==GL_RGB);
 
    for (k=0; k<n; k++) {
-      GLint i = IFLOOR(s[k] * width) & colMask;
-      GLint j = IFLOOR(t[k] * height) & rowMask;
+      GLint i = IFLOOR(texcoords[k][0] * width) & colMask;
+      GLint j = IFLOOR(texcoords[k][1] * height) & rowMask;
       GLint pos = (j << shift) | i;
       GLchan *texel = ((GLchan *) img->Data) + 3*pos;
       rgba[k][RCOMP] = texel[0];
@@ -929,8 +916,8 @@ opt_sample_rgb_2d( GLcontext *ctx, GLuint texUnit,
 static void
 opt_sample_rgba_2d( GLcontext *ctx, GLuint texUnit,
                     const struct gl_texture_object *tObj,
-                    GLuint n, const GLfloat s[], const GLfloat t[],
-                    const GLfloat u[], const GLfloat lambda[],
+                    GLuint n, GLfloat texcoords[][3],
+                    const GLfloat lambda[],
                     GLchan rgba[][4] )
 {
    const struct gl_texture_image *img = tObj->Image[tObj->BaseLevel];
@@ -940,7 +927,6 @@ opt_sample_rgba_2d( GLcontext *ctx, GLuint texUnit,
    const GLint rowMask = img->Height - 1;
    const GLint shift = img->WidthLog2;
    GLuint i;
-   (void) u;
    (void) lambda;
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
@@ -948,8 +934,8 @@ opt_sample_rgba_2d( GLcontext *ctx, GLuint texUnit,
    ASSERT(img->Format==GL_RGBA);
 
    for (i = 0; i < n; i++) {
-      const GLint col = IFLOOR(s[i] * width) & colMask;
-      const GLint row = IFLOOR(t[i] * height) & rowMask;
+      const GLint col = IFLOOR(texcoords[i][0] * width) & colMask;
+      const GLint row = IFLOOR(texcoords[i][1] * height) & rowMask;
       const GLint pos = (row << shift) | col;
       const GLchan *texel = ((GLchan *) img->Data) + (pos << 2);    /* pos*4 */
       COPY_CHAN4(rgba[i], texel);
@@ -986,14 +972,12 @@ span_is_monotonous (GLuint n, const GLfloat lambda[])
 static void
 sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
                   const struct gl_texture_object *tObj,
-                  GLuint n,
-                  const GLfloat s[], const GLfloat t[],
-                  const GLfloat u[], const GLfloat lambda[],
+                  GLuint n, GLfloat texcoords[][3],
+                  const GLfloat lambda[],
                   GLchan rgba[][4] )
 {
    const GLfloat minMagThresh = SWRAST_CONTEXT(ctx)->_MinMagThresh[texUnit];
    GLuint i;
-   (void) u;
 
 #ifdef DEBUG
    ASSERT (span_is_monotonous(n, lambda) == GL_TRUE);
@@ -1009,25 +993,25 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
              img->Border == 0) {
             switch (img->Format) {
             case GL_RGB:
-               opt_sample_rgb_2d(ctx, texUnit, tObj, n, s, t, NULL,
+               opt_sample_rgb_2d(ctx, texUnit, tObj, n, texcoords,
                                  NULL, rgba);
                break;
             case GL_RGBA:
-               opt_sample_rgba_2d(ctx, texUnit, tObj, n, s, t, NULL,
+	       opt_sample_rgba_2d(ctx, texUnit, tObj, n, texcoords,
                                   NULL, rgba);
                break;
             default:
-               sample_nearest_2d(ctx, texUnit, tObj, n, s, t, NULL,
+               sample_nearest_2d(ctx, texUnit, tObj, n, texcoords,
                                  NULL, rgba);
             }
          }
          else {
-            sample_nearest_2d(ctx, texUnit, tObj, n, s, t, NULL,
+            sample_nearest_2d(ctx, texUnit, tObj, n, texcoords,
                               NULL, rgba);
          }
          break;
       case GL_LINEAR:
-	 sample_linear_2d(ctx, texUnit, tObj, n, s, t, NULL,
+	 sample_linear_2d(ctx, texUnit, tObj, n, texcoords,
 			  NULL, rgba);
          break;
       default:
@@ -1041,26 +1025,26 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
             switch (tObj->MinFilter) {
                case GL_NEAREST:
                   sample_2d_nearest(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                    s[i], t[i], rgba[i]);
+                                    texcoords[i][0], texcoords[i][1], rgba[i]);
                   break;
                case GL_LINEAR:
                   sample_2d_linear(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                   s[i], t[i], rgba[i]);
+                                   texcoords[i][0], texcoords[i][1], rgba[i]);
                   break;
                case GL_NEAREST_MIPMAP_NEAREST:
-                  sample_2d_nearest_mipmap_nearest(ctx, tObj, s[i], t[i],
+                  sample_2d_nearest_mipmap_nearest(ctx, tObj, texcoords[i][0], texcoords[i][1],
                                                    lambda[i], rgba[i]);
                   break;
                case GL_LINEAR_MIPMAP_NEAREST:
-                  sample_2d_linear_mipmap_nearest(ctx,tObj, s[i], t[i],
+                  sample_2d_linear_mipmap_nearest(ctx,tObj, texcoords[i][0], texcoords[i][1],
                                                   lambda[i], rgba[i]);
                   break;
                case GL_NEAREST_MIPMAP_LINEAR:
-                  sample_2d_nearest_mipmap_linear(ctx,tObj, s[i], t[i],
+                  sample_2d_nearest_mipmap_linear(ctx,tObj, texcoords[i][0], texcoords[i][1],
                                                   lambda[i], rgba[i]);
                   break;
                case GL_LINEAR_MIPMAP_LINEAR:
-                  sample_2d_linear_mipmap_linear(ctx,tObj, s[i], t[i],
+                  sample_2d_linear_mipmap_linear(ctx,tObj, texcoords[i][0], texcoords[i][1],
                                                  lambda[i], rgba[i] );
                   break;
                default:
@@ -1073,11 +1057,11 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
             switch (tObj->MagFilter) {
                case GL_NEAREST:
                   sample_2d_nearest(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                    s[i], t[i], rgba[i]);
+                                    texcoords[i][0], texcoords[i][1], rgba[i]);
                   break;
                case GL_LINEAR:
                   sample_2d_linear(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                   s[i], t[i], rgba[i] );
+                                   texcoords[i][0], texcoords[i][1], rgba[i] );
                   break;
                default:
                   _mesa_problem(NULL, "Bad mag filter in sample_2d_texture");
@@ -1402,15 +1386,14 @@ sample_3d_linear_mipmap_linear(GLcontext *ctx,
 static void
 sample_nearest_3d(GLcontext *ctx, GLuint texUnit,
                   const struct gl_texture_object *tObj, GLuint n,
-                  const GLfloat s[], const GLfloat t[],
-                  const GLfloat u[], const GLfloat lambda[],
+                  GLfloat texcoords[][3], const GLfloat lambda[],
                   GLchan rgba[][4])
 {
    GLuint i;
    struct gl_texture_image *image = tObj->Image[tObj->BaseLevel];
    (void) lambda;
    for (i=0;i<n;i++) {
-      sample_3d_nearest(ctx, tObj, image, s[i], t[i], u[i], rgba[i]);
+      sample_3d_nearest(ctx, tObj, image, texcoords[i][0], texcoords[i][1], texcoords[i][2], rgba[i]);
    }
 }
 
@@ -1419,15 +1402,14 @@ sample_nearest_3d(GLcontext *ctx, GLuint texUnit,
 static void
 sample_linear_3d( GLcontext *ctx, GLuint texUnit,
                   const struct gl_texture_object *tObj, GLuint n,
-                  const GLfloat s[], const GLfloat t[],
-                  const GLfloat u[], const GLfloat lambda[],
-                  GLchan rgba[][4] )
+                  GLfloat texcoords[][3],
+		  const GLfloat lambda[], GLchan rgba[][4] )
 {
    GLuint i;
    struct gl_texture_image *image = tObj->Image[tObj->BaseLevel];
    (void) lambda;
    for (i=0;i<n;i++) {
-      sample_3d_linear(ctx, tObj, image, s[i], t[i], u[i], rgba[i]);
+      sample_3d_linear(ctx, tObj, image, texcoords[i][0], texcoords[i][1], texcoords[i][2], rgba[i]);
    }
 }
 
@@ -1439,8 +1421,7 @@ sample_linear_3d( GLcontext *ctx, GLuint texUnit,
 static void
 sample_lambda_3d( GLcontext *ctx, GLuint texUnit,
                   const struct gl_texture_object *tObj, GLuint n,
-                  const GLfloat s[], const GLfloat t[],
-                  const GLfloat u[], const GLfloat lambda[],
+                  GLfloat texcoords[][3], const GLfloat lambda[],
                   GLchan rgba[][4] )
 {
    GLuint i;
@@ -1453,26 +1434,26 @@ sample_lambda_3d( GLcontext *ctx, GLuint texUnit,
          switch (tObj->MinFilter) {
             case GL_NEAREST:
                sample_3d_nearest(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                 s[i], t[i], u[i], rgba[i]);
+                                 texcoords[i][0], texcoords[i][1], texcoords[i][2], rgba[i]);
                break;
             case GL_LINEAR:
                sample_3d_linear(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                s[i], t[i], u[i], rgba[i]);
+                                texcoords[i][0], texcoords[i][1], texcoords[i][2], rgba[i]);
                break;
             case GL_NEAREST_MIPMAP_NEAREST:
-               sample_3d_nearest_mipmap_nearest(ctx, tObj, s[i], t[i], u[i],
+               sample_3d_nearest_mipmap_nearest(ctx, tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2],
                                                 lambda[i], rgba[i]);
                break;
             case GL_LINEAR_MIPMAP_NEAREST:
-               sample_3d_linear_mipmap_nearest(ctx, tObj, s[i], t[i], u[i],
+               sample_3d_linear_mipmap_nearest(ctx, tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2],
                                                lambda[i], rgba[i]);
                break;
             case GL_NEAREST_MIPMAP_LINEAR:
-               sample_3d_nearest_mipmap_linear(ctx, tObj, s[i], t[i], u[i],
+               sample_3d_nearest_mipmap_linear(ctx, tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2],
                                                lambda[i], rgba[i]);
                break;
             case GL_LINEAR_MIPMAP_LINEAR:
-               sample_3d_linear_mipmap_linear(ctx, tObj, s[i], t[i], u[i],
+               sample_3d_linear_mipmap_linear(ctx, tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2],
                                               lambda[i], rgba[i]);
                break;
             default:
@@ -1484,11 +1465,11 @@ sample_lambda_3d( GLcontext *ctx, GLuint texUnit,
          switch (tObj->MagFilter) {
             case GL_NEAREST:
                sample_3d_nearest(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                 s[i], t[i], u[i], rgba[i]);
+                                 texcoords[i][0], texcoords[i][1], texcoords[i][2], rgba[i]);
                break;
             case GL_LINEAR:
                sample_3d_linear(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                                s[i], t[i], u[i], rgba[i]);
+                                texcoords[i][0], texcoords[i][1], texcoords[i][2], rgba[i]);
                break;
             default:
                _mesa_problem(NULL, "Bad mag filter in sample_3d_texture");
@@ -1579,8 +1560,7 @@ choose_cube_face(const struct gl_texture_object *texObj,
 static void
 sample_nearest_cube(GLcontext *ctx, GLuint texUnit,
 		    const struct gl_texture_object *tObj, GLuint n,
-                    const GLfloat s[], const GLfloat t[],
-                    const GLfloat u[], const GLfloat lambda[],
+                    GLfloat texcoords[][3], const GLfloat lambda[],
                     GLchan rgba[][4])
 {
    GLuint i;
@@ -1588,7 +1568,7 @@ sample_nearest_cube(GLcontext *ctx, GLuint texUnit,
    for (i = 0; i < n; i++) {
       const struct gl_texture_image **images;
       GLfloat newS, newT;
-      images = choose_cube_face(tObj, s[i], t[i], u[i], &newS, &newT);
+      images = choose_cube_face(tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2], &newS, &newT);
       sample_2d_nearest(ctx, tObj, images[tObj->BaseLevel],
                         newS, newT, rgba[i]);
    }
@@ -1598,16 +1578,15 @@ sample_nearest_cube(GLcontext *ctx, GLuint texUnit,
 static void
 sample_linear_cube(GLcontext *ctx, GLuint texUnit,
 		   const struct gl_texture_object *tObj, GLuint n,
-                   const GLfloat s[], const GLfloat t[],
-                   const GLfloat u[], const GLfloat lambda[],
-                   GLchan rgba[][4])
+                   GLfloat texcoords[][3],
+		   const GLfloat lambda[], GLchan rgba[][4])
 {
    GLuint i;
    (void) lambda;
    for (i = 0; i < n; i++) {
       const struct gl_texture_image **images;
       GLfloat newS, newT;
-      images = choose_cube_face(tObj, s[i], t[i], u[i], &newS, &newT);
+      images = choose_cube_face(tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2], &newS, &newT);
       sample_2d_linear(ctx, tObj, images[tObj->BaseLevel],
                        newS, newT, rgba[i]);
    }
@@ -1711,8 +1690,7 @@ sample_cube_linear_mipmap_linear(GLcontext *ctx,
 static void
 sample_lambda_cube( GLcontext *ctx, GLuint texUnit,
 		    const struct gl_texture_object *tObj, GLuint n,
-		    const GLfloat s[], const GLfloat t[],
-		    const GLfloat u[], const GLfloat lambda[],
+		    GLfloat texcoords[][3], const GLfloat lambda[],
 		    GLchan rgba[][4])
 {
    GLfloat MinMagThresh = SWRAST_CONTEXT(ctx)->_MinMagThresh[texUnit];
@@ -1726,7 +1704,8 @@ sample_lambda_cube( GLcontext *ctx, GLuint texUnit,
                {
                   const struct gl_texture_image **images;
                   GLfloat newS, newT;
-                  images = choose_cube_face(tObj, s[i], t[i], u[i],
+                  images = choose_cube_face(tObj, texcoords[i][0],
+					    texcoords[i][1], texcoords[i][2],
                                             &newS, &newT);
                   sample_2d_nearest(ctx, tObj, images[tObj->BaseLevel],
                                     newS, newT, rgba[i]);
@@ -1736,26 +1715,26 @@ sample_lambda_cube( GLcontext *ctx, GLuint texUnit,
                {
                   const struct gl_texture_image **images;
                   GLfloat newS, newT;
-                  images = choose_cube_face(tObj, s[i], t[i], u[i],
+                  images = choose_cube_face(tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2],
                                             &newS, &newT);
                   sample_2d_linear(ctx, tObj, images[tObj->BaseLevel],
                                    newS, newT, rgba[i]);
                }
                break;
             case GL_NEAREST_MIPMAP_NEAREST:
-               sample_cube_nearest_mipmap_nearest(ctx, tObj, s[i], t[i], u[i],
+               sample_cube_nearest_mipmap_nearest(ctx, tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2],
                                                   lambda[i], rgba[i]);
                break;
             case GL_LINEAR_MIPMAP_NEAREST:
-               sample_cube_linear_mipmap_nearest(ctx, tObj, s[i], t[i], u[i],
+               sample_cube_linear_mipmap_nearest(ctx, tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2],
                                                  lambda[i], rgba[i]);
                break;
             case GL_NEAREST_MIPMAP_LINEAR:
-               sample_cube_nearest_mipmap_linear(ctx, tObj, s[i], t[i], u[i],
+               sample_cube_nearest_mipmap_linear(ctx, tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2],
                                                  lambda[i], rgba[i]);
                break;
             case GL_LINEAR_MIPMAP_LINEAR:
-               sample_cube_linear_mipmap_linear(ctx, tObj, s[i], t[i], u[i],
+               sample_cube_linear_mipmap_linear(ctx, tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2],
                                                 lambda[i], rgba[i]);
                break;
             default:
@@ -1766,7 +1745,7 @@ sample_lambda_cube( GLcontext *ctx, GLuint texUnit,
          /* magnification */
          const struct gl_texture_image **images;
          GLfloat newS, newT;
-         images = choose_cube_face(tObj, s[i], t[i], u[i],
+         images = choose_cube_face(tObj, texcoords[i][0], texcoords[i][1], texcoords[i][2],
                                    &newS, &newT);
          switch (tObj->MagFilter) {
             case GL_NEAREST:
@@ -1788,8 +1767,7 @@ sample_lambda_cube( GLcontext *ctx, GLuint texUnit,
 static void
 null_sample_func( GLcontext *ctx, GLuint texUnit,
 		  const struct gl_texture_object *tObj, GLuint n,
-		  const GLfloat s[], const GLfloat t[],
-		  const GLfloat u[], const GLfloat lambda[],
+		  GLfloat texcoords[][3], const GLfloat lambda[],
 		  GLchan rgba[][4])
 {
 }
@@ -2711,8 +2689,7 @@ apply_texture( const GLcontext *ctx,
 static void
 sample_depth_texture(const GLcontext *ctx,
                      const struct gl_texture_unit *texUnit,
-                     GLuint n,
-                     const GLfloat s[], const GLfloat t[], const GLfloat r[],
+                     GLuint n, GLfloat texcoords[][3],
                      GLchan texel[][4])
 {
    const struct gl_texture_object *texObj = texUnit->_Current;
@@ -2773,11 +2750,11 @@ sample_depth_texture(const GLcontext *ctx,
       for (i = 0; i < n; i++) {
          GLfloat depthSample;
          GLint col, row;
-         COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapS, s[i], width, col);
-         COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapT, t[i], height, row);
+         COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapS, texcoords[i][0], width, col);
+         COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapT, texcoords[i][1], height, row);
          depthSample = *((const GLfloat *) texImage->Data + row * width + col);
-         if ((r[i] <= depthSample && lequal) ||
-             (r[i] >= depthSample && gequal)) {
+         if ((texcoords[i][2] <= depthSample && lequal) ||
+             (texcoords[i][2] >= depthSample && gequal)) {
             result = CHAN_MAX;
          }
          else {
@@ -2817,8 +2794,8 @@ sample_depth_texture(const GLcontext *ctx,
          GLfloat u, v;
          GLuint useBorderTexel;
 
-         COMPUTE_LINEAR_TEXEL_LOCATIONS(texObj->WrapS, s[i], u, width, i0, i1);
-         COMPUTE_LINEAR_TEXEL_LOCATIONS(texObj->WrapT, t[i], v, height,j0, j1);
+         COMPUTE_LINEAR_TEXEL_LOCATIONS(texObj->WrapS, texcoords[i][0], u, width, i0, i1);
+         COMPUTE_LINEAR_TEXEL_LOCATIONS(texObj->WrapT, texcoords[i][1], v, height,j0, j1);
 
          useBorderTexel = 0;
          if (texImage->Border) {
@@ -2870,8 +2847,8 @@ sample_depth_texture(const GLcontext *ctx,
             const GLfloat w11 = (       a) * (       b);
             const GLfloat depthSample = w00 * depth00 + w10 * depth10
                                       + w01 * depth01 + w11 * depth11;
-            if ((depthSample <= r[i] && lequal) ||
-                (depthSample >= r[i] && gequal)) {
+            if ((depthSample <= texcoords[i][2] && lequal) ||
+                (depthSample >= texcoords[i][2] && gequal)) {
                result  = ambient;
             }
             else {
@@ -2886,16 +2863,16 @@ sample_depth_texture(const GLcontext *ctx,
             const GLfloat d = (CHAN_MAXF - (GLfloat) ambient) * 0.25F;
             GLfloat luminance = CHAN_MAXF;
             if (lequal) {
-               if (depth00 <= r[i])   luminance -= d;
-               if (depth01 <= r[i])   luminance -= d;
-               if (depth10 <= r[i])   luminance -= d;
-               if (depth11 <= r[i])   luminance -= d;
+               if (depth00 <= texcoords[i][2])   luminance -= d;
+               if (depth01 <= texcoords[i][2])   luminance -= d;
+               if (depth10 <= texcoords[i][2])   luminance -= d;
+               if (depth11 <= texcoords[i][2])   luminance -= d;
             }
             else {
-               if (depth00 >= r[i])   luminance -= d;
-               if (depth01 >= r[i])   luminance -= d;
-               if (depth10 >= r[i])   luminance -= d;
-               if (depth11 >= r[i])   luminance -= d;
+               if (depth00 >= texcoords[i][2])   luminance -= d;
+               if (depth01 >= texcoords[i][2])   luminance -= d;
+               if (depth10 >= texcoords[i][2])   luminance -= d;
+               if (depth11 >= texcoords[i][2])   luminance -= d;
             }
             result = (GLchan) luminance;
          }
@@ -2934,8 +2911,7 @@ sample_depth_texture(const GLcontext *ctx,
 static void
 sample_depth_texture2(const GLcontext *ctx,
                      const struct gl_texture_unit *texUnit,
-                     GLuint n,
-                     const GLfloat s[], const GLfloat t[], const GLfloat r[],
+                     GLuint n, GLfloat texcoords[][3],
                      GLchan texel[][4])
 {
    const struct gl_texture_object *texObj = texUnit->_Current;
@@ -2981,8 +2957,10 @@ sample_depth_texture2(const GLcontext *ctx,
          GLint col, row, ii, jj, imin, imax, jmin, jmax, samples, count;
          GLfloat w;
          GLchan lum;
-         COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapS, s[i], width, col);
-         COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapT, t[i], height, row);
+         COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapS, texcoords[i][0],
+					width, col);
+         COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapT, texcoords[i][1],
+					height, row);
 
          imin = col - K;
          imax = col + K;
@@ -3025,20 +3003,20 @@ sample_depth_texture2(const GLcontext *ctx,
  * Apply a unit of texture mapping to the incoming fragments.
  */
 void
-_swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
-                           const GLfloat s[], const GLfloat t[],
-                           const GLfloat r[], GLfloat lambda[],
-                           CONST GLchan primary_rgba[][4], GLchan rgba[][4] )
+_old_swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
+			       GLfloat texcoords[][3], GLfloat lambda[],
+			       CONST GLchan primary_rgba[][4],
+			       GLchan rgba[][4] )
 {
    const GLuint mask = TEXTURE0_ANY << (texUnit * 4);
 
    if (ctx->Texture._ReallyEnabled & mask) {
       const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
-
+      
       if (textureUnit->_Current) {   /* XXX need this? */
          const struct gl_texture_object *curObj = textureUnit->_Current;
          GLchan texel[PB_SIZE][4];
-
+         
 	 if (textureUnit->LodBias != 0.0F) {
 	    /* apply LOD bias, but don't clamp yet */
             GLuint i;
@@ -3046,7 +3024,7 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
 	       lambda[i] += textureUnit->LodBias;
 	    }
 	 }
-
+         
          if ((curObj->MinLod != -1000.0 || curObj->MaxLod != 1000.0)
              && lambda) {
             /* apply LOD clamping to lambda */
@@ -3062,13 +3040,13 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
          /* Sample the texture. */
          if (curObj->Image[curObj->BaseLevel]->Format == GL_DEPTH_COMPONENT) {
             /* depth texture */
-            sample_depth_texture(ctx, textureUnit, n, s, t, r, texel);
+            sample_depth_texture(ctx, textureUnit, n, texcoords, texel);
          }
          else {
             /* color texture */
             SWRAST_CONTEXT(ctx)->TextureSample[texUnit]( ctx, texUnit,
                                                          textureUnit->_Current,
-                                                         n, s, t, r,
+                                                         n, texcoords,
                                                          lambda, texel );
          }
          apply_texture( ctx, textureUnit, n, primary_rgba,
@@ -3076,3 +3054,67 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
       }
    }
 }
+
+
+/*
+ * Apply a unit of texture mapping to the incoming fragments.
+ */
+void
+_swrast_texture_fragments( GLcontext *ctx, GLuint texUnit,
+                           struct sw_span *span,
+                           GLchan rgba[][4] )
+{
+   const GLuint mask = TEXTURE0_ANY << (texUnit * 4);
+
+   if (ctx->Texture._ReallyEnabled & mask) {
+      const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
+      GLfloat *lambda = span->lambda[texUnit];
+      
+      ASSERT(span->filledTex[texUnit] == GL_TRUE);
+      
+      if (textureUnit->_Current) {   /* XXX need this? */
+         const struct gl_texture_object *curObj = textureUnit->_Current;
+         GLchan texel[PB_SIZE][4];
+         
+	 if (textureUnit->LodBias != 0.0F) {
+	    /* apply LOD bias, but don't clamp yet */
+            GLuint i;
+	    for (i=0;i<span->end;i++) {
+	       lambda[i] += textureUnit->LodBias;
+	    }
+	 }
+         
+         if ((curObj->MinLod != -1000.0 || curObj->MaxLod != 1000.0)
+             && lambda) {
+            /* apply LOD clamping to lambda */
+            const GLfloat min = curObj->MinLod;
+            const GLfloat max = curObj->MaxLod;
+            GLuint i;
+            for (i=0;i<span->end;i++) {
+               GLfloat l = lambda[i];
+               lambda[i] = CLAMP(l, min, max);
+            }
+         }
+
+         /* Sample the texture. */
+         if (curObj->Image[curObj->BaseLevel]->Format == GL_DEPTH_COMPONENT) {
+            /* depth texture */
+            sample_depth_texture(ctx, textureUnit, span->end,
+                                 span->texcoords[texUnit], texel);
+         }
+         else {
+            /* color texture */
+            SWRAST_CONTEXT(ctx)->TextureSample[texUnit]( ctx, texUnit,
+                                                         textureUnit->_Current,
+                                                         span->end,
+                                                         span->texcoords[texUnit],
+                                                         lambda, texel );
+         }
+         apply_texture( ctx, textureUnit, span->end,
+                        (CONST GLchan (*)[4])span->color.rgba,
+                        (CONST GLchan (*)[4]) texel, rgba );
+      }
+   }
+}
+
+

@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.12 2001/03/19 02:25:36 keithw Exp $ */
+/* $Id: swrast.h,v 1.13 2001/12/17 04:54:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -66,6 +66,105 @@ typedef struct {
    GLfloat pointSize;
 } SWvertex;
 
+
+/*
+ * The sw_span structure is used by the triangle template code in
+ * s_tritemp.h.  It describes how colors, Z, texcoords, etc are to be
+ * interpolated across each scanline of triangle.
+ * With this structure it's easy to hand-off span rasterization to a
+ * subroutine instead of doing it all inline like we used to do.
+ * It also cleans up the local variable namespace a great deal.
+ *
+ * It would be interesting to experiment with multiprocessor rasterization
+ * with this structure.  The triangle rasterizer could simply emit a
+ * stream of these structures which would be consumed by one or more
+ * span-processing threads which could run in parallel.
+ */
+
+
+/* When the sw_span struct is initialized, these flags indicates
+ * which values are needed for rendering the triangle.
+ */
+#define SPAN_RGBA         0x001
+#define SPAN_SPEC         0x002
+#define SPAN_INDEX        0x004
+#define SPAN_Z            0x008
+#define SPAN_FOG          0x010
+#define SPAN_TEXTURE      0x020
+#define SPAN_INT_TEXTURE  0x040
+#define SPAN_LAMBDA       0x080
+#define SPAN_FLAT         0x100  /* flat shading? */
+
+
+struct sw_span {
+   GLint x, y;
+   GLuint start, end;  /* start=first pixel in span, end=last pixel in span*/
+                       /* only end is used until now.(end was before called count) */
+   GLuint activeMask;  /* OR of the SPAN_* flags */
+#if CHAN_TYPE == GL_FLOAT
+   GLfloat red, redStep;
+   GLfloat green, greenStep;
+   GLfloat blue, blueStep;
+   GLfloat alpha, alphaStep;
+   GLfloat specRed, specRedStep;
+   GLfloat specGreen, specGreenStep;
+   GLfloat specBlue, specBlueStep;
+#else /* CHAN_TYPE == */
+   GLfixed red, redStep;
+   GLfixed green, greenStep;
+   GLfixed blue, blueStep;
+   GLfixed alpha, alphaStep;
+   GLfixed specRed, specRedStep;
+   GLfixed specGreen, specGreenStep;
+   GLfixed specBlue, specBlueStep;
+#endif
+   GLfixed index, indexStep;
+   GLfixed z, zStep;
+   GLfloat fog, fogStep;
+   GLfloat tex[MAX_TEXTURE_UNITS][4], texStep[MAX_TEXTURE_UNITS][4];
+   GLfixed intTex[2], intTexStep[2];
+   /* Needed for texture lambda (LOD) computation */
+   GLfloat rho[MAX_TEXTURE_UNITS];
+   GLfloat texWidth[MAX_TEXTURE_UNITS], texHeight[MAX_TEXTURE_UNITS];
+
+   GLboolean write_all;   /* This flag indicates that only a part of */
+                          /*the span is visible. */
+#ifdef DEBUG
+   GLboolean filledDepth, filledMask, filledAlpha;
+   GLboolean filledColor, filledSpecular;
+   GLboolean filledLambda[MAX_TEXTURE_UNITS], filledTex[MAX_TEXTURE_UNITS];
+   GLboolean testedDepth, testedAlpha;
+#endif
+   /* The interpolated fragment values */
+   GLdepth depth[MAX_WIDTH];
+   union {
+      GLchan rgb[MAX_WIDTH][3];
+      GLchan rgba[MAX_WIDTH][4];
+      GLuint index[MAX_WIDTH];
+   } color;
+   GLchan specular[MAX_WIDTH][4];
+   GLint   itexcoords[MAX_WIDTH][2];                       /* s, t    */
+   GLfloat texcoords[MAX_TEXTURE_UNITS][MAX_WIDTH][3];     /* s, t, r */
+   GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH];
+   GLfloat coverage[MAX_WIDTH];
+   GLubyte mask[MAX_WIDTH];
+};
+
+#ifdef DEBUG
+#define SW_SPAN_SET_FLAG(flag) {ASSERT((flag) == GL_FALSE);(flag) = GL_TRUE;}
+#define SW_SPAN_RESET(span) {                                        \
+         (span).filledDepth = (span).filledMask = (span).filledAlpha \
+         = (span).filledColor = (span).filledSpecular                \
+         = (span).testedDepth = (span).testedAlpha = GL_FALSE;       \
+         MEMSET((span).filledTex, GL_FALSE,                          \
+		MAX_TEXTURE_UNITS*sizeof(GLboolean));                \
+         MEMSET((span).filledLambda, GL_FALSE,                       \
+		MAX_TEXTURE_UNITS*sizeof(GLboolean));                \
+         (span).start = 0; (span).write_all = GL_TRUE;}
+#else
+#define SW_SPAN_SET_FLAG(flag) ;
+#define SW_SPAN_RESET(span) {(span).start = 0;(span).write_all = GL_TRUE;}
+#endif
 
 struct swrast_device_driver;
 

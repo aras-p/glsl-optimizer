@@ -1,4 +1,4 @@
-/* $Id: s_zoom.c,v 1.6 2001/05/15 21:30:27 brianp Exp $ */
+/* $Id: s_zoom.c,v 1.7 2001/12/17 04:54:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -106,7 +106,7 @@ _mesa_write_zoomed_rgba_span( GLcontext *ctx,
       return;
    }
 
-   assert( m <= MAX_WIDTH );
+   ASSERT( m <= MAX_WIDTH );
 
    /* zoom the span horizontally */
    if (ctx->Pixel.ZoomX==-1.0F) {
@@ -142,7 +142,7 @@ _mesa_write_zoomed_rgba_span( GLcontext *ctx,
 
    /* write the span */
    for (r=r0; r<r1; r++) {
-      _mesa_write_rgba_span( ctx, m, x+skipcol, r, zdepth,
+      _old_write_rgba_span( ctx, m, x+skipcol, r, zdepth,
 			  (fog ? zfog : 0), zrgba, NULL, GL_BITMAP );
    }
 }
@@ -210,7 +210,7 @@ _mesa_write_zoomed_rgb_span( GLcontext *ctx,
       return;
    }
 
-   assert( m <= MAX_WIDTH );
+   ASSERT( m <= MAX_WIDTH );
 
    /* zoom the span horizontally */
    if (ctx->Pixel.ZoomX==-1.0F) {
@@ -252,7 +252,7 @@ _mesa_write_zoomed_rgb_span( GLcontext *ctx,
 
    /* write the span */
    for (r=r0; r<r1; r++) {
-      _mesa_write_rgba_span( ctx, m, x+skipcol, r, zdepth,
+      _old_write_rgba_span( ctx, m, x+skipcol, r, zdepth,
 			  (fog ? zfog : 0), zrgba, NULL, GL_BITMAP );
    }
 }
@@ -323,7 +323,7 @@ _mesa_write_zoomed_index_span( GLcontext *ctx,
       return;
    }
 
-   assert( m <= MAX_WIDTH );
+   ASSERT( m <= MAX_WIDTH );
 
    /* zoom the span horizontally */
    if (ctx->Pixel.ZoomX==-1.0F) {
@@ -359,7 +359,7 @@ _mesa_write_zoomed_index_span( GLcontext *ctx,
 
    /* write the span */
    for (r=r0; r<r1; r++) {
-      _mesa_write_index_span( ctx, m, x+skipcol, r, zdepth,
+      _old_write_index_span( ctx, m, x+skipcol, r, zdepth,
                               (fog ? zfog : 0), zindexes, NULL, GL_BITMAP );
    }
 }
@@ -427,7 +427,7 @@ _mesa_write_zoomed_stencil_span( GLcontext *ctx,
       return;
    }
 
-   assert( m <= MAX_WIDTH );
+   ASSERT( m <= MAX_WIDTH );
 
    /* zoom the span horizontally */
    if (ctx->Pixel.ZoomX==-1.0F) {

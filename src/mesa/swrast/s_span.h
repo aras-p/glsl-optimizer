@@ -1,4 +1,4 @@
-/* $Id: s_span.h,v 1.7 2001/11/19 01:18:28 brianp Exp $ */
+/* $Id: s_span.h,v 1.8 2001/12/17 04:54:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,58 +31,55 @@
 
 #include "mtypes.h"
 #include "swrast.h"
-#include "s_trispan.h"
 
 
 extern void
-_mesa_write_index_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+_old_write_index_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                         const GLdepth z[], const GLfloat fog[],
                         GLuint index[], const GLint coverage[],
                         GLenum primitive );
 
-
 extern void
-_mesa_write_monoindex_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                            const GLdepth z[], const GLfloat fog[],
-                            GLuint index, const GLint coverage[],
-                            GLenum primitive );
-
-
-extern void
-_mesa_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+_old_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                        const GLdepth z[], const GLfloat fog[],
                        GLchan rgba[][4], const GLfloat coverage[],
                        GLenum primitive );
 
+void
+_mesa_write_index_span( GLcontext *ctx,	struct sw_span *span,
+			GLenum primitive);
 
 extern void
-_mesa_write_monocolor_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                            const GLdepth z[], const GLfloat fog[],
-                            const GLchan color[4], const GLfloat coverage[],
-                            GLenum primitive );
-
+_mesa_write_monoindex_span( GLcontext *ctx, struct sw_span *span,
+                            GLuint index, GLenum primitive );
 
 extern void
-_mesa_rasterize_span(GLcontext *ctx, struct triangle_span *span);
-
+_mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
+                       GLenum primitive );
 
 extern void
-_mesa_write_texture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                          const GLdepth z[], const GLfloat fog[],
-                          const GLfloat s[], const GLfloat t[],
-                          const GLfloat u[], GLfloat lambda[],
-                          GLchan rgba[][4], CONST GLchan spec[][4],
-                          const GLfloat coverage[], GLenum primitive );
+_mesa_write_monocolor_span( GLcontext *ctx, struct sw_span *span,
+			    const GLchan color[4], GLenum primitive );
 
 
 extern void
-_mesa_write_multitexture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+_mesa_rasterize_span(GLcontext *ctx, struct sw_span *span);
+
+
+extern void
+_old_write_texture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+			 const GLdepth z[], const GLfloat fog[],
+			 GLfloat texcoord[][3], GLfloat lambda[],
+			 GLchan rgba[][4], GLchan spec[][4],
+			 const GLfloat coverage[], GLenum primitive );
+
+
+extern void
+_old_write_multitexture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                                const GLdepth z[], const GLfloat fog[],
-                               CONST GLfloat s[MAX_TEXTURE_UNITS][MAX_WIDTH],
-                               CONST GLfloat t[MAX_TEXTURE_UNITS][MAX_WIDTH],
-                               CONST GLfloat u[MAX_TEXTURE_UNITS][MAX_WIDTH],
+                               GLfloat texcoord[MAX_TEXTURE_UNITS][MAX_WIDTH][3],
                                GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH],
-                               GLchan rgba[][4], CONST GLchan spec[][4],
+                               GLchan rgba[][4], GLchan spec[][4],
                                const GLfloat coverage[],  GLenum primitive );
 
 

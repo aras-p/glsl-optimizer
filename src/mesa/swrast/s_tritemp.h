@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.28 2001/12/05 10:24:31 keithw Exp $ */
+/* $Id: s_tritemp.h,v 1.29 2001/12/17 04:54:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -120,7 +120,7 @@
    const GLint snapMask = ~((FIXED_ONE / 16) - 1); /* for x/y coord snapping */
    GLfixed vMin_fx, vMin_fy, vMid_fx, vMid_fy, vMax_fx, vMax_fy;
 
-   struct triangle_span span;
+   struct sw_span span;
 
 #ifdef INTERP_Z
    (void) fixedToDepthShift;
@@ -1136,11 +1136,13 @@
                /* initialize the span interpolants to the leftmost value */
                /* ff = fixed-pt fragment */
                const GLint right = FixedToInt(fxRightEdge);
+	       SW_SPAN_RESET(span);
                span.x = FixedToInt(fxLeftEdge);
+
                if (right <= span.x)
-                  span.count = 0;
+                  span.end = 0;
                else
-                  span.count = right - span.x;
+                  span.end = right - span.x;
 
 #ifdef INTERP_Z
                span.z = fz;
@@ -1254,7 +1256,7 @@
 #endif
 
                /* This is where we actually generate fragments */
-               if (span.count > 0) {
+               if (span.end > 0) {
                   RENDER_SPAN( span );
                }
 

@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.22 2001/12/05 10:24:31 keithw Exp $ */
+/* $Id: s_aatritemp.h,v 1.23 2001/12/17 04:54:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,7 +52,9 @@
    GLfloat yMin, yMax;
    GLboolean ltor;
    GLfloat majDx, majDy;  /* major (i.e. long) edge dx and dy */
-
+   
+   struct sw_span span;
+   
 #ifdef DO_Z
    GLfloat zPlane[4];
    GLdepth z[MAX_WIDTH];
@@ -65,52 +67,29 @@
 #endif
 #ifdef DO_RGBA
    GLfloat rPlane[4], gPlane[4], bPlane[4], aPlane[4];
-   DEFMARRAY(GLchan, rgba, MAX_WIDTH, 4);  /* mac 32k limitation */
 #endif
 #ifdef DO_INDEX
    GLfloat iPlane[4];
-   GLuint index[MAX_WIDTH];
    GLint icoverageSpan[MAX_WIDTH];
 #else
    GLfloat coverageSpan[MAX_WIDTH];
 #endif
 #ifdef DO_SPEC
    GLfloat srPlane[4], sgPlane[4], sbPlane[4];
-   DEFMARRAY(GLchan, spec, MAX_WIDTH, 4);
 #endif
 #ifdef DO_TEX
    GLfloat sPlane[4], tPlane[4], uPlane[4], vPlane[4];
    GLfloat texWidth, texHeight;
-   DEFARRAY(GLfloat, s, MAX_WIDTH);  /* mac 32k limitation */
-   DEFARRAY(GLfloat, t, MAX_WIDTH);
-   DEFARRAY(GLfloat, u, MAX_WIDTH);
-   DEFARRAY(GLfloat, lambda, MAX_WIDTH);
 #elif defined(DO_MULTITEX)
    GLfloat sPlane[MAX_TEXTURE_UNITS][4];
    GLfloat tPlane[MAX_TEXTURE_UNITS][4];
    GLfloat uPlane[MAX_TEXTURE_UNITS][4];
    GLfloat vPlane[MAX_TEXTURE_UNITS][4];
    GLfloat texWidth[MAX_TEXTURE_UNITS], texHeight[MAX_TEXTURE_UNITS];
-   DEFMARRAY(GLfloat, s, MAX_TEXTURE_UNITS, MAX_WIDTH);  /* mac 32k limit */
-   DEFMARRAY(GLfloat, t, MAX_TEXTURE_UNITS, MAX_WIDTH);
-   DEFMARRAY(GLfloat, u, MAX_TEXTURE_UNITS, MAX_WIDTH);
-   DEFMARRAY(GLfloat, lambda, MAX_TEXTURE_UNITS, MAX_WIDTH);
 #endif
    GLfloat bf = SWRAST_CONTEXT(ctx)->_backface_sign;
-
-#ifdef DO_RGBA
-   CHECKARRAY(rgba, return);  /* mac 32k limitation */
-#endif
-#ifdef DO_SPEC
-   CHECKARRAY(spec, return);
-#endif
-#if defined(DO_TEX) || defined(DO_MULTITEX)
-   CHECKARRAY(s, return);
-   CHECKARRAY(t, return);
-   CHECKARRAY(u, return);
-   CHECKARRAY(lambda, return);
-#endif
-
+   
+   
    /* determine bottom to top order of vertices */
    {
       GLfloat y0 = v0->win[1];
@@ -286,6 +265,8 @@
          GLint ix, startX = (GLint) (x - xAdj);
          GLuint count, n;
          GLfloat coverage = 0.0F;
+         SW_SPAN_RESET(span);
+
          /* skip over fragments with zero coverage */
          while (startX < MAX_WIDTH) {
             coverage = compute_coveragef(pMin, pMid, pMax, startX, iy);
@@ -312,27 +293,27 @@
 	    fog[count] = solve_plane(cx, cy, fogPlane);
 #endif
 #ifdef DO_RGBA
-            rgba[count][RCOMP] = solve_plane_chan(cx, cy, rPlane);
-            rgba[count][GCOMP] = solve_plane_chan(cx, cy, gPlane);
-            rgba[count][BCOMP] = solve_plane_chan(cx, cy, bPlane);
-            rgba[count][ACOMP] = solve_plane_chan(cx, cy, aPlane);
+            span.color.rgba[count][RCOMP] = solve_plane_chan(cx, cy, rPlane);
+            span.color.rgba[count][GCOMP] = solve_plane_chan(cx, cy, gPlane);
+            span.color.rgba[count][BCOMP] = solve_plane_chan(cx, cy, bPlane);
+            span.color.rgba[count][ACOMP] = solve_plane_chan(cx, cy, aPlane);
 #endif
 #ifdef DO_INDEX
-            index[count] = (GLint) solve_plane(cx, cy, iPlane);
+            span.color.index[count] = (GLint) solve_plane(cx, cy, iPlane);
 #endif
 #ifdef DO_SPEC
-            spec[count][RCOMP] = solve_plane_chan(cx, cy, srPlane);
-            spec[count][GCOMP] = solve_plane_chan(cx, cy, sgPlane);
-            spec[count][BCOMP] = solve_plane_chan(cx, cy, sbPlane);
+            span.specular[count][RCOMP] = solve_plane_chan(cx, cy, srPlane);
+            span.specular[count][GCOMP] = solve_plane_chan(cx, cy, sgPlane);
+            span.specular[count][BCOMP] = solve_plane_chan(cx, cy, sbPlane);
 #endif
 #ifdef DO_TEX
             {
                const GLfloat invQ = solve_plane_recip(cx, cy, vPlane);
-               s[count] = solve_plane(cx, cy, sPlane) * invQ;
-               t[count] = solve_plane(cx, cy, tPlane) * invQ;
-               u[count] = solve_plane(cx, cy, uPlane) * invQ;
-               lambda[count] = compute_lambda(sPlane, tPlane, invQ,
-                                                 texWidth, texHeight);
+               span.texcoords[0][count][0] = solve_plane(cx, cy, sPlane) * invQ;
+               span.texcoords[0][count][1] = solve_plane(cx, cy, tPlane) * invQ;
+               span.texcoords[0][count][2] = solve_plane(cx, cy, uPlane) * invQ;
+               span.lambda[0][count] = compute_lambda(sPlane, tPlane, invQ,
+                                                      texWidth, texHeight);
             }
 #elif defined(DO_MULTITEX)
             {
@@ -340,11 +321,11 @@
                for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
                   if (ctx->Texture.Unit[unit]._ReallyEnabled) {
                      GLfloat invQ = solve_plane_recip(cx, cy, vPlane[unit]);
-                     s[unit][count] = solve_plane(cx, cy, sPlane[unit]) * invQ;
-                     t[unit][count] = solve_plane(cx, cy, tPlane[unit]) * invQ;
-                     u[unit][count] = solve_plane(cx, cy, uPlane[unit]) * invQ;
-                     lambda[unit][count] = compute_lambda(sPlane[unit],
-                          tPlane[unit], invQ, texWidth[unit], texHeight[unit]);
+                     span.texcoords[unit][count][0] = solve_plane(cx, cy, sPlane[unit]) * invQ;
+                     span.texcoords[unit][count][1] = solve_plane(cx, cy, tPlane[unit]) * invQ;
+                     span.texcoords[unit][count][2] = solve_plane(cx, cy, uPlane[unit]) * invQ;
+                     span.lambda[unit][count] = compute_lambda(sPlane[unit],
+                                                               tPlane[unit], invQ, texWidth[unit], texHeight[unit]);
                   }
                }
             }
@@ -353,46 +334,46 @@
             count++;
             coverage = compute_coveragef(pMin, pMid, pMax, ix, iy);
          }
-
+         
          if (ix <= startX)
             continue;
-
+         
          n = (GLuint) ix - (GLuint) startX;
 
 #ifdef DO_MULTITEX
 #  ifdef DO_SPEC
-         _mesa_write_multitexture_span(ctx, n, startX, iy, z, fog,
-                                       (const GLfloat (*)[MAX_WIDTH]) s,
-                                       (const GLfloat (*)[MAX_WIDTH]) t,
-                                       (const GLfloat (*)[MAX_WIDTH]) u,
-                                       (GLfloat (*)[MAX_WIDTH]) lambda,
-                                       rgba, (const GLchan (*)[4]) spec,
-                                       coverageSpan,  GL_POLYGON);
+         _old_write_multitexture_span(ctx, n, startX, iy, z, fog,
+				      span.texcoords,
+				      span.lambda, span.color.rgba,
+				      span.specular,
+				      coverageSpan,  GL_POLYGON);
 #  else
-         _mesa_write_multitexture_span(ctx, n, startX, iy, z, fog,
-                                       (const GLfloat (*)[MAX_WIDTH]) s,
-                                       (const GLfloat (*)[MAX_WIDTH]) t,
-                                       (const GLfloat (*)[MAX_WIDTH]) u,
-                                       lambda, rgba, NULL, coverageSpan,
-                                       GL_POLYGON);
+         _old_write_multitexture_span(ctx, n, startX, iy, z, fog,
+				      span.texcoords,
+				      span.lambda, span.color.rgba,
+				      NULL, coverageSpan,
+				      GL_POLYGON);
 #  endif
 #elif defined(DO_TEX)
 #  ifdef DO_SPEC
-         _mesa_write_texture_span(ctx, n, startX, iy, z, fog,
-                                  s, t, u, lambda, rgba,
-                                  (const GLchan (*)[4]) spec,
-                                  coverageSpan, GL_POLYGON);
+         _old_write_texture_span(ctx, n, startX, iy, z, fog,
+				 span.texcoords[0],
+				 span.lambda[0], span.color.rgba,
+                                 span.specular,
+				 coverageSpan, GL_POLYGON);
 #  else
-         _mesa_write_texture_span(ctx, n, startX, iy, z, fog,
-                                  s, t, u, lambda,
-                                  rgba, NULL, coverageSpan, GL_POLYGON);
+         _old_write_texture_span(ctx, n, startX, iy, z, fog,
+				 span.texcoords[0],
+				 span.lambda[0],
+				 span.color.rgba, NULL,
+				 coverageSpan, GL_POLYGON);
 #  endif
 #elif defined(DO_RGBA)
-         _mesa_write_rgba_span(ctx, n, startX, iy, z, fog, rgba,
-                               coverageSpan, GL_POLYGON);
+         _old_write_rgba_span(ctx, n, startX, iy, z, fog, span.color.rgba,
+                              coverageSpan, GL_POLYGON);
 #elif defined(DO_INDEX)
-         _mesa_write_index_span(ctx, n, startX, iy, z, fog, index,
-                                icoverageSpan, GL_POLYGON);
+         _old_write_index_span(ctx, n, startX, iy, z, fog, span.color.index,
+                               icoverageSpan, GL_POLYGON);
 #endif
       }
    }
@@ -409,7 +390,7 @@
          GLint ix, left, startX = (GLint) (x + xAdj);
          GLuint count, n;
          GLfloat coverage = 0.0F;
-
+         
          /* make sure we're not past the window edge */
          if (startX >= ctx->DrawBuffer->_Xmax) {
             startX = ctx->DrawBuffer->_Xmax - 1;
@@ -422,7 +403,7 @@
                break;
             startX--;
          }
-
+         
          /* enter interior of triangle */
          ix = startX;
          count = 0;
@@ -441,26 +422,26 @@
             fog[ix] = solve_plane(cx, cy, fogPlane);
 #endif
 #ifdef DO_RGBA
-            rgba[ix][RCOMP] = solve_plane_chan(cx, cy, rPlane);
-            rgba[ix][GCOMP] = solve_plane_chan(cx, cy, gPlane);
-            rgba[ix][BCOMP] = solve_plane_chan(cx, cy, bPlane);
-            rgba[ix][ACOMP] = solve_plane_chan(cx, cy, aPlane);
+            span.color.rgba[ix][RCOMP] = solve_plane_chan(cx, cy, rPlane);
+            span.color.rgba[ix][GCOMP] = solve_plane_chan(cx, cy, gPlane);
+            span.color.rgba[ix][BCOMP] = solve_plane_chan(cx, cy, bPlane);
+            span.color.rgba[ix][ACOMP] = solve_plane_chan(cx, cy, aPlane);
 #endif
 #ifdef DO_INDEX
-            index[ix] = (GLint) solve_plane(cx, cy, iPlane);
+            span.color.index[ix] = (GLint) solve_plane(cx, cy, iPlane);
 #endif
 #ifdef DO_SPEC
-            spec[ix][RCOMP] = solve_plane_chan(cx, cy, srPlane);
-            spec[ix][GCOMP] = solve_plane_chan(cx, cy, sgPlane);
-            spec[ix][BCOMP] = solve_plane_chan(cx, cy, sbPlane);
+            span.specular[ix][RCOMP] = solve_plane_chan(cx, cy, srPlane);
+            span.specular[ix][GCOMP] = solve_plane_chan(cx, cy, sgPlane);
+            span.specular[ix][BCOMP] = solve_plane_chan(cx, cy, sbPlane);
 #endif
 #ifdef DO_TEX
             {
                const GLfloat invQ = solve_plane_recip(cx, cy, vPlane);
-               s[ix] = solve_plane(cx, cy, sPlane) * invQ;
-               t[ix] = solve_plane(cx, cy, tPlane) * invQ;
-               u[ix] = solve_plane(cx, cy, uPlane) * invQ;
-               lambda[ix] = compute_lambda(sPlane, tPlane, invQ,
+               span.texcoords[0][ix][0] = solve_plane(cx, cy, sPlane) * invQ;
+               span.texcoords[0][ix][1] = solve_plane(cx, cy, tPlane) * invQ;
+               span.texcoords[0][ix][2] = solve_plane(cx, cy, uPlane) * invQ;
+               span.lambda[0][ix] = compute_lambda(sPlane, tPlane, invQ,
                                               texWidth, texHeight);
             }
 #elif defined(DO_MULTITEX)
@@ -469,11 +450,14 @@
                for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
                   if (ctx->Texture.Unit[unit]._ReallyEnabled) {
                      GLfloat invQ = solve_plane_recip(cx, cy, vPlane[unit]);
-                     s[unit][ix] = solve_plane(cx, cy, sPlane[unit]) * invQ;
-                     t[unit][ix] = solve_plane(cx, cy, tPlane[unit]) * invQ;
-                     u[unit][ix] = solve_plane(cx, cy, uPlane[unit]) * invQ;
-                     lambda[unit][ix] = compute_lambda(sPlane[unit],
-                         tPlane[unit], invQ, texWidth[unit], texHeight[unit]);
+                     span.texcoords[unit][ix][0] = solve_plane(cx, cy, sPlane[unit]) * invQ;
+                     span.texcoords[unit][ix][1] = solve_plane(cx, cy, tPlane[unit]) * invQ;
+                     span.texcoords[unit][ix][2] = solve_plane(cx, cy, uPlane[unit]) * invQ;
+                     span.lambda[unit][ix] = compute_lambda(sPlane[unit],
+                                                            tPlane[unit],
+                                                            invQ,
+                                                            texWidth[unit],
+                                                            texHeight[unit]);
                   }
                }
             }
@@ -482,7 +466,7 @@
             count++;
             coverage = compute_coveragef(pMin, pMax, pMid, ix, iy);
          }
-
+         
          if (startX <= ix)
             continue;
 
@@ -496,69 +480,55 @@
                if (ctx->Texture.Unit[unit]._ReallyEnabled) {
                   GLint j;
                   for (j = 0; j < (GLint) n; j++) {
-                     s[unit][j] = s[unit][j + left];
-                     t[unit][j] = t[unit][j + left];
-                     u[unit][j] = u[unit][j + left];
-                     lambda[unit][j] = lambda[unit][j + left];
+		     span.texcoords[unit][j][0] = span.texcoords[unit][j + left][0];
+                     span.texcoords[unit][j][1] = span.texcoords[unit][j + left][1];
+                     span.texcoords[unit][j][2] = span.texcoords[unit][j + left][2];
+                     span.lambda[unit][j] = span.lambda[unit][j + left];
                   }
                }
             }
          }
 #  ifdef DO_SPEC
-         _mesa_write_multitexture_span(ctx, n, left, iy, z + left, fog + left,
-                                       (const GLfloat (*)[MAX_WIDTH]) s,
-                                       (const GLfloat (*)[MAX_WIDTH]) t,
-                                       (const GLfloat (*)[MAX_WIDTH]) u,
-                                       lambda, rgba + left,
-                                       (const GLchan (*)[4]) (spec + left),
-                                       coverageSpan + left,
-                                       GL_POLYGON);
+         _old_write_multitexture_span(ctx, n, left, iy, z + left, fog + left,
+				      span.texcoords, span.lambda,
+				      span.color.rgba + left,
+				      span.specular + left,
+				      coverageSpan + left,
+				      GL_POLYGON);
 #  else
-         _mesa_write_multitexture_span(ctx, n, left, iy, z + left, fog + left,
-                                       (const GLfloat (*)[MAX_WIDTH]) s,
-                                       (const GLfloat (*)[MAX_WIDTH]) t,
-                                       (const GLfloat (*)[MAX_WIDTH]) u,
-                                       lambda,
-                                       rgba + left, NULL, coverageSpan + left,
-                                       GL_POLYGON);
+         _old_write_multitexture_span(ctx, n, left, iy, z + left, fog + left,
+				      span.texcoords, span.lambda,
+				      span.color.rgba + left, NULL,
+				      coverageSpan + left,
+				      GL_POLYGON);
 #  endif
 #elif defined(DO_TEX)
 #  ifdef DO_SPEC
-         _mesa_write_texture_span(ctx, n, left, iy, z + left, fog + left,
-                                  s + left, t + left, u + left,
-                                  lambda + left, rgba + left,
-                                  (const GLchan (*)[4]) (spec + left),
-                                  coverageSpan + left,
-                                  GL_POLYGON);
+         _old_write_texture_span(ctx, n, left, iy, z + left, fog + left,
+				 span.texcoords[0] + left,
+				 span.lambda[0] + left,
+				 span.color.rgba + left,
+				 span.specular + left, coverageSpan + left,
+				 GL_POLYGON);
 #  else
-         _mesa_write_texture_span(ctx, n, left, iy, z + left, fog + left,
-                                  s + left, t + left,
-                                  u + left, lambda + left,
-                                  rgba + left, NULL,
-                                  coverageSpan + left, GL_POLYGON);
+         _old_write_texture_span(ctx, n, left, iy, z + left, fog + left,
+				 span.texcoords[0] + left,
+				 span.lambda[0] + left,
+				 span.color.rgba + left, NULL,
+				 coverageSpan + left, GL_POLYGON);
 #  endif
 #elif defined(DO_RGBA)
-         _mesa_write_rgba_span(ctx, n, left, iy, z + left, fog + left,
-                               rgba + left, coverageSpan + left, GL_POLYGON);
+         _old_write_rgba_span(ctx, n, left, iy, z + left, fog + left,
+                              span.color.rgba + left, coverageSpan + left, GL_POLYGON);
 #elif defined(DO_INDEX)
-         _mesa_write_index_span(ctx, n, left, iy, z + left, fog + left,
-                               index + left, icoverageSpan + left, GL_POLYGON);
+         _old_write_index_span(ctx, n, left, iy, z + left, fog + left,
+                               span.color.index + left,
+			       icoverageSpan + left, GL_POLYGON);
 #endif
       }
    }
 
-#ifdef DO_RGBA
-   UNDEFARRAY(rgba);  /* mac 32k limitation */
-#endif
-#ifdef DO_SPEC
-   UNDEFARRAY(spec);
-#endif
-#if defined(DO_TEX) || defined(DO_MULTITEX)
-   UNDEFARRAY(s);
-   UNDEFARRAY(t);
-   UNDEFARRAY(u);
-   UNDEFARRAY(lambda);
-#endif
+
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: s_fog.h,v 1.5 2001/06/18 23:55:18 brianp Exp $ */
+/* $Id: s_fog.h,v 1.6 2001/12/17 04:54:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,13 +38,20 @@ _mesa_z_to_fogfactor(GLcontext *ctx, GLfloat z);
 
 
 extern void
-_mesa_fog_rgba_pixels( const GLcontext *ctx,
+_old_fog_rgba_pixels( const GLcontext *ctx,
                        GLuint n, const GLfloat fog[],
                        GLchan rgba[][4] );
+extern void
+_mesa_fog_rgba_pixels( const GLcontext *ctx, struct sw_span *span,
+		       GLchan rgba[][4]);
 
 extern void
-_mesa_fog_ci_pixels( const GLcontext *ctx,
-                     GLuint n, const GLfloat fog[], GLuint indx[] );
+_mesa_fog_ci_pixels( const GLcontext *ctx, struct sw_span *span,
+		     GLuint indx[]);
+extern void
+_old_fog_ci_pixels( const GLcontext *ctx,
+		    GLuint n, const GLfloat fog[],
+		    GLuint indx[] );
 
 extern void
 _mesa_win_fog_coords_from_z( const GLcontext *ctx,
@@ -53,12 +60,17 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
 			     GLfloat fogcoord[] );
 
 extern void
-_mesa_depth_fog_rgba_pixels( const GLcontext *ctx,
+_mesa_depth_fog_rgba_pixels( const GLcontext *ctx, struct sw_span *span,
+			     GLchan rgba[][4] );
+extern void
+_old_depth_fog_rgba_pixels( const GLcontext *ctx,
 			     GLuint n, const GLdepth z[], GLchan rgba[][4] );
 
 extern void
-_mesa_depth_fog_ci_pixels( const GLcontext *ctx,
-			   GLuint n, const GLdepth z[], GLuint index[] );
-
+_mesa_depth_fog_ci_pixels( const GLcontext *ctx, struct sw_span *span,
+			   GLuint index[] );
+extern void
+_old_depth_fog_ci_pixels( const GLcontext *ctx,
+			  GLuint n, const GLdepth z[], GLuint index[] );
 
 #endif

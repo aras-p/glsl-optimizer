@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.71 2001/09/25 17:38:11 keithw Exp $ */
+/* $Id: osmesa.c,v 1.72 2001/12/17 04:56:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,7 +55,6 @@
 #include "swrast/s_depth.h"
 #include "swrast/s_lines.h"
 #include "swrast/s_triangle.h"
-#include "swrast/s_trispan.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
@@ -1843,7 +1842,7 @@ static void smooth_rgba_z_triangle( GLcontext *ctx,
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    GLchan *img = PIXELADDR4(span.x, span.y); 			\
-   for (i = 0; i < span.count; i++, img += 4) {			\
+   for (i = 0; i < span.end; i++, img += 4) {			\
       const GLdepth z = FixedToDepth(span.z);			\
       if (z < zRow[i]) {					\
          PACK_RGBA(img, FixedToChan(span.red),			\
@@ -1887,7 +1886,7 @@ static void flat_rgba_z_triangle( GLcontext *ctx,
 #define RENDER_SPAN( span )				\
    GLuint i;						\
    GLuint *img = (GLuint *) PIXELADDR4(span.x, span.y);	\
-   for (i = 0; i < span.count; i++) {			\
+   for (i = 0; i < span.end; i++) {			\
       const GLdepth z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {				\
          img[i] = pixel;				\
