@@ -40,6 +40,7 @@
 #include "colormac.h"
 #include "texformat.h"
 #include "texstore.h"
+#include "teximage.h"
 
 #include "swrast/swrast.h"
 #include "array_cache/acache.h"
@@ -877,7 +878,7 @@ void tdfxUpdateViewport( GLcontext *ctx )
    m[MAT_SZ] = v[MAT_SZ];
    m[MAT_TZ] = v[MAT_TZ];
 
-   fxMesa->SetupNewInputs |= VERT_BIT_CLIP;
+   fxMesa->SetupNewInputs |= VERT_BIT_POS;
 }
 
 
