@@ -1342,7 +1342,7 @@ void savageEmitDrawingRectangle( savageContextPtr imesa )
 {
     __DRIdrawablePrivate *dPriv = imesa->driDrawable;
     savageScreenPrivate *savageScreen = imesa->savageScreen;
-    XF86DRIClipRectPtr pbox;
+    drm_clip_rect_t *pbox;
     int nbox;
    
 
@@ -1808,7 +1808,7 @@ void savageDDRenderStart(GLcontext *ctx)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
     __DRIdrawablePrivate *dPriv = imesa->driDrawable;
-    XF86DRIClipRectPtr pbox;
+    drm_clip_rect_t *pbox;
     GLint nbox;
 
     /* if the screen is overrided by other application. set the scissor.

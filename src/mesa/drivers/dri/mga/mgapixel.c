@@ -324,7 +324,7 @@ mgaTryReadPixels( GLcontext *ctx,
       for (i = 0 ; i < nbox ; )
       {
 	 int nr = MIN2(i + MGA_NR_SAREA_CLIPRECTS, dPriv->numClipRects);
-	 XF86DRIClipRectRec *box = dPriv->pClipRects;
+	 drm_clip_rect_t *box = dPriv->pClipRects;
 	 drm_clip_rect_t *b = mmesa->sarea->boxes;
 	 int n = 0;
 
@@ -392,7 +392,7 @@ static void do_draw_pix( GLcontext *ctx,
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    drmMGABlit blit;
    __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
-   XF86DRIClipRectPtr pbox = dPriv->pClipRects;
+   drm_clip_rect_t pbox = dPriv->pClipRects;
    int nbox = dPriv->numClipRects;
    int retcode, i;
 
@@ -425,7 +425,7 @@ static void do_draw_pix( GLcontext *ctx,
    for (i = 0 ; i < nbox ; )
    {
       int nr = MIN2(i + MGA_NR_SAREA_CLIPRECTS, dPriv->numClipRects);
-      XF86DRIClipRectRec *box = mmesa->pClipRects;
+      drm_clip_rect_t *box = mmesa->pClipRects;
       drm_clip_rect_t *b = mmesa->sarea->boxes;
       int n = 0;
 

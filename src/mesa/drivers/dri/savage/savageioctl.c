@@ -278,7 +278,7 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 
        for (i = 0 ; i < imesa->numClipRects ; ) { 	 
 	   int nr = MIN2(i + SAVAGE_NR_SAREA_CLIPRECTS, imesa->numClipRects);
-	   XF86DRIClipRectRec *box = imesa->pClipRects;	 
+	   drm_clip_rect_t *box = imesa->pClipRects;	 
 	   drm_clip_rect_t *b = imesa->sarea->boxes;
 	   int n = 0;
 
@@ -332,7 +332,7 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 void savageSwapBuffers( __DRIdrawablePrivate *dPriv )
 {
    savageContextPtr imesa;
-   XF86DRIClipRectPtr pbox;
+   drm_clip_rect_t *pbox;
    int nbox;
    int i;
 
@@ -359,7 +359,7 @@ void savageSwapBuffers( __DRIdrawablePrivate *dPriv )
    for (i = 0 ; i < nbox ; )
    {
       int nr = MIN2(i + SAVAGE_NR_SAREA_CLIPRECTS, dPriv->numClipRects);
-      XF86DRIClipRectRec *b = (XF86DRIClipRectRec *)imesa->sarea->boxes;
+      drm_clip_rect_t *b = (drm_clip_rect_t *)imesa->sarea->boxes;
 
       imesa->sarea->nbox = nr - i;
 

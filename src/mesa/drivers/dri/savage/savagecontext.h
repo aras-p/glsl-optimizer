@@ -209,7 +209,7 @@ struct savage_context_t {
     int drawY;
     GLuint numClipRects;		/* cliprects for that buffer */
     GLint currentClip;
-    XF86DRIClipRectPtr pClipRects;
+    drm_clip_rect_t *pClipRects;
 
     /*  use this bit to support single/double buffer */
     GLuint IsDouble;
@@ -232,7 +232,7 @@ struct savage_context_t {
     GLboolean scissorChanged;
     drm_clip_rect_t draw_rect;
     drm_clip_rect_t scissor_rect;
-    XF86DRIClipRectRec tmp_boxes[2][SAVAGE_NR_SAREA_CLIPRECTS];
+    drm_clip_rect_t tmp_boxes[2][SAVAGE_NR_SAREA_CLIPRECTS];
     /*Texture aging and DMA based aging*/
     unsigned int texAge[SAVAGE_NR_TEX_HEAPS]; 
 
