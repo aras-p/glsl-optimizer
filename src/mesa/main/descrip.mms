@@ -103,11 +103,9 @@ RASTER_SOURCES = [.swrast]s_aatriangle.c \
 [.swrast]s_lines.c \
 [.swrast]s_logic.c \
 [.swrast]s_masking.c \
-[.swrast]s_pb.c \
 [.swrast]s_pixeltex.c \
 [.swrast]s_points.c \
 [.swrast]s_readpix.c \
-[.swrast]s_scissor.c \
 [.swrast]s_span.c \
 [.swrast]s_stencil.c \
 [.swrast]s_texstore.c \
@@ -250,13 +248,11 @@ OBJECTS8=[.swrast]s_drawpix.obj,\
 [.swrast]s_lines.obj,\
 [.swrast]s_logic.obj,\
 [.swrast]s_masking.obj,\
-[.swrast]s_pb.obj,\
 [.swrast]s_pixeltex.obj,\
 [.swrast]s_points.obj
 
 OBJECTS9=[.swrast]s_readpix.obj,\
 [.swrast]s_aaline.obj,\
-[.swrast]s_scissor.obj,\
 [.swrast]s_span.obj,\
 [.swrast]s_stencil.obj,\
 [.swrast]s_texstore.obj,\
@@ -451,16 +447,12 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_logic.obj [.swrast]s_logic.c
 [.swrast]s_masking.obj : [.swrast]s_masking.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_masking.obj [.swrast]s_masking.c
-[.swrast]s_pb.obj : [.swrast]s_pb.c
-	$(CC) $(CFLAGS) /obj=[.swrast]s_pb.obj [.swrast]s_pb.c
 [.swrast]s_pixeltex.obj : [.swrast]s_pixeltex.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_pixeltex.obj [.swrast]s_pixeltex.c
 [.swrast]s_points.obj : [.swrast]s_points.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_points.obj [.swrast]s_points.c
 [.swrast]s_readpix.obj : [.swrast]s_readpix.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_readpix.obj [.swrast]s_readpix.c
-[.swrast]s_scissor.obj : [.swrast]s_scissor.c
-	$(CC) $(CFLAGS) /obj=[.swrast]s_scissor.obj [.swrast]s_scissor.c
 [.swrast]s_span.obj : [.swrast]s_span.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_span.obj [.swrast]s_span.c
 [.swrast]s_stencil.obj : [.swrast]s_stencil.c

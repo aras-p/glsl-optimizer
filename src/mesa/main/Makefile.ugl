@@ -1,5 +1,5 @@
 # Mesa 3-D graphics library
-# Version:  3.5
+# Version:  4.1
 #
 # Copyright (C) 2001 Wind River Systems, Inc
 
@@ -137,11 +137,9 @@ GL_SOURCES = \
 	swrast/s_lines.c \
 	swrast/s_logic.c \
 	swrast/s_masking.c \
-	swrast/s_pb.c \
 	swrast/s_pixeltex.c \
 	swrast/s_points.c \
 	swrast/s_readpix.c \
-	swrast/s_scissor.c \
 	swrast/s_span.c \
 	swrast/s_stencil.c \
 	swrast/s_texture.c \

@@ -1,8 +1,8 @@
-# $Id: Makefile.OSMesa16,v 1.5 2001/07/14 17:53:04 brianp Exp $
+# $Id: Makefile.OSMesa16,v 1.6 2002/02/02 21:41:58 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  3.5
-# Copyright (C) 1995-2001  Brian Paul
+# Version:  4.1
+# Copyright (C) 1995-2002  Brian Paul
 
 # Makefile for building Mesa for 16/32-bit/channel rendering with the OSMesa
 # driver.
@@ -107,11 +107,9 @@ CORE_SOURCES = \
 	swrast/s_lines.c \
 	swrast/s_logic.c \
 	swrast/s_masking.c \
-	swrast/s_pb.c \
 	swrast/s_pixeltex.c \
 	swrast/s_points.c \
 	swrast/s_readpix.c \
-	swrast/s_scissor.c \
 	swrast/s_span.c \
 	swrast/s_stencil.c \
 	swrast/s_texture.c \
