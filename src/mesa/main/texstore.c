@@ -1897,6 +1897,7 @@ unmap_teximage_pbo(GLcontext *ctx, const struct gl_pixelstore_attrib *unpack)
 /*
  * This is the software fallback for Driver.TexImage1D()
  * and Driver.CopyTexImage1D().
+ * \sa _mesa_store_teximage2d()
  */
 void
 _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
@@ -1936,10 +1937,13 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
 
    pixels = validate_pbo_teximage(ctx, 1, width, 1, 1, format, type, pixels,
                                   packing, "glTexImage1D");
-   if (!pixels)
+   if (!pixels) {
+      /* Note: we check for a NULL image pointer here, _after_ we allocated
+       * memory for the texture.  That's what the GL spec calls for.
+       */
       return;
-
-   {
+   }
+   else {
       const GLint dstRowStride = 0, dstImageStride = 0;
       GLboolean success;
       ASSERT(texImage->TexFormat->StoreImage);
@@ -1966,13 +1970,19 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
 }
 
 
-/*
+/**
  * This is the software fallback for Driver.TexImage2D()
  * and Driver.CopyTexImage2D().
+ * We store the image in heap memory.  We know nothing about on-board
+ * VRAM here.  But since most DRI drivers rely on keeping a copy of all
+ * textures in main memory, this routine will typically be used by
+ * hardware drivers too.
+ *
  * Reasons why a driver might override this function:
- *  - Special memory allocation needs
- *  - Unusual row/image strides
+ *  - Special memory allocation needs (VRAM, AGP, etc)
+ *  - Unusual row/image strides or padding
  *  - Special housekeeping
+ *  - Using VRAM-based Pixel Buffer Objects
  */
 void
 _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
@@ -2015,10 +2025,13 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
 
    pixels = validate_pbo_teximage(ctx, 2, width, height, 1, format, type,
                                   pixels, packing, "glTexImage2D");
-   if (!pixels)
+   if (!pixels) {
+      /* Note: we check for a NULL image pointer here, _after_ we allocated
+       * memory for the texture.  That's what the GL spec calls for.
+       */
       return;
-
-   {
+   }
+   else {
       GLint dstRowStride, dstImageStride = 0;
       GLboolean success;
       if (texImage->IsCompressed) {
@@ -2052,9 +2065,10 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
 
 
 
-/*
+/**
  * This is the software fallback for Driver.TexImage3D()
  * and Driver.CopyTexImage3D().
+ * \sa _mesa_store_teximage2d()
  */
 void
 _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
@@ -2091,11 +2105,13 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
 
    pixels = validate_pbo_teximage(ctx, 3, width, height, depth, format, type,
                                   pixels, packing, "glTexImage3D");
-   if (!pixels)
+   if (!pixels) {
+      /* Note: we check for a NULL image pointer here, _after_ we allocated
+       * memory for the texture.  That's what the GL spec calls for.
+       */
       return;
-
-   /* unpack image, apply transfer ops and store in texImage->Data */
-   {
+   }
+   else {
       GLint dstRowStride, dstImageStride;
       GLboolean success;
       if (texImage->IsCompressed) {
