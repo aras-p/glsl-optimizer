@@ -42,6 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "texformat.h"
 #include "texstore.h"
 #include "teximage.h"
+#include "texobj.h"
 
 
 #include "radeon_context.h"
@@ -567,7 +568,7 @@ static void radeonTexEnv( GLcontext *ctx, GLenum target,
    }
 
    case GL_TEXTURE_LOD_BIAS_EXT: {
-      GLfloat bias;
+      GLfloat bias, min;
       GLuint b;
 
       /* The Radeon's LOD bias is a signed 2's complement value with a
@@ -575,7 +576,9 @@ static void radeonTexEnv( GLcontext *ctx, GLenum target,
        * functions, one mapping [-1.0,0.0] to [-128,0] and one mapping
        * [0.0,4.0] to [0,127].
        */
-      bias = CLAMP( *param, -1.0, 4.0 );
+      min = driQueryOptionb (&rmesa->optionCache, "no_neg_lod_bias") ?
+	  0.0 : -1.0;
+      bias = CLAMP( *param, min, 4.0 );
       if ( bias == 0 ) {
 	 b = 0;
       } else if ( bias > 0 ) {
@@ -712,6 +715,18 @@ static void radeonTexGen( GLcontext *ctx,
    rmesa->recheck_texgen[unit] = GL_TRUE;
 }
 
+/* Fixup MaxAnisotropy according to user preference.
+ */
+static struct gl_texture_object *radeonNewTextureObject ( GLcontext *ctx,
+							  GLuint name,
+							  GLenum target ) {
+    struct gl_texture_object *obj;
+    obj = _mesa_new_texture_object (ctx, name, target);
+    obj->MaxAnisotropy = driQueryOptionf (&RADEON_CONTEXT(ctx)->optionCache,
+					  "def_max_anisotropy");
+    return obj;
+}
+
 
 void radeonInitTextureFuncs( GLcontext *ctx )
 {
@@ -732,6 +747,7 @@ void radeonInitTextureFuncs( GLcontext *ctx )
    ctx->Driver.CopyTexSubImage3D 	= _swrast_copy_texsubimage3d;
    ctx->Driver.TestProxyTexImage	= _mesa_test_proxy_teximage;
 
+   ctx->Driver.NewTextureObject         = radeonNewTextureObject;
    ctx->Driver.BindTexture		= radeonBindTexture;
    ctx->Driver.CreateTexture		= NULL; /* FIXME: Is this used??? */
    ctx->Driver.DeleteTexture		= radeonDeleteTexture;
@@ -747,4 +763,10 @@ void radeonInitTextureFuncs( GLcontext *ctx )
    driInitTextureObjects( ctx, & rmesa->swapped,
 			  DRI_TEXMGR_DO_TEXTURE_1D
 			  | DRI_TEXMGR_DO_TEXTURE_2D );
+
+   /* Hack: radeonNewTextureObject is not yet installed when the
+    * default textures are created. Therefore set MaxAnisotropy of the
+    * default 2D texture now. */
+   ctx->Shared->Default2D->MaxAnisotropy = driQueryOptionf (&rmesa->optionCache,
+							    "def_max_anisotropy");
 }

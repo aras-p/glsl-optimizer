@@ -44,6 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "texutil.h"
 #include "texmem.h"
 #include "teximage.h"
+#include "texobj.h"
 
 #include "r200_context.h"
 #include "r200_state.h"
@@ -831,7 +832,7 @@ static void r200TexEnv( GLcontext *ctx, GLenum target,
    }
 
    case GL_TEXTURE_LOD_BIAS_EXT: {
-      GLfloat bias;
+      GLfloat bias, min;
       GLuint b;
       const int fixed_one = 0x8000000;
 
@@ -841,7 +842,9 @@ static void r200TexEnv( GLcontext *ctx, GLenum target,
        * NOTE: Add a small bias to the bias for conform mipsel.c test.
        */
       bias = *param + .01;
-      bias = CLAMP( bias, -16.0, 16.0 );
+      min = driQueryOptionb (&rmesa->optionCache, "no_neg_lod_bias") ?
+	  0.0 : -16.0;
+      bias = CLAMP( bias, min, 16.0 );
       b = (int)(bias * fixed_one) & R200_LOD_BIAS_MASK;
       
       if ( (rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT_X] & R200_LOD_BIAS_MASK) != b ) {
@@ -974,6 +977,18 @@ static void r200TexGen( GLcontext *ctx,
    rmesa->recheck_texgen[unit] = GL_TRUE;
 }
 
+/* Fixup MaxAnisotropy according to user preference.
+ */
+static struct gl_texture_object *r200NewTextureObject ( GLcontext *ctx,
+							GLuint name,
+							GLenum target ) {
+    struct gl_texture_object *obj;
+    obj = _mesa_new_texture_object (ctx, name, target);
+    obj->MaxAnisotropy = driQueryOptionf (&R200_CONTEXT(ctx)->optionCache,
+					  "def_max_anisotropy");
+    return obj;
+}
+
 
 void r200InitTextureFuncs( GLcontext *ctx )
 {
@@ -1002,6 +1017,7 @@ void r200InitTextureFuncs( GLcontext *ctx )
    ctx->Driver.CopyTexSubImage3D 	= _swrast_copy_texsubimage3d;
    ctx->Driver.TestProxyTexImage	= _mesa_test_proxy_teximage;
 
+   ctx->Driver.NewTextureObject         = r200NewTextureObject;
    ctx->Driver.BindTexture		= r200BindTexture;
    ctx->Driver.CreateTexture		= NULL; /* FIXME: Is this used??? */
    ctx->Driver.DeleteTexture		= r200DeleteTexture;
@@ -1017,4 +1033,10 @@ void r200InitTextureFuncs( GLcontext *ctx )
    driInitTextureObjects( ctx, & rmesa->swapped,
 			  DRI_TEXMGR_DO_TEXTURE_1D
 			  | DRI_TEXMGR_DO_TEXTURE_2D );
+
+   /* Hack: r200NewTextureObject is not yet installed when the
+    * default textures are created. Therefore set MaxAnisotropy of the
+    * default 2D texture now. */
+   ctx->Shared->Default2D->MaxAnisotropy = driQueryOptionf (&rmesa->optionCache,
+							    "def_max_anisotropy");
 }
