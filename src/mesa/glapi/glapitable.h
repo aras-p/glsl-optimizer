@@ -1,4 +1,4 @@
-/* $Id: glapitable.h,v 1.10 2000/02/12 16:44:24 brianp Exp $ */
+/* $Id: glapitable.h,v 1.11 2000/02/23 01:52:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -512,8 +512,8 @@ struct _glapi_table
    void (*TexSubImage3DEXT)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
 
    /* 7. GL_SGI_texture_filter4 */
-   void (*GetTexFilterFuncSGIS)(GLenum, GLenum, GLsizei, const GLfloat *);
-   void (*TexFilterFuncSGIS)(GLenum, GLenum, GLfloat *);
+   void (*GetTexFilterFuncSGIS)(GLenum, GLenum, GLfloat *);
+   void (*TexFilterFuncSGIS)(GLenum, GLenum, GLsizei, const GLfloat *);
 
    /* 8. ??? */
 
@@ -572,7 +572,7 @@ struct _glapi_table
    void (*GetPixelTexGenParameterivSGIS)(GLenum, GLint *);
 
    /* 16. GL_SGIS_texture4D */
-   void (*TexImage4DSGIS)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const void *);
+   void (*TexImage4DSGIS)(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const void *);
    void (*TexSubImage4DSGIS)(GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const void *);
 
    /* 17. GL_SGI_texture_color_table - no functions */

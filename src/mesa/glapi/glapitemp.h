@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.14 2000/02/11 21:14:28 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.15 2000/02/23 01:52:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2195,14 +2195,14 @@ KEYWORD1 void KEYWORD2 NAME(TexSubImage3DEXT)(GLenum target, GLint level, GLint 
 
 /* 7. GL_SGI_texture_filter4 */
 
-KEYWORD1 void KEYWORD2 NAME(GetTexFilterFuncSGIS)(GLenum target, GLenum filter, GLsizei n, const GLfloat *weights)
+KEYWORD1 void KEYWORD2 NAME(GetTexFilterFuncSGIS)(GLenum target, GLenum filter, GLfloat *weights)
 {
-   DISPATCH(GetTexFilterFuncSGIS, (target, filter, n, weights), (F, ";"));
+   DISPATCH(GetTexFilterFuncSGIS, (target, filter, weights), (F, ";"));
 }
 
-KEYWORD1 void KEYWORD2 NAME(TexFilterFuncSGIS)(GLenum target, GLenum filter, GLfloat *weights)
+KEYWORD1 void KEYWORD2 NAME(TexFilterFuncSGIS)(GLenum target, GLenum filter, GLsizei n, const GLfloat *weights)
 {
-   DISPATCH(TexFilterFuncSGIS, (target, filter, weights), (F, ";"));
+   DISPATCH(TexFilterFuncSGIS, (target, filter, n, weights), (F, ";"));
 }
 
 
@@ -2431,7 +2431,7 @@ KEYWORD1 void KEYWORD2 NAME(GetPixelTexGenParameterivSGIS)(GLenum target, GLint 
 
 /* 16. GL_SGIS_texture4D */
 
-KEYWORD1 void KEYWORD2 NAME(TexImage4DSGIS)(GLenum target, GLint level, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLsizei extent, GLint border, GLenum format, GLenum type, const void *pixels)
+KEYWORD1 void KEYWORD2 NAME(TexImage4DSGIS)(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLsizei extent, GLint border, GLenum format, GLenum type, const void *pixels)
 {
    DISPATCH(TexImage4DSGIS, (target, level, internalFormat, width, height, depth, extent, border, format, type, pixels), (F, ";"));
 }
