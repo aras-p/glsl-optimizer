@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.55 2001/04/24 16:12:48 brianp Exp $ */
+/* $Id: gl.h,v 1.56 2001/05/29 15:44:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1270,7 +1270,7 @@ GLAPI void GLAPIENTRY glTexCoordPointer( GLint size, GLenum type,
 
 GLAPI void GLAPIENTRY glEdgeFlagPointer( GLsizei stride, const GLvoid *ptr );
 
-GLAPI void GLAPIENTRY glGetPointerv( GLenum pname, void **params );
+GLAPI void GLAPIENTRY glGetPointerv( GLenum pname, GLvoid **params );
 
 GLAPI void GLAPIENTRY glArrayElement( GLint i );
 
@@ -1971,7 +1971,7 @@ GLAPI void GLAPIENTRY glTexCoordPointerEXT( GLint size, GLenum type, GLsizei str
 
 GLAPI void GLAPIENTRY glEdgeFlagPointerEXT( GLsizei stride, GLsizei count, const GLboolean *ptr );
 
-GLAPI void GLAPIENTRY glGetPointervEXT( GLenum pname, void **params );
+GLAPI void GLAPIENTRY glGetPointervEXT( GLenum pname, GLvoid **params );
 
 GLAPI void GLAPIENTRY glArrayElementEXT( GLint i );
 
