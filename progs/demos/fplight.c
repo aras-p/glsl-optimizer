@@ -37,15 +37,19 @@ static void Display( void )
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
    if (PixelLight) {
+#if defined(GL_NV_fragment_program)
       NAMED_PARAMETER4FV(FragProg, "LightPos", LightPos);
       glEnable(GL_FRAGMENT_PROGRAM_NV);
       glEnable(GL_VERTEX_PROGRAM_NV);
+#endif
       glDisable(GL_LIGHTING);
    }
    else {
       glLightfv(GL_LIGHT0, GL_POSITION, LightPos);
+#if defined(GL_NV_fragment_program)
       glDisable(GL_FRAGMENT_PROGRAM_NV);
       glDisable(GL_VERTEX_PROGRAM_NV);
+#endif
       glEnable(GL_LIGHTING);
    }
 
@@ -216,6 +220,7 @@ static void Init( void )
       exit(1);
    }
          
+#if defined(GL_NV_fragment_program)
    glGenProgramsNV(1, &FragProg);
    assert(FragProg > 0);
    glGenProgramsNV(1, &VertProg);
@@ -243,6 +248,7 @@ static void Init( void )
    glBindProgramNV(GL_VERTEX_PROGRAM_NV, VertProg);
    glTrackMatrixNV(GL_VERTEX_PROGRAM_NV, 0, GL_MODELVIEW_PROJECTION_NV, GL_IDENTITY_NV);
    glTrackMatrixNV(GL_VERTEX_PROGRAM_NV, 4, GL_MODELVIEW, GL_INVERSE_TRANSPOSE_NV);
+#endif
 
    /*
     * Misc init
