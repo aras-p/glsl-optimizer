@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.84 2002/06/29 19:48:15 brianp Exp $ */
+/* $Id: get.c,v 1.85 2002/06/29 20:03:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -5596,6 +5596,7 @@ _mesa_GetString( GLenum name )
    static const char *renderer = "Mesa";
    static const char *version_1_2 = "1.2 Mesa 4.1 beta";
    static const char *version_1_3 = "1.3 Mesa 4.1 beta";
+   static const char *version_1_4 = "1.4 Mesa 4.1 beta";
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
@@ -5612,16 +5613,38 @@ _mesa_GetString( GLenum name )
           case GL_RENDERER:
              return (const GLubyte *) renderer;
           case GL_VERSION:
-             if (ctx->Extensions.ARB_multitexture &&
-                 ctx->Extensions.ARB_multisample &&
+             if (ctx->Extensions.ARB_multisample &&
+                 ctx->Extensions.ARB_multitexture &&
                  ctx->Extensions.ARB_texture_border_clamp &&
                  ctx->Extensions.ARB_texture_compression &&
                  ctx->Extensions.EXT_texture_env_add &&
                  ctx->Extensions.ARB_texture_env_combine &&
-                 ctx->Extensions.ARB_texture_env_dot3)
-                return (const GLubyte *) version_1_3;
-             else
+                 ctx->Extensions.ARB_texture_env_dot3) {
+                if (ctx->Extensions.ARB_depth_texture &&
+                    ctx->Extensions.ARB_shadow &&
+                    ctx->Extensions.ARB_texture_env_crossbar &&
+                    ctx->Extensions.ARB_texture_mirrored_repeat &&
+                    ctx->Extensions.ARB_window_pos &&
+                    ctx->Extensions.EXT_blend_color &&
+                    ctx->Extensions.EXT_blend_func_separate &&
+                    ctx->Extensions.EXT_blend_logic_op &&
+                    ctx->Extensions.EXT_blend_minmax &&
+                    ctx->Extensions.EXT_blend_subtract &&
+                    ctx->Extensions.EXT_fog_coord &&
+                    ctx->Extensions.EXT_multi_draw_arrays &&
+                    ctx->Extensions.EXT_point_parameters && /*aka ARB*/
+                    ctx->Extensions.EXT_secondary_color &&
+                    ctx->Extensions.EXT_stencil_wrap &&
+                    ctx->Extensions.SGIS_generate_mipmap) {
+                   return (const GLubyte *) version_1_4;
+                }
+                else {
+                   return (const GLubyte *) version_1_3;
+                }
+             }
+             else {
                 return (const GLubyte *) version_1_2;
+             }
           case GL_EXTENSIONS:
              return (const GLubyte *) _mesa_extensions_get_string(ctx);
           default:

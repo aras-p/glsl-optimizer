@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.82 2002/06/29 19:48:16 brianp Exp $ */
+/* $Id: mtypes.h,v 1.83 2002/06/29 20:03:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1387,6 +1387,7 @@ struct gl_extensions {
    GLboolean EXT_compiled_vertex_array;
    GLboolean EXT_fog_coord;
    GLboolean EXT_histogram;
+   GLboolean EXT_multi_draw_arrays;
    GLboolean EXT_packed_pixels;
    GLboolean EXT_paletted_texture;
    GLboolean EXT_point_parameters;
