@@ -848,6 +848,8 @@
 #define P_XMM6 	xmm6
 #define P_XMM7 	xmm7
 
+#define	CONCAT(x, y)	x ## y
+
 #if defined(NASM_ASSEMBLER)
 
 #define ST(n) st ## n
