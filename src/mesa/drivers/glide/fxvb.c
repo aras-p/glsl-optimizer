@@ -1,6 +1,10 @@
+/* $Id: fxvb.c,v 1.11 2001/09/23 16:50:01 brianp Exp $ */
+
 /*
- * GLX Hardware Device Driver for Intel i810
- * Copyright (C) 1999 Keith Whitwell
+ * Mesa 3-D graphics library
+ * Version:  4.0
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -19,11 +23,16 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfxvb.c,v 1.7 2000/11/08 05:02:43 dawes Exp $ */
- 
+
+/* Authors:
+ *   Keith Whitwell
+ */
+
+#ifdef HAVE_CONFIG_H
+#include "conf.h"
+#endif
+
 #ifdef FX
 
 #include "glheader.h"

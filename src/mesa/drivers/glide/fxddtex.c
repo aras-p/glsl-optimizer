@@ -1,7 +1,8 @@
+/* $Id: fxddtex.c,v 1.45 2001/09/23 16:50:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.0
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -21,24 +22,13 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- *
- * Original Mesa / 3Dfx device driver (C) 1999 David Bucciarelli, by the
- * terms stated above.
- *
- * Thank you for your contribution, David!
- *
- * Please make note of the above copyright/license statement.  If you
- * contributed code or bug fixes to this code under the previous (GNU
- * Library) license and object to the new license, your code will be
- * removed at your request.  Please see the Mesa docs/COPYRIGHT file
- * for more information.
- *
- * Additional Mesa/3Dfx driver developers:
- *   Daryll Strauss <daryll@precisioninsight.com>
- *   Keith Whitwell <keith@precisioninsight.com>
- *
- * See fxapi.h for more revision/author details.
+ */
+
+/* Authors:
+ *    David Bucciarelli
+ *    Brian Paul
+ *    Daryll Strauss
+ *    Keith Whitwell
  */
 
 
