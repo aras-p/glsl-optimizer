@@ -201,3 +201,4 @@ Revision History
      3 September 2003 - further clarify when YCbCr->RGB conversion takes place
     19 September 2003 - a few more updates prior to submitting to extension
                         registry.
+     3 April 2004 - fix assorted inaccuracies
