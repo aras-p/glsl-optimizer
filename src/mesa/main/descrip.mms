@@ -61,7 +61,7 @@ OBJECTS6=vbxform.obj,xform.obj,zoom.obj,bbox.obj,cva.obj,vector.obj,vbindirect.o
 	vertices.obj,[.x86]x86.obj
 
 OBJECTS2=[.x]glxapi.obj,[.x]fakeglx.obj,[.x]xfonts.obj,\
-[.x]xm_api.obj,[.x]xm_dd.obj,[.x]xm_line.obj,[.x]xm_span.obj,[.x]xm_tri.obj\
+[.x]xm_api.obj,[.x]xm_dd.obj,[.x]xm_line.obj,[.x]xm_span.obj,[.x]xm_tri.obj,\
 [.osmesa]osmesa.obj,\
 [.svga]svgamesa.obj
 
