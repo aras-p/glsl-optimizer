@@ -1,4 +1,4 @@
-/* $Id: t_dd_vb.c,v 1.10 2001/04/29 08:41:09 keithw Exp $ */
+/* $Id: t_dd_vb.c,v 1.11 2001/04/29 08:44:30 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -103,10 +103,9 @@ void TAG(translate_vertex)(GLcontext *ctx,
       dst->color[3] = src->tv.color.alpha;
    }
    else {
-      GLfloat oow = (HAVE_HW_DIVIDE) ? 1.0 / src->v.w : src->v.w;
-
       if (HAVE_HW_VIEWPORT) {
-	 if (HAVE_HW_DIVIDE) {
+	 if (HAVE_HW_DIVIDE && CHECK_HW_DIVIDE) {
+	    GLfloat oow = 1.0 / src->v.w;
 	    dst->win[0] = s[0]  * src->v.x * oow + s[12];
 	    dst->win[1] = s[5]  * src->v.y * oow + s[13];
 	    dst->win[2] = s[10] * src->v.z * oow + s[14];
@@ -115,13 +114,14 @@ void TAG(translate_vertex)(GLcontext *ctx,
 	    dst->win[0] = s[0]  * src->v.x + s[12];
 	    dst->win[1] = s[5]  * src->v.y + s[13];
 	    dst->win[2] = s[10] * src->v.z + s[14];
-	    dst->win[3] = oow;
+	    dst->win[3] = src->v.w;
 	 }
       } else {
+	 oow = src->v.w;
 	 dst->win[0] = UNVIEWPORT_X( src->v.x );
 	 dst->win[1] = UNVIEWPORT_Y( src->v.y );
 	 dst->win[2] = UNVIEWPORT_Z( src->v.z );
-	 dst->win[3] = oow;
+	 dst->win[3] = src->v.w;
       }
 
       dst->color[0] = src->v.color.red;
