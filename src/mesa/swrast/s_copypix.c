@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.33 2002/02/17 17:30:23 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.34 2002/03/14 22:09:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -379,7 +379,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       for (j = 0; j < height; j++, ssy += stepy) {
          _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, srcx, ssy,
                             (GLchan (*)[4]) p );
-         p += (width * sizeof(GLchan) * 4);
+         p += width * 4;
       }
       p = tmpImage;
    }
@@ -393,7 +393,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       if (overlapping) {
          /* get from buffered image */
          MEMCPY(span.color.rgba, p, width * sizeof(GLchan) * 4);
-         p += (width * sizeof(GLchan) * 4);
+         p += width * 4;
       }
       else {
          /* get from framebuffer */
