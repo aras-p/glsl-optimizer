@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.24 2002/01/15 18:14:34 kschultz Exp $ */
+/* $Id: wmesa.c,v 1.25 2002/01/16 15:42:17 kschultz Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -474,9 +474,9 @@ static clear(GLcontext* ctx, GLbitfield mask,
       b = GetBValue(Current->clearpixel); 
       iSize = Current->width; 
       while (i < iSize) { 
-        *lpb++ = r; 
-        *lpb++ = g; 
         *lpb++ = b; 
+        *lpb++ = g; 
+        *lpb++ = r; 
         i++; 
       } 
       lpb = Current->pbPixels + Current->ScanWidth; 
@@ -1616,7 +1616,11 @@ wmSetPixel(PWMC pwc, int iScanLine, int iPixel, BYTE r, BYTE g, BYTE b)
 		else if(nBypp == 2)
 			*((LPWORD)lpb) = BGR16(r,g,b);
 		else if (nBypp == 3)
-			*((LPDWORD)lpb) = BGR24(r,g,b);
+			{
+			*lpb++ = b;
+			*lpb++ = g;
+			*lpb   = r;
+			}
 		else if (nBypp == 4)
 			*((LPDWORD)lpb) = BGR32(r,g,b);
 	}
@@ -1638,7 +1642,9 @@ void wmSetPixel4(PWMC pwc, int iScanLine, int iPixel, BYTE r, BYTE g, BYTE b)
 void wmSetPixel3(PWMC pwc, int iScanLine, int iPixel, BYTE r, BYTE g, BYTE b)
 {
 	LPBYTE  lpb = pwc->pbPixels + pwc->ScanWidth * iScanLine + iPixel + iPixel + iPixel;
-	*((LPDWORD)lpb) = BGR24(r,g,b);
+	*lpb++ = b;
+	*lpb++ = g;
+	*lpb   = r;
 }
 
 void wmSetPixel2(PWMC pwc, int iScanLine, int iPixel, BYTE r, BYTE g, BYTE b)
