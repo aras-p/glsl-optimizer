@@ -530,6 +530,8 @@ _mesa_bitcount(unsigned int n)
 
 /**
  * Convert a 4-byte float to a 2-byte half float.
+ * Based on code from:
+ * http://www.opengl.org/discussion_boards/ubb/Forum3/HTML/008786.html
  */
 GLhalfNV
 _mesa_float_to_half(float val)
@@ -614,6 +616,8 @@ _mesa_float_to_half(float val)
 
 /**
  * Convert a 2-byte half float to a 4-byte float.
+ * Based on code from:
+ * http://www.opengl.org/discussion_boards/ubb/Forum3/HTML/008786.html
  */
 float
 _mesa_half_to_float(GLhalfNV val)
