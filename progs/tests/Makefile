@@ -28,7 +28,9 @@ PROGS = antialias \
 	vptest2 \
 	vptest3 \
 	vptorus \
-	vpwarpmesh
+	vpwarpmesh \
+	yuvrect \
+	yuvsquare
 
 
 ##### RULES #####

@@ -1,4 +1,4 @@
-/* $Id: texrect.c,v 1.2 2002/10/15 14:43:55 brianp Exp $ */
+/* $Id: texrect.c,v 1.3 2003/05/20 09:54:58 keithw Exp $ */
 
 /* GL_NV_texture_rectangle test
  *
@@ -13,8 +13,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <GL/glut.h>
-
-#include "readtex.c"   /* I know, this is a hack. */
 
 #define TEXTURE_0_FILE "../images/girl.rgb"
 #define TEXTURE_1_FILE "../images/reflect.rgb"

@@ -20,5 +20,7 @@ extern GLubyte *
 LoadRGBImage( const char *imageFile,
               GLint *width, GLint *height, GLenum *format );
 
+extern GLushort *
+LoadYUVImage( const char *imageFile, GLint *width, GLint *height );
 
 #endif

@@ -19,7 +19,6 @@
 static GLfloat Xrot = 0, Yrot = 0, Zrot = 0;
 static GLint ImgWidth, ImgHeight;
 static GLenum ImgFormat;
-static GLubyte *Image = NULL;
 static GLushort *ImageYUV = NULL;
 
 
@@ -107,42 +106,6 @@ static void SpecialKey( int key, int x, int y )
 }
 
 
-#define CLAMP( X, MIN, MAX )  ( (X)<(MIN) ? (MIN) : ((X)>(MAX) ? (MAX) : (X)) )
-
-static void ConvertRGBtoYUV(GLint w, GLint h, const GLubyte *src,
-                            GLushort *dest)
-{
-   GLint i, j;
-
-   for (i = 0; i < h; i++) {
-      for (j = 0; j < w; j++) {
-         const GLfloat r = (*src++) / 255.0;
-         const GLfloat g = (*src++) / 255.0;
-         const GLfloat b = (*src++) / 255.0;
-         GLfloat y, cr, cb;
-         GLint iy, icr, icb;
-
-         y  = r * 65.481 + g * 128.553 + b * 24.966 + 16;
-         cb = r * -37.797 + g * -74.203 + b * 112.0 + 128;
-         cr = r * 112.0 + g * -93.786 + b * -18.214 + 128;
-         /*printf("%f %f %f -> %f %f %f\n", r, g, b, y, cb, cr);*/
-         iy  = (GLint) CLAMP(y,  0, 254);
-         icb = (GLint) CLAMP(cb, 0, 254);
-         icr = (GLint) CLAMP(cr, 0, 254);
-
-         if (j & 1) {
-            /* odd */
-            *dest = (iy << 8) | icr;
-         }
-         else {
-            /* even */
-            *dest = (iy << 8) | icb;
-         }
-         dest++;
-      }
-   }
-}
-
 
 static void Init( int argc, char *argv[] )
 {
@@ -176,16 +139,14 @@ static void Init( int argc, char *argv[] )
    else
       file = TEXTURE_FILE;
 
-   Image = LoadRGBImage(file, &ImgWidth, &ImgHeight, &ImgFormat);
-   if (!Image) {
+   ImageYUV = LoadYUVImage(file, &ImgWidth, &ImgHeight);
+   if (!ImageYUV) {
       printf("Couldn't read %s\n", TEXTURE_FILE);
       exit(0);
    }
 
    printf("Image: %dx%d\n", ImgWidth, ImgHeight);
 
-   ImageYUV = (GLushort *) malloc(ImgWidth * ImgHeight * sizeof(GLushort));
-   ConvertRGBtoYUV(ImgWidth, ImgHeight, Image, ImageYUV);
    glTexImage2D(GL_TEXTURE_RECTANGLE_NV, 0,
                 GL_YCBCR_MESA, ImgWidth, ImgHeight, 0,
                 GL_YCBCR_MESA, GL_UNSIGNED_SHORT_8_8_MESA, ImageYUV);

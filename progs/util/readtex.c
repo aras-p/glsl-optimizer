@@ -365,3 +365,88 @@ GLubyte *LoadRGBImage( const char *imageFile, GLint *width, GLint *height,
    return buffer;
 }
 
+#define CLAMP( X, MIN, MAX )  ( (X)<(MIN) ? (MIN) : ((X)>(MAX) ? (MAX) : (X)) )
+
+
+static void ConvertRGBtoYUV(GLint w, GLint h, GLint texel_bytes,
+			    const GLubyte *src,
+                            GLushort *dest)
+{
+   GLint i, j;
+
+   for (i = 0; i < h; i++) {
+      for (j = 0; j < w; j++) {
+         const GLfloat r = (src[0]) / 255.0;
+         const GLfloat g = (src[1]) / 255.0;
+         const GLfloat b = (src[2]) / 255.0;
+         GLfloat y, cr, cb;
+         GLint iy, icr, icb;
+
+         y  = r * 65.481 + g * 128.553 + b * 24.966 + 16;
+         cb = r * -37.797 + g * -74.203 + b * 112.0 + 128;
+         cr = r * 112.0 + g * -93.786 + b * -18.214 + 128;
+         /*printf("%f %f %f -> %f %f %f\n", r, g, b, y, cb, cr);*/
+         iy  = (GLint) CLAMP(y,  0, 254);
+         icb = (GLint) CLAMP(cb, 0, 254);
+         icr = (GLint) CLAMP(cr, 0, 254);
+
+         if (j & 1) {
+            /* odd */
+            *dest = (iy << 8) | icr;
+         }
+         else {
+            /* even */
+            *dest = (iy << 8) | icb;
+         }
+         dest++;
+	 src += texel_bytes;
+      }
+   }
+}
+
+
+/*
+ * Load an SGI .rgb file and return a pointer to the image data, converted
+ * to 422 yuv.
+ *
+ * Input:  imageFile - name of .rgb to read
+ * Output:  width - width of image
+ *          height - height of image
+ * Return:  pointer to image data or NULL if error
+ */
+GLushort *LoadYUVImage( const char *imageFile, GLint *width, GLint *height )
+{
+   TK_RGBImageRec *image;
+   GLint bytes;
+   GLushort *buffer;
+
+   image = tkRGBImageLoad( imageFile );
+   if (!image) {
+      return NULL;
+   }
+
+   if (image->components != 3 && image->components !=4 ) {
+      /* not implemented */
+      fprintf(stderr,
+              "Error in LoadYUVImage %d-component images not implemented\n",
+              image->components );
+      return NULL;
+   }
+
+   *width = image->sizeX;
+   *height = image->sizeY;
+
+   buffer = (GLushort *) malloc( image->sizeX * image->sizeY * 2 );
+
+   if (buffer)
+      ConvertRGBtoYUV( image->sizeX, 
+		       image->sizeY,
+		       image->components,
+		       image->data, 
+		       buffer );
+
+
+   FreeImage(image);
+   return buffer;
+}
+
