@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.6 2001/01/05 02:26:49 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.7 2001/01/08 04:09:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -487,6 +487,7 @@ do {							\
     (void) elt; (void) mask; (void) sz;
 
 #define TAG(x) clip_##x##_verts
+#define INIT(x) ctx->Driver.RenderPrimitive( ctx, x )
 #define RESET_STIPPLE ctx->Driver.ResetLineStipple( ctx )
 #define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE;
 #define PRESERVE_VB_DEFS

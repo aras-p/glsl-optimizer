@@ -1,4 +1,4 @@
-/* $Id: ss_context.c,v 1.6 2001/01/05 02:26:49 keithw Exp $ */
+/* $Id: ss_context.c,v 1.7 2001/01/08 04:09:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -211,3 +211,9 @@ _swsetup_DestroyContext( GLcontext *ctx )
 }
 
 
+void
+_swsetup_RenderPrimNoop( GLcontext *ctx, GLenum mode )
+{
+   (void) ctx;
+   (void) mode;
+}

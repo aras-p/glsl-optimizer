@@ -1,4 +1,4 @@
-/* $Id: t_vb_rendertmp.h,v 1.4 2001/01/05 02:26:49 keithw Exp $ */
+/* $Id: t_vb_rendertmp.h,v 1.5 2001/01/08 04:09:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -107,7 +107,7 @@ static void TAG(render_line_strip)( GLcontext *ctx,
    (void) flags;
 
    RESET_OCCLUSION;
-   INIT(GL_LINES);
+   INIT(GL_LINE_STRIP);
 
    for (j=start+1; j<count; j++ ) 
       RENDER_LINE( ELT(j-1), ELT(j) );
@@ -130,7 +130,7 @@ static void TAG(render_line_loop)( GLcontext *ctx,
    (void) flags;
 
    RESET_OCCLUSION;
-   INIT(GL_LINES);
+   INIT(GL_LINE_LOOP);
 
    if (start+1 < count) {
       if (TEST_PRIM_BEGIN(flags)) {
@@ -160,7 +160,7 @@ static void TAG(render_triangles)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
-   INIT(GL_POLYGON);
+   INIT(GL_TRIANGLES);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+2; j<count; j+=3) {
 	 /* Leave the edgeflags as supplied by the user.
@@ -190,7 +190,7 @@ static void TAG(render_tri_strip)( GLcontext *ctx,
    if (TEST_PRIM_PARITY(flags))
       parity = 1;
    
-   INIT(GL_POLYGON);
+   INIT(GL_TRIANGLE_STRIP);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+2;j<count;j++,parity^=1) {
 	 GLuint ej2 = ELT(j-2+parity);
@@ -226,7 +226,7 @@ static void TAG(render_tri_fan)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
-   INIT(GL_POLYGON);
+   INIT(GL_TRIANGLE_FAN);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+2;j<count;j++) {
 	 /* For trifans, all edges are boundary.
@@ -334,7 +334,7 @@ static void TAG(render_quads)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
-   INIT(GL_POLYGON);
+   INIT(GL_QUADS);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+3; j<count; j+=4) {
 	 /* Use user-specified edgeflags for quads.
@@ -359,7 +359,7 @@ static void TAG(render_quad_strip)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
-   INIT(GL_POLYGON);
+   INIT(GL_QUAD_STRIP);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+3;j<count;j+=2) {
 	 /* All edges are boundary.  Set edgeflags to 1, draw the

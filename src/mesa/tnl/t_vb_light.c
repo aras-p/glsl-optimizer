@@ -1,4 +1,4 @@
-/* $Id: t_vb_light.c,v 1.2 2000/12/27 19:57:37 keithw Exp $ */
+/* $Id: t_vb_light.c,v 1.3 2001/01/08 04:09:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -246,6 +246,10 @@ static void check_lighting( GLcontext *ctx, struct gl_pipeline_stage *stage )
 	 stage->inputs |= VERT_EYE; /* effectively, even when lighting in obj */
       if (ctx->Light.ColorMaterialEnabled) 
 	 stage->inputs |= VERT_RGBA;
+
+      stage->outputs = VERT_RGBA;
+      if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
+	 stage->outputs |= VERT_SPEC_RGB;
    }
 }
 
@@ -273,7 +277,7 @@ const struct gl_pipeline_stage _tnl_lighting_stage =
    _NEW_LIGHT|_NEW_MODELVIEW,	/* recalc -- modelview dependency
 				 * otherwise not captured by inputs
 				 * (which may be VERT_OBJ) */
-   0,0,VERT_RGBA,		/* active, inputs, outputs */
+   0,0,0,			/* active, inputs, outputs */
    0,0,				/* changed_inputs, private_data */
    dtr,				/* destroy */
    check_lighting,		/* check */

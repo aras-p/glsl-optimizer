@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.115 2001/01/05 05:31:42 keithw Exp $ */
+/* $Id: context.c,v 1.116 2001/01/08 04:09:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -131,7 +131,8 @@ __glCoreCreateContext(__GLimports *imports, __GLcontextModes *modes)
                             modes->accumAlphaBits,
                             0);
 
-    _mesa_initialize_context(ctx, &ctx->Visual, NULL, imports->wscx, GL_FALSE);
+    /* KW: was imports->wscx */
+    _mesa_initialize_context(ctx, &ctx->Visual, NULL, imports->other, GL_FALSE);
 
     ctx->exports.destroyContext = _mesa_DestroyContext;
 

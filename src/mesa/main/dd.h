@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.45 2001/01/05 02:26:48 keithw Exp $ */
+/* $Id: dd.h,v 1.46 2001/01/08 04:09:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -746,6 +746,7 @@ struct dd_function_table {
 
 
    void (*RenderStart)( GLcontext *ctx );
+   void (*RenderPrimitive)( GLcontext *ctx, GLenum mode );
    void (*RenderFinish)( GLcontext *ctx );
    /* Wrap around all rendering functions.  Suitable for
     * grabbing/releasing hardware locks.
@@ -895,6 +896,7 @@ struct dd_function_table {
    void (*LogicOpcode)(GLcontext *ctx, GLenum opcode);
    void (*PolygonMode)(GLcontext *ctx, GLenum face, GLenum mode);
    void (*PolygonStipple)(GLcontext *ctx, const GLubyte *mask );
+   void (*RenderMode)(GLcontext *ctx, GLenum mode );
    void (*Scissor)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
    void (*ShadeModel)(GLcontext *ctx, GLenum mode);
    void (*StencilFunc)(GLcontext *ctx, GLenum func, GLint ref, GLuint mask);

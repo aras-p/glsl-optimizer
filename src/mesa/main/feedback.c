@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.18 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: feedback.c,v 1.19 2001/01/08 04:09:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -406,6 +406,9 @@ _mesa_RenderMode( GLenum mode )
    }
 
    ctx->RenderMode = mode;
+   if (ctx->Driver.RenderMode) 
+      ctx->Driver.RenderMode( ctx, mode );
+
    return result;
 }
 

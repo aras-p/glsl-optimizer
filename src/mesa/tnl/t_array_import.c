@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.4 2001/01/05 02:26:49 keithw Exp $ */
+/* $Id: t_array_import.c,v 1.5 2001/01/08 04:09:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -267,31 +267,37 @@ static void _tnl_upgrade_client_data( GLcontext *ctx,
    if ((required & VERT_OBJ) && (VB->ObjPtr->flags & flags)) {
       ASSERT(VB->ObjPtr == &inputs->Obj);
       _tnl_import_vertex( ctx, writeable, stride );
+      VB->importable_data &= ~(VERT_OBJ|VERT_CLIP);
    }
 
    if ((required & VERT_NORM) && (VB->NormalPtr->flags & flags)) {
       ASSERT(VB->NormalPtr == &inputs->Normal);
       _tnl_import_normal( ctx, writeable, stride );
+      VB->importable_data &= ~VERT_NORM;
    }
 
    if ((required & VERT_RGBA) && (VB->ColorPtr[0]->flags & flags)) {
       ASSERT(VB->ColorPtr[0] == &inputs->Color);
       _tnl_import_color( ctx, writeable, stride );
+      VB->importable_data &= ~VERT_RGBA;
    }
 
    if ((required & VERT_SPEC_RGB) && (VB->SecondaryColorPtr[0]->flags&flags)) {
       ASSERT(VB->SecondaryColorPtr[0] == &inputs->SecondaryColor);
       _tnl_import_secondarycolor( ctx, writeable, stride );
+      VB->importable_data &= ~VERT_SPEC_RGB;
    }
 
    if ((required & VERT_FOG_COORD) && (VB->FogCoordPtr->flags & flags)) {
       ASSERT(VB->FogCoordPtr == &inputs->FogCoord);
       _tnl_import_fogcoord( ctx, writeable, stride );
+      VB->importable_data &= ~VERT_FOG_COORD;
    }
 
    if ((required & VERT_INDEX) && (VB->IndexPtr[0]->flags & flags)) {
       ASSERT(VB->IndexPtr[0] == &inputs->Index);
       _tnl_import_index( ctx, writeable, stride );
+      VB->importable_data &= ~VERT_INDEX;
    }
 
    if (required & VERT_TEX_ANY)
@@ -299,9 +305,9 @@ static void _tnl_upgrade_client_data( GLcontext *ctx,
 	 if ((required & VERT_TEX(i)) && (VB->TexCoordPtr[i]->flags & flags)) {
 	    ASSERT(VB->TexCoordPtr[i] == &inputs->TexCoord[i]);
 	    _tnl_import_texcoord( ctx, i, writeable, stride );
+	    VB->importable_data &= ~VERT_TEX(i);
 	 }
    
-   VB->importable_data &= ~required;
 }
 
 

@@ -58,5 +58,7 @@ _swsetup_Line( GLcontext *ctx, GLuint v0, GLuint v1 );
 extern void 
 _swsetup_Points( GLcontext *ctx, GLuint first, GLuint last );
 
+extern void
+_swsetup_RenderPrimNoop( GLcontext *ctx, GLenum mode );
 
 #endif

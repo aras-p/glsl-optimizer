@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.15 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: glheader.h,v 1.16 2001/01/08 04:09:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -177,7 +177,7 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #ifndef CAPI
 #define CAPI
 #endif
-#include "glcore.h"
+#include <GL/internal/glcore.h>
 
 
 

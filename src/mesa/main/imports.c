@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.3 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: imports.c,v 1.4 2001/01/08 04:09:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,6 +76,11 @@ _mesa_warning(__GLcontext *gc, char *str)
 #ifdef DEBUG
    debug = GL_TRUE;
 #else
+/* Whacko XFree86 macro:
+ */
+#ifdef getenv
+#undef getenv			
+#endif
    if (gc->imports.getenv(gc, "MESA_DEBUG")) {
       debug = GL_TRUE;
    }
@@ -99,7 +104,7 @@ static char *
 _mesa_getenv(__GLcontext *gc, const char *var)
 {
    (void) gc;
-   return getenv(var);
+   return gc->imports.getenv(gc, var);
 }
 
 static int
@@ -153,12 +158,12 @@ _mesa_InitDefaultImports(__GLimports *imports, void *driverCtx, void *other)
    imports->warning = _mesa_warning;
    imports->fatal = _mesa_fatal;
    imports->getenv = _mesa_getenv;
-   imports->atoi = _mesa_atoi;
+/*     imports->atoi = _mesa_atoi; */
    imports->sprintf = _mesa_sprintf;
    imports->fopen = _mesa_fopen;
    imports->fclose = _mesa_fclose;
    imports->fprintf = _mesa_fprintf;
    imports->getDrawablePrivate = _mesa_GetDrawablePrivate;
-   imports->wscx = driverCtx;
-   imports->other = other;
+/*     imports->wscx = driverCtx; */
+   imports->other = driverCtx;
 }

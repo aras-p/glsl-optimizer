@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.24 2000/12/26 05:09:29 keithw Exp $ */
+/* $Id: lines.c,v 1.25 2001/01/08 04:09:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,6 +57,10 @@ _mesa_LineWidth( GLfloat width )
 
    FLUSH_VERTICES(ctx, _NEW_LINE);
    ctx->Line.Width = width;
+   ctx->Line._Width = CLAMP(width, 
+			    ctx->Const.MinLineWidth,
+			    ctx->Const.MaxLineWidth);
+
 
    if (width != 1.0) 
       ctx->_TriangleCaps |= DD_LINE_WIDTH;

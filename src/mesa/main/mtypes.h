@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.11 2001/01/06 22:46:13 gareth Exp $ */
+/* $Id: mtypes.h,v 1.12 2001/01/08 04:09:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -516,6 +516,7 @@ struct gl_line_attrib {
    GLushort StipplePattern;	/* Stipple pattern */
    GLint StippleFactor;		/* Stipple repeat factor */
    GLfloat Width;		/* Line width */
+   GLfloat _Width;		/* Clamped Line width */
 };
 
 
