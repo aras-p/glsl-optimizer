@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.39 2002/10/02 23:24:04 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.40 2002/10/17 15:26:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -115,7 +115,7 @@
    GLfloat oneOverArea;
    const SWvertex *vMin, *vMid, *vMax;  /* Y(vMin)<=Y(vMid)<=Y(vMax) */
    float bf = SWRAST_CONTEXT(ctx)->_backface_sign;
-   const GLint snapMask = ~((FIXED_ONE / 16) - 1); /* for x/y coord snapping */
+   const GLint snapMask = ~((FIXED_ONE / (1 << SUB_PIXEL_BITS)) - 1); /* for x/y coord snapping */
    GLfixed vMin_fx, vMin_fy, vMid_fx, vMid_fy, vMax_fx, vMax_fy;
 
    struct sw_span span;
@@ -206,7 +206,7 @@
       if (area * bf < 0.0)
          return;
 
-      if (area == 0.0F || IS_INF_OR_NAN(area))
+      if (IS_INF_OR_NAN(area) || area == 0.0F)
          return;
 
       oneOverArea = 1.0F / area;

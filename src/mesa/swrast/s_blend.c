@@ -1,4 +1,4 @@
-/* $Id: s_blend.c,v 1.24 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_blend.c,v 1.25 2002/10/17 15:26:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -100,7 +100,7 @@ blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
 
    for (i=0;i<n;i++) {
       if (mask[i]) {
-         const GLint t = rgba[i][ACOMP];  /* t in [0, CHAN_MAX] */
+         const GLchan t = rgba[i][ACOMP];  /* t in [0, CHAN_MAX] */
          if (t == 0) {
             /* 0% alpha */
             rgba[i][RCOMP] = dest[i][RCOMP];
@@ -153,7 +153,8 @@ blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
             const GLfloat r = (rgba[i][RCOMP] - dest[i][RCOMP]) * tt + dest[i][RCOMP];
             const GLfloat g = (rgba[i][GCOMP] - dest[i][GCOMP]) * tt + dest[i][GCOMP];
             const GLfloat b = (rgba[i][BCOMP] - dest[i][BCOMP]) * tt + dest[i][BCOMP];
-            const GLfloat a = (rgba[i][ACOMP] - dest[i][ACOMP]) * tt + dest[i][ACOMP];
+            const GLfloat a = CLAMP( rgba[i][ACOMP], 0.0F, CHAN_MAXF ) * t +
+                              CLAMP( dest[i][ACOMP], 0.0F, CHAN_MAXF ) * (1.0F - t);
 #endif
 #endif
             ASSERT(r <= CHAN_MAX);
@@ -187,13 +188,11 @@ blend_add( GLcontext *ctx, GLuint n, const GLubyte mask[],
    for (i=0;i<n;i++) {
       if (mask[i]) {
 #if CHAN_TYPE == GL_FLOAT
-         GLfloat r = rgba[i][RCOMP] + dest[i][RCOMP];
-         GLfloat g = rgba[i][GCOMP] + dest[i][GCOMP];
-         GLfloat b = rgba[i][BCOMP] + dest[i][BCOMP];
-         GLfloat a = rgba[i][ACOMP] + dest[i][ACOMP];
-         rgba[i][RCOMP] = (GLchan) MIN2( r, CHAN_MAXF );
-         rgba[i][GCOMP] = (GLchan) MIN2( g, CHAN_MAXF );
-         rgba[i][BCOMP] = (GLchan) MIN2( b, CHAN_MAXF );
+         /* don't RGB clamp to max */
+         GLfloat a = CLAMP(rgba[i][ACOMP], 0.0F, CHAN_MAXF) + dest[i][ACOMP];
+         rgba[i][RCOMP] += dest[i][RCOMP];
+         rgba[i][GCOMP] += dest[i][GCOMP];
+         rgba[i][BCOMP] += dest[i][BCOMP];
          rgba[i][ACOMP] = (GLchan) MIN2( a, CHAN_MAXF );
 #else
          GLint r = rgba[i][RCOMP] + dest[i][RCOMP];
@@ -227,7 +226,12 @@ blend_min( GLcontext *ctx, GLuint n, const GLubyte mask[],
          rgba[i][RCOMP] = (GLchan) MIN2( rgba[i][RCOMP], dest[i][RCOMP] );
          rgba[i][GCOMP] = (GLchan) MIN2( rgba[i][GCOMP], dest[i][GCOMP] );
          rgba[i][BCOMP] = (GLchan) MIN2( rgba[i][BCOMP], dest[i][BCOMP] );
+#if CHAN_TYPE == GL_FLOAT
+         rgba[i][ACOMP] = (GLchan) MIN2(CLAMP(rgba[i][ACOMP], 0.0F, CHAN_MAXF),
+                                        dest[i][ACOMP]);
+#else
          rgba[i][ACOMP] = (GLchan) MIN2( rgba[i][ACOMP], dest[i][ACOMP] );
+#endif
       }
    }
 }
@@ -250,7 +254,12 @@ blend_max( GLcontext *ctx, GLuint n, const GLubyte mask[],
          rgba[i][RCOMP] = (GLchan) MAX2( rgba[i][RCOMP], dest[i][RCOMP] );
          rgba[i][GCOMP] = (GLchan) MAX2( rgba[i][GCOMP], dest[i][GCOMP] );
          rgba[i][BCOMP] = (GLchan) MAX2( rgba[i][BCOMP], dest[i][BCOMP] );
+#if CHAN_TYPE == GL_FLOAT
+         rgba[i][ACOMP] = (GLchan) MAX2(CLAMP(rgba[i][ACOMP], 0.0F, CHAN_MAXF),
+                                        dest[i][ACOMP]);
+#else
          rgba[i][ACOMP] = (GLchan) MAX2( rgba[i][ACOMP], dest[i][ACOMP] );
+#endif
       }
    }
 }
@@ -310,10 +319,10 @@ static void _BLENDAPI
 blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
                GLchan rgba[][4], CONST GLchan dest[][4] )
 {
-   GLfloat rscale = 1.0F / CHAN_MAXF;
-   GLfloat gscale = 1.0F / CHAN_MAXF;
-   GLfloat bscale = 1.0F / CHAN_MAXF;
-   GLfloat ascale = 1.0F / CHAN_MAXF;
+   const GLfloat rscale = 1.0F / CHAN_MAXF;
+   const GLfloat gscale = 1.0F / CHAN_MAXF;
+   const GLfloat bscale = 1.0F / CHAN_MAXF;
+   const GLfloat ascale = 1.0F / CHAN_MAXF;
    GLuint i;
 
    for (i=0;i<n;i++) {
@@ -327,19 +336,33 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
 #endif
          GLfloat sR, sG, sB, sA;  /* Source scaling */
          GLfloat dR, dG, dB, dA;  /* Dest scaling */
-         GLfloat r, g, b, a;
+         GLfloat r, g, b, a;      /* result color */
 
-         /* Source Color */
+         /* Incoming/source Color */
          Rs = rgba[i][RCOMP];
          Gs = rgba[i][GCOMP];
          Bs = rgba[i][BCOMP];
          As = rgba[i][ACOMP];
+#if CHAN_TYPE == GL_FLOAT
+         /* clamp */
+         Rs = MIN2(Rs, CHAN_MAXF);
+         Gs = MIN2(Gs, CHAN_MAXF);
+         Bs = MIN2(Bs, CHAN_MAXF);
+         As = MIN2(As, CHAN_MAXF);
+#endif
 
-         /* Frame buffer color */
+         /* Frame buffer/dest color */
          Rd = dest[i][RCOMP];
          Gd = dest[i][GCOMP];
          Bd = dest[i][BCOMP];
          Ad = dest[i][ACOMP];
+#if CHAN_TYPE == GL_FLOAT
+         /* clamp */
+         Rd = MIN2(Rd, CHAN_MAXF);
+         Gd = MIN2(Gd, CHAN_MAXF);
+         Bd = MIN2(Bd, CHAN_MAXF);
+         Ad = MIN2(Ad, CHAN_MAXF);
+#endif
 
          /* Source RGB factor */
          switch (ctx->Color.BlendSrcRGB) {
@@ -363,7 +386,7 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
                sR = sG = sB = (GLfloat) As * ascale;
                break;
             case GL_ONE_MINUS_SRC_ALPHA:
-               sR = sG = sB = (GLfloat) 1.0F - (GLfloat) As * ascale;
+               sR = sG = sB = 1.0F - (GLfloat) As * ascale;
                break;
             case GL_DST_ALPHA:
                sR = sG = sB = (GLfloat) Ad * ascale;
@@ -429,7 +452,7 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
                sA = (GLfloat) As * ascale;
                break;
             case GL_ONE_MINUS_SRC_ALPHA:
-               sA = (GLfloat) 1.0F - (GLfloat) As * ascale;
+               sA = 1.0F - (GLfloat) As * ascale;
                break;
             case GL_DST_ALPHA:
                sA =(GLfloat) Ad * ascale;
@@ -486,7 +509,7 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
                dR = dG = dB = (GLfloat) As * ascale;
                break;
             case GL_ONE_MINUS_SRC_ALPHA:
-               dR = dG = dB = (GLfloat) 1.0F - (GLfloat) As * ascale;
+               dR = dG = dB = 1.0F - (GLfloat) As * ascale;
                break;
             case GL_DST_ALPHA:
                dR = dG = dB = (GLfloat) Ad * ascale;
@@ -544,7 +567,7 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
                dA = (GLfloat) As * ascale;
                break;
             case GL_ONE_MINUS_SRC_ALPHA:
-               dA = (GLfloat) 1.0F - (GLfloat) As * ascale;
+               dA = 1.0F - (GLfloat) As * ascale;
                break;
             case GL_DST_ALPHA:
                dA = (GLfloat) Ad * ascale;
@@ -624,9 +647,9 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
          }
 
          /* final clamping */
-         rgba[i][RCOMP] = CLAMP( r, 0.0F, CHAN_MAXF );
-         rgba[i][GCOMP] = CLAMP( g, 0.0F, CHAN_MAXF );
-         rgba[i][BCOMP] = CLAMP( b, 0.0F, CHAN_MAXF );
+         rgba[i][RCOMP] = MAX2( r, 0.0F );
+         rgba[i][GCOMP] = MAX2( g, 0.0F );
+         rgba[i][BCOMP] = MAX2( b, 0.0F );
          rgba[i][ACOMP] = CLAMP( a, 0.0F, CHAN_MAXF );
 #else
          if (ctx->Color.BlendEquation==GL_FUNC_ADD_EXT) {

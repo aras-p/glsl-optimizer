@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.91 2002/10/14 17:08:27 brianp Exp $ */
+/* $Id: osmesa.c,v 1.92 2002/10/17 15:26:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -672,12 +672,12 @@ OSMesaGetProcAddress( const char *funcName )
  */
 
 #if CHAN_TYPE == GL_FLOAT
-#define PACK_RGBA(DST, R, G, B, A)				\
-do {								\
-   (DST)[0] = (R < 0.0f) ? 0.0f : ((R > 1.0f) ? 1.0f : R);	\
-   (DST)[1] = (G < 0.0f) ? 0.0f : ((G > 1.0f) ? 1.0f : G);	\
-   (DST)[2] = (B < 0.0f) ? 0.0f : ((B > 1.0f) ? 1.0f : B);	\
-   (DST)[3] = (A < 0.0f) ? 0.0f : ((A > 1.0f) ? 1.0f : A);	\
+#define PACK_RGBA(DST, R, G, B, A)	\
+do {					\
+   (DST)[0] = MAX2( R, 0.0F );		\
+   (DST)[1] = MAX2( G, 0.0F );		\
+   (DST)[2] = MAX2( B, 0.0F );		\
+   (DST)[3] = CLAMP(A, 0.0F, CHAN_MAXF);\
 } while (0)
 #else
 #define PACK_RGBA(DST, R, G, B, A)	\
