@@ -246,7 +246,7 @@ typedef enum {
         /* GL_NV_vertex_program */
         OPCODE_BIND_PROGRAM_NV,
         OPCODE_EXECUTE_PROGRAM_NV,
-        OPCODE_REQUEST_PROGRAMS_RESIDENT_NV,
+        OPCODE_REQUEST_RESIDENT_PROGRAMS_NV,
         OPCODE_LOAD_PROGRAM_NV,
         OPCODE_PROGRAM_PARAMETER4F_NV,
         OPCODE_TRACK_MATRIX_NV,
@@ -426,6 +426,16 @@ void _mesa_destroy_list( GLcontext *ctx, GLuint list )
             FREE(n[11].data);
             n += InstSize[n[0].opcode];
             break;
+#if FEATURE_NV_vertex_program
+         case OPCODE_LOAD_PROGRAM_NV:
+            FREE(n[4].data);
+            n += InstSize[n[0].opcode];
+            break;
+         case OPCODE_REQUEST_RESIDENT_PROGRAMS_NV:
+            FREE(n[2].data);
+            n += InstSize[n[0].opcode];
+            break;
+#endif
 #if FEATURE_NV_fragment_program
          case OPCODE_PROGRAM_NAMED_PARAMETER_NV:
             FREE(n[3].data);
@@ -652,8 +662,8 @@ void _mesa_init_lists( void )
       /* GL_NV_vertex_program */
       InstSize[OPCODE_BIND_PROGRAM_NV] = 3;
       InstSize[OPCODE_EXECUTE_PROGRAM_NV] = 7;
-      InstSize[OPCODE_REQUEST_PROGRAMS_RESIDENT_NV] = 2;
-      InstSize[OPCODE_LOAD_PROGRAM_NV] = 4;
+      InstSize[OPCODE_REQUEST_RESIDENT_PROGRAMS_NV] = 2;
+      InstSize[OPCODE_LOAD_PROGRAM_NV] = 5;
       InstSize[OPCODE_PROGRAM_PARAMETER4F_NV] = 7;
       InstSize[OPCODE_TRACK_MATRIX_NV] = 5;
       /* GL_NV_fragment_program */
@@ -4112,6 +4122,58 @@ save_ProgramParameters4fvNV(GLenum target, GLuint index,
 }
 
 
+static void
+save_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
+                   const GLubyte *program)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   GLubyte *programCopy;
+
+   programCopy = (GLubyte *) _mesa_malloc(len);
+   if (!programCopy) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
+      return;
+   }
+   _mesa_memcpy(programCopy, program, len);
+
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_LOAD_PROGRAM_NV, 4 );
+   if (n) {
+      n[1].e = target;
+      n[2].ui = id;
+      n[3].i = len;
+      n[4].data = programCopy;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->LoadProgramNV)(target, id, len, program);
+   }
+}
+
+
+static void
+save_RequestResidentProgramsNV(GLsizei num, const GLuint *ids)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   GLuint *idCopy;
+   idCopy = _mesa_malloc(num * sizeof(GLuint));
+   if (!idCopy) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glRequestResidentProgramsNV");
+      return;
+   }
+   _mesa_memcpy(idCopy, ids, num * sizeof(GLuint));
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_TRACK_MATRIX_NV, 2 );
+   if (n) {
+      n[1].i = num;
+      n[2].data = idCopy;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->RequestResidentProgramsNV)(num, ids);
+   }
+}
+
 
 static void
 save_TrackMatrixNV(GLenum target, GLuint address,
@@ -5019,15 +5081,11 @@ execute_list( GLcontext *ctx, GLuint list )
                (*ctx->Exec->ExecuteProgramNV)(n[1].e, n[2].ui, v);
             }
             break;
-         case OPCODE_REQUEST_PROGRAMS_RESIDENT_NV:
-            /*
-            (*ctx->Exec->RequestResidentProgramsNV)();
-            */
+         case OPCODE_REQUEST_RESIDENT_PROGRAMS_NV:
+            (*ctx->Exec->RequestResidentProgramsNV)(n[1].ui, n[2].data);
             break;
          case OPCODE_LOAD_PROGRAM_NV:
-            /*
-            (*ctx->Exec->LoadProgramNV)();
-            */
+            (*ctx->Exec->LoadProgramNV)(n[1].e, n[2].ui, n[3].i, n[4].data);
             break;
          case OPCODE_PROGRAM_PARAMETER4F_NV:
             (*ctx->Exec->ProgramParameter4fNV)(n[1].e, n[2].ui, n[3].f,
@@ -6390,7 +6448,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->ExecuteProgramNV = save_ExecuteProgramNV;
    table->GenProgramsNV = _mesa_GenProgramsNV;
    table->AreProgramsResidentNV = _mesa_AreProgramsResidentNV;
-   table->RequestResidentProgramsNV = _mesa_RequestResidentProgramsNV;
+   table->RequestResidentProgramsNV = save_RequestResidentProgramsNV;
    table->GetProgramParameterfvNV = _mesa_GetProgramParameterfvNV;
    table->GetProgramParameterdvNV = _mesa_GetProgramParameterdvNV;
    table->GetProgramivNV = _mesa_GetProgramivNV;
@@ -6401,7 +6459,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->GetVertexAttribivNV = _mesa_GetVertexAttribivNV;
    table->GetVertexAttribPointervNV = _mesa_GetVertexAttribPointervNV;
    table->IsProgramNV = _mesa_IsProgramNV;
-   table->LoadProgramNV = _mesa_LoadProgramNV;
+   table->LoadProgramNV = save_LoadProgramNV;
    table->ProgramParameter4dNV = save_ProgramParameter4dNV;
    table->ProgramParameter4dvNV = save_ProgramParameter4dvNV;
    table->ProgramParameter4fNV = save_ProgramParameter4fNV;
