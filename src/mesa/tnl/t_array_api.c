@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.21 2001/11/29 15:15:20 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.22 2001/12/03 17:41:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -121,42 +121,26 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
    if (ctx->CompileFlag) {
       fallback_drawarrays( ctx, mode, start, start + count );
    }    
-   else if (count < (GLint) ctx->Const.MaxArrayLockSize) {
-
+   else if (ctx->Array.LockCount && 
+	    count < (GLint) ctx->Const.MaxArrayLockSize) {
+      
       /* Small primitives which can fit in a single vertex buffer:
        */
       FLUSH_CURRENT( ctx, 0 );
 
-      if (ctx->Array.LockCount)
-      {
-	 if (start < (GLint) ctx->Array.LockFirst)
-            start = ctx->Array.LockFirst;
-	 if (start + count > (GLint) ctx->Array.LockCount)
-            count = ctx->Array.LockCount - start;
-
-	 /* Locked drawarrays.  Reuse any previously transformed data.
-	  */
-	 _tnl_vb_bind_arrays( ctx, ctx->Array.LockFirst, ctx->Array.LockCount );
-	 VB->FirstPrimitive = start;
-	 VB->Primitive[start] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;
-	 VB->PrimitiveLength[start] = count;
-	 tnl->Driver.RunPipeline( ctx );
-      } else {
-	 /* The arrays are small enough to fit in a single VB; just bind
-	  * them and go.  Any untransformed data will be copied on
-	  * clipping.
-	  *
-	  * Invalidate any cached data dependent on these arrays.
-	  */
-	 _tnl_vb_bind_arrays( ctx, start, start + count );
-	 VB->FirstPrimitive = 0;
-	 VB->Primitive[0] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;
-	 VB->PrimitiveLength[0] = count;
-	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
-	 tnl->Driver.RunPipeline( ctx );
-	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
-      }
-   }
+      if (start < (GLint) ctx->Array.LockFirst)
+	 start = ctx->Array.LockFirst;
+      if (start + count > (GLint) ctx->Array.LockCount)
+	 count = ctx->Array.LockCount - start;
+      
+      /* Locked drawarrays.  Reuse any previously transformed data.
+       */
+      _tnl_vb_bind_arrays( ctx, ctx->Array.LockFirst, ctx->Array.LockCount );
+      VB->FirstPrimitive = start;
+      VB->Primitive[start] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;
+      VB->PrimitiveLength[start] = count;
+      tnl->Driver.RunPipeline( ctx );
+   } 
    else {
       int bufsz = 256;		/* Use a small buffer for cache goodness */
       int j, nr;
@@ -204,10 +188,19 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
       case GL_POLYGON:
       default:
 	 /* Primitives requiring a copied vertex (fan-like primitives)
-	  * must use the slow path:
+	  * must use the slow path if they cannot fit in a single
+	  * vertex buffer.  
 	  */
-	 fallback_drawarrays( ctx, mode, start, start + count );
-	 return;
+	 if (count < (GLint) ctx->Const.MaxArrayLockSize) {
+	    bufsz = ctx->Const.MaxArrayLockSize;
+	    minimum = 0;
+	    modulo = 1;
+	    skip = 0;
+	 }
+	 else {
+	    fallback_drawarrays( ctx, mode, start, start + count );
+	    return;
+	 }
       }
 
       FLUSH_CURRENT( ctx, 0 );
