@@ -53,9 +53,10 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 msvcrt.lib winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ../../../lib/OPENGL32.LIB /nologo /dll /machine:I386 /nodefaultlib /out:"Release/GLU32.dll"
+# ADD LINK32 msvcrt.lib winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ../../../lib/OPENGL32.LIB Release/GLUCC.LIB /nologo /dll /machine:I386 /nodefaultlib /out:"Release/GLU32.dll"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
+PreLink_Cmds=cl @ccRelease.txt	LIB /OUT:Release/GLUCC.LIB @ccReleaseObj.txt
 PostBuild_Desc=Copy import lib and dll
 PostBuild_Cmds=if not exist ..\..\..\lib md ..\..\..\lib	if not exist ..\..\..\libexec md ..\..\..\libexec	copy Release\GLU32.LIB ..\..\..\lib	copy Release\GLU32.DLL ..\..\..\libexec
 # End Special Build Tool
@@ -84,9 +85,11 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 msvcrtd.lib winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ../../../lib/OPENGL32.LIB /nologo /dll /debug /machine:I386 /nodefaultlib /out:"Debug/GLU32.dll" /pdbtype:sept
+# ADD LINK32 msvcrtd.lib winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ../../../lib/OPENGL32.LIB Debug/GLUCC.LIB /nologo /dll /debug /machine:I386 /nodefaultlib /out:"Debug/GLU32.dll" /pdbtype:sept
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
+PreLink_Desc=C++ compilations
+PreLink_Cmds=cl @ccDebug.txt	LIB /OUT:Debug/GLUCC.LIB @ccDebugObj.txt
 PostBuild_Desc=Copy import lib and dll
 PostBuild_Cmds=if not exist ..\..\..\lib md ..\..\..\lib	if not exist ..\..\..\libexec md ..\..\..\libexec	copy Debug\GLU32.LIB ..\..\..\lib	copy Debug\GLU32.DLL ..\..\..\libexec
 # End Special Build Tool
@@ -111,6 +114,10 @@ SOURCE=.\libutil\error.c
 # Begin Source File
 
 SOURCE=.\libtess\geom.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\glu.def
 # End Source File
 # Begin Source File
 
