@@ -39,6 +39,7 @@
 #include "tdfx_lock.h"
 #include "tdfx_vb.h"
 #include "tdfx_tris.h"
+#include "utils.h"
 
 
 #ifdef DEBUG_LOCKING
