@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -121,7 +121,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #if FLAGS & TEXTURE
    span->arrayMask |= SPAN_TEXTURE;
    for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-      if (ctx->Texture.Unit[u]._ReallyEnabled) {
+      if (ctx->Texture._EnabledCoordUnits & (1 << u)) {
          const GLfloat q = vert->texcoord[u][3];
          const GLfloat invQ = (q == 0.0F || q == 1.0F) ? 1.0F : (1.0F / q);
          texcoord[u][0] = vert->texcoord[u][0] * invQ;
@@ -130,6 +130,10 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
          texcoord[u][3] = q;
       }
    }
+   /* need these for fragment programs */
+   span->w = 1.0F;
+   span->dwdx = 0.0F;
+   span->dwdy = 0.0F;
 #endif
 #if FLAGS & SMOOTH
    span->arrayMask |= SPAN_COVERAGE;
@@ -256,7 +260,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #endif
 #if FLAGS & TEXTURE
             for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-               if (ctx->Texture.Unit[u]._ReallyEnabled) {
+               if (ctx->Texture._EnabledCoordUnits & (1 << u)) {
                   COPY_4V(span->array->texcoords[u][count], texcoord[u]);
                }
             }
