@@ -24,6 +24,20 @@
                    counter  CDATA #IMPLIED
                    count_scale  CDATA #IMPLIED
                    output   CDATA #IMPLIED
+		   img_width     CDATA #IMPLIED
+		   img_height    CDATA #IMPLIED
+		   img_depth     CDATA #IMPLIED
+		   img_extent    CDATA #IMPLIED
+		   img_xoff      CDATA #IMPLIED
+		   img_yoff      CDATA #IMPLIED
+		   img_zoff      CDATA #IMPLIED
+		   img_woff      CDATA #IMPLIED
+		   img_format    CDATA #IMPLIED
+		   img_type      CDATA #IMPLIED
+		   img_target    CDATA #IMPLIED
+		   img_send_null CDATA #IMPLIED
+		   img_null_flag CDATA #IMPLIED
+		   img_pad_dimensions CDATA #IMPLIED
                    variable_param  CDATA #IMPLIED>
 <!ATTLIST return   type     CDATA #REQUIRED>
 <!ATTLIST glx      rop      CDATA #IMPLIED
@@ -58,6 +72,24 @@ param:
          single enum parameter.  Most of the gl*Parameter[if]v functions use
 	 this.  Additionally, the enums that can be passed should be properly
 	 annotated.
+     img_width / img_height / img_depth / img_extent - name of parameters
+         (or hardcoded integer) used for the dimensions of pixel data.
+     img_xoff / img_yoff / img_zoff / img_woff - name of parameters used
+         for x, y, z, and w offsets of pixel data.
+     img_format - name of parameter used as the pixel data format.
+     img_type - name of parameter used as the pixel data type.
+     img_target - name of parameter used as a texture target.  Non-texture
+        pixel data should hardcode 0.
+     img_send_null - boolean flag to determine if blank pixel data should
+        be sent when a NULL pointer is passed.  This is only used by
+	TexImage1D and TexImage2D.
+     img_null_flag - boolean flag to determine if an extra flag is used to
+        determine if a NULL pixel pointer was passed.  This is used by
+	TexSubImage1D, TexSubImage2D, TexImage3D and others.
+     img_pad_dimensions - boolean flag to determine if dimension data and
+        offset data should be padded to the next even number of dimensions.
+	For example, this will insert an empty "height" field after the
+	"width" field in the protocol for TexImage1D.
 
 glx:
      rop - Opcode value for "render" commands
@@ -73,8 +105,8 @@ glx:
          return value data (e.g., glGetLightfv).  Other single commands take
          reply data only as an array (e.g., glGetClipPlane).
      handcode - some functions are just too complicated to generate 
-         (e.g., glTexImage2D) or operate only on client-side data (e.g.,
-         glVertexPointer) and must be handcoded.
+         (e.g., glSeperableFilter2D) or operate only on client-side data
+         (e.g., glVertexPointer) and must be handcoded.
      ignore - some functions have an entry in the dispatch table, but aren't
          suitable for protocol implementation (e.g., glLockArraysEXT).  This
 	 also applies to functions that don't have any GLX protocol specified
@@ -775,8 +807,8 @@ glx:
         <param name="yorig" type="GLfloat"/>
         <param name="xmove" type="GLfloat"/>
         <param name="ymove" type="GLfloat"/>
-        <param name="bitmap" type="const GLubyte *"/>
-        <glx rop="5" handcode="true"/>
+        <param name="bitmap" type="const GLubyte *" img_width="width" img_height="height" img_format="GL_COLOR_INDEX" img_type="GL_BITMAP" img_target="0" img_pad_dimensions="false"/>
+        <glx rop="5" large="true"/>
     </function>
 
     <function name="Color3b" offset="9" vectorequiv="Color3bv">
@@ -1706,8 +1738,8 @@ glx:
     </function>
 
     <function name="PolygonStipple" offset="175">
-        <param name="mask" type="const GLubyte *"/>
-        <glx rop="102" handcode="true"/>
+        <param name="mask" type="const GLubyte *" img_width="32" img_height="32" img_format="GL_COLOR_INDEX" img_type="GL_BITMAP" img_target="0" img_pad_dimensions="false"/>
+        <glx rop="102"/>
     </function>
 
     <function name="Scissor" offset="176">
@@ -1759,8 +1791,8 @@ glx:
         <param name="border" type="GLint"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="pixels" type="const GLvoid *"/>
-        <glx rop="109" handcode="true"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_format="format" img_type="type" img_target="target" img_send_null="true" img_pad_dimensions="true"/>
+        <glx rop="109" large="true"/>
     </function>
 
     <function name="TexImage2D" offset="183">
@@ -1772,8 +1804,8 @@ glx:
         <param name="border" type="GLint"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="pixels" type="const GLvoid *"/>
-        <glx rop="110" handcode="true"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_format="format" img_type="type" img_target="target" img_send_null="true" img_pad_dimensions="true"/>
+        <glx rop="110" large="true"/>
     </function>
 
     <function name="TexEnvf" offset="184">
@@ -2249,8 +2281,8 @@ glx:
         <param name="height" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="pixels" type="const GLvoid *"/>
-        <glx rop="173" handcode="true"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_format="format" img_type="type" img_target="0" img_pad_dimensions="false"/>
+        <glx rop="173" large="true"/>
     </function>
 
     <function name="GetBooleanv" offset="258">
@@ -2826,8 +2858,8 @@ glx:
         <param name="width" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="pixels" type="const GLvoid *"/>
-        <glx rop="4099" handcode="true"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_xoff="xoffset" img_format="format" img_type="type" img_target="target" img_null_flag="true" img_pad_dimensions="true"/>
+        <glx rop="4099" large="true"/>
     </function>
 
     <function name="TexSubImage2D" offset="333">
@@ -2839,8 +2871,8 @@ glx:
         <param name="height" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="pixels" type="const GLvoid *"/>
-        <glx rop="4100" handcode="true"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_xoff="xoffset" img_yoff="yoffset" img_format="format" img_type="type" img_target="target" img_null_flag="true" img_pad_dimensions="true"/>
+        <glx rop="4100" large="true"/>
     </function>
 
     <function name="AreTexturesResident" offset="322">
@@ -3035,8 +3067,8 @@ glx:
         <param name="width" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="table" type="const GLvoid *"/>
-        <glx rop="2053" handcode="true"/>
+        <param name="table" type="const GLvoid *" img_width="width" img_pad_dimensions="false" img_format="format" img_type="type" img_target="target"/>
+        <glx rop="2053" large="true"/>
     </function>
 
     <function name="ColorTableParameterfv" offset="340">
@@ -3090,8 +3122,8 @@ glx:
         <param name="count" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="data" type="const GLvoid *"/>
-        <glx rop="195" handcode="true"/>
+        <param name="data" type="const GLvoid *" img_width="count" img_pad_dimensions="false" img_format="format" img_type="type" img_target="target"/>
+        <glx rop="195" large="true"/>
     </function>
 
     <function name="CopyColorSubTable" offset="347">
@@ -3109,8 +3141,8 @@ glx:
         <param name="width" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="image" type="const GLvoid *"/>
-        <glx rop="4101" handcode="true"/>
+        <param name="image" type="const GLvoid *" img_width="width" img_format="format" img_type="type" img_target="target" img_pad_dimensions="true"/>
+        <glx rop="4101" large="true"/>
     </function>
 
     <function name="ConvolutionFilter2D" offset="349">
@@ -3120,8 +3152,8 @@ glx:
         <param name="height" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="image" type="const GLvoid *"/>
-        <glx rop="4102" handcode="true"/>
+        <param name="image" type="const GLvoid *" img_width="width" img_height="height" img_format="format" img_type="type" img_target="target" img_pad_dimensions="true"/>
+        <glx rop="4102" large="true"/>
     </function>
 
     <function name="ConvolutionParameterf" offset="350">
@@ -3296,8 +3328,8 @@ glx:
         <param name="border" type="GLint"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="pixels" type="const GLvoid *"/>
-        <glx rop="4114" handcode="true"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_depth="depth" img_format="format" img_type="type" img_target="target" img_null_flag="true" img_pad_dimensions="true"/>
+        <glx rop="4114" large="true"/>
     </function>
 
     <function name="TexSubImage3D" offset="372">
@@ -3311,8 +3343,8 @@ glx:
         <param name="depth" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="pixels" type="const GLvoid *"/>
-        <glx rop="4115" handcode="true"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_depth="depth" img_xoff="xoffset" img_yoff="yoffset" img_zoff="zoffset" img_format="format" img_type="type" img_target="target" img_null_flag="true" img_pad_dimensions="true"/>
+        <glx rop="4115" large="true"/>
     </function>
 
     <function name="CopyTexSubImage3D" offset="373">
@@ -6545,7 +6577,7 @@ glx:
         <param name="border" type="GLint"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="pixels" type="const GLvoid *"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_depth="depth" img_extent="size4d" img_format="format" img_type="type" img_target="target" img_null_flag="true" img_pad_dimensions="true"/>
         <glx rop="2057" ignore="true"/>
     </function>
 
@@ -6562,7 +6594,7 @@ glx:
         <param name="size4d" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="pixels" type="const GLvoid *"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_depth="depth" img_extent="size4d" img_xoff="xoffset" img_yoff="yoffset" img_zoff="zoffset" img_woff="woffset" img_format="format" img_type="type" img_target="target" img_null_flag="true" img_pad_dimensions="true"/>
         <glx rop="2058" ignore="true"/>
     </function>
 </category>

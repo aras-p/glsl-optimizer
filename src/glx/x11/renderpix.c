@@ -34,32 +34,65 @@
 **
 */
 
+/*
+ * (C) Copyright IBM Corporation 2005
+ * All Rights Reserved.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sub license,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
+ * IBM,
+ * AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include "packrender.h"
 
-/*
-** This file contains routines that deal with unpacking data from client
-** memory using the pixel store unpack modes and then shipping it to
-** the server.  For all of these routines (except glPolygonStipple) there
-** are two forms of the transport - small and large.  Small commands are
-** the commands that fit into the "rendering" transport buffer.  Large
-** commands are sent to the server in chunks by __glXSendLargeCommand.
-**
-** All of the commands send over a pixel header (see glxproto.h) which
-** describes the pixel store modes that the server must use to properly
-** handle the data.  Any pixel store modes not done by the __glFillImage
-** routine are passed on to the server.
-*/
-
-/*
-** Send a large image to the server.  If necessary, a buffer is allocated
-** to hold the unpacked data that is copied from the clients memory.
-*/
-static void SendLargeImage(__GLXcontext *gc, GLint compsize, GLint dim,
-			   GLint width, GLint height, GLint depth,
-			   GLenum format, GLenum type, const GLvoid *src,
-			   GLubyte *pc, GLubyte *modes)
+/**
+ * Send a large image to the server.  If necessary, a buffer is allocated
+ * to hold the unpacked data that is copied from the clients memory.
+ * 
+ * \param gc        Current GLX context
+ * \param compsize  Size, in bytes, of the image portion
+ * \param dim       Number of dimensions of the image
+ * \param width     Width of the image
+ * \param height    Height of the image, must be 1 for 1D images
+ * \param depth     Depth of the image, must be 1 for 1D or 2D images
+ * \param format    Format of the image
+ * \param type      Data type of the image
+ * \param src       Pointer to the image data
+ * \param pc        Pointer to end of the command header
+ * \param modes     Pointer to the pixel unpack data
+ *
+ * \todo
+ * Modify this function so that \c NULL images are sent using
+ * \c __glXSendLargeChunk instead of __glXSendLargeCommand.  Doing this
+ * will eliminate the need to allocate a buffer for that case.
+ *
+ * \bugs
+ * The \c fastImageUnpack path, which is thankfully never used, is completely
+ * broken.
+ */
+void
+__glXSendLargeImage(__GLXcontext *gc, GLint compsize, GLint dim,
+		    GLint width, GLint height, GLint depth,
+		    GLenum format, GLenum type, const GLvoid *src,
+		    GLubyte *pc, GLubyte *modes)
 {
-    if (!gc->fastImageUnpack) {
+    if ( !gc->fastImageUnpack || (src == NULL) ) {
 	/* Allocate a temporary holding buffer */
 	GLubyte *buf = (GLubyte *) Xmalloc(compsize);
 	if (!buf) {
@@ -68,8 +101,18 @@ static void SendLargeImage(__GLXcontext *gc, GLint compsize, GLint dim,
 	}
 
 	/* Apply pixel store unpack modes to copy data into buf */
-	(*gc->fillImage)(gc, dim, width, height, depth, format, type, src, buf,
-			 modes);
+	if ( src != NULL ) {
+	    (*gc->fillImage)(gc, dim, width, height, depth, format, type,
+			     src, buf, modes);
+	}
+	else {
+	    if ( dim < 3 ) {
+		(void) memcpy( modes, __glXDefaultPixelStore + 4, 20 );
+	    }
+	    else {
+		(void) memcpy( modes, __glXDefaultPixelStore + 0, 36 );
+	    }
+	}
 
 	/* Send large command */
 	__glXSendLargeCommand(gc, gc->pc, pc - gc->pc, buf, compsize);
@@ -82,578 +125,15 @@ static void SendLargeImage(__GLXcontext *gc, GLint compsize, GLint dim,
     }
 }
 
-/*
-** Send a large null image to the server.  To be backwards compatible,
-** data must be sent to the server even when the application has passed
-** a null pointer into glTexImage1D, glTexImage2D or glTexImage3D.
-*/
-static void SendLargeNULLImage(__GLXcontext *gc, GLint compsize,
-			       GLint width, GLint height, GLint depth,
-			       GLenum format, GLenum type, const GLvoid *src,
-			       GLubyte *pc, GLubyte *modes)
-{
-    GLubyte *buf = (GLubyte *) Xmalloc(compsize);
-
-    /* Allocate a temporary holding buffer */
-    if (!buf) {
-	__glXSetError(gc, GL_OUT_OF_MEMORY);
-	return;
-    }
-
-    /* Send large command */
-    __glXSendLargeCommand(gc, gc->pc, pc - gc->pc, buf, compsize);
-
-    /* Free buffer */
-    Xfree((char*) buf);
-}
-
 /************************************************************************/
 
-void __indirect_glPolygonStipple(const GLubyte *mask)
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    compsize = __glImageSize(32, 32, 1, GL_COLOR_INDEX, GL_BITMAP);
-    cmdlen = __GLX_PAD(__GLX_POLYGONSTIPPLE_CMD_HDR_SIZE + compsize);
-    if (!gc->currentDpy) return;
-
-    __GLX_BEGIN(X_GLrop_PolygonStipple,cmdlen);
-    pc += __GLX_RENDER_HDR_SIZE;
-    pixelHeaderPC = pc;
-    pc += __GLX_PIXEL_HDR_SIZE;
-    (*gc->fillImage)(gc, 2, 32, 32, 1, GL_COLOR_INDEX, GL_BITMAP,
-		     mask, pc, pixelHeaderPC);
-    __GLX_END(__GLX_PAD(compsize));
-}
-
-void __indirect_glBitmap(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig,
-	      GLfloat xmove, GLfloat ymove, const GLubyte *bitmap)
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    compsize = __glImageSize(width, height, 1, GL_COLOR_INDEX, GL_BITMAP);
-    cmdlen = __GLX_PAD(__GLX_BITMAP_CMD_HDR_SIZE + compsize);
-    if (!gc->currentDpy) return;
-
-    if (cmdlen <= gc->maxSmallRenderCommandSize) {
-	/* Use GLXRender protocol to send small command */
-	__GLX_BEGIN_VARIABLE_WITH_PIXEL(X_GLrop_Bitmap,cmdlen);
-	__GLX_PUT_LONG(0,width);
-	__GLX_PUT_LONG(4,height);
-	__GLX_PUT_FLOAT(8,xorig);
-	__GLX_PUT_FLOAT(12,yorig);
-	__GLX_PUT_FLOAT(16,xmove);
-	__GLX_PUT_FLOAT(20,ymove);
-	pc += __GLX_BITMAP_HDR_SIZE;
-	if (compsize > 0) {
-	    (*gc->fillImage)(gc, 2, width, height, 1, GL_COLOR_INDEX,
-			     GL_BITMAP, bitmap, pc, pixelHeaderPC);
-	} else {
-	    /* Setup default store modes */
-	    GLubyte *pc = pixelHeaderPC;
-	    __GLX_PUT_CHAR(0,GL_FALSE);
-	    __GLX_PUT_CHAR(1,GL_FALSE);
-	    __GLX_PUT_CHAR(2,0);
-	    __GLX_PUT_CHAR(3,0);
-	    __GLX_PUT_LONG(4,0);
-	    __GLX_PUT_LONG(8,0);
-	    __GLX_PUT_LONG(12,0);
-	    __GLX_PUT_LONG(16,1);
-	}
-	__GLX_END(__GLX_PAD(compsize));
-    } else {
-	/* Use GLXRenderLarge protocol to send command */
-	__GLX_BEGIN_VARIABLE_LARGE_WITH_PIXEL(X_GLrop_Bitmap,cmdlen+4);
-	__GLX_PUT_LONG(0,width);
-	__GLX_PUT_LONG(4,height);
-	__GLX_PUT_FLOAT(8,xorig);
-	__GLX_PUT_FLOAT(12,yorig);
-	__GLX_PUT_FLOAT(16,xmove);
-	__GLX_PUT_FLOAT(20,ymove);
-	pc += __GLX_BITMAP_HDR_SIZE;
-	SendLargeImage(gc, compsize, 2, width, height, 1, GL_COLOR_INDEX,
-		       GL_BITMAP, bitmap, pc, pixelHeaderPC);
-    }
-}
-
-void __indirect_glTexImage1D(GLenum target, GLint level, GLint components,
-		  GLsizei width, GLint border, GLenum format, GLenum type,
-		  const GLvoid *image)
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    if (target == GL_PROXY_TEXTURE_1D) {
-	compsize = 0;
-    } else {
-	compsize = __glImageSize(width, 1, 1, format, type);
-    }
-    cmdlen = __GLX_PAD(__GLX_TEXIMAGE_CMD_HDR_SIZE + compsize);
-    if (!gc->currentDpy) return;
-
-    if (cmdlen <= gc->maxSmallRenderCommandSize) {
-	/* Use GLXRender protocol to send small command */
-	__GLX_BEGIN_VARIABLE_WITH_PIXEL(X_GLrop_TexImage1D,cmdlen);
-	__GLX_PUT_LONG(0,target);
-	__GLX_PUT_LONG(4,level);
-	__GLX_PUT_LONG(8,components);
-	__GLX_PUT_LONG(12,width);
-	__GLX_PUT_LONG(20,border);
-	__GLX_PUT_LONG(24,format);
-	__GLX_PUT_LONG(28,type);
-	pc += __GLX_TEXIMAGE_HDR_SIZE;
-	if (compsize > 0 && image != NULL) {
-	    (*gc->fillImage)(gc, 1, width, 1, 1, format, type,
-			     image, pc, pixelHeaderPC);
-	} else {
-	    /* Setup default store modes */
-	    GLubyte *pc = pixelHeaderPC;
-	    __GLX_PUT_CHAR(0,GL_FALSE);
-	    __GLX_PUT_CHAR(1,GL_FALSE);
-	    __GLX_PUT_CHAR(2,0);
-	    __GLX_PUT_CHAR(3,0);
-	    __GLX_PUT_LONG(4,0);
-	    __GLX_PUT_LONG(8,0);
-	    __GLX_PUT_LONG(12,0);
-	    __GLX_PUT_LONG(16,1);
-	}
-	__GLX_END(__GLX_PAD(compsize));
-    } else {
-	/* Use GLXRenderLarge protocol to send command */
-	__GLX_BEGIN_VARIABLE_LARGE_WITH_PIXEL(X_GLrop_TexImage1D,cmdlen+4);
-	__GLX_PUT_LONG(0,target);
-	__GLX_PUT_LONG(4,level);
-	__GLX_PUT_LONG(8,components);
-	__GLX_PUT_LONG(12,width);
-	__GLX_PUT_LONG(16,1);
-	__GLX_PUT_LONG(20,border);
-	__GLX_PUT_LONG(24,format);
-	__GLX_PUT_LONG(28,type);
-	pc += __GLX_TEXIMAGE_HDR_SIZE;
-	if (image != NULL) {
-	    SendLargeImage(gc, compsize, 1, width, 1, 1, format,
-			   type, image, pc, pixelHeaderPC);
-	} else {
-	    /* Setup default store modes */
-	    {
-		GLubyte *pc = pixelHeaderPC;
-		__GLX_PUT_CHAR(0,GL_FALSE);
-		__GLX_PUT_CHAR(1,GL_FALSE);
-		__GLX_PUT_CHAR(2,0);
-		__GLX_PUT_CHAR(3,0);
-		__GLX_PUT_LONG(4,0);
-		__GLX_PUT_LONG(8,0);
-		__GLX_PUT_LONG(12,0);
-		__GLX_PUT_LONG(16,1);
-	    }
-	    SendLargeNULLImage(gc, compsize, width, 1, 1, format,
-			       type, image, pc, pixelHeaderPC);
-	}
-    }
-}
-
-void __indirect_glTexImage2D(GLenum target, GLint level, GLint components,
-		  GLsizei width, GLsizei height, GLint border, GLenum format,
-		  GLenum type, const GLvoid *image)
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    if (target == GL_PROXY_TEXTURE_2D ||
-        target == GL_PROXY_TEXTURE_CUBE_MAP_ARB) {
-	compsize = 0;
-    } else {
-	compsize = __glImageSize(width, height, 1, format, type);
-    }
-    cmdlen = __GLX_PAD(__GLX_TEXIMAGE_CMD_HDR_SIZE + compsize);
-    if (!gc->currentDpy) return;
-
-    if (cmdlen <= gc->maxSmallRenderCommandSize) {
-	/* Use GLXRender protocol to send small command */
-	__GLX_BEGIN_VARIABLE_WITH_PIXEL(X_GLrop_TexImage2D,cmdlen);
-	__GLX_PUT_LONG(0,target);
-	__GLX_PUT_LONG(4,level);
-	__GLX_PUT_LONG(8,components);
-	__GLX_PUT_LONG(12,width);
-	__GLX_PUT_LONG(16,height);
-	__GLX_PUT_LONG(20,border);
-	__GLX_PUT_LONG(24,format);
-	__GLX_PUT_LONG(28,type);
-	pc += __GLX_TEXIMAGE_HDR_SIZE;
-	if (compsize > 0 && image != NULL) {
-	    (*gc->fillImage)(gc, 2, width, height, 1, format, type,
-			     image, pc, pixelHeaderPC);
-	} else {
-	    /* Setup default store modes */
-	    GLubyte *pc = pixelHeaderPC;
-	    __GLX_PUT_CHAR(0,GL_FALSE);
-	    __GLX_PUT_CHAR(1,GL_FALSE);
-	    __GLX_PUT_CHAR(2,0);
-	    __GLX_PUT_CHAR(3,0);
-	    __GLX_PUT_LONG(4,0);
-	    __GLX_PUT_LONG(8,0);
-	    __GLX_PUT_LONG(12,0);
-	    __GLX_PUT_LONG(16,1);
-	}
-	__GLX_END(__GLX_PAD(compsize));
-    } else {
-	/* Use GLXRenderLarge protocol to send command */
-	__GLX_BEGIN_VARIABLE_LARGE_WITH_PIXEL(X_GLrop_TexImage2D,cmdlen+4);
-	__GLX_PUT_LONG(0,target);
-	__GLX_PUT_LONG(4,level);
-	__GLX_PUT_LONG(8,components);
-	__GLX_PUT_LONG(12,width);
-	__GLX_PUT_LONG(16,height);
-	__GLX_PUT_LONG(20,border);
-	__GLX_PUT_LONG(24,format);
-	__GLX_PUT_LONG(28,type);
-	pc += __GLX_TEXIMAGE_HDR_SIZE;
-	if (image != NULL) {
-	    SendLargeImage(gc, compsize, 2, width, height, 1, format,
-			   type, image, pc, pixelHeaderPC);
-	} else {
-	    /* Setup default store modes */
-	    {
-		GLubyte *pc = pixelHeaderPC;
-		__GLX_PUT_CHAR(0,GL_FALSE);
-		__GLX_PUT_CHAR(1,GL_FALSE);
-		__GLX_PUT_CHAR(2,0);
-		__GLX_PUT_CHAR(3,0);
-		__GLX_PUT_LONG(4,0);
-		__GLX_PUT_LONG(8,0);
-		__GLX_PUT_LONG(12,0);
-		__GLX_PUT_LONG(16,1);
-	    }
-	    SendLargeNULLImage(gc, compsize, width, height, 1, format,
-			       type, image, pc, pixelHeaderPC);
-	}
-    }
-}
-
-void __indirect_glDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type,
-		  const GLvoid *image)
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    compsize = __glImageSize(width, height, 1, format, type);
-    cmdlen = __GLX_PAD(__GLX_DRAWPIXELS_CMD_HDR_SIZE + compsize);
-    if (!gc->currentDpy) return;
-
-    if (cmdlen <= gc->maxSmallRenderCommandSize) {
-	/* Use GLXRender protocol to send small command */
-	__GLX_BEGIN_VARIABLE_WITH_PIXEL(X_GLrop_DrawPixels,cmdlen);
-	__GLX_PUT_LONG(0,width);
-	__GLX_PUT_LONG(4,height);
-	__GLX_PUT_LONG(8,format);
-	__GLX_PUT_LONG(12,type);
-	pc += __GLX_DRAWPIXELS_HDR_SIZE;
-	if (compsize > 0) {
-	    (*gc->fillImage)(gc, 2, width, height, 1, format, type,
-			     image, pc, pixelHeaderPC);
-	} else {
-	    /* Setup default store modes */
-	    GLubyte *pc = pixelHeaderPC;
-	    __GLX_PUT_CHAR(0,GL_FALSE);
-	    __GLX_PUT_CHAR(1,GL_FALSE);
-	    __GLX_PUT_CHAR(2,0);
-	    __GLX_PUT_CHAR(3,0);
-	    __GLX_PUT_LONG(4,0);
-	    __GLX_PUT_LONG(8,0);
-	    __GLX_PUT_LONG(12,0);
-	    __GLX_PUT_LONG(16,1);
-	}
-	__GLX_END(__GLX_PAD(compsize));
-    } else {
-	/* Use GLXRenderLarge protocol to send command */
-	__GLX_BEGIN_VARIABLE_LARGE_WITH_PIXEL(X_GLrop_DrawPixels,cmdlen+4);
-	__GLX_PUT_LONG(0,width);
-	__GLX_PUT_LONG(4,height);
-	__GLX_PUT_LONG(8,format);
-	__GLX_PUT_LONG(12,type);
-	pc += __GLX_DRAWPIXELS_HDR_SIZE;
-	SendLargeImage(gc, compsize, 2, width, height, 1, format,
-		       type, image, pc, pixelHeaderPC);
-    }
-}
-
-static void __glx_TexSubImage1D2D(GLshort opcode, GLenum target, GLint level,
-			GLint xoffset, GLint yoffset, GLsizei width, 	
-			GLsizei height, GLenum format, GLenum type, 	
-			const GLvoid *image, GLint dim)
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    if (image == NULL) {
-	compsize = 0;
-    } else {
-        compsize = __glImageSize(width, height, 1, format, type);
-    }
-
-    cmdlen = __GLX_PAD(__GLX_TEXSUBIMAGE_CMD_HDR_SIZE + compsize);
-    if (!gc->currentDpy) return;
-
-    if (cmdlen <= gc->maxSmallRenderCommandSize) {
-	/* Use GLXRender protocol to send small command */
-	__GLX_BEGIN_VARIABLE_WITH_PIXEL(opcode, cmdlen);
-	__GLX_PUT_LONG(0,target);
-	__GLX_PUT_LONG(4,level);
-	__GLX_PUT_LONG(8,xoffset);
-	__GLX_PUT_LONG(12,yoffset);
-	__GLX_PUT_LONG(16,width);
-	__GLX_PUT_LONG(20,height);
-	__GLX_PUT_LONG(24,format);
-	__GLX_PUT_LONG(28,type);
-	if (image == NULL) {
-	    __GLX_PUT_LONG(32,GL_TRUE);
-	} else {
-	    __GLX_PUT_LONG(32,GL_FALSE);
-	}
-	pc += __GLX_TEXSUBIMAGE_HDR_SIZE;
-	if (compsize > 0) {
-	    (*gc->fillImage)(gc, dim, width, height, 1, format, type, image, 
-			     pc, pixelHeaderPC);
-	} else {
-	    /* Setup default store modes */
-	    GLubyte *pc = pixelHeaderPC;
-	    __GLX_PUT_CHAR(0,GL_FALSE);
-	    __GLX_PUT_CHAR(1,GL_FALSE);
-	    __GLX_PUT_CHAR(2,0);
-	    __GLX_PUT_CHAR(3,0);
-	    __GLX_PUT_LONG(4,0);
-	    __GLX_PUT_LONG(8,0);
-	    __GLX_PUT_LONG(12,0);
-	    __GLX_PUT_LONG(16,1);
-	}
-	__GLX_END(__GLX_PAD(compsize));
-    } else {
-	/* Use GLXRenderLarge protocol to send command */
-	__GLX_BEGIN_VARIABLE_LARGE_WITH_PIXEL(opcode,cmdlen+4);
-	__GLX_PUT_LONG(0,target);
-	__GLX_PUT_LONG(4,level);
-	__GLX_PUT_LONG(8,xoffset);
-	__GLX_PUT_LONG(12,yoffset);
-	__GLX_PUT_LONG(16,width);
-	__GLX_PUT_LONG(20,height);
-	__GLX_PUT_LONG(24,format);
-	__GLX_PUT_LONG(28,type);
-	if (image == NULL) {
-	    __GLX_PUT_LONG(32,GL_TRUE);
-	} else {
-	    __GLX_PUT_LONG(32,GL_FALSE);
-	}
-	pc += __GLX_TEXSUBIMAGE_HDR_SIZE;
-	SendLargeImage(gc, compsize, dim, width, height, 1,
-		       format, type, image, pc, pixelHeaderPC);
-    }
-}
-	
-void __indirect_glTexSubImage1D(GLenum target, GLint level, GLint xoffset, 
-			GLsizei width, GLenum format, GLenum type,
-		      	const GLvoid *image)
-{
-    __glx_TexSubImage1D2D(X_GLrop_TexSubImage1D, target, level, xoffset, 
-			 0, width, 1, format, type, image, 1);
-}
-
-void __indirect_glTexSubImage2D(GLenum target, GLint level, GLint xoffset, 
-			GLint yoffset, GLsizei width, GLsizei height, 
-			GLenum format, GLenum type, const GLvoid *image)
-{
-    __glx_TexSubImage1D2D(X_GLrop_TexSubImage2D, target, level, xoffset, 
-			 yoffset, width, height, format, type, image, 2);
-}
-
-void __indirect_glColorTable(GLenum target, GLenum internalformat, GLsizei width,
-		  GLenum format, GLenum type, const GLvoid *table)
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    switch (target) {
-	case GL_PROXY_TEXTURE_1D:
-	case GL_PROXY_TEXTURE_2D:
-	case GL_PROXY_TEXTURE_3D:
-	case GL_PROXY_COLOR_TABLE:
-	case GL_PROXY_POST_CONVOLUTION_COLOR_TABLE:
-	case GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE:
-	case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
-	    compsize = 0;
-	    break;
-	default:
-	    compsize = __glImageSize(width, 1, 1, format, type);
-	    break;
-    }
-    cmdlen = __GLX_PAD(__GLX_COLOR_TABLE_CMD_HDR_SIZE + compsize);
-    if (!gc->currentDpy) {
-	 return;
-    }
-
-    if (cmdlen <= gc->maxSmallRenderCommandSize) {
-        /* Use GLXRender protocol to send small command */
-        __GLX_BEGIN_VARIABLE_WITH_PIXEL(X_GLrop_ColorTable, (short)cmdlen);
-        __GLX_PUT_LONG(0, (long)target);
-        __GLX_PUT_LONG(4, (long)internalformat);
-        __GLX_PUT_LONG(8, width);
-        __GLX_PUT_LONG(12, (long)format);
-        __GLX_PUT_LONG(16, (long)type);
-        pc += __GLX_COLOR_TABLE_HDR_SIZE;
-        if (compsize > 0 && table != NULL) {
-            (*gc->fillImage)(gc, 1, width, 1, 1, format, type, table, pc,
-                             pixelHeaderPC);
-        } else {
-            /* Setup default store modes */
-            GLubyte *pc = pixelHeaderPC;
-            __GLX_PUT_CHAR(0, GL_FALSE);
-            __GLX_PUT_CHAR(1, GL_FALSE);
-            __GLX_PUT_CHAR(2, 0);
-            __GLX_PUT_CHAR(3, 0);
-            __GLX_PUT_LONG(4, 0);
-            __GLX_PUT_LONG(8, 0);
-            __GLX_PUT_LONG(12, 0);
-            __GLX_PUT_LONG(16, 1);
-        }
-        __GLX_END(__GLX_PAD(compsize));
-    } else {
-        /* Use GLXRenderLarge protocol to send command */
-        __GLX_BEGIN_VARIABLE_LARGE_WITH_PIXEL(X_GLrop_ColorTable, cmdlen+4);
-        __GLX_PUT_LONG(0, (long)target);
-        __GLX_PUT_LONG(4, (long)internalformat);
-        __GLX_PUT_LONG(8, width);
-        __GLX_PUT_LONG(12, (long)format);
-        __GLX_PUT_LONG(16, (long)type);
-        pc += __GLX_COLOR_TABLE_HDR_SIZE;
-        SendLargeImage(gc, compsize, 1, width, 1, 1, format,
-                       type, table, pc, pixelHeaderPC);
-    }
-}
-
-void __indirect_glColorSubTable(GLenum target, GLsizei start, GLsizei count,
-		     GLenum format, GLenum type, const GLvoid *table)
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    compsize = __glImageSize(count, 1, 1, format, type);
-    cmdlen = __GLX_PAD(__GLX_COLOR_SUBTABLE_CMD_HDR_SIZE + compsize);
-    if (!gc->currentDpy) {
-	 return;
-    }
-
-    if (cmdlen <= gc->maxSmallRenderCommandSize) {
-        /* Use GLXRender protocol to send small command */
-        __GLX_BEGIN_VARIABLE_WITH_PIXEL(X_GLrop_ColorSubTable, (short)cmdlen);
-        __GLX_PUT_LONG(0, (long)target);
-        __GLX_PUT_LONG(4, start);
-        __GLX_PUT_LONG(8, count);
-        __GLX_PUT_LONG(12, (long)format);
-        __GLX_PUT_LONG(16, (long)type);
-        pc += __GLX_COLOR_SUBTABLE_HDR_SIZE;
-        if (compsize > 0 && table != NULL) {
-            (*gc->fillImage)(gc, 1, start+count, 1, 1, format, type, table, pc,
-                             pixelHeaderPC);
-        } else {
-            /* Setup default store modes */
-            GLubyte *pc = pixelHeaderPC;
-            __GLX_PUT_CHAR(0, GL_FALSE);
-            __GLX_PUT_CHAR(1, GL_FALSE);
-            __GLX_PUT_CHAR(2, 0);
-            __GLX_PUT_CHAR(3, 0);
-            __GLX_PUT_LONG(4, 0);
-            __GLX_PUT_LONG(8, 0);
-            __GLX_PUT_LONG(12, 0);
-            __GLX_PUT_LONG(16, 1);
-        }
-        __GLX_END(__GLX_PAD(compsize));
-    } else {
-        /* Use GLXRenderLarge protocol to send command */
-        __GLX_BEGIN_VARIABLE_LARGE_WITH_PIXEL(X_GLrop_ColorSubTable, cmdlen+4);
-        __GLX_PUT_LONG(0, (long)target);
-        __GLX_PUT_LONG(4, start);
-        __GLX_PUT_LONG(8, count);
-        __GLX_PUT_LONG(12, (long)format);
-        __GLX_PUT_LONG(16, (long)type);
-        pc += __GLX_COLOR_SUBTABLE_HDR_SIZE;
-        SendLargeImage(gc, compsize, 1, start+count, 1, 1, format,
-                       type, table, pc, pixelHeaderPC);
-    }
-}
-
-static void __glx_ConvolutionFilter1D2D(GLshort opcode, GLint dim,
-			GLenum target,
-			GLenum internalformat,
-			GLsizei width, GLsizei height,
-			GLenum format, GLenum type, const GLvoid *image)
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    compsize = __glImageSize(width, height, 1, format, type);
-    cmdlen = __GLX_PAD(__GLX_CONV_FILT_CMD_HDR_SIZE + compsize);
-    if (!gc->currentDpy) return;
-
-    if (cmdlen <= gc->maxSmallRenderCommandSize) {
-	/* Use GLXRender protocol to send small command */
-	__GLX_BEGIN_VARIABLE_WITH_PIXEL(opcode, cmdlen);
-	__GLX_PUT_LONG(0,target);
-	__GLX_PUT_LONG(4,internalformat);
-	__GLX_PUT_LONG(8,width);
-	__GLX_PUT_LONG(12,height);
-	__GLX_PUT_LONG(16,format);
-	__GLX_PUT_LONG(20,type);
-	pc += __GLX_CONV_FILT_HDR_SIZE;
-	if (compsize > 0) {
-	    (*gc->fillImage)(gc, dim, width, height, 1, format, type,
-			     image, pc, pixelHeaderPC);
-	} else {
-	    /* Setup default store modes */
-	    GLubyte *pc = pixelHeaderPC;
-	    __GLX_PUT_CHAR(0,GL_FALSE);
-	    __GLX_PUT_CHAR(1,GL_FALSE);
-	    __GLX_PUT_CHAR(2,0);
-	    __GLX_PUT_CHAR(3,0);
-	    __GLX_PUT_LONG(4,0);
-	    __GLX_PUT_LONG(8,0);
-	    __GLX_PUT_LONG(12,0);
-	    __GLX_PUT_LONG(16,1);
-	}
-	__GLX_END(__GLX_PAD(compsize));
-    } else {
-	/* Use GLXRenderLarge protocol to send command */
-	__GLX_BEGIN_VARIABLE_LARGE_WITH_PIXEL(opcode,cmdlen+4);
-	__GLX_PUT_LONG(0,target);
-	__GLX_PUT_LONG(4,internalformat);
-	__GLX_PUT_LONG(8,width);
-	__GLX_PUT_LONG(12,height);
-	__GLX_PUT_LONG(16,format);
-	__GLX_PUT_LONG(20,type);
-	pc += __GLX_CONV_FILT_HDR_SIZE;
-	SendLargeImage(gc, compsize, dim, width, height, 1, format,
-		       type, image, pc, pixelHeaderPC);
-    }
-}
-
-void __indirect_glConvolutionFilter1D(GLenum target, GLenum internalformat,
-				GLsizei width, GLenum format,
-				GLenum type, const GLvoid *image)
-{
-     __glx_ConvolutionFilter1D2D(X_GLrop_ConvolutionFilter1D, 1, target, 
-				 internalformat, width, 1, format, type,
-				 image);
-}
-
-void __indirect_glConvolutionFilter2D(GLenum target, GLenum internalformat,
-				GLsizei width, GLsizei height, GLenum format,
-				GLenum type, const GLvoid *image)
-{
-     __glx_ConvolutionFilter1D2D(X_GLrop_ConvolutionFilter2D, 2, target,
-				internalformat, width, height, format, type,
-				image);
-}
-
+/**
+ * Implement GLX protocol for \c glSeparableFilter2D.
+ *
+ * \bugs
+ * The \c fastImageUnpack path, which is thankfully never used, is completely
+ * broken.
+ */
 void __indirect_glSeparableFilter2D(GLenum target, GLenum internalformat,
 				GLsizei width, GLsizei height, GLenum format,
 				GLenum type, const GLvoid *row,
@@ -663,8 +143,8 @@ void __indirect_glSeparableFilter2D(GLenum target, GLenum internalformat,
     GLuint compsize2, hdrlen, totalhdrlen, image1len, image2len;
 
     __GLX_LOAD_VARIABLES();
-    compsize = __glImageSize(width, 1, 1, format, type);
-    compsize2 = __glImageSize(height, 1, 1, format, type);
+    compsize = __glImageSize(width, 1, 1, format, type, 0);
+    compsize2 = __glImageSize(height, 1, 1, format, type, 0);
     totalhdrlen = __GLX_PAD(__GLX_CONV_FILT_CMD_HDR_SIZE);
     hdrlen = __GLX_PAD(__GLX_CONV_FILT_HDR_SIZE);
     image1len = __GLX_PAD(compsize);
@@ -694,21 +174,11 @@ void __indirect_glSeparableFilter2D(GLenum target, GLenum internalformat,
 	}
 	if ((compsize == 0) && (compsize2 == 0)) {
 	    /* Setup default store modes */
-	    GLubyte *pc = pixelHeaderPC;
-	    __GLX_PUT_CHAR(0,GL_FALSE);
-	    __GLX_PUT_CHAR(1,GL_FALSE);
-	    __GLX_PUT_CHAR(2,0);
-	    __GLX_PUT_CHAR(3,0);
-	    __GLX_PUT_LONG(4,0);
-	    __GLX_PUT_LONG(8,0);
-	    __GLX_PUT_LONG(12,0);
-	    __GLX_PUT_LONG(16,1);
+	    (void) memcpy( pixelHeaderPC, __glXDefaultPixelStore + 4, 20 );
 	}
 	__GLX_END(0);
     } else {
-	GLint bufsize;
-
-	bufsize = image1len + image2len;
+	const GLint bufsize = image1len + image2len;
 
 	/* Use GLXRenderLarge protocol to send command */
 	__GLX_BEGIN_VARIABLE_LARGE_WITH_PIXEL(X_GLrop_SeparableFilter2D,cmdlen+4);
@@ -740,167 +210,5 @@ void __indirect_glSeparableFilter2D(GLenum target, GLenum internalformat,
 	    /* Just send the data straight as is */
 	    __glXSendLargeCommand(gc, gc->pc, (GLint)(pc - gc->pc), pc, bufsize);
 	}
-    }
-}
-
-void __indirect_glTexImage3D(GLenum target, GLint level, GLint internalformat,
-		  GLsizei width, GLsizei height, GLsizei depth, GLint border,
-		  GLenum format, GLenum type, const GLvoid *image)
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    if ((target == GL_PROXY_TEXTURE_3D) || (image == NULL)) {
-	compsize = 0;
-    } else {
-	compsize = __glImageSize(width, height, depth, format, type);
-    }
-    cmdlen = __GLX_PAD(__GLX_TEXIMAGE_3D_CMD_HDR_SIZE + compsize);
-    if (!gc->currentDpy) return;
-
-    if (cmdlen <= gc->maxSmallRenderCommandSize) {
-	/* Use GLXRender protocol to send small command */
-	__GLX_BEGIN_VARIABLE_WITH_PIXEL_3D(X_GLrop_TexImage3D,cmdlen);
-	__GLX_PUT_LONG(0,target);
-	__GLX_PUT_LONG(4,level);
-	__GLX_PUT_LONG(8,internalformat);
-	__GLX_PUT_LONG(12,width);
-	__GLX_PUT_LONG(16,height);
-	__GLX_PUT_LONG(20,depth);
-	__GLX_PUT_LONG(24,0);    /* size4d */
-	__GLX_PUT_LONG(28,border);
-	__GLX_PUT_LONG(32,format);
-	__GLX_PUT_LONG(36,type);
-	if (image == NULL) {
-	    __GLX_PUT_LONG(40,GL_TRUE);
-	} else {
-	    __GLX_PUT_LONG(40,GL_FALSE);
-	}
-	pc += __GLX_TEXIMAGE_3D_HDR_SIZE;
-	if (compsize > 0 && image != NULL) {
-	    (*gc->fillImage)(gc, 3, width, height, depth, format, type,
-			     image, pc, pixelHeaderPC);
-	} else {
-	    /* Setup default store modes */
-	    GLubyte *pc = pixelHeaderPC;
-	    __GLX_PUT_CHAR(0,GL_FALSE);
-	    __GLX_PUT_CHAR(1,GL_FALSE);
-	    __GLX_PUT_CHAR(2,0);
-	    __GLX_PUT_CHAR(3,0);
-	    __GLX_PUT_LONG(4,0);
-	    __GLX_PUT_LONG(8,0);
-	    __GLX_PUT_LONG(12,0);
-	    __GLX_PUT_LONG(16,0);
-	    __GLX_PUT_LONG(20,0);
-	    __GLX_PUT_LONG(24,0);
-	    __GLX_PUT_LONG(28,0);
-	    __GLX_PUT_LONG(32,1);
-	}
-	__GLX_END(__GLX_PAD(compsize));
-    } else {
-	/* Use GLXRenderLarge protocol to send command */
-	__GLX_BEGIN_VARIABLE_LARGE_WITH_PIXEL_3D(X_GLrop_TexImage3D,cmdlen+4);
-	__GLX_PUT_LONG(0,target);
-	__GLX_PUT_LONG(4,level);
-	__GLX_PUT_LONG(8,internalformat);
-	__GLX_PUT_LONG(12,width);
-	__GLX_PUT_LONG(16,height);
-	__GLX_PUT_LONG(20,depth);
-	__GLX_PUT_LONG(24,0);    /* size4d */
-	__GLX_PUT_LONG(28,border);
-	__GLX_PUT_LONG(32,format);
-	__GLX_PUT_LONG(36,type);
-	if (image == NULL) {
-	    __GLX_PUT_LONG(40,GL_TRUE);
-	} else {
-	    __GLX_PUT_LONG(40,GL_FALSE);
-	}
-	pc += __GLX_TEXIMAGE_3D_HDR_SIZE;
-	SendLargeImage(gc, compsize, 3, width, height, depth, format,
-		       type, image, pc, pixelHeaderPC);
-    }
-}
-
-void __indirect_glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
-		     GLint zoffset, GLsizei width, GLsizei height,
-		     GLsizei depth, GLenum format, GLenum type,
-		     const GLvoid *image)
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    if (image == NULL) {
-	compsize = 0;
-    } else {
-        compsize = __glImageSize(width, height, depth, format, type);
-    }
-    cmdlen = __GLX_PAD(__GLX_TEXSUBIMAGE_3D_CMD_HDR_SIZE + compsize);
-    if (!gc->currentDpy) return;
-
-    if (cmdlen <= gc->maxSmallRenderCommandSize) {
-	/* Use GLXRender protocol to send small command */
-	__GLX_BEGIN_VARIABLE_WITH_PIXEL_3D(X_GLrop_TexSubImage3D,cmdlen);
-	__GLX_PUT_LONG(0,target);
-	__GLX_PUT_LONG(4,level);
-	__GLX_PUT_LONG(8,xoffset);
-	__GLX_PUT_LONG(12,yoffset);
-	__GLX_PUT_LONG(16,zoffset);
-	__GLX_PUT_LONG(20,0); /* woffset */
-	__GLX_PUT_LONG(24,width);
-	__GLX_PUT_LONG(28,height);
-	__GLX_PUT_LONG(32,depth);
-	__GLX_PUT_LONG(36,0);      /* size4d */
-	__GLX_PUT_LONG(40,format);
-	__GLX_PUT_LONG(44,type);
-	if (image == NULL) {
-	    __GLX_PUT_LONG(48,GL_TRUE);
-	} else {
-	    __GLX_PUT_LONG(48,GL_FALSE);
-	}
-	pc += __GLX_TEXSUBIMAGE_3D_HDR_SIZE;
-	if (compsize > 0) {
-	    (*gc->fillImage)(gc, 3, width, height, depth, format, type, image,
-			     pc, pixelHeaderPC);
-	} else {
-	    /* Setup default store modes */
-	    GLubyte *pc = pixelHeaderPC;
-	    __GLX_PUT_CHAR(0,GL_FALSE);
-	    __GLX_PUT_CHAR(1,GL_FALSE);
-	    __GLX_PUT_CHAR(2,0);
-	    __GLX_PUT_CHAR(3,0);
-	    __GLX_PUT_LONG(4,0);
-	    __GLX_PUT_LONG(8,0);
-	    __GLX_PUT_LONG(12,0);
-	    __GLX_PUT_LONG(16,0);
-	    __GLX_PUT_LONG(20,0);
-	    __GLX_PUT_LONG(24,0);
-	    __GLX_PUT_LONG(28,0);
-	    __GLX_PUT_LONG(32,1);
-	}
-	__GLX_END(__GLX_PAD(compsize));
-    } else {
-	/* Use GLXRenderLarge protocol to send command */
-	__GLX_BEGIN_VARIABLE_LARGE_WITH_PIXEL_3D(X_GLrop_TexSubImage3D,
-						 cmdlen+4);
-	__GLX_PUT_LONG(0,target);
-	__GLX_PUT_LONG(4,level);
-	__GLX_PUT_LONG(8,xoffset);
-	__GLX_PUT_LONG(12,yoffset);
-	__GLX_PUT_LONG(16,zoffset);
-	__GLX_PUT_LONG(20,0);    /* woffset */
-	__GLX_PUT_LONG(24,width);
-	__GLX_PUT_LONG(28,height);
-	__GLX_PUT_LONG(32,depth);
-	__GLX_PUT_LONG(36,0);    /* size4d */
-	__GLX_PUT_LONG(40,format);
-	__GLX_PUT_LONG(44,type);
-	if (image == NULL) {
-	    __GLX_PUT_LONG(48,GL_TRUE);
-	} else {
-	    __GLX_PUT_LONG(48,GL_FALSE);
-	}
-	pc += __GLX_TEXSUBIMAGE_3D_HDR_SIZE;
-	SendLargeImage(gc, compsize, 3, width, height, depth, format, type,
-		       image, pc, pixelHeaderPC);
     }
 }

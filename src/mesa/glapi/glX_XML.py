@@ -1,6 +1,6 @@
 #!/usr/bin/python2
 
-# (C) Copyright IBM Corporation 2004
+# (C) Copyright IBM Corporation 2004, 2005
 # All Rights Reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -400,6 +400,36 @@ class glXFunction(gl_XML.glFunction):
 
 	def command_payload_length(self):
 		size = 0
+
+		if self.image:
+			[dim, junk, junk, junk, junk] = self.dimensions()
+			
+			# The base size is the size of the pixel pack info
+			# header used by images with the specified number
+			# of dimensions.
+
+			if dim <=  2:
+				size = 20
+			elif dim <= 4:
+				size = 36
+			else:
+				raise RuntimeError('Invalid number of dimensions %u for parameter "%s" in function "%s".' % (dim, self.image.name, self.name))
+
+			if self.image.img_null_flag:
+				size += 4
+
+			if self.image.img_pad_dimensions:
+				size += 4 * (dim & 1)
+				
+				# If the image has offset parameters, like
+				# TexSubImage1D or TexSubImage3D, they need to
+				# be padded out as well.
+
+				if self.image.img_xoff:
+					size += 4 * (dim & 1)
+					
+
+	
 		size_string = ""
 		for p in gl_XML.glFunction.parameterIterator(self):
 			if p.is_output: continue
@@ -507,6 +537,60 @@ class glXFunction(gl_XML.glFunction):
 		return self.fn_return_type != 'void' or self.output != None
 
 
+	def dimensions(self):
+		"""Determine the dimensions of an image.
+		
+		Returns a tuple representing the number of dimensions and the
+		string name of each of the dimensions of an image,  If the
+		function is not a pixel function, the number of dimensions
+		will be zero."""
+
+		if not self.image:
+			return [0, "0", "0", "0", "0"]
+		else:
+			dim = 1
+			w = self.image.width
+
+			if self.image.height:
+				dim = 2
+				h = self.image.height
+			else:
+				h = "1"
+
+			if self.image.depth:
+				dim = 3
+				d = self.image.depth
+			else:
+				d = "1"
+			
+			if self.image.extent:
+				dim = 4
+				e = self.image.extent
+			else:
+				e = "1"
+
+			return [dim, w, h, d, e]
+
+
+	def pad_after(self, p):
+		"""Returns the name of the field inserted after the
+		specified field to pad out the command header."""
+
+		if self.image and self.image.img_pad_dimensions:
+			if not self.image.height:
+				if p.name == self.image.width:
+					return "height"
+				elif p.name == self.image.img_xoff:
+					return "yoffset"
+			elif not self.image.extent:
+				if p.name == self.image.depth:
+					# Should this be "size4d"?
+					return "extent"
+				elif p.name == self.image.img_zoff:
+					return "woffset"
+		return None
+
+		
 class GlxProto(gl_XML.FilterGLAPISpecBase):
 	name = "glX_proto_send.py (from Mesa)"
 

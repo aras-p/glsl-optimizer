@@ -1,6 +1,6 @@
 #!/usr/bin/python2
 
-# (C) Copyright IBM Corporation 2004
+# (C) Copyright IBM Corporation 2004, 2005
 # All Rights Reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -32,15 +32,87 @@ from xml.sax.handler import feature_namespaces
 import gl_XML
 import glX_XML
 import license
-import sys, getopt
+import sys, getopt, copy
+
+def hash_pixel_function(func):
+	"""Generate a 'unique' key for a pixel function.  The key is based on
+	the parameters written in the command packet.  This includes any
+	padding that might be added for the original function and the 'NULL
+	image' flag."""
+
+	[dim, junk, junk, junk, junk] = func.dimensions()
+
+	d = (dim + 1) & ~1
+	h = "%uD%uD_" % (d - 1, d)
+
+	for p in func.parameterIterator(1, 1):
+		h = "%s%u" % (h, p.size())
+
+		if func.pad_after(p):
+			h += "4"
+
+	if func.image.img_null_flag:
+		h += "_NF"
+
+	n = func.name.replace("%uD" % (dim), "")
+	n = "__glx_%s_%uD%uD" % (n, d - 1, d)
+	return [h, n]
+
+
+class glXPixelFunctionUtility(glX_XML.glXFunction):
+	"""Dummy class used to generate pixel "utility" functions that are
+	shared by multiple dimension image functions.  For example, these
+	objects are used to generate shared functions used to send GLX
+	protocol for TexImage1D and TexImage2D, TexSubImage1D and
+	TexSubImage2D, etc."""
+
+	def __init__(self, func, name):
+		# The parameters to the utility function are the same as the
+		# parameters to the real function except for the added "pad"
+		# parameters.
+
+		self.name = name
+		self.image = copy.copy(func.image)
+		self.fn_parameters = []
+		for p in gl_XML.glFunction.parameterIterator(func):
+			self.fn_parameters.append(p)
+
+			pad_name = func.pad_after(p)
+			if pad_name:
+				pad = copy.copy(p)
+				pad.name = pad_name
+				self.fn_parameters.append(pad)
+				
+
+		if self.image.height == None:
+			self.image.height = "height"
+
+		if self.image.img_yoff == None:
+			self.image.img_yoff = "yoffset"
+
+		if func.image.depth:
+			if self.image.extent == None:
+				self.image.extent = "extent"
+
+			if self.image.img_woff == None:
+				self.image.img_woff = "woffset"
+
+
+		self.set_return_type( func.fn_return_type )
+		self.glx_rop = ~0
+		self.can_be_large = func.can_be_large
+		self.count_parameters = func.count_parameters
+		self.counter = func.counter
+		return
 
 
 class PrintGlxProtoStubs(glX_XML.GlxProto):
 	def __init__(self):
 		glX_XML.GlxProto.__init__(self)
 		self.last_category = ""
-		self.license = license.bsd_license_template % ( "(C) Copyright IBM Corporation 2004", "IBM")
+		self.license = license.bsd_license_template % ( "(C) Copyright IBM Corporation 2004, 2005", "IBM")
 		self.generic_sizes = [3, 4, 6, 8, 12, 16, 24, 32]
+		self.pixel_stubs = {}
 		return
 
 	def printRealHeader(self):
@@ -48,7 +120,7 @@ class PrintGlxProtoStubs(glX_XML.GlxProto):
 		print '#include <GL/gl.h>'
 		print '#include "indirect.h"'
 		print '#include "glxclient.h"'
-		print '#include "size.h"'
+		print '#include "indirect_size.h"'
 		print '#include <GL/glxproto.h>'
 		print ''
 		print '#define __GLX_PAD(n) (((n) + 3) & ~3)'
@@ -125,6 +197,19 @@ setup_vendor_request( __GLXcontext * gc, GLint code, GLint vop, GLint cmdlen )
     req->contextTag = gc->currentContextTag;
     return (GLubyte *)(req) + sz_xGLXVendorPrivateReq;
 }
+
+const GLuint __glXDefaultPixelStore[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
+
+#define zero                        (__glXDefaultPixelStore+0)
+#define one                         (__glXDefaultPixelStore+8)
+#define default_pixel_store_1D      (__glXDefaultPixelStore+4)
+#define default_pixel_store_1D_size 20
+#define default_pixel_store_2D      (__glXDefaultPixelStore+4)
+#define default_pixel_store_2D_size 20
+#define default_pixel_store_3D      (__glXDefaultPixelStore+0)
+#define default_pixel_store_3D_size 36
+#define default_pixel_store_4D      (__glXDefaultPixelStore+0)
+#define default_pixel_store_4D_size 36
 """
 
 		for size in self.generic_sizes:
@@ -135,7 +220,10 @@ setup_vendor_request( __GLXcontext * gc, GLint code, GLint vop, GLint cmdlen )
 		if f.fn_offset < 0 or f.handcode or f.ignore: return
 
 		if f.glx_rop != 0 or f.vectorequiv != None:
-			self.printRenderFunction(f)
+			if f.image:
+				self.printPixelFunction(f)
+			else:
+				self.printRenderFunction(f)
 		elif f.glx_sop != 0 or f.glx_vendorpriv != 0:
 			self.printSingleFunction(f)
 		else:
@@ -182,8 +270,38 @@ generic_%u_byte( GLint rop, const void * ptr )
 		return offset
 
 
-	def large_emit_begin(self, indent, f):
-		print '%s    const GLint op = %s;' % (indent, f.opcode_real_name())
+	def pixel_emit_args(self, f, pc, indent, adjust, dim, large):
+		"""Emit the arguments for a pixel function.  This differs from
+		common_emit_args in that pixel functions may require padding
+		be inserted (i.e., for the missing width field for
+		TexImage1D), and they may also require a 'NULL image' flag
+		be inserted before the image data."""
+
+		offset = 0
+		for p in f.parameterIterator(1, 1):
+			self.common_emit_one_arg(p, offset, pc, indent, adjust)
+			offset += p.size()
+
+			if f.pad_after(p):
+				print '%s    (void) memcpy((void *)(%s + %u), zero, 4);' % (indent, pc, offset + adjust)
+				offset += 4
+
+		if f.image.img_null_flag:
+			if large:
+				print '%s    (void) memcpy((void *)(%s + %u), zero, 4);' % (indent, pc, offset + adjust)
+			else:
+				print '%s    (void) memcpy((void *)(%s + %u), (void *)((%s == NULL) ? one : zero), 4);' % (indent, pc, offset + adjust, f.image.name)
+
+			offset += 4
+
+		return offset
+
+
+	def large_emit_begin(self, indent, f, op_name = None):
+		if not op_name:
+			op_name = f.opcode_real_name()
+
+		print '%s    const GLint op = %s;' % (indent, op_name)
 		print '%s    const GLuint cmdlenLarge = cmdlen + 4;' % (indent)
 		print '%s    GLubyte * const pc = __glXFlushRenderBuffer(gc, gc->pc);' % (indent)
 		print '%s    (void) memcpy((void *)(pc + 0), (void *)(&cmdlenLarge), 4);' % (indent)
@@ -199,9 +317,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 		print '{'
 
 
-	def common_func_print_header(self, f):
-		self.common_func_print_just_header(f)
-
+	def common_func_print_just_start(self, f):
 		print '    __GLXcontext * const gc = __glXGetCurrentContext();'
 		
 		# The only reason that single and vendor private commands need
@@ -224,6 +340,15 @@ generic_%u_byte( GLint rop, const void * ptr )
 
 		if f.count_parameters != None:
 			print '    const GLuint compsize = __gl%s_size(%s);' % (f.name, f.count_parameters)
+		elif f.image:
+			[dim, w, h, d, junk] = f.dimensions()
+			
+			compsize = '__glImageSize(%s, %s, %s, %s, %s, %s)' % (w, h, d, f.image.img_format, f.image.img_type, f.image.img_target)
+			if not f.image.img_send_null:
+				compsize = '(%s != NULL) ? %s : 0' % (f.image.name, compsize)
+
+			print '    const GLuint compsize = %s;' % (compsize)
+
 
 		print '    const GLuint cmdlen = %s;' % (f.command_length())
 
@@ -239,6 +364,12 @@ generic_%u_byte( GLint rop, const void * ptr )
 			return 1
 		else:
 			return 0
+
+
+	def common_func_print_header(self, f):
+		self.common_func_print_just_header(f)
+		return self.common_func_print_just_start(f)
+
 
 
 	def printSingleFunction(self, f):
@@ -279,6 +410,203 @@ generic_%u_byte( GLint rop, const void * ptr )
 		print '        UnlockDisplay(dpy); SyncHandle();'
 		print '    }'
 		print '    %s' % f.return_string()
+		print '}'
+		print ''
+		return
+
+
+	def printPixelFunction(self, f):
+		"""This function could use some major refactoring. :("""
+
+		# There is a code-space optimization that we can do here.
+		# Functions that are marked img_pad_dimensions have a version
+		# with an odd number of dimensions and an even number of
+		# dimensions.  TexSubImage1D and TexSubImage2D are examples.
+		# We can emit a single function that does both, and have the
+		# real functions call the utility function with the correct
+		# parameters.
+		#
+		# The only quirk to this is that utility funcitons will be
+		# generated for 3D and 4D functions, but 4D (e.g.,
+		# GL_SGIS_texture4D) isn't typically supported.  This is
+		# probably not an issue.  However, it would be possible to
+		# look at the total set of functions and determine if there
+		# is another function that would actually use the utility
+		# function.  If not, then fallback to the normal way of
+		# generating code.
+
+		if f.image.img_pad_dimensions:
+			# Determine the hash key and the name for the utility
+			# function that is used to implement the real
+			# function.
+
+			[h, n] = hash_pixel_function(f)
+
+			
+			# If the utility function is not yet known, generate
+			# it.
+
+			if not self.pixel_stubs.has_key(h):
+				self.pixel_stubs[h] = n
+				pixel_func = glXPixelFunctionUtility(f, n)
+
+				print 'static void'
+				print '%s( unsigned opcode, unsigned dim, %s )' % (n, pixel_func.get_parameter_string())
+				print '{'
+
+				if self.common_func_print_just_start(pixel_func):
+					indent = "    "
+					trailer = "    }"
+				else:
+					indent = ""
+					trailer = None
+
+
+				if pixel_func.can_be_large:
+					print '%s    if (cmdlen <= gc->maxSmallRenderCommandSize) {' % (indent)
+					print '%s        if ( (gc->pc + cmdlen) > gc->bufEnd ) {' % (indent)
+					print '%s            (void) __glXFlushRenderBuffer(gc, gc->pc);' % (indent)
+					print '%s        }' % (indent)
+					indent += "    "
+
+				[dim, width, height, depth, extent] = pixel_func.dimensions()
+
+				if dim < 3:
+					adjust = 20 + 4
+				else:
+					adjust = 36 + 4
+
+
+				print '%s    emit_header(gc->pc, opcode, cmdlen);' % (indent)
+
+				offset = self.pixel_emit_args(pixel_func, "gc->pc", indent, adjust, dim, 0)
+
+				[s, junk] = pixel_func.command_payload_length()
+
+				pixHeaderPtr = "gc->pc + 4"
+				pcPtr = "gc->pc + %u" % (s + 4)
+
+				if pixel_func.image.img_send_null:
+					condition = '(compsize > 0) && (%s != NULL)' % (pixel_func.image.name)
+				else:
+					condition = 'compsize > 0'
+
+				print '%s    if (%s) {' % (indent, condition)
+				print '%s        (*gc->fillImage)(gc, dim, %s, %s, %s, %s, %s, %s, %s, %s);' % (indent, width, height, depth, pixel_func.image.img_format, pixel_func.image.img_type, pixel_func.image.name, pcPtr, pixHeaderPtr)
+				print '%s    }' % (indent)
+				print '%s    else {' % (indent)
+				print '%s        (void) memcpy( %s, default_pixel_store_%uD, default_pixel_store_%uD_size );' % (indent, pixHeaderPtr, dim, dim)
+				print '%s    }' % (indent)
+
+				print '%s    gc->pc += cmdlen;' % (indent)
+				print '%s    if (gc->pc > gc->limit) { (void) __glXFlushRenderBuffer(gc, gc->pc); }' % (indent)
+
+				if f.can_be_large:
+					adjust += 4
+
+					print '%s}' % (indent)
+					print '%selse {' % (indent)
+
+					self.large_emit_begin(indent, pixel_func, "opcode")
+					offset = self.pixel_emit_args(pixel_func, "pc", indent, adjust, dim, 1)
+
+					pixHeaderPtr = "pc + 8"
+					pcPtr = "pc + %u" % (s + 8)
+
+					print '%s    __glXSendLargeImage(gc, compsize, dim, %s, %s, %s, %s, %s, %s, %s, %s);' % (indent, width, height, depth, f.image.img_format, f.image.img_type, f.image.name, pcPtr, pixHeaderPtr)
+
+					print '%s}' % (indent)
+
+				if trailer: print trailer
+				print '}'
+				print ''
+
+
+
+			# Generate the real function as a call to the
+			# utility function.
+
+			self.common_func_print_just_header(f)
+
+			[dim, junk, junk, junk, junk] = f.dimensions()
+
+			p_string = ""
+			for p in gl_XML.glFunction.parameterIterator(f):
+				p_string += ", " + p.name
+
+				if f.pad_after(p):
+					p_string += ", 1"
+
+			print '    %s(%s, %u%s );' % (n, f.opcode_name(), dim, p_string)
+			print '}'
+			print ''
+			return
+
+
+		if self.common_func_print_header(f):
+			indent = "    "
+			trailer = "    }"
+		else:
+			indent = ""
+			trailer = None
+
+
+		if f.can_be_large:
+			print '%s    if (cmdlen <= gc->maxSmallRenderCommandSize) {' % (indent)
+			print '%s        if ( (gc->pc + cmdlen) > gc->bufEnd ) {' % (indent)
+			print '%s            (void) __glXFlushRenderBuffer(gc, gc->pc);' % (indent)
+			print '%s        }' % (indent)
+			indent += "    "
+
+		[dim, width, height, depth, extent] = f.dimensions()
+
+		if dim < 3:
+			adjust = 20 + 4
+		else:
+			adjust = 36 + 4
+
+
+		print '%s    emit_header(gc->pc, %s, cmdlen);' % (indent, f.opcode_real_name())
+
+		offset = self.pixel_emit_args(f, "gc->pc", indent, adjust, dim, 0)
+
+		[s, junk] = f.command_payload_length()
+
+		pixHeaderPtr = "gc->pc + 4"
+		pcPtr = "gc->pc + %u" % (s + 4)
+
+		if f.image.img_send_null:
+			condition = '(compsize > 0) && (%s != NULL)' % (f.image.name)
+		else:
+			condition = 'compsize > 0'
+
+		print '%s    if (%s) {' % (indent, condition)
+		print '%s        (*gc->fillImage)(gc, %u, %s, %s, %s, %s, %s, %s, %s, %s);' % (indent, dim, width, height, depth, f.image.img_format, f.image.img_type, f.image.name, pcPtr, pixHeaderPtr)
+		print '%s    }' % (indent)
+		print '%s    else {' % (indent)
+		print '%s        (void) memcpy( %s, default_pixel_store_%uD, default_pixel_store_%uD_size );' % (indent, pixHeaderPtr, dim, dim)
+		print '%s    }' % (indent)
+
+		print '%s    gc->pc += cmdlen;' % (indent)
+		print '%s    if (gc->pc > gc->limit) { (void) __glXFlushRenderBuffer(gc, gc->pc); }' % (indent)
+
+		if f.can_be_large:
+			adjust += 4
+
+			print '%s}' % (indent)
+			print '%selse {' % (indent)
+
+			self.large_emit_begin(indent, f)
+			offset = self.pixel_emit_args(f, "pc", indent, adjust, dim, 1)
+
+			pixHeaderPtr = "pc + 8"
+			pcPtr = "pc + %u" % (s + 8)
+
+			print '%s    __glXSendLargeImage(gc, compsize, %u, %s, %s, %s, %s, %s, %s, %s, %s);' % (indent, dim, width, height, depth, f.image.img_format, f.image.img_type, f.image.name, pcPtr, pixHeaderPtr)
+
+			print '%s}' % (indent)
+
+		if trailer: print trailer
 		print '}'
 		print ''
 		return

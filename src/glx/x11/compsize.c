@@ -35,7 +35,7 @@
 */
 
 #include <GL/gl.h>
-#include "size.h"
+#include "indirect_size.h"
 
 /*
 ** Return the number of elements per group of a specified format
@@ -147,14 +147,28 @@ GLint __glBytesPerElement(GLenum type)
 ** and format.
 */
 GLint __glImageSize(GLsizei width, GLsizei height, GLsizei depth,
-		    GLenum format, GLenum type) 
+		    GLenum format, GLenum type, GLenum target)
 {
     int bytes_per_row;
     int components;
 
+    switch( target ) {
+    case GL_PROXY_TEXTURE_1D:
+    case GL_PROXY_TEXTURE_2D:
+    case GL_PROXY_TEXTURE_3D:
+    case GL_PROXY_TEXTURE_4D_SGIS:
+    case GL_PROXY_TEXTURE_CUBE_MAP:
+    case GL_PROXY_TEXTURE_RECTANGLE_ARB:
+    case GL_PROXY_COLOR_TABLE:
+    case GL_PROXY_POST_CONVOLUTION_COLOR_TABLE:
+    case GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE:
+	return 0;
+    }
+
     if (width < 0 || height < 0 || depth < 0) {
 	return 0;
     }
+
     /*
     ** Zero is returned if either format or type are invalid.
     */
@@ -168,5 +182,6 @@ GLint __glImageSize(GLsizei width, GLsizei height, GLsizei depth,
     } else {
 	bytes_per_row = __glBytesPerElement(type) * width;
     }
+
     return bytes_per_row * height * depth * components;
 }

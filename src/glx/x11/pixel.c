@@ -249,31 +249,12 @@ void __glFillImage(__GLXcontext *gc, GLint dim, GLint width, GLint height,
 
     /* Setup store modes that describe what we just did */
     if (modes) {
-	if (dim == 3) {
-	    GLubyte *pc = modes;
-	    __GLX_PUT_CHAR(0,GL_FALSE);
-	    __GLX_PUT_CHAR(1,GL_FALSE);
-	    __GLX_PUT_CHAR(2,0);
-	    __GLX_PUT_CHAR(3,0);
-	    __GLX_PUT_LONG(4,0);
-	    __GLX_PUT_LONG(8,0);
-	    __GLX_PUT_LONG(12,0);
-	    __GLX_PUT_LONG(16,0);
-	    __GLX_PUT_LONG(20,0);
-	    __GLX_PUT_LONG(24,0);
-	    __GLX_PUT_LONG(28,0);
-	    __GLX_PUT_LONG(32,1);
-	} else {
-	    GLubyte *pc = modes;
-	    __GLX_PUT_CHAR(0,GL_FALSE);
-	    __GLX_PUT_CHAR(1,GL_FALSE);
-	    __GLX_PUT_CHAR(2,0);
-	    __GLX_PUT_CHAR(3,0);
-	    __GLX_PUT_LONG(4,0);
-	    __GLX_PUT_LONG(8,0);
-	    __GLX_PUT_LONG(12,0);
-	    __GLX_PUT_LONG(16,1);
-	}
+       if ( dim < 3 ) {
+	  (void) memcpy( modes, __glXDefaultPixelStore + 4, 20 );
+       }
+       else {
+	  (void) memcpy( modes, __glXDefaultPixelStore + 0, 36 );
+       }
     }
 }
 

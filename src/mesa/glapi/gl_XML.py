@@ -1,6 +1,6 @@
 #!/usr/bin/python2
 
-# (C) Copyright IBM Corporation 2004
+# (C) Copyright IBM Corporation 2004, 2005
 # All Rights Reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -154,7 +154,45 @@ class glParameter( glItem ):
 		else:
 			self.is_output = 0
 
-		if self.p_count > 0 or self.counter != None or self.p_count_parameters != None :
+			
+		# Pixel data has special parameters.
+
+		self.width      = attrs.get('img_width',  None)
+		self.height     = attrs.get('img_height', None)
+		self.depth      = attrs.get('img_depth',  None)
+		self.extent     = attrs.get('img_extent', None)
+
+		self.img_xoff   = attrs.get('img_xoff',   None)
+		self.img_yoff   = attrs.get('img_yoff',   None)
+		self.img_zoff   = attrs.get('img_zoff',   None)
+		self.img_woff   = attrs.get('img_woff',   None)
+
+		self.img_format = attrs.get('img_format', None)
+		self.img_type   = attrs.get('img_type',   None)
+		self.img_target = attrs.get('img_target', None)
+
+		pad = attrs.get('img_pad_dimensions', "false")
+		if pad == "true":
+			self.img_pad_dimensions = 1
+		else:
+			self.img_pad_dimensions = 0
+
+
+		null_flag = attrs.get('img_null_flag', "false")
+		if null_flag == "true":
+			self.img_null_flag = 1
+		else:
+			self.img_null_flag = 0
+
+		send_null = attrs.get('img_send_null', "false")
+		if send_null == "true":
+			self.img_send_null = 1
+		else:
+			self.img_send_null = 0
+
+
+
+		if self.p_count > 0 or self.counter or self.p_count_parameters:
 			has_count = 1
 		else:
 			has_count = 0
@@ -193,7 +231,7 @@ class glParameter( glItem ):
 		to glCallLists, are not variable length arrays in this
 		sense."""
 
-		return (self.p_count_parameters != None) or (self.counter != None)
+		return self.p_count_parameters or self.counter or self.width
 
 
 	def is_array(self):
@@ -222,7 +260,7 @@ class glParameter( glItem ):
 
 
 	def size(self):
-		if self.p_count_parameters != None or self.counter != None or self.is_output:
+		if self.p_count_parameters or self.counter or self.width or self.is_output:
 			return 0
 		elif self.p_count == 0:
 			return self.p_type.size
@@ -241,6 +279,8 @@ class glParameter( glItem ):
 				pass
 			elif self.p_count_parameters != None and self.counter != None:
 				b_prod = self.counter
+			elif self.width:
+				return "compsize"
 			else:
 				raise RuntimeError("Parameter '%s' to function '%s' has size 0." % (self.name, self.context.name))
 
@@ -281,6 +321,7 @@ class glFunction( glItem ):
 	def __init__(self, context, name, attrs):
 		self.fn_alias = attrs.get('alias', None)
 		self.fn_parameters = []
+		self.image = None
 
 		temp = attrs.get('offset', None)
 		if temp == None or temp == "?":
@@ -317,6 +358,9 @@ class glFunction( glItem ):
 	def append(self, tag_name, p):
 		if tag_name != "param":
 			raise RuntimeError("Trying to append '%s' to parameter list of function '%s'." % (tag_name, self.name))
+
+		if p.width:
+			self.image = p
 
 		self.fn_parameters.append(p)
 

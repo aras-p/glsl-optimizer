@@ -737,8 +737,15 @@ extern CARD8 __glXSetupForCommand(Display *dpy);
 ** Data conversion and packing support.
 */
 
+extern const GLuint __glXDefaultPixelStore[9];
+
+/* Send an image to the server using RenderLarge. */
+extern void __glXSendLargeImage(__GLXcontext *gc, GLint compsize, GLint dim,
+    GLint width, GLint height, GLint depth, GLenum format, GLenum type,
+    const GLvoid *src, GLubyte *pc, GLubyte *modes);
+
 /* Return the size, in bytes, of some pixel data */
-extern GLint __glImageSize(GLint, GLint, GLint, GLenum, GLenum);
+extern GLint __glImageSize(GLint, GLint, GLint, GLenum, GLenum, GLenum);
 
 /* Return the number of elements per group of a specified format*/
 extern GLint __glElementsPerGroup(GLenum format, GLenum type);
@@ -747,9 +754,6 @@ extern GLint __glElementsPerGroup(GLenum format, GLenum type);
 ** than GL_BITMAP).
 */
 extern GLint __glBytesPerElement(GLenum type);
-
-/* Return the k value for a given map target */
-extern GLint __glEvalComputeK(GLenum);
 
 /*
 ** Fill the transport buffer with the data from the users buffer,

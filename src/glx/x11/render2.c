@@ -36,7 +36,7 @@
 
 #include "packrender.h"
 #include "indirect.h"
-#include "size.h"
+#include "indirect_size.h"
 
 /*
 ** This file contains routines that might need to be transported as

@@ -280,8 +280,8 @@ void __indirect_glGetSeparableFilter(GLenum target, GLenum format, GLenum type,
 	width = reply.width;
 	height = reply.height;
 
-	widthsize = __glImageSize(width,1,1,format, type);
-	heightsize = __glImageSize(height,1,1,format, type);
+	widthsize = __glImageSize(width,1,1,format, type, 0);
+	heightsize = __glImageSize(height,1,1,format, type, 0);
 
 	/* Allocate a holding buffer to transform the data from */
 	rowBuf = (GLubyte*) Xmalloc(widthsize);
