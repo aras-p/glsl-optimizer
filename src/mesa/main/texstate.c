@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.33 2001/02/20 16:42:25 brianp Exp $ */
+/* $Id: texstate.c,v 1.34 2001/02/28 19:31:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -911,22 +911,10 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          *params = img->Width;
          return;
       case GL_TEXTURE_HEIGHT:
-         if (dimensions > 1) {
-            *params = img->Height;
-         }
-         else {
-            gl_error( ctx, GL_INVALID_ENUM,
-                      "glGetTexLevelParameter[if]v(pname=GL_TEXTURE_HEIGHT)" );
-         }
+         *params = img->Height;
          return;
       case GL_TEXTURE_DEPTH:
-         if (dimensions > 2) {
-            *params = img->Depth;
-         }
-         else {
-            gl_error( ctx, GL_INVALID_ENUM,
-                      "glGetTexLevelParameter[if]v(pname=GL_TEXTURE_DEPTH)" );
-         }
+         *params = img->Depth;
          return;
       case GL_TEXTURE_COMPONENTS:
          *params = img->IntFormat;
