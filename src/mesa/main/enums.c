@@ -1,4 +1,4 @@
-/* $Id: enums.c,v 1.19 2001/04/30 21:08:51 keithw Exp $ */
+/* $Id: enums.c,v 1.20 2001/06/08 20:10:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -874,6 +874,9 @@ static void sort_enums( void )
    GLuint i;
    index1 = (enum_elt **)MALLOC( Elements(all_enums) * sizeof(enum_elt *) );
    sorted = 1;
+
+   if (!index1)
+      return;  /* what else can we do? */
 
    qsort( all_enums, Elements(all_enums), sizeof(*all_enums),
 	  (cfunc) compar_name );
