@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.19 2000/02/16 01:09:06 brianp Exp $
+# $Id: Makefile.X11,v 1.20 2000/03/18 23:40:37 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -431,8 +431,6 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/GGI/include/ggi/mesa/Makefile.in	\
 	$(DIRECTORY)/src/GGI/include/ggi/mesa/*.h		\
 	$(DIRECTORY)/src/KNOWN_BUGS				\
-	$(DIRECTORY)/src/MGL/*.[ch]				\
-	$(DIRECTORY)/src/MGL/*.txt				\
 	$(DIRECTORY)/src/OSmesa/Makefile.am			\
 	$(DIRECTORY)/src/OSmesa/Makefile.in			\
 	$(DIRECTORY)/src/OSmesa/*.[ch]				\
