@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.13 1999/10/11 17:53:09 gareth Exp $ */
+/* $Id: tess.c,v 1.14 1999/10/12 18:49:28 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,9 @@
 
 /*
  * $Log: tess.c,v $
+ * Revision 1.14  1999/10/12 18:49:28  gareth
+ * Updated memory allocation to allow new macros to be used.
+ *
  * Revision 1.13  1999/10/11 17:53:09  gareth
  * Renamed GLUtesselator user data pointer to avoid confusion.
  *
@@ -109,9 +112,8 @@ GLUtesselator* GLAPIENTRY gluNewTess( void )
 
     DEBUGP( 15, ( "-> gluNewTess()\n" ) );
 
-    if ( ( tobj = (GLUtesselator *)
-	   malloc( sizeof(GLUtesselator) ) ) == NULL )
-    {
+    tobj = malloc( sizeof(GLUtesselator) );
+    if ( tobj == NULL ) {
 	return NULL;
     }
 
@@ -211,10 +213,8 @@ void GLAPIENTRY gluTessBeginContour( GLUtesselator *tobj )
 	return;
     }
 
-    if ( ( tobj->current_contour =
-	   (tess_contour_t *) malloc( sizeof(tess_contour_t) ) ) == NULL )
-    {
-	DEBUGP( 0, ( "*** memory error ***\n" ) );
+    tobj->current_contour = malloc( sizeof(tess_contour_t) );
+    if ( tobj->current_contour == NULL ) {
 	tess_error_callback( tobj, GLU_OUT_OF_MEMORY );
 	return;
     }
@@ -270,10 +270,8 @@ void GLAPIENTRY gluTessVertex( GLUtesselator *tobj, GLdouble coords[3],
 
     if ( last_vertex == NULL )
     {
-	if ( ( last_vertex = (tess_vertex_t *)
-	       malloc( sizeof(tess_vertex_t) ) ) == NULL )
-	{
-	    DEBUGP( 0, ( "*** memory error ***\n" ) );
+	last_vertex = malloc( sizeof(tess_vertex_t) );
+	if ( last_vertex == NULL ) {
 	    tess_error_callback( tobj, GLU_OUT_OF_MEMORY );
 	    return;
 	}
@@ -301,10 +299,8 @@ void GLAPIENTRY gluTessVertex( GLUtesselator *tobj, GLdouble coords[3],
     {
 	tess_vertex_t	*vertex;
 
-	if ( ( vertex = (tess_vertex_t *)
-	       malloc( sizeof(tess_vertex_t) ) ) == NULL )
-	{
-	    DEBUGP( 0, ( "*** memory error ***\n" ) );
+	vertex = malloc( sizeof(tess_vertex_t) );
+	if ( vertex == NULL ) {
 	    tess_error_callback( tobj, GLU_OUT_OF_MEMORY );
 	    return;
 	}
@@ -398,12 +394,6 @@ void GLAPIENTRY gluTessEndPolygon( GLUtesselator *tobj )
     tobj->last_contour->next = tobj->contours;
     tobj->contours->previous = tobj->last_contour;
 
-    /* tess_find_contour_hierarchies(tobj); */
-
-    TESS_CHECK_ERRORS( tobj );
-
-    /* tess_handle_holes(tobj); */
-
     TESS_CHECK_ERRORS( tobj );
 
     /*
@@ -418,15 +408,7 @@ void GLAPIENTRY gluTessEndPolygon( GLUtesselator *tobj )
 	 ( ( tobj->callbacks.end != NULL ) ||
 	   ( tobj->callbacks.endData != NULL ) ) )
     {
-	if ( ( tobj->callbacks.edgeFlag == NULL ) &&
-	     ( tobj->callbacks.edgeFlagData == NULL ) )
-	{
-	    fist_tessellation( tobj );
-	}
-	else
-	{
-	    fist_tessellation( tobj );
-	}
+	fist_tessellation( tobj );
     }
 
  cleanup:
@@ -673,13 +655,10 @@ static void tess_cleanup( GLUtesselator *tobj )
 {
     DEBUGP( 15, ( "  -> tess_cleanup( tobj:%p )\n", tobj ) );
 
-    if ( tobj->current_contour != NULL )
-    {
+    if ( tobj->current_contour != NULL ) {
 	delete_current_contour( tobj );
     }
-
-    if ( tobj->contours != NULL )
-    {
+    if ( tobj->contours != NULL ) {
 	delete_all_contours( tobj );
     }
 
@@ -970,8 +949,7 @@ static void delete_all_contours( GLUtesselator *tobj )
     tess_vertex_t	*vertex, *next_vertex;
     GLuint			i;
 
-    if ( current != NULL )
-    {
+    if ( current != NULL ) {
 	delete_current_contour( tobj );
     }
 
