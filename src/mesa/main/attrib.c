@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.32 2000/10/30 16:32:42 brianp Exp $ */
+/* $Id: attrib.c,v 1.33 2000/11/05 18:40:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,12 +85,10 @@ copy_texobj_state( struct gl_texture_object *dest,
    dest->MaxLod = src->MaxLod;
    dest->BaseLevel = src->BaseLevel;
    dest->MaxLevel = src->MaxLevel;
-   dest->P = src->P;
-   dest->M = src->M;
-   dest->MinMagThresh = src->MinMagThresh;
+   dest->_P = src->_P;
+   dest->_M = src->_M;
    dest->Palette = src->Palette;
    dest->Complete = src->Complete;
-   dest->SampleFunc = src->SampleFunc;
 }
 
 
@@ -666,8 +664,8 @@ _mesa_PopAttrib(void)
                   (*ctx->Driver.Fogfv)( ctx, GL_FOG_INDEX, &index );
                   (*ctx->Driver.Fogfv)( ctx, GL_FOG_COLOR, ctx->Fog.Color );
                }
-	       ctx->Enabled &= ~ENABLE_FOG;
-	       if (ctx->Fog.Enabled) ctx->Enabled |= ENABLE_FOG;
+	       ctx->_Enabled &= ~ENABLE_FOG;
+	       if (ctx->Fog.Enabled) ctx->_Enabled |= ENABLE_FOG;
             }
             break;
          case GL_HINT_BIT:
@@ -697,14 +695,14 @@ _mesa_PopAttrib(void)
                (*ctx->Driver.Enable)( ctx, GL_LIGHTING, ctx->Light.Enabled );
             }
             if (ctx->Light.ShadeModel == GL_FLAT)
-               ctx->TriangleCaps |= DD_FLATSHADE;
+               ctx->_TriangleCaps |= DD_FLATSHADE;
             else
-               ctx->TriangleCaps &= ~DD_FLATSHADE;
+               ctx->_TriangleCaps &= ~DD_FLATSHADE;
             if (ctx->Driver.ShadeModel)
                (*ctx->Driver.ShadeModel)(ctx, ctx->Light.ShadeModel);
-	    ctx->Enabled &= ~ENABLE_LIGHT;
+	    ctx->_Enabled &= ~ENABLE_LIGHT;
 	    if (ctx->Light.Enabled && !is_empty_list(&ctx->Light.EnabledList))
-	       ctx->Enabled |= ENABLE_LIGHT;
+	       ctx->_Enabled |= ENABLE_LIGHT;
             break;
          case GL_LINE_BIT:
             MEMCPY( &ctx->Line, attr->data, sizeof(struct gl_line_attrib) );
@@ -787,9 +785,9 @@ _mesa_PopAttrib(void)
                (*ctx->Driver.ClearStencil)( ctx, ctx->Stencil.Clear );
             if (ctx->Driver.Enable)
                (*ctx->Driver.Enable)( ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled );
-	    ctx->TriangleCaps &= ~DD_STENCIL;
+	    ctx->_TriangleCaps &= ~DD_STENCIL;
 	    if (ctx->Stencil.Enabled)
-	       ctx->TriangleCaps |= DD_STENCIL;
+	       ctx->_TriangleCaps |= DD_STENCIL;
 
             break;
          case GL_TRANSFORM_BIT:
@@ -800,9 +798,9 @@ _mesa_PopAttrib(void)
                (*ctx->Driver.Enable)( ctx, GL_NORMALIZE, ctx->Transform.Normalize );
                (*ctx->Driver.Enable)( ctx, GL_RESCALE_NORMAL_EXT, ctx->Transform.RescaleNormals );
             }
-	    ctx->Enabled &= ~(ENABLE_NORMALIZE|ENABLE_RESCALE);
-	    if (ctx->Transform.Normalize) ctx->Enabled |= ENABLE_NORMALIZE;
-	    if (ctx->Transform.RescaleNormals) ctx->Enabled |= ENABLE_RESCALE;
+	    ctx->_Enabled &= ~(ENABLE_NORMALIZE|ENABLE_RESCALE);
+	    if (ctx->Transform.Normalize) ctx->_Enabled |= ENABLE_NORMALIZE;
+	    if (ctx->Transform.RescaleNormals) ctx->_Enabled |= ENABLE_RESCALE;
             break;
          case GL_TEXTURE_BIT:
             /* Take care of texture object reference counters */

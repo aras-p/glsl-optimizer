@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.31 2000/10/30 13:32:01 keithw Exp $ */
+/* $Id: texobj.c,v 1.32 2000/11/05 18:40:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,7 +77,6 @@ gl_alloc_texture_object( struct gl_shared_state *shared, GLuint name,
       obj->MaxLod = 1000.0;
       obj->BaseLevel = 0;
       obj->MaxLevel = 1000;
-      obj->MinMagThresh = 0.0F;
       _mesa_init_colortable(&obj->Palette);
 
       /* insert into linked list */
@@ -189,21 +188,21 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
 
    /* Compute number of mipmap levels */
    if (t->Dimensions == 1) {
-      t->P = t->Image[baseLevel]->WidthLog2;
+      t->_P = t->Image[baseLevel]->WidthLog2;
    }
    else if (t->Dimensions == 2 || t->Dimensions == 6) {
-      t->P = MAX2(t->Image[baseLevel]->WidthLog2,
-                  t->Image[baseLevel]->HeightLog2);
+      t->_P = MAX2(t->Image[baseLevel]->WidthLog2,
+		   t->Image[baseLevel]->HeightLog2);
    }
    else if (t->Dimensions == 3) {
       GLint max = MAX2(t->Image[baseLevel]->WidthLog2,
                        t->Image[baseLevel]->HeightLog2);
       max = MAX2(max, (GLint)(t->Image[baseLevel]->DepthLog2));
-      t->P = max;
+      t->_P = max;
    }
 
    /* Compute M (see the 1.2 spec) used during mipmapping */
-   t->M = (GLfloat) (MIN2(t->MaxLevel, t->P) - t->BaseLevel);
+   t->_M = (GLfloat) (MIN2(t->MaxLevel, t->_P) - t->BaseLevel);
 
 
    if (t->Dimensions == 6) {
@@ -237,7 +236,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
        */
       GLint i;
       GLint minLevel = baseLevel;
-      GLint maxLevel = MIN2(t->P, ctx->Const.MaxTextureLevels-1);
+      GLint maxLevel = MIN2(t->_P, ctx->Const.MaxTextureLevels-1);
       maxLevel = MIN2(maxLevel, t->MaxLevel);
 
       if (minLevel > maxLevel) {
@@ -597,7 +596,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    /* If we've changed the CurrentD[123] texture object then update the
     * ctx->Texture.Current pointer to point to the new texture object.
     */
-   texUnit->Current = texUnit->CurrentD[texUnit->CurrentDimension];
+   texUnit->_Current = texUnit->CurrentD[texUnit->_CurrentDimension];
 
    ctx->NewState |= _NEW_TEXTURE;
 

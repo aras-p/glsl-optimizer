@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.12 2000/10/29 18:23:16 brianp Exp $ */
+/* $Id: macros.h,v 1.13 2000/11/05 18:40:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -149,6 +149,12 @@ do {						\
    case 1: (DST)[0] = (SRC)[0];			\
    }  						\
 } while(0)			   
+
+#define COPY_CLEAN_4V(DST, SZ, SRC) 		\
+do {						\
+      ASSIGN_4V( DST, 0, 0, 0, 1 );		\
+      COPY_SZ_4V( DST, SZ, SRC );		\
+} while (0)
 
 #define SUB_4V( DST, SRCA, SRCB )		\
 do {						\

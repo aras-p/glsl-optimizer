@@ -428,7 +428,7 @@ static void RenderTriangleVB( GLcontext *ctx, GLuint start, GLuint end )
 
    DPF(( DBG_FUNC, "RenderTriangleVB" ));
 
-   if ( (!(ctx->IndirectTriangles & DD_SW_SETUP)) && !VB->ClipOrMask )
+   if ( !VB->ClipOrMask )
    {
 	DPF(( DBG_PRIM_INFO, "DirectTriangles( %d )", (end-start) ));
 	for( index = start, cVertex = 0; index < end; )
@@ -602,7 +602,7 @@ static void RenderTriangleFanVB( GLcontext *ctx, GLuint start, GLuint end )
    DPF(( DBG_FUNC, "RenderTriangleFanVB();" ));
 
    /* Special case that we can blast the fan without culling, offset, etc... */
-   if ( (!(ctx->IndirectTriangles & DD_SW_SETUP)) && !VB->ClipOrMask && (ctx->Light.ShadeModel != GL_FLAT) )
+   if ( !VB->ClipOrMask && (ctx->Light.ShadeModel != GL_FLAT) )
    {
 	DPF(( DBG_PRIM_INFO, "DirectTriangles( %d )", (end-start) ));
 
@@ -760,7 +760,7 @@ static void RenderTriangleStripVB( GLcontext *ctx, GLuint start, GLuint end )
   DPF(( DBG_FUNC, "RenderTriangleStripVB();" ));
 
   /* Special case that we can blast the fan without culling, offset, etc... */
-  if ( (!(ctx->IndirectTriangles & DD_SW_SETUP)) && !VB->ClipOrMask && (ctx->Light.ShadeModel != GL_FLAT) )
+  if ( !VB->ClipOrMask && (ctx->Light.ShadeModel != GL_FLAT) )
   {
     DPF(( DBG_PRIM_PROFILE, "DirectTriangles" ));
 
@@ -946,7 +946,7 @@ static void RenderQuadVB( GLcontext *ctx, GLuint start, GLuint end )
 #define  v3 (index+2)
 #define  v4 (index+3)
 
-  if ( (!(ctx->IndirectTriangles & DD_SW_SETUP)) && !VB->ClipOrMask )
+  if ( !VB->ClipOrMask )
   {
     DPF(( DBG_PRIM_PROFILE, "DirectTriangles" ));
 
@@ -1511,7 +1511,7 @@ static void SetRenderStates( GLcontext *ctx )
    /*================================================*/
    /* Check too see if there are new TEXTURE states. */
    /*================================================*/
-   if ( ctx->Texture.ReallyEnabled )
+   if ( ctx->Texture._ReallyEnabled )
    {
       switch( ctx->Texture.Set[ctx->Texture.CurrentSet].EnvMode )
       {
@@ -1871,9 +1871,9 @@ static void DebugRenderStates( GLcontext *ctx, BOOL bForce )
    /*================================================*/
    /* Check too see if there are new TEXTURE states. */
    /*================================================*/
-   if ( texture != ctx->Texture.ReallyEnabled )
+   if ( texture != ctx->Texture._ReallyEnabled )
    {
-	texture = ctx->Texture.ReallyEnabled;
+	texture = ctx->Texture._ReallyEnabled;
 	DPF(( 0, "\tTexture\t\t%s", (texture) ? "ENABLED" : "--------" ));
    }	
 

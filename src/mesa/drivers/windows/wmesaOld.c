@@ -20,8 +20,17 @@
 
 /*
  * $Log: wmesaOld.c,v $
- * Revision 1.1  1999/08/19 00:55:42  jtg
- * Initial revision
+ * Revision 1.2  2000/11/05 18:41:00  keithw
+ * - Changes for new software rasterizer modules
+ * - Remove support for choosing software fallbacks from core code
+ * - Remove partial fallback code from vbrender.c -- drivers are now
+ *   expected to be able to find a triangle/quad function for every state,
+ *   even if they have to use _swsetup_Triangle or _swsetup_Quad.
+ * - Marked derived variables in the GLcontext struct with a leading
+ *   underscore '_'.
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
+ * Imported sources
  *
  * Revision 1.2  1999/01/03 03:08:57  brianp
  * Ted Jump's changes
@@ -668,7 +677,7 @@ static void fast_rgb_points( GLcontext* ctx, GLuint first, GLuint last )
 extern points_func choose_points_function( GLcontext* ctx )
 {
    STARTPROFILE
-   if (ctx->Point.Size==1.0 && !ctx->Point.SmoothFlag && ctx->RasterMask==0
+   if (ctx->Point.Size==1.0 && !ctx->Point.SmoothFlag && ctx->_RasterMask==0
        && !ctx->Texture.Enabled  && ctx->Visual->RGBAflag) {
    ENDPROFILE(choose_points_function)
       return fast_rgb_points;
@@ -726,7 +735,7 @@ static line_func choose_line_function( GLcontext* ctx )
 {
 	STARTPROFILE
    if (ctx->Line.Width==1.0 && !ctx->Line.SmoothFlag && !ctx->Line.StippleFlag
-       && ctx->Light.ShadeModel==GL_FLAT && ctx->RasterMask==0
+       && ctx->Light.ShadeModel==GL_FLAT && ctx->_RasterMask==0
        && !ctx->Texture.Enabled && Current->rgb_flag) {
    ENDPROFILE(choose_line_function)
       return fast_flat_rgb_line;
@@ -2635,7 +2644,7 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
    if (!wmesa->db_flag) return NULL;
    /*if (wmesa->xm_buffer->buffer==XIMAGE)*/ {
       if (   ctx->Light.ShadeModel==GL_SMOOTH
-          && ctx->RasterMask==DEPTH_BIT
+          && ctx->_RasterMask==DEPTH_BIT
           && ctx->Depth.Func==GL_LESS
           && ctx->Depth.Mask==GL_TRUE
           && ctx->Polygon.StippleFlag==GL_FALSE) {
@@ -2655,7 +2664,7 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
          }
       }
       if (   ctx->Light.ShadeModel==GL_FLAT
-          && ctx->RasterMask==DEPTH_BIT
+          && ctx->_RasterMask==DEPTH_BIT
           && ctx->Depth.Func==GL_LESS
           && ctx->Depth.Mask==GL_TRUE
           && ctx->Polygon.StippleFlag==GL_FALSE) {
@@ -2674,7 +2683,7 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
                return NULL;
          }
       }
-      if (   ctx->RasterMask==0   /* no depth test */
+      if (   ctx->_RasterMask==0   /* no depth test */
           && ctx->Light.ShadeModel==GL_SMOOTH
           && ctx->Polygon.StippleFlag==GL_FALSE) {
          switch (wmesa->pixelformat) {
@@ -2693,7 +2702,7 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
          }
       }
 
-      if (   ctx->RasterMask==0   /* no depth test */
+      if (   ctx->_RasterMask==0   /* no depth test */
           && ctx->Light.ShadeModel==GL_FLAT
           && ctx->Polygon.StippleFlag==GL_FALSE) {
          switch (wmesa->pixelformat) {

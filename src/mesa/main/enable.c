@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.30 2000/10/30 16:32:43 brianp Exp $ */
+/* $Id: enable.c,v 1.31 2000/11/05 18:40:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,19 +95,19 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	    ctx->NewState |= _NEW_TRANSFORM;
 
 	    if (state) {
-	       ctx->Enabled |= ENABLE_USERCLIP;
-	       ctx->Transform.AnyClip++;
+	       ctx->_Enabled |= ENABLE_USERCLIP;
+	       ctx->Transform._AnyClip++;
 	       
 	       if (ctx->ProjectionMatrix.flags & MAT_DIRTY_ALL_OVER) {
 		  gl_matrix_analyze( &ctx->ProjectionMatrix );
 	       }
 	       
-	       gl_transform_vector( ctx->Transform.ClipUserPlane[p],
+	       gl_transform_vector( ctx->Transform._ClipUserPlane[p],
 				    ctx->Transform.EyeUserPlane[p],
 				    ctx->ProjectionMatrix.inv );
 	    } else {
-	       if (--ctx->Transform.AnyClip == 0)
-		  ctx->Enabled &= ~ENABLE_USERCLIP;	       
+	       if (--ctx->Transform._AnyClip == 0)
+		  ctx->_Enabled &= ~ENABLE_USERCLIP;	       
 	    }	    
 	 }
 	 break;
@@ -122,7 +122,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_CULL_FACE:
          if (ctx->Polygon.CullFlag!=state) {
             ctx->Polygon.CullFlag = state;
-	    ctx->TriangleCaps ^= DD_TRI_CULL;
+/*  	    ctx->_TriangleCaps ^= DD_TRI_CULL; */
             ctx->NewState |= _NEW_POLYGON;
          }
 	 break;
@@ -149,7 +149,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_FOG:
 	 if (ctx->Fog.Enabled!=state) {
             ctx->Fog.Enabled = state;
-	    ctx->Enabled ^= ENABLE_FOG;
+	    ctx->_Enabled ^= ENABLE_FOG;
             ctx->NewState |= _NEW_FOG;
          }
 	 break;
@@ -178,11 +178,11 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	       insert_at_tail(&ctx->Light.EnabledList, 
 			      &ctx->Light.Light[cap-GL_LIGHT0]);
 	       if (ctx->Light.Enabled)
-		  ctx->Enabled |= ENABLE_LIGHT;
+		  ctx->_Enabled |= ENABLE_LIGHT;
 	    } else {
 	       remove_from_list(&ctx->Light.Light[cap-GL_LIGHT0]);
 	       if (is_empty_list(&ctx->Light.EnabledList))
-		  ctx->Enabled &= ~ENABLE_LIGHT;
+		  ctx->_Enabled &= ~ENABLE_LIGHT;
 	    }
 
 	    ctx->NewState |= _NEW_LIGHT;
@@ -191,23 +191,23 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_LIGHTING:
          if (ctx->Light.Enabled!=state) {
             ctx->Light.Enabled = state;
-	    ctx->Enabled &= ~ENABLE_LIGHT;
+	    ctx->_Enabled &= ~ENABLE_LIGHT;
             if (state)
-	       ctx->Enabled |= ENABLE_LIGHT;
+	       ctx->_Enabled |= ENABLE_LIGHT;
             ctx->NewState |= _NEW_LIGHT;
          }
          break;
       case GL_LINE_SMOOTH:
 	 if (ctx->Line.SmoothFlag!=state) {
             ctx->Line.SmoothFlag = state;
-	    ctx->TriangleCaps ^= DD_LINE_SMOOTH;
+	    ctx->_TriangleCaps ^= DD_LINE_SMOOTH;
             ctx->NewState |= _NEW_LINE;
          }
 	 break;
       case GL_LINE_STIPPLE:
 	 if (ctx->Line.StippleFlag!=state) {
             ctx->Line.StippleFlag = state;
-	    ctx->TriangleCaps ^= DD_LINE_STIPPLE;
+	    ctx->_TriangleCaps ^= DD_LINE_STIPPLE;
             ctx->NewState |= _NEW_LINE;
          }
 	 break;
@@ -303,27 +303,27 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 if (ctx->Transform.Normalize != state) {
 	    ctx->Transform.Normalize = state;
 	    ctx->NewState |= _NEW_TRANSFORM;
-	    ctx->Enabled ^= ENABLE_NORMALIZE;
+	    ctx->_Enabled ^= ENABLE_NORMALIZE;
 	 }
 	 break;
       case GL_POINT_SMOOTH:
 	 if (ctx->Point.SmoothFlag!=state) {
             ctx->Point.SmoothFlag = state;
-	    ctx->TriangleCaps ^= DD_POINT_SMOOTH;
+	    ctx->_TriangleCaps ^= DD_POINT_SMOOTH;
             ctx->NewState |= _NEW_POINT;
          }
 	 break;
       case GL_POLYGON_SMOOTH:
 	 if (ctx->Polygon.SmoothFlag!=state) {
             ctx->Polygon.SmoothFlag = state;
-	    ctx->TriangleCaps ^= DD_TRI_SMOOTH;
+	    ctx->_TriangleCaps ^= DD_TRI_SMOOTH;
             ctx->NewState |= _NEW_POLYGON;
          }
 	 break;
       case GL_POLYGON_STIPPLE:
 	 if (ctx->Polygon.StippleFlag!=state) {
             ctx->Polygon.StippleFlag = state;
-	    ctx->TriangleCaps ^= DD_TRI_STIPPLE;
+	    ctx->_TriangleCaps ^= DD_TRI_STIPPLE;
             ctx->NewState |= _NEW_POLYGON;
          }
 	 break;
@@ -350,7 +350,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 if (ctx->Transform.RescaleNormals != state) {
 	    ctx->Transform.RescaleNormals = state;
 	    ctx->NewState |= _NEW_TRANSFORM;
-	    ctx->Enabled ^= ENABLE_RESCALE;
+	    ctx->_Enabled ^= ENABLE_RESCALE;
 	 }
          break;
       case GL_SCISSOR_TEST:
@@ -371,7 +371,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 if (ctx->Stencil.Enabled!=state) {
             ctx->Stencil.Enabled = state;
             ctx->NewState |= _NEW_STENCIL;
-	    ctx->TriangleCaps ^= DD_STENCIL;
+	    ctx->_TriangleCaps ^= DD_STENCIL;
          }
 	 break;
       case GL_TEXTURE_1D:
@@ -567,9 +567,9 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_COLOR_SUM_EXT:
          ctx->Fog.ColorSumEnabled = state;
 	 if (state)
-	    SET_BITS(ctx->TriangleCaps, DD_SEPERATE_SPECULAR);
+	    SET_BITS(ctx->_TriangleCaps, DD_SEPERATE_SPECULAR);
 	 else if (ctx->Light.Model.ColorControl == GL_SINGLE_COLOR)
-	    CLEAR_BITS(ctx->TriangleCaps, DD_SEPERATE_SPECULAR);
+	    CLEAR_BITS(ctx->_TriangleCaps, DD_SEPERATE_SPECULAR);
 	 ctx->NewState |= _NEW_FOG;
          break;
 

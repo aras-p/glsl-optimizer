@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.20 2000/10/31 18:09:44 keithw Exp $ */
+/* $Id: lines.c,v 1.21 2000/11/05 18:40:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,8 +54,8 @@ _mesa_LineWidth( GLfloat width )
    
    if (ctx->Line.Width != width) {
       ctx->Line.Width = width;
-      ctx->TriangleCaps &= ~DD_LINE_WIDTH;
-      if (width != 1.0) ctx->TriangleCaps |= DD_LINE_WIDTH;
+      ctx->_TriangleCaps &= ~DD_LINE_WIDTH;
+      if (width != 1.0) ctx->_TriangleCaps |= DD_LINE_WIDTH;
 
       ctx->NewState |= _NEW_LINE;
 

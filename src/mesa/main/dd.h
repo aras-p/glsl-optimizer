@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.37 2000/10/31 18:09:44 keithw Exp $ */
+/* $Id: dd.h,v 1.38 2000/11/05 18:40:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -108,9 +108,6 @@ struct gl_pipeline_stage;
 
 
 
-
-/* Used by the GetParameteri device driver function */
-#define DD_HAVE_HARDWARE_FOG         3
 
 
 
@@ -349,20 +346,6 @@ struct dd_function_table {
     * Called from glFrustum and glOrtho to tell device driver the
     * near and far clipping plane Z values.  The 3Dfx driver, for example,
     * uses this.
-    */
-
-   GLint (*GetParameteri)( const GLcontext *ctx, GLint param );
-   /* Query the device driver to get an integer parameter.
-    * Current parameters:
-    *     DD_MAX_TEXTURE_SIZE         return maximum texture size
-    *
-    *     DD_MAX_TEXTURES             number of texture sets/stages, usually 1
-    *
-    *     DD_HAVE_HARDWARE_FOG        the driver should return 1 (0 otherwise)
-    *                                 when the hardware support per fragment
-    *                                 fog for free (like the Voodoo Graphics)
-    *                                 so the Mesa core will start to ever use
-    *                                 per fragment fog
     */
 
 
@@ -845,13 +828,6 @@ struct dd_function_table {
     * points, lines and triangles.  It is not called on transitions between 
     * primtives such as GL_TRIANGLES and GL_TRIANGLE_STRIPS, or between
     * triangles and quads or triangles and polygons.
-    */
-
-   GLuint TriangleCaps;
-   /* Holds a list of the reasons why we might normally want to call
-    * render_triangle, but which are in fact implemented by the
-    * driver.  The FX driver sets this to DD_TRI_CULL, and will soon
-    * implement DD_TRI_OFFSET.
     */
 
    GLboolean (*MultipassFunc)( struct vertex_buffer *VB, GLuint passno );

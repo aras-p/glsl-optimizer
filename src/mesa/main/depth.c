@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.22 2000/10/31 18:09:44 keithw Exp $ */
+/* $Id: depth.c,v 1.23 2000/11/05 18:40:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -78,7 +78,7 @@ _mesa_DepthFunc( GLenum func )
 	 if (ctx->Depth.Func != func) {
 	    ctx->Depth.Func = func;
 	    ctx->NewState |= _NEW_DEPTH;
-	    ctx->TriangleCaps &= ~DD_Z_NEVER;
+	    ctx->_TriangleCaps &= ~DD_Z_NEVER;
 	    if (ctx->Driver.DepthFunc) {
 	       (*ctx->Driver.DepthFunc)( ctx, func );
 	    }
@@ -88,7 +88,7 @@ _mesa_DepthFunc( GLenum func )
 	 if (ctx->Depth.Func != func) {
 	    ctx->Depth.Func = func;
 	    ctx->NewState |= _NEW_DEPTH;
-	    ctx->TriangleCaps |= DD_Z_NEVER;
+	    ctx->_TriangleCaps |= DD_Z_NEVER;
 	    if (ctx->Driver.DepthFunc) {
 	       (*ctx->Driver.DepthFunc)( ctx, func );
 	    }

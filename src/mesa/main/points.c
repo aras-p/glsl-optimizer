@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.19 2000/10/31 18:09:44 keithw Exp $ */
+/* $Id: points.c,v 1.20 2000/11/05 18:40:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,9 +55,9 @@ _mesa_PointSize( GLfloat size )
    if (ctx->Point.UserSize != size) {
       ctx->Point.UserSize = size;
       ctx->Point.Size = CLAMP(size, ctx->Const.MinPointSize, ctx->Const.MaxPointSize);
-      ctx->TriangleCaps &= ~DD_POINT_SIZE;
+      ctx->_TriangleCaps &= ~DD_POINT_SIZE;
       if (size != 1.0)
-         ctx->TriangleCaps |= DD_POINT_SIZE;
+         ctx->_TriangleCaps |= DD_POINT_SIZE;
       ctx->NewState |= _NEW_POINT;
    }
 }
@@ -80,15 +80,15 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
    switch (pname) {
       case GL_DISTANCE_ATTENUATION_EXT:
          {
-            const GLboolean tmp = ctx->Point.Attenuated;
+            const GLboolean tmp = ctx->Point._Attenuated;
             COPY_3V(ctx->Point.Params, params);
-            ctx->Point.Attenuated = (params[0] != 1.0 ||
-                                     params[1] != 0.0 ||
-                                     params[2] != 0.0);
+            ctx->Point._Attenuated = (params[0] != 1.0 ||
+				      params[1] != 0.0 ||
+				      params[2] != 0.0);
 
-            if (tmp != ctx->Point.Attenuated) {
-               ctx->Enabled ^= ENABLE_POINT_ATTEN;
-               ctx->TriangleCaps ^= DD_POINT_ATTEN;
+            if (tmp != ctx->Point._Attenuated) {
+               ctx->_Enabled ^= ENABLE_POINT_ATTEN;
+               ctx->_TriangleCaps ^= DD_POINT_ATTEN;
             }
          }
          break;

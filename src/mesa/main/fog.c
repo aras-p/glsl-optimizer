@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.27 2000/10/31 18:09:44 keithw Exp $ */
+/* $Id: fog.c,v 1.28 2000/11/05 18:40:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -154,7 +154,7 @@ static GLvector1f *get_fogcoord_ptr( GLcontext *ctx, GLvector1f *tmp )
    struct vertex_buffer *VB = ctx->VB;
 
    if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT) {      
-      if (!ctx->NeedEyeCoords) {
+      if (!ctx->_NeedEyeCoords) {
 	 GLfloat *m = ctx->ModelView.m;
 	 GLfloat plane[4];
 

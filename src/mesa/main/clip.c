@@ -1,4 +1,4 @@
-/* $Id: clip.c,v 1.12 2000/10/30 13:31:59 keithw Exp $ */
+/* $Id: clip.c,v 1.13 2000/11/05 18:40:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -206,7 +206,7 @@ _mesa_ClipPlane( GLenum plane, const GLdouble *eq )
       if (ctx->ProjectionMatrix.flags & MAT_DIRTY_ALL_OVER) {
 	 gl_matrix_analyze( &ctx->ProjectionMatrix );
       }
-      gl_transform_vector( ctx->Transform.ClipUserPlane[p], 
+      gl_transform_vector( ctx->Transform._ClipUserPlane[p], 
 			   ctx->Transform.EyeUserPlane[p], 
 			   ctx->ProjectionMatrix.inv );
    }
@@ -221,7 +221,7 @@ void gl_update_userclip( GLcontext *ctx )
    
    for (p = 0 ; p < MAX_CLIP_PLANES ; p++) {
       if (ctx->Transform.ClipEnabled[p]) {
-	 gl_transform_vector( ctx->Transform.ClipUserPlane[p],
+	 gl_transform_vector( ctx->Transform._ClipUserPlane[p],
 			      ctx->Transform.EyeUserPlane[p],
 			      ctx->ProjectionMatrix.inv );
       }
@@ -287,10 +287,10 @@ GLuint gl_userclip_point( GLcontext* ctx, const GLfloat v[] )
 
    for (p=0;p<MAX_CLIP_PLANES;p++) {
       if (ctx->Transform.ClipEnabled[p]) {
-	 GLfloat dot = v[0] * ctx->Transform.ClipUserPlane[p][0]
-		     + v[1] * ctx->Transform.ClipUserPlane[p][1]
-		     + v[2] * ctx->Transform.ClipUserPlane[p][2]
-		     + v[3] * ctx->Transform.ClipUserPlane[p][3];
+	 GLfloat dot = v[0] * ctx->Transform._ClipUserPlane[p][0]
+		     + v[1] * ctx->Transform._ClipUserPlane[p][1]
+		     + v[2] * ctx->Transform._ClipUserPlane[p][2]
+		     + v[3] * ctx->Transform._ClipUserPlane[p][3];
          if (dot < 0.0F) {
             return 0;
          }
@@ -380,33 +380,33 @@ void gl_update_clipmask( GLcontext *ctx )
    {
       mask |= CLIP_RGBA0;
       
-      if (ctx->TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_SEPERATE_SPECULAR))
+      if (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_SEPERATE_SPECULAR))
          mask |= CLIP_RGBA1;
 
-      if (ctx->Texture.ReallyEnabled & 0xf0)
+      if (ctx->Texture._ReallyEnabled & 0xf0)
 	 mask |= CLIP_TEX1|CLIP_TEX0;
 
-      if (ctx->Texture.ReallyEnabled & 0xf)
+      if (ctx->Texture._ReallyEnabled & 0xf)
 	 mask |= CLIP_TEX0;
    }
    else if (ctx->Light.ShadeModel==GL_SMOOTH) 
    {
       mask |= CLIP_INDEX0;
       
-      if (ctx->TriangleCaps & DD_TRI_LIGHT_TWOSIDE) 
+      if (ctx->_TriangleCaps & DD_TRI_LIGHT_TWOSIDE) 
 	 mask |= CLIP_INDEX1;
    }
 
    if (ctx->Fog.Enabled)
       mask |= CLIP_FOG_COORD;
    
-   ctx->ClipInterpFunc = clip_interp_tab[mask];
-   ctx->poly_clip_tab = gl_poly_clip_tab[0];
-   ctx->line_clip_tab = gl_line_clip_tab[0];
+   ctx->_ClipInterpFunc = clip_interp_tab[mask];
+   ctx->_poly_clip_tab = gl_poly_clip_tab[0];
+   ctx->_line_clip_tab = gl_line_clip_tab[0];
 
-   if (ctx->TriangleCaps & DD_TRI_UNFILLED) {
-      ctx->poly_clip_tab = gl_poly_clip_tab[1];
-      ctx->line_clip_tab = gl_line_clip_tab[0];
+   if (ctx->_TriangleCaps & DD_TRI_UNFILLED) {
+      ctx->_poly_clip_tab = gl_poly_clip_tab[1];
+      ctx->_line_clip_tab = gl_line_clip_tab[0];
    } 
 }
 
@@ -426,10 +426,10 @@ static void NAME( struct vertex_buffer *VB )				\
    for (bit = 1, p = 0; p < MAX_CLIP_PLANES ; p++, bit *=2)		\
       if (ctx->Transform.ClipEnabled[p]) {				\
 	 GLuint nr = 0;							\
-	 const GLfloat a = ctx->Transform.ClipUserPlane[p][0];		\
-	 const GLfloat b = ctx->Transform.ClipUserPlane[p][1];		\
-	 const GLfloat c = ctx->Transform.ClipUserPlane[p][2];		\
-	 const GLfloat d = ctx->Transform.ClipUserPlane[p][3];		\
+	 const GLfloat a = ctx->Transform._ClipUserPlane[p][0];		\
+	 const GLfloat b = ctx->Transform._ClipUserPlane[p][1];		\
+	 const GLfloat c = ctx->Transform._ClipUserPlane[p][2];		\
+	 const GLfloat d = ctx->Transform._ClipUserPlane[p][3];		\
          GLfloat *coord = VB->ClipPtr->start;				\
          GLuint stride = VB->ClipPtr->stride;				\
 									\

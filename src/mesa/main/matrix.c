@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.23 2000/10/30 13:32:00 keithw Exp $ */
+/* $Id: matrix.c,v 1.24 2000/11/05 18:40:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -514,8 +514,10 @@ static inv_mat_func inv_mat_tab[7] = {
 static GLboolean matrix_invert( GLmatrix *mat )
 {
    if (inv_mat_tab[mat->type](mat)) {
+      mat->flags &= ~MAT_FLAG_SINGULAR;
       return GL_TRUE;
    } else {
+      mat->flags |= MAT_FLAG_SINGULAR;
       MEMCPY( mat->inv, Identity, sizeof(Identity) );
       return GL_FALSE;
    }  
@@ -930,11 +932,11 @@ static void mat_mul_floats( GLmatrix *mat, const GLfloat *m, GLuint flags )
 
 void gl_calculate_model_project_matrix( GLcontext *ctx )
 {
-   gl_matrix_mul( &ctx->ModelProjectMatrix,
+   gl_matrix_mul( &ctx->_ModelProjectMatrix,
 		  &ctx->ProjectionMatrix,
 		  &ctx->ModelView );
 
-   gl_matrix_analyze( &ctx->ModelProjectMatrix );
+   gl_matrix_analyze( &ctx->_ModelProjectMatrix );
 }
 
 
@@ -1520,32 +1522,21 @@ gl_Viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height )
    ctx->Viewport.Height = height;
 
    /* compute scale and bias values */
-   ctx->Viewport.WindowMap.m[MAT_SX] = (GLfloat) width / 2.0F;
-   ctx->Viewport.WindowMap.m[MAT_TX] = ctx->Viewport.WindowMap.m[MAT_SX] + x;
-   ctx->Viewport.WindowMap.m[MAT_SY] = (GLfloat) height / 2.0F;
-   ctx->Viewport.WindowMap.m[MAT_TY] = ctx->Viewport.WindowMap.m[MAT_SY] + y;
-   ctx->Viewport.WindowMap.m[MAT_SZ] = 0.5 * ctx->Visual.DepthMaxF;
-   ctx->Viewport.WindowMap.m[MAT_TZ] = 0.5 * ctx->Visual.DepthMaxF;
+   ctx->Viewport._WindowMap.m[MAT_SX] = (GLfloat) width / 2.0F;
+   ctx->Viewport._WindowMap.m[MAT_TX] = ctx->Viewport._WindowMap.m[MAT_SX] + x;
+   ctx->Viewport._WindowMap.m[MAT_SY] = (GLfloat) height / 2.0F;
+   ctx->Viewport._WindowMap.m[MAT_TY] = ctx->Viewport._WindowMap.m[MAT_SY] + y;
+   ctx->Viewport._WindowMap.m[MAT_SZ] = 0.5 * ctx->Visual.DepthMaxF;
+   ctx->Viewport._WindowMap.m[MAT_TZ] = 0.5 * ctx->Visual.DepthMaxF;
 
-   ctx->Viewport.WindowMap.flags = MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION;
-   ctx->Viewport.WindowMap.type = MATRIX_3D_NO_ROT;
+   ctx->Viewport._WindowMap.flags = MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION;
+   ctx->Viewport._WindowMap.type = MATRIX_3D_NO_ROT;
    ctx->NewState |= _NEW_VIEWPORT;
 
    /* Check if window/buffer has been resized and if so, reallocate the
     * ancillary buffers.
     */
    _mesa_ResizeBuffersMESA();
-
-
-   ctx->RasterMask &= ~WINCLIP_BIT;
-
-   if (   ctx->Viewport.X<0
-       || ctx->Viewport.X + ctx->Viewport.Width > ctx->DrawBuffer->Width
-       || ctx->Viewport.Y<0
-       || ctx->Viewport.Y + ctx->Viewport.Height > ctx->DrawBuffer->Height) {
-      ctx->RasterMask |= WINCLIP_BIT;
-   }
-
 
    if (ctx->Driver.Viewport) {
       (*ctx->Driver.Viewport)( ctx, x, y, width, height );
@@ -1580,8 +1571,8 @@ _mesa_DepthRange( GLclampd nearval, GLclampd farval )
 
    ctx->Viewport.Near = n;
    ctx->Viewport.Far = f;
-   ctx->Viewport.WindowMap.m[MAT_SZ] = ctx->Visual.DepthMaxF * ((f - n) / 2.0);
-   ctx->Viewport.WindowMap.m[MAT_TZ] = ctx->Visual.DepthMaxF * ((f - n) / 2.0 + n);
+   ctx->Viewport._WindowMap.m[MAT_SZ] = ctx->Visual.DepthMaxF * ((f - n) / 2.0);
+   ctx->Viewport._WindowMap.m[MAT_TZ] = ctx->Visual.DepthMaxF * ((f - n) / 2.0 + n);
    ctx->NewState |= _NEW_VIEWPORT;
 
    if (ctx->Driver.DepthRange) {

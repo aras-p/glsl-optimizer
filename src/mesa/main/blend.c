@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.24 2000/10/31 18:09:44 keithw Exp $ */
+/* $Id: blend.c,v 1.25 2000/11/05 18:40:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -108,7 +108,6 @@ _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
       (*ctx->Driver.BlendFunc)( ctx, sfactor, dfactor );
    }
 
-   ctx->Color.BlendFunc = NULL;
    ctx->NewState |= _NEW_COLOR;
 }
 
@@ -238,7 +237,6 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
          return;
    }
 
-   ctx->Color.BlendFunc = NULL;
    ctx->NewState |= _NEW_COLOR;
 
    if (ctx->Driver.BlendFuncSeparate) {
@@ -299,7 +297,6 @@ _mesa_BlendEquation( GLenum mode )
       ctx->Color.ColorLogicOpEnabled = GL_FALSE;
    }
 
-   ctx->Color.BlendFunc = NULL;
    ctx->NewState |= _NEW_COLOR;
    
    if (ctx->Driver.BlendEquation)

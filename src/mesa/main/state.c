@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.39 2000/10/31 18:09:45 keithw Exp $ */
+/* $Id: state.c,v 1.40 2000/11/05 18:40:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -690,72 +690,6 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 
 
 
-/*
- * Recompute the value of ctx->RasterMask, etc. according to
- * the current context.
- */
-static void update_rasterflags( GLcontext *ctx )
-{
-   ctx->RasterMask = 0;
-
-   if (ctx->Color.AlphaEnabled)           ctx->RasterMask |= ALPHATEST_BIT;
-   if (ctx->Color.BlendEnabled)           ctx->RasterMask |= BLEND_BIT;
-   if (ctx->Depth.Test)                   ctx->RasterMask |= DEPTH_BIT;
-   if (ctx->Fog.Enabled)                  ctx->RasterMask |= FOG_BIT;
-   if (ctx->Scissor.Enabled)              ctx->RasterMask |= SCISSOR_BIT;
-   if (ctx->Stencil.Enabled)              ctx->RasterMask |= STENCIL_BIT;
-   if (ctx->Visual.RGBAflag) {
-      const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
-      if (colorMask != 0xffffffff)        ctx->RasterMask |= MASKING_BIT;
-      if (ctx->Color.ColorLogicOpEnabled) ctx->RasterMask |= LOGIC_OP_BIT;
-      if (ctx->Texture.ReallyEnabled)     ctx->RasterMask |= TEXTURE_BIT;
-   }
-   else {
-      if (ctx->Color.IndexMask != 0xffffffff) ctx->RasterMask |= MASKING_BIT;
-      if (ctx->Color.IndexLogicOpEnabled)     ctx->RasterMask |= LOGIC_OP_BIT;
-   }
-
-   if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
-       && ctx->Color.ColorMask[ACOMP]
-       && ctx->Color.DrawBuffer != GL_NONE)
-      ctx->RasterMask |= ALPHABUF_BIT;
-
-   if (   ctx->Viewport.X < 0
-       || ctx->Viewport.X + ctx->Viewport.Width > ctx->DrawBuffer->Width
-       || ctx->Viewport.Y < 0
-       || ctx->Viewport.Y + ctx->Viewport.Height > ctx->DrawBuffer->Height) {
-      ctx->RasterMask |= WINCLIP_BIT;
-   }
-
-   if (ctx->Depth.OcclusionTest)
-      ctx->RasterMask |= OCCLUSION_BIT;
-
-
-   /* If we're not drawing to exactly one color buffer set the
-    * MULTI_DRAW_BIT flag.  Also set it if we're drawing to no
-    * buffers or the RGBA or CI mask disables all writes.
-    */
-   ctx->TriangleCaps &= ~DD_MULTIDRAW;
-
-   if (ctx->Color.MultiDrawBuffer) {
-      ctx->RasterMask |= MULTI_DRAW_BIT;
-      ctx->TriangleCaps |= DD_MULTIDRAW;
-   }
-   else if (ctx->Color.DrawBuffer==GL_NONE) {
-      ctx->RasterMask |= MULTI_DRAW_BIT;
-      ctx->TriangleCaps |= DD_MULTIDRAW;
-   }
-   else if (ctx->Visual.RGBAflag && *((GLuint *) ctx->Color.ColorMask) == 0) {
-      /* all RGBA channels disabled */
-      ctx->RasterMask |= MULTI_DRAW_BIT;
-      ctx->TriangleCaps |= DD_MULTIDRAW;
-   }
-   else if (!ctx->Visual.RGBAflag && ctx->Color.IndexMask==0) {
-      /* all color index bits disabled */
-      ctx->RasterMask |= MULTI_DRAW_BIT;
-      ctx->TriangleCaps |= DD_MULTIDRAW;
-   }
-}
 
 
 void gl_print_state( const char *msg, GLuint state )
@@ -826,14 +760,14 @@ void gl_update_state( GLcontext *ctx )
    if (MESA_VERBOSE & VERBOSE_STATE)
       gl_print_state("", ctx->NewState);
 
-   if (ctx->NewState & _NEW_PIXEL)
+   if (ctx->NewState & (_NEW_PIXEL|_NEW_COLOR_MATRIX))
       _mesa_update_image_transfer_state(ctx);
 
    if (ctx->NewState & _NEW_ARRAY)
       gl_update_client_state( ctx );
 
    if (ctx->NewState & _NEW_TEXTURE_MATRIX) {
-      ctx->Enabled &= ~(ENABLE_TEXMAT0 | ENABLE_TEXMAT1 | ENABLE_TEXMAT2);
+      ctx->_Enabled &= ~(ENABLE_TEXMAT0 | ENABLE_TEXMAT1 | ENABLE_TEXMAT2);
 
       for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
 	 if (ctx->TextureMatrix[i].flags & MAT_DIRTY_ALL_OVER) {
@@ -842,54 +776,52 @@ void gl_update_state( GLcontext *ctx )
 
 	    if (ctx->Texture.Unit[i].Enabled &&
 		ctx->TextureMatrix[i].type != MATRIX_IDENTITY)
-	       ctx->Enabled |= ENABLE_TEXMAT0 << i;
+	       ctx->_Enabled |= ENABLE_TEXMAT0 << i;
 	 }
       }
    }
 
    if (ctx->NewState & _NEW_TEXTURE) {
-      ctx->Texture.MultiTextureEnabled = GL_FALSE;
-      ctx->Texture.NeedNormals = GL_FALSE;
+      ctx->Texture._MultiTextureEnabled = GL_FALSE;
+      ctx->Texture._NeedNormals = GL_FALSE;
       gl_update_dirty_texobjs(ctx);
-      ctx->Enabled &= ~(ENABLE_TEXGEN0 | ENABLE_TEXGEN1 | ENABLE_TEXGEN2);
-      ctx->Texture.ReallyEnabled = 0;
+      ctx->_Enabled &= ~(ENABLE_TEXGEN0 | ENABLE_TEXGEN1 | ENABLE_TEXGEN2);
+      ctx->Texture._ReallyEnabled = 0;
 
       for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
 	 if (ctx->Texture.Unit[i].Enabled) {
 	    gl_update_texture_unit( ctx, &ctx->Texture.Unit[i] );
 
-	    ctx->Texture.ReallyEnabled |=
-	       ctx->Texture.Unit[i].ReallyEnabled << (i * 4);
+	    ctx->Texture._ReallyEnabled |=
+	       ctx->Texture.Unit[i]._ReallyEnabled << (i * 4);
 
-	    if (ctx->Texture.Unit[i].GenFlags != 0) {
-	       ctx->Enabled |= ENABLE_TEXGEN0 << i;
+	    if (ctx->Texture.Unit[i]._GenFlags != 0) {
+	       ctx->_Enabled |= ENABLE_TEXGEN0 << i;
 
-	       if (ctx->Texture.Unit[i].GenFlags & TEXGEN_NEED_NORMALS) {
-		  ctx->Texture.NeedNormals = GL_TRUE;
-		  ctx->Texture.NeedEyeCoords = GL_TRUE;
+	       if (ctx->Texture.Unit[i]._GenFlags & TEXGEN_NEED_NORMALS) {
+		  ctx->Texture._NeedNormals = GL_TRUE;
+		  ctx->Texture._NeedEyeCoords = GL_TRUE;
 	       }
 
-	       if (ctx->Texture.Unit[i].GenFlags & TEXGEN_NEED_EYE_COORD) {
-		  ctx->Texture.NeedEyeCoords = GL_TRUE;
+	       if (ctx->Texture.Unit[i]._GenFlags & TEXGEN_NEED_EYE_COORD) {
+		  ctx->Texture._NeedEyeCoords = GL_TRUE;
 	       }
 	    }
 
-            if (i > 0 && ctx->Texture.Unit[i].ReallyEnabled) {
-               ctx->Texture.MultiTextureEnabled = GL_TRUE;
+            if (i > 0 && ctx->Texture.Unit[i]._ReallyEnabled) {
+               ctx->Texture._MultiTextureEnabled = GL_TRUE;
             }
 	 }
          else {
-            ctx->Texture.Unit[i].ReallyEnabled = 0;
+            ctx->Texture.Unit[i]._ReallyEnabled = 0;
          }
       }
-      ctx->Enabled = (ctx->Enabled & ~ENABLE_TEX_ANY) | ctx->Texture.ReallyEnabled;
-      ctx->NeedNormals = (ctx->Light.Enabled || ctx->Texture.NeedNormals);
+      ctx->_Enabled = ((ctx->_Enabled & ~ENABLE_TEX_ANY) | 
+		       ctx->Texture._ReallyEnabled);
+      ctx->_NeedNormals = (ctx->Light.Enabled || ctx->Texture._NeedNormals);
    }
 
 
-   if (ctx->NewState & _SWRAST_NEW_RASTERMASK) 
-      update_rasterflags(ctx);
-   
    if (ctx->NewState & (_NEW_BUFFERS|_NEW_SCISSOR)) {
       /* update scissor region */
       ctx->DrawBuffer->Xmin = 0;
@@ -913,53 +845,54 @@ void gl_update_state( GLcontext *ctx )
    }
 
    if (ctx->NewState & _NEW_LIGHT) {
-      ctx->TriangleCaps &= ~(DD_TRI_LIGHT_TWOSIDE|DD_LIGHTING_CULL);
+      ctx->_TriangleCaps &= ~(DD_TRI_LIGHT_TWOSIDE|DD_LIGHTING_CULL);
       if (ctx->Light.Enabled) {
          if (ctx->Light.Model.TwoSide)
-            ctx->TriangleCaps |= (DD_TRI_LIGHT_TWOSIDE|DD_LIGHTING_CULL);
+            ctx->_TriangleCaps |= (DD_TRI_LIGHT_TWOSIDE|DD_LIGHTING_CULL);
          gl_update_lighting(ctx);
       }
    }
 
    if (ctx->NewState & (_NEW_POLYGON | _NEW_LIGHT)) {
 
-      ctx->TriangleCaps &= ~DD_TRI_CULL_FRONT_BACK;
 
       if (ctx->NewState & _NEW_POLYGON) {
+	 ctx->_TriangleCaps &= ~DD_TRI_CULL_FRONT_BACK;
+
 	 /* Setup CullBits bitmask */
 	 if (ctx->Polygon.CullFlag) {
-	    ctx->backface_sign = 1;
+	    ctx->_backface_sign = 1;
 	    switch(ctx->Polygon.CullFaceMode) {
 	    case GL_BACK:
 	       if(ctx->Polygon.FrontFace==GL_CCW)
-		  ctx->backface_sign = -1;
-	       ctx->Polygon.CullBits = 1;
+		  ctx->_backface_sign = -1;
+	       ctx->Polygon._CullBits = 1;
 	       break;
 	    case GL_FRONT:
 	       if(ctx->Polygon.FrontFace!=GL_CCW)
-		  ctx->backface_sign = -1;
-	       ctx->Polygon.CullBits = 2;
+		  ctx->_backface_sign = -1;
+	       ctx->Polygon._CullBits = 2;
 	       break;
 	    default:
 	    case GL_FRONT_AND_BACK:
-	       ctx->backface_sign = 0;
-	       ctx->Polygon.CullBits = 0;
-	       ctx->TriangleCaps |= DD_TRI_CULL_FRONT_BACK;
+	       ctx->_backface_sign = 0;
+	       ctx->Polygon._CullBits = 0;
+	       ctx->_TriangleCaps |= DD_TRI_CULL_FRONT_BACK;
 	       break;
 	    }
 	 }
 	 else {
-	    ctx->Polygon.CullBits = 3;
-	    ctx->backface_sign = 0;
+	    ctx->Polygon._CullBits = 3;
+	    ctx->_backface_sign = 0;
 	 }
 
 	 /* Any Polygon offsets enabled? */
-	 ctx->TriangleCaps &= ~DD_TRI_OFFSET;
+	 ctx->_TriangleCaps &= ~DD_TRI_OFFSET;
 
 	 if (ctx->Polygon.OffsetPoint ||
 	     ctx->Polygon.OffsetLine ||
 	     ctx->Polygon.OffsetFill)
-	    ctx->TriangleCaps |= DD_TRI_OFFSET;
+	    ctx->_TriangleCaps |= DD_TRI_OFFSET;
       }
    }
 
@@ -971,51 +904,12 @@ void gl_update_state( GLcontext *ctx )
 
    if (ctx->NewState & ctx->Driver.UpdateStateNotify)
    {
-      ctx->IndirectTriangles = ctx->TriangleCaps & ~ctx->Driver.TriangleCaps;
-      ctx->IndirectTriangles |= DD_SW_RASTERIZE;
-
-      if (MESA_VERBOSE&VERBOSE_CULL)
-	 gl_print_tri_caps("initial indirect tris", ctx->IndirectTriangles);
-
-      ctx->Driver.PointsFunc = NULL;
-      ctx->Driver.LineFunc = NULL;
-      ctx->Driver.TriangleFunc = NULL;
-      ctx->Driver.QuadFunc = NULL;
-      ctx->Driver.RectFunc = NULL;
-      ctx->Driver.RenderVBClippedTab = NULL;
-      ctx->Driver.RenderVBCulledTab = NULL;
-      ctx->Driver.RenderVBRawTab = NULL;
-
       /*
        * Here the driver sets up all the ctx->Driver function pointers to
        * it's specific, private functions.
        */
       ctx->Driver.UpdateState(ctx);
-
-      if (MESA_VERBOSE&VERBOSE_CULL)
-	 gl_print_tri_caps("indirect tris", ctx->IndirectTriangles);
-
-      /*
-       * In case the driver didn't hook in an optimized point, line or
-       * triangle function we'll now select "core/fallback" point, line
-       * and triangle functions.
-       */
-      if (ctx->IndirectTriangles & DD_SW_RASTERIZE) {
-	 _swrast_set_point_function(ctx);
-	 _swrast_set_line_function(ctx);
-	 _swrast_set_triangle_function(ctx);
-	 _swrast_set_quad_function(ctx);
-
-	 if ((ctx->IndirectTriangles & 
-	      (DD_TRI_SW_RASTERIZE|DD_QUAD_SW_RASTERIZE|DD_TRI_CULL)) ==
-	     (DD_TRI_SW_RASTERIZE|DD_QUAD_SW_RASTERIZE|DD_TRI_CULL)) 
-	    ctx->IndirectTriangles &= ~DD_TRI_CULL;
-      }
-
-      if (MESA_VERBOSE&VERBOSE_CULL)
-	 gl_print_tri_caps("indirect tris 2", ctx->IndirectTriangles);
-
-      gl_set_render_vb_function(ctx);
+      gl_set_render_vb_function(ctx); /* fix me */
    }
 
    /* Should only be calc'd when !need_eye_coords and not culling.
@@ -1030,7 +924,7 @@ void gl_update_state( GLcontext *ctx )
 	 gl_matrix_analyze( &ctx->ProjectionMatrix );
 	 ctx->ProjectionMatrix.flags &= ~MAT_DIRTY_DEPENDENTS;
 
-	 if (ctx->Transform.AnyClip) {
+	 if (ctx->Transform._AnyClip) {
 	    gl_update_userclip( ctx );
 	 }
       }
@@ -1045,7 +939,7 @@ void gl_update_state( GLcontext *ctx )
    /* Figure out whether we can light in object space or not.  If we
     * can, find the current positions of the lights in object space
     */
-   if ((ctx->Enabled & (ENABLE_POINT_ATTEN | ENABLE_LIGHT | ENABLE_FOG |
+   if ((ctx->_Enabled & (ENABLE_POINT_ATTEN | ENABLE_LIGHT | ENABLE_FOG |
 			ENABLE_TEXGEN0 | ENABLE_TEXGEN1 | ENABLE_TEXGEN2)) &&
        (ctx->NewState & (_NEW_LIGHT | 
 			 _NEW_TEXTURE |
@@ -1059,47 +953,47 @@ void gl_update_state( GLcontext *ctx )
    {
       GLboolean oldcoord, oldnorm;
 
-      oldcoord = ctx->NeedEyeCoords;
-      oldnorm = ctx->NeedEyeNormals;
+      oldcoord = ctx->_NeedEyeCoords;
+      oldnorm = ctx->_NeedEyeNormals;
 
-      ctx->NeedNormals = (ctx->Light.Enabled || ctx->Texture.NeedNormals);
-      ctx->NeedEyeCoords = (ctx->Fog.Enabled || ctx->Point.Attenuated);
-      ctx->NeedEyeNormals = GL_FALSE;
+      ctx->_NeedNormals = (ctx->Light.Enabled || ctx->Texture._NeedNormals);
+      ctx->_NeedEyeCoords = (ctx->Fog.Enabled || ctx->Point._Attenuated);
+      ctx->_NeedEyeNormals = GL_FALSE;
 
       if (ctx->Light.Enabled) {
-	 if ((ctx->Light.Flags & LIGHT_POSITIONAL) ||
-             ctx->Light.NeedVertices ||
+	 if ((ctx->Light._Flags & LIGHT_POSITIONAL) ||
+             ctx->Light._NeedVertices ||
              !TEST_MAT_FLAGS( &ctx->ModelView, MAT_FLAGS_LENGTH_PRESERVING)) {
             /* Need length for attenuation or need angle for spotlights
              * or non-uniform scale matrix
              */
-            ctx->NeedEyeCoords = GL_TRUE;
+            ctx->_NeedEyeCoords = GL_TRUE;
 	 }
-	 ctx->NeedEyeNormals = ctx->NeedEyeCoords;
+	 ctx->_NeedEyeNormals = ctx->_NeedEyeCoords;
       }
-      if (ctx->Texture.ReallyEnabled || ctx->RenderMode==GL_FEEDBACK) {
-	 if (ctx->Texture.NeedEyeCoords) ctx->NeedEyeCoords = GL_TRUE;
-	 if (ctx->Texture.NeedNormals)
-	    ctx->NeedNormals = ctx->NeedEyeNormals = GL_TRUE;
+      if (ctx->Texture._ReallyEnabled || ctx->RenderMode==GL_FEEDBACK) {
+	 if (ctx->Texture._NeedEyeCoords) ctx->_NeedEyeCoords = GL_TRUE;
+	 if (ctx->Texture._NeedNormals)
+	    ctx->_NeedNormals = ctx->_NeedEyeNormals = GL_TRUE;
       }
 
-      ctx->vb_proj_matrix = &ctx->ModelProjectMatrix;
-
-      if (ctx->NeedEyeCoords)
-	 ctx->vb_proj_matrix = &ctx->ProjectionMatrix;
+      if (ctx->_NeedEyeCoords)
+	 ctx->_vb_proj_matrix = &ctx->ProjectionMatrix;
+      else
+	 ctx->_vb_proj_matrix = &ctx->_ModelProjectMatrix;
 
       if (ctx->Light.Enabled) {
 	 gl_update_lighting_function(ctx);
 
 	 if ( (ctx->NewState & _NEW_LIGHT) ||
 	      ((ctx->NewState & (_NEW_MODELVIEW|_NEW_PROJECTION)) &&
-	       !ctx->NeedEyeCoords) ||
-	      oldcoord != ctx->NeedEyeCoords ||
-	      oldnorm != ctx->NeedEyeNormals) {
+	       !ctx->_NeedEyeCoords) ||
+	      oldcoord != ctx->_NeedEyeCoords ||
+	      oldnorm != ctx->_NeedEyeNormals) {
 	    gl_compute_light_positions(ctx);
 	 }
 
-	 ctx->rescale_factor = 1.0F;
+	 ctx->_rescale_factor = 1.0F;
 	 if (ctx->ModelView.flags & (MAT_FLAG_UNIFORM_SCALE |
 				     MAT_FLAG_GENERAL_SCALE |
 				     MAT_FLAG_GENERAL_3D |
@@ -1107,7 +1001,7 @@ void gl_update_state( GLcontext *ctx )
 	    const GLfloat *m = ctx->ModelView.inv;
 	    const GLfloat f = m[2] * m[2] + m[6] * m[6] + m[10] * m[10];
 	    if (f > 1e-12 && (f - 1.0) * (f - 1.0) > 1e-12)
-	       ctx->rescale_factor = 1.0 / GL_SQRT(f);
+	       ctx->_rescale_factor = 1.0 / GL_SQRT(f);
 	 }
       }
 
@@ -1173,5 +1067,5 @@ _mesa_update_image_transfer_state(GLcontext *ctx)
    if (ctx->Pixel.MinMaxEnabled)
       mask |= IMAGE_MIN_MAX_BIT;
 
-   ctx->ImageTransferState = mask;
+   ctx->_ImageTransferState = mask;
 }

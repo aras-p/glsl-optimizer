@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.22 2000/10/30 13:32:00 keithw Exp $ */
+/* $Id: light.c,v 1.23 2000/11/05 18:40:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,9 +63,9 @@ _mesa_ShadeModel( GLenum mode )
       if (ctx->Light.ShadeModel != mode) {
          ctx->Light.ShadeModel = mode;
          if (ctx->Light.ShadeModel == GL_FLAT)
-            SET_BITS(ctx->TriangleCaps, DD_FLATSHADE);
+            SET_BITS(ctx->_TriangleCaps, DD_FLATSHADE);
          else
-            CLEAR_BITS(ctx->TriangleCaps, DD_FLATSHADE);
+            CLEAR_BITS(ctx->_TriangleCaps, DD_FLATSHADE);
 
          ctx->NewState |= _NEW_LIGHT;
 
@@ -150,9 +150,9 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
             return;
          }
          ctx->Light.Light[l].SpotCutoff = params[0];
-         ctx->Light.Light[l].CosCutoff = cos(params[0]*DEG2RAD);
-         if (ctx->Light.Light[l].CosCutoff < 0) 
-	    ctx->Light.Light[l].CosCutoff = 0;
+         ctx->Light.Light[l]._CosCutoff = cos(params[0]*DEG2RAD);
+         if (ctx->Light.Light[l]._CosCutoff < 0) 
+	    ctx->Light.Light[l]._CosCutoff = 0;
          nParams = 1;
          break;
       case GL_CONSTANT_ATTENUATION:
@@ -389,11 +389,11 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
          if (params[0] == (GLfloat) GL_SINGLE_COLOR) {
             ctx->Light.Model.ColorControl = GL_SINGLE_COLOR;
 	    if (!ctx->Fog.ColorSumEnabled)
-	       CLEAR_BITS(ctx->TriangleCaps, DD_SEPERATE_SPECULAR);
+	       CLEAR_BITS(ctx->_TriangleCaps, DD_SEPERATE_SPECULAR);
          }
          else if (params[0] == (GLfloat) GL_SEPARATE_SPECULAR_COLOR) {
             ctx->Light.Model.ColorControl = GL_SEPARATE_SPECULAR_COLOR;
-	    SET_BITS(ctx->TriangleCaps, DD_SEPERATE_SPECULAR);
+	    SET_BITS(ctx->_TriangleCaps, DD_SEPERATE_SPECULAR);
 	 }
          else {
             gl_error( ctx, GL_INVALID_ENUM, "glLightModel(param)" );
@@ -561,27 +561,27 @@ void gl_update_material( GLcontext *ctx,
       struct gl_material *mat = &ctx->Light.Material[0];
       COPY_4FV( mat->Ambient, src[0].Ambient );
       foreach (light, list) {
-         SCALE_3V( light->MatAmbient[0], light->Ambient, src[0].Ambient);
+         SCALE_3V( light->_MatAmbient[0], light->Ambient, src[0].Ambient);
       }
    }
    if (bitmask & BACK_AMBIENT_BIT) {
       struct gl_material *mat = &ctx->Light.Material[1];
       COPY_4FV( mat->Ambient, src[1].Ambient );
       foreach (light, list) {
-         SCALE_3V( light->MatAmbient[1], light->Ambient, src[1].Ambient);
+         SCALE_3V( light->_MatAmbient[1], light->Ambient, src[1].Ambient);
       }
    }
 
    /* update BaseColor = emission + scene's ambience * material's ambience */
    if (bitmask & (FRONT_EMISSION_BIT | FRONT_AMBIENT_BIT)) {
       struct gl_material *mat = &ctx->Light.Material[0];
-      COPY_3V( ctx->Light.BaseColor[0], mat->Emission );
-      ACC_SCALE_3V( ctx->Light.BaseColor[0], mat->Ambient, ctx->Light.Model.Ambient );
+      COPY_3V( ctx->Light._BaseColor[0], mat->Emission );
+      ACC_SCALE_3V( ctx->Light._BaseColor[0], mat->Ambient, ctx->Light.Model.Ambient );
    }
    if (bitmask & (BACK_EMISSION_BIT | BACK_AMBIENT_BIT)) {
       struct gl_material *mat = &ctx->Light.Material[1];
-      COPY_3V( ctx->Light.BaseColor[1], mat->Emission );
-      ACC_SCALE_3V( ctx->Light.BaseColor[1], mat->Ambient, ctx->Light.Model.Ambient );
+      COPY_3V( ctx->Light._BaseColor[1], mat->Emission );
+      ACC_SCALE_3V( ctx->Light._BaseColor[1], mat->Ambient, ctx->Light.Model.Ambient );
    }
 
    /* update material diffuse values */
@@ -590,20 +590,20 @@ void gl_update_material( GLcontext *ctx,
       GLfloat tmp[4];
       SUB_3V( tmp, src[0].Diffuse, mat->Diffuse );
       foreach (light, list) {
-	 ACC_SCALE_3V( light->MatDiffuse[0], light->Diffuse, tmp );
+	 ACC_SCALE_3V( light->_MatDiffuse[0], light->Diffuse, tmp );
       }
       COPY_4FV( mat->Diffuse, src[0].Diffuse );
-      FLOAT_COLOR_TO_CHAN(ctx->Light.BaseAlpha[0], mat->Diffuse[3]);
+      FLOAT_COLOR_TO_CHAN(ctx->Light._BaseAlpha[0], mat->Diffuse[3]);
    }
    if (bitmask & BACK_DIFFUSE_BIT) {
       struct gl_material *mat = &ctx->Light.Material[1];
       GLfloat tmp[4];
       SUB_3V( tmp, src[1].Diffuse, mat->Diffuse );
       foreach (light, list) {
-	 ACC_SCALE_3V( light->MatDiffuse[1], light->Diffuse, tmp );
+	 ACC_SCALE_3V( light->_MatDiffuse[1], light->Diffuse, tmp );
       }
       COPY_4FV( mat->Diffuse, src[1].Diffuse );
-      FLOAT_COLOR_TO_CHAN(ctx->Light.BaseAlpha[1], mat->Diffuse[3]);
+      FLOAT_COLOR_TO_CHAN(ctx->Light._BaseAlpha[1], mat->Diffuse[3]);
    }
 
    /* update material specular values */
@@ -612,10 +612,10 @@ void gl_update_material( GLcontext *ctx,
       GLfloat tmp[4];
       SUB_3V( tmp, src[0].Specular, mat->Specular );
       foreach (light, list) {
-	 if (light->Flags & LIGHT_SPECULAR) {
-	    ACC_SCALE_3V( light->MatSpecular[0], light->Specular, tmp );
-	    light->IsMatSpecular[0] = 
-	       (LEN_SQUARED_3FV(light->MatSpecular[0]) > 1e-16);
+	 if (light->_Flags & LIGHT_SPECULAR) {
+	    ACC_SCALE_3V( light->_MatSpecular[0], light->Specular, tmp );
+	    light->_IsMatSpecular[0] = 
+	       (LEN_SQUARED_3FV(light->_MatSpecular[0]) > 1e-16);
 	 }
       }
       COPY_4FV( mat->Specular, src[0].Specular );
@@ -625,10 +625,10 @@ void gl_update_material( GLcontext *ctx,
       GLfloat tmp[4];
       SUB_3V( tmp, src[1].Specular, mat->Specular );
       foreach (light, list) {
-	 if (light->Flags & LIGHT_SPECULAR) {
-	    ACC_SCALE_3V( light->MatSpecular[1], light->Specular, tmp );
-	    light->IsMatSpecular[1] = 
-	       (LEN_SQUARED_3FV(light->MatSpecular[1]) > 1e-16);
+	 if (light->_Flags & LIGHT_SPECULAR) {
+	    ACC_SCALE_3V( light->_MatSpecular[1], light->Specular, tmp );
+	    light->_IsMatSpecular[1] = 
+	       (LEN_SQUARED_3FV(light->_MatSpecular[1]) > 1e-16);
 	 }
       }
       COPY_4FV( mat->Specular, src[1].Specular );
@@ -712,11 +712,11 @@ void gl_update_color_material( GLcontext *ctx,
       COPY_4FV( mat->Emission, color );
    }
 
-   /* update light->MatAmbient = light's ambient * material's ambient */
+   /* update light->_MatAmbient = light's ambient * material's ambient */
    if (bitmask & FRONT_AMBIENT_BIT) {
       struct gl_material *mat = &ctx->Light.Material[0];
       foreach (light, list) {
-         SCALE_3V( light->MatAmbient[0], light->Ambient, color);
+         SCALE_3V( light->_MatAmbient[0], light->Ambient, color);
       }
       COPY_4FV( mat->Ambient, color );
    }
@@ -724,7 +724,7 @@ void gl_update_color_material( GLcontext *ctx,
    if (bitmask & BACK_AMBIENT_BIT) {
       struct gl_material *mat = &ctx->Light.Material[1];
       foreach (light, list) {
-         SCALE_3V( light->MatAmbient[1], light->Ambient, color);
+         SCALE_3V( light->_MatAmbient[1], light->Ambient, color);
       }
       COPY_4FV( mat->Ambient, color );
    }
@@ -732,26 +732,26 @@ void gl_update_color_material( GLcontext *ctx,
    /* update BaseColor = emission + scene's ambience * material's ambience */
    if (bitmask & (FRONT_EMISSION_BIT | FRONT_AMBIENT_BIT)) {
       struct gl_material *mat = &ctx->Light.Material[0];
-      COPY_3V( ctx->Light.BaseColor[0], mat->Emission );
-      ACC_SCALE_3V( ctx->Light.BaseColor[0], mat->Ambient, ctx->Light.Model.Ambient );
+      COPY_3V( ctx->Light._BaseColor[0], mat->Emission );
+      ACC_SCALE_3V( ctx->Light._BaseColor[0], mat->Ambient, ctx->Light.Model.Ambient );
    }
 
    if (bitmask & (BACK_EMISSION_BIT | BACK_AMBIENT_BIT)) {
       struct gl_material *mat = &ctx->Light.Material[1];
-      COPY_3V( ctx->Light.BaseColor[1], mat->Emission );
-      ACC_SCALE_3V( ctx->Light.BaseColor[1], mat->Ambient, ctx->Light.Model.Ambient );
+      COPY_3V( ctx->Light._BaseColor[1], mat->Emission );
+      ACC_SCALE_3V( ctx->Light._BaseColor[1], mat->Ambient, ctx->Light.Model.Ambient );
    }
 
-   /* update light->MatDiffuse = light's diffuse * material's diffuse */
+   /* update light->_MatDiffuse = light's diffuse * material's diffuse */
    if (bitmask & FRONT_DIFFUSE_BIT) {
       struct gl_material *mat = &ctx->Light.Material[0];
       GLfloat tmp[4];
       SUB_3V( tmp, color, mat->Diffuse );
       foreach (light, list) {
-	 ACC_SCALE_3V( light->MatDiffuse[0], light->Diffuse, tmp );
+	 ACC_SCALE_3V( light->_MatDiffuse[0], light->Diffuse, tmp );
       }
       COPY_4FV( mat->Diffuse, color );
-      FLOAT_COLOR_TO_CHAN(ctx->Light.BaseAlpha[0], mat->Diffuse[3]);
+      FLOAT_COLOR_TO_CHAN(ctx->Light._BaseAlpha[0], mat->Diffuse[3]);
    }
 
    if (bitmask & BACK_DIFFUSE_BIT) {
@@ -759,22 +759,22 @@ void gl_update_color_material( GLcontext *ctx,
       GLfloat tmp[4];
       SUB_3V( tmp, color, mat->Diffuse );
       foreach (light, list) {
-	 ACC_SCALE_3V( light->MatDiffuse[1], light->Diffuse, tmp );
+	 ACC_SCALE_3V( light->_MatDiffuse[1], light->Diffuse, tmp );
       }
       COPY_4FV( mat->Diffuse, color );
-      FLOAT_COLOR_TO_CHAN(ctx->Light.BaseAlpha[1], mat->Diffuse[3]);
+      FLOAT_COLOR_TO_CHAN(ctx->Light._BaseAlpha[1], mat->Diffuse[3]);
    }
 
-   /* update light->MatSpecular = light's specular * material's specular */
+   /* update light->_MatSpecular = light's specular * material's specular */
    if (bitmask & FRONT_SPECULAR_BIT) {
       struct gl_material *mat = &ctx->Light.Material[0];
       GLfloat tmp[4];
       SUB_3V( tmp, color, mat->Specular );
       foreach (light, list) {
-	 if (light->Flags & LIGHT_SPECULAR) {
-	    ACC_SCALE_3V( light->MatSpecular[0], light->Specular, tmp );
-	    light->IsMatSpecular[0] = 
-	       (LEN_SQUARED_3FV(light->MatSpecular[0]) > 1e-16);
+	 if (light->_Flags & LIGHT_SPECULAR) {
+	    ACC_SCALE_3V( light->_MatSpecular[0], light->Specular, tmp );
+	    light->_IsMatSpecular[0] = 
+	       (LEN_SQUARED_3FV(light->_MatSpecular[0]) > 1e-16);
 	 }
       }
       COPY_4FV( mat->Specular, color );
@@ -785,10 +785,10 @@ void gl_update_color_material( GLcontext *ctx,
       GLfloat tmp[4];
       SUB_3V( tmp, color, mat->Specular );
       foreach (light, list) {
-	 if (light->Flags & LIGHT_SPECULAR) {
-	    ACC_SCALE_3V( light->MatSpecular[1], light->Specular, tmp );
-	    light->IsMatSpecular[1] = 
-	       (LEN_SQUARED_3FV(light->MatSpecular[1]) > 1e-16);
+	 if (light->_Flags & LIGHT_SPECULAR) {
+	    ACC_SCALE_3V( light->_MatSpecular[1], light->Specular, tmp );
+	    light->_IsMatSpecular[1] = 
+	       (LEN_SQUARED_3FV(light->_MatSpecular[1]) > 1e-16);
 	 }
       }
       COPY_4FV( mat->Specular, color );
@@ -1109,10 +1109,10 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
  *   IF P[3]==0 THEN
  *       // light at infinity
  *       IF local_viewer THEN
- *           VP_inf_norm = unit vector from V to P      // Precompute
+ *           _VP_inf_norm = unit vector from V to P      // Precompute
  *       ELSE 
  *           // eye at infinity
- *           h_inf_norm = Normalize( VP + <0,0,1> )     // Precompute
+ *           _h_inf_norm = Normalize( VP + <0,0,1> )     // Precompute
  *       ENDIF
  *   ENDIF
  *
@@ -1135,7 +1135,7 @@ gl_compute_spot_exp_table( struct gl_light *l )
    GLdouble tmp = 0;
    GLint clamp = 0;
 
-   l->SpotExpTable[0][0] = 0.0;
+   l->_SpotExpTable[0][0] = 0.0;
 
    for (i = EXP_TABLE_SIZE - 1; i > 0 ;i--) {
       if (clamp == 0) {
@@ -1145,12 +1145,12 @@ gl_compute_spot_exp_table( struct gl_light *l )
             clamp = 1;
          }
       }
-      l->SpotExpTable[i][0] = tmp;
+      l->_SpotExpTable[i][0] = tmp;
    }
    for (i = 0; i < EXP_TABLE_SIZE - 1; i++) {
-      l->SpotExpTable[i][1] = l->SpotExpTable[i+1][0] - l->SpotExpTable[i][0];
+      l->_SpotExpTable[i][1] = l->_SpotExpTable[i+1][0] - l->_SpotExpTable[i][0];
    }
-   l->SpotExpTable[EXP_TABLE_SIZE-1][1] = 0.0;
+   l->_SpotExpTable[EXP_TABLE_SIZE-1][1] = 0.0;
 }
 
 
@@ -1190,7 +1190,7 @@ void
 gl_compute_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
 {
 #define DISTSQR(a,b) ((a-b)*(a-b))
-   struct gl_shine_tab *list = ctx->ShineTabList;
+   struct gl_shine_tab *list = ctx->_ShineTabList;
    struct gl_shine_tab *s;
 
    foreach(s, list) 
@@ -1205,8 +1205,8 @@ gl_compute_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
       compute_shine_table( s, shininess );
    }
 
-   ctx->ShineTable[i]->refcount--;
-   ctx->ShineTable[i] = s;
+   ctx->_ShineTable[i]->refcount--;
+   ctx->_ShineTable[i] = s;
    move_to_tail( list, s );
    s->refcount++;
 #undef DISTSQR
@@ -1226,68 +1226,68 @@ gl_update_lighting( GLcontext *ctx )
 {
    struct gl_light *light;
 
-   ctx->Light.Flags = 0;
+   ctx->Light._Flags = 0;
 
    foreach(light, &ctx->Light.EnabledList) {
 
-      light->Flags = 0;
+      light->_Flags = 0;
 
       if (light->EyePosition[3] != 0.0F) 
-	 light->Flags |= LIGHT_POSITIONAL;
+	 light->_Flags |= LIGHT_POSITIONAL;
       
       if (LEN_SQUARED_3FV(light->Specular) > 1e-16) 
-	 light->Flags |= LIGHT_SPECULAR;
+	 light->_Flags |= LIGHT_SPECULAR;
       
       if (light->SpotCutoff != 180.0F)
-	 light->Flags |= LIGHT_SPOT;
+	 light->_Flags |= LIGHT_SPOT;
 
-      ctx->Light.Flags |= light->Flags;
+      ctx->Light._Flags |= light->_Flags;
    }
 
-   ctx->Light.NeedVertices = 
-      ((ctx->Light.Flags & (LIGHT_POSITIONAL|LIGHT_SPOT)) ||
+   ctx->Light._NeedVertices = 
+      ((ctx->Light._Flags & (LIGHT_POSITIONAL|LIGHT_SPOT)) ||
        (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR) ||
-       (ctx->Light.Model.LocalViewer && (ctx->Light.Flags & LIGHT_SPECULAR)));
+       (ctx->Light.Model.LocalViewer && (ctx->Light._Flags & LIGHT_SPECULAR)));
 
 
    /* Precompute some shading values.
     */
    if (ctx->Visual.RGBAflag) {
-      GLuint sides = ((ctx->TriangleCaps & DD_TRI_LIGHT_TWOSIDE) ? 2 : 1);
+      GLuint sides = ((ctx->_TriangleCaps & DD_TRI_LIGHT_TWOSIDE) ? 2 : 1);
       GLuint side;
       for (side=0; side < sides; side++) {
 	 struct gl_material *mat = &ctx->Light.Material[side];
 
-	 COPY_3V(ctx->Light.BaseColor[side], mat->Emission);
-	 ACC_SCALE_3V(ctx->Light.BaseColor[side], 
+	 COPY_3V(ctx->Light._BaseColor[side], mat->Emission);
+	 ACC_SCALE_3V(ctx->Light._BaseColor[side], 
 		      ctx->Light.Model.Ambient,
 		      mat->Ambient);
 
-	 FLOAT_COLOR_TO_CHAN(ctx->Light.BaseAlpha[side],
+	 FLOAT_COLOR_TO_CHAN(ctx->Light._BaseAlpha[side],
                              ctx->Light.Material[side].Diffuse[3] );
       }
       
       foreach (light, &ctx->Light.EnabledList) {	 
 	 for (side=0; side< sides; side++) {
 	    const struct gl_material *mat = &ctx->Light.Material[side];
-	    SCALE_3V( light->MatDiffuse[side], light->Diffuse, mat->Diffuse );
-	    SCALE_3V( light->MatAmbient[side], light->Ambient, mat->Ambient );
-	    if (light->Flags & LIGHT_SPECULAR) {
-	       SCALE_3V( light->MatSpecular[side], light->Specular,
+	    SCALE_3V( light->_MatDiffuse[side], light->Diffuse, mat->Diffuse );
+	    SCALE_3V( light->_MatAmbient[side], light->Ambient, mat->Ambient );
+	    if (light->_Flags & LIGHT_SPECULAR) {
+	       SCALE_3V( light->_MatSpecular[side], light->Specular,
 			 mat->Specular);
-	       light->IsMatSpecular[side] = 
-		  (LEN_SQUARED_3FV(light->MatSpecular[side]) > 1e-16);
+	       light->_IsMatSpecular[side] = 
+		  (LEN_SQUARED_3FV(light->_MatSpecular[side]) > 1e-16);
 	    } 
 	    else 
-	       light->IsMatSpecular[side] = 0;
+	       light->_IsMatSpecular[side] = 0;
 	 }
       }
    } 
    else {
       static const GLfloat ci[3] = { .30, .59, .11 };
       foreach(light, &ctx->Light.EnabledList) {
-	 light->dli = DOT3(ci, light->Diffuse);
-	 light->sli = DOT3(ci, light->Specular);
+	 light->_dli = DOT3(ci, light->Diffuse);
+	 light->_sli = DOT3(ci, light->Specular);
       }
    }
 }
@@ -1304,65 +1304,65 @@ gl_compute_light_positions( GLcontext *ctx )
    
    if (1 /*ctx->Light.NeedVertices && !ctx->Light.Model.LocalViewer*/) {
       static const GLfloat eye_z[3] = { 0, 0, 1 };
-      if (ctx->NeedEyeCoords) {
-	 COPY_3V( ctx->EyeZDir, eye_z );
+      if (ctx->_NeedEyeCoords) {
+	 COPY_3V( ctx->_EyeZDir, eye_z );
       }
       else {
-	 TRANSFORM_NORMAL( ctx->EyeZDir, eye_z, ctx->ModelView.m );
+	 TRANSFORM_NORMAL( ctx->_EyeZDir, eye_z, ctx->ModelView.m );
       }
    }
 
    foreach (light, &ctx->Light.EnabledList) {
 
-      if (ctx->NeedEyeCoords) {
-	 COPY_4FV( light->Position, light->EyePosition );
+      if (ctx->_NeedEyeCoords) {
+	 COPY_4FV( light->_Position, light->EyePosition );
       }
       else {
-	 TRANSFORM_POINT( light->Position, ctx->ModelView.inv, 
+	 TRANSFORM_POINT( light->_Position, ctx->ModelView.inv, 
 			  light->EyePosition );
       }
 
-      if (!(light->Flags & LIGHT_POSITIONAL)) {
+      if (!(light->_Flags & LIGHT_POSITIONAL)) {
 	 /* VP (VP) = Normalize( Position ) */
-	 COPY_3V( light->VP_inf_norm, light->Position );
-	 NORMALIZE_3FV( light->VP_inf_norm );
+	 COPY_3V( light->_VP_inf_norm, light->_Position );
+	 NORMALIZE_3FV( light->_VP_inf_norm );
 
 	 if (!ctx->Light.Model.LocalViewer) {
-	    /* h_inf_norm = Normalize( V_to_P + <0,0,1> ) */
-	    ADD_3V( light->h_inf_norm, light->VP_inf_norm, ctx->EyeZDir);
-	    NORMALIZE_3FV( light->h_inf_norm );
+	    /* _h_inf_norm = Normalize( V_to_P + <0,0,1> ) */
+	    ADD_3V( light->_h_inf_norm, light->_VP_inf_norm, ctx->_EyeZDir);
+	    NORMALIZE_3FV( light->_h_inf_norm );
 	 }
-	 light->VP_inf_spot_attenuation = 1.0;
+	 light->_VP_inf_spot_attenuation = 1.0;
       }
       
-      if (light->Flags & LIGHT_SPOT) {
-	 if (ctx->NeedEyeNormals) {
-	    COPY_3V( light->NormDirection, light->EyeDirection );
+      if (light->_Flags & LIGHT_SPOT) {
+	 if (ctx->_NeedEyeNormals) {
+	    COPY_3V( light->_NormDirection, light->EyeDirection );
 	 }
          else {
-	    TRANSFORM_NORMAL( light->NormDirection, 
+	    TRANSFORM_NORMAL( light->_NormDirection, 
 			      light->EyeDirection,
 			      ctx->ModelView.m);
 	 }
 
-	 NORMALIZE_3FV( light->NormDirection );
+	 NORMALIZE_3FV( light->_NormDirection );
 
 
 	 /* Unlikely occurrance?
 	  */
-	 if (!(light->Flags & LIGHT_POSITIONAL)) {
-	    GLfloat PV_dot_dir = - DOT3(light->VP_inf_norm, 
-					light->NormDirection);
+	 if (!(light->_Flags & LIGHT_POSITIONAL)) {
+	    GLfloat PV_dot_dir = - DOT3(light->_VP_inf_norm, 
+					light->_NormDirection);
 
-	    if (PV_dot_dir > light->CosCutoff) {
+	    if (PV_dot_dir > light->_CosCutoff) {
 	       double x = PV_dot_dir * (EXP_TABLE_SIZE-1);
 	       int k = (int) x;
-	       light->VP_inf_spot_attenuation = 
-		  (light->SpotExpTable[k][0] + 
-		   (x-k)*light->SpotExpTable[k][1]);
+	       light->_VP_inf_spot_attenuation = 
+		  (light->_SpotExpTable[k][0] + 
+		   (x-k)*light->_SpotExpTable[k][1]);
 	    }
 	    else {
-	       light->VP_inf_spot_attenuation = 0;
+	       light->_VP_inf_spot_attenuation = 0;
             }
 	 }
       }
@@ -1373,10 +1373,10 @@ gl_compute_light_positions( GLcontext *ctx )
 void
 gl_update_normal_transform( GLcontext *ctx )
 {
-   ctx->vb_rescale_factor = 1.0;
+   ctx->_vb_rescale_factor = 1.0;
 
-   if (ctx->NeedEyeCoords) {
-      if (ctx->NeedNormals) {
+   if (ctx->_NeedEyeCoords) {
+      if (ctx->_NeedNormals) {
 	 GLuint transform = NORM_TRANSFORM_NO_ROT;
 
 	 if (ctx->ModelView.flags & (MAT_FLAG_GENERAL |
@@ -1385,40 +1385,40 @@ gl_update_normal_transform( GLcontext *ctx )
 				     MAT_FLAG_PERSPECTIVE)) 
 	    transform = NORM_TRANSFORM;
 	    
-	 ctx->vb_rescale_factor = ctx->rescale_factor;
+	 ctx->_vb_rescale_factor = ctx->_rescale_factor;
 	       
 	 if (ctx->Transform.Normalize) {
-	    ctx->NormalTransform = gl_normal_tab[transform | NORM_NORMALIZE];
+	    ctx->_NormalTransform = gl_normal_tab[transform | NORM_NORMALIZE];
 	 } 
 	 else if (ctx->Transform.RescaleNormals &&
-		  ctx->rescale_factor != 1.0) {
-	    ctx->NormalTransform = gl_normal_tab[transform | NORM_RESCALE];
+		  ctx->_rescale_factor != 1.0) {
+	    ctx->_NormalTransform = gl_normal_tab[transform | NORM_RESCALE];
 	 }
 	 else {
-	    ctx->NormalTransform = gl_normal_tab[transform];
+	    ctx->_NormalTransform = gl_normal_tab[transform];
 	 }
       }
       else {
-	 ctx->NormalTransform = 0;
+	 ctx->_NormalTransform = 0;
       }
    }
    else {
-      if (ctx->NeedNormals) {
-	 ctx->vb_rescale_factor = 1.0/ctx->rescale_factor;
+      if (ctx->_NeedNormals) {
+	 ctx->_vb_rescale_factor = 1.0/ctx->_rescale_factor;
 
 	 if (ctx->Transform.Normalize) {
-	    ctx->NormalTransform = gl_normal_tab[NORM_NORMALIZE];
+	    ctx->_NormalTransform = gl_normal_tab[NORM_NORMALIZE];
 	 }
 	 else if (!ctx->Transform.RescaleNormals &&
-		  ctx->rescale_factor != 1.0) {
-	    ctx->NormalTransform = gl_normal_tab[NORM_RESCALE];
+		  ctx->_rescale_factor != 1.0) {
+	    ctx->_NormalTransform = gl_normal_tab[NORM_RESCALE];
 	 }
 	 else {
-	    ctx->NormalTransform = 0;
+	    ctx->_NormalTransform = 0;
 	 }
       }
       else {
-	 ctx->NormalTransform = 0;
+	 ctx->_NormalTransform = 0;
       }
    }
 }

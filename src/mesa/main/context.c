@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.102 2000/10/31 18:09:44 keithw Exp $ */
+/* $Id: context.c,v 1.103 2000/11/05 18:40:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -65,7 +65,6 @@
 #include "vbxform.h"
 #include "vertices.h"
 #include "xform.h"
-#include "swrast/swrast.h"
 #endif
 
 #if defined(MESA_TRACE)
@@ -590,7 +589,7 @@ init_light( struct gl_light *l, GLuint n )
    l->SpotExponent = 0.0;
    gl_compute_spot_exp_table( l );
    l->SpotCutoff = 180.0;
-   l->CosCutoff = 0.0;		/* KW: -ve values not admitted */
+   l->_CosCutoff = 0.0;		/* KW: -ve values not admitted */
    l->ConstantAttenuation = 1.0;
    l->LinearAttenuation = 0.0;
    l->QuadraticAttenuation = 0.0;
@@ -653,10 +652,10 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
    texUnit->GenModeT = GL_EYE_LINEAR;
    texUnit->GenModeR = GL_EYE_LINEAR;
    texUnit->GenModeQ = GL_EYE_LINEAR;
-   texUnit->GenBitS = TEXGEN_EYE_LINEAR;
-   texUnit->GenBitT = TEXGEN_EYE_LINEAR;
-   texUnit->GenBitR = TEXGEN_EYE_LINEAR;
-   texUnit->GenBitQ = TEXGEN_EYE_LINEAR;
+   texUnit->_GenBitS = TEXGEN_EYE_LINEAR;
+   texUnit->_GenBitT = TEXGEN_EYE_LINEAR;
+   texUnit->_GenBitR = TEXGEN_EYE_LINEAR;
+   texUnit->_GenBitQ = TEXGEN_EYE_LINEAR;
 
    /* Yes, these plane coefficients are correct! */
    ASSIGN_4V( texUnit->ObjectPlaneS, 1.0, 0.0, 0.0, 0.0 );
@@ -823,7 +822,7 @@ init_attrib_groups( GLcontext *ctx )
    gl_matrix_ctr( &ctx->ProjectionMatrix );
    gl_matrix_alloc_inv( &ctx->ProjectionMatrix );
 
-   gl_matrix_ctr( &ctx->ModelProjectMatrix );
+   gl_matrix_ctr( &ctx->_ModelProjectMatrix );
 
    ctx->ProjectionStackDepth = 0;
    ctx->NearFarStack[0][0] = 1.0; /* These values seem weird by make */
@@ -872,7 +871,6 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Color.BlendSrcA = GL_ONE;
    ctx->Color.BlendDstA = GL_ZERO;
    ctx->Color.BlendEquation = GL_FUNC_ADD_EXT;
-   ctx->Color.BlendFunc = NULL;  /* this pointer set only when needed */
    ASSIGN_4V( ctx->Color.BlendColor, 0.0, 0.0, 0.0, 0.0 );
    ctx->Color.IndexLogicOpEnabled = GL_FALSE;
    ctx->Color.ColorLogicOpEnabled = GL_FALSE;
@@ -1055,17 +1053,17 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Light.ColorMaterialEnabled = GL_FALSE;
 
    /* Lighting miscellaneous */
-   ctx->ShineTabList = MALLOC_STRUCT( gl_shine_tab );
-   make_empty_list( ctx->ShineTabList );
+   ctx->_ShineTabList = MALLOC_STRUCT( gl_shine_tab );
+   make_empty_list( ctx->_ShineTabList );
    for (i = 0 ; i < 10 ; i++) {
       struct gl_shine_tab *s = MALLOC_STRUCT( gl_shine_tab );
       s->shininess = -1;
       s->refcount = 0;
-      insert_at_tail( ctx->ShineTabList, s );
+      insert_at_tail( ctx->_ShineTabList, s );
    }
    for (i = 0 ; i < 4 ; i++) {
-      ctx->ShineTable[i] = ctx->ShineTabList->prev;
-      ctx->ShineTable[i]->refcount++;
+      ctx->_ShineTable[i] = ctx->_ShineTabList->prev;
+      ctx->_ShineTable[i]->refcount++;
    }
 
    gl_compute_shine_table( ctx, 0, ctx->Light.Material[0].Shininess );
@@ -1160,7 +1158,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Point.Params[0] = 1.0;
    ctx->Point.Params[1] = 0.0;
    ctx->Point.Params[2] = 0.0;
-   ctx->Point.Attenuated = GL_FALSE;
+   ctx->Point._Attenuated = GL_FALSE;
    ctx->Point.MinSize = 0.0;
    ctx->Point.MaxSize = (GLfloat) MAX_POINT_SIZE;
    ctx->Point.Threshold = 1.0;
@@ -1172,7 +1170,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Polygon.FrontBit = 0;
    ctx->Polygon.FrontMode = GL_FILL;
    ctx->Polygon.BackMode = GL_FILL;
-   ctx->Polygon.Unfilled = GL_FALSE;
+   ctx->Polygon._Unfilled = GL_FALSE;
    ctx->Polygon.SmoothFlag = GL_FALSE;
    ctx->Polygon.StippleFlag = GL_FALSE;
    ctx->Polygon.OffsetFactor = 0.0F;
@@ -1206,7 +1204,7 @@ init_attrib_groups( GLcontext *ctx )
    /* Texture group */
    ctx->Texture.CurrentUnit = 0;      /* multitexture */
    ctx->Texture.CurrentTransformUnit = 0; /* multitexture */
-   ctx->Texture.ReallyEnabled = 0;
+   ctx->Texture._ReallyEnabled = 0;
    for (i=0; i<MAX_TEXTURE_UNITS; i++)
       init_texture_unit( ctx, i );
    ctx->Texture.SharedPalette = GL_FALSE;
@@ -1220,7 +1218,7 @@ init_attrib_groups( GLcontext *ctx )
       ctx->Transform.ClipEnabled[i] = GL_FALSE;
       ASSIGN_4V( ctx->Transform.EyeUserPlane[i], 0.0, 0.0, 0.0, 0.0 );
    }
-   ctx->Transform.AnyClip = GL_FALSE;
+   ctx->Transform._AnyClip = GL_FALSE;
 
    /* Viewport group */
    ctx->Viewport.X = 0;
@@ -1229,17 +1227,17 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Viewport.Height = 0;
    ctx->Viewport.Near = 0.0;
    ctx->Viewport.Far = 1.0;
-   gl_matrix_ctr(&ctx->Viewport.WindowMap);
+   gl_matrix_ctr(&ctx->Viewport._WindowMap);
 
 #define Sz 10
 #define Tz 14
-   ctx->Viewport.WindowMap.m[Sz] = 0.5 * ctx->Visual.DepthMaxF;
-   ctx->Viewport.WindowMap.m[Tz] = 0.5 * ctx->Visual.DepthMaxF;
+   ctx->Viewport._WindowMap.m[Sz] = 0.5 * ctx->Visual.DepthMaxF;
+   ctx->Viewport._WindowMap.m[Tz] = 0.5 * ctx->Visual.DepthMaxF;
 #undef Sz
 #undef Tz
 
-   ctx->Viewport.WindowMap.flags = MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION;
-   ctx->Viewport.WindowMap.type = MATRIX_3D_NO_ROT;
+   ctx->Viewport._WindowMap.flags = MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION;
+   ctx->Viewport._WindowMap.type = MATRIX_3D_NO_ROT;
 
    /* Vertex arrays */
    ctx->Array.Vertex.Size = 4;
@@ -1338,14 +1336,12 @@ init_attrib_groups( GLcontext *ctx )
    /* Miscellaneous */
    ctx->NewState = _NEW_ALL;
    ctx->RenderMode = GL_RENDER;
-   ctx->StippleCounter = 0;
-   ctx->NeedNormals = GL_FALSE;
-   ctx->DoViewportMapping = GL_TRUE;
-   ctx->ImageTransferState = 0;
+   ctx->_NeedNormals = GL_FALSE;
+   ctx->_ImageTransferState = 0;
 
-   ctx->NeedEyeCoords = GL_FALSE;
-   ctx->NeedEyeNormals = GL_FALSE;
-   ctx->vb_proj_matrix = &ctx->ModelProjectMatrix;
+   ctx->_NeedEyeCoords = GL_FALSE;
+   ctx->_NeedEyeNormals = GL_FALSE;
+   ctx->_vb_proj_matrix = &ctx->_ModelProjectMatrix;
 
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
 
@@ -1470,11 +1466,6 @@ _mesa_initialize_context( GLcontext *ctx,
    }
    ctx->input = ctx->VB->IM;
    
-   if (!_swrast_create_context( ctx )) {
-      ALIGN_FREE( ctx->VB );
-      return GL_FALSE;
-   }
-
    if (share_list) {
       /* share the group of display lists of another context */
       ctx->Shared = share_list->Shared;
@@ -1484,7 +1475,6 @@ _mesa_initialize_context( GLcontext *ctx,
       ctx->Shared = alloc_shared_state();
       if (!ctx->Shared) {
          ALIGN_FREE( ctx->VB );
-	 _swrast_destroy_context( ctx );
          return GL_FALSE;
       }
    }
@@ -1515,7 +1505,6 @@ _mesa_initialize_context( GLcontext *ctx,
    if (!alloc_proxy_textures(ctx)) {
       free_shared_state(ctx, ctx->Shared);
       ALIGN_FREE( ctx->VB );
-      _swrast_destroy_context( ctx );
       return GL_FALSE;
    }
 
@@ -1543,7 +1532,6 @@ _mesa_initialize_context( GLcontext *ctx,
    if (!ctx->Exec || !ctx->Save) {
       free_shared_state(ctx, ctx->Shared);
       ALIGN_FREE( ctx->VB );
-      _swrast_destroy_context( ctx );
       if (ctx->Exec)
          FREE( ctx->Exec );
    }
@@ -1559,7 +1547,6 @@ _mesa_initialize_context( GLcontext *ctx,
    if (!(ctx->TraceCtx)) {
       free_shared_state(ctx, ctx->Shared);
       ALIGN_FREE( ctx->VB );
-      _swrast_destroy_context( ctx );
       FREE( ctx->Exec );
       FREE( ctx->Save );
       return GL_FALSE;
@@ -1573,7 +1560,6 @@ _mesa_initialize_context( GLcontext *ctx,
    if (!(ctx->TraceCtx)) {
       free_shared_state(ctx, ctx->Shared);
       ALIGN_FREE( ctx->VB );
-      _swrast_destroy_context( ctx );
       FREE( ctx->Exec );
       FREE( ctx->Save );
       FREE( ctx->TraceCtx );
@@ -1647,8 +1633,6 @@ _mesa_free_context_data( GLcontext *ctx )
       }
    }
 
-   _swrast_destroy_context( ctx );
-
    if (ctx->input != ctx->VB->IM)
       gl_immediate_free( ctx->input );
 
@@ -1663,10 +1647,10 @@ _mesa_free_context_data( GLcontext *ctx )
       free_shared_state( ctx, ctx->Shared );
    }
 
-   foreach_s( s, tmps, ctx->ShineTabList ) {
+   foreach_s( s, tmps, ctx->_ShineTabList ) {
       FREE( s );
    }
-   FREE( ctx->ShineTabList );
+   FREE( ctx->_ShineTabList );
 
    /* Free proxy texture objects */
    gl_free_texture_object( NULL, ctx->Texture.Proxy1D );

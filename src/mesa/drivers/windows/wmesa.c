@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.9 2000/09/28 22:44:32 brianp Exp $ */
+/* $Id: wmesa.c,v 1.10 2000/11/05 18:41:00 keithw Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -650,8 +650,8 @@ static void fast_rgb_points( GLcontext* ctx, GLuint first, GLuint last )
 extern points_func choose_points_function( GLcontext* ctx )
 {
     STARTPROFILE
-        if (ctx->Point.Size==1.0 && !ctx->Point.SmoothFlag && ctx->RasterMask==0
-            && !ctx->Texture.ReallyEnabled  && ctx->Visual->RGBAflag) {
+        if (ctx->Point.Size==1.0 && !ctx->Point.SmoothFlag && ctx->_RasterMask==0
+            && !ctx->Texture._ReallyEnabled  && ctx->Visual->RGBAflag) {
             ENDPROFILE(choose_points_function)
                 return fast_rgb_points;
         }
@@ -708,8 +708,8 @@ static line_func choose_line_function( GLcontext* ctx )
 {
     STARTPROFILE
     if (ctx->Line.Width==1.0 && !ctx->Line.SmoothFlag && !ctx->Line.StippleFlag
-        && ctx->Light.ShadeModel==GL_FLAT && ctx->RasterMask==0
-        && !ctx->Texture.ReallyEnabled && Current->rgb_flag) {
+        && ctx->Light.ShadeModel==GL_FLAT && ctx->_RasterMask==0
+        && !ctx->Texture._ReallyEnabled && Current->rgb_flag) {
        ENDPROFILE(choose_line_function)
        return fast_flat_rgb_line;
     }
@@ -2851,11 +2851,11 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
     int depth = wmesa->cColorBits;
 
     if (ctx->Polygon.SmoothFlag)     return NULL;
-    if (ctx->Texture.ReallyEnabled)  return NULL;
+    if (ctx->Texture._ReallyEnabled)  return NULL;
     if (!wmesa->db_flag) return NULL;
     /*if (wmesa->xm_buffer->buffer==XIMAGE)*/ {
     if (   ctx->Light.ShadeModel==GL_SMOOTH
-        && ctx->RasterMask==DEPTH_BIT
+        && ctx->_RasterMask==DEPTH_BIT
         && ctx->Depth.Func==GL_LESS
         && ctx->Depth.Mask==GL_TRUE
         && ctx->Polygon.StippleFlag==GL_FALSE) {
@@ -2875,7 +2875,7 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
         }
     }
     if (   ctx->Light.ShadeModel==GL_FLAT
-        && ctx->RasterMask==DEPTH_BIT
+        && ctx->_RasterMask==DEPTH_BIT
         && ctx->Depth.Func==GL_LESS
         && ctx->Depth.Mask==GL_TRUE
         && ctx->Polygon.StippleFlag==GL_FALSE) {
@@ -2894,7 +2894,7 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
             return NULL;
         }
     }
-    if (   ctx->RasterMask==0   /* no depth test */
+    if (   ctx->_RasterMask==0   /* no depth test */
         && ctx->Light.ShadeModel==GL_SMOOTH
         && ctx->Polygon.StippleFlag==GL_FALSE) {
         switch (wmesa->pixelformat) {
@@ -2913,7 +2913,7 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
         }
     }
 
-    if (   ctx->RasterMask==0   /* no depth test */
+    if (   ctx->_RasterMask==0   /* no depth test */
         && ctx->Light.ShadeModel==GL_FLAT
         && ctx->Polygon.StippleFlag==GL_FALSE) {
         switch (wmesa->pixelformat) {

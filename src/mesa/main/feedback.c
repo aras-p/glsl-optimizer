@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.15 2000/10/31 18:09:44 keithw Exp $ */
+/* $Id: feedback.c,v 1.16 2000/11/05 18:40:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -156,123 +156,6 @@ void gl_feedback_vertex( GLcontext *ctx,
    }
 }
 
-
-
-static void feedback_vertex( GLcontext *ctx, GLuint v, GLuint pv )
-{
-   GLfloat win[4];
-   GLfloat color[4];
-   GLfloat tc[4];
-   GLuint texUnit = ctx->Texture.CurrentTransformUnit;
-   const struct vertex_buffer *VB = ctx->VB;
-   GLuint index;
-
-   win[0] = VB->Win.data[v][0];
-   win[1] = VB->Win.data[v][1];
-   win[2] = VB->Win.data[v][2] / ctx->Visual.DepthMaxF;
-   win[3] = 1.0 / VB->Win.data[v][3];
-
-   if (ctx->Light.ShadeModel == GL_SMOOTH)
-      pv = v;
-
-   color[0] = CHAN_TO_FLOAT(VB->ColorPtr->data[pv][0]);
-   color[1] = CHAN_TO_FLOAT(VB->ColorPtr->data[pv][1]);
-   color[2] = CHAN_TO_FLOAT(VB->ColorPtr->data[pv][2]);
-   color[3] = CHAN_TO_FLOAT(VB->ColorPtr->data[pv][3]);
-
-   if (VB->TexCoordPtr[texUnit]->size == 4 &&     
-       VB->TexCoordPtr[texUnit]->data[v][3] != 0.0) {
-      GLfloat invq = 1.0F / VB->TexCoordPtr[texUnit]->data[v][3];
-      tc[0] = VB->TexCoordPtr[texUnit]->data[v][0] * invq;
-      tc[1] = VB->TexCoordPtr[texUnit]->data[v][1] * invq;
-      tc[2] = VB->TexCoordPtr[texUnit]->data[v][2] * invq;
-      tc[3] = VB->TexCoordPtr[texUnit]->data[v][3];
-   }
-   else {
-      ASSIGN_4V(tc, 0,0,0,1);
-      COPY_SZ_4V(tc, 
-		 VB->TexCoordPtr[texUnit]->size,
-		 VB->TexCoordPtr[texUnit]->data[v]);
-   }
-
-   if (VB->IndexPtr)
-      index = VB->IndexPtr->data[v];
-   else
-      index = 0;
-
-   gl_feedback_vertex( ctx, win, color, index, tc );
-}
-
-
-static GLboolean cull_triangle( GLcontext *ctx,
-				GLuint v0, GLuint v1, GLuint v2, GLuint pv )
-{
-   struct vertex_buffer *VB = ctx->VB;
-   GLfloat (*win)[4] = VB->Win.data;
-   GLfloat ex = win[v1][0] - win[v0][0];
-   GLfloat ey = win[v1][1] - win[v0][1];
-   GLfloat fx = win[v2][0] - win[v0][0];
-   GLfloat fy = win[v2][1] - win[v0][1];
-   GLfloat c = ex*fy-ey*fx;
-
-   if (c * ctx->backface_sign > 0)
-      return 0;
-   
-   return 1;
-}
-
-
-
-/*
- * Put triangle in feedback buffer.
- */
-void gl_feedback_triangle( GLcontext *ctx,
-			   GLuint v0, GLuint v1, GLuint v2, GLuint pv )
-{
-   if (cull_triangle( ctx, v0, v1, v2, 0 )) {
-      FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POLYGON_TOKEN );
-      FEEDBACK_TOKEN( ctx, (GLfloat) 3 );        /* three vertices */
-      
-      feedback_vertex( ctx, v0, pv );
-      feedback_vertex( ctx, v1, pv );
-      feedback_vertex( ctx, v2, pv );
-   }
-}
-
-
-void gl_feedback_line( GLcontext *ctx, GLuint v1, GLuint v2, GLuint pv )
-{
-   GLenum token = GL_LINE_TOKEN;
-
-   if (ctx->StippleCounter==0) 
-      token = GL_LINE_RESET_TOKEN;
-
-   FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) token );
-
-   feedback_vertex( ctx, v1, pv );
-   feedback_vertex( ctx, v2, pv );
-
-   ctx->StippleCounter++;
-}
-
-
-void gl_feedback_points( GLcontext *ctx, GLuint first, GLuint last )
-{
-   const struct vertex_buffer *VB = ctx->VB;
-   GLuint i;
-
-   for (i=first;i<=last;i++) {
-      if (VB->ClipMask[i]==0) {
-         FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POINT_TOKEN );
-	 feedback_vertex( ctx, i, i );
-      }
-   }
-}
-
-
-
-
-
 /**********************************************************************/
 /*                              Selection                             */
 /**********************************************************************/
@@ -317,43 +200,6 @@ void gl_update_hitflag( GLcontext *ctx, GLfloat z )
    }
    if (z > ctx->Select.HitMaxZ) {
       ctx->Select.HitMaxZ = z;
-   }
-}
-
-void gl_select_triangle( GLcontext *ctx,
-			 GLuint v0, GLuint v1, GLuint v2, GLuint pv )
-{
-   const struct vertex_buffer *VB = ctx->VB;
-
-   if (cull_triangle( ctx, v0, v1, v2, 0 )) {
-      const GLfloat zs = 1.0F / ctx->Visual.DepthMaxF;
-      gl_update_hitflag( ctx, VB->Win.data[v0][2] * zs );
-      gl_update_hitflag( ctx, VB->Win.data[v1][2] * zs );
-      gl_update_hitflag( ctx, VB->Win.data[v2][2] * zs );
-   }
-}
-
-
-void gl_select_line( GLcontext *ctx,
-		     GLuint v0, GLuint v1, GLuint pv )
-{
-   const struct vertex_buffer *VB = ctx->VB;
-   const GLfloat zs = 1.0F / ctx->Visual.DepthMaxF;
-   gl_update_hitflag( ctx, VB->Win.data[v0][2] * zs );
-   gl_update_hitflag( ctx, VB->Win.data[v1][2] * zs );
-}
-
-
-void gl_select_points( GLcontext *ctx, GLuint first, GLuint last )
-{
-   struct vertex_buffer *VB = ctx->VB;
-   const GLfloat zs = 1.0F / ctx->Visual.DepthMaxF;
-   GLuint i;
-
-   for (i=first;i<=last;i++) {
-      if (VB->ClipMask[i]==0) {
-         gl_update_hitflag( ctx, VB->Win.data[i][2] * zs );
-      }
    }
 }
 
@@ -494,7 +340,7 @@ _mesa_RenderMode( GLenum mode )
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glRenderMode %s\n", gl_lookup_enum_by_nr(mode));
 
-   ctx->TriangleCaps &= ~(DD_FEEDBACK|DD_SELECT);
+   ctx->_TriangleCaps &= ~(DD_FEEDBACK|DD_SELECT);
 
    switch (ctx->RenderMode) {
       case GL_RENDER:
@@ -539,14 +385,14 @@ _mesa_RenderMode( GLenum mode )
       case GL_RENDER:
          break;
       case GL_SELECT:
-	 ctx->TriangleCaps |= DD_SELECT;
+	 ctx->_TriangleCaps |= DD_SELECT;
 	 if (ctx->Select.BufferSize==0) {
 	    /* haven't called glSelectBuffer yet */
 	    gl_error( ctx, GL_INVALID_OPERATION, "glRenderMode" );
 	 }
 	 break;
       case GL_FEEDBACK:
-	 ctx->TriangleCaps |= DD_FEEDBACK;
+	 ctx->_TriangleCaps |= DD_FEEDBACK;
 	 if (ctx->Feedback.BufferSize==0) {
 	    /* haven't called glFeedbackBuffer yet */
 	    gl_error( ctx, GL_INVALID_OPERATION, "glRenderMode" );

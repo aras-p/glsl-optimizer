@@ -1,4 +1,4 @@
-/* $Id: feedback.h,v 1.3 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: feedback.h,v 1.4 2000/11/05 18:40:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -73,16 +73,6 @@ _mesa_PopName( void );
 extern GLint
 _mesa_RenderMode( GLenum mode );
 
-
-extern void gl_feedback_points( GLcontext *ctx, GLuint first, GLuint last );
-extern void gl_feedback_line( GLcontext *ctx, GLuint v1, GLuint v2, GLuint pv );
-extern void gl_feedback_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
-				  GLuint v2, GLuint pv );
-
-extern void gl_select_points( GLcontext *ctx, GLuint first, GLuint last );
-extern void gl_select_line( GLcontext *ctx, GLuint v1, GLuint v2, GLuint pv );
-extern void gl_select_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
-				GLuint v2, GLuint pv );
 
 #endif
 

@@ -1,4 +1,4 @@
-/* $Id: mmx.h,v 1.3 2000/10/23 00:16:28 gareth Exp $ */
+/* $Id: mmx.h,v 1.4 2000/11/05 18:41:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,43 +36,6 @@ extern void _ASMAPI
 gl_mmx_blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
 						   GLubyte rgba[][4], const GLubyte dest[][4] );
 
-
-void gl_mmx_set_blend_function( GLcontext *ctx )
-{
-   const GLenum eq = ctx->Color.BlendEquation;
-   const GLenum srcRGB = ctx->Color.BlendSrcRGB;
-   const GLenum dstRGB = ctx->Color.BlendDstRGB;
-   const GLenum srcA = ctx->Color.BlendSrcA;
-   const GLenum dstA = ctx->Color.BlendDstA;
-
-
-   if (srcRGB != srcA || dstRGB != dstA) {
-      ctx->Color.BlendFunc = blend_general;
-   }
-   else if (eq==GL_FUNC_ADD_EXT && srcRGB==GL_SRC_ALPHA
-       && dstRGB==GL_ONE_MINUS_SRC_ALPHA) {
-      ctx->Color.BlendFunc = gl_mmx_blend_transparency;
-   }
-   else if (eq==GL_FUNC_ADD_EXT && srcRGB==GL_ONE && dstRGB==GL_ONE) {
-      ctx->Color.BlendFunc = blend_add;
-   }
-   else if (((eq==GL_FUNC_ADD_EXT || eq==GL_FUNC_REVERSE_SUBTRACT_EXT)
-             && (srcRGB==GL_ZERO && dstRGB==GL_SRC_COLOR))
-            ||
-            ((eq==GL_FUNC_ADD_EXT || eq==GL_FUNC_SUBTRACT_EXT)
-             && (srcRGB==GL_DST_COLOR && dstRGB==GL_ZERO))) {
-      ctx->Color.BlendFunc = blend_modulate;
-   }
-   else if (eq==GL_MIN_EXT) {
-      ctx->Color.BlendFunc = blend_min;
-   }
-   else if (eq==GL_MAX_EXT) {
-      ctx->Color.BlendFunc = blend_max;
-   }
-   else {
-      ctx->Color.BlendFunc = blend_general;
-   }
-}
 
 
 #endif

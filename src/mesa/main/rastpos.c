@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.11 2000/10/29 19:02:23 brianp Exp $ */
+/* $Id: rastpos.c,v 1.12 2000/11/05 18:40:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -73,10 +73,10 @@ static void raster_pos4f( GLcontext *ctx,
       GLfloat *objnorm = ctx->Current.Normal;
 
 	  /* Not needed???
-      vert = (ctx->NeedEyeCoords ? eye : v);
+      vert = (ctx->_NeedEyeCoords ? eye : v);
 	  */
 
-      if (ctx->NeedEyeNormals) {
+      if (ctx->_NeedEyeNormals) {
 	 GLfloat *inv = ctx->ModelView.inv;
 	 TRANSFORM_NORMAL( eyenorm, objnorm, inv );
 	 norm = eyenorm;
@@ -116,7 +116,7 @@ static void raster_pos4f( GLcontext *ctx,
    }
 
    /* clip to user clipping planes */
-   if ( ctx->Transform.AnyClip &&
+   if ( ctx->Transform._AnyClip &&
 	gl_userclip_point(ctx, clip) == 0) 
    {
       ctx->Current.RasterPosValid = GL_FALSE;
@@ -130,12 +130,12 @@ static void raster_pos4f( GLcontext *ctx,
    ndc[1] = clip[1] * d;
    ndc[2] = clip[2] * d;
 
-   ctx->Current.RasterPos[0] = (ndc[0] * ctx->Viewport.WindowMap.m[MAT_SX] + 
-				ctx->Viewport.WindowMap.m[MAT_TX]);
-   ctx->Current.RasterPos[1] = (ndc[1] * ctx->Viewport.WindowMap.m[MAT_SY] + 
-				ctx->Viewport.WindowMap.m[MAT_TY]);
-   ctx->Current.RasterPos[2] = (ndc[2] * ctx->Viewport.WindowMap.m[MAT_SZ] + 
-				ctx->Viewport.WindowMap.m[MAT_TZ]) / ctx->Visual.DepthMaxF;
+   ctx->Current.RasterPos[0] = (ndc[0] * ctx->Viewport._WindowMap.m[MAT_SX] + 
+				ctx->Viewport._WindowMap.m[MAT_TX]);
+   ctx->Current.RasterPos[1] = (ndc[1] * ctx->Viewport._WindowMap.m[MAT_SY] + 
+				ctx->Viewport._WindowMap.m[MAT_TY]);
+   ctx->Current.RasterPos[2] = (ndc[2] * ctx->Viewport._WindowMap.m[MAT_SZ] + 
+				ctx->Viewport._WindowMap.m[MAT_TZ]) / ctx->Visual.DepthMaxF;
    ctx->Current.RasterPos[3] = clip[3];
    ctx->Current.RasterPosValid = GL_TRUE;
 

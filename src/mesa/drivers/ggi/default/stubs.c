@@ -389,7 +389,7 @@ triangle_func ggiGetTriangleFunc(GLcontext *ctx)
 	if (ctx->Stencil.Enabled) return NULL;
 	if (ctx->Polygon.SmoothFlag) return NULL;
 	if (ctx->Polygon.StippleFlag) return NULL;
-	if (ctx->Texture.ReallyEnabled) return NULL;  
+	if (ctx->Texture._ReallyEnabled) return NULL;  
 	if (ctx->Light.ShadeModel==GL_SMOOTH) return NULL;
 	if (ctx->Depth.Test && ctx->Depth.Func != GL_LESS) return NULL;
 

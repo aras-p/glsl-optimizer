@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.20 2000/10/31 18:09:45 keithw Exp $ */
+/* $Id: texstate.c,v 1.21 2000/11/05 18:40:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1084,23 +1084,23 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	    switch (mode) {
 	    case GL_OBJECT_LINEAR:
 	       texUnit->GenModeS = mode;
-	       texUnit->GenBitS = TEXGEN_OBJ_LINEAR;
+	       texUnit->_GenBitS = TEXGEN_OBJ_LINEAR;
 	       break;
 	    case GL_EYE_LINEAR:
 	       texUnit->GenModeS = mode;
-	       texUnit->GenBitS = TEXGEN_EYE_LINEAR;
+	       texUnit->_GenBitS = TEXGEN_EYE_LINEAR;
 	       break;
 	    case GL_REFLECTION_MAP_NV:
 	       texUnit->GenModeS = mode;
-	       texUnit->GenBitS = TEXGEN_REFLECTION_MAP_NV;
+	       texUnit->_GenBitS = TEXGEN_REFLECTION_MAP_NV;
 	       break;
 	    case GL_NORMAL_MAP_NV:
 	       texUnit->GenModeS = mode;
-	       texUnit->GenBitS = TEXGEN_NORMAL_MAP_NV;
+	       texUnit->_GenBitS = TEXGEN_NORMAL_MAP_NV;
 	       break;
 	    case GL_SPHERE_MAP:
 	       texUnit->GenModeS = mode;
-	       texUnit->GenBitS = TEXGEN_SPHERE_MAP;
+	       texUnit->_GenBitS = TEXGEN_SPHERE_MAP;
 	       break;
 	    default:
 	       gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
@@ -1132,23 +1132,23 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	    switch (mode) {
                case GL_OBJECT_LINEAR:
                   texUnit->GenModeT = GL_OBJECT_LINEAR;
-                  texUnit->GenBitT = TEXGEN_OBJ_LINEAR;
+                  texUnit->_GenBitT = TEXGEN_OBJ_LINEAR;
                   break;
                case GL_EYE_LINEAR:
                   texUnit->GenModeT = GL_EYE_LINEAR;
-                  texUnit->GenBitT = TEXGEN_EYE_LINEAR;
+                  texUnit->_GenBitT = TEXGEN_EYE_LINEAR;
                   break;
                case GL_REFLECTION_MAP_NV:
                   texUnit->GenModeT = GL_REFLECTION_MAP_NV;
-                  texUnit->GenBitT = TEXGEN_REFLECTION_MAP_NV;
+                  texUnit->_GenBitT = TEXGEN_REFLECTION_MAP_NV;
                   break;
                case GL_NORMAL_MAP_NV:
                   texUnit->GenModeT = GL_NORMAL_MAP_NV;
-                  texUnit->GenBitT = TEXGEN_NORMAL_MAP_NV;
+                  texUnit->_GenBitT = TEXGEN_NORMAL_MAP_NV;
                   break;
                case GL_SPHERE_MAP:
                   texUnit->GenModeT = GL_SPHERE_MAP;
-                  texUnit->GenBitT = TEXGEN_SPHERE_MAP;
+                  texUnit->_GenBitT = TEXGEN_SPHERE_MAP;
                   break;
                default:
                   gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
@@ -1180,19 +1180,19 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	    switch (mode) {
 	    case GL_OBJECT_LINEAR:
 	       texUnit->GenModeR = GL_OBJECT_LINEAR;
-	       texUnit->GenBitR = TEXGEN_OBJ_LINEAR;
+	       texUnit->_GenBitR = TEXGEN_OBJ_LINEAR;
 	       break;
 	    case GL_REFLECTION_MAP_NV:
 	       texUnit->GenModeR = GL_REFLECTION_MAP_NV;
-	       texUnit->GenBitR = TEXGEN_REFLECTION_MAP_NV;
+	       texUnit->_GenBitR = TEXGEN_REFLECTION_MAP_NV;
 	       break;
 	    case GL_NORMAL_MAP_NV:
 	       texUnit->GenModeR = GL_NORMAL_MAP_NV;
-	       texUnit->GenBitR = TEXGEN_NORMAL_MAP_NV;
+	       texUnit->_GenBitR = TEXGEN_NORMAL_MAP_NV;
 	       break;
 	    case GL_EYE_LINEAR:
 	       texUnit->GenModeR = GL_EYE_LINEAR;
-	       texUnit->GenBitR = TEXGEN_EYE_LINEAR;
+	       texUnit->_GenBitR = TEXGEN_EYE_LINEAR;
 	       break;
 	    default:
 	       gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
@@ -1224,11 +1224,11 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	    switch (mode) {
 	    case GL_OBJECT_LINEAR: 
 	       texUnit->GenModeQ = GL_OBJECT_LINEAR;
-	       texUnit->GenBitQ = TEXGEN_OBJ_LINEAR;
+	       texUnit->_GenBitQ = TEXGEN_OBJ_LINEAR;
 	       break;
 	    case GL_EYE_LINEAR:
 	       texUnit->GenModeQ = GL_EYE_LINEAR;
-	       texUnit->GenBitQ = TEXGEN_EYE_LINEAR;
+	       texUnit->_GenBitQ = TEXGEN_EYE_LINEAR;
 	       break;
 	    default:
 	       gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
@@ -1684,7 +1684,6 @@ void gl_update_dirty_texobjs( GLcontext *ctx )
    for (t = ctx->Shared->DirtyTexObjList; t; t = next) {
       next = t->NextDirty;
       _mesa_test_texobj_completeness(ctx, t);
-      _swrast_set_texture_sampler(t); /*  swrast should do this internally */
       t->NextDirty = NULL;
       t->Dirty = GL_FALSE;
    }

@@ -1,4 +1,4 @@
-/* $Id: polygon.c,v 1.14 2000/10/30 13:32:01 keithw Exp $ */
+/* $Id: polygon.c,v 1.15 2000/11/05 18:40:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -115,12 +115,12 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
    }
 
    /* Compute a handy "shortcut" value: */
-   ctx->TriangleCaps &= ~DD_TRI_UNFILLED;
-   ctx->Polygon.Unfilled = GL_FALSE;
+   ctx->_TriangleCaps &= ~DD_TRI_UNFILLED;
+   ctx->Polygon._Unfilled = GL_FALSE;
 
    if (ctx->Polygon.FrontMode!=GL_FILL || ctx->Polygon.BackMode!=GL_FILL) {
-      ctx->Polygon.Unfilled = GL_TRUE;
-      ctx->TriangleCaps |= DD_TRI_UNFILLED;
+      ctx->Polygon._Unfilled = GL_TRUE;
+      ctx->_TriangleCaps |= DD_TRI_UNFILLED;
    }
 
    ctx->NewState |= _NEW_POLYGON;
