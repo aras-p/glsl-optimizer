@@ -92,6 +92,13 @@ static const GLuint __driNConfigOptions = 10;
 #define PCI_CHIP_RADEON_LZ	0x4C5A
 
 #define PCI_CHIP_RV200_QW	0x5157 /* Radeon 7500 - not an R200 at all */
+/* IGP Chipsets */
+#define PCI_CHIP_RS100_4136     0x4136
+#define PCI_CHIP_RS200_4137     0x4137
+#define PCI_CHIP_RS250_4237     0x4237
+#define PCI_CHIP_RS100_4336     0x4336
+#define PCI_CHIP_RS200_4337     0x4337
+#define PCI_CHIP_RS250_4437     0x4437
 #endif
 
 static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
@@ -224,6 +231,12 @@ radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RADEON_QZ:
    case PCI_CHIP_RADEON_LY:
    case PCI_CHIP_RADEON_LZ:
+   case PCI_CHIP_RS100_4136: /* IGPs don't have TCL */
+   case PCI_CHIP_RS200_4137:
+   case PCI_CHIP_RS250_4237:
+   case PCI_CHIP_RS100_4336:
+   case PCI_CHIP_RS200_4337:
+   case PCI_CHIP_RS250_4437:
       break;
    }
 

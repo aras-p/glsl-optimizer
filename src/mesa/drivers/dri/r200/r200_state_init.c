@@ -461,6 +461,12 @@ void r200InitState( r200ContextPtr rmesa )
 #else
 						R200_VC_NO_SWAP;
 #endif
+
+   if (!(rmesa->r200Screen->chipset & R200_CHIPSET_TCL)) {
+      /* Bypass TCL */
+      rmesa->hw.cst.cmd[CST_SE_VAP_CNTL_STATUS] |= (1<<8);
+   }
+
    rmesa->hw.cst.cmd[CST_RE_POINTSIZE] = 0x100010;
    rmesa->hw.cst.cmd[CST_SE_TCL_INPUT_VTX_0] =
       (0x0 << R200_VERTEX_POSITION_ADDR__SHIFT);

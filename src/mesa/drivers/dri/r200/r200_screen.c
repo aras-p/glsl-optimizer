@@ -89,6 +89,16 @@ static const GLuint __driNConfigOptions = 10;
 #define PCI_CHIP_R200_LY	0x4C59
 #define PCI_CHIP_R200_LZ	0x4C5A
 #define PCI_CHIP_RV200_QW	0x5157 /* Radeon 7500 - not an R200 at all */
+#define PCI_CHIP_RS100_4136     0x4136 /* IGP RS100, RS200, RS250 are not R200 */
+#define PCI_CHIP_RS200_4137     0x4137
+#define PCI_CHIP_RS250_4237     0x4237
+#define PCI_CHIP_RS100_4336     0x4336
+#define PCI_CHIP_RS200_4337     0x4337
+#define PCI_CHIP_RS250_4437     0x4437
+#define PCI_CHIP_RS300_5834     0x5834 /* All RS300's are R200 */
+#define PCI_CHIP_RS300_5835     0x5835
+#define PCI_CHIP_RS300_5836     0x5836
+#define PCI_CHIP_RS300_5837     0x5837
 #endif
 
 static r200ScreenPtr __r200Screen;
@@ -115,6 +125,7 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
       return NULL;
    }
 
+   screen->chipset = 0;
    switch ( dri_priv->deviceID ) {
    case PCI_CHIP_R200_QD:
    case PCI_CHIP_R200_QE:
@@ -126,11 +137,24 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_R200_LW:
    case PCI_CHIP_R200_LY:
    case PCI_CHIP_R200_LZ:
+   case PCI_CHIP_RS100_4136:
+   case PCI_CHIP_RS200_4137:
+   case PCI_CHIP_RS250_4237:
+   case PCI_CHIP_RS100_4336:
+   case PCI_CHIP_RS200_4337:
+   case PCI_CHIP_RS250_4437:
       __driUtilMessage("r200CreateScreen(): Device isn't an r200!\n");
       FREE( screen );
-      return NULL;      
+      return NULL;
+
+   case PCI_CHIP_RS300_5834:
+   case PCI_CHIP_RS300_5835:
+   case PCI_CHIP_RS300_5836:
+   case PCI_CHIP_RS300_5837:
+      break;
+
    default:
-      screen->chipset = R200_CHIPSET_R200;
+      screen->chipset |= R200_CHIPSET_TCL;
       break;
    }
 
