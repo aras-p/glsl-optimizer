@@ -1481,8 +1481,7 @@ void _tnl_NewList( GLcontext *ctx, GLuint list, GLenum mode )
 
 void _tnl_EndList( GLcontext *ctx )
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   assert(tnl->save.vertex_size == 0);
+   assert(TNL_CONTEXT(ctx)->save.vertex_size == 0);
 }
  
 void _tnl_BeginCallList( GLcontext *ctx, GLuint list )

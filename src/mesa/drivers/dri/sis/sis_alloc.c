@@ -170,7 +170,7 @@ sisAllocZStencilBuffer( sisContextPtr smesa )
    memset( &smesa->zClearPacket, 0, sizeof(ENGPACKET) );
 
    smesa->zClearPacket.dwSrcPitch = (z_depth == 2) ? 0x80000000 : 0xf0000000;
-   smesa->zClearPacket.dwDestBaseAddr = (GLint)(addr -
+   smesa->zClearPacket.dwDestBaseAddr = (unsigned long)(addr -
       (unsigned long)smesa->FbBase);
    smesa->zClearPacket.wDestPitch = width2;
    smesa->zClearPacket.stdwDestPos.wY = 0;
@@ -218,7 +218,7 @@ sisAllocBackbuffer( sisContextPtr smesa )
    addr = (char *)ALIGNMENT( (unsigned long)addr, DRAW_BUFFER_HW_ALIGNMENT );
 
    smesa->backbuffer = addr;
-   smesa->backOffset = (GLint)(addr - (unsigned long)smesa->FbBase);
+   smesa->backOffset = (unsigned long)(addr - (unsigned long)smesa->FbBase);
    smesa->backPitch = width2 * depth;
 
    memset ( &smesa->cbClearPacket, 0, sizeof(ENGPACKET) );

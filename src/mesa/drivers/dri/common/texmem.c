@@ -1083,7 +1083,7 @@ driValidateTextureHeaps( driTexHeap * const * texture_heaps,
        * the correct heap.  
        *
        * Check the texobj base address corresponds to the MemBlock
-       * range.  Check the texobj size (recalculate???) fits within
+       * range.  Check the texobj size (recalculate?) fits within
        * the MemBlock.
        *
        * Count the number of texobj's using this heap.

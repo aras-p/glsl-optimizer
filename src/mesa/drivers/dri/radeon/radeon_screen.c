@@ -39,6 +39,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "glheader.h"
 #include "imports.h"
 
+#define STANDALONE_MMIO
 #include "radeon_context.h"
 #include "radeon_screen.h"
 #include "radeon_macros.h"

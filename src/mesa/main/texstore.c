@@ -3553,9 +3553,7 @@ make_2d_mipmap(const struct gl_texture_format *format, GLint border,
    const GLint dstRowStride = bpt * dstWidth;
    const GLubyte *srcA, *srcB;
    GLubyte *dst;
-   GLint row, colStride;
-
-   colStride = (srcWidth == dstWidth) ? 1 : 2;
+   GLint row;
 
    /* Compute src and dst pointers, skipping any border */
    srcA = srcPtr + border * ((srcWidth + 1) * bpt);

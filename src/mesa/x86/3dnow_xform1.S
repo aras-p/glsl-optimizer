@@ -1,4 +1,4 @@
-/* $Id: 3dnow_xform1.S,v 1.1 2001/03/29 06:46:16 gareth Exp $ */
+/* $Id: 3dnow_xform1.S,v 1.2 2004/04/26 10:10:25 alanh Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,6 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#ifdef USE_3DNOW_ASM
 #include "matypes.h"
 #include "xform_args.h"
 
@@ -421,3 +422,5 @@ LLBL( G3TP3R_3 ):
     POP_L     ( EDI )
     POP_L     ( ESI )
     RET
+
+#endif

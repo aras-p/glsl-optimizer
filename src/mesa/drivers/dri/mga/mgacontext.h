@@ -29,7 +29,6 @@
 #ifndef MGALIB_INC
 #define MGALIB_INC
 
-#include <inttypes.h>
 #include "drm.h"
 #include "mga_drm.h"
 #include "dri_util.h"

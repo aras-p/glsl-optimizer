@@ -880,7 +880,7 @@ tdfxTMMoveOutTM_NoLock( tdfxContextPtr fxMesa, struct gl_texture_object *tObj )
     tdfxTexInfo *ti = TDFX_TEXTURE_DATA(tObj);
 
     if (MESA_VERBOSE & VERBOSE_DRIVER) {
-        fprintf(stderr, "fxmesa: %s(%p (%d))\n", __FUNCTION__, tObj, tObj->Name);
+        fprintf(stderr, "fxmesa: %s(%p (%d))\n", __FUNCTION__, (void *)tObj, tObj->Name);
     }
 
     /*

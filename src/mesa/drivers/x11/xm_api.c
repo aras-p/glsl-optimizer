@@ -794,6 +794,8 @@ noFaultXAllocColor( int client,
 static GLboolean setup_grayscale( int client, XMesaVisual v,
                                   XMesaBuffer buffer, XMesaColormap cmap )
 {
+   (void) DitherValues;		/* Muffle compiler */
+
    if (GET_VISUAL_DEPTH(v)<4 || GET_VISUAL_DEPTH(v)>16) {
       return GL_FALSE;
    }

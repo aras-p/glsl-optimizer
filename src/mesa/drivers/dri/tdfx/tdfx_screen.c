@@ -118,7 +118,7 @@ static GLboolean
 tdfxInitDriver( __DRIscreenPrivate *sPriv )
 {
    if ( TDFX_DEBUG & DEBUG_VERBOSE_DRI ) {
-      fprintf( stderr, "%s( %p )\n", __FUNCTION__, sPriv );
+      fprintf( stderr, "%s( %p )\n", __FUNCTION__, (void *)sPriv );
    }
 
    /* Check the DRI externsion version */
@@ -195,7 +195,7 @@ tdfxSwapBuffers( __DRIdrawablePrivate *driDrawPriv )
    GLframebuffer *mesaBuffer;
 
    if ( TDFX_DEBUG & DEBUG_VERBOSE_DRI ) {
-      fprintf( stderr, "%s( %p )\n", __FUNCTION__, driDrawPriv );
+      fprintf( stderr, "%s( %p )\n", __FUNCTION__, (void *)driDrawPriv );
    }
 
    mesaBuffer = (GLframebuffer *) driDrawPriv->driverPrivate;

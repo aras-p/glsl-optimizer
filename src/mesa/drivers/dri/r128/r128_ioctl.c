@@ -33,6 +33,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <errno.h>
 
+#define STANDALONE_MMIO
 #include "r128_context.h"
 #include "r128_state.h"
 #include "r128_ioctl.h"
@@ -266,7 +267,7 @@ void r128CopyBuffer( const __DRIdrawablePrivate *dPriv )
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "\n********************************\n" );
       fprintf( stderr, "\n%s( %p )\n\n",
-	       __FUNCTION__, rmesa->glCtx );
+	       __FUNCTION__, (void *)rmesa->glCtx );
       fflush( stderr );
    }
 
@@ -344,7 +345,7 @@ void r128PageFlip( const __DRIdrawablePrivate *dPriv )
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "\n%s( %p ): page=%d\n\n",
-	       __FUNCTION__, rmesa->glCtx, rmesa->sarea->pfCurrentPage );
+	       __FUNCTION__, (void *)rmesa->glCtx, rmesa->sarea->pfCurrentPage );
    }
 
    FLUSH_BATCH( rmesa );

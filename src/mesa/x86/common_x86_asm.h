@@ -1,4 +1,4 @@
-/* $Id: common_x86_asm.h,v 1.10 2002/10/29 20:28:57 brianp Exp $ */
+/* $Id: common_x86_asm.h,v 1.11 2004/04/26 10:10:25 alanh Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,7 @@
  *
  * Written by Holger Waechtler <holger@akaflieg.extern.tu-berlin.de>
  * Changed by Andre Werthmann <wertmann@cs.uni-potsdam.de> for using the
- * new Katmai functions
+ * new SSE functions
  *
  * Reimplemented by Gareth Hughes in a more
  * future-proof manner, based on code in the Linux kernel.

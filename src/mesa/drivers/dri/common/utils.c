@@ -46,7 +46,8 @@ driParseDebugString( const char * debug,
    flag = 0;
    if ( debug != NULL ) {
       while( control->string != NULL ) {
-	 if ( strstr( debug, control->string ) != NULL ) {
+	 if ( !strcmp( debug, "all" ) ||
+	      strstr( debug, control->string ) != NULL ) {
 	    flag |= control->flag;
 	 }
 

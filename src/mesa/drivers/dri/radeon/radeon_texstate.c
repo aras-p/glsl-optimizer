@@ -391,7 +391,7 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	   || (texUnit->_Current != NULL) );
 
    if ( RADEON_DEBUG & DEBUG_TEXTURE ) {
-      fprintf( stderr, "%s( %p, %d )\n", __FUNCTION__, ctx, unit );
+      fprintf( stderr, "%s( %p, %d )\n", __FUNCTION__, (void *)ctx, unit );
    }
 
    /* Set the texture environment state.  Isn't this nice and clean?

@@ -3,7 +3,9 @@
 static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
+#if defined(VB_DEBUG) || (IND & (FFB_VB_XYZ_BIT | FFB_VB_RGBA_BIT))
 	struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+#endif
 #if (IND & (FFB_VB_RGBA_BIT))
 	GLfloat (*col0)[4];
 	GLuint col0_stride;

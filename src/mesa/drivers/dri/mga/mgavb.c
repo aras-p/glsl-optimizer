@@ -115,8 +115,8 @@ static struct {
 
 #define PTEX_FALLBACK() FALLBACK(ctx, MGA_FALLBACK_TEXTURE, 1)
 
-#define INTERP_VERTEX setup_tab[MGA_CONTEXT(ctx)->SetupIndex].interp
-#define COPY_PV_VERTEX setup_tab[MGA_CONTEXT(ctx)->SetupIndex].copy_pv
+#define INTERP_VERTEX setup_tab[mmesa->SetupIndex].interp
+#define COPY_PV_VERTEX setup_tab[mmesa->SetupIndex].copy_pv
 
 
 /***********************************************************************

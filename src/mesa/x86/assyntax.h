@@ -274,9 +274,7 @@
 #define GLOBL		CHOICE(.globl, .globl, .extern)
 #define GLOBAL		GLOBL
 #define EXTERN		GLOBL
-/*
-#define ALIGNTEXT32	CHOICE(.align 32, .align ARG2(5,0x90), .align 32)
-*/
+#ifndef __AOUT__
 #define ALIGNTEXT32	CHOICE(.align 32, .balign 32, .align 32)
 #define ALIGNTEXT16	CHOICE(.align 16, .balign 16, .align 16)
 #define ALIGNTEXT8	CHOICE(.align 8, .balign 8, .align 8)
@@ -294,6 +292,26 @@
 #define ALIGNDATA8	CHOICE(.align 8, .balign ARG2(8,0x0), .align 8)
 #define ALIGNDATA4	CHOICE(.align 4, .balign ARG2(4,0x0), .align 4)
 #define ALIGNDATA2	CHOICE(.align 2, .balign ARG2(2,0x0), .align 2)
+#else
+/* 'as -aout' on FreeBSD doesn't have .balign */
+#define ALIGNTEXT32	CHOICE(.align 32, .align ARG2(5,0x90), .align 32)
+#define ALIGNTEXT16	CHOICE(.align 16, .align ARG2(4,0x90), .align 16)
+#define ALIGNTEXT8	CHOICE(.align 8, .align ARG2(3,0x90), .align 8)
+#define ALIGNTEXT4	CHOICE(.align 4, .align ARG2(2,0x90), .align 4)
+#define ALIGNTEXT2	CHOICE(.align 2, .align ARG2(1,0x90), .align 2)
+/* ALIGNTEXT4ifNOP is the same as ALIGNTEXT4, but only if the space is
+ * guaranteed to be filled with NOPs.  Otherwise it does nothing.
+ */
+#define ALIGNTEXT32ifNOP	CHOICE(.align 32, .align ARG2(5,0x90), /*can't do it*/)
+#define ALIGNTEXT16ifNOP	CHOICE(.align 16, .align ARG2(4,0x90), /*can't do it*/)
+#define ALIGNTEXT8ifNOP	CHOICE(.align 8, .align ARG2(3,0x90), /*can't do it*/)
+#define ALIGNTEXT4ifNOP	CHOICE(.align 4, .align ARG2(2,0x90), /*can't do it*/)
+#define ALIGNDATA32	CHOICE(.align 32, .align ARG2(5,0x0), .align 32)
+#define ALIGNDATA16	CHOICE(.align 16, .align ARG2(4,0x0), .align 16)
+#define ALIGNDATA8	CHOICE(.align 8, .align ARG2(3,0x0), .align 8)
+#define ALIGNDATA4	CHOICE(.align 4, .align ARG2(2,0x0), .align 4)
+#define ALIGNDATA2	CHOICE(.align 2, .align ARG2(1,0x0), .align 2)
+#endif /* __AOUT__ */
 #define FILE(s)		CHOICE(.file s, .file s, .file s)
 #define STRING(s)	CHOICE(.string s, .asciz s, .asciz s)
 #define D_LONG		CHOICE(.long, .long, .data4)

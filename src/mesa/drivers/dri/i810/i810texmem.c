@@ -60,6 +60,7 @@ void i810DestroyTexObj(i810ContextPtr imesa, i810TextureObjectPtr t)
 
 
 
+#if defined(i386) || defined(__i386__)
 /* From linux kernel i386 header files, copes with odd sizes better
  * than COPY_DWORDS would:
  */
@@ -80,6 +81,10 @@ __asm__ __volatile__(
 	: "memory");
 return (to);
 }
+#else
+/* Allow compilation on other architectures */
+#define __memcpy memcpy
+#endif
 
 /* Upload an image from mesa's internal copy.
  */

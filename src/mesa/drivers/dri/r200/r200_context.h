@@ -38,7 +38,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #ifdef GLX_DIRECT_RENDERING
 
-#include <inttypes.h>
 #include "tnl/t_vertex.h"
 #include "drm.h"
 #include "radeon_drm.h"
