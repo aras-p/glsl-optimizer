@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.57 2002/02/13 00:53:19 keithw Exp $ */
+/* $Id: enable.c,v 1.58 2002/03/28 22:45:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -230,6 +230,9 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
                                     ctx->Transform.EyeUserPlane[p],
                                     ctx->ProjectionMatrixStack.Top->inv );
             }
+            else {
+               ctx->Transform._AnyClip--;
+            }               
          }
          break;
       case GL_COLOR_MATERIAL:
