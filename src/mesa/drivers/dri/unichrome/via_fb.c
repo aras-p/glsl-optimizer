@@ -66,7 +66,7 @@ via_free_draw_buffer(viaContextPtr vmesa, viaBuffer *buf)
 GLboolean
 via_alloc_dma_buffer(viaContextPtr vmesa)
 {
-   drmVIADMAInit init;
+   drm_via_dma_init_t init;
 
    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
    vmesa->dma = (GLubyte *) malloc(VIA_DMA_BUFSIZ);
@@ -76,7 +76,7 @@ via_alloc_dma_buffer(viaContextPtr vmesa)
     */
    init.func = VIA_DMA_INITIALIZED;
    vmesa->useAgp = 
-      ( 0 == drmCommandWrite(vmesa->driFd, DRM_VIA_DMA_INIT, 
+      ( 0 == drmCommandWrite(vmesa->driFd, VIA_INIT_DMA, 
 			     &init, sizeof(init)));
    if (vmesa->useAgp) 
       printf("unichrome_dri.so: Using AGP.\n");

@@ -424,14 +424,14 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
 
 static int fire_buffer(viaContextPtr vmesa)
 {
-   drmVIACommandBuffer bufI;
+   drm_via_cmdbuffer_t bufI;
    int ret;
 
    bufI.buf = (char *)vmesa->dma;
    bufI.size = vmesa->dmaLow;
 
    if (vmesa->useAgp) {
-      drmVIACmdBufSize bSiz;
+      drm_via_cmdbuf_size_t bSiz;
 
       /* Do the CMDBUF_SIZE ioctl:
        */
@@ -448,7 +448,7 @@ static int fire_buffer(viaContextPtr vmesa)
 	 return ret;
       }
 
-      /* Acutally fire the buffer:
+      /* Actually fire the buffer:
        */
       do {
 	 ret = drmCommandWrite(vmesa->driFd, DRM_VIA_CMDBUFFER, 

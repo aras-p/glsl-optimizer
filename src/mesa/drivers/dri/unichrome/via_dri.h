@@ -38,6 +38,8 @@ typedef struct {
     int sarea_priv_offset;
     /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
     int VQEnable;
+    int DRIIrqEnable;
+    int ringBufActive;
 } VIADRIRec, *VIADRIPtr;
 
 typedef struct {

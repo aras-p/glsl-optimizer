@@ -40,7 +40,6 @@ typedef struct via_texture_object_t *viaTextureObjectPtr;
 #include "via_screen.h"
 #include "via_tex.h"
 #include "via_common.h"
-#include "xf86drmVIA.h"
 
 #define VIA_FALLBACK_TEXTURE           	0x1
 #define VIA_FALLBACK_DRAW_BUFFER       	0x2

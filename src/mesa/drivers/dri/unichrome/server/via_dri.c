@@ -77,7 +77,7 @@ static int VIADRIFinishScreenInit(DRIDriverContext * ctx);
 #define AGP_PAGE_SIZE 4096
 #define AGP_PAGES 8192
 #define AGP_SIZE (AGP_PAGE_SIZE * AGP_PAGES)
-#define AGP_CMDBUF_PAGES 256
+#define AGP_CMDBUF_PAGES 512
 #define AGP_CMDBUF_SIZE (AGP_PAGE_SIZE * AGP_CMDBUF_PAGES)
 
 static char VIAKernelDriverName[] = "via";
@@ -88,6 +88,119 @@ static int VIADRIPciInit(DRIDriverContext * ctx, VIAPtr pVia);
 static int VIADRIFBInit(DRIDriverContext * ctx, VIAPtr pVia);
 static int VIADRIKernelInit(DRIDriverContext * ctx, VIAPtr pVia);
 static int VIADRIMapInit(DRIDriverContext * ctx, VIAPtr pVia);
+
+static void VIADRIIrqInit( DRIDriverContext *ctx )
+{
+    VIAPtr pVia = VIAPTR(ctx);
+    VIADRIPtr pVIADRI = pVia->devPrivate;
+
+    pVIADRI->irqEnabled = drmGetInterruptFromBusID(pVia->drmFD,
+					   ctx->pciBus,
+					   ctx->pciDevice,
+					   ctx->pciFunc);
+
+    if ((drmCtlInstHandler(pVia->drmFD, pVIADRI->irqEnabled))) {
+	xf86DrvMsg(pScreen->myNum, X_WARNING,
+		   "[drm] Failure adding irq handler. "
+		   "Falling back to irq-free operation.\n");
+	pVIADRI->irqEnabled = 0;
+    }
+
+    if (pVIADRI->irqEnabled)
+	xf86DrvMsg(pScreen->myNum, X_INFO,
+		   "[drm] Irq handler installed, using IRQ %d.\n",
+		   pVIADRI->irqEnabled);
+}
+
+static void VIADRIIrqExit( DRIDriverContext *ctx ) {
+    VIAPtr pVia = VIAPTR(ctx);
+    VIADRIPtr pVIADRI = pVia->devPrivate;
+
+    if (pVIADRI->irqEnabled) {
+	if (drmCtlUninstHandler(pVia->drmFD)) {
+	    xf86DrvMsg(pScreen-myNum, X_INFO,"[drm] Irq handler uninstalled.\n");
+	} else {
+	    xf86DrvMsg(pScreen->myNum, X_ERROR,
+		       "[drm] Could not uninstall irq handler.\n");
+	}
+    }
+}
+	    
+
+/* Locks up engine - FIXME 
+#define ENABLE_AGP_RINGBUF
+*/
+
+#ifdef ENABLE_AGP_RINGBUF
+
+static void VIADRIRingBufferCleanup(DRIDriverContext *ctx)
+{
+    VIAPtr pVia = VIAPTR(ctx);
+    VIADRIPtr pVIADRI = pVia->devPrivate;
+    drmVIADMAInit ringBufInit;
+
+    if (pVIADRI->ringBufActive) {
+	xf86DrvMsg(pScreen->myNum, X_INFO, 
+		   "[drm] Cleaning up DMA ring-buffer.\n");
+	ringBufInit.func = VIA_CLEANUP_DMA;
+	if (drmCommandWrite(pVia->drmFD, DRM_VIA_DMA_INIT, &ringBufInit,
+			    sizeof(ringBufInit))) {
+	    xf86DrvMsg(pScreen->myNum, X_WARNING, 
+		       "[drm] Failed to clean up DMA ring-buffer: %d\n", errno);
+	}
+	pVIADRI->ringBufActive = 0;
+    }
+}
+
+static int VIADRIRingBufferInit(DRIDriverContext *ctx)
+{
+    VIAPtr pVia = VIAPTR(ctx);
+    VIADRIPtr pVIADRI = pVia->devPrivate;
+    drmVIADMAInit ringBufInit;
+    drmVersionPtr drmVer;
+
+    pVIADRI->ringBufActive = 0;
+
+    if (NULL == (drmVer = drmGetVersion(pVia->drmFD))) {
+	return GL_FALSE;
+    }
+
+    if (((drmVer->version_major <= 1) && (drmVer->version_minor <= 3))) {
+	return GL_FALSE;
+    } 
+
+    /*
+     * Info frome code-snippet on DRI-DEVEL list; Erdi Chen.
+     */
+
+    switch (pVia->ChipId) {
+    case PCI_CHIP_VT3259:
+    	ringBufInit.reg_pause_addr = 0x40c;
+	break;
+    default:
+    	ringBufInit.reg_pause_addr = 0x418;
+	break;
+    }
+   
+    ringBufInit.offset = pVia->agpSize;
+    ringBufInit.size = AGP_CMDBUF_SIZE;
+    ringBufInit.func = VIA_INIT_DMA;
+    if (drmCommandWrite(pVia->drmFD, DRM_VIA_DMA_INIT, &ringBufInit,
+			sizeof(ringBufInit))) {
+	xf86DrvMsg(pScreen->myNum, X_ERROR, 
+		   "[drm] Failed to initialize DMA ring-buffer: %d\n", errno);
+	return GL_FALSE;
+    }
+    xf86DrvMsg(pScreen->myNum, X_INFO, 
+	       "[drm] Initialized AGP ring-buffer, size 0x%lx at AGP offset 0x%lx.\n",
+	       ringBufInit.size, ringBufInit.offset);
+   
+    pVIADRI->ringBufActive = 1;
+    return GL_TRUE;
+}	    
+
+#endif
+	
 
 static int VIADRIAgpInit(const DRIDriverContext *ctx, VIAPtr pVia)
 {
@@ -125,7 +238,12 @@ static int VIADRIAgpInit(const DRIDriverContext *ctx, VIAPtr pVia)
         return GL_FALSE;
     }
 
-    pVia->agpSize = AGP_SIZE;
+    /*
+     * Place the ring-buffer last in the AGP region, and restrict the
+     * public map not to include the buffer for security reasons.
+     */
+
+    pVia->agpSize = AGP_SIZE - AGP_CMDBUF_SIZE;
     pVia->agpAddr = drmAgpBase(pVia->drmFD);
     xf86DrvMsg(pScreen->myNum, X_INFO,
                  "[drm] agpAddr = 0x%08lx\n",pVia->agpAddr);
@@ -154,9 +272,22 @@ static int VIADRIAgpInit(const DRIDriverContext *ctx, VIAPtr pVia)
     xf86DrvMsg(pScreen->myNum, X_INFO, 
                 "[drm] agp physical addr = 0x%08lx\n", agp_phys);
 
-    drmVIAAgpInit(pVia->drmFD, 0, AGP_SIZE);
-    return GL_TRUE;
+    {
+	drm_via_agp_t agp;
+	agp.offset = 0;
+	agp.size = AGP_SIZE-AGP_CMDBUF_SIZE;
+	if (drmCommandWrite(pVia->drmFD, DRM_VIA_AGP_INIT, &agp,
+			    sizeof(drm_via_agp_t)) < 0) {
+	    drmUnmap(&agpaddr,pVia->agpSize);
+	    drmRmMap(pVia->drmFD,pVIADRI->agp.handle);
+	    drmAgpUnbind(pVia->drmFD, pVia->agpHandle);
+	    drmAgpFree(pVia->drmFD, pVia->agpHandle);
+	    drmAgpRelease(pVia->drmFD);
+	    return GL_FALSE;
+	}
+    }
 
+    return GL_TRUE;
 }
 
 static int VIADRIFBInit(DRIDriverContext * ctx, VIAPtr pVia)
@@ -167,13 +298,23 @@ static int VIADRIFBInit(DRIDriverContext * ctx, VIAPtr pVia)
     pVIADRI->fbOffset = FBOffset;
     pVIADRI->fbSize = pVia->videoRambytes;
 
-    if (drmVIAFBInit(pVia->drmFD, FBOffset, FBSize) < 0) {
-	xf86DrvMsg(pScreen->myNum, X_ERROR,"[drm] failed to init frame buffer area\n");
-	return GL_FALSE;
-    }
-    else {
-	xf86DrvMsg(pScreen->myNum, X_INFO,"[drm] FBFreeStart= 0x%08lx FBFreeEnd= 0x%08lx FBSize= 0x%08lx\n", pVia->FBFreeStart, pVia->FBFreeEnd, FBSize);
-	return GL_TRUE;
+    {
+	drm_via_fb_t fb;
+	fb.offset = FBOffset;
+	fb.size = FBSize;
+	
+	if (drmCommandWrite(pVia->drmFD, DRM_VIA_FB_INIT, &fb,
+			    sizeof(drm_via_fb_t)) < 0) {
+	    xf86DrvMsg(pScreen->myNum, X_ERROR,
+		       "[drm] failed to init frame buffer area\n");
+	    return GL_FALSE;
+	} else {
+	    xf86DrvMsg(pScreen->myNum, X_INFO,
+		       "[drm] FBFreeStart= 0x%08x FBFreeEnd= 0x%08x "
+		       "FBSize= 0x%08x\n",
+		       pVia->FBFreeStart, pVia->FBFreeEnd, FBSize);
+	    return GL_TRUE;	
+	}   
     }
 }
 
@@ -274,7 +415,7 @@ static int VIADRIScreenInit(DRIDriverContext * ctx)
 
     if (!(VIADRIFBInit(ctx, pVia))) {
 	VIADRICloseScreen(ctx);
-        xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "[dri] frame buffer initialize fial .\n" );
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "[dri] frame buffer initialize fail .\n" );
         return GL_FALSE;
     }
     
@@ -315,6 +456,10 @@ VIADRICloseScreen(DRIDriverContext * ctx)
     VIAPtr pVia = VIAPTR(ctx);
     VIADRIPtr pVIADRI=(VIADRIPtr)pVia->devPrivate;
 
+#ifdef ENABLE_AGP_RINGBUF
+    VIADRIRingBufferCleanup(ctx);
+#endif
+
     if (pVia->MapBase) {
 	xf86DrvMsg(pScreen->myNum, X_INFO, "[drm] Unmapping MMIO registers\n");
         drmUnmap(pVia->MapBase, pVIADRI->regs.size);
@@ -326,6 +471,11 @@ VIADRICloseScreen(DRIDriverContext * ctx)
 	xf86DrvMsg(pScreen->myNum, X_INFO, "[drm] Releasing agp module\n");
     	drmAgpRelease(pVia->drmFD);
     }
+
+#if 0
+    if (pVia->DRIIrqEnable) 
+#endif
+        VIADRIIrqExit(ctx);
 }
 
 static int
@@ -371,15 +521,27 @@ VIADRIFinishScreenInit(DRIDriverContext * ctx)
     pVIADRI->scrnX=pVIADRI->width;
     pVIADRI->scrnY=pVIADRI->height;
 
+    /* Initialize IRQ */
+#if 0
+    if (pVia->DRIIrqEnable) 
+#endif
+	VIADRIIrqInit(ctx);
+    
+#ifdef ENABLE_AGP_RINGBUF
+    pVIADRI->ringBufActive = 0;
+    VIADRIRingBufferInit(ctx);
+#endif     
+
     return GL_TRUE;
 }
 
 /* Initialize the kernel data structures. */
 static int VIADRIKernelInit(DRIDriverContext * ctx, VIAPtr pVia)
 {
-    drmVIAInit drmInfo;
-    memset(&drmInfo, 0, sizeof(drmVIAInit));
+    drm_via_init_t drmInfo;
+    memset(&drmInfo, 0, sizeof(drm_via_init_t));
     drmInfo.sarea_priv_offset   = sizeof(drm_sarea_t);
+    drmInfo.func = VIA_INIT_MAP;
     drmInfo.fb_offset           = pVia->FrameBufferBase;
     drmInfo.mmio_offset         = pVia->registerHandle;
     if (pVia->IsPCI)
@@ -387,7 +549,9 @@ static int VIADRIKernelInit(DRIDriverContext * ctx, VIAPtr pVia)
     else
 	drmInfo.agpAddr = (u_int32_t)pVia->agpAddr;
 
-    if (drmVIAInitMAP(pVia->drmFD, &drmInfo) < 0) return GL_FALSE;
+    if ((drmCommandWrite(pVia->drmFD, DRM_VIA_MAP_INIT,&drmInfo,
+			     sizeof(drm_via_init_t))) < 0)
+	    return GL_FALSE;
 
     return GL_TRUE;
 }
