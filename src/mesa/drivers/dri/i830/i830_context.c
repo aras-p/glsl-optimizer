@@ -508,6 +508,7 @@ GLboolean i830MakeCurrent(__DRIcontextPrivate *driContextPriv,
       if ( imesa->driDrawable != driDrawPriv ) {
 	 imesa->driDrawable = driDrawPriv;
 	 i830XMesaWindowMoved( imesa );
+	 imesa->mesa_drawable = driDrawPriv;
       }
 
        imesa->driReadable = driReadPriv;
