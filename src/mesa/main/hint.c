@@ -1,4 +1,4 @@
-/* $Id: hint.c,v 1.2 2000/03/17 15:32:04 brianp Exp $ */
+/* $Id: hint.c,v 1.3 2000/04/10 15:52:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -90,17 +90,17 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
       case GL_ALWAYS_FAST_HINT_PGI:
          if (mode) {
             ctx->Hint.AllowDrawWin = GL_TRUE;
-            ctx->Hint.AllowDrawSpn = GL_FALSE;
+            ctx->Hint.AllowDrawFrg = GL_FALSE;
             ctx->Hint.AllowDrawMem = GL_FALSE;
          } else {
             ctx->Hint.AllowDrawWin = GL_TRUE;
-            ctx->Hint.AllowDrawSpn = GL_TRUE;
+            ctx->Hint.AllowDrawFrg = GL_TRUE;
             ctx->Hint.AllowDrawMem = GL_TRUE;
          } 
          break;
       case GL_ALWAYS_SOFT_HINT_PGI:
          ctx->Hint.AllowDrawWin = GL_TRUE;
-         ctx->Hint.AllowDrawSpn = GL_TRUE;
+         ctx->Hint.AllowDrawFrg = GL_TRUE;
          ctx->Hint.AllowDrawMem = GL_TRUE;
          break;
       case GL_ALLOW_DRAW_OBJ_HINT_PGI:
@@ -108,8 +108,8 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
       case GL_ALLOW_DRAW_WIN_HINT_PGI:
          ctx->Hint.AllowDrawWin = mode;
          break;
-      case GL_ALLOW_DRAW_SPN_HINT_PGI:
-         ctx->Hint.AllowDrawSpn = mode;
+      case GL_ALLOW_DRAW_FRG_HINT_PGI:
+         ctx->Hint.AllowDrawFrg = mode;
          break;
       case GL_ALLOW_DRAW_MEM_HINT_PGI:
          ctx->Hint.AllowDrawMem = mode;
@@ -169,7 +169,7 @@ _mesa_HintPGI( GLenum target, GLint mode )
       case GL_ALWAYS_SOFT_HINT_PGI:
       case GL_ALLOW_DRAW_OBJ_HINT_PGI:
       case GL_ALLOW_DRAW_WIN_HINT_PGI:
-      case GL_ALLOW_DRAW_SPN_HINT_PGI:
+      case GL_ALLOW_DRAW_FRG_HINT_PGI:
       case GL_ALLOW_DRAW_MEM_HINT_PGI:
       case GL_CLIP_NEAR_HINT_PGI:
       case GL_CLIP_FAR_HINT_PGI:

@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.19 2000/04/08 18:57:45 brianp Exp $ */
+/* $Id: get.c,v 1.20 2000/04/10 15:52:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -963,12 +963,12 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 break;
       case GL_ALWAYS_FAST_HINT_PGI:
 	 *params = (GLboolean) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawSpn == GL_FALSE && 
+			      ctx->Hint.AllowDrawFrg == GL_FALSE && 
 			      ctx->Hint.AllowDrawMem == GL_FALSE);
 	 break;
       case GL_ALWAYS_SOFT_HINT_PGI:
 	 *params = (GLboolean) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawSpn == GL_TRUE && 
+			      ctx->Hint.AllowDrawFrg == GL_TRUE && 
 			      ctx->Hint.AllowDrawMem == GL_TRUE);
 	 break;
       case GL_ALLOW_DRAW_OBJ_HINT_PGI:
@@ -977,8 +977,8 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_ALLOW_DRAW_WIN_HINT_PGI:
 	 *params = (GLboolean) ctx->Hint.AllowDrawWin;
 	 break;
-      case GL_ALLOW_DRAW_SPN_HINT_PGI:
-	 *params = (GLboolean) ctx->Hint.AllowDrawSpn;
+      case GL_ALLOW_DRAW_FRG_HINT_PGI:
+	 *params = (GLboolean) ctx->Hint.AllowDrawFrg;
 	 break;
       case GL_ALLOW_DRAW_MEM_HINT_PGI:
 	 *params = (GLboolean) ctx->Hint.AllowDrawMem;
@@ -2005,12 +2005,12 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 break;
       case GL_ALWAYS_FAST_HINT_PGI:
 	 *params = (GLdouble) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawSpn == GL_FALSE && 
+			      ctx->Hint.AllowDrawFrg == GL_FALSE && 
 			      ctx->Hint.AllowDrawMem == GL_FALSE);
 	 break;
       case GL_ALWAYS_SOFT_HINT_PGI:
 	 *params = (GLdouble) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawSpn == GL_TRUE && 
+			      ctx->Hint.AllowDrawFrg == GL_TRUE && 
 			      ctx->Hint.AllowDrawMem == GL_TRUE);
 	 break;
       case GL_ALLOW_DRAW_OBJ_HINT_PGI:
@@ -2019,8 +2019,8 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       case GL_ALLOW_DRAW_WIN_HINT_PGI:
 	 *params = (GLdouble) ctx->Hint.AllowDrawWin;
 	 break;
-      case GL_ALLOW_DRAW_SPN_HINT_PGI:
-	 *params = (GLdouble) ctx->Hint.AllowDrawSpn;
+      case GL_ALLOW_DRAW_FRG_HINT_PGI:
+	 *params = (GLdouble) ctx->Hint.AllowDrawFrg;
 	 break;
       case GL_ALLOW_DRAW_MEM_HINT_PGI:
 	 *params = (GLdouble) ctx->Hint.AllowDrawMem;
@@ -3045,12 +3045,12 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 break;
       case GL_ALWAYS_FAST_HINT_PGI:
 	 *params = (GLfloat) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawSpn == GL_FALSE && 
+			      ctx->Hint.AllowDrawFrg == GL_FALSE && 
 			      ctx->Hint.AllowDrawMem == GL_FALSE);
 	 break;
       case GL_ALWAYS_SOFT_HINT_PGI:
 	 *params = (GLfloat) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawSpn == GL_TRUE && 
+			      ctx->Hint.AllowDrawFrg == GL_TRUE && 
 			      ctx->Hint.AllowDrawMem == GL_TRUE);
 	 break;
       case GL_ALLOW_DRAW_OBJ_HINT_PGI:
@@ -3059,8 +3059,8 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_ALLOW_DRAW_WIN_HINT_PGI:
 	 *params = (GLfloat) ctx->Hint.AllowDrawWin;
 	 break;
-      case GL_ALLOW_DRAW_SPN_HINT_PGI:
-	 *params = (GLfloat) ctx->Hint.AllowDrawSpn;
+      case GL_ALLOW_DRAW_FRG_HINT_PGI:
+	 *params = (GLfloat) ctx->Hint.AllowDrawFrg;
 	 break;
       case GL_ALLOW_DRAW_MEM_HINT_PGI:
 	 *params = (GLfloat) ctx->Hint.AllowDrawMem;
@@ -4066,12 +4066,12 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 break;
       case GL_ALWAYS_FAST_HINT_PGI:
 	 *params = (ctx->Hint.AllowDrawWin == GL_TRUE &&
-		    ctx->Hint.AllowDrawSpn == GL_FALSE && 
+		    ctx->Hint.AllowDrawFrg == GL_FALSE && 
 		    ctx->Hint.AllowDrawMem == GL_FALSE);
 	 break;
       case GL_ALWAYS_SOFT_HINT_PGI:
 	 *params =  (ctx->Hint.AllowDrawWin == GL_TRUE &&
-		     ctx->Hint.AllowDrawSpn == GL_TRUE && 
+		     ctx->Hint.AllowDrawFrg == GL_TRUE && 
 		     ctx->Hint.AllowDrawMem == GL_TRUE);
 	 break;
       case GL_ALLOW_DRAW_OBJ_HINT_PGI:
@@ -4080,8 +4080,8 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_ALLOW_DRAW_WIN_HINT_PGI:
 	 *params = ctx->Hint.AllowDrawWin;
 	 break;
-      case GL_ALLOW_DRAW_SPN_HINT_PGI:
-	 *params = ctx->Hint.AllowDrawSpn;
+      case GL_ALLOW_DRAW_FRG_HINT_PGI:
+	 *params = ctx->Hint.AllowDrawFrg;
 	 break;
       case GL_ALLOW_DRAW_MEM_HINT_PGI:
 	 *params = ctx->Hint.AllowDrawMem;

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.56 2000/04/08 18:57:45 brianp Exp $ */
+/* $Id: context.c,v 1.57 2000/04/10 15:52:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -996,7 +996,7 @@ static void init_attrib_groups( GLcontext *ctx )
    ctx->Hint.Fog = GL_DONT_CARE;
 
    ctx->Hint.AllowDrawWin = GL_TRUE;
-   ctx->Hint.AllowDrawSpn = GL_TRUE;
+   ctx->Hint.AllowDrawFrg = GL_TRUE;
    ctx->Hint.AllowDrawMem = GL_TRUE;
    ctx->Hint.StrictLighting = GL_TRUE;
 
