@@ -1,7 +1,7 @@
-# $Id: Makefile.X11,v 1.69 2002/11/13 15:33:51 brianp Exp $
+# $Id: Makefile.X11,v 1.70 2002/11/14 16:14:50 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  5.0
+# Version:  5.1
 # 
 # Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
 # 
@@ -69,7 +69,6 @@ default:
 
 	@echo "  make linux                for Linux systems, make shared .so libs"
 	@echo "  make linux-static         for Linux systems, make static .a libs"
-	@echo "  make linux-trace          for Linux systems, with API trace extension"
 	@echo "  make linux-x86            for Linux on Intel, make shared .so libs"
 	@echo "  make linux-x86-static     for Linux on Intel, make static .a libs"
 	@echo "  make linux-ggi            for Linux systems with libggi"
@@ -330,10 +329,10 @@ realclean: clean
 	cd samples     && $(MAKE) -f Makefile.X11 realclean || true
 
 
-DIRECTORY = Mesa-5.0
-LIB_NAME = MesaLib-5.0
-DEMO_NAME = MesaDemos-5.0
-GLU_NAME = MesaGLU-5.0
+DIRECTORY = Mesa-5.1
+LIB_NAME = MesaLib-5.1
+DEMO_NAME = MesaDemos-5.1
+GLU_NAME = MesaGLU-5.1
 GLUT_NAME = GLUT-3.7
 
 
@@ -354,6 +353,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/missing						\
 	$(DIRECTORY)/mkinstalldirs					\
 	$(DIRECTORY)/stamp-h.in						\
+	$(DIRECTORY)/docs/index.html					\
 	$(DIRECTORY)/docs/CONFORM					\
 	$(DIRECTORY)/docs/COPYING					\
 	$(DIRECTORY)/docs/COPYRIGHT					\
@@ -470,9 +470,6 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/SVGA/Makefile.am				\
 	$(DIRECTORY)/src/SVGA/Makefile.in				\
 	$(DIRECTORY)/src/SVGA/*.[ch]					\
-	$(DIRECTORY)/src/Trace/*.[ch]					\
-	$(DIRECTORY)/src/Trace/Makefile.am				\
-	$(DIRECTORY)/src/Trace/Makefile.in				\
 	$(DIRECTORY)/src/Windows/*.[ch]					\
 	$(DIRECTORY)/src/Windows/*.def					\
 	$(DIRECTORY)/src/X/Makefile.am					\
