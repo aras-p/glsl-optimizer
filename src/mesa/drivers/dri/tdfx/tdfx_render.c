@@ -725,7 +725,7 @@ void tdfxEmitHwStateLocked( tdfxContextPtr fxMesa )
 	 fxMesa->Glide.grColorMask( fxMesa->Color.ColorMask[RCOMP] ||
                                     fxMesa->Color.ColorMask[GCOMP] ||
                                     fxMesa->Color.ColorMask[BCOMP],
-                                    fxMesa->Color.ColorMask[ACOMP] );
+                                    /*fxMesa->Color.ColorMask[ACOMP]*/GL_FALSE/*[dBorca] no-no*/ );
       }
       fxMesa->dirty &= ~TDFX_UPLOAD_COLOR_MASK;
    }
