@@ -4063,6 +4063,7 @@ _mesa_unpack_image( GLsizei width, GLsizei height, GLsizei depth,
  * Perform clipping for glDrawPixels.  The image's window position
  * and size, and the unpack skipPixels and skipRows are adjusted so
  * that the image region is entirely within the window and scissor bounds.
+ * NOTE: this will only work when glPixelZoom is (1, 1).
  *
  * \return  GL_TRUE if image is ready for drawing or
  *          GL_FALSE if image was completely clipped away (draw nothing)
@@ -4074,6 +4075,8 @@ _mesa_clip_drawpixels(const GLcontext *ctx,
                       GLint *skipPixels, GLint *skipRows)
 {
    const GLframebuffer *buffer = ctx->DrawBuffer;
+
+   ASSERT(ctx->Pixel.ZoomX == 1.0F && ctx->Pixel.ZoomY == 1.0F);
 
    /* left clipping */
    if (*destX < buffer->_Xmin) {
