@@ -1,9 +1,9 @@
-/* $Id: nurbs.c,v 1.2 1999/11/11 03:21:43 kendallb Exp $ */
+/* $Id: nurbs.c,v 1.3 2000/02/10 17:45:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
- * Copyright (C) 1995-1999  Brian Paul
+ * Version:  3.3
+ * Copyright (C) 1995-2000  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -18,73 +18,6 @@
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-
-/*
- * $Log: nurbs.c,v $
- * Revision 1.2  1999/11/11 03:21:43  kendallb
- *
- *  . Updated GL/gl.h with GLCALLACKP and GLAPIENTRYP macros for compatibility
- *    with the IBM VisualAge C++ compiler. Eventually some more code will be
- *    needed in the headers to enable the reversal of (__stdcall*) to (*__stdcall)
- *    for the IBM compilers, however we currently build using our own header files
- *    that already handle this.
- *
- *  . Changed instances of (GLCALLBACK*) to GLCALLBACKP for compatibility
- *    with the IBM VisualAge C++ compiler in src-glu.
- *
- *  . Misc cleanups for warnings generated with Watcom C++ in src-glu. Compiles
- *    with 0 warnings now.
- *
- *  . tess_hash.c: line 244 - Why is this function stubbed out? I removed the
- *    code with a #if 0 to avoid a compiler warning, but it looks dangerous.
- *
- * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
- * Imported sources
- *
- * Revision 1.14  1999/01/03 03:23:15  brianp
- * now using GLAPIENTRY and GLCALLBACK keywords (Ted Jump)
- *
- * Revision 1.13  1998/06/01 01:07:49  brianp
- * small update for Next/OpenStep from Alexander Mai
- *
- * Revision 1.12  1998/03/15 18:14:30  brianp
- * fixed a compiler cast warning
- *
- * Revision 1.11  1998/02/07 14:29:11  brianp
- * fixed casting problem in gluNurbsCallback, again
- *
- * Revision 1.10  1998/02/04 00:21:20  brianp
- * fixed cygnus compilation problem (Stephane Rehel)
- *
- * Revision 1.9  1998/01/16 03:35:26  brianp
- * fixed Windows compilation warnings (Theodore Jump)
- *
- * Revision 1.8  1997/09/17 01:51:48  brianp
- * changed glu*Callback() functions to match prototype in glu.h
- *
- * Revision 1.7  1997/07/24 01:28:44  brianp
- * changed precompiled header symbol from PCH to PC_HEADER
- *
- * Revision 1.6  1997/07/24 01:26:31  brianp
- * added CALLBACK keyword to gluNurbsCallback()
- *
- * Revision 1.5  1997/05/28 02:29:38  brianp
- * added support for precompiled headers (PCH), inserted APIENTRY keyword
- *
- * Revision 1.4  1997/05/27 03:17:22  brianp
- * minor clean-up
- *
- * Revision 1.3  1997/05/27 03:00:16  brianp
- * incorporated Bogdan's new NURBS code
- *
- * Revision 1.2  1996/09/27 23:11:23  brianp
- * ifdef'd out unimplemented trimmed nurbs code
- *
- * Revision 1.1  1996/09/27 01:19:39  brianp
- * Initial revision
- *
  */
 
 
@@ -619,11 +552,7 @@ void GLAPIENTRY gluNurbsSurface( GLUnurbsObj *nobj,
 void GLAPIENTRY
 gluNurbsCallback( GLUnurbsObj *nobj, GLenum which, void (GLCALLBACKP fn)())
 {
-#if defined(__CYGWIN32__) || defined(OPENSTEP)
-    nobj->error_callback = (void(*)(GLenum))fn;
-#else
-	nobj->error_callback = (void(GLCALLBACKP)(GLenum))fn;
-#endif
+    nobj->error_callback = (void(GLCALLBACKPCAST)(GLenum))fn;
 
     if(which!=GLU_ERROR)
         call_user_error(nobj,GLU_INVALID_ENUM);

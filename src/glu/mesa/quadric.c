@@ -1,4 +1,4 @@
-/* $Id: quadric.c,v 1.6 2000/01/11 22:01:08 brianp Exp $ */
+/* $Id: quadric.c,v 1.7 2000/02/10 17:45:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -153,7 +153,7 @@ void GLAPIENTRY gluQuadricCallback( GLUquadricObj *qobj,
     */
    if (qobj && which==GLU_ERROR) {
 #ifdef __CYGWIN32__
-      qobj->ErrorFunc = (void(*)(int))fn;
+      qobj->ErrorFunc = (void(GLCALLBACKPCAST)(GLenum))fn;
 #elif defined(OPENSTEP)
       qobj->ErrorFunc = (void(*)(GLenum))fn;
 #elif defined(_WIN32)
