@@ -300,6 +300,8 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
       case GL_TEXTURE_ENV_MODE:
          {
             const GLenum mode = (GLenum) (GLint) *param;
+	    if (texUnit->EnvMode == mode)
+	       return;
             if (mode == GL_MODULATE ||
                 mode == GL_BLEND ||
                 mode == GL_DECAL ||
@@ -309,22 +311,8 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
                  (ctx->Extensions.EXT_texture_env_combine ||
                   ctx->Extensions.ARB_texture_env_combine))) {
                /* legal */
-               if (texUnit->EnvMode == mode)
-                  return;
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
                texUnit->EnvMode = mode;
-
-	       /* FIXME: Is this needed here or is having it in
-		* FIXME: update_texture_state enough?
-		*/
-	       if ( mode == GL_COMBINE ) {
-		  texUnit->_CurrentCombine = & texUnit->Combine;
-	       }
-	       else if ( texUnit->_Current != NULL ) {
-		  calculate_derived_texenv( & texUnit->_EnvMode, mode,
-					     texUnit->_Current->Image[0][0]->Format );
-		  texUnit->_CurrentCombine = & texUnit->_EnvMode;
-	       }
             }
             else {
                TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
@@ -349,6 +337,8 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 if (ctx->Extensions.EXT_texture_env_combine ||
              ctx->Extensions.ARB_texture_env_combine) {
 	    const GLenum mode = (GLenum) (GLint) *param;
+	    if (texUnit->Combine.ModeRGB == mode)
+	       return;
 	    switch (mode) {
 	    case GL_REPLACE:
 	    case GL_MODULATE:
@@ -389,8 +379,6 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
                TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
 	       return;
 	    }
-	    if (texUnit->Combine.ModeRGB == mode)
-	       return;
 	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	    texUnit->Combine.ModeRGB = mode;
 	 }
@@ -403,6 +391,8 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 if (ctx->Extensions.EXT_texture_env_combine ||
              ctx->Extensions.ARB_texture_env_combine) {
 	    const GLenum mode = (GLenum) (GLint) *param;
+	    if (texUnit->Combine.ModeA == mode)
+	       return;
             switch (mode) {
 	    case GL_REPLACE:
 	    case GL_MODULATE:
@@ -429,9 +419,6 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	       TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
 	       return;
 	    }
-
-	    if (texUnit->Combine.ModeA == mode)
-		return;
 	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	    texUnit->Combine.ModeA = mode;
 	 }
@@ -447,6 +434,8 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	     ctx->Extensions.ARB_texture_env_combine) {
 	    const GLenum source = (GLenum) (GLint) *param;
 	    const GLuint s = pname - GL_SOURCE0_RGB;
+	    if (texUnit->Combine.SourceRGB[s] == source)
+	       return;
             if (source == GL_TEXTURE ||
                 source == GL_CONSTANT ||
                 source == GL_PRIMARY_COLOR ||
@@ -457,8 +446,6 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
                 (ctx->Extensions.ATI_texture_env_combine3 &&
                  (source == GL_ZERO || source == GL_ONE))) {
                /* legal */
-               if (texUnit->Combine.SourceRGB[s] == source)
-                  return;
 	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	       texUnit->Combine.SourceRGB[s] = source;
             }
@@ -479,6 +466,8 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
              ctx->Extensions.ARB_texture_env_combine) {
 	    const GLenum source = (GLenum) (GLint) *param;
 	    const GLuint s = pname - GL_SOURCE0_ALPHA;
+	    if (texUnit->Combine.SourceA[s] == source)
+	       return;
             if (source == GL_TEXTURE ||
                 source == GL_CONSTANT ||
                 source == GL_PRIMARY_COLOR ||
@@ -489,8 +478,6 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 		(ctx->Extensions.ATI_texture_env_combine3 &&
                  (source == GL_ZERO || source == GL_ONE))) {
                /* legal */
-	       if (texUnit->Combine.SourceA[s] == source)
-                  return;
 	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	       texUnit->Combine.SourceA[s] = source;
             }
@@ -510,13 +497,13 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	     ctx->Extensions.ARB_texture_env_combine) {
 	    const GLenum operand = (GLenum) (GLint) *param;
 	    const GLuint s = pname - GL_OPERAND0_RGB;
+	    if (texUnit->Combine.OperandRGB[s] == operand)
+	       return;
 	    switch (operand) {
 	    case GL_SRC_COLOR:
 	    case GL_ONE_MINUS_SRC_COLOR:
 	    case GL_SRC_ALPHA:
 	    case GL_ONE_MINUS_SRC_ALPHA:
-	       if (texUnit->Combine.OperandRGB[s] == operand)
-		  return;
 	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	       texUnit->Combine.OperandRGB[s] = operand;
 	       break;
@@ -535,12 +522,11 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 if (ctx->Extensions.EXT_texture_env_combine ||
              ctx->Extensions.ARB_texture_env_combine) {
 	    const GLenum operand = (GLenum) (GLint) *param;
+	    if (texUnit->Combine.OperandA[pname-GL_OPERAND0_ALPHA] == operand)
+	       return;
 	    switch (operand) {
 	    case GL_SRC_ALPHA:
 	    case GL_ONE_MINUS_SRC_ALPHA:
-	       if (texUnit->Combine.OperandA[pname-GL_OPERAND0_ALPHA] ==
-		   operand)
-		  return;
 	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	       texUnit->Combine.OperandA[pname-GL_OPERAND0_ALPHA] = operand;
 	       break;
@@ -558,13 +544,13 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 if (ctx->Extensions.EXT_texture_env_combine ||
              ctx->Extensions.ARB_texture_env_combine) {
 	    const GLenum operand = (GLenum) (GLint) *param;
+	    if (texUnit->Combine.OperandRGB[2] == operand)
+	       return;
 	    switch (operand) {
 	    case GL_SRC_COLOR:           /* ARB combine only */
 	    case GL_ONE_MINUS_SRC_COLOR: /* ARB combine only */
 	    case GL_SRC_ALPHA:
 	    case GL_ONE_MINUS_SRC_ALPHA: /* ARB combine only */
-	       if (texUnit->Combine.OperandRGB[2] == operand)
-		  return;
 	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	       texUnit->Combine.OperandRGB[2] = operand;
                break;
@@ -582,11 +568,11 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 if (ctx->Extensions.EXT_texture_env_combine ||
              ctx->Extensions.ARB_texture_env_combine) {
 	    const GLenum operand = (GLenum) (GLint) *param;
+	    if (texUnit->Combine.OperandA[2] == operand)
+	       return;
 	    switch (operand) {
 	    case GL_SRC_ALPHA:
 	    case GL_ONE_MINUS_SRC_ALPHA: /* ARB combine only */
-	       if (texUnit->Combine.OperandA[2] == operand)
-		  return;
 	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	       texUnit->Combine.OperandA[2] = operand;
 	       break;
