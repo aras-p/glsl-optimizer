@@ -26,6 +26,7 @@ MAIN_SOURCES = \
 	main/feedback.c \
 	main/fog.c \
 	main/get.c \
+	main/getstring.c \
 	main/hash.c \
 	main/hint.c \
 	main/histogram.c \
