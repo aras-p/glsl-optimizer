@@ -45,7 +45,7 @@ SOLO_SOURCES = \
 SOLO_OBJECTS = $(SOLO_SOURCES:.c=.o)
 
 
-linux-solo: depend mesa.a drivers
+linux-solo: depend mesa.a driver-dirs
 
 # Make archive of core object files
 mesa.a:	$(SOLO_OBJECTS)
@@ -53,7 +53,7 @@ mesa.a:	$(SOLO_OBJECTS)
 	ar rcv $@ $(SOLO_OBJECTS)
 	ranlib $@
 
-drivers:
+driver-dirs:
 	cd drivers/dri ; make
 
 
