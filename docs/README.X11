@@ -40,16 +40,6 @@ Header and library files:
 
 	(actually, use "cp -d" on Linux to preserve symbolic links)
 
-   Create a few symbolic links so that compiling OpenGL applications is easy:
-	cd /usr/local/lib
-	IF USING STATIC (lib*.a) FILES THEN
-		ln -s libMesaGL.a libGL.a
-		ln -s libMesaGLU.a libGLU.a
-	ELSE
-		ln -s libMesaGL.so libGL.so
-		ln -s libMesaGLU.so libGLU.so
-	ENDIF
-
 
 Xt/Motif widgets:
    If you want to use Mesa or OpenGL in your Xt/Motif program you can build
@@ -108,8 +98,6 @@ Remote display of OpenGL/GLX programs:
    in /usr/local/Mesa and using the C-shell:
        % cd /usr/local/Mesa
        % make irix5-dso
-       % cd lib
-       % ln -s libMesaGL.so libGL.so
        % setenv _RLD_LIST "/usr/local/Mesa/lib/libGL.so:DEFAULT"
        % /usr/demos/bin/ideas_ogl      // this is a test
 
@@ -313,4 +301,4 @@ Summary of X-related environment variables:
 
 
 ----------------------------------------------------------------------
-$Id: README.X11,v 3.2 1998/10/03 12:48:50 brianp Exp $
+$Id: README.X11,v 3.3 1999/09/15 16:39:01 brianp Exp $
