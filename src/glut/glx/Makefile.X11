@@ -102,8 +102,8 @@ targets: $(LIBDIR)/$(GLUT_LIB)
 # Make the library
 $(LIBDIR)/$(GLUT_LIB): $(OBJECTS)
 	$(TOP)/bin/mklib -o glut -major $(GLUT_MAJOR) -minor $(GLUT_MINOR) \
-		-patch $(GLUT_TINY) $(GLUT_LIB_DEPS) -install $(LIBDIR) \
-		$(MKLIB_OPTIONS) $(OBJECTS)
+		-patch $(GLUT_TINY) $(MKLIB_OPTIONS) -install $(LIBDIR) \
+		$(GLUT_LIB_DEPS) $(OBJECTS)
 
 include $(TOP)/Make-config
 

@@ -105,10 +105,9 @@ $(LIBDIR)/$(GL_LIB): $(OBJECTS)
 $(LIBDIR)/$(OSMESA_LIB): $(OSMESA_OBJECTS)
 	if [ ${OSMESA_LIB} ] ; then \
 		$(TOP)/bin/mklib -o $(OSMESA_LIB_NAME) -major $(MESA_MAJOR) \
-			-minor $(MESA_MINOR) -patch $(GL_TINY) -L$(LIBDIR) \
-			-l$(GL_LIB_NAME) $(OSMESA_LIB_DEPS) \
-			-install $(LIBDIR) \
-			$(MKLIB_OPTIONS) $(OSMESA_OBJECTS) ; \
+			-minor $(MESA_MINOR) -patch $(GL_TINY) \
+			$(MKLIB_OPTIONS) -install $(LIBDIR) \
+			$(OSMESA_LIB_DEPS) $(OSMESA_OBJECTS) ; \
 	fi
 
 
