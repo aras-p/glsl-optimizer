@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.12 2000/11/21 23:01:22 brianp Exp $ */
+/* $Id: convolve.c,v 1.13 2000/11/21 23:26:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -564,6 +564,10 @@ _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid *im
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetConvolutionFilter");
 
+   if (ctx->NewState) {
+      gl_update_state(ctx);
+   }
+
    if (!_mesa_is_legal_format_and_type(format, type) ||
        format == GL_COLOR_INDEX ||
        format == GL_STENCIL_INDEX ||
@@ -738,6 +742,10 @@ _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type, GLvoid *row,
    const struct gl_convolution_attrib *filter;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetSeparableFilter");
+
+   if (ctx->NewState) {
+      gl_update_state(ctx);
+   }
 
    if (target != GL_SEPARABLE_2D) {
       gl_error(ctx, GL_INVALID_ENUM, "glGetSeparableFilter(target)");

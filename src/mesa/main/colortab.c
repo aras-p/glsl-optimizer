@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.28 2000/11/21 23:01:23 brianp Exp $ */
+/* $Id: colortab.c,v 1.29 2000/11/21 23:26:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -688,6 +688,10 @@ _mesa_GetColorTable( GLenum target, GLenum format,
    GLint i;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetColorTable");
+
+   if (ctx->NewState) {
+      gl_update_state(ctx);
+   }
 
    switch (target) {
       case GL_TEXTURE_1D:
