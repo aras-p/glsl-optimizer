@@ -234,7 +234,8 @@ get_register_pointer( const struct vp_src_register *source,
 {
    if (source->RelAddr) {
       const GLint reg = source->Index + state->AddressReg[0];
-      ASSERT(source->File == PROGRAM_ENV_PARAM);
+      ASSERT( (source->File == PROGRAM_ENV_PARAM) || 
+        (source->File == PROGRAM_STATE_VAR) );
       if (reg < 0 || reg > MAX_NV_VERTEX_PROGRAM_PARAMS)
          return zeroVec;
       else
@@ -368,6 +369,20 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
    const struct vp_instruction *inst;
 
    ctx->_CurrentProgram = GL_VERTEX_PROGRAM_ARB; /* or NV, doesn't matter */
+
+   /* If the program is position invariant, multiply the input
+    * position and the MVP matrix and stick it into the output pos slot
+    */
+   if (ctx->VertexProgram.Current->IsPositionInvariant) {
+      TRANSFORM_POINT( ctx->VertexProgram.Outputs[0], 
+                       ctx->_ModelProjectMatrix.m, 
+                       ctx->VertexProgram.Inputs[0]);
+
+      /* XXX: This could go elsewhere */
+      ctx->VertexProgram.Current->OutputsWritten |= 0x1;
+   }
+
+
 
    for (inst = program->Instructions; inst->Opcode != VP_OPCODE_END; inst++) {
 
