@@ -597,6 +597,7 @@ struct gl_enable_attrib {
    GLboolean RescaleNormals;
    GLboolean Scissor;
    GLboolean Stencil;
+   GLboolean StencilTwoSide;          /* GL_EXT_stencil_two_side */
    GLboolean MultisampleEnabled;      /* GL_ARB_multisample */
    GLboolean SampleAlphaToCoverage;   /* GL_ARB_multisample */
    GLboolean SampleAlphaToOne;        /* GL_ARB_multisample */

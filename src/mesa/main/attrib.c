@@ -190,6 +190,7 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->RescaleNormals = ctx->Transform.RescaleNormals;
       attr->Scissor = ctx->Scissor.Enabled;
       attr->Stencil = ctx->Stencil.Enabled;
+      attr->StencilTwoSide = ctx->Stencil.TestTwoSide;
       attr->MultisampleEnabled = ctx->Multisample.Enabled;
       attr->SampleAlphaToCoverage = ctx->Multisample.SampleAlphaToCoverage;
       attr->SampleAlphaToOne = ctx->Multisample.SampleAlphaToOne;
@@ -518,7 +519,9 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
                    GL_POLYGON_STIPPLE);
    TEST_AND_UPDATE(ctx->Scissor.Enabled, enable->Scissor, GL_SCISSOR_TEST);
    TEST_AND_UPDATE(ctx->Stencil.Enabled, enable->Stencil, GL_STENCIL_TEST);
-   /* XXX two-sided stencil */
+   if (ctx->Extensions.EXT_stencil_two_side) {
+      TEST_AND_UPDATE(ctx->Stencil.TestTwoSide, enable->StencilTwoSide, GL_STENCIL_TEST_TWO_SIDE_EXT);
+   }
    TEST_AND_UPDATE(ctx->Multisample.Enabled, enable->MultisampleEnabled,
                    GL_MULTISAMPLE_ARB);
    TEST_AND_UPDATE(ctx->Multisample.SampleAlphaToCoverage,
