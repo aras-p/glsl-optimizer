@@ -47,8 +47,8 @@ typedef struct  {
     BoxRec  AvailFBArea;
     FBLinearPtr   SWOVlinear;
 
-    Bool MPEG_ON;
-    Bool SWVideo_ON;
+    int MPEG_ON;
+    int SWVideo_ON;
 
 /*To solve the bandwidth issue */
     unsigned long   gdwUseExtendedFIFO;

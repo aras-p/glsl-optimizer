@@ -77,13 +77,9 @@
 #else
 #include "via_regs.h"
 
-#include "dri.h"
+#include "GL/internal/dri_interface.h"
 #include "via_dri.h"
 #endif
-
-typedef unsigned char CARD8;
-typedef unsigned short CARD16;
-typedef enum Bool { FALSE, TRUE } Bool;
 
 /* _SOLO : copied from via_bios.h */
 /* System Memory CLK */
@@ -155,7 +151,7 @@ typedef struct _VIA {
     int                 stateMode;
     VIAModeInfoPtr      VIAModeList;
 #endif
-    Bool                ModeStructInit;
+    int                 ModeStructInit;
     int                 Bpp, Bpl, ScissB;
     unsigned            PlaneMask;
 
@@ -179,20 +175,20 @@ typedef struct _VIA {
     unsigned char*      FBBase;
     unsigned char*      FBStart;
 
-    Bool                PrimaryVidMapped;
+    int                 PrimaryVidMapped;
     int                 dacSpeedBpp;
     int                 minClock, maxClock;
     int                 MCLK, REFCLK, LCDclk;
     double              refclk_fact;
 
     /* Here are all the Options */
-    Bool                VQEnable;
-    Bool                pci_burst;
-    Bool                NoPCIRetry;
-    Bool                hwcursor;
-    Bool                NoAccel;
-    Bool                shadowFB;
-    Bool                NoDDCValue;
+    int                 VQEnable;
+    int                 pci_burst;
+    int                 NoPCIRetry;
+    int                 hwcursor;
+    int                 NoAccel;
+    int                 shadowFB;
+    int                 NoDDCValue;
     int                 rotate;
 
 #if 0
@@ -216,12 +212,12 @@ typedef struct _VIA {
     XAAInfoRecPtr       AccelInfoRec;
     xRectangle          Rect;
 #endif
-    CARD32              SavedCmd;
-    CARD32              SavedFgColor;
-    CARD32              SavedBgColor;
-    CARD32              SavedPattern0;
-    CARD32              SavedPattern1;
-    CARD32              SavedPatternAddr;
+    uint32_t            SavedCmd;
+    uint32_t            SavedFgColor;
+    uint32_t            SavedBgColor;
+    uint32_t            SavedPattern0;
+    uint32_t            SavedPattern1;
+    uint32_t            SavedPatternAddr;
 
 #if 0
     /* Support for Int10 processing */
@@ -235,7 +231,7 @@ typedef struct _VIA {
     /* Support for DGA */
     int                 numDGAModes;
     /*DGAModePtr          DGAModes;*/
-    Bool                DGAactive;
+    int                 DGAactive;
     int                 DGAViewportStatus;
 
     /* The various wait handlers. */
@@ -250,8 +246,8 @@ typedef struct _VIA {
 #endif
 
     /* MHS */
-    Bool                IsSecondary;
-    Bool                HasSecondary;
+    int                 IsSecondary;
+    int                 HasSecondary;
 
 #if 0
     /* Capture information */
@@ -259,16 +255,16 @@ typedef struct _VIA {
 #endif
 
 /*
-    CARD32              Cap0_Deinterlace;
-    CARD32              Cap1_Deinterlace;
+    uint32_t            Cap0_Deinterlace;
+    uint32_t            Cap1_Deinterlace;
 
-    Bool                Cap0_FieldSwap;
-    Bool                NoCap0_HFilter;
-    Bool                Capture_OverScanOff;
-    Bool                NoMPEGHQV_VFilter;
+    int                 Cap0_FieldSwap;
+    int                 NoCap0_HFilter;
+    int                 Capture_OverScanOff;
+    int                 NoMPEGHQV_VFilter;
 */
 #ifdef XF86DRI
-    Bool		directRenderingEnabled;
+    int 		directRenderingEnabled;
     DRIInfoPtr		pDRIInfo;
     int 		drmFD;
     int 		numVisualConfigs;
@@ -276,11 +272,11 @@ typedef struct _VIA {
     VIAConfigPrivPtr 	pVisualConfigsPriv;
     unsigned long 	agpHandle;
     unsigned long 	registerHandle;
-    CARD32              agpAddr;
+    uint32_t            agpAddr;
     unsigned char 	*agpBase;
     unsigned int 	agpSize;
-    Bool 		IsPCI;
-    Bool 		drixinerama;
+    int  		IsPCI;
+    int  		drixinerama;
 #else
     int 		drmFD;
     unsigned long 	agpHandle;
@@ -288,18 +284,18 @@ typedef struct _VIA {
     unsigned long 	agpAddr;
     unsigned char 	*agpBase;
     unsigned int 	agpSize;
-    Bool 		IsPCI;
+    int  		IsPCI;
 #endif
 
-    Bool    V4LEnabled;
-    CARD16  ActiveDevice;	/* if SAMM, non-equal pBIOSInfo->ActiveDevice */
+    int     V4LEnabled;
+    uint16_t    ActiveDevice;	/* if SAMM, non-equal pBIOSInfo->ActiveDevice */
     unsigned char       *CursorImage;
-    CARD32  CursorFG;
-    CARD32  CursorBG;
-    CARD32  CursorMC;
+    uint32_t    CursorFG;
+    uint32_t    CursorBG;
+    uint32_t    CursorMC;
 
     unsigned char	MemClk;
-    Bool		EnableExtendedFIFO;
+    int 		EnableExtendedFIFO;
     VIADRIPtr		devPrivate;
 } VIARec, *VIAPtr;
 

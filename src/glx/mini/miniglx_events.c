@@ -38,7 +38,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $Id: miniglx_events.c,v 1.2 2004/03/11 20:35:38 jonsmirl Exp $ */
+/* $Id: miniglx_events.c,v 1.3 2004/06/26 17:16:42 jonsmirl Exp $ */
 
 
 #include <assert.h>
@@ -64,8 +64,6 @@
 
 #include "miniglxP.h"
 
-#include "xf86drm.h"
-#include "dri_util.h"
 
 #define MINIGLX_FIFO_NAME "/tmp/miniglx.fifo"
 

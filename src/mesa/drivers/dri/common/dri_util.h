@@ -558,6 +558,9 @@ extern float
 driCalculateSwapUsage( __DRIdrawablePrivate *dPriv,
 		       int64_t last_swap_ust, int64_t current_ust );
 
+extern void 
+(*glXGetProcAddress(const GLubyte *procname))( void );
+
 #endif /* GLX_DIRECT_RENDERING */
 
 #endif /* _DRI_UTIL_H_ */

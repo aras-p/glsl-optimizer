@@ -165,11 +165,14 @@ extern GLboolean XF86DRIDestroyDrawable( __DRInativeDisplay *dpy, int screen,
  */
 /*@{*/
 
-extern void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
-    const __GLcontextModes * modes, const __DRIversion * ddx_version,
-    const __DRIversion * dri_version, const __DRIversion * drm_version,
-    const __DRIframebuffer * frame_buffer, drmAddress pSAREA, int fd, 
-    int internal_api_version, __GLcontextModes ** driver_modes );
+typedef void *(CREATENEWSCREENFUNC)(__DRInativeDisplay *dpy, int scrn,
+    __DRIscreen *psc, const __GLcontextModes * modes,
+    const __DRIversion * ddx_version, const __DRIversion * dri_version,
+    const __DRIversion * drm_version, const __DRIframebuffer * frame_buffer,
+    void * pSAREA, int fd, int internal_api_version,
+    __GLcontextModes ** driver_modes);
+typedef CREATENEWSCREENFUNC* PFNCREATENEWSCREENFUNC;
+extern CREATENEWSCREENFUNC __driCreateNewScreen;
 
 #ifndef DRI_NEW_INTERFACE_ONLY
 

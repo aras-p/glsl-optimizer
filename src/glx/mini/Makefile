@@ -5,13 +5,18 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 
-C_SOURCES = dispatch.c \
-	  dri_util.c \
-	  ../../mesa/glapi/glapi.c \
-	  ../../mesa/glapi/glthread.c \
+DEFINES += -DGLX_DIRECT_RENDERING
+
+C_SOURCES = \
+	  $(TOP)/src/mesa/main/dispatch.c \
+	  $(TOP)/src/mesa/glapi/glapi.c \
+	  $(TOP)/src/mesa/glapi/glthread.c \
+	  $(TOP)/src/mesa/drivers/dri/common/glcontextmodes.c \
+	  $(TOP)/src/mesa/drivers/dri/dri_client/xf86drm.c \
+	  $(TOP)/src/mesa/drivers/dri/dri_client/xf86drmHash.c \
+	  $(TOP)/src/mesa/drivers/dri/dri_client/xf86drmRandom.c \
 	  miniglx.c \
-	  miniglx_events.c \
-	  xf86drm.c 
+	  miniglx_events.c
 
 OBJECTS = $(C_SOURCES:.c=.o)
 
@@ -26,6 +31,8 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/transform \
 	-I$(TOP)/src/mesa/swrast \
 	-I$(TOP)/src/mesa/swrast_setup \
+	-I$(TOP)/src/mesa/drivers/dri/common \
+	-I$(TOP)/src/mesa/drivers/dri/dri_client/imports \
 	-I$(DRM_SOURCE_PATH)/shared
 
 

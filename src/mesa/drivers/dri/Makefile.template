@@ -21,6 +21,7 @@ WINLIB=-L$(MESA)/src/glx/mini
 MINIGLX_INCLUDES = -I$(TOP)/src/glx/mini
 INCLUDES = $(MINIGLX_INCLUDES) \
 	   -I$(DRM_SOURCE_PATH)/shared \
+	   -I$(DRM_SOURCE_PATH)/libdrm \
 	   $(SHARED_INCLUDES)
 
 OBJECTS = $(C_SOURCES:.c=.o) \

@@ -18,7 +18,7 @@
 #include "mtypes.h"
 
 #include "driver.h"
-#include "dri.h"
+#include "GL/internal/dri_interface.h"
 
 /**
  * \brief Supported pixel formats.
@@ -71,7 +71,7 @@ struct MiniGLXWindowRec {
    GLubyte *frontBottom;           /**< \brief pointer to last row */
    GLubyte *backBottom;            /**< \brief pointer to last row */
    GLubyte *curBottom;             /**<  = frontBottom or backBottom */
-   __DRIdrawable *driDrawable;
+   __DRIdrawable driDrawable;
    GLuint ismapped;
 };
 
@@ -85,7 +85,7 @@ struct MiniGLXContextRec {
    Window drawBuffer;       /**< \brief drawing buffer */
    Window curBuffer;        /**< \brief current buffer */
    VisualID vid;            /**< \brief visual ID */
-   __DRIcontext *driContext; /**< \brief context dependent methods */
+   __DRIcontext driContext; /**< \brief context dependent methods */
 };
 
 #define MINIGLX_BUF_SIZE 512
@@ -153,16 +153,21 @@ struct MiniGLXDisplayRec {
    /*@{*/
    int numModes;		/**< \brief Number of modes. */
    const __GLcontextModes *modes;	/**< \brief Modes list pointer. */
+   const __GLcontextModes *driver_modes; /**< \brief Modes filtered by driver. */
    /*@}*/
     
    /**
    * \name From __GLXdisplayPrivate
    */
    /*@{*/
-   driCreateScreenFunc *createScreen; /**< \brief \e __driCreateScreen hook */
-   __DRIscreen *driScreen;         /**< \brief Screen dependent methods */
+   PFNCREATENEWSCREENFUNC createNewScreen; /**< \brief \e __driCreateScreen hook */
+   __DRIscreen driScreen;         /**< \brief Screen dependent methods */
    void *dlHandle;                /**<
 				   * \brief handle to the client dynamic
+				   * library 
+				   */
+   void *dlHandleSrv;             /**<
+				   * \brief handle to the server dynamic
 				   * library 
 				   */
    /*@}*/
@@ -184,9 +189,7 @@ struct MiniGLXDisplayRec {
    /*@}*/
 };
 
-extern __DRIscreen *__glXFindDRIScreen(Display *dpy, int scrn);
-
-extern Bool __glXWindowExists(Display *dpy, GLXDrawable draw);
+extern Bool __glXWindowExists(__DRInativeDisplay *dpy, GLXDrawable draw);
 
 extern int __miniglx_open_connections( Display *dpy );
 extern void __miniglx_close_connections( Display *dpy );

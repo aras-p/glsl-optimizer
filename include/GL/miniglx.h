@@ -420,8 +420,8 @@ glXGetCurrentContext( void );
 extern GLXDrawable
 glXGetCurrentDrawable( void );
 
-extern const void *
-glXGetProcAddress( const GLubyte *procname );
+extern void 
+(*glXGetProcAddress(const GLubyte *procname))( void );
 
 extern Bool
 glXQueryVersion( Display *dpy, int *major, int *minor );
