@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.41 2001/01/24 00:04:58 brianp Exp $ */
+/* $Id: attrib.c,v 1.42 2001/01/24 15:27:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,14 +29,30 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "accum.h"
+#include "alpha.h"
 #include "attrib.h"
+#include "blend.h"
 #include "buffers.h"
+#include "clip.h"
+#include "colormac.h"
 #include "context.h"
+#include "depth.h"
 #include "enable.h"
 #include "enums.h"
+#include "fog.h"
+#include "hint.h"
+#include "light.h"
+#include "lines.h"
+#include "logic.h"
+#include "masking.h"
 #include "matrix.h"
 #include "mem.h"
+#include "points.h"
+#include "polygon.h"
+#include "scissor.h"
 #include "simple_list.h"
+#include "stencil.h"
 #include "texstate.h"
 #include "mtypes.h"
 #endif
@@ -105,7 +121,7 @@ _mesa_PushAttrib(GLbitfield mask)
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glPushAttrib %x\n", (int)mask);
 
-   if (ctx->AttribStackDepth>=MAX_ATTRIB_STACK_DEPTH) {
+   if (ctx->AttribStackDepth >= MAX_ATTRIB_STACK_DEPTH) {
       gl_error( ctx, GL_STACK_OVERFLOW, "glPushAttrib" );
       return;
    }
@@ -539,6 +555,12 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
 /*
  * This function is kind of long just because we have to call a lot
  * of device driver functions to update device driver state.
+ *
+ * XXX As it is now, most of the pop-code calls immediate-mode Mesa functions
+ * in order to restore GL state.  This isn't terribly efficient but it
+ * ensures that dirty flags and any derived state gets updated correctly.
+ * We could at least check if the value to restore equals the current value
+ * and then skip the Mesa call.
  */
 void
 _mesa_PopAttrib(void)
@@ -547,7 +569,7 @@ _mesa_PopAttrib(void)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->AttribStackDepth==0) {
+   if (ctx->AttribStackDepth == 0) {
       gl_error( ctx, GL_STACK_UNDERFLOW, "glPopAttrib" );
       return;
    }
@@ -562,50 +584,49 @@ _mesa_PopAttrib(void)
 
       switch (attr->kind) {
          case GL_ACCUM_BUFFER_BIT:
-            MEMCPY( &ctx->Accum, attr->data, sizeof(struct gl_accum_attrib) );
-	    ctx->NewState |= _NEW_ACCUM;
+            {
+               const struct gl_accum_attrib *accum;
+               accum = (const struct gl_accum_attrib *) attr->data;
+               _mesa_ClearAccum(accum->ClearColor[0],
+                                accum->ClearColor[1],
+                                accum->ClearColor[2],
+                                accum->ClearColor[3]);
+            }
             break;
          case GL_COLOR_BUFFER_BIT:
             {
-               GLenum oldDrawBuffer = ctx->Color.DrawBuffer;
-               GLenum oldAlphaFunc = ctx->Color.AlphaFunc;
-               GLchan oldAlphaRef = ctx->Color.AlphaRef;
-               GLenum oldBlendSrc = ctx->Color.BlendSrcRGB;
-               GLenum oldBlendDst = ctx->Color.BlendDstRGB;
-	       GLenum oldLogicOp = ctx->Color.LogicOp;
-               MEMCPY( &ctx->Color, attr->data,
-                       sizeof(struct gl_colorbuffer_attrib) );
-	       ctx->NewState |= _NEW_COLOR;
-               if (ctx->Color.DrawBuffer != oldDrawBuffer) {
-                  _mesa_DrawBuffer( ctx->Color.DrawBuffer);
-               }
-               if ((ctx->Color.BlendSrcRGB != oldBlendSrc ||
-                    ctx->Color.BlendDstRGB != oldBlendDst) &&
-                   ctx->Driver.BlendFunc)
-                  (*ctx->Driver.BlendFunc)( ctx, ctx->Color.BlendSrcRGB,
-                                            ctx->Color.BlendDstRGB);
-	       if (ctx->Color.LogicOp != oldLogicOp &&
-		   ctx->Driver.LogicOpcode) {
-		  ctx->Driver.LogicOpcode( ctx, ctx->Color.LogicOp );
-               }
-               if (ctx->Visual.rgbMode) {
-                  (*ctx->Driver.ClearColor)(ctx, ctx->Color.ClearColor);
-                  if ((ctx->Color.AlphaFunc != oldAlphaFunc ||
-                       ctx->Color.AlphaRef != oldAlphaRef) &&
-                      ctx->Driver.AlphaFunc)
-                     (*ctx->Driver.AlphaFunc)( ctx, ctx->Color.AlphaFunc,
-                                              ctx->Color.AlphaRef / CHAN_MAXF);
-                  if (ctx->Driver.ColorMask) {
-                     (*ctx->Driver.ColorMask)(ctx,
-                                              ctx->Color.ColorMask[0],
-                                              ctx->Color.ColorMask[1],
-                                              ctx->Color.ColorMask[2],
-                                              ctx->Color.ColorMask[3]);
-                  }
-               }
-               else {
-                  (*ctx->Driver.ClearIndex)( ctx, ctx->Color.ClearIndex);
-               }
+               const struct gl_colorbuffer_attrib *color;
+               color = (const struct gl_colorbuffer_attrib *) attr->data;
+               _mesa_ClearIndex(color->ClearIndex);
+               _mesa_ClearColor(CHAN_TO_FLOAT(color->ClearColor[0]),
+                                CHAN_TO_FLOAT(color->ClearColor[1]),
+                                CHAN_TO_FLOAT(color->ClearColor[2]),
+                                CHAN_TO_FLOAT(color->ClearColor[3]));
+               _mesa_IndexMask(color->IndexMask);
+               _mesa_ColorMask((GLboolean) (color->ColorMask[0] != 0),
+                               (GLboolean) (color->ColorMask[1] != 0),
+                               (GLboolean) (color->ColorMask[2] != 0),
+                               (GLboolean) (color->ColorMask[3] != 0));
+               _mesa_DrawBuffer(color->DrawBuffer);
+               _mesa_set_enable(ctx, GL_ALPHA_TEST, color->AlphaEnabled);
+               _mesa_AlphaFunc(color->AlphaFunc,
+                               CHAN_TO_FLOAT(color->AlphaRef));
+               _mesa_set_enable(ctx, GL_BLEND, color->BlendEnabled);
+               _mesa_BlendFuncSeparateEXT(color->BlendSrcRGB,
+                                          color->BlendDstRGB,
+                                          color->BlendSrcA,
+                                          color->BlendDstA);
+               _mesa_BlendEquation(color->BlendEquation);
+               _mesa_BlendColor(color->BlendColor[0],
+                                color->BlendColor[1],
+                                color->BlendColor[2],
+                                color->BlendColor[3]);
+               _mesa_LogicOp(color->LogicOp);
+               _mesa_set_enable(ctx, GL_COLOR_LOGIC_OP,
+                                color->ColorLogicOpEnabled);
+               _mesa_set_enable(ctx, GL_INDEX_LOGIC_OP,
+                                color->IndexLogicOpEnabled);
+               _mesa_set_enable(ctx, GL_DITHER, color->DitherFlag);
             }
             break;
          case GL_CURRENT_BIT:
@@ -615,21 +636,15 @@ _mesa_PopAttrib(void)
             break;
          case GL_DEPTH_BUFFER_BIT:
             {
-               GLboolean oldDepthTest = ctx->Depth.Test;
-               GLenum oldDepthFunc = ctx->Depth.Func;
-               GLboolean oldDepthMask = ctx->Depth.Mask;
-               GLfloat oldDepthClear = ctx->Depth.Clear;
-               MEMCPY( &ctx->Depth, attr->data,
-                       sizeof(struct gl_depthbuffer_attrib) );
-	       ctx->NewState |= _NEW_DEPTH;
-               if (ctx->Depth.Test != oldDepthTest && ctx->Driver.Enable)
-                  (*ctx->Driver.Enable)( ctx, GL_DEPTH_TEST, ctx->Depth.Test);
-               if (ctx->Depth.Func != oldDepthFunc && ctx->Driver.DepthFunc)
-                  (*ctx->Driver.DepthFunc)( ctx, ctx->Depth.Func );
-               if (ctx->Depth.Mask != oldDepthMask && ctx->Driver.DepthMask)
-                  (*ctx->Driver.DepthMask)( ctx, ctx->Depth.Mask );
-               if (ctx->Depth.Clear != oldDepthClear && ctx->Driver.ClearDepth)
-                  (*ctx->Driver.ClearDepth)( ctx, ctx->Depth.Clear );
+               const struct gl_depthbuffer_attrib *depth;
+               depth = (const struct gl_depthbuffer_attrib *) attr->data;
+               _mesa_DepthFunc(depth->Func);
+               _mesa_ClearDepth(depth->Clear);
+               _mesa_set_enable(ctx, GL_DEPTH_TEST, depth->Test);
+               _mesa_DepthMask(depth->Mask);
+               if (ctx->Extensions.HP_occlusion_test)
+                  _mesa_set_enable(ctx, GL_OCCLUSION_TEST_HP,
+                                   depth->OcclusionTest);
             }
             break;
          case GL_ENABLE_BIT:
@@ -646,74 +661,80 @@ _mesa_PopAttrib(void)
             break;
          case GL_FOG_BIT:
             {
-               GLboolean anyChange = (GLboolean) (memcmp( &ctx->Fog, attr->data, sizeof(struct gl_fog_attrib) ) != 0);
-               MEMCPY( &ctx->Fog, attr->data, sizeof(struct gl_fog_attrib) );
-	       ctx->NewState |= _NEW_FOG;
-               if (anyChange && ctx->Driver.Fogfv) {
-                  const GLfloat mode = (GLfloat) ctx->Fog.Mode;
-                  const GLfloat density = ctx->Fog.Density;
-                  const GLfloat start = ctx->Fog.Start;
-                  const GLfloat end = ctx->Fog.End;
-                  const GLfloat index = ctx->Fog.Index;
-                  (*ctx->Driver.Fogfv)( ctx, GL_FOG_MODE, &mode);
-                  (*ctx->Driver.Fogfv)( ctx, GL_FOG_DENSITY, &density );
-                  (*ctx->Driver.Fogfv)( ctx, GL_FOG_START, &start );
-                  (*ctx->Driver.Fogfv)( ctx, GL_FOG_END, &end );
-                  (*ctx->Driver.Fogfv)( ctx, GL_FOG_INDEX, &index );
-                  (*ctx->Driver.Fogfv)( ctx, GL_FOG_COLOR, ctx->Fog.Color );
-               }
-	       ctx->_Enabled &= ~ENABLE_FOG;
-	       if (ctx->Fog.Enabled) ctx->_Enabled |= ENABLE_FOG;
+               const struct gl_fog_attrib *fog;
+               fog = (const struct gl_fog_attrib *) attr->data;
+               _mesa_set_enable(ctx, GL_FOG, fog->Enabled);
+               _mesa_Fogfv(GL_FOG_COLOR, fog->Color);
+               _mesa_Fogf(GL_FOG_DENSITY, fog->Density);
+               _mesa_Fogf(GL_FOG_START, fog->Start);
+               _mesa_Fogf(GL_FOG_END, fog->End);
+               _mesa_Fogf(GL_FOG_INDEX, fog->Index);
+               _mesa_Fogi(GL_FOG_MODE, fog->Mode);
             }
             break;
          case GL_HINT_BIT:
-            MEMCPY( &ctx->Hint, attr->data, sizeof(struct gl_hint_attrib) );
-	    ctx->NewState |= _NEW_HINT;
-            if (ctx->Driver.Hint) {
-               (*ctx->Driver.Hint)( ctx, GL_PERSPECTIVE_CORRECTION_HINT,
-                                    ctx->Hint.PerspectiveCorrection );
-               (*ctx->Driver.Hint)( ctx, GL_POINT_SMOOTH_HINT,
-                                    ctx->Hint.PointSmooth);
-               (*ctx->Driver.Hint)( ctx, GL_LINE_SMOOTH_HINT,
-                                    ctx->Hint.LineSmooth );
-               (*ctx->Driver.Hint)( ctx, GL_POLYGON_SMOOTH_HINT,
-                                    ctx->Hint.PolygonSmooth );
-               (*ctx->Driver.Hint)( ctx, GL_FOG_HINT, ctx->Hint.Fog );
+            {
+               const struct gl_hint_attrib *hint;
+               hint = (const struct gl_hint_attrib *) attr->data;
+               /* XXX this memcpy is temporary: */
+               MEMCPY(&ctx->Hint, hint, sizeof(struct gl_hint_attrib));
+               _mesa_Hint(GL_PERSPECTIVE_CORRECTION_HINT,
+                          hint->PerspectiveCorrection );
+               _mesa_Hint(GL_POINT_SMOOTH_HINT, hint->PointSmooth);
+               _mesa_Hint(GL_LINE_SMOOTH_HINT, hint->LineSmooth);
+               _mesa_Hint(GL_POLYGON_SMOOTH_HINT, hint->PolygonSmooth);
+               _mesa_Hint(GL_FOG_HINT, hint->Fog);
+               _mesa_Hint(GL_CLIP_VOLUME_CLIPPING_HINT_EXT,
+                          hint->ClipVolumeClipping);
+               if (ctx->Extensions.ARB_texture_compression)
+                  _mesa_Hint(GL_TEXTURE_COMPRESSION_HINT_ARB,
+                             hint->TextureCompression);
             }
             break;
          case GL_LIGHTING_BIT:
-            MEMCPY( &ctx->Light, attr->data, sizeof(struct gl_light_attrib) );
-	    ctx->NewState |= _NEW_LIGHT;
-            if (ctx->Driver.Enable) {
+            {
                GLuint i;
+               const struct gl_light_attrib *light;
+               light = (const struct gl_light_attrib *) attr->data;
+               /* lighting enable */
+               _mesa_set_enable(ctx, GL_LIGHTING, light->Enabled);
+               /* per-light state */
                for (i = 0; i < MAX_LIGHTS; i++) {
-                  GLenum light = (GLenum) (GL_LIGHT0 + i);
-                  (*ctx->Driver.Enable)( ctx, light, ctx->Light.Light[i].Enabled );
+                  GLenum lgt = (GLenum) (GL_LIGHT0 + i);
+                  _mesa_set_enable(ctx, lgt, light->Light[i].Enabled);
+                  MEMCPY(&ctx->Light.Light[i], &light->Light[i],
+                         sizeof(struct gl_light));
                }
-               (*ctx->Driver.Enable)( ctx, GL_LIGHTING, ctx->Light.Enabled );
+               /* light model */
+               _mesa_LightModelfv(GL_LIGHT_MODEL_AMBIENT,
+                                  light->Model.Ambient);
+               _mesa_LightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER,
+                                 (GLfloat) light->Model.LocalViewer);
+               _mesa_LightModelf(GL_LIGHT_MODEL_TWO_SIDE,
+                                 (GLfloat) light->Model.TwoSide);
+               _mesa_LightModelf(GL_LIGHT_MODEL_COLOR_CONTROL,
+                                 (GLfloat) light->Model.ColorControl);
+               /* materials */
+               MEMCPY(ctx->Light.Material, light->Material,
+                      2 * sizeof(struct gl_material));
+               /* shade model */
+               _mesa_ShadeModel(ctx->Light.ShadeModel);
+               /* color material */
+               _mesa_ColorMaterial(light->ColorMaterialFace,
+                                   light->ColorMaterialMode);
+               _mesa_set_enable(ctx, GL_COLOR_MATERIAL,
+                                light->ColorMaterialEnabled);
             }
-            if (ctx->Light.ShadeModel == GL_FLAT)
-               ctx->_TriangleCaps |= DD_FLATSHADE;
-            else
-               ctx->_TriangleCaps &= ~DD_FLATSHADE;
-            if (ctx->Driver.ShadeModel)
-               (*ctx->Driver.ShadeModel)(ctx, ctx->Light.ShadeModel);
-	    ctx->_Enabled &= ~ENABLE_LIGHT;
-	    if (ctx->Light.Enabled)
-	       ctx->_Enabled |= ENABLE_LIGHT;
             break;
          case GL_LINE_BIT:
-            MEMCPY( &ctx->Line, attr->data, sizeof(struct gl_line_attrib) );
-	    ctx->NewState |= _NEW_LINE;
-            if (ctx->Driver.Enable) {
-               (*ctx->Driver.Enable)( ctx, GL_LINE_SMOOTH, ctx->Line.SmoothFlag );
-               (*ctx->Driver.Enable)( ctx, GL_LINE_STIPPLE, ctx->Line.StippleFlag );
+            {
+               const struct gl_line_attrib *line;
+               line = (const struct gl_line_attrib *) attr->data;
+               _mesa_set_enable(ctx, GL_LINE_SMOOTH, line->SmoothFlag);
+               _mesa_set_enable(ctx, GL_LINE_STIPPLE, line->StippleFlag);
+               _mesa_LineStipple(line->StippleFactor, line->StipplePattern);
+               _mesa_LineWidth(line->Width);
             }
-            if (ctx->Driver.LineStipple)
-               (*ctx->Driver.LineStipple)(ctx, ctx->Line.StippleFactor,
-                                          ctx->Line.StipplePattern);
-            if (ctx->Driver.LineWidth)
-               (*ctx->Driver.LineWidth)(ctx, ctx->Line.Width);
             break;
          case GL_LIST_BIT:
             MEMCPY( &ctx->List, attr->data, sizeof(struct gl_list_attrib) );
@@ -723,32 +744,38 @@ _mesa_PopAttrib(void)
 	    ctx->NewState |= _NEW_PIXEL;
             break;
          case GL_POINT_BIT:
-            MEMCPY( &ctx->Point, attr->data, sizeof(struct gl_point_attrib) );
-	    ctx->NewState |= _NEW_POINT;
-            if (ctx->Driver.Enable)
-               (*ctx->Driver.Enable)( ctx, GL_POINT_SMOOTH, ctx->Point.SmoothFlag );
+            {
+               const struct gl_point_attrib *point;
+               point = (const struct gl_point_attrib *) attr->data;
+               _mesa_PointSize(point->Size);
+               _mesa_set_enable(ctx, GL_POINT_SMOOTH, point->SmoothFlag);
+               _mesa_PointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT,
+                                         point->Params);
+               _mesa_PointParameterfEXT(GL_POINT_SIZE_MIN_EXT, point->MinSize);
+               _mesa_PointParameterfEXT(GL_POINT_SIZE_MAX_EXT, point->MaxSize);
+               _mesa_PointParameterfEXT(GL_POINT_FADE_THRESHOLD_SIZE_EXT,
+                                        point->Threshold);
+            }
             break;
          case GL_POLYGON_BIT:
             {
-               GLenum oldFrontMode = ctx->Polygon.FrontMode;
-               GLenum oldBackMode = ctx->Polygon.BackMode;
-               MEMCPY( &ctx->Polygon, attr->data,
-                       sizeof(struct gl_polygon_attrib) );
-	       ctx->NewState |= _NEW_POLYGON;
-               if ((ctx->Polygon.FrontMode != oldFrontMode ||
-                    ctx->Polygon.BackMode != oldBackMode) &&
-                   ctx->Driver.PolygonMode) {
-                  (*ctx->Driver.PolygonMode)( ctx, GL_FRONT, ctx->Polygon.FrontMode);
-                  (*ctx->Driver.PolygonMode)( ctx, GL_BACK, ctx->Polygon.BackMode);
-               }
-	       if (ctx->Driver.CullFace)
-		  ctx->Driver.CullFace( ctx, ctx->Polygon.CullFaceMode );
-
-	       if (ctx->Driver.FrontFace)
-		  ctx->Driver.FrontFace( ctx, ctx->Polygon.FrontFace );
-
-               if (ctx->Driver.Enable)
-                  (*ctx->Driver.Enable)( ctx, GL_POLYGON_SMOOTH, ctx->Polygon.SmoothFlag );
+               const struct gl_polygon_attrib *polygon;
+               polygon = (const struct gl_polygon_attrib *) attr->data;
+               _mesa_CullFace(polygon->CullFaceMode);
+               _mesa_FrontFace(polygon->FrontFace);
+               _mesa_PolygonMode(GL_FRONT, polygon->FrontMode);
+               _mesa_PolygonMode(GL_BACK, polygon->BackMode);
+               _mesa_PolygonOffset(polygon->OffsetFactor,
+                                   polygon->OffsetUnits);
+               _mesa_set_enable(ctx, GL_POLYGON_SMOOTH, polygon->SmoothFlag);
+               _mesa_set_enable(ctx, GL_POLYGON_STIPPLE, polygon->StippleFlag);
+               _mesa_set_enable(ctx, GL_CULL_FACE, polygon->CullFlag);
+               _mesa_set_enable(ctx, GL_POLYGON_OFFSET_POINT,
+                                polygon->OffsetPoint);
+               _mesa_set_enable(ctx, GL_POLYGON_OFFSET_LINE,
+                                polygon->OffsetLine);
+               _mesa_set_enable(ctx, GL_POLYGON_OFFSET_FILL,
+                                polygon->OffsetFill);
             }
             break;
 	 case GL_POLYGON_STIPPLE_BIT:
@@ -758,47 +785,48 @@ _mesa_PopAttrib(void)
 	       ctx->Driver.PolygonStipple( ctx, (const GLubyte *) attr->data );
 	    break;
          case GL_SCISSOR_BIT:
-            MEMCPY( &ctx->Scissor, attr->data,
-		    sizeof(struct gl_scissor_attrib) );
-	    ctx->NewState |= _NEW_SCISSOR;
-            if (ctx->Driver.Enable)
-               (*ctx->Driver.Enable)( ctx, GL_SCISSOR_TEST, ctx->Scissor.Enabled );
-	    if (ctx->Driver.Scissor)
-	       ctx->Driver.Scissor( ctx, ctx->Scissor.X, ctx->Scissor.Y,
-				    ctx->Scissor.Width, ctx->Scissor.Height );
+            {
+               const struct gl_scissor_attrib *scissor;
+               scissor = (const struct gl_scissor_attrib *) attr->data;
+               _mesa_Scissor(scissor->X, scissor->Y,
+                             scissor->Width, scissor->Height);
+               _mesa_set_enable(ctx, GL_SCISSOR_TEST, scissor->Enabled);
+            }
             break;
          case GL_STENCIL_BUFFER_BIT:
-            MEMCPY( &ctx->Stencil, attr->data,
-		    sizeof(struct gl_stencil_attrib) );
-	    ctx->NewState |= _NEW_STENCIL;
-            if (ctx->Driver.StencilFunc)
-               (*ctx->Driver.StencilFunc)( ctx, ctx->Stencil.Function,
-                                   ctx->Stencil.Ref, ctx->Stencil.ValueMask);
-            if (ctx->Driver.StencilMask)
-               (*ctx->Driver.StencilMask)( ctx, ctx->Stencil.WriteMask );
-            if (ctx->Driver.StencilOp)
-               (*ctx->Driver.StencilOp)( ctx, ctx->Stencil.FailFunc,
-                              ctx->Stencil.ZFailFunc, ctx->Stencil.ZPassFunc);
-            if (ctx->Driver.ClearStencil)
-               (*ctx->Driver.ClearStencil)( ctx, ctx->Stencil.Clear );
-            if (ctx->Driver.Enable)
-               (*ctx->Driver.Enable)( ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled );
-	    ctx->_TriangleCaps &= ~DD_STENCIL;
-	    if (ctx->Stencil.Enabled)
-	       ctx->_TriangleCaps |= DD_STENCIL;
-
+            {
+               const struct gl_stencil_attrib *stencil;
+               stencil = (const struct gl_stencil_attrib *) attr->data;
+               _mesa_set_enable(ctx, GL_STENCIL_TEST, stencil->Enabled);
+               _mesa_ClearStencil(stencil->Clear);
+               _mesa_StencilFunc(stencil->Function, stencil->Ref,
+                                 stencil->ValueMask);
+               _mesa_StencilMask(stencil->WriteMask);
+               _mesa_StencilOp(stencil->FailFunc, stencil->ZFailFunc,
+                               stencil->ZPassFunc);
+            }
             break;
          case GL_TRANSFORM_BIT:
-            MEMCPY( &ctx->Transform, attr->data,
-		    sizeof(struct gl_transform_attrib) );
-	    ctx->NewState |= _NEW_TRANSFORM;
-            if (ctx->Driver.Enable) {
-               (*ctx->Driver.Enable)( ctx, GL_NORMALIZE, ctx->Transform.Normalize );
-               (*ctx->Driver.Enable)( ctx, GL_RESCALE_NORMAL_EXT, ctx->Transform.RescaleNormals );
+            {
+               GLuint i;
+               const struct gl_transform_attrib *xform;
+               xform = (const struct gl_transform_attrib *) attr->data;
+               _mesa_MatrixMode(xform->MatrixMode);
+               /* clip planes */
+               MEMCPY(ctx->Transform.EyeUserPlane, xform->EyeUserPlane,
+                      sizeof(xform->EyeUserPlane));
+               MEMCPY(ctx->Transform._ClipUserPlane, xform->_ClipUserPlane,
+                      sizeof(xform->EyeUserPlane));
+               /* clip plane enable flags */
+               for (i = 0; i < MAX_CLIP_PLANES; i++) {
+                  _mesa_set_enable(ctx, GL_CLIP_PLANE0 + i,
+                                   xform->ClipEnabled[i]);
+               }
+               /* normalize/rescale */
+               _mesa_set_enable(ctx, GL_NORMALIZE, ctx->Transform.Normalize);
+               _mesa_set_enable(ctx, GL_RESCALE_NORMAL_EXT,
+                                ctx->Transform.RescaleNormals);
             }
-	    ctx->_Enabled &= ~(ENABLE_NORMALIZE|ENABLE_RESCALE);
-	    if (ctx->Transform.Normalize) ctx->_Enabled |= ENABLE_NORMALIZE;
-	    if (ctx->Transform.RescaleNormals) ctx->_Enabled |= ENABLE_RESCALE;
             break;
          case GL_TEXTURE_BIT:
             /* Take care of texture object reference counters */
@@ -832,15 +860,13 @@ _mesa_PopAttrib(void)
             }
             break;
          case GL_VIEWPORT_BIT:
-	 {
-	    struct gl_viewport_attrib *v =
-	       (struct gl_viewport_attrib *)attr->data;
-
-	    ctx->NewState |= _NEW_VIEWPORT;
-	    _mesa_Viewport( v->X, v->Y, v->Width, v->Height );
-	    _mesa_DepthRange( v->Near, v->Far );
-	    break;
-	 }
+            {
+               const struct gl_viewport_attrib *vp;
+               vp = (const struct gl_viewport_attrib *)attr->data;
+               _mesa_Viewport(vp->X, vp->Y, vp->Width, vp->Height);
+               _mesa_DepthRange(vp->Near, vp->Far);
+            }
+            break;
          default:
             gl_problem( ctx, "Bad attrib flag in PopAttrib");
             break;
@@ -867,7 +893,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (ctx->ClientAttribStackDepth>=MAX_CLIENT_ATTRIB_STACK_DEPTH) {
+   if (ctx->ClientAttribStackDepth >= MAX_CLIENT_ATTRIB_STACK_DEPTH) {
       gl_error( ctx, GL_STACK_OVERFLOW, "glPushClientAttrib" );
       return;
    }
@@ -918,7 +944,7 @@ _mesa_PopClientAttrib(void)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->ClientAttribStackDepth==0) {
+   if (ctx->ClientAttribStackDepth == 0) {
       gl_error( ctx, GL_STACK_UNDERFLOW, "glPopClientAttrib" );
       return;
    }
@@ -953,7 +979,6 @@ _mesa_PopClientAttrib(void)
       FREE( attr );
       attr = next;
    }
-
 }
 
 
