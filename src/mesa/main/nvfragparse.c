@@ -136,7 +136,7 @@ struct parse_state {
 
    GLuint numInst;                    /* number of instructions parsed */
    GLuint inputsRead;                 /* bitmask of input registers used */
-   GLuint outputsWritten;             /* 2 = depth register */
+   GLuint outputsWritten;             /* bitmask of 1 << FRAG_OUTPUT_* bits */
    GLuint texturesUsed[MAX_TEXTURE_IMAGE_UNITS];
 };
 
@@ -545,6 +545,7 @@ Parse_Identifier(struct parse_state *parseState, GLubyte *ident)
 /**
  * Parse a floating point constant, or a defined symbol name.
  * [+/-]N[.N[eN]]
+ * Output:  number[0 .. 3] will get the value.
  */
 static GLboolean
 Parse_ScalarConstant(struct parse_state *parseState, GLfloat *number)
@@ -556,6 +557,9 @@ Parse_ScalarConstant(struct parse_state *parseState, GLfloat *number)
    if (end && end > (char *) parseState->pos) {
       /* got a number */
       parseState->pos = (GLubyte *) end;
+      number[1] = *number;
+      number[2] = *number;
+      number[3] = *number;
       return GL_TRUE;
    }
    else {
@@ -925,9 +929,10 @@ Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
    /* try to match an output register name */
    for (j = 0; OutputRegisters[j]; j++) {
       if (_mesa_strcmp((const char *) token, OutputRegisters[j]) == 0) {
+         static GLuint bothColors = (1 << FRAG_OUTPUT_COLR) | (1 << FRAG_OUTPUT_COLH);
          *outputRegNum = FP_OUTPUT_REG_START + j;
          parseState->outputsWritten |= (1 << j);
-         if ((parseState->outputsWritten & 0x3) == 0x3) {
+         if ((parseState->outputsWritten & bothColors) == bothColors) {
             RETURN_ERROR1("Illegal to write to both o[COLR] and o[COLH]");
          }
          break;
@@ -1110,12 +1115,19 @@ Parse_VectorSrc(struct parse_state *parseState,
       srcReg->IsParameter = GL_TRUE;
       srcReg->Register = paramIndex;      
    }
-   else if (IsDigit(token[0]) || token[0] == '-' || token[0] == '+'){
+   else if (IsDigit(token[0]) || token[0] == '-' || token[0] == '+' || token[0] == '.'){
       /* literal scalar constant */
       GLfloat values[4];
+      GLuint paramIndex;
       if (!Parse_ScalarConstant(parseState, values))
          RETURN_ERROR;
+#if 0
       srcReg->Register = 0; /* XXX fix */
+#else
+      paramIndex = add_unnamed_constant(parseState, values);
+      srcReg->IsParameter = GL_TRUE;
+      srcReg->Register = paramIndex;
+#endif
    }
    else if (token[0] == '{'){
       /* literal vector constant */

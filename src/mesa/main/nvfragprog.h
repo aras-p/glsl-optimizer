@@ -1,4 +1,4 @@
-/* $Id: nvfragprog.h,v 1.6 2003/04/05 00:38:09 brianp Exp $ */
+/* $Id: nvfragprog.h,v 1.7 2003/05/10 04:36:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,6 +49,10 @@
 #define FRAG_ATTRIB_TEX5  9
 #define FRAG_ATTRIB_TEX6  10
 #define FRAG_ATTRIB_TEX7  11
+
+#define FRAG_OUTPUT_COLR  0
+#define FRAG_OUTPUT_COLH  1
+#define FRAG_OUTPUT_DEPR  2
 
 
 /* Location of register sets within the whole register file */
