@@ -1,4 +1,4 @@
-/* $Id: s_points.h,v 1.5 2001/03/12 00:48:42 gareth Exp $ */
+/* $Id: s_points.h,v 1.6 2002/02/02 21:40:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,10 +30,10 @@
 
 #include "mtypes.h"
 
-void
+extern void
 _swrast_choose_point( GLcontext *ctx );
 
-void
+extern void
 _swrast_add_spec_terms_point( GLcontext *ctx,
 			      const SWvertex *v0 );
 

@@ -1,4 +1,4 @@
-/* $Id: s_blend.c,v 1.11 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_blend.c,v 1.12 2002/02/02 21:40:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,7 +33,6 @@
 #include "s_alphabuf.h"
 #include "s_blend.h"
 #include "s_context.h"
-#include "s_pb.h"
 #include "s_span.h"
 
 
@@ -701,32 +700,4 @@ _mesa_blend_span( GLcontext *ctx, const struct sw_span *span,
 
    SWRAST_CONTEXT(ctx)->BlendFunc( ctx, span->end, span->mask, rgba,
 				   (const GLchan (*)[4]) framebuffer );
-}
-
-
-
-/*
- * Apply the blending operator to an array of pixels.
- * Input:  n - number of pixels in span
- *         x, y - array of pixel locations
- *         mask - boolean mask indicating which pixels to blend.
- * In/Out:  rgba - pixel values
- */
-void
-_mesa_blend_pixels( GLcontext *ctx,
-                    GLuint n, const GLint x[], const GLint y[],
-                    GLchan rgba[][4], const GLubyte mask[] )
-{
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLchan dest[PB_SIZE][4];
-
-   ASSERT(!ctx->Color.ColorLogicOpEnabled);
-
-   /* Read pixels from current color buffer */
-   (*swrast->Driver.ReadRGBAPixels)( ctx, n, x, y, dest, mask );
-   if (swrast->_RasterMask & ALPHABUF_BIT) {
-      _mesa_read_alpha_pixels( ctx, n, x, y, dest, mask );
-   }
-
-   swrast->BlendFunc( ctx, n, mask, rgba, (const GLchan (*)[4])dest );
 }

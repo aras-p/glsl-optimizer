@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.28 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_context.c,v 1.29 2002/02/02 21:40:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,7 @@
 #include "mtypes.h"
 #include "mem.h"
 
-#include "s_pb.h"
+#include "swrast.h"
 #include "s_points.h"
 #include "s_lines.h"
 #include "s_triangle.h"
@@ -467,12 +467,6 @@ _swrast_CreateContext( GLcontext *ctx )
    if (!swrast)
       return GL_FALSE;
 
-   swrast->PB = _mesa_alloc_pb();
-   if (!swrast->PB) {
-      FREE(swrast);
-      return GL_FALSE;
-   }
-
    swrast->NewState = ~0;
 
    swrast->choose_point = _swrast_choose_point;
@@ -513,7 +507,6 @@ _swrast_DestroyContext( GLcontext *ctx )
       fprintf(stderr, "_swrast_DestroyContext\n");
    }
 
-   FREE( swrast->PB );
    FREE( swrast );
 
    ctx->swrast_context = 0;
@@ -560,4 +553,11 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
       fprintf(stderr, "pointsize %f\n", v->pointSize);
       fprintf(stderr, "\n");
    }
+}
+
+
+void
+_swrast_flush( GLcontext *ctx )
+{
+   /* no-op */
 }

@@ -1,4 +1,4 @@
-/* $Id: s_alpha.h,v 1.5 2002/01/31 00:27:43 brianp Exp $ */
+/* $Id: s_alpha.h,v 1.6 2002/02/02 21:40:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,14 +34,7 @@
 
 
 extern GLint
-_old_alpha_test( const GLcontext *ctx, GLuint n,
-		 CONST GLchan rgba[][4], GLubyte mask[] );
-
-extern GLint
 _mesa_alpha_test( const GLcontext *ctx, struct sw_span *span );
 
+
 #endif
-
-
-
-

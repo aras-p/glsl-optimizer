@@ -1,4 +1,4 @@
-/* $Id: s_aalinetemp.h,v 1.16 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_aalinetemp.h,v 1.17 2002/02/02 21:40:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -100,7 +100,7 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
 #endif
 
    if (line->span.end == MAX_WIDTH) {
-#ifdef DO_TEX
+#if defined(DO_TEX) || defined(DO_MULTITEX)
       _mesa_write_texture_span(ctx, &line->span, GL_LINE);
 #elif defined(DO_RGBA)
       _mesa_write_rgba_span(ctx, &line->span, GL_LINE);
@@ -293,7 +293,7 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
       segment(ctx, &line, NAME(plot), 0.0, 1.0);
    }
 
-#ifdef DO_TEX
+#if defined(DO_TEX) || defined(DO_MULTITEX)
    _mesa_write_texture_span(ctx, &line.span, GL_LINE);
 #elif defined(DO_RGBA)
    _mesa_write_rgba_span(ctx, &line.span, GL_LINE);

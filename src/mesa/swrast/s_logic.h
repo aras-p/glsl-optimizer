@@ -1,4 +1,4 @@
-/* $Id: s_logic.h,v 1.4 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_logic.h,v 1.5 2002/02/02 21:40:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,20 +39,8 @@ _mesa_logicop_ci_span( GLcontext *ctx, const struct sw_span *span,
 
 
 extern void
-_mesa_logicop_ci_pixels( GLcontext *ctx,
-                         GLuint n, const GLint x[], const GLint y[],
-                         GLuint index[], const GLubyte mask[] );
-
-
-extern void
 _mesa_logicop_rgba_span( GLcontext *ctx, const struct sw_span *span,
                          GLchan rgba[][4] );
-
-
-extern void
-_mesa_logicop_rgba_pixels( GLcontext *ctx,
-                           GLuint n, const GLint x[], const GLint y[],
-                           GLchan rgba[][4], const GLubyte mask[] );
 
 
 #endif

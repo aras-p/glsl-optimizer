@@ -1,4 +1,4 @@
-/* $Id: s_depth.c,v 1.14 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_depth.c,v 1.15 2002/02/02 21:40:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,6 @@
 
 #include "s_depth.h"
 #include "s_context.h"
-#include "s_pb.h"
 
 
 
@@ -533,9 +532,7 @@ depth_test_span32( GLcontext *ctx, GLuint n,
 
 
 
-/*
- * Apply depth test to span of fragments.  Hardware or software z buffer.
- */
+
 GLuint
 _old_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
 		      const GLdepth z[], GLubyte mask[] )
@@ -1334,8 +1331,6 @@ hardware_depth_test_pixels( GLcontext *ctx, GLuint n, GLdepth zbuffer[],
    }
 }
 
-
-
 void
 _mesa_depth_test_pixels( GLcontext *ctx,
                          GLuint n, const GLint x[], const GLint y[],
@@ -1344,7 +1339,7 @@ _mesa_depth_test_pixels( GLcontext *ctx,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    if (swrast->Driver.ReadDepthPixels) {
       /* read depth values from hardware Z buffer */
-      GLdepth zbuffer[PB_SIZE];
+      GLdepth zbuffer[MAX_WIDTH];
       (*swrast->Driver.ReadDepthPixels)(ctx, n, x, y, zbuffer);
 
       hardware_depth_test_pixels( ctx, n, zbuffer, z, mask );

@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.48 2002/01/28 04:25:56 brianp Exp $ */
+/* $Id: s_texture.c,v 1.49 2002/02/02 21:40:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,7 +35,6 @@
 #include "teximage.h"
 
 #include "s_context.h"
-#include "s_pb.h"
 #include "s_texture.h"
 
 
@@ -3043,7 +3042,7 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
       
       if (textureUnit->_Current) {   /* XXX need this? */
          const struct gl_texture_object *curObj = textureUnit->_Current;
-         GLchan texel[PB_SIZE][4];
+         GLchan texel[MAX_WIDTH][4];
          
 	 if (textureUnit->LodBias != 0.0F) {
 	    /* apply LOD bias, but don't clamp yet */
@@ -3096,10 +3095,10 @@ _swrast_multitexture_fragments( GLcontext *ctx, struct sw_span *span )
 {
    if (ctx->Texture._ReallyEnabled & ~TEXTURE0_ANY) {
       /* multitexture */
-      GLchan primary_rgba[PB_SIZE][4];
+      GLchan primary_rgba[MAX_WIDTH][4];
       GLuint unit;
 
-      ASSERT(span->end < PB_SIZE);
+      ASSERT(span->end < MAX_WIDTH);
 
       /* save copy of the span colors (the GL_PRIMARY_COLOR) */
       MEMCPY(primary_rgba, span->color.rgba, 4 * span->end * sizeof(GLchan));

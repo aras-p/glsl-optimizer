@@ -1,4 +1,4 @@
-/* $Id: s_logic.c,v 1.9 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_logic.c,v 1.10 2002/02/02 21:40:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,6 @@
 #include "s_alphabuf.h"
 #include "s_context.h"
 #include "s_logic.h"
-#include "s_pb.h"
 #include "s_span.h"
 
 
@@ -184,24 +183,6 @@ _mesa_logicop_ci_span( GLcontext *ctx, const struct sw_span *span,
    }
 
    index_logicop( ctx, span->end, index, dest, span->mask );
-}
-
-
-
-/*
- * Apply the current logic operator to an array of CI pixels.  This is only
- * used if the device driver can't do logic ops.
- */
-void
-_mesa_logicop_ci_pixels( GLcontext *ctx,
-                         GLuint n, const GLint x[], const GLint y[],
-                         GLuint index[], const GLubyte mask[] )
-{
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLuint dest[PB_SIZE];
-   /* Read dest values from frame buffer */
-   (*swrast->Driver.ReadCI32Pixels)( ctx, n, x, y, dest, mask );
-   index_logicop( ctx, n, index, dest, mask );
 }
 
 
@@ -509,32 +490,6 @@ _mesa_logicop_rgba_span( GLcontext *ctx, const struct sw_span *span,
    }
    else {
       rgba_logicop_chan(ctx, 4 * span->end, span->mask,
-                        (GLchan *) rgba, (const GLchan *) dest);
-   }
-}
-
-
-
-/*
- * Apply the current logic operator to an array of RGBA pixels.
- * This is only used if the device driver can't do logic ops.
- */
-void
-_mesa_logicop_rgba_pixels( GLcontext *ctx,
-                           GLuint n, const GLint x[], const GLint y[],
-                           GLchan rgba[][4], const GLubyte mask[] )
-{
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLchan dest[PB_SIZE][4];
-   (*swrast->Driver.ReadRGBAPixels)( ctx, n, x, y, dest, mask );
-   if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
-      _mesa_read_alpha_pixels( ctx, n, x, y, dest, mask );
-   }
-   if (sizeof(GLchan) * 4 == sizeof(GLuint)) {
-      rgba_logicop_ui(ctx, n, mask, (GLuint *) rgba, (const GLuint *) dest);
-   }
-   else {
-      rgba_logicop_chan(ctx, 4 * n, mask,
                         (GLchan *) rgba, (const GLchan *) dest);
    }
 }

@@ -1,10 +1,10 @@
-/* $Id: s_linetemp.h,v 1.11 2002/01/16 20:15:01 brianp Exp $ */
+/* $Id: s_linetemp.h,v 1.12 2002/02/02 21:40:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -56,11 +56,7 @@
  * Optionally, one may provide one-time setup code
  *    SETUP_CODE    - code which is to be executed once per line
  *
- * To enable line stippling define STIPPLE = 1
- * To enable wide lines define WIDE = 1
- *
- * To actually "plot" each pixel either the PLOT macro or
- * (XMAJOR_PLOT and YMAJOR_PLOT macros) must be defined...
+ * To actually "plot" each pixel the PLOT macro must be defined...
  *    PLOT(X,Y) - code to plot a pixel.  Example:
  *                if (Z < *zPtr) {
  *                   *zPtr = Z;
@@ -139,16 +135,6 @@
 #ifdef PIXEL_ADDRESS
    PIXEL_TYPE *pixelPtr;
    GLint pixelXstep, pixelYstep;
-#endif
-#ifdef STIPPLE
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-#endif
-#ifdef WIDE
-   /* for wide lines, draw all X in [x+min, x+max] or Y in [y+min, y+max] */
-   GLint width, min, max;
-   width = (GLint) CLAMP( ctx->Line.Width, MIN_LINE_WIDTH, MAX_LINE_WIDTH );
-   min = (width-1) / -2;
-   max = min + width - 1;
 #endif
 #ifdef INTERP_TEX
    {
@@ -313,6 +299,9 @@
       GLint errorInc = dy+dy;
       GLint error = errorInc-dx;
       GLint errorDec = error-dx;
+#ifdef SET_XMAJOR
+      xMajor = GL_TRUE;
+#endif
 #ifdef INTERP_Z
       dz = (z1-z0) / dx;
 #endif
@@ -360,11 +349,6 @@
 #endif
 
       for (i=0;i<dx;i++) {
-#ifdef STIPPLE
-         GLushort m;
-         m = 1 << ((swrast->StippleCounter/ctx->Line.StippleFactor) & 0xf);
-         if (ctx->Line.StipplePattern & m) {
-#endif
 #ifdef INTERP_Z
             GLdepth Z = FixedToDepth(z0);
 #endif
@@ -394,26 +378,9 @@
                }
             }
 #endif
-#ifdef WIDE
-            {
-               GLint yy;
-               GLint ymin = y0 + min;
-               GLint ymax = y0 + max;
-               for (yy=ymin;yy<=ymax;yy++) {
-                  PLOT( x0, yy );
-               }
-            }
-#else
-#  ifdef XMAJOR_PLOT
-            XMAJOR_PLOT( x0, y0 );
-#  else
+
             PLOT( x0, y0 );
-#  endif
-#endif /*WIDE*/
-#ifdef STIPPLE
-        }
-	swrast->StippleCounter++;
-#endif
+
 #ifdef INTERP_XY
          x0 += xstep;
 #endif
@@ -535,11 +502,6 @@
 #endif
 
       for (i=0;i<dy;i++) {
-#ifdef STIPPLE
-         GLushort m;
-         m = 1 << ((swrast->StippleCounter/ctx->Line.StippleFactor) & 0xf);
-         if (ctx->Line.StipplePattern & m) {
-#endif
 #ifdef INTERP_Z
             GLdepth Z = FixedToDepth(z0);
 #endif
@@ -569,26 +531,9 @@
                }
             }
 #endif
-#ifdef WIDE
-            {
-               GLint xx;
-               GLint xmin = x0 + min;
-               GLint xmax = x0 + max;
-               for (xx=xmin;xx<=xmax;xx++) {
-                  PLOT( xx, y0 );
-               }
-            }
-#else
-#  ifdef YMAJOR_PLOT
-            YMAJOR_PLOT( x0, y0 );
-#  else
+
             PLOT( x0, y0 );
-#  endif
-#endif /*WIDE*/
-#ifdef STIPPLE
-        }
-	swrast->StippleCounter++;
-#endif
+
 #ifdef INTERP_XY
          y0 += ystep;
 #endif
@@ -675,9 +620,6 @@
 #undef BYTES_PER_ROW
 #undef SETUP_CODE
 #undef PLOT
-#undef XMAJOR_PLOT
-#undef YMAJOR_PLOT
 #undef CLIP_HACK
-#undef STIPPLE
-#undef WIDE
 #undef FixedToDepth
+#undef SET_XMAJOR

@@ -1,4 +1,4 @@
-/* $Id: s_stencil.c,v 1.18 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_stencil.c,v 1.19 2002/02/02 21:40:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,6 @@
 
 #include "s_context.h"
 #include "s_depth.h"
-#include "s_pb.h"
 #include "s_stencil.h"
 
 
@@ -236,12 +235,12 @@ static GLboolean
 do_stencil_test( GLcontext *ctx, GLuint n, GLstencil stencil[],
                  GLubyte mask[] )
 {
-   GLubyte fail[PB_SIZE];
+   GLubyte fail[MAX_WIDTH];
    GLboolean allfail = GL_FALSE;
    GLuint i;
    GLstencil r, s;
 
-   ASSERT(n <= PB_SIZE);
+   ASSERT(n <= MAX_WIDTH);
 
    /*
     * Perform stencil test.  The results of this operation are stored
@@ -420,7 +419,7 @@ stencil_and_ztest_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                         GLubyte mask[] )
 {
    ASSERT(ctx->Stencil.Enabled);
-   ASSERT(n <= PB_SIZE);
+   ASSERT(n <= MAX_WIDTH);
 
    /*
     * Apply the stencil test to the fragments.
@@ -722,7 +721,7 @@ static GLboolean
 stencil_test_pixels( GLcontext *ctx, GLuint n,
                      const GLint x[], const GLint y[], GLubyte mask[] )
 {
-   GLubyte fail[PB_SIZE];
+   GLubyte fail[MAX_WIDTH];
    GLstencil r, s;
    GLuint i;
    GLboolean allfail = GL_FALSE;
@@ -910,19 +909,19 @@ stencil_test_pixels( GLcontext *ctx, GLuint n,
  * Return: GL_TRUE - all fragments failed the testing
  *         GL_FALSE - one or more fragments passed the testing
  */
-GLboolean
-_mesa_stencil_and_ztest_pixels( GLcontext *ctx,
-                                GLuint n, const GLint x[], const GLint y[],
-                                const GLdepth z[], GLubyte mask[] )
+static GLboolean
+stencil_and_ztest_pixels( GLcontext *ctx,
+                          GLuint n, const GLint x[], const GLint y[],
+                          const GLdepth z[], GLubyte mask[] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    ASSERT(ctx->Stencil.Enabled);
-   ASSERT(n <= PB_SIZE);
+   ASSERT(n <= MAX_WIDTH);
 
    if (swrast->Driver.WriteStencilPixels) {
       /*** Hardware stencil buffer ***/
-      GLstencil stencil[PB_SIZE];
-      GLubyte origMask[PB_SIZE];
+      GLstencil stencil[MAX_WIDTH];
+      GLubyte origMask[MAX_WIDTH];
 
       ASSERT(swrast->Driver.ReadStencilPixels);
       (*swrast->Driver.ReadStencilPixels)(ctx, n, x, y, stencil);
@@ -938,7 +937,7 @@ _mesa_stencil_and_ztest_pixels( GLcontext *ctx,
          _mesa_depth_test_pixels(ctx, n, x, y, z, mask);
 
          if (ctx->Stencil.ZFailFunc != GL_KEEP) {
-            GLubyte failmask[PB_SIZE];
+            GLubyte failmask[MAX_WIDTH];
             GLuint i;
             for (i = 0; i < n; i++) {
                ASSERT(mask[i] == 0 || mask[i] == 1);
@@ -948,7 +947,7 @@ _mesa_stencil_and_ztest_pixels( GLcontext *ctx,
                              n, stencil, failmask);
          }
          if (ctx->Stencil.ZPassFunc != GL_KEEP) {
-            GLubyte passmask[PB_SIZE];
+            GLubyte passmask[MAX_WIDTH];
             GLuint i;
             for (i = 0; i < n; i++) {
                ASSERT(mask[i] == 0 || mask[i] == 1);
@@ -977,7 +976,7 @@ _mesa_stencil_and_ztest_pixels( GLcontext *ctx,
                                     ctx->Stencil.ZPassFunc, mask);
       }
       else {
-         GLubyte passmask[PB_SIZE], failmask[PB_SIZE], oldmask[PB_SIZE];
+         GLubyte passmask[MAX_WIDTH], failmask[MAX_WIDTH], oldmask[MAX_WIDTH];
          GLuint i;
 
          MEMCPY(oldmask, mask, n * sizeof(GLubyte));
@@ -1010,9 +1009,9 @@ GLboolean
 _mesa_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span)
 {
    if (span->arrayMask & SPAN_XY) {
-      return _mesa_stencil_and_ztest_pixels(ctx, span->end,
-                                            span->xArray, span->yArray,
-                                            span->zArray, span->mask);
+      return stencil_and_ztest_pixels(ctx, span->end,
+                                      span->xArray, span->yArray,
+                                      span->zArray, span->mask);
    }
    else {
       return stencil_and_ztest_span2(ctx, span);

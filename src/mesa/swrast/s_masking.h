@@ -1,4 +1,4 @@
-/* $Id: s_masking.h,v 1.4 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_masking.h,v 1.5 2002/02/02 21:40:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,16 +47,6 @@ _mesa_mask_rgba_array( GLcontext *ctx, GLuint n, GLint x, GLint y,
 
 
 /*
- * Implement glColorMask for an array of RGBA pixels.
- */
-extern void
-_mesa_mask_rgba_pixels( GLcontext *ctx,
-                        GLuint n, const GLint x[], const GLint y[],
-                        GLchan rgba[][4], const GLubyte mask[] );
-
-
-
-/*
  * Implement glIndexMask for a span of CI pixels.
  */
 extern void
@@ -64,24 +54,9 @@ _mesa_mask_index_span( GLcontext *ctx, const struct sw_span *span,
                        GLuint index[] );
 
 
-
-/*
- * Implement glIndexMask for a span of CI pixels.
- */
 extern void
 _mesa_mask_index_array( GLcontext *ctx,
                         GLuint n, GLint x, GLint y, GLuint index[] );
-
-
-
-/*
- * Implement glIndexMask for an array of CI pixels.
- */
-extern void
-_mesa_mask_index_pixels( GLcontext *ctx,
-                         GLuint n, const GLint x[], const GLint y[],
-                         GLuint index[], const GLubyte mask[] );
-
 
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: s_context.h,v 1.15 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_context.h,v 1.16 2002/02/02 21:40:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -123,7 +123,6 @@ typedef struct
 
    /* Working values:
     */
-   struct pixel_buffer* PB;
    GLuint StippleCounter;    /* Line stipple counter */
    GLuint NewState;
    GLuint StateChanges;

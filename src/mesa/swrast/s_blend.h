@@ -1,10 +1,10 @@
-/* $Id: s_blend.h,v 1.5 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_blend.h,v 1.6 2002/02/02 21:40:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,11 +38,6 @@ extern void
 _mesa_blend_span( GLcontext *ctx, const struct sw_span *span,
                   GLchan rgba[][4] );
 
-
-extern void
-_mesa_blend_pixels( GLcontext *ctx,
-                    GLuint n, const GLint x[], const GLint y[],
-                    GLchan rgba[][4], const GLubyte mask[] );
 
 extern void
 _swrast_choose_blend_func( GLcontext *ctx );

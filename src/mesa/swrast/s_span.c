@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.29 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_span.c,v 1.30 2002/02/02 21:40:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,7 +45,6 @@
 #include "s_fog.h"
 #include "s_logic.h"
 #include "s_masking.h"
-#include "s_scissor.h"
 #include "s_span.h"
 #include "s_stencil.h"
 #include "s_texture.h"
@@ -433,10 +432,19 @@ clip_span( GLcontext *ctx, struct sw_span *span )
       const GLint n = span->end;
       GLubyte *mask = span->mask;
       GLint i;
-      /* note: using & intead of && to reduce branches */
-      for (i = 0; i < n; i++) {
-         mask[i] = (x[i] >= xmin) & (x[i] < xmax)
-                 & (y[i] >= ymin) & (y[i] < ymax);
+      if (span->arrayMask & SPAN_MASK) {
+         /* note: using & intead of && to reduce branches */
+         for (i = 0; i < n; i++) {
+            mask[i] &= (x[i] >= xmin) & (x[i] < xmax)
+                     & (y[i] >= ymin) & (y[i] < ymax);
+         }
+      }
+      else {
+         /* note: using & intead of && to reduce branches */
+         for (i = 0; i < n; i++) {
+            mask[i] = (x[i] >= xmin) & (x[i] < xmax)
+                    & (y[i] >= ymin) & (y[i] < ymax);
+         }
       }
       return GL_TRUE;  /* some pixels visible */
    }
@@ -640,11 +648,25 @@ _mesa_write_index_span( GLcontext *ctx, struct sw_span *span,
 
    /* Clipping */
    if ((swrast->_RasterMask & CLIP_BIT) || (primitive == GL_BITMAP)
-       || (primitive == GL_POINT)) {
+       || (primitive == GL_POINT) || (primitive == GL_LINE)) {
       if (!clip_span(ctx, span)) {
          return;
       }
    }
+
+#ifdef DEBUG
+   if (span->arrayMask & SPAN_XY) {
+      int i;
+      for (i = 0; i < span->end; i++) {
+         if (span->mask[i]) {
+            assert(span->xArray[i] >= ctx->DrawBuffer->_Xmin);
+            assert(span->xArray[i] < ctx->DrawBuffer->_Xmax);
+            assert(span->yArray[i] >= ctx->DrawBuffer->_Ymin);
+            assert(span->yArray[i] < ctx->DrawBuffer->_Ymax);
+         }
+      }
+   }
+#endif
 
    /* Polygon Stippling */
    if (ctx->Polygon.StippleFlag && primitive == GL_POLYGON) {
@@ -801,11 +823,25 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
 
    /* Clipping */
    if ((swrast->_RasterMask & CLIP_BIT) || (primitive == GL_BITMAP)
-       || (primitive == GL_POINT)) {
+       || (primitive == GL_POINT) || (primitive == GL_LINE)) {
       if (!clip_span(ctx, span)) {
          return;
       }
    }
+
+#ifdef DEBUG
+   if (span->arrayMask & SPAN_XY) {
+      int i;
+      for (i = 0; i < span->end; i++) {
+         if (span->mask[i]) {
+            assert(span->xArray[i] >= ctx->DrawBuffer->_Xmin);
+            assert(span->xArray[i] < ctx->DrawBuffer->_Xmax);
+            assert(span->yArray[i] >= ctx->DrawBuffer->_Ymin);
+            assert(span->yArray[i] < ctx->DrawBuffer->_Ymax);
+         }
+      }
+   }
+#endif
 
    /* Polygon Stippling */
    if (ctx->Polygon.StippleFlag && primitive == GL_POLYGON) {
@@ -1014,11 +1050,25 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
 
    /* Clipping */
    if ((swrast->_RasterMask & CLIP_BIT) || (primitive == GL_BITMAP)
-       || (primitive == GL_POINT)) {
+       || (primitive == GL_POINT) || (primitive == GL_LINE)) {
       if (!clip_span(ctx, span)) {
 	 return;
       }
    }
+
+#ifdef DEBUG
+   if (span->arrayMask & SPAN_XY) {
+      int i;
+      for (i = 0; i < span->end; i++) {
+         if (span->mask[i]) {
+            assert(span->xArray[i] >= ctx->DrawBuffer->_Xmin);
+            assert(span->xArray[i] < ctx->DrawBuffer->_Xmax);
+            assert(span->yArray[i] >= ctx->DrawBuffer->_Ymin);
+            assert(span->yArray[i] < ctx->DrawBuffer->_Ymax);
+         }
+      }
+   }
+#endif
 
    /* Polygon Stippling */
    if (ctx->Polygon.StippleFlag && primitive == GL_POLYGON) {

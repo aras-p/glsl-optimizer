@@ -1,4 +1,4 @@
-/* $Id: s_masking.c,v 1.6 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_masking.c,v 1.7 2002/02/02 21:40:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,7 +37,6 @@
 #include "s_alphabuf.h"
 #include "s_context.h"
 #include "s_masking.h"
-#include "s_pb.h"
 #include "s_span.h"
 
 
@@ -136,58 +135,6 @@ _mesa_mask_rgba_array( GLcontext *ctx,
 
 
 
-/*
- * Apply glColorMask to an array of RGBA pixels.
- */
-void
-_mesa_mask_rgba_pixels( GLcontext *ctx,
-                        GLuint n, const GLint x[], const GLint y[],
-                        GLchan rgba[][4], const GLubyte mask[] )
-{
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLchan dest[PB_SIZE][4];
-   GLuint i;
-
-#if CHAN_BITS == 8
-
-   GLuint srcMask = *((GLuint*)ctx->Color.ColorMask);
-   GLuint dstMask = ~srcMask;
-   GLuint *rgba32 = (GLuint *) rgba;
-   GLuint *dest32 = (GLuint *) dest;
-
-   (*swrast->Driver.ReadRGBAPixels)( ctx, n, x, y, dest, mask );
-   if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
-      _mesa_read_alpha_pixels( ctx, n, x, y, dest, mask );
-   }
-
-   for (i=0; i<n; i++) {
-      rgba32[i] = (rgba32[i] & srcMask) | (dest32[i] & dstMask);
-   }
-
-#else
-
-   const GLint rMask = ctx->Color.ColorMask[RCOMP];
-   const GLint gMask = ctx->Color.ColorMask[GCOMP];
-   const GLint bMask = ctx->Color.ColorMask[BCOMP];
-   const GLint aMask = ctx->Color.ColorMask[ACOMP];
-
-   (*swrast->Driver.ReadRGBAPixels)( ctx, n, x, y, dest, mask );
-   if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
-      _mesa_read_alpha_pixels( ctx, n, x, y, dest, mask );
-   }
-
-   for (i = 0; i < n; i++) {
-      if (!rMask)  rgba[i][RCOMP] = dest[i][RCOMP];
-      if (!gMask)  rgba[i][GCOMP] = dest[i][GCOMP];
-      if (!bMask)  rgba[i][BCOMP] = dest[i][BCOMP];
-      if (!aMask)  rgba[i][ACOMP] = dest[i][ACOMP];
-   }
-
-#endif
-}
-
-
-
 void
 _mesa_mask_index_span( GLcontext *ctx, const struct sw_span *span,
                        GLuint index[] )
@@ -242,29 +189,3 @@ _mesa_mask_index_array( GLcontext *ctx,
       index[i] = (index[i] & msrc) | (fbindexes[i] & mdest);
    }
 }
-
-
-
-/*
- * Apply glIndexMask to an array of CI pixels.
- */
-void
-_mesa_mask_index_pixels( GLcontext *ctx,
-                         GLuint n, const GLint x[], const GLint y[],
-                         GLuint index[], const GLubyte mask[] )
-{
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLuint i;
-   GLuint fbindexes[PB_SIZE];
-   GLuint msrc, mdest;
-
-   (*swrast->Driver.ReadCI32Pixels)( ctx, n, x, y, fbindexes, mask );
-
-   msrc = ctx->Color.IndexMask;
-   mdest = ~msrc;
-
-   for (i=0;i<n;i++) {
-      index[i] = (index[i] & msrc) | (fbindexes[i] & mdest);
-   }
-}
-
