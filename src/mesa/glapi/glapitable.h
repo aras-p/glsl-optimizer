@@ -2,7 +2,9 @@
 #ifndef _GLAPI_TABLE_H_
 #define _GLAPI_TABLE_H_
 
-#include <GL/gl.h>
+#ifndef GLAPIENTRYP
+#define GLAPIENTRYP
+#endif
 
 struct _glapi_table
 {

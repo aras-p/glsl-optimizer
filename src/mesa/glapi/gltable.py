@@ -2,9 +2,9 @@
 
 
 # Mesa 3-D graphics library
-# Version:  4.1
+# Version:  5.1
 # 
-# Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+# Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -27,7 +27,7 @@
 # Generate the glapitable.h file.
 #
 # Usage:
-#    gloffsets.py >glapitable.h
+#    python gloffsets.py >glapitable.h
 #
 # Dependencies:
 #    The apispec file must be in the current directory.
@@ -41,7 +41,9 @@ def PrintHead():
         print '#ifndef _GLAPI_TABLE_H_'
         print '#define _GLAPI_TABLE_H_'
         print ''
-        print '#include <GL/gl.h>'
+        print '#ifndef GLAPIENTRYP'
+        print '#define GLAPIENTRYP'
+        print '#endif'
         print ''
         print 'struct _glapi_table'
         print '{'
