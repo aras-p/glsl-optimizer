@@ -346,7 +346,7 @@ static GLboolean inClipRects(fxMesaContext fxMesa, int px, int py)
 #endif
 
 
-static GLboolean fxDDDrawBitMap(GLcontext *ctx, GLint px, GLint py,
+static GLboolean fxDDDrawBitmap(GLcontext *ctx, GLint px, GLint py,
                                 GLsizei width, GLsizei height,
                                 const struct gl_pixelstore_attrib *unpack,
                                 const GLubyte *bitmap)
@@ -518,6 +518,124 @@ static GLboolean fxDDDrawBitMap(GLcontext *ctx, GLint px, GLint py,
   FX_grLfbUnlock(GR_LFB_WRITE_ONLY,fxMesa->currentFB);
   return GL_TRUE;
 }
+
+
+static GLboolean fxDDReadPixels( GLcontext *ctx, GLint x, GLint y,
+                                 GLsizei width, GLsizei height,
+                                 GLenum format, GLenum type,
+                                 const struct gl_pixelstore_attrib *packing,
+                                 GLvoid *dstImage )
+{
+  if (ctx->Pixel.ScaleOrBiasRGBA || ctx->Pixel.MapColorFlag) {
+    return GL_FALSE;  /* can't do this */
+  }
+  else {
+    fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
+    GrLfbInfo_t info;
+    GLboolean result;
+
+    BEGIN_BOARD_LOCK();
+    if (grLfbLock(GR_LFB_READ_ONLY,
+                  fxMesa->currentFB,
+                  GR_LFBWRITEMODE_ANY,
+                  GR_ORIGIN_UPPER_LEFT,
+                  FXFALSE,
+                  &info)) {
+      const GLint winX = fxMesa->x_offset;
+      const GLint winY = fxMesa->y_offset + fxMesa->height - 1;
+      const GLint srcStride = (fxMesa->glCtx->Color.DrawBuffer == GL_FRONT)
+                            ? (fxMesa->screen_width) : (info.strideInBytes / 2);
+      const GLushort *src = (const GLushort *) info.lfbPtr
+                          + (winY - y) * srcStride + (winX + x);
+      GLubyte *dst = (GLubyte *) _mesa_image_address(packing, dstImage,
+                                         width, height, format, type, 0, 0, 0);
+      GLint dstStride = _mesa_image_row_stride(packing, width, format, type);
+
+      if (format == GL_RGB && type == GL_UNSIGNED_BYTE) {
+        /* convert 5R6G5B into 8R8G8B */
+        GLint row, col;
+        const GLint halfWidth = width >> 1;
+        const GLint extraPixel = (width & 1);
+        for (row = 0; row < height; row++) {
+          GLubyte *d = dst;
+          for (col = 0; col < halfWidth; col++) {
+            const GLuint pixel = ((const GLuint *) src)[col];
+            const GLint pixel0 = pixel & 0xffff;
+            const GLint pixel1 = pixel >> 16;
+            *d++ = FX_PixelToR[pixel0];
+            *d++ = FX_PixelToG[pixel0];
+            *d++ = FX_PixelToB[pixel0];
+            *d++ = FX_PixelToR[pixel1];
+            *d++ = FX_PixelToG[pixel1];
+            *d++ = FX_PixelToB[pixel1];
+          }
+          if (extraPixel) {
+            GLushort pixel = src[width-1];
+            *d++ = FX_PixelToR[pixel];
+            *d++ = FX_PixelToG[pixel];
+            *d++ = FX_PixelToB[pixel];
+          }
+          dst += dstStride;
+          src -= srcStride;
+        }
+        result = GL_TRUE;
+      }
+      else if (format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
+        /* convert 5R6G5B into 8R8G8B8A */
+        GLint row, col;
+        const GLint halfWidth = width >> 1;
+        const GLint extraPixel = (width & 1);
+        for (row = 0; row < height; row++) {
+          GLubyte *d = dst;
+          for (col = 0; col < halfWidth; col++) {
+            const GLuint pixel = ((const GLuint *) src)[col];
+            const GLint pixel0 = pixel & 0xffff;
+            const GLint pixel1 = pixel >> 16;
+            *d++ = FX_PixelToR[pixel0];
+            *d++ = FX_PixelToG[pixel0];
+            *d++ = FX_PixelToB[pixel0];
+            *d++ = 255;
+            *d++ = FX_PixelToR[pixel1];
+            *d++ = FX_PixelToG[pixel1];
+            *d++ = FX_PixelToB[pixel1];
+            *d++ = 255;
+          }
+          if (extraPixel) {
+            const GLushort pixel = src[width-1];
+            *d++ = FX_PixelToR[pixel];
+            *d++ = FX_PixelToG[pixel];
+            *d++ = FX_PixelToB[pixel];
+            *d++ = 255;
+          }
+          dst += dstStride;
+          src -= srcStride;
+        }
+        result = GL_TRUE;
+      }
+      else if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5) {
+        /* directly memcpy 5R6G5B pixels into client's buffer */
+        const GLint widthInBytes = width * 2;
+        GLint row;
+        for (row = 0; row < height; row++) {
+          MEMCPY(dst, src, widthInBytes);
+          dst += dstStride;
+          src -= srcStride;
+        }
+        result = GL_TRUE;
+      }
+      else {
+        result = GL_FALSE;
+      }
+
+      grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
+    }
+    END_BOARD_LOCK();
+
+    return result;
+  }
+}
+
+
 
 static void fxDDFinish(GLcontext *ctx)
 {
@@ -981,8 +1099,9 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.SetReadBuffer=fxDDSetReadBuffer;
   ctx->Driver.GetBufferSize=fxDDBufferSize;
 
-  ctx->Driver.Bitmap=fxDDDrawBitMap;
+  ctx->Driver.Bitmap=fxDDDrawBitmap;
   ctx->Driver.DrawPixels=NULL;
+  ctx->Driver.ReadPixels=fxDDReadPixels;
 
   ctx->Driver.Finish=fxDDFinish;
   ctx->Driver.Flush=NULL;
