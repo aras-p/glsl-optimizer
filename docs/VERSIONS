@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.54 2001/05/15 21:31:36 brianp Exp $
+$Id: VERSIONS,v 1.55 2001/05/23 14:44:12 brianp Exp $
 
 
 Mesa Version History
@@ -803,6 +803,33 @@ Mesa Version History
 	- NURBS or evaluator surfaces inside display lists don't always work
 
 
+3.4.2  May 17, 2001
+    Bug fixes:
+	- deleting the currently bound texture could cause bad problems
+	- using fog could result in random vertex alpha values
+	- AA triangle rendering could touch pixels outside right window bound
+	- fixed byteswapping problem in clear_32bit_ximage() function
+	- fixed bugs in wglUseFontBitmapsA(), by Frank Warmerdam
+	- fixed memory leak in glXUseXFont()
+	- fragment sampling in AA triangle function was off by 1/2 pixel
+	- Windows: reading pixels from framebuffer didn't always work
+	- glConvolutionFilter2D could segfault or cause FP exception
+	- fixed segfaults in FX and X drivers when using tex unit 1 but not 0
+	- GL_NAND logicop didn't work right in RGBA mode
+	- fixed a memory corruption bug in vertex buffer reset code
+	- clearing the softwara alpha buffer with scissoring was broken
+	- fixed a few color index mode fog bugs
+	- fixed some bad assertions in color index mode
+	- fixed FX line 'stipple' bug #420091
+	- fixed stencil buffer clear width/height typo
+	- fixed GL error glitches in gl[Client]ActiveTextureARB()
+	- fixed Windows compilation problem in texutil.c
+	- fixed 1/8-pixel AA triangle sampling error
+    Changes:
+	- optimized writing mono-colored pixel spans to X pixmaps
+	- increased max viewport size to 2048 x 2048
+
+
 3.5  Month ??, 2001
     New:
 	- internals of Mesa divided into modular pieces (Keith Whitwell)
@@ -828,6 +855,7 @@ Mesa Version History
 	- GL/glxext.h header file for GLX extensions
 	- somewhat faster software texturing, fogging, depth testing
 	- all color-index conformance tests now pass (only 8bpp tested)
+	- SPARC assembly language TCL optimizations (David Miller)
     Bug Fixes:
 	- fbiRev and tmuRev were unitialized when using Glide3
 	- fixed a few color index mode conformance failures; all pass now
