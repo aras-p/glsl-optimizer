@@ -25,6 +25,9 @@ static GLboolean Anim = GL_TRUE;
 static GLboolean Wire = GL_FALSE;
 static GLboolean PixelLight = GL_TRUE;
 
+static GLint T0 = 0;
+static GLint Frames = 0;
+
 static GLfloat Xrot = 0, Yrot = 0;
 
 static PFNGLPROGRAMLOCALPARAMETER4FVARBPROC glProgramLocalParameter4fvARB_func;
@@ -68,6 +71,19 @@ static void Redisplay( void )
    glPopMatrix();
 
    glutSwapBuffers();
+
+   Frames++;
+
+   if (Anim) {
+      GLint t = glutGet(GLUT_ELAPSED_TIME);
+      if (t - T0 >= 5000) {
+	 GLfloat seconds = (t - T0) / 1000.0;
+	 GLfloat fps = Frames / seconds;
+	 printf("%d frames in %6.3f seconds = %6.3f FPS\n", Frames, seconds, fps);
+	 T0 = t;
+	 Frames = 0;
+      }
+   }
 }
 
 
