@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.56 2002/03/16 18:02:08 brianp Exp $ */
+/* $Id: s_texture.c,v 1.57 2002/03/23 16:33:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2030,7 +2030,7 @@ sample_depth_texture( GLcontext *ctx, GLuint unit,
    const GLuint width = texImage->Width;
    const GLuint height = texImage->Height;
    const GLchan ambient = tObj->ShadowAmbient;
-   GLboolean lequal, gequal;
+   GLenum function;
    GLchan result;
 
    (void) unit;
@@ -2044,29 +2044,19 @@ sample_depth_texture( GLcontext *ctx, GLuint unit,
    if (tObj->CompareFlag) {
       /* GL_SGIX_shadow */
       if (tObj->CompareOperator == GL_TEXTURE_LEQUAL_R_SGIX) {
-         lequal = GL_TRUE;
-         gequal = GL_FALSE;
+         function = GL_LEQUAL;
       }
       else {
          ASSERT(tObj->CompareOperator == GL_TEXTURE_GEQUAL_R_SGIX);
-         lequal = GL_FALSE;
-         gequal = GL_TRUE;
+         function = GL_GEQUAL;
       }
    }
    else if (tObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
       /* GL_ARB_shadow */
-      if (tObj->CompareFunc == GL_LEQUAL) {
-         lequal = GL_TRUE;
-         gequal = GL_FALSE;
-      }
-      else {
-         ASSERT(tObj->CompareFunc == GL_GEQUAL);
-         lequal = GL_FALSE;
-         gequal = GL_TRUE;
-      }
+      function = tObj->CompareFunc;
    }
    else {
-      lequal = gequal = GL_FALSE;
+      function = GL_NONE;  /* pass depth through as grayscale */
    }
 
    if (tObj->MagFilter == GL_NEAREST) {
@@ -2078,21 +2068,37 @@ sample_depth_texture( GLcontext *ctx, GLuint unit,
          COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapT, texcoords[i][1], height, row);
          depthSample = *((const GLfloat *) texImage->Data + row * width + col);
 
-         if (lequal) {
-            if (texcoords[i][2] <= depthSample)
-               result = CHAN_MAX;
-            else
-               result = ambient;
-         }
-         else if (gequal) {
-            if (texcoords[i][2] >= depthSample)
-               result = CHAN_MAX;
-            else
-               result = ambient;
-         }
-         else {
-            /* no comparison */
+         switch (function) {
+         case GL_LEQUAL:
+            result = (texcoords[i][2] <= depthSample) ? CHAN_MAX : ambient;
+            break;
+         case GL_GEQUAL:
+            result = (texcoords[i][2] >= depthSample) ? CHAN_MAX : ambient;
+            break;
+         case GL_LESS:
+            result = (texcoords[i][2] < depthSample) ? CHAN_MAX : ambient;
+            break;
+         case GL_GREATER:
+            result = (texcoords[i][2] > depthSample) ? CHAN_MAX : ambient;
+            break;
+         case GL_EQUAL:
+            result = (texcoords[i][2] == depthSample) ? CHAN_MAX : ambient;
+            break;
+         case GL_NOTEQUAL:
+            result = (texcoords[i][2] != depthSample) ? CHAN_MAX : ambient;
+            break;
+         case GL_ALWAYS:
+            result = CHAN_MAX;
+            break;
+         case GL_NEVER:
+            result = ambient;
+            break;
+         case GL_NONE:
             CLAMPED_FLOAT_TO_CHAN(result, depthSample);
+            break;
+         default:
+            _mesa_problem(ctx, "Bad compare func in sample_depth_texture");
+            return;
          }
 
          switch (tObj->DepthMode) {
@@ -2181,8 +2187,8 @@ sample_depth_texture( GLcontext *ctx, GLuint unit,
             const GLfloat w11 = (       a) * (       b);
             const GLfloat depthSample = w00 * depth00 + w10 * depth10
                                       + w01 * depth01 + w11 * depth11;
-            if ((depthSample <= texcoords[i][2] && lequal) ||
-                (depthSample >= texcoords[i][2] && gequal)) {
+            if ((depthSample <= texcoords[i][2] && function == GL_LEQUAL) ||
+                (depthSample >= texcoords[i][2] && function == GL_GEQUAL)) {
                result  = ambient;
             }
             else {
@@ -2196,31 +2202,73 @@ sample_depth_texture( GLcontext *ctx, GLuint unit,
              */
             const GLfloat d = (CHAN_MAXF - (GLfloat) ambient) * 0.25F;
             GLfloat luminance = CHAN_MAXF;
-            if (lequal) {
-               if (depth00 <= texcoords[i][2])   luminance -= d;
-               if (depth01 <= texcoords[i][2])   luminance -= d;
-               if (depth10 <= texcoords[i][2])   luminance -= d;
-               if (depth11 <= texcoords[i][2])   luminance -= d;
+
+            switch (function) {
+            case GL_LEQUAL:
+               if (depth00 <= texcoords[i][2])  luminance -= d;
+               if (depth01 <= texcoords[i][2])  luminance -= d;
+               if (depth10 <= texcoords[i][2])  luminance -= d;
+               if (depth11 <= texcoords[i][2])  luminance -= d;
                result = (GLchan) luminance;
-            }
-            else if (gequal) {
-               if (depth00 >= texcoords[i][2])   luminance -= d;
-               if (depth01 >= texcoords[i][2])   luminance -= d;
-               if (depth10 >= texcoords[i][2])   luminance -= d;
-               if (depth11 >= texcoords[i][2])   luminance -= d;
+               break;
+            case GL_GEQUAL:
+               if (depth00 >= texcoords[i][2])  luminance -= d;
+               if (depth01 >= texcoords[i][2])  luminance -= d;
+               if (depth10 >= texcoords[i][2])  luminance -= d;
+               if (depth11 >= texcoords[i][2])  luminance -= d;
                result = (GLchan) luminance;
-            }
-            else {
-               /* no comparison, just bilinear sampling */
-               const GLfloat a = FRAC(u + 1.0F);
-               const GLfloat b = FRAC(v + 1.0F);
-               const GLfloat w00 = (1.0F - a) * (1.0F - b);
-               const GLfloat w10 = (       a) * (1.0F - b);
-               const GLfloat w01 = (1.0F - a) * (       b);
-               const GLfloat w11 = (       a) * (       b);
-               const GLfloat depthSample = w00 * depth00 + w10 * depth10
-                                         + w01 * depth01 + w11 * depth11;
-               CLAMPED_FLOAT_TO_CHAN(result, depthSample);
+               break;
+            case GL_LESS:
+               if (depth00 < texcoords[i][2])  luminance -= d;
+               if (depth01 < texcoords[i][2])  luminance -= d;
+               if (depth10 < texcoords[i][2])  luminance -= d;
+               if (depth11 < texcoords[i][2])  luminance -= d;
+               result = (GLchan) luminance;
+               break;
+            case GL_GREATER:
+               if (depth00 > texcoords[i][2])  luminance -= d;
+               if (depth01 > texcoords[i][2])  luminance -= d;
+               if (depth10 > texcoords[i][2])  luminance -= d;
+               if (depth11 > texcoords[i][2])  luminance -= d;
+               result = (GLchan) luminance;
+               break;
+            case GL_EQUAL:
+               if (depth00 == texcoords[i][2])  luminance -= d;
+               if (depth01 == texcoords[i][2])  luminance -= d;
+               if (depth10 == texcoords[i][2])  luminance -= d;
+               if (depth11 == texcoords[i][2])  luminance -= d;
+               result = (GLchan) luminance;
+               break;
+            case GL_NOTEQUAL:
+               if (depth00 != texcoords[i][2])  luminance -= d;
+               if (depth01 != texcoords[i][2])  luminance -= d;
+               if (depth10 != texcoords[i][2])  luminance -= d;
+               if (depth11 != texcoords[i][2])  luminance -= d;
+               result = (GLchan) luminance;
+               break;
+            case GL_ALWAYS:
+               result = 0;
+               break;
+            case GL_NEVER:
+               result = CHAN_MAXF;
+               break;
+            case GL_NONE:
+               /* ordinary bilinear filtering */
+               {
+                  const GLfloat a = FRAC(u + 1.0F);
+                  const GLfloat b = FRAC(v + 1.0F);
+                  const GLfloat w00 = (1.0F - a) * (1.0F - b);
+                  const GLfloat w10 = (       a) * (1.0F - b);
+                  const GLfloat w01 = (1.0F - a) * (       b);
+                  const GLfloat w11 = (       a) * (       b);
+                  const GLfloat depthSample = w00 * depth00 + w10 * depth10
+                                            + w01 * depth01 + w11 * depth11;
+                  CLAMPED_FLOAT_TO_CHAN(result, depthSample);
+               }
+               break;
+            default:
+               _mesa_problem(ctx, "Bad compare func in sample_depth_texture");
+               return;
             }
          }
 

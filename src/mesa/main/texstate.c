@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.65 2002/03/23 01:48:18 brianp Exp $ */
+/* $Id: texstate.c,v 1.66 2002/03/23 16:33:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1122,6 +1122,16 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          if (ctx->Extensions.ARB_shadow) {
             const GLenum func = (GLenum) params[0];
             if (func == GL_LEQUAL || func == GL_GEQUAL) {
+               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+               texObj->CompareFunc = params[0];
+            }
+            else if (ctx->Extensions.EXT_shadow_funcs &&
+                     (func == GL_EQUAL ||
+                      func == GL_NOTEQUAL ||
+                      func == GL_LESS ||
+                      func == GL_GREATER ||
+                      func == GL_ALWAYS ||
+                      func == GL_NEVER)) {
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
                texObj->CompareFunc = params[0];
             }

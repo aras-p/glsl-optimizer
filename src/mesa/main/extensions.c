@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.70 2002/03/13 04:33:16 brianp Exp $ */
+/* $Id: extensions.c,v 1.71 2002/03/23 16:33:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -90,6 +90,7 @@ static struct {
    { ON,  "GL_EXT_polygon_offset",             F(EXT_polygon_offset) },
    { ON,  "GL_EXT_rescale_normal",             F(EXT_rescale_normal) },
    { OFF, "GL_EXT_secondary_color",            F(EXT_secondary_color) },
+   { OFF, "GL_EXT_shadow_funcs",               F(EXT_shadow_funcs) },
    { OFF, "GL_EXT_shared_texture_palette",     F(EXT_shared_texture_palette) },
    { OFF, "GL_EXT_stencil_wrap",               F(EXT_stencil_wrap) },
    { ON,  "GL_EXT_texture3D",                  F(EXT_texture3D) },
@@ -159,6 +160,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_EXT_histogram",
       "GL_EXT_paletted_texture",
       "GL_EXT_point_parameters",
+      "GL_EXT_shadow_funcs",
       "GL_EXT_secondary_color",
       "GL_EXT_shared_texture_palette",
       "GL_EXT_stencil_wrap",
