@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.38 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.39 2002/10/30 20:18:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -686,7 +686,6 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          }
          if (ctx->Visual.rgbMode) {
             if (zoom) {
-               abort();
                _mesa_write_zoomed_rgba_span(ctx, &span,
                                  (const GLchan (*)[4]) span.array->rgba, desty);
             }
@@ -694,7 +693,6 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
                _mesa_write_rgba_span(ctx, &span);
          }
          else {
-               abort();
             if (zoom)
                _mesa_write_zoomed_index_span(ctx, &span, desty);
             else
