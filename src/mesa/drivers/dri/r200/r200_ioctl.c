@@ -860,7 +860,7 @@ void r200FreeMemoryMESA(__DRInativeDisplay *dpy, int scrn, GLvoid *pointer)
 {
    GET_CURRENT_CONTEXT(ctx);
    r200ContextPtr rmesa;
-   int region_offset;
+   ptrdiff_t region_offset;
    drm_radeon_mem_free_t memfree;
    int ret;
 
@@ -921,7 +921,7 @@ GLuint r200GetMemoryOffsetMESA(__DRInativeDisplay *dpy, int scrn, const GLvoid *
 GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
 			   GLint size )
 {
-   int offset = (char *)pointer - (char *)rmesa->r200Screen->gartTextures.map;
+   ptrdiff_t offset = (char *)pointer - (char *)rmesa->r200Screen->gartTextures.map;
    int valid = (size >= 0 &&
 		offset >= 0 &&
 		offset + size < rmesa->r200Screen->gartTextures.size);
@@ -935,7 +935,7 @@ GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
 
 GLuint r200GartOffsetFromVirtual( r200ContextPtr rmesa, const GLvoid *pointer )
 {
-   int offset = (char *)pointer - (char *)rmesa->r200Screen->gartTextures.map;
+   ptrdiff_t offset = (char *)pointer - (char *)rmesa->r200Screen->gartTextures.map;
 
    if (offset < 0 || offset > rmesa->r200Screen->gartTextures.size)
       return ~0;
