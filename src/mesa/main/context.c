@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.112 2000/12/09 20:35:54 brianp Exp $ */
+/* $Id: context.c,v 1.113 2000/12/16 00:21:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -302,7 +302,7 @@ _mesa_initialize_visual( GLvisual *vis,
       vis->DepthMax = 0xffffffff;
       vis->DepthMaxF = (GLfloat) vis->DepthMax;
    }
-   vis->MRD = 1;  /* XXX temporary value */
+   vis->MRD = 2.0;  /* XXX temporary value */
 
    return GL_TRUE;
 }
