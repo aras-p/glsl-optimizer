@@ -21,6 +21,12 @@ subdirs:
 	done
 
 
+install:
+	@for dir in $(DRI_DIRS) ; do \
+		(cd $$dir ; $(MAKE) install) || exit 1; \
+	done
+
+
 clean:
 	@for dir in $(DRI_DIRS) ; do \
 		(cd $$dir ; $(MAKE) clean) ; \
