@@ -972,6 +972,11 @@ void viaGetLock(viaContextPtr vmesa, GLuint flags)
     if (sarea->ctxOwner != me) {
         vmesa->uploadCliprects = GL_TRUE;
         sarea->ctxOwner = me;
+        vmesa->dirty |= (VIA_UPLOAD_CTX |
+			 VIA_UPLOAD_BUFFERS |
+			 VIA_UPLOAD_TEX0 |
+			 VIA_UPLOAD_TEX1 |
+			 VIA_UPLOAD_CLIPRECTS);
     }
 
     viaXMesaWindowMoved(vmesa);
