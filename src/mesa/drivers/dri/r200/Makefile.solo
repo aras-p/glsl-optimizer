@@ -20,26 +20,34 @@ DEFINES += \
 	-D_HAVE_USERCLIP=1 \
 	-DGLX_DIRECT_RENDERING 
 
-# Not yet
-# MINIGLX_SOURCES = server/i830_dri.c 
+MINIGLX_SOURCES = server/radeon_dri.c 
 
-DRIVER_SOURCES = \
-		i830_context.c \
-		i830_debug.c \
-		i830_ioctl.c \
-		i830_render.c \
-		i830_screen.c \
-		i830_span.c \
-		i830_state.c \
-		i830_tex.c \
-		i830_texmem.c \
-		i830_texstate.c \
-		i830_tris.c \
-		i830_vb.c \
-                ../common/mm.c \
-                ../common/utils.c \
-                ../common/texmem.c \
-                ../common/vblank.c
+DRIVER_SOURCES = r200_context.c \
+		 r200_ioctl.c \
+		 r200_lock.c \
+		 r200_screen.c \
+		 r200_state.c \
+		 r200_state_init.c \
+		 ../common/mm.c \
+		 ../common/utils.c \
+		 ../common/texmem.c \
+		 ../common/vblank.c \
+		 ../common/xmlconfig.c \
+		 r200_cmdbuf.c \
+		 r200_pixel.c \
+		 r200_tex.c \
+		 r200_texmem.c \
+		 r200_texstate.c \
+		 r200_tcl.c \
+		 r200_swtcl.c \
+		 r200_span.c \
+		 r200_maos.c \
+		 r200_sanity.c \
+		 r200_vtxfmt.c \
+		 r200_vtxfmt_c.c \
+		 r200_vtxfmt_sse.c \
+		 r200_vtxfmt_x86.c 
+
 
 INCLUDES = $(MINIGLX_INCLUDES) \
 	   $(SHARED_INCLUDES)
@@ -62,6 +70,22 @@ endif
 ASM_SOURCES = 
 OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(ASM_SOURCES:.S=.o) 
+
+SYMLINKS = \
+	server/radeon_common.h \
+	server/radeon_dri.c \
+	server/radeon_dri.h \
+	server/radeon.h \
+	server/radeon_macros.h \
+	server/radeon_reg.h \
+	server/radeon_sarea.h \
+
+
+$(SYMLINKS):
+	mkdir -p server
+	cd server
+	rm -f $@ && ln -s ../../radeon/$@ $@
+
 
 ### Include directories
 
@@ -87,18 +111,18 @@ INCLUDE_DIRS = \
 
 ##### TARGETS #####
 
-targets: depend i830_dri.so
+targets: depend r200_dri.so
 
-i830_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
+r200_dri.so:  $(SYMLINKS) $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.solo
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc $(GL_LIB_DEPS)
-	rm -f $(TOP)/lib/i830_dri.so && \
-	install i830_dri.so $(TOP)/lib/i830_dri.so
+	rm -f $(TOP)/lib/r200_dri.so && \
+	install r200_dri.so $(TOP)/lib/r200_dri.so
 
-$(TOP)/lib/i830_dri.so:	i830_dri.so
-	rm -f $(TOP)/lib/i830_dri.so && \
-	install i830_dri.so $(TOP)/lib/i830_dri.so
+$(TOP)/lib/r200_dri.so:	r200_dri.so
+	rm -f $(TOP)/lib/r200_dri.so && \
+	install r200_dri.so $(TOP)/lib/r200_dri.so
 
-# Run 'make -f Makefile.X11 dep' to update the dependencies if you change
+# Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	makedepend -fdepend -Y $(SHARED_INCLUDES) $(MINIGLX_INCLUDES) \
@@ -113,6 +137,7 @@ tags:
 # Remove .o and backup files
 clean:
 	-rm -f *.o */*.o *~ *.o *~ *.so server/*.o
+	-rm -f $(SYMLINKS)
 
 
 include $(TOP)/Make-config

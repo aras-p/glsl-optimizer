@@ -20,27 +20,26 @@ DEFINES += \
 	-D_HAVE_USERCLIP=1 \
 	-DGLX_DIRECT_RENDERING 
 
-# not yet
-# MINIGLX_SOURCES = server/tdfx_dri.c 
+# Not yet
+# MINIGLX_SOURCES = server/i830_dri.c 
 
-DRIVER_SOURCES = tdfx_context.c \
-		 ../common/mm.c \
-		 ../common/utils.c \
-		 ../common/texmem.c \
-		 ../common/vblank.c \
-		 ../common/xmlconfig.c \
-		 tdfx_dd.c \
-		 tdfx_lock.c \
-		 tdfx_pixels.c \
-		 tdfx_render.c \
-		 tdfx_screen.c \
-		 tdfx_span.c \
-		 tdfx_state.c \
-		 tdfx_tex.c \
-		 tdfx_texman.c \
-		 tdfx_texstate.c \
-		 tdfx_tris.c \
-		 tdfx_vb.c
+DRIVER_SOURCES = \
+		i830_context.c \
+		i830_debug.c \
+		i830_ioctl.c \
+		i830_render.c \
+		i830_screen.c \
+		i830_span.c \
+		i830_state.c \
+		i830_tex.c \
+		i830_texmem.c \
+		i830_texstate.c \
+		i830_tris.c \
+		i830_vb.c \
+                ../common/mm.c \
+                ../common/utils.c \
+                ../common/texmem.c \
+                ../common/vblank.c
 
 INCLUDES = $(MINIGLX_INCLUDES) \
 	   $(SHARED_INCLUDES)
@@ -63,12 +62,6 @@ endif
 ASM_SOURCES = 
 OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(ASM_SOURCES:.S=.o) 
-
-$(SYMLINKS):
-	mkdir -p server
-	cd server
-	rm -f $@ && ln -s ../../radeon/$@ $@
-
 
 ### Include directories
 
@@ -94,18 +87,18 @@ INCLUDE_DIRS = \
 
 ##### TARGETS #####
 
-targets: depend tdfx_dri.so
+targets: depend i830_dri.so
 
-tdfx_dri.so:  $(SYMLINKS) $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
+i830_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.solo
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc $(GL_LIB_DEPS)
-	rm -f $(TOP)/lib/tdfx_dri.so && \
-	install tdfx_dri.so $(TOP)/lib/tdfx_dri.so
+	rm -f $(TOP)/lib/i830_dri.so && \
+	install i830_dri.so $(TOP)/lib/i830_dri.so
 
-$(TOP)/lib/tdfx_dri.so:	tdfx_dri.so
-	rm -f $(TOP)/lib/tdfx_dri.so && \
-	install tdfx_dri.so $(TOP)/lib/tdfx_dri.so
+$(TOP)/lib/i830_dri.so:	i830_dri.so
+	rm -f $(TOP)/lib/i830_dri.so && \
+	install i830_dri.so $(TOP)/lib/i830_dri.so
 
-# Run 'make -f Makefile.X11 dep' to update the dependencies if you change
+# Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	makedepend -fdepend -Y $(SHARED_INCLUDES) $(MINIGLX_INCLUDES) \
@@ -120,7 +113,6 @@ tags:
 # Remove .o and backup files
 clean:
 	-rm -f *.o */*.o *~ *.o *~ *.so server/*.o
-	-rm -f $(SYMLINKS)
 
 
 include $(TOP)/Make-config

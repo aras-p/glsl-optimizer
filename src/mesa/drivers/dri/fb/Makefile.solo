@@ -51,7 +51,7 @@ INCLUDE_DIRS = \
 
 targets: depend fb_dri.so
 
-fb_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
+fb_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.solo
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc -lm
 	rm -f $(TOP)/lib/fb_dri.so && \
 	install fb_dri.so $(TOP)/lib/fb_dri.so
@@ -60,7 +60,7 @@ $(TOP)/lib/fb_dri.so:	fb_dri.so
 	rm -f $(TOP)/lib/fb_dri.so && \
 	install fb_dri.so $(TOP)/lib/fb_dri.so
 
-# Run 'make -f Makefile.X11 dep' to update the dependencies if you change
+# Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	makedepend -fdepend -Y $(SHARED_INCLUDES) \

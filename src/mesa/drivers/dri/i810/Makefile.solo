@@ -18,39 +18,34 @@ DEFINES += \
 	-D_HAVE_LIGHTING=1 \
 	-D_HAVE_TEXGEN=1 \
 	-D_HAVE_USERCLIP=1 \
-	-DGLX_DIRECT_RENDERING
+	-DGLX_DIRECT_RENDERING 
 
-MINIGLX_SOURCES = server/mga_dri.c 
+# Not yet
+# MINIGLX_SOURCES = server/i810_dri.c 
 
-DRIVER_SOURCES = mgadd.c \
-		 mgaioctl.c \
-		 mgarender.c \
-		 mgastate.c \
-		 mgatris.c \
-		 ../common/mm.c \
-		 ../common/utils.c \
-		 ../common/texmem.c \
-		 ../common/vblank.c \
-		 ../common/xmlconfig.c
-
-FULL_DRIVER_SOURCES = 	\
-		 mgapixel.c \
-		 mgaspan.c \
-		 mgatex.c \
-		 mgatexmem.c \
-		 mga_texstate.c \
-		 mga_texcombine.c \
-		 mgavb.c \
-		 mga_xmesa.c
-
+DRIVER_SOURCES = \
+		i810context.c \
+		i810ioctl.c \
+		i810render.c \
+		i810screen.c \
+		i810span.c \
+		i810state.c \
+		i810tex.c \
+		i810texmem.c \
+		i810texstate.c \
+		i810tris.c \
+		i810vb.c \
+                ../common/mm.c \
+                ../common/utils.c \
+                ../common/texmem.c \
+                ../common/vblank.c
 
 INCLUDES = $(MINIGLX_INCLUDES) \
 	   $(SHARED_INCLUDES)
 
 
-C_SOURCES = $(MINIGLX_SOURCES) \
-	    $(FULL_DRIVER_SOURCES) \
-	    $(DRIVER_SOURCES) 
+C_SOURCES = $(DRIVER_SOURCES) \
+	    $(MINIGLX_SOURCES) 
 
 MESA_MODULES = $(TOP)/src/mesa/mesa.a
 
@@ -66,8 +61,6 @@ endif
 ASM_SOURCES = 
 OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(ASM_SOURCES:.S=.o) 
-
-
 
 ### Include directories
 
@@ -93,18 +86,18 @@ INCLUDE_DIRS = \
 
 ##### TARGETS #####
 
-targets: depend mga_dri.so
+targets: depend i810_dri.so
 
-mga_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
-	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc -lm
-	rm -f $(TOP)/lib/mga_dri.so && \
-	install mga_dri.so $(TOP)/lib/mga_dri.so
+i810_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.solo
+	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc $(GL_LIB_DEPS)
+	rm -f $(TOP)/lib/i810_dri.so && \
+	install i810_dri.so $(TOP)/lib/i810_dri.so
 
-$(TOP)/lib/mga_dri.so:	mga_dri.so
-	rm -f $(TOP)/lib/mga_dri.so && \
-	install mga_dri.so $(TOP)/lib/mga_dri.so
+$(TOP)/lib/i810_dri.so:	i810_dri.so
+	rm -f $(TOP)/lib/i810_dri.so && \
+	install i810_dri.so $(TOP)/lib/i810_dri.so
 
-# Run 'make -f Makefile.X11 dep' to update the dependencies if you change
+# Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	makedepend -fdepend -Y $(SHARED_INCLUDES) $(MINIGLX_INCLUDES) \
@@ -118,7 +111,7 @@ tags:
 
 # Remove .o and backup files
 clean:
-	-rm -f *.o *~ *.o *~ *.so server/*.o
+	-rm -f *.o */*.o *~ *.o *~ *.so server/*.o
 
 
 include $(TOP)/Make-config

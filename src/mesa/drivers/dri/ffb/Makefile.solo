@@ -20,25 +20,29 @@ DEFINES += \
 	-D_HAVE_USERCLIP=1 \
 	-DGLX_DIRECT_RENDERING 
 
-# Not yet
-# MINIGLX_SOURCES = server/i810_dri.c 
+# not yet
+# MINIGLX_SOURCES = server/ffb_dri.c 
 
-DRIVER_SOURCES = \
-		i810context.c \
-		i810ioctl.c \
-		i810render.c \
-		i810screen.c \
-		i810span.c \
-		i810state.c \
-		i810tex.c \
-		i810texmem.c \
-		i810texstate.c \
-		i810tris.c \
-		i810vb.c \
-                ../common/mm.c \
-                ../common/utils.c \
-                ../common/texmem.c \
-                ../common/vblank.c
+DRIVER_SOURCES = ffb_bitmap.c \
+		 ../common/mm.c \
+		 ../common/utils.c \
+		 ../common/texmem.c \
+		 ../common/vblank.c \
+		 ../common/xmlconfig.c \
+		 ffb_clear.c \
+		 ffb_dd.c \
+		 ffb_depth.c \
+		 ffb_fog.c \
+		 ffb_lines.c \
+		 ffb_points.c \
+		 ffb_span.c \
+		 ffb_state.c \
+		 ffb_stencil.c \
+		 ffb_tex.c \
+		 ffb_tris.c \
+		 ffb_vb.c \
+		 ffb_vtxfmt.c \
+		 ffb_xmesa.c
 
 INCLUDES = $(MINIGLX_INCLUDES) \
 	   $(SHARED_INCLUDES)
@@ -61,6 +65,12 @@ endif
 ASM_SOURCES = 
 OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(ASM_SOURCES:.S=.o) 
+
+$(SYMLINKS):
+	mkdir -p server
+	cd server
+	rm -f $@ && ln -s ../../radeon/$@ $@
+
 
 ### Include directories
 
@@ -86,18 +96,18 @@ INCLUDE_DIRS = \
 
 ##### TARGETS #####
 
-targets: depend i810_dri.so
+targets: depend ffb_dri.so
 
-i810_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
+ffb_dri.so:  $(SYMLINKS) $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.solo
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc $(GL_LIB_DEPS)
-	rm -f $(TOP)/lib/i810_dri.so && \
-	install i810_dri.so $(TOP)/lib/i810_dri.so
+	rm -f $(TOP)/lib/ffb_dri.so && \
+	install ffb_dri.so $(TOP)/lib/ffb_dri.so
 
-$(TOP)/lib/i810_dri.so:	i810_dri.so
-	rm -f $(TOP)/lib/i810_dri.so && \
-	install i810_dri.so $(TOP)/lib/i810_dri.so
+$(TOP)/lib/ffb_dri.so:	ffb_dri.so
+	rm -f $(TOP)/lib/ffb_dri.so && \
+	install ffb_dri.so $(TOP)/lib/ffb_dri.so
 
-# Run 'make -f Makefile.X11 dep' to update the dependencies if you change
+# Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	makedepend -fdepend -Y $(SHARED_INCLUDES) $(MINIGLX_INCLUDES) \
@@ -112,6 +122,7 @@ tags:
 # Remove .o and backup files
 clean:
 	-rm -f *.o */*.o *~ *.o *~ *.so server/*.o
+	-rm -f $(SYMLINKS)
 
 
 include $(TOP)/Make-config

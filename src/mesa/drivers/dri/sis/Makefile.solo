@@ -20,34 +20,28 @@ DEFINES += \
 	-D_HAVE_USERCLIP=1 \
 	-DGLX_DIRECT_RENDERING 
 
-MINIGLX_SOURCES = server/radeon_dri.c 
+# Not yet
+# MINIGLX_SOURCES = server/sis_dri.c 
 
-DRIVER_SOURCES = r200_context.c \
-		 r200_ioctl.c \
-		 r200_lock.c \
-		 r200_screen.c \
-		 r200_state.c \
-		 r200_state_init.c \
-		 ../common/mm.c \
-		 ../common/utils.c \
-		 ../common/texmem.c \
-		 ../common/vblank.c \
-		 ../common/xmlconfig.c \
-		 r200_cmdbuf.c \
-		 r200_pixel.c \
-		 r200_tex.c \
-		 r200_texmem.c \
-		 r200_texstate.c \
-		 r200_tcl.c \
-		 r200_swtcl.c \
-		 r200_span.c \
-		 r200_maos.c \
-		 r200_sanity.c \
-		 r200_vtxfmt.c \
-		 r200_vtxfmt_c.c \
-		 r200_vtxfmt_sse.c \
-		 r200_vtxfmt_x86.c 
-
+DRIVER_SOURCES = \
+		sis_alloc.c \
+		sis_clear.c \
+		sis_context.c \
+		sis_dd.c \
+		sis_fog.c \
+		sis_lock.c \
+		sis_screen.c \
+		sis_span.c \
+		sis_state.c \
+		sis_stencil.c \
+		sis_tex.c \
+		sis_texstate.c \
+		sis_tris.c \
+		sis_vb.c \
+                ../common/mm.c \
+                ../common/utils.c \
+                ../common/texmem.c \
+                ../common/vblank.c
 
 INCLUDES = $(MINIGLX_INCLUDES) \
 	   $(SHARED_INCLUDES)
@@ -70,22 +64,6 @@ endif
 ASM_SOURCES = 
 OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(ASM_SOURCES:.S=.o) 
-
-SYMLINKS = \
-	server/radeon_common.h \
-	server/radeon_dri.c \
-	server/radeon_dri.h \
-	server/radeon.h \
-	server/radeon_macros.h \
-	server/radeon_reg.h \
-	server/radeon_sarea.h \
-
-
-$(SYMLINKS):
-	mkdir -p server
-	cd server
-	rm -f $@ && ln -s ../../radeon/$@ $@
-
 
 ### Include directories
 
@@ -111,18 +89,18 @@ INCLUDE_DIRS = \
 
 ##### TARGETS #####
 
-targets: depend r200_dri.so
+targets: depend sis_dri.so
 
-r200_dri.so:  $(SYMLINKS) $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
+sis_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.solo
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc $(GL_LIB_DEPS)
-	rm -f $(TOP)/lib/r200_dri.so && \
-	install r200_dri.so $(TOP)/lib/r200_dri.so
+	rm -f $(TOP)/lib/sis_dri.so && \
+	install sis_dri.so $(TOP)/lib/sis_dri.so
 
-$(TOP)/lib/r200_dri.so:	r200_dri.so
-	rm -f $(TOP)/lib/r200_dri.so && \
-	install r200_dri.so $(TOP)/lib/r200_dri.so
+$(TOP)/lib/sis_dri.so:	sis_dri.so
+	rm -f $(TOP)/lib/sis_dri.so && \
+	install sis_dri.so $(TOP)/lib/sis_dri.so
 
-# Run 'make -f Makefile.X11 dep' to update the dependencies if you change
+# Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	makedepend -fdepend -Y $(SHARED_INCLUDES) $(MINIGLX_INCLUDES) \
@@ -137,7 +115,6 @@ tags:
 # Remove .o and backup files
 clean:
 	-rm -f *.o */*.o *~ *.o *~ *.so server/*.o
-	-rm -f $(SYMLINKS)
 
 
 include $(TOP)/Make-config

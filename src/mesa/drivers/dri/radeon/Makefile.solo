@@ -127,7 +127,7 @@ INCLUDE_DIRS = \
 
 targets: depend $(TARGET)
 
-$(TARGET):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
+$(TARGET):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.solo
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc -lm
 	rm -f $(TOP)/lib/$(TARGET) && \
 	install $(TARGET) $(TOP)/lib/$(TARGET)
@@ -136,7 +136,7 @@ $(TOP)/lib/$(TARGET):	$(TARGET)
 	rm -f $(TOP)/lib/$(TARGET) && \
 	install $(TARGET) $(TOP)/lib/$(TARGET)
 
-# Run 'make -f Makefile.X11 dep' to update the dependencies if you change
+# Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	makedepend -fdepend -Y $(SHARED_INCLUDES) $(MINIGLX_INCLUDES)\

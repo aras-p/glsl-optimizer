@@ -1,3 +1,4 @@
+# $Id: Makefile.solo,v 1.1 2003/12/12 15:30:52 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -21,27 +22,27 @@ DEFINES += \
 	-DGLX_DIRECT_RENDERING 
 
 # Not yet
-# MINIGLX_SOURCES = server/sis_dri.c 
+# MINIGLX_SOURCES = server/gamma_dri.c 
 
 DRIVER_SOURCES = \
-		sis_alloc.c \
-		sis_clear.c \
-		sis_context.c \
-		sis_dd.c \
-		sis_fog.c \
-		sis_lock.c \
-		sis_screen.c \
-		sis_span.c \
-		sis_state.c \
-		sis_stencil.c \
-		sis_tex.c \
-		sis_texstate.c \
-		sis_tris.c \
-		sis_vb.c \
-                ../common/mm.c \
-                ../common/utils.c \
-                ../common/texmem.c \
-                ../common/vblank.c
+		gamma_context.c \
+		gamma_dd.c \
+		gamma_inithw.c \
+		gamma_lock.c \
+		gamma_render.c \
+		gamma_screen.c \
+		gamma_span.c \
+		gamma_state.c \
+		gamma_tex.c \
+		gamma_texmem.c \
+		gamma_texstate.c \
+		gamma_tris.c \
+		gamma_vb.c \
+		gamma_xmesa.c \
+		../common/mm.c \
+		../common/utils.c \
+		../common/texmem.c \
+		../common/vblank.c
 
 INCLUDES = $(MINIGLX_INCLUDES) \
 	   $(SHARED_INCLUDES)
@@ -89,18 +90,18 @@ INCLUDE_DIRS = \
 
 ##### TARGETS #####
 
-targets: depend sis_dri.so
+targets: depend gamma_dri.so
 
-sis_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
+gamma_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.solo
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc $(GL_LIB_DEPS)
-	rm -f $(TOP)/lib/sis_dri.so && \
-	install sis_dri.so $(TOP)/lib/sis_dri.so
+	rm -f $(TOP)/lib/gamma_dri.so && \
+	install gamma_dri.so $(TOP)/lib/gamma_dri.so
 
-$(TOP)/lib/sis_dri.so:	sis_dri.so
-	rm -f $(TOP)/lib/sis_dri.so && \
-	install sis_dri.so $(TOP)/lib/sis_dri.so
+$(TOP)/lib/gamma_dri.so:	gamma_dri.so
+	rm -f $(TOP)/lib/gamma_dri.so && \
+	install gamma_dri.so $(TOP)/lib/gamma_dri.so
 
-# Run 'make -f Makefile.X11 dep' to update the dependencies if you change
+# Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	makedepend -fdepend -Y $(SHARED_INCLUDES) $(MINIGLX_INCLUDES) \
