@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.59 2001/06/27 13:56:17 brianp Exp $ */
+/* $Id: osmesa.c,v 1.60 2001/07/05 15:12:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -457,8 +457,9 @@ OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
       return GL_FALSE;
    }
 
-   if (ctx->format == OSMESA_RGB_565 && type != GL_UNSIGNED_SHORT_5_6_5) {
-      return GL_FALSE;
+   if (ctx->format == OSMESA_RGB_565) {
+      if (type != GL_UNSIGNED_SHORT_5_6_5)
+         return GL_FALSE;
    }
    else if (type != CHAN_TYPE) {
       return GL_FALSE;
