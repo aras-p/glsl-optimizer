@@ -1248,7 +1248,7 @@ Mesa Version History
 	- option to walk triangle edges with double-precision floats
 	  (Justin Novosad of Discreet) (see config.h file)
 	- support for AUX buffers in software GLX driver
-	- updated glext.h to version 23
+	- updated glext.h to version 24 and glxext.h to version 6
 	- new MESA_GLX_FORCE_ALPHA and MESA_GLX_DEPTH_BITS env vars
     Changes:
 	- fragment fog interpolation is perspective corrected now
