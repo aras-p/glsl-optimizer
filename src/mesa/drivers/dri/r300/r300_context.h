@@ -54,6 +54,9 @@ typedef struct r300_context *r300ContextPtr;
 #include "radeon_lock.h"
 #include "mm.h"
 
+typedef GLuint uint32_t;
+typedef GLubyte uint8_t;
+
 
 static __inline__ uint32_t r300PackFloat32(float fl)
 {
