@@ -3416,10 +3416,13 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
  * all aspect ratios).  This can be made a lot faster, but I don't
  * really care enough...
  */
-void _mesa_rescale_teximage2d( GLuint bytesPerPixel, GLuint dstRowStride,
-			       GLint srcWidth, GLint srcHeight,
-			       GLint dstWidth, GLint dstHeight,
-			       const GLvoid *srcImage, GLvoid *dstImage )
+void
+_mesa_rescale_teximage2d (GLuint bytesPerPixel,
+			  GLuint srcStrideInPixels,
+			  GLuint dstRowStride,
+			  GLint srcWidth, GLint srcHeight,
+			  GLint dstWidth, GLint dstHeight,
+			  const GLvoid *srcImage, GLvoid *dstImage)
 {
    GLint row, col;
 
@@ -3428,7 +3431,7 @@ void _mesa_rescale_teximage2d( GLuint bytesPerPixel, GLuint dstRowStride,
       GLint srcRow = row HOP hScale;					\
       for ( col = 0 ; col < dstWidth ; col++ ) {			\
 	 GLint srcCol = col WOP wScale;					\
-	 dst[col] = src[srcRow * srcWidth + srcCol];			\
+	 dst[col] = src[srcRow * srcStrideInPixels + srcCol];		\
       }									\
       dst = (TYPE *) ((GLubyte *) dst + dstRowStride);			\
    }									\
@@ -3438,9 +3441,9 @@ do {									\
    const TYPE *src = (const TYPE *)srcImage;				\
    TYPE *dst = (TYPE *)dstImage;					\
 									\
-   if ( srcHeight <= dstHeight ) {					\
+   if ( srcHeight < dstHeight ) {					\
       const GLint hScale = dstHeight / srcHeight;			\
-      if ( srcWidth <= dstWidth ) {					\
+      if ( srcWidth < dstWidth ) {					\
 	 const GLint wScale = dstWidth / srcWidth;			\
 	 INNER_LOOP( TYPE, /, / );					\
       }									\
@@ -3451,7 +3454,7 @@ do {									\
    }									\
    else {								\
       const GLint hScale = srcHeight / dstHeight;			\
-      if ( srcWidth <= dstWidth ) {					\
+      if ( srcWidth < dstWidth ) {					\
 	 const GLint wScale = dstWidth / srcWidth;			\
 	 INNER_LOOP( TYPE, *, / );					\
       }									\
