@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.46 2001/01/08 04:09:41 keithw Exp $ */
+/* $Id: dd.h,v 1.47 2001/01/09 00:02:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -406,6 +406,15 @@ struct dd_function_table {
   
 
    /***
+    *** For hardware accumulation buffer:
+    ***/
+   GLboolean (*Accum)( GLcontext *ctx, GLenum op, GLfloat value,
+                       GLint xpos, GLint ypos, GLint width, GLint height );
+   /* Execute glAccum command within the given scissor region.
+    */
+
+
+   /***
     *** glDraw/Read/CopyPixels and glBitmap functions:
     ***/
 
@@ -446,14 +455,9 @@ struct dd_function_table {
    /* This is called by glBitmap.  Works the same as DrawPixels, above.
     */
 
-   GLboolean (*Accum)( GLcontext *ctx, GLenum op, 
-		       GLfloat value, GLint xpos, GLint ypos, 
-		       GLint width, GLint height );
-   /* Hardware accum buffer.
-    */
 
    /***
-    *** Texture mapping functions:
+    *** Texture image functions:
     ***/
 
    GLboolean (*TexImage1D)( GLcontext *ctx, GLenum target, GLint level,
@@ -582,6 +586,10 @@ struct dd_function_table {
     * if the test fails.
     */
 
+   /***
+    *** Compressed texture functions:
+    ***/
+
    GLboolean (*CompressedTexImage1D)( GLcontext *ctx, GLenum target,
                                       GLint level, GLsizei imageSize,
                                       const GLvoid *data,
@@ -697,21 +705,9 @@ struct dd_function_table {
     * <texImage> is the source texture image.
     */
 
-   void (*TexEnv)( GLcontext *ctx, GLenum target, GLenum pname,
-                   const GLfloat *param );
-   /* Called by glTexEnv*().
-    */
-
-   void (*TexParameter)( GLcontext *ctx, GLenum target,
-                         struct gl_texture_object *texObj,
-                         GLenum pname, const GLfloat *params );
-   /* Called by glTexParameter*().
-    *    <target> is user specified
-    *    <texObj> the texture object to modify
-    *    <pname> is one of GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER,
-    *       GL_TEXTURE_WRAP_[STR], or GL_TEXTURE_BORDER_COLOR.
-    *    <params> is user specified.
-    */
+   /***
+    *** Texture object functions:
+    ***/
 
    void (*BindTexture)( GLcontext *ctx, GLenum target,
                         struct gl_texture_object *tObj );
@@ -745,13 +741,111 @@ struct dd_function_table {
     */
 
 
-   void (*RenderStart)( GLcontext *ctx );
-   void (*RenderPrimitive)( GLcontext *ctx, GLenum mode );
-   void (*RenderFinish)( GLcontext *ctx );
-   /* Wrap around all rendering functions.  Suitable for
-    * grabbing/releasing hardware locks.
+   /***
+    *** State-changing functions (drawing functions are above)
+    ***
+    *** These functions are called by their corresponding OpenGL API functions.
+    *** They're ALSO called by the gl_PopAttrib() function!!!
+    *** May add more functions like these to the device driver in the future.
+    ***/
+   void (*AlphaFunc)(GLcontext *ctx, GLenum func, GLclampf ref);
+   void (*BlendEquation)(GLcontext *ctx, GLenum mode);
+   void (*BlendFunc)(GLcontext *ctx, GLenum sfactor, GLenum dfactor);
+   void (*BlendFuncSeparate)(GLcontext *ctx,
+                             GLenum sfactorRGB, GLenum dfactorRGB,
+                             GLenum sfactorA, GLenum dfactorA);
+   void (*ClearDepth)(GLcontext *ctx, GLclampd d);
+   void (*ClearStencil)(GLcontext *ctx, GLint s);
+   void (*ColorMask)(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
+                     GLboolean bmask, GLboolean amask );
+   void (*CullFace)(GLcontext *ctx, GLenum mode);
+   void (*ClipPlane)(GLcontext *ctx, GLenum plane, const GLfloat *equation );
+   void (*FrontFace)(GLcontext *ctx, GLenum mode);
+   void (*DepthFunc)(GLcontext *ctx, GLenum func);
+   void (*DepthMask)(GLcontext *ctx, GLboolean flag);
+   void (*DepthRange)(GLcontext *ctx, GLclampd nearval, GLclampd farval);
+   void (*Enable)(GLcontext* ctx, GLenum cap, GLboolean state);
+   void (*Fogfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);
+   void (*Hint)(GLcontext *ctx, GLenum target, GLenum mode);
+   void (*IndexMask)(GLcontext *ctx, GLuint mask);
+   void (*Lightfv)(GLcontext *ctx, GLenum light,
+		   GLenum pname, const GLfloat *params );
+   void (*LightModelfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);
+   void (*LineStipple)(GLcontext *ctx, GLint factor, GLushort pattern );
+   void (*LineWidth)(GLcontext *ctx, GLfloat width);
+   void (*LogicOpcode)(GLcontext *ctx, GLenum opcode);
+   void (*PointParameterfv)(GLcontext *ctx, GLenum pname,
+                            const GLfloat *params);
+   void (*PointSize)(GLcontext *ctx, GLfloat size);
+   void (*PolygonMode)(GLcontext *ctx, GLenum face, GLenum mode);
+   void (*PolygonStipple)(GLcontext *ctx, const GLubyte *mask );
+   void (*RenderMode)(GLcontext *ctx, GLenum mode );
+   void (*Scissor)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
+   void (*ShadeModel)(GLcontext *ctx, GLenum mode);
+   void (*StencilFunc)(GLcontext *ctx, GLenum func, GLint ref, GLuint mask);
+   void (*StencilMask)(GLcontext *ctx, GLuint mask);
+   void (*StencilOp)(GLcontext *ctx, GLenum fail, GLenum zfail, GLenum zpass);
+   void (*TexGen)(GLcontext *ctx, GLenum coord, GLenum pname, 
+		  const GLfloat *params);
+   void (*TexEnv)(GLcontext *ctx, GLenum target, GLenum pname,
+                  const GLfloat *param);
+   void (*TexParameter)(GLcontext *ctx, GLenum target,
+                        struct gl_texture_object *texObj,
+                        GLenum pname, const GLfloat *params);
+   void (*TextureMatrix)(GLcontext *ctx, GLuint unit, const GLmatrix *mat);
+   void (*Viewport)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
+
+
+   /*** State-query functions
+    ***
+    *** Return GL_TRUE if query was completed, GL_FALSE otherwise.
+    ***/
+   GLboolean (*GetBooleanv)(GLcontext *ctx, GLenum pname, GLboolean *result);
+   GLboolean (*GetDoublev)(GLcontext *ctx, GLenum pname, GLdouble *result);
+   GLboolean (*GetFloatv)(GLcontext *ctx, GLenum pname, GLfloat *result);
+   GLboolean (*GetIntegerv)(GLcontext *ctx, GLenum pname, GLint *result);
+   GLboolean (*GetPointerv)(GLcontext *ctx, GLenum pname, GLvoid **result);
+
+
+   /***
+    *** Vertex array functions
+    ***
+    *** Called by the corresponding OpenGL functions.
+    ***/
+   void (*VertexPointer)(GLcontext *ctx, GLint size, GLenum type, 
+			 GLsizei stride, const GLvoid *ptr);
+   void (*NormalPointer)(GLcontext *ctx, GLenum type, 
+			 GLsizei stride, const GLvoid *ptr);
+   void (*ColorPointer)(GLcontext *ctx, GLint size, GLenum type, 
+			GLsizei stride, const GLvoid *ptr);
+   void (*FogCoordPointer)(GLcontext *ctx, GLenum type, 
+			   GLsizei stride, const GLvoid *ptr);
+   void (*IndexPointer)(GLcontext *ctx, GLenum type, 
+			GLsizei stride, const GLvoid *ptr);
+   void (*SecondaryColorPointer)(GLcontext *ctx, GLint size, GLenum type, 
+				 GLsizei stride, const GLvoid *ptr);
+   void (*TexCoordPointer)(GLcontext *ctx, GLint size, GLenum type, 
+			   GLsizei stride, const GLvoid *ptr);
+   void (*EdgeFlagPointer)(GLcontext *ctx, GLsizei stride, const GLvoid *ptr);
+
+
+
+   /***
+    *** Rendering
+    ***/
+
+   void (*RenderStart)(GLcontext *ctx);
+   void (*RenderFinish)(GLcontext *ctx);
+   /* Called before and after all rendering operations, including DrawPixels,
+    * ReadPixels, Bitmap, span functions, and CopyTexImage, etc commands.
+    * These are a suitable place for grabbing/releasing hardware locks.
     */
 
+   void (*RenderPrimitive)(GLcontext *ctx, GLenum mode);
+   /* Called between RednerStart() and RenderFinish() to indicate the
+    * type of primitive we're about to draw.  Mode will be one of the
+    * modes accepted by glBegin().
+    */
 
 
    /***
@@ -761,11 +855,18 @@ struct dd_function_table {
    line_func             LineFunc;
    triangle_func         TriangleFunc;
    quad_func             QuadFunc;
+   /* These functions are called in order to render points, lines,
+    * triangles and quads.  These are only called via the T&L module.
+    */
 
    render_func          *RenderTabVerts;
    render_func          *RenderTabElts;
+   /* XXX Description???
+    */
 
    void (*ResetLineStipple)( GLcontext *ctx );
+   /* Reset the hardware's line stipple counter.
+    */
    
    void (*BuildProjectedVertices)( GLcontext *ctx, 
 				   GLuint start, GLuint end,
@@ -840,11 +941,13 @@ struct dd_function_table {
    void (*EndList)( GLcontext *ctx );
    /* Let the t&l component know what is going on with display lists
     * in time to make changes to dispatch tables, etc.
+    * Called by glNewList() and glEndList(), respectively.
     */
 
    void (*BeginCallList)( GLcontext *ctx, GLuint list );
    void (*EndCallList)( GLcontext *ctx );
    /* Notify the t&l component before and after calling a display list.
+    * Called by glCallList(s), but not recursively.
     */
 
    void (*MakeCurrent)( GLcontext *ctx, GLframebuffer *drawBuffer, 
@@ -855,94 +958,17 @@ struct dd_function_table {
 
    void (*LockArraysEXT)( GLcontext *ctx, GLint first, GLsizei count );
    void (*UnlockArraysEXT)( GLcontext *ctx );
-   /* 
+   /* Called by glLockArraysEXT() and glUnlockArraysEXT(), respectively.
     */
 
-
-   /*
-    * State-changing functions (drawing functions are above)
-    *
-    * These functions are called by their corresponding OpenGL API functions.
-    * They're ALSO called by the gl_PopAttrib() function!!!
-    * May add more functions like these to the device driver in the future.
-    * This should reduce the amount of state checking that
-    * the driver's UpdateState() function must do.
-    */
-   void (*AlphaFunc)(GLcontext *ctx, GLenum func, GLclampf ref);
-   void (*BlendEquation)(GLcontext *ctx, GLenum mode);
-   void (*BlendFunc)(GLcontext *ctx, GLenum sfactor, GLenum dfactor);
-   void (*BlendFuncSeparate)( GLcontext *ctx, GLenum sfactorRGB, 
-			      GLenum dfactorRGB, GLenum sfactorA,
-			      GLenum dfactorA );
-   void (*ClearDepth)(GLcontext *ctx, GLclampd d);
-   void (*ClearStencil)(GLcontext *ctx, GLint s);
-   void (*ColorMask)(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
-                     GLboolean bmask, GLboolean amask );
-   void (*CullFace)(GLcontext *ctx, GLenum mode);
-   void (*ClipPlane)(GLcontext *ctx, GLenum plane, const GLfloat *equation );
-   void (*FrontFace)(GLcontext *ctx, GLenum mode);
-   void (*DepthFunc)(GLcontext *ctx, GLenum func);
-   void (*DepthMask)(GLcontext *ctx, GLboolean flag);
-   void (*DepthRange)(GLcontext *ctx, GLclampd nearval, GLclampd farval);
-   void (*Enable)(GLcontext* ctx, GLenum cap, GLboolean state);
-   void (*Fogfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);
-   void (*Hint)(GLcontext *ctx, GLenum target, GLenum mode);
-   void (*IndexMask)(GLcontext *ctx, GLuint mask);
-   void (*Lightfv)(GLcontext *ctx, GLenum light,
-		   GLenum pname, const GLfloat *params );
-   void (*LightModelfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);
-   void (*LineStipple)(GLcontext *ctx, GLint factor, GLushort pattern );
-   void (*LineWidth)(GLcontext *ctx, GLfloat width);
-   void (*LogicOpcode)(GLcontext *ctx, GLenum opcode);
-   void (*PolygonMode)(GLcontext *ctx, GLenum face, GLenum mode);
-   void (*PolygonStipple)(GLcontext *ctx, const GLubyte *mask );
-   void (*RenderMode)(GLcontext *ctx, GLenum mode );
-   void (*Scissor)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
-   void (*ShadeModel)(GLcontext *ctx, GLenum mode);
-   void (*StencilFunc)(GLcontext *ctx, GLenum func, GLint ref, GLuint mask);
-   void (*StencilMask)(GLcontext *ctx, GLuint mask);
-   void (*StencilOp)(GLcontext *ctx, GLenum fail, GLenum zfail, GLenum zpass);
-   void (*TexGen)(GLcontext *ctx, GLenum coord, GLenum pname, 
-		  const GLfloat *params );
-   void (*TextureMatrix)(GLcontext *ctx, GLuint unit, const GLmatrix *mat);
-   void (*Viewport)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
-
-   /* State-query functions
-    *
-    * Return GL_TRUE if query was completed, GL_FALSE otherwise.
-    */
-   GLboolean (*GetBooleanv)(GLcontext *ctx, GLenum pname, GLboolean *result);
-   GLboolean (*GetDoublev)(GLcontext *ctx, GLenum pname, GLdouble *result);
-   GLboolean (*GetFloatv)(GLcontext *ctx, GLenum pname, GLfloat *result);
-   GLboolean (*GetIntegerv)(GLcontext *ctx, GLenum pname, GLint *result);
-   GLboolean (*GetPointerv)(GLcontext *ctx, GLenum pname, GLvoid **result);
-
-
-   void (*VertexPointer)(GLcontext *ctx, GLint size, GLenum type, 
-			 GLsizei stride, const GLvoid *ptr);
-   void (*NormalPointer)(GLcontext *ctx, GLenum type, 
-			 GLsizei stride, const GLvoid *ptr);
-   void (*ColorPointer)(GLcontext *ctx, GLint size, GLenum type, 
-			GLsizei stride, const GLvoid *ptr);
-   void (*FogCoordPointer)(GLcontext *ctx, GLenum type, 
-			   GLsizei stride, const GLvoid *ptr);
-   void (*IndexPointer)(GLcontext *ctx, GLenum type, 
-			GLsizei stride, const GLvoid *ptr);
-   void (*SecondaryColorPointer)(GLcontext *ctx, GLint size, GLenum type, 
-				 GLsizei stride, const GLvoid *ptr);
-   void (*TexCoordPointer)(GLcontext *ctx, GLint size, GLenum type, 
-			   GLsizei stride, const GLvoid *ptr);
-   void (*EdgeFlagPointer)(GLcontext *ctx, GLsizei stride, const GLvoid *ptr);
 };
 
 
 
-
-
-
-
+/*
+ * Transform/Clip/Lighting interface
+ */
 typedef struct {
-
    void (*ArrayElement)( GLint ); /* NOTE */
    void (*Color3f)( GLfloat, GLfloat, GLfloat );
    void (*Color3fv)( const GLfloat * );

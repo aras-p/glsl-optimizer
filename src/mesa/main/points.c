@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.26 2000/12/26 05:09:29 keithw Exp $ */
+/* $Id: points.c,v 1.27 2001/01/09 00:02:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,7 +59,14 @@ _mesa_PointSize( GLfloat size )
    ctx->Point._Size = CLAMP(size, 
 			    ctx->Const.MinPointSize,
 			    ctx->Const.MaxPointSize);
-   ctx->_TriangleCaps ^= DD_POINT_SIZE;
+
+   if (ctx->Point._Size == 1.0F)
+      ctx->_TriangleCaps &= ~DD_POINT_SIZE;
+   else
+      ctx->_TriangleCaps |= DD_POINT_SIZE;
+
+   if (ctx->Driver.PointSize)
+      (*ctx->Driver.PointSize)(ctx, size);
 }
 
 
@@ -136,5 +143,8 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
          gl_error( ctx, GL_INVALID_ENUM, "glPointParameterfvEXT" );
          return;
    }
+
+   if (ctx->Driver.PointParameterfv)
+      (*ctx->Driver.PointParameterfv)(ctx, pname, params);
 }
 
