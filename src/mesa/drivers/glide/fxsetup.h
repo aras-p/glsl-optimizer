@@ -379,36 +379,35 @@ fxSetupTextureEnvNapalm_NoLock(GLcontext * ctx, GLuint textureset, GLuint tmu, G
       break;
     /* COMBINE_EXT */
     case GL_COMBINE_EXT:
-#if 0/*666*/
-{
- fprintf(stderr, "Texture Unit %d\n", textureset);
- fprintf(stderr, "  GL_TEXTURE_ENV_MODE = %s\n", _mesa_lookup_enum_by_nr(texUnit->EnvMode));
- fprintf(stderr, "  GL_COMBINE_RGB = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineModeRGB));
- fprintf(stderr, "  GL_COMBINE_ALPHA = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineModeA));
- fprintf(stderr, "  GL_SOURCE0_RGB = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineSourceRGB[0]));
- fprintf(stderr, "  GL_SOURCE1_RGB = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineSourceRGB[1]));
- fprintf(stderr, "  GL_SOURCE2_RGB = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineSourceRGB[2]));
- fprintf(stderr, "  GL_SOURCE0_ALPHA = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineSourceA[0]));
- fprintf(stderr, "  GL_SOURCE1_ALPHA = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineSourceA[1]));
- fprintf(stderr, "  GL_SOURCE2_ALPHA = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineSourceA[2]));
- fprintf(stderr, "  GL_OPERAND0_RGB = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineOperandRGB[0]));
- fprintf(stderr, "  GL_OPERAND1_RGB = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineOperandRGB[1]));
- fprintf(stderr, "  GL_OPERAND2_RGB = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineOperandRGB[2]));
- fprintf(stderr, "  GL_OPERAND0_ALPHA = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineOperandA[0]));
- fprintf(stderr, "  GL_OPERAND1_ALPHA = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineOperandA[1]));
- fprintf(stderr, "  GL_OPERAND2_ALPHA = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineOperandA[2]));
- fprintf(stderr, "  GL_RGB_SCALE = %d\n", 1 << texUnit->CombineScaleShiftRGB);
- fprintf(stderr, "  GL_ALPHA_SCALE = %d\n", 1 << texUnit->CombineScaleShiftA);
- fprintf(stderr, "  GL_TEXTURE_ENV_COLOR = (%f, %f, %f, %f)\n", envColor[0], envColor[1], envColor[2], envColor[3]);
-}
-#endif
       /* [dBorca] Hack alert:
        * INCOMPLETE!!!
        */
       if (TDFX_DEBUG & (VERBOSE_DRIVER | VERBOSE_TEXTURE)) {
+#if 1
          fprintf(stderr, "COMBINE_EXT: %s + %s\n",
 	      _mesa_lookup_enum_by_nr(texUnit->CombineModeRGB),
 	      _mesa_lookup_enum_by_nr(texUnit->CombineModeA));
+#else
+         fprintf(stderr, "Texture Unit %d\n", textureset);
+         fprintf(stderr, "  GL_TEXTURE_ENV_MODE = %s\n", _mesa_lookup_enum_by_nr(texUnit->EnvMode));
+         fprintf(stderr, "  GL_COMBINE_RGB = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineModeRGB));
+         fprintf(stderr, "  GL_COMBINE_ALPHA = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineModeA));
+         fprintf(stderr, "  GL_SOURCE0_RGB = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineSourceRGB[0]));
+         fprintf(stderr, "  GL_SOURCE1_RGB = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineSourceRGB[1]));
+         fprintf(stderr, "  GL_SOURCE2_RGB = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineSourceRGB[2]));
+         fprintf(stderr, "  GL_SOURCE0_ALPHA = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineSourceA[0]));
+         fprintf(stderr, "  GL_SOURCE1_ALPHA = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineSourceA[1]));
+         fprintf(stderr, "  GL_SOURCE2_ALPHA = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineSourceA[2]));
+         fprintf(stderr, "  GL_OPERAND0_RGB = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineOperandRGB[0]));
+         fprintf(stderr, "  GL_OPERAND1_RGB = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineOperandRGB[1]));
+         fprintf(stderr, "  GL_OPERAND2_RGB = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineOperandRGB[2]));
+         fprintf(stderr, "  GL_OPERAND0_ALPHA = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineOperandA[0]));
+         fprintf(stderr, "  GL_OPERAND1_ALPHA = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineOperandA[1]));
+         fprintf(stderr, "  GL_OPERAND2_ALPHA = %s\n", _mesa_lookup_enum_by_nr(texUnit->CombineOperandA[2]));
+         fprintf(stderr, "  GL_RGB_SCALE = %d\n", 1 << texUnit->CombineScaleShiftRGB);
+         fprintf(stderr, "  GL_ALPHA_SCALE = %d\n", 1 << texUnit->CombineScaleShiftA);
+         fprintf(stderr, "  GL_TEXTURE_ENV_COLOR = (%f, %f, %f, %f)\n", envColor[0], envColor[1], envColor[2], envColor[3]);
+#endif
       }
 
       alphaComb.Shift   = texUnit->CombineScaleShiftA;
@@ -1062,6 +1061,7 @@ fxSelectSingleTMUSrcNapalm_NoLock(fxMesaContext fxMesa, GLint tmu, FxBool LODble
 	 fxMesa->tmuSrc = FX_TMU0;
       }
       else {
+#if 1
          grTexCombine(GR_TMU0,
                       GR_COMBINE_FUNCTION_BLEND,
                       GR_COMBINE_FACTOR_ONE,
@@ -1069,7 +1069,8 @@ fxSelectSingleTMUSrcNapalm_NoLock(fxMesaContext fxMesa, GLint tmu, FxBool LODble
                       GR_COMBINE_FACTOR_ONE,
                       FXFALSE,
                       FXFALSE);
-         /*
+#else
+         /* [dBorca] why, oh why? doesn't work! stupid Glide? */
          fxMesa->Glide.grTexAlphaCombineExt(FX_TMU0,
                                             GR_CMBX_OTHER_TEXTURE_ALPHA,
                                             GR_FUNC_MODE_X,
@@ -1092,7 +1093,7 @@ fxSelectSingleTMUSrcNapalm_NoLock(fxMesaContext fxMesa, GLint tmu, FxBool LODble
                                             FXFALSE,
                                             0,
                                             FXFALSE);
-         */
+#endif
 
 	 fxMesa->tmuSrc = FX_TMU1;
       }
@@ -1144,6 +1145,7 @@ fxSetupTextureSingleTMUNapalm_NoLock(GLcontext * ctx, GLuint textureset)
 
    /* [dBorca] Hack alert:
     * what if we're in split mode? (LODBlend)
+    * also should we update BOTH TMUs in FX_TMU_BOTH mode?
     */
    fxSetupTextureEnvNapalm_NoLock(ctx, textureset, tmu, GL_TRUE);
 }
@@ -1196,11 +1198,8 @@ fxSetupTextureDoubleTMUNapalm_NoLock(GLcontext * ctx)
    fxMesa->tmuSrc = FX_TMU_BOTH;
 
    /* OpenGL vs Glide texture pipeline */
-   /* [dBorca] Hack alert:
-    * TODO: revise this ASAP!!!
-    */
-   fxSetupTextureEnvNapalm_NoLock(ctx, FX_TMU1 - tmu0, tmu0, tmu0 != 0);
-   fxSetupTextureEnvNapalm_NoLock(ctx, FX_TMU1 - tmu1, tmu1, tmu1 != 0);
+   fxSetupTextureEnvNapalm_NoLock(ctx, 0, 1, GL_TRUE);
+   fxSetupTextureEnvNapalm_NoLock(ctx, 1, 0, GL_FALSE);
 }
 
 /************************* No Texture ***************************/

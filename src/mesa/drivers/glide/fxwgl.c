@@ -325,7 +325,16 @@ wglCreateContext(HDC hdc)
    }
 
 #if FX_DEBUG
+   /* always log when debugging */
    freopen("MESA.LOG", "w", stderr);
+#else
+   /* log only if user wants */
+   {
+    char *env = getenv("MESA_FX_INFO");
+    if (env && env[0] == 'r') {
+      freopen("MESA.LOG", "w", stderr);
+    }
+   }
 #endif
 
    {
@@ -707,8 +716,8 @@ wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR * ppfd)
   fprintf(pix_file, "dwLayerMask     = %d\n",ppfd->dwLayerMask);
   fprintf(pix_file, "dwVisibleMask   = %d\n",ppfd->dwVisibleMask);
   fprintf(pix_file, "dwDamageMask    = %d\n",ppfd->dwDamageMask);
-  }
   fclose(pix_file);
+  }
 #endif
 
 #if 1 || QUAKE2

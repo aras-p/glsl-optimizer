@@ -89,9 +89,8 @@ static void TAG(emit)( GLcontext *ctx,
 
    if (start) {
       proj =  (GLfloat (*)[4])((GLubyte *)proj + start * proj_stride);
-      if (IND & SETUP_PSIZ) {
+      if (IND & SETUP_PSIZ)
          psize =  (GLfloat (*)[4])((GLubyte *)psize + start * psize_stride);
-      }
       if (IND & SETUP_TMU0)
 	 tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 + start * tc0_stride);
       if (IND & SETUP_TMU1) 
