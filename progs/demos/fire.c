@@ -151,7 +151,7 @@ gettime(void)
    return (ris / (float) CLOCKS_PER_SEC);
 }
 
-float
+static float
 vrnd(void)
 {
    return (((float) rand()) / RAND_MAX);

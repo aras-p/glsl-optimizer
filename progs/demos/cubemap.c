@@ -1,4 +1,4 @@
-/* $Id: cubemap.c,v 1.2 2000/06/13 18:45:54 brianp Exp $ */
+/* $Id: cubemap.c,v 1.3 2000/06/27 17:04:43 brianp Exp $ */
 
 /*
  * GL_ARB_texture_cube_map demo
@@ -37,6 +37,7 @@
 
 
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "GL/glut.h"

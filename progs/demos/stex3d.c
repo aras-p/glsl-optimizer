@@ -1,4 +1,4 @@
-/* $Id: stex3d.c,v 1.4 2000/03/22 19:48:57 brianp Exp $ */
+/* $Id: stex3d.c,v 1.5 2000/06/27 17:04:43 brianp Exp $ */
 
 /*----------------------------- 
  * stex3d.c GL example of the mesa 3d-texture extention to simulate procedural
@@ -17,6 +17,9 @@
 
 /*
  * $Log: stex3d.c,v $
+ * Revision 1.5  2000/06/27 17:04:43  brianp
+ * fixed compiler warnings
+ *
  * Revision 1.4  2000/03/22 19:48:57  brianp
  * converted from GL_EXT_texture3D to GL 1.2
  *
@@ -385,7 +388,7 @@ void resize(int w, int h)
  glTranslatef(0,0,-5);
 }
 
-void cleanEverything(void)
+static void cleanEverything(void)
 {
 /*  free(voxels); */
 }

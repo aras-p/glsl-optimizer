@@ -197,7 +197,7 @@ struct envModeInfo envModes[] =
 #endif
 };
 
-void checkErrors( void )
+static void checkErrors( void )
 {
    GLenum error;
 
@@ -265,7 +265,7 @@ static void initialize( void )
 }
 
 /* ARGSUSED1 */
-void keyboard( unsigned char c, int x, int y )
+static void keyboard( unsigned char c, int x, int y )
 {
    switch ( c ) {
    case 'c':
@@ -296,7 +296,7 @@ void keyboard( unsigned char c, int x, int y )
 }
 
 /* ARGSUSED1 */
-void special( int key, int x, int y )
+static void special( int key, int x, int y )
 {
    switch ( key ) {
    case GLUT_KEY_DOWN:
@@ -327,7 +327,7 @@ void special( int key, int x, int y )
    glutPostRedisplay();
 }
 
-void
+static void
 reshape( int w, int h )
 {
    winWidth = w;

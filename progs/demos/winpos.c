@@ -1,4 +1,4 @@
-/* $Id: winpos.c,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: winpos.c,v 1.2 2000/06/27 17:04:43 brianp Exp $ */
 
 /*
  * Example of how to use the GL_MESA_window_pos extension.
@@ -8,8 +8,11 @@
 
 /*
  * $Log: winpos.c,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
+ * Revision 1.2  2000/06/27 17:04:43  brianp
+ * fixed compiler warnings
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
+ * Imported sources
  *
  * Revision 3.3  1999/03/28 18:24:37  brianp
  * minor clean-up
@@ -30,6 +33,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#define GL_GLEXT_LEGACY
 #include "GL/glut.h"
 
 #include "../util/readtex.c"  /* a hack, I know */

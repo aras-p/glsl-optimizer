@@ -1,4 +1,4 @@
-/* $Id: tessdemo.c,v 1.6 2000/03/27 15:46:12 brianp Exp $ */
+/* $Id: tessdemo.c,v 1.7 2000/06/27 17:04:43 brianp Exp $ */
 
 /*
  * A demo of the GLU polygon tesselation functions written by Bogdan Sikorski.
@@ -51,7 +51,7 @@ static struct
 
 
 
-void GLCALLBACK error_callback( GLenum err )
+static void GLCALLBACK error_callback( GLenum err )
 {
    int		len, i;
    char const	*str;
@@ -67,14 +67,14 @@ void GLCALLBACK error_callback( GLenum err )
    }
 }
 
-void GLCALLBACK begin_callback( GLenum mode )
+static void GLCALLBACK begin_callback( GLenum mode )
 {
    /* Allow multiple triangles to be output inside the begin/end pair. */
    triangle_cnt = 0;
    triangles[triangle_cnt].no = 0;
 }
 
-void GLCALLBACK edge_callback( GLenum flag )
+static void GLCALLBACK edge_callback( GLenum flag )
 {
    /* Persist the edge flag across triangles. */
    if ( flag == GL_TRUE )
@@ -91,7 +91,7 @@ void GLCALLBACK edge_callback( GLenum flag )
    }
 }
 
-void GLCALLBACK end_callback()
+static void GLCALLBACK end_callback()
 {
    GLint	i;
 
@@ -126,7 +126,7 @@ void GLCALLBACK end_callback()
    glEnd();
 }
 
-void GLCALLBACK vertex_callback( void *data )
+static void GLCALLBACK vertex_callback( void *data )
 {
    GLsizei	no;
    GLfloat	*p;
@@ -149,12 +149,11 @@ void GLCALLBACK vertex_callback( void *data )
    }
 }
 
-void GLCALLBACK combine_callback( GLdouble coords[3],
+static void GLCALLBACK combine_callback( GLdouble coords[3],
 				  GLdouble *vertex_data[4],
 				  GLfloat weight[4], void **data )
 {
    GLfloat	*vertex;
-   int		i;
 
    vertex = (GLfloat *) malloc( 2 * sizeof(GLfloat) );
 
@@ -165,13 +164,13 @@ void GLCALLBACK combine_callback( GLdouble coords[3],
 }
 
 
-void set_screen_wh( GLsizei w, GLsizei h )
+static void set_screen_wh( GLsizei w, GLsizei h )
 {
    width = w;
    height = h;
 }
 
-void tesse( void )
+static void tesse( void )
 {
    GLUtesselator	*tobj;
    GLdouble		data[3];
@@ -242,7 +241,7 @@ void tesse( void )
    }
 }
 
-void left_down( int x1, int y1 )
+static void left_down( int x1, int y1 )
 {
    GLfloat	P[2];
    GLuint	point_cnt;
@@ -276,7 +275,7 @@ void left_down( int x1, int y1 )
    contours[contour_cnt].point_cnt++;
 }
 
-void middle_down( int x1, int y1 )
+static void middle_down( int x1, int y1 )
 {
    GLuint	point_cnt;
    (void) x1;
@@ -301,7 +300,7 @@ void middle_down( int x1, int y1 )
    }
 }
 
-void mouse_clicked( int button, int state, int x, int y )
+static void mouse_clicked( int button, int state, int x, int y )
 {
    x -= x%10;
    y -= y%10;
@@ -321,7 +320,7 @@ void mouse_clicked( int button, int state, int x, int y )
    }
 }
 
-void display( void )
+static void display( void )
 {
    GLuint i,j;
    GLuint point_cnt;
@@ -406,7 +405,7 @@ void display( void )
    glColor3f( 1.0, 1.0, 0.0 );
 }
 
-void clear( void )
+static void clear( void )
 {
    contour_cnt = 0;
    contours[0].point_cnt = 0;
@@ -420,12 +419,12 @@ void clear( void )
    list_start = 0;
 }
 
-void quit( void )
+static void quit( void )
 {
    exit( 0 );
 }
 
-void menu_selected( int entry )
+static void menu_selected( int entry )
 {
    switch ( entry )
    {
@@ -443,7 +442,7 @@ void menu_selected( int entry )
    glutPostRedisplay();
 }
 
-void key_pressed( unsigned char key, int x, int y )
+static void key_pressed( unsigned char key, int x, int y )
 {
    (void) x;
    (void) y;
@@ -467,7 +466,7 @@ void key_pressed( unsigned char key, int x, int y )
    glutPostRedisplay();
 }
 
-void myinit( void )
+static void myinit( void )
 {
    /* clear background to gray */
    glClearColor( 0.4, 0.4, 0.4, 0.0 );

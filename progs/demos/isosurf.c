@@ -1,4 +1,4 @@
-/* $Id: isosurf.c,v 1.5 2000/03/30 17:58:56 keithw Exp $ */
+/* $Id: isosurf.c,v 1.6 2000/06/27 17:04:43 brianp Exp $ */
 
 /*
  * Display an isosurface of 3-D wind speed volume.  
@@ -25,41 +25,12 @@
  * Other options are available via the popup menu.
  */
 
-/*
- * $Log: isosurf.c,v $
- * Revision 1.5  2000/03/30 17:58:56  keithw
- * Added stipple mode
- *
- * Revision 1.4  1999/10/21 16:39:06  brianp
- * added -info command line option
- *
- * Revision 1.3  1999/09/08 22:14:31  brianp
- * minor changes. always call compactify_arrays()
- *
- * Revision 1.2  1999/09/03 14:56:40  keithw
- * Fog, displaylist and zoom operations
- *
- * Revision 3.4  1999/04/24 01:10:47  keithw
- * clip planes, materials
- *
- * Revision 3.3  1999/03/31 19:42:14  keithw
- * support for cva
- *
- * Revision 3.1  1998/11/01 20:30:20  brianp
- * added benchmark feature (b key)
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
-
-
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#define GL_GLEXT_LEGACY
 #include "GL/glut.h"
 
 #include "../util/readtex.c"   /* I know, this is a hack.  KW: me too. */

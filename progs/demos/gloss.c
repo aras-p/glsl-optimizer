@@ -1,4 +1,4 @@
-/* $Id: gloss.c,v 1.3 1999/10/26 17:08:31 brianp Exp $ */
+/* $Id: gloss.c,v 1.4 2000/06/27 17:04:43 brianp Exp $ */
 
 /*
  * Specular reflection demo.  The specular highlight is modulated by
@@ -245,7 +245,7 @@ static void Init( int argc, char *argv[] )
 
       glMatrixMode(GL_TEXTURE);
       glLoadIdentity();
-      glScalef(8.0, 4.0, 2.0);
+      /*glScalef(8.0, 4.0, 2.0);*/
       glMatrixMode(GL_MODELVIEW);
 
       /* cylinder */
@@ -322,8 +322,14 @@ static void Init( int argc, char *argv[] )
    glBindTexture(GL_TEXTURE_2D, SpecularTexture);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#if 1
    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+#else
+   glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+   glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+   glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+#endif
    if (!LoadRGBMipmaps(SPECULAR_TEXTURE_FILE, GL_RGB)) {
       printf("Error: couldn't load texture image file %s\n", SPECULAR_TEXTURE_FILE);
       exit(1);

@@ -48,6 +48,8 @@ OpenGL(TM) is a trademark of Silicon Graphics, Inc.
 /* Rendering shadows using projective shadows. */
 
 #include <GL/glut.h>
+#include "shadow.h"
+
 
 enum {
   X, Y, Z, W

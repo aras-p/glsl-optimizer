@@ -13,8 +13,11 @@
 
 /*
  * $Log: pointblast.c,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
+ * Revision 1.2  2000/06/27 17:04:43  brianp
+ * fixed compiler warnings
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
+ * Imported sources
  *
  * Revision 3.3  1998/07/26 01:24:27  brianp
  * removed include of gl.h
@@ -35,6 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>       /* for cos(), sin(), and sqrt() */
+#define GL_GLEXT_LEGACY
 #include <GL/glut.h>
 
 /* Some <math.h> files do not define M_PI... */
@@ -100,7 +104,7 @@ static float float_rand(void) { return rand() / (float) RAND_MAX; }
 /* Modeling units of ground extent in each X and Z direction. */
 #define EDGE 12
 
-void
+static void
 makePointList(void)
 {
   float angle, velocity, direction;
@@ -124,7 +128,7 @@ makePointList(void)
   theTime = 0.0;
 }
 
-void
+static void
 updatePointList(void)
 {
   float distance;
@@ -167,7 +171,7 @@ updatePointList(void)
   }
 }
 
-void
+static void
 idle(void)
 {
   updatePointList();
@@ -178,7 +182,7 @@ idle(void)
   glutPostRedisplay();
 }
 
-void
+static void
 visible(int vis)
 {
   if (vis == GLUT_VISIBLE) {
@@ -190,7 +194,7 @@ visible(int vis)
   }
 }
 
-void
+static void
 recalcModelView(void)
 {
   glPopMatrix();
@@ -199,7 +203,7 @@ recalcModelView(void)
   newModel = 0;
 }
 
-void
+static void
 redraw(void)
 {
   int i;
@@ -247,7 +251,7 @@ redraw(void)
 }
 
 /* ARGSUSED2 */
-void
+static void
 mouse(int button, int state, int x, int y)
 {
   /* Scene can be spun around Y axis using left
@@ -262,7 +266,7 @@ mouse(int button, int state, int x, int y)
 }
 
 /* ARGSUSED1 */
-void
+static void
 mouseMotion(int x, int y)
 {
   if (moving) {
@@ -273,7 +277,7 @@ mouseMotion(int x, int y)
   }
 }
 
-void
+static void
 menu(int option)
 {
   switch (option) {
@@ -347,7 +351,7 @@ menu(int option)
 }
 
 /* ARGSUSED1 */
-void
+static void
 key(unsigned char c, int x, int y)
 {
   switch (c) {

@@ -85,7 +85,7 @@ initlight(void)
 static void
 initdlists(void)
 {
-   static slicetable[MAX_LOD][2] = {
+   static int slicetable[MAX_LOD][2] = {
       {21, 10},
       {18, 9},
       {15, 8},

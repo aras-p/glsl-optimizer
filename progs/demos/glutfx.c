@@ -1,4 +1,4 @@
-/* $Id: glutfx.c,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: glutfx.c,v 1.2 2000/06/27 17:04:43 brianp Exp $ */
 
 /*
  * Example of how one might use GLUT with the 3Dfx driver in full-screen mode.
@@ -16,8 +16,11 @@
 
 /*
  * $Log: glutfx.c,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
+ * Revision 1.2  2000/06/27 17:04:43  brianp
+ * fixed compiler warnings
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
+ * Imported sources
  *
  * Revision 3.2  1999/03/28 18:18:33  brianp
  * minor clean-up
@@ -164,7 +167,6 @@ int main( int argc, char *argv[] )
    printf("NOTE: if you've got 3Dfx VooDoo hardware you must run this");
    printf(" program as root.\n\n");
    printf("Move the mouse.  Press ESC to exit.\n\n");
-   sleep(2);
 #endif
 
    /* Tell Mesa GLX to use 3Dfx driver in fullscreen mode. */

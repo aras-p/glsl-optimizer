@@ -1,7 +1,10 @@
-/* $Id: morph3d.c,v 1.3 1999/12/15 13:00:45 brianp Exp $ */
+/* $Id: morph3d.c,v 1.4 2000/06/27 17:04:43 brianp Exp $ */
 
 /*
  * $Log: morph3d.c,v $
+ * Revision 1.4  2000/06/27 17:04:43  brianp
+ * fixed compiler warnings
+ *
  * Revision 1.3  1999/12/15 13:00:45  brianp
  * moved #define to column 0
  *
@@ -830,7 +833,7 @@ static void pinit(void)
 
 }
 
-void INIT(void)
+static void INIT(void)
 {
   printf("Morph 3D - Shows morphing platonic polyhedra\n");
   printf("Author: Marcelo Fernandes Vianna (vianna@cat.cbpf.br)\n\n");

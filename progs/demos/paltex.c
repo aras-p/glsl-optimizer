@@ -1,30 +1,14 @@
-/* $Id: paltex.c,v 1.2 1999/11/02 15:09:04 brianp Exp $ */
+/* $Id: paltex.c,v 1.3 2000/06/27 17:04:43 brianp Exp $ */
 
 /*
  * Paletted texture demo.  Written by Brian Paul.
  * This program is in the public domain.
  */
 
-/*
- * $Log: paltex.c,v $
- * Revision 1.2  1999/11/02 15:09:04  brianp
- * new texture image, cleaned-up code
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.1  1999/03/28 18:20:49  brianp
- * minor clean-up
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#define GL_GLEXT_LEGACY
 #include <GL/glut.h>
 
 

@@ -410,8 +410,6 @@ static void draw(void)
 
 static void inittextures(void)
 {
-  GLenum gluerr;
-  
   glGenTextures(1,&t1id);
   glBindTexture(GL_TEXTURE_2D,t1id);
 

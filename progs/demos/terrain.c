@@ -125,7 +125,7 @@ reshape(int width, int height)
    glLoadIdentity();
 }
 
-int
+static int
 clipstrip(float y, float *start, float *end)
 {
    float x1, x2, t1, t2, tmp;
@@ -254,7 +254,7 @@ printhelp(void)
 		  "(No Joystick control available)");
 }
 
-void
+static void
 drawterrain(void)
 {
    int h, i, idx, ox, oy;
@@ -357,7 +357,7 @@ dojoy(void)
 #endif
 }
 
-void
+static void
 drawscene(void)
 {
    static int count = 0;
