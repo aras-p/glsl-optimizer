@@ -2005,6 +2005,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
    }
 
    if (target == GL_TEXTURE_1D) {
+      /* non-proxy target */
       struct gl_texture_unit *texUnit;
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
@@ -2204,6 +2205,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       struct gl_texture_unit *texUnit;
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
+      /* non-proxy target */
 
       if (texture_error_check(ctx, target, level, (GLint) internalFormat,
                               format, type, 3, width, height, depth, border)) {
@@ -2852,6 +2854,7 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (target == GL_TEXTURE_1D) {
+      /* non-proxy target */
       struct gl_texture_unit *texUnit;
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
@@ -2934,6 +2937,7 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
        (ctx->Extensions.ARB_texture_cube_map &&
         target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
         target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)) {
+      /* non-proxy target */
       struct gl_texture_unit *texUnit;
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
@@ -3015,6 +3019,7 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (target == GL_TEXTURE_3D) {
+      /* non-proxy target */
       struct gl_texture_unit *texUnit;
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
