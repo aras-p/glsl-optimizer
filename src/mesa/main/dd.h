@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.16 2000/03/07 17:11:29 brianp Exp $ */
+/* $Id: dd.h,v 1.17 2000/03/07 18:24:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -624,11 +624,6 @@ struct dd_function_table {
     * Called when the texture's color lookup table is changed.
     * If tObj is NULL then the shared texture palette ctx->Texture.Palette
     * was changed.
-    */
-
-   void (*UseGlobalTexturePalette)( GLcontext *ctx, GLboolean state );
-   /*
-    * Called via glEnable/Disable(GL_SHARED_TEXTURE_PALETTE_EXT)
     */
 
    void (*ActiveTexture)( GLcontext *ctx, GLuint texUnitNumber );

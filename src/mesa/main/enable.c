@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.10 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: enable.c,v 1.11 2000/03/07 18:24:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -328,8 +328,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 break;
       case GL_SHARED_TEXTURE_PALETTE_EXT:
          ctx->Texture.SharedPalette = state;
-         if (ctx->Driver.UseGlobalTexturePalette)
-            (*ctx->Driver.UseGlobalTexturePalette)( ctx, state );
          break;
       case GL_STENCIL_TEST:
 	 if (state && ctx->Visual->StencilBits==0) {

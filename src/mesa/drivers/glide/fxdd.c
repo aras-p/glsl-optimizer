@@ -990,7 +990,6 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.BindTexture=fxDDTexBind;
   ctx->Driver.DeleteTexture=fxDDTexDel;
   ctx->Driver.UpdateTexturePalette=fxDDTexPalette;
-  ctx->Driver.UseGlobalTexturePalette=fxDDTexUseGlbPalette;
 
   ctx->Driver.RectFunc=NULL;
 

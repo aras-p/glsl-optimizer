@@ -1615,6 +1615,9 @@ void fxDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
      fxMesa->new_state |= FX_NEW_SCISSOR;
      ctx->Driver.RenderStart = fxSetupFXUnits;
      break;
+  case GL_SHARED_TEXTURE_PALETTE_EXT:
+     fxDDTexUseGlbPalette(ctx, state);
+     break;
   case GL_FOG:
      fxMesa->new_state |= FX_NEW_FOG;
      ctx->Driver.RenderStart = fxSetupFXUnits;
