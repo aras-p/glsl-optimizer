@@ -1,10 +1,10 @@
-/* $Id: gl_mangle.h,v 1.4 2000/01/04 08:07:09 brianp Exp $ */
+/* $Id: gl_mangle.h,v 1.5 2001/02/19 18:28:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -535,5 +535,128 @@
 #define glCopyColorTable mglCopyColorTable
 #define glLockArraysEXT mglLockArraysEXT
 #define glUnlockArraysEXT mglUnlockArraysEXT
+#define glGetFinalCombinerInputParameterivNV mglGetFinalCombinerInputParameterivNV
+#define glGetFinalCombinerInputParameterfvNV mglGetFinalCombinerInputParameterfvNV 
+#define glGetCombinerOutputParameterivNV mglGetCombinerOutputParameterivNV 
+#define glGetCombinerOutputParameterfvNV mglGetCombinerOutputParameterfvNV 
+#define glGetCombinerInputParameterivNV mglGetCombinerInputParameterivNV 
+#define glGetCombinerInputParameterfvNV mglGetCombinerInputParameterfvNV 
+#define glFinalCombinerInputNV mglFinalCombinerInputNV 
+#define glCombinerOutputNV mglCombinerOutputNV 
+#define glCombinerInputNV mglCombinerInputNV 
+#define glCombinerParameteriNV mglCombinerParameteriNV 
+#define glCombinerParameterivNV mglCombinerParameterivNV 
+#define glCombinerParameterfNV mglCombinerParameterfNV 
+#define glCombinerParameterfvNV mglCombinerParameterfvNV 
+#define glVertexArrayRangeNV mglVertexArrayRangeNV 
+#define glFlushVertexArrayRangeNV mglFlushVertexArrayRangeNV 
+#define glVertexWeightPointerEXT mglVertexWeightPointerEXT 
+#define glVertexWeightfvEXT mglVertexWeightfvEXT 
+#define glVertexWeightfEXT mglVertexWeightfEXT 
+#define glBlendFuncSeparateEXT mglBlendFuncSeparateEXT 
+#define glFogCoordPointerEXT mglFogCoordPointerEXT 
+#define glFogCoorddEXT mglFogCoorddEXT 
+#define glFogCoordfvEXT mglFogCoordfvEXT 
+#define glFogCoordfEXT mglFogCoordfEXT 
+#define glLightEnviSGIX mglLightEnviSGIX 
+#define glGetFragmentMaterialivSGIX mglGetFragmentMaterialivSGIX 
+#define glGetFragmentMaterialfvSGIX mglGetFragmentMaterialfvSGIX 
+#define glGetFragmentLightivSGIX mglGetFragmentLightivSGIX 
+#define glGetFragmentLightfvSGIX mglGetFragmentLightfvSGIX 
+#define glFragmentMaterialivSGIX mglFragmentMaterialivSGIX 
+#define glFragmentMaterialiSGIX mglFragmentMaterialiSGIX 
+#define glFragmentMaterialfvSGIX mglFragmentMaterialfvSGIX 
+#define glFragmentMaterialfSGIX mglFragmentMaterialfSGIX 
+#define glFragmentLightModelivSGIX mglFragmentLightModelivSGIX 
+#define glFragmentLightModeliSGIX mglFragmentLightModeliSGIX 
+#define glFragmentLightModelfvSGIX mglFragmentLightModelfvSGIX 
+#define glFragmentLightModelfSGIX mglFragmentLightModelfSGIX 
+#define glFragmentLightivSGIX mglFragmentLightivSGIX 
+#define glFragmentLightiSGIX mglFragmentLightiSGIX 
+#define glFragmentLightfvSGIX mglFragmentLightfvSGIX 
+#define glFragmentLightfSGIX mglFragmentLightfSGIX 
+#define glFragmentColorMaterialSGIX mglFragmentColorMaterialSGIX 
+#define glCullParameterdvEXT mglCullParameterdvEXT 
+#define glCullParameterfvEXT mglCullParameterfvEXT 
+#define glIndexFuncEXT mglIndexFuncEXT 
+#define glIndexMaterialEXT mglIndexMaterialEXT 
+#define glListParameterivSGIX mglListParameterivSGIX 
+#define glListParameteriSGIX mglListParameteriSGIX 
+#define glListParameterfvSGIX mglListParameterfvSGIX 
+#define glListParameterfSGIX mglListParameterfSGIX 
+#define glGetListParameterivSGIX mglGetListParameterivSGIX 
+#define glGetListParameterfvSGIX mglGetListParameterfvSGIX 
+#define glHintPGI mglHintPGI 
+#define glCopyColorSubTableEXT mglCopyColorSubTableEXT 
+#define glFlushRasterSGIX mglFlushRasterSGIX 
+#define glReferencePlaneSGIX mglReferencePlaneSGIX 
+#define glTagSampleBufferSGIX mglTagSampleBufferSGIX 
+#define glFrameZoomSGIX mglFrameZoomSGIX 
+#define glGetInstrumentsSGIX mglGetInstrumentsSGIX 
+#define glPollInstrumentsSGIX mglPollInstrumentsSGIX 
+#define glReadInstrumentsSGIX mglReadInstrumentsSGIX 
+#define glStopInstrumentsSGIX mglStopInstrumentsSGIX 
+#define glStartInstrumentsSGIX mglStartInstrumentsSGIX 
+#define glInstrumentsBufferSGIX mglInstrumentsBufferSGIX 
+#define glPointParameterfvSGIS mglPointParameterfvSGIS 
+#define glPointParameterfSGIS mglPointParameterfSGIS 
+#define glSpriteParameterivSGIX mglSpriteParameterivSGIX 
+#define glSpriteParameteriSGIX mglSpriteParameteriSGIX 
+#define glSpriteParameterfvSGIX mglSpriteParameterfvSGIX 
+#define glSpriteParameterfSGIX mglSpriteParameterfSGIX 
+#define glSamplePatternSGIS mglSamplePatternSGIS 
+#define glSampleMaskSGIS mglSampleMaskSGIS 
+#define glSharpenTexFuncSGIS mglSharpenTexFuncSGIS 
+#define glGetSharpenTexFuncSGIS mglGetSharpenTexFuncSGIS 
+#define glGetDetailTexFuncSGIS mglGetDetailTexFuncSGIS 
+#define glDetailTexFuncSGIS mglDetailTexFuncSGIS 
+#define glTexSubImage4DSGIS mglTexSubImage4DSGIS 
+#define glTexImage4DSGIS mglTexImage4DSGIS 
+#define glGetPixelTexGenParameterivSGIS mglGetPixelTexGenParameterivSGIS 
+#define glGetPixelTexGenParameterfvSGIS mglGetPixelTexGenParameterfvSGIS 
+#define glPixelTexGenParameteriSGIS mglPixelTexGenParameteriSGIS 
+#define glPixelTexGenParameterfSGIS mglPixelTexGenParameterfSGIS 
+#define glGetColorTableParameterivSGI mglGetColorTableParameterivSGI 
+#define glGetColorTableParameterfvSGI mglGetColorTableParameterfvSGI 
+#define glGetColorTableSGI mglGetColorTableSGI 
+#define glCopyColorTableSGI mglCopyColorTableSGI 
+#define glColorTableParameterivSGI mglColorTableParameterivSGI 
+#define glColorTableParameterfvSGI mglColorTableParameterfvSGI 
+#define glColorTableSGI mglColorTableSGI 
+#define glSeparableFilter2DEXT mglSeparableFilter2DEXT 
+#define glGetSeparableFilterEXT mglGetSeparableFilterEXT 
+#define glGetConvolutionParameterfvEXT mglGetConvolutionParameterfvEXT 
+#define glGetConvolutionParameterivEXT mglGetConvolutionParameterivEXT 
+#define glGetConvolutionFilterEXT mglGetConvolutionFilterEXT 
+#define glCopyConvolutionFilter2DEXT mglCopyConvolutionFilter2DEXT 
+#define glCopyConvolutionFilter1DEXT mglCopyConvolutionFilter1DEXT 
+#define glConvolutionParameterivEXT mglConvolutionParameterivEXT 
+#define glConvolutionParameteriEXT mglConvolutionParameteriEXT 
+#define glConvolutionParameterfvEXT mglConvolutionParameterfvEXT 
+#define glConvolutionParameterfEXT mglConvolutionParameterfEXT 
+#define glConvolutionFilter2DEXT mglConvolutionFilter2DEXT 
+#define glConvolutionFilter1DEXT mglConvolutionFilter1DEXT 
+#define glResetMinmaxEXT mglResetMinmaxEXT 
+#define glResetHistogramEXT mglResetHistogramEXT 
+#define glMinmaxEXT mglMinmaxEXT 
+#define glHistogramEXT mglHistogramEXT 
+#define glGetMinmaxParameterivEXT mglGetMinmaxParameterivEXT 
+#define glGetMinmaxParameterfvEXT mglGetMinmaxParameterfvEXT 
+#define glGetMinmaxEXT mglGetMinmaxEXT 
+#define glGetHistogramParameterivEXT mglGetHistogramParameterivEXT 
+#define glGetHistogramParameterfvEXT mglGetHistogramParameterfvEXT 
+#define glGetHistogramEXT mglGetHistogramEXT 
+#define glCopyTexSubImage2DEXT mglCopyTexSubImage2DEXT 
+#define glCopyTexSubImage1DEXT mglCopyTexSubImage1DEXT 
+#define glCopyTexImage2DEXT mglCopyTexImage2DEXT 
+#define glCopyTexImage1DEXT mglCopyTexImage1DEXT 
+#define glTexSubImage2DEXT mglTexSubImage2DEXT 
+#define glTexSubImage1DEXT mglTexSubImage1DEXT 
+#define glSampleCoverageARB mglSampleCoverageARB 
+#define glSamplePassARB mglSamplePassARB 
+#define glMultTransposeMatrixfARB mglMultTransposeMatrixfARB 
+#define glMultTransposeMatrixdARB mglMultTransposeMatrixdARB 
+#define glLoadTransposeMatrixfARB mglLoadTransposeMatrixfARB 
+#define glLoadTransposeMatrixdARB mglLoadTransposeMatrixdARB 
 
 #endif
