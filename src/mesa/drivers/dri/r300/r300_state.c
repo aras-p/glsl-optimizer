@@ -98,6 +98,7 @@ static void r300AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
 		break;
 	case GL_ALWAYS:
 		pp_misc |= R300_ALPHA_TEST_PASS;
+		//pp_misc &= ~R300_ALPHA_TEST_ENABLE;
 		break;
 	}
 
@@ -108,7 +109,17 @@ static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 {
 	GLubyte color[4];
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	fprintf(stderr, "%s:%s is not implemented yet. Fixme !\n", __FILE__, __FUNCTION__);
+	
+	R300_STATECHANGE(rmesa, unk4E10);
+
+	/* Ordering might be wrong */	
+	CLAMPED_FLOAT_TO_UBYTE(color[0], cf[0]);
+	CLAMPED_FLOAT_TO_UBYTE(color[1], cf[1]);
+	CLAMPED_FLOAT_TO_UBYTE(color[2], cf[2]);
+	CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
+	
+	rmesa->hw.unk4E10.cmd[1]=radeonPackColor(4, color[0], color[1], color[2], color[3]);
+	//fprintf(stderr, "%s:%s is not implemented yet. Fixme !\n", __FILE__, __FUNCTION__);
 	#if 0
 	R200_STATECHANGE(rmesa, ctx);
 	CLAMPED_FLOAT_TO_UBYTE(color[0], cf[0]);
@@ -641,7 +652,8 @@ static void r300PointSize(GLcontext * ctx, GLfloat size)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	
-	/* TODO: Validate point size */
+	size = ctx->Point._Size;
+	
 	R300_STATECHANGE(r300, ps);
 	r300->hw.ps.cmd[R300_PS_POINTSIZE] =
 		((int)(size * 6) << R300_POINTSIZE_X_SHIFT) |
@@ -660,10 +672,8 @@ static void r300PointSize(GLcontext * ctx, GLfloat size)
 static void r300LineWidth(GLcontext *ctx, GLfloat widthf)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	/* IMHO mesa isnt clamping line widths according to ctx->Const.*LineWidth
-	   before calling this from the dd function table.
-	   Since r300ResetHwState calls these with clamped values,
-	   they must be set properly. */
+	
+	widthf = ctx->Line._Width;
 	
 	R300_STATECHANGE(r300, lcntl);
 	r300->hw.lcntl.cmd[1] = (int)(widthf * 6.0);
@@ -696,9 +706,40 @@ static void r300PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	unsigned long hw_mode=0;
 	
-	hw_mode=r300->hw.unk4288.cmd[1];
+	//hw_mode=r300->hw.unk4288.cmd[1];
 	hw_mode |= 1; /* enables point mode by default */
-
+	
+	switch (ctx->Polygon.FrontMode) {
+	case GL_LINE:
+		hw_mode &= ~PM_NOT_FRONT;
+		hw_mode |= PM_FRONT_LINE;
+	break;
+	case GL_POINT:
+		hw_mode &= ~PM_NOT_FRONT;
+		hw_mode &= ~PM_FRONT_LINE;
+	break;
+	 /* I dont think fgl properly handles these... In any case, test program is needed */
+	case GL_FILL:
+	break;
+	}
+	
+	switch (ctx->Polygon.BackMode) {
+	case GL_LINE:
+		hw_mode &= ~PM_NOT_BACK;
+		hw_mode |= PM_BACK_LINE;
+	break;
+	case GL_POINT:
+		hw_mode &= ~PM_NOT_BACK;
+		hw_mode &= ~PM_BACK_LINE;
+	break;
+	case GL_FILL:
+	break;
+	}
+	
+	if(hw_mode == 1)
+		hw_mode = 0;
+	
+#if 0	
 	switch (face) {
 	case GL_FRONT:
 		//fprintf(stderr, "front\n");
@@ -710,8 +751,7 @@ static void r300PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
 		case GL_POINT:
 			hw_mode &= ~PM_FRONT_LINE;
 		break;
-		case GL_FILL: /* No idea */
-			hw_mode = 0;
+		case GL_FILL:
 		break;
 		}
 	break;
@@ -726,8 +766,7 @@ static void r300PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
 		case GL_POINT:
 			hw_mode &= ~PM_BACK_LINE;
 		break;
-		case GL_FILL: /* No idea */
-			hw_mode = 0;
+		case GL_FILL:
 		break;
 		}
 	break;
@@ -751,6 +790,7 @@ static void r300PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
 		}
 	break;
 	}
+#endif
 	
 	//if( front and back fill) hw_mode=0;
 	
@@ -1887,7 +1927,7 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk4214.cmd[1] = 0x00050005;
 
-	r300PointSize(ctx, ctx->Point._Size);
+	r300PointSize(ctx, 0.0);
 #if 0	
 	r300->hw.ps.cmd[R300_PS_POINTSIZE] = (6 << R300_POINTSIZE_X_SHIFT) |
 					     (6 << R300_POINTSIZE_Y_SHIFT);
@@ -1897,7 +1937,7 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4230.cmd[2] = 0x00020006;
 	r300->hw.unk4230.cmd[3] = r300PackFloat32(1.0 / 192.0);
 	
-	r300LineWidth(ctx, ctx->Line._Width);
+	r300LineWidth(ctx, 0.0);
 	
 #ifdef EXP_C
 	static int foobar=0;
@@ -1968,7 +2008,8 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4BC8.cmd[1] = 0;
 	r300->hw.unk4BC8.cmd[2] = 0;
 	r300->hw.unk4BC8.cmd[3] = 0;
-
+	
+	//r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
 	#if 0
 	r300->hw.at.cmd[R300_AT_ALPHA_TEST] = 0;
 	#endif
@@ -1982,8 +2023,11 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.bld.cmd[R300_BLD_CBLEND] = 0;
 	r300->hw.bld.cmd[R300_BLD_ABLEND] = 0;
 	#endif
-
+	
+	r300BlendColor(ctx, ctx->Color.BlendColor);
+#if 0
 	r300->hw.unk4E10.cmd[1] = 0;
+#endif	
 	r300->hw.unk4E10.cmd[2] = 0;
 	r300->hw.unk4E10.cmd[3] = 0;
 

@@ -485,7 +485,7 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
    efloat(1.0);
    #endif
    
-/* Why do we need this for immediate mode?? */
+/* Why do we need this for immediate mode?? Vertex processor needs it to know proper regs */
 //   r300EmitLOAD_VBPNTR(rmesa, 0);
    
    for(i=0; i < VB->PrimitiveCount; i++){
@@ -543,7 +543,7 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
    
 	r300ReleaseArrays(ctx);
 	r300EmitArrays(ctx, rmesa->state.render_inputs);
-
+	
 //	LOCK_HARDWARE(&(rmesa->radeon));
 
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
