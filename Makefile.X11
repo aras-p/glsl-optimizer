@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.60 2002/02/12 03:28:48 brianp Exp $
+# $Id: Makefile.X11,v 1.61 2002/03/11 14:59:50 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -579,7 +579,6 @@ OBSOLETE_LIB_FILES = \
 	$(DIRECTORY)/src/D3D/*bat					\
 	$(DIRECTORY)/src/D3D/*DEF					\
 	$(DIRECTORY)/src/DOS/DEPEND.DOS					\
-	$(DIRECTORY)/src/DOS/*.c					\
 	$(DIRECTORY)/src/S3/*.[ch]					\
 	$(DIRECTORY)/src/S3/*.def					\
 	$(DIRECTORY)/src/S3/*.mak					\
@@ -614,7 +613,6 @@ DEMO_FILES =	\
 	$(DIRECTORY)/src-glut/*.[ch]		\
 	$(DIRECTORY)/src-glut.dos/*.[ch]	\
 	$(DIRECTORY)/src-glut.dos/Makefile.DJ	\
-	$(DIRECTORY)/src-glut.dos/depend	\
 	$(DIRECTORY)/src-glut.dos/PC_HW/*.[chS]	\
 	$(DIRECTORY)/images/*			\
 	$(DIRECTORY)/demos/Makefile*		\
