@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.52 2001/02/15 01:33:52 keithw Exp $ */
+/* $Id: dd.h,v 1.53 2001/02/19 20:02:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -469,7 +469,6 @@ struct dd_function_table {
                        struct gl_texture_object *texObj,
                        struct gl_texture_image *texImage );
    /* Called by glTexImage1/2/3D.
-    * Will not be called if any glPixelTransfer operations are enabled.
     * Arguments:
     *   <target>, <level>, <format>, <type> and <pixels> are user specified.
     *   <packing> indicates the image packing of pixels.
@@ -478,10 +477,7 @@ struct dd_function_table {
     *      width, height, depth, border and internalFormat information.
     *   <retainInternalCopy> is returned by this function and indicates whether
     *      core Mesa should keep an internal copy of the texture image.
-    * Return GL_TRUE if operation completed, return GL_FALSE if core Mesa
-    * should do the job.  If GL_FALSE is returned, this function will be
-    * called a second time after the texture image has been unpacked into
-    * GLubytes.  It may be easier for the driver to handle then.
+    * Drivers should call a fallback routine from texstore.c if needed.
     */
 
    void (*TexSubImage1D)( GLcontext *ctx, GLenum target, GLint level,
@@ -508,7 +504,6 @@ struct dd_function_table {
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage );
    /* Called by glTexSubImage1/2/3D.
-    * Will not be called if any glPixelTransfer operations are enabled.
     * Arguments:
     *   <target>, <level>, <xoffset>, <yoffset>, <zoffset>, <width>, <height>,
     *      <depth>, <format>, <type> and <pixels> are user specified.
@@ -516,38 +511,32 @@ struct dd_function_table {
     *   <texObj> is the target texture object.
     *   <texImage> is the target texture image.  It will have the texture
     *      width, height, border and internalFormat information.
-    * Return GL_TRUE if operation completed, return GL_FALSE if core Mesa
-    * should do the job.  If GL_FALSE is returned, then TexImage1/2/3D will
-    * be called with the complete texture image.
+    * The driver should use a fallback routine from texstore.c if needed.
     */
       
-   GLboolean (*CopyTexImage1D)( GLcontext *ctx, GLenum target, GLint level,
-                                GLenum internalFormat, GLint x, GLint y,
-                                GLsizei width, GLint border );
-   GLboolean (*CopyTexImage2D)( GLcontext *ctx, GLenum target, GLint level,
-                                GLenum internalFormat, GLint x, GLint y,
-                                GLsizei width, GLsizei height, GLint border );
+   void (*CopyTexImage1D)( GLcontext *ctx, GLenum target, GLint level,
+                           GLenum internalFormat, GLint x, GLint y,
+                           GLsizei width, GLint border );
+   void (*CopyTexImage2D)( GLcontext *ctx, GLenum target, GLint level,
+                           GLenum internalFormat, GLint x, GLint y,
+                           GLsizei width, GLsizei height, GLint border );
    /* Called by glCopyTexImage1D and glCopyTexImage2D.
-    * Will not be called if any glPixelTransfer operations are enabled.
-    * Return GL_TRUE if operation completed, return GL_FALSE if core Mesa
-    * should do the job.
+    * Drivers should use a fallback routine from texstore.c if needed.
     */
 
-   GLboolean (*CopyTexSubImage1D)( GLcontext *ctx, GLenum target, GLint level,
-                                   GLint xoffset,
-                                   GLint x, GLint y, GLsizei width );
-   GLboolean (*CopyTexSubImage2D)( GLcontext *ctx, GLenum target, GLint level,
-                                   GLint xoffset, GLint yoffset,
-                                   GLint x, GLint y,
-                                   GLsizei width, GLsizei height );
-   GLboolean (*CopyTexSubImage3D)( GLcontext *ctx, GLenum target, GLint level,
-                                   GLint xoffset, GLint yoffset, GLint zoffset,
-                                   GLint x, GLint y,
-                                   GLsizei width, GLsizei height );
+   void (*CopyTexSubImage1D)( GLcontext *ctx, GLenum target, GLint level,
+                              GLint xoffset,
+                              GLint x, GLint y, GLsizei width );
+   void (*CopyTexSubImage2D)( GLcontext *ctx, GLenum target, GLint level,
+                              GLint xoffset, GLint yoffset,
+                              GLint x, GLint y,
+                              GLsizei width, GLsizei height );
+   void (*CopyTexSubImage3D)( GLcontext *ctx, GLenum target, GLint level,
+                              GLint xoffset, GLint yoffset, GLint zoffset,
+                              GLint x, GLint y,
+                              GLsizei width, GLsizei height );
    /* Called by glCopyTexSubImage1/2/3D.
-    * Will not be called if any glPixelTransfer operations are enabled.
-    * Return GL_TRUE if operation completed, return GL_FALSE if core Mesa
-    * should do the job.
+    * Drivers should use a fallback routine from texstore.c if needed.
     */
 
    GLboolean (*TestProxyTexImage)(GLcontext *ctx, GLenum target,

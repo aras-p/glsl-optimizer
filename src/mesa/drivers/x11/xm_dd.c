@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.14 2001/02/06 21:42:49 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.15 2001/02/19 20:01:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -965,6 +965,11 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
    ctx->Driver.TexSubImage2D = _mesa_store_texsubimage2d;
    ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
+   ctx->Driver.CopyTexImage1D = _mesa_copy_teximage1d;
+   ctx->Driver.CopyTexImage2D = _mesa_copy_teximage2d;
+   ctx->Driver.CopyTexSubImage1D = _mesa_copy_texsubimage1d;
+   ctx->Driver.CopyTexSubImage2D = _mesa_copy_texsubimage2d;
+   ctx->Driver.CopyTexSubImage3D = _mesa_copy_texsubimage3d;
    ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
 
    /* 
