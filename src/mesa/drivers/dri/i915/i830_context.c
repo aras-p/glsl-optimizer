@@ -32,7 +32,7 @@
 #include "tnl/tnl.h"
 #include "tnl/t_vertex.h"
 #include "tnl/t_context.h"
-
+#include "utils.h"
 
 /***************************************
  * Mesa's Driver Functions
