@@ -1,4 +1,4 @@
-/* $Id: s_depth.c,v 1.16 2002/02/04 15:59:29 brianp Exp $ */
+/* $Id: s_depth.c,v 1.17 2002/02/06 03:22:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1308,7 +1308,7 @@ depth_test_pixels( GLcontext *ctx, struct sw_span *span )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLuint n = span->end;
    const GLint *x = span->xArray;
-   const GLint *y = span->xArray;
+   const GLint *y = span->yArray;
    const GLdepth *z = span->zArray;
    GLubyte *mask = span->mask;
 
