@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.70 2001/10/22 22:45:18 brianp Exp $ */
+/* $Id: get.c,v 1.71 2001/10/25 23:21:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1278,6 +1278,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
             return;
          }
+         break;
       case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = ctx->Multisample.SampleAlphaToCoverage;
@@ -1286,6 +1287,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
             return;
          }
+         break;
       case GL_SAMPLE_ALPHA_TO_ONE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = ctx->Multisample.SampleAlphaToOne;
@@ -1294,6 +1296,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
             return;
          }
+         break;
       case GL_SAMPLE_COVERAGE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = ctx->Multisample.SampleCoverage;
@@ -1302,6 +1305,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
             return;
          }
+         break;
       case GL_SAMPLE_COVERAGE_VALUE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = FLOAT_TO_BOOL(ctx->Multisample.SampleCoverageValue);
@@ -1310,6 +1314,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
             return;
          }
+         break;
       case GL_SAMPLE_COVERAGE_INVERT_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = ctx->Multisample.SampleCoverageInvert;
@@ -1318,6 +1323,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
             return;
          }
+         break;
       case GL_SAMPLE_BUFFERS_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = 0; /* XXX fix someday */
@@ -1326,6 +1332,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
             return;
          }
+         break;
       case GL_SAMPLES_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = 0; /* XXX fix someday */
@@ -1334,6 +1341,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
             return;
          }
+         break;
 
       /* GL_IBM_rasterpos_clip */
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
@@ -1344,6 +1352,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetBoolean");
             return;
          }
+         break;
 
       /* GL_MESA_sprite_point */
       case GL_SPRITE_POINT_MESA:
@@ -2568,6 +2577,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
             return;
          }
+         break;
       case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = (GLdouble) ctx->Multisample.SampleAlphaToCoverage;
@@ -2576,6 +2586,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
             return;
          }
+         break;
       case GL_SAMPLE_ALPHA_TO_ONE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = (GLdouble) ctx->Multisample.SampleAlphaToOne;
@@ -2584,6 +2595,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
             return;
          }
+         break;
       case GL_SAMPLE_COVERAGE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = (GLdouble) ctx->Multisample.SampleCoverage;
@@ -2592,6 +2604,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
             return;
          }
+         break;
       case GL_SAMPLE_COVERAGE_VALUE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = ctx->Multisample.SampleCoverageValue;
@@ -2600,6 +2613,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
             return;
          }
+         break;
       case GL_SAMPLE_COVERAGE_INVERT_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = (GLdouble) ctx->Multisample.SampleCoverageInvert;
@@ -2608,6 +2622,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
             return;
          }
+         break;
       case GL_SAMPLE_BUFFERS_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = 0.0; /* XXX fix someday */
@@ -2616,6 +2631,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
             return;
          }
+         break;
       case GL_SAMPLES_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = 0.0; /* XXX fix someday */
@@ -2624,6 +2640,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
             return;
          }
+         break;
 
       /* GL_IBM_rasterpos_clip */
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
@@ -2634,6 +2651,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
             return;
          }
+         break;
 
       /* GL_MESA_sprite_point */
       case GL_SPRITE_POINT_MESA:
@@ -3839,6 +3857,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             GET_FLOAT_ERROR;
             return;
          }
+         break;
       case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = (GLfloat) ctx->Multisample.SampleAlphaToCoverage;
@@ -3847,6 +3866,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             GET_FLOAT_ERROR;
             return;
          }
+         break;
       case GL_SAMPLE_ALPHA_TO_ONE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = (GLfloat) ctx->Multisample.SampleAlphaToOne;
@@ -3855,6 +3875,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             GET_FLOAT_ERROR;
             return;
          }
+         break;
       case GL_SAMPLE_COVERAGE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = (GLfloat) ctx->Multisample.SampleCoverage;
@@ -3863,6 +3884,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             GET_FLOAT_ERROR;
             return;
          }
+         break;
       case GL_SAMPLE_COVERAGE_VALUE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = ctx->Multisample.SampleCoverageValue;
@@ -3871,6 +3893,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             GET_FLOAT_ERROR;
             return;
          }
+         break;
       case GL_SAMPLE_COVERAGE_INVERT_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = (GLfloat) ctx->Multisample.SampleCoverageInvert;
@@ -3879,6 +3902,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             GET_FLOAT_ERROR;
             return;
          }
+         break;
       case GL_SAMPLE_BUFFERS_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = 0.0; /* XXX fix someday */
@@ -3887,6 +3911,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             GET_FLOAT_ERROR;
             return;
          }
+         break;
       case GL_SAMPLES_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = 0.0; /* XXX fix someday */
@@ -3895,6 +3920,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             GET_FLOAT_ERROR;
             return;
          }
+         break;
 
       /* GL_IBM_rasterpos_clip */
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
@@ -3905,6 +3931,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             GET_FLOAT_ERROR;
             return;
          }
+         break;
 
       /* GL_MESA_sprite_point */
       case GL_SPRITE_POINT_MESA:
@@ -5152,6 +5179,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
             return;
          }
+         break;
       case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = (GLint) ctx->Multisample.SampleAlphaToCoverage;
@@ -5160,6 +5188,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
             return;
          }
+         break;
       case GL_SAMPLE_ALPHA_TO_ONE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = (GLint) ctx->Multisample.SampleAlphaToOne;
@@ -5168,6 +5197,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
             return;
          }
+         break;
       case GL_SAMPLE_COVERAGE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = (GLint) ctx->Multisample.SampleCoverage;
@@ -5176,6 +5206,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
             return;
          }
+         break;
       case GL_SAMPLE_COVERAGE_VALUE_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = (GLint) ctx->Multisample.SampleCoverageValue;
@@ -5184,6 +5215,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
             return;
          }
+         break;
       case GL_SAMPLE_COVERAGE_INVERT_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = (GLint) ctx->Multisample.SampleCoverageInvert;
@@ -5192,6 +5224,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
             return;
          }
+         break;
       case GL_SAMPLE_BUFFERS_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = 0; /* XXX fix someday */
@@ -5200,6 +5233,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
             return;
          }
+         break;
       case GL_SAMPLES_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = 0; /* XXX fix someday */
@@ -5208,6 +5242,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
             return;
          }
+         break;
 
       /* GL_IBM_rasterpos_clip */
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
@@ -5218,6 +5253,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
             return;
          }
+         break;
 
       /* GL_MESA_sprite_point */
       case GL_SPRITE_POINT_MESA:
