@@ -383,7 +383,6 @@ _mesa_init_buffer_objects( GLcontext *ctx )
  * glGetTexImage, etc) we call this function to check that we're not
  * going to read out of bounds.
  *
- * \param ctx  the rendering context
  * \param width  width of image to read/write
  * \param height  height of image to read/write
  * \param depth  depth of image to read/write
@@ -511,7 +510,7 @@ _mesa_BindBufferARB(GLenum target, GLuint buffer)
  * Delete a set of buffer objects.
  * 
  * \param n      Number of buffer objects to delete.
- * \param buffer Array of \c n buffer object IDs.
+ * \param ids    Array of \c n buffer object IDs.
  */
 void GLAPIENTRY
 _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)

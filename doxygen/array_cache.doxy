@@ -40,7 +40,7 @@ SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------
 # Configuration::addtions related to external references   
 #---------------------------------------------------------------------------
-TAGFILES               = core.tag=../core \
+TAGFILES               = main.tag=../core \
 			 tnl.tag=../tnl \
 			 swrast_setup.tag=../swrast_setup \
 			 swrast.tag=../swrast \

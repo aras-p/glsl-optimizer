@@ -1607,7 +1607,7 @@ _mesa_destroy_context( GLcontext *ctx )
  * \param mask bitwise OR of GL_*_BIT flags
  *
  * According to the bits specified in \p mask, copies the corresponding
- * attributes from \p src into \dst.  For many of the attributes a simple \c
+ * attributes from \p src into \p dst.  For many of the attributes a simple \c
  * memcpy is not enough due to the existence of internal pointers in their data
  * structures.
  */
