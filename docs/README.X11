@@ -231,6 +231,12 @@ Gamma correction (X11 only):
    http://www.inforamp.net/~poynton/notes/colour_and_gamma/GammaFAQ.html
 
 
+HPCR glClear(GL_COLOR_BUFFER_BIT) dithering
+
+   If you set the MESA_HPCR_CLEAR environment variable then dithering
+   will be used when clearing the color buffer.  This is only applicable
+   to HP systems with the HPCR (Color Recovery) system.
+
 
 Extensions:
    The following OpenGL GLX extensions are currently implemented:
@@ -298,4 +304,4 @@ Summary of X-related environment variables:
 
 
 ----------------------------------------------------------------------
-$Id: README.X11,v 3.0 1998/02/14 17:45:13 brianp Exp $
+$Id: README.X11,v 3.1 1998/07/29 01:19:15 brianp Exp $
