@@ -42,12 +42,16 @@ extern "C" {
 #ifndef APIENTRY
 #define APIENTRY
 #endif
+#ifndef GLAPI
+#define GLAPI extern
+#endif
 
 /*************************************************************/
 
 /* Header file version number, required by OpenGL ABI for Linux */
-/* glxext.h last updated 2001/09/26 */
-#define GLX_GLXEXT_VERSION 3
+/* glxext.h last updated 2002/03/22 */
+/* Current version at http://oss.sgi.com/projects/ogl-sample/registry/ */
+#define GLX_GLXEXT_VERSION 5
 
 #ifndef GLX_VERSION_1_3
 #define GLX_WINDOW_BIT                     0x00000001
@@ -111,6 +115,9 @@ extern "C" {
 #ifndef GLX_VERSION_1_4
 #define GLX_SAMPLE_BUFFERS                 100000
 #define GLX_SAMPLES                        100001
+#endif
+
+#ifndef GLX_ARB_get_proc_address
 #endif
 
 #ifndef GLX_ARB_multisample
@@ -276,7 +283,6 @@ extern "C" {
 /*************************************************************/
 
 #ifndef GLX_ARB_get_proc_address
-/* XXX Added void parameter to silence many, many warnings (BrianP) */
 typedef void (*__GLXextFuncPtr)(void);
 #endif
 
@@ -348,12 +354,24 @@ typedef void ( * PFNGLXSELECTEVENTPROC) (Display *dpy, GLXDrawable draw, unsigne
 typedef void ( * PFNGLXGETSELECTEDEVENTPROC) (Display *dpy, GLXDrawable draw, unsigned long *event_mask);
 #endif
 
+#ifndef GLX_VERSION_1_4
+#define GLX_VERSION_1_4 1
+#ifdef GLX_GLXEXT_PROTOTYPES
+extern __GLXextFuncPtr glXGetProcAddress (const GLubyte *);
+#endif /* GLX_GLXEXT_PROTOTYPES */
+typedef __GLXextFuncPtr ( * PFNGLXGETPROCADDRESSPROC) (const GLubyte *procName);
+#endif
+
 #ifndef GLX_ARB_get_proc_address
 #define GLX_ARB_get_proc_address 1
 #ifdef GLX_GLXEXT_PROTOTYPES
 extern __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *);
 #endif /* GLX_GLXEXT_PROTOTYPES */
 typedef __GLXextFuncPtr ( * PFNGLXGETPROCADDRESSARBPROC) (const GLubyte *procName);
+#endif
+
+#ifndef GLX_ARB_multisample
+#define GLX_ARB_multisample 1
 #endif
 
 #ifndef GLX_SGIS_multisample
@@ -419,7 +437,7 @@ extern void glXFreeContextEXT (Display *, GLXContext);
 #endif /* GLX_GLXEXT_PROTOTYPES */
 typedef Display * ( * PFNGLXGETCURRENTDISPLAYEXTPROC) (void);
 typedef int ( * PFNGLXQUERYCONTEXTINFOEXTPROC) (Display *dpy, GLXContext context, int attribute, int *value);
-typedef GLXContextID ( * PFNGLXGETCONTEXTIDEXTPROC) (GLXContext context);
+typedef GLXContextID ( * PFNGLXGETCONTEXTIDEXTPROC) (const GLXContext context);
 typedef GLXContext ( * PFNGLXIMPORTCONTEXTEXTPROC) (Display *dpy, GLXContextID contextID);
 typedef void ( * PFNGLXFREECONTEXTEXTPROC) (Display *dpy, GLXContext context);
 #endif
@@ -554,14 +572,33 @@ typedef Bool ( * PFNGLXSET3DFXMODEMESAPROC) (int mode);
 #define GLX_SGIX_visual_select_group 1
 #endif
 
-#ifndef GLX_GLX_OML_swap_method
-#define GLX_GLX_OML_swap_method 1
+#ifndef GLX_OML_swap_method
+#define GLX_OML_swap_method 1
 #endif
 
-#ifndef GLX_GLX_OML_sync_control
-#define GLX_GLX_OML_sync_control 1
+#if defined(__STDC_VERSION__)
+#if __STDC_VERSION__ >= 199901L
+/* Include ISO C99 integer types for OML_sync_control; need a better test */
+#include <inttypes.h>
+
+#ifndef GLX_OML_sync_control
+#define GLX_OML_sync_control 1
+#ifdef GLX_GLXEXT_PROTOTYPES
+extern Bool glXGetSyncValuesOML (Display *, GLXDrawable, int64_t *, int64_t *, int64_t *);
+extern Bool glXGetMscRateOML (Display *, GLXDrawable, int32_t *, int32_t *);
+extern int64_t glXSwapBuffersMscOML (Display *, GLXDrawable, int64_t, int64_t, int64_t);
+extern Bool glXWaitForMscOML (Display *, GLXDrawable, int64_t, int64_t, int64_t, int64_t *, int64_t *, int64_t *);
+extern Bool glXWaitForSbcOML (Display *, GLXDrawable, int64_t, int64_t *, int64_t *, int64_t *);
+#endif /* GLX_GLXEXT_PROTOTYPES */
+typedef Bool ( * PFNGLXGETSYNCVALUESOMLPROC) (Display *dpy, GLXDrawable drawable, int64_t *ust, int64_t *msc, int64_t *sbc);
+typedef Bool ( * PFNGLXGETMSCRATEOMLPROC) (Display *dpy, GLXDrawable drawable, int32_t *numerator, int32_t *denominator);
+typedef int64_t ( * PFNGLXSWAPBUFFERSMSCOMLPROC) (Display *dpy, GLXDrawable drawable, int64_t target_msc, int64_t divisor, int64_t remainder);
+typedef Bool ( * PFNGLXWAITFORMSCOMLPROC) (Display *dpy, GLXDrawable drawable, int64_t target_msc, int64_t divisor, int64_t remainder, int64_t *ust, int64_t *msc, int64_t *sbc);
+typedef Bool ( * PFNGLXWAITFORSBCOMLPROC) (Display *dpy, GLXDrawable drawable, int64_t target_sbc, int64_t *ust, int64_t *msc, int64_t *sbc);
 #endif
 
+#endif /* C99 version test */
+#endif /* STDC test */
 
 #ifdef __cplusplus
 }
