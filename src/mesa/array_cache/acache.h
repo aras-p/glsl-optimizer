@@ -1,10 +1,10 @@
-/* $Id: acache.h,v 1.2 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: acache.h,v 1.3 2002/04/21 18:49:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,15 +41,6 @@ _ac_DestroyContext( GLcontext *ctx );
 
 extern void
 _ac_InvalidateState( GLcontext *ctx, GLuint new_state );
-
-extern struct gl_client_array *
-_ac_import_texcoord( GLcontext *ctx,
-		     GLuint unit,
-		     GLenum type,
-		     GLuint reqstride,
-		     GLuint reqsize,
-		     GLboolean reqwritable,
-		     GLboolean *writable );
 
 extern struct gl_client_array *
 _ac_import_vertex( GLcontext *ctx,
@@ -102,6 +93,24 @@ _ac_import_edgeflag( GLcontext *ctx,
 		     GLuint reqstride,
 		     GLboolean reqwritable,
 		     GLboolean *writable );
+
+extern struct gl_client_array *
+_ac_import_texcoord( GLcontext *ctx,
+		     GLuint unit,
+		     GLenum type,
+		     GLuint reqstride,
+		     GLuint reqsize,
+		     GLboolean reqwritable,
+		     GLboolean *writable );
+
+extern struct gl_client_array *
+_ac_import_attrib( GLcontext *ctx,
+                   GLuint index,
+                   GLenum type,
+                   GLuint reqstride,
+                   GLuint reqsize,
+                   GLboolean reqwritable,
+                   GLboolean *writable );
 
 
 /* Clients must call this function to validate state and set bounds

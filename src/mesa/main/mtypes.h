@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.71 2002/04/19 15:49:40 kschultz Exp $ */
+/* $Id: mtypes.h,v 1.72 2002/04/21 18:49:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1538,10 +1538,11 @@ struct matrix_stack
 #define _NEW_ARRAY_TEXCOORD_6       VERT_BIT_TEX6
 #define _NEW_ARRAY_TEXCOORD_7       VERT_BIT_TEX7
 #define _NEW_ARRAY_ALL              0xffff
-#define _NEW_ARRAY_VERT_ATTRIB0     0x10000
+#define _NEW_ARRAY_ATTRIB_0         0x10000  /* start at bit 16 */
 
 
 #define _NEW_ARRAY_TEXCOORD(i) (_NEW_ARRAY_TEXCOORD_0 << (i))
+#define _NEW_ARRAY_ATTRIB(i) (_NEW_ARRAY_ATTRIB_0 << (i))
 
 /* A bunch of flags that we think might be useful to drivers.
  */

@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.42 2002/04/04 23:59:14 brianp Exp $ */
+/* $Id: varray.c,v 1.43 2002/04/21 18:49:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -452,12 +452,12 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *vptr)
 
 
 void _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
-                                 GLsizei stride, const GLvoid *pointer)
+                                 GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index >= VP_NUM_PROG_REGS) {
+   if (index >= VERT_ATTRIB_MAX) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerNV(index)");
       return;
    }
@@ -502,16 +502,13 @@ void _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
    ctx->Array.VertexAttrib[index].Stride = stride;
    ctx->Array.VertexAttrib[index].Size = size;
    ctx->Array.VertexAttrib[index].Type = type;
+   ctx->Array.VertexAttrib[index].Ptr = (void *) ptr;
 
-   /* XXX need new flags here??? */
    ctx->NewState |= _NEW_ARRAY;
-   /* XXX probably need new flags!!!! */
-   ctx->Array.NewState |= _NEW_ARRAY_VERT_ATTRIB0;
+   ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
 
-   /* XXX
-   if (ctx->Driver.VertexAttribdPointer)
+   if (ctx->Driver.VertexAttribPointer)
       ctx->Driver.VertexAttribPointer( ctx, index, size, type, stride, ptr );
-   */
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.61 2002/04/19 08:38:23 alanh Exp $ */
+/* $Id: enable.c,v 1.62 2002/04/21 18:49:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -112,7 +112,7 @@ client_state( GLcontext *ctx, GLenum cap, GLboolean state )
          {
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
             var = &ctx->Array.VertexAttrib[n].Enabled;
-            flag = _NEW_ARRAY_VERT_ATTRIB0;  /* XXX flag OK? */
+            flag = _NEW_ARRAY_ATTRIB(n);
          }
          break;
       default:

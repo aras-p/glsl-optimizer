@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.67 2002/03/16 00:57:14 brianp Exp $ */
+/* $Id: dd.h,v 1.68 2002/04/21 18:49:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -542,6 +542,8 @@ struct dd_function_table {
    void (*TexCoordPointer)(GLcontext *ctx, GLint size, GLenum type,
 			   GLsizei stride, const GLvoid *ptr);
    void (*EdgeFlagPointer)(GLcontext *ctx, GLsizei stride, const GLvoid *ptr);
+   void (*VertexAttribPointer)(GLcontext *ctx, GLuint index, GLint size,
+                               GLenum type, GLsizei stride, const GLvoid *ptr);
 
 
    /*** State-query functions
