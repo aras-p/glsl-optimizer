@@ -1190,5 +1190,7 @@ Mesa Version History
     New:
 	- full OpenGL 1.5 support
     Bug fixes:
-	- fragment program dot product?
+	- fixed bug UNCLAMPED_FLOAT_TO_UBYTE macro; solves a color clamping issue
+	- updated suno5-gcc configs
+
 
