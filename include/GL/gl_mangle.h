@@ -1,4 +1,4 @@
-/* $Id: gl_mangle.h,v 1.5 2001/02/19 18:28:59 brianp Exp $ */
+/* $Id: gl_mangle.h,v 1.6 2001/04/19 22:33:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -658,5 +658,22 @@
 #define glMultTransposeMatrixdARB mglMultTransposeMatrixdARB 
 #define glLoadTransposeMatrixfARB mglLoadTransposeMatrixfARB 
 #define glLoadTransposeMatrixdARB mglLoadTransposeMatrixdARB 
+#define glSecondaryColor3fEXT mglSecondaryColor3fEXT
+#define glSecondaryColor3ubEXT mglSecondaryColor3ubEXT
+#define glSecondaryColor3uivEXT mglSecondaryColor3uivEXT
+#define glSecondaryColor3ubvEXT mglSecondaryColor3ubvEXT
+#define glSecondaryColor3svEXT mglSecondaryColor3svEXT
+#define glSecondaryColor3ivEXT mglSecondaryColor3ivEXT
+#define glSecondaryColor3fvEXT mglSecondaryColor3fvEXT
+#define glSecondaryColor3dvEXT mglSecondaryColor3dvEXT
+#define glSecondaryColor3bvEXT mglSecondaryColor3bvEXT
+#define glSecondaryColor3usvEXT mglSecondaryColor3usvEXT
+#define glSecondaryColorPointerEXT mglSecondaryColorPointerEXT
+#define glSecondaryColor3iEXT mglSecondaryColor3iEXT
+#define glSecondaryColor3dEXT mglSecondaryColor3dEXT
+#define glSecondaryColor3bEXT mglSecondaryColor3bEXT
+#define glSecondaryColor3uiEXT mglSecondaryColor3uiEXT
+#define glSecondaryColor3usEXT mglSecondaryColor3usEXT
+#define glSecondaryColor3sEXT mglSecondaryColor3sEXT
 
 #endif
