@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.88 2000/09/17 21:56:07 brianp Exp $ */
+/* $Id: context.c,v 1.89 2000/09/26 15:27:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,7 +74,7 @@
 #endif
 
 
-#if defined(GL_MESA_TRACE)
+#if defined(MESA_TRACE)
 #include "Trace/tr_context.h"
 #include "Trace/tr_wrapper.h"
 #endif
@@ -1491,7 +1491,7 @@ _mesa_initialize_context( GLcontext *ctx,
    _mesa_init_dlist_table(ctx->Save, dispatchSize);
    ctx->CurrentDispatch = ctx->Exec;
 
-#if defined(GL_MESA_TRACE)
+#if defined(MESA_TRACE)
    ctx->TraceCtx = CALLOC( sizeof(trace_context_t) );
 #if 0
    /* Brian: do you want to have CreateContext fail here,

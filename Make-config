@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.28 2000/09/15 19:44:43 brianp Exp $
+# $Id: Make-config,v 1.29 2000/09/26 15:27:20 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=5
@@ -463,7 +463,7 @@ linux-trace:
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
 	"CC = gcc" \
-	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -DGL_MESA_TRACE -I/usr/X11R6/include" \
+	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -DMESA_TRACE -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -1306,7 +1306,7 @@ linux-elf-debug:
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
 	"CC = gcc" \
-	"CFLAGS = -g -ansi -pedantic -Wall -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DSVGA -I/usr/include/glide -DFX -DGL_MESA_TRACE" \
+	"CFLAGS = -g -ansi -pedantic -Wall -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DSVGA -I/usr/include/glide -DFX" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -lvga -L/usr/local/glide/lib -lglide2x" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \

@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.22 2000/09/07 15:42:13 brianp Exp $
+# $Id: Makefile.X11,v 1.23 2000/09/26 15:27:23 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -132,7 +132,15 @@ DRIVER_SOURCES = \
 	FX/fxtexman.c \
 	FX/fxtrifuncs.c \
 	FX/fxvsetup.c \
-	FX/fxglidew.c
+	FX/fxglidew.c \
+	Trace/tr_2string.c \
+	Trace/tr_attrib.c \
+	Trace/tr_context.c \
+	Trace/tr_control.c \
+	Trace/tr_error.c \
+	Trace/tr_print.c \
+	Trace/tr_wrapper.c
+
 
 ASM_SOURCES = 
 
@@ -170,6 +178,7 @@ X/xm_line.o: X/xm_line.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 X/xm_tri.o: X/xm_tri.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+
 SVGA/svgamesa.o: SVGA/svgamesa.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 SVGA/svgamesa8.o: SVGA/svgamesa8.c
@@ -182,8 +191,10 @@ SVGA/svgamesa24.o: SVGA/svgamesa24.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 SVGA/svgamesa32.o: SVGA/svgamesa32.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+
 OSmesa/osmesa.o: OSmesa/osmesa.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+
 FX/fxapi.o: FX/fxapi.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 FX/fxclip.o: FX/fxclip.c
@@ -214,9 +225,9 @@ FX/fxvsetup.o: FX/fxvsetup.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 FX/fxglidew.o: FX/fxglidew.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+
 FX/X86/fx_3dnow_fastpath.o: FX/X86/fx_3dnow_fastpath.S
-GGI/ggimesa.o: GGI/ggimesa.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+
 X86/x86.o: X86/x86.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 X86/common_x86.o: X86/common_x86.c
@@ -225,6 +236,26 @@ X86/3dnow.o: X86/3dnow.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 X86/katmai.o: X86/katmai.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+
+GGI/ggimesa.o: GGI/ggimesa.c
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+
+Trace/tr_2string.o: Trace/tr_2string.c
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+Trace/tr_attrib.o: Trace/tr_attrib.c
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+Trace/tr_context.o: Trace/tr_context.c
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+Trace/tr_control.o: Trace/tr_control.c
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+Trace/tr_error.o: Trace/tr_error.c
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+Trace/tr_print.o: Trace/tr_print.c
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+Trace/tr_wrapper.o: Trace/tr_wrapper.c
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+
+
 
 ##### TARGETS #####
 
