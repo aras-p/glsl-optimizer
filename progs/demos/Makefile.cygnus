@@ -1,37 +1,13 @@
-# Makefile for demo programs
-# Stephane Rehel (rehel@worldnet.fr) April 13 1997
+# $Id: Makefile.cygnus,v 1.2 1999/10/22 20:37:23 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  3.0
-# Copyright (C) 1995-1998  Brian Paul
-#
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Library General Public
-# License as published by the Free Software Foundation; either
-# version 2 of the License, or (at your option) any later version.
-#
-# This library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Library General Public License for more details.
-#
-# You should have received a copy of the GNU Library General Public
-# License along with this library; if not, write to the Free
-# Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+# Version:  3.1
+# Copyright (C) 1995-1999  Brian Paul
 
 
-# $Id: Makefile.cygnus,v 1.1 1999/08/19 00:55:40 jtg Exp $
+# Makefile for demo programs for cygnus
+# Stephane Rehel (rehel@worldnet.fr) April 13 1997
 
-# $Log: Makefile.cygnus,v $
-# Revision 1.1  1999/08/19 00:55:40  jtg
-# Initial revision
-#
-# Revision 3.1  1999/06/22 12:50:29  brianp
-# removed multitex demo
-#
-# Revision 3.0  1998/06/10 02:55:51  brianp
-# initial revision
-#
 
 
 ##### MACROS #####
@@ -43,7 +19,7 @@ GL_LIBS = -L$(LIBDIR) -lglut -lMesaGLU -lMesaGL -lm $(WLIBS)
 
 LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
 
-PROGS = clearspd drawpix gamma gears glinfo glutfx isosurf \
+PROGS = clearspd drawpix gamma gears glinfo glutfx gloss isosurf \
 	morph3d multiext osdemo paltex pointblast reflect \
 	renormal spectex stex3d tessdemo texcyl texobj trispd winpos
 
