@@ -793,8 +793,9 @@ hook_in_driver_functions( GLcontext *ctx )
 GLAPI OSMesaContext GLAPIENTRY
 OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
 {
+   const GLint accumBits = (format == GL_COLOR_INDEX) ? 0 : 16;
    return OSMesaCreateContextExt(format, DEFAULT_SOFTWARE_DEPTH_BITS,
-                                 8, 16, sharelist);
+                                 8, accumBits, sharelist);
 }
 
 
