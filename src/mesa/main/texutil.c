@@ -1281,7 +1281,7 @@ generate_lookup_tables(void)
       A4R4G4B4toRed[i]   = r;
       A4R4G4B4toGreen[i] = g;
       A4R4G4B4toBlue[i]  = b;
-      A4R4G4B4toAlpha[i] = b;
+      A4R4G4B4toAlpha[i] = a;
    }
 
    for (i = 0; i <= 0xffff; i++) {
@@ -1296,7 +1296,7 @@ generate_lookup_tables(void)
       A1R5G5B5toRed[i]   = r;
       A1R5G5B5toGreen[i] = g;
       A1R5G5B5toBlue[i]  = b;
-      A1R5G5B5toAlpha[i] = b;
+      A1R5G5B5toAlpha[i] = a;
    }
 }
 
