@@ -690,7 +690,7 @@ static GLboolean r300_run_render(GLcontext *ctx,
 	
    #if 1
 	
-   	#if 1
+   	#if 0
         return r300_run_immediate_render(ctx, stage);
 	#else 
         return r300_run_vb_render(ctx, stage);

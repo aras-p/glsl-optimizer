@@ -1935,11 +1935,6 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk43A4.cmd[1] = 0x0000001C;
 	r300->hw.unk43A4.cmd[2] = 0x2DA49525;
 	
-#ifdef EXP_C
-	r300->hw.lsp.cmd[1] = rand()%(~0); //0x00b405a0;
-	r300->hw.lsp.cmd[2] = foobar++;// 0x00efe81f;
-#endif
-		
 	r300->hw.unk43E8.cmd[1] = 0x00FFFFFF;
 
 	#if 0

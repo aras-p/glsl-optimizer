@@ -16,12 +16,6 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_SE_VPORT_ZSCALE                0x1DA8
 #define R300_SE_VPORT_ZOFFSET               0x1DAC
 
-/*
-VB mode colorbuffer clears are broken with these too so these would
-probably work also. --aet
-*/
-#define R300_SE_ZBIAS_FACTOR                0x1DB0
-#define R300_SE_ZBIAS_CONSTANT              0x1DB4
 
 /* This register is written directly and also starts data section in many 3d CP_PACKET3's */
 #define R300_VAP_VF_CNTL	0x2084
@@ -238,7 +232,15 @@ probably work also. --aet
 // experiments so far have shown that both *must* point to an instruction
 // inside the vertex program, otherwise the GPU locks up.
 // fglrx usually sets CNTL_3_UNKNOWN to the end of the program and
-// CNTL_1_UNKNOWN somewhere in the middle, but the criteria are not clear. */
+// CNTL_1_UNKNOWN somewhere in the middle, but the criteria are not clear. 
+
+// Some tests would indicate that CNTL_3_UNKNOWN is set to program len - 
+// number of "temp to result instrutions". I havent yet seen a case where 
+// "temp to result instrutions" have not been moved at the end of program.
+// However tests have shown that fgls vertex program implementation is
+// not perfect and im having hard-time trusting
+// it at the time being. -aet
+*/
 #define R300_VAP_PVS_CNTL_1                 0x22D0
 #       define R300_PVS_CNTL_1_PROGRAM_START_SHIFT   0
 #       define R300_PVS_CNTL_1_UNKNOWN_SHIFT         10
@@ -427,7 +429,7 @@ probably work also. --aet
 #       define R300_POINTSIZE_MAX             (R300_POINTSIZE_Y_MASK / 6)
 
 /* The line width is given in multiples of 6.
-   00020018 == 4.0, 0002001e == 5.0  */
+   R300_LINE_CNT_UNK1 must be on to obtain expected results. */
 #define R300_RE_LINE_CNT                      0x4234
 #       define R300_LINESIZE_SHIFT            0
 #       define R300_LINESIZE_MASK             (0xFFFF << 0) /* GUESS */
@@ -439,10 +441,11 @@ probably work also. --aet
 
 #define R300_RE_POLYGON_MODE                  0x4288
 
-#define R300_RE_LINE_STIPPLE_PTRN1            0x43E0
-#define R300_RE_LINE_STIPPLE_PTRN2            0x43E4
-
-
+/* Not sure why there are duplicate of factor and constant values. 
+   My best guess so far is that there are seperate zbiases for test and write. 
+   Ordering might be wrong.
+   Some of the tests indicate that fgl has a fallback implementation of zbias
+   via pixel shaders. */
 #define R300_RE_ZBIAS_T_FACTOR                0x42A4
 #define R300_RE_ZBIAS_T_CONSTANT              0x42A8
 #define R300_RE_ZBIAS_W_FACTOR                0x42AC
@@ -452,6 +455,9 @@ probably work also. --aet
    perform depth test (see --vb-triangles in r300_demo)
    Don't know about other chips. - Vladimir
    This is set to 3 when GL_POLYGON_OFFSET_FILL is on.
+   My guess is that there are two bits for each zbias primitive (FILL, LINE, POINT).
+   One to enable depth test and one for depth write.
+   Yet this doesnt explain why depth writes work ...
     */
 #define R300_RE_OCCLUSION_CNTL		    0x42B4
 #	define R300_OCCLUSION_ON		(1<<1)
@@ -1192,12 +1198,14 @@ probably work also. --aet
 #define R300_VPI_OUT_OP_MIN                     (8 << 0)
 #define R300_VPI_OUT_OP_SGE                     (9 << 0)
 #define R300_VPI_OUT_OP_SLT                     (10 << 0)
+#define R300_VPI_OUT_OP_UNK1                    (12 << 0) /* Used in GL_POINT_DISTANCE_ATTENUATION_ARB */
 #define R300_VPI_OUT_OP_EXP                     (65 << 0)
 #define R300_VPI_OUT_OP_LOG                     (66 << 0)
 #define R300_VPI_OUT_OP_LIT                     (68 << 0)
 #define R300_VPI_OUT_OP_POW                     (69 << 0)
 #define R300_VPI_OUT_OP_RCP                     (70 << 0)
 #define R300_VPI_OUT_OP_RSQ                     (72 << 0)
+#define R300_VPI_OUT_OP_UNK2                    (73 << 0) /* Used in GL_POINT_DISTANCE_ATTENUATION_ARB */
 #define R300_VPI_OUT_OP_EX2                     (75 << 0)
 #define R300_VPI_OUT_OP_LG2                     (76 << 0)
 #define R300_VPI_OUT_OP_MAD_2                   (128 << 0)
