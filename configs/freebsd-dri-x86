@@ -1,0 +1,12 @@
+# -*-makefile-*-
+# Configuration for freebsd-dri: FreeBSD DRI hardware drivers
+
+include $(TOP)/configs/freebsd-dri
+
+CONFIG_NAME = freebsd-dri-x86
+
+# Unnecessary on x86, generally.
+PIC_FLAGS = 
+
+ASM_FLAGS = -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM
+ASM_SOURCES = $(X86_SOURCES)

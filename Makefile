@@ -52,6 +52,8 @@ beos \
 darwin \
 darwin-static \
 freebsd \
+freebsd-dri \
+freebsd-dri-x86 \
 hpux10 \
 hpux10-gcc \
 hpux10-static \
