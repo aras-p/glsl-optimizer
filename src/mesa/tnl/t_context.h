@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.7 2000/12/26 05:09:32 keithw Exp $ */
+/* $Id: t_context.h,v 1.8 2000/12/27 22:30:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -354,6 +354,7 @@ struct tnl_eval_store {
    GLuint EvalMap2Flags;
    GLuint EvalNewState;
 
+   GLfloat Coord[IMM_SIZE][4];	  
    GLfloat Obj[IMM_SIZE][4];	  
    GLfloat TexCoord[IMM_SIZE][4];  
    GLfloat Normal[IMM_SIZE][3];

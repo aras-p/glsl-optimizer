@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.1 2000/12/26 05:09:32 keithw Exp $ */
+/* $Id: t_imm_eval.c,v 1.2 2000/12/27 22:30:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -190,7 +190,7 @@ static void eval2_obj_norm( GLvector4f *obj_ptr,
 	 ASSIGN_4V(obj[i], 0,0,0,1);
 	 _math_de_casteljau_surf(map->Points, obj[i], du, dv, u, v, dimension,
 				 map->Uorder, map->Vorder);
-	
+
 	 CROSS3(normal[i], du, dv);
 	 NORMALIZE_3FV(normal[i]);
       }
@@ -426,27 +426,27 @@ void _tnl_eval_vb( GLcontext *ctx,
       req |= tnl->pipeline.inputs & tnl->eval.EvalMap2Flags;
 
    
-   /* Translate points into coords.  Use store->Obj to hold the
+   /* Translate points into coords.  Use store->Coord to hold the
     * new data.  
     */
    if (any_eval1 && (orflag & VERT_EVAL_P1))
    {
-      eval_points1( store->Obj, coord, flags,
+      eval_points1( store->Coord, coord, flags,
 		    ctx->Eval.MapGrid1du,
 		    ctx->Eval.MapGrid1u1);
 
-      coord = store->Obj;
+      coord = store->Coord;
    }
 
    if (any_eval2 && (orflag & VERT_EVAL_P2))
    {
-      eval_points2( store->Obj, coord, flags,
+      eval_points2( store->Coord, coord, flags,
 		    ctx->Eval.MapGrid2du,
 		    ctx->Eval.MapGrid2u1,
 		    ctx->Eval.MapGrid2dv,
 		    ctx->Eval.MapGrid2v1 );
 
-      coord = store->Obj;
+      coord = store->Coord;
    }
 
 
