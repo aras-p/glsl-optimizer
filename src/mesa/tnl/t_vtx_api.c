@@ -275,10 +275,15 @@ static void _tnl_wrap_upgrade_vertex( GLcontext *ctx,
 	 for (j = 0 ; j < _TNL_ATTRIB_MAX ; j++) {
 	    if (tnl->vtx.attrsz[j]) {
 	       if (j == attr) {
-		  COPY_SZ_4V( dest, newsz, tnl->vtx.current[j] );
-		  COPY_SZ_4V( dest, oldsz, data );
-		  data += oldsz;
-		  dest += newsz;
+		  if (oldsz) {
+		     ASSIGN_4V( dest, 0, 0, 0, 1 );
+		     COPY_SZ_4V( dest, oldsz, data );
+		     data += oldsz;
+		     dest += newsz;
+		  } else {
+		     COPY_SZ_4V( dest, newsz, tnl->vtx.current[j] );
+		     dest += newsz;
+		  }
 	       }
 	       else {
 		  GLuint sz = tnl->vtx.attrsz[j];

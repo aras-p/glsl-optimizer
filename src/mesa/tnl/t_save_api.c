@@ -503,10 +503,7 @@ static void _save_upgrade_vertex( GLcontext *ctx,
 		     dest += newsz;
 		  }
 		  else {
-		     GLuint currentsz = tnl->save.currentsz[attr][0];
-		     GLfloat *current = tnl->save.current[attr];
-		     ASSIGN_4V( dest, 0, 0, 0, 1 );
-		     COPY_SZ_4V( dest, currentsz, current );
+		     COPY_SZ_4V( dest, newsz, tnl->save.current[attr] );
 		     dest += newsz;
 		  }
 	       }
