@@ -742,10 +742,10 @@ static void savageRenderStart( GLcontext *ctx )
    }
 
    /* t_context.c always includes a diffuse color */
-   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA, SAVAGE_HW_NO_CD );
+   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, SAVAGE_HW_NO_CD );
       
    if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
-      EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB, SAVAGE_HW_NO_CS );
+      EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, SAVAGE_HW_NO_CS );
       EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, SAVAGE_HW_NO_CS );
    }
 

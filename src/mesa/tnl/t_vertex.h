@@ -28,6 +28,8 @@
 #ifndef _TNL_VERTEX_H
 #define _TNL_VERTEX_H
 
+#include "mtypes.h"
+
 /* New mechanism to specify hardware vertices so that tnl can build
  * and manipulate them directly.  
  */
@@ -46,10 +48,10 @@ enum tnl_attr_format {
    EMIT_4F_VIEWPORT,		/* do viewport transform and emit */
    EMIT_3F_XYW,			/* for projective texture */
    EMIT_1UB_1F,			/* for fog coordinate */
-   EMIT_3UB_3F_BGR,		/* for specular color */
    EMIT_3UB_3F_RGB,		/* for specular color */
-   EMIT_4UB_4F_BGRA,		/* for color */
+   EMIT_3UB_3F_BGR,		/* for specular color */
    EMIT_4UB_4F_RGBA,		/* for color */
+   EMIT_4UB_4F_BGRA,		/* for color */
    EMIT_4CHAN_4F_RGBA,		/* for swrast color */
    EMIT_PAD,			/* leave a hole of 'offset' bytes */
    EMIT_MAX
