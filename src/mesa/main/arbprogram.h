@@ -175,14 +175,6 @@ _mesa_BindProgramARB(GLenum target, GLuint program);
 
 
 extern void
-_mesa_DeleteProgramsARB(GLsizei n, const GLuint *programs);
-
-
-extern void
-_mesa_GenProgramsARB(GLsizei n, GLuint *programs);
-
-
-extern void
 _mesa_ProgramEnvParameter4dARB(GLenum target, GLuint index,
                                GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 
@@ -250,9 +242,6 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params);
 extern void
 _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string);
 
-
-extern GLboolean
-_mesa_IsProgramARB(GLuint program);
 
 #endif
 

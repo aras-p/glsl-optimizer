@@ -660,85 +660,52 @@ struct _glapi_table
    void (*GetFenceivNV)(GLuint fence, GLenum pname, GLint * params); /* 651 */
    void (*FinishFenceNV)(GLuint fence); /* 652 */
    void (*SetFenceNV)(GLuint fence, GLenum condition); /* 653 */
-   void (*VertexAttrib1sARB)(GLuint index, GLshort x); /* 654 */
-   void (*VertexAttrib1fARB)(GLuint index, GLfloat x); /* 655 */
-   void (*VertexAttrib1dARB)(GLuint index, GLdouble x); /* 656 */
-   void (*VertexAttrib2sARB)(GLuint index, GLshort x, GLshort y); /* 657 */
-   void (*VertexAttrib2fARB)(GLuint index, GLfloat x, GLfloat y); /* 658 */
-   void (*VertexAttrib2dARB)(GLuint index, GLdouble x, GLdouble y); /* 659 */
-   void (*VertexAttrib3sARB)(GLuint index, GLshort x, GLshort y, GLshort z); /* 660 */
-   void (*VertexAttrib3fARB)(GLuint index, GLfloat x, GLfloat y, GLfloat z); /* 661 */
-   void (*VertexAttrib3dARB)(GLuint index, GLdouble x, GLdouble y, GLdouble z); /* 662 */
-   void (*VertexAttrib4sARB)(GLuint index, GLshort x, GLshort y, GLshort z, GLshort w); /* 663 */
-   void (*VertexAttrib4fARB)(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w); /* 664 */
-   void (*VertexAttrib4dARB)(GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w); /* 665 */
-   void (*VertexAttrib4NubARB)(GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w); /* 666 */
-   void (*VertexAttrib1svARB)(GLuint index, const GLshort * v); /* 667 */
-   void (*VertexAttrib1fvARB)(GLuint index, const GLfloat * v); /* 668 */
-   void (*VertexAttrib1dvARB)(GLuint index, const GLdouble * v); /* 669 */
-   void (*VertexAttrib2svARB)(GLuint index, const GLshort * v); /* 670 */
-   void (*VertexAttrib2fvARB)(GLuint index, const GLfloat * v); /* 671 */
-   void (*VertexAttrib2dvARB)(GLuint index, const GLdouble * v); /* 672 */
-   void (*VertexAttrib3svARB)(GLuint index, const GLshort * v); /* 673 */
-   void (*VertexAttrib3fvARB)(GLuint index, const GLfloat * v); /* 674 */
-   void (*VertexAttrib3dvARB)(GLuint index, const GLdouble * v); /* 675 */
-   void (*VertexAttrib4bvARB)(GLuint index, const GLbyte * v); /* 676 */
-   void (*VertexAttrib4svARB)(GLuint index, const GLshort * v); /* 677 */
-   void (*VertexAttrib4ivARB)(GLuint index, const GLint * v); /* 678 */
-   void (*VertexAttrib4ubvARB)(GLuint index, const GLubyte * v); /* 679 */
-   void (*VertexAttrib4usvARB)(GLuint index, const GLushort * v); /* 680 */
-   void (*VertexAttrib4uivARB)(GLuint index, const GLuint * v); /* 681 */
-   void (*VertexAttrib4fvARB)(GLuint index, const GLfloat * v); /* 682 */
-   void (*VertexAttrib4dvARB)(GLuint index, const GLdouble * v); /* 683 */
-   void (*VertexAttrib4NbvARB)(GLuint index, const GLbyte * v); /* 684 */
-   void (*VertexAttrib4NsvARB)(GLuint index, const GLshort * v); /* 685 */
-   void (*VertexAttrib4NivARB)(GLuint index, const GLint * v); /* 686 */
-   void (*VertexAttrib4NubvARB)(GLuint index, const GLubyte * v); /* 687 */
-   void (*VertexAttrib4NusvARB)(GLuint index, const GLushort * v); /* 688 */
-   void (*VertexAttrib4NuivARB)(GLuint index, const GLuint * v); /* 689 */
-   void (*VertexAttribPointerARB)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer); /* 690 */
-   void (*EnableVertexAttribArrayARB)(GLuint index); /* 691 */
-   void (*DisableVertexAttribArrayARB)(GLuint index); /* 692 */
-   void (*ProgramStringARB)(GLenum target, GLenum format, GLsizei len, const GLvoid * string); /* 693 */
-   void (*BindProgramARB)(GLenum target, GLuint program); /* 694 */
-   void (*DeleteProgramsARB)(GLsizei n, const GLuint * programs); /* 695 */
-   void (*GenProgramsARB)(GLsizei n, GLuint * programs); /* 696 */
-   void (*ProgramEnvParameter4dARB)(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w); /* 697 */
-   void (*ProgramEnvParameter4dvARB)(GLenum target, GLuint index, const GLdouble * params); /* 698 */
-   void (*ProgramEnvParameter4fARB)(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w); /* 699 */
-   void (*ProgramEnvParameter4fvARB)(GLenum target, GLuint index, const GLfloat * params); /* 700 */
-   void (*ProgramLocalParameter4dARB)(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w); /* 701 */
-   void (*ProgramLocalParameter4dvARB)(GLenum target, GLuint index, const GLdouble * params); /* 702 */
-   void (*ProgramLocalParameter4fARB)(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w); /* 703 */
-   void (*ProgramLocalParameter4fvARB)(GLenum target, GLuint index, const GLfloat * params); /* 704 */
-   void (*GetProgramEnvParameterdvARB)(GLenum target, GLuint index, GLdouble * params); /* 705 */
-   void (*GetProgramEnvParameterfvARB)(GLenum target, GLuint index, GLfloat * params); /* 706 */
-   void (*GetProgramLocalParameterdvARB)(GLenum target, GLuint index, GLdouble * params); /* 707 */
-   void (*GetProgramLocalParameterfvARB)(GLenum target, GLuint index, GLfloat * params); /* 708 */
-   void (*GetProgramivARB)(GLenum target, GLenum pname, GLint * params); /* 709 */
-   void (*GetProgramStringARB)(GLenum target, GLenum pname, GLvoid * string); /* 710 */
-   void (*GetVertexAttribdvARB)(GLuint index, GLenum pname, GLdouble * params); /* 711 */
-   void (*GetVertexAttribfvARB)(GLuint index, GLenum pname, GLfloat * params); /* 712 */
-   void (*GetVertexAttribivARB)(GLuint index, GLenum pname, GLint * params); /* 713 */
-   void (*GetVertexAttribPointervARB)(GLuint index, GLenum pname, GLvoid ** params); /* 714 */
-   GLboolean (*IsProgramARB)(GLuint program); /* 715 */
-   void (*ProgramNamedParameter4fNV)(GLuint id, GLsizei len, const GLubyte * name, GLfloat x, GLfloat y, GLfloat z, GLfloat w); /* 716 */
-   void (*ProgramNamedParameter4dNV)(GLuint id, GLsizei len, const GLubyte * name, GLdouble x, GLdouble y, GLdouble z, GLdouble w); /* 717 */
-   void (*ProgramNamedParameter4fvNV)(GLuint id, GLsizei len, const GLubyte * name, const GLfloat * v); /* 718 */
-   void (*ProgramNamedParameter4dvNV)(GLuint id, GLsizei len, const GLubyte * name, const GLdouble * v); /* 719 */
-   void (*GetProgramNamedParameterfvNV)(GLuint id, GLsizei len, const GLubyte * name, GLfloat * params); /* 720 */
-   void (*GetProgramNamedParameterdvNV)(GLuint id, GLsizei len, const GLubyte * name, GLdouble * params); /* 721 */
-   void (*BindBufferARB)(GLenum target, GLuint buffer); /* 722 */
-   void (*DeleteBuffersARB)(GLsizei n, const GLuint * buffer); /* 723 */
-   void (*GenBuffersARB)(GLsizei n, GLuint * buffer); /* 724 */
-   GLboolean (*IsBufferARB)(GLuint buffer); /* 725 */
-   void (*BufferDataARB)(GLenum target, GLsizeiptrARB size, const GLvoid * data, GLenum usage); /* 726 */
-   void (*BufferSubDataARB)(GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid * data); /* 727 */
-   void (*GetBufferSubDataARB)(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data); /* 728 */
-   void (*MapBufferARB)(GLenum target, GLenum access); /* 729 */
-   GLboolean (*UnmapBufferARB)(GLenum target); /* 730 */
-   void (*GetBufferParameterivARB)(GLenum target, GLenum pname, GLint * params); /* 731 */
-   void (*GetBufferPointervARB)(GLenum target, GLenum pname, GLvoid ** params); /* 732 */
+   void (*VertexAttrib4bvARB)(GLuint index, const GLbyte * v); /* 654 */
+   void (*VertexAttrib4ivARB)(GLuint index, const GLint * v); /* 655 */
+   void (*VertexAttrib4ubvARB)(GLuint index, const GLubyte * v); /* 656 */
+   void (*VertexAttrib4usvARB)(GLuint index, const GLushort * v); /* 657 */
+   void (*VertexAttrib4uivARB)(GLuint index, const GLuint * v); /* 658 */
+   void (*VertexAttrib4NbvARB)(GLuint index, const GLbyte * v); /* 659 */
+   void (*VertexAttrib4NsvARB)(GLuint index, const GLshort * v); /* 660 */
+   void (*VertexAttrib4NivARB)(GLuint index, const GLint * v); /* 661 */
+   void (*VertexAttrib4NusvARB)(GLuint index, const GLushort * v); /* 662 */
+   void (*VertexAttrib4NuivARB)(GLuint index, const GLuint * v); /* 663 */
+   void (*VertexAttribPointerARB)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer); /* 664 */
+   void (*EnableVertexAttribArrayARB)(GLuint index); /* 665 */
+   void (*DisableVertexAttribArrayARB)(GLuint index); /* 666 */
+   void (*ProgramStringARB)(GLenum target, GLenum format, GLsizei len, const GLvoid * string); /* 667 */
+   void (*ProgramEnvParameter4dARB)(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w); /* 668 */
+   void (*ProgramEnvParameter4dvARB)(GLenum target, GLuint index, const GLdouble * params); /* 669 */
+   void (*ProgramEnvParameter4fARB)(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w); /* 670 */
+   void (*ProgramEnvParameter4fvARB)(GLenum target, GLuint index, const GLfloat * params); /* 671 */
+   void (*ProgramLocalParameter4dARB)(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w); /* 672 */
+   void (*ProgramLocalParameter4dvARB)(GLenum target, GLuint index, const GLdouble * params); /* 673 */
+   void (*ProgramLocalParameter4fARB)(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w); /* 674 */
+   void (*ProgramLocalParameter4fvARB)(GLenum target, GLuint index, const GLfloat * params); /* 675 */
+   void (*GetProgramEnvParameterdvARB)(GLenum target, GLuint index, GLdouble * params); /* 676 */
+   void (*GetProgramEnvParameterfvARB)(GLenum target, GLuint index, GLfloat * params); /* 677 */
+   void (*GetProgramLocalParameterdvARB)(GLenum target, GLuint index, GLdouble * params); /* 678 */
+   void (*GetProgramLocalParameterfvARB)(GLenum target, GLuint index, GLfloat * params); /* 679 */
+   void (*GetProgramivARB)(GLenum target, GLenum pname, GLint * params); /* 680 */
+   void (*GetProgramStringARB)(GLenum target, GLenum pname, GLvoid * string); /* 681 */
+   void (*ProgramNamedParameter4fNV)(GLuint id, GLsizei len, const GLubyte * name, GLfloat x, GLfloat y, GLfloat z, GLfloat w); /* 682 */
+   void (*ProgramNamedParameter4dNV)(GLuint id, GLsizei len, const GLubyte * name, GLdouble x, GLdouble y, GLdouble z, GLdouble w); /* 683 */
+   void (*ProgramNamedParameter4fvNV)(GLuint id, GLsizei len, const GLubyte * name, const GLfloat * v); /* 684 */
+   void (*ProgramNamedParameter4dvNV)(GLuint id, GLsizei len, const GLubyte * name, const GLdouble * v); /* 685 */
+   void (*GetProgramNamedParameterfvNV)(GLuint id, GLsizei len, const GLubyte * name, GLfloat * params); /* 686 */
+   void (*GetProgramNamedParameterdvNV)(GLuint id, GLsizei len, const GLubyte * name, GLdouble * params); /* 687 */
+   void (*BindBufferARB)(GLenum target, GLuint buffer); /* 688 */
+   void (*BufferDataARB)(GLenum target, GLsizeiptrARB size, const GLvoid * data, GLenum usage); /* 689 */
+   void (*BufferSubDataARB)(GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid * data); /* 690 */
+   void (*DeleteBuffersARB)(GLsizei n, const GLuint * buffer); /* 691 */
+   void (*GenBuffersARB)(GLsizei n, GLuint * buffer); /* 692 */
+   void (*GetBufferParameterivARB)(GLenum target, GLenum pname, GLint * params); /* 693 */
+   void (*GetBufferPointervARB)(GLenum target, GLenum pname, GLvoid ** params); /* 694 */
+   void (*GetBufferSubDataARB)(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data); /* 695 */
+   GLboolean (*IsBufferARB)(GLuint buffer); /* 696 */
+   void (*MapBufferARB)(GLenum target, GLenum access); /* 697 */
+   GLboolean (*UnmapBufferARB)(GLenum target); /* 698 */
+   void (*DepthBoundsEXT)(GLclampd zmin, GLclampd zmax); /* 699 */
 };
 
 #endif

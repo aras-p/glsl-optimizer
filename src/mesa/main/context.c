@@ -1081,6 +1081,9 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Depth.Func = GL_LESS;
    ctx->Depth.Mask = GL_TRUE;
    ctx->Depth.OcclusionTest = GL_FALSE;
+   ctx->Depth.BoundsTest = GL_FALSE;
+   ctx->Depth.BoundsMin = 0.0F;
+   ctx->Depth.BoundsMax = 1.0F;
 
    /* Evaluators group */
    ctx->Eval.Map1Color4 = GL_FALSE;

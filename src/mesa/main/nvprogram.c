@@ -274,7 +274,7 @@ _mesa_BindProgramNV(GLenum target, GLuint id)
 /**
  * Delete a list of programs.
  * \note Not compiled into display lists.
- * \note Called from the GL API dispatcher.
+ * \note Called by both glDeleteProgramsNV and glDeleteProgramsARB.
  */
 void
 _mesa_DeleteProgramsNV(GLsizei n, const GLuint *ids)
@@ -356,7 +356,7 @@ _mesa_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
 /**
  * Generate a list of new program identifiers.
  * \note Not compiled into display lists.
- * \note Called from the GL API dispatcher.
+ * \note Called by both glGenProgramsNV and glGenProgramsARB.
  */
 void
 _mesa_GenProgramsNV(GLsizei n, GLuint *ids)
@@ -803,7 +803,7 @@ _mesa_GetVertexAttribPointervNV(GLuint index, GLenum pname, GLvoid **pointer)
 /**
  * Determine if id names a program.
  * \note Not compiled into display lists.
- * \note Called from the GL API dispatcher.
+ * \note Called from both glIsProgramNV and glIsProgramARB.
  * \param id is the program identifier
  * \return GL_TRUE if id is a program, else GL_FALSE.
  */

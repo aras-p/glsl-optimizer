@@ -4048,48 +4048,6 @@ GL_PREFIX(SamplePatternEXT):
 	JMP(GL_OFFSET(_gloffset_SamplePatternSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DeleteFencesNV))
-GL_PREFIX(DeleteFencesNV):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_DeleteFencesNV))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GenFencesNV))
-GL_PREFIX(GenFencesNV):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_GenFencesNV))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IsFenceNV))
-GL_PREFIX(IsFenceNV):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_IsFenceNV))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TestFenceNV))
-GL_PREFIX(TestFenceNV):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_TestFenceNV))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetFenceivNV))
-GL_PREFIX(GetFenceivNV):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_GetFenceivNV))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FinishFenceNV))
-GL_PREFIX(FinishFenceNV):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_FinishFenceNV))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SetFenceNV))
-GL_PREFIX(SetFenceNV):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_SetFenceNV))
-
-ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(WindowPos2dARB))
 GL_PREFIX(WindowPos2dARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
@@ -4858,136 +4816,178 @@ GL_PREFIX(ActiveStencilFaceEXT):
 	JMP(GL_OFFSET(_gloffset_ActiveStencilFaceEXT))
 
 ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(DeleteFencesNV))
+GL_PREFIX(DeleteFencesNV):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_DeleteFencesNV))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GenFencesNV))
+GL_PREFIX(GenFencesNV):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GenFencesNV))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(IsFenceNV))
+GL_PREFIX(IsFenceNV):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_IsFenceNV))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(TestFenceNV))
+GL_PREFIX(TestFenceNV):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_TestFenceNV))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetFenceivNV))
+GL_PREFIX(GetFenceivNV):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GetFenceivNV))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(FinishFenceNV))
+GL_PREFIX(FinishFenceNV):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_FinishFenceNV))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SetFenceNV))
+GL_PREFIX(SetFenceNV):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_SetFenceNV))
+
+ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib1sARB))
 GL_PREFIX(VertexAttrib1sARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib1sARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib1sNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib1fARB))
 GL_PREFIX(VertexAttrib1fARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib1fARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib1fNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib1dARB))
 GL_PREFIX(VertexAttrib1dARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib1dARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib1dNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib2sARB))
 GL_PREFIX(VertexAttrib2sARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib2sARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib2sNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib2fARB))
 GL_PREFIX(VertexAttrib2fARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib2fARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib2fNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib2dARB))
 GL_PREFIX(VertexAttrib2dARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib2dARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib2dNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib3sARB))
 GL_PREFIX(VertexAttrib3sARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib3sARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib3sNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib3fARB))
 GL_PREFIX(VertexAttrib3fARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib3fARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib3fNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib3dARB))
 GL_PREFIX(VertexAttrib3dARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib3dARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib3dNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib4sARB))
 GL_PREFIX(VertexAttrib4sARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib4sARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib4sNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib4fARB))
 GL_PREFIX(VertexAttrib4fARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib4fARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib4fNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib4dARB))
 GL_PREFIX(VertexAttrib4dARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib4dARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib4dNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib4NubARB))
 GL_PREFIX(VertexAttrib4NubARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib4NubARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib4ubNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib1svARB))
 GL_PREFIX(VertexAttrib1svARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib1svARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib1svNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib1fvARB))
 GL_PREFIX(VertexAttrib1fvARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib1fvARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib1fvNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib1dvARB))
 GL_PREFIX(VertexAttrib1dvARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib1dvARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib1dvNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib2svARB))
 GL_PREFIX(VertexAttrib2svARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib2svARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib2svNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib2fvARB))
 GL_PREFIX(VertexAttrib2fvARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib2fvARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib2fvNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib2dvARB))
 GL_PREFIX(VertexAttrib2dvARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib2dvARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib2dvNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib3svARB))
 GL_PREFIX(VertexAttrib3svARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib3svARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib3svNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib3fvARB))
 GL_PREFIX(VertexAttrib3fvARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib3fvARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib3fvNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib3dvARB))
 GL_PREFIX(VertexAttrib3dvARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib3dvARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib3dvNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib4bvARB))
@@ -4999,7 +4999,7 @@ ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib4svARB))
 GL_PREFIX(VertexAttrib4svARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib4svARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib4svNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib4ivARB))
@@ -5029,13 +5029,13 @@ ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib4fvARB))
 GL_PREFIX(VertexAttrib4fvARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib4fvARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib4fvNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib4dvARB))
 GL_PREFIX(VertexAttrib4dvARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib4dvARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib4dvNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib4NbvARB))
@@ -5059,7 +5059,7 @@ ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib4NubvARB))
 GL_PREFIX(VertexAttrib4NubvARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_VertexAttrib4NubvARB))
+	JMP(GL_OFFSET(_gloffset_VertexAttrib4ubvNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexAttrib4NusvARB))
@@ -5101,19 +5101,25 @@ ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(BindProgramARB))
 GL_PREFIX(BindProgramARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_BindProgramARB))
+	JMP(GL_OFFSET(_gloffset_BindProgramNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(DeleteProgramsARB))
 GL_PREFIX(DeleteProgramsARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_DeleteProgramsARB))
+	JMP(GL_OFFSET(_gloffset_DeleteProgramsNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(GenProgramsARB))
 GL_PREFIX(GenProgramsARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_GenProgramsARB))
+	JMP(GL_OFFSET(_gloffset_GenProgramsNV))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(IsProgramARB))
+GL_PREFIX(IsProgramARB):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_IsProgramNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(ProgramEnvParameter4dARB))
@@ -5203,31 +5209,25 @@ ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(GetVertexAttribdvARB))
 GL_PREFIX(GetVertexAttribdvARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_GetVertexAttribdvARB))
+	JMP(GL_OFFSET(_gloffset_GetVertexAttribdvNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(GetVertexAttribfvARB))
 GL_PREFIX(GetVertexAttribfvARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_GetVertexAttribfvARB))
+	JMP(GL_OFFSET(_gloffset_GetVertexAttribfvNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(GetVertexAttribivARB))
 GL_PREFIX(GetVertexAttribivARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_GetVertexAttribivARB))
+	JMP(GL_OFFSET(_gloffset_GetVertexAttribivNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(GetVertexAttribPointervARB))
 GL_PREFIX(GetVertexAttribPointervARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_GetVertexAttribPointervARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IsProgramARB))
-GL_PREFIX(IsProgramARB):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_IsProgramARB))
+	JMP(GL_OFFSET(_gloffset_GetVertexAttribPointervNV))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(ProgramNamedParameter4fNV))
@@ -5272,24 +5272,6 @@ GL_PREFIX(BindBufferARB):
 	JMP(GL_OFFSET(_gloffset_BindBufferARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DeleteBuffersARB))
-GL_PREFIX(DeleteBuffersARB):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_DeleteBuffersARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GenBuffersARB))
-GL_PREFIX(GenBuffersARB):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_GenBuffersARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IsBufferARB))
-GL_PREFIX(IsBufferARB):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_IsBufferARB))
-
-ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(BufferDataARB))
 GL_PREFIX(BufferDataARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
@@ -5302,10 +5284,40 @@ GL_PREFIX(BufferSubDataARB):
 	JMP(GL_OFFSET(_gloffset_BufferSubDataARB))
 
 ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(DeleteBuffersARB))
+GL_PREFIX(DeleteBuffersARB):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_DeleteBuffersARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GenBuffersARB))
+GL_PREFIX(GenBuffersARB):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GenBuffersARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetBufferParameterivARB))
+GL_PREFIX(GetBufferParameterivARB):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GetBufferParameterivARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetBufferPointervARB))
+GL_PREFIX(GetBufferPointervARB):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GetBufferPointervARB))
+
+ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(GetBufferSubDataARB))
 GL_PREFIX(GetBufferSubDataARB):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetBufferSubDataARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(IsBufferARB))
+GL_PREFIX(IsBufferARB):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_IsBufferARB))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MapBufferARB))
@@ -5320,16 +5332,10 @@ GL_PREFIX(UnmapBufferARB):
 	JMP(GL_OFFSET(_gloffset_UnmapBufferARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetBufferParameterivARB))
-GL_PREFIX(GetBufferParameterivARB):
+GLOBL_FN(GL_PREFIX(DepthBoundsEXT))
+GL_PREFIX(DepthBoundsEXT):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_GetBufferParameterivARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetBufferPointervARB))
-GL_PREFIX(GetBufferPointervARB):
-	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
-	JMP(GL_OFFSET(_gloffset_GetBufferPointervARB))
+	JMP(GL_OFFSET(_gloffset_DepthBoundsEXT))
 
 
 #endif  /* __WIN32__ */
