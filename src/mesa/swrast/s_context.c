@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.31 2002/04/19 14:05:50 brianp Exp $ */
+/* $Id: s_context.c,v 1.32 2002/05/02 00:59:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,9 +38,6 @@
 #include "s_blend.h"
 #include "s_context.h"
 #include "s_texture.h"
-
-
-
 
 
 /*
@@ -145,6 +142,26 @@ _swrast_update_hint( GLcontext *ctx )
 			       swrast->AllowPixelFog));
 }
 
+
+/*
+ * Update the swrast->_AnyTextureCombine flag.
+ */
+static void
+_swrast_update_texture_env( GLcontext *ctx )
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GLuint i;
+   swrast->_AnyTextureCombine = GL_FALSE;
+   for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+      if (ctx->Texture.Unit[i].EnvMode == GL_COMBINE_EXT ||
+          ctx->Texture.Unit[i].EnvMode == GL_COMBINE4_NV) {
+         swrast->_AnyTextureCombine = GL_TRUE;
+         return;
+      }
+   }
+}
+
+
 #define _SWRAST_NEW_DERIVED (_SWRAST_NEW_RASTERMASK |	\
 			     _NEW_TEXTURE |		\
 			     _NEW_HINT |		\
@@ -182,6 +199,8 @@ _swrast_update_hint( GLcontext *ctx )
                            _DD_NEW_SEPARATE_SPECULAR)
 
 #define _SWRAST_NEW_TEXTURE_SAMPLE_FUNC _NEW_TEXTURE
+
+#define _SWRAST_NEW_TEXTURE_ENV_MODE _NEW_TEXTURE
 
 #define _SWRAST_NEW_BLEND_FUNC _NEW_COLOR
 
@@ -315,7 +334,6 @@ _swrast_invalidate_state( GLcontext *ctx, GLuint new_state )
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
 	 swrast->TextureSample[i] = _swrast_validate_texture_sample;
 
-
    if (ctx->Visual.rgbMode) {
       ASSERT(swrast->Driver.WriteRGBASpan);
       ASSERT(swrast->Driver.WriteRGBSpan);
@@ -334,9 +352,7 @@ _swrast_invalidate_state( GLcontext *ctx, GLuint new_state )
       ASSERT(swrast->Driver.ReadCI32Span);
       ASSERT(swrast->Driver.ReadCI32Pixels);
    }
-
 }
-
 
 
 void
@@ -344,8 +360,7 @@ _swrast_validate_derived( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   if (swrast->NewState)
-   {
+   if (swrast->NewState) {
       if (swrast->NewState & _SWRAST_NEW_RASTERMASK)
  	 _swrast_update_rasterflags( ctx );
 
@@ -354,6 +369,9 @@ _swrast_validate_derived( GLcontext *ctx )
 
       if (swrast->NewState & _NEW_HINT)
 	 _swrast_update_hint( ctx );
+
+      if (swrast->NewState & _SWRAST_NEW_TEXTURE_ENV_MODE)
+	 _swrast_update_texture_env( ctx );
 
       swrast->NewState = 0;
       swrast->StateChanges = 0;
@@ -490,7 +508,6 @@ _swrast_CreateContext( GLcontext *ctx )
    swrast->_IntegerAccumMode = GL_TRUE;
    swrast->_IntegerAccumScaler = 0.0;
 
-
    for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)
       swrast->TextureSample[i] = _swrast_validate_texture_sample;
 
@@ -499,7 +516,18 @@ _swrast_CreateContext( GLcontext *ctx )
      FREE(swrast);
      return GL_FALSE;
    }
-   
+
+   assert(ctx->Const.MaxTextureUnits > 0);
+   assert(ctx->Const.MaxTextureUnits <= MAX_TEXTURE_UNITS);
+
+   swrast->TexelBuffer = (GLchan *) MALLOC(ctx->Const.MaxTextureUnits *
+                                           MAX_WIDTH * 4 * sizeof(GLchan));
+   if (!swrast->TexelBuffer) {
+      FREE(swrast->span);
+      FREE(swrast);
+      return GL_FALSE;
+   }
+
    ctx->swrast_context = swrast;
 
    return GL_TRUE;
@@ -515,7 +543,7 @@ _swrast_DestroyContext( GLcontext *ctx )
    }
 
    FREE( swrast->span );
-   
+   FREE( swrast->TexelBuffer );
    FREE( swrast );
 
    ctx->swrast_context = 0;

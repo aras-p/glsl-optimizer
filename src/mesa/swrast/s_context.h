@@ -1,4 +1,4 @@
-/* $Id: s_context.h,v 1.17 2002/04/19 14:05:50 brianp Exp $ */
+/* $Id: s_context.h,v 1.18 2002/05/02 00:59:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -124,6 +124,7 @@ typedef struct
    GLfloat _MinMagThresh[MAX_TEXTURE_UNITS];
    GLfloat _backface_sign;
    GLboolean _PreferPixelFog;
+   GLboolean _AnyTextureCombine;
 
    /* Accum buffer temporaries.
     */
@@ -175,6 +176,11 @@ typedef struct
     */
    blend_func BlendFunc;
    TextureSampleFunc TextureSample[MAX_TEXTURE_UNITS];
+
+   /** Buffer for saving the sampled texture colors.
+    * Needed for GL_ARB_texture_env_crossbar implementation.
+    */
+   GLchan *TexelBuffer;
 
 } SWcontext;
 

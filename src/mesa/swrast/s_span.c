@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.41 2002/04/20 17:54:55 brianp Exp $ */
+/* $Id: s_span.c,v 1.42 2002/05/02 00:59:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1171,7 +1171,7 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span)
       /* Texturing without alpha is done after depth-testing which
        * gives a potential speed-up.
        */
-      _swrast_multitexture_fragments( ctx, span );
+      _swrast_texture_span( ctx, span );
 
       /* Do the alpha test */
       if (!_mesa_alpha_test(ctx, span)) {
@@ -1220,7 +1220,7 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span)
       if ((span->interpMask & SPAN_RGBA) && (span->arrayMask & SPAN_RGBA) == 0)
          interpolate_colors(ctx, span);
 
-      _swrast_multitexture_fragments( ctx, span );
+      _swrast_texture_span( ctx, span );
    }
 
    ASSERT(span->arrayMask & SPAN_RGBA);

@@ -1,4 +1,4 @@
-/* $Id: s_pixeltex.c,v 1.8 2002/04/12 15:39:59 brianp Exp $ */
+/* $Id: s_pixeltex.c,v 1.9 2002/05/02 00:59:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,47 +85,34 @@ pixeltexgen(GLcontext *ctx, GLuint n, const GLchan rgba[][4],
 
 
 /*
- * Used byglDraw/CopyPixels: the incoming image colors are treated
+ * Used by glDraw/CopyPixels: the incoming image colors are treated
  * as texture coordinates.  Use those coords to texture the image.
  * This is for GL_SGIS_pixel_texture / GL_SGIX_pixel_texture.
  */
 void
 _swrast_pixel_texture(GLcontext *ctx, struct sw_span *span)
 {
-   if (ctx->Texture._ReallyEnabled & ~TEXTURE0_ANY) {
-      /* multitexture! */
-      GLchan primary_rgba[MAX_WIDTH][4];
-      GLuint unit;
+   GLuint unit;
 
-      ASSERT(!(span->arrayMask & SPAN_TEXTURE));
-      span->arrayMask |= SPAN_TEXTURE;
+   ASSERT(!(span->arrayMask & SPAN_TEXTURE));
+   span->arrayMask |= SPAN_TEXTURE;
 
-      MEMCPY(primary_rgba, span->color.rgba, 4 * span->end * sizeof(GLchan));
-      
-      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
-         if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-            pixeltexgen(ctx, span->end,
-                        (const GLchan (*)[4]) span->color.rgba,
-                        span->texcoords[unit]);
-            _swrast_texture_fragments(ctx, unit, span,
-                                      (CONST GLchan (*)[4]) primary_rgba);
-         }
+   /* convert colors into texture coordinates */
+   pixeltexgen( ctx, span->end,
+                (const GLchan (*)[4]) span->color.rgba,
+                span->texcoords[0] );
+
+   /* copy the new texture units for all enabled units */
+   for (unit = 1; unit < ctx->Const.MaxTextureUnits; unit++) {
+      if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+         MEMCPY( span->texcoords[unit], span->texcoords[0],
+                 span->end * 4 * sizeof(GLfloat) );
       }
-      /* this is a work-around to be fixed by initializing again span */
-      span->arrayMask &= ~SPAN_TEXTURE;
    }
-   else {
-      /* single texture, unit 0 */
-      ASSERT(ctx->Texture._ReallyEnabled & TEXTURE0_ANY);
-      ASSERT(!(span->arrayMask & SPAN_TEXTURE));
-      span->arrayMask |= SPAN_TEXTURE;
 
-      pixeltexgen(ctx, span->end,
-                  (const GLchan (*)[4]) span->color.rgba,
-                  span->texcoords[0]);
-      _swrast_texture_fragments(ctx, 0, span,
-                                (CONST GLchan (*)[4]) span->color.rgba);
-      /* this is a work-around to be fixed */
-      span->arrayMask &= ~SPAN_TEXTURE;
-   }
+   /* apply texture mapping */
+   _swrast_texture_span( ctx, span );
+
+   /* this is a work-around to be fixed by initializing again span */
+   span->arrayMask &= ~SPAN_TEXTURE;
 }

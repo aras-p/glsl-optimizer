@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.61 2002/04/19 00:38:27 brianp Exp $ */
+/* $Id: s_texture.c,v 1.62 2002/05/02 00:59:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2394,6 +2394,9 @@ sample_depth_texture2(const GLcontext *ctx,
 #endif
 
 
+/**
+ * We use this function when a texture object is in an "incomplete" state.
+ */
 static void
 null_sample_func( GLcontext *ctx, GLuint texUnit,
 		  const struct gl_texture_object *tObj, GLuint n,
@@ -2404,12 +2407,7 @@ null_sample_func( GLcontext *ctx, GLuint texUnit,
 
 
 
-/**********************************************************************/
-/*                       Texture Sampling Setup                       */
-/**********************************************************************/
-
-
-/*
+/**
  * Setup the texture sampling function for this texture object.
  */
 void
@@ -2516,17 +2514,27 @@ _swrast_choose_texture_sample_func( GLcontext *ctx, GLuint texUnit,
 #define PROD(A,B)   ( (GLuint)(A) * ((GLuint)(B)+1) )
 #define S_PROD(A,B) ( (GLint)(A) * ((GLint)(B)+1) )
 
+
+/**
+ * Do texture application for GL_ARB/EXT_texture_env_combine.
+ * Input:
+ *     ctx - rendering context
+ *     textureUnit - the texture unit to apply
+ *     n - number of fragments to process (span width)
+ *     primary_rgba - incoming fragment color array
+ *     texelBuffer - pointer to texel colors for all texture units
+ * Input/Output:
+ *     rgba - incoming colors, which get modified here
+ */
 static INLINE void
-texture_combine(const GLcontext *ctx,
-                const struct gl_texture_unit *textureUnit,
-                GLuint n,
-                CONST GLchan (*primary_rgba)[4],
-                CONST GLchan (*texel)[4],
-                GLchan (*rgba)[4])
+texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
+                 CONST GLchan (*primary_rgba)[4],
+                 CONST GLchan *texelBuffer,
+                 GLchan (*rgba)[4] )
 {
+   const struct gl_texture_unit *textureUnit = &(ctx->Texture.Unit[unit]);
    const GLchan (*argRGB [3])[4];
    const GLchan (*argA [3])[4];
-   GLuint i, j;
    const GLuint RGBshift = textureUnit->CombineScaleShiftRGB;
    const GLuint Ashift   = textureUnit->CombineScaleShiftA;
 #if CHAN_TYPE == GL_FLOAT
@@ -2535,12 +2543,16 @@ texture_combine(const GLcontext *ctx,
 #else
    const GLint half = (CHAN_MAX + 1) / 2;
 #endif
+   GLuint i, j;
 
+   /* GLchan ccolor[3][4]; */
    DEFMNARRAY(GLchan, ccolor, 3, 3 * MAX_WIDTH, 4);  /* mac 32k limitation */
    CHECKARRAY(ccolor, return);  /* mac 32k limitation */
 
    ASSERT(ctx->Extensions.EXT_texture_env_combine ||
           ctx->Extensions.ARB_texture_env_combine);
+   ASSERT(SWRAST_CONTEXT(ctx)->_AnyTextureCombine);
+
 
    /*
    printf("modeRGB 0x%x  modeA 0x%x  srcRGB1 0x%x  srcA1 0x%x  srcRGB2 0x%x  srcA2 0x%x\n",
@@ -2556,9 +2568,13 @@ texture_combine(const GLcontext *ctx,
     * Do operand setup for up to 3 operands.  Loop over the terms.
     */
    for (j = 0; j < 3; j++) {
-      switch (textureUnit->CombineSourceA[j]) {
+      const GLenum srcA = textureUnit->CombineSourceA[j];
+      const GLenum srcRGB = textureUnit->CombineSourceRGB[j];
+
+      switch (srcA) {
          case GL_TEXTURE:
-            argA[j] = texel;
+            argA[j] = (const GLchan (*)[4])
+               (texelBuffer + unit * (n * 4 * sizeof(GLchan)));
             break;
          case GL_PRIMARY_COLOR_EXT:
             argA[j] = primary_rgba;
@@ -2576,12 +2592,21 @@ texture_combine(const GLcontext *ctx,
             }
             break;
          default:
-            _mesa_problem(ctx, "invalid combine source");
+            /* ARB_texture_env_crossbar source */
+            {
+               const GLuint srcUnit = srcA - GL_TEXTURE0_ARB;
+               ASSERT(srcUnit < ctx->Const.MaxTextureUnits);
+               if (!ctx->Texture.Unit[srcUnit]._ReallyEnabled)
+                  return;
+               argA[j] = (const GLchan (*)[4])
+                  (texelBuffer + srcUnit * (n * 4 * sizeof(GLchan)));
+            }
       }
 
-      switch (textureUnit->CombineSourceRGB[j]) {
+      switch (srcRGB) {
          case GL_TEXTURE:
-            argRGB[j] = texel;
+            argRGB[j] = (const GLchan (*)[4])
+               (texelBuffer + unit * (n * 4 * sizeof(GLchan)));
             break;
          case GL_PRIMARY_COLOR_EXT:
             argRGB[j] = primary_rgba;
@@ -2607,7 +2632,16 @@ texture_combine(const GLcontext *ctx,
             }
             break;
          default:
-            _mesa_problem(ctx, "invalid combine source");
+            /* ARB_texture_env_crossbar source */
+            {
+               const GLuint srcUnit = srcRGB - GL_TEXTURE0_ARB;
+               ASSERT(srcUnit < ctx->Const.MaxTextureUnits);
+               if (!ctx->Texture.Unit[srcUnit]._ReallyEnabled)
+                  return;
+               argRGB[j] = (const GLchan (*)[4])
+                  (texelBuffer + srcUnit * (n * 4 * sizeof(GLchan)));
+               printf("unit %d from unit %d\n", unit, srcUnit);
+            }
       }
 
       if (textureUnit->CombineOperandRGB[j] != GL_SRC_COLOR) {
@@ -2991,14 +3025,23 @@ texture_combine(const GLcontext *ctx,
 #undef PROD
 
 
+/**
+ * Implement NVIDIA's GL_NV_texture_env_combine4 extension when
+ * texUnit->EnvMode == GL_COMBINE4_NV.
+ */
+static INLINE void
+texture_combine4( const GLcontext *ctx, GLuint unit, GLuint n,
+                  CONST GLchan (*primary_rgba)[4],
+                  CONST GLchan *texelBuffer,
+                  GLchan (*rgba)[4] )
+{
+}
 
-/**********************************************************************/
-/*                      Texture Application                           */
-/**********************************************************************/
 
 
-/*
- * Combine incoming fragment color with texel color to produce output color.
+/**
+ * Apply a conventional OpenGL texture env mode (REPLACE, ADD, BLEND,
+ * MODULATE, or DECAL) to an array of fragments.
  * Input:  textureUnit - pointer to texture unit to apply
  *         format - base internal texture format
  *         n - number of fragments
@@ -3008,7 +3051,7 @@ texture_combine(const GLcontext *ctx,
  *                according to the texture environment mode.
  */
 static void
-apply_texture( const GLcontext *ctx,
+texture_apply( const GLcontext *ctx,
                const struct gl_texture_unit *texUnit,
                GLuint n,
                CONST GLchan primary_rgba[][4], CONST GLchan texel[][4],
@@ -3087,7 +3130,7 @@ apply_texture( const GLcontext *ctx,
 	       }
 	       break;
             default:
-               _mesa_problem(ctx, "Bad format (GL_REPLACE) in apply_texture");
+               _mesa_problem(ctx, "Bad format (GL_REPLACE) in texture_apply");
                return;
 	 }
 	 break;
@@ -3153,7 +3196,7 @@ apply_texture( const GLcontext *ctx,
 	       }
 	       break;
             default:
-               _mesa_problem(ctx, "Bad format (GL_MODULATE) in apply_texture");
+               _mesa_problem(ctx, "Bad format (GL_MODULATE) in texture_apply");
                return;
 	 }
 	 break;
@@ -3186,7 +3229,7 @@ apply_texture( const GLcontext *ctx,
 	       }
 	       break;
             default:
-               _mesa_problem(ctx, "Bad format (GL_DECAL) in apply_texture");
+               _mesa_problem(ctx, "Bad format (GL_DECAL) in texture_apply");
                return;
 	 }
 	 break;
@@ -3256,7 +3299,7 @@ apply_texture( const GLcontext *ctx,
 	       }
 	       break;
             default:
-               _mesa_problem(ctx, "Bad format (GL_BLEND) in apply_texture");
+               _mesa_problem(ctx, "Bad format (GL_BLEND) in texture_apply");
                return;
 	 }
 	 break;
@@ -3333,63 +3376,57 @@ apply_texture( const GLcontext *ctx,
                }
                break;
             default:
-               _mesa_problem(ctx, "Bad format (GL_ADD) in apply_texture");
+               _mesa_problem(ctx, "Bad format (GL_ADD) in texture_apply");
                return;
 	 }
 	 break;
 
-      case GL_COMBINE_EXT:
-         texture_combine(ctx, texUnit, n, primary_rgba, texel, rgba);
-         break;
-
       default:
-         _mesa_problem(ctx, "Bad env mode in apply_texture");
+         _mesa_problem(ctx, "Bad env mode in texture_apply");
          return;
    }
 }
 
 
 
-/*
- * Apply a unit of texture mapping to the incoming fragments.
+/**
+ * Apply texture mapping to a span of fragments.
  */
 void
-_swrast_texture_fragments( GLcontext *ctx, GLuint texUnit,
-			   struct sw_span *span,
-			   CONST GLchan primary_rgba[][4])
+_swrast_texture_span( GLcontext *ctx, struct sw_span *span )
 {
-   const GLuint mask = TEXTURE0_ANY << (texUnit * 4);
-   GLfloat (*texcoords)[4] = span->texcoords[texUnit];
-   GLfloat *lambda = span->lambda[texUnit];
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GLchan primary_rgba[MAX_WIDTH][4];
+   GLuint unit;
 
+   ASSERT(span->end < MAX_WIDTH);
+   ASSERT(span->arrayMask & SPAN_TEXTURE);
 
-   if (ctx->Texture._ReallyEnabled & mask) {
-      const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
+   /*
+    * Save copy of the incoming fragment colors (the GL_PRIMARY_COLOR)
+    */
+   if (swrast->_AnyTextureCombine)
+      MEMCPY(primary_rgba, span->color.rgba, 4 * span->end * sizeof(GLchan));
 
-      ASSERT(span->arrayMask & SPAN_TEXTURE);
-      
-      if (textureUnit->_Current) {   /* XXX need this? */
-         const struct gl_texture_object *curObj = textureUnit->_Current;
-         GLchan texel[MAX_WIDTH][4];
-         
+   /*
+    * Must do all texture sampling before combining in order to
+    * accomodate GL_ARB_texture_env_crossbar.
+    */
+   for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
+      if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+         const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+         const struct gl_texture_object *curObj = texUnit->_Current;
+         GLfloat *lambda = span->lambda[unit];
+         GLchan (*texels)[4] = (GLchan (*)[4])
+            (swrast->TexelBuffer + unit * (span->end * 4 * sizeof(GLchan)));
+
+         /* adjust texture lod (lambda) */
          if (span->arrayMask | SPAN_LAMBDA) {
-#if 0
-            float min, max;
-            int i;
-            min = max = lambda[0];
-            for (i = 1; i < span->end; i++) {
-               if (lambda[i] > max)
-                  max = lambda[i];
-               if (lambda[i] < min)
-                  min = lambda[i];
-            }
-            printf("min/max %g / %g\n", min, max);
-#endif
-            if (textureUnit->LodBias != 0.0F) {
+            if (texUnit->LodBias != 0.0F) {
                /* apply LOD bias, but don't clamp yet */
                GLuint i;
-               for (i=0;i<span->end;i++) {
-                  lambda[i] += textureUnit->LodBias;
+               for (i = 0; i < span->end; i++) {
+                  lambda[i] += texUnit->LodBias;
                }
             }
 
@@ -3398,60 +3435,50 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit,
                const GLfloat min = curObj->MinLod;
                const GLfloat max = curObj->MaxLod;
                GLuint i;
-               for (i=0;i<span->end;i++) {
+               for (i = 0; i < span->end; i++) {
                   GLfloat l = lambda[i];
                   lambda[i] = CLAMP(l, min, max);
                }
             }
          }
 
-         /* Sample the texture for n fragments */
-         SWRAST_CONTEXT(ctx)->TextureSample[texUnit]( ctx, texUnit,
-                                                      textureUnit->_Current,
-                                                      span->end, texcoords,
-                                                      lambda, texel );
-
-         apply_texture( ctx, textureUnit, span->end, primary_rgba,
-                        (const GLchan (*)[4]) texel, span->color.rgba );
+         /* Sample the texture (span->end fragments) */
+         swrast->TextureSample[unit]( ctx, unit, texUnit->_Current,
+                                      span->end, span->texcoords[unit],
+                                      lambda, texels );
       }
    }
-}
 
-
-/*
- * Apply multiple texture stages (or just unit 0) to the span.
- * At some point in the future we'll probably modify this so that
- * texels from any texture unit are available in any combiner unit.
- * That'll require doing all the texture sampling first, and then
- * all the application (blending) afterward.
- */
-void
-_swrast_multitexture_fragments( GLcontext *ctx, struct sw_span *span )
-{
-   if (ctx->Texture._ReallyEnabled & ~TEXTURE0_ANY) {
-      /* multitexture */
-      GLchan primary_rgba[MAX_WIDTH][4];
-      GLuint unit;
-
-      ASSERT(span->end < MAX_WIDTH);
-      ASSERT(span->arrayMask & SPAN_TEXTURE);
-
-      /* save copy of the span colors (the GL_PRIMARY_COLOR) */
-      MEMCPY(primary_rgba, span->color.rgba, 4 * span->end * sizeof(GLchan));
-
-      /* loop over texture units, modifying the span->color.rgba values */
-      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
-         if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-            _swrast_texture_fragments( ctx, unit, span,
-				       (CONST GLchan (*)[4]) primary_rgba);
+   /*
+    * OK, now apply the texture (aka texture combine/blend).
+    * We modify the span->color.rgba values.
+    */
+   for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
+      if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+         const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+         if (texUnit->EnvMode == GL_COMBINE_EXT) {
+            /* GL_ARB/EXT_texture_env_combine */
+            texture_combine( ctx, unit, span->end,
+                             (CONST GLchan (*)[4]) primary_rgba,
+                             swrast->TexelBuffer,
+                             span->color.rgba );
+         }
+         else if (texUnit->EnvMode == GL_COMBINE4_NV) {
+            /* GL_NV_texture_env_combine4 */
+            texture_combine4( ctx, unit, span->end,
+                              (CONST GLchan (*)[4]) primary_rgba,
+                              swrast->TexelBuffer,
+                              span->color.rgba );
+         }
+         else {
+            /* conventional texture blend */
+            const GLchan (*texels)[4] = (const GLchan (*)[4])
+               (swrast->TexelBuffer + unit *
+                (span->end * 4 * sizeof(GLchan)));
+            texture_apply( ctx, texUnit, span->end,
+                           (CONST GLchan (*)[4]) primary_rgba, texels,
+                           span->color.rgba );
          }
       }
-   }
-   else {
-      /* Just unit 0 enabled */
-      ASSERT(ctx->Texture._ReallyEnabled & TEXTURE0_ANY);
-
-      _swrast_texture_fragments( ctx, 0, span,
-				 (CONST GLchan (*)[4]) span->color.rgba);
    }
 }

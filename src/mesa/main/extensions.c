@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.72 2002/04/02 16:15:17 brianp Exp $ */
+/* $Id: extensions.c,v 1.73 2002/05/02 00:59:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -68,6 +68,7 @@ static struct {
    { OFF, "GL_ARB_texture_cube_map",           F(ARB_texture_cube_map) },
    { OFF, "GL_ARB_texture_env_add",            F(EXT_texture_env_add) },
    { OFF, "GL_ARB_texture_env_combine",        F(ARB_texture_env_combine) },
+   { OFF, "GL_ARB_texture_env_crossbar",       F(ARB_texture_env_crossbar) },
    { OFF, "GL_ARB_texture_env_dot3",           F(ARB_texture_env_dot3) },
    { OFF, "GL_ARB_texture_mirrored_repeat",    F(ARB_texture_mirrored_repeat)},
    { ON,  "GL_ARB_transpose_matrix",           0 },
@@ -150,6 +151,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_ARB_texture_cube_map",
       "GL_ARB_texture_env_add",
       "GL_ARB_texture_env_combine",
+      "GL_ARB_texture_env_crossbar",
       "GL_ARB_texture_env_dot3",
       "GL_ARB_texture_mirrored_repeat",
       "GL_EXT_blend_color",
