@@ -59,8 +59,11 @@ typedef struct r300_context *r300ContextPtr;
 #define WARN_ONCE(a)	{ \
 	static int warn##__LINE__=1; \
 	if(warn##__LINE__){ \
-		fprintf(stderr, "%s:%s line %d ***WARN_ONCE*** " a, \
+		fprintf(stderr, "*********************************WARN_ONCE*********************************\n"); \
+		fprintf(stderr, "File %s function %s line %d\n", \
 			__FILE__, __FUNCTION__, __LINE__); \
+		fprintf(stderr,  a);\
+		fprintf(stderr, "***************************************************************************\n"); \
 		warn##__LINE__=0;\
 		} \
 	}

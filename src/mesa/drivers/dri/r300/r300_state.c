@@ -1432,6 +1432,112 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	#endif
 }
 
+
+/* just a skeleton for now.. */
+void r300GenerateTexturePixelShader(r300ContextPtr r300)
+{
+	int i, mtu;
+	mtu = r300->radeon.glCtx->Const.MaxTextureUnits;
+	GLenum envMode;
+	
+	int tex_inst=0, alu_inst=0;
+	
+	for(i=0;i<mtu;i++){
+		/* No need to proliferate {} */
+		if(! (r300->state.render_inputs & (_TNL_BIT_TEX0<<i)))continue;
+		
+		envMode = r300->radeon.glCtx->Texture.Unit[i].EnvMode;
+		//fprintf(stderr, "envMode=%s\n", _mesa_lookup_enum_by_nr(envMode));
+		
+		/* Fetch textured pixel */
+		
+		r300->state.pixel_shader.program.tex.inst[tex_inst]=0x00018000;
+		tex_inst++;
+		
+		switch(r300->radeon.glCtx->Texture.Unit[i]._CurrentCombine->ModeRGB){
+			case GL_REPLACE:
+				WARN_ONCE("ModeA==GL_REPLACE is possibly broken.\n");
+				r300->state.pixel_shader.program.alu.inst[alu_inst].inst0=
+					EASY_PFS_INSTR0(MAD, SRC0C_XYZ, ONE, ZERO);
+			
+				r300->state.pixel_shader.program.alu.inst[alu_inst].inst1=
+					EASY_PFS_INSTR1(0, 0, 0 | PFS_FLAG_CONST, 0 | PFS_FLAG_CONST, NONE, ALL);
+				break;
+			case GL_MODULATE:
+				WARN_ONCE("ModeRGB==GL_MODULATE is possibly broken.\n");
+				r300->state.pixel_shader.program.alu.inst[alu_inst].inst0=
+					EASY_PFS_INSTR0(MAD, SRC0C_XYZ, SRC1C_XYZ, ZERO);
+				
+				r300->state.pixel_shader.program.alu.inst[alu_inst].inst1=
+					EASY_PFS_INSTR1(0, 0, 1, 0 | PFS_FLAG_CONST, NONE, ALL);
+				
+				break;
+			default:
+				fprintf(stderr, "ModeRGB=%s is not implemented yet !\n",
+					 _mesa_lookup_enum_by_nr(r300->radeon.glCtx->Texture.Unit[i]._CurrentCombine->ModeRGB));
+				/* PFS_NOP */
+				r300->state.pixel_shader.program.alu.inst[alu_inst].inst0=
+					EASY_PFS_INSTR0(MAD, SRC0C_XYZ, ONE, ZERO);
+			
+				r300->state.pixel_shader.program.alu.inst[alu_inst].inst1=
+					EASY_PFS_INSTR1(0, 0, 0 | PFS_FLAG_CONST, 0 | PFS_FLAG_CONST, NONE, ALL);
+			}
+		switch(r300->radeon.glCtx->Texture.Unit[i]._CurrentCombine->ModeA){
+			case GL_REPLACE:
+				WARN_ONCE("ModeA==GL_REPLACE is possibly broken.\n");
+				r300->state.pixel_shader.program.alu.inst[alu_inst].inst2=
+					EASY_PFS_INSTR2(MAD, SRC0A, ONE, ZERO);
+				
+				r300->state.pixel_shader.program.alu.inst[alu_inst].inst3=
+					EASY_PFS_INSTR3(0, 0, 0| PFS_FLAG_CONST, 0 | PFS_FLAG_CONST, OUTPUT);
+
+				#if 0
+				fprintf(stderr, "numArgsA=%d sourceA[0]=%s op=%d\n",
+					 r300->radeon.glCtx->Texture.Unit[i]._CurrentCombine->_NumArgsA,
+					 _mesa_lookup_enum_by_nr(r300->radeon.glCtx->Texture.Unit[i]._CurrentCombine->SourceA[0]),
+					 r300->radeon.glCtx->Texture.Unit[i]._CurrentCombine->OperandA[0]-GL_SRC_ALPHA);
+				#endif
+				break;				
+			case GL_MODULATE:
+				WARN_ONCE("ModeA==GL_MODULATE is possibly broken.\n");
+				
+				r300->state.pixel_shader.program.alu.inst[alu_inst].inst2=
+					EASY_PFS_INSTR2(MAD, SRC0A, SRC1A, ZERO);
+				
+				r300->state.pixel_shader.program.alu.inst[alu_inst].inst3=
+					EASY_PFS_INSTR3(0, 0, 1, 0 | PFS_FLAG_CONST, OUTPUT);
+				
+				break;
+			default:
+				fprintf(stderr, "ModeA=%s is not implemented yet !\n",
+					 _mesa_lookup_enum_by_nr(r300->radeon.glCtx->Texture.Unit[i]._CurrentCombine->ModeA));
+				/* PFS_NOP */
+				r300->state.pixel_shader.program.alu.inst[alu_inst].inst2=
+					EASY_PFS_INSTR2(MAD, SRC0A, ONE, ZERO);
+				
+				r300->state.pixel_shader.program.alu.inst[alu_inst].inst3=
+					EASY_PFS_INSTR3(0, 0, 0 | PFS_FLAG_CONST, 0 | PFS_FLAG_CONST, OUTPUT);
+
+			}
+					
+		alu_inst++;				
+		}
+		
+	r300->state.pixel_shader.program.tex.length=tex_inst;
+	r300->state.pixel_shader.program.tex_offset=0;
+	r300->state.pixel_shader.program.tex_end=tex_inst-1;
+
+	#if 0
+	/* saturate last instruction, like i915 driver does */
+	r300->state.pixel_shader.program.alu.inst[alu_inst-1].inst0|=R300_FPI0_OUTC_SAT;
+	r300->state.pixel_shader.program.alu.inst[alu_inst-1].inst2|=R300_FPI2_OUTA_SAT;
+	#endif
+		
+	r300->state.pixel_shader.program.alu.length=alu_inst;
+	r300->state.pixel_shader.program.alu_offset=0;
+	r300->state.pixel_shader.program.alu_end=alu_inst-1;
+}
+
 void r300SetupPixelShader(r300ContextPtr rmesa)
 {
 int i,k;
@@ -1441,6 +1547,7 @@ int i,k;
 	/* textures enabled ? */
 	if(rmesa->state.texture.tc_count>0){
 		rmesa->state.pixel_shader=SINGLE_TEXTURE_PIXEL_SHADER;
+		r300GenerateTexturePixelShader(rmesa);
 		} else {
 		rmesa->state.pixel_shader=FLAT_COLOR_PIXEL_SHADER;
 		}
