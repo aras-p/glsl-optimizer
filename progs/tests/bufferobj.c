@@ -46,8 +46,21 @@ static void DrawObject( const struct object *obj )
    glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->BufferID);
    glVertexPointer(3, GL_FLOAT, 0, (void *) obj->VertexOffset);
    glEnable(GL_VERTEX_ARRAY);
+
+   /* test push/pop attrib */
+   /* XXX this leads to a segfault with NVIDIA's 53.36 driver */
+#if 0
+   if (1)
+   {
+      glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
+      /*glVertexPointer(3, GL_FLOAT, 0, (void *) (obj->VertexOffset + 10000));*/
+      glBindBufferARB(GL_ARRAY_BUFFER_ARB, 999999);
+      glPopClientAttrib();
+   }
+#endif
    glColorPointer(3, GL_FLOAT, 0, (void *) obj->ColorOffset);
    glEnable(GL_COLOR_ARRAY);
+
    if (obj->NumElements > 0) {
       /* indexed arrays */
       glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, obj->ElementsBufferID);
@@ -303,6 +316,20 @@ static void Init( void )
       exit(0);
    }
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
+
+   /* Test buffer object deletion */
+   if (1) {
+      static GLubyte data[1000];
+      GLuint id = 999;
+      glBindBufferARB(GL_ARRAY_BUFFER_ARB, id);
+      glBufferDataARB(GL_ARRAY_BUFFER_ARB, 1000, data, GL_STATIC_DRAW_ARB);
+      glVertexPointer(3, GL_FLOAT, 0, (void *) 0);
+      glDeleteBuffersARB(1, &id);
+      /*assert(!glIsBufferARB(id));*/
+      glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+      glVertexPointer(3, GL_FLOAT, 0, (void *) 0);
+      /*assert(!glIsBufferARB(id));*/
+   }
 
    MakeObject1(Objects + 0);
    MakeObject2(Objects + 1);
