@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.56 2001/05/23 23:55:52 brianp Exp $
+$Id: VERSIONS,v 1.57 2001/05/24 14:49:14 brianp Exp $
 
 
 Mesa Version History
@@ -840,7 +840,7 @@ Mesa Version History
 	- OSMesaCreateContextExt() function
 	- GL_ARB_texture_env_add extension (same as GL_EXT_texture_env_add)
 	- GL_MAX_TEXTURE_UNITS_ARB now defaults to eight
-	- libOSMesa.so now created, contains the OSMesa driver interface
+	- new libOSMesa.so library, contains the OSMesa driver interface
 	- GL_EXT_fog_coord extension (Keith Whitwell)
 	- GL_EXT_secondary_color extension (Keith Whitwell)
 	- GL_ARB_texture_env_add extension (same as GL_EXT_texture_env_add)
@@ -856,6 +856,7 @@ Mesa Version History
 	- somewhat faster software texturing, fogging, depth testing
 	- all color-index conformance tests now pass (only 8bpp tested)
 	- SPARC assembly language TCL optimizations (David Miller)
+	- GL_SGIS_generate_mipmap extension
     Bug Fixes:
 	- fbiRev and tmuRev were unitialized when using Glide3
 	- fixed a few color index mode conformance failures; all pass now
