@@ -339,6 +339,25 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
 }
 
 
+/**
+ * Return the default number of bits for the Z buffer.
+ * If defined, use the MESA_GLX_DEPTH_BITS env var value.
+ * Otherwise, use the DEFAULT_SOFTWARE_DEPTH_BITS constant.
+ * XXX probably do the same thing for stencil, accum, etc.
+ */
+static GLint
+default_depth_bits(void)
+{
+   int zBits;
+   const char *zEnv = _mesa_getenv("MESA_GLX_DEPTH_BITS");
+   if (zEnv)
+      zBits = _mesa_atoi(zEnv);
+   else
+      zBits = DEFAULT_SOFTWARE_DEPTH_BITS;
+   return zBits;
+}
+
+
 
 /*
  * Create a GLX visual from a regular XVisualInfo.
@@ -352,6 +371,7 @@ static XMesaVisual
 create_glx_visual( Display *dpy, XVisualInfo *visinfo )
 {
    int vislevel;
+   GLint zBits = default_depth_bits();
 
    vislevel = level_of_visual( dpy, visinfo );
    if (vislevel) {
@@ -376,7 +396,7 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
                                  GL_FALSE,  /* alpha */
                                  GL_TRUE,   /* double */
                                  GL_FALSE,  /* stereo */
-                                 DEFAULT_SOFTWARE_DEPTH_BITS,
+                                 zBits,
                                  8 * sizeof(GLstencil),
                                  0 * sizeof(GLaccum), /* r */
                                  0 * sizeof(GLaccum), /* g */
@@ -395,7 +415,7 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
                                  GL_FALSE,  /* alpha */
                                  GL_TRUE,   /* double */
                                  GL_FALSE,  /* stereo */
-                                 DEFAULT_SOFTWARE_DEPTH_BITS,
+                                 zBits,
                                  8 * sizeof(GLstencil),
                                  8 * sizeof(GLaccum), /* r */
                                  8 * sizeof(GLaccum), /* g */
@@ -1131,7 +1151,7 @@ static XMesaVisual choose_visual( Display *dpy, int screen, const int *list,
          double_flag = GL_TRUE;
          if (vis->depth > 8)
             rgb_flag = GL_TRUE;
-         depth_size = DEFAULT_SOFTWARE_DEPTH_BITS;
+         depth_size = default_depth_bits();
          stencil_size = STENCIL_BITS;
          /* XXX accum??? */
       }
@@ -1182,8 +1202,9 @@ static XMesaVisual choose_visual( Display *dpy, int screen, const int *list,
          depth_size = 31;   /* 32 causes int overflow problems */
       else if (depth_size > 16)
          depth_size = 24;
-      else if (depth_size > 0)
-         depth_size = DEFAULT_SOFTWARE_DEPTH_BITS; /*16*/
+      else if (depth_size > 0) {
+         depth_size = default_depth_bits();
+      }
 
       /* we only support one size of stencil and accum buffers. */
       if (stencil_size > 0)
