@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.71 2001/02/06 21:42:48 brianp Exp $ */
+/* $Id: teximage.c,v 1.72 2001/02/06 23:35:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -464,11 +464,15 @@ make_null_texture(GLint width, GLint height, GLint depth, GLenum format)
 
 
 /*
+ * Reset the fields of a gl_texture_image struct to zero.
  * This is called when a proxy texture test fails, we set all the
  * image members (except DriverData) to zero.
+ * It's also used in glTexImage[123]D as a safeguard to be sure all
+ * required fields get initialized properly by the Driver.TexImage[123]D
+ * functions.
  */
 static void
-clear_proxy_teximage(struct gl_texture_image *img)
+clear_teximage_fields(struct gl_texture_image *img)
 {
    ASSERT(img);
    img->Format = 0;
@@ -493,6 +497,7 @@ clear_proxy_teximage(struct gl_texture_image *img)
    img->Data = NULL;
    img->IsCompressed = 0;
    img->CompressedSize = 0;
+   img->FetchTexel = NULL;
 }
 
 
@@ -1167,6 +1172,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
          FREE(texImage->Data);
          texImage->Data = NULL;
       }
+      clear_teximage_fields(texImage); /* not really needed, but helpful */
 
       if (ctx->NewState & _NEW_PIXEL)
          gl_update_state(ctx);
@@ -1188,6 +1194,11 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
          }
       }
 
+      /* one of these has to be non-zero! */
+      ASSERT(texImage->RedBits || texImage->IndexBits || texImage->AlphaBits ||
+             texImage->LuminanceBits || texImage->IntensityBits);
+      ASSERT(texImage->FetchTexel);
+
       /* state update */
       texObj->Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
@@ -1206,7 +1217,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       if (error) {
          /* if error, clear all proxy texture image parameters */
          if (level >= 0 && level < ctx->Const.MaxTextureLevels) {
-            clear_proxy_teximage(ctx->Texture.Proxy1D->Image[level]);
+            clear_teximage_fields(ctx->Texture.Proxy1D->Image[level]);
          }
       }
    }
@@ -1261,6 +1272,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
          FREE(texImage->Data);
          texImage->Data = NULL;
       }
+      clear_teximage_fields(texImage); /* not really needed, but helpful */
 
       if (ctx->NewState & _NEW_PIXEL)
          gl_update_state(ctx);
@@ -1282,6 +1294,11 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
          }
       }
 
+      /* one of these has to be non-zero! */
+      ASSERT(texImage->RedBits || texImage->IndexBits || texImage->AlphaBits ||
+             texImage->LuminanceBits || texImage->IntensityBits);
+      ASSERT(texImage->FetchTexel);
+
       /* state update */
       texObj->Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
@@ -1300,7 +1317,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       if (error) {
          /* if error, clear all proxy texture image parameters */
          if (level >= 0 && level < ctx->Const.MaxTextureLevels) {
-            clear_proxy_teximage(ctx->Texture.Proxy2D->Image[level]);
+            clear_teximage_fields(ctx->Texture.Proxy2D->Image[level]);
          }
       }
    }
@@ -1350,6 +1367,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
          FREE(texImage->Data);
          texImage->Data = NULL;
       }
+      clear_teximage_fields(texImage); /* not really needed, but helpful */
 
       if (ctx->NewState & _NEW_PIXEL)
          gl_update_state(ctx);
@@ -1372,6 +1390,11 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
          }
       }
 
+      /* one of these has to be non-zero! */
+      ASSERT(texImage->RedBits || texImage->IndexBits || texImage->AlphaBits ||
+             texImage->LuminanceBits || texImage->IntensityBits);
+      ASSERT(texImage->FetchTexel);
+
       /* state update */
       texObj->Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
@@ -1388,8 +1411,8 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       }
       if (error) {
          /* if error, clear all proxy texture image parameters */
-         if (level>=0 && level<ctx->Const.MaxTextureLevels) {
-            clear_proxy_teximage(ctx->Texture.Proxy3D->Image[level]);
+         if (level >= 0 && level < ctx->Const.MaxTextureLevels) {
+            clear_teximage_fields(ctx->Texture.Proxy3D->Image[level]);
          }
       }
    }
@@ -1881,8 +1904,8 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
       }
       if (error) {
          /* if error, clear all proxy texture image parameters */
-         if (level>=0 && level<ctx->Const.MaxTextureLevels) {
-            clear_proxy_teximage(ctx->Texture.Proxy1D->Image[level]);
+         if (level >= 0 && level < ctx->Const.MaxTextureLevels) {
+            clear_teximage_fields(ctx->Texture.Proxy1D->Image[level]);
          }
       }
    }
@@ -1971,8 +1994,8 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
       }
       if (error) {
          /* if error, clear all proxy texture image parameters */
-         if (level>=0 && level<ctx->Const.MaxTextureLevels) {
-            clear_proxy_teximage(ctx->Texture.Proxy2D->Image[level]);
+         if (level >= 0 && level < ctx->Const.MaxTextureLevels) {
+            clear_teximage_fields(ctx->Texture.Proxy2D->Image[level]);
          }
       }
    }
@@ -2059,8 +2082,8 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
       }
       if (error) {
          /* if error, clear all proxy texture image parameters */
-         if (level>=0 && level<ctx->Const.MaxTextureLevels) {
-            clear_proxy_teximage(ctx->Texture.Proxy3D->Image[level]);
+         if (level >= 0 && level < ctx->Const.MaxTextureLevels) {
+            clear_teximage_fields(ctx->Texture.Proxy3D->Image[level]);
          }
       }
    }
