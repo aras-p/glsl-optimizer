@@ -5075,7 +5075,7 @@ static void GLAPIENTRY save_MultiTexCoord4fv( GLenum target, const GLfloat *v )
 }
 
 
-static void enum_error() 
+static void enum_error( void )
 {
    GET_CURRENT_CONTEXT( ctx );
    _mesa_error( ctx, GL_INVALID_ENUM, "VertexAttribfNV" );
