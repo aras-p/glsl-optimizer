@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.15 2001/03/19 02:25:36 keithw Exp $ */
+/* $Id: svgamesa.c,v 1.16 2001/09/23 16:11:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -430,6 +430,7 @@ SVGAMesaContext SVGAMesaCreateContext( GLboolean doubleBuffer )
                                        (void *) ctx, GL_TRUE );
 
    _mesa_enable_sw_extensions(ctx->gl_ctx);
+   _mesa_enable_1_3_extensions(ctx->gl_ctx);
 
    ctx->gl_buffer = _mesa_create_framebuffer( ctx->gl_vis,
                                               ctx->gl_vis->depthBits > 0,

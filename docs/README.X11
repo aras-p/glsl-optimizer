@@ -1,5 +1,5 @@
 
-                       Mesa 3.5.1 Unix/X11 Information
+                       Mesa 4.0 Unix/X11 Information
 
 
 
@@ -25,7 +25,7 @@ There are two ways to compile Mesa on Unix/X11 systems:
 
 
 The top-level makefile will execute the makefiles in a number of sub-
-directories.  When finished, the Mesa libraries will be in the Mesa-3.5/lib/
+directories.  When finished, the Mesa libraries will be in the Mesa-4.0/lib/
 directory.  A few GLUT demos in the demos/ directory should be ready to run.
 
 If you also downloaded and unpacked the demos there should be executables
@@ -323,4 +323,4 @@ Summary of X-related environment variables:
 
 
 ----------------------------------------------------------------------
-$Id: README.X11,v 3.7 2001/08/28 22:54:47 brianp Exp $
+$Id: README.X11,v 3.8 2001/09/23 16:10:02 brianp Exp $

@@ -1,10 +1,10 @@
-/* $Id: fakeglx.c,v 1.57 2001/09/14 02:43:04 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.58 2001/09/23 16:11:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.0
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,7 +57,7 @@
 
 /* This indicates the client-side GLX API and GLX encoder version. */
 #define CLIENT_MAJOR_VERSION 1
-#define CLIENT_MINOR_VERSION 2  /* don't have 1.3's pbuffers, etc yet */
+#define CLIENT_MINOR_VERSION 4  /* but don't have 1.3's pbuffers, etc yet */
 
 /* This indicates the server-side GLX decoder version.
  * GLX 1.4 indicates OpenGL 1.3 support
@@ -66,7 +66,7 @@
 #define SERVER_MINOR_VERSION 4
 
 /* This is appended onto the glXGetClient/ServerString version strings. */
-#define MESA_GLX_VERSION "Mesa 3.5.1"
+#define MESA_GLX_VERSION "Mesa 4.0"
 
 /* Who implemented this GLX? */
 #define VENDOR "Brian Paul"
@@ -1698,7 +1698,7 @@ Fake_glXGetClientString( Display *dpy, int name )
 
 /* XXX Move this when done.
  * Create an XMesaBuffer as a Pbuffer.
- * New in Mesa 3.5.1 but untested.
+ * New in Mesa 4.0 but untested.
  */
 extern XMesaBuffer XMesaCreatePBuffer( XMesaVisual v, XMesaColormap cmap,
                                     unsigned int width, unsigned int height );
