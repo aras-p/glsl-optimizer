@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.30 2002/10/05 03:02:34 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.31 2002/10/05 18:27:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -163,6 +163,8 @@ struct xmesa_buffer {
 				/* frontbuffer, backpixmap or XIMAGE (None) */
 
    XMesaColormap cmap;		/* the X colormap */
+
+   unsigned long selectedEvents;/* for pbuffers only */
 
    GLint db_state;		/* 0 = single buffered */
 				/* BACK_PIXMAP = use Pixmap for back buffer */

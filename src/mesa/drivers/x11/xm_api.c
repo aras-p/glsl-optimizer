@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.42 2002/10/05 03:02:34 brianp Exp $ */
+/* $Id: xm_api.c,v 1.43 2002/10/05 18:27:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -628,9 +628,7 @@ void xmesa_alloc_back_buffer( XMesaBuffer b )
 	 b->backimage = XMesaCreateImage(b->xm_visual->BitsPerPixel,
 					 b->width, b->height, NULL);
 #else
-      if (b->shm==0
-	  || alloc_shm_back_buffer(b)==GL_FALSE
-	  ) {
+      if (b->shm==0 || alloc_shm_back_buffer(b)==GL_FALSE) {
 	 /* Allocate a regular XImage for the back buffer. */
 	 b->backimage = XCreateImage( b->xm_visual->display,
                                       b->xm_visual->visinfo->visual,
@@ -1932,9 +1930,10 @@ XMesaBuffer XMesaCreatePBuffer( XMesaVisual v, XMesaColormap cmap,
                                 unsigned int width, unsigned int height )
 {
    int client = 0;
+   XMesaWindow root;
+   XMesaDrawable drawable;  /* X Pixmap Drawable */
    XMesaBuffer b = alloc_xmesa_buffer();
    if (!b) {
-      printf("return NULL 1\n");
       return NULL;
    }
 
@@ -1942,6 +1941,10 @@ XMesaBuffer XMesaCreatePBuffer( XMesaVisual v, XMesaColormap cmap,
    b->type = PBUFFER;
    b->display = v->display;
    b->cmap = cmap;
+
+   /* allocate pixmap for front buffer */
+   root = RootWindow( v->display, v->visinfo->screen );
+   drawable = XCreatePixmap( v->display, root, width, height, v->visinfo->depth );
 
    /* determine back buffer implementation */
    if (v->mesa_visual.doubleBufferMode) {
@@ -1966,9 +1969,8 @@ XMesaBuffer XMesaCreatePBuffer( XMesaVisual v, XMesaColormap cmap,
                                 v->mesa_visual.alphaBits > 0 );
 
    if (!initialize_visual_and_buffer(client, v, b, v->mesa_visual.rgbMode,
-				     0, cmap)) {
+				     drawable, cmap)) {
       free_xmesa_buffer(client, b);
-      printf("return NULL\n");
       return NULL;
    }
 
