@@ -41,14 +41,12 @@ CORE_SOURCES =accum.c \
 	glapi.c \
 	glthread.c \
 	hash.c \
-	highpc.c \
 	hint.c \
 	histogram.c \
 	image.c \
 	imports.c \
 	light.c \
 	lines.c \
-	lowpc.c \
 	matrix.c \
 	mem.c \
 	mmath.c \
@@ -183,14 +181,12 @@ get.obj,\
 glapi.obj,\
 glthread.obj,\
 hash.obj,\
-highpc.obj,\
 hint.obj,\
 histogram.obj,\
 image.obj,\
 imports.obj,\
 light.obj,\
 lines.obj,\
-lowpc.obj,\
 matrix.obj,\
 mem.obj
 
