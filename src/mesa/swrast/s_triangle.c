@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.37 2001/09/13 22:12:54 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.38 2001/09/19 20:30:44 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -708,8 +708,8 @@ fast_persp_span(GLcontext *ctx, struct triangle_span *span,
 	for (i = 0; i < span->count; i++) {				\
            GLdouble invQ = tex_coord[2] ?				\
                                  (1.0 / tex_coord[2]) : 1.0;            \
-           GLfloat s_tmp = tex_coord[0] * invQ;				\
-           GLfloat t_tmp = tex_coord[1] * invQ;				\
+           GLfloat s_tmp = (GLfloat) (tex_coord[0] * invQ);		\
+           GLfloat t_tmp = (GLfloat) (tex_coord[1] * invQ);		\
            GLint s = IFLOOR(s_tmp) & info->smask;	        	\
            GLint t = IFLOOR(t_tmp) & info->tmask;	        	\
            GLint pos = (t << info->twidth_log2) + s;			\
@@ -733,8 +733,8 @@ fast_persp_span(GLcontext *ctx, struct triangle_span *span,
 	for (i = 0; i < span->count; i++) {				\
            GLdouble invQ = tex_coord[2] ?				\
                                  (1.0 / tex_coord[2]) : 1.0;            \
-           GLfloat s_tmp = tex_coord[0] * invQ;				\
-           GLfloat t_tmp = tex_coord[1] * invQ;				\
+           GLfloat s_tmp = (GLfloat) (tex_coord[0] * invQ);		\
+           GLfloat t_tmp = (GLfloat) (tex_coord[1] * invQ);		\
            GLfixed s_fix = FloatToFixed(s_tmp) - FIXED_HALF;		\
            GLfixed t_fix = FloatToFixed(t_tmp) - FIXED_HALF;        	\
            GLint s = FixedToInt(FixedFloor(s_fix)) & info->smask;	\
@@ -1144,11 +1144,12 @@ rasterize_span(GLcontext *ctx, const struct triangle_span *span)
                   GLfloat q = span->tex[u][3];
                   GLuint i;
                   for (i = 0; i < span->count; i++) {
-                     const GLfloat invQ = (q == 0.0F) ? 1.0 : (1.0F / q);
+                     const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
                      msTex[u][i] = s * invQ;
                      mtTex[u][i] = t * invQ;
                      mrTex[u][i] = r * invQ;
-                     mLambda[u][i] = log(span->rho[u] * invQ * invQ) * 1.442695F * 0.5F;
+                     mLambda[u][i] = (GLfloat) 
+			 (log(span->rho[u] * invQ * invQ) * 1.442695F * 0.5F);
                      s += span->texStep[u][0];
                      t += span->texStep[u][1];
                      r += span->texStep[u][2];
@@ -1168,7 +1169,7 @@ rasterize_span(GLcontext *ctx, const struct triangle_span *span)
                   GLfloat q = span->tex[u][3];
                   GLuint i;
                   for (i = 0; i < span->count; i++) {
-                     const GLfloat invQ = (q == 0.0F) ? 1.0 : (1.0F / q);
+                     const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
                      msTex[u][i] = s * invQ;
                      mtTex[u][i] = t * invQ;
                      mrTex[u][i] = r * invQ;
@@ -1191,11 +1192,12 @@ rasterize_span(GLcontext *ctx, const struct triangle_span *span)
             GLfloat q = span->tex[0][3];
             GLuint i;
             for (i = 0; i < span->count; i++) {
-               const GLfloat invQ = (q == 0.0F) ? 1.0 : (1.0F / q);
+               const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
                sTex[i] = s * invQ;
                tTex[i] = t * invQ;
                rTex[i] = r * invQ;
-               lambda[i] = log(span->rho[0] * invQ * invQ) * 1.442695F * 0.5F;
+               lambda[i] = (GLfloat)
+		   (log(span->rho[0] * invQ * invQ) * 1.442695F * 0.5F);
                s += span->texStep[0][0];
                t += span->texStep[0][1];
                r += span->texStep[0][2];
@@ -1210,7 +1212,7 @@ rasterize_span(GLcontext *ctx, const struct triangle_span *span)
             GLfloat q = span->tex[0][3];
             GLuint i;
             for (i = 0; i < span->count; i++) {
-               const GLfloat invQ = (q == 0.0F) ? 1.0 : (1.0F / q);
+               const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
                sTex[i] = s * invQ;
                tTex[i] = t * invQ;
                rTex[i] = r * invQ;
@@ -1351,9 +1353,9 @@ static void general_textured_triangle( GLcontext *ctx,
       span.green += span.greenStep;					\
       span.blue += span.blueStep;					\
       span.alpha += span.alphaStep;					\
-      sSpan[i] = span.tex[0][0] * invQ;					\
-      tSpan[i] = span.tex[0][1] * invQ;					\
-      uSpan[i] = span.tex[0][2] * invQ;					\
+      sSpan[i] = (GLfloat) (span.tex[0][0] * invQ);			\
+      tSpan[i] = (GLfloat) (span.tex[0][1] * invQ);			\
+      uSpan[i] = (GLfloat) (span.tex[0][2] * invQ);			\
       span.tex[0][0] += span.texStep[0][0];				\
       span.tex[0][1] += span.texStep[0][1];				\
       span.tex[0][2] += span.texStep[0][2];				\

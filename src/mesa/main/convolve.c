@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.24 2001/05/09 22:24:22 brianp Exp $ */
+/* $Id: convolve.c,v 1.25 2001/09/19 20:30:44 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -450,10 +450,20 @@ _mesa_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
          }
          break;
       case GL_CONVOLUTION_FILTER_SCALE:
-         COPY_4V(ctx->Pixel.ConvolutionFilterScale[c], params);
+	 /* COPY_4V(ctx->Pixel.ConvolutionFilterScale[c], params); */
+	 /* need cast to prevent compiler warnings */  
+	 ctx->Pixel.ConvolutionFilterScale[c][0] = (GLfloat) params[0]; 
+	 ctx->Pixel.ConvolutionFilterScale[c][1] = (GLfloat) params[1]; 
+	 ctx->Pixel.ConvolutionFilterScale[c][2] = (GLfloat) params[2]; 
+	 ctx->Pixel.ConvolutionFilterScale[c][3] = (GLfloat) params[3]; 
          break;
       case GL_CONVOLUTION_FILTER_BIAS:
-         COPY_4V(ctx->Pixel.ConvolutionFilterBias[c], params);
+	 /* COPY_4V(ctx->Pixel.ConvolutionFilterBias[c], params); */
+	 /* need cast to prevent compiler warnings */  
+	 ctx->Pixel.ConvolutionFilterBias[c][0] = (GLfloat) params[0]; 
+	 ctx->Pixel.ConvolutionFilterBias[c][1] = (GLfloat) params[1]; 
+	 ctx->Pixel.ConvolutionFilterBias[c][2] = (GLfloat) params[2]; 
+	 ctx->Pixel.ConvolutionFilterBias[c][3] = (GLfloat) params[3]; 
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteriv(pname)");

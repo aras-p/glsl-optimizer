@@ -1,4 +1,4 @@
-/* $Id: s_aatriangle.c,v 1.18 2001/05/29 15:23:15 brianp Exp $ */
+/* $Id: s_aatriangle.c,v 1.19 2001/09/19 20:30:44 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -347,7 +347,7 @@ compute_lambda(const GLfloat sPlane[4], const GLfloat tPlane[4],
    if (rho2 == 0.0F)
       return 0.0;
    else
-      return log(rho2) * 1.442695 * 0.5;       /* 1.442695 = 1/log(2) */
+      return (GLfloat) (log(rho2) * 1.442695 * 0.5); /* 1.442695 = 1/log(2) */
 }
 
 

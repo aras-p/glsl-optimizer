@@ -1,4 +1,4 @@
-/* $Id: s_aalinetemp.h,v 1.13 2001/09/18 23:06:14 kschultz Exp $ */
+/* $Id: s_aalinetemp.h,v 1.14 2001/09/19 20:30:44 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -212,10 +212,10 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
 #ifdef DO_INDEX
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
       compute_plane(line.x0, line.y0, line.x1, line.y1,
-                    v0->index, v1->index, line.iPlane);
+                    (GLfloat) v0->index, (GLfloat) v1->index, line.iPlane);
    }
    else {
-      constant_plane(v1->index, line.iPlane);
+      constant_plane((GLfloat) v1->index, line.iPlane);
    }
 #endif
 #ifdef DO_TEX

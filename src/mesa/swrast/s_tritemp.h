@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.26 2001/09/13 22:12:54 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.27 2001/09/19 20:30:44 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -375,24 +375,32 @@
 #  ifdef INTERP_ALPHA
          GLfloat eMaj_da, eBot_da;
 #  endif
-         eMaj_dr = (GLint) vMax->color[RCOMP] - (GLint) vMin->color[RCOMP];
-         eBot_dr = (GLint) vMid->color[RCOMP] - (GLint) vMin->color[RCOMP];
+         eMaj_dr = (GLfloat) ((GLint) vMax->color[RCOMP] - 
+			      (GLint) vMin->color[RCOMP]);
+         eBot_dr = (GLfloat) ((GLint) vMid->color[RCOMP] - 
+			      (GLint) vMin->color[RCOMP]);
          drdx = oneOverArea * (eMaj_dr * eBot.dy - eMaj.dy * eBot_dr);
          span.redStep = SignedFloatToFixed(drdx);
          drdy = oneOverArea * (eMaj.dx * eBot_dr - eMaj_dr * eBot.dx);
-         eMaj_dg = (GLint) vMax->color[GCOMP] - (GLint) vMin->color[GCOMP];
-         eBot_dg = (GLint) vMid->color[GCOMP] - (GLint) vMin->color[GCOMP];
+         eMaj_dg = (GLfloat) ((GLint) vMax->color[GCOMP] - 
+			      (GLint) vMin->color[GCOMP]);
+         eBot_dg = (GLfloat) ((GLint) vMid->color[GCOMP] - 
+			      (GLint) vMin->color[GCOMP]);
          dgdx = oneOverArea * (eMaj_dg * eBot.dy - eMaj.dy * eBot_dg);
          span.greenStep = SignedFloatToFixed(dgdx);
          dgdy = oneOverArea * (eMaj.dx * eBot_dg - eMaj_dg * eBot.dx);
-         eMaj_db = (GLint) vMax->color[BCOMP] - (GLint) vMin->color[BCOMP];
-         eBot_db = (GLint) vMid->color[BCOMP] - (GLint) vMin->color[BCOMP];
+         eMaj_db = (GLfloat) ((GLint) vMax->color[BCOMP] - 
+			      (GLint) vMin->color[BCOMP]);
+         eBot_db = (GLfloat) ((GLint) vMid->color[BCOMP] - 
+			      (GLint) vMin->color[BCOMP]);
          dbdx = oneOverArea * (eMaj_db * eBot.dy - eMaj.dy * eBot_db);
          span.blueStep = SignedFloatToFixed(dbdx);
          dbdy = oneOverArea * (eMaj.dx * eBot_db - eMaj_db * eBot.dx);
 #  ifdef INTERP_ALPHA
-         eMaj_da = (GLint) vMax->color[ACOMP] - (GLint) vMin->color[ACOMP];
-         eBot_da = (GLint) vMid->color[ACOMP] - (GLint) vMin->color[ACOMP];
+         eMaj_da = (GLfloat) ((GLint) vMax->color[ACOMP] - 
+			      (GLint) vMin->color[ACOMP]);
+         eBot_da = (GLfloat) ((GLint) vMid->color[ACOMP] - 
+			      (GLint) vMin->color[ACOMP]);
          dadx = oneOverArea * (eMaj_da * eBot.dy - eMaj.dy * eBot_da);
          span.alphaStep = SignedFloatToFixed(dadx);
          dady = oneOverArea * (eMaj.dx * eBot_da - eMaj_da * eBot.dx);
@@ -454,18 +462,24 @@
          GLfloat eMaj_dsr, eBot_dsr;
          GLfloat eMaj_dsg, eBot_dsg;
          GLfloat eMaj_dsb, eBot_dsb;
-         eMaj_dsr = (GLint) vMax->specular[RCOMP] - (GLint) vMin->specular[RCOMP];
-         eBot_dsr = (GLint) vMid->specular[RCOMP] - (GLint) vMin->specular[RCOMP];
+         eMaj_dsr = (GLfloat) ((GLint) vMax->specular[RCOMP] - 
+			       (GLint) vMin->specular[RCOMP]);
+         eBot_dsr = (GLfloat) ((GLint) vMid->specular[RCOMP] - 
+			       (GLint) vMin->specular[RCOMP]);
          dsrdx = oneOverArea * (eMaj_dsr * eBot.dy - eMaj.dy * eBot_dsr);
          span.specRedStep = SignedFloatToFixed(dsrdx);
          dsrdy = oneOverArea * (eMaj.dx * eBot_dsr - eMaj_dsr * eBot.dx);
-         eMaj_dsg = (GLint) vMax->specular[GCOMP] - (GLint) vMin->specular[GCOMP];
-         eBot_dsg = (GLint) vMid->specular[GCOMP] - (GLint) vMin->specular[GCOMP];
+         eMaj_dsg = (GLfloat) ((GLint) vMax->specular[GCOMP] - 
+			       (GLint) vMin->specular[GCOMP]);
+         eBot_dsg = (GLfloat) ((GLint) vMid->specular[GCOMP] - 
+			       (GLint) vMin->specular[GCOMP]);
          dsgdx = oneOverArea * (eMaj_dsg * eBot.dy - eMaj.dy * eBot_dsg);
          span.specGreenStep = SignedFloatToFixed(dsgdx);
          dsgdy = oneOverArea * (eMaj.dx * eBot_dsg - eMaj_dsg * eBot.dx);
-         eMaj_dsb = (GLint) vMax->specular[BCOMP] - (GLint) vMin->specular[BCOMP];
-         eBot_dsb = (GLint) vMid->specular[BCOMP] - (GLint) vMin->specular[BCOMP];
+         eMaj_dsb = (GLfloat) ((GLint) vMax->specular[BCOMP] - 
+			       (GLint) vMin->specular[BCOMP]);
+         eBot_dsb = (GLfloat) ((GLint) vMid->specular[BCOMP] - 
+			       (GLint) vMin->specular[BCOMP]);
          dsbdx = oneOverArea * (eMaj_dsb * eBot.dy - eMaj.dy * eBot_dsb);
          span.specBlueStep = SignedFloatToFixed(dsbdx);
          dsbdy = oneOverArea * (eMaj.dx * eBot_dsb - eMaj_dsb * eBot.dx);
@@ -511,8 +525,8 @@
       span.activeMask |= SPAN_INDEX;
       if (ctx->Light.ShadeModel == GL_SMOOTH) {
          GLfloat eMaj_di, eBot_di;
-         eMaj_di = (GLint) vMax->index - (GLint) vMin->index;
-         eBot_di = (GLint) vMid->index - (GLint) vMin->index;
+         eMaj_di = (GLfloat) ((GLint) vMax->index - (GLint) vMin->index);
+         eBot_di = (GLfloat) ((GLint) vMid->index - (GLint) vMin->index);
          didx = oneOverArea * (eMaj_di * eBot.dy - eMaj.dy * eBot_di);
          span.indexStep = SignedFloatToFixed(didx);
          didy = oneOverArea * (eMaj.dx * eBot_di - eMaj_di * eBot.dx);

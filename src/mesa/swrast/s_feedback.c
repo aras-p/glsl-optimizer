@@ -1,4 +1,4 @@
-/* $Id: s_feedback.c,v 1.8 2001/06/12 22:06:53 brianp Exp $ */
+/* $Id: s_feedback.c,v 1.9 2001/09/19 20:30:44 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -58,7 +58,7 @@ static void feedback_vertex( GLcontext *ctx,
    win[0] = v->win[0];
    win[1] = v->win[1];
    win[2] = v->win[2] / ctx->DepthMaxF;
-   win[3] = 1.0 / v->win[3];
+   win[3] = 1.0F / v->win[3];
 
    color[0] = CHAN_TO_FLOAT(pv->color[0]);
    color[1] = CHAN_TO_FLOAT(pv->color[1]);

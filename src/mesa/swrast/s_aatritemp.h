@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.20 2001/07/13 20:12:44 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.21 2001/09/19 20:30:44 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -184,11 +184,11 @@
 #endif
 #ifdef DO_INDEX
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
-      compute_plane(p0, p1, p2, v0->index,
-                    v1->index, v2->index, iPlane);
+      compute_plane(p0, p1, p2, (GLfloat) v0->index,
+                    (GLfloat) v1->index, (GLfloat) v2->index, iPlane);
    }
    else {
-      constant_plane(v2->index, iPlane);
+      constant_plane((GLfloat) v2->index, iPlane);
    }
 #endif
 #ifdef DO_SPEC

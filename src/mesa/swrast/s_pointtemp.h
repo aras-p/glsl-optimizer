@@ -1,4 +1,4 @@
-/* $Id: s_pointtemp.h,v 1.9 2001/07/19 16:12:03 brianp Exp $ */
+/* $Id: s_pointtemp.h,v 1.10 2001/09/19 20:30:44 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -122,7 +122,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #if FLAGS & SPRITE
    {
       SWcontext *swctx = SWRAST_CONTEXT(ctx);
-      const GLfloat radius = 0.5 * vert->pointSize;  /* XXX threshold, alpha */
+      const GLfloat radius = 0.5F * vert->pointSize; /* XXX threshold, alpha */
       SWvertex v0, v1, v2, v3;
       GLuint unit;
 
@@ -182,7 +182,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #if FLAGS & SMOOTH
       const GLfloat rmin = radius - 0.7071F;  /* 0.7071 = sqrt(2)/2 */
       const GLfloat rmax = radius + 0.7071F;
-      const GLfloat rmin2 = MAX2(0.0, rmin * rmin);
+      const GLfloat rmin2 = MAX2(0.0F, rmin * rmin);
       const GLfloat rmax2 = rmax * rmax;
       const GLfloat cscale = 1.0F / (rmax2 - rmin2);
       const GLint xmin = (GLint) (vert->win[0] - radius);

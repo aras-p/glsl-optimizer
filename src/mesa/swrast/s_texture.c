@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.38 2001/08/14 14:08:44 brianp Exp $ */
+/* $Id: s_texture.c,v 1.39 2001/09/19 20:30:44 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -68,7 +68,7 @@
       if (S <= 0.0F)							\
          U = 0.0F;							\
       else if (S >= 1.0F)						\
-         U = SIZE;							\
+         U = (GLfloat) SIZE;						\
       else								\
          U = S * SIZE;							\
       U -= 0.5F;							\
@@ -97,7 +97,7 @@
       if (S <= 0.0F)							\
          U = 0.0F;							\
       else if (S >= 1.0F)						\
-         U = SIZE;							\
+         U = (GLfloat) SIZE;						\
       else								\
          U = S * SIZE;							\
       U -= 0.5F;							\

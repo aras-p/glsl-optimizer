@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.33 2001/07/23 16:07:12 brianp Exp $ */
+/* $Id: texstore.c,v 1.34 2001/09/19 20:30:44 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1032,7 +1032,7 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          const GLchan (*rowA)[4] = (const GLchan (*)[4]) srcRowA;
          const GLchan (*rowB)[4] = (const GLchan (*)[4]) srcRowB;
          GLchan (*dst)[4] = (GLchan (*)[4]) dstRow;
-         for (i = j = 0, k = k0; i < dstWidth;
+         for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i][0] = (rowA[j][0] + rowA[k][0] +
                          rowB[j][0] + rowB[k][0]) / 4;
@@ -1051,7 +1051,7 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          const GLchan (*rowA)[3] = (const GLchan (*)[3]) srcRowA;
          const GLchan (*rowB)[3] = (const GLchan (*)[3]) srcRowB;
          GLchan (*dst)[3] = (GLchan (*)[3]) dstRow;
-         for (i = j = 0, k = k0; i < dstWidth;
+         for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i][0] = (rowA[j][0] + rowA[k][0] +
                          rowB[j][0] + rowB[k][0]) / 4;
@@ -1071,7 +1071,7 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          const GLchan *rowA = (const GLchan *) srcRowA;
          const GLchan *rowB = (const GLchan *) srcRowB;
          GLchan *dst = (GLchan *) dstRow;
-         for (i = j = 0, k = k0; i < dstWidth;
+         for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) / 4;
          }
@@ -1083,7 +1083,7 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          const GLchan (*rowA)[2] = (const GLchan (*)[2]) srcRowA;
          const GLchan (*rowB)[2] = (const GLchan (*)[2]) srcRowB;
          GLchan (*dst)[2] = (GLchan (*)[2]) dstRow;
-         for (i = j = 0, k = k0; i < dstWidth;
+         for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i][0] = (rowA[j][0] + rowA[k][0] +
                          rowB[j][0] + rowB[k][0]) / 4;
@@ -1098,7 +1098,7 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          const GLfloat *rowA = (const GLfloat *) srcRowA;
          const GLfloat *rowB = (const GLfloat *) srcRowB;
          GLfloat *dst = (GLfloat *) dstRow;
-         for (i = j = 0, k = k0; i < dstWidth;
+         for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) * 0.25F;
          }
@@ -1112,7 +1112,7 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          const GLubyte (*rowA)[4] = (const GLubyte (*)[4]) srcRowA;
          const GLubyte (*rowB)[4] = (const GLubyte (*)[4]) srcRowB;
          GLubyte (*dst)[4] = (GLubyte (*)[4]) dstRow;
-         for (i = j = 0, k = k0; i < dstWidth;
+         for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i][0] = (rowA[j][0] + rowA[k][0] +
                          rowB[j][0] + rowB[k][0]) / 4;
@@ -1131,7 +1131,7 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          const GLubyte (*rowA)[3] = (const GLubyte (*)[3]) srcRowA;
          const GLubyte (*rowB)[3] = (const GLubyte (*)[3]) srcRowB;
          GLubyte (*dst)[3] = (GLubyte (*)[3]) dstRow;
-         for (i = j = 0, k = k0; i < dstWidth;
+         for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i][0] = (rowA[j][0] + rowA[k][0] +
                          rowB[j][0] + rowB[k][0]) / 4;
@@ -1148,7 +1148,7 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          const GLushort *rowA = (const GLushort *) srcRowA;
          const GLushort *rowB = (const GLushort *) srcRowB;
          GLushort *dst = (GLushort *) dstRow;
-         for (i = j = 0, k = k0; i < dstWidth;
+         for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             const GLint rowAr0 = rowA[j] & 0x1f;
             const GLint rowAr1 = rowA[k] & 0x1f;
@@ -1175,7 +1175,7 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          const GLushort *rowA = (const GLushort *) srcRowA;
          const GLushort *rowB = (const GLushort *) srcRowB;
          GLushort *dst = (GLushort *) dstRow;
-         for (i = j = 0, k = k0; i < dstWidth;
+         for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             const GLint rowAr0 = rowA[j] & 0xf;
             const GLint rowAr1 = rowA[k] & 0xf;
@@ -1207,7 +1207,7 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          const GLushort *rowA = (const GLushort *) srcRowA;
          const GLushort *rowB = (const GLushort *) srcRowB;
          GLushort *dst = (GLushort *) dstRow;
-         for (i = j = 0, k = k0; i < dstWidth;
+         for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             const GLint rowAr0 = rowA[j] & 0x1f;
             const GLint rowAr1 = rowA[k] & 0x1f;
@@ -1239,7 +1239,7 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          const GLubyte (*rowA)[2] = (const GLubyte (*)[2]) srcRowA;
          const GLubyte (*rowB)[2] = (const GLubyte (*)[2]) srcRowB;
          GLubyte (*dst)[2] = (GLubyte (*)[2]) dstRow;
-         for (i = j = 0, k = k0; i < dstWidth;
+         for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i][0] = (rowA[j][0] + rowA[k][0] +
                          rowB[j][0] + rowB[k][0]) >> 2;
@@ -1254,7 +1254,7 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          const GLubyte *rowA = (const GLubyte *) srcRowA;
          const GLubyte *rowB = (const GLubyte *) srcRowB;
          GLubyte *dst = (GLubyte *) dstRow;
-         for (i = j = 0, k = k0; i < dstWidth;
+         for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             const GLint rowAr0 = rowA[j] & 0x3;
             const GLint rowAr1 = rowA[k] & 0x3;
@@ -1284,7 +1284,7 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          const GLubyte *rowA = (const GLubyte *) srcRowA;
          const GLubyte *rowB = (const GLubyte *) srcRowB;
          GLubyte *dst = (GLubyte *) dstRow;
-         for (i = j = 0, k = k0; i < dstWidth;
+         for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) >> 2;
          }
@@ -1615,7 +1615,7 @@ _mesa_generate_mipmap(GLcontext *ctx,
                                   GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,
                                   0 };
    const GLenum *targets;
-   GLuint level;
+   GLint level;
    GLint maxLevels = 0;
 
    ASSERT(texObj);

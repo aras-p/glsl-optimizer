@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.13 2001/06/18 23:55:18 brianp Exp $ */
+/* $Id: s_fog.c,v 1.14 2001/09/19 20:30:44 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,11 +56,11 @@ _mesa_z_to_fogfactor(GLcontext *ctx, GLfloat z)
       return CLAMP(f, 0.0F, 1.0F);
    case GL_EXP:
       d = ctx->Fog.Density;
-      f = exp(-d * z);
+      f = (GLfloat) exp(-d * z);
       return f;
    case GL_EXP2:
       d = ctx->Fog.Density;
-      f = exp(-(d * d * z * z));
+      f = (GLfloat) exp(-(d * d * z * z));
       return f;
    default:
       _mesa_problem(ctx, "Bad fog mode in make_fog_coord");
@@ -92,10 +92,10 @@ _mesa_fog_rgba_pixels( const GLcontext *ctx,
 
    for (i = 0; i < n; i++) {
       const GLfloat f = fog[i];
-      const GLfloat g = 1.0 - f;
-      rgba[i][RCOMP] = f * rgba[i][RCOMP] + g * rFog;
-      rgba[i][GCOMP] = f * rgba[i][GCOMP] + g * gFog;
-      rgba[i][BCOMP] = f * rgba[i][BCOMP] + g * bFog;
+      const GLfloat g = 1.0F - f;
+      rgba[i][RCOMP] = (GLchan) (f * rgba[i][RCOMP] + g * rFog);
+      rgba[i][GCOMP] = (GLchan) (f * rgba[i][GCOMP] + g * gFog);
+      rgba[i][BCOMP] = (GLchan) (f * rgba[i][BCOMP] + g * bFog);
    }
 }
 
@@ -116,7 +116,7 @@ _mesa_fog_ci_pixels( const GLcontext *ctx,
    GLuint i;
 
    for (i = 0; i < n; i++) {
-      const GLfloat f = CLAMP(fog[i], 0.0, 1.0);
+      const GLfloat f = CLAMP(fog[i], 0.0F, 1.0F);
       index[i] = (GLuint) ((GLfloat) index[i] + (1.0F - f) * idx);
    }
 }
@@ -210,7 +210,7 @@ compute_fog_factors_from_z( const GLcontext *ctx,
                GLfloat eyez = (ndcz - p14) / p10;
                if (eyez < 0.0)
                   eyez = -eyez;
-               fogFact[i] = exp( -ctx->Fog.Density * eyez );
+               fogFact[i] = (GLfloat) exp( -ctx->Fog.Density * eyez );
             }
          }
          else {
@@ -220,7 +220,7 @@ compute_fog_factors_from_z( const GLcontext *ctx,
                GLfloat eyez = p14 / (ndcz + p10);
                if (eyez < 0.0)
                   eyez = -eyez;
-               fogFact[i] = exp( -ctx->Fog.Density * eyez );
+               fogFact[i] = (GLfloat) exp( -ctx->Fog.Density * eyez );
             }
          }
 	 break;
@@ -237,7 +237,7 @@ compute_fog_factors_from_z( const GLcontext *ctx,
                   if (tmp < FLT_MIN_10_EXP)
                      tmp = FLT_MIN_10_EXP;
 #endif
-                  fogFact[i] = exp( tmp );
+                  fogFact[i] = (GLfloat) exp( tmp );
                }
             }
             else {
@@ -251,7 +251,7 @@ compute_fog_factors_from_z( const GLcontext *ctx,
                   if (tmp < FLT_MIN_10_EXP)
                      tmp = FLT_MIN_10_EXP;
 #endif
-                  fogFact[i] = exp( tmp );
+                  fogFact[i] = (GLfloat) exp( tmp );
                }
             }
          }

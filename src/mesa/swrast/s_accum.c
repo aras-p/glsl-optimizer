@@ -1,4 +1,4 @@
-/* $Id: s_accum.c,v 1.12 2001/07/13 20:07:37 brianp Exp $ */
+/* $Id: s_accum.c,v 1.13 2001/09/19 20:30:44 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -108,7 +108,7 @@ static void rescale_accum( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLuint n = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height * 4;
-   const GLfloat s = swrast->_IntegerAccumScaler * (32767.0 / CHAN_MAXF);
+   const GLfloat s = swrast->_IntegerAccumScaler * (32767.0F / CHAN_MAXF);
    GLaccum *accum = ctx->DrawBuffer->Accum;
    GLuint i;
 
