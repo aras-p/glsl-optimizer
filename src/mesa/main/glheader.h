@@ -121,7 +121,9 @@
 /* non-Windows compilation */
 #  define GLAPI extern
 #  define GLAPIENTRY
-#  define GLAPIENTRYP *
+#  ifndef GLAPIENTRYP
+#    define GLAPIENTRYP *
+#  endif
 #  define GLCALLBACK
 #  define GLCALLBACKP *
 #  define GLCALLBACKPCAST *
