@@ -1,4 +1,4 @@
-/* $Id: osmesa.h,v 1.6 2000/09/08 16:41:38 brianp Exp $ */
+/* $Id: osmesa.h,v 1.7 2001/06/27 13:56:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,6 +77,7 @@ extern "C" {
 #define OSMESA_ARGB		0x2
 #define OSMESA_RGB		GL_RGB
 #define OSMESA_BGR		0x4
+#define OSMESA_RGB_565		0x5
 
 
 /*

@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.58 2001/06/15 13:41:12 brianp Exp $ */
+/* $Id: osmesa.c,v 1.59 2001/06/27 13:56:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -251,6 +251,22 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       rgbmode = GL_TRUE;
       swalpha = GL_TRUE;
    }
+   else if (format==OSMESA_RGB_565) {
+      indexBits = 0;
+      redBits = 5;
+      greenBits = 6;
+      blueBits = 5;
+      alphaBits = 0;
+      rshift = 11;
+      gshift = 5;
+      bshift = 0;
+      ashift = 0;
+      rind = 0; /* not used */
+      gind = 0;
+      bind = 0;
+      rgbmode = GL_TRUE;
+      swalpha = GL_FALSE;
+   }
    else {
       return NULL;
    }
@@ -377,6 +393,10 @@ static void compute_row_addresses( OSMesaContext ctx )
       /* RGB mode */
       bytesPerPixel = 3 * sizeof(GLchan);
    }
+   else if (ctx->format == OSMESA_RGB_565) {
+      /* 5/6/5 RGB pixel in 16 bits */
+      bytesPerPixel = 2;
+   }
    else {
       /* RGBA mode */
       bytesPerPixel = 4 * sizeof(GLchan);
@@ -421,7 +441,7 @@ static void compute_row_addresses( OSMesaContext ctx )
  * Input:  ctx - the rendering context
  *         buffer - the image buffer memory
  *         type - data type for pixel components, only GL_UNSIGNED_BYTE
- *                supported now
+ *                and GL_UNSIGNED_SHORT_5_6_5 supported now.
  *         width, height - size of image buffer in pixels, at least 1
  * Return:  GL_TRUE if success, GL_FALSE if error because of invalid ctx,
  *          invalid buffer address, type!=GL_UNSIGNED_BYTE, width<1, height<1,
@@ -431,9 +451,16 @@ GLboolean GLAPIENTRY
 OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
                    GLsizei width, GLsizei height )
 {
-   if (!ctx || !buffer || type != CHAN_TYPE ||
+   if (!ctx || !buffer ||
        width < 1 || height < 1 ||
        width > MAX_WIDTH || height > MAX_HEIGHT) {
+      return GL_FALSE;
+   }
+
+   if (ctx->format == OSMESA_RGB_565 && type != GL_UNSIGNED_SHORT_5_6_5) {
+      return GL_FALSE;
+   }
+   else if (type != CHAN_TYPE) {
       return GL_FALSE;
    }
 
@@ -619,6 +646,11 @@ do {				\
    (DST)[2] = R;		\
 } while (0)
 
+#define PACK_RGB_565(DST, R, G, B)					\
+do {									\
+   (DST) = (((R) << 8) & 0xf800) | (((G) << 3) & 0x7e0) | ((B) >> 3);\
+} while (0)
+
 
 #define UNPACK_RED(P)      ( (P)[osmesa->rInd] )
 #define UNPACK_GREEN(P)    ( (P)[osmesa->gInd] )
@@ -627,6 +659,7 @@ do {				\
 
 
 #define PIXELADDR1(X,Y)  (osmesa->rowaddr[Y] + (X))
+#define PIXELADDR2(X,Y)  (osmesa->rowaddr[Y] + 2 * (X))
 #define PIXELADDR3(X,Y)  (osmesa->rowaddr[Y] + 3 * (X))
 #define PIXELADDR4(X,Y)  (osmesa->rowaddr[Y] + 4 * (X))
 
@@ -741,6 +774,34 @@ static void clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	       }
 	    }
 	 }
+         else if (osmesa->format == OSMESA_RGB_565) {
+	    const GLchan r = ctx->Color.ClearColor[0];
+	    const GLchan g = ctx->Color.ClearColor[1];
+	    const GLchan b = ctx->Color.ClearColor[2];
+            GLushort clearPixel;
+            PACK_RGB_565(clearPixel, r, g, b);
+            if (all) {
+               /* Clear whole RGB buffer */
+	       const GLint n = osmesa->rowlength * osmesa->height;
+               GLushort *ptr2 = (GLushort *) osmesa->buffer;
+               GLuint  i;
+               for (i = 0; i < n; i++) {
+                  *ptr2 = clearPixel;
+                  ptr2++;
+               }
+            }
+            else {
+               /* clear scissored region */
+               GLint i, j;
+               for (i = 0; i < height; i++) {
+                  GLushort *ptr2 = (GLushort *) PIXELADDR2(x, (y + i));
+                  for (j = 0; j < width; j++) {
+                     *ptr2 = clearPixel;
+                     ptr2++;
+                  }
+               }
+            }
+         }
 	 else {
 #if CHAN_TYPE == GL_UNSIGNED_BYTE
 	    /* 4-byte pixel value */
@@ -1205,6 +1266,145 @@ read_rgba_pixels3( const GLcontext *ctx,
       }
    }
 }
+
+
+/**********************************************************************/
+/*****                2 byte RGB pixel support funcs              *****/
+/**********************************************************************/
+
+/* Write RGBA pixels to an RGB_565 buffer. */
+static void
+write_rgba_span2( const GLcontext *ctx,
+                  GLuint n, GLint x, GLint y,
+                  CONST GLubyte rgba[][4], const GLubyte mask[] )
+{
+   OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
+   GLushort *ptr2 = (GLushort *) PIXELADDR2(x, y);
+   GLuint i;
+   if (mask) {
+      for (i = 0; i < n; i++, ptr2++) {
+         if (mask[i]) {
+            PACK_RGB_565(*ptr2, rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP]);
+         }
+      }
+   }
+   else {
+      for (i = 0; i < n; i++, ptr2++) {
+         PACK_RGB_565(*ptr2, rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP]);
+      }
+   }
+}
+
+
+/* Write RGB pixels to an RGB_565 buffer. */
+static void
+write_rgb_span2( const GLcontext *ctx,
+                 GLuint n, GLint x, GLint y,
+                 CONST GLubyte rgb[][3], const GLubyte mask[] )
+{
+   OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
+   GLushort *ptr2 = (GLushort *) PIXELADDR2(x, y);
+   GLuint i;
+   if (mask) {
+      for (i = 0; i < n; i++, ptr2++) {
+         if (mask[i]) {
+            PACK_RGB_565(*ptr2, rgb[i][RCOMP], rgb[i][GCOMP], rgb[i][BCOMP]);
+         }
+      }
+   }
+   else {
+      for (i = 0; i < n; i++, ptr2++) {
+         PACK_RGB_565(*ptr2, rgb[i][RCOMP], rgb[i][GCOMP], rgb[i][BCOMP]);
+      }
+   }
+}
+
+
+static void
+write_monocolor_span2( const GLcontext *ctx, GLuint n, GLint x, GLint y,
+                       const GLchan color[4], const GLubyte mask[] )
+{
+   OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
+   GLushort pixel;
+   GLushort *ptr2 = (GLushort *) PIXELADDR2(x, y);
+   GLuint i;
+   PACK_RGB_565(pixel, color[RCOMP], color[GCOMP], color[BCOMP]);
+   for (i = 0; i < n; i++, ptr2++) {
+      if (mask[i]) {
+         *ptr2 = pixel;
+      }
+   }
+}
+
+
+static void
+write_rgba_pixels2( const GLcontext *ctx,
+                    GLuint n, const GLint x[], const GLint y[],
+                    CONST GLubyte rgba[][4], const GLubyte mask[] )
+{
+   OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      if (mask[i]) {
+         GLushort *ptr2 = (GLushort *) PIXELADDR2(x[i],y[i]);
+         PACK_RGB_565(*ptr2, rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP]);
+      }
+   }
+}
+
+static void
+write_monocolor_pixels2( const GLcontext *ctx,
+                         GLuint n, const GLint x[], const GLint y[],
+                         const GLchan color[4], const GLubyte mask[] )
+{
+   OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
+   GLuint i;
+   GLushort pixel;
+   PACK_RGB_565(pixel, color[RCOMP], color[GCOMP], color[BCOMP]);
+   for (i = 0; i < n; i++) {
+      if (mask[i]) {
+         GLushort *ptr2 = (GLushort *) PIXELADDR2(x[i],y[i]);
+         *ptr2 = pixel;
+      }
+   }
+}
+
+static void
+read_rgba_span2( const GLcontext *ctx,
+                 GLuint n, GLint x, GLint y,
+                 GLubyte rgba[][4] )
+{
+   OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
+   GLuint i;
+   const GLushort *ptr2 = (const GLushort *) PIXELADDR2(x, y);
+   for (i = 0; i < n; i++, ptr2++) {
+      /* This should be fixed to get the low bits right */
+      rgba[i][RCOMP] = (*ptr2 >> 8) & 0xFe;
+      rgba[i][GCOMP] = (*ptr2 >> 3) & 0xFc;
+      rgba[i][BCOMP] = (*ptr2 << 3) & 0xFe;
+      rgba[i][ACOMP] = 0;
+   }
+}
+
+static void
+read_rgba_pixels2( const GLcontext *ctx,
+                   GLuint n, const GLint x[], const GLint y[],
+                   GLubyte rgba[][4], const GLubyte mask[] )
+{
+   OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      if (mask[i]) {
+         /* This should be fixed to get the low bits right */
+         const GLushort *ptr2 = (const GLushort *) PIXELADDR2(x[i],y[i]);
+         rgba[i][RCOMP] = (*ptr2 >> 8) & 0xFE;
+         rgba[i][GCOMP] = (*ptr2 >> 3) & 0xFC;
+         rgba[i][BCOMP] = (*ptr2 << 3) & 0xFE;
+         rgba[i][ACOMP] = 0;
+      }
+   }
+}
+
 
 
 /**********************************************************************/
@@ -1829,6 +2029,15 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
       swdd->WriteMonoRGBAPixels = write_monocolor_pixels_BGR;
       swdd->ReadRGBASpan = read_rgba_span3;
       swdd->ReadRGBAPixels = read_rgba_pixels3;
+   }
+   else if (osmesa->format == OSMESA_RGB_565) {
+      swdd->WriteRGBASpan = write_rgba_span2;
+      swdd->WriteRGBSpan = write_rgb_span2;
+      swdd->WriteMonoRGBASpan = write_monocolor_span2;
+      swdd->WriteRGBAPixels = write_rgba_pixels2;
+      swdd->WriteMonoRGBAPixels = write_monocolor_pixels2;
+      swdd->ReadRGBASpan = read_rgba_span2;
+      swdd->ReadRGBAPixels = read_rgba_pixels2;
    }
    else {
       /* 4 GLchan / pixel in frame buffer */
