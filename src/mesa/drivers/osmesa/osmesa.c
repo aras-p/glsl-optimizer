@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.55 2001/05/14 16:23:04 brianp Exp $ */
+/* $Id: osmesa.c,v 1.56 2001/05/31 19:25:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -295,7 +295,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
                                           osmesa->gl_visual->depthBits > 0,
                                           osmesa->gl_visual->stencilBits > 0,
                                           osmesa->gl_visual->accumRedBits > 0,
-                                          osmesa->gl_visual->alphaBits > 0 );
+                                          swalpha );
 
       if (!osmesa->gl_buffer) {
          _mesa_destroy_visual( osmesa->gl_visual );
