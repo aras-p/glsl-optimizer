@@ -1,4 +1,4 @@
-/* $Id: imports.h,v 1.15 2003/03/02 19:38:24 brianp Exp $ */
+/* $Id: imports.h,v 1.16 2003/03/03 21:44:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -151,9 +151,7 @@ extern void _ext_mesa_free_pixelbuffer( void *pb );
 /***
  *** SQRTF: single-precision square root
  ***/
-#ifdef DEBUG
-#  define SQRTF(X)  ((float)_mesa_sqrtd((float) X))
-#elif defined(__WATCOMC__) && defined(USE_X86_ASM)
+#if defined(__WATCOMC__) && defined(USE_X86_ASM)
 float asm_sqrt (float x);
 #pragma aux asm_sqrt =                      \
 	"fsqrt"                             \
@@ -161,8 +159,12 @@ float asm_sqrt (float x);
 	value [8087]                        \
 	modify exact [];
 #  define SQRTF(X)  asm_sqrt(X)
-#else
+#elif 0 /* _mesa_sqrtf() not accurate enough - temporarily disabled */
 #  define SQRTF(X)  _mesa_sqrtf(X)
+#elif defined(XFree86LOADER) && defined(IN_MODULE)
+#  define SQRTF(X)  (float) xf86sqrt((float) (X))
+#else
+#  define SQRTF(X)  (float) sqrt((float) (X))
 #endif
 
 
