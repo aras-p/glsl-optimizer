@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.31 2002/01/27 18:32:03 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.32 2002/01/28 03:42:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1144,8 +1144,7 @@
                /* initialize the span interpolants to the leftmost value */
                /* ff = fixed-pt fragment */
                const GLint right = FixedToInt(fxRightEdge);
-	       /*INIT_SPAN(span);*/
-	       SW_SPAN_RESET(span);
+
                span.x = FixedToInt(fxLeftEdge);
 
                if (right <= span.x)

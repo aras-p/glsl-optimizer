@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.25 2002/01/28 00:07:33 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.26 2002/01/28 03:42:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -270,7 +270,6 @@
          GLint ix, startX = (GLint) (x - xAdj);
          GLuint count;
          GLfloat coverage = 0.0F;
-         SW_SPAN_RESET(span);
 
          /* skip over fragments with zero coverage */
          while (startX < MAX_WIDTH) {

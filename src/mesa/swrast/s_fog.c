@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.19 2002/01/28 00:07:33 brianp Exp $ */
+/* $Id: s_fog.c,v 1.20 2002/01/28 03:42:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -87,7 +87,7 @@ _mesa_fog_rgba_pixels( const GLcontext *ctx, struct sw_span *span,
 
    ASSERT(ctx->Fog.Enabled);
    ASSERT(span->interpMask & SPAN_FOG);
-   ASSERT(span->filledColor == GL_TRUE || (span->arrayMask & SPAN_RGBA));
+   ASSERT(span->arrayMask & SPAN_RGBA);
 
    UNCLAMPED_FLOAT_TO_CHAN(rFog, ctx->Fog.Color[RCOMP]);
    UNCLAMPED_FLOAT_TO_CHAN(gFog, ctx->Fog.Color[GCOMP]);
@@ -120,7 +120,7 @@ _mesa_fog_rgba_pixels_with_array( const GLcontext *ctx, struct sw_span *span,
 
    ASSERT(fog != NULL);
    ASSERT(ctx->Fog.Enabled);
-   ASSERT(span->filledColor == GL_TRUE || (span->arrayMask & SPAN_RGBA));
+   ASSERT(span->arrayMask & SPAN_RGBA);
 
    UNCLAMPED_FLOAT_TO_CHAN(rFog, ctx->Fog.Color[RCOMP]);
    UNCLAMPED_FLOAT_TO_CHAN(gFog, ctx->Fog.Color[GCOMP]);
@@ -209,7 +209,7 @@ _mesa_fog_ci_pixels_with_array( const GLcontext *ctx, struct sw_span *span,
 
    ASSERT(fog != NULL);
    ASSERT(ctx->Fog.Enabled);
-   ASSERT((span->filledColor == GL_TRUE) || (span->arrayMask & SPAN_INDEX));
+   ASSERT(span->arrayMask & SPAN_INDEX);
 
    for (i = span->start; i < span->end; i++) {
       const GLfloat f = CLAMP(fog[i], 0.0F, 1.0F);

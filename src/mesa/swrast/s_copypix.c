@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.29 2002/01/27 18:32:03 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.30 2002/01/28 03:42:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -332,23 +332,6 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
                                  ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
-
-   if (ctx->Depth.Test || ctx->Fog.Enabled) {
-      /* fill in array of z values */
-      GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->DepthMax);
-      GLfloat fog;
-
-      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
-         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterFogCoord);
-      else
-         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
-
-      for (i=0;i<width;i++) {
-         span.zArray[i] = z;
-         span.fogArray[i] = fog;
-      }
-      span.arrayMask |= (SPAN_Z | SPAN_FOG);
-   }
 
    if (ctx->Depth.Test)
       _mesa_span_default_z(ctx, &span);

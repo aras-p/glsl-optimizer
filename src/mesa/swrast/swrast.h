@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.17 2002/01/28 00:07:33 brianp Exp $ */
+/* $Id: swrast.h,v 1.18 2002/01/28 03:42:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -160,10 +160,6 @@ struct sw_span {
 
    /* This mask indicates if fragment is alive or culled */
    GLubyte mask[MAX_WIDTH];
-
-#ifdef DEBUG
-   GLboolean filledAlpha, filledColor;
-#endif
 };
 
 
@@ -175,15 +171,6 @@ do {			\
 } while (0)
 
 
-#ifdef DEBUG
-#define SW_SPAN_SET_FLAG(flag) {ASSERT((flag) == GL_FALSE);(flag) = GL_TRUE;}
-#define SW_SPAN_RESET(span) {                                        \
-         (span).filledAlpha = (span).filledColor = GL_FALSE;    \
-         (span).start = 0; (span).writeAll = GL_TRUE;}
-#else
-#define SW_SPAN_SET_FLAG(flag) ;
-#define SW_SPAN_RESET(span) {(span).start = 0;(span).writeAll = GL_TRUE;}
-#endif
 
 struct swrast_device_driver;
 

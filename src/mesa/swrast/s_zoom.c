@@ -1,4 +1,4 @@
-/* $Id: s_zoom.c,v 1.10 2002/01/28 00:07:33 brianp Exp $ */
+/* $Id: s_zoom.c,v 1.11 2002/01/28 03:42:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -83,11 +83,11 @@ _mesa_write_zoomed_rgba_span( GLcontext *ctx,
 {
    GLint r0, r1, row;
    GLint i, j;
-   struct sw_span zoomed;
    const GLint maxwidth = MIN2( ctx->DrawBuffer->Width, MAX_WIDTH );
+   struct sw_span zoomed;
 
-   SW_SPAN_RESET(zoomed);
    INIT_SPAN(zoomed);
+   zoomed.arrayMask |= SPAN_RGBA;
 
    /* compute width of output row */
    zoomed.end = (GLint) ABSF( n * ctx->Pixel.ZoomX );
@@ -148,8 +148,6 @@ _mesa_write_zoomed_rgba_span( GLcontext *ctx,
 
    /* zoom the span horizontally */
    if (ctx->Pixel.ZoomX==-1.0F) {
-      SW_SPAN_SET_FLAG(zoomed.filledColor);
-      SW_SPAN_SET_FLAG(zoomed.filledAlpha);
       /* n==m */
       for (j=zoomed.start; j<zoomed.end; j++) {
          i = n - j - 1;
@@ -165,8 +163,6 @@ _mesa_write_zoomed_rgba_span( GLcontext *ctx,
    }
    else {
       const GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
-      SW_SPAN_SET_FLAG(zoomed.filledColor);
-      SW_SPAN_SET_FLAG(zoomed.filledAlpha);
       for (j=zoomed.start; j<zoomed.end; j++) {
          i = (GLint) (j * xscale);
          if (i<0)  i = n + i - 1;
@@ -182,7 +178,6 @@ _mesa_write_zoomed_rgba_span( GLcontext *ctx,
       }
    }
 
-   zoomed.arrayMask |= SPAN_RGBA;
    zoomed.arrayMask |= SPAN_Z;
    if (fog)
       zoomed.arrayMask |= SPAN_FOG;
@@ -334,7 +329,6 @@ _mesa_write_zoomed_index_span( GLcontext *ctx,
    GLint maxwidth = MIN2( ctx->DrawBuffer->Width, MAX_WIDTH );
    struct sw_span zoomed;
 
-   SW_SPAN_RESET(zoomed);
    INIT_SPAN(zoomed);
    zoomed.arrayMask |= SPAN_INDEX;
 

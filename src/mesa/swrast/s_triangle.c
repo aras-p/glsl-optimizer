@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.50 2002/01/28 00:07:33 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.51 2002/01/28 03:42:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -106,12 +106,6 @@ static void smooth_ci_triangle( GLcontext *ctx,
 #define INTERP_INDEX 1
 
 #define RENDER_SPAN( span )						\
-   GLuint i;						                \
-   SW_SPAN_SET_FLAG(span.filledColor);			                \
-   for (i = 0; i < span.end; i++) {					\
-      span.color.index[i] = FixedToInt(span.index);			\
-      span.index += span.indexStep;					\
-   }									\
    _mesa_write_index_span(ctx, &span, GL_POLYGON);
 
 #include "s_tritemp.h"
@@ -132,6 +126,8 @@ static void flat_rgba_triangle( GLcontext *ctx,
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 
 #define SETUP_CODE				\
+   ASSERT(!ctx->Texture._ReallyEnabled);	\
+   ASSERT(ctx->Light.ShadeModel==GL_FLAT);	\
    span.interpMask |= SPAN_RGBA;		\
    span.red = ChanToFixed(v2->color[0]);	\
    span.green = ChanToFixed(v2->color[1]);	\
@@ -142,13 +138,10 @@ static void flat_rgba_triangle( GLcontext *ctx,
    span.blueStep = 0;				\
    span.alphaStep = 0;
 
-#define RENDER_SPAN( span )						\
-   _mesa_write_monocolor_span(ctx, &span, v2->color, GL_POLYGON );
+#define RENDER_SPAN( span )				\
+   _mesa_write_rgba_span(ctx, &span, GL_POLYGON );
 
 #include "s_tritemp.h"
-
-   ASSERT(!ctx->Texture._ReallyEnabled);  /* texturing must be off */
-   ASSERT(ctx->Light.ShadeModel==GL_FLAT);
 }
 
 
@@ -169,21 +162,7 @@ static void smooth_rgba_triangle( GLcontext *ctx,
 #define INTERP_ALPHA 1
 
 #define RENDER_SPAN( span )					\
-   GLuint i;				        	        \
-   SW_SPAN_SET_FLAG(span.filledColor);			        \
-   SW_SPAN_SET_FLAG(span.filledAlpha);			        \
    ASSERT(span.interpMask & SPAN_RGBA);				\
-   span.arrayMask |= SPAN_RGBA;					\
-   for (i = 0; i < span.end; i++) {				\
-      span.color.rgba[i][RCOMP] = FixedToChan(span.red);	\
-      span.color.rgba[i][GCOMP] = FixedToChan(span.green);	\
-      span.color.rgba[i][BCOMP] = FixedToChan(span.blue);	\
-      span.color.rgba[i][ACOMP] = FixedToChan(span.alpha);	\
-      span.red += span.redStep;					\
-      span.green += span.greenStep;				\
-      span.blue += span.blueStep;				\
-      span.alpha += span.alphaStep;				\
-   }								\
    _mesa_write_rgba_span(ctx, &span, GL_POLYGON);
 
 #include "s_tritemp.h"
@@ -225,7 +204,6 @@ static void simple_textured_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span  )						\
    GLuint i;								\
-   SW_SPAN_SET_FLAG(span.filledColor);					\
    span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
    span.intTex[1] -= FIXED_HALF;					\
    for (i = 0; i < span.end; i++) {					\
@@ -284,7 +262,6 @@ static void simple_z_textured_triangle( GLcontext *ctx,
    GLuint i;				    				\
    span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
    span.intTex[1] -= FIXED_HALF;					\
-   SW_SPAN_SET_FLAG(span.filledColor);					\
    for (i = 0; i < span.end; i++) {					\
       const GLdepth z = FixedToDepth(span.z);				\
       if (z < zRow[i]) {						\
@@ -476,9 +453,6 @@ affine_span(GLcontext *ctx, struct sw_span *span,
 
    GLuint i;
    GLchan *dest = span->color.rgba[0];
-
-   SW_SPAN_SET_FLAG(span->filledColor);
-   SW_SPAN_SET_FLAG(span->filledAlpha);
 
    span->intTex[0] -= FIXED_HALF;
    span->intTex[1] -= FIXED_HALF;
@@ -747,9 +721,6 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
    GLfloat tex_coord[3], tex_step[3];
    GLchan *dest = span->color.rgba[0];
 
-   SW_SPAN_SET_FLAG(span->filledColor);
-   SW_SPAN_SET_FLAG(span->filledAlpha);
-
    tex_coord[0] = span->tex[0][0]  * (info->smask + 1),
      tex_step[0] = span->texStep[0][0] * (info->smask + 1);
    tex_coord[1] = span->tex[0][1] * (info->tmask + 1),
@@ -850,7 +821,6 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
       break;
    }
    
-   ASSERT(span->interpMask & SPAN_RGBA);
    ASSERT(span->arrayMask & SPAN_RGBA);
    _mesa_write_rgba_span(ctx, span, GL_POLYGON);
 
@@ -890,7 +860,6 @@ static void persp_textured_triangle( GLcontext *ctx,
    info.format = obj->Image[b]->Format;					\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
-   span.arrayMask |= SPAN_RGBA;						\
 									\
    if (info.envmode == GL_BLEND) {					\
       /* potential off-by-one error here? (1.0f -> 2048 -> 0) */	\
@@ -925,7 +894,10 @@ static void persp_textured_triangle( GLcontext *ctx,
    }									\
    info.tsize = obj->Image[b]->Height * info.tbytesline;
 
-#define RENDER_SPAN( span )   fast_persp_span(ctx, &span, &info);
+#define RENDER_SPAN( span )			\
+   span.interpMask &= ~SPAN_RGBA;		\
+   span.arrayMask |= SPAN_RGBA;			\
+   fast_persp_span(ctx, &span, &info);
 
 #include "s_tritemp.h"
 
