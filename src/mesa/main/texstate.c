@@ -2946,13 +2946,16 @@ update_texture_state( GLcontext *ctx )
       if (texUnit->_ReallyEnabled)
          ctx->Texture._EnabledUnits |= (1 << unit);
 
-      if ( texUnit->EnvMode == GL_COMBINE ) {
+      if (texUnit->EnvMode == GL_COMBINE) {
 	 texUnit->_CurrentCombine = & texUnit->Combine;
       }
       else {
          GLenum format = texUnit->_Current->Image[0][0]->Format;
          if (format == GL_COLOR_INDEX) {
             format = GL_RGBA;  /* a bit of a hack */
+         }
+         else if (format == GL_DEPTH_COMPONENT) {
+            format = texUnit->_Current->DepthMode;
          }
 	 calculate_derived_texenv(&texUnit->_EnvMode, texUnit->EnvMode, format);
 	 texUnit->_CurrentCombine = & texUnit->_EnvMode;
