@@ -128,7 +128,7 @@ static int r300_get_primitive_type(r300ContextPtr rmesa,
 		return -1;
          	break;
    	}
-   #if 1
+   #if 0
    fprintf(stderr, "[%d-%d]%s ", start, end, name);
    #endif
    if(start+min_vertices>=end){
@@ -169,11 +169,6 @@ static void r300_render_flat_primitive(r300ContextPtr rmesa,
        	
    type=r300_get_primitive_type(rmesa, ctx, start, end, prim);
 		
-		fprintf(stderr,"ObjPtr: size=%d stride=%d\n", 
-			VB->ObjPtr->size, VB->ObjPtr->stride);
-		fprintf(stderr,"ColorPtr[0]: size=%d stride=%d\n", 
-			VB->ColorPtr[0]->size, VB->ColorPtr[0]->stride);
-   
    if(type<0)return;
 
 
@@ -213,6 +208,9 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
    GLuint i;
    AOS_DATA vb_arrays[2];
    LOCAL_VARS
+	
+   /* Flush state - make sure command buffer is nice and large */
+   r300Flush(ctx);
 	
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
@@ -264,6 +262,7 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
    FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[3]=0.0;
    
    program_pipeline(PASS_PREFIX &FLAT_COLOR_PIPELINE);
+   cp_delay(PASS_PREFIX 15);
    
    /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
    setup_AOS(PASS_PREFIX vb_arrays, 2);
@@ -275,9 +274,14 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
 	r300_render_flat_primitive(rmesa, ctx, start, start + length, prim);
    	}
 	
+   sync_VAP(PASS_PREFIX_VOID);
+   
    end_3d(PASS_PREFIX_VOID);
    
-   fprintf(stderr, "\n");
+   /* Flush state - this reduces the chance that something else will mess with 
+      the hardware in between */
+   r300Flush(ctx);
+   //fprintf(stderr, "\n");
    return GL_FALSE;
 }
 
@@ -454,7 +458,7 @@ static void r300_render_tex_primitive(r300ContextPtr rmesa,
    if(type<0)return;
 
 
-   start_immediate_packet(end-start, type, 8);
+   start_immediate_packet(end-start, type, 12);
 
 	for(i=start;i<end;i++){
 		#if 0
@@ -476,6 +480,9 @@ static void r300_render_tex_primitive(r300ContextPtr rmesa,
 		output_vector(VB->ObjPtr, i);
 		
 		/* color components */
+		output_vector(VB->ColorPtr[0], i);
+		
+		/* texture coordinates */
 		output_vector(VB->TexCoordPtr[0], i);
 		}
 
@@ -488,14 +495,17 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
-   AOS_DATA vb_arrays[2];
+   AOS_DATA vb_arrays[3];
    /* Only do 2d textures */
    struct gl_texture_object *to=ctx->Texture.Unit[0].Current2D;
    radeonScreenPtr rsp=rmesa->radeon.radeonScreen;
    LOCAL_VARS
 	
    
-   fprintf(stderr, "%s Fixme ! I am broken\n", __FUNCTION__);
+   /* Flush state - make sure command buffer is nice and large */
+   r300Flush(ctx);
+   
+   fprintf(stderr, "You can enable texture drawing in %s:%s \n", __FILE__, __FUNCTION__);
    return GL_TRUE;
    
 	if (RADEON_DEBUG == DEBUG_PRIMS)
@@ -505,7 +515,7 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
 
    /* Note: immediate vertex data includes all coordinates.
      To save bandwidth use either VBUF or state-based vertex generation */
-    /* xyz */
+    /* xyzw */
    vb_arrays[0].element_size=4;
    vb_arrays[0].stride=4;
    vb_arrays[0].offset=0; /* Not used */
@@ -517,9 +527,17 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    vb_arrays[1].element_size=4;
    vb_arrays[1].stride=4;
    vb_arrays[1].offset=0; /* Not used */
-   vb_arrays[1].format=AOS_FORMAT_FLOAT;
+   vb_arrays[1].format=AOS_FORMAT_FLOAT_COLOR;
    vb_arrays[1].ncomponents=4;
-   vb_arrays[1].reg=REG_TEX0;
+   vb_arrays[1].reg=REG_COLOR0;
+
+    /* texture coordinates */
+   vb_arrays[2].element_size=4;
+   vb_arrays[2].stride=4;
+   vb_arrays[2].offset=0; /* Not used */
+   vb_arrays[2].format=AOS_FORMAT_FLOAT;
+   vb_arrays[2].ncomponents=4;
+   vb_arrays[2].reg=REG_TEX0;
 
    
    /* needed before starting 3d operation .. */
@@ -529,6 +547,13 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    reg_start(0x4f18,0);
 	e32(0x00000003);
 	
+   
+   rmesa->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
+				| R300_VPORT_X_OFFSET_ENA
+				| R300_VPORT_Y_SCALE_ENA
+				| R300_VPORT_Y_OFFSET_ENA
+				| R300_VTX_W0_FMT;
+   R300_STATECHANGE(rmesa, vte);
    
    r300EmitState(rmesa);
    
@@ -544,35 +569,15 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    /* Put it in the beginning of texture memory */
    SINGLE_TEXTURE_PIPELINE.texture_unit[0].offset=rsp->gartTextures.handle;
    
+   /* Fill texture with some random data */
+   for(i=0;i<1000;i++)((int *)(rsp->gartTextures.map))[i]=rand();
+   
    /* Upload texture, a hack, really  we can do a lot better */
    #if 0
    memcpy(rsp->gartTextures.map, to->Image[0][0]->Data, to->Image[0][0]->RowStride*to->Image[0][0]->Height*4);
    #endif
 
-reg_start(0x4e0c,0);
-	e32(0x0000000f);
-
-reg_start(0x427c,1);
-	/* XG_427c(427c) */
-	e32(0x00000000);
-	/* XG_4280(4280) */
-	e32(0x00000000);
-
-reg_start(0x4e04,1);
-	/* XG_4e04(4e04) */
-	e32(0x20220000);
-	/* XG_4e08(4e08) */
-	e32(0x00000000);
-
-reg_start(0x4f14,0);
-	e32(0x00000001);
-
-reg_start(0x4f1c,0);
-	e32(0x00000000);
-
-/* gap */
-sync_VAP(PASS_PREFIX_VOID);
-
+   /* Program RS unit. This needs to be moved into R300 pipeline */   
 reg_start(R300_RS_CNTL_0,1);
 	/* R300_RS_CNTL_0(4300) */
 	e32(0x00040084);
@@ -600,34 +605,21 @@ reg_start(R300_RS_INTERP_0,7);
 	/* X_MEM0_7(432c) */
 	e32(0x00d10004);
 
-reg_start(0x221c,0);
-	e32(0x00000000);
-
-reg_start(0x20b0,0);
-	e32(0x0000043f);
-
-reg_start(0x4bd8,0);
-	e32(0x00000000);
-
-reg_start(0x4e04,0);
-	e32(0x20220000);
-
-reg_start(0x20b4,0);
-	e32(0x0000000c);
-
-reg_start(0x4288,0);
-	e32(0x00000000);
-
-reg_start(0x4e0c,0);
-	e32(0x0000000f);
-  
   reg_start(R300_RS_CNTL_0,0);
 	e32(0x00040084);
+
+   /* Magic register - note it is right after 20b0 */
+   
+   reg_start(0x20b4,0);
+	e32(0x0000000c);
    
    program_pipeline(PASS_PREFIX &SINGLE_TEXTURE_PIPELINE);
    
+   sync_VAP(PASS_PREFIX_VOID);
+   cp_delay(PASS_PREFIX 15);
+      
    /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
-   setup_AOS(PASS_PREFIX vb_arrays, 2);
+   setup_AOS(PASS_PREFIX vb_arrays, 3);
    
    for(i=0; i < VB->PrimitiveCount; i++){
        GLuint prim = VB->Primitive[i].mode;
@@ -636,7 +628,13 @@ reg_start(0x4e0c,0);
 	r300_render_tex_primitive(rmesa, ctx, start, start + length, prim);
    	}
 	
+   sync_VAP(PASS_PREFIX_VOID);
+   
    end_3d(PASS_PREFIX_VOID);
+   
+   /* Flush state - this reduces the chance that something else will mess with 
+      the hardware in between */
+   r300Flush(ctx);
    
    fprintf(stderr, "\n");
    return GL_FALSE;
