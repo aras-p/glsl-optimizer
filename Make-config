@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.38 2001/03/28 20:44:43 gareth Exp $
+# $Id: Make-config,v 1.39 2001/03/29 03:14:48 gareth Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=5
@@ -219,6 +219,7 @@ freebsd-386:
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.freebsd" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm" \
+	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -591,6 +592,7 @@ linux-x86-static:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
+	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -635,6 +637,7 @@ linux-386-ggi:
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ggi" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lggi -lm" \
+	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked3.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked2.S \
@@ -674,6 +677,7 @@ linux-386-glide:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
+	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -696,6 +700,7 @@ linux-386-opt-glide:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
+	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -718,6 +723,7 @@ linux-386-opt-V2-glide:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
+	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -738,6 +744,7 @@ linux-x86-glide:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
+	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -996,6 +1003,7 @@ os2-x11:
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ..\\bin\\mklib-emx.cmd " \
 	"APP_LIB_DEPS = -Zmt -Zcrtdll -Zexe -L$(X11ROOT)/XFree86/lib -lXt -lX11 -lm" \
+	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -1506,6 +1514,7 @@ linux-x86-debug:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
+	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -1549,6 +1558,7 @@ linux-prof:
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
+	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked3.S \
@@ -1578,6 +1588,7 @@ linux-glide-prof:
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide2x -L/usr/X11/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
+	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
