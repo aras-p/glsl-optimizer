@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.34 2001/07/14 17:53:04 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.35 2001/07/23 16:47:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -348,7 +348,7 @@ static void
 affine_span(GLcontext *ctx, struct triangle_span *span,
             struct affine_info *info)
 {
-   GLint tr, tg, tb, ta;
+   GLchan tmp_col[4];
 
    /* Instead of defining a function for each mode, a test is done
     * between the outer and inner loops. This is to reduce code size
@@ -356,81 +356,82 @@ affine_span(GLcontext *ctx, struct triangle_span *span,
     * unused variables (for instance tf,sf,ti,si in case of GL_NEAREST).
     */
 
-#define NEAREST_RGB		\
-        tr = tex00[RCOMP];	\
-        tg = tex00[GCOMP];	\
-        tb = tex00[BCOMP];	\
-        ta = CHAN_MAX
+#define NEAREST_RGB			\
+   tmp_col[RCOMP] = tex00[RCOMP];	\
+   tmp_col[GCOMP] = tex00[GCOMP];	\
+   tmp_col[BCOMP] = tex00[BCOMP];	\
+   tmp_col[ACOMP] = CHAN_MAX
 
 #define LINEAR_RGB							\
-	tr = (ti * (si * tex00[0] + sf * tex01[0]) +			\
-              tf * (si * tex10[0] + sf * tex11[0])) >> 2 * FIXED_SHIFT;	\
-	tg = (ti * (si * tex00[1] + sf * tex01[1]) +			\
-              tf * (si * tex10[1] + sf * tex11[1])) >> 2 * FIXED_SHIFT;	\
-	tb = (ti * (si * tex00[2] + sf * tex01[2]) +			\
-              tf * (si * tex10[2] + sf * tex11[2])) >> 2 * FIXED_SHIFT;	\
-	ta = CHAN_MAX
+   tmp_col[RCOMP] = (ti * (si * tex00[0] + sf * tex01[0]) +		\
+             tf * (si * tex10[0] + sf * tex11[0])) >> 2 * FIXED_SHIFT;	\
+   tmp_col[GCOMP] = (ti * (si * tex00[1] + sf * tex01[1]) +		\
+             tf * (si * tex10[1] + sf * tex11[1])) >> 2 * FIXED_SHIFT;	\
+   tmp_col[BCOMP] = (ti * (si * tex00[2] + sf * tex01[2]) +		\
+             tf * (si * tex10[2] + sf * tex11[2])) >> 2 * FIXED_SHIFT;	\
+   tmp_col[ACOMP] = CHAN_MAX
 
-#define NEAREST_RGBA		\
-        tr = tex00[RCOMP];	\
-        tg = tex00[GCOMP];	\
-        tb = tex00[BCOMP];	\
-        ta = tex00[ACOMP]
+#define NEAREST_RGBA  COPY_CHAN4(tmp_col, tex00)
 
 #define LINEAR_RGBA							\
-	tr = (ti * (si * tex00[0] + sf * tex01[0]) +			\
-              tf * (si * tex10[0] + sf * tex11[0])) >> 2 * FIXED_SHIFT;	\
-	tg = (ti * (si * tex00[1] + sf * tex01[1]) +			\
-              tf * (si * tex10[1] + sf * tex11[1])) >> 2 * FIXED_SHIFT;	\
-	tb = (ti * (si * tex00[2] + sf * tex01[2]) +			\
-              tf * (si * tex10[2] + sf * tex11[2])) >> 2 * FIXED_SHIFT;	\
-	ta = (ti * (si * tex00[3] + sf * tex01[3]) +			\
-              tf * (si * tex10[3] + sf * tex11[3])) >> 2 * FIXED_SHIFT
+   tmp_col[RCOMP] = (ti * (si * tex00[0] + sf * tex01[0]) +		\
+               tf * (si * tex10[0] + sf * tex11[0])) >> 2 * FIXED_SHIFT;\
+   tmp_col[GCOMP] = (ti * (si * tex00[1] + sf * tex01[1]) +		\
+               tf * (si * tex10[1] + sf * tex11[1])) >> 2 * FIXED_SHIFT;\
+   tmp_col[BCOMP] = (ti * (si * tex00[2] + sf * tex01[2]) +		\
+               tf * (si * tex10[2] + sf * tex11[2])) >> 2 * FIXED_SHIFT;\
+   tmp_col[ACOMP] = (ti * (si * tex00[3] + sf * tex01[3]) +		\
+               tf * (si * tex10[3] + sf * tex11[3])) >> 2 * FIXED_SHIFT
 
-#define MODULATE							\
-        dest[RCOMP] = span->red * (tr + 1) >> (FIXED_SHIFT + 8);	\
-        dest[GCOMP] = span->green * (tg + 1) >> (FIXED_SHIFT + 8);	\
-        dest[BCOMP] = span->blue * (tb + 1) >> (FIXED_SHIFT + 8);	\
-        dest[ACOMP] = span->alpha * (ta + 1) >> (FIXED_SHIFT + 8)
+#define MODULATE							   \
+   dest[RCOMP] = span->red   * (tmp_col[RCOMP] + 1u) >> (FIXED_SHIFT + 8); \
+   dest[GCOMP] = span->green * (tmp_col[GCOMP] + 1u) >> (FIXED_SHIFT + 8); \
+   dest[BCOMP] = span->blue  * (tmp_col[BCOMP] + 1u) >> (FIXED_SHIFT + 8); \
+   dest[ACOMP] = span->alpha * (tmp_col[ACOMP] + 1u) >> (FIXED_SHIFT + 8)
 
 #define DECAL								\
-	dest[RCOMP] = ((CHAN_MAX - ta) * span->red			\
-           + ((ta + 1) * tr << FIXED_SHIFT)) >> (FIXED_SHIFT + 8);	\
-	dest[GCOMP] = ((CHAN_MAX - ta) * span->green			\
-           + ((ta + 1) * tg << FIXED_SHIFT)) >> (FIXED_SHIFT + 8);	\
-	dest[BCOMP] = ((CHAN_MAX - ta) * span->blue			\
-           + ((ta + 1) * tb << FIXED_SHIFT)) >> (FIXED_SHIFT + 8);	\
-	dest[ACOMP] = FixedToInt(span->alpha)
+   dest[RCOMP] = ((CHAN_MAX - tmp_col[ACOMP]) * span->red +		\
+               ((tmp_col[ACOMP] + 1) * tmp_col[RCOMP] << FIXED_SHIFT))	\
+               >> (FIXED_SHIFT + 8);					\
+   dest[GCOMP] = ((CHAN_MAX - tmp_col[ACOMP]) * span->green +		\
+               ((tmp_col[ACOMP] + 1) * tmp_col[GCOMP] << FIXED_SHIFT))	\
+               >> (FIXED_SHIFT + 8);					\
+   dest[BCOMP] = ((CHAN_MAX - tmp_col[ACOMP]) * span->blue +		\
+               ((tmp_col[ACOMP] + 1) * tmp_col[BCOMP] << FIXED_SHIFT))	\
+               >> (FIXED_SHIFT + 8);					\
+   dest[ACOMP] = FixedToInt(span->alpha)
 
 #define BLEND								\
-        dest[RCOMP] = ((CHAN_MAX - tr) * span->red			\
-           + (tr + 1) * info->er) >> (FIXED_SHIFT + 8);			\
-        dest[GCOMP] = ((CHAN_MAX - tg) * span->green			\
-           + (tg + 1) * info->eg) >> (FIXED_SHIFT + 8);			\
-        dest[BCOMP] = ((CHAN_MAX - tb) * span->blue			\
-           + (tb + 1) * info->eb) >> (FIXED_SHIFT + 8);			\
-        dest[ACOMP] = span->alpha * (ta + 1) >> (FIXED_SHIFT + 8)
+   dest[RCOMP] = ((CHAN_MAX - tmp_col[RCOMP]) * span->red		\
+               + (tmp_col[RCOMP] + 1) * info->er) >> (FIXED_SHIFT + 8);	\
+   dest[GCOMP] = ((CHAN_MAX - tmp_col[GCOMP]) * span->green		\
+               + (tmp_col[GCOMP] + 1) * info->eg) >> (FIXED_SHIFT + 8);	\
+   dest[BCOMP] = ((CHAN_MAX - tmp_col[BCOMP]) * span->blue		\
+               + (tmp_col[BCOMP] + 1) * info->eb) >> (FIXED_SHIFT + 8);	\
+   dest[ACOMP] = span->alpha * (tmp_col[ACOMP] + 1) >> (FIXED_SHIFT + 8)
 
-#define REPLACE			\
-        dest[RCOMP] = tr;	\
-        dest[GCOMP] = tg;	\
-        dest[BCOMP] = tb;	\
-        dest[ACOMP] = ta
+#define REPLACE  COPY_CHAN4(dest, tmp_col)
+
+#define I2CHAN_CLAMP(I) (GLchan) ((I) & CHAN_MAX)
+   /* equivalent to '(GLchan) MIN2((I),CHAN_MAX)' */
 
 #define ADD								\
-        dest[RCOMP] = ((span->red << 8)					\
-           + (tr + 1) * info->er) >> (FIXED_SHIFT + 8);			\
-        dest[GCOMP] = ((span->green << 8)				\
-           + (tg + 1) * info->eg) >> (FIXED_SHIFT + 8);			\
-        dest[BCOMP] = ((span->blue << 8)				\
-           + (tb + 1) * info->eb) >> (FIXED_SHIFT + 8);			\
-        dest[ACOMP] = span->alpha * (ta + 1) >> (FIXED_SHIFT + 8)
+   dest[RCOMP] = MIN2(((span->red << 8) +				\
+                       (tmp_col[RCOMP] + 1) * info->er)			\
+                       >> (FIXED_SHIFT + 8), CHAN_MAX);			\
+   dest[GCOMP] = MIN2(((span->green << 8) +				\
+                       (tmp_col[GCOMP] + 1) * info->eg)			\
+                       >> (FIXED_SHIFT + 8), CHAN_MAX);			\
+   dest[RCOMP] = MIN2(((span->blue << 8) +				\
+                       (tmp_col[BCOMP] + 1) * info->eb)			\
+                       >> (FIXED_SHIFT + 8), CHAN_MAX);			\
+   dest[ACOMP] = span->alpha * (tmp_col[ACOMP] + 1) >> (FIXED_SHIFT + 8)
 
 /* shortcuts */
 
 #define NEAREST_RGB_REPLACE  NEAREST_RGB;REPLACE
 
-#define NEAREST_RGBA_REPLACE  *(GLint *)dest = *(GLint *)tex00
+#define NEAREST_RGBA_REPLACE  COPY_CHAN4(dest, tex00)
 
 #define SPAN_NEAREST(DO_TEX,COMP)					\
 	for (i = 0; i < span->count; i++) {				\
@@ -703,7 +704,7 @@ static void
 fast_persp_span(GLcontext *ctx, struct triangle_span *span,
 		struct persp_info *info)
 {
-   GLint tr, tg, tb, ta;
+   GLchan tmp_col[4];
 
   /* Instead of defining a function for each mode, a test is done
    * between the outer and inner loops. This is to reduce code size
@@ -739,10 +740,10 @@ fast_persp_span(GLcontext *ctx, struct triangle_span *span,
 	for (i = 0; i < span->count; i++) {				\
            GLdouble invQ = tex_coord[2] ?				\
                                  (1.0 / tex_coord[2]) : 1.0;            \
-           GLfloat s_tmp = tex_coord[0] * invQ - 0.5F;			\
-           GLfloat t_tmp = tex_coord[1] * invQ - 0.5F;			\
-           GLfixed s_fix = FloatToFixed(s_tmp);				\
-           GLfixed t_fix = FloatToFixed(t_tmp);		        	\
+           GLfloat s_tmp = tex_coord[0] * invQ;				\
+           GLfloat t_tmp = tex_coord[1] * invQ;				\
+           GLfixed s_fix = FloatToFixed(s_tmp) - FIXED_HALF;		\
+           GLfixed t_fix = FloatToFixed(t_tmp) - FIXED_HALF;        	\
            GLint s = FixedToInt(FixedFloor(s_fix)) & info->smask;	\
            GLint t = FixedToInt(FixedFloor(t_fix)) & info->tmask;	\
            GLfixed sf = s_fix & FIXED_FRAC_MASK;			\
