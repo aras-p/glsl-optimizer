@@ -452,6 +452,14 @@ class glXFunction(gl_XML.glFunction):
 		return None
 
 
+	def output_parameter(self):
+		for param in self.fn_parameters:
+			if param.is_output:
+				return param
+
+		return None
+
+
 	def offset_of_first_parameter(self):
 		"""Get the offset of the first parameter in the command.
 

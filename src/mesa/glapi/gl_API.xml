@@ -2359,19 +2359,19 @@ glx:
 
     <function name="GetBooleanv" offset="258">
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLboolean *" output="true"/>
+        <param name="params" type="GLboolean *" output="true" variable_param="pname"/>
         <glx sop="112" handcode="client"/>
     </function>
 
     <function name="GetClipPlane" offset="259">
         <param name="plane" type="GLenum"/>
-        <param name="equation" type="GLdouble *" output="true"/>
+        <param name="equation" type="GLdouble *" output="true" count="4"/>
         <glx sop="113" always_array="true"/>
     </function>
 
     <function name="GetDoublev" offset="260">
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLdouble *" output="true"/>
+        <param name="params" type="GLdouble *" output="true" variable_param="pname"/>
         <glx sop="114" handcode="client"/>
     </function>
 
@@ -2382,80 +2382,80 @@ glx:
 
     <function name="GetFloatv" offset="262">
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx sop="116" handcode="client"/>
     </function>
 
     <function name="GetIntegerv" offset="263">
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx sop="117" handcode="client"/>
     </function>
 
     <function name="GetLightfv" offset="264">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx sop="118"/>
     </function>
 
     <function name="GetLightiv" offset="265">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx sop="119"/>
     </function>
 
     <function name="GetMapdv" offset="266">
         <param name="target" type="GLenum"/>
         <param name="query" type="GLenum"/>
-        <param name="v" type="GLdouble *" output="true"/>
+        <param name="v" type="GLdouble *" output="true" variable_param="target, query"/>
         <glx sop="120"/>
     </function>
 
     <function name="GetMapfv" offset="267">
         <param name="target" type="GLenum"/>
         <param name="query" type="GLenum"/>
-        <param name="v" type="GLfloat *" output="true"/>
+        <param name="v" type="GLfloat *" output="true" variable_param="target, query"/>
         <glx sop="121"/>
     </function>
 
     <function name="GetMapiv" offset="268">
         <param name="target" type="GLenum"/>
         <param name="query" type="GLenum"/>
-        <param name="v" type="GLint *" output="true"/>
+        <param name="v" type="GLint *" output="true" variable_param="target, query"/>
         <glx sop="122"/>
     </function>
 
     <function name="GetMaterialfv" offset="269">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx sop="123"/>
     </function>
 
     <function name="GetMaterialiv" offset="270">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx sop="124"/>
     </function>
 
     <function name="GetPixelMapfv" offset="271">
         <param name="map" type="GLenum"/>
-        <param name="values" type="GLfloat *" output="true"/>
+        <param name="values" type="GLfloat *" output="true" variable_param="map"/>
         <glx sop="125"/>
     </function>
 
     <function name="GetPixelMapuiv" offset="272">
         <param name="map" type="GLenum"/>
-        <param name="values" type="GLuint *" output="true"/>
+        <param name="values" type="GLuint *" output="true" variable_param="map"/>
         <glx sop="126"/>
     </function>
 
     <function name="GetPixelMapusv" offset="273">
         <param name="map" type="GLenum"/>
-        <param name="values" type="GLushort *" output="true"/>
+        <param name="values" type="GLushort *" output="true" variable_param="map"/>
         <glx sop="127"/>
     </function>
 
@@ -2473,35 +2473,35 @@ glx:
     <function name="GetTexEnvfv" offset="276">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx sop="130"/>
     </function>
 
     <function name="GetTexEnviv" offset="277">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx sop="131"/>
     </function>
 
     <function name="GetTexGendv" offset="278">
         <param name="coord" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLdouble *" output="true"/>
+        <param name="params" type="GLdouble *" output="true" variable_param="pname"/>
         <glx sop="132"/>
     </function>
 
     <function name="GetTexGenfv" offset="279">
         <param name="coord" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx sop="133"/>
     </function>
 
     <function name="GetTexGeniv" offset="280">
         <param name="coord" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx sop="134"/>
     </function>
 
@@ -2517,14 +2517,14 @@ glx:
     <function name="GetTexParameterfv" offset="282">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx sop="136"/>
     </function>
 
     <function name="GetTexParameteriv" offset="283">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx sop="137"/>
     </function>
 
@@ -2532,7 +2532,7 @@ glx:
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx sop="138"/>
     </function>
 
@@ -2540,7 +2540,7 @@ glx:
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx sop="139"/>
     </function>
 
@@ -2970,7 +2970,7 @@ glx:
     <function name="AreTexturesResident" offset="322">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="textures" type="const GLuint *" count="n"/>
-        <param name="residences" type="GLboolean *" output="true"/>
+        <param name="residences" type="GLboolean *" output="true" count="n"/>
         <return type="GLboolean"/>
         <glx sop="143" always_array="true"/>
     </function>
@@ -2989,7 +2989,7 @@ glx:
 
     <function name="GenTextures" offset="328">
         <param name="n" type="GLsizei" counter="true"/>
-        <param name="textures" type="GLuint *" output="true"/>
+        <param name="textures" type="GLuint *" output="true" count="n"/>
         <glx sop="145" always_array="true"/>
     </function>
 
@@ -3312,14 +3312,14 @@ glx:
     <function name="GetColorTableParameterfv" offset="344">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx sop="148"/>
     </function>
 
     <function name="GetColorTableParameteriv" offset="345">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx sop="149"/>
     </function>
 
@@ -3421,14 +3421,14 @@ glx:
     <function name="GetConvolutionParameterfv" offset="357">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx sop="151"/>
     </function>
 
     <function name="GetConvolutionParameteriv" offset="358">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx sop="152"/>
     </function>
 
@@ -3466,14 +3466,14 @@ glx:
     <function name="GetHistogramParameterfv" offset="362">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx sop="155"/>
     </function>
 
     <function name="GetHistogramParameteriv" offset="363">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx sop="156"/>
     </function>
 
@@ -3489,14 +3489,14 @@ glx:
     <function name="GetMinmaxParameterfv" offset="365">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx sop="158"/>
     </function>
 
     <function name="GetMinmaxParameteriv" offset="366">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx sop="159"/>
     </function>
 
@@ -4426,14 +4426,14 @@ glx:
     </function>
 
     <function name="GenBuffers" alias="GenBuffersARB">
-        <param name="n" type="GLsizei"/>
-        <param name="buffer" type="GLuint *" output="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="buffer" type="GLuint *" output="true" count="n"/>
     </function>
 
     <function name="GetBufferParameteriv" alias="GetBufferParameterivARB">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
     </function>
 
     <function name="GetBufferPointerv" alias="GetBufferPointervARB">
@@ -4466,8 +4466,8 @@ glx:
     </function>
 
     <function name="GenQueries" alias="GenQueriesARB">
-        <param name="n" type="GLsizei"/>
-        <param name="ids" type="GLuint *" output="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="ids" type="GLuint *" output="true" count="n"/>
     </function>
 
     <function name="DeleteQueries" alias="DeleteQueriesARB">
@@ -4492,19 +4492,19 @@ glx:
     <function name="GetQueryiv" alias="GetQueryivARB">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
     </function>
 
     <function name="GetQueryObjectiv" alias="GetQueryObjectivARB">
         <param name="id" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
     </function>
 
     <function name="GetQueryObjectuiv" alias="GetQueryObjectuivARB">
         <param name="id" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLuint *" output="true"/>
+        <param name="params" type="GLuint *" output="true" variable_param="pname"/>
     </function>
 </category>
 
@@ -4889,8 +4889,8 @@ glx:
         <param name="height" type="GLsizei"/>
         <param name="depth" type="GLsizei"/>
         <param name="border" type="GLint"/>
-        <param name="imageSize" type="GLsizei"/>
-        <param name="data" type="const GLvoid *"/>
+        <param name="imageSize" type="GLsizei" counter="true"/>
+        <param name="data" type="const GLvoid *" count="imageSize"/>
         <glx rop="216" handcode="client"/>
     </function>
 
@@ -4901,8 +4901,8 @@ glx:
         <param name="width" type="GLsizei"/>
         <param name="height" type="GLsizei"/>
         <param name="border" type="GLint"/>
-        <param name="imageSize" type="GLsizei"/>
-        <param name="data" type="const GLvoid *"/>
+        <param name="imageSize" type="GLsizei" counter="true"/>
+        <param name="data" type="const GLvoid *" count="imageSize"/>
         <glx rop="215" handcode="client"/>
     </function>
 
@@ -4912,8 +4912,8 @@ glx:
         <param name="internalformat" type="GLenum"/>
         <param name="width" type="GLsizei"/>
         <param name="border" type="GLint"/>
-        <param name="imageSize" type="GLsizei"/>
-        <param name="data" type="const GLvoid *"/>
+        <param name="imageSize" type="GLsizei" counter="true"/>
+        <param name="data" type="const GLvoid *" count="imageSize"/>
         <glx rop="214" handcode="client"/>
     </function>
 
@@ -4927,8 +4927,8 @@ glx:
         <param name="height" type="GLsizei"/>
         <param name="depth" type="GLsizei"/>
         <param name="format" type="GLenum"/>
-        <param name="imageSize" type="GLsizei"/>
-        <param name="data" type="const GLvoid *"/>
+        <param name="imageSize" type="GLsizei" counter="true"/>
+        <param name="data" type="const GLvoid *" count="imageSize"/>
         <glx rop="219" handcode="client"/>
     </function>
 
@@ -4940,8 +4940,8 @@ glx:
         <param name="width" type="GLsizei"/>
         <param name="height" type="GLsizei"/>
         <param name="format" type="GLenum"/>
-        <param name="imageSize" type="GLsizei"/>
-        <param name="data" type="const GLvoid *"/>
+        <param name="imageSize" type="GLsizei" counter="true"/>
+        <param name="data" type="const GLvoid *" count="imageSize"/>
         <glx rop="218" handcode="client"/>
     </function>
 
@@ -4951,8 +4951,8 @@ glx:
         <param name="xoffset" type="GLint"/>
         <param name="width" type="GLsizei"/>
         <param name="format" type="GLenum"/>
-        <param name="imageSize" type="GLsizei"/>
-        <param name="data" type="const GLvoid *"/>
+        <param name="imageSize" type="GLsizei" counter="true"/>
+        <param name="data" type="const GLvoid *" count="imageSize"/>
         <glx rop="217" handcode="client"/>
     </function>
 
@@ -5669,8 +5669,8 @@ glx:
     </function>
 
     <function name="GenProgramsARB" alias="GenProgramsNV">
-        <param name="n" type="GLsizei"/>
-        <param name="programs" type="GLuint *" output="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="programs" type="GLuint *" output="true" count="n"/>
     </function>
 
     <function name="IsProgramARB" alias="IsProgramNV">
@@ -5884,8 +5884,8 @@ glx:
     </function>
 
     <function name="GenBuffersARB" offset="692">
-        <param name="n" type="GLsizei"/>
-        <param name="buffer" type="GLuint *" output="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="buffer" type="GLuint *" output="true" count="n"/>
         <glx ignore="true"/>
     </function>
 
@@ -5939,8 +5939,8 @@ glx:
     <enum name="SAMPLES_PASSED_ARB"                       value="0x8914"/>
 
     <function name="GenQueriesARB" offset="700">
-        <param name="n" type="GLsizei"/>
-        <param name="ids" type="GLuint *" output="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="ids" type="GLuint *" output="true" count="n"/>
         <glx ignore="true"/>
     </function>
 
@@ -6664,14 +6664,14 @@ glx:
     <function name="GetHistogramParameterfvEXT" offset="418">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx vendorpriv="6" ignore="true"/>
     </function>
 
     <function name="GetHistogramParameterivEXT" offset="419">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx vendorpriv="7" ignore="true"/>
     </function>
 
@@ -6687,14 +6687,14 @@ glx:
     <function name="GetMinmaxParameterfvEXT" offset="421">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx vendorpriv="9" ignore="true"/>
     </function>
 
     <function name="GetMinmaxParameterivEXT" offset="422">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx vendorpriv="10" ignore="true"/>
     </function>
 
@@ -6847,14 +6847,14 @@ glx:
     <function name="GetConvolutionParameterfvEXT" offset="424">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx vendorpriv="2" ignore="true"/>
     </function>
 
     <function name="GetConvolutionParameterivEXT" offset="425">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx vendorpriv="3" ignore="true"/>
     </function>
 
@@ -6921,14 +6921,14 @@ glx:
     <function name="GetColorTableParameterfvSGI" offset="428">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx vendorpriv="4099" ignore="true"/>
     </function>
 
     <function name="GetColorTableParameterivSGI" offset="429">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx vendorpriv="4100" ignore="true"/>
     </function>
 </category>
@@ -6960,13 +6960,13 @@ glx:
 
     <function name="GetPixelTexGenParameterivSGIS" offset="435">
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
     <function name="GetPixelTexGenParameterfvSGIS" offset="436">
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 </category>
@@ -7011,7 +7011,7 @@ glx:
     <function name="AreTexturesResidentEXT" offset="439">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="textures" type="const GLuint *" count="n"/>
-        <param name="residences" type="GLboolean *" output="true"/>
+        <param name="residences" type="GLboolean *" output="true" count="n"/>
         <return type="GLboolean"/>
         <glx vendorpriv="11" always_array="true"/>
     </function>
@@ -7025,13 +7025,14 @@ glx:
          do not have the same protocol!
     -->
     <function name="DeleteTexturesEXT" alias="DeleteTextures">
-        <param name="n" type="GLsizei"/>
-        <param name="textures" type="const GLuint *"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="textures" type="const GLuint *" count="n"/>
+        <glx vendorpriv="12"/>
     </function>
 
     <function name="GenTexturesEXT" offset="440">
         <param name="n" type="GLsizei" counter="true"/>
-        <param name="textures" type="GLuint *" output="true"/>
+        <param name="textures" type="GLuint *" output="true" count="n"/>
         <glx vendorpriv="13" always_array="true"/>
     </function>
 
@@ -7428,13 +7429,13 @@ glx:
     <function name="GetImageTransformParameterivHP" offset="?">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
     </function>
 
     <function name="GetImageTransformParameterfvHP" offset="?">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
     </function>
 </category>
 
@@ -7531,14 +7532,14 @@ glx:
     <function name="GetColorTableParameterivEXT" offset="551">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
     <function name="GetColorTableParameterfvEXT" offset="552">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 </category>
@@ -7547,14 +7548,14 @@ glx:
     <function name="GetListParameterfvSGIX" offset="470">
         <param name="list" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
     <function name="GetListParameterivSGIX" offset="471">
         <param name="list" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
@@ -7622,6 +7623,8 @@ glx:
     <enum name="SHADOW_AMBIENT_SGIX"           count="1"  value="0x80BF">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
     </enum>
 </category>
 
@@ -7774,28 +7777,28 @@ glx:
     <function name="GetFragmentLightfvSGIX" offset="489">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
     <function name="GetFragmentLightivSGIX" offset="490">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
     <function name="GetFragmentMaterialfvSGIX" offset="491">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
     <function name="GetFragmentMaterialivSGIX" offset="492">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
@@ -9156,8 +9159,8 @@ glx:
     </function>
 
     <function name="GenFencesNV" offset="648">
-        <param name="n" type="GLsizei"/>
-        <param name="fences" type="GLuint *" output="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="fences" type="GLuint *" output="true" counter="n"/>
         <glx ignore="true"/>
     </function>
 
@@ -9318,8 +9321,8 @@ glx:
     </function>
 
     <function name="GenProgramsNV" offset="582">
-        <param name="n" type="GLsizei"/>
-        <param name="ids" type="GLuint *" output="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="ids" type="GLuint *" output="true" counter="n"/>
         <glx vendorpriv="1295" ignore="true"/>
     </function>
 

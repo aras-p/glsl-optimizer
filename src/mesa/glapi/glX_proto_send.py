@@ -339,7 +339,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 		if f.fn_return_type != 'void':
 			print '    %s retval = (%s) 0;' % (f.fn_return_type, f.fn_return_type)
 
-		if f.count_parameters != None:
+		if f.count_parameters and not f.output_parameter():
 			print '    const GLuint compsize = __gl%s_size(%s);' % (f.name, f.count_parameters)
 		elif f.image:
 			[dim, w, h, d, junk] = f.dimensions()
