@@ -34,11 +34,12 @@ DRIVER_SOURCES = [.x]glxapi.c [.x]fakeglx.c [.x]xfonts.c \
 [.osmesa]osmesa.c \
 [.svga]svgamesa.c \
 [.fx]fxapi.c [.fx]fxdd.c [.fx]fxddtex.c [.fx]fxvsetup.c [.fx]fxsetup.c \
-[.fx]fxtrifuncs.c [.fx]fxclip.c [.fx]fxfastpath.c [.fx]fxpipeline.c\
-[.fx]fxrender.c [.fx]fxtexman.c [.fx]fxddspan.c [.fx]fxsanity.c\
+[.fx]fxtrifuncs.c [.fx]fxfastpath.c [.fx]fxpipeline.c\
+[.fx]fxtexman.c [.fx]fxddspan.c\
 [.fx]fxglidew.c
 
 RASTER_SOURCES = [.swrast]s_aatriangle.c \
+[.swrast]s_aaline.c \
 [.swrast]s_accum.c \
 [.swrast]s_alpha.c \
 [.swrast]s_alphabuf.c \
@@ -50,6 +51,7 @@ RASTER_SOURCES = [.swrast]s_aatriangle.c \
 [.swrast]s_depth.c \
 [.swrast]s_drawpix.c \
 [.swrast]s_fog.c \
+[.swrast]s_feedback.c \
 [.swrast]s_imaging.c \
 [.swrast]s_lines.c \
 [.swrast]s_logic.c \
@@ -64,7 +66,10 @@ RASTER_SOURCES = [.swrast]s_aatriangle.c \
 [.swrast]s_stencil.c \
 [.swrast]s_texture.c \
 [.swrast]s_triangle.c \
-[.swrast]s_zoom.c
+[.swrast]s_zoom.c \
+[.swrast_setup]ss_context.c \
+[.swrast_setup]ss_triangle.c \
+[.swrast_setup]ss_vb.c 
 
 ASM_SOURCES =
 
@@ -95,10 +100,10 @@ OBJECTS2=[.x]glxapi.obj,[.x]fakeglx.obj,[.x]xfonts.obj,\
 [.svga]svgamesa.obj
 
 OBJECTS5=[.fx]fxapi.obj,[.fx]fxdd.obj,[.fx]fxddtex.obj,[.fx]fxvsetup.obj,\
-[.fx]fxsetup.obj,[.fx]fxclip.obj,[.fx]fxfastpath.obj,[.fx]fxpipeline.obj
+[.fx]fxsetup.obj,[.fx]fxfastpath.obj,[.fx]fxpipeline.obj
 
-OBJECTS8=[.fx]fxtrifuncs.obj,[.fx]fxsanity.obj,[.fx]fxglidew.obj,\
-[.fx]fxrender.obj,[.fx]fxtexman.obj,[.fx]fxddspan.obj
+OBJECTS8=[.fx]fxtrifuncs.obj,[.fx]fxglidew.obj,\
+[.fx]fxtexman.obj,[.fx]fxddspan.obj
 
 OBJECTS9=[.swrast]s_aatriangle.obj,\
 [.swrast]s_accum.obj,\
@@ -123,12 +128,18 @@ OBJECTS10=[.swrast]s_drawpix.obj,\
 [.swrast]s_quads.obj
 
 OBJECTS11=[.swrast]s_readpix.obj,\
+[.swrast]s_aaline.obj,\
 [.swrast]s_scissor.obj,\
 [.swrast]s_span.obj,\
 [.swrast]s_stencil.obj,\
 [.swrast]s_texture.obj,\
 [.swrast]s_triangle.obj,\
+[.swrast]s_feedback.obj,\
 [.swrast]s_zoom.obj
+
+OBJECTS12=[.swrast_setup]ss_context.obj,\
+[.swrast_setup]ss_triangle.obj,\
+[.swrast_setup]ss_vb.obj 
 
 ##### RULES #####
 
@@ -138,7 +149,7 @@ VERSION=Mesa V3.4
 # Make the library
 $(LIBDIR)$(GL_LIB) : $(OBJECTS),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
 	$(OBJECTS5) $(OBJECTS8) $(OBJECTS7) $(OBJECTS6) $(OBJECTS9)\
-	$(OBJECTS10) $(OBJECTS11)
+	$(OBJECTS10) $(OBJECTS11) $(OBJECTS12)
 .ifdef SHARE
   @ WRITE_ SYS$OUTPUT "  generating mesagl1.opt"
   @ OPEN_/WRITE FILE  mesagl1.opt
@@ -158,6 +169,7 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
   @ WRITE_ FILE "$(OBJECTS9)"
   @ WRITE_ FILE "$(OBJECTS10)"
   @ WRITE_ FILE "$(OBJECTS11)"
+  @ WRITE_ FILE "$(OBJECTS12)"
   @ WRITE_ FILE "SYS$SHARE:DECW$XEXTLIBSHR/SHARE"
   @ WRITE_ FILE "SYS$SHARE:DECW$XLIBSHR/SHARE"
   @ CLOSE_ FILE
@@ -179,6 +191,7 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
   @ library $(GL_LIB) $(OBJECTS9)
   @ library $(GL_LIB) $(OBJECTS10)
   @ library $(GL_LIB) $(OBJECTS11)
+  @ library $(GL_LIB) $(OBJECTS12)
 .endif
   @ rename $(GL_LIB)* $(LIBDIR)
 
@@ -201,7 +214,7 @@ imports.obj : imports.c
 [.x]xm_api.obj : [.x]xm_api.c
 	$(CC) $(CFLAGS) /obj=[.x]xm_api.obj [.x]xm_api.c
 [.x]xm_dd.obj : [.x]xm_dd.c
-	$(CC) $(CFLAGS) /obj=[.x]xm_dd.obj [.x]xm_dd.c
+	$(CC) $(CFLAGS)/nowarn /obj=[.x]xm_dd.obj [.x]xm_dd.c
 [.x]xm_line.obj : [.x]xm_line.c
 	$(CC) $(CFLAGS) /obj=[.x]xm_line.obj [.x]xm_line.c
 [.x]xm_span.obj : [.x]xm_span.c
@@ -214,8 +227,6 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.svga]svgamesa.obj [.svga]svgamesa.c
 [.fx]fxapi.obj : [.fx]fxapi.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxapi.obj [.fx]fxapi.c
-[.fx]fxclip.obj : [.fx]fxclip.c
-	$(CC) $(CFLAGS) /obj=[.fx]fxclip.obj [.fx]fxclip.c
 [.fx]fxdd.obj : [.fx]fxdd.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxdd.obj [.fx]fxdd.c
 [.fx]fxddtex.obj : [.fx]fxddtex.c
@@ -224,16 +235,12 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxfastpath.obj [.fx]fxfastpath.c
 [.fx]fxpipeline.obj : [.fx]fxpipeline.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxpipeline.obj [.fx]fxpipeline.c
-[.fx]fxsanity.obj : [.fx]fxsanity.c
-	$(CC) $(CFLAGS) /obj=[.fx]fxsanity.obj [.fx]fxsanity.c
 [.fx]fxvsetup.obj : [.fx]fxvsetup.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxvsetup.obj [.fx]fxvsetup.c
 [.fx]fxsetup.obj : [.fx]fxsetup.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxsetup.obj [.fx]fxsetup.c
 [.fx]fxtrifuncs.obj : [.fx]fxtrifuncs.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxtrifuncs.obj [.fx]fxtrifuncs.c
-[.fx]fxrender.obj : [.fx]fxrender.c
-	$(CC) $(CFLAGS) /obj=[.fx]fxrender.obj [.fx]fxrender.c
 [.fx]fxtexman.obj : [.fx]fxtexman.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxtexman.obj [.fx]fxtexman.c
 [.fx]fxddspan.obj : [.fx]fxddspan.c
@@ -241,6 +248,8 @@ imports.obj : imports.c
 [.fx]fxglidew.obj : [.fx]fxglidew.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxglidew.obj [.fx]fxglidew.c
 
+[.swrast]s_aaline.obj : [.swrast]s_aaline.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_aaline.obj [.swrast]s_aaline.c
 [.swrast]s_aatriangle.obj : [.swrast]s_aatriangle.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_aatriangle.obj [.swrast]s_aatriangle.c
 [.swrast]s_accum.obj : [.swrast]s_accum.c
@@ -263,6 +272,8 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_depth.obj [.swrast]s_depth.c
 [.swrast]s_drawpix.obj : [.swrast]s_drawpix.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_drawpix.obj [.swrast]s_drawpix.c
+[.swrast]s_feedback.obj : [.swrast]s_feedback.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_feedback.obj [.swrast]s_feedback.c
 [.swrast]s_fog.obj : [.swrast]s_fog.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_fog.obj [.swrast]s_fog.c
 [.swrast]s_imaging.obj : [.swrast]s_imaging.c
@@ -295,5 +306,11 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_triangle.obj [.swrast]s_triangle.c
 [.swrast]s_zoom.obj : [.swrast]s_zoom.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_zoom.obj [.swrast]s_zoom.c
+[.swrast_setup]ss_context.obj : [.swrast_setup]ss_context.c
+	$(CC) $(CFLAGS) /obj=[.swrast_setup]ss_context.obj [.swrast_setup]ss_context.c
+[.swrast_setup]ss_triangle.obj : [.swrast_setup]ss_triangle.c
+	$(CC) $(CFLAGS) /obj=[.swrast_setup]ss_triangle.obj [.swrast_setup]ss_triangle.c
+[.swrast_setup]ss_vb.obj : [.swrast_setup]ss_vb.c
+	$(CC) $(CFLAGS) /obj=[.swrast_setup]ss_vb.obj [.swrast_setup]ss_vb.c
 
 .include mms_depend.
