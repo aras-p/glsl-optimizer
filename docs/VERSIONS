@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.112 2002/11/07 16:24:27 brianp Exp $
+$Id: VERSIONS,v 1.113 2002/11/07 16:37:12 brianp Exp $
 
 
 Mesa Version History
@@ -1073,4 +1073,6 @@ Mesa Version History
 	- FX (Glide) driver didn't compile
 	- setting GL_TEXTURE_BORDER_COLOR with glTexParameteriv() didn't work
 	- a few EXT functions, like glGenTexturesEXT, were no-ops
-	- OpenGL 1.4 glFogCoord functions were missing
+	- a few OpenGL 1.4 functions like glFogCoord*, glBlendFuncSeparate,
+	  glMultiDrawArrays and glMultiDrawElements were missing
+
