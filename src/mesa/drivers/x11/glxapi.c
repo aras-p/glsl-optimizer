@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.22 2001/05/24 19:06:21 brianp Exp $ */
+/* $Id: glxapi.c,v 1.23 2001/05/24 20:05:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -255,7 +255,7 @@ GLXContext glXGetCurrentContext(void)
 
 GLXDrawable glXGetCurrentDrawable(void)
 {
-   GLXContext gc = glXGetCurrentContext();
+   __GLXcontext *gc = (__GLXcontext *) glXGetCurrentContext();
    return gc ? gc->currentDrawable : 0;
 }
 
@@ -390,7 +390,7 @@ const char *glXQueryServerString(Display *dpy, int screen, int name)
 Display *glXGetCurrentDisplay(void)
 {
    /* Same code as in libGL's glxext.c */
-   GLXContext gc = __glXGetCurrentContext();
+   __GLXcontext *gc = (__GLXcontext *) glXGetCurrentContext();
    if (NULL == gc) return NULL;
    return gc->currentDpy;
 }
@@ -482,7 +482,7 @@ void glXDestroyWindow(Display *dpy, GLXWindow window)
 
 GLXDrawable glXGetCurrentReadDrawable(void)
 {
-   GLXContext gc = glXGetCurrentContext();
+   __GLXcontext *gc = (__GLXcontext *) glXGetCurrentContext();
    return gc ? gc->currentReadable : 0;
 }
 
@@ -674,7 +674,7 @@ void glXFreeContextEXT(Display *dpy, GLXContext context)
 /* stand-alone Mesa */
 GLXContextID glXGetContextIDEXT(const GLXContext context)
 {
-   return context->xid;
+   return ((__GLXcontext *) context)->xid;
 }
 #endif
 
