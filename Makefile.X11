@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.106 2004/01/10 22:14:51 brianp Exp $
+# $Id: Makefile.X11,v 1.107 2004/01/11 17:15:03 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  6.0
@@ -403,20 +403,20 @@ linux-solo:
 # Remove .o files, emacs backup files, etc.
 # XXX this should be cleaned up
 clean:
-	if ! [ -f src/mesa/depend      ] ; then touch src/mesa/depend      ; fi
-	if ! [ -f src/mesa/drivers/dri/r200/depend ];   then touch src/mesa/drivers/dri/r200/depend;   fi
-	if ! [ -f src/mesa/drivers/dri/r128/depend ];   then touch src/mesa/drivers/dri/r128/depend;   fi
-	if ! [ -f src/mesa/drivers/dri/radeon/depend ]; then touch src/mesa/drivers/dri/radeon/depend; fi
-	if ! [ -f src/mesa/drivers/dri/mga/depend ];    then touch src/mesa/drivers/dri/mga/depend;    fi
-	if ! [ -f src/mesa/drivers/dri/fb/depend ];     then touch src/mesa/drivers/dri/fb/depend;     fi
-	if ! [ -f src/glu/mesa/depend  ] ; then touch src/glu/mesa/depend  ; fi
-	if ! [ -f src/glu/sgi/depend   ] ; then touch src/glu/sgi/depend   ; fi
-	if ! [ -f src/glu/mini/depend  ] ; then touch src/glu/mini/depend  ; fi
-	if ! [ -f src/glut/glx/depend  ] ; then touch src/glut/glx/depend  ; fi
-	if ! [ -f src/glut/mini/depend ] ; then touch src/glut/mini/depend ; fi
-	if ! [ -f src/glx/mini/depend  ] ; then touch src/glx/mini/depend  ; fi
-	if ! [ -f progs/tests/depend   ] ; then touch progs/tests/depend   ; fi
-	if ! [ -f progs/miniglx/depend ] ; then touch progs/miniglx/depend ; fi
+#	if ! [ -f src/mesa/depend      ] ; then touch src/mesa/depend      ; fi
+#	if ! [ -f src/mesa/drivers/dri/r200/depend ];   then touch src/mesa/drivers/dri/r200/depend;   fi
+#	if ! [ -f src/mesa/drivers/dri/r128/depend ];   then touch src/mesa/drivers/dri/r128/depend;   fi
+#	if ! [ -f src/mesa/drivers/dri/radeon/depend ]; then touch src/mesa/drivers/dri/radeon/depend; fi
+#	if ! [ -f src/mesa/drivers/dri/mga/depend ];    then touch src/mesa/drivers/dri/mga/depend;    fi
+#	if ! [ -f src/mesa/drivers/dri/fb/depend ];     then touch src/mesa/drivers/dri/fb/depend;     fi
+#	if ! [ -f src/glu/mesa/depend  ] ; then touch src/glu/mesa/depend  ; fi
+#	if ! [ -f src/glu/sgi/depend   ] ; then touch src/glu/sgi/depend   ; fi
+#	if ! [ -f src/glu/mini/depend  ] ; then touch src/glu/mini/depend  ; fi
+#	if ! [ -f src/glut/glx/depend  ] ; then touch src/glut/glx/depend  ; fi
+#	if ! [ -f src/glut/mini/depend ] ; then touch src/glut/mini/depend ; fi
+#	if ! [ -f src/glx/mini/depend  ] ; then touch src/glx/mini/depend  ; fi
+#	if ! [ -f progs/tests/depend   ] ; then touch progs/tests/depend   ; fi
+#	if ! [ -f progs/miniglx/depend ] ; then touch progs/miniglx/depend ; fi
 	-rm -f include/GL/*~
 	cd src/mesa          && $(MAKE) -f Makefile.X11 $@ || true
 	cd src/mesa/drivers/dri/r200   && $(MAKE) -f Makefile.solo $@ || true
@@ -437,20 +437,20 @@ clean:
 	cd progs/samples     && $(MAKE) -f Makefile.X11 $@ || true
 	cd progs/tests       && $(MAKE) -f Makefile.X11 $@ || true
 	cd progs/miniglx     && $(MAKE) -f Makefile.solo $@ || true
-	if [ -f src/mesa/depend      ] ; then rm src/mesa/depend      ; fi
-	if [ -f src/mesa/drivers/dri/r200/depend ];   then rm -f src/mesa/drivers/dri/r200/depend;   fi
-	if [ -f src/mesa/drivers/dri/r128/depend ];   then rm -f src/mesa/drivers/dri/r128/depend;   fi
-	if [ -f src/mesa/drivers/dri/radeon/depend ]; then rm -f src/mesa/drivers/dri/radeon/depend; fi
-	if [ -f src/mesa/drivers/dri/mga/depend ];    then rm -f src/mesa/drivers/dri/mga/depend;    fi
-	if [ -f src/mesa/drivers/dri/fb/depend ];     then rm -f src/mesa/drivers/dri/fb/depend;     fi
-	if [ -f src/glu/mesa/depend  ] ; then rm -f src/glu/mesa/depend  ; fi
-	if [ -f src/glu/sgi/depend   ] ; then rm -f src/glu/sgi/depend   ; fi
-	if [ -f src/glu/mini/depend  ] ; then rm -f src/glu/mini/depend  ; fi
-	if [ -f src/glut/glx/depend  ] ; then rm -f src/glut/glx/depend  ; fi
-	if [ -f src/glut/mini/depend ] ; then rm -f src/glut/mini/depend ; fi
-	if [ -f src/glx/mini/depend  ] ; then rm -f src/glx/mini/depend  ; fi
-	if [ -f progs/tests/depend   ] ; then rm -f progs/tests/depend   ; fi
-	if [ -f progs/miniglx/depend ] ; then rm -f progs/miniglx/depend ; fi
+#	if [ -f src/mesa/depend      ] ; then rm src/mesa/depend      ; fi
+#	if [ -f src/mesa/drivers/dri/r200/depend ];   then rm -f src/mesa/drivers/dri/r200/depend;   fi
+#	if [ -f src/mesa/drivers/dri/r128/depend ];   then rm -f src/mesa/drivers/dri/r128/depend;   fi
+#	if [ -f src/mesa/drivers/dri/radeon/depend ]; then rm -f src/mesa/drivers/dri/radeon/depend; fi
+#	if [ -f src/mesa/drivers/dri/mga/depend ];    then rm -f src/mesa/drivers/dri/mga/depend;    fi
+#	if [ -f src/mesa/drivers/dri/fb/depend ];     then rm -f src/mesa/drivers/dri/fb/depend;     fi
+#	if [ -f src/glu/mesa/depend  ] ; then rm -f src/glu/mesa/depend  ; fi
+#	if [ -f src/glu/sgi/depend   ] ; then rm -f src/glu/sgi/depend   ; fi
+#	if [ -f src/glu/mini/depend  ] ; then rm -f src/glu/mini/depend  ; fi
+#	if [ -f src/glut/glx/depend  ] ; then rm -f src/glut/glx/depend  ; fi
+#	if [ -f src/glut/mini/depend ] ; then rm -f src/glut/mini/depend ; fi
+#	if [ -f src/glx/mini/depend  ] ; then rm -f src/glx/mini/depend  ; fi
+#	if [ -f progs/tests/depend   ] ; then rm -f progs/tests/depend   ; fi
+#	if [ -f progs/miniglx/depend ] ; then rm -f progs/miniglx/depend ; fi
 
 
 # Remove everything that can be remade
