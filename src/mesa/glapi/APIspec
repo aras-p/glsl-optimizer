@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.11 2002/09/06 03:30:20 brianp Exp $
+# $Id: APIspec,v 1.12 2002/11/07 16:20:20 brianp Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -5373,6 +5373,8 @@ category	GL_EXT_fog_coord
 offset		549
 
 
+# GL_EXT_coordinate_frame
+
 name		Tangent3bEXT
 return		void
 param		tx		GLbyte
@@ -7621,6 +7623,39 @@ return		void
 param		v		const GLshort *
 category	1.4
 alias		WindowPos3svMESA
+
+
+name		FogCoordf
+return		void
+param		coord		GLfloat
+category	1.4
+alias		FogCoordfEXT
+
+name		FogCoordfv
+return		void
+param		coord		const GLfloat *
+category	1.4
+alias		FogCoordfvEXT
+
+name		FogCoordd
+return		void
+param		coord		GLdouble
+category	1.4
+alias		FogCoorddEXT
+
+name		FogCoorddv
+return		void
+param		coord		const GLdouble *
+category	1.4
+alias		FogCoorddvEXT
+
+name		FogCoordPointer
+return		void
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.4
+alias		FogCoordPointerEXT
 
 
 # GL_EXT_stencil_two_side

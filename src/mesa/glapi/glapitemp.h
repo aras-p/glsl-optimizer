@@ -4179,6 +4179,31 @@ KEYWORD1 void KEYWORD2 NAME(WindowPos3sv)(const GLshort * v)
    DISPATCH(WindowPos3svMESA, (v), (F, "glWindowPos3sv(%p);\n", (void *) v));
 }
 
+KEYWORD1 void KEYWORD2 NAME(FogCoordf)(GLfloat coord)
+{
+   DISPATCH(FogCoordfEXT, (coord), (F, "glFogCoordf(%f);\n", coord));
+}
+
+KEYWORD1 void KEYWORD2 NAME(FogCoordfv)(const GLfloat * coord)
+{
+   DISPATCH(FogCoordfvEXT, (coord), (F, "glFogCoordfv(%p);\n", (void *) coord));
+}
+
+KEYWORD1 void KEYWORD2 NAME(FogCoordd)(GLdouble coord)
+{
+   DISPATCH(FogCoorddEXT, (coord), (F, "glFogCoordd(%f);\n", coord));
+}
+
+KEYWORD1 void KEYWORD2 NAME(FogCoorddv)(const GLdouble * coord)
+{
+   DISPATCH(FogCoorddvEXT, (coord), (F, "glFogCoorddv(%p);\n", (void *) coord));
+}
+
+KEYWORD1 void KEYWORD2 NAME(FogCoordPointer)(GLenum type, GLsizei stride, const GLvoid * pointer)
+{
+   DISPATCH(FogCoordPointerEXT, (type, stride, pointer), (F, "glFogCoordPointer(0x%x, %d, %p);\n", type, stride, (void *) pointer));
+}
+
 KEYWORD1 void KEYWORD2 NAME(ActiveStencilFaceEXT)(GLenum face)
 {
    DISPATCH(ActiveStencilFaceEXT, (face), (F, "glActiveStencilFaceEXT(0x%x);\n", face));
@@ -5108,6 +5133,11 @@ void *UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(WindowPos3iv),
    TABLE_ENTRY(WindowPos3s),
    TABLE_ENTRY(WindowPos3sv),
+   TABLE_ENTRY(FogCoordf),
+   TABLE_ENTRY(FogCoordfv),
+   TABLE_ENTRY(FogCoordd),
+   TABLE_ENTRY(FogCoorddv),
+   TABLE_ENTRY(FogCoordPointer),
 };
 #endif /*UNUSED_TABLE_NAME*/
 

@@ -4804,6 +4804,36 @@ GL_PREFIX(WindowPos3sv):
 	JMP(GL_OFFSET(_gloffset_WindowPos3svMESA))
 
 ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(FogCoordf))
+GL_PREFIX(FogCoordf):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_FogCoordfEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(FogCoordfv))
+GL_PREFIX(FogCoordfv):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_FogCoordfvEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(FogCoordd))
+GL_PREFIX(FogCoordd):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_FogCoorddEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(FogCoorddv))
+GL_PREFIX(FogCoorddv):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_FogCoorddvEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(FogCoordPointer))
+GL_PREFIX(FogCoordPointer):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_FogCoordPointerEXT))
+
+ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(ActiveStencilFaceEXT))
 GL_PREFIX(ActiveStencilFaceEXT):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)

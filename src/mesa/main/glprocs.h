@@ -801,6 +801,11 @@ static struct name_address_offset static_functions[] = {
    { "glWindowPos3iv", (GLvoid *) glWindowPos3iv, _gloffset_WindowPos3ivMESA },
    { "glWindowPos3s", (GLvoid *) glWindowPos3s, _gloffset_WindowPos3sMESA },
    { "glWindowPos3sv", (GLvoid *) glWindowPos3sv, _gloffset_WindowPos3svMESA },
+   { "glFogCoordf", (GLvoid *) glFogCoordf, _gloffset_FogCoordfEXT },
+   { "glFogCoordfv", (GLvoid *) glFogCoordfv, _gloffset_FogCoordfvEXT },
+   { "glFogCoordd", (GLvoid *) glFogCoordd, _gloffset_FogCoorddEXT },
+   { "glFogCoorddv", (GLvoid *) glFogCoorddv, _gloffset_FogCoorddvEXT },
+   { "glFogCoordPointer", (GLvoid *) glFogCoordPointer, _gloffset_FogCoordPointerEXT },
    { "glActiveStencilFaceEXT", (GLvoid *) glActiveStencilFaceEXT, _gloffset_ActiveStencilFaceEXT },
    { NULL, NULL }  /* end of list marker */
 };
