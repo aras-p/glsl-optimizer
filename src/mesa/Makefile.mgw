@@ -22,7 +22,7 @@
 
 # MinGW core makefile v1.3 for Mesa
 #
-#  Copyright (C) 2002 - Borca Daniel
+#  Copyright (C) 2002 - Daniel Borca
 #  Email : dborca@users.sourceforge.net
 #  Web   : http://www.geocities.com/dborca
 
@@ -189,7 +189,8 @@ clean:
 	-$(call UNLINK,tnl/*.o)
 	-$(call UNLINK,x86/*.o)
 	-$(call UNLINK,drivers/common/*.o)
+	-$(call UNLINK,drivers/glide/*.o)
+	-$(call UNLINK,drivers/windows/fx/*.o)
+	-$(call UNLINK,drivers/windows/fx/*.res)
 	-$(call UNLINK,drivers/windows/gdi/*.o)
 	-$(call UNLINK,drivers/windows/icd/*.o)
-	-$(call UNLINK,drivers/glide/*.o)
-	-$(call UNLINK,drivers/glide/*.res)
