@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.8 1999/11/28 20:07:33 brianp Exp $ */
+/* $Id: glxapi.c,v 1.9 1999/11/28 20:18:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -720,6 +720,8 @@ static struct name_address_pair GLX_functions[] = {
    { "glXDestroyContext", (GLvoid *) glXDestroyContext },
    { "glXDestroyGLXPixmap", (GLvoid *) glXDestroyGLXPixmap },
    { "glXGetConfig", (GLvoid *) glXGetConfig },
+   { "glXGetCurrentContext", (GLvoid *) glXGetCurrentContext },
+   { "glXGetCurrentDrawable", (GLvoid *) glXGetCurrentDrawable },
    { "glXIsDirect", (GLvoid *) glXIsDirect },
    { "glXMakeCurrent", (GLvoid *) glXMakeCurrent },
    { "glXQueryExtension", (GLvoid *) glXQueryExtension },
@@ -736,7 +738,7 @@ static struct name_address_pair GLX_functions[] = {
 #endif
 
 #ifdef _GLXAPI_VERSION_1_2
-   /*{ "glXGetCurrentDisplay", (GLvoid *) glXGetCurrentDisplay },*/
+   { "glXGetCurrentDisplay", (GLvoid *) glXGetCurrentDisplay },
 #endif
 
 #ifdef _GLXAPI_VERSION_1_3
@@ -748,6 +750,7 @@ static struct name_address_pair GLX_functions[] = {
    { "glXDestroyPbuffer", (GLvoid *) glXDestroyPbuffer },
    { "glXDestroyPixmap", (GLvoid *) glXDestroyPixmap },
    { "glXDestroyWindow", (GLvoid *) glXDestroyWindow },
+   { "glXGetCurrentReadDrawable", (GLvoid *) glXGetCurrentReadDrawable },
    { "glXGetFBConfigAttrib", (GLvoid *) glXGetFBConfigAttrib },
    { "glXGetSelectedEvent", (GLvoid *) glXGetSelectedEvent },
    { "glXGetVisualFromFBConfig", (GLvoid *) glXGetVisualFromFBConfig },
