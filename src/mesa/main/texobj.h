@@ -1,4 +1,4 @@
-/* $Id: texobj.h,v 1.8 2002/06/17 23:36:31 brianp Exp $ */
+/* $Id: texobj.h,v 1.9 2003/04/01 16:41:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,23 +38,28 @@
  */
 
 extern struct gl_texture_object *
-_mesa_alloc_texture_object( struct gl_shared_state *shared, GLuint name,
-                            GLenum target );
-
+_mesa_new_texture_object( GLcontext *ctx, GLuint name, GLenum target );
 
 extern void
-_mesa_free_texture_object( struct gl_shared_state *shared,
-                           struct gl_texture_object *t );
+_mesa_initialize_texture_object( struct gl_texture_object *obj,
+                                 GLuint name, GLenum target );
 
+extern void
+_mesa_delete_texture_object( GLcontext *ctx, struct gl_texture_object *obj );
+
+extern void
+_mesa_save_texture_object( GLcontext *ctx, struct gl_texture_object *obj );
+
+extern void
+_mesa_remove_texture_object( GLcontext *ctx, struct gl_texture_object *obj );
 
 extern void
 _mesa_copy_texture_object( struct gl_texture_object *dest,
                            const struct gl_texture_object *src );
 
-
 extern void
 _mesa_test_texobj_completeness( const GLcontext *ctx,
-                                struct gl_texture_object *t );
+                                struct gl_texture_object *obj );
 
 
 /*

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.194 2003/03/01 01:50:20 brianp Exp $ */
+/* $Id: context.c,v 1.195 2003/04/01 16:41:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -637,15 +637,14 @@ free_matrix_stack( struct matrix_stack *stack )
 /*
  * Allocate and initialize a shared context state structure.
  */
-static struct gl_shared_state *
-alloc_shared_state( void )
+static GLboolean
+alloc_shared_state( GLcontext *ctx )
 {
-   struct gl_shared_state *ss;
-   GLboolean outOfMemory;
-
-   ss = CALLOC_STRUCT(gl_shared_state);
+   struct gl_shared_state *ss = CALLOC_STRUCT(gl_shared_state);
    if (!ss)
-      return NULL;
+      return GL_FALSE;
+
+   ctx->Shared = ss;
 
    _glthread_INIT_MUTEX(ss->Mutex);
 
@@ -655,64 +654,66 @@ alloc_shared_state( void )
    ss->Programs = _mesa_NewHashTable();
 #endif
 
-   /* Default Texture objects */
-   outOfMemory = GL_FALSE;
+   ss->Default1D = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_1D);
+   if (!ss->Default1D)
+      goto cleanup;
 
-   ss->Default1D = _mesa_alloc_texture_object(ss, 0, GL_TEXTURE_1D);
-   if (!ss->Default1D) {
-      outOfMemory = GL_TRUE;
-   }
+   ss->Default2D = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_2D);
+   if (!ss->Default2D)
+      goto cleanup;
 
-   ss->Default2D = _mesa_alloc_texture_object(ss, 0, GL_TEXTURE_2D);
-   if (!ss->Default2D) {
-      outOfMemory = GL_TRUE;
-   }
+   ss->Default3D = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_3D);
+   if (!ss->Default3D)
+      goto cleanup;
 
-   ss->Default3D = _mesa_alloc_texture_object(ss, 0, GL_TEXTURE_3D);
-   if (!ss->Default3D) {
-      outOfMemory = GL_TRUE;
-   }
+   ss->DefaultCubeMap = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_CUBE_MAP_ARB);
+   if (!ss->DefaultCubeMap)
+      goto cleanup;
 
-   ss->DefaultCubeMap = _mesa_alloc_texture_object(ss, 0,
-                                                   GL_TEXTURE_CUBE_MAP_ARB);
-   if (!ss->DefaultCubeMap) {
-      outOfMemory = GL_TRUE;
-   }
+   ss->DefaultRect = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_RECTANGLE_NV);
+   if (!ss->DefaultRect)
+      goto cleanup;
 
-   ss->DefaultRect = _mesa_alloc_texture_object(ss, 0,
-                                                GL_TEXTURE_RECTANGLE_NV);
-   if (!ss->DefaultRect) {
-      outOfMemory = GL_TRUE;
-   }
-
-   if (!ss->DisplayList || !ss->TexObjects
-#if FEATURE_NV_vertex_program
-       || !ss->Programs
+#if 0
+   _mesa_save_texture_object(ctx, ss->Default1D);
+   _mesa_save_texture_object(ctx, ss->Default2D);
+   _mesa_save_texture_object(ctx, ss->Default3D);
+   _mesa_save_texture_object(ctx, ss->DefaultCubeMap);
+   _mesa_save_texture_object(ctx, ss->DefaultRect);
 #endif
-       || outOfMemory) {
-      /* Ran out of memory at some point.  Free everything and return NULL */
-      if (ss->DisplayList)
-         _mesa_DeleteHashTable(ss->DisplayList);
-      if (ss->TexObjects)
-         _mesa_DeleteHashTable(ss->TexObjects);
-      if (ss->Programs)
-         _mesa_DeleteHashTable(ss->Programs);
-      if (ss->Default1D)
-         _mesa_free_texture_object(ss, ss->Default1D);
-      if (ss->Default2D)
-         _mesa_free_texture_object(ss, ss->Default2D);
-      if (ss->Default3D)
-         _mesa_free_texture_object(ss, ss->Default3D);
-      if (ss->DefaultCubeMap)
-         _mesa_free_texture_object(ss, ss->DefaultCubeMap);
-      if (ss->DefaultRect)
-         _mesa_free_texture_object(ss, ss->DefaultRect);
-      FREE(ss);
-      return NULL;
-   }
-   else {
-      return ss;
-   }
+
+   /* Effectively bind the default textures to all texture units */
+   ss->Default1D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
+   ss->Default2D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
+   ss->Default3D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
+   ss->DefaultCubeMap->RefCount += MAX_TEXTURE_IMAGE_UNITS;
+   ss->DefaultRect->RefCount += MAX_TEXTURE_IMAGE_UNITS;
+
+   return GL_TRUE;
+
+ cleanup:
+   /* Ran out of memory at some point.  Free everything and return NULL */
+   if (ss->DisplayList)
+      _mesa_DeleteHashTable(ss->DisplayList);
+   if (ss->TexObjects)
+      _mesa_DeleteHashTable(ss->TexObjects);
+#if FEATURE_NV_vertex_program
+   if (ss->Programs)
+      _mesa_DeleteHashTable(ss->Programs);
+#endif
+   if (ss->Default1D)
+      (*ctx->Driver.DeleteTexture)(ctx, ss->Default1D);
+   if (ss->Default2D)
+      (*ctx->Driver.DeleteTexture)(ctx, ss->Default2D);
+   if (ss->Default3D)
+      (*ctx->Driver.DeleteTexture)(ctx, ss->Default3D);
+   if (ss->DefaultCubeMap)
+      (*ctx->Driver.DeleteTexture)(ctx, ss->DefaultCubeMap);
+   if (ss->DefaultRect)
+      (*ctx->Driver.DeleteTexture)(ctx, ss->DefaultRect);
+   if (ss)
+      _mesa_free(ss);
+   return GL_FALSE;
 }
 
 
@@ -735,11 +736,19 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_DeleteHashTable(ss->DisplayList);
 
    /* Free texture objects */
-   while (ss->TexObjectList) {
-      if (ctx->Driver.DeleteTexture)
-         (*ctx->Driver.DeleteTexture)( ctx, ss->TexObjectList );
-      /* this function removes from linked list too! */
-      _mesa_free_texture_object(ss, ss->TexObjectList);
+   ASSERT(ctx->Driver.DeleteTexture);
+   while (1) {
+      GLuint texName = _mesa_HashFirstEntry(ss->TexObjects);
+      if (texName) {
+         struct gl_texture_object *texObj = (struct gl_texture_object *)
+            _mesa_HashLookup(ss->TexObjects, texName);
+         ASSERT(texObj);
+         (*ctx->Driver.DeleteTexture)(ctx, texObj);
+         _mesa_HashRemove(ss->TexObjects, texName);
+      }
+      else {
+         break;
+      }
    }
    _mesa_DeleteHashTable(ss->TexObjects);
 
@@ -1529,99 +1538,48 @@ init_attrib_groups( GLcontext *ctx )
 
 
 
-/*
- * Allocate the proxy textures.  If we run out of memory part way through
- * the allocations clean up and return GL_FALSE.
- * Return:  GL_TRUE=success, GL_FALSE=failure
+/**
+ * Allocate the proxy textures for the given context.
+ * \param  ctx  the context to allocate proxies for.
+ * \return  GL_TRUE if success, GL_FALSE if failure.
  */
 static GLboolean
 alloc_proxy_textures( GLcontext *ctx )
 {
-   GLboolean out_of_memory;
-   GLint i;
+   ctx->Texture.Proxy1D = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_1D);
+   if (!ctx->Texture.Proxy1D)
+      goto cleanup;
 
-   ctx->Texture.Proxy1D = _mesa_alloc_texture_object(NULL, 0, GL_TEXTURE_1D);
-   if (!ctx->Texture.Proxy1D) {
-      return GL_FALSE;
-   }
+   ctx->Texture.Proxy2D = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_2D);
+   if (!ctx->Texture.Proxy2D)
+      goto cleanup;
 
-   ctx->Texture.Proxy2D = _mesa_alloc_texture_object(NULL, 0, GL_TEXTURE_2D);
-   if (!ctx->Texture.Proxy2D) {
-      _mesa_free_texture_object(NULL, ctx->Texture.Proxy1D);
-      return GL_FALSE;
-   }
+   ctx->Texture.Proxy3D = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_3D);
+   if (!ctx->Texture.Proxy3D)
+      goto cleanup;
 
-   ctx->Texture.Proxy3D = _mesa_alloc_texture_object(NULL, 0, GL_TEXTURE_3D);
-   if (!ctx->Texture.Proxy3D) {
-      _mesa_free_texture_object(NULL, ctx->Texture.Proxy1D);
-      _mesa_free_texture_object(NULL, ctx->Texture.Proxy2D);
-      return GL_FALSE;
-   }
+   ctx->Texture.ProxyCubeMap = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_CUBE_MAP_ARB);
+   if (!ctx->Texture.ProxyCubeMap)
+      goto cleanup;
 
-   ctx->Texture.ProxyCubeMap = _mesa_alloc_texture_object(NULL, 0,
-                                                     GL_TEXTURE_CUBE_MAP_ARB);
-   if (!ctx->Texture.ProxyCubeMap) {
-      _mesa_free_texture_object(NULL, ctx->Texture.Proxy1D);
-      _mesa_free_texture_object(NULL, ctx->Texture.Proxy2D);
-      _mesa_free_texture_object(NULL, ctx->Texture.Proxy3D);
-      return GL_FALSE;
-   }
+   ctx->Texture.ProxyRect = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_RECTANGLE_NV);
+   if (!ctx->Texture.ProxyRect)
+      goto cleanup;
 
-   ctx->Texture.ProxyRect = _mesa_alloc_texture_object(NULL, 0,
-                                                      GL_TEXTURE_RECTANGLE_NV);
-   if (!ctx->Texture.ProxyRect) {
-      _mesa_free_texture_object(NULL, ctx->Texture.Proxy1D);
-      _mesa_free_texture_object(NULL, ctx->Texture.Proxy2D);
-      _mesa_free_texture_object(NULL, ctx->Texture.Proxy3D);
-      _mesa_free_texture_object(NULL, ctx->Texture.ProxyCubeMap);
-      return GL_FALSE;
-   }
+   return GL_TRUE;
 
-   out_of_memory = GL_FALSE;
-   for (i=0;i<MAX_TEXTURE_LEVELS;i++) {
-      ctx->Texture.Proxy1D->Image[i] = _mesa_alloc_texture_image();
-      ctx->Texture.Proxy2D->Image[i] = _mesa_alloc_texture_image();
-      ctx->Texture.Proxy3D->Image[i] = _mesa_alloc_texture_image();
-      ctx->Texture.ProxyCubeMap->Image[i] = _mesa_alloc_texture_image();
-      if (!ctx->Texture.Proxy1D->Image[i]
-          || !ctx->Texture.Proxy2D->Image[i]
-          || !ctx->Texture.Proxy3D->Image[i]
-          || !ctx->Texture.ProxyCubeMap->Image[i]) {
-         out_of_memory = GL_TRUE;
-      }
-   }
-   ctx->Texture.ProxyRect->Image[0] = _mesa_alloc_texture_image();
-   if (!ctx->Texture.ProxyRect->Image[0])
-      out_of_memory = GL_TRUE;
-
-   if (out_of_memory) {
-      for (i=0;i<MAX_TEXTURE_LEVELS;i++) {
-         if (ctx->Texture.Proxy1D->Image[i]) {
-            _mesa_free_texture_image(ctx->Texture.Proxy1D->Image[i]);
-         }
-         if (ctx->Texture.Proxy2D->Image[i]) {
-            _mesa_free_texture_image(ctx->Texture.Proxy2D->Image[i]);
-         }
-         if (ctx->Texture.Proxy3D->Image[i]) {
-            _mesa_free_texture_image(ctx->Texture.Proxy3D->Image[i]);
-         }
-         if (ctx->Texture.ProxyCubeMap->Image[i]) {
-            _mesa_free_texture_image(ctx->Texture.ProxyCubeMap->Image[i]);
-         }
-      }
-      if (ctx->Texture.ProxyRect->Image[0]) {
-         _mesa_free_texture_image(ctx->Texture.ProxyRect->Image[0]);
-      }
-      _mesa_free_texture_object(NULL, ctx->Texture.Proxy1D);
-      _mesa_free_texture_object(NULL, ctx->Texture.Proxy2D);
-      _mesa_free_texture_object(NULL, ctx->Texture.Proxy3D);
-      _mesa_free_texture_object(NULL, ctx->Texture.ProxyCubeMap);
-      _mesa_free_texture_object(NULL, ctx->Texture.ProxyRect);
-      return GL_FALSE;
-   }
-   else {
-      return GL_TRUE;
-   }
+ cleanup:
+   if (ctx->Texture.Proxy1D)
+      (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.Proxy1D);
+   if (ctx->Texture.Proxy2D)
+      (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.Proxy2D);
+   if (ctx->Texture.Proxy3D)
+      (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.Proxy3D);
+   if (ctx->Texture.ProxyCubeMap)
+      (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.ProxyCubeMap);
+   if (ctx->Texture.ProxyRect)
+      (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.ProxyRect);
+   return GL_FALSE;
 }
 
 
@@ -1695,27 +1653,29 @@ _mesa_initialize_context( GLcontext *ctx,
    ctx->DrawBuffer = NULL;
    ctx->ReadBuffer = NULL;
 
+   /* Set these pointers to defaults now in case they're not set since
+    * we need them while creating the default textures.
+    */
+   if (!ctx->Driver.NewTextureObject)
+      ctx->Driver.NewTextureObject = _mesa_new_texture_object;
+   if (!ctx->Driver.DeleteTexture)
+      ctx->Driver.DeleteTexture = _mesa_delete_texture_object;
+   if (!ctx->Driver.NewTextureImage)
+      ctx->Driver.NewTextureImage = _mesa_new_texture_image;
+
    if (share_list) {
       /* share state with another context */
       ctx->Shared = share_list->Shared;
    }
    else {
       /* allocate new, unshared state */
-      ctx->Shared = alloc_shared_state();
-      if (!ctx->Shared) {
+      if (!alloc_shared_state( ctx )) {
          return GL_FALSE;
       }
    }
    _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
    ctx->Shared->RefCount++;
    _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
-
-   /* Effectively bind the default textures to all texture units */
-   ctx->Shared->Default1D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
-   ctx->Shared->Default2D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
-   ctx->Shared->Default3D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
-   ctx->Shared->DefaultCubeMap->RefCount += MAX_TEXTURE_IMAGE_UNITS;
-   ctx->Shared->DefaultRect->RefCount += MAX_TEXTURE_IMAGE_UNITS;
 
    init_attrib_groups( ctx );
 
@@ -1837,6 +1797,7 @@ _mesa_initialize_context( GLcontext *ctx,
    _glapi_add_entrypoint("glGetFenceivNV", 651);
    _glapi_add_entrypoint("glFinishFenceNV", 652);
    _glapi_add_entrypoint("glSetFenceNV", 653);
+   /* XXX add NV_fragment_program and ARB_vertex_program functions */
 
    /* Find the larger of Mesa's dispatch table and libGL's dispatch table.
     * In practice, this'll be the same for stand-alone Mesa.  But for DRI
@@ -1997,11 +1958,11 @@ _mesa_free_context_data( GLcontext *ctx )
    FREE( ctx->_ShineTabList );
 
    /* Free proxy texture objects */
-   _mesa_free_texture_object( NULL, ctx->Texture.Proxy1D );
-   _mesa_free_texture_object( NULL, ctx->Texture.Proxy2D );
-   _mesa_free_texture_object( NULL, ctx->Texture.Proxy3D );
-   _mesa_free_texture_object( NULL, ctx->Texture.ProxyCubeMap );
-   _mesa_free_texture_object( NULL, ctx->Texture.ProxyRect );
+   (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy1D );
+   (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy2D );
+   (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy3D );
+   (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.ProxyCubeMap );
+   (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.ProxyRect );
 
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
       _mesa_free_colortable_data( &ctx->Texture.Unit[i].ColorTable );

@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.66 2003/03/10 00:26:24 brianp Exp $ */
+/* $Id: texobj.c,v 1.67 2003/04/01 16:41:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,23 +37,37 @@
 #include "mtypes.h"
 
 
-/*
- * Allocate a new texture object and add it to the linked list of texture
- * objects.  If name>0 then also insert the new texture object into the hash
- * table.
- * Input:  shared - the shared GL state structure to contain the texture object
- *         name - integer name for the texture object
- *         target - either GL_TEXTURE_1D, GL_TEXTURE_2D, GL_TEXTURE_3D,
- *                  GL_TEXTURE_CUBE_MAP_ARB or GL_TEXTURE_RECTANGLE_NV
- *                      zero is ok for the sake of GenTextures()
- * Return:  pointer to new texture object
+/**
+ * Allocate and initialize a new texture object
+ * Called via ctx->Driver.NewTextureObject, unless overridden by a device
+ * driver.
+ * \param ctx  the rendering context
+ * \param name  the integer name for the texture object
+ * \param target  either GL_TEXTURE_1D, GL_TEXTURE_2D, GL_TEXTURE_3D,
+ *                GL_TEXTURE_CUBE_MAP_ARB or GL_TEXTURE_RECTANGLE_NV
+ *                zero is ok for the sake of GenTextures()
+ * \return  pointer to new texture object
  */
 struct gl_texture_object *
-_mesa_alloc_texture_object( struct gl_shared_state *shared,
-			    GLuint name, GLenum target )
+_mesa_new_texture_object( GLcontext *ctx, GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
+   obj = CALLOC_STRUCT(gl_texture_object);
+   _mesa_initialize_texture_object(obj, name, target);
+   return obj;
+}
 
+
+/**
+ * Initialize a texture object to default values.
+ * \param obj  the texture object
+ * \param name  the texture name
+ * \param target  the texture target
+ */
+void
+_mesa_initialize_texture_object( struct gl_texture_object *obj,
+                                 GLuint name, GLenum target )
+{
    ASSERT(target == 0 ||
           target == GL_TEXTURE_1D ||
           target == GL_TEXTURE_2D ||
@@ -61,114 +75,124 @@ _mesa_alloc_texture_object( struct gl_shared_state *shared,
           target == GL_TEXTURE_CUBE_MAP_ARB ||
           target == GL_TEXTURE_RECTANGLE_NV);
 
-   obj = CALLOC_STRUCT(gl_texture_object);
-
-   if (obj) {
-      /* init the non-zero fields */
-      _glthread_INIT_MUTEX(obj->Mutex);
-      obj->RefCount = 1;
-      obj->Name = name;
-      obj->Target = target;
-      obj->Priority = 1.0F;
-      if (target == GL_TEXTURE_RECTANGLE_NV) {
-         obj->WrapS = GL_CLAMP_TO_EDGE;
-         obj->WrapT = GL_CLAMP_TO_EDGE;
-         obj->WrapR = GL_CLAMP_TO_EDGE;
-         obj->MinFilter = GL_LINEAR;
-      }
-      else {
-         obj->WrapS = GL_REPEAT;
-         obj->WrapT = GL_REPEAT;
-         obj->WrapR = GL_REPEAT;
-         obj->MinFilter = GL_NEAREST_MIPMAP_LINEAR;
-      }
-      obj->MagFilter = GL_LINEAR;
-      obj->MinLod = -1000.0;
-      obj->MaxLod = 1000.0;
-      obj->BaseLevel = 0;
-      obj->MaxLevel = 1000;
-      obj->MaxAnisotropy = 1.0;
-      obj->CompareFlag = GL_FALSE;                      /* SGIX_shadow */
-      obj->CompareOperator = GL_TEXTURE_LEQUAL_R_SGIX;  /* SGIX_shadow */
-      obj->CompareMode = GL_LUMINANCE;    /* ARB_shadow */
-      obj->CompareFunc = GL_LEQUAL;       /* ARB_shadow */
-      obj->DepthMode = GL_LUMINANCE;      /* ARB_depth_texture */
-      obj->ShadowAmbient = 0.0F;          /* ARB/SGIX_shadow_ambient */
-      _mesa_init_colortable(&obj->Palette);
-
-      /* insert into linked list */
-      if (shared) {
-         _glthread_LOCK_MUTEX(shared->Mutex);
-         obj->Next = shared->TexObjectList;
-         shared->TexObjectList = obj;
-         _glthread_UNLOCK_MUTEX(shared->Mutex);
-      }
-
-      if (name > 0) {
-         /* insert into hash table */
-         _mesa_HashInsert(shared->TexObjects, name, obj);
-      }
+   /* init the non-zero fields */
+   _glthread_INIT_MUTEX(obj->Mutex);
+   obj->RefCount = 1;
+   obj->Name = name;
+   obj->Target = target;
+   obj->Priority = 1.0F;
+   if (target == GL_TEXTURE_RECTANGLE_NV) {
+      obj->WrapS = GL_CLAMP_TO_EDGE;
+      obj->WrapT = GL_CLAMP_TO_EDGE;
+      obj->WrapR = GL_CLAMP_TO_EDGE;
+      obj->MinFilter = GL_LINEAR;
    }
-   return obj;
+   else {
+      obj->WrapS = GL_REPEAT;
+      obj->WrapT = GL_REPEAT;
+      obj->WrapR = GL_REPEAT;
+      obj->MinFilter = GL_NEAREST_MIPMAP_LINEAR;
+   }
+   obj->MagFilter = GL_LINEAR;
+   obj->MinLod = -1000.0;
+   obj->MaxLod = 1000.0;
+   obj->BaseLevel = 0;
+   obj->MaxLevel = 1000;
+   obj->MaxAnisotropy = 1.0;
+   obj->CompareFlag = GL_FALSE;                      /* SGIX_shadow */
+   obj->CompareOperator = GL_TEXTURE_LEQUAL_R_SGIX;  /* SGIX_shadow */
+   obj->CompareMode = GL_LUMINANCE;    /* ARB_shadow */
+   obj->CompareFunc = GL_LEQUAL;       /* ARB_shadow */
+   obj->DepthMode = GL_LUMINANCE;      /* ARB_depth_texture */
+   obj->ShadowAmbient = 0.0F;          /* ARB/SGIX_shadow_ambient */
+   _mesa_init_colortable(&obj->Palette);
 }
 
 
 /*
- * Deallocate a texture object struct and remove it from the given
- * shared GL state.
- * Input:  shared - the shared GL state to which the object belongs
- *         t - the texture object to delete
+ * Deallocate a texture object.  It should have already been removed from
+ * the texture object pool.
+ * \param texObj  the texture object to deallocate
  */
-void _mesa_free_texture_object( struct gl_shared_state *shared,
-                                struct gl_texture_object *t )
+void
+_mesa_delete_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
 {
-   struct gl_texture_object *tprev, *tcurr;
+   GLuint i;
 
-   assert(t);
+   (void) ctx;
 
-   /* unlink t from the linked list */
-   if (shared) {
-      _glthread_LOCK_MUTEX(shared->Mutex);
-      tprev = NULL;
-      tcurr = shared->TexObjectList;
-      while (tcurr) {
-         if (tcurr==t) {
-            if (tprev) {
-               tprev->Next = t->Next;
-            }
-            else {
-               shared->TexObjectList = t->Next;
-            }
-            break;
-         }
-         tprev = tcurr;
-         tcurr = tcurr->Next;
-      }
-      _glthread_UNLOCK_MUTEX(shared->Mutex);
-   }
+   assert(texObj);
 
-   if (t->Name) {
-      /* remove from hash table */
-      _mesa_HashRemove(shared->TexObjects, t->Name);
-   }
-
-   _mesa_free_colortable_data(&t->Palette);
+   _mesa_free_colortable_data(&texObj->Palette);
 
    /* free the texture images */
-   {
-      GLuint i;
-      for (i=0;i<MAX_TEXTURE_LEVELS;i++) {
-         if (t->Image[i]) {
-            _mesa_free_texture_image( t->Image[i] );
-         }
+   for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
+      if (texObj->Image[i]) {
+         _mesa_delete_texture_image( texObj->Image[i] );
       }
    }
 
    /* destroy the mutex -- it may have allocated memory (eg on bsd) */
-   _glthread_DESTROY_MUTEX(t->Mutex);
+   _glthread_DESTROY_MUTEX(texObj->Mutex);
 
    /* free this object */
-   FREE( t );
+   _mesa_free(texObj);
+}
+
+
+/**
+ * Add the given texture object to the texture object pool.
+ */
+void
+_mesa_save_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
+{
+   /* insert into linked list */
+   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+   texObj->Next = ctx->Shared->TexObjectList;
+   ctx->Shared->TexObjectList = texObj;
+   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+
+   if (texObj->Name > 0) {
+      /* insert into hash table */
+      _mesa_HashInsert(ctx->Shared->TexObjects, texObj->Name, texObj);
+   }
+}
+
+
+/**
+ * Remove the given texture object from the texture object pool.
+ * Do not deallocate the texture object though.
+ */
+void
+_mesa_remove_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
+{
+   struct gl_texture_object *tprev, *tcurr;
+
+   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+
+   /* unlink from the linked list */
+   tprev = NULL;
+   tcurr = ctx->Shared->TexObjectList;
+   while (tcurr) {
+      if (tcurr == texObj) {
+         if (tprev) {
+            tprev->Next = texObj->Next;
+         }
+         else {
+            ctx->Shared->TexObjectList = texObj->Next;
+         }
+         break;
+      }
+      tprev = tcurr;
+      tcurr = tcurr->Next;
+   }
+
+   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+
+   if (texObj->Name > 0) {
+      /* remove from hash table */
+      _mesa_HashRemove(ctx->Shared->TexObjects, texObj->Name);
+   }
 }
 
 
@@ -531,10 +555,16 @@ _mesa_GenTextures( GLsizei n, GLuint *texName )
    }
 
    /* Allocate new, empty texture objects */
-   for (i=0;i<n;i++) {
+   for (i = 0; i < n; i++) {
+      struct gl_texture_object *texObj;
       GLuint name = first + i;
       GLenum target = 0;
-      (void) _mesa_alloc_texture_object( ctx->Shared, name, target);
+      texObj = (*ctx->Driver.NewTextureObject)( ctx, name, target);
+      if (!texObj) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenTextures");
+         return;
+      }
+      _mesa_save_texture_object(ctx, texObj);
    }
 
    _glthread_UNLOCK_MUTEX(GenTexturesLock);
@@ -610,9 +640,9 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *texName)
 
             if (delObj->RefCount == 0) {
                ASSERT(delObj->Name != 0);
-               if (ctx->Driver.DeleteTexture)
-                  (*ctx->Driver.DeleteTexture)( ctx, delObj );
-               _mesa_free_texture_object(ctx->Shared, delObj);
+               _mesa_remove_texture_object(ctx, delObj);
+               ASSERT(ctx->Driver.DeleteTexture);
+               (*ctx->Driver.DeleteTexture)(ctx, delObj);
             }
          }
       }
@@ -717,12 +747,12 @@ _mesa_BindTexture( GLenum target, GLuint texName )
       }
       else {
          /* if this is a new texture id, allocate a texture object now */
-	 newTexObj = _mesa_alloc_texture_object( ctx->Shared, texName,
-						 target);
+	 newTexObj = (*ctx->Driver.NewTextureObject)(ctx, texName, target);
          if (!newTexObj) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindTexture");
             return;
          }
+         _mesa_save_texture_object(ctx, newTexObj);
       }
       newTexObj->Target = target;
    }
@@ -762,10 +792,9 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    assert(oldTexObj->RefCount >= 0);
    if (oldTexObj->RefCount == 0) {
       assert(oldTexObj->Name != 0);
-      if (ctx->Driver.DeleteTexture) {
-         (*ctx->Driver.DeleteTexture)( ctx, oldTexObj );
-      }
-      _mesa_free_texture_object(ctx->Shared, oldTexObj);
+      _mesa_remove_texture_object(ctx, oldTexObj);
+      ASSERT(ctx->Driver.DeleteTexture);
+      (*ctx->Driver.DeleteTexture)( ctx, oldTexObj );
    }
 }
 

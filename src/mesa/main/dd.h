@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.74 2002/10/11 17:41:04 brianp Exp $ */
+/* $Id: dd.h,v 1.75 2003/04/01 16:41:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,7 +51,6 @@ struct gl_pixelstore_attrib;
  * Device Driver function table.
  */
 struct dd_function_table {
-
    const GLubyte * (*GetString)( GLcontext *ctx, GLenum name );
    /* Return a string as needed by glGetString().
     * Only the GL_RENDERER token must be implemented.  Otherwise,
@@ -354,13 +353,21 @@ struct dd_function_table {
    /* Called by glBindTexture().
     */
 
-   void (*CreateTexture)( GLcontext *ctx, struct gl_texture_object *tObj );
-   /* Called when a texture object is created.
+   struct gl_texture_object * (*NewTextureObject)( GLcontext *ctx, GLuint name,
+                                                   GLenum target );
+   /* Called to allocate a new texture object.
+    * NOTE: this function pointer should be initialized by drivers _BEFORE_
+    * calling _mesa_initialize_context() since context initialization involves
+    * allocating some texture objects!
     */
 
    void (*DeleteTexture)( GLcontext *ctx, struct gl_texture_object *tObj );
    /* Called when a texture object is about to be deallocated.  Driver
     * should free anything attached to the DriverData pointers.
+    */
+
+   struct gl_texture_image * (*NewTextureImage)( GLcontext *ctx );
+   /* Called to allocate a new texture image object.
     */
 
    GLboolean (*IsTextureResident)( GLcontext *ctx,

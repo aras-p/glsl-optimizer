@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.101 2003/03/04 19:16:47 brianp Exp $ */
+/* $Id: osmesa.c,v 1.102 2003/04/01 16:41:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,6 +47,7 @@
 #include "matrix.h"
 #include "mtypes.h"
 #include "texformat.h"
+#include "texobj.h"
 #include "texstore.h"
 #include "array_cache/acache.h"
 #include "swrast/swrast.h"
@@ -648,7 +649,7 @@ hook_in_driver_functions( GLcontext *ctx )
 
    ctx->Driver.Accum = _swrast_Accum;
    ctx->Driver.Bitmap = _swrast_Bitmap;
-   ctx->Driver.Clear = clear;  /* = _swrast_Clear */
+   ctx->Driver.Clear = clear;  /* uses _swrast_Clear */
    ctx->Driver.CopyPixels = _swrast_CopyPixels;
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
    ctx->Driver.ReadPixels = _swrast_ReadPixels;
@@ -669,6 +670,9 @@ hook_in_driver_functions( GLcontext *ctx )
    ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
    ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
    ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
+
+   ctx->Driver.NewTextureObject = _mesa_new_texture_object;
+   ctx->Driver.DeleteTexture = _mesa_delete_texture_object;
 
    ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
    ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;

@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.126 2003/03/01 01:50:22 brianp Exp $ */
+/* $Id: teximage.c,v 1.127 2003/04/01 16:41:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -415,19 +415,26 @@ _mesa_set_tex_image(struct gl_texture_object *tObj,
 
 
 
-/*
+/**
  * Return new gl_texture_image struct with all fields initialized to zero.
+ * Called via ctx->Driver.NewTextureImage() unless overriden by a device
+ * driver.
  */
 struct gl_texture_image *
-_mesa_alloc_texture_image( void )
+_mesa_new_texture_image( GLcontext *ctx )
 {
+   (void) ctx;
    return CALLOC_STRUCT(gl_texture_image);
 }
 
 
 
+/**
+ * Delete/free the given texture image and associated image data if it's not
+ * marked as client data.
+ */
 void
-_mesa_free_texture_image( struct gl_texture_image *teximage )
+_mesa_delete_texture_image( struct gl_texture_image *teximage )
 {
    if (teximage->Data && !teximage->IsClientData) {
       MESA_PBUFFER_FREE( teximage->Data );
@@ -573,6 +580,118 @@ _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
       default:
          _mesa_problem(ctx, "bad target in _mesa_select_tex_image()");
          return NULL;
+   }
+}
+
+
+/**
+ * Like _mesa_select_tex_image() but if the image doesn't exist, allocate
+ * it and install it.  Only return NULL if passed a bad parameter or run
+ * out of memory.
+ */
+struct gl_texture_image *
+_mesa_get_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
+                    GLenum target, GLint level)
+{
+   struct gl_texture_image *texImage;
+   texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+   if (!texImage) {
+      struct gl_texture_object *texObj;
+      texImage = ctx->Driver.NewTextureImage(ctx);
+      if (!texImage) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture image allocation");
+         return NULL;
+      }
+      texObj = _mesa_select_tex_object(ctx, texUnit, target);
+      ASSERT(texObj);
+      _mesa_set_tex_image(texObj, target, level, texImage);
+   }
+   return texImage;
+}
+
+
+/**
+ * Return pointer to the specified proxy texture image.
+ * Note that proxy textures are per-context, not per-texture unit.
+ * \return pointer to texture image or NULL if invalid target, invalid
+ *         level, or out of memory.
+ */
+struct gl_texture_image *
+_mesa_get_proxy_tex_image(GLcontext *ctx, GLenum target, GLint level)
+{
+   struct gl_texture_image *texImage;
+
+   if (level < 0 )
+      return NULL;
+
+   switch (target) {
+   case GL_PROXY_TEXTURE_1D:
+      if (level >= ctx->Const.MaxTextureLevels)
+         return NULL;
+      texImage = ctx->Texture.Proxy1D->Image[level];
+      if (!texImage) {
+         texImage = ctx->Driver.NewTextureImage(ctx);
+         if (!texImage) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
+            return NULL;
+         }
+         ctx->Texture.Proxy1D->Image[level] = texImage;
+      }
+      return texImage;
+   case GL_PROXY_TEXTURE_2D:
+      if (level >= ctx->Const.MaxTextureLevels)
+         return NULL;
+      texImage = ctx->Texture.Proxy2D->Image[level];
+      if (!texImage) {
+         texImage = ctx->Driver.NewTextureImage(ctx);
+         if (!texImage) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
+            return NULL;
+         }
+         ctx->Texture.Proxy2D->Image[level] = texImage;
+      }
+      return texImage;
+   case GL_PROXY_TEXTURE_3D:
+      if (level >= ctx->Const.Max3DTextureLevels)
+         return NULL;
+      texImage = ctx->Texture.Proxy3D->Image[level];
+      if (!texImage) {
+         texImage = ctx->Driver.NewTextureImage(ctx);
+         if (!texImage) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
+            return NULL;
+         }
+         ctx->Texture.Proxy3D->Image[level] = texImage;
+      }
+      return texImage;
+   case GL_PROXY_TEXTURE_CUBE_MAP:
+      if (level >= ctx->Const.MaxCubeTextureLevels)
+         return NULL;
+      texImage = ctx->Texture.ProxyCubeMap->Image[level];
+      if (!texImage) {
+         texImage = ctx->Driver.NewTextureImage(ctx);
+         if (!texImage) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
+            return NULL;
+         }
+         ctx->Texture.ProxyCubeMap->Image[level] = texImage;
+      }
+      return texImage;
+   case GL_PROXY_TEXTURE_RECTANGLE_NV:
+      if (level > 0)
+         return NULL;
+      texImage = ctx->Texture.ProxyRect->Image[level];
+      if (!texImage) {
+         texImage = ctx->Driver.NewTextureImage(ctx);
+         if (!texImage) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
+            return NULL;
+         }
+         ctx->Texture.ProxyRect->Image[level] = texImage;
+      }
+      return texImage;
+   default:
+      return NULL;
    }
 }
 
@@ -1167,10 +1286,8 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
 
    if (destTex->IsCompressed) {
       const struct gl_texture_unit *texUnit;
-      const struct gl_texture_object *texObj;
       const struct gl_texture_image *texImage;
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-      texObj = _mesa_select_tex_object(ctx, texUnit, target);
       texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
 
       if (target == GL_TEXTURE_2D || target == GL_PROXY_TEXTURE_2D) {
@@ -1637,15 +1754,11 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       texObj = _mesa_select_tex_object(ctx, texUnit, target);
-      texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+      texImage = _mesa_get_tex_image(ctx, texUnit, target, level);
 
       if (!texImage) {
-         texImage = _mesa_alloc_texture_image();
-         texObj->Image[level] = texImage;
-         if (!texImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
-            return;
-         }
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
+         return;
       }
       else if (texImage->Data && !texImage->IsClientData) {
          /* free the old texture data */
@@ -1690,9 +1803,10 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       }
       if (error) {
          /* if error, clear all proxy texture image parameters */
-         if (level >= 0 && level < ctx->Const.MaxTextureLevels) {
-            clear_teximage_fields(ctx->Texture.Proxy1D->Image[level]);
-         }
+         struct gl_texture_image *texImage;
+         texImage = _mesa_get_proxy_tex_image(ctx, target, level);
+         if (texImage)
+            clear_teximage_fields(texImage);
       }
       else {
          /* no error, set the tex image parameters */
@@ -1746,15 +1860,10 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       texObj = _mesa_select_tex_object(ctx, texUnit, target);
-      texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
-
+      texImage = _mesa_get_tex_image(ctx, texUnit, target, level);
       if (!texImage) {
-         texImage = _mesa_alloc_texture_image();
-         _mesa_set_tex_image(texObj, target, level, texImage);
-         if (!texImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
-            return;
-         }
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+         return;
       }
       else if (texImage->Data && !texImage->IsClientData) {
          /* free the old texture data */
@@ -1803,11 +1912,10 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       }
       if (error) {
          /* if error, clear all proxy texture image parameters */
-         const GLint maxLevels = (target == GL_PROXY_TEXTURE_2D) ?
-            ctx->Const.MaxTextureLevels : ctx->Const.MaxCubeTextureLevels;
-         if (level >= 0 && level < maxLevels) {
+         struct gl_texture_image *texImage;
+         texImage = _mesa_get_proxy_tex_image(ctx, target, level);
+         if (texImage)
             clear_teximage_fields(ctx->Texture.Proxy2D->Image[level]);
-         }
       }
       else {
          /* no error, set the tex image parameters */
@@ -1852,15 +1960,10 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       texObj = _mesa_select_tex_object(ctx, texUnit, target);
-      texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
-
+      texImage = _mesa_get_tex_image(ctx, texUnit, target, level);
       if (!texImage) {
-         texImage = _mesa_alloc_texture_image();
-         texObj->Image[level] = texImage;
-         if (!texImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
-            return;
-         }
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
+         return;
       }
       else if (texImage->Data && !texImage->IsClientData) {
          MESA_PBUFFER_FREE(texImage->Data);
@@ -1904,9 +2007,10 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       }
       if (error) {
          /* if error, clear all proxy texture image parameters */
-         if (level >= 0 && level < ctx->Const.Max3DTextureLevels) {
-            clear_teximage_fields(ctx->Texture.Proxy3D->Image[level]);
-         }
+         struct gl_texture_image *texImage;
+         texImage = _mesa_get_proxy_tex_image(ctx, target, level);
+         if (texImage)
+            clear_teximage_fields(texImage);
       }
       else {
          /* no error, set the tex image parameters */
@@ -2102,14 +2206,10 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
 
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
-   texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+   texImage = _mesa_get_tex_image(ctx, texUnit, target, level);
    if (!texImage) {
-      texImage = _mesa_alloc_texture_image();
-      _mesa_set_tex_image(texObj, target, level, texImage);
-      if (!texImage) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
-         return;
-      }
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
+      return;
    }
    else if (texImage->Data && !texImage->IsClientData) {
       /* free the old texture data */
@@ -2166,14 +2266,10 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
 
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
-   texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+   texImage = _mesa_get_tex_image(ctx, texUnit, target, level);
    if (!texImage) {
-      texImage = _mesa_alloc_texture_image();
-      _mesa_set_tex_image(texObj, target, level, texImage);
-      if (!texImage) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
-         return;
-      }
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
+      return;
    }
    else if (texImage->Data && !texImage->IsClientData) {
       /* free the old texture data */
@@ -2228,6 +2324,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+   ASSERT(texImage);
 
    /* If we have a border, xoffset=-1 is legal.  Bias by border width */
    xoffset += texImage->Border;
@@ -2264,6 +2361,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+   ASSERT(texImage);
 
    /* If we have a border, xoffset=-1 is legal.  Bias by border width */
    xoffset += texImage->Border;
@@ -2302,6 +2400,7 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+   ASSERT(texImage);
 
    /* If we have a border, xoffset=-1 is legal.  Bias by border width */
    xoffset += texImage->Border;
@@ -2509,15 +2608,10 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       texObj = _mesa_select_tex_object(ctx, texUnit, target);
-      texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
-
+      texImage = _mesa_get_tex_image(ctx, texUnit, target, level);
       if (!texImage) {
-         texImage = _mesa_alloc_texture_image();
-         texObj->Image[level] = texImage;
-         if (!texImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage1D");
-            return;
-         }
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage1D");
+         return;
       }
       else if (texImage->Data && !texImage->IsClientData) {
          MESA_PBUFFER_FREE(texImage->Data);
@@ -2549,9 +2643,10 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
       }
       if (error) {
          /* if error, clear all proxy texture image parameters */
-         if (level >= 0 && level < ctx->Const.MaxTextureLevels) {
-            clear_teximage_fields(ctx->Texture.Proxy1D->Image[level]);
-         }
+         struct gl_texture_image *texImage;
+         texImage = _mesa_get_proxy_tex_image(ctx, target, level);
+         if (texImage)
+            clear_teximage_fields(texImage);
       }
       else {
          /* store the teximage parameters */
@@ -2595,15 +2690,10 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       texObj = _mesa_select_tex_object(ctx, texUnit, target);
-      texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
-
+      texImage = _mesa_get_tex_image(ctx, texUnit, target, level);
       if (!texImage) {
-         texImage = _mesa_alloc_texture_image();
-         texObj->Image[level] = texImage;
-         if (!texImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
-            return;
-         }
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
+         return;
       }
       else if (texImage->Data && !texImage->IsClientData) {
          MESA_PBUFFER_FREE(texImage->Data);
@@ -2637,11 +2727,10 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
       }
       if (error) {
          /* if error, clear all proxy texture image parameters */
-         const GLint maxLevels = (target == GL_PROXY_TEXTURE_2D) ?
-            ctx->Const.MaxTextureLevels : ctx->Const.MaxCubeTextureLevels;
-         if (level >= 0 && level < maxLevels) {
-            clear_teximage_fields(ctx->Texture.Proxy2D->Image[level]);
-         }
+         struct gl_texture_image *texImage;
+         texImage = _mesa_get_proxy_tex_image(ctx, target, level);
+         if (texImage)
+            clear_teximage_fields(texImage);
       }
       else {
          /* store the teximage parameters */
@@ -2682,15 +2771,10 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       texObj = _mesa_select_tex_object(ctx, texUnit, target);
-      texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
-
+      texImage = _mesa_get_tex_image(ctx, texUnit, target, level);
       if (!texImage) {
-         texImage = _mesa_alloc_texture_image();
-         texObj->Image[level] = texImage;
-         if (!texImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage3D");
-            return;
-         }
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage3D");
+         return;
       }
       else if (texImage->Data && !texImage->IsClientData) {
          MESA_PBUFFER_FREE(texImage->Data);
@@ -2723,9 +2807,10 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
       }
       if (error) {
          /* if error, clear all proxy texture image parameters */
-         if (level >= 0 && level < ctx->Const.Max3DTextureLevels) {
-            clear_teximage_fields(ctx->Texture.Proxy3D->Image[level]);
-         }
+         struct gl_texture_image *texImage;
+         texImage = _mesa_get_proxy_tex_image(ctx, target, level);
+         if (texImage)
+            clear_teximage_fields(texImage);
       }
       else {
          /* store the teximage parameters */
