@@ -250,7 +250,7 @@ v1.5 (jan-2004)
 	- removed Matrox Millennium MGA2064W driver
 	x more changes to the 3dfx driver
 
-v1.6 (???-2004)
+v1.6 (aug-2004)
 	+ implemented NUL driver
 	+ added DMesaGetProcAddress and glutGetProcAddress
 	* reorganized fxMesa wrapper to handle multiple contexts
