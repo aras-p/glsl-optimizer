@@ -1,4 +1,4 @@
-/* $Id: glu.c,v 1.2 1999/09/10 02:03:31 gareth Exp $ */
+/* $Id: glu.c,v 1.3 1999/09/10 04:32:10 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: glu.c,v $
+ * Revision 1.3  1999/09/10 04:32:10  gareth
+ * Fixed triangle output, recovery process termination.
+ *
  * Revision 1.2  1999/09/10 02:03:31  gareth
  * Added GLU 1.3 tessellation (except winding rule code).
  *
@@ -216,14 +219,14 @@ void GLAPIENTRY gluPickMatrix( GLdouble x, GLdouble y,
 const GLubyte* GLAPIENTRY gluErrorString( GLenum errorCode )
 {
    static char *tess_error[] = {
-      "missing gluEndPolygon",
       "missing gluBeginPolygon",
-      "misoriented contour",
-      "vertex/edge intersection",
+      "missing gluBeginContour",
+      "missing gluEndPolygon",
+      "missing gluEndContour",
       "misoriented or self-intersecting loops",
       "coincident vertices",
       "colinear vertices",
-      "intersecting edges"
+      "FIST recovery process fatal error"
    };
    static char *nurbs_error[] = {
       "spline order un-supported",
