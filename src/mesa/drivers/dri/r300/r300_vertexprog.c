@@ -6,86 +6,10 @@
 #include "r300_context.h"
 #include "nvvertprog.h"
 
-static void r300BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
-{
-	fprintf(stderr, "r300BindProgram\n");
-}
-
-
-static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct r300_vertex_program *vp;
-	struct fragment_program *fp;
-	struct ati_fragment_shader *afs;
-
-	fprintf(stderr, "r300NewProgram, target=%d, id=%d\n", target, id);
-
-	switch(target){
-		case GL_VERTEX_PROGRAM_ARB:
-		fprintf(stderr, "vertex prog\n");
-		vp=malloc(sizeof(*vp));
-		memset(vp, 0, sizeof(*vp));
-		
-		/* note that vp points to mesa_program since its first on the struct
-		*/
-		return _mesa_init_vertex_program(ctx, &vp->mesa_program, target, id);
-		
-		case GL_FRAGMENT_PROGRAM_ARB:
-		fprintf(stderr, "fragment prog\n");
-		fp=malloc(sizeof(*fp));
-		memset(fp, 0, sizeof(*fp));
-			
-		return _mesa_init_fragment_program(ctx, fp, target, id);
-		case GL_FRAGMENT_PROGRAM_NV:
-		fprintf(stderr, "nv fragment prog\n");
-		fp=malloc(sizeof(*fp));
-		memset(fp, 0, sizeof(*fp));
-			
-		return _mesa_init_fragment_program(ctx, fp, target, id);
-		
-		case GL_FRAGMENT_SHADER_ATI:
-		fprintf(stderr, "ati fragment prog\n");
-		afs=malloc(sizeof(*afs));
-		memset(afs, 0, sizeof(*afs));
-			
-		return _mesa_init_ati_fragment_shader(ctx, afs, target, id);
-		
-		default:
-			return NULL;
-	}
-	
-}
-
-
-static void r300DeleteProgram(GLcontext *ctx, struct program *prog)
-{
-	fprintf(stderr, "r300DeleteProgram\n");
-	
-	/* check that not active */
-	_mesa_delete_program(ctx, prog);
-}
-     
-static void r300ProgramStringNotify(GLcontext *ctx, GLenum target, 
-				struct program *prog)
-{
-	struct r300_vertex_program *vp=(void *)prog;
-	
-	fprintf(stderr, "r300ProgramStringNotify\n");
-	/* XXX: There is still something wrong as mesa doesnt call r300IsProgramNative at all */
-	r300IsProgramNative(ctx, target, prog);
-
-	switch(target) {
-	case GL_VERTEX_PROGRAM_ARB:
-		vp->translated=GL_FALSE;
-		break;
-	}
-	
-}
-
 #define SCALAR_FLAG (1<<31)
 #define FLAG_MASK (1<<31)
 #define OPN(operator, ip, op) {#operator, VP_OPCODE_##operator, ip, op}
+
 struct{
 	char *name;
 	int opcode;
@@ -175,7 +99,8 @@ char *dst_mask_names[4]={ "X", "Y", "Z", "W" };
       XPD            v,v     v        cross product
 */
 
-void dump_program_params(struct vertex_program *vp){
+void dump_program_params(struct vertex_program *vp)
+{
 	int i;
 	int pi;
 
@@ -222,16 +147,11 @@ void dump_program_params(struct vertex_program *vp){
 	}
 }
 
-static GLboolean r300IsProgramNative(GLcontext *ctx, GLenum target,
-				struct program *prog)
+static void debug_vp(struct vertex_program *vp)
 {
-	struct vertex_program *vp=(void *)prog;
 	struct vp_instruction *vpi;
 	int i, operand_index;
 	int operator_index;
-	
-	fprintf(stderr, "r300IsProgramNative\n");
-	//exit(0);
 	
 	dump_program_params(vp);
 
@@ -263,7 +183,7 @@ static GLboolean r300IsProgramNative(GLcontext *ctx, GLenum target,
 				fprintf(stderr, "%s", dst_mask_names[i]);
 		fprintf(stderr, " ");
 		
-		for(operand_index=0; operand_index < op_names[operator_index].ip & (~FLAG_MASK);
+		for(operand_index=0; operand_index < (op_names[operator_index].ip & (~FLAG_MASK));
 			operand_index++){
 				
 			if(vpi->SrcReg[operand_index].Negate)
@@ -280,13 +200,98 @@ static GLboolean r300IsProgramNative(GLcontext *ctx, GLenum target,
 			for(i=0; i < 4; i++)
 				fprintf(stderr, "%s", dst_mask_names[vpi->SrcReg[operand_index].Swizzle[i]]);
 			
-			if(operand_index+1 < op_names[operator_index].ip & (~FLAG_MASK) )
+			if(operand_index+1 < (op_names[operator_index].ip & (~FLAG_MASK)) )
 				fprintf(stderr, ",");
 		}
 		fprintf(stderr, "\n");
-		//op_names[i].ip
-		//op_names[i].op
 	}
+	
+}
+
+static void r300BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
+{
+	fprintf(stderr, "r300BindProgram\n");
+}
+
+/* Mesa doesnt seem to have prototype for this */
+struct program *
+_mesa_init_ati_fragment_shader( GLcontext *ctx, struct ati_fragment_shader *prog,
+                           GLenum target, GLuint id);
+
+static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	struct r300_vertex_program *vp;
+	struct fragment_program *fp;
+	struct ati_fragment_shader *afs;
+
+	fprintf(stderr, "r300NewProgram, target=%d, id=%d\n", target, id);
+
+	switch(target){
+		case GL_VERTEX_PROGRAM_ARB:
+			fprintf(stderr, "vertex prog\n");
+			vp=CALLOC_STRUCT(r300_vertex_program);
+		
+		/* note that vp points to mesa_program since its first on the struct
+		*/
+		return _mesa_init_vertex_program(ctx, &vp->mesa_program, target, id);
+		
+		case GL_FRAGMENT_PROGRAM_ARB:
+			fprintf(stderr, "fragment prog\n");
+			fp=CALLOC_STRUCT(fragment_program);
+		return _mesa_init_fragment_program(ctx, fp, target, id);
+		
+		case GL_FRAGMENT_PROGRAM_NV:
+			fprintf(stderr, "nv fragment prog\n");
+			fp=CALLOC_STRUCT(fragment_program);
+		return _mesa_init_fragment_program(ctx, fp, target, id);
+		
+		case GL_FRAGMENT_SHADER_ATI:
+			fprintf(stderr, "ati fragment prog\n");
+			afs=CALLOC_STRUCT(ati_fragment_shader);
+		return _mesa_init_ati_fragment_shader(ctx, afs, target, id);
+	}
+	
+	return NULL;	
+}
+
+
+static void r300DeleteProgram(GLcontext *ctx, struct program *prog)
+{
+	fprintf(stderr, "r300DeleteProgram\n");
+	
+	/* check that not active */
+	_mesa_delete_program(ctx, prog);
+}
+     
+static GLboolean r300IsProgramNative(GLcontext *ctx, GLenum target,
+				struct program *prog);
+
+static void r300ProgramStringNotify(GLcontext *ctx, GLenum target, 
+				struct program *prog)
+{
+	struct r300_vertex_program *vp=(void *)prog;
+	
+	fprintf(stderr, "r300ProgramStringNotify\n");
+	/* XXX: There is still something wrong as mesa doesnt call r300IsProgramNative at all */
+	(void)r300IsProgramNative(ctx, target, prog);
+
+	switch(target) {
+	case GL_VERTEX_PROGRAM_ARB:
+		vp->translated=GL_FALSE;
+		break;
+	}
+	
+}
+
+static GLboolean r300IsProgramNative(GLcontext *ctx, GLenum target,
+				struct program *prog)
+{
+	
+	fprintf(stderr, "r300IsProgramNative\n");
+	//exit(0);
+	debug_vp((struct vertex_program *)prog);
+	
 	return 1;
 }
 
