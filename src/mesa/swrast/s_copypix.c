@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.1 2000/10/31 18:00:04 keithw Exp $ */
+/* $Id: s_copypix.c,v 1.2 2000/10/31 23:11:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -329,7 +329,10 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    /* If read and draw buffer are different we must do buffer switching */
    saveReadAlpha = ctx->ReadBuffer->Alpha;
    changeBuffer = ctx->Pixel.ReadBuffer != ctx->Color.DrawBuffer
-               || ctx->DrawBuffer != ctx->ReadBuffer;
+                  || ctx->DrawBuffer != ctx->ReadBuffer;
+
+   (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+                                 ctx->Pixel.DriverReadBuffer );
 
    if (overlapping) {
       GLint ssy = sy;
@@ -487,6 +490,10 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
    }
 
+   /* Restore pixel source to be the draw buffer (for blending, etc) */
+   (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
+                                 ctx->Color.DriverDrawBuffer );
+
    if (overlapping)
       FREE(tmpImage);
 }
@@ -533,6 +540,9 @@ static void copy_ci_pixels( GLcontext *ctx,
    /* If read and draw buffer are different we must do buffer switching */
    changeBuffer = ctx->Pixel.ReadBuffer != ctx->Color.DrawBuffer
                || ctx->DrawBuffer != ctx->ReadBuffer;
+
+   (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+                                 ctx->Pixel.DriverReadBuffer );
 
    if (overlapping) {
       GLint ssy = sy;
@@ -591,6 +601,10 @@ static void copy_ci_pixels( GLcontext *ctx,
          gl_write_index_span(ctx, width, destx, dy, zspan, 0, indexes, GL_BITMAP);
       }
    }
+
+   /* Restore pixel source to be the draw buffer (for blending, etc) */
+   (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
+                                 ctx->Color.DriverDrawBuffer );
 
    if (overlapping)
       FREE(tmpImage);
