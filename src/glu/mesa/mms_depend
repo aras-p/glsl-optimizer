@@ -12,3 +12,4 @@ tess.obj : gluP.h [-.include.gl]gl.h [-.include.gl]glu.h tess.h
 tess_fist.obj : gluP.h [-.include.gl]gl.h [-.include.gl]glu.h tess.h
 tess_hash.obj : gluP.h [-.include.gl]gl.h [-.include.gl]glu.h tess.h
 tess_heap.obj : gluP.h [-.include.gl]gl.h [-.include.gl]glu.h tess.h
+tess_clip.obj : gluP.h [-.include.gl]gl.h [-.include.gl]glu.h tess.h
