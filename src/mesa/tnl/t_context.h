@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.33 2001/12/14 02:51:44 brianp Exp $ */
+/* $Id: t_context.h,v 1.34 2001/12/18 04:06:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -260,7 +260,7 @@ typedef struct vertex_buffer
    GLvector4f  *ObjPtr;		                /* VERT_OBJ_BIT */
    GLvector4f  *EyePtr;		                /* VERT_EYE */
    GLvector4f  *ClipPtr;	                /* VERT_CLIP */
-   GLvector4f  *ProjectedClipPtr;               /* VERT_CLIP (2) */
+   GLvector4f  *NdcPtr;                         /* VERT_CLIP (2) */
    GLubyte     ClipOrMask;	                /* VERT_CLIP (3) */
    GLubyte     *ClipMask;		        /* VERT_CLIP (4) */
    GLvector3f  *NormalPtr;	                /* VERT_NORMAL_BIT */
@@ -535,7 +535,7 @@ typedef struct {
 
    /* Probably need a better configuration mechanism:
     */
-   GLboolean NeedProjCoords;
+   GLboolean NeedNdcCoords;
    GLboolean LoopbackDListCassettes;
    GLboolean CalcDListNormalLengths;
 

@@ -1,4 +1,4 @@
-/* $Id: t_vb_fog.c,v 1.13 2001/12/14 02:51:45 brianp Exp $ */
+/* $Id: t_vb_fog.c,v 1.14 2001/12/18 04:06:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -145,7 +145,7 @@ static GLboolean run_fog_stage( GLcontext *ctx,
       VB->FogCoordPtr = &store->fogcoord;
 
       if (!ctx->_NeedEyeCoords) {
-	 GLfloat *m = ctx->ModelView.m;
+	 const GLfloat *m = ctx->ModelviewMatrixStack.Top->m;
 	 GLfloat plane[4];
 
 	 /* Use this to store calculated eye z values:

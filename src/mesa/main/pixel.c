@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.32 2001/12/04 23:45:31 brianp Exp $ */
+/* $Id: pixel.c,v 1.33 2001/12/18 04:06:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -852,7 +852,7 @@ _mesa_transform_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4])
    const GLfloat bb = ctx->Pixel.PostColorMatrixBias[2];
    const GLfloat as = ctx->Pixel.PostColorMatrixScale[3];
    const GLfloat ab = ctx->Pixel.PostColorMatrixBias[3];
-   const GLfloat *m = ctx->ColorMatrix.m;
+   const GLfloat *m = ctx->ColorMatrixStack.Top->m;
    GLuint i;
    for (i = 0; i < n; i++) {
       const GLfloat r = rgba[i][RCOMP];

@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.15 2001/12/17 04:54:35 brianp Exp $ */
+/* $Id: s_fog.c,v 1.16 2001/12/18 04:06:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -195,9 +195,10 @@ compute_fog_factors_from_z( const GLcontext *ctx,
                             const GLdepth z[],
                             GLfloat fogFact[] )
 {
-   const GLboolean ortho = (ctx->ProjectionMatrix.m[15] != 0.0F);
-   const GLfloat p10 = ctx->ProjectionMatrix.m[10];
-   const GLfloat p14 = ctx->ProjectionMatrix.m[14];
+   const GLfloat *proj = ctx->ProjectionMatrixStack.Top->m;
+   const GLboolean ortho = (proj[15] != 0.0F);
+   const GLfloat p10 = proj[10];
+   const GLfloat p14 = proj[14];
    const GLfloat tz = ctx->Viewport._WindowMap.m[MAT_TZ];
    GLfloat szInv;
    GLuint i;

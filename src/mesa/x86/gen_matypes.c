@@ -1,4 +1,4 @@
-/* $Id: gen_matypes.c,v 1.4 2001/12/16 11:28:20 brianp Exp $ */
+/* $Id: gen_matypes.c,v 1.5 2001/12/18 04:06:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -122,7 +122,7 @@ int main( int argc, char **argv )
    OFFSET( "VB_OBJ_PTR             ", struct vertex_buffer, ObjPtr );
    OFFSET( "VB_EYE_PTR             ", struct vertex_buffer, EyePtr );
    OFFSET( "VB_CLIP_PTR            ", struct vertex_buffer, ClipPtr );
-   OFFSET( "VB_PROJ_CLIP_PTR       ", struct vertex_buffer, ProjectedClipPtr );
+   OFFSET( "VB_PROJ_CLIP_PTR       ", struct vertex_buffer, NdcPtr );
    OFFSET( "VB_CLIP_OR_MASK        ", struct vertex_buffer, ClipOrMask );
    OFFSET( "VB_CLIP_MASK           ", struct vertex_buffer, ClipMask );
    OFFSET( "VB_NORMAL_PTR          ", struct vertex_buffer, NormalPtr );

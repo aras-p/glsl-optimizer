@@ -1,8 +1,8 @@
-/* $Id: m_matrix.c,v 1.9 2001/09/18 23:06:14 kschultz Exp $ */
+/* $Id: m_matrix.c,v 1.10 2001/12/18 04:06:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -975,11 +975,10 @@ _math_matrix_loadf( GLmatrix *mat, const GLfloat *m )
 void
 _math_matrix_ctr( GLmatrix *m )
 {
-   if ( m->m == 0 ) {
-      m->m = (GLfloat *) ALIGN_MALLOC( 16 * sizeof(GLfloat), 16 );
-   }
-   MEMCPY( m->m, Identity, sizeof(Identity) );
-   m->inv = 0;
+   m->m = (GLfloat *) ALIGN_MALLOC( 16 * sizeof(GLfloat), 16 );
+   if (m->m)
+      MEMCPY( m->m, Identity, sizeof(Identity) );
+   m->inv = NULL;
    m->type = MATRIX_IDENTITY;
    m->flags = 0;
 }
@@ -987,13 +986,13 @@ _math_matrix_ctr( GLmatrix *m )
 void
 _math_matrix_dtr( GLmatrix *m )
 {
-   if ( m->m != 0 ) {
+   if (m->m) {
       ALIGN_FREE( m->m );
-      m->m = 0;
+      m->m = NULL;
    }
-   if ( m->inv != 0 ) {
+   if (m->inv) {
       ALIGN_FREE( m->inv );
-      m->inv = 0;
+      m->inv = NULL;
    }
 }
 
@@ -1001,9 +1000,10 @@ _math_matrix_dtr( GLmatrix *m )
 void
 _math_matrix_alloc_inv( GLmatrix *m )
 {
-   if ( m->inv == 0 ) {
+   if (!m->inv) {
       m->inv = (GLfloat *) ALIGN_MALLOC( 16 * sizeof(GLfloat), 16 );
-      MEMCPY( m->inv, Identity, 16 * sizeof(GLfloat) );
+      if (m->inv)
+         MEMCPY( m->inv, Identity, 16 * sizeof(GLfloat) );
    }
 }
 

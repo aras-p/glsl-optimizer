@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.151 2001/12/17 22:41:45 brianp Exp $ */
+/* $Id: context.c,v 1.152 2001/12/18 04:06:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,6 +52,7 @@
 #include "texobj.h"
 #include "mtypes.h"
 #include "varray.h"
+#include "vpstate.h"
 #include "vtxfmt.h"
 #include "math/m_translate.h"
 #include "math/m_vertices.h"
@@ -487,15 +488,13 @@ init_matrix_stack( struct matrix_stack *stack,
    stack->Depth = 0;
    stack->MaxDepth = maxDepth;
    stack->DirtyFlag = dirtyFlag;
-   /* Top matrix */
-   _math_matrix_ctr( &stack->Top );
-   _math_matrix_alloc_inv( &stack->Top );
    /* The stack */
-   stack->Stack = MALLOC(maxDepth * sizeof(GLmatrix));
+   stack->Stack = CALLOC(maxDepth * sizeof(GLmatrix));
    for (i = 0; i < maxDepth; i++) {
       _math_matrix_ctr(&stack->Stack[i]);
       _math_matrix_alloc_inv(&stack->Stack[i]);
    }
+   stack->Top = stack->Stack;
 }
 
 
@@ -503,10 +502,10 @@ static void
 free_matrix_stack( struct matrix_stack *stack )
 {
    GLuint i;
-   _math_matrix_dtr( &stack->Top );
    for (i = 0; i < stack->MaxDepth; i++) {
       _math_matrix_dtr(&stack->Stack[i]);
    }
+   stack->Stack = stack->Top = NULL;
 }
 
 
@@ -527,6 +526,7 @@ alloc_shared_state( void )
 
    ss->DisplayList = _mesa_NewHashTable();
    ss->TexObjects = _mesa_NewHashTable();
+   ss->VertexPrograms = _mesa_NewHashTable();
 
    /* Default Texture objects */
    outOfMemory = GL_FALSE;
@@ -551,12 +551,15 @@ alloc_shared_state( void )
       outOfMemory = GL_TRUE;
    }
 
-   if (!ss->DisplayList || !ss->TexObjects || outOfMemory) {
+   if (!ss->DisplayList || !ss->TexObjects || !ss->VertexPrograms
+       || outOfMemory) {
       /* Ran out of memory at some point.  Free everything and return NULL */
       if (ss->DisplayList)
          _mesa_DeleteHashTable(ss->DisplayList);
       if (ss->TexObjects)
          _mesa_DeleteHashTable(ss->TexObjects);
+      if (ss->VertexPrograms)
+         _mesa_DeleteHashTable(ss->VertexPrograms);
       if (ss->Default1D)
          _mesa_free_texture_object(ss, ss->Default1D);
       if (ss->Default2D)
@@ -600,6 +603,18 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
       _mesa_free_texture_object(ss, ss->TexObjectList);
    }
    _mesa_DeleteHashTable(ss->TexObjects);
+
+   /* Free vertex programs */
+   while (1) {
+      GLuint prog = _mesa_HashFirstEntry(ss->VertexPrograms);
+      if (prog) {
+         _mesa_delete_program(ctx, prog);
+      }
+      else {
+         break;
+      }
+   }
+   _mesa_DeleteHashTable(ss->VertexPrograms);
 
    FREE(ss);
 }
@@ -757,7 +772,7 @@ init_2d_map( struct gl_2d_map *map, int n, const float *initial )
 static void
 init_attrib_groups( GLcontext *ctx )
 {
-   GLuint i, j;
+   GLuint i;
 
    assert(ctx);
 
@@ -791,48 +806,23 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Const.MaxClipPlanes = MAX_CLIP_PLANES;
    ctx->Const.MaxLights = MAX_LIGHTS;
 
-   /* Modelview matrix */
-   _math_matrix_ctr( &ctx->ModelView );
-   _math_matrix_alloc_inv( &ctx->ModelView );
+   /* Initialize matrix stacks */
+   init_matrix_stack(&ctx->ModelviewMatrixStack, MAX_MODELVIEW_STACK_DEPTH,
+                     _NEW_MODELVIEW);
+   init_matrix_stack(&ctx->ProjectionMatrixStack, MAX_PROJECTION_STACK_DEPTH,
+                     _NEW_PROJECTION);
+   init_matrix_stack(&ctx->ColorMatrixStack, MAX_COLOR_STACK_DEPTH,
+                     _NEW_COLOR_MATRIX);
+   for (i = 0; i < MAX_TEXTURE_UNITS; i++)
+      init_matrix_stack(&ctx->TextureMatrixStack[i], MAX_TEXTURE_STACK_DEPTH,
+                        _NEW_TEXTURE_MATRIX);
+   for (i = 0; i < MAX_PROGRAM_MATRICES; i++)
+      init_matrix_stack(&ctx->ProgramMatrixStack[i], MAX_PROGRAM_STACK_DEPTH,
+                        _NEW_TRACK_MATRIX);
+   ctx->CurrentStack = &ctx->ModelviewMatrixStack;
 
-   ctx->ModelViewStackDepth = 0;
-   for (i = 0; i < MAX_MODELVIEW_STACK_DEPTH - 1; i++) {
-      _math_matrix_ctr( &ctx->ModelViewStack[i] );
-      _math_matrix_alloc_inv( &ctx->ModelViewStack[i] );
-   }
-#if 0
-   init_matrix_stack(&ctx->ModelviewStack, 32, _NEW_MODELVIEW);
-#endif
-
-   /* Projection matrix - need inv for user clipping in clip space*/
-   _math_matrix_ctr( &ctx->ProjectionMatrix );
-   _math_matrix_alloc_inv( &ctx->ProjectionMatrix );
-
-   ctx->ProjectionStackDepth = 0;
-   for (i = 0; i < MAX_PROJECTION_STACK_DEPTH - 1; i++) {
-      _math_matrix_ctr( &ctx->ProjectionStack[i] );
-      _math_matrix_alloc_inv( &ctx->ProjectionStack[i] );
-   }
-
-   /* Derived ModelProject matrix */
+   /* Init combined Modelview*Projection matrix */
    _math_matrix_ctr( &ctx->_ModelProjectMatrix );
-
-   /* Texture matrix */
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
-      _math_matrix_ctr( &ctx->TextureMatrix[i] );
-      ctx->TextureStackDepth[i] = 0;
-      for (j = 0; j < MAX_TEXTURE_STACK_DEPTH - 1; j++) {
-         _math_matrix_ctr( &ctx->TextureStack[i][j] );
-         ctx->TextureStack[i][j].inv = 0;
-      }
-   }
-
-   /* Color matrix */
-   _math_matrix_ctr(&ctx->ColorMatrix);
-   ctx->ColorStackDepth = 0;
-   for (j = 0; j < MAX_COLOR_STACK_DEPTH - 1; j++) {
-      _math_matrix_ctr(&ctx->ColorStack[j]);
-   }
 
    /* Accumulate buffer group */
    ASSIGN_4V( ctx->Accum.ClearColor, 0.0, 0.0, 0.0, 0.0 );
@@ -1319,8 +1309,8 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_colortable(&ctx->ProxyPostColorMatrixColorTable);
 
    /* GL_NV_vertex_program */
-   ctx->VertexProgram.Binding = 0;
-   ctx->VertexProgram.HashTable = _mesa_NewHashTable();
+   ctx->VertexProgram.Current = NULL;
+   ctx->VertexProgram.CurrentID = 0;
    ctx->VertexProgram.Enabled = GL_FALSE;
    ctx->VertexProgram.PointSizeEnabled = GL_FALSE;
    ctx->VertexProgram.TwoSideEnabled = GL_FALSE;
@@ -1643,39 +1633,34 @@ void
 _mesa_free_context_data( GLcontext *ctx )
 {
    struct gl_shine_tab *s, *tmps;
-   GLuint i, j;
+   GLuint i;
 
    /* if we're destroying the current context, unbind it first */
    if (ctx == _mesa_get_current_context()) {
       _mesa_make_current(NULL, NULL);
    }
 
-#if 0
-   free_matrix_stack(&ctx->ModelviewStack);
-#endif
-
-   _math_matrix_dtr( &ctx->ModelView );
-   for (i = 0; i < MAX_MODELVIEW_STACK_DEPTH - 1; i++) {
-      _math_matrix_dtr( &ctx->ModelViewStack[i] );
-   }
-   _math_matrix_dtr( &ctx->ProjectionMatrix );
-   for (i = 0; i < MAX_PROJECTION_STACK_DEPTH - 1; i++) {
-      _math_matrix_dtr( &ctx->ProjectionStack[i] );
-   }
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
-      _math_matrix_dtr( &ctx->TextureMatrix[i] );
-      for (j = 0; j < MAX_TEXTURE_STACK_DEPTH - 1; j++) {
-         _math_matrix_dtr( &ctx->TextureStack[i][j] );
-      }
-   }
-
+   /*
+    * Free transformation matrix stacks
+    */
+   free_matrix_stack(&ctx->ModelviewMatrixStack);
+   free_matrix_stack(&ctx->ProjectionMatrixStack);
+   free_matrix_stack(&ctx->ColorMatrixStack);
+   for (i = 0; i < MAX_TEXTURE_UNITS; i++)
+      free_matrix_stack(&ctx->TextureMatrixStack[i]);
+   for (i = 0; i < MAX_PROGRAM_MATRICES; i++)
+      free_matrix_stack(&ctx->ProgramMatrixStack[i]);
+   /* combined Modelview*Projection matrix */
    _math_matrix_dtr( &ctx->_ModelProjectMatrix );
 
-   _math_matrix_dtr(&ctx->ColorMatrix);
-   for (j = 0; j < MAX_COLOR_STACK_DEPTH - 1; j++) {
-      _math_matrix_dtr(&ctx->ColorStack[j]);
+
+   if (ctx->VertexProgram.Current) {
+      ctx->VertexProgram.Current->RefCount--;
+      if (ctx->VertexProgram.Current->RefCount <= 0)
+         _mesa_delete_program(ctx, ctx->VertexProgram.CurrentID);
    }
 
+   /* Shared context state (display lists, textures, etc) */
    _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
    ctx->Shared->RefCount--;
    assert(ctx->Shared->RefCount >= 0);
@@ -1685,6 +1670,7 @@ _mesa_free_context_data( GLcontext *ctx )
       free_shared_state( ctx, ctx->Shared );
    }
 
+   /* Free lighting shininess exponentiation table */
    foreach_s( s, tmps, ctx->_ShineTabList ) {
       FREE( s );
    }
@@ -1743,9 +1729,6 @@ _mesa_free_context_data( GLcontext *ctx )
    _math_matrix_dtr(&ctx->Viewport._WindowMap);
 
    _mesa_extensions_dtr(ctx);
-
-   /* GL_NV_vertex_program */
-   _mesa_DeleteHashTable(ctx->VertexProgram.HashTable);
 
    FREE(ctx->Exec);
    FREE(ctx->Save);

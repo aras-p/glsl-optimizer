@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.82 2001/12/14 03:13:04 brianp Exp $ */
+/* $Id: dlist.c,v 1.83 2001/12/18 04:06:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -5999,6 +5999,10 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
 
    /* 233. GL_NV_vertex_program */
    /* XXX Need to implement vertex program in display lists !!! */
+   /* The following commands DO NOT go into display lists:
+    * AreProgramsResidentNV, IsProgramNV, GenProgramsNV, DeleteProgramsNV,
+    * VertexAttribPointerNV
+    */
    table->BindProgramNV = _mesa_BindProgramNV;
    table->DeleteProgramsNV = _mesa_DeleteProgramsNV;
    table->ExecuteProgramNV = _mesa_ExecuteProgramNV;

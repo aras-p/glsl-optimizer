@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.33 2001/12/14 02:50:02 brianp Exp $ */
+/* $Id: rastpos.c,v 1.34 2001/12/18 04:06:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -286,7 +286,7 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
       _mesa_update_state( ctx );
 
    ASSIGN_4V( v, x, y, z, w );
-   TRANSFORM_POINT( eye, ctx->ModelView.m, v );
+   TRANSFORM_POINT( eye, ctx->ModelviewMatrixStack.Top->m, v );
 
    /* raster color */
    if (ctx->Light.Enabled) {
@@ -294,7 +294,7 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
       GLfloat *objnorm = ctx->Current.Attrib[VERT_ATTRIB_NORMAL];
 
       if (ctx->_NeedEyeCoords) {
-	 GLfloat *inv = ctx->ModelView.inv;
+	 GLfloat *inv = ctx->ModelviewMatrixStack.Top->inv;
 	 TRANSFORM_NORMAL( eyenorm, objnorm, inv );
 	 norm = eyenorm;
       }
@@ -326,7 +326,7 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
                       GL_SQRT( eye[0]*eye[0] + eye[1]*eye[1] + eye[2]*eye[2] );
 
    /* apply projection matrix:  clip = Proj * eye */
-   TRANSFORM_POINT( clip, ctx->ProjectionMatrix.m, eye );
+   TRANSFORM_POINT( clip, ctx->ProjectionMatrixStack.Top->m, eye );
 
    /* clip to view volume */
    if (ctx->Transform.RasterPositionUnclipped) {

@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.74 2001/12/14 03:13:04 brianp Exp $ */
+/* $Id: state.c,v 1.75 2001/12/18 04:06:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -557,8 +557,8 @@ calculate_model_project_matrix( GLcontext *ctx )
 {
    if (!ctx->_NeedEyeCoords) {
       _math_matrix_mul_matrix( &ctx->_ModelProjectMatrix,
-			       &ctx->ProjectionMatrix,
-			       &ctx->ModelView );
+			       ctx->ProjectionMatrixStack.Top,
+			       ctx->ModelviewMatrixStack.Top );
 
       _math_matrix_analyse( &ctx->_ModelProjectMatrix );
    }
@@ -568,11 +568,11 @@ static void
 update_modelview_scale( GLcontext *ctx )
 {
    ctx->_ModelViewInvScale = 1.0F;
-   if (ctx->ModelView.flags & (MAT_FLAG_UNIFORM_SCALE |
+   if (ctx->ModelviewMatrixStack.Top->flags & (MAT_FLAG_UNIFORM_SCALE |
 			       MAT_FLAG_GENERAL_SCALE |
 			       MAT_FLAG_GENERAL_3D |
 			       MAT_FLAG_GENERAL) ) {
-      const GLfloat *m = ctx->ModelView.inv;
+      const GLfloat *m = ctx->ModelviewMatrixStack.Top->inv;
       GLfloat f = m[2] * m[2] + m[6] * m[6] + m[10] * m[10];
       if (f < 1e-12) f = 1.0;
       if (ctx->_NeedEyeCoords)
@@ -651,7 +651,7 @@ update_drawbuffer( GLcontext *ctx )
 static void
 update_projection( GLcontext *ctx )
 {
-   _math_matrix_analyse( &ctx->ProjectionMatrix );
+   _math_matrix_analyse( ctx->ProjectionMatrixStack.Top );
 
    /* Recompute clip plane positions in clipspace.  This is also done
     * in _mesa_ClipPlane().
@@ -662,7 +662,7 @@ update_projection( GLcontext *ctx )
 	 if (ctx->Transform.ClipEnabled[p]) {
 	    _mesa_transform_vector( ctx->Transform._ClipUserPlane[p],
 				 ctx->Transform.EyeUserPlane[p],
-				 ctx->ProjectionMatrix.inv );
+				 ctx->ProjectionMatrixStack.Top->inv );
 	 }
       }
    }
@@ -712,7 +712,7 @@ update_image_transfer_state(GLcontext *ctx)
    if (ctx->Pixel.PostConvolutionColorTableEnabled)
       mask |= IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT;
 
-   if (ctx->ColorMatrix.type != MATRIX_IDENTITY ||
+   if (ctx->ColorMatrixStack.Top->type != MATRIX_IDENTITY ||
        ctx->Pixel.PostColorMatrixScale[0] != 1.0F ||
        ctx->Pixel.PostColorMatrixBias[0]  != 0.0F ||
        ctx->Pixel.PostColorMatrixScale[1] != 1.0F ||
@@ -754,14 +754,14 @@ update_texture_matrices( GLcontext *ctx )
    ctx->Texture._TexMatEnabled = 0;
 
    for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
-      if (ctx->TextureMatrix[i].flags & MAT_DIRTY) {
-	 _math_matrix_analyse( &ctx->TextureMatrix[i] );
+      if (ctx->TextureMatrixStack[i].Top->flags & MAT_DIRTY) {
+	 _math_matrix_analyse( ctx->TextureMatrixStack[i].Top );
 
 	 if (ctx->Driver.TextureMatrix)
-	    ctx->Driver.TextureMatrix( ctx, i, &ctx->TextureMatrix[i] );
+	    ctx->Driver.TextureMatrix( ctx, i, ctx->TextureMatrixStack[i].Top);
 
 	 if (ctx->Texture.Unit[i]._ReallyEnabled &&
-	     ctx->TextureMatrix[i].type != MATRIX_IDENTITY)
+	     ctx->TextureMatrixStack[i].Top->type != MATRIX_IDENTITY)
 	    ctx->Texture._TexMatEnabled |= ENABLE_TEXMAT(i);
       }
    }
@@ -874,7 +874,7 @@ update_texture_state( GLcontext *ctx )
 	 ctx->Texture._GenFlags |= texUnit->_GenFlags;
       }
 
-      if (ctx->TextureMatrix[i].type != MATRIX_IDENTITY)
+      if (ctx->TextureMatrixStack[i].Top->type != MATRIX_IDENTITY)
 	 ctx->Texture._TexMatEnabled |= ENABLE_TEXMAT(i);
    }
 
@@ -915,7 +915,7 @@ void _mesa_update_state( GLcontext *ctx )
       _mesa_print_state("", new_state);
 
    if (new_state & _NEW_MODELVIEW)
-      _math_matrix_analyse( &ctx->ModelView );
+      _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
 
    if (new_state & _NEW_PROJECTION)
       update_projection( ctx );
@@ -924,7 +924,7 @@ void _mesa_update_state( GLcontext *ctx )
       update_texture_matrices( ctx );
 
    if (new_state & _NEW_COLOR_MATRIX)
-      _math_matrix_analyse( &ctx->ColorMatrix );
+      _math_matrix_analyse( ctx->ColorMatrixStack.Top );
 
    /* References ColorMatrix.type (derived above).
     */
@@ -953,7 +953,7 @@ void _mesa_update_state( GLcontext *ctx )
    if (new_state & (_NEW_MODELVIEW|_NEW_LIGHT)) {
       ctx->_NeedEyeCoords &= ~NEED_EYE_LIGHT_MODELVIEW;
       if (ctx->Light.Enabled &&
-	  !TEST_MAT_FLAGS( &ctx->ModelView, MAT_FLAGS_LENGTH_PRESERVING))
+	  !TEST_MAT_FLAGS( ctx->ModelviewMatrixStack.Top, MAT_FLAGS_LENGTH_PRESERVING))
 	    ctx->_NeedEyeCoords |= NEED_EYE_LIGHT_MODELVIEW;
    }
 

@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.51 2001/12/14 02:50:01 brianp Exp $ */
+/* $Id: enable.c,v 1.52 2001/12/18 04:06:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -207,7 +207,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_CLIP_PLANE4:
       case GL_CLIP_PLANE5:
          {
-            GLuint p = cap-GL_CLIP_PLANE0;
+            GLuint p = cap - GL_CLIP_PLANE0;
 
             if (ctx->Transform.ClipEnabled[p] == state)
                return;
@@ -218,8 +218,8 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
             if (state) {
                ctx->Transform._AnyClip++;
 
-               if (ctx->ProjectionMatrix.flags & MAT_DIRTY) {
-                  _math_matrix_analyse( &ctx->ProjectionMatrix );
+               if (ctx->ProjectionMatrixStack.Top->flags & MAT_DIRTY) {
+                  _math_matrix_analyse( ctx->ProjectionMatrixStack.Top );
                }
 
                /* This derived state also calculated in clip.c and
@@ -228,7 +228,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
                 */
                _mesa_transform_vector( ctx->Transform._ClipUserPlane[p],
                                     ctx->Transform.EyeUserPlane[p],
-                                    ctx->ProjectionMatrix.inv );
+                                    ctx->ProjectionMatrixStack.Top->inv );
             }
          }
          break;

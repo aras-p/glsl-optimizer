@@ -1,4 +1,4 @@
-/* $Id: t_context.c,v 1.22 2001/07/19 15:54:35 brianp Exp $ */
+/* $Id: t_context.c,v 1.23 2001/12/18 04:06:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -102,7 +102,7 @@ _tnl_CreateContext( GLcontext *ctx )
    _tnl_install_pipeline( ctx, _tnl_default_pipeline );
 
 
-   tnl->NeedProjCoords = GL_TRUE;
+   tnl->NeedNdcCoords = GL_TRUE;
    tnl->LoopbackDListCassettes = GL_FALSE;
    tnl->CalcDListNormalLengths = GL_TRUE;
 
@@ -210,8 +210,8 @@ void
 _tnl_need_projected_coords( GLcontext *ctx, GLboolean mode )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   if (tnl->NeedProjCoords != mode) {
-      tnl->NeedProjCoords = mode;
+   if (tnl->NeedNdcCoords != mode) {
+      tnl->NeedNdcCoords = mode;
       _tnl_InvalidateState( ctx, _NEW_PROJECTION );
    }
 }

@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.55 2001/12/14 02:50:02 brianp Exp $ */
+/* $Id: mtypes.h,v 1.56 2001/12/18 04:06:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1131,8 +1131,6 @@ struct gl_evaluators {
  */
 
 #define VP_MAX_INSTRUCTIONS 128
-#define VP_MAX_MATRICES 8
-#define VP_MAX_MATRIX_DEPTH 4
 
 #define VP_NUM_INPUT_REGS 16
 #define VP_NUM_OUTPUT_REGS 15
@@ -1251,7 +1249,8 @@ struct vp_program
    GLubyte *String;                      /* Original user code */
    struct vp_instruction *Instructions;  /* Compiled instructions */
    GLenum Target;      /* GL_VERTEX_PROGRAM_NV or GL_VERTEX_STATE_PROGRAM_NV */
-   GLint ErrorPos;
+   GLint ErrorPos;            /* Position in string where error was detected */
+   GLint RefCount;            /* Since programs can be shared among contexts */
    GLboolean Resident;
 };
 
@@ -1259,21 +1258,17 @@ struct vp_program
 /*
  * State vars for GL_NV_vertex_program
  */
-struct gl_vertex_program
+struct vertex_program_state
 {
    GLboolean Enabled;                    /* GL_VERTEX_PROGRAM_NV */
    GLboolean PointSizeEnabled;           /* GL_VERTEX_PROGRAM_POINT_SIZE_NV */
-   GLboolean TwoSideEnabled;            /* GL_VERTEX_PROGRAM_TWO_SIDE_NV */
-   GLuint Binding;                       /* currently bound program */
-   struct _mesa_HashTable *HashTable;    /* all programs */
+   GLboolean TwoSideEnabled;             /* GL_VERTEX_PROGRAM_TWO_SIDE_NV */
+   GLuint CurrentID;                     /* currently bound program's ID */
+   struct vp_program *Current;           /* ptr to currently bound program */
    struct vp_machine Machine;            /* machine state */
-   GLmatrix Matrix[VP_MAX_MATRICES];          /* Tracking matrices */
-   GLmatrix MatrixStack[VP_MAX_MATRICES][VP_MAX_MATRIX_DEPTH-1];  /* stacks */
-   GLuint MatrixStackDepth[VP_MAX_MATRICES];
 
    GLenum TrackMatrix[VP_NUM_PROG_REGS / 4];
    GLenum TrackMatrixTransform[VP_NUM_PROG_REGS / 4];
-
 };
 
 
@@ -1293,6 +1288,9 @@ struct gl_shared_state {
    struct gl_texture_object *Default2D;
    struct gl_texture_object *Default3D;
    struct gl_texture_object *DefaultCubeMap;
+
+   /* GL_NV_vertex_program */
+   struct _mesa_HashTable *VertexPrograms;
 
    void *DriverData;  /* Device driver shared state */
 };
@@ -1439,10 +1437,10 @@ struct gl_extensions {
 /* XXX just an idea */
 struct matrix_stack
 {
-   GLmatrix Top;
-   GLmatrix *Stack;
-   GLuint Depth;
-   GLuint MaxDepth;
+   GLmatrix *Top;      /* points into Stack */
+   GLmatrix *Stack;    /* array [MaxDepth] of GLmatrix */
+   GLuint Depth;       /* 0 <= Depth < MaxDepth */
+   GLuint MaxDepth;    /* size of Stack[] array */
    GLuint DirtyFlag;   /* _NEW_MODELVIEW or _NEW_PROJECTION, for example */
 };
 
@@ -1654,31 +1652,16 @@ struct __GLcontextRec {
    /* Core/Driver constants */
    struct gl_constants Const;
 
-   /* Modelview matrix and stack */
-   GLmatrix ModelView;           /* current matrix, not stored on stack */
-   GLuint ModelViewStackDepth;
-   GLmatrix ModelViewStack[MAX_MODELVIEW_STACK_DEPTH - 1];
-#if 1
-   struct matrix_stack ModelviewStack;
-#endif
-
-   /* Projection matrix and stack */
-   GLmatrix ProjectionMatrix;    /* current matrix, not stored on stack */
-   GLuint ProjectionStackDepth;
-   GLmatrix ProjectionStack[MAX_PROJECTION_STACK_DEPTH - 1];
+   /* The various 4x4 matrix stacks */
+   struct matrix_stack ModelviewMatrixStack;
+   struct matrix_stack ProjectionMatrixStack;
+   struct matrix_stack ColorMatrixStack;
+   struct matrix_stack TextureMatrixStack[MAX_TEXTURE_UNITS];
+   struct matrix_stack ProgramMatrixStack[MAX_PROGRAM_MATRICES];
+   struct matrix_stack *CurrentStack; /* Points to one of the above stacks */
 
    /* Combined modelview and projection matrix */
    GLmatrix _ModelProjectMatrix;
-
-   /* Texture matrix and stack */
-   GLmatrix TextureMatrix[MAX_TEXTURE_UNITS];
-   GLuint TextureStackDepth[MAX_TEXTURE_UNITS];
-   GLmatrix TextureStack[MAX_TEXTURE_UNITS][MAX_TEXTURE_STACK_DEPTH - 1];
-
-   /* Color matrix and stack */
-   GLmatrix ColorMatrix;
-   GLuint ColorStackDepth;
-   GLmatrix ColorStack[MAX_COLOR_STACK_DEPTH - 1];
 
    /* Display lists */
    GLuint CallDepth;		/* Current recursion calling depth */
@@ -1745,7 +1728,7 @@ struct __GLcontextRec {
    struct gl_color_table PostColorMatrixColorTable;
    struct gl_color_table ProxyPostColorMatrixColorTable;
 
-   struct gl_vertex_program VertexProgram;  /* GL_NV_vertex_program */
+   struct vertex_program_state VertexProgram;  /* GL_NV_vertex_program */
 
    GLenum ErrorValue;        /* Last error code */
    GLenum RenderMode;        /* either GL_RENDER, GL_SELECT, GL_FEEDBACK */
@@ -1759,13 +1742,13 @@ struct __GLcontextRec {
    GLuint _NeedEyeCoords;
    GLuint _NeedNormals;    /* Are vertex normal vectors needed? */
 
-   struct gl_shine_tab *_ShineTable[2];  /* Active shine tables */
-   struct gl_shine_tab *_ShineTabList;   /* Mru list of inactive shine tables */
+   struct gl_shine_tab *_ShineTable[2]; /* Active shine tables */
+   struct gl_shine_tab *_ShineTabList;  /* Mru list of inactive shine tables */
 
    struct gl_list_extensions listext; /* driver dlist extensions */
 
 
-   GLboolean OcclusionResult;  /* GL_HP_occlusion_test */
+   GLboolean OcclusionResult;       /* GL_HP_occlusion_test */
    GLboolean OcclusionResultSaved;  /* GL_HP_occlusion_test */
 
    /* Z buffer stuff */

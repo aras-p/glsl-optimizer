@@ -1,4 +1,4 @@
-/* $Id: t_vb_program.c,v 1.4 2001/12/15 22:31:23 brianp Exp $ */
+/* $Id: t_vb_program.c,v 1.5 2001/12/18 04:06:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -718,7 +718,6 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    struct vp_stage_data *store = VP_STAGE_DATA(stage);
    struct vertex_buffer *VB = &tnl->vb;
    struct vp_machine *machine = &(ctx->VertexProgram.Machine);
-   struct vp_program *program;
    GLint i;
 
    /* convenience pointers */
@@ -733,9 +732,6 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    GLfloat (*texture1)[4] = (GLfloat (*)[4]) store->texCoord[1].data;
    GLfloat (*texture2)[4] = (GLfloat (*)[4]) store->texCoord[2].data;
    GLfloat (*texture3)[4] = (GLfloat (*)[4]) store->texCoord[3].data;
-
-   program = (struct vp_program *) _mesa_HashLookup(ctx->VertexProgram.HashTable, ctx->VertexProgram.Binding);
-   assert(program);
 
    _mesa_init_tracked_matrices(ctx);
    _mesa_init_vp_registers(ctx);  /* sets temp regs to (0,0,0,1) */
@@ -770,7 +766,8 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
       }
 
       /* execute the program */
-      _mesa_exec_program(ctx, program);
+      ASSERT(ctx->VertexProgram.Current);
+      _mesa_exec_program(ctx, ctx->VertexProgram.Current);
 
 #if 0
       printf("Output %d: %f, %f, %f, %f\n", i,
@@ -819,8 +816,8 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    store->ormask = 0;
    store->andmask = CLIP_ALL_BITS;
 
-   if (tnl->NeedProjCoords) {
-      VB->ProjectedClipPtr =
+   if (tnl->NeedNdcCoords) {
+      VB->NdcPtr =
          _mesa_clip_tab[VB->ClipPtr->size]( VB->ClipPtr,
                                             &store->ndcCoords,
                                             store->clipmask,
@@ -829,7 +826,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
 
    }
    else {
-      VB->ProjectedClipPtr = 0;
+      VB->NdcPtr = 0;
       _mesa_clip_np_tab[VB->ClipPtr->size]( VB->ClipPtr,
                                             0,
                                             store->clipmask,

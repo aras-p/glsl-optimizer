@@ -1,4 +1,4 @@
-/* $Id: t_vb_normals.c,v 1.10 2001/12/14 02:51:45 brianp Exp $ */
+/* $Id: t_vb_normals.c,v 1.11 2001/12/18 04:06:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -62,7 +62,7 @@ static GLboolean run_normal_stage( GLcontext *ctx,
    ASSERT(store->NormalTransform);
 
    if (stage->changed_inputs)
-      store->NormalTransform( &ctx->ModelView,
+      store->NormalTransform( ctx->ModelviewMatrixStack.Top,
 			      ctx->_ModelViewInvScale,
 			      VB->NormalPtr,
 			      VB->NormalLengthPtr,
@@ -84,7 +84,7 @@ static GLboolean run_validate_normal_stage( GLcontext *ctx,
    if (ctx->_NeedEyeCoords) {
       GLuint transform = NORM_TRANSFORM_NO_ROT;
 
-      if (ctx->ModelView.flags & (MAT_FLAG_GENERAL |
+      if (ctx->ModelviewMatrixStack.Top->flags & (MAT_FLAG_GENERAL |
 				  MAT_FLAG_ROTATION |
 				  MAT_FLAG_GENERAL_3D |
 				  MAT_FLAG_PERSPECTIVE))

@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.61 2001/12/13 16:02:11 brianp Exp $ */
+/* $Id: texstate.c,v 1.62 2001/12/18 04:06:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1706,10 +1706,10 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	    GLfloat tmp[4];
 
             /* Transform plane equation by the inverse modelview matrix */
-            if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
-               _math_matrix_analyse( &ctx->ModelView );
+            if (ctx->ModelviewMatrixStack.Top->flags & MAT_DIRTY_INVERSE) {
+               _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
             }
-            _mesa_transform_vector( tmp, params, ctx->ModelView.inv );
+            _mesa_transform_vector( tmp, params, ctx->ModelviewMatrixStack.Top->inv );
 	    if (TEST_EQ_4V(texUnit->EyePlaneS, tmp))
 	       return;
 	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -1762,10 +1762,10 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	 else if (pname==GL_EYE_PLANE) {
 	    GLfloat tmp[4];
             /* Transform plane equation by the inverse modelview matrix */
-	    if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
-               _math_matrix_analyse( &ctx->ModelView );
+	    if (ctx->ModelviewMatrixStack.Top->flags & MAT_DIRTY_INVERSE) {
+               _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
             }
-            _mesa_transform_vector( tmp, params, ctx->ModelView.inv );
+            _mesa_transform_vector( tmp, params, ctx->ModelviewMatrixStack.Top->inv );
 	    if (TEST_EQ_4V(texUnit->EyePlaneT, tmp))
 		return;
 	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -1815,10 +1815,10 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	 else if (pname==GL_EYE_PLANE) {
 	    GLfloat tmp[4];
             /* Transform plane equation by the inverse modelview matrix */
-            if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
-               _math_matrix_analyse( &ctx->ModelView );
+            if (ctx->ModelviewMatrixStack.Top->flags & MAT_DIRTY_INVERSE) {
+               _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
             }
-            _mesa_transform_vector( tmp, params, ctx->ModelView.inv );
+            _mesa_transform_vector( tmp, params, ctx->ModelviewMatrixStack.Top->inv );
 	    if (TEST_EQ_4V(texUnit->EyePlaneR, tmp))
 	       return;
 	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -1862,10 +1862,10 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	 else if (pname==GL_EYE_PLANE) {
 	    GLfloat tmp[4];
             /* Transform plane equation by the inverse modelview matrix */
-            if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
-               _math_matrix_analyse( &ctx->ModelView );
+            if (ctx->ModelviewMatrixStack.Top->flags & MAT_DIRTY_INVERSE) {
+               _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
             }
-            _mesa_transform_vector( tmp, params, ctx->ModelView.inv );
+            _mesa_transform_vector( tmp, params, ctx->ModelviewMatrixStack.Top->inv );
 	    if (TEST_EQ_4V(texUnit->EyePlaneQ, tmp))
 	       return;
 	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);

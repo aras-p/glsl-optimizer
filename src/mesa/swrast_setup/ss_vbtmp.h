@@ -1,4 +1,4 @@
-/* $Id: ss_vbtmp.h,v 1.17 2001/07/17 19:39:32 keithw Exp $ */
+/* $Id: ss_vbtmp.h,v 1.18 2001/12/18 04:06:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -73,8 +73,8 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
       }
    }
 
-   proj = VB->ProjectedClipPtr->data[0];
-   proj_stride = VB->ProjectedClipPtr->stride;
+   proj = VB->NdcPtr->data[0];
+   proj_stride = VB->NdcPtr->stride;
 
    if (IND & FOG) {
       fog = VB->FogCoordPtr->data;

@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.74 2001/12/14 02:55:08 brianp Exp $ */
+/* $Id: get.c,v 1.75 2001/12/18 04:06:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -616,11 +616,11 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 break;
       case GL_MODELVIEW_MATRIX:
 	 for (i=0;i<16;i++) {
-	    params[i] = FLOAT_TO_BOOL(ctx->ModelView.m[i]);
+	    params[i] = FLOAT_TO_BOOL(ctx->ModelviewMatrixStack.Top->m[i]);
 	 }
 	 break;
       case GL_MODELVIEW_STACK_DEPTH:
-	 *params = INT_TO_BOOL(ctx->ModelViewStackDepth + 1);
+         *params = INT_TO_BOOL(ctx->ModelviewMatrixStack.Depth + 1);
 	 break;
       case GL_NAME_STACK_DEPTH:
 	 *params = INT_TO_BOOL(ctx->Select.NameStackDepth);
@@ -743,11 +743,11 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 break;
       case GL_PROJECTION_MATRIX:
 	 for (i=0;i<16;i++) {
-	    params[i] = FLOAT_TO_BOOL(ctx->ProjectionMatrix.m[i]);
+	    params[i] = FLOAT_TO_BOOL(ctx->ProjectionMatrixStack.Top->m[i]);
 	 }
 	 break;
       case GL_PROJECTION_STACK_DEPTH:
-	 *params = INT_TO_BOOL(ctx->ProjectionStackDepth + 1);
+	 *params = INT_TO_BOOL(ctx->ProjectionMatrixStack.Depth + 1);
 	 break;
       case GL_READ_BUFFER:
 	 *params = ENUM_TO_BOOL(ctx->Pixel.ReadBuffer);
@@ -868,11 +868,11 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_TEXTURE_MATRIX:
 	 for (i=0;i<16;i++) {
 	    params[i] =
-	       FLOAT_TO_BOOL(ctx->TextureMatrix[texUnit].m[i]);
+	       FLOAT_TO_BOOL(ctx->TextureMatrixStack[texUnit].Top->m[i]);
 	 }
 	 break;
       case GL_TEXTURE_STACK_DEPTH:
-	 *params = INT_TO_BOOL(ctx->TextureStackDepth[texUnit] + 1);
+	 *params = INT_TO_BOOL(ctx->TextureMatrixStack[texUnit].Depth + 1);
 	 break;
       case GL_UNPACK_ALIGNMENT:
 	 *params = INT_TO_BOOL(ctx->Unpack.Alignment);
@@ -1042,7 +1042,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          {
             GLfloat tm[16];
             GLuint i;
-            _math_transposef(tm, ctx->ColorMatrix.m);
+            _math_transposef(tm, ctx->ColorMatrixStack.Top->m);
             for (i=0;i<16;i++) {
                params[i] = FLOAT_TO_BOOL(tm[i]);
             }
@@ -1052,7 +1052,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          {
             GLfloat tm[16];
             GLuint i;
-            _math_transposef(tm, ctx->ModelView.m);
+            _math_transposef(tm, ctx->ModelviewMatrixStack.Top->m);
             for (i=0;i<16;i++) {
                params[i] = FLOAT_TO_BOOL(tm[i]);
             }
@@ -1062,7 +1062,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          {
             GLfloat tm[16];
             GLuint i;
-            _math_transposef(tm, ctx->ProjectionMatrix.m);
+            _math_transposef(tm, ctx->ProjectionMatrixStack.Top->m);
             for (i=0;i<16;i++) {
                params[i] = FLOAT_TO_BOOL(tm[i]);
             }
@@ -1072,7 +1072,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          {
             GLfloat tm[16];
             GLuint i;
-            _math_transposef(tm, ctx->TextureMatrix[texUnit].m);
+            _math_transposef(tm, ctx->TextureMatrixStack[texUnit].Top->m);
             for (i=0;i<16;i++) {
                params[i] = FLOAT_TO_BOOL(tm[i]);
             }
@@ -1111,11 +1111,11 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       /* GL_SGI_color_matrix (also in 1.2 imaging) */
       case GL_COLOR_MATRIX_SGI:
          for (i=0;i<16;i++) {
-	    params[i] = FLOAT_TO_BOOL(ctx->ColorMatrix.m[i]);
+	    params[i] = FLOAT_TO_BOOL(ctx->ColorMatrixStack.Top->m[i]);
 	 }
 	 break;
       case GL_COLOR_MATRIX_STACK_DEPTH_SGI:
-         *params = INT_TO_BOOL(ctx->ColorStackDepth + 1);
+         *params = INT_TO_BOOL(ctx->ColorMatrixStack.Depth + 1);
          break;
       case GL_MAX_COLOR_MATRIX_STACK_DEPTH_SGI:
          *params = FLOAT_TO_BOOL(MAX_COLOR_STACK_DEPTH);
@@ -1334,11 +1334,11 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       /* GL_NV_vertex_program */
       case GL_MAX_TRACK_MATRIX_STACK_DEPTH_NV:
          CHECK_EXTENSION_B(NV_vertex_program);
-         *params = VP_MAX_MATRIX_DEPTH;
+         *params = MAX_PROGRAM_STACK_DEPTH;
          break;
       case GL_MAX_TRACK_MATRICES_NV:
          CHECK_EXTENSION_B(NV_vertex_program);
-         *params = VP_MAX_MATRICES;
+         *params = MAX_PROGRAM_MATRICES;
          break;
       case GL_VERTEX_PROGRAM_NV:
          CHECK_EXTENSION_B(NV_vertex_program);
@@ -1942,11 +1942,11 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          break;
       case GL_MODELVIEW_MATRIX:
 	 for (i=0;i<16;i++) {
-	    params[i] = (GLdouble) ctx->ModelView.m[i];
+	    params[i] = (GLdouble) ctx->ModelviewMatrixStack.Top->m[i];
 	 }
 	 break;
       case GL_MODELVIEW_STACK_DEPTH:
-	 *params = (GLdouble) (ctx->ModelViewStackDepth + 1);
+	 *params = (GLdouble) (ctx->ModelviewMatrixStack.Depth + 1);
 	 break;
       case GL_NAME_STACK_DEPTH:
 	 *params = (GLdouble) ctx->Select.NameStackDepth;
@@ -2069,11 +2069,11 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 break;
       case GL_PROJECTION_MATRIX:
 	 for (i=0;i<16;i++) {
-	    params[i] = (GLdouble) ctx->ProjectionMatrix.m[i];
+	    params[i] = (GLdouble) ctx->ProjectionMatrixStack.Top->m[i];
 	 }
 	 break;
       case GL_PROJECTION_STACK_DEPTH:
-	 *params = (GLdouble) (ctx->ProjectionStackDepth + 1);
+	 *params = (GLdouble) (ctx->ProjectionMatrixStack.Depth + 1);
 	 break;
       case GL_READ_BUFFER:
 	 *params = ENUM_TO_DOUBLE(ctx->Pixel.ReadBuffer);
@@ -2191,11 +2191,11 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 break;
       case GL_TEXTURE_MATRIX:
          for (i=0;i<16;i++) {
-	    params[i] = (GLdouble) ctx->TextureMatrix[texUnit].m[i];
+	    params[i] = (GLdouble) ctx->TextureMatrixStack[texUnit].Top->m[i];
 	 }
 	 break;
       case GL_TEXTURE_STACK_DEPTH:
-	 *params = (GLdouble) (ctx->TextureStackDepth[texUnit] + 1);
+	 *params = (GLdouble) (ctx->TextureMatrixStack[texUnit].Depth + 1);
 	 break;
       case GL_UNPACK_ALIGNMENT:
 	 *params = (GLdouble) ctx->Unpack.Alignment;
@@ -2368,7 +2368,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          {
             GLfloat tm[16];
             GLuint i;
-            _math_transposef(tm, ctx->ColorMatrix.m);
+            _math_transposef(tm, ctx->ColorMatrixStack.Top->m);
             for (i=0;i<16;i++) {
                params[i] = (GLdouble) tm[i];
             }
@@ -2378,7 +2378,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          {
             GLfloat tm[16];
             GLuint i;
-            _math_transposef(tm, ctx->ModelView.m);
+            _math_transposef(tm, ctx->ModelviewMatrixStack.Top->m);
             for (i=0;i<16;i++) {
                params[i] = (GLdouble) tm[i];
             }
@@ -2388,7 +2388,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          {
             GLfloat tm[16];
             GLuint i;
-            _math_transposef(tm, ctx->ProjectionMatrix.m);
+            _math_transposef(tm, ctx->ProjectionMatrixStack.Top->m);
             for (i=0;i<16;i++) {
                params[i] = (GLdouble) tm[i];
             }
@@ -2398,7 +2398,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          {
             GLfloat tm[16];
             GLuint i;
-            _math_transposef(tm, ctx->TextureMatrix[texUnit].m);
+            _math_transposef(tm, ctx->TextureMatrixStack[texUnit].Top->m);
             for (i=0;i<16;i++) {
                params[i] = (GLdouble) tm[i];
             }
@@ -2437,11 +2437,11 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       /* GL_SGI_color_matrix (also in 1.2 imaging) */
       case GL_COLOR_MATRIX_SGI:
          for (i=0;i<16;i++) {
-	    params[i] = (GLdouble) ctx->ColorMatrix.m[i];
+	    params[i] = (GLdouble) ctx->ColorMatrixStack.Top->m[i];
 	 }
 	 break;
       case GL_COLOR_MATRIX_STACK_DEPTH_SGI:
-         *params = (GLdouble) (ctx->ColorStackDepth + 1);
+         *params = (GLdouble) (ctx->ColorMatrixStack.Depth + 1);
          break;
       case GL_MAX_COLOR_MATRIX_STACK_DEPTH_SGI:
          *params = (GLdouble) MAX_COLOR_STACK_DEPTH;
@@ -2658,7 +2658,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          break;
 
       /* GL_NV_vertex_program */
-         /* to do */
+         /* XXX to do */
 
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
@@ -3178,11 +3178,11 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_MODELVIEW_MATRIX:
 	 for (i=0;i<16;i++) {
-	    params[i] = ctx->ModelView.m[i];
+	    params[i] = ctx->ModelviewMatrixStack.Top->m[i];
 	 }
 	 break;
       case GL_MODELVIEW_STACK_DEPTH:
-	 *params = (GLfloat) (ctx->ModelViewStackDepth + 1);
+	 *params = (GLfloat) (ctx->ModelviewMatrixStack.Depth + 1);
 	 break;
       case GL_NAME_STACK_DEPTH:
 	 *params = (GLfloat) ctx->Select.NameStackDepth;
@@ -3307,11 +3307,11 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 break;
       case GL_PROJECTION_MATRIX:
 	 for (i=0;i<16;i++) {
-	    params[i] = ctx->ProjectionMatrix.m[i];
+	    params[i] = ctx->ProjectionMatrixStack.Top->m[i];
 	 }
 	 break;
       case GL_PROJECTION_STACK_DEPTH:
-	 *params = (GLfloat) (ctx->ProjectionStackDepth + 1);
+	 *params = (GLfloat) (ctx->ProjectionMatrixStack.Depth + 1);
 	 break;
       case GL_READ_BUFFER:
 	 *params = ENUM_TO_FLOAT(ctx->Pixel.ReadBuffer);
@@ -3429,11 +3429,11 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 break;
       case GL_TEXTURE_MATRIX:
          for (i=0;i<16;i++) {
-	    params[i] = ctx->TextureMatrix[texUnit].m[i];
+	    params[i] = ctx->TextureMatrixStack[texUnit].Top->m[i];
 	 }
 	 break;
       case GL_TEXTURE_STACK_DEPTH:
-	 *params = (GLfloat) (ctx->TextureStackDepth[texUnit] + 1);
+	 *params = (GLfloat) (ctx->TextureMatrixStack[texUnit].Depth + 1);
 	 break;
       case GL_UNPACK_ALIGNMENT:
 	 *params = (GLfloat) ctx->Unpack.Alignment;
@@ -3605,16 +3605,16 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 
       /* GL_ARB_transpose_matrix */
       case GL_TRANSPOSE_COLOR_MATRIX_ARB:
-         _math_transposef(params, ctx->ColorMatrix.m);
+         _math_transposef(params, ctx->ColorMatrixStack.Top->m);
          break;
       case GL_TRANSPOSE_MODELVIEW_MATRIX_ARB:
-         _math_transposef(params, ctx->ModelView.m);
+         _math_transposef(params, ctx->ModelviewMatrixStack.Top->m);
          break;
       case GL_TRANSPOSE_PROJECTION_MATRIX_ARB:
-         _math_transposef(params, ctx->ProjectionMatrix.m);
+         _math_transposef(params, ctx->ProjectionMatrixStack.Top->m);
          break;
       case GL_TRANSPOSE_TEXTURE_MATRIX_ARB:
-         _math_transposef(params, ctx->TextureMatrix[texUnit].m);
+         _math_transposef(params, ctx->TextureMatrixStack[texUnit].Top->m);
          break;
 
       /* GL_HP_occlusion_test */
@@ -3649,11 +3649,11 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       /* GL_SGI_color_matrix (also in 1.2 imaging) */
       case GL_COLOR_MATRIX_SGI:
          for (i=0;i<16;i++) {
-	    params[i] = ctx->ColorMatrix.m[i];
+	    params[i] = ctx->ColorMatrixStack.Top->m[i];
 	 }
 	 break;
       case GL_COLOR_MATRIX_STACK_DEPTH_SGI:
-         *params = (GLfloat) (ctx->ColorStackDepth + 1);
+         *params = (GLfloat) (ctx->ColorMatrixStack.Depth + 1);
          break;
       case GL_MAX_COLOR_MATRIX_STACK_DEPTH_SGI:
          *params = (GLfloat) MAX_COLOR_STACK_DEPTH;
@@ -3870,7 +3870,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
 
       /* GL_NV_vertex_program */
-         /* to do */
+         /* XXX to do */
 
       default:
          GET_FLOAT_ERROR;
@@ -4385,11 +4385,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_MODELVIEW_MATRIX:
 	 for (i=0;i<16;i++) {
-	    params[i] = (GLint) ctx->ModelView.m[i];
+	    params[i] = (GLint) ctx->ModelviewMatrixStack.Top->m[i];
 	 }
 	 break;
       case GL_MODELVIEW_STACK_DEPTH:
-	 *params = (GLint) (ctx->ModelViewStackDepth + 1);
+	 *params = (GLint) (ctx->ModelviewMatrixStack.Depth + 1);
 	 break;
       case GL_NAME_STACK_DEPTH:
 	 *params = (GLint) ctx->Select.NameStackDepth;
@@ -4512,11 +4512,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 break;
       case GL_PROJECTION_MATRIX:
 	 for (i=0;i<16;i++) {
-	    params[i] = (GLint) ctx->ProjectionMatrix.m[i];
+	    params[i] = (GLint) ctx->ProjectionMatrixStack.Top->m[i];
 	 }
 	 break;
       case GL_PROJECTION_STACK_DEPTH:
-	 *params = (GLint) (ctx->ProjectionStackDepth + 1);
+	 *params = (GLint) (ctx->ProjectionMatrixStack.Depth + 1);
 	 break;
       case GL_READ_BUFFER:
 	 *params = (GLint) ctx->Pixel.ReadBuffer;
@@ -4634,11 +4634,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 break;
       case GL_TEXTURE_MATRIX:
          for (i=0;i<16;i++) {
-	    params[i] = (GLint) ctx->TextureMatrix[texUnit].m[i];
+	    params[i] = (GLint) ctx->TextureMatrixStack[texUnit].Top->m[i];
 	 }
 	 break;
       case GL_TEXTURE_STACK_DEPTH:
-	 *params = (GLint) (ctx->TextureStackDepth[texUnit] + 1);
+	 *params = (GLint) (ctx->TextureMatrixStack[texUnit].Depth + 1);
 	 break;
       case GL_UNPACK_ALIGNMENT:
 	 *params = ctx->Unpack.Alignment;
@@ -4813,7 +4813,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          {
             GLfloat tm[16];
             GLuint i;
-            _math_transposef(tm, ctx->ColorMatrix.m);
+            _math_transposef(tm, ctx->ColorMatrixStack.Top->m);
             for (i=0;i<16;i++) {
                params[i] = (GLint) tm[i];
             }
@@ -4823,7 +4823,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          {
             GLfloat tm[16];
             GLuint i;
-            _math_transposef(tm, ctx->ModelView.m);
+            _math_transposef(tm, ctx->ModelviewMatrixStack.Top->m);
             for (i=0;i<16;i++) {
                params[i] = (GLint) tm[i];
             }
@@ -4833,7 +4833,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          {
             GLfloat tm[16];
             GLuint i;
-            _math_transposef(tm, ctx->ProjectionMatrix.m);
+            _math_transposef(tm, ctx->ProjectionMatrixStack.Top->m);
             for (i=0;i<16;i++) {
                params[i] = (GLint) tm[i];
             }
@@ -4843,7 +4843,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          {
             GLfloat tm[16];
             GLuint i;
-            _math_transposef(tm, ctx->TextureMatrix[texUnit].m);
+            _math_transposef(tm, ctx->TextureMatrixStack[texUnit].Top->m);
             for (i=0;i<16;i++) {
                params[i] = (GLint) tm[i];
             }
@@ -4886,12 +4886,12 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_COLOR_MATRIX_SGI:
          CHECK_EXTENSION_I(SGI_color_matrix);
          for (i=0;i<16;i++) {
-	    params[i] = (GLint) ctx->ColorMatrix.m[i];
+	    params[i] = (GLint) ctx->ColorMatrixStack.Top->m[i];
 	 }
 	 break;
       case GL_COLOR_MATRIX_STACK_DEPTH_SGI:
          CHECK_EXTENSION_I(SGI_color_matrix);
-         *params = ctx->ColorStackDepth + 1;
+         *params = ctx->ColorMatrixStack.Depth + 1;
          break;
       case GL_MAX_COLOR_MATRIX_STACK_DEPTH_SGI:
          CHECK_EXTENSION_I(SGI_color_matrix);
@@ -5121,7 +5121,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
 
       /* GL_NV_vertex_program */
-         /* to do */
+         /* XXX to do */
 
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );

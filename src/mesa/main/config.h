@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.36 2001/11/28 17:18:36 brianp Exp $ */
+/* $Id: config.h,v 1.37 2001/12/18 04:06:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,6 +54,10 @@
 
 /* Maximum color matrix stack depth: */
 #define MAX_COLOR_STACK_DEPTH 4
+
+/* Vertex program matrix stacks: */
+#define MAX_PROGRAM_MATRICES 8
+#define MAX_PROGRAM_STACK_DEPTH 4
 
 /* Maximum attribute stack depth: */
 #define MAX_ATTRIB_STACK_DEPTH 16

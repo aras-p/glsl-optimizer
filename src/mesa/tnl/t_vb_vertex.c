@@ -1,4 +1,4 @@
-/* $Id: t_vb_vertex.c,v 1.10 2001/12/14 02:51:45 brianp Exp $ */
+/* $Id: t_vb_vertex.c,v 1.11 2001/12/18 04:06:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,7 +57,7 @@ struct vertex_stage_data {
     */
    GLvector4f *save_eyeptr;
    GLvector4f *save_clipptr;
-   GLvector4f *save_projptr;
+   GLvector4f *save_ndcptr;
 };
 
 #define VERTEX_STAGE_DATA(stage) ((struct vertex_stage_data *)stage->privatePtr)
@@ -142,16 +142,18 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
       if (ctx->_NeedEyeCoords) {
 	 /* Separate modelview and project transformations:
 	  */
-	 if (ctx->ModelView.type == MATRIX_IDENTITY)
+	 if (ctx->ModelviewMatrixStack.Top->type == MATRIX_IDENTITY)
 	    VB->EyePtr = VB->ObjPtr;
 	 else
-	    VB->EyePtr = TransformRaw( &store->eye, &ctx->ModelView,
+	    VB->EyePtr = TransformRaw( &store->eye,
+                                       ctx->ModelviewMatrixStack.Top,
 				       VB->ObjPtr);
 
-	 if (ctx->ProjectionMatrix.type == MATRIX_IDENTITY)
+	 if (ctx->ProjectionMatrixStack.Top->type == MATRIX_IDENTITY)
 	    VB->ClipPtr = VB->EyePtr;
 	 else
-	    VB->ClipPtr = TransformRaw( &store->clip, &ctx->ProjectionMatrix,
+	    VB->ClipPtr = TransformRaw( &store->clip,
+                                        ctx->ProjectionMatrixStack.Top,
 					VB->EyePtr );
       }
       else {
@@ -184,16 +186,17 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
       store->ormask = 0;
       store->andmask = CLIP_ALL_BITS;
 
-      if (tnl->NeedProjCoords) {
-	 VB->ProjectedClipPtr =
+      if (tnl->NeedNdcCoords) {
+	 VB->NdcPtr =
 	    _mesa_clip_tab[VB->ClipPtr->size]( VB->ClipPtr,
                                                &store->proj,
                                                store->clipmask,
                                                &store->ormask,
                                                &store->andmask );
 
-      } else {
-	 VB->ProjectedClipPtr = 0;
+      }
+      else {
+	 VB->NdcPtr = 0;
 	 _mesa_clip_np_tab[VB->ClipPtr->size]( VB->ClipPtr,
                                                0,
                                                store->clipmask,
@@ -227,14 +230,14 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 
       store->save_eyeptr = VB->EyePtr;
       store->save_clipptr = VB->ClipPtr;
-      store->save_projptr = VB->ProjectedClipPtr;
+      store->save_ndcptr = VB->NdcPtr;
    }
    else {
       /* Replay the sideeffects.
        */
       VB->EyePtr = store->save_eyeptr;
       VB->ClipPtr = store->save_clipptr;
-      VB->ProjectedClipPtr = store->save_projptr;
+      VB->NdcPtr = store->save_ndcptr;
       VB->ClipMask = store->clipmask;
       VB->ClipOrMask = store->ormask;
       if (VB->ClipPtr == VB->ObjPtr && (VB->importable_data & VERT_OBJ_BIT))
