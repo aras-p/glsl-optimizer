@@ -56,7 +56,7 @@ static void Key( unsigned char key, int x, int y )
 
 static void Init( void )
 {
-   static const char *prog1 =
+   static const char *prog0 =
       "!!FP1.0\n"
       "MUL   o[COLR], R0, f[WPOS]; \n"
       "ADD   o[COLH], H3, f[TEX0]; \n"
@@ -72,8 +72,8 @@ static void Init( void )
       "MOV   HC, H2; \n"
       ;
 
-   /* masked updates */
-   static const char *prog2 =
+   /* masked updates, defines, declarations */
+   static const char *prog1 =
       "!!FP1.0\n"
       "DEFINE foo = {1, 2, 3, 4}; \n"
       "DEFINE foo2 = 5; \n"
@@ -81,18 +81,44 @@ static void Init( void )
       "DECLARE bar = 3; \n"
       "DECLARE bar2; \n"
       "DECLARE bar3 = bar; \n"
-      "DECLARE bar4 = { a, b, c, d }; \n"
+      "#DECLARE bar4 = { a, b, c, d }; \n"
       "MOV o[COLR],      R0; \n"
       "MOV o[COLR].xy,   R0; \n"
       "MOV o[COLR] (NE), R0; \n"
       "MOV o[COLR] (NE.wzyx), R0; \n"
       "MOV o[COLR].xy (NE.wzyx), R0; \n"
+      "MOV RC.x (EQ), R1.x; \n"
       "KIL NE; \n"
       "KIL EQ.xyxy; \n"
       ;
 
-   /* double the color */
+   /* texture instructions */
+   static const char *prog2 =
+      "!!FP1.0\n"
+      "TEX R0, f[TEX0], TEX0, 2D; \n"
+      "TEX R1, f[TEX1], TEX1, CUBE; \n"
+      "TEX R2, f[TEX2], TEX2, 3D; \n"
+      "TXP R3, f[TEX3], TEX3, RECT; \n"
+      "TXD R3, R2, R1, f[TEX3], TEX3, RECT; \n"
+      "MUL o[COLR], R0, f[COL0]; \n"
+      ;
+
+   /* test negation, absolute value */
    static const char *prog3 =
+      "!!FP1.0\n"
+      "MOV R0, -R1; \n"
+      "MOV R0, +R1; \n"
+      "MOV R0, |-R1|; \n"
+      "MOV R0, |+R1|; \n"
+      "MOV R0, -|R1|; \n"
+      "MOV R0, +|R1|; \n"
+      "MOV R0, -|-R1|; \n"
+      "MOV R0, -|+R1|; \n"
+      "MOV o[COLR], R0; \n"
+      ;
+
+   /* double the color */
+   static const char *prog10 =
       "!!FP1.0\n"
       "MOV R0, f[COL0]; \n"
       "ADD o[COLR], R0, f[COL0]; \n"
@@ -105,27 +131,36 @@ static void Init( void )
    assert(progs[1]);
    assert(progs[0] != progs[1]);
 
-   glGenProgramsNV(3, progs + 2);
-   assert(progs[2]);
-   assert(progs[3]);
-   assert(progs[2] != progs[3]);
-   assert(progs[0] != progs[2]);
-
    glLoadProgramNV(GL_FRAGMENT_PROGRAM_NV, progs[0],
-                   strlen(prog1),
-                   (const GLubyte *) prog1);
+                   strlen(prog0),
+                   (const GLubyte *) prog0);
    assert(glIsProgramNV(progs[0]));
 
    glLoadProgramNV(GL_FRAGMENT_PROGRAM_NV, progs[1],
-                   strlen(prog2),
-                   (const GLubyte *) prog2);
+                   strlen(prog1),
+                   (const GLubyte *) prog1);
    assert(glIsProgramNV(progs[1]));
 
    glLoadProgramNV(GL_FRAGMENT_PROGRAM_NV, progs[2],
                    strlen(prog2),
-                   (const GLubyte *) prog3);
+                   (const GLubyte *) prog2);
    assert(glIsProgramNV(progs[2]));
    glBindProgramNV(GL_FRAGMENT_PROGRAM_NV, progs[2]);
+
+   glLoadProgramNV(GL_FRAGMENT_PROGRAM_NV, progs[3],
+                   strlen(prog3),
+                   (const GLubyte *) prog3);
+   assert(glIsProgramNV(progs[3]));
+   glBindProgramNV(GL_FRAGMENT_PROGRAM_NV, progs[3]);
+
+
+   /* a real program */
+   glLoadProgramNV(GL_FRAGMENT_PROGRAM_NV, progs[10],
+                   strlen(prog10),
+                   (const GLubyte *) prog10);
+   assert(glIsProgramNV(progs[10]));
+   glBindProgramNV(GL_FRAGMENT_PROGRAM_NV, progs[10]);
+
    glEnable(GL_FRAGMENT_PROGRAM_NV);
    glEnable(GL_ALPHA_TEST);
    glAlphaFunc(GL_ALWAYS, 0.0);
