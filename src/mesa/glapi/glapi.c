@@ -159,7 +159,7 @@ static int NoOpUnused(void)
  * It is possible for the original thread to be setting it at the same instant
  * a new thread, perhaps running on a different processor, is clearing it.
  * Because of that, \c ThreadSafe, which can only ever be changed to
- * \c GL_FALSE, is used to determin whether or not the application is
+ * \c GL_TRUE, is used to determine whether or not the application is
  * multithreaded.
  */
 /*@{*/
