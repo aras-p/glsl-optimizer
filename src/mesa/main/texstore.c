@@ -430,9 +430,9 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
                                                  srcFormat, srcType,
                                                  img, 0, 0);
       for (row = 0; row < srcHeight; row++) {
-         _mesa_unpack_color_span_chan(ctx, srcWidth, logicalBaseFormat,
-                                      dst, srcFormat, srcType, src,
-                                      srcPacking, transferOps);
+         _mesa_unpack_color_span_chan(ctx, srcWidth, logicalBaseFormat, dst,
+                                      srcFormat, srcType, src, srcPacking,
+                                      transferOps);
          dst += srcWidth * components;
          src += srcStride;
       }
@@ -644,7 +644,7 @@ _mesa_texstore_rgba(GLcontext *ctx, GLuint dims,
                                                  srcFormat, srcType, srcAddr,
                                                  srcPacking);
       const GLchan *src = tempImage;
-      const GLint bytesPerRow = srcWidth * components * sizeof(GLchan);
+      GLint bytesPerRow;
       GLubyte *dstImage = (GLubyte *) dstAddr
                         + dstZoffset * dstImageStride
                         + dstYoffset * dstRowStride
@@ -653,6 +653,7 @@ _mesa_texstore_rgba(GLcontext *ctx, GLuint dims,
       if (!tempImage)
          return GL_FALSE;
       _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
+      bytesPerRow = srcWidth * components * sizeof(GLchan);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = dstImage;
          for (row = 0; row < srcHeight; row++) {
@@ -1537,7 +1538,7 @@ _mesa_texstore_rgba_float32(STORE_PARAMS)
                                                  srcFormat, srcType, srcAddr,
                                                  srcPacking);
       const GLfloat *src = tempImage;
-      const GLint bytesPerRow = srcWidth * components * sizeof(GLfloat);
+      GLint bytesPerRow;
       GLubyte *dstImage = (GLubyte *) dstAddr
                         + dstZoffset * dstImageStride
                         + dstYoffset * dstRowStride
@@ -1546,6 +1547,7 @@ _mesa_texstore_rgba_float32(STORE_PARAMS)
       if (!tempImage)
          return GL_FALSE;
       _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
+      bytesPerRow = srcWidth * components * sizeof(GLfloat);
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dst = dstImage;
          for (row = 0; row < srcHeight; row++) {
@@ -1812,7 +1814,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
          dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat,width);
       }
       else {
-         dstRowStride = width * texImage->TexFormat->TexelBytes;
+         dstRowStride = postConvWidth * texImage->TexFormat->TexelBytes;
       }
       ASSERT(texImage->TexFormat->StoreImage);
       success = texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
