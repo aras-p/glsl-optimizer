@@ -78,18 +78,20 @@ void TAG(translate_vertex)(GLcontext *ctx,
 	 dst->win[3] = LE32_IN_FLOAT( p++ );
 	
       case NOTEX_VERTEX_FORMAT:
-	 dst->specular[2] = *((GLubyte *)p)++;
-	 dst->specular[1] = *((GLubyte *)p)++;
-	 dst->specular[0] = *((GLubyte *)p)++;
-	 dst->fog = *((GLubyte *)p)++;
+	 dst->specular[2] = ((GLubyte *)p)[0];
+	 dst->specular[1] = ((GLubyte *)p)[1];
+	 dst->specular[0] = ((GLubyte *)p)[2];
+	 dst->fog = ((GLubyte *)p)[3];
+	 p++;
 
       case TINY_VERTEX_FORMAT:
 	 dst->win[2] = UNVIEWPORT_Z( LE32_IN( p++ ) );
 
-	 dst->color[2] = *((GLubyte *)p)++;
-	 dst->color[1] = *((GLubyte *)p)++;
-	 dst->color[0] = *((GLubyte *)p)++;
-	 dst->color[3] = *((GLubyte *)p)++;
+	 dst->color[2] = ((GLubyte *)p)[0];
+	 dst->color[1] = ((GLubyte *)p)[1];
+	 dst->color[0] = ((GLubyte *)p)[2];
+	 dst->color[3] = ((GLubyte *)p)[3];
+	 p++;
 	 
 	 {
 	    GLuint xy = LE32_IN( p );
@@ -149,11 +151,11 @@ void TAG(print_vertex)( GLcontext *ctx, const VERTEX *v )
 	 {
 	    GLubyte r, g, b, a;
 	    
-	    b = *((GLubyte *)p)++;
-	    g = *((GLubyte *)p)++;
-	    r = *((GLubyte *)p)++;
-	    a = *((GLubyte *)p)++;
-
+	    b = ((GLubyte *)p)[0];
+	    g = ((GLubyte *)p)[1];
+	    r = ((GLubyte *)p)[2];
+	    a = ((GLubyte *)p)[3];
+	    p++;
 	    fprintf(stderr, "spec: r %d g %d b %d a %d\n", r, g, b, a);
 	 }
 
@@ -165,11 +167,11 @@ void TAG(print_vertex)( GLcontext *ctx, const VERTEX *v )
 	    
 	    z = LE32_IN( p++ ) / 65536.0;
 
-	    b = *((GLubyte *)p)++;
-	    g = *((GLubyte *)p)++;
-	    r = *((GLubyte *)p)++;
-	    a = *((GLubyte *)p)++;
-	 
+	    b = ((GLubyte *)p)[0];
+	    g = ((GLubyte *)p)[1];
+	    r = ((GLubyte *)p)[2];
+	    a = ((GLubyte *)p)[3];
+	    p++;
 	    xy = LE32_IN( p );
 	    x = (GLfloat)(GLshort)( xy >> 16 ) / 4.0;
 	    y = (GLfloat)(GLshort)( xy & 0xffff ) / 4.0;

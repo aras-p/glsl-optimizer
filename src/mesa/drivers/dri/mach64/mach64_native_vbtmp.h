@@ -274,14 +274,11 @@ static void TAG(emit)( GLcontext *ctx,
 #endif
 
 #if DO_RGBA
-	 UNCLAMPED_FLOAT_TO_UBYTE(*((GLubyte *)p), col[0][2]);
-	 *((GLubyte *)p)++;
-	 UNCLAMPED_FLOAT_TO_UBYTE(*((GLubyte *)p), col[0][1]);
-	 *((GLubyte *)p)++;
-	 UNCLAMPED_FLOAT_TO_UBYTE(*((GLubyte *)p), col[0][0]);
-	 *((GLubyte *)p)++;
-	 UNCLAMPED_FLOAT_TO_UBYTE(*((GLubyte *)p), col[0][3]);
-	 *((GLubyte *)p)++;
+	 UNCLAMPED_FLOAT_TO_UBYTE(((GLubyte *)p)[0], col[0][2]);
+	 UNCLAMPED_FLOAT_TO_UBYTE(((GLubyte *)p)[1], col[0][1]);
+	 UNCLAMPED_FLOAT_TO_UBYTE(((GLubyte *)p)[2], col[0][0]);
+	 UNCLAMPED_FLOAT_TO_UBYTE(((GLubyte *)p)[3], col[0][3]);
+	 p++;
 	 STRIDE_4F(col, col_stride);
 #else
 	 p++;
@@ -473,45 +470,25 @@ static void TAG(interp)( GLcontext *ctx,
 #endif /* !DO_TEX0 */
    
 #if DO_SPEC
-   INTERP_UB( t, *(GLubyte *)dst, *(GLubyte *)out, *(GLubyte *)in );	/* VERTEX_?_SPEC_B */
-   ((GLubyte *)dst)++; ((GLubyte *)out)++; ((GLubyte *)in)++;
-
-   INTERP_UB( t, *(GLubyte *)dst, *(GLubyte *)out, *(GLubyte *)in );	/* VERTEX_?_SPEC_G */
-   ((GLubyte *)dst)++; ((GLubyte *)out)++; ((GLubyte *)in)++;
-   
-   INTERP_UB( t, *(GLubyte *)dst, *(GLubyte *)out, *(GLubyte *)in );	/* VERTEX_?_SPEC_R */
-#if DO_FOG
-   ((GLubyte *)dst)++; ((GLubyte *)out)++; ((GLubyte *)in)++;
-#else /* !DO_FOG */
-   ((GLubyte *)dst) += 2; ((GLubyte *)out) += 2; ((GLubyte *)in) += 2;
-#endif /* !DO_FOG */
-#elif DO_FOG
-   ((GLubyte *)dst) += 3; ((GLubyte *)out) += 3; ((GLubyte *)in) += 3;
+   INTERP_UB( t, ((GLubyte *)dst)[0], ((GLubyte *)out)[0], ((GLubyte *)in)[0] );	/* VERTEX_?_SPEC_B */
+   INTERP_UB( t, ((GLubyte *)dst)[1], ((GLubyte *)out)[1], ((GLubyte *)in)[1] );	/* VERTEX_?_SPEC_G */
+   INTERP_UB( t, ((GLubyte *)dst)[2], ((GLubyte *)out)[2], ((GLubyte *)in)[2] );	/* VERTEX_?_SPEC_R */
 #endif
    
 #if DO_FOG
-   INTERP_UB( t, *(GLubyte *)dst, *(GLubyte *)out, *(GLubyte *)in );	/* VERTEX_?_SPEC_A */
-   ((GLubyte *)dst)++; ((GLubyte *)out)++; ((GLubyte *)in)++;
+   INTERP_UB( t, ((GLubyte *)dst)[3], ((GLubyte *)out)[3], ((GLubyte *)in)[3] );	/* VERTEX_?_SPEC_A */
 #endif /* DO_FOG */
 
-#if !DO_SPEC && !DO_FOG
    dst++; out++; in++;
-#endif
 
    LE32_OUT( dst, VIEWPORT_Z( dstclip[2] * w ) );		/* VERTEX_?_Z */
    dst++; out++; in++;
   
-   INTERP_UB( t, *(GLubyte *)dst, *(GLubyte *)out, *(GLubyte *)in );	/* VERTEX_?_B */
-   ((GLubyte *)dst)++; ((GLubyte *)out)++; ((GLubyte *)in)++;
-
-   INTERP_UB( t, *(GLubyte *)dst, *(GLubyte *)out, *(GLubyte *)in );	/* VERTEX_?_G */
-   ((GLubyte *)dst)++; ((GLubyte *)out)++; ((GLubyte *)in)++;
-
-   INTERP_UB( t, *(GLubyte *)dst, *(GLubyte *)out, *(GLubyte *)in );	/* VERTEX_?_R */
-   ((GLubyte *)dst)++; ((GLubyte *)out)++; ((GLubyte *)in)++;
-
-   INTERP_UB( t, *(GLubyte *)dst, *(GLubyte *)out, *(GLubyte *)in );	/* VERTEX_?_A */
-   ((GLubyte *)dst)++; /* ((GLubyte *)out)++; ((GLubyte *)in)++; */
+   INTERP_UB( t, ((GLubyte *)dst)[0], ((GLubyte *)out)[0], ((GLubyte *)in)[0] );	/* VERTEX_?_B */
+   INTERP_UB( t, ((GLubyte *)dst)[1], ((GLubyte *)out)[1], ((GLubyte *)in)[1] );	/* VERTEX_?_G */
+   INTERP_UB( t, ((GLubyte *)dst)[2], ((GLubyte *)out)[2], ((GLubyte *)in)[2] );	/* VERTEX_?_R */
+   INTERP_UB( t, ((GLubyte *)dst)[3], ((GLubyte *)out)[3], ((GLubyte *)in)[3] );	/* VERTEX_?_A */
+   dst++; /*out++; in++;*/
 
    LE32_OUT( dst,
 	     (VIEWPORT_X( dstclip[0] * w ) << 16) |		/* VERTEX_?_X */
