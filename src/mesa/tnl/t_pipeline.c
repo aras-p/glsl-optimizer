@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.c,v 1.18 2001/05/10 12:18:38 keithw Exp $ */
+/* $Id: t_pipeline.c,v 1.19 2001/05/21 16:33:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -134,18 +134,18 @@ void _tnl_run_pipeline( GLcontext *ctx )
    /* Done elsewhere.
     */
    ASSERT(pipe->build_state_changes == 0);
-   
+
    START_FAST_MATH(__tmp);
 
    /* If something changes in the pipeline, tag all subsequent stages
     * using this value for recalculation.  Inactive stages have their
     * state and inputs examined to try to keep cached data alive over
-    * state-changes.  
+    * state-changes.
     */
    for ( ; s->run ; s++) {
       s->changed_inputs |= s->inputs & changed_inputs;
 
-      if (s->run_state & changed_state) 
+      if (s->run_state & changed_state)
 	 s->changed_inputs = s->inputs;
 
       if (s->active && running) {

@@ -1,4 +1,4 @@
-/* $Id: m_clip_tmp.h,v 1.6 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: m_clip_tmp.h,v 1.7 2001/05/21 16:33:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -109,8 +109,8 @@ static GLvector4f * _XFORMAPI TAG(cliptest_np_points4)( GLvector4f *clip_vec,
 							GLubyte *andMask )
 {
    const GLuint stride = clip_vec->stride;
-   const GLfloat *from = (GLfloat *)clip_vec->start;
    const GLuint count = clip_vec->count;
+   const GLfloat *from = (GLfloat *)clip_vec->start;
    GLuint c = 0;
    GLubyte tmpAndMask = *andMask;
    GLubyte tmpOrMask = *orMask;

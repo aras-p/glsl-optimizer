@@ -1,4 +1,4 @@
-/* $Id: x86.c,v 1.22 2001/05/13 18:55:15 gareth Exp $ */
+/* $Id: x86.c,v 1.23 2001/05/21 16:33:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -90,6 +90,7 @@ void _mesa_init_x86_transform_asm( void )
 
 #ifdef DEBUG
    _math_test_all_transform_functions( "x86" );
+   _math_test_all_cliptest_functions( "x86" );
 #endif
 #endif
 }
@@ -100,7 +101,7 @@ void _mesa_init_x86_vertex_asm( void )
    _mesa_xform_points3_v16_general = _mesa_v16_x86_general_xform;
    _mesa_cliptest_points4_v16 = _mesa_v16_x86_cliptest_points4;
 
-#ifdef DEBUG
+#ifdef 0 /* DEBUG */
    _math_test_all_vertex_functions( "x86" );
 #endif
 #endif

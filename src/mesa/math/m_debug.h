@@ -1,4 +1,4 @@
-/* $Id: m_debug.h,v 1.3 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: m_debug.h,v 1.4 2001/05/21 16:33:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,6 +32,10 @@
 
 extern void _math_test_all_transform_functions( char *description );
 extern void _math_test_all_normal_transform_functions( char *description );
+extern void _math_test_all_cliptest_functions( char *description );
+
+/* Deprecated?
+ */
 extern void _math_test_all_vertex_functions( char *description );
 
 extern char *mesa_profile;

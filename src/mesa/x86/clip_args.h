@@ -1,4 +1,4 @@
-/* $Id: clip_args.h,v 1.3 2001/03/28 20:44:43 gareth Exp $ */
+/* $Id: clip_args.h,v 1.4 2001/05/21 16:33:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,8 +38,8 @@
 /*
  * Offsets for clip_func arguments
  *
- * typedef GLvector4f *(*clip_func)( GLvector4f *vClip,
- *	                             GLvector4f *vProj,
+ * typedef GLvector4f *(*clip_func)( GLvector4f *clip_vec,
+ *	                             GLvector4f *proj_vec,
  *	                             GLubyte clipMask[],
  *	                             GLubyte *orMask,
  *	                             GLubyte *andMask );

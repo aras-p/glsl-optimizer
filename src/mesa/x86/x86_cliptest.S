@@ -1,4 +1,4 @@
-/* $Id: x86_cliptest.S,v 1.7 2001/05/13 18:55:15 gareth Exp $ */
+/* $Id: x86_cliptest.S,v 1.8 2001/05/21 16:33:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,9 +27,6 @@
 #include "matypes.h"
 #include "clip_args.h"
 
-#define FP_ONE		1065353216
-#define FP_ZERO		0
-
 #define SRC(i)		REGOFF(i * 4, ESI)
 #define DST(i)		REGOFF(i * 4, EDI)
 #define MAT(i)		REGOFF(i * 4, EDX)
@@ -50,22 +47,22 @@
 	SEG_DATA
 
 clip_table:
-	D_BYTE 0, 1, 0, 2, 4, 5, 4, 6
-	D_BYTE 0, 1, 0, 2, 8, 9, 8, 10
-	D_BYTE 32, 33, 32, 34, 36, 37, 36, 38
-	D_BYTE 32, 33, 32, 34, 40, 41, 40, 42
-	D_BYTE 0, 1, 0, 2, 4, 5, 4, 6
-	D_BYTE 0, 1, 0, 2, 8, 9, 8, 10
-	D_BYTE 16, 17, 16, 18, 20, 21, 20, 22
-	D_BYTE 16, 17, 16, 18, 24, 25, 24, 26
-	D_BYTE 63, 61, 63, 62, 55, 53, 55, 54
-	D_BYTE 63, 61, 63, 62, 59, 57, 59, 58
-	D_BYTE 47, 45, 47, 46, 39, 37, 39, 38
-	D_BYTE 47, 45, 47, 46, 43, 41, 43, 42
-	D_BYTE 63, 61, 63, 62, 55, 53, 55, 54
-	D_BYTE 63, 61, 63, 62, 59, 57, 59, 58
-	D_BYTE 31, 29, 31, 30, 23, 21, 23, 22
-	D_BYTE 31, 29, 31, 30, 27, 25, 27, 26
+	D_BYTE 0x00, 0x01, 0x00, 0x02, 0x04, 0x05, 0x04, 0x06
+	D_BYTE 0x00, 0x01, 0x00, 0x02, 0x08, 0x09, 0x08, 0x0a
+	D_BYTE 0x20, 0x21, 0x20, 0x22, 0x24, 0x25, 0x24, 0x26
+	D_BYTE 0x20, 0x21, 0x20, 0x22, 0x28, 0x29, 0x28, 0x2a
+	D_BYTE 0x00, 0x01, 0x00, 0x02, 0x04, 0x05, 0x04, 0x06
+	D_BYTE 0x00, 0x01, 0x00, 0x02, 0x08, 0x09, 0x08, 0x0a
+	D_BYTE 0x10, 0x11, 0x10, 0x12, 0x14, 0x15, 0x14, 0x16
+	D_BYTE 0x10, 0x11, 0x10, 0x12, 0x18, 0x19, 0x18, 0x1a
+	D_BYTE 0x3f, 0x3d, 0x3f, 0x3e, 0x37, 0x35, 0x37, 0x36
+	D_BYTE 0x3f, 0x3d, 0x3f, 0x3e, 0x3b, 0x39, 0x3b, 0x3a
+	D_BYTE 0x2f, 0x2d, 0x2f, 0x2e, 0x27, 0x25, 0x27, 0x26
+	D_BYTE 0x2f, 0x2d, 0x2f, 0x2e, 0x2b, 0x29, 0x2b, 0x2a
+	D_BYTE 0x3f, 0x3d, 0x3f, 0x3e, 0x37, 0x35, 0x37, 0x36
+	D_BYTE 0x3f, 0x3d, 0x3f, 0x3e, 0x3b, 0x39, 0x3b, 0x3a
+	D_BYTE 0x1f, 0x1d, 0x1f, 0x1e, 0x17, 0x15, 0x17, 0x16
+	D_BYTE 0x1f, 0x1d, 0x1f, 0x1e, 0x1b, 0x19, 0x1b, 0x1a
 
 
 	SEG_TEXT
@@ -149,13 +146,8 @@ LLBL( ctp4_clip_table_ready ):
 ALIGNTEXT16
 LLBL( ctp4_top ):
 
-	MOV_L( SRC(3), ECX )
 	FLD1				/* F3 */
-
-	TEST_L( ECX, ECX )		/* GH: If src[3] is zero, abort */
-	JZ( LLBL( ctp4_noproj ) )
-
-	FDIV_S( SRC(3) )
+	FDIV_S( SRC(3) )		/* GH: don't care about div-by-zero */
 
 	MOV_L( SRC(3), EBP )
 	MOV_L( SRC(2), EBX )
@@ -205,12 +197,12 @@ LLBL( ctp4_top ):
 
 LLBL( ctp4_noproj ):
 
-	FLDZ				/* F0 F3 */
+	FSTP( ST(0) )			/* */
 
-	FST_S( DST(0) )			/* F0 F3 */
-	FST_S( DST(1) )			/* F0 F3 */
-	FSTP_S( DST(2) )		/* F3 */
-	FSTP_S( DST(3) )		/* */
+	MOV_L( CONST(0), DST(0) )
+	MOV_L( CONST(0), DST(1) )
+	MOV_L( CONST(0), DST(2) )
+	MOV_L( CONST(0x3f800000), DST(3) )
 
 	JMP( LLBL( ctp4_next ) )
 
