@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.147 2001/09/15 18:02:49 brianp Exp $ */
+/* $Id: context.c,v 1.148 2001/10/18 08:04:57 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -114,6 +114,7 @@ __glCoreCreateContext(__GLimports *imports, __GLcontextModes *modes)
     if (ctx == NULL) {
 	return NULL;
     }
+   ctx->Driver.CurrentExecPrimitive=0;
     ctx->imports = *imports;
 
     _mesa_initialize_visual(&ctx->Visual,
@@ -1571,7 +1572,7 @@ _mesa_create_context( const GLvisual *visual,
    if (!ctx) {
       return NULL;
    }
-
+   ctx->Driver.CurrentExecPrimitive = 0;
    if (_mesa_initialize_context(ctx, visual, share_list, driver_ctx, direct)) {
       return ctx;
    }
