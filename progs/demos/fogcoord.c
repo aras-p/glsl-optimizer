@@ -13,7 +13,7 @@
 #include <math.h>
 #include <GL/glut.h>
 
-#include "readtex.c" /* the compulsory hack  */
+#include "readtex.h"
 
 #define TEXTURE_FILE "../images/bw.rgb"
 

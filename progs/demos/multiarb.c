@@ -17,7 +17,7 @@
 #include <string.h>
 #include <GL/glut.h>
 
-#include "readtex.c"   /* I know, this is a hack. */
+#include "readtex.h"
 
 #define TEXTURE_1_FILE "../images/girl.rgb"
 #define TEXTURE_2_FILE "../images/reflect.rgb"
@@ -34,7 +34,6 @@ static GLboolean TexEnabled[8];
 static GLfloat Drift = 0.0;
 static GLfloat drift_increment = 0.005;
 static GLfloat Xrot = 20.0, Yrot = 30.0, Zrot = 0.0;
-
 
 
 static void Idle( void )

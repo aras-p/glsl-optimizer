@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <string.h>
 
 #ifdef WIN32
 #include <windows.h>
