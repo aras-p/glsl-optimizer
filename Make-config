@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.23 2000/05/03 15:03:27 brianp Exp $
+# $Id: Make-config,v 1.24 2000/05/08 18:20:13 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=3
@@ -683,7 +683,7 @@ linux-alpha:
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
 	"CC = gcc" \
-	"CFLAGS = -ansi -mieee -pedantic -fPIC -D_XOPEN_SOURCE -DUSE_XSHM" \
+	"CFLAGS = -O3 -mcpu=ev5 -ansi -mieee -pedantic -fPIC -D_XOPEN_SOURCE -DSHM" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -694,10 +694,10 @@ linux-alpha-static:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.a" \
 	"GLU_LIB = libGLU.a" \
-	"GLUT_LIB = libglut.so" \
+	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
 	"CC = gcc" \
-	"CFLAGS = -O3 -mieee -pedantic -L/usr/X11R6/lib -D_XOPEN_SOURCE -DUSE_XSHM" \
+	"CFLAGS = -O3 -mcpu=ev5 -ansi -mieee -pedantic -L/usr/X11R6/lib -D_XOPEN_SOURCE -DSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lm"
 
