@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.30 2002/02/15 03:38:12 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.31 2002/02/17 17:30:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,7 +37,6 @@
 
 #include "s_context.h"
 #include "s_drawpix.h"
-#include "s_fog.h"
 #include "s_pixeltex.h"
 #include "s_span.h"
 #include "s_stencil.h"
