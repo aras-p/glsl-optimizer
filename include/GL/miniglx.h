@@ -1,4 +1,4 @@
-/* $Id: miniglx.h,v 1.1 2003/08/23 01:25:30 jonsmirl Exp $ */
+/* $Id: miniglx.h,v 1.2 2003/12/06 17:17:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -92,6 +92,15 @@ typedef struct MiniGLXXVisualInfoRec {
 } XVisualInfo;
 
 /**
+ * \brief GLX Frame Buffer Configuration (for pbuffers)
+ * \sa \ref datatypes.
+ */
+typedef struct MiniGLXFBConfigRec {
+   XVisualInfo *visInfo;
+} GLXFBConfig;
+
+
+/**
  * \brief Display handle.
  *
  * Alias for the private ::MiniGLXDisplayRec structure.
@@ -131,6 +140,17 @@ typedef struct MiniGLXWindowRec   *Drawable;
  * \sa \ref datatypes.
  */
 typedef struct MiniGLXWindowRec   *GLXDrawable;
+
+/**
+ * \brief GLX pbuffer.
+ *
+ * Alias for the private ::MiniGLXWindowRec structure.
+ * 
+ * Same as #Drawable.
+ *
+ * \sa \ref datatypes.
+ */
+typedef struct MiniGLXWindowRec   *GLXPbuffer;
 
 /**
  * \brief GLX context.
@@ -282,6 +302,8 @@ typedef union _XEvent {
 /*@{*/
 /** \brief Defined if version 1.0 of Mini GLX is supported. */
 #define MINI_GLX_VERSION_1_0    1
+/** \brief Defined if version 1.1 of Mini GLX is supported. */
+#define MINI_GLX_VERSION_1_1    1
 /*@}*/
 
 
@@ -355,7 +377,8 @@ extern void
 XFree( void *data );
 
 extern XVisualInfo *
-XGetVisualInfo( Display *display, long vinfo_mask, XVisualInfo *vinfo_template, int *nitems_return );
+XGetVisualInfo( Display *display, long vinfo_mask,
+                XVisualInfo *vinfo_template, int *nitems_return );
 /*@}*/
 
 
@@ -394,6 +417,21 @@ glXGetProcAddress( const GLubyte *procname );
 
 extern Bool
 glXQueryVersion( Display *dpy, int *major, int *minor );
+
+/* Added in MiniGLX 1.1 */
+extern GLXPbuffer
+glXCreatePbuffer( Display *dpy, GLXFBConfig config, const int *attribList );
+
+extern void
+glXDestroyPbuffer( Display *dpy, GLXPbuffer pbuf );
+
+extern GLXFBConfig *
+glXChooseFBConfig( Display *dpy, int screen, const int *attribList,
+                   int *nitems );
+
+extern XVisualInfo *
+glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config );
+
 /*@}*/
 
 

@@ -31,7 +31,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $Id: miniglx.c,v 1.2 2003/10/21 06:05:40 jonsmirl Exp $ */
+/* $Id: miniglx.c,v 1.3 2003/12/06 17:18:09 brianp Exp $ */
 
 /**
  * \mainpage Mini GLX
@@ -1935,6 +1935,10 @@ glXGetProcAddress( const GLubyte *procName )
       { "XFreeColormap", (void *) XFreeColormap },
       { "XFree", (void *) XFree },
       { "XGetVisualinfo", (void *) XGetVisualInfo },
+      { "glXCreatePbuffer", (void *) glXCreatePbuffer },
+      { "glXDestroyPbuffer", (void *) glXDestroyPbuffer },
+      { "glXChooseFBConfig", (void *) glXChooseFBConfig },
+      { "glXGetVisualFromFBConfig", (void *) glXGetVisualFromFBConfig },
       { NULL, NULL }
    };
    const struct name_address *entry;
@@ -1969,6 +1973,50 @@ glXQueryVersion( Display *dpy, int *major, int *minor )
    *major = 1;
    *minor = 0;
    return True;
+}
+
+
+/**
+ * \brief Create a new pbuffer.
+ */
+GLXPbuffer
+glXCreatePbuffer( Display *dpy, GLXFBConfig config, const int *attribList )
+{
+   return NULL;
+}
+
+
+void
+glXDestroyPbuffer( Display *dpy, GLXPbuffer pbuf )
+{
+   free(pbuf);
+}
+
+
+GLXFBConfig *
+glXChooseFBConfig( Display *dpy, int screen, const int *attribList,
+                   int *nitems )
+{
+   GLXFBConfig *f = (GLXFBConfig *) malloc(sizeof(GLXFBConfig));
+   f->visInfo = glXChooseVisual( dpy, screen, (int *) attribList );
+   if (f->visInfo) { 
+      *nitems = 1;
+      return f;
+   }
+   else {
+      *nitems = 0;
+      free(f);
+      return NULL;
+   }
+}
+
+
+XVisualInfo *
+glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config )
+{
+   /* XVisualInfo and GLXFBConfig are the same structure */
+   (void) dpy;
+   return config.visInfo;
 }
 
 
