@@ -1,4 +1,4 @@
-/* $Id: texformat.h,v 1.3 2001/03/22 06:23:56 gareth Exp $ */
+/* $Id: texformat.h,v 1.4 2001/03/22 06:25:23 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,7 +49,7 @@ enum _format {
     */
 				/* msb <------ TEXEL BITS -----------> lsb */
 				/* ---- ---- ---- ---- ---- ---- ---- ---- */
-   MESA_FORMAT_RGBA8888 = 0,	/* RRRR RRRR GGGG GGGG BBBB BBBB AAAA AAAA */
+   MESA_FORMAT_RGBA8888,	/* RRRR RRRR GGGG GGGG BBBB BBBB AAAA AAAA */
    MESA_FORMAT_ARGB8888,	/* AAAA AAAA RRRR RRRR GGGG GGGG BBBB BBBB */
    MESA_FORMAT_RGB888,		/*           RRRR RRRR GGGG GGGG BBBB BBBB */
    MESA_FORMAT_RGB565,		/*                     RRRR RGGG GGGB BBBB */
