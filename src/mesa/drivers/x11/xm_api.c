@@ -1740,14 +1740,17 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
 
 #ifdef XFree86Server
    if (GET_VISUAL_DEPTH(v) != ((XMesaDrawable)w)->depth) {
+      _mesa_warning(NULL, "XMesaCreateWindowBuffer: depth mismatch between visual and window! (%d != %d)\n", GET_VISUAL_DEPTH(v) , ((XMesaDrawable)w)->depth );
+      return NULL;
+   }
 #else
    XGetWindowAttributes( v->display, w, &attr );
 
    if (GET_VISUAL_DEPTH(v) != attr.depth) {
-#endif
       _mesa_warning(NULL, "XMesaCreateWindowBuffer: depth mismatch between visual and window! (%d != %d)\n", GET_VISUAL_DEPTH(v) , attr.depth );
       return NULL;
    }
+#endif
 
    b->xm_visual = v;
    b->type = WINDOW;
