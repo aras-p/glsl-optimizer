@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.40 2001/11/19 01:18:28 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.41 2001/11/28 16:11:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -92,7 +92,7 @@ static void flat_ci_triangle( GLcontext *ctx,
       span.fog += span.fogStep;						\
    }									\
    _mesa_write_monoindex_span(ctx, span.count, span.x, span.y,		\
-	                      zSpan, fogSpan, v0->index, NULL, GL_POLYGON );
+	                      zSpan, fogSpan, v2->index, NULL, GL_POLYGON );
 
 #include "s_tritemp.h"
 }
