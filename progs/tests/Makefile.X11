@@ -8,6 +8,7 @@ TOP = ../..
 LIBS = $(APP_LIB_DEPS)
 
 SOURCES = antialias.c \
+	bufferobj.c \
 	cva.c \
 	dinoshade.c \
 	fogcoord.c \
