@@ -3,10 +3,11 @@
 # These programs aren't intended to be included with the normal
 # distro.  They're not too interesting but they're good for testing.
 
+TOP = ../..
 
 CC = gcc
-CFLAGS = -g -I../include
-LIBS = -L../lib -lGL -lGLU -lglut -lm -Wl,-rpath,../lib
+CFLAGS = -g -I$(TOP)/include
+LIBS = -L$(TOP)/lib -lGL -lGLU -lglut -lm -Wl,-rpath,$(TOP)/lib
 
 PROGS = miniglxtest miniglxsample sample_server sample_server2 manytex texline
 
