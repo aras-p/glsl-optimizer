@@ -116,6 +116,7 @@ TNL_SOURCES = \
 	tnl/t_save_api.c \
 	tnl/t_save_loopback.c \
 	tnl/t_save_playback.c \
+	tnl/t_vb_cull.c \
 	tnl/t_vb_fog.c \
 	tnl/t_vb_light.c \
 	tnl/t_vb_normals.c \
