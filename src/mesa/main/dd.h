@@ -34,6 +34,7 @@
 /* THIS FILE ONLY INCLUDED BY mtypes.h !!!!! */
 
 struct gl_pixelstore_attrib;
+struct mesa_display_list;
 
 /**
  * Device driver function table.
@@ -886,12 +887,12 @@ struct dd_function_table {
    void (*EndList)( GLcontext *ctx );
 
    /**
-    * Called by glCallList(s), but not recursively.
+    * Called by glCallList(s).
     *
     * Notify the T&L component before and after calling a display list.
-    * Called by glCallList(s), but not recursively.
     */
-   void (*BeginCallList)( GLcontext *ctx, GLuint list );
+   void (*BeginCallList)( GLcontext *ctx, 
+			  struct mesa_display_list *dlist );
    /**
     * Called by glEndCallList().
     *

@@ -412,11 +412,13 @@ void mesa_print_display_list( GLuint list );
  * Make an empty display list.  This is used by glGenLists() to
  * reserver display list IDs.
  */
-static Node *make_empty_list( void )
+static struct mesa_display_list *make_list( GLuint list, GLuint count )
 {
-   Node *n = (Node *) MALLOC( sizeof(Node) );
-   n[0].opcode = OPCODE_END_OF_LIST;
-   return n;
+   struct mesa_display_list *dlist = CALLOC_STRUCT( mesa_display_list );
+   dlist->id = list;
+   dlist->node = (Node *) MALLOC( sizeof(Node) * count );
+   dlist->node[0].opcode = OPCODE_END_OF_LIST;
+   return dlist;
 }
 
 
@@ -427,14 +429,18 @@ static Node *make_empty_list( void )
  */
 void _mesa_destroy_list( GLcontext *ctx, GLuint list )
 {
+   struct mesa_display_list *dlist;
    Node *n, *block;
    GLboolean done;
 
    if (list==0)
       return;
 
-   block = (Node *) _mesa_HashLookup(ctx->Shared->DisplayList, list);
-   n = block;
+   dlist = (struct mesa_display_list *) _mesa_HashLookup(ctx->Shared->DisplayList, list);
+   if (!dlist)
+      return;
+   
+   n = block = dlist->node;
 
    done = block ? GL_FALSE : GL_TRUE;
    while (!done) {
@@ -572,6 +578,7 @@ void _mesa_destroy_list( GLcontext *ctx, GLuint list )
       }
    }
 
+   FREE( dlist );
    _mesa_HashRemove(ctx->Shared->DisplayList, list);
 }
 
@@ -5637,18 +5644,29 @@ islist(GLcontext *ctx, GLuint list)
 static void GLAPIENTRY
 execute_list( GLcontext *ctx, GLuint list )
 {
+   struct mesa_display_list *dlist;
    Node *n;
    GLboolean done;
 
    if (list == 0 || !islist(ctx,list))
       return;
 
+   if (ctx->ListState.CallDepth == MAX_LIST_NESTING) {
+      /* raise an error? */
+      return;
+   }
+
+
+   dlist = (struct mesa_display_list *) _mesa_HashLookup(ctx->Shared->DisplayList, list);
+   if (!dlist)
+      return;
+
+   ctx->ListState.CallStack[ctx->ListState.CallDepth++] = dlist;
+
    if (ctx->Driver.BeginCallList)
-      ctx->Driver.BeginCallList( ctx, list );
+      ctx->Driver.BeginCallList( ctx, dlist );
 
-   ctx->ListState.CallDepth++;
-
-   n = (Node *) _mesa_HashLookup(ctx->Shared->DisplayList, list);
+   n = dlist->node;
 
    done = GL_FALSE;
    while (!done) {
@@ -6501,10 +6519,11 @@ execute_list( GLcontext *ctx, GLuint list )
 	 }
       }
    }
-   ctx->ListState.CallDepth--;
 
    if (ctx->Driver.EndCallList)
       ctx->Driver.EndCallList( ctx );
+
+   ctx->ListState.CallStack[ctx->ListState.CallDepth--] = NULL;
 }
 
 
@@ -6583,7 +6602,7 @@ _mesa_GenLists(GLsizei range )
       /* reserve the list IDs by with empty/dummy lists */
       GLint i;
       for (i=0; i<range; i++) {
-         _mesa_HashInsert(ctx->Shared->DisplayList, base+i, make_empty_list());
+         _mesa_HashInsert(ctx->Shared->DisplayList, base+i, make_list(base+i, 1));
       }
    }
 
@@ -6631,7 +6650,8 @@ _mesa_NewList( GLuint list, GLenum mode )
 
    /* Allocate new display list */
    ctx->ListState.CurrentListNum = list;
-   ctx->ListState.CurrentBlock = (Node *) CALLOC( sizeof(Node) * BLOCK_SIZE );
+   ctx->ListState.CurrentList = make_list( list, BLOCK_SIZE );
+   ctx->ListState.CurrentBlock = ctx->ListState.CurrentList->node;
    ctx->ListState.CurrentListPtr = ctx->ListState.CurrentBlock;
    ctx->ListState.CurrentPos = 0;
 
@@ -6679,18 +6699,19 @@ _mesa_EndList( void )
    /* Destroy old list, if any */
    _mesa_destroy_list(ctx, ctx->ListState.CurrentListNum);
    /* Install the list */
-   _mesa_HashInsert(ctx->Shared->DisplayList, ctx->ListState.CurrentListNum, ctx->ListState.CurrentListPtr);
+   _mesa_HashInsert(ctx->Shared->DisplayList, ctx->ListState.CurrentListNum, ctx->ListState.CurrentList);
 
 
    if (MESA_VERBOSE & VERBOSE_DISPLAY_LIST)
       mesa_print_display_list(ctx->ListState.CurrentListNum);
 
+   ctx->Driver.EndList( ctx );
+
+   ctx->ListState.CurrentList = NULL;
    ctx->ListState.CurrentListNum = 0;
    ctx->ListState.CurrentListPtr = NULL;
    ctx->ExecuteFlag = GL_TRUE;
    ctx->CompileFlag = GL_FALSE;
-
-   ctx->Driver.EndList( ctx );
 
    ctx->CurrentDispatch = ctx->Exec;
    _glapi_set_dispatch( ctx->CurrentDispatch );
@@ -8032,6 +8053,7 @@ static const char *enum_string( GLenum k )
  */
 static void GLAPIENTRY print_list( GLcontext *ctx, GLuint list )
 {
+   struct mesa_display_list *dlist;
    Node *n;
    GLboolean done;
 
@@ -8040,8 +8062,12 @@ static void GLAPIENTRY print_list( GLcontext *ctx, GLuint list )
       return;
    }
 
-   n = (Node *) _mesa_HashLookup(ctx->Shared->DisplayList, list);
+   dlist = (struct mesa_display_list *) _mesa_HashLookup(ctx->Shared->DisplayList, list);
+   if (!dlist)
+      return;
 
+   n = dlist->node;
+   
    _mesa_printf("START-LIST %u, address %p\n", list, (void*)n );
 
    done = n ? GL_FALSE : GL_TRUE;

@@ -2428,17 +2428,38 @@ struct gl_tnl_module
    /*@}*/
 };
 
+/* Strictly this is a tnl/ private concept, but it doesn't seem
+ * worthwhile adding a tnl private structure just to hold this one bit
+ * of information:
+ */
+#define MESA_DLIST_DANGLING_REFS     0x1 
+
+/* Provide a location where information about a display list can be
+ * collected.  Could be extended with driverPrivate structures,
+ * etc. in the future.
+ */
+struct mesa_display_list
+{
+   Node *node;
+   GLuint id;
+   GLuint flags;
+};
+
 
 /**
  * State used during display list compilation and execution.
  */
 struct mesa_list_state
 {
+   struct mesa_display_list *CallStack[MAX_LIST_NESTING];
    GLuint CallDepth;		/**< Current recursion calling depth */
+
+   struct mesa_display_list *CurrentList;
    Node *CurrentListPtr;	/**< Head of list being compiled */
    GLuint CurrentListNum;	/**< Number of the list being compiled */
    Node *CurrentBlock;		/**< Pointer to current block of nodes */
    GLuint CurrentPos;		/**< Index into current block of nodes */
+
    GLvertexformat ListVtxfmt;
 
    GLubyte ActiveAttribSize[VERT_ATTRIB_MAX];

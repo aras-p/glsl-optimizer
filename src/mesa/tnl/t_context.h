@@ -364,6 +364,7 @@ struct tnl_save {
    GLfloat *buffer;
    GLuint count;
    GLuint wrap_count;
+   GLuint replay_flags;
 
    struct tnl_prim *prim;
    GLuint prim_count, prim_max;

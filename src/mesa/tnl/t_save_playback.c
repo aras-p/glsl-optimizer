@@ -178,7 +178,7 @@ void _tnl_playback_vertex_list( GLcontext *ctx, void *data )
    if (node->prim_count > 0 && node->count > 0) {
 
       if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END &&
-	       (node->prim[0].mode & PRIM_BEGIN)) {
+	  (node->prim[0].mode & PRIM_BEGIN)) {
 
 	 /* Degenerate case: list is called inside begin/end pair and
 	  * includes operations such as glBegin or glDrawArrays.
@@ -187,10 +187,9 @@ void _tnl_playback_vertex_list( GLcontext *ctx, void *data )
 	 _tnl_loopback_vertex_list( ctx, node );
 	 return;
       }
-      else if (tnl->LoopbackDListCassettes ||
-	       node->dangling_attr_ref) {
-	 /* Degenerate case: list references current data and would
-	  * require fixup.  Take the easier option & loop it back.
+      else if (tnl->save.replay_flags) {
+	 /* Various degnerate cases: translate into immediate mode
+	  * calls rather than trying to execute in place.
 	  */
 	 _tnl_loopback_vertex_list( ctx, node );
 	 return;

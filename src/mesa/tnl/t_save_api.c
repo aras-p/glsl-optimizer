@@ -248,7 +248,6 @@ static void _save_compile_vertex_list( GLcontext *ctx )
    node->prim_count = tnl->save.prim_count;
    node->vertex_store = tnl->save.vertex_store;
    node->prim_store = tnl->save.prim_store;
-   node->dangling_attr_ref = tnl->save.dangling_attr_ref;
    node->normal_lengths = 0;
 
    node->vertex_store->refcount++;
@@ -257,12 +256,16 @@ static void _save_compile_vertex_list( GLcontext *ctx )
    assert(node->attrsz[_TNL_ATTRIB_POS] != 0 ||
 	  node->count == 0);
 
+   if (tnl->save.dangling_attr_ref)
+      ctx->ListState.CurrentList->flags |= MESA_DLIST_DANGLING_REFS;
+
    /* Maybe calculate normal lengths:
     */
    if (tnl->CalcDListNormalLengths && 
        node->attrsz[_TNL_ATTRIB_NORMAL] == 3 &&
-       !node->dangling_attr_ref)
+       !(ctx->ListState.CurrentList->flags & MESA_DLIST_DANGLING_REFS))
       build_normal_lengths( node );
+
 
    tnl->save.vertex_store->used += tnl->save.vertex_size * node->count;
    tnl->save.prim_store->used += node->prim_count;
@@ -1189,8 +1192,6 @@ static void GLAPIENTRY _save_Indexfv( const GLfloat *f )
 do {									\
    TNLcontext *tnl = TNL_CONTEXT(ctx);					\
 									\
-   /*fprintf(stderr, "fallback %s inside begin/end\n", __FUNCTION__);*/	\
-									\
    if (tnl->save.initial_counter != tnl->save.counter ||		\
        tnl->save.prim_count) 						\
       _save_compile_vertex_list( ctx );					\
@@ -1577,14 +1578,19 @@ void _tnl_EndList( GLcontext *ctx )
    assert(TNL_CONTEXT(ctx)->save.vertex_size == 0);
 }
  
-void _tnl_BeginCallList( GLcontext *ctx, GLuint list )
+void _tnl_BeginCallList( GLcontext *ctx, struct mesa_display_list *dlist )
 {
-   (void) ctx; (void) list;
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   tnl->save.replay_flags |= dlist->flags;
+   tnl->save.replay_flags |= tnl->LoopbackDListCassettes;
 }
 
 void _tnl_EndCallList( GLcontext *ctx )
 {
-   (void) ctx;
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   
+   if (ctx->ListState.CallDepth == 1)
+      tnl->save.replay_flags = 0;
 }
 
 
