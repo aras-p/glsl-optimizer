@@ -78,7 +78,7 @@ $(LIBNAME):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drive
 
 
 $(LIB_DIR)/$(LIBNAME): $(LIBNAME)
-	install -C $(LIBNAME) $(LIB_DIR) 
+	install $(LIBNAME) $(LIB_DIR) 
 
 
 
@@ -102,6 +102,6 @@ clean:
 	-rm -f depend depend.bak
 
 install: $(LIBNAME)
-	install -C $(LIBNAME) /usr/X11R6/lib/modules/dri/$(LIBNAME)
+	install $(LIBNAME) /usr/X11R6/lib/modules/dri/$(LIBNAME)
 
 include depend
