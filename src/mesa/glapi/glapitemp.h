@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.5 2000/01/07 06:09:05 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.6 2000/01/07 07:28:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2932,6 +2932,13 @@ KEYWORD1 void KEYWORD2 NAME(PointParameterfvEXT)(GLenum target, const GLfloat *p
    DISPATCH(PointParameterfvEXT, (target, param));
 }
 
+
+/* 77. GL_PGI_misc_hints */
+KEYWORD1 void KEYWORD2 NAME(HintPGI)(GLenum target, GLint mode)
+{
+   DISPATCH_SETUP;
+   DISPATCH(HintPGI, (target, mode));
+}
 
 
 /* 78. GL_EXT_paletted_texture */
