@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -687,6 +687,8 @@ _mesa_GetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
    GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* update materials */
 
+   FLUSH_CURRENT(ctx, 0); /* update ctx->Light.Material from vertex buffer */
+
    if (face==GL_FRONT) {
       f = 0;
    }
@@ -732,6 +734,8 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
    GLuint f;
    GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* update materials */
+
+   FLUSH_CURRENT(ctx, 0); /* update ctx->Light.Material from vertex buffer */
 
    if (face==GL_FRONT) {
       f = 0;
