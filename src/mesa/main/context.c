@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.93 2000/10/20 19:54:49 brianp Exp $ */
+/* $Id: context.c,v 1.94 2000/10/21 00:02:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -295,6 +295,7 @@ _mesa_initialize_visual( GLvisual *vis,
       vis->DepthMax = 0xffffffff;
       vis->DepthMaxF = (GLfloat) vis->DepthMax;
    }
+   vis->MRD = 1;  /* XXX temporary value */
 
    return GL_TRUE;
 }
@@ -1157,6 +1158,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Polygon.StippleFlag = GL_FALSE;
    ctx->Polygon.OffsetFactor = 0.0F;
    ctx->Polygon.OffsetUnits = 0.0F;
+   ctx->Polygon.OffsetMRD = 0.0F;
    ctx->Polygon.OffsetPoint = GL_FALSE;
    ctx->Polygon.OffsetLine = GL_FALSE;
    ctx->Polygon.OffsetFill = GL_FALSE;
