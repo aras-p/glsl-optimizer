@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.55 2001/06/26 01:32:48 brianp Exp $ */
+/* $Id: drawpix.c,v 1.56 2001/06/26 21:15:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,8 +42,6 @@
 
 
 
-
-
 /*
  * Execute glDrawPixels
  */
@@ -64,13 +62,10 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
          _mesa_update_state(ctx);
       }
 
-#if 1
+      /* Round, to satisfy conformance tests (matches SGI's OpenGL) */
       x = IROUND(ctx->Current.RasterPos[0]);
       y = IROUND(ctx->Current.RasterPos[1]);
-#else
-      x = IFLOOR(ctx->Current.RasterPos[0]);
-      y = IFLOOR(ctx->Current.RasterPos[1]);
-#endif
+
       ctx->OcclusionResult = GL_TRUE;
       ctx->Driver.DrawPixels(ctx, x, y, width, height, format, type,
 			     &ctx->Unpack, pixels);
@@ -146,13 +141,11 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
       if (!ctx->Current.RasterPosValid) {
 	 return;
       }
-#if 1
+
+      /* Round, to satisfy conformance tests (matches SGI's OpenGL) */
       destx = IROUND(ctx->Current.RasterPos[0]);
       desty = IROUND(ctx->Current.RasterPos[1]);
-#else
-      destx = IFLOOR(ctx->Current.RasterPos[0]);
-      desty = IFLOOR(ctx->Current.RasterPos[1]);
-#endif
+
       ctx->OcclusionResult = GL_TRUE;
 
       ctx->Driver.CopyPixels( ctx, srcx, srcy, width, height, destx, desty,
@@ -195,13 +188,10 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
 
    if (ctx->RenderMode==GL_RENDER) {
       if (bitmap) {
-#if 0
-         GLint x = (GLint) ( (ctx->Current.RasterPos[0] - xorig) + 0.0F );
-         GLint y = (GLint) ( (ctx->Current.RasterPos[1] - yorig) + 0.0F );
-#else
+         /* Truncate, to satisfy conformance tests (matches SGI's OpenGL). */
          GLint x = IFLOOR(ctx->Current.RasterPos[0] - xorig);
          GLint y = IFLOOR(ctx->Current.RasterPos[1] - yorig);
-#endif
+
          if (ctx->NewState) {
             _mesa_update_state(ctx);
          }

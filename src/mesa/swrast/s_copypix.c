@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.20 2001/06/18 23:55:18 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.21 2001/06/26 21:15:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -114,12 +114,10 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       GLfloat fog;
       GLint i;
 
-      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) {
-         fog = ctx->Current.RasterFogCoord;
-      }
-      else {
+      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
+         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterFogCoord);
+      else
          fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
-      }
 
       for (i = 0; i < width; i++) {
          zspan[i] = z;
@@ -354,12 +352,10 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->DepthMax);
       GLfloat fog;
 
-      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) {
-         fog = ctx->Current.RasterFogCoord;
-      }
-      else {
+      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
+         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterFogCoord);
+      else
          fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
-      }
 
       for (i=0;i<width;i++) {
          zspan[i] = z;
@@ -620,12 +616,10 @@ static void copy_ci_pixels( GLcontext *ctx,
       GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->DepthMax);
       GLfloat fog;
 
-      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) {
-         fog = ctx->Current.RasterFogCoord;
-      }
-      else {
+      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
+         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterFogCoord);
+      else
          fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
-      }
 
       for (i=0;i<width;i++) {
          zspan[i] = z;
@@ -769,12 +763,10 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    if (ctx->Fog.Enabled) {
       GLfloat fog;
 
-      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) {
-         fog = ctx->Current.RasterFogCoord;
-      }
-      else {
+      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
+         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterFogCoord);
+      else
          fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
-      }
 
       for (i = 0; i < width; i++) {
          fogSpan[i] = fog;

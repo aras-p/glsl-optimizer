@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.21 2001/06/18 23:55:18 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.22 2001/06/26 21:15:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -501,12 +501,10 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
       GLfloat fog;
       GLint i;
 
-      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) {
-         fog = ctx->Current.RasterFogCoord;
-      }
-      else {
+      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
+         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterFogCoord);
+      else
          fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
-      }
 
       for (i = 0; i < drawWidth; i++) {
 	 zspan[i] = zval;
@@ -747,12 +745,10 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       GLfloat fog;
       GLint i;
 
-      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) {
-         fog = ctx->Current.RasterFogCoord;
-      }
-      else {
+      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
+         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterFogCoord);
+      else
          fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
-      }
 
       for (i=0;i<width;i++) {
 	 zspan[i] = z;

@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.27 2001/06/26 01:32:48 brianp Exp $ */
+/* $Id: rastpos.c,v 1.28 2001/06/26 21:15:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -110,22 +110,30 @@ userclip_point( GLcontext* ctx, const GLfloat v[] )
 /* This has been split off to allow the normal shade routines to
  * get a little closer to the vertex buffer, and to use the
  * GLvector objects directly.
+ * Input: ctx - the context
+ *        vertex - vertex location
+ *        normal - normal vector
+ * Output: Rcolor - returned color
+ *         Rspec  - returned specular color (if separate specular enabled)
+ *         Rindex - returned color index
  */
 static void
 shade_rastpos(GLcontext *ctx,
               const GLfloat vertex[4],
               const GLfloat normal[3],
               GLfloat Rcolor[4],
-              GLuint *index)
+              GLfloat Rspec[4],
+              GLuint *Rindex)
 {
    GLfloat (*base)[3] = ctx->Light._BaseColor;
    const GLfloat *sumA = ctx->Light._BaseAlpha;
    struct gl_light *light;
-   GLfloat color[4];
+   GLfloat diffuseColor[4], specularColor[4];
    GLfloat diffuse = 0, specular = 0;
 
-   COPY_3V(color, base[0]);
-   color[3] = sumA[0];
+   COPY_3V(diffuseColor, base[0]);
+   diffuseColor[3] = sumA[0];
+   ASSIGN_4V(specularColor, 0.0, 0.0, 0.0, 0.0);
 
    foreach (light, &ctx->Light.EnabledList) {
       GLfloat n_dot_h;
@@ -133,7 +141,7 @@ shade_rastpos(GLcontext *ctx,
       GLfloat VP[3];
       GLfloat n_dot_VP;
       GLfloat *h;
-      GLfloat contrib[3];
+      GLfloat diffuseContrib[3], specularContrib[3];
       GLboolean normalized;
 
       if (!(light->_Flags & LIGHT_POSITIONAL)) {
@@ -176,13 +184,14 @@ shade_rastpos(GLcontext *ctx,
       n_dot_VP = DOT3( normal, VP );
 
       if (n_dot_VP < 0.0F) {
-	 ACC_SCALE_SCALAR_3V(color, attenuation, light->_MatAmbient[0]);
+	 ACC_SCALE_SCALAR_3V(diffuseColor, attenuation, light->_MatAmbient[0]);
 	 continue;
       }
 
-      COPY_3V(contrib, light->_MatAmbient[0]);
-      ACC_SCALE_SCALAR_3V(contrib, n_dot_VP, light->_MatDiffuse[0]);
+      COPY_3V(diffuseContrib, light->_MatAmbient[0]);
+      ACC_SCALE_SCALAR_3V(diffuseContrib, n_dot_VP, light->_MatDiffuse[0]);
       diffuse += n_dot_VP * light->_dli * attenuation;
+      ASSIGN_3V(specularContrib, 0.0, 0.0, 0.0);
 
       {
 	 if (ctx->Light.Model.LocalViewer) {
@@ -206,7 +215,7 @@ shade_rastpos(GLcontext *ctx,
 	 n_dot_h = DOT3(normal, h);
 
 	 if (n_dot_h > 0.0F) {
-	    struct gl_material *mat = &ctx->Light.Material[0];
+	    const struct gl_material *mat = &ctx->Light.Material[0];
 	    GLfloat spec_coef;
 	    GLfloat shininess = mat->Shininess;
 
@@ -219,21 +228,32 @@ shade_rastpos(GLcontext *ctx,
 	    GET_SHINE_TAB_ENTRY( ctx->_ShineTable[0], n_dot_h, spec_coef );
 
 	    if (spec_coef > 1.0e-10) {
-	       ACC_SCALE_SCALAR_3V( contrib, spec_coef,
-				    light->_MatSpecular[0]);
+               if (ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR) {
+                  ACC_SCALE_SCALAR_3V( specularContrib, spec_coef,
+                                       light->_MatSpecular[0]);
+               }
+               else {
+                  ACC_SCALE_SCALAR_3V( diffuseContrib, spec_coef,
+                                       light->_MatSpecular[0]);
+               }
 	       specular += spec_coef * light->_sli * attenuation;
 	    }
 	 }
       }
 
-      ACC_SCALE_SCALAR_3V( color, attenuation, contrib );
+      ACC_SCALE_SCALAR_3V( diffuseColor, attenuation, diffuseContrib );
+      ACC_SCALE_SCALAR_3V( specularColor, attenuation, specularContrib );
    }
 
    if (ctx->Visual.rgbMode) {
-      Rcolor[0] = CLAMP(color[0], 0.0F, 1.0F);
-      Rcolor[1] = CLAMP(color[1], 0.0F, 1.0F);
-      Rcolor[2] = CLAMP(color[2], 0.0F, 1.0F);
-      Rcolor[3] = CLAMP(color[3], 0.0F, 1.0F);
+      Rcolor[0] = CLAMP(diffuseColor[0], 0.0F, 1.0F);
+      Rcolor[1] = CLAMP(diffuseColor[1], 0.0F, 1.0F);
+      Rcolor[2] = CLAMP(diffuseColor[2], 0.0F, 1.0F);
+      Rcolor[3] = CLAMP(diffuseColor[3], 0.0F, 1.0F);
+      Rspec[0] = CLAMP(specularColor[0], 0.0F, 1.0F);
+      Rspec[1] = CLAMP(specularColor[1], 0.0F, 1.0F);
+      Rspec[2] = CLAMP(specularColor[2], 0.0F, 1.0F);
+      Rspec[3] = CLAMP(specularColor[3], 0.0F, 1.0F);
    }
    else {
       struct gl_material *mat = &ctx->Light.Material[0];
@@ -245,7 +265,7 @@ shade_rastpos(GLcontext *ctx,
       if (ind > mat->SpecularIndex) {
 	 ind = mat->SpecularIndex;
       }
-      *index = (GLuint) (GLint) ind;
+      *Rindex = (GLuint) (GLint) ind;
    }
 
 }
@@ -282,16 +302,16 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 
       shade_rastpos( ctx, v, norm,
                      ctx->Current.RasterColor,
+                     ctx->Current.RasterSecondaryColor,
                      &ctx->Current.RasterIndex );
 
    }
    else {
       /* use current color or index */
       if (ctx->Visual.rgbMode) {
-         ctx->Current.RasterColor[0] = (ctx->Current.Color[0]);
-         ctx->Current.RasterColor[1] = (ctx->Current.Color[1]);
-         ctx->Current.RasterColor[2] = (ctx->Current.Color[2]);
-         ctx->Current.RasterColor[3] = (ctx->Current.Color[3]);
+         COPY_4FV(ctx->Current.RasterColor, ctx->Current.Color);
+         COPY_4FV(ctx->Current.RasterSecondaryColor,
+                  ctx->Current.SecondaryColor);
       }
       else {
 	 ctx->Current.RasterIndex = ctx->Current.Index;

@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.47 2001/06/26 01:32:48 brianp Exp $ */
+/* $Id: mtypes.h,v 1.48 2001/06/26 21:15:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -309,6 +309,7 @@ struct gl_current_attrib {
    GLfloat RasterPos[4];			/* Current raster position */
    GLfloat RasterDistance;			/* Current raster distance */
    GLfloat RasterColor[4];			/* Current raster color */
+   GLfloat RasterSecondaryColor[4];             /* Current rast 2ndary color */
    GLuint  RasterIndex;				/* Current raster index */
    GLfloat *RasterTexCoord;			/* Current raster texcoord*/
    GLfloat RasterMultiTexCoord[MAX_TEXTURE_UNITS][4];
