@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.26 2001/03/20 17:56:10 brianp Exp $ */
+/* $Id: tess.c,v 1.27 2002/10/15 14:45:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -314,4 +314,15 @@ delete_contours(GLUtriangulatorObj * tobj)
    }
    tobj->contours = tobj->last_contour = NULL;
    tobj->contour_cnt = 0;
+}
+
+
+void GLAPIENTRY
+gluTessNormal(GLUtesselator *tess, GLdouble valueX, GLdouble valueY, GLdouble valueZ)
+{
+   /* dummy function */
+   (void) tess;
+   (void) valueX;
+   (void) valueY;
+   (void) valueZ;
 }
