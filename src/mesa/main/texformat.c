@@ -97,7 +97,7 @@ const struct gl_texture_format _mesa_texformat_rgba = {
    0,					/* IntensityBits */
    0,					/* IndexBits */
    0,					/* DepthBits */
-   4 * CHAN_BITS / 8,			/* TexelBytes */
+   4 * sizeof(GLchan),			/* TexelBytes */
    _mesa_texstore_rgba,			/* StoreTexImageFunc */
    fetch_texel_1d_rgba,			/* FetchTexel1D */
    fetch_texel_2d_rgba,			/* FetchTexel2D */
@@ -119,7 +119,7 @@ const struct gl_texture_format _mesa_texformat_rgb = {
    0,					/* IntensityBits */
    0,					/* IndexBits */
    0,					/* DepthBits */
-   3 * CHAN_BITS / 8,			/* TexelBytes */
+   3 * sizeof(GLchan),			/* TexelBytes */
    _mesa_texstore_rgba,/*yes*/		/* StoreTexImageFunc */
    fetch_texel_1d_rgb,			/* FetchTexel1D */
    fetch_texel_2d_rgb,			/* FetchTexel2D */
@@ -141,7 +141,7 @@ const struct gl_texture_format _mesa_texformat_alpha = {
    0,					/* IntensityBits */
    0,					/* IndexBits */
    0,					/* DepthBits */
-   CHAN_BITS / 8,			/* TexelBytes */
+   sizeof(GLchan),			/* TexelBytes */
    _mesa_texstore_rgba,/*yes*/		/* StoreTexImageFunc */
    fetch_texel_1d_alpha,		/* FetchTexel1D */
    fetch_texel_2d_alpha,		/* FetchTexel2D */
@@ -163,7 +163,7 @@ const struct gl_texture_format _mesa_texformat_luminance = {
    0,					/* IntensityBits */
    0,					/* IndexBits */
    0,					/* DepthBits */
-   CHAN_BITS / 8,			/* TexelBytes */
+   sizeof(GLchan),			/* TexelBytes */
    _mesa_texstore_rgba,/*yes*/		/* StoreTexImageFunc */
    fetch_texel_1d_luminance,		/* FetchTexel1D */
    fetch_texel_2d_luminance,		/* FetchTexel2D */
@@ -185,7 +185,7 @@ const struct gl_texture_format _mesa_texformat_luminance_alpha = {
    0,					/* IntensityBits */
    0,					/* IndexBits */
    0,					/* DepthBits */
-   2 * CHAN_BITS / 8,			/* TexelBytes */
+   2 * sizeof(GLchan),			/* TexelBytes */
    _mesa_texstore_rgba,/*yes*/		/* StoreTexImageFunc */
    fetch_texel_1d_luminance_alpha,	/* FetchTexel1D */
    fetch_texel_2d_luminance_alpha,	/* FetchTexel2D */
@@ -207,7 +207,7 @@ const struct gl_texture_format _mesa_texformat_intensity = {
    CHAN_BITS,				/* IntensityBits */
    0,					/* IndexBits */
    0,					/* DepthBits */
-   CHAN_BITS / 8,			/* TexelBytes */
+   sizeof(GLchan),			/* TexelBytes */
    _mesa_texstore_rgba,/*yes*/		/* StoreTexImageFunc */
    fetch_texel_1d_intensity,		/* FetchTexel1D */
    fetch_texel_2d_intensity,		/* FetchTexel2D */
@@ -229,7 +229,7 @@ const struct gl_texture_format _mesa_texformat_color_index = {
    0,					/* IntensityBits */
    CHAN_BITS,				/* IndexBits */
    0,					/* DepthBits */
-   CHAN_BITS / 8,			/* TexelBytes */
+   sizeof(GLchan),			/* TexelBytes */
    _mesa_texstore_color_index,		/* StoreTexImageFunc */
    fetch_texel_1d_color_index,		/* FetchTexel1D */
    fetch_texel_2d_color_index,		/* FetchTexel2D */
