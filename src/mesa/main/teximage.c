@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.113 2002/09/06 14:42:04 brianp Exp $ */
+/* $Id: teximage.c,v 1.114 2002/09/14 16:51:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1285,7 +1285,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 {
    const struct gl_texture_unit *texUnit;
    const struct gl_texture_object *texObj;
-   struct gl_texture_image *texImage;
+   const struct gl_texture_image *texImage;
    GLint maxLevels = 0;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
@@ -1360,7 +1360,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       for (img = 0; img < depth; img++) {
          for (row = 0; row < height; row++) {
             /* compute destination address in client memory */
-            GLvoid *dest = _mesa_image_address( &ctx->Unpack, pixels,
+            GLvoid *dest = _mesa_image_address( &ctx->Pack, pixels,
                                                 width, height, format, type,
                                                 img, row, 0);
             assert(dest);
