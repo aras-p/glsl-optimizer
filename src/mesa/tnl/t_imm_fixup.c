@@ -766,7 +766,7 @@ _tnl_upgrade_current_data( GLcontext *ctx, GLuint required, GLuint flags )
       struct gl_client_array *tmp = &tnl->imm_inputs.Color;
       GLuint start = IM->CopyStart;
 
-      tmp->Ptr = IM->Attrib[VERT_ATTRIB_COLOR0] + start;
+      tmp->Ptr = (GLubyte *) (IM->Attrib[VERT_ATTRIB_COLOR0] + start);
       tmp->StrideB = 4 * sizeof(GLfloat);
       tmp->Flags = 0;
 

@@ -546,7 +546,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 			 tmp->Color.StrideB,
 			 copycount );
 
-      tmp->Color.Ptr = store->Attrib[VERT_ATTRIB_COLOR0] + IM->CopyStart;
+      tmp->Color.Ptr = (GLubyte *) (store->Attrib[VERT_ATTRIB_COLOR0] + IM->CopyStart);
       tmp->Color.StrideB = 4 * sizeof(GLfloat);
       tmp->Color.Flags = 0;
       tnl->vb.importable_data &= ~VERT_BIT_COLOR0;
