@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.59 2000/11/05 18:40:58 keithw Exp $ */
+/* $Id: teximage.c,v 1.60 2000/11/07 16:40:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,6 +39,7 @@
 #include "teximage.h"
 #include "texstate.h"
 #include "types.h"
+#include "swrast/s_span.h" /* XXX SWRAST hack */
 #endif
 
 
@@ -2197,7 +2198,6 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 
    texUnit = &(ctx->Texture.Unit[ctx->Texture.CurrentUnit]);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
-   texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
    if (!texObj || !texImage ||
        target == GL_PROXY_TEXTURE_1D ||
        target == GL_PROXY_TEXTURE_2D ||
@@ -2207,7 +2207,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
    }
 
    if (!texImage) {
-      /* invalid mipmap level */
+      /* invalid mipmap level, not an error */
       return;
    }
 
@@ -2439,7 +2439,7 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
       }
 
       fill_texture_image(ctx, 1, texImage->Format, texImage->Data,
-                         width, 1, 1, xoffset, 0, 0, /* size and offsets */
+                         width, 1, 1, xoffset + texImage->Border, 0, 0, /* size and offsets */
                          0, 0, /* strides */
                          format, type, pixels, &ctx->Unpack);
 
@@ -2513,8 +2513,8 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
       }
 
       fill_texture_image(ctx, 2, texImage->Format, texImage->Data,
-                         width, height, 1, xoffset, yoffset, 0,
-                         texRowStride, 0,
+                         width, height, 1, xoffset + texImage->Border,
+                         yoffset + texImage->Border, 0, texRowStride, 0,
                          format, type, pixels, &ctx->Unpack);
 
       if (ctx->Driver.TexImage2D) {
@@ -2597,9 +2597,10 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
       }
 
       fill_texture_image(ctx, 3, texImage->Format, texImage->Data,
-                         width, height, depth, xoffset, yoffset, zoffset,
-                         texRowStride, texImgStride,
-                         format, type, pixels, &ctx->Unpack);
+                         width, height, depth, xoffset + texImage->Border,
+                         yoffset + texImage->Border,
+                         zoffset + texImage->Border, texRowStride,
+                         texImgStride, format, type, pixels, &ctx->Unpack);
 
       if (ctx->Driver.TexImage3D) {
          (*ctx->Driver.TexImage3D)(ctx, target, level, texImage->Format,
