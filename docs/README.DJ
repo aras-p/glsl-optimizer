@@ -1,4 +1,4 @@
-			Mesa 6.1 DOS/DJGPP Port v1.6
+			Mesa 6.3 DOS/DJGPP Port v1.7
 			~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -6,7 +6,7 @@
 Description:
 ~~~~~~~~~~~~
 
-Well, guess what... this is the DOS port of Mesa 6.1, for DJGPP fans... Whoa!
+Well, guess what... this is the DOS port of Mesa 6.3, for DJGPP fans... Whoa!
 The driver has its origins in ddsample.c, written by Brian Paul and found by me
 in Mesa 3.4.2.
 
@@ -92,7 +92,7 @@ FAQ:
 2. Using Mesa for DJGPP
 
    Q) DMesa is so SLOOOW! The Win32 OpenGL performs so much better...
-   A) Is that a question? If you have a 3dfx Voodoo or higher card, you're
+   A) Is that a question? If you have a 3dfx Voodoo (any model), you're
       lucky (check http://sourceforge.net/projects/glide for the DJGPP port).
       If you haven't, sorry; everything is done in software. Suggestions?
 
@@ -134,7 +134,7 @@ FAQ:
 	struct {
 		int xres, yres;
 		int bpp;
-	} **l = malloc(n * sizeof(void **));
+	} **l = malloc(n * sizeof(void *));
       Now pass the newly allocated buffer to fill in:
 	DMesaGetIntegerv(DMESA_GET_VIDEO_MODES, (GLint *)l);
       And collect the info:
@@ -256,6 +256,10 @@ v1.6 (aug-2004)
 	* reorganized fxMesa wrapper to handle multiple contexts
 	! fixed a horrible bug in VGA initialization routine
 	! fixed partial clears
+
+v1.7 (???-2004)
+	+ enabled OpenGL 2.0 support
+	+ added support for sw texture compression
 
 
 
