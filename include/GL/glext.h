@@ -38,8 +38,10 @@ extern "C" {
  *      Intial Version
  *   2. Brian Paul, 7 Mar 2000
  *      Added GL_HP_occlusion_test, GL_EXT_texture_lod_bias
+ *   3. Brian Paul, 20 Mar 2000
+ *      Added all missing extensions up to number 137
  */
-#define GL_GLEXT_VERSION_EXT 2
+#define GL_GLEXT_VERSION_EXT 3
 
 
 /*
@@ -93,6 +95,65 @@ typedef void (APIENTRY * PFNGLPOLYGONOFFSETEXTPROC) (GLfloat factor, GLfloat bia
 
 
 /*
+ * 4. GL_EXT_texture
+ */
+#ifndef GL_EXT_texture
+#define GL_EXT_texture 1
+
+#define GL_ALPHA4_EXT				0x803B
+#define GL_ALPHA8_EXT				0x803C
+#define GL_ALPHA12_EXT				0x803D
+#define GL_ALPHA16_EXT				0x803E
+#define GL_LUMINANCE4_EXT			0x803F
+#define GL_LUMINANCE8_EXT			0x8040
+#define GL_LUMINANCE12_EXT			0x8041
+#define GL_LUMINANCE16_EXT			0x8042
+#define GL_LUMINANCE4_ALPHA4_EXT		0x8043
+#define GL_LUMINANCE6_ALPHA2_EXT		0x8044
+#define GL_LUMINANCE8_ALPHA8_EXT		0x8045
+#define GL_LUMINANCE12_ALPHA4_EXT		0x8046
+#define GL_LUMINANCE12_ALPHA12_EXT		0x8047
+#define GL_LUMINANCE16_ALPHA16_EXT		0x8048
+#define GL_INTENSITY_EXT			0x8049
+#define GL_INTENSITY4_EXT			0x804A
+#define GL_INTENSITY8_EXT			0x804B
+#define GL_INTENSITY12_EXT			0x804C
+#define GL_INTENSITY16_EXT			0x804D
+#define GL_RGB2_EXT				0x804E
+#define GL_RGB4_EXT				0x804F
+#define GL_RGB5_EXT				0x8050
+#define GL_RGB8_EXT				0x8051
+#define GL_RGB10_EXT				0x8052
+#define GL_RGB12_EXT				0x8053
+#define GL_RGB16_EXT				0x8054
+#define GL_RGBA2_EXT				0x8055
+#define GL_RGBA4_EXT				0x8056
+#define GL_RGB5_A1_EXT				0x8057
+#define GL_RGBA8_EXT				0x8058
+#define GL_RGB10_A2_EXT				0x8059
+#define GL_RGBA12_EXT				0x805A
+#define GL_RGBA16_EXT				0x805B
+#define GL_TEXTURE_RED_SIZE_EXT			0x805C
+#define GL_TEXTURE_GREEN_SIZE_EXT		0x805D
+#define GL_TEXTURE_BLUE_SIZE_EXT		0x805E
+#define GL_TEXTURE_ALPHA_SIZE_EXT		0x805F
+#define GL_TEXTURE_LUMINANCE_SIZE_EXT		0x8060
+#define GL_TEXTURE_INTENSITY_SIZE_EXT		0x8061
+#define GL_REPLACE_EXT				0x8062
+#define GL_PROXY_TEXTURE_1D_EXT			0x8063
+#define GL_PROXY_TEXTURE_2D_EXT			0x8064
+
+#endif /* GL_EXT_texture */
+
+
+
+/*
+ * 5. unknown
+ */
+
+
+
+/*
  * 6. GL_EXT_texture3D
  */
 #ifndef GL_EXT_texture3D
@@ -137,6 +198,12 @@ typedef void (APIENTRY * PFNGLGETTEXFILTERFUNCSGISPROC) (GLenum target, GLenum f
 typedef void (APIENTRY * PFNGLTEXFILTERFUNCSGISPROC) (GLenum target, GLenum filter, GLsizei n, const GLfloat *weights);
 
 #endif /* GL_SGI_texture_filter4 */
+
+
+
+/*
+ * 8. unknown
+ */
 
 
 
@@ -392,16 +459,16 @@ typedef void (APIENTRY * PFNGLGETPIXELTEXGENPARAMETERIVSGISPROC) (GLenum target,
 #ifndef GL_SGIS_texture4D
 #define GL_SGIS_texture4D 1
 
-#define GL_PACK_SKIP_VOLUMES_SGIS	?
-#define GL_PACK_IMAGE_DEPTH_SGIS	?
-#define GL_UNPACK_SKIP_VOLUMES_SGIS	?
-#define GL_UNPACK_IMAGE_DEPTH_SGIS	?
-#define GL_TEXTURE_4D_SGIS		?
-#define GL_PROXY_TEXTURE_4D_SGIS	?
-#define GL_TEXTURE_4DSIZE_SGIS		?
-#define GL_TEXTURE_WRAP_Q_SGIS		?
-#define GL_MAX_4D_TEXTURE_SIZE_SGIS	?
-#define GL_TEXTURE_4D_BINDING_SGIS	?
+#define GL_PACK_SKIP_VOLUMES_SGIS		?
+#define GL_PACK_IMAGE_DEPTH_SGIS		?
+#define GL_UNPACK_SKIP_VOLUMES_SGIS		?
+#define GL_UNPACK_IMAGE_DEPTH_SGIS		?
+#define GL_TEXTURE_4D_SGIS			?
+#define GL_PROXY_TEXTURE_4D_SGIS		?
+#define GL_TEXTURE_4DSIZE_SGIS			?
+#define GL_TEXTURE_WRAP_Q_SGIS			?
+#define GL_MAX_4D_TEXTURE_SIZE_SGIS		?
+#define GL_TEXTURE_4D_BINDING_SGIS		?
 
 GLAPI void APIENTRY glTexImage4DSGIS(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLsizei extent, GLint border, GLenum format, GLenum type, const void *pixels);
 GLAPI void APIENTRY glTexSubImage4DSGIS(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint woffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei extent, GLenum format, GLenum type, const void *pixels);
@@ -410,6 +477,40 @@ typedef void (APIENTRY * PFNGLTEXIMAGE4DSGISPROC) (GLenum target, GLint level, G
 typedef void (APIENTRY * PFNGLTEXSUBIMAGE4DSGISPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint woffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei extent, GLenum format, GLenum type, const void *pixels);
 
 #endif /* GL_SGIS_texture4D */
+
+
+
+/*
+ * 17. GL_SGI_texture_color_table
+ */
+#ifndef GL_SGI_texture_color_table
+#define GL_SGI_texture_color_table 1
+
+#define GL_COLOR_TABLE_SGI			0x80BC
+#define GL_PROXY_TEXTURE_COLOR_TABLE_SGI	0x80BD
+
+#endif /* GL_SGI_texture_color_table */
+
+
+
+/*
+ * 18. GL_EXT_cmyka
+ */
+#ifndef GL_EXT_cmyka
+#define GL_EXT_cmyka 1
+
+#define GL_CMYK_EXT				0x800C
+#define GL_CMYKA_EXT				0x800D
+#define GL_PACK_CMYK_HINT_EXT			0x800E
+#define GL_UNPACK_CMYK_HINT_EXT			0x800F
+
+#endif /* GL_EXT_cmyka */
+
+
+
+/*
+ * 19. unknown
+ */
 
 
 
@@ -504,6 +605,22 @@ typedef void (APIENTRY * PFNGLSHARPENTEXFUNCSGISPROC) (GLenum target, GLsizei n,
 
 
 /*
+ * 24. GL_SGIS_texture_lod
+ */
+
+#ifndef GL_SGIS_texture_lod
+#define GL_SGIS_texture_lod 1
+
+#define GL_TEXTURE_MIN_LOD_SGIS			0x813A
+#define GL_TEXTURE_MAX_LOD_SGIS			0x813B
+#define GL_TEXTURE_BASE_LEVEL_SGIS		0x813C
+#define GL_TEXTURE_MAX_LEVEL_SGIS		0x813D
+
+#endif /* GL_SGIS_texture_lod */
+
+
+
+/*
  * 25. GL_SGIS_multisample
  */
 
@@ -539,6 +656,12 @@ typedef void (APIENTRY * PFNGLSAMPLEPATTERNSGISPROC) (GLenum pattern);
 
 
 /*
+ * 26. unknown
+ */
+
+
+
+/*
  * 27. GL_EXT_rescale_normal
  */
 #ifndef GL_EXT_rescale_normal
@@ -547,6 +670,18 @@ typedef void (APIENTRY * PFNGLSAMPLEPATTERNSGISPROC) (GLenum pattern);
 #define GL_RESCALE_NORMAL_EXT			0x803A
 
 #endif /* GL_EXT_rescale_normal */
+
+
+
+/*
+ * 28. GLX_EXT_visual_info
+ */
+
+
+
+/*
+ * 29. unknown
+ */
 
 
 
@@ -614,6 +749,66 @@ typedef void (APIENTRY * PFNGLVERTEXPOINTEREXTPROC) (GLint size, GLenum type, GL
 
 
 /*
+ * 31. GL_EXT_misc_attribute
+ */
+#ifndef GL_EXT_misc_attribute
+#define GL_EXT_misc_attribute 1
+
+#define MISC_BIT_EXT				?
+
+#endif /* GL_EXT_misc_attribute */
+
+
+
+/*
+ * 32. GL_SGIS_generate_mipmap
+ */
+#ifndef GL_SGIS_generate_mipmap
+#define GL_SGIS_generate_mipmap 1
+
+#define GL_GENERATE_MIPMAP_SGIS			0x8191
+#define GL_GENERATE_MIPMAP_HINT_SGIS		0x8192
+
+#endif /* GL_SGIS_generate_mipmap */
+
+
+
+/*
+ * 33. GL_SGIX_clipmap
+ */
+#ifndef GL_SGIX_clipmap
+#define GL_SGIX_clipmap 1
+
+#define GL_LINEAR_CLIPMAP_LINEAR_SGIX		0x8170
+#define GL_TEXTURE_CLIPMAP_CENTER_SGIX		0x8171
+#define GL_TEXTURE_CLIPMAP_FRAME_SGIX		0x8172
+#define GL_TEXTURE_CLIPMAP_OFFSET_SGIX		0x8173
+#define GL_TEXTURE_CLIPMAP_VIRTUAL_DEPTH_SGIX	0x8174
+#define GL_TEXTURE_CLIPMAP_LOD_OFFSET_SGIX	0x8175
+#define GL_TEXTURE_CLIPMAP_DEPTH_SGIX		0x8176
+#define GL_MAX_CLIPMAP_DEPTH_SGIX		0x8177
+#define GL_MAX_CLIPMAP_VIRTUAL_DEPTH_SGIX	0x8178
+
+#endif /* GL_SGIX_clipmap */
+
+
+
+/*
+ * 34. GL_SGIX_shadow
+ */
+#ifndef GL_SGIX_shadow
+#define GL_SGIX_shadow 1
+
+#define GL_TEXTURE_COMPARE_SGIX			0x819A
+#define GL_TEXTURE_COMPARE_OPERATOR_SGIX	0x819B
+#define GL_TEXTURE_LEQUAL_R_SGIX		0x819C
+#define GL_TEXTURE_GEQUAL_R_SGIX		0x819D
+
+#endif /* GL_SGIX_shadow */
+
+
+
+/*
  * 35. GL_SGIS_texture_edge_clamp
  */
 #ifndef GL_SGIS_texture_edge_clamp
@@ -622,6 +817,18 @@ typedef void (APIENTRY * PFNGLVERTEXPOINTEREXTPROC) (GLint size, GLenum type, GL
 #define GL_CLAMP_TO_EDGE_SGIS			0x812F
 
 #endif /* GL_SGIS_texture_edge_clamp */
+
+
+
+/*
+ * 36. GL_SGIS_texture_border_clamp
+ */
+#ifndef GL_SGIS_texture_border_clamp
+#define GL_SGIS_texture_border_clamp 1
+
+#define GL_CLAMP_TO_BORDER_SGIS			0x812D
+
+#endif /* GL_SGIS_texture_border_clamp */
 
 
 
@@ -670,6 +877,70 @@ typedef void (APIENTRY * PFNGLBLENDEQUATIONEXTPROC) (GLenum mode);
 
 
 /*
+ * 40. GLX_SGI_swap_control
+ * 41. GLX_SGI_video_sync 
+ * 42. GLX_SGI_make_current_read
+ * 43. GLX_SGIX_video_source 
+ * 44. GLX_EXT_visual_rating 
+ */
+
+
+
+/*
+ * 45. GL_SGIX_interlace
+ */
+#ifndef GL_SGIX_interlace
+#define GL_SGIX_interlace 1
+
+#define GL_INTERLACE_SGIX			0x8094
+
+#endif /* GL_SGIX_interlace */
+
+
+
+/*
+ * 46. unknown
+ * 47. GLX_EXT_import_context 
+ * 49. GLX_SGIX_fbconfig 
+ * 50. GLX_SGIX_pbuffer
+ */
+
+
+
+/*
+ * 51. GL_SGIS_texture_select
+ */
+#ifndef GL_SGIS_texture_select
+#define GL_SGIS_texture_select 1
+
+#define GL_DUAL_ALPHA4_SGIS			0x8110
+#define GL_DUAL_ALPHA8_SGIS			0x8111
+#define GL_DUAL_ALPHA12_SGIS			0x8112
+#define GL_DUAL_ALPHA16_SGIS			0x8113
+#define GL_DUAL_LUMINANCE4_SGIS			0x8114
+#define GL_DUAL_LUMINANCE8_SGIS			0x8115
+#define GL_DUAL_LUMINANCE12_SGIS		0x8116
+#define GL_DUAL_LUMINANCE16_SGIS		0x8117
+#define GL_DUAL_INTENSITY4_SGIS			0x8118
+#define GL_DUAL_INTENSITY8_SGIS			0x8119
+#define GL_DUAL_INTENSITY12_SGIS		0x811A
+#define GL_DUAL_INTENSITY16_SGIS		0x811B
+#define GL_DUAL_LUMINANCE_ALPHA4_SGIS  		0x811C
+#define GL_DUAL_LUMINANCE_ALPHA8_SGIS   	0x811D
+#define GL_DUAL_TEXTURE_SELECT_SGIS		0x8124
+#define GL_QUAD_ALPHA4_SGIS			0x811E
+#define GL_QUAD_ALPHA8_SGIS			0x811F
+#define GL_QUAD_LUMINANCE4_SGIS0		x8120
+#define GL_QUAD_LUMINANCE8_SGIS			0x8121
+#define GL_QUAD_INTENSITY4_SGIS			0x8122
+#define GL_QUAD_INTENSITY8_SGIS			0x8123
+#define GL_QUAD_TEXTURE_SELECT_SGIS		0x8125
+
+#endif /* GL_SGIS_texture_select */
+
+
+
+/*
  * 52. GL_SGIX_sprite
  */
 #ifndef GL_SGIX_sprite
@@ -694,6 +965,12 @@ typedef void (APIENTRY * PFNGLSPRITEPARAMETERISGIXPROC) (GLenum pname, GLint par
 typedef void (APIENTRY * PFNGLSPRITEPARAMETERIVSGIXPROC) (GLenum pname, const GLint *param);
 
 #endif /* GL_SGIX_sprite */
+
+
+
+/*
+ * 53. unknown
+ */
 
 
 
@@ -744,6 +1021,22 @@ typedef void (APIENTRY * PFNGLSTOPINSTRUMENTSSGIXPROC) (GLint marker);
 #endif
 
 
+
+/*
+ * 56. GL_SGIX_texture_scale_bias
+ */
+#ifndef GL_SGIX_texture_scale_bias
+#define GL_SGIX_texture_scale_bias 1
+
+#define GL_POST_TEXTURE_FILTER_BIAS_SGIX	0x8179
+#define GL_POST_TEXTURE_FILTER_SCALE_SGIX	0x817A
+#define GL_POST_TEXTURE_FILTER_BIAS_RANGE_SGIX	0x817B
+#define GL_POST_TEXTURE_FILTER_SCALE_RANGE_SGIX	0x817C
+
+#endif /* GL_SGIX_texture_scale_bias */
+
+
+
 /*
  * 57. GL_SGIX_framezoom
  */
@@ -773,6 +1066,12 @@ GLAPI void APIENTRY glTagSampleBufferSGIX(void);
 typedef void (APIENTRY * PFNGLTAGSAMPLEBUFFERSGIXPROC) (void);
 
 #endif /* GL_SGIX_tag_sample_buffer */
+
+
+
+/*
+ * 59. unknown
+ */
 
 
 
@@ -808,9 +1107,139 @@ typedef void (APIENTRY * PFNGLFLUSHRASTERSGIXPROC) (void);
 
 
 /*
- * 74. GL_EXT_color_subtable
+ * 62. GLX_SGI_cushion
  */
 
+
+
+/*
+ * 63. GL_SGIX_depth_texture
+ */
+#ifndef GL_SGIX_depth_texture
+#define GL_SGIX_depth_texture 1
+
+#define GL_DEPTH_COMPONENT16_SGIX 		0x81A5
+#define GL_DEPTH_COMPONENT24_SGIX		0x81A6
+#define GL_DEPTH_COMPONENT32_SGIX		0x81A7
+
+#endif /* GL_SGIX_depth_texture */
+
+
+
+/*
+ * 64. GL_SGIS_fog_function
+ */
+#ifndef GL_SGIS_fog_function
+#define GL_SGIS_fog_function 1
+
+#define GL_FOG_FUNC_SGIS			?
+#define GL_FOG_FUNC_POINTS_SGIS			?
+#define GL_MAX_FOG_FUNC_POINTS_SGIS		?
+#define GL_FOG_FUNC_SGIS			?
+#define GL_FOG_FUNC_SGIS			?
+
+#endif /* GL_SGIS_fog_function */
+
+
+
+/*
+ * 65. GL_SGIX_fog_offset
+ */
+#ifndef GL_SGIX_fog_offset
+#define GL_SGIX_fog_offset 1
+
+#define GL_FOG_OFFSET_SGIX			0x8198
+#define GL_FOG_OFFSET_VALUE_SGIX		0x8199
+
+#endif /* GL_SGIX_fog_offset */
+
+
+
+/*
+ * 66. GL_HP_image_transform
+ */
+#ifndef GL_HP_image_transform
+#define GL_HP_image_transform 1
+
+#define GL_IMAGE_SCALE_X_HP				?
+#define GL_IMAGE_SCALE_Y_HP				?
+#define GL_IMAGE_TRANSLATE_X_HP				?
+#define GL_IMAGE_TRANSLATE_Y_HP				?
+#define GL_IMAGE_ROTATE_ANGLE_HP			?
+#define GL_IMAGE_ROTATE_ORIGIN_X_HP			?
+#define GL_IMAGE_ROTATE_ORIGIN_Y_HP			?
+#define GL_IMAGE_MAG_FILTER_HP				?
+#define GL_IMAGE_MIN_FILTER_HP				?
+#define GL_IMAGE_CUBIC_WEIGHT_HP			?
+#define GL_CUBIC_HP					?
+#define GL_AVERAGE_HP					?
+#define GL_IMAGE_TRANSFORM_2D_HP			?
+#define GL_POST_IMAGE_TRANSFORM_COLOR_TABLE_HP		?
+#define GL_PROXY_POST_IMAGE_TRANSFORM_COLOR_TABLE_HP	?
+
+GLAPI void APIENTRY glImageTransformParameteriHP(GLenum target, GLenum pname, const GLint param);
+GLAPI void APIENTRY glImageTransformParameterfHP(GLenum target, GLenum pname, const GLfloat param);
+GLAPI void APIENTRY glImageTransformParameterivHP(GLenum target, GLenum pname, const GLint *params);
+GLAPI void APIENTRY glImageTransformParameterfvHP(GLenum target, GLenum pname, const GLfloat *params);
+GLAPI void APIENTRY GetImageTransformParameterivHP(GLenum target, GLenum pname, const GLint *params);
+GLAPI void APIENTRY glGetImageTransformParameterfvHP(GLenum target, GLenum pname,const GLfloat* params);
+
+typedef void (APIENTRY *PFNGLIMAGETRANSFORMPARAMETERIHPPROC) (GLenum target, GLenum pname, const GLint param);
+typedef void (APIENTRY *PFNGLIMAGETRANSFORMPARAMETERFHPPROC) (GLenum target, GLenum pname, const GLfloat param);
+typedef void (APIENTRY *PFNGLIMAGETRANSFORMPARAMETERIVHPROC) (GLenum target, GLenum pname, const GLint *params);
+typedef void (APIENTRY *PFNGLIMAGETRANSFORMPARAMETERFVHPPROC) (GLenum target, GLenum pname, const GLfloat *params);
+typedef void (APIENTRY *PFNGETIMAGETRANSFORMPARAMETERIVHPPROC) (GLenum target, GLenum pname, const GLint *params);
+typedef void (APIENTRY *PFNGLGETIMAGETRANSFORMPARAMETERFVHPPROC) (GLenum target, GLenum pname,const GLfloat* params);
+
+#endif /* GL_HP_image_transform */
+
+
+
+/*
+ * 67. GL_HP_convolution_border_modes 
+ */
+#ifndef GL_HP_convolution_border_modes
+#define GL_HP_convolution_border_modes 1
+
+#define GL_IGNORE_BORDER_HP			?
+#define GL_CONSTANT_BORDER_HP			?
+#define GL_REPLICATE_BORDER_HP			?
+#define GL_CONVOLUTION_BORDER_COLOR_HP		?
+
+#endif /* GL_HP_convolution_border_modes */
+
+
+
+/*
+ * 68. unknown
+ */
+
+
+
+/*
+ * 69. GL_SGIX_texture_add_env
+ */
+#ifndef GL_SGIX_texture_add_env
+#define GL_SGIX_texture_add_env 1
+
+#define GL_TEXTURE_ENV_BIAS_SGIX		0x80BE
+
+#endif /* GL_SGIX_texture_add_env */
+
+
+
+/*
+ * 70. unknown
+ * 71. unknown
+ * 72. unknown
+ * 73. unknown
+ */
+
+
+
+/*
+ * 74. GL_EXT_color_subtable
+ */
 #ifndef GL_EXT_color_subtable
 #define GL_EXT_color_subtable 1
 
@@ -821,6 +1250,46 @@ typedef void (APIENTRY * PFNGLCOLORSUBTABLEEXTPROC) (GLenum target, GLsizei star
 typedef void (APIENTRY * PFNGLCOPYCOLORSUBTABLEEXTPROC) (GLenum target, GLsizei start, GLint x, GLint y, GLsizei width);
 
 #endif
+
+
+
+/*
+ * 75. GLU_EXT_object_space_tess
+ */
+
+
+
+/*
+ * 76. GL_PGI_vertex_hints
+ */
+#ifndef GL_PGI_vertex_hints
+#define GL_PGI_vertex_hints 1
+
+#define GL_VERTEX_DATA_HINT_PGI			107050
+#define GL_VERTEX_CONSISTENT_HINT_PGI		107051
+#define GL_VATERIAL_SIDE_HINT_PGI		107052
+#define GL_VAX_VERTEX_HINT_PGI			107053
+#define GL_VOLOR3_BIT_PGI			0x00010000
+#define GL_VOLOR4_BIT_PGI			0x00020000
+#define GL_VDGEFLAG_BIT_PGI			0x00040000
+#define GL_VNDEX_BIT_PGI			0x00080000
+#define GL_VAT_AMBIENT_BIT_PGI			0x00100000
+#define GL_VAT_AMBIENT_AND_DIFFUSE_BIT_PGI	0x00200000
+#define GL_VAT_DIFFUSE_BIT_PGI			0x00400000
+#define GL_VAT_EMISSION_BIT_PGI			0x00800000
+#define GL_VAT_COLOR_INDEXES_BIT_PGI		0x01000000
+#define GL_VAT_SHININESS_BIT_PGI		0x02000000
+#define GL_VAT_SPECULAR_BIT_PGI			0x04000000
+#define GL_VORMAL_BIT_PGI			0x08000000
+#define GL_VEXCOORD1_BIT_PGI			0x10000000
+#define GL_VEXCOORD2_BIT_PGI			0x20000000
+#define GL_VEXCOORD3_BIT_PGI			0x40000000
+#define GL_VEXCOORD4_BIT_PGI			0x80000000
+#define GL_VERTEX23_BIT_PGI			0x00000004
+#define GL_VERTEX4_BIT_PGI			0x00000008
+
+#endif /* GL_PGI_vertex_hints */
+
 
 
 /*
@@ -937,6 +1406,64 @@ typedef void (APIENTRY * PFNGLLISTPARAMETERIVSGIXPROC) (GLuint list, GLenum name
 
 
 /*
+ * 81. GL_SGIX_ir_instrument1
+ */
+#ifndef GL_SGIX_ir_instrument1
+#define GL_SGIX_ir_instrument1 1
+
+#define GL_IR_INSTRUMENT1_SGIX			0x817F
+
+#endif /* GL_SGIX_ir_instrument1 */
+
+
+
+/*
+ * 82. unknown
+ * 83. GLX_SGIX_video_resize
+ */
+
+
+
+/*
+ * 84. GL_SGIX_texture_lod_bias
+ */
+#ifndef GL_SGIX_texture_lod_bias
+#define GL_SGIX_texture_lod_bias 1
+
+#define GL_TEXTURE_LOD_BIAS_S_SGIX		0x818E
+#define GL_TEXTURE_LOD_BIAS_T_SGIX		0x818F
+#define GL_TEXTURE_LOD_BIAS_R_SGIX		0x8190
+
+#endif /* GL_SGIX_texture_lod_bias */
+
+
+
+/*
+ * 85. GLU_SGI_filter4_parameters
+ * 86. GLX_SGIX_dm_buffer
+ * 87. unknown
+ * 88. unknown
+ * 89. unknown
+ * 90. unknown
+ * 91. GLX_SGIX_swap_group
+ * 92. GLX_SGIX_swap_barrier
+ */
+
+
+
+/*
+ *  93. GL_EXT_index_texture
+ */
+#ifndef GL_EXT_index_texture
+#define GL_EXT_index_texture 1
+
+/* No new tokens or functions */
+
+#endif /* GL_EXT_index_texture */
+
+
+
+/*
  * 94. GL_EXT_index_material
  */
 #ifndef GL_EXT_index_material
@@ -960,15 +1487,34 @@ typedef void (APIENTRY * PFNGLINDEXMATERIALEXTPROC) (GLenum face, GLenum mode);
 #ifndef GL_EXT_index_func
 #define GL_EXT_index_func 1
 
-#define GL_INDEX_TEST_EXT		?
-#define GL_INDEX_TEST_FUNC_EXT		?
-#define GL_INDEX_TEST_REF_EXT		?
+#define GL_INDEX_TEST_EXT			?
+#define GL_INDEX_TEST_FUNC_EXT			?
+#define GL_INDEX_TEST_REF_EXT			?
 
 GLAPI void APIENTRY glIndexFuncEXT(GLenum func, GLfloat ref);
 
 typedef void (APIENTRY * PFNGLINDEXFUNCEXTPROC) (GLenum func, GLfloat ref);
 
 #endif /* GL_EXT_index_func */
+
+
+
+/*
+ * 96. GL_EXT_index_array_formats
+ */
+#ifndef GL_EXT_index_array_formats
+#define GL_EXT_index_array_formats 1
+
+#define GL_IUI_V2F_EXT				?
+#define GL_IUI_V3F_EXT				?
+#define GL_IUI_N3F_V2F_EXT			?
+#define GL_IUI_N3F_V3F_EXT			?
+#define GL_T2F_IUI_V2F_EXT			?
+#define GL_T2F_IUI_V3F_EXT			?
+#define GL_T2F_IUI_N3F_V2F_EXT			?
+#define GL_T2F_IUI_N3F_V3F_EXT			?
+
+#endif /* GL_EXT_index_array_formats */
 
 
 
@@ -1008,6 +1554,31 @@ typedef void (APIENTRY * PFNGLCULLPARAMETERDVEXTPROC) (GLenum pname, GLdouble* p
 typedef void (APIENTRY * PFNGLCULLPARAMETERFVEXTPROC) (GLenum pname, GLfloat* params);
 
 #endif /* GL_EXT_cull_vertex */
+
+
+
+/*
+ * 99. unknown
+ */
+
+
+
+/*
+ * 100. GLU_EXT_nurbs_tessellator
+ */
+
+
+
+/*
+ * 101. GL_SGIX_ycrcb
+ */
+#ifndef GL_SGIX_ycrcb
+#define GL_SGIX_ycrcb 1
+
+#define GL_YCRCB_422_SGIX			0x81BB
+#define GL_YCRCB_444_SGIX			0x81BC
+
+#endif /* GL_SGIX_ycrcb */
 
 
 
@@ -1060,6 +1631,164 @@ typedef void (APIENTRY * PFNGLLIGHTENVISGIXPROC) (GLenum pname, GLint param);
 
 
 /*
+ * 103. unknown
+ * 104. unknown
+ * 105. unknown
+ * 106. unknown
+ * 107. unknown
+ * 108. unknown
+ * 109. unknown
+ */
+
+
+
+/*
+ * 110. GL_IBM_rasterpos_clip
+ */
+#ifndef GL_IBM_rasterpos_clip
+#define GL_IBM_rasterpos_clip 1
+
+#endif /* GL_IBM_rasterpos_clip */
+
+
+
+/*
+ * 111. GL_HP_texture_lighting
+ */
+#ifndef GL_HP_texture_lighting
+#define GL_HP_texture_lighting 1
+
+#define GL_TEXTURE_LIGHTING_MODE_HP		?
+#define GL_TEXTURE_POST_SPECULAR_HP		?
+#define GL_TEXTURE_PRE_SPECULAR_HP		?
+
+#endif /* GL_HP_texture_lighting */
+
+
+
+/*
+ * 112. GL_EXT_draw_range_elements
+ */
+#ifndef GL_EXT_draw_range_elements
+#define GL_EXT_draw_range_elements 1
+
+#define GL_MAX_ELEMENTS_VERTICES_EXT		0x80E8
+#define GL_MAX_ELEMENTS_INDICES_EXT		0x80E9
+
+GLAPI void APIENTRY glDrawRangeElementsEXT(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
+
+typedef void (APIENTRY * PFNGLDRAWRANGEELEMENTSEXTPROC) (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
+
+#endif /* GL_EXT_draw_range_elements */
+
+
+
+/*
+ * 113. GL_WIN_phong_shading
+ */
+#ifndef GL_WIN_phong_shading
+#define GL_WIN_phong_shading 1
+
+#define GL_PHONG_WIN				0x80EA
+#define GL_PHONG_HINT_WIN			0x80EB
+
+#endif /* GL_WIN_phong_shading */
+
+
+
+/*
+ * 114. GL_WIN_specular_fog
+ */
+#ifndef GL_WIN_specular_fog
+#define GL_WIN_specular_fog 1
+
+#define GL_FOG_SPECULAR_TEXTURE_WIN		0x80EC
+#define GL_FOG_SPECULAR_TEXTURE_WIN		0x80EC
+
+#endif /* GL_WIN_specular_fog */
+
+
+
+/*
+ * 115. unknown
+ * 116. unknown
+ */
+
+
+
+/*
+ * 117. GL_EXT_light_texture
+ */
+#ifndef GL_EXT_light_texture
+#define GL_EXT_light_texture 1
+
+#define GL_FRAGMENT_MATERIAL_EXT		0x8349
+#define GL_FRAGMENT_NORMAL_EXT			0x834A
+/* XXX this symbol collides with the same in GL_EXT_fog_coord and they
+** have different values!  We're disabling this one since it's the less
+** common of the two extensions.
+#define GL_FRAGMENT_DEPTH_EXT			0x834B
+**/
+#define GL_FRAGMENT_COLOR_EXT			0x834C
+#define GL_ATTENUATION_EXT			0x834D
+#define GL_SHADOW_ATTENUATION_EXT	        0x834E
+#define GL_TEXTURE_APPLICATION_MODE_EXT		0x834F
+#define GL_TEXTURE_LIGHT_EXT			0x8350
+#define GL_TEXTURE_MATERIAL_FACE_EXT		0x8351
+#define GL_TEXTURE_MATERIAL_PARAMETER_EXT	0x8352
+
+GLAPI void APIENTRY glApplyTextureEXT(GLenum mode);
+GLAPI void APIENTRY glTextureLightEXT(GLenum pname);
+GLAPI void APIENTRY glTextureMaterialEXT(GLenum face, GLenum mode);
+
+typedef void (APIENTRY * PFNGLAPPLYTEXTUREEXTPROC) (GLenum mode);
+typedef void (APIENTRY * PFNGLTEXTURELIGHTEXTPROC) (GLenum pname);
+typedef void (APIENTRY * PFNGLTEXTUREMATERIALEXTPROC) (GLenum face, GLenum mode);
+
+#endif /* GL_EXT_light_texture */
+
+
+
+/*
+ * 118. unknown
+ */
+
+
+
+/*
+ * 119. GL_SGIX_blend_alpha_minmax
+ */
+#ifndef GL_SGIX_blend_alpha_minmax
+#define GL_SGIX_blend_alpha_minmax 1
+
+#endif /* GL_SGIX_blend_alpha_minmax */
+
+
+
+/*
+ * 120. GL_EXT_scene_marker
+ */
+#ifndef GL_EXT_scene_marker
+#define GL_EXT_scene_marker 1
+
+#endif /* GL_EXT_scene_marker */
+
+
+
+/*
+ * 121. unknown
+ * 122. unknown
+ * 123. unknown
+ * 124. unknown
+ * 125. unknown
+ * 126. unknown
+ * 127. unknown
+ * 128. unknown
+ */
+
+
+
+/*
  * 129. GL_EXT_bgra
  */
 #ifndef GL_EXT_bgra
@@ -1069,6 +1798,63 @@ typedef void (APIENTRY * PFNGLLIGHTENVISGIXPROC) (GLenum pname, GLint param);
 #define GL_BGRA_EXT				0x80E1
 
 #endif /* GL_EXT_bgra */
+
+
+
+/*
+ * 130. unknown
+ * 131. unknown
+ * 132. unknown
+ * 133. unknown
+ * 134. unknown
+ */
+
+
+
+/*
+ * 135. GL_INTEL_texture_scissor
+ */
+#ifndef GL_INTEL_texture_scissor
+#define GL_INTEL_texture_scissor 1
+
+#define TEXTURE_SCISSOR_INTEL			?
+#define TEXTURE_SCISSOR_S_INTEL			?
+#define TEXTURE_SCISSOR_T_INTEL			?
+#define TEXTURE_SCISSOR_R_INTEL 		?
+
+GLAPI void APIENTRY glTexScissorINTEL(GLenum target, GLclampf tlow, GLclampf thigh);
+GLAPI void APIENTRY glTexScissorFuncINTEL(GLenum target, GLenum lfunc, GLenum hfunc);
+
+typedef void (APIENTRY * PFNGLTEXSCISSORINTELPROC) (GLenum target, GLclampf tlow, GLclampf thigh);
+typedef void (APIENTRY * PFNGLTEXSCISSORFUNCINTELPROC) (GLenum target, GLenum lfunc, GLenum hfunc);
+
+#endif /* GL_INTEL_texture_scissor */
+
+
+
+/*
+ * 136. GL_INTEL_parallel_arrays
+ */
+#ifndef GL_INTEL_parallel_arrays
+#define GL_INTEL_parallel_arrays 1
+
+#define GL_PARALLEL_ARRAYS_INTEL			?
+#define GL_VERTEX_ARRAY_PARALLEL_POINTERS_INTEL		?
+#define GL_NORMAL_ARRAY_PARALLEL_POINTERS_INTEL		?
+#define GL_COLOR_ARRAY_PARALLEL_POINTERS_INTEL		?
+#define GL_TEXTURE_COORD_ARRAY_PARALLEL_POINTERS_INTEL	?
+
+GLAPI void APIENTRY glVertexPointervINTEL(GLint size, GLenum type, const void ** pointer);
+GLAPI void APIENTRY glNormalPointervINTEL(GLenum type, const void** pointer);
+GLAPI void APIENTRY glColorPointervINTEL(GLint size, GLenum type, const void** pointer);
+GLAPI void APIENTRY glTexCoordPointervINTEL(GLint size, GLenum type, const void** pointer);
+
+typedef void (APIENTRY * PFNGLVERTEXPOINTERVINTELPROC) (GLint size, GLenum type, const void ** pointer);
+typedef void (APIENTRY * PFNGLNORMALPOINTERVINTELPROC) (GLenum type, const void** pointer);
+typedef void (APIENTRY * PFNGLCOLORPOINTERVINTELPROC) (GLint size, GLenum type, const void** pointer);
+typedef void (APIENTRY * PFNGLTEXCOORDPOINTERVINTELPROC) (GLint size, GLenum type, const void** pointer);
+
+#endif /* GL_INTEL_parallel_arrays */
 
 
 
