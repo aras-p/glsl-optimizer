@@ -151,10 +151,9 @@ clear_color_buffer(GLcontext *ctx)
       const GLubyte a = (GLint) (ctx->Color.ClearColor[3] * 255.0F);
       GLubyte span[MAX_WIDTH][4];
       GLint i;
-      ASSERT(ctx->Color.ColorMask[0] &&
-             ctx->Color.ColorMask[1] &&
-             ctx->Color.ColorMask[2] &&
-             ctx->Color.ColorMask[3]);
+
+      ASSERT(!ctx->Color.SWmasking);
+
       for (i = 0; i < width; i++) {
          span[i][RCOMP] = r;
          span[i][GCOMP] = g;
@@ -299,7 +298,7 @@ _mesa_Clear( GLbitfield mask )
       /* clear software-based alpha buffer(s) */
       if ( (mask & GL_COLOR_BUFFER_BIT)
            && ctx->DrawBuffer->UseSoftwareAlphaBuffers
-           && ctx->Color.ColorMask[RCOMP]) {
+           && ctx->Color.ColorMask[ACOMP]) {
          _mesa_clear_alpha_buffers( ctx );
       }
 
