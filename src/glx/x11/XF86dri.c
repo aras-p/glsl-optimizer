@@ -42,6 +42,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "xf86dristr.h"
 #include <X11/extensions/Xext.h>
 #include "extutil.h"
+#include "glheader.h"
 
 static XExtensionInfo _xf86dri_info_data;
 static XExtensionInfo *xf86dri_info = &_xf86dri_info_data;
@@ -93,7 +94,7 @@ static XEXT_GENERATE_CLOSE_DISPLAY (close_display, xf86dri_info)
 #endif
 
 
-Bool XF86DRIQueryExtension (dpy, event_basep, error_basep)
+PUBLIC Bool XF86DRIQueryExtension (dpy, event_basep, error_basep)
     Display *dpy;
     int *event_basep, *error_basep;
 {
@@ -111,7 +112,7 @@ Bool XF86DRIQueryExtension (dpy, event_basep, error_basep)
     }
 }
 
-Bool XF86DRIQueryVersion(dpy, majorVersion, minorVersion, patchVersion)
+PUBLIC Bool XF86DRIQueryVersion(dpy, majorVersion, minorVersion, patchVersion)
     Display* dpy;
     int* majorVersion; 
     int* minorVersion;
@@ -143,7 +144,7 @@ Bool XF86DRIQueryVersion(dpy, majorVersion, minorVersion, patchVersion)
     return True;
 }
 
-Bool XF86DRIQueryDirectRenderingCapable(dpy, screen, isCapable)
+PUBLIC Bool XF86DRIQueryDirectRenderingCapable(dpy, screen, isCapable)
     Display* dpy;
     int screen;
     Bool* isCapable;
@@ -173,7 +174,7 @@ Bool XF86DRIQueryDirectRenderingCapable(dpy, screen, isCapable)
     return True;
 }
 
-Bool XF86DRIOpenConnection(dpy, screen, hSAREA, busIdString)
+PUBLIC Bool XF86DRIOpenConnection(dpy, screen, hSAREA, busIdString)
     Display* dpy;
     int screen;
     drm_handle_t * hSAREA;
@@ -221,7 +222,7 @@ Bool XF86DRIOpenConnection(dpy, screen, hSAREA, busIdString)
     return True;
 }
 
-Bool XF86DRIAuthConnection(dpy, screen, magic)
+PUBLIC Bool XF86DRIAuthConnection(dpy, screen, magic)
     Display* dpy;
     int screen;
     drm_magic_t magic;
@@ -252,7 +253,7 @@ Bool XF86DRIAuthConnection(dpy, screen, magic)
     return True;
 }
 
-Bool XF86DRICloseConnection(dpy, screen)
+PUBLIC Bool XF86DRICloseConnection(dpy, screen)
     Display* dpy;
     int screen;
 {
@@ -274,7 +275,7 @@ Bool XF86DRICloseConnection(dpy, screen)
     return True;
 }
 
-Bool XF86DRIGetClientDriverName(dpy, screen, ddxDriverMajorVersion, 
+PUBLIC Bool XF86DRIGetClientDriverName(dpy, screen, ddxDriverMajorVersion, 
 	ddxDriverMinorVersion, ddxDriverPatchVersion, clientDriverName)
     Display* dpy;
     int screen;
@@ -324,7 +325,8 @@ Bool XF86DRIGetClientDriverName(dpy, screen, ddxDriverMajorVersion,
     return True;
 }
 
-Bool XF86DRICreateContextWithConfig(dpy, screen, configID, context, hHWContext)
+PUBLIC Bool XF86DRICreateContextWithConfig(dpy, screen, configID, context,
+	hHWContext)
     Display* dpy;
     int screen;
     int configID;
@@ -359,7 +361,7 @@ Bool XF86DRICreateContextWithConfig(dpy, screen, configID, context, hHWContext)
     return True;
 }
 
-Bool XF86DRICreateContext(dpy, screen, visual, context, hHWContext)
+PUBLIC Bool XF86DRICreateContext(dpy, screen, visual, context, hHWContext)
     Display* dpy;
     int screen;
     Visual* visual;
@@ -370,7 +372,7 @@ Bool XF86DRICreateContext(dpy, screen, visual, context, hHWContext)
 					   context, hHWContext );
 }
 
-GLboolean XF86DRIDestroyContext( __DRInativeDisplay * ndpy, int screen, 
+PUBLIC GLboolean XF86DRIDestroyContext( __DRInativeDisplay * ndpy, int screen, 
     __DRIid context )
 {
     Display * const dpy = (Display *) ndpy;
@@ -392,7 +394,7 @@ GLboolean XF86DRIDestroyContext( __DRInativeDisplay * ndpy, int screen,
     return True;
 }
 
-GLboolean XF86DRICreateDrawable( __DRInativeDisplay * ndpy, int screen, 
+PUBLIC GLboolean XF86DRICreateDrawable( __DRInativeDisplay * ndpy, int screen, 
     __DRIid drawable, drm_drawable_t * hHWDrawable )
 {
     Display * const dpy = (Display *) ndpy;
@@ -422,7 +424,7 @@ GLboolean XF86DRICreateDrawable( __DRInativeDisplay * ndpy, int screen,
     return True;
 }
 
-GLboolean XF86DRIDestroyDrawable( __DRInativeDisplay * ndpy, int screen,
+PUBLIC GLboolean XF86DRIDestroyDrawable( __DRInativeDisplay * ndpy, int screen,
     __DRIid drawable )
 {
     Display * const dpy = (Display *) ndpy;
@@ -444,7 +446,7 @@ GLboolean XF86DRIDestroyDrawable( __DRInativeDisplay * ndpy, int screen,
     return True;
 }
 
-Bool XF86DRIGetDrawableInfo(Display* dpy, int screen, Drawable drawable,
+PUBLIC Bool XF86DRIGetDrawableInfo(Display* dpy, int screen, Drawable drawable,
     unsigned int* index, unsigned int* stamp,
     int* X, int* Y, int* W, int* H,
     int* numClipRects, drm_clip_rect_t ** pClipRects,
@@ -529,7 +531,7 @@ Bool XF86DRIGetDrawableInfo(Display* dpy, int screen, Drawable drawable,
     return True;
 }
 
-Bool XF86DRIGetDeviceInfo(dpy, screen, hFrameBuffer, 
+PUBLIC Bool XF86DRIGetDeviceInfo(dpy, screen, hFrameBuffer, 
 	fbOrigin, fbSize, fbStride, devPrivateSize, pDevPrivate)
     Display* dpy;
     int screen;
@@ -588,7 +590,7 @@ Bool XF86DRIGetDeviceInfo(dpy, screen, hFrameBuffer,
     return True;
 }
 
-Bool XF86DRIOpenFullScreen(dpy, screen, drawable)
+PUBLIC Bool XF86DRIOpenFullScreen(dpy, screen, drawable)
     Display* dpy;
     int screen;
     Drawable drawable;
@@ -601,7 +603,7 @@ Bool XF86DRIOpenFullScreen(dpy, screen, drawable)
     return False;
 }
 
-Bool XF86DRICloseFullScreen(dpy, screen, drawable)
+PUBLIC Bool XF86DRICloseFullScreen(dpy, screen, drawable)
     Display* dpy;
     int screen;
     Drawable drawable;
