@@ -651,12 +651,11 @@ convertPalette(FxU32 data[256], const struct gl_color_table *table)
         }
         return GR_TEXTABLE_PALETTE_6666_EXT;
     default:
-	return GR_TEXTABLE_NCC0;	/* ???? */
+        /* XXX fixme: how can this happen? */
+        _mesa_error(NULL, GL_INVALID_ENUM, "convertPalette: table->Format == %s",
+                                           _mesa_lookup_enum_by_nr(table->Format));
+        return GR_TEXTABLE_PALETTE;
     }
-    /* XXX fixme: how can this happen? */
-    _mesa_error(NULL, GL_INVALID_ENUM, "convertPalette: table->Format == %s",
-                                       _mesa_lookup_enum_by_nr(table->Format));
-    abort();
 }
 
 
