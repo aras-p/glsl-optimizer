@@ -135,10 +135,11 @@ logbase2( int n )
 
 
 /**
- * Get base internal format.
+ * Return the simple base format for a given internal texture format.
+ * For example, given GL_LUMINANCE12_ALPHA4, return GL_LUMINANCE_ALPHA.
  *
  * \param ctx GL context.
- * \param format internal texture format enum or 1, 2, 3, 4.
+ * \param internalFormat the internal texture format token or 1, 2, 3, or 4.
  *
  * \return the corresponding \u base internal format (GL_ALPHA, GL_LUMINANCE,
  * GL_LUMANCE_ALPHA, GL_INTENSITY, GL_RGB, or GL_RGBA), or -1 if invalid enum.
@@ -147,13 +148,9 @@ logbase2( int n )
  * texture format and env mode determine the arithmetic used.
  */
 GLint
-_mesa_base_tex_format( GLcontext *ctx, GLint format )
+_mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
 {
-   /*
-    * Ask the driver for the base format, if it doesn't
-    * know, it will return -1;
-    */
-   switch (format) {
+   switch (internalFormat) {
       case GL_ALPHA:
       case GL_ALPHA4:
       case GL_ALPHA8:
@@ -294,6 +291,8 @@ _mesa_base_tex_format( GLcontext *ctx, GLint format )
          else
             return -1;
 
+      /* XXX add float texture formats here */
+
       default:
          return -1;  /* error */
    }
@@ -301,13 +300,15 @@ _mesa_base_tex_format( GLcontext *ctx, GLint format )
 
 
 /**
- * Test if the given image format is a color/RGBA format, i.e., not
- * color index, depth, stencil, etc.
+ * Test if the given internal texture format is a color/RGBA format
+ * (i.e., not color index, depth, stencil, etc).
+ * \param internalFormat an internal texture format token (or 1, 2, 3, or 4)
+ * \return GL_TRUE if its a color/RGBA format, GL_FALSE otherwise.
  */
 static GLboolean
-is_color_format(GLenum format)
+is_color_format(GLenum internalFormat)
 {
-   switch (format) {
+   switch (internalFormat) {
       case GL_ALPHA:
       case GL_ALPHA4:
       case GL_ALPHA8:
@@ -350,6 +351,7 @@ is_color_format(GLenum format)
       case GL_RGB10_A2:
       case GL_RGBA12:
       case GL_RGBA16:
+      /* XXX add float texture formats here */
          return GL_TRUE;
       case GL_YCBCR_MESA:  /* not considered to be RGB */
       default:
@@ -359,12 +361,12 @@ is_color_format(GLenum format)
 
 
 /**
- * Test if the given image format is a color index format.
+ * Test if the given internal texture format is a color index format.
  */
 static GLboolean
-is_index_format(GLenum format)
+is_index_format(GLenum internalFormat)
 {
-   switch (format) {
+   switch (internalFormat) {
       case GL_COLOR_INDEX:
       case GL_COLOR_INDEX1_EXT:
       case GL_COLOR_INDEX2_EXT:
@@ -372,6 +374,39 @@ is_index_format(GLenum format)
       case GL_COLOR_INDEX8_EXT:
       case GL_COLOR_INDEX12_EXT:
       case GL_COLOR_INDEX16_EXT:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
+
+
+/**
+ * Test if the given internal texture format is a depth component format.
+ */
+static GLboolean
+is_depth_format(GLenum internalFormat)
+{
+   switch (internalFormat) {
+      case GL_DEPTH_COMPONENT16_ARB:
+      case GL_DEPTH_COMPONENT24_ARB:
+      case GL_DEPTH_COMPONENT32_ARB:
+      case GL_DEPTH_COMPONENT:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
+
+
+/**
+ * Test if the given internal texture format is a YCbCr format.
+ */
+static GLboolean
+is_ycbcr_format(GLenum internalFormat)
+{
+   switch (internalFormat) {
+      case GL_YCBCR_MESA:
          return GL_TRUE;
       default:
          return GL_FALSE;
@@ -1786,13 +1821,13 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
 
 
 /**
- * Get texture image.
+ * Get texture image.  Called by glGetTexImage.
  *
  * \param target texture target.
  * \param level image level.
- * \param format pixel data format.
- * \param type pixel data type.
- * \param pixels pixel data.
+ * \param format pixel data format for returned image.
+ * \param type pixel data type for returned image.
+ * \param pixels returned pixel data.
  */
 void GLAPIENTRY
 _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
@@ -1835,15 +1870,13 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
    }
 
-   if (!ctx->Extensions.SGIX_depth_texture && format == GL_DEPTH_COMPONENT) {
+   if (!ctx->Extensions.SGIX_depth_texture && is_depth_format(format)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
    }
 
-   if (!ctx->Extensions.MESA_ycbcr_texture && format == GL_YCBCR_MESA) {
+   if (!ctx->Extensions.MESA_ycbcr_texture && is_ycbcr_format(format)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
    }
-
-   /* XXX what if format/type doesn't match texture format/type? */
 
    if (!pixels)
       return;
@@ -1858,6 +1891,32 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       /* no image data, not an error */
       return;
    }
+
+   /* Make sure the requested image format is compatible with the
+    * texture's format.
+    */
+   if (is_color_format(format)
+       && !is_color_format(texImage->TexFormat->BaseFormat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
+      return;
+   }
+   else if (is_index_format(format)
+       && !is_index_format(texImage->TexFormat->BaseFormat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
+      return;
+   }
+   else if (is_depth_format(format)
+       && !is_depth_format(texImage->TexFormat->BaseFormat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
+      return;
+   }
+   else if (is_ycbcr_format(format)
+       && !is_ycbcr_format(texImage->TexFormat->BaseFormat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
+      return;
+   }
+
+
 
    {
       const GLint width = texImage->Width;
