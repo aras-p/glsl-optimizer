@@ -1,8 +1,8 @@
-/* $Id: get.c,v 1.97 2002/10/24 23:57:20 brianp Exp $ */
+/* $Id: get.c,v 1.98 2002/10/29 22:32:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -5630,7 +5630,7 @@ _mesa_GetString( GLenum name )
    static const char *renderer = "Mesa";
    static const char *version_1_2 = "1.2 Mesa 4.1";
    static const char *version_1_3 = "1.3 Mesa 4.1";
-   static const char *version_1_4 = "1.3 Mesa 4.1"; /* change to 1.4 in 5.0 */
+   static const char *version_1_4 = "1.4 Mesa 5.0";
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 

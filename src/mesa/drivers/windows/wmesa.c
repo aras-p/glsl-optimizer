@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.41 2002/10/24 23:57:23 brianp Exp $ */
+/* $Id: wmesa.c,v 1.42 2002/10/29 22:32:50 brianp Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -1352,6 +1352,7 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
   
   _mesa_enable_sw_extensions(c->gl_ctx);
   _mesa_enable_1_3_extensions(c->gl_ctx);
+  _mesa_enable_1_4_extensions(c->gl_ctx);
 
   c->gl_buffer = _mesa_create_framebuffer( c->gl_visual,
 					   c->gl_visual->depthBits > 0,

@@ -1,8 +1,8 @@
-/* $Id: xm_api.c,v 1.47 2002/10/25 21:06:34 brianp Exp $ */
+/* $Id: xm_api.c,v 1.48 2002/10/29 22:32:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0.2
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -1637,7 +1637,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
    _mesa_enable_sw_extensions(ctx);
    _mesa_enable_1_3_extensions(ctx);
-   /*_mesa_enable_1_4_extensions(ctx);*/
+   _mesa_enable_1_4_extensions(ctx);
 
    if (CHECK_BYTE_ORDER(v)) {
       c->swapbytes = GL_FALSE;
