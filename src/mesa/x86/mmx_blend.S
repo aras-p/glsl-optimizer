@@ -35,7 +35,7 @@ GLNAME( _mesa_mmx_blend_transparency ):
     MOV_L     ( EDX, EAX )
     AND_L     ( CONST(4), EAX )
     CMP_L     ( CONST(8), EAX )
-    JNE       ( LLBL(GMBT_no_align) )
+    JNE       ( LLBL(GMBT_skip_runin) )
     MOV_L     ( REGOFF(20, EBP), EAX )
     ADD_L     ( CONST(3), EAX )
     XOR_L     ( EDX, EDX )
@@ -126,13 +126,15 @@ GLNAME( _mesa_mmx_blend_transparency ):
     ADD_L     ( CONST(4), REGOFF(20, EBP) )
     ADD_L     ( CONST(4), REGOFF(24, EBP) )
     DEC_L     ( REGOFF(12, EBP) )
-LLBL(GMBT_skip_runin):
+
+LLBL (GMBT_skip_runin):
 
     CMP_L     ( CONST(0), REGOFF(12, EBP) )	/* n == 0 */
-    JE        ( LLBL(GMBT_zero_length) )
+    JE        ( LLBL(GMBT_runout) )
     MOV_L     ( CONST(0), REGOFF(-28, EBP) )	
+
 ALIGNTEXT4
-LLBL(GMBT_main_loop):
+LLBL (GMBT_main_loop):
 
     MOV_L     ( REGOFF(12, EBP), EDX )
     MOV_L     ( EDX, EAX )
@@ -140,19 +142,20 @@ LLBL(GMBT_main_loop):
     CMP_L     ( EAX, REGOFF(-28, EBP) )
     JB        ( LLBL(GMBT_no_jump) )
     JMP       ( LLBL(GMBT_end_loop) )
-ALIGNTEXT16
-LLBL(GMBT_nojump):
 
-    MOV_L     ( REGOFF(-28, EBP), EAX )
-    LEA_L     ( REGDIS(0,EAX,2), EDX )
-    MOV_L     ( REGOFF(16, EBP), EAX )		/* mask */
-    CMP_B     ( CONST(0), REGBI(EAX,EDX) )
+ALIGNTEXT16
+LLBL (GMBT_no_jump):
+
+    MOV_L     ( REGOFF(-28, EBP), EAX )		/* eax = i */
+    LEA_L     ( REGDIS(0,EAX,2), EDX )		/* edx = i*2 */
+    MOV_L     ( REGOFF(16, EBP), EAX )		/* eax = mask */
+    CMP_W     ( CONST(0), REGBI(EAX,EDX) )	/* ((unsigned *) mask)[i] == 0 */
     JE        ( LLBL(GMBT_masked) )
-    MOV_L     ( REGOFF(-28, EBP), EAX )
+    MOV_L     ( REGOFF(-28, EBP), EAX )		/* eax = i */
     MOV_L     ( EAX, EDX )
-    LEA_L     ( REGDIS(0,EDX,8), ECX )
+    LEA_L     ( REGDIS(0,EDX,8), ECX )		/* ecx = i*8 */
     MOV_L     ( ECX, EAX )
-    ADD_L     ( REGOFF(20, EBP), EAX )
+    ADD_L     ( REGOFF(20, EBP), EAX )		
     MOV_L     ( REGOFF(-28, EBP), EDX )
     MOV_L     ( EDX, ECX )
     LEA_L     ( REGDIS(0,ECX,8), EDX )
@@ -160,7 +163,7 @@ LLBL(GMBT_nojump):
     ADD_L     ( REGOFF(24, EBP), ECX )
 
     MOVQ      ( REGIND(EAX), MM4 )
-    PXOR      ( MM5, MM5 )
+    PXOR      ( MM5, MM5 )			/* mm5 = 00 00 00 00 00 00 00 00 */
     MOVQ      ( MM4, MM1 )
     MOVQ      ( REGIND(ECX), MM7 )
     PUNPCKLBW ( MM5, MM1 )
@@ -205,17 +208,16 @@ LLBL(GMBT_nojump):
     POR       ( MM1, MM4 )
     MOVQ      ( MM4, REGIND(EAX) )
 
-LLBL(GMBT_masked):
+LLBL (GMBT_masked):
 
     INC_L     ( REGOFF(-28, EBP) )
     JMP       ( LLBL(GMBT_main_loop) )
+
 ALIGNTEXT16
-LLBL(GMBT_end_loop):
-
-
+LLBL (GMBT_end_loop):
     EMMS
 
-LLBL(GMBT_runout):
+LLBL (GMBT_runout):
 
     MOV_L     ( REGOFF(12, EBP), EAX )
     AND_L     ( CONST(1), EAX )
@@ -349,7 +351,8 @@ LLBL(GMBT_runout):
     LEA_L     ( REGOFF(-1, EAX), EDX )
     MOV_B     ( REGOFF(-32, EBP), AL )
     MOV_B     ( AL, REGIND(EDX) )
-LLBL(GMBT_skip_runout):
+
+LLBL (GMBT_skip_runout):
 
     MOV_L     ( REGOFF(-56, EBP), EBX )
     MOV_L     ( EBP, ESP )

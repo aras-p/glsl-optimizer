@@ -1,4 +1,4 @@
-/* $Id: s_blend.c,v 1.15 2002/04/02 16:16:45 brianp Exp $ */
+/* $Id: s_blend.c,v 1.16 2002/04/02 23:36:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -138,33 +138,23 @@ blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
 	    GLint temp;
 #define DIV255(X)  (temp = (X), ((temp << 8) + temp + 256) >> 16)
 #endif
-#if 0
-            const GLint s = CHAN_MAX - t;
-            const GLint r = DIV255(rgba[i][RCOMP] * t + dest[i][RCOMP] * s);
-            const GLint g = DIV255(rgba[i][GCOMP] * t + dest[i][GCOMP] * s);
-            const GLint b = DIV255(rgba[i][BCOMP] * t + dest[i][BCOMP] * s);
-            const GLint a = DIV255(rgba[i][ACOMP] * t + dest[i][ACOMP] * s);
-#else
             const GLint r = DIV255((rgba[i][RCOMP] - dest[i][RCOMP]) * t) + dest[i][RCOMP];
             const GLint g = DIV255((rgba[i][GCOMP] - dest[i][GCOMP]) * t) + dest[i][GCOMP];
             const GLint b = DIV255((rgba[i][BCOMP] - dest[i][BCOMP]) * t) + dest[i][BCOMP];
             const GLint a = DIV255((rgba[i][ACOMP] - dest[i][ACOMP]) * t) + dest[i][ACOMP]; 
-#endif
 #undef DIV255
 #elif CHAN_BITS == 16
             const GLfloat tt = (GLfloat) t / CHAN_MAXF;
-            const GLfloat s = 1.0 - tt;
-            const GLint r = (GLint) (rgba[i][RCOMP] * tt + dest[i][RCOMP] * s);
-            const GLint g = (GLint) (rgba[i][GCOMP] * tt + dest[i][GCOMP] * s);
-            const GLint b = (GLint) (rgba[i][BCOMP] * tt + dest[i][BCOMP] * s);
-            const GLint a = (GLint) (rgba[i][ACOMP] * tt + dest[i][ACOMP] * s);
+            const GLint r = (GLint) ((rgba[i][RCOMP] - dest[i][RCOMP]) * tt + dest[i][RCOMP]);
+            const GLint g = (GLint) ((rgba[i][GCOMP] - dest[i][GCOMP]) * tt + dest[i][GCOMP]);
+            const GLint b = (GLint) ((rgba[i][BCOMP] - dest[i][BCOMP]) * tt + dest[i][BCOMP]);
+            const GLint a = (GLint) ((rgba[i][ACOMP] - dest[i][ACOMP]) * tt + dest[i][ACOMP]);
 #else /* CHAN_BITS == 32 */
             const GLfloat tt = (GLfloat) t / CHAN_MAXF;
-            const GLfloat s = 1.0 - tt;
-            const GLfloat r = rgba[i][RCOMP] * tt + dest[i][RCOMP] * s;
-            const GLfloat g = rgba[i][GCOMP] * tt + dest[i][GCOMP] * s;
-            const GLfloat b = rgba[i][BCOMP] * tt + dest[i][BCOMP] * s;
-            const GLfloat a = rgba[i][ACOMP] * tt + dest[i][ACOMP] * s;
+            const GLfloat r = (rgba[i][RCOMP] - dest[i][RCOMP]) * tt + dest[i][RCOMP];
+            const GLfloat g = (rgba[i][GCOMP] - dest[i][GCOMP]) * tt + dest[i][GCOMP];
+            const GLfloat b = (rgba[i][BCOMP] - dest[i][BCOMP]) * tt + dest[i][BCOMP];
+            const GLfloat a = (rgba[i][ACOMP] - dest[i][ACOMP]) * tt + dest[i][ACOMP];
 #endif
 #endif
             ASSERT(r <= CHAN_MAX);
