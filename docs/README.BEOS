@@ -5,11 +5,11 @@
 
 * Introduction
 
-Brian Paul added in Mesa 3.1 a driver for BeOS R4.5 operating system.  
-This driver implements a clone of the BGLView class.  This class, derived from BView, allows
-OpenGL rendering into any BeOS window.
-His driver was updated in Mesa 4.1 by Philippe Houdoin, 
-who's maintaining this driver since.
+Brian Paul added in Mesa 3.1 a driver for BeOS R4.5 operating system.
+This driver implements a clone of the BGLView class.  This class,
+derived from BView, allows OpenGL rendering into any BeOS window.  His
+driver was updated in Mesa 4.1 and again in version 6.1 by Philippe
+Houdoin, who's maintaining this driver since.
 
 Any application which uses the BGLView should be able to use Mesa
 instead of Be's OpenGL without changing any code.
@@ -45,7 +45,8 @@ the Mesa based then.
 
 By default, it build a non-debug version library.
 The x86 (MMX, SSE and 3DNOW) optimizations are also supported for x86 target.
-For PowerPC BeOS flavor, sorry, Mesa don't have ppc (Altivec) optimizations yet.
+For PowerPC BeOS flavor, sorry, Mesa don't have ppc (Altivec) optimizations
+yet.
 
 To build a DEBUG version, type instead this :
 
@@ -91,8 +92,10 @@ cause a fatal error when running with Be's OpenGL.
 - BDirectWindow single buffering support is not implemented yet.
 - Color index mode is not implemented yet.
 - Reading pixels from the front buffer not implemented yet.
-- There is also a BGLScreen class in BeOS for full-screen OpenGL rendering.  This should also be implemented for Mesa.
-- Multiple renderers add-ons support, first step toward hardware acceleration support.
+- There is also a BGLScreen class in BeOS for full-screen OpenGL rendering.
+  This should also be implemented for Mesa.
+- Multiple renderers add-ons support, first step toward hardware acceleration
+  support.
 
 * Other contributors to this BeOS port
 
@@ -113,9 +116,9 @@ Mesa 3.0 supported the 3Dfx/Glide library on Beos.  Download Mesa 3.0
 if interested.  Ideally, the 3Dfx/Glide support should be updated to
 work with the new Mesa 3.1 BGLView implementation.
 
-The Glide library hasn't been updated for BeOS R4 and newer, to my knowledge, as
-of February, 1999.
+The Glide library hasn't been updated for BeOS R4 and newer, to my knowledge,
+as of February, 1999.
 
 
 ----------------------------------------------------------------------
-$Id: README.BEOS,v 1.9 2004/08/14 10:06:21 phoudoin Exp $
+$Id: README.BEOS,v 1.10 2004/08/14 15:23:51 brianp Exp $
