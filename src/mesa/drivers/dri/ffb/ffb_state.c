@@ -445,7 +445,7 @@ void ffbCalcViewport(GLcontext *ctx)
 
 	ffbCalcViewportRegs(ctx);
 
-	fmesa->setupnewinputs |= VERT_BIT_CLIP;
+	fmesa->setupnewinputs |= VERT_BIT_POS;
 }
 
 static void ffbDDViewport(GLcontext *ctx, GLint x, GLint y,

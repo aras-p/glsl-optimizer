@@ -28,6 +28,7 @@
 #include <GL/gl.h>
 #include "texformat.h"
 #include "texstore.h"
+#include "teximage.h"
 #include "swrast/swrast.h"
 
 #include "ffb_tex.h"
