@@ -22,7 +22,6 @@
 #define VERBOSE 1    /* tell me what happens */
 
 #define DEPTH 15.0f
-#define EPS   1e-6f
 
 typedef void (GLAPIENTRYP GLFOGCOORDFEXTPROC) (GLfloat f);
 typedef void (GLAPIENTRYP GLFOGCOORDPOINTEREXTPROC) (GLenum, GLsizei, const GLvoid *);
@@ -37,7 +36,7 @@ static GLuint texture[1];
 static GLint fogMode;
 static GLboolean fogCoord;
 static GLfloat fogDensity = 0.75;
-static GLfloat fogStart = 0.0, fogEnd = 1.0;
+static GLfloat fogStart = 1.0, fogEnd = 40.0;
 static GLfloat fogColor[4] = {0.6f, 0.3f, 0.0f, 1.0f};
 
 
@@ -292,38 +291,38 @@ static void Key( unsigned char key, int x, int y )
          fogMode = SetFogMode(fogMode + 1);
          break;
       case '+':
-         if (fogDensity < 1.0 - EPS) {
+         if (fogDensity < 1.0) {
             fogDensity += 0.05;
          }
          SetFogMode(fogMode);
          break;
       case '-':
-         if (fogDensity > EPS) {
+         if (fogDensity > 0.0) {
             fogDensity -= 0.05;
          }
          SetFogMode(fogMode);
          break;
       case 's':
-         if (fogStart > EPS) {
-            fogStart -= 0.1;
+         if (fogStart > 0.0) {
+            fogStart -= 1.0;
          }
          SetFogMode(fogMode);
          break;
       case 'S':
-         if (fogStart < fogEnd - EPS) {
-            fogStart += 0.1;
+         if (fogStart < fogEnd) {
+            fogStart += 1.0;
          }
          SetFogMode(fogMode);
          break;
       case 'e':
-         if (fogEnd > fogStart + EPS) {
-            fogEnd -= 0.1;
+         if (fogEnd > fogStart) {
+            fogEnd -= 1.0;
          }
          SetFogMode(fogMode);
          break;
       case 'E':
-         if (fogEnd < 1.0 - EPS) {
-            fogEnd += 0.1;
+         if (fogEnd < 100.0) {
+            fogEnd += 1.0;
          }
          SetFogMode(fogMode);
          break;

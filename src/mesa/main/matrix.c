@@ -112,7 +112,7 @@ _mesa_Ortho( GLdouble left, GLdouble right,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glFrustum(%f, %f, %f, %f, %f, %f)\n",
+      _mesa_debug(ctx, "glOrtho(%f, %f, %f, %f, %f, %f)\n",
                   left, right, bottom, top, nearval, farval);
 
    if (left == right ||
