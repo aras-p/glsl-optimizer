@@ -12,9 +12,9 @@ C_SOURCES = \
 	  $(TOP)/src/mesa/glapi/glapi.c \
 	  $(TOP)/src/mesa/glapi/glthread.c \
 	  $(TOP)/src/mesa/drivers/dri/common/glcontextmodes.c \
-	  $(TOP)/src/mesa/drivers/dri/dri_client/xf86drm.c \
-	  $(TOP)/src/mesa/drivers/dri/dri_client/xf86drmHash.c \
-	  $(TOP)/src/mesa/drivers/dri/dri_client/xf86drmRandom.c \
+	  $(DRM_SOURCE_PATH)/libdrm/xf86drm.c \
+	  $(DRM_SOURCE_PATH)/libdrm/xf86drmHash.c \
+	  $(DRM_SOURCE_PATH)/libdrm/xf86drmRandom.c \
 	  miniglx.c \
 	  miniglx_events.c
 
@@ -32,7 +32,7 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/swrast \
 	-I$(TOP)/src/mesa/swrast_setup \
 	-I$(TOP)/src/mesa/drivers/dri/common \
-	-I$(TOP)/src/mesa/drivers/dri/dri_client/imports \
+	-I$(DRM_SOURCE_PATH)/libdrm \
 	-I$(DRM_SOURCE_PATH)/shared
 
 
