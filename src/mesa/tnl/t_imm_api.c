@@ -495,7 +495,7 @@ _tnl_Color4ubv( const GLubyte *v)
    GLuint count = IM->Count;				\
    GLfloat *color;					\
    CHECK_ATTRIB_ARRAY(IM, VERT_ATTRIB_COLOR1);		\
-   color = IM->Attrib[VERT_ATTRIB_COLOR0][count];	\
+   color = IM->Attrib[VERT_ATTRIB_COLOR1][count];	\
    color[0] = r;					\
    color[1] = g;					\
    color[2] = b;					\
