@@ -56,6 +56,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "r300_reg.h"
 #include "r300_program.h"
+#include "r300_fixed_pipelines.h"
 
 static void r300AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
 {
@@ -1109,8 +1110,6 @@ void static inline setup_vertex_shader_fragment(r300ContextPtr r300, int dest, s
 }
 
 
-#include "r300_lib.h"
-
 void r300SetupVertexShader(r300ContextPtr rmesa)
 {
 	GLcontext* ctx = rmesa->radeon.glCtx;
@@ -1124,18 +1123,11 @@ void r300SetupVertexShader(r300ContextPtr rmesa)
 /* This needs to be replaced by vertex shader generation code */
 
 	
-	/* Watch out ! This is buggy .. but will do for now */
-	
-	/* At least one sanity check is in order */
-	if(sizeof(rmesa->state.vertex_shader) != sizeof(FLAT_COLOR_PIPELINE.vertex_shader)){
-		fprintf(stderr, "Aieee ! vertex_shader sizes don't match.\n");
-		exit(-1);
-		}
 	/* textures enabled ? */
 	if(rmesa->state.texture.tc_count>0){
-   		memcpy(&rmesa->state.vertex_shader, &(SINGLE_TEXTURE_PIPELINE.vertex_shader), sizeof(rmesa->state.vertex_shader));
+		rmesa->state.vertex_shader=SINGLE_TEXTURE_VERTEX_SHADER;
 		} else {
-   		memcpy(&rmesa->state.vertex_shader, &(FLAT_COLOR_PIPELINE.vertex_shader), sizeof(rmesa->state.vertex_shader));
+		rmesa->state.vertex_shader=FLAT_COLOR_VERTEX_SHADER;
 		}
 
 
@@ -1181,19 +1173,11 @@ int i,k;
 
 	/* This needs to be replaced by pixel shader generation code */
 
-	
-	/* Watch out ! This is buggy .. but will do for now */
-	
-	/* At least one sanity check is in order */
-	if(sizeof(rmesa->state.pixel_shader) != sizeof(FLAT_COLOR_PIPELINE.pixel_shader)){
-		fprintf(stderr, "Aieee ! pixel_shader sizes don't match.\n");
-		exit(-1);
-		}
 	/* textures enabled ? */
 	if(rmesa->state.texture.tc_count>0){
-   		memcpy(&rmesa->state.pixel_shader, &(SINGLE_TEXTURE_PIPELINE.pixel_shader), sizeof(rmesa->state.pixel_shader));
+		rmesa->state.pixel_shader=SINGLE_TEXTURE_PIXEL_SHADER;
 		} else {
-   		memcpy(&rmesa->state.pixel_shader, &(FLAT_COLOR_PIPELINE.pixel_shader), sizeof(rmesa->state.pixel_shader));
+		rmesa->state.pixel_shader=FLAT_COLOR_PIXEL_SHADER;
 		}
 
 	R300_STATECHANGE(rmesa, fpt);
