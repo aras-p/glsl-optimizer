@@ -1,0 +1,34 @@
+# -*-makefile-*-
+# Configuration for linux-dri: Linux DRI hardware drivers for XFree86 & others
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = linux-dri-x86-64
+
+# Compiler and flags
+CC = gcc
+CXX = g++
+
+CFLAGS = -m64 -Wmissing-prototypes -g -std=c99  -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DPTHREADS -D_GNU_SOURCE -DGLX_DIRECT_RENDERING -D__AMD64__ -I/usr/X11R6/include -I/usr/X11R6/include/X11/extensions
+
+CXXFLAGS = -m64 -Wall -g -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -D__AMD64__
+
+#ASM_SOURCES = $(X86_SOURCES)
+
+LIB_DIR = $(TOP)/lib64
+
+# Library/program dependencies
+GL_LIB_DEPS = -L/usr/X11R6/lib64 -lX11 -lXext -lm -lpthread -lexpat -ldl
+GLUT_LIB_DEPS = -L$(LIB_DIR) -lGLU -lGL -L/usr/X11R6/lib64 -lX11 -lXmu -lXt -lXi -lm
+GLW_LIB_DEPS = -L$(LIB_DIR) -lGL -L/usr/X11R6/lib64 -lXt -lXm -lX11
+
+# Directories
+SRC_DIRS = mesa glu glut/glx glw
+DRIVER_DIRS = dri
+PROGRAM_DIRS = 
+WINDOW_SYSTEM=dri
+
+# ffb & savage missing:
+#
+DRI_DIRS = dri_client gamma i810 i830 mach64 mga r128 r200 radeon sis tdfx unichrome
+

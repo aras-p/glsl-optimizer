@@ -65,6 +65,7 @@ linux-alpha \
 linux-alpha-static \
 linux-debug \
 linux-dri \
+linux-dri-x86-64 \
 linux-glide \
 linux-icc \
 linux-icc-static \
