@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -805,14 +805,16 @@ execute_program( GLcontext *ctx,
             break;
          case FP_OPCODE_LIT:
             {
+               const GLfloat epsilon = 1.0F / 256.0F; /* from NV VP spec */
                GLfloat a[4], result[4];
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a );
-               if (a[0] < 0.0F)
-                  a[0] = 0.0F;
-               if (a[1] < 0.0F)
-                  a[1] = 0.0F;
+               a[0] = MAX2(a[0], 0.0F);
+               a[1] = MAX2(a[1], 0.0F);
+               /* XXX ARB version clamps a[3], NV version doesn't */
+               a[3] = CLAMP(a[3], -(128.0F - epsilon), (128.0F - epsilon));
                result[0] = 1.0F;
                result[1] = a[0];
+               /* XXX we could probably just use pow() here */
                result[2] = (a[0] > 0.0F) ? (GLfloat) exp(a[3] * log(a[1])) : 0.0F;
                result[3] = 1.0F;
                store_vector4( inst, machine, result );

@@ -412,17 +412,12 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
             break;
          case VP_OPCODE_LIT:
             {
-               const GLfloat epsilon = 1.0e-5F; /* XXX fix? */
+               const GLfloat epsilon = 1.0F / 256.0F; /* per NV spec */
                GLfloat t[4], lit[4];
                fetch_vector4( &inst->SrcReg[0], state, t );
-               if (t[3] < -(128.0F - epsilon))
-                   t[3] = - (128.0F - epsilon);
-               else if (t[3] > 128.0F - epsilon)
-                  t[3] = 128.0F - epsilon;
-               if (t[0] < 0.0)
-                  t[0] = 0.0;
-               if (t[1] < 0.0)
-                  t[1] = 0.0;
+               t[0] = MAX2(t[0], 0.0F);
+               t[1] = MAX2(t[1], 0.0F);
+               t[3] = CLAMP(t[3], -(128.0F - epsilon), (128.0F - epsilon));
                lit[0] = 1.0;
                lit[1] = t[0];
                lit[2] = (t[0] > 0.0) ? (GLfloat) exp(t[3] * log(t[1])) : 0.0F;
