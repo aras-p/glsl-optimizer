@@ -46,7 +46,8 @@ extern "C" {
 /*************************************************************/
 
 /* Header file version number, required by OpenGL ABI for Linux */
-#define GLX_GLXEXT_VERSION 2
+/* glxext.h last updated 2001/09/26 */
+#define GLX_GLXEXT_VERSION 3
 
 #ifndef GLX_VERSION_1_3
 #define GLX_WINDOW_BIT                     0x00000001
@@ -107,7 +108,16 @@ extern "C" {
 #define GLX_PBUFFER_WIDTH                  0x8041
 #endif
 
-/* XXX Added by BrianP */
+#ifndef GLX_VERSION_1_4
+#define GLX_SAMPLE_BUFFERS                 100000
+#define GLX_SAMPLES                        100001
+#endif
+
+#ifndef GLX_ARB_multisample
+#define GLX_SAMPLE_BUFFERS_ARB             100000
+#define GLX_SAMPLES_ARB                    100001
+#endif
+
 #ifndef GLX_SGIS_multisample
 #define GLX_SAMPLE_BUFFERS_SGIS            100000
 #define GLX_SAMPLES_SGIS                   100001
@@ -246,6 +256,20 @@ extern "C" {
 #ifndef GLX_MESA_set_3dfx_mode
 #define GLX_3DFX_WINDOW_MODE_MESA          0x1
 #define GLX_3DFX_FULLSCREEN_MODE_MESA      0x2
+#endif
+
+#ifndef GLX_SGIX_visual_select_group
+#define GLX_VISUAL_SELECT_GROUP_SGIX       0x8028
+#endif
+
+#ifndef GLX_OML_swap_method
+#define GLX_SWAP_METHOD_OML                0x8060
+#define GLX_SWAP_EXCHANGE_OML              0x8061
+#define GLX_SWAP_COPY_OML                  0x8062
+#define GLX_SWAP_UNDEFINED_OML             0x8063
+#endif
+
+#ifndef GLX_OML_sync_control
 #endif
 
 
@@ -524,6 +548,18 @@ typedef Bool ( * PFNGLXRELEASEBUFFERSMESAPROC) (Display *dpy, GLXDrawable drawab
 extern Bool glXSet3DfxModeMESA (int);
 #endif /* GLX_GLXEXT_PROTOTYPES */
 typedef Bool ( * PFNGLXSET3DFXMODEMESAPROC) (int mode);
+#endif
+
+#ifndef GLX_SGIX_visual_select_group
+#define GLX_SGIX_visual_select_group 1
+#endif
+
+#ifndef GLX_GLX_OML_swap_method
+#define GLX_GLX_OML_swap_method 1
+#endif
+
+#ifndef GLX_GLX_OML_sync_control
+#define GLX_GLX_OML_sync_control 1
 #endif
 
 
