@@ -1,7 +1,7 @@
 /*
 ** gluos.h - operating system dependencies for GLU
 **
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/include/gluos.h,v 1.3 2001/07/16 15:46:42 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/include/gluos.h,v 1.4 2002/10/04 15:58:33 kschultz Exp $
 */
 #ifdef __VMS
 #ifdef __cplusplus 
@@ -33,7 +33,9 @@
 #pragma warning(disable : 4244)
 #pragma warning(disable : 4761)
 
+#if defined(_MSC_VER) && _MSC_VER >= 1200
 #pragma comment(linker, "/OPT:NOWIN98")
+#endif
 
 #else
 
