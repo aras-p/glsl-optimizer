@@ -767,18 +767,18 @@ struct gl_list_attrib {
 };
 
 
-struct gl_list_opcode {
-   GLuint size;
-   void (*execute)( GLcontext *ctx, void *data );
-   void (*destroy)( GLcontext *ctx, void *data );
-   void (*print)( GLcontext *ctx, void *data );
+struct gl_list_instruction {
+   GLuint Size;
+   void (*Execute)( GLcontext *ctx, void *data );
+   void (*Destroy)( GLcontext *ctx, void *data );
+   void (*Print)( GLcontext *ctx, void *data );
 };
 
-#define GL_MAX_EXT_OPCODES 16
+#define MAX_DLIST_EXT_OPCODES 16
 
 struct gl_list_extensions {
-   struct gl_list_opcode opcode[GL_MAX_EXT_OPCODES];
-   GLuint nr_opcodes;
+   struct gl_list_instruction Opcode[MAX_DLIST_EXT_OPCODES];
+   GLuint NumOpcodes;
 };
 
 
@@ -2301,7 +2301,7 @@ struct __GLcontextRec {
    struct gl_shine_tab *_ShineTabList;  /**< MRU list of inactive shine tables */
    /**@}*/
 
-   struct gl_list_extensions listext; /**< driver dlist extensions */
+   struct gl_list_extensions ListExt; /**< driver dlist extensions */
 
 
    GLboolean OcclusionResult;       /**< for GL_HP_occlusion_test */

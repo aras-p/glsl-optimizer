@@ -334,7 +334,7 @@ typedef enum {
 	OPCODE_ERROR,	        /* raise compiled-in error */
 	OPCODE_CONTINUE,
 	OPCODE_END_OF_LIST,
-	OPCODE_DRV_0
+	OPCODE_EXT_0
 } OpCode;
 
 
@@ -421,10 +421,10 @@ void _mesa_destroy_list( GLcontext *ctx, GLuint list )
 
       /* check for extension opcodes first */
 
-      GLint i = (GLint) n[0].opcode - (GLint) OPCODE_DRV_0;
-      if (i >= 0 && i < (GLint) ctx->listext.nr_opcodes) {
-	 ctx->listext.opcode[i].destroy(ctx, &n[1]);
-	 n += ctx->listext.opcode[i].size;
+      GLint i = (GLint) n[0].opcode - (GLint) OPCODE_EXT_0;
+      if (i >= 0 && i < (GLint) ctx->ListExt.NumOpcodes) {
+	 ctx->ListExt.Opcode[i].Destroy(ctx, &n[1]);
+	 n += ctx->ListExt.Opcode[i].Size;
       }
       else {
 	 switch (n[0].opcode) {
@@ -803,7 +803,7 @@ _mesa_alloc_instruction( GLcontext *ctx, int opcode, GLint sz )
    GLuint count = 1 + (sz + sizeof(Node) - 1) / sizeof(Node);
 
 #ifdef DEBUG
-   if (opcode < (int) OPCODE_DRV_0) {
+   if (opcode < (int) OPCODE_EXT_0) {
       assert( count == InstSize[opcode] );
    }
 #endif
@@ -831,22 +831,30 @@ _mesa_alloc_instruction( GLcontext *ctx, int opcode, GLint sz )
 }
 
 
-/* Allow modules and drivers to get their own opcodes.
+/**
+ * This function allows modules and drivers to get their own opcodes
+ * for extending display list functionality.
+ * \param ctx  the rendering context
+ * \param size  number of bytes for storing the new display list command
+ * \param execute  function to execute the new display list command
+ * \param destroy  function to destroy the new display list command
+ * \param print  function to print the new display list command
+ * \return  the new opcode number or -1 if error
  */
-int
+GLint
 _mesa_alloc_opcode( GLcontext *ctx,
-		    GLuint sz,
+		    GLuint size,
 		    void (*execute)( GLcontext *, void * ),
 		    void (*destroy)( GLcontext *, void * ),
 		    void (*print)( GLcontext *, void * ) )
 {
-   if (ctx->listext.nr_opcodes < GL_MAX_EXT_OPCODES) {
-      GLuint i = ctx->listext.nr_opcodes++;
-      ctx->listext.opcode[i].size = 1 + (sz + sizeof(Node) - 1)/sizeof(Node);
-      ctx->listext.opcode[i].execute = execute;
-      ctx->listext.opcode[i].destroy = destroy;
-      ctx->listext.opcode[i].print = print;
-      return i + OPCODE_DRV_0;
+   if (ctx->ListExt.NumOpcodes < MAX_DLIST_EXT_OPCODES) {
+      const GLuint i = ctx->ListExt.NumOpcodes++;
+      ctx->ListExt.Opcode[i].Size = 1 + (size + sizeof(Node) - 1)/sizeof(Node);
+      ctx->ListExt.Opcode[i].Execute = execute;
+      ctx->ListExt.Opcode[i].Destroy = destroy;
+      ctx->ListExt.Opcode[i].Print = print;
+      return i + OPCODE_EXT_0;
    }
    return -1;
 }
@@ -5252,11 +5260,12 @@ execute_list( GLcontext *ctx, GLuint list )
    done = GL_FALSE;
    while (!done) {
       OpCode opcode = n[0].opcode;
-      int i = (int)n[0].opcode - (int)OPCODE_DRV_0;
+      int i = (int)n[0].opcode - (int)OPCODE_EXT_0;
 
-      if (i >= 0 && i < (GLint) ctx->listext.nr_opcodes) {
-	 ctx->listext.opcode[i].execute(ctx, &n[1]);
-	 n += ctx->listext.opcode[i].size;
+      if (i >= 0 && i < (GLint) ctx->ListExt.NumOpcodes) {
+         /* this is a driver-extended opcode */
+	 ctx->ListExt.Opcode[i].Execute(ctx, &n[1]);
+	 n += ctx->ListExt.Opcode[i].Size;
       }
       else {
 	 switch (opcode) {
@@ -7528,11 +7537,12 @@ static void GLAPIENTRY print_list( GLcontext *ctx, GLuint list )
    done = n ? GL_FALSE : GL_TRUE;
    while (!done) {
       OpCode opcode = n[0].opcode;
-      GLint i = (GLint) n[0].opcode - (GLint) OPCODE_DRV_0;
+      GLint i = (GLint) n[0].opcode - (GLint) OPCODE_EXT_0;
 
-      if (i >= 0 && i < (GLint) ctx->listext.nr_opcodes) {
-	 ctx->listext.opcode[i].print(ctx, &n[1]);
-	 n += ctx->listext.opcode[i].size;
+      if (i >= 0 && i < (GLint) ctx->ListExt.NumOpcodes) {
+         /* this is a driver-extended opcode */
+	 ctx->ListExt.Opcode[i].Print(ctx, &n[1]);
+	 n += ctx->ListExt.Opcode[i].Size;
       }
       else {
 	 switch (opcode) {
