@@ -99,27 +99,6 @@
  *
  *    Grammar Changes:
  *    -----------------------------------------------------
- *    - changed optional_exponent rule from:
- *         " exponent .or .true .emit '1' .emit 0x00;\n"
- *      to
- *         " exponent .or .true .emit '1' .emit 0x00 .emit $;\n"
- *
- *    - XXX: need to recognize "1" as a valid float ?
- *    - XXX: this fails:
- *               "MUL   result.color.xyz, R0, program.local[35] ;"
- *           but this works:        
- *               "MUL   result.color.primary.xyz, R0, program.local[35] ;"
- *             -> see progs/tests/arbvptorus.c
- *
- *    - changed "progLocalParam\n" changed from:
- *         " \"local\" .emit PROGRAM_PARAM_LOCAL .and lbracket .and progLocalParamNum 
- *                  .and rbracket;\n"
- *      to:                   
- *         " \"local\" .emit PROGRAM_PARAM_LOCAL .and lbracket .and progLocalParamNum 
- *                  .and rbracket .emit 0x00;\n"
- *      so we can distinguish between the progLocalParam and progLocalParams rules                  
- *
- *    - made the same change as above to the progEnvParam rule  
  */
 
 typedef GLubyte *production;
@@ -128,7 +107,7 @@ typedef GLubyte *production;
  * From here on down is the syntax checking portion 
  */
 
-/* VERSION: 0.3 */
+/* VERSION: 0.4 */
 
 /*
 INTRODUCTION
@@ -390,7 +369,7 @@ Little-Endian convention (the lowest byte comes first).  */
  * These should match up with the values defined in arbparse.syn.h
  */
 
-#define REVISION                                   0x03
+#define REVISION                                   0x04
 
 /* program type */
 #define FRAGMENT_PROGRAM                           0x01
@@ -410,7 +389,10 @@ Little-Endian convention (the lowest byte comes first).  */
 #define ARB_FOG_LINEAR                             0x10
 
 /* vertex program option flags */
-#define ARB_POSITION_INVARIANT                     0x01
+/*
+$4: changed from 0x01 to 0x20.
+*/
+#define ARB_POSITION_INVARIANT                     0x20
 
 /* fragment program instruction class */
 #define F_ALU_INST                                 0x01
@@ -643,9 +625,12 @@ $3: Added enumerants.
 #define STATE_TEX_ENV                              0x07
 #define STATE_DEPTH                                0x08
 /* vertex program only */
-#define STATE_TEX_GEN                              0x07
-#define STATE_CLIP_PLANE                           0x08
-#define STATE_POINT                                0x09
+/*
+$4: incremented all the three emit codes by two to not collide with other STATE_* emit codes.
+*/
+#define STATE_TEX_GEN                              0x09
+#define STATE_CLIP_PLANE                           0x0A
+#define STATE_POINT                                0x0B
 
 /* state material property */
 #define MATERIAL_AMBIENT                           0x01
@@ -3320,18 +3305,17 @@ parse_state_single_item (GLcontext * ctx, GLubyte ** inst,
          }
          break;
 
-         /* STATE_TEX_ENV == STATE_TEX_GEN */
       case STATE_TEX_ENV:
-         if (Program->type == GL_FRAGMENT_PROGRAM_ARB) {
-            state_tokens[1] = parse_integer (inst, Program);
-            switch (*(*inst)++) {
-               case TEX_ENV_COLOR:
-                  state_tokens[0] = STATE_TEXENV_COLOR;
-                  break;
-            }
+         state_tokens[1] = parse_integer (inst, Program);
+         switch (*(*inst)++) {
+            case TEX_ENV_COLOR:
+               state_tokens[0] = STATE_TEXENV_COLOR;
+               break;
          }
-         /* For vertex programs, this case is STATE_TEX_GEN */
-         else {
+         break;
+
+      case STATE_TEX_GEN:
+         {
             GLuint type, coord;
 
             state_tokens[0] = STATE_TEXGEN;
@@ -3382,22 +3366,19 @@ parse_state_single_item (GLcontext * ctx, GLubyte ** inst,
          }
          break;
 
-         /* STATE_DEPTH = STATE_CLIP_PLANE */
       case STATE_DEPTH:
-         if (Program->type == GL_FRAGMENT_PROGRAM_ARB) {
-            switch (*(*inst)++) {
-               case DEPTH_RANGE:
-                  state_tokens[0] = STATE_DEPTH_RANGE;
-                  break;
-            }
+         switch (*(*inst)++) {
+            case DEPTH_RANGE:
+               state_tokens[0] = STATE_DEPTH_RANGE;
+               break;
          }
-         /* for vertex programs, we want STATE_CLIP_PLANE */
-         else {
-            state_tokens[0] = STATE_CLIPPLANE;
-            state_tokens[1] = parse_integer (inst, Program);
-            if (parse_clipplane_num (ctx, inst, Program, &state_tokens[1]))
-               return 1;
-         }
+         break;
+
+      case STATE_CLIP_PLANE:
+         state_tokens[0] = STATE_CLIPPLANE;
+         state_tokens[1] = parse_integer (inst, Program);
+         if (parse_clipplane_num (ctx, inst, Program, &state_tokens[1]))
+            return 1;
          break;
 
       case STATE_POINT:
@@ -5670,38 +5651,32 @@ parse_arb_program (GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
 
    while (*inst != END) {
       switch (*inst++) {
-            /* XXX: */
+            
          case OPTION:
+            switch (*inst++) {
+               case ARB_PRECISION_HINT_FASTEST:
+                  Program->HintPrecisionFastest = 1;
+                  break;
 
-            if (Program->type == GL_FRAGMENT_PROGRAM_ARB) {
-               switch (*inst++) {
-                  case ARB_PRECISION_HINT_FASTEST:
-                     Program->HintPrecisionFastest = 1;
-                     break;
+               case ARB_PRECISION_HINT_NICEST:
+                  Program->HintPrecisionNicest = 1;
+                  break;
 
-                  case ARB_PRECISION_HINT_NICEST:
-                     Program->HintPrecisionNicest = 1;
-                     break;
+               case ARB_FOG_EXP:
+                  Program->HintFogExp = 1;
+                  break;
 
-                  case ARB_FOG_EXP:
-                     Program->HintFogExp = 1;
-                     break;
+               case ARB_FOG_EXP2:
+                  Program->HintFogExp2 = 1;
+                  break;
 
-                  case ARB_FOG_EXP2:
-                     Program->HintFogExp2 = 1;
-                     break;
+               case ARB_FOG_LINEAR:
+                  Program->HintFogLinear = 1;
+                  break;
 
-                  case ARB_FOG_LINEAR:
-                     Program->HintFogLinear = 1;
-                     break;
-               }
-            }
-            else {
-               switch (*inst++) {
-                  case ARB_POSITION_INVARIANT:
-                     Program->HintPositionInvariant = 1;
-                     break;
-               }
+               case ARB_POSITION_INVARIANT:
+                  Program->HintPositionInvariant = 1;
+                  break;
             }
             break;
 
