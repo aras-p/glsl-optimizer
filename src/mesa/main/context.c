@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.70 2000/05/26 14:44:59 brianp Exp $ */
+/* $Id: context.c,v 1.71 2000/06/27 04:29:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1067,6 +1067,7 @@ init_attrib_groups( GLcontext *ctx )
 
    /* Point group */
    ctx->Point.SmoothFlag = GL_FALSE;
+   ctx->Point.UserSize = 1.0;
    ctx->Point.Size = 1.0;
    ctx->Point.Params[0] = 1.0;
    ctx->Point.Params[1] = 0.0;
