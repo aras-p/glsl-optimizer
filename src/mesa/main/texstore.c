@@ -1374,8 +1374,9 @@ _mesa_texstore_al88(STORE_PARAMS)
          for (row = 0; row < srcHeight; row++) {
             GLushort *dstUS = (GLushort *) dstRow;
             for (col = 0; col < srcWidth; col++) {
-               dstUS[col] = PACK_COLOR_88( CHAN_TO_UBYTE(src[ACOMP]),
-                                           CHAN_TO_UBYTE(src[RCOMP]) );
+               /* src[0] is luminance, src[1] is alpha */
+               dstUS[col] = PACK_COLOR_88( CHAN_TO_UBYTE(src[1]),
+                                           CHAN_TO_UBYTE(src[0]) );
                src += 2;
             }
             if (dstFormat == &_mesa_texformat_al88_rev) {
