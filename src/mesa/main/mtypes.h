@@ -1559,6 +1559,7 @@ struct vertex_program
 {
    struct program Base;   /* base class */
    struct vp_instruction *Instructions;  /* Compiled instructions */
+   GLboolean IsNVProgram; /* GL_NV_vertex_program ? */
    GLboolean IsPositionInvariant;  /* GL_NV_vertex_program1_1 */
    GLuint InputsRead;     /* Bitmask of which input regs are read */
    GLuint OutputsWritten; /* Bitmask of which output regs are written to */

@@ -1300,6 +1300,7 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
       program->InputsRead = parseState.inputsRead;
       program->OutputsWritten = parseState.outputsWritten;
       program->IsPositionInvariant = parseState.isPositionInvariant;
+      program->IsNVProgram = GL_TRUE;
 
 #ifdef DEBUG
       _mesa_printf("--- glLoadProgramNV result ---\n");

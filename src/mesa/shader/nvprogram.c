@@ -79,8 +79,8 @@ _mesa_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
       return;
    }
    
-   _mesa_init_vp_registers(ctx);
-   _mesa_init_tracked_matrices(ctx);
+   _mesa_init_vp_per_vertex_registers(ctx);
+   _mesa_init_vp_per_primitive_registers(ctx);
    COPY_4V(ctx->VertexProgram.Inputs[VERT_ATTRIB_POS], params);
    _mesa_exec_vertex_program(ctx, vprog);
 }

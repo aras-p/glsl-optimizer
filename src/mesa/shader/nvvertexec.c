@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.0.1
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -39,44 +39,31 @@
 #include "math/m_matrix.h"
 
 
-static const GLfloat zeroVec[4] = { 0, 0, 0, 0 };
+static const GLfloat ZeroVec[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
 
 
 /**
- * Load/initialize the vertex program registers.
- * This needs to be done per vertex.
+ * Load/initialize the vertex program registers which need to be set
+ * per-vertex.
  */
 void
-_mesa_init_vp_registers(GLcontext *ctx)
+_mesa_init_vp_per_vertex_registers(GLcontext *ctx)
 {
-   GLuint i;
-
    /* Input registers get initialized from the current vertex attribs */
    MEMCPY(ctx->VertexProgram.Inputs, ctx->Current.Attrib,
           VERT_ATTRIB_MAX * 4 * sizeof(GLfloat));
 
-   /* Output and temp regs are initialized to [0,0,0,1] */
-   for (i = 0; i < MAX_NV_VERTEX_PROGRAM_OUTPUTS; i++) {
-      ASSIGN_4V(ctx->VertexProgram.Outputs[i], 0.0F, 0.0F, 0.0F, 1.0F);
-   }
-   for (i = 0; i < MAX_NV_VERTEX_PROGRAM_TEMPS; i++) {
-      ASSIGN_4V(ctx->VertexProgram.Temporaries[i], 0.0F, 0.0F, 0.0F, 1.0F);
-   }
-
-   /* The program parameters aren't touched */
-   /* XXX: This should be moved to glBegin() time, but its safe (and slow!) 
-    * here - Karl
-    */
-   if (ctx->VertexProgram.Current->Parameters) {
-      /* Grab the state */			  
-      _mesa_load_state_parameters(ctx, ctx->VertexProgram.Current->Parameters);
-
-      /* And copy it into the program state */
-      for (i=0; i<ctx->VertexProgram.Current->Parameters->NumParameters; i++) {
-         MEMCPY(ctx->VertexProgram.Parameters[i], 
-                &ctx->VertexProgram.Current->Parameters->Parameters[i].Values,
-                4*sizeof(GLfloat));				
-      }				  
+   if (ctx->VertexProgram.Current->IsNVProgram) {
+      GLuint i;
+      /* Output/result regs are initialized to [0,0,0,1] */
+      for (i = 0; i < MAX_NV_VERTEX_PROGRAM_OUTPUTS; i++) {
+         ASSIGN_4V(ctx->VertexProgram.Outputs[i], 0.0F, 0.0F, 0.0F, 1.0F);
+      }
+      /* Temp regs are initialized to [0,0,0,0] */
+      for (i = 0; i < MAX_NV_VERTEX_PROGRAM_TEMPS; i++) {
+         ASSIGN_4V(ctx->VertexProgram.Temporaries[i], 0.0F, 0.0F, 0.0F, 0.0F);
+      }
+      ASSIGN_4V(ctx->VertexProgram.AddressReg, 0, 0, 0, 0);
    }
 }
 
@@ -111,63 +98,84 @@ load_transpose_matrix(GLfloat registers[][4], GLuint pos,
 
 
 /**
- * Load all currently tracked matrices into the program registers.
- * This needs to be done per glBegin/glEnd.
+ * Load program parameter registers with tracked matrices (if NV program)
+ * or GL state values (if ARB program).
+ * This needs to be done per glBegin/glEnd, not per-vertex.
  */
 void
-_mesa_init_tracked_matrices(GLcontext *ctx)
+_mesa_init_vp_per_primitive_registers(GLcontext *ctx)
 {
-   GLuint i;
+   if (ctx->VertexProgram.Current->IsNVProgram) {
+      GLuint i;
 
-   for (i = 0; i < MAX_NV_VERTEX_PROGRAM_PARAMS / 4; i++) {
-      /* point 'mat' at source matrix */
-      GLmatrix *mat;
-      if (ctx->VertexProgram.TrackMatrix[i] == GL_MODELVIEW) {
-         mat = ctx->ModelviewMatrixStack.Top;
-      }
-      else if (ctx->VertexProgram.TrackMatrix[i] == GL_PROJECTION) {
-         mat = ctx->ProjectionMatrixStack.Top;
-      }
-      else if (ctx->VertexProgram.TrackMatrix[i] == GL_TEXTURE) {
-         mat = ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Top;
-      }
-      else if (ctx->VertexProgram.TrackMatrix[i] == GL_COLOR) {
-         mat = ctx->ColorMatrixStack.Top;
-      }
-      else if (ctx->VertexProgram.TrackMatrix[i]==GL_MODELVIEW_PROJECTION_NV) {
-         /* XXX verify the combined matrix is up to date */
-         mat = &ctx->_ModelProjectMatrix;
-      }
-      else if (ctx->VertexProgram.TrackMatrix[i] >= GL_MATRIX0_NV &&
-               ctx->VertexProgram.TrackMatrix[i] <= GL_MATRIX7_NV) {
-         GLuint n = ctx->VertexProgram.TrackMatrix[i] - GL_MATRIX0_NV;
-         ASSERT(n < MAX_PROGRAM_MATRICES);
-         mat = ctx->ProgramMatrixStack[n].Top;
-      }
-      else {
-         /* no matrix is tracked, but we leave the register values as-is */
-         assert(ctx->VertexProgram.TrackMatrix[i] == GL_NONE);
-         continue;
-      }
+      for (i = 0; i < MAX_NV_VERTEX_PROGRAM_PARAMS / 4; i++) {
+         /* point 'mat' at source matrix */
+         GLmatrix *mat;
+         if (ctx->VertexProgram.TrackMatrix[i] == GL_MODELVIEW) {
+            mat = ctx->ModelviewMatrixStack.Top;
+         }
+         else if (ctx->VertexProgram.TrackMatrix[i] == GL_PROJECTION) {
+            mat = ctx->ProjectionMatrixStack.Top;
+         }
+         else if (ctx->VertexProgram.TrackMatrix[i] == GL_TEXTURE) {
+            mat = ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Top;
+         }
+         else if (ctx->VertexProgram.TrackMatrix[i] == GL_COLOR) {
+            mat = ctx->ColorMatrixStack.Top;
+         }
+         else if (ctx->VertexProgram.TrackMatrix[i]==GL_MODELVIEW_PROJECTION_NV) {
+            /* XXX verify the combined matrix is up to date */
+            mat = &ctx->_ModelProjectMatrix;
+         }
+         else if (ctx->VertexProgram.TrackMatrix[i] >= GL_MATRIX0_NV &&
+                  ctx->VertexProgram.TrackMatrix[i] <= GL_MATRIX7_NV) {
+            GLuint n = ctx->VertexProgram.TrackMatrix[i] - GL_MATRIX0_NV;
+            ASSERT(n < MAX_PROGRAM_MATRICES);
+            mat = ctx->ProgramMatrixStack[n].Top;
+         }
+         else {
+            /* no matrix is tracked, but we leave the register values as-is */
+            assert(ctx->VertexProgram.TrackMatrix[i] == GL_NONE);
+            continue;
+         }
 
-      /* load the matrix */
-      if (ctx->VertexProgram.TrackMatrixTransform[i] == GL_IDENTITY_NV) {
-         load_matrix(ctx->VertexProgram.Parameters, i*4, mat->m);
+         /* load the matrix */
+         if (ctx->VertexProgram.TrackMatrixTransform[i] == GL_IDENTITY_NV) {
+            load_matrix(ctx->VertexProgram.Parameters, i*4, mat->m);
+         }
+         else if (ctx->VertexProgram.TrackMatrixTransform[i] == GL_INVERSE_NV) {
+            _math_matrix_analyse(mat); /* update the inverse */
+            assert((mat->flags & MAT_DIRTY_INVERSE) == 0);
+            load_matrix(ctx->VertexProgram.Parameters, i*4, mat->inv);
+         }
+         else if (ctx->VertexProgram.TrackMatrixTransform[i] == GL_TRANSPOSE_NV) {
+            load_transpose_matrix(ctx->VertexProgram.Parameters, i*4, mat->m);
+         }
+         else {
+            assert(ctx->VertexProgram.TrackMatrixTransform[i]
+                   == GL_INVERSE_TRANSPOSE_NV);
+            _math_matrix_analyse(mat); /* update the inverse */
+            assert((mat->flags & MAT_DIRTY_INVERSE) == 0);
+            load_transpose_matrix(ctx->VertexProgram.Parameters, i*4, mat->inv);
+         }
       }
-      else if (ctx->VertexProgram.TrackMatrixTransform[i] == GL_INVERSE_NV) {
-         _math_matrix_analyse(mat); /* update the inverse */
-         assert((mat->flags & MAT_DIRTY_INVERSE) == 0);
-         load_matrix(ctx->VertexProgram.Parameters, i*4, mat->inv);
-      }
-      else if (ctx->VertexProgram.TrackMatrixTransform[i] == GL_TRANSPOSE_NV) {
-         load_transpose_matrix(ctx->VertexProgram.Parameters, i*4, mat->m);
-      }
-      else {
-         assert(ctx->VertexProgram.TrackMatrixTransform[i]
-                == GL_INVERSE_TRANSPOSE_NV);
-         _math_matrix_analyse(mat); /* update the inverse */
-         assert((mat->flags & MAT_DIRTY_INVERSE) == 0);
-         load_transpose_matrix(ctx->VertexProgram.Parameters, i*4, mat->inv);
+   }
+   else {
+      /* Using and ARB vertex program */
+      if (ctx->VertexProgram.Current->Parameters) {
+         GLuint i;
+
+         /* Grab the state */			  
+         _mesa_load_state_parameters(ctx,
+                                     ctx->VertexProgram.Current->Parameters);
+
+         /* And copy it into the program state */
+         for (i = 0; i < ctx->VertexProgram.Current->Parameters->NumParameters;
+              i++) {
+            MEMCPY(ctx->VertexProgram.Parameters[i], 
+                &ctx->VertexProgram.Current->Parameters->Parameters[i].Values,
+                4 * sizeof(GLfloat));				
+         }				  
       }
    }
 }
@@ -237,7 +245,7 @@ get_register_pointer( const struct vp_src_register *source,
       ASSERT( (source->File == PROGRAM_ENV_PARAM) || 
         (source->File == PROGRAM_STATE_VAR) );
       if (reg < 0 || reg > MAX_NV_VERTEX_PROGRAM_PARAMS)
-         return zeroVec;
+         return ZeroVec;
       else
          return state->Parameters[reg];
    }
@@ -390,7 +398,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
       ctx->VertexProgram.Current->OutputsWritten |= 0x1;
    }
 
-   for (inst = program->Instructions; /*inst->Opcode != VP_OPCODE_END*/; inst++) {
+   for (inst = program->Instructions; ; inst++) {
 
       if (ctx->VertexProgram.CallbackEnabled &&
           ctx->VertexProgram.Callback) {
