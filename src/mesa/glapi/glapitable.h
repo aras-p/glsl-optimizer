@@ -1,4 +1,4 @@
-/* DO NOT EDIT - This file generated automatically */
+/* DO NOT EDIT - This file generated automatically with gltable.py script */
 #ifndef _GLAPI_TABLE_H_
 #define _GLAPI_TABLE_H_
 
@@ -443,7 +443,7 @@ struct _glapi_table
    void (*PixelTexGenParameterfvSGIS)(GLenum pname, const GLfloat * params); /* 434 */
    void (*GetPixelTexGenParameterivSGIS)(GLenum pname, GLint * params); /* 435 */
    void (*GetPixelTexGenParameterfvSGIS)(GLenum pname, GLfloat * params); /* 436 */
-   void (*TexImage4DSGIS)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLint border, GLenum format, GLenum type, const GLvoid * pixels); /* 437 */
+   void (*TexImage4DSGIS)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLint border, GLenum format, GLenum type, const GLvoid * pixels); /* 437 */
    void (*TexSubImage4DSGIS)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint woffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLenum format, GLenum type, const GLvoid * pixels); /* 438 */
    GLboolean (*AreTexturesResidentEXT)(GLsizei n, const GLenum * textures, GLboolean * residences); /* 439 */
    void (*GenTexturesEXT)(GLsizei n, GLenum * textures); /* 440 */
@@ -559,6 +559,14 @@ struct _glapi_table
    void (*GetColorTableEXT)(GLenum target, GLenum format, GLenum type, GLvoid * data); /* 550 */
    void (*GetColorTableParameterivEXT)(GLenum target, GLenum pname, GLint * params); /* 551 */
    void (*GetColorTableParameterfvEXT)(GLenum target, GLenum pname, GLfloat * params); /* 552 */
+   void (*TbufferMask3DFX)(GLuint mask); /* 553 */
+   void (*CompressedTexImage3DARB)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid * data); /* 554 */
+   void (*CompressedTexImage2DARB)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid * data); /* 555 */
+   void (*CompressedTexImage1DARB)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const GLvoid * data); /* 556 */
+   void (*CompressedTexSubImage3DARB)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid * data); /* 557 */
+   void (*CompressedTexSubImage2DARB)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid * data); /* 558 */
+   void (*CompressedTexSubImage1DARB)(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid * data); /* 559 */
+   void (*GetCompressedTexImageARB)(GLenum target, GLint level, void * img); /* 560 */
 };
 
 #endif

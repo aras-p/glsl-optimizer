@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.17 2000/04/10 23:13:51 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.18 2000/05/18 18:13:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1979,180 +1979,6 @@ KEYWORD1 void KEYWORD2 NAME(SeparableFilter2D)(GLenum target, GLenum internalfor
 
 
 
-/* ARB 0. GL_ARB_multitexture */
-
-KEYWORD1 void KEYWORD2 NAME(ActiveTextureARB)(GLenum texture)
-{
-   DISPATCH(ActiveTextureARB, (texture), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(ClientActiveTextureARB)(GLenum texture)
-{
-   DISPATCH(ClientActiveTextureARB, (texture), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1dARB)(GLenum target, GLdouble s)
-{
-   DISPATCH(MultiTexCoord1dARB, (target, s), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1dvARB)(GLenum target, const GLdouble *v)
-{
-   DISPATCH(MultiTexCoord1dvARB, (target, v), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1fARB)(GLenum target, GLfloat s)
-{
-   DISPATCH(MultiTexCoord1fARB, (target, s), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1fvARB)(GLenum target, const GLfloat *v)
-{
-   DISPATCH(MultiTexCoord1fvARB, (target, v), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1iARB)(GLenum target, GLint s)
-{
-   DISPATCH(MultiTexCoord1iARB, (target, s), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1ivARB)(GLenum target, const GLint *v)
-{
-   DISPATCH(MultiTexCoord1ivARB, (target, v), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1sARB)(GLenum target, GLshort s)
-{
-   DISPATCH(MultiTexCoord1sARB, (target, s), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1svARB)(GLenum target, const GLshort *v)
-{
-   DISPATCH(MultiTexCoord1svARB, (target, v), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2dARB)(GLenum target, GLdouble s, GLdouble t)
-{
-   DISPATCH(MultiTexCoord2dARB, (target, s, t), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2dvARB)(GLenum target, const GLdouble *v)
-{
-   DISPATCH(MultiTexCoord2dvARB, (target, v), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2fARB)(GLenum target, GLfloat s, GLfloat t)
-{
-   DISPATCH(MultiTexCoord2fARB, (target, s, t), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2fvARB)(GLenum target, const GLfloat *v)
-{
-   DISPATCH(MultiTexCoord2fvARB, (target, v), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2iARB)(GLenum target, GLint s, GLint t)
-{
-   DISPATCH(MultiTexCoord2iARB, (target, s, t), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2ivARB)(GLenum target, const GLint *v)
-{
-   DISPATCH(MultiTexCoord2ivARB, (target, v), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2sARB)(GLenum target, GLshort s, GLshort t)
-{
-   DISPATCH(MultiTexCoord2sARB, (target, s, t), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2svARB)(GLenum target, const GLshort *v)
-{
-   DISPATCH(MultiTexCoord2svARB, (target, v), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3dARB)(GLenum target, GLdouble s, GLdouble t, GLdouble r)
-{
-   DISPATCH(MultiTexCoord3dARB, (target, s, t, r), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3dvARB)(GLenum target, const GLdouble *v)
-{
-   DISPATCH(MultiTexCoord3dvARB, (target, v), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3fARB)(GLenum target, GLfloat s, GLfloat t, GLfloat r)
-{
-   DISPATCH(MultiTexCoord3fARB, (target, s, t, r), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3fvARB)(GLenum target, const GLfloat *v)
-{
-   DISPATCH(MultiTexCoord3fvARB, (target, v), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3iARB)(GLenum target, GLint s, GLint t, GLint r)
-{
-   DISPATCH(MultiTexCoord3iARB, (target, s, t, r), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3ivARB)(GLenum target, const GLint *v)
-{
-   DISPATCH(MultiTexCoord3ivARB, (target, v), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3sARB)(GLenum target, GLshort s, GLshort t, GLshort r)
-{
-   DISPATCH(MultiTexCoord3sARB, (target, s, t, r), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3svARB)(GLenum target, const GLshort *v)
-{
-   DISPATCH(MultiTexCoord3svARB, (target, v), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4dARB)(GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q)
-{
-   DISPATCH(MultiTexCoord4dARB, (target, s, t, r, q), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4dvARB)(GLenum target, const GLdouble *v)
-{
-   DISPATCH(MultiTexCoord4dvARB, (target, v), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4fARB)(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q)
-{
-   DISPATCH(MultiTexCoord4fARB, (target, s, t, r, q), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4fvARB)(GLenum target, const GLfloat *v)
-{
-   DISPATCH(MultiTexCoord4fvARB, (target, v), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4iARB)(GLenum target, GLint s, GLint t, GLint r, GLint q)
-{
-   DISPATCH(MultiTexCoord4iARB, (target, s, t, r, q), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4ivARB)(GLenum target, const GLint *v)
-{
-   DISPATCH(MultiTexCoord4ivARB, (target, v), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4sARB)(GLenum target, GLshort s, GLshort t, GLshort r, GLshort q)
-{
-   DISPATCH(MultiTexCoord4sARB, (target, s, t, r, q), (F, ";"));
-}
-
-KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4svARB)(GLenum target, const GLshort *v)
-{
-   DISPATCH(MultiTexCoord4svARB, (target, v), (F, ";"));
-}
-
-
-
 /***
  *** Extension functions
  ***/
@@ -2625,6 +2451,16 @@ KEYWORD1 void KEYWORD2 NAME(PointParameterfvEXT)(GLenum target, const GLfloat *p
    DISPATCH(PointParameterfvEXT, (target, param), (F, ";"));
 }
 
+KEYWORD1 void KEYWORD2 NAME(PointParameterfSGIS)(GLenum target, GLfloat param)
+{
+   DISPATCH(PointParameterfEXT, (target, param), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(PointParameterfvSGIS)(GLenum target, const GLfloat *param)
+{
+   DISPATCH(PointParameterfvEXT, (target, param), (F, ";"));
+}
+
 
 
 /* 55. GL_SGIX_instruments */
@@ -2817,7 +2653,6 @@ KEYWORD1 void KEYWORD2 NAME(IndexFuncEXT)(GLenum func, GLfloat ref)
 
 
 /* 97. GL_EXT_compiled_vertex_array */
-
 KEYWORD1 void KEYWORD2 NAME(LockArraysEXT)(GLint first, GLsizei count)
 {
    DISPATCH(LockArraysEXT, (first, count), (F, ";"));
@@ -2935,23 +2770,18 @@ KEYWORD1 void KEYWORD2 NAME(LightEnviSGIX)(GLenum pname, GLint param)
 
 
 /* 112. GL_EXT_draw_range_elements */
-
-#if 00
 KEYWORD1 void KEYWORD2 NAME(DrawRangeElementsEXT)(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices)
 {
-   DISPATCH(DrawRangeElementsEXT, (mode, start, end, count, type, indices), (F, "glDrawRangeElementsEXT(0x%x, %u %u %d 0x%x %p);", mode, start, end, count, type, indices));
+   DISPATCH(DrawRangeElements, (mode, start, end, count, type, indices), (F, "glDrawRangeElementsEXT(0x%x, %u %u %d 0x%x %p);", mode, start, end, count, type, indices));
 }
-#endif
 
 
 /* 117. GL_EXT_light_texture */
-
 #if 00
 KEYWORD1 void KEYWORD2 NAME(ApplyTextureEXT)(GLenum mode)
 {
    DISPATCH(ApplyTextureEXT, (mode), (F, "glApplyTextureEXT(0x%x);", mode));
 }
-
 
 KEYWORD1 void KEYWORD2 NAME(TextureLightEXT)(GLenum pname)
 {
@@ -3192,7 +3022,6 @@ KEYWORD1 void KEYWORD2 NAME(ResizeBuffersMESA)(void)
 
 
 /* 197. GL_MESA_window_pos */
-
 KEYWORD1 void KEYWORD2 NAME(WindowPos2iMESA)(GLint x, GLint y)
 {
    DISPATCH(WindowPos2iMESA, (x, y), (F, ";"));
@@ -3314,8 +3143,194 @@ KEYWORD1 void KEYWORD2 NAME(WindowPos4dvMESA)(const GLdouble *p)
 }
 
 
+/* 209. WGL_EXT_multisample */
 
-/* ARB 2. GL_ARB_transpose_matrix */
+KEYWORD1 void KEYWORD2 NAME(SampleMaskEXT)(GLclampf value, GLboolean invert)
+{
+   DISPATCH(SampleMaskSGIS, (value, invert), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SamplePatternEXT)(GLenum pattern)
+{
+   DISPATCH(SamplePatternSGIS, (pattern), (F, ";"));
+}
+
+
+/* ARB 1. GL_ARB_multitexture */
+
+KEYWORD1 void KEYWORD2 NAME(ActiveTextureARB)(GLenum texture)
+{
+   DISPATCH(ActiveTextureARB, (texture), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ClientActiveTextureARB)(GLenum texture)
+{
+   DISPATCH(ClientActiveTextureARB, (texture), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1dARB)(GLenum target, GLdouble s)
+{
+   DISPATCH(MultiTexCoord1dARB, (target, s), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1dvARB)(GLenum target, const GLdouble *v)
+{
+   DISPATCH(MultiTexCoord1dvARB, (target, v), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1fARB)(GLenum target, GLfloat s)
+{
+   DISPATCH(MultiTexCoord1fARB, (target, s), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1fvARB)(GLenum target, const GLfloat *v)
+{
+   DISPATCH(MultiTexCoord1fvARB, (target, v), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1iARB)(GLenum target, GLint s)
+{
+   DISPATCH(MultiTexCoord1iARB, (target, s), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1ivARB)(GLenum target, const GLint *v)
+{
+   DISPATCH(MultiTexCoord1ivARB, (target, v), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1sARB)(GLenum target, GLshort s)
+{
+   DISPATCH(MultiTexCoord1sARB, (target, s), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord1svARB)(GLenum target, const GLshort *v)
+{
+   DISPATCH(MultiTexCoord1svARB, (target, v), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2dARB)(GLenum target, GLdouble s, GLdouble t)
+{
+   DISPATCH(MultiTexCoord2dARB, (target, s, t), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2dvARB)(GLenum target, const GLdouble *v)
+{
+   DISPATCH(MultiTexCoord2dvARB, (target, v), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2fARB)(GLenum target, GLfloat s, GLfloat t)
+{
+   DISPATCH(MultiTexCoord2fARB, (target, s, t), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2fvARB)(GLenum target, const GLfloat *v)
+{
+   DISPATCH(MultiTexCoord2fvARB, (target, v), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2iARB)(GLenum target, GLint s, GLint t)
+{
+   DISPATCH(MultiTexCoord2iARB, (target, s, t), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2ivARB)(GLenum target, const GLint *v)
+{
+   DISPATCH(MultiTexCoord2ivARB, (target, v), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2sARB)(GLenum target, GLshort s, GLshort t)
+{
+   DISPATCH(MultiTexCoord2sARB, (target, s, t), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord2svARB)(GLenum target, const GLshort *v)
+{
+   DISPATCH(MultiTexCoord2svARB, (target, v), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3dARB)(GLenum target, GLdouble s, GLdouble t, GLdouble r)
+{
+   DISPATCH(MultiTexCoord3dARB, (target, s, t, r), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3dvARB)(GLenum target, const GLdouble *v)
+{
+   DISPATCH(MultiTexCoord3dvARB, (target, v), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3fARB)(GLenum target, GLfloat s, GLfloat t, GLfloat r)
+{
+   DISPATCH(MultiTexCoord3fARB, (target, s, t, r), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3fvARB)(GLenum target, const GLfloat *v)
+{
+   DISPATCH(MultiTexCoord3fvARB, (target, v), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3iARB)(GLenum target, GLint s, GLint t, GLint r)
+{
+   DISPATCH(MultiTexCoord3iARB, (target, s, t, r), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3ivARB)(GLenum target, const GLint *v)
+{
+   DISPATCH(MultiTexCoord3ivARB, (target, v), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3sARB)(GLenum target, GLshort s, GLshort t, GLshort r)
+{
+   DISPATCH(MultiTexCoord3sARB, (target, s, t, r), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord3svARB)(GLenum target, const GLshort *v)
+{
+   DISPATCH(MultiTexCoord3svARB, (target, v), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4dARB)(GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q)
+{
+   DISPATCH(MultiTexCoord4dARB, (target, s, t, r, q), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4dvARB)(GLenum target, const GLdouble *v)
+{
+   DISPATCH(MultiTexCoord4dvARB, (target, v), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4fARB)(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q)
+{
+   DISPATCH(MultiTexCoord4fARB, (target, s, t, r, q), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4fvARB)(GLenum target, const GLfloat *v)
+{
+   DISPATCH(MultiTexCoord4fvARB, (target, v), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4iARB)(GLenum target, GLint s, GLint t, GLint r, GLint q)
+{
+   DISPATCH(MultiTexCoord4iARB, (target, s, t, r, q), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4ivARB)(GLenum target, const GLint *v)
+{
+   DISPATCH(MultiTexCoord4ivARB, (target, v), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4sARB)(GLenum target, GLshort s, GLshort t, GLshort r, GLshort q)
+{
+   DISPATCH(MultiTexCoord4sARB, (target, s, t, r, q), (F, ";"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4svARB)(GLenum target, const GLshort *v)
+{
+   DISPATCH(MultiTexCoord4svARB, (target, v), (F, ";"));
+}
+
+
+
+/* ARB 3. GL_ARB_transpose_matrix */
 KEYWORD1 void KEYWORD2 NAME(LoadTransposeMatrixdARB)(const GLdouble m[16])
 {
    DISPATCH(LoadTransposeMatrixdARB, (m), (F, "glLoadTransposeMatrixARB(%p);", m));
@@ -3337,17 +3352,56 @@ KEYWORD1 void KEYWORD2 NAME(MultTransposeMatrixfARB)(const GLfloat m[16])
 }
 
 
-/* ARB 4. GL_ARB_multisample */
+
+/* ARB 5. GL_ARB_multisample */
 KEYWORD1 void KEYWORD2 NAME(SampleCoverageARB)(GLclampf value, GLboolean invert)
 {
    DISPATCH(SampleCoverageARB, (value, invert), (F, "glSampleCoverageARB(%f, %d);", value, invert));
 }
 
-
 KEYWORD1 void KEYWORD2 NAME(SamplePassARB)(GLenum pass)
 {
    DISPATCH(SamplePassARB, (pass), (F, "glSamplePassARB(0x%x);", pass));
 }
+
+
+#if 00
+/* ARB 12. GL_ARB_texture_compression */
+KEYWORD1 void KEYWORD2 NAME(CompressedTexImage3DARB)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, GLvoid *data)
+{
+   DISPATCH(CompressedTexImage3DARB, (target, level, internalformat, width, height, depth, border, imageSize, data), (F, "glCompressedTexImage3DARB();"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(CompressedTexImage2DARB)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, GLvoid *data)
+{
+   DISPATCH(CompressedTexImage2DARB, (target, level, internalformat, width, height, border, imageSize, data), (F, "glCompressedTexImage2DARB();"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(CompressedTexImage1DARB)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLsizei imageSize, GLvoid *data)
+{
+   DISPATCH(CompressedTexImage1DARB, (target, level, internalformat, width, border, imageSize, data), (F, "glCompressedTexImage1DARB();"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(CompressedTexSubImage3DARB)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, GLvoid *data)
+{
+   DISPATCH(CompressedTexSubImage3DARB, (target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data), (F, "glCompressedTexSubImage3DARB();"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(CompressedTexSubImage2DARB)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, GLvoid *data)
+{
+   DISPATCH(CompressedTexSubImage2DARB, (target, level, xoffset, yoffset, width, height, format, imageSize, data), (F, "glCompressedTexSubImage2DARB();"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(CompressedTexSubImage1DARB)(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, GLvoid *data)
+{
+   DISPATCH(CompressedTexSubImage1DARB, (target, level, xoffset, width, format, imageSize, data), (F, "glCompressedTexSubImage1DARB();"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetCompressedTexImageARB)(GLenum target, GLint lod, GLvoid *img)
+{
+   DISPATCH(GetCompressedTexImageARB, (target, lod, img), (F, "glGetCompressedTexImageARB();"));
+}
+#endif
 
 
 

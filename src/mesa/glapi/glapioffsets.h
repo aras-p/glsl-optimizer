@@ -1,4 +1,4 @@
-/* DO NOT EDIT - This file generated automatically */
+/* DO NOT EDIT - This file generated automatically by gloffsets.py script */
 #ifndef _GLAPI_OFFSETS_H_
 #define _GLAPI_OFFSETS_H_
 
@@ -555,5 +555,13 @@
 #define _gloffset_GetColorTableEXT 550
 #define _gloffset_GetColorTableParameterivEXT 551
 #define _gloffset_GetColorTableParameterfvEXT 552
+#define _gloffset_TbufferMask3DFX 553
+#define _gloffset_CompressedTexImage3DARB 554
+#define _gloffset_CompressedTexImage2DARB 555
+#define _gloffset_CompressedTexImage1DARB 556
+#define _gloffset_CompressedTexSubImage3DARB 557
+#define _gloffset_CompressedTexSubImage2DARB 558
+#define _gloffset_CompressedTexSubImage1DARB 559
+#define _gloffset_GetCompressedTexImageARB 560
 
 #endif
