@@ -857,7 +857,9 @@ osf1:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = cc" \
+	"CXX = cxx" \
 	"CFLAGS = -O0 -std1 -ieee_with_no_inexact -DUSE_XSHM" \
+	"CXXFLAGS = -O2 -std ansi -ieee" \
 	"GL_LIB_DEPS = -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lX11 -lXmu -lXt -lXi -lm" \
