@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.4 1999/09/02 13:16:17 keithw Exp $ */
+/* $Id: context.c,v 1.5 1999/09/04 14:40:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1293,6 +1293,15 @@ GLcontext *gl_create_context( GLvisual *visual,
       ctx->Pixel.DriverReadBuffer = GL_FRONT_LEFT;
    }
 
+   
+   /* Fill in some driver defaults now.
+    */
+   ctx->Driver.AllocDepthBuffer = gl_alloc_depth_buffer;
+   ctx->Driver.ReadDepthSpanFloat = gl_read_depth_span_float;
+   ctx->Driver.ReadDepthSpanInt = gl_read_depth_span_int;
+
+   
+
 #ifdef PROFILE
    init_timings( ctx );
 #endif
@@ -2173,31 +2182,30 @@ void gl_update_state( GLcontext *ctx )
 	    }
 	 }
 
-	 /*
-	  * Update Device Driver interface
+	 /* The driver isn't managing the depth buffer.
 	  */
-	 ctx->Driver.AllocDepthBuffer = gl_alloc_depth_buffer;
-	 if (ctx->Depth.Mask) {
-	    switch (ctx->Depth.Func) {
-	    case GL_LESS:
-	       ctx->Driver.DepthTestSpan = gl_depth_test_span_less;
-	       ctx->Driver.DepthTestPixels = gl_depth_test_pixels_less;
-	       break;
-	    case GL_GREATER:
-	       ctx->Driver.DepthTestSpan = gl_depth_test_span_greater;
-	       ctx->Driver.DepthTestPixels = gl_depth_test_pixels_greater;
-	       break;
-	    default:
+	 if (ctx->Driver.AllocDepthBuffer == gl_alloc_depth_buffer) 
+	 {
+	    if (ctx->Depth.Mask) {
+	       switch (ctx->Depth.Func) {
+	       case GL_LESS:
+		  ctx->Driver.DepthTestSpan = gl_depth_test_span_less;
+		  ctx->Driver.DepthTestPixels = gl_depth_test_pixels_less;
+		  break;
+	       case GL_GREATER:
+		  ctx->Driver.DepthTestSpan = gl_depth_test_span_greater;
+		  ctx->Driver.DepthTestPixels = gl_depth_test_pixels_greater;
+		  break;
+	       default:
+		  ctx->Driver.DepthTestSpan = gl_depth_test_span_generic;
+		  ctx->Driver.DepthTestPixels = gl_depth_test_pixels_generic;
+	       }
+	    }
+	    else {
 	       ctx->Driver.DepthTestSpan = gl_depth_test_span_generic;
 	       ctx->Driver.DepthTestPixels = gl_depth_test_pixels_generic;
 	    }
 	 }
-	 else {
-	    ctx->Driver.DepthTestSpan = gl_depth_test_span_generic;
-	    ctx->Driver.DepthTestPixels = gl_depth_test_pixels_generic;
-	 }
-	 ctx->Driver.ReadDepthSpanFloat = gl_read_depth_span_float;
-	 ctx->Driver.ReadDepthSpanInt = gl_read_depth_span_int;
       }
 
       if (ctx->NewState & NEW_LIGHTING) {

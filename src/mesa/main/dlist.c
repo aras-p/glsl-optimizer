@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.2 1999/08/26 14:50:49 keithw Exp $ */
+/* $Id: dlist.c,v 1.3 1999/09/04 14:40:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -271,6 +271,7 @@ union node {
 /* Number of nodes of storage needed for each instruction: */
 static GLuint InstSize[ OPCODE_END_OF_LIST+1 ];
 
+void mesa_print_display_list( GLuint list );
 
 
 /**********************************************************************/
@@ -2382,14 +2383,9 @@ void gl_compile_cassette( GLcontext *ctx )
       return;
    }
 
-   /* Do some easy optimizations of the cassette.  If current value of
-    * clip volume hint is GL_FASTEST, we are not clipping anyway, so
-    * don't calculate the bounds.  But - they will not be calculated
-    * later even if the hint is changed, so this is a slightly odd
-    * behaviour.
+   /* Do some easy optimizations of the cassette.  
     */
-   if (ctx->Hint.ClipVolumeClipping != GL_FASTEST &&
-       im->v.Obj.size < 4 && 
+   if (im->v.Obj.size < 4 && 
        im->Count > 15)
    {
       im->Bounds = (GLfloat (*)[3]) malloc(6 * sizeof(GLfloat));
@@ -3063,12 +3059,14 @@ void gl_EndList( GLcontext *ctx )
 
    (void) alloc_instruction( ctx, OPCODE_END_OF_LIST, 0 );
 
-
-
    /* Destroy old list, if any */
    gl_destroy_list(ctx, ctx->CurrentListNum);
    /* Install the list */
    HashInsert(ctx->Shared->DisplayList, ctx->CurrentListNum, ctx->CurrentListPtr);
+
+
+   if (MESA_VERBOSE & VERBOSE_DISPLAY_LIST)
+      mesa_print_display_list(ctx->CurrentListNum);
 
    ctx->CurrentListNum = 0;
    ctx->CurrentListPtr = NULL;
@@ -3080,6 +3078,11 @@ void gl_EndList( GLcontext *ctx )
     */
    free( ctx->input );
    SET_IMMEDIATE( ctx, ctx->VB->IM );
+   gl_reset_input( ctx );
+
+   /* Haven't tracked down why this is needed.
+    */
+   ctx->NewState = ~0;
 
    ctx->API = ctx->Exec;   /* Switch the API function pointers */
 }
