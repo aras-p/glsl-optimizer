@@ -1,4 +1,4 @@
-/* $Id: histogram.c,v 1.2 2000/11/10 18:31:04 brianp Exp $ */
+/* $Id: histogram.c,v 1.3 2000/12/10 19:23:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,7 +37,9 @@
 #endif
 
 
-
+/*
+ * XXX need to handle packed datatypes!
+ */
 static void
 pack_histogram( GLcontext *ctx,
                 GLuint n, CONST GLuint rgba[][4],
@@ -194,6 +196,9 @@ pack_histogram( GLcontext *ctx,
 
 
 
+/*
+ * XXX need to handle packed datatypes!
+ */
 static void
 pack_minmax( GLcontext *ctx, CONST GLfloat minmax[2][4],
              GLenum format, GLenum type, GLvoid *destination,
@@ -415,27 +420,8 @@ _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvo
       return;
    }
 
-   if (format != GL_RED &&
-       format != GL_GREEN &&
-       format != GL_BLUE &&
-       format != GL_ALPHA &&
-       format != GL_RGB &&
-       format != GL_RGBA &&
-       format != GL_ABGR_EXT &&
-       format != GL_LUMINANCE &&
-       format != GL_LUMINANCE_ALPHA) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetMinmax(format)");
-      return;
-   }
-
-   if (type != GL_UNSIGNED_BYTE &&
-       type != GL_BYTE &&
-       type != GL_UNSIGNED_SHORT &&
-       type != GL_SHORT &&
-       type != GL_UNSIGNED_INT &&
-       type != GL_INT &&
-       type != GL_FLOAT) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetMinmax(type)");
+   if (!_mesa_is_legal_format_and_type(format, type)) {
+      gl_error(ctx, GL_INVALID_OPERATION, "glGetMinmax(format or type)");
       return;
    }
 
@@ -478,27 +464,8 @@ _mesa_GetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, G
       return;
    }
 
-   if (format != GL_RED &&
-       format != GL_GREEN &&
-       format != GL_BLUE &&
-       format != GL_ALPHA &&
-       format != GL_RGB &&
-       format != GL_RGBA &&
-       format != GL_ABGR_EXT &&
-       format != GL_LUMINANCE &&
-       format != GL_LUMINANCE_ALPHA) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetHistogram(format)");
-      return;
-   }
-
-   if (type != GL_UNSIGNED_BYTE &&
-       type != GL_BYTE &&
-       type != GL_UNSIGNED_SHORT &&
-       type != GL_SHORT &&
-       type != GL_UNSIGNED_INT &&
-       type != GL_INT &&
-       type != GL_FLOAT) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetHistogram(type)");
+   if (!_mesa_is_legal_format_and_type(format, type)) {
+      gl_error(ctx, GL_INVALID_OPERATION, "glGetHistogram(format or type)");
       return;
    }
 

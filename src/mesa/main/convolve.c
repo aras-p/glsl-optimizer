@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.15 2000/11/23 02:50:56 jtaylor Exp $ */
+/* $Id: convolve.c,v 1.16 2000/12/10 19:23:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -130,8 +130,12 @@ _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, G
       return;
    }
 
-   if (!_mesa_is_legal_format_and_type(format, type) ||
-       format == GL_COLOR_INDEX ||
+   if (!_mesa_is_legal_format_and_type(format, type)) {
+      gl_error(ctx, GL_INVALID_OPERATION, "glConvolutionFilter1D(format or type)");
+      return;
+   }
+
+   if (format == GL_COLOR_INDEX ||
        format == GL_STENCIL_INDEX ||
        format == GL_DEPTH_COMPONENT ||
        format == GL_INTENSITY ||
@@ -204,8 +208,11 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
       return;
    }
 
-   if (!_mesa_is_legal_format_and_type(format, type) ||
-       format == GL_COLOR_INDEX ||
+   if (!_mesa_is_legal_format_and_type(format, type)) {
+      gl_error(ctx, GL_INVALID_OPERATION, "glConvolutionFilter2D(format or type)");
+      return;
+   }
+   if (format == GL_COLOR_INDEX ||
        format == GL_STENCIL_INDEX ||
        format == GL_DEPTH_COMPONENT ||
        format == GL_INTENSITY ||
@@ -569,8 +576,12 @@ _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid *im
       gl_update_state(ctx);
    }
 
-   if (!_mesa_is_legal_format_and_type(format, type) ||
-       format == GL_COLOR_INDEX ||
+   if (!_mesa_is_legal_format_and_type(format, type)) {
+      gl_error(ctx, GL_INVALID_OPERATION, "glGetConvolutionFilter(format or type)");
+      return;
+   }
+
+   if (format == GL_COLOR_INDEX ||
        format == GL_STENCIL_INDEX ||
        format == GL_DEPTH_COMPONENT ||
        format == GL_INTENSITY ||
@@ -753,8 +764,12 @@ _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type, GLvoid *row,
       return;
    }
 
-   if (!_mesa_is_legal_format_and_type(format, type) ||
-       format == GL_COLOR_INDEX ||
+   if (!_mesa_is_legal_format_and_type(format, type)) {
+      gl_error(ctx, GL_INVALID_OPERATION, "glGetConvolutionFilter(format or type)");
+      return;
+   }
+
+   if (format == GL_COLOR_INDEX ||
        format == GL_STENCIL_INDEX ||
        format == GL_DEPTH_COMPONENT ||
        format == GL_INTENSITY ||
@@ -818,8 +833,12 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
       return;
    }
 
-   if (!_mesa_is_legal_format_and_type(format, type) ||
-       format == GL_COLOR_INDEX ||
+   if (!_mesa_is_legal_format_and_type(format, type)) {
+      gl_error(ctx, GL_INVALID_OPERATION, "glSeparableFilter2D(format or type)");
+      return;
+   }
+
+   if (format == GL_COLOR_INDEX ||
        format == GL_STENCIL_INDEX ||
        format == GL_DEPTH_COMPONENT ||
        format == GL_INTENSITY ||
