@@ -278,7 +278,9 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #endif
 
 
-#ifdef DEBUG
+#if defined(__SCITECH_SNAP__) && defined(CHECKED)
+#  define ASSERT(X)   _CHECK(X) 
+#elif defined(DEBUG)
 #  define ASSERT(X)   assert(X)
 #else
 #  define ASSERT(X)

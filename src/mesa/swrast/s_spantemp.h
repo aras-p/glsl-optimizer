@@ -188,6 +188,7 @@ NAME(read_rgba_pixels)( const GLcontext *ctx,
    SPAN_VARS
 #endif
    GLuint i;
+   ASSERT(mask);
    for (i = 0; i < n; i++) {
       if (mask[i]) {
          INIT_PIXEL_PTR(pixel, x[i], y[i]);
@@ -221,9 +222,6 @@ NAME(write_index32_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
          INC_PIXEL_PTR(pixel);
       }
    }
-   else if (sizeof(*pixel) == sizeof(GLuint)) {
-      _mesa_memcpy(pixel, index, n * sizeof(GLuint));
-   }
    else {
       for (i = 0; i < n; i++) {
          STORE_CI_PIXEL(pixel, index[i]);
@@ -250,9 +248,6 @@ NAME(write_index8_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
          INC_PIXEL_PTR(pixel);
       }
    }
-   else if (sizeof(*pixel) == sizeof(GLubyte)) {
-      _mesa_memcpy(pixel, index, n * sizeof(GLubyte));
-   }
    else {
       for (i = 0; i < n; i++) {
          STORE_CI_PIXEL(pixel, index[i]);
@@ -271,12 +266,20 @@ NAME(write_monoindex_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
 #endif
    GLuint i;
    INIT_PIXEL_PTR(pixel, x, y);
-   for (i = 0; i < n; i++) {
-      if (mask[i]) {
-         STORE_CI_PIXEL(pixel, colorIndex);
+   if (mask) {
+      for (i = 0; i < n; i++) {
+         if (mask[i]) {
+            STORE_CI_PIXEL(pixel, colorIndex);
+         }
+         INC_PIXEL_PTR(pixel);
       }
-      INC_PIXEL_PTR(pixel);
-   }
+   }      
+   else {
+      for (i = 0; i < n; i++) {
+         STORE_CI_PIXEL(pixel, colorIndex);
+         INC_PIXEL_PTR(pixel);
+      }
+   }      
 }
 
 
@@ -289,6 +292,7 @@ NAME(write_index_pixels)( const GLcontext *ctx,
    SPAN_VARS
 #endif
    GLuint i;
+   ASSERT(mask);
    for (i = 0; i < n; i++) {
       if (mask[i]) {
          INIT_PIXEL_PTR(pixel, x[i], y[i]);
@@ -307,6 +311,7 @@ NAME(write_monoindex_pixels)( const GLcontext *ctx,
    SPAN_VARS
 #endif
    GLuint i;
+   ASSERT(mask);
    for (i = 0; i < n; i++) {
       if (mask[i]) {
          INIT_PIXEL_PTR(pixel, x[i], y[i]);
@@ -341,6 +346,7 @@ NAME(read_index_pixels)( const GLcontext *ctx,
    SPAN_VARS
 #endif
    GLuint i;
+   ASSERT(mask);
    for (i = 0; i < n; i++) {
       if (mask[i] ) {
          INIT_PIXEL_PTR(pixel, x[i], y[i]);
