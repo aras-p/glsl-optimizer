@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.51 2000/09/28 18:30:39 brianp Exp $ */
+/* $Id: teximage.c,v 1.52 2000/10/16 23:43:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2112,6 +2112,56 @@ _mesa_get_teximage_from_driver( GLcontext *ctx, GLenum target, GLint level,
    if (freeImage)
       FREE(image);
 }
+
+
+/*
+ * Get all the mipmap images for a texture object from the device driver.
+ * Actually, only get mipmap images if we're using a mipmap filter.
+ */
+GLboolean
+_mesa_get_teximages_from_driver(GLcontext *ctx,
+                                struct gl_texture_object *texObj)
+{
+   if (ctx->Driver.GetTexImage) {
+      static const GLenum targets[] = {
+         GL_TEXTURE_1D,
+         GL_TEXTURE_2D,
+         GL_TEXTURE_3D,
+         GL_TEXTURE_CUBE_MAP_ARB,
+         GL_TEXTURE_CUBE_MAP_ARB,
+         GL_TEXTURE_CUBE_MAP_ARB
+      };
+      GLboolean needLambda = (texObj->MinFilter != texObj->MagFilter);
+      GLenum target = targets[texObj->Dimensions - 1];
+      if (needLambda) {
+         GLint level;
+         /* Get images for all mipmap levels.  We might not need them
+          * all but this is easier.  We're on a (slow) software path
+          * anyway.
+          */
+         for (level = 0; level <= texObj->P; level++) {
+            struct gl_texture_image *texImg = texObj->Image[level];
+            if (texImg && !texImg->Data) {
+               _mesa_get_teximage_from_driver(ctx, target, level, texObj);
+               if (!texImg->Data)
+                  return GL_FALSE;  /* out of memory */
+            }
+         }
+      }
+      else {
+         GLint level = texObj->BaseLevel;
+         struct gl_texture_image *texImg = texObj->Image[level];
+         if (texImg && !texImg->Data) {
+            _mesa_get_teximage_from_driver(ctx, target, level, texObj);
+            if (!texImg->Data)
+               return GL_FALSE;  /* out of memory */
+         }
+      }
+      return GL_TRUE;
+   }
+   return GL_FALSE;
+}
+
 
 
 void
