@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.58 2002/03/23 02:30:18 brianp Exp $
+# $Id: Make-config,v 1.59 2002/04/09 14:47:57 keithw Exp $
 
 MESA_MAJOR=4
 MESA_MINOR=1
@@ -597,14 +597,14 @@ linux-x86:
 	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform4.S \
-		X86/x86_cliptest.S X86/x86_vertex.S \
+		X86/x86_cliptest.S \
 		X86/mmx_blend.S \
 		X86/3dnow_xform1.S X86/3dnow_xform2.S \
 		X86/3dnow_xform3.S X86/3dnow_xform4.S \
-		X86/3dnow_normal.S X86/3dnow_vertex.S \
+		X86/3dnow_normal.S \
 		X86/sse_xform1.S X86/sse_xform2.S \
 		X86/sse_xform3.S X86/sse_xform4.S \
-		X86/sse_normal.S X86/sse_vertex.S"
+		X86/sse_normal.S"
 
 linux-x86-static:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -623,14 +623,14 @@ linux-x86-static:
 	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform4.S \
-		X86/x86_cliptest.S X86/x86_vertex.S \
+		X86/x86_cliptest.S \
 		X86/mmx_blend.S \
 		X86/3dnow_xform1.S X86/3dnow_xform2.S \
 		X86/3dnow_xform3.S X86/3dnow_xform4.S \
-		X86/3dnow_normal.S X86/3dnow_vertex.S \
+		X86/3dnow_normal.S \
 		X86/sse_xform1.S X86/sse_xform2.S \
 		X86/sse_xform3.S X86/sse_xform4.S \
-		X86/sse_normal.S X86/sse_vertex.S"
+		X86/sse_normal.S"
 
 # Contributed by Uwe_Maurer@t-online.de
 linux-ggi:
@@ -663,7 +663,7 @@ linux-386-ggi:
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lggi -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform4.S \
-		X86/x86_cliptest.S X86/x86_vertex.S"
+		X86/x86_cliptest.S"
 
 linux-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -700,7 +700,7 @@ linux-386-glide:
 	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide2x -lglut -lGLU -lGL" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform4.S \
-		X86/x86_cliptest.S X86/x86_vertex.S"
+		X86/x86_cliptest.S"
 
 linux-386-opt-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -720,7 +720,7 @@ linux-386-opt-glide:
 	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform4.S \
-		X86/x86_cliptest.S X86/x86_vertex.S"
+		X86/x86_cliptest.S"
 
 linux-x86-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -739,15 +739,15 @@ linux-x86-glide:
 	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform4.S \
-		X86/x86_cliptest.S X86/x86_vertex.S \
+		X86/x86_cliptest.S  \
 		X86/mmx_blend.S \
 		X86/3dnow_xform1.S X86/3dnow_xform2.S \
 		X86/3dnow_xform3.S X86/3dnow_xform4.S \
-		X86/3dnow_normal.S X86/3dnow_vertex.S \
+		X86/3dnow_normal.S  \
 		FX/X86/fx_3dnow_fastpath.S \
 		X86/sse_xform1.S X86/sse_xform2.S \
 		X86/sse_xform3.S X86/sse_xform4.S \
-		X86/sse_normal.S X86/sse_vertex.S"
+		X86/sse_normal.S "
 
 linux-alpha:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1017,7 +1017,7 @@ os2-x11:
 	"APP_LIB_DEPS = -Zmt -Zcrtdll -Zexe -L$(X11ROOT)/XFree86/lib -lXt -lX11 -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform4.S \
-		X86/x86_cliptest.S X86/x86_vertex.S"
+		X86/x86_cliptest.S"
 
 osf1:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1526,14 +1526,14 @@ linux-x86-debug:
 	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform4.S \
-		X86/x86_cliptest.S X86/x86_vertex.S \
+		X86/x86_cliptest.S \
 		X86/mmx_blend.S \
 		X86/3dnow_xform1.S X86/3dnow_xform2.S \
 		X86/3dnow_xform3.S X86/3dnow_xform4.S \
-		X86/3dnow_normal.S X86/3dnow_vertex.S \
+		X86/3dnow_normal.S \
 		X86/sse_xform1.S X86/sse_xform2.S \
 		X86/sse_xform3.S X86/sse_xform4.S \
-		X86/sse_normal.S X86/sse_vertex.S"
+		X86/sse_normal.S"
 
 linux-glide-debug:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1565,15 +1565,15 @@ linux-prof:
 	"APP_LIB_DEPS = -L/usr/X11/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform4.S \
-		X86/x86_cliptest.S X86/x86_vertex.S \
+		X86/x86_cliptest.S  \
 		X86/mmx_blend.S \
 		X86/3dnow_xform1.S X86/3dnow_xform2.S \
 		X86/3dnow_xform3.S X86/3dnow_xform4.S \
-		X86/3dnow_normal.S X86/3dnow_vertex.S \
+		X86/3dnow_normal.S \
 		FX/X86/fx_3dnow_fastpath.S \
 		X86/sse_xform1.S X86/sse_xform2.S \
 		X86/sse_xform3.S X86/sse_xform4.S \
-		X86/sse_normal.S X86/sse_vertex.S"
+		X86/sse_normal.S "
 
 linux-glide-prof:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1590,12 +1590,12 @@ linux-glide-prof:
 	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide2x -L/usr/X11/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform4.S \
-		X86/x86_cliptest.S X86/x86_vertex.S \
+		X86/x86_cliptest.S \
 		X86/mmx_blend.S \
 		X86/3dnow_xform1.S X86/3dnow_xform2.S \
 		X86/3dnow_xform3.S X86/3dnow_xform4.S \
-		X86/3dnow_normal.S X86/3dnow_vertex.S \
+		X86/3dnow_normal.S \
 		FX/X86/fx_3dnow_fastpath.S \
 		X86/sse_xform1.S X86/sse_xform2.S \
 		X86/sse_xform3.S X86/sse_xform4.S \
-		X86/sse_normal.S X86/sse_vertex.S"
+		X86/sse_normal.S"
