@@ -321,15 +321,15 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
 
 
 /**
- * Test if the given internal texture format is a color/RGBA format
- * (i.e., not color index, depth, stencil, etc).
- * \param internalFormat an internal texture format token (or 1, 2, 3, or 4)
+ * Test if the given image format is a color/RGBA format (i.e., not color
+ * index, depth, stencil, etc).
+ * \param format  the image format value (may by an internal texture format)
  * \return GL_TRUE if its a color/RGBA format, GL_FALSE otherwise.
  */
 static GLboolean
-is_color_format(GLenum internalFormat)
+is_color_format(GLenum format)
 {
-   switch (internalFormat) {
+   switch (format) {
       case GL_ALPHA:
       case GL_ALPHA4:
       case GL_ALPHA8:
@@ -387,6 +387,19 @@ is_color_format(GLenum internalFormat)
       case GL_RGB32F_ARB:
       case GL_RGBA16F_ARB:
       case GL_RGBA32F_ARB:
+      /* compressed formats */
+      case GL_COMPRESSED_ALPHA:
+      case GL_COMPRESSED_LUMINANCE:
+      case GL_COMPRESSED_LUMINANCE_ALPHA:
+      case GL_COMPRESSED_INTENSITY:
+      case GL_COMPRESSED_RGB:
+      case GL_COMPRESSED_RGBA:
+      case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+      case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+      case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+      case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+      case GL_COMPRESSED_RGB_FXT1_3DFX:
+      case GL_COMPRESSED_RGBA_FXT1_3DFX:
          return GL_TRUE;
       case GL_YCBCR_MESA:  /* not considered to be RGB */
       default:
@@ -396,12 +409,12 @@ is_color_format(GLenum internalFormat)
 
 
 /**
- * Test if the given internal texture format is a color index format.
+ * Test if the given image format is a color index format.
  */
 static GLboolean
-is_index_format(GLenum internalFormat)
+is_index_format(GLenum format)
 {
-   switch (internalFormat) {
+   switch (format) {
       case GL_COLOR_INDEX:
       case GL_COLOR_INDEX1_EXT:
       case GL_COLOR_INDEX2_EXT:
@@ -417,12 +430,12 @@ is_index_format(GLenum internalFormat)
 
 
 /**
- * Test if the given internal texture format is a depth component format.
+ * Test if the given image format is a depth component format.
  */
 static GLboolean
-is_depth_format(GLenum internalFormat)
+is_depth_format(GLenum format)
 {
-   switch (internalFormat) {
+   switch (format) {
       case GL_DEPTH_COMPONENT16_ARB:
       case GL_DEPTH_COMPONENT24_ARB:
       case GL_DEPTH_COMPONENT32_ARB:
@@ -435,12 +448,12 @@ is_depth_format(GLenum internalFormat)
 
 
 /**
- * Test if the given internal texture format is a YCbCr format.
+ * Test if the given image format is a YCbCr format.
  */
 static GLboolean
-is_ycbcr_format(GLenum internalFormat)
+is_ycbcr_format(GLenum format)
 {
-   switch (internalFormat) {
+   switch (format) {
       case GL_YCBCR_MESA:
          return GL_TRUE;
       default:
