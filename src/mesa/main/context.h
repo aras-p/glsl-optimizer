@@ -361,4 +361,30 @@ do {									\
 /*@}*/
 
 
+
+/**
+ * Macros to help evaluate current state conditions
+ */
+
+/*@{*/
+
+/**
+ * Is the secondary color needed?
+ */
+#define NEED_SECONDARY_COLOR(CTX)					\
+   (((CTX)->Light.Enabled &&						\
+     (CTX)->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)	\
+    || (CTX)->Fog.ColorSumEnabled)
+
+
+/**
+ * Is two-sided lighting in effect?
+ */
+#define NEED_TWO_SIDED_LIGHTING(CTX) \
+   (ctx->Light.Enabled && ctx->Light.Model.TwoSide)
+
+
+/*@}*/
+
+
 #endif

@@ -226,8 +226,8 @@ _swrast_validate_triangle( GLcontext *ctx,
    _swrast_validate_derived( ctx );
    swrast->choose_triangle( ctx );
 
-   if ((ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) &&
-       ctx->Texture._EnabledUnits == 0) {
+   if (ctx->Texture._EnabledUnits == 0 && NEED_SECONDARY_COLOR(ctx)) {
+      /* separate specular color, but no texture */
       swrast->SpecTriangle = swrast->Triangle;
       swrast->Triangle = _swrast_add_spec_terms_triangle;
    }
@@ -243,8 +243,7 @@ _swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
    _swrast_validate_derived( ctx );
    swrast->choose_line( ctx );
 
-   if ((ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) &&
-       ctx->Texture._EnabledUnits == 0) {
+   if (ctx->Texture._EnabledUnits == 0 && NEED_SECONDARY_COLOR(ctx)) {
       swrast->SpecLine = swrast->Line;
       swrast->Line = _swrast_add_spec_terms_line;
    }
@@ -261,8 +260,7 @@ _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
    _swrast_validate_derived( ctx );
    swrast->choose_point( ctx );
 
-   if ((ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) &&
-       ctx->Texture._EnabledUnits == 0) {
+   if (ctx->Texture._EnabledUnits == 0 && NEED_SECONDARY_COLOR(ctx)) {
       swrast->SpecPoint = swrast->Point;
       swrast->Point = _swrast_add_spec_terms_point;
    }

@@ -69,7 +69,7 @@ static void _swsetup_render_line_tri( GLcontext *ctx,
          return;
    }
 
-   if (ctx->_TriangleCaps & DD_FLATSHADE) {
+   if (ctx->Light.ShadeModel == GL_FLAT) {
       COPY_CHAN4(c[0], v0->color);
       COPY_CHAN4(c[1], v1->color);
       COPY_CHAN4(s[0], v0->specular);
@@ -95,7 +95,7 @@ static void _swsetup_render_line_tri( GLcontext *ctx,
       if (ef[e2]) _swrast_Line( ctx, v2, v0 );
    }
 
-   if (ctx->_TriangleCaps & DD_FLATSHADE) {
+   if (ctx->Light.ShadeModel == GL_FLAT) {
       COPY_CHAN4(v0->color, c[0]);
       COPY_CHAN4(v1->color, c[1]);
       COPY_CHAN4(v0->specular, s[0]);
@@ -128,7 +128,8 @@ static void _swsetup_render_point_tri( GLcontext *ctx,
          return;
    }
 
-   if (ctx->_TriangleCaps & DD_FLATSHADE) {
+   if (ctx->Light.ShadeModel == GL_FLAT) {
+      /* save colors/indexes for v0, v1 vertices */
       COPY_CHAN4(c[0], v0->color);
       COPY_CHAN4(c[1], v1->color);
       COPY_CHAN4(s[0], v0->specular);
@@ -136,6 +137,7 @@ static void _swsetup_render_point_tri( GLcontext *ctx,
       i[0] = v0->index;
       i[1] = v1->index;
 
+      /* copy v2 color/indexes to v0, v1 indexes */
       COPY_CHAN4(v0->color, v2->color);
       COPY_CHAN4(v1->color, v2->color);
       COPY_CHAN4(v0->specular, v2->specular);
@@ -148,7 +150,8 @@ static void _swsetup_render_point_tri( GLcontext *ctx,
    if (ef[e1]) _swrast_Point( ctx, v1 );
    if (ef[e2]) _swrast_Point( ctx, v2 );
 
-   if (ctx->_TriangleCaps & DD_FLATSHADE) {
+   if (ctx->Light.ShadeModel == GL_FLAT) {
+      /* restore v0, v1 colores/indexes */
       COPY_CHAN4(v0->color, c[0]);
       COPY_CHAN4(v1->color, c[1]);
       COPY_CHAN4(v0->specular, s[0]);
@@ -294,7 +297,8 @@ void _swsetup_choose_trifuncs( GLcontext *ctx )
    /* We piggyback the two-sided stencil front/back determination on the
     * unfilled triangle path.
     */
-   if ((ctx->_TriangleCaps & DD_TRI_UNFILLED) ||
+   if (ctx->Polygon.FrontMode != GL_FILL ||
+       ctx->Polygon.BackMode != GL_FILL ||
        (ctx->Stencil.Enabled && ctx->Stencil.TestTwoSide))
       ind |= SS_UNFILLED_BIT;
 

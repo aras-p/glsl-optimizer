@@ -392,7 +392,7 @@ _swsetup_choose_rastersetup_func(GLcontext *ctx)
          else if (ctx->Texture._EnabledCoordUnits == 1)
             funcindex |= TEX0;  /* only unit 0 is enabled */
 
-         if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
+         if (NEED_SECONDARY_COLOR(ctx))
             funcindex |= SPEC;
       }
       else {
@@ -418,7 +418,9 @@ _swsetup_choose_rastersetup_func(GLcontext *ctx)
    swsetup->SetupIndex = funcindex;
    tnl->Driver.Render.BuildVertices = setup_tab[funcindex];
 
-   if (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED)) {
+   if (NEED_TWO_SIDED_LIGHTING(ctx) ||
+       ctx->Polygon.FrontMode != GL_FILL ||
+       ctx->Polygon.BackMode != GL_FILL) {
       tnl->Driver.Render.Interp = interp_extras;
       tnl->Driver.Render.CopyPV = copy_pv_extras;
    }

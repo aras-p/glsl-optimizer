@@ -72,7 +72,7 @@
 /*              Clip and render whole begin/end objects               */
 /**********************************************************************/
 
-#define NEED_EDGEFLAG_SETUP (ctx->_TriangleCaps & DD_TRI_UNFILLED)
+#define NEED_EDGEFLAG_SETUP (ctx->Polygon.FrontMode != GL_FILL || ctx->Polygon.BackMode != GL_FILL)
 #define EDGEFLAG_GET(idx) VB->EdgeFlag[idx]
 #define EDGEFLAG_SET(idx, val) VB->EdgeFlag[idx] = val
 
@@ -184,7 +184,7 @@ static void clip_elt_triangles( GLcontext *ctx,
 /*                  Render whole begin/end objects                    */
 /**********************************************************************/
 
-#define NEED_EDGEFLAG_SETUP (ctx->_TriangleCaps & DD_TRI_UNFILLED)
+#define NEED_EDGEFLAG_SETUP (ctx->Polygon.FrontMode != GL_FILL || ctx->Polygon.BackMode != GL_FILL)
 #define EDGEFLAG_GET(idx) VB->EdgeFlag[idx]
 #define EDGEFLAG_SET(idx, val) VB->EdgeFlag[idx] = val
 
@@ -348,7 +348,7 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
    if (ctx->Visual.rgbMode) {
       inputs |= VERT_BIT_COLOR0;
 
-      if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
+      if (NEED_SECONDARY_COLOR(ctx))
 	 inputs |= VERT_BIT_COLOR1;
 
       if (ctx->Texture._EnabledCoordUnits) {
@@ -370,7 +370,7 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
    if (ctx->Fog.Enabled)
       inputs |= VERT_BIT_FOG;
 
-   if (ctx->_TriangleCaps & DD_TRI_UNFILLED)
+   if (ctx->Polygon.FrontMode != GL_FILL || ctx->Polygon.BackMode != GL_FILL)
       inputs |= VERT_BIT_EDGEFLAG;
 
    if (ctx->RenderMode==GL_FEEDBACK)

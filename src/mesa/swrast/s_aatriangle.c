@@ -464,7 +464,7 @@ _swrast_set_aa_triangle_function(GLcontext *ctx)
    ASSERT(ctx->Polygon.SmoothFlag);
 
    if (ctx->Texture._EnabledCoordUnits != 0) {
-      if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
+      if (NEED_SECONDARY_COLOR(ctx)) {
          if (ctx->Texture._EnabledCoordUnits > 1) {
             SWRAST_CONTEXT(ctx)->Triangle = spec_multitex_aa_tri;
          }

@@ -24,6 +24,7 @@
 
 
 #include "glheader.h"
+#include "context.h"
 #include "colormac.h"
 #include "macros.h"
 #include "s_aaline.h"
@@ -304,7 +305,7 @@ _swrast_choose_line( GLcontext *ctx )
       else if (ctx->Texture._EnabledCoordUnits) {
          /* textured lines */
          if (ctx->Texture._EnabledCoordUnits > 0x1
-             || (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)) {
+             || NEED_SECONDARY_COLOR(ctx)) {
             /* multi-texture and/or separate specular color */
             USE(multitextured_line);
          }
