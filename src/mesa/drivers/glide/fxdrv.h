@@ -562,6 +562,10 @@ extern void fxUpdateDDSpanPointers(GLcontext *);
 extern void fxSetupDDSpanPointers(GLcontext *);
 
 extern void fxPrintTextureData(tfxTexInfo * ti);
+
+extern const struct gl_texture_format *
+fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
+                         GLenum srcFormat, GLenum srcType );
 extern void fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 			   GLint internalFormat, GLint width, GLint height,
 			   GLint border, GLenum format, GLenum type,

@@ -1073,6 +1073,7 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.ResizeBuffersMESA = _swrast_alloc_buffers;
    ctx->Driver.Finish = fxDDFinish;
    ctx->Driver.Flush = NULL;
+   ctx->Driver.ChooseTextureFormat = fxDDChooseTextureFormat;
    ctx->Driver.TexImage1D = _mesa_store_teximage1d;
    ctx->Driver.TexImage2D = fxDDTexImage2D;
    ctx->Driver.TexImage3D = _mesa_store_teximage3d;
