@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.47 2000/11/03 15:14:18 brianp Exp $ */
+/* $Id: gl.h,v 1.48 2000/12/08 00:28:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2281,6 +2281,16 @@ GLAPI void GLAPIENTRY glTracePointerRange( const GLvoid* first, const GLvoid* la
 
 #endif /* GL_MESA_packed_depth_stencil */
 
+
+/*
+ * ??. GL_MESA_sprite_point
+ */
+#ifndef GL_MESA_sprite_point
+#define GL_MESA_sprite_point 1
+
+#define GL_SPRITE_POINT_MESA 0x8757  /* XXX not finalized! */
+
+#endif
 
 
 /**********************************************************************
