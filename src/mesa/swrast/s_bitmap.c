@@ -72,7 +72,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
    }
    else {
       span.interpMask |= SPAN_INDEX;
-      span.index = ChanToFixed(ctx->Current.RasterIndex);
+      span.index = FloatToFixed(ctx->Current.RasterIndex);
       span.indexStep = 0;
    }
 
@@ -188,7 +188,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
    }
    else {
       span.interpMask |= SPAN_INDEX;
-      span.index = ChanToFixed(ctx->Current.RasterIndex);
+      span.index = FloatToFixed(ctx->Current.RasterIndex);
       span.indexStep = 0;
    }
 

@@ -3392,7 +3392,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 params[0] = ctx->Current.RasterDistance;
 	 break;
       case GL_CURRENT_RASTER_INDEX:
-	 *params = (GLfloat) ctx->Current.RasterIndex;
+	 *params = ctx->Current.RasterIndex;
 	 break;
       case GL_CURRENT_RASTER_POSITION:
 	 params[0] = ctx->Current.RasterPos[0];

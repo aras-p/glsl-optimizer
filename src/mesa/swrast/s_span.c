@@ -110,7 +110,7 @@ _swrast_span_default_color( GLcontext *ctx, struct sw_span *span )
       span->interpMask |= SPAN_RGBA;
    }
    else {
-      span->index = IntToFixed(ctx->Current.RasterIndex);
+      span->index = FloatToFixed(ctx->Current.RasterIndex);
       span->indexStep = 0;
       span->interpMask |= SPAN_INDEX;
    }

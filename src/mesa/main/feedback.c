@@ -121,10 +121,10 @@ _mesa_PassThrough( GLfloat token )
  * Put a vertex into the feedback buffer.
  */
 void _mesa_feedback_vertex( GLcontext *ctx,
-                         const GLfloat win[4],
-			 const GLfloat color[4],
-			 GLuint index,
-			 const GLfloat texcoord[4] )
+                            const GLfloat win[4],
+                            const GLfloat color[4],
+                            GLfloat index,
+                            const GLfloat texcoord[4] )
 {
    FEEDBACK_TOKEN( ctx, win[0] );
    FEEDBACK_TOKEN( ctx, win[1] );

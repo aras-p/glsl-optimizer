@@ -454,15 +454,15 @@ struct gl_current_attrib {
    /**
     * \name Values are always valid.  
     * 
-    * \note BTW, note how similar this set of attributes is to the SWvertex data type
-    * in the software rasterizer...
+    * \note BTW, note how similar this set of attributes is to the SWvertex
+    * data type in the software rasterizer...
     */
    /*@{*/
    GLfloat RasterPos[4];			/**< Current raster position */
    GLfloat RasterDistance;			/**< Current raster distance */
    GLfloat RasterColor[4];			/**< Current raster color */
    GLfloat RasterSecondaryColor[4];             /**< Current raster secondary color */
-   GLuint RasterIndex;				/**< Current raster index */
+   GLfloat RasterIndex;				/**< Current raster index */
    GLfloat RasterTexCoords[MAX_TEXTURE_UNITS][4];/**< Current raster texcoords */
    GLboolean RasterPosValid;			/**< Raster pos valid flag */
    /*@}*/

@@ -47,7 +47,7 @@ extern void _mesa_init_feedback( GLcontext * ctx );
 extern void _mesa_feedback_vertex( GLcontext *ctx,
                                 const GLfloat win[4],
                                 const GLfloat color[4],
-				GLuint index,
+				GLfloat index,
                                 const GLfloat texcoord[4] );
 
 
