@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.90 2001/03/30 15:31:44 brianp Exp $ */
+/* $Id: teximage.c,v 1.91 2001/03/30 21:12:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1644,6 +1644,9 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
    if (width == 0 || !pixels)
       return;  /* no-op, not an error */
 
+   /* If we have a border, xoffset=-1 is legal.  Bias by border width */
+   xoffset += texImage->Border;
+
    ASSERT(ctx->Driver.TexSubImage1D);
    (*ctx->Driver.TexSubImage1D)(ctx, target, level, xoffset, width,
                                 format, type, pixels, &ctx->Unpack,
@@ -1688,6 +1691,10 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
    if (width == 0 || height == 0 || !pixels)
       return;  /* no-op, not an error */
 
+   /* If we have a border, xoffset=-1 is legal.  Bias by border width */
+   xoffset += texImage->Border;
+   yoffset += texImage->Border;
+
    ASSERT(ctx->Driver.TexSubImage2D);
    (*ctx->Driver.TexSubImage2D)(ctx, target, level, xoffset, yoffset,
                                 width, height, format, type, pixels,
@@ -1725,6 +1732,11 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
 
    if (width == 0 || height == 0 || height == 0 || !pixels)
       return;  /* no-op, not an error */
+
+   /* If we have a border, xoffset=-1 is legal.  Bias by border width */
+   xoffset += texImage->Border;
+   yoffset += texImage->Border;
+   zoffset += texImage->Border;
 
    ASSERT(ctx->Driver.TexSubImage3D);
    (*ctx->Driver.TexSubImage3D)(ctx, target, level,
@@ -1862,6 +1874,9 @@ void
 _mesa_CopyTexSubImage1D( GLenum target, GLint level,
                          GLint xoffset, GLint x, GLint y, GLsizei width )
 {
+   struct gl_texture_unit *texUnit;
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
    GLsizei postConvWidth = width;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
@@ -1876,6 +1891,13 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
                                    xoffset, 0, 0, postConvWidth, 1))
       return;
 
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+
+   /* If we have a border, xoffset=-1 is legal.  Bias by border width */
+   xoffset += texImage->Border;
+
    ASSERT(ctx->Driver.CopyTexSubImage1D);
    (*ctx->Driver.CopyTexSubImage1D)(ctx, target, level, xoffset, x, y, width);
    ctx->NewState |= _NEW_TEXTURE;
@@ -1888,6 +1910,9 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
                          GLint xoffset, GLint yoffset,
                          GLint x, GLint y, GLsizei width, GLsizei height )
 {
+   struct gl_texture_unit *texUnit;
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
    GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
@@ -1902,6 +1927,14 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
                                    postConvWidth, postConvHeight))
       return;
 
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+
+   /* If we have a border, xoffset=-1 is legal.  Bias by border width */
+   xoffset += texImage->Border;
+   yoffset += texImage->Border;
+
    ASSERT(ctx->Driver.CopyTexSubImage2D);
    (*ctx->Driver.CopyTexSubImage2D)(ctx, target, level,
                                     xoffset, yoffset, x, y, width, height);
@@ -1915,6 +1948,9 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
                          GLint xoffset, GLint yoffset, GLint zoffset,
                          GLint x, GLint y, GLsizei width, GLsizei height )
 {
+   struct gl_texture_unit *texUnit;
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
    GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
@@ -1928,6 +1964,15 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
    if (copytexsubimage_error_check(ctx, 3, target, level, xoffset, yoffset,
                                    zoffset, postConvWidth, postConvHeight))
       return;
+
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+
+   /* If we have a border, xoffset=-1 is legal.  Bias by border width */
+   xoffset += texImage->Border;
+   yoffset += texImage->Border;
+   zoffset += texImage->Border;
 
    ASSERT(ctx->Driver.CopyTexSubImage3D);
    (*ctx->Driver.CopyTexSubImage3D)(ctx, target, level,
