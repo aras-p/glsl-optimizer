@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.11 1999/10/11 17:26:48 gareth Exp $ */
+/* $Id: tess.c,v 1.12 1999/10/11 17:48:53 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,9 @@
 
 /*
  * $Log: tess.c,v $
+ * Revision 1.12  1999/10/11 17:48:53  gareth
+ * Correctly initialized GLUtesselator user data pointer.
+ *
  * Revision 1.11  1999/10/11 17:26:48  gareth
  * Updated debugging output.  I'm going to change it all to something
  * much more like the GLX project.  This was a set of macros left over
@@ -182,7 +185,8 @@ void GLAPIENTRY gluTessBeginPolygon( GLUtesselator *tobj, void *polygon_data )
 	tess_cleanup( tobj );
     }
 
-    tobj->user_data = polygon_data;
+    tobj->data = polygon_data;
+    tobj->vertex_count = 0;
 
     DEBUGP( 15, ( "<- gluTessBeginPolygon( tobj:%p data:%p )\n", tobj, polygon_data ) );
 }

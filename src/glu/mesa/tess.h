@@ -1,4 +1,4 @@
-/* $Id: tess.h,v 1.10 1999/10/11 17:28:05 gareth Exp $ */
+/* $Id: tess.h,v 1.11 1999/10/11 17:49:22 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,9 @@
 
 /*
  * $Log: tess.h,v $
+ * Revision 1.11  1999/10/11 17:49:22  gareth
+ * Correctly initialized GLUtesselator user data pointer.
+ *
  * Revision 1.10  1999/10/11 17:28:05  gareth
  * Allow debugging output capture under Win32.  This seems really
  * broken to me, but that's Windows for you...
@@ -96,7 +99,7 @@ struct GLUtesselator
 #endif
     heap_t		*ears;
     hashtable_t		*cvc_lists;
-    void		*user_data;
+    void		*data;
     GLuint		label;
     GLenum		error;
 };
