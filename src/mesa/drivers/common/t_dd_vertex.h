@@ -25,7 +25,7 @@
  *   Keith Whitwell <keithw@valinux.com>
  */
 
-#if (COLOR_IS_RBGA)
+#ifdef COLOR_IS_RGBA
 typedef struct {
   GLubyte red;
   GLubyte green;
