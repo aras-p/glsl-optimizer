@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.81 2003/08/24 04:44:23 jonsmirl Exp $
+# $Id: Makefile.X11,v 1.82 2003/09/03 14:34:55 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -89,6 +89,7 @@ default:
 	@echo "  make sunos4-gcc           for Suns with SunOS 4.x and GCC"
 	@echo "  make sunos4-gcc-sl        for Suns with SunOS 4.x, GCC, make shared libs"
 	@echo "  make sunos5               for Suns with SunOS 5.x"
+	@echo "  make sunos5-smp           for Suns with SunOS 5.x, SMP optimization"
 	@echo "  make sunos5-gcc           for Suns with SunOS 5.x and GCC"
 	@echo "  make ultrix-gcc           for DEC systems with Ultrix and GCC"
 	@echo "  make unixware             for PCs running UnixWare"
@@ -113,7 +114,7 @@ linux-sparc linux-sparc5 linux-sparc-ultra \
 mklinux netbsd osf1 openbsd qnx \
 solaris-x86 solaris-x86-gcc \
 sunos4 sunos4-sl sunos4-gcc sunos4-gcc-sl sunos4-gcc-x11r6-sl \
-sunos5 sunos5-gcc \
+sunos5 sunos5-smp sunos5-gcc \
 ultrix-gcc unixware:
 	-mkdir lib
 	if [ -d src/mesa     ] ; then touch src/mesa/depend     ; fi

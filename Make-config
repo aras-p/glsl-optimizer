@@ -929,12 +929,31 @@ sunos5:
 	"CC = cc" \
 	"CXX = c++" \
 	"CFLAGS = -KPIC -Xa -O -I/usr/openwin/include -I/usr/dt/include -DUSE_XSHM" \
+	"CXXFLAGS = -KPIC -Xa -O -I/usr/openwin/include -I/usr/dt/include" \
 	"GL_LIB_DEPS = -L/usr/openwin/lib -L/usr/dt/lib -lX11 -lXext -lXmu -lXi -lm" \
 	"GLUT_CFLAGS = -DSOLARIS_2_4_BUG" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/openwin/lib -lXt -lX11" \
-	"APP_LIB_DEPS = -lX11 -lglut -lGLU -lGL -lm"
+	"APP_LIB_DEPS = -lCrun -lX11 -lglut -lGLU -lGL -lm"
+
+sunos5-smp:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
+	"CC = cc" \
+	"CPLUSPLUS = CC" \
+	"CFLAGS = -KPIC -Xa -native -fast -xO5 -xlibmil -xparallel -xdepend -xsafe=mem -I/usr/openwin/include -I/usr/dt/include -DUSE_XSHM" \
+	"CXXFLAGS = -KPIC -Xa -native -fast -xO5 -xlibmil -xparallel -xdepend -xsafe=mem -I/usr/openwin/include -I/usr/dt/include" \
+	"GLUT_CFLAGS = -DSOLARIS_2_4_BUG" \
+	"MAKELIB = ../bin/mklib.sunos5" \
+	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lm" \
+	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/openwin/lib -lXt -lX11" \
+	"APP_LIB_DEPS = -xparallel -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm -lCrun"
 
 sunos5-gcc:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
