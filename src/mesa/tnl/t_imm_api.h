@@ -42,7 +42,7 @@ extern void _tnl_End(void);
 /* TNL-private internal functions for building higher-level operations:
  */
 extern GLboolean _tnl_hard_begin( GLcontext *ctx, GLenum p );
-extern void _tnl_end( GLcontext *ctx );
+extern void _tnl_end_ctx( GLcontext *ctx );
 extern void _tnl_vertex2f( GLcontext *ctx, GLfloat x, GLfloat y );
 extern void _tnl_eval_coord1f( GLcontext *CC, GLfloat u );
 extern void _tnl_eval_coord2f( GLcontext *CC, GLfloat u, GLfloat v );

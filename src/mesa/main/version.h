@@ -41,11 +41,12 @@
 /* OpenGL API version */
 #define OPENGL_MAJOR 1
 #define OPENGL_MINOR 4
+#define OPENGL_PATCH 0
 #define OPENGL_VERSION_STRING "1.4"
 
 /* To make version comparison easy */
-#define OPENGL_VERSION(a,b) (((a) << 16) + ((b) << 8) + (0))
-#define OPENGL_VERSION_CODE OPENGL_VERSION(OPENGL_MAJOR, OPENGL_MINOR)
+#define OPENGL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
+#define OPENGL_VERSION_CODE OPENGL_VERSION(OPENGL_MAJOR, OPENGL_MINOR, OPENGL_PATCH)
 
 
 #endif /* VERSION_H */

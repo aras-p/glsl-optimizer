@@ -334,7 +334,7 @@ _tnl_hard_begin( GLcontext *ctx, GLenum p )
  * rects/arrays together in a single immediate struct.
  */
 void
-_tnl_end( GLcontext *ctx )
+_tnl_end_ctx( GLcontext *ctx )
 {
    struct immediate *IM = TNL_CURRENT_IM(ctx);
    GLuint state = IM->BeginState;
@@ -387,7 +387,7 @@ _tnl_End(void)
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   _tnl_end( ctx );
+   _tnl_end_ctx( ctx );
 
    /* Need to keep save primitive uptodate in COMPILE and
     * COMPILE_AND_EXEC modes, need to keep exec primitive uptodate

@@ -120,7 +120,7 @@ _tnl_exec_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
       for (i=i1;i<=i2;i++,u+=du) {
 	 _tnl_eval_coord1f( ctx, u );
       }
-      _tnl_end(ctx);
+      _tnl_end_ctx(ctx);
 
       /* Need this for replay *and* compile:
        */
@@ -190,7 +190,7 @@ _tnl_exec_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 	       _tnl_eval_coord2f( ctx, u, v );
 	    }
 	 }
-	 _tnl_end(ctx);
+	 _tnl_end_ctx(ctx);
 	 break;
       case GL_LINE:
 	 for (v=v1,j=j1;j<=j2;j++,v+=dv) {
@@ -198,14 +198,14 @@ _tnl_exec_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 	    for (u=u1,i=i1;i<=i2;i++,u+=du) {
 	       _tnl_eval_coord2f( ctx, u, v );
 	    }
-	    _tnl_end(ctx);
+	    _tnl_end_ctx(ctx);
 	 }
 	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
 	    _tnl_Begin( GL_LINE_STRIP );
 	    for (v=v1,j=j1;j<=j2;j++,v+=dv) {
 	       _tnl_eval_coord2f( ctx, u, v );
 	    }
-	    _tnl_end(ctx);
+	    _tnl_end_ctx(ctx);
 	 }
 	 break;
       case GL_FILL:
@@ -215,7 +215,7 @@ _tnl_exec_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 	       _tnl_eval_coord2f( ctx, u, v );
 	       _tnl_eval_coord2f( ctx, u, v+dv );
 	    }
-	    _tnl_end(ctx);
+	    _tnl_end_ctx(ctx);
 	 }
 	 break;
       default:

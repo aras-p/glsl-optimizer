@@ -113,7 +113,7 @@
 #  endif
 #  define GLWINAPI __stdcall
 #  define GLWINAPIV __cdecl
-#else
+#elif !defined(__SCITECH_SNAP__)
 /* non-Windows compilation */
 #  define GLAPI extern
 #  define GLAPIENTRY
