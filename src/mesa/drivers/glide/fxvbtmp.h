@@ -319,16 +319,16 @@ static void TAG(init)( void )
    setup_tab[IND].check_tex_sizes = TAG(check_tex_sizes);
    setup_tab[IND].interp = TAG(interp);
 
+   setup_tab[IND].vertex_format = 0;
    if (IND & SETUP_PTEX) {
-      setup_tab[IND].vertex_format = (GR_STWHINT_W_DIFF_TMU0 |
-				      GR_STWHINT_W_DIFF_TMU1);
-   }
-   else {
-      setup_tab[IND].vertex_format = 0;
+      setup_tab[IND].vertex_format |= GR_STWHINT_W_DIFF_TMU0;
    }
 
 #if (IND & SETUP_TMU1)
-     setup_tab[IND].vertex_format |= GR_STWHINT_ST_DIFF_TMU1;
+   setup_tab[IND].vertex_format |= GR_STWHINT_ST_DIFF_TMU1;
+   if (IND & SETUP_PTEX) {
+      setup_tab[IND].vertex_format |= GR_STWHINT_W_DIFF_TMU1;
+   }
 #endif
 
 #endif
