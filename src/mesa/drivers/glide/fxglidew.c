@@ -147,6 +147,21 @@ extern FxU32 FX_grTexMaxAddress(GrChipID_t tmu) {
   return result;
 }
 
+FxBool FX_grSstControl(FxU32 code)
+{
+#if defined(FX_GLIDE3)
+  (void) code;
+  return 1;  /* OK? */
+#else
+  FxU32 result;
+  BEGIN_BOARD_LOCK();
+  result = grSstControl(code);
+  END_BOARD_LOCK();
+  return result;
+#endif
+}
+
+
 #if defined(FX_GLIDE3)
 
 void FX_grGammaCorrectionValue(float val)
@@ -155,11 +170,6 @@ void FX_grGammaCorrectionValue(float val)
 /* ToDo */
 }
 
-void FX_grSstControl(int par)
-{
-  (void)par;
-  /* ToDo */
-}
 int FX_getFogTableSize(void)
 {
    int result;
