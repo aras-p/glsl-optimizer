@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_fog.c,v 1.3 2000/11/15 00:26:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -102,12 +102,35 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
 			     const GLdepth z[], 
 			     GLfixed fogcoord[] )
 {
-   GLfloat c = ctx->ProjectionMatrix.m[10];
-   GLfloat d = ctx->ProjectionMatrix.m[14];
+   const GLboolean ortho = (ctx->ProjectionMatrix.m[15] != 0.0F);
+   const GLfloat p10 = ctx->ProjectionMatrix.m[10];
+   const GLfloat p14 = ctx->ProjectionMatrix.m[14];
+   const GLfloat tz = ctx->Viewport._WindowMap.m[MAT_TZ];
+   const GLfloat szInv = 1.0F / ctx->Viewport._WindowMap.m[MAT_SZ];
    GLuint i;
 
-   GLfloat tz = ctx->Viewport._WindowMap.m[MAT_TZ];
-   GLfloat szInv = 1.0F / ctx->Viewport._WindowMap.m[MAT_SZ];
+   /*
+    * Note: to compute eyeZ from the ndcZ we have to solve the following:
+    *
+    *        p[10] * eyeZ + p[14] * eyeW
+    * ndcZ = ---------------------------
+    *        p[11] * eyeZ + p[15] * eyeW
+    *
+    * Thus:
+    *
+    *        p[14] * eyeW - p[15] * eyeW * ndcZ
+    * eyeZ = ----------------------------------
+    *             p[11] * ndcZ - p[10]
+    *
+    * If we note:
+    *    a) if using an orthographic projection, p[11] = 0 and p[15] = 1.
+    *    b) if using a perspective projection, p[11] = -1 and p[15] = 0.
+    *    c) we assume eyeW = 1 (not always true- glVertex4)
+    *
+    * Then we can simplify the calculation of eyeZ quite a bit.  We do
+    * separate calculations for the orthographic and perspective cases below.
+    * Note that we drop a negative sign or two since they don't matter.
+    */
 
    switch (ctx->Fog.Mode) {
       case GL_LINEAR:
@@ -115,35 +138,73 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
             GLfloat fogEnd = ctx->Fog.End;
             GLfloat fogScale = (GLfloat) FIXED_ONE / (ctx->Fog.End - 
 						      ctx->Fog.Start);
-            for (i=0;i<n;i++) {
-               GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
-               GLfloat eyez = -d / (c+ndcz);
-	       if (eyez < 0.0)  eyez = -eyez;
-               fogcoord[i] = (GLint)(fogEnd - eyez) * fogScale;
+            if (ortho) {
+               for (i=0;i<n;i++) {
+                  GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
+                  GLfloat eyez = (ndcz - p14) / p10;
+                  if (eyez < 0.0)  eyez = -eyez;
+                  fogcoord[i] = (GLint) ((fogEnd - eyez) * fogScale);
+               }
+            }
+            else {
+               /* perspective */
+               for (i=0;i<n;i++) {
+                  GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
+                  GLfloat eyez = p14 / (ndcz + p10);
+                  if (eyez < 0.0)  eyez = -eyez;
+                  fogcoord[i] = (GLint) ((fogEnd - eyez) * fogScale);
+               }
             }
          }
 	 break;
       case GL_EXP:
-	 for (i=0;i<n;i++) {
-	    GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
-	    GLfloat eyez = d / (c+ndcz);
-	    if (eyez < 0.0) eyez = -eyez;
-	    fogcoord[i] = FloatToFixed(exp( -ctx->Fog.Density * eyez ));
-	 }
+         if (ortho) {
+            for (i=0;i<n;i++) {
+               GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
+               GLfloat eyez = (ndcz - p14) / p10;
+               if (eyez < 0.0) eyez = -eyez;
+               fogcoord[i] = FloatToFixed(exp( -ctx->Fog.Density * eyez ));
+            }
+         }
+         else {
+            /* perspective */
+            for (i=0;i<n;i++) {
+               GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
+               GLfloat eyez = p14 / (ndcz + p10);
+               if (eyez < 0.0) eyez = -eyez;
+               fogcoord[i] = FloatToFixed(exp( -ctx->Fog.Density * eyez ));
+            }
+         }
 	 break;
       case GL_EXP2:
          {
             GLfloat negDensitySquared = -ctx->Fog.Density * ctx->Fog.Density;
-            for (i=0;i<n;i++) {
-               GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
-               GLfloat eyez = d / (c+ndcz);
-               GLfloat tmp = negDensitySquared * eyez * eyez;
+            if (ortho) {
+               for (i=0;i<n;i++) {
+                  GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
+                  GLfloat eyez = (ndcz - p14) / p10;
+                  GLfloat tmp = negDensitySquared * eyez * eyez;
 #if defined(__alpha__) || defined(__alpha)
-               /* XXX this underflow check may be needed for other systems */
-               if (tmp < FLT_MIN_10_EXP)
-		  tmp = FLT_MIN_10_EXP;
+                  /* XXX this underflow check may be needed for other systems*/
+                  if (tmp < FLT_MIN_10_EXP)
+                     tmp = FLT_MIN_10_EXP;
 #endif
-	       fogcoord[i] = FloatToFixed(exp( tmp ));
+                  fogcoord[i] = FloatToFixed(exp( tmp ));
+               }
+            }
+            else {
+               /* perspective */
+               for (i=0;i<n;i++) {
+                  GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
+                  GLfloat eyez = p14 / (ndcz + p10);
+                  GLfloat tmp = negDensitySquared * eyez * eyez;
+#if defined(__alpha__) || defined(__alpha)
+                  /* XXX this underflow check may be needed for other systems*/
+                  if (tmp < FLT_MIN_10_EXP)
+                     tmp = FLT_MIN_10_EXP;
+#endif
+                  fogcoord[i] = FloatToFixed(exp( tmp ));
+               }
             }
          }
 	 break;
