@@ -812,20 +812,35 @@ void r300_setup_textures(GLcontext *ctx)
 			r300->hw.tex.unknown4.cmd[R300_TEX_VALUE_0+i]=0x0;
 			r300->hw.tex.unknown5.cmd[R300_TEX_VALUE_0+i]=0x0;
 			
+			
+			fprintf(stderr, "Want to set format %08x\n", t->format);
 			/* We don't know how to set this yet */
 			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x88a0c;
+			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x88013;
+			/* Use the code below to quickly find matching texture
+			   formats. Requires an app that displays the same texture
+			   repeatedly  */
+			      #if 0
+				{ 
+				static int fmt=0;
+				static int k=0;
+				k++;
+				if(k>400){
+					k=0;
+					fmt++;
+					if(fmt>0xff){
+						exit(-1);
+						fmt=0;
+						}
+					//sleep(1);
+					}
+				r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x00a0c | (fmt<<12);
+				}
+			      #endif
+			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x53a0c;
+			fprintf(stderr, "Instead setting format %08x\n", r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]);
+
 			
-			} else {
-			/* Fill in with 0's */
-			#if 0 /* No need.. */
-			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=0x0;
-			r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=0x0;
-			r300->hw.tex.size.cmd[R300_TEX_VALUE_0+i]=0x0;
-			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x0;
-			r300->hw.tex.offset.cmd[R300_TEX_VALUE_0+i]=r300->radeon.radeonScreen->fbLocation;
-			r300->hw.tex.unknown4.cmd[R300_TEX_VALUE_0+i]=0x0;
-			r300->hw.tex.unknown5.cmd[R300_TEX_VALUE_0+i]=0x0;
-			#endif
 			}
 			
 		}

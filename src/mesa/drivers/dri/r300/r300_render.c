@@ -279,11 +279,13 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 	e32(0x00000003);
 	
    
+	#if 0 /* looks like the Z offset issue got fixed */
    rmesa->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
 				| R300_VPORT_X_OFFSET_ENA
 				| R300_VPORT_Y_SCALE_ENA
 				| R300_VPORT_Y_OFFSET_ENA
 				| R300_VTX_W0_FMT;
+	#endif
    R300_STATECHANGE(rmesa, vte);
    
    r300EmitState(rmesa);
@@ -311,6 +313,12 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
    
    r300EmitVertexShader(rmesa);
    r300EmitPixelShader(rmesa);
+   
+   #if 0
+   reg_start(R300_RB3D_COLORMASK, 0);
+   	e32(0xf);
+   #endif
+   /* ----------------------------------- */
    
    /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
    r300EmitLOAD_VBPNTR(rmesa, 0);

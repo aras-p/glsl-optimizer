@@ -318,7 +318,7 @@ static const struct gl_texture_format *r300ChooseTextureFormat(GLcontext * ctx,
 	const GLboolean force16bpt =
 	    (rmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FORCE_16);
 	(void)format;
-
+	
 	switch (internalFormat) {
 	case 4:
 	case GL_RGBA:
