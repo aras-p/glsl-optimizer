@@ -1,9 +1,9 @@
-# $Id: Makefile.X11,v 1.103 2003/12/19 11:26:46 dborca Exp $
+# $Id: Makefile.X11,v 1.104 2003/12/21 04:06:31 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  5.1
+# Version:  6.0
 # 
-# Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+# Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -472,10 +472,10 @@ cvsclean: realclean
 
 
 
-DIRECTORY = Mesa-5.1
-LIB_NAME = MesaLib-5.1
-DEMO_NAME = MesaDemos-5.1
-GLU_NAME = MesaGLU-5.1
+DIRECTORY = Mesa-6.0
+LIB_NAME = MesaLib-6.0
+DEMO_NAME = MesaDemos-6.0
+GLU_NAME = MesaGLU-6.0
 GLUT_NAME = GLUT-3.7
 
 

@@ -9,7 +9,7 @@
 TOP = ../..
 
 GL_MAJOR = 1
-GL_MINOR = 4
+GL_MINOR = 5
 GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 OSMESA_LIB_NAME = "OSMesa16"  # may be overridden in Make-config

@@ -8,8 +8,8 @@
 # new platform support to the bin/mklib script.
 
 
-MESA_MAJOR=5
-MESA_MINOR=1
+MESA_MAJOR=6
+MESA_MINOR=0
 MESA_TINY=0
 VERSION=$(MESA_MAJOR).$(MESA_MINOR)
 
@@ -1093,7 +1093,7 @@ linux-debug:
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
-	"APP_LIB_DEPS = -lglut -lGLU -lGL"
+	"APP_LIB_DEPS = -L$(TOP)/lib -lglut -lGLU -lGL"
 
 linux-x86-debug:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
