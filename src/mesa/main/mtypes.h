@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.87 2002/09/21 17:34:56 brianp Exp $ */
+/* $Id: mtypes.h,v 1.88 2002/09/23 16:37:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -839,6 +839,7 @@ struct gl_texture_image {
    GLuint Width;		/* = 2^WidthLog2 + 2*Border */
    GLuint Height;		/* = 2^HeightLog2 + 2*Border */
    GLuint Depth;		/* = 2^DepthLog2 + 2*Border */
+   GLuint RowStride;		/* == Width unless IsClientData and padded */
    GLuint Width2;		/* = Width - 2*Border */
    GLuint Height2;		/* = Height - 2*Border */
    GLuint Depth2;		/* = Depth - 2*Border */

@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.61 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.62 2002/09/23 16:37:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1136,6 +1136,7 @@ _swrast_choose_triangle( GLcontext *ctx )
              && texObj2D->WrapS==GL_REPEAT
 	     && texObj2D->WrapT==GL_REPEAT
              && texImg->Border==0
+             && texImg->Width == texImg->RowStride
              && (format == MESA_FORMAT_RGB || format == MESA_FORMAT_RGBA)
 	     && minFilter == magFilter
 	     && ctx->Light.Model.ColorControl == GL_SINGLE_COLOR

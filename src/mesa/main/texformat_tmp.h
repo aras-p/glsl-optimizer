@@ -1,4 +1,4 @@
-/* $Id: texformat_tmp.h,v 1.7 2002/09/21 16:51:25 brianp Exp $ */
+/* $Id: texformat_tmp.h,v 1.8 2002/09/23 16:37:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -43,13 +43,13 @@
 #elif DIM == 2
 
 #define CHAN_SRC( t, i, j, k, sz )					\
-	((GLchan *)(t)->Data + ((t)->Width * (j) + (i)) * (sz))
+	((GLchan *)(t)->Data + ((t)->RowStride * (j) + (i)) * (sz))
 #define UBYTE_SRC( t, i, j, k, sz )					\
-	((GLubyte *)(t)->Data + ((t)->Width * (j) + (i)) * (sz))
+	((GLubyte *)(t)->Data + ((t)->RowStride * (j) + (i)) * (sz))
 #define USHORT_SRC( t, i, j, k )					\
-	((GLushort *)(t)->Data + ((t)->Width * (j) + (i)))
+	((GLushort *)(t)->Data + ((t)->RowStride * (j) + (i)))
 #define FLOAT_SRC( t, i, j, k )						\
-	((GLfloat *)(t)->Data + ((t)->Width * (j) + (i)))
+	((GLfloat *)(t)->Data + ((t)->RowStride * (j) + (i)))
 
 #define FETCH(x) fetch_2d_texel_##x
 
@@ -57,16 +57,16 @@
 
 #define CHAN_SRC( t, i, j, k, sz )					\
 	(GLchan *)(t)->Data + (((t)->Height * (k) + (j)) *		\
-				(t)->Width + (i)) * (sz)
+				(t)->RowStride + (i)) * (sz)
 #define UBYTE_SRC( t, i, j, k, sz )					\
 	((GLubyte *)(t)->Data + (((t)->Height * (k) + (j)) *		\
-				 (t)->Width + (i)) * (sz))
+				 (t)->RowStride + (i)) * (sz))
 #define USHORT_SRC( t, i, j, k )					\
 	((GLushort *)(t)->Data + (((t)->Height * (k) + (j)) *		\
-				  (t)->Width + (i)))
+				  (t)->RowStride + (i)))
 #define FLOAT_SRC( t, i, j, k )						\
 	((GLfloat *)(t)->Data + (((t)->Height * (k) + (j)) *		\
-				  (t)->Width + (i)))
+				  (t)->RowStride + (i)))
 
 #define FETCH(x) fetch_3d_texel_##x
 
