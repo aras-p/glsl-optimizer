@@ -26,6 +26,11 @@
 #ifndef ARBPROGRAM_H
 #define ARBPROGRAM_H
 
+#include "mtypes.h"
+
+extern void
+_mesa_init_program(GLcontext *ctx);
+
 
 extern void
 _mesa_EnableVertexAttribArrayARB(GLuint index);

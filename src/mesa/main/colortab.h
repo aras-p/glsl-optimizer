@@ -77,28 +77,33 @@ _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params );
 extern void
 _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params );
 
-extern void 
-_mesa_init_colortable( GLcontext * ctx );
 
-extern void 
-_mesa_free_colortable_data( GLcontext * ctx );
 
 extern void
-_mesa_free_one_colortable( struct gl_color_table *p );
+_mesa_init_colortable( struct gl_color_table *table );
 
 extern void
-_mesa_init_one_colortable( struct gl_color_table *p );
+_mesa_free_colortable_data( struct gl_color_table *table );
+
+extern void 
+_mesa_init_colortables( GLcontext *ctx );
+
+extern void 
+_mesa_free_colortables_data( GLcontext *ctx );
 
 #else
 
 /** No-op */
-#define _mesa_init_one_colortable( p ) ((void)0)
+#define _mesa_init_colortable( p ) ((void) 0)
 
 /** No-op */
-#define _mesa_init_colortable( p ) ((void)0)
+#define _mesa_free_colortable_data( p ) ((void) 0)
 
 /** No-op */
-#define _mesa_free_colortable_data( p ) ((void)0)
+#define _mesa_init_colortables( p ) ((void)0)
+
+/** No-op */
+#define _mesa_free_colortables_data( p ) ((void)0)
 
 #endif
 

@@ -53,6 +53,20 @@ struct occlusion_query
 };
 
 
+
+void
+_mesa_init_occlude(GLcontext *ctx)
+{
+#if FEATURE_ARB_occlusion_query
+   ctx->Occlusion.QueryObjects = _mesa_NewHashTable();
+#endif
+
+   ctx->OcclusionResult = GL_FALSE;
+   ctx->OcclusionResultSaved = GL_FALSE;
+}
+
+
+
 /**
  * Allocate a new occlusion query object.
  * \param target - must be GL_SAMPLES_PASSED_ARB at this time

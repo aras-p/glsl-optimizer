@@ -74,6 +74,7 @@
 #include "glheader.h"
 #include "imports.h"
 #include "accum.h"
+#include "arbprogram.h"
 #include "attrib.h"
 #include "blend.h"
 #include "buffers.h"
@@ -97,6 +98,7 @@
 #include "lines.h"
 #include "macros.h"
 #include "matrix.h"
+#include "occlude.h"
 #include "pixel.h"
 #include "points.h"
 #include "polygon.h"
@@ -1089,7 +1091,7 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_attrib( ctx );
    _mesa_init_buffers( ctx );
    _mesa_init_color( ctx );
-   _mesa_init_colortable( ctx );
+   _mesa_init_colortables( ctx );
    _mesa_init_current( ctx );
    _mesa_init_depth( ctx );
    _mesa_init_debug( ctx );
@@ -1102,10 +1104,11 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_line( ctx );
    _mesa_init_lighting( ctx );
    _mesa_init_matrix( ctx );
+   _mesa_init_occlude( ctx );
    _mesa_init_pixel( ctx );
    _mesa_init_point( ctx );
    _mesa_init_polygon( ctx );
-   /* XXX _mesa_init_program( ctx ); */
+   _mesa_init_program( ctx );
    _mesa_init_rastpos( ctx );
    _mesa_init_stencil( ctx );
    _mesa_init_transform( ctx );
@@ -1473,7 +1476,7 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_texture_data( ctx );
    _mesa_free_matrix_data( ctx );
    _mesa_free_viewport_data( ctx );
-   _mesa_free_colortable_data( ctx );
+   _mesa_free_colortables_data( ctx );
 #if FEATURE_NV_vertex_program
    if (ctx->VertexProgram.Current) {
       ctx->VertexProgram.Current->Base.RefCount--;

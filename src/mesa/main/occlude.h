@@ -28,6 +28,9 @@
 
 
 extern void
+_mesa_init_occlude(GLcontext *ctx);
+
+extern void
 _mesa_GenQueriesARB(GLsizei n, GLuint *ids);
 
 extern void

@@ -2966,7 +2966,7 @@ GLboolean _mesa_init_texture( GLcontext * ctx )
    for (i=0; i<MAX_TEXTURE_UNITS; i++)
       init_texture_unit( ctx, i );
    ctx->Texture.SharedPalette = GL_FALSE;
-   _mesa_init_one_colortable(&ctx->Texture.Palette);
+   _mesa_init_colortable(&ctx->Texture.Palette);
 
    /* Allocate proxy textures */
    if (!alloc_proxy_textures( ctx ))
@@ -2987,5 +2987,5 @@ void _mesa_free_texture_data( GLcontext *ctx )
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.ProxyRect );
 
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
-      _mesa_free_one_colortable( &ctx->Texture.Unit[i].ColorTable );
+      _mesa_free_colortable_data( &ctx->Texture.Unit[i].ColorTable );
 }

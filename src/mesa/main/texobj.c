@@ -123,7 +123,7 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
    obj->CompareFunc = GL_LEQUAL;       /* ARB_shadow */
    obj->DepthMode = GL_LUMINANCE;      /* ARB_depth_texture */
    obj->ShadowAmbient = 0.0F;          /* ARB/SGIX_shadow_ambient */
-   _mesa_init_one_colortable(&obj->Palette);
+   _mesa_init_colortable(&obj->Palette);
 }
 
 
@@ -147,7 +147,7 @@ _mesa_delete_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
 
    assert(texObj);
 
-   _mesa_free_one_colortable(&texObj->Palette);
+   _mesa_free_colortable_data(&texObj->Palette);
 
    /* free the texture images */
    for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
