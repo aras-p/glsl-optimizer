@@ -1,8 +1,8 @@
-/* $Id: colortab.c,v 1.20 2000/06/29 18:54:29 brianp Exp $ */
+/* $Id: colortab.c,v 1.21 2000/08/21 14:23:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -360,8 +360,8 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
 
          _mesa_unpack_float_color_span(ctx, width, table->Format,
                                        tempTab,  /* dest */
-                                       format, type, data,
-                                       &ctx->Unpack, GL_TRUE, GL_FALSE);
+                                       format, type, data, &ctx->Unpack,
+                                       0, GL_FALSE);
 
          table->TableType = GL_FLOAT;
          table->Table = MALLOC(comps * width * sizeof(GLfloat));
@@ -425,7 +425,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          _mesa_unpack_ubyte_color_span(ctx, width, table->Format,
                                        table->Table,  /* dest */
                                        format, type, data,
-                                       &ctx->Unpack, GL_TRUE);
+                                       &ctx->Unpack, 0);
       } /* floatTable */
    } /* proxy */
 
@@ -537,7 +537,7 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
    if (table->TableType == GL_UNSIGNED_BYTE) {
       GLubyte *dest = (GLubyte *) table->Table + start * comps * sizeof(GLubyte);
       _mesa_unpack_ubyte_color_span(ctx, count, table->Format, dest,
-                                    format, type, data, &ctx->Unpack, GL_TRUE);
+                                    format, type, data, &ctx->Unpack, 0);
    }
    else {
       GLfloat tempTab[MAX_COLOR_TABLE_SIZE * 4];
@@ -548,8 +548,8 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
 
       _mesa_unpack_float_color_span(ctx, count, table->Format,
                                     tempTab,  /* dest */
-                                    format, type, data,
-                                    &ctx->Unpack, GL_TRUE, GL_FALSE);
+                                    format, type, data, &ctx->Unpack,
+                                    0, GL_FALSE);
 
       tableF = (GLfloat *) table->Table;
 
