@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.77 2002/06/29 19:48:16 brianp Exp $ */
+/* $Id: texstate.c,v 1.78 2002/09/08 17:29:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -463,7 +463,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
    else if (target == GL_TEXTURE_FILTER_CONTROL_EXT) {
       /* GL_EXT_texture_lod_bias */
       if (!ctx->Extensions.EXT_texture_lod_bias) {
-	 _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(target)" );
+	 _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(target=0x%x)", target );
 	 return;
       }
       if (pname == GL_TEXTURE_LOD_BIAS_EXT) {
@@ -481,7 +481,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
    else if (target == GL_POINT_SPRITE_NV) {
       /* GL_NV_point_sprite */
       if (!ctx->Extensions.NV_point_sprite) {
-	 _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(target)" );
+	 _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(target=0x%x)", target );
 	 return;
       }
       if (pname == GL_COORD_REPLACE_NV) {
@@ -497,17 +497,17 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
             ctx->Point.CoordReplace[ctx->Texture.CurrentUnit] = state;
          }
          else {
-            _mesa_error( ctx, GL_INVALID_VALUE, "glTexEnv(param)" );
+            _mesa_error( ctx, GL_INVALID_VALUE, "glTexEnv(param=0x%x)", value);
             return;
          }
       }
       else {
-         _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(pname)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(pname=0x%x)", pname );
          return;
       }
    }
    else {
-      _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(target)" );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(target=0x%x)",target );
       return;
    }
 
