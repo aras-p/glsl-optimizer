@@ -1,8 +1,8 @@
-/* $Id: s_triangle.c,v 1.63 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.64 2002/10/30 20:16:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -477,7 +477,8 @@ affine_span(GLcontext *ctx, struct sw_span *span,
             SPAN_NEAREST(NEAREST_RGB;ADD,3);
             break;
          default:
-            abort();
+            _mesa_problem(ctx, "bad tex env mode in SPAN_LINEAR");
+            return;
          }
          break;
       case GL_RGBA:
@@ -498,7 +499,8 @@ affine_span(GLcontext *ctx, struct sw_span *span,
             SPAN_NEAREST(NEAREST_RGBA_REPLACE,4);
             break;
          default:
-            abort();
+            _mesa_problem(ctx, "bad tex env mode (2) in SPAN_LINEAR");
+            return;
          }
          break;
       }
@@ -524,7 +526,8 @@ affine_span(GLcontext *ctx, struct sw_span *span,
             SPAN_LINEAR(LINEAR_RGB;ADD,3);
             break;
          default:
-            abort();
+            _mesa_problem(ctx, "bad tex env mode (3) in SPAN_LINEAR");
+            return;
          }
          break;
       case GL_RGBA:
@@ -545,8 +548,10 @@ affine_span(GLcontext *ctx, struct sw_span *span,
             SPAN_LINEAR(LINEAR_RGBA;REPLACE,4);
             break;
          default:
-            abort();
-         }		    break;
+            _mesa_problem(ctx, "bad tex env mode (4) in SPAN_LINEAR");
+            return;
+         }
+         break;
       }
       break;
    }
@@ -750,7 +755,8 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
             SPAN_NEAREST(NEAREST_RGB;ADD,3);
             break;
          default:
-            abort();
+            _mesa_problem(ctx, "bad tex env mode (5) in SPAN_LINEAR");
+            return;
          }
          break;
       case GL_RGBA:
@@ -771,7 +777,8 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
             SPAN_NEAREST(NEAREST_RGBA_REPLACE,4);
             break;
          default:
-            abort();
+            _mesa_problem(ctx, "bad tex env mode (6) in SPAN_LINEAR");
+            return;
          }
          break;
       }
@@ -795,7 +802,8 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
             SPAN_LINEAR(LINEAR_RGB;ADD,3);
             break;
          default:
-            abort();
+            _mesa_problem(ctx, "bad tex env mode (7) in SPAN_LINEAR");
+            return;
          }
          break;
       case GL_RGBA:
@@ -816,7 +824,8 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
             SPAN_LINEAR(LINEAR_RGBA;REPLACE,4);
             break;
          default:
-            abort();
+            _mesa_problem(ctx, "bad tex env mode (8) in SPAN_LINEAR");
+            return;
          }
          break;
       }
