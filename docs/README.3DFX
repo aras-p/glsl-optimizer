@@ -185,9 +185,9 @@ Doing more with Mesa & Linux Glide:
 	   quality. However you can use any visual depth supported by X.
 
 	2. Set the following environment variables:
-		export MESA_GLX_FX="window"	// to enable window rendering
-		export SST_VGA_PASS=1	// to stop video signal switching
-		export SST_NOSHUTDOWN=1	// to stop video signal switching
+		export MESA_GLX_FX="window"	# to enable window rendering
+		export SST_VGA_PASS=1	# to stop video signal switching
+		export SST_NOSHUTDOWN=1	# to stop video signal switching
 	    OR
 		setenv MESA_GLX_FX window
 		setenv SST_VGA_PASS 1
