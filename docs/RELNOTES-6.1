@@ -18,7 +18,44 @@ Even numbered versions (such as 6.0) designate stable releases.
 New Features
 ------------
 
-TBD
+GL_ARB_texture_float extension (not finished yet)
+
+   Supports 16 and 32-bit floating point textures.
+
+GL_ARB_half_float_pixel extension (not finished yet)
+
+   Adds the GLhalfARB datatype for 16-bit floating point for glDraw/ReadPixels,
+   and glTexImage commands.
+
+
+
+Texture image handling
+----------------------
+
+The code which implements image conversion, pixel transfer ops, etc
+for glTexImage commands has been rewritten.
+
+Now the gl_texture_format struct has a new StoreImage function
+pointer.  Each texture format must implement this function.  The
+function is totally responsible for converting the user's texture
+image into the specific format.  A few helper functions makes this
+relatively simple.
+
+Overall, the code is much simpler, cleaner and easier to work with
+now.  Adding new texture formats is straight-forward and there's no
+longer any distinction between "hardware" and "software" formats.
+
+Finally, the code for compressed texture images has been reorganized
+as well.
+
+Removed files:
+  texutil.c
+  texutil.h
+  texutil_tmp.h
+
+New files:
+  texcompress_s3tc.c
+  texcompress_fxt1.c
 
 
 
@@ -39,7 +76,6 @@ ctx->Driver.Accum to point to _swrast_Accum).  Adding new functions to
 the dd_function_table can be done with less hassle since the pointer can
 be initialized in _mesa_init_driver_functions() rather than in _all_ the
 drivers.
-
 
 
 Device Drivers
@@ -79,4 +115,4 @@ See the VERSIONS file for more details about bug fixes, etc. in Mesa 6.1.
 
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-6.1,v 3.2 2004/01/23 01:56:26 brianp Exp $
+$Id: RELNOTES-6.1,v 3.3 2004/05/05 00:02:23 brianp Exp $
