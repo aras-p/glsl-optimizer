@@ -411,7 +411,7 @@ static void upload_vertex_buffer(r300ContextPtr rmesa, GLcontext *ctx)
 		offset+=v->size*4*VB->Count; \
 		idx++; \
 		}
-		
+
 	UPLOAD_VECTOR(VB->ObjPtr);
 	UPLOAD_VECTOR(VB->ColorPtr[0]);
 	/* texture coordinates */
@@ -518,8 +518,8 @@ static GLboolean r300_run_render(GLcontext *ctx,
 	
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
-
-		
+	
+	
    #if 1
 	
    	#if 1
@@ -597,7 +597,13 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 		stage->active = GL_FALSE;
 		return;
 	}
-
+	
+#if 0 // selecting VERT_BIT_NORMAL still doesnt give us normals but why?
+	stage->inputs |= VERT_BIT_POS;
+	stage->inputs |= VERT_BIT_NORMAL;
+	stage->inputs |= VERT_BIT_COLOR0;
+#endif
+	
 	// I failed to figure out how dither works in hardware,
 	// let's just ignore it for now
 	//FALLBACK_IF(ctx->Color.DitherFlag);

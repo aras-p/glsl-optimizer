@@ -853,31 +853,31 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 	   	if(tnl->render_inputs & _TNL_BIT_POS){
 			reg=r300->current_vp->inputs[VERT_ATTRIB_POS];
 			CONFIGURE_AOS(VB->ObjPtr, 0, i_coords, AOS_FORMAT_FLOAT);
-		}else fprintf(stderr, "vp expects pos but none was given\n");
+		}else WARN_ONCE("vp expects pos but none was given\n");
 	}
 	if(r300->current_vp->inputs[VERT_ATTRIB_NORMAL] != -1){
 		if(tnl->render_inputs & _TNL_BIT_NORMAL){
 			reg=r300->current_vp->inputs[VERT_ATTRIB_NORMAL];
 			CONFIGURE_AOS(VB->NormalPtr, 0, i_normal, AOS_FORMAT_FLOAT);
-		}else fprintf(stderr, "vp expects normal but none was given\n");
+		}else WARN_ONCE("vp expects normal but none was given\n");
 	}
 	if(r300->current_vp->inputs[VERT_ATTRIB_COLOR0] != -1){
 		if(tnl->render_inputs & _TNL_BIT_COLOR0){
 			reg=r300->current_vp->inputs[VERT_ATTRIB_COLOR0];
 			CONFIGURE_AOS(VB->ColorPtr[0], 0, i_color[0], AOS_FORMAT_FLOAT_COLOR);
-		}else fprintf(stderr, "vp expects primary color but none was given\n");
+		}else WARN_ONCE("vp expects primary color but none was given\n");
 	}
 	if(r300->current_vp->inputs[VERT_ATTRIB_COLOR1] != -1){
 		if(tnl->render_inputs & _TNL_BIT_COLOR1){
 			reg=r300->current_vp->inputs[VERT_ATTRIB_COLOR1];
 			CONFIGURE_AOS(VB->SecondaryColorPtr[0], 0, i_color[1], AOS_FORMAT_FLOAT_COLOR);
-		}else fprintf(stderr, "vp expects secondary color but none was given\n");
+		}else WARN_ONCE("vp expects secondary color but none was given\n");
 	}
 	if(r300->current_vp->inputs[VERT_ATTRIB_FOG] != -1){
 		if(tnl->render_inputs & _TNL_BIT_FOG){
 			reg=r300->current_vp->inputs[VERT_ATTRIB_FOG];
 			CONFIGURE_AOS(VB->FogCoordPtr, 0, i_fog, AOS_FORMAT_FLOAT);
-		}else fprintf(stderr, "vp expects fog but none was given\n");
+		}else WARN_ONCE("vp expects fog but none was given\n");
 	}
 	for(i=0;i < ctx->Const.MaxTextureUnits;i++) // tex 7 is last 
 		if(r300->current_vp->inputs[VERT_ATTRIB_TEX0+i] != -1){
@@ -1807,7 +1807,6 @@ void r300InitState(r300ContextPtr r300)
 }
 
 
-
 /**
  * Initialize driver's state callback functions
  */
@@ -1838,4 +1837,3 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	functions->DepthRange = r300DepthRange;
 	functions->PointSize = r300PointSize;
 }
-
