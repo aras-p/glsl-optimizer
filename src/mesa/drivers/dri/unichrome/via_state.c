@@ -890,13 +890,8 @@ static void viaChooseTextureState(GLcontext *ctx)
 
         if (texUnit0->_ReallyEnabled) {
             struct gl_texture_object *texObj = texUnit0->_Current;
-            struct gl_texture_image *texImage = texObj->Image[0][0];
 
 	    if (VIA_DEBUG) fprintf(stderr, "texUnit0->_ReallyEnabled\n");    
-            if (texImage->Border) {
-                FALLBACK(vmesa, VIA_FALLBACK_TEXTURE, GL_TRUE);
-                return;
-            }
 
             vmesa->regEnable |= HC_HenTXMP_MASK | HC_HenTXCH_MASK | HC_HenTXPP_MASK;
    
@@ -957,12 +952,6 @@ static void viaChooseTextureState(GLcontext *ctx)
 
         if (texUnit1->_ReallyEnabled) {
             struct gl_texture_object *texObj = texUnit1->_Current;
-            struct gl_texture_image *texImage = texObj->Image[0][0];
-
-            if (texImage->Border) {
-                FALLBACK(vmesa, VIA_FALLBACK_TEXTURE, GL_TRUE);
-                return;
-            }
 
             vmesa->regEnable |= HC_HenTXMP_MASK | HC_HenTXCH_MASK | HC_HenTXPP_MASK;
 
