@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.13 2001/04/30 21:08:52 keithw Exp $ */
+/* $Id: t_imm_fixup.c,v 1.14 2001/05/03 16:11:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -631,7 +631,9 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 	 if (tnl->ExecParity)
 	    IM->Primitive[IM->CopyStart] |= PRIM_PARITY;
 
-
+         /* one of these should be true, else we'll be in an infinite loop */
+         assert(IM->PrimitiveLength[IM->Start] > 0 ||
+                IM->Flag[IM->Start] & (VERT_END|VERT_END_VB));
 	 for (i = IM->Start ; i <= IM->Count ; i += IM->PrimitiveLength[i])
 	    if (IM->Flag[i] & (VERT_END|VERT_END_VB)) {
 	       IM->PrimitiveLength[IM->CopyStart] = i - IM->CopyStart;
