@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v0.1 for Mesa 4.0
+ * DOS/DJGPP glut driver v1.0 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com

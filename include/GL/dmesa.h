@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v0.2 for Mesa 4.0
+ * DOS/DJGPP device driver v1.0 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -61,6 +61,10 @@ void DMesaDestroyBuffer (DMesaBuffer b);
 DMesaContext DMesaCreateContext (DMesaVisual visual, DMesaContext share);
 
 void DMesaDestroyContext (DMesaContext c);
+
+GLboolean DMesaViewport (DMesaBuffer b,
+                         GLint xpos, GLint ypos,
+                         GLint width, GLint height);
 
 GLboolean DMesaMakeCurrent (DMesaContext c, DMesaBuffer b);
 

@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP glu makefile v0.4 for Mesa 4.0
+# DOS/DJGPP glu makefile v1.0 for Mesa 4.0
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
@@ -31,7 +31,7 @@
 
 TOP = ..
 CC = gcc
-CFLAGS = -I$(TOP)/include -Wall -W -Wno-unused -mcpu=pentium -ffast-math -O2
+CFLAGS = -I$(TOP)/include -Wall -W -Wno-unused -mcpu=$(CPU) -ffast-math -O2
 AR = ar
 ARFLAGS = ruv
 LIBDIR = $(TOP)/lib
@@ -73,10 +73,10 @@ $(LIBDIR)/$(GLU_LIB): $(OBJECTS)
 
 $(LIBDIR)/$(GLU_DXE) $(LIBDIR)/$(GLU_IMP): $(OBJECTS)
 ifeq ($(DXE2GEN),)
-	@echo Missing DXE2GEN and/or DXE2.LD! You must have DXE2GEN
-	@echo somewhere in PATH, and DXE2.LD in DJGPP/LIB directory.
+	$(warning Missing DXE2GEN and/or DXE2.LD! You must have DXE2GEN)
+	$(warning somewhere in PATH, and DXE2.LD in DJGPP/LIB directory.)
 else
-	dxe2gen -o $(LIBDIR)/$(GLU_DXE) -I $(LIBDIR)/$(GLU_IMP) $(OBJECTS) -D "Glu" -U
+	dxe2gen -o $(LIBDIR)/$(GLU_DXE) -I $(LIBDIR)/$(GLU_IMP) $(OBJECTS) -D "Mesa DOS GLU" -U
 endif
 
 clean:

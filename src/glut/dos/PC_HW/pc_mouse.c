@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v0.4 for DOS/DJGPP
+ * PC/HW routine collection v1.0 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com

@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP core makefile v0.4 for Mesa 4.0
+# DOS/DJGPP core makefile v1.0 for Mesa 4.0
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
@@ -31,7 +31,7 @@
 
 TOP = ..
 CC = gcc
-CFLAGS = -I$(TOP)/include -I. -Wall -W -Wno-unused -mcpu=pentium -ffast-math -O2
+CFLAGS = -I$(TOP)/include -I. -Wall -W -Wno-unused -mcpu=$(CPU) -ffast-math -O2
 AR = ar
 ARFLAGS = ruv
 LIBDIR = $(TOP)/lib
@@ -165,13 +165,64 @@ CORE_SOURCES = \
 	tnl/t_vb_texmat.c \
 	tnl/t_vb_vertex.c
 
+X86_SOURCES = \
+	X86/x86.c \
+	X86/glapi_x86.S \
+	X86/common_x86.c \
+	X86/common_x86_asm.S \
+	X86/x86_xform2.S \
+	X86/x86_xform3.S \
+	X86/x86_xform4.S \
+	X86/x86_vertex.S \
+	X86/x86_cliptest.S
+
+MMX_SOURCES =
+
+SSE_SOURCES = \
+	X86/sse.c \
+	X86/sse_xform2.S \
+	X86/sse_xform3.S \
+	X86/sse_xform4.S \
+	X86/sse_vertex.S \
+	X86/sse_normal.S
+
+D3NOW_SOURCES = \
+	X86/3dnow.c \
+	X86/3dnow_xform2.S \
+	X86/3dnow_xform3.S \
+	X86/3dnow_xform4.S \
+	X86/3dnow_vertex.S
+
+ifdef HAVE_MMX
+X86_SOURCES += $(MMX_SOURCES)
+CFLAGS += -DUSE_MMX_ASM
+HAVE_X86 = 1
+endif
+ifdef HAVE_SSE
+X86_SOURCES += $(SSE_SOURCES)
+CFLAGS += -DUSE_SSE_ASM
+HAVE_X86 = 1
+endif
+ifdef HAVE_3DNOW
+X86_SOURCES += $(D3NOW_SOURCES)
+CFLAGS += -DUSE_3DNOW_ASM
+HAVE_X86 = 1
+endif
+ifdef HAVE_X86
+CFLAGS += -DUSE_X86_ASM
+else
+X86_SOURCES =
+endif
+
 DRIVER_SOURCES = DOS/dmesa.c DOS/video.c DOS/dpmi.c
 
-SOURCES = $(CORE_SOURCES) $(DRIVER_SOURCES)
+SOURCES = $(CORE_SOURCES) $(X86_SOURCES) $(DRIVER_SOURCES)
 
-OBJECTS = $(SOURCES:.c=.o)
+OBJECTS = $(addsuffix .o,$(basename $(SOURCES)))
 
 .c.o:
+	gcc -o $@ -c $(CFLAGS) $<
+.S.o:
 	gcc -o $@ -c $(CFLAGS) $<
 
 all: $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GL_DXE) $(LIBDIR)/$(GL_IMP)
@@ -181,21 +232,24 @@ $(LIBDIR)/$(GL_LIB): $(OBJECTS)
 
 $(LIBDIR)/$(GL_DXE) $(LIBDIR)/$(GL_IMP): $(OBJECTS)
 ifeq ($(DXE2GEN),)
-	@echo Missing DXE2GEN and/or DXE2.LD! You must have DXE2GEN
-	@echo somewhere in PATH, and DXE2.LD in DJGPP/LIB directory.
+	$(warning Missing DXE2GEN and/or DXE2.LD! You must have DXE2GEN)
+	$(warning somewhere in PATH, and DXE2.LD in DJGPP/LIB directory.)
 else
-	dxe2gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) $(OBJECTS) -D "DOS Mesa" -U
+	dxe2gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) $(OBJECTS) -D "Mesa DOS GL" -U
 endif
 
 clean:
 	-$(RM) *.o
+ifdef HAVE_X86
+	-$(RM) X86\*.o
+endif
 	-$(RM) DOS\*.o
 
 include depend
 
 DOS/dmesa.o: DOS/dmesa.c glheader.h ../include/GL/gl.h context.h glapi.h \
-  mtypes.h config.h glapitable.h glthread.h math/m_matrix.h dd.h \
-  ../include/GL/dmesa.h extensions.h macros.h matrix.h mmath.h texformat.h \
+  mtypes.h config.h glapitable.h glthread.h math/m_matrix.h dd.h macros.h \
+  ../include/GL/dmesa.h extensions.h matrix.h mmath.h texformat.h \
   texstore.h array_cache/acache.h swrast/s_context.h swrast/swrast.h \
   swrast/s_depth.h swrast/s_lines.h swrast/s_triangle.h swrast/s_trispan.h \
   swrast_setup/swrast_setup.h tnl/tnl.h tnl/t_context.h math/m_vector.h \

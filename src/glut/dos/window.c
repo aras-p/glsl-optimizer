@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v0.2 for Mesa 4.0
+ * DOS/DJGPP glut driver v1.0 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -171,11 +171,24 @@ void APIENTRY glutSetIconTitle (const char *title)
 
 void APIENTRY glutPositionWindow (int x, int y)
 {
+ if (DMesaViewport(buffer[window], x, y, g_width, g_height)) {
+    g_xpos = x;
+    g_ypos = y;
+ }
 }
 
 
 void APIENTRY glutReshapeWindow (int width, int height)
 {
+ if (DMesaViewport(buffer[window], g_xpos, g_ypos, width, height)) {
+    g_width = width;
+    g_height = height;
+    if (reshape_func) {
+       reshape_func(width, height);
+    } else {
+       glViewport(0, 0, width, height);
+    }
+ }
 }
 
 

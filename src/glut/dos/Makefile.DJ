@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP glut makefile v0.4 for Mesa 4.0
+# DOS/DJGPP glut makefile v1.0 for Mesa 4.0
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
@@ -31,7 +31,7 @@
 
 TOP = ..
 CC = gcc
-CFLAGS = -I$(TOP)/include -Wall -W -Wno-unused -mcpu=pentium -ffast-math -O2
+CFLAGS = -I$(TOP)/include -Wall -W -Wno-unused -mcpu=$(CPU) -ffast-math -O2
 AR = ar
 ARFLAGS = ruv
 LIBDIR = $(TOP)/lib
@@ -59,23 +59,23 @@ CORE_SOURCES = \
 	teapot.c \
 	window.c
 
-PC_HW_OBJECTS = \
-	PC_HW/pc_hw.o \
-	PC_HW/pc_keyb.o \
-	PC_HW/pc_mouse.o \
-	PC_HW/pc_timer.o \
-	PC_HW/pc_irq.o
+PC_HW_SOURCES = \
+	PC_HW/pc_hw.c \
+	PC_HW/pc_keyb.c \
+	PC_HW/pc_mouse.c \
+	PC_HW/pc_timer.c \
+	PC_HW/pc_irq.S
 
-SOURCES = $(CORE_SOURCES)
+SOURCES = $(CORE_SOURCES) $(PC_HW_SOURCES)
 
-OBJECTS = $(SOURCES:.c=.o) $(PC_HW_OBJECTS)
+OBJECTS = $(addsuffix .o,$(basename $(SOURCES)))
 
+.c.o:
+	gcc -o $@ -c $(CFLAGS) $<
 .S.o:
 	gcc -o $@ -c $(CFLAGS) $<
 .s.o:
 	gcc -o $@ -c $(CFLAGS) $(<:.s=.S)
-.c.o:
-	gcc -o $@ -c $(CFLAGS) $<
 
 all: $(LIBDIR)/$(GLUT_LIB) $(LIBDIR)/$(GLUT_DXE) $(LIBDIR)/$(GLUT_IMP)
 
@@ -84,10 +84,10 @@ $(LIBDIR)/$(GLUT_LIB): $(OBJECTS)
 
 $(LIBDIR)/$(GLUT_DXE) $(LIBDIR)/$(GLUT_IMP): $(OBJECTS)
 ifeq ($(DXE2GEN),)
-	@echo Missing DXE2GEN and/or DXE2.LD! You must have DXE2GEN
-	@echo somewhere in PATH, and DXE2.LD in DJGPP/LIB directory.
+	$(warning Missing DXE2GEN and/or DXE2.LD! You must have DXE2GEN)
+	$(warning somewhere in PATH, and DXE2.LD in DJGPP/LIB directory.)
 else
-	dxe2gen -o $(LIBDIR)/$(GLUT_DXE) -I $(LIBDIR)/$(GLUT_IMP) $(OBJECTS) -D "DOS Glut" -U
+	dxe2gen -o $(LIBDIR)/$(GLUT_DXE) -I $(LIBDIR)/$(GLUT_IMP) $(OBJECTS) -D "Mesa DOS GLUT" -U
 endif
 
 clean:
@@ -102,7 +102,7 @@ init.o: init.c ../include/GL/glut.h internal.h PC_HW/pc_hw.h
 menu.o: menu.c ../include/GL/glut.h
 models.o: models.c ../include/GL/glut.h
 overlay.o: overlay.c ../include/GL/glut.h
-state.o: state.c ../include/GL/glut.h internal.h pc_hw/pc_hw.h
+state.o: state.c ../include/GL/glut.h internal.h PC_HW/pc_hw.h
 teapot.o: teapot.c ../include/GL/glut.h
 window.o: window.c ../include/GL/glut.h ../include/GL/dmesa.h internal.h \
   PC_HW/pc_hw.h

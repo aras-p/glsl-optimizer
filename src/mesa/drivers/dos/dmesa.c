@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v0.3 for Mesa 4.0
+ * DOS/DJGPP device driver v1.0 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -76,9 +76,10 @@ struct dmesa_visual {
  * Add system-specific fields to it.
  */
 struct dmesa_buffer {
-   GLframebuffer *gl_buffer;    /* The depth, stencil, accum, etc buffers */
+   GLframebuffer gl_buffer;     /* The depth, stencil, accum, etc buffers */
    void *the_window;            /* your window handle, etc */
 
+   int bypp;                    /* bytes per pixel */
    int xpos, ypos;              /* position */
    int width, height;           /* size in pixels */
    int bwidth, len;             /* bytes in a line, then total */
@@ -540,12 +541,12 @@ static GLboolean set_draw_buffer (GLcontext *ctx, GLenum mode)
  * If anything special has to been done when the buffer/window is
  * resized, do it now.
  */
-static void get_buffer_size (GLcontext *ctx, GLuint *width, GLuint *height)
+static void get_buffer_size (GLframebuffer *buffer, GLuint *width, GLuint *height)
 {
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ DMesaBuffer b = (DMesaBuffer)buffer;
 
- *width  = c->Buffer->width;
- *height = c->Buffer->height;
+ *width  = b->width;
+ *height = b->height;
 }
 
 
@@ -554,7 +555,7 @@ static const GLubyte* get_string (GLcontext *ctx, GLenum name)
 {
  switch (name) {
         case GL_RENDERER:
-             return (const GLubyte *)"DOS Mesa";
+             return (const GLubyte *)"Mesa DOS\0DJGPP port (c) Borca Daniel 31-mar-2002";
         default:
              return NULL;
  }
@@ -636,7 +637,7 @@ void dmesa_init_pointers (GLcontext *ctx)
  ctx->Driver.Accum = _swrast_Accum;
  ctx->Driver.Bitmap = _swrast_Bitmap;
  ctx->Driver.Clear = clear;
- ctx->Driver.ResizeBuffersMESA = _swrast_alloc_buffers;
+ ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
  ctx->Driver.CopyPixels = _swrast_CopyPixels;
  ctx->Driver.DrawPixels = _swrast_DrawPixels;
  ctx->Driver.ReadPixels = _swrast_ReadPixels;
@@ -804,17 +805,17 @@ DMesaBuffer DMesaCreateBuffer (DMesaVisual visual,
 
  if ((b=(DMesaBuffer)calloc(1, sizeof(struct dmesa_buffer)))!=NULL) {
 
-    b->gl_buffer = _mesa_create_framebuffer(visual->gl_visual,
-                                            visual->gl_visual->depthBits > 0,
-                                            visual->gl_visual->stencilBits > 0,
-                                            visual->gl_visual->accumRedBits > 0,
-                                            visual->gl_visual->alphaBits > 0);
+    _mesa_initialize_framebuffer(&b->gl_buffer,
+                                 visual->gl_visual,
+                                 visual->gl_visual->depthBits > 0,
+                                 visual->gl_visual->stencilBits > 0,
+                                 visual->gl_visual->accumRedBits > 0,
+                                 visual->gl_visual->alphaBits > 0);
     b->xpos = xpos;
     b->ypos = ypos;
     b->width = width;
-    b->bwidth = width * ((visual->depth+7)/8);
     b->height = height;
-    b->len = b->bwidth * b->height;
+    b->bypp = (visual->depth+7)/8;
  }
 
  return b;
@@ -825,7 +826,7 @@ DMesaBuffer DMesaCreateBuffer (DMesaVisual visual,
 void DMesaDestroyBuffer (DMesaBuffer b)
 {
  free(b->the_window);
- _mesa_destroy_framebuffer(b->gl_buffer);
+ _mesa_free_framebuffer_data(&b->gl_buffer);
  free(b);
 }
 
@@ -871,23 +872,45 @@ void DMesaDestroyContext (DMesaContext c)
 
 
 
+GLboolean DMesaViewport (DMesaBuffer b,
+                         GLint xpos, GLint ypos,
+                         GLint width, GLint height)
+{
+ void *new_window;
+
+ if ((new_window=vl_sync_buffer(b->the_window, xpos, ypos, width, height))==NULL) {
+    return GL_FALSE;
+ } else {
+    b->the_window = new_window;
+    b->xpos = xpos;
+    b->ypos = ypos;
+    b->width = width;
+    b->height = height;
+    b->bwidth = width * b->bypp;
+    b->len = b->bwidth * height;
+    return GL_TRUE;
+ }
+}
+
+
+
 /*
  * Make the specified context and buffer the current one.
  */
 GLboolean DMesaMakeCurrent (DMesaContext c, DMesaBuffer b)
 {
  if (c&&b) {
-    if ((b->the_window=vl_sync_buffer(b->the_window, b->xpos, b->ypos, b->width, b->height))==NULL) {
+    if (!DMesaViewport(b, b->xpos, b->ypos, b->width, b->height)) {
        return GL_FALSE;
     }
 
     c->Buffer = b;
 
     dmesa_update_state(c->gl_ctx, 0);
-    _mesa_make_current(c->gl_ctx, b->gl_buffer);
+    _mesa_make_current(c->gl_ctx, &b->gl_buffer);
     if (c->gl_ctx->Viewport.Width==0) {
        /* initialize viewport to window size */
-       _mesa_Viewport(0, 0, c->Buffer->width, c->Buffer->height);
+       _mesa_Viewport(0, 0, b->width, b->height);
     }
  } else {
     /* Detach */

@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v0.1 for DOS/DJGPP
+ * PC/HW routine collection v1.0 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -189,12 +189,11 @@ extern int pc_remove_irq (int i);
 
 #define KEY_MAX               115
 
-extern volatile char pc_key[KEY_MAX];
-
 int pc_install_keyb (void);
 void pc_remove_keyb (void);
 int pc_keypressed (void);
 int pc_readkey (void);
+int pc_keydown (int code);
 
 /*
  * timer
@@ -205,13 +204,12 @@ void pc_remove_timer (void);
 /*
  * mouse
  */
-extern volatile int pc_mouse_x, pc_mouse_y, pc_mouse_b;
-
 int pc_install_mouse (void);
 void pc_remove_mouse (void);
 MFUNC pc_install_mouse_handler (MFUNC handler);
 void pc_mouse_area (int x1, int y1, int x2, int y2);
 void pc_mouse_speed (int xspeed, int yspeed);
+int pc_query_mouse (int *x, int *y);
 void pc_show_mouse (void);
 void pc_scare_mouse (void);
 void pc_unscare_mouse (void);

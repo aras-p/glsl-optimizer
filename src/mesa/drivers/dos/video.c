@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v0.4 for Mesa 4.0
+ * DOS/DJGPP device driver v1.0 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -416,14 +416,12 @@ void *vl_sync_buffer (void *buffer, int x, int y, int width, int height)
  if (width&3) {
     return NULL;
  } else {
-    current_offset = video_scanlen * y + video_bypp * x;
     if ((newbuf=realloc(buffer, width*height*video_bypp))!=NULL) {
+       current_offset = video_scanlen * y + video_bypp * x;
        current_width = width;
        current_delta = video_scanlen - video_bypp * width;
-       return newbuf;
-    } else {
-       return NULL;
     }
+    return newbuf;
  }
 }
 

@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v0.3 for Mesa 4.0
+ * DOS/DJGPP device driver v1.0 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
