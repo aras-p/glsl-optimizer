@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.51 2000/03/27 17:54:17 brianp Exp $ */
+/* $Id: context.c,v 1.52 2000/03/31 01:05:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -267,18 +267,23 @@ static void print_timings( GLcontext *ctx )
  * Return:  pointer to new GLvisual or NULL if requested parameters can't
  *          be met.
  */
-GLvisual *gl_create_visual( GLboolean rgbFlag,
-                            GLboolean alphaFlag,
-                            GLboolean dbFlag,
-                            GLboolean stereoFlag,
-                            GLint depthBits,
-                            GLint stencilBits,
-                            GLint accumBits,
-                            GLint indexBits,
-                            GLint redBits,
-                            GLint greenBits,
-                            GLint blueBits,
-                            GLint alphaBits )
+GLvisual *
+_mesa_create_visual( GLboolean rgbFlag,
+                     GLboolean alphaFlag,
+                     GLboolean dbFlag,
+                     GLboolean stereoFlag,
+                     GLint redBits,
+                     GLint greenBits,
+                     GLint blueBits,
+                     GLint alphaBits,
+                     GLint indexBits,
+                     GLint depthBits,
+                     GLint stencilBits,
+                     GLint accumRedBits,
+                     GLint accumGreenBits,
+                     GLint accumBlueBits,
+                     GLint accumAlphaBits,
+                     GLint numSamples )
 {
    GLvisual *vis;
 
@@ -294,7 +299,16 @@ GLvisual *gl_create_visual( GLboolean rgbFlag,
    if (stencilBits < 0 || stencilBits > (GLint) (8 * sizeof(GLstencil))) {
       return NULL;
    }
-   if (accumBits < 0 || accumBits > (GLint) (8 * sizeof(GLaccum))) {
+   if (accumRedBits < 0 || accumRedBits > (GLint) (8 * sizeof(GLaccum))) {
+      return NULL;
+   }
+   if (accumGreenBits < 0 || accumGreenBits > (GLint) (8 * sizeof(GLaccum))) {
+      return NULL;
+   }
+   if (accumBlueBits < 0 || accumBlueBits > (GLint) (8 * sizeof(GLaccum))) {
+      return NULL;
+   }
+   if (accumAlphaBits < 0 || accumAlphaBits > (GLint) (8 * sizeof(GLaccum))) {
       return NULL;
    }
 
@@ -311,10 +325,13 @@ GLvisual *gl_create_visual( GLboolean rgbFlag,
    vis->BlueBits   = blueBits;
    vis->AlphaBits  = alphaFlag ? (8 * sizeof(GLubyte)) : alphaBits;
 
-   vis->IndexBits   = indexBits;
-   vis->DepthBits   = depthBits;
-   vis->AccumBits   = (accumBits > 0) ? (8 * sizeof(GLaccum)) : 0;
-   vis->StencilBits = (stencilBits > 0) ? (8 * sizeof(GLstencil)) : 0;
+   vis->IndexBits      = indexBits;
+   vis->DepthBits      = depthBits;
+   vis->AccumRedBits   = (accumRedBits > 0) ? (8 * sizeof(GLaccum)) : 0;
+   vis->AccumGreenBits = (accumGreenBits > 0) ? (8 * sizeof(GLaccum)) : 0;
+   vis->AccumBlueBits  = (accumBlueBits > 0) ? (8 * sizeof(GLaccum)) : 0;
+   vis->AccumAlphaBits = (accumAlphaBits > 0) ? (8 * sizeof(GLaccum)) : 0;
+   vis->StencilBits    = (stencilBits > 0) ? (8 * sizeof(GLstencil)) : 0;
 
    vis->SoftwareAlpha = alphaFlag;
 
@@ -334,10 +351,38 @@ GLvisual *gl_create_visual( GLboolean rgbFlag,
 }
 
 
+/* This function should no longer be used. Use _mesa_create_visual() instead */
+GLvisual *gl_create_visual( GLboolean rgbFlag,
+                            GLboolean alphaFlag,
+                            GLboolean dbFlag,
+                            GLboolean stereoFlag,
+                            GLint depthBits,
+                            GLint stencilBits,
+                            GLint accumBits,
+                            GLint indexBits,
+                            GLint redBits,
+                            GLint greenBits,
+                            GLint blueBits,
+                            GLint alphaBits )
+{
+   return _mesa_create_visual(rgbFlag, alphaFlag, dbFlag, stereoFlag,
+                              redBits, greenBits, blueBits, alphaBits,
+                              indexBits, depthBits, stencilBits,
+                              accumBits, accumBits, accumBits, accumBits, 0);
+}
 
+
+void
+_mesa_destroy_visual( GLvisual *vis )
+{
+   FREE(vis);
+}
+
+
+/* obsolete */
 void gl_destroy_visual( GLvisual *vis )
 {
-   FREE( vis );
+   _mesa_destroy_visual(vis);
 }
 
 
@@ -381,7 +426,9 @@ GLframebuffer *gl_create_framebuffer( GLvisual *visual,
    }
    if (softwareAccum) {
       assert(visual->RGBAflag);
-      assert(visual->AccumBits > 0);
+      assert(visual->AccumRedBits > 0);
+      assert(visual->AccumGreenBits > 0);
+      assert(visual->AccumBlueBits > 0);
    }
    if (softwareAlpha) {
       assert(visual->RGBAflag);
