@@ -3827,6 +3827,8 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
        enable_ext (ctx, arbprogram_syn_id,
           (byte *) "fog_coord", (byte *) "GL_EXT_fog_coord") ||
        enable_ext (ctx, arbprogram_syn_id,
+          (byte *) "texture_rectangle", (byte *) "GL_ARB_texture_rectangle") ||
+       enable_ext (ctx, arbprogram_syn_id,
           (byte *) "texture_rectangle", (byte *) "GL_EXT_texture_rectangle") ||
        enable_ext (ctx, arbprogram_syn_id,
           (byte *) "texture_rectangle", (byte *) "GL_NV_texture_rectangle") ||

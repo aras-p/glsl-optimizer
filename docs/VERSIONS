@@ -1278,6 +1278,7 @@ Mesa Version History
 
 6.2  Month, day, 2004
     New:
+	- enabled GL_ARB_texture_rectangle (same as GL_NV_texture_rectangle)
     Changes:
     Bug fixes:
 	- OpenGL version 1.5 doesn't need GL_ARB_texture_non_power_of_two
