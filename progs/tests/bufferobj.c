@@ -36,7 +36,7 @@ static void CheckError(int line)
 {
    GLenum err = glGetError();
    if (err) {
-      printf("GL Error %d at line %d\n", (int) err, line);
+      printf("GL Error 0x%x at line %d\n", (int) err, line);
    }
 }
 
@@ -179,7 +179,9 @@ static void MakeObject1(struct object *obj)
    for (i = 0; i < 500; i++)
       buffer[i] = i & 0xff;
 
+   obj->BufferID = 0;
    glGenBuffersARB(1, &obj->BufferID);
+   assert(obj->BufferID != 0);
    glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->BufferID);
    glBufferDataARB(GL_ARRAY_BUFFER_ARB, 500, buffer, GL_STATIC_DRAW_ARB);
 
