@@ -1317,7 +1317,6 @@ struct gl_array_attrib {
 
    struct gl_client_array VertexAttrib[VERT_ATTRIB_MAX];  /**< GL_NV_vertex_program */
 
-   GLint TexCoordInterleaveFactor;
    GLint ActiveTexture;		/**< Client Active Texture */
    GLuint LockFirst;            /**< GL_EXT_compiled_vertex_array */
    GLuint LockCount;            /**< GL_EXT_compiled_vertex_array */

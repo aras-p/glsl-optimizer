@@ -618,6 +618,7 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
    GLint tcomps, ccomps, vcomps;   /* components per texcoord, color, vertex */
    GLenum ctype = 0;               /* color type */
    GLint coffset = 0, noffset = 0, voffset;/* color, normal, vertex offsets */
+   const GLint toffset = 0;        /* always zero */
    GLint defstride;                /* default stride */
    GLint c, f;
    GLint coordUnitSave;
@@ -753,22 +754,22 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
    /* Texcoords */
    coordUnitSave = ctx->Array.ActiveTexture;
    if (tflag) {
-      GLint i;
-      GLint factor = ctx->Array.TexCoordInterleaveFactor;
-      for (i = 0; i < factor; i++) {
-         _mesa_ClientActiveTextureARB( (GLenum) (GL_TEXTURE0_ARB + i) );
-         _mesa_EnableClientState( GL_TEXTURE_COORD_ARRAY );
-         _mesa_TexCoordPointer( tcomps, GL_FLOAT, stride,
-				(GLubyte *) pointer + i * coffset );
-      }
-      for (i = factor; i < (GLint) ctx->Const.MaxTextureCoordUnits; i++) {
+      GLuint i;
+      /* enable unit 0 texcoord array */
+      _mesa_ClientActiveTextureARB( GL_TEXTURE0_ARB );
+      _mesa_EnableClientState( GL_TEXTURE_COORD_ARRAY );
+      _mesa_TexCoordPointer( tcomps, GL_FLOAT, stride,
+                             (GLubyte *) pointer + i * toffset );
+      /* disable all other texcoord arrays */
+      for (i = 1; i < ctx->Const.MaxTextureCoordUnits; i++) {
          _mesa_ClientActiveTextureARB( (GLenum) (GL_TEXTURE0_ARB + i) );
          _mesa_DisableClientState( GL_TEXTURE_COORD_ARRAY );
       }
    }
    else {
-      GLint i;
-      for (i = 0; i < (GLint) ctx->Const.MaxTextureCoordUnits; i++) {
+      /* disable all texcoord arrays */
+      GLuint i;
+      for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
          _mesa_ClientActiveTextureARB( (GLenum) (GL_TEXTURE0_ARB + i) );
          _mesa_DisableClientState( GL_TEXTURE_COORD_ARRAY );
       }
@@ -781,7 +782,7 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
    if (cflag) {
       _mesa_EnableClientState( GL_COLOR_ARRAY );
       _mesa_ColorPointer( ccomps, ctype, stride,
-			  (GLubyte*) pointer + coffset );
+			  (GLubyte *) pointer + coffset );
    }
    else {
       _mesa_DisableClientState( GL_COLOR_ARRAY );
@@ -791,13 +792,13 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
    /* Normals */
    if (nflag) {
       _mesa_EnableClientState( GL_NORMAL_ARRAY );
-      _mesa_NormalPointer( GL_FLOAT, stride,
-			   (GLubyte*) pointer + noffset );
+      _mesa_NormalPointer( GL_FLOAT, stride, (GLubyte *) pointer + noffset );
    }
    else {
       _mesa_DisableClientState( GL_NORMAL_ARRAY );
    }
 
+   /* Vertices */
    _mesa_EnableClientState( GL_VERTEX_ARRAY );
    _mesa_VertexPointer( vcomps, GL_FLOAT, stride,
 			(GLubyte *) pointer + voffset );
@@ -988,7 +989,6 @@ _mesa_init_varray( GLcontext * ctx )
       ctx->Array.TexCoord[i].Enabled = GL_FALSE;
       ctx->Array.TexCoord[i].Flags = CA_CLIENT_DATA;
    }
-   ctx->Array.TexCoordInterleaveFactor = 1;
    ctx->Array.EdgeFlag.Stride = 0;
    ctx->Array.EdgeFlag.StrideB = 0;
    ctx->Array.EdgeFlag.Ptr = NULL;
