@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.37 2000/06/28 14:34:30 brianp Exp $
+$Id: VERSIONS,v 1.38 2000/07/21 15:41:59 brianp Exp $
 
 
 Mesa Version History
@@ -689,19 +689,37 @@ Mesa Version History
 	- re-enabled the optimized persp_textured_triangle() function
 
 
-3.2.1  June ??, 2000
+3.2.1  July 19, 2000
     Bug fixes:
 	- gluBuild2DMipmaps() didn't accept GL_BGRA
 	- Fixed compile/makefile problems on IRIX
+	- fixed segfault in 3dfx driver when using GL selection/feedback
+	- no longer cull very, very tiny triangles
+	- blending w/ drawbuffer==GL_FRONT_BACK caused segfault (sw rendering)
+	- fixed Motif detection code in widgets-mesa/configure.in
+	- glColorMaterial and glMaterial updates to emissive and ambient
+	  didn't always work right
+	- Specular highlights weren't always in the right place
+	- clipped GL_LINE mode polygons had interior lines appear
+	- blend term GL_ONE_MINUS_CONSTANT_ALPHA was broken
+	- GL_NICEST fog didn't always work with flat shading
+	- glRect commands in display lists were sometimes miscolored
+	- Line Z offset didn't always work
+	- fixed texgen normal vector problem (gloss's teapot)
+	- numerous GL conformance bugs fixed
+    Changes:
+	- glColorMask(false, false, false, false) handled better/faster
+	- reverted to old GLU polygon tessellator, GLU 1.1
+	- updated Win32 build files
 
 
-3.3 (Experimental/advanced development)  Month?, ??, 2000
+3.3  July 21, 2000
     New:
 	- antialiased triangles now implemented
 	- GL_EXT_texture_env_add texture mode extension
 	- GLX 1.3 API
 	- support for separate draw/read buffers (ie GL_SGI_make_current_read)
-	- better thread safety
+	- thread-safe API dispath
 	- improved glxinfo program
 	- demos/texdown program to measure texture download performance
 	- glext.h header file
@@ -710,7 +728,7 @@ Mesa Version History
 	- demos/lodbias program
 	- further optimized glRead/DrawPixels for 16-bit TrueColor X visuals
 	- GLX_EXT_visual_rating extension (a no-op, however)
-	- GL_HP_occlusion_test demo (for X and OS/Mesa drivers)
+	- GL_HP_occlusion_test extension (for X and OS/Mesa drivers)
 	- demos/occlude program
 	- GL_SGIS_pixel_texture and GL_SGIX_pixel_texture extensions
 	- demos/pixeltex program
@@ -721,8 +739,9 @@ Mesa Version History
 	- added xdemos/glxheads and xdemos/manywin
 	- demos/texenv.c demo
 	- GL_EXT_texture_env_combine extension (by Holger Waechtler)
+	- Xlib driver is now thread-safe (see xdemos/glthreads)
     Bug Fixes:
-	- none since 3.2.1
+	- various GL conformance failures fixed since 3.2.1
     Changes:
 	- gl.h now uses #defines instead of C enums for all tokens
 	- glu.h now uses #defines instead of C enums for all tokens
