@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.41 2002/10/30 20:24:47 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.42 2003/01/16 19:10:46 alanh Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -64,8 +64,14 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    unsigned int winwidth, winheight;
 #ifdef XFree86Server
    /* XFree86 GLX renderer */
-   winwidth = xmBuffer->frontbuffer->width;
-   winheight = xmBuffer->frontbuffer->height;
+   if (xmBuffer->frontbuffer->width > MAX_WIDTH ||
+       xmBuffer->frontbuffer->height > MAX_HEIGHT) {
+     winwidth = buffer->Width;
+     winheight = buffer->Height;
+   } else {
+     winwidth = xmBuffer->frontbuffer->width;
+     winheight = xmBuffer->frontbuffer->height;
+   }
 #else
    Window root;
    int winx, winy;
