@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.25 2000/01/24 16:19:54 brianp Exp $ */
+/* $Id: dlist.c,v 1.26 2000/01/31 23:09:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2893,6 +2893,17 @@ static void save_TexImage3D( GLenum target,
 }
 
 
+static void save_TexImage3DEXT( GLenum target,
+                                GLint level, GLenum components,
+                                GLsizei width, GLsizei height, GLsizei depth,
+                                GLint border, GLenum format, GLenum type,
+                                const GLvoid *pixels )
+{
+   save_TexImage3D(target, level, (GLint) components, width, height,
+                   depth, border, format, type, pixels);
+}
+
+
 static void save_TexSubImage1D( GLenum target, GLint level, GLint xoffset,
                                 GLsizei width, GLenum format, GLenum type,
                                 const GLvoid *pixels )
@@ -4435,6 +4446,11 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    table->ResetHistogram = _mesa_ResetHistogram;
    table->ResetMinmax = _mesa_ResetMinmax;
    table->SeparableFilter2D = _mesa_SeparableFilter2D;
+
+   /* 6. GL_EXT_texture3d */
+   table->CopyTexSubImage3DEXT = save_CopyTexSubImage3D;
+   table->TexImage3DEXT = save_TexImage3DEXT;
+   table->TexSubImage3DEXT = save_TexSubImage3D;
 
    /* GL_EXT_paletted_texture */
    table->ColorTableEXT = save_ColorTableEXT;
