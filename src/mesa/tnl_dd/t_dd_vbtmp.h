@@ -129,7 +129,7 @@ static void TAG(emit)( GLcontext *ctx,
    GLfloat (*col)[4], (*spec)[4];
    GLuint tc0_stride, tc1_stride, col_stride, spec_stride, fog_stride;
    GLuint tc2_stride, tc3_stride;
-   GLuint tc0_size, tc1_size;
+   GLuint tc0_size, tc1_size, col_size;
    GLuint tc2_size, tc3_size;
    GLfloat (*coord)[4];
    GLuint coord_stride;
@@ -186,6 +186,7 @@ static void TAG(emit)( GLcontext *ctx,
    if (DO_RGBA) {
       col_stride = VB->ColorPtr[0]->stride;
       col = VB->ColorPtr[0]->data;
+      col_size = VB->ColorPtr[0]->size;
    }
 
    if (DO_SPEC) {
@@ -244,7 +245,11 @@ static void TAG(emit)( GLcontext *ctx,
 	 UNCLAMPED_FLOAT_TO_UBYTE(v->v.color.red, col[0][0]);
 	 UNCLAMPED_FLOAT_TO_UBYTE(v->v.color.green, col[0][1]);
 	 UNCLAMPED_FLOAT_TO_UBYTE(v->v.color.blue, col[0][2]);
-	 UNCLAMPED_FLOAT_TO_UBYTE(v->v.color.alpha, col[0][3]);
+	 if (col_size == 4) {
+	    UNCLAMPED_FLOAT_TO_UBYTE(v->v.color.alpha, col[0][3]);
+	 } else {
+	    v->v.color.alpha = CHAN_MAX;
+	 }
 	 STRIDE_4F(col, col_stride);
       }
       if (DO_SPEC) {
@@ -379,7 +384,11 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 	 UNCLAMPED_FLOAT_TO_UBYTE(c->red, col[0][0]);
 	 UNCLAMPED_FLOAT_TO_UBYTE(c->green, col[0][1]);
 	 UNCLAMPED_FLOAT_TO_UBYTE(c->blue, col[0][2]);
-	 UNCLAMPED_FLOAT_TO_UBYTE(c->alpha, col[0][3]);
+	 if (col_size == 4) {
+	    UNCLAMPED_FLOAT_TO_UBYTE(c->alpha, col[0][3]);
+	 } else {
+	    c->alpha = CHAN_MAX;
+	 }
 	 STRIDE_4F( col, col_stride );
       }
 /*  	 fprintf(stderr, "vert %d: %.2f %.2f %.2f %x\n",  */
