@@ -1,4 +1,4 @@
-/* $Id: m_xform.h,v 1.3 2000/12/26 05:09:31 keithw Exp $ */
+/* $Id: m_xform.h,v 1.4 2001/01/05 05:31:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,7 +34,6 @@
 
 #include "glheader.h"
 #include "config.h"
-#include "math/math.h"
 #include "math/m_vector.h"
 #include "math/m_matrix.h"
 

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.114 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: context.c,v 1.115 2001/01/05 05:31:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,7 +59,7 @@
 #include "math/m_vertices.h"
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
-#include "math/math.h"
+#include "math/mathmod.h"
 #endif
 
 #if defined(MESA_TRACE)

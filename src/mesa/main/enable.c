@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.38 2000/12/27 22:52:45 keithw Exp $ */
+/* $Id: enable.c,v 1.39 2001/01/05 05:31:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,6 +85,7 @@ client_state( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
    default:
       gl_error( ctx, GL_INVALID_ENUM, "glEnable/DisableClientState" );
+      return;
    }
 
    if (*var == flag)

@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.35 2000/12/28 22:11:05 keithw Exp $ */
+/* $Id: varray.c,v 1.36 2001/01/05 05:31:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -509,8 +509,8 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
    GLboolean tflag, cflag, nflag;  /* enable/disable flags */
    GLint tcomps, ccomps, vcomps;   /* components per texcoord, color, vertex */
 
-   GLenum ctype;                   /* color type */
-   GLint coffset, noffset, voffset;/* color, normal, vertex offsets */
+   GLenum ctype = 0;               /* color type */
+   GLint coffset = 0, noffset = 0, voffset;/* color, normal, vertex offsets */
    GLint defstride;                /* default stride */
    GLint c, f;
    GLint coordUnitSave;

@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.37 2000/12/28 22:11:04 keithw Exp $
+# $Id: Makefile.X11,v 1.38 2001/01/05 05:31:42 keithw Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -160,7 +160,6 @@ DRIVER_SOURCES = \
 	FX/fxtexman.c \
 	FX/fxtris.c \
 	FX/fxvb.c \
-	FX/fxsimplerender.c \
 	FX/fxglidew.c \
 	X/glxapi.c \
 	X/fakeglx.c \
