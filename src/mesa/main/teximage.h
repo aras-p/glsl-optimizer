@@ -1,8 +1,8 @@
-/* $Id: teximage.h,v 1.12 2000/08/29 23:31:23 brianp Exp $ */
+/* $Id: teximage.h,v 1.13 2000/09/05 15:41:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -55,7 +55,7 @@ _mesa_compressed_image_size(GLcontext *ctx,
 
 
 extern struct gl_texture_object *
-_mesa_select_tex_object(GLcontext *ctx, struct gl_texture_unit *texUnit,
+_mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
                         GLenum target);
 
 
