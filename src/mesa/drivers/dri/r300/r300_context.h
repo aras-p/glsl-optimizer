@@ -174,10 +174,11 @@ struct r300_texture_env_state {
 	GLenum envMode;
 };
 
-#define R300_MAX_TEXTURE_UNITS 6
+#define R300_MAX_TEXTURE_UNITS 8
 
 struct r300_texture_state {
 	struct r300_texture_env_state unit[R300_MAX_TEXTURE_UNITS];
+	int tc_count; /* number of incoming texture coordinates from VAP */
 };
 
 /**

@@ -331,6 +331,294 @@ static void r300DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
 	r300UpdateWindow(ctx);
 }
 
+/* Routing and texture-related */
+
+void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
+{
+	int i, count=0,reg=0;
+	GLuint dw, mask;
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	struct vertex_buffer *VB = &tnl->vb;
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	
+	
+	/* Stage 1 - input to VAP */
+	
+	/* Assign register number automatically, retaining it in rmesa->state.reg */
+	
+	/* Note: immediate vertex data includes all coordinates.
+	To save bandwidth use either VBUF or state-based vertex generation */
+	
+	#define CONFIGURE_AOS(v, o, r, f) \
+		{\
+		if(immediate){ \
+			r300->state.aos[count].element_size=4; \
+			r300->state.aos[count].stride=4; \
+			r300->state.aos[count].ncomponents=4; \
+			} else { \
+			r300->state.aos[count].element_size=v->size; \
+			r300->state.aos[count].stride=v->size; \
+			r300->state.aos[count].ncomponents=v->size; \
+			} \
+		r300->state.aos[count].offset=o; \
+		r300->state.aos[count].reg=reg; \
+		r300->state.aos[count].format=(f); \
+		r300->state.vap_reg.r=reg; \
+		count++; \
+		reg++; \
+		}
+	
+		/* All offsets are 0 - for use by immediate mode. 
+		Should change later to handle vertex buffers */
+	CONFIGURE_AOS(VB->ObjPtr, 0, i_coords, AOS_FORMAT_FLOAT);
+	CONFIGURE_AOS(VB->ColorPtr[0], 0, i_color[0], AOS_FORMAT_FLOAT_COLOR);
+	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
+		if(ctx->Texture.Unit[i].Enabled)
+			CONFIGURE_AOS(VB->TexCoordPtr[i], 0, i_tex[i], AOS_FORMAT_FLOAT);
+			
+	r300->state.aos_count=count;
+	
+	if (RADEON_DEBUG & DEBUG_STATE)
+		fprintf(stderr, "aos_count=%d\n", count);
+	
+	if(count>R300_MAX_AOS_ARRAYS){
+		fprintf(stderr, "Aieee ! AOS array count exceeded !\n");
+		exit(-1);
+		}
+			
+	/* Implement AOS */
+	
+	/* setup INPUT_ROUTE */
+	R300_STATECHANGE(r300, vir[0]);
+	for(i=0;i+1<count;i+=2){
+		dw=(r300->state.aos[i].ncomponents-1) 
+		| ((r300->state.aos[i].reg)<<8)
+		| (r300->state.aos[i].format<<14)
+		| (((r300->state.aos[i+1].ncomponents-1) 
+		| ((r300->state.aos[i+1].reg)<<8)
+		| (r300->state.aos[i+1].format<<14))<<16);
+		
+		if(i+2==count){
+			dw|=(1<<(13+16));
+			}
+		r300->hw.vir[0].cmd[R300_VIR_CNTL_0+(i>>1)]=dw;
+		}
+	if(count & 1){
+		dw=(r300->state.aos[count-1].ncomponents-1)
+		| (r300->state.aos[count-1].format<<14)
+		| ((r300->state.aos[count-1].reg)<<8)
+		| (1<<13);
+		r300->hw.vir[0].cmd[R300_VIR_CNTL_0+(count>>1)]=dw;
+		//fprintf(stderr, "vir0 dw=%08x\n", dw);
+		}
+	/* Set the rest of INPUT_ROUTE_0 to 0 */
+	//for(i=((count+1)>>1); i<8; i++)r300->hw.vir[0].cmd[R300_VIR_CNTL_0+i]=(0x0);
+	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->unchecked_state.count = (count+1)>>1;
+	
+	
+	/* Mesa assumes that all missing components are from (0, 0, 0, 1) */
+	#define ALL_COMPONENTS ((R300_INPUT_ROUTE_SELECT_X<<R300_INPUT_ROUTE_X_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_Y<<R300_INPUT_ROUTE_Y_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_Z<<R300_INPUT_ROUTE_Z_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_W<<R300_INPUT_ROUTE_W_SHIFT))
+	
+	#define ALL_DEFAULT ((R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_X_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Y_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Z_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_ONE<<R300_INPUT_ROUTE_W_SHIFT))
+	
+	R300_STATECHANGE(r300, vir[1]);
+		
+	for(i=0;i+1<count;i+=2){
+		/* do i first.. */
+		mask=(1<<(r300->state.aos[i].ncomponents*3))-1;
+		dw=(ALL_COMPONENTS & mask)
+		| (ALL_DEFAULT & ~mask)
+		| R300_INPUT_ROUTE_ENABLE;
+		
+		/* i+1 */
+		mask=(1<<(r300->state.aos[i+1].ncomponents*3))-1;
+		dw|=( 
+		(ALL_COMPONENTS & mask)
+		| (ALL_DEFAULT & ~mask)
+		| R300_INPUT_ROUTE_ENABLE
+		)<<16;
+	
+		r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(i>>1)]=dw;
+		}
+	if(count & 1){
+		mask=(1<<(r300->state.aos[count-1].ncomponents*3))-1;
+		dw=(ALL_COMPONENTS & mask)
+		| (ALL_DEFAULT & ~mask)
+		| R300_INPUT_ROUTE_ENABLE;
+		r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(count>>1)]=dw;
+		//fprintf(stderr, "vir1 dw=%08x\n", dw);
+		}
+	/* Set the rest of INPUT_ROUTE_1 to 0 */
+	//for(i=((count+1)>>1); i<8; i++)r300->hw.vir[1].cmd[R300_VIR_CNTL_0+i]=0x0;
+	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->unchecked_state.count = (count+1)>>1;
+	
+	/* Set up input_cntl */
+	
+	R300_STATECHANGE(r300, vic);
+	r300->hw.vic.cmd[R300_VIC_CNTL_0]=0x5555;  /* Hard coded value, no idea what it means */
+	
+	r300->hw.vic.cmd[R300_VIC_CNTL_1]=R300_INPUT_CNTL_POS
+					| R300_INPUT_CNTL_COLOR;
+	
+	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
+		if(ctx->Texture.Unit[i].Enabled)
+			r300->hw.vic.cmd[R300_VIC_CNTL_1]|=(R300_INPUT_CNTL_TC0<<i);
+	
+	/* Stage 3: VAP output */
+	R300_STATECHANGE(r300, vof);
+	r300->hw.vof.cmd[R300_VOF_CNTL_0]=R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT
+					| R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
+	
+	r300->hw.vof.cmd[R300_VOF_CNTL_1]=0;
+	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
+		if(ctx->Texture.Unit[i].Enabled)
+			r300->hw.vof.cmd[R300_VOF_CNTL_1]|=(4<<(3*i));
+	
+}
+
+static r300TexObj default_tex_obj={
+	filter:R300_TX_MAG_FILTER_LINEAR | R300_TX_MIN_FILTER_LINEAR,
+	pitch: 0x8000,
+	size: (0xff << R300_TX_WIDTHMASK_SHIFT) 
+	      | (0xff << R300_TX_HEIGHTMASK_SHIFT)
+	      | (0x8 << R300_TX_SIZE_SHIFT),
+	format: 0x88a0c,
+	offset: 0x0,
+	unknown4: 0x0,
+	unknown5: 0x0
+	};
+
+void r300_setup_textures(GLcontext *ctx)
+{
+	int i, mtu;
+	struct r300_tex_obj *t;
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	int max_texture_unit=-1; /* -1 translates into no setup costs for fields */
+	
+	R300_STATECHANGE(r300, txe);
+	R300_STATECHANGE(r300, tex.filter);
+	R300_STATECHANGE(r300, tex.unknown1);
+	R300_STATECHANGE(r300, tex.size);
+	R300_STATECHANGE(r300, tex.format);
+	R300_STATECHANGE(r300, tex.offset);
+	R300_STATECHANGE(r300, tex.unknown4);
+	R300_STATECHANGE(r300, tex.unknown5);
+	
+	r300->state.texture.tc_count=0;
+	
+	r300->hw.txe.cmd[R300_TXE_ENABLE]=0x0;
+	
+	mtu = r300->radeon.glCtx->Const.MaxTextureUnits;
+	if (RADEON_DEBUG & DEBUG_STATE)
+		fprintf(stderr, "mtu=%d\n", mtu);
+	
+	if(mtu>R300_MAX_TEXTURE_UNITS){
+		fprintf(stderr, "Aiiee ! mtu=%d is greater than R300_MAX_TEXTURE_UNITS=%d\n", 
+			mtu, R300_MAX_TEXTURE_UNITS);
+		exit(-1);
+		}
+	for(i=0;i<mtu;i++){
+		if(ctx->Texture.Unit[i].Enabled!=NULL){
+			t=r300->state.texture.unit[i].texobj;
+			r300->state.texture.tc_count++;
+			if(t==NULL){
+				fprintf(stderr, "Texture unit %d enabled, but corresponding texobj is NULL, using default object.\n", i);
+				//exit(-1);
+				t=&default_tex_obj;
+				}
+			if (RADEON_DEBUG & DEBUG_STATE)
+				fprintf(stderr, "Activating texture unit %d\n", i);
+			max_texture_unit=i;
+			r300->hw.txe.cmd[R300_TXE_ENABLE]|=(1<<i);
+			
+			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=t->filter;
+			r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=t->pitch;
+			r300->hw.tex.size.cmd[R300_TEX_VALUE_0+i]=t->size;
+			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=t->format;
+			r300->hw.tex.offset.cmd[R300_TEX_VALUE_0+i]=r300->radeon.radeonScreen->fbLocation+t->offset;
+			r300->hw.tex.unknown4.cmd[R300_TEX_VALUE_0+i]=0x0;
+			r300->hw.tex.unknown5.cmd[R300_TEX_VALUE_0+i]=0x0;
+			
+			/* We don't know how to set this yet */
+			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x88a0c;
+			
+			} else {
+			/* Fill in with 0's */
+			#if 0 /* No need.. */
+			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=0x0;
+			r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=0x0;
+			r300->hw.tex.size.cmd[R300_TEX_VALUE_0+i]=0x0;
+			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x0;
+			r300->hw.tex.offset.cmd[R300_TEX_VALUE_0+i]=r300->radeon.radeonScreen->fbLocation;
+			r300->hw.tex.unknown4.cmd[R300_TEX_VALUE_0+i]=0x0;
+			r300->hw.tex.unknown5.cmd[R300_TEX_VALUE_0+i]=0x0;
+			#endif
+			}
+			
+		}
+	((drm_r300_cmd_header_t*)r300->hw.tex.filter.cmd)->unchecked_state.count = max_texture_unit+1;
+	((drm_r300_cmd_header_t*)r300->hw.tex.unknown1.cmd)->unchecked_state.count = max_texture_unit+1;
+	((drm_r300_cmd_header_t*)r300->hw.tex.size.cmd)->unchecked_state.count = max_texture_unit+1;
+	((drm_r300_cmd_header_t*)r300->hw.tex.format.cmd)->unchecked_state.count = max_texture_unit+1;
+	((drm_r300_cmd_header_t*)r300->hw.tex.offset.cmd)->unchecked_state.count = max_texture_unit+1;
+	((drm_r300_cmd_header_t*)r300->hw.tex.unknown4.cmd)->unchecked_state.count = max_texture_unit+1;
+	((drm_r300_cmd_header_t*)r300->hw.tex.unknown5.cmd)->unchecked_state.count = max_texture_unit+1;
+	
+	if (RADEON_DEBUG & DEBUG_STATE)
+		fprintf(stderr, "TX_ENABLE: %08x  max_texture_unit=%d\n", r300->hw.txe.cmd[R300_TXE_ENABLE], max_texture_unit);
+}
+
+void r300_setup_rs_unit(GLcontext *ctx)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	int i;
+	
+	/* This needs to be rewritten - it is a hack at best */
+	
+	R300_STATECHANGE(r300, ri);
+	R300_STATECHANGE(r300, rc);
+	R300_STATECHANGE(r300, rr);
+	
+	for(i = 1; i <= 8; ++i)
+		r300->hw.ri.cmd[i] = 0x00d10000;
+	r300->hw.ri.cmd[R300_RI_INTERP_1] |= R300_RS_INTERP_1_UNKNOWN;
+	r300->hw.ri.cmd[R300_RI_INTERP_2] |= R300_RS_INTERP_2_UNKNOWN;
+	r300->hw.ri.cmd[R300_RI_INTERP_3] |= R300_RS_INTERP_3_UNKNOWN;
+	
+	for(i = 1; i <= 8; ++i)
+		r300->hw.rr.cmd[i] = 0;
+	/* textures enabled ? */
+	if(r300->state.texture.tc_count>0){
+	
+		/* This code only really works with one set of texture coordinates */
+		
+		/* The second constant is needed to get glxgears display anything .. */
+		r300->hw.rc.cmd[1] = R300_RS_CNTL_0_UNKNOWN_7 
+				| R300_RS_CNTL_0_UNKNOWN_18 
+				| (r300->state.texture.tc_count<<R300_RS_CNTL_TC_CNT_SHIFT);
+		r300->hw.rc.cmd[2] = 0xc0;
+	
+	
+		((drm_r300_cmd_header_t*)r300->hw.rr.cmd)->unchecked_state.count = 1;
+		r300->hw.rr.cmd[R300_RR_ROUTE_0] = 0x24008;
+		
+		} else {
+		
+		/* The second constant is needed to get glxgears display anything .. */
+		r300->hw.rc.cmd[1] = R300_RS_CNTL_0_UNKNOWN_7 | R300_RS_CNTL_0_UNKNOWN_18;
+		r300->hw.rc.cmd[2] = 0;
+		
+		((drm_r300_cmd_header_t*)r300->hw.rr.cmd)->unchecked_state.count = 1;
+		r300->hw.rr.cmd[R300_RR_ROUTE_0] = 0x4000;
+		
+		}
+}
 
 /**
  * Called by Mesa after an internal state update.
@@ -374,6 +662,12 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300DepthFunc(ctx, ctx->Depth.Func);
 
 	r300UpdateCulling(ctx);
+        
+	r300_setup_routing(ctx, GL_TRUE);
+	
+	r300UpdateTextureState(ctx);
+	r300_setup_textures(ctx);
+	r300_setup_rs_unit(ctx);
 
 //BEGIN: TODO
 	r300->hw.unk2080.cmd[1] = 0x0030045A;
@@ -395,6 +689,7 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk2140.cmd[1] = 0x00000000;
 
+	#if 0 /* Done in setup routing */
 	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->unchecked_state.count = 1;
 	r300->hw.vir[0].cmd[1] = 0x21030003;
 
@@ -403,7 +698,8 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.vic.cmd[R300_VIR_CNTL_0] = 0x00000001;
 	r300->hw.vic.cmd[R300_VIR_CNTL_1] = 0x00000405;
-
+	#endif
+	
 	r300->hw.unk21DC.cmd[1] = 0xAAAAAAAA;
 
 	r300->hw.unk221C.cmd[1] = R300_221C_NORMAL;
@@ -418,10 +714,12 @@ void r300ResetHwState(r300ContextPtr r300)
 	else
 		r300->hw.unk2288.cmd[1] = R300_2288_RV350;
 
+	#if 0
 	r300->hw.vof.cmd[R300_VOF_CNTL_0] = R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT
 				| R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
 	r300->hw.vof.cmd[R300_VOF_CNTL_1] = 0; /* no textures */
-		
+	#endif	
+	
 	r300->hw.pvs.cmd[R300_PVS_CNTL_1] = 0;
 	r300->hw.pvs.cmd[R300_PVS_CNTL_2] = 0;
 	r300->hw.pvs.cmd[R300_PVS_CNTL_3] = 0;
@@ -443,7 +741,7 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.gb_misc.cmd[R300_GB_MISC_SELECT] = 0x00000000;
 	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = 0x00000000; /* No antialiasing */
 
-	r300->hw.txe.cmd[R300_TXE_ENABLE] = 0;
+	//r300->hw.txe.cmd[R300_TXE_ENABLE] = 0;
 
 	r300->hw.unk4200.cmd[1] = r300PackFloat32(0.0);
 	r300->hw.unk4200.cmd[2] = r300PackFloat32(0.0);
@@ -481,20 +779,6 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk42C0.cmd[1] = 0x4B7FFFFF;
 	r300->hw.unk42C0.cmd[2] = 0x00000000;
 
-	/* The second constant is needed to get glxgears display anything .. */
-	r300->hw.rc.cmd[1] = R300_RS_CNTL_0_UNKNOWN_7 | R300_RS_CNTL_0_UNKNOWN_18;
-	r300->hw.rc.cmd[2] = 0;
-
-	for(i = 1; i <= 8; ++i)
-		r300->hw.ri.cmd[i] = 0x00d10000;
-	r300->hw.ri.cmd[R300_RI_INTERP_1] |= R300_RS_INTERP_1_UNKNOWN;
-	r300->hw.ri.cmd[R300_RI_INTERP_2] |= R300_RS_INTERP_2_UNKNOWN;
-	r300->hw.ri.cmd[R300_RI_INTERP_3] |= R300_RS_INTERP_3_UNKNOWN;
-
-	((drm_r300_cmd_header_t*)r300->hw.rr.cmd)->unchecked_state.count = 1;
-	for(i = 1; i <= 8; ++i)
-		r300->hw.rr.cmd[i] = 0;
-	r300->hw.rr.cmd[R300_RR_ROUTE_0] = 0x4000;
 
 	r300->hw.unk43A4.cmd[1] = 0x0000001C;
 	r300->hw.unk43A4.cmd[2] = 0x2DA49525;
@@ -602,16 +886,6 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.vps.cmd[R300_VPS_POINTSIZE] = r300PackFloat32(1.0);
 	r300->hw.vps.cmd[R300_VPS_ZERO_3] = 0;
 	
-	/* Initialize texture units */
-	for(i=0;i<r300->radeon.glCtx->Const.MaxTextureUnits;i++){
-		r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=0x0;
-		r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=0x0;
-		r300->hw.tex.size.cmd[R300_TEX_VALUE_0+i]=0x0;
-		r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x0;
-		r300->hw.tex.offset.cmd[R300_TEX_VALUE_0+i]=0x0;
-		r300->hw.tex.unknown4.cmd[R300_TEX_VALUE_0+i]=0x0;
-		r300->hw.tex.unknown5.cmd[R300_TEX_VALUE_0+i]=0x0;
-		}
 //END: TODO
 	
 	r300->hw.all_dirty = GL_TRUE;
@@ -626,9 +900,29 @@ void r300ResetHwState(r300ContextPtr r300)
  */
 void r300InitState(r300ContextPtr r300)
 {
+	GLcontext *ctx = r300->radeon.glCtx;
+	GLuint depth_fmt;
+
 	radeonInitState(&r300->radeon);
 	
-	r300->state.depth.scale = 1.0 / (GLfloat) 0xffff;
+	switch (ctx->Visual.depthBits) {
+	case 16:
+		r300->state.depth.scale = 1.0 / (GLfloat) 0xffff;
+		depth_fmt = R200_DEPTH_FORMAT_16BIT_INT_Z;
+		//r300->state.stencil.clear = 0x00000000;
+		break;
+	case 24:
+		r300->state.depth.scale = 1.0 / (GLfloat) 0xffffff;
+		depth_fmt = R200_DEPTH_FORMAT_24BIT_INT_Z;
+		//r300->state.stencil.clear = 0xff000000;
+		break;
+	default:
+		fprintf(stderr, "Error: Unsupported depth %d... exiting\n",
+			ctx->Visual.depthBits);
+		exit(-1);
+	}
+	
+	memset(&(r300->state.texture), 0, sizeof(r300->state.texture));
 
 	r300ResetHwState(r300);
 }

@@ -98,5 +98,18 @@ static __inline__ uint32_t* r300AllocCmdBuf(r300ContextPtr r300,
 	return ptr;
 }
 
+extern void r300EmitBlit(r300ContextPtr rmesa,
+		  GLuint color_fmt,
+		  GLuint src_pitch,
+		  GLuint src_offset,
+		  GLuint dst_pitch,
+		  GLuint dst_offset,
+		  GLint srcx, GLint srcy,
+		  GLint dstx, GLint dsty, GLuint w, GLuint h);
+
+extern void r300EmitWait(r300ContextPtr rmesa, GLuint flags);
+extern void r300EmitLOAD_VBPNTR(r300ContextPtr rmesa, int start);
+extern void r300EmitVertexShader(r300ContextPtr rmesa);
+extern void r300EmitPixelShader(r300ContextPtr rmesa);
 
 #endif /* __R300_CMDBUF_H__ */

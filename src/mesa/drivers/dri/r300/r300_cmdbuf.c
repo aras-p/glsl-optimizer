@@ -416,26 +416,26 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.vps.cmd[R300_VPS_CMD_0] = cmdvpu(R300_PVS_UPLOAD_POINTSIZE, 1);
 
 	/* Textures */
-	ALLOC_STATE( tex.filter, always, mtu, "tex_filter", 0 );
-		r300->hw.tex.filter.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_FILTER_0, mtu-1);
+	ALLOC_STATE( tex.filter, variable, mtu+1, "tex_filter", 0 );
+		r300->hw.tex.filter.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_FILTER_0, 0);
 		
-	ALLOC_STATE( tex.unknown1, always, mtu, "tex_unknown1", 0 );
-		r300->hw.tex.unknown1.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_UNK1_0, mtu-1);
+	ALLOC_STATE( tex.unknown1, variable, mtu+1, "tex_unknown1", 0 );
+		r300->hw.tex.unknown1.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_UNK1_0, 0);
 		
-	ALLOC_STATE( tex.size, always, mtu, "tex_size", 0 );
-		r300->hw.tex.size.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_SIZE_0, mtu-1);
+	ALLOC_STATE( tex.size, variable, mtu+1, "tex_size", 0 );
+		r300->hw.tex.size.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_SIZE_0, 0);
 		
-	ALLOC_STATE( tex.format, always, mtu, "tex_format", 0 );
-		r300->hw.tex.format.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_FORMAT_0, mtu-1);
+	ALLOC_STATE( tex.format, variable, mtu+1, "tex_format", 0 );
+		r300->hw.tex.format.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_FORMAT_0, 0);
 		
-	ALLOC_STATE( tex.offset, always, mtu, "tex_offset", 0 );
-		r300->hw.tex.offset.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_OFFSET_0, mtu-1);
+	ALLOC_STATE( tex.offset, variable, mtu+1, "tex_offset", 0 );
+		r300->hw.tex.offset.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_OFFSET_0, 0);
 		
-	ALLOC_STATE( tex.unknown4, always, mtu, "tex_unknown4", 0 );
-		r300->hw.tex.unknown4.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_UNK4_0, mtu-1);
+	ALLOC_STATE( tex.unknown4, variable, mtu+1, "tex_unknown4", 0 );
+		r300->hw.tex.unknown4.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_UNK4_0, 0);
 		
-	ALLOC_STATE( tex.unknown5, always, mtu, "tex_unknown5", 0 );
-		r300->hw.tex.unknown5.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_UNK5_0, mtu-1);
+	ALLOC_STATE( tex.unknown5, variable, mtu+1, "tex_unknown5", 0 );
+		r300->hw.tex.unknown5.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_UNK5_0, 0);
 	
 
 	/* Setup the atom linked list */
@@ -574,7 +574,7 @@ void r300EmitBlit(r300ContextPtr rmesa,
 	assert(h < (1 << 16));
 
 	cmd =
-	    (drm_radeon_cmd_header_t *) r200AllocCmdBuf(rmesa, 8 * sizeof(int),
+	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 8 * sizeof(int),
 							__FUNCTION__);
 
 	cmd[0].header.cmd_type = RADEON_CMD_PACKET3;
@@ -603,7 +603,7 @@ void r300EmitWait(r300ContextPtr rmesa, GLuint flags)
 		assert(!(flags & ~(RADEON_WAIT_2D | RADEON_WAIT_3D)));
 
 		cmd =
-		    (drm_radeon_cmd_header_t *) r200AllocCmdBuf(rmesa,
+		    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa,
 								1 * sizeof(int),
 								__FUNCTION__);
 		cmd[0].i = 0;

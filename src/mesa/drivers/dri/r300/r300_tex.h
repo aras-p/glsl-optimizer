@@ -47,5 +47,7 @@ extern void r300DestroyTexObj(r300ContextPtr rmesa, r300TexObjPtr t);
 
 extern void r300InitTextureFuncs(struct dd_function_table *functions);
 
+extern void r300UpdateTextureState(GLcontext * ctx);
+
 #endif
 #endif				/* __r300_TEX_H__ */

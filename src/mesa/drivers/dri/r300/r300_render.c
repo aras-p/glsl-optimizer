@@ -45,6 +45,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "array_cache/acache.h"
 #include "tnl/tnl.h"
 
+#include "radeon_reg.h"
+#include "radeon_macros.h"
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
 #include "r300_context.h"
@@ -52,6 +54,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "r300_reg.h"
 #include "r300_program.h"
+#include "r300_tex.h"
 
 #include "r300_lib.h"
 
@@ -149,180 +152,6 @@ static int r300_get_primitive_type(r300ContextPtr rmesa,
 
 
 
-static void inline r300_setup_routing(r300ContextPtr r300, GLcontext *ctx, GLboolean immediate)
-{
-int i, count=0,reg=0;
-GLuint dw, mask;
-TNLcontext *tnl = TNL_CONTEXT(ctx);
-struct vertex_buffer *VB = &tnl->vb;
-
-
-/* Stage 1 - input to VAP */
-
-/* Assign register number automatically, retaining it in rmesa->state.reg */
-
-   /* Note: immediate vertex data includes all coordinates.
-     To save bandwidth use either VBUF or state-based vertex generation */
-   
-#define CONFIGURE_AOS(v, o, r, f) \
-	{\
-	if(immediate){ \
-		r300->state.aos[count].element_size=4; \
-		r300->state.aos[count].stride=4; \
-		r300->state.aos[count].ncomponents=4; \
-		} else { \
-		r300->state.aos[count].element_size=v->size; \
-		r300->state.aos[count].stride=v->size; \
-		r300->state.aos[count].ncomponents=v->size; \
-		} \
-	r300->state.aos[count].offset=o; \
-	r300->state.aos[count].reg=reg; \
-	r300->state.aos[count].format=(f); \
-	r300->state.vap_reg.r=reg; \
-	count++; \
-	reg++; \
-	}
-
-	/* All offsets are 0 - for use by immediate mode. 
-	   Should change later to handle vertex buffers */
-CONFIGURE_AOS(VB->ObjPtr, 0, i_coords, AOS_FORMAT_FLOAT);
-CONFIGURE_AOS(VB->ColorPtr[0], 0, i_color[0], AOS_FORMAT_FLOAT_COLOR);
-for(i=0;i < ctx->Const.MaxTextureUnits;i++)
-	if(ctx->Texture.Unit[i].Enabled)
-		CONFIGURE_AOS(VB->TexCoordPtr[i], 0, i_tex[i], AOS_FORMAT_FLOAT);
-		
-r300->state.aos_count=count;
-
-if(count>R300_MAX_AOS_ARRAYS){
-	fprintf(stderr, "Aieee ! AOS array count exceeded !\n");
-	exit(-1);
-	}
-		
-/* Implement AOS */
-
-
-/* setup INPUT_ROUTE */
-
-R300_STATECHANGE(r300, vir[0]);
-for(i=0;i+1<count;i+=2){
-	dw=(r300->state.aos[i].ncomponents-1) 
-	   | ((r300->state.aos[i].reg)<<8)
-	   | (r300->state.aos[i].format<<14)
-	   | (((r300->state.aos[i+1].ncomponents-1) 
-	   | ((r300->state.aos[i+1].reg)<<8)
-	   | (r300->state.aos[i+1].format<<14))<<16);
-	   
-	if(i+2==count){
-		dw|=(1<<(13+16));
-		}
-	r300->hw.vir[0].cmd[R300_VIR_CNTL_0+(i>>1)]=dw;
-	}
-if(count & 1){
-	dw=(r300->state.aos[count-1].ncomponents-1)
-	   | (r300->state.aos[count-1].format<<14)
-	   | ((r300->state.aos[count-1].reg)<<8)
-	   | (1<<13);
-	r300->hw.vir[0].cmd[R300_VIR_CNTL_0+(count>>1)]=dw;
-	}
-/* Set the rest of INPUT_ROUTE_0 to 0 */
-for(i=((count+1)>>1); i<8; i++)r300->hw.vir[0].cmd[R300_VIR_CNTL_0+i]=(0x0);
-
-/* Mesa assumes that all missing components are from (0, 0, 0, 1) */
-#define ALL_COMPONENTS ((R300_INPUT_ROUTE_SELECT_X<<R300_INPUT_ROUTE_X_SHIFT) \
-	| (R300_INPUT_ROUTE_SELECT_Y<<R300_INPUT_ROUTE_Y_SHIFT) \
-	| (R300_INPUT_ROUTE_SELECT_Z<<R300_INPUT_ROUTE_Z_SHIFT) \
-	| (R300_INPUT_ROUTE_SELECT_W<<R300_INPUT_ROUTE_W_SHIFT))
-
-#define ALL_DEFAULT ((R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_X_SHIFT) \
-	| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Y_SHIFT) \
-	| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Z_SHIFT) \
-	| (R300_INPUT_ROUTE_SELECT_ONE<<R300_INPUT_ROUTE_W_SHIFT))
-
-R300_STATECHANGE(r300, vir[1]);
-	
-for(i=0;i+1<count;i+=2){
-	/* do i first.. */
-	mask=(1<<(r300->state.aos[i].ncomponents*3))-1;
-	dw=(ALL_COMPONENTS & mask)
-	 | (ALL_DEFAULT & ~mask)
-	 | R300_INPUT_ROUTE_ENABLE;
-	 
-	/* i+1 */
-	mask=(1<<(r300->state.aos[i+1].ncomponents*3))-1;
-	dw|=( 
-	   (ALL_COMPONENTS & mask)
-	 | (ALL_DEFAULT & ~mask)
-	 | R300_INPUT_ROUTE_ENABLE
-	    )<<16;
-
-	r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(i>>1)]=dw;
-	}
-if(count & 1){
-	mask=(1<<(r300->state.aos[count-1].ncomponents*3))-1;
-	dw=(ALL_COMPONENTS & mask)
-	 | (ALL_DEFAULT & ~mask)
-	 | R300_INPUT_ROUTE_ENABLE;
-	r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(count>>1)]=dw;
-	}
-/* Set the rest of INPUT_ROUTE_1 to 0 */
-for(i=((count+1)>>1); i<8; i++)r300->hw.vir[1].cmd[R300_VIR_CNTL_0+i]=(0x0);
-
-/* Set up input_cntl */
-
-R300_STATECHANGE(r300, vic);
-r300->hw.vic.cmd[R300_VIC_CNTL_0]=0x5555;  /* Hard coded value, no idea what it means */
-
-r300->hw.vic.cmd[R300_VIC_CNTL_1]=R300_INPUT_CNTL_POS
-				| R300_INPUT_CNTL_COLOR;
-
-for(i=0;i < ctx->Const.MaxTextureUnits;i++)
-	if(ctx->Texture.Unit[i].Enabled)
-		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=(R300_INPUT_CNTL_TC0<<i);
-
-/* Stage 3: VAP output */
-R300_STATECHANGE(r300, vof);
-r300->hw.vof.cmd[R300_VOF_CNTL_0]=R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT
-				| R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
-
-r300->hw.vof.cmd[R300_VOF_CNTL_1]=0;
-for(i=0;i < ctx->Const.MaxTextureUnits;i++)
-	if(ctx->Texture.Unit[i].Enabled)
-		r300->hw.vof.cmd[R300_VOF_CNTL_1]|=(4<<(3*i));
-}
-
-static inline void r300_setup_textures(r300ContextPtr r300, GLcontext *ctx)
-{
-int i;
-struct r300_tex_obj *t;
-
-R300_STATECHANGE(r300, txe);
-R300_STATECHANGE(r300, tex.filter);
-R300_STATECHANGE(r300, tex.unknown1);
-R300_STATECHANGE(r300, tex.size);
-R300_STATECHANGE(r300, tex.format);
-R300_STATECHANGE(r300, tex.offset);
-R300_STATECHANGE(r300, tex.unknown4);
-R300_STATECHANGE(r300, tex.unknown5);
-
-r300->hw.txe.cmd[R300_TXE_ENABLE]=0x0;
-
-for(i=0;i<R300_MAX_TEXTURE_UNITS;i++){
-	if((t=r300->state.texture.unit[i].texobj)!=NULL){
-		r300->hw.txe.cmd[R300_TXE_ENABLE]|=(1<<i);
-		
-		r300->hw.tex.filter.cmd[R300_TEX_CMD_0+i]=t->filter;
-		r300->hw.tex.unknown1.cmd[R300_TEX_CMD_0+i]=t->pitch;
-		r300->hw.tex.size.cmd[R300_TEX_CMD_0+i]=t->size;
-		r300->hw.tex.format.cmd[R300_TEX_CMD_0+i]=t->format;
-		r300->hw.tex.offset.cmd[R300_TEX_CMD_0+i]=r300->radeon.radeonScreen->fbLocation+t->offset;
-		r300->hw.tex.unknown4.cmd[R300_TEX_CMD_0+i]=0x0;
-		r300->hw.tex.unknown5.cmd[R300_TEX_CMD_0+i]=0x0;
-		
-		/* We don't know how to set this yet */
-		r300->hw.tex.format.cmd[R300_TEX_CMD_0+i]=0x88a0c;
-		}
-	}
-}
 
 /* Immediate implementation - vertex data is sent via command stream */
 
@@ -431,8 +260,8 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
 				| R300_VTX_W0_FMT;
    R300_STATECHANGE(rmesa, vte);
 
-   r300_setup_routing(rmesa, ctx, GL_TRUE);
-   r300_setup_textures(rmesa, ctx);
+  // r300_setup_routing(rmesa, ctx, GL_TRUE);
+  // r300_setup_textures(rmesa, ctx);
       
    r300EmitState(rmesa);
    
@@ -544,13 +373,6 @@ static void r300_render_vb_flat_primitive(r300ContextPtr rmesa,
    fire_AOS(PASS_PREFIX end-start, type);
 }
 
-static VERTEX_SHADER_FRAGMENT default_vector_vsf={
-	length: 4,
-	body: { 
-		f: {0.0, 0.0, 0.0, 1.0}
-		}
-	};
-
 static GLboolean r300_run_vb_flat_render(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
@@ -645,7 +467,7 @@ static void r300_render_tex_primitive(r300ContextPtr rmesa,
        	
    type=r300_get_primitive_type(rmesa, ctx, start, end, prim);
 		
-   		#if 1
+   		#if 0
 		fprintf(stderr,"ObjPtr: size=%d stride=%d\n", 
 			VB->ObjPtr->size, VB->ObjPtr->stride);
 		fprintf(stderr,"ColorPtr[0]: size=%d stride=%d\n", 
@@ -702,17 +524,8 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    
    /* Update texture state - needs to be done only when actually changed..
       All the time for now.. */
-   r300UpdateTextureState(ctx);
-   
-   r300_setup_routing(rmesa, ctx, GL_TRUE);
-   r300_setup_textures(rmesa, ctx);
-   exit(-1);
-      
    /* Flush state - make sure command buffer is nice and large */
    r300Flush(ctx);
-   
-   //fprintf(stderr, "You can enable texture drawing in %s:%s \n", __FILE__, __FUNCTION__);
-   //return GL_TRUE;
 
 
 	if (RADEON_DEBUG == DEBUG_PRIMS)
@@ -735,69 +548,29 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    R300_STATECHANGE(rmesa, vte);
    
    r300EmitState(rmesa);
+//   r300Flush(ctx);
+      
+   assign_pipeline(rmesa, &SINGLE_TEXTURE_PIPELINE);
    
-   SINGLE_TEXTURE_PIPELINE.vertex_shader.matrix[0].length=16;
-   memcpy(SINGLE_TEXTURE_PIPELINE.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
+   rmesa->state.vertex_shader.matrix[0].length=16;
+   memcpy(rmesa->state.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
 
-   SINGLE_TEXTURE_PIPELINE.vertex_shader.unknown2.length=4;
-   SINGLE_TEXTURE_PIPELINE.vertex_shader.unknown2.body.f[0]=0.0;
-   SINGLE_TEXTURE_PIPELINE.vertex_shader.unknown2.body.f[1]=0.0;
-   SINGLE_TEXTURE_PIPELINE.vertex_shader.unknown2.body.f[2]=1.0;
-   SINGLE_TEXTURE_PIPELINE.vertex_shader.unknown2.body.f[3]=0.0;
-
-   /* Use actual texture offset */
-   
-   fprintf(stderr,"pp_border_color=%08x pp_cubic_faces=%08x format=%08x size=%08x format_x=%08x\n", 
-   	t->pp_border_color, t->pp_cubic_faces, t->format, t->size, t->format_x);
-   
-   SINGLE_TEXTURE_PIPELINE.texture_unit[0].offset=rmesa->radeon.radeonScreen->fbLocation+t->offset;
-   #if 0
-   SINGLE_TEXTURE_PIPELINE.texture_unit[0].format=t->format;
-   #endif
-   SINGLE_TEXTURE_PIPELINE.texture_unit[0].size=t->size;
-   SINGLE_TEXTURE_PIPELINE.texture_unit[0].filter=t->filter;
-   SINGLE_TEXTURE_PIPELINE.texture_unit[0].unknown1=t->pitch; /* Unknown 1 is pitch ! */
-   SINGLE_TEXTURE_PIPELINE.texture_unit[0].filter=t->filter;
-   
-   
-   /* Program RS unit. This needs to be moved into R300 pipeline */   
-reg_start(R300_RS_CNTL_0,1);
-	/* R300_RS_CNTL_0(4300) */
-	e32(0x00040084);
-	/* RS_INST_COUNT(4304) */
-	e32(0x000000c0);
-
-reg_start(R300_RS_ROUTE_0,0);
-	e32(0x00024008);
-
-reg_start(R300_RS_INTERP_0,7);
-	/* X_MEM0_0(4310) */
-	e32(0x00d10000);
-	/* X_MEM0_1(4314) */
-	e32(0x00d10044);
-	/* X_MEM0_2(4318) */
-	e32(0x00d10084);
-	/* X_MEM0_3(431c) */
-	e32(0x00d100c4);
-	/* X_MEM0_4(4320) */
-	e32(0x00d10004);
-	/* X_MEM0_5(4324) */
-	e32(0x00d10004);
-	/* X_MEM0_6(4328) */
-	e32(0x00d10004);
-	/* X_MEM0_7(432c) */
-	e32(0x00d10004);
-
-  reg_start(R300_RS_CNTL_0,0);
-	e32(0x00040084);
-
+   rmesa->state.vertex_shader.unknown2.length=4;
+   rmesa->state.vertex_shader.unknown2.body.f[0]=0.0;
+   rmesa->state.vertex_shader.unknown2.body.f[1]=0.0;
+   rmesa->state.vertex_shader.unknown2.body.f[2]=1.0;
+   rmesa->state.vertex_shader.unknown2.body.f[3]=0.0;
+	
    /* Magic register - note it is right after 20b0 */
    
    reg_start(0x20b4,0);
 	e32(0x0000000c);
    
-   program_pipeline(PASS_PREFIX &SINGLE_TEXTURE_PIPELINE);
-         
+//   program_pipeline(PASS_PREFIX &SINGLE_TEXTURE_PIPELINE);
+   
+   r300EmitVertexShader(rmesa);
+   r300EmitPixelShader(rmesa);
+   
    /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
    r300EmitLOAD_VBPNTR(rmesa, 0);
    
@@ -817,8 +590,8 @@ reg_start(R300_RS_INTERP_0,7);
    reg_start(0x4f18,0);
 	e32(0x00000003);
          
-//   exit(-1);
    fprintf(stderr, "\n");
+   //exit(-1);
    return GL_FALSE;
 }
 

@@ -81,6 +81,26 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 
 	cboffset += r300->radeon.radeonScreen->fbLocation;
 
+	R300_STATECHANGE(r300, vir[0]);
+	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->unchecked_state.count = 1;
+	r300->hw.vir[0].cmd[1] = 0x21030003;
+
+	R300_STATECHANGE(r300, vir[1]);
+	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->unchecked_state.count = 1;
+	r300->hw.vir[1].cmd[1] = 0xF688F688;
+
+	R300_STATECHANGE(r300, vic);
+	r300->hw.vic.cmd[R300_VIR_CNTL_0] = 0x00000001;
+	r300->hw.vic.cmd[R300_VIR_CNTL_1] = 0x00000405;
+	
+	R300_STATECHANGE(r300, vof);
+	r300->hw.vof.cmd[R300_VOF_CNTL_0] = R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT
+				| R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
+	r300->hw.vof.cmd[R300_VOF_CNTL_1] = 0; /* no textures */
+	
+	R300_STATECHANGE(r300, txe);
+	r300->hw.txe.cmd[R300_TXE_ENABLE] = 0;
+	
 	R300_STATECHANGE(r300, vpt);
 	r300->hw.vpt.cmd[R300_VPT_XSCALE] = r300PackFloat32(1.0);
 	r300->hw.vpt.cmd[R300_VPT_XOFFSET] = r300PackFloat32(dPriv->x);
@@ -105,6 +125,11 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	for(i = 1; i <= 8; ++i)
 		r300->hw.ri.cmd[i] = R300_RS_INTERP_USED;
 
+	R300_STATECHANGE(r300, rc);
+	/* The second constant is needed to get glxgears display anything .. */
+	r300->hw.rc.cmd[1] = R300_RS_CNTL_0_UNKNOWN_7 | R300_RS_CNTL_0_UNKNOWN_18;
+	r300->hw.rc.cmd[2] = 0;
+	
 	R300_STATECHANGE(r300, rr);
 	((drm_r300_cmd_header_t*)r300->hw.rr.cmd)->unchecked_state.count = 1;
 	r300->hw.rr.cmd[1] = 0x00004000;
