@@ -1,4 +1,3 @@
-/* $Id: sse.c,v 1.4 2003/10/21 23:53:34 kendallb Exp $ */
 
 /*
  * Mesa 3-D graphics library

@@ -39,6 +39,8 @@
 #include "ss_context.h"
 #include "ss_vb.h"
 
+
+#if 0
 static void do_import( struct vertex_buffer *VB,
 		       struct gl_client_array *to,
 		       struct gl_client_array *from )
@@ -83,7 +85,7 @@ static void import_float_spec_colors( GLcontext *ctx )
    do_import( VB, to, VB->SecondaryColorPtr[0] );
    VB->SecondaryColorPtr[0] = to;
 }
-
+#endif
 
 /* Provides a RasterSetup function which prebuilds vertices for the
  * software rasterizer.  This is required for the triangle functions
@@ -226,7 +228,7 @@ static copy_pv_func copy_pv_tab[MAX_SETUPFUNC];
  *      Additional setup and interp for back color and edgeflag. 
  ***********************************************************************/
 
-#define GET_COLOR(ptr, idx) (((GLchan (*)[4])((ptr)->Ptr))[idx])
+#define GET_COLOR(ptr, idx) (((GLfloat (*)[4])((ptr)->data))[idx])
 
 static void interp_extras( GLcontext *ctx,
 			   GLfloat t,
@@ -236,23 +238,22 @@ static void interp_extras( GLcontext *ctx,
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
    if (VB->ColorPtr[1]) {
-      INTERP_4CHAN( t,
+      INTERP_4F( t,
 		 GET_COLOR(VB->ColorPtr[1], dst),
 		 GET_COLOR(VB->ColorPtr[1], out),
 		 GET_COLOR(VB->ColorPtr[1], in) );
 
       if (VB->SecondaryColorPtr[1]) {
-	 INTERP_3CHAN( t,
+	 INTERP_3F( t,
 		    GET_COLOR(VB->SecondaryColorPtr[1], dst),
 		    GET_COLOR(VB->SecondaryColorPtr[1], out),
 		    GET_COLOR(VB->SecondaryColorPtr[1], in) );
       }
    }
    else if (VB->IndexPtr[1]) {
-      VB->IndexPtr[1]->data[dst] = (GLuint) (GLint)
-	 LINTERP( t,
-		  (GLfloat) VB->IndexPtr[1]->data[out],
-		  (GLfloat) VB->IndexPtr[1]->data[in] );
+      VB->IndexPtr[1]->data[dst][0] = LINTERP( t,
+					       VB->IndexPtr[1]->data[out][0],
+					       VB->IndexPtr[1]->data[in][0] );
    }
 
    if (VB->EdgeFlag) {
@@ -268,8 +269,8 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
    if (VB->ColorPtr[1]) {
-	 COPY_CHAN4( GET_COLOR(VB->ColorPtr[1], dst), 
-		     GET_COLOR(VB->ColorPtr[1], src) );
+	 COPY_4FV( GET_COLOR(VB->ColorPtr[1], dst), 
+		   GET_COLOR(VB->ColorPtr[1], src) );
 	 
 	 if (VB->SecondaryColorPtr[1]) {
 	    COPY_3V( GET_COLOR(VB->SecondaryColorPtr[1], dst), 
@@ -277,7 +278,7 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
 	 }
    }
    else if (VB->IndexPtr[1]) {
-      VB->IndexPtr[1]->data[dst] = VB->IndexPtr[1]->data[src];
+      VB->IndexPtr[1]->data[dst][0] = VB->IndexPtr[1]->data[src][0];
    }
 
    copy_pv_tab[SWSETUP_CONTEXT(ctx)->SetupIndex](ctx, dst, src);

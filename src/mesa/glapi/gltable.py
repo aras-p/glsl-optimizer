@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-# $Id: gltable.py,v 1.4 2003/10/21 22:22:18 kendallb Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1

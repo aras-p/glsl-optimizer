@@ -45,7 +45,6 @@
  * listed in dd.h.  The easiest way for a driver to do this is to
  * install the supplied software t&l module.
  */
-#define COLORUBV(v)                 glColor4ubv(v)
 #define COLORF(r,g,b,a)             glColor4f(r,g,b,a)
 #define VERTEX2(x,y)	            glVertex2f(x,y)
 #define VERTEX3(x,y,z)	            glVertex3f(x,y,z)
@@ -55,7 +54,7 @@
 #define TEXCOORD2(s,t)              glTexCoord2f(s,t)
 #define TEXCOORD3(s,t,u)            glTexCoord3f(s,t,u)
 #define TEXCOORD4(s,t,u,v)          glTexCoord4f(s,t,u,v)
-#define INDEX(c)		    glIndexi(c)
+#define INDEX(c)		    glIndexf(c)
 #define MULTI_TEXCOORD1(z,s)	    glMultiTexCoord1fARB(z,s)
 #define MULTI_TEXCOORD2(z,s,t)	    glMultiTexCoord2fARB(z,s,t)
 #define MULTI_TEXCOORD3(z,s,t,u)    glMultiTexCoord3fARB(z,s,t,u)
@@ -65,294 +64,15 @@
 #define MATERIALFV(a,b,c)           glMaterialfv(a,b,c)
 #define RECTF(a,b,c,d)              glRectf(a,b,c,d)
 
-#define ATTRIB(index, x, y, z, w)   _glapi_Dispatch->VertexAttrib4fNV(index, x, y, z, w)
-
-
-#define FOGCOORDF(x)                _glapi_Dispatch->FogCoordfEXT(x)
-#define SECONDARYCOLORUB(a,b,c)     _glapi_Dispatch->SecondaryColor3ubEXT(a,b,c)
-#define SECONDARYCOLORF(a,b,c)      _glapi_Dispatch->SecondaryColor3fEXT(a,b,c)
-
-
-static void GLAPIENTRY
-loopback_Color3b( GLbyte red, GLbyte green, GLbyte blue )
-{
-   GLubyte col[4];
-   col[0] = BYTE_TO_UBYTE(red);
-   col[1] = BYTE_TO_UBYTE(green);
-   col[2] = BYTE_TO_UBYTE(blue);
-   col[3] = 255;
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color3d( GLdouble red, GLdouble green, GLdouble blue )
-{
-   GLubyte col[4];
-   GLfloat r = (GLfloat) red;
-   GLfloat g = (GLfloat) green;
-   GLfloat b = (GLfloat) blue;
-   UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
-   UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
-   UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
-   col[3] = 255;
-   COLORUBV( col );
-}
-
-static void GLAPIENTRY
-loopback_Color3i( GLint red, GLint green, GLint blue )
-{
-   GLubyte col[4];
-   col[0] = INT_TO_UBYTE(red);
-   col[1] = INT_TO_UBYTE(green);
-   col[2] = INT_TO_UBYTE(blue);
-   col[3] = 255;
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color3s( GLshort red, GLshort green, GLshort blue )
-{
-   GLubyte col[4];
-   col[0] = SHORT_TO_UBYTE(red);
-   col[1] = SHORT_TO_UBYTE(green);
-   col[2] = SHORT_TO_UBYTE(blue);
-   col[3] = 255;
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color3ui( GLuint red, GLuint green, GLuint blue )
-{
-   GLubyte col[4];
-   col[0] = UINT_TO_UBYTE(red);
-   col[1] = UINT_TO_UBYTE(green);
-   col[2] = UINT_TO_UBYTE(blue);
-   col[3] = 255;
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color3us( GLushort red, GLushort green, GLushort blue )
-{
-   GLubyte col[4];
-   col[0] = USHORT_TO_UBYTE(red);
-   col[1] = USHORT_TO_UBYTE(green);
-   col[2] = USHORT_TO_UBYTE(blue);
-   col[3] = 255;
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color4b( GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha )
-{
-   GLubyte col[4];
-   col[0] = BYTE_TO_UBYTE(red);
-   col[1] = BYTE_TO_UBYTE(green);
-   col[2] = BYTE_TO_UBYTE(blue);
-   col[3] = 255;
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color4d( GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha )
-{
-   GLubyte col[4];
-   GLfloat r = (GLfloat) red;
-   GLfloat g = (GLfloat) green;
-   GLfloat b = (GLfloat) blue;
-   GLfloat a = (GLfloat) alpha;
-   UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
-   UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
-   UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
-   UNCLAMPED_FLOAT_TO_UBYTE(col[3], a);
-   COLORUBV( col );
-}
-
-static void GLAPIENTRY
-loopback_Color4i( GLint red, GLint green, GLint blue, GLint alpha )
-{
-   GLubyte col[4];
-   col[0] = INT_TO_UBYTE(red);
-   col[1] = INT_TO_UBYTE(green);
-   col[2] = INT_TO_UBYTE(blue);
-   col[3] = INT_TO_UBYTE(alpha);
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color4s( GLshort red, GLshort green, GLshort blue,
-			GLshort alpha )
-{
-   GLubyte col[4];
-   col[0] = SHORT_TO_UBYTE(red);
-   col[1] = SHORT_TO_UBYTE(green);
-   col[2] = SHORT_TO_UBYTE(blue);
-   col[3] = SHORT_TO_UBYTE(alpha);
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color4ui( GLuint red, GLuint green, GLuint blue, GLuint alpha )
-{
-   GLubyte col[4];
-   col[0] = UINT_TO_UBYTE(red);
-   col[1] = UINT_TO_UBYTE(green);
-   col[2] = UINT_TO_UBYTE(blue);
-   col[3] = UINT_TO_UBYTE(alpha);
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color4us( GLushort red, GLushort green, GLushort blue,
-			 GLushort alpha )
-{
-   GLubyte col[4];
-   col[0] = USHORT_TO_UBYTE(red);
-   col[1] = USHORT_TO_UBYTE(green);
-   col[2] = USHORT_TO_UBYTE(blue);
-   col[3] = USHORT_TO_UBYTE(alpha);
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color3bv( const GLbyte *v )
-{
-   GLubyte col[4];
-   col[0] = BYTE_TO_UBYTE(v[0]);
-   col[1] = BYTE_TO_UBYTE(v[1]);
-   col[2] = BYTE_TO_UBYTE(v[2]);
-   col[3] = 255;
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color3dv( const GLdouble *v )
-{
-   GLubyte col[4];
-   GLfloat r = (GLfloat) v[0];
-   GLfloat g = (GLfloat) v[1];
-   GLfloat b = (GLfloat) v[2];
-   UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
-   UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
-   UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
-   col[3] = 255;
-   COLORUBV( col );
-}
-
-static void GLAPIENTRY
-loopback_Color3iv( const GLint *v )
-{
-   GLubyte col[4];
-   col[0] = INT_TO_UBYTE(v[0]);
-   col[1] = INT_TO_UBYTE(v[1]);
-   col[2] = INT_TO_UBYTE(v[2]);
-   col[3] = 255;
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color3sv( const GLshort *v )
-{
-   GLubyte col[4];
-   col[0] = SHORT_TO_UBYTE(v[0]);
-   col[1] = SHORT_TO_UBYTE(v[1]);
-   col[2] = SHORT_TO_UBYTE(v[2]);
-   col[3] = 255;
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color3uiv( const GLuint *v )
-{
-   GLubyte col[4];
-   col[0] = UINT_TO_UBYTE(v[0]);
-   col[1] = UINT_TO_UBYTE(v[1]);
-   col[2] = UINT_TO_UBYTE(v[2]);
-   col[3] = 255;
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color3usv( const GLushort *v )
-{
-   GLubyte col[4];
-   col[0] = USHORT_TO_UBYTE(v[0]);
-   col[1] = USHORT_TO_UBYTE(v[1]);
-   col[2] = USHORT_TO_UBYTE(v[2]);
-   col[3] = 255;
-   COLORUBV(col);
-
-}
-
-static void GLAPIENTRY
-loopback_Color4bv( const GLbyte *v )
-{
-   GLubyte col[4];
-   col[0] = BYTE_TO_UBYTE(v[0]);
-   col[1] = BYTE_TO_UBYTE(v[1]);
-   col[2] = BYTE_TO_UBYTE(v[2]);
-   col[3] = BYTE_TO_UBYTE(v[3]);
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color4dv( const GLdouble *v )
-{
-   GLubyte col[4];
-   GLfloat r = (GLfloat) v[0];
-   GLfloat g = (GLfloat) v[1];
-   GLfloat b = (GLfloat) v[2];
-   GLfloat a = (GLfloat) v[3];
-   UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
-   UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
-   UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
-   UNCLAMPED_FLOAT_TO_UBYTE(col[3], a);
-   COLORUBV( col );
-}
-
-static void GLAPIENTRY
-loopback_Color4iv( const GLint *v )
-{
-   GLubyte col[4];
-   col[0] = INT_TO_UBYTE(v[0]);
-   col[1] = INT_TO_UBYTE(v[1]);
-   col[2] = INT_TO_UBYTE(v[2]);
-   col[3] = INT_TO_UBYTE(v[3]);
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color4sv( const GLshort *v)
-{
-   GLubyte col[4];
-   col[0] = SHORT_TO_UBYTE(v[0]);
-   col[1] = SHORT_TO_UBYTE(v[1]);
-   col[2] = SHORT_TO_UBYTE(v[2]);
-   col[3] = SHORT_TO_UBYTE(v[3]);
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color4uiv( const GLuint *v)
-{
-   GLubyte col[4];
-   col[0] = UINT_TO_UBYTE(v[0]);
-   col[1] = UINT_TO_UBYTE(v[1]);
-   col[2] = UINT_TO_UBYTE(v[2]);
-   col[3] = UINT_TO_UBYTE(v[3]);
-   COLORUBV(col);
-}
-
-static void GLAPIENTRY
-loopback_Color4usv( const GLushort *v)
-{
-   GLubyte col[4];
-   col[0] = USHORT_TO_UBYTE(v[0]);
-   col[1] = USHORT_TO_UBYTE(v[1]);
-   col[2] = USHORT_TO_UBYTE(v[2]);
-   col[3] = USHORT_TO_UBYTE(v[3]);
-   COLORUBV(col);
-}
+/* Extension functions must be dereferenced through _glapi_Dispatch as
+ * not all libGL.so's will have all the uptodate entrypoints.
+ */
+#define ATTRIB1(index,x)        _glapi_Dispatch->VertexAttrib1fNV(index,x)
+#define ATTRIB2(index,x,y)      _glapi_Dispatch->VertexAttrib2fNV(index,x,y)
+#define ATTRIB3(index,x,y,z)    _glapi_Dispatch->VertexAttrib3fNV(index,x,y,z)
+#define ATTRIB4(index,x,y,z,w)  _glapi_Dispatch->VertexAttrib4fNV(index,x,y,z,w)
+#define FOGCOORDF(x)            _glapi_Dispatch->FogCoordfEXT(x)
+#define SECONDARYCOLORF(a,b,c)  _glapi_Dispatch->SecondaryColor3fEXT(a,b,c)
 
 static void GLAPIENTRY
 loopback_Color3b_f( GLbyte red, GLbyte green, GLbyte blue )
@@ -397,6 +117,13 @@ loopback_Color3us_f( GLushort red, GLushort green, GLushort blue )
 	   USHORT_TO_FLOAT(blue), 1.0 );
 }
 
+static void GLAPIENTRY
+loopback_Color3ub_f( GLubyte red, GLubyte green, GLubyte blue )
+{
+   COLORF( UBYTE_TO_FLOAT(red), UBYTE_TO_FLOAT(green),
+	   UBYTE_TO_FLOAT(blue), 1.0 );
+}
+
 
 static void GLAPIENTRY
 loopback_Color3bv_f( const GLbyte *v )
@@ -437,6 +164,13 @@ loopback_Color3usv_f( const GLushort *v )
 {
    COLORF( USHORT_TO_FLOAT(v[0]), USHORT_TO_FLOAT(v[1]),
 	   USHORT_TO_FLOAT(v[2]), 1.0 );
+}
+
+static void GLAPIENTRY
+loopback_Color3ubv_f( const GLubyte *v )
+{
+   COLORF( UBYTE_TO_FLOAT(v[0]), UBYTE_TO_FLOAT(v[1]),
+	   UBYTE_TO_FLOAT(v[2]), 1.0 );
 }
 
 
@@ -482,6 +216,13 @@ loopback_Color4us_f( GLushort red, GLushort green, GLushort blue, GLushort alpha
 {
    COLORF( USHORT_TO_FLOAT(red), USHORT_TO_FLOAT(green),
 	   USHORT_TO_FLOAT(blue), USHORT_TO_FLOAT(alpha) );
+}
+
+static void
+loopback_Color4ub_f( GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha )
+{
+   COLORF( UBYTE_TO_FLOAT(red), UBYTE_TO_FLOAT(green),
+	   UBYTE_TO_FLOAT(blue), UBYTE_TO_FLOAT(alpha) );
 }
 
 
@@ -530,6 +271,13 @@ loopback_Color4usv_f( const GLushort *v)
 }
 
 static void GLAPIENTRY
+loopback_Color4ubv_f( const GLubyte *v)
+{
+   COLORF( UBYTE_TO_FLOAT(v[0]), UBYTE_TO_FLOAT(v[1]),
+	   UBYTE_TO_FLOAT(v[2]), UBYTE_TO_FLOAT(v[3]) );
+}
+
+static void GLAPIENTRY
 loopback_FogCoorddEXT( GLdouble d )
 {
    FOGCOORDF( (GLfloat) d );
@@ -545,55 +293,49 @@ loopback_FogCoorddvEXT( const GLdouble *v )
 static void GLAPIENTRY
 loopback_Indexd( GLdouble c )
 {
-   INDEX( (GLint) c );
+   INDEX( (GLfloat) c );
 }
 
 static void GLAPIENTRY
-loopback_Indexf( GLfloat c )
+loopback_Indexi( GLint c )
 {
-   INDEX( (GLuint) (GLint) c );
+   INDEX( (GLfloat) c );
 }
 
 static void GLAPIENTRY
 loopback_Indexs( GLshort c )
 {
-   INDEX( (GLint) c );
+   INDEX( (GLfloat) c );
 }
 
 static void GLAPIENTRY
 loopback_Indexub( GLubyte c )
 {
-   INDEX( (GLint) c );
+   INDEX( (GLfloat) c );
 }
 
 static void GLAPIENTRY
 loopback_Indexdv( const GLdouble *c )
 {
-   INDEX( (GLint) (GLint) *c );
-}
-
-static void GLAPIENTRY
-loopback_Indexfv( const GLfloat *c )
-{
-   INDEX( (GLint) (GLint) *c );
+   INDEX( (GLfloat) *c );
 }
 
 static void GLAPIENTRY
 loopback_Indexiv( const GLint *c )
 {
-   INDEX( *c );
+   INDEX( (GLfloat) *c );
 }
 
 static void GLAPIENTRY
 loopback_Indexsv( const GLshort *c )
 {
-   INDEX( (GLint) *c );
+   INDEX( (GLfloat) *c );
 }
 
 static void GLAPIENTRY
 loopback_Indexubv( const GLubyte *c )
 {
-   INDEX( (GLint) *c );
+   INDEX( (GLfloat) *c );
 }
 
 static void GLAPIENTRY
@@ -1173,114 +915,6 @@ loopback_Rectsv(const GLshort *v1, const GLshort *v2)
 }
 
 static void GLAPIENTRY
-loopback_SecondaryColor3bEXT( GLbyte red, GLbyte green, GLbyte blue )
-{
-   SECONDARYCOLORUB( BYTE_TO_UBYTE(red),
-		     BYTE_TO_UBYTE(green),
-		     BYTE_TO_UBYTE(blue) );
-}
-
-static void GLAPIENTRY
-loopback_SecondaryColor3dEXT( GLdouble red, GLdouble green, GLdouble blue )
-{
-   GLubyte col[3];
-   GLfloat r = (GLfloat) red;
-   GLfloat g = (GLfloat) green;
-   GLfloat b = (GLfloat) blue;
-   UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
-   UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
-   UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
-   SECONDARYCOLORUB( col[0], col[1], col[2] );
-}
-
-static void GLAPIENTRY
-loopback_SecondaryColor3iEXT( GLint red, GLint green, GLint blue )
-{
-   SECONDARYCOLORUB( INT_TO_UBYTE(red),
-		     INT_TO_UBYTE(green),
-		     INT_TO_UBYTE(blue));
-}
-
-static void GLAPIENTRY
-loopback_SecondaryColor3sEXT( GLshort red, GLshort green, GLshort blue )
-{
-   SECONDARYCOLORUB(SHORT_TO_UBYTE(red),
-		    SHORT_TO_UBYTE(green),
-		    SHORT_TO_UBYTE(blue));
-}
-
-static void GLAPIENTRY
-loopback_SecondaryColor3uiEXT( GLuint red, GLuint green, GLuint blue )
-{
-   SECONDARYCOLORUB(UINT_TO_UBYTE(red),
-		    UINT_TO_UBYTE(green),
-		    UINT_TO_UBYTE(blue));
-}
-
-static void GLAPIENTRY
-loopback_SecondaryColor3usEXT( GLushort red, GLushort green, GLushort blue )
-{
-   SECONDARYCOLORUB(USHORT_TO_UBYTE(red),
-		    USHORT_TO_UBYTE(green),
-		    USHORT_TO_UBYTE(blue));
-}
-
-static void GLAPIENTRY
-loopback_SecondaryColor3bvEXT( const GLbyte *v )
-{
-   const GLfloat a = BYTE_TO_FLOAT(v[0]);
-   const GLfloat b = BYTE_TO_FLOAT(v[1]);
-   const GLfloat c = BYTE_TO_FLOAT(v[2]);
-   SECONDARYCOLORF(a,b,c);
-}
-
-static void GLAPIENTRY
-loopback_SecondaryColor3dvEXT( const GLdouble *v )
-{
-   GLubyte col[3];
-   GLfloat r = (GLfloat) v[0];
-   GLfloat g = (GLfloat) v[1];
-   GLfloat b = (GLfloat) v[2];
-   UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
-   UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
-   UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
-   SECONDARYCOLORUB( col[0], col[1], col[2] );
-}
-
-static void GLAPIENTRY
-loopback_SecondaryColor3ivEXT( const GLint *v )
-{
-   SECONDARYCOLORUB(INT_TO_UBYTE(v[0]),
-		    INT_TO_UBYTE(v[1]),
-		    INT_TO_UBYTE(v[2]));
-}
-
-static void GLAPIENTRY
-loopback_SecondaryColor3svEXT( const GLshort *v )
-{
-   SECONDARYCOLORUB(SHORT_TO_UBYTE(v[0]),
-		    SHORT_TO_UBYTE(v[1]),
-		    SHORT_TO_UBYTE(v[2]));
-}
-
-static void GLAPIENTRY
-loopback_SecondaryColor3uivEXT( const GLuint *v )
-{
-   SECONDARYCOLORUB(UINT_TO_UBYTE(v[0]),
-		    UINT_TO_UBYTE(v[1]),
-		    UINT_TO_UBYTE(v[2]));
-}
-
-static void GLAPIENTRY
-loopback_SecondaryColor3usvEXT( const GLushort *v )
-{
-   SECONDARYCOLORUB(USHORT_TO_UBYTE(v[0]),
-		    USHORT_TO_UBYTE(v[1]),
-		    USHORT_TO_UBYTE(v[2]));
-}
-
-
-static void GLAPIENTRY
 loopback_SecondaryColor3bEXT_f( GLbyte red, GLbyte green, GLbyte blue )
 {
    SECONDARYCOLORF( BYTE_TO_FLOAT(red),
@@ -1324,6 +958,14 @@ loopback_SecondaryColor3usEXT_f( GLushort red, GLushort green, GLushort blue )
    SECONDARYCOLORF(USHORT_TO_FLOAT(red),
                    USHORT_TO_FLOAT(green),
                    USHORT_TO_FLOAT(blue));
+}
+
+static void GLAPIENTRY
+loopback_SecondaryColor3ubEXT_f( GLubyte red, GLubyte green, GLubyte blue )
+{
+   SECONDARYCOLORF(UBYTE_TO_FLOAT(red),
+                   UBYTE_TO_FLOAT(green),
+                   UBYTE_TO_FLOAT(blue));
 }
 
 static void GLAPIENTRY
@@ -1371,6 +1013,14 @@ loopback_SecondaryColor3usvEXT_f( const GLushort *v )
                    USHORT_TO_FLOAT(v[2]));
 }
 
+static void GLAPIENTRY
+loopback_SecondaryColor3ubvEXT_f( const GLubyte *v )
+{
+   SECONDARYCOLORF(UBYTE_TO_FLOAT(v[0]),
+                   UBYTE_TO_FLOAT(v[1]),
+                   UBYTE_TO_FLOAT(v[2]));
+}
+
 
 /*
  * GL_NV_vertex_program
@@ -1379,153 +1029,153 @@ loopback_SecondaryColor3usvEXT_f( const GLushort *v )
 static void GLAPIENTRY
 loopback_VertexAttrib1sNV(GLuint index, GLshort x)
 {
-   ATTRIB(index, (GLfloat) x, 0.0F, 0.0F, 1.0F);
+   ATTRIB1(index, (GLfloat) x);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib1fNV(GLuint index, GLfloat x)
 {
-   ATTRIB(index, x, 0.0F, 0.0F, 1.0F);
+   ATTRIB1(index, x);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib1dNV(GLuint index, GLdouble x)
 {
-   ATTRIB(index, (GLfloat) x, 0.0F, 0.0F, 1.0F);
+   ATTRIB1(index, (GLfloat) x);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib2sNV(GLuint index, GLshort x, GLshort y)
 {
-   ATTRIB(index, (GLfloat) x, y, 0.0F, 1.0F);
+   ATTRIB2(index, (GLfloat) x, y);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib2fNV(GLuint index, GLfloat x, GLfloat y)
 {
-   ATTRIB(index, (GLfloat) x, y, 0.0F, 1.0F);
+   ATTRIB2(index, (GLfloat) x, y);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib2dNV(GLuint index, GLdouble x, GLdouble y)
 {
-   ATTRIB(index, (GLfloat) x, (GLfloat) y, 0.0F, 1.0F);
+   ATTRIB2(index, (GLfloat) x, (GLfloat) y);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib3sNV(GLuint index, GLshort x, GLshort y, GLshort z)
 {
-   ATTRIB(index, (GLfloat) x, y, z, 1.0F);
+   ATTRIB3(index, (GLfloat) x, y, z);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib3fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z)
 {
-   ATTRIB(index, x, y, z, 1.0F);
+   ATTRIB3(index, x, y, z);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib3dNV(GLuint index, GLdouble x, GLdouble y, GLdouble z)
 {
-   ATTRIB(index, (GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
+   ATTRIB4(index, (GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4sNV(GLuint index, GLshort x, GLshort y, GLshort z, GLshort w)
 {
-   ATTRIB(index, (GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
+   ATTRIB4(index, (GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4dNV(GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-   ATTRIB(index, (GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
+   ATTRIB4(index, (GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4ubNV(GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w)
 {
-   ATTRIB(index, UBYTE_TO_FLOAT(x), UBYTE_TO_FLOAT(y),
+   ATTRIB4(index, UBYTE_TO_FLOAT(x), UBYTE_TO_FLOAT(y),
 	UBYTE_TO_FLOAT(z), UBYTE_TO_FLOAT(w));
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib1svNV(GLuint index, const GLshort *v)
 {
-   ATTRIB(index, (GLfloat) v[0], 0.0F, 0.0F, 1.0F);
+   ATTRIB1(index, (GLfloat) v[0]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib1fvNV(GLuint index, const GLfloat *v)
 {
-   ATTRIB(index, v[0], 0.0F, 0.0F, 1.0F);
+   ATTRIB1(index, v[0]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib1dvNV(GLuint index, const GLdouble *v)
 {
-   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
+   ATTRIB1(index, (GLfloat) v[0]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib2svNV(GLuint index, const GLshort *v)
 {
-   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
+   ATTRIB2(index, (GLfloat) v[0], (GLfloat) v[1]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib2fvNV(GLuint index, const GLfloat *v)
 {
-   ATTRIB(index, v[0], v[1], 0.0F, 1.0F);
+   ATTRIB2(index, v[0], v[1]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib2dvNV(GLuint index, const GLdouble *v)
 {
-   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
+   ATTRIB2(index, (GLfloat) v[0], (GLfloat) v[1]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib3svNV(GLuint index, const GLshort *v)
 {
-   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
+   ATTRIB2(index, (GLfloat) v[0], (GLfloat) v[1]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib3fvNV(GLuint index, const GLfloat *v)
 {
-   ATTRIB(index, v[0], v[1], v[2], 1.0F);
+   ATTRIB3(index, v[0], v[1], v[2]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib3dvNV(GLuint index, const GLdouble *v)
 {
-   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
+   ATTRIB3(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4svNV(GLuint index, const GLshort *v)
 {
-   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 
+   ATTRIB4(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 
 	  (GLfloat)v[3]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4fvNV(GLuint index, const GLfloat *v)
 {
-   ATTRIB(index, v[0], v[1], v[2], v[3]);
+   ATTRIB4(index, v[0], v[1], v[2], v[3]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4dvNV(GLuint index, const GLdouble *v)
 {
-   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+   ATTRIB4(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4ubvNV(GLuint index, const GLubyte *v)
 {
-   ATTRIB(index, UBYTE_TO_FLOAT(v[0]), UBYTE_TO_FLOAT(v[1]),
+   ATTRIB4(index, UBYTE_TO_FLOAT(v[0]), UBYTE_TO_FLOAT(v[1]),
           UBYTE_TO_FLOAT(v[2]), UBYTE_TO_FLOAT(v[3]));
 }
 
@@ -1642,171 +1292,127 @@ loopback_VertexAttribs4ubvNV(GLuint index, GLsizei n, const GLubyte *v)
 static void GLAPIENTRY
 loopback_VertexAttrib4bvARB(GLuint index, const GLbyte * v)
 {
-   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+   ATTRIB4(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4ivARB(GLuint index, const GLint * v)
 {
-   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+   ATTRIB4(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4ubvARB(GLuint index, const GLubyte * v)
 {
-   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+   ATTRIB4(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4usvARB(GLuint index, const GLushort * v)
 {
-   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+   ATTRIB4(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4uivARB(GLuint index, const GLuint * v)
 {
-   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+   ATTRIB4(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4NbvARB(GLuint index, const GLbyte * v)
 {
-   ATTRIB(index, BYTE_TO_FLOAT(v[0]), BYTE_TO_FLOAT(v[1]),
+   ATTRIB4(index, BYTE_TO_FLOAT(v[0]), BYTE_TO_FLOAT(v[1]),
           BYTE_TO_FLOAT(v[2]), BYTE_TO_FLOAT(v[3]));
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4NsvARB(GLuint index, const GLshort * v)
 {
-   ATTRIB(index, SHORT_TO_FLOAT(v[0]), SHORT_TO_FLOAT(v[1]),
+   ATTRIB4(index, SHORT_TO_FLOAT(v[0]), SHORT_TO_FLOAT(v[1]),
           SHORT_TO_FLOAT(v[2]), SHORT_TO_FLOAT(v[3]));
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4NivARB(GLuint index, const GLint * v)
 {
-   ATTRIB(index, INT_TO_FLOAT(v[0]), INT_TO_FLOAT(v[1]),
+   ATTRIB4(index, INT_TO_FLOAT(v[0]), INT_TO_FLOAT(v[1]),
           INT_TO_FLOAT(v[2]), INT_TO_FLOAT(v[3]));
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4NusvARB(GLuint index, const GLushort * v)
 {
-   ATTRIB(index, USHORT_TO_FLOAT(v[0]), USHORT_TO_FLOAT(v[1]),
+   ATTRIB4(index, USHORT_TO_FLOAT(v[0]), USHORT_TO_FLOAT(v[1]),
           USHORT_TO_FLOAT(v[2]), USHORT_TO_FLOAT(v[3]));
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4NuivARB(GLuint index, const GLuint * v)
 {
-   ATTRIB(index, UINT_TO_FLOAT(v[0]), UINT_TO_FLOAT(v[1]),
+   ATTRIB4(index, UINT_TO_FLOAT(v[0]), UINT_TO_FLOAT(v[1]),
           UINT_TO_FLOAT(v[2]), UINT_TO_FLOAT(v[3]));
 }
 
 
 
-void
-_mesa_loopback_prefer_float( struct _glapi_table *dest,
-			     GLboolean prefer_float_colors )
-{
-   if (!prefer_float_colors) {
-      dest->Color3b = loopback_Color3b;
-      dest->Color3d = loopback_Color3d;
-      dest->Color3i = loopback_Color3i;
-      dest->Color3s = loopback_Color3s;
-      dest->Color3ui = loopback_Color3ui;
-      dest->Color3us = loopback_Color3us;
-      dest->Color4b = loopback_Color4b;
-      dest->Color4d = loopback_Color4d;
-      dest->Color4i = loopback_Color4i;
-      dest->Color4s = loopback_Color4s;
-      dest->Color4ui = loopback_Color4ui;
-      dest->Color4us = loopback_Color4us;
-      dest->Color3bv = loopback_Color3bv;
-      dest->Color3dv = loopback_Color3dv;
-      dest->Color3iv = loopback_Color3iv;
-      dest->Color3sv = loopback_Color3sv;
-      dest->Color3uiv = loopback_Color3uiv;
-      dest->Color3usv = loopback_Color3usv;
-      dest->Color4bv = loopback_Color4bv;
-      dest->Color4dv = loopback_Color4dv;
-      dest->Color4iv = loopback_Color4iv;
-      dest->Color4sv = loopback_Color4sv;
-      dest->Color4uiv = loopback_Color4uiv;
-      dest->Color4usv = loopback_Color4usv;
-      dest->SecondaryColor3bEXT = loopback_SecondaryColor3bEXT;
-      dest->SecondaryColor3dEXT = loopback_SecondaryColor3dEXT;
-      dest->SecondaryColor3iEXT = loopback_SecondaryColor3iEXT;
-      dest->SecondaryColor3sEXT = loopback_SecondaryColor3sEXT;
-      dest->SecondaryColor3uiEXT = loopback_SecondaryColor3uiEXT;
-      dest->SecondaryColor3usEXT = loopback_SecondaryColor3usEXT;
-      dest->SecondaryColor3bvEXT = loopback_SecondaryColor3bvEXT;
-      dest->SecondaryColor3dvEXT = loopback_SecondaryColor3dvEXT;
-      dest->SecondaryColor3ivEXT = loopback_SecondaryColor3ivEXT;
-      dest->SecondaryColor3svEXT = loopback_SecondaryColor3svEXT;
-      dest->SecondaryColor3uivEXT = loopback_SecondaryColor3uivEXT;
-      dest->SecondaryColor3usvEXT = loopback_SecondaryColor3usvEXT;
-   }
-   else {
-      dest->Color3b = loopback_Color3b_f;
-      dest->Color3d = loopback_Color3d_f;
-      dest->Color3i = loopback_Color3i_f;
-      dest->Color3s = loopback_Color3s_f;
-      dest->Color3ui = loopback_Color3ui_f;
-      dest->Color3us = loopback_Color3us_f;
-      dest->Color4b = loopback_Color4b_f;
-      dest->Color4d = loopback_Color4d_f;
-      dest->Color4i = loopback_Color4i_f;
-      dest->Color4s = loopback_Color4s_f;
-      dest->Color4ui = loopback_Color4ui_f;
-      dest->Color4us = loopback_Color4us_f;
-      dest->Color3bv = loopback_Color3bv_f;
-      dest->Color3dv = loopback_Color3dv_f;
-      dest->Color3iv = loopback_Color3iv_f;
-      dest->Color3sv = loopback_Color3sv_f;
-      dest->Color3uiv = loopback_Color3uiv_f;
-      dest->Color3usv = loopback_Color3usv_f;
-      dest->Color4bv = loopback_Color4bv_f;
-      dest->Color4dv = loopback_Color4dv_f;
-      dest->Color4iv = loopback_Color4iv_f;
-      dest->Color4sv = loopback_Color4sv_f;
-      dest->Color4uiv = loopback_Color4uiv_f;
-      dest->Color4usv = loopback_Color4usv_f;
-      dest->SecondaryColor3bEXT = loopback_SecondaryColor3bEXT_f;
-      dest->SecondaryColor3dEXT = loopback_SecondaryColor3dEXT_f;
-      dest->SecondaryColor3iEXT = loopback_SecondaryColor3iEXT_f;
-      dest->SecondaryColor3sEXT = loopback_SecondaryColor3sEXT_f;
-      dest->SecondaryColor3uiEXT = loopback_SecondaryColor3uiEXT_f;
-      dest->SecondaryColor3usEXT = loopback_SecondaryColor3usEXT_f;
-      dest->SecondaryColor3bvEXT = loopback_SecondaryColor3bvEXT_f;
-      dest->SecondaryColor3dvEXT = loopback_SecondaryColor3dvEXT_f;
-      dest->SecondaryColor3ivEXT = loopback_SecondaryColor3ivEXT_f;
-      dest->SecondaryColor3svEXT = loopback_SecondaryColor3svEXT_f;
-      dest->SecondaryColor3uivEXT = loopback_SecondaryColor3uivEXT_f;
-      dest->SecondaryColor3usvEXT = loopback_SecondaryColor3usvEXT_f;
-   }
-}
 
-/* Passing prefer_float_colors as true will mean that all colors
- * *except* Color{34}ub{v} are passed as floats.  Setting it false will
- * mean all colors *except* Color{34}f{v} are passed as ubytes.
- *
+/*
  * This code never registers handlers for any of the entry points
  * listed in vtxfmt.h.
  */
 void
-_mesa_loopback_init_api_table( struct _glapi_table *dest,
-			       GLboolean prefer_float_colors )
+_mesa_loopback_init_api_table( struct _glapi_table *dest )
 {
-   _mesa_loopback_prefer_float( dest, prefer_float_colors );
+   dest->Color3b = loopback_Color3b_f;
+   dest->Color3d = loopback_Color3d_f;
+   dest->Color3i = loopback_Color3i_f;
+   dest->Color3s = loopback_Color3s_f;
+   dest->Color3ui = loopback_Color3ui_f;
+   dest->Color3us = loopback_Color3us_f;
+   dest->Color3ub = loopback_Color3ub_f;
+   dest->Color4b = loopback_Color4b_f;
+   dest->Color4d = loopback_Color4d_f;
+   dest->Color4i = loopback_Color4i_f;
+   dest->Color4s = loopback_Color4s_f;
+   dest->Color4ui = loopback_Color4ui_f;
+   dest->Color4us = loopback_Color4us_f;
+   dest->Color4ub = loopback_Color4ub_f;
+   dest->Color3bv = loopback_Color3bv_f;
+   dest->Color3dv = loopback_Color3dv_f;
+   dest->Color3iv = loopback_Color3iv_f;
+   dest->Color3sv = loopback_Color3sv_f;
+   dest->Color3uiv = loopback_Color3uiv_f;
+   dest->Color3usv = loopback_Color3usv_f;
+   dest->Color3ubv = loopback_Color3ubv_f;
+   dest->Color4bv = loopback_Color4bv_f;
+   dest->Color4dv = loopback_Color4dv_f;
+   dest->Color4iv = loopback_Color4iv_f;
+   dest->Color4sv = loopback_Color4sv_f;
+   dest->Color4uiv = loopback_Color4uiv_f;
+   dest->Color4usv = loopback_Color4usv_f;
+   dest->Color4ubv = loopback_Color4ubv_f;
 
+   dest->SecondaryColor3bEXT = loopback_SecondaryColor3bEXT_f;
+   dest->SecondaryColor3dEXT = loopback_SecondaryColor3dEXT_f;
+   dest->SecondaryColor3iEXT = loopback_SecondaryColor3iEXT_f;
+   dest->SecondaryColor3sEXT = loopback_SecondaryColor3sEXT_f;
+   dest->SecondaryColor3uiEXT = loopback_SecondaryColor3uiEXT_f;
+   dest->SecondaryColor3usEXT = loopback_SecondaryColor3usEXT_f;
+   dest->SecondaryColor3ubEXT = loopback_SecondaryColor3ubEXT_f;
+   dest->SecondaryColor3bvEXT = loopback_SecondaryColor3bvEXT_f;
+   dest->SecondaryColor3dvEXT = loopback_SecondaryColor3dvEXT_f;
+   dest->SecondaryColor3ivEXT = loopback_SecondaryColor3ivEXT_f;
+   dest->SecondaryColor3svEXT = loopback_SecondaryColor3svEXT_f;
+   dest->SecondaryColor3uivEXT = loopback_SecondaryColor3uivEXT_f;
+   dest->SecondaryColor3usvEXT = loopback_SecondaryColor3usvEXT_f;
+   dest->SecondaryColor3ubvEXT = loopback_SecondaryColor3ubvEXT_f;
+      
    dest->Indexd = loopback_Indexd;
-   dest->Indexf = loopback_Indexf;
+   dest->Indexi = loopback_Indexi;
    dest->Indexs = loopback_Indexs;
    dest->Indexub = loopback_Indexub;
    dest->Indexdv = loopback_Indexdv;
-   dest->Indexfv = loopback_Indexfv;
    dest->Indexiv = loopback_Indexiv;
    dest->Indexsv = loopback_Indexsv;
    dest->Indexubv = loopback_Indexubv;

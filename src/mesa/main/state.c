@@ -144,7 +144,7 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    _mesa_init_no_op_table(exec, tableSize);
 
 #if _HAVE_FULL_GL
-   _mesa_loopback_init_api_table( exec, GL_TRUE );
+   _mesa_loopback_init_api_table( exec );
 #endif
 
    /* load the dispatch slots we understand */

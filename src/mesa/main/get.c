@@ -295,7 +295,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_CURRENT_INDEX:
 	 FLUSH_CURRENT(ctx, 0);
-         *params = INT_TO_BOOL(ctx->Current.Index);
+         *params = FLOAT_TO_BOOL(ctx->Current.Index);
          break;
       case GL_CURRENT_NORMAL:
 	 FLUSH_CURRENT(ctx, 0);
@@ -499,7 +499,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = INT_TO_BOOL(ctx->List.ListBase);
 	 break;
       case GL_LIST_INDEX:
-	 *params = INT_TO_BOOL( ctx->CurrentListNum );
+	 *params = INT_TO_BOOL( ctx->ListState.CurrentListNum );
 	 break;
       case GL_LIST_MODE:
          if (!ctx->CompileFlag)
@@ -2041,7 +2041,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) ctx->List.ListBase;
 	 break;
       case GL_LIST_INDEX:
-	 *params = (GLdouble) ctx->CurrentListNum;
+	 *params = (GLdouble) ctx->ListState.CurrentListNum;
 	 break;
       case GL_LIST_MODE:
          if (!ctx->CompileFlag)
@@ -3578,7 +3578,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) ctx->List.ListBase;
 	 break;
       case GL_LIST_INDEX:
-	 *params = (GLfloat) ctx->CurrentListNum;
+	 *params = (GLfloat) ctx->ListState.CurrentListNum;
 	 break;
       case GL_LIST_MODE:
          if (!ctx->CompileFlag)
@@ -5092,7 +5092,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 *params = (GLint) ctx->List.ListBase;
 	 break;
       case GL_LIST_INDEX:
-	 *params = (GLint) ctx->CurrentListNum;
+	 *params = (GLint) ctx->ListState.CurrentListNum;
 	 break;
       case GL_LIST_MODE:
          if (!ctx->CompileFlag)

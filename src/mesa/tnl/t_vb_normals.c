@@ -52,7 +52,7 @@ struct normal_stage_data {
 
 
 static GLboolean run_normal_stage( GLcontext *ctx,
-				   struct gl_pipeline_stage *stage )
+				   struct tnl_pipeline_stage *stage )
 {
    struct normal_stage_data *store = NORMAL_STAGE_DATA(stage);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -83,7 +83,7 @@ static GLboolean run_normal_stage( GLcontext *ctx,
 
 
 static GLboolean run_validate_normal_stage( GLcontext *ctx,
-					    struct gl_pipeline_stage *stage )
+					    struct tnl_pipeline_stage *stage )
 {
    struct normal_stage_data *store = NORMAL_STAGE_DATA(stage);
 
@@ -133,7 +133,7 @@ static GLboolean run_validate_normal_stage( GLcontext *ctx,
 
 
 static void check_normal_transform( GLcontext *ctx,
-				    struct gl_pipeline_stage *stage )
+				    struct tnl_pipeline_stage *stage )
 {
    stage->active = !ctx->VertexProgram.Enabled &&
       (ctx->Light.Enabled || (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS));
@@ -146,7 +146,7 @@ static void check_normal_transform( GLcontext *ctx,
 
 
 static GLboolean alloc_normal_data( GLcontext *ctx,
-				 struct gl_pipeline_stage *stage )
+				 struct tnl_pipeline_stage *stage )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct normal_stage_data *store;
@@ -165,7 +165,7 @@ static GLboolean alloc_normal_data( GLcontext *ctx,
 
 
 
-static void free_normal_data( struct gl_pipeline_stage *stage )
+static void free_normal_data( struct tnl_pipeline_stage *stage )
 {
    struct normal_stage_data *store = NORMAL_STAGE_DATA(stage);
    if (store) {
@@ -182,14 +182,14 @@ static void free_normal_data( struct gl_pipeline_stage *stage )
 
 
 
-const struct gl_pipeline_stage _tnl_normal_transform_stage =
+const struct tnl_pipeline_stage _tnl_normal_transform_stage =
 {
    "normal transform",		/* name */
    _TNL_NEW_NORMAL_TRANSFORM,	/* re-check */
    _TNL_NEW_NORMAL_TRANSFORM,	/* re-run */
    GL_FALSE,			/* active? */
-   VERT_BIT_NORMAL,		/* inputs */
-   VERT_BIT_NORMAL,		/* outputs */
+   _TNL_BIT_NORMAL,		/* inputs */
+   _TNL_BIT_NORMAL,		/* outputs */
    0,				/* changed_inputs */
    NULL,			/* private data */
    free_normal_data,		/* destructor */

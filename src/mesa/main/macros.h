@@ -109,6 +109,8 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 #define STRIDE_UI(p, i)  (p = (GLuint *)((GLubyte *)p + i))
 /** Stepping a GLubyte[4] pointer by a byte stride */
 #define STRIDE_4UB(p, i)  (p = (GLubyte (*)[4])((GLubyte *)p + i))
+/** Stepping a GLfloat[4] pointer by a byte stride */
+#define STRIDE_4F(p, i)  (p = (GLfloat (*)[4])((GLubyte *)p + i))
 /** Stepping a GLchan[4] pointer by a byte stride */
 #define STRIDE_4CHAN(p, i)  (p = (GLchan (*)[4])((GLubyte *)p + i))
 /** Stepping a GLchan pointer by a byte stride */

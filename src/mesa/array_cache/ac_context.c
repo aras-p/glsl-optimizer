@@ -93,7 +93,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
 
    cl = &ac->Fallback.Index;
    cl->Size = 1;
-   cl->Type = GL_UNSIGNED_INT;
+   cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 0;
    cl->Ptr = (GLubyte *) &ctx->Current.Index;
@@ -217,9 +217,9 @@ static void _ac_cache_init( GLcontext *ctx )
 
    cl = &ac->Cache.Index;
    cl->Size = 1;
-   cl->Type = GL_UNSIGNED_INT;
+   cl->Type = GL_FLOAT;
    cl->Stride = 0;
-   cl->StrideB = sizeof(GLuint);
+   cl->StrideB = sizeof(GLfloat);
    cl->Ptr = (GLubyte *) MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;

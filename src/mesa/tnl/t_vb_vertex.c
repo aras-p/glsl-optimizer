@@ -129,7 +129,7 @@ static void (*(usercliptab[5]))( GLcontext *,
 
 
 static GLboolean run_vertex_stage( GLcontext *ctx,
-				   struct gl_pipeline_stage *stage )
+				   struct tnl_pipeline_stage *stage )
 {
    struct vertex_stage_data *store = (struct vertex_stage_data *)stage->privatePtr;
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -149,36 +149,23 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 	    VB->EyePtr = TransformRaw( &store->eye,
                                        ctx->ModelviewMatrixStack.Top,
 				       VB->ObjPtr);
+      }
 
-	 if (ctx->ProjectionMatrixStack.Top->type == MATRIX_IDENTITY)
-	    VB->ClipPtr = VB->EyePtr;
-	 else
-	    VB->ClipPtr = TransformRaw( &store->clip,
-                                        &ctx->_ModelProjectMatrix,
-					VB->ObjPtr );
-      }
-      else {
-	 /* Combined modelviewproject transform:
-	  */
-	 if (ctx->_ModelProjectMatrix.type == MATRIX_IDENTITY)
-	    VB->ClipPtr = VB->ObjPtr;
-	 else
-	    VB->ClipPtr = TransformRaw( &store->clip,
-                                        &ctx->_ModelProjectMatrix,
-					VB->ObjPtr );
-      }
+      VB->ClipPtr = TransformRaw( &store->clip,
+				  &ctx->_ModelProjectMatrix,
+				  VB->ObjPtr );
 
       /* Drivers expect this to be clean to element 4...
        */
-      if (VB->ClipPtr->size < 4) {
-	 if (VB->ClipPtr->flags & VEC_NOT_WRITEABLE) {
-	    ASSERT(VB->ClipPtr == VB->ObjPtr);
-	    VB->import_data( ctx, VERT_BIT_POS, VEC_NOT_WRITEABLE );
-	    VB->ClipPtr = VB->ObjPtr;
-	 }
-	 if (VB->ClipPtr->size == 2)
-	    _mesa_vector4f_clean_elem( VB->ClipPtr, VB->Count, 2 );
+      switch (VB->ClipPtr->size) {
+      case 1:			
+	 /* impossible */
+      case 2:
+	 _mesa_vector4f_clean_elem( VB->ClipPtr, VB->Count, 2 );
+      case 3:
 	 _mesa_vector4f_clean_elem( VB->ClipPtr, VB->Count, 3 );
+      case 4:
+	 break;
       }
 
       /* Cliptest and perspective divide.  Clip functions must clear
@@ -225,9 +212,6 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
       VB->ClipOrMask = store->ormask;
       VB->ClipMask = store->clipmask;
 
-      if (VB->ClipPtr == VB->ObjPtr && (VB->importable_data & VERT_BIT_POS))
-	 VB->importable_data |= VERT_BIT_CLIP;
-
       store->save_eyeptr = VB->EyePtr;
       store->save_clipptr = VB->ClipPtr;
       store->save_ndcptr = VB->NdcPtr;
@@ -240,8 +224,6 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
       VB->NdcPtr = store->save_ndcptr;
       VB->ClipMask = store->clipmask;
       VB->ClipOrMask = store->ormask;
-      if (VB->ClipPtr == VB->ObjPtr && (VB->importable_data & VERT_BIT_POS))
-	 VB->importable_data |= VERT_BIT_CLIP;
       if (store->andmask)
 	 return GL_FALSE;
    }
@@ -250,13 +232,13 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 }
 
 
-static void check_vertex( GLcontext *ctx, struct gl_pipeline_stage *stage )
+static void check_vertex( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 {
    stage->active = !ctx->VertexProgram.Enabled;
 }
 
 static GLboolean init_vertex_stage( GLcontext *ctx,
-				    struct gl_pipeline_stage *stage )
+				    struct tnl_pipeline_stage *stage )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct vertex_stage_data *store;
@@ -285,7 +267,7 @@ static GLboolean init_vertex_stage( GLcontext *ctx,
    return stage->run( ctx, stage );
 }
 
-static void dtr( struct gl_pipeline_stage *stage )
+static void dtr( struct tnl_pipeline_stage *stage )
 {
    struct vertex_stage_data *store = VERTEX_STAGE_DATA(stage);
 
@@ -301,7 +283,7 @@ static void dtr( struct gl_pipeline_stage *stage )
 }
 
 
-const struct gl_pipeline_stage _tnl_vertex_transform_stage =
+const struct tnl_pipeline_stage _tnl_vertex_transform_stage =
 {
    "modelview/project/cliptest/divide",
    _NEW_PROGRAM,                /* check_state: only care about vertex prog */
@@ -311,8 +293,8 @@ const struct gl_pipeline_stage _tnl_vertex_transform_stage =
    _NEW_PROGRAM|
    _NEW_TRANSFORM,
    GL_TRUE,			/* active */
-   VERT_BIT_POS,		/* inputs */
-   VERT_BIT_EYE|VERT_BIT_CLIP,		/* outputs */
+   _TNL_BIT_POS,		/* inputs */
+   _TNL_BIT_POS,		/* outputs */
    0,				/* changed_inputs */
    NULL,			/* private data */
    dtr,				/* destructor */

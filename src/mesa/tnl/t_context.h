@@ -1,5 +1,5 @@
 /*
- * Mesa 3-D graphics library
+ * mesa 3-D graphics library
  * Version:  5.1
  *
  * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
@@ -37,9 +37,9 @@
  * necessary transformations (rotations, clipping, vertex shader etc.)
  * and passes then the output to the rasterizer.
  *
- * The gl_pipeline contains the array of all stages, which should be
+ * The tnl_pipeline contains the array of all stages, which should be
  * applied. Each stage is a black-box, which is described by an
- * gl_pipeline_stage. The function ::_tnl_run_pipeline applies all the
+ * tnl_pipeline_stage. The function ::_tnl_run_pipeline applies all the
  * stages to the vertex_buffer TNLcontext::vb, where the vertex data
  * is stored. The last stage in the pipeline is the rasterizer.
  *
@@ -68,7 +68,6 @@
  * into TNLcontext::vb, so that the pipeline can be started.
  */
 
-/* What is ELT? */
 
 #ifndef _T_CONTEXT_H
 #define _T_CONTEXT_H
@@ -84,256 +83,346 @@
 #define MAX_PIPELINE_STAGES     30
 
 
-/* Numbers for sizing immediate structs.
+enum {
+	_TNL_ATTRIB_POS = 0,
+	_TNL_ATTRIB_WEIGHT = 1,
+	_TNL_ATTRIB_NORMAL = 2,
+	_TNL_ATTRIB_COLOR0 = 3,
+	_TNL_ATTRIB_COLOR1 = 4,
+	_TNL_ATTRIB_FOG = 5,
+	_TNL_ATTRIB_SIX = 6,
+	_TNL_ATTRIB_SEVEN = 7,
+	_TNL_ATTRIB_TEX0 = 8,
+	_TNL_ATTRIB_TEX1 = 9,
+	_TNL_ATTRIB_TEX2 = 10,
+	_TNL_ATTRIB_TEX3 = 11,
+	_TNL_ATTRIB_TEX4 = 12,
+	_TNL_ATTRIB_TEX5 = 13,
+	_TNL_ATTRIB_TEX6 = 14,
+	_TNL_ATTRIB_TEX7 = 15,
+	_TNL_ATTRIB_MAT_FRONT_AMBIENT = 16,
+	_TNL_ATTRIB_MAT_BACK_AMBIENT = 17,
+	_TNL_ATTRIB_MAT_FRONT_DIFFUSE = 18,
+	_TNL_ATTRIB_MAT_BACK_DIFFUSE = 19,
+	_TNL_ATTRIB_MAT_FRONT_SPECULAR = 20,
+	_TNL_ATTRIB_MAT_BACK_SPECULAR = 21,
+	_TNL_ATTRIB_MAT_FRONT_EMISSION = 22,
+	_TNL_ATTRIB_MAT_BACK_EMISSION = 23,
+	_TNL_ATTRIB_MAT_FRONT_SHININESS = 24,
+	_TNL_ATTRIB_MAT_BACK_SHININESS = 25,
+	_TNL_ATTRIB_MAT_FRONT_INDEXES = 26,
+	_TNL_ATTRIB_MAT_BACK_INDEXES = 27, 
+	_TNL_ATTRIB_INDEX = 28,        
+	_TNL_ATTRIB_EDGEFLAG = 29,     
+	_TNL_ATTRIB_MAX = 30
+} ;
+
+/* Will probably have to revise this scheme fairly shortly, eg. by
+ * compacting all the MAT flags down to one bit, or by using two
+ * dwords to store the flags.
  */
-#define IMM_MAX_COPIED_VERTS  3
-#define IMM_MAXDATA          (216 + IMM_MAX_COPIED_VERTS)
-#define IMM_SIZE             (IMM_MAXDATA + MAX_CLIPPED_VERTICES)
+#define _TNL_BIT_POS                 (1<<0)
+#define _TNL_BIT_WEIGHT              (1<<1)
+#define _TNL_BIT_NORMAL              (1<<2)
+#define _TNL_BIT_COLOR0              (1<<3)
+#define _TNL_BIT_COLOR1              (1<<4)
+#define _TNL_BIT_FOG                 (1<<5)
+#define _TNL_BIT_SIX                 (1<<6)
+#define _TNL_BIT_SEVEN               (1<<7)
+#define _TNL_BIT_TEX0                (1<<8)
+#define _TNL_BIT_TEX1                (1<<9)
+#define _TNL_BIT_TEX2                (1<<10)
+#define _TNL_BIT_TEX3                (1<<11)
+#define _TNL_BIT_TEX4                (1<<12)
+#define _TNL_BIT_TEX5                (1<<13)
+#define _TNL_BIT_TEX6                (1<<14)
+#define _TNL_BIT_TEX7                (1<<15)
+#define _TNL_BIT_MAT_FRONT_AMBIENT   (1<<16)
+#define _TNL_BIT_MAT_BACK_AMBIENT    (1<<17)
+#define _TNL_BIT_MAT_FRONT_DIFFUSE   (1<<18)
+#define _TNL_BIT_MAT_BACK_DIFFUSE    (1<<19)
+#define _TNL_BIT_MAT_FRONT_SPECULAR  (1<<20)
+#define _TNL_BIT_MAT_BACK_SPECULAR   (1<<21)
+#define _TNL_BIT_MAT_FRONT_EMISSION  (1<<22)
+#define _TNL_BIT_MAT_BACK_EMISSION   (1<<23)
+#define _TNL_BIT_MAT_FRONT_SHININESS (1<<24)
+#define _TNL_BIT_MAT_BACK_SHININESS  (1<<25)
+#define _TNL_BIT_MAT_FRONT_INDEXES   (1<<26)
+#define _TNL_BIT_MAT_BACK_INDEXES    (1<<27)
+#define _TNL_BIT_INDEX               (1<<28)
+#define _TNL_BIT_EDGEFLAG            (1<<29)
+
+#define _TNL_BIT_TEX(u)  (1 << (_TNL_ATTRIB_TEX0 + (u)))
 
 
-/* Values for IM->BeginState
+#define _TNL_BITS_MAT_ANY  (_TNL_BIT_MAT_FRONT_AMBIENT   | 	\
+			    _TNL_BIT_MAT_BACK_AMBIENT    | 	\
+			    _TNL_BIT_MAT_FRONT_DIFFUSE   | 	\
+			    _TNL_BIT_MAT_BACK_DIFFUSE    | 	\
+			    _TNL_BIT_MAT_FRONT_SPECULAR  | 	\
+			    _TNL_BIT_MAT_BACK_SPECULAR   | 	\
+			    _TNL_BIT_MAT_FRONT_EMISSION  | 	\
+			    _TNL_BIT_MAT_BACK_EMISSION   | 	\
+			    _TNL_BIT_MAT_FRONT_SHININESS | 	\
+			    _TNL_BIT_MAT_BACK_SHININESS  | 	\
+			    _TNL_BIT_MAT_FRONT_INDEXES   | 	\
+			    _TNL_BIT_MAT_BACK_INDEXES)
+
+
+#define _TNL_BITS_TEX_ANY  (_TNL_BIT_TEX0 |	\
+                            _TNL_BIT_TEX1 |	\
+                            _TNL_BIT_TEX2 |	\
+                            _TNL_BIT_TEX3 |	\
+                            _TNL_BIT_TEX4 |	\
+                            _TNL_BIT_TEX5 |	\
+                            _TNL_BIT_TEX6 |	\
+                            _TNL_BIT_TEX7)
+
+
+#define _TNL_BITS_PROG_ANY   (_TNL_BIT_POS    |		\
+			      _TNL_BIT_WEIGHT |		\
+			      _TNL_BIT_NORMAL |		\
+			      _TNL_BIT_COLOR0 |		\
+			      _TNL_BIT_COLOR1 |		\
+			      _TNL_BIT_FOG    |		\
+			      _TNL_BIT_SIX    |		\
+			      _TNL_BIT_SEVEN  |		\
+			      _TNL_BITS_TEX_ANY)
+
+
+
+#define PRIM_BEGIN     0x10
+#define PRIM_END       0x20
+#define PRIM_WEAK      0x40
+#define PRIM_MODE_MASK 0x0f
+
+/* 
  */
-#define VERT_BEGIN_0    0x1	   /* glBegin (if initially inside beg/end) */
-#define VERT_BEGIN_1    0x2	   /* glBegin (if initially outside beg/end) */
-#define VERT_ERROR_0    0x4	   /* invalid_operation in initial state 0 */
-#define VERT_ERROR_1    0x8        /* invalid_operation in initial state 1 */
-
-
-/* Flags to be added to the primitive enum in VB->Primitive.
- */
-#define PRIM_MODE_MASK  0xff   /* Extract the actual primitive */
-#define PRIM_BEGIN      0x100  /* The prim starts here (not wrapped) */
-#define PRIM_END        0x200  /* The prim ends in this VB (does not wrap) */
-#define PRIM_PARITY     0x400  /* The prim wrapped on an odd number of verts */
-#define PRIM_LAST       0x800  /* No more prims in the VB */
-
-
-/**
- * Flags that describe the inputs and outputs of pipeline stages, and
- * the contents of a vertex-cassette.  We reuse the VERT_BIT_* flags
- * defined in mtypes.h and add a bunch of new ones.
- */
-/* bits 0..5 defined in mtypes.h */
-#define VERT_BIT_INDEX       VERT_BIT_SIX    /* a free vertex attrib bit */
-#define VERT_BIT_EDGEFLAG    VERT_BIT_SEVEN  /* a free vertex attrib bit */
-/* bits 8..15 defined in mtypes.h */
-#define VERT_BIT_EVAL_C1     (1 << 16)  /* imm only */
-#define VERT_BIT_EVAL_C2     (1 << 17)  /* imm only */
-#define VERT_BIT_EVAL_P1     (1 << 18)  /* imm only */
-#define VERT_BIT_EVAL_P2     (1 << 19)  /* imm only */
-#define VERT_BIT_OBJ_3       (1 << 20)  /* imm only */
-#define VERT_BIT_OBJ_4       (1 << 21)  /* imm only */
-#define VERT_BIT_MATERIAL    (1 << 22)  /* imm only, but tested in vb code */
-#define VERT_BIT_ELT         (1 << 23)  /* imm only */
-#define VERT_BIT_BEGIN       (1 << 24)  /* imm only, but tested in vb code */
-#define VERT_BIT_END         (1 << 25)  /* imm only, but tested in vb code */
-#define VERT_BIT_END_VB      (1 << 26)  /* imm only, but tested in vb code */
-#define VERT_BIT_POINT_SIZE  (1 << 27)  /* vb only, could reuse a bit */
-#define VERT_BIT_EYE         VERT_BIT_BEGIN /* vb only, reuse imm bit */
-#define VERT_BIT_CLIP        VERT_BIT_END   /* vb only, reuse imm bit*/
-
-
-/* Flags for IM->TexCoordSize.  Enough flags for 16 units.
- */
-#define TEX_0_SIZE_3          (unsigned)0x1
-#define TEX_0_SIZE_4          (unsigned)0x10001
-#define TEX_SIZE_3(unit)      (TEX_0_SIZE_3 << (unit))
-#define TEX_SIZE_4(unit)      (TEX_0_SIZE_4 << (unit))
-
-
-/* Shorthands.
- */
-#define VERT_BITS_OBJ_23   (VERT_BIT_POS | VERT_BIT_OBJ_3)
-#define VERT_BITS_OBJ_234  (VERT_BIT_POS | VERT_BIT_OBJ_3 | VERT_BIT_OBJ_4)
-
-#define VERT_BITS_TEX_ANY  (VERT_BIT_TEX0 |	\
-                            VERT_BIT_TEX1 |	\
-                            VERT_BIT_TEX2 |	\
-                            VERT_BIT_TEX3 |	\
-                            VERT_BIT_TEX4 |	\
-                            VERT_BIT_TEX5 |	\
-                            VERT_BIT_TEX6 |	\
-                            VERT_BIT_TEX7)
-
-#define VERT_BITS_EVAL_ANY (VERT_BIT_EVAL_C1 | VERT_BIT_EVAL_P1 | \
-                            VERT_BIT_EVAL_C2 | VERT_BIT_EVAL_P2)
-
-#define VERT_BITS_FIXUP    (VERT_BITS_TEX_ANY |		\
-                            VERT_BIT_COLOR0 |		\
-                            VERT_BIT_COLOR1 |		\
-                            VERT_BIT_FOG |		\
-			    VERT_BIT_INDEX |		\
-                            VERT_BIT_EDGEFLAG |		\
-                            VERT_BIT_NORMAL)
-
-#define VERT_BITS_CURRENT_DATA  (VERT_BITS_FIXUP |	\
-			         VERT_BIT_MATERIAL)
-
-#define VERT_BITS_DATA     (VERT_BITS_TEX_ANY |		\
-			    VERT_BIT_COLOR0 |		\
-			    VERT_BIT_COLOR1 |		\
-			    VERT_BIT_FOG |		\
-                            VERT_BIT_INDEX |		\
-                            VERT_BIT_EDGEFLAG |		\
-                            VERT_BIT_NORMAL |		\
-	                    VERT_BIT_POS |		\
-                            VERT_BIT_MATERIAL |		\
-                            VERT_BIT_ELT |		\
-	                    VERT_BITS_EVAL_ANY)
-
-
-/**
- * \struct immediate
- * Stores everything that can take place between a glBegin and glEnd.
- * Adjacent glBegin/glEnd pairs are stored back-to-back when there's no
- * state changes between them.
- * Used for immediate mode rendering and display lists.
- */
-struct immediate
-{
-   GLuint id, ref_count;
-
-   /* This must be saved when immediates are shared in display lists.
-    */
-   GLuint CopyStart, Start, Count;
-   GLuint LastData;		/* count or count+1 */
-   GLuint AndFlag, OrFlag;
-   GLuint TexSize;		/* keep track of texcoord sizes */
-   GLuint BeginState, SavedBeginState;
-   GLuint LastPrimitive;
-
-   GLuint ArrayEltFlags;	/* precalc'ed for glArrayElt */
-   GLuint ArrayEltIncr;
-   GLuint ArrayEltFlush;
-
-#define FLUSH_ELT_EAGER 0x1
-#define FLUSH_ELT_LAZY 0x2
-   GLuint FlushElt;
-
-   GLuint MaxTextureUnits;	/* precalc'ed for glMultiTexCoordARB */
-
-   /* Temporary values created when vertices are copied into the
-    * first 3 slots of the struct:
-    */
-   GLuint CopyOrFlag;
-   GLuint CopyAndFlag;
-   GLuint CopyTexSize;
-   GLuint Evaluated;
-
-
-   /* allocate storage for these on demand:
-    */
-   struct gl_material *Material;
-   GLuint *MaterialMask;
-   GLuint LastMaterial;
-   GLuint MaterialOrMask;
-   GLuint MaterialAndMask;
-
-   GLuint  Primitive[IMM_SIZE];	      /* BEGIN/END */
-   GLuint  PrimitiveLength[IMM_SIZE]; /* BEGIN/END */
-   GLuint  Flag[IMM_SIZE];	      /* VERT_BIT_* flags */
-
-   /* Attrib is an array [MAX_VERT_ATTRIBS] of pointer to array [][4]
-    * of GLfloat.
-    * We only pre-allocate the vertex position array.  The other vertex
-    * attribute arrays are only allocated when needed to save memory.
-    */
-   GLfloat (*Attrib[VERT_ATTRIB_MAX])[4];
-
-   GLfloat *NormalLengthPtr; /* length of normal vectors (display list only) */
-
-   GLuint  Elt[IMM_SIZE];
-   GLubyte EdgeFlag[IMM_SIZE];
-   GLuint  Index[IMM_SIZE];
+struct tnl_prim {
+   GLuint mode;
+   GLuint start;
+   GLuint count;
 };
 
 
-struct vertex_arrays
+
+struct tnl_eval1_map {
+   struct gl_1d_map *map;
+   GLuint sz;
+};
+
+struct tnl_eval2_map {
+   struct gl_2d_map *map;
+   GLuint sz;
+};
+
+struct tnl_eval {
+   GLuint new_state;
+   struct tnl_eval1_map map1[_TNL_ATTRIB_INDEX + 1];
+   struct tnl_eval2_map map2[_TNL_ATTRIB_INDEX + 1];
+};
+
+
+#define TNL_MAX_PRIM 16
+#define TNL_MAX_COPIED_VERTS 3
+
+struct tnl_copied_vtx {
+   GLfloat buffer[_TNL_ATTRIB_MAX * 4 * TNL_MAX_COPIED_VERTS];
+   GLuint nr;
+};
+
+#define VERT_BUFFER_SIZE 2048	/* 8kbytes */
+
+typedef void (*attrfv_func)( const GLfloat * );
+
+/* The assembly of vertices in immediate mode is separated from
+ * display list compilation.  This allows a simpler immediate mode
+ * treatment and a display list compiler better suited to
+ * hardware-acceleration.
+ */
+struct tnl_vtx {
+   GLfloat buffer[VERT_BUFFER_SIZE];
+   GLubyte attrsz[_TNL_ATTRIB_MAX];
+   GLuint vertex_size;
+   struct tnl_prim prim[TNL_MAX_PRIM];
+   GLuint prim_count;
+   GLfloat *vbptr;		      /* cursor, points into buffer */
+   GLfloat vertex[_TNL_ATTRIB_MAX*4]; /* current vertex */
+   GLfloat *attrptr[_TNL_ATTRIB_MAX]; /* points into vertex */
+   GLfloat *current[_TNL_ATTRIB_MAX]; /* points into ctx->Current, etc */
+   GLuint counter, initial_counter;
+   struct tnl_copied_vtx copied;
+   attrfv_func tabfv[_TNL_ATTRIB_MAX][4];
+   struct tnl_eval eval;
+   GLboolean *edgeflag_tmp;
+};
+
+
+
+
+/* For display lists, this structure holds a run of vertices of the
+ * same format, and a strictly well-formed set of begin/end pairs,
+ * starting on the first vertex and ending at the last.  Vertex
+ * copying on buffer breaks is precomputed according to these
+ * primitives, though there are situations where the copying will need
+ * correction at execute-time, perhaps by replaying the list as
+ * immediate mode commands.
+ *
+ * On executing this list, the 'current' values may be updated with
+ * the values of the final vertex, and often no fixup of the start of
+ * the vertex list is required.
+ *
+ * Eval and other commands that don't fit into these vertex lists are
+ * compiled using the fallback opcode mechanism provided by dlist.c.
+ */
+struct tnl_vertex_list {
+   GLubyte attrsz[_TNL_ATTRIB_MAX];
+   GLuint vertex_size;
+
+   GLfloat *buffer;
+   GLuint count;
+   GLuint wrap_count;		/* number of copied vertices at start */
+   GLuint dangling_attr_ref;	/* current attr implicitly referenced 
+				   outside the list */
+
+   GLfloat *normal_lengths;
+   struct tnl_prim *prim;
+   GLuint prim_count;
+
+   struct tnl_vertex_store *vertex_store;
+   struct tnl_primitive_store *prim_store;
+};
+
+/* These buffers should be a reasonable size to support upload to
+ * hardware?  Maybe drivers should stitch them back together, or
+ * specify a desired size?
+ */
+#define SAVE_BUFFER_SIZE (16*1024)
+#define SAVE_PRIM_SIZE   128
+
+/* Storage to be shared among several vertex_lists.
+ */
+struct tnl_vertex_store {
+   GLfloat buffer[SAVE_BUFFER_SIZE];
+   GLuint used;
+   GLuint refcount;
+};
+
+struct tnl_primitive_store {
+   struct tnl_prim buffer[SAVE_PRIM_SIZE];
+   GLuint used;
+   GLuint refcount;
+};
+
+
+struct tnl_save {
+   GLubyte attrsz[_TNL_ATTRIB_MAX];
+   GLuint vertex_size;
+
+   GLfloat *buffer;
+   GLuint count;
+   GLuint wrap_count;
+
+   struct tnl_prim *prim;
+   GLuint prim_count, prim_max;
+
+   struct tnl_vertex_store *vertex_store;
+   struct tnl_primitive_store *prim_store;
+
+   GLfloat *vbptr;		   /* cursor, points into buffer */
+   GLfloat vertex[_TNL_ATTRIB_MAX*4];	   /* current values */
+   GLfloat *attrptr[_TNL_ATTRIB_MAX];
+   GLuint counter, initial_counter;
+   GLuint dangling_attr_ref;
+
+   GLuint opcode_vertex_list;
+
+   struct tnl_copied_vtx copied;
+
+   GLfloat *current[_TNL_ATTRIB_MAX]; /* points into ctx->ListState */
+   GLubyte *currentsz[_TNL_ATTRIB_MAX];
+
+   void (*tabfv[_TNL_ATTRIB_MAX][4])( const GLfloat * );
+};
+
+
+
+
+
+
+
+struct tnl_vertex_arrays
 {
    /* Conventional vertex attribute arrays */
    GLvector4f  Obj;
    GLvector4f  Normal;
-   struct gl_client_array Color;
-   struct gl_client_array SecondaryColor;
+   GLvector4f  Color;
+   GLvector4f  SecondaryColor;
    GLvector4f  FogCoord;
    GLvector4f  TexCoord[MAX_TEXTURE_COORD_UNITS];
-   GLvector1ub EdgeFlag;
-   GLvector1ui Index;
-   GLvector1ui Elt;
+   GLvector4f  Index;
+
+   GLubyte     *EdgeFlag;
+   GLuint      *Elt;
 
    /* These attributes don't alias with the conventional attributes.
     * The GL_NV_vertex_program extension defines 16 extra sets of vertex
     * arrays which have precedent over the conventional arrays when enabled.
     */
-   GLvector4f  Attribs[VERT_ATTRIB_MAX];
+   GLvector4f  Attribs[_TNL_ATTRIB_MAX];
 };
 
 
 /**
  * Contains the current state of a running pipeline.
  */
-typedef struct vertex_buffer
+struct vertex_buffer
 {
    /* Constant over life of the vertex_buffer.
     */
-   GLuint Size;
+   GLuint      Size;
 
    /* Constant over the pipeline.
     */
-   GLuint     Count;		              /* for everything except Elts */
-   GLuint     FirstClipped;	              /* temp verts for clipping */
-   GLuint     FirstPrimitive;	              /* usually zero */
+   GLuint      Count;		              /* for everything except Elts */
 
    /* Pointers to current data.
     */
-   GLuint      *Elts;		                /* VERT_BIT_ELT */
-   GLvector4f  *ObjPtr;		                /* VERT_BIT_POS */
-   GLvector4f  *EyePtr;		                /* VERT_BIT_EYE */
-   GLvector4f  *ClipPtr;	                /* VERT_BIT_CLIP */
-   GLvector4f  *NdcPtr;                         /* VERT_BIT_CLIP (2) */
-   GLubyte     ClipOrMask;	                /* VERT_BIT_CLIP (3) */
-   GLubyte     *ClipMask;		        /* VERT_BIT_CLIP (4) */
-   GLvector4f  *NormalPtr;	                /* VERT_BIT_NORMAL */
-   GLfloat     *NormalLengthPtr;	        /* VERT_BIT_NORMAL */
-   GLboolean   *EdgeFlag;	                /* VERT_BIT_EDGEFLAG */
+   GLuint      *Elts;		                
+   GLvector4f  *ObjPtr;		                /* _TNL_BIT_POS */
+   GLvector4f  *EyePtr;		                /* _TNL_BIT_POS */
+   GLvector4f  *ClipPtr;	                /* _TNL_BIT_POS */
+   GLvector4f  *NdcPtr;                         /* _TNL_BIT_POS */
+   GLubyte     ClipOrMask;	                /* _TNL_BIT_POS */
+   GLubyte     *ClipMask;		        /* _TNL_BIT_POS */
+   GLvector4f  *NormalPtr;	                /* _TNL_BIT_NORMAL */
+   GLfloat     *NormalLengthPtr;	        /* _TNL_BIT_NORMAL */
+   GLboolean   *EdgeFlag;	                /* _TNL_BIT_EDGEFLAG */
    GLvector4f  *TexCoordPtr[MAX_TEXTURE_COORD_UNITS]; /* VERT_TEX_0..n */
-   GLvector1ui *IndexPtr[2];	                /* VERT_BIT_INDEX */
-   struct gl_client_array *ColorPtr[2];	        /* VERT_BIT_COLOR0 */
-   struct gl_client_array *SecondaryColorPtr[2];/* VERT_BIT_COLOR1 */
-   GLvector4f  *PointSizePtr;	                /* VERT_BIT_POINT_SIZE */
-   GLvector4f  *FogCoordPtr;	                /* VERT_BIT_FOG */
-   struct gl_material *Material;              /* VERT_BIT_MATERIAL, optional */
-   GLuint      *MaterialMask;	              /* VERT_BIT_MATERIAL, optional */
-   GLuint      *Flag;		              /* VERT_BIT_* flags, optional */
-   GLuint      *Primitive;	              /* GL_(mode)|PRIM_* flags */
-   GLuint      *PrimitiveLength;	      /* integers */
+   GLvector4f  *IndexPtr[2];	                /* _TNL_BIT_INDEX */
+   GLvector4f  *ColorPtr[2];	                /* _TNL_BIT_COLOR0 */
+   GLvector4f  *SecondaryColorPtr[2];           /* _TNL_BIT_COLOR1 */
+   GLvector4f  *PointSizePtr;	                /* _TNL_BIT_POS */
+   GLvector4f  *FogCoordPtr;	                /* _TNL_BIT_FOG */
+
+   struct tnl_prim  *Primitive;	              
+   GLuint      PrimitiveCount;	      
 
    /* Inputs to the vertex program stage */
-   GLvector4f *AttribPtr[VERT_ATTRIB_MAX];      /* GL_NV_vertex_program */
-
-   GLuint importable_data;
-   void *import_source;
-   void (*import_data)( GLcontext *ctx, GLuint flags, GLuint vecflags );
-   /* Callback to the provider of the untransformed input for the
-    * render stage (or other stages) to call if they need to write into
-    * write-protected arrays, or fixup the stride on input arrays.
-    *
-    * This is currently only necessary for client arrays that make it
-    * as far down the pipeline as the render stage.
-    */
+   GLvector4f *AttribPtr[_TNL_ATTRIB_MAX];      /* GL_NV_vertex_program */
 
    GLuint LastClipped;
    /* Private data from _tnl_render_stage that has no business being
     * in this struct.
     */
 
-} TNLvertexbuffer;
+};
 
 
 
 /** Describes an individual operation on the pipeline.
  */
-struct gl_pipeline_stage {
+struct tnl_pipeline_stage {
    const char *name;
    GLuint check_state;		/* All state referenced in check() --
 				 * When is the pipeline_stage struct
@@ -365,12 +454,12 @@ struct gl_pipeline_stage {
 
    /* Free private data.  May not be null.
     */
-   void (*destroy)( struct gl_pipeline_stage * );
+   void (*destroy)( struct tnl_pipeline_stage * );
 
    /* Called from _tnl_validate_pipeline().  Must update all fields in
     * the pipeline_stage struct for the current state.
     */
-   void (*check)( GLcontext *ctx, struct gl_pipeline_stage * );
+   void (*check)( GLcontext *ctx, struct tnl_pipeline_stage * );
 
    /* Called from _tnl_run_pipeline().  The stage.changed_inputs value
     * encodes all inputs to thee struct which have changed.  If
@@ -380,31 +469,23 @@ struct gl_pipeline_stage {
     * Return value: GL_TRUE - keep going
     *               GL_FALSE - finished pipeline
     */
-   GLboolean (*run)( GLcontext *ctx, struct gl_pipeline_stage * );
+   GLboolean (*run)( GLcontext *ctx, struct tnl_pipeline_stage * );
 };
 
 /** Contains the array of all pipeline stages.
  * The default values are defined at the end of t_pipeline.c */
-struct gl_pipeline {
+struct tnl_pipeline {
    GLuint build_state_trigger;	  /**< state changes which require build */
    GLuint build_state_changes;    /**< state changes since last build */
    GLuint run_state_changes;	  /**< state changes since last run */
    GLuint run_input_changes;	  /**< VERT_* changes since last run */
    GLuint inputs;		  /**< VERT_* inputs to pipeline */
    /** This array has to end with a NULL-pointer. */
-   struct gl_pipeline_stage stages[MAX_PIPELINE_STAGES+1];
+   struct tnl_pipeline_stage stages[MAX_PIPELINE_STAGES+1];
    GLuint nr_stages;
 };
 
 
-struct tnl_eval_store {
-   GLuint EvalMap1Flags;
-   GLuint EvalMap2Flags;
-   GLuint EvalMap1AttribFlags;  /* GL_NV_vertex_program */
-   GLuint EvalMap2AttribFlags;  /* GL_NV_vertex_program */
-   GLuint EvalNewState;
-   struct immediate *im;	/* used for temporary data */
-};
 
 
 typedef void (*points_func)( GLcontext *ctx, GLuint first, GLuint last );
@@ -533,50 +614,26 @@ typedef struct {
     */
    struct tnl_device_driver Driver;
 
-   /* Track whether the module is active.
+   /* Execute:
     */
-   GLboolean bound_exec;
-
-   /* Display list extensions
+   struct tnl_vtx vtx;
+   
+   /* Compile:
     */
-   GLuint opcode_vertex_cassette;
+   struct tnl_save save;
 
    /* Pipeline
     */
-   struct gl_pipeline pipeline;
+   struct tnl_pipeline pipeline;
    struct vertex_buffer vb;
 
    /* GLvectors for binding to vb:
     */
-   struct vertex_arrays imm_inputs;
-   struct vertex_arrays array_inputs;
-   GLuint *tmp_primitive;
-   GLuint *tmp_primitive_length;
+   struct tnl_vertex_arrays vtx_inputs;
+   struct tnl_vertex_arrays save_inputs;
+   struct tnl_vertex_arrays current;
+   struct tnl_vertex_arrays array_inputs;
 
-   /* Set when executing an internally generated begin/end object.  If
-    * such an object is encountered in a display list, it will be
-    * replayed only if the list is outside any existing begin/end
-    * objects.  
-    */
-   GLboolean ReplayHardBeginEnd;
-
-   /* Note which vertices need copying over succesive immediates.
-    * Will add save versions to precompute vertex copying where
-    * possible.
-    */
-   struct immediate *ExecCopySource;
-   GLuint ExecCopyCount;
-   GLuint ExecCopyElts[IMM_MAX_COPIED_VERTS];
-   GLuint ExecCopyTexSize;
-   GLuint ExecParity;
-
-   GLuint DlistPrimitive;
-   GLuint DlistPrimitiveLength;
-   GLuint DlistLastPrimitive;
-
-   /* Cache a single free immediate (refcount == 0)
-    */
-   struct immediate *freed_immediate;   
 
    /* Probably need a better configuration mechanism:
     */
@@ -585,13 +642,8 @@ typedef struct {
    GLboolean CalcDListNormalLengths;
    GLboolean IsolateMaterials;
 
-   /* Derived state and storage for _tnl_eval_vb:
-    */
-   struct tnl_eval_store eval;
 
-   /* Functions to be plugged into dispatch when tnl is active.
-    */
-   GLvertexformat vtxfmt;
+   GLvertexformat exec_vtxfmt;
    GLvertexformat save_vtxfmt;
 
 } TNLcontext;
@@ -599,7 +651,6 @@ typedef struct {
 
 
 #define TNL_CONTEXT(ctx) ((TNLcontext *)(ctx->swtnl_context))
-#define TNL_CURRENT_IM(ctx) ((struct immediate *)(ctx->swtnl_im))
 
 
 #define TYPE_IDX(t) ((t) & 0xf)
@@ -610,21 +661,6 @@ extern void _tnl_MakeCurrent( GLcontext *ctx,
 			      GLframebuffer *readBuffer );
 
 
-/*
- * Macros for fetching current input buffer.
- */
-#ifdef THREADS
-#define GET_IMMEDIATE  struct immediate *IM = TNL_CURRENT_IM(((GLcontext *) (_glapi_Context ? _glapi_Context : _glapi_get_context())))
-#define SET_IMMEDIATE(ctx, im)  ctx->swtnl_im = (void *)im
-#else
-extern struct immediate *_tnl_CurrentInput;
-#define GET_IMMEDIATE struct immediate *IM = _tnl_CurrentInput
-#define SET_IMMEDIATE(ctx, im)			\
-do {						\
-   ctx->swtnl_im = (void *)im;			\
-   _tnl_CurrentInput = im;			\
-} while (0)
-#endif
 
 
 #endif

@@ -49,6 +49,7 @@
 
 
 #include "glapi.h"
+#include "imports.h"
 #include "mtypes.h"
 
 
@@ -263,6 +264,7 @@ _mesa_Flush( void );
 /** \name Macros for contexts/flushing. */
 /*@{*/
 
+
 /**
  * Flush vertices.
  *
@@ -272,8 +274,6 @@ _mesa_Flush( void );
  * Checks if dd_function_table::NeedFlush is marked to flush stored vertices,
  * and calls dd_function_table::FlushVertices if so. Marks
  * __GLcontextRec::NewState with \p newstate.
- * 
- * \todo Eventually let the driver specify what state changes require a flush:
  */
 #define FLUSH_VERTICES(ctx, newstate)				\
 do {								\

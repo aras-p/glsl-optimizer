@@ -1,244 +1,252 @@
-/* $XFree86$ */
-/**************************************************************************
-
-Copyright 2002 Tungsten Graphics Inc., Cedar Park, Texas.
-
-All Rights Reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-on the rights to use, copy, modify, merge, publish, distribute, sub
-license, and/or sell copies of the Software, and to permit persons to whom
-the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice (including the next
-paragraph) shall be included in all copies or substantial portions of the
-Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
-TUNGSTEN GRAPHICS AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-**************************************************************************/
-
 /*
- * Authors:
- *   Keith Whitwell <keith@tungstengraphics.com>
+ * Mesa 3-D graphics library
+ * Version:  5.1
  *
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
-#include "api_noop.h"
-#include "api_arrayelt.h"
+
+#include "glheader.h"
+#include "api_eval.h"
 #include "context.h"
-#include "imports.h"
-#include "mtypes.h"
-#include "enums.h"
-#include "glapi.h"
-#include "colormac.h"
-#include "light.h"
 #include "state.h"
-#include "vtxfmt.h"
+#include "macros.h"
+#include "math/m_eval.h"
+#include "t_vtx_api.h"
+#include "t_pipeline.h"
 
-#include "tnl/tnl.h"
-#include "tnl/t_context.h"
-#include "tnl/t_array_api.h"
-
-static void _tnl_FlushVertices( GLcontext *, GLuint );
-
-
-void tnl_copy_to_current( GLcontext *ctx ) 
+static void _tnl_print_vtx( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   GLuint flag = tnl->vertex_format;
-   GLint i;
+   GLuint count = tnl->vtx.initial_counter - tnl->vtx.counter;
+   GLuint i;
 
-   assert(ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT);
+   _mesa_debug(0, "%s: %u vertices %d primitives, %d vertsize\n",
+	       __FUNCTION__,
+               count,
+	       tnl->vtx.prim_count,
+	       tnl->vtx.vertex_size);
 
-   for (i = 0 ; i < 16 ; i++)
-      if (flag & (1<<i))
-	 COPY_4FV( ctx->Current.Attrib[i], tnl->attribptr[i] );
-
-   if (flag & VERT_BIT_INDEX)
-      ctx->Current.Index = tnl->indexptr[0];
-
-   if (flag & VERT_BIT_EDGEFLAG)
-      ctx->Current.EdgeFlag = tnl->edgeflagptr[0];
-
-   if (flag & VERT_BIT_MATERIAL) {
-      _mesa_update_material( ctx,
-			  IM->Material[IM->LastMaterial],
-			  IM->MaterialOrMask );
-
-      tnl->Driver.NotifyMaterialChange( ctx );
+   for (i = 0 ; i < tnl->vtx.prim_count ; i++) {
+      struct tnl_prim *prim = &tnl->vtx.prim[i];
+      _mesa_debug(0, "   prim %d: %s %d..%d %s %s\n",
+		  i, 
+		  _mesa_lookup_enum_by_nr(prim->mode & PRIM_MODE_MASK),
+		  prim->start, 
+		  prim->start + prim->count,
+		  (prim->mode & PRIM_BEGIN) ? "BEGIN" : "(wrap)",
+		  (prim->mode & PRIM_END) ? "END" : "(wrap)");
    }
-
-
-   ctx->Driver.NeedFlush &= ~FLUSH_UPDATE_CURRENT;
 }
 
-static GLboolean discreet_gl_prim[GL_POLYGON+1] = {
-   1,				/* 0 points */
-   1,				/* 1 lines */
-   0,				/* 2 line_strip */
-   0,				/* 3 line_loop */
-   1,				/* 4 tris */
-   0,				/* 5 tri_fan */
-   0,				/* 6 tri_strip */
-   1,				/* 7 quads */
-   0,				/* 8 quadstrip */
-   0,				/* 9 poly */
-};
-
-/* Optimize the primitive list:  ONLY FOR EXECUTE ATM
- */
-static void optimize_prims( TNLcontext *tnl )
+GLboolean *_tnl_translate_edgeflag( GLcontext *ctx, const GLfloat *data,
+				    GLuint count, GLuint stride )
 {
-   int i, j;
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   GLboolean *ef = tnl->vtx.edgeflag_tmp;
+   GLuint i;
 
-   if (tnl->nrprims <= 1)
-      return;
+   if (!ef) 
+      ef = tnl->vtx.edgeflag_tmp = MALLOC( tnl->vb.Size );
+   
+   for (i = 0 ; i < count ; i++, data += stride)
+      ef[i] = (data[0] == 1.0);
 
-   for (j = 0, i = 1 ; i < tnl->nrprims; i++) {
-      int pj = tnl->primlist[j].prim & 0xf;
-      int pi = tnl->primlist[i].prim & 0xf;
-      
-      if (pj == pi && discreet_gl_prim[pj] &&
-	  tnl->primlist[i].start == tnl->primlist[j].end) {
-	 tnl->primlist[j].end = tnl->primlist[i].end;
+   return ef;
+}
+
+
+GLboolean *_tnl_import_current_edgeflag( GLcontext *ctx,
+					 GLuint count )
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   GLboolean *ef = tnl->vtx.edgeflag_tmp;
+   GLboolean tmp = ctx->Current.EdgeFlag;
+   GLuint i;
+
+   if (!ef) 
+      ef = tnl->vtx.edgeflag_tmp = MALLOC( tnl->vb.Size );
+
+   for (i = 0 ; i < count ; i++)
+      ef[i] = tmp;
+
+   return ef;
+}
+
+static GLint get_size( const GLfloat *f )
+{
+   if (f[3] != 1.0) return 4;
+   if (f[2] != 0.0) return 3;
+   return 2;
+}
+
+/* Some nasty stuff still hanging on here.  
+ *
+ * TODO - remove VB->NormalPtr, etc and just use the AttrPtr's.
+ */
+static void _tnl_vb_bind_vtx( GLcontext *ctx )
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   struct tnl_vertex_arrays *tmp = &tnl->vtx_inputs;
+   GLfloat *data = tnl->vtx.buffer;
+   GLuint count = tnl->vtx.initial_counter - tnl->vtx.counter;
+   GLuint attr, i;
+
+   if (0) fprintf(stderr, "%s: %d verts %d vertsize\n",
+		  __FUNCTION__, count, tnl->vtx.vertex_size);
+
+
+   /* Setup constant data in the VB.
+    */
+   VB->Count = count;
+   VB->Primitive = tnl->vtx.prim;
+   VB->PrimitiveCount = tnl->vtx.prim_count;
+   VB->Elts = NULL;
+   VB->NormalLengthPtr = NULL;
+
+   for (attr = 0; attr <= _TNL_ATTRIB_INDEX ; attr++) {
+      if (tnl->vtx.attrsz[attr]) {
+	 tmp->Attribs[attr].count = count;
+	 tmp->Attribs[attr].data = (GLfloat (*)[4]) data;
+	 tmp->Attribs[attr].start = data;
+	 tmp->Attribs[attr].size = tnl->vtx.attrsz[attr];
+	 tmp->Attribs[attr].stride = tnl->vtx.vertex_size * sizeof(GLfloat);
+	 VB->AttribPtr[attr] = &tmp->Attribs[attr];
+	 data += tnl->vtx.attrsz[attr];
       }
       else {
-	 j++;
-	 if (j != i) tnl->primlist[j] = tnl->primlist[i];
+/* 	 VB->AttribPtr[attr] = &tnl->current.Attribs[attr]; */
+
+
+	 tmp->Attribs[attr].count = count;
+	 tmp->Attribs[attr].data = (GLfloat (*)[4]) tnl->vtx.current[attr];
+	 tmp->Attribs[attr].start = tnl->vtx.current[attr];
+	 tmp->Attribs[attr].size = get_size( tnl->vtx.current[attr] );
+	 tmp->Attribs[attr].stride = 0;
+	 VB->AttribPtr[attr] = &tmp->Attribs[attr];
       }
    }
 
-   tnl->nrprims = j+1;
-}
-
-
-/* Bind vertex buffer pointers, run pipeline:
- */
-static void flush_prims( TNLcontext *tnl )
-{
-   int i,j;
-
-   tnl->dma.current.ptr = tnl->dma.current.start += 
-      (tnl->initial_counter - tnl->counter) * tnl->vertex_size * 4; 
-
-   tnl->tcl.vertex_format = tnl->vertex_format;
-   tnl->tcl.aos_components[0] = &tmp;
-   tnl->tcl.nr_aos_components = 1;
-   tnl->dma.flush = 0;
-
-   tnl->Driver.RunPipeline( ... );
    
-   tnl->nrprims = 0;
-}
+   /* Copy and translate EdgeFlag to a contiguous array of GLbooleans
+    */
+   if (ctx->Polygon.FrontMode != GL_FILL || ctx->Polygon.BackMode != GL_FILL) {
+      if (tnl->vtx.attrsz[_TNL_ATTRIB_EDGEFLAG]) {
+	 VB->EdgeFlag = _tnl_translate_edgeflag( ctx, data, count,
+						 tnl->vtx.vertex_size );
+	 data++;
+      }
+      else 
+	 VB->EdgeFlag = _tnl_import_current_edgeflag( ctx, count );
+   }
 
+   /* Legacy pointers -- remove one day.
+    */
+   VB->ObjPtr = VB->AttribPtr[_TNL_ATTRIB_POS];
+   VB->NormalPtr = VB->AttribPtr[_TNL_ATTRIB_NORMAL];
+   VB->ColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR0];
+   VB->ColorPtr[1] = 0;
+   VB->IndexPtr[0] = VB->AttribPtr[_TNL_ATTRIB_INDEX];
+   VB->IndexPtr[1] = 0;
+   VB->SecondaryColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR1];
+   VB->SecondaryColorPtr[1] = 0;
 
-static void start_prim( TNLcontext *tnl, GLuint mode )
-{
-   if (MESA_VERBOSE & DEBUG_VFMT)
-      _mesa_debug(NULL, "%s %d\n", __FUNCTION__, 
-	      tnl->initial_counter - tnl->counter);
-
-   tnl->primlist[tnl->nrprims].start = tnl->initial_counter - tnl->counter;
-   tnl->primlist[tnl->nrprims].prim = mode;
-}
-
-static void note_last_prim( TNLcontext *tnl, GLuint flags )
-{
-   if (MESA_VERBOSE & DEBUG_VFMT)
-      _mesa_debug(NULL, "%s %d\n", __FUNCTION__, 
-	      tnl->initial_counter - tnl->counter);
-
-   if (tnl->prim[0] != GL_POLYGON+1) {
-      tnl->primlist[tnl->nrprims].prim |= flags;
-      tnl->primlist[tnl->nrprims].end = tnl->initial_counter - tnl->counter;
-
-      if (++tnl->nrprims == TNL_MAX_PRIMS)
-	 flush_prims( tnl );
+   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
+      VB->TexCoordPtr[i] = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i];
    }
 }
 
 
-static void copy_vertex( TNLcontext *tnl, GLuint n, GLfloat *dst )
+
+
+
+/*
+ * NOTE: Need to have calculated primitives by this point -- do it on the fly.
+ * NOTE: Old 'parity' issue is gone.
+ */
+static GLuint _tnl_copy_vertices( GLcontext *ctx )
 {
-   GLuint i;
-   GLfloat *src = (GLfloat *)(tnl->dma.current.address + 
-			      tnl->dma.current.ptr + 
-			      (tnl->primlist[tnl->nrprims].start + n) * 
-			      tnl->vertex_size * 4);
-
-   if (MESA_VERBOSE & DEBUG_VFMT) 
-      _mesa_debug(NULL, "copy_vertex %d\n", 
-	      tnl->primlist[tnl->nrprims].start + n);
-
-   for (i = 0 ; i < tnl->vertex_size; i++) {
-      dst[i] = src[i];
-   }
-}
-
-static GLuint copy_wrapped_verts( TNLcontext *tnl, GLfloat (*tmp)[15] )
-{
+   TNLcontext *tnl = TNL_CONTEXT( ctx );
+   GLuint nr = tnl->vtx.prim[tnl->vtx.prim_count-1].count;
    GLuint ovf, i;
-   GLuint nr = (tnl->initial_counter - tnl->counter) - tnl->primlist[tnl->nrprims].start;
+   GLuint sz = tnl->vtx.vertex_size;
+   GLfloat *dst = tnl->vtx.copied.buffer;
+   GLfloat *src = (tnl->vtx.buffer + 
+		   tnl->vtx.prim[tnl->vtx.prim_count-1].start * 
+		   tnl->vtx.vertex_size);
 
-   if (MESA_VERBOSE & DEBUG_VFMT)
-      _mesa_debug(NULL, "%s %d verts\n", __FUNCTION__, nr);
 
-   switch( tnl->prim[0] )
+   switch( ctx->Driver.CurrentExecPrimitive )
    {
    case GL_POINTS:
       return 0;
    case GL_LINES:
       ovf = nr&1;
       for (i = 0 ; i < ovf ; i++)
-	 copy_vertex( tnl, nr-ovf+i, tmp[i] );
+	 memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
       return i;
    case GL_TRIANGLES:
       ovf = nr%3;
       for (i = 0 ; i < ovf ; i++)
-	 copy_vertex( tnl, nr-ovf+i, tmp[i] );
+	 memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
       return i;
    case GL_QUADS:
       ovf = nr&3;
       for (i = 0 ; i < ovf ; i++)
-	 copy_vertex( tnl, nr-ovf+i, tmp[i] );
+	 memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
       return i;
    case GL_LINE_STRIP:
       if (nr == 0) 
 	 return 0;
-      copy_vertex( tnl, nr-1, tmp[0] );
-      return 1;
+      else {
+	 memcpy( dst, src+(nr-1)*sz, sz * sizeof(GLfloat) );
+	 return 1;
+      }
    case GL_LINE_LOOP:
    case GL_TRIANGLE_FAN:
    case GL_POLYGON:
       if (nr == 0) 
 	 return 0;
       else if (nr == 1) {
-	 copy_vertex( tnl, 0, tmp[0] );
+	 memcpy( dst, src+0, sz * sizeof(GLfloat) );
 	 return 1;
       } else {
-	 copy_vertex( tnl, 0, tmp[0] );
-	 copy_vertex( tnl, nr-1, tmp[1] );
+	 memcpy( dst, src+0, sz * sizeof(GLfloat) );
+	 memcpy( dst+sz, src+(nr-1)*sz, sz * sizeof(GLfloat) );
 	 return 2;
       }
    case GL_TRIANGLE_STRIP:
-      ovf = MIN2( nr-1, 2 );
-      for (i = 0 ; i < ovf ; i++)
-	 copy_vertex( tnl, nr-ovf+i, tmp[i] );
-      return i;
    case GL_QUAD_STRIP:
-      ovf = MIN2( nr-1, 2 );
-      if (nr > 2) ovf += nr&1;
+      switch (nr) {
+      case 0: ovf = 0; break;
+      case 1: ovf = 1; break;
+      default: ovf = 2 + (nr&1); break;
+      }
       for (i = 0 ; i < ovf ; i++)
-	 copy_vertex( tnl, nr-ovf+i, tmp[i] );
+	 memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
       return i;
+   case GL_POLYGON+1:
+      return 0;
    default:
       assert(0);
       return 0;
@@ -247,385 +255,45 @@ static GLuint copy_wrapped_verts( TNLcontext *tnl, GLfloat (*tmp)[15] )
 
 
 
-/* Extend for vertex-format changes on wrap:
+
+
+
+/**
+ * Execute the buffer and save copied verts.
  */
-static void wrap_buffer( void )
-{
-   TNLcontext *tnl = tnl->tnl;
-   GLfloat tmp[3][15];
-   GLuint i, nrverts;
-
-   if (MESA_VERBOSE & (DEBUG_VFMT|DEBUG_PRIMS))
-      _mesa_debug(NULL, "%s %d\n", __FUNCTION__, 
-	      tnl->initial_counter - tnl->counter);
-
-   /* Don't deal with parity.  *** WONT WORK FOR COMPILE
-    */
-   if ((((tnl->initial_counter - tnl->counter) -  
-	 tnl->primlist[tnl->nrprims].start) & 1)) {
-      tnl->counter++;
-      tnl->initial_counter++;
-      return;
-   }
-
-   /* Copy vertices out of dma:
-    */
-   nrverts = copy_dma_verts( tnl, tmp );
-
-   if (MESA_VERBOSE & DEBUG_VFMT)
-      _mesa_debug(NULL, "%d vertices to copy\n", nrverts);
-   
-
-   /* Finish the prim at this point:
-    */
-   note_last_prim( tnl, 0 );
-   flush_prims( tnl );
-
-   /* Reset counter, dmaptr
-    */
-   tnl->dmaptr = (int *)(tnl->dma.current.ptr + tnl->dma.current.address);
-   tnl->counter = (tnl->dma.current.end - tnl->dma.current.ptr) / 
-      (tnl->vertex_size * 4);
-   tnl->counter--;
-   tnl->initial_counter = tnl->counter;
-   tnl->notify = wrap_buffer;
-
-   tnl->dma.flush = flush_prims;
-   start_prim( tnl, tnl->prim[0] );
-
-
-   /* Reemit saved vertices 
-    * *** POSSIBLY IN NEW FORMAT
-    *       --> Can't always extend at end of vertex?
-    */
-   for (i = 0 ; i < nrverts; i++) {
-      if (MESA_VERBOSE & DEBUG_VERTS) {
-	 int j;
-	 _mesa_debug(NULL, "re-emit vertex %d to %p\n", i, tnl->dmaptr);
-	 if (MESA_VERBOSE & DEBUG_VERBOSE)
-	    for (j = 0 ; j < tnl->vertex_size; j++) 
-	       _mesa_debug(NULL, "\t%08x/%f\n", *(int*)&tmp[i][j], tmp[i][j]);
-      }
-
-      memcpy( tnl->dmaptr, tmp[i], tnl->vertex_size * 4 );
-      tnl->dmaptr += tnl->vertex_size;
-      tnl->counter--;
-   }
-}
-
-
-
-/* Always follow data, don't try to predict what's necessary.  
- */
-static GLboolean check_vtx_fmt( GLcontext *ctx )
+void _tnl_flush_vtx( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
-   if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT) 
-      ctx->Driver.FlushVertices( ctx, FLUSH_UPDATE_CURRENT );
-   
+   if (0)
+      _tnl_print_vtx( ctx );
 
-   TNL_NEWPRIM(tnl);
-   tnl->vertex_format = VERT_BIT_POS;
-   tnl->prim = &ctx->Driver.CurrentExecPrimitive;
+   if (tnl->vtx.prim_count && 
+       tnl->vtx.counter != tnl->vtx.initial_counter) {
 
+      tnl->vtx.copied.nr = _tnl_copy_vertices( ctx ); 
 
-   /* Currently allow the full 4 components per attrib.  Can use the
-    * mechanism from radeon driver color handling to reduce this (and
-    * also to store ubyte colors where these are incoming).  This
-    * won't work for compile mode.
-    *
-    * Only adding components when they are first received eliminates
-    * the need for displaylist fixup, as there are no 'empty' slots
-    * at the start of buffers.  
-    */
-   for (i = 0 ; i < 16 ; i++) {
-      if (ind & (1<<i)) {
-	 tnl->attribptr[i] = &tnl->vertex[tnl->vertex_size].f;
-	 tnl->vertex_size += 4;
-	 tnl->attribptr[i][0] = ctx->Current.Attrib[i][0];
-	 tnl->attribptr[i][1] = ctx->Current.Attrib[i][1];
-	 tnl->attribptr[i][2] = ctx->Current.Attrib[i][2];
-	 tnl->attribptr[i][3] = ctx->Current.Attrib[i][3];
-      }
-      else
-	 tnl->attribptr[i] = ctx->Current.Attrib[i];
+      if (ctx->NewState)
+	 _mesa_update_state( ctx );
+      
+      if (tnl->pipeline.build_state_changes)
+	 _tnl_validate_pipeline( ctx );
+
+      _tnl_vb_bind_vtx( ctx );
+
+      /* Invalidate all stored data before and after run:
+       */
+      tnl->pipeline.run_input_changes |= tnl->pipeline.inputs;
+      tnl->Driver.RunPipeline( ctx );
+      tnl->pipeline.run_input_changes |= tnl->pipeline.inputs;
    }
 
-   /* Edgeflag, Index:
-    */
-   for (i = 16 ; i < 18 ; i++)
-      ;
-
-   /* Materials:
-    */
-   for (i = 18 ; i < 28 ; i++)
-      ;
-
-   /* Eval:
-    */
-   for (i = 28 ; i < 29 ; i++)
-      ;
-	   
-
-   if (tnl->installed_vertex_format != tnl->vertex_format) {
-      if (MESA_VERBOSE & DEBUG_VFMT)
-	 _mesa_debug(NULL, "reinstall on vertex_format change\n");
-      _mesa_install_exec_vtxfmt( ctx, &tnl->vtxfmt );
-      tnl->installed_vertex_format = tnl->vertex_format;
-   }
-
-   return GL_TRUE;
-}
-
-
-void _tnl_InvalidateVtxfmt( GLcontext *ctx )
-{
-   tnl->recheck = GL_TRUE;
-   tnl->fell_back = GL_FALSE;
+   tnl->vtx.prim_count = 0;
+   tnl->vtx.counter = tnl->vtx.initial_counter;
+   tnl->vtx.vbptr = tnl->vtx.buffer;
 }
 
 
 
 
-static void _tnl_ValidateVtxfmt( GLcontext *ctx )
-{
-   if (MESA_VERBOSE & DEBUG_VFMT)
-      _mesa_debug(NULL, "%s\n", __FUNCTION__);
-
-   if (ctx->Driver.NeedFlush)
-      ctx->Driver.FlushVertices( ctx, ctx->Driver.NeedFlush );
-
-   tnl->recheck = GL_FALSE;
-
-   if (check_vtx_fmt( ctx )) {
-      if (!tnl->installed) {
-	 if (MESA_VERBOSE & DEBUG_VFMT)
-	    _mesa_debug(NULL, "reinstall (new install)\n");
-
-	 _mesa_install_exec_vtxfmt( ctx, &tnl->vtxfmt );
-	 ctx->Driver.FlushVertices = _tnl_FlushVertices;
-	 tnl->installed = GL_TRUE;
-      }
-      else
-	 _mesa_debug(NULL, "%s: already installed", __FUNCTION__);
-   } 
-   else {
-      if (MESA_VERBOSE & DEBUG_VFMT)
-	 _mesa_debug(NULL, "%s: failed\n", __FUNCTION__);
-
-      if (tnl->installed) {
-	 if (tnl->tnl->dma.flush)
-	    tnl->tnl->dma.flush( tnl->tnl );
-	 _tnl_wakeup_exec( ctx );
-	 tnl->installed = GL_FALSE;
-      }
-   }      
-}
-
-
-
-
-
-/* Begin/End
- */
-static void _tnl_Begin( GLenum mode )
-{
-   GLcontext *ctx = tnl->context;
-   TNLcontext *tnl = tnl->tnl;
-   
-   if (MESA_VERBOSE & DEBUG_VFMT)
-      _mesa_debug(NULL, "%s\n", __FUNCTION__);
-
-   if (mode > GL_POLYGON) {
-      _mesa_error( ctx, GL_INVALID_ENUM, "glBegin" );
-      return;
-   }
-
-   if (tnl->prim[0] != GL_POLYGON+1) {
-      _mesa_error( ctx, GL_INVALID_OPERATION, "glBegin" );
-      return;
-   }
-   
-   if (ctx->NewState) 
-      _mesa_update_state( ctx );
-
-   if (tnl->recheck) 
-      _tnl_ValidateVtxfmt( ctx );
-
-   if (tnl->dma.flush && tnl->counter < 12) {
-      if (MESA_VERBOSE & DEBUG_VFMT)
-	 _mesa_debug(NULL, "%s: flush almost-empty buffers\n", __FUNCTION__);
-      flush_prims( tnl );
-   }
-
-   if (!tnl->dma.flush) {
-      if (tnl->dma.current.ptr + 12*tnl->vertex_size*4 > 
-	  tnl->dma.current.end) {
-	 TNL_NEWPRIM( tnl );
-	 _tnl_RefillCurrentDmaRegion( tnl );
-      }
-
-      tnl->dmaptr = (int *)(tnl->dma.current.address + tnl->dma.current.ptr);
-      tnl->counter = (tnl->dma.current.end - tnl->dma.current.ptr) / 
-	 (tnl->vertex_size * 4);
-      tnl->counter--;
-      tnl->initial_counter = tnl->counter;
-      tnl->notify = wrap_buffer;
-      tnl->dma.flush = flush_prims;
-      tnl->context->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
-   }
-   
-   
-   tnl->prim[0] = mode;
-   start_prim( tnl, mode | PRIM_BEGIN );
-}
-
-
-
-
-
-static void _tnl_End( void )
-{
-   TNLcontext *tnl = tnl->tnl;
-   GLcontext *ctx = tnl->context;
-
-   if (MESA_VERBOSE & DEBUG_VFMT)
-      _mesa_debug(NULL, "%s\n", __FUNCTION__);
-
-   if (tnl->prim[0] == GL_POLYGON+1) {
-      _mesa_error( ctx, GL_INVALID_OPERATION, "glEnd" );
-      return;
-   }
-	  
-   note_last_prim( tnl, PRIM_END );
-   tnl->prim[0] = GL_POLYGON+1;
-}
-
-
-static void _tnl_FlushVertices( GLcontext *ctx, GLuint flags )
-{
-   if (MESA_VERBOSE & DEBUG_VFMT)
-      _mesa_debug(NULL, "%s\n", __FUNCTION__);
-
-   assert(tnl->installed);
-
-   if (flags & FLUSH_UPDATE_CURRENT) {
-      _tnl_copy_to_current( ctx );
-      if (MESA_VERBOSE & DEBUG_VFMT)
-	 _mesa_debug(NULL, "reinstall on update_current\n");
-      _mesa_install_exec_vtxfmt( ctx, &tnl->vtxfmt );
-      ctx->Driver.NeedFlush &= ~FLUSH_UPDATE_CURRENT;
-   }
-
-   if (flags & FLUSH_STORED_VERTICES) {
-      TNLcontext *tnl = TNL_CONTEXT( ctx );
-      assert (tnl->dma.flush == 0 ||
-	      tnl->dma.flush == flush_prims);
-      if (tnl->dma.flush == flush_prims)
-	 flush_prims( TNL_CONTEXT( ctx ) );
-      ctx->Driver.NeedFlush &= ~FLUSH_STORED_VERTICES;
-   }
-}
-
-
-
-/* At this point, don't expect very many versions of each function to
- * be generated, so not concerned about freeing them?
- */
-
-
-static void _tnl_InitVtxfmt( GLcontext *ctx )
-{
-   GLvertexformat *vfmt = &(tnl->vtxfmt);
-
-   MEMSET( vfmt, 0, sizeof(GLvertexformat) );
-
-   /* Hook in chooser functions for codegen, etc:
-    */
-   _tnl_InitVtxfmtChoosers( vfmt );
-
-   /* Handled fully in supported states, but no codegen:
-    */
-   vfmt->ArrayElement = _ae_loopback_array_elt;	        /* generic helper */
-   vfmt->Rectf = _mesa_noop_Rectf;			/* generic helper */
-   vfmt->Begin = _tnl_Begin;
-   vfmt->End = _tnl_End;
-   
-   tnl->context = ctx;
-   tnl->tnl = TNL_CONTEXT(ctx);
-   tnl->prim = &ctx->Driver.CurrentExecPrimitive;
-   tnl->primflags = 0;
-
-   make_empty_list( &tnl->dfn_cache.Vertex2f );
-   make_empty_list( &tnl->dfn_cache.Vertex2fv );
-   make_empty_list( &tnl->dfn_cache.Vertex3f );
-   make_empty_list( &tnl->dfn_cache.Vertex3fv );
-   make_empty_list( &tnl->dfn_cache.Color4ub );
-   make_empty_list( &tnl->dfn_cache.Color4ubv );
-   make_empty_list( &tnl->dfn_cache.Color3ub );
-   make_empty_list( &tnl->dfn_cache.Color3ubv );
-   make_empty_list( &tnl->dfn_cache.Color4f );
-   make_empty_list( &tnl->dfn_cache.Color4fv );
-   make_empty_list( &tnl->dfn_cache.Color3f );
-   make_empty_list( &tnl->dfn_cache.Color3fv );
-   make_empty_list( &tnl->dfn_cache.SecondaryColor3fEXT );
-   make_empty_list( &tnl->dfn_cache.SecondaryColor3fvEXT );
-   make_empty_list( &tnl->dfn_cache.SecondaryColor3ubEXT );
-   make_empty_list( &tnl->dfn_cache.SecondaryColor3ubvEXT );
-   make_empty_list( &tnl->dfn_cache.Normal3f );
-   make_empty_list( &tnl->dfn_cache.Normal3fv );
-   make_empty_list( &tnl->dfn_cache.TexCoord2f );
-   make_empty_list( &tnl->dfn_cache.TexCoord2fv );
-   make_empty_list( &tnl->dfn_cache.TexCoord1f );
-   make_empty_list( &tnl->dfn_cache.TexCoord1fv );
-   make_empty_list( &tnl->dfn_cache.MultiTexCoord2fARB );
-   make_empty_list( &tnl->dfn_cache.MultiTexCoord2fvARB );
-   make_empty_list( &tnl->dfn_cache.MultiTexCoord1fARB );
-   make_empty_list( &tnl->dfn_cache.MultiTexCoord1fvARB );
-
-   _tnl_InitCodegen( &tnl->codegen );
-}
-
-static void free_funcs( struct dynfn *l )
-{
-   struct dynfn *f, *tmp;
-   foreach_s (f, tmp, l) {
-      remove_from_list( f );
-      ALIGN_FREE( f->code );
-      FREE( f );
-   }
-}
-
-
-static void _tnl_DestroyVtxfmt( GLcontext *ctx )
-{
-   count_funcs();
-   free_funcs( &tnl->dfn_cache.Vertex2f );
-   free_funcs( &tnl->dfn_cache.Vertex2fv );
-   free_funcs( &tnl->dfn_cache.Vertex3f );
-   free_funcs( &tnl->dfn_cache.Vertex3fv );
-   free_funcs( &tnl->dfn_cache.Color4ub );
-   free_funcs( &tnl->dfn_cache.Color4ubv );
-   free_funcs( &tnl->dfn_cache.Color3ub );
-   free_funcs( &tnl->dfn_cache.Color3ubv );
-   free_funcs( &tnl->dfn_cache.Color4f );
-   free_funcs( &tnl->dfn_cache.Color4fv );
-   free_funcs( &tnl->dfn_cache.Color3f );
-   free_funcs( &tnl->dfn_cache.Color3fv );
-   free_funcs( &tnl->dfn_cache.SecondaryColor3ubEXT );
-   free_funcs( &tnl->dfn_cache.SecondaryColor3ubvEXT );
-   free_funcs( &tnl->dfn_cache.SecondaryColor3fEXT );
-   free_funcs( &tnl->dfn_cache.SecondaryColor3fvEXT );
-   free_funcs( &tnl->dfn_cache.Normal3f );
-   free_funcs( &tnl->dfn_cache.Normal3fv );
-   free_funcs( &tnl->dfn_cache.TexCoord2f );
-   free_funcs( &tnl->dfn_cache.TexCoord2fv );
-   free_funcs( &tnl->dfn_cache.TexCoord1f );
-   free_funcs( &tnl->dfn_cache.TexCoord1fv );
-   free_funcs( &tnl->dfn_cache.MultiTexCoord2fARB );
-   free_funcs( &tnl->dfn_cache.MultiTexCoord2fvARB );
-   free_funcs( &tnl->dfn_cache.MultiTexCoord1fARB );
-   free_funcs( &tnl->dfn_cache.MultiTexCoord1fvARB );
-}
 

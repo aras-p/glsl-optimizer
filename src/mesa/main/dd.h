@@ -819,6 +819,7 @@ struct dd_function_table {
     * these conditions.
     */
    GLuint NeedFlush;
+   GLuint SaveNeedFlush;
 
    /**
     * If inside glBegin()/glEnd(), it should ASSERT(0).  Otherwise, if
@@ -830,6 +831,14 @@ struct dd_function_table {
     * FLUSH_UPDATE_CURRENT bit, even after performing the update.
     */
    void (*FlushVertices)( GLcontext *ctx, GLuint flags );
+   void (*SaveFlushVertices)( GLcontext *ctx );
+
+   /**
+    * Give the driver the opportunity to hook in its own vtxfmt for
+    * compiling optimized display lists.  This is called on each valid
+    * glBegin() during list compilation.
+    */
+   GLboolean (*NotifySaveBegin)( GLcontext *ctx, GLenum mode );
 
    /**
     * Notify driver that the special derived value _NeedEyeCoords has
@@ -910,12 +919,8 @@ typedef struct {
    void (GLAPIENTRYP ArrayElement)( GLint ); /* NOTE */
    void (GLAPIENTRYP Color3f)( GLfloat, GLfloat, GLfloat );
    void (GLAPIENTRYP Color3fv)( const GLfloat * );
-   void (GLAPIENTRYP Color3ub)( GLubyte, GLubyte, GLubyte );
-   void (GLAPIENTRYP Color3ubv)( const GLubyte * );
    void (GLAPIENTRYP Color4f)( GLfloat, GLfloat, GLfloat, GLfloat );
    void (GLAPIENTRYP Color4fv)( const GLfloat * );
-   void (GLAPIENTRYP Color4ub)( GLubyte, GLubyte, GLubyte, GLubyte );
-   void (GLAPIENTRYP Color4ubv)( const GLubyte * );
    void (GLAPIENTRYP EdgeFlag)( GLboolean );
    void (GLAPIENTRYP EdgeFlagv)( const GLboolean * );
    void (GLAPIENTRYP EvalCoord1f)( GLfloat );          /* NOTE */
@@ -926,8 +931,8 @@ typedef struct {
    void (GLAPIENTRYP EvalPoint2)( GLint, GLint );      /* NOTE */
    void (GLAPIENTRYP FogCoordfEXT)( GLfloat );
    void (GLAPIENTRYP FogCoordfvEXT)( const GLfloat * );
-   void (GLAPIENTRYP Indexi)( GLint );
-   void (GLAPIENTRYP Indexiv)( const GLint * );
+   void (GLAPIENTRYP Indexf)( GLfloat );
+   void (GLAPIENTRYP Indexfv)( const GLfloat * );
    void (GLAPIENTRYP Materialfv)( GLenum face, GLenum pname, const GLfloat * ); /* NOTE */
    void (GLAPIENTRYP MultiTexCoord1fARB)( GLenum, GLfloat );
    void (GLAPIENTRYP MultiTexCoord1fvARB)( GLenum, const GLfloat * );
@@ -941,8 +946,6 @@ typedef struct {
    void (GLAPIENTRYP Normal3fv)( const GLfloat * );
    void (GLAPIENTRYP SecondaryColor3fEXT)( GLfloat, GLfloat, GLfloat );
    void (GLAPIENTRYP SecondaryColor3fvEXT)( const GLfloat * );
-   void (GLAPIENTRYP SecondaryColor3ubEXT)( GLubyte, GLubyte, GLubyte );
-   void (GLAPIENTRYP SecondaryColor3ubvEXT)( const GLubyte * );
    void (GLAPIENTRYP TexCoord1f)( GLfloat );
    void (GLAPIENTRYP TexCoord1fv)( const GLfloat * );
    void (GLAPIENTRYP TexCoord2f)( GLfloat, GLfloat );
@@ -958,8 +961,15 @@ typedef struct {
    void (GLAPIENTRYP Vertex4f)( GLfloat, GLfloat, GLfloat, GLfloat );
    void (GLAPIENTRYP Vertex4fv)( const GLfloat * );
    void (GLAPIENTRYP CallList)( GLuint );	/* NOTE */
+   void (GLAPIENTRYP CallLists)( GLsizei, GLenum, const GLvoid * );	/* NOTE */
    void (GLAPIENTRYP Begin)( GLenum );
    void (GLAPIENTRYP End)( void );
+   void (GLAPIENTRYP VertexAttrib1fNV)( GLuint index, GLfloat x );
+   void (GLAPIENTRYP VertexAttrib1fvNV)( GLuint index, const GLfloat *v );
+   void (GLAPIENTRYP VertexAttrib2fNV)( GLuint index, GLfloat x, GLfloat y );
+   void (GLAPIENTRYP VertexAttrib2fvNV)( GLuint index, const GLfloat *v );
+   void (GLAPIENTRYP VertexAttrib3fNV)( GLuint index, GLfloat x, GLfloat y, GLfloat z );
+   void (GLAPIENTRYP VertexAttrib3fvNV)( GLuint index, const GLfloat *v );
    void (GLAPIENTRYP VertexAttrib4fNV)( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w );
    void (GLAPIENTRYP VertexAttrib4fvNV)( GLuint index, const GLfloat *v );
    /*@}*/
@@ -970,10 +980,6 @@ typedef struct {
 
    /**
     * \name Array
-    *
-    * These may or may not belong here.  Heuristic: if an array is
-    * enabled, the installed vertex format should support that array and
-    * its current size natively.
     */
    /*@{*/
    void (GLAPIENTRYP DrawArrays)( GLenum mode, GLint start, GLsizei count );
@@ -999,11 +1005,6 @@ typedef struct {
    void (GLAPIENTRYP EvalMesh2)( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 );
    /*@}*/
 
-   /**
-    * Should core try to send colors to glColor4f or glColor4chan,
-    * where it has a choice?
-    */
-   GLboolean prefer_float_colors;
 } GLvertexformat;
 
 

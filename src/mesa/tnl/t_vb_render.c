@@ -261,7 +261,7 @@ void _tnl_RenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj )
 
 
 static GLboolean run_render( GLcontext *ctx,
-			     struct gl_pipeline_stage *stage )
+			     struct tnl_pipeline_stage *stage )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
@@ -304,29 +304,29 @@ static GLboolean run_render( GLcontext *ctx,
 
    do
    {
-      GLuint i, length, flags = 0;
-      for (i = VB->FirstPrimitive ; !(flags & PRIM_LAST) ; i += length)
-      {
-	 flags = VB->Primitive[i];
-	 length= VB->PrimitiveLength[i];
-	 ASSERT(length || (flags & PRIM_LAST));
-	 ASSERT((flags & PRIM_MODE_MASK) <= GL_POLYGON+1);
+      GLint i;
 
-	 if (MESA_VERBOSE & VERBOSE_PRIMS)
+      for (i = 0 ; i < VB->PrimitiveCount ; i++)
+      {
+	 GLuint prim = VB->Primitive[i].mode;
+	 GLuint start = VB->Primitive[i].start;
+	 GLuint length = VB->Primitive[i].count;
+
+	 assert((prim & PRIM_MODE_MASK) < GL_POLYGON+1);
+
+	 if (MESA_VERBOSE & VERBOSE_PRIMS) 
 	    _mesa_debug(NULL, "MESA prim %s %d..%d\n", 
-		    _mesa_lookup_enum_by_nr(flags & PRIM_MODE_MASK), 
-		    i, i+length);
+			_mesa_lookup_enum_by_nr(prim & PRIM_MODE_MASK), 
+			start, start+length);
 
 	 if (length)
-	    tab[flags & PRIM_MODE_MASK]( ctx, i, i + length, flags );
+	    tab[prim & PRIM_MODE_MASK]( ctx, start, start + length, prim );
       }
    } while (tnl->Driver.Render.Multipass &&
 	    tnl->Driver.Render.Multipass( ctx, ++pass ));
 
-
    tnl->Driver.Render.Finish( ctx );
-/*     _swrast_flush(ctx); */
-/*     usleep(1000000); */
+
    return GL_FALSE;		/* finished the pipe */
 }
 
@@ -340,41 +340,38 @@ static GLboolean run_render( GLcontext *ctx,
 /* Quite a bit of work involved in finding out the inputs for the
  * render stage.
  */
-static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
+static void check_render( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 {
-   GLuint inputs = VERT_BIT_CLIP;
+   GLuint inputs = _TNL_BIT_POS;
    GLuint i;
 
    if (ctx->Visual.rgbMode) {
-      inputs |= VERT_BIT_COLOR0;
+      inputs |= _TNL_BIT_COLOR0;
 
       if (NEED_SECONDARY_COLOR(ctx))
-	 inputs |= VERT_BIT_COLOR1;
+	 inputs |= _TNL_BIT_COLOR1;
 
       if (ctx->Texture._EnabledCoordUnits) {
 	 for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
 	    if (ctx->Texture._EnabledCoordUnits & (1 << i))
-	       inputs |= VERT_BIT_TEX(i);
+	       inputs |= _TNL_BIT_TEX(i);
 	 }
       }
    }
    else {
-      inputs |= VERT_BIT_INDEX;
+      inputs |= _TNL_BIT_INDEX;
    }
-
-   if (ctx->Point._Attenuated)
-      inputs |= VERT_BIT_POINT_SIZE;
 
    /* How do drivers turn this off?
     */
    if (ctx->Fog.Enabled)
-      inputs |= VERT_BIT_FOG;
+      inputs |= _TNL_BIT_FOG;
 
    if (ctx->Polygon.FrontMode != GL_FILL || ctx->Polygon.BackMode != GL_FILL)
-      inputs |= VERT_BIT_EDGEFLAG;
+      inputs |= _TNL_BIT_EDGEFLAG;
 
    if (ctx->RenderMode==GL_FEEDBACK)
-      inputs |= VERT_BITS_TEX_ANY;
+      inputs |= _TNL_BITS_TEX_ANY;
 
    stage->inputs = inputs;
 }
@@ -382,12 +379,12 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
 
 
 
-static void dtr( struct gl_pipeline_stage *stage )
+static void dtr( struct tnl_pipeline_stage *stage )
 {
 }
 
 
-const struct gl_pipeline_stage _tnl_render_stage =
+const struct tnl_pipeline_stage _tnl_render_stage =
 {
    "render",			/* name */
    (_NEW_BUFFERS |

@@ -127,7 +127,7 @@ static void make_win_fog_coords( GLcontext *ctx, GLvector4f *out,
 
 
 static GLboolean run_fog_stage( GLcontext *ctx,
-				struct gl_pipeline_stage *stage )
+				struct tnl_pipeline_stage *stage )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct fog_stage_data *store = FOG_STAGE_DATA(stage);
@@ -189,21 +189,21 @@ static GLboolean run_fog_stage( GLcontext *ctx,
 }
 
 
-static void check_fog_stage( GLcontext *ctx, struct gl_pipeline_stage *stage )
+static void check_fog_stage( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 {
    stage->active = ctx->Fog.Enabled && !ctx->VertexProgram.Enabled;
 
    if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT)
-      stage->inputs = VERT_BIT_EYE;
+      stage->inputs = _TNL_BIT_POS;
    else
-      stage->inputs = VERT_BIT_FOG;
+      stage->inputs = _TNL_BIT_FOG;
 }
 
 
 /* Called the first time stage->run() is invoked.
  */
 static GLboolean alloc_fog_data( GLcontext *ctx,
-				 struct gl_pipeline_stage *stage )
+				 struct tnl_pipeline_stage *stage )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct fog_stage_data *store;
@@ -225,7 +225,7 @@ static GLboolean alloc_fog_data( GLcontext *ctx,
 }
 
 
-static void free_fog_data( struct gl_pipeline_stage *stage )
+static void free_fog_data( struct tnl_pipeline_stage *stage )
 {
    struct fog_stage_data *store = FOG_STAGE_DATA(stage);
    if (store) {
@@ -236,14 +236,14 @@ static void free_fog_data( struct gl_pipeline_stage *stage )
 }
 
 
-const struct gl_pipeline_stage _tnl_fog_coordinate_stage =
+const struct tnl_pipeline_stage _tnl_fog_coordinate_stage =
 {
    "build fog coordinates",	/* name */
    _NEW_FOG,			/* check_state */
    _NEW_FOG,			/* run_state */
    GL_FALSE,			/* active? */
    0,				/* inputs */
-   VERT_BIT_FOG,		/* outputs */
+   _TNL_BIT_FOG,		/* outputs */
    0,				/* changed_inputs */
    NULL,			/* private_data */
    free_fog_data,		/* dtr */

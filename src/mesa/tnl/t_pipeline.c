@@ -40,10 +40,10 @@
 
 
 void _tnl_install_pipeline( GLcontext *ctx,
-			    const struct gl_pipeline_stage **stages )
+			    const struct tnl_pipeline_stage **stages )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct gl_pipeline *pipe = &tnl->pipeline;
+   struct tnl_pipeline *pipe = &tnl->pipeline;
    GLuint i;
 
    ASSERT(pipe->nr_stages == 0);
@@ -82,8 +82,8 @@ void _tnl_destroy_pipeline( GLcontext *ctx )
 void _tnl_validate_pipeline( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct gl_pipeline *pipe = &tnl->pipeline;
-   struct gl_pipeline_stage *s = pipe->stages;
+   struct tnl_pipeline *pipe = &tnl->pipeline;
+   struct tnl_pipeline_stage *s = pipe->stages;
    GLuint newstate = pipe->build_state_changes;
    GLuint generated = 0;
    GLuint changed_inputs = 0;
@@ -118,9 +118,8 @@ void _tnl_validate_pipeline( GLcontext *ctx )
 void _tnl_run_pipeline( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   struct gl_pipeline *pipe = &tnl->pipeline;
-   struct gl_pipeline_stage *s = pipe->stages;
+   struct tnl_pipeline *pipe = &tnl->pipeline;
+   struct tnl_pipeline_stage *s = pipe->stages;
    GLuint changed_state = pipe->run_state_changes;
    GLuint changed_inputs = pipe->run_input_changes;
    GLboolean running = GL_TRUE;
@@ -153,7 +152,6 @@ void _tnl_run_pipeline( GLcontext *ctx )
 	 running = s->run( ctx, s );
 
 	 s->changed_inputs = 0;
-	 VB->importable_data &= ~s->outputs;
       }
    }
 
@@ -184,7 +182,7 @@ void _tnl_run_pipeline( GLcontext *ctx )
  *
  * - inserting optimized (but specialized) stages ahead of the
  *   general-purpose fallback implementation.  For example, the old
- *   fastpath mechanism, which only works when the VERT_BIT_ELT input is
+ *   fastpath mechanism, which only works when the VB->Elts input is
  *   available, can be duplicated by placing the fastpath stage at the
  *   head of this pipeline.  Such specialized stages are currently
  *   constrained to have no outputs (ie. they must either finish the *
@@ -193,7 +191,7 @@ void _tnl_run_pipeline( GLcontext *ctx )
  * Some work can be done to lift some of the restrictions in the final
  * case, if it becomes necessary to do so.
  */
-const struct gl_pipeline_stage *_tnl_default_pipeline[] = {
+const struct tnl_pipeline_stage *_tnl_default_pipeline[] = {
    &_tnl_vertex_transform_stage,
    &_tnl_normal_transform_stage,
    &_tnl_lighting_stage,

@@ -323,9 +323,6 @@ static void TAG(render_tri_strip_verts)( GLcontext *ctx,
 
       ELT_INIT( GL_TRIANGLES, HW_TRIANGLES );
 
-      if (flags & PRIM_PARITY)
-	 parity = 1;
-
       /* Emit even number of tris in each full buffer.
        */
       dmasz = dmasz/3;
@@ -348,8 +345,6 @@ static void TAG(render_tri_strip_verts)( GLcontext *ctx,
 	 CLOSE_ELTS();
       }
    }
-   else if ((flags & PRIM_PARITY) == 0)  
-      EMIT_PRIM( ctx, GL_TRIANGLE_STRIP, HW_TRIANGLE_STRIP_0, start, count );
    else if (HAVE_TRI_STRIP_1)
       EMIT_PRIM( ctx, GL_TRIANGLE_STRIP, HW_TRIANGLE_STRIP_1, start, count );
    else {
@@ -757,18 +752,9 @@ static void TAG(render_tri_strip_elts)( GLcontext *ctx,
    for (j = start ; j + 2 < count; j += nr - 2 ) {
       nr = MIN2( dmasz, count - j );
 
-      if (flags & PRIM_PARITY) {
-	 dest = ALLOC_ELTS( nr );	
-	 dest = TAG(emit_elts)( ctx, dest, elts+j, 1 );
-	 dest = TAG(emit_elts)( ctx, dest, elts+j, nr-1 );
-	 nr--; flags &= ~PRIM_PARITY;
-	 CLOSE_ELTS();
-      }
-      else {
-	 dest = ALLOC_ELTS( nr );
-	 dest = TAG(emit_elts)( ctx, dest, elts+j, nr );
-	 CLOSE_ELTS();
-      }
+      dest = ALLOC_ELTS( nr );
+      dest = TAG(emit_elts)( ctx, dest, elts+j, nr );
+      CLOSE_ELTS();
    }
 }
 

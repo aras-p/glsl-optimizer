@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-# $Id: glx86asm.py,v 1.9 2003/10/23 13:28:06 dborca Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1

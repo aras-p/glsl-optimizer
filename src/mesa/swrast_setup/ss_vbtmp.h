@@ -35,9 +35,9 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
    SWvertex *v;
    const GLfloat *ndc;		/* NDC (i.e. projected clip coordinates) */
    const GLfloat *tc[MAX_TEXTURE_COORD_UNITS];
-   const GLchan *color;
-   const GLchan *spec;
-   const GLuint *index;
+   const GLfloat *color;
+   const GLfloat *spec;
+   const GLfloat *index;
    const GLfloat *fog;
    const GLfloat *pointSize;
    GLuint tsz[MAX_TEXTURE_COORD_UNITS];
@@ -80,21 +80,15 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
       fog_stride = VB->FogCoordPtr->stride;
    }
    if (IND & COLOR) {
-      if (VB->ColorPtr[0]->Type != CHAN_TYPE)
-	 import_float_colors( ctx );
-
-      color = (GLchan *) VB->ColorPtr[0]->Ptr;
-      color_stride = VB->ColorPtr[0]->StrideB;
+      color = (GLfloat *) VB->ColorPtr[0]->data;
+      color_stride = VB->ColorPtr[0]->stride;
    }
    if (IND & SPEC) {
-      if (VB->SecondaryColorPtr[0]->Type != CHAN_TYPE)
-	 import_float_spec_colors( ctx );
-
-      spec = (GLchan *) VB->SecondaryColorPtr[0]->Ptr;
-      spec_stride = VB->SecondaryColorPtr[0]->StrideB;
+      spec = (GLfloat *) VB->SecondaryColorPtr[0]->data;
+      spec_stride = VB->SecondaryColorPtr[0]->stride;
    }
    if (IND & INDEX) {
-      index = VB->IndexPtr[0]->data;
+      index = (GLfloat *) VB->IndexPtr[0]->data;
       index_stride = VB->IndexPtr[0]->stride;
    }
    if (IND & POINT) {
@@ -128,13 +122,13 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
       }
 
       if (IND & COLOR) {
-	 COPY_CHAN4(v->color, color);
-	 STRIDE_CHAN(color, color_stride);
+	 UNCLAMPED_FLOAT_TO_RGBA_CHAN(v->color, color);
+	 STRIDE_F(color, color_stride);
       }
 
       if (IND & SPEC) {
-	 COPY_CHAN4(v->specular, spec);
-	 STRIDE_CHAN(spec, spec_stride);
+	 UNCLAMPED_FLOAT_TO_RGBA_CHAN(v->specular, spec);
+	 STRIDE_F(spec, spec_stride);
       }
 
       if (IND & FOG) {
@@ -144,7 +138,7 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
 
       if (IND & INDEX) {
 	 v->index = index[0];
-	 STRIDE_UI(index, index_stride);
+	 STRIDE_F(index, index_stride);
       }
 
       if (IND & POINT) {

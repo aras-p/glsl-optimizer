@@ -43,7 +43,7 @@ struct point_stage_data {
  * Compute attenuated point sizes
  */
 static GLboolean run_point_stage( GLcontext *ctx,
-				  struct gl_pipeline_stage *stage )
+				  struct tnl_pipeline_stage *stage )
 {
    struct point_stage_data *store = POINT_STAGE_DATA(stage);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -73,13 +73,13 @@ static GLboolean run_point_stage( GLcontext *ctx,
 /* If point size attenuation is on we'll compute the point size for
  * each vertex in a special pipeline stage.
  */
-static void check_point_size( GLcontext *ctx, struct gl_pipeline_stage *d )
+static void check_point_size( GLcontext *ctx, struct tnl_pipeline_stage *d )
 {
    d->active = ctx->Point._Attenuated && !ctx->VertexProgram.Enabled;
 }
 
 static GLboolean alloc_point_data( GLcontext *ctx,
-				   struct gl_pipeline_stage *stage )
+				   struct tnl_pipeline_stage *stage )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct point_stage_data *store;
@@ -97,7 +97,7 @@ static GLboolean alloc_point_data( GLcontext *ctx,
 }
 
 
-static void free_point_data( struct gl_pipeline_stage *stage )
+static void free_point_data( struct tnl_pipeline_stage *stage )
 {
    struct point_stage_data *store = POINT_STAGE_DATA(stage);
    if (store) {
@@ -107,14 +107,14 @@ static void free_point_data( struct gl_pipeline_stage *stage )
    }
 }
 
-const struct gl_pipeline_stage _tnl_point_attenuation_stage =
+const struct tnl_pipeline_stage _tnl_point_attenuation_stage =
 {
    "point size attenuation",	/* name */
    _NEW_POINT,			/* build_state_change */
    _NEW_POINT,			/* run_state_change */
    GL_FALSE,			/* active */
-   VERT_BIT_EYE,			/* inputs */
-   VERT_BIT_POINT_SIZE,		/* outputs */
+   _TNL_BIT_POS,			/* inputs */
+   _TNL_BIT_POS,		/* outputs */
    0,				/* changed_inputs (temporary value) */
    NULL,			/* stage private data */
    free_point_data,		/* destructor */

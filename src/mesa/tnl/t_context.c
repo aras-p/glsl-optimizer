@@ -27,6 +27,7 @@
  */
 
 
+#include "api_arrayelt.h"
 #include "glheader.h"
 #include "imports.h"
 #include "macros.h"
@@ -37,17 +38,11 @@
 
 #include "t_context.h"
 #include "t_array_api.h"
-#include "t_eval_api.h"
-#include "t_imm_alloc.h"
-#include "t_imm_api.h"
-#include "t_imm_exec.h"
-#include "t_imm_dlist.h"
+#include "t_vtx_api.h"
+#include "t_save_api.h"
 #include "t_pipeline.h"
 #include "tnl.h"
 
-#ifndef THREADS
-struct immediate *_tnl_CurrentInput = NULL;
-#endif
 
 
 void
@@ -55,9 +50,6 @@ _tnl_MakeCurrent( GLcontext *ctx,
 		  GLframebuffer *drawBuffer,
 		  GLframebuffer *readBuffer )
 {
-#ifndef THREADS
-   SET_IMMEDIATE( ctx, TNL_CURRENT_IM(ctx) );
-#endif
 }
 
 
@@ -66,7 +58,8 @@ install_driver_callbacks( GLcontext *ctx )
 {
    ctx->Driver.NewList = _tnl_NewList;
    ctx->Driver.EndList = _tnl_EndList;
-   ctx->Driver.FlushVertices = _tnl_flush_vertices;
+   ctx->Driver.FlushVertices = _tnl_FlushVertices;
+   ctx->Driver.SaveFlushVertices = _tnl_SaveFlushVertices;
    ctx->Driver.MakeCurrent = _tnl_MakeCurrent;
    ctx->Driver.BeginCallList = _tnl_BeginCallList;
    ctx->Driver.EndCallList = _tnl_EndCallList;
@@ -89,17 +82,20 @@ _tnl_CreateContext( GLcontext *ctx )
 
    /* Initialize the VB.
     */
-   tnl->vb.Size = MAX2( IMM_SIZE,
-			ctx->Const.MaxArrayLockSize + MAX_CLIPPED_VERTICES);
+   tnl->vb.Size = ctx->Const.MaxArrayLockSize + MAX_CLIPPED_VERTICES;
 
 
    /* Initialize tnl state and tnl->vtxfmt.
     */
-   _tnl_dlist_init( ctx );
+   _tnl_save_init( ctx );
    _tnl_array_init( ctx );
-   _tnl_imm_init( ctx );
-   _tnl_eval_init( ctx );
+   _tnl_vtx_init( ctx );
    _tnl_install_pipeline( ctx, _tnl_default_pipeline );
+
+   /* Initialize the arrayelt helper
+    */
+   if (!_ae_create_context( ctx ))
+      return GL_FALSE;
 
 
    tnl->NeedNdcCoords = GL_TRUE;
@@ -108,29 +104,19 @@ _tnl_CreateContext( GLcontext *ctx )
 
    /* Hook our functions into exec and compile dispatch tables.
     */
-   _mesa_install_exec_vtxfmt( ctx, &tnl->vtxfmt );
-
-   tnl->save_vtxfmt = tnl->vtxfmt;
-   tnl->save_vtxfmt.CallList = _mesa_save_CallList;	
-   tnl->save_vtxfmt.EvalMesh1 = _mesa_save_EvalMesh1;	
-   tnl->save_vtxfmt.EvalMesh2 = _mesa_save_EvalMesh2;
-   tnl->save_vtxfmt.Begin = _tnl_save_Begin;
-
-   _mesa_install_save_vtxfmt( ctx, &tnl->save_vtxfmt );
+   _mesa_install_exec_vtxfmt( ctx, &tnl->exec_vtxfmt );
 
 
    /* Set a few default values in the driver struct.
     */
    install_driver_callbacks(ctx);
-   ctx->Driver.NeedFlush = FLUSH_UPDATE_CURRENT;
+   ctx->Driver.NeedFlush = 0;
    ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
    ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
 
    tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
    tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
    tnl->Driver.NotifyMaterialChange = _mesa_validate_all_lighting_tables;
-
-
    
    return GL_TRUE;
 }
@@ -142,9 +128,9 @@ _tnl_DestroyContext( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
    _tnl_array_destroy( ctx );
-   _tnl_imm_destroy( ctx );
+   _tnl_vtx_destroy( ctx );
+   _tnl_save_destroy( ctx );
    _tnl_destroy_pipeline( ctx );
-   _tnl_free_immediate( ctx, tnl->freed_immediate );
 
    FREE(tnl);
    ctx->swtnl_context = 0;
@@ -157,13 +143,6 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
    if (new_state & _NEW_ARRAY) {
-      struct immediate *IM = TNL_CURRENT_IM(ctx);
-      IM->ArrayEltFlags = ~ctx->Array._Enabled;
-      IM->ArrayEltFlush = (ctx->Array.LockCount 
-			   ? FLUSH_ELT_LAZY : FLUSH_ELT_EAGER);
-      IM->ArrayEltIncr = (ctx->Array.Vertex.Enabled ||
-                          (ctx->VertexProgram.Enabled &&
-                           ctx->Array.VertexAttrib[0].Enabled)) ? 1 : 0;
       tnl->pipeline.run_input_changes |= ctx->Array.NewState; /* overkill */
    }
 
@@ -171,7 +150,7 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
    tnl->pipeline.build_state_changes |= (new_state &
 					 tnl->pipeline.build_state_trigger);
 
-   tnl->eval.EvalNewState |= new_state;
+   tnl->vtx.eval.new_state |= new_state;
 }
 
 
@@ -185,7 +164,7 @@ _tnl_wakeup_exec( GLcontext *ctx )
 
    /* Hook our functions into exec and compile dispatch tables.
     */
-   _mesa_install_exec_vtxfmt( ctx, &tnl->vtxfmt );
+   _mesa_install_exec_vtxfmt( ctx, &tnl->exec_vtxfmt );
 
    /* Call all appropriate driver callbacks to revive state.
     */
@@ -197,9 +176,9 @@ _tnl_wakeup_exec( GLcontext *ctx )
    tnl->pipeline.run_input_changes = ~0;
 
    if (ctx->Light.ColorMaterialEnabled) {
-      _mesa_update_color_material( ctx, ctx->Current.Attrib[VERT_ATTRIB_COLOR0] );
+      _mesa_update_color_material( ctx, 
+				   ctx->Current.Attrib[VERT_ATTRIB_COLOR0] );
    }
-
 }
 
 

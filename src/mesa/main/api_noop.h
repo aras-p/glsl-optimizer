@@ -46,9 +46,9 @@ extern void _mesa_noop_FogCoordfEXT( GLfloat a );
 
 extern void _mesa_noop_FogCoordfvEXT( const GLfloat *v );
 
-extern void _mesa_noop_Indexi( GLint i );
+extern void _mesa_noop_Indexf( GLfloat i );
 
-extern void _mesa_noop_Indexiv( const GLint *v );
+extern void _mesa_noop_Indexfv( const GLfloat *v );
 
 extern void _mesa_noop_Normal3f( GLfloat a, GLfloat b, GLfloat c );
 
@@ -127,11 +127,37 @@ extern void _mesa_noop_Vertex3f( GLfloat a, GLfloat b, GLfloat c );
 
 extern void _mesa_noop_Vertex4f( GLfloat a, GLfloat b, GLfloat c, GLfloat d );
 
+extern void _mesa_noop_VertexAttrib1fNV( GLuint index, GLfloat x );
+
+extern void _mesa_noop_VertexAttrib1fvNV( GLuint index, const GLfloat *v );
+
+extern void _mesa_noop_VertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y );
+extern void _mesa_noop_VertexAttrib2fvNV( GLuint index, const GLfloat *v );
+
+extern void _mesa_noop_VertexAttrib3fNV( GLuint index, GLfloat x,
+					 GLfloat y, GLfloat z );
+extern void _mesa_noop_VertexAttrib3fvNV( GLuint index, const GLfloat *v );
+
 extern void _mesa_noop_VertexAttrib4fNV( GLuint index, GLfloat x,
                                          GLfloat y, GLfloat z, GLfloat w );
 
 extern void _mesa_noop_VertexAttrib4fvNV( GLuint index, const GLfloat *v );
 
+extern void _mesa_noop_End( void );
+extern void _mesa_noop_Begin( GLenum mode );
+extern void _mesa_noop_EvalPoint2( GLint a, GLint b );
+extern void _mesa_noop_EvalPoint1( GLint a );
+extern void _mesa_noop_EvalCoord2fv( const GLfloat *v );
+extern void _mesa_noop_EvalCoord2f( GLfloat a, GLfloat b );
+extern void _mesa_noop_EvalCoord1fv( const GLfloat *v );
+extern void _mesa_noop_EvalCoord1f( GLfloat a );
+
+extern void _mesa_noop_vtxfmt_init( GLvertexformat *vfmt );
+
+extern void _mesa_noop_EvalMesh2( GLenum mode, GLint i1, GLint i2, 
+				  GLint j1, GLint j2 );
+
+extern void _mesa_noop_EvalMesh1( GLenum mode, GLint i1, GLint i2 );
 
 
 /* Not strictly a noop -- translate Rectf down to Begin/End and

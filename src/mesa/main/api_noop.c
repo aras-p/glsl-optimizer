@@ -27,11 +27,13 @@
 #include "glheader.h"
 #include "api_noop.h"
 #include "api_validate.h"
+#include "api_arrayelt.h"
 #include "context.h"
 #include "colormac.h"
 #include "light.h"
 #include "macros.h"
 #include "mtypes.h"
+#include "dlist.h"
 
 
 /* In states where certain vertex components are required for t&l or
@@ -53,93 +55,56 @@ void _mesa_noop_EdgeFlagv( const GLboolean *b )
    ctx->Current.EdgeFlag = *b;
 }
 
+void _mesa_noop_Indexf( GLfloat f )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ctx->Current.Index = f;
+}
+
+void _mesa_noop_Indexfv( const GLfloat *v )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ctx->Current.Index = *v;
+}
+
 void _mesa_noop_FogCoordfEXT( GLfloat a )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ctx->Current.Attrib[VERT_ATTRIB_FOG][0] = a;
+   GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_FOG];
+   dest[0] = a;
+   dest[1] = 0.0;
+   dest[2] = 0.0;
+   dest[3] = 1.0;
 }
 
 void _mesa_noop_FogCoordfvEXT( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ctx->Current.Attrib[VERT_ATTRIB_FOG][0] = *v;
-}
-
-void _mesa_noop_Indexi( GLint i )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Current.Index = i;
-}
-
-void _mesa_noop_Indexiv( const GLint *v )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Current.Index = *v;
+   GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_NORMAL];
+   dest[0] = v[0];
+   dest[1] = 0.0;
+   dest[2] = 0.0;
+   dest[3] = 1.0;
 }
 
 void _mesa_noop_Normal3f( GLfloat a, GLfloat b, GLfloat c )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_NORMAL];
-   COPY_FLOAT(dest[0], a);
-   COPY_FLOAT(dest[1], b);
-   COPY_FLOAT(dest[2], c);
+   dest[0] = a;
+   dest[1] = b;
+   dest[2] = c;
+   dest[3] = 1.0;
 }
 
 void _mesa_noop_Normal3fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_NORMAL];
-   COPY_FLOAT(dest[0], v[0]);
-   COPY_FLOAT(dest[1], v[1]);
-   COPY_FLOAT(dest[2], v[2]);
-}
-
-void _mesa_noop_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   GLint i, nr;
-   struct gl_material *mat = &ctx->Light.Material;
-   GLuint bitmask = _mesa_material_bitmask( ctx, face, pname, ~0,
-                                            "_mesa_noop_Materialfv" );
-
-   if (ctx->Light.ColorMaterialEnabled)
-      bitmask &= ~ctx->Light.ColorMaterialBitmask;
-
-   if (bitmask == 0)
-      return;
-
-   switch (face) {
-   case GL_SHININESS: nr = 1; break;
-   case GL_COLOR_INDEXES: nr = 3; break;
-   default: nr = 4 ; break;
-   }
-
-   for (i = 0 ; i < MAT_ATTRIB_MAX ; i++) 
-      if (bitmask & (1<<i))
-	 COPY_SZ_4V( mat->Attrib[i], nr, params ); 
-
-   _mesa_update_material( ctx, bitmask );
-}
-
-void _mesa_noop_Color4ub( GLubyte a, GLubyte b, GLubyte c, GLubyte d )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   GLfloat *color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
-   color[0] = UBYTE_TO_FLOAT(a);
-   color[1] = UBYTE_TO_FLOAT(b);
-   color[2] = UBYTE_TO_FLOAT(c);
-   color[3] = UBYTE_TO_FLOAT(d);
-}
-
-void _mesa_noop_Color4ubv( const GLubyte *v )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   GLfloat *color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
-   color[0] = UBYTE_TO_FLOAT(v[0]);
-   color[1] = UBYTE_TO_FLOAT(v[1]);
-   color[2] = UBYTE_TO_FLOAT(v[2]);
-   color[3] = UBYTE_TO_FLOAT(v[3]);
+   dest[0] = v[0];
+   dest[1] = v[1];
+   dest[2] = v[2];
+   dest[3] = 1.0;
 }
 
 void _mesa_noop_Color4f( GLfloat a, GLfloat b, GLfloat c, GLfloat d )
@@ -160,26 +125,6 @@ void _mesa_noop_Color4fv( const GLfloat *v )
    color[1] = v[1];
    color[2] = v[2];
    color[3] = v[3];
-}
-
-void _mesa_noop_Color3ub( GLubyte a, GLubyte b, GLubyte c )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   GLfloat *color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
-   color[0] = UBYTE_TO_FLOAT(a);
-   color[1] = UBYTE_TO_FLOAT(b);
-   color[2] = UBYTE_TO_FLOAT(c);
-   color[3] = 1.0;
-}
-
-void _mesa_noop_Color3ubv( const GLubyte *v )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   GLfloat *color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
-   color[0] = UBYTE_TO_FLOAT(v[0]);
-   color[1] = UBYTE_TO_FLOAT(v[1]);
-   color[2] = UBYTE_TO_FLOAT(v[2]);
-   color[3] = 1.0;
 }
 
 void _mesa_noop_Color3f( GLfloat a, GLfloat b, GLfloat c )
@@ -212,7 +157,7 @@ void _mesa_noop_MultiTexCoord1fARB( GLenum target, GLfloat a )
    if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
-      COPY_FLOAT(dest[0], a);
+      dest[0] = a;
       dest[1] = 0;
       dest[2] = 0;
       dest[3] = 1;
@@ -229,7 +174,7 @@ void _mesa_noop_MultiTexCoord1fvARB( GLenum target, const GLfloat *v )
    if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
-      COPY_FLOAT(dest[0], v[0]);
+      dest[0] = v[0];
       dest[1] = 0;
       dest[2] = 0;
       dest[3] = 1;
@@ -246,8 +191,8 @@ void _mesa_noop_MultiTexCoord2fARB( GLenum target, GLfloat a, GLfloat b )
    if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
-      COPY_FLOAT(dest[0], a);
-      COPY_FLOAT(dest[1], b);
+      dest[0] = a;
+      dest[1] = b;
       dest[2] = 0;
       dest[3] = 1;
    }
@@ -263,8 +208,8 @@ void _mesa_noop_MultiTexCoord2fvARB( GLenum target, const GLfloat *v )
    if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
-      COPY_FLOAT(dest[0], v[0]);
-      COPY_FLOAT(dest[1], v[1]);
+      dest[0] = v[0];
+      dest[1] = v[1];
       dest[2] = 0;
       dest[3] = 1;
    }
@@ -280,9 +225,9 @@ void _mesa_noop_MultiTexCoord3fARB( GLenum target, GLfloat a, GLfloat b, GLfloat
    if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
-      COPY_FLOAT(dest[0], a);
-      COPY_FLOAT(dest[1], b);
-      COPY_FLOAT(dest[2], c);
+      dest[0] = a;
+      dest[1] = b;
+      dest[2] = c;
       dest[3] = 1;
    }
 }
@@ -297,9 +242,9 @@ void _mesa_noop_MultiTexCoord3fvARB( GLenum target, const GLfloat *v )
    if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
-      COPY_FLOAT(dest[0], v[0]);
-      COPY_FLOAT(dest[1], v[1]);
-      COPY_FLOAT(dest[2], v[2]);
+      dest[0] = v[0];
+      dest[1] = v[1];
+      dest[2] = v[2];
       dest[3] = 1;
    }
 }
@@ -315,9 +260,9 @@ void _mesa_noop_MultiTexCoord4fARB( GLenum target, GLfloat a, GLfloat b,
    if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
-      COPY_FLOAT(dest[0], a);
-      COPY_FLOAT(dest[1], b);
-      COPY_FLOAT(dest[2], c);
+      dest[0] = a;
+      dest[1] = b;
+      dest[2] = c;
       dest[3] = d;
    }
 }
@@ -332,31 +277,11 @@ void _mesa_noop_MultiTexCoord4fvARB( GLenum target, const GLfloat *v )
    if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
-      COPY_FLOAT(dest[0], v[0]);
-      COPY_FLOAT(dest[1], v[1]);
-      COPY_FLOAT(dest[2], v[2]);
-      COPY_FLOAT(dest[3], v[3]);
+      dest[0] = v[0];
+      dest[1] = v[1];
+      dest[2] = v[2];
+      dest[3] = v[3];
    }
-}
-
-void _mesa_noop_SecondaryColor3ubEXT( GLubyte a, GLubyte b, GLubyte c )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   GLfloat *color = ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
-   color[0] = UBYTE_TO_FLOAT(a);
-   color[1] = UBYTE_TO_FLOAT(b);
-   color[2] = UBYTE_TO_FLOAT(c);
-   color[3] = 1.0;
-}
-
-void _mesa_noop_SecondaryColor3ubvEXT( const GLubyte *v )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   GLfloat *color = ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
-   color[0] = UBYTE_TO_FLOAT(v[0]);
-   color[1] = UBYTE_TO_FLOAT(v[1]);
-   color[2] = UBYTE_TO_FLOAT(v[2]);
-   color[3] = 1.0;
 }
 
 void _mesa_noop_SecondaryColor3fEXT( GLfloat a, GLfloat b, GLfloat c )
@@ -383,7 +308,7 @@ void _mesa_noop_TexCoord1f( GLfloat a )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
-   COPY_FLOAT(dest[0], a);
+   dest[0] = a;
    dest[1] = 0;
    dest[2] = 0;
    dest[3] = 1;
@@ -393,7 +318,7 @@ void _mesa_noop_TexCoord1fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
-   COPY_FLOAT(dest[0], v[0]);
+   dest[0] = v[0];
    dest[1] = 0;
    dest[2] = 0;
    dest[3] = 1;
@@ -403,8 +328,8 @@ void _mesa_noop_TexCoord2f( GLfloat a, GLfloat b )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
-   COPY_FLOAT(dest[0], a);
-   COPY_FLOAT(dest[1], b);
+   dest[0] = a;
+   dest[1] = b;
    dest[2] = 0;
    dest[3] = 1;
 }
@@ -413,8 +338,8 @@ void _mesa_noop_TexCoord2fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
-   COPY_FLOAT(dest[0], v[0]);
-   COPY_FLOAT(dest[1], v[1]);
+   dest[0] = v[0];
+   dest[1] = v[1];
    dest[2] = 0;
    dest[3] = 1;
 }
@@ -423,9 +348,9 @@ void _mesa_noop_TexCoord3f( GLfloat a, GLfloat b, GLfloat c )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
-   COPY_FLOAT(dest[0], a);
-   COPY_FLOAT(dest[1], b);
-   COPY_FLOAT(dest[2], c);
+   dest[0] = a;
+   dest[1] = b;
+   dest[2] = c;
    dest[3] = 1;
 }
 
@@ -433,9 +358,9 @@ void _mesa_noop_TexCoord3fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
-   COPY_FLOAT(dest[0], v[0]);
-   COPY_FLOAT(dest[1], v[1]);
-   COPY_FLOAT(dest[2], v[2]);
+   dest[0] = v[0];
+   dest[1] = v[1];
+   dest[2] = v[2];
    dest[3] = 1;
 }
 
@@ -443,23 +368,136 @@ void _mesa_noop_TexCoord4f( GLfloat a, GLfloat b, GLfloat c, GLfloat d )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
-   COPY_FLOAT(dest[0], a);
-   COPY_FLOAT(dest[1], b);
-   COPY_FLOAT(dest[2], c);
-   COPY_FLOAT(dest[3], d);
+   dest[0] = a;
+   dest[1] = b;
+   dest[2] = c;
+   dest[3] = d;
 }
 
 void _mesa_noop_TexCoord4fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
-   COPY_FLOAT(dest[0], v[0]);
-   COPY_FLOAT(dest[1], v[1]);
-   COPY_FLOAT(dest[2], v[2]);
-   COPY_FLOAT(dest[3], v[3]);
+   dest[0] = v[0];
+   dest[1] = v[1];
+   dest[2] = v[2];
+   dest[3] = v[3];
 }
 
-/* Useful outside begin/end?
+
+
+void _mesa_noop_VertexAttrib1fNV( GLuint index, GLfloat x )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index < 16) {
+      ASSIGN_4V(ctx->Current.Attrib[index], x, 0, 0, 1);
+   }
+   else
+      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+}
+
+void _mesa_noop_VertexAttrib1fvNV( GLuint index, const GLfloat *v )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index < 16) {
+      ASSIGN_4V(ctx->Current.Attrib[index], v[0], 0, 0, 1);
+   }
+   else
+      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+}
+
+void _mesa_noop_VertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index < 16) {
+      ASSIGN_4V(ctx->Current.Attrib[index], x, y, 0, 1);
+   }
+   else
+      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+}
+
+void _mesa_noop_VertexAttrib2fvNV( GLuint index, const GLfloat *v )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index < 16) {
+      ASSIGN_4V(ctx->Current.Attrib[index], v[0], v[1], 0, 1);
+   }
+   else
+      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+}
+
+void _mesa_noop_VertexAttrib3fNV( GLuint index, GLfloat x,
+                                  GLfloat y, GLfloat z )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index < 16) {
+      ASSIGN_4V(ctx->Current.Attrib[index], x, y, z, 1);
+   }
+   else
+      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+}
+
+void _mesa_noop_VertexAttrib3fvNV( GLuint index, const GLfloat *v )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index < 16) {
+      ASSIGN_4V(ctx->Current.Attrib[index], v[0], v[1], v[2], 1);
+   }
+   else
+      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+}
+
+void _mesa_noop_VertexAttrib4fNV( GLuint index, GLfloat x,
+                                  GLfloat y, GLfloat z, GLfloat w )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index < 16) {
+      ASSIGN_4V(ctx->Current.Attrib[index], x, y, z, w);
+   }
+   else
+      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+}
+
+void _mesa_noop_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   if (index < 16) {
+      ASSIGN_4V(ctx->Current.Attrib[index], v[0], v[1], v[2], v[3]);
+   }
+   else
+      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+}
+
+/* Material
+ */
+void _mesa_noop_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLint i, nr;
+   struct gl_material *mat = &ctx->Light.Material;
+   GLuint bitmask = _mesa_material_bitmask( ctx, face, pname, ~0,
+                                            "_mesa_noop_Materialfv" );
+
+   if (ctx->Light.ColorMaterialEnabled)
+      bitmask &= ~ctx->Light.ColorMaterialBitmask;
+
+   if (bitmask == 0)
+      return;
+
+   switch (face) {
+   case GL_SHININESS: nr = 1; break;
+   case GL_COLOR_INDEXES: nr = 3; break;
+   default: nr = 4 ; break;
+   }
+
+   for (i = 0 ; i < MAT_ATTRIB_MAX ; i++) 
+      if (bitmask & (1<<i))
+	 COPY_SZ_4V( mat->Attrib[i], nr, params ); 
+
+   _mesa_update_material( ctx, bitmask );
+}
+
+/* These really are noops outside begin/end:
  */
 void _mesa_noop_Vertex2fv( const GLfloat *v )
 {
@@ -491,25 +529,54 @@ void _mesa_noop_Vertex4f( GLfloat a, GLfloat b, GLfloat c, GLfloat d )
    (void) a; (void) b; (void) c; (void) d;
 }
 
-
-
-void _mesa_noop_VertexAttrib4fNV( GLuint index, GLfloat x,
-                                  GLfloat y, GLfloat z, GLfloat w )
+/* Similarly, these have no effect outside begin/end:
+ */
+void _mesa_noop_EvalCoord1f( GLfloat a )
 {
-   GET_CURRENT_CONTEXT(ctx);
-   if (index < 16) {
-      ASSIGN_4V(ctx->Current.Attrib[index], x, y, z, w);
-   }
+   (void) a;
 }
 
-void _mesa_noop_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
+void _mesa_noop_EvalCoord1fv( const GLfloat *v )
 {
-   GET_CURRENT_CONTEXT(ctx);
-   if (index < 16) {
-      ASSIGN_4V(ctx->Current.Attrib[index], v[0], v[1], v[2], v[3]);
-   }
+   (void) v;
 }
 
+void _mesa_noop_EvalCoord2f( GLfloat a, GLfloat b )
+{
+   (void) a; (void) b;
+}
+
+void _mesa_noop_EvalCoord2fv( const GLfloat *v )
+{
+   (void) v;
+}
+
+void _mesa_noop_EvalPoint1( GLint a )
+{
+   (void) a;
+}
+
+void _mesa_noop_EvalPoint2( GLint a, GLint b )
+{
+   (void) a; (void) b;
+}
+
+
+/* Begin -- call into driver, should result in the vtxfmt being
+ * swapped out:
+ */
+void _mesa_noop_Begin( GLenum mode )
+{
+}
+
+
+/* End -- just raise an error
+ */
+void _mesa_noop_End( void )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_error( ctx, GL_INVALID_OPERATION, __FUNCTION__ );
+}
 
 
 /* Execute a glRectf() function.  This is not suitable for GL_COMPILE
@@ -549,7 +616,7 @@ void _mesa_noop_DrawArrays(GLenum mode, GLint start, GLsizei count)
       return;
 
    glBegin(mode);
-   for (i = start ; i <= count ; i++)
+   for (i = start ; i < count ; i++)
       glArrayElement( i );
    glEnd();
 }
@@ -598,4 +665,200 @@ void _mesa_noop_DrawRangeElements(GLenum mode,
 					 start, end,
 					 count, type, indices ))
       glDrawElements( mode, count, type, indices );
+}
+
+/*
+ * Eval Mesh
+ */
+
+/* KW: If are compiling, we don't know whether eval will produce a
+ *     vertex when it is run in the future.  If this is pure immediate
+ *     mode, eval is a noop if neither vertex map is enabled.
+ *
+ *     Thus we need to have a check in the display list code or
+ *     elsewhere for eval(1,2) vertices in the case where
+ *     map(1,2)_vertex is disabled, and to purge those vertices from
+ *     the vb.
+ */
+void _mesa_noop_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLint i;
+   GLfloat u, du;
+   GLenum prim;
+
+   switch (mode) {
+   case GL_POINT:
+      prim = GL_POINTS;
+      break;
+   case GL_LINE:
+      prim = GL_LINE_STRIP;
+      break;
+   default:
+      _mesa_error( ctx, GL_INVALID_ENUM, "glEvalMesh1(mode)" );
+      return;
+   }
+
+   /* No effect if vertex maps disabled.
+    */
+   if (!ctx->Eval.Map1Vertex4 && 
+       !ctx->Eval.Map1Vertex3 &&
+       !(ctx->VertexProgram.Enabled && ctx->Eval.Map1Attrib[VERT_ATTRIB_POS]))
+      return;
+
+   du = ctx->Eval.MapGrid1du;
+   u = ctx->Eval.MapGrid1u1 + i1 * du;
+
+   glBegin( prim );
+   for (i=i1;i<=i2;i++,u+=du) {
+      glEvalCoord1f( u );
+   }
+   glEnd();
+}
+
+
+
+void _mesa_noop_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLfloat u, du, v, dv, v1, u1;
+   GLint i, j;
+
+   switch (mode) {
+   case GL_POINT:
+   case GL_LINE:
+   case GL_FILL:
+      break;
+   default:
+      _mesa_error( ctx, GL_INVALID_ENUM, "glEvalMesh2(mode)" );
+      return;
+   }
+
+   /* No effect if vertex maps disabled.
+    */
+   if (!ctx->Eval.Map2Vertex4 && 
+       !ctx->Eval.Map2Vertex3 &&
+       !(ctx->VertexProgram.Enabled && ctx->Eval.Map2Attrib[VERT_ATTRIB_POS]))
+      return;
+
+   du = ctx->Eval.MapGrid2du;
+   dv = ctx->Eval.MapGrid2dv;
+   v1 = ctx->Eval.MapGrid2v1 + j1 * dv;
+   u1 = ctx->Eval.MapGrid2u1 + i1 * du;
+
+   switch (mode) {
+   case GL_POINT:
+      glBegin( GL_POINTS );
+      for (v=v1,j=j1;j<=j2;j++,v+=dv) {
+	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
+	    glEvalCoord2f(u, v );
+	 }
+      }
+      glEnd();
+      break;
+   case GL_LINE:
+      for (v=v1,j=j1;j<=j2;j++,v+=dv) {
+	 glBegin( GL_LINE_STRIP );
+	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
+	    glEvalCoord2f(u, v );
+	 }
+	 glEnd();
+      }
+      for (u=u1,i=i1;i<=i2;i++,u+=du) {
+	 glBegin( GL_LINE_STRIP );
+	 for (v=v1,j=j1;j<=j2;j++,v+=dv) {
+	    glEvalCoord2f(u, v );
+	 }
+	 glEnd();
+      }
+      break;
+   case GL_FILL:
+      for (v=v1,j=j1;j<j2;j++,v+=dv) {
+	 glBegin( GL_TRIANGLE_STRIP );
+	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
+	    glEvalCoord2f(u, v );
+	    glEvalCoord2f(u, v+dv );
+	 }
+	 glEnd();
+      }
+      break;
+   default:
+      _mesa_error( ctx, GL_INVALID_ENUM, "glEvalMesh2(mode)" );
+      return;
+   }
+}
+
+
+
+/* Build a vertexformat full of things to use outside begin/end pairs.
+ * 
+ * TODO -- build a whole dispatch table for this purpose, and likewise
+ * for inside begin/end.
+ */
+void _mesa_noop_vtxfmt_init( GLvertexformat *vfmt )
+{
+   vfmt->ArrayElement = _ae_loopback_array_elt;	        /* generic helper */
+   vfmt->Begin = _mesa_noop_Begin;
+   vfmt->CallList = _mesa_CallList;
+   vfmt->CallLists = _mesa_CallLists;
+   vfmt->Color3f = _mesa_noop_Color3f;
+   vfmt->Color3fv = _mesa_noop_Color3fv;
+   vfmt->Color4f = _mesa_noop_Color4f;
+   vfmt->Color4fv = _mesa_noop_Color4fv;
+   vfmt->EdgeFlag = _mesa_noop_EdgeFlag;
+   vfmt->EdgeFlagv = _mesa_noop_EdgeFlagv;
+   vfmt->End = _mesa_noop_End;
+   vfmt->EvalCoord1f = _mesa_noop_EvalCoord1f;
+   vfmt->EvalCoord1fv = _mesa_noop_EvalCoord1fv;
+   vfmt->EvalCoord2f = _mesa_noop_EvalCoord2f;
+   vfmt->EvalCoord2fv = _mesa_noop_EvalCoord2fv;
+   vfmt->EvalPoint1 = _mesa_noop_EvalPoint1;
+   vfmt->EvalPoint2 = _mesa_noop_EvalPoint2;
+   vfmt->FogCoordfEXT = _mesa_noop_FogCoordfEXT;
+   vfmt->FogCoordfvEXT = _mesa_noop_FogCoordfvEXT;
+   vfmt->Indexf = _mesa_noop_Indexf;
+   vfmt->Indexfv = _mesa_noop_Indexfv;
+   vfmt->Materialfv = _mesa_noop_Materialfv;
+   vfmt->MultiTexCoord1fARB = _mesa_noop_MultiTexCoord1fARB;
+   vfmt->MultiTexCoord1fvARB = _mesa_noop_MultiTexCoord1fvARB;
+   vfmt->MultiTexCoord2fARB = _mesa_noop_MultiTexCoord2fARB;
+   vfmt->MultiTexCoord2fvARB = _mesa_noop_MultiTexCoord2fvARB;
+   vfmt->MultiTexCoord3fARB = _mesa_noop_MultiTexCoord3fARB;
+   vfmt->MultiTexCoord3fvARB = _mesa_noop_MultiTexCoord3fvARB;
+   vfmt->MultiTexCoord4fARB = _mesa_noop_MultiTexCoord4fARB;
+   vfmt->MultiTexCoord4fvARB = _mesa_noop_MultiTexCoord4fvARB;
+   vfmt->Normal3f = _mesa_noop_Normal3f;
+   vfmt->Normal3fv = _mesa_noop_Normal3fv;
+   vfmt->SecondaryColor3fEXT = _mesa_noop_SecondaryColor3fEXT;
+   vfmt->SecondaryColor3fvEXT = _mesa_noop_SecondaryColor3fvEXT;
+   vfmt->TexCoord1f = _mesa_noop_TexCoord1f;
+   vfmt->TexCoord1fv = _mesa_noop_TexCoord1fv;
+   vfmt->TexCoord2f = _mesa_noop_TexCoord2f;
+   vfmt->TexCoord2fv = _mesa_noop_TexCoord2fv;
+   vfmt->TexCoord3f = _mesa_noop_TexCoord3f;
+   vfmt->TexCoord3fv = _mesa_noop_TexCoord3fv;
+   vfmt->TexCoord4f = _mesa_noop_TexCoord4f;
+   vfmt->TexCoord4fv = _mesa_noop_TexCoord4fv;
+   vfmt->Vertex2f = _mesa_noop_Vertex2f;
+   vfmt->Vertex2fv = _mesa_noop_Vertex2fv;
+   vfmt->Vertex3f = _mesa_noop_Vertex3f;
+   vfmt->Vertex3fv = _mesa_noop_Vertex3fv;
+   vfmt->Vertex4f = _mesa_noop_Vertex4f;
+   vfmt->Vertex4fv = _mesa_noop_Vertex4fv;
+   vfmt->VertexAttrib1fNV = _mesa_noop_VertexAttrib1fNV;
+   vfmt->VertexAttrib1fvNV = _mesa_noop_VertexAttrib1fvNV;
+   vfmt->VertexAttrib2fNV = _mesa_noop_VertexAttrib2fNV;
+   vfmt->VertexAttrib2fvNV = _mesa_noop_VertexAttrib2fvNV;
+   vfmt->VertexAttrib3fNV = _mesa_noop_VertexAttrib3fNV;
+   vfmt->VertexAttrib3fvNV = _mesa_noop_VertexAttrib3fvNV;
+   vfmt->VertexAttrib4fNV = _mesa_noop_VertexAttrib4fNV;
+   vfmt->VertexAttrib4fvNV = _mesa_noop_VertexAttrib4fvNV;
+
+   vfmt->Rectf = _mesa_noop_Rectf;
+
+   vfmt->DrawArrays = _mesa_noop_DrawArrays;
+   vfmt->DrawElements = _mesa_noop_DrawElements;
+   vfmt->DrawRangeElements = _mesa_noop_DrawRangeElements;
+   vfmt->EvalMesh1 = _mesa_noop_EvalMesh1;
+   vfmt->EvalMesh2 = _mesa_noop_EvalMesh2;
 }

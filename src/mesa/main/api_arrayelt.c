@@ -250,6 +250,9 @@ static void (*fogcoordfuncs[8])( const void * ) = {
 
 GLboolean _ae_create_context( GLcontext *ctx )
 {
+   if (ctx->aelt_context)
+      return GL_TRUE;
+
    ctx->aelt_context = MALLOC( sizeof(AEcontext) );
    if (!ctx->aelt_context)
       return GL_FALSE;

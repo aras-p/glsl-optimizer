@@ -52,7 +52,6 @@
 #ifndef TEST_PRIM_END
 #define TEST_PRIM_END(flags) (flags & PRIM_END)
 #define TEST_PRIM_BEGIN(flags) (flags & PRIM_BEGIN)
-#define TEST_PRIM_PARITY(flags) (flags & PRIM_PARITY)
 #endif
 
 #ifndef ELT
@@ -186,9 +185,6 @@ static void TAG(render_tri_strip)( GLcontext *ctx,
    GLuint j;
    GLuint parity = 0;
    LOCAL_VARS;
-
-   if (TEST_PRIM_PARITY(flags))
-      parity = 1;
 
    INIT(GL_TRIANGLE_STRIP);
    if (NEED_EDGEFLAG_SETUP) {

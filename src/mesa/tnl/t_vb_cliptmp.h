@@ -126,7 +126,7 @@ TAG(clip_line)( GLcontext *ctx, GLuint i, GLuint j, GLubyte mask )
    GLfloat (*coord)[4] = VB->ClipPtr->data;
    GLuint ii = i, jj = j, p;
 
-   VB->LastClipped = VB->FirstClipped;
+   VB->LastClipped = VB->Count;
 
    if (mask & 0x3f) {
       LINE_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
@@ -174,7 +174,7 @@ TAG(clip_tri)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte mask )
 
    ASSIGN_3V(inlist, v2, v0, v1 ); /* pv rotated to slot zero */
 
-   VB->LastClipped = VB->FirstClipped;
+   VB->LastClipped = VB->Count;
 
    if (mask & 0x3f) {
       POLY_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
@@ -199,7 +199,7 @@ TAG(clip_tri)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte mask )
 
    if (ctx->_TriangleCaps & DD_FLATSHADE) {
       if (pv != inlist[0]) {
-	 ASSERT( inlist[0] >= VB->FirstClipped );
+	 ASSERT( inlist[0] >= VB->Count );
 	 tnl->Driver.Render.CopyPV( ctx, inlist[0], pv );
       }
    }
@@ -227,7 +227,7 @@ TAG(clip_quad)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
 
    ASSIGN_4V(inlist, v3, v0, v1, v2 ); /* pv rotated to slot zero */
 
-   VB->LastClipped = VB->FirstClipped;
+   VB->LastClipped = VB->Count;
 
    if (mask & 0x3f) {
       POLY_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
@@ -252,7 +252,7 @@ TAG(clip_quad)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
 
    if (ctx->_TriangleCaps & DD_FLATSHADE) {
       if (pv != inlist[0]) {
-	 ASSERT( inlist[0] >= VB->FirstClipped );
+	 ASSERT( inlist[0] >= VB->Count );
 	 tnl->Driver.Render.CopyPV( ctx, inlist[0], pv );
       }
    }

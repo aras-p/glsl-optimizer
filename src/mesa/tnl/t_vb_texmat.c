@@ -52,7 +52,7 @@ struct texmat_stage_data {
 
 #define TEXMAT_STAGE_DATA(stage) ((struct texmat_stage_data *)stage->privatePtr)
 
-static void check_texmat( GLcontext *ctx, struct gl_pipeline_stage *stage )
+static void check_texmat( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 {
    GLuint i;
    stage->active = 0;
@@ -62,7 +62,7 @@ static void check_texmat( GLcontext *ctx, struct gl_pipeline_stage *stage )
 
       for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
 	 if (ctx->Texture._TexMatEnabled & ENABLE_TEXMAT(i))
-	    flags |= VERT_BIT_TEX(i);
+	    flags |= _TNL_BIT_TEX(i);
 
       stage->active = 1;
       stage->inputs = flags;
@@ -71,7 +71,7 @@ static void check_texmat( GLcontext *ctx, struct gl_pipeline_stage *stage )
 }
 
 static GLboolean run_texmat_stage( GLcontext *ctx,
-				   struct gl_pipeline_stage *stage )
+				   struct tnl_pipeline_stage *stage )
 {
    struct texmat_stage_data *store = TEXMAT_STAGE_DATA(stage);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -82,7 +82,7 @@ static GLboolean run_texmat_stage( GLcontext *ctx,
     */
    for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
       if (ctx->Texture._TexMatEnabled & ENABLE_TEXMAT(i)) {
-	 if (stage->changed_inputs & VERT_BIT_TEX(i))
+	 if (stage->changed_inputs & _TNL_BIT_TEX(i))
 	    (void) TransformRaw( &store->texcoord[i],
                                  ctx->TextureMatrixStack[i].Top,
 				 VB->TexCoordPtr[i]);
@@ -96,7 +96,7 @@ static GLboolean run_texmat_stage( GLcontext *ctx,
 /* Called the first time stage->run() is invoked.
  */
 static GLboolean alloc_texmat_data( GLcontext *ctx,
-				    struct gl_pipeline_stage *stage )
+				    struct tnl_pipeline_stage *stage )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct texmat_stage_data *store;
@@ -117,7 +117,7 @@ static GLboolean alloc_texmat_data( GLcontext *ctx,
 }
 
 
-static void free_texmat_data( struct gl_pipeline_stage *stage )
+static void free_texmat_data( struct tnl_pipeline_stage *stage )
 {
    struct texmat_stage_data *store = TEXMAT_STAGE_DATA(stage);
    GLuint i;
@@ -133,7 +133,7 @@ static void free_texmat_data( struct gl_pipeline_stage *stage )
 
 
 
-const struct gl_pipeline_stage _tnl_texture_transform_stage =
+const struct tnl_pipeline_stage _tnl_texture_transform_stage =
 {
    "texture transform",			/* name */
    _NEW_TEXTURE|_NEW_TEXTURE_MATRIX,	/* check_state */

@@ -79,6 +79,8 @@ extern void GLAPIENTRY _mesa_save_EvalMesh1( GLenum mode, GLint i1, GLint i2 );
 extern void GLAPIENTRY _mesa_save_CallLists( GLsizei n, GLenum type, const GLvoid *lists );
 extern void GLAPIENTRY _mesa_save_CallList( GLuint list );
 extern void _mesa_init_display_list( GLcontext * ctx );
+extern void _mesa_save_vtxfmt_init( GLvertexformat *vfmt );
+
 
 #else
 
@@ -93,6 +95,9 @@ extern void _mesa_init_display_list( GLcontext * ctx );
 
 /** No-op */
 #define _mesa_init_display_list(c) ((void)0)
+
+/** No-op */
+#define _mesa_save_vtxfmt_init(v) ((void)0)
 
 #endif
 

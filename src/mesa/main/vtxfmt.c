@@ -77,12 +77,8 @@ static void install_vtxfmt( struct _glapi_table *tab, GLvertexformat *vfmt )
    tab->ArrayElement = vfmt->ArrayElement;
    tab->Color3f = vfmt->Color3f;
    tab->Color3fv = vfmt->Color3fv;
-   tab->Color3ub = vfmt->Color3ub;
-   tab->Color3ubv = vfmt->Color3ubv;
    tab->Color4f = vfmt->Color4f;
    tab->Color4fv = vfmt->Color4fv;
-   tab->Color4ub = vfmt->Color4ub;
-   tab->Color4ubv = vfmt->Color4ubv;
    tab->EdgeFlag = vfmt->EdgeFlag;
    tab->EdgeFlagv = vfmt->EdgeFlagv;
    tab->EvalCoord1f = vfmt->EvalCoord1f;
@@ -93,8 +89,8 @@ static void install_vtxfmt( struct _glapi_table *tab, GLvertexformat *vfmt )
    tab->EvalPoint2 = vfmt->EvalPoint2;
    tab->FogCoordfEXT = vfmt->FogCoordfEXT;
    tab->FogCoordfvEXT = vfmt->FogCoordfvEXT;
-   tab->Indexi = vfmt->Indexi;
-   tab->Indexiv = vfmt->Indexiv;
+   tab->Indexf = vfmt->Indexf;
+   tab->Indexfv = vfmt->Indexfv;
    tab->Materialfv = vfmt->Materialfv;
    tab->MultiTexCoord1fARB = vfmt->MultiTexCoord1fARB;
    tab->MultiTexCoord1fvARB = vfmt->MultiTexCoord1fvARB;
@@ -108,8 +104,6 @@ static void install_vtxfmt( struct _glapi_table *tab, GLvertexformat *vfmt )
    tab->Normal3fv = vfmt->Normal3fv;
    tab->SecondaryColor3fEXT = vfmt->SecondaryColor3fEXT;
    tab->SecondaryColor3fvEXT = vfmt->SecondaryColor3fvEXT;
-   tab->SecondaryColor3ubEXT = vfmt->SecondaryColor3ubEXT;
-   tab->SecondaryColor3ubvEXT = vfmt->SecondaryColor3ubvEXT;
    tab->TexCoord1f = vfmt->TexCoord1f;
    tab->TexCoord1fv = vfmt->TexCoord1fv;
    tab->TexCoord2f = vfmt->TexCoord2f;
@@ -125,8 +119,15 @@ static void install_vtxfmt( struct _glapi_table *tab, GLvertexformat *vfmt )
    tab->Vertex4f = vfmt->Vertex4f;
    tab->Vertex4fv = vfmt->Vertex4fv;
    tab->CallList = vfmt->CallList;
+   tab->CallLists = vfmt->CallLists;
    tab->Begin = vfmt->Begin;
    tab->End = vfmt->End;
+   tab->VertexAttrib1fNV = vfmt->VertexAttrib1fNV;
+   tab->VertexAttrib1fvNV = vfmt->VertexAttrib1fvNV;
+   tab->VertexAttrib2fNV = vfmt->VertexAttrib2fNV;
+   tab->VertexAttrib2fvNV = vfmt->VertexAttrib2fvNV;
+   tab->VertexAttrib3fNV = vfmt->VertexAttrib3fNV;
+   tab->VertexAttrib3fvNV = vfmt->VertexAttrib3fvNV;
    tab->VertexAttrib4fNV = vfmt->VertexAttrib4fNV;
    tab->VertexAttrib4fvNV = vfmt->VertexAttrib4fvNV;
    tab->Rectf = vfmt->Rectf;
@@ -150,15 +151,11 @@ void _mesa_install_exec_vtxfmt( GLcontext *ctx, GLvertexformat *vfmt )
 {
    ctx->TnlModule.Current = vfmt;
    _mesa_restore_exec_vtxfmt( ctx );
-   if ( ctx->ExecPrefersFloat != vfmt->prefer_float_colors )
-      _mesa_loopback_prefer_float( ctx->Exec, vfmt->prefer_float_colors );
 }
 
 void _mesa_install_save_vtxfmt( GLcontext *ctx, GLvertexformat *vfmt )
 {
    install_vtxfmt( ctx->Save, vfmt );
-   if ( ctx->SavePrefersFloat != vfmt->prefer_float_colors )
-      _mesa_loopback_prefer_float( ctx->Save, vfmt->prefer_float_colors );
 }
 
 

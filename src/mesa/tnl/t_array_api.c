@@ -40,38 +40,40 @@
 
 #include "t_array_api.h"
 #include "t_array_import.h"
-#include "t_imm_api.h"
-#include "t_imm_exec.h"
+#include "t_save_api.h"
 #include "t_context.h"
 #include "t_pipeline.h"
 
 static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
 				 GLsizei count )
 {
-   if (_tnl_hard_begin( ctx, mode )) {
-      GLint i;
-      for (i = start; i < count; i++) 
-	 glArrayElement( i );
-      glEnd();
-   }
+   GLint i;
+
+   assert(!ctx->CompileFlag);
+   assert(ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1);
+
+   glBegin(mode);
+   for (i = start; i < count; i++) 
+      glArrayElement( i );
+   glEnd();
 }
 
 
 static void fallback_drawelements( GLcontext *ctx, GLenum mode, GLsizei count,
 				   const GLuint *indices)
 {
-   if (_tnl_hard_begin(ctx, mode)) {
-      GLint i;
-      if (ctx->Array.ElementArrayBufferObj->Name) {
-         /* use indices in the buffer object */
-         ASSERT(ctx->Array.ElementArrayBufferObj->Data);
-         indices = (const GLuint *) ctx->Array.ElementArrayBufferObj->Data;
-      }
-      for (i = 0 ; i < count ; i++) {
-         glArrayElement( indices[i] );
-      }
-      glEnd();
+   GLint i;
+
+   assert(!ctx->CompileFlag);
+   assert(ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1);
+
+   /* Here, indices will already reflect the buffer object if active */
+
+   glBegin(mode);
+   for (i = 0 ; i < count ; i++) {
+      glArrayElement( indices[i] );
    }
+   glEnd();
 }
 
 
@@ -81,22 +83,26 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
 
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct tnl_prim prim;
    int i;
    FLUSH_CURRENT( ctx, 0 );
    
-   /*  _mesa_debug(ctx, "%s\n", __FUNCTION__); */
    if (tnl->pipeline.build_state_changes)
       _tnl_validate_pipeline( ctx );
 
    _tnl_vb_bind_arrays( ctx, start, end );
 
-   tnl->vb.FirstPrimitive = 0;
-   tnl->vb.Primitive[0] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;
-   tnl->vb.PrimitiveLength[0] = count;
+   tnl->vb.Primitive = &prim;
+   tnl->vb.Primitive[0].mode = mode | PRIM_BEGIN | PRIM_END;
+   tnl->vb.Primitive[0].start = 0;
+   tnl->vb.Primitive[0].count = count;
+   tnl->vb.PrimitiveCount = 1;
+
    tnl->vb.Elts = (GLuint *)indices;
 
-   for (i = 0 ; i < count ; i++)
-      indices[i] -= start;
+   if (start)
+      for (i = 0 ; i < count ; i++)
+	 indices[i] -= start;
 
    if (ctx->Array.LockCount)
       tnl->Driver.RunPipeline( ctx );
@@ -108,8 +114,9 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
       tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
    }
 
-   for (i = 0 ; i < count ; i++)
-      indices[i] += start;
+   if (start)
+      for (i = 0 ; i < count ; i++)
+	 indices[i] += start;
 }
 
 
@@ -122,7 +129,6 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 {
    GET_CURRENT_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
    GLuint thresh = (ctx->Driver.NeedFlush & FLUSH_STORED_VERTICES) ? 30 : 10;
    
    if (MESA_VERBOSE & VERBOSE_API)
@@ -136,10 +142,9 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
    if (tnl->pipeline.build_state_changes)
       _tnl_validate_pipeline( ctx );
 
-   if (ctx->CompileFlag) {
-      fallback_drawarrays( ctx, mode, start, start + count );
-   }    
-   else if (!ctx->Array.LockCount && (GLuint) count < thresh) {
+   assert(!ctx->CompileFlag);
+
+   if (!ctx->Array.LockCount && (GLuint) count < thresh) {
       /* Small primitives: attempt to share a vb (at the expense of
        * using the immediate interface).
       */
@@ -148,6 +153,8 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
    else if (ctx->Array.LockCount && 
 	    count < (GLint) ctx->Const.MaxArrayLockSize) {
       
+      struct tnl_prim prim;
+
       /* Locked primitives which can fit in a single vertex buffer:
        */
       FLUSH_CURRENT( ctx, 0 );
@@ -160,9 +167,13 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
       /* Locked drawarrays.  Reuse any previously transformed data.
        */
       _tnl_vb_bind_arrays( ctx, ctx->Array.LockFirst, ctx->Array.LockCount );
-      VB->FirstPrimitive = start;
-      VB->Primitive[start] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;
-      VB->PrimitiveLength[start] = count;
+
+      tnl->vb.Primitive = &prim;
+      tnl->vb.Primitive[0].mode = mode | PRIM_BEGIN | PRIM_END;
+      tnl->vb.Primitive[0].start = start;
+      tnl->vb.Primitive[0].count = count;
+      tnl->vb.PrimitiveCount = 1;
+
       tnl->Driver.RunPipeline( ctx );
    } 
    else {
@@ -237,13 +248,25 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 
       for (j = start + minimum ; j < count ; j += nr + skip ) {
 
+	 struct tnl_prim prim;
+
 	 nr = MIN2( bufsz, count - j );
 
 	 _tnl_vb_bind_arrays( ctx, j - minimum, j + nr );
 
-	 VB->FirstPrimitive = 0;
-	 VB->Primitive[0] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;
-	 VB->PrimitiveLength[0] = nr + minimum;
+	 tnl->vb.Primitive = &prim;
+	 tnl->vb.Primitive[0].mode = mode;
+
+	 if (j == start + minimum)
+	    tnl->vb.Primitive[0].mode |= PRIM_BEGIN;
+
+	 if (j + nr + skip >= count)
+	    tnl->vb.Primitive[0].mode |= PRIM_END;
+
+	 tnl->vb.Primitive[0].start = 0;
+	 tnl->vb.Primitive[0].count = nr + minimum;
+	 tnl->vb.PrimitiveCount = 1;
+
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
 	 tnl->Driver.RunPipeline( ctx );
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
@@ -286,12 +309,9 @@ _tnl_DrawRangeElements(GLenum mode,
 					       count, type, indices );
 
 
-   if (ctx->CompileFlag) {
-      /* Can't do anything when compiling:
-       */
-      fallback_drawelements( ctx, mode, count, ui_indices );
-   }
-   else if (ctx->Array.LockCount) {
+   assert(!ctx->CompileFlag);
+
+   if (ctx->Array.LockCount) {
       /* Are the arrays already locked?  If so we currently have to look
        * at the whole locked range.
        */
@@ -360,12 +380,9 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
    ui_indices = (GLuint *)_ac_import_elements( ctx, GL_UNSIGNED_INT,
 					       count, type, indices );
 
-   if (ctx->CompileFlag) {
-      /* Can't do anything when compiling:
-       */
-      fallback_drawelements( ctx, mode, count, ui_indices );
-   }
-   else if (ctx->Array.LockCount) {
+   assert(!ctx->CompileFlag);
+
+   if (ctx->Array.LockCount) {
       _tnl_draw_range_elements( ctx, mode,
 				ctx->Array.LockFirst,
 				ctx->Array.LockCount,
@@ -397,8 +414,8 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
 void _tnl_array_init( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_arrays *tmp = &tnl->array_inputs;
-   GLvertexformat *vfmt = &(TNL_CONTEXT(ctx)->vtxfmt);
+   struct tnl_vertex_arrays *tmp = &tnl->array_inputs;
+   GLvertexformat *vfmt = &(TNL_CONTEXT(ctx)->exec_vtxfmt);
    GLuint i;
 
    vfmt->DrawArrays = _tnl_DrawArrays;
@@ -410,14 +427,10 @@ void _tnl_array_init( GLcontext *ctx )
    _mesa_vector4f_init( &tmp->Obj, 0, 0 );
    _mesa_vector4f_init( &tmp->Normal, 0, 0 );   
    _mesa_vector4f_init( &tmp->FogCoord, 0, 0 );
-   _mesa_vector1ui_init( &tmp->Index, 0, 0 );
-   _mesa_vector1ub_init( &tmp->EdgeFlag, 0, 0 );
+   _mesa_vector4f_init( &tmp->Index, 0, 0 );
 
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
       _mesa_vector4f_init( &tmp->TexCoord[i], 0, 0);
-
-   tnl->tmp_primitive = (GLuint *)MALLOC(sizeof(GLuint)*tnl->vb.Size);
-   tnl->tmp_primitive_length = (GLuint *)MALLOC(sizeof(GLuint)*tnl->vb.Size);
 }
 
 
@@ -427,7 +440,4 @@ void _tnl_array_init( GLcontext *ctx )
  */
 void _tnl_array_destroy( GLcontext *ctx )
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   if (tnl->tmp_primitive_length) FREE(tnl->tmp_primitive_length);
-   if (tnl->tmp_primitive) FREE(tnl->tmp_primitive);
 }

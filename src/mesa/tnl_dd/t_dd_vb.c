@@ -271,56 +271,7 @@ void TAG(print_vertex)( GLcontext *ctx, const VERTEX *v )
    fprintf(stderr, "\n");
 }
 
-static void do_import( struct vertex_buffer *VB,
-		       struct gl_client_array *to,
-		       struct gl_client_array *from )
-{
-   GLuint count = VB->Count;
 
-   if (!to->Ptr) {
-      to->Ptr = ALIGN_MALLOC( VB->Size * 4 * sizeof(GLubyte), 32 );
-      to->Type = GL_UNSIGNED_BYTE;
-   }
-
-   /* No need to transform the same value 3000 times.
-    */
-   if (!from->StrideB) {
-      to->StrideB = 0;
-      count = 1;
-   }
-   else
-      to->StrideB = 4 * sizeof(GLubyte);
-   
-   _math_trans_4ub( (GLubyte (*)[4]) to->Ptr,
-		    from->Ptr,
-		    from->StrideB,
-		    from->Type,
-		    from->Size,
-		    0,
-		    count);
-}
-
-#ifndef IMPORT_QUALIFIER
-#define IMPORT_QUALIFIER static
-#endif
-
-IMPORT_QUALIFIER void TAG(import_float_colors)( GLcontext *ctx )
-{
-   LOCALVARS
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   struct gl_client_array *to = GET_UBYTE_COLOR_STORE();
-   do_import( VB, to, VB->ColorPtr[0] );
-   VB->ColorPtr[0] = to;
-}
-
-IMPORT_QUALIFIER void TAG(import_float_spec_colors)( GLcontext *ctx )
-{
-   LOCALVARS
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   struct gl_client_array *to = GET_UBYTE_SPEC_COLOR_STORE();
-   do_import( VB, to, VB->SecondaryColorPtr[0] );
-   VB->SecondaryColorPtr[0] = to;
-}
 
 /* Interpolate the elements of the VB not included in typical hardware
  * vertices.  
@@ -332,7 +283,7 @@ IMPORT_QUALIFIER void TAG(import_float_spec_colors)( GLcontext *ctx )
 #define INTERP_QUALIFIER static
 #endif
 
-#define GET_COLOR(ptr, idx) (((GLchan (*)[4])((ptr)->Ptr))[idx])
+#define GET_COLOR(ptr, idx) ((ptr)->data[idx])
 
 
 INTERP_QUALIFIER void TAG(interp_extras)( GLcontext *ctx,
@@ -344,13 +295,15 @@ INTERP_QUALIFIER void TAG(interp_extras)( GLcontext *ctx,
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
    if (VB->ColorPtr[1]) {
-      INTERP_4CHAN( t,
+      assert(VB->ColorPtr[1]->stride == 4 * sizeof(GLfloat));
+
+      INTERP_4F( t,
 		    GET_COLOR(VB->ColorPtr[1], dst),
 		    GET_COLOR(VB->ColorPtr[1], out),
 		    GET_COLOR(VB->ColorPtr[1], in) );
 
       if (VB->SecondaryColorPtr[1]) {
-	 INTERP_3CHAN( t,
+	 INTERP_3F( t,
 		       GET_COLOR(VB->SecondaryColorPtr[1], dst),
 		       GET_COLOR(VB->SecondaryColorPtr[1], out),
 		       GET_COLOR(VB->SecondaryColorPtr[1], in) );
@@ -371,12 +324,12 @@ INTERP_QUALIFIER void TAG(copy_pv_extras)( GLcontext *ctx,
       struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
    if (VB->ColorPtr[1]) {
-      COPY_CHAN4( GET_COLOR(VB->ColorPtr[1], dst), 
-		  GET_COLOR(VB->ColorPtr[1], src) );
+      COPY_4FV( GET_COLOR(VB->ColorPtr[1], dst), 
+		GET_COLOR(VB->ColorPtr[1], src) );
 
       if (VB->SecondaryColorPtr[1]) {
-	 COPY_CHAN4( GET_COLOR(VB->SecondaryColorPtr[1], dst), 
-		     GET_COLOR(VB->SecondaryColorPtr[1], src) );
+	 COPY_4FV( GET_COLOR(VB->SecondaryColorPtr[1], dst), 
+		   GET_COLOR(VB->SecondaryColorPtr[1], src) );
       }
    }
 
@@ -385,7 +338,6 @@ INTERP_QUALIFIER void TAG(copy_pv_extras)( GLcontext *ctx,
 
 
 #undef INTERP_QUALIFIER
-#undef IMPORT_QUALIFIER
 #undef GET_COLOR
 
 #undef IND

@@ -178,7 +178,6 @@ int main( int argc, char **argv )
    DEFINE( "VERT_BIT_END_VB        ", VERT_BIT_END_VB );
    DEFINE( "VERT_BIT_POINT_SIZE    ", VERT_BIT_POINT_SIZE );
    DEFINE( "VERT_BIT_EYE           ", VERT_BIT_EYE );
-   DEFINE( "VERT_BIT_CLIP          ", VERT_BIT_CLIP );
    printf( "\n" );
    DEFINE( "VERT_BIT_OBJ_23        ", VERT_BIT_OBJ_3 );
    DEFINE( "VERT_BIT_OBJ_234       ", VERT_BIT_OBJ_4 );

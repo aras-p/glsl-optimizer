@@ -318,14 +318,6 @@ static void TAG(render_tri_strip_verts)( GLcontext *ctx,
 	 currentsz = dmasz;
       }
 
-      if ((flags & PRIM_PARITY) && count - start > 2) {
-	 if (HAVE_TRI_STRIP_1 && 0) {
-	 } else {
-	    EMIT_VERTS( ctx, start, 1 );
-	    currentsz--;
-	 }
-      }
-
       /* From here on emit even numbers of tris when wrapping over buffers:
        */
       dmasz -= (dmasz & 1);
@@ -867,10 +859,6 @@ static void TAG(render_tri_strip_elts)( GLcontext *ctx,
       if (currentsz < 8) {
 	 NEW_BUFFER();
 	 currentsz = dmasz;
-      }
-
-      if ((flags & PRIM_PARITY) && count - start > 2) {
-	 TAG(emit_elts)( ctx, elts+start, 1 );
       }
 
       /* Keep the same winding over multiple buffers:
