@@ -1,4 +1,4 @@
-/* $Id: eval.c,v 1.10 2000/07/20 15:53:17 keithw Exp $ */
+/* $Id: eval.c,v 1.11 2000/09/11 18:49:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2718,7 +2718,7 @@ _mesa_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
    IM->Flag[count] |= VERT_EVAL_C1;			\
    ASSIGN_4V(IM->Obj[count], x, 0, 0, 1);		\
    if (count == VB_MAX-1)				\
-      IM->maybe_transform_vb( IM );			\
+      _mesa_maybe_transform_vb( IM );			\
 }
 
 #define EVALCOORD2(IM, x, y)				\
@@ -2727,7 +2727,7 @@ _mesa_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
    IM->Flag[count] |= VERT_EVAL_C2;			\
    ASSIGN_4V(IM->Obj[count], x, y, 0, 1);		\
    if (count == VB_MAX-1)				\
-      IM->maybe_transform_vb( IM );			\
+      _mesa_maybe_transform_vb( IM );			\
 }
 
 #define EVALPOINT1(IM, x)				\
@@ -2736,7 +2736,7 @@ _mesa_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
    IM->Flag[count] |= VERT_EVAL_P1;			\
    ASSIGN_4V(IM->Obj[count], x, 0, 0, 1);		\
    if (count == VB_MAX-1)				\
-      IM->maybe_transform_vb( IM );			\
+      _mesa_maybe_transform_vb( IM );			\
 }
  
 #define EVALPOINT2(IM, x, y)				\
@@ -2745,7 +2745,7 @@ _mesa_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
    IM->Flag[count] |= VERT_EVAL_P2;			\
    ASSIGN_4V(IM->Obj[count], x, y, 0, 1);		\
    if (count == VB_MAX-1)				\
-      IM->maybe_transform_vb( IM );			\
+      _mesa_maybe_transform_vb( IM );			\
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.22 2000/06/12 15:30:51 brianp Exp $ */
+/* $Id: varray.c,v 1.23 2000/09/11 18:49:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -509,7 +509,7 @@ void gl_exec_array_elements( GLcontext *ctx, struct immediate *IM,
    IM->FlushElt |= IM->ArrayEltFlush;				\
    IM->Count = count += IM->ArrayIncr;				\
    if (count == VB_MAX)						\
-      IM->maybe_transform_vb( IM );				\
+      _mesa_maybe_transform_vb( IM );				\
 }
 
 
@@ -787,7 +787,6 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
 
 
 /* KW: Exactly fakes the effects of calling glArrayElement multiple times.
- *     Compilation is handled via. the IM->maybe_transform_vb() callback.
  */
 #if 1
 #define DRAW_ELT(FUNC, TYPE)				\
@@ -815,8 +814,9 @@ static void FUNC( GLcontext *ctx, GLenum mode,		\
       IM->Count = nr;					\
       j += nr - start;					\
 							\
-      if (j == count) gl_End( ctx );			\
-      IM->maybe_transform_vb( IM );			\
+      if (j == count)					\
+         gl_End( ctx );					\
+      _mesa_maybe_transform_vb( IM );			\
    }							\
 }
 #else 
