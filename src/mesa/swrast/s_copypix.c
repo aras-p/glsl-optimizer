@@ -184,7 +184,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
       /* GL_COLOR_TABLE lookup */
       if (transferOps & IMAGE_COLOR_TABLE_BIT) {
-         _mesa_lookup_rgba(&ctx->ColorTable, width, rgba);
+         _mesa_lookup_rgba_float(&ctx->ColorTable, width, rgba);
       }
    }
 
@@ -204,7 +204,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
       /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
       if (transferOps & IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT) {
-         _mesa_lookup_rgba(&ctx->PostConvolutionColorTable, width, rgba);
+         _mesa_lookup_rgba_float(&ctx->PostConvolutionColorTable, width, rgba);
       }
       /* color matrix */
       if (transferOps & IMAGE_COLOR_MATRIX_BIT) {
@@ -212,7 +212,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
       /* GL_POST_COLOR_MATRIX_COLOR_TABLE lookup */
       if (transferOps & IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT) {
-         _mesa_lookup_rgba(&ctx->PostColorMatrixColorTable, width, rgba);
+         _mesa_lookup_rgba_float(&ctx->PostColorMatrixColorTable, width, rgba);
       }
       /* update histogram count */
       if (transferOps & IMAGE_HISTOGRAM_BIT) {
@@ -412,7 +412,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          }
          /* GL_COLOR_TABLE lookup */
          if (transferOps & IMAGE_COLOR_TABLE_BIT) {
-            _mesa_lookup_rgba(&ctx->ColorTable, width, rgbaFloat);
+            _mesa_lookup_rgba_float(&ctx->ColorTable, width, rgbaFloat);
          }
          /* convolution */
          if (transferOps & IMAGE_CONVOLUTION_BIT) {
@@ -433,7 +433,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          }
          /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
          if (transferOps & IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT) {
-            _mesa_lookup_rgba(&ctx->PostConvolutionColorTable, width, rgbaFloat);
+            _mesa_lookup_rgba_float(&ctx->PostConvolutionColorTable, width, rgbaFloat);
          }
          /* color matrix */
          if (transferOps & IMAGE_COLOR_MATRIX_BIT) {
@@ -441,7 +441,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          }
          /* GL_POST_COLOR_MATRIX_COLOR_TABLE lookup */
          if (transferOps & IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT) {
-            _mesa_lookup_rgba(&ctx->PostColorMatrixColorTable, width, rgbaFloat);
+            _mesa_lookup_rgba_float(&ctx->PostColorMatrixColorTable, width, rgbaFloat);
          }
          /* update histogram count */
          if (transferOps & IMAGE_HISTOGRAM_BIT) {
