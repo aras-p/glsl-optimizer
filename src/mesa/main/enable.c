@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.55 2002/01/11 17:26:54 brianp Exp $ */
+/* $Id: enable.c,v 1.56 2002/01/22 18:40:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1069,6 +1069,12 @@ _mesa_IsEnabled( GLenum cap )
          return (ctx->Array.TexCoord[ctx->Array.ActiveTexture].Enabled != 0);
       case GL_EDGE_FLAG_ARRAY:
          return (ctx->Array.EdgeFlag.Enabled != 0);
+      case GL_FOG_COORDINATE_ARRAY_EXT:
+         CHECK_EXTENSION(EXT_fog_coord);
+         return (ctx->Array.FogCoord.Enabled != 0);
+      case GL_SECONDARY_COLOR_ARRAY_EXT:
+         CHECK_EXTENSION(EXT_secondary_color);
+         return (ctx->Array.SecondaryColor.Enabled != 0);
 
       /* GL_EXT_histogram */
       case GL_HISTOGRAM:
