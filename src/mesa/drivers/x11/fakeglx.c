@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.73 2002/10/30 20:24:45 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.74 2002/11/05 21:11:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1049,6 +1049,16 @@ static XMesaVisual choose_visual( Display *dpy, int screen, const int *list )
             break;
 
          /*
+          * GLX_ARB_multisample
+          */
+         case GLX_SAMPLE_BUFFERS_ARB:
+            /* ms not supported */
+            return NULL;
+         case GLX_SAMPLES_ARB:
+            /* ms not supported */
+            return NULL;
+
+         /*
           * FBConfig attribs.
           */
          case GLX_RENDER_TYPE:
@@ -1622,12 +1632,12 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
          return 0;
 
       /*
-       * GLX_EXT_multisample
+       * GLX_ARB_multisample
        */
-      case GLX_SAMPLE_BUFFERS_SGIS:
+      case GLX_SAMPLE_BUFFERS_ARB:
          *value = 0;
          return 0;
-      case GLX_SAMPLES_SGIS:
+      case GLX_SAMPLES_ARB:
          *value = 0;
          return 0;
 
