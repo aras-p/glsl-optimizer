@@ -365,7 +365,7 @@ static int
 fxt1_variance (double variance[MAX_COMP],
                unsigned char input[N_TEXELS][MAX_COMP], int nc, int n)
 {
-   int i, k, best;
+   int i, k, best = 0;
    int sx, sx2;
    double var, maxvar = -1; /* small enough */
    double teenth = 1.0 / n;
@@ -693,8 +693,8 @@ fxt1_quantize_ALPHA1 (unsigned long *cc,
 
    int minSum;
    int maxSum;
-   int minColL, maxColL;
-   int minColR, maxColR;
+   int minColL = 0, maxColL = 0;
+   int minColR = 0, maxColR = 0;
    int sumL = 0, sumR = 0;
 
    /* Our solution here is to find the darkest and brightest colors in
@@ -739,7 +739,7 @@ fxt1_quantize_ALPHA1 (unsigned long *cc,
    /* choose the common vector (yuck!) */
 {
    int j1, j2;
-   int v1, v2;
+   int v1 = 0, v2 = 0;
    float err = 1e9; /* big enough */
    float tv[2 * 2][MAX_COMP]; /* 2 extrema for each sub-block */
    for (i = 0; i < n_comp; i++) {
@@ -980,8 +980,8 @@ fxt1_quantize_MIXED1 (unsigned long *cc,
 
    int minSum;
    int maxSum;
-   int minColL, maxColL = -1;
-   int minColR, maxColR = -1;
+   int minColL = 0, maxColL = -1;
+   int minColR = 0, maxColR = -1;
 
    /* Our solution here is to find the darkest and brightest colors in
     * the 4x4 tile and use those as the two representative colors.
@@ -1160,8 +1160,8 @@ fxt1_quantize_MIXED0 (unsigned long *cc,
    Fx64 hi; /* high quadword */
    unsigned long lohi, lolo; /* low quadword: hi dword, lo dword */
 
-   int minColL, maxColL;
-   int minColR, maxColR;
+   int minColL = 0, maxColL = 0;
+   int minColR = 0, maxColR = 0;
 #if 0
    int minSum;
    int maxSum;
