@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.12 2000/01/31 22:54:41 brianp Exp $ */
+/* $Id: dispatch.c,v 1.13 2000/02/01 23:57:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -80,6 +80,14 @@
  * Generate the GL entrypoint functions here.
  */
 
+#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
+
+/* We're building a DRI driver.
+ * GL entrypoints will be in libGL.so, not in this rendering core.
+ */
+
+#else
+
 #define KEYWORD1
 #define KEYWORD2 GLAPIENTRY
 #if defined(USE_X86_ASM) && !defined(__WIN32__) && !defined(XF86DRI)
@@ -142,6 +150,8 @@ trace(void)
 
 #include "glapitemp.h"
 
+
+#endif /*GLX_DIRECT_RENDERING*/
 
 
 /**********************************************************************/
