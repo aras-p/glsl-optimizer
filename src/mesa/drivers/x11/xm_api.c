@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.33 2002/03/01 04:28:32 brianp Exp $ */
+/* $Id: xm_api.c,v 1.34 2002/03/12 21:55:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1700,35 +1700,6 @@ void XMesaDestroyContext( XMesaContext c )
       _mesa_destroy_context( c->gl_ctx );
    }
 
-   /*
-    * XXX This code should really go away because the ancilliary data
-    * associated with a window/pixmap should not go away just because
-    * a context is destroyed.
-    */
-#if 0
-   /* Destroy any buffers which are using this context.  If we don't
-    * we may have dangling references.  Hmm, maybe we should just
-    * set the buffer's context pointer to NULL instead of deleting it?
-    * Let's see if we get any bug reports...
-    * This contributed by Doug Rabson <dfr@calcaphon.com>
-    */
-   {
-      XMesaBuffer b, next;
-      for (b = XMesaBufferList; b; b = next) {
-         next = b->Next;
-         if (!b->pixmap_flag) {
-#ifndef XFree86Server
-            XSync(b->display, False);
-#endif
-            if (b->xm_context == c) {
-               /* found a context created for this context */
-               XMesaDestroyBuffer( b );
-            }
-         }
-      }
-   }
-#endif
-
    FREE( c );
 }
 
@@ -1778,8 +1749,6 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
       }
       return NULL;
    }
-
-   b->xm_context = NULL; /* Associate no context with this buffer */
 
    b->xm_visual = v;
    b->pixmap_flag = GL_FALSE;
@@ -1927,8 +1896,6 @@ XMesaBuffer XMesaCreatePixmapBuffer( XMesaVisual v,
 
    assert(v);
 
-   b->xm_context = NULL; /* Associate no context with this buffer */
-
    b->xm_visual = v;
    b->pixmap_flag = GL_TRUE;
    b->display = v->display;
@@ -1976,8 +1943,6 @@ XMesaBuffer XMesaCreatePBuffer( XMesaVisual v, XMesaColormap cmap,
    if (!b) {
       return NULL;
    }
-
-   b->xm_context = NULL; /* Associate no context with this buffer */
 
    b->xm_visual = v;
    b->pbuffer_flag = GL_TRUE;
@@ -2059,9 +2024,6 @@ void XMesaDestroyBuffer( XMesaBuffer b )
       XMesaDestroyImage( b->rowimage );
    }
 
-   if (b->xm_context)
-      b->xm_context->xm_buffer = NULL;
-
    free_xmesa_buffer(client, b);
 }
 
@@ -2090,17 +2052,6 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
       if (drawBuffer->FXctx) {
          fxMesaMakeCurrent(drawBuffer->FXctx);
 
-         /* Disassociate drawBuffer's current context from drawBuffer */
-         if (drawBuffer->xm_context)
-            drawBuffer->xm_context->xm_buffer = NULL;
-
-         /* Disassociate old buffer from this context */
-         if (c->xm_buffer)
-            c->xm_buffer->xm_context = NULL;
-
-         /* Associate the context with this buffer */
-         drawBuffer->xm_context = c;
-
          c->xm_buffer = drawBuffer;
          c->xm_read_buffer = readBuffer;
          c->use_read_buffer = (drawBuffer != readBuffer);
@@ -2115,16 +2066,6 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
          /* same context and buffer, do nothing */
          return GL_TRUE;
       }
-
-      /* Disassociate drawBuffer's current context from drawBuffer */
-      if (drawBuffer->xm_context)
-         drawBuffer->xm_context->xm_buffer = NULL;
- 
-      /* Disassociate old buffer with this context */
-      if (c->xm_buffer)
-	  c->xm_buffer->xm_context = NULL;
-
-      drawBuffer->xm_context = c; /* Associate the context with this buffer */
 
       c->xm_buffer = drawBuffer;
       c->xm_read_buffer = readBuffer;
@@ -2290,12 +2231,13 @@ GLboolean XMesaSetFXmode( GLint mode )
  */
 static void FXgetImage( XMesaBuffer b )
 {
+   GET_CURRENT_CONTEXT(ctx);
    static unsigned short pixbuf[MAX_WIDTH];
    GLuint x, y;
    int xpos, ypos;
    XMesaWindow root;
    unsigned int bw, depth, width, height;
-   XMesaContext xmesa = (XMesaContext) b->xm_context->gl_ctx->DriverCtx;
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 
    assert(xmesa->xm_buffer->FXctx);
 
@@ -2387,8 +2329,9 @@ void XMesaSwapBuffers( XMesaBuffer b )
    /* If we're swapping the buffer associated with the current context
     * we have to flush any pending rendering commands first.
     */
-   if (b->xm_context && b->xm_context->gl_ctx == ctx)
+   if (ctx && ctx->DrawBuffer == &(b->mesa_buffer)) {
       _mesa_swapbuffers(ctx);
+   }
 
    if (b->db_state) {
 #ifdef FX
@@ -2453,7 +2396,7 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
    /* If we're swapping the buffer associated with the current context
     * we have to flush any pending rendering commands first.
     */
-   if (b->xm_context->gl_ctx == ctx)
+   if (ctx && ctx->DrawBuffer == &(b->mesa_buffer))
       _mesa_swapbuffers(ctx);
 
    if (b->db_state) {
