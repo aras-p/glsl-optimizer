@@ -1,10 +1,10 @@
-/* $Id: texformat.h,v 1.7 2001/06/15 14:18:46 brianp Exp $ */
+/* $Id: texformat.h,v 1.8 2002/06/12 00:52:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -43,7 +43,7 @@ enum _format {
     * most useful for x86-based PC graphics card drivers.
     *
     * NOTE: In the default case, some of these formats will be
-    * duplicates of the default formats listed above.  However, these
+    * duplicates of the generic formats listed below.  However, these
     * formats guarantee their internal component sizes, while GLchan may
     * vary betwen GLubyte, GLushort and GLfloat.
     */
@@ -62,6 +62,21 @@ enum _format {
    MESA_FORMAT_I8,		/*                               IIII IIII */
    MESA_FORMAT_CI8,		/*                               CCCC CCCC */
 
+#if 0
+   /* upcoming little-endian formats: */
+
+				/* msb <------ TEXEL BITS -----------> lsb */
+				/* ---- ---- ---- ---- ---- ---- ---- ---- */
+   MESA_FORMAT_ABGR8888,	/* AAAA AAAA BBBB BBBB GGGG GGGG RRRR RRRR */
+   MESA_FORMAT_BGRA8888,	/* BBBB BBBB GGGG GGGG RRRR RRRR AAAA AAAA */
+   MESA_FORMAT_BGR888,		/*           BBBB BBBB GGGG GGGG RRRR RRRR */
+   MESA_FORMAT_BGR565,		/*                     BBBB BGGG GGGR RRRR */
+   MESA_FORMAT_BGRA4444,	/*                     BBBB GGGG RRRR AAAA */
+   MESA_FORMAT_BGRA5551,	/*                     BBBB BGGG GGRR RRRA */
+   MESA_FORMAT_LA88,		/*                     LLLL LLLL AAAA AAAA */
+   MESA_FORMAT_BGR233,		/*                               BBGG GRRR */
+#endif
+
    /* Generic GLchan-based formats.  These are the default formats used
     * by the software rasterizer and, unless the driver overrides the
     * texture image functions, incoming images will be converted to one
@@ -70,7 +85,7 @@ enum _format {
     *
     * NOTE: Because these are based on the GLchan datatype, one cannot
     * assume 8 bits per channel with these formats.  If you require
-    * GLubyte per channel, use one of the hardware formats below.
+    * GLubyte per channel, use one of the hardware formats above.
     */
    MESA_FORMAT_RGBA,
    MESA_FORMAT_RGB,
