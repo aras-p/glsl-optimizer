@@ -4,6 +4,7 @@
 #define _FFB_CONTEXT_H
 
 #include "dri_util.h"
+#include "drm.h"
 
 #include "mtypes.h"
 

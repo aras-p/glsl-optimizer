@@ -26,6 +26,9 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
+#include <stdlib.h>
+#include "drm.h"
+#include "mga_drm.h"
 #include "mga_xmesa.h"
 #include "context.h"
 #include "matrix.h"

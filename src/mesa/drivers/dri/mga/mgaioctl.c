@@ -34,6 +34,8 @@
 #include "swrast/swrast.h"
 
 #include "mm.h"
+#include "drm.h"
+#include "mga_drm.h"
 #include "mgacontext.h"
 #include "mgadd.h"
 #include "mgastate.h"

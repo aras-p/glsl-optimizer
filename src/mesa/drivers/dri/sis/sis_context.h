@@ -37,6 +37,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "context.h"
 #include "dri_util.h"
+#include "drm.h"
+#include "drm_sarea.h"
 #include "xmlconfig.h"
 
 #include "sis_screen.h"

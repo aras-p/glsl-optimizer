@@ -30,6 +30,7 @@ typedef struct i810_context_t i810Context;
 typedef struct i810_context_t *i810ContextPtr;
 typedef struct i810_texture_object_t *i810TextureObjectPtr;
 
+#include "drm.h"
 #include "mtypes.h"
 #include "mm.h"
 

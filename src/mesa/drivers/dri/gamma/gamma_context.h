@@ -28,6 +28,8 @@
 #define _GAMMA_CONTEXT_H_
 
 #include "dri_util.h"
+#include "drm.h"
+#include "drm_sarea.h"
 #include "colormac.h"
 #include "gamma_regs.h"
 #include "gamma_macros.h"

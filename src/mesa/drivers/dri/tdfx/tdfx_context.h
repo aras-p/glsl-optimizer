@@ -50,6 +50,8 @@
 #include <signal.h>
 #endif
 
+#include "drm.h"
+#include "drm_sarea.h"
 #include "tdfx_glide.h"
 
 #include "clip.h"

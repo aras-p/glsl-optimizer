@@ -42,6 +42,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <inttypes.h>
 #include "dri_util.h"
+#include "drm.h"
+#include "radeon_drm.h"
 #include "texmem.h"
 
 #include "macros.h"

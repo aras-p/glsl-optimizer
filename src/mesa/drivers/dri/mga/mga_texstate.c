@@ -28,6 +28,7 @@
  */
 /* $XFree86:$ */
 
+#include <stdlib.h>
 #include "mm.h"
 #include "mgacontext.h"
 #include "mgatex.h"

@@ -30,10 +30,11 @@
 #define MGALIB_INC
 
 #include <inttypes.h>
+#include "drm.h"
+#include "mga_drm.h"
 #include "dri_util.h"
 #include "mtypes.h"
 #include "xf86drm.h"
-#include "mga_drm.h"
 #include "mm.h"
 #include "colormac.h"
 #include "texmem.h"
