@@ -103,9 +103,13 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
 
    tnl->vb.Elts = (GLuint *)indices;
 
+   assert (start == 0);
+   
+/* XXX - indices may be read only 
    if (start)
       for (i = 0 ; i < count ; i++)
 	 indices[i] -= start;
+*/
 
    if (ctx->Array.LockCount)
       tnl->Driver.RunPipeline( ctx );
@@ -122,9 +126,11 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
       tnl->pipeline.run_input_changes |= enabledArrays;
    }
 
+/* XXX - indices may be read only
    if (start)
       for (i = 0 ; i < count ; i++)
 	 indices[i] += start;
+*/
 }
 
 
@@ -335,7 +341,8 @@ _tnl_DrawRangeElements(GLenum mode,
       /* Are the arrays already locked?  If so we currently have to look
        * at the whole locked range.
        */
-      if (start >= ctx->Array.LockFirst && end <= ctx->Array.LockCount)
+      if (start == 0 &&
+	  start >= ctx->Array.LockFirst && end <= ctx->Array.LockCount)
 	 _tnl_draw_range_elements( ctx, mode,
 				   ctx->Array.LockFirst,
 				   ctx->Array.LockCount,
@@ -356,7 +363,8 @@ _tnl_DrawRangeElements(GLenum mode,
 		     "elements outside locked range.");
       }
    }
-   else if (end - start + 1 <= ctx->Const.MaxArrayLockSize) {
+   else if (start == 0 &&
+	    end - start + 1 <= ctx->Const.MaxArrayLockSize) {
       /* The arrays aren't locked but we can still fit them inside a
        * single vertexbuffer.
        */
@@ -400,7 +408,8 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
 
    assert(!ctx->CompileFlag);
 
-   if (ctx->Array.LockCount) {
+   if (ctx->Array.LockFirst == 0 &&
+       ctx->Array.LockCount) {
       _tnl_draw_range_elements( ctx, mode,
 				ctx->Array.LockFirst,
 				ctx->Array.LockCount,
