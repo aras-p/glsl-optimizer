@@ -42,12 +42,18 @@ void gl_init_all_x86_asm (void)
 {
 #ifdef USE_X86_ASM
    gl_x86_cpu_features = gl_identify_x86_cpu_features ();
+   gl_x86_cpu_features |= GL_CPU_AnyX86;
+
+   if (getenv("MESA_NO_ASM") != 0)
+      gl_x86_cpu_features = 0;
 
    if (gl_x86_cpu_features & GL_CPU_GenuineIntel) {
       fprintf (stderr, "GenuineIntel cpu detected.\n");
    }
-   gl_init_x86_asm_transforms ();
 
+   if (gl_x86_cpu_features) {
+      gl_init_x86_asm_transforms ();
+   }
 
 #ifdef USE_MMX_ASM
    if (gl_x86_cpu_features & GL_CPU_MMX) {
