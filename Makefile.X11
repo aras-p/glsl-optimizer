@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.45 2001/06/18 23:39:38 brianp Exp $
+# $Id: Makefile.X11,v 1.46 2001/06/19 18:06:41 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -344,6 +344,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/acconfig.h						\
 	$(DIRECTORY)/acinclude.m4					\
 	$(DIRECTORY)/aclocal.m4						\
+	$(DIRECTORY)/common_rules.make					\
 	$(DIRECTORY)/conf.h.in						\
 	$(DIRECTORY)/config.guess					\
 	$(DIRECTORY)/config.sub						\
@@ -421,19 +422,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/tnl/*.[ch]					\
 	$(DIRECTORY)/src/tnl/Makefile*					\
 	$(DIRECTORY)/src/tnl/libMesaTnl_la_SOURCES			\
-	$(DIRECTORY)/src/Allegro/*.[ch]					\
 	$(DIRECTORY)/src/BeOS/*.cpp					\
-	$(DIRECTORY)/src/D3D/*.cpp					\
-	$(DIRECTORY)/src/D3D/*.CPP					\
-	$(DIRECTORY)/src/D3D/*.h					\
-	$(DIRECTORY)/src/D3D/*.H					\
-	$(DIRECTORY)/src/D3D/*.c					\
-	$(DIRECTORY)/src/D3D/*.C					\
-	$(DIRECTORY)/src/D3D/MAKEFILE					\
-	$(DIRECTORY)/src/D3D/*bat					\
-	$(DIRECTORY)/src/D3D/*DEF					\
-	$(DIRECTORY)/src/DOS/DEPEND.DOS					\
-	$(DIRECTORY)/src/DOS/*.c					\
 	$(DIRECTORY)/src/FX/Makefile.am					\
 	$(DIRECTORY)/src/FX/Makefile.in					\
 	$(DIRECTORY)/src/FX/libMesaFX_la_SOURCES			\
@@ -465,13 +454,15 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/OSmesa/Makefile.am				\
 	$(DIRECTORY)/src/OSmesa/Makefile.in				\
 	$(DIRECTORY)/src/OSmesa/*.[ch]					\
-	$(DIRECTORY)/src/S3/*.[ch]					\
-	$(DIRECTORY)/src/S3/*.def					\
-	$(DIRECTORY)/src/S3/*.mak					\
-	$(DIRECTORY)/src/S3/*.rc					\
+	$(DIRECTORY)/src/SPARC/*.[chS]					\
+	$(DIRECTORY)/src/SPARC/Makefile.am				\
+	$(DIRECTORY)/src/SPARC/Makefile.in				\
 	$(DIRECTORY)/src/SVGA/Makefile.am				\
 	$(DIRECTORY)/src/SVGA/Makefile.in				\
 	$(DIRECTORY)/src/SVGA/*.[ch]					\
+	$(DIRECTORY)/src/Trace/*.[ch]					\
+	$(DIRECTORY)/src/Trace/Makefile.am				\
+	$(DIRECTORY)/src/Trace/Makefile.in				\
 	$(DIRECTORY)/src/Windows/*.[ch]					\
 	$(DIRECTORY)/src/Windows/*.def					\
 	$(DIRECTORY)/src/X/Makefile.am					\
@@ -481,23 +472,39 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/X86/Makefile.am				\
 	$(DIRECTORY)/src/X86/Makefile.in				\
 	$(DIRECTORY)/src/X86/*.S					\
+	$(DIRECTORY)/si-glu/Makefile.am					\
+	$(DIRECTORY)/si-glu/Makefile.in					\
 	$(DIRECTORY)/si-glu/Makefile.X11				\
 	$(DIRECTORY)/si-glu/include/gluos.h				\
+	$(DIRECTORY)/si-glu/include/Makefile.am				\
+	$(DIRECTORY)/si-glu/include/Makefile.in				\
+	$(DIRECTORY)/si-glu/libnurbs/Makefile.am			\
+	$(DIRECTORY)/si-glu/libnurbs/Makefile.in			\
 	$(DIRECTORY)/si-glu/libnurbs/interface/*.h			\
 	$(DIRECTORY)/si-glu/libnurbs/interface/*.cc			\
 	$(DIRECTORY)/si-glu/libnurbs/interface/libNIFac_la_SOURCES	\
+	$(DIRECTORY)/si-glu/libnurbs/interface/Makefile.am		\
+	$(DIRECTORY)/si-glu/libnurbs/interface/Makefile.in		\
 	$(DIRECTORY)/si-glu/libnurbs/internals/*.h			\
 	$(DIRECTORY)/si-glu/libnurbs/internals/*.cc			\
 	$(DIRECTORY)/si-glu/libnurbs/internals/libNInt_la_SOURCES	\
+	$(DIRECTORY)/si-glu/libnurbs/internals/Makefile.am		\
+	$(DIRECTORY)/si-glu/libnurbs/internals/Makefile.in		\
 	$(DIRECTORY)/si-glu/libnurbs/nurbtess/*.h			\
 	$(DIRECTORY)/si-glu/libnurbs/nurbtess/*.cc			\
 	$(DIRECTORY)/si-glu/libnurbs/nurbtess/libNTess_la_SOURCES	\
+	$(DIRECTORY)/si-glu/libnurbs/nurbtess/Makefile.am		\
+	$(DIRECTORY)/si-glu/libnurbs/nurbtess/Makefile.in		\
 	$(DIRECTORY)/si-glu/libtess/README				\
 	$(DIRECTORY)/si-glu/libtess/alg-outline				\
 	$(DIRECTORY)/si-glu/libtess/*.[ch]				\
 	$(DIRECTORY)/si-glu/libtess/libtess_la_SOURCES			\
+	$(DIRECTORY)/si-glu/libtess/Makefile.am				\
+	$(DIRECTORY)/si-glu/libtess/Makefile.in				\
 	$(DIRECTORY)/si-glu/libutil/*.[ch]				\
 	$(DIRECTORY)/si-glu/libutil/libutil_la_SOURCES			\
+	$(DIRECTORY)/si-glu/libutil/Makefile.am				\
+	$(DIRECTORY)/si-glu/libutil/Makefile.in				\
 	$(DIRECTORY)/src-glu/README[12]					\
 	$(DIRECTORY)/src-glu/Makefile*					\
 	$(DIRECTORY)/src-glu/descrip.mms				\
@@ -542,7 +549,25 @@ LIB_FILES =	\
 	$(DIRECTORY)/vms/xlib.opt					\
 	$(DIRECTORY)/vms/xlib_share.opt					\
 	$(DIRECTORY)/BeOS/Makefile					\
-	$(DIRECTORY)/BeOS/*.cpp						\
+	$(DIRECTORY)/BeOS/*.cpp
+
+OBSOLETE_LIB_FILES = \
+	$(DIRECTORY)/src/Allegro/*.[ch]					\
+	$(DIRECTORY)/src/D3D/*.cpp					\
+	$(DIRECTORY)/src/D3D/*.CPP					\
+	$(DIRECTORY)/src/D3D/*.h					\
+	$(DIRECTORY)/src/D3D/*.H					\
+	$(DIRECTORY)/src/D3D/*.c					\
+	$(DIRECTORY)/src/D3D/*.C					\
+	$(DIRECTORY)/src/D3D/MAKEFILE					\
+	$(DIRECTORY)/src/D3D/*bat					\
+	$(DIRECTORY)/src/D3D/*DEF					\
+	$(DIRECTORY)/src/DOS/DEPEND.DOS					\
+	$(DIRECTORY)/src/DOS/*.c					\
+	$(DIRECTORY)/src/S3/*.[ch]					\
+	$(DIRECTORY)/src/S3/*.def					\
+	$(DIRECTORY)/src/S3/*.mak					\
+	$(DIRECTORY)/src/S3/*.rc					\
 	$(DIRECTORY)/macos/README					\
 	$(DIRECTORY)/macos/gli_api/*.h					\
 	$(DIRECTORY)/macos/cglpane/CGLPane.*				\
@@ -560,20 +585,17 @@ LIB_FILES =	\
 	$(DIRECTORY)/macos/src-gli/*.[ch]				\
 	$(DIRECTORY)/OpenStep
 
+
+
 DEMO_FILES =	\
 	$(DIRECTORY)/include/GL/glut.h		\
 	$(DIRECTORY)/include/GL/glutf90.h	\
-	$(DIRECTORY)/include/GL/glut_h.dja	\
 	$(DIRECTORY)/src-glut/Makefile*		\
 	$(DIRECTORY)/src-glut/depend		\
 	$(DIRECTORY)/src-glut/*def		\
 	$(DIRECTORY)/src-glut/descrip.mms	\
 	$(DIRECTORY)/src-glut/mms_depend	\
 	$(DIRECTORY)/src-glut/*.[ch]		\
-	$(DIRECTORY)/src-glut.dja/*		\
-	$(DIRECTORY)/src-glut.beos/Makefile	\
-	$(DIRECTORY)/src-glut.beos/*.cpp	\
-	$(DIRECTORY)/src-glut.beos/*.h		\
 	$(DIRECTORY)/images/*			\
 	$(DIRECTORY)/demos/Makefile*		\
 	$(DIRECTORY)/demos/descrip.mms		\
@@ -592,6 +614,14 @@ DEMO_FILES =	\
 	$(DIRECTORY)/samples/*.c		\
 	$(DIRECTORY)/mtdemos			\
 	$(DIRECTORY)/ggi
+
+OBSOLETE_DEMO_FILES = \
+	$(DIRECTORY)/include/GL/glut_h.dja	\
+	$(DIRECTORY)/src-glut.dja/*		\
+	$(DIRECTORY)/src-glut.beos/Makefile	\
+	$(DIRECTORY)/src-glut.beos/*.cpp	\
+	$(DIRECTORY)/src-glut.beos/*.h		\
+
 
 SI_GLU_FILES = \
 	$(DIRECTORY)/Makefile*				\
@@ -639,13 +669,16 @@ GLUT_FILES = \
 	$(DIRECTORY)/include/GL/glu_mangle.h	\
 	$(DIRECTORY)/include/GL/glut.h		\
 	$(DIRECTORY)/include/GL/glutf90.h	\
-	$(DIRECTORY)/include/GL/glut_h.dja	\
 	$(DIRECTORY)/src-glut/Makefile*		\
 	$(DIRECTORY)/src-glut/depend		\
 	$(DIRECTORY)/src-glut/*def		\
 	$(DIRECTORY)/src-glut/descrip.mms	\
 	$(DIRECTORY)/src-glut/mms_depend	\
-	$(DIRECTORY)/src-glut/*.[ch]		\
+	$(DIRECTORY)/src-glut/*.[ch]
+
+
+OBSOLETE_GLUT_FILES = \
+	$(DIRECTORY)/include/GL/glut_h.dja	\
 	$(DIRECTORY)/src-glut.dja/*		\
 	$(DIRECTORY)/src-glut.beos/Makefile	\
 	$(DIRECTORY)/src-glut.beos/*.cpp	\
