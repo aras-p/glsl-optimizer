@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.110 2002/11/05 20:53:42 brianp Exp $
+$Id: VERSIONS,v 1.111 2002/11/06 15:18:26 brianp Exp $
 
 
 Mesa Version History
@@ -1071,3 +1071,5 @@ Mesa Version History
 	- fixed missing triangle bug when running vertex programs
 	- fixed a few HPUX compilation problems
 	- FX (Glide) driver didn't compile
+	- setting GL_TEXTURE_BORDER_COLOR with glTexParameteriv() didn't work
+	- a few EXT functions, like glGenTexturesEXT, were no-ops
