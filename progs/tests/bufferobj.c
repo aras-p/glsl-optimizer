@@ -327,10 +327,10 @@ static void Init( void )
       glBufferDataARB(GL_ARRAY_BUFFER_ARB, 1000, data, GL_STATIC_DRAW_ARB);
       glVertexPointer(3, GL_FLOAT, 0, (void *) 0);
       glDeleteBuffersARB(1, &id);
-      /*assert(!glIsBufferARB(id));*/
+      assert(!glIsBufferARB(id));
       glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
       glVertexPointer(3, GL_FLOAT, 0, (void *) 0);
-      /*assert(!glIsBufferARB(id));*/
+      assert(!glIsBufferARB(id));
    }
 
    MakeObject1(Objects + 0);
