@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.3 for Mesa
+ * DOS/DJGPP glut driver v1.4 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -29,8 +29,9 @@
 
 #include <string.h>
 
-#include "GL/glut.h"
+#include <GL/glut.h>
 
+#include "GL/dmesa.h"
 
 
 int APIENTRY glutExtensionSupported (const char *extension)
@@ -60,4 +61,12 @@ int APIENTRY glutExtensionSupported (const char *extension)
         }
      }
  }
+}
+
+
+void * APIENTRY
+glutGetProcAddress (const char *procName)
+{
+ /* TODO - handle glut namespace */
+ return DMesaGetProcAddress(procName);
 }

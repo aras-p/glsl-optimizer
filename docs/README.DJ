@@ -248,7 +248,7 @@ v1.5 (jan-2004)
 	x more changes to the 3dfx driver
 
 v1.6 (???-2004)
-	+ added DMesaGetProcAddress
+	+ added DMesaGetProcAddress and glutGetProcAddress
 	! fixed a horrible bug in VGA initialization routine
 
 
