@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.15 2000/04/17 17:57:04 brianp Exp $ */
+/* $Id: colortab.c,v 1.16 2000/04/18 14:32:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -153,6 +153,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
    GLfloat rScale = 1.0, gScale = 1.0, bScale = 1.0, aScale = 1.0;
    GLfloat rBias  = 0.0, gBias  = 0.0, bBias  = 0.0, aBias  = 0.0;
    GLboolean floatTable = GL_FALSE;
+   GLint comps;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glColorTable");
 
@@ -267,11 +268,13 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
       return;
    }
 
-
    table->Size = width;
    table->IntFormat = internalFormat;
    table->Format = (GLenum) baseFormat;
    set_component_sizes(table);
+
+   comps = _mesa_components_in_format(table->Format);
+   assert(comps > 0);  /* error should have been caught sooner */
 
    if (!proxy) {
       /* free old table, if any */
@@ -289,7 +292,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
                                        &ctx->Unpack, GL_TRUE);
 
          table->TableType = GL_FLOAT;
-         table->Table = MALLOC(4 * width * sizeof(GLfloat));
+         table->Table = MALLOC(comps * width * sizeof(GLfloat));
          if (!table->Table) {
             gl_error(ctx, GL_OUT_OF_MEMORY, "glColorTable");
             return;
@@ -349,7 +352,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
       else {
          /* store GLubyte table */
          table->TableType = GL_UNSIGNED_BYTE;
-         table->Table = MALLOC(4 * width * sizeof(GLubyte));
+         table->Table = MALLOC(comps * width * sizeof(GLubyte));
          if (!table->Table) {
             gl_error(ctx, GL_OUT_OF_MEMORY, "glColorTable");
             return;
@@ -367,7 +370,6 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          (*ctx->Driver.UpdateTexturePalette)( ctx, texObj );
       }
    }
-
 }
 
 
@@ -382,7 +384,6 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
    struct gl_texture_object *texObj = NULL;
    struct gl_color_table *table = NULL;
    GLint comps;
-   GLubyte *dest;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glColorSubTable");
 
@@ -442,16 +443,16 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
    }
 
    if (table->TableType == GL_UNSIGNED_BYTE) {
-      dest = (GLubyte *) table->Table + start * comps * sizeof(GLubyte);
+      GLubyte *dest = (GLubyte *) table->Table + start * comps * sizeof(GLubyte);
       _mesa_unpack_ubyte_color_span(ctx, count, table->Format, dest,
-                                    format, type, data,
-                                    &ctx->Unpack, GL_TRUE);
+                                    format, type, data, &ctx->Unpack, GL_TRUE);
    }
    else {
+      GLfloat *dest = (GLfloat *) table->Table + start * comps * sizeof(GLfloat);
       ASSERT(table->TableType == GL_FLOAT);
-      /* XXX todo */
+      _mesa_unpack_float_color_span(ctx, count, table->Format, dest,
+                                    format, type, data, &ctx->Unpack, GL_TRUE);
    }
-
 
    if (texObj || target == GL_SHARED_TEXTURE_PALETTE_EXT) {
       /* per-texture object palette */

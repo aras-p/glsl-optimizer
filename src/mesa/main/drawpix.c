@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.20 2000/04/12 18:54:48 brianp Exp $ */
+/* $Id: drawpix.c,v 1.21 2000/04/18 14:32:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -121,6 +121,8 @@ simple_DrawPixels( GLcontext *ctx, GLint x, GLint y,
        && !ctx->Pixel.ScaleOrBiasRGBApcm
        && ctx->ColorMatrix.type == MATRIX_IDENTITY
        && !ctx->Pixel.ColorTableEnabled
+       && !ctx->Pixel.PostColorMatrixColorTableEnabled
+       && !ctx->Pixel.MinMaxEnabled
        && ctx->Pixel.IndexShift==0 && ctx->Pixel.IndexOffset==0
        && ctx->Pixel.MapColorFlag==0
        && ctx->Texture.ReallyEnabled == 0
@@ -650,6 +652,8 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
                   pixels, width, height, format, type, 0, row, 0);
          _mesa_unpack_ubyte_color_span(ctx, width, GL_RGBA, (void*) rgba,
                    format, type, source, unpack, GL_TRUE);
+         if (ctx->Pixel.MinMaxEnabled && ctx->MinMax.Sink)
+            continue;
 
          if (ctx->Texture.ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
             GLfloat s[MAX_WIDTH], t[MAX_WIDTH], r[MAX_WIDTH], q[MAX_WIDTH];

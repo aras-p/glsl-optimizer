@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.28 2000/04/17 15:13:53 brianp Exp $ */
+/* $Id: image.c,v 1.29 2000/04/18 14:32:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,6 +31,7 @@
 #include "glheader.h"
 #include "context.h"
 #include "image.h"
+#include "imaging.h"
 #include "macros.h"
 #include "mem.h"
 #include "mmath.h"
@@ -602,7 +603,7 @@ _mesa_pack_polygon_stipple( const GLuint pattern[32], GLubyte *dest,
  *         applyTransferOps - apply scale/bias/lookup-table ops?
  */
 void
-_mesa_pack_rgba_span( const GLcontext *ctx,
+_mesa_pack_rgba_span( GLcontext *ctx,
                       GLuint n, CONST GLubyte srcRgba[][4],
                       GLenum format, GLenum type, GLvoid *destination,
                       const struct gl_pixelstore_attrib *packing,
@@ -613,7 +614,8 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
                         ctx->ColorMatrix.type != MATRIX_IDENTITY ||
                         ctx->Pixel.ScaleOrBiasRGBApcm ||
                         ctx->Pixel.ColorTableEnabled ||
-                        ctx->Pixel.PostColorMatrixColorTableEnabled);
+                        ctx->Pixel.PostColorMatrixColorTableEnabled ||
+                        ctx->Pixel.MinMaxEnabled);
 
    /* Test for optimized case first */
    if (!applyTransferOps && format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
@@ -680,6 +682,11 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
          }
          /* XXX histogram here */
          /* XXX min/max here */
+         if (ctx->Pixel.MinMaxEnabled) {
+            _mesa_update_minmax(ctx, n, (const GLfloat (*)[4]) rgba);
+            if (ctx->MinMax.Sink)
+               return;
+         }
       }
 
       if (format==GL_LUMINANCE || format==GL_LUMINANCE_ALPHA) {
@@ -2128,7 +2135,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
  * XXX perhaps expand this to process whole images someday.
  */
 void
-_mesa_unpack_ubyte_color_span( const GLcontext *ctx,
+_mesa_unpack_ubyte_color_span( GLcontext *ctx,
                                GLuint n, GLenum dstFormat, GLubyte dest[],
                                GLenum srcFormat, GLenum srcType,
                                const GLvoid *source,
@@ -2186,7 +2193,8 @@ _mesa_unpack_ubyte_color_span( const GLcontext *ctx,
                         ctx->ColorMatrix.type != MATRIX_IDENTITY ||
                         ctx->Pixel.ScaleOrBiasRGBApcm ||
                         ctx->Pixel.ColorTableEnabled ||
-                        ctx->Pixel.PostColorMatrixColorTableEnabled);
+                        ctx->Pixel.PostColorMatrixColorTableEnabled ||
+                        ctx->Pixel.MinMaxEnabled);
 
    /* Try simple cases first */
    if (!applyTransferOps && srcType == GL_UNSIGNED_BYTE) {
@@ -2258,26 +2266,22 @@ _mesa_unpack_ubyte_color_span( const GLcontext *ctx,
          extract_uint_indexes(n, indexes, srcFormat, srcType, source,
                               unpacking);
 
-         /* shift and offset indexes */
-         _mesa_shift_and_offset_ci(ctx, n, indexes);
+         if (applyTransferOps) {
+            if (ctx->Pixel.MapColorFlag) {
+               _mesa_map_ci(ctx, n, indexes);
+            }
+            if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset) {
+               _mesa_shift_and_offset_ci(ctx, n, indexes);
+            }
+         }
 
          if (dstFormat == GL_COLOR_INDEX) {
-            if (applyTransferOps) {
-               if (ctx->Pixel.MapColorFlag) {
-                  /* Apply lookup table */
-                  _mesa_map_ci(ctx, n, indexes);
-               }
-               if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset) {
-                  _mesa_shift_and_offset_ci(ctx, n, indexes);
-               }
-            }
             /* convert to GLubyte and return */
-            {
-               GLuint i;
-               for (i = 0; i < n; i++) {
-                  dest[i] = (GLubyte) (indexes[i] & 0xff);
-               }
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dest[i] = (GLubyte) (indexes[i] & 0xff);
             }
+            return;
          }
          else {
             /* Convert indexes to RGBA */
@@ -2290,28 +2294,36 @@ _mesa_unpack_ubyte_color_span( const GLcontext *ctx,
 
          if (applyTransferOps) {
             /* scale and bias colors */
-            _mesa_scale_and_bias_rgba(ctx, n, rgba);
+            if (ctx->Pixel.ScaleOrBiasRGBA) {
+               _mesa_scale_and_bias_rgba(ctx, n, rgba);
+            }
             /* color map lookup */
             if (ctx->Pixel.MapColorFlag) {
                _mesa_map_rgba(ctx, n, rgba);
             }
-            /* GL_COLOR_TABLE lookup */
-            if (ctx->Pixel.ColorTableEnabled) {
-               _mesa_lookup_rgba(&ctx->ColorTable, n, rgba);
-            }
-            /* XXX convolution here */
-            /* XXX post-convolution color table look-up here */
-            /* color matrix transform */
-            if (ctx->ColorMatrix.type != MATRIX_IDENTITY ||
-                ctx->Pixel.ScaleOrBiasRGBApcm) {
-               _mesa_transform_rgba(ctx, n, rgba);
-            }
-            /* GL_POST_COLOR_MATRIX_COLOR_TABLE lookup */
-            if (ctx->Pixel.PostColorMatrixColorTableEnabled) {
-               _mesa_lookup_rgba(&ctx->PostColorMatrixColorTable, n, rgba);
-            }
-            /* XXX histogram here */
-            /* XXX min/max here */
+         }
+      }
+
+      if (applyTransferOps) {
+         /* GL_COLOR_TABLE lookup */
+         if (ctx->Pixel.ColorTableEnabled) {
+            _mesa_lookup_rgba(&ctx->ColorTable, n, rgba);
+         }
+         /* XXX convolution here */
+         /* XXX post-convolution color table look-up here */
+         /* color matrix transform */
+         if (ctx->ColorMatrix.type != MATRIX_IDENTITY ||
+             ctx->Pixel.ScaleOrBiasRGBApcm) {
+            _mesa_transform_rgba(ctx, n, rgba);
+         }
+         /* GL_POST_COLOR_MATRIX_COLOR_TABLE lookup */
+         if (ctx->Pixel.PostColorMatrixColorTableEnabled) {
+            _mesa_lookup_rgba(&ctx->PostColorMatrixColorTable, n, rgba);
+         }
+         /* XXX histogram here */
+         /* XXX min/max here */
+         if (ctx->Pixel.MinMaxEnabled) {
+            _mesa_update_minmax(ctx, n, (const GLfloat (*)[4]) rgba);
          }
       }
 
@@ -2431,6 +2443,266 @@ _mesa_unpack_ubyte_color_span( const GLcontext *ctx,
       }
    }
 }
+
+
+void
+_mesa_unpack_float_color_span( GLcontext *ctx,
+                               GLuint n, GLenum dstFormat, GLfloat dest[],
+                               GLenum srcFormat, GLenum srcType,
+                               const GLvoid *source,
+                               const struct gl_pixelstore_attrib *unpacking,
+                               GLboolean applyTransferOps )
+{
+   ASSERT(dstFormat == GL_ALPHA ||
+          dstFormat == GL_LUMINANCE || 
+          dstFormat == GL_LUMINANCE_ALPHA ||
+          dstFormat == GL_INTENSITY ||
+          dstFormat == GL_RGB ||
+          dstFormat == GL_RGBA ||
+          dstFormat == GL_COLOR_INDEX);
+
+   ASSERT(srcFormat == GL_RED ||
+          srcFormat == GL_GREEN ||
+          srcFormat == GL_BLUE ||
+          srcFormat == GL_ALPHA ||
+          srcFormat == GL_LUMINANCE ||
+          srcFormat == GL_LUMINANCE_ALPHA ||
+          srcFormat == GL_INTENSITY ||
+          srcFormat == GL_RGB ||
+          srcFormat == GL_BGR ||
+          srcFormat == GL_RGBA ||
+          srcFormat == GL_BGRA ||
+          srcFormat == GL_ABGR_EXT ||
+          srcFormat == GL_COLOR_INDEX);
+
+   ASSERT(srcType == GL_BITMAP ||
+          srcType == GL_UNSIGNED_BYTE ||
+          srcType == GL_BYTE ||
+          srcType == GL_UNSIGNED_SHORT ||
+          srcType == GL_SHORT ||
+          srcType == GL_UNSIGNED_INT ||
+          srcType == GL_INT ||
+          srcType == GL_FLOAT ||
+          srcType == GL_UNSIGNED_BYTE_3_3_2 ||
+          srcType == GL_UNSIGNED_BYTE_2_3_3_REV ||
+          srcType == GL_UNSIGNED_SHORT_5_6_5 ||
+          srcType == GL_UNSIGNED_SHORT_5_6_5_REV ||
+          srcType == GL_UNSIGNED_SHORT_4_4_4_4 ||
+          srcType == GL_UNSIGNED_SHORT_4_4_4_4_REV ||
+          srcType == GL_UNSIGNED_SHORT_5_5_5_1 ||
+          srcType == GL_UNSIGNED_SHORT_1_5_5_5_REV ||
+          srcType == GL_UNSIGNED_INT_8_8_8_8 ||
+          srcType == GL_UNSIGNED_INT_8_8_8_8_REV ||
+          srcType == GL_UNSIGNED_INT_10_10_10_2 ||
+          srcType == GL_UNSIGNED_INT_2_10_10_10_REV);
+
+   /* this is intended for RGBA mode only */
+   assert(ctx->Visual->RGBAflag);
+
+   applyTransferOps &= (ctx->Pixel.ScaleOrBiasRGBA ||
+                        ctx->Pixel.MapColorFlag ||
+                        ctx->ColorMatrix.type != MATRIX_IDENTITY ||
+                        ctx->Pixel.ScaleOrBiasRGBApcm ||
+                        ctx->Pixel.ColorTableEnabled ||
+                        ctx->Pixel.PostColorMatrixColorTableEnabled ||
+                        ctx->Pixel.MinMaxEnabled);
+
+   /* general solution, no special cases, yet */
+   {
+      GLfloat rgba[MAX_WIDTH][4];
+      GLint dstComponents;
+      GLint dstRedIndex, dstGreenIndex, dstBlueIndex, dstAlphaIndex;
+      GLint dstLuminanceIndex, dstIntensityIndex;
+
+      dstComponents = _mesa_components_in_format( dstFormat );
+      /* source & dest image formats should have been error checked by now */
+      assert(dstComponents > 0);
+
+      /*
+       * Extract image data and convert to RGBA floats
+       */
+      assert(n <= MAX_WIDTH);
+      if (srcFormat == GL_COLOR_INDEX) {
+         GLuint indexes[MAX_WIDTH];
+         extract_uint_indexes(n, indexes, srcFormat, srcType, source,
+                              unpacking);
+
+         if (applyTransferOps) {
+            if (ctx->Pixel.MapColorFlag) {
+               _mesa_map_ci(ctx, n, indexes);
+            }
+            if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset) {
+               _mesa_shift_and_offset_ci(ctx, n, indexes);
+            }
+         }
+
+         if (dstFormat == GL_COLOR_INDEX) {
+            /* convert to GLubyte and return */
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               dest[i] = (GLubyte) (indexes[i] & 0xff);
+            }
+            return;
+         }
+         else {
+            /* Convert indexes to RGBA */
+            _mesa_map_ci_to_rgba(ctx, n, indexes, rgba);
+         }
+      }
+      else {
+         extract_float_rgba(n, rgba, srcFormat, srcType, source,
+                            unpacking->SwapBytes);
+
+         if (applyTransferOps) {
+            /* scale and bias colors */
+            if (ctx->Pixel.ScaleOrBiasRGBA) {
+               _mesa_scale_and_bias_rgba(ctx, n, rgba);
+            }
+            /* color map lookup */
+            if (ctx->Pixel.MapColorFlag) {
+               _mesa_map_rgba(ctx, n, rgba);
+            }
+         }
+      }
+
+      if (applyTransferOps) {
+         /* GL_COLOR_TABLE lookup */
+         if (ctx->Pixel.ColorTableEnabled) {
+            _mesa_lookup_rgba(&ctx->ColorTable, n, rgba);
+         }
+         /* XXX convolution here */
+         /* XXX post-convolution color table look-up here */
+         /* color matrix transform */
+         if (ctx->ColorMatrix.type != MATRIX_IDENTITY ||
+             ctx->Pixel.ScaleOrBiasRGBApcm) {
+            _mesa_transform_rgba(ctx, n, rgba);
+         }
+         /* GL_POST_COLOR_MATRIX_COLOR_TABLE lookup */
+         if (ctx->Pixel.PostColorMatrixColorTableEnabled) {
+            _mesa_lookup_rgba(&ctx->PostColorMatrixColorTable, n, rgba);
+         }
+         /* XXX histogram here */
+         /* XXX min/max here */
+         if (ctx->Pixel.MinMaxEnabled) {
+            _mesa_update_minmax(ctx, n, (const GLfloat (*)[4]) rgba);
+         }
+      }
+
+      /* clamp to [0,1] */
+      {
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            rgba[i][RCOMP] = CLAMP(rgba[i][RCOMP], 0.0F, 1.0F);
+            rgba[i][GCOMP] = CLAMP(rgba[i][GCOMP], 0.0F, 1.0F);
+            rgba[i][BCOMP] = CLAMP(rgba[i][BCOMP], 0.0F, 1.0F);
+            rgba[i][ACOMP] = CLAMP(rgba[i][ACOMP], 0.0F, 1.0F);
+         }
+      }
+
+      /* Now determine which color channels we need to produce.
+       * And determine the dest index (offset) within each color tuple.
+       */
+      switch (dstFormat) {
+         case GL_ALPHA:
+            dstAlphaIndex = 0;
+            dstRedIndex = dstGreenIndex = dstBlueIndex = -1;
+            dstLuminanceIndex = dstIntensityIndex = -1;
+            break;
+         case GL_LUMINANCE: 
+            dstLuminanceIndex = 0;
+            dstRedIndex = dstGreenIndex = dstBlueIndex = dstAlphaIndex = -1;
+            dstIntensityIndex = -1;
+            break;
+         case GL_LUMINANCE_ALPHA:
+            dstLuminanceIndex = 0;
+            dstAlphaIndex = 1;
+            dstRedIndex = dstGreenIndex = dstBlueIndex = -1;
+            dstIntensityIndex = -1;
+            break;
+         case GL_INTENSITY:
+            dstIntensityIndex = 0;
+            dstRedIndex = dstGreenIndex = dstBlueIndex = dstAlphaIndex = -1;
+            dstLuminanceIndex = -1;
+            break;
+         case GL_RGB:
+            dstRedIndex = 0;
+            dstGreenIndex = 1;
+            dstBlueIndex = 2;
+            dstAlphaIndex = dstLuminanceIndex = dstIntensityIndex = -1;
+            break;
+         case GL_RGBA:
+            dstRedIndex = 0;
+            dstGreenIndex = 1;
+            dstBlueIndex = 2;
+            dstAlphaIndex = 3;
+            dstLuminanceIndex = dstIntensityIndex = -1;
+            break;
+         default:
+            gl_problem(ctx, "bad dstFormat in _mesa_unpack_float_span()");
+            return;
+      }
+
+      /* Now pack results in teh requested dstFormat */
+      if (dstRedIndex >= 0) {
+         GLfloat *dst = dest;
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            dst[dstRedIndex] = rgba[i][RCOMP];
+            dst += dstComponents;
+         }
+      }
+
+      if (dstGreenIndex >= 0) {
+         GLfloat *dst = dest;
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            dst[dstGreenIndex] = rgba[i][GCOMP];
+            dst += dstComponents;
+         }
+      }
+
+      if (dstBlueIndex >= 0) {
+         GLfloat *dst = dest;
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            dst[dstBlueIndex] = rgba[i][BCOMP];
+            dst += dstComponents;
+         }
+      }
+
+      if (dstAlphaIndex >= 0) {
+         GLfloat *dst = dest;
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            dst[dstAlphaIndex] = rgba[i][ACOMP];
+            dst += dstComponents;
+         }
+      }
+
+      if (dstIntensityIndex >= 0) {
+         GLfloat *dst = dest;
+         GLuint i;
+         assert(dstIntensityIndex == 0);
+         assert(dstComponents == 1);
+         for (i = 0; i < n; i++) {
+            /* Intensity comes from red channel */
+            dst[i] = rgba[i][RCOMP];
+         }
+      }
+
+      if (dstLuminanceIndex >= 0) {
+         GLfloat *dst = dest;
+         GLuint i;
+         assert(dstLuminanceIndex == 0);
+         for (i = 0; i < n; i++) {
+            /* Luminance comes from red channel */
+            dst[0] = rgba[i][RCOMP];
+            dst += dstComponents;
+         }
+      }
+   }
+}
+
 
 
 
