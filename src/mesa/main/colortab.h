@@ -1,4 +1,4 @@
-/* $Id: colortab.h,v 1.3 1999/11/11 17:50:04 brianp Exp $ */
+/* $Id: colortab.h,v 1.4 1999/11/12 08:32:37 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,6 +45,11 @@ _mesa_ColorSubTableEXT( GLenum target, GLsizei start,
 extern void
 _mesa_GetColorTableEXT( GLenum target, GLenum format,
                         GLenum type, GLvoid *table );
+#ifdef VMS
+/* VMS does not support externals longer than 32 characters. */
+#define _mesa_GetColorTableParameterfvEXT VMS_GCTParameterfvEXT
+#define _mesa_GetColorTableParameterivEXT VMS_GCTParameterivEXT
+#endif
 
 extern void
 _mesa_GetColorTableParameterfvEXT( GLenum target, GLenum pname, GLfloat *params );
