@@ -53,26 +53,9 @@
 
 #include "fxdrv.h"
 #include "enums.h"
-
 #include "tnl/t_context.h"
 
-static GLuint fxGetTexSetConfiguration(GLcontext * ctx,
-				       struct gl_texture_object *tObj0,
-				       struct gl_texture_object *tObj1);
-static void fxSetupTextureSingleTMU_NoLock(GLcontext * ctx,
-					   GLuint textureset);
-static void fxSetupDoubleTMU_NoLock(fxMesaContext fxMesa,
-				    struct gl_texture_object *tObj0,
-				    struct gl_texture_object *tObj1);
-static void fxSetupTexture_NoLock(GLcontext * ctx);
-static void fxSetupTexture(GLcontext * ctx);
-static void fxSetupBlend(GLcontext * ctx);
-static void fxSetupDepthTest(GLcontext * ctx);
-static void fxSetupScissor(GLcontext * ctx);
-static void fxSetupCull(GLcontext * ctx);
-static void fx_print_state_flags(const char *msg, GLuint flags);
-/*static GLboolean fxMultipassBlend(struct vertex_buffer *, GLuint);*/
-static GLboolean fxMultipassTexture(GLcontext *, GLuint);
+/*static GLboolean fxMultipassTexture(GLcontext *, GLuint);*/
 
 static void
 fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
