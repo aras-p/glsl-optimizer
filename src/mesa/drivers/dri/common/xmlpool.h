@@ -267,4 +267,9 @@ DRI_CONF_OPT_BEGIN_V(vblank_mode,enum,def,"0:3") \
         DRI_CONF_DESC_END \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_MAX_TEXTURE_UNITS(def,min,max) \
+DRI_CONF_OPT_BEGIN_V(texture_units,int,def, # min ":" # max ) \
+        DRI_CONF_DESC(en,"Number of texture units") \
+DRI_CONF_OPT_END
+
 #endif
