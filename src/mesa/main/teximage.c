@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.48 2000/09/05 22:11:38 brianp Exp $ */
+/* $Id: teximage.c,v 1.49 2000/09/06 15:15:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2148,92 +2148,161 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
    if (texImage->Data) {
       GLint width = texImage->Width;
       GLint height = texImage->Height;
-      GLint row;
+      GLint depth = texImage->Depth;
+      GLint img, row;
 
       if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
          _mesa_update_image_transfer_state(ctx);
 
-      for (row = 0; row < height; row++) {
-         /* compute destination address in client memory */
-         GLvoid *dest = _mesa_image_address( &ctx->Unpack, pixels,
-                                                width, height,
-                                                format, type, 0, row, 0);
+      if (ctx->ImageTransferState & IMAGE_CONVOLUTION_BIT) {
+         /* convert texture image to GL_RGBA, GL_FLOAT */
+         GLfloat *tmpImage, *convImage;
+         const GLint comps = components_in_intformat(texImage->Format);
 
-         assert(dest);
-         if (texImage->Format == GL_RGBA) {
-            const GLubyte *src = texImage->Data + row * width * 4 * sizeof(GLubyte);
-            /* XXX convolution */
-            _mesa_pack_rgba_span( ctx, width, (CONST GLubyte (*)[4]) src,
-                                  format, type, dest, &ctx->Pack,
-                                  ctx->ImageTransferState );
+         tmpImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
+         if (!tmpImage) {
+            gl_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
+            return;
          }
-         else {
-            /* fetch RGBA row from texture image then pack it in client mem */
-            GLubyte rgba[MAX_WIDTH][4];
-            GLint i;
-            const GLubyte *src;
-            switch (texImage->Format) {
-               case GL_ALPHA:
-                  src = texImage->Data + row * width * sizeof(GLubyte);
-                  for (i = 0; i < width; i++) {
-                     rgba[i][RCOMP] = 255;
-                     rgba[i][GCOMP] = 255;
-                     rgba[i][BCOMP] = 255;
-                     rgba[i][ACOMP] = src[i];
-                  }
-                  break;
-               case GL_LUMINANCE:
-                  src = texImage->Data + row * width * sizeof(GLubyte);
-                  for (i = 0; i < width; i++) {
-                     rgba[i][RCOMP] = src[i];
-                     rgba[i][GCOMP] = src[i];
-                     rgba[i][BCOMP] = src[i];
-                     rgba[i][ACOMP] = 255;
-                   }
-                  break;
-               case GL_LUMINANCE_ALPHA:
-                  src = texImage->Data + row * 2 * width * sizeof(GLubyte);
-                  for (i = 0; i < width; i++) {
-                     rgba[i][RCOMP] = src[i*2+0];
-                     rgba[i][GCOMP] = src[i*2+0];
-                     rgba[i][BCOMP] = src[i*2+0];
-                     rgba[i][ACOMP] = src[i*2+1];
-                  }
-                  break;
-               case GL_INTENSITY:
-                  src = texImage->Data + row * width * sizeof(GLubyte);
-                  for (i = 0; i < width; i++) {
-                     rgba[i][RCOMP] = src[i];
-                     rgba[i][GCOMP] = src[i];
-                     rgba[i][BCOMP] = src[i];
-                     rgba[i][ACOMP] = 255;
-                  }
-                  break;
-               case GL_RGB:
-                  src = texImage->Data + row * 3 * width * sizeof(GLubyte);
-                  for (i = 0; i < width; i++) {
-                     rgba[i][RCOMP] = src[i*3+0];
-                     rgba[i][GCOMP] = src[i*3+1];
-                     rgba[i][BCOMP] = src[i*3+2];
-                     rgba[i][ACOMP] = 255;
-                  }
-                  break;
-               case GL_RGBA:
-                  /* this special case should have been handled above! */
-                  gl_problem( ctx, "error 1 in gl_GetTexImage" );
-                  break;
-               case GL_COLOR_INDEX:
-                  gl_problem( ctx, "GL_COLOR_INDEX not implemented in gl_GetTexImage" );
-                  break;
-               default:
-                  gl_problem( ctx, "bad format in gl_GetTexImage" );
+         convImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
+         if (!convImage) {
+            FREE(tmpImage);
+            gl_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
+            return;
+         }
+
+         for (img = 0; img < depth; img++) {
+            GLint convWidth, convHeight;
+
+            /* convert to GL_RGBA */
+            for (row = 0; row < height; row++) {
+               const GLubyte *src = texImage->Data
+                                  + (img * height + row ) * width * comps;
+               GLfloat *dst = tmpImage + row * width * 4;
+               _mesa_unpack_float_color_span(ctx, width, GL_RGBA, dst,
+                          texImage->Format, GL_UNSIGNED_BYTE,
+                          src, &_mesa_native_packing,
+                          ctx->ImageTransferState & IMAGE_PRE_CONVOLUTION_BITS,
+                          GL_FALSE);
             }
-            /* XXX convolution */
-            _mesa_pack_rgba_span( ctx, width, (const GLubyte (*)[4])rgba,
-                                  format, type, dest, &ctx->Pack,
-                                  ctx->ImageTransferState );
+
+            convWidth = width;
+            convHeight = height;
+
+            /* convolve */
+            if (target == GL_TEXTURE_1D) {
+               if (ctx->Pixel.Convolution1DEnabled) {
+                  _mesa_convolve_1d_image(ctx, &convWidth, tmpImage, convImage);
+               }
+            }
+            else {
+               if (ctx->Pixel.Convolution2DEnabled) {
+                  _mesa_convolve_2d_image(ctx, &convWidth, &convHeight,
+                                          tmpImage, convImage);
+               }
+               else if (ctx->Pixel.Separable2DEnabled) {
+                  _mesa_convolve_sep_image(ctx, &convWidth, &convHeight,
+                                           tmpImage, convImage);
+               }
+            }
+
+            /* pack convolved image */
+            for (row = 0; row < convHeight; row++) {
+               const GLfloat *src = convImage + row * convWidth * 4;
+               GLvoid *dest = _mesa_image_address(&ctx->Pack, pixels,
+                                                  convWidth, convHeight,
+                                                  format, type, img, row, 0);
+               _mesa_pack_float_rgba_span(ctx, convWidth,
+                        (const GLfloat(*)[4]) src,
+                        format, type, dest, &ctx->Pack,
+                        ctx->ImageTransferState & IMAGE_POST_CONVOLUTION_BITS);
+            }
          }
+
+         FREE(tmpImage);
+         FREE(convImage);
       }
+      else {
+         /* no convolution */
+         for (img = 0; img < depth; img++) {
+            for (row = 0; row < height; row++) {
+               /* compute destination address in client memory */
+               GLvoid *dest = _mesa_image_address( &ctx->Unpack, pixels,
+                                  width, height, format, type, img, row, 0);
+               assert(dest);
+               if (texImage->Format == GL_RGBA) {
+                  /* simple case */
+                  const GLubyte *src = texImage->Data
+                                     + (img * height + row ) * width * 4;
+                  _mesa_pack_rgba_span( ctx, width, (CONST GLubyte (*)[4]) src,
+                                        format, type, dest, &ctx->Pack,
+                                        ctx->ImageTransferState );
+               }
+               else {
+                  /* general case:  convert row to RGBA format */
+                  GLubyte rgba[MAX_WIDTH][4];
+                  GLint i;
+                  const GLubyte *src;
+                  switch (texImage->Format) {
+                     case GL_ALPHA:
+                        src = texImage->Data + row * width * sizeof(GLubyte);
+                        for (i = 0; i < width; i++) {
+                           rgba[i][RCOMP] = 255;
+                           rgba[i][GCOMP] = 255;
+                           rgba[i][BCOMP] = 255;
+                           rgba[i][ACOMP] = src[i];
+                        }
+                        break;
+                     case GL_LUMINANCE:
+                        src = texImage->Data + row * width * sizeof(GLubyte);
+                        for (i = 0; i < width; i++) {
+                           rgba[i][RCOMP] = src[i];
+                           rgba[i][GCOMP] = src[i];
+                           rgba[i][BCOMP] = src[i];
+                           rgba[i][ACOMP] = 255;
+                         }
+                        break;
+                     case GL_LUMINANCE_ALPHA:
+                        src = texImage->Data + row * 2 * width * sizeof(GLubyte);
+                        for (i = 0; i < width; i++) {
+                           rgba[i][RCOMP] = src[i*2+0];
+                           rgba[i][GCOMP] = src[i*2+0];
+                           rgba[i][BCOMP] = src[i*2+0];
+                           rgba[i][ACOMP] = src[i*2+1];
+                        }
+                        break;
+                     case GL_INTENSITY:
+                        src = texImage->Data + row * width * sizeof(GLubyte);
+                        for (i = 0; i < width; i++) {
+                           rgba[i][RCOMP] = src[i];
+                           rgba[i][GCOMP] = src[i];
+                           rgba[i][BCOMP] = src[i];
+                           rgba[i][ACOMP] = 255;
+                        }
+                        break;
+                     case GL_RGB:
+                        src = texImage->Data + row * 3 * width * sizeof(GLubyte);
+                        for (i = 0; i < width; i++) {
+                           rgba[i][RCOMP] = src[i*3+0];
+                           rgba[i][GCOMP] = src[i*3+1];
+                           rgba[i][BCOMP] = src[i*3+2];
+                           rgba[i][ACOMP] = 255;
+                        }
+                        break;
+                     case GL_COLOR_INDEX:
+                        gl_problem( ctx, "GL_COLOR_INDEX not implemented in gl_GetTexImage" );
+                        break;
+                     case GL_RGBA:
+                     default:
+                        gl_problem( ctx, "bad format in gl_GetTexImage" );
+                  }
+                  _mesa_pack_rgba_span( ctx, width, (const GLubyte (*)[4])rgba,
+                                        format, type, dest, &ctx->Pack,
+                                        ctx->ImageTransferState );
+               } /* format */
+            } /* row */
+         } /* img */
+      } /* convolution */
 
       /* if we got the teximage from the device driver we'll discard it now */
       if (discardImage) {
