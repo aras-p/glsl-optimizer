@@ -142,7 +142,6 @@ void intelFlushBatchLocked( intelContextPtr intel,
     * single buffer.
     */
    if (intel->numClipRects == 0 && !ignore_cliprects) {
-      intel->batch.space = intel->batch.size;
       
       /* Without this yeild, an application with no cliprects can hog
        * the hardware.  Without unlocking, the effect is much worse -
@@ -157,6 +156,8 @@ void intelFlushBatchLocked( intelContextPtr intel,
       /* Note that any state thought to have been emitted actually
        * hasn't:
        */
+      intel->batch.ptr -= (intel->batch.size - intel->batch.space);
+      intel->batch.space = intel->batch.size;
       intel->vtbl.lost_hardware( intel ); 
    }
 
