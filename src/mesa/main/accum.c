@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.4 1999/10/10 12:40:54 brianp Exp $ */
+/* $Id: accum.c,v 1.5 1999/10/11 04:20:25 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,6 +37,7 @@
 #else
 #include "GL/xf86glx.h"
 #endif
+#include <assert.h>
 #include "accum.h"
 #include "context.h"
 #include "macros.h"
