@@ -10,9 +10,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -582,8 +582,8 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
    }
 
    /* clamp width, and height to implementation dependent range */
-   width  = CLAMP( width,  1, MAX_WIDTH );
-   height = CLAMP( height, 1, MAX_HEIGHT );
+   width  = CLAMP( width,  1, ctx->Const.MaxViewportWidth );
+   height = CLAMP( height, 1, ctx->Const.MaxViewportHeight );
 
    /* Save viewport */
    ctx->Viewport.X = x;
