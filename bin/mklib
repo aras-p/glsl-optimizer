@@ -110,29 +110,40 @@ case $ARCH in
 
     'Linux')
 	LIBNAME="lib${LIBNAME}"     # prefix with "lib"
-	OPTS="-Xlinker -Bsymbolic -shared -Wl,-soname,${LIBNAME}.so.${MAJOR}"
-	VERSION="${MAJOR}.${MINOR}.${PATCH}"
 
-	echo "mklib: Making Linux shared library: " ${LIBNAME}.so.${VERSION}
+        if [ $STATIC = 1 ] ; then
+            echo "mklib: Making Linux static library: " ${LIBNAME}.a
+            LINK="ar"
+            OPTS="-ruv"
+            # make lib
+            ${LINK} ${OPTS} ${LIBNAME}.a ${OBJECTS}
+            # finish up
+            FINAL_LIBS="${LIBNAME}.a"
+        else
+            OPTS="-Xlinker -Bsymbolic -shared -Wl,-soname,${LIBNAME}.so.${MAJOR}"
+            VERSION="${MAJOR}.${MINOR}.${PATCH}"
 
-	if [ $CPLUSPLUS = 1 ] ; then
-	    LINK="g++"
-	else
-	    LINK="gcc"
-	fi
+            echo "mklib: Making Linux shared library: " ${LIBNAME}.so.${VERSION}
 
-	# rm any old libs
-	rm -f ${LIBNAME}.so.${VERSION}
-	rm -f ${LIBNAME}.so.${MAJOR}
-	rm -f ${LIBNAME}.so
+            if [ $CPLUSPLUS = 1 ] ; then
+                LINK="g++"
+            else
+                LINK="gcc"
+            fi
 
-	# make lib
-	${LINK} ${OPTS} -o ${LIBNAME}.so.${VERSION} ${OBJECTS} ${DEPS}
-	# make usual symlinks
-	ln -s ${LIBNAME}.so.${VERSION} ${LIBNAME}.so.${MAJOR}
-	ln -s ${LIBNAME}.so.${MAJOR} ${LIBNAME}.so
-	# finish up
-	FINAL_LIBS="${LIBNAME}.so.${VERSION} ${LIBNAME}.so.${MAJOR} ${LIBNAME}.so"
+            # rm any old libs
+            rm -f ${LIBNAME}.so.${VERSION}
+            rm -f ${LIBNAME}.so.${MAJOR}
+            rm -f ${LIBNAME}.so
+
+            # make lib
+            ${LINK} ${OPTS} -o ${LIBNAME}.so.${VERSION} ${OBJECTS} ${DEPS}
+            # make usual symlinks
+            ln -s ${LIBNAME}.so.${VERSION} ${LIBNAME}.so.${MAJOR}
+            ln -s ${LIBNAME}.so.${MAJOR} ${LIBNAME}.so
+            # finish up
+            FINAL_LIBS="${LIBNAME}.so.${VERSION} ${LIBNAME}.so.${MAJOR} ${LIBNAME}.so"
+        fi
 	;;
 
     'SunOS')

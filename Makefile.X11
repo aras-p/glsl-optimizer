@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.90 2003/10/03 14:03:14 brianp Exp $
+# $Id: Makefile.X11,v 1.91 2003/10/10 17:58:38 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -33,69 +33,70 @@ SHELL = /bin/sh
 
 default:
 	@echo "Type one of the following:"
-	@echo "  make aix                  for IBM RS/6000 with AIX"
-	@echo "  make aix-sl               for IBM RS/6000, make shared libs"
-	@echo "  make beos-r4              for BeOS R4"
-	@echo "  make cygnus               for Win95/NT using Cygnus-Win32"
-	@echo "  make cygnus-linux         for Win95/NT using Cygnus-Win32 under Linux"
-	@echo "  make darwin               for Darwin - Mac OS X"
-	@echo "  make freebsd              for FreeBSD systems with GCC"
-	@echo "  make freebsd-386          for FreeBSD systems with GCC, w/ Intel assembly"
-	@echo "  make gcc-sl               for a generic system with GCC for shared libs"
-	@echo "  make hpux9                for HP systems with HPUX 9.x"
-	@echo "  make hpux9-sl             for HP systems with HPUX 9.x, make shared libs"
-	@echo "  make hpux9-gcc            for HP systems with HPUX 9.x using GCC"
-	@echo "  make hpux9-gcc-sl         for HP systems with HPUX 9.x, GCC, make shared libs"
-	@echo "  make hpux10               for HP systems with HPUX 10.x and 11.x"
-	@echo "  make hpux10-sl            for HP systems with HPUX 10.x and 11.x, shared libs"
-	@echo "  make hpux10-gcc           for HP systems with HPUX 10.x w/ GCC"
-	@echo "  make hpux10-gcc-sl        for HP systems with HPUX 10.x w/ GCC, shared libs"
-	@echo "  make irix6-o32            for SGI systems with IRIX 6.x, make o32-bit libs"
-	@echo "  make irix6-o32-dso        for SGI systems with IRIX 6.x, make o32-bit DSOs"
-	@echo "  make irix6-n32            for SGI systems with IRIX 6.x, make n32-bit libs"
-	@echo "  make irix6-n32-dso        for SGI systems with IRIX 6.x, make n32-bit DSOs"
-	@echo "  make irix6-gcc-n32-sl     for SGI systems with IRIX 6.x, GCC, make n32 DSOs"
-	@echo "  make irix6-64             for SGI systems with IRIX 6.x, make 64-bit libs"
-	@echo "  make irix6-64-dso         for SGI systems with IRIX 6.x, make 64-bit DSOs"
+	@echo "  make aix                   for IBM RS/6000 with AIX"
+	@echo "  make aix-sl                for IBM RS/6000, make shared libs"
+	@echo "  make beos-r4               for BeOS R4"
+	@echo "  make cygnus                for Win95/NT using Cygnus-Win32"
+	@echo "  make cygnus-linux          for Win95/NT using Cygnus-Win32 under Linux"
+	@echo "  make darwin                for Darwin - Mac OS X"
+	@echo "  make freebsd               for FreeBSD systems with GCC"
+	@echo "  make freebsd-386           for FreeBSD systems with GCC, w/ Intel assembly"
+	@echo "  make gcc-sl                for a generic system with GCC for shared libs"
+	@echo "  make hpux9                 for HP systems with HPUX 9.x"
+	@echo "  make hpux9-sl              for HP systems with HPUX 9.x, make shared libs"
+	@echo "  make hpux9-gcc             for HP systems with HPUX 9.x using GCC"
+	@echo "  make hpux9-gcc-sl          for HP systems with HPUX 9.x, GCC, make shared libs"
+	@echo "  make hpux10                for HP systems with HPUX 10.x and 11.x"
+	@echo "  make hpux10-sl             for HP systems with HPUX 10.x and 11.x, shared libs"
+	@echo "  make hpux10-gcc            for HP systems with HPUX 10.x w/ GCC"
+	@echo "  make hpux10-gcc-sl         for HP systems with HPUX 10.x w/ GCC, shared libs"
+	@echo "  make irix6-o32             for SGI systems with IRIX 6.x, make o32-bit libs"
+	@echo "  make irix6-o32-dso         for SGI systems with IRIX 6.x, make o32-bit DSOs"
+	@echo "  make irix6-n32             for SGI systems with IRIX 6.x, make n32-bit libs"
+	@echo "  make irix6-n32-dso         for SGI systems with IRIX 6.x, make n32-bit DSOs"
+	@echo "  make irix6-gcc-n32-sl      for SGI systems with IRIX 6.x, GCC, make n32 DSOs"
+	@echo "  make irix6-64              for SGI systems with IRIX 6.x, make 64-bit libs"
+	@echo "  make irix6-64-dso          for SGI systems with IRIX 6.x, make 64-bit DSOs"
 
-	@echo "  make linux                for Linux"
-	@echo "  make linux-x86            for Linux with x86 optimizations"
-	@echo "  make linux-ggi            for Linux with libggi driver"
-	@echo "  make linux-x86-ggi        for Linux with libggi driver and x86 optimizations"
-	@echo "  make linux-glide          for Linux with 3Dfx Glide driver"
-	@echo "  make linux-x86-glide      for Linux with 3Dfx Glide driver and x86 opts"
-	@echo "  make linux-alpha          for Linux with Alpha optimizations"
-	@echo "  make linux-alpha-static   for Linux with Alpha opts, make static libs"
-	@echo "  make linux-ppc            for Linux with PowerPC opts"
-	@echo "  make linux-ppc-static     for Linux with PowerPC opts, make static libs"
-	@echo "  make linux-sparc          for Linux with Sparc optimzations"
-	@echo "  make linux-sparc5         for Linux with Sparc5 optimizations"
-	@echo "  make linux-sparc-ultra    for Linux with UltraSparc optimizations"
-	@echo "  make linux-osmesa16       for 16-bit/channel OSMesa"
-	@echo "  make linux-osmesa32       for 32-bit/channel OSMesa"
-	@echo "  make linux-solo           for Linux standalone with dri drivers"
-	@echo "  make linux-icc            for Linux with the Intel C/C++ compiler"
-	@echo "  make lynxos               for LynxOS systems with GCC"
-	@echo "  make mklinux              for Linux on Power Macintosh"
-	@echo "  make netbsd               for NetBSD 1.0 systems with GCC"
-	@echo "  make openbsd              for OpenBSD systems"
-	@echo "  make openstep             for OpenStep/MacOSX Server systems"
-	@echo "  make osf1                 for DEC Alpha systems with OSF/1"
-	@echo "  make qnx                  for QNX V4 systems with Watcom compiler"
-	@echo "  make solaris-x86          for PCs with Solaris"
-	@echo "  make solaris-x86-gcc      for PCs with Solaris using GCC"
-	@echo "  make sunos4               for Suns with SunOS 4.x"
-	@echo "  make sunos4-sl            for Suns with SunOS 4.x, make shared libs"
-	@echo "  make sunos4-gcc           for Suns with SunOS 4.x and GCC"
-	@echo "  make sunos4-gcc-sl        for Suns with SunOS 4.x, GCC, make shared libs"
-	@echo "  make sunos5               for Suns with SunOS 5.x"
-	@echo "  make sunos5-smp           for Suns with SunOS 5.x, SMP optimization"
-	@echo "  make sunos5-gcc           for Suns with SunOS 5.x and GCC"
-	@echo "  make ultrix-gcc           for DEC systems with Ultrix and GCC"
-	@echo "  make unixware             for PCs running UnixWare"
-	@echo "  make unixware-shared      for PCs running UnixWare, shared libs"
-	@echo "  make clean                remove .o files"
-	@echo "  make realclean            remove .o, library and executable files"
+	@echo "  make linux                 for Linux"
+	@echo "  make linux-x86             for Linux with x86 optimizations"
+	@echo "  make linux-ggi             for Linux with libggi driver"
+	@echo "  make linux-x86-ggi         for Linux with libggi driver and x86 optimizations"
+	@echo "  make linux-glide           for Linux with 3Dfx Glide driver"
+	@echo "  make linux-x86-glide       for Linux with 3Dfx Glide driver and x86 opts"
+	@echo "  make linux-alpha           for Linux with Alpha optimizations"
+	@echo "  make linux-alpha-static    for Linux with Alpha opts, make static libs"
+	@echo "  make linux-ppc             for Linux with PowerPC opts"
+	@echo "  make linux-ppc-static      for Linux with PowerPC opts, make static libs"
+	@echo "  make linux-sparc           for Linux with Sparc optimzations"
+	@echo "  make linux-sparc5          for Linux with Sparc5 optimizations"
+	@echo "  make linux-sparc-ultra     for Linux with UltraSparc optimizations"
+	@echo "  make linux-osmesa16        for 16-bit/channel OSMesa"
+	@echo "  make linux-osmesa16-static for 16-bit/channel OSMesa, make static libs"
+	@echo "  make linux-osmesa32        for 32-bit/channel OSMesa"
+	@echo "  make linux-solo            for Linux standalone with dri drivers"
+	@echo "  make linux-icc             for Linux with the Intel C/C++ compiler"
+	@echo "  make lynxos                for LynxOS systems with GCC"
+	@echo "  make mklinux               for Linux on Power Macintosh"
+	@echo "  make netbsd                for NetBSD 1.0 systems with GCC"
+	@echo "  make openbsd               for OpenBSD systems"
+	@echo "  make openstep              for OpenStep/MacOSX Server systems"
+	@echo "  make osf1                  for DEC Alpha systems with OSF/1"
+	@echo "  make qnx                   for QNX V4 systems with Watcom compiler"
+	@echo "  make solaris-x86           for PCs with Solaris"
+	@echo "  make solaris-x86-gcc       for PCs with Solaris using GCC"
+	@echo "  make sunos4                for Suns with SunOS 4.x"
+	@echo "  make sunos4-sl             for Suns with SunOS 4.x, make shared libs"
+	@echo "  make sunos4-gcc            for Suns with SunOS 4.x and GCC"
+	@echo "  make sunos4-gcc-sl         for Suns with SunOS 4.x, GCC, make shared libs"
+	@echo "  make sunos5                for Suns with SunOS 5.x"
+	@echo "  make sunos5-smp            for Suns with SunOS 5.x, SMP optimization"
+	@echo "  make sunos5-gcc            for Suns with SunOS 5.x and GCC"
+	@echo "  make ultrix-gcc            for DEC systems with Ultrix and GCC"
+	@echo "  make unixware              for PCs running UnixWare"
+	@echo "  make unixware-shared       for PCs running UnixWare, shared libs"
+	@echo "  make clean                 remove .o files"
+	@echo "  make realclean             remove .o, library and executable files"
 
 
 
@@ -224,11 +225,11 @@ linux-ggi-install linux-x86-ggi-install:
 #	echo ".include $(DESTDIR)/etc/ggi/ggimesa.conf" >> $(DESTDIR)/etc/ggi/libggi.conf ; \
 #	fi
 
-linux-osmesa16 linux-osmesa32:
+linux-osmesa16 linux-osmesa16-static linux-osmesa32:
 	-mkdir lib
-	if [ -d src ] ; then touch src/depend ; fi
-	if [ -d src ] ; then cd src ; $(MAKE) -f Makefile.OSMesa16 $@ ; fi
-	
+	if [ -d src/mesa ] ; then touch src/mesa/depend ; fi
+	if [ -d src/mesa ] ; then cd src/mesa ; $(MAKE) -f Makefile.OSMesa16 $@ ; fi
+
 linux-solo:
 	-mkdir lib
 	if [ -d src/mesa     ] ; then touch src/mesa/depend     ; fi
@@ -440,7 +441,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/drivers/ggi/include/ggi/mesa/Makefile.am		\
 	$(DIRECTORY)/src/mesa/drivers/ggi/include/ggi/mesa/Makefile.in		\
 	$(DIRECTORY)/src/mesa/drivers/ggi/include/ggi/mesa/*.h			\
-  	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.am			\
+	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.am			\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.in			\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.win			\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/osmesa.def				\
