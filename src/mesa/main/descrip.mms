@@ -17,6 +17,7 @@ LIBDIR = [---.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
 
 SOURCES =accum.c \
+	api_arrayelt.c \
 	api_loopback.c \
 	api_noop.c \
 	api_validate.c \
@@ -75,6 +76,7 @@ SOURCES =accum.c \
 	vtxfmt.c
 
 OBJECTS=accum.obj,\
+api_arrayelt.obj,\
 api_loopback.obj,\
 api_noop.obj,\
 api_validate.obj,\
@@ -147,6 +149,7 @@ clean :
 	delete *.obj;*
 
 accum.obj : accum.c
+api_arrayelt.obj : api_arrayelt.c
 api_loopback.obj : api_loopback.c
 api_noop.obj : api_noop.c
 api_validate.obj : api_validate.c

@@ -431,7 +431,7 @@ ATTRS( 15 )
 
 static void init_attrfv( TNLcontext *tnl )
 {
-#ifdef WIN32
+#if defined( WIN32 ) || defined( __VMS )
    if (0) fprintf(stderr, "%s %d\n", "init_attrfv", tnl->vtx.vertex_size);
 #else
    if (0) fprintf(stderr, "%s %d\n", __FUNCTION__, tnl->vtx.vertex_size);
