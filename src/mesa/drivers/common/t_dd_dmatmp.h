@@ -1,4 +1,4 @@
-/* $Id: t_dd_dmatmp.h,v 1.9 2001/04/07 16:16:58 alanh Exp $ */
+/* $Id: t_dd_dmatmp.h,v 1.10 2001/04/09 15:41:11 alanh Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -449,7 +449,7 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
 
       FINISH;
 
-   } else if (HAVE_ELTS && HAVE_TRI_STRIPS && ctx->_TriangleCaps & DD_FLATSHADE) {
+   } else if (HAVE_TRI_STRIPS && ctx->_TriangleCaps & DD_FLATSHADE) {
       if (TAG(emit_elt_verts)( ctx, start, count )) {
 	 LOCAL_VARS;
 	 int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
