@@ -374,6 +374,7 @@ viaFillInModes( unsigned pixel_bits, GLboolean have_back_buffer )
  *         failure.
  */
 #ifdef USE_NEW_INTERFACE
+PUBLIC
 void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,

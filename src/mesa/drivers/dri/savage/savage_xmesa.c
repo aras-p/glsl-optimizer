@@ -913,6 +913,7 @@ savageFillInModes( unsigned pixel_bits, unsigned depth_bits,
  * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
  *         failure.
  */
+PUBLIC
 void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
