@@ -1,4 +1,4 @@
-/* $Id: hash.c,v 1.10 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: hash.c,v 1.11 2001/11/02 00:57:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -64,7 +64,11 @@ struct _mesa_HashTable {
  */
 struct _mesa_HashTable *_mesa_NewHashTable(void)
 {
-   return CALLOC_STRUCT(_mesa_HashTable);
+   struct _mesa_HashTable *table = CALLOC_STRUCT(_mesa_HashTable);
+   if (table) {
+      _glthread_INIT_MUTEX(table->Mutex);
+   }
+   return table;
 }
 
 
