@@ -1745,7 +1745,7 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
 
    if (GET_VISUAL_DEPTH(v) != attr.depth) {
 #endif
-      _mesa_warning(NULL, "XMesaCreateWindowBuffer: depth mismatch between visual and window!\n");
+      _mesa_warning(NULL, "XMesaCreateWindowBuffer: depth mismatch between visual and window! (%d != %d)\n", GET_VISUAL_DEPTH(v) , attr.depth );
       return NULL;
    }
 
