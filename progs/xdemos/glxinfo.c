@@ -1,4 +1,4 @@
-/* $Id: glxinfo.c,v 1.5 2000/02/23 22:50:35 brianp Exp $ */
+/* $Id: glxinfo.c,v 1.6 2000/03/31 18:17:51 brianp Exp $ */
 
 /*
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
@@ -74,6 +74,7 @@ struct visual_attribs
    int stencilSize;
    int accumRedSize, accumGreenSize, accumBlueSize, accumAlphaSize;
    int numSamples, numMultisample;
+   int visualCaveat;
 };
 
    
@@ -265,6 +266,8 @@ static void
 get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
                    struct visual_attribs *attribs)
 {
+   const char *ext = glXQueryExtensionsString(dpy, vInfo->screen);
+
    attribs->id = vInfo->visualid;
 #if defined(__cplusplus) || defined(c_plusplus)
    attribs->klass = vInfo->c_class;
@@ -302,6 +305,17 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
    /* multisample tests not implemented yet */
    attribs->numSamples = 0;
    attribs->numMultisample = 0;
+
+#if defined(GLX_EXT_visual_rating)
+   if (ext && strstr(ext, "GLX_EXT_visual_rating")) {
+      glXGetConfig(dpy, vInfo, GLX_VISUAL_CAVEAT_EXT, &attribs->visualCaveat);
+   }
+   else {
+      attribs->visualCaveat = GLX_NONE_EXT;
+   }
+#else
+   attribs->visualCaveat = 0;
+#endif
 }
 
 
@@ -324,21 +338,41 @@ print_visual_attribs_verbose(const struct visual_attribs *attribs)
    printf("    multiSample=%d  multiSampleBuffers=%d\n",
           attribs->numSamples, attribs->numMultisample);
    printf("    %s\n", attribs->transparent ? "Transparent." : "Opaque.");
+#ifdef GLX_EXT_visual_rating
+   if (attribs->visualCaveat == GLX_NONE_EXT || attribs->visualCaveat == 0)
+      printf("    visualCaveat: None\n");
+   else if (attribs->visualCaveat == GLX_SLOW_VISUAL_EXT)
+      printf("    visualCaveat: Slow\n");
+   else if (attribs->visualCaveat == GLX_NON_CONFORMANT_VISUAL_EXT)
+      printf("    visualCaveat: Nonconformant\n");
+#endif
 }
 
 
 static void
 print_visual_attribs_short_header(void)
 {
- printf("   visual  x  bf lv rg d st  r  g  b  a ax dp st accum buffs  ms \n");
- printf(" id dep cl sp sz l  ci b ro sz sz sz sz bf th cl  r  g  b  a ns b\n");
- printf("-----------------------------------------------------------------\n");
+ printf("   visual  x  bf lv rg d st  r  g  b  a ax dp st accum buffs  ms  cav\n");
+ printf(" id dep cl sp sz l  ci b ro sz sz sz sz bf th cl  r  g  b  a ns b eat\n");
+ printf("----------------------------------------------------------------------\n");
 }
 
 
 static void
 print_visual_attribs_short(const struct visual_attribs *attribs)
 {
+   char *caveat;
+#ifdef GLX_EXT_visual_rating
+   if (attribs->visualCaveat == GLX_NONE_EXT || attribs->visualCaveat == 0)
+      caveat = "None";
+   else if (attribs->visualCaveat == GLX_SLOW_VISUAL_EXT)
+      caveat = "Slow";
+   else if (attribs->visualCaveat == GLX_NON_CONFORMANT_VISUAL_EXT)
+      caveat = "Ncon";
+#else
+   caveat = "None";
+#endif 
+
    printf("0x%2x %2d %2s %2d %2d %2d %1s %2s %2s %2d %2d %2d %2d %2d %2d %2d",
           attribs->id,
           attribs->depth,
@@ -356,10 +390,11 @@ print_visual_attribs_short(const struct visual_attribs *attribs)
           attribs->stencilSize
           );
 
-   printf(" %2d %2d %2d %2d %2d %1d\n",
+   printf(" %2d %2d %2d %2d %2d %1d %s\n",
           attribs->accumRedSize, attribs->accumGreenSize,
           attribs->accumBlueSize, attribs->accumAlphaSize,
-          attribs->numSamples, attribs->numMultisample
+          attribs->numSamples, attribs->numMultisample,
+          caveat
           );
 }
 
