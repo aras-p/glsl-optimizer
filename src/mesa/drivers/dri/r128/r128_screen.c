@@ -327,36 +327,6 @@ r128InitDriver( __DRIscreenPrivate *sPriv )
    return GL_TRUE;
 }
 
-#ifndef _SOLO
-/**
- * This function is called by libGL.so as soon as libGL.so is loaded.
- * This is where we register new extension functions with the dispatcher.
- *
- * \todo This interface has been deprecated, so we should probably remove
- *       this function before the next XFree86 release.
- */
-void __driRegisterExtensions( void )
-{
-#if 0
-   /* KW: This is done slightly differently to the other drivers and
-      dri_interface.h doesn't seem to cope. 
-   */
-   PFNGLXENABLEEXTENSIONPROC
-   glx_enable_extension;
-
-   if ( driCompareGLXAPIVersion( 20030317 ) >= 0 ) {
-      glx_enable_extension = (PFNGLXENABLEEXTENSIONPROC)
-	  glXGetProcAddress( (const GLubyte *) "__glXEnableExtension" );
-
-      if ( glx_enable_extension != NULL ) {
-	 glx_enable_extension( "GLX_SGI_swap_control", GL_FALSE );
-	 glx_enable_extension( "GLX_SGI_video_sync", GL_FALSE );
-	 glx_enable_extension( "GLX_MESA_swap_control", GL_FALSE );
-      }
-   }
-#endif
-}
-#endif
 
 static struct __DriverAPIRec r128API = {
    .InitDriver      = r128InitDriver,

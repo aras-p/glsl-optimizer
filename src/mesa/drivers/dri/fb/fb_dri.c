@@ -570,12 +570,6 @@ static struct __DriverAPIRec fbAPI = {
 };
 
 
-void
-__driRegisterExtensions( void )
-{
-}
-
-
 /*
  * This is the bootstrap function for the driver.
  * The __driCreateScreen name is the symbol that libGL.so fetches.
@@ -589,7 +583,6 @@ __driCreateScreen(struct DRIDriverRec *driver,
    psp = __driUtilCreateScreenNoDRM(driver, driverContext, &fbAPI);
    return (void *) psp;
 }
-
 
 
 /**
