@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.22 2000/05/04 13:48:49 brianp Exp $ */
+/* $Id: drawpix.c,v 1.23 2000/06/27 04:32:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -512,11 +512,11 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    GLuint ispan[MAX_WIDTH];
    GLint drawWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
 
-   if (type != GL_UNSIGNED_BYTE
+   if (type != GL_BYTE
        && type != GL_UNSIGNED_BYTE
+       && type != GL_SHORT
        && type != GL_UNSIGNED_SHORT
-       && type != GL_UNSIGNED_SHORT
-       && type != GL_UNSIGNED_INT
+       && type != GL_INT
        && type != GL_UNSIGNED_INT
        && type != GL_FLOAT) {
       gl_error(ctx, GL_INVALID_ENUM, "glDrawPixels(type)");
