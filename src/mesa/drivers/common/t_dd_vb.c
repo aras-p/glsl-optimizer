@@ -1,4 +1,4 @@
-/* $Id: t_dd_vb.c,v 1.13 2001/04/30 21:08:52 keithw Exp $ */
+/* $Id: t_dd_vb.c,v 1.14 2001/05/09 15:34:08 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -303,7 +303,7 @@ INTERP_QUALIFIER void TAG(interp_extras)( GLcontext *ctx,
    }
 
    if (VB->EdgeFlag) {
-      VB->EdgeFlag[dst] = VB->EdgeFlag[out] || force_boundary || 1;
+      VB->EdgeFlag[dst] = VB->EdgeFlag[out] || force_boundary;
    }
 
    INTERP_VERTEX(ctx, t, dst, out, in, force_boundary);
