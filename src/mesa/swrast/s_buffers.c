@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.0.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -190,7 +189,7 @@ _swrast_Clear( GLcontext *ctx, GLbitfield mask,
    if (mask) {
       if (mask & ctx->Color._DrawDestMask)   clear_color_buffers(ctx);
       if (mask & GL_DEPTH_BUFFER_BIT)    _swrast_clear_depth_buffer(ctx);
-      if (mask & GL_ACCUM_BUFFER_BIT)    _swarst_clear_accum_buffer(ctx);
+      if (mask & GL_ACCUM_BUFFER_BIT)    _swrast_clear_accum_buffer(ctx);
       if (mask & GL_STENCIL_BUFFER_BIT)  _swrast_clear_stencil_buffer(ctx);
    }
 
