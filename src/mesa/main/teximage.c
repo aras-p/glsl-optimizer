@@ -1,4 +1,3 @@
-/* $Id: teximage.c,v 1.25 2000/03/23 16:23:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -642,7 +641,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
    }
 
    /* Border */
-   if (border!=0 && border!=1) {
+   if (border != 0 && border != 1) {
       if (!isProxy) {
          char message[100];
          sprintf(message, "glTexImage%dD(border)", dimensions);
@@ -687,7 +686,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
    }
 
    /* Level */
-   if (level<0 || level>=ctx->Const.MaxTextureLevels) {
+   if (level < 0 || level >= ctx->Const.MaxTextureLevels) {
       if (!isProxy) {
          char message[100];
          sprintf(message, "glTexImage%dD(level)", dimensions);
@@ -1788,7 +1787,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
                                     texImage->IntFormat, texImage);
       }
       else if (ctx->Driver.TexImage) {
-         (*ctx->Driver.TexImage)(ctx, GL_TEXTURE_1D, texObj,
+         (*ctx->Driver.TexImage)(ctx, GL_TEXTURE_2D, texObj,
                                  level, texImage->IntFormat, texImage );
       }
 #endif
@@ -2063,7 +2062,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
       if (teximage->Data) {
          copy_tex_sub_image(ctx, teximage, width, 1, x, y, xoffset, 0, 0);
          /* tell driver about the change */
-         /* XXX call Driver.TexSubImage instead? */
+         /* XXX this is obsolete */
          if (ctx->Driver.TexImage) {
             (*ctx->Driver.TexImage)( ctx, GL_TEXTURE_1D,
                                      texUnit->CurrentD[1],
@@ -2100,7 +2099,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
          copy_tex_sub_image(ctx, teximage, width, height,
                             x, y, xoffset, yoffset, 0);
          /* tell driver about the change */
-         /* XXX call Driver.TexSubImage instead? */
+         /* XXX this is obsolete */
          if (ctx->Driver.TexImage) {
             (*ctx->Driver.TexImage)( ctx, GL_TEXTURE_2D,
                                      texUnit->CurrentD[2],
@@ -2137,7 +2136,7 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
          copy_tex_sub_image(ctx, teximage, width, height, 
                             x, y, xoffset, yoffset, zoffset);
          /* tell driver about the change */
-         /* XXX call Driver.TexSubImage instead? */
+         /* XXX this is obsolete */
          if (ctx->Driver.TexImage) {
             (*ctx->Driver.TexImage)( ctx, GL_TEXTURE_3D,
                                      texUnit->CurrentD[3],
