@@ -1434,7 +1434,6 @@ static void savageUpdateTextureState_s4( GLcontext *ctx )
    if (imesa->CurrentTexObj[1]) imesa->CurrentTexObj[1]->bound &= ~2;
    imesa->CurrentTexObj[0] = 0;
    imesa->CurrentTexObj[1] = 0;   
-   FALLBACK (ctx, SAVAGE_FALLBACK_TEXTURE, GL_FALSE);
    savageUpdateTex0State_s4( ctx );
    savageUpdateTex1State_s4( ctx );
    imesa->dirty |= (SAVAGE_UPLOAD_CTX |
@@ -1446,18 +1445,15 @@ static void savageUpdateTextureState_s3d( GLcontext *ctx )
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     if (imesa->CurrentTexObj[0]) imesa->CurrentTexObj[0]->bound &= ~1;
     imesa->CurrentTexObj[0] = 0;
-    if (ctx->Texture.Unit[1]._ReallyEnabled) {
-	FALLBACK (ctx, SAVAGE_FALLBACK_TEXTURE, GL_TRUE);
-    } else {
-	FALLBACK (ctx, SAVAGE_FALLBACK_TEXTURE, GL_FALSE);
-	savageUpdateTexState_s3d( ctx );
-	imesa->dirty |= (SAVAGE_UPLOAD_CTX |
-			 SAVAGE_UPLOAD_TEX0);
-    }
+    savageUpdateTexState_s3d( ctx );
+    imesa->dirty |= (SAVAGE_UPLOAD_CTX |
+		     SAVAGE_UPLOAD_TEX0);
 }
 void savageUpdateTextureState( GLcontext *ctx)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
+    FALLBACK (ctx, SAVAGE_FALLBACK_TEXTURE, GL_FALSE);
+    FALLBACK(ctx, SAVAGE_FALLBACK_PROJ_TEXTURE, GL_FALSE);
     if (imesa->savageScreen->chipset >= S3_SAVAGE4)
 	savageUpdateTextureState_s4 (ctx);
     else

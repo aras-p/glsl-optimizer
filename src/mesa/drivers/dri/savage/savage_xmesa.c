@@ -70,27 +70,25 @@ DRI_CONF_BEGIN
     DRI_CONF_SECTION_PERFORMANCE
         DRI_CONF_MAX_TEXTURE_UNITS(2,1,2)
     DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_DEBUG
+        DRI_CONF_NO_RAST(false)
+    DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 3;
+static const GLuint __driNConfigOptions = 4;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 #endif /* USE_NEW_INTERFACE */
 
+static const struct dri_debug_control debug_control[] =
+{
+    { "fall",  DEBUG_FALLBACKS },
+    { "api",   DEBUG_VERBOSE_API },
+    { "lru",   DEBUG_VERBOSE_LRU },
+    { NULL,    0 }
+};
 #ifndef SAVAGE_DEBUG
-int SAVAGE_DEBUG = (0
-/*     		  | DEBUG_ALWAYS_SYNC  */
-/*  		  | DEBUG_VERBOSE_RING    */
-/*  		  | DEBUG_VERBOSE_OUTREG  */
-/*  		  | DEBUG_VERBOSE_MSG */
-/*  		  | DEBUG_NO_OUTRING */
-/*  		  | DEBUG_NO_OUTREG */
-/*  		  | DEBUG_VERBOSE_API */
-/*  		  | DEBUG_VERBOSE_2D */
-/*  		  | DEBUG_VERBOSE_DRI */
-/*  		  | DEBUG_VALIDATE_RING */
-/*  		  | DEBUG_VERBOSE_IOCTL */
-		  );
+int SAVAGE_DEBUG = 0;
 #endif
 
 
@@ -487,7 +485,12 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    imesa->glCtx = ctx;
    if (savageDMAInit(imesa) == GL_FALSE)
        return GL_FALSE;  
-   
+
+#ifndef SAVAGE_DEBUG
+   SAVAGE_DEBUG = driParseDebugString( getenv( "SAVAGE_DEBUG" ),
+				       debug_control );
+#endif
+
    driInitExtensions( ctx, card_extensions, GL_TRUE );
 
    savageDDInitStateFuncs( ctx );
@@ -497,6 +500,9 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    savageInitTriFuncs( ctx );
 
    savageDDInitState( imesa );
+
+   if (driQueryOptionb(&imesa->optionCache, "no_rast"))
+       FALLBACK(ctx, SAVAGE_FALLBACK_NORAST, GL_TRUE);
 
    driContextPriv->driverPrivate = (void *) imesa;
 

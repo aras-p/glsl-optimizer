@@ -52,13 +52,14 @@ typedef struct savage_texture_object_t *savageTextureObjectPtr;
 #define SAVAGE_FALLBACK_DRAW_BUFFER    0x2
 #define SAVAGE_FALLBACK_READ_BUFFER    0x4
 #define SAVAGE_FALLBACK_COLORMASK      0x8  
-#define SAVAGE_FALLBACK_STIPPLE        0x10  
-#define SAVAGE_FALLBACK_SPECULAR       0x20 
-#define SAVAGE_FALLBACK_LOGICOP        0x40
+#define SAVAGE_FALLBACK_SPECULAR       0x10 
+#define SAVAGE_FALLBACK_LOGICOP        0x20
 /*frank 2001/11/12 add the stencil fallbak*/
-#define SAVAGE_FALLBACK_STENCIL        0x80
-#define SAVAGE_FALLBACK_RENDERMODE     0x100
-#define SAVAGE_FALLBACK_BLEND_EQ       0x200
+#define SAVAGE_FALLBACK_STENCIL        0x40
+#define SAVAGE_FALLBACK_RENDERMODE     0x80
+#define SAVAGE_FALLBACK_BLEND_EQ       0x100
+#define SAVAGE_FALLBACK_NORAST         0x200
+#define SAVAGE_FALLBACK_PROJ_TEXTURE   0x400
 
 
 #define HW_CULL    1
@@ -273,37 +274,17 @@ struct savage_context_t {
 /* To remove all debugging, make sure SAVAGE_DEBUG is defined as a
  * preprocessor symbol, and equal to zero.  
  */
-#define SAVAGE_DEBUG 0   
 #ifndef SAVAGE_DEBUG
-#warning "Debugging enabled - expect reduced performance"
 extern int SAVAGE_DEBUG;
 #endif
 
-#define DEBUG_VERBOSE_2D     0x1
-#define DEBUG_VERBOSE_RING   0x8
-#define DEBUG_VERBOSE_OUTREG 0x10
-#define DEBUG_ALWAYS_SYNC    0x40
-#define DEBUG_VERBOSE_MSG    0x80
-#define DEBUG_NO_OUTRING     0x100
-#define DEBUG_NO_OUTREG      0x200
-#define DEBUG_VERBOSE_API    0x400
-#define DEBUG_VALIDATE_RING  0x800
-#define DEBUG_VERBOSE_LRU    0x1000
-#define DEBUG_VERBOSE_DRI    0x2000
-#define DEBUG_VERBOSE_IOCTL  0x4000
+#define DEBUG_FALLBACKS      0x001
+#define DEBUG_VERBOSE_API    0x002
+#define DEBUG_VERBOSE_LRU    0x004
 
 #define TARGET_FRONT    0x0
 #define TARGET_BACK     0x1
 #define TARGET_DEPTH    0x2
-
-#define SAVAGEDEBUG 0
-#define _SAVAGE_DEBUG
-/*frank remove the least debug information*/
-#ifdef _SAVAGE_DEBUG
-#define fprintf fprintf
-#else
-#define fprintf(...) 
-#endif
 
 #define SUBPIXEL_X -0.5
 #define SUBPIXEL_Y -0.375

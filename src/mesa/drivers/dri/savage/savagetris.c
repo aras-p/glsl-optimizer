@@ -781,7 +781,7 @@ static void savageRenderStart( GLcontext *ctx )
    if (index & _TNL_BIT_TEX(0)) {
       if (VB->TexCoordPtr[0]->size > 2) {
 	 /* projective textures are not supported by the hardware */
-	 FALLBACK(ctx, SAVAGE_FALLBACK_TEXTURE, GL_TRUE);
+	 FALLBACK(ctx, SAVAGE_FALLBACK_PROJ_TEXTURE, GL_TRUE);
       }
       if (VB->TexCoordPtr[0]->size == 2)
 	 EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_2F, SAVAGE_EMIT_ST0, SAVAGE_HW_NO_UV0 );
@@ -791,7 +791,7 @@ static void savageRenderStart( GLcontext *ctx )
    if (index & _TNL_BIT_TEX(1)) {
       if (VB->TexCoordPtr[1]->size > 2) {
 	 /* projective textures are not supported by the hardware */
-	 FALLBACK(ctx, SAVAGE_FALLBACK_TEXTURE, GL_TRUE);
+	 FALLBACK(ctx, SAVAGE_FALLBACK_PROJ_TEXTURE, GL_TRUE);
       }
       if (VB->TexCoordPtr[1]->size == 2)
 	 EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, SAVAGE_EMIT_ST1, SAVAGE_HW_NO_UV1 );
@@ -841,11 +841,27 @@ static void savageRenderFinish( GLcontext *ctx )
 /*           Transition to/from hardware rasterization.               */
 /**********************************************************************/
 
+static const char * const fallbackStrings[] = {
+   "Texture mode",
+   "Draw buffer",
+   "Read buffer",
+   "Color mask",
+   "Specular",
+   "LogicOp",
+   "glEnable(GL_STENCIL) without hw stencil buffer",
+   "glRenderMode(selection or feedback)",
+   "glBlendEquation",
+   "Hardware rasterization disabled",
+   "Projective texture",
+};
+
 void savageFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    GLuint oldfallback = imesa->Fallback;
+   GLuint index;
+   for (index = 0; (1 << index) < bit; ++index);
 
    if (mode) {
       imesa->Fallback |= bit;
@@ -855,6 +871,9 @@ void savageFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	 _swsetup_Wakeup( ctx );
 	 imesa->RenderIndex = ~0;
       }
+      if (!(oldfallback & bit) && (SAVAGE_DEBUG & DEBUG_FALLBACKS))
+	 fprintf (stderr, "Savage begin fallback: 0x%x %s\n",
+		  bit, fallbackStrings[index]);
    }
    else {
       imesa->Fallback &= ~bit;
@@ -878,6 +897,9 @@ void savageFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 
 	 imesa->new_gl_state |= _SAVAGE_NEW_RENDER_STATE;
       }
+      if ((oldfallback & bit) && (SAVAGE_DEBUG & DEBUG_FALLBACKS))
+	 fprintf (stderr, "Savage end fallback: 0x%x %s\n",
+		  bit, fallbackStrings[index]);
    }
 }
 
