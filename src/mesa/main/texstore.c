@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.30 2001/07/13 16:38:44 brianp Exp $ */
+/* $Id: texstore.c,v 1.31 2001/07/13 20:07:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1021,13 +1021,13 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          for (i = j = 0, k = k0; i < dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i][0] = (rowA[j][0] + rowA[k][0] +
-                         rowB[j][0] + rowB[k][0]) >> 2;
+                         rowB[j][0] + rowB[k][0]) / 4;
             dst[i][1] = (rowA[j][1] + rowA[k][1] +
-                         rowB[j][1] + rowB[k][1]) >> 2;
+                         rowB[j][1] + rowB[k][1]) / 4;
             dst[i][2] = (rowA[j][2] + rowA[k][2] +
-                         rowB[j][2] + rowB[k][2]) >> 2;
+                         rowB[j][2] + rowB[k][2]) / 4;
             dst[i][3] = (rowA[j][3] + rowA[k][3] +
-                         rowB[j][3] + rowB[k][3]) >> 2;
+                         rowB[j][3] + rowB[k][3]) / 4;
          }
       }
       return;
@@ -1040,11 +1040,11 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          for (i = j = 0, k = k0; i < dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i][0] = (rowA[j][0] + rowA[k][0] +
-                         rowB[j][0] + rowB[k][0]) >> 2;
+                         rowB[j][0] + rowB[k][0]) / 4;
             dst[i][1] = (rowA[j][1] + rowA[k][1] +
-                         rowB[j][1] + rowB[k][1]) >> 2;
+                         rowB[j][1] + rowB[k][1]) / 4;
             dst[i][2] = (rowA[j][2] + rowA[k][2] +
-                         rowB[j][2] + rowB[k][2]) >> 2;
+                         rowB[j][2] + rowB[k][2]) / 4;
          }
       }
       return;
@@ -1059,7 +1059,7 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          GLchan *dst = (GLchan *) dstRow;
          for (i = j = 0, k = k0; i < dstWidth;
               i++, j += colStride, k += colStride) {
-            dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) >> 2;
+            dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) / 4;
          }
       }
       return;
@@ -1072,9 +1072,9 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          for (i = j = 0, k = k0; i < dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i][0] = (rowA[j][0] + rowA[k][0] +
-                         rowB[j][0] + rowB[k][0]) >> 2;
+                         rowB[j][0] + rowB[k][0]) / 4;
             dst[i][1] = (rowA[j][1] + rowA[k][1] +
-                         rowB[j][1] + rowB[k][1]) >> 2;
+                         rowB[j][1] + rowB[k][1]) / 4;
          }
       }
       return;
@@ -1101,13 +1101,13 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          for (i = j = 0, k = k0; i < dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i][0] = (rowA[j][0] + rowA[k][0] +
-                         rowB[j][0] + rowB[k][0]) >> 2;
+                         rowB[j][0] + rowB[k][0]) / 4;
             dst[i][1] = (rowA[j][1] + rowA[k][1] +
-                         rowB[j][1] + rowB[k][1]) >> 2;
+                         rowB[j][1] + rowB[k][1]) / 4;
             dst[i][2] = (rowA[j][2] + rowA[k][2] +
-                         rowB[j][2] + rowB[k][2]) >> 2;
+                         rowB[j][2] + rowB[k][2]) / 4;
             dst[i][3] = (rowA[j][3] + rowA[k][3] +
-                         rowB[j][3] + rowB[k][3]) >> 2;
+                         rowB[j][3] + rowB[k][3]) / 4;
          }
       }
       return;
@@ -1120,11 +1120,11 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
          for (i = j = 0, k = k0; i < dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i][0] = (rowA[j][0] + rowA[k][0] +
-                         rowB[j][0] + rowB[k][0]) >> 2;
+                         rowB[j][0] + rowB[k][0]) / 4;
             dst[i][1] = (rowA[j][1] + rowA[k][1] +
-                         rowB[j][1] + rowB[k][1]) >> 2;
+                         rowB[j][1] + rowB[k][1]) / 4;
             dst[i][2] = (rowA[j][2] + rowA[k][2] +
-                         rowB[j][2] + rowB[k][2]) >> 2;
+                         rowB[j][2] + rowB[k][2]) / 4;
          }
       }
       return;

@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.29 2001/05/23 23:55:01 brianp Exp $ */
+/* $Id: pixel.c,v 1.30 2001/07/13 20:07:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -580,13 +580,13 @@ _mesa_PixelTransferf( GLenum pname, GLfloat param )
 
    switch (pname) {
       case GL_MAP_COLOR:
-         if (ctx->Pixel.MapColorFlag == param ? GL_TRUE : GL_FALSE)
+         if (ctx->Pixel.MapColorFlag == (param ? GL_TRUE : GL_FALSE))
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.MapColorFlag = param ? GL_TRUE : GL_FALSE;
 	 break;
       case GL_MAP_STENCIL:
-         if (ctx->Pixel.MapStencilFlag == param ? GL_TRUE : GL_FALSE)
+         if (ctx->Pixel.MapStencilFlag == (param ? GL_TRUE : GL_FALSE))
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.MapStencilFlag = param ? GL_TRUE : GL_FALSE;
@@ -1290,6 +1290,9 @@ void
 _mesa_chan_to_float_span(const GLcontext *ctx, GLuint n,
                          CONST GLchan rgba[][4], GLfloat rgbaf[][4])
 {
+#if CHAN_TYPE == GL_FLOAT
+   MEMCPY(rgbaf, rgba, n * 4 * sizeof(GLfloat));
+#else
    const GLuint rShift = CHAN_BITS - ctx->Visual.redBits;
    const GLuint gShift = CHAN_BITS - ctx->Visual.greenBits;
    const GLuint bShift = CHAN_BITS - ctx->Visual.blueBits;
@@ -1319,4 +1322,5 @@ _mesa_chan_to_float_span(const GLcontext *ctx, GLuint n,
       rgbaf[i][BCOMP] = (GLfloat) b * bScale;
       rgbaf[i][ACOMP] = (GLfloat) a * aScale;
    }
+#endif
 }

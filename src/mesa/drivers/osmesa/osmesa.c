@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.61 2001/07/12 22:09:21 keithw Exp $ */
+/* $Id: osmesa.c,v 1.62 2001/07/13 20:07:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -650,7 +650,7 @@ do {				\
 
 #define PACK_RGB_565(DST, R, G, B)					\
 do {									\
-   (DST) = (((R) << 8) & 0xf800) | (((G) << 3) & 0x7e0) | ((B) >> 3);\
+   (DST) = (((int) (R) << 8) & 0xf800) | (((int) (G) << 3) & 0x7e0) | ((int) (B) >> 3);\
 } while (0)
 
 
@@ -1278,7 +1278,7 @@ read_rgba_pixels3( const GLcontext *ctx,
 static void
 write_rgba_span2( const GLcontext *ctx,
                   GLuint n, GLint x, GLint y,
-                  CONST GLubyte rgba[][4], const GLubyte mask[] )
+                  CONST GLchan rgba[][4], const GLubyte mask[] )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    GLushort *ptr2 = (GLushort *) PIXELADDR2(x, y);
@@ -1302,7 +1302,7 @@ write_rgba_span2( const GLcontext *ctx,
 static void
 write_rgb_span2( const GLcontext *ctx,
                  GLuint n, GLint x, GLint y,
-                 CONST GLubyte rgb[][3], const GLubyte mask[] )
+                 CONST GLchan rgb[][3], const GLubyte mask[] )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    GLushort *ptr2 = (GLushort *) PIXELADDR2(x, y);
@@ -1342,7 +1342,7 @@ write_monocolor_span2( const GLcontext *ctx, GLuint n, GLint x, GLint y,
 static void
 write_rgba_pixels2( const GLcontext *ctx,
                     GLuint n, const GLint x[], const GLint y[],
-                    CONST GLubyte rgba[][4], const GLubyte mask[] )
+                    CONST GLchan rgba[][4], const GLubyte mask[] )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    GLuint i;
@@ -1374,7 +1374,7 @@ write_monocolor_pixels2( const GLcontext *ctx,
 static void
 read_rgba_span2( const GLcontext *ctx,
                  GLuint n, GLint x, GLint y,
-                 GLubyte rgba[][4] )
+                 GLchan rgba[][4] )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    GLuint i;
@@ -1391,7 +1391,7 @@ read_rgba_span2( const GLcontext *ctx,
 static void
 read_rgba_pixels2( const GLcontext *ctx,
                    GLuint n, const GLint x[], const GLint y[],
-                   GLubyte rgba[][4], const GLubyte mask[] )
+                   GLchan rgba[][4], const GLubyte mask[] )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    GLuint i;

@@ -1,4 +1,4 @@
-/* $Id: s_linetemp.h,v 1.8 2001/05/03 22:13:32 brianp Exp $ */
+/* $Id: s_linetemp.h,v 1.9 2001/07/13 20:07:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -99,24 +99,24 @@
    GLfloat dfog = vert1->fog - fog0;
 #endif
 #ifdef INTERP_RGB
-   GLfixed r0 = IntToFixed(vert0->color[0]);
-   GLfixed dr = IntToFixed(vert1->color[0]) - r0;
-   GLfixed g0 = IntToFixed(vert0->color[1]);
-   GLfixed dg = IntToFixed(vert1->color[1]) - g0;
-   GLfixed b0 = IntToFixed(vert0->color[2]);
-   GLfixed db = IntToFixed(vert1->color[2]) - b0;
+   GLfixed r0 = ChanToFixed(vert0->color[0]);
+   GLfixed dr = ChanToFixed(vert1->color[0]) - r0;
+   GLfixed g0 = ChanToFixed(vert0->color[1]);
+   GLfixed dg = ChanToFixed(vert1->color[1]) - g0;
+   GLfixed b0 = ChanToFixed(vert0->color[2]);
+   GLfixed db = ChanToFixed(vert1->color[2]) - b0;
 #endif
 #ifdef INTERP_SPEC
-   GLfixed sr0 = IntToFixed(vert0->specular[0]);
-   GLfixed dsr = IntToFixed(vert1->specular[0]) - sr0;
-   GLfixed sg0 = IntToFixed(vert0->specular[1]);
-   GLfixed dsg = IntToFixed(vert1->specular[1]) - sg0;
-   GLfixed sb0 = IntToFixed(vert0->specular[2]);
-   GLfixed dsb = IntToFixed(vert1->specular[2]) - sb0;
+   GLfixed sr0 = ChanToFixed(vert0->specular[0]);
+   GLfixed dsr = ChanToFixed(vert1->specular[0]) - sr0;
+   GLfixed sg0 = ChanToFixed(vert0->specular[1]);
+   GLfixed dsg = ChanToFixed(vert1->specular[1]) - sg0;
+   GLfixed sb0 = ChanToFixed(vert0->specular[2]);
+   GLfixed dsb = ChanToFixed(vert1->specular[2]) - sb0;
 #endif
 #ifdef INTERP_ALPHA
-   GLfixed a0 = IntToFixed(vert0->color[3]);
-   GLfixed da = IntToFixed(vert1->color[3]) - a0;
+   GLfixed a0 = ChanToFixed(vert0->color[3]);
+   GLfixed da = ChanToFixed(vert1->color[3]) - a0;
 #endif
 #ifdef INTERP_INDEX
    GLint i0 = vert0->index << 8;

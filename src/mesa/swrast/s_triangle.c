@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.32 2001/07/09 16:24:30 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.33 2001/07/13 20:07:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -329,6 +329,7 @@ static void simple_z_textured_triangle( GLcontext *ctx,
 }
 
 
+#if CHAN_TYPE != GL_FLOAT
 
 struct affine_info
 {
@@ -682,6 +683,8 @@ static void affine_textured_triangle( GLcontext *ctx,
 
 }
 
+#endif /* CHAN_BITS != GL_FLOAT */
+
 
 struct persp_info
 {
@@ -696,6 +699,7 @@ struct persp_info
    GLint fixedToDepthShift;
 };
 
+
 static void
 fast_persp_span(GLcontext *ctx, struct triangle_span *span,
 		struct persp_info *info)
@@ -707,7 +711,6 @@ fast_persp_span(GLcontext *ctx, struct triangle_span *span,
    * and complexity. Observe that an optimizing compiler kills
    * unused variables (for instance tf,sf,ti,si in case of GL_NEAREST).
    */
-
 #define SPAN_NEAREST(DO_TEX,COMP)					\
 	for (i = 0; i < span->count; i++) {				\
            GLdouble invQ = tex_coord[2] ?				\
@@ -1285,10 +1288,10 @@ static void general_textured_triangle( GLcontext *ctx,
    CHECKARRAY(tSpan, return);  /* mac 32k limitation */			\
    CHECKARRAY(uSpan, return);  /* mac 32k limitation */			\
    if (flatShade) {							\
-      rFlat = IntToFixed(v2->color[RCOMP]);				\
-      gFlat = IntToFixed(v2->color[GCOMP]);				\
-      bFlat = IntToFixed(v2->color[BCOMP]);				\
-      aFlat = IntToFixed(v2->color[ACOMP]);				\
+      rFlat = ChanToFixed(v2->color[RCOMP]);				\
+      gFlat = ChanToFixed(v2->color[GCOMP]);				\
+      bFlat = ChanToFixed(v2->color[BCOMP]);				\
+      aFlat = ChanToFixed(v2->color[ACOMP]);				\
    }									\
    span.texWidth[0] = (GLfloat) texImage->Width;			\
    span.texHeight[0] = (GLfloat) texImage->Height;			\
@@ -1366,13 +1369,13 @@ static void general_textured_spec_triangle( GLcontext *ctx,
    GLfixed rFlat, gFlat, bFlat, aFlat;					\
    GLfixed srFlat, sgFlat, sbFlat;					\
    if (flatShade) {							\
-      rFlat = IntToFixed(v2->color[RCOMP]);				\
-      gFlat = IntToFixed(v2->color[GCOMP]);				\
-      bFlat = IntToFixed(v2->color[BCOMP]);				\
-      aFlat = IntToFixed(v2->color[ACOMP]);				\
-      srFlat = IntToFixed(v2->specular[RCOMP]);				\
-      sgFlat = IntToFixed(v2->specular[GCOMP]);				\
-      sbFlat = IntToFixed(v2->specular[BCOMP]);				\
+      rFlat = ChanToFixed(v2->color[RCOMP]);				\
+      gFlat = ChanToFixed(v2->color[GCOMP]);				\
+      bFlat = ChanToFixed(v2->color[BCOMP]);				\
+      aFlat = ChanToFixed(v2->color[ACOMP]);				\
+      srFlat = ChanToFixed(v2->specular[RCOMP]);			\
+      sgFlat = ChanToFixed(v2->specular[GCOMP]);			\
+      sbFlat = ChanToFixed(v2->specular[BCOMP]);			\
    }									\
    span.texWidth[0] = (GLfloat) texImage->Width;			\
    span.texHeight[0] = (GLfloat) texImage->Height;			\
@@ -1421,13 +1424,13 @@ static void lambda_textured_triangle( GLcontext *ctx,
    GLfixed rFlat, gFlat, bFlat, aFlat;					\
    GLfixed srFlat, sgFlat, sbFlat;					\
    if (flatShade) {							\
-      rFlat = IntToFixed(v2->color[RCOMP]);				\
-      gFlat = IntToFixed(v2->color[GCOMP]);				\
-      bFlat = IntToFixed(v2->color[BCOMP]);				\
-      aFlat = IntToFixed(v2->color[ACOMP]);				\
-      srFlat = IntToFixed(v2->specular[RCOMP]);				\
-      sgFlat = IntToFixed(v2->specular[GCOMP]);				\
-      sbFlat = IntToFixed(v2->specular[BCOMP]);				\
+      rFlat = ChanToFixed(v2->color[RCOMP]);				\
+      gFlat = ChanToFixed(v2->color[GCOMP]);				\
+      bFlat = ChanToFixed(v2->color[BCOMP]);				\
+      aFlat = ChanToFixed(v2->color[ACOMP]);				\
+      srFlat = ChanToFixed(v2->specular[RCOMP]);			\
+      sgFlat = ChanToFixed(v2->specular[GCOMP]);			\
+      sbFlat = ChanToFixed(v2->specular[BCOMP]);			\
    }									\
    span.texWidth[0] = (GLfloat) texImage->Width;			\
    span.texHeight[0] = (GLfloat) texImage->Height;			\
@@ -1478,13 +1481,13 @@ static void lambda_textured_spec_triangle( GLcontext *ctx,
    GLfixed rFlat, gFlat, bFlat, aFlat;					\
    GLfixed srFlat, sgFlat, sbFlat;					\
    if (flatShade) {							\
-      rFlat = IntToFixed(v2->color[RCOMP]);				\
-      gFlat = IntToFixed(v2->color[GCOMP]);				\
-      bFlat = IntToFixed(v2->color[BCOMP]);				\
-      aFlat = IntToFixed(v2->color[ACOMP]);				\
-      srFlat = IntToFixed(v2->specular[RCOMP]);				\
-      sgFlat = IntToFixed(v2->specular[GCOMP]);				\
-      sbFlat = IntToFixed(v2->specular[BCOMP]);				\
+      rFlat = ChanToFixed(v2->color[RCOMP]);				\
+      gFlat = ChanToFixed(v2->color[GCOMP]);				\
+      bFlat = ChanToFixed(v2->color[BCOMP]);				\
+      aFlat = ChanToFixed(v2->color[ACOMP]);				\
+      srFlat = ChanToFixed(v2->specular[RCOMP]);			\
+      sgFlat = ChanToFixed(v2->specular[GCOMP]);			\
+      sbFlat = ChanToFixed(v2->specular[BCOMP]);			\
    }									\
    span.texWidth[0] = (GLfloat) texImage->Width;			\
    span.texHeight[0] = (GLfloat) texImage->Height;			\
@@ -1534,13 +1537,13 @@ lambda_multitextured_triangle( GLcontext *ctx,
    GLfixed srFlat, sgFlat, sbFlat;					\
    GLuint u;								\
    if (flatShade) {							\
-      rFlat = IntToFixed(v2->color[RCOMP]);				\
-      gFlat = IntToFixed(v2->color[GCOMP]);				\
-      bFlat = IntToFixed(v2->color[BCOMP]);				\
-      aFlat = IntToFixed(v2->color[ACOMP]);				\
-      srFlat = IntToFixed(v2->specular[RCOMP]);				\
-      sgFlat = IntToFixed(v2->specular[GCOMP]);				\
-      sbFlat = IntToFixed(v2->specular[BCOMP]);				\
+      rFlat = ChanToFixed(v2->color[RCOMP]);				\
+      gFlat = ChanToFixed(v2->color[GCOMP]);				\
+      bFlat = ChanToFixed(v2->color[BCOMP]);				\
+      aFlat = ChanToFixed(v2->color[ACOMP]);				\
+      srFlat = ChanToFixed(v2->specular[RCOMP]);			\
+      sgFlat = ChanToFixed(v2->specular[GCOMP]);			\
+      sbFlat = ChanToFixed(v2->specular[BCOMP]);			\
    }									\
    for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {			\
       if (ctx->Texture.Unit[u]._ReallyEnabled) {			\
@@ -1733,17 +1736,18 @@ _swrast_choose_triangle( GLcontext *ctx )
 		  }
 	       }
 	       else {
-		 /* GL_MODULATE seems also not to work !! */
-                  if (ctx->Texture.Unit[0].EnvMode==GL_ADD) {
-                     USE(general_textured_triangle);
-                  }
-                  else {
+#if CHAN_TYPE != GL_FLOAT
+                  if (ctx->Texture.Unit[0].EnvMode != GL_ADD) {
                      USE(affine_textured_triangle);
+                  }
+                  else
+#endif
+                  {
+                     USE(general_textured_triangle);
                   }
 	       }
 	    }
 	    else {
-	      /* GL_MODULATE seems also not to work !! */
 	       if (ctx->Texture.Unit[0].EnvMode==GL_ADD) {
 		  USE(general_textured_triangle);
 	       }

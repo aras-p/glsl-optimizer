@@ -1,4 +1,4 @@
-/* $Id: s_alphabuf.c,v 1.7 2001/05/11 18:58:32 brianp Exp $ */
+/* $Id: s_alphabuf.c,v 1.8 2001/07/13 20:07:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -162,8 +162,8 @@ _mesa_clear_alpha_buffers( GLcontext *ctx )
          if (ctx->Scissor.Enabled) {
             /* clear scissor region */
             GLint j;
-            GLint rowLen = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin + 1;
-            GLint rows = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin + 1;
+            GLint rowLen = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
+            GLint rows = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
             GLint width = ctx->DrawBuffer->Width;
             GLchan *aptr = buffer
                           + ctx->DrawBuffer->_Ymin * ctx->DrawBuffer->Width
@@ -174,7 +174,10 @@ _mesa_clear_alpha_buffers( GLcontext *ctx )
 #elif CHAN_BITS == 16
                MEMSET16( aptr, aclear, rowLen );
 #else
-#error unexpected CHAN_BITS value
+               GLint i;
+               for (i = 0; i < rowLen; i++) {
+                  aptr[i] = aclear;
+               }
 #endif
                aptr += width;
             }
@@ -187,7 +190,10 @@ _mesa_clear_alpha_buffers( GLcontext *ctx )
 #elif CHAN_BITS == 16
             MEMSET16(buffer, aclear, pixels);
 #else
-#error unexpected CHAN_BITS value
+            GLuint i;
+            for (i = 0; i < pixels; i++) {
+               buffer[i] = aclear;
+            }
 #endif
          }
       }

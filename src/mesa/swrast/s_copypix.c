@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.22 2001/07/13 15:24:34 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.23 2001/07/13 20:07:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -814,7 +814,7 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
          }
          else {
             _mesa_write_rgba_span( ctx, width, destx, dy, zspan, fogSpan,
-                                   rgba, NULL, GL_BITMAP);
+                                   (GLchan (*)[4])rgba, NULL, GL_BITMAP);
          }
       }
       else {

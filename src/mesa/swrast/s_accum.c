@@ -1,4 +1,4 @@
-/* $Id: s_accum.c,v 1.11 2001/04/20 19:21:41 brianp Exp $ */
+/* $Id: s_accum.c,v 1.12 2001/07/13 20:07:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -108,8 +108,7 @@ static void rescale_accum( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLuint n = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height * 4;
-   const GLfloat fChanMax = (1 << (sizeof(GLchan) * 8)) - 1;
-   const GLfloat s = swrast->_IntegerAccumScaler * (32767.0 / fChanMax);
+   const GLfloat s = swrast->_IntegerAccumScaler * (32767.0 / CHAN_MAXF);
    GLaccum *accum = ctx->DrawBuffer->Accum;
    GLuint i;
 
@@ -150,8 +149,7 @@ _mesa_clear_accum_buffer( GLcontext *ctx )
       acc_scale = 32767.0;
    }
    else {
-      /* sizeof(GLaccum) > 2 (Cray) */
-      acc_scale = (float) SHRT_MAX;
+      acc_scale = 1.0F;
    }
 
    /* number of pixels */
@@ -166,14 +164,13 @@ _mesa_clear_accum_buffer( GLcontext *ctx )
    if (ctx->DrawBuffer->Accum) {
       if (ctx->Scissor.Enabled) {
 	 /* Limit clear to scissor box */
-	 GLaccum r, g, b, a;
+	 const GLaccum r = (GLaccum) (ctx->Accum.ClearColor[0] * acc_scale);
+	 const GLaccum g = (GLaccum) (ctx->Accum.ClearColor[1] * acc_scale);
+	 const GLaccum b = (GLaccum) (ctx->Accum.ClearColor[2] * acc_scale);
+	 const GLaccum a = (GLaccum) (ctx->Accum.ClearColor[3] * acc_scale);
 	 GLint i, j;
          GLint width, height;
          GLaccum *row;
-	 r = (GLaccum) (ctx->Accum.ClearColor[0] * acc_scale);
-	 g = (GLaccum) (ctx->Accum.ClearColor[1] * acc_scale);
-	 b = (GLaccum) (ctx->Accum.ClearColor[2] * acc_scale);
-	 a = (GLaccum) (ctx->Accum.ClearColor[3] * acc_scale);
          /* size of region to clear */
          width = 4 * (ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin);
          height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
@@ -202,14 +199,12 @@ _mesa_clear_accum_buffer( GLcontext *ctx )
 	 }
 	 else {
 	    /* Not black */
-	    GLaccum *acc, r, g, b, a;
+	    const GLaccum r = (GLaccum) (ctx->Accum.ClearColor[0] * acc_scale);
+	    const GLaccum g = (GLaccum) (ctx->Accum.ClearColor[1] * acc_scale);
+	    const GLaccum b = (GLaccum) (ctx->Accum.ClearColor[2] * acc_scale);
+	    const GLaccum a = (GLaccum) (ctx->Accum.ClearColor[3] * acc_scale);
+	    GLaccum *acc = ctx->DrawBuffer->Accum;
 	    GLuint i;
-
-	    acc = ctx->DrawBuffer->Accum;
-	    r = (GLaccum) (ctx->Accum.ClearColor[0] * acc_scale);
-	    g = (GLaccum) (ctx->Accum.ClearColor[1] * acc_scale);
-	    b = (GLaccum) (ctx->Accum.ClearColor[2] * acc_scale);
-	    a = (GLaccum) (ctx->Accum.ClearColor[3] * acc_scale);
 	    for (i=0;i<buffersize;i++) {
 	       *acc++ = r;
 	       *acc++ = g;
@@ -247,8 +242,6 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
    GLfloat acc_scale;
    GLchan rgba[MAX_WIDTH][4];
    const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
-   const GLint iChanMax = (1 << (sizeof(GLchan) * 8)) - 1;
-   const GLfloat fChanMax = (1 << (sizeof(GLchan) * 8)) - 1;
 
 
    if (SWRAST_CONTEXT(ctx)->NewState)
@@ -268,8 +261,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
       acc_scale = 32767.0;
    }
    else {
-      /* sizeof(GLaccum) > 2 (Cray) */
-      acc_scale = (float) SHRT_MAX;
+      acc_scale = 1.0F;
    }
 
    width4 = 4 * width;
@@ -277,16 +269,16 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
    switch (op) {
       case GL_ADD:
          if (value != 0.0F) {
-	    const GLaccum intVal = (GLaccum) (value * acc_scale);
+	    const GLaccum val = (GLaccum) (value * acc_scale);
 	    GLint j;
             /* Leave optimized accum buffer mode */
             if (swrast->_IntegerAccumMode)
                rescale_accum(ctx);
 	    for (j = 0; j < height; j++) {
-	       GLaccum * acc = ctx->DrawBuffer->Accum + ypos * width4 + 4 * xpos;
+	       GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + 4*xpos;
                GLuint i;
 	       for (i = 0; i < width4; i++) {
-                  acc[i] += intVal;
+                  acc[i] += val;
 	       }
 	       ypos++;
 	    }
@@ -346,21 +338,22 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             }
          }
          else {
-            /* scaled integer accum buffer */
-            const GLfloat rscale = value * acc_scale / fChanMax;
-            const GLfloat gscale = value * acc_scale / fChanMax;
-            const GLfloat bscale = value * acc_scale / fChanMax;
-            const GLfloat ascale = value * acc_scale / fChanMax;
+            /* scaled integer (or float) accum buffer */
+            const GLfloat rscale = value * acc_scale / CHAN_MAXF;
+            const GLfloat gscale = value * acc_scale / CHAN_MAXF;
+            const GLfloat bscale = value * acc_scale / CHAN_MAXF;
+            const GLfloat ascale = value * acc_scale / CHAN_MAXF;
             GLint j;
             for (j=0;j<height;j++) {
                GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos * 4;
                GLint i;
                _mesa_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
                for (i=0;i<width;i++) {
-                  *acc += (GLaccum) ( (GLfloat) rgba[i][RCOMP] * rscale );  acc++;
-                  *acc += (GLaccum) ( (GLfloat) rgba[i][GCOMP] * gscale );  acc++;
-                  *acc += (GLaccum) ( (GLfloat) rgba[i][BCOMP] * bscale );  acc++;
-                  *acc += (GLaccum) ( (GLfloat) rgba[i][ACOMP] * ascale );  acc++;
+                  acc[0] += (GLaccum) ( (GLfloat) rgba[i][RCOMP] * rscale );
+                  acc[1] += (GLaccum) ( (GLfloat) rgba[i][GCOMP] * gscale );
+                  acc[2] += (GLaccum) ( (GLfloat) rgba[i][BCOMP] * bscale );
+                  acc[3] += (GLaccum) ( (GLfloat) rgba[i][ACOMP] * ascale );
+                  acc += 4;
                }
                ypos++;
             }
@@ -410,21 +403,30 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             }
          }
          else {
-            /* scaled integer accum buffer */
-            const GLfloat rscale = value * acc_scale / fChanMax;
-            const GLfloat gscale = value * acc_scale / fChanMax;
-            const GLfloat bscale = value * acc_scale / fChanMax;
-            const GLfloat ascale = value * acc_scale / fChanMax;
-            const GLfloat d = 3.0 / acc_scale;
+            /* scaled integer (or float) accum buffer */
+            const GLfloat rscale = value * acc_scale / CHAN_MAXF;
+            const GLfloat gscale = value * acc_scale / CHAN_MAXF;
+            const GLfloat bscale = value * acc_scale / CHAN_MAXF;
+            const GLfloat ascale = value * acc_scale / CHAN_MAXF;
+#if 0
+            const GLfloat d = 3.0 / acc_scale;  /* XXX what's this? */
+#endif
             GLint i, j;
             for (j = 0; j < height; j++) {
                GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos * 4;
                _mesa_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
                for (i=0;i<width;i++) {
+#if 0
                   *acc++ = (GLaccum) ((GLfloat) rgba[i][RCOMP] * rscale + d);
                   *acc++ = (GLaccum) ((GLfloat) rgba[i][GCOMP] * gscale + d);
                   *acc++ = (GLaccum) ((GLfloat) rgba[i][BCOMP] * bscale + d);
                   *acc++ = (GLaccum) ((GLfloat) rgba[i][ACOMP] * ascale + d);
+#else
+                  *acc++ = (GLaccum) ((GLfloat) rgba[i][RCOMP] * rscale);
+                  *acc++ = (GLaccum) ((GLfloat) rgba[i][GCOMP] * gscale);
+                  *acc++ = (GLaccum) ((GLfloat) rgba[i][BCOMP] * bscale);
+                  *acc++ = (GLaccum) ((GLfloat) rgba[i][ACOMP] * ascale);
+#endif
                }
                ypos++;
             }
@@ -442,6 +444,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             rescale_accum(ctx);
 
          RENDER_START(swrast,ctx);
+#ifdef USE_OPTIMIZED_ACCUM
          if (swrast->_IntegerAccumMode && swrast->_IntegerAccumScaler > 0) {
             /* build lookup table to avoid many floating point multiplies */
             static GLchan multTable[32768];
@@ -483,11 +486,14 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
                ypos++;
             }
          }
-         else {
-            const GLfloat rscale = value / acc_scale * fChanMax;
-            const GLfloat gscale = value / acc_scale * fChanMax;
-            const GLfloat bscale = value / acc_scale * fChanMax;
-            const GLfloat ascale = value / acc_scale * fChanMax;
+         else
+#endif /* USE_OPTIMIZED_ACCUM */
+         {
+            /* scaled integer (or float) accum buffer */
+            const GLfloat rscale = value / acc_scale * CHAN_MAXF;
+            const GLfloat gscale = value / acc_scale * CHAN_MAXF;
+            const GLfloat bscale = value / acc_scale * CHAN_MAXF;
+            const GLfloat ascale = value / acc_scale * CHAN_MAXF;
             GLint i, j;
             for (j=0;j<height;j++) {
                const GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos*4;
@@ -497,10 +503,10 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
                   GLint b = IROUND( (GLfloat) (acc[2]) * bscale );
                   GLint a = IROUND( (GLfloat) (acc[3]) * ascale );
                   acc += 4;
-                  rgba[i][RCOMP] = CLAMP( r, 0, iChanMax );
-                  rgba[i][GCOMP] = CLAMP( g, 0, iChanMax );
-                  rgba[i][BCOMP] = CLAMP( b, 0, iChanMax );
-                  rgba[i][ACOMP] = CLAMP( a, 0, iChanMax );
+                  rgba[i][RCOMP] = CLAMP( r, 0, CHAN_MAX );
+                  rgba[i][GCOMP] = CLAMP( g, 0, CHAN_MAX );
+                  rgba[i][BCOMP] = CLAMP( b, 0, CHAN_MAX );
+                  rgba[i][ACOMP] = CLAMP( a, 0, CHAN_MAX );
                }
                if (colorMask != 0xffffffff) {
                   _mesa_mask_rgba_span( ctx, width, xpos, ypos, rgba );

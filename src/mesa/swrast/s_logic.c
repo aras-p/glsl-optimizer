@@ -1,4 +1,4 @@
-/* $Id: s_logic.c,v 1.7 2001/05/10 16:54:12 brianp Exp $ */
+/* $Id: s_logic.c,v 1.8 2001/07/13 20:07:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -334,9 +334,19 @@ static void rgba_logicop_ui( const GLcontext *ctx, GLuint n,
  */
 static void rgba_logicop_chan( const GLcontext *ctx, GLuint n,
                                const GLubyte mask[],
-                               GLchan src[], const GLchan dest[] )
+                               GLchan srcPtr[], const GLchan destPtr[] )
 {
+#if CHAN_TYPE == GL_FLOAT
+   GLuint *src = (GLuint *) srcPtr;
+   const GLuint *dest = (const GLuint *) destPtr;
    GLuint i;
+   ASSERT(sizeof(GLfloat) == sizeof(GLuint));
+#else
+   GLchan *src = srcPtr;
+   const GLchan *dest = destPtr;
+   GLuint i;
+#endif
+
    switch (ctx->Color.LogicOp) {
       case GL_CLEAR:
          for (i=0;i<n;i++) {

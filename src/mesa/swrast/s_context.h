@@ -1,4 +1,4 @@
-/* $Id: s_context.h,v 1.10 2001/05/17 09:32:17 keithw Exp $ */
+/* $Id: s_context.h,v 1.11 2001/07/13 20:07:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -167,25 +167,39 @@ typedef struct
 } SWcontext;
 
 
-void
+extern void
 _swrast_validate_derived( GLcontext *ctx );
 
 
 #define SWRAST_CONTEXT(ctx) ((SWcontext *)ctx->swrast_context)
 
 #define RENDER_START(SWctx, GLctx)			\
-   do {						\
+   do {							\
       if ((SWctx)->Driver.SpanRenderStart) {		\
          (*(SWctx)->Driver.SpanRenderStart)(GLctx);	\
-      }						\
+      }							\
    } while (0)
 
 #define RENDER_FINISH(SWctx, GLctx)			\
-   do {						\
+   do {							\
       if ((SWctx)->Driver.SpanRenderFinish) {		\
          (*(SWctx)->Driver.SpanRenderFinish)(GLctx);	\
-      }						\
+      }							\
    } while (0)
 
+
+
+/*
+ * XXX these macros are just bandages for now in order to make
+ * CHAN_BITS==32 compile cleanly.
+ * These should probably go elsewhere at some point.
+ */
+#if CHAN_TYPE == GL_FLOAT
+#define ChanToFixed(X)  FloatToFixed(X)
+#define FixedToChan(X)  FixedToFloat(X)
+#else
+#define ChanToFixed(X)  IntToFixed(X)
+#define FixedToChan(X)  FixedToInt(X)
+#endif
 
 #endif

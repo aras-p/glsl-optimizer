@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.99 2001/07/13 15:44:21 brianp Exp $ */
+/* $Id: teximage.c,v 1.100 2001/07/13 20:07:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -58,6 +58,9 @@
 #ifdef DEBUG
 static void PrintTexture(const struct gl_texture_image *img)
 {
+#if CHAN_TYPE == GL_FLOAT
+   _mesa_problem(NULL, "PrintTexture doesn't support float channels");
+#else
    GLuint i, j, c;
    const GLchan *data = (const GLchan *) img->Data;
 
@@ -101,6 +104,7 @@ static void PrintTexture(const struct gl_texture_image *img)
       }
       printf("\n");
    }
+#endif
 }
 #endif
 

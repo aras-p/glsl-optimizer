@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.19 2001/06/13 14:53:52 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.20 2001/07/13 20:07:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -792,33 +792,33 @@
                dfogOuter = dfogdy + dxOuter * span.fogStep;
 #endif
 #ifdef INTERP_RGB
-               fr = (GLfixed)(IntToFixed(vLower->color[0])
+               fr = (GLfixed)(ChanToFixed(vLower->color[0])
                               + drdx * adjx + drdy * adjy) + FIXED_HALF;
                fdrOuter = SignedFloatToFixed(drdy + dxOuter * drdx);
 
-               fg = (GLfixed)(IntToFixed(vLower->color[1])
+               fg = (GLfixed)(ChanToFixed(vLower->color[1])
                               + dgdx * adjx + dgdy * adjy) + FIXED_HALF;
                fdgOuter = SignedFloatToFixed(dgdy + dxOuter * dgdx);
 
-               fb = (GLfixed)(IntToFixed(vLower->color[2])
+               fb = (GLfixed)(ChanToFixed(vLower->color[2])
                               + dbdx * adjx + dbdy * adjy) + FIXED_HALF;
                fdbOuter = SignedFloatToFixed(dbdy + dxOuter * dbdx);
 #endif
 #ifdef INTERP_ALPHA
-               fa = (GLfixed)(IntToFixed(vLower->color[3])
+               fa = (GLfixed)(ChanToFixed(vLower->color[3])
                               + dadx * adjx + dady * adjy) + FIXED_HALF;
                fdaOuter = SignedFloatToFixed(dady + dxOuter * dadx);
 #endif
 #ifdef INTERP_SPEC
-               fsr = (GLfixed)(IntToFixed(vLower->specular[0])
+               fsr = (GLfixed)(ChanToFixed(vLower->specular[0])
                                + dsrdx * adjx + dsrdy * adjy) + FIXED_HALF;
                fdsrOuter = SignedFloatToFixed(dsrdy + dxOuter * dsrdx);
 
-               fsg = (GLfixed)(IntToFixed(vLower->specular[1])
+               fsg = (GLfixed)(ChanToFixed(vLower->specular[1])
                                + dsgdx * adjx + dsgdy * adjy) + FIXED_HALF;
                fdsgOuter = SignedFloatToFixed(dsgdy + dxOuter * dsgdx);
 
-               fsb = (GLfixed)(IntToFixed(vLower->specular[2])
+               fsb = (GLfixed)(ChanToFixed(vLower->specular[2])
                                + dsbdx * adjx + dsbdy * adjy) + FIXED_HALF;
                fdsbOuter = SignedFloatToFixed(dsbdy + dxOuter * dsbdx);
 #endif

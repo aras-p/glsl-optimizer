@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.22 2001/07/12 22:09:21 keithw Exp $ */
+/* $Id: s_context.c,v 1.23 2001/07/13 20:07:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -547,10 +547,17 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
 		 v->texcoord[i][0], v->texcoord[i][1],
 		 v->texcoord[i][2], v->texcoord[i][3]);
 
+#if CHAN_TYPE == GL_FLOAT
+      fprintf(stderr, "color %f %f %f %f\n",
+	      v->color[0], v->color[1], v->color[2], v->color[3]);
+      fprintf(stderr, "spec %f %f %f %f\n",
+	      v->specular[0], v->specular[1], v->specular[2], v->specular[3]);
+#else
       fprintf(stderr, "color %d %d %d %d\n",
 	      v->color[0], v->color[1], v->color[2], v->color[3]);
       fprintf(stderr, "spec %d %d %d %d\n",
 	      v->specular[0], v->specular[1], v->specular[2], v->specular[3]);
+#endif
       fprintf(stderr, "fog %f\n", v->fog);
       fprintf(stderr, "index %d\n", v->index);
       fprintf(stderr, "pointsize %f\n", v->pointSize);

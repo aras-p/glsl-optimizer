@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.48 2001/06/26 21:15:35 brianp Exp $ */
+/* $Id: mtypes.h,v 1.49 2001/07/13 20:07:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,6 +74,8 @@
    typedef GLbyte GLaccum;
 #elif ACCUM_BITS==16
    typedef GLshort GLaccum;
+#elif ACCUM_BITS==32
+   typedef GLfloat GLaccum;
 #else
 #  error "illegal number of accumulation bits"
 #endif
