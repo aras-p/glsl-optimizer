@@ -1,4 +1,4 @@
-/* $Id: multiarb.c,v 1.5 2000/02/02 17:31:45 brianp Exp $ */
+/* $Id: multiarb.c,v 1.6 2000/05/23 23:21:00 brianp Exp $ */
 
 /*
  * GL_ARB_multitexture demo
@@ -12,6 +12,9 @@
 
 /*
  * $Log: multiarb.c,v $
+ * Revision 1.6  2000/05/23 23:21:00  brianp
+ * set default window pos
+ *
  * Revision 1.5  2000/02/02 17:31:45  brianp
  * changed > to >=
  *
@@ -319,6 +322,7 @@ int main( int argc, char *argv[] )
 {
    glutInit( &argc, argv );
    glutInitWindowSize( 300, 300 );
+   glutInitWindowPosition( 0, 0 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
    glutCreateWindow(argv[0] );
 
