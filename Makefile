@@ -142,7 +142,6 @@ LIB_FILES =	\
 	$(DIRECTORY)/configs/[a-z]*					\
 	$(DIRECTORY)/docs/*.html					\
 	$(DIRECTORY)/docs/COPYING					\
-	$(DIRECTORY)/docs/INSTALL.GNU					\
 	$(DIRECTORY)/docs/README.*					\
 	$(DIRECTORY)/docs/RELNOTES*					\
 	$(DIRECTORY)/docs/VERSIONS					\
