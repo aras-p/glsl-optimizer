@@ -24,7 +24,7 @@ extern "C" {
 ** 
 ** Original Code. The Original Code is: OpenGL Sample Implementation,
 ** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
-** Inc. The Original Code is Copyright (c) 1991-2002 Silicon Graphics, Inc.
+** Inc. The Original Code is Copyright (c) 1991-2004 Silicon Graphics, Inc.
 ** Copyright in any portions created by third parties is as indicated
 ** elsewhere herein. All Rights Reserved.
 ** 
@@ -52,9 +52,9 @@ extern "C" {
 /*************************************************************/
 
 /* Header file version number, required by OpenGL ABI for Linux */
-/* glext.h last updated 2004/6/22 */
+/* glext.h last updated 2004/7/26 */
 /* Current version at http://oss.sgi.com/projects/ogl-sample/registry/ */
-#define GL_GLEXT_VERSION 23
+#define GL_GLEXT_VERSION 24
 
 #ifndef GL_VERSION_1_2
 #define GL_UNSIGNED_BYTE_3_3_2            0x8032
@@ -356,7 +356,7 @@ extern "C" {
 #define GL_DYNAMIC_READ                   0x88E9
 #define GL_DYNAMIC_COPY                   0x88EA
 #define GL_SAMPLES_PASSED                 0x8914
-#define GL_FOG_COORD_SOURCE               GL_FOG_COORDINATE_SOURCE
+#define GL_FOG_COORD_SRC                  GL_FOG_COORDINATE_SOURCE
 #define GL_FOG_COORD                      GL_FOG_COORDINATE
 #define GL_CURRENT_FOG_COORD              GL_CURRENT_FOG_COORDINATE
 #define GL_FOG_COORD_ARRAY_TYPE           GL_FOG_COORDINATE_ARRAY_TYPE
@@ -796,6 +796,33 @@ extern "C" {
 #endif
 
 #ifndef GL_ARB_fragment_program_shadow
+#endif
+
+#ifndef GL_ARB_draw_buffers
+#define GL_MAX_DRAW_BUFFERS_ARB           0x8824
+#define GL_DRAW_BUFFER0_ARB               0x8825
+#define GL_DRAW_BUFFER1_ARB               0x8826
+#define GL_DRAW_BUFFER2_ARB               0x8827
+#define GL_DRAW_BUFFER3_ARB               0x8828
+#define GL_DRAW_BUFFER4_ARB               0x8829
+#define GL_DRAW_BUFFER5_ARB               0x882A
+#define GL_DRAW_BUFFER6_ARB               0x882B
+#define GL_DRAW_BUFFER7_ARB               0x882C
+#define GL_DRAW_BUFFER8_ARB               0x882D
+#define GL_DRAW_BUFFER9_ARB               0x882E
+#define GL_DRAW_BUFFER10_ARB              0x882F
+#define GL_DRAW_BUFFER11_ARB              0x8830
+#define GL_DRAW_BUFFER12_ARB              0x8831
+#define GL_DRAW_BUFFER13_ARB              0x8832
+#define GL_DRAW_BUFFER14_ARB              0x8833
+#define GL_DRAW_BUFFER15_ARB              0x8834
+#endif
+
+#ifndef GL_ARB_texture_rectangle
+#define GL_TEXTURE_RECTANGLE_ARB          0x84F5
+#define GL_TEXTURE_BINDING_RECTANGLE_ARB  0x84F6
+#define GL_PROXY_TEXTURE_RECTANGLE_ARB    0x84F7
+#define GL_MAX_RECTANGLE_TEXTURE_SIZE_ARB 0x84F8
 #endif
 
 #ifndef GL_EXT_abgr
@@ -2675,6 +2702,11 @@ extern "C" {
 #define GL_DRAW_BUFFER15_ATI              0x8834
 #endif
 
+#ifndef GL_ATI_pixel_format_float
+#define GL_TYPE_RGBA_FLOAT_ATI            0x8820
+#define GL_COLOR_CLEAR_UNCLAMPED_VALUE_ATI 0x8835
+#endif
+
 #ifndef GL_ATI_texture_env_combine3
 #define GL_MODULATE_ADD_ATI               0x8744
 #define GL_MODULATE_SIGNED_ADD_ATI        0x8745
@@ -3706,6 +3738,18 @@ typedef GLint (APIENTRYP PFNGLGETATTRIBLOCATIONARBPROC) (GLhandleARB programObj,
 
 #ifndef GL_ARB_fragment_program_shadow
 #define GL_ARB_fragment_program_shadow 1
+#endif
+
+#ifndef GL_ARB_draw_buffers
+#define GL_ARB_draw_buffers 1
+#ifdef GL_GLEXT_PROTOTYPES
+GLAPI void APIENTRY glDrawBuffersARB (GLsizei, const GLenum *);
+#endif /* GL_GLEXT_PROTOTYPES */
+typedef void (APIENTRYP PFNGLDRAWBUFFERSARBPROC) (GLsizei n, const GLenum *bufs);
+#endif
+
+#ifndef GL_ARB_texture_rectangle
+#define GL_ARB_texture_rectangle 1
 #endif
 
 #ifndef GL_EXT_abgr
@@ -5732,6 +5776,13 @@ typedef void (APIENTRYP PFNGLVERTEXARRAYPARAMETERIAPPLEPROC) (GLenum pname, GLin
 GLAPI void APIENTRY glDrawBuffersATI (GLsizei, const GLenum *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRYP PFNGLDRAWBUFFERSATIPROC) (GLsizei n, const GLenum *bufs);
+#endif
+
+#ifndef GL_ATI_pixel_format_float
+#define GL_ATI_pixel_format_float 1
+/* This is really a WGL extension, but defines some associated GL enums.
+ * ATI does not export "GL_ATI_pixel_format_float" in the GL_EXTENSIONS string.
+ */
 #endif
 
 #ifndef GL_ATI_texture_env_combine3
