@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.4 2000/12/13 17:35:43 brianp Exp $ */
+/* $Id: s_fog.c,v 1.5 2000/12/15 16:42:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,17 +48,17 @@ _mesa_fog_rgba_pixels( const GLcontext *ctx,
 		       const GLfixed fog[], 
 		       GLchan rgba[][4] )
 {
-   GLfixed rFog = ctx->Fog.Color[0] * CHAN_MAXF;
-   GLfixed gFog = ctx->Fog.Color[1] * CHAN_MAXF;
-   GLfixed bFog = ctx->Fog.Color[2] * CHAN_MAXF;
+   GLchan rFog = FLOAT_TO_CHAN(ctx->Fog.Color[0]);
+   GLchan gFog = FLOAT_TO_CHAN(ctx->Fog.Color[1]);
+   GLchan bFog = FLOAT_TO_CHAN(ctx->Fog.Color[2]);
    GLuint i;
 
-   for (i=0;i<n;i++) {
+   for (i = 0; i < n; i++) {
       GLfixed f = CLAMP(fog[i], 0, FIXED_ONE);
       GLfixed g = FIXED_ONE - f;
-      rgba[i][0] = (f*rgba[i][0] + g*rFog) >> FIXED_SHIFT;
-      rgba[i][1] = (f*rgba[i][1] + g*gFog) >> FIXED_SHIFT;
-      rgba[i][2] = (f*rgba[i][2] + g*bFog) >> FIXED_SHIFT;
+      rgba[i][0] = (f * rgba[i][0] + g * rFog) >> FIXED_SHIFT;
+      rgba[i][1] = (f * rgba[i][1] + g * gFog) >> FIXED_SHIFT;
+      rgba[i][2] = (f * rgba[i][2] + g * bFog) >> FIXED_SHIFT;
    }
 }
 
@@ -136,14 +136,14 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
       case GL_LINEAR:
          {
             GLfloat fogEnd = ctx->Fog.End;
-            GLfloat fogScale = (GLfloat) FIXED_ONE / (ctx->Fog.End - 
-						      ctx->Fog.Start);
+            GLfloat fogScale = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
             if (ortho) {
                for (i=0;i<n;i++) {
                   GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
                   GLfloat eyez = (ndcz - p14) / p10;
-                  if (eyez < 0.0)  eyez = -eyez;
-                  fogcoord[i] = (GLint) ((fogEnd - eyez) * fogScale);
+                  if (eyez < 0.0)
+                     eyez = -eyez;
+                  fogcoord[i] = FloatToFixed((fogEnd - eyez) * fogScale);
                }
             }
             else {
@@ -151,8 +151,9 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
                for (i=0;i<n;i++) {
                   GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
                   GLfloat eyez = p14 / (ndcz + p10);
-                  if (eyez < 0.0)  eyez = -eyez;
-                  fogcoord[i] = (GLint) ((fogEnd - eyez) * fogScale);
+                  if (eyez < 0.0)
+                     eyez = -eyez;
+                  fogcoord[i] = FloatToFixed((fogEnd - eyez) * fogScale);
                }
             }
          }
@@ -162,7 +163,8 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
             for (i=0;i<n;i++) {
                GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
                GLfloat eyez = (ndcz - p14) / p10;
-               if (eyez < 0.0) eyez = -eyez;
+               if (eyez < 0.0)
+                  eyez = -eyez;
                fogcoord[i] = FloatToFixed(exp( -ctx->Fog.Density * eyez ));
             }
          }
@@ -171,7 +173,8 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
             for (i=0;i<n;i++) {
                GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
                GLfloat eyez = p14 / (ndcz + p10);
-               if (eyez < 0.0) eyez = -eyez;
+               if (eyez < 0.0)
+                  eyez = -eyez;
                fogcoord[i] = FloatToFixed(exp( -ctx->Fog.Density * eyez ));
             }
          }
