@@ -7,6 +7,33 @@
 <H1>News</H1>
 
 
+<h2>October 2, 2004</h2>
+<p>
+Mesa 6.2 has been released.
+This is a stable release which just fixes bugs since the 6.1 release.
+</p>
+<pre>
+    New:
+	- enabled GL_ARB_texture_rectangle (same as GL_NV_texture_rectangle)
+	- updated Doxygen support (Jose Fonseca)
+    Changes:
+	- some GGI driver updates (Christoph Egger, bug 1025977)
+    Bug fixes:
+	- Omit GL_ARB_texture_non_power_of_two from list of OpenGL 1.5 features
+	- fixed a few compilation issues on IRIX
+	- fixed a matrix classification bug (reported by Wes Bethel)
+	- we weren't reseting the vertex/fragment program error state
+	  before parsing (Dave Reveman)
+	- adjust texcoords for sampling texture rectangles (Dave Reveman)
+	- glGet*(GL_MAX_VERTEX_ATTRIBS_ARB) wasn't implemented
+	- repeated calls to glDeleteTexture(t) could lead to a crash
+	- fixed potential ref count bugs in VBOs and vertex/fragment programs
+	- spriteblast demo didn't handle window size changes correctly
+	- glTexSubImage didn't handle pixels=NULL correctly for PBOs
+	- fixed color index mode glDrawPixels bug (Karl Schultz)
+</pre>
+
+
 <h2>August 18, 2004</h2>
 <p>
 Mesa 6.1 has been released.
@@ -886,6 +913,6 @@ source code</a>.</p>
 
 
 <hr>
-$Id: news.html,v 3.14 2004/08/18 22:41:09 brianp Exp $
+$Id: news.html,v 3.15 2004/10/02 15:26:25 brianp Exp $
 </body>
 </html>
