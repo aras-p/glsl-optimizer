@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.15 2000/03/06 12:59:24 joukj Exp $ */
+/* $Id: glx.h,v 1.16 2000/03/20 21:31:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,9 +45,6 @@
 #endif
 #endif
 #include "GL/gl.h"
-#ifdef MESA
-#include "GL/xmesa.h"
-#endif
 
 
 #if defined(USE_MGL_NAMESPACE)
