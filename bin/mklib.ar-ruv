@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# Make a standard Unix .a library file with 'ar ruv'
+
+#--identification------------------------------------------------------
+
+# $Id: mklib.ar-ruv,v 1.1 1999/08/19 13:52:57 brianp Exp $
+
+# $Log: mklib.ar-ruv,v $
+# Revision 1.1  1999/08/19 13:52:57  brianp
+# initial check-in (post-crash)
+#
+
+
+#--common--------------------------------------------------------------
+
+# Usage:  mklib libname major minor file.o ...
+#
+# First argument is name of output library (LIBRARY)
+# Second arg is major version number (MAJOR)
+# Third arg is minor version number (MINOR)
+# Rest of arguments are object files (OBJECTS)
+
+LIBRARY=$1
+shift 1
+
+MAJOR=$1
+shift 1
+
+MINOR=$1
+shift 1
+
+OBJECTS=$*
+
+#--platform-------------------------------------------------------------
+
+#ar ruv $LIBRARY $OBJECTS
+ar ru $LIBRARY $OBJECTS
+

@@ -1,0 +1,53 @@
+#!/bin/sh
+
+# Make a Solaris shared library
+# contributed by Arno Hahma (arno@nitro.pp.utu.fi)
+
+#--identification------------------------------------------------------
+
+# $Id: mklib.solaris,v 1.1 1999/08/19 13:53:06 brianp Exp $
+
+# $Log: mklib.solaris,v $
+# Revision 1.1  1999/08/19 13:53:06  brianp
+# initial check-in (post-crash)
+#
+
+
+#--common--------------------------------------------------------------
+
+# Usage:  mklib libname major minor file.o ...
+#
+# First argument is name of output library (LIBRARY)
+# Second arg is major version number (MAJOR)
+# Third arg is minor version number (MINOR)
+# Rest of arguments are object files (OBJECTS)
+
+LIBRARY=$1
+shift 1
+
+MAJOR=$1
+shift 1
+
+MINOR=$1
+shift 1
+
+OBJECTS=$*
+
+#--platform-------------------------------------------------------------
+
+set -x
+
+LIBRARY=`basename $LIBRARY .a`
+
+VERSION=$MAJOR.$MINOR
+
+echo "Building shared object $LIBRARY.so.$VERSION and the archive library $LIBRARY.a"
+rm -f ${LIBRARY}.a ${LIBRARY}.so.${VERSION}
+ar ruv ${LIBRARY}.a ${OBJECTS}
+
+ld -G -o ${LIBRARY}.so.${VERSION} ${OBJECTS}
+
+cp ${LIBRARY}.a ${LIBRARY}.so.${VERSION} ../lib
+cd ../lib
+ln -s ${LIBRARY}.so.${VERSION} ${LIBRARY}.so
+
