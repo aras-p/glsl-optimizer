@@ -104,156 +104,160 @@ static void r200AlphaFunc( GLcontext *ctx, GLenum func, GLfloat ref )
    rmesa->hw.ctx.cmd[CTX_PP_MISC] = pp_misc;
 }
 
-static void r200BlendEquationSeparate( GLcontext *ctx, 
-				       GLenum modeRGB, GLenum modeA )
+/**
+ * Calculate the hardware blend factor setting.  This same function is used
+ * for source and destination of both alpha and RGB.
+ *
+ * \returns
+ * The hardware register value for the specified blend factor.  This value
+ * will need to be shifted into the correct position for either source or
+ * destination factor.
+ *
+ * \todo
+ * Since the two cases where source and destination are handled differently
+ * are essentially error cases, they should never happen.  Determine if these
+ * cases can be removed.
+ */
+static int blend_factor( GLenum factor, GLboolean is_src )
+{
+   int func;
+
+   switch ( factor ) {
+   case GL_ZERO:
+      func = R200_BLEND_GL_ZERO;
+      break;
+   case GL_ONE:
+      func = R200_BLEND_GL_ONE;
+      break;
+   case GL_DST_COLOR:
+      func = R200_BLEND_GL_DST_COLOR;
+      break;
+   case GL_ONE_MINUS_DST_COLOR:
+      func = R200_BLEND_GL_ONE_MINUS_DST_COLOR;
+      break;
+   case GL_SRC_COLOR:
+      func = R200_BLEND_GL_SRC_COLOR;
+      break;
+   case GL_ONE_MINUS_SRC_COLOR:
+      func = R200_BLEND_GL_ONE_MINUS_SRC_COLOR;
+      break;
+   case GL_SRC_ALPHA:
+      func = R200_BLEND_GL_SRC_ALPHA;
+      break;
+   case GL_ONE_MINUS_SRC_ALPHA:
+      func = R200_BLEND_GL_ONE_MINUS_SRC_ALPHA;
+      break;
+   case GL_DST_ALPHA:
+      func = R200_BLEND_GL_DST_ALPHA;
+      break;
+   case GL_ONE_MINUS_DST_ALPHA:
+      func = R200_BLEND_GL_ONE_MINUS_DST_ALPHA;
+      break;
+   case GL_SRC_ALPHA_SATURATE:
+      func = (is_src) ? R200_BLEND_GL_SRC_ALPHA_SATURATE : R200_BLEND_GL_ZERO;
+      break;
+   case GL_CONSTANT_COLOR:
+      func = R200_BLEND_GL_CONST_COLOR;
+      break;
+   case GL_ONE_MINUS_CONSTANT_COLOR:
+      func = R200_BLEND_GL_ONE_MINUS_CONST_COLOR;
+      break;
+   case GL_CONSTANT_ALPHA:
+      func = R200_BLEND_GL_CONST_ALPHA;
+      break;
+   case GL_ONE_MINUS_CONSTANT_ALPHA:
+      func = R200_BLEND_GL_ONE_MINUS_CONST_ALPHA;
+      break;
+   default:
+      func = (is_src) ? R200_BLEND_GL_ONE : R200_BLEND_GL_ZERO;
+   }
+   return func;
+}
+
+/**
+ * Sets both the blend equation and the blend function.
+ * This is done in a single
+ * function because some blend equations (i.e., \c GL_MIN and \c GL_MAX)
+ * change the interpretation of the blend function.
+ * Also, make sure that blend function and blend equation are set to their default
+ * value if color blending is not enabled, since at least blend equations GL_MIN
+ * and GL_FUNC_REVERSE_SUBTRACT will cause wrong results otherwise for
+ * unknown reasons.
+ */
+static void r200_set_blend_state( GLcontext * ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint b = rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] & ~R200_COMB_FCN_MASK;
+   GLuint cntl = rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &
+      ~(R200_ROP_ENABLE | R200_ALPHA_BLEND_ENABLE);
 
-   assert( modeRGB == modeA );
+   int func = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
+      (R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT);
+   int eqn = R200_COMB_FCN_ADD_CLAMP;
 
-   switch ( modeRGB ) {
+   R200_STATECHANGE( rmesa, ctx );
+
+   if (ctx->Color._LogicOpEnabled) {
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =  cntl | R200_ROP_ENABLE;
+      rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
+      return;
+   } else if (ctx->Color.BlendEnabled) {
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =  cntl | R200_ALPHA_BLEND_ENABLE;
+   }
+   else {
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = cntl;
+      rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
+      return;
+   }
+
+   func = (blend_factor( ctx->Color.BlendSrcRGB, GL_TRUE ) << R200_SRC_BLEND_SHIFT) |
+      (blend_factor( ctx->Color.BlendDstRGB, GL_FALSE ) << R200_DST_BLEND_SHIFT);
+
+   switch(ctx->Color.BlendEquationRGB) {
    case GL_FUNC_ADD:
    case GL_LOGIC_OP:
-      b |= R200_COMB_FCN_ADD_CLAMP;
+      eqn = R200_COMB_FCN_ADD_CLAMP;
       break;
 
    case GL_FUNC_SUBTRACT:
-      b |= R200_COMB_FCN_SUB_CLAMP;
+      eqn = R200_COMB_FCN_SUB_CLAMP;
       break;
 
    case GL_FUNC_REVERSE_SUBTRACT:
-      b |= R200_COMB_FCN_RSUB_CLAMP;
+      eqn = R200_COMB_FCN_RSUB_CLAMP;
       break;
 
    case GL_MIN:
-      b |= R200_COMB_FCN_MIN;
+      eqn = R200_COMB_FCN_MIN;
+      func = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
+         (R200_BLEND_GL_ONE << R200_DST_BLEND_SHIFT);
       break;
 
    case GL_MAX:
-      b |= R200_COMB_FCN_MAX;
+      eqn = R200_COMB_FCN_MAX;
+      func = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
+         (R200_BLEND_GL_ONE << R200_DST_BLEND_SHIFT);
       break;
 
    default:
-      break;
+      fprintf( stderr, "[%s:%u] Invalid RGB blend equation (0x%04x).\n",
+         __func__, __LINE__, ctx->Color.BlendEquationRGB );
+      return;
    }
 
-   R200_STATECHANGE( rmesa, ctx );
-   rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = b;
-   if ( ctx->Color._LogicOpEnabled ) {
-      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  R200_ROP_ENABLE;
-   } else {
-      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~R200_ROP_ENABLE;
-   }
+   rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
+}
+
+static void r200BlendEquationSeparate( GLcontext *ctx,
+				       GLenum modeRGB, GLenum modeA )
+{
+      r200_set_blend_state( ctx );
 }
 
 static void r200BlendFuncSeparate( GLcontext *ctx,
 				     GLenum sfactorRGB, GLenum dfactorRGB,
 				     GLenum sfactorA, GLenum dfactorA )
 {
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint b = rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] & 
-      ~(R200_SRC_BLEND_MASK | R200_DST_BLEND_MASK);
-
-   switch ( ctx->Color.BlendSrcRGB ) {
-   case GL_ZERO:
-      b |= R200_SRC_BLEND_GL_ZERO;
-      break;
-   case GL_ONE:
-      b |= R200_SRC_BLEND_GL_ONE;
-      break;
-   case GL_DST_COLOR:
-      b |= R200_SRC_BLEND_GL_DST_COLOR;
-      break;
-   case GL_ONE_MINUS_DST_COLOR:
-      b |= R200_SRC_BLEND_GL_ONE_MINUS_DST_COLOR;
-      break;
-   case GL_SRC_COLOR:
-      b |= R200_SRC_BLEND_GL_SRC_COLOR;
-      break;
-   case GL_ONE_MINUS_SRC_COLOR:
-      b |= R200_SRC_BLEND_GL_ONE_MINUS_SRC_COLOR;
-      break;
-   case GL_SRC_ALPHA:
-      b |= R200_SRC_BLEND_GL_SRC_ALPHA;
-      break;
-   case GL_ONE_MINUS_SRC_ALPHA:
-      b |= R200_SRC_BLEND_GL_ONE_MINUS_SRC_ALPHA;
-      break;
-   case GL_DST_ALPHA:
-      b |= R200_SRC_BLEND_GL_DST_ALPHA;
-      break;
-   case GL_ONE_MINUS_DST_ALPHA:
-      b |= R200_SRC_BLEND_GL_ONE_MINUS_DST_ALPHA;
-      break;
-   case GL_SRC_ALPHA_SATURATE:
-      b |= R200_SRC_BLEND_GL_SRC_ALPHA_SATURATE;
-      break;
-   case GL_CONSTANT_COLOR:
-      b |= R200_SRC_BLEND_GL_CONST_COLOR;
-      break;
-   case GL_ONE_MINUS_CONSTANT_COLOR:
-      b |= R200_SRC_BLEND_GL_ONE_MINUS_CONST_COLOR;
-      break;
-   case GL_CONSTANT_ALPHA:
-      b |= R200_SRC_BLEND_GL_CONST_ALPHA;
-      break;
-   case GL_ONE_MINUS_CONSTANT_ALPHA:
-      b |= R200_SRC_BLEND_GL_ONE_MINUS_CONST_ALPHA;
-      break;
-   default:
-      break;
-   }
-
-   switch ( ctx->Color.BlendDstRGB ) {
-   case GL_ZERO:
-      b |= R200_DST_BLEND_GL_ZERO;
-      break;
-   case GL_ONE:
-      b |= R200_DST_BLEND_GL_ONE;
-      break;
-   case GL_SRC_COLOR:
-      b |= R200_DST_BLEND_GL_SRC_COLOR;
-      break;
-   case GL_ONE_MINUS_SRC_COLOR:
-      b |= R200_DST_BLEND_GL_ONE_MINUS_SRC_COLOR;
-      break;
-   case GL_SRC_ALPHA:
-      b |= R200_DST_BLEND_GL_SRC_ALPHA;
-      break;
-   case GL_ONE_MINUS_SRC_ALPHA:
-      b |= R200_DST_BLEND_GL_ONE_MINUS_SRC_ALPHA;
-      break;
-   case GL_DST_COLOR:
-      b |= R200_DST_BLEND_GL_DST_COLOR;
-      break;
-   case GL_ONE_MINUS_DST_COLOR:
-      b |= R200_DST_BLEND_GL_ONE_MINUS_DST_COLOR;
-      break;
-   case GL_DST_ALPHA:
-      b |= R200_DST_BLEND_GL_DST_ALPHA;
-      break;
-   case GL_ONE_MINUS_DST_ALPHA:
-      b |= R200_DST_BLEND_GL_ONE_MINUS_DST_ALPHA;
-      break;
-   case GL_CONSTANT_COLOR:
-      b |= R200_DST_BLEND_GL_CONST_COLOR;
-      break;
-   case GL_ONE_MINUS_CONSTANT_COLOR:
-      b |= R200_DST_BLEND_GL_ONE_MINUS_CONST_COLOR;
-      break;
-   case GL_CONSTANT_ALPHA:
-      b |= R200_DST_BLEND_GL_CONST_ALPHA;
-      break;
-   case GL_ONE_MINUS_CONSTANT_ALPHA:
-      b |= R200_DST_BLEND_GL_ONE_MINUS_CONST_ALPHA;
-      break;
-   default:
-      break;
-   }
-
-   R200_STATECHANGE( rmesa, ctx );
-   rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = b;
+      r200_set_blend_state( ctx );
 }
 
 
@@ -1738,17 +1742,8 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
 
    case GL_BLEND:
-      R200_STATECHANGE( rmesa, ctx );
-      if (state) {
-	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  R200_ALPHA_BLEND_ENABLE;
-      } else {
-	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~R200_ALPHA_BLEND_ENABLE;
-      }
-      if ( ctx->Color._LogicOpEnabled ) {
-	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  R200_ROP_ENABLE;
-      } else {
-	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~R200_ROP_ENABLE;
-      }
+   case GL_COLOR_LOGIC_OP:
+      r200_set_blend_state( ctx );
       break;
 
    case GL_CLIP_PLANE0:
@@ -1864,15 +1859,6 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
       }
       break;
 
-   case GL_COLOR_LOGIC_OP:
-      R200_STATECHANGE( rmesa, ctx );
-      if ( ctx->Color._LogicOpEnabled ) {
-	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  R200_ROP_ENABLE;
-      } else {
-	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~R200_ROP_ENABLE;
-      }
-      break;
-      
    case GL_NORMALIZE:
       R200_STATECHANGE( rmesa, tcl );
       if ( state ) {

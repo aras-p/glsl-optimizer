@@ -367,8 +367,8 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.ctx.cmd[CTX_RE_SOLID_COLOR] = 0x00000000;
 
    rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = (R200_COMB_FCN_ADD_CLAMP |
-					    R200_SRC_BLEND_GL_ONE |
-					    R200_DST_BLEND_GL_ZERO );
+					    (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
+					    (R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT));
 
    rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHOFFSET] =
       rmesa->r200Screen->depthOffset + rmesa->r200Screen->fbLocation;
