@@ -1982,14 +1982,15 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
             }
             else {
                /* general case:  convert row to RGBA format */
-               GLchan rgba[MAX_WIDTH][4];
+               GLfloat rgba[MAX_WIDTH][4];
                GLint col;
                for (col = 0; col < width; col++) {
-                  (*texImage->FetchTexelc)(texImage, col, row, img, rgba[col]);
+                  (*texImage->FetchTexelf)(texImage, col, row, img, rgba[col]);
                }
-               _mesa_pack_rgba_span_chan(ctx, width, (const GLchan (*)[4])rgba,
-                                    format, type, dest, &ctx->Pack,
-                                    0 /* no image transfer */);
+               _mesa_pack_rgba_span_float(ctx, width,
+                                          (const GLfloat (*)[4]) rgba,
+                                          format, type, dest, &ctx->Pack,
+                                          0 /* no image transfer */);
             } /* format */
          } /* row */
       } /* img */
