@@ -293,6 +293,23 @@ DRI_CONF_OPT_BEGIN_V(texture_units,int,def, # min ":" # max ) \
         DRI_CONF_DESC(de,"Anzahl der Textureinheiten") \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_TEXTURE_HEAPS_ALL 0
+#define DRI_CONF_TEXTURE_HEAPS_CARD 1
+#define DRI_CONF_TEXTURE_HEAPS_GART 2
+#define DRI_CONF_TEXTURE_HEAPS(def) \
+DRI_CONF_OPT_BEGIN_V(texture_heaps,enum,def,"0:2") \
+	DRI_CONF_DESC_BEGIN(en,"Used types of texture memory") \
+		DRI_CONF_ENUM(0,"All available") \
+		DRI_CONF_ENUM(1,"Only card memory (if available)") \
+		DRI_CONF_ENUM(2,"Only GART (AGP/PCIE) memory (if available)") \
+	DRI_CONF_DESC_END \
+	DRI_CONF_DESC_BEGIN(de,"Verwendete Texturspeicherarten") \
+		DRI_CONF_ENUM(0,"Alle verfügbaren") \
+		DRI_CONF_ENUM(1,"Nur Grafikspeicher (falls vorhanden)") \
+		DRI_CONF_ENUM(2,"Nur GART (AGP/PCIE) Speicher (falls vorhanden)") \
+	DRI_CONF_DESC_END \
+DRI_CONF_OPT_END
+
 /* Options for features that are not done in hardware by the driver (like GL_ARB_vertex_program
    On cards where there is no documentation (r200) or on rasterization-only hardware). */
 #define DRI_CONF_SECTION_SOFTWARE \

@@ -83,12 +83,13 @@ DRI_CONF_BEGIN
         DRI_CONF_MAX_TEXTURE_UNITS(2,1,2)
         SAVAGE_ENABLE_VDMA(true)
         SAVAGE_ENABLE_FASTPATH(true)
+    	DRI_CONF_TEXTURE_HEAPS(DRI_CONF_TEXTURE_HEAPS_ALL)
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_DEBUG
         DRI_CONF_NO_RAST(false)
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 7;
+static const GLuint __driNConfigOptions = 8;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
@@ -295,6 +296,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    savageScreenPrivate *savageScreen = (savageScreenPrivate *)sPriv->private;
    drm_savage_sarea_t *saPriv=(drm_savage_sarea_t *)(((char*)sPriv->pSAREA)+
 						 savageScreen->sarea_priv_offset);
+   int textureSize[SAVAGE_NR_TEX_HEAPS];
    int i;
    imesa = (savageContextPtr)Xcalloc(sizeof(savageContext), 1);
    if (!imesa) {
@@ -367,11 +369,25 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    (void) memset( imesa->textureHeaps, 0, sizeof( imesa->textureHeaps ) );
    make_empty_list( & imesa->swapped );
 
+   textureSize[SAVAGE_CARD_HEAP] = savageScreen->textureSize[SAVAGE_CARD_HEAP];
+   textureSize[SAVAGE_AGP_HEAP] = savageScreen->textureSize[SAVAGE_AGP_HEAP];
    imesa->lastTexHeap = savageScreen->texVirtual[SAVAGE_AGP_HEAP] ? 2 : 1;
+   switch(driQueryOptioni (&imesa->optionCache, "texture_heaps")) {
+   case DRI_CONF_TEXTURE_HEAPS_CARD: /* only use card memory, if available */
+       if (textureSize[SAVAGE_CARD_HEAP])
+	   imesa->lastTexHeap = 1;
+       break;
+   case DRI_CONF_TEXTURE_HEAPS_GART: /* only use gart memory, if available */
+       if (imesa->lastTexHeap == 2 && textureSize[SAVAGE_AGP_HEAP])
+	   textureSize[SAVAGE_CARD_HEAP] = 0;
+       break;
+   /*default: Nothing to do, use all available memory. */
+   }
+   
    for (i = 0; i < imesa->lastTexHeap; i++) {
        imesa->textureHeaps[i] = driCreateTextureHeap(
 	   i, imesa,
-	   savageScreen->textureSize[i],
+	   textureSize[i],
 	   11,					/* 2^11 = 2k alignment */
 	   SAVAGE_NR_TEX_REGIONS,
 	   (drmTextureRegionPtr)imesa->sarea->texList[i],
