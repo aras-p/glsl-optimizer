@@ -1,8 +1,8 @@
-/* $Id: glx_mangle.h,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: glx_mangle.h,v 1.2 2001/11/09 22:01:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.0
+ * Version:  4.1
  * Copyright (C) 1995-1998  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
@@ -20,25 +20,6 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-
-/*
- * $Log: glx_mangle.h,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
- *
- * Revision 3.3  1999/06/21 22:01:00  brianp
- * added #ifndef GLX_MANGLE_H stuff, video sync extension functions
- *
- * Revision 3.2  1998/03/26 02:44:53  brianp
- * removed ^M characters
- *
- * Revision 3.1  1998/03/17 02:41:19  brianp
- * updated by Randy Frank
- *
- * Revision 3.0  1998/02/20 05:04:45  brianp
- * initial rev
- *
- */
 
 #ifndef GLX_MANGLE_H
 #define GLX_MANGLE_H
@@ -68,5 +49,9 @@
 #define glXCopySubBufferMESA mglXCopySubBufferMESA
 #define glXGetVideoSyncSGI mglXGetVideoSyncSGI
 #define glXWaitVideoSyncSGI mglXWaitVideoSyncSGI
+
+/* GLX 1.4 */
+#define glXGetProcAddress mglXGetProcAddress
+
 
 #endif
