@@ -22,10 +22,11 @@
 #endif
 
 /* added by BrianP: */
+#ifndef _WIN32
 #define APIENTRY GLAPIENTRY
 #define __cdecl GLAPIENTRY
 #define CDECL GLAPIENTRY
-
+#endif
 
 #define GLUT_BUILDING_LIB  /* Building the GLUT library itself. */
 
