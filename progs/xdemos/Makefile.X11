@@ -1,8 +1,8 @@
-# $Id: Makefile.X11,v 1.9 2000/06/13 19:42:05 brianp Exp $
+# $Id: Makefile.X11,v 1.10 2000/07/20 20:12:17 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
-# Copyright (C) 1995-1999  Brian Paul
+# Copyright (C) 1995-2000  Brian Paul
 
 # Makefile for non-GLUT (X11, SVGA, etc) demo programs
 
@@ -16,7 +16,8 @@ GL_LIBS = -L$(LIBDIR) -lglut -lGLU -lGL $(APP_LIB_DEPS)
 
 LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
 
-PROGS = glxdemo \
+PROGS = glthreads \
+	glxdemo \
 	glxheads \
 	glxinfo \
 	glxpixmap \
