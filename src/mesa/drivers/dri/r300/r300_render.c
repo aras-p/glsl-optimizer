@@ -73,62 +73,16 @@ static void r300_render_flat_primitive(r300ContextPtr rmesa,
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
    int k;
-   ADAPTOR adaptor;
-   AOS_DATA vb_arrays[2];
    LOCAL_VARS
        	
    if(end<=start)return; /* do we need to watch for this ? */
    
-   /* setup array of structures data */
-
-   /* Note: immediate vertex data includes all coordinates.
-     To save bandwidth use either VBUF or state-based vertex generation */
-    /* xyz */
-   vb_arrays[0].element_size=4;
-   vb_arrays[0].stride=4;
-   vb_arrays[0].offset=0; /* Not used */
-   vb_arrays[0].format=AOS_FORMAT_FLOAT;
-   vb_arrays[0].ncomponents=4;
-
-    /* color */
-   vb_arrays[1].element_size=4;
-   vb_arrays[1].stride=4;
-   vb_arrays[1].offset=0; /* Not used */
-   vb_arrays[1].format=AOS_FORMAT_FLOAT_COLOR;
-   vb_arrays[1].ncomponents=4;
-
-   adaptor=TWO_PIPE_ADAPTOR;
-   
-   adaptor.color_offset[0]=rmesa->radeon.radeonScreen->backOffset+rmesa->radeon.radeonScreen->fbLocation;
-   adaptor.color_pitch[0]=(rmesa->radeon.radeonScreen->backPitch) | (0xc0<<16);
-
-   adaptor.depth_offset=rmesa->radeon.radeonScreen->depthOffset;
-   adaptor.depth_pitch=rmesa->radeon.radeonScreen->depthPitch | (0x2 << 16);
-   
-   init_3d(PASS_PREFIX &adaptor);
-   init_flat_primitive(PASS_PREFIX &adaptor);
-   
-   set_scissors(PASS_PREFIX 0, 0, 2647, 1941);
-
-   set_cliprect(PASS_PREFIX 0, 0, 0, 2647,1941);
-   set_cliprect(PASS_PREFIX 1, 0, 0, 2647,1941);
-   set_cliprect(PASS_PREFIX 2, 0, 0, 2647,1941);
-   set_cliprect(PASS_PREFIX 3, 0, 0, 2647,1941);
-   
-   reg_start(R300_RE_OCCLUSION_CNTL, 0);
-	     e32(R300_OCCLUSION_ON);
-
-   set_quad0(PASS_PREFIX 1.0,1.0,1.0,1.0);
-   set_init21(PASS_PREFIX 0.0,1.0);
-
-   /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
-   setup_AOS(PASS_PREFIX vb_arrays, 2);
 
 
    start_immediate_packet(end-start, type, 8);
 
 	for(i=start;i<end;i++){
-		#if 1
+		#if 0
 		fprintf(stderr, "* (%f %f %f %f) (%f %f %f %f)\n", 
 			VEC_ELT(VB->ObjPtr, GLfloat, i)[0],
 			VEC_ELT(VB->ObjPtr, GLfloat, i)[1],
@@ -149,7 +103,7 @@ static void r300_render_flat_primitive(r300ContextPtr rmesa,
 		#if 0
 		efloat(VEC_ELT(VB->ObjPtr, GLfloat, i)[3]);
 		#else
-		efloat(1.0);
+		efloat(2.0);
 		#endif
 		
 		/* color components */
@@ -163,13 +117,9 @@ static void r300_render_flat_primitive(r300ContextPtr rmesa,
 		#endif
 		}
 
-   end_3d(PASS_PREFIX_VOID);
-   
-   start_packet3(RADEON_CP_PACKET3_NOP, 0);
-   e32(0x0);
 }
 
-static void r300_render_primitive(r300ContextPtr rmesa, 
+static void r300_dispatch_flat_primitive(r300ContextPtr rmesa, 
 	GLcontext *ctx,
 	int start,
 	int end,
@@ -257,6 +207,80 @@ static void r300_render_primitive(r300ContextPtr rmesa,
 	
 }
 
+static GLboolean r300_run_flat_render(GLcontext *ctx,
+				 struct tnl_pipeline_stage *stage)
+{
+   r300ContextPtr rmesa = R300_CONTEXT(ctx);
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   GLuint i;
+   ADAPTOR adaptor;
+   AOS_DATA vb_arrays[2];
+   LOCAL_VARS
+	
+	if (RADEON_DEBUG == DEBUG_PRIMS)
+		fprintf(stderr, "%s\n", __FUNCTION__);
+
+   /* setup array of structures data */
+
+   /* Note: immediate vertex data includes all coordinates.
+     To save bandwidth use either VBUF or state-based vertex generation */
+    /* xyz */
+   vb_arrays[0].element_size=4;
+   vb_arrays[0].stride=4;
+   vb_arrays[0].offset=0; /* Not used */
+   vb_arrays[0].format=AOS_FORMAT_FLOAT;
+   vb_arrays[0].ncomponents=4;
+
+    /* color */
+   vb_arrays[1].element_size=4;
+   vb_arrays[1].stride=4;
+   vb_arrays[1].offset=0; /* Not used */
+   vb_arrays[1].format=AOS_FORMAT_FLOAT_COLOR;
+   vb_arrays[1].ncomponents=4;
+
+   adaptor=TWO_PIPE_ADAPTOR;
+   
+   adaptor.color_offset[0]=rmesa->radeon.radeonScreen->backOffset+rmesa->radeon.radeonScreen->fbLocation;
+   adaptor.color_pitch[0]=(rmesa->radeon.radeonScreen->backPitch) | (0xc0<<16);
+
+   adaptor.depth_offset=rmesa->radeon.radeonScreen->depthOffset;
+   adaptor.depth_pitch=rmesa->radeon.radeonScreen->depthPitch | (0x2 << 16);
+   
+   init_3d(PASS_PREFIX &adaptor);
+   init_flat_primitive(PASS_PREFIX &adaptor);
+   
+   set_scissors(PASS_PREFIX 0, 0, 2647, 1941);
+
+   set_cliprect(PASS_PREFIX 0, 0, 0, 2647,1941);
+   set_cliprect(PASS_PREFIX 1, 0, 0, 2647,1941);
+   set_cliprect(PASS_PREFIX 2, 0, 0, 2647,1941);
+   set_cliprect(PASS_PREFIX 3, 0, 0, 2647,1941);
+   
+   reg_start(R300_RE_OCCLUSION_CNTL, 0);
+	     e32(R300_OCCLUSION_ON);
+
+   set_quad0(PASS_PREFIX 1.0,1.0,1.0,1.0);
+   set_init21(PASS_PREFIX 0.0,1.0);
+
+   /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
+   setup_AOS(PASS_PREFIX vb_arrays, 2);
+   
+   for(i=0; i < VB->PrimitiveCount; i++){
+       GLuint prim = VB->Primitive[i].mode;
+       GLuint start = VB->Primitive[i].start;
+       GLuint length = VB->Primitive[i].count;
+	r300_dispatch_flat_primitive(rmesa, ctx, start, start + length, prim);
+   	}
+	
+   end_3d(PASS_PREFIX_VOID);
+   
+   start_packet3(RADEON_CP_PACKET3_NOP, 0);
+   e32(0x0);
+   
+   fprintf(stderr, "\n");
+   return GL_FALSE;
+}
 
 /**
  * Called by the pipeline manager to render a batch of primitives.
@@ -275,15 +299,7 @@ static GLboolean r300_run_render(GLcontext *ctx,
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-   for(i=0; i < VB->PrimitiveCount; i++){
-       GLuint prim = VB->Primitive[i].mode;
-       GLuint start = VB->Primitive[i].start;
-       GLuint length = VB->Primitive[i].count;
-	r300_render_primitive(rmesa, ctx, start, start + length, prim);
-   	}
-	
-   
-   fprintf(stderr, "\n");
+   return r300_run_flat_render(ctx, stage);
    #if 0
 	return GL_TRUE;
    #else
