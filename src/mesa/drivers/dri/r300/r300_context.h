@@ -209,11 +209,6 @@ struct r300_state_atom {
 #define R300_VPT_ZOFFSET	6
 #define R300_VPT_CMDSIZE	7
 
-#define R300_OVF_CMD_0		0
-#define R300_OVF_FMT_0		1
-#define R300_OVF_FMT_1		2
-#define R300_OVF_CMDSIZE	3
-
 #define R300_VIR_CMD_0		0 /* vir is variable size (at least 1) */
 #define R300_VIR_CNTL_0		1
 #define R300_VIR_CNTL_1		2
@@ -375,7 +370,6 @@ struct r300_hw_state {
 
 	struct r300_state_atom vpt;	/* viewport (1D98) */
 	struct r300_state_atom unk2080;	/* (2080) */
-	struct r300_state_atom ovf;	/* output vertex format (2090) */
 	struct r300_state_atom vte;	/* (20B0) */
 	struct r300_state_atom unk2134;	/* (2134) */
 	struct r300_state_atom unk2140;	/* (2140) */
@@ -386,7 +380,7 @@ struct r300_hw_state {
 	struct r300_state_atom unk2220; /* (2220) */
 	struct r300_state_atom unk2288; /* (2288) */
 	struct r300_state_atom pvs;	/* pvs_cntl (22D0) */
-	struct r300_state_atom vof;     /* VAP output format register 0x4000 */
+	struct r300_state_atom vof;     /* VAP output format register 0x2090 */
 	struct r300_state_atom gb_enable; /* (4008) */
 	struct r300_state_atom gb_misc; /* Multisampling position shifts ? (4010) */
 	struct r300_state_atom unk4200; /* (4200) */

@@ -201,6 +201,25 @@ static int blend_factor(GLenum factor, GLboolean is_src)
  * and GL_FUNC_REVERSE_SUBTRACT will cause wrong results otherwise for
  * unknown reasons.
  */
+ 
+/* helper function */
+static void r300_set_blend_cntl(r300ContextPtr rmesa, int func, int eqn, int cbits, int funcA, int eqnA)
+{
+	GLuint new_ablend, new_cblend;
+	
+	new_ablend = eqnA | funcA;
+	new_cblend = eqn | func | cbits;
+	if(rmesa->hw.bld.cmd[R300_BLD_ABLEND] == rmesa->hw.bld.cmd[R300_BLD_CBLEND]){
+		new_cblend |=  R300_BLEND_NO_SEPARATE;
+		}
+	if((new_ablend != rmesa->hw.bld.cmd[R300_BLD_ABLEND]) 
+		|| (new_cblend != rmesa->hw.bld.cmd[R300_BLD_CBLEND])){
+		R300_STATECHANGE(rmesa, bld);
+		rmesa->hw.bld.cmd[R300_BLD_ABLEND]=new_ablend;
+		rmesa->hw.bld.cmd[R300_BLD_CBLEND]=new_cblend;
+		}
+}
+ 
 static void r300_set_blend_state(GLcontext * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -217,7 +236,6 @@ static void r300_set_blend_state(GLcontext * ctx)
 	    (R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT);
 	int eqnA = R200_COMB_FCN_ADD_CLAMP;
 
-	R300_STATECHANGE(rmesa, bld);
 
 	if (rmesa->radeon.radeonScreen->drmSupportsBlendColor) {
 		if (ctx->Color._LogicOpEnabled) {
@@ -225,8 +243,9 @@ static void r300_set_blend_state(GLcontext * ctx)
 			rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =
 			    cntl | R300_ROP_ENABLE;
 			#endif
-			rmesa->hw.bld.cmd[R300_BLD_ABLEND] = eqn | func;
-			rmesa->hw.bld.cmd[R300_BLD_CBLEND] = eqn | func;
+			r300_set_blend_cntl(rmesa,
+				func, eqn, 0,
+				func, eqn);
 			return;
 		} else if (ctx->Color.BlendEnabled) {
 			#if 0
@@ -238,8 +257,9 @@ static void r300_set_blend_state(GLcontext * ctx)
 			#if 0
 			rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = cntl;
 			#endif
-			rmesa->hw.bld.cmd[R300_BLD_ABLEND] = eqn | func;
-			rmesa->hw.bld.cmd[R300_BLD_CBLEND] = eqn | func;
+			r300_set_blend_cntl(rmesa,
+				func, eqn, 0,
+				func, eqn);
 			return;
 		}
 	} else {
@@ -260,6 +280,9 @@ static void r300_set_blend_state(GLcontext * ctx)
 			rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = cntl;
 			rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
 			#endif
+			r300_set_blend_cntl(rmesa,
+				func, eqn, 0,
+				func, eqn);
 			return;
 		}
 	}
@@ -346,14 +369,12 @@ static void r300_set_blend_state(GLcontext * ctx)
 		return;
 	}
 
-	rmesa->hw.bld.cmd[R300_BLD_ABLEND] = eqnA | funcA;
-	rmesa->hw.bld.cmd[R300_BLD_CBLEND] = eqn | func ;
-	if(rmesa->hw.bld.cmd[R300_BLD_ABLEND] == rmesa->hw.bld.cmd[R300_BLD_CBLEND]){
-		rmesa->hw.bld.cmd[R300_BLD_CBLEND] |= R300_BLEND_UNKNOWN | R300_BLEND_ENABLE | R300_BLEND_NO_SEPARATE;
-		} else {
-		rmesa->hw.bld.cmd[R300_BLD_CBLEND] |= R300_BLEND_UNKNOWN | R300_BLEND_ENABLE;
-		}
-
+	r300_set_blend_cntl(rmesa, 
+		func, eqn, R300_BLEND_UNKNOWN | R300_BLEND_ENABLE, 
+		funcA, eqnA);
+	r300_set_blend_cntl(rmesa, 
+		func, eqn, R300_BLEND_UNKNOWN | R300_BLEND_ENABLE, 
+		funcA, eqnA);
 }
 
 static void r300BlendEquationSeparate(GLcontext * ctx,
@@ -412,6 +433,29 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 			state ? "GL_TRUE" : "GL_FALSE");
 
 	switch (cap) {
+		/* Fast track this one...
+		 */
+	case GL_TEXTURE_1D:
+	case GL_TEXTURE_2D:
+	case GL_TEXTURE_3D:
+		break;
+	
+	case GL_ALPHA_TEST:
+		R200_STATECHANGE(r300, at);
+		if (state) {
+			r300->hw.at.cmd[R300_AT_ALPHA_TEST] |= 
+			    R300_ALPHA_TEST_ENABLE;
+		} else {
+			r300->hw.at.cmd[R300_AT_ALPHA_TEST] |= 
+			    ~R300_ALPHA_TEST_ENABLE;
+		}
+		break;
+	
+	case GL_BLEND:
+	case GL_COLOR_LOGIC_OP:
+		r300_set_blend_state(ctx);
+		break;
+
 	case GL_DEPTH_TEST:
 		R300_STATECHANGE(r300, zc);
 
@@ -1333,9 +1377,6 @@ void r300ResetHwState(r300ContextPtr r300)
 //BEGIN: TODO
 	r300->hw.unk2080.cmd[1] = 0x0030045A;
 
-	r300->hw.ovf.cmd[R300_OVF_FMT_0] = 0x00000003;
-	r300->hw.ovf.cmd[R300_OVF_FMT_1] = 0x00000000;
-
 	r300->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
 				| R300_VPORT_X_OFFSET_ENA
 				| R300_VPORT_Y_SCALE_ENA
@@ -1609,7 +1650,7 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	radeonInitStateFuncs(functions);
 
 	functions->UpdateState = r300InvalidateState;
-	//functions->AlphaFunc = r300AlphaFunc;
+	functions->AlphaFunc = r300AlphaFunc;
 	functions->BlendColor = r300BlendColor;
 	functions->BlendEquationSeparate = r300BlendEquationSeparate;
 	functions->BlendFuncSeparate = r300BlendFuncSeparate;
