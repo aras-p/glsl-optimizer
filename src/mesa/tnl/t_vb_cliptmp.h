@@ -1,4 +1,4 @@
-/* $Id: t_vb_cliptmp.h,v 1.11 2001/04/28 08:39:18 keithw Exp $ */
+/* $Id: t_vb_cliptmp.h,v 1.12 2001/05/09 12:25:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -161,21 +161,21 @@ static __inline void TAG(clip_line)( GLcontext *ctx,
 /* Clip a triangle against the viewport and user clip planes.
  */
 static __inline void TAG(clip_tri)( GLcontext *ctx,
-			   GLuint v0, GLuint v1, GLuint v2,
-			   GLubyte mask )
+				    GLuint v0, GLuint v1, GLuint v2,
+				    GLubyte mask )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    interp_func interp = tnl->Driver.RenderInterp;
    GLfloat (*coord)[4] = VB->ClipPtr->data;
-   GLuint pv = v0;
+   GLuint pv = v2;
    GLuint vlist[2][MAX_CLIPPED_VERTICES];
    GLuint *inlist = vlist[0], *outlist = vlist[1];
    GLuint p;
    GLubyte *clipmask = VB->ClipMask;
    GLuint n = 3;
 
-   ASSIGN_3V(inlist, v0, v1, v2 );
+   ASSIGN_3V(inlist, v2, v0, v1 ); /* pv rotated to slot zero */
 
    VB->LastClipped = VB->FirstClipped;
 
@@ -221,14 +221,14 @@ static __inline void TAG(clip_quad)( GLcontext *ctx,
    struct vertex_buffer *VB = &tnl->vb;
    interp_func interp = tnl->Driver.RenderInterp;
    GLfloat (*coord)[4] = VB->ClipPtr->data;
-   GLuint pv = v0;
+   GLuint pv = v3;
    GLuint vlist[2][MAX_CLIPPED_VERTICES];
    GLuint *inlist = vlist[0], *outlist = vlist[1];
    GLuint p;
    GLubyte *clipmask = VB->ClipMask;
    GLuint n = 4;
 
-   ASSIGN_4V(inlist, v0, v1, v2, v3 );
+   ASSIGN_4V(inlist, v3, v0, v1, v2 ); /* pv rotated to slot zero */
 
    VB->LastClipped = VB->FirstClipped;
 
