@@ -333,6 +333,14 @@ _swrast_validate_blend_func( GLcontext *ctx, GLuint n,
 }
 
 
+/**
+ * Called via the swrast->TextureSample[i] function pointer.
+ * Basically, given a texture object, an array of texture coords
+ * and an array of level-of-detail values, return an array of colors.
+ * In this case, determine the correct texture sampling routine
+ * (depending on filter mode, texture dimensions, etc) then call the
+ * sampler routine.
+ */
 static void
 _swrast_validate_texture_sample( GLcontext *ctx, GLuint texUnit,
 				 const struct gl_texture_object *tObj,
@@ -344,7 +352,7 @@ _swrast_validate_texture_sample( GLcontext *ctx, GLuint texUnit,
    _swrast_validate_derived( ctx );
 
    /* Compute min/mag filter threshold */
-   if (tObj->MinFilter != tObj->MagFilter) {
+   if (tObj && tObj->MinFilter != tObj->MagFilter) {
       if (tObj->MagFilter == GL_LINEAR
           && (tObj->MinFilter == GL_NEAREST_MIPMAP_NEAREST ||
               tObj->MinFilter == GL_NEAREST_MIPMAP_LINEAR)) {
