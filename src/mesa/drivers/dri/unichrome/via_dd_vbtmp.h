@@ -251,7 +251,7 @@ static void TAG(emit)(GLcontext *ctx,
         }
 
         if (DO_FOG) {
-            //UNCLAMPED_FLOAT_TO_UBYTE(v->v.specular.alpha, fog[0][0]);
+            /*UNCLAMPED_FLOAT_TO_UBYTE(v->v.specular.alpha, fog[0][0]);*/
             v->v.specular.alpha = fog[0][0];
             /*=* [DBG]  exy : fix lighting on + fog off error *=*/
             STRIDE_4F(fog, fog_stride);
