@@ -45,52 +45,111 @@
 
 static GLfloat Xrot = 0, Yrot = 0;
 static GLfloat EyeDist = 10;
+static GLboolean use_vertex_arrays = GL_FALSE;
 
+#define eps1 0.99
+#define br   20.0  /* box radius */
+
+static const GLfloat tex_coords[] = {
+   /* +X side */
+   1.0, -eps1, -eps1,
+   1.0, -eps1,  eps1,
+   1.0,  eps1,  eps1,
+   1.0,  eps1, -eps1,
+
+   /* -X side */
+   -1.0,  eps1, -eps1,
+   -1.0,  eps1,  eps1,
+   -1.0, -eps1,  eps1,
+   -1.0, -eps1, -eps1,
+
+   /* +Y side */
+   -eps1, 1.0, -eps1,
+   -eps1, 1.0,  eps1,
+    eps1, 1.0,  eps1,
+    eps1, 1.0, -eps1,
+
+   /* -Y side */
+   -eps1, -1.0, -eps1,
+   -eps1, -1.0,  eps1,
+    eps1, -1.0,  eps1,
+    eps1, -1.0, -eps1,
+
+   /* +Z side */
+    eps1, -eps1, 1.0,
+   -eps1, -eps1, 1.0,
+   -eps1,  eps1, 1.0,
+    eps1,  eps1, 1.0,
+
+   /* -Z side */
+    eps1,  eps1, -1.0,
+   -eps1,  eps1, -1.0,
+   -eps1, -eps1, -1.0,
+    eps1, -eps1, -1.0,
+};
+
+static const GLfloat vtx_coords[] = {
+   /* +X side */
+   br, -br, -br,
+   br, -br,  br,
+   br,  br,  br,
+   br,  br, -br,
+
+   /* -X side */
+   -br,  br, -br,
+   -br,  br,  br,
+   -br, -br,  br,
+   -br, -br, -br,
+
+   /* +Y side */
+   -br,  br, -br,
+   -br,  br,  br,
+    br,  br,  br,
+    br,  br, -br,
+
+   /* -Y side */
+   -br, -br, -br,
+   -br, -br,  br,
+    br, -br,  br,
+    br, -br, -br,
+
+   /* +Z side */
+    br, -br, br,
+   -br, -br, br,
+   -br,  br, br,
+    br,  br, br,
+
+   /* -Z side */
+    br,  br, -br,
+   -br,  br, -br,
+   -br, -br, -br,
+    br, -br, -br,
+};
 
 static void draw_skybox( void )
 {
-   const GLfloat eps1 = 0.99;
-   const GLfloat br = 20.0; /* box radius */
+   if ( use_vertex_arrays ) {
+      glTexCoordPointer( 3, GL_FLOAT, 0, tex_coords );
+      glVertexPointer(   3, GL_FLOAT, 0, vtx_coords );
 
-   glBegin(GL_QUADS);
+      glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+      glEnableClientState( GL_VERTEX_ARRAY );
 
-   /* +X side */
-   glTexCoord3f(1.0, -eps1, -eps1);  glVertex3f(br, -br, -br);
-   glTexCoord3f(1.0, -eps1,  eps1);  glVertex3f(br, -br,  br);
-   glTexCoord3f(1.0,  eps1,  eps1);  glVertex3f(br,  br,  br);
-   glTexCoord3f(1.0,  eps1, -eps1);  glVertex3f(br,  br, -br);
+      glDrawArrays( GL_QUADS, 0, 24 );
 
-   /* -X side */
-   glTexCoord3f(-1.0,  eps1, -eps1);  glVertex3f(-br,  br, -br);
-   glTexCoord3f(-1.0,  eps1,  eps1);  glVertex3f(-br,  br,  br);
-   glTexCoord3f(-1.0, -eps1,  eps1);  glVertex3f(-br, -br,  br);
-   glTexCoord3f(-1.0, -eps1, -eps1);  glVertex3f(-br, -br, -br);
+      glDisableClientState( GL_TEXTURE_COORD_ARRAY );
+      glDisableClientState( GL_VERTEX_ARRAY );
+   }
+   else {
+      unsigned   i;
 
-   /* +Y side */
-   glTexCoord3f(-eps1, 1.0, -eps1);  glVertex3f(-br,  br, -br);
-   glTexCoord3f(-eps1, 1.0,  eps1);  glVertex3f(-br,  br,  br);
-   glTexCoord3f( eps1, 1.0,  eps1);  glVertex3f( br,  br,  br);
-   glTexCoord3f( eps1, 1.0, -eps1);  glVertex3f( br,  br, -br);
-
-   /* -Y side */
-   glTexCoord3f(-eps1, -1.0, -eps1);  glVertex3f(-br, -br, -br);
-   glTexCoord3f(-eps1, -1.0,  eps1);  glVertex3f(-br, -br,  br);
-   glTexCoord3f( eps1, -1.0,  eps1);  glVertex3f( br, -br,  br);
-   glTexCoord3f( eps1, -1.0, -eps1);  glVertex3f( br, -br, -br);
-
-   /* +Z side */
-   glTexCoord3f( eps1, -eps1, 1.0);  glVertex3f( br, -br, br);
-   glTexCoord3f(-eps1, -eps1, 1.0);  glVertex3f(-br, -br, br);
-   glTexCoord3f(-eps1,  eps1, 1.0);  glVertex3f(-br,  br, br);
-   glTexCoord3f( eps1,  eps1, 1.0);  glVertex3f( br,  br, br);
-
-   /* -Z side */
-   glTexCoord3f( eps1,  eps1, -1.0);  glVertex3f( br,  br, -br);
-   glTexCoord3f(-eps1,  eps1, -1.0);  glVertex3f(-br,  br, -br);
-   glTexCoord3f(-eps1, -eps1, -1.0);  glVertex3f(-br, -br, -br);
-   glTexCoord3f( eps1, -eps1, -1.0);  glVertex3f( br, -br, -br);
-
-   glEnd();
+      glBegin(GL_QUADS);
+      for ( i = 0 ; i < 24 ; i++ ) {
+	 glTexCoord3fv( & tex_coords[ i * 3 ] );
+	 glVertex3fv  ( & vtx_coords[ i * 3 ] );
+      }
+      glEnd();
+   }
 }
 
 
@@ -175,6 +234,11 @@ static void key(unsigned char k, int x, int y)
       case 'm':
          mode = !mode;
          set_mode(mode);
+         break;
+      case 'v':
+         use_vertex_arrays = ! use_vertex_arrays;
+         printf( "Vertex arrays are %sabled\n",
+		 (use_vertex_arrays) ? "en" : "dis" );
          break;
       case 'z':
          EyeDist -= 0.5;
