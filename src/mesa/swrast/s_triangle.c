@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.13 2001/02/16 18:14:41 keithw Exp $ */
+/* $Id: s_triangle.c,v 1.14 2001/03/03 00:37:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -388,10 +388,10 @@ static void affine_textured_triangle( GLcontext *ctx,
    }									\
    if (envmode == GL_BLEND || envmode == GL_ADD) {                      \
       /* potential off-by-one error here? (1.0f -> 2048 -> 0) */        \
-      er = FloatToFixed(unit->EnvColor[0]);                             \
-      eg = FloatToFixed(unit->EnvColor[1]);                             \
-      eb = FloatToFixed(unit->EnvColor[2]);                             \
-      ea = FloatToFixed(unit->EnvColor[3]);                             \
+      er = FloatToFixed(unit->EnvColor[RCOMP]);                         \
+      eg = FloatToFixed(unit->EnvColor[GCOMP]);                         \
+      eb = FloatToFixed(unit->EnvColor[BCOMP]);                         \
+      ea = FloatToFixed(unit->EnvColor[ACOMP]);                         \
    }                                                                    \
    switch (format) {                                                    \
    case GL_ALPHA:                                                       \
@@ -423,9 +423,9 @@ static void affine_textured_triangle( GLcontext *ctx,
    */ 
 
 #define NEAREST_RGB    \
-        tr = tex00[0]; \
-        tg = tex00[1]; \
-        tb = tex00[2]; \
+        tr = tex00[RCOMP]; \
+        tg = tex00[GCOMP]; \
+        tb = tex00[BCOMP]; \
         ta = 0xff
 
 #define LINEAR_RGB                                                      \
@@ -438,10 +438,10 @@ static void affine_textured_triangle( GLcontext *ctx,
 	ta = 0xff
 
 #define NEAREST_RGBA   \
-        tr = tex00[0]; \
-        tg = tex00[1]; \
-        tb = tex00[2]; \
-        ta = tex00[3]
+        tr = tex00[RCOMP]; \
+        tg = tex00[GCOMP]; \
+        tb = tex00[BCOMP]; \
+        ta = tex00[ACOMP]
 
 #define LINEAR_RGBA                                                     \
 	tr = (ti * (si * tex00[0] + sf * tex01[0]) +                    \
@@ -454,34 +454,34 @@ static void affine_textured_triangle( GLcontext *ctx,
               tf * (si * tex10[3] + sf * tex11[3])) >> 2 * FIXED_SHIFT
 
 #define MODULATE                                       \
-        dest[0] = ffr * (tr + 1) >> (FIXED_SHIFT + 8); \
-        dest[1] = ffg * (tg + 1) >> (FIXED_SHIFT + 8); \
-        dest[2] = ffb * (tb + 1) >> (FIXED_SHIFT + 8); \
-        dest[3] = ffa * (ta + 1) >> (FIXED_SHIFT + 8)
+        dest[RCOMP] = ffr * (tr + 1) >> (FIXED_SHIFT + 8); \
+        dest[GCOMP] = ffg * (tg + 1) >> (FIXED_SHIFT + 8); \
+        dest[BCOMP] = ffb * (tb + 1) >> (FIXED_SHIFT + 8); \
+        dest[ACOMP] = ffa * (ta + 1) >> (FIXED_SHIFT + 8)
 
 #define DECAL                                                                \
-	dest[0] = ((0xff - ta) * ffr + ((ta + 1) * tr << FIXED_SHIFT)) >> (FIXED_SHIFT + 8); \
-	dest[1] = ((0xff - ta) * ffg + ((ta + 1) * tg << FIXED_SHIFT)) >> (FIXED_SHIFT + 8); \
-	dest[2] = ((0xff - ta) * ffb + ((ta + 1) * tb << FIXED_SHIFT)) >> (FIXED_SHIFT + 8); \
-	dest[3] = FixedToInt(ffa)
+	dest[RCOMP] = ((0xff - ta) * ffr + ((ta + 1) * tr << FIXED_SHIFT)) >> (FIXED_SHIFT + 8); \
+	dest[GCOMP] = ((0xff - ta) * ffg + ((ta + 1) * tg << FIXED_SHIFT)) >> (FIXED_SHIFT + 8); \
+	dest[BCOMP] = ((0xff - ta) * ffb + ((ta + 1) * tb << FIXED_SHIFT)) >> (FIXED_SHIFT + 8); \
+	dest[ACOMP] = FixedToInt(ffa)
 
 #define BLEND                                                               \
-        dest[0] = ((0xff - tr) * ffr + (tr + 1) * er) >> (FIXED_SHIFT + 8); \
-        dest[1] = ((0xff - tg) * ffg + (tg + 1) * eg) >> (FIXED_SHIFT + 8); \
-        dest[2] = ((0xff - tb) * ffb + (tb + 1) * eb) >> (FIXED_SHIFT + 8); \
-        dest[3] = ffa * (ta + 1) >> (FIXED_SHIFT + 8)
+        dest[RCOMP] = ((0xff - tr) * ffr + (tr + 1) * er) >> (FIXED_SHIFT + 8); \
+        dest[GCOMP] = ((0xff - tg) * ffg + (tg + 1) * eg) >> (FIXED_SHIFT + 8); \
+        dest[BCOMP] = ((0xff - tb) * ffb + (tb + 1) * eb) >> (FIXED_SHIFT + 8); \
+        dest[ACOMP] = ffa * (ta + 1) >> (FIXED_SHIFT + 8)
 
 #define REPLACE       \
-        dest[0] = tr; \
-        dest[1] = tg; \
-        dest[2] = tb; \
-        dest[3] = ta
+        dest[RCOMP] = tr; \
+        dest[GCOMP] = tg; \
+        dest[BCOMP] = tb; \
+        dest[ACOMP] = ta
 
 #define ADD                                                          \
-        dest[0] = ((ffr << 8) + (tr + 1) * er) >> (FIXED_SHIFT + 8); \
-        dest[1] = ((ffg << 8) + (tg + 1) * eg) >> (FIXED_SHIFT + 8); \
-        dest[2] = ((ffb << 8) + (tb + 1) * eb) >> (FIXED_SHIFT + 8); \
-        dest[3] = ffa * (ta + 1) >> (FIXED_SHIFT + 8)
+        dest[RCOMP] = ((ffr << 8) + (tr + 1) * er) >> (FIXED_SHIFT + 8); \
+        dest[GCOMP] = ((ffg << 8) + (tg + 1) * eg) >> (FIXED_SHIFT + 8); \
+        dest[BCOMP] = ((ffb << 8) + (tb + 1) * eb) >> (FIXED_SHIFT + 8); \
+        dest[ACOMP] = ffa * (ta + 1) >> (FIXED_SHIFT + 8)
 
 /* shortcuts */
 
@@ -713,10 +713,10 @@ static void near_persp_textured_triangle(GLcontext *ctx,
       return;								\
    }									\
    if (envmode == GL_BLEND || envmode == GL_ADD) {                      \
-      er = FloatToFixed(unit->EnvColor[0]);                             \
-      eg = FloatToFixed(unit->EnvColor[1]);                             \
-      eb = FloatToFixed(unit->EnvColor[2]);                             \
-      ea = FloatToFixed(unit->EnvColor[3]);                             \
+      er = FloatToFixed(unit->EnvColor[RCOMP]);                         \
+      eg = FloatToFixed(unit->EnvColor[GCOMP]);                         \
+      eb = FloatToFixed(unit->EnvColor[BCOMP]);                         \
+      ea = FloatToFixed(unit->EnvColor[ACOMP]);                         \
    }                                                                    \
    sscale = twidth;                                                     \
    tscale = theight;                                                    \
@@ -728,7 +728,7 @@ static void near_persp_textured_triangle(GLcontext *ctx,
       GLint s = (int)(SS * invQ + BIAS) & smask;      \
       GLint t = (int)(TT * invQ + BIAS) & tmask;      \
       GLint pos = COMP * ((t << twidth_log2) + s);    \
-      GLchan *tex00 = texture + pos;                  \
+      const GLchan *tex00 = texture + pos;            \
       zspan[i] = FixedToDepth(ffz);                   \
       fogspan[i] = fffog / 256;                       \
       DO_TEX;                                         \
@@ -1444,10 +1444,10 @@ static void lin_persp_textured_triangle( GLcontext *ctx,
       return;								\
    }									\
    if (envmode == GL_BLEND || envmode == GL_ADD) {                      \
-      er = FloatToFixed(unit->EnvColor[0]);                             \
-      eg = FloatToFixed(unit->EnvColor[1]);                             \
-      eb = FloatToFixed(unit->EnvColor[2]);                             \
-      ea = FloatToFixed(unit->EnvColor[3]);                             \
+      er = FloatToFixed(unit->EnvColor[RCOMP]);                         \
+      eg = FloatToFixed(unit->EnvColor[GCOMP]);                         \
+      eb = FloatToFixed(unit->EnvColor[BCOMP]);                         \
+      ea = FloatToFixed(unit->EnvColor[ACOMP]);                         \
    }                                                                    \
    switch (format) {                                                    \
    case GL_ALPHA:							\
@@ -1603,10 +1603,10 @@ static void general_textured_triangle( GLcontext *ctx,
    GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);	\
    GLint r, g, b, a;						\
    if (flat_shade) {						\
-      r = v2->color[0];						\
-      g = v2->color[1];						\
-      b = v2->color[2];						\
-      a = v2->color[3];						\
+      r = v2->color[RCOMP];					\
+      g = v2->color[GCOMP];					\
+      b = v2->color[BCOMP];					\
+      a = v2->color[ACOMP];					\
    }
 #define INNER_LOOP( LEFT, RIGHT, Y )				\
 	{							\
@@ -1698,13 +1698,13 @@ static void general_textured_spec_triangle1( GLcontext *ctx,
    GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);	\
    GLint r, g, b, a, sr, sg, sb;				\
    if (flat_shade) {						\
-      r = v2->color[0];						\
-      g = v2->color[1];						\
-      b = v2->color[2];						\
-      a = v2->color[3];						\
-      sr = v2->specular[0]; 					\
-      sg = v2->specular[1]; 					\
-      sb = v2->specular[2]; 					\
+      r = v2->color[RCOMP];					\
+      g = v2->color[GCOMP];					\
+      b = v2->color[BCOMP];					\
+      a = v2->color[ACOMP];					\
+      sr = v2->specular[RCOMP];					\
+      sg = v2->specular[GCOMP];					\
+      sb = v2->specular[BCOMP];					\
    }
 #define INNER_LOOP( LEFT, RIGHT, Y )				\
 	{							\
@@ -1777,26 +1777,6 @@ static void general_textured_spec_triangle1( GLcontext *ctx,
 }
 
 
-
-/*
- * Compute the lambda value for a fragment. (texture level of detail)
- */
-static INLINE GLfloat
-compute_lambda( GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
-                GLfloat invQ, GLfloat width, GLfloat height ) 
-{
-   GLfloat dudx = dsdx * invQ * width;
-   GLfloat dudy = dsdy * invQ * width;
-   GLfloat dvdx = dtdx * invQ * height;
-   GLfloat dvdy = dtdy * invQ * height;
-   GLfloat r1 = dudx * dudx + dudy * dudy;
-   GLfloat r2 = dvdx * dvdx + dvdy * dvdy;
-   GLfloat rho2 = r1 + r2;     /* used to be:  rho2 = MAX2(r1,r2); */
-   /* return log base 2 of rho */
-   return log(rho2) * 1.442695 * 0.5;       /* 1.442695 = 1/log(2) */
-}
-
-
 /*
  * Render a smooth-shaded, textured, RGBA triangle.
  * Interpolate S,T,U with perspective correction and compute lambda for
@@ -1828,10 +1808,10 @@ static void lambda_textured_triangle1( GLcontext *ctx,
    const GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);	\
    GLint r, g, b, a;							\
    if (flat_shade) {							\
-      r = v2->color[0];							\
-      g = v2->color[1];							\
-      b = v2->color[2];							\
-      a = v2->color[3];							\
+      r = v2->color[RCOMP];						\
+      g = v2->color[GCOMP];						\
+      b = v2->color[BCOMP];						\
+      a = v2->color[ACOMP];						\
    }
 
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
@@ -1855,7 +1835,7 @@ static void lambda_textured_triangle1( GLcontext *ctx,
 		    s[i] = ss*invQ;					\
 		    t[i] = tt*invQ;					\
 		    u[i] = uu*invQ;					\
-                    lambda[i] = COMPUTE_LAMBDA(invQ);			\
+                    COMPUTE_LAMBDA(lambda[i], invQ);			\
 		    ffz += fdzdx;					\
 		    fffog += fdfogdx;					\
 		    ss += dsdx;						\
@@ -1876,7 +1856,7 @@ static void lambda_textured_triangle1( GLcontext *ctx,
 		    s[i] = ss*invQ;					\
 		    t[i] = tt*invQ;					\
 		    u[i] = uu*invQ;					\
-                    lambda[i] = COMPUTE_LAMBDA(invQ);			\
+                    COMPUTE_LAMBDA(lambda[i], invQ);			\
 		    ffz += fdzdx;					\
 		    fffog += fdfogdx;					\
 		    ffr += fdrdx;					\
@@ -1932,13 +1912,13 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
    const GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);	\
    GLint r, g, b, a, sr, sg, sb;					\
    if (flat_shade) {							\
-      r = v2->color[0];							\
-      g = v2->color[1];							\
-      b = v2->color[2];							\
-      a = v2->color[3];							\
-      sr = v2->specular[0];						\
-      sg = v2->specular[1];						\
-      sb = v2->specular[2];						\
+      r = v2->color[RCOMP];						\
+      g = v2->color[GCOMP];						\
+      b = v2->color[BCOMP];						\
+      a = v2->color[ACOMP];						\
+      sr = v2->specular[RCOMP];						\
+      sg = v2->specular[GCOMP];						\
+      sb = v2->specular[BCOMP];						\
    }
 
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
@@ -1966,7 +1946,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
 		    s[i] = ss*invQ;					\
 		    t[i] = tt*invQ;					\
 		    u[i] = uu*invQ;					\
-                    lambda[i] = COMPUTE_LAMBDA(invQ);			\
+                    COMPUTE_LAMBDA(lambda[i], invQ);			\
 		    fffog += fdfogdx;					\
 		    ffz += fdzdx;					\
 		    ss += dsdx;						\
@@ -1990,7 +1970,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
 		    s[i] = ss*invQ;					\
 		    t[i] = tt*invQ;					\
 		    u[i] = uu*invQ;					\
-                    lambda[i] = COMPUTE_LAMBDA(invQ);			\
+                    COMPUTE_LAMBDA(lambda[i], invQ);			\
 		    fffog += fdfogdx;					\
 		    ffz += fdzdx;					\
 		    ffr += fdrdx;					\
@@ -2036,112 +2016,109 @@ lambda_multitextured_triangle1( GLcontext *ctx,
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
 #define INTERP_MULTITEX 1
+#define INTERP_MULTILAMBDA 1
 
-#define SETUP_CODE								\
-   GLchan rgba[MAX_WIDTH][4];							\
-   const GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);		\
-   GLfloat twidth[MAX_TEXTURE_UNITS], theight[MAX_TEXTURE_UNITS];		\
-   GLint r, g, b, a;								\
-   if (flat_shade) {								\
-      r = v2->color[0];								\
-      g = v2->color[1];								\
-      b = v2->color[2];								\
-      a = v2->color[3];								\
-   }										\
-   {										\
-      GLuint unit;								\
-      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {		\
-         if (ctx->Texture.Unit[unit]._ReallyEnabled) {				\
+#define SETUP_CODE							\
+   GLchan rgba[MAX_WIDTH][4];						\
+   const GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);	\
+   GLfloat twidth[MAX_TEXTURE_UNITS], theight[MAX_TEXTURE_UNITS];	\
+   GLint r, g, b, a;							\
+   if (flat_shade) {							\
+      r = v2->color[0];							\
+      g = v2->color[1];							\
+      b = v2->color[2];							\
+      a = v2->color[3];							\
+   }									\
+   {									\
+      GLuint unit;							\
+      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {	\
+         if (ctx->Texture.Unit[unit]._ReallyEnabled) {			\
             const struct gl_texture_object *obj = ctx->Texture.Unit[unit]._Current; \
-            const GLint baseLevel = obj->BaseLevel;				\
-            const struct gl_texture_image *texImage = obj->Image[baseLevel];	\
-            twidth[unit] = (GLfloat) texImage->Width;				\
-            theight[unit] = (GLfloat) texImage->Height;				\
-         }									\
-      }										\
+            const GLint baseLevel = obj->BaseLevel;			\
+            const struct gl_texture_image *texImage = obj->Image[baseLevel];\
+            twidth[unit] = (GLfloat) texImage->Width;			\
+            theight[unit] = (GLfloat) texImage->Height;			\
+         }								\
+      }									\
    }
 
 
 
-#define INNER_LOOP( LEFT, RIGHT, Y )						\
-   {										\
-      GLint i;									\
-      const GLint n = RIGHT-LEFT;						\
-      GLdepth zspan[MAX_WIDTH];							\
-      GLfixed fogspan[MAX_WIDTH];						\
-      GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH];				\
-      if (n > 0) {								\
-         if (flat_shade) {							\
-	    for (i=0;i<n;i++) {							\
-	       zspan[i] = FixedToDepth(ffz);					\
-	       fogspan[i] = fffog / 256;					\
-               fffog += fdfogdx;						\
-	       ffz += fdzdx;							\
-	       rgba[i][RCOMP] = r;						\
-	       rgba[i][GCOMP] = g;						\
-	       rgba[i][BCOMP] = b;						\
-	       rgba[i][ACOMP] = a;						\
-	       {								\
-		  GLuint unit;							\
-		  for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {	\
-		     if (ctx->Texture.Unit[unit]._ReallyEnabled) {		\
-			GLdouble invQ = 1.0 / vv[unit];				\
-			s[unit][i] = ss[unit] * invQ;				\
-			t[unit][i] = tt[unit] * invQ;				\
-			u[unit][i] = uu[unit] * invQ;				\
-			lambda[unit][i] = compute_lambda(dsdx[unit], dsdy[unit],\
-				   dtdx[unit], dtdy[unit], invQ,		\
-				   twidth[unit], theight[unit] );		\
-			ss[unit] += dsdx[unit];					\
-			tt[unit] += dtdx[unit];					\
-			uu[unit] += dudx[unit];					\
-			vv[unit] += dvdx[unit];					\
-		     }								\
-		  }								\
-	       }								\
-	    }									\
-	 }									\
-	 else { /* smooth shade */						\
-	    for (i=0;i<n;i++) {							\
-	       zspan[i] = FixedToDepth(ffz);					\
-	       fogspan[i] = fffog / 256;					\
-	       ffz += fdzdx;							\
-	       fffog += fdfogdx;						\
-	       rgba[i][RCOMP] = FixedToInt(ffr);				\
-	       rgba[i][GCOMP] = FixedToInt(ffg);				\
-	       rgba[i][BCOMP] = FixedToInt(ffb);				\
-	       rgba[i][ACOMP] = FixedToInt(ffa);				\
-	       ffr += fdrdx;							\
-	       ffg += fdgdx;							\
-	       ffb += fdbdx;							\
-	       ffa += fdadx;							\
-	       {								\
-		  GLuint unit;							\
-		  for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {	\
-		     if (ctx->Texture.Unit[unit]._ReallyEnabled) {		\
-			GLdouble invQ = 1.0 / vv[unit];				\
-			s[unit][i] = ss[unit] * invQ;				\
-			t[unit][i] = tt[unit] * invQ;				\
-			u[unit][i] = uu[unit] * invQ;				\
-			lambda[unit][i] = compute_lambda(dsdx[unit], dsdy[unit],\
-				   dtdx[unit], dtdy[unit], invQ,		\
-				   twidth[unit], theight[unit] );		\
-			ss[unit] += dsdx[unit];					\
-			tt[unit] += dtdx[unit];					\
-			uu[unit] += dudx[unit];					\
-			vv[unit] += dvdx[unit];					\
-		     }								\
-		  }								\
-	       }								\
-	    }									\
-	 }									\
-	 gl_write_multitexture_span( ctx, n, LEFT, Y, zspan, fogspan,		\
-				     (const GLfloat (*)[MAX_WIDTH]) s,		\
-				     (const GLfloat (*)[MAX_WIDTH]) t,		\
-				     (const GLfloat (*)[MAX_WIDTH]) u,		\
-				     (GLfloat (*)[MAX_WIDTH]) lambda,		\
-				     rgba, NULL, GL_POLYGON );			\
-      }										\
+#define INNER_LOOP( LEFT, RIGHT, Y )					\
+   {									\
+      GLint i;								\
+      const GLint n = RIGHT-LEFT;					\
+      GLdepth zspan[MAX_WIDTH];						\
+      GLfixed fogspan[MAX_WIDTH];					\
+      GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH];			\
+      if (n > 0) {							\
+         if (flat_shade) {						\
+	    for (i=0;i<n;i++) {						\
+	       zspan[i] = FixedToDepth(ffz);				\
+	       fogspan[i] = fffog / 256;				\
+               fffog += fdfogdx;					\
+	       ffz += fdzdx;						\
+	       rgba[i][RCOMP] = r;					\
+	       rgba[i][GCOMP] = g;					\
+	       rgba[i][BCOMP] = b;					\
+	       rgba[i][ACOMP] = a;					\
+	       {							\
+		  GLuint unit;						\
+		  for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {\
+		     if (ctx->Texture.Unit[unit]._ReallyEnabled) {	\
+			GLdouble invQ = 1.0 / vv[unit];			\
+			s[unit][i] = ss[unit] * invQ;			\
+			t[unit][i] = tt[unit] * invQ;			\
+			u[unit][i] = uu[unit] * invQ;			\
+                        COMPUTE_MULTILAMBDA(lambda[unit][i], invQ, unit);\
+			ss[unit] += dsdx[unit];				\
+			tt[unit] += dtdx[unit];				\
+			uu[unit] += dudx[unit];				\
+			vv[unit] += dvdx[unit];				\
+		     }							\
+		  }							\
+	       }							\
+	    }								\
+	 }								\
+	 else { /* smooth shade */					\
+	    for (i=0;i<n;i++) {						\
+	       zspan[i] = FixedToDepth(ffz);				\
+	       fogspan[i] = fffog / 256;				\
+	       ffz += fdzdx;						\
+	       fffog += fdfogdx;					\
+	       rgba[i][RCOMP] = FixedToInt(ffr);			\
+	       rgba[i][GCOMP] = FixedToInt(ffg);			\
+	       rgba[i][BCOMP] = FixedToInt(ffb);			\
+	       rgba[i][ACOMP] = FixedToInt(ffa);			\
+	       ffr += fdrdx;						\
+	       ffg += fdgdx;						\
+	       ffb += fdbdx;						\
+	       ffa += fdadx;						\
+	       {							\
+		  GLuint unit;						\
+		  for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {\
+		     if (ctx->Texture.Unit[unit]._ReallyEnabled) {	\
+			GLdouble invQ = 1.0 / vv[unit];			\
+			s[unit][i] = ss[unit] * invQ;			\
+			t[unit][i] = tt[unit] * invQ;			\
+			u[unit][i] = uu[unit] * invQ;			\
+                        COMPUTE_MULTILAMBDA(lambda[unit][i], invQ, unit);  \
+			ss[unit] += dsdx[unit];				\
+			tt[unit] += dtdx[unit];				\
+			uu[unit] += dudx[unit];				\
+			vv[unit] += dvdx[unit];				\
+		     }							\
+		  }							\
+	       }							\
+	    }								\
+	 }								\
+	 gl_write_multitexture_span( ctx, n, LEFT, Y, zspan, fogspan,	\
+				     (const GLfloat (*)[MAX_WIDTH]) s,	\
+				     (const GLfloat (*)[MAX_WIDTH]) t,	\
+				     (const GLfloat (*)[MAX_WIDTH]) u,	\
+				     (GLfloat (*)[MAX_WIDTH]) lambda,	\
+				     rgba, NULL, GL_POLYGON );		\
+      }									\
    }
 #include "s_tritemp.h"
 }

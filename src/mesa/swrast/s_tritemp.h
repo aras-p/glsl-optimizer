@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.10 2001/02/12 17:02:00 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.11 2001/03/03 00:37:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,11 +39,13 @@
  *    INTERP_INDEX    - if defined, interpolate color index values
  *    INTERP_INT_TEX  - if defined, interpolate integer ST texcoords
  *                         (fast, simple 2-D texture mapping)
- *    INTERP_LAMBDA   - if defined, the lambda value is computed at every
- *                         pixel, to apply MIPMAPPING, and min/maxification
  *    INTERP_TEX      - if defined, interpolate set 0 float STRQ texcoords
  *                         NOTE:  OpenGL STRQ = Mesa STUV (R was taken for red)
  *    INTERP_MULTITEX - if defined, interpolate N units of STRQ texcoords
+ *    INTERP_LAMBDA   - if defined, the lambda value is computed at every
+ *                         pixel, to apply MIPMAPPING, and min/maxification
+ *    INTERP_MULTILAMBDA - like above but for multitexturing, i.e.
+ *                         a lambda value for every texture unit
  *
  * When one can directly address pixels in the color buffer the following
  * macros can be defined and used to compute pixel addresses during
@@ -285,13 +287,20 @@
       GLfloat dudx[MAX_TEXTURE_UNITS], dudy[MAX_TEXTURE_UNITS];
       GLfloat dvdx[MAX_TEXTURE_UNITS], dvdy[MAX_TEXTURE_UNITS];
 #endif
-#ifdef INTERP_LAMBDA
 
+#ifdef INTERP_LAMBDA
 #ifndef INTERP_TEX
 #error "Mipmapping without texturing doesn't make sense."
 #endif
       GLfloat lambda_nominator;
 #endif /* INTERP_LAMBDA */
+
+#ifdef INTERP_MULTILAMBDA
+#ifndef INTERP_MULTITEX
+#error "Multi-Mipmapping without multi-texturing doesn't make sense."
+#endif
+      GLfloat lambda_nominator[MAX_TEXTURE_UNITS];
+#endif /* INTERP_MULTILAMBDA */
 
 
       /*
@@ -974,19 +983,46 @@
  *     which saves some computation time.
  */
 	       {
-		 GLfloat dudx = dsdx /* * invQ*/ * twidth;
-		 GLfloat dudy = dsdy /* * invQ*/ * twidth;
-		 GLfloat dvdx = dtdx /* * invQ*/ * theight;
-		 GLfloat dvdy = dtdy /* * invQ*/ * theight;
-		 GLfloat r1 = dudx * dudx + dudy * dudy;
-		 GLfloat r2 = dvdx * dvdx + dvdy * dvdy;
-		 GLfloat rho2 = r1 + r2; /* used to be:  rho2 = MAX2(r1,r2); */
-		 lambda_nominator = rho2;
+                  GLfloat dudx = dsdx /* * invQ*/ * twidth;
+                  GLfloat dudy = dsdy /* * invQ*/ * twidth;
+                  GLfloat dvdx = dtdx /* * invQ*/ * theight;
+                  GLfloat dvdy = dtdy /* * invQ*/ * theight;
+                  GLfloat r1 = dudx * dudx + dudy * dudy;
+                  GLfloat r2 = dvdx * dvdx + dvdy * dvdy;
+                  GLfloat rho2 = r1 + r2; /* was:  rho2 = MAX2(r1,r2); */
+                  lambda_nominator = rho2;
 	       }
 	       
-	       /* return log base 2 of sqrt(rho) */ 
-#define COMPUTE_LAMBDA(X)  log( lambda_nominator * (X)*(X) ) * 1.442695F * 0.5F  /* 1.442695 = 1/log(2) */
+	       /* set DEST to log_(base 2) of sqrt(rho) */ 
+               /* 1.442695 = 1/log(2) */
+#define COMPUTE_LAMBDA(DEST, X)  \
+   DEST = log( lambda_nominator * (X)*(X) ) * 1.442695F * 0.5F
 #endif
+
+#ifdef INTERP_MULTILAMBDA
+/*
+ *  Read the comment for INTERP_LAMBDA, but apply to each texture unit 
+ */
+	       {
+                  GLuint unit;
+                  for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
+                     if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+                        GLfloat dudx = dsdx[unit] /* * invQ*/ * twidth[unit];
+                        GLfloat dudy = dsdy[unit] /* * invQ*/ * twidth[unit];
+                        GLfloat dvdx = dtdx[unit] /* * invQ*/ * theight[unit];
+                        GLfloat dvdy = dtdy[unit] /* * invQ*/ * theight[unit];
+                        GLfloat r1 = dudx * dudx + dudy * dudy;
+                        GLfloat r2 = dvdx * dvdx + dvdy * dvdy;
+                        GLfloat rho2 = r1 + r2; /* used to be:  rho2 = MAX2(r1,r2); */
+                        lambda_nominator[unit] = rho2;
+                     }
+                  }
+	       }
+	       /* set DEST to log_(base 2) of sqrt(rho) */ 
+#define COMPUTE_MULTILAMBDA(DEST, X, unit)  \
+   DEST = log( lambda_nominator[unit] * (X)*(X) ) * 1.442695F * 0.5F
+#endif
+
 
                INNER_LOOP( left, right, iy );
 
@@ -1117,11 +1153,13 @@
 #undef INTERP_SPEC
 #undef INTERP_ALPHA
 #undef INTERP_INDEX
-#undef INTERP_LAMBDA
-#undef COMPUTE_LAMBDA
 #undef INTERP_INT_TEX
 #undef INTERP_TEX
 #undef INTERP_MULTITEX
+#undef INTERP_LAMBDA
+#undef COMPUTE_LAMBDA
+#undef INTERP_MULTILAMBDA
+#undef COMPUTE_MULTILAMBDA
 
 #undef S_SCALE
 #undef T_SCALE
