@@ -5,6 +5,8 @@
 /*
  * XXX Some token values aren't known (grep for ?)
  * XXX This file may be automatically generated in the future.
+ * XXX There are some doubly-defined tokens with different values!  Search
+ *     for "DUPLICATE".
  */
 
 
@@ -47,8 +49,10 @@ extern "C" {
  *      Added GL_ARB_multisample tokens, added GL_ARB_texture_env_add
  *   7. Brian Paul, 7 Apr 2000
  *      Minor clean-ups, temporary token values for GL_SGIS_pixel_texture
+ *   8. Brian Paul, 15 Apr 2000
+ *      Added GL_EXT_texture_cube_map, misc clean-up.
  */
-#define GL_GLEXT_VERSION_EXT 7
+#define GL_GLEXT_VERSION_EXT 8
 
 
 /*
@@ -380,10 +384,7 @@ typedef void (APIENTRY * PFNGLSEPARABLEFILTER2DEXTPROC) (GLenum target, GLenum i
 #ifndef GL_SGI_color_table
 #define GL_SGI_color_table 1
 
-/* XXX this symbol collides with the same in GL_SGI_texture_color_tabled
-** and they have different values!
-#define GL_COLOR_TABLE_SGI				0x80D0
-**/
+#define GL_COLOR_TABLE_SGI				0x80D0 /* DUPLICATE! */
 #define GL_POST_CONVOLUTION_COLOR_TABLE_SGI		0x80D1
 #define GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI		0x80D2
 #define GL_PROXY_COLOR_TABLE_SGI			0x80D3
@@ -499,7 +500,7 @@ typedef void (APIENTRY * PFNGLTEXSUBIMAGE4DSGISPROC) (GLenum target, GLint level
 #ifndef GL_SGI_texture_color_table
 #define GL_SGI_texture_color_table 1
 
-#define GL_COLOR_TABLE_SGI			0x80BC
+#define GL_COLOR_TABLE_SGI_80BC			0x80BC /* DUPLICATE! */
 #define GL_PROXY_TEXTURE_COLOR_TABLE_SGI	0x80BD
 
 #endif /* GL_SGI_texture_color_table */
@@ -1729,11 +1730,8 @@ typedef void (APIENTRY * PFNGLDRAWRANGEELEMENTSEXTPROC) (GLenum mode, GLuint sta
 
 #define GL_FRAGMENT_MATERIAL_EXT		0x8349
 #define GL_FRAGMENT_NORMAL_EXT			0x834A
-/* XXX this symbol collides with the same in GL_EXT_fog_coord and they
-** have different values!  We're disabling this one since it's the less
-** common of the two extensions.
-#define GL_FRAGMENT_DEPTH_EXT			0x834B
-**/
+
+#define GL_FRAGMENT_DEPTH_EXT_834B		0x834B /* DUPLICATE! */
 #define GL_FRAGMENT_COLOR_EXT			0x834C
 #define GL_ATTENUATION_EXT			0x834D
 #define GL_SHADOW_ATTENUATION_EXT	        0x834E
@@ -2083,7 +2081,7 @@ typedef void (APIENTRY * PFNGLMULTIDRAWARRAYSEXT) (GLenum mode, GLint *first, GL
 
 #define GL_FOG_COORDINATE_SOURCE_EXT		0x8450
 #define GL_FOG_COORDINATE_EXT			0x8451
-#define GL_FRAGMENT_DEPTH_EXT			0x8452
+#define GL_FRAGMENT_DEPTH_EXT			0x8452 /* DUPLICATE! */
 #define GL_CURRENT_FOG_COORDINATE_EXT		0x8453
 #define GL_FOG_COORDINATE_ARRAY_TYPE_EXT	0x8454
 #define GL_FOG_COORDINATE_ARRAY_STRIDE_EXT	0x8455
@@ -3118,6 +3116,29 @@ typedef void (APIENTRY * PFNGLCOMPRESSEDTEXSUBIMAGE1DARBPROC) (GLenum target, GL
 typedef void (APIENTRY * PFNGLGETCOMPRESSEDTEXIMAGEARBPROC) (GLenum target, GLint lod, GLvoid *img);
 
 #endif /* GL_ARB_texture_compression */
+
+
+
+/*
+ * ?. GL_EXT_texture_cube_map
+ */
+#ifndef GL_EXT_texture_cube_map
+#define GL_EXT_texture_cube_map 1
+
+#define GL_NORMAL_MAP_EXT				0x8511
+#define GL_REFLECTION_MAP_EXT				0x8512
+#define GL_TEXTURE_CUBE_MAP_EXT				0x8513
+#define GL_TEXTURE_BINDING_CUBE_MAP_EXT			0x8514
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_X_EXT		0x8515
+#define GL_TEXTURE_CUBE_MAP_NEGATIVE_X_EXT		0x8516
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_Y_EXT		0x8517
+#define GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_EXT		0x8518
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_Z_EXT		0x8519
+#define GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_EXT		0x851a
+#define GL_PROXY_TEXTURE_CUBE_MAP_EXT			0x851b 
+#define GL_MAX_CUBE_MAP_TEXTURE_SIZE_EXT		0x851c
+
+#endif
 
 
 
