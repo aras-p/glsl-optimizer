@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.22 2002/04/12 15:39:59 brianp Exp $ */
+/* $Id: swrast.h,v 1.23 2002/04/12 15:47:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -102,10 +102,11 @@ typedef struct {
 struct sw_span {
    GLint x, y;
 
-   /* only need to process pixels between start <= i < end */
+   /* Only need to process pixels between start <= i < end */
+   /* At this time, start is always zero. */
    GLuint start, end;
 
-   /* This flag indicates that only a part of the span is visible */
+   /* This flag indicates that mask[] array is effectively filled with ones */
    GLboolean writeAll;
 
    /* either GL_POLYGON, GL_LINE, GL_POLYGON, GL_BITMAP */
@@ -125,7 +126,7 @@ struct sw_span {
    GLfloat specRed, specRedStep;
    GLfloat specGreen, specGreenStep;
    GLfloat specBlue, specBlueStep;
-#else /* CHAN_TYPE == */
+#else /* CHAN_TYPE == GL_UNSIGNED_BYTE or GL_UNSIGNED SHORT */
    GLfixed red, redStep;
    GLfixed green, greenStep;
    GLfixed blue, blueStep;
