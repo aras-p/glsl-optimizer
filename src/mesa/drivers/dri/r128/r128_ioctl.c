@@ -31,17 +31,23 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Gareth Hughes <gareth@valinux.com>
  *
  */
+#include <errno.h>
 
 #include "r128_context.h"
 #include "r128_state.h"
 #include "r128_ioctl.h"
-
 #include "imports.h"
 #include "macros.h"
 
 #include "swrast/swrast.h"
 
 #include "vblank.h"
+
+#ifdef _SOLO
+/* temporary - should really split r128_reg.h into r128_reg.h & r128_macros.h
+ * like the radeon */
+#include "r128_macros.h"
+#endif
 
 #define R128_TIMEOUT        2048
 #define R128_IDLE_RETRY       32
