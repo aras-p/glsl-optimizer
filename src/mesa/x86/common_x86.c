@@ -22,13 +22,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/*
+/**
+ * \file common_x86.c
+ *
  * Check CPU capabilities & initialize optimized funtions for this particular
  * processor.
  *
- * Written by Holger Waechtler <holger@akaflieg.extern.tu-berlin.de>
- * Changed by Andre Werthmann <wertmann@cs.uni-potsdam.de> for using the
- * new SSE functions.
+ * Changed by Andre Werthmann for using the new SSE functions.
+ *
+ * \author Holger Waechtler <holger@akaflieg.extern.tu-berlin.de>
+ * \author Andre Werthmann <wertmann@cs.uni-potsdam.de>
  */
 
 /* XXX these includes should probably go into imports.h or glheader.h */
@@ -87,12 +90,19 @@ static void message( const char *msg )
  * loop in the signal delivery from the kernel as we can't interact with
  * the SIMD FPU state to clear the exception bits.  Either way, this is
  * not good.
+ *
+ * However, I have been told by Alan Cox that all 2.4 (and later) Linux
+ * kernels provide full SSE support on all processors that expose SSE via
+ * the CPUID mechanism.  It just so happens that this is the exact set of
+ * kernels supported DRI.  Therefore, when building for DRI the funky SSE
+ * exception test is omitted.
  */
 
 extern void _mesa_test_os_sse_support( void );
 extern void _mesa_test_os_sse_exception_support( void );
 
-#if defined(__linux__) && defined(_POSIX_SOURCE) && defined(X86_FXSR_MAGIC)
+#if defined(__linux__) && defined(_POSIX_SOURCE) && defined(X86_FXSR_MAGIC) \
+   && !defined(DRI_NEW_INTERFACE_ONLY)
 static void sigill_handler( int signal, struct sigcontext sc )
 {
    message( "SIGILL, " );
@@ -142,7 +152,7 @@ static void sigfpe_handler( int signal, struct sigcontext sc )
  */
 static void check_os_sse_support( void )
 {
-#if defined(__linux__)
+#if defined(__linux__) && !defined(DRI_NEW_INTERFACE_ONLY)
 #if defined(_POSIX_SOURCE) && defined(X86_FXSR_MAGIC)
    struct sigaction saved_sigill;
    struct sigaction saved_sigfpe;
