@@ -2210,11 +2210,11 @@ GLAPI void GLAPIENTRY glTracePointerRangeMESA( const GLvoid* first, const GLvoid
 
 typedef void (*GLprogramcallbackMESA)(GLenum target, GLvoid *data);
 
-extern void
+GLAPI void GLAPIENTRY
 glProgramCallbackMESA(GLenum target, GLprogramcallbackMESA callback,
                       GLvoid *data);
 
-extern void
+GLAPI void GLAPIENTRY
 glGetProgramRegisterfvMESA(GLenum target, GLsizei len, const GLubyte *name,
                            GLfloat *v);
 
@@ -2230,6 +2230,123 @@ GLAPI void GLAPIENTRY glBlendEquationSeparateATI( GLenum modeRGB, GLenum modeA )
 typedef void (APIENTRYP PFNGLBLENDEQUATIONSEPARATEATIPROC) (GLenum modeRGB, GLenum modeA);
 
 #endif /* GL_ATI_blend_equation_separate */
+
+
+/* XXX this is temporary here! */
+#ifndef GL_EXT_framebuffer_object
+#define GL_EXT_framebuffer_object
+
+GLAPI GLboolean GLAPIENTRY
+glIsRenderbufferEXT(GLuint renderbuffer);
+
+GLAPI void GLAPIENTRY
+glBindRenderbufferEXT(GLenum target, GLuint renderbuffer);
+
+GLAPI void GLAPIENTRY
+glDeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers);
+
+GLAPI void GLAPIENTRY
+glGenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers);
+
+GLAPI void GLAPIENTRY
+glRenderbufferStorageEXT(GLenum target, GLenum internalformat,
+                             GLsizei width, GLsizei height);
+
+GLAPI void GLAPIENTRY
+glGetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params);
+
+GLAPI GLboolean GLAPIENTRY
+glIsFramebufferEXT(GLuint framebuffer);
+
+GLAPI void GLAPIENTRY
+glBindFramebufferEXT(GLenum target, GLuint framebuffer);
+
+GLAPI void GLAPIENTRY
+glDeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers);
+
+GLAPI void GLAPIENTRY
+glGenFramebuffersEXT(GLsizei n, GLuint *framebuffers);
+
+GLAPI GLenum GLAPIENTRY
+glCheckFramebufferStatusEXT(GLenum target);
+
+GLAPI void GLAPIENTRY
+glFramebufferTexture1DEXT(GLenum target, GLenum attachment,
+                              GLenum textarget, GLuint texture, GLint level);
+
+GLAPI void GLAPIENTRY
+glFramebufferTexture2DEXT(GLenum target, GLenum attachment,
+                              GLenum textarget, GLuint texture, GLint level);
+
+GLAPI void GLAPIENTRY
+glFramebufferTexture3DEXT(GLenum target, GLenum attachment,
+                              GLenum textarget, GLuint texture,
+                              GLint level, GLint zoffset);
+
+GLAPI void GLAPIENTRY
+glFramebufferRenderbufferEXT(GLenum target, GLenum attachment,
+                                 GLenum renderbuffertarget,
+                                 GLuint renderbuffer);
+
+GLAPI void GLAPIENTRY
+glGetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
+                                             GLenum pname, GLint *params);
+
+GLAPI void GLAPIENTRY
+glGenerateMipmapEXT(GLenum target);
+
+
+#define GL_FRAMEBUFFER_EXT                     0x8D40
+#define GL_RENDERBUFFER_EXT                    0x8D41
+#define GL_STENCIL_INDEX_EXT                   0x8D45
+#define GL_STENCIL_INDEX1_EXT                  0x8D46
+#define GL_STENCIL_INDEX4_EXT                  0x8D47
+#define GL_STENCIL_INDEX8_EXT                  0x8D48
+#define GL_STENCIL_INDEX16_EXT                 0x8D49
+#define GL_RENDERBUFFER_WIDTH_EXT              0x8D42
+#define GL_RENDERBUFFER_HEIGHT_EXT             0x8D43
+#define GL_RENDERBUFFER_INTERNAL_FORMAT_EXT    0x8D44
+#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT            0x8CD0
+#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT            0x8CD1
+#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL_EXT          0x8CD2
+#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE_EXT  0x8CD3
+#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_3D_ZOFFSET_EXT     0x8CD4
+#define GL_COLOR_ATTACHMENT0_EXT                0x8CE0
+#define GL_COLOR_ATTACHMENT1_EXT                0x8CE1
+#define GL_COLOR_ATTACHMENT2_EXT                0x8CE2
+#define GL_COLOR_ATTACHMENT3_EXT                0x8CE3
+#define GL_COLOR_ATTACHMENT4_EXT                0x8CE4
+#define GL_COLOR_ATTACHMENT5_EXT                0x8CE5
+#define GL_COLOR_ATTACHMENT6_EXT                0x8CE6
+#define GL_COLOR_ATTACHMENT7_EXT                0x8CE7
+#define GL_COLOR_ATTACHMENT8_EXT                0x8CE8
+#define GL_COLOR_ATTACHMENT9_EXT                0x8CE9
+#define GL_COLOR_ATTACHMENT10_EXT               0x8CEA
+#define GL_COLOR_ATTACHMENT11_EXT               0x8CEB
+#define GL_COLOR_ATTACHMENT12_EXT               0x8CEC
+#define GL_COLOR_ATTACHMENT13_EXT               0x8CED
+#define GL_COLOR_ATTACHMENT14_EXT               0x8CEE
+#define GL_COLOR_ATTACHMENT15_EXT               0x8CEF
+#define GL_DEPTH_ATTACHMENT_EXT                 0x8D00
+#define GL_STENCIL_ATTACHMENT_EXT               0x8D20
+#define GL_FRAMEBUFFER_COMPLETE_EXT                          0x8CD5
+#define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT             0x8CD6
+#define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT     0x8CD7
+#define GL_FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT_EXT   0x8CD8
+#define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT             0x8CD9
+#define GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT                0x8CDA
+#define GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT            0x8CDB
+#define GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT            0x8CDC
+#define GL_FRAMEBUFFER_UNSUPPORTED_EXT                       0x8CDD
+#define GL_FRAMEBUFFER_STATUS_ERROR_EXT                      0x8CDE
+#define GL_FRAMEBUFFER_BINDING_EXT             0x8CA6
+#define GL_RENDERBUFFER_BINDING_EXT            0x8CA7
+#define GL_MAX_COLOR_ATTACHMENTS_EXT           0x8CDF
+#define GL_MAX_RENDERBUFFER_SIZE_EXT           0x84E8
+#define GL_INVALID_FRAMEBUFFER_OPERATION_EXT   0x0506
+
+#endif /* GL_EXT_framebuffer_object */
+
 
 
 /**
