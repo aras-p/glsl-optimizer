@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.44 2003/01/14 04:55:47 brianp Exp $ */
+/* $Id: t_context.h,v 1.45 2003/03/28 01:39:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -143,9 +143,10 @@
 
 
 /**
- * KW: Represents everything that can take place between a begin and
- * end, and can represent multiple begin/end pairs.  Can be used to
- * losslessly encode this information in display lists.
+ * Stores everything that can take place between a glBegin and glEnd.
+ * Adjacent glBegin/glEnd pairs are stored back-to-back when there's no
+ * state changes between them.
+ * Used for immediate mode rendering and display lists.
  */
 struct immediate
 {
@@ -196,6 +197,9 @@ struct immediate
     * of individual arrays as we did prior to Mesa 4.1.
     *
     * XXX may need to use 32-byte aligned allocation for this!!!
+    * XXX replace this with GLfloat *Attrib[VERT_ATTRIB_MAX] and allocate
+    * the attribute arrays as needed, so save memory.  As is, we're using
+    * 256 bytes per vertex (16 attribs * 4 comps/attrib * 4 bytes/comp).
     */
    GLfloat Attrib[VERT_ATTRIB_MAX][IMM_SIZE][4];  /* GL_NV_vertex_program */
 
@@ -219,6 +223,11 @@ struct vertex_arrays
    GLvector4f  TexCoord[MAX_TEXTURE_COORD_UNITS];
    GLvector1ui Elt;
    GLvector4f  FogCoord;
+
+   /* These attributes don't alias with the conventional attributes.
+    * The GL_NV_vertex_program extension defines 16 extra sets of vertex
+    * arrays which have precedent over the conventional arrays when enabled.
+    */
    GLvector4f  Attribs[VERT_ATTRIB_MAX];
 };
 

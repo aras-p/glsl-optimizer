@@ -1,10 +1,10 @@
-/* $Id: t_imm_alloc.c,v 1.17 2002/10/29 20:29:01 brianp Exp $ */
+/* $Id: t_imm_alloc.c,v 1.18 2003/03/28 01:39:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,57 +36,63 @@
 
 static int id = 0;  /* give each struct immediate a unique ID number */
 
-static struct immediate *real_alloc_immediate( GLcontext *ctx )
+
+static struct immediate *
+real_alloc_immediate( GLcontext *ctx )
 {
-   struct immediate *IM = ALIGN_CALLOC_STRUCT( immediate, 32 );
+   struct immediate *immed = ALIGN_CALLOC_STRUCT( immediate, 32 );
 
-   if (!IM)
-      return 0;
+   printf("Sizeof(struct immed) = %d\n", sizeof(struct immediate));
 
-/*     memset(IM, 0, sizeof(*IM)); */
+   if (!immed)
+      return NULL;
 
-   IM->id = id++;
-   IM->ref_count = 0;
-   IM->FlushElt = 0;
-   IM->LastPrimitive = IMM_MAX_COPIED_VERTS;
-   IM->Count = IMM_MAX_COPIED_VERTS;
-   IM->Start = IMM_MAX_COPIED_VERTS;
-   IM->Material = 0;
-   IM->MaterialMask = 0;
-   IM->MaxTextureUnits = ctx->Const.MaxTextureUnits;
-   IM->TexSize = 0;
-   IM->NormalLengthPtr = 0;
+   immed->id = id++;
+   immed->ref_count = 0;
+   immed->FlushElt = 0;
+   immed->LastPrimitive = IMM_MAX_COPIED_VERTS;
+   immed->Count = IMM_MAX_COPIED_VERTS;
+   immed->Start = IMM_MAX_COPIED_VERTS;
+   immed->Material = 0;
+   immed->MaterialMask = 0;
+   immed->MaxTextureUnits = ctx->Const.MaxTextureCoordUnits;
+   immed->TexSize = 0;
+   immed->NormalLengthPtr = 0;
 
-   IM->CopyTexSize = 0;
-   IM->CopyStart = IM->Start;
+   immed->CopyTexSize = 0;
+   immed->CopyStart = immed->Start;
 
-   return IM;
+   return immed;
 }
 
 
-static void real_free_immediate( struct immediate *IM )
+static void
+real_free_immediate( struct immediate *immed )
 {
    static int freed = 0;
 
-   if (IM->Material) {
-      FREE( IM->Material );
-      FREE( IM->MaterialMask );
-      IM->Material = 0;
-      IM->MaterialMask = 0;
+   if (immed->Material) {
+      FREE( immed->Material );
+      FREE( immed->MaterialMask );
+      immed->Material = 0;
+      immed->MaterialMask = 0;
    }
 
-   if (IM->NormalLengthPtr)
-      ALIGN_FREE( IM->NormalLengthPtr );
+   if (immed->NormalLengthPtr)
+      ALIGN_FREE( immed->NormalLengthPtr );
 
-   ALIGN_FREE( IM );
+   ALIGN_FREE( immed );
    freed++;
 /*     printf("outstanding %d\n", id - freed);    */
 }
 
 
-/* Cache a single allocated immediate struct.
+/**
+ * Return a pointer to a new 'struct immediate' object.
+ * We actually keep a spare/cached one to reduce malloc calls.
  */
-struct immediate *_tnl_alloc_immediate( GLcontext *ctx )
+struct immediate *
+_tnl_alloc_immediate( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct immediate *tmp = tnl->freed_immediate;
@@ -99,26 +105,29 @@ struct immediate *_tnl_alloc_immediate( GLcontext *ctx )
       return real_alloc_immediate( ctx );
 }
 
-/* May be called after tnl is destroyed.
+/**
+ * Free a 'struct immediate' object.
+ * May be called after tnl is destroyed.
  */
-void _tnl_free_immediate( GLcontext *ctx, struct immediate *IM )
+void
+_tnl_free_immediate( GLcontext *ctx, struct immediate *immed )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
-   ASSERT(IM->ref_count == 0);
+   ASSERT(immed->ref_count == 0);
 
-   if (IM->NormalLengthPtr) {
-      ALIGN_FREE(IM->NormalLengthPtr);
-      IM->NormalLengthPtr = NULL;
+   if (immed->NormalLengthPtr) {
+      ALIGN_FREE(immed->NormalLengthPtr);
+      immed->NormalLengthPtr = NULL;
    }
 
    if (!tnl) {
-      real_free_immediate( IM );
+      real_free_immediate( immed );
    } 
    else {
       if (tnl->freed_immediate)
 	 real_free_immediate( tnl->freed_immediate );
       
-      tnl->freed_immediate = IM;
+      tnl->freed_immediate = immed;
    }
 }

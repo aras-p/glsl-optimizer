@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.40 2003/03/01 01:50:27 brianp Exp $ */
+/* $Id: t_imm_fixup.c,v 1.41 2003/03/28 01:39:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -207,39 +207,11 @@ static void copy_from_current( GLcontext *ctx, struct immediate *IM,
    if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
       _tnl_print_vert_flags("copy from current", copyMask); 
 
-#if 0
-   if (copyMask & VERT_BIT_NORMAL) {
-      COPY_4V(IM->Attrib[VERT_ATTRIB_NORMAL][pos],
-              ctx->Current.Attrib[VERT_ATTRIB_NORMAL]);
-   }
-
-   if (copyMask & VERT_BIT_COLOR0) {
-      COPY_4FV( IM->Attrib[VERT_ATTRIB_COLOR0][pos],
-                ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
-   }
-
-   if (copyMask & VERT_BIT_COLOR1)
-      COPY_4FV( IM->Attrib[VERT_ATTRIB_COLOR1][pos],
-                ctx->Current.Attrib[VERT_ATTRIB_COLOR1]);
-
-   if (copyMask & VERT_BIT_FOG)
-      IM->Attrib[VERT_ATTRIB_FOG][pos][0] = ctx->Current.Attrib[VERT_ATTRIB_FOG][0];
-
-   if (copyMask & VERT_BITS_TEX_ANY) {
-      GLuint i;
-      for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
-	 if (copyMask & VERT_BIT_TEX(i))
-            COPY_4FV(IM->Attrib[VERT_ATTRIB_TEX0 + i][pos],
-                     ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i]);
-      }
-   }
-#else
    for (attrib = 0, attribBit = 1; attrib < 16; attrib++, attribBit <<= 1) {
       if (copyMask & attribBit) {
          COPY_4FV( IM->Attrib[attrib][pos], ctx->Current.Attrib[attrib]);
       }
    }
-#endif
 
    if (copyMask & VERT_BIT_INDEX)
       IM->Index[pos] = ctx->Current.Index;
