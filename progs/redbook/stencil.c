@@ -43,6 +43,21 @@
  *  of the scene.  Within this mask, a different model
  *  (a sphere) is drawn in a different color.
  */
+
+/*
+ * !!! NOTE !!!
+ *
+ * This demo is poorly written.  The stencil buffer should be
+ * redrawn in display(), not in the myReshape() function.
+ * The reason is if the window gets "damaged" then the stencil buffer
+ * contents will be in an undefined state (myReshape is not called when
+ * a window is damaged and needs to be redrawn).  If the stencil buffer
+ * contents are undefined, the results of display() are unpredictable.
+ *
+ * -Brian
+ */
+
+
 #include <stdlib.h>
 #include <GL/glut.h>
 
@@ -90,6 +105,8 @@ void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    glStencilOp (GL_KEEP, GL_KEEP, GL_KEEP);
+
 /* draw blue sphere where the stencil is 1 */
     glStencilFunc (GL_EQUAL, 0x1, 0x1);
     glCallList (BLUEMAT);
@@ -97,7 +114,6 @@ void display(void)
 
 /* draw the tori where the stencil is not 1 */
     glStencilFunc (GL_NOTEQUAL, 0x1, 0x1);
-    glStencilOp (GL_KEEP, GL_KEEP, GL_KEEP);
     glPushMatrix();
 	glRotatef (45.0, 0.0, 0.0, 1.0);
 	glRotatef (45.0, 0.0, 1.0, 0.0);
@@ -110,6 +126,7 @@ void display(void)
     glPopMatrix();
 
     glFlush();
+    glutSwapBuffers();
 }
 
 /*  Whenever the window is reshaped, redefine the
@@ -164,7 +181,7 @@ key(unsigned char k, int x, int y)
 int main(int argc, char** argv)
 {
     glutInit(&argc, argv);
-    glutInitDisplayMode (GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH | GLUT_STENCIL);
+    glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STENCIL);
     glutInitWindowSize (400, 400);
     glutCreateWindow (argv[0]);
     myinit ();
