@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.93 2003/01/21 23:58:29 brianp Exp $ */
+/* $Id: texstate.c,v 1.94 2003/02/23 04:12:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2447,7 +2447,7 @@ void
 _mesa_ActiveTextureARB( GLenum target )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLuint texUnit = target - GL_TEXTURE0;
+   const GLuint texUnit = target - GL_TEXTURE0;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
@@ -2459,6 +2459,9 @@ _mesa_ActiveTextureARB( GLenum target )
       _mesa_error(ctx, GL_INVALID_ENUM, "glActiveTexture(target)");
       return;
    }
+
+   if (ctx->Texture.CurrentUnit == texUnit)
+      return;
 
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 
