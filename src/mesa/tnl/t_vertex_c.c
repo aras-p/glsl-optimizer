@@ -234,7 +234,7 @@ static GLboolean print_attr_footer( struct tnl_clipspace_codegen *p )
 
 static tnl_emit_func print_store_func( struct tnl_clipspace_codegen *p ) 
 {
-#ifdef WIN32
+#if defined( WIN32 ) || defined( __VMS )
    fprintf(stderr, "%s: emitted:\n%s\n", "print_store_func", p->buf);
 #else
    fprintf(stderr, "%s: emitted:\n%s\n", __FUNCTION__, p->buf);
