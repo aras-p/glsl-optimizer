@@ -16,9 +16,11 @@ CXXFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199
 ASM_SOURCES = $(X86_SOURCES)
 
 # Library/program dependencies
-GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -lexpat -ldl
-GLUT_LIB_DEPS = -L$(LIB_DIR) -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
-GLW_LIB_DEPS = -L$(LIB_DIR) -lGL -L/usr/X11R6/lib -lXt -lXm -lX11
+GL_LIB_DEPS = -lm -lpthread -lexpat -ldl
+GLU_LIB_DEPS = -L$(LIB_DIR) -lGL -lm
+GLUT_LIB_DEPS = -L$(LIB_DIR) -lGLU -lGL -lm
+GLW_LIB_DEPS = -L$(LIB_DIR) -lGL 
+APP_LIB_DEPS = -L$(LIB_DIR) -lglut -lGLU -lGL -lm -lpthread
 
 # Directories
 SRC_DIRS = mesa glx glu glw glut/mini
