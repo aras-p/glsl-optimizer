@@ -379,8 +379,11 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 	    &imesa->swapped,
 	    sizeof( savageTexObj ),
 	    (destroy_texture_object_t *) savageDestroyTexObj );
-       driSetTextureSwapCounterLocation( imesa->textureHeaps[i],
-					 & imesa->c_textureSwaps );
+       /* If textureSize[i] == 0 textureHeaps[i] is NULL. This can happen
+	* if there is not enough card memory for a card texture heap. */
+       if (imesa->textureHeaps[i])
+	   driSetTextureSwapCounterLocation( imesa->textureHeaps[i],
+					     & imesa->c_textureSwaps );
    }
    imesa->texture_depth = driQueryOptioni (&imesa->optionCache,
 					   "texture_depth");
