@@ -157,10 +157,18 @@ x86/gen_matypes.exe: x86/gen_matypes.c
 # [dBorca]
 # glapi_x86.S needs some adjustments
 # in order to generate correct entrypoints
+# Trick: change the following condition to
+# be always false if you need C entrypoints
+# with USE_X86_ASM (useful for trace/debug)
+ifeq (1,1)
 x86/glapi_x86.o: x86/glapi_x86.S
 	$(CC) -o $@ $(CFLAGS) -U__WIN32__ -DSTDCALL_API -c $<
-#main/dispatch.o: main/dispatch.c
-#	$(CC) -o $@ $(CFLAGS) -UUSE_X86_ASM -c $<
+else
+main/dispatch.o: main/dispatch.c
+	$(CC) -o $@ $(CFLAGS) -UUSE_X86_ASM -c $<
+glapi/glapi.o: glapi/glapi.c
+	$(CC) -o $@ $(CFLAGS) -UUSE_X86_ASM -c $<
+endif
 
 # [dBorca]
 # if we want codegen, we have to stdcall
