@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.20 2000/03/20 23:45:59 brianp Exp $ */
+/* $Id: dd.h,v 1.21 2000/03/20 23:54:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -434,12 +434,10 @@ struct dd_function_table {
     * Else, only write stencil[i] if mask[i] is non-zero.
     */
 
-
    void (*ReadStencilSpan)( GLcontext *ctx, GLuint n, GLint x, GLint y,
                             GLstencil stencil[] );
    /* Read a horizontal span of stencil values from the stencil buffer.
     */
-
 
    void (*WriteStencilPixels)( GLcontext *ctx, GLuint n,
                                const GLint x[], const GLint y[],
@@ -457,17 +455,9 @@ struct dd_function_table {
     */
   
 
-
    /***
-    *** Accelerated point, line, polygon, glDrawPixels and glBitmap functions:
+    *** glDraw/Read/CopyPixels and glBitmap functions:
     ***/
-
-   points_func   PointsFunc;
-   line_func     LineFunc;
-   triangle_func TriangleFunc;
-   quad_func     QuadFunc;
-   rect_func     RectFunc;    
-   
 
    GLboolean (*DrawPixels)( GLcontext *ctx,
                             GLint x, GLint y, GLsizei width, GLsizei height,
@@ -506,22 +496,21 @@ struct dd_function_table {
    /* This is called by glBitmap.  Works the same as DrawPixels, above.
     */
 
+
    /***
     *** Texture mapping functions:
     ***/
 
    void (*TexEnv)( GLcontext *ctx, GLenum target, GLenum pname,
                    const GLfloat *param );
-   /*
-    * Called whenever glTexEnv*() is called.
+   /* Called whenever glTexEnv*() is called.
     */
 
    void (*TexImage)( GLcontext *ctx, GLenum target,
                      struct gl_texture_object *tObj, GLint level,
                      GLint internalFormat,
                      const struct gl_texture_image *image );
-   /*
-    * Called whenever a texture object's image is changed.
+   /* Called whenever a texture object's image is changed.
     *    texObject is the number of the texture object being changed.
     *    level indicates the mipmap level.
     *    internalFormat is the format in which the texture is to be stored.
@@ -535,8 +524,7 @@ struct dd_function_table {
                         GLsizei width, GLsizei height,
                         GLint internalFormat,
                         const struct gl_texture_image *image );
-   /*
-    * Called from glTexSubImage() to define a sub-region of a texture.
+   /* Called from glTexSubImage() to define a sub-region of a texture.
     */
 
 
@@ -616,9 +604,6 @@ struct dd_function_table {
     * GLubytes.  It may be easier for the driver to handle then.
     */
       
-
-
-
    GLboolean (*CopyTexImage1D)( GLcontext *ctx, GLenum target, GLint level,
                                 GLenum internalFormat, GLint x, GLint y,
                                 GLsizei width, GLint border );
@@ -666,8 +651,7 @@ struct dd_function_table {
    void (*TexParameter)( GLcontext *ctx, GLenum target,
                          struct gl_texture_object *tObj,
                          GLenum pname, const GLfloat *params );
-   /*
-    * Called whenever glTexParameter*() is called.
+   /* Called whenever glTexParameter*() is called.
     *    target is GL_TEXTURE_1D or GL_TEXTURE_2D
     *    texObject is the texture object to modify
     *    pname is one of GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER,
@@ -677,44 +661,49 @@ struct dd_function_table {
 
    void (*BindTexture)( GLcontext *ctx, GLenum target,
                         struct gl_texture_object *tObj );
-   /*
-    * Called whenever glBindTexture() is called.  This specifies which
+   /* Called whenever glBindTexture() is called.  This specifies which
     * texture is to be the current one.  No dirty flags will be set.
     */
 
    void (*DeleteTexture)( GLcontext *ctx, struct gl_texture_object *tObj );
-   /*
-    * Called when a texture object is about to be deallocated.  Driver
+   /* Called when a texture object is about to be deallocated.  Driver
     * should free anything attached to the DriverData pointers.
     */
 
    void (*UpdateTexturePalette)( GLcontext *ctx,
                                  struct gl_texture_object *tObj );
-   /*
-    * Called when the texture's color lookup table is changed.
+   /* Called when the texture's color lookup table is changed.
     * If tObj is NULL then the shared texture palette ctx->Texture.Palette
     * was changed.
     */
 
    void (*ActiveTexture)( GLcontext *ctx, GLuint texUnitNumber );
-   /*
-    * Called by glActiveTextureARB to set current texture unit.
+   /* Called by glActiveTextureARB to set current texture unit.
     */
 
 
    GLboolean (*IsTextureResident)( GLcontext *ctx, 
-				   struct gl_texture_object *t );
-   /*
-    * Allows the driver to implement the AreTexturesResident tests without
+                                   struct gl_texture_object *t );
+   /* Allows the driver to implement the AreTexturesResident tests without
     * knowing about Mesa's internal hash tables for textures.
     */
 
-   void (*PrioritizeTexture)( GLcontext *ctx, 
-			      struct gl_texture_object *t,
-			      GLclampf priority );
+   void (*PrioritizeTexture)( GLcontext *ctx,  struct gl_texture_object *t,
+                              GLclampf priority );
    /* Notify driver of priority change for a texture.
     */
 
+
+   /***
+    *** Accelerated point, line, polygon, glDrawPixels and glBitmap functions:
+    ***/
+
+   points_func   PointsFunc;
+   line_func     LineFunc;
+   triangle_func TriangleFunc;
+   quad_func     QuadFunc;
+   rect_func     RectFunc;    
+   
 
    /***
     *** Transformation/Rendering functions
