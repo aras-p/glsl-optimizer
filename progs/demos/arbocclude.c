@@ -1,5 +1,5 @@
 /*
- * GL_ARB_occlustion_query demo
+ * GL_ARB_occlusion_query demo
  *
  * Brian Paul
  * 12 June 2003
@@ -33,6 +33,7 @@
 #include <GL/glut.h>
 
 
+static GLboolean Anim = GL_TRUE;
 static GLfloat Xpos = 0;
 static GLuint OccQuery;
 
@@ -182,6 +183,13 @@ static void Key( unsigned char key, int x, int y )
    switch (key) {
       case 27:
          exit(0);
+         break;
+      case ' ':
+         Anim = !Anim;
+         if (Anim)
+            glutIdleFunc(Idle);
+         else
+            glutIdleFunc(NULL);
          break;
    }
    glutPostRedisplay();
