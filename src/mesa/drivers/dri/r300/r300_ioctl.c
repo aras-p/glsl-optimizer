@@ -403,19 +403,24 @@ void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
 
 	LOCK_HARDWARE(&rmesa->radeon);	/* no need to validate */
 
-	while (1) {
-		ret = drmDMA(fd, &dma);
-		if (ret == 0)
-			break;
+	ret = drmDMA(fd, &dma);
 
+	if (ret != 0) {
+		/* Try to release some buffers and wait until we can't get any more */
 		if (rmesa->dma.nr_released_bufs) {
 			r300FlushCmdBufLocked(rmesa, __FUNCTION__);
 		}
 
-		if (rmesa->radeon.do_usleeps) {
+		if (RADEON_DEBUG & DEBUG_DMA)
+			fprintf(stderr, "Waiting for buffers\n");
+
+		radeonWaitForIdleLocked(&rmesa->radeon);
+		ret = drmDMA(fd, &dma);
+
+		if (ret != 0) {
 			UNLOCK_HARDWARE(&rmesa->radeon);
-			DO_USLEEP(1);
-			LOCK_HARDWARE(&rmesa->radeon);
+			fprintf(stderr, "Error: Could not get dma buffer... exiting\n");
+			exit(-1);
 		}
 	}
 
