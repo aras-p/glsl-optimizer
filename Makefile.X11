@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.96 2003/12/08 17:27:33 alanh Exp $
+# $Id: Makefile.X11,v 1.97 2003/12/10 02:44:38 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -404,10 +404,11 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/tnl_dd/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/NOTES.imm			\
+	$(DIRECTORY)/src/mesa/drivers/beos/*.cpp			\
 	$(DIRECTORY)/src/mesa/drivers/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/dos/*.[chS]			\
 	$(DIRECTORY)/src/mesa/drivers/dos/mga/*.[ch]			\
-	$(DIRECTORY)/src/mesa/drivers/beos/*.cpp			\
+	$(DIRECTORY)/src/mesa/drivers/fbdev/glfbdev.c                   \
 	$(DIRECTORY)/src/mesa/drivers/glide/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/glide/*.def			\
 	$(DIRECTORY)/src/mesa/drivers/ggi/*.[ch]			\
