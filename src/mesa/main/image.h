@@ -1,4 +1,4 @@
-/* $Id: image.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: image.h,v 1.2 1999/11/03 17:27:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -104,6 +104,33 @@ extern void gl_free_image( struct gl_image *image );
 extern GLboolean gl_image_error_test( GLcontext *ctx,
                                       const struct gl_image *image,
                                       const char *msg );
+
+
+/*
+ * New (3.3) functions
+ */
+
+
+extern void
+_mesa_unpack_ubyte_color_span( const GLcontext *ctx,
+                               GLuint n, GLenum dstFormat, GLubyte dest[],
+                               GLenum srcFormat, GLenum srcType,
+                               const GLvoid *source,
+                               const struct gl_pixelstore_attrib *unpacking,
+                               GLboolean applyTransferOps );
+
+
+extern void
+_mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
+                         GLenum dstType, GLvoid *dest,
+                         GLenum srcType, const GLvoid *source,
+                         const struct gl_pixelstore_attrib *unpacking,
+                         GLboolean applyTransferOps );
+
+extern void *
+_mesa_unpack_image( GLsizei width, GLsizei height, GLsizei depth,
+                    GLenum format, GLenum type, const GLvoid *pixels,
+                    const struct gl_pixelstore_attrib *unpack );
 
 
 #endif

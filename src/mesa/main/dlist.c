@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.12 1999/10/31 08:34:47 brianp Exp $ */
+/* $Id: dlist.c,v 1.13 1999/11/03 17:27:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -389,26 +389,28 @@ void gl_destroy_list( GLcontext *ctx, GLuint list )
 	    n += InstSize[n[0].opcode];
             break;
 	 case OPCODE_TEX_IMAGE1D:
-            gl_free_image( (struct gl_image *) n[8].data );
+            FREE( n[8]. data );
             n += InstSize[n[0].opcode];
 	    break;
 	 case OPCODE_TEX_IMAGE2D:
-            gl_free_image( (struct gl_image *) n[9].data );
+            FREE( n[9].data );
+            n += InstSize[n[0].opcode];
+	    break;
+	 case OPCODE_TEX_IMAGE3D:
+            FREE( n[10].data );
             n += InstSize[n[0].opcode];
 	    break;
          case OPCODE_TEX_SUB_IMAGE1D:
-            {
-               struct gl_image *image;
-               image = (struct gl_image *) n[7].data;
-               gl_free_image( image );
-            }
+            FREE( n[7].data );
+            n += InstSize[n[0].opcode];
             break;
          case OPCODE_TEX_SUB_IMAGE2D:
-            {
-               struct gl_image *image;
-               image = (struct gl_image *) n[9].data;
-               gl_free_image( image );
-            }
+            FREE( n[9].data );
+            n += InstSize[n[0].opcode];
+            break;
+         case OPCODE_TEX_SUB_IMAGE3D:
+            FREE( n[11].data );
+            n += InstSize[n[0].opcode];
             break;
 	 case OPCODE_CONTINUE:
 	    n = (Node *) n[1].next;
@@ -1097,11 +1099,12 @@ static void save_CopyTexSubImage2D( GLcontext *ctx,
 }
 
 
-static void save_CopyTexSubImage3DEXT( GLcontext *ctx,
-                                   GLenum target, GLint level,
-                                   GLint xoffset, GLint yoffset, GLint zoffset,
-                                   GLint x, GLint y,
-                                   GLsizei width, GLint height )
+static void save_CopyTexSubImage3D( GLcontext *ctx,
+                                    GLenum target, GLint level,
+                                    GLint xoffset, GLint yoffset,
+                                    GLint zoffset,
+                                    GLint x, GLint y,
+                                    GLsizei width, GLint height )
 {
    Node *n;
    FLUSH_VB(ctx, "dlist");
@@ -1118,8 +1121,8 @@ static void save_CopyTexSubImage3DEXT( GLcontext *ctx,
       n[9].i = height;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.CopyTexSubImage3DEXT)( ctx, target, level, xoffset, yoffset, zoffset,
-                               x, y, width, height );
+      (*ctx->Exec.CopyTexSubImage3D)(ctx, target, level, xoffset, yoffset,
+                                     zoffset, x, y, width, height );
    }
 }
 
@@ -2111,105 +2114,128 @@ static void save_TexParameterfv( GLcontext *ctx, GLenum target,
 
 
 static void save_TexImage1D( GLcontext *ctx, GLenum target,
-                         GLint level, GLint components,
-			 GLsizei width, GLint border,
-                         GLenum format, GLenum type,
-			 struct gl_image *teximage )
+                             GLint level, GLint components,
+                             GLsizei width, GLint border,
+                             GLenum format, GLenum type,
+                             const GLvoid *pixels )
 {
-   Node *n;
    FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_TEX_IMAGE1D, 8 );
-   if (n) {
-      n[1].e = target;
-      n[2].i = level;
-      n[3].i = components;
-      n[4].i = (GLint) width;
-      n[5].i = border;
-      n[6].e = format;
-      n[7].e = type;
-      n[8].data = teximage;
-      if (teximage) {
-         /* this prevents gl_TexImage1D() from freeing the image */
-         teximage->RefCount = 1;
-      }
-   }
-   if (ctx->ExecuteFlag) {
+   if (target == GL_PROXY_TEXTURE_1D) {
       (*ctx->Exec.TexImage1D)( ctx, target, level, components, width,
-                        border, format, type, teximage );
+                               border, format, type, pixels );
+   }
+   else {
+      Node *n;
+      GLvoid *image = _mesa_unpack_image(width, 1, 1, format, type,
+                                         pixels, &ctx->Unpack);
+      n = alloc_instruction( ctx, OPCODE_TEX_IMAGE1D, 8 );
+      if (n) {
+         n[1].e = target;
+         n[2].i = level;
+         n[3].i = components;
+         n[4].i = (GLint) width;
+         n[5].i = border;
+         n[6].e = format;
+         n[7].e = type;
+         n[8].data = image;
+      }
+      else {
+         FREE(image);
+      }
+      if (ctx->ExecuteFlag) {
+         (*ctx->Exec.TexImage1D)( ctx, target, level, components, width,
+                                  border, format, type, pixels );
+      }
    }
 }
 
 
 static void save_TexImage2D( GLcontext *ctx, GLenum target,
-                         GLint level, GLint components,
-			 GLsizei width, GLsizei height, GLint border,
-                         GLenum format, GLenum type,
-			 struct gl_image *teximage )
+                             GLint level, GLint components,
+                             GLsizei width, GLsizei height, GLint border,
+                             GLenum format, GLenum type,
+                             const GLvoid *pixels )
 {
-   Node *n;
    FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_TEX_IMAGE2D, 9 );
-   if (n) {
-      n[1].e = target;
-      n[2].i = level;
-      n[3].i = components;
-      n[4].i = (GLint) width;
-      n[5].i = (GLint) height;
-      n[6].i = border;
-      n[7].e = format;
-      n[8].e = type;
-      n[9].data = teximage;
-      if (teximage) {
-         /* this prevents gl_TexImage2D() from freeing the image */
-         teximage->RefCount = 1;
-      }
-   }
-   if (ctx->ExecuteFlag) {
+   if (target == GL_PROXY_TEXTURE_2D) {
       (*ctx->Exec.TexImage2D)( ctx, target, level, components, width,
-                        height, border, format, type, teximage );
+                               height, border, format, type, pixels );
+   }
+   else {
+      Node *n;
+      GLvoid *image = _mesa_unpack_image(width, height, 1, format, type,
+                                         pixels, &ctx->Unpack);
+      n = alloc_instruction( ctx, OPCODE_TEX_IMAGE2D, 9 );
+      if (n) {
+         n[1].e = target;
+         n[2].i = level;
+         n[3].i = components;
+         n[4].i = (GLint) width;
+         n[5].i = (GLint) height;
+         n[6].i = border;
+         n[7].e = format;
+         n[8].e = type;
+         n[9].data = image;
+      }
+      else {
+         FREE(image);
+      }
+      if (ctx->ExecuteFlag) {
+         (*ctx->Exec.TexImage2D)( ctx, target, level, components, width,
+                                  height, border, format, type, pixels );
+      }
    }
 }
 
 
-static void save_TexImage3DEXT( GLcontext *ctx, GLenum target,
-                            GLint level, GLint components,
-                            GLsizei width, GLsizei height, GLsizei depth,
-                            GLint border,
-                            GLenum format, GLenum type,
-                            struct gl_image *teximage )
+static void save_TexImage3D( GLcontext *ctx, GLenum target,
+                             GLint level, GLint components,
+                             GLsizei width, GLsizei height, GLsizei depth,
+                             GLint border,
+                             GLenum format, GLenum type,
+                             const GLvoid *pixels )
 {
-   Node *n;
    FLUSH_VB(ctx, "dlist");
-   n = alloc_instruction( ctx, OPCODE_TEX_IMAGE3D, 10 );
-   if (n) {
-      n[1].e = target;
-      n[2].i = level;
-      n[3].i = components;
-      n[4].i = (GLint) width;
-      n[5].i = (GLint) height;
-      n[6].i = (GLint) depth; 
-      n[7].i = border;
-      n[8].e = format;
-      n[9].e = type;
-      n[10].data = teximage;
-      if (teximage) {
-         /* this prevents gl_TexImage3D() from freeing the image */
-         teximage->RefCount = 1;
-      }
+   if (target == GL_PROXY_TEXTURE_3D) {
+      (*ctx->Exec.TexImage3D)( ctx, target, level, components, width,
+                               height, depth, border, format, type, pixels );
    }
-   if (ctx->ExecuteFlag) {
-      (*ctx->Exec.TexImage3DEXT)( ctx, target, level, components, width,
-                           height, depth, border, format, type, teximage );
+   else {
+      GLvoid *image = _mesa_unpack_image(width, height, depth, format, type,
+                                         pixels, &ctx->Unpack);
+      Node *n;
+      n = alloc_instruction( ctx, OPCODE_TEX_IMAGE3D, 10 );
+      if (n) {
+         n[1].e = target;
+         n[2].i = level;
+         n[3].i = components;
+         n[4].i = (GLint) width;
+         n[5].i = (GLint) height;
+         n[6].i = (GLint) depth; 
+         n[7].i = border;
+         n[8].e = format;
+         n[9].e = type;
+         n[10].data = image;
+      }
+      else {
+         FREE(image);
+      }
+      if (ctx->ExecuteFlag) {
+         (*ctx->Exec.TexImage3D)( ctx, target, level, components, width,
+                               height, depth, border, format, type, pixels );
+      }
    }
 }
 
 
 static void save_TexSubImage1D( GLcontext *ctx,
-                            GLenum target, GLint level, GLint xoffset,
-                            GLsizei width, GLenum format, GLenum type,
-                            struct gl_image *image )
+                                GLenum target, GLint level, GLint xoffset,
+                                GLsizei width, GLenum format, GLenum type,
+                                const GLvoid *pixels )
 {
    Node *n;
+   GLvoid *image = _mesa_unpack_image(width, 1, 1, format, type,
+                                      pixels, &ctx->Unpack);
    FLUSH_VB(ctx, "dlist");
    n = alloc_instruction( ctx, OPCODE_TEX_SUB_IMAGE1D, 7 );
    if (n) {
@@ -2220,24 +2246,27 @@ static void save_TexSubImage1D( GLcontext *ctx,
       n[5].e = format;
       n[6].e = type;
       n[7].data = image;
-      if (image)
-         image->RefCount = 1;
+   }
+   else {
+      FREE(image);
    }
    if (ctx->ExecuteFlag) {
       (*ctx->Exec.TexSubImage1D)( ctx, target, level, xoffset, width,
-                           format, type, image );
+                                  format, type, pixels );
    }
 }
 
 
 static void save_TexSubImage2D( GLcontext *ctx,
-                            GLenum target, GLint level,
-                            GLint xoffset, GLint yoffset,
-                            GLsizei width, GLsizei height,
-                            GLenum format, GLenum type,
-                            struct gl_image *image )
+                                GLenum target, GLint level,
+                                GLint xoffset, GLint yoffset,
+                                GLsizei width, GLsizei height,
+                                GLenum format, GLenum type,
+                                const GLvoid *pixels )
 {
    Node *n;
+   GLvoid *image = _mesa_unpack_image(width, height, 1, format, type,
+                                      pixels, &ctx->Unpack);
    FLUSH_VB(ctx, "dlist");
    n = alloc_instruction( ctx, OPCODE_TEX_SUB_IMAGE2D, 9 );
    if (n) {
@@ -2250,24 +2279,27 @@ static void save_TexSubImage2D( GLcontext *ctx,
       n[7].e = format;
       n[8].e = type;
       n[9].data = image;
-      if (image)
-         image->RefCount = 1;
+   }
+   else {
+      FREE(image);
    }
    if (ctx->ExecuteFlag) {
       (*ctx->Exec.TexSubImage2D)( ctx, target, level, xoffset, yoffset,
-                           width, height, format, type, image );
+                                  width, height, format, type, pixels );
    }
 }
 
 
-static void save_TexSubImage3DEXT( GLcontext *ctx,
-                               GLenum target, GLint level,
-                               GLint xoffset, GLint yoffset,GLint zoffset,
-                               GLsizei width, GLsizei height, GLsizei depth,
-                               GLenum format, GLenum type,
-                               struct gl_image *image )
+static void save_TexSubImage3D( GLcontext *ctx,
+                                GLenum target, GLint level,
+                                GLint xoffset, GLint yoffset,GLint zoffset,
+                                GLsizei width, GLsizei height, GLsizei depth,
+                                GLenum format, GLenum type,
+                                const GLvoid *pixels )
 {
    Node *n;
+   GLvoid *image = _mesa_unpack_image(width, height, depth, format, type,
+                                      pixels, &ctx->Unpack);
    FLUSH_VB(ctx, "dlist");
    n = alloc_instruction( ctx, OPCODE_TEX_SUB_IMAGE3D, 11 );
    if (n) {
@@ -2282,12 +2314,13 @@ static void save_TexSubImage3DEXT( GLcontext *ctx,
       n[9].e = format;
       n[10].e = type;
       n[11].data = image;
-      if (image)
-         image->RefCount = 1;
+   }
+   else {
+      FREE(image);
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec.TexSubImage3DEXT)( ctx, target, level, xoffset, yoffset, zoffset,
-                              width, height, depth, format, type, image );
+      (*ctx->Exec.TexSubImage3D)(ctx, target, level, xoffset, yoffset, zoffset,
+                                 width, height, depth, format, type, pixels );
    }
 }
 
@@ -2460,6 +2493,16 @@ void gl_save_error( GLcontext *ctx, GLenum error, const char *s )
  */
 static void execute_list( GLcontext *ctx, GLuint list )
 {
+   static struct gl_pixelstore_attrib defaultPacking = {
+      1,            /* Alignment */
+      0,            /* RowLength */
+      0,            /* SkipPixels */
+      0,            /* SkipRows */
+      0,            /* ImageHeight */
+      0,            /* SkipImages */
+      GL_FALSE,     /* SwapBytes */
+      GL_FALSE      /* LsbFirst */
+   };
    Node *n;
    GLboolean done;
    OpCode opcode;
@@ -2527,16 +2570,6 @@ static void execute_list( GLcontext *ctx, GLuint list )
             break;
 	 case OPCODE_BITMAP:
             {
-               static struct gl_pixelstore_attrib defaultPacking = {
-                  1,            /* Alignment */
-                  0,            /* RowLength */
-                  0,            /* SkipPixels */
-                  0,            /* SkipRows */
-                  0,            /* ImageHeight */
-                  0,            /* SkipImages */
-                  GL_FALSE,     /* SwapBytes */
-                  GL_FALSE      /* LsbFirst */
-               };
                const struct gl_image *image = (struct gl_image *) n[7].data;
                const GLubyte *bitmap = image ? image->Data : NULL;
                gl_Bitmap( ctx, (GLsizei) n[1].i, (GLsizei) n[2].i,
@@ -2630,8 +2663,8 @@ static void execute_list( GLcontext *ctx, GLuint list )
                                   n[5].i, n[6].i, n[7].i, n[8].i );
             break;
          case OPCODE_COPY_TEX_SUB_IMAGE3D:
-            gl_CopyTexSubImage3DEXT( ctx, n[1].e, n[2].i, n[3].i, n[4].i,
-                                     n[5].i, n[6].i, n[7].i, n[8].i , n[9].i);
+            gl_CopyTexSubImage3D( ctx, n[1].e, n[2].i, n[3].i, n[4].i,
+                                  n[5].i, n[6].i, n[7].i, n[8].i, n[9].i);
             break;
 	 case OPCODE_CULL_FACE:
 	    gl_CullFace( ctx, n[1].e );
@@ -2889,30 +2922,43 @@ static void execute_list( GLcontext *ctx, GLuint list )
             }
             break;
 	 case OPCODE_TEX_IMAGE1D:
-	    gl_TexImage1D( ctx,
-                           n[1].e, /* target */
-                           n[2].i, /* level */
-                           n[3].i, /* components */
-                           n[4].i, /* width */
-                           n[5].e, /* border */
-                           n[6].e, /* format */
-                           n[7].e, /* type */
-                           (struct gl_image *) n[8].data );
+            {
+               struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = defaultPacking;
+               gl_TexImage1D( ctx,
+                              n[1].e, /* target */
+                              n[2].i, /* level */
+                              n[3].i, /* components */
+                              n[4].i, /* width */
+                              n[5].e, /* border */
+                              n[6].e, /* format */
+                              n[7].e, /* type */
+                              n[8].data );
+               ctx->Unpack = save;  /* restore */
+            }
 	    break;
 	 case OPCODE_TEX_IMAGE2D:
-	    gl_TexImage2D( ctx,
-                           n[1].e, /* target */
-                           n[2].i, /* level */
-                           n[3].i, /* components */
-                           n[4].i, /* width */
-                           n[5].i, /* height */
-                           n[6].e, /* border */
-                           n[7].e, /* format */
-                           n[8].e, /* type */
-                           (struct gl_image *) n[9].data );
+            {
+               struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = defaultPacking;
+               gl_TexImage2D( ctx,
+                              n[1].e, /* target */
+                              n[2].i, /* level */
+                              n[3].i, /* components */
+                              n[4].i, /* width */
+                              n[5].i, /* height */
+                              n[6].e, /* border */
+                              n[7].e, /* format */
+                              n[8].e, /* type */
+                              n[9].data );
+               ctx->Unpack = save;  /* restore */
+            }
 	    break;
          case OPCODE_TEX_IMAGE3D:
-            gl_TexImage3DEXT( ctx,
+            {
+               struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = defaultPacking;
+               gl_TexImage3D( ctx,
                               n[1].e, /* target */
                               n[2].i, /* level */
                               n[3].i, /* components */
@@ -2922,21 +2968,38 @@ static void execute_list( GLcontext *ctx, GLuint list )
                               n[7].e, /* border */
                               n[8].e, /* format */
                               n[9].e, /* type */
-                              (struct gl_image *) n[10].data );
+                              n[10].data );
+               ctx->Unpack = save;  /* restore */
+            }
             break;
          case OPCODE_TEX_SUB_IMAGE1D:
-            gl_TexSubImage1D( ctx, n[1].e, n[2].i, n[3].i, n[4].i, n[5].e,
-                              n[6].e, (struct gl_image *) n[7].data );
+            {
+               struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = defaultPacking;
+               gl_TexSubImage1D( ctx, n[1].e, n[2].i, n[3].i, n[4].i, n[5].e,
+                                 n[6].e, n[7].data );
+               ctx->Unpack = save;  /* restore */
+            }
             break;
          case OPCODE_TEX_SUB_IMAGE2D:
-            gl_TexSubImage2D( ctx, n[1].e, n[2].i, n[3].i, n[4].i, n[5].e,
-                              n[6].i, n[7].e, n[8].e,
-                              (struct gl_image *) n[9].data );
+            {
+               struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = defaultPacking;
+               (*ctx->Exec.TexSubImage2D)( ctx, n[1].e, n[2].i, n[3].i,
+                                           n[4].i, n[5].e,
+                                           n[6].i, n[7].e, n[8].e, n[9].data );
+               ctx->Unpack = save;  /* restore */
+            }
             break;
          case OPCODE_TEX_SUB_IMAGE3D:
-            gl_TexSubImage3DEXT( ctx, n[1].e, n[2].i, n[3].i, n[4].i, n[5].i,
+            {
+               struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = defaultPacking;
+               gl_TexSubImage3D( ctx, n[1].e, n[2].i, n[3].i, n[4].i, n[5].i,
                                  n[6].i, n[7].i, n[8].i, n[9].e, n[10].e,
-                                 (struct gl_image *) n[11].data );
+                                 n[11].data );
+               ctx->Unpack = save;  /* restore */
+            }
             break;
          case OPCODE_TRANSLATE:
             gl_Translatef( ctx, n[1].f, n[2].f, n[3].f );
@@ -3255,7 +3318,7 @@ void gl_init_dlist_pointers( struct gl_api_table *table )
    table->CopyTexImage2D = save_CopyTexImage2D;
    table->CopyTexSubImage1D = save_CopyTexSubImage1D;
    table->CopyTexSubImage2D = save_CopyTexSubImage2D;
-   table->CopyTexSubImage3DEXT = save_CopyTexSubImage3DEXT;
+   table->CopyTexSubImage3D = save_CopyTexSubImage3D;
    table->CullFace = save_CullFace;
    table->DeleteLists = gl_DeleteLists;   /* NOT SAVED */
    table->DeleteTextures = gl_DeleteTextures;  /* NOT SAVED */
@@ -3373,10 +3436,10 @@ void gl_init_dlist_pointers( struct gl_api_table *table )
    table->TexGenfv = save_TexGenfv;
    table->TexImage1D = save_TexImage1D;
    table->TexImage2D = save_TexImage2D;
-   table->TexImage3DEXT = save_TexImage3DEXT;
+   table->TexImage3D = save_TexImage3D;
    table->TexSubImage1D = save_TexSubImage1D;
    table->TexSubImage2D = save_TexSubImage2D;
-   table->TexSubImage3DEXT = save_TexSubImage3DEXT;
+   table->TexSubImage3D = save_TexSubImage3D;
    table->TexParameterfv = save_TexParameterfv;
    table->Translatef = save_Translatef;
    table->Viewport = save_Viewport;

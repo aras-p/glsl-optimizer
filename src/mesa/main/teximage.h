@@ -1,4 +1,4 @@
-/* $Id: teximage.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: teximage.h,v 1.2 1999/11/03 17:27:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,9 +25,6 @@
  */
 
 
-
-
-
 #ifndef TEXIMAGE_H
 #define TEXIMAGE_H
 
@@ -44,57 +41,6 @@ extern struct gl_texture_image *gl_alloc_texture_image( void );
 extern void gl_free_texture_image( struct gl_texture_image *teximage );
 
 
-extern struct gl_image *
-gl_unpack_texsubimage( GLcontext *ctx, GLint width, GLint height,
-                       GLenum format, GLenum type, const GLvoid *pixels );
-
-
-extern struct gl_image *
-gl_unpack_texsubimage3D( GLcontext *ctx, GLint width, GLint height,GLint depth,
-                         GLenum format, GLenum type, const GLvoid *pixels );
-
-
-extern struct gl_texture_image *
-gl_unpack_texture( GLcontext *ctx,
-                   GLint dimensions,
-                   GLenum target,
-                   GLint level,
-                   GLint internalformat,
-                   GLsizei width, GLsizei height,
-                   GLint border,
-                   GLenum format, GLenum type,
-                   const GLvoid *pixels );
-
-extern struct gl_texture_image *
-gl_unpack_texture3D( GLcontext *ctx,
-                     GLint dimensions,
-                     GLenum target,
-                     GLint level,
-                     GLint internalformat,
-                     GLsizei width, GLsizei height, GLsizei depth,
-                     GLint border,
-                     GLenum format, GLenum type,
-                     const GLvoid *pixels );
-
-
-extern void gl_tex_image_1D( GLcontext *ctx,
-                             GLenum target, GLint level, GLint internalformat,
-                             GLsizei width, GLint border, GLenum format,
-                             GLenum type, const GLvoid *pixels );
-
-
-extern void gl_tex_image_2D( GLcontext *ctx,
-                             GLenum target, GLint level, GLint internalformat,
-                             GLsizei width, GLint height, GLint border,
-                             GLenum format, GLenum type,
-                             const GLvoid *pixels );
-
-extern void gl_tex_image_3D( GLcontext *ctx,
-                             GLenum target, GLint level, GLint internalformat,
-                             GLsizei width, GLint height, GLint depth,
-                             GLint border,
-                             GLenum format, GLenum type,
-                             const GLvoid *pixels );
 
 
 /*** API entry points ***/
@@ -103,22 +49,21 @@ extern void gl_tex_image_3D( GLcontext *ctx,
 extern void gl_TexImage1D( GLcontext *ctx,
                            GLenum target, GLint level, GLint internalformat,
                            GLsizei width, GLint border, GLenum format,
-                           GLenum type, struct gl_image *teximage );
+                           GLenum type, const GLvoid *pixels );
 
 
 extern void gl_TexImage2D( GLcontext *ctx,
                            GLenum target, GLint level, GLint internalformat,
                            GLsizei width, GLsizei height, GLint border,
                            GLenum format, GLenum type,
-                           struct gl_image *teximage );
+                           const GLvoid *pixels );
 
 
-extern void gl_TexImage3DEXT( GLcontext *ctx,
-                              GLenum target, GLint level, GLint internalformat,
-                              GLsizei width, GLsizei height, GLsizei depth,
-                              GLint border,
-                              GLenum format, GLenum type,
-                              struct gl_image *teximage );
+extern void gl_TexImage3D( GLcontext *ctx,
+                           GLenum target, GLint level, GLint internalformat,
+                           GLsizei width, GLsizei height, GLsizei depth,
+                           GLint border, GLenum format, GLenum type,
+                           const GLvoid *pixels );
 
 
 extern void gl_GetTexImage( GLcontext *ctx, GLenum target, GLint level,
@@ -129,7 +74,7 @@ extern void gl_GetTexImage( GLcontext *ctx, GLenum target, GLint level,
 extern void gl_TexSubImage1D( GLcontext *ctx,
                               GLenum target, GLint level, GLint xoffset,
                               GLsizei width, GLenum format, GLenum type,
-                              struct gl_image *image );
+                              const GLvoid *pixels );
 
 
 extern void gl_TexSubImage2D( GLcontext *ctx,
@@ -137,15 +82,15 @@ extern void gl_TexSubImage2D( GLcontext *ctx,
                               GLint xoffset, GLint yoffset,
                               GLsizei width, GLsizei height,
                               GLenum format, GLenum type,
-                              struct gl_image *image );
+                              const GLvoid *pixels );
 
 
-extern void gl_TexSubImage3DEXT( GLcontext *ctx,
-                                 GLenum target, GLint level,
-                                 GLint xoffset, GLint yoffset, GLint zoffset,
-                                 GLsizei width, GLsizei height, GLsizei depth,
-                                 GLenum format, GLenum type,
-                                 struct gl_image *image );
+extern void gl_TexSubImage3D( GLcontext *ctx,
+                              GLenum target, GLint level,
+                              GLint xoffset, GLint yoffset, GLint zoffset,
+                              GLsizei width, GLsizei height, GLsizei depth,
+                              GLenum format, GLenum type,
+                              const GLvoid *pixels );
 
 
 extern void gl_CopyTexImage1D( GLcontext *ctx,
@@ -175,12 +120,12 @@ extern void gl_CopyTexSubImage2D( GLcontext *ctx,
                                   GLsizei width, GLsizei height );
 
 
-extern void gl_CopyTexSubImage3DEXT( GLcontext *ctx,
-                                     GLenum target, GLint level,
-                                     GLint xoffset, GLint yoffset,
-                                     GLint zoffset,
-                                     GLint x, GLint y,
-                                     GLsizei width, GLsizei height );
+extern void gl_CopyTexSubImage3D( GLcontext *ctx,
+                                  GLenum target, GLint level,
+                                  GLint xoffset, GLint yoffset,
+                                  GLint zoffset,
+                                  GLint x, GLint y,
+                                  GLsizei width, GLsizei height );
 
 #endif
 
