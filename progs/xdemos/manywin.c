@@ -1,4 +1,4 @@
-/* $Id: manywin.c,v 1.4 2001/04/27 21:19:13 brianp Exp $ */
+/* $Id: manywin.c,v 1.5 2001/11/26 17:21:46 brianp Exp $ */
 
 /*
  * Create N GLX windows/contexts and render to them in round-robin
@@ -29,6 +29,7 @@
 #include <GL/glx.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 
@@ -281,7 +282,7 @@ static void
 PrintInfo(const struct head *h)
 {
    printf("Name: %s\n", h->DisplayName);
-   printf("  Display:     %p\n", h->Dpy);
+   printf("  Display:     %p\n", (void *) h->Dpy);
    printf("  Window:      0x%x\n", (int) h->Win);
    printf("  Context:     0x%x\n", (int) h->Context);
    printf("  GL_VERSION:  %s\n", h->Version);
