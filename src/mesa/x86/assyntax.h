@@ -236,7 +236,8 @@
 
 
 #if defined(Lynx) || (defined(SYSV) || defined(SVR4)) && !defined(ACK_ASSEMBLER) \
- || (defined(linux) || defined(__OS2ELF__)) && defined(__ELF__)
+ || (defined(linux) || defined(__OS2ELF__)) && defined(__ELF__) \
+ || defined(__FreeBSD__) && __FreeBSD__ >= 3
 #define GLNAME(a)       a
 #else
 #define GLNAME(a)       CONCAT(_,a)
@@ -930,7 +931,8 @@
 #endif
 
 #if defined(Lynx) || (defined(SYSV) || defined(SVR4)) \
-|| (defined(linux) || defined(__OS2ELF__)) && defined(__ELF__)
+ || (defined(linux) || defined(__OS2ELF__)) && defined(__ELF__) \
+ || defined(__FreeBSD__) && __FreeBSD__ >= 3
 #define GLNAME(a) a
 #else
 #define GLNAME(a) _ ## a
