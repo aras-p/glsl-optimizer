@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.39 2001/03/29 03:14:48 gareth Exp $
+# $Id: Make-config,v 1.40 2001/03/29 03:41:39 gareth Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=5
@@ -219,7 +219,6 @@ freebsd-386:
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.freebsd" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm" \
-	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -556,13 +555,13 @@ linux-x86:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM -DPTHREADS -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -586,13 +585,13 @@ linux-x86-static:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM -DPTHREADS -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -637,7 +636,6 @@ linux-386-ggi:
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ggi" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lggi -lm" \
-	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked3.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked2.S \
@@ -677,7 +675,6 @@ linux-386-glide:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -700,7 +697,6 @@ linux-386-opt-glide:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -723,7 +719,6 @@ linux-386-opt-V2-glide:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -738,13 +733,13 @@ linux-x86-glide:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM -DUSE_XSHM -DFX -DPTHREADS -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include -I/usr/src/mesa-glx/src/FX/X86" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -1003,7 +998,6 @@ os2-x11:
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ..\\bin\\mklib-emx.cmd " \
 	"APP_LIB_DEPS = -Zmt -Zcrtdll -Zexe -L$(X11ROOT)/XFree86/lib -lXt -lX11 -lm" \
-	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -1508,13 +1502,13 @@ linux-x86-debug:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
+	"CPLUSPLUS = g++" \
 	"CFLAGS = -O2 -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM -DPTHREADS -I/usr/X11R6/include -DDEBUG -DMESA_DEBUG" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
@@ -1558,7 +1552,6 @@ linux-prof:
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
-	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked3.S \
@@ -1588,7 +1581,6 @@ linux-glide-prof:
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide2x -L/usr/X11/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
-	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
 		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \

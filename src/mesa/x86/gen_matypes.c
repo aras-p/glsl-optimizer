@@ -1,4 +1,4 @@
-/* $Id: gen_matypes.c,v 1.1 2001/03/28 20:44:44 gareth Exp $ */
+/* $Id: gen_matypes.c,v 1.2 2001/03/29 03:41:40 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,7 +38,6 @@
 #include "all.h"
 #else
 #include "glheader.h"
-#include "context.h"
 #include "mtypes.h"
 #include "tnl/t_context.h"
 #endif
