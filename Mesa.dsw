@@ -62,6 +62,9 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name glu
     End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name osmesa
+    End Project Dependency
 }}}
 
 ###############################################################################
