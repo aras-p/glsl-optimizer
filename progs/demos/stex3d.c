@@ -1,4 +1,4 @@
-/* $Id: stex3d.c,v 1.8 2003/03/29 16:40:23 brianp Exp $ */
+/* $Id: stex3d.c,v 1.9 2003/03/31 16:51:38 brianp Exp $ */
 
 /*----------------------------- 
  * stex3d.c GL example of the mesa 3d-texture extention to simulate procedural
@@ -36,8 +36,7 @@
 
 static int tex_width=64, tex_height=64, tex_depth=64;
 static float angx=0, angy=0, angz=0;
-static GLuint DList;
-static int texgen = 2, animate = 1, smooth = 1;
+static int texgen = 2, animate = 1, smooth = 1, wireframe = 0;
 static int CurTexture = NOISE_TEXTURE, CurObject = TORUS;
 
 
@@ -522,6 +521,13 @@ KeyHandler(unsigned char key, int x, int y)
       else
          glutIdleFunc(NULL);
       break;
+   case 'w':
+      wireframe = !wireframe;
+      if (wireframe)
+         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+      else
+         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      break;
    default:
       break;
    }
@@ -611,12 +617,15 @@ init(void)
 
    glClearColor(.5, .5, .5, 0);
 
-   /* create torus for texturing */
-   DList = glGenLists(1);
-
-   glNewList(SPHERE, GL_COMPILE);
-   glutSolidSphere(0.95, 30, 15);
-   glEndList();
+   {
+      GLUquadricObj *q;
+      q = gluNewQuadric();
+      gluQuadricTexture( q, GL_TRUE );
+      glNewList(SPHERE, GL_COMPILE);
+      gluSphere( q, 0.95, 30, 15 );
+      glEndList();
+      gluDeleteQuadric(q);
+   }
 
    BuildTorus();
 
