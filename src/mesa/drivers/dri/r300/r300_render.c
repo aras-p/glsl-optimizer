@@ -202,32 +202,10 @@ static void r300_render_flat_primitive(r300ContextPtr rmesa,
 		
 		
 		/* coordinates */
-		#if 1
 		output_vector(VB->ObjPtr, i);
-		#else
-		efloat(VEC_ELT(VB->ObjPtr, GLfloat, i)[0]);
-		efloat(VEC_ELT(VB->ObjPtr, GLfloat, i)[1]);
-		efloat(VEC_ELT(VB->ObjPtr, GLfloat, i)[2]);
-		#if 0
-		efloat(VEC_ELT(VB->ObjPtr, GLfloat, i)[3]);
-		#else
-		efloat(2.0);
-		#endif
-		#endif
 		
 		/* color components */
-		#if 1
 		output_vector(VB->ColorPtr[0], i);
-		#else
-		efloat(VEC_ELT(VB->ColorPtr[0], GLfloat, i)[0]);
-		efloat(VEC_ELT(VB->ColorPtr[0], GLfloat, i)[1]);
-		efloat(VEC_ELT(VB->ColorPtr[0], GLfloat, i)[2]);
-		#if 0
-		efloat(VEC_ELT(VB->ColorPtr[0], GLfloat, i)[3]);
-		#else
-		efloat(0.0);
-		#endif
-		#endif
 		}
 
 }
@@ -265,7 +243,6 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
    vb_arrays[1].ncomponents=4;
    vb_arrays[1].reg=REG_COLOR0;
 
-   r300EmitState(rmesa);
    
    /* needed before starting 3d operation .. */
    reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
@@ -274,22 +251,23 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
    reg_start(0x4f18,0);
 	e32(0x00000003);
 	
-	
+   r300EmitState(rmesa);
+   
    reg_start(0x20b0,0);
 	e32(0x0000043f);
    
-   memcpy(FLAT_COLOR_PIPELINE.vertex_shader.parameters.body.f, ctx->_ModelProjectMatrix.m, 16*4);
- 
-   program_pipeline(PASS_PREFIX &FLAT_COLOR_PIPELINE);
+   FLAT_COLOR_PIPELINE.vertex_shader.matrix[0].length=16;
+   memcpy(FLAT_COLOR_PIPELINE.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
 
-   #if 0 /* Turn on for smooth color on teeth.. why ??.. */
-   set_cull_cntl(PASS_PREFIX 0);
+   #if 0
+   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.length=4;
+   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[0]=0.0;
+   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[1]=0.0;
+   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[2]=1.0;
+   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[3]=0.0;
    #endif
-   reg_start(R300_RE_OCCLUSION_CNTL, 0);
-	     e32(R300_OCCLUSION_ON);
-	     
-//   set_quad0(PASS_PREFIX 1.0,1.0,1.0,1.0);
-     set_init21(PASS_PREFIX 0.0,1.0);
+   
+   program_pipeline(PASS_PREFIX &FLAT_COLOR_PIPELINE);
    
    /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
    setup_AOS(PASS_PREFIX vb_arrays, 2);
@@ -485,11 +463,10 @@ static GLboolean r300_run_render(GLcontext *ctx,
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-   return r300_run_flat_render(ctx, stage);
-   #if 0
-	return GL_TRUE;
+   #if 1
+        return r300_run_flat_render(ctx, stage);
    #else
-        return GL_FALSE;
+	return GL_TRUE;
    #endif
 
 #if 0
