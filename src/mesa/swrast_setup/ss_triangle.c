@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.0.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -291,7 +291,7 @@ void _swsetup_choose_trifuncs( GLcontext *ctx )
       ind |= SS_OFFSET_BIT;
 
    if ((ctx->Light.Enabled && ctx->Light.Model.TwoSide) ||
-       (ctx->VertexProgram.Enabled && ctx->VertexProgram.TwoSideEnabled))
+       (ctx->VertexProgram._Enabled && ctx->VertexProgram.TwoSideEnabled))
       ind |= SS_TWOSIDE_BIT;
 
    /* We piggyback the two-sided stencil front/back determination on the

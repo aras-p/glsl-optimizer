@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  6.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -135,7 +134,7 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
 
-   ASSERT(!ctx->VertexProgram.Enabled);
+   ASSERT(!ctx->VertexProgram._Enabled);
 
    if (stage->changed_inputs) {
 
@@ -234,7 +233,7 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 
 static void check_vertex( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 {
-   stage->active = !ctx->VertexProgram.Enabled;
+   stage->active = !ctx->VertexProgram._Enabled;
 }
 
 static GLboolean init_vertex_stage( GLcontext *ctx,

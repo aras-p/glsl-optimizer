@@ -315,7 +315,7 @@ static GLboolean run_init_vp( GLcontext *ctx,
  */
 static void check_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 {
-   stage->active = ctx->VertexProgram.Enabled;
+   stage->active = ctx->VertexProgram._Enabled;
 
    if (stage->active) {
       /* Set stage->inputs equal to the bitmask of vertex attributes

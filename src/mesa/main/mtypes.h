@@ -1628,10 +1628,11 @@ struct program_state {
  */
 struct vertex_program_state
 {
-   GLboolean Enabled;                    /**< GL_VERTEX_PROGRAM_NV */
-   GLboolean PointSizeEnabled;           /**< GL_VERTEX_PROGRAM_POINT_SIZE_NV */
-   GLboolean TwoSideEnabled;             /**< GL_VERTEX_PROGRAM_TWO_SIDE_NV */
-   struct vertex_program *Current;       /**< ptr to currently bound program */
+   GLboolean Enabled;                  /**< GL_VERTEX_PROGRAM_NV */
+   GLboolean _Enabled;                 /**< Really enabled? */
+   GLboolean PointSizeEnabled;         /**< GL_VERTEX_PROGRAM_POINT_SIZE_NV */
+   GLboolean TwoSideEnabled;           /**< GL_VERTEX_PROGRAM_TWO_SIDE_NV */
+   struct vertex_program *Current;     /**< ptr to currently bound program */
 
    GLenum TrackMatrix[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
    GLenum TrackMatrixTransform[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
@@ -1658,6 +1659,7 @@ struct vertex_program_state
 struct fragment_program_state
 {
    GLboolean Enabled;                    /* GL_VERTEX_PROGRAM_NV */
+   GLboolean _Enabled;                   /* Really enabled? */
    struct fragment_program *Current;     /* ptr to currently bound program */
    struct fp_machine Machine;            /* machine state */
    GLfloat Parameters[MAX_NV_FRAGMENT_PROGRAM_PARAMS][4]; /* Env params */

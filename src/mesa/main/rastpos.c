@@ -418,7 +418,7 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    if (ctx->NewState)
       _mesa_update_state( ctx );
 
-   if (ctx->VertexProgram.Enabled) {
+   if (ctx->VertexProgram._Enabled) {
       /* XXX implement this */
       _mesa_problem(ctx, "Vertex programs not implemented for glRasterPos");
       return;

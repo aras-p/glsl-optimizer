@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -192,7 +192,7 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
       tnl->render_inputs |= _TNL_BIT_TEX0;
 
    if (ctx->Point._Attenuated ||
-       (ctx->VertexProgram.Enabled && ctx->VertexProgram.PointSizeEnabled))
+       (ctx->VertexProgram._Enabled && ctx->VertexProgram.PointSizeEnabled))
       tnl->render_inputs |= _TNL_BIT_POINTSIZE;
 }
 

@@ -21,9 +21,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -375,9 +375,9 @@ do {									\
    (((CTX)->Light.Enabled &&						\
      (CTX)->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)	\
     || (CTX)->Fog.ColorSumEnabled					\
-    || ((CTX)->VertexProgram.Enabled &&					\
+    || ((CTX)->VertexProgram._Enabled &&				\
         ((CTX)->VertexProgram.Current->InputsRead & VERT_BIT_COLOR1))	\
-    || ((CTX)->FragmentProgram.Enabled &&				\
+    || ((CTX)->FragmentProgram._Enabled &&				\
         ((CTX)->FragmentProgram.Current->InputsRead & FRAG_BIT_COL1))	\
    )
 

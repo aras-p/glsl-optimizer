@@ -45,8 +45,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->FragmentProgram.Enabled
-       && !ctx->FragmentProgram.Current->Instructions) {
+   if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glDrawPixels (invalid fragment program)");
       return;
@@ -103,8 +102,7 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
    GLint destx, desty;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->FragmentProgram.Enabled
-       && !ctx->FragmentProgram.Current->Instructions) {
+   if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCopyPixels (invalid fragment program)");
       return;
@@ -184,8 +182,7 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->FragmentProgram.Enabled
-       && !ctx->FragmentProgram.Current->Instructions) {
+   if (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBitmap (invalid fragment program)");
       return;

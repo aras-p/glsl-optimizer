@@ -1,11 +1,3 @@
-/**
- * \file state.c
- * State management.
- * 
- * This file manages recalculation of derived values in the __GLcontextRec.
- * Also, this is where we initialize the API dispatch table.
- */
-
 /*
  * Mesa 3-D graphics library
  * Version:  6.1
@@ -30,6 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+
+/**
+ * \file state.c
+ * State management.
+ * 
+ * This file manages recalculation of derived values in the __GLcontextRec.
+ * Also, this is where we initialize the API dispatch table.
+ */
 
 #include "glheader.h"
 #include "accum.h"
@@ -762,7 +762,7 @@ update_arrays( GLcontext *ctx )
    /* find min of _MaxElement values for all enabled arrays */
 
    /* 0 */
-   if (ctx->VertexProgram.Enabled
+   if (ctx->VertexProgram._Enabled
        && ctx->Array.VertexAttrib[VERT_ATTRIB_POS].Enabled) {
       min = ctx->Array.VertexAttrib[VERT_ATTRIB_POS]._MaxElement;
    }
@@ -775,14 +775,14 @@ update_arrays( GLcontext *ctx )
    }
 
    /* 1 */
-   if (ctx->VertexProgram.Enabled
+   if (ctx->VertexProgram._Enabled
        && ctx->Array.VertexAttrib[VERT_ATTRIB_WEIGHT].Enabled) {
       min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_WEIGHT]._MaxElement);
    }
    /* no conventional vertex weight array */
 
    /* 2 */
-   if (ctx->VertexProgram.Enabled
+   if (ctx->VertexProgram._Enabled
        && ctx->Array.VertexAttrib[VERT_ATTRIB_NORMAL].Enabled) {
       min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_NORMAL]._MaxElement);
    }
@@ -791,7 +791,7 @@ update_arrays( GLcontext *ctx )
    }
 
    /* 3 */
-   if (ctx->VertexProgram.Enabled
+   if (ctx->VertexProgram._Enabled
        && ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR0].Enabled) {
       min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR0]._MaxElement);
    }
@@ -800,7 +800,7 @@ update_arrays( GLcontext *ctx )
    }
 
    /* 4 */
-   if (ctx->VertexProgram.Enabled
+   if (ctx->VertexProgram._Enabled
        && ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR1].Enabled) {
       min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_COLOR1]._MaxElement);
    }
@@ -809,7 +809,7 @@ update_arrays( GLcontext *ctx )
    }
 
    /* 5 */
-   if (ctx->VertexProgram.Enabled
+   if (ctx->VertexProgram._Enabled
        && ctx->Array.VertexAttrib[VERT_ATTRIB_FOG].Enabled) {
       min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_FOG]._MaxElement);
    }
@@ -818,20 +818,20 @@ update_arrays( GLcontext *ctx )
    }
 
    /* 6 */
-   if (ctx->VertexProgram.Enabled
+   if (ctx->VertexProgram._Enabled
        && ctx->Array.VertexAttrib[VERT_ATTRIB_SIX].Enabled) {
       min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_SIX]._MaxElement);
    }
 
    /* 7 */
-   if (ctx->VertexProgram.Enabled
+   if (ctx->VertexProgram._Enabled
        && ctx->Array.VertexAttrib[VERT_ATTRIB_SEVEN].Enabled) {
       min = MIN2(min, ctx->Array.VertexAttrib[VERT_ATTRIB_SEVEN]._MaxElement);
    }
 
    /* 8..15 */
    for (i = VERT_ATTRIB_TEX0; i < VERT_ATTRIB_MAX; i++) {
-      if (ctx->VertexProgram.Enabled
+      if (ctx->VertexProgram._Enabled
           && ctx->Array.VertexAttrib[i].Enabled) {
          min = MIN2(min, ctx->Array.VertexAttrib[i]._MaxElement);
       }
@@ -854,6 +854,22 @@ update_arrays( GLcontext *ctx )
 }
 
 
+/**
+ * Update derived vertex/fragment program state.
+ */
+static void
+update_program(GLcontext *ctx)
+{
+   /* For now, just set the _Enabled (really enabled) flags.
+    * In the future we may have to check other state to be sure we really
+    * have a runable program or shader.
+    */
+   ctx->VertexProgram._Enabled = ctx->VertexProgram.Enabled
+      && ctx->VertexProgram.Current->Instructions;
+   ctx->FragmentProgram._Enabled = ctx->FragmentProgram.Enabled
+      && ctx->FragmentProgram.Current->Instructions;
+}
+
 
 /*
  * If __GLcontextRec::NewState is non-zero then this function \b must be called
@@ -874,6 +890,9 @@ void _mesa_update_state( GLcontext *ctx )
 
    if (MESA_VERBOSE & VERBOSE_STATE)
       _mesa_print_state("_mesa_update_state", new_state);
+
+   if (new_state & _NEW_PROGRAM)
+      update_program( ctx );
 
    if (new_state & (_NEW_MODELVIEW|_NEW_PROJECTION))
       _mesa_update_modelview_project( ctx, new_state );

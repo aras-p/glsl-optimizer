@@ -216,7 +216,7 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 static void
 check_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
-   stage->active = ctx->Fog.Enabled && !ctx->VertexProgram.Enabled;
+   stage->active = ctx->Fog.Enabled && !ctx->VertexProgram._Enabled;
 
    if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT)
       stage->inputs = _TNL_BIT_POS;

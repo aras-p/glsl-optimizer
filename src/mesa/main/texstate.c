@@ -2935,7 +2935,7 @@ update_texture_state( GLcontext *ctx )
       texUnit->_GenFlags = 0;
 
       /* Get the bitmask of texture enables */
-      if (ctx->FragmentProgram.Enabled && ctx->FragmentProgram.Current) {
+      if (ctx->FragmentProgram._Enabled) {
          enableBits = ctx->FragmentProgram.Current->TexturesUsed[unit];
       }
       else {
@@ -3099,7 +3099,7 @@ update_texture_state( GLcontext *ctx )
    /* Fragment programs may need texture coordinates but not the
     * corresponding texture images.
     */
-   if (ctx->FragmentProgram.Enabled && ctx->FragmentProgram.Current) {
+   if (ctx->FragmentProgram._Enabled) {
       ctx->Texture._EnabledCoordUnits |=
          (ctx->FragmentProgram.Current->InputsRead >> FRAG_ATTRIB_TEX0);
    }

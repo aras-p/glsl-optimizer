@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.0
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -1142,7 +1142,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                         "glGetProgramRegisterfvMESA(target)");
             return;
          }
-         if (!ctx->VertexProgram.Enabled) {
+         if (!ctx->VertexProgram._Enabled) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
                         "glGetProgramRegisterfvMESA");
             return;
@@ -1194,7 +1194,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                         "glGetProgramRegisterfvMESA(target)");
             return;
          }
-         if (!ctx->FragmentProgram.Enabled) {
+         if (!ctx->FragmentProgram._Enabled) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
                         "glGetProgramRegisterfvMESA");
             return;
@@ -1207,7 +1207,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                         "glGetProgramRegisterfvMESA(target)");
             return;
          }
-         if (!ctx->FragmentProgram.Enabled) {
+         if (!ctx->FragmentProgram._Enabled) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
                         "glGetProgramRegisterfvMESA");
             return;

@@ -379,7 +379,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
             if (obj) {
                const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
                needLambda = (obj->MinFilter != obj->MagFilter)
-                  || ctx->FragmentProgram.Enabled;
+                  || ctx->FragmentProgram._Enabled;
                texW = img->WidthScale;
                texH = img->HeightScale;
             }
@@ -404,7 +404,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               if (ctx->FragmentProgram.Enabled) {
+               if (ctx->FragmentProgram._Enabled) {
                   /* do perspective correction but don't divide s, t, r by q */
                   const GLfloat dwdx = span->dwdx;
                   GLfloat w = span->w;
@@ -455,7 +455,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               if (ctx->FragmentProgram.Enabled) {
+               if (ctx->FragmentProgram._Enabled) {
                   /* do perspective correction but don't divide s, t, r by q */
                   const GLfloat dwdx = span->dwdx;
                   GLfloat w = span->w;
@@ -513,7 +513,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
       if (obj) {
          const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
          needLambda = (obj->MinFilter != obj->MagFilter)
-            || ctx->FragmentProgram.Enabled;
+            || ctx->FragmentProgram._Enabled;
          texW = (GLfloat) img->WidthScale;
          texH = (GLfloat) img->HeightScale;
       }
@@ -538,7 +538,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         if (ctx->FragmentProgram.Enabled) {
+         if (ctx->FragmentProgram._Enabled) {
             /* do perspective correction but don't divide s, t, r by q */
             const GLfloat dwdx = span->dwdx;
             GLfloat w = span->w;
@@ -589,7 +589,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         if (ctx->FragmentProgram.Enabled) {
+         if (ctx->FragmentProgram._Enabled) {
             /* do perspective correction but don't divide s, t, r by q */
             const GLfloat dwdx = span->dwdx;
             GLfloat w = span->w;
@@ -1104,7 +1104,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
    }
 
    /* Fragment program */
-   if (ctx->FragmentProgram.Enabled) {
+   if (ctx->FragmentProgram._Enabled) {
       /* Now we may need to interpolate the colors and texcoords */
       if ((span->interpMask & SPAN_RGBA) &&
           (span->arrayMask & SPAN_RGBA) == 0) {
@@ -1326,7 +1326,7 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
 	  span->primitive == GL_POLYGON  ||  span->primitive == GL_BITMAP);
    ASSERT(span->end <= MAX_WIDTH);
    ASSERT((span->interpMask & span->arrayMask) == 0);
-   ASSERT(ctx->Texture._EnabledCoordUnits || ctx->FragmentProgram.Enabled);
+   ASSERT(ctx->Texture._EnabledCoordUnits || ctx->FragmentProgram._Enabled);
 
    /*
    printf("%s()  interp 0x%x  array 0x%x\n", __FUNCTION__, span->interpMask, span->arrayMask);
@@ -1386,7 +1386,7 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
       /* Texturing without alpha is done after depth-testing which
        * gives a potential speed-up.
        */
-      if (ctx->FragmentProgram.Enabled)
+      if (ctx->FragmentProgram._Enabled)
          _swrast_exec_fragment_program( ctx, span );
       else
          _swrast_texture_span( ctx, span );
@@ -1453,7 +1453,7 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
          interpolate_specular(ctx, span);
       }
 
-      if (ctx->FragmentProgram.Enabled)
+      if (ctx->FragmentProgram._Enabled)
          _swrast_exec_fragment_program( ctx, span );
       else
          _swrast_texture_span( ctx, span );

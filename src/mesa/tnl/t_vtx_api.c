@@ -724,21 +724,20 @@ static void GLAPIENTRY _tnl_Begin( GLenum mode )
 {
    GET_CURRENT_CONTEXT( ctx ); 
 
-   if ((ctx->VertexProgram.Enabled
-        && !ctx->VertexProgram.Current->Instructions) ||
-       (ctx->FragmentProgram.Enabled
-        && !ctx->FragmentProgram.Current->Instructions)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glBegin (invalid vertex/fragment program)");
-      return;
-   }
-
    if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1) {
       TNLcontext *tnl = TNL_CONTEXT(ctx); 
       int i;
 
       if (ctx->NewState) {
 	 _mesa_update_state( ctx );
+
+         if ((ctx->VertexProgram.Enabled && !ctx->VertexProgram._Enabled) ||
+            (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled)) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glBegin (invalid vertex/fragment program)");
+            return;
+         }
+
 	 if (!(tnl->Driver.NotifyBegin && 
 	       tnl->Driver.NotifyBegin( ctx, mode )))
 	     ctx->Exec->Begin(mode);

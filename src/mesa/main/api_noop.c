@@ -704,7 +704,7 @@ void GLAPIENTRY _mesa_noop_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
     */
    if (!ctx->Eval.Map1Vertex4 && 
        !ctx->Eval.Map1Vertex3 &&
-       !(ctx->VertexProgram.Enabled && ctx->Eval.Map1Attrib[VERT_ATTRIB_POS]))
+       !(ctx->VertexProgram._Enabled && ctx->Eval.Map1Attrib[VERT_ATTRIB_POS]))
       return;
 
    du = ctx->Eval.MapGrid1du;
@@ -739,7 +739,7 @@ void GLAPIENTRY _mesa_noop_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1,
     */
    if (!ctx->Eval.Map2Vertex4 && 
        !ctx->Eval.Map2Vertex3 &&
-       !(ctx->VertexProgram.Enabled && ctx->Eval.Map2Attrib[VERT_ATTRIB_POS]))
+       !(ctx->VertexProgram._Enabled && ctx->Eval.Map2Attrib[VERT_ATTRIB_POS]))
       return;
 
    du = ctx->Eval.MapGrid2du;

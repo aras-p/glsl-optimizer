@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -72,7 +72,7 @@ static void reset_vertex( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
    ASSERT(ctx->Array.Vertex.Enabled
-          || (ctx->VertexProgram.Enabled && ctx->Array.VertexAttrib[0].Enabled));
+          || (ctx->VertexProgram._Enabled && ctx->Array.VertexAttrib[0].Enabled));
    ac->Raw.Vertex = ctx->Array.Vertex;
    STRIDE_ARRAY(ac->Raw.Vertex, ac->start);
    ac->IsCached.Vertex = GL_FALSE;

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.0
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -260,7 +260,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
       /* When vertex program mode is enabled, the generic vertex attribute
        * arrays have priority over the conventional vertex arrays.
        */
-      if (ctx->VertexProgram.Enabled
+      if (ctx->VertexProgram._Enabled
           && ctx->Array.VertexAttrib[index].Enabled) {
          /* Use generic attribute array */
          _tnl_import_attrib( ctx, index, GL_FALSE, GL_TRUE );
