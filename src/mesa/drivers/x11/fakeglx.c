@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.40 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: fakeglx.c,v 1.41 2000/12/14 17:44:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1798,8 +1798,8 @@ Fake_glXReleaseBuffersMESA( Display *dpy, GLXDrawable d )
 
 
 #ifdef GLX_MESA_set_3dfx_mode
-static GLboolean
-Fake_glXSet3DfxModeMESA( GLint mode )
+static Bool
+Fake_glXSet3DfxModeMESA( int mode )
 {
    return XMesaSetFXmode( mode );
 }
@@ -1897,6 +1897,23 @@ struct _glxapi_table *_mesa_GetGLXDispatchTable(void)
 #ifdef GLX_SGI_video_sync
    glx.GetVideoSyncSGI = Fake_glXGetVideoSyncSGI;
    glx.WaitVideoSyncSGI = Fake_glXWaitVideoSyncSGI;
+#endif
+
+#ifdef GLX_SGIX_video_resize
+   glx.BindChannelToWindowSGIX = NULL;
+   glx.ChannelRectSGIX = NULL;
+   glx.QueryChannelRectSGIX = NULL;
+   glx.QueryChannelDeltasSGIX = NULL;
+   glx.ChannelRectSyncSGIX = NULL;
+#endif
+
+#ifdef GLX_SGIX_fbconfig
+   glx.GetFBConfigAttribSGIX = NULL;
+   glx.ChooseFBConfigSGIX = NULL;
+   glx.CreateGLXPixmapWithConfigSGIX = NULL;
+   glx.CreateContextWithConfigSGIX = NULL;
+   glx.GetVisualFromFBConfigSGIX = NULL;
+   glx.GetFBConfigFromVisualSGIX = NULL;
 #endif
 
 #ifdef GLX_MESA_copy_sub_buffer

@@ -1,8 +1,8 @@
-/* $Id: glxapi.h,v 1.6 2000/06/08 22:50:28 brianp Exp $ */
+/* $Id: glxapi.h,v 1.7 2000/12/14 17:44:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -29,8 +29,7 @@
 #define _glxapi_h_
 
 
-#define GLX_GLXEXT_LEGACY
-#define GL_GLEXT_PROTOTYPES
+#define GLX_GLXEXT_PROTOTYPES
 #include "GL/glx.h"
 
 
@@ -106,6 +105,25 @@ struct _glxapi_table {
    int (*WaitVideoSyncSGI)(int divisor, int remainder, unsigned int *count);
 #endif
 
+#ifdef GLX_SGIX_video_resize
+   int (*BindChannelToWindowSGIX)(Display *, int, int, Window);
+   int (*ChannelRectSGIX)(Display *, int, int, int, int, int, int);
+   int (*QueryChannelRectSGIX)(Display *, int, int, int *, int *, int *, int *);
+   int (*QueryChannelDeltasSGIX)(Display *, int, int, int *, int *, int *, int *);
+   int (*ChannelRectSyncSGIX)(Display *, int, int, GLenum);
+#endif
+
+#ifdef GLX_SGIX_fbconfig
+   int (*GetFBConfigAttribSGIX)(Display *, GLXFBConfigSGIX, int, int *);
+   GLXFBConfigSGIX * (*ChooseFBConfigSGIX)(Display *, int, int *, int *);
+   GLXPixmap (*CreateGLXPixmapWithConfigSGIX)(Display *, GLXFBConfigSGIX, Pixmap);
+   GLXContext (*CreateContextWithConfigSGIX)(Display *, GLXFBConfigSGIX, int, GLXContext, Bool);
+   XVisualInfo * (*GetVisualFromFBConfigSGIX)(Display *, GLXFBConfigSGIX);
+   GLXFBConfigSGIX (*GetFBConfigFromVisualSGIX)(Display *, XVisualInfo *);
+#endif
+
+   /* XXX more glx extensions to add here */
+
    /*
     * XXX thesa Mesa-specific functions might not belong here
     */
@@ -123,7 +141,7 @@ struct _glxapi_table {
 #endif
 
 #ifdef GLX_MESA_set_3dfx_mode
-   GLboolean (*Set3DfxModeMESA)(GLint mode);
+   Bool (*Set3DfxModeMESA)(int mode);
 #endif
 
 };

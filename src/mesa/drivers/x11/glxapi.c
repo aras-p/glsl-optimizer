@@ -1,8 +1,8 @@
-/* $Id: glxapi.c,v 1.18 2000/11/19 23:42:33 jtaylor Exp $ */
+/* $Id: glxapi.c,v 1.19 2000/12/14 17:44:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -588,6 +588,107 @@ int glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
 #endif
 
 
+#ifdef GLX_SGIX_video_resize
+
+int glXBindChannelToWindowSGIX(Display *dpy, int screen, int channel , Window window)
+{
+   struct _glxapi_table *t = get_dispatch(CurrentDisplay);
+   if (!t)
+      return 0;
+   return (t->BindChannelToWindowSGIX)(dpy, screen, channel, window);
+}
+
+int glXChannelRectSGIX(Display *dpy, int screen, int channel, int x, int y, int w, int h)
+{
+   struct _glxapi_table *t = get_dispatch(CurrentDisplay);
+   if (!t)
+      return 0;
+   return (t->ChannelRectSGIX)(dpy, screen, channel, x, y, w, h);
+}
+
+int glXQueryChannelRectSGIX(Display *dpy, int screen, int channel, int *x, int *y, int *w, int *h)
+{
+   struct _glxapi_table *t = get_dispatch(CurrentDisplay);
+   if (!t)
+      return 0;
+   return (t->QueryChannelRectSGIX)(dpy, screen, channel, x, y, w, h);
+}
+
+int glXQueryChannelDeltasSGIX(Display *dpy, int screen, int channel, int *dx, int *dy, int *dw, int *dh)
+{
+   struct _glxapi_table *t = get_dispatch(CurrentDisplay);
+   if (!t)
+      return 0;
+   return (t->QueryChannelDeltasSGIX)(dpy, screen, channel, dx, dy, dw, dh);
+}
+
+int glXChannelRectSyncSGIX(Display *dpy, int screen, int channel, GLenum synctype)
+{
+   struct _glxapi_table *t = get_dispatch(CurrentDisplay);
+   if (!t)
+      return 0;
+   return (t->ChannelRectSyncSGIX)(dpy, screen, channel, synctype);
+}
+
+#endif
+
+
+#ifdef GLX_SGIX_fbconfig
+
+int glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfigSGIX config, int attribute, int *value)
+{
+   struct _glxapi_table *t = get_dispatch(CurrentDisplay);
+   if (!t)
+      return 0;
+   return (t->GetFBConfigAttribSGIX)(dpy, config, attribute, value);
+}
+
+GLXFBConfigSGIX * glXChooseFBConfigSGIX(Display *dpy, int screen, int *attrib_list, int *nelements)
+{
+   struct _glxapi_table *t = get_dispatch(CurrentDisplay);
+   if (!t)
+      return 0;
+   return (t->ChooseFBConfigSGIX)(dpy, screen, attrib_list, nelements);
+}
+
+
+GLXPixmap glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, Pixmap pixmap)
+{
+   struct _glxapi_table *t = get_dispatch(CurrentDisplay);
+   if (!t)
+      return 0;
+   return (t->CreateGLXPixmapWithConfigSGIX)(dpy, config, pixmap);
+}
+
+
+GLXContext glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, int render_type, GLXContext share_list, Bool direct)
+{
+   struct _glxapi_table *t = get_dispatch(CurrentDisplay);
+   if (!t)
+      return 0;
+   return (t->CreateContextWithConfigSGIX)(dpy, config, render_type, share_list, direct);
+}
+
+XVisualInfo * glXGetVisualFromFBConfigSGIX(Display *dpy, GLXFBConfigSGIX config)
+{
+   struct _glxapi_table *t = get_dispatch(CurrentDisplay);
+   if (!t)
+      return 0;
+   return (t->GetVisualFromFBConfigSGIX)(dpy, config);
+}
+
+GLXFBConfigSGIX glXGetFBConfigFromVisualSGIX(Display *dpy, XVisualInfo *vis)
+{
+   struct _glxapi_table *t = get_dispatch(CurrentDisplay);
+   if (!t)
+      return 0;
+   return (t->GetFBConfigFromVisualSGIX)(dpy, vis);
+}
+
+#endif
+
+
+
 #ifdef GLX_MESA_copy_sub_buffer
 
 void glXCopySubBufferMESA(Display *dpy, GLXDrawable drawable, int x, int y, int width, int height)
@@ -629,7 +730,7 @@ GLXPixmap glXCreateGLXPixmapMESA(Display *dpy, XVisualInfo *visinfo, Pixmap pixm
 
 #ifdef GLX_MESA_set_3dfx_mode
 
-GLboolean glXSet3DfxModeMESA(GLint mode)
+Bool glXSet3DfxModeMESA(int mode)
 {
    struct _glxapi_table *t = get_dispatch(CurrentDisplay);
    if (!t)
