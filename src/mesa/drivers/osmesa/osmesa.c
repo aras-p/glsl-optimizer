@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.45 2001/02/08 23:52:29 brianp Exp $ */
+/* $Id: osmesa.c,v 1.46 2001/02/12 18:32:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1769,9 +1769,24 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
 
    ctx->Driver.GetString = get_string;
    ctx->Driver.UpdateState = osmesa_update_state;
-
    ctx->Driver.SetDrawBuffer = set_draw_buffer;
    ctx->Driver.SetReadBuffer = set_read_buffer;
+   ctx->Driver.ResizeBuffersMESA = _swrast_alloc_buffers;
+   ctx->Driver.GetBufferSize = buffer_size;
+
+   ctx->Driver.RenderStart = _swsetup_RenderStart;
+   ctx->Driver.RenderFinish = _swsetup_RenderFinish;
+   ctx->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
+   ctx->Driver.RenderPrimitive = _swsetup_RenderPrimitive;
+   ctx->Driver.PointsFunc = _swsetup_Points;
+   ctx->Driver.LineFunc = _swsetup_Line;
+   ctx->Driver.TriangleFunc = _swsetup_Triangle;
+   ctx->Driver.QuadFunc = _swsetup_Quad;
+   ctx->Driver.ResetLineStipple = _swrast_ResetLineStipple;
+   ctx->Driver.RenderInterp = _swsetup_RenderInterp;
+   ctx->Driver.RenderCopyPV = _swsetup_RenderCopyPV;
+   ctx->Driver.RenderClippedLine = _swsetup_RenderClippedLine;
+   ctx->Driver.RenderClippedPolygon = _swsetup_RenderClippedPolygon;
 
    ctx->Driver.Accum = _swrast_Accum;
    ctx->Driver.Bitmap = _swrast_Bitmap;
@@ -1779,9 +1794,6 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.CopyPixels = _swrast_CopyPixels;
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
    ctx->Driver.ReadPixels = _swrast_ReadPixels;
-   ctx->Driver.ResizeBuffersMESA = _swrast_alloc_buffers;
-
-   ctx->Driver.GetBufferSize = buffer_size;
 
    ctx->Driver.TexImage1D = _mesa_store_teximage1d;
    ctx->Driver.TexImage2D = _mesa_store_teximage2d;
@@ -1791,18 +1803,6 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
    ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
 
-   ctx->Driver.PointsFunc = _swsetup_Points;
-   ctx->Driver.LineFunc = _swsetup_Line;
-   ctx->Driver.TriangleFunc = _swsetup_Triangle;
-   ctx->Driver.QuadFunc = _swsetup_Quad;
-   ctx->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
-   ctx->Driver.RenderPrimitive = _swsetup_RenderPrimitive;
-   ctx->Driver.RenderStart = _swsetup_RenderStart;
-   ctx->Driver.RenderFinish = _swsetup_RenderFinish;
-   ctx->Driver.RenderInterp = _swsetup_RenderInterp;
-   ctx->Driver.RenderCopyPV = _swsetup_RenderCopyPV;
-   ctx->Driver.RenderClippedLine = _swsetup_RenderClippedLine;
-   ctx->Driver.RenderClippedPolygon = _swsetup_RenderClippedPolygon;
 
    /* RGB(A) span/pixel functions */
    if (osmesa->format == OSMESA_RGB) {
