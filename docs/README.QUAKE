@@ -1,0 +1,80 @@
+
+             Info on using Mesa 3.0 with Linux Quake I and Quake II
+
+
+
+Disclaimer
+----------
+
+I am _not_ a Quake expert by any means.  I pretty much only run it to
+test Mesa.  There have been a lot of questions about Linux Quake and
+Mesa so I'm trying to provide some useful info here.  If this file
+doesn't help you then you should look elsewhere for help.  The Mesa
+mailing list or the news://news.3dfx.com/3dfx.linux.glide newsgroup
+might be good.
+
+Again, all the information I have is in this file.  Please don't email
+me with questions.
+
+If you have information to contribute to this file please send it to
+me at brianp@elastic.avid.com
+
+
+
+Linux Quake
+-----------
+
+You can get Linux Quake from http://www.idsoftware.com/
+
+Quake I and II for Linux were tested with, and include, Mesa 2.6.  You
+shouldn't have too many problems if you simply follow the instructions
+in the Quake distribution.
+
+
+
+RedHat 5.0 Linux problems
+-------------------------
+
+RedHat Linux 5.x uses the GNU C library ("glibc" or "libc6") whereas
+previous RedHat and other Linux distributions use "libc5" for its
+runtime C library.
+
+Linux Quake I and II were compiled for libc5.  If you compile Mesa
+on a RedHat 5.x system the resulting libMesaGL.so file will not work
+with Linux Quake because of the different C runtime libraries.
+The symptom of this is a segmentation fault soon after starting Quake.
+
+If you want to use a newer version of Mesa (like 3.x) with Quake on
+RedHat 5.x then read on.
+
+The solution to the C library problem is to force Mesa to use libc5.
+libc5 is in /usr/i486-linux-libc5/lib on RedHat 5.x systems.
+
+Emil Briggs (briggs@tick.physics.ncsu.edu) nicely gave me the following
+info:
+
+>   I only know what works on a RedHat 5.0 distribution. RH5 includes
+> a full set of libraries for both libc5 and glibc. The loader ld.so
+> uses the libc5 libraries in /usr/i486-linux-libc5/lib for programs
+> linked against libc5 while it uses the glibc libraries in /lib and
+> /usr/lib for programs linked against glibc.
+> 
+> Anyway I changed line 41 of mklib.glide to
+>     GLIDELIBS="-L/usr/local/glide/lib -lglide2x -L/usr/i486-linux-libc5/lib"
+> 
+> And I started quake2 up with a script like this
+> #!/bin/csh
+> setenv LD_LIBRARY_PATH /usr/i486-linux-libc5/lib
+> setenv MESA_GLX_FX f
+> ./quake2 +set vid_ref gl
+> kbd_mode -a
+> reset
+
+
+I've already patched the mklib.glide file.  You'll have to start Quake
+with the script shown above though.
+
+
+
+----------------------------------------------------------------------
+$Id: README.QUAKE,v 1.1 1998/07/29 01:15:40 brianp Exp $
