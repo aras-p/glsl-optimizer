@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.4 1999/09/11 20:13:21 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.5 1999/09/12 12:04:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1482,7 +1482,7 @@ GLfunction Fake_glXGetProcAddress( const GLubyte *procName )
    };
    static struct proc procTable[] = {
       { "glXGetProcAddressEXT", (GLfunction) glXGetProcAddressEXT },
-      { "glXReleaseBuffersMESA", (GLfunction) glXReleaseBuffersMESA },
+      { "glXCreateGLXPixmapMESA", (GLfunction) glXCreateGLXPixmapMESA },
       { "glXReleaseBuffersMESA", (GLfunction) glXReleaseBuffersMESA },
       { "glXCopySubBufferMESA", (GLfunction) glXCopySubBufferMESA },
       /* NOTE: GLX_SGI_video_sync not implemented in Mesa */
