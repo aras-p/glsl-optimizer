@@ -1,4 +1,4 @@
-/* $Id: t_vb_program.c,v 1.7 2002/01/06 03:54:12 brianp Exp $ */
+/* $Id: t_vb_program.c,v 1.8 2002/01/06 20:39:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -141,10 +141,17 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    struct vp_stage_data *store = VP_STAGE_DATA(stage);
    struct vertex_buffer *VB = &tnl->vb;
    struct vp_machine *machine = &(ctx->VertexProgram.Machine);
+   struct vp_program *program = ctx->VertexProgram.Current;
    GLint i;
 
    _mesa_init_tracked_matrices(ctx);
    _mesa_init_vp_registers(ctx);  /* init temp and result regs */
+   /* XXX if GL_FOG is enabled but the program doesn't write to the
+    * o[FOGC] register, set the fog result to 1.0
+    */
+   /* XXX if GL_VERTEX_PROGRAM_POINT_SIZE_NV is enabled but the program
+    * doesn't write the PSIZ variable then use ctx->Point.Size
+    */
 
    for (i = 0; i < VB->Count; i++) {
       GLuint attr;
@@ -176,8 +183,8 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
       }
 
       /* execute the program */
-      ASSERT(ctx->VertexProgram.Current);
-      _mesa_exec_program(ctx, ctx->VertexProgram.Current);
+      ASSERT(program);
+      _mesa_exec_program(ctx, program);
 
 #if 0
       printf("Output %d: %f, %f, %f, %f\n", i,
@@ -190,6 +197,8 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
              machine->Registers[VP_OUT_COL0][1],
              machine->Registers[VP_OUT_COL0][2],
              machine->Registers[VP_OUT_COL0][3]);
+      printf("PointSize[%d]: %g\n", i,
+             machine->Registers[VP_OUTPUT_REG_START + VERT_RESULT_PSIZ][0]);
 #endif
 
       /* copy the output registers into the VB->attribs arrays */

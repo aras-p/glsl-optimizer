@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.53 2002/01/05 21:53:20 brianp Exp $ */
+/* $Id: enable.c,v 1.54 2002/01/06 20:39:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -802,21 +802,21 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          CHECK_EXTENSION(NV_vertex_program);
          if (ctx->VertexProgram.Enabled == state)
             return;
-         FLUSH_VERTICES(ctx, _NEW_TRANSFORM);  /* XXX OK? */
+         FLUSH_VERTICES(ctx, _NEW_TRANSFORM | _NEW_PROGRAM);  /* XXX OK? */
          ctx->VertexProgram.Enabled = state;
          break;
       case GL_VERTEX_PROGRAM_POINT_SIZE_NV:
          CHECK_EXTENSION(NV_vertex_program);
          if (ctx->VertexProgram.PointSizeEnabled == state)
             return;
-         FLUSH_VERTICES(ctx, _NEW_TRANSFORM);  /* XXX OK? */
+         FLUSH_VERTICES(ctx, _NEW_POINT | _NEW_PROGRAM);
          ctx->VertexProgram.PointSizeEnabled = state;
          break;
       case GL_VERTEX_PROGRAM_TWO_SIDE_NV:
          CHECK_EXTENSION(NV_vertex_program);
          if (ctx->VertexProgram.TwoSideEnabled == state)
             return;
-         FLUSH_VERTICES(ctx, _NEW_TRANSFORM);  /* XXX OK? */
+         FLUSH_VERTICES(ctx, _NEW_PROGRAM);  /* XXX OK? */
          ctx->VertexProgram.TwoSideEnabled = state;
          break;
       case GL_MAP1_VERTEX_ATTRIB0_4_NV:

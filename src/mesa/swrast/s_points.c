@@ -1,4 +1,4 @@
-/* $Id: s_points.c,v 1.15 2001/03/12 00:48:42 gareth Exp $ */
+/* $Id: s_points.c,v 1.16 2002/01/06 20:39:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -212,7 +212,7 @@ _swrast_choose_point( GLcontext *ctx )
       else if (ctx->Point.SmoothFlag) {
          /* Smooth points */
          if (rgbMode) {
-            if (ctx->Point._Attenuated) {
+            if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled) {
                USE(atten_antialiased_rgba_point);
             }
             else if (ctx->Texture._ReallyEnabled) {
@@ -226,7 +226,7 @@ _swrast_choose_point( GLcontext *ctx )
             USE(antialiased_ci_point);
          }
       }
-      else if (ctx->Point._Attenuated) {
+      else if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled) {
          if (rgbMode) {
             if (ctx->Texture._ReallyEnabled) {
                if (ctx->Point.SmoothFlag) {

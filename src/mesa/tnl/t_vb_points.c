@@ -1,4 +1,4 @@
-/* $Id: t_vb_points.c,v 1.6 2002/01/06 03:54:12 brianp Exp $ */
+/* $Id: t_vb_points.c,v 1.7 2002/01/06 20:39:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,7 +76,7 @@ static GLboolean run_point_stage( GLcontext *ctx,
  */
 static void check_point_size( GLcontext *ctx, struct gl_pipeline_stage *d )
 {
-   d->active = ctx->Point._Attenuated;
+   d->active = ctx->Point._Attenuated && !ctx->VertexProgram.Enabled;
 }
 
 static GLboolean alloc_point_data( GLcontext *ctx,

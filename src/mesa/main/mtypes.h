@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.59 2002/01/06 03:54:12 brianp Exp $ */
+/* $Id: mtypes.h,v 1.60 2002/01/06 20:39:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1225,6 +1225,8 @@ struct vp_program
    GLint ErrorPos;            /* Position in string where error was detected */
    GLint RefCount;            /* Since programs can be shared among contexts */
    GLboolean Resident;
+   GLbitfield InputsRead;     /* Bitmask of which input regs are read */
+   GLbitfield OutputsWritten; /* Bitmask of which output regs are written to */
 };
 
 
@@ -1478,6 +1480,7 @@ struct matrix_stack
 #define _NEW_BUFFERS            0x1000000  /* ctx->Visual, ctx->DrawBuffer, */
 #define _NEW_MULTISAMPLE        0x2000000  /* ctx->Multisample */
 #define _NEW_TRACK_MATRIX       0x4000000  /* ctx->VertexProgram */
+#define _NEW_PROGRAM            0x8000000  /* ctx->VertexProgram */
 #define _NEW_ALL ~0
 
 

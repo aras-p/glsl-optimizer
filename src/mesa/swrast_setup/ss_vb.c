@@ -1,4 +1,4 @@
-/* $Id: ss_vb.c,v 1.14 2001/07/17 19:39:32 keithw Exp $ */
+/* $Id: ss_vb.c,v 1.15 2002/01/06 20:39:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -398,7 +398,8 @@ _swsetup_choose_rastersetup_func(GLcontext *ctx)
          funcindex = INDEX;
       }
 
-      if (ctx->Point._Attenuated)
+      if (ctx->Point._Attenuated ||
+          (ctx->VertexProgram.Enabled && ctx->VertexProgram.PointSizeEnabled))
          funcindex |= POINT;
 
       if (ctx->Fog.Enabled)
