@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.12 1999/12/15 12:52:31 brianp Exp $ */
+/* $Id: glapi.c,v 1.13 1999/12/15 15:02:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -43,32 +43,37 @@
 #include "glapinoop.h"
 
 
+/* Flag to indicate whether thread-safe dispatch is enabled */
+static GLboolean ThreadSafe = GL_FALSE;
 
-/*
- * Define the DISPATCH_SETUP and DISPATCH macros here dependant on
- * whether or not threading is enabled.
- */
+/* This is used when thread safety is disabled */
+static struct _glapi_table *Dispatch = &__glapi_noop_table;
+
+
 #if defined(THREADS)
-
-/*** Thread-safe API dispatch ***/
 #include "mthreads.h"
 static MesaTSD mesa_dispatch_tsd;
 static void mesa_dispatch_thread_init() {
   MesaInitTSD(&mesa_dispatch_tsd);
 }
-#define DISPATCH_SETUP struct _glapi_table *dispatch = (struct _glapi_table *) MesaGetTSD(&mesa_dispatch_tsd)
+#endif
+
+
+
+#define DISPATCH_SETUP			\
+   const struct _glapi_table *dispatch;	\
+   if (ThreadSafe) {			\
+      dispatch = _glapi_get_dispatch();	\
+   }					\
+   else {				\
+      dispatch = Dispatch;		\
+   }
+
 #define DISPATCH(FUNC, ARGS) (dispatch->FUNC) ARGS
 
 
-#else
-
-/*** Non-threaded API dispatch ***/
-static struct _glapi_table *Dispatch = &__glapi_noop_table;
-#define DISPATCH_SETUP
-#define DISPATCH(FUNC, ARGS) (Dispatch->FUNC) ARGS
-
-#endif
-
+static GLuint MaxDispatchOffset = sizeof(struct _glapi_table) / sizeof(void *);
+static GLboolean GetSizeCalled = GL_FALSE;
 
 
 /*
@@ -111,6 +116,14 @@ _glapi_get_dispatch(void)
 
 
 
+void
+_glapi_enable_thread_safety(void)
+{
+   ThreadSafe = GL_TRUE;
+}
+
+
+
 /*
  * Return size of dispatch table struct as number of functions (or
  * slots).
@@ -118,7 +131,9 @@ _glapi_get_dispatch(void)
 GLuint
 _glapi_get_dispatch_table_size(void)
 {
-   return sizeof(struct _glapi_table) / sizeof(void *);
+   /*   return sizeof(struct _glapi_table) / sizeof(void *);*/
+   GetSizeCalled = GL_TRUE;
+   return MaxDispatchOffset + 1;
 }
 
 
@@ -678,13 +693,23 @@ generate_entrypoint(GLuint offset)
 GLboolean
 _glapi_add_entrypoint(const char *funcName, GLuint offset)
 {
+   GLint index;
+
+   /* Make sure we don't try to add a new entrypoint after someone
+    * has already called _glapi_get_dispatch_table_size()!  If that's
+    * happened the caller's information will now be out of date.
+    */
+   assert(!GetSizeCalled);
+
    /* first check if the named function is already statically present */
-   GLint index = get_static_proc_offset(funcName);
+   index = get_static_proc_offset(funcName);
+
    if (index >= 0) {
       assert(index == offset);
       return GL_TRUE;
    }
-   else if (offset < _glapi_get_dispatch_table_size()) {
+   /* else if (offset < _glapi_get_dispatch_table_size()) { */
+   else {
       /* be sure index and name match known data */
       GLuint i;
       for (i = 0; i < NumExtEntryPoints; i++) {
@@ -703,11 +728,17 @@ _glapi_add_entrypoint(const char *funcName, GLuint offset)
       ExtEntryTable[NumExtEntryPoints].Offset = offset;
       ExtEntryTable[NumExtEntryPoints].Address = generate_entrypoint(offset);
       NumExtEntryPoints++;
+
+      if (offset > MaxDispatchOffset)
+         MaxDispatchOffset = offset;
+
       return GL_TRUE;      
    }
+/*
    else {
       return GL_FALSE;
    }
+*/
 }
 
 
@@ -759,7 +790,7 @@ _glapi_get_proc_address(const char *funcName)
 void
 _glapi_check_table(const struct _glapi_table *table)
 {
-   const GLuint entries = sizeof(struct _glapi_table) / sizeof(void *);
+   const GLuint entries = _glapi_get_dispatch_table_size();
    const void **tab = (const void **) table;
    GLuint i;
    for (i = 0; i < entries; i++) {

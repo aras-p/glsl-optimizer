@@ -1,4 +1,4 @@
-/* $Id: glapi.h,v 1.5 1999/12/15 12:52:31 brianp Exp $ */
+/* $Id: glapi.h,v 1.6 1999/12/15 15:02:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,6 +39,10 @@ _glapi_set_dispatch(struct _glapi_table *dispatch);
 
 extern struct _glapi_table *
 _glapi_get_dispatch(void);
+
+
+extern void
+_glapi_enable_thread_safety(void);
 
 
 extern GLuint
