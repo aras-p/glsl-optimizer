@@ -28,7 +28,7 @@ PROGS = bounce.exe;,clearspd.exe;,drawpix.exe;,gamma.exe;,gears.exe;,\
 
 ##### RULES #####
 .obj.exe :
-	link $(MMS$TARGET_NAME),$(GL_LIBS)
+	cxxlink $(MMS$TARGET_NAME),$(GL_LIBS)
 
 ##### TARGETS #####
 default :

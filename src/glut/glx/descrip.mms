@@ -142,11 +142,11 @@ $(LIBDIR)$(GLUT_LIB) : $(OBJECTS) $(OBJECTS1) $(OBJECTS2) $(OBJECTS3)
   @ WRITE_ FILE "SYS$SHARE:DECW$XLIBSHR/SHARE"
   @ CLOSE_ FILE
   @ WRITE_ SYS$OUTPUT "  generating mesagl.map ..."
-  @ LINK_/NODEB/NOSHARE/NOEXE/MAP=mesagl.map/FULL mesagl1.opt/OPT
+  @ CXXLINK_/NODEB/NOSHARE/NOEXE/MAP=mesagl.map/FULL mesagl1.opt/OPT
   @ WRITE_ SYS$OUTPUT "  analyzing mesagl.map ..."
   @ @[-.vms]ANALYZE_MAP.COM mesagl.map mesagl.opt
   @ WRITE_ SYS$OUTPUT "  linking $(GLUT_LIB) ..."
-  @ LINK_/NODEB/SHARE=$(GLUT_LIB)/MAP=mesagl.map/FULL mesagl1.opt/opt,mesagl.opt/opt
+  @ CXXLINK_/NODEB/SHARE=$(GLUT_LIB)/MAP=mesagl.map/FULL mesagl1.opt/opt,mesagl.opt/opt
 .else
   @ $(MAKELIB) $(GLUT_LIB) $(OBJECTS)
   @ library $(GLUT_LIB) $(OBJECTS1)

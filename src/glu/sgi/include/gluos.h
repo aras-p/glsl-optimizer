@@ -1,8 +1,15 @@
 /*
 ** gluos.h - operating system dependencies for GLU
 **
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/include/gluos.h,v 1.1 2001/03/17 00:25:40 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/include/gluos.h,v 1.2 2001/03/22 11:38:36 joukj Exp $
 */
+#ifdef __VMS
+#ifdef __cplusplus 
+#pragma message disable nocordel
+#pragma message disable codeunreachable
+#pragma message disable codcauunr
+#endif
+#endif
 
 #ifdef _WIN32
 

@@ -35,13 +35,14 @@
 /*
  * bufpool.h
  *
- * $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/bufpool.h,v 1.1 2001/03/17 00:25:40 brianp Exp $
+ * $Date: 2001/03/22 11:38:36 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/bufpool.h,v 1.2 2001/03/22 11:38:36 joukj Exp $
  */
 
 #ifndef __glubufpool_h_
 #define __glubufpool_h_
 
+#include "gluos.h"
 #include "myassert.h"
 #include "mystdlib.h"
 
