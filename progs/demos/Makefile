@@ -7,6 +7,8 @@ INCDIR = $(TOP)/include
 
 OSMESA_LIBS = -L$(LIB_DIR) -lglut -lOSMesa -lGLU -lGL $(APP_LIB_DEPS)
 
+OSMESA16_LIBS = -L$(LIB_DIR) -lglut -lOSMesa16 -lGLU -lGL $(APP_LIB_DEPS)
+
 OSMESA32_LIBS = -L$(LIB_DIR) -lglut -lOSMesa32 -lGLU -lGL $(APP_LIB_DEPS)
 
 LIB_DEP = $(LIB_DIR)/$(GL_LIB_NAME) $(LIB_DIR)/$(GLU_LIB_NAME) $(LIB_DIR)/$(GLUT_LIB_NAME)
@@ -111,6 +113,10 @@ shadowtex.o: shadowtex.c showbuffer.h
 # special case: need the -lOSMesa library:
 osdemo: osdemo.c
 	$(CC) -I$(INCDIR) $(CFLAGS) osdemo.c $(OSMESA_LIBS) -o $@
+
+# another special case: need the -lOSMesa16 library:
+osdemo16: osdemo16.c
+	$(CC) -I$(INCDIR) $(CFLAGS) osdemo16.c $(OSMESA16_LIBS) -o $@
 
 # another special case: need the -lOSMesa32 library:
 osdemo32: osdemo32.c
