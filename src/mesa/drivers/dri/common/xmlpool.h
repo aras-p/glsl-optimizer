@@ -140,7 +140,7 @@ DRI_CONF_OPT_BEGIN_V(texture_depth,enum,def,"0:3") \
                 DRI_CONF_ENUM(3,"Force 16 bits") \
         DRI_CONF_DESC_END \
 	DRI_CONF_DESC_BEGIN(de,"Texturfarbtiefe") \
-                DRI_CONF_ENUM(0,"Bevorzugt so wie Frambuffer") \
+                DRI_CONF_ENUM(0,"Bevorzugt so wie Framebuffer") \
                 DRI_CONF_ENUM(1,"Bevorzugt 32 Bits") \
                 DRI_CONF_ENUM(2,"Bevorzugt 16 Bits") \
                 DRI_CONF_ENUM(3,"Höchstens 16 Bits") \
@@ -225,8 +225,8 @@ DRI_CONF_OPT_BEGIN_V(tcl_mode,enum,def,"0:3") \
         DRI_CONF_DESC_BEGIN(de,"TCL Modus (Transformation, Clipping, Licht)") \
                 DRI_CONF_ENUM(0,"Software") \
                 DRI_CONF_ENUM(1,"TCL Stufe in MESA Pipeline") \
-                DRI_CONF_ENUM(2,"Umgehe MESA's Pipeline") \
-                DRI_CONF_ENUM(3,"Umgehe MESA's Pipeline mit zustandsbasierter Codegenerierung") \
+                DRI_CONF_ENUM(2,"Umgehe MESAs Pipeline") \
+                DRI_CONF_ENUM(3,"Umgehe MESAs Pipeline mit zustandsbasierter Codegenerierung") \
         DRI_CONF_DESC_END \
 DRI_CONF_OPT_END
 
@@ -243,7 +243,7 @@ DRI_CONF_OPT_BEGIN_V(fthrottle_mode,enum,def,"0:2") \
         DRI_CONF_DESC_BEGIN(de,"Framethrottling") \
                 DRI_CONF_ENUM(0,"Aktives Warten") \
                 DRI_CONF_ENUM(1,"Usleeps") \
-                DRI_CONF_ENUM(2,"Sortware Interrutps") \
+                DRI_CONF_ENUM(2,"Software Interrutps") \
         DRI_CONF_DESC_END \
 DRI_CONF_OPT_END
 
