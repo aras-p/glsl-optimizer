@@ -647,16 +647,26 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
          colorComb.Factor   = GR_COMBINE_FACTOR_NONE;
          colorComb.Other    = GR_COMBINE_OTHER_NONE;
       } else {
-         /* [dBorca] Hack alert:
-          * only Voodoo^2 can GL_BLEND (GR_COMBINE_FACTOR_TEXTURE_RGB)
-          */
          if (fxMesa->type >= GR_SSTTYPE_Voodoo2) {
             colorComb.Function = GR_COMBINE_FUNCTION_BLEND;
             colorComb.Factor   = GR_COMBINE_FACTOR_TEXTURE_RGB;
             colorComb.Other    = GR_COMBINE_OTHER_CONSTANT;
+         } else if (ifmt == GL_INTENSITY) {
+            /* just a hack: RGB == ALPHA */
+            colorComb.Function = GR_COMBINE_FUNCTION_BLEND;
+            colorComb.Factor   = GR_COMBINE_FACTOR_TEXTURE_ALPHA;
+            colorComb.Other    = GR_COMBINE_OTHER_CONSTANT;
          } else {
+            /* [dBorca] Hack alert:
+             * only Voodoo^2 can GL_BLEND (GR_COMBINE_FACTOR_TEXTURE_RGB)
+             * These settings assume that the TexEnv color is black
+             * and incoming fragment color is white.
+             */
+            colorComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
+            colorComb.Factor   = GR_COMBINE_FACTOR_ONE;
+            colorComb.Other    = GR_COMBINE_OTHER_TEXTURE;
+            colorComb.Invert   = FXTRUE;
             _mesa_problem(NULL, "can't GL_BLEND with SST1");
-            return;
          }
       }
 
@@ -704,7 +714,7 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
       }
       else {
          /* sum of texel and fragment alpha */
-         alphaComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL,
+         alphaComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL;
          alphaComb.Factor   = GR_COMBINE_FACTOR_ONE;
          alphaComb.Other    = GR_COMBINE_OTHER_TEXTURE;
       }
@@ -717,7 +727,7 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
       }
       else {
          /* sum of texel and fragment rgb */
-         colorComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL,
+         colorComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL;
          colorComb.Factor   = GR_COMBINE_FACTOR_ONE;
          colorComb.Other    = GR_COMBINE_OTHER_TEXTURE;
       }
