@@ -1,21 +1,21 @@
-/* $Id: enums.c,v 1.9 2000/06/27 21:42:13 brianp Exp $ */
+/* $Id: enums.c,v 1.10 2001/01/06 22:46:13 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -34,12 +34,12 @@
 #endif
 
 
-typedef struct { 
-   const char *c; 
-   int n; 
+typedef struct {
+   const char *c;
+   int n;
 } enum_elt;
 
-enum_elt all_enums[] = 
+enum_elt all_enums[] =
 {
    /* Boolean values */
    { "GL_FALSE", 0 },
@@ -828,7 +828,11 @@ enum_elt all_enums[] =
    { "GL_INTERPOLATE_EXT", 0x8575 },
    { "GL_CONSTANT_EXT", 0x8576 },
    { "GL_PRIMARY_COLOR_EXT", 0x8577 },
-   { "GL_PREVIOUS_EXT", 0x8578 }
+   { "GL_PREVIOUS_EXT", 0x8578 },
+
+   /* GL_EXT_texture_env_dot3 */
+   { "GL_DOT3_RGB_EXT", 0x8740 },
+   { "GL_DOT3_RGBA_EXT", 0x8741 },
 
 };
 
@@ -839,7 +843,7 @@ typedef int (GLWINAPIV *cfunc)(const void *, const void *);
 static enum_elt **index1 = 0;
 static int sorted = 0;
 
-static int compar_name( const enum_elt *a, const enum_elt *b ) 
+static int compar_name( const enum_elt *a, const enum_elt *b )
 {
    return strcmp(a->c, b->c);
 }
@@ -847,7 +851,7 @@ static int compar_name( const enum_elt *a, const enum_elt *b )
 
 /* note the extra level of indirection
  */
-static int compar_nr( const enum_elt **a, const enum_elt **b ) 
+static int compar_nr( const enum_elt **a, const enum_elt **b )
 {
    return (*a)->n - (*b)->n;
 }
@@ -859,10 +863,10 @@ static void sort_enums( void )
    index1 = (enum_elt **)MALLOC( Elements(all_enums) * sizeof(enum_elt *) );
    sorted = 1;
 
-   qsort( all_enums, Elements(all_enums), sizeof(*all_enums), 
+   qsort( all_enums, Elements(all_enums), sizeof(*all_enums),
 	  (cfunc) compar_name );
 
-   for (i = 0 ; i < Elements(all_enums) ; i++) 
+   for (i = 0 ; i < Elements(all_enums) ; i++)
       index1[i] = &all_enums[i];
 
    qsort( index1, Elements(all_enums), sizeof(*index1), (cfunc) compar_nr );
@@ -875,14 +879,14 @@ int gl_lookup_enum_by_name( const char *symbol )
    enum_elt tmp;
    enum_elt *e;
 
-   if (!sorted) 
+   if (!sorted)
       sort_enums();
 
-   if (!symbol) 
+   if (!symbol)
       return 0;
 
    tmp.c = symbol;
-   e = (enum_elt *)bsearch( &tmp, all_enums, Elements(all_enums), 
+   e = (enum_elt *)bsearch( &tmp, all_enums, Elements(all_enums),
 			    sizeof(*all_enums), (cfunc) compar_name );
 
    return e ? e->n : -1;
@@ -893,13 +897,13 @@ const char *gl_lookup_enum_by_nr( int nr )
 {
    enum_elt tmp, *e, **f;
 
-   if (!sorted) 
+   if (!sorted)
       sort_enums();
 
    tmp.n = nr;
    e = &tmp;
 
-   f = (enum_elt **)bsearch( &e, index1, Elements(all_enums), 
+   f = (enum_elt **)bsearch( &e, index1, Elements(all_enums),
 			     sizeof(*index1), (cfunc) compar_nr );
 
    return f ? (*f)->c : "(unknown)";
@@ -920,6 +924,6 @@ int main()
    for (i = 0 ; i < Elements(test) ; i++) {
       int d = gl_lookup_enum_by_name( test[i] );
       printf("%s --> %d --> %s\n", test[i], d, gl_lookup_enum_by_nr( d ));
-   }       
+   }
 }
 #endif

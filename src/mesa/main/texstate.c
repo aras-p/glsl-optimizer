@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.26 2000/12/26 05:09:29 keithw Exp $ */
+/* $Id: texstate.c,v 1.27 2001/01/06 22:46:13 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -100,7 +100,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 }
 
 	 if (texUnit->EnvMode == mode)
-	    return;  
+	    return;
 	 FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	 texUnit->EnvMode = mode;
 	 break;
@@ -117,7 +117,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 COPY_4FV(texUnit->EnvColor, tmp);
 	 break;
       }
-      case GL_COMBINE_RGB_EXT: 
+      case GL_COMBINE_RGB_EXT:
 	 if (ctx->Extensions.EXT_texture_env_combine) {
 	    GLenum mode = (GLenum) (GLint) *param;
 	    switch (mode) {
@@ -127,12 +127,19 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	    case GL_ADD_SIGNED_EXT:
 	    case GL_INTERPOLATE_EXT:
 	       break;
+	    case GL_DOT3_RGB_EXT:
+	    case GL_DOT3_RGBA_EXT:
+	       if (!ctx->Extensions.EXT_texture_env_dot3) {
+		  gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(param)");
+		  return;
+	       }
+	       break;
 	    default:
 	       gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
 	       return;
 	    }
 	    if (texUnit->CombineModeRGB == mode)
-	       return; 
+	       return;
 	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	    texUnit->CombineModeRGB = mode;
 	 }
@@ -140,7 +147,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	    gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
 	    return;
 	 }
-      case GL_COMBINE_ALPHA_EXT: 
+      case GL_COMBINE_ALPHA_EXT:
 	 if (ctx->Extensions.EXT_texture_env_combine) {
 	    GLenum mode = (GLenum) (GLint) *param;
 	    switch (mode) {
@@ -150,7 +157,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	    case GL_ADD_SIGNED_EXT:
 	    case GL_INTERPOLATE_EXT:
 	       if (texUnit->CombineModeA == mode)
-		  return;  
+		  return;
 	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	       texUnit->CombineModeA = mode;
 	       break;
@@ -1326,7 +1333,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
          gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(coord)" );
 	 return;
    }
-   
+
    if (ctx->Driver.TexGen)
       ctx->Driver.TexGen( ctx, coord, pname, params );
 }

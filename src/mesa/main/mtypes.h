@@ -1,21 +1,21 @@
-/* $Id: mtypes.h,v 1.10 2001/01/05 02:26:48 keithw Exp $ */
+/* $Id: mtypes.h,v 1.11 2001/01/06 22:46:13 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -27,7 +27,7 @@
 
 #ifndef TYPES_H
 #define TYPES_H
- 
+
 
 #include "glheader.h"
 #include "config.h"		/* Hardwired parameters */
@@ -211,7 +211,7 @@ struct gl_light {
    GLfloat _VP_inf_norm[3];	/* Norm direction to infinite light */
    GLfloat _h_inf_norm[3];	/* Norm( _VP_inf_norm + <0,0,1> ) */
    GLfloat _NormDirection[4];	/* normalized spotlight direction */
-   GLfloat _VP_inf_spot_attenuation; 
+   GLfloat _VP_inf_spot_attenuation;
 
    GLfloat _SpotExpTable[EXP_TABLE_SIZE][2];  /* to replace a pow() call */
    GLfloat _MatAmbient[2][3];	/* material ambient * light ambient */
@@ -231,7 +231,7 @@ struct gl_lightmodel {
 };
 
 
-struct gl_material 
+struct gl_material
 {
    GLfloat Ambient[4];
    GLfloat Diffuse[4];
@@ -308,7 +308,7 @@ struct gl_current_attrib {
    GLuint Index;				/* Current color index */
    GLboolean EdgeFlag;				/* Current edge flag */
    GLfloat Texcoord[MAX_TEXTURE_UNITS][4];	/* Current texture coords */
-	
+
    /* These values are always valid.
     */
    GLfloat RasterPos[4];			/* Current raster position */
@@ -744,7 +744,7 @@ struct gl_stencil_attrib {
 #define ENABLE_TEXMAT1        0x200
 #define ENABLE_TEXMAT2        0x400
 #define ENABLE_TEXMAT3        0x800
-#define ENABLE_TEXMAT4        0x1000	
+#define ENABLE_TEXMAT4        0x1000
 #define ENABLE_TEXMAT5        0x2000
 #define ENABLE_TEXMAT6        0x4000
 #define ENABLE_TEXMAT7        0x8000
@@ -910,7 +910,7 @@ struct gl_texture_attrib {
    GLuint _GenFlags;  /* for texgen */
 
    struct gl_texture_unit Unit[MAX_TEXTURE_UNITS];
-	
+
    struct gl_texture_object *Proxy1D;
    struct gl_texture_object *Proxy2D;
    struct gl_texture_object *Proxy3D;
@@ -1033,7 +1033,7 @@ struct gl_1d_map {
    GLfloat u1, u2, du;	/* u1, u2, 1.0/(u2-u1) */
    GLfloat *Points;	/* Points to contiguous control points */
 };
-	
+
 
 /*
  * 2-D Evaluator control points
@@ -1231,6 +1231,7 @@ struct gl_extensions {
    GLboolean EXT_texture_compression_s3tc;
    GLboolean EXT_texture_env_add;
    GLboolean EXT_texture_env_combine;
+   GLboolean EXT_texture_env_dot3;
    GLboolean EXT_texture_object;
    GLboolean EXT_texture_lod_bias;
    GLboolean EXT_vertex_array_set;
@@ -1321,18 +1322,18 @@ struct gl_extensions {
 
 /* Bits to track array state changes (also used to summarize array enabled)
  */
-#define _NEW_ARRAY_VERTEX           0x1	
-#define _NEW_ARRAY_COLOR            0x2	
-#define _NEW_ARRAY_NORMAL           0x4	
-#define _NEW_ARRAY_INDEX            0x8	
+#define _NEW_ARRAY_VERTEX           0x1
+#define _NEW_ARRAY_COLOR            0x2
+#define _NEW_ARRAY_NORMAL           0x4
+#define _NEW_ARRAY_INDEX            0x8
 #define _NEW_ARRAY_EDGEFLAG         0x10
 #define _NEW_ARRAY_SECONDARYCOLOR   0x20
 #define _NEW_ARRAY_FOGCOORD         0x40
-#define _NEW_ARRAY_TEXCOORD_0       0x80	
+#define _NEW_ARRAY_TEXCOORD_0       0x80
 #define _NEW_ARRAY_TEXCOORD_1       0x100
 #define _NEW_ARRAY_TEXCOORD_2       0x200
 #define _NEW_ARRAY_TEXCOORD_3       0x400
-#define _NEW_ARRAY_TEXCOORD_4       0x800	
+#define _NEW_ARRAY_TEXCOORD_4       0x800
 #define _NEW_ARRAY_TEXCOORD_5       0x1000
 #define _NEW_ARRAY_TEXCOORD_6       0x2000
 #define _NEW_ARRAY_TEXCOORD_7       0x4000
@@ -1359,7 +1360,7 @@ struct gl_extensions {
 #define DD_POINT_ATTEN              0x10000
 #define DD_TRI_CULL_FRONT_BACK      0x400000 /* special case on some hw */
 #define DD_Z_NEVER                  0x800000 /* special case on some hw */
-#define DD_STENCIL                  0x1000000 
+#define DD_STENCIL                  0x1000000
 
 /* Define the state changes under which each of these bits might change
  */
@@ -1380,7 +1381,7 @@ struct gl_extensions {
 #define _DD_NEW_POINT_SIZE               _NEW_POINT
 #define _DD_NEW_POINT_ATTEN              _NEW_POINT
 #define _DD_NEW_LIGHTING_CULL            _NEW_LIGHT
-#define _DD_NEW_TRI_CULL_FRONT_BACK      _NEW_POLYGON 
+#define _DD_NEW_TRI_CULL_FRONT_BACK      _NEW_POLYGON
 #define _DD_NEW_Z_NEVER                  _NEW_DEPTH
 #define _DD_NEW_STENCIL                  _NEW_STENCIL
 
@@ -1388,7 +1389,7 @@ struct gl_extensions {
 #define _MESA_NEW_NEED_EYE_COORDS         (_NEW_LIGHT|		\
                                             _NEW_TEXTURE|		\
                                             _NEW_POINT|		\
-                                            _NEW_MODELVIEW)	
+                                            _NEW_MODELVIEW)
 
 #define _MESA_NEW_NEED_NORMALS            (_NEW_LIGHT|		\
                                             _NEW_TEXTURE)
@@ -1420,7 +1421,7 @@ typedef union node Node;
 
 
 /*
- * The library context: 
+ * The library context:
  */
 struct __GLcontextRec {
    /*
@@ -1438,7 +1439,7 @@ struct __GLcontextRec {
    struct _glapi_table *Save;	/* Display list save funcs */
    struct _glapi_table *Exec;	/* Execute funcs */
    struct _glapi_table *CurrentDispatch;  /* == Save or Exec !! */
-  
+
    GLboolean ExecPrefersFloat;	/* What preference for color conversion? */
    GLboolean SavePrefersFloat;
 
@@ -1566,7 +1567,7 @@ struct __GLcontextRec {
 
    /* Should 3Dfx Glide driver catch signals? */
    GLboolean CatchSignals;
-        
+
    /* For debugging/development only */
    GLboolean NoRaster;
    GLboolean FirstTimeCurrent;
@@ -1601,7 +1602,7 @@ extern GLenum gl_reduce_prim[];
 
 
 #ifdef MESA_DEBUG
-extern int MESA_VERBOSE; 
+extern int MESA_VERBOSE;
 extern int MESA_DEBUG_FLAGS;
 #else
 # define MESA_VERBOSE 0
@@ -1622,12 +1623,12 @@ enum _verbose {
    VERBOSE_API             = 0x40,
    VERBOSE_DISPLAY_LIST    = 0x200,
    VERBOSE_LIGHTING        = 0x400
-}; 
+};
 
 
 enum _debug {
    DEBUG_ALWAYS_FLUSH          = 0x1
-}; 
+};
 
 
 

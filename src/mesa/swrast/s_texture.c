@@ -1,21 +1,21 @@
-/* $Id: s_texture.c,v 1.7 2001/01/05 21:28:31 brianp Exp $ */
+/* $Id: s_texture.c,v 1.8 2001/01/06 22:46:13 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -197,7 +197,7 @@ palette_sample(const struct gl_texture_object *tObj,
 }
 
 
-   
+
 
 /*
  * Bitflags for texture border color sampling.
@@ -1830,6 +1830,7 @@ _swrast_choose_texture_sample_func( GLcontext *ctx, GLuint texUnit,
 
 
 #define PROD(A,B)   ( (GLuint)(A) * ((GLuint)(B)+1) )
+#define S_PROD(A,B) ( (GLint)(A) * ((GLint)(B)+1) )
 
 static INLINE void
 _mesa_texture_combine(const GLcontext *ctx,
@@ -2044,6 +2045,28 @@ _mesa_texture_combine(const GLcontext *ctx,
             }
          }
          break;
+      case GL_DOT3_RGB_EXT:
+      case GL_DOT3_RGBA_EXT:
+         {
+            const GLubyte (*arg0)[4] = (const GLubyte (*)[4]) argRGB[0];
+            const GLubyte (*arg1)[4] = (const GLubyte (*)[4]) argRGB[1];
+	    /* ATI's EXT extension has a constant scale by 4.  The ARB
+	     * one will likely remove this restriction, and we should
+	     * drop the EXT extension in favour of the ARB one.
+	     */
+            for (i = 0; i < n; i++) {
+               GLint dot = (S_PROD((GLint)arg0[i][RCOMP] - 128,
+				   (GLint)arg1[i][RCOMP] - 128) +
+			    S_PROD((GLint)arg0[i][GCOMP] - 128,
+				   (GLint)arg1[i][GCOMP] - 128) +
+			    S_PROD((GLint)arg0[i][BCOMP] - 128,
+				   (GLint)arg1[i][BCOMP] - 128)) >> 6;
+               rgba[i][RCOMP] = (GLubyte) CLAMP(dot, 0, 255);
+               rgba[i][GCOMP] = (GLubyte) CLAMP(dot, 0, 255);
+               rgba[i][BCOMP] = (GLubyte) CLAMP(dot, 0, 255);
+            }
+         }
+         break;
       default:
          gl_problem(NULL, "invalid combine mode");
    }
@@ -2113,6 +2136,14 @@ _mesa_texture_combine(const GLcontext *ctx,
          break;
       default:
          gl_problem(NULL, "invalid combine mode");
+   }
+
+   /* Fix the alpha component for GL_DOT3_RGBA_EXT combining.
+    */
+   if (textureUnit->CombineModeRGB == GL_DOT3_RGBA_EXT) {
+      for (i = 0; i < n; i++) {
+	 rgba[i][ACOMP] = rgba[i][RCOMP];
+      }
    }
 }
 #undef PROD
@@ -2563,8 +2594,8 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
 
          /* Sample the texture. */
          SWRAST_CONTEXT(ctx)->TextureSample[texUnit]( ctx, texUnit,
-						      textureUnit->_Current, 
-						      n, s, t, r, 
+						      textureUnit->_Current,
+						      n, s, t, r,
 						      lambda, texel );
 
          apply_texture( ctx, textureUnit, n, primary_rgba, texel, rgba );
