@@ -3820,6 +3820,14 @@ GL_PREFIX(BindTextureEXT):
 	JMP(GL_OFFSET(_gloffset_BindTexture))
 
 ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(DeleteTexturesEXT))
+GL_PREFIX(DeleteTexturesEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_DeleteTexturesEXT))
+	JMP(GL_OFFSET(_gloffset_DeleteTextures))
+
+ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(GenTexturesEXT))
 GL_PREFIX(GenTexturesEXT):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
