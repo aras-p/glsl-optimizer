@@ -9660,6 +9660,27 @@ glMultTransposeMatrixd:
 	jmpl	%g3, %g0
 	nop
 
+.globl glSampleCoverage
+.type glSampleCoverage,#function
+glSampleCoverage:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_SampleCoverageARB), %g2
+	or	%g2, %lo(8 * _gloffset_SampleCoverageARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_SampleCoverageARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
 .globl glCompressedTexImage3D
 .type glCompressedTexImage3D,#function
 glCompressedTexImage3D:

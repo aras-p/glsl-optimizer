@@ -463,6 +463,7 @@ static struct name_address_offset static_functions[] = {
    { "glLoadTransposeMatrixd", (GLvoid *) glLoadTransposeMatrixd, _gloffset_LoadTransposeMatrixdARB },
    { "glMultTransposeMatrixf", (GLvoid *) glMultTransposeMatrixf, _gloffset_MultTransposeMatrixfARB },
    { "glMultTransposeMatrixd", (GLvoid *) glMultTransposeMatrixd, _gloffset_MultTransposeMatrixdARB },
+   { "glSampleCoverage", (GLvoid *) glSampleCoverage, _gloffset_SampleCoverageARB },
    { "glCompressedTexImage3D", (GLvoid *) glCompressedTexImage3D, _gloffset_CompressedTexImage3DARB },
    { "glCompressedTexImage2D", (GLvoid *) glCompressedTexImage2D, _gloffset_CompressedTexImage2DARB },
    { "glCompressedTexImage1D", (GLvoid *) glCompressedTexImage1D, _gloffset_CompressedTexImage1DARB },

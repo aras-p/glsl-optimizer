@@ -2776,6 +2776,12 @@ GL_PREFIX(MultTransposeMatrixd):
 	JMP(GL_OFFSET(_gloffset_MultTransposeMatrixdARB))
 
 ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SampleCoverage))
+GL_PREFIX(SampleCoverage):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_SampleCoverageARB))
+
+ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(CompressedTexImage3D))
 GL_PREFIX(CompressedTexImage3D):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)

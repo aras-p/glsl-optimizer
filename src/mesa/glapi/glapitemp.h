@@ -2343,7 +2343,11 @@ KEYWORD1 void KEYWORD2 NAME(MultTransposeMatrixd)(const GLdouble * m)
    DISPATCH(MultTransposeMatrixdARB, (m), (F, "glMultTransposeMatrixd(%p);\n", (void *) m));
 }
 
-/* No dispatch for SampleCover() */
+KEYWORD1 void KEYWORD2 NAME(SampleCoverage)(GLclampf value, GLboolean invert)
+{
+   DISPATCH(SampleCoverageARB, (value, invert), (F, "glSampleCoverage(%f, %d);\n", value, invert));
+}
+
 KEYWORD1 void KEYWORD2 NAME(CompressedTexImage3D)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid * data)
 {
    DISPATCH(CompressedTexImage3DARB, (target, level, internalformat, width, height, depth, border, imageSize, data), (F, "glCompressedTexImage3D(0x%x, %d, 0x%x, %d, %d, %d, %d, %d, %p);\n", target, level, internalformat, width, height, depth, border, imageSize, (void *) data));
@@ -4998,6 +5002,7 @@ void *UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(LoadTransposeMatrixd),
    TABLE_ENTRY(MultTransposeMatrixf),
    TABLE_ENTRY(MultTransposeMatrixd),
+   TABLE_ENTRY(SampleCoverage),
    TABLE_ENTRY(CompressedTexImage3D),
    TABLE_ENTRY(CompressedTexImage2D),
    TABLE_ENTRY(CompressedTexImage1D),
