@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.48 2002/10/29 22:32:51 brianp Exp $ */
+/* $Id: xm_api.c,v 1.49 2002/10/29 23:53:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2510,7 +2510,7 @@ const char *XMesaGetString( XMesaContext c, int name )
 {
    (void) c;
    if (name==XMESA_VERSION) {
-      return "3.5";
+      return "5.0";
    }
    else if (name==XMESA_EXTENSIONS) {
       return "";
