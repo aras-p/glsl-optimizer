@@ -712,6 +712,7 @@ linux-osmesa32:
 # change -g to -O3 for non-debug
 linux-solo:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"SOLO = true" \
 	"LIBMESA = mesa.a" \
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
