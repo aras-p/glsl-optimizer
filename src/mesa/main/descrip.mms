@@ -1,6 +1,6 @@
 # Makefile for core library for VMS
 # contributed by Jouk Jansen  joukj@hrem.stm.tudelft.nl
-# Last revision : 1 November 2000
+# Last revision : 17 November 2000
 
 .first
 	define gl [-.include.gl]
@@ -13,21 +13,67 @@ VPATH = RCS
 
 INCDIR = [-.include]
 LIBDIR = [-.lib]
-CFLAGS = /include=($(INCDIR),[])/define=(FBIND=1)/name=(as_is,short)
+CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
 
-CORE_SOURCES = accum.c alpha.c attrib.c \
-bitmap.c blend.c buffers.c clip.c colortab.c context.c copypix.c depth.c \
-dispatch.c convolve.c \
-dlist.c drawpix.c enable.c eval.c feedback.c fog.c \
-get.c hash.c highpc.c hint.c image.c histogram.c light.c lines.c logic.c\
-lowpc.c masking.c matrix.c \
-mem.c glapi.c glapinoop.c imports.c\
-mmath.c pixel.c points.c polygon.c \
-rastpos.c readpix.c rect.c scissor.c shade.c \
-stencil.c teximage.c texobj.c texstate.c texture.c translate.c \
-varray.c winpos.c vb.c vbcull.c vbfill.c vbrender.c vbxform.c xform.c \
-bbox.c cva.c vector.c vbindirect.c config.c enums.c extensions.c \
-pipeline.c stages.c state.c vertices.c [.x86]x86.c
+CORE_SOURCES =accum.c \
+	alpha.c \
+	attrib.c \
+	bitmap.c \
+	blend.c \
+	buffers.c \
+	clip.c \
+	colortab.c \
+	config.c \
+	context.c \
+	convolve.c \
+	copypix.c \
+	debug.c \
+	depth.c \
+	dispatch.c \
+	dlist.c \
+	drawpix.c \
+	enable.c \
+	enums.c \
+	eval.c \
+	extensions.c \
+	feedback.c \
+	fog.c \
+	get.c \
+	glapi.c \
+	glapinoop.c \
+	glthread.c \
+	hash.c \
+	highpc.c \
+	hint.c \
+	histogram.c \
+	image.c \
+	imports.c \
+	light.c \
+	lines.c \
+	logic.c \
+	lowpc.c \
+	masking.c \
+	matrix.c \
+	mem.c \
+	mmath.c \
+	pixel.c \
+	pixeltex.c \
+	points.c \
+	polygon.c \
+	rastpos.c \
+	readpix.c \
+	rect.c \
+	scissor.c \
+	state.c \
+	stencil.c \
+	teximage.c \
+	texobj.c \
+	texstate.c \
+	texture.c \
+	texutil.c \
+	varray.c \
+	winpos.c \
+	[.x86]x86.c
 
 DRIVER_SOURCES = [.x]glxapi.c [.x]fakeglx.c [.x]xfonts.c \
 [.x]xm_api.c [.x]xm_dd.c [.x]xm_line.c [.x]xm_span.c [.x]xm_tri.c \
@@ -73,28 +119,99 @@ RASTER_SOURCES = [.swrast]s_aatriangle.c \
 
 ASM_SOURCES =
 
-OBJECTS =\
-accum.obj,alpha.obj,attrib.obj,\
-bitmap.obj,blend.obj,buffers.obj,clip.obj,colortab.obj,context.obj,copypix.obj,depth.obj,\
-dlist.obj,drawpix.obj,enable.obj,eval.obj,feedback.obj,fog.obj
+TNL_SOURCES=[.tnl]t_bbox.c \
+[.tnl]t_clip.c \
+[.tnl]t_context.c \
+[.tnl]t_cva.c \
+[.tnl]t_debug.c \
+[.tnl]t_dlist.c \
+[.tnl]t_eval.c \
+[.tnl]t_fog.c \
+[.tnl]t_light.c \
+[.tnl]t_pipeline.c \
+[.tnl]t_rect.c \
+[.tnl]t_shade.c \
+[.tnl]t_stages.c \
+[.tnl]t_texture.c \
+[.tnl]t_trans_elt.c \
+[.tnl]t_varray.c \
+[.tnl]t_vb.c \
+[.tnl]t_vbcull.c \
+[.tnl]t_vbfill.c \
+[.tnl]t_vbindirect.c \
+[.tnl]t_vbrender.c \
+[.tnl]t_vbxform.c
 
+MATH_SOURCES=[.math]m_debug_xform.c \
+[.math]m_matrix.c \
+[.math]m_translate.c \
+[.math]m_vector.c \
+[.math]m_vertices.c \
+[.math]m_xform.c  
 
-OBJECTS3=get.obj,hash.obj,hint.obj,image.obj,light.obj,lines.obj,logic.obj,masking.obj,\
-matrix.obj,glapi.obj,glapinoop.obj,dispatch.obj,highpc.obj,histogram.obj,mem.obj,\
-mmath.obj,pixel.obj,points.obj
+OBJECTS1=accum.obj,\
+alpha.obj,\
+attrib.obj,\
+bitmap.obj,\
+blend.obj,\
+buffers.obj,\
+clip.obj,\
+colortab.obj,\
+config.obj,\
+context.obj,\
+convolve.obj,\
+copypix.obj,\
+debug.obj,\
+depth.obj,\
+dispatch.obj,\
+dlist.obj,\
+drawpix.obj,\
+enable.obj,\
+enums.obj
 
-OBJECTS7=polygon.obj,imports.obj,\
-rastpos.obj,readpix.obj,rect.obj,scissor.obj,shade.obj,\
-pixeltex.obj,convolve.obj,lowpc.obj
+OBJECTS2=eval.obj,\
+extensions.obj,\
+feedback.obj,\
+fog.obj,\
+get.obj,\
+glapi.obj,\
+glapinoop.obj,\
+glthread.obj,\
+hash.obj,\
+highpc.obj,\
+hint.obj,\
+histogram.obj,\
+image.obj,\
+imports.obj,\
+light.obj,\
+lines.obj,\
+logic.obj,\
+lowpc.obj,\
+masking.obj,\
+matrix.obj,\
+mem.obj,\
+mmath.obj
 
-OBJECTS4=stencil.obj,teximage.obj,texobj.obj,texstate.obj,texture.obj,translate.obj,\
-varray.obj,winpos.obj,vb.obj,vbcull.obj,vbfill.obj,vbrender.obj
+OBJECTS3=pixel.obj,\
+pixeltex.obj,\
+points.obj,\
+polygon.obj,\
+rastpos.obj,\
+readpix.obj,\
+rect.obj,\
+scissor.obj,\
+state.obj,\
+stencil.obj,\
+teximage.obj,\
+texobj.obj,\
+texstate.obj,\
+texture.obj,\
+texutil.obj,\
+varray.obj,\
+winpos.obj,\
+[.x86]x86.obj
 
-OBJECTS6=vbxform.obj,xform.obj,bbox.obj,cva.obj,vector.obj,vbindirect.obj,\
-	config.obj,enums.obj,extensions.obj,pipeline.obj,stages.obj,state.obj,\
-	vertices.obj,[.x86]x86.obj
-
-OBJECTS2=[.x]glxapi.obj,[.x]fakeglx.obj,[.x]xfonts.obj,\
+OBJECTS4=[.x]glxapi.obj,[.x]fakeglx.obj,[.x]xfonts.obj,\
 [.x]xm_api.obj,[.x]xm_dd.obj,[.x]xm_line.obj,[.x]xm_span.obj,[.x]xm_tri.obj,\
 [.osmesa]osmesa.obj,\
 [.svga]svgamesa.obj
@@ -102,10 +219,10 @@ OBJECTS2=[.x]glxapi.obj,[.x]fakeglx.obj,[.x]xfonts.obj,\
 OBJECTS5=[.fx]fxapi.obj,[.fx]fxdd.obj,[.fx]fxddtex.obj,[.fx]fxvsetup.obj,\
 [.fx]fxsetup.obj,[.fx]fxfastpath.obj,[.fx]fxpipeline.obj
 
-OBJECTS8=[.fx]fxtrifuncs.obj,[.fx]fxglidew.obj,\
+OBJECTS6=[.fx]fxtrifuncs.obj,[.fx]fxglidew.obj,\
 [.fx]fxtexman.obj,[.fx]fxddspan.obj
 
-OBJECTS9=[.swrast]s_aatriangle.obj,\
+OBJECTS7=[.swrast]s_aatriangle.obj,\
 [.swrast]s_accum.obj,\
 [.swrast]s_alpha.obj,\
 [.swrast]s_alphabuf.obj,\
@@ -116,7 +233,7 @@ OBJECTS9=[.swrast]s_aatriangle.obj,\
 [.swrast]s_context.obj,\
 [.swrast]s_depth.obj
 
-OBJECTS10=[.swrast]s_drawpix.obj,\
+OBJECTS8=[.swrast]s_drawpix.obj,\
 [.swrast]s_fog.obj,\
 [.swrast]s_histogram.obj,\
 [.swrast]s_lines.obj,\
@@ -127,7 +244,7 @@ OBJECTS10=[.swrast]s_drawpix.obj,\
 [.swrast]s_points.obj,\
 [.swrast]s_quads.obj
 
-OBJECTS11=[.swrast]s_readpix.obj,\
+OBJECTS9=[.swrast]s_readpix.obj,\
 [.swrast]s_aaline.obj,\
 [.swrast]s_scissor.obj,\
 [.swrast]s_span.obj,\
@@ -137,9 +254,40 @@ OBJECTS11=[.swrast]s_readpix.obj,\
 [.swrast]s_feedback.obj,\
 [.swrast]s_zoom.obj
 
-OBJECTS12=[.swrast_setup]ss_context.obj,\
+OBJECTS10=[.swrast_setup]ss_context.obj,\
 [.swrast_setup]ss_triangle.obj,\
 [.swrast_setup]ss_vb.obj 
+
+OBJECTS11=[.tnl]t_bbox.obj,\
+[.tnl]t_clip.obj,\
+[.tnl]t_context.obj,\
+[.tnl]t_cva.obj,\
+[.tnl]t_debug.obj,\
+[.tnl]t_dlist.obj,\
+[.tnl]t_eval.obj,\
+[.tnl]t_fog.obj,\
+[.tnl]t_light.obj,\
+[.tnl]t_pipeline.obj,\
+[.tnl]t_rect.obj
+
+OBJECTS12=[.tnl]t_shade.obj,\
+[.tnl]t_stages.obj,\
+[.tnl]t_texture.obj,\
+[.tnl]t_trans_elt.obj,\
+[.tnl]t_varray.obj,\
+[.tnl]t_vb.obj,\
+[.tnl]t_vbcull.obj,\
+[.tnl]t_vbfill.obj,\
+[.tnl]t_vbindirect.obj,\
+[.tnl]t_vbrender.obj,\
+[.tnl]t_vbxform.obj
+
+OBJECTS13=[.math]m_debug_xform.obj,\
+[.math]m_matrix.obj,\
+[.math]m_translate.obj,\
+[.math]m_vector.obj,\
+[.math]m_vertices.obj,\
+[.math]m_xform.obj 
 
 ##### RULES #####
 
@@ -147,9 +295,9 @@ VERSION=Mesa V3.4
 
 ##### TARGETS #####
 # Make the library
-$(LIBDIR)$(GL_LIB) : $(OBJECTS),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
-	$(OBJECTS5) $(OBJECTS8) $(OBJECTS7) $(OBJECTS6) $(OBJECTS9)\
-	$(OBJECTS10) $(OBJECTS11) $(OBJECTS12)
+$(LIBDIR)$(GL_LIB) : $(OBJECTS1),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
+	$(OBJECTS5) $(OBJECTS6) $(OBJECTS7) $(OBJECTS8) $(OBJECTS9)\
+	$(OBJECTS10) $(OBJECTS11) $(OBJECTS12) $(OBJECTS13)
 .ifdef SHARE
   @ WRITE_ SYS$OUTPUT "  generating mesagl1.opt"
   @ OPEN_/WRITE FILE  mesagl1.opt
@@ -158,20 +306,22 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
   @ WRITE_ FILE "!"
   @ WRITE_ FILE "IDENTIFICATION=""$(VERSION)"""
   @ WRITE_ FILE "GSMATCH=LEQUAL,3,4
-  @ WRITE_ FILE "$(OBJECTS)"
+  @ WRITE_ FILE "$(OBJECTS1)"
+  @ WRITE_ FILE "$(OBJECTS2)"
   @ WRITE_ FILE "$(OBJECTS3)"
   @ WRITE_ FILE "$(OBJECTS4)"
-  @ WRITE_ FILE "$(OBJECTS7)"
-  @ WRITE_ FILE "$(OBJECTS6)"
-  @ WRITE_ FILE "$(OBJECTS2)"
   @ WRITE_ FILE "$(OBJECTS5)"
+  @ WRITE_ FILE "$(OBJECTS6)"
+  @ WRITE_ FILE "$(OBJECTS7)"
   @ WRITE_ FILE "$(OBJECTS8)"
   @ WRITE_ FILE "$(OBJECTS9)"
   @ WRITE_ FILE "$(OBJECTS10)"
   @ WRITE_ FILE "$(OBJECTS11)"
   @ WRITE_ FILE "$(OBJECTS12)"
-  @ WRITE_ FILE "SYS$SHARE:DECW$XEXTLIBSHR/SHARE"
-  @ WRITE_ FILE "SYS$SHARE:DECW$XLIBSHR/SHARE"
+  @ WRITE_ FILE "$(OBJECTS13)"
+  @ write_ file "sys$share:decw$xextlibshr/share"
+  @ write_ file "sys$share:decw$xlibshr/share"
+  @ write_ file "sys$share:pthread$rtl/share"
   @ CLOSE_ FILE
   @ WRITE_ SYS$OUTPUT "  generating mesagl.map ..."
   @ LINK_/NODEB/NOSHARE/NOEXE/MAP=mesagl.map/FULL mesagl1.opt/OPT
@@ -180,18 +330,19 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
   @ WRITE_ SYS$OUTPUT "  linking $(GL_LIB) ..."
   @ LINK_/NODEB/SHARE=$(GL_LIB)/MAP=mesagl.map/FULL mesagl1.opt/opt,mesagl.opt/opt
 .else
-  @ $(MAKELIB) $(GL_LIB) $(OBJECTS)
+  @ $(MAKELIB) $(GL_LIB) $(OBJECTS1)
   @ library $(GL_LIB) $(OBJECTS2)
   @ library $(GL_LIB) $(OBJECTS3)
   @ library $(GL_LIB) $(OBJECTS4)
   @ library $(GL_LIB) $(OBJECTS5)
-  @ library $(GL_LIB) $(OBJECTS8)
-  @ library $(GL_LIB) $(OBJECTS7)
   @ library $(GL_LIB) $(OBJECTS6)
+  @ library $(GL_LIB) $(OBJECTS7)
+  @ library $(GL_LIB) $(OBJECTS8)
   @ library $(GL_LIB) $(OBJECTS9)
   @ library $(GL_LIB) $(OBJECTS10)
   @ library $(GL_LIB) $(OBJECTS11)
   @ library $(GL_LIB) $(OBJECTS12)
+  @ library $(GL_LIB) $(OBJECTS13)
 .endif
   @ rename $(GL_LIB)* $(LIBDIR)
 
@@ -312,5 +463,61 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.swrast_setup]ss_triangle.obj [.swrast_setup]ss_triangle.c
 [.swrast_setup]ss_vb.obj : [.swrast_setup]ss_vb.c
 	$(CC) $(CFLAGS) /obj=[.swrast_setup]ss_vb.obj [.swrast_setup]ss_vb.c
+[.tnl]t_bbox.obj : [.tnl]t_bbox.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_bbox.obj [.tnl]t_bbox.c
+[.tnl]t_clip.obj : [.tnl]t_clip.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_clip.obj [.tnl]t_clip.c
+[.tnl]t_context.obj : [.tnl]t_context.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_context.obj [.tnl]t_context.c
+[.tnl]t_cva.obj : [.tnl]t_cva.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_cva.obj [.tnl]t_cva.c
+[.tnl]t_debug.obj : [.tnl]t_debug.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_debug.obj [.tnl]t_debug.c
+[.tnl]t_dlist.obj : [.tnl]t_dlist.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_dlist.obj [.tnl]t_dlist.c
+[.tnl]t_eval.obj : [.tnl]t_eval.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_eval.obj [.tnl]t_eval.c
+[.tnl]t_fog.obj : [.tnl]t_fog.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_fog.obj [.tnl]t_fog.c
+[.tnl]t_light.obj : [.tnl]t_light.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_light.obj [.tnl]t_light.c
+[.tnl]t_pipeline.obj : [.tnl]t_pipeline.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_pipeline.obj [.tnl]t_pipeline.c
+[.tnl]t_rect.obj : [.tnl]t_rect.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_rect.obj [.tnl]t_rect.c
+[.tnl]t_shade.obj : [.tnl]t_shade.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_shade.obj [.tnl]t_shade.c
+[.tnl]t_stages.obj : [.tnl]t_stages.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_stages.obj [.tnl]t_stages.c
+[.tnl]t_texture.obj : [.tnl]t_texture.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_texture.obj [.tnl]t_texture.c
+[.tnl]t_trans_elt.obj : [.tnl]t_trans_elt.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_trans_elt.obj [.tnl]t_trans_elt.c
+[.tnl]t_varray.obj : [.tnl]t_varray.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_varray.obj [.tnl]t_varray.c
+[.tnl]t_vb.obj : [.tnl]t_vb.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vb.obj [.tnl]t_vb.c
+[.tnl]t_vbcull.obj : [.tnl]t_vbcull.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vbcull.obj [.tnl]t_vbcull.c
+[.tnl]t_vbfill.obj : [.tnl]t_vbfill.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vbfill.obj [.tnl]t_vbfill.c
+[.tnl]t_vbindirect.obj : [.tnl]t_vbindirect.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vbindirect.obj [.tnl]t_vbindirect.c
+[.tnl]t_vbrender.obj : [.tnl]t_vbrender.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vbrender.obj [.tnl]t_vbrender.c
+[.tnl]t_vbxform.obj : [.tnl]t_vbxform.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vbxform.obj [.tnl]t_vbxform.c
+[.math]m_debug_xform.obj : [.math]m_debug_xform.c
+	$(CC) $(CFLAGS) /obj=[.math]m_debug_xform.obj [.math]m_debug_xform.c
+[.math]m_matrix.obj : [.math]m_matrix.c
+	$(CC) $(CFLAGS) /obj=[.math]m_matrix.obj [.math]m_matrix.c
+[.math]m_translate.obj : [.math]m_translate.c
+	$(CC) $(CFLAGS) /obj=[.math]m_translate.obj [.math]m_translate.c
+[.math]m_vector.obj : [.math]m_vector.c
+	$(CC) $(CFLAGS) /obj=[.math]m_vector.obj [.math]m_vector.c
+[.math]m_vertices.obj : [.math]m_vertices.c
+	$(CC) $(CFLAGS) /obj=[.math]m_vertices.obj [.math]m_vertices.c
+[.math]m_xform.obj : [.math]m_xform.c
+	$(CC) $(CFLAGS) /obj=[.math]m_xform.obj [.math]m_xform.c
 
 .include mms_depend.

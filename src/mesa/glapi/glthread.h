@@ -1,4 +1,4 @@
-/* $Id: glthread.h,v 1.5 2000/02/11 21:38:33 brianp Exp $ */
+/* $Id: glthread.h,v 1.6 2000/11/17 11:00:56 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -62,6 +62,11 @@
  * In general, it should only be included when needed however.
  */
 
+#ifdef VMS
+# if defined(PTHREADS)
+#include "types.h"
+#endif
+#endif
 
 #ifndef GLTHREAD_H
 #define GLTHREAD_H
@@ -71,7 +76,9 @@
 #define THREADS
 #endif
 
-
+#ifdef VMS
+#include <GL/vms_x_fix.h>
+#endif
 
 /*
  * POSIX threads. This should be your choice in the Unix world
