@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.1 2003/09/30 11:02:39 alanh Exp $
+# $Id: Makefile.X11,v 1.2 2003/09/30 11:05:46 alanh Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -22,7 +22,7 @@ DEFINES += \
 	-DGLX_DIRECT_RENDERING 
 
 # Not yet
-# MINIGLX_SOURCES = server/i810_dri.c 
+# MINIGLX_SOURCES = server/i830_dri.c 
 
 DRIVER_SOURCES = \
 		i830_context.c \
@@ -88,12 +88,12 @@ INCLUDE_DIRS = \
 
 ##### TARGETS #####
 
-targets: depend i810_dri.so
+targets: depend i830_dri.so
 
-i810_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
+i830_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc $(GL_LIB_DEPS)
-	rm -f $(TOP)/lib/i810_dri.so && \
-	install i810_dri.so $(TOP)/lib/i810_dri.so
+	rm -f $(TOP)/lib/i830_dri.so && \
+	install i830_dri.so $(TOP)/lib/i830_dri.so
 
 # Run 'make -f Makefile.X11 dep' to update the dependencies if you change
 # what's included by any source file.
