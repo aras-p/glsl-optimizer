@@ -1,8 +1,10 @@
+/* $Id: s_context.h,v 1.6 2001/03/07 04:50:49 brianp Exp $ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -109,7 +111,7 @@ typedef struct
     */
    GLuint _RasterMask;
    GLboolean _MultiTextureEnabled;
-   GLuint _MinMagThresh[MAX_TEXTURE_UNITS];
+   GLfloat _MinMagThresh[MAX_TEXTURE_UNITS];
    GLfloat _backface_sign;
    GLboolean _PreferPixelFog;
 
