@@ -219,25 +219,32 @@ are some things to change:
 
    Here are the changes:
 
-   - Rename ctx->Color.DrawDestMask to ctx->Color._DrawDestMask
-   - Rename ctx->Color.DriverDrawBuffer to ctx->Color._DriverDrawBuffer
-   - Rename ctx->Pixel.DriverReadBuffer to ctx->Pixel._DriverReadBuffer
+   - Renamed ctx->Color.DrawDestMask to ctx->Color._DrawDestMask
+   - Removed ctx->Color.DriverDrawBuffer
+   - Removed ctx->Pixel.DriverReadBuffer
    - Removed ctx->Color.MultiDrawBuffer
-   - Removed ctx->Driver.SetDrawBuffer
-   - Added ctx->Driver.DrawBuffer and ctx->Driver.ReadBuffer.  These functions
-     exactly correspond to glDrawBuffer and glReadBuffer calls.
+   - Removed ctx->Driver.SetDrawBuffer()
+   - Removed swrast->Driver.SetReadBuffer().
+   - Added ctx->Color._DrawDestMask - a bitmask of FRONT/BACK_LEFT/RIGHT_BIT
+     values to indicate the current draw buffers.
+   - Added ctx->Pixel._ReadSrcMask to indicate the source for pixel reading.
+     The value is _one_ of the FRONT/BACK_LEFT/RIGHT_BIT values.
+   - Added ctx->Driver.DrawBuffer() and ctx->Driver.ReadBuffer().
+     These functions exactly correspond to glDrawBuffer and glReadBuffer calls.
      Many drivers will set ctx->Driver.DrawBuffer = _swrast_DrawBuffer and
      leave ctx->Draw.ReadBuffer NULL.
      DRI drivers should implement their own function for ctx->Driver.DrawBuffer
      and use it to set the current hardware drawing buffer.  You'll probably
      also want to check for GL_FRONT_AND_BACK mode and fall back to software.
      Call _swrast_DrawBuffer() too, to update the swrast state.
-   - Removed swrast->Driver.SetReadBuffer
-   - Added swrast->Driver.SetBuffer.  This function should be implemented by
-     all device drivers that use swrast fallbacks (and the span functions).
-     Mesa will call this function to specify the buffer to use for span
-     reading AND writing and point/line/triangle rendering.  There
-     should be no confusion between current read or draw buffer anymore.
+   - Added swrast->Driver.SetBuffer().
+     This function should be implemented by all device drivers that use swrast.
+     Mesa will call it to specify the buffer to use for span reading AND
+     writing and point/line/triangle rendering.
+     There should be no confusion between current read or draw buffer anymore.
+   - Added swrast->CurrentBuffer to indicate which color buffer to read/draw.
+     Will be FRONT_LEFT_BIT, BACK_LEFT_BIT, FRONT_RIGHT_BIT or BACK_RIGHT_BIT.
+     This value is usually passed to swrast->Driver.SetBuffer().
 
 
 4. _mesa_create_context() changes.  This function now takes a pointer to
@@ -293,4 +300,4 @@ are some things to change:
 
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-4.1,v 1.19 2002/10/10 23:49:02 brianp Exp $
+$Id: RELNOTES-4.1,v 1.20 2002/10/11 17:42:48 brianp Exp $
