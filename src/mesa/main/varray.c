@@ -1,8 +1,8 @@
-/* $Id: varray.c,v 1.21 2000/02/25 03:55:40 keithw Exp $ */
+/* $Id: varray.c,v 1.22 2000/06/12 15:30:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -368,6 +368,63 @@ static void gl_CVAEltPointer( GLcontext *ctx, GLenum type, const GLvoid *ptr )
    ctx->Array.NewArrayState |= VERT_ELT; /* ??? */
 }
 #endif
+
+
+
+void
+_mesa_VertexPointerEXT(GLint size, GLenum type, GLsizei stride,
+                       GLsizei count, const GLvoid *ptr)
+{
+   (void) count;
+   _mesa_VertexPointer(size, type, stride, ptr);
+}
+
+
+void
+_mesa_NormalPointerEXT(GLenum type, GLsizei stride, GLsizei count,
+                       const GLvoid *ptr)
+{
+   (void) count;
+   _mesa_NormalPointer(type, stride, ptr);
+}
+
+
+void
+_mesa_ColorPointerEXT(GLint size, GLenum type, GLsizei stride, GLsizei count,
+                      const GLvoid *ptr)
+{
+   (void) count;
+   _mesa_ColorPointer(size, type, stride, ptr);
+}
+
+
+void
+_mesa_IndexPointerEXT(GLenum type, GLsizei stride, GLsizei count,
+                      const GLvoid *ptr)
+{
+   (void) count;
+   _mesa_IndexPointer(type, stride, ptr);
+}
+
+
+void
+_mesa_TexCoordPointerEXT(GLint size, GLenum type, GLsizei stride,
+                         GLsizei count, const GLvoid *ptr)
+{
+   (void) count;
+   _mesa_TexCoordPointer(size, type, stride, ptr);
+}
+
+
+void
+_mesa_EdgeFlagPointerEXT(GLsizei stride, GLsizei count, const GLboolean *ptr)
+{
+   (void) count;
+   _mesa_EdgeFlagPointer(stride, ptr);
+}
+
+
+
 
 
 /* KW: Batch function to exec all the array elements in the input

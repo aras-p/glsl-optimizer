@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.15 2000/05/26 14:44:59 brianp Exp $ */
+/* $Id: state.c,v 1.16 2000/06/12 15:31:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -539,6 +539,14 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->PixelTexGenParameterfvSGIS = _mesa_PixelTexGenParameterfvSGIS;
    exec->GetPixelTexGenParameterivSGIS = _mesa_GetPixelTexGenParameterivSGIS;
    exec->GetPixelTexGenParameterfvSGIS = _mesa_GetPixelTexGenParameterfvSGIS;
+
+   /* 30. GL_EXT_vertex_array */
+   exec->ColorPointerEXT = _mesa_ColorPointerEXT;
+   exec->EdgeFlagPointerEXT = _mesa_EdgeFlagPointerEXT;
+   exec->IndexPointerEXT = _mesa_IndexPointerEXT;
+   exec->NormalPointerEXT = _mesa_NormalPointerEXT;
+   exec->TexCoordPointerEXT = _mesa_TexCoordPointerEXT;
+   exec->VertexPointerEXT = _mesa_VertexPointerEXT;
 
    /* 37. GL_EXT_blend_minmax */
 #if 0
