@@ -6423,7 +6423,6 @@ _mesa_GetString( GLenum name )
                    ctx->Extensions.EXT_texture_lod_bias &&
                    ctx->Extensions.SGIS_generate_mipmap) {
                   if (ctx->Extensions.ARB_occlusion_query &&
-                      ctx->Extensions.ARB_point_sprite &&
                       ctx->Extensions.ARB_vertex_buffer_object &&
                       ctx->Extensions.ARB_texture_non_power_of_two &&
                       ctx->Extensions.EXT_shadow_funcs) {
