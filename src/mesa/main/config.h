@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.0
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -131,9 +131,9 @@
 /** 
  * Maximum viewport/image width. Must accomodate all texture sizes too. 
  */
-#define MAX_WIDTH 2048
+#define MAX_WIDTH 4096
 /** Maximum viewport/image height */
-#define MAX_HEIGHT 2048
+#define MAX_HEIGHT 4096
 
 /** Maxmimum size for CVA.  May be overridden by the drivers.  */
 #define MAX_ARRAY_LOCK_SIZE 3000
