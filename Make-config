@@ -1,8 +1,8 @@
-# $Id: Make-config,v 1.48 2001/09/01 20:26:51 brianp Exp $
+# $Id: Make-config,v 1.49 2001/09/23 16:53:28 brianp Exp $
 
-MESA_MAJOR=3
-MESA_MINOR=5
-MESA_TINY=1
+MESA_MAJOR=4
+MESA_MINOR=0
+MESA_TINY=0
 VERSION=$(MESA_MAJOR).$(MESA_MINOR)
 
 # Mesa 3-D graphics library
