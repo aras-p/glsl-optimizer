@@ -423,6 +423,8 @@ main(int argc, char **argv)
   int i;
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
+  glutInitWindowPosition(0, 0);
+  glutInitWindowSize(300, 300);
 
   for (i=1; i<argc; i++) {
     if(!strcmp("-noms", argv[i])) {
