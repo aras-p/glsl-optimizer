@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.8 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: s_aatritemp.h,v 1.9 2001/03/28 21:36:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -366,6 +366,12 @@
          GLint ix, left, startX = (GLint) (x + xAdj);
          GLuint count, n;
          GLfloat coverage = 0.0F;
+
+         /* make sure we're not past the window edge */
+         if (startX >= ctx->DrawBuffer->_Xmax) {
+            startX = ctx->DrawBuffer->_Xmax - 1;
+         }
+
          /* skip fragments with zero coverage */
          while (startX >= 0) {
             coverage = compute_coveragef(pMin, pMax, pMid, startX, iy);
