@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.161 2002/04/19 00:23:08 brianp Exp $ */
+/* $Id: context.c,v 1.162 2002/05/09 21:54:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -857,8 +857,7 @@ init_attrib_groups( GLcontext *ctx )
    ASSIGN_4V( ctx->Current.RasterColor, 1.0, 1.0, 1.0, 1.0 );
    ctx->Current.RasterIndex = 1;
    for (i=0; i<MAX_TEXTURE_UNITS; i++)
-      ASSIGN_4V( ctx->Current.RasterMultiTexCoord[i], 0.0, 0.0, 0.0, 1.0 );
-   ctx->Current.RasterTexCoord = ctx->Current.RasterMultiTexCoord[0];
+      ASSIGN_4V( ctx->Current.RasterTexCoords[i], 0.0, 0.0, 0.0, 1.0 );
    ctx->Current.RasterPosValid = GL_TRUE;
 
 

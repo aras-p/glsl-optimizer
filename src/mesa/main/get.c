@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.77 2002/04/24 20:05:26 brianp Exp $ */
+/* $Id: get.c,v 1.78 2002/05/09 21:54:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -296,10 +296,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 params[3] = FLOAT_TO_BOOL(ctx->Current.RasterPos[3]);
 	 break;
       case GL_CURRENT_RASTER_TEXTURE_COORDS:
-         params[0] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texUnit][0]);
-         params[1] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texUnit][1]);
-         params[2] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texUnit][2]);
-         params[3] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texUnit][3]);
+         params[0] = FLOAT_TO_BOOL(ctx->Current.RasterTexCoords[texUnit][0]);
+         params[1] = FLOAT_TO_BOOL(ctx->Current.RasterTexCoords[texUnit][1]);
+         params[2] = FLOAT_TO_BOOL(ctx->Current.RasterTexCoords[texUnit][2]);
+         params[3] = FLOAT_TO_BOOL(ctx->Current.RasterTexCoords[texUnit][3]);
 	 break;
       case GL_CURRENT_RASTER_POSITION_VALID:
          *params = ctx->Current.RasterPosValid;
@@ -1628,10 +1628,10 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 params[3] = (GLdouble) ctx->Current.RasterPos[3];
 	 break;
       case GL_CURRENT_RASTER_TEXTURE_COORDS:
-	 params[0] = (GLdouble) ctx->Current.RasterMultiTexCoord[texUnit][0];
-	 params[1] = (GLdouble) ctx->Current.RasterMultiTexCoord[texUnit][1];
-	 params[2] = (GLdouble) ctx->Current.RasterMultiTexCoord[texUnit][2];
-	 params[3] = (GLdouble) ctx->Current.RasterMultiTexCoord[texUnit][3];
+	 params[0] = (GLdouble) ctx->Current.RasterTexCoords[texUnit][0];
+	 params[1] = (GLdouble) ctx->Current.RasterTexCoords[texUnit][1];
+	 params[2] = (GLdouble) ctx->Current.RasterTexCoords[texUnit][2];
+	 params[3] = (GLdouble) ctx->Current.RasterTexCoords[texUnit][3];
 	 break;
       case GL_CURRENT_RASTER_POSITION_VALID:
 	 *params = (GLdouble) ctx->Current.RasterPosValid;
@@ -2867,10 +2867,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 params[3] = ctx->Current.RasterPos[3];
 	 break;
       case GL_CURRENT_RASTER_TEXTURE_COORDS:
-	 params[0] = ctx->Current.RasterMultiTexCoord[texUnit][0];
-	 params[1] = ctx->Current.RasterMultiTexCoord[texUnit][1];
-	 params[2] = ctx->Current.RasterMultiTexCoord[texUnit][2];
-	 params[3] = ctx->Current.RasterMultiTexCoord[texUnit][3];
+	 params[0] = ctx->Current.RasterTexCoords[texUnit][0];
+	 params[1] = ctx->Current.RasterTexCoords[texUnit][1];
+	 params[2] = ctx->Current.RasterTexCoords[texUnit][2];
+	 params[3] = ctx->Current.RasterTexCoords[texUnit][3];
 	 break;
       case GL_CURRENT_RASTER_POSITION_VALID:
 	 *params = (GLfloat) ctx->Current.RasterPosValid;
@@ -4076,10 +4076,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 params[3] = (GLint) ctx->Current.RasterPos[3];
 	 break;
       case GL_CURRENT_RASTER_TEXTURE_COORDS:
-	 params[0] = (GLint) ctx->Current.RasterMultiTexCoord[texUnit][0];
-	 params[1] = (GLint) ctx->Current.RasterMultiTexCoord[texUnit][1];
-	 params[2] = (GLint) ctx->Current.RasterMultiTexCoord[texUnit][2];
-	 params[3] = (GLint) ctx->Current.RasterMultiTexCoord[texUnit][3];
+	 params[0] = (GLint) ctx->Current.RasterTexCoords[texUnit][0];
+	 params[1] = (GLint) ctx->Current.RasterTexCoords[texUnit][1];
+	 params[2] = (GLint) ctx->Current.RasterTexCoords[texUnit][2];
+	 params[3] = (GLint) ctx->Current.RasterTexCoords[texUnit][3];
 	 break;
       case GL_CURRENT_RASTER_POSITION_VALID:
 	 *params = (GLint) ctx->Current.RasterPosValid;

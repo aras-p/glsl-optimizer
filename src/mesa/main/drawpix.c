@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.59 2002/01/15 21:49:57 brianp Exp $ */
+/* $Id: drawpix.c,v 1.60 2002/05/09 21:54:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -84,7 +84,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
 				ctx->Current.RasterPos,
 				ctx->Current.RasterColor,
 				ctx->Current.RasterIndex,
-				ctx->Current.RasterTexCoord );
+				ctx->Current.RasterTexCoords[0] );
       }
    }
    else if (ctx->RenderMode==GL_SELECT) {
@@ -163,7 +163,7 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
                                 ctx->Current.RasterPos,
                                 ctx->Current.RasterColor,
                                 ctx->Current.RasterIndex,
-                                ctx->Current.RasterTexCoord );
+                                ctx->Current.RasterTexCoords[0] );
       }
    }
    else if (ctx->RenderMode == GL_SELECT) {
@@ -212,7 +212,7 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
 				ctx->Current.RasterPos,
 				ctx->Current.RasterColor,
 				ctx->Current.RasterIndex, 
-				ctx->Current.RasterTexCoord );
+				ctx->Current.RasterTexCoords[0] );
       }
    }
    else if (ctx->RenderMode==GL_SELECT) {

@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.36 2002/03/29 17:27:59 brianp Exp $ */
+/* $Id: rastpos.c,v 1.37 2002/05/09 21:54:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -368,7 +368,7 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    {
       GLuint texSet;
       for (texSet = 0; texSet < ctx->Const.MaxTextureUnits; texSet++) {
-         COPY_4FV( ctx->Current.RasterMultiTexCoord[texSet],
+         COPY_4FV( ctx->Current.RasterTexCoords[texSet],
                   ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texSet] );
       }
    }
@@ -584,7 +584,7 @@ window_pos3f(GLfloat x, GLfloat y, GLfloat z)
    {
       GLuint texSet;
       for (texSet = 0; texSet < ctx->Const.MaxTextureUnits; texSet++) {
-         COPY_4FV( ctx->Current.RasterMultiTexCoord[texSet],
+         COPY_4FV( ctx->Current.RasterTexCoords[texSet],
                   ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texSet] );
       }
    }
