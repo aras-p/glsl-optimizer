@@ -113,14 +113,10 @@ FAQ:
       at peak performance ;-).
 
    Q) I'm getting a "bad font!" fatal error.
-   A) By default, DOS GLUT compiles with GLUT_IMPORT_LIB, to cope with variable
-      access inside dynamic modules (same mechanism used for Win32 _DLL). Since
-      -DGLUT_IMPORT_LIB affects Mesa's `glut.h', your apps must be compiled the
-      same way GLUT was compiled (either with or without defining it). If you
-      want to use another `glut.h' when building your own demos, or just don't
-      feel happy about this, make sure you remove the line with GLUT_IMPORT_LIB
-      from `Mesa/src/glut/dos/Makefile.DJ' before (re)making GLUT. Beware, this
-      means you will never EVER be able to safely use `glut.dxe'!
+   A) Always use GLUT_STROKE_* and GLUT_BITMAP_* constants when dealing with
+      GLUT fonts. If you're using `glut.dxe', then make sure GLUT_STROKE_* and
+      GLUT_BITMAP_* are mapped to integer constants, not to the actual font
+      address (same mechanism used for Win32 _DLL).
 
    Q) What is NUL driver good for, if I don't get any output at all?
    A) For debugging. The NUL driver is very much like OSMesa. Everything is
@@ -265,8 +261,9 @@ v1.6 (aug-2004)
 v1.7 (???-2005)
 	+ enabled OpenGL 2.0 support
 	+ added support for sw texture compression
-	* minor rework
-	* `glutTimerFunc' now works with heavy callbacks
+	+ added FreeGLUT specific functions
+	* no more GLX sources in DOS GLUT
+	* made GLUT timer callbacks less accurate but safer
 
 
 
