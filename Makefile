@@ -171,6 +171,8 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/math/math.dsp				\
 	$(DIRECTORY)/src/mesa/math/descrip.mms				\
 	$(DIRECTORY)/src/mesa/shader/*.[ch]				\
+	$(DIRECTORY)/src/mesa/shader/swrast.dsp				\
+	$(DIRECTORY)/src/mesa/shader/descrip.mms			\
 	$(DIRECTORY)/src/mesa/swrast/*.[ch]				\
 	$(DIRECTORY)/src/mesa/swrast/swrast.dsp				\
 	$(DIRECTORY)/src/mesa/swrast/descrip.mms			\
