@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.31 2001/07/09 16:16:20 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.32 2001/07/09 16:24:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -349,11 +349,11 @@ affine_span(GLcontext *ctx, struct triangle_span *span,
 {
    GLint tr, tg, tb, ta;
 
-  /* Instead of defining a function for each mode, a test is done
-   * between the outer and inner loops. This is to reduce code size
-   * and complexity. Observe that an optimizing compiler kills
-   * unused variables (for instance tf,sf,ti,si in case of GL_NEAREST).
-   */
+   /* Instead of defining a function for each mode, a test is done
+    * between the outer and inner loops. This is to reduce code size
+    * and complexity. Observe that an optimizing compiler kills
+    * unused variables (for instance tf,sf,ti,si in case of GL_NEAREST).
+    */
 
 #define NEAREST_RGB		\
         tr = tex00[RCOMP];	\
@@ -669,7 +669,13 @@ static void affine_textured_triangle( GLcontext *ctx,
    }									\
    info.tsize = obj->Image[b]->Height * info.tbytesline;
 
-#define RENDER_SPAN( span )		\
+#define RENDER_SPAN( span )				\
+   if (ctx->Light.ShadeModel == GL_FLAT) {		\
+      span.red   = IntToFixed(v2->color[RCOMP]);	\
+      span.green = IntToFixed(v2->color[GCOMP]);	\
+      span.blue  = IntToFixed(v2->color[BCOMP]);	\
+      span.alpha = IntToFixed(v2->color[ACOMP]);	\
+   }							\
    affine_span(ctx, &span, &info);
 
 #include "s_tritemp.h"
@@ -737,8 +743,8 @@ fast_persp_span(GLcontext *ctx, struct triangle_span *span,
            GLfixed t_fix = FloatToFixed(t_tmp);		        	\
            GLint s = FixedToInt(FixedFloor(s_fix)) & info->smask;	\
            GLint t = FixedToInt(FixedFloor(t_fix)) & info->tmask;	\
-           GLfixed sf = s_fix & FIXED_FRAC_MASK;		\
-           GLfixed tf = t_fix & FIXED_FRAC_MASK;		\
+           GLfixed sf = s_fix & FIXED_FRAC_MASK;			\
+           GLfixed tf = t_fix & FIXED_FRAC_MASK;			\
            GLfixed si = FIXED_FRAC_MASK - sf;				\
            GLfixed ti = FIXED_FRAC_MASK - tf;				\
            GLint pos = (t << info->twidth_log2) + s;			\
@@ -956,22 +962,31 @@ static void persp_textured_triangle( GLcontext *ctx,
       info.tbytesline = obj->Image[b]->Width * 4;			\
       break;								\
    default:								\
-      _mesa_problem(NULL, "Bad texture format in affine_texture_triangle");\
+      _mesa_problem(NULL, "Bad texture format in persp_textured_triangle");\
       return;								\
    }									\
    info.tsize = obj->Image[b]->Height * info.tbytesline;
 
-#define RENDER_SPAN( span )		\
+#define RENDER_SPAN( span )				\
+   if (ctx->Light.ShadeModel == GL_FLAT) {		\
+      span.red   = IntToFixed(v2->color[RCOMP]);	\
+      span.green = IntToFixed(v2->color[GCOMP]);	\
+      span.blue  = IntToFixed(v2->color[BCOMP]);	\
+      span.alpha = IntToFixed(v2->color[ACOMP]);	\
+   }							\
    fast_persp_span(ctx, &span, &info);
 
 #include "s_tritemp.h"
 
 }
 
+
+
 /*
  * Generate arrays of fragment colors, z, fog, texcoords, etc from a
  * triangle span object.  Then call the span/fragment processsing
- * functions in s_span.[ch].
+ * functions in s_span.[ch].  This is used by a bunch of the textured
+ * triangle functions.
  */
 static void
 rasterize_span(GLcontext *ctx, const struct triangle_span *span)
