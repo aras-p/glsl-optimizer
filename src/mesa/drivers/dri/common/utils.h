@@ -51,4 +51,8 @@ extern GLboolean driCheckDriDdxDrmVersions( __DRIscreenPrivate *sPriv,
     const char * driver_name, int dri_major, int dri_minor,
     int ddx_major, int ddx_minor, int drm_major, int drm_minor );
 
+extern GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
+					   GLint *x, GLint *y,
+					   GLsizei *width, GLsizei *height );
+
 #endif /* DRI_DEBUG_H */

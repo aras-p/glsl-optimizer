@@ -184,3 +184,36 @@ driCheckDriDdxDrmVersions(__DRIscreenPrivate *sPriv,
 
    return GL_TRUE;
 }
+
+GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
+				    GLint *x, GLint *y,
+				    GLsizei *width, GLsizei *height )
+{
+   /* left clipping */
+   if (*x < buffer->_Xmin) {
+      *width -= (buffer->_Xmin - *x);
+      *x = buffer->_Xmin;
+   }
+
+   /* right clipping */
+   if (*x + *width > buffer->_Xmax)
+      *width -= (*x + *width - buffer->_Xmax - 1);
+
+   if (*width <= 0)
+      return GL_FALSE;
+
+   /* bottom clipping */
+   if (*y < buffer->_Ymin) {
+      *height -= (buffer->_Ymin - *y);
+      *y = buffer->_Ymin;
+   }
+
+   /* top clipping */
+   if (*y + *height > buffer->_Ymax)
+      *height -= (*y + *height - buffer->_Ymax - 1);
+
+   if (*height <= 0)
+      return GL_FALSE;
+
+   return GL_TRUE;
+}
