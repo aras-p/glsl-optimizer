@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -89,8 +89,6 @@
 #endif
 #include "debug.h"
 
-/* #include "math/m_matrix.h" */
-/* #include "math/m_xform.h" */
 
 
 /**********************************************************************/
@@ -122,11 +120,10 @@ generic_noop(void)
 void
 _mesa_init_no_op_table(struct _glapi_table *table, GLuint tableSize)
 {
-   typedef void (*func_ptr_t)();
    GLuint i;
-   func_ptr_t *dispatch = (func_ptr_t *) table;
+   _glapi_proc *dispatch = (_glapi_proc *) table;
    for (i = 0; i < tableSize; i++) {
-      dispatch[i] = (func_ptr_t)generic_noop;
+      dispatch[i] = (_glapi_proc) generic_noop;
    }
 }
 
