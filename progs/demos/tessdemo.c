@@ -1,4 +1,4 @@
-/* $Id: tessdemo.c,v 1.4 2000/01/23 21:25:39 gareth Exp $ */
+/* $Id: tessdemo.c,v 1.5 2000/01/24 22:54:05 gareth Exp $ */
 
 /*
  * A demo of the GLU polygon tesselation functions written by Bogdan Sikorski.
@@ -14,6 +14,9 @@
 
 /*
  * $Log: tessdemo.c,v $
+ * Revision 1.5  2000/01/24 22:54:05  gareth
+ * Removed '#if 0' from second pass.
+ *
  * Revision 1.4  2000/01/23 21:25:39  gareth
  * Merged 3.2 updates, namely combine callback for intersecting
  * contours.
@@ -258,7 +261,6 @@ void tesse( void )
       gluEndPolygon( tobj );
       glEndList();
 
-#if 0
       gluTessCallback( tobj, GLU_TESS_BEGIN, begin_callback );
       gluTessCallback( tobj, GLU_TESS_VERTEX, vertex_callback );
       gluTessCallback( tobj, GLU_TESS_END, end_callback );
@@ -283,7 +285,6 @@ void tesse( void )
 
       gluEndPolygon( tobj );
       glEndList();
-#endif
 
       gluDeleteTess( tobj );
 
