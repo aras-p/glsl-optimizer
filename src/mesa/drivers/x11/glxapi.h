@@ -1,10 +1,10 @@
-/* $Id: glxapi.h,v 1.14 2002/10/08 23:16:26 brianp Exp $ */
+/* $Id: glxapi.h,v 1.15 2003/01/14 04:49:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0.2 
+ * Version:  5.1
  * 
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -205,6 +205,11 @@ struct _glxapi_table {
 
    /*** GLX_MESA_agp_offset ***/
    GLuint (*GetAGPOffsetMESA)( const GLvoid *pointer );
+
+   /*** GLX_ARB_render_texture ***/
+   Bool (*BindTexImageARB)(Display *dpy, GLXPbuffer pbuffer, int buffer);
+   Bool (*ReleaseTexImageARB)(Display *dpy, GLXPbuffer pbuffer, int buffer);
+   Bool (*DrawableAttribARB)(Display *dpy, GLXDrawable draw, const int *attribList);
 };
 
 

@@ -1,10 +1,10 @@
-/* $Id: realglx.c,v 1.6 2002/10/08 23:16:27 brianp Exp $ */
+/* $Id: realglx.c,v 1.7 2003/01/14 04:49:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  * 
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -176,6 +176,11 @@ _real_GetGLXDispatchTable(void)
 
    /*** GLX_MESA_agp_offset ***/
    glx.GetAGPOffsetMESA = _real_glXGetAGPOffsetMESA;
+
+   /*** GLX_ARB_render_texture ***/
+   glx.BindTexImageARB = _real_glXBindTexImageARB;
+   glx.ReleaseTexImageARB = _real_glXReleaseTexImageARB;
+   glx.DrawableAttribARB = _real_glXDrawableAttribARB;
 
    return &glx;
 }

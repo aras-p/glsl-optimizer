@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.31 2002/11/18 15:11:52 brianp Exp $ */
+/* $Id: glxapi.c,v 1.32 2003/01/14 04:49:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -988,7 +988,6 @@ Bool glXSet3DfxModeMESA(int mode)
 
 
 
-
 /*** GLX_NV_vertex_array_range ***/
 
 void *
@@ -1032,6 +1031,42 @@ glXGetAGPOffsetMESA( const GLvoid *pointer )
 }
 
 
+/*** GLX_ARB_render_Texture ***/
+
+Bool
+glXBindTexImageARB( Display *dpy, GLXPbuffer pbuffer, int buffer )
+{
+   struct _glxapi_table *t;
+   GET_DISPATCH(dpy, t);
+   if (!t)
+      return False;
+   return (t->BindTexImageARB)(dpy, pbuffer, buffer);
+}
+
+
+Bool
+glXReleaseTexImageARB(Display *dpy, GLXPbuffer pbuffer, int buffer )
+{
+   struct _glxapi_table *t;
+   GET_DISPATCH(dpy, t);
+   if (!t)
+      return False;
+   return (t->ReleaseTexImageARB)(dpy, pbuffer, buffer);
+}
+
+
+Bool
+glXDrawableAttribARB( Display *dpy, GLXDrawable draw, const int *attribList )
+{
+   struct _glxapi_table *t;
+   GET_DISPATCH(dpy, t);
+   if (!t)
+      return False;
+   return (t->DrawableAttribARB)(dpy, draw, attribList);
+}
+
+
+
 /**********************************************************************/
 /* GLX API management functions                                       */
 /**********************************************************************/
@@ -1068,6 +1103,15 @@ _glxapi_get_extensions(void)
 #endif
 #ifdef GLX_MESA_set_3dfx_mode
       "GLX_MESA_set_3dfx_mode",
+#endif
+#ifdef GLX_SGIX_fbconfig
+      "GLX_SGIX_fbconfig",
+#endif
+#ifdef GLX_SGIX_pbuffer
+      "GLX_SGIX_pbuffer",
+#endif
+#ifdef GLX_ARB_render_texture
+      "GLX_ARB_render_texture",
 #endif
       NULL
    };
@@ -1247,6 +1291,11 @@ static struct name_address_pair GLX_functions[] = {
 
    /*** GLX_MESA_agp_offset ***/
    { "glXGetAGPOffsetMESA", (GLvoid *) glXGetAGPOffsetMESA },
+
+   /*** GLX_ARB_render_texture ***/
+   { "glXBindTexImageARB", (GLvoid *) glXBindTexImageARB },
+   { "glXReleaseTexImageARB", (GLvoid *) glXReleaseTexImageARB },
+   { "glXDrawableAttribARB", (GLvoid *) glXDrawableAttribARB },
 
    { NULL, NULL }   /* end of list */
 };

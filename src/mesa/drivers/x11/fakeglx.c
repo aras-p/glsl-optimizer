@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.77 2002/11/18 15:11:49 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.78 2003/01/14 04:49:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -81,7 +81,8 @@
    "GLX_EXT_visual_rating " \
    "GLX_SGI_video_sync " \
    "GLX_SGIX_fbconfig " \
-   "GLX_SGIX_pbuffer"
+   "GLX_SGIX_pbuffer" \
+   "GLX_ARB_render_texture"
 
 
 /* Silence compiler warnings */
@@ -2615,7 +2616,7 @@ Fake_glXSet3DfxModeMESA( int mode )
 
 
 
-/*** AGP memory allocation ***/
+/*** GLX_NV_vertex_array range ***/
 static void *
 Fake_glXAllocateMemoryNV( GLsizei size,
                           GLfloat readFrequency,
@@ -2637,13 +2638,36 @@ Fake_glXFreeMemoryNV( GLvoid *pointer )
 }
 
 
-/*** GLX_MESA_agp_offset */
+/*** GLX_MESA_agp_offset ***/
 
 static GLuint
 Fake_glXGetAGPOffsetMESA( const GLvoid *pointer )
 {
    (void) pointer;
    return ~0;
+}
+
+
+/*** GLX_ARB_render_texture ***/
+
+static Bool
+Fake_glXBindTexImageARB( Display *dpy, GLXPbuffer pbuffer, int buffer )
+{
+   return False;
+}
+
+
+static Bool
+Fake_glXReleaseTexImageARB(Display *dpy, GLXPbuffer pbuffer, int buffer )
+{
+   return False;
+}
+
+
+static Bool
+Fake_glXDrawableAttribARB( Display *dpy, GLXDrawable draw, const int *attribList )
+{
+   return False;
 }
 
 
@@ -2791,6 +2815,11 @@ struct _glxapi_table *_mesa_GetGLXDispatchTable(void)
 
    /*** GLX_MESA_agp_offset ***/
    glx.GetAGPOffsetMESA = Fake_glXGetAGPOffsetMESA;
+
+   /*** GLX_ARB_render_texture ***/
+   glx.BindTexImageARB = Fake_glXBindTexImageARB;
+   glx.ReleaseTexImageARB = Fake_glXReleaseTexImageARB;
+   glx.DrawableAttribARB = Fake_glXDrawableAttribARB;
 
    return &glx;
 }
