@@ -1,8 +1,8 @@
-/* $Id: s_copypix.c,v 1.42 2002/10/30 20:16:43 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.43 2002/12/05 04:46:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -26,13 +26,10 @@
 
 
 #include "glheader.h"
-#include "colormac.h"
 #include "context.h"
 #include "convolve.h"
-#include "feedback.h"
 #include "macros.h"
 #include "imports.h"
-#include "mmath.h"
 #include "pixel.h"
 
 #include "s_context.h"
@@ -263,7 +260,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          span.end = width;
          _mesa_write_zoomed_rgba_span(ctx, &span, 
                                      (CONST GLchan (*)[4])span.array->rgba,
-                                     desty);
+                                     desty, 0);
       }
       else {
          span.x = destx;
@@ -370,6 +367,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* Get source pixels */
       if (overlapping) {
          /* get from buffered image */
+         ASSERT(width < MAX_WIDTH);
          MEMCPY(span.array->rgba, p, width * sizeof(GLchan) * 4);
          p += width * 4;
       }
@@ -377,6 +375,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          /* get from framebuffer */
          if (changeBuffer)
             _swrast_use_read_buffer(ctx);
+         ASSERT(width < MAX_WIDTH);
          _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, srcx, sy,
                                span.array->rgba );
          if (changeBuffer)
@@ -468,9 +467,10 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          _swrast_pixel_texture(ctx, &span);
       }
 
+      /* Write color span */
       if (quick_draw && dy >= 0 && dy < (GLint) ctx->DrawBuffer->Height) {
          (*swrast->Driver.WriteRGBASpan)( ctx, width, destx, dy,
-				       (const GLchan (*)[4])span.array->rgba, NULL );
+                                 (const GLchan (*)[4])span.array->rgba, NULL );
       }
       else if (zoom) {
          span.x = destx;
@@ -478,7 +478,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          span.end = width;
          _mesa_write_zoomed_rgba_span(ctx, &span,
                                      (CONST GLchan (*)[4]) span.array->rgba,
-                                     desty);
+                                     desty, 0);
       }
       else {
          span.x = destx;
@@ -493,9 +493,10 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 }
 
 
-static void copy_ci_pixels( GLcontext *ctx,
-                            GLint srcx, GLint srcy, GLint width, GLint height,
-                            GLint destx, GLint desty )
+static void
+copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
+                GLint width, GLint height,
+                GLint destx, GLint desty )
 {
    GLuint *tmpImage,*p;
    GLint sy, dy, stepy;
@@ -563,6 +564,7 @@ static void copy_ci_pixels( GLcontext *ctx,
    }
 
    for (j = 0; j < height; j++, sy += stepy, dy += stepy) {
+      /* Get color indexes */
       if (overlapping) {
          MEMCPY(span.array->index, p, width * sizeof(GLuint));
          p += width;
@@ -576,6 +578,7 @@ static void copy_ci_pixels( GLcontext *ctx,
             _swrast_use_draw_buffer(ctx);
       }
 
+      /* Apply shift, offset, look-up table */
       if (shift_or_offset) {
          _mesa_shift_and_offset_ci( ctx, width, span.array->index );
       }
@@ -583,11 +586,12 @@ static void copy_ci_pixels( GLcontext *ctx,
          _mesa_map_ci( ctx, width, span.array->index );
       }
 
+      /* write color indexes */
       span.x = destx;
       span.y = dy;
       span.end = width;
       if (zoom)
-         _mesa_write_zoomed_index_span(ctx, &span, desty);
+         _mesa_write_zoomed_index_span(ctx, &span, desty, 0);
       else
          _mesa_write_index_span(ctx, &span);
    }
@@ -601,11 +605,11 @@ static void copy_ci_pixels( GLcontext *ctx,
 /*
  * TODO: Optimize!!!!
  */
-static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
-                               GLint width, GLint height,
-                               GLint destx, GLint desty )
+static void
+copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
+                   GLint width, GLint height,
+                   GLint destx, GLint desty )
 {
-   GLfloat depth[MAX_WIDTH];
    GLfloat *p, *tmpImage;
    GLint sy, dy, stepy;
    GLint i, j;
@@ -661,6 +665,9 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    for (j = 0; j < height; j++, sy += stepy, dy += stepy) {
+      GLfloat depth[MAX_WIDTH];
+
+      /* get depth values */
       if (overlapping) {
          MEMCPY(depth, p, width * sizeof(GLfloat));
          p += width;
@@ -669,25 +676,26 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
          _mesa_read_depth_span_float(ctx, width, srcx, sy, depth);
       }
 
+      /* apply scale and bias */
       for (i = 0; i < width; i++) {
          GLfloat d = depth[i] * ctx->Pixel.DepthScale + ctx->Pixel.DepthBias;
          span.array->z[i] = (GLdepth) (CLAMP(d, 0.0F, 1.0F) * ctx->DepthMax);
       }
 
+      /* write depth values */
       span.x = destx;
       span.y = dy;
       span.end = width;
       if (ctx->Visual.rgbMode) {
          if (zoom)
             _mesa_write_zoomed_rgba_span( ctx, &span, 
-                                          (const GLchan (*)[4])span.array->rgba,
-                                          desty );
+                            (const GLchan (*)[4])span.array->rgba, desty, 0 );
          else
             _mesa_write_rgba_span(ctx, &span);
       }
       else {
          if (zoom)
-            _mesa_write_zoomed_index_span( ctx, &span, desty );
+            _mesa_write_zoomed_index_span( ctx, &span, desty, 0 );
          else
             _mesa_write_index_span(ctx, &span);
       }
@@ -699,9 +707,10 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
 
 
-static void copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
-                                 GLint width, GLint height,
-                                 GLint destx, GLint desty )
+static void
+copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
+                     GLint width, GLint height,
+                     GLint destx, GLint desty )
 {
    GLint sy, dy, stepy;
    GLint j;
@@ -754,6 +763,7 @@ static void copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    for (j = 0; j < height; j++, sy += stepy, dy += stepy) {
       GLstencil stencil[MAX_WIDTH];
 
+      /* Get stencil values */
       if (overlapping) {
          MEMCPY(stencil, p, width * sizeof(GLstencil));
          p += width;
@@ -762,6 +772,7 @@ static void copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
          _mesa_read_stencil_span( ctx, width, srcx, sy, stencil );
       }
 
+      /* Apply shift, offset, look-up table */
       if (shift_or_offset) {
          _mesa_shift_and_offset_stencil( ctx, width, stencil );
       }
@@ -769,8 +780,10 @@ static void copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
          _mesa_map_stencil( ctx, width, stencil );
       }
 
+      /* Write stencil values */
       if (zoom) {
-         _mesa_write_zoomed_stencil_span( ctx, width, destx, dy, stencil, desty );
+         _mesa_write_zoomed_stencil_span( ctx, width, destx, dy,
+                                          stencil, desty, 0 );
       }
       else {
          _mesa_write_stencil_span( ctx, width, destx, dy, stencil );
@@ -780,7 +793,6 @@ static void copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    if (overlapping)
       FREE(tmpImage);
 }
-
 
 
 
