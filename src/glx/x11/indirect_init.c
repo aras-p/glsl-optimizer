@@ -688,6 +688,7 @@ __GLapi * __glXNewIndirectAPI( void )
 
     /* GL_ARB_vertex_program */
 
+    glAPI->VertexAttrib4bvARB = __indirect_glVertexAttrib4bvARB;
     glAPI->VertexAttrib4ivARB = __indirect_glVertexAttrib4ivARB;
     glAPI->VertexAttrib4ubvARB = __indirect_glVertexAttrib4ubvARB;
     glAPI->VertexAttrib4usvARB = __indirect_glVertexAttrib4usvARB;

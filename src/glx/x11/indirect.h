@@ -611,6 +611,7 @@ extern HIDDEN void __indirect_glPointParameterivNV(GLenum pname, const GLint * p
 extern HIDDEN void __indirect_glMultiDrawArraysEXT(GLenum mode, GLint * first, GLsizei * count, GLsizei primcount);
 extern HIDDEN void __indirect_glMultiDrawElementsEXT(GLenum mode, const GLsizei * count, GLenum type, const GLvoid ** indices, GLsizei primcount);
 extern HIDDEN void __indirect_glActiveStencilFaceEXT(GLenum face);
+extern HIDDEN void __indirect_glVertexAttrib4bvARB(GLuint index, const GLbyte * v);
 extern HIDDEN void __indirect_glVertexAttrib4ivARB(GLuint index, const GLint * v);
 extern HIDDEN void __indirect_glVertexAttrib4ubvARB(GLuint index, const GLubyte * v);
 extern HIDDEN void __indirect_glVertexAttrib4usvARB(GLuint index, const GLushort * v);

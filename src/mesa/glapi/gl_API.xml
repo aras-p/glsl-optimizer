@@ -5664,7 +5664,7 @@ glx:
     <function name="VertexAttrib4bvARB" offset="654">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLbyte *" count="4"/>
-        <glx rop="4230" ignore="true"/>
+        <glx rop="4230"/>
     </function>
 
     <function name="VertexAttrib4ivARB" offset="655">

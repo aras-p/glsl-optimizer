@@ -449,7 +449,11 @@ generic_%u_byte( GLint rop, const void * ptr )
 					print "        __glXReadPixelReply(dpy, gc, %u, %s, %s, %s, %s, %s, %s, GL_FALSE);" % (dim, w, h, d, f.image.img_format, f.image.img_type, f.image.name)
 			else:
 				if f.output != None:
-					output_size = f.output.p_type.size
+					if f.output.p_type.size == 0:
+						output_size = 1
+					else:
+						output_size = f.output.p_type.size
+
 					output_str = f.output.name
 				else:
 					output_size = 0

@@ -6756,6 +6756,19 @@ __indirect_glActiveStencilFaceEXT(GLenum face)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
+#define X_GLrop_VertexAttrib4bvARB 4230
+void
+__indirect_glVertexAttrib4bvARB(GLuint index, const GLbyte * v)
+{
+    __GLXcontext * const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_VertexAttrib4bvARB, cmdlen);
+    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+    (void) memcpy((void *)(gc->pc + 8), (void *)(v), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+}
+
 #define X_GLrop_VertexAttrib4ivARB 4231
 void
 __indirect_glVertexAttrib4ivARB(GLuint index, const GLint * v)
@@ -7058,7 +7071,7 @@ __indirect_glGetProgramStringARB(GLenum target, GLenum pname, GLvoid * string)
         GLubyte const * pc = __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply, X_GLvop_GetProgramStringARB, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
-        (void) __glXReadReply(dpy, 0, string, GL_TRUE);
+        (void) __glXReadReply(dpy, 1, string, GL_TRUE);
         UnlockDisplay(dpy); SyncHandle();
     }
     return;
