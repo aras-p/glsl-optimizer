@@ -1,10 +1,10 @@
-/* $Id: histogram.h,v 1.4 2002/10/24 23:57:21 brianp Exp $ */
+/* $Id: histogram.h,v 1.5 2003/03/25 02:26:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,13 @@
 #include "mtypes.h"
 
 
+extern void
+_mesa_update_minmax(GLcontext *ctx, GLuint n, const GLfloat rgba[][4]);
+
+extern void
+_mesa_update_histogram(GLcontext *ctx, GLuint n, const GLfloat rgba[][4]);
+
+
 extern void _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum types, GLvoid *values);
 
 extern void _mesa_GetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values);
@@ -51,12 +58,5 @@ extern void _mesa_Minmax(GLenum target, GLenum internalformat, GLboolean sink);
 extern void _mesa_ResetHistogram(GLenum target);
 
 extern void _mesa_ResetMinmax(GLenum target);
-
-extern void
-_mesa_update_minmax(GLcontext *ctx, GLuint n, const GLfloat rgba[][4]);
-
-extern void
-_mesa_update_histogram(GLcontext *ctx, GLuint n, const GLfloat rgba[][4]);
-
 
 #endif

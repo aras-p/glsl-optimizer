@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.42 2003/01/16 19:10:46 alanh Exp $ */
+/* $Id: xm_dd.c,v 1.43 2003/03/25 02:26:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,7 @@
 #include "imports.h"
 #include "mtypes.h"
 #include "state.h"
+#include "texobj.h"
 #include "texstore.h"
 #include "texformat.h"
 #include "xmesaP.h"
@@ -705,7 +706,7 @@ clear_buffers( GLcontext *ctx, GLbitfield mask,
    if ((mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) &&
        xmesa->xm_draw_buffer->mesa_buffer.UseSoftwareAlphaBuffers &&
        ctx->Color.ColorMask[ACOMP]) {
-      _mesa_clear_alpha_buffers(ctx);
+      _swrast_clear_alpha_buffers(ctx);
    }
 
    /* we can't handle color or index masking */
@@ -962,6 +963,9 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
    ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
    ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
+
+   ctx->Driver.NewTextureObject = _mesa_alloc_texture_object;
+   ctx->Driver.DeleteTexture = _mesa_free_texture_object;
 
    ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
    ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;

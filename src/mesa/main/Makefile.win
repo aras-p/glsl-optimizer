@@ -91,7 +91,6 @@ CORE_SRCS = \
 	swrast\s_drawpix.c \
 	swrast\s_feedback.c \
 	swrast\s_fog.c \
-	swrast\s_histogram.c \
 	swrast\s_imaging.c \
 	swrast\s_lines.c \
 	swrast\s_logic.c \

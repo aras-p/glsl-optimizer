@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.74 2003/03/01 01:50:20 brianp Exp $
+# $Id: Makefile.X11,v 1.75 2003/03/25 02:26:29 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -102,7 +102,6 @@ CORE_SOURCES = \
 	swrast/s_drawpix.c \
 	swrast/s_feedback.c \
 	swrast/s_fog.c \
-	swrast/s_histogram.c \
 	swrast/s_imaging.c \
 	swrast/s_lines.c \
 	swrast/s_logic.c \

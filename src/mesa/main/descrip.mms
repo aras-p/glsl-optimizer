@@ -97,7 +97,6 @@ RASTER_SOURCES = [.swrast]s_aatriangle.c \
 [.swrast]s_drawpix.c \
 [.swrast]s_fog.c \
 [.swrast]s_feedback.c \
-[.swrast]s_histogram.c \
 [.swrast]s_imaging.c \
 [.swrast]s_lines.c \
 [.swrast]s_logic.c \
@@ -239,7 +238,6 @@ OBJECTS8=[.swrast]s_aatriangle.obj,\
 
 OBJECTS9=[.swrast]s_drawpix.obj,\
 [.swrast]s_fog.obj,\
-[.swrast]s_histogram.obj,\
 [.swrast]s_imaging.obj,\
 [.swrast]s_lines.obj,\
 [.swrast]s_logic.obj,\
@@ -435,8 +433,6 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_feedback.obj [.swrast]s_feedback.c
 [.swrast]s_fog.obj : [.swrast]s_fog.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_fog.obj [.swrast]s_fog.c
-[.swrast]s_histogram.obj : [.swrast]s_histogram.c
-	$(CC) $(CFLAGS) /obj=[.swrast]s_histogram.obj [.swrast]s_histogram.c
 [.swrast]s_imaging.obj : [.swrast]s_imaging.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_imaging.obj [.swrast]s_imaging.c
 [.swrast]s_lines.obj : [.swrast]s_lines.c
