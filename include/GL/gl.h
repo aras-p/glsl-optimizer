@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.30 2000/02/10 17:27:55 brianp Exp $ */
+/* $Id: gl.h,v 1.31 2000/02/11 20:44:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,44 +57,44 @@
 #  pragma warning( disable : 4710 ) /* function 'foo' not inlined */
 #  pragma warning( disable : 4711 ) /* function 'foo' selected for automatic inline expansion */
 #  pragma warning( disable : 4127 ) /* conditional expression is constant */
-#	if defined(MESA_MINWARN)
-#	  pragma warning( disable : 4244 ) /* '=' : conversion from 'const double ' to 'float ', possible loss of data */
-#	  pragma warning( disable : 4018 ) /* '<' : signed/unsigned mismatch */
-#	  pragma warning( disable : 4305 ) /* '=' : truncation from 'const double ' to 'float ' */
-#	  pragma warning( disable : 4550 ) /* 'function' undefined; assuming extern returning int */
-#	  pragma warning( disable : 4761 ) /* integral size mismatch in argument; conversion supplied */
+#  if defined(MESA_MINWARN)
+#    pragma warning( disable : 4244 ) /* '=' : conversion from 'const double ' to 'float ', possible loss of data */
+#    pragma warning( disable : 4018 ) /* '<' : signed/unsigned mismatch */
+#    pragma warning( disable : 4305 ) /* '=' : truncation from 'const double ' to 'float ' */
+#    pragma warning( disable : 4550 ) /* 'function' undefined; assuming extern returning int */
+#    pragma warning( disable : 4761 ) /* integral size mismatch in argument; conversion supplied */
 #  endif
-#	if defined(_MSC_VER) && defined(BUILD_GL32) /* tag specify we're building mesa as a DLL */
-#		define GLAPI __declspec(dllexport)
-#     define WGLAPI __declspec(dllexport)
-#	elif defined(_MSC_VER) && defined(_DLL) /* tag specifying we're building for DLL runtime support */
-#		define GLAPI __declspec(dllimport)
-#     define WGLAPI __declspec(dllimport)
-#	else /* for use with static link lib build of Win32 edition only */
-#		define GLAPI extern
-#     define WGLAPI __declspec(dllimport)
-#	endif /* _STATIC_MESA support */
-#	define GLAPIENTRY __stdcall
-#	define GLAPIENTRYP __stdcall *
-#	define GLCALLBACK __stdcall
-#       define GLCALLBACKP __stdcall *
-#if defined(__CYGWIN32__)
-#       define GLCALLBACKPCAST *
-#else
-#       define GLCALLBACKPCAST __stdcall *
-#endif
-#	define GLWINAPI __stdcall
-#	define GLWINAPIV __cdecl
+#  if defined(_MSC_VER) && defined(BUILD_GL32) /* tag specify we're building mesa as a DLL */
+#    define GLAPI __declspec(dllexport)
+#    define WGLAPI __declspec(dllexport)
+#  elif defined(_MSC_VER) && defined(_DLL) /* tag specifying we're building for DLL runtime support */
+#    define GLAPI __declspec(dllimport)
+#    define WGLAPI __declspec(dllimport)
+#  else /* for use with static link lib build of Win32 edition only */
+#    define GLAPI extern
+#    define WGLAPI __declspec(dllimport)
+#  endif /* _STATIC_MESA support */
+#  define GLAPIENTRY __stdcall
+#  define GLAPIENTRYP __stdcall *
+#  define GLCALLBACK __stdcall
+#  define GLCALLBACKP __stdcall *
+#  if defined(__CYGWIN32__)
+#    define GLCALLBACKPCAST *
+#  else
+#    define GLCALLBACKPCAST __stdcall *
+#  endif
+#  define GLWINAPI __stdcall
+#  define GLWINAPIV __cdecl
 #else
 /* non-Windows compilation */
-#	define GLAPI extern
-#	define GLAPIENTRY
-#	define GLAPIENTRYP *
-#	define GLCALLBACK
-#	define GLCALLBACKP *
-#	define GLCALLBACKPCAST *
-#	define GLWINAPI
-#	define GLWINAPIV
+#  define GLAPI extern
+#  define GLAPIENTRY
+#  define GLAPIENTRYP *
+#  define GLCALLBACK
+#  define GLCALLBACKP *
+#  define GLCALLBACKPCAST *
+#  define GLWINAPI
+#  define GLWINAPIV
 #endif /* WIN32 / CYGWIN32 bracket */
 
 /* compatability guard so we don't need to change client code */
@@ -135,16 +135,6 @@ extern "C" {
 	#endif
 #endif
 
-
-
-/*
- * Apps can test for this symbol to do conditional compilation if needed.
- */
-/* XXX these Mesa symbols are going away
-#define MESA
-#define MESA_MAJOR_VERSION 3
-#define MESA_MINOR_VERSION 1
-*/
 
 
 #define GL_VERSION_1_1   1
