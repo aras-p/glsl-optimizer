@@ -648,6 +648,8 @@ struct _glapi_table
    void (*VertexAttribs4fvNV)(GLuint index, GLsizei n, const GLfloat * v); /* 639 */
    void (*VertexAttribs4svNV)(GLuint index, GLsizei n, const GLshort * v); /* 640 */
    void (*VertexAttribs4ubvNV)(GLuint index, GLsizei n, const GLubyte * v); /* 641 */
+   void (*PointParameteriNV)(GLenum pname, GLint params); /* 642 */
+   void (*PointParameterivNV)(GLenum pname, const GLint * params); /* 643 */
 };
 
 #endif

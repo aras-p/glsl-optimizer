@@ -644,5 +644,7 @@
 #define _gloffset_VertexAttribs4fvNV 639
 #define _gloffset_VertexAttribs4svNV 640
 #define _gloffset_VertexAttribs4ubvNV 641
+#define _gloffset_PointParameteriNV 642
+#define _gloffset_PointParameterivNV 643
 
 #endif

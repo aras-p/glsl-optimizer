@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.87 2002/05/27 17:03:09 brianp Exp $ */
+/* $Id: dlist.c,v 1.88 2002/05/29 15:16:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2517,13 +2517,13 @@ static void save_PointParameterfEXT( GLenum pname, GLfloat param )
    save_PointParameterfvEXT(pname, &param);
 }
 
-static void save_PointParameteriEXT( GLenum pname, GLint param )
+static void save_PointParameteriNV( GLenum pname, GLint param )
 {
    GLfloat p = (GLfloat) param;
    save_PointParameterfvEXT(pname, &p);
 }
 
-static void save_PointParameterivEXT( GLenum pname, const GLint *param )
+static void save_PointParameterivNV( GLenum pname, const GLint *param )
 {
    GLfloat p = (GLfloat) param[0];
    save_PointParameterfvEXT(pname, &p);
@@ -3577,103 +3577,6 @@ static void save_WindowPos4svMESA(const GLshort *v)
    save_WindowPos4fMESA(v[0], v[1], v[2], v[3]);
 }
 
-
-
-/*
- * GL_ARB_window_pos
- */
-
-static void save_WindowPos3fARB( GLfloat x, GLfloat y, GLfloat z )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-   FLUSH_CURRENT(ctx, 0);
-   n = ALLOC_INSTRUCTION( ctx,  OPCODE_WINDOW_POS_ARB, 3 );
-   if (n) {
-      n[1].f = x;
-      n[2].f = y;
-      n[3].f = z;
-   }
-   if (ctx->ExecuteFlag) {
-      (*ctx->Exec->WindowPos3fMESA)( x, y, z );
-   }
-}
-
-static void save_WindowPos2dARB(GLdouble x, GLdouble y)
-{
-   save_WindowPos3fARB((GLfloat) x, (GLfloat) y, 0.0F);
-}
-
-static void save_WindowPos2fARB(GLfloat x, GLfloat y)
-{
-   save_WindowPos3fARB(x, y, 0.0F);
-}
-
-static void save_WindowPos2iARB(GLint x, GLint y)
-{
-   save_WindowPos3fARB((GLfloat) x, (GLfloat) y, 0.0F);
-}
-
-static void save_WindowPos2sARB(GLshort x, GLshort y)
-{
-   save_WindowPos3fARB(x, y, 0.0F);
-}
-
-static void save_WindowPos3dARB(GLdouble x, GLdouble y, GLdouble z)
-{
-   save_WindowPos3fARB((GLfloat) x, (GLfloat) y, (GLfloat) z);
-}
-
-static void save_WindowPos3iARB(GLint x, GLint y, GLint z)
-{
-   save_WindowPos3fARB((GLfloat) x, (GLfloat) y, (GLfloat) z);
-}
-
-static void save_WindowPos3sARB(GLshort x, GLshort y, GLshort z)
-{
-   save_WindowPos3fARB(x, y, z);
-}
-
-static void save_WindowPos2dvARB(const GLdouble *v)
-{
-   save_WindowPos3fARB((GLfloat) v[0], (GLfloat) v[1], 0.0F);
-}
-
-static void save_WindowPos2fvARB(const GLfloat *v)
-{
-   save_WindowPos3fARB(v[0], v[1], 0.0F);
-}
-
-static void save_WindowPos2ivARB(const GLint *v)
-{
-   save_WindowPos3fARB((GLfloat) v[0], (GLfloat) v[1], 0.0F);
-}
-
-static void save_WindowPos2svARB(const GLshort *v)
-{
-   save_WindowPos3fARB(v[0], v[1], 0.0F);
-}
-
-static void save_WindowPos3dvARB(const GLdouble *v)
-{
-   save_WindowPos3fARB((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2]);
-}
-
-static void save_WindowPos3fvARB(const GLfloat *v)
-{
-   save_WindowPos3fARB(v[0], v[1], v[2]);
-}
-
-static void save_WindowPos3ivARB(const GLint *v)
-{
-   save_WindowPos3fARB((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2]);
-}
-
-static void save_WindowPos3svARB(const GLshort *v)
-{
-   save_WindowPos3fARB(v[0], v[1], v[2]);
-}
 
 
 /* GL_ARB_multitexture */
@@ -6212,10 +6115,8 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->VertexAttribPointerNV = _mesa_VertexAttribPointerNV;
 
    /* 262. GL_NV_point_sprite */
-#if 0
    table->PointParameteriNV = save_PointParameteriNV;
    table->PointParameterivNV = save_PointParameterivNV;
-#endif
 
    /* ARB 1. GL_ARB_multitexture */
    table->ActiveTextureARB = save_ActiveTextureARB;

@@ -3944,6 +3944,16 @@ KEYWORD1 void KEYWORD2 NAME(VertexAttribs4ubvNV)(GLuint index, GLsizei n, const 
    DISPATCH(VertexAttribs4ubvNV, (index, n, v), (F, "glVertexAttribs4ubvNV(%d, %d, %p);\n", index, n, (void *) v));
 }
 
+KEYWORD1 void KEYWORD2 NAME(PointParameteriNV)(GLenum pname, GLint params)
+{
+   DISPATCH(PointParameteriNV, (pname, params), (F, "glPointParameteriNV(0x%x, %d);\n", pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(PointParameterivNV)(GLenum pname, const GLint * params)
+{
+   DISPATCH(PointParameterivNV, (pname, params), (F, "glPointParameterivNV(0x%x, %p);\n", pname, (void *) params));
+}
+
 
 
 /*
@@ -4599,6 +4609,8 @@ void *DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(VertexAttribs4fvNV),
    TABLE_ENTRY(VertexAttribs4svNV),
    TABLE_ENTRY(VertexAttribs4ubvNV),
+   TABLE_ENTRY(PointParameteriNV),
+   TABLE_ENTRY(PointParameterivNV),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.

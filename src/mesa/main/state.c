@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.82 2002/05/27 17:03:09 brianp Exp $ */
+/* $Id: state.c,v 1.83 2002/05/29 15:16:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -485,10 +485,8 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->VertexAttribPointerNV = _mesa_VertexAttribPointerNV;
 
    /* 262. GL_NV_point_sprite */
-#if 0
    exec->PointParameteriNV = _mesa_PointParameteriNV;
    exec->PointParameterivNV = _mesa_PointParameterivNV;
-#endif
 
    /* ARB 1. GL_ARB_multitexture */
    exec->ActiveTextureARB = _mesa_ActiveTextureARB;

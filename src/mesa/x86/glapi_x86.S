@@ -4507,5 +4507,17 @@ GL_PREFIX(VertexAttribs4ubvNV):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribs4ubvNV))
 
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(PointParameteriNV))
+GL_PREFIX(PointParameteriNV):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_PointParameteriNV))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(PointParameterivNV))
+GL_PREFIX(PointParameterivNV):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_PointParameterivNV))
+
 
 #endif  /* __WIN32__ */

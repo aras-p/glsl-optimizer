@@ -752,5 +752,7 @@ static struct name_address_offset static_functions[] = {
    { "glVertexAttribs4fvNV", (GLvoid *) glVertexAttribs4fvNV, _gloffset_VertexAttribs4fvNV },
    { "glVertexAttribs4svNV", (GLvoid *) glVertexAttribs4svNV, _gloffset_VertexAttribs4svNV },
    { "glVertexAttribs4ubvNV", (GLvoid *) glVertexAttribs4ubvNV, _gloffset_VertexAttribs4ubvNV },
+   { "glPointParameteriNV", (GLvoid *) glPointParameteriNV, _gloffset_PointParameteriNV },
+   { "glPointParameterivNV", (GLvoid *) glPointParameterivNV, _gloffset_PointParameterivNV },
    { NULL, NULL }  /* end of list marker */
 };
