@@ -162,6 +162,46 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
 
    savageScreen->texVirtual[SAVAGE_CARD_HEAP] = 
              (drmAddress)(((unsigned int)sPriv->pFB)+gDRIPriv->textureOffset);
+
+   if (drmMap(sPriv->fd, 
+	      gDRIPriv->registers.handle, 
+	      gDRIPriv->registers.size, 
+	      (drmAddress *)&(gDRIPriv->registers.map)) != 0) 
+   {
+      Xfree(savageScreen);
+      sPriv->private = NULL;
+      return GL_FALSE;
+   }
+   
+   if (drmMap(sPriv->fd, 
+	      gDRIPriv->agpTextures.handle, 
+	      gDRIPriv->agpTextures.size, 
+	      (drmAddress *)&(gDRIPriv->agpTextures.map)) != 0) 
+   {
+      Xfree(savageScreen);
+      sPriv->private = NULL;
+      return GL_FALSE;
+   }
+
+/* agp texture*/
+   savageScreen->texVirtual[SAVAGE_AGP_HEAP] = 
+                        (drmAddress)(gDRIPriv->agpTextures.map);
+
+   gDRIPriv->BCIcmdBuf.map = (drmAddress *)
+                           ((unsigned int)gDRIPriv->registers.map+0x00010000);
+
+   savageScreen->aperture.handle = gDRIPriv->aperture.handle;
+   savageScreen->aperture.size   = gDRIPriv->aperture.size;
+   if (drmMap(sPriv->fd, 
+	      savageScreen->aperture.handle, 
+	      savageScreen->aperture.size, 
+	      (drmAddress *)&savageScreen->aperture.map) != 0) 
+   {
+      Xfree(savageScreen);
+      sPriv->private = NULL;
+      return GL_FALSE;
+   } 
+      
 #if 0
    savageDDFastPathInit();
    savageDDTrifuncInit();
@@ -278,9 +318,9 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    }
    for (maxTextureLevels = 1; maxTextureLevels <= 11; ++maxTextureLevels) {
        GLuint size = 1 << maxTextureLevels;
-       size *= size * 4; /* 4 bytes per texel */
-       size *= 2; /* all mipmap levels together take roughly twice the size of
-		     the biggest level */
+       size *= size * 4;  /* 4 bytes per texel */
+       size = size * 4/3; /* all mipmap levels together take roughly
+		             4/3 the size of the biggest level */
        if (size > maxTextureSize)
 	   break;
    }
@@ -317,78 +357,12 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    imesa->shadowCounter = MAX_SHADOWCOUNTER;
    imesa->shadowStatus = GL_TRUE;/*Will judge by 2d message */
 
-   if (drmMap(sPriv->fd, 
-	      gDRIPriv->registers.handle, 
-	      gDRIPriv->registers.size, 
-	      (drmAddress *)&(gDRIPriv->registers.map)) != 0) 
-   {
-      Xfree(savageScreen);
-      sPriv->private = NULL;
-      return GL_FALSE;
-   }
-   
-   if (drmMap(sPriv->fd, 
-	      gDRIPriv->agpTextures.handle, 
-	      gDRIPriv->agpTextures.size, 
-	      (drmAddress *)&(gDRIPriv->agpTextures.map)) != 0) 
-   {
-      Xfree(savageScreen);
-      sPriv->private = NULL;
-      return GL_FALSE;
-   }
-
-/* agp texture*/
-   savageScreen->texVirtual[SAVAGE_AGP_HEAP] = 
-                        (drmAddress)(gDRIPriv->agpTextures.map);
-
-   
-
-   gDRIPriv->BCIcmdBuf.map = (drmAddress *)
-                           ((unsigned int)gDRIPriv->registers.map+0x00010000);
-      
    imesa->MMIO_BASE = (GLuint)gDRIPriv->registers.map;
    imesa->BCIBase= (GLuint)gDRIPriv->BCIcmdBuf.map;
-
-   savageScreen->aperture.handle = gDRIPriv->aperture.handle;
-   savageScreen->aperture.size   = gDRIPriv->aperture.size;
-   if (drmMap(sPriv->fd, 
-	      savageScreen->aperture.handle, 
-	      savageScreen->aperture.size, 
-	      (drmAddress *)&savageScreen->aperture.map) != 0) 
-   {
-      Xfree(savageScreen);
-      sPriv->private = NULL;
-      return GL_FALSE;
-   } 
-   
-   
-
-
-   
    for(i=0;i<5;i++)
    {
        imesa->apertureBase[i] = ((GLuint)savageScreen->aperture.map + 
                                  0x01000000 * i );
-       
-   
-   }
-   
-   {
-      volatile unsigned int * tmp;
-      
-      tmp=(volatile unsigned int *)(imesa->MMIO_BASE + 0x850C);
-      
-      
-      tmp=(volatile unsigned int *)(imesa->MMIO_BASE + 0x48C40);
-      
-   
-      tmp=(volatile unsigned int *)(imesa->MMIO_BASE + 0x48C44);
-
-   
-      tmp=(volatile unsigned int *)(imesa->MMIO_BASE + 0x48C48);
-
-   
-   
    }
    
    imesa->aperturePitch = gDRIPriv->aperturePitch;
