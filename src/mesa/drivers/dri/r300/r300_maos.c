@@ -328,12 +328,14 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 						count);
 	}
 
+#if 0
 	if (inputs & _TNL_BIT_FOG) {
 		CONFIGURE_AOS(	AOS_FORMAT_FLOAT,
 						VB->FogCoordPtr,
 						immd ? 4 : VB->FogCoordPtr->size,
 						count);
 	}
+#endif
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 		if (inputs & (_TNL_BIT_TEX0 << i)) {
