@@ -640,13 +640,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define SiS_S_BOTH_ONE_MINUS_SRC_ALPHA	0x0000000c
 
 /*
- * REG_3D_DstBlendMode			(0x8A54 - 0x8A57)
+ * REG_3D_ClipTopBottom			(0x8A54 - 0x8A57)
  */
 #define MASK_BottomClip			0x00001FFF
 #define MASK_TopClip			0x03FFE000
 
 /*
- * REG_3D_DstBlendMode			(0x8A58 - 0x8A5B)
+ * REG_3D_ClipLeftRight			(0x8A58 - 0x8A5B)
  */
 #define MASK_RightClip			0x00001FFF
 #define MASK_LeftClip			0x03FFE000
