@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.25 2002/02/02 21:40:33 brianp Exp $ */
+/* $Id: s_lines.c,v 1.26 2002/02/15 03:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -566,7 +566,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
    ASSERT(ctx->Light.ShadeModel == GL_SMOOTH);
 
    INIT_SPAN(span);
-   span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_RGBA | SPAN_TEXTURE | SPAN_LAMBDA);
+   span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_RGBA | SPAN_SPEC | SPAN_TEXTURE | SPAN_LAMBDA);
 
 #define SET_XMAJOR 1
 #define INTERP_XY 1
