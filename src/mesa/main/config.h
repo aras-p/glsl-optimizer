@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.14 2000/05/23 20:10:49 brianp Exp $ */
+/* $Id: config.h,v 1.15 2000/07/05 22:40:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -105,8 +105,8 @@
 /* Number of texture units - GL_ARB_multitexture */
 #define MAX_TEXTURE_UNITS 2
 
-/* Maximum viewport size: */
-#define MAX_WIDTH 1600
+/* Maximum viewport/image size: */
+#define MAX_WIDTH 2048
 #define MAX_HEIGHT 1200
 
 /* Maxmimum size for CVA.  May be overridden by the drivers.  */
