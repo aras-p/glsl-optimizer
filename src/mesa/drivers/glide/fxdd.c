@@ -1392,6 +1392,8 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
     */
    _swrast_allow_vertex_fog(ctx, GL_FALSE);
    _swrast_allow_pixel_fog(ctx, GL_TRUE);
+   _tnl_allow_vertex_fog( ctx, GL_FALSE );
+   _tnl_allow_pixel_fog( ctx, GL_TRUE );
 
    /* Tell tnl not to calculate or use vertex fog factors.  (Needed to
     * tell render stage not to clip fog coords).
