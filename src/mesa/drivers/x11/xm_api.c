@@ -1,8 +1,6 @@
-/* $Id: xm_api.c,v 1.55 2003/04/01 17:28:11 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.0.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
@@ -1675,9 +1673,8 @@ void XMesaDestroyContext( XMesaContext c )
    _swrast_DestroyContext( mesaCtx );
    _tnl_DestroyContext( mesaCtx );
    _ac_DestroyContext( mesaCtx );
-   _mesa_destroy_context( mesaCtx );
-
-   FREE( c );
+   _mesa_free_context_data( mesaCtx );
+   _mesa_free( c );
 }
 
 
