@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2000  Brian Paul   All Rights Reserved.
  * 
@@ -60,7 +59,7 @@ struct winthread {
 #define MAX_WINTHREADS 100
 static struct winthread WinThreads[MAX_WINTHREADS];
 static int NumWinThreads = 0;
-static GLboolean ExitFlag = GL_FALSE;
+static volatile GLboolean ExitFlag = GL_FALSE;
 
 
 
@@ -186,33 +185,30 @@ draw_loop(struct winthread *wt)
 static void
 event_loop(Display *dpy)
 {
-   while (!ExitFlag) {
-      static long mask = StructureNotifyMask | ExposureMask | KeyPressMask;
-      XEvent event;
-      int i;
+   XEvent event;
+   int i;
 
-      for (i = 0; i < NumWinThreads; i++) {
-         struct winthread *wt = &WinThreads[i];
-         while (XCheckWindowEvent(dpy, wt->Win, mask, &event)) {
-            if (event.xany.window == wt->Win) {
-               switch (event.type) {
-                  case ConfigureNotify:
-                     resize(wt, event.xconfigure.width,
-                            event.xconfigure.height);
-                     break;
-                  case KeyPress:
-                     /* tell all threads to exit */
-                     ExitFlag = GL_TRUE;
-                     /*printf("exit draw_loop %d\n", wt->Index);*/
-                     return;
-                  default:
-                     /*no-op*/ ;
+   while (!ExitFlag) {
+      XNextEvent(dpy, &event);
+      switch (event.type) {
+         case ConfigureNotify:
+            /* Find winthread for this event's window */
+            for (i = 0; i < NumWinThreads; i++) {
+               struct winthread *wt = &WinThreads[i];
+               if (event.xconfigure.window == wt->Win) {
+                  resize(wt, event.xconfigure.width,
+                         event.xconfigure.height);
+                  break;
                }
             }
-            else {
-               printf("window mismatch\n");
-            }
-         }
+            break;
+         case KeyPress:
+            /* tell all threads to exit */
+            ExitFlag = GL_TRUE;
+            /*printf("exit draw_loop %d\n", wt->Index);*/
+            return;
+         default:
+            /*no-op*/ ;
       }
    }
 }
@@ -391,7 +387,7 @@ main(int argc, char *argv[])
    for (i = 0; i < numThreads; i++) {
       pthread_create(&WinThreads[i].Thread, NULL, thread_function,
                      (void*) &WinThreads[i]);
-      printf("Created Thread %p\n", WinThreads[i].Thread);
+      printf("Created Thread %d\n", (int) WinThreads[i].Thread);
    }
 
    event_loop(dpy);
