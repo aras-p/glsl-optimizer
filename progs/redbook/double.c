@@ -45,6 +45,7 @@
 #include <stdlib.h>
 
 static GLfloat spin = 0.0;
+static GLdouble t0 = 0.;
 
 void display(void)
 {
@@ -58,9 +59,18 @@ void display(void)
    glutSwapBuffers();
 }
 
+GLdouble gettime(void)
+{
+    return (GLdouble)(glutGet(GLUT_ELAPSED_TIME)) / 1000.;
+}
+
 void spinDisplay(void)
 {
-   spin = spin + 2.0;
+   GLdouble t, dt;
+   t = gettime();
+   dt = t - t0;
+   t0 = t;
+   spin = spin + 120.0*dt;
    if (spin > 360.0)
       spin = spin - 360.0;
    glutPostRedisplay();
@@ -88,7 +98,10 @@ void mouse(int button, int state, int x, int y)
    switch (button) {
       case GLUT_LEFT_BUTTON:
          if (state == GLUT_DOWN)
+         {
+            t0 = gettime();
             glutIdleFunc(spinDisplay);
+         }
          break;
       case GLUT_MIDDLE_BUTTON:
          if (state == GLUT_DOWN)

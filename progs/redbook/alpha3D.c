@@ -49,7 +49,7 @@
 
 #define MAXZ 8.0
 #define MINZ -8.0
-#define ZINC 0.4
+#define ZINC 4.
 
 static float solidZ = MAXZ;
 static float transparentZ = MINZ;
@@ -130,11 +130,21 @@ void reshape(int w, int h)
 
 void animate(void)
 {
+   static double t0 = -1.;
    if (solidZ <= MINZ || transparentZ >= MAXZ)
+   {
       glutIdleFunc(NULL);
+      t0 = -1.;
+   }
    else {
-      solidZ -= ZINC;
-      transparentZ += ZINC;
+      double t, dt;
+      t = glutGet(GLUT_ELAPSED_TIME) / 1000.;
+      if (t0 < 0.)
+         t0 = t;
+      dt = t - t0;
+      t0 = t;
+      solidZ -= ZINC*dt;
+      transparentZ += ZINC*dt;
       glutPostRedisplay();
    }
 }
@@ -163,7 +173,7 @@ void keyboard(unsigned char key, int x, int y)
 int main(int argc, char** argv)
 {
    glutInit(&argc, argv);
-   glutInitDisplayMode (GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
+   glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
    glutInitWindowSize(500, 500);
    glutCreateWindow(argv[0]);
    init();
