@@ -37,30 +37,6 @@
 
 
 /**
- * \struct sw_span
- * \brief Contains data for either a horizontal line or a set of
- * pixels that are passed through a pipeline of functions before being
- * drawn.
- *
- * The sw_span structure describes the colors, Z, fogcoord, texcoords,
- * etc for either a horizontal run or a set of independent pixels.  We
- * can either specify a base/step to indicate interpolated values, or
- * fill in arrays of values.  The interpMask and arrayMask bitfields
- * indicate which are active.
- *
- * With this structure it's easy to hand-off span rasterization to
- * subroutines instead of doing it all inline in the triangle functions
- * like we used to do.
- * It also cleans up the local variable namespace a great deal.
- *
- * It would be interesting to experiment with multiprocessor rasterization
- * with this structure.  The triangle rasterizer could simply emit a
- * stream of these structures which would be consumed by one or more
- * span-processing threads which could run in parallel.
- */
-
-
-/**
  * \defgroup SpanFlags SPAN_XXX-flags
  * Bitmasks to indicate which span_arrays need to be computed
  * (sw_span::interpMask) or have already been filled
@@ -109,6 +85,28 @@ struct span_arrays {
 };
 
 
+/**
+ * \struct sw_span
+ * \brief Contains data for either a horizontal line or a set of
+ * pixels that are passed through a pipeline of functions before being
+ * drawn.
+ *
+ * The sw_span structure describes the colors, Z, fogcoord, texcoords,
+ * etc for either a horizontal run or an array of independent pixels.
+ * We can either specify a base/step to indicate interpolated values, or
+ * fill in arrays of values.  The interpMask and arrayMask bitfields
+ * indicate which are active.
+ *
+ * With this structure it's easy to hand-off span rasterization to
+ * subroutines instead of doing it all inline in the triangle functions
+ * like we used to do.
+ * It also cleans up the local variable namespace a great deal.
+ *
+ * It would be interesting to experiment with multiprocessor rasterization
+ * with this structure.  The triangle rasterizer could simply emit a
+ * stream of these structures which would be consumed by one or more
+ * span-processing threads which could run in parallel.
+ */
 struct sw_span {
    GLint x, y;
 
