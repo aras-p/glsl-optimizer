@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -625,7 +625,6 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
    const GLint toffset = 0;        /* always zero */
    GLint defstride;                /* default stride */
    GLint c, f;
-   GLint coordUnitSave;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -756,31 +755,14 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
    _mesa_DisableClientState( GL_INDEX_ARRAY );
 
    /* Texcoords */
-   coordUnitSave = ctx->Array.ActiveTexture;
    if (tflag) {
-      GLuint i=0;
-      /* enable unit 0 texcoord array */
-      _mesa_ClientActiveTextureARB( GL_TEXTURE0_ARB );
       _mesa_EnableClientState( GL_TEXTURE_COORD_ARRAY );
       _mesa_TexCoordPointer( tcomps, GL_FLOAT, stride,
-                             (GLubyte *) pointer + i * toffset );
-      /* disable all other texcoord arrays */
-      for (i = 1; i < ctx->Const.MaxTextureCoordUnits; i++) {
-         _mesa_ClientActiveTextureARB( (GLenum) (GL_TEXTURE0_ARB + i) );
-         _mesa_DisableClientState( GL_TEXTURE_COORD_ARRAY );
-      }
+                             (GLubyte *) pointer + toffset );
    }
    else {
-      /* disable all texcoord arrays */
-      GLuint i;
-      for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
-         _mesa_ClientActiveTextureARB( (GLenum) (GL_TEXTURE0_ARB + i) );
-         _mesa_DisableClientState( GL_TEXTURE_COORD_ARRAY );
-      }
+      _mesa_DisableClientState( GL_TEXTURE_COORD_ARRAY );
    }
-   /* Restore texture coordinate unit index */
-   _mesa_ClientActiveTextureARB( (GLenum) (GL_TEXTURE0_ARB + coordUnitSave) );
-
 
    /* Color */
    if (cflag) {
