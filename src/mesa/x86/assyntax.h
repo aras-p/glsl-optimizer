@@ -1,4 +1,4 @@
-/* $Id: assyntax.h,v 1.14 2000/09/18 16:57:16 gareth Exp $ */
+/* $Id: assyntax.h,v 1.15 2000/09/18 22:49:04 gareth Exp $ */
 
 #ifndef __ASSYNTAX_H__
 #define __ASSYNTAX_H__
@@ -261,6 +261,8 @@
 /* Redefine assembler directives */
 /*********************************/
 #define GLOBL		CHOICE(.globl, .globl, .extern)
+#define GLOBAL		GLOBL
+#define EXTERN		GLOBL
 /*
 #define ALIGNTEXT32	CHOICE(.align 32, .align ARG2(5,0x90), .align 32)
 */
@@ -312,6 +314,8 @@
  * which has no scaling
  */
 #define REGBID(b,i,d)	CHOICE(d(b,i), d(b,i), d(b)(i))
+/* Reg indirect Base + (Index * Scale) */
+#define REGBIS(b,i,s)	CHOICE((b,i,s), (b,i,s), (b)(i*s))
 /* Reg indirect Base + (Index * Scale) + Displacement */
 #define REGBISD(b,i,s,d) CHOICE(d(b,i,s), d(b,i,s), d(b)(i*s))
 /* Displaced Scaled Index: */
@@ -1009,6 +1013,14 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define W_REGBID(b, i, d)	WORD_PTR [b + i + d]
 #define B_REGBID(b, i, d)	BYTE_PTR [b + i + d]
 
+/* Reg indirect Base + (Index * Scale) */
+#define P_REGBIS(b, i, s)	[b + i * s]
+#define X_REGBIS(b, i, s)	TBYTE_PTR [b + i * s]
+#define D_REGBIS(b, i, s)	QWORD_PTR [b + i * s]
+#define L_REGBIS(b, i, s)	DWORD_PTR [b + i * s]
+#define W_REGBIS(b, i, s)	WORD_PTR [b + i * s]
+#define B_REGBIS(b, i, s)	BYTE_PTR [b + i * s]
+
 /* Reg indirect Base + (Index * Scale) + Displacement */
 #define P_REGBISD(b, i, s, d)	[b + i * s + d]
 #define X_REGBISD(b, i, s, d)	TBYTE_PTR [b + i * s + d]
@@ -1627,6 +1639,8 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define MOVLHPS(a, b)		movlhps P_ARG2(a, b)
 #define MOVLPS(a, b)		movlps P_ARG2(a, b)
 #define MOVMSKPS(a, b)		movmskps P_ARG2(a, b)
+#define MOVNTPS(a, b)		movntps P_ARG2(a, b)
+#define MOVNTQ(a, b)		movntq P_ARG2(a, b)
 #define MOVSS(a, b)		movss P_ARG2(a, b)
 #define MOVUPS(a, b)		movups P_ARG2(a, b)
 #define MULPS(a, b)		mulps P_ARG2(a, b)
