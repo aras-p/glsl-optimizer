@@ -15,11 +15,12 @@ LIBDIR = [-.lib]
 CFLAGS = /include=$(INCDIR)/define=(FBIND=1)
 
 SOURCES = glu.c mipmap.c nurbs.c nurbscrv.c nurbssrf.c nurbsutl.c \
-	project.c quadric.c tess.c tess_fist.c tess_hash.c tess_heap.c
+	project.c quadric.c tess.c tess_fist.c tess_hash.c tess_heap.c \
+	tess_winding.c
 
 OBJECTS =glu.obj,mipmap.obj,nurbs.obj,nurbscrv.obj,nurbssrf.obj,nurbsutl.obj,\
 	project.obj,quadric.obj,tess.obj,tess_fist.obj,tess_hash.obj,\
-	tess_heap.obj
+	tess_heap.obj,tess_winding.obj
 
 
 
