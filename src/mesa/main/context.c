@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.25 1999/12/02 20:33:06 brianp Exp $ */
+/* $Id: context.c,v 1.26 1999/12/04 21:23:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -872,9 +872,9 @@ static void initialize_context( GLcontext *ctx )
       ctx->Stencil.ZPassFunc = GL_KEEP;
       ctx->Stencil.ZFailFunc = GL_KEEP;
       ctx->Stencil.Ref = 0;
-      ctx->Stencil.ValueMask = 0xff;
+      ctx->Stencil.ValueMask = STENCIL_MAX;
       ctx->Stencil.Clear = 0;
-      ctx->Stencil.WriteMask = 0xff;
+      ctx->Stencil.WriteMask = STENCIL_MAX;
 
       /* Texture group */
       ctx->Texture.CurrentUnit = 0;      /* multitexture */
