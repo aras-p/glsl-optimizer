@@ -329,17 +329,25 @@ _mesa_add_unnamed_constant(struct program_parameter_list *paramList,
 /**
  * Add a new state reference to the parameter list.
  * \param paramList - the parameter list
- * \param values - four float values
+ * \param state     - an array of 6 state tokens
+ *
  * \return index of the new parameter.
  */
 GLint
 _mesa_add_state_reference(struct program_parameter_list *paramList,
-                          const char *stateString)
+                          GLint *stateTokens)
 {
    /* XXX Should we parse <stateString> here and produce the parameter's
     * list of STATE_* tokens here, or in the parser?
     */
-   return add_parameter(paramList, stateString, NULL, STATE);
+   GLint a, idx;
+
+   idx = add_parameter(paramList, "Some State", NULL, STATE);
+	
+   for (a=0; a<6; a++)
+      paramList->Parameters[idx].StateIndexes[a] = stateTokens[a];
+
+   return idx;
 }
 
 
@@ -485,6 +493,21 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
          case STATE_SPOT_DIRECTION:
             COPY_4V(value, ctx->Light.Light[ln].EyeDirection);
             return;
+         case STATE_HALF:
+            {
+               GLfloat eye_z[] = {0, 0, 1};
+					
+               /* Compute infinite half angle vector:
+                *   half-vector = light_position + (0, 0, 1) 
+                * and then normalize.  w = 0
+					 *
+					 * light.EyePosition.w should be 0 for infinite lights.
+                */
+					ADD_3V(value, eye_z, ctx->Light.Light[ln].EyePosition);
+					NORMALIZE_3FV(value);
+					value[3] = 0;
+            }						  
+            return;
          default:
             _mesa_problem(ctx, "Invalid light state in fetch_state");
             return;
@@ -587,6 +610,13 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
          }
       }
       return;
+   case STATE_TEXENV_COLOR:
+      {		
+         /* state[1] is the texture unit */
+         const GLuint unit = (GLuint) state[1];
+         COPY_4V(value, ctx->Texture.Unit[unit].EnvColor);
+      }			
+      return;
    case STATE_FOG_COLOR:
       COPY_4V(value, ctx->Fog.Color);
       return;
@@ -675,6 +705,47 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
             }
          }
       }
+      return;
+   case STATE_DEPTH_RANGE:
+      value[0] = ctx->Viewport.Near;                     /* near       */		
+      value[1] = ctx->Viewport.Far;                      /* far        */		
+      value[2] = ctx->Viewport.Far - ctx->Viewport.Near; /* far - near */		
+      value[3] = 0;		
+      return;
+   case STATE_FRAGMENT_PROGRAM:
+      {
+         /* state[1] = {STATE_ENV, STATE_LOCAL} */
+         /* state[2] = parameter index          */
+         int idx = state[2];				  
+
+         switch (state[1]) {
+            case STATE_ENV:
+               COPY_4V(value, ctx->FragmentProgram.Parameters[idx]);						  
+               break;
+
+            case STATE_LOCAL:
+               COPY_4V(value, ctx->FragmentProgram.Current->Base.LocalParams[idx]);
+               break;				
+         }				  
+      }			
+      return;
+		
+   case STATE_VERTEX_PROGRAM:
+      {		
+         /* state[1] = {STATE_ENV, STATE_LOCAL} */
+         /* state[2] = parameter index          */
+         int idx = state[2];				  
+			
+         switch (state[1]) {
+            case STATE_ENV:
+               COPY_4V(value, ctx->VertexProgram.Parameters[idx]);						  
+               break;
+
+            case STATE_LOCAL:
+               COPY_4V(value, ctx->VertexProgram.Current->Base.LocalParams[idx]);
+               break;				
+         }				  
+      }			
       return;
    default:
       _mesa_problem(ctx, "Invalid state in fetch_state");

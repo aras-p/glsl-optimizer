@@ -101,6 +101,7 @@ enum state_index {
    STATE_SPECULAR,
    STATE_EMISSION,
    STATE_SHININESS,
+   STATE_HALF,	
 
    STATE_POSITION,
    STATE_ATTENUATION,
@@ -113,7 +114,17 @@ enum state_index {
    STATE_TEXGEN_OBJECT_S,
    STATE_TEXGEN_OBJECT_T,
    STATE_TEXGEN_OBJECT_R,
-   STATE_TEXGEN_OBJECT_Q
+   STATE_TEXGEN_OBJECT_Q,
+
+	STATE_TEXENV_COLOR,
+	
+	STATE_DEPTH_RANGE,
+
+	STATE_VERTEX_PROGRAM,
+	STATE_FRAGMENT_PROGRAM,
+
+	STATE_ENV,
+	STATE_LOCAL
 };
 
 
@@ -137,7 +148,7 @@ struct program_parameter
 {
    const char *Name;                   /* Null-terminated */
    enum parameter_type Type;
-   enum state_index StateIndexes[5];   /* Global state reference */
+   enum state_index StateIndexes[6];   /* Global state reference */
    GLfloat Values[4];
 };
 
@@ -176,7 +187,7 @@ _mesa_add_unnamed_constant(struct program_parameter_list *paramList,
 
 extern GLint
 _mesa_add_state_reference(struct program_parameter_list *paramList,
-                          const char *stateString);
+                          GLint *stateTokens);
 
 extern GLfloat *
 _mesa_lookup_parameter_value(struct program_parameter_list *paramList,
