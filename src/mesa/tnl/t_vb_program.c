@@ -1,4 +1,4 @@
-/* $Id: t_vb_program.c,v 1.1 2001/12/14 02:51:45 brianp Exp $ */
+/* $Id: t_vb_program.c,v 1.2 2001/12/15 02:13:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -764,6 +764,12 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
              VB->AttribPtr[3]->data[i][1],
              VB->AttribPtr[3]->data[i][2],
              VB->AttribPtr[3]->data[i][3]);
+      printf("  normal: %f, %f, %f, %f\n",
+             VB->AttribPtr[2]->data[i][0],
+             VB->AttribPtr[2]->data[i][1],
+             VB->AttribPtr[2]->data[i][2],
+             VB->AttribPtr[2]->data[i][3]);
+
 
       /* load the input attribute registers */
       for (attr = 0; attr < 16; attr++) {
@@ -969,7 +975,7 @@ static GLboolean run_init_vp( GLcontext *ctx,
 static void check_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
 {
    stage->active = ctx->VertexProgram.Enabled;
-   printf("check_vp() active = %d\n", stage->active);
+
    if (stage->active) {
 #if 000
       if (stage->privatePtr)

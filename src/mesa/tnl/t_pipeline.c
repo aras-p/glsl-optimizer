@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.c,v 1.20 2001/12/14 02:51:45 brianp Exp $ */
+/* $Id: t_pipeline.c,v 1.21 2001/12/15 02:13:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -130,8 +130,6 @@ void _tnl_run_pipeline( GLcontext *ctx )
 
    pipe->run_state_changes = 0;
    pipe->run_input_changes = 0;
-
-   printf("%s()\n", __FUNCTION__);
 
    /* Done elsewhere.
     */

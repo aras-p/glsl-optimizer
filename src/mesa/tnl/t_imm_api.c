@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.20 2001/12/14 02:51:44 brianp Exp $ */
+/* $Id: t_imm_api.c,v 1.21 2001/12/15 02:13:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,6 +38,7 @@
 #include "state.h"
 #include "colormac.h"
 #include "macros.h"
+#include "vtxfmt.h"
 
 #include "t_context.h"
 #include "t_imm_api.h"
@@ -104,7 +105,8 @@ _tnl_begin( GLcontext *ctx, GLenum p )
       _tnl_vprog_vtxfmt_init(ctx);
    else
       _tnl_imm_vtxfmt_init(ctx);
-   _mesa_init_exec_vtxfmt(ctx);
+   /* XXX this should not be done here - inefficient */
+   _mesa_install_exec_vtxfmt(ctx, &(TNL_CONTEXT(ctx)->vtxfmt));
 
    /* if only a very few slots left, might as well flush now
     */
@@ -1240,8 +1242,6 @@ _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
 void _tnl_imm_vtxfmt_init( GLcontext *ctx )
 {
    GLvertexformat *vfmt = &(TNL_CONTEXT(ctx)->vtxfmt);
-
-   printf("%s()\n", __FUNCTION__);
 
    /* All begin/end operations are handled by this vertex format:
     */

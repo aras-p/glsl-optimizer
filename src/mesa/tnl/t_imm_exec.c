@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.31 2001/12/14 02:51:45 brianp Exp $ */
+/* $Id: t_imm_exec.c,v 1.32 2001/12/15 02:13:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -463,7 +463,6 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
-   printf("enter %s()\n", __FUNCTION__);
    _tnl_compute_orflag( IM, IM->Start );
    _tnl_copy_immediate_vertices( ctx, IM ); 
    _tnl_get_exec_copy_verts( ctx, IM );
@@ -471,7 +470,6 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
    if (tnl->pipeline.build_state_changes)
       _tnl_validate_pipeline( ctx );
 
-   printf("  CopyStart %d == Count %d ?\n", IM->CopyStart, IM->Count);
    if (IM->CopyStart == IM->Count) {
       exec_empty_cassette( ctx, IM );
    }
@@ -504,7 +502,6 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
 
    if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1)
       ctx->Driver.NeedFlush &= ~FLUSH_STORED_VERTICES;
-   printf("leave %s()\n", __FUNCTION__);
 }
 
 

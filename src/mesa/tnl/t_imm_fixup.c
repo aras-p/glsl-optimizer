@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.29 2001/12/14 02:51:45 brianp Exp $ */
+/* $Id: t_imm_fixup.c,v 1.30 2001/12/15 02:13:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -421,7 +421,6 @@ void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
    }
 
    next->CopyStart = next->Start - count;
-   printf("%s() CopyStart = %d\n", __FUNCTION__, next->CopyStart);
 
    if ((prev->CopyOrFlag & VERT_DATA) == VERT_ELT &&
        ctx->Array.LockCount &&
