@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.4 1999/03/02 20:52:14 martin Exp $
+$Id: VERSIONS,v 1.5 1999/03/10 12:41:11 sio2 Exp $
 
 
 Mesa Version History
@@ -637,6 +637,7 @@ Mesa Version History
 	- glClear(GL_COLOR_BUFFER_BIT) with RGBA or CI masking was broken
 	- GL_LINEAR sampling of 3D textures was broken
 	- fixed SVR4 'cc' compiler macro problem (dawes@xfree86.org)
+	- added GL_TEXTURE_PRIORITY fix (keithh@netcomuk.co.uk)
     Changes:
 	- some device driver changes (see src/dd.h)
 	- new copyright on core Mesa code
