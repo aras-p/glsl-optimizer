@@ -416,8 +416,8 @@ static void VFMT_FALLBACK( const char *caller )
    assert(rmesa->dma.flush == 0);
    rmesa->vb.fell_back = GL_TRUE;
    rmesa->vb.installed = GL_FALSE;
-   glBegin( prim );
-   
+   _glapi_Dispatch->Begin( prim );
+
    if (rmesa->vb.installed_color_3f_sz == 4)
       alpha = ctx->Current.Attrib[VERT_ATTRIB_COLOR0][3];
 
@@ -426,20 +426,20 @@ static void VFMT_FALLBACK( const char *caller )
    for (i = 0 ; i < nrverts; i++) {
       GLuint offset = 3;
       if (ind0 & R200_VTX_N0) {
-	 glNormal3fv( &tmp[i][offset] ); 
+	 _glapi_Dispatch->Normal3fv( &tmp[i][offset] ); 
 	 offset += 3;
       }
 
       if (VTX_COLOR(ind0, 0) == R200_VTX_PK_RGBA) {
-	 glColor4ubv( (GLubyte *)&tmp[i][offset] ); 
+	 _glapi_Dispatch->Color4ubv( (GLubyte *)&tmp[i][offset] ); 
 	 offset++;
       }
       else if (VTX_COLOR(ind0, 0) == R200_VTX_FP_RGBA) {
-	 glColor4fv( &tmp[i][offset] ); 
+	 _glapi_Dispatch->Color4fv( &tmp[i][offset] ); 
 	 offset+=4;
       } 
       else if (VTX_COLOR(ind0, 0) == R200_VTX_FP_RGB) {
-	 glColor3fv( &tmp[i][offset] ); 
+	 _glapi_Dispatch->Color3fv( &tmp[i][offset] ); 
 	 offset+=3;
       }
 
@@ -449,38 +449,42 @@ static void VFMT_FALLBACK( const char *caller )
       }
 
       if (ind1 & (7 << R200_VTX_TEX0_COMP_CNT_SHIFT)) {
-	 glTexCoord2fv( &tmp[i][offset] ); 
+	 _glapi_Dispatch->TexCoord2fv( &tmp[i][offset] ); 
 	 offset += 2;
       }
 
       if (ind1 & (7 << R200_VTX_TEX1_COMP_CNT_SHIFT)) {
-	 glMultiTexCoord2fvARB( GL_TEXTURE1_ARB, &tmp[i][offset] );
+	 _glapi_Dispatch->MultiTexCoord2fvARB( GL_TEXTURE1, &tmp[i][offset] );
 	 offset += 2;
       }
 
-      glVertex3fv( &tmp[i][0] );
+      _glapi_Dispatch->Vertex3fv( &tmp[i][0] );
    }
 
    /* Replay current vertex
     */
    if (ind0 & R200_VTX_N0) 
-      glNormal3fv( rmesa->vb.normalptr );
+       _glapi_Dispatch->Normal3fv( rmesa->vb.normalptr );
 
-   if (VTX_COLOR(ind0, 0) == R200_VTX_PK_RGBA) 
-         glColor4ub( rmesa->vb.colorptr->red,
-		     rmesa->vb.colorptr->green,
-		     rmesa->vb.colorptr->blue,
-		     rmesa->vb.colorptr->alpha );
-   else if (VTX_COLOR(ind0, 0) == R200_VTX_FP_RGBA) 
-      glColor4fv( rmesa->vb.floatcolorptr );
+   if (VTX_COLOR(ind0, 0) == R200_VTX_PK_RGBA) {
+      _glapi_Dispatch->Color4ub( rmesa->vb.colorptr->red,
+				 rmesa->vb.colorptr->green,
+				 rmesa->vb.colorptr->blue,
+				 rmesa->vb.colorptr->alpha );
+   }
+   else if (VTX_COLOR(ind0, 0) == R200_VTX_FP_RGBA) {
+      _glapi_Dispatch->Color4fv( rmesa->vb.floatcolorptr );
+   }
    else if (VTX_COLOR(ind0, 0) == R200_VTX_FP_RGB) {
-      if (rmesa->vb.installed_color_3f_sz == 4 && alpha != 1.0)
-	 glColor4f( rmesa->vb.floatcolorptr[0],
-		    rmesa->vb.floatcolorptr[1],
-		    rmesa->vb.floatcolorptr[2],
-		    alpha );
-      else
-	 glColor3fv( rmesa->vb.floatcolorptr );
+      if (rmesa->vb.installed_color_3f_sz == 4 && alpha != 1.0) {
+	 _glapi_Dispatch->Color4f( rmesa->vb.floatcolorptr[0],
+				   rmesa->vb.floatcolorptr[1],
+				   rmesa->vb.floatcolorptr[2],
+				   alpha );
+      }
+      else {
+	 _glapi_Dispatch->Color3fv( rmesa->vb.floatcolorptr );
+      }
    }
 
    if (VTX_COLOR(ind0, 1) == R200_VTX_PK_RGBA) 
@@ -488,11 +492,13 @@ static void VFMT_FALLBACK( const char *caller )
 					     rmesa->vb.specptr->green,
 					     rmesa->vb.specptr->blue ); 
 
-   if (ind1 & (7 << R200_VTX_TEX0_COMP_CNT_SHIFT)) 
-      glTexCoord2fv( rmesa->vb.texcoordptr[0] );
+   if (ind1 & (7 << R200_VTX_TEX0_COMP_CNT_SHIFT)) {
+      _glapi_Dispatch->TexCoord2fv( rmesa->vb.texcoordptr[0] );
+   }
 
-   if (ind1 & (7 << R200_VTX_TEX1_COMP_CNT_SHIFT)) 
-      glMultiTexCoord2fvARB( GL_TEXTURE1_ARB, rmesa->vb.texcoordptr[1] );
+   if (ind1 & (7 << R200_VTX_TEX1_COMP_CNT_SHIFT)) {
+      _glapi_Dispatch->MultiTexCoord2fvARB( GL_TEXTURE1, rmesa->vb.texcoordptr[1] );
+   }
 }
 
 
@@ -797,7 +803,7 @@ static void r200_Materialfv( GLenum face, GLenum pname,
 
    if (rmesa->vb.prim[0] != GL_POLYGON+1) {
       VFMT_FALLBACK( __FUNCTION__ );
-      glMaterialfv( face, pname, params );
+      _glapi_Dispatch->Materialfv( face, pname, params );
       return;
    }
    _mesa_noop_Materialfv( face, pname, params );
@@ -836,7 +842,7 @@ static void r200_Begin( GLenum mode )
       r200VtxfmtValidate( ctx );
 
    if (!rmesa->vb.installed) {
-      glBegin( mode );
+      _glapi_Dispatch->Begin( mode );
       return;
    }
 
@@ -885,7 +891,7 @@ static void r200_End( void )
       _mesa_error( ctx, GL_INVALID_OPERATION, "glEnd" );
       return;
    }
-	  
+
    note_last_prim( rmesa, PRIM_END );
    rmesa->vb.prim[0] = GL_POLYGON+1;
 }
