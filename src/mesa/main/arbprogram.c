@@ -31,8 +31,9 @@
 
 #include "glheader.h"
 #include "arbprogram.h"
+#include "arbfragparse.h"
+#include "arbvertparse.h"
 #include "context.h"
-#include "hash.h"
 #include "imports.h"
 #include "macros.h"
 #include "mtypes.h"
@@ -41,23 +42,6 @@
 #include "nvfragprog.h"
 #include "nvvertparse.h"
 #include "nvvertprog.h"
-
-
-/* XXX temporary */
-static void
-_mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
-                               const GLubyte *string, GLsizei len,
-                               struct vertex_program *prog)
-{
-}
-
-
-static void
-_mesa_parse_arb_fragment_program(GLcontext *ctx, GLenum target,
-                                 const GLubyte *string, GLsizei len,
-                                 struct fragment_program *prog)
-{
-}
 
 
 /*
