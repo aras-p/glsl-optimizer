@@ -1,4 +1,4 @@
-# $Id: Makefile.BeOS-R4,v 1.1 1999/08/19 00:55:40 jtg Exp $
+# $Id: Makefile.BeOS-R4,v 1.2 1999/09/17 00:07:26 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.1
@@ -23,8 +23,11 @@
 
 
 # $Log: Makefile.BeOS-R4,v $
-# Revision 1.1  1999/08/19 00:55:40  jtg
-# Initial revision
+# Revision 1.2  1999/09/17 00:07:26  brianp
+# link with -lGLU -lGL instead of -lMesaGLU -lMesaGL
+#
+# Revision 1.1.1.1  1999/08/19 00:55:40  jtg
+# Imported sources
 #
 # Revision 1.5  1999/06/22 12:50:11  brianp
 # removed multitex demo
@@ -49,7 +52,7 @@
 INCDIR = ../include
 LIBDIR = ../lib
 
-GL_LIBS = -L$(LIBDIR) -L/boot/home/config/lib -Xlinker -rpath $(LIBDIR) -lbe -lglut -lMesaGLU -lMesaGL $(XLIBS)
+GL_LIBS = -L$(LIBDIR) -L/boot/home/config/lib -Xlinker -rpath $(LIBDIR) -lbe -lglut -lGLU -lGL $(XLIBS)
 
 LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
 

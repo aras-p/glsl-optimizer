@@ -1,4 +1,4 @@
-# $Id: Makefile.BeOS-R4,v 1.1 1999/08/19 00:55:41 jtg Exp $
+# $Id: Makefile.BeOS-R4,v 1.2 1999/09/17 00:08:38 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.1
@@ -17,7 +17,7 @@
 INCDIR = ../include
 LIBDIR = ../lib
 
-GL_LIBS = -L$(LIBDIR) -L/boot/home/config/lib -Xlinker -rpath $(LIBDIR) -lbe -lglut -lMesaGLU -lMesaGL $(XLIBS)
+GL_LIBS = -L$(LIBDIR) -L/boot/home/config/lib -Xlinker -rpath $(LIBDIR) -lbe -lglut -lGLU -lGL $(XLIBS)
 
 LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
 
