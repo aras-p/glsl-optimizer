@@ -564,6 +564,19 @@ struct dd_function_table {
 
 
    /**
+    * \name Vertex/fragment program functions
+    */
+   /*@{*/
+   /** Bind a vertex/fragment program */
+   void (*BindProgram)(GLcontext *ctx, GLenum target, struct program *prog);
+   /** Allocate a new program */
+   struct program * (*NewProgram)(GLcontext *ctx, GLenum target, GLuint id);
+   /** Delete a program */
+   void (*DeleteProgram)(GLcontext *ctx, struct program *prog);
+   /*@}*/
+
+
+   /**
     * \name State-changing functions.
     *
     * \note drawing functions are above.

@@ -59,7 +59,7 @@ _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
                        GLint *line, GLint *col);
 
 extern struct program *
-_mesa_alloc_program(GLcontext *ctx, GLenum target, GLuint id);
+_mesa_new_program(GLcontext *ctx, GLenum target, GLuint id);
 
 extern void
 _mesa_delete_program(GLcontext *ctx, struct program *prog);

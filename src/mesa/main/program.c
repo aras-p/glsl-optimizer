@@ -140,14 +140,17 @@ _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
 
 
 /**
- * Allocate and initialize a new fragment/vertex program object
+ * Allocate and initialize a new fragment/vertex program object but don't
+ * put it into the program hash table.
+ * Called via ctx->Driver.NewProgram.  May be wrapped (OO deriviation)
+ * by a device driver function.
  * \param ctx  context
  * \param id   program id/number
  * \param target  program target/type
  * \return  pointer to new program object
  */
 struct program *
-_mesa_alloc_program(GLcontext *ctx, GLenum target, GLuint id)
+_mesa_new_program(GLcontext *ctx, GLenum target, GLuint id)
 {
    struct program *prog;
 
@@ -168,7 +171,7 @@ _mesa_alloc_program(GLcontext *ctx, GLenum target, GLuint id)
       prog = &(fprog->Base);
    }
    else {
-      _mesa_problem(ctx, "bad target in _mesa_alloc_program");
+      _mesa_problem(ctx, "bad target in _mesa_new_program");
       return NULL;
    }
    prog->Id = id;
@@ -182,6 +185,8 @@ _mesa_alloc_program(GLcontext *ctx, GLenum target, GLuint id)
 /**
  * Delete a program and remove it from the hash table, ignoring the
  * reference count.
+ * Called via ctx->Driver.DeleteProgram.  May be wrapped (OO deriviation)
+ * by a device driver function.
  */
 void
 _mesa_delete_program(GLcontext *ctx, struct program *prog)
@@ -812,7 +817,7 @@ _mesa_BindProgram(GLenum target, GLuint id)
          ctx->VertexProgram.Current->Base.RefCount--;
          /* and delete if refcount goes below one */
          if (ctx->VertexProgram.Current->Base.RefCount <= 0) {
-            _mesa_delete_program(ctx, &(ctx->VertexProgram.Current->Base));
+            ctx->Driver.DeleteProgram(ctx, &(ctx->VertexProgram.Current->Base));
             _mesa_HashRemove(ctx->Shared->Programs, id);
          }
       }
@@ -829,7 +834,7 @@ _mesa_BindProgram(GLenum target, GLuint id)
          ctx->FragmentProgram.Current->Base.RefCount--;
          /* and delete if refcount goes below one */
          if (ctx->FragmentProgram.Current->Base.RefCount <= 0) {
-            _mesa_delete_program(ctx, &(ctx->FragmentProgram.Current->Base));
+            ctx->Driver.DeleteProgram(ctx, &(ctx->FragmentProgram.Current->Base));
             _mesa_HashRemove(ctx->Shared->Programs, id);
          }
       }
@@ -865,7 +870,7 @@ _mesa_BindProgram(GLenum target, GLuint id)
       }
       else {
          /* allocate a new program now */
-         prog = _mesa_alloc_program(ctx, target, id);
+         prog = ctx->Driver.NewProgram(ctx, target, id);
          if (!prog) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramNV/ARB");
             return;
@@ -888,6 +893,9 @@ _mesa_BindProgram(GLenum target, GLuint id)
 
    if (prog)
       prog->RefCount++;
+
+   if (ctx->Driver.BindProgram)
+      ctx->Driver.BindProgram(ctx, target, prog);
 }
 
 
@@ -935,7 +943,7 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
             }
             prog->RefCount--;
             if (prog->RefCount <= 0) {
-               _mesa_delete_program(ctx, prog);
+               ctx->Driver.DeleteProgram(ctx, prog);
             }
          }
       }

@@ -27,6 +27,7 @@
 #include "imports.h"
 #include "buffers.h"
 #include "context.h"
+#include "program.h"
 #include "texformat.h"
 #include "teximage.h"
 #include "texobj.h"
@@ -105,6 +106,11 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->CopyColorSubTable = _swrast_CopyColorSubTable;
    driver->CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
    driver->CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
+
+   /* Vertex/fragment programs */
+   driver->BindProgram = NULL;
+   driver->NewProgram = _mesa_new_program;
+   driver->DeleteProgram = _mesa_delete_program;
 
    /* simple state commands */
    driver->AlphaFunc = NULL;

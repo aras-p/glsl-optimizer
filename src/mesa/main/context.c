@@ -6,9 +6,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -827,12 +827,12 @@ alloc_shared_state( GLcontext *ctx )
 #endif
 
 #if FEATURE_ARB_vertex_program
-   ss->DefaultVertexProgram = _mesa_alloc_program(ctx, GL_VERTEX_PROGRAM_ARB, 0);
+   ss->DefaultVertexProgram = ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
    if (!ss->DefaultVertexProgram)
       goto cleanup;
 #endif
 #if FEATURE_ARB_fragment_program
-   ss->DefaultFragmentProgram = _mesa_alloc_program(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
+   ss->DefaultFragmentProgram = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
    if (!ss->DefaultFragmentProgram)
       goto cleanup;
 #endif
@@ -880,11 +880,11 @@ alloc_shared_state( GLcontext *ctx )
 #endif
 #if FEATURE_ARB_vertex_program
    if (ss->DefaultVertexProgram)
-      _mesa_delete_program(ctx, ss->DefaultVertexProgram);
+      ctx->Driver.DeleteProgram(ctx, ss->DefaultVertexProgram);
 #endif
 #if FEATURE_ARB_fragment_program
    if (ss->DefaultFragmentProgram)
-      _mesa_delete_program(ctx, ss->DefaultFragmentProgram);
+      ctx->Driver.DeleteProgram(ctx, ss->DefaultFragmentProgram);
 #endif
    if (ss->BufferObjects)
       _mesa_DeleteHashTable(ss->BufferObjects);
@@ -956,7 +956,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
          struct program *p = (struct program *) _mesa_HashLookup(ss->Programs,
                                                                  prog);
          ASSERT(p);
-         _mesa_delete_program(ctx, p);
+         ctx->Driver.DeleteProgram(ctx, p);
          _mesa_HashRemove(ss->Programs, prog);
       }
       else {
@@ -974,7 +974,11 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
 }
 
 
-static void _mesa_init_current( GLcontext *ctx )
+/**
+ * Initialize fields of gl_current_attrib (aka ctx->Current.*)
+ */
+static void
+_mesa_init_current( GLcontext *ctx )
 {
    int i;
 
@@ -995,6 +999,11 @@ static void _mesa_init_current( GLcontext *ctx )
 }
 
 
+/**
+ * Initialize fields of gl_constants (aka ctx->Const.*).
+ * Use defaults from config.h.  The device drivers will often override
+ * some of these values (such as number of texture units).
+ */
 static void 
 _mesa_init_constants( GLcontext *ctx )
 {
@@ -1066,6 +1075,7 @@ _mesa_init_constants( GLcontext *ctx )
 
    ASSERT(ctx->Const.MaxTextureUnits == MAX2(ctx->Const.MaxTextureImageUnits, ctx->Const.MaxTextureCoordUnits));
 }
+
 
 /**
  * Initialize the attribute groups in a GL context.
@@ -1510,14 +1520,14 @@ _mesa_free_context_data( GLcontext *ctx )
    if (ctx->VertexProgram.Current) {
       ctx->VertexProgram.Current->Base.RefCount--;
       if (ctx->VertexProgram.Current->Base.RefCount <= 0)
-         _mesa_delete_program(ctx, &(ctx->VertexProgram.Current->Base));
+         ctx->Driver.DeleteProgram(ctx, &(ctx->VertexProgram.Current->Base));
    }
 #endif
 #if FEATURE_NV_fragment_program
    if (ctx->FragmentProgram.Current) {
       ctx->FragmentProgram.Current->Base.RefCount--;
       if (ctx->FragmentProgram.Current->Base.RefCount <= 0)
-         _mesa_delete_program(ctx, &(ctx->FragmentProgram.Current->Base));
+         ctx->Driver.DeleteProgram(ctx, &(ctx->FragmentProgram.Current->Base));
    }
 #endif
 
