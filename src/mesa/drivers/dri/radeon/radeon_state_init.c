@@ -522,6 +522,7 @@ void radeonInitState( radeonContextPtr rmesa )
 			   &l->LinearAttenuation );
       ctx->Driver.Lightfv( ctx, p, GL_QUADRATIC_ATTENUATION, 
 		     &l->QuadraticAttenuation );
+      *(float *)&(rmesa->hw.lit[i].cmd[LIT_ATTEN_XXX]) = 0.0;
    }
 
    ctx->Driver.LightModelfv( ctx, GL_LIGHT_MODEL_AMBIENT, 

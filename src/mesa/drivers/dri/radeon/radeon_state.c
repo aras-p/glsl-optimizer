@@ -1101,6 +1101,10 @@ static void radeonLightfv( GLcontext *ctx, GLenum light,
    case GL_CONSTANT_ATTENUATION:
       RADEON_STATECHANGE(rmesa, lit[p]);
       fcmd[LIT_ATTEN_CONST] = params[0];
+      if ( params[0] == 0.0 )
+	 fcmd[LIT_ATTEN_CONST_INV] = FLT_MAX;
+      else
+	 fcmd[LIT_ATTEN_CONST_INV] = 1.0 / params[0];
       break;
    case GL_LINEAR_ATTENUATION:
       RADEON_STATECHANGE(rmesa, lit[p]);
@@ -1117,23 +1121,34 @@ static void radeonLightfv( GLcontext *ctx, GLenum light,
    /* Set RANGE_ATTEN only when needed */
    switch (pname) {
    case GL_POSITION:
+   case GL_CONSTANT_ATTENUATION:
    case GL_LINEAR_ATTENUATION:
    case GL_QUADRATIC_ATTENUATION:
    {
-      GLuint flag;
+      GLuint *icmd = (GLuint *)RADEON_DB_STATE( tcl );
       GLuint idx = TCL_PER_LIGHT_CTL_0 + p/2;
+      GLuint atten_flag = ( p&1 ) ? RADEON_LIGHT_1_ENABLE_RANGE_ATTEN
+				  : RADEON_LIGHT_0_ENABLE_RANGE_ATTEN;
+      GLuint atten_const_flag = ( p&1 ) ? RADEON_LIGHT_1_CONSTANT_RANGE_ATTEN
+				  : RADEON_LIGHT_0_CONSTANT_RANGE_ATTEN;
 
-      if (p&1) 
-        flag = RADEON_LIGHT_1_ENABLE_RANGE_ATTEN;
-      else
-        flag = RADEON_LIGHT_0_ENABLE_RANGE_ATTEN;
+      if ( l->EyePosition[3] == 0.0F ||
+	   ( ( fcmd[LIT_ATTEN_CONST] == 0.0 || fcmd[LIT_ATTEN_CONST] == 1.0 ) &&
+	     fcmd[LIT_ATTEN_QUADRATIC] == 0.0 && fcmd[LIT_ATTEN_LINEAR] == 0.0 ) ) {
+	 /* Disable attenuation */
+	 icmd[idx] &= ~atten_flag;
+      } else {
+	 if ( fcmd[LIT_ATTEN_QUADRATIC] == 0.0 && fcmd[LIT_ATTEN_LINEAR] == 0.0 ) {
+	    /* Enable only constant portion of attenuation calculation */
+	    icmd[idx] |= ( atten_flag | atten_const_flag );
+	 } else {
+	    /* Enable full attenuation calculation */
+	    icmd[idx] &= ~atten_const_flag;
+	    icmd[idx] |= atten_flag;
+	 }
+      }
 
-      RADEON_STATECHANGE(rmesa, tcl);
-      if (l->EyePosition[3] != 0.0F &&
-         (l->LinearAttenuation != 0.0F || l->QuadraticAttenuation != 0.0F))
-        rmesa->hw.tcl.cmd[idx] |= flag;
-      else
-        rmesa->hw.tcl.cmd[idx] &= ~flag;
+      RADEON_DB_STATECHANGE( rmesa, &rmesa->hw.tcl );
       break;
    }
    default:

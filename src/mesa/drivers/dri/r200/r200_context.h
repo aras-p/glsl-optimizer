@@ -399,9 +399,9 @@ struct r200_state_atom {
 #define LIT_DIRECTION_Y            18
 #define LIT_DIRECTION_Z            19
 #define LIT_DIRECTION_W            20
-#define LIT_ATTEN_CONST            21
+#define LIT_ATTEN_QUADRATIC        21
 #define LIT_ATTEN_LINEAR           22
-#define LIT_ATTEN_QUADRATIC        23
+#define LIT_ATTEN_CONST            23
 #define LIT_ATTEN_XXX              24
 #define LIT_CMD_1                  25
 #define LIT_SPOT_DCD               26
@@ -410,7 +410,7 @@ struct r200_state_atom {
 #define LIT_SPOT_CUTOFF            29
 #define LIT_SPECULAR_THRESH        30
 #define LIT_RANGE_CUTOFF           31 /* ? */
-#define LIT_RANGE_ATTEN            32 /* ? */
+#define LIT_ATTEN_CONST_INV        32
 #define LIT_STATE_SIZE             33
 
 /* Fog
