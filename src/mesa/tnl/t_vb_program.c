@@ -1,4 +1,4 @@
-/* $Id: t_vb_program.c,v 1.13 2002/06/23 02:40:48 brianp Exp $ */
+/* $Id: t_vb_program.c,v 1.14 2002/08/08 16:55:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -152,14 +152,8 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    struct vp_program *program = ctx->VertexProgram.Current;
    GLuint i;
 
-   _mesa_init_tracked_matrices(ctx);
-   _mesa_init_vp_registers(ctx);  /* init temp and result regs */
-   /* XXX if GL_FOG is enabled but the program doesn't write to the
-    * o[FOGC] register, set the fog result to 1.0
-    */
-   /* XXX if GL_VERTEX_PROGRAM_POINT_SIZE_NV is enabled but the program
-    * doesn't write the PSIZ variable then use ctx->Point.Size
-    */
+   _mesa_init_tracked_matrices(ctx); /* load registers with matrices */
+   _mesa_init_vp_registers(ctx);     /* init temp and result regs */
 
    for (i = 0; i < VB->Count; i++) {
       GLuint attr;
@@ -209,6 +203,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
       /* execute the program */
       ASSERT(program);
       _mesa_exec_program(ctx, program);
+
 #if 0
       printf("Output %d: %f, %f, %f, %f\n", i,
              machine->Registers[VP_OUTPUT_REG_START + 0][0],
@@ -223,6 +218,18 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
       printf("PointSize[%d]: %g\n", i,
              machine->Registers[VP_OUTPUT_REG_START + VERT_RESULT_PSIZ][0]);
 #endif
+
+      /* Fixup fog an point size results if needed */
+      if (ctx->Fog.Enabled &&
+          (program->OutputsWritten & (1 << VERT_RESULT_FOGC)) == 0) {
+         machine->Registers[VP_OUTPUT_REG_START + VERT_RESULT_FOGC][0] = 1.0;
+      }
+
+      if (ctx->VertexProgram.PointSizeEnabled &&
+          (program->OutputsWritten & (1 << VERT_RESULT_PSIZ)) == 0) {
+         machine->Registers[VP_OUTPUT_REG_START + VERT_RESULT_PSIZ][0]
+            = ctx->Point.Size;
+      }
 
       /* copy the output registers into the VB->attribs arrays */
       /* XXX (optimize) could use a conditional and smaller loop limit here */
