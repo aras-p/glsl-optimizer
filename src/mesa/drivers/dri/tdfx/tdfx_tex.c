@@ -962,23 +962,13 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
             return;
         }
         /* unpack image, apply transfer ops and store in tempImage */
-#if !NEWTEXSTORE
-        _mesa_transfer_teximage(ctx, 2, texImage->Format,
-                                texImage->TexFormat,
-                                tempImage,
-                                width, height, 1, 0, 0, 0,
-                                width * texelBytes,
-                                0, /* dstImageStride */
-                                format, type, pixels, packing);
-#else
         texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
-                                        texImage->Format, tempImage,
+                                        &texImage->Format, tempImage,
                                         0, 0, 0, /* dstX/Y/Zoffset */
                                         width * texelBytes, /* dstRowStride */
                                         0, /* dstImageStride */
                                         width, height, 1,
                                         format, type, pixels, packing);
-#endif
         assert(!texImage->Data);
         texImage->Data = MESA_PBUFFER_ALLOC(mml->width * mml->height * texelBytes);
         if (!texImage->Data) {
@@ -1002,22 +992,13 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
           return;
       }
       /* unpack image, apply transfer ops and store in texImage->Data */
-#if !NEWTEXSTORE
-      _mesa_transfer_teximage(ctx, 2, texImage->Format,
-                              texImage->TexFormat, texImage->Data,
-                              width, height, 1, 0, 0, 0,
-                              texImage->Width * texelBytes,
-                              0, /* dstImageStride */
-                              format, type, pixels, packing);
-#else
       texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
-                                    texImage->Format, texImage->Data,
+                                    &texImage->Format, texImage->Data,
                                     0, 0, 0, /* dstX/Y/Zoffset */
                                     width * texelBytes, /* dstRowStride */
                                     0, /* dstImageStride */
                                     width, height, 1,
                                     format, type, pixels, packing);
-#endif
     }
 
     RevalidateTexture(ctx, texObj);
@@ -1080,7 +1061,7 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
                                 format, type, pixels, packing);
 #else
         texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
-                                        texImage->Format, texImage->Data,
+                                        &texImage->Format, texImage->Data,
                                         0, 0, 0, /* dstX/Y/Zoffset */
                                         width * texelBytes, /* dstRowStride */
                                         0, /* dstImageStride */
@@ -1123,7 +1104,7 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
                                 format, type, pixels, packing);
 #else
         texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
-                                    texImage->Format, texImage->Data,
+                                    &texImage->Format, texImage->Data,
                                     xoffset, yoffset, 0,
                                     mml->width * texelBytes, /* dstRowStride */
                                     0, /* dstImageStride */
