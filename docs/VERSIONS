@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.72 2001/09/23 16:10:02 brianp Exp $
+$Id: VERSIONS,v 1.73 2001/10/22 16:04:46 brianp Exp $
 
 
 Mesa Version History
@@ -869,15 +869,17 @@ Mesa Version History
 	- new libOSMesa.so library, contains the OSMesa driver interface
 
 
-4.0  September ??, 2001
+4.0  October 22, 2001
     New:
 	- Mesa 4.0 implements the OpenGL 1.3 specification
 	- GL_IBM_rasterpos_clip extension
 	- GL_EXT_texture_edge_clamp extension (aka GL_SGIS_texture_edge_clamp)
+	- GL_ARB_texture_mirrored_repeat extension
 	- WindML UGL driver (Stephane Raimbault)
 	- added OSMESA_MAX_WIDTH/HEIGHT queries
 	- attempted compiliation fixes for Solaris 5, 7 and 8
-	- Wind River UGL driver (Stephane Raimbault)
+	- updated glext.h and glxext.h files
+	- updated Windows driver (Karl Schultz)
     Bug fixes:
 	- added some missing GLX 1.3 tokens to include/GL/glx.h
 	- GL_COLOR_MATRIX changes weren't recognized by teximage functions
@@ -893,3 +895,5 @@ Mesa Version History
 	- fixed a glPush/PopAttrib() bug related to texture binding
 	- flat-shaded, textured lines were broken
 	- fixed a dangling pointer problem in the XMesa code (Chris Burghart)
+	- lighting didn't always produce the correct alpha value
+	- fixed 3DNow! code to not read past end of arrays (Andrew Lewycky)
