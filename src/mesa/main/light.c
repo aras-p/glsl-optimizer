@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.14 2000/06/26 23:37:46 brianp Exp $ */
+/* $Id: light.c,v 1.15 2000/06/29 04:56:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1258,13 +1258,12 @@ void gl_update_lighting( GLcontext *ctx )
 
    /* Precompute some shading values.
     */
-   if (ctx->Visual->RGBAflag) 
-   {
+   if (ctx->Visual->RGBAflag) {
       GLuint sides = ((ctx->TriangleCaps & DD_TRI_LIGHT_TWOSIDE) ? 2 : 1);
       GLuint side;
       for (side=0; side < sides; side++) {
 	 struct gl_material *mat = &ctx->Light.Material[side];
-	 
+
 	 COPY_3V(ctx->Light.BaseColor[side], mat->Emission);
 	 ACC_SCALE_3V(ctx->Light.BaseColor[side], 
 		      ctx->Light.Model.Ambient,
@@ -1276,12 +1275,10 @@ void gl_update_lighting( GLcontext *ctx )
       
       foreach (light, &ctx->Light.EnabledList) {	 
 	 for (side=0; side< sides; side++) {
-	    struct gl_material *mat = &ctx->Light.Material[side];
-	    SCALE_3V( light->MatDiffuse[side],  light->Diffuse, mat->Diffuse );
-	    SCALE_3V( light->MatAmbient[side],  light->Ambient, mat->Ambient );
-	    ACC_3V( ctx->Light.BaseColor[side], light->MatAmbient[side] ); 
-	    if (light->Flags & LIGHT_SPECULAR)
-	    {
+	    const struct gl_material *mat = &ctx->Light.Material[side];
+	    SCALE_3V( light->MatDiffuse[side], light->Diffuse, mat->Diffuse );
+	    SCALE_3V( light->MatAmbient[side], light->Ambient, mat->Ambient );
+	    if (light->Flags & LIGHT_SPECULAR) {
 	       SCALE_3V( light->MatSpecular[side], light->Specular,
 			 mat->Specular);
 	       light->IsMatSpecular[side] = 
@@ -1292,16 +1289,16 @@ void gl_update_lighting( GLcontext *ctx )
 	 }
       }
    } 
-   else
-   {
-      static GLfloat ci[3] = { .30, .59, .11 };
-
+   else {
+      static const GLfloat ci[3] = { .30, .59, .11 };
       foreach(light, &ctx->Light.EnabledList) {
 	 light->dli = DOT3(ci, light->Diffuse);
 	 light->sli = DOT3(ci, light->Specular);
       }
    }
 }
+
+
 
 /* Need to seriously restrict the circumstances under which these
  * calc's are performed.
