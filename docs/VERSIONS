@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.6 1999/04/18 01:36:45 brianp Exp $
+$Id: VERSIONS,v 1.7 1999/05/23 22:46:32 brianp Exp $
 
 
 Mesa Version History
@@ -612,7 +612,7 @@ Mesa Version History
 	- removed GL_EXT_multitexture extension
 
 
-3.1 beta 2  April ??, 1999
+3.1 beta 2  May 24, 1999
     New:
 	- multi-textured points and lines (mjk@nvidia.com)
 	- optimized 24bpp X rendering (bernd.paysan@gmx.de)
