@@ -291,7 +291,7 @@ void _swsetup_choose_trifuncs( GLcontext *ctx )
       ind |= SS_OFFSET_BIT;
 
    if ((ctx->Light.Enabled && ctx->Light.Model.TwoSide) ||
-       ctx->VertexProgram.TwoSideEnabled)
+       (ctx->VertexProgram.Enabled && ctx->VertexProgram.TwoSideEnabled))
       ind |= SS_TWOSIDE_BIT;
 
    /* We piggyback the two-sided stencil front/back determination on the
