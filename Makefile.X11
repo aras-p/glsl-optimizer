@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.95 2003/10/20 16:48:14 kschultz Exp $
+# $Id: Makefile.X11,v 1.96 2003/12/08 17:27:33 alanh Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -244,6 +244,7 @@ linux-solo:
 	if [ -d src/mesa/drivers/dri/i830 ] ; then touch src/mesa/drivers/dri/i830/depend ; fi
 	if [ -d src/mesa/drivers/dri/sis ] ; then touch src/mesa/drivers/dri/sis/depend ; fi
 	if [ -d src/mesa/drivers/dri/gamma ] ; then touch src/mesa/drivers/dri/gamma/depend ; fi
+	if [ -d src/mesa/drivers/dri/tdfx ] ; then touch src/mesa/drivers/dri/tdfx/depend ; fi
 	if [ -d src/mesa/drivers/dri/fb ] ; then touch src/mesa/drivers/dri/fb/depend ; fi
 	if [ -d src/glut/mini ] ; then touch src/glut/mini/depend ; fi
 	if [ -d progs/miniglx ] ; then touch progs/miniglx/depend ; fi
@@ -257,6 +258,7 @@ linux-solo:
 	if [ -d src/mesa/drivers/dri/i830 ] ; then cd src/mesa/drivers/dri/i830       ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src/mesa/drivers/dri/sis ] ; then cd src/mesa/drivers/dri/sis       ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src/mesa/drivers/dri/gamma ] ; then cd src/mesa/drivers/dri/gamma       ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d src/mesa/drivers/dri/tdfx ] ; then cd src/mesa/drivers/dri/tdfx       ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src/mesa/drivers/dri/fb ] ; then cd src/mesa/drivers/dri/fb         ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src/glx/mini  ] ; then cd src/glx/mini  ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src/glu/mini  ] ; then cd src/glu/mini  ; $(MAKE) -f Makefile.X11 $@ ; fi
