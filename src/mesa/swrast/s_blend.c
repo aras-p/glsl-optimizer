@@ -1,4 +1,4 @@
-/* $Id: s_blend.c,v 1.14 2002/03/27 15:49:27 brianp Exp $ */
+/* $Id: s_blend.c,v 1.15 2002/04/02 16:16:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -132,12 +132,24 @@ blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
 #if CHAN_BITS == 8
             /* This satisfies Glean and should be reasonably fast */
             /* Contributed by Nathan Hand */
+#if 0
 #define DIV255(X)  (((X) << 8) + (X) + 256) >> 16
+#else
+	    GLint temp;
+#define DIV255(X)  (temp = (X), ((temp << 8) + temp + 256) >> 16)
+#endif
+#if 0
             const GLint s = CHAN_MAX - t;
             const GLint r = DIV255(rgba[i][RCOMP] * t + dest[i][RCOMP] * s);
             const GLint g = DIV255(rgba[i][GCOMP] * t + dest[i][GCOMP] * s);
             const GLint b = DIV255(rgba[i][BCOMP] * t + dest[i][BCOMP] * s);
             const GLint a = DIV255(rgba[i][ACOMP] * t + dest[i][ACOMP] * s);
+#else
+            const GLint r = DIV255((rgba[i][RCOMP] - dest[i][RCOMP]) * t) + dest[i][RCOMP];
+            const GLint g = DIV255((rgba[i][GCOMP] - dest[i][GCOMP]) * t) + dest[i][GCOMP];
+            const GLint b = DIV255((rgba[i][BCOMP] - dest[i][BCOMP]) * t) + dest[i][BCOMP];
+            const GLint a = DIV255((rgba[i][ACOMP] - dest[i][ACOMP]) * t) + dest[i][ACOMP]; 
+#endif
 #undef DIV255
 #elif CHAN_BITS == 16
             const GLfloat tt = (GLfloat) t / CHAN_MAXF;
