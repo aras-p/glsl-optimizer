@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.56 2001/06/06 22:55:28 davem69 Exp $ */
+/* $Id: glapi.c,v 1.57 2001/09/14 02:48:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -850,6 +850,61 @@ static struct name_address_offset static_functions[] = {
 	{ "glCopyTexSubImage3D", (GLvoid *) NAME(glCopyTexSubImage3D), _gloffset_CopyTexSubImage3D },
 #undef NAME
 
+	/* 1.3 */
+#ifdef GL_VERSION_1_3
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glActiveTexture", (GLvoid *) NAME(glActiveTexture), _gloffset_ActiveTextureARB },
+	{ "glClientActiveTexture", (GLvoid *) NAME(glClientActiveTexture), _gloffset_ClientActiveTextureARB },
+	{ "glCompressedTexImage1D", (GLvoid *) NAME(glCompressedTexImage1D), _gloffset_CompressedTexImage1DARB },
+	{ "glCompressedTexImage2D", (GLvoid *) NAME(glCompressedTexImage2D), _gloffset_CompressedTexImage2DARB },
+	{ "glCompressedTexImage3D", (GLvoid *) NAME(glCompressedTexImage3D), _gloffset_CompressedTexImage3DARB },
+	{ "glCompressedTexSubImage1D", (GLvoid *) NAME(glCompressedTexSubImage1D), _gloffset_CompressedTexSubImage1DARB },
+	{ "glCompressedTexSubImage2D", (GLvoid *) NAME(glCompressedTexSubImage2D), _gloffset_CompressedTexSubImage2DARB },
+	{ "glCompressedTexSubImage3D", (GLvoid *) NAME(glCompressedTexSubImage3D), _gloffset_CompressedTexSubImage3DARB },
+	{ "glGetCompressedTexImage", (GLvoid *) NAME(glGetCompressedTexImage), _gloffset_GetCompressedTexImageARB },
+	{ "glMultiTexCoord1d", (GLvoid *) NAME(glMultiTexCoord1d), _gloffset_MultiTexCoord1dARB },
+	{ "glMultiTexCoord1dv", (GLvoid *) NAME(glMultiTexCoord1dv), _gloffset_MultiTexCoord1dvARB },
+	{ "glMultiTexCoord1f", (GLvoid *) NAME(glMultiTexCoord1f), _gloffset_MultiTexCoord1fARB },
+	{ "glMultiTexCoord1fv", (GLvoid *) NAME(glMultiTexCoord1fv), _gloffset_MultiTexCoord1fvARB },
+	{ "glMultiTexCoord1i", (GLvoid *) NAME(glMultiTexCoord1i), _gloffset_MultiTexCoord1iARB },
+	{ "glMultiTexCoord1iv", (GLvoid *) NAME(glMultiTexCoord1iv), _gloffset_MultiTexCoord1ivARB },
+	{ "glMultiTexCoord1s", (GLvoid *) NAME(glMultiTexCoord1s), _gloffset_MultiTexCoord1sARB },
+	{ "glMultiTexCoord1sv", (GLvoid *) NAME(glMultiTexCoord1sv), _gloffset_MultiTexCoord1svARB },
+	{ "glMultiTexCoord2d", (GLvoid *) NAME(glMultiTexCoord2d), _gloffset_MultiTexCoord2dARB },
+	{ "glMultiTexCoord2dv", (GLvoid *) NAME(glMultiTexCoord2dv), _gloffset_MultiTexCoord2dvARB },
+	{ "glMultiTexCoord2f", (GLvoid *) NAME(glMultiTexCoord2f), _gloffset_MultiTexCoord2fARB },
+	{ "glMultiTexCoord2fv", (GLvoid *) NAME(glMultiTexCoord2fv), _gloffset_MultiTexCoord2fvARB },
+	{ "glMultiTexCoord2i", (GLvoid *) NAME(glMultiTexCoord2i), _gloffset_MultiTexCoord2iARB },
+	{ "glMultiTexCoord2iv", (GLvoid *) NAME(glMultiTexCoord2iv), _gloffset_MultiTexCoord2ivARB },
+	{ "glMultiTexCoord2s", (GLvoid *) NAME(glMultiTexCoord2s), _gloffset_MultiTexCoord2sARB },
+	{ "glMultiTexCoord2sv", (GLvoid *) NAME(glMultiTexCoord2sv), _gloffset_MultiTexCoord2svARB },
+	{ "glMultiTexCoord3d", (GLvoid *) NAME(glMultiTexCoord3d), _gloffset_MultiTexCoord3dARB },
+	{ "glMultiTexCoord3dv", (GLvoid *) NAME(glMultiTexCoord3dv), _gloffset_MultiTexCoord3dvARB },
+	{ "glMultiTexCoord3f", (GLvoid *) NAME(glMultiTexCoord3f), _gloffset_MultiTexCoord3fARB },
+	{ "glMultiTexCoord3fv", (GLvoid *) NAME(glMultiTexCoord3fv), _gloffset_MultiTexCoord3fvARB },
+	{ "glMultiTexCoord3i", (GLvoid *) NAME(glMultiTexCoord3i), _gloffset_MultiTexCoord3iARB },
+	{ "glMultiTexCoord3iv", (GLvoid *) NAME(glMultiTexCoord3iv), _gloffset_MultiTexCoord3ivARB },
+	{ "glMultiTexCoord3s", (GLvoid *) NAME(glMultiTexCoord3s), _gloffset_MultiTexCoord3sARB },
+	{ "glMultiTexCoord3sv", (GLvoid *) NAME(glMultiTexCoord3sv), _gloffset_MultiTexCoord3svARB },
+	{ "glMultiTexCoord4d", (GLvoid *) NAME(glMultiTexCoord4d), _gloffset_MultiTexCoord4dARB },
+	{ "glMultiTexCoord4dv", (GLvoid *) NAME(glMultiTexCoord4dv), _gloffset_MultiTexCoord4dvARB },
+	{ "glMultiTexCoord4f", (GLvoid *) NAME(glMultiTexCoord4f), _gloffset_MultiTexCoord4fARB },
+	{ "glMultiTexCoord4fv", (GLvoid *) NAME(glMultiTexCoord4fv), _gloffset_MultiTexCoord4fvARB },
+	{ "glMultiTexCoord4i", (GLvoid *) NAME(glMultiTexCoord4i), _gloffset_MultiTexCoord4iARB },
+	{ "glMultiTexCoord4iv", (GLvoid *) NAME(glMultiTexCoord4iv), _gloffset_MultiTexCoord4ivARB },
+	{ "glMultiTexCoord4s", (GLvoid *) NAME(glMultiTexCoord4s), _gloffset_MultiTexCoord4sARB },
+	{ "glMultiTexCoord4sv", (GLvoid *) NAME(glMultiTexCoord4sv), _gloffset_MultiTexCoord4svARB },
+	{ "glLoadTransposeMatrixd", (GLvoid *) NAME(glLoadTransposeMatrixd), _gloffset_LoadTransposeMatrixdARB },
+	{ "glLoadTransposeMatrixf", (GLvoid *) NAME(glLoadTransposeMatrixf), _gloffset_LoadTransposeMatrixfARB },
+	{ "glMultTransposeMatrixd", (GLvoid *) NAME(glMultTransposeMatrixd), _gloffset_MultTransposeMatrixdARB },
+	{ "glMultTransposeMatrixf", (GLvoid *) NAME(glMultTransposeMatrixf), _gloffset_MultTransposeMatrixfARB },
+	{ "glSampleCoverage", (GLvoid *) NAME(glSampleCoverage), _gloffset_SampleCoverageARB },
+	{ "glSamplePass", (GLvoid *) NAME(glSamplePass), _gloffset_SamplePassARB },
+#undef NAME
+
 	/* ARB 1. GL_ARB_multitexture */
 #ifdef GL_ARB_multitexture
 #define NAME(X) (GLvoid *) X
@@ -904,29 +959,29 @@ static struct name_address_offset static_functions[] = {
 	{ "glMultTransposeMatrixfARB", (GLvoid *) NAME(glMultTransposeMatrixfARB), _gloffset_MultTransposeMatrixfARB },
 #undef NAME
 
-        /* ARB 5. GL_ARB_multisample */
+	/* ARB 5. GL_ARB_multisample */
 #ifdef GL_ARB_multisample
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glSampleCoverageARB", NAME(glSampleCoverageARB), _gloffset_SampleCoverageARB },
+	{ "glSampleCoverageARB", NAME(glSampleCoverageARB), _gloffset_SampleCoverageARB },
 #undef NAME
 
-        /* ARB 12. GL_ARB_texture_compression */
+	/* ARB 12. GL_ARB_texture_compression */
 #if 000
 #if defined(GL_ARB_texture_compression) && defined(_gloffset_CompressedTexImage3DARB)
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glCompressedTexImage3DARB", NAME(glCompressedTexImage3DARB), _gloffset_CompressedTexImage3DARB },
-        { "glCompressedTexImage2DARB", NAME(glCompressedTexImage2DARB), _gloffset_CompressedTexImage2DARB },
-        { "glCompressedTexImage1DARB", NAME(glCompressedTexImage1DARB), _gloffset_CompressedTexImage1DARB },
-        { "glCompressedTexSubImage3DARB", NAME(glCompressedTexSubImage3DARB), _gloffset_CompressedTexSubImage3DARB },
-        { "glCompressedTexSubImage2DARB", NAME(glCompressedTexSubImage2DARB), _gloffset_CompressedTexSubImage2DARB },
-        { "glCompressedTexSubImage1DARB", NAME(glCompressedTexSubImage1DARB), _gloffset_CompressedTexSubImage1DARB },
-        { "glGetCompressedTexImageARB", NAME(glGetCompressedTexImageARB), _gloffset_GetCompressedTexImageARB },
+	{ "glCompressedTexImage3DARB", NAME(glCompressedTexImage3DARB), _gloffset_CompressedTexImage3DARB },
+	{ "glCompressedTexImage2DARB", NAME(glCompressedTexImage2DARB), _gloffset_CompressedTexImage2DARB },
+	{ "glCompressedTexImage1DARB", NAME(glCompressedTexImage1DARB), _gloffset_CompressedTexImage1DARB },
+	{ "glCompressedTexSubImage3DARB", NAME(glCompressedTexSubImage3DARB), _gloffset_CompressedTexSubImage3DARB },
+	{ "glCompressedTexSubImage2DARB", NAME(glCompressedTexSubImage2DARB), _gloffset_CompressedTexSubImage2DARB },
+	{ "glCompressedTexSubImage1DARB", NAME(glCompressedTexSubImage1DARB), _gloffset_CompressedTexSubImage1DARB },
+	{ "glGetCompressedTexImageARB", NAME(glGetCompressedTexImageARB), _gloffset_GetCompressedTexImageARB },
 #undef NAME
 #endif
 
@@ -1184,7 +1239,7 @@ static struct name_address_offset static_functions[] = {
 	{ "glFrameZoomSGIX", NAME(glFrameZoomSGIX), _gloffset_FrameZoomSGIX },
 #undef NAME
 
-        /* 58. GL_SGIX_tag_sample_buffer */
+	/* 58. GL_SGIX_tag_sample_buffer */
 #ifdef GL_SGIX_tag_sample_buffer
 #define NAME(X) (GLvoid *) X
 #else
@@ -1310,7 +1365,7 @@ static struct name_address_offset static_functions[] = {
 	{ "glCullParameterdvEXT", NAME(glCullParameterdvEXT), _gloffset_CullParameterdvEXT },
 #undef NAME
 
-        /* 102. GL_SGIX_fragment_lighting */
+	/* 102. GL_SGIX_fragment_lighting */
 #ifdef GL_SGIX_fragment_lighting
 #define NAME(X) (GLvoid *) X
 #else
@@ -1336,83 +1391,83 @@ static struct name_address_offset static_functions[] = {
 	{ "glLightEnviSGIX", NAME(glLightEnviSGIX), _gloffset_LightEnviSGIX },
 #undef NAME
 
-        /* 112. GL_EXT_draw_range_elements */
+	/* 112. GL_EXT_draw_range_elements */
 #if 000
 #ifdef GL_EXT_draw_range_elements
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glDrawRangeElementsEXT", NAME(glDrawRangeElementsEXT), _gloffset_DrawRangeElementsEXT },
+	{ "glDrawRangeElementsEXT", NAME(glDrawRangeElementsEXT), _gloffset_DrawRangeElementsEXT },
 #undef NAME
 #endif
 
-        /* 117. GL_EXT_light_texture */
+	/* 117. GL_EXT_light_texture */
 #if 000
 #ifdef GL_EXT_light_texture
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glApplyTextureEXT", NAME(glApplyTextureEXT), _gloffset_ApplyTextureEXT },
-        { "glTextureLightEXT", NAME(glTextureLightEXT), _gloffset_TextureLightEXT },
-        { "glTextureMaterialEXT", NAME(glTextureMaterialEXT), _gloffset_TextureMaterialEXT },
+	{ "glApplyTextureEXT", NAME(glApplyTextureEXT), _gloffset_ApplyTextureEXT },
+	{ "glTextureLightEXT", NAME(glTextureLightEXT), _gloffset_TextureLightEXT },
+	{ "glTextureMaterialEXT", NAME(glTextureMaterialEXT), _gloffset_TextureMaterialEXT },
 #undef NAME
 
-        /* 135. GL_INTEL_texture_scissor */
+	/* 135. GL_INTEL_texture_scissor */
 #ifdef GL_INTEL_texture_scissor
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glTexScissorINTEL", NAME(glTexScissorINTEL), _gloffset_TexScissorINTEL },
-        { "glTexScissorFuncINTEL", NAME(glTexScissorFuncINTEL), _gloffset_glTexScissorFuncINTEL },
+	{ "glTexScissorINTEL", NAME(glTexScissorINTEL), _gloffset_TexScissorINTEL },
+	{ "glTexScissorFuncINTEL", NAME(glTexScissorFuncINTEL), _gloffset_glTexScissorFuncINTEL },
 #undef NAME
 
-        /* 136. GL_INTEL_parallel_arrays */
+	/* 136. GL_INTEL_parallel_arrays */
 #ifdef GL_INTEL_parallel_arrays
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glVertexPointervINTEL", NAME(glVertexPointervINTEL), _gloffset_VertexPointervINTEL },
-        { "glNormalPointervINTEL", NAME(glNormalPointervINTEL), _gloffset_NormalPointervINTEL },
-        { "glColorPointervINTEL", NAME(glColorPointervINTEL), _gloffset_ColorPointervINTEL },
-        { "glTexCoordPointervINTEL", NAME(glTexCoordPointervINTEL), _gloffset_glxCoordPointervINTEL },
+	{ "glVertexPointervINTEL", NAME(glVertexPointervINTEL), _gloffset_VertexPointervINTEL },
+	{ "glNormalPointervINTEL", NAME(glNormalPointervINTEL), _gloffset_NormalPointervINTEL },
+	{ "glColorPointervINTEL", NAME(glColorPointervINTEL), _gloffset_ColorPointervINTEL },
+	{ "glTexCoordPointervINTEL", NAME(glTexCoordPointervINTEL), _gloffset_glxCoordPointervINTEL },
 #undef NAME
 #endif
 
-        /* 138. GL_EXT_pixel_transform */
+	/* 138. GL_EXT_pixel_transform */
 #if 000
 #ifdef GL_EXT_pixel_transform
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glPixelTransformParameteriEXT", NAME(glPixelTransformParameteriEXT), _gloffset_PixelTransformParameteriEXT },
-        { "glPixelTransformParameterfEXT", NAME(glPixelTransformParameterfEXT), _gloffset_PixelTransformParameterfEXT },
-        { "glPixelTransformParameterivEXT", NAME(glPixelTransformParameterivEXT), _gloffset_PixelTransformParameterivEXT },
-        { "glPixelTransformParameterfvEXT", NAME(glPixelTransformParameterfvEXT), _gloffset_PixelTransformParameterfvEXT },
-        { "glGetPixelTransformParameterivEXT", NAME(glGetPixelTransformParameterivEXT), _gloffset_GetPixelTransformParameterivEXT },
-        { "glGetPixelTransformParameterfvEXT", NAME(glGetPixelTransformParameterfvEXT), _gloffset_GetPixelTransformParameterfvEXT },
+	{ "glPixelTransformParameteriEXT", NAME(glPixelTransformParameteriEXT), _gloffset_PixelTransformParameteriEXT },
+	{ "glPixelTransformParameterfEXT", NAME(glPixelTransformParameterfEXT), _gloffset_PixelTransformParameterfEXT },
+	{ "glPixelTransformParameterivEXT", NAME(glPixelTransformParameterivEXT), _gloffset_PixelTransformParameterivEXT },
+	{ "glPixelTransformParameterfvEXT", NAME(glPixelTransformParameterfvEXT), _gloffset_PixelTransformParameterfvEXT },
+	{ "glGetPixelTransformParameterivEXT", NAME(glGetPixelTransformParameterivEXT), _gloffset_GetPixelTransformParameterivEXT },
+	{ "glGetPixelTransformParameterfvEXT", NAME(glGetPixelTransformParameterfvEXT), _gloffset_GetPixelTransformParameterfvEXT },
 #undef NAME
 #endif
 
-        /* 145. GL_EXT_secondary_color */
+	/* 145. GL_EXT_secondary_color */
 #ifdef GL_EXT_secondary_color
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glSecondaryColor3bEXT", NAME(glSecondaryColor3bEXT), _gloffset_SecondaryColor3bEXT },
-        { "glSecondaryColor3dEXT", NAME(glSecondaryColor3dEXT), _gloffset_SecondaryColor3dEXT },
-        { "glSecondaryColor3fEXT", NAME(glSecondaryColor3fEXT), _gloffset_SecondaryColor3fEXT },
-        { "glSecondaryColor3iEXT", NAME(glSecondaryColor3iEXT), _gloffset_SecondaryColor3iEXT },
-        { "glSecondaryColor3sEXT", NAME(glSecondaryColor3sEXT), _gloffset_SecondaryColor3sEXT },
-        { "glSecondaryColor3ubEXT", NAME(glSecondaryColor3ubEXT), _gloffset_SecondaryColor3ubEXT },
-        { "glSecondaryColor3uiEXT", NAME(glSecondaryColor3uiEXT), _gloffset_SecondaryColor3uiEXT },
-        { "glSecondaryColor3usEXT", NAME(glSecondaryColor3usEXT), _gloffset_SecondaryColor3usEXT },
-        { "glSecondaryColor3bvEXT", NAME(glSecondaryColor3bvEXT), _gloffset_SecondaryColor3bvEXT },
+	{ "glSecondaryColor3bEXT", NAME(glSecondaryColor3bEXT), _gloffset_SecondaryColor3bEXT },
+	{ "glSecondaryColor3dEXT", NAME(glSecondaryColor3dEXT), _gloffset_SecondaryColor3dEXT },
+	{ "glSecondaryColor3fEXT", NAME(glSecondaryColor3fEXT), _gloffset_SecondaryColor3fEXT },
+	{ "glSecondaryColor3iEXT", NAME(glSecondaryColor3iEXT), _gloffset_SecondaryColor3iEXT },
+	{ "glSecondaryColor3sEXT", NAME(glSecondaryColor3sEXT), _gloffset_SecondaryColor3sEXT },
+	{ "glSecondaryColor3ubEXT", NAME(glSecondaryColor3ubEXT), _gloffset_SecondaryColor3ubEXT },
+	{ "glSecondaryColor3uiEXT", NAME(glSecondaryColor3uiEXT), _gloffset_SecondaryColor3uiEXT },
+	{ "glSecondaryColor3usEXT", NAME(glSecondaryColor3usEXT), _gloffset_SecondaryColor3usEXT },
+	{ "glSecondaryColor3bvEXT", NAME(glSecondaryColor3bvEXT), _gloffset_SecondaryColor3bvEXT },
 	{ "glSecondaryColor3dvEXT", NAME(glSecondaryColor3dvEXT), _gloffset_SecondaryColor3dvEXT },
 	{ "glSecondaryColor3fvEXT", NAME(glSecondaryColor3fvEXT), _gloffset_SecondaryColor3fvEXT },
 	{ "glSecondaryColor3ivEXT", NAME(glSecondaryColor3ivEXT), _gloffset_SecondaryColor3ivEXT },
@@ -1596,7 +1651,7 @@ static struct name_address_offset static_functions[] = {
 	{ "glVertexWeightPointerEXT", NAME(glVertexWeightPointerEXT), _gloffset_VertexWeightPointerEXT },
 #undef NAME
 
-        /* 190. GL_NV_vertex_array_range */
+	/* 190. GL_NV_vertex_array_range */
 #ifdef GL_NV_vertex_array_range
 #define NAME(X) (GLvoid *) X
 #else
@@ -1645,14 +1700,14 @@ static struct name_address_offset static_functions[] = {
 	{ "glWindowPos4fMESA", NAME(glWindowPos4fMESA), _gloffset_WindowPos4fMESA },
 #undef NAME
 
-        /* 209. WGL_EXT_multisample */
+	/* 209. WGL_EXT_multisample */
 #ifdef WGL_EXT_multisample
 #define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glSampleMaskEXT", NAME(glSampleMaskEXT), _gloffset_SampleMaskSGIS },
-        { "glSamplePatternEXT", NAME(glSamplePatternEXT), _gloffset_SamplePatternSGIS },
+	{ "glSampleMaskEXT", NAME(glSampleMaskEXT), _gloffset_SampleMaskSGIS },
+	{ "glSamplePatternEXT", NAME(glSamplePatternEXT), _gloffset_SamplePatternSGIS },
 #undef NAME
 
 	{ NULL, NULL }  /* end of list marker */
@@ -1670,7 +1725,7 @@ get_static_proc_offset(const char *funcName)
    GLuint i;
    for (i = 0; static_functions[i].Name; i++) {
       if (strcmp(static_functions[i].Name, funcName) == 0) {
-         return static_functions[i].Offset;
+	 return static_functions[i].Offset;
       }
    }
    return -1;
