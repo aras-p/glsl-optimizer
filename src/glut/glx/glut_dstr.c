@@ -439,15 +439,15 @@ loadVisuals(int *nitems_return)
         GLXFBConfigSGIX fbc;
         int fbconfigID, drawType, renderType;
 
-        fbc = glXGetFBConfigFromVisualSGIX(__glutDisplay, vlist[i]);
+        fbc = __glut_glXGetFBConfigFromVisualSGIX(__glutDisplay, vlist[i]);
         if (fbc) {
-          rc = glXGetFBConfigAttribSGIX(__glutDisplay, fbc,
+          rc = __glut_glXGetFBConfigAttribSGIX(__glutDisplay, fbc,
 	    GLX_FBCONFIG_ID_SGIX, &fbconfigID);
           if ((rc == 0) && (fbconfigID != None)) {
-            rc = glXGetFBConfigAttribSGIX(__glutDisplay, fbc,
+            rc = __glut_glXGetFBConfigAttribSGIX(__glutDisplay, fbc,
 	      GLX_DRAWABLE_TYPE_SGIX, &drawType);
             if ((rc == 0) && (drawType & GLX_WINDOW_BIT_SGIX)) {
-              rc = glXGetFBConfigAttribSGIX(__glutDisplay, fbc,
+              rc = __glut_glXGetFBConfigAttribSGIX(__glutDisplay, fbc,
 	        GLX_RENDER_TYPE_SGIX, &renderType);
               if ((rc == 0) && (renderType & GLX_RGBA_BIT_SGIX)) {
                 mode->fbc = fbc;
@@ -459,7 +459,7 @@ loadVisuals(int *nitems_return)
 
                 /* Start with "j = 1" to skip the GLX_RGBA attribute. */
                 for (j = 1; j < NUM_GLXCAPS; j++) {
-                  rc = glXGetFBConfigAttribSGIX(__glutDisplay,
+                  rc = __glut_glXGetFBConfigAttribSGIX(__glutDisplay,
 		    fbc, glxcap[j], &mode->cap[j]);
                   if (rc != 0) {
                     mode->valid = 0;
@@ -509,7 +509,7 @@ loadVisuals(int *nitems_return)
 #define GLX_VISUAL_CAVEAT_EXT 0x20
 #endif
 
-                  rc = glXGetFBConfigAttribSGIX(__glutDisplay,
+                  rc = __glut_glXGetFBConfigAttribSGIX(__glutDisplay,
 		    fbc, GLX_VISUAL_CAVEAT_EXT, &rating);
                   if (rc != 0) {
                     mode->cap[SLOW] = 0;
@@ -558,7 +558,7 @@ loadVisuals(int *nitems_return)
 #define GLX_TRANSPARENT_TYPE_EXT 0x23
 #endif
 
-                  rc = glXGetFBConfigAttribSGIX(__glutDisplay,
+                  rc = __glut_glXGetFBConfigAttribSGIX(__glutDisplay,
 		    fbc, GLX_TRANSPARENT_TYPE_EXT, &transparent);
                   if (rc != 0) {
                     mode->cap[TRANSPARENT] = 0;
@@ -573,7 +573,7 @@ loadVisuals(int *nitems_return)
 #endif
 #if defined(GLX_VERSION_1_1) && defined(GLX_SGIS_multisample)
                 if (multisample) {
-                  rc = glXGetFBConfigAttribSGIX(__glutDisplay,
+                  rc = __glut_glXGetFBConfigAttribSGIX(__glutDisplay,
 		    fbc, GLX_SAMPLES_SGIS, &mode->cap[SAMPLES]);
                   if (rc != 0) {
                     mode->cap[SAMPLES] = 0;

@@ -395,7 +395,7 @@ glutEstablishOverlay(void)
   }
 #if defined(GLX_VERSION_1_1) && defined(GLX_SGIX_fbconfig)
   if (fbc) {
-    window->ctx = glXCreateContextWithConfigSGIX(__glutDisplay, fbc,
+    window->ctx = __glut_glXCreateContextWithConfigSGIX(__glutDisplay, fbc,
       GLX_RGBA_TYPE_SGIX, None, __glutTryDirect);
   } else
 #endif

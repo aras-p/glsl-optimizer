@@ -57,7 +57,7 @@ glutVideoResizeGet(GLenum param)
   if (canVideoResize < 0) {
     canVideoResize = __glutIsSupportedByGLX("GLX_SGIX_video_resize");
     if (canVideoResize) {
-#if __sgi
+#if defined(__sgi) && __sgi
       /* This is a hack because IRIX 6.2, 6.3, and some 6.4
          versions were released with GLX_SGIX_video_resize
          being advertised by the X server though the video
@@ -94,7 +94,8 @@ glutVideoResizeGet(GLenum param)
 
 #if defined(GLX_GLXEXT_PROTOTYPES)
 #endif
-        glXQueryChannelDeltasSGIX(__glutDisplay, __glutScreen,
+
+        __glut_glXQueryChannelDeltasSGIX(__glutDisplay, __glutScreen,
           videoResizeChannel, &dx, &dy, &dw, &dh);
 
         /* glXQueryChannelDeltasSGIX is an inherent X server
@@ -138,7 +139,7 @@ glutVideoResizeGet(GLenum param)
     if (videoResizeInUse) {
       int x, y, width, height;
 
-      glXQueryChannelRectSGIX(__glutDisplay, __glutScreen,
+      __glut_glXQueryChannelRectSGIX(__glutDisplay, __glutScreen,
         videoResizeChannel, &x, &y, &width, &height);
       switch (param) {
       case GLUT_VIDEO_RESIZE_X:
@@ -164,7 +165,7 @@ glutSetupVideoResizing(void)
 {
 #if defined(GLX_VERSION_1_1) && defined(GLX_SGIX_video_resize)
   if (glutVideoResizeGet(GLUT_VIDEO_RESIZE_POSSIBLE)) {
-    glXBindChannelToWindowSGIX(__glutDisplay, __glutScreen,
+    __glut_glXBindChannelToWindowSGIX(__glutDisplay, __glutScreen,
       videoResizeChannel, __glutCurrentWindow->win);
     videoResizeInUse = 1;
   } else
@@ -178,7 +179,7 @@ glutStopVideoResizing(void)
 #if defined(GLX_VERSION_1_1) && defined(GLX_SGIX_video_resize)
   if (glutVideoResizeGet(GLUT_VIDEO_RESIZE_POSSIBLE)) {
     if (videoResizeInUse) {
-      glXBindChannelToWindowSGIX(__glutDisplay, __glutScreen,
+      __glut_glXBindChannelToWindowSGIX(__glutDisplay, __glutScreen,
         videoResizeChannel, None);
       videoResizeInUse = 0;
     }
@@ -196,10 +197,10 @@ glutVideoResize(int x, int y, int width, int height)
     /* glXChannelRectSyncSGIX introduced in a patch to IRIX
        6.2; the original unpatched IRIX 6.2 behavior is always
        GLX_SYNC_SWAP_SGIX. */
-    glXChannelRectSyncSGIX(__glutDisplay, __glutScreen,
+    __glut_glXChannelRectSyncSGIX(__glutDisplay, __glutScreen,
       videoResizeChannel, GLX_SYNC_SWAP_SGIX);
 #endif
-    glXChannelRectSGIX(__glutDisplay, __glutScreen,
+    __glut_glXChannelRectSGIX(__glutDisplay, __glutScreen,
       videoResizeChannel, x, y, width, height);
   }
 #endif
@@ -218,10 +219,10 @@ glutVideoPan(int x, int y, int width, int height)
        accomplish GLX_SYNC_FRAME_SGIX on IRIX unpatched 6.2;
        this means you'd need a glutSwapBuffers to actually
        realize the video resize. */
-    glXChannelRectSyncSGIX(__glutDisplay, __glutScreen,
+    __glut_glXChannelRectSyncSGIX(__glutDisplay, __glutScreen,
       videoResizeChannel, GLX_SYNC_FRAME_SGIX);
 #endif
-    glXChannelRectSGIX(__glutDisplay, __glutScreen,
+    __glut_glXChannelRectSGIX(__glutDisplay, __glutScreen,
       videoResizeChannel, x, y, width, height);
   }
 #endif

@@ -764,6 +764,29 @@ extern void __glutDestroyWindow(
 #if !defined(_WIN32)
 /* private routines from glut_glxext.c */
 extern int __glutIsSupportedByGLX(char *);
+extern int __glut_glXBindChannelToWindowSGIX(Display *dpy, int screen,
+                                             int channel, Window window);
+extern int __glut_glXChannelRectSGIX(Display *dpy, int screen, int channel,
+                                     int x, int y, int w, int h);
+extern int __glut_glXQueryChannelRectSGIX(Display *dpy, int screen,
+                                          int channel, int *x, int *y,
+                                          int *w, int *h);
+extern int __glut_glXQueryChannelDeltasSGIX(Display *dpy, int screen,
+                                            int channel, int *dx, int *dy,
+                                            int *dw, int *dh);
+extern int __glut_glXChannelRectSyncSGIX(Display *dpy, int screen, int channel,
+                                         GLenum synctype);
+extern GLXContext __glut_glXCreateContextWithConfigSGIX(Display *dpy,
+                                                        GLXFBConfigSGIX config,
+                                                        int render_type,
+                                                        GLXContext share_list,
+                                                        Bool direct);
+extern int __glut_glXGetFBConfigAttribSGIX(Display *dpy,
+                                           GLXFBConfigSGIX config,
+                                           int attribute,
+                                           int *value);
+extern GLXFBConfigSGIX __glut_glXGetFBConfigFromVisualSGIX(Display *dpy,
+                                                           XVisualInfo *vis);
 #endif
 
 /* private routines from glut_input.c */
