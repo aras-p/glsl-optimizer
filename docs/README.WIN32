@@ -16,12 +16,12 @@ to set up the appropriate compiler environment variables.
 Details and Notes
 
 - Building Mesa as noted above should visit and build the following:
-  src        MesaGL.dll, MesaGL.lib, osmesa.dll, osmesa.lib
-  si-glu     MesaGLU.dll, MesaGLU.lib
-  src-glut   glut32.dll, glut32.lib
-  demos      a handful of demo executables.
-  book       more examples
-  samples    more examples
+  src/mesa        MesaGL.dll, MesaGL.lib, osmesa.dll, osmesa.lib
+  src/glu         MesaGLU.dll, MesaGLU.lib
+  src/glut        glut32.dll, glut32.lib
+  progs/demos     a handful of demo executables.
+  progs/redbook   examples from the OpenGL Programming Guide
+  progs/samples   more examples from SGI
 
 - After building, you can copy the above DLL files to a place in your PATH
   such as $SystemRoot/SYSTEM32.  If you don't like putting things in a
