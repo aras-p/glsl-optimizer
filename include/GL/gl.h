@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.0
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -2221,6 +2221,13 @@ GLAPI void GLAPIENTRY glBlendEquationSeparateATI( GLenum modeRGB, GLenum modeA )
 typedef void (APIENTRYP PFNGLBLENDEQUATIONSEPARATEATIPROC) (GLenum modeRGB, GLenum modeA);
 
 #endif /* GL_ATI_blend_equation_separate */
+
+
+/**
+ ** NOTE!!!!!  If you add new functions to this file, or update
+ ** glext.h be sure to regenerate the gl_mangle.h file.  See comments
+ ** in that file for details.
+ **/
 
 
 /**********************************************************************
