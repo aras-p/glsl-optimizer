@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.14 2000/01/23 17:48:16 brianp Exp $
+# $Id: Makefile.X11,v 1.15 2000/01/28 22:18:03 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -125,8 +125,7 @@ DRIVER_SOURCES = \
 	FX/fxtexman.c \
 	FX/fxtrifuncs.c \
 	FX/fxvsetup.c \
-	FX/fxglidew.c 
-#	GGI/ggimesa.c
+	FX/fxglidew.c
 
 ASM_SOURCES = 
 
@@ -144,7 +143,7 @@ OBJECTS = $(ASM_SOURCES:.S=.o) \
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 
 .S.o:
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c -I. $(CFLAGS) $< -o $@
 
 
 # UGH! These rules shouldn't be needed but IRIX's make (and others?) needs them
