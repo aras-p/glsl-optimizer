@@ -1,11 +1,4 @@
-# $Id: Makefile.X11,v 1.8 2000/07/11 14:11:04 brianp Exp $
-
-# Mesa 3-D graphics library
-# Version:  3.3
-# Copyright (C) 1995-2000  Brian Paul
-
-# Makefile for GLU library
-
+# Makefile for old Mesa GLU library
 
 ##### MACROS #####
 
@@ -15,8 +8,9 @@ GLU_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 VPATH = RCS
 
-INCDIR = ../include
-LIBDIR = ../lib
+TOP = ..
+INCDIR = $(TOP)/include
+LIBDIR = $(TOP)/lib
 
 SOURCES = glu.c mipmap.c nurbs.c nurbscrv.c nurbssrf.c nurbsutl.c \
 	polytest.c project.c quadric.c tess.c tesselat.c
@@ -44,10 +38,11 @@ targets: $(LIBDIR)/$(GLU_LIB)
 
 # Make the library:
 $(LIBDIR)/$(GLU_LIB): $(OBJECTS)
-	$(MAKELIB) $(GLU_LIB) $(GLU_MAJOR) $(GLU_MINOR) $(GLU_TINY) $(OBJECTS)
-	mv $(GLU_LIB)* $(LIBDIR)
+	$(TOP)/bin/mklib -o GLU -major $(GLU_MAJOR) -minor $(GLU_MINOR) \
+		-patch $(GLU_TINY) $(GLU_LIB_DEPS) -install $(LIBDIR) \
+		$(OBJECTS)
 
-include ../Make-config
+include $(TOP)/Make-config
 
 include depend
 
@@ -58,4 +53,4 @@ include depend
 # by any source file.
 # 
 dep: $(SOURCES)
-	makedepend -fdepend -Y -I../include $(SOURCES)
+	makedepend -fdepend -Y -I$(TOP)/include $(SOURCES)

@@ -1,18 +1,13 @@
-# $Id: Makefile.X11,v 1.23 2003/04/21 14:04:27 brianp Exp $
-
-# Mesa 3-D graphics library
-# Version:  5.1
-# Copyright (C) 1995-2003  Brian Paul
-
-# Makefile for GLUT-based demo programs for Unix/X11
+# Makefile for GLUT-based demo programs
 
 
 ##### MACROS #####
 
-INCDIR = ../include
-LIBDIR = ../lib
+TOP = ..
+INCDIR = $(TOP)/include
+LIBDIR = $(TOP)/lib
 
-GL_LIBS = -L$(LIBDIR) -lglut -lGLU -lGL $(APP_LIB_DEPS)
+LIBS = -L$(LIBDIR) $(APP_LIB_DEPS)
 
 OSMESA_LIBS = -L$(LIBDIR) -lglut -lOSMesa -lGLU -lGL $(APP_LIB_DEPS)
 
@@ -71,7 +66,7 @@ PROGS = \
 
 # make executable from .c file:
 .c: $(LIB_DEP)
-	$(CC) -I$(INCDIR) -I../util $(CFLAGS) $< $(GL_LIBS) -o $@
+	$(CC) -I$(INCDIR) $(CFLAGS) $< $(LIBS) -o $@
 
 # special case: need the -lOSMesa library:
 osdemo: osdemo.c
@@ -95,20 +90,10 @@ targets: readtex.c readtex.h $(PROGS)
 
 
 readtex.c:
-	cp ../util/readtex.c .
+	cp $(TOP)/util/readtex.c .
 
 readtex.h:
-	cp ../util/readtex.h .
+	cp $(TOP)/util/readtex.h .
 
 
-# execute all programs
-exec: $(PROGS)
-	@for prog in $(PROGS) ;			\
-	do					\
-		echo -n "Running $$prog ..." ;	\
-		$$prog ;			\
-		echo ;				\
-	done
-
-
-include ../Make-config
+include $(TOP)/Make-config

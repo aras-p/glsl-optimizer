@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.76 2003/04/07 14:45:52 brianp Exp $
+# $Id: Makefile.X11,v 1.77 2003/06/01 16:25:02 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -35,19 +35,12 @@ default:
 	@echo "Type one of the following:"
 	@echo "  make aix                  for IBM RS/6000 with AIX"
 	@echo "  make aix-sl               for IBM RS/6000, make shared libs"
-	@echo "  make amiwin               for Amiga with SAS/C and AmiWin"
-	@echo "  make amix                 for Amiga 3000 UX  SVR4 v2.1 systems"
 	@echo "  make beos-r4              for BeOS R4"
-	@echo "  make bsdos                for BSD/OS from BSDI using GCC"
-	@echo "  make bsdos4               for BSD/OS 4.x, dynamic libraries"
 	@echo "  make cygnus               for Win95/NT using Cygnus-Win32"
 	@echo "  make cygnus-linux         for Win95/NT using Cygnus-Win32 under Linux"
 	@echo "  make darwin               for Darwin - Mac OS X"
-	@echo "  make dgux                 for Data General"
 	@echo "  make freebsd              for FreeBSD systems with GCC"
 	@echo "  make freebsd-386          for FreeBSD systems with GCC, w/ Intel assembly"
-	@echo "  make gcc                  for a generic system with GCC"
-	@echo "  make gcc-sl               for a generic system with GCC for shared libs"
 	@echo "  make hpux9                for HP systems with HPUX 9.x"
 	@echo "  make hpux9-sl             for HP systems with HPUX 9.x, make shared libs"
 	@echo "  make hpux9-gcc            for HP systems with HPUX 9.x using GCC"
@@ -56,10 +49,6 @@ default:
 	@echo "  make hpux10-sl            for HP systems with HPUX 10.x and 11.x, shared libs"
 	@echo "  make hpux10-gcc           for HP systems with HPUX 10.x w/ GCC"
 	@echo "  make hpux10-gcc-sl        for HP systems with HPUX 10.x w/ GCC, shared libs"
-	@echo "  make irix4                for SGI systems with IRIX 4.x"
-	@echo "  make irix5                for SGI systems with IRIX 5.x"
-	@echo "  make irix5-gcc            for SGI systems with IRIX 5.x using GCC"
-	@echo "  make irix5-dso            for SGI systems with IRIX 5.x, make DSOs"
 	@echo "  make irix6-o32            for SGI systems with IRIX 6.x, make o32-bit libs"
 	@echo "  make irix6-o32-dso        for SGI systems with IRIX 6.x, make o32-bit DSOs"
 	@echo "  make irix6-n32            for SGI systems with IRIX 6.x, make n32-bit libs"
@@ -68,43 +57,29 @@ default:
 	@echo "  make irix6-64             for SGI systems with IRIX 6.x, make 64-bit libs"
 	@echo "  make irix6-64-dso         for SGI systems with IRIX 6.x, make 64-bit DSOs"
 
-	@echo "  make linux                for Linux systems, make shared .so libs"
-	@echo "  make linux-static         for Linux systems, make static .a libs"
-	@echo "  make linux-x86            for Linux on Intel, make shared .so libs"
-	@echo "  make linux-x86-static     for Linux on Intel, make static .a libs"
-	@echo "  make linux-ggi            for Linux systems with libggi"
-	@echo "  make linux-386-ggi        for Linux systems with libggi w/ Intel assembly"
-	@echo "  make linux-glide          for Linux w/ 3Dfx Glide driver"
-	@echo "  make linux-386-glide      for Linux w/ 3Dfx Glide driver, Intel assembly"
-	@echo "  make linux-386-opt-glide  for Linux with 3Dfx Voodoo1 for GLQuake"
-	@echo "  make linux-x86-glide      for Linux w/ all x86 asm for Glide"
-	@echo "  make linux-alpha          for Linux on Alpha systems"
-	@echo "  make linux-alpha-static   for Linux on Alpha systems, static libs"
-	@echo "  make linux-ppc            for Linux on PowerPC systems"
-	@echo "  make linux-ppc-static     for Linux on PowerPC systems, static libs"
-	@echo "  make linux-sparc          for Linux on Sparc systems"
-	@echo "  make linux-sparc5-elf     for Sparc5 systems, make ELF shared libs"
-	@echo "  make linux-sparc-ultra    for UltraSparc systems, make ELF shared libs"
+	@echo "  make linux                for Linux"
+	@echo "  make linux-x86            for Linux with x86 optimizations"
+	@echo "  make linux-ggi            for Linux with libggi driver"
+	@echo "  make linux-x86-ggi        for Linux with libggi driver and x86 optimizations"
+	@echo "  make linux-glide          for Linux with 3Dfx Glide driver"
+	@echo "  make linux-x86-glide      for Linux with 3Dfx Glide driver and x86 opts"
+	@echo "  make linux-alpha          for Linux with Alpha optimizations"
+	@echo "  make linux-alpha-static   for Linux with Alpha opts, make static libs"
+	@echo "  make linux-ppc            for Linux with PowerPC opts"
+	@echo "  make linux-ppc-static     for Linux with PowerPC opts, make static libs"
+	@echo "  make linux-sparc          for Linux with Sparc optimzations"
+	@echo "  make linux-sparc5         for Linux with Sparc5 optimizations"
+	@echo "  make linux-sparc-ultra    for Linux with UltraSparc optimizations"
 	@echo "  make linux-osmesa16       for 16-bit/channel OSMesa"
 	@echo "  make linux-osmesa32       for 32-bit/channel OSMesa"
 	@echo "  make linux-icc            for Linux with the Intel C/C++ compiler"
 	@echo "  make lynxos               for LynxOS systems with GCC"
-	@echo "  make macintosh            for Macintosh"
-	@echo "  make machten-2.2          for Macs w/ MachTen 2.2 (68k w/ FPU)"
-	@echo "  make machten-4.0          for Macs w/ MachTen 4.0.1 or newer with GNU make"
 	@echo "  make mklinux              for Linux on Power Macintosh"
 	@echo "  make netbsd               for NetBSD 1.0 systems with GCC"
-	@echo "  make next                 for NeXT systems with NEXTSTEP 3.3"
 	@echo "  make openbsd              for OpenBSD systems"
 	@echo "  make openstep             for OpenStep/MacOSX Server systems"
-	@echo "  make os2-x11              for OS/2 with XFree86"
 	@echo "  make osf1                 for DEC Alpha systems with OSF/1"
-	@echo "  make osf1-sl              for DEC Alpha systems with OSF/1, make shared libs"
-	@echo "  make pgi-cygnus           for Cygnus with Portland Group, Inc. compiler"
-	@echo "  make pgi-mingw32          for mingW32 with Portland Group, Inc. compiler"
 	@echo "  make qnx                  for QNX V4 systems with Watcom compiler"
-	@echo "  make sco                  for SCO Unix systems with ODT"
-	@echo "  make sco5                 for SCO 5.0.5 OpenServer Unix"
 	@echo "  make solaris-x86          for PCs with Solaris"
 	@echo "  make solaris-x86-gcc      for PCs with Solaris using GCC"
 	@echo "  make sunos4               for Suns with SunOS 4.x"
@@ -112,25 +87,10 @@ default:
 	@echo "  make sunos4-gcc           for Suns with SunOS 4.x and GCC"
 	@echo "  make sunos4-gcc-sl        for Suns with SunOS 4.x, GCC, make shared libs"
 	@echo "  make sunos5               for Suns with SunOS 5.x"
-	@echo "  make sunos5-sl            for Suns with SunOS 5.x, make shared libs"
-	@echo "  make sunos5-ultra         for Sun UltraSPARCs with SunOS 5.x"
-	@echo "  make sunos5-ultra-sl      for Sun UltraSPARCs with SunOS 5.x, make shared libs"
-	@echo "  make sunos5-thread        for Suns with SunOS 5.x, using Solaris threads"
-	@echo "  make sunos5-pthread       for Suns with SunOS 5.[56] using POSIX threads"
-	@echo "  make sunos5-gcc-thread    for Suns with SunOS 5.x and GCC, using Solaris threads"
-	@echo "  make sunos5-gcc-pthread   for Suns with SunOS 5.[56] and GCC, using POSIX threads"
 	@echo "  make sunos5-gcc           for Suns with SunOS 5.x and GCC"
-	@echo "  make sunos5-gcc-sl        for Suns with SunOS 5.x, GCC, make shared libs"
-	@echo "  make sunos5-x11r6-gcc-sl  for Suns with X11R6, GCC, make shared libs"
-	@echo "  make sunos5-gcc-thread    for Suns with SunOS 5.x and GCC, using Solaris threads"
-	@echo "  make sunos5-gcc-pthread   for Suns with SunOS 5.[56] and GCC, using POSIX threads"
-	@echo "  make sunSolaris-CC        for Solaris using C++ compiler"
 	@echo "  make ultrix-gcc           for DEC systems with Ultrix and GCC"
-	@echo "  make unicos               for Cray C90 (and other?) systems"
 	@echo "  make unixware             for PCs running UnixWare"
 	@echo "  make unixware-shared      for PCs running UnixWare, shared libs"
-	@echo "  make uwin                 for Windows NT with AT&T/Wipro UWIN"
-	@echo "  make vistra               for Stardent Vistra systems"
 	@echo "  make clean                remove .o files"
 	@echo "  make realclean            remove .o, library and executable files"
 
@@ -139,29 +99,23 @@ default:
 # XXX we may have to split up this group of targets into those that
 # have a C++ compiler and those that don't for the SI-GLU library.
 
-aix aix-sl amix bsdos bsdos4 darwin dgux freebsd freebsd-386 gcc gcc-sl \
+aix aix-sl darwin freebsd freebsd-386 \
 hpux9 hpux9-sl hpux9-gcc hpux9-gcc-sl \
 hpux10 hpux10-sl hpux10-gcc hpux10-gcc-sl \
-irix4 irix5 irix5-gcc irix5-dso \
-linux linux-static linux-debug linux-static-debug linux-prof \
-linux-x86 linux-icc linux-x86-static linux-x86-debug \
-linux-glide linux-386-glide linux-386-opt-glide \
-linux-x86-glide linux-glide-debug linux-glide-prof \
+linux linux-debug \
+linux-x86 linux-x86-sse linux-icc linux-x86-static linux-x86-debug \
+linux-glide linux-x86-glide linux-glide-debug \
 linux-alpha-static linux-alpha \
 linux-ppc-static linux-ppc \
-linux-sparc \
-linux-sparc5-elf \
-linux-sparc-ultra \
-lynxos machten-2.2 machten-4.0 \
-mklinux netbsd osf1 osf1-sl openbsd qnx sco sco5 \
-solaris-x86 solaris-x86-gcc sunSolaris-CC \
+linux-sparc linux-sparc5 linux-sparc-ultra \
+mklinux netbsd osf1 openbsd qnx \
+solaris-x86 solaris-x86-gcc \
 sunos4 sunos4-sl sunos4-gcc sunos4-gcc-sl sunos4-gcc-x11r6-sl \
-sunos5 sunos5-sl sunos5-ultra sunos5-ultra-sl sunos5-gcc sunos5-gcc-sl \
-sunos5-thread sunos5-pthread sunos5-gcc-thread sunos5-gcc-pthread \
-sunos5-x11r6-gcc-sl ultrix-gcc unicos unixware uwin vistra:
+sunos5 sunos5-gcc \
+ultrix-gcc unixware:
 	-mkdir lib
 	if [ -d src      ] ; then touch src/depend      ; fi
-	if [ -d si-glu   ] ; then touch si-glu/depend  ; fi
+	if [ -d si-glu   ] ; then touch si-glu/depend   ; fi
 	if [ -d src-glut ] ; then touch src-glut/depend ; fi
 	if [ -d widgets-sgi ] ; then touch widgets-sgi/depend ; fi
 	if [ -d src      ] ; then cd src      ; $(MAKE) -f Makefile.X11 $@ ; fi
@@ -173,34 +127,29 @@ sunos5-x11r6-gcc-sl ultrix-gcc unicos unixware uwin vistra:
 	if [ -d book     ] ; then cd book     ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d widgets-sgi ] ; then cd widgets-sgi; $(MAKE) -f Makefile.X11 $@ ; fi
 
-gcc-mesa-sl:
-	if [ -d src      ] ; then cd src      ; $(MAKE) -f Makefile.X11 $@ ; fi
-
-irix6-o32 irix6-o32-dso irix6-n32 irix6-n32-dso irix6-gcc-n32-sl irix-debug:
+irix6-o32 irix6-o32-dso irix6-n32 irix6-n32-dso irix6-gcc-n32-sl:
 	-mkdir lib32
 	if [ -d src      ] ; then touch src/depend      ; fi
-	if [ -d src-glu  ] ; then touch src-glu/depend  ; fi
+	if [ -d si-glu   ] ; then touch si-glu/depend   ; fi
 	if [ -d src-glut ] ; then touch src-glut/depend ; fi
 	if [ -d widgets-sgi ] ; then touch widgets-sgi/depend ; fi
 	if [ -d src      ] ; then cd src      ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src-glu  ] ; then cd src-glu  ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d si-glu   ] ; then cd si-glu   ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src-glut ] ; then cd src-glut ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d demos    ] ; then cd demos    ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d xdemos   ] ; then cd xdemos   ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d samples  ] ; then cd samples  ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d book     ] ; then cd book     ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d widgets-sgi ] ; then cd widgets-sgi; $(MAKE) -f Makefile.X11 $@ ; fi
-
-CORE_OBJECTS = $(CORE_SOURCES:.c=.o)
 
 irix6-64 irix6-64-dso:
 	-mkdir lib64
-	touch src/depend
-	touch src-glu/depend
+	if [ -d src      ] ; then touch src/depend      ; fi
+	if [ -d si-glu   ] ; then touch si-glu/depend   ; fi
 	if [ -d src-glut ] ; then touch src-glut/depend ; fi
 	if [ -d widgets-sgi ] ; then touch widgets-sgi/depend ; fi
 	if [ -d src      ] ; then cd src      ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src-glu  ] ; then cd src-glu  ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d si-glu   ] ; then cd si-glu   ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src-glut ] ; then cd src-glut ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d demos    ] ; then cd demos    ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d xdemos   ] ; then cd xdemos   ; $(MAKE) -f Makefile.X11 $@ ; fi
@@ -208,18 +157,6 @@ irix6-64 irix6-64-dso:
 	if [ -d book     ] ; then cd book     ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d widgets-sgi ] ; then cd widgets-sgi; $(MAKE) -f Makefile.X11 $@ ; fi
 
-CORE_OBJECTS = $(CORE_SOURCES:.c=.o)
-
-amiwin:
-	bin/mklib.amiwin
-
-# Make an optional library with _just_ core objects
-libmesa:	$(LIBDIR)/$(MESA_LIB)
-	if [ ${MESA_LIB} ] ; then $(MAKELIB) $(MESA_LIB) $(MESA_MAJOR) $(MESA_MINOR) $(GL_TINY) $(CORE_OBJECTS) ; fi
-	if [ ${MESA_LIB} ] ; then rm -f $(LIBDIR)/$(MESA_LIB)* ; fi
-	if [ ${MESA_LIB} ] ; then mv $(MESA_LIB)* $(LIBDIR) ; fi
-
-$(LIBDIR)/$(MESA_LIB):	$(CORE_OBJECTS)
 
 beos-r4:
 	-mkdir lib
@@ -236,7 +173,6 @@ beos-r4:
 	if [ -d samples ] ; then cd samples ; $(MAKE) -f Makefile.BeOS-R4 $@ ; fi
 	if [ -d book    ] ; then cd book    ; $(MAKE) -f Makefile.BeOS-R4 $@ ; fi
 
-pgi-cygnus pgi-mingw32 \
 cygnus cygnus-linux:
 	-mkdir lib
 	touch src/depend
@@ -249,33 +185,12 @@ cygnus cygnus-linux:
 	if [ -d xdemos   ] ; then cd xdemos   ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d widgets-sgi ] ; then cd widgets-sgi; $(MAKE) -f Makefile.X11 $@ ; fi
 
-macintosh:
-	@echo "See the README file for Macintosh intallation information"
-
-next:
-	-mkdir lib
-	cd src ; $(MAKE) -f Makefile.X11 "MYCC=${CC}" $@
-	cd src-glu ; $(MAKE) -f Makefile.X11 "MYCC=${CC}" $@
-
 openstep:
 	-mkdir lib
 	cd src ; $(MAKE) -f Makefile.X11 "MYCC=${CC}" $@
 	cd src-glu ; $(MAKE) -f Makefile.X11 "MYCC=${CC}" $@
 
-os2-x11:
-	if not EXIST .\lib md lib
-	touch src/depend
-	touch src-glu/depend
-	if exist src-glut touch src-glut/depend
-	cd src     & make -f Makefile.X11 $@
-	cd src-glu & make -f Makefile.X11 $@
-	if exist src-glut  cd src-glut & make -f Makefile.X11 $@
-	if exist demos     cd demos    & make -f Makefile.X11 $@
-	if exist xdemos    cd xdemos   & make -f Makefile.X11 $@
-	if exist samples   cd samples  & make -f Makefile.X11 $@
-	if exist book      cd book     & make -f Makefile.X11 $@
-
-linux-ggi linux-386-ggi:
+linux-ggi linux-x86-ggi:
 	-mkdir lib
 	touch src/depend
 	touch si-glu/depend
@@ -299,7 +214,7 @@ linux-ggi linux-386-ggi:
 DESTDIR=/usr/local
 GGI_DEST=lib/ggi/mesa
 
-linux-ggi-install linux-386-ggi-install:
+linux-ggi-install linux-x86-ggi-install:
 	install -d $(DESTDIR)/$(GGI_DEST)/default $(DESTDIR)/$(GGI_DEST)/display $(DESTDIR)/etc/ggi
 	install -m 0755 src/GGI/default/*.so $(DESTDIR)/$(GGI_DEST)/default
 	install -m 0755 src/GGI/display/*.so $(DESTDIR)/$(GGI_DEST)/display
@@ -349,19 +264,15 @@ cvsclean: realclean
 	-rm -f install-sh libtool ltmain.sh Makefile.in
 	-rm -f missing mkinstalldirs stamp-h stamp-h.in
 
+
+
+
 DIRECTORY = Mesa-5.1
 LIB_NAME = MesaLib-5.1
 DEMO_NAME = MesaDemos-5.1
 GLU_NAME = MesaGLU-5.1
 GLUT_NAME = GLUT-3.7
 
-# Make an optional library with _just_ core objects
-libmesa:	$(LIBDIR)/$(MESA_LIB)
-	if [ ${MESA_LIB} ] ; then $(MAKELIB) $(MESA_LIB) $(MESA_MAJOR) $(MESA_MINOR) $(GL_TINY) $(CORE_OBJECTS) ; fi
-	if [ ${MESA_LIB} ] ; then rm -f $(LIBDIR)/$(MESA_LIB)* ; fi
-	if [ ${MESA_LIB} ] ; then mv $(MESA_LIB)* $(LIBDIR) ; fi
-
-$(LIBDIR)/$(MESA_LIB):	$(CORE_OBJECTS)
 
 LIB_FILES =	\
 	$(DIRECTORY)/Makefile*						\
@@ -380,14 +291,9 @@ LIB_FILES =	\
 	$(DIRECTORY)/missing						\
 	$(DIRECTORY)/mkinstalldirs					\
 	$(DIRECTORY)/stamp-h.in						\
-	$(DIRECTORY)/docs/index.html					\
-	$(DIRECTORY)/docs/CONFORM					\
+	$(DIRECTORY)/docs/*.html					\
 	$(DIRECTORY)/docs/COPYING					\
-	$(DIRECTORY)/docs/COPYRIGHT					\
-	$(DIRECTORY)/docs/DEVINFO					\
-	$(DIRECTORY)/docs/INSTALL					\
 	$(DIRECTORY)/docs/INSTALL.GNU					\
-	$(DIRECTORY)/docs/README					\
 	$(DIRECTORY)/docs/README.*					\
 	$(DIRECTORY)/docs/RELNOTES*					\
 	$(DIRECTORY)/docs/VERSIONS					\

@@ -1,18 +1,13 @@
-# $Id: Makefile.X11,v 1.13 2002/10/05 18:30:46 brianp Exp $
-
-# Mesa 3-D graphics library
-# Version:  4.1
-# Copyright (C) 1995-2002  Brian Paul
-
 # Makefile for non-GLUT (X11, SVGA, etc) demo programs
 
 
 ##### MACROS #####
 
-INCDIR = ../include
-LIBDIR = ../lib
+TOP = ..
+INCDIR = $(TOP)/include
+LIBDIR = $(TOP)/lib
 
-GL_LIBS = -L$(LIBDIR) -lGLU -lGL $(APP_LIB_DEPS)
+LIBS = -L$(LIBDIR) $(APP_LIB_DEPS)
 
 LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB)
 
@@ -38,7 +33,24 @@ PROGS = glthreads \
 .SUFFIXES: .c
 
 .c: $(LIB_DEP)
-	$(CC) -I$(INCDIR) $(CFLAGS) $< $(GL_LIBS) -o $@
+	$(CC) -I$(INCDIR) $(CFLAGS) $< $(LIBS) -o $@
+
+
+# special cases
+pbinfo: pbinfo.o pbutil.o
+	$(CC) pbinfo.o pbutil.o $(LIBS) -o $@
+
+pbdemo: pbdemo.o pbutil.o
+	$(CC) pbdemo.o pbutil.o $(LIBS) -o $@
+
+pbinfo.o: pbinfo.c pbutil.h
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) pbinfo.c
+
+pbdemo.o: pbdemo.c pbutil.h
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) pbdemo.c
+
+pbutil.o: pbutil.c pbutil.h
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) pbutil.c
 
 
 
@@ -56,30 +68,7 @@ realclean:
 
 targets: $(PROGS)
 
-# execute all programs
-exec: $(PROGS)
-	@for prog in $(PROGS) ;			\
-	do					\
-		echo -n "Running $$prog ..." ;	\
-		$$prog ;			\
-		echo ;				\
-	done
 
+include $(TOP)/Make-config
 
-include ../Make-config
-
-pbinfo: pbinfo.o pbutil.o
-	$(CC) pbinfo.o pbutil.o $(GL_LIBS) -o $@
-
-pbdemo: pbdemo.o pbutil.o
-	$(CC) pbdemo.o pbutil.o $(GL_LIBS) -o $@
-
-pbinfo.o: pbinfo.c pbutil.h
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $<
-
-pbdemo.o: pbdemo.c pbutil.h
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $<
-
-pbutil.o: pbutil.c pbutil.h
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $<
 
