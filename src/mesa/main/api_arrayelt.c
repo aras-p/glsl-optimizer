@@ -35,7 +35,7 @@
 #include "mtypes.h"
 
 
-typedef void (*texarray_func)( GLenum, const void * );
+typedef void (GLAPIENTRY *texarray_func)( GLenum, const void * );
 
 typedef struct {
    GLint unit;
@@ -43,7 +43,7 @@ typedef struct {
    texarray_func func;
 } AEtexarray;
 
-typedef void (*array_func)( const void * );
+typedef void (GLAPIENTRY *array_func)( const void * );
 
 typedef struct {
    struct gl_client_array *array;
@@ -59,7 +59,7 @@ typedef struct {
 #define AE_CONTEXT(ctx) ((AEcontext *)(ctx)->aelt_context)
 #define TYPE_IDX(t) ((t) & 0xf)
 
-static void (*colorfuncs[2][8])( const void * ) = {
+static void (GLAPIENTRY *colorfuncs[2][8])( const void * ) = {
    { (array_func)glColor3bv,
      (array_func)glColor3ubv,
      (array_func)glColor3sv,
@@ -79,7 +79,7 @@ static void (*colorfuncs[2][8])( const void * ) = {
      (array_func)glColor4dv }
 };
 
-static void (*vertexfuncs[3][8])( const void * ) = {
+static void (GLAPIENTRY *vertexfuncs[3][8])( const void * ) = {
    { 0,
      0,
      (array_func)glVertex2sv,
@@ -109,7 +109,7 @@ static void (*vertexfuncs[3][8])( const void * ) = {
 };
 
 
-static void (*multitexfuncs[4][8])( GLenum, const void * ) = {
+static void (GLAPIENTRY *multitexfuncs[4][8])( GLenum, const void * ) = {
    { 0,
      0,
      (texarray_func)glMultiTexCoord1svARB,
@@ -147,7 +147,7 @@ static void (*multitexfuncs[4][8])( GLenum, const void * ) = {
      (texarray_func)glMultiTexCoord4dvARB }
 };
 
-static void (*indexfuncs[8])( const void * ) = {
+static void (GLAPIENTRY *indexfuncs[8])( const void * ) = {
    0,
    (array_func)glIndexubv,
    (array_func)glIndexsv,
@@ -159,7 +159,7 @@ static void (*indexfuncs[8])( const void * ) = {
 };
 
 
-static void (*normalfuncs[8])( const void * ) = {
+static void (GLAPIENTRY *normalfuncs[8])( const void * ) = {
    (array_func)glNormal3bv,
    0,
    (array_func)glNormal3sv,
@@ -212,7 +212,7 @@ static void SecondaryColor3dvEXT(const GLdouble *c)
    _glapi_Dispatch->SecondaryColor3dvEXT(c);
 }
 
-static void (*secondarycolorfuncs[8])( const void * ) = {
+static void (GLAPIENTRY *secondarycolorfuncs[8])( const void * ) = {
    (array_func) SecondaryColor3bvEXT,
    (array_func) SecondaryColor3ubvEXT,
    (array_func) SecondaryColor3svEXT,
@@ -235,7 +235,7 @@ static void FogCoorddvEXT(const GLdouble *f)
    _glapi_Dispatch->FogCoorddvEXT(f);
 }
 
-static void (*fogcoordfuncs[8])( const void * ) = {
+static void (GLAPIENTRY *fogcoordfuncs[8])( const void * ) = {
    0,
    0,
    0,
