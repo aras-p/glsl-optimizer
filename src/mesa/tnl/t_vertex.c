@@ -681,7 +681,7 @@ static void generic_emit( GLcontext *ctx,
    for (j = 0; j < count; j++) {
       GLvector4f *vptr = VB->AttribPtr[a[j].attrib];
       a[j].inputstride = vptr->stride;
-      a[j].inputptr = (GLubyte *)STRIDE_4F(vptr->data, start * vptr->stride);
+      a[j].inputptr = ((GLubyte *)vptr->data) + start * vptr->stride;
       a[j].emit = a[j].insert[vptr->size - 1];
    }
 
@@ -921,7 +921,7 @@ void _tnl_get_attr( GLcontext *ctx, const void *vin,
 
    for (j = 0; j < attr_count; j++) {
       if (a[j].attrib == attr) {
-	 a[j].extract( &a[j], dest, vin );
+	 a[j].extract( &a[j], dest, (GLubyte *)vin + a[j].vertoffset );
 	 return;
       }
    }
@@ -978,6 +978,9 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
 	 vtx->attr[i].vertoffset = map[i].offset;
       else
 	 vtx->attr[i].vertoffset = offset;
+
+/*       fprintf(stderr, "%d: %s offset %d\n", i, */
+/* 	      format_info[format].name, vtx->attr[i].vertoffset); */
 
       offset += format_info[format].attrsize;
    }
