@@ -1,4 +1,4 @@
-/* $Id: gloss.c,v 1.2 1999/10/23 08:12:23 brianp Exp $ */
+/* $Id: gloss.c,v 1.3 1999/10/26 17:08:31 brianp Exp $ */
 
 /*
  * Specular reflection demo.  The specular highlight is modulated by
@@ -82,14 +82,7 @@ static void Display( void )
    glMaterialfv(GL_FRONT, GL_SPECULAR, Black);
    glEnable(GL_TEXTURE_2D);
    glBindTexture(GL_TEXTURE_2D, BaseTexture);
-   glMatrixMode(GL_TEXTURE);
-   glLoadIdentity();
-   glScalef(2.0, 2.0, 2.0);
-   glMatrixMode(GL_MODELVIEW);
    glCallList(Object);
-   glMatrixMode(GL_TEXTURE);
-   glLoadIdentity();
-   glMatrixMode(GL_MODELVIEW);
 
    /* Second pass: specular lighting with reflection texture */
    glBlendFunc(GL_ONE, GL_ONE);  /* add */
@@ -237,6 +230,9 @@ static void Init( int argc, char *argv[] )
    {
       static GLfloat height = 100.0;
       static GLfloat radius = 40.0;
+      static GLint slices = 24;  /* pie slices around Z axis */
+      static GLint stacks = 10;  /* subdivisions along length of cylinder */
+      static GLint rings = 4;    /* rings in the end disks */
       GLUquadricObj *q = gluNewQuadric();
       assert(q);
       gluQuadricTexture(q, GL_TRUE);
@@ -247,21 +243,36 @@ static void Init( int argc, char *argv[] )
       glPushMatrix();
       glTranslatef(0.0, 0.0, -0.5 * height);
 
+      glMatrixMode(GL_TEXTURE);
+      glLoadIdentity();
+      glScalef(8.0, 4.0, 2.0);
+      glMatrixMode(GL_MODELVIEW);
+
       /* cylinder */
       gluQuadricNormals(q, GL_SMOOTH);
       gluQuadricTexture(q, GL_TRUE);
-      gluCylinder(q, radius, radius, height, 24, 10);
+      gluCylinder(q, radius, radius, height, slices, stacks);
 
       /* end cap */
+      glMatrixMode(GL_TEXTURE);
+      glLoadIdentity();
+      glScalef(3.0, 3.0, 1.0);
+      glMatrixMode(GL_MODELVIEW);
+
       glTranslatef(0.0, 0.0, height);
-      gluDisk(q, 0.0, radius, 24, 1);
+      gluDisk(q, 0.0, radius, slices, rings);
 
       /* other end cap */
       glTranslatef(0.0, 0.0, -height);
       gluQuadricOrientation(q, GLU_INSIDE);
-      gluDisk(q, 0.0, radius, 24, 1);
+      gluDisk(q, 0.0, radius, slices, rings);
 
       glPopMatrix();
+
+      glMatrixMode(GL_TEXTURE);
+      glLoadIdentity();
+      glMatrixMode(GL_MODELVIEW);
+
       glEndList();
       gluDeleteQuadric(q);
    }
