@@ -1,4 +1,4 @@
-/* $Id: ss_tritmp.h,v 1.17 2002/10/04 17:37:47 brianp Exp $ */
+/* $Id: ss_tritmp.h,v 1.18 2002/10/29 20:29:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 

@@ -1,4 +1,4 @@
-/* $Id: vtxfmt.c,v 1.13 2002/10/24 23:57:21 brianp Exp $ */
+/* $Id: vtxfmt.c,v 1.14 2002/10/29 20:28:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,8 +24,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
- *    Gareth Hughes <gareth@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
+ *    Gareth Hughes
  */
 
 #include "glheader.h"

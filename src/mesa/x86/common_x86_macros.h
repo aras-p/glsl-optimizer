@@ -1,4 +1,4 @@
-/* $Id: common_x86_macros.h,v 1.2 2002/08/08 16:53:12 brianp Exp $ */
+/* $Id: common_x86_macros.h,v 1.3 2002/10/29 20:28:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Gareth Hughes <gareth@valinux.com>
+ *    Gareth Hughes
  */
 
 #ifndef __COMMON_X86_MACROS_H__

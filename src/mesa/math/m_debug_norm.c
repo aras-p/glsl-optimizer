@@ -1,4 +1,4 @@
-/* $Id: m_debug_norm.c,v 1.10 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: m_debug_norm.c,v 1.11 2002/10/29 20:28:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Gareth Hughes <gareth@valinux.com>
+ *    Gareth Hughes
  */
 
 #include "glheader.h"

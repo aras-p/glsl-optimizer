@@ -1,4 +1,4 @@
-/* $Id: tnl.h,v 1.9 2002/02/13 00:53:20 keithw Exp $ */
+/* $Id: tnl.h,v 1.10 2002/10/29 20:29:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 #ifndef _TNL_H

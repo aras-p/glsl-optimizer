@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.34 2002/10/24 23:57:25 brianp Exp $ */
+/* $Id: t_imm_api.c,v 1.35 2002/10/29 20:29:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 

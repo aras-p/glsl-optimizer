@@ -1,4 +1,4 @@
-/* $Id: t_dd_tritmp.h,v 1.12 2001/07/17 19:39:32 keithw Exp $ */
+/* $Id: t_dd_tritmp.h,v 1.13 2002/10/29 20:29:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 

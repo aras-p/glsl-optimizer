@@ -1,4 +1,4 @@
-/* $Id: gen_matypes.c,v 1.9 2002/10/24 23:57:23 brianp Exp $ */
+/* $Id: gen_matypes.c,v 1.10 2002/10/29 20:28:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Gareth Hughes <gareth@valinux.com>
+ *    Gareth Hughes
  */
 
 /*

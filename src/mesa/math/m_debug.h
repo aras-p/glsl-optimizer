@@ -1,4 +1,4 @@
-/* $Id: m_debug.h,v 1.4 2001/05/21 16:33:41 gareth Exp $ */
+/* $Id: m_debug.h,v 1.5 2002/10/29 20:28:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Gareth Hughes <gareth@valinux.com>
+ *    Gareth Hughes
  */
 
 #ifndef __M_DEBUG_H__

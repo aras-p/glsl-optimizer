@@ -1,4 +1,4 @@
-/* $Id: common_x86_features.h,v 1.4 2001/03/28 20:44:44 gareth Exp $ */
+/* $Id: common_x86_features.h,v 1.5 2002/10/29 20:28:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,7 +29,7 @@
  * _mesa_identify_x86_cpu_features() and interpreted with the cpu_has_*
  * helper macros.
  *
- * Gareth Hughes <gareth@valinux.com>
+ * Gareth Hughes
  */
 
 #ifndef __COMMON_X86_FEATURES_H__

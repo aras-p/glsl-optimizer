@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.31 2002/10/21 15:06:26 brianp Exp $ */
+/* $Id: swrast.h,v 1.32 2002/10/29 20:29:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,7 +28,7 @@
 /**
  * \file swrast/swrast.h
  * \brief Defines basic structures for sw_rasterizer.
- * \author Keith Whitwell <keithw@valinux.com>
+ * \author Keith Whitwell <keith@tungstengraphics.com>
  */
 
 #ifndef SWRAST_H

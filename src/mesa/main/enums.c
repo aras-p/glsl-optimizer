@@ -1,4 +1,4 @@
-/* $Id: enums.c,v 1.23 2002/10/25 21:06:26 brianp Exp $ */
+/* $Id: enums.c,v 1.24 2002/10/29 20:28:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Author:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 

@@ -1,4 +1,4 @@
-/* $Id: api_loopback.c,v 1.16 2002/10/17 22:26:06 kschultz Exp $ */
+/* $Id: api_loopback.c,v 1.17 2002/10/29 20:28:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 

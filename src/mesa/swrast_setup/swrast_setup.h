@@ -1,4 +1,4 @@
-/* $Id: swrast_setup.h,v 1.9 2001/07/12 22:09:21 keithw Exp $ */
+/* $Id: swrast_setup.h,v 1.10 2002/10/29 20:29:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 /* Public interface to the swrast_setup module.  This module provides

@@ -1,4 +1,4 @@
-/* $Id: fxvbtmp.h,v 1.11 2002/08/21 02:59:54 brianp Exp $ */
+/* $Id: fxvbtmp.h,v 1.12 2002/10/29 20:28:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,7 +25,7 @@
  */
 
 /* Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 

@@ -1,4 +1,4 @@
-/* $Id: texformat_tmp.h,v 1.9 2002/09/27 02:45:38 brianp Exp $ */
+/* $Id: texformat_tmp.h,v 1.10 2002/10/29 20:28:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Gareth Hughes <gareth@valinux.com>
+ *    Gareth Hughes
  *    Brian Paul
  */
 

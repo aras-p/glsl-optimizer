@@ -1,4 +1,4 @@
-/* $Id: ac_context.h,v 1.4 2002/04/21 18:49:19 brianp Exp $ */
+/* $Id: ac_context.h,v 1.5 2002/10/29 20:28:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 #ifndef _AC_CONTEXT_H

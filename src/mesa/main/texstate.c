@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.84 2002/10/24 23:57:21 brianp Exp $ */
+/* $Id: texstate.c,v 1.85 2002/10/29 20:28:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1202,7 +1202,6 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          texObj->MaxLevel = (GLint) params[0];
          break;
       case GL_TEXTURE_PRIORITY:
-         /* (keithh@netcomuk.co.uk) */
          FLUSH_VERTICES(ctx, _NEW_TEXTURE);
          texObj->Priority = CLAMP( params[0], 0.0F, 1.0F );
          break;

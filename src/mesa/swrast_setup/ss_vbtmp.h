@@ -1,4 +1,4 @@
-/* $Id: ss_vbtmp.h,v 1.21 2002/04/19 00:42:20 brianp Exp $ */
+/* $Id: ss_vbtmp.h,v 1.22 2002/10/29 20:29:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 

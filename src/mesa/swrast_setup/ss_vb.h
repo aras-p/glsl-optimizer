@@ -1,4 +1,4 @@
-/* $Id: ss_vb.h,v 1.3 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: ss_vb.h,v 1.4 2002/10/29 20:29:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 #ifndef SS_VB_H

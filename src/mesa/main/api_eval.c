@@ -1,4 +1,4 @@
-/* $Id: api_eval.c,v 1.2 2001/12/14 02:50:01 brianp Exp $ */
+/* $Id: api_eval.c,v 1.3 2002/10/29 20:28:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 #include "glheader.h"

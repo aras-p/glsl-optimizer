@@ -1,4 +1,4 @@
-/* $Id: s_context.h,v 1.21 2002/10/11 17:41:06 brianp Exp $ */
+/* $Id: s_context.h,v 1.22 2002/10/29 20:29:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,13 +24,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 /**
  * \file swrast/s_context.h
  * \brief fill in description
- * \author Keith Whitwell <keithw@valinux.com>
+ * \author Keith Whitwell <keith@tungstengraphics.com>
  */
 
 #ifndef S_CONTEXT_H

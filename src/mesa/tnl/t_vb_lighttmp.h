@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.25 2002/02/13 00:53:20 keithw Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.26 2002/10/29 20:29:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,8 +25,8 @@
  *
  *
  * Authors:
- *    Brian Paul <brianp@valinux.com>
- *    Keith Whitwell <keithw@valinux.com>
+ *    Brian Paul
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 

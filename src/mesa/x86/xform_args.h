@@ -1,4 +1,4 @@
-/* $Id: xform_args.h,v 1.4 2001/03/30 14:44:43 gareth Exp $ */
+/* $Id: xform_args.h,v 1.5 2002/10/29 20:28:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,7 +29,7 @@
  * FRAME_OFFSET to the number of bytes pushed onto the stack before
  * using the ARG_* argument macros.
  *
- * Gareth Hughes <gareth@valinux.com>
+ * Gareth Hughes
  */
 
 #ifndef __XFORM_ARGS_H__

@@ -1,4 +1,4 @@
-/* $Id: ac_context.c,v 1.8 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: ac_context.c,v 1.9 2002/10/29 20:28:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 #include "glheader.h"

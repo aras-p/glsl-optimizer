@@ -1,4 +1,4 @@
-/* $Id: t_imm_alloc.c,v 1.16 2002/10/24 23:57:25 brianp Exp $ */
+/* $Id: t_imm_alloc.c,v 1.17 2002/10/29 20:29:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 #include "glheader.h"

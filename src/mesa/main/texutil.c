@@ -1,4 +1,4 @@
-/* $Id: texutil.c,v 1.33 2002/10/24 23:57:21 brianp Exp $ */
+/* $Id: texutil.c,v 1.34 2002/10/29 20:28:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Gareth Hughes <gareth@valinux.com>
+ *    Gareth Hughes
  */
 
 /*

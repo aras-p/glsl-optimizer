@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.h,v 1.9 2001/12/14 02:51:45 brianp Exp $ */
+/* $Id: t_pipeline.h,v 1.10 2002/10/29 20:29:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 

@@ -1,4 +1,4 @@
-/* $Id: texformat.c,v 1.17 2002/10/24 23:57:21 brianp Exp $ */
+/* $Id: texformat.c,v 1.18 2002/10/29 20:28:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,7 +24,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Author:
- *    Gareth Hughes <gareth@valinux.com>
+ *    Gareth Hughes
  */
 
 #include "glheader.h"

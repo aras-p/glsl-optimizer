@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.38 2002/10/24 23:57:25 brianp Exp $ */
+/* $Id: t_imm_fixup.c,v 1.39 2002/10/29 20:29:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,7 +26,7 @@
 
 /*
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 
