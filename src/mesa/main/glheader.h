@@ -228,7 +228,7 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
  * than GNU C
  */
 #ifndef _ASMAPI
-#if !defined( __GNUC__ ) && !defined( VMS )
+#if !defined( __GNUC__ ) && !defined( VMS ) && !defined( __INTEL_COMPILER )
 #define _ASMAPI __cdecl
 #else
 #define _ASMAPI
@@ -258,6 +258,8 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #  define INLINE __inline
 #elif defined(__ICL)
 #  define INLINE __inline
+#elif defined(__INTEL_COMPILER)
+#  define INLINE inline
 #elif defined(__WATCOMC__) && (__WATCOMC__ >= 1100)
 #  define INLINE __inline
 #else
