@@ -12,6 +12,12 @@
 #include <String.h>
 
 #include <GL/gl.h>
+#include <GL/glu.h>
+
+#define GLUT_INFO 1
+#ifdef GLUT_INFO
+	#include <GL/glut.h>
+#endif
 
 
 class GLInfoWindow : public BWindow 
@@ -66,11 +72,7 @@ GLInfoWindow::GLInfoWindow(BRect frame)
 	
 	// gl->LockGL();
 	
-	s = (char *) glGetString(GL_RENDERER);
-	if (!s)
-		goto error;
-		
-	list->AddItem(new BStringItem(s));
+	list->AddItem(new BStringItem("OpenGL", 0));
 
 	s = (char *) glGetString(GL_VENDOR);
 	if (s) {
@@ -92,7 +94,7 @@ GLInfoWindow::GLInfoWindow(BRect frame)
 
 	s = (char *) glGetString(GL_EXTENSIONS);
 	if (s) {
-		list->AddItem(new BStringItem("OpenGL Extensions", 1));
+		list->AddItem(new BStringItem("Extensions", 1));
 		while (*s) {
 			char extname[255];
 			int n = strcspn(s, " ");
@@ -105,9 +107,36 @@ GLInfoWindow::GLInfoWindow(BRect frame)
 		}
 	}
 
+	list->AddItem(new BStringItem("GLU", 0));
+	s = (char *) gluGetString(GLU_VERSION);
+	if (s) {
+		l = ""; l << "Version: " << s;
+		list->AddItem(new BStringItem(l.String(), 1));
+	}
+
+	s = (char *) gluGetString(GLU_EXTENSIONS);
+	if (s) {
+		list->AddItem(new BStringItem("Extensions", 1));
+		while (*s) {
+			char extname[255];
+			int n = strcspn(s, " ");
+			strncpy(extname, s, n);
+			extname[n] = 0;
+			list->AddItem(new BStringItem(extname, 2));
+			if (! s[n])
+				break;
+			s += (n + 1);	// next !
+		}
+	}
+
+#ifdef GLUT_INFO
+	list->AddItem(new BStringItem("GLUT", 0));
+	l = "API version: "; l << GLUT_API_VERSION;
+	list->AddItem(new BStringItem(l.String(), 1));
+#endif
+
 	// gl->UnlockGL();
 
-error:
 	UnlockLooper();
 }
 

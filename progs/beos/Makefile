@@ -12,6 +12,8 @@ include $(TOP)/configs/current
 
 LDFLAGS += -soname=_APP_ $(APP_LIB_DEPS)
 
+INCLUDES = -I. -I- -I../../include
+
 default: demo sample GLInfo
 
 clean:
@@ -25,7 +27,7 @@ sample: sample.o
 	$(LD) sample.o $(LDFLAGS) -o $@
 
 GTLInfo: GLInfo.o
-	$(LD) GLInfo.o $(LDFLAGS) -o $@
+	$(LD) GLInfo.o $(INCLUDES) $(LDFLAGS) -o $@
 
 .cpp.o:
-	$(CC) -c $< $(CFLAGS) -o $@
+	$(CC) -c $< $(INCLUDES) $(CFLAGS) -o $@
