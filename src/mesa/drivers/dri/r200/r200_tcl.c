@@ -560,6 +560,7 @@ static void transition_to_hwtnl( GLcontext *ctx )
    
    R200_STATECHANGE( rmesa, vte );
    rmesa->hw.vte.cmd[VTE_SE_VTE_CNTL] &= ~(R200_VTX_XY_FMT|R200_VTX_Z_FMT);
+   rmesa->hw.vte.cmd[VTE_SE_VTE_CNTL] |= R200_VTX_W0_FMT;
 
    if (R200_DEBUG & DEBUG_FALLBACKS) 
       fprintf(stderr, "R200 end tcl fallback\n");
