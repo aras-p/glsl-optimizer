@@ -39,7 +39,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_vtxfmt.h"
 
 #if defined(USE_SSE_ASM)
-#include "X86/common_x86_asm.h"
+#include "x86/common_x86_asm.h"
 
 #define EXTERN( FUNC )		\
 extern const char *FUNC;	\
