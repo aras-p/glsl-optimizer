@@ -210,82 +210,22 @@ static void emit_vector(GLcontext * ctx,
 
 }
 
-void emit_elts(GLcontext * ctx, GLuint *elts,
-		unsigned long n_elts, unsigned long n_fake_elts, int align)
+void r300EmitElts(GLcontext * ctx, GLuint *elts, unsigned long n_elts)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	radeonScreenPtr rsp=rmesa->radeon.radeonScreen;
-	unsigned short int *hw_elts;
+	struct r300_dma_region *rvb=&rmesa->state.elt_dma;
+	unsigned short int *out;
 	int i;
-	int inc_found=0;
-	int dec_found=0;
-	unsigned long *dst;
-	unsigned long magic_tbl2[6]= { 0x3f51eb85, 0x3e99999a, 0x3f1eb852, 0x3e6b851f, 0x3f2b851f, 0x3eb33333 };
-
-	if(n_elts == 1){
-		fprintf(stderr, "Dont know how to handle this\n");
-		exit(-1);
-	}
-
-	hw_elts=malloc(n_fake_elts*sizeof(unsigned short int));
-
+	
+	r300AllocDmaRegion(rmesa, rvb, (n_elts+1)*2 , 0x20);
+	
+	out = (unsigned short int *)(rvb->address + rvb->start);
+	
 	for(i=0; i < n_elts; i++)
-		hw_elts[i]=(unsigned short int)elts[i];
-
-	/* Work around magic_1 problem by filling rest of the data with last idx */
-	for(; i < n_fake_elts; i++)
-		hw_elts[i]=(unsigned short int)elts[n_elts-1];
-
-	dst=rsp->gartTextures.map;
-
-	/* Buffer underrun in fgl causes these patterns to appear.
-	   Filling these shouldnt be needed in real life. */
-	for(i=0; i < align; i++)
-		if(dst[i] = magic_tbl2[6-align+i])
-
-	//memset(dst, 0, align*sizeof(unsigned long));
-	/*for(i=0; i < align; i++)
-		dst[i]=rand()%(~0);*/
-
-	dst=&dst[align];
-
-	memcpy(dst, hw_elts, n_fake_elts*sizeof(unsigned short int));
-	dst=((char *)dst)+n_fake_elts*sizeof(unsigned short int);
-
-	/*for(i=0; i < 1024/4; i++)
-		dst[i]=rand()%(~0);*/
-	//memset(dst, 0, 1024);
-
-	//memset(((char *)rsp->gartTextures.map)+ec*sizeof(unsigned short int), 0, 1024);
-	/*emit_vector(ctx, &rmesa->state.elt_ao,
-			(char *)hw_elts,
-			2,
-			2, ec);*/
-	/*
-	// some debug code...
-	inc_found=1;
-	for(i=1; i < oec; i++)
-		if(hw_elts[i-1] != hw_elts[i]+1){
-			inc_found=0;
-			break;
-		}
-
-	dec_found=1;
-	for(i=1; i < oec; i++)
-		if(hw_elts[i-1] != hw_elts[i]-1){
-			dec_found=0;
-		}
-
-	fprintf(stderr, "elts:");
-
-	if(inc_found==0 && dec_found==0){
-		fprintf(stderr, "error found\n");
-		exit(-1);
-	}
-	*/
-	/*for(i=0; i < n_elts; i++)
-		fprintf(stderr, "%d ", hw_elts[i]);
-		fprintf(stderr, "\n");*/
+		out[i]=(unsigned short int)elts[i];
+	
+	if(n_elts & 1)
+		out[i]=0;
 }
 
 /* Emit vertex data to GART memory (unless immediate mode)
@@ -558,7 +498,7 @@ void r300ReleaseArrays(GLcontext * ctx)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	int i;
 
-	//r300ReleaseDmaRegion(rmesa, &rmesa->state.elt_ao, __FUNCTION__);
+	r300ReleaseDmaRegion(rmesa, &rmesa->state.elt_dma, __FUNCTION__);
 	for (i=0;i<rmesa->state.aos_count;i++) {
 		r300ReleaseDmaRegion(rmesa, &rmesa->state.aos[i], __FUNCTION__);
 	}

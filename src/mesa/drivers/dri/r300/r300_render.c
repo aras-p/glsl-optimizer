@@ -460,55 +460,24 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 }
 
 /* vertex buffer implementation */
-void emit_elts(GLcontext * ctx, GLuint *elts,
-		unsigned long n_elts, unsigned long n_fake_elts, int align);
-
-#    define R300_EB_UNK1_SHIFT 24
-#    define R300_EB_UNK1 (0x80<<24)
-#    define R300_EB_UNK2 0x0810
-
-//#define PLAY_WITH_MAGIC_1
-
-unsigned long get_num_elts(unsigned long count)
-{
-#ifdef PLAY_WITH_MAGIC_1
-	return count;
-#else
-	/* round up elt count so that magic_1 is 0 (divisable by 4)*/
-	return (count+3) & (~3);
-	//return count - (count % 4);
-#endif
-}
-
-int get_align(int vertex_count)
-{
-	unsigned char magic1_tbl[4]={ 0, 6, 4, 2 };
-
-	return magic1_tbl[vertex_count % 4];
-}
 
 static void inline fire_EB(PREFIX unsigned long addr, int vertex_count, int type)
 {
 	LOCAL_VARS
-	unsigned long magic_1;
-
-	magic_1 = get_align(vertex_count);
-#ifndef PLAY_WITH_MAGIC_1
-	if(magic_1 != 0){
-		WARN_ONCE("Dont know how to handle this yet!\n");
-		return ;
-	}
-#endif
+	unsigned long addr_a;
+	
+	addr_a = addr & 0x1c;
+	
 	check_space(6);
 	
 	start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, 0);
+	/* TODO: Check if R300_VAP_VF_CNTL__INDEX_SIZE_32bit works. */
 	e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count<<16) | type);
 
 	start_packet3(RADEON_CP_PACKET3_INDX_BUFFER, 2);
-	e32(R300_EB_UNK1 | (magic_1 << 16) | R300_EB_UNK2);
-	e32(addr);
-	e32(((vertex_count+1) / 2) + magic_1); /* This still fails once in a while */
-	
+	e32(R300_EB_UNK1 | (addr_a << 16) | R300_EB_UNK2);
+	e32(addr & 0xffffffe3);
+	e32((vertex_count+1)/2 + addr_a/4);
 }
 
 static void r300_render_vb_primitive(r300ContextPtr rmesa,
@@ -530,19 +499,24 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
    if(type<0 || num_verts <= 0)return;
 
    if(rmesa->state.Elts){
-	unsigned long elt_count;
-
-	WARN_ONCE("Rendering with elts\n");
 	r300EmitAOS(rmesa, rmesa->state.aos_count, 0);
 #if 1
 	start_index32_packet(num_verts, type);
 	for(i=0; i < num_verts; i++)
 		e32(rmesa->state.Elts[start+i]); /* start ? */
 #else
-	elt_count=get_num_elts(num_verts);
-	//emit_elts(ctx, rmesa->state.Elts, VB->Count, get_num_elts(VB->Count));
-	emit_elts(ctx, rmesa->state.Elts+start, num_verts, elt_count, get_align(elt_count));
-	fire_EB(PASS_PREFIX rsp->gartTextures.handle/*rmesa->state.elt_ao.aos_offset*/, elt_count, type);
+	WARN_ONCE("Rendering with elt buffers\n");
+	if(num_verts == 1){
+		start_index32_packet(num_verts, type);
+		e32(rmesa->state.Elts[start]);
+		return;
+	}
+	
+	if(num_verts > 65535){ /* not implemented yet */
+		return;
+	}
+	r300EmitElts(ctx, rmesa->state.Elts+start, num_verts);
+	fire_EB(PASS_PREFIX GET_START(&(rmesa->state.elt_dma)), num_verts, type);
 #endif
    }else{
 	   r300EmitAOS(rmesa, rmesa->state.aos_count, start);
@@ -566,10 +540,6 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 	r300ReleaseArrays(ctx);
 	r300EmitArrays(ctx, GL_FALSE);
 	//dump_inputs(ctx, rmesa->state.render_inputs);
-#if 0 /* Cant do this here yet due to magic_1 */
-	if(rmesa->state.Elts)
-		emit_elts(ctx, rmesa->state.Elts, /*600*/VB->Count, get_num_elts(/*600*/VB->Count));
-#endif
 
 //	LOCK_HARDWARE(&(rmesa->radeon));
 

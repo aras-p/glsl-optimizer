@@ -60,6 +60,7 @@ typedef struct r300_context *r300ContextPtr;
    I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble 
    with other compilers ... GLUE!
 */
+#if 1
 #define WARN_ONCE(a, ...)	{ \
 	static int warn##__LINE__=1; \
 	if(warn##__LINE__){ \
@@ -71,6 +72,9 @@ typedef struct r300_context *r300ContextPtr;
 		warn##__LINE__=0;\
 		} \
 	}
+#else
+#define WARN_ONCE(a, ...) {}
+#endif
 
 typedef GLuint uint32_t;
 typedef GLubyte uint8_t;
@@ -663,7 +667,7 @@ struct r300_state {
 	int aos_count;
 
 	GLuint *Elts;
-	struct r300_dma_region elt_ao;
+	struct r300_dma_region elt_dma;
 	
 	GLuint render_inputs; /* actual render inputs that R300 was configured for. 
 				 They are the same as tnl->render_inputs for fixed pipeline */	

@@ -1606,6 +1606,7 @@ void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 void r300SetupVertexShader(r300ContextPtr rmesa)
 {
 	GLcontext* ctx = rmesa->radeon.glCtx;
+	LOCAL_VARS
 
 	if(rmesa->current_vp != NULL){
 		r300SetupVertexProgram(rmesa);
