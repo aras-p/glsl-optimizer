@@ -38,11 +38,7 @@
  */
 #if !defined(__SCITECH_SNAP__)
 
-#ifndef XFree86Server
 #include <stddef.h>     /* to get ptrdiff_t, used below */
-#else
-#define ptrdiff_t int
-#endif
 
 #if defined(__BEOS__)
 #include <stdlib.h>     /* to get some BeOS-isms */
