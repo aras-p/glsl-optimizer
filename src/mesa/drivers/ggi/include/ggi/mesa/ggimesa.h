@@ -30,7 +30,10 @@
 #include <stdarg.h>
 #include "config.h"
 #include "context.h"
+#include "drawpix.h"
+#include "mem.h"
 #include "matrix.h"
+#include "state.h"
 #include "types.h"
 #include "macros.h"
 #include "depth.h"
