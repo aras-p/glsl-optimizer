@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.54 2001/09/23 18:32:51 brianp Exp $
+# $Id: Makefile.X11,v 1.55 2001/10/17 14:57:16 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.0
@@ -408,7 +408,6 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/Makefile*					\
 	$(DIRECTORY)/src/libGL_la_SOURCES				\
 	$(DIRECTORY)/src/descrip.mms					\
-	$(DIRECTORY)/src/mms_depend					\
 	$(DIRECTORY)/src/mesa.conf					\
 	$(DIRECTORY)/src/*.def						\
 	$(DIRECTORY)/src/depend						\
