@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.64 2001/08/07 16:02:48 brianp Exp $
+$Id: VERSIONS,v 1.65 2001/08/07 23:13:54 brianp Exp $
 
 
 Mesa Version History
@@ -882,3 +882,6 @@ Mesa Version History
 	- fixed a number of 16-bit color channel bugs
 	- fixed a few minor memory leaks
 	- GLX context sharing was broken in 3.5
+	- fixed state-update bugs in glPopClientAttrib()
+	- fixed glDrawRangeElements() bug
+	- fixed a glPush/PopAttrib() bug related to texture binding
