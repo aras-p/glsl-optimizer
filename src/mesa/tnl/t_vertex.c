@@ -937,10 +937,30 @@ void _tnl_get_attr( GLcontext *ctx, const void *vin,
       }
    }
 
-   /* Else return the value from ctx->Current
+   /* Else return the value from ctx->Current -- dangerous???
     */
    _mesa_memcpy( dest, ctx->Current.Attrib[attr], 4*sizeof(GLfloat));
 }
+
+
+/* Complementary operation to the above.
+ */
+void _tnl_set_attr( GLcontext *ctx, void *vout,
+		    GLenum attr, const GLfloat *src )
+{
+   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
+   const struct tnl_clipspace_attr *a = vtx->attr;
+   int attr_count = vtx->attr_count;
+   int j;
+
+   for (j = 0; j < attr_count; j++) {
+      if (a[j].attrib == (int)attr) {
+	 a[j].insert[4-1]( &a[j], (GLubyte *)vout + a[j].vertoffset, src );
+	 return;
+      }
+   }
+}
+
 
 void *_tnl_get_vertex( GLcontext *ctx, GLuint nr )
 {
@@ -981,8 +1001,8 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
       if (format == EMIT_PAD) {
 	 offset += map[i].offset;
 
-/* 	    fprintf(stderr, "%d: pad %d, offset now %d\n", i,  */
-/* 		    map[i].offset, offset);  */
+/* 	 fprintf(stderr, "%d: pad %d, offset now %d\n", i,   */
+/* 		 map[i].offset, offset);   */
 
       }
       else {
@@ -997,8 +1017,8 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
 	 else
 	    vtx->attr[j].vertoffset = offset;
 	 
-/* 	    fprintf(stderr, "%d: %s offset %d\n", i,  */
-/* 		    format_info[format].name, vtx->attr[j].vertoffset);  */
+/* 	 fprintf(stderr, "%d: %s offset %d\n", i,  */
+/* 		 format_info[format].name, vtx->attr[j].vertoffset);   */
 	 
 	 offset += format_info[format].attrsize;
 	 j++;

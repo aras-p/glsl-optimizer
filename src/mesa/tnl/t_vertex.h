@@ -82,6 +82,12 @@ extern void _tnl_copy_pv(  GLcontext *ctx, GLuint edst, GLuint esrc );
 extern void _tnl_get_attr( GLcontext *ctx, const void *vertex, GLenum attrib,
 			   GLfloat *dest );
 
+/* Complementary to the above.
+ */
+extern void _tnl_set_attr( GLcontext *ctx, void *vout, GLenum attrib, 
+			   const GLfloat *src );
+
+
 extern void *_tnl_get_vertex( GLcontext *ctx, GLuint nr );
 
 
