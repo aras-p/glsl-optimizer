@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.75 2001/02/07 18:59:45 brianp Exp $ */
+/* $Id: teximage.c,v 1.76 2001/02/17 00:15:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -210,11 +210,93 @@ _mesa_base_tex_format( GLcontext *ctx, GLint format )
       case GL_COLOR_INDEX12_EXT:
       case GL_COLOR_INDEX16_EXT:
          return GL_COLOR_INDEX;
+      case GL_DEPTH_COMPONENT:
+      case GL_DEPTH_COMPONENT16_SGIX:
+      case GL_DEPTH_COMPONENT24_SGIX:
+      case GL_DEPTH_COMPONENT32_SGIX:
+         if (ctx->Extensions.SGIX_depth_texture)
+            return GL_DEPTH_COMPONENT;
+         else
+            return -1;
       default:
          return -1;  /* error */
    }
 }
 
+
+/*
+ * Test if the given image format is a color/rgba format.  That is,
+ * not color index, depth, stencil, etc.
+ */
+static GLboolean
+is_color_format(GLenum format)
+{
+   switch (format) {
+      case GL_ALPHA:
+      case GL_ALPHA4:
+      case GL_ALPHA8:
+      case GL_ALPHA12:
+      case GL_ALPHA16:
+      case 1:
+      case GL_LUMINANCE:
+      case GL_LUMINANCE4:
+      case GL_LUMINANCE8:
+      case GL_LUMINANCE12:
+      case GL_LUMINANCE16:
+      case 2:
+      case GL_LUMINANCE_ALPHA:
+      case GL_LUMINANCE4_ALPHA4:
+      case GL_LUMINANCE6_ALPHA2:
+      case GL_LUMINANCE8_ALPHA8:
+      case GL_LUMINANCE12_ALPHA4:
+      case GL_LUMINANCE12_ALPHA12:
+      case GL_LUMINANCE16_ALPHA16:
+      case GL_INTENSITY:
+      case GL_INTENSITY4:
+      case GL_INTENSITY8:
+      case GL_INTENSITY12:
+      case GL_INTENSITY16:
+      case 3:
+      case GL_RGB:
+      case GL_R3_G3_B2:
+      case GL_RGB4:
+      case GL_RGB5:
+      case GL_RGB8:
+      case GL_RGB10:
+      case GL_RGB12:
+      case GL_RGB16:
+      case 4:
+      case GL_RGBA:
+      case GL_RGBA2:
+      case GL_RGBA4:
+      case GL_RGB5_A1:
+      case GL_RGBA8:
+      case GL_RGB10_A2:
+      case GL_RGBA12:
+      case GL_RGBA16:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
+
+
+static GLboolean
+is_index_format(GLenum format)
+{
+   switch (format) {
+      case GL_COLOR_INDEX:
+      case GL_COLOR_INDEX1_EXT:
+      case GL_COLOR_INDEX2_EXT:
+      case GL_COLOR_INDEX4_EXT:
+      case GL_COLOR_INDEX8_EXT:
+      case GL_COLOR_INDEX12_EXT:
+      case GL_COLOR_INDEX16_EXT:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
 
 
 /*
@@ -476,6 +558,7 @@ clear_teximage_fields(struct gl_texture_image *img)
 {
    ASSERT(img);
    img->Format = 0;
+   img->Type = 0;
    img->IntFormat = 0;
    img->RedBits = 0;
    img->GreenBits = 0;
@@ -1028,10 +1111,21 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
-   if (_mesa_components_in_format(format) <= 0) {
+   if (_mesa_components_in_format(format) <= 0 ||
+       format == GL_STENCIL_INDEX) {
       gl_error( ctx, GL_INVALID_ENUM, "glGetTexImage(format)" );
       return;
    }
+
+   if (!ctx->Extensions.EXT_paletted_texture && is_index_format(format)) {
+      gl_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+   }
+
+   if (!ctx->Extensions.SGIX_depth_texture && format == GL_DEPTH_COMPONENT) {
+      gl_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+   }
+
+   /* XXX what if format/type doesn't match texture format/type? */
 
    if (!pixels)
       return;
@@ -1057,7 +1151,8 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
 
-   if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
+   if (is_color_format(format) &&
+       ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
       /* convert texture image to GL_RGBA, GL_FLOAT */
       GLint width = texImage->Width;
       GLint height = texImage->Height;
@@ -1132,7 +1227,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       FREE(convImage);
    }
    else {
-      /* no convolution */
+      /* no convolution, or non-rgba image */
       GLint width = texImage->Width;
       GLint height = texImage->Height;
       GLint depth = texImage->Depth;
@@ -1141,10 +1236,41 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
          for (row = 0; row < height; row++) {
             /* compute destination address in client memory */
             GLvoid *dest = _mesa_image_address( &ctx->Unpack, pixels,
-                                    width, height, format, type, img, row, 0);
+                                                width, height, format, type,
+                                                img, row, 0);
             assert(dest);
 
-            {
+            if (format == GL_COLOR_INDEX) {
+               GLuint indexRow[MAX_WIDTH];
+               GLint col;
+               for (col = 0; col < width; col++) {
+                  GLchan rgba[1];
+                  /* XXX this won't really work yet */
+                  /*need (*texImage->FetchRawTexel)() */
+                  (*texImage->FetchTexel)(ctx, texObj, texImage,
+                                           col, row, img, rgba);
+                  indexRow[col] = rgba[0];
+               }
+               _mesa_pack_index_span(ctx, width, type, dest,
+                                     indexRow, &ctx->Pack,
+                                     ctx->_ImageTransferState);
+            }
+            else if (format == GL_DEPTH_COMPONENT) {
+               /* XXX finish this */
+               GLfloat depthRow[MAX_WIDTH];
+               GLint col;
+               for (col = 0; col < width; col++) {
+                  GLchan rgba[1];
+                  /* XXX this won't really work yet */
+                  /*need (*texImage->FetchRawTexel)() */
+                  (*texImage->FetchTexel)(ctx, texObj, texImage,
+                                           col, row, img, rgba);
+                  depthRow[col] = (GLfloat) rgba[0];
+               }
+               _mesa_pack_depth_span(ctx, width, dest, type,
+                                     depthRow, &ctx->Pack);
+            }
+            else {
                /* general case:  convert row to RGBA format */
                GLchan rgba[MAX_WIDTH][4];
                GLint col;
@@ -1152,7 +1278,6 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                   (*texImage->FetchTexel)(ctx, texObj, texImage,
                                           col, row, img, rgba[col]);
                }
-
                _mesa_pack_rgba_span( ctx, width, (const GLchan (*)[4])rgba,
                                      format, type, dest, &ctx->Pack,
                                      ctx->_ImageTransferState );
@@ -1176,7 +1301,9 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
+   if (is_color_format(internalFormat)) {
+      _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
+   }
 
    if (target == GL_TEXTURE_1D) {
       struct gl_texture_unit *texUnit;
@@ -1231,7 +1358,8 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
 
       /* one of these has to be non-zero! */
       ASSERT(texImage->RedBits || texImage->IndexBits || texImage->AlphaBits ||
-             texImage->LuminanceBits || texImage->IntensityBits);
+             texImage->LuminanceBits || texImage->IntensityBits ||
+             texImage->DepthBits);
       ASSERT(texImage->FetchTexel);
 
       /* state update */
@@ -1279,7 +1407,10 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,&postConvHeight);
+   if (is_color_format(internalFormat)) {
+      _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,
+                                         &postConvHeight);
+   }
 
    if (target == GL_TEXTURE_2D ||
        (ctx->Extensions.ARB_texture_cube_map &&
@@ -1339,7 +1470,8 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
 
       /* one of these has to be non-zero! */
       ASSERT(texImage->RedBits || texImage->IndexBits || texImage->AlphaBits ||
-             texImage->LuminanceBits || texImage->IntensityBits);
+             texImage->LuminanceBits || texImage->IntensityBits ||
+             texImage->DepthBits);
       ASSERT(texImage->FetchTexel);
 
       /* state update */
@@ -1443,7 +1575,8 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
 
       /* one of these has to be non-zero! */
       ASSERT(texImage->RedBits || texImage->IndexBits || texImage->AlphaBits ||
-             texImage->LuminanceBits || texImage->IntensityBits);
+             texImage->LuminanceBits || texImage->IntensityBits ||
+             texImage->DepthBits);
       ASSERT(texImage->FetchTexel);
 
       /* state update */
@@ -1504,7 +1637,10 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
 
-   _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
+   /* XXX should test internal format */
+   if (is_color_format(format)) {
+      _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
+   }
 
    if (subtexture_error_check(ctx, 1, target, level, xoffset, 0, 0,
                               postConvWidth, 1, 1, format, type)) {
@@ -1542,7 +1678,11 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
 
-   _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,&postConvHeight);
+   /* XXX should test internal format */
+   if (is_color_format(format)) {
+      _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,
+                                         &postConvHeight);
+   }
 
    if (subtexture_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
                              postConvWidth, postConvHeight, 1, format, type)) {
@@ -1663,7 +1803,9 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
 
-   _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
+   if (is_color_format(internalFormat)) {
+      _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
+   }
 
    if (copytexture_error_check(ctx, 1, target, level, internalFormat,
                                postConvWidth, 1, border))
@@ -1706,7 +1848,10 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
 
-   _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,&postConvHeight);
+   if (is_color_format(internalFormat)) {
+      _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,
+                                         &postConvHeight);
+   }
 
    if (copytexture_error_check(ctx, 2, target, level, internalFormat,
                                postConvWidth, postConvHeight, border))
@@ -1748,6 +1893,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
 
+   /* XXX should test internal format */
    _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
 
    if (copytexsubimage_error_check(ctx, 1, target, level,
@@ -1798,7 +1944,8 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
 
-   _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,&postConvHeight);
+   /* XXX should test internal format */
+   _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth, &postConvHeight);
 
    if (copytexsubimage_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
                                    postConvWidth, postConvHeight))
@@ -1848,7 +1995,8 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
 
-   _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,&postConvHeight);
+   /* XXX should test internal format */
+   _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth, &postConvHeight);
 
    if (copytexsubimage_error_check(ctx, 3, target, level, xoffset, yoffset,
                                    zoffset, postConvWidth, postConvHeight))

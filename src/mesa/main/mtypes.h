@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.18 2001/02/06 21:42:48 brianp Exp $ */
+/* $Id: mtypes.h,v 1.19 2001/02/17 00:15:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -788,6 +788,7 @@ struct gl_texture_image {
    GLubyte IntensityBits;	/*   color resolution.                   */
    GLubyte LuminanceBits;
    GLubyte IndexBits;
+   GLubyte DepthBits;
    GLuint Border;		/* 0 or 1 */
    GLuint Width;		/* = 2^WidthLog2 + 2*Border */
    GLuint Height;		/* = 2^HeightLog2 + 2*Border */
@@ -1221,6 +1222,7 @@ struct gl_extensions {
    GLboolean SGI_color_table;
    GLboolean SGIS_pixel_texture;
    GLboolean SGIS_texture_edge_clamp;
+   GLboolean SGIX_depth_texture;
    GLboolean SGIX_pixel_texture;
    GLboolean _3DFX_texture_compression_FXT1;
 };

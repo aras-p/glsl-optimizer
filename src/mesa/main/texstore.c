@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.4 2001/02/07 19:02:23 brianp Exp $ */
+/* $Id: texstore.c,v 1.5 2001/02/17 00:15:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -150,6 +150,13 @@ fetch_1d_texel(GLcontext *ctx,
          rgba[BCOMP] = texel[2];
          rgba[ACOMP] = texel[3];
          return;
+      case GL_DEPTH_COMPONENT:
+         {
+            const GLfloat *data = (const GLfloat *) img->Data;
+            GLfloat *texel = (GLfloat *) rgba;
+            *texel = data[i];
+            return;
+         }
       default:
          gl_problem(NULL, "Bad format in fetch_1d_texel");
          return;
@@ -210,6 +217,13 @@ fetch_2d_texel(GLcontext *ctx,
          rgba[BCOMP] = texel[2];
          rgba[ACOMP] = texel[3];
          return;
+      case GL_DEPTH_COMPONENT:
+         {
+            const GLfloat *data = (const GLfloat *) img->Data;
+            GLfloat *texel = (GLfloat *) rgba;
+            *texel = data[width * j + i];
+            return;
+         }
       default:
          gl_problem(NULL, "Bad format in fetch_2d_texel");
    }
@@ -273,6 +287,13 @@ fetch_3d_texel(GLcontext *ctx,
          rgba[BCOMP] = texel[2];
          rgba[ACOMP] = texel[3];
          return;
+      case GL_DEPTH_COMPONENT:
+         {
+            const GLfloat *data = (const GLfloat *) img->Data;
+            GLfloat *texel = (GLfloat *) rgba;
+            *texel = data[rectarea * k + width * j + i];
+            return;
+         }
       default:
          gl_problem(NULL, "Bad format in fetch_3d_texel");
    }
@@ -298,6 +319,7 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
          texImage->IntensityBits = 0;
          texImage->LuminanceBits = 0;
          texImage->IndexBits = 0;
+         texImage->DepthBits = 0;
          break;
       case GL_LUMINANCE:
          texImage->RedBits = 0;
@@ -307,6 +329,7 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
          texImage->IntensityBits = 0;
          texImage->LuminanceBits = 8 * sizeof(GLchan);
          texImage->IndexBits = 0;
+         texImage->DepthBits = 0;
          break;
       case GL_LUMINANCE_ALPHA:
          texImage->RedBits = 0;
@@ -316,6 +339,7 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
          texImage->IntensityBits = 0;
          texImage->LuminanceBits = 8 * sizeof(GLchan);
          texImage->IndexBits = 0;
+         texImage->DepthBits = 0;
          break;
       case GL_INTENSITY:
          texImage->RedBits = 0;
@@ -325,6 +349,7 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
          texImage->IntensityBits = 8 * sizeof(GLchan);
          texImage->LuminanceBits = 0;
          texImage->IndexBits = 0;
+         texImage->DepthBits = 0;
          break;
       case GL_RED:
          texImage->RedBits = 8 * sizeof(GLchan);
@@ -334,6 +359,7 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
          texImage->IntensityBits = 0;
          texImage->LuminanceBits = 0;
          texImage->IndexBits = 0;
+         texImage->DepthBits = 0;
          break;
       case GL_GREEN:
          texImage->RedBits = 0;
@@ -343,6 +369,7 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
          texImage->IntensityBits = 0;
          texImage->LuminanceBits = 0;
          texImage->IndexBits = 0;
+         texImage->DepthBits = 0;
          break;
       case GL_BLUE:
          texImage->RedBits = 0;
@@ -352,6 +379,7 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
          texImage->IntensityBits = 0;
          texImage->LuminanceBits = 0;
          texImage->IndexBits = 0;
+         texImage->DepthBits = 0;
          break;
       case GL_RGB:
       case GL_BGR:
@@ -362,6 +390,7 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
          texImage->IntensityBits = 0;
          texImage->LuminanceBits = 0;
          texImage->IndexBits = 0;
+         texImage->DepthBits = 0;
          break;
       case GL_RGBA:
       case GL_BGRA:
@@ -373,6 +402,7 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
          texImage->IntensityBits = 0;
          texImage->LuminanceBits = 0;
          texImage->IndexBits = 0;
+         texImage->DepthBits = 0;
          break;
       case GL_COLOR_INDEX:
          texImage->RedBits = 0;
@@ -382,6 +412,17 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
          texImage->IntensityBits = 0;
          texImage->LuminanceBits = 0;
          texImage->IndexBits = 8 * sizeof(GLchan);
+         texImage->DepthBits = 0;
+         break;
+      case GL_DEPTH_COMPONENT:
+         texImage->RedBits = 0;
+         texImage->GreenBits = 0;
+         texImage->BlueBits = 0;
+         texImage->AlphaBits = 0;
+         texImage->IntensityBits = 0;
+         texImage->LuminanceBits = 0;
+         texImage->IndexBits = 0;
+         texImage->DepthBits = 8 * sizeof(GLfloat);
          break;
       default:
          gl_problem(NULL, "unexpected format in set_teximage_component_sizes");
@@ -456,6 +497,11 @@ components_in_intformat( GLint format )
       case GL_COLOR_INDEX12_EXT:
       case GL_COLOR_INDEX16_EXT:
          return 1;
+      case GL_DEPTH_COMPONENT:
+      case GL_DEPTH_COMPONENT16_SGIX:
+      case GL_DEPTH_COMPONENT24_SGIX:
+      case GL_DEPTH_COMPONENT32_SGIX:
+         return 1;
       default:
          return -1;  /* error */
    }
@@ -516,8 +562,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
    texComponents = components_in_intformat(texFormat);
 
    /* try common 2D texture cases first */
-   if (!ctx->_ImageTransferState && dimensions == 2
-       && srcType == CHAN_TYPE) {
+   if (!ctx->_ImageTransferState && dimensions == 2 && srcType == CHAN_TYPE) {
 
       if (srcFormat == texFormat) {
          /* This will cover the common GL_RGB, GL_RGBA, GL_ALPHA,
@@ -588,6 +633,31 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
             _mesa_unpack_index_span(ctx, srcWidth, texType, destRow,
                                     srcType, src, srcPacking,
                                     ctx->_ImageTransferState);
+            destRow += dstRowStride;
+         }
+         dest += dstImageStride;
+      }
+   }
+   else if (texFormat == GL_DEPTH_COMPONENT) {
+      /* Depth texture (shadow maps) */
+      const GLenum texType = GL_FLOAT;
+      GLint img, row;
+      GLfloat *dest = (GLfloat *) texAddr + dstZoffset * dstImageStride
+                    + dstYoffset * dstRowStride
+                    + dstXoffset * texComponents;
+      for (img = 0; img < srcDepth; img++) {
+         GLfloat *destRow = dest;
+         for (row = 0; row < srcHeight; row++) {
+            const GLvoid *src = _mesa_image_address(srcPacking,
+                srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, row, 0);
+            (void) src;
+            (void) texType;
+            /* XXX destRow: GLfloat vs. GLdepth? */
+            /*
+            _mesa_unpack_depth_span(ctx, srcWidth, texType, destRow,
+                                    srcType, src, srcPacking,
+                                    ctx->_ImageTransferState);
+            */
             destRow += dstRowStride;
          }
          dest += dstImageStride;
@@ -713,6 +783,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
                        struct gl_texture_image *texImage)
 {
    const GLint components = components_in_intformat(internalFormat);
+   GLint compSize;
    GLint postConvWidth = width;
 
    if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
@@ -721,13 +792,19 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
 
    /* setup the teximage struct's fields */
    texImage->Format = (GLenum) _mesa_base_tex_format(ctx, internalFormat);
-   texImage->Type = CHAN_TYPE; /* usually GL_UNSIGNED_BYTE */
+   if (format == GL_DEPTH_COMPONENT) {
+      texImage->Type = GL_FLOAT; /* XXX or GL_UNSIGNED_INT? */
+      compSize = sizeof(GLfloat);
+   }
+   else {
+      texImage->Type = CHAN_TYPE; /* usually GL_UNSIGNED_BYTE */
+      compSize = sizeof(CHAN_TYPE);
+   }
    texImage->FetchTexel = fetch_1d_texel;
    set_teximage_component_sizes(texImage);
 
    /* allocate memory */
-   texImage->Data = (GLchan *) MALLOC(postConvWidth
-                                      * components * sizeof(GLchan));
+   texImage->Data = (GLchan *) MALLOC(postConvWidth * components * compSize);
    if (!texImage->Data)
       return;      /* out of memory */
 
@@ -757,6 +834,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
                        struct gl_texture_image *texImage)
 {
    const GLint components = components_in_intformat(internalFormat);
+   GLint compSize;
    GLint postConvWidth = width, postConvHeight = height;
 
    if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
@@ -766,13 +844,20 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
 
    /* setup the teximage struct's fields */
    texImage->Format = (GLenum) _mesa_base_tex_format(ctx, internalFormat);
-   texImage->Type = CHAN_TYPE; /* usually GL_UNSIGNED_BYTE */
+   if (format == GL_DEPTH_COMPONENT) {
+      texImage->Type = GL_FLOAT; /* XXX or GL_UNSIGNED_INT? */
+      compSize = sizeof(GLfloat);
+   }
+   else {
+      texImage->Type = CHAN_TYPE; /* usually GL_UNSIGNED_BYTE */
+      compSize = sizeof(CHAN_TYPE);
+   }
    texImage->FetchTexel = fetch_2d_texel;
    set_teximage_component_sizes(texImage);
 
    /* allocate memory */
    texImage->Data = (GLchan *) MALLOC(postConvWidth * postConvHeight
-                                      * components * sizeof(GLchan));
+                                      * components * compSize);
    if (!texImage->Data)
       return;      /* out of memory */
 
@@ -803,16 +888,24 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
                        struct gl_texture_image *texImage)
 {
    const GLint components = components_in_intformat(internalFormat);
+   GLint compSize;
 
    /* setup the teximage struct's fields */
    texImage->Format = (GLenum) _mesa_base_tex_format(ctx, internalFormat);
-   texImage->Type = CHAN_TYPE; /* usually GL_UNSIGNED_BYTE */
+   if (format == GL_DEPTH_COMPONENT) {
+      texImage->Type = GL_FLOAT; /* XXX or GL_UNSIGNED_INT? */
+      compSize = sizeof(GLfloat);
+   }
+   else {
+      texImage->Type = CHAN_TYPE; /* usually GL_UNSIGNED_BYTE */
+      compSize = sizeof(CHAN_TYPE);
+   }
    texImage->FetchTexel = fetch_3d_texel;
    set_teximage_component_sizes(texImage);
 
    /* allocate memory */
    texImage->Data = (GLchan *) MALLOC(width * height * depth
-                                      * components * sizeof(GLchan));
+                                      * components * compSize);
    if (!texImage->Data)
       return;      /* out of memory */
 
@@ -861,10 +954,11 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_image *texImage)
 {
    const GLint components = components_in_intformat(texImage->IntFormat);
+   const GLint compSize = _mesa_sizeof_type(texImage->Type);
    _mesa_transfer_teximage(ctx, 2, texImage->Format, texImage->Data,
                            width, height, 1, /* src size */
                            xoffset, yoffset, 0, /* dest offsets */
-                           texImage->Width * components * sizeof(GLchan),
+                           texImage->Width * components * compSize,
                            0, /* dstImageStride */
                            format, type, pixels, packing);
 }
@@ -883,12 +977,13 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_image *texImage)
 {
    const GLint components = components_in_intformat(texImage->IntFormat);
+   const GLint compSize = _mesa_sizeof_type(texImage->Type);
    _mesa_transfer_teximage(ctx, 3, texImage->Format, texImage->Data,
                            width, height, depth, /* src size */
                            xoffset, yoffset, xoffset, /* dest offsets */
-                           texImage->Width * components * sizeof(GLchan),
+                           texImage->Width * components * compSize,
                            texImage->Width * texImage->Height * components
-                           * sizeof(GLchan),
+                           * compSize,
                            format, type, pixels, packing);
 }
 
@@ -963,6 +1058,7 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
+   GLint compSize;
 
    (void) format;
    (void) type;
@@ -978,7 +1074,14 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
     */
    /* setup the teximage struct's fields */
    texImage->Format = (GLenum) _mesa_base_tex_format(ctx, internalFormat);
-   texImage->Type = CHAN_TYPE; /* usually GL_UNSIGNED_BYTE */
+   if (format == GL_DEPTH_COMPONENT) {
+      texImage->Type = GL_FLOAT; /* XXX or GL_UNSIGNED_INT? */
+      compSize = sizeof(GLfloat);
+   }
+   else {
+      texImage->Type = CHAN_TYPE; /* usually GL_UNSIGNED_BYTE */
+      compSize = sizeof(CHAN_TYPE);
+   }
    set_teximage_component_sizes(texImage);
 
    return GL_TRUE;

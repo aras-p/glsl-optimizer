@@ -1,10 +1,10 @@
-/* $Id: extensions.c,v 1.45 2001/01/24 04:56:20 brianp Exp $ */
+/* $Id: extensions.c,v 1.46 2001/02/17 00:15:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -84,7 +84,7 @@ static struct {
    { ON,  "GL_EXT_shared_texture_palette",    F(EXT_shared_texture_palette) },
    { ON,  "GL_EXT_stencil_wrap",              F(EXT_stencil_wrap) },
    { ON,  "GL_EXT_texture3D",                 F(EXT_texture3D) },
-   { OFF, "GL_EXT_texture_compression_s3tc",  F(EXT_texture_compression_s3tc) },
+   { OFF, "GL_EXT_texture_compression_s3tc",  F(EXT_texture_compression_s3tc)},
    { ON,  "GL_EXT_texture_env_add",           F(EXT_texture_env_add) },
    { OFF, "GL_EXT_texture_env_combine",       F(EXT_texture_env_combine) },
    { OFF, "GL_EXT_texture_env_dot3",          F(EXT_texture_env_dot3) },
@@ -103,6 +103,7 @@ static struct {
    { ON,  "GL_SGI_color_table",               F(SGI_color_table) },
    { ON,  "GL_SGIS_pixel_texture",            F(SGIS_pixel_texture) },
    { ON,  "GL_SGIS_texture_edge_clamp",       F(SGIS_texture_edge_clamp) },
+   { OFF, "GL_SGIX_depth_texture",            F(SGIX_depth_texture) },
    { ON,  "GL_SGIX_pixel_texture",            F(SGIX_pixel_texture) },
    { OFF, "GL_3DFX_texture_compression_FXT1", F(_3DFX_texture_compression_FXT1) }
 };
@@ -124,6 +125,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    gl_extensions_enable(ctx, "GL_HP_occlusion_test");
    gl_extensions_enable(ctx, "GL_NV_blend_square");
    gl_extensions_enable(ctx, "GL_MESA_sprite_point");
+   gl_extensions_enable(ctx, "GL_SGIX_depth_texture");
 }
 
 

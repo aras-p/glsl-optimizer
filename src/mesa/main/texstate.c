@@ -1,10 +1,10 @@
-/* $Id: texstate.c,v 1.30 2001/02/06 21:42:48 brianp Exp $ */
+/* $Id: texstate.c,v 1.31 2001/02/17 00:15:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -920,6 +920,15 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          return;
       case GL_TEXTURE_INDEX_SIZE_EXT:
          *params = img->IndexBits;
+         return;
+      case GL_DEPTH_BITS:
+         /* XXX this isn't in the GL_SGIX_depth_texture spec
+          * but seems appropriate.
+          */
+         if (ctx->Extensions.SGIX_depth_texture)
+            *params = img->DepthBits;
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetTexLevelParameter[if]v(pname)");
          return;
 
       /* GL_ARB_texture_compression */
