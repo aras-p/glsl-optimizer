@@ -1,8 +1,8 @@
-/* $Id: glx.h,v 1.23 2000/08/22 13:31:00 joukj Exp $ */
+/* $Id: glx.h,v 1.24 2000/11/25 18:52:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -159,7 +159,7 @@ extern "C" {
 #define GLX_DAMAGED			0x8020
 #define GLX_SAVED			0x8021
 #define GLX_WINDOW			0x8022
-#define GLX_PBUFFER			0x8033
+#define GLX_PBUFFER			0x8023
 
 
 
