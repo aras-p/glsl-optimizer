@@ -148,7 +148,7 @@
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;   \
     GLuint depth_pitch = vmesa->depth.pitch;                  \
     GLuint height = dPriv->h;                           \
-    char *buf = (char *)(vmesa->depth.map)   
+    char *buf = (char *)(vmesa->depth.map + (vmesa->drawXoff * vmesa->depth.bpp/8))
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS 
 
