@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.81 2001/12/14 02:50:01 brianp Exp $ */
+/* $Id: dlist.c,v 1.82 2001/12/14 03:13:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -65,6 +65,7 @@
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
+#include "vpstate.h"
 
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
@@ -5958,14 +5959,19 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->LockArraysEXT = exec_LockArraysEXT;
    table->UnlockArraysEXT = exec_UnlockArraysEXT;
 
-   /* GL_ARB_multitexture */
-   table->ActiveTextureARB = save_ActiveTextureARB;
-   table->ClientActiveTextureARB = exec_ClientActiveTextureARB;
+   /* 145. GL_EXT_secondary_color */
+   table->SecondaryColorPointerEXT = exec_SecondaryColorPointerEXT;
 
-   /* GL_EXT_blend_func_separate */
+   /* 149. GL_EXT_fog_coord */
+   table->FogCoordPointerEXT = exec_FogCoordPointerEXT;
+
+   /* 173. GL_EXT_blend_func_separate */
    table->BlendFuncSeparateEXT = save_BlendFuncSeparateEXT;
 
-   /* GL_MESA_window_pos */
+   /* 196. GL_MESA_resize_buffers */
+   table->ResizeBuffersMESA = exec_ResizeBuffersMESA;
+
+   /* 197. GL_MESA_window_pos */
    table->WindowPos2dMESA = save_WindowPos2dMESA;
    table->WindowPos2dvMESA = save_WindowPos2dvMESA;
    table->WindowPos2fMESA = save_WindowPos2fMESA;
@@ -5991,16 +5997,45 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->WindowPos4sMESA = save_WindowPos4sMESA;
    table->WindowPos4svMESA = save_WindowPos4svMESA;
 
-   /* GL_MESA_resize_buffers */
-   table->ResizeBuffersMESA = exec_ResizeBuffersMESA;
+   /* 233. GL_NV_vertex_program */
+   /* XXX Need to implement vertex program in display lists !!! */
+   table->BindProgramNV = _mesa_BindProgramNV;
+   table->DeleteProgramsNV = _mesa_DeleteProgramsNV;
+   table->ExecuteProgramNV = _mesa_ExecuteProgramNV;
+   table->GenProgramsNV = _mesa_GenProgramsNV;
+   table->AreProgramsResidentNV = _mesa_AreProgramsResidentNV;
+   table->RequestResidentProgramsNV = _mesa_RequestResidentProgramsNV;
+   table->GetProgramParameterfvNV = _mesa_GetProgramParameterfvNV;
+   table->GetProgramParameterdvNV = _mesa_GetProgramParameterdvNV;
+   table->GetProgramivNV = _mesa_GetProgramivNV;
+   table->GetProgramStringNV = _mesa_GetProgramStringNV;
+   table->GetTrackMatrixivNV = _mesa_GetTrackMatrixivNV;
+   table->GetVertexAttribdvNV = _mesa_GetVertexAttribdvNV;
+   table->GetVertexAttribfvNV = _mesa_GetVertexAttribfvNV;
+   table->GetVertexAttribivNV = _mesa_GetVertexAttribivNV;
+   table->GetVertexAttribPointervNV = _mesa_GetVertexAttribPointervNV;
+   table->IsProgramNV = _mesa_IsProgramNV;
+   table->LoadProgramNV = _mesa_LoadProgramNV;
+   table->ProgramParameter4dNV = _mesa_ProgramParameter4dNV;
+   table->ProgramParameter4dvNV = _mesa_ProgramParameter4dvNV;
+   table->ProgramParameter4fNV = _mesa_ProgramParameter4fNV;
+   table->ProgramParameter4fvNV = _mesa_ProgramParameter4fvNV;
+   table->ProgramParameters4dvNV = _mesa_ProgramParameters4dvNV;
+   table->ProgramParameters4fvNV = _mesa_ProgramParameters4fvNV;
+   table->TrackMatrixNV = _mesa_TrackMatrixNV;
+   table->VertexAttribPointerNV = _mesa_VertexAttribPointerNV;
 
-   /* GL_ARB_transpose_matrix */
+   /* ARB 1. GL_ARB_multitexture */
+   table->ActiveTextureARB = save_ActiveTextureARB;
+   table->ClientActiveTextureARB = exec_ClientActiveTextureARB;
+
+   /* ARB 3. GL_ARB_transpose_matrix */
    table->LoadTransposeMatrixdARB = save_LoadTransposeMatrixdARB;
    table->LoadTransposeMatrixfARB = save_LoadTransposeMatrixfARB;
    table->MultTransposeMatrixdARB = save_MultTransposeMatrixdARB;
    table->MultTransposeMatrixfARB = save_MultTransposeMatrixfARB;
 
-   /* GL_ARB_multisample */
+   /* ARB 5. GL_ARB_multisample */
    table->SampleCoverageARB = save_SampleCoverageARB;
 
    /* ARB 12. GL_ARB_texture_compression */
@@ -6012,13 +6047,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->CompressedTexSubImage1DARB = save_CompressedTexSubImage1DARB;
    table->GetCompressedTexImageARB = exec_GetCompressedTexImageARB;
 
-   /* GL_EXT_secondary_color */
-   table->SecondaryColorPointerEXT = exec_SecondaryColorPointerEXT;
-
-   /* GL_EXT_fog_coord */
-   table->FogCoordPointerEXT = exec_FogCoordPointerEXT;
-
-   /* GL_ARB_window_pos */
+   /* ARB ??. GL_ARB_window_pos */
    table->WindowPos2dARB = save_WindowPos2dARB;
    table->WindowPos2dvARB = save_WindowPos2dvARB;
    table->WindowPos2fARB = save_WindowPos2fARB;

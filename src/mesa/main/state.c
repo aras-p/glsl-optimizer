@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.73 2001/12/14 02:50:02 brianp Exp $ */
+/* $Id: state.c,v 1.74 2001/12/14 03:13:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -457,7 +457,7 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->WindowPos4sMESA = _mesa_WindowPos4sMESA;
    exec->WindowPos4svMESA = _mesa_WindowPos4svMESA;
 
-   /* ###. GL_NV_vertex_program */
+   /* 233. GL_NV_vertex_program */
    exec->BindProgramNV = _mesa_BindProgramNV;
    exec->DeleteProgramsNV = _mesa_DeleteProgramsNV;
    exec->ExecuteProgramNV = _mesa_ExecuteProgramNV;
@@ -506,7 +506,7 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->CompressedTexSubImage1DARB = _mesa_CompressedTexSubImage1DARB;
    exec->GetCompressedTexImageARB = _mesa_GetCompressedTexImageARB;
 
-   /* GL_ARB_window_pos */
+   /* ARB ??. GL_ARB_window_pos */
    exec->WindowPos2dARB = _mesa_WindowPos2dARB;
    exec->WindowPos2dvARB = _mesa_WindowPos2dvARB;
    exec->WindowPos2fARB = _mesa_WindowPos2fARB;
