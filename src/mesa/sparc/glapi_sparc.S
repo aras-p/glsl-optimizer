@@ -14049,6 +14049,48 @@ glWindowPos4svMESA:
 	jmpl	%g3, %g0
 	nop
 
+.globl glMultiModeDrawArraysIBM
+.type glMultiModeDrawArraysIBM,#function
+glMultiModeDrawArraysIBM:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_MultiModeDrawArraysIBM), %g2
+	or	%g2, %lo(8 * _gloffset_MultiModeDrawArraysIBM), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_MultiModeDrawArraysIBM)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glMultiModeDrawElementsIBM
+.type glMultiModeDrawElementsIBM,#function
+glMultiModeDrawElementsIBM:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_MultiModeDrawElementsIBM), %g2
+	or	%g2, %lo(8 * _gloffset_MultiModeDrawElementsIBM), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_MultiModeDrawElementsIBM)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
 .globl glTbufferMask3DFX
 .type glTbufferMask3DFX,#function
 glTbufferMask3DFX:
@@ -18791,48 +18833,6 @@ glGetQueryObjectuivARB:
 	sethi	%hi(0x00000000), %g1
 	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_GetQueryObjectuivARB)], %g3
-#endif
-	jmpl	%g3, %g0
-	nop
-
-.globl glMultiModeDrawArraysIBM
-.type glMultiModeDrawArraysIBM,#function
-glMultiModeDrawArraysIBM:
-#ifdef __sparc_v9__
-	sethi	%hi(0x00000000), %g2
-	sethi	%hi(0x00000000), %g1
-	or	%g2, %lo(0x00000000), %g2
-	or	%g1, %lo(0x00000000), %g1
-	sllx	%g2, 32, %g2
-	ldx	[%g1 + %g2], %g1
-	sethi	%hi(8 * _gloffset_MultiModeDrawArraysIBM), %g2
-	or	%g2, %lo(8 * _gloffset_MultiModeDrawArraysIBM), %g2
-	ldx	[%g1 + %g2], %g3
-#else
-	sethi	%hi(0x00000000), %g1
-	ld	[%g1 + %lo(0x00000000)], %g1
-	ld	[%g1 + (4 * _gloffset_MultiModeDrawArraysIBM)], %g3
-#endif
-	jmpl	%g3, %g0
-	nop
-
-.globl glMultiModeDrawElementsIBM
-.type glMultiModeDrawElementsIBM,#function
-glMultiModeDrawElementsIBM:
-#ifdef __sparc_v9__
-	sethi	%hi(0x00000000), %g2
-	sethi	%hi(0x00000000), %g1
-	or	%g2, %lo(0x00000000), %g2
-	or	%g1, %lo(0x00000000), %g1
-	sllx	%g2, 32, %g2
-	ldx	[%g1 + %g2], %g1
-	sethi	%hi(8 * _gloffset_MultiModeDrawElementsIBM), %g2
-	or	%g2, %lo(8 * _gloffset_MultiModeDrawElementsIBM), %g2
-	ldx	[%g1 + %g2], %g3
-#else
-	sethi	%hi(0x00000000), %g1
-	ld	[%g1 + %lo(0x00000000)], %g1
-	ld	[%g1 + (4 * _gloffset_MultiModeDrawElementsIBM)], %g3
 #endif
 	jmpl	%g3, %g0
 	nop
