@@ -100,25 +100,35 @@ static const struct {
 static const struct {
 	GLuint format, filter, flag;
 } tx_table[] = {
+	/*
+	 * Note that the _REV formats are the same as the non-REV formats.
+	 * This is because the REV and non-REV formats are identical as a
+	 * byte string, but differ when accessed as 16-bit or 32-bit words
+	 * depending on the endianness of the host.  Since the textures are
+	 * transferred to the R300 as a byte string (i.e. without any
+	 * byte-swapping), the R300 sees the REV and non-REV formats
+	 * identically.  -- paulus
+	 */
 	    _ASSIGN(RGBA8888, R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8)),
-	    _ASSIGN(RGBA8888_REV, R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8)),
+	    _ASSIGN(RGBA8888_REV, R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8)),
 	    _ASSIGN(ARGB8888, R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8)),
-	    _ASSIGN(ARGB8888_REV, R300_EASY_TX_FORMAT(W, Z, Y, X, W8Z8Y8X8)),
+	    _ASSIGN(ARGB8888_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8)),
 	    _ASSIGN(RGB888, 0xffffffff),
 	    _ASSIGN(RGB565, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
-	    _ASSIGN(RGB565_REV, 0xffffff01),
-	    _ASSIGN(ARGB4444, R300_EASY_TX_FORMAT(Y, Z, W, X, W4Z4Y4X4)),
-	    _ASSIGN(ARGB4444_REV, 0xffffff02),
+	    _ASSIGN(RGB565_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
+	    _ASSIGN(ARGB4444, R300_EASY_TX_FORMAT(X, Y, Z, W, W4Z4Y4X4)),
+	    _ASSIGN(ARGB4444_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W4Z4Y4X4)),
 	    _ASSIGN(ARGB1555, R300_EASY_TX_FORMAT(Z, Y, X, W, W1Z5Y5X5)),
-	    _ASSIGN(ARGB1555_REV, 0xffffff04),
+	    _ASSIGN(ARGB1555_REV, R300_EASY_TX_FORMAT(Z, Y, X, W, W1Z5Y5X5)),
 	    _ASSIGN(AL88, R300_EASY_TX_FORMAT(Y, Y, Y, X, Y8X8)),
-	    _ASSIGN(AL88_REV, 0xffffff05),
-	    _ASSIGN(A8, 0xffffff06),
-	    _ASSIGN(L8, R300_EASY_TX_FORMAT(X, X, X, X, X8)),
+	    _ASSIGN(AL88_REV, R300_EASY_TX_FORMAT(Y, Y, Y, X, Y8X8)),
+	    _ASSIGN(RGB332, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z3Y3X2)),
+	    _ASSIGN(A8, R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X8)),
+	    _ASSIGN(L8, R300_EASY_TX_FORMAT(X, X, X, ONE, X8)),
 	    _ASSIGN(I8, R300_EASY_TX_FORMAT(X, X, X, X, X8)),
 	    _ASSIGN(CI8, R300_EASY_TX_FORMAT(X, X, X, X, X8)),
 	    _ASSIGN(YCBCR, R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8)|R300_TX_FORMAT_YUV_MODE ),
-	    _ASSIGN(YCBCR_REV, 0xffffff08),
+	    _ASSIGN(YCBCR_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8)|R300_TX_FORMAT_YUV_MODE),
 	    };
 
 #undef _COLOR
