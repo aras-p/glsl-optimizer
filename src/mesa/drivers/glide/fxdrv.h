@@ -674,7 +674,6 @@ extern void fxDDDoRenderVB( struct vertex_buffer *VB );
 extern int fxDDInitFxMesaContext( fxMesaContext fxMesa );
 
 
-extern void fxCloseHardware(void);
 extern void fxSetScissorValues(GLcontext *ctx);
 extern void fxTMMoveInTM_NoLock(fxMesaContext fxMesa, 
 				struct gl_texture_object *tObj, 
