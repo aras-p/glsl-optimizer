@@ -2140,7 +2140,6 @@ static GLboolean check_material( GLcontext *ctx )
 static void radeonWrapRunPipeline( GLcontext *ctx )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLboolean has_material;
 
    if (0)
@@ -2163,7 +2162,6 @@ static void radeonWrapRunPipeline( GLcontext *ctx )
 
    if (has_material) {
       TCL_FALLBACK( ctx, RADEON_TCL_FALLBACK_MATERIAL, GL_FALSE );
-      radeonUpdateMaterial( ctx ); /* not needed any more? */
    }
 }
 
