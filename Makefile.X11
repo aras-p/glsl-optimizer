@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.48 2001/06/19 21:49:06 brianp Exp $
+# $Id: Makefile.X11,v 1.49 2001/07/13 20:08:42 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -85,6 +85,7 @@ default:
 	@echo "  make linux-sparc5-elf     for Sparc5 systems, make ELF shared libs"
 	@echo "  make linux-sparc-ultra    for UltraSparc systems, make ELF shared libs"
 	@echo "  make linux-osmesa16       for 16-bit/channel OSMesa"
+	@echo "  make linux-osmesa32       for 32-bit/channel OSMesa"
 	@echo "  make lynxos               for LynxOS systems with GCC"
 	@echo "  make macintosh            for Macintosh"
 	@echo "  make machten-2.2          for Macs w/ MachTen 2.2 (68k w/ FPU)"
@@ -294,7 +295,7 @@ linux-ggi-install linux-386-ggi-install:
 #	echo ".include $(DESTDIR)/etc/ggi/ggimesa.conf" >> $(DESTDIR)/etc/ggi/libggi.conf ; \
 #	fi
 
-linux-osmesa16:
+linux-osmesa16 linux-osmesa32:
 	-mkdir lib
 	if [ -d src ] ; then touch src/depend ; fi
 	if [ -d src ] ; then cd src ; $(MAKE) -f Makefile.OSMesa16 $@ ; fi

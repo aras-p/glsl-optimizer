@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.46 2001/06/18 22:45:16 brianp Exp $
+# $Id: Make-config,v 1.47 2001/07/13 20:08:42 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=5
@@ -836,7 +836,19 @@ linux-osmesa16:
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -lm -lpthread" \
-	"APP_LIB_DEPS = -lOSMesa -lGL"
+	"APP_LIB_DEPS = -lOSMesa16 -lGL"
+
+# 32-bit/channel Mesa using OSMesa driver
+linux-osmesa32:
+	$(MAKE) $(MFLAGS) -f Makefile.OSMesa16 targets \
+	"OSMESA16_LIB = libOSMesa32.so" \
+	"CC = gcc" \
+	"CPLUSPLUS = g++" \
+	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DCHAN_BITS=32" \
+	"CCFLAGS = $(CFLAGS)" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"GL_LIB_DEPS = -lm -lpthread" \
+	"APP_LIB_DEPS = -lOSMesa32 -lGL"
 
 # May want to add these CFLAGS for better performance under LynxOS and GCC:
 # -fPIC -O2 -ansi -pedantic -mieee-fp -DUSE_XSHM -funroll-loops
