@@ -1,4 +1,4 @@
-/* $Id: gluP.h,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: gluP.h,v 1.2 1999/12/07 09:02:12 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,8 +23,18 @@
 
 /*
  * $Log: gluP.h,v $
- * Revision 1.1  1999/08/19 00:55:42  jtg
- * Initial revision
+ * Revision 1.2  1999/12/07 09:02:12  joukj
+ *
+ *  Committing in .
+ *
+ *  Make supportupdate for VMS
+ *
+ *  Modified Files:
+ *  	Mesa/src-glu/descrip.mms Mesa/src-glu/gluP.h
+ *  ----------------------------------------------------------------------
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
+ * Imported sources
  *
  * Revision 1.4  1999/01/03 03:23:15  brianp
  * now using GLAPIENTRY and GLCALLBACK keywords (Ted Jump)
@@ -55,6 +65,7 @@
 #include "GL/gl.h"
 #include "GL/glu.h"
 
+#include <string.h>
 
 #ifndef MESA
    /* If we're using the real OpenGL header files... */
