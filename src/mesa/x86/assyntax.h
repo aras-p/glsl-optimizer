@@ -1,4 +1,4 @@
-/* $Id: assyntax.h,v 1.20 2002/06/06 15:33:37 brianp Exp $ */
+/* $Id: assyntax.h,v 1.21 2002/06/11 01:26:58 brianp Exp $ */
 
 #ifndef __ASSYNTAX_H__
 #define __ASSYNTAX_H__
@@ -964,11 +964,11 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #endif
 
 #if defined(Lynx) || (defined(SYSV) || defined(SVR4)) \
- || (defined(linux) || defined(__OS2ELF__)) && defined(__ELF__) \
+ || (defined(__linux__) || defined(__OS2ELF__)) && defined(__ELF__) \
  || defined(__FreeBSD__) && __FreeBSD__ >= 3
 #define GLNAME(a)	a
 #else
-#define GLNAME(a)	_ ## a
+#define GLNAME(a)	CONCAT(_, a)
 #endif
 
 /*
@@ -1077,7 +1077,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define VARINDIRECT(var)	var
 
 /* Use register contents as jump/call target: */
-#define CODEPTR(reg)		reg
+#define CODEPTR(reg)		P_(reg)
 
 /*
  * Redefine assembler commands
@@ -1201,7 +1201,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define JS(a)			js NEAR a
 #define JZ(a)			jz NEAR a
 #define JMP(a)			jmp a
-#define JMPF(s,a)		jmpf
+#define JMPF(s,a)		jmp far s:a
 #define LAHF			lahf
 #define LAR(a, b)		lar b, a
 #define LEA_L(a, b)		lea P_(b), P_(a)

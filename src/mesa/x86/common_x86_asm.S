@@ -1,4 +1,4 @@
-/* $Id: common_x86_asm.S,v 1.9 2002/06/04 21:29:20 brianp Exp $ */
+/* $Id: common_x86_asm.S,v 1.10 2002/06/11 01:26:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,11 +63,6 @@
  */
 GLNAME( found_intel ):	STRING( "Genuine Intel processor found\n\0" )
 GLNAME( found_amd ):	STRING( "Authentic AMD processor found\n\0" )
-
-#ifdef USE_SSE_ASM
-GLNAME( sse_test_dummy ):
-	D_LONG 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000
-#endif
 
 
 	SEG_TEXT
@@ -202,7 +197,15 @@ GLNAME( _mesa_test_os_sse_exception_support ):
 	LDMXCSR	( REGOFF( -8, EBP ) )
 
 	XORPS	( XMM0, XMM0 )
-	MOVUPS	( CONTENT( GLNAME( sse_test_dummy ) ), XMM1 )
+
+	PUSH_L	( CONST( 0x3f800000 ) )
+	PUSH_L	( CONST( 0x3f800000 ) )
+	PUSH_L	( CONST( 0x3f800000 ) )
+	PUSH_L	( CONST( 0x3f800000 ) )
+
+	MOVUPS	( REGIND( ESP ), XMM1 )
+
+	ADD_L	( CONST( 32 ), ESP )
 
 	DIVPS	( XMM0, XMM1 )
 

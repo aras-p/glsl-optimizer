@@ -1,4 +1,4 @@
-/* $Id: x86_cliptest.S,v 1.9 2002/03/07 21:40:08 brianp Exp $ */
+/* $Id: x86_cliptest.S,v 1.10 2002/06/11 01:26:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,7 +95,7 @@ clip_table:
  *   EBP: temp2
  */
 
-#if defined(__ELF__) && defined(__PIC__) && !defined(ELFPIC)
+#if defined(__ELF__) && defined(__PIC__) && defined(GNU_ASSEMBLER) && !defined(ELFPIC)
 #define ELFPIC
 #endif
 

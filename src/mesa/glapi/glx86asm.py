@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: glx86asm.py,v 1.5 2002/04/02 16:18:20 brianp Exp $
+# $Id: glx86asm.py,v 1.6 2002/06/11 01:26:58 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -59,6 +59,8 @@ def PrintHead():
 	print '#endif'
 	print ''
 	print ''
+	print 'EXTERN GLNAME(_glapi_Dispatch)'
+	print ''
 	return
 #enddef
 
@@ -106,7 +108,7 @@ def EmitFunction(name, returnType, argTypeList, argNameList, alias, offset):
 	print 'ALIGNTEXT16'
 	print "GLOBL_FN(GL_PREFIX(%s))" % (name)
 	print "GL_PREFIX(%s):" % (name)
-	print '\tMOV_L(GLNAME(_glapi_Dispatch), EAX)'
+	print '\tMOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)'
 	print "\tJMP(GL_OFFSET(_gloffset_%s))" % (dispatchName)
 	print ''
 
