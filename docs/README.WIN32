@@ -1,12 +1,13 @@
 File: docs/README.WIN32
 
-Last updated: Nov 29, 2001 - Karl Schultz - kschultz@users.sourceforge.net
+Last updated: Aug 15, 2002 - Karl Schultz - kschultz@users.sourceforge.net
 
 Quick Start
 
 If you have Microsoft Visual C++ 6.0 installed, simply go to the top directory
 of the Mesa distribution and type 'nmake -f Makefile.win NODEBUG=1' for
-an optimized build.
+an optimized build.  Note that you may have to run ...VC98/BIN/VCVARS32.BAT
+to set up the appropriate compiler environment variables.
 
 Details and Notes
 
@@ -15,11 +16,16 @@ Details and Notes
   si-glu     MesaGLU.dll, MesaGLU.lib
   src-glut   glut32.dll, glut32.lib
   demos      a handful of demo executables.
+  book       more examples
+  samples    more examples
 
 - After building, you can copy the above DLL files to a place in your PATH
-  or to the demos directory if you just want to give the demos a try.
-  The DLL and LIB files are copied to the ./lib directory.  The makefile
-  creates this directory if it does not already exist.
+  such as $SystemRoot/SYSTEM32.  If you don't like putting things in a
+  system directory, place them in the same directory as the executable(s).
+  For example, you can copy the DLL files to the demos directory if you
+  just want to run the demos. The build process places the DLL and LIB files
+  in the ./lib directory.  The makefile creates this directory if it does 
+  not already exist.
 
 - The make targets 'clean' and 'clobber' will remove objects and libraries.
   But the files in ./lib are never cleaned.
