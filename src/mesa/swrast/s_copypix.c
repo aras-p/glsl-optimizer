@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.5 2000/11/28 00:07:52 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.6 2000/11/28 08:03:22 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -439,7 +439,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          }
          /* GL_POST_CONVOLUTION_RED/GREEN/BLUE/ALPHA_SCALE/BIAS */
          if (transferOps & IMAGE_POST_CONVOLUTION_SCALE_BIAS) {
-            _mesa_scale_and_bias_rgba(ctx, width, rgba,
+            _mesa_scale_and_bias_rgba(ctx, width, rgbaFloat,
                                       ctx->Pixel.PostConvolutionScale[RCOMP],
                                       ctx->Pixel.PostConvolutionScale[GCOMP],
                                       ctx->Pixel.PostConvolutionScale[BCOMP],
