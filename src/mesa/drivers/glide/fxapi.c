@@ -623,7 +623,7 @@
 #if defined(FX)
 #include "fxdrv.h"
 
-fxMesaContext fxMesaCurrentCtx=NULL;
+static fxMesaContext fxMesaCurrentCtx=NULL;
 
 /*
  * Status of 3Dfx hardware initialization
