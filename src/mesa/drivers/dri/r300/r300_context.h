@@ -128,7 +128,11 @@ struct r300_dma {
 	void (*flush) (r300ContextPtr);
 
 	char *buf0_address;	/* start of buf[0], for index calcs */
-	GLuint nr_released_bufs;	/* flush after so many buffers released */
+
+	/* Number of "in-flight" DMA buffers, i.e. the number of buffers
+	 * for which a DISCARD command is currently queued in the command buffer.
+	 */
+	GLuint nr_released_bufs;
 };
 
        /* Texture related */

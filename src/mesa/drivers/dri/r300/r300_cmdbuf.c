@@ -100,6 +100,8 @@ int r300FlushCmdBufLocked(r300ContextPtr r300, const char* caller)
 			fprintf(stderr, "Syncing in %s\n\n", __FUNCTION__);
 			radeonWaitForIdleLocked(&r300->radeon);
 		}
+
+		r300->dma.nr_released_bufs = 0;
 	} else {
 		ret = 0;
 		if (RADEON_DEBUG & DEBUG_IOCTL)
