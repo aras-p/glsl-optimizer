@@ -7,12 +7,18 @@
 
 ##### MACROS #####
 
+MAJOR = 1
+MINOR = 0
+TINY = 0
+
 VPATH = RCS
 
 INCDIRS = -I../include -I/usr/include/Motif1.2 -I/usr/X11R6/include
 LIBDIR = ../lib
 
-SOURCES = GLwDrawA.c GLwMDrawA.c
+# Compile GLwMDrawA.c only if you have Motif headers!
+#SOURCES = GLwDrawA.c GLwMDrawA.c
+SOURCES = GLwDrawA.c
 
 
 OBJECTS = $(SOURCES:.c=.o)
@@ -34,16 +40,15 @@ default:
 clean:
 	-rm *.o *~
 
-# The name of the library file comes from Make-config
-#XXX GLW_LIB = libGLw.a
-
 targets: $(LIBDIR)/$(GLW_LIB)
 
 
 # Make the library
 $(LIBDIR)/$(GLW_LIB): $(OBJECTS)
-	$(MAKELIB) $(GLW_LIB) $(MAJOR) $(MINOR) $(OBJECTS)
+	$(MAKELIB) $(GLW_LIB) $(MAJOR) $(MINOR) $(TINY) $(OBJECTS)
 	mv $(GLW_LIB)* $(LIBDIR)
+	-mv *.a $(LIBDIR)
+
 
 include ../Make-config
 
