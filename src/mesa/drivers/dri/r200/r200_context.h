@@ -49,7 +49,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "colormac.h"
 #include "r200_reg.h"
 
-#define ENABLE_HW_3D_TEXTURE 0  /* XXX this is temporary! */
+#define ENABLE_HW_3D_TEXTURE 1  /* XXX this is temporary! */
 
 struct r200_context;
 typedef struct r200_context r200ContextRec;
@@ -364,6 +364,12 @@ struct r200_state_atom {
 
 #define VTX_COLOR(v,n)   (((v)>>(R200_VTX_COLOR_0_SHIFT+(n)*2))&\
                          R200_VTX_COLOR_MASK)
+
+/**
+ * Given the \c R200_SE_VTX_FMT_1 for the current vertex state, determine
+ * how many components are in texture coordinate \c n.
+ */
+#define VTX_TEXn_COUNT(v,n)   (((v) >> (3 * n)) & 0x07)
 
 #define MAT_CMD_0              0
 #define MAT_ELT_0              1
@@ -703,10 +709,14 @@ struct dfn_lists {
    struct dynfn SecondaryColor3fvEXT;
    struct dynfn Normal3f;
    struct dynfn Normal3fv;
+   struct dynfn TexCoord3f;
+   struct dynfn TexCoord3fv;
    struct dynfn TexCoord2f;
    struct dynfn TexCoord2fv;
    struct dynfn TexCoord1f;
    struct dynfn TexCoord1fv;
+   struct dynfn MultiTexCoord3fARB;
+   struct dynfn MultiTexCoord3fvARB;
    struct dynfn MultiTexCoord2fARB;
    struct dynfn MultiTexCoord2fvARB;
    struct dynfn MultiTexCoord1fARB;
@@ -732,10 +742,14 @@ struct dfn_generators {
    struct dynfn *(*SecondaryColor3fvEXT)( GLcontext *, const int * );
    struct dynfn *(*Normal3f)( GLcontext *, const int * );
    struct dynfn *(*Normal3fv)( GLcontext *, const int * );
+   struct dynfn *(*TexCoord3f)( GLcontext *, const int * );
+   struct dynfn *(*TexCoord3fv)( GLcontext *, const int * );
    struct dynfn *(*TexCoord2f)( GLcontext *, const int * );
    struct dynfn *(*TexCoord2fv)( GLcontext *, const int * );
    struct dynfn *(*TexCoord1f)( GLcontext *, const int * );
    struct dynfn *(*TexCoord1fv)( GLcontext *, const int * );
+   struct dynfn *(*MultiTexCoord3fARB)( GLcontext *, const int * );
+   struct dynfn *(*MultiTexCoord3fvARB)( GLcontext *, const int * );
    struct dynfn *(*MultiTexCoord2fARB)( GLcontext *, const int * );
    struct dynfn *(*MultiTexCoord2fvARB)( GLcontext *, const int * );
    struct dynfn *(*MultiTexCoord1fARB)( GLcontext *, const int * );
@@ -756,17 +770,16 @@ struct r200_vbinfo {
    void (*notify)( void );
    GLint vertex_size;
 
-   /* A maximum total of 15 elements per vertex:  3 floats for position, 3
+   /* A maximum total of 17 elements per vertex:  3 floats for position, 3
     * floats for normal, 4 floats for color, 4 bytes for secondary color,
-    * 2 floats for each texture unit (4 floats total).
+    * 3 floats for each texture unit (6 floats total).
     * 
-    * As soon as the 3rd TMU is supported or cube maps (or 3D textures) are
-    * supported, this value will grow.
+    * As soon as the 3rd through 6th TMUs are supported, this value will grow.
     * 
     * The position data is never actually stored here, so 3 elements could be
     * trimmed out of the buffer.
     */
-   union { float f; int i; r200_color_t color; } vertex[15];
+   union { float f; int i; r200_color_t color; } vertex[17];
 
    GLfloat *normalptr;
    GLfloat *floatcolorptr;

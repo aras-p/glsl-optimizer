@@ -147,22 +147,15 @@ static void r200SetVertexFormat( GLcontext *ctx )
 	    GLuint sz = VB->TexCoordPtr[i]->size;
 	    GLuint emit;
 
-	    /* r200 doesn't like 1D or 4D texcoords (is that true?):
+	    /* r200 doesn't like 4D texcoords (is that true?):
 	     */
-	    switch (sz) {
-	    case 1: 
-	    case 2: 
-	    case 3: 		/* no attempt at cube texturing so far */
-	       emit = EMIT_2F; 
-	       sz = 2; 
-	       break;
-	    case 4: 
+	    if (sz != 4) {
+	       emit = EMIT_1F + (sz - 1);
+	    }
+	    else {
+	       sz = 3;
 	       emit = EMIT_3F_XYW; 
-	       sz = 3;     
-	       break;
-	    default: 
-	       continue;
-	    };
+	    }
 
 	    fmt_1 |= sz << (3 * i);
 	    EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_SZ(sz), 0 );

@@ -337,6 +337,7 @@ struct dynfn *r200_makeX86Color3f( GLcontext *ctx, const int *key )
 
 
 
+#if 0 /* Temporarily disabled as it is broken w/the new cubemap code. - idr */
 struct dynfn *r200_makeX86TexCoord2fv( GLcontext *ctx, const int *key )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -395,7 +396,7 @@ struct dynfn *r200_makeX86MultiTexCoord2fARB( GLcontext *ctx,
    }      
    return dfn;
 }
-
+#endif
 
 void r200InitX86Codegen( struct dfn_generators *gen )
 {
@@ -405,10 +406,12 @@ void r200InitX86Codegen( struct dfn_generators *gen )
    gen->Color4ubv = r200_makeX86Color4ubv; /* PKCOLOR only */
    gen->Normal3f = r200_makeX86Normal3f;
    gen->Normal3fv = r200_makeX86Normal3fv;
+#if 0 /* Temporarily disabled as it is broken w/the new cubemap code. - idr */
    gen->TexCoord2f = r200_makeX86TexCoord2f;
    gen->TexCoord2fv = r200_makeX86TexCoord2fv;
    gen->MultiTexCoord2fARB = r200_makeX86MultiTexCoord2fARB;
    gen->MultiTexCoord2fvARB = r200_makeX86MultiTexCoord2fvARB;
+#endif
    gen->Color3f = r200_makeX86Color3f;
    gen->Color3fv = r200_makeX86Color3fv;
 

@@ -343,6 +343,8 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
    GLuint nr = 0;
    GLuint vfmt0 = 0, vfmt1 = 0;
    GLuint count = VB->Count;
+   GLuint i;
+   GLuint re_cntl;
    
    if (1) {
       if (!rmesa->tcl.obj.buf) 
@@ -422,30 +424,34 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
 /*    vtx = (rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] & */
 /* 	  ~(R200_TCL_VTX_Q0|R200_TCL_VTX_Q1)); */
       
-   if (inputs & VERT_BIT_TEX0) {
-      if (!rmesa->tcl.tex[0].buf)
-	 emit_vector( ctx, 
-		      &(rmesa->tcl.tex[0]), 
-		      (char *)VB->TexCoordPtr[0]->data,
-		      VB->TexCoordPtr[0]->size,
-		      VB->TexCoordPtr[0]->stride,
-		      count );
+   re_cntl = rmesa->hw.set.cmd[SET_RE_CNTL] & ~(R200_VTX_STQ0_D3D |
+						R200_VTX_STQ1_D3D |
+						R200_VTX_STQ2_D3D |
+						R200_VTX_STQ3_D3D |
+						R200_VTX_STQ4_D3D |
+						R200_VTX_STQ5_D3D );
+   for ( i = 0 ; i < ctx->Const.MaxTextureUnits ; i++ ) {
+      if (inputs & (VERT_BIT_TEX0 << i)) {
+	 if (!rmesa->tcl.tex[i].buf)
+	     emit_vector( ctx, 
+			  &(rmesa->tcl.tex[i]),
+			  (char *)VB->TexCoordPtr[i]->data,
+			  VB->TexCoordPtr[i]->size,
+			  VB->TexCoordPtr[i]->stride,
+			  count );
 
-      vfmt1 |= VB->TexCoordPtr[0]->size << R200_VTX_TEX0_COMP_CNT_SHIFT;
-      component[nr++] = &rmesa->tcl.tex[0];
+	 if ( ctx->Texture.Unit[i]._ReallyEnabled == TEXTURE_CUBE_BIT ) {
+	    re_cntl |= R200_VTX_STQ0_D3D << (2 * i);
+	 }
+
+	 vfmt1 |= VB->TexCoordPtr[i]->size << (i * 3);
+	 component[nr++] = &rmesa->tcl.tex[i];
+      }
    }
 
-   if (inputs & VERT_BIT_TEX1) {
-      if (!rmesa->tcl.tex[1].buf)
-	 emit_vector( ctx, 
-		      &(rmesa->tcl.tex[1]), 
-		      (char *)VB->TexCoordPtr[1]->data,
-		      VB->TexCoordPtr[1]->size,
-		      VB->TexCoordPtr[1]->stride,
-		      count );
-	 
-      vfmt1 |= VB->TexCoordPtr[1]->size << R200_VTX_TEX1_COMP_CNT_SHIFT;
-      component[nr++] = &rmesa->tcl.tex[1];
+   if ( re_cntl != rmesa->hw.set.cmd[SET_RE_CNTL] ) {
+      R200_STATECHANGE( rmesa, set );
+      rmesa->hw.set.cmd[SET_RE_CNTL] = re_cntl;
    }
 
    if (vfmt0 != rmesa->hw.vtx.cmd[VTX_VTXFMT_0] ||

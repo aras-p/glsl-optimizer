@@ -154,6 +154,7 @@ static struct dynfn *r200_makeSSEColor3f( GLcontext *ctx, const int * key )
    }
 }
 
+#if 0 /* Temporarily disabled as it is broken w/the new cubemap code. - idr */
 static struct dynfn *r200_makeSSETexCoord2fv( GLcontext *ctx, const int * key )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -205,6 +206,7 @@ static struct dynfn *r200_makeSSEMultiTexCoord2f( GLcontext *ctx, const int * ke
    }
    return dfn;
 }
+#endif
 
 void r200InitSSECodegen( struct dfn_generators *gen )
 {
@@ -213,10 +215,12 @@ void r200InitSSECodegen( struct dfn_generators *gen )
       gen->Normal3f = (void *) r200_makeSSENormal3f;
       gen->Color3fv = (void *) r200_makeSSEColor3fv;
       gen->Color3f = (void *) r200_makeSSEColor3f;
+#if 0 /* Temporarily disabled as it is broken w/the new cubemap code. - idr */
       gen->TexCoord2fv = (void *) r200_makeSSETexCoord2fv;
       gen->TexCoord2f = (void *) r200_makeSSETexCoord2f;
       gen->MultiTexCoord2fvARB = (void *) r200_makeSSEMultiTexCoord2fv;
       gen->MultiTexCoord2fARB = (void *) r200_makeSSEMultiTexCoord2f;
+#endif
    }
 }
 

@@ -88,10 +88,14 @@ static void count_funcs( r200ContextPtr rmesa )
    count_func( "SecondaryColor3ubv", &rmesa->vb.dfn_cache.SecondaryColor3ubvEXT );
    count_func( "Normal3f", &rmesa->vb.dfn_cache.Normal3f );
    count_func( "Normal3fv", &rmesa->vb.dfn_cache.Normal3fv );
+   count_func( "TexCoord3f", &rmesa->vb.dfn_cache.TexCoord3f );
+   count_func( "TexCoord3fv", &rmesa->vb.dfn_cache.TexCoord3fv );
    count_func( "TexCoord2f", &rmesa->vb.dfn_cache.TexCoord2f );
    count_func( "TexCoord2fv", &rmesa->vb.dfn_cache.TexCoord2fv );
    count_func( "TexCoord1f", &rmesa->vb.dfn_cache.TexCoord1f );
    count_func( "TexCoord1fv", &rmesa->vb.dfn_cache.TexCoord1fv );
+   count_func( "MultiTexCoord3fARB", &rmesa->vb.dfn_cache.MultiTexCoord3fARB );
+   count_func( "MultiTexCoord3fvARB", &rmesa->vb.dfn_cache.MultiTexCoord3fvARB );
    count_func( "MultiTexCoord2fARB", &rmesa->vb.dfn_cache.MultiTexCoord2fARB );
    count_func( "MultiTexCoord2fvARB", &rmesa->vb.dfn_cache.MultiTexCoord2fvARB );
    count_func( "MultiTexCoord1fARB", &rmesa->vb.dfn_cache.MultiTexCoord1fARB );
@@ -102,6 +106,7 @@ static void count_funcs( r200ContextPtr rmesa )
 void r200_copy_to_current( GLcontext *ctx ) 
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   unsigned i;
 
    if (R200_DEBUG & DEBUG_VFMT)
       fprintf(stderr, "%s\n", __FUNCTION__);
@@ -145,18 +150,29 @@ void r200_copy_to_current( GLcontext *ctx )
       ctx->Current.Attrib[VERT_ATTRIB_COLOR1][2] = UBYTE_TO_FLOAT( rmesa->vb.specptr->blue );
    } 
 
-   if (rmesa->vb.vtxfmt_1 & (7 << R200_VTX_TEX0_COMP_CNT_SHIFT)) {
-      ctx->Current.Attrib[VERT_ATTRIB_TEX0][0] = rmesa->vb.texcoordptr[0][0];
-      ctx->Current.Attrib[VERT_ATTRIB_TEX0][1] = rmesa->vb.texcoordptr[0][1];
-      ctx->Current.Attrib[VERT_ATTRIB_TEX0][2] = 0.0F;
-      ctx->Current.Attrib[VERT_ATTRIB_TEX0][3] = 1.0F;
-   }
+   for ( i = 0 ; i < ctx->Const.MaxTextureUnits ; i++ ) {
+      const unsigned count = VTX_TEXn_COUNT( rmesa->vb.vtxfmt_1, i );
+      GLfloat * const src = rmesa->vb.texcoordptr[i];
 
-   if (rmesa->vb.vtxfmt_1 & (7 << R200_VTX_TEX1_COMP_CNT_SHIFT)) {
-      ctx->Current.Attrib[VERT_ATTRIB_TEX1][0] = rmesa->vb.texcoordptr[1][0];
-      ctx->Current.Attrib[VERT_ATTRIB_TEX1][1] = rmesa->vb.texcoordptr[1][1];
-      ctx->Current.Attrib[VERT_ATTRIB_TEX1][2] = 0.0F;
-      ctx->Current.Attrib[VERT_ATTRIB_TEX1][3] = 1.0F;
+      if ( count != 0 ) {
+	 switch( count ) {
+	 case 3:
+	    ctx->Current.Attrib[VERT_ATTRIB_TEX0+i][1] = src[1];
+	    ctx->Current.Attrib[VERT_ATTRIB_TEX0+i][2] = src[2];
+	    break;
+	 case 2:
+	    ctx->Current.Attrib[VERT_ATTRIB_TEX0+i][1] = src[1];
+	    ctx->Current.Attrib[VERT_ATTRIB_TEX0+i][2] = 0.0F;
+	    break;
+	 case 1:
+	    ctx->Current.Attrib[VERT_ATTRIB_TEX0+i][1] = 0.0F;
+	    ctx->Current.Attrib[VERT_ATTRIB_TEX0+i][2] = 0.0F;
+	    break;
+	 }
+
+	 ctx->Current.Attrib[VERT_ATTRIB_TEX0+i][0] = src[0];
+	 ctx->Current.Attrib[VERT_ATTRIB_TEX0+i][3] = 1.0F;
+      }
    }
 
    ctx->Driver.NeedFlush &= ~FLUSH_UPDATE_CURRENT;
@@ -378,6 +394,42 @@ static void VFMT_FALLBACK_OUTSIDE_BEGIN_END( const char *caller )
 }
 
 
+static void dispatch_texcoord( GLuint count, GLfloat * f )
+{
+   switch( count ) {
+   case 3:
+      _glapi_Dispatch->TexCoord3fv( f );
+      break;
+   case 2:
+      _glapi_Dispatch->TexCoord2fv( f );
+      break;
+   case 1:
+      _glapi_Dispatch->TexCoord1fv( f );
+      break;
+   default:
+      assert( count == 0 );
+      break;
+   }
+}
+
+static void dispatch_multitexcoord( GLuint count, GLuint unit, GLfloat * f )
+{
+   switch( count ) {
+   case 3:
+      _glapi_Dispatch->MultiTexCoord3fvARB( GL_TEXTURE0+unit, f );
+      break;
+   case 2:
+      _glapi_Dispatch->MultiTexCoord2fvARB( GL_TEXTURE0+unit, f );
+      break;
+   case 1:
+      _glapi_Dispatch->MultiTexCoord1fvARB( GL_TEXTURE0+unit, f );
+      break;
+   default:
+      assert( count == 0 );
+      break;
+   }
+}
+
 static void VFMT_FALLBACK( const char *caller )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -388,6 +440,8 @@ static void VFMT_FALLBACK( const char *caller )
    GLuint ind1 = rmesa->vb.vtxfmt_1;
    GLuint nrverts;
    GLfloat alpha = 1.0;
+   GLuint count;
+   GLuint unit;
 
    if (R200_DEBUG & (DEBUG_FALLBACKS|DEBUG_VFMT))
       fprintf(stderr, "%s from %s\n", __FUNCTION__, caller);
@@ -425,6 +479,7 @@ static void VFMT_FALLBACK( const char *caller )
     */
    for (i = 0 ; i < nrverts; i++) {
       GLuint offset = 3;
+
       if (ind0 & R200_VTX_N0) {
 	 _glapi_Dispatch->Normal3fv( &tmp[i][offset] ); 
 	 offset += 3;
@@ -448,14 +503,14 @@ static void VFMT_FALLBACK( const char *caller )
 	 offset++;
       }
 
-      if (ind1 & (7 << R200_VTX_TEX0_COMP_CNT_SHIFT)) {
-	 _glapi_Dispatch->TexCoord2fv( &tmp[i][offset] ); 
-	 offset += 2;
-      }
+      count = VTX_TEXn_COUNT( ind1, 0 );
+      dispatch_texcoord( count, &tmp[i][offset] );
+      offset += count;
 
-      if (ind1 & (7 << R200_VTX_TEX1_COMP_CNT_SHIFT)) {
-	 _glapi_Dispatch->MultiTexCoord2fvARB( GL_TEXTURE1, &tmp[i][offset] );
-	 offset += 2;
+      for ( unit = 1 ; unit < ctx->Const.MaxTextureUnits ; unit++ ) {
+	 count = VTX_TEXn_COUNT( ind1, unit );
+	 dispatch_multitexcoord( count, unit, &tmp[i][offset] );
+	 offset += count;
       }
 
       _glapi_Dispatch->Vertex3fv( &tmp[i][0] );
@@ -492,12 +547,12 @@ static void VFMT_FALLBACK( const char *caller )
 					     rmesa->vb.specptr->green,
 					     rmesa->vb.specptr->blue ); 
 
-   if (ind1 & (7 << R200_VTX_TEX0_COMP_CNT_SHIFT)) {
-      _glapi_Dispatch->TexCoord2fv( rmesa->vb.texcoordptr[0] );
-   }
+   count = VTX_TEXn_COUNT( ind1, 0 );
+   dispatch_texcoord( count, rmesa->vb.texcoordptr[0] );
 
-   if (ind1 & (7 << R200_VTX_TEX1_COMP_CNT_SHIFT)) {
-      _glapi_Dispatch->MultiTexCoord2fvARB( GL_TEXTURE1, rmesa->vb.texcoordptr[1] );
+   for ( unit = 1 ; unit < ctx->Const.MaxTextureUnits ; unit++ ) {
+      count = VTX_TEXn_COUNT( ind1, unit );
+      dispatch_multitexcoord( count, unit, rmesa->vb.texcoordptr[unit] );
    }
 }
 
@@ -582,12 +637,34 @@ static void wrap_buffer( void )
 }
 
 
-
+/**
+ * Determines the hardware vertex format based on the current state vector.
+ * 
+ * \returns
+ * If the hardware TCL unit is capable of handling the current state vector,
+ * \c GL_TRUE is returned.  Otherwise, \c GL_FALSE is returned.
+ *
+ * \todo
+ * Make this color format selection data driven.  If we receive only ubytes,
+ * send color as ubytes.  Also check if converting (with free checking for
+ * overflow) is cheaper than sending floats directly.
+ *
+ * \todo
+ * When intializing texture coordinates, it might be faster to just copy the
+ * entire \c VERT_ATTRIB_TEX0 vector into the vertex buffer.  It may mean that
+ * some of the data (i.e., the last texture coordinate components) get copied
+ * over, but that still may be faster than the conditional branching.  If
+ * nothing else, the code will be smaller and easier to follow.
+ */
 static GLboolean check_vtx_fmt( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint ind0 = R200_VTX_Z0;
    GLuint ind1 = 0;
+   GLuint i;
+   GLuint count[R200_MAX_TEXTURE_UNITS];
+   GLuint re_cntl;
+
 
    if (rmesa->TclFallback || rmesa->vb.fell_back || ctx->CompileFlag)
       return GL_FALSE;
@@ -600,11 +677,6 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
    if (ctx->Light.Enabled) {
       ind0 |= R200_VTX_N0;
 
-      /* TODO: make this data driven: If we receive only ubytes, send
-       * color as ubytes.  Also check if converting (with free
-       * checking for overflow) is cheaper than sending floats
-       * directly.
-       */
       if (ctx->Light.ColorMaterialEnabled) 
 	 ind0 |= R200_VTX_FP_RGBA << R200_VTX_COLOR_0_SHIFT;
       else
@@ -620,36 +692,46 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
       }
    }
 
-   if (ctx->Texture.Unit[0]._ReallyEnabled) {
-      if (ctx->Texture.Unit[0].TexGenEnabled) {
-	 if (rmesa->TexGenNeedNormals[0]) {
-	    ind0 |= R200_VTX_N0;
+   re_cntl = rmesa->hw.set.cmd[SET_RE_CNTL] & ~(R200_VTX_STQ0_D3D |
+						R200_VTX_STQ1_D3D |
+						R200_VTX_STQ2_D3D |
+						R200_VTX_STQ3_D3D |
+						R200_VTX_STQ4_D3D |
+						R200_VTX_STQ5_D3D );
+   for ( i = 0 ; i < ctx->Const.MaxTextureUnits ; i++ ) {
+      count[i] = 0;
+
+      if (ctx->Texture.Unit[i]._ReallyEnabled) {
+	 if (ctx->Texture.Unit[i].TexGenEnabled) {
+	    if (rmesa->TexGenNeedNormals[i]) {
+	       ind0 |= R200_VTX_N0;
+	    }
 	 }
-      } else {
-	 if (ctx->Current.Attrib[VERT_ATTRIB_TEX0][2] != 0.0F ||
-	     ctx->Current.Attrib[VERT_ATTRIB_TEX0][3] != 1.0) {
-	    if (R200_DEBUG & (DEBUG_VFMT|DEBUG_FALLBACKS))
-	       fprintf(stderr, "%s: rq0\n", __FUNCTION__);
-	    return GL_FALSE;
+	 else {
+	    switch( ctx->Texture.Unit[i]._ReallyEnabled ) {
+	    case TEXTURE_CUBE_BIT:
+	       re_cntl |= R200_VTX_STQ0_D3D << (2 * i);
+	       /* FALLTHROUGH */
+	    case TEXTURE_3D_BIT:
+	       count[i] = 3;
+	       break;
+	    case TEXTURE_2D_BIT:
+	    case TEXTURE_RECT_BIT:
+	       count[i] = 2;
+	       break;
+	    case TEXTURE_1D_BIT:
+	       count[i] = 1;
+	       break;
+	    }
+
+	    ind1 |= count[i] << (3 * i);
 	 }
-	 ind1 |= 2 << R200_VTX_TEX0_COMP_CNT_SHIFT;
       }
    }
 
-   if (ctx->Texture.Unit[1]._ReallyEnabled) {
-      if (ctx->Texture.Unit[1].TexGenEnabled) {
-	 if (rmesa->TexGenNeedNormals[1]) {
-	    ind0 |= R200_VTX_N0;
-	 }
-      } else {
-	 if (ctx->Current.Attrib[VERT_ATTRIB_TEX1][2] != 0.0F ||
-	     ctx->Current.Attrib[VERT_ATTRIB_TEX1][3] != 1.0) {
-	    if (R200_DEBUG & (DEBUG_VFMT|DEBUG_FALLBACKS))
-	       fprintf(stderr, "%s: rq1\n", __FUNCTION__);
-	    return GL_FALSE;
-	 }
-	 ind1 |= 2 << R200_VTX_TEX1_COMP_CNT_SHIFT;
-      }
+   if ( re_cntl != rmesa->hw.set.cmd[SET_RE_CNTL] ) {
+      R200_STATECHANGE( rmesa, set );
+      rmesa->hw.set.cmd[SET_RE_CNTL] = re_cntl;
    }
 
    if (R200_DEBUG & (DEBUG_VFMT|DEBUG_STATE))
@@ -713,19 +795,20 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
    }
 
 
-   if (ind1 & (7 << R200_VTX_TEX0_COMP_CNT_SHIFT)) {
-      rmesa->vb.texcoordptr[0] = &rmesa->vb.vertex[rmesa->vb.vertex_size].f;
-      rmesa->vb.vertex_size += 2;
-      rmesa->vb.texcoordptr[0][0] = ctx->Current.Attrib[VERT_ATTRIB_TEX0][0];
-      rmesa->vb.texcoordptr[0][1] = ctx->Current.Attrib[VERT_ATTRIB_TEX0][1];   
-   } 
+   for ( i = 0 ; i < ctx->Const.MaxTextureUnits ; i++ ) {
+      if ( count[i] != 0 ) {
+	 float * const attr = ctx->Current.Attrib[VERT_ATTRIB_TEX0+i];
+	 unsigned  j;
 
-   if (ind1 & (7 << R200_VTX_TEX1_COMP_CNT_SHIFT)) {
-      rmesa->vb.texcoordptr[1] = &rmesa->vb.vertex[rmesa->vb.vertex_size].f;
-      rmesa->vb.vertex_size += 2;
-      rmesa->vb.texcoordptr[1][0] = ctx->Current.Attrib[VERT_ATTRIB_TEX1][0];
-      rmesa->vb.texcoordptr[1][1] = ctx->Current.Attrib[VERT_ATTRIB_TEX1][1];
-   } 
+	 rmesa->vb.texcoordptr[i] = &rmesa->vb.vertex[rmesa->vb.vertex_size].f;
+
+	 for ( j = 0 ; j < count[i] ; j++ ) {
+	    rmesa->vb.texcoordptr[i][j] = attr[j];
+	 }
+
+	 rmesa->vb.vertex_size += count[i];
+      }
+   }
 
    if (rmesa->vb.installed_vertex_format != rmesa->vb.vtxfmt_0) {
       if (R200_DEBUG & DEBUG_VFMT)
@@ -736,7 +819,10 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
 
    if (R200_DEBUG & DEBUG_VFMT)
       fprintf(stderr, "%s -- success\n", __FUNCTION__);
-   
+
+   fprintf( stderr, "[%s:%u] vertex size = %u\n", __func__, __LINE__,
+	    rmesa->vb.vertex_size );
+
    return GL_TRUE;
 }
 
@@ -1026,12 +1112,8 @@ void r200VtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
    vfmt->EvalMesh2 = r200_fallback_EvalMesh2;
    vfmt->EvalPoint1 = r200_fallback_EvalPoint1;
    vfmt->EvalPoint2 = r200_fallback_EvalPoint2;
-   vfmt->TexCoord3f = r200_fallback_TexCoord3f;
-   vfmt->TexCoord3fv = r200_fallback_TexCoord3fv;
    vfmt->TexCoord4f = r200_fallback_TexCoord4f;
    vfmt->TexCoord4fv = r200_fallback_TexCoord4fv;
-   vfmt->MultiTexCoord3fARB = r200_fallback_MultiTexCoord3fARB;
-   vfmt->MultiTexCoord3fvARB = r200_fallback_MultiTexCoord3fvARB;
    vfmt->MultiTexCoord4fARB = r200_fallback_MultiTexCoord4fARB;
    vfmt->MultiTexCoord4fvARB = r200_fallback_MultiTexCoord4fvARB;
    vfmt->Vertex4f = r200_fallback_Vertex4f;
@@ -1071,10 +1153,14 @@ void r200VtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
    make_empty_list( &rmesa->vb.dfn_cache.SecondaryColor3ubvEXT );
    make_empty_list( &rmesa->vb.dfn_cache.Normal3f );
    make_empty_list( &rmesa->vb.dfn_cache.Normal3fv );
+   make_empty_list( &rmesa->vb.dfn_cache.TexCoord3f );
+   make_empty_list( &rmesa->vb.dfn_cache.TexCoord3fv );
    make_empty_list( &rmesa->vb.dfn_cache.TexCoord2f );
    make_empty_list( &rmesa->vb.dfn_cache.TexCoord2fv );
    make_empty_list( &rmesa->vb.dfn_cache.TexCoord1f );
    make_empty_list( &rmesa->vb.dfn_cache.TexCoord1fv );
+   make_empty_list( &rmesa->vb.dfn_cache.MultiTexCoord3fARB );
+   make_empty_list( &rmesa->vb.dfn_cache.MultiTexCoord3fvARB );
    make_empty_list( &rmesa->vb.dfn_cache.MultiTexCoord2fARB );
    make_empty_list( &rmesa->vb.dfn_cache.MultiTexCoord2fvARB );
    make_empty_list( &rmesa->vb.dfn_cache.MultiTexCoord1fARB );
@@ -1126,10 +1212,14 @@ void r200VtxfmtDestroy( GLcontext *ctx )
    free_funcs( &rmesa->vb.dfn_cache.SecondaryColor3fvEXT );
    free_funcs( &rmesa->vb.dfn_cache.Normal3f );
    free_funcs( &rmesa->vb.dfn_cache.Normal3fv );
+   free_funcs( &rmesa->vb.dfn_cache.TexCoord3f );
+   free_funcs( &rmesa->vb.dfn_cache.TexCoord3fv );
    free_funcs( &rmesa->vb.dfn_cache.TexCoord2f );
    free_funcs( &rmesa->vb.dfn_cache.TexCoord2fv );
    free_funcs( &rmesa->vb.dfn_cache.TexCoord1f );
    free_funcs( &rmesa->vb.dfn_cache.TexCoord1fv );
+   free_funcs( &rmesa->vb.dfn_cache.MultiTexCoord3fARB );
+   free_funcs( &rmesa->vb.dfn_cache.MultiTexCoord3fvARB );
    free_funcs( &rmesa->vb.dfn_cache.MultiTexCoord2fARB );
    free_funcs( &rmesa->vb.dfn_cache.MultiTexCoord2fvARB );
    free_funcs( &rmesa->vb.dfn_cache.MultiTexCoord1fARB );

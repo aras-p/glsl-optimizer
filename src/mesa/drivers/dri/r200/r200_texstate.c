@@ -747,6 +747,7 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
 
 #define TEXOBJ_TXFORMAT_X_MASK (R200_DEPTH_LOG2_MASK |		\
                                 R200_TEXCOORD_MASK |		\
+                                R200_CLAMP_Q_MASK | 		\
                                 R200_VOLUME_FILTER_MASK)
 
 
