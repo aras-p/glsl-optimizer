@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.5 1999/10/17 23:24:16 brianp Exp $ */
+/* $Id: teximage.c,v 1.6 1999/10/19 20:36:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -325,6 +325,7 @@ static void set_teximage_component_sizes( struct gl_texture_image *texImage )
          texImage->IndexBits = 0;
          break;
       case GL_RGB:
+      case GL_BGR:
          texImage->RedBits = 8;
          texImage->GreenBits = 8;
          texImage->BlueBits = 8;
@@ -334,6 +335,8 @@ static void set_teximage_component_sizes( struct gl_texture_image *texImage )
          texImage->IndexBits = 0;
          break;
       case GL_RGBA:
+      case GL_BGRA:
+      case GL_ABGR_EXT:
          texImage->RedBits = 8;
          texImage->GreenBits = 8;
          texImage->BlueBits = 8;
@@ -1055,12 +1058,15 @@ static GLboolean texture_error_check( GLcontext *ctx, GLenum target,
    }
 
    if (!gl_is_legal_format_and_type( format, type )) {
+      /* Yes, generate GL_INVALID_OPERATION, not GL_INVALID_ENUM, if there
+       * is a type/format mismatch.  See 1.2 spec page 94, sec 3.6.4.
+       */
       if (dimensions == 1)
-         gl_error( ctx, GL_INVALID_ENUM, "glTexImage1D(format or type)");
+         gl_error( ctx, GL_INVALID_OPERATION, "glTexImage1D(format or type)");
       else if (dimensions == 2)
-         gl_error( ctx, GL_INVALID_ENUM, "glTexImage2D(format or type)");
+         gl_error( ctx, GL_INVALID_OPERATION, "glTexImage2D(format or type)");
       else if (dimensions == 3)
-         gl_error( ctx, GL_INVALID_ENUM, "glTexImage3D(format or type)");
+         gl_error( ctx, GL_INVALID_OPERATION, "glTexImage3D(format or type)");
       return GL_TRUE;
    }
 
@@ -1876,13 +1882,13 @@ void gl_TexSubImage3DEXT( GLcontext *ctx,
          gl_error( ctx, GL_INVALID_ENUM, "glTexSubImage3DEXT(format)" );
          return;
       }
-      components = components_in_intformat( format );
+      components = gl_components_in_format( format );
       if (components<0 || format==GL_STENCIL_INDEX
           || format==GL_DEPTH_COMPONENT){
          gl_error( ctx, GL_INVALID_ENUM, "glTexSubImage3DEXT(format)" );
          return;
       }
-      size = gl_sizeof_type( type );
+      size = gl_sizeof_packed_type( type );
       if (size<=0) {
          gl_error( ctx, GL_INVALID_ENUM, "glTexSubImage3DEXT(type)" );
          return;
@@ -2321,7 +2327,7 @@ void gl_CopyTexSubImage3DEXT( GLcontext *ctx,
    struct gl_texture_image *teximage;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexSubImage3DEXT");
-   if (target!=GL_TEXTURE_2D) {
+   if (target!=GL_TEXTURE_3D) {
       gl_error( ctx, GL_INVALID_ENUM, "glCopyTexSubImage3DEXT(target)" );
       return;
    }
