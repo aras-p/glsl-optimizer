@@ -459,6 +459,12 @@ EXPORTS
 	_mesa_init_default_imports
 	_tnl_MakeCurrent
 	_swrast_DrawBuffer
+	_mesa_free
+	_mesa_calloc
+	_mesa_strcmp
+	_mesa_bzero
+	_mesa_memset
+	_mesa_memcpy
 	wglCopyContext
 	wglCreateContext
 	wglDeleteContext
