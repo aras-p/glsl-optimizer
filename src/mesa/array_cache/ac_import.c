@@ -1,4 +1,4 @@
-/* $Id: ac_import.c,v 1.17 2002/04/21 18:49:19 brianp Exp $ */
+/* $Id: ac_import.c,v 1.18 2002/04/21 20:37:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -183,12 +183,55 @@ static void reset_edgeflag( GLcontext *ctx )
 static void reset_attrib( GLcontext *ctx, GLuint index )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
+   GLboolean fallback = GL_FALSE;
 
+   /*
+    * The 16 NV vertex attribute arrays have top priority.  If one of those
+    * is not enabled, look if a corresponding conventional array is enabled.
+    * If nothing else, use the fallback (ctx->Current.Attrib) values.
+    */
    if (ctx->Array._Enabled & _NEW_ARRAY_ATTRIB(index)) {
       ac->Raw.Attrib[index] = ctx->Array.VertexAttrib[index];
       STRIDE_ARRAY(ac->Raw.Attrib[index], ac->start);
    }
+   else if (ctx->Array._Enabled & (1 << index)) {
+      /* use conventional vertex array */
+      switch (index) {
+         case VERT_ATTRIB_POS:
+            ac->Raw.Attrib[index] = ctx->Array.Vertex;
+            break;
+         case VERT_ATTRIB_NORMAL:
+            ac->Raw.Attrib[index] = ctx->Array.Normal;
+            break;
+         case VERT_ATTRIB_COLOR0:
+            ac->Raw.Attrib[index] = ctx->Array.Color;
+            break;
+         case VERT_ATTRIB_COLOR1:
+            ac->Raw.Attrib[index] = ctx->Array.SecondaryColor;
+            break;
+         case VERT_ATTRIB_FOG:
+            ac->Raw.Attrib[index] = ctx->Array.FogCoord;
+            break;
+         default:
+            if (index >= VERT_ATTRIB_TEX0 && index <= VERT_ATTRIB_TEX7) {
+               GLuint unit = index - VERT_ATTRIB_TEX0;
+               ac->Raw.Attrib[index] = ctx->Array.TexCoord[unit];
+            }
+            else {
+               /* missing conventional array (vertex weight, for example) */
+               fallback = GL_TRUE;
+            }
+            break;
+      }
+      if (!fallback)
+         STRIDE_ARRAY(ac->Raw.Attrib[index], ac->start);
+   }
    else {
+      fallback = GL_TRUE;
+   }
+
+   if (fallback) {
+      /* fallback to ctx->Current.Attrib values */
       ac->Raw.Attrib[index] = ac->Fallback.Attrib[index];
 
       if (ctx->Current.Attrib[index][3] != 1.0)
@@ -766,13 +809,18 @@ struct gl_client_array *_ac_import_attrib( GLcontext *ctx,
 
    /* Can we keep the existing version?
     */
-   if (ac->NewArrayState & _NEW_ARRAY_ATTRIB(index))
+   if (ac->NewArrayState & _NEW_ARRAY_ATTRIB(index)) {
       reset_attrib( ctx, index );
+   }
+   else if (ac->NewArrayState & (1 << index)) {
+      /* Also need to check conventional attributes */
+      reset_attrib( ctx, index );
+   }
 
    /* Is the request impossible?
     */
    if (reqsize != 0 && ac->Raw.Attrib[index].Size > (GLint) reqsize)
-      return 0;
+      return NULL;
 
    /* Do we need to pull in a copy of the client data:
     */

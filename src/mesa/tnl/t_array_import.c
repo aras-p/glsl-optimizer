@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.23 2002/04/19 00:45:50 brianp Exp $ */
+/* $Id: t_array_import.c,v 1.24 2002/04/21 20:37:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -177,7 +177,7 @@ static void _tnl_import_index( GLcontext *ctx,
 
 
 static void _tnl_import_texcoord( GLcontext *ctx,
-				  GLuint i,
+				  GLuint unit,
 				  GLboolean writeable,
 				  GLboolean stride )
 {
@@ -185,21 +185,21 @@ static void _tnl_import_texcoord( GLcontext *ctx,
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
 
-   tmp = _ac_import_texcoord(ctx, i, GL_FLOAT,
-			     stride ? 4*sizeof(GLfloat) : 0,
+   tmp = _ac_import_texcoord(ctx, unit, GL_FLOAT,
+			     stride ? 4 * sizeof(GLfloat) : 0,
 			     0,
 			     writeable,
 			     &is_writeable);
 
-   inputs->TexCoord[i].data = (GLfloat (*)[4]) tmp->Ptr;
-   inputs->TexCoord[i].start = (GLfloat *) tmp->Ptr;
-   inputs->TexCoord[i].stride = tmp->StrideB;
-   inputs->TexCoord[i].size = tmp->Size;
-   inputs->TexCoord[i].flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
-   if (inputs->TexCoord[i].stride != 4*sizeof(GLfloat))
-      inputs->TexCoord[i].flags |= VEC_BAD_STRIDE;
+   inputs->TexCoord[unit].data = (GLfloat (*)[4]) tmp->Ptr;
+   inputs->TexCoord[unit].start = (GLfloat *) tmp->Ptr;
+   inputs->TexCoord[unit].stride = tmp->StrideB;
+   inputs->TexCoord[unit].size = tmp->Size;
+   inputs->TexCoord[unit].flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
+   if (inputs->TexCoord[unit].stride != 4*sizeof(GLfloat))
+      inputs->TexCoord[unit].flags |= VEC_BAD_STRIDE;
    if (!is_writeable)
-      inputs->TexCoord[i].flags |= VEC_NOT_WRITEABLE;
+      inputs->TexCoord[unit].flags |= VEC_NOT_WRITEABLE;
 }
 
 
@@ -224,6 +224,34 @@ static void _tnl_import_edgeflag( GLcontext *ctx,
       inputs->EdgeFlag.flags |= VEC_BAD_STRIDE;
    if (!is_writeable)
       inputs->EdgeFlag.flags |= VEC_NOT_WRITEABLE;
+}
+
+
+
+static void _tnl_import_attrib( GLcontext *ctx,
+                                GLuint index,
+                                GLboolean writeable,
+                                GLboolean stride )
+{
+   struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
+   struct gl_client_array *tmp;
+   GLboolean is_writeable = 0;
+
+   tmp = _ac_import_attrib(ctx, index, GL_FLOAT,
+                           stride ? 4 * sizeof(GLfloat) : 0,
+                           4,  /* want GLfloat[4] */
+                           writeable,
+                           &is_writeable);
+
+   inputs->Attribs[index].data = (GLfloat (*)[4]) tmp->Ptr;
+   inputs->Attribs[index].start = (GLfloat *) tmp->Ptr;
+   inputs->Attribs[index].stride = tmp->StrideB;
+   inputs->Attribs[index].size = tmp->Size;
+   inputs->Attribs[index].flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
+   if (inputs->Attribs[index].stride != 4 * sizeof(GLfloat))
+      inputs->Attribs[index].flags |= VEC_BAD_STRIDE;
+   if (!is_writeable)
+      inputs->Attribs[index].flags |= VEC_NOT_WRITEABLE;
 }
 
 
@@ -300,6 +328,7 @@ static void _tnl_upgrade_client_data( GLcontext *ctx,
 	    VB->importable_data &= ~VERT_BIT_TEX(i);
 	 }
 
+   /* XXX not sure what to do here for vertex program arrays */
 }
 
 
@@ -310,7 +339,6 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
    struct vertex_buffer *VB = &tnl->vb;
    GLuint inputs = tnl->pipeline.inputs;
    struct vertex_arrays *tmp = &tnl->array_inputs;
-   GLuint i;
 
 /*        fprintf(stderr, "%s %d..%d // %d..%d\n", __FUNCTION__, */
 /*  	      start, count, ctx->Array.LockFirst, ctx->Array.LockCount);  */
@@ -355,11 +383,12 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
    }
 
    if (inputs & VERT_BITS_TEX_ANY) {
-      for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-	 if (inputs & VERT_BIT_TEX(i)) {
-	    _tnl_import_texcoord( ctx, i, 0, 0 );
-	    tmp->TexCoord[i].count = VB->Count;
-	    VB->TexCoordPtr[i] = &tmp->TexCoord[i];
+      GLuint unit;
+      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
+	 if (inputs & VERT_BIT_TEX(unit)) {
+	    _tnl_import_texcoord( ctx, unit, GL_FALSE, GL_FALSE );
+	    tmp->TexCoord[unit].count = VB->Count;
+	    VB->TexCoordPtr[unit] = &tmp->TexCoord[unit];
 	 }
       }
    }
@@ -391,20 +420,13 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
       }
    }
 
+   /* XXX not 100% sure this is finished.  Keith should probably inspect. */
    if (ctx->VertexProgram.Enabled) {
-      /* XXX lots of work to do here */
-
-      VB->AttribPtr[VERT_ATTRIB_POS] = VB->ObjPtr;
-      /*
-      printf("bind vp arrays!\n");
-      printf("   data = %p\n", VB->ObjPtr->data);
-      printf(" stride = %d\n", VB->ObjPtr->stride);
-      printf("   size = %d\n", VB->ObjPtr->size);
-      */
-
-      VB->AttribPtr[VERT_ATTRIB_NORMAL] = VB->NormalPtr;
+      GLuint index;
+      for (index = 0; index < VERT_ATTRIB_MAX; index++) {
+         /* XXX check program->InputsRead to reduce work here */
+         _tnl_import_attrib( ctx, index, GL_FALSE, GL_TRUE );
+         VB->AttribPtr[index] = &tmp->Attribs[index];
+      }
    }
-
 }
-
-
