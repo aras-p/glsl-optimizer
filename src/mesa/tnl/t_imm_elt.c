@@ -1,4 +1,4 @@
-/* $Id: t_imm_elt.c,v 1.15 2002/01/06 03:54:12 brianp Exp $ */
+/* $Id: t_imm_elt.c,v 1.16 2002/01/22 14:35:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -138,7 +138,7 @@ static trans_elt_4f_func  _tnl_trans_elt_4f_tab[5][MAX_TYPES];
                GLuint start, GLuint n
 #define SRC_START  0
 #define DST_START  start
-#define CHECK  if ((flags[i]&match) == VERT_ELT)
+#define CHECK  if ((flags[i]&match) == VERT_BIT_ELT)
 #define NEXT_F  (void)1
 #define NEXT_F2 f = first + elts[i] * stride;
 
@@ -760,63 +760,63 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
    if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
       fprintf(stderr, "exec_array_elements %d .. %d\n", start, count);
 
-   if (translate & VERT_OBJ_BIT) {
+   if (translate & VERT_BIT_POS) {
       _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_POS],
 			 &ctx->Array.Vertex,
-			 flags, elts, (VERT_ELT|VERT_OBJ_BIT),
+			 flags, elts, (VERT_BIT_ELT|VERT_BIT_POS),
 			 start, count);
 
       if (ctx->Array.Vertex.Size == 4)
-	 translate |= VERT_OBJ_234;
+	 translate |= VERT_BITS_OBJ_234;
       else if (ctx->Array.Vertex.Size == 3)
-	 translate |= VERT_OBJ_23;
+	 translate |= VERT_BITS_OBJ_23;
    }
 
 
-   if (translate & VERT_NORMAL_BIT)
+   if (translate & VERT_BIT_NORMAL)
       _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_NORMAL],
 			 &ctx->Array.Normal,
-			 flags, elts, (VERT_ELT|VERT_NORMAL_BIT),
+			 flags, elts, (VERT_BIT_ELT|VERT_BIT_NORMAL),
 			 start, count);
 
-   if (translate & VERT_EDGEFLAG_BIT)
+   if (translate & VERT_BIT_EDGEFLAG)
       _tnl_trans_elt_1ub( IM->EdgeFlag,
 			  &ctx->Array.EdgeFlag,
-			  flags, elts, (VERT_ELT|VERT_EDGEFLAG_BIT),
+			  flags, elts, (VERT_BIT_ELT|VERT_BIT_EDGEFLAG),
 			  start, count);
 
-   if (translate & VERT_COLOR0_BIT) {
+   if (translate & VERT_BIT_COLOR0) {
       _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_COLOR0],
 			 &ctx->Array.Color,
-			 flags, elts, (VERT_ELT|VERT_COLOR0_BIT),
+			 flags, elts, (VERT_BIT_ELT|VERT_BIT_COLOR0),
 			 start, count);
    }
 
-   if (translate & VERT_COLOR1_BIT) {
+   if (translate & VERT_BIT_COLOR1) {
       _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_COLOR1],
 			 &ctx->Array.SecondaryColor,
-			 flags, elts, (VERT_ELT|VERT_COLOR1_BIT),
+			 flags, elts, (VERT_BIT_ELT|VERT_BIT_COLOR1),
 			 start, count);
    }
 
-   if (translate & VERT_FOG_BIT)
+   if (translate & VERT_BIT_FOG)
       _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_FOG],
 			 &ctx->Array.FogCoord,
-			 flags, elts, (VERT_ELT|VERT_FOG_BIT),
+			 flags, elts, (VERT_BIT_ELT|VERT_BIT_FOG),
 			 start, count);
 
-   if (translate & VERT_INDEX_BIT)
+   if (translate & VERT_BIT_INDEX)
       _tnl_trans_elt_1ui( IM->Index,
 			  &ctx->Array.Index,
-			  flags, elts, (VERT_ELT|VERT_INDEX_BIT),
+			  flags, elts, (VERT_BIT_ELT|VERT_BIT_INDEX),
 			  start, count);
 
-   if (translate & VERT_TEX_ANY) {
+   if (translate & VERT_BITS_TEX_ANY) {
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
-	 if (translate & VERT_TEX(i)) {
+	 if (translate & VERT_BIT_TEX(i)) {
 	    _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_TEX0 + i],
 			       &ctx->Array.TexCoord[i],
-			       flags, elts, (VERT_ELT|VERT_TEX(i)),
+			       flags, elts, (VERT_BIT_ELT|VERT_BIT_TEX(i)),
 			       start, count);
 
 	    if (ctx->Array.TexCoord[i].Size == 4)
@@ -827,7 +827,7 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
    }
 
    for (i = start ; i < count ; i++)
-      if (flags[i] & VERT_ELT) flags[i] |= translate;
+      if (flags[i] & VERT_BIT_ELT) flags[i] |= translate;
 
    IM->FlushElt = 0;
 }

@@ -1,4 +1,4 @@
-/* $Id: t_vb_program.c,v 1.9 2002/01/12 02:57:14 brianp Exp $ */
+/* $Id: t_vb_program.c,v 1.10 2002/01/22 14:35:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -70,9 +70,10 @@
  * ---------------------------------------------
  */
 
-/*
- * Authors:
- *    Brian Paul
+/**
+ * \file tnl/t_vb_program.c
+ * \brief Pipeline stage for executing vertex programs
+ * \author Brian Paul,  Keith Whitwell
  */
 
 
@@ -98,7 +99,8 @@
 #include "t_imm_exec.h"
 
 
-/* WARNING: these values _MUST_ match the values in the OutputRegisters[]
+/**
+ * \warning These values _MUST_ match the values in the OutputRegisters[]
  * array in vpparse.c!!!
  */
 #define VERT_RESULT_HPOS 0
@@ -118,23 +120,29 @@
 #define VERT_RESULT_TEX7 14
 
 
+/*!
+ * Private storage for the vertex program pipeline stage.
+ */
 struct vp_stage_data {
-   /* The results of running the vertex program go into these arrays. */
+   /** The results of running the vertex program go into these arrays. */
    GLvector4f attribs[15];
 
    /* These point to the attribs[VERT_RESULT_COL0, COL1, BFC0, BFC1] arrays */
-   struct gl_client_array color0[2];  /* diffuse front and back */
-   struct gl_client_array color1[2];  /* specular front and back */
+   struct gl_client_array color0[2];  /**< diffuse front and back */
+   struct gl_client_array color1[2];  /**< specular front and back */
 
-   GLvector4f ndcCoords;              /* normalized device coords */
-   GLubyte *clipmask;                 /* clip flags */
-   GLubyte ormask, andmask;
+   GLvector4f ndcCoords;              /**< normalized device coords */
+   GLubyte *clipmask;                 /**< clip flags */
+   GLubyte ormask, andmask;           /**< for clipping */
 };
 
 
 #define VP_STAGE_DATA(stage) ((struct vp_stage_data *)(stage->privatePtr))
 
 
+/**
+ * This function executes vertex programs
+ */
 static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -174,11 +182,30 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
              VB->AttribPtr[2]->data[i][3]);
 #endif
 
+      /* XXXX
+       * We have to deal with stride!=16 bytes, size!=4, etc in these loops!!!
+       */
+
       /* load the input attribute registers */
-      for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
-         if (VB->Flag[i] & (1 << attr)) {
-            COPY_4V(machine->Registers[VP_INPUT_REG_START + attr],
-                    VB->AttribPtr[attr]->data[i]);
+      if (VB->Flag) {
+         /* the traditional glBegin/glVertex/glEnd case */
+         for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
+            if (VB->Flag[i] & (1 << attr)) {
+               COPY_4V(machine->Registers[VP_INPUT_REG_START + attr],
+                       VB->AttribPtr[attr]->data[i]);
+            }
+         }
+      }
+      else {
+         /* the vertex array case */
+         for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
+            const GLubyte *ptr = (const GLubyte *) VB->AttribPtr[attr]->data;
+            const GLint stride = VB->AttribPtr[attr]->stride;
+            const GLfloat *data = (GLfloat *) (ptr + stride * i);
+            const GLint size = VB->AttribPtr[attr]->size;
+            COPY_4V(machine->Registers[VP_INPUT_REG_START + attr], data);
+            if (size == 3)
+               machine->Registers[VP_INPUT_REG_START + attr][3] = 1.0;
          }
       }
 
@@ -259,15 +286,16 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    VB->ClipMask = store->clipmask;
 
    /* XXXX what's this?
-   if (VB->ClipPtr == VB->ObjPtr && (VB->importable_data & VERT_OBJ_BIT))
-      VB->importable_data |= VERT_CLIP;
+   if (VB->ClipPtr == VB->ObjPtr && (VB->importable_data & VERT_BIT_POS))
+      VB->importable_data |= VERT_BIT_CLIP;
    */
 
    return GL_TRUE;
 }
 
 
-/* Called in place of do_lighting when the light table may have changed.
+/**
+ * This function validates stuff.
  */
 static GLboolean run_validate_program( GLcontext *ctx,
 					struct gl_pipeline_stage *stage )
@@ -314,7 +342,10 @@ static GLboolean run_validate_program( GLcontext *ctx,
 }
 
 
-static void init_client_array( struct gl_client_array *a, GLvector4f *vec )
+/**
+ * Initialize a gl_client_array to point into a GLvector4f color vector.
+ */
+static void init_color_array( struct gl_client_array *a, GLvector4f *vec )
 {
    a->Ptr = vec->data;
    a->Size = 4;
@@ -326,7 +357,8 @@ static void init_client_array( struct gl_client_array *a, GLvector4f *vec )
 }
 
 
-/* Called the first time stage->run is called.  In effect, don't
+/**
+ * Called the first time stage->run is called.  In effect, don't
  * allocate data until the first time the stage is run.
  */
 static GLboolean run_init_vp( GLcontext *ctx,
@@ -348,10 +380,10 @@ static GLboolean run_init_vp( GLcontext *ctx,
       _mesa_vector4f_alloc( &store->attribs[i], 0, size, 32 );
 
    /* Make the color0[] and color1[] arrays point into the attribs[] arrays */
-   init_client_array( &store->color0[0], &store->attribs[VERT_RESULT_COL0] );
-   init_client_array( &store->color0[1], &store->attribs[VERT_RESULT_COL1] );
-   init_client_array( &store->color1[0], &store->attribs[VERT_RESULT_BFC0] );
-   init_client_array( &store->color1[1], &store->attribs[VERT_RESULT_BFC1] );
+   init_color_array( &store->color0[0], &store->attribs[VERT_RESULT_COL0] );
+   init_color_array( &store->color0[1], &store->attribs[VERT_RESULT_COL1] );
+   init_color_array( &store->color1[0], &store->attribs[VERT_RESULT_BFC0] );
+   init_color_array( &store->color1[1], &store->attribs[VERT_RESULT_BFC1] );
 
    /* a few other misc allocations */
    _mesa_vector4f_alloc( &store->ndcCoords, 0, size, 32 );
@@ -365,7 +397,7 @@ static GLboolean run_init_vp( GLcontext *ctx,
 
 
 
-/*
+/**
  * Check if vertex program mode is enabled. 
  * If so, configure the pipeline stage's type, inputs, and outputs.
  */
@@ -375,23 +407,30 @@ static void check_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
 
    if (stage->active) {
       /* XXX what do we need here??? */
+      /*
+      GLbitfield vpInput = ctx->VertexProgram.Current->InputsRead;
+      */
+
 #if 000
       if (stage->privatePtr)
 	 stage->run = run_validate_program;
-      stage->inputs = VERT_NORMAL_BIT|VERT_MATERIAL;
+      stage->inputs = VERT_BIT_NORMAL|VERT_BIT_MATERIAL;
       if (ctx->Light._NeedVertices)
-	 stage->inputs |= VERT_EYE; /* effectively, even when lighting in obj */
+	 stage->inputs |= VERT_BIT_EYE; /* effectively, even when lighting in obj */
       if (ctx->Light.ColorMaterialEnabled)
-	 stage->inputs |= VERT_COLOR0_BIT;
+	 stage->inputs |= VERT_BIT_COLOR0;
 
-      stage->outputs = VERT_COLOR0_BIT;
+      stage->outputs = VERT_BIT_COLOR0;
       if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
-	 stage->outputs |= VERT_COLOR1_BIT;
+	 stage->outputs |= VERT_BIT_COLOR1;
 #endif
    }
 }
 
 
+/**
+ * Destructor for this pipeline stage.
+ */
 static void dtr( struct gl_pipeline_stage *stage )
 {
    struct vp_stage_data *store = VP_STAGE_DATA(stage);
@@ -412,16 +451,19 @@ static void dtr( struct gl_pipeline_stage *stage )
    }
 }
 
+/**
+ * Public description of this pipeline stage.
+ */
 const struct gl_pipeline_stage _tnl_vertex_program_stage =
 {
    "vertex-program",
    _NEW_ALL,	/*XXX FIX */	/* recheck */
    _NEW_ALL,	/*XXX FIX */    /* recalc -- modelview dependency
 				 * otherwise not captured by inputs
-				 * (which may be VERT_OBJ_BIT) */
+				 * (which may be VERT_BIT_POS) */
    GL_FALSE,			/* active */
-   0/*VERT_OBJ_BIT*/,				/* inputs  XXX OK? */
-   VERT_CLIP | VERT_COLOR0_BIT,			/* outputs XXX OK? */
+   /*0*/ VERT_BIT_POS,				/* inputs  XXX OK? */
+   VERT_BIT_CLIP | VERT_BIT_COLOR0,			/* outputs XXX OK? */
    0,				/* changed_inputs */
    NULL,			/* private_data */
    dtr,				/* destroy */

@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.20 2002/01/05 20:51:13 brianp Exp $ */
+/* $Id: t_imm_eval.c,v 1.21 2002/01/22 14:35:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,11 +52,11 @@ static void eval_points1( GLfloat outcoord[][4],
 			  GLfloat du, GLfloat u1 )
 {
    GLuint i;
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
-      if (flags[i] & VERT_EVAL_ANY) {
+   for (i = 0 ; !(flags[i] & VERT_BIT_END_VB) ; i++)
+      if (flags[i] & VERT_BITS_EVAL_ANY) {
 	 outcoord[i][0] = coord[i][0];
 	 outcoord[i][1] = coord[i][1];
-	 if (flags[i] & VERT_EVAL_P1)
+	 if (flags[i] & VERT_BIT_EVAL_P1)
 	    outcoord[i][0] = coord[i][0] * du + u1;
       }
 }
@@ -68,11 +68,11 @@ static void eval_points2( GLfloat outcoord[][4],
 			  GLfloat dv, GLfloat v1 )
 {
    GLuint i;
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++) {
-      if (flags[i] & VERT_EVAL_ANY) {
+   for (i = 0 ; !(flags[i] & VERT_BIT_END_VB) ; i++) {
+      if (flags[i] & VERT_BITS_EVAL_ANY) {
 	 outcoord[i][0] = coord[i][0];
 	 outcoord[i][1] = coord[i][1];
-	 if (flags[i] & VERT_EVAL_P2) {
+	 if (flags[i] & VERT_BIT_EVAL_P2) {
 	    outcoord[i][0] = coord[i][0] * du + u1;
 	    outcoord[i][1] = coord[i][1] * dv + v1;
 	 }
@@ -100,8 +100,8 @@ static void eval1_4f( GLvector4f *dest,
    GLfloat (*to)[4] = dest->data;
    GLuint i;
 
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
-      if (flags[i] & (VERT_EVAL_C1|VERT_EVAL_P1)) {
+   for (i = 0 ; !(flags[i] & VERT_BIT_END_VB) ; i++)
+      if (flags[i] & (VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 ASSIGN_4V(to[i], 0,0,0,1);
 	 _math_horner_bezier_curve(map->Points, to[i], u,
@@ -126,8 +126,8 @@ static void eval1_4f_ca( struct gl_client_array *dest,
    ASSERT(dest->Type == GL_FLOAT);
    ASSERT(dest->StrideB == 4 * sizeof(GLfloat));
 
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
-      if (flags[i] & (VERT_EVAL_C1|VERT_EVAL_P1)) {
+   for (i = 0 ; !(flags[i] & VERT_BIT_END_VB) ; i++)
+      if (flags[i] & (VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 ASSIGN_4V(to[i], 0,0,0,1);
 	 _math_horner_bezier_curve(map->Points, to[i], u,
@@ -148,8 +148,8 @@ static void eval1_1ui( GLvector1ui *dest,
    GLuint *to = dest->data;
    GLuint i;
 
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
-      if (flags[i] & (VERT_EVAL_C1|VERT_EVAL_P1)) {
+   for (i = 0 ; !(flags[i] & VERT_BIT_END_VB) ; i++)
+      if (flags[i] & (VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 GLfloat tmp;
 	 _math_horner_bezier_curve(map->Points, &tmp, u, 1, map->Order);
@@ -168,8 +168,8 @@ static void eval1_norm( GLvector4f *dest,
    GLfloat (*to)[4] = dest->data;
    GLuint i;
 
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
-      if (flags[i] & (VERT_EVAL_C1|VERT_EVAL_P1)) {
+   for (i = 0 ; !(flags[i] & VERT_BIT_END_VB) ; i++)
+      if (flags[i] & (VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 _math_horner_bezier_curve(map->Points, to[i], u, 3, map->Order);
       }
@@ -196,8 +196,8 @@ static void eval2_obj_norm( GLvector4f *obj_ptr,
 
 /*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
-      if (flags[i] & (VERT_EVAL_C2|VERT_EVAL_P2)) {
+   for (i = 0 ; !(flags[i] & VERT_BIT_END_VB) ; i++)
+      if (flags[i] & (VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 GLfloat v = (coord[i][1] - v1) * dv;
 	 GLfloat du[4], dv[4];
@@ -238,8 +238,8 @@ static void eval2_4f( GLvector4f *dest,
    GLfloat (*to)[4] = dest->data;
    GLuint i;
 
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
-      if (flags[i] & (VERT_EVAL_C2|VERT_EVAL_P2)) {
+   for (i = 0 ; !(flags[i] & VERT_BIT_END_VB) ; i++)
+      if (flags[i] & (VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 GLfloat v = (coord[i][1] - v1) * dv;
 /*  	 fprintf(stderr, "coord %d: %f %f\n", i, coord[i][0], coord[i][1]); */
@@ -268,8 +268,8 @@ static void eval2_4f_ca( struct gl_client_array *dest,
    ASSERT(dest->Type == GL_FLOAT);
    ASSERT(dest->StrideB == 4 * sizeof(GLfloat));
 
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
-      if (flags[i] & (VERT_EVAL_C2|VERT_EVAL_P2)) {
+   for (i = 0 ; !(flags[i] & VERT_BIT_END_VB) ; i++)
+      if (flags[i] & (VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 GLfloat v = (coord[i][1] - v1) * dv;
 	 _math_horner_bezier_surf(map->Points, to[i], u, v, dimension,
@@ -292,8 +292,8 @@ static void eval2_norm( GLvector4f *dest,
    GLfloat (*to)[4] = dest->data;
    GLuint i;
 
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++) {
-      if (flags[i] & (VERT_EVAL_C2|VERT_EVAL_P2)) {
+   for (i = 0 ; !(flags[i] & VERT_BIT_END_VB) ; i++) {
+      if (flags[i] & (VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 GLfloat v = (coord[i][1] - v1) * dv;
 	 _math_horner_bezier_surf(map->Points, to[i], u, v, 3,
@@ -315,8 +315,8 @@ static void eval2_1ui( GLvector1ui *dest,
    GLuint *to = dest->data;
    GLuint i;
 
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
-      if (flags[i] & (VERT_EVAL_C2|VERT_EVAL_P2)) {
+   for (i = 0 ; !(flags[i] & VERT_BIT_END_VB) ; i++)
+      if (flags[i] & (VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 GLfloat v = (coord[i][1] - v1) * dv;
 	 GLfloat tmp;
@@ -379,52 +379,52 @@ static void update_eval( GLcontext *ctx )
    GLuint eval1 = 0, eval2 = 0;
 
    if (ctx->Eval.Map1Index)
-      eval1 |= VERT_INDEX_BIT;
+      eval1 |= VERT_BIT_INDEX;
 
    if (ctx->Eval.Map2Index)
-      eval2 |= VERT_INDEX_BIT;
+      eval2 |= VERT_BIT_INDEX;
 
    if (ctx->Eval.Map1Color4)
-      eval1 |= VERT_COLOR0_BIT;
+      eval1 |= VERT_BIT_COLOR0;
 
    if (ctx->Eval.Map2Color4)
-      eval2 |= VERT_COLOR0_BIT;
+      eval2 |= VERT_BIT_COLOR0;
 
    if (ctx->Eval.Map1Normal)
-      eval1 |= VERT_NORMAL_BIT;
+      eval1 |= VERT_BIT_NORMAL;
 
    if (ctx->Eval.Map2Normal)
-      eval2 |= VERT_NORMAL_BIT;
+      eval2 |= VERT_BIT_NORMAL;
 
    if (ctx->Eval.Map1TextureCoord4 ||
        ctx->Eval.Map1TextureCoord3 ||
        ctx->Eval.Map1TextureCoord2 ||
        ctx->Eval.Map1TextureCoord1)
-      eval1 |= VERT_TEX0_BIT;
+      eval1 |= VERT_BIT_TEX0;
 
    if (ctx->Eval.Map2TextureCoord4 ||
        ctx->Eval.Map2TextureCoord3 ||
        ctx->Eval.Map2TextureCoord2 ||
        ctx->Eval.Map2TextureCoord1)
-      eval2 |= VERT_TEX0_BIT;
+      eval2 |= VERT_BIT_TEX0;
 
    if (ctx->Eval.Map1Vertex4)
-      eval1 |= VERT_OBJ_234;
+      eval1 |= VERT_BITS_OBJ_234;
 
    if (ctx->Eval.Map1Vertex3)
-      eval1 |= VERT_OBJ_23;
+      eval1 |= VERT_BITS_OBJ_23;
 
    if (ctx->Eval.Map2Vertex4) {
       if (ctx->Eval.AutoNormal)
-	 eval2 |= VERT_OBJ_234 | VERT_NORMAL_BIT;
+	 eval2 |= VERT_BITS_OBJ_234 | VERT_BIT_NORMAL;
       else
-	 eval2 |= VERT_OBJ_234;
+	 eval2 |= VERT_BITS_OBJ_234;
    }
    else if (ctx->Eval.Map2Vertex3) {
       if (ctx->Eval.AutoNormal)
-	 eval2 |= VERT_OBJ_23 | VERT_NORMAL_BIT;
+	 eval2 |= VERT_BITS_OBJ_23 | VERT_BIT_NORMAL;
       else
-	 eval2 |= VERT_OBJ_23;
+	 eval2 |= VERT_BITS_OBJ_23;
    }
 
    tnl->eval.EvalMap1Flags = eval1;
@@ -448,13 +448,13 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
    GLuint *flags = IM->Flag + IM->CopyStart;
    GLuint copycount;
    GLuint orflag = IM->OrFlag;
-   GLuint any_eval1 = orflag & (VERT_EVAL_C1|VERT_EVAL_P1);
-   GLuint any_eval2 = orflag & (VERT_EVAL_C2|VERT_EVAL_P2);
+   GLuint any_eval1 = orflag & (VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1);
+   GLuint any_eval2 = orflag & (VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2);
    GLuint req = 0;
    GLuint purge_flags = 0;
    GLfloat (*coord)[4] = IM->Attrib[VERT_ATTRIB_POS] + IM->CopyStart;
 
-   if (IM->AndFlag & VERT_EVAL_ANY)
+   if (IM->AndFlag & VERT_BITS_EVAL_ANY)
       copycount = IM->Start - IM->CopyStart; /* just copy copied vertices */
    else
       copycount = IM->Count - IM->CopyStart; /* copy all vertices */
@@ -472,9 +472,9 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       req |= tnl->pipeline.inputs & tnl->eval.EvalMap1Flags;
 
       if (!ctx->Eval.Map1Vertex4 && !ctx->Eval.Map1Vertex3)
-	 purge_flags = (VERT_EVAL_P1|VERT_EVAL_C1);
+	 purge_flags = (VERT_BIT_EVAL_P1|VERT_BIT_EVAL_C1);
 
-      if (orflag & VERT_EVAL_P1) {
+      if (orflag & VERT_BIT_EVAL_P1) {
 	 eval_points1( store->Attrib[VERT_ATTRIB_POS] + IM->CopyStart, 
 		       coord, flags,
 		       ctx->Eval.MapGrid1du,
@@ -488,9 +488,9 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       req |= tnl->pipeline.inputs & tnl->eval.EvalMap2Flags;
 
       if (!ctx->Eval.Map2Vertex4 && !ctx->Eval.Map2Vertex3)
-	 purge_flags |= (VERT_EVAL_P2|VERT_EVAL_C2);
+	 purge_flags |= (VERT_BIT_EVAL_P2|VERT_BIT_EVAL_C2);
 
-      if (orflag & VERT_EVAL_P2) {
+      if (orflag & VERT_BIT_EVAL_P2) {
 	 eval_points2( store->Attrib[VERT_ATTRIB_POS] + IM->CopyStart, 
 		       coord, flags,
 		       ctx->Eval.MapGrid2du,
@@ -507,7 +507,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 
    /* Perform the evaluations on active data elements.
     */
-   if (req & VERT_INDEX_BIT)
+   if (req & VERT_BIT_INDEX)
    {
       GLuint generated = 0;
 
@@ -519,16 +519,16 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 
       if (ctx->Eval.Map1Index && any_eval1) {
 	 eval1_1ui( &tmp->Index, coord, flags, &ctx->EvalMap.Map1Index );
-	 generated |= VERT_EVAL_C1|VERT_EVAL_P1;
+	 generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
       }
 
       if (ctx->Eval.Map2Index && any_eval2) {
 	 eval2_1ui( &tmp->Index, coord, flags, &ctx->EvalMap.Map2Index );
-	 generated |= VERT_EVAL_C2|VERT_EVAL_P2;
+	 generated |= VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2;
       }
    }
 
-   if (req & VERT_COLOR0_BIT)
+   if (req & VERT_BIT_COLOR0)
    {
       GLuint generated = 0;
 
@@ -541,21 +541,21 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       tmp->Color.Ptr = store->Attrib[VERT_ATTRIB_COLOR0] + IM->CopyStart;
       tmp->Color.StrideB = 4 * sizeof(GLfloat);
       tmp->Color.Flags = 0;
-      tnl->vb.importable_data &= ~VERT_COLOR0_BIT;
+      tnl->vb.importable_data &= ~VERT_BIT_COLOR0;
 
       if (ctx->Eval.Map1Color4 && any_eval1) {
 	 eval1_4f_ca( &tmp->Color, coord, flags, 4, &ctx->EvalMap.Map1Color4 );
-	 generated |= VERT_EVAL_C1|VERT_EVAL_P1;
+	 generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
       }
 
       if (ctx->Eval.Map2Color4 && any_eval2) {
 	 eval2_4f_ca( &tmp->Color, coord, flags, 4, &ctx->EvalMap.Map2Color4 );
-	 generated |= VERT_EVAL_C2|VERT_EVAL_P2;
+	 generated |= VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2;
       }
    }
 
 
-   if (req & VERT_TEX(0))
+   if (req & VERT_BIT_TEX(0))
    {
       GLuint generated = 0;
 
@@ -572,22 +572,22 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 	 if (ctx->Eval.Map1TextureCoord4) {
 	    eval1_4f( &tmp->TexCoord[0], coord, flags, 4,
 		      &ctx->EvalMap.Map1Texture4 );
-	    generated |= VERT_EVAL_C1|VERT_EVAL_P1;
+	    generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
 	 }
 	 else if (ctx->Eval.Map1TextureCoord3) {
 	    eval1_4f( &tmp->TexCoord[0], coord, flags, 3,
 		      &ctx->EvalMap.Map1Texture3 );
-	    generated |= VERT_EVAL_C1|VERT_EVAL_P1;
+	    generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
 	 }
 	 else if (ctx->Eval.Map1TextureCoord2) {
 	    eval1_4f( &tmp->TexCoord[0], coord, flags, 2,
 		      &ctx->EvalMap.Map1Texture2 );
-	    generated |= VERT_EVAL_C1|VERT_EVAL_P1;
+	    generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
 	 }
 	 else if (ctx->Eval.Map1TextureCoord1) {
 	    eval1_4f( &tmp->TexCoord[0], coord, flags, 1,
 		      &ctx->EvalMap.Map1Texture1 );
-	    generated |= VERT_EVAL_C1|VERT_EVAL_P1;
+	    generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
 	 }
       }
 
@@ -595,28 +595,28 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 	 if (ctx->Eval.Map2TextureCoord4) {
 	    eval2_4f( &tmp->TexCoord[0], coord, flags, 4,
 		      &ctx->EvalMap.Map2Texture4 );
-	    generated |= VERT_EVAL_C2|VERT_EVAL_P2;
+	    generated |= VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2;
 	 }
 	 else if (ctx->Eval.Map2TextureCoord3) {
 	    eval2_4f( &tmp->TexCoord[0], coord, flags, 3,
 		      &ctx->EvalMap.Map2Texture3 );
-	    generated |= VERT_EVAL_C2|VERT_EVAL_P2;
+	    generated |= VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2;
 	 }
 	 else if (ctx->Eval.Map2TextureCoord2) {
 	    eval2_4f( &tmp->TexCoord[0], coord, flags, 2,
 		      &ctx->EvalMap.Map2Texture2 );
-	    generated |= VERT_EVAL_C2|VERT_EVAL_P2;
+	    generated |= VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2;
 	 }
 	 else if (ctx->Eval.Map2TextureCoord1) {
 	    eval2_4f( &tmp->TexCoord[0], coord, flags, 1,
 		      &ctx->EvalMap.Map2Texture1 );
-	    generated |= VERT_EVAL_C2|VERT_EVAL_P2;
+	    generated |= VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2;
 	 }
       }
    }
 
 
-   if (req & VERT_NORMAL_BIT)
+   if (req & VERT_BIT_NORMAL)
    {
       GLuint generated = 0;
 
@@ -631,12 +631,12 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 
       if (ctx->Eval.Map1Normal && any_eval1) {
 	 eval1_norm( &tmp->Normal, coord, flags, &ctx->EvalMap.Map1Normal );
-	 generated |= VERT_EVAL_C1|VERT_EVAL_P1;
+	 generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
       }
 
       if (ctx->Eval.Map2Normal && any_eval2) {
 	 eval2_norm( &tmp->Normal, coord, flags, &ctx->EvalMap.Map2Normal );
-	 generated |= VERT_EVAL_C2|VERT_EVAL_P2;
+	 generated |= VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2;
       }
    }
 
@@ -645,7 +645,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
    /* In the AutoNormal case, the copy and assignment of tmp->NormalPtr
     * are done above.
     */
-   if (req & VERT_OBJ_BIT)
+   if (req & VERT_BIT_POS)
    {
       if (copycount) {
 	 /* This copy may already have occurred when eliminating
@@ -679,7 +679,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 
       if (any_eval2) {
 	 if (ctx->Eval.Map2Vertex4) {
-	    if (ctx->Eval.AutoNormal && (req & VERT_NORMAL_BIT))
+	    if (ctx->Eval.AutoNormal && (req & VERT_BIT_NORMAL))
 	       eval2_obj_norm( &tmp->Obj, &tmp->Normal, coord, flags, 4,
 			       &ctx->EvalMap.Map2Vertex4 );
 	    else
@@ -687,7 +687,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 			 &ctx->EvalMap.Map2Vertex4 );
 	 }
 	 else if (ctx->Eval.Map2Vertex3) {
-	    if (ctx->Eval.AutoNormal && (req & VERT_NORMAL_BIT))
+	    if (ctx->Eval.AutoNormal && (req & VERT_BIT_NORMAL))
 	       eval2_obj_norm( &tmp->Obj, &tmp->Normal, coord, flags, 3,
 			       &ctx->EvalMap.Map2Vertex3 );
 	    else
@@ -704,7 +704,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
     * must be ignored.
     */
    if (purge_flags) {
-      GLuint vertex = VERT_OBJ_BIT|(VERT_EVAL_ANY & ~purge_flags);
+      GLuint vertex = VERT_BIT_POS|(VERT_BITS_EVAL_ANY & ~purge_flags);
       GLuint last_new_prim = 0;
       GLuint new_prim_length = 0;
       GLuint next_old_prim = 0;

@@ -1,4 +1,4 @@
-/* $Id: gen_matypes.c,v 1.5 2001/12/18 04:06:45 brianp Exp $ */
+/* $Id: gen_matypes.c,v 1.6 2002/01/22 14:35:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -153,7 +153,7 @@ int main( int argc, char **argv )
    DEFINE( "VERT_NORM              ", VERT_NORMAL_BIT );
    DEFINE( "VERT_RGBA              ", VERT_COLOR0_BIT );
    DEFINE( "VERT_SPEC_RGB          ", VERT_COLOR1_BIT );
-   DEFINE( "VERT_FOG_COORD         ", VERT_FOG_BIT );
+   DEFINE( "VERT_FOG_COORD         ", VERT_BIT_FOG );
    DEFINE( "VERT_INDEX             ", VERT_INDEX_BIT );
    DEFINE( "VERT_EDGE              ", VERT_EDGEFLAG_BIT );
    DEFINE( "VERT_TEX0              ", VERT_TEX0_BIT );

@@ -1,4 +1,4 @@
-/* $Id: t_vb_fog.c,v 1.16 2002/01/06 03:54:12 brianp Exp $ */
+/* $Id: t_vb_fog.c,v 1.17 2002/01/22 14:35:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -196,9 +196,9 @@ static void check_fog_stage( GLcontext *ctx, struct gl_pipeline_stage *stage )
    stage->active = ctx->Fog.Enabled && !ctx->VertexProgram.Enabled;
 
    if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT)
-      stage->inputs = VERT_EYE;
+      stage->inputs = VERT_BIT_EYE;
    else
-      stage->inputs = VERT_FOG_BIT;
+      stage->inputs = VERT_BIT_FOG;
 }
 
 
@@ -245,7 +245,7 @@ const struct gl_pipeline_stage _tnl_fog_coordinate_stage =
    _NEW_FOG,			/* run_state */
    GL_FALSE,			/* active? */
    0,				/* inputs */
-   VERT_FOG_BIT,		/* outputs */
+   VERT_BIT_FOG,		/* outputs */
    0,				/* changed_inputs */
    NULL,			/* private_data */
    free_fog_data,		/* dtr */

@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.26 2001/12/17 01:46:58 brianp Exp $ */
+/* $Id: t_vb_render.c,v 1.27 2002/01/22 14:35:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -349,39 +349,39 @@ static GLboolean run_render( GLcontext *ctx,
  */
 static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
 {
-   GLuint inputs = VERT_CLIP;
+   GLuint inputs = VERT_BIT_CLIP;
    GLuint i;
 
    if (ctx->Visual.rgbMode) {
-      inputs |= VERT_COLOR0_BIT;
+      inputs |= VERT_BIT_COLOR0;
 
       if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
-	 inputs |= VERT_COLOR1_BIT;
+	 inputs |= VERT_BIT_COLOR1;
 
       if (ctx->Texture._ReallyEnabled) {
 	 for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
 	    if (ctx->Texture.Unit[i]._ReallyEnabled)
-	       inputs |= VERT_TEX(i);
+	       inputs |= VERT_BIT_TEX(i);
 	 }
       }
    }
    else {
-      inputs |= VERT_INDEX_BIT;
+      inputs |= VERT_BIT_INDEX;
    }
 
    if (ctx->Point._Attenuated)
-      inputs |= VERT_POINT_SIZE;
+      inputs |= VERT_BIT_POINT_SIZE;
 
    /* How do drivers turn this off?
     */
    if (ctx->Fog.Enabled)
-      inputs |= VERT_FOG_BIT;
+      inputs |= VERT_BIT_FOG;
 
    if (ctx->_TriangleCaps & DD_TRI_UNFILLED)
-      inputs |= VERT_EDGEFLAG_BIT;
+      inputs |= VERT_BIT_EDGEFLAG;
 
    if (ctx->RenderMode==GL_FEEDBACK)
-      inputs |= VERT_TEX_ANY;
+      inputs |= VERT_BITS_TEX_ANY;
 
    stage->inputs = inputs;
 }

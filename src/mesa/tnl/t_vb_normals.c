@@ -1,4 +1,4 @@
-/* $Id: t_vb_normals.c,v 1.12 2002/01/05 20:51:13 brianp Exp $ */
+/* $Id: t_vb_normals.c,v 1.13 2002/01/22 14:35:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -179,8 +179,8 @@ const struct gl_pipeline_stage _tnl_normal_transform_stage =
    _TNL_NEW_NORMAL_TRANSFORM,	/* re-check */
    _TNL_NEW_NORMAL_TRANSFORM,	/* re-run */
    GL_FALSE,			/* active? */
-   VERT_NORMAL_BIT,		/* inputs */
-   VERT_NORMAL_BIT,		/* outputs */
+   VERT_BIT_NORMAL,		/* inputs */
+   VERT_BIT_NORMAL,		/* outputs */
    0,				/* changed_inputs */
    NULL,			/* private data */
    free_normal_data,		/* destructor */

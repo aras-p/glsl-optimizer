@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.c,v 1.21 2001/12/15 02:13:32 brianp Exp $ */
+/* $Id: t_pipeline.c,v 1.22 2002/01/22 14:35:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -186,7 +186,7 @@ void _tnl_run_pipeline( GLcontext *ctx )
  *
  * - inserting optimized (but specialized) stages ahead of the
  *   general-purpose fallback implementation.  For example, the old
- *   fastpath mechanism, which only works when the VERT_ELT input is
+ *   fastpath mechanism, which only works when the VERT_BIT_ELT input is
  *   available, can be duplicated by placing the fastpath stage at the
  *   head of this pipeline.  Such specialized stages are currently
  *   constrained to have no outputs (ie. they must either finish the *

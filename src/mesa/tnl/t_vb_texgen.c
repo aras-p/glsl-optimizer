@@ -1,4 +1,4 @@
-/* $Id: t_vb_texgen.c,v 1.11 2002/01/05 20:51:13 brianp Exp $ */
+/* $Id: t_vb_texgen.c,v 1.12 2002/01/22 14:35:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -529,7 +529,7 @@ static GLboolean run_texgen_stage( GLcontext *ctx,
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
       if (ctx->Texture._TexGenEnabled & ENABLE_TEXGEN(i)) {
-	 if (stage->changed_inputs & (VERT_EYE | VERT_NORMAL_BIT | VERT_TEX(i)))
+	 if (stage->changed_inputs & (VERT_BIT_EYE | VERT_BIT_NORMAL | VERT_BIT_TEX(i)))
 	    store->TexgenFunc[i]( ctx, store, i );
 
 	 VB->TexCoordPtr[i] = &store->texcoord[i];
@@ -596,23 +596,23 @@ static void check_texgen( GLcontext *ctx, struct gl_pipeline_stage *stage )
       GLuint outputs = 0;
 
       if (ctx->Texture._GenFlags & TEXGEN_OBJ_LINEAR)
-	 inputs |= VERT_OBJ_BIT;
+	 inputs |= VERT_BIT_POS;
 
       if (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD)
-	 inputs |= VERT_EYE;
+	 inputs |= VERT_BIT_EYE;
 
       if (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS)
-	 inputs |= VERT_NORMAL_BIT;
+	 inputs |= VERT_BIT_NORMAL;
 
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
 	 if (ctx->Texture._TexGenEnabled & ENABLE_TEXGEN(i))
 	 {
-	    outputs |= VERT_TEX(i);
+	    outputs |= VERT_BIT_TEX(i);
 
 	    /* Need the original input in case it contains a Q coord:
 	     * (sigh)
 	     */
-	    inputs |= VERT_TEX(i);
+	    inputs |= VERT_BIT_TEX(i);
 
 	    /* Something for Feedback? */
 	 }

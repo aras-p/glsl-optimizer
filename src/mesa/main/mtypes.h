@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.62 2002/01/12 03:01:23 brianp Exp $ */
+/* $Id: mtypes.h,v 1.63 2002/01/22 14:35:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,6 +24,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/**
+ * \file mtypes.h
+ * \brief Main Mesa data structures.
+ */
 
 #ifndef TYPES_H
 #define TYPES_H
@@ -67,7 +71,7 @@
 #endif
 
 
-/*
+/**
  * Accumulation buffer data type:
  */
 #if ACCUM_BITS==8
@@ -81,7 +85,7 @@
 #endif
 
 
-/*
+/**
  * Stencil buffer data type:
  */
 #if STENCIL_BITS==8
@@ -95,20 +99,20 @@
 #endif
 
 
-/*
+/**
  * Depth buffer data type:
  */
 typedef GLuint GLdepth;  /* Must be 32-bits! */
 
 
-/*
+/**
  * Fixed point data type:
  */
 typedef int GLfixed;
 
 
 
-/*
+/**
  * Some forward type declarations
  */
 struct _mesa_HashTable;
@@ -120,7 +124,52 @@ typedef struct gl_frame_buffer GLframebuffer;
 
 
 
-/* Maximum number of temporary vertices required for clipping.  (Used
+/* These define the aliases between numbered vertex attributes and
+ * conventional OpenGL vertex attributes.  We use these values in
+ * quite a few places.  New in Mesa 4.1.
+ */
+#define VERT_ATTRIB_POS      0
+#define VERT_ATTRIB_WEIGHT   1
+#define VERT_ATTRIB_NORMAL   2
+#define VERT_ATTRIB_COLOR0   3
+#define VERT_ATTRIB_COLOR1   4
+#define VERT_ATTRIB_FOG      5
+#define VERT_ATTRIB_SIX      6
+#define VERT_ATTRIB_SEVEN    7
+#define VERT_ATTRIB_TEX0     8
+#define VERT_ATTRIB_TEX1     9
+#define VERT_ATTRIB_TEX2     10
+#define VERT_ATTRIB_TEX3     11
+#define VERT_ATTRIB_TEX4     12
+#define VERT_ATTRIB_TEX5     13
+#define VERT_ATTRIB_TEX6     14
+#define VERT_ATTRIB_TEX7     15
+#define VERT_ATTRIB_MAX      16
+
+/* These are used in bitfields in many places */
+#define VERT_BIT_POS     (1 << VERT_ATTRIB_POS)
+#define VERT_BIT_WEIGHT  (1 << VERT_ATTRIB_WEIGHT)
+#define VERT_BIT_NORMAL  (1 << VERT_ATTRIB_NORMAL)
+#define VERT_BIT_COLOR0  (1 << VERT_ATTRIB_COLOR0)
+#define VERT_BIT_COLOR1  (1 << VERT_ATTRIB_COLOR1)
+#define VERT_BIT_FOG     (1 << VERT_ATTRIB_FOG)
+#define VERT_BIT_SIX     (1 << VERT_ATTRIB_SIX)
+#define VERT_BIT_SEVEN   (1 << VERT_ATTRIB_SEVEN)
+#define VERT_BIT_TEX0    (1 << VERT_ATTRIB_TEX0)
+#define VERT_BIT_TEX1    (1 << VERT_ATTRIB_TEX1)
+#define VERT_BIT_TEX2    (1 << VERT_ATTRIB_TEX2)
+#define VERT_BIT_TEX3    (1 << VERT_ATTRIB_TEX3)
+#define VERT_BIT_TEX4    (1 << VERT_ATTRIB_TEX4)
+#define VERT_BIT_TEX5    (1 << VERT_ATTRIB_TEX5)
+#define VERT_BIT_TEX6    (1 << VERT_ATTRIB_TEX6)
+#define VERT_BIT_TEX7    (1 << VERT_ATTRIB_TEX7)
+
+#define VERT_BIT_TEX(u)  (1 << (VERT_ATTRIB_TEX0 + (u)))
+
+
+
+/**
+ * Maximum number of temporary vertices required for clipping.  (Used
  * in array_cache and tnl modules).
  */
 #define MAX_CLIPPED_VERTICES ((2 * (6 + MAX_CLIP_PLANES))+1)
@@ -185,7 +234,7 @@ struct gl_shine_tab {
 
 
 struct gl_light {
-   struct gl_light *next;	        /* double linked list with sentinel */
+   struct gl_light *next;	/* double linked list with sentinel */
    struct gl_light *prev;
 
    GLfloat Ambient[4];		/* ambient color */
@@ -294,27 +343,6 @@ struct gl_colorbuffer_attrib {
    GLboolean DitherFlag;		/* Dither enable flag */
 };
 
-
-/* These define the aliases between numbered vertex attributes and
- * conventional OpenGL vertex attributes.
- */
-#define VERT_ATTRIB_POS      0
-#define VERT_ATTRIB_WEIGHT   1
-#define VERT_ATTRIB_NORMAL   2
-#define VERT_ATTRIB_COLOR0   3
-#define VERT_ATTRIB_COLOR1   4
-#define VERT_ATTRIB_FOG      5
-#define VERT_ATTRIB_SIX      6
-#define VERT_ATTRIB_SEVEN    7
-#define VERT_ATTRIB_TEX0     8
-#define VERT_ATTRIB_TEX1     9
-#define VERT_ATTRIB_TEX2     10
-#define VERT_ATTRIB_TEX3     11
-#define VERT_ATTRIB_TEX4     12
-#define VERT_ATTRIB_TEX5     13
-#define VERT_ATTRIB_TEX6     14
-#define VERT_ATTRIB_TEX7     15
-#define VERT_ATTRIB_MAX      16
 
 struct gl_current_attrib {
    /* These values valid only when FLUSH_VERTICES has been called.
@@ -1225,8 +1253,8 @@ struct vp_program
    GLint ErrorPos;            /* Position in string where error was detected */
    GLint RefCount;            /* Since programs can be shared among contexts */
    GLboolean Resident;
-   GLbitfield InputsRead;     /* Bitmask of which input regs are read */
-   GLbitfield OutputsWritten; /* Bitmask of which output regs are written to */
+   GLuint InputsRead;     /* Bitmask of which input regs are read */
+   GLuint OutputsWritten; /* Bitmask of which output regs are written to */
 };
 
 
@@ -1487,22 +1515,22 @@ struct matrix_stack
 
 /* Bits to track array state changes (also used to summarize array enabled)
  */
-#define _NEW_ARRAY_VERTEX           (1 << VERT_ATTRIB_POS)
-#define _NEW_ARRAY_WEIGHT           (1 << VERT_ATTRIB_WEIGHT)
-#define _NEW_ARRAY_NORMAL           (1 << VERT_ATTRIB_NORMAL)
-#define _NEW_ARRAY_COLOR0           (1 << VERT_ATTRIB_COLOR0)
-#define _NEW_ARRAY_COLOR1           (1 << VERT_ATTRIB_COLOR1)
-#define _NEW_ARRAY_FOGCOORD         (1 << VERT_ATTRIB_FOG)
-#define _NEW_ARRAY_INDEX            (1 << VERT_ATTRIB_SIX)
-#define _NEW_ARRAY_EDGEFLAG         (1 << VERT_ATTRIB_SEVEN)
-#define _NEW_ARRAY_TEXCOORD_0       (1 << VERT_ATTRIB_TEX0)
-#define _NEW_ARRAY_TEXCOORD_1       (1 << VERT_ATTRIB_TEX1)
-#define _NEW_ARRAY_TEXCOORD_2       (1 << VERT_ATTRIB_TEX2)
-#define _NEW_ARRAY_TEXCOORD_3       (1 << VERT_ATTRIB_TEX3)
-#define _NEW_ARRAY_TEXCOORD_4       (1 << VERT_ATTRIB_TEX4)
-#define _NEW_ARRAY_TEXCOORD_5       (1 << VERT_ATTRIB_TEX5)
-#define _NEW_ARRAY_TEXCOORD_6       (1 << VERT_ATTRIB_TEX6)
-#define _NEW_ARRAY_TEXCOORD_7       (1 << VERT_ATTRIB_TEX7)
+#define _NEW_ARRAY_VERTEX           VERT_BIT_POS
+#define _NEW_ARRAY_WEIGHT           VERT_BIT_WEIGHT
+#define _NEW_ARRAY_NORMAL           VERT_BIT_NORMAL
+#define _NEW_ARRAY_COLOR0           VERT_BIT_COLOR0
+#define _NEW_ARRAY_COLOR1           VERT_BIT_COLOR1
+#define _NEW_ARRAY_FOGCOORD         VERT_BIT_FOG
+#define _NEW_ARRAY_INDEX            VERT_BIT_SIX
+#define _NEW_ARRAY_EDGEFLAG         VERT_BIT_SEVEN
+#define _NEW_ARRAY_TEXCOORD_0       VERT_BIT_TEX0
+#define _NEW_ARRAY_TEXCOORD_1       VERT_BIT_TEX1
+#define _NEW_ARRAY_TEXCOORD_2       VERT_BIT_TEX2
+#define _NEW_ARRAY_TEXCOORD_3       VERT_BIT_TEX3
+#define _NEW_ARRAY_TEXCOORD_4       VERT_BIT_TEX4
+#define _NEW_ARRAY_TEXCOORD_5       VERT_BIT_TEX5
+#define _NEW_ARRAY_TEXCOORD_6       VERT_BIT_TEX6
+#define _NEW_ARRAY_TEXCOORD_7       VERT_BIT_TEX7
 #define _NEW_ARRAY_ALL              0xffff
 #define _NEW_ARRAY_VERT_ATTRIB0     0x10000
 
@@ -1594,15 +1622,16 @@ struct gl_tnl_module {
 };
 
 
-/*
- * The library context:
+/**
+ * This is the central context data structure for Mesa.  Almost all
+ * OpenGL state is contained in this structure.
  */
 struct __GLcontextRec {
-   /*
-   ** Os related interfaces; these *must* be the first members of this
-   ** structure, because they are exposed to the outside world (i.e. GLX
-   ** extension).
-   */
+   /**
+    * OS related interfaces; these *must* be the first members of this
+    * structure, because they are exposed to the outside world (i.e. GLX
+    * extension).
+    */
    __GLimports imports;
    __GLexports exports;
 
@@ -1610,22 +1639,24 @@ struct __GLcontextRec {
    struct gl_shared_state *Shared;
 
    /* API function pointer tables */
-   struct _glapi_table *Save;	/* Display list save funcs */
-   struct _glapi_table *Exec;	/* Execute funcs */
-   struct _glapi_table *CurrentDispatch;  /* == Save or Exec !! */
+   struct _glapi_table *Save;	/**< Display list save funcs */
+   struct _glapi_table *Exec;	/**< Execute funcs */
+   struct _glapi_table *CurrentDispatch;  /**< == Save or Exec !! */
 
-   GLboolean ExecPrefersFloat;	/* What preference for color conversion? */
+   GLboolean ExecPrefersFloat;	/**< What preference for color conversion? */
    GLboolean SavePrefersFloat;
 
    GLvisual Visual;
-   GLframebuffer *DrawBuffer;	/* buffer for writing */
-   GLframebuffer *ReadBuffer;	/* buffer for reading */
+   GLframebuffer *DrawBuffer;	/**< buffer for writing */
+   GLframebuffer *ReadBuffer;	/**< buffer for reading */
 
-   /* Driver function pointer table */
+   /**
+    * Device driver function pointer table
+    */
    struct dd_function_table Driver;
 
-   void *DriverCtx;	/* Points to device driver context/state */
-   void *DriverMgrCtx;	/* Points to device driver manager (optional)*/
+   void *DriverCtx;	/**< Points to device driver context/state */
+   void *DriverMgrCtx;	/**< Points to device driver manager (optional)*/
 
    /* Core/Driver constants */
    struct gl_constants Const;
@@ -1726,22 +1757,22 @@ struct __GLcontextRec {
    struct gl_list_extensions listext; /* driver dlist extensions */
 
 
-   GLboolean OcclusionResult;       /* GL_HP_occlusion_test */
-   GLboolean OcclusionResultSaved;  /* GL_HP_occlusion_test */
+   GLboolean OcclusionResult;       /**< for GL_HP_occlusion_test */
+   GLboolean OcclusionResultSaved;  /**< for GL_HP_occlusion_test */
 
    /* Z buffer stuff */
-   GLuint DepthMax;		/* Max depth buffer value */
-   GLfloat DepthMaxF;		/* Float max depth buffer value */
-   GLfloat MRD;			/* minimum resolvable difference in Z values */
+   GLuint DepthMax;	/**< Max depth buffer value */
+   GLfloat DepthMaxF;	/**< Float max depth buffer value */
+   GLfloat MRD;		/**< minimum resolvable difference in Z values */
 
-   /* Should 3Dfx Glide driver catch signals? */
+   /** Should 3Dfx Glide driver catch signals? */
    GLboolean CatchSignals;
 
-   /* For debugging/development only */
+   /** For debugging/development only */
    GLboolean NoRaster;
    GLboolean FirstTimeCurrent;
 
-   /* Dither disable via MESA_NO_DITHER env var */
+   /** Dither disable via MESA_NO_DITHER env var */
    GLboolean NoDither;
 
    GLboolean Rendering;

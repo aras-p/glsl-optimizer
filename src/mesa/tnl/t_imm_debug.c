@@ -1,4 +1,4 @@
-/* $Id: t_imm_debug.c,v 1.6 2002/01/05 20:51:13 brianp Exp $ */
+/* $Id: t_imm_debug.c,v 1.7 2002/01/22 14:35:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,30 +34,30 @@ void _tnl_print_vert_flags( const char *name, GLuint flags )
 	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   name,
 	   flags,
-	   (flags & VERT_CLIP)       ? "clip/proj-clip/glend, " : "",
-	   (flags & VERT_EDGEFLAG_BIT)       ? "edgeflag, " : "",
-	   (flags & VERT_ELT)        ? "array-elt, " : "",
-	   (flags & VERT_END_VB)     ? "end-vb, " : "",
-	   (flags & VERT_EVAL_ANY)   ? "eval-coord, " : "",
-	   (flags & VERT_EYE)        ? "eye/glbegin, " : "",
-	   (flags & VERT_FOG_BIT)  ? "fog-coord, " : "",
-	   (flags & VERT_INDEX_BIT)      ? "index, " : "",
-	   (flags & VERT_MATERIAL)   ? "material, " : "",
-	   (flags & VERT_NORMAL_BIT)       ? "normals, " : "",
-	   (flags & VERT_OBJ_BIT)        ? "obj, " : "",
-	   (flags & VERT_OBJ_3)      ? "obj-3, " : "",
-	   (flags & VERT_OBJ_4)      ? "obj-4, " : "",
-	   (flags & VERT_POINT_SIZE) ? "point-size, " : "",
-	   (flags & VERT_COLOR0_BIT)       ? "colors, " : "",
-	   (flags & VERT_COLOR1_BIT)   ? "specular, " : "",
-	   (flags & VERT_TEX0_BIT)       ? "texcoord0, " : "",
-	   (flags & VERT_TEX1_BIT)       ? "texcoord1, " : "",
-	   (flags & VERT_TEX2_BIT)       ? "texcoord2, " : "",
-	   (flags & VERT_TEX3_BIT)       ? "texcoord3, " : "",
-	   (flags & VERT_TEX4_BIT)       ? "texcoord4, " : "",
-	   (flags & VERT_TEX5_BIT)       ? "texcoord5, " : "",
-	   (flags & VERT_TEX6_BIT)       ? "texcoord6, " : "",
-	   (flags & VERT_TEX7_BIT)       ? "texcoord7, " : ""
+	   (flags & VERT_BIT_CLIP)       ? "clip/proj-clip/glend, " : "",
+	   (flags & VERT_BIT_EDGEFLAG)       ? "edgeflag, " : "",
+	   (flags & VERT_BIT_ELT)        ? "array-elt, " : "",
+	   (flags & VERT_BIT_END_VB)     ? "end-vb, " : "",
+	   (flags & VERT_BITS_EVAL_ANY)   ? "eval-coord, " : "",
+	   (flags & VERT_BIT_EYE)        ? "eye/glbegin, " : "",
+	   (flags & VERT_BIT_FOG)  ? "fog-coord, " : "",
+	   (flags & VERT_BIT_INDEX)      ? "index, " : "",
+	   (flags & VERT_BIT_MATERIAL)   ? "material, " : "",
+	   (flags & VERT_BIT_NORMAL)       ? "normals, " : "",
+	   (flags & VERT_BIT_POS)        ? "obj, " : "",
+	   (flags & VERT_BIT_OBJ_3)      ? "obj-3, " : "",
+	   (flags & VERT_BIT_OBJ_4)      ? "obj-4, " : "",
+	   (flags & VERT_BIT_POINT_SIZE) ? "point-size, " : "",
+	   (flags & VERT_BIT_COLOR0)       ? "colors, " : "",
+	   (flags & VERT_BIT_COLOR1)   ? "specular, " : "",
+	   (flags & VERT_BIT_TEX0)       ? "texcoord0, " : "",
+	   (flags & VERT_BIT_TEX1)       ? "texcoord1, " : "",
+	   (flags & VERT_BIT_TEX2)       ? "texcoord2, " : "",
+	   (flags & VERT_BIT_TEX3)       ? "texcoord3, " : "",
+	   (flags & VERT_BIT_TEX4)       ? "texcoord4, " : "",
+	   (flags & VERT_BIT_TEX5)       ? "texcoord5, " : "",
+	   (flags & VERT_BIT_TEX6)       ? "texcoord6, " : "",
+	   (flags & VERT_BIT_TEX7)       ? "texcoord7, " : ""
       );
 }
 
@@ -89,22 +89,22 @@ void _tnl_print_cassette( struct immediate *IM )
 
    for (i = IM->CopyStart ; i <= IM->Count ; i++) {
       fprintf(stderr, "%u: ", i);
-      if (req & VERT_OBJ_234) {
-	 if (flags[i] & VERT_EVAL_C1)
+      if (req & VERT_BITS_OBJ_234) {
+	 if (flags[i] & VERT_BIT_EVAL_C1)
 	    fprintf(stderr, "EvalCoord %f ",
                     IM->Attrib[VERT_ATTRIB_POS][i][0]);
-	 else if (flags[i] & VERT_EVAL_P1)
+	 else if (flags[i] & VERT_BIT_EVAL_P1)
 	    fprintf(stderr, "EvalPoint %.0f ",
                     IM->Attrib[VERT_ATTRIB_POS][i][0]);
-	 else if (flags[i] & VERT_EVAL_C2)
+	 else if (flags[i] & VERT_BIT_EVAL_C2)
 	    fprintf(stderr, "EvalCoord %f %f ",
                     IM->Attrib[VERT_ATTRIB_POS][i][0],
                     IM->Attrib[VERT_ATTRIB_POS][i][1]);
-	 else if (flags[i] & VERT_EVAL_P2)
+	 else if (flags[i] & VERT_BIT_EVAL_P2)
 	    fprintf(stderr, "EvalPoint %.0f %.0f ",
                     IM->Attrib[VERT_ATTRIB_POS][i][0],
                     IM->Attrib[VERT_ATTRIB_POS][i][1]);
-	 else if (i < IM->Count && (flags[i]&VERT_OBJ_234)) {
+	 else if (i < IM->Count && (flags[i] & VERT_BITS_OBJ_234)) {
 	    fprintf(stderr, "Obj %f %f %f %f",
                     IM->Attrib[VERT_ATTRIB_POS][i][0],
                     IM->Attrib[VERT_ATTRIB_POS][i][1],
@@ -113,19 +113,19 @@ void _tnl_print_cassette( struct immediate *IM )
 	 }
       }
 
-      if (req & flags[i] & VERT_ELT)
+      if (req & flags[i] & VERT_BIT_ELT)
 	 fprintf(stderr, " Elt %u\t", IM->Elt[i]);
 
-      if (req & flags[i] & VERT_NORMAL_BIT)
+      if (req & flags[i] & VERT_BIT_NORMAL)
 	 fprintf(stderr, " Norm %f %f %f ",
                  IM->Attrib[VERT_ATTRIB_NORMAL][i][0],
                  IM->Attrib[VERT_ATTRIB_NORMAL][i][1],
                  IM->Attrib[VERT_ATTRIB_NORMAL][i][2]);
 
-      if (req & flags[i] & VERT_TEX_ANY) {
+      if (req & flags[i] & VERT_BITS_TEX_ANY) {
 	 GLuint j;
 	 for (j = 0 ; j < MAX_TEXTURE_UNITS ; j++) {
-	    if (req & flags[i] & VERT_TEX(j)) {
+	    if (req & flags[i] & VERT_BIT_TEX(j)) {
 	       fprintf(stderr, "TC%d %f %f %f %f", j,
 		       IM->Attrib[VERT_ATTRIB_TEX0 + j][i][0],
 		       IM->Attrib[VERT_ATTRIB_TEX0 + j][i][1],
@@ -135,39 +135,39 @@ void _tnl_print_cassette( struct immediate *IM )
 	 }
       }
 
-      if (req & flags[i] & VERT_COLOR0_BIT)
+      if (req & flags[i] & VERT_BIT_COLOR0)
 	 fprintf(stderr, " Rgba %f %f %f %f ",
                  IM->Attrib[VERT_ATTRIB_COLOR0][i][0],
                  IM->Attrib[VERT_ATTRIB_COLOR0][i][1],
                  IM->Attrib[VERT_ATTRIB_COLOR0][i][2],
                  IM->Attrib[VERT_ATTRIB_COLOR0][i][3]);
 
-      if (req & flags[i] & VERT_COLOR1_BIT)
+      if (req & flags[i] & VERT_BIT_COLOR1)
 	 fprintf(stderr, " Spec %f %f %f ",
                  IM->Attrib[VERT_ATTRIB_COLOR1][i][0],
                  IM->Attrib[VERT_ATTRIB_COLOR1][i][1],
                  IM->Attrib[VERT_ATTRIB_COLOR1][i][2]);
 
-      if (req & flags[i] & VERT_FOG_BIT)
+      if (req & flags[i] & VERT_BIT_FOG)
 	 fprintf(stderr, " Fog %f ", IM->Attrib[VERT_ATTRIB_FOG][i][0]);
 
-      if (req & flags[i] & VERT_INDEX_BIT)
+      if (req & flags[i] & VERT_BIT_INDEX)
 	 fprintf(stderr, " Index %u ", IM->Index[i]);
 
-      if (req & flags[i] & VERT_EDGEFLAG_BIT)
+      if (req & flags[i] & VERT_BIT_EDGEFLAG)
 	 fprintf(stderr, " Edgeflag %d ", IM->EdgeFlag[i]);
 
-      if (req & flags[i] & VERT_MATERIAL)
+      if (req & flags[i] & VERT_BIT_MATERIAL)
 	 fprintf(stderr, " Material ");
 
 
       /* The order of these two is not easily knowable, but this is
        * the usually correct way to look at them.
        */
-      if (req & flags[i] & VERT_END)
+      if (req & flags[i] & VERT_BIT_END)
 	 fprintf(stderr, " END ");
 
-      if (req & flags[i] & VERT_BEGIN)
+      if (req & flags[i] & VERT_BIT_BEGIN)
 	 fprintf(stderr, " BEGIN(%s) (%s%s%s%s)",
 		 _mesa_prim_name[IM->Primitive[i] & PRIM_MODE_MASK],
 		 (IM->Primitive[i] & PRIM_LAST) ? "LAST," : "",

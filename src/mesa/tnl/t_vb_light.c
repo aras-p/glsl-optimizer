@@ -1,4 +1,4 @@
-/* $Id: t_vb_light.c,v 1.16 2001/12/14 02:51:45 brianp Exp $ */
+/* $Id: t_vb_light.c,v 1.17 2002/01/22 14:35:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -168,12 +168,12 @@ static GLboolean run_lighting( GLcontext *ctx, struct gl_pipeline_stage *stage )
    /* Make sure we can talk about elements 0..2 in the vector we are
     * lighting.
     */
-   if (stage->changed_inputs & (VERT_EYE|VERT_OBJ_BIT)) {
+   if (stage->changed_inputs & (VERT_BIT_EYE|VERT_BIT_POS)) {
       if (input->size <= 2) {
 	 if (input->flags & VEC_NOT_WRITEABLE) {
-	    ASSERT(VB->importable_data & VERT_OBJ_BIT);
+	    ASSERT(VB->importable_data & VERT_BIT_POS);
 
-	    VB->import_data( ctx, VERT_OBJ_BIT, VEC_NOT_WRITEABLE );
+	    VB->import_data( ctx, VERT_BIT_POS, VEC_NOT_WRITEABLE );
 	    input = ctx->_NeedEyeCoords ? VB->EyePtr : VB->ObjPtr;
 
 	    ASSERT((input->flags & VEC_NOT_WRITEABLE) == 0);
@@ -299,15 +299,15 @@ static void check_lighting( GLcontext *ctx, struct gl_pipeline_stage *stage )
    if (stage->active) {
       if (stage->privatePtr)
 	 stage->run = run_validate_lighting;
-      stage->inputs = VERT_NORMAL_BIT|VERT_MATERIAL;
+      stage->inputs = VERT_BIT_NORMAL|VERT_BIT_MATERIAL;
       if (ctx->Light._NeedVertices)
-	 stage->inputs |= VERT_EYE; /* effectively, even when lighting in obj */
+	 stage->inputs |= VERT_BIT_EYE; /* effectively, even when lighting in obj */
       if (ctx->Light.ColorMaterialEnabled)
-	 stage->inputs |= VERT_COLOR0_BIT;
+	 stage->inputs |= VERT_BIT_COLOR0;
 
-      stage->outputs = VERT_COLOR0_BIT;
+      stage->outputs = VERT_BIT_COLOR0;
       if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
-	 stage->outputs |= VERT_COLOR1_BIT;
+	 stage->outputs |= VERT_BIT_COLOR1;
    }
 }
 
@@ -338,7 +338,7 @@ const struct gl_pipeline_stage _tnl_lighting_stage =
    _NEW_LIGHT,			/* recheck */
    _NEW_LIGHT|_NEW_MODELVIEW,	/* recalc -- modelview dependency
 				 * otherwise not captured by inputs
-				 * (which may be VERT_OBJ_BIT) */
+				 * (which may be VERT_BIT_POS) */
    GL_FALSE,			/* active? */
    0,				/* inputs */
    0,				/* outputs */

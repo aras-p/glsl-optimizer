@@ -1,4 +1,4 @@
-/* $Id: t_vb_points.c,v 1.7 2002/01/06 20:39:19 brianp Exp $ */
+/* $Id: t_vb_points.c,v 1.8 2002/01/22 14:35:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -114,8 +114,8 @@ const struct gl_pipeline_stage _tnl_point_attenuation_stage =
    _NEW_POINT,			/* build_state_change */
    _NEW_POINT,			/* run_state_change */
    GL_FALSE,			/* active */
-   VERT_EYE,			/* inputs */
-   VERT_POINT_SIZE,		/* outputs */
+   VERT_BIT_EYE,			/* inputs */
+   VERT_BIT_POINT_SIZE,		/* outputs */
    0,				/* changed_inputs (temporary value) */
    NULL,			/* stage private data */
    free_point_data,		/* destructor */

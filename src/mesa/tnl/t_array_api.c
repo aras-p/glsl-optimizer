@@ -1,10 +1,10 @@
-/* $Id: t_array_api.c,v 1.23 2002/01/05 20:51:12 brianp Exp $ */
+/* $Id: t_array_api.c,v 1.24 2002/01/22 14:35:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,9 +22,12 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ */
+
+/**
+ * \file vpexec.c
+ * \brief Vertex array API functions (glDrawArrays, etc)
+ * \author Keith Whitwell
  */
 
 #include "glheader.h"
@@ -100,7 +103,9 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
 
 
 
-
+/**
+ * Called via the GL API dispatcher.
+ */
 void
 _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 {
@@ -232,6 +237,9 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 }
 
 
+/**
+ * Called via the GL API dispatcher.
+ */
 void
 _tnl_DrawRangeElements(GLenum mode,
 		       GLuint start, GLuint end,
@@ -300,6 +308,9 @@ _tnl_DrawRangeElements(GLenum mode,
 
 
 
+/**
+ * Called via the GL API dispatcher.
+ */
 void
 _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
 		  const GLvoid *indices)
@@ -351,6 +362,10 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
 }
 
 
+/**
+ * Initialize context's vertex array fields.  Called during T 'n L context
+ * creation.
+ */
 void _tnl_array_init( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -378,6 +393,10 @@ void _tnl_array_init( GLcontext *ctx )
 }
 
 
+/**
+ * Destroy the context's vertex array stuff.
+ * Called during T 'n L context destruction.
+ */
 void _tnl_array_destroy( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);

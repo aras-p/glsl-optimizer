@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.21 2002/01/06 03:54:12 brianp Exp $ */
+/* $Id: t_array_import.c,v 1.22 2002/01/22 14:35:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -228,9 +228,12 @@ static void _tnl_import_edgeflag( GLcontext *ctx,
 
 
 
-/* Callback for VB stages that need to improve the quality of arrays
+/**
+ * Callback for VB stages that need to improve the quality of arrays
  * bound to the VB.  This is only necessary for client arrays which
  * have not been transformed at any point in the pipeline.
+ * \param required - bitmask of VERT_*_BIT flags
+ * \param flags - bitmask of VEC_* flags (ex: VEC_NOT_WRITABLE)
  */
 static void _tnl_upgrade_client_data( GLcontext *ctx,
 				      GLuint required,
@@ -246,55 +249,55 @@ static void _tnl_upgrade_client_data( GLcontext *ctx,
 
    if (writeable || stride) ca_flags |= CA_CLIENT_DATA;
 
-   if ((required & VERT_CLIP) && VB->ClipPtr == VB->ObjPtr)
-      required |= VERT_OBJ_BIT;
+   if ((required & VERT_BIT_CLIP) && VB->ClipPtr == VB->ObjPtr)
+      required |= VERT_BIT_POS;
 
 /*     _tnl_print_vert_flags("_tnl_upgrade_client_data", required); */
 
-   if ((required & VERT_OBJ_BIT) && (VB->ObjPtr->flags & flags)) {
+   if ((required & VERT_BIT_POS) && (VB->ObjPtr->flags & flags)) {
       ASSERT(VB->ObjPtr == &inputs->Obj);
       _tnl_import_vertex( ctx, writeable, stride );
-      VB->importable_data &= ~(VERT_OBJ_BIT|VERT_CLIP);
+      VB->importable_data &= ~(VERT_BIT_POS|VERT_BIT_CLIP);
    }
 
-   if ((required & VERT_NORMAL_BIT) && (VB->NormalPtr->flags & flags)) {
+   if ((required & VERT_BIT_NORMAL) && (VB->NormalPtr->flags & flags)) {
       ASSERT(VB->NormalPtr == &inputs->Normal);
       _tnl_import_normal( ctx, writeable, stride );
-      VB->importable_data &= ~VERT_NORMAL_BIT;
+      VB->importable_data &= ~VERT_BIT_NORMAL;
    }
 
-   if ((required & VERT_COLOR0_BIT) && (VB->ColorPtr[0]->Flags & ca_flags)) {
+   if ((required & VERT_BIT_COLOR0) && (VB->ColorPtr[0]->Flags & ca_flags)) {
       ASSERT(VB->ColorPtr[0] == &inputs->Color);
       _tnl_import_color( ctx, GL_FLOAT, writeable, stride );
-      VB->importable_data &= ~VERT_COLOR0_BIT;
+      VB->importable_data &= ~VERT_BIT_COLOR0;
    }
 
-   if ((required & VERT_COLOR1_BIT) && 
+   if ((required & VERT_BIT_COLOR1) && 
        (VB->SecondaryColorPtr[0]->Flags & ca_flags)) {
       ASSERT(VB->SecondaryColorPtr[0] == &inputs->SecondaryColor);
       _tnl_import_secondarycolor( ctx, GL_FLOAT, writeable, stride );
-      VB->importable_data &= ~VERT_COLOR1_BIT;
+      VB->importable_data &= ~VERT_BIT_COLOR1;
    }
 
-   if ((required & VERT_FOG_BIT)
+   if ((required & VERT_BIT_FOG)
        && (VB->FogCoordPtr->flags & flags)) {
       ASSERT(VB->FogCoordPtr == &inputs->FogCoord);
       _tnl_import_fogcoord( ctx, writeable, stride );
-      VB->importable_data &= ~VERT_FOG_BIT;
+      VB->importable_data &= ~VERT_BIT_FOG;
    }
 
-   if ((required & VERT_INDEX_BIT) && (VB->IndexPtr[0]->flags & flags)) {
+   if ((required & VERT_BIT_INDEX) && (VB->IndexPtr[0]->flags & flags)) {
       ASSERT(VB->IndexPtr[0] == &inputs->Index);
       _tnl_import_index( ctx, writeable, stride );
-      VB->importable_data &= ~VERT_INDEX_BIT;
+      VB->importable_data &= ~VERT_BIT_INDEX;
    }
 
-   if (required & VERT_TEX_ANY)
+   if (required & VERT_BITS_TEX_ANY)
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
-	 if ((required & VERT_TEX(i)) && (VB->TexCoordPtr[i]->flags & flags)) {
+	 if ((required & VERT_BIT_TEX(i)) && (VB->TexCoordPtr[i]->flags & flags)) {
 	    ASSERT(VB->TexCoordPtr[i] == &inputs->TexCoord[i]);
 	    _tnl_import_texcoord( ctx, i, writeable, stride );
-	    VB->importable_data &= ~VERT_TEX(i);
+	    VB->importable_data &= ~VERT_BIT_TEX(i);
 	 }
 
 }
@@ -313,18 +316,18 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
 /*  	      start, count, ctx->Array.LockFirst, ctx->Array.LockCount);  */
 /*        _tnl_print_vert_flags("    inputs", inputs);  */
 /*        _tnl_print_vert_flags("    _Enabled", ctx->Array._Enabled); */
-/*        _tnl_print_vert_flags("    importable", inputs & VERT_FIXUP); */
+/*        _tnl_print_vert_flags("    importable", inputs & VERT_BITS_FIXUP); */
 
    VB->Count = count - start;
    VB->FirstClipped = VB->Count;
-   VB->Elts = 0;
-   VB->MaterialMask = 0;
-   VB->Material = 0;
-   VB->Flag = 0;
+   VB->Elts = NULL;
+   VB->MaterialMask = NULL;
+   VB->Material = NULL;
+   VB->Flag = NULL;
    VB->Primitive = tnl->tmp_primitive;
    VB->PrimitiveLength = tnl->tmp_primitive_length;
    VB->import_data = _tnl_upgrade_client_data;
-   VB->importable_data = inputs & VERT_FIXUP;
+   VB->importable_data = inputs & VERT_BITS_FIXUP;
 
    if (ctx->Array.LockCount) {
       ASSERT(start == (GLint) ctx->Array.LockFirst);
@@ -333,27 +336,27 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
 
    _ac_import_range( ctx, start, count );
 
-   if (inputs & VERT_OBJ_BIT) {
+   if (inputs & VERT_BIT_POS) {
       _tnl_import_vertex( ctx, 0, 0 );
       tmp->Obj.count = VB->Count;
       VB->ObjPtr = &tmp->Obj;
    }
 
-   if (inputs & VERT_NORMAL_BIT) {
+   if (inputs & VERT_BIT_NORMAL) {
       _tnl_import_normal( ctx, 0, 0 );
       tmp->Normal.count = VB->Count;
       VB->NormalPtr = &tmp->Normal;
    }
 
-   if (inputs & VERT_COLOR0_BIT) {
+   if (inputs & VERT_BIT_COLOR0) {
       _tnl_import_color( ctx, 0, 0, 0 );
       VB->ColorPtr[0] = &tmp->Color;
       VB->ColorPtr[1] = 0;
    }
 
-   if (inputs & VERT_TEX_ANY) {
-      for (i = 0; i < ctx->Const.MaxTextureUnits ; i++) {
-	 if (inputs & VERT_TEX(i)) {
+   if (inputs & VERT_BITS_TEX_ANY) {
+      for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+	 if (inputs & VERT_BIT_TEX(i)) {
 	    _tnl_import_texcoord( ctx, i, 0, 0 );
 	    tmp->TexCoord[i].count = VB->Count;
 	    VB->TexCoordPtr[i] = &tmp->TexCoord[i];
@@ -361,31 +364,45 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
       }
    }
 
-   if (inputs & (VERT_INDEX_BIT|VERT_FOG_BIT|VERT_EDGEFLAG_BIT|VERT_COLOR1_BIT)) {
-      if (inputs & VERT_INDEX_BIT) {
+   if (inputs & (VERT_BIT_INDEX | VERT_BIT_FOG |
+                 VERT_BIT_EDGEFLAG | VERT_BIT_COLOR1)) {
+      if (inputs & VERT_BIT_INDEX) {
 	 _tnl_import_index( ctx, 0, 0 );
 	 tmp->Index.count = VB->Count;
 	 VB->IndexPtr[0] = &tmp->Index;
 	 VB->IndexPtr[1] = 0;
       }
 
-      if (inputs & VERT_FOG_BIT) {
+      if (inputs & VERT_BIT_FOG) {
 	 _tnl_import_fogcoord( ctx, 0, 0 );
 	 tmp->FogCoord.count = VB->Count;
 	 VB->FogCoordPtr = &tmp->FogCoord;
       }
 
-      if (inputs & VERT_EDGEFLAG_BIT) {
+      if (inputs & VERT_BIT_EDGEFLAG) {
 	 _tnl_import_edgeflag( ctx, GL_TRUE, sizeof(GLboolean) );
 	 VB->EdgeFlag = (GLboolean *) tmp->EdgeFlag.data;
       }
 
-      if (inputs & VERT_COLOR1_BIT) {
+      if (inputs & VERT_BIT_COLOR1) {
 	 _tnl_import_secondarycolor( ctx, 0, 0, 0 );
 	 VB->SecondaryColorPtr[0] = &tmp->SecondaryColor;
 	 VB->SecondaryColorPtr[1] = 0;
       }
    }
+
+   if (ctx->VertexProgram.Enabled) {
+      /* XXX lots of work to do here */
+
+      printf("bind vp arrays!\n");
+      VB->AttribPtr[VERT_ATTRIB_POS] = VB->ObjPtr;
+      printf("   data = %p\n", VB->ObjPtr->data);
+      printf(" stride = %d\n", VB->ObjPtr->stride);
+      printf("   size = %d\n", VB->ObjPtr->size);
+
+      VB->AttribPtr[VERT_ATTRIB_NORMAL] = VB->NormalPtr;
+   }
+
 }
 
 

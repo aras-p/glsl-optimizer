@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.23 2002/01/05 20:51:13 brianp Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.24 2002/01/22 14:35:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,24 +33,24 @@
 #if (IDX & LIGHT_FLAGS)
 #  define VSTRIDE (4 * sizeof(GLfloat))
 #  define NSTRIDE nstride /*(3 * sizeof(GLfloat))*/
-#  define CHECK_MATERIAL(x)  (flags[x] & VERT_MATERIAL)
-#  define CHECK_END_VB(x)    (flags[x] & VERT_END_VB)
+#  define CHECK_MATERIAL(x)  (flags[x] & VERT_BIT_MATERIAL)
+#  define CHECK_END_VB(x)    (flags[x] & VERT_BIT_END_VB)
 #  if (IDX & LIGHT_COLORMATERIAL)
 #    define CMSTRIDE STRIDE_F(CMcolor, CMstride)
-#    define CHECK_COLOR_MATERIAL(x) (flags[x] & VERT_COLOR0_BIT)
-#    define CHECK_VALIDATE(x) (flags[x] & (VERT_COLOR0_BIT|VERT_MATERIAL))
+#    define CHECK_COLOR_MATERIAL(x) (flags[x] & VERT_BIT_COLOR0)
+#    define CHECK_VALIDATE(x) (flags[x] & (VERT_BIT_COLOR0|VERT_BIT_MATERIAL))
 #    define DO_ANOTHER_NORMAL(x) \
-     ((flags[x] & (VERT_COLOR0_BIT|VERT_NORMAL_BIT|VERT_END_VB|VERT_MATERIAL)) == VERT_NORMAL_BIT)
+     ((flags[x] & (VERT_BIT_COLOR0|VERT_BIT_NORMAL|VERT_BIT_END_VB|VERT_BIT_MATERIAL)) == VERT_BIT_NORMAL)
 #    define REUSE_LIGHT_RESULTS(x) \
-     ((flags[x] & (VERT_COLOR0_BIT|VERT_NORMAL_BIT|VERT_END_VB|VERT_MATERIAL)) == 0)
+     ((flags[x] & (VERT_BIT_COLOR0|VERT_BIT_NORMAL|VERT_BIT_END_VB|VERT_BIT_MATERIAL)) == 0)
 #  else
 #    define CMSTRIDE (void)0
 #    define CHECK_COLOR_MATERIAL(x) 0
-#    define CHECK_VALIDATE(x) (flags[x] & (VERT_MATERIAL))
+#    define CHECK_VALIDATE(x) (flags[x] & (VERT_BIT_MATERIAL))
 #    define DO_ANOTHER_NORMAL(x) \
-      ((flags[x] & (VERT_NORMAL_BIT|VERT_END_VB|VERT_MATERIAL)) == VERT_NORMAL_BIT)
+      ((flags[x] & (VERT_BIT_NORMAL|VERT_BIT_END_VB|VERT_BIT_MATERIAL)) == VERT_BIT_NORMAL)
 #    define REUSE_LIGHT_RESULTS(x) \
-      ((flags[x] & (VERT_NORMAL_BIT|VERT_END_VB|VERT_MATERIAL)) == 0)
+      ((flags[x] & (VERT_BIT_NORMAL|VERT_BIT_END_VB|VERT_BIT_MATERIAL)) == 0)
 #  endif
 #else
 #  define VSTRIDE vstride
