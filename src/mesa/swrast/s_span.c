@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.14 2001/05/15 21:30:27 brianp Exp $ */
+/* $Id: s_span.c,v 1.15 2001/06/18 23:55:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -175,6 +175,7 @@ multi_write_index_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
  * Input:  n - number of pixels in the span
  *         x, y - location of leftmost pixel in the span
  *         z - array of [n] z-values
+ *         fog - array of fog factor values in [0,1]
  *         index - array of [n] color indexes
  *         primitive - either GL_POINT, GL_LINE, GL_POLYGON, or GL_BITMAP
  */
@@ -603,6 +604,7 @@ _mesa_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
  * Input:  n - number of pixels in the span
  *         x, y - location of leftmost pixel in the span
  *         z - array of [n] z-values
+ *         fog - array of fog factor values in [0,1]
  *         r, g, b, a - the color of the pixels
  *         primitive - either GL_POINT, GL_LINE, GL_POLYGON or GL_BITMAP.
  */

@@ -1,4 +1,4 @@
-/* $Id: s_fog.h,v 1.4 2001/05/03 22:13:32 brianp Exp $ */
+/* $Id: s_fog.h,v 1.5 2001/06/18 23:55:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,6 +31,10 @@
 
 #include "mtypes.h"
 #include "swrast.h"
+
+
+extern GLfloat
+_mesa_z_to_fogfactor(GLcontext *ctx, GLfloat z);
 
 
 extern void

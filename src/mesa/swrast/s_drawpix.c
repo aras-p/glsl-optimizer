@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.20 2001/05/30 15:22:05 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.21 2001/06/18 23:55:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,6 +37,7 @@
 
 #include "s_context.h"
 #include "s_drawpix.h"
+#include "s_fog.h"
 #include "s_pixeltex.h"
 #include "s_span.h"
 #include "s_stencil.h"
@@ -497,9 +498,16 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
    /* Fragment depth values */
    if (ctx->Depth.Test || ctx->Fog.Enabled) {
       GLdepth zval = (GLdepth) (ctx->Current.RasterPos[2] * ctx->DepthMaxF);
-      GLfloat fog = (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) ?
-         ctx->Current.RasterFogCoord : ctx->Current.RasterDistance;
+      GLfloat fog;
       GLint i;
+
+      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) {
+         fog = ctx->Current.RasterFogCoord;
+      }
+      else {
+         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
+      }
+
       for (i = 0; i < drawWidth; i++) {
 	 zspan[i] = zval;
          fogSpan[i] = fog;
@@ -736,9 +744,16 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    if (ctx->Depth.Test || ctx->Fog.Enabled) {
       /* fill in array of z values */
       GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->DepthMaxF);
-      GLfloat fog = (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) ?
-         ctx->Current.RasterFogCoord : ctx->Current.RasterDistance;
+      GLfloat fog;
       GLint i;
+
+      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT) {
+         fog = ctx->Current.RasterFogCoord;
+      }
+      else {
+         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
+      }
+
       for (i=0;i<width;i++) {
 	 zspan[i] = z;
          fogSpan[i] = fog;

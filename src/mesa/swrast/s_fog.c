@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.12 2001/05/03 22:13:32 brianp Exp $ */
+/* $Id: s_fog.c,v 1.13 2001/06/18 23:55:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,10 +36,44 @@
 #include "s_pb.h"
 
 
+
+
+/*
+ * Used to convert current raster distance to a fog factor in [0,1].
+ */
+GLfloat
+_mesa_z_to_fogfactor(GLcontext *ctx, GLfloat z)
+{
+   GLfloat d, f;
+
+   switch (ctx->Fog.Mode) {
+   case GL_LINEAR:
+      if (ctx->Fog.Start == ctx->Fog.End)
+         d = 1.0F;
+      else
+         d = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
+      f = (ctx->Fog.End - z) * d;
+      return CLAMP(f, 0.0F, 1.0F);
+   case GL_EXP:
+      d = ctx->Fog.Density;
+      f = exp(-d * z);
+      return f;
+   case GL_EXP2:
+      d = ctx->Fog.Density;
+      f = exp(-(d * d * z * z));
+      return f;
+   default:
+      _mesa_problem(ctx, "Bad fog mode in make_fog_coord");
+      return 0.0; 
+   }
+}
+
+
+
 /*
  * Apply fog to an array of RGBA pixels.
  * Input:  n - number of pixels
- *         fog - array of interpolated screen-space fog coordinates in [0..1]
+ *         fog - array of fog factors in [0,1]
  *         red, green, blue, alpha - pixel colors
  * Output:  red, green, blue, alpha - fogged pixel colors
  */
@@ -70,7 +104,7 @@ _mesa_fog_rgba_pixels( const GLcontext *ctx,
 /*
  * Apply fog to an array of color index pixels.
  * Input:  n - number of pixels
- *         z - array of integer depth values
+ *         fog - array of fog factors in [0,1]
  *         index - pixel color indexes
  * Output:  index - fogged pixel color indexes
  */
@@ -90,7 +124,7 @@ _mesa_fog_ci_pixels( const GLcontext *ctx,
 
 
 /*
- * Calculate fog coords from window z values
+ * Calculate fog factors (in [0,1]) from window z values
  * Input:  n - number of pixels
  *         z - array of integer depth values
  *         red, green, blue, alpha - pixel colors
@@ -98,11 +132,11 @@ _mesa_fog_ci_pixels( const GLcontext *ctx,
  *
  * Use lookup table & interpolation?
  */
-void
-_mesa_win_fog_coords_from_z( const GLcontext *ctx,
-			     GLuint n,
-			     const GLdepth z[],
-			     GLfloat fogcoord[] )
+static void
+compute_fog_factors_from_z( const GLcontext *ctx,
+                            GLuint n,
+                            const GLdepth z[],
+                            GLfloat fogFact[] )
 {
    const GLboolean ortho = (ctx->ProjectionMatrix.m[15] != 0.0F);
    const GLfloat p10 = ctx->ProjectionMatrix.m[10];
@@ -154,7 +188,7 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
                   GLfloat eyez = (ndcz - p14) / p10;
                   if (eyez < 0.0)
                      eyez = -eyez;
-                  fogcoord[i] = (fogEnd - eyez) * fogScale;
+                  fogFact[i] = (fogEnd - eyez) * fogScale;
                }
             }
             else {
@@ -164,7 +198,7 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
                   GLfloat eyez = p14 / (ndcz + p10);
                   if (eyez < 0.0)
                      eyez = -eyez;
-                  fogcoord[i] = (fogEnd - eyez) * fogScale;
+                  fogFact[i] = (fogEnd - eyez) * fogScale;
                }
             }
          }
@@ -176,7 +210,7 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
                GLfloat eyez = (ndcz - p14) / p10;
                if (eyez < 0.0)
                   eyez = -eyez;
-               fogcoord[i] = exp( -ctx->Fog.Density * eyez );
+               fogFact[i] = exp( -ctx->Fog.Density * eyez );
             }
          }
          else {
@@ -186,7 +220,7 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
                GLfloat eyez = p14 / (ndcz + p10);
                if (eyez < 0.0)
                   eyez = -eyez;
-               fogcoord[i] = exp( -ctx->Fog.Density * eyez );
+               fogFact[i] = exp( -ctx->Fog.Density * eyez );
             }
          }
 	 break;
@@ -203,7 +237,7 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
                   if (tmp < FLT_MIN_10_EXP)
                      tmp = FLT_MIN_10_EXP;
 #endif
-                  fogcoord[i] = exp( tmp );
+                  fogFact[i] = exp( tmp );
                }
             }
             else {
@@ -217,13 +251,13 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
                   if (tmp < FLT_MIN_10_EXP)
                      tmp = FLT_MIN_10_EXP;
 #endif
-                  fogcoord[i] = exp( tmp );
+                  fogFact[i] = exp( tmp );
                }
             }
          }
 	 break;
       default:
-         _mesa_problem(ctx, "Bad fog mode in _mesa_win_fog_coords_from_z");
+         _mesa_problem(ctx, "Bad fog mode in compute_fog_factors_from_z");
          return;
    }
 }
@@ -240,10 +274,10 @@ void
 _mesa_depth_fog_rgba_pixels( const GLcontext *ctx,
 			     GLuint n, const GLdepth z[], GLchan rgba[][4] )
 {
-   GLfloat fog[PB_SIZE];
+   GLfloat fogFact[PB_SIZE];
    ASSERT(n <= PB_SIZE);
-   _mesa_win_fog_coords_from_z( ctx, n, z, fog );
-   _mesa_fog_rgba_pixels( ctx, n, fog, rgba );
+   compute_fog_factors_from_z( ctx, n, z, fogFact );
+   _mesa_fog_rgba_pixels( ctx, n, fogFact, rgba );
 }
 
 
@@ -258,8 +292,8 @@ void
 _mesa_depth_fog_ci_pixels( const GLcontext *ctx,
                      GLuint n, const GLdepth z[], GLuint index[] )
 {
-   GLfloat fog[PB_SIZE];
+   GLfloat fogFact[PB_SIZE];
    ASSERT(n <= PB_SIZE);
-   _mesa_win_fog_coords_from_z( ctx, n, z, fog );
-   _mesa_fog_ci_pixels( ctx, n, fog, index );
+   compute_fog_factors_from_z( ctx, n, z, fogFact );
+   _mesa_fog_ci_pixels( ctx, n, fogFact, index );
 }
