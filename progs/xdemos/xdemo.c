@@ -1,4 +1,4 @@
-/* $Id: xdemo.c,v 1.1 1999/08/19 00:55:43 jtg Exp $ */
+/* $Id: xdemo.c,v 1.2 2000/04/05 22:09:58 brianp Exp $ */
 
 
 /*
@@ -14,8 +14,11 @@
 
 /*
  * $Log: xdemo.c,v $
- * Revision 1.1  1999/08/19 00:55:43  jtg
- * Initial revision
+ * Revision 1.2  2000/04/05 22:09:58  brianp
+ * new arguments to XMesaCreateVisual()
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:43  jtg
+ * Imported sources
  *
  * Revision 3.0  1998/02/21 02:16:54  brianp
  * initial rev
@@ -184,8 +187,10 @@ static void make_window( char *title, int color_flag )
                                GL_FALSE,  /* ximage_flag */
                                0,         /* depth size */
                                0,         /* stencil size */
-                               0,         /* accum_size */
-                               0          /* level */
+                               0,0,0,0,   /* accum_size */
+                               0,         /* num samples */
+                               0,         /* level */
+                               0          /* caveat */
                               );
    if (!visual) {
       printf("Couldn't create Mesa/X visual!\n");

@@ -1,4 +1,4 @@
-/* $Id: xmesa.h,v 1.6 2000/03/31 01:04:07 brianp Exp $ */
+/* $Id: xmesa.h,v 1.7 2000/04/05 22:09:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -141,41 +141,35 @@ extern void XMesaResetDriver( __DRIscreenPrivate *driScrnPriv );
  *         db_flag - GL_TRUE = double-buffered,
  *                   GL_FALSE = single buffered
  *         stereo_flag - stereo visual?
- *         depth_size - requested bits/depth values, or zero
- *         stencil_size - requested bits/stencil values, or zero
- *         accum_size - requested bits/component values, or zero
  *         ximage_flag - GL_TRUE = use an XImage for back buffer,
  *                       GL_FALSE = use an off-screen pixmap for back buffer
+ *         depth_size - requested bits/depth values, or zero
+ *         stencil_size - requested bits/stencil values, or zero
+ *         accum_red_size - requested bits/red accum values, or zero
+ *         accum_green_size - requested bits/green accum values, or zero
+ *         accum_blue_size - requested bits/blue accum values, or zero
+ *         accum_alpha_size - requested bits/alpha accum values, or zero
+ *         num_samples - number of samples/pixel if multisampling, or zero
+ *         level - visual level, usually 0
+ *         visualCaveat - ala the GLX extension, usually GLX_NONE_EXT
  * Return;  a new XMesaVisual or 0 if error.
  */
 extern XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
-				      XMesaVisualInfo visinfo,
-				      GLboolean rgb_flag,
-				      GLboolean alpha_flag,
-				      GLboolean db_flag,
-				      GLboolean stereo_flag,
-				      GLboolean ximage_flag,
-				      GLint depth_size,
-				      GLint stencil_size,
-				      GLint accum_size,
-				      GLint level );
-
-extern XMesaVisual XMesaCreateVisual2( XMesaDisplay *display,
-                                       XMesaVisualInfo visinfo,
-                                       GLboolean rgb_flag,
-                                       GLboolean alpha_flag,
-                                       GLboolean db_flag,
-                                       GLboolean stereo_flag,
-                                       GLboolean ximage_flag,
-                                       GLint depth_size,
-                                       GLint stencil_size,
-                                       GLint accum_red_size,
-                                       GLint accum_green_size,
-                                       GLint accum_blue_size,
-                                       GLint accum_alpha_size,
-                                       GLint num_samples,
-                                       GLint level,
-                                       GLint visualCaveat );
+                                      XMesaVisualInfo visinfo,
+                                      GLboolean rgb_flag,
+                                      GLboolean alpha_flag,
+                                      GLboolean db_flag,
+                                      GLboolean stereo_flag,
+                                      GLboolean ximage_flag,
+                                      GLint depth_size,
+                                      GLint stencil_size,
+                                      GLint accum_red_size,
+                                      GLint accum_green_size,
+                                      GLint accum_blue_size,
+                                      GLint accum_alpha_size,
+                                      GLint num_samples,
+                                      GLint level,
+                                      GLint visualCaveat );
 
 /*
  * Destroy an XMesaVisual, but not the associated XVisualInfo.

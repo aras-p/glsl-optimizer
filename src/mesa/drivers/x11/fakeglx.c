@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.30 2000/03/31 18:17:01 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.31 2000/04/05 22:09:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -292,12 +292,12 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
       return NULL;
    }
 
-   xmvis = XMesaCreateVisual2( dpy, vinfo, rgbFlag, alphaFlag, dbFlag,
-                               stereoFlag, ximageFlag,
-                               depth_size, stencil_size,
-                               accumRedSize, accumBlueSize,
-                               accumBlueSize, accumAlphaSize, 0, level,
-                               GLX_NONE_EXT );
+   xmvis = XMesaCreateVisual( dpy, vinfo, rgbFlag, alphaFlag, dbFlag,
+                              stereoFlag, ximageFlag,
+                              depth_size, stencil_size,
+                              accumRedSize, accumBlueSize,
+                              accumBlueSize, accumAlphaSize, 0, level,
+                              GLX_NONE_EXT );
    if (xmvis) {
       VisualTable[NumVisuals] = xmvis;
       NumVisuals++;
