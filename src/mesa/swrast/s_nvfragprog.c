@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.0
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -585,11 +585,6 @@ execute_program( GLcontext *ctx,
 #if DEBUG_FRAG
    printf("execute fragment program --------------------\n");
 #endif
-
-   /* XXX: This should go someplace else, but it is safe here (and slow!) 
-    *        - karl
-    */
-   _mesa_load_state_parameters(ctx, program->Parameters); 
 
    for (pc = 0; pc < maxInst; pc++) {
       const struct fp_instruction *inst = program->Instructions + pc;

@@ -30,6 +30,7 @@
 #include "context.h"
 #include "colormac.h"
 #include "mtypes.h"
+#include "program.h"
 #include "texobj.h"
 #include "nvfragprog.h"
 
@@ -197,6 +198,16 @@ _swrast_update_fog_state( GLcontext *ctx )
       if (p->FogOption != GL_NONE) {
          swrast->_FogEnabled = GL_TRUE;
       }
+   }
+}
+
+
+static void
+_swrast_update_fragment_program( GLcontext *ctx )
+{
+   if (ctx->FragmentProgram.Enabled) {
+      struct fragment_program *program = ctx->FragmentProgram.Current;
+      _mesa_load_state_parameters(ctx, program->Parameters);
    }
 }
 
@@ -432,9 +443,11 @@ _swrast_validate_derived( GLcontext *ctx )
       if (swrast->NewState & _SWRAST_NEW_TEXTURE_ENV_MODE)
 	 _swrast_update_texture_env( ctx );
 
-      if (swrast->NewState & _NEW_FOG) {
+      if (swrast->NewState & _NEW_FOG)
          _swrast_update_fog_state( ctx );
-      }
+
+      if (swrast->NewState & _NEW_PROGRAM)
+	 _swrast_update_fragment_program( ctx );
 
       swrast->NewState = 0;
       swrast->StateChanges = 0;
