@@ -309,7 +309,8 @@ struct r300_state_atom {
 
 #define R300_AT_CMD_0		0
 #define R300_AT_ALPHA_TEST	1
-#define R300_AT_CMDSIZE		2
+#define R300_AT_UNKNOWN		2
+#define R300_AT_CMDSIZE		3
 
 #define R300_BLD_CMD_0		0
 #define R300_BLD_CBLEND		1

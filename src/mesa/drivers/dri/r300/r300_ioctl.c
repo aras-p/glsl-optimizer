@@ -90,8 +90,8 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	r300->hw.vir[1].cmd[1] = 0xF688F688;
 
 	R300_STATECHANGE(r300, vic);
-	r300->hw.vic.cmd[R300_VIR_CNTL_0] = 0x00000001;
-	r300->hw.vic.cmd[R300_VIR_CNTL_1] = 0x00000405;
+	r300->hw.vic.cmd[R300_VIC_CNTL_0] = 0x00000001;
+	r300->hw.vic.cmd[R300_VIC_CNTL_1] = 0x00000405;
 	
 	R300_STATECHANGE(r300, vof);
 	r300->hw.vof.cmd[R300_VOF_CNTL_0] = R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT

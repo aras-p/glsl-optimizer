@@ -385,7 +385,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE( unk4BC8, always, 4, "unk4BC8", 0 );
 		r300->hw.unk4BC8.cmd[0] = cmducs(0x4BC8, 3);
 	ALLOC_STATE( at, always, R300_AT_CMDSIZE, "at", 0 );
-		r300->hw.at.cmd[R300_AT_CMD_0] = cmducs(R300_PP_ALPHA_TEST, 1);
+		r300->hw.at.cmd[R300_AT_CMD_0] = cmducs(R300_PP_ALPHA_TEST, 2);
 	ALLOC_STATE( unk4BD8, always, 2, "unk4BD8", 0 );
 		r300->hw.unk4BD8.cmd[0] = cmducs(0x4BD8, 1);
 	ALLOC_STATE( fpp, variable, R300_FPP_CMDSIZE, "fpp", 0 );

@@ -472,11 +472,22 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 		break;
 	
 	case GL_STENCIL_TEST:
+	
+		{
+		static int stencil=1;
+		if(stencil){
+			fprintf(stderr, "%s:%s - do not know how to enable stencil. Help me !\n",
+				__FILE__, __FUNCTION__);
+			stencil=0;
+			}
+		}
+		
 		if (r300->state.hw_stencil) {
+			//fprintf(stderr, "Stencil %s\n", state ? "enabled" : "disabled");
 			R300_STATECHANGE(r300, zs);
 			if (state) {
 				r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
-				    R300_STENCIL_ENABLE;
+				    R300_STENCIL_ENABLE;				  
 			} else {
 				r300->hw.zs.cmd[R300_ZS_CNTL_0] &=
 				    ~R300_STENCIL_ENABLE;
@@ -614,68 +625,38 @@ static void r300PointSize(GLcontext * ctx, GLfloat size)
  * Stencil
  */
 
-static void r300StencilFunc(GLcontext * ctx, GLenum func,
-			    GLint ref, GLuint mask)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	GLuint refmask = ((ctx->Stencil.Ref[0] << R300_RB3D_ZS2_STENCIL_REF_SHIFT) |
-			  (ctx->Stencil.
-			   ValueMask[0] << R300_RB3D_ZS2_STENCIL_MASK_SHIFT));
-
-	R200_STATECHANGE(rmesa, zs);
-
-	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] &= ~(R300_ZS_MASK << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT);
-	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] &=  ~((R300_ZS_MASK << R300_RB3D_ZS2_STENCIL_REF_SHIFT) |
-						(R300_ZS_MASK << R300_RB3D_ZS2_STENCIL_MASK_SHIFT));
-
-	switch (ctx->Stencil.Function[0]) {
+ static int translate_stencil_func(int func)
+ {
+	switch (func) {
 	case GL_NEVER:
-		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
-		    R300_ZS_NEVER << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		    return R300_ZS_NEVER;
 		break;
 	case GL_LESS:
-		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
-		    R300_ZS_LESS << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		    return R300_ZS_LESS;
 		break;
 	case GL_EQUAL:
-		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
-		    R300_ZS_EQUAL << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		    return R300_ZS_EQUAL;
 		break;
 	case GL_LEQUAL:
-		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
-		    R300_ZS_LEQUAL << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		    return R300_ZS_LEQUAL;
 		break;
 	case GL_GREATER:
-		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
-		    R300_ZS_GREATER << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		    return R300_ZS_GREATER;
 		break;
 	case GL_NOTEQUAL:
-		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
-		    R300_ZS_NOTEQUAL << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		    return R300_ZS_NOTEQUAL;
 		break;
 	case GL_GEQUAL:
-		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
-		    R300_ZS_GEQUAL << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		    return R300_ZS_GEQUAL;
 		break;
 	case GL_ALWAYS:
-		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
-		    R300_ZS_ALWAYS << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		    return R300_ZS_ALWAYS;
 		break;
 	}
-
-	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] |= refmask;
-}
-
-static void r300StencilMask(GLcontext * ctx, GLuint mask)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-
-	R200_STATECHANGE(rmesa, zs);
-	rmesa->hw.zs.cmd[R300_ZS_CNTL_2]  &= ~(R300_ZS_MASK << R300_RB3D_ZS2_STENCIL_WRITE_MASK_SHIFT);
-	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] |= ctx->Stencil.WriteMask[0] << R300_RB3D_ZS2_STENCIL_WRITE_MASK_SHIFT;
-}
-
-static int translate_stencil_op(int op)
+ return 0;
+ }
+ 
+ static int translate_stencil_op(int op)
 {
 	switch (op) {
 	case GL_KEEP:
@@ -697,21 +678,56 @@ static int translate_stencil_op(int op)
 	}
 }
 
+static void r300StencilFunc(GLcontext * ctx, GLenum func,
+			    GLint ref, GLuint mask)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	GLuint refmask = ((ctx->Stencil.Ref[0] << R300_RB3D_ZS2_STENCIL_REF_SHIFT) |
+			  (ctx->Stencil.
+			   ValueMask[0] << R300_RB3D_ZS2_STENCIL_MASK_SHIFT));
+	GLuint func;
+
+	R200_STATECHANGE(rmesa, zs);
+
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] &= ~(
+		(R300_ZS_MASK << R300_RB3D_ZS1_FRONT_FUNC_SHIFT)
+		| (R300_ZS_MASK << R300_RB3D_ZS1_BACK_FUNC_SHIFT));
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] &=  ~((R300_ZS_MASK << R300_RB3D_ZS2_STENCIL_REF_SHIFT) |
+						(R300_ZS_MASK << R300_RB3D_ZS2_STENCIL_MASK_SHIFT));
+
+	func = translate_stencil_func(ctx->Stencil.Function[0]);
+	
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |= (func << R300_RB3D_ZS1_FRONT_FUNC_SHIFT) 
+					  | (func << R300_RB3D_ZS1_BACK_FUNC_SHIFT);
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] |= refmask;
+}
+
+static void r300StencilMask(GLcontext * ctx, GLuint mask)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+
+	R200_STATECHANGE(rmesa, zs);
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_2]  &= ~(R300_ZS_MASK << R300_RB3D_ZS2_STENCIL_WRITE_MASK_SHIFT);
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] |= ctx->Stencil.WriteMask[0] << R300_RB3D_ZS2_STENCIL_WRITE_MASK_SHIFT;
+}
+
+
 static void r300StencilOp(GLcontext * ctx, GLenum fail,
 			  GLenum zfail, GLenum zpass)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
 	R200_STATECHANGE(rmesa, zs);
-	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] &= ~((R300_ZS_MASK << R300_RB3D_ZS1_STENCIL_FAIL_OP_SHIFT)
-					| (R300_ZS_MASK << R300_RB3D_ZS1_STENCIL_ZPASS_OP_SHIFT)
-					| (R300_ZS_MASK << R300_RB3D_ZS1_STENCIL_ZFAIL_OP_SHIFT)
-					);
+		/* It is easier to mask what's left.. */
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] &= (R300_ZS_MASK << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
 
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |= 
-		 (translate_stencil_op(ctx->Stencil.FailFunc[0]) << R300_RB3D_ZS1_STENCIL_FAIL_OP_SHIFT)
-		|(translate_stencil_op(ctx->Stencil.ZFailFunc[0]) << R300_RB3D_ZS1_STENCIL_ZFAIL_OP_SHIFT)
-		|(translate_stencil_op(ctx->Stencil.ZPassFunc[0]) << R300_RB3D_ZS1_STENCIL_ZPASS_OP_SHIFT);
+		 (translate_stencil_op(ctx->Stencil.FailFunc[0]) << R300_RB3D_ZS1_FRONT_FAIL_OP_SHIFT)
+		|(translate_stencil_op(ctx->Stencil.ZFailFunc[0]) << R300_RB3D_ZS1_FRONT_ZFAIL_OP_SHIFT)
+		|(translate_stencil_op(ctx->Stencil.ZPassFunc[0]) << R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT)
+		|(translate_stencil_op(ctx->Stencil.FailFunc[0]) << R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT)
+		|(translate_stencil_op(ctx->Stencil.ZFailFunc[0]) << R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT)
+		|(translate_stencil_op(ctx->Stencil.ZPassFunc[0]) << R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT);
 	
 }
 
@@ -1689,6 +1705,7 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.at.cmd[R300_AT_ALPHA_TEST] = 0;
 	#endif
 
+	r300->hw.at.cmd[R300_AT_UNKNOWN] = 0;
 	r300->hw.unk4BD8.cmd[1] = 0;
 
 	r300->hw.unk4E00.cmd[1] = 0;
@@ -1727,6 +1744,9 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4F10.cmd[2] = 0x00000000;
 	r300->hw.unk4F10.cmd[3] = 0x00000003;
 	r300->hw.unk4F10.cmd[4] = 0x00000000;
+
+	/* experiment a bit */
+	r300->hw.unk4F10.cmd[2] = 0x00000001; // depthbuffer format?
 
 	r300->hw.zb.cmd[R300_ZB_OFFSET] =
 		r300->radeon.radeonScreen->depthOffset +

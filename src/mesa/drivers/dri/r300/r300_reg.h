@@ -1049,6 +1049,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_COLOR_ENDIAN_WORD_SWAP       (1 << 18) /* GUESS */
 #       define R300_COLOR_ENDIAN_DWORD_SWAP      (2 << 18) /* GUESS */
 #       define R300_COLOR_UNKNOWN_22_23          (3 << 22) /* GUESS: Format? */
+		/* if format then it is (6<<21) - RGBA8 */
 #define R300_RB3D_COLORPITCH1               0x4E3C /* GUESS */
 #define R300_RB3D_COLORPITCH2               0x4E40 /* GUESS */
 #define R300_RB3D_COLORPITCH3               0x4E44 /* GUESS */
@@ -1071,7 +1072,12 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_RB3D_Z_WRITE_ONLY        	 0x00000006
 #	define R300_STENCIL_ENABLE		 0x00000000  /* UNKNOWN yet.. */
 
-#define R300_RB3D_ZSTENCILCNTL_1                   0x4F04
+#       define R300_RB3D_Z_TEST                  0x00000012
+#       define R300_RB3D_Z_TEST_AND_WRITE        0x00000016
+#       define R300_RB3D_Z_WRITE_ONLY        	 0x00000006
+#	define R300_STENCIL_ENABLE		 (0<<1)  /* UNKNOWN yet.. */
+
+#define R300_RB3D_ZSTENCIL_CNTL_1                   0x4F04
 		/* functions */
 #	define R300_ZS_NEVER			0
 #	define R300_ZS_LESS			1
@@ -1094,14 +1100,17 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 
 
 #	define	R300_RB3D_ZS1_DEPTH_FUNC_SHIFT		0
+	/* front and back refer to operations done for front
+	   and back faces - newer Radeons can perform different
+	   functions */
 #	define	R300_RB3D_ZS1_FRONT_FUNC_SHIFT		3
 #	define	R300_RB3D_ZS1_FRONT_FAIL_OP_SHIFT	6
 #	define	R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT	9
 #	define	R300_RB3D_ZS1_FRONT_ZFAIL_OP_SHIFT	12
-#	define	R300_RB3D_ZS1_STENCIL_FUNC_SHIFT	15
-#	define	R300_RB3D_ZS1_STENCIL_FAIL_OP_SHIFT	18
-#	define	R300_RB3D_ZS1_STENCIL_ZPASS_OP_SHIFT	21
-#	define	R300_RB3D_ZS1_STENCIL_ZFAIL_OP_SHIFT	24
+#	define	R300_RB3D_ZS1_BACK_FUNC_SHIFT		15
+#	define	R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT	18
+#	define	R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT	21
+#	define	R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT	24
 
 
 
