@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.6 1999/11/25 17:42:01 brianp Exp $
+# $Id: Makefile.X11,v 1.7 2000/02/16 01:09:06 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -12,7 +12,7 @@
 INCDIR = ../include
 LIBDIR = ../lib
 
-GL_LIBS = -L$(LIBDIR) -lglut -lGLU -lGL $(XLIBS)
+GL_LIBS = -L$(LIBDIR) -lglut -lGLU -lGL $(APP_LIB_DEPS)
 
 LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
 

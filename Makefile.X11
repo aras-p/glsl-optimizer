@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.18 2000/02/10 16:00:36 brianp Exp $
+# $Id: Makefile.X11,v 1.19 2000/02/16 01:09:06 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -72,10 +72,6 @@ default:
 	@echo "  make linux-386-static     for Linux on Intel, make static .a libs"
 	@echo "  make linux-ggi            for Linux systems with libggi"
 	@echo "  make linux-386-ggi        for Linux systems with libggi w/ Intel assembly"
-	@echo "  make linux-alpha          for Linux on Alpha systems"
-	@echo "  make linux-alpha-elf      for Linux on Alpha systems, make ELF shared libs"
-	@echo "  make linux-ppc            for Linux on PowerPC systems"
-	@echo "  make linux-ppc-so         for Linux on PowerPC systems, make shared libs"
 	@echo "  make linux-glide          for Linux w/ 3Dfx Glide driver"
 	@echo "  make linux-386-glide      for Linux w/ 3Dfx Glide driver, Intel assembly"
 	@echo "  make linux-386-opt-glide  for Linux with 3Dfx Voodoo1 for GLQuake"
@@ -84,8 +80,10 @@ default:
 	@echo "  make linux-3dnow-glide    for Linux on AMD w/ 3DNow! for Glide"
 	@echo "  make linux-katmai         for Linux on PentiumIII w/ SSE"
 	@echo "  make linux-katmai-glide   for Linux on PentiumIII w/ SSE for Glide"
-	@echo "  make linux-386-pthread    for Linux on Intel, thread safety"
-	@echo "  make linux-386-pthread-glide  for Linux on Intel, thread safety, Glide"
+	@echo "  make linux-alpha          for Linux on Alpha systems"
+	@echo "  make linux-alpha-static   for Linux on Alpha systems, static libs"
+	@echo "  make linux-ppc            for Linux on PowerPC systems"
+	@echo "  make linux-ppc-static     for Linux on PowerPC systems, static libs"
 	@echo "  make linux-sparc          for Linux on Sparc systems"
 	@echo "  make linux-sparc5-elf     for Sparc5 systems, make ELF shared libs"
 	@echo "  make linux-sparc-ultra    for UltraSparc systems, make ELF shared libs"
@@ -148,9 +146,8 @@ linux-glide linux-386-glide linux-386-opt-glide \
 linux-386-opt-V2-glide \
 linux-3dnow linux-3dnow-glide \
 linux-katmai linux-katmai-glide \
-linux-alpha linux-alpha-elf \
-linux-ppc linux-ppc-so \
-linux-386-pthread linux-386-pthread-glide \
+linux-alpha-static linux-alpha \
+linux-ppc-static linux-ppc \
 linux-sparc \
 linux-sparc5-elf \
 linux-sparc-ultra \
