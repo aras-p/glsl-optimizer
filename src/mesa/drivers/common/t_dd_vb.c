@@ -1,4 +1,4 @@
-/* $Id: t_dd_vb.c,v 1.11 2001/04/29 08:44:30 keithw Exp $ */
+/* $Id: t_dd_vb.c,v 1.12 2001/04/29 08:48:43 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -117,7 +117,6 @@ void TAG(translate_vertex)(GLcontext *ctx,
 	    dst->win[3] = src->v.w;
 	 }
       } else {
-	 oow = src->v.w;
 	 dst->win[0] = UNVIEWPORT_X( src->v.x );
 	 dst->win[1] = UNVIEWPORT_Y( src->v.y );
 	 dst->win[2] = UNVIEWPORT_Z( src->v.z );
