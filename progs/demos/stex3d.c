@@ -1,4 +1,4 @@
-/* $Id: stex3d.c,v 1.3 1999/12/16 08:54:22 brianp Exp $ */
+/* $Id: stex3d.c,v 1.4 2000/03/22 19:48:57 brianp Exp $ */
 
 /*----------------------------- 
  * stex3d.c GL example of the mesa 3d-texture extention to simulate procedural
@@ -17,6 +17,9 @@
 
 /*
  * $Log: stex3d.c,v $
+ * Revision 1.4  2000/03/22 19:48:57  brianp
+ * converted from GL_EXT_texture3D to GL 1.2
+ *
  * Revision 1.3  1999/12/16 08:54:22  brianp
  * added a cast to malloc call
  *
@@ -56,7 +59,6 @@ void init(void),
      initNoise(void);
 float turbulence(float point[3], float lofreq, float hifreq);
 
-int isExtSupported(char *ext);
 void KeyHandler( unsigned char key, int x, int y );
 GLenum parseCmdLine(int argc, char **argv);
 float noise3(float vec[3]);
@@ -124,17 +126,20 @@ void init()
  /* start the noise function variables */
  initNoise();
  
- /* see if the texture 3d extention is supported */
- if (!isExtSupported("GL_EXT_texture3D")) {
-   printf("Sorry this GL implementation (%s) does not support 3d texture extentions\n",
-        (char *)(glGetString(GL_RENDERER)));
-/*   tkQuit();*/
+ /* see if we have OpenGL 1.2 or later, for 3D texturing */
+ {
+    const char *version = (const char *) glGetString(GL_VERSION);
+    if (strncmp(version, "1.0", 3) == 0 ||
+        strncmp(version, "1.1", 3) == 0) {
+       printf("Sorry, OpenGL 1.2 or later is required\n");
+       exit(1);
+    }
  }
  
  /* if texture is supported then generate the texture */
  create3Dtexture(); 
 
- glEnable(GL_TEXTURE_3D_EXT); 
+ glEnable(GL_TEXTURE_3D); 
  /*
  glBlendFunc(GL_SRC_COLOR, GL_SRC_ALPHA);
  glEnable(GL_BLEND); 
@@ -252,37 +257,18 @@ void create3Dtexture()
 
  printf("setting up 3d texture...\n");
  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
- glTexParameteri(GL_TEXTURE_3D_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
- glTexParameteri(GL_TEXTURE_3D_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
- glTexParameteri(GL_TEXTURE_3D_EXT, GL_TEXTURE_WRAP_S,     GL_REPEAT);
- glTexParameteri(GL_TEXTURE_3D_EXT, GL_TEXTURE_WRAP_T,     GL_REPEAT);
- glTexParameteri(GL_TEXTURE_3D_EXT, GL_TEXTURE_WRAP_R_EXT, GL_REPEAT);
+ glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+ glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+ glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S,     GL_REPEAT);
+ glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T,     GL_REPEAT);
+ glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R,     GL_REPEAT);
  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 
- glTexImage3DEXT(GL_TEXTURE_3D_EXT, 0, GL_RGBA,
-                    tex_width, tex_height, tex_depth,
-                    0, GL_RGBA, GL_UNSIGNED_BYTE, voxels);
+ glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA,
+              tex_width, tex_height, tex_depth,
+              0, GL_RGBA, GL_UNSIGNED_BYTE, voxels);
  
  printf("finished setting up 3d texture image...\n");
-}
-
-int isExtSupported(char *ext)
-{
-    /* routine to find whether a specified OpenGL extension is supported */
-
-    char *c;
-    int len;
-    char *allext = (char *)(glGetString(GL_EXTENSIONS));
-
-    len = strlen(ext);
-    if (len <= 0) return 0;
-
-    c = allext;
-    while (c) {
-        if (!strncmp(c,ext,len)) return 1;
-        c = strchr(c+1,'G');
-    }
-    return 0;
 }
 
 void printHelp()
@@ -435,10 +421,10 @@ void KeyHandler( unsigned char key, int x, int y )
          angz-=10; 
          break;
       case 't':
-         glEnable(GL_TEXTURE_3D_EXT); 
+         glEnable(GL_TEXTURE_3D); 
          break;
       case 'T':
-         glDisable(GL_TEXTURE_3D_EXT);
+         glDisable(GL_TEXTURE_3D);
          break;
       case 's':
          glShadeModel(GL_SMOOTH);
