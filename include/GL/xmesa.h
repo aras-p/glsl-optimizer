@@ -1,8 +1,8 @@
-/* $Id: xmesa.h,v 1.9 2000/08/22 13:31:01 joukj Exp $ */
+/* $Id: xmesa.h,v 1.10 2001/01/24 00:07:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -58,7 +58,6 @@ and create a window, you must do the following to use the X/Mesa interface:
 
 8. Before exiting, call XMesaDestroyVisual and XMesaDestroyContext.
 
-See the demos/xdemo.c and xmesa1.c files for examples.
 */
 
 
