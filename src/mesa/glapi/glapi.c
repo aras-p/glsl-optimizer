@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.45 2000/09/26 15:27:22 brianp Exp $ */
+/* $Id: glapi.c,v 1.46 2000/10/19 20:13:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1535,11 +1535,13 @@ get_static_proc_offset(const char *funcName)
 static GLvoid *
 get_static_proc_address(const char *funcName)
 {
-   GLint i = get_static_proc_offset(funcName);
-   if (i >= 0)
-      return static_functions[i].Address;
-   else
-      return NULL;
+   GLint i;
+   for (i = 0; static_functions[i].Name; i++) {
+      if (strcmp(static_functions[i].Name, funcName) == 0) {
+         return static_functions[i].Address;
+      }
+   }
+   return NULL;
 }
 
 
