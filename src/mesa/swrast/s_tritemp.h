@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.18 2001/06/12 14:18:58 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.19 2001/06/13 14:53:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -108,9 +108,9 @@
     * And find the order of the 3 vertices along the Y axis.
     */
    {
-      const GLfixed fy0 = FloatToFixed(v0->win[1] + 0.5F) & snapMask;
-      const GLfixed fy1 = FloatToFixed(v1->win[1] + 0.5F) & snapMask;
-      const GLfixed fy2 = FloatToFixed(v2->win[1] + 0.5F) & snapMask;
+      const GLfixed fy0 = FloatToFixed(v0->win[1] - 0.5F) & snapMask;
+      const GLfixed fy1 = FloatToFixed(v1->win[1] - 0.5F) & snapMask;
+      const GLfixed fy2 = FloatToFixed(v2->win[1] - 0.5F) & snapMask;
 
       if (fy0 <= fy1) {
 	 if (fy1 <= fy2) {
