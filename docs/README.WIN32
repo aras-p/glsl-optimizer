@@ -1,7 +1,7 @@
 
     Mesa/Readme.win32
 
-    Last Updated: Thursday, September 16th, 1999 - tjump@tertius.com
+    Last Updated: Sunday, September 19th, 1999 - tjump@tertius.com
 
 *** What's New
 
@@ -11,6 +11,16 @@
   I expected them to).
 
   What did you expect, complete regression testing maybe?
+
+- NASM build support. Any file in the project coded as a .S file will
+  automatically be recognized and built as a NASM-source assember file.
+
+  To enable building using NASM, set the environment variable NASM to
+  indicate that command to execute to run nasm on a file. If NASM is in
+  your command search path then all this needs be set to is 'nasmw' -
+  otherwise you will need to include the complete drive and directory path.
+
+  NASM may be retrieved here: http://www.web-sites.co.uk/nasm/
 
 - DevStudio projects suspended for compatability reasons: projects modified
   by DevStudio 6 are not compatible with DevStudio 5.
