@@ -81,7 +81,7 @@ static void _BLENDAPI
 blend_replace( GLcontext *ctx, GLuint n, const GLubyte mask[],
                GLchan rgba[][4], CONST GLchan dest[][4] )
 {
-   ASSERT(ctx->Color.BlendEquatioRGB==GL_FUNC_ADD);
+   ASSERT(ctx->Color.BlendEquationRGB==GL_FUNC_ADD);
    ASSERT(ctx->Color.BlendEquationA==GL_FUNC_ADD);
    ASSERT(ctx->Color.BlendSrcRGB==GL_ONE);
    ASSERT(ctx->Color.BlendDstRGB==GL_ZERO);
@@ -101,7 +101,7 @@ blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
                     GLchan rgba[][4], CONST GLchan dest[][4] )
 {
    GLuint i;
-   ASSERT(ctx->Color.BlendEquatioRGB==GL_FUNC_ADD);
+   ASSERT(ctx->Color.BlendEquationRGB==GL_FUNC_ADD);
    ASSERT(ctx->Color.BlendEquationA==GL_FUNC_ADD);
    ASSERT(ctx->Color.BlendSrcRGB==GL_SRC_ALPHA);
    ASSERT(ctx->Color.BlendDstRGB==GL_ONE_MINUS_SRC_ALPHA);
@@ -189,7 +189,7 @@ blend_add( GLcontext *ctx, GLuint n, const GLubyte mask[],
            GLchan rgba[][4], CONST GLchan dest[][4] )
 {
    GLuint i;
-   ASSERT(ctx->Color.BlendEquatioRGB==GL_FUNC_ADD);
+   ASSERT(ctx->Color.BlendEquationRGB==GL_FUNC_ADD);
    ASSERT(ctx->Color.BlendEquationA==GL_FUNC_ADD);
    ASSERT(ctx->Color.BlendSrcRGB==GL_ONE);
    ASSERT(ctx->Color.BlendDstRGB==GL_ONE);
@@ -228,7 +228,7 @@ blend_min( GLcontext *ctx, GLuint n, const GLubyte mask[],
            GLchan rgba[][4], CONST GLchan dest[][4] )
 {
    GLuint i;
-   ASSERT(ctx->Color.BlendEquatioRGB==GL_MIN);
+   ASSERT(ctx->Color.BlendEquationRGB==GL_MIN);
    ASSERT(ctx->Color.BlendEquationA==GL_MIN);
    (void) ctx;
 
@@ -257,7 +257,7 @@ blend_max( GLcontext *ctx, GLuint n, const GLubyte mask[],
            GLchan rgba[][4], CONST GLchan dest[][4] )
 {
    GLuint i;
-   ASSERT(ctx->Color.BlendEquatioRGB==GL_MAX);
+   ASSERT(ctx->Color.BlendEquationRGB==GL_MAX);
    ASSERT(ctx->Color.BlendEquationA==GL_MAX);
    (void) ctx;
 
