@@ -1,10 +1,8 @@
-/* $Id: t_context.h,v 1.46 2003/03/31 18:19:56 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +26,33 @@
  * \file t_context.h
  * \brief TnL module datatypes and definitions.
  * \author Keith Whitwell
+ */
+
+
+/**
+ * \mainpage The TNL-module
+ *
+ * TNL stands for "transform and lighting", i.e. this module implements
+ * a pipeline that receives as input a buffer of vertices and does all
+ * necessary transformations (rotations, clipping, vertex shader etc.)
+ * and passes then the output to the rasterizer.
+ *
+ * The gl_pipeline contains an array of stages. The stages are
+ * black-boxes, which are described by gl_pipeline_stage.
+ * The function _tnl_run_pipeline (in file t_pipeline.c) applies all
+ * the stages to the vertex buffer.
+ * Note that the last stage in the pipeline is the rasterizer.
+ *
+ * _tnl_run_pipeline is called either, when the vertex buffer is full or
+ * when a state change flushes the pipeline.
+ * Note that _tnl_run_pipeline is not called directly but via
+ * tnl_device_driver::RunPipeline, which is stored in TNLcontext::Driver.
+ *
+ * The 'immediate' structure records all the GL commands issued between
+ * glBegin and glEnd.  The 'vertex_buffer' structure stores the vertex
+ * data as its passed through the pipeline stages.  The initial vertex_buffer
+ * data may either come from the 'immediate' structure or client vertex
+ * arrays or display lists.
  */
 
 #ifndef _T_CONTEXT_H
@@ -290,7 +315,7 @@ typedef struct vertex_buffer
 
 
 
-/* Describes an individual operation on the pipeline.
+/** Describes an individual operation on the pipeline.
  */
 struct gl_pipeline_stage {
    const char *name;
@@ -342,13 +367,15 @@ struct gl_pipeline_stage {
    GLboolean (*run)( GLcontext *ctx, struct gl_pipeline_stage * );
 };
 
-
+/** Contains the array of all pipeline stages.
+ * The default values are defined at the end of t_pipeline.c */
 struct gl_pipeline {
-   GLuint build_state_trigger;	  /* state changes which require build */
-   GLuint build_state_changes;    /* state changes since last build */
-   GLuint run_state_changes;	  /* state changes since last run */
-   GLuint run_input_changes;	  /* VERT_* changes since last run */
-   GLuint inputs;		  /* VERT_* inputs to pipeline */
+   GLuint build_state_trigger;	  /**< state changes which require build */
+   GLuint build_state_changes;    /**< state changes since last build */
+   GLuint run_state_changes;	  /**< state changes since last run */
+   GLuint run_input_changes;	  /**< VERT_* changes since last run */
+   GLuint inputs;		  /**< VERT_* inputs to pipeline */
+   /** This array has to end with a NULL-pointer. */
    struct gl_pipeline_stage stages[MAX_PIPELINE_STAGES+1];
    GLuint nr_stages;
 };
