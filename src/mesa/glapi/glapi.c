@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.27 2000/01/27 00:26:03 brianp Exp $ */
+/* $Id: glapi.c,v 1.28 2000/01/28 19:03:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,13 +32,16 @@
  * There are functions to set/get the current dispatch table for the
  * current thread and to manage registration/dispatch of dynamically
  * added extension functions.
+ *
+ * It's intended that this file and the other glapi*.[ch] files are
+ * flexible enough to be reused in several places:  XFree86, DRI-
+ * based libGL.so, and perhaps the SGI SI.
+ *
+ * There are no dependencies on Mesa in this code.
  */
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "conf.h"
-#endif
 #include <assert.h>
 #include <stdlib.h>  /* to get NULL */
 #include <string.h>
@@ -46,7 +49,9 @@
 #include "glapinoop.h"
 #include "glapioffsets.h"
 #include "glapitable.h"
-
+#if defined(THREADS)
+#include "glthread.h"
+#endif
 
 
 /* This is used when thread safety is disabled */
@@ -57,8 +62,6 @@ void *_glapi_CurrentContext = NULL;
 
 
 #if defined(THREADS)
-
-#include "glthread.h"
 
 /* Flag to indicate whether thread-safe dispatch is enabled */
 static GLboolean ThreadSafe = GL_FALSE;
@@ -227,12 +230,11 @@ _glapi_get_dispatch_table_size(void)
 
 /*
  * Get API dispatcher version string.
- * XXX this isn't well defined yet.
  */
 const char *
 _glapi_get_version(void)
 {
-   return "1.2";
+   return "20000128";  /* YYYYMMDD */
 }
 
 
@@ -493,67 +495,6 @@ _glapi_check_table(const struct _glapi_table *table)
    }
 #endif
 }
-
-
-/**********************************************************************
- * Generate the GL entrypoint functions here.
- */
-
-#define KEYWORD1
-#define KEYWORD2 GLAPIENTRY
-#if defined(USE_X86_ASM) && !defined(__WIN32__) && !defined(XF86DRI)
-#define NAME(func) _glapi_fallback_##func
-#elif defined(USE_MGL_NAMESPACE)
-#define NAME(func)  mgl##func
-#else
-#define NAME(func)  gl##func
-#endif
-
-#ifdef DEBUG
-
-#include <stdio.h>
-
-static int
-trace(void)
-{
-   static int trace = -1;
-   if (trace < 0)
-      trace = getenv("MESA_TRACE") ? 1 : 0;
-   return trace > 0;
-}
-
-#define DISPATCH(FUNC, ARGS, MESSAGE)					\
-   const struct _glapi_table *dispatch;					\
-   dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
-   if (trace()) printf MESSAGE;						\
-   (dispatch->FUNC) ARGS
-
-#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 				\
-   const struct _glapi_table *dispatch;					\
-   dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
-   if (trace()) printf MESSAGE;						\
-   return (dispatch->FUNC) ARGS
-
-#else
-
-#define DISPATCH(FUNC, ARGS, MESSAGE)					\
-   const struct _glapi_table *dispatch;					\
-   dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
-   (dispatch->FUNC) ARGS
-
-#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE)				\
-   const struct _glapi_table *dispatch;					\
-   dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
-   return (dispatch->FUNC) ARGS
-
-#endif
-
-
-#ifndef GLAPIENTRY
-#define GLAPIENTRY
-#endif
-
-#include "glapitemp.h"
 
 
 /*
