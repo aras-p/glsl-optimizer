@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.106 2002/11/01 23:46:53 brianp Exp $
+$Id: VERSIONS,v 1.107 2002/11/04 16:25:42 brianp Exp $
 
 
 Mesa Version History
@@ -1063,6 +1063,7 @@ Mesa Version History
     New:
 	- OpenGL 1.4 support (glGetString(GL_VERSION) returns "1.4")
 	- removed some overlooked debugging code
+	- glxinfo updated to support GLX_ARB_multisample
     Bug fixes:
 	- GL_POINT and GL_LINE-mode polygons didn't obey cull state
 	- fixed potential bug in _mesa_align_malloc/calloc()
