@@ -60,6 +60,7 @@ extern void r200TclFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 #define R200_TCL_FALLBACK_TEXGEN_5          0x200 /* texgen, unit 5 */
 #define R200_TCL_FALLBACK_TCL_DISABLE       0x400 /* user disable */
 #define R200_TCL_FALLBACK_BITMAP            0x800 /* draw bitmap with points */
+#define R200_TCL_FALLBACK_VERTEX_PROGRAM    0x1000/* vertex program active */
 
 #define TCL_FALLBACK( ctx, bit, mode )	r200TclFallback( ctx, bit, mode )
 

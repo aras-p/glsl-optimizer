@@ -273,4 +273,25 @@ DRI_CONF_OPT_BEGIN_V(texture_units,int,def, # min ":" # max ) \
         DRI_CONF_DESC(de,"Anzahl der Textureinheiten") \
 DRI_CONF_OPT_END
 
+/* Options for features that are not done in hardware by the driver (like GL_ARB_vertex_program
+   On cards where there is no documentation (r200) or on rasterization-only hardware). */
+#define DRI_CONF_SECTION_SOFTWARE \
+DRI_CONF_SECTION_BEGIN \
+        DRI_CONF_DESC(de,"Funktionalität, die nicht durch die Hardware beschleunigt wird") \
+        DRI_CONF_DESC(en,"Features that are not hardware-accelerated")
+
+#define DRI_CONF_ARB_VERTEX_PROGRAM(def) \
+DRI_CONF_OPT_BEGIN(arb_vertex_program,bool,def) \
+        DRI_CONF_DESC(de,"GL_ARB_vertex_program aktivieren") \
+        DRI_CONF_DESC(en,"Enable GL_ARB_vertex_program") \
+        DRI_CONF_DESC(fr,"Activer GL_ARB_vertex_program") \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_NV_VERTEX_PROGRAM(def) \
+DRI_CONF_OPT_BEGIN(nv_vertex_program,bool,def) \
+        DRI_CONF_DESC(de,"GL_NV_vertex_program aktivieren") \
+        DRI_CONF_DESC(en,"Enable GL_NV_vertex_program") \
+        DRI_CONF_DESC(fr,"Activer GL_NV_vertex_program") \
+DRI_CONF_OPT_END
+
 #endif

@@ -2043,6 +2043,10 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
       r200UpdateSpecular ( ctx );
       break;
 
+   case GL_VERTEX_PROGRAM_ARB:
+      TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, state);
+      break;
+
    default:
       return;
    }
