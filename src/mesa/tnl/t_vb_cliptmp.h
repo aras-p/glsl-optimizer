@@ -1,4 +1,4 @@
-/* $Id: t_vb_cliptmp.h,v 1.14 2001/07/13 17:26:39 brianp Exp $ */
+/* $Id: t_vb_cliptmp.h,v 1.15 2002/03/29 17:27:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -140,11 +140,11 @@ TAG(clip_line)( GLcontext *ctx, GLuint i, GLuint j, GLubyte mask )
 
    if (mask & CLIP_USER_BIT) {
       for (p=0;p<MAX_CLIP_PLANES;p++) {
-	 if (ctx->Transform.ClipEnabled[p]) {
-	    GLfloat a = ctx->Transform._ClipUserPlane[p][0];
-	    GLfloat b = ctx->Transform._ClipUserPlane[p][1];
-	    GLfloat c = ctx->Transform._ClipUserPlane[p][2];
-	    GLfloat d = ctx->Transform._ClipUserPlane[p][3];
+	 if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
+            const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
+            const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
+            const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
+            const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
 	    LINE_CLIP( CLIP_USER_BIT, a, b, c, d );
 	 }
       }
@@ -188,13 +188,13 @@ TAG(clip_tri)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte mask )
 
    if (mask & CLIP_USER_BIT) {
       for (p=0;p<MAX_CLIP_PLANES;p++) {
-	 if (ctx->Transform.ClipEnabled[p]) {
-	    GLfloat a = ctx->Transform._ClipUserPlane[p][0];
-	    GLfloat b = ctx->Transform._ClipUserPlane[p][1];
-	    GLfloat c = ctx->Transform._ClipUserPlane[p][2];
-	    GLfloat d = ctx->Transform._ClipUserPlane[p][3];
-	    POLY_CLIP( CLIP_USER_BIT, a, b, c, d );
-	 }
+         if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
+            const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
+            const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
+            const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
+            const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
+            POLY_CLIP( CLIP_USER_BIT, a, b, c, d );
+         }
       }
    }
 
@@ -241,11 +241,11 @@ TAG(clip_quad)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
 
    if (mask & CLIP_USER_BIT) {
       for (p=0;p<MAX_CLIP_PLANES;p++) {
-	 if (ctx->Transform.ClipEnabled[p]) {
-	    GLfloat a = ctx->Transform._ClipUserPlane[p][0];
-	    GLfloat b = ctx->Transform._ClipUserPlane[p][1];
-	    GLfloat c = ctx->Transform._ClipUserPlane[p][2];
-	    GLfloat d = ctx->Transform._ClipUserPlane[p][3];
+	 if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
+            const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
+            const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
+            const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
+            const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
 	    POLY_CLIP( CLIP_USER_BIT, a, b, c, d );
 	 }
       }

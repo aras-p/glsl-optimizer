@@ -1,10 +1,10 @@
-/* $Id: get.c,v 1.75 2001/12/18 04:06:45 brianp Exp $ */
+/* $Id: get.c,v 1.76 2002/03/29 17:27:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -228,7 +228,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_CLIP_PLANE3:
       case GL_CLIP_PLANE4:
       case GL_CLIP_PLANE5:
-         *params = ctx->Transform.ClipEnabled[pname-GL_CLIP_PLANE0];
+         if (ctx->Transform.ClipPlanesEnabled & (1 << (pname - GL_CLIP_PLANE0)))
+            *params = GL_TRUE;
+         else
+            *params = GL_FALSE;
          break;
       case GL_COLOR_CLEAR_VALUE:
          params[0] = ctx->Color.ClearColor[0] ? GL_TRUE : GL_FALSE;
@@ -1554,7 +1557,10 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       case GL_CLIP_PLANE3:
       case GL_CLIP_PLANE4:
       case GL_CLIP_PLANE5:
-         *params = (GLdouble) ctx->Transform.ClipEnabled[pname-GL_CLIP_PLANE0];
+         if (ctx->Transform.ClipPlanesEnabled & (1 << (pname - GL_CLIP_PLANE0)))
+            *params = 1.0;
+         else
+            *params = 0.0;
          break;
       case GL_COLOR_CLEAR_VALUE:
          params[0] = (GLdouble) CHAN_TO_FLOAT(ctx->Color.ClearColor[0]);
@@ -2790,7 +2796,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_CLIP_PLANE3:
       case GL_CLIP_PLANE4:
       case GL_CLIP_PLANE5:
-         *params = (GLfloat) ctx->Transform.ClipEnabled[pname-GL_CLIP_PLANE0];
+         if (ctx->Transform.ClipPlanesEnabled & (1 << (pname - GL_CLIP_PLANE0)))
+            *params = 1.0;
+         else
+            *params = 0.0;
          break;
       case GL_COLOR_CLEAR_VALUE:
          params[0] = CHAN_TO_FLOAT(ctx->Color.ClearColor[0]);
@@ -3996,8 +4005,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_CLIP_PLANE3:
       case GL_CLIP_PLANE4:
       case GL_CLIP_PLANE5:
-         i = (GLint) (pname - GL_CLIP_PLANE0);
-         *params = (GLint) ctx->Transform.ClipEnabled[i];
+         if (ctx->Transform.ClipPlanesEnabled & (1 << (pname - GL_CLIP_PLANE0)))
+            *params = 1;
+         else
+            *params = 0;
          break;
       case GL_COLOR_CLEAR_VALUE:
          params[0] = FLOAT_TO_INT( (ctx->Color.ClearColor[0]) );

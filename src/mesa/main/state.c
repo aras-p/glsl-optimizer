@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.78 2002/03/16 18:07:39 brianp Exp $ */
+/* $Id: state.c,v 1.79 2002/03/29 17:27:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -650,10 +650,10 @@ update_projection( GLcontext *ctx )
    /* Recompute clip plane positions in clipspace.  This is also done
     * in _mesa_ClipPlane().
     */
-   if (ctx->Transform._AnyClip) {
+   if (ctx->Transform.ClipPlanesEnabled) {
       GLuint p;
       for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
-	 if (ctx->Transform.ClipEnabled[p]) {
+	 if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
 	    _mesa_transform_vector( ctx->Transform._ClipUserPlane[p],
 				 ctx->Transform.EyeUserPlane[p],
 				 ctx->ProjectionMatrixStack.Top->inv );

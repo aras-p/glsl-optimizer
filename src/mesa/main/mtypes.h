@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.68 2002/03/23 16:33:53 brianp Exp $ */
+/* $Id: mtypes.h,v 1.69 2002/03/29 17:27:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -379,7 +379,7 @@ struct gl_enable_attrib {
    GLboolean AlphaTest;
    GLboolean AutoNormal;
    GLboolean Blend;
-   GLboolean ClipPlane[MAX_CLIP_PLANES];
+   GLuint ClipPlanes;
    GLboolean ColorMaterial;
    GLboolean Convolution1D;
    GLboolean Convolution2D;
@@ -1009,8 +1009,7 @@ struct gl_transform_attrib {
    GLenum MatrixMode;				/* Matrix mode */
    GLfloat EyeUserPlane[MAX_CLIP_PLANES][4];
    GLfloat _ClipUserPlane[MAX_CLIP_PLANES][4];	/* derived */
-   GLboolean ClipEnabled[MAX_CLIP_PLANES];
-   GLubyte   _AnyClip;				/* How many ClipEnabled? */
+   GLuint ClipPlanesEnabled;                    /* on/off bitmask */
    GLboolean Normalize;				/* Normalize all normals? */
    GLboolean RescaleNormals;			/* GL_EXT_rescale_normal */
    GLboolean RasterPositionUnclipped;           /* GL_IBM_rasterpos_clip */

@@ -1,4 +1,4 @@
-/* $Id: clip.c,v 1.24 2001/12/18 04:06:44 brianp Exp $ */
+/* $Id: clip.c,v 1.25 2002/03/29 17:29:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -90,9 +90,9 @@ _mesa_ClipPlane( GLenum plane, const GLdouble *eq )
     * matrix, and is recalculated on changes to the projection matrix by
     * code in _mesa_update_state().
     */
-   if (ctx->Transform.ClipEnabled[p]) {
+   if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
       if (ctx->ProjectionMatrixStack.Top->flags & MAT_DIRTY)
-	 _math_matrix_analyse( ctx->ProjectionMatrixStack.Top );
+         _math_matrix_analyse( ctx->ProjectionMatrixStack.Top );
 
       _mesa_transform_vector( ctx->Transform._ClipUserPlane[p],
 			   ctx->Transform.EyeUserPlane[p],

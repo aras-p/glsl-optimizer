@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.35 2002/02/15 16:26:08 brianp Exp $ */
+/* $Id: rastpos.c,v 1.36 2002/03/29 17:27:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -92,7 +92,7 @@ userclip_point( GLcontext* ctx, const GLfloat v[] )
    GLuint p;
 
    for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
-      if (ctx->Transform.ClipEnabled[p]) {
+      if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
 	 GLfloat dot = v[0] * ctx->Transform._ClipUserPlane[p][0]
 		     + v[1] * ctx->Transform._ClipUserPlane[p][1]
 		     + v[2] * ctx->Transform._ClipUserPlane[p][2]
@@ -344,8 +344,7 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    }
 
    /* clip to user clipping planes */
-   if (ctx->Transform._AnyClip &&
-       userclip_point(ctx, clip) == 0) {
+   if (ctx->Transform.ClipPlanesEnabled && !userclip_point(ctx, clip)) {
       ctx->Current.RasterPosValid = GL_FALSE;
       return;
    }

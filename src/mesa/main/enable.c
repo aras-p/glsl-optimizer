@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.58 2002/03/28 22:45:45 brianp Exp $ */
+/* $Id: enable.c,v 1.59 2002/03/29 17:27:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -207,20 +207,18 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_CLIP_PLANE4:
       case GL_CLIP_PLANE5:
          {
-            GLuint p = cap - GL_CLIP_PLANE0;
+            const GLuint p = cap - GL_CLIP_PLANE0;
 
-            if (ctx->Transform.ClipEnabled[p] == state)
+            if ((ctx->Transform.ClipPlanesEnabled & (1 << p)) == (state << p))
                return;
 
             FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
-            ctx->Transform.ClipEnabled[p] = state;
 
             if (state) {
-               ctx->Transform._AnyClip++;
+               ctx->Transform.ClipPlanesEnabled |= (1 << p);
 
-               if (ctx->ProjectionMatrixStack.Top->flags & MAT_DIRTY) {
+               if (ctx->ProjectionMatrixStack.Top->flags & MAT_DIRTY)
                   _math_matrix_analyse( ctx->ProjectionMatrixStack.Top );
-               }
 
                /* This derived state also calculated in clip.c and
                 * from _mesa_update_state() on changes to EyeUserPlane
@@ -231,7 +229,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
                                     ctx->ProjectionMatrixStack.Top->inv );
             }
             else {
-               ctx->Transform._AnyClip--;
+               ctx->Transform.ClipPlanesEnabled &= ~(1 << p);
             }               
          }
          break;
@@ -930,7 +928,7 @@ _mesa_IsEnabled( GLenum cap )
       case GL_CLIP_PLANE3:
       case GL_CLIP_PLANE4:
       case GL_CLIP_PLANE5:
-	 return ctx->Transform.ClipEnabled[cap-GL_CLIP_PLANE0];
+	 return (ctx->Transform.ClipPlanesEnabled >> (cap - GL_CLIP_PLANE0)) & 1;
       case GL_COLOR_MATERIAL:
 	 return ctx->Light.ColorMaterialEnabled;
       case GL_CULL_FACE:

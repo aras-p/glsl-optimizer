@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.61 2002/03/28 22:42:41 brianp Exp $ */
+/* $Id: attrib.c,v 1.62 2002/03/29 17:27:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -180,9 +180,7 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->AlphaTest = ctx->Color.AlphaEnabled;
       attr->AutoNormal = ctx->Eval.AutoNormal;
       attr->Blend = ctx->Color.BlendEnabled;
-      for (i=0;i<MAX_CLIP_PLANES;i++) {
-         attr->ClipPlane[i] = ctx->Transform.ClipEnabled[i];
-      }
+      attr->ClipPlanes = ctx->Transform.ClipPlanesEnabled;
       attr->ColorMaterial = ctx->Light.ColorMaterialEnabled;
       attr->Convolution1D = ctx->Pixel.Convolution1DEnabled;
       attr->Convolution2D = ctx->Pixel.Convolution2DEnabled;
@@ -451,9 +449,10 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
    TEST_AND_UPDATE(ctx->Color.BlendEnabled, enable->Blend, GL_BLEND);
 
    for (i=0;i<MAX_CLIP_PLANES;i++) {
-      if (ctx->Transform.ClipEnabled[i] != enable->ClipPlane[i])
+      const GLuint mask = 1 << i;
+      if ((ctx->Transform.ClipPlanesEnabled & mask) != (enable->ClipPlanes & mask))
          _mesa_set_enable(ctx, (GLenum) (GL_CLIP_PLANE0 + i),
-                          enable->ClipPlane[i]);
+                          (enable->ClipPlanes & mask) ? GL_TRUE : GL_FALSE);
    }
 
    TEST_AND_UPDATE(ctx->Light.ColorMaterialEnabled, enable->ColorMaterial,
@@ -1055,12 +1054,10 @@ _mesa_PopAttrib(void)
 
                /* restore clip planes */
                for (i = 0; i < MAX_CLIP_PLANES; i++) {
+                  const GLuint mask = 1 << 1;
                   const GLfloat *eyePlane = xform->EyeUserPlane[i];
                   COPY_4V(ctx->Transform.EyeUserPlane[i], eyePlane);
-                  if (xform->ClipEnabled[i]) {
-                     _mesa_transform_vector( ctx->Transform._ClipUserPlane[i],
-                                             eyePlane,
-                                             ctx->ProjectionMatrixStack.Top->inv );
+                  if (xform->ClipPlanesEnabled & mask) {
                      _mesa_set_enable(ctx, GL_CLIP_PLANE0 + i, GL_TRUE);
                   }
                   else {

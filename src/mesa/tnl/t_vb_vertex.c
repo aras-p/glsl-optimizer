@@ -1,4 +1,4 @@
-/* $Id: t_vb_vertex.c,v 1.12 2002/01/22 14:35:17 brianp Exp $ */
+/* $Id: t_vb_vertex.c,v 1.13 2002/03/29 17:27:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -79,7 +79,7 @@ static void NAME( GLcontext *ctx,				\
    GLuint p;							\
 								\
    for (p = 0; p < ctx->Const.MaxClipPlanes; p++)		\
-      if (ctx->Transform.ClipEnabled[p]) {			\
+      if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {	\
 	 GLuint nr, i;						\
 	 const GLfloat a = ctx->Transform._ClipUserPlane[p][0];	\
 	 const GLfloat b = ctx->Transform._ClipUserPlane[p][1];	\
@@ -211,7 +211,7 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
       /* Test userclip planes.  This contributes to VB->ClipMask, so
        * is essentially required to be in this stage.
        */
-      if (ctx->Transform._AnyClip) {
+      if (ctx->Transform.ClipPlanesEnabled) {
 	 usercliptab[VB->ClipPtr->size]( ctx,
 					 VB->ClipPtr,
 					 store->clipmask,
