@@ -199,7 +199,7 @@ WGLAPI int   GLAPIENTRY SetPixelFormat(HDC,int,const PIXELFORMATDESCRIPTOR *);
 #  define GLUTCALLBACK
 #  define GLUTAPI extern
 /* Prototype exit for the non-Win32 case (see above). */
-extern void exit(int);
+/*extern void exit(int);  this screws up gcc -ansi -pedantic! */
 #endif
 
 
