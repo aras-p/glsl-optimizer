@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 1999/08/19 00:55:40 jtg Exp $
+# $Id: Makefile,v 1.2 1999/09/17 00:55:21 brianp Exp $
 
 # Makefile for BeOS demos
 
@@ -11,7 +11,7 @@ CC = g++
 
 # Use Mesa:
 CFLAGS = -I../include -c -g
-LFLAGS = -L../lib  -Xlinker -rpath ../lib -lbe -lMesaGL
+LFLAGS = -L../lib  -Xlinker -rpath ../lib -lbe -lGL
 
 # Use BeOS OpenGL:
 #CFLAGS = -I/boot/develop/headers/be/opengl -c -g
