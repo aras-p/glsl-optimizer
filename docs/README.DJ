@@ -111,7 +111,7 @@ FAQ:
 
    Q) I made a simple application and it does nothing. It exits right away. Not
       even a blank screen.
-   A) The pure software drivers (VESA/VGA) support only double-buffered modes.
+   A) Pure software drivers (VESA/VGA/NUL) support only double-buffered modes.
    A) Another weird "feature" is that buffer width must be multiple of 8 (I'm a
       lazy programmer and I found that the easiest way to keep buffer handling
       at peak performance ;-).
@@ -125,6 +125,13 @@ FAQ:
       feel happy about this, make sure you remove the line with GLUT_IMPORT_LIB
       from `Mesa/src/glut/dos/Makefile.DJ' before (re)making GLUT. Beware, this
       means you will never EVER be able to safely use `glut.dxe'!
+
+   Q) What is NUL driver good for, if I don't get any output at all?
+   A) For debugging. The NUL driver is very much like OSMesa. Everything is
+      done just the same as VESA/VGA drivers, only it doesn't touches your
+      video hardware. You can query the actual buffer by issuing:
+	DMesaGetIntegerv(DMESA_GET_BUFFER_ADDR, &buffer);
+      and dump it to a file.
 
    Q) How do I query for a list of available video modes to choose as a visual?
    A) This is an ugly hack, for which I'm sure I'll burn in hell.
@@ -189,7 +196,11 @@ chosen in such a way that first window will fit. If you need high resolution
 with small windows, set initial position far to the right (or way down); then
 you can move them back to any position right before the main loop.
 
-The following environment variables can customize GLUT behaviour:
+
+
+Environment variables:
+~~~~~~~~~~~~~~~~~~~~~~
+	DMESA_NULDRV		- (any value) force NUL driver
 	GLUT_FPS		- print frames/second statistics to stderr
 	DMESA_GLUT_REFRESH	- set vertical screen refresh rate (VESA3)
 	DMESA_GLUT_BPP		- set default bits per pixel (VGA needs 8)
@@ -248,6 +259,7 @@ v1.5 (jan-2004)
 	x more changes to the 3dfx driver
 
 v1.6 (???-2004)
+	+ implemented NUL driver
 	+ added DMesaGetProcAddress and glutGetProcAddress
 	! fixed a horrible bug in VGA initialization routine
 

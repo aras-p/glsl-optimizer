@@ -38,6 +38,7 @@
 #include "internal.h"
 #include "vesa.h"
 #include "vga.h"
+#include "null.h"
 #include "video.h"
 
 
@@ -428,6 +429,13 @@ static vl_mode *v_init_hw (void)
  static vl_mode *q = NULL;
 
  if (q == NULL) {
+    /* are we forced to NUL driver? */
+    if (getenv("DMESA_NULDRV")) {
+       if ((q = NUL.init()) != NULL) {
+          drv = &NUL;
+       }
+       return q;
+    }
     /* initialize hardware */
     if ((q = VESA.init()) != NULL) {
        drv = &VESA;

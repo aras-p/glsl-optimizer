@@ -572,12 +572,12 @@ wglUseFontBitmaps_FX(HDC fontDevice, DWORD firstChar, DWORD numChars,
 
    bitDevice = CreateCompatibleDC(fontDevice);
 
-   // Swap fore and back colors so the bitmap has the right polarity
+   /* Swap fore and back colors so the bitmap has the right polarity */
    tempColor = GetBkColor(bitDevice);
    SetBkColor(bitDevice, GetTextColor(bitDevice));
    SetTextColor(bitDevice, tempColor);
 
-   // Place chars based on base line
+   /* Place chars based on base line */
    SetTextAlign(bitDevice, TA_BASELINE);
 
    for (i = 0; i < (int)numChars; i++) {
@@ -588,34 +588,34 @@ wglUseFontBitmaps_FX(HDC fontDevice, DWORD firstChar, DWORD numChars,
       HGDIOBJ origBmap;
       unsigned char *bmap;
 
-      curChar = (char)(i + firstChar); // [koolsmoky] explicit cast
+      curChar = (char)(i + firstChar); /* [koolsmoky] explicit cast */
 
-      // Find how high/wide this character is
+      /* Find how high/wide this character is */
       GetTextExtentPoint32(bitDevice, &curChar, 1, &size);
  
-      // Create the output bitmap
+      /* Create the output bitmap */
       charWidth = size.cx;
       charHeight = size.cy;
-      bmapWidth = ((charWidth + 31) / 32) * 32;	// Round up to the next multiple of 32 bits
+      bmapWidth = ((charWidth + 31) / 32) * 32;	/* Round up to the next multiple of 32 bits */
       bmapHeight = charHeight;
       bitObject = CreateCompatibleBitmap(bitDevice, bmapWidth, bmapHeight);
-      //VERIFY(bitObject);
+      /*VERIFY(bitObject);*/
 
-      // Assign the output bitmap to the device
+      /* Assign the output bitmap to the device */
       origBmap = SelectObject(bitDevice, bitObject);
 
       PatBlt(bitDevice, 0, 0, bmapWidth, bmapHeight, BLACKNESS);
 
-      // Use our source font on the device
+      /* Use our source font on the device */
       SelectObject(bitDevice, GetCurrentObject(fontDevice, OBJ_FONT));
 
-      // Draw the character
+      /* Draw the character */
       TextOut(bitDevice, 0, metric.tmAscent, &curChar, 1);
 
-      // Unselect our bmap object
+      /* Unselect our bmap object */
       SelectObject(bitDevice, origBmap);
 
-      // Convert the display dependant representation to a 1 bit deep DIB
+      /* Convert the display dependant representation to a 1 bit deep DIB */
       numBytes = (bmapWidth * bmapHeight) / 8;
       bmap = MALLOC(numBytes);
       dibInfo->bmiHeader.biWidth = bmapWidth;
@@ -623,21 +623,21 @@ wglUseFontBitmaps_FX(HDC fontDevice, DWORD firstChar, DWORD numChars,
       res = GetDIBits(bitDevice, bitObject, 0, bmapHeight, bmap,
 		      dibInfo, DIB_RGB_COLORS);
 
-      // Create the GL object
+      /* Create the GL object */
       glNewList(i + listBase, GL_COMPILE);
       glBitmap(bmapWidth, bmapHeight, 0.0, metric.tmDescent,
 	       charWidth, 0.0, bmap);
       glEndList();
-      // CheckGL();
+      /* CheckGL(); */
 
-      // Destroy the bmap object
+      /* Destroy the bmap object */
       DeleteObject(bitObject);
 
-      // Deallocate the bitmap data
+      /* Deallocate the bitmap data */
       FREE(bmap);
    }
 
-   // Destroy the DC
+   /* Destroy the DC */
    DeleteDC(bitDevice);
 
    FREE(dibInfo);
@@ -695,87 +695,95 @@ GLAPI int GLAPIENTRY
 wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR * ppfd)
 {
    int i, best = -1, qt_valid_pix;
+   PIXELFORMATDESCRIPTOR pfd = *ppfd;
 
 #if 0
   FILE *pix_file;
   pix_file = fopen("pix_log.txt", "a");
   if (pix_file) {
   fprintf(pix_file, "wglChoosePixelFormat\n");
-  fprintf(pix_file, "nSize           = %d\n",ppfd->nSize);
-  fprintf(pix_file, "nVersion        = %d\n",ppfd->nVersion);
-  fprintf(pix_file, "dwFlags         = %d\n",ppfd->dwFlags);
-  fprintf(pix_file, "iPixelType      = %d\n",ppfd->iPixelType);
-  fprintf(pix_file, "cColorBits      = %d\n",ppfd->cColorBits);
-  fprintf(pix_file, "cRedBits        = %d\n",ppfd->cRedBits);
-  fprintf(pix_file, "cRedShift       = %d\n",ppfd->cRedShift);
-  fprintf(pix_file, "cGreenBits      = %d\n",ppfd->cGreenBits);
-  fprintf(pix_file, "cGreenShift     = %d\n",ppfd->cGreenShift);
-  fprintf(pix_file, "cBlueBits       = %d\n",ppfd->cBlueBits);
-  fprintf(pix_file, "cBlueShift      = %d\n",ppfd->cBlueShift);
-  fprintf(pix_file, "cAlphaBits      = %d\n",ppfd->cAlphaBits);
-  fprintf(pix_file, "cAlphaShift     = %d\n",ppfd->cAlphaShift);
-  fprintf(pix_file, "cAccumBits      = %d\n",ppfd->cAccumBits);
-  fprintf(pix_file, "cAccumRedBits   = %d\n",ppfd->cAccumRedBits);
-  fprintf(pix_file, "cAccumGreenBits = %d\n",ppfd->cAccumGreenBits);
-  fprintf(pix_file, "cAccumBlueBits  = %d\n",ppfd->cAccumBlueBits);
-  fprintf(pix_file, "cAccumAlphaBits = %d\n",ppfd->cAccumAlphaBits);
-  fprintf(pix_file, "cDepthBits      = %d\n",ppfd->cDepthBits);
-  fprintf(pix_file, "cStencilBits    = %d\n",ppfd->cStencilBits);
-  fprintf(pix_file, "cAuxBuffers     = %d\n",ppfd->cAuxBuffers);
-  fprintf(pix_file, "iLayerType      = %d\n",ppfd->iLayerType);
-  fprintf(pix_file, "bReserved       = %d\n",ppfd->bReserved);
-  fprintf(pix_file, "dwLayerMask     = %d\n",ppfd->dwLayerMask);
-  fprintf(pix_file, "dwVisibleMask   = %d\n",ppfd->dwVisibleMask);
-  fprintf(pix_file, "dwDamageMask    = %d\n",ppfd->dwDamageMask);
+  fprintf(pix_file, "nSize           = %d\n",pfd.nSize);
+  fprintf(pix_file, "nVersion        = %d\n",pfd.nVersion);
+  fprintf(pix_file, "dwFlags         = %d\n",pfd.dwFlags);
+  fprintf(pix_file, "iPixelType      = %d\n",pfd.iPixelType);
+  fprintf(pix_file, "cColorBits      = %d\n",pfd.cColorBits);
+  fprintf(pix_file, "cRedBits        = %d\n",pfd.cRedBits);
+  fprintf(pix_file, "cRedShift       = %d\n",pfd.cRedShift);
+  fprintf(pix_file, "cGreenBits      = %d\n",pfd.cGreenBits);
+  fprintf(pix_file, "cGreenShift     = %d\n",pfd.cGreenShift);
+  fprintf(pix_file, "cBlueBits       = %d\n",pfd.cBlueBits);
+  fprintf(pix_file, "cBlueShift      = %d\n",pfd.cBlueShift);
+  fprintf(pix_file, "cAlphaBits      = %d\n",pfd.cAlphaBits);
+  fprintf(pix_file, "cAlphaShift     = %d\n",pfd.cAlphaShift);
+  fprintf(pix_file, "cAccumBits      = %d\n",pfd.cAccumBits);
+  fprintf(pix_file, "cAccumRedBits   = %d\n",pfd.cAccumRedBits);
+  fprintf(pix_file, "cAccumGreenBits = %d\n",pfd.cAccumGreenBits);
+  fprintf(pix_file, "cAccumBlueBits  = %d\n",pfd.cAccumBlueBits);
+  fprintf(pix_file, "cAccumAlphaBits = %d\n",pfd.cAccumAlphaBits);
+  fprintf(pix_file, "cDepthBits      = %d\n",pfd.cDepthBits);
+  fprintf(pix_file, "cStencilBits    = %d\n",pfd.cStencilBits);
+  fprintf(pix_file, "cAuxBuffers     = %d\n",pfd.cAuxBuffers);
+  fprintf(pix_file, "iLayerType      = %d\n",pfd.iLayerType);
+  fprintf(pix_file, "bReserved       = %d\n",pfd.bReserved);
+  fprintf(pix_file, "dwLayerMask     = %d\n",pfd.dwLayerMask);
+  fprintf(pix_file, "dwVisibleMask   = %d\n",pfd.dwVisibleMask);
+  fprintf(pix_file, "dwDamageMask    = %d\n",pfd.dwDamageMask);
   fclose(pix_file);
-  }
-#endif
-
-#if 1 || QUAKE2
-  if (ppfd->cColorBits == 24 && ppfd->cDepthBits == 32) {
-     ppfd->cColorBits = 16;
-     ppfd->cDepthBits = 16;
   }
 #endif
 
    qt_valid_pix = pfd_tablen();
 
-   if (ppfd->nSize != sizeof(PIXELFORMATDESCRIPTOR) || ppfd->nVersion != 1) {
+#if 1 || QUAKE2 || GORE
+  /* QUAKE2: 24+32 */
+  /* GORE  : 24+16 */
+  if (pfd.cColorBits == 24) {
+     /* the first 2 entries are 16bit */
+     pfd.cColorBits = (qt_valid_pix > 2) ? 32 : 16;
+  }
+  if (pfd.cColorBits == 32) {
+     pfd.cDepthBits = 24;
+  } else if (pfd.cColorBits == 16) {
+     pfd.cDepthBits = 16;
+  }
+#endif
+
+   if (pfd.nSize != sizeof(PIXELFORMATDESCRIPTOR) || pfd.nVersion != 1) {
       SetLastError(0);
       return (0);
    }
 
    for (i = 0; i < qt_valid_pix; i++) {
-      if (ppfd->cColorBits > 0 && pix[i].pfd.cColorBits != ppfd->cColorBits) 
+      if (pfd.cColorBits > 0 && pix[i].pfd.cColorBits != pfd.cColorBits) 
 		  continue;
 
-      if ((ppfd->dwFlags & PFD_DRAW_TO_WINDOW)
+      if ((pfd.dwFlags & PFD_DRAW_TO_WINDOW)
 	  && !(pix[i].pfd.dwFlags & PFD_DRAW_TO_WINDOW)) continue;
-      if ((ppfd->dwFlags & PFD_DRAW_TO_BITMAP)
+      if ((pfd.dwFlags & PFD_DRAW_TO_BITMAP)
 	  && !(pix[i].pfd.dwFlags & PFD_DRAW_TO_BITMAP)) continue;
-      if ((ppfd->dwFlags & PFD_SUPPORT_GDI)
+      if ((pfd.dwFlags & PFD_SUPPORT_GDI)
 	  && !(pix[i].pfd.dwFlags & PFD_SUPPORT_GDI)) continue;
-      if ((ppfd->dwFlags & PFD_SUPPORT_OPENGL)
+      if ((pfd.dwFlags & PFD_SUPPORT_OPENGL)
 	  && !(pix[i].pfd.dwFlags & PFD_SUPPORT_OPENGL)) continue;
-      if (!(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE)
-	  && ((ppfd->dwFlags & PFD_DOUBLEBUFFER) !=
+      if (!(pfd.dwFlags & PFD_DOUBLEBUFFER_DONTCARE)
+	  && ((pfd.dwFlags & PFD_DOUBLEBUFFER) !=
 	      (pix[i].pfd.dwFlags & PFD_DOUBLEBUFFER))) continue;
-      if (!(ppfd->dwFlags & PFD_STEREO_DONTCARE)
-	  && ((ppfd->dwFlags & PFD_STEREO) !=
+      if (!(pfd.dwFlags & PFD_STEREO_DONTCARE)
+	  && ((pfd.dwFlags & PFD_STEREO) !=
 	      (pix[i].pfd.dwFlags & PFD_STEREO))) continue;
 
-      if (ppfd->cDepthBits > 0 && pix[i].pfd.cDepthBits == 0)
+      if (pfd.cDepthBits > 0 && pix[i].pfd.cDepthBits == 0)
 	 continue;		/* need depth buffer */
 
-      if (ppfd->cAlphaBits > 0 && pix[i].pfd.cAlphaBits == 0)
+      if (pfd.cAlphaBits > 0 && pix[i].pfd.cAlphaBits == 0)
 	 continue;		/* need alpha buffer */
 
 #if 0
-      if ((ppfd->cColorBits == 32) && (ppfd->cStencilBits > 0 && pix[i].pfd.cStencilBits == 0))
+      if ((pfd.cColorBits == 32) && (pfd.cStencilBits > 0 && pix[i].pfd.cStencilBits == 0))
 	 continue;		/* need stencil */
 #endif
 
-      if (ppfd->iPixelType == pix[i].pfd.iPixelType) {
+      if (pfd.iPixelType == pix[i].pfd.iPixelType) {
 	 best = i + 1;
 	 break;
       }

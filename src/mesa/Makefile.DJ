@@ -171,6 +171,7 @@ DRIVER_SOURCES += \
 	drivers/dos/vesa.c \
 	drivers/dos/blit.S \
 	drivers/dos/vga.c \
+	drivers/dos/null.c \
 	drivers/dos/dpmi.c
 endif
 
