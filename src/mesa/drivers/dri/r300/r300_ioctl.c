@@ -281,7 +281,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 		if (dPriv->numClipRects == 0)
 			return;
 	}
-	
+#ifdef HAVE_ZBS
 	/* When unk42B4==0 z-bias is still on for vb mode with points ... */
 	R300_STATECHANGE(r300, zbs);
 	zbs[0]=r300->hw.zbs.cmd[R300_ZBS_T_FACTOR];
@@ -297,8 +297,8 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	/* Make sure z-bias isnt on */
 	R300_STATECHANGE(r300, unk42B4);
 	unk42B4=r300->hw.unk42B4.cmd[1];
-	r300->hw.unk42B4.cmd[1]=3;
-
+	r300->hw.unk42B4.cmd[1]=0;//3;
+#endif
 	if (mask & DD_FRONT_LEFT_BIT) {
 		flags |= DD_FRONT_LEFT_BIT;
 		mask &= ~DD_FRONT_LEFT_BIT;
@@ -340,7 +340,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	 * but do keep it like this for now.
 	 */
 	r300ResetHwState(r300);
-	
+#ifdef HAVE_ZBS
 	R300_STATECHANGE(r300, unk42B4);
 	r300->hw.unk42B4.cmd[1]=unk42B4;
 	
@@ -350,7 +350,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	r300->hw.zbs.cmd[R300_ZBS_T_CONSTANT] = zbs[1];
 	r300->hw.zbs.cmd[R300_ZBS_W_FACTOR] = zbs[2];
 	r300->hw.zbs.cmd[R300_ZBS_W_CONSTANT] = zbs[3];
-
+#endif
 	/* r300ClearBuffer has trampled all over the hardware state.. */
 	r300->hw.all_dirty=GL_TRUE;
 }

@@ -58,9 +58,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r300_emit.h"
 
-#if 0
+
+#ifdef HAVE_ZBS
 /* Turns out we might not need this after all... */
-static void update_zbias(GLcontext * ctx, int prim)
+void update_zbias(GLcontext * ctx, int prim)
 {
     r300ContextPtr rmesa = R300_CONTEXT(ctx);
     int enabled = 0;
@@ -690,7 +691,7 @@ static GLboolean r300_run_render(GLcontext *ctx,
 
    #if 1
 	
-   	#if 1
+   	#if 0
 	
         return r300_run_immediate_render(ctx, stage);
 	#else 
