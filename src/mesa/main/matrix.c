@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.38 2001/12/18 04:06:45 brianp Exp $ */
+/* $Id: matrix.c,v 1.39 2002/02/15 16:24:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -108,7 +108,7 @@ _mesa_MatrixMode( GLenum mode )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (ctx->Transform.MatrixMode == mode)
+   if (ctx->Transform.MatrixMode == mode && mode != GL_TEXTURE)
       return;
    FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
 
