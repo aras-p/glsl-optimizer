@@ -40,6 +40,7 @@
 #define _R128_DRI_
 
 #include "xf86drm.h"
+#include "drm.h"
 
 /* DRI Driver defaults */
 #define R128_DEFAULT_CCE_PIO_MODE R128_PM4_64PIO_64VCBM_64INDBM

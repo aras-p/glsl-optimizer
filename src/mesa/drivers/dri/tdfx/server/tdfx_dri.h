@@ -4,6 +4,7 @@
 #define _TDFX_DRI_
 
 #include "xf86drm.h"
+#include "drm.h"
 
 typedef struct {
   drm_handle_t regs;

@@ -6,6 +6,7 @@
 #define _SIS_DRI_
 
 #include "xf86drm.h"
+#include "drm.h"
 
 #define SIS_MAX_DRAWABLES 256
 #define SISIOMAPSIZE (64*1024)

@@ -40,7 +40,7 @@
 #ifndef DRI_NEW_INTERFACE_ONLY
 # include "xf86dri.h"
 #endif /* DRI_NEW_INTERFACE_ONLY */
-#include "sarea.h"
+#include "drm_sarea.h"
 #include "glcontextmodes.h"
 
 #ifndef GLX_OML_sync_control
@@ -316,7 +316,7 @@ static void __driGarbageCollectDrawables(void *drawHash)
  * While casting the opaque private pointers associated with the parameters
  * into their respective real types it also assures they are not \c NULL. 
  */
-static Bool driUnbindContext3(__DRInativeDisplay *dpy, int scrn,
+static GLboolean driUnbindContext3(__DRInativeDisplay *dpy, int scrn,
 			      __DRIid draw, __DRIid read,
 			      __DRIcontext *ctx)
 {
@@ -498,7 +498,7 @@ static Bool DoBindContext(__DRInativeDisplay *dpy,
  * for \c glXMakeCurrentReadSGI or GLX 1.3's \c glXMakeContextCurrent
  * function.
  */
-static Bool driBindContext3(__DRInativeDisplay *dpy, int scrn,
+static GLboolean driBindContext3(__DRInativeDisplay *dpy, int scrn,
                             __DRIid draw, __DRIid read,
                             __DRIcontext * ctx)
 {
@@ -1167,7 +1167,7 @@ __driUtilCreateNewScreen(__DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			 const __DRIversion * dri_version,
 			 const __DRIversion * drm_version,
 			 const __DRIframebuffer * frame_buffer,
-			 drmAddress pSAREA,
+			 drm_sarea_t *pSAREA,
 			 int fd,
 			 int internal_api_version,
 			 const struct __DriverAPIRec *driverAPI)

@@ -27,6 +27,7 @@
 
 #include "glheader.h"
 #include "mtypes.h"
+#include "ffb_tex.h"
 
 /* No texture unit, all software. */
 /* XXX this function isn't needed since _mesa_init_driver_functions()

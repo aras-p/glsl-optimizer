@@ -56,7 +56,7 @@
 #include <inttypes.h>
 #include "glxclient.h"           /* for GLXDrawable */
 #include "drm.h"             /* for drm_clip_rect_t */
-#include "sarea.h"               /* for XF86DRISAREAPtr */
+#include "drm_sarea.h"               /* for XF86DRISAREAPtr */
 #include "GL/internal/glcore.h"  /* for __GLcontextModes */
 
 /* This is a temporary relic.  Once all drivers are converted to support
@@ -481,7 +481,7 @@ struct __DRIscreenPrivateRec {
      *   - the device lock
      *   - the device-independent per-drawable and per-context(?) information
      */
-    XF86DRISAREAPtr pSAREA;
+    drm_sarea_t *pSAREA;
 
     /**
      * \name Direct frame buffer access information 
@@ -563,7 +563,7 @@ extern __DRIscreenPrivate * __driUtilCreateNewScreen( __DRInativeDisplay *dpy,
     int scrn, __DRIscreen *psc, __GLcontextModes * modes,
     const __DRIversion * ddx_version, const __DRIversion * dri_version,
     const __DRIversion * drm_version, const __DRIframebuffer * frame_buffer,
-    drmAddress pSAREA, int fd, int internal_api_version,
+    drm_sarea_t *pSAREA, int fd, int internal_api_version,
     const struct __DriverAPIRec *driverAPI );
 
 #ifndef DRI_NEW_INTERFACE_ONLY

@@ -728,7 +728,7 @@ static void r200TexImage3D( GLcontext *ctx, GLenum target, GLint level,
       driSwapOutTextureObject( t );
    }
    else {
-      t = r200AllocTexObj( texObj );
+      t = (driTextureObject *) r200AllocTexObj( texObj );
       if (!t) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
          return;
@@ -789,7 +789,7 @@ r200TexSubImage3D( GLcontext *ctx, GLenum target, GLint level,
       driSwapOutTextureObject( t );
    }
    else {
-      t = r200AllocTexObj(texObj);
+      t = (driTextureObject *) r200AllocTexObj( texObj );
       if (!t) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage3D");
          return;

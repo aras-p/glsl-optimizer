@@ -263,7 +263,7 @@ do {	if ((STATE_MASK) & ~((FMESA)->state_dirty)) {	\
 	float			Znear, Zfar;
 
 	drm_context_t		hHWContext;
-	drmLock			*driHwLock;
+	drm_hw_lock_t		*driHwLock;
 	int			driFd;
 
 	unsigned int		clear_pixel;

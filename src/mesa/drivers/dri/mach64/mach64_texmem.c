@@ -28,7 +28,7 @@
  * Authors:
  *   Gareth Hughes <gareth@valinux.com>
  *   Leif Delgass <ldelgass@retinalburn.net>
- *   José Fonseca <j_r_fonseca@yahoo.co.uk>
+ *   Jose Fonseca <j_r_fonseca@yahoo.co.uk>
  */
 
 #include "mach64_context.h"
@@ -174,7 +174,7 @@ void mach64PrintLocalLRU( mach64ContextPtr mmesa, int heap )
 
 void mach64PrintGlobalLRU( mach64ContextPtr mmesa, int heap )
 {
-   drmTextureRegion *list = mmesa->sarea->tex_list[heap];
+   drm_tex_region_t *list = mmesa->sarea->tex_list[heap];
    int i, j;
 
    fprintf( stderr, "\nGlobal LRU, heap %d list %p:\n", heap, list );
@@ -202,7 +202,7 @@ void mach64PrintGlobalLRU( mach64ContextPtr mmesa, int heap )
 /* NOTE: This function is only called while holding the hardware lock */
 static void mach64ResetGlobalLRU( mach64ContextPtr mmesa, int heap )
 {
-   drmTextureRegion *list = mmesa->sarea->tex_list[heap];
+   drm_tex_region_t *list = mmesa->sarea->tex_list[heap];
    int sz = 1 << mmesa->mach64Screen->logTexGranularity[heap];
    int i;
 
@@ -234,7 +234,7 @@ void mach64UpdateTexLRU( mach64ContextPtr mmesa,
 			 mach64TexObjPtr t )
 {
    int heap = t->heap;
-   drmTextureRegion *list = mmesa->sarea->tex_list[heap];
+   drm_tex_region_t *list = mmesa->sarea->tex_list[heap];
    int log2sz = mmesa->mach64Screen->logTexGranularity[heap];
    int start = t->memBlock->ofs >> log2sz;
    int end = (t->memBlock->ofs + t->memBlock->size - 1) >> log2sz;
