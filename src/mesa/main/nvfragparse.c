@@ -52,6 +52,13 @@
 #define OUTPUT_S    21
 #define OUTPUT_NONE 22
 
+/* IRIX defines some of these */
+#undef _R
+#undef _H
+#undef _X
+#undef _C
+#undef _S
+
 /* Optional suffixes */
 #define _R  FLOAT32  /* float */
 #define _H  FLOAT16  /* half-float */
@@ -1249,10 +1256,10 @@ Parse_InstructionSequence(struct parse_state *parseState,
       GLubyte token[100];
 
       /* Initialize the instruction */
-      inst->SrcReg[0].File = -1;
-      inst->SrcReg[1].File = -1;
-      inst->SrcReg[2].File = -1;
-      inst->DstReg.File = -1;
+      inst->SrcReg[0].File = (enum register_file) -1;
+      inst->SrcReg[1].File = (enum register_file) -1;
+      inst->SrcReg[2].File = (enum register_file) -1;
+      inst->DstReg.File = (enum register_file) -1;
       inst->DstReg.CondSwizzle[0] = 0;
       inst->DstReg.CondSwizzle[1] = 1;
       inst->DstReg.CondSwizzle[2] = 2;

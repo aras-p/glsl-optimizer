@@ -1034,10 +1034,10 @@ Parse_InstructionSequence(struct parse_state *parseState,
       struct vp_instruction *inst = program + parseState->numInst;
 
       /* Initialize the instruction */
-      inst->SrcReg[0].File = -1;
-      inst->SrcReg[1].File = -1;
-      inst->SrcReg[2].File = -1;
-      inst->DstReg.File = -1;
+      inst->SrcReg[0].File = (enum register_file) -1;
+      inst->SrcReg[1].File = (enum register_file) -1;
+      inst->SrcReg[2].File = (enum register_file) -1;
+      inst->DstReg.File = (enum register_file) -1;
 
       if (Parse_String(parseState, "MOV")) {
          if (!Parse_UnaryOpInstruction(parseState, inst, VP_OPCODE_MOV))
