@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.52 2001/12/18 04:06:45 brianp Exp $ */
+/* $Id: enable.c,v 1.53 2002/01/05 21:53:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -836,6 +836,11 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_MAP1_VERTEX_ATTRIB14_4_NV:
       case GL_MAP1_VERTEX_ATTRIB15_4_NV:
          CHECK_EXTENSION(NV_vertex_program);
+         {
+            const GLuint map = (GLuint) (cap - GL_MAP1_VERTEX_ATTRIB0_4_NV);
+            FLUSH_VERTICES(ctx, _NEW_EVAL);
+            ctx->Eval.Map1Attrib[map] = state;
+         }
          break;
       case GL_MAP2_VERTEX_ATTRIB0_4_NV:
       case GL_MAP2_VERTEX_ATTRIB1_4_NV:
@@ -854,6 +859,11 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_MAP2_VERTEX_ATTRIB14_4_NV:
       case GL_MAP2_VERTEX_ATTRIB15_4_NV:
          CHECK_EXTENSION(NV_vertex_program);
+         {
+            const GLuint map = (GLuint) (cap - GL_MAP2_VERTEX_ATTRIB0_4_NV);
+            FLUSH_VERTICES(ctx, _NEW_EVAL);
+            ctx->Eval.Map2Attrib[map] = state;
+         }
          break;
 
       default:
@@ -867,8 +877,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 }
 
 
-
-
 void
 _mesa_Enable( GLenum cap )
 {
@@ -877,7 +885,6 @@ _mesa_Enable( GLenum cap )
 
    _mesa_set_enable( ctx, cap, GL_TRUE );
 }
-
 
 
 void
@@ -1191,7 +1198,10 @@ _mesa_IsEnabled( GLenum cap )
       case GL_MAP1_VERTEX_ATTRIB14_4_NV:
       case GL_MAP1_VERTEX_ATTRIB15_4_NV:
          CHECK_EXTENSION(NV_vertex_program);
-         return GL_FALSE;
+         {
+            const GLuint map = (GLuint) (cap - GL_MAP1_VERTEX_ATTRIB0_4_NV);
+            return ctx->Eval.Map1Attrib[map];
+         }
       case GL_MAP2_VERTEX_ATTRIB0_4_NV:
       case GL_MAP2_VERTEX_ATTRIB1_4_NV:
       case GL_MAP2_VERTEX_ATTRIB2_4_NV:
@@ -1209,7 +1219,10 @@ _mesa_IsEnabled( GLenum cap )
       case GL_MAP2_VERTEX_ATTRIB14_4_NV:
       case GL_MAP2_VERTEX_ATTRIB15_4_NV:
          CHECK_EXTENSION(NV_vertex_program);
-         return GL_FALSE;
+         {
+            const GLuint map = (GLuint) (cap - GL_MAP2_VERTEX_ATTRIB0_4_NV);
+            return ctx->Eval.Map2Attrib[map];
+         }
 
       default:
 	 _mesa_error( ctx, GL_INVALID_ENUM, "glIsEnabled" );

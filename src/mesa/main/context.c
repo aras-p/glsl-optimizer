@@ -1,10 +1,10 @@
-/* $Id: context.c,v 1.152 2001/12/18 04:06:45 brianp Exp $ */
+/* $Id: context.c,v 1.153 2002/01/05 21:53:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -890,6 +890,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Eval.Map1TextureCoord4 = GL_FALSE;
    ctx->Eval.Map1Vertex3 = GL_FALSE;
    ctx->Eval.Map1Vertex4 = GL_FALSE;
+   MEMSET(ctx->Eval.Map1Attrib, 0, sizeof(ctx->Eval.Map1Attrib));
    ctx->Eval.Map2Color4 = GL_FALSE;
    ctx->Eval.Map2Index = GL_FALSE;
    ctx->Eval.Map2Normal = GL_FALSE;
@@ -899,6 +900,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Eval.Map2TextureCoord4 = GL_FALSE;
    ctx->Eval.Map2Vertex3 = GL_FALSE;
    ctx->Eval.Map2Vertex4 = GL_FALSE;
+   MEMSET(ctx->Eval.Map2Attrib, 0, sizeof(ctx->Eval.Map2Attrib));
    ctx->Eval.AutoNormal = GL_FALSE;
    ctx->Eval.MapGrid1un = 1;
    ctx->Eval.MapGrid1u1 = 0.0;
@@ -917,6 +919,7 @@ init_attrib_groups( GLcontext *ctx )
       static GLfloat index[1] = { 1.0 };
       static GLfloat color[4] = { 1.0, 1.0, 1.0, 1.0 };
       static GLfloat texcoord[4] = { 0.0, 0.0, 0.0, 1.0 };
+      static GLfloat attrib[4] = { 0.0, 0.0, 0.0, 1.0 };
 
       init_1d_map( &ctx->EvalMap.Map1Vertex3, 3, vertex );
       init_1d_map( &ctx->EvalMap.Map1Vertex4, 4, vertex );
@@ -927,6 +930,8 @@ init_attrib_groups( GLcontext *ctx )
       init_1d_map( &ctx->EvalMap.Map1Texture2, 2, texcoord );
       init_1d_map( &ctx->EvalMap.Map1Texture3, 3, texcoord );
       init_1d_map( &ctx->EvalMap.Map1Texture4, 4, texcoord );
+      for (i = 0; i < 16; i++)
+         init_1d_map( ctx->EvalMap.Map1Attrib + i, 4, attrib );
 
       init_2d_map( &ctx->EvalMap.Map2Vertex3, 3, vertex );
       init_2d_map( &ctx->EvalMap.Map2Vertex4, 4, vertex );
@@ -937,6 +942,8 @@ init_attrib_groups( GLcontext *ctx )
       init_2d_map( &ctx->EvalMap.Map2Texture2, 2, texcoord );
       init_2d_map( &ctx->EvalMap.Map2Texture3, 3, texcoord );
       init_2d_map( &ctx->EvalMap.Map2Texture4, 4, texcoord );
+      for (i = 0; i < 16; i++)
+         init_2d_map( ctx->EvalMap.Map2Attrib + i, 4, attrib );
    }
 
    /* Fog group */

@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.58 2001/12/14 02:50:01 brianp Exp $ */
+/* $Id: attrib.c,v 1.59 2002/01/05 21:53:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -210,6 +210,7 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->Map1TextureCoord4 = ctx->Eval.Map1TextureCoord4;
       attr->Map1Vertex3 = ctx->Eval.Map1Vertex3;
       attr->Map1Vertex4 = ctx->Eval.Map1Vertex4;
+      MEMCPY(attr->Map1Attrib, ctx->Eval.Map1Attrib, sizeof(ctx->Eval.Map1Attrib));
       attr->Map2Color4 = ctx->Eval.Map2Color4;
       attr->Map2Index = ctx->Eval.Map2Index;
       attr->Map2Normal = ctx->Eval.Map2Normal;
@@ -219,6 +220,7 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->Map2TextureCoord4 = ctx->Eval.Map2TextureCoord4;
       attr->Map2Vertex3 = ctx->Eval.Map2Vertex3;
       attr->Map2Vertex4 = ctx->Eval.Map2Vertex4;
+      MEMCPY(attr->Map2Attrib, ctx->Eval.Map2Attrib, sizeof(ctx->Eval.Map2Attrib));
       attr->Normalize = ctx->Transform.Normalize;
       attr->RasterPositionUnclipped = ctx->Transform.RasterPositionUnclipped;
       attr->PixelTexture = ctx->Pixel.PixelTextureEnabled;
@@ -474,6 +476,7 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
                    GL_INDEX_LOGIC_OP);
    TEST_AND_UPDATE(ctx->Color.ColorLogicOpEnabled, enable->ColorLogicOp,
                    GL_COLOR_LOGIC_OP);
+
    TEST_AND_UPDATE(ctx->Eval.Map1Color4, enable->Map1Color4, GL_MAP1_COLOR_4);
    TEST_AND_UPDATE(ctx->Eval.Map1Index, enable->Map1Index, GL_MAP1_INDEX);
    TEST_AND_UPDATE(ctx->Eval.Map1Normal, enable->Map1Normal, GL_MAP1_NORMAL);
@@ -489,6 +492,11 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
                    GL_MAP1_VERTEX_3);
    TEST_AND_UPDATE(ctx->Eval.Map1Vertex4, enable->Map1Vertex4,
                    GL_MAP1_VERTEX_4);
+   for (i = 0; i < 16; i++) {
+      TEST_AND_UPDATE(ctx->Eval.Map1Attrib[i], enable->Map1Attrib[i],
+                      GL_MAP1_VERTEX_ATTRIB0_4_NV + i);
+   }
+
    TEST_AND_UPDATE(ctx->Eval.Map2Color4, enable->Map2Color4, GL_MAP2_COLOR_4);
    TEST_AND_UPDATE(ctx->Eval.Map2Index, enable->Map2Index, GL_MAP2_INDEX);
    TEST_AND_UPDATE(ctx->Eval.Map2Normal, enable->Map2Normal, GL_MAP2_NORMAL);
@@ -504,6 +512,11 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
                    GL_MAP2_VERTEX_3);
    TEST_AND_UPDATE(ctx->Eval.Map2Vertex4, enable->Map2Vertex4,
                    GL_MAP2_VERTEX_4);
+   for (i = 0; i < 16; i++) {
+      TEST_AND_UPDATE(ctx->Eval.Map2Attrib[i], enable->Map2Attrib[i],
+                      GL_MAP2_VERTEX_ATTRIB0_4_NV + i);
+   }
+
    TEST_AND_UPDATE(ctx->Eval.AutoNormal, enable->AutoNormal, GL_AUTO_NORMAL);
    TEST_AND_UPDATE(ctx->Transform.Normalize, enable->Normalize, GL_NORMALIZE);
    TEST_AND_UPDATE(ctx->Transform.RescaleNormals, enable->RescaleNormals,
