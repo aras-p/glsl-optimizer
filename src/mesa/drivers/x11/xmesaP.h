@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.10 2000/05/19 13:08:01 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.11 2000/07/19 23:26:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,6 +55,9 @@
 #  define DRI_DRAWABLE_PARM
 #  define DRI_CTX_ARG
 #endif
+
+
+extern _glthread_Mutex _xmesa_lock;
 
 
 /* for PF_8R8G8B24 pixel format */
