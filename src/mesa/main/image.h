@@ -1,4 +1,4 @@
-/* $Id: image.h,v 1.6 2000/03/21 01:03:40 brianp Exp $ */
+/* $Id: image.h,v 1.7 2000/03/21 16:09:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,7 @@
 #include "types.h"
 
 
-extern struct gl_pixelstore_attrib _mesa_native_packing;
+extern const struct gl_pixelstore_attrib _mesa_native_packing;
 
 
 extern void

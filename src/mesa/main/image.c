@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.22 2000/03/21 01:03:40 brianp Exp $ */
+/* $Id: image.c,v 1.23 2000/03/21 16:09:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,7 +47,7 @@
  * from within display lists we have to be sure to set the current
  * unpacking params to these values!
  */
-struct gl_pixelstore_attrib _mesa_native_packing = {
+const struct gl_pixelstore_attrib _mesa_native_packing = {
    1,            /* Alignment */
    0,            /* RowLength */
    0,            /* SkipPixels */
