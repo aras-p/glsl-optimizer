@@ -1,4 +1,4 @@
-/* $Id: nvfragparse.c,v 1.17 2003/04/05 00:38:09 brianp Exp $ */
+/* $Id: nvfragparse.c,v 1.18 2003/04/07 14:58:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -607,11 +607,12 @@ Parse_VectorConstant(struct parse_state *parseState, GLfloat *vec)
 {
    /* "{" was already consumed */
 
+   ASSIGN_4V(vec, 0.0, 0.0, 0.0, 1.0);
+
    if (!Parse_ScalarConstant(parseState, vec+0))  /* X */
       return GL_FALSE;
 
    if (Parse_String(parseState, "}")) {
-      vec[1] = vec[2] = vec[3] = vec[0];
       return GL_TRUE;
    }
 
@@ -622,7 +623,6 @@ Parse_VectorConstant(struct parse_state *parseState, GLfloat *vec)
       return GL_FALSE;
 
    if (Parse_String(parseState, "}")) {
-      vec[2] = vec[3] = vec[1];
       return GL_TRUE;
    }
 
@@ -633,7 +633,6 @@ Parse_VectorConstant(struct parse_state *parseState, GLfloat *vec)
       return GL_FALSE;
 
    if (Parse_String(parseState, "}")) {
-      vec[3] = vec[2];
       return GL_TRUE;
    }
 
@@ -1179,13 +1178,31 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
                    struct fp_src_register *srcReg)
 {
    GLubyte token[100];
+   GLfloat sign = 1.0F;
 
-   /* check for '-' */
-   if (Parse_String(parseState, "-")) {
-      srcReg->NegateBase = GL_TRUE;
+   /*
+    * First, take care of +/- and absolute value stuff.
+    */
+   if (Parse_String(parseState, "-"))
+      sign = -1.0F;
+   else if (Parse_String(parseState, "+"))
+      sign = +1.0F;
+
+   if (Parse_String(parseState, "|")) {
+      srcReg->Abs = GL_TRUE;
+      srcReg->NegateAbs = (sign < 0.0F) ? GL_TRUE : GL_FALSE;
+
+      if (Parse_String(parseState, "-"))
+         srcReg->NegateBase = GL_TRUE;
+      else if (Parse_String(parseState, "+"))
+         srcReg->NegateBase = GL_FALSE;
+      else
+         srcReg->NegateBase = GL_FALSE;
    }
    else {
-      srcReg->NegateBase = GL_FALSE;
+      srcReg->Abs = GL_FALSE;
+      srcReg->NegateAbs = GL_FALSE;
+      srcReg->NegateBase = (sign < 0.0F) ? GL_TRUE : GL_FALSE;
    }
 
    if (!Peek_Token(parseState, token))
@@ -1228,6 +1245,11 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
    }
    srcReg->Swizzle[1] = srcReg->Swizzle[2] = srcReg->Swizzle[3] = 0;
 
+   /* Finish absolute value */
+   if (srcReg->Abs && !Parse_String(parseState, "|")) {
+      RETURN_ERROR1("Expected |");
+   }
+
    return GL_TRUE;
 }
 
@@ -1246,6 +1268,9 @@ Parse_InstructionSequence(struct parse_state *parseState,
       inst->SrcReg[0].Register = -1;
       inst->SrcReg[1].Register = -1;
       inst->SrcReg[2].Register = -1;
+      inst->SrcReg[0].IsParameter = GL_FALSE;
+      inst->SrcReg[1].IsParameter = GL_FALSE;
+      inst->SrcReg[2].IsParameter = GL_FALSE;
       inst->DstReg.Register = -1;
 
       /* special instructions */
@@ -1347,7 +1372,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
                RETURN_ERROR;
          }
          else if (instMatch.inputs == INPUT_3V) {
-            if (!Parse_VectorSrc(parseState, &inst->SrcReg[1]))
+            if (!Parse_VectorSrc(parseState, &inst->SrcReg[0]))
                RETURN_ERROR;
             if (!Parse_String(parseState, ","))
                RETURN_ERROR1("Expected ,");
@@ -1355,11 +1380,11 @@ Parse_InstructionSequence(struct parse_state *parseState,
                RETURN_ERROR;
             if (!Parse_String(parseState, ","))
                RETURN_ERROR1("Expected ,");
-            if (!Parse_VectorSrc(parseState, &inst->SrcReg[1]))
+            if (!Parse_VectorSrc(parseState, &inst->SrcReg[2]))
                RETURN_ERROR;
          }
          else if (instMatch.inputs == INPUT_1S) {
-            if (!Parse_ScalarSrcReg(parseState, &inst->SrcReg[1]))
+            if (!Parse_ScalarSrcReg(parseState, &inst->SrcReg[0]))
                RETURN_ERROR;
          }
          else if (instMatch.inputs == INPUT_2S) {
@@ -1552,7 +1577,8 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
 
 
 static void
-PrintSrcReg(const struct fp_src_register *src)
+PrintSrcReg(const struct fragment_program *program,
+            const struct fp_src_register *src)
 {
    static const char comps[5] = "xyzw";
    GLint r;
@@ -1566,7 +1592,19 @@ PrintSrcReg(const struct fp_src_register *src)
    if (src->NegateBase) {
       _mesa_printf("-");
    }
-   if ((r = OutputRegisterNumber(src->Register)) >= 0) {
+   if (src->IsParameter) {
+      if (program->Parameters[src->Register].Constant) {
+         printf("{%g, %g, %g, %g}",
+                program->Parameters[src->Register].Values[0],
+                program->Parameters[src->Register].Values[1],
+                program->Parameters[src->Register].Values[2],
+                program->Parameters[src->Register].Values[3]);
+      }
+      else {
+         printf("%s", program->Parameters[src->Register].Name);
+      }
+   }
+   else if ((r = OutputRegisterNumber(src->Register)) >= 0) {
       _mesa_printf("o[%s]", OutputRegisters[r]);
    }
    else if ((r = InputRegisterNumber(src->Register)) >= 0) {
@@ -1671,7 +1709,7 @@ PrintDstReg(const struct fp_dst_register *dst)
       _mesa_printf("o[%s]", OutputRegisters[r]);
    }
    else if ((r = HalfTempRegisterNumber(dst->Register)) >= 0) {
-      _mesa_printf("H[%s]", InputRegisters[r]);
+      _mesa_printf("H%d", r);
    }
    else if ((r = TempRegisterNumber(dst->Register)) >= 0) {
       _mesa_printf("R%d", r);
@@ -1747,32 +1785,32 @@ _mesa_print_nv_fragment_program(const struct fragment_program *program)
             /* print source register(s) */
             if (Instructions[i].inputs == INPUT_1V ||
                 Instructions[i].inputs == INPUT_1S) {
-               PrintSrcReg(&inst->SrcReg[0]);
+               PrintSrcReg(program, &inst->SrcReg[0]);
             }
             else if (Instructions[i].inputs == INPUT_2V ||
                      Instructions[i].inputs == INPUT_2S) {
-               PrintSrcReg(&inst->SrcReg[0]);
+               PrintSrcReg(program, &inst->SrcReg[0]);
                _mesa_printf(", ");
-               PrintSrcReg(&inst->SrcReg[1]);
+               PrintSrcReg(program, &inst->SrcReg[1]);
             }
             else if (Instructions[i].inputs == INPUT_3V) {
-               PrintSrcReg(&inst->SrcReg[0]);
+               PrintSrcReg(program, &inst->SrcReg[0]);
                _mesa_printf(", ");
-               PrintSrcReg(&inst->SrcReg[1]);
+               PrintSrcReg(program, &inst->SrcReg[1]);
                _mesa_printf(", ");
-               PrintSrcReg(&inst->SrcReg[2]);
+               PrintSrcReg(program, &inst->SrcReg[2]);
             }
             else if (Instructions[i].inputs == INPUT_1V_T) {
-               PrintSrcReg(&inst->SrcReg[0]);
+               PrintSrcReg(program, &inst->SrcReg[0]);
                _mesa_printf(", ");
                PrintTextureSrc(inst);
             }
             else if (Instructions[i].inputs == INPUT_3V_T) {
-               PrintSrcReg(&inst->SrcReg[0]);
+               PrintSrcReg(program, &inst->SrcReg[0]);
                _mesa_printf(", ");
-               PrintSrcReg(&inst->SrcReg[1]);
+               PrintSrcReg(program, &inst->SrcReg[1]);
                _mesa_printf(", ");
-               PrintSrcReg(&inst->SrcReg[2]);
+               PrintSrcReg(program, &inst->SrcReg[2]);
                _mesa_printf(", ");
                PrintTextureSrc(inst);
             }
