@@ -1,4 +1,4 @@
-/* $Id: s_nvfragprog.c,v 1.3 2003/02/23 04:10:54 brianp Exp $ */
+/* $Id: s_nvfragprog.c,v 1.4 2003/02/25 19:29:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -213,12 +213,17 @@ test_cc(GLuint condCode, GLuint ccMaskRule)
 
 
 /**
- * Store 4 floats into a register.
+ * Store 4 floats into a register.  Observe the instructions saturate and
+ * set-condition-code flags.
  */
 static void
-store_vector4( const struct fp_dst_register *dest, struct fp_machine *machine,
-               const GLfloat value[4], GLboolean clamp, GLboolean updateCC )
+store_vector4( const struct fp_instruction *inst,
+               struct fp_machine *machine,
+               const GLfloat value[4] )
 {
+   const struct fp_dst_register *dest = &(inst->DstReg);
+   const GLboolean clamp = inst->Saturate;
+   const GLboolean updateCC = inst->UpdateCondRegister;
    GLfloat *dstReg = machine->Registers[dest->Register];
    GLfloat clampedValue[4];
    const GLboolean *writeMask = dest->WriteMask;
@@ -269,8 +274,9 @@ store_vector4( const struct fp_dst_register *dest, struct fp_machine *machine,
 
 /**
  * Execute the given vertex program
+ * \return GL_TRUE if program completed or GL_FALSE if program executed KIL.
  */
-static void
+static GLboolean
 execute_program(GLcontext *ctx, const struct fragment_program *program)
 {
    struct fp_machine *machine = &ctx->FragmentProgram.Machine;
@@ -287,8 +293,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = a[1] + b[1];
                result[2] = a[2] + b[2];
                result[3] = a[3] + b[3];
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_COS:
@@ -296,8 +301,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                GLfloat a[4], result[4];
                fetch_vector1( &inst->SrcReg[0], machine, a );
                result[0] = result[1] = result[2] = result[3] = cos(a[0]);
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_DDX: /* Partial derivative with respect to X */
@@ -308,8 +312,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = 0;
                result[2] = 0;
                result[3] = 0;
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_DDY: /* Partial derivative with respect to Y */
@@ -320,8 +323,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = 0;
                result[2] = 0;
                result[3] = 0;
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_DP3:
@@ -331,8 +333,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                fetch_vector4( &inst->SrcReg[1], machine, b );
                result[0] = result[1] = result[2] = result[3] = 
                   a[0] + b[0] + a[1] * b[1] + a[2] * b[2];
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_DP4:
@@ -342,8 +343,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                fetch_vector4( &inst->SrcReg[1], machine, b );
                result[0] = result[1] = result[2] = result[3] = 
                   a[0] + b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_DST: /* Distance vector */
@@ -355,8 +355,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = a[1] * b[1];
                result[2] = a[2];
                result[3] = b[3];
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_EX2: /* Exponential base 2 */
@@ -365,8 +364,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                fetch_vector1( &inst->SrcReg[0], machine, a );
                result[0] = result[1] = result[2] = result[3] =
                   (GLfloat) pow(2.0, a[0]);
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_FLR:
@@ -377,8 +375,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = FLOORF(a[1]);
                result[2] = FLOORF(a[2]);
                result[3] = FLOORF(a[3]);
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_FRC:
@@ -389,8 +386,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = a[1] - FLOORF(a[1]);
                result[2] = a[2] - FLOORF(a[2]);
                result[3] = a[3] - FLOORF(a[3]);
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_KIL:
@@ -401,7 +397,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                    test_cc(machine->CondCodes[swizzle[1]], condMask) ||
                    test_cc(machine->CondCodes[swizzle[2]], condMask) ||
                    test_cc(machine->CondCodes[swizzle[3]], condMask))
-                  return;
+                  return GL_FALSE;
             }
             break;
          case FP_OPCODE_LG2:  /* log base 2 */
@@ -410,8 +406,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                fetch_vector1( &inst->SrcReg[0], machine, a );
                result[0] = result[1] = result[2] = result[3]
                   = LOG2(a[0]);
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_LIT:
@@ -426,8 +421,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = a[0];
                result[2] = (a[0] > 0.0) ? pow(2.0, a[3]) : 0.0F;
                result[3] = 1.0F;
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_LRP:
@@ -440,8 +434,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = a[1] * b[1] + (1.0F - a[1]) * c[1];
                result[2] = a[2] * b[2] + (1.0F - a[2]) * c[2];
                result[3] = a[3] * b[3] + (1.0F - a[3]) * c[3];
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_MAD:
@@ -454,8 +447,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = a[1] * b[1] + c[1];
                result[2] = a[2] * b[2] + c[2];
                result[3] = a[3] * b[3] + c[3];
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_MAX:
@@ -467,8 +459,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = MAX2(a[1], b[1]);
                result[2] = MAX2(a[2], b[2]);
                result[3] = MAX2(a[3], b[3]);
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_MIN:
@@ -480,16 +471,14 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = MIN2(a[1], b[1]);
                result[2] = MIN2(a[2], b[2]);
                result[3] = MIN2(a[3], b[3]);
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_MOV:
             {
-               GLfloat t[4];
-               fetch_vector4( &inst->SrcReg[0], machine, t );
-               store_vector4( &inst->DstReg, machine, t, inst->Saturate,
-                              inst->UpdateCondRegister );
+               GLfloat result[4];
+               fetch_vector4( &inst->SrcReg[0], machine, result );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_MUL:
@@ -501,8 +490,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = a[1] * b[1];
                result[2] = a[2] * b[2];
                result[3] = a[3] * b[3];
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_PK2H: /* pack two 16-bit floats */
@@ -514,8 +502,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                fetch_vector4( &inst->SrcReg[0], machine, a );
                rawResult[0] = rawResult[1] = rawResult[2] = rawResult[3]
                   = rawBits[0] | (rawBits[1] << 16);
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_PK2US: /* pack two GLushorts */
@@ -529,8 +516,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                usy = IROUND(a[1] * 65535.0F);
                rawResult[0] = rawResult[1] = rawResult[2] = rawResult[3]
                   = usx | (usy << 16);
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_PK4B: /* pack four GLbytes */
@@ -548,8 +534,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                ubw = IROUND(127.0F * a[3] + 128.0F);
                rawResult[0] = rawResult[1] = rawResult[2] = rawResult[3]
                   = ubx | (uby << 8) | (ubz << 16) | (ubw << 24);
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_PK4UB: /* pack four GLubytes */
@@ -567,8 +552,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                ubw = IROUND(255.0F * a[3]);
                rawResult[0] = rawResult[1] = rawResult[2] = rawResult[3]
                   = ubx | (uby << 8) | (ubz << 16) | (ubw << 24);
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_POW:
@@ -578,8 +562,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                fetch_vector1( &inst->SrcReg[1], machine, b );
                result[0] = result[1] = result[2] = result[3]
                   = pow(a[0], b[0]);
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_RCP:
@@ -588,8 +571,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                fetch_vector1( &inst->SrcReg[0], machine, a );
                result[0] = result[1] = result[2] = result[3]
                   = 1.0F / a[0];
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_RFL:
@@ -607,8 +589,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = tmp[0] * axis[1] - dir[1];
                result[2] = tmp[0] * axis[2] - dir[2];
                /* result[3] is never written! XXX enforce in parser! */
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_RSQ: /* 1 / sqrt() */
@@ -617,8 +598,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                fetch_vector1( &inst->SrcReg[0], machine, a );
                result[0] = result[1] = result[2] = result[3]
                   = 1.0F / GL_SQRT(a[0]);
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_SEQ: /* set on equal */
@@ -630,15 +610,13 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = (a[1] == b[1]) ? 1.0F : 0.0F;
                result[2] = (a[2] == b[2]) ? 1.0F : 0.0F;
                result[3] = (a[3] == b[3]) ? 1.0F : 0.0F;
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_SFL: /* set false, operands ignored */
             {
                static const GLfloat result[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_SGE: /* set on greater or equal */
@@ -650,8 +628,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = (a[1] >= b[1]) ? 1.0F : 0.0F;
                result[2] = (a[2] >= b[2]) ? 1.0F : 0.0F;
                result[3] = (a[3] >= b[3]) ? 1.0F : 0.0F;
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_SGT: /* set on greater */
@@ -663,8 +640,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = (a[1] > b[1]) ? 1.0F : 0.0F;
                result[2] = (a[2] > b[2]) ? 1.0F : 0.0F;
                result[3] = (a[3] > b[3]) ? 1.0F : 0.0F;
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_SIN:
@@ -672,8 +648,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                GLfloat a[4], result[4];
                fetch_vector1( &inst->SrcReg[0], machine, a );
                result[0] = result[1] = result[2] = result[3] = sin(a[0]);
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_SLE: /* set on less or equal */
@@ -685,8 +660,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = (a[1] <= b[1]) ? 1.0F : 0.0F;
                result[2] = (a[2] <= b[2]) ? 1.0F : 0.0F;
                result[3] = (a[3] <= b[3]) ? 1.0F : 0.0F;
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_SLT: /* set on less */
@@ -698,8 +672,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = (a[1] < b[1]) ? 1.0F : 0.0F;
                result[2] = (a[2] < b[2]) ? 1.0F : 0.0F;
                result[3] = (a[3] < b[3]) ? 1.0F : 0.0F;
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_SNE: /* set on not equal */
@@ -711,15 +684,13 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = (a[1] != b[1]) ? 1.0F : 0.0F;
                result[2] = (a[2] != b[2]) ? 1.0F : 0.0F;
                result[3] = (a[3] != b[3]) ? 1.0F : 0.0F;
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_STR: /* set true, operands ignored */
             {
                static const GLfloat result[4] = { 1.0F, 1.0F, 1.0F, 1.0F };
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_SUB:
@@ -731,8 +702,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = a[1] - b[1];
                result[2] = a[2] - b[2];
                result[3] = a[3] - b[3];
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_TEX:
@@ -742,8 +712,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                fetch_vector4( &inst->SrcReg[0], machine, texcoord );
                fetch_texel( ctx, texcoord, inst->TexSrcUnit,
                             inst->TexSrcIndex, color );
-               store_vector4( &inst->DstReg, machine, color, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, color );
             }
             break;
          case FP_OPCODE_TXD:
@@ -755,8 +724,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                fetch_vector4( &inst->SrcReg[2], machine, dtdy );
                fetch_texel_deriv( ctx, texcoord, dtdx, dtdy, inst->TexSrcUnit,
                                   inst->TexSrcIndex, color );
-               store_vector4( &inst->DstReg, machine, color, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, color );
             }
             break;
          case FP_OPCODE_TXP:
@@ -769,8 +737,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                texcoord[2] /= texcoord[3];
                fetch_texel( ctx, texcoord, inst->TexSrcUnit,
                             inst->TexSrcIndex, color );
-               store_vector4( &inst->DstReg, machine, color, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, color );
             }
             break;
          case FP_OPCODE_UP2H: /* unpack two 16-bit floats */
@@ -784,8 +751,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                rawResult[1] = (rawBits[0] >> 16) & 0xffff;
                rawResult[2] = rawBits[0] & 0xffff;
                rawResult[3] = (rawBits[0] >> 16) & 0xffff;
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_UP2US: /* unpack two GLushorts */
@@ -797,8 +763,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = (GLfloat) ((rawBits[0] >> 16) & 0xffff) / 65535.0F;
                result[2] = result[0];
                result[3] = result[1];
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_UP4B: /* unpack four GLbytes */
@@ -810,8 +775,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[0] = (((rawBits[0] >>  8) & 0xff) - 128) / 127.0F;
                result[0] = (((rawBits[0] >> 16) & 0xff) - 128) / 127.0F;
                result[0] = (((rawBits[0] >> 24) & 0xff) - 128) / 127.0F;
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_UP4UB: /* unpack four GLubytes */
@@ -823,8 +787,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[0] = ((rawBits[0] >>  8) & 0xff) / 255.0F;
                result[0] = ((rawBits[0] >> 16) & 0xff) / 255.0F;
                result[0] = ((rawBits[0] >> 24) & 0xff) / 255.0F;
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_X2D: /* 2-D matrix transform */
@@ -837,15 +800,15 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[1] = a[1] + b[0] * c[2] + b[1] * c[3];
                result[2] = a[2] + b[0] * c[0] + b[1] * c[1];
                result[3] = a[3] + b[0] * c[2] + b[1] * c[3];
-               store_vector4( &inst->DstReg, machine, result, inst->Saturate,
-                              inst->UpdateCondRegister );
+               store_vector4( inst, machine, result );
             }
             break;
          default:
             _mesa_problem(ctx, "Bad opcode in _mesa_exec_fragment_program");
-            return;
+            return GL_TRUE; /* return value doesn't matter */
       }
    }
+   return GL_TRUE;
 }
 
 
@@ -856,62 +819,64 @@ _swrast_exec_nv_fragment_program( GLcontext *ctx, struct sw_span *span )
    GLuint i;
 
    for (i = 0; i < span->end; i++) {
-      GLfloat *wpos = ctx->FragmentProgram.Machine.Registers[0];
-      GLfloat *col0 = ctx->FragmentProgram.Machine.Registers[1];
-      GLfloat *col1 = ctx->FragmentProgram.Machine.Registers[2];
-      GLfloat *fogc = ctx->FragmentProgram.Machine.Registers[3];
-      const GLfloat *colOut = ctx->FragmentProgram.Machine.Registers[FP_OUTPUT_REG_START];
-      GLuint j;
+      if (span->array->mask[i]) {
+         GLfloat *wpos = ctx->FragmentProgram.Machine.Registers[0];
+         GLfloat *col0 = ctx->FragmentProgram.Machine.Registers[1];
+         GLfloat *col1 = ctx->FragmentProgram.Machine.Registers[2];
+         GLfloat *fogc = ctx->FragmentProgram.Machine.Registers[3];
+         const GLfloat *colOut = ctx->FragmentProgram.Machine.Registers[FP_OUTPUT_REG_START];
+         GLuint j;
 
-      /* Clear temporary registers XXX use memzero() */
-      for (j = 0; j < MAX_NV_FRAGMENT_PROGRAM_TEMPS; j++) {
-         ctx->FragmentProgram.Machine.Registers[FP_TEMP_REG_START+j][0] = 0.0F;
-         ctx->FragmentProgram.Machine.Registers[FP_TEMP_REG_START+j][1] = 0.0F;
-         ctx->FragmentProgram.Machine.Registers[FP_TEMP_REG_START+j][2] = 0.0F;
-         ctx->FragmentProgram.Machine.Registers[FP_TEMP_REG_START+j][3] = 0.0F;
-      }
+         /* Clear temporary registers XXX use memzero() */
+         _mesa_bzero(ctx->FragmentProgram.Machine.Registers +FP_TEMP_REG_START,
+                     MAX_NV_FRAGMENT_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
 
-      /*
-       * Load input registers - yes this is all very inefficient for now.
-       */
-      wpos[0] = span->x + i;
-      wpos[1] = span->y + i;
-      wpos[2] = span->array->z[i];
-      wpos[3] = 1.0; /* XXX should be 1/w */
+         /*
+          * Load input registers - yes this is all very inefficient for now.
+          */
+         wpos[0] = span->x + i;
+         wpos[1] = span->y + i;
+         wpos[2] = (GLfloat) span->array->z[i] / ctx->DepthMaxF;
+         wpos[3] = 1.0; /* XXX should be 1/w */
 
-      col0[0] = CHAN_TO_FLOAT(span->array->rgba[i][RCOMP]);
-      col0[1] = CHAN_TO_FLOAT(span->array->rgba[i][GCOMP]);
-      col0[2] = CHAN_TO_FLOAT(span->array->rgba[i][BCOMP]);
-      col0[3] = CHAN_TO_FLOAT(span->array->rgba[i][ACOMP]);
+         col0[0] = CHAN_TO_FLOAT(span->array->rgba[i][RCOMP]);
+         col0[1] = CHAN_TO_FLOAT(span->array->rgba[i][GCOMP]);
+         col0[2] = CHAN_TO_FLOAT(span->array->rgba[i][BCOMP]);
+         col0[3] = CHAN_TO_FLOAT(span->array->rgba[i][ACOMP]);
 
-      col1[0] = CHAN_TO_FLOAT(span->array->spec[i][RCOMP]);
-      col1[1] = CHAN_TO_FLOAT(span->array->spec[i][GCOMP]);
-      col1[2] = CHAN_TO_FLOAT(span->array->spec[i][BCOMP]);
-      col1[3] = CHAN_TO_FLOAT(span->array->spec[i][ACOMP]);
+         col1[0] = CHAN_TO_FLOAT(span->array->spec[i][RCOMP]);
+         col1[1] = CHAN_TO_FLOAT(span->array->spec[i][GCOMP]);
+         col1[2] = CHAN_TO_FLOAT(span->array->spec[i][BCOMP]);
+         col1[3] = CHAN_TO_FLOAT(span->array->spec[i][ACOMP]);
 
-      fogc[0] = span->array->fog[i];
-      fogc[1] = 0.0F;
-      fogc[2] = 0.0F;
-      fogc[3] = 0.0F;
+         fogc[0] = span->array->fog[i];
+         fogc[1] = 0.0F;
+         fogc[2] = 0.0F;
+         fogc[3] = 0.0F;
 
-      for (j = 0; j < ctx->Const.MaxTextureCoordUnits; j++) {
-         if (ctx->Texture.Unit[j]._ReallyEnabled) {
-            COPY_4V(ctx->FragmentProgram.Machine.Registers[4 + j],
-                    span->array->texcoords[j][i]);
+         for (j = 0; j < ctx->Const.MaxTextureCoordUnits; j++) {
+            if (ctx->Texture.Unit[j]._ReallyEnabled) {
+               COPY_4V(ctx->FragmentProgram.Machine.Registers[4 + j],
+                       span->array->texcoords[j][i]);
+            }
+            else {
+               COPY_4V(ctx->FragmentProgram.Machine.Registers[4 + j],
+                       ctx->Current.Attrib[VERT_ATTRIB_TEX0 + j]);
+            }
          }
-         else {
-            COPY_4V(ctx->FragmentProgram.Machine.Registers[4 + j],
-                    ctx->Current.Attrib[VERT_ATTRIB_TEX0 + j]);
-         }
+
+         if (!execute_program(ctx, ctx->FragmentProgram.Current))
+            span->array->mask[i] = GL_FALSE;  /* killed fragment */
+
+         /* Store output registers */
+         UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][RCOMP], colOut[0]);
+         UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][GCOMP], colOut[1]);
+         UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][BCOMP], colOut[2]);
+         UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][ACOMP], colOut[3]);
+         /* depth value */
+         if (ctx->FragmentProgram.Current->OutputsWritten & 2)
+            span->array->z[i] = IROUND(ctx->FragmentProgram.Machine.Registers[FP_OUTPUT_REG_START + 2][0] * ctx->DepthMaxF);
       }
-
-      execute_program(ctx, ctx->FragmentProgram.Current);
-
-      /* Store output registers */
-      UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][RCOMP], colOut[0]);
-      UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][GCOMP], colOut[1]);
-      UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][BCOMP], colOut[2]);
-      UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][ACOMP], colOut[3]);
    }
 }
 
