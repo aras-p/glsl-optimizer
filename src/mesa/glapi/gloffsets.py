@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: gloffsets.py,v 1.3 2000/02/24 18:36:32 brianp Exp $
+# $Id: gloffsets.py,v 1.4 2000/05/11 17:45:20 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -41,7 +41,7 @@ import re
 
 
 def PrintHead():
-	print '/* DO NOT EDIT - This file generated automatically */'
+	print '/* DO NOT EDIT - This file generated automatically by gloffsets.py script */'
 	print '#ifndef _GLAPI_OFFSETS_H_'
 	print '#define _GLAPI_OFFSETS_H_'
 	print ''
@@ -84,15 +84,22 @@ def PrintDefines():
 			if m[0] == 'param':
 				paramName = m[1]
 			if m[0] == 'offset':
-				funcOffset = int(m[1])
-				if funcOffset > maxOffset:
-					maxOffset = funcOffset
-				s = GenerateDefine(funcName, funcOffset)
-				if offsetInfo.has_key(funcOffset):
-					print 'ERROR: offset', funcOffset, 'already used!'
-					raise ERROR
+				if m[1] == '?':
+					#print 'WARNING skipping', funcName
+					noop = 0
 				else:
-					offsetInfo[funcOffset] = s;
+					funcOffset = int(m[1])
+					if funcOffset > maxOffset:
+						maxOffset = funcOffset
+					s = GenerateDefine(funcName, funcOffset)
+					if offsetInfo.has_key(funcOffset):
+						print 'ERROR: offset', funcOffset, 'already used!'
+						raise ERROR
+					else:
+						offsetInfo[funcOffset] = s;
+					#endif
+				#endif
+			#endif
 		#endif
 	#endfor
 
