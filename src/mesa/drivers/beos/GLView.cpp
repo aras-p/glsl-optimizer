@@ -663,7 +663,8 @@ MesaDriver::~MesaDriver()
    _mesa_destroy_visual(m_glvisual);
    _mesa_destroy_framebuffer(m_glframebuffer);
    _mesa_destroy_context(m_glcontext);
-
+   
+   delete m_bitmap;
 }
 
 
