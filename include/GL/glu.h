@@ -258,7 +258,7 @@ typedef struct GLUtesselator GLUtriangulatorObj;
 #define GLU_TESS_MAX_COORD 1.0e150
 
 /* Internal convenience typedefs */
-typedef void (*_GLUfuncptr)();
+typedef void (GLAPIENTRY *_GLUfuncptr)();
 
 GLAPI void GLAPIENTRY gluBeginCurve (GLUnurbs* nurb);
 GLAPI void GLAPIENTRY gluBeginPolygon (GLUtesselator* tess);
