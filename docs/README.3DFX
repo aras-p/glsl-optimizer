@@ -19,7 +19,7 @@ How to compile:
 
 DJGPP:
    Place the Glide3 SDK in the top Mesa directory:
-	$(MESA)/glide3/include/*.h
+	$(MESA)/glide3/include/
 		3dfx.h, g3ext.h, glide.h, glidesys.h, glideutl.h, sst1vid.h
 	$(MESA)/glide3/lib/
 		libgld3x.a, libgld3i.a, glide3x.dxe
@@ -29,7 +29,7 @@ DJGPP:
 
 MinGW:
    Place the Glide3 SDK in the top Mesa directory:
-	$(MESA)/glide3/include/*.h
+	$(MESA)/glide3/include/
 		3dfx.h, g3ext.h, glide.h, glidesys.h, glideutl.h, sst1vid.h
 	$(MESA)/glide3/lib/
 		libglide3x.a, glide3x.dll
@@ -39,9 +39,9 @@ MinGW:
 
 Linux:
    Place the Glide3 SDK in /usr/local/glide
-	/usr/local/glide/include/*.h
+	/usr/local/glide/include/
 		3dfx.h, g3ext.h, glide.h, glidesys.h, glideutl.h, sst1vid.h
-	/usr/local/glide/lib/*.h
+	/usr/local/glide/lib/
 		libglide3x.a, libglide3x.so
    Type:
 	make linux-glide
@@ -97,7 +97,7 @@ FX_GLIDE_SWAPPENDINGCOUNT
 	HW: all
 	Desc: max # of buffers allowed to build up
 	Note: (*) (!)
-	Value: "0", "1", "2" or "3"
+	Value: "0", "1", "2", "3", "4", "5" or "6"
 FX_GLIDE_SWAPINTERVAL
 	OS: all
 	HW: all
@@ -185,6 +185,10 @@ MESA_FX_MAXLOD
 	    "9"  - 512x512 textures
 	    "10" - 1024x1024 textures
 	    "11" - 2048x2048 textures
+MESA_FX_ALLOW_VP
+	OS: all
+	HW: all
+	Desc: allow vertex program extensions
 MESA_GLX_FX
 	OS: linux
 	HW: Voodoo1, Rush, Voodoo2
