@@ -38,13 +38,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_context.h"
 
 
+extern int r300FlushCmdBufLocked(r300ContextPtr r300, const char* caller);
 extern int r300FlushCmdBuf(r300ContextPtr r300, const char* caller);
 
 extern void r300EmitState(r300ContextPtr r300);
 
 extern void r300InitCmdBuf(r300ContextPtr r300);
 extern void r300DestroyCmdBuf(r300ContextPtr r300);
-
 
 /**
  * Make sure that enough space is available in the command buffer

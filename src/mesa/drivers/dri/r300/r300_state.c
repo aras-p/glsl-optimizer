@@ -498,7 +498,7 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 	case GL_CULL_FACE:
 		r300UpdateCulling(ctx);
 		break;
-#ifdef HAVE_ZBS	
+		
 	case GL_POLYGON_OFFSET_POINT:
 	case GL_POLYGON_OFFSET_LINE:
 		WARN_ONCE("Don't know how to enable polygon offset point/line. Help me !\n");
@@ -512,7 +512,7 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 			r300->hw.unk42B4.cmd[1] &= ~3;
 			}
 		break;
-#endif		
+		
 	case GL_VERTEX_PROGRAM_ARB:
 		//TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, state);
 	break;
@@ -1792,10 +1792,10 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4288.cmd[5] = 0x00000000;
 
 	r300->hw.unk42A0.cmd[1] = 0x00000000;
-#ifdef GA	
-#ifndef HAVE_ZBS
+
+	update_zbias(ctx, GL_TRIANGLES);/* FIXME */
+#if 0	
 	r300->hw.unk42B4.cmd[1] = 0x00000000;
-#endif
 #endif	
 	r300->hw.unk42C0.cmd[1] = 0x4B7FFFFF;
 	r300->hw.unk42C0.cmd[2] = 0x00000000;
@@ -1995,7 +1995,5 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	functions->DepthRange = r300DepthRange;
 	functions->PointSize = r300PointSize;
 	
-#ifdef HAVE_ZBS	
 	functions->PolygonOffset = r300PolygonOffset;
-#endif
 }

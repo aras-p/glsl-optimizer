@@ -349,14 +349,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.unk4288.cmd[0] = cmducs(0x4288, 5);
 	ALLOC_STATE( unk42A0, always, 2, "unk42A0", 0 );
 		r300->hw.unk42A0.cmd[0] = cmducs(0x42A0, 1);
-#ifdef HAVE_ZBS		
 	ALLOC_STATE( zbs, always, R300_ZBS_CMDSIZE, "zbs", 0 );
 		r300->hw.zbs.cmd[R300_ZBS_CMD_0] = cmducs(R300_RE_ZBIAS_T_FACTOR, 4);
-#endif
-#ifdef GA				
 	ALLOC_STATE( unk42B4, always, 2, "unk42B4", 0 );
 		r300->hw.unk42B4.cmd[0] = cmducs(0x42B4, 1);
-#endif		
 	ALLOC_STATE( cul, always, R300_CUL_CMDSIZE, "cul", 0 );
 		r300->hw.cul.cmd[R300_CUL_CMD_0] = cmducs(R300_RE_CULL_CNTL, 1);
 	ALLOC_STATE( unk42C0, always, 3, "unk42C0", 0 );
@@ -490,12 +486,8 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4274);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4288);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk42A0);
-#ifdef HAVE_ZBS	
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.zbs);
-#endif
-#ifdef GA		
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk42B4);
-#endif	
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.cul);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk42C0);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.rc);

@@ -281,7 +281,8 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 		if (dPriv->numClipRects == 0)
 			return;
 	}
-#ifdef HAVE_ZBS
+
+#if 0	/* We shouldnt need this now */
 	/* When unk42B4==0 z-bias is still on for vb mode with points ... */
 	R300_STATECHANGE(r300, zbs);
 	zbs[0]=r300->hw.zbs.cmd[R300_ZBS_T_FACTOR];
@@ -293,12 +294,12 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	r300->hw.zbs.cmd[R300_ZBS_T_CONSTANT] =
 	r300->hw.zbs.cmd[R300_ZBS_W_FACTOR] =
 	r300->hw.zbs.cmd[R300_ZBS_W_CONSTANT] = r300PackFloat32(0.0);
-	
+#endif	
 	/* Make sure z-bias isnt on */
 	R300_STATECHANGE(r300, unk42B4);
 	unk42B4=r300->hw.unk42B4.cmd[1];
-	r300->hw.unk42B4.cmd[1]=0;//3;
-#endif
+	r300->hw.unk42B4.cmd[1]=0;
+	
 	if (mask & DD_FRONT_LEFT_BIT) {
 		flags |= DD_FRONT_LEFT_BIT;
 		mask &= ~DD_FRONT_LEFT_BIT;
@@ -340,10 +341,11 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	 * but do keep it like this for now.
 	 */
 	r300ResetHwState(r300);
-#ifdef HAVE_ZBS
+	
 	R300_STATECHANGE(r300, unk42B4);
 	r300->hw.unk42B4.cmd[1]=unk42B4;
 	
+#if 0 	/* We shouldnt need this now */
 	/* Put real z-bias back */
 	R300_STATECHANGE(r300, zbs);
 	r300->hw.zbs.cmd[R300_ZBS_T_FACTOR] = zbs[0];
@@ -407,7 +409,7 @@ void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
 			break;
 
 		if (rmesa->dma.nr_released_bufs) {
-			r200FlushCmdBufLocked(rmesa, __FUNCTION__);
+			r300FlushCmdBufLocked(rmesa, __FUNCTION__);
 		}
 
 		if (rmesa->radeon.do_usleeps) {

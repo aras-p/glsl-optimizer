@@ -407,10 +407,8 @@ struct r300_hw_state {
 	struct r300_state_atom unk4274; /* (4274) */
 	struct r300_state_atom unk4288; /* (4288) */
 	struct r300_state_atom unk42A0;	/* (42A0) */
-#ifdef HAVE_ZBS
-#endif
-	//struct r300_state_atom zbs;	/* zbias (42A4) */
-	//struct r300_state_atom unk42B4; /* (42B4) */
+	struct r300_state_atom zbs;	/* zbias (42A4) */
+	struct r300_state_atom unk42B4; /* (42B4) */
 	struct r300_state_atom cul;	/* cull cntl (42B8) */
 	struct r300_state_atom unk42C0; /* (42C0) */
 	struct r300_state_atom rc;	/* rs control (4300) */

@@ -58,8 +58,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r300_emit.h"
 
-
-#ifdef HAVE_ZBS
 /* Turns out we might not need this after all... */
 void update_zbias(GLcontext * ctx, int prim)
 {
@@ -115,7 +113,6 @@ void update_zbias(GLcontext * ctx, int prim)
 	    
     }
 }
-#endif
 
 /**********************************************************************
 *                     Hardware rasterization
@@ -664,7 +661,7 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
    end_3d(PASS_PREFIX_VOID);
    
    /* Flush state - we are done drawing.. */
-   r300FlushCmdBufLocked(ctx, __FUNCTION__);
+   r300FlushCmdBufLocked(rmesa, __FUNCTION__);
    radeonWaitForIdleLocked(&(rmesa->radeon));
    
    UNLOCK_HARDWARE(&(rmesa->radeon));
@@ -692,7 +689,6 @@ static GLboolean r300_run_render(GLcontext *ctx,
    #if 1
 	
    	#if 0
-	
         return r300_run_immediate_render(ctx, stage);
 	#else 
         return r300_run_vb_render(ctx, stage);
