@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.10 2001/04/09 14:47:34 keithw Exp $ */
+/* $Id: t_imm_fixup.c,v 1.11 2001/04/26 14:53:48 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,9 +52,11 @@
 #include "t_pipeline.h"
 
 
+static const GLuint increment[GL_POLYGON+2] = { 1,2,1,1,3,1,1,4,2,1,1 };
+static const GLuint intro[GL_POLYGON+2]     = { 0,0,2,2,0,2,2,0,2,2,0 };
 
-static void
-fixup_4f( GLfloat data[][4], GLuint flag[], GLuint start, GLuint match )
+void
+_tnl_fixup_4f( GLfloat data[][4], GLuint flag[], GLuint start, GLuint match )
 {
    GLuint i = start;
 
@@ -66,8 +68,8 @@ fixup_4f( GLfloat data[][4], GLuint flag[], GLuint start, GLuint match )
    }
 }
 
-static void
-fixup_3f( float data[][3], GLuint flag[], GLuint start, GLuint match )
+void
+_tnl_fixup_3f( float data[][3], GLuint flag[], GLuint start, GLuint match )
 {
    GLuint i = start;
 
@@ -80,8 +82,8 @@ fixup_3f( float data[][3], GLuint flag[], GLuint start, GLuint match )
 }
 
 
-static void
-fixup_1ui( GLuint *data, GLuint flag[], GLuint start, GLuint match )
+void
+_tnl_fixup_1ui( GLuint *data, GLuint flag[], GLuint start, GLuint match )
 {
    GLuint i = start;
 
@@ -95,8 +97,8 @@ fixup_1ui( GLuint *data, GLuint flag[], GLuint start, GLuint match )
 }
 
 
-static void
-fixup_1f( GLfloat *data, GLuint flag[], GLuint start, GLuint match )
+void
+_tnl_fixup_1f( GLfloat *data, GLuint flag[], GLuint start, GLuint match )
 {
    GLuint i = start;
 
@@ -109,8 +111,8 @@ fixup_1f( GLfloat *data, GLuint flag[], GLuint start, GLuint match )
    flag[i] |= match;
 }
 
-static void
-fixup_1ub( GLubyte *data, GLuint flag[], GLuint start, GLuint match )
+void
+_tnl_fixup_1ub( GLubyte *data, GLuint flag[], GLuint start, GLuint match )
 {
    GLuint i = start;
 
@@ -124,8 +126,8 @@ fixup_1ub( GLubyte *data, GLuint flag[], GLuint start, GLuint match )
 }
 
 
-static void
-fixup_4chan( GLchan data[][4], GLuint flag[], GLuint start, GLuint match )
+void
+_tnl_fixup_4chan( GLchan data[][4], GLuint flag[], GLuint start, GLuint match )
 {
    GLuint i = start;
 
@@ -285,7 +287,8 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
 	 for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
 	    if (fixup & VERT_TEX(i)) {
 	       if (orflag & VERT_TEX(i))
-		  fixup_4f( IM->TexCoord[i], IM->Flag, start, VERT_TEX(i) );
+		  _tnl_fixup_4f( IM->TexCoord[i], IM->Flag, start,
+				 VERT_TEX(i) );
 	       else
 		  fixup_first_4f( IM->TexCoord[i], IM->Flag, VERT_END_VB, start,
 				  IM->TexCoord[i][start]);
@@ -296,7 +299,7 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
 
       if (fixup & VERT_EDGE) {
 	 if (orflag & VERT_EDGE)
-	    fixup_1ub( IM->EdgeFlag, IM->Flag, start, VERT_EDGE );
+	    _tnl_fixup_1ub( IM->EdgeFlag, IM->Flag, start, VERT_EDGE );
 	 else
 	    fixup_first_1ub( IM->EdgeFlag, IM->Flag, VERT_END_VB, start,
 			     IM->EdgeFlag[start] );
@@ -304,7 +307,7 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
 
       if (fixup & VERT_INDEX) {
 	 if (orflag & VERT_INDEX)
-	    fixup_1ui( IM->Index, IM->Flag, start, VERT_INDEX );
+	    _tnl_fixup_1ui( IM->Index, IM->Flag, start, VERT_INDEX );
 	 else
 	    fixup_first_1ui( IM->Index, IM->Flag, VERT_END_VB, start, 
 			     IM->Index[start] );
@@ -312,7 +315,7 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
 
       if (fixup & VERT_RGBA) {
 	 if (orflag & VERT_RGBA)
-	    fixup_4chan( IM->Color, IM->Flag, start, VERT_RGBA );
+	    _tnl_fixup_4chan( IM->Color, IM->Flag, start, VERT_RGBA );
 	 else
 	    fixup_first_4chan( IM->Color, IM->Flag, VERT_END_VB, start, 
 			       IM->Color[start] );
@@ -320,7 +323,8 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
       
       if (fixup & VERT_SPEC_RGB) {
 	 if (orflag & VERT_SPEC_RGB)
-	    fixup_4chan( IM->SecondaryColor, IM->Flag, start, VERT_SPEC_RGB );
+	    _tnl_fixup_4chan( IM->SecondaryColor, IM->Flag, start, 
+			     VERT_SPEC_RGB );
 	 else
 	    fixup_first_4chan( IM->SecondaryColor, IM->Flag, VERT_END_VB, start,
 			       IM->SecondaryColor[start] );
@@ -328,7 +332,7 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
       
       if (fixup & VERT_FOG_COORD) {
 	 if (orflag & VERT_FOG_COORD)
-	    fixup_1f( IM->FogCoord, IM->Flag, start, VERT_FOG_COORD );
+	    _tnl_fixup_1f( IM->FogCoord, IM->Flag, start, VERT_FOG_COORD );
 	 else
 	    fixup_first_1f( IM->FogCoord, IM->Flag, VERT_END_VB, start,
 			    IM->FogCoord[start] );
@@ -336,7 +340,7 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
 
       if (fixup & VERT_NORM) {
 	 if (orflag & VERT_NORM)
-	    fixup_3f( IM->Normal, IM->Flag, start, VERT_NORM );
+	    _tnl_fixup_3f( IM->Normal, IM->Flag, start, VERT_NORM );
 	 else
 	    fixup_first_3f( IM->Normal, IM->Flag, VERT_END_VB, start,
 			    IM->Normal[start] );
@@ -742,8 +746,6 @@ static copy_func copy_tab[GL_POLYGON+2] =
 void
 _tnl_get_exec_copy_verts( GLcontext *ctx, struct immediate *IM )
 {
-   static const GLuint increment[GL_POLYGON+2] = { 1,2,1,1,3,1,1,4,2,1,1 };
-   static const GLuint intro[GL_POLYGON+2]     = { 0,0,2,2,0,2,2,0,2,2,0 };
 
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint last = IM->LastPrimitive;
@@ -778,62 +780,33 @@ _tnl_get_exec_copy_verts( GLcontext *ctx, struct immediate *IM )
 }
 
 
-/* If we receive evalcoords in an immediate struct for maps which
- * don't have a vertex enabled, need to do an additional fixup, as
- * those rows containing evalcoords must now be ignored.  The
- * evalcoords may still generate colors, normals, etc, so have to
- * respect the relative order between calls to EvalCoord and Normal
- * etc.
- *
- * Generate the index list that will be used to render this immediate
- * struct.
- *
- * Finally, generate a new primitives list for rendering the indices.
+/*
  */
-#if 0
-void _tnl_fixup_purged_eval( GLcontext *ctx,
-			     GLuint fixup, GLuint purge )
+void _tnl_fixup_purged_eval( GLcontext *ctx, struct immediate *IM ) 
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct tnl_eval_store *store = &tnl->eval;
-   GLuint *flags = tnl->vb.Flag;
-   GLuint i, j, nextprim;
-   GLuint fixup_fence = purge|VERT_OBJ;
-   GLuint good_index = (VERT_EVAL_ANY & ~purge)|VERT_OBJ;
-   GLuint prim_length = 0, lastprim = 0, nextprim = 0;
 
-   if (fixup & VERT_TEX0)
-      fixup_4f( store->TexCoord, flags, 0, VERT_TEX0|fixup_fence );
-
-   if (fixup & VERT_INDEX)
-      fixup_1ui( store->Index, flags, 0, VERT_INDEX|fixup_fence );
-
-   if (fixup & VERT_RGBA)
-      fixup_4chan( store->Color, flags, 0, VERT_RGBA|fixup_fence );
-
-   if (fixup & VERT_NORM)
-      fixup_3f( store->Normal, flags, 0, VERT_NORM|fixup_fence );
-
-   for (i = 0, j = 0 ; i < tnl->vb.Count ; i++) {
-      if (flags[i] & good_index) {
-	 store->Elts[j++] = i;
-	 prim_length++;
-      }
-      if (i == nextprim) {
-	 VB->PrimitiveLength[lastprim] = prim_length;
-	 VB->Primitive[j] = VB->Primitive[i];
-	 nextprim += lastprimlen;
-	 lastprim = i;
-	 lastprimlen = VB->PrimitiveLength[i];
-      }
-   }
-
-   VB->Elts = store->Elts;
-
-   /* What about copying???  No immediate exists with the right
-    * vertices in place...
+   /* Recalculate ExecCopyElts, ExecParity, etc.  These don't need the
+    * post-eval values, so using the original immediate is fine, but
+    * copied vertices will need to be re-evaluated.
     */
    if (tnl->CurrentPrimitive != GL_POLYGON+1) {
+      GLuint last = IM->LastPrimitive;
+      GLenum prim = IM->Primitive[last];
+      GLuint pincr = increment[prim];
+      GLuint pintro = intro[prim];
+      GLuint ovf, i;
+
+      tnl->ExecCopyCount = 0;
+      tnl->ExecParity = IM->PrimitiveLength[last] & 1;
+
+      if (pincr != 1 && (IM->Count - last - pintro))
+	 ovf = (IM->Count - last - pintro) % pincr;
+
+      if (last < IM->Count)
+	 copy_tab[prim]( tnl, last, IM->Count, ovf );
+
+      for (i = 0 ; i < tnl->ExecCopyCount ; i++)
+	 tnl->ExecCopyElts[i] = IM->Elt[tnl->ExecCopyElts[i]];
    }
 }
-#endif

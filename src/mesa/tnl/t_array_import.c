@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.12 2001/04/17 17:01:33 brianp Exp $ */
+/* $Id: t_array_import.c,v 1.13 2001/04/26 14:53:48 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -98,6 +98,8 @@ static void _tnl_import_color( GLcontext *ctx,
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
+
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    tmp = _ac_import_color(ctx,
 			  GL_UNSIGNED_BYTE,
@@ -317,7 +319,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
    struct vertex_arrays *tmp = &tnl->array_inputs;
 
 /*     fprintf(stderr, "_tnl_vb_bind_arrays %d..%d // %d..%d\n", */
-/*  	   start, count, ctx->Array.LockFirst, ctx->Array.LockCount); */
+/*    	   start, count, ctx->Array.LockFirst, ctx->Array.LockCount);  */
 
    if (ctx->Array.LockCount) {
       ASSERT(start == (GLint) ctx->Array.LockFirst);

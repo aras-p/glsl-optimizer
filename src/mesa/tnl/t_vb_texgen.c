@@ -1,4 +1,4 @@
-/* $Id: t_vb_texgen.c,v 1.8 2001/03/30 14:44:44 gareth Exp $ */
+/* $Id: t_vb_texgen.c,v 1.9 2001/04/26 14:53:48 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -94,8 +94,6 @@ static GLuint all_bits[5] = {
 
 
 
-/*
- */
 static void build_m3( GLfloat f[][3], GLfloat m[],
 		      const GLvector3f *normal,
 		      const GLvector4f *eye )
@@ -106,11 +104,7 @@ static void build_m3( GLfloat f[][3], GLfloat m[],
    const GLfloat *norm = normal->start;
    GLuint i;
 
-   /* KW: Had to rearrange this loop to avoid a compiler bug with gcc
-    *     2.7.3.1 at -O3 optimization.  Using -fno-strength-reduce
-    *     also fixed the bug - is this generally necessary?
-    */
-   for (i=0;i<count;i++,STRIDE_F(coord,stride)) {
+   for (i=0;i<count;i++,STRIDE_F(coord,stride),STRIDE_F(norm,normal->stride)) {
       GLfloat u[3], two_nu, fx, fy, fz;
       COPY_3V( u, coord );
       NORMALIZE_3FV( u );
@@ -122,8 +116,6 @@ static void build_m3( GLfloat f[][3], GLfloat m[],
       if (m[i] != 0.0F) {
 	 m[i] = 0.5F / (GLfloat) GL_SQRT(m[i]);
       }
-
-      STRIDE_F(norm, normal->stride);
    }
 }
 
@@ -140,8 +132,7 @@ static void build_m2( GLfloat f[][3], GLfloat m[],
    GLfloat *norm = normal->start;
    GLuint i;
 
-   for (i=0;i<count;i++,STRIDE_F(coord,stride)) {
-
+   for (i=0;i<count;i++,STRIDE_F(coord,stride),STRIDE_F(norm,normal->stride)) {
       GLfloat u[3], two_nu, fx, fy, fz;
       COPY_2V( u, coord );
       u[2] = 0;
@@ -154,8 +145,6 @@ static void build_m2( GLfloat f[][3], GLfloat m[],
       if (m[i] != 0.0F) {
 	 m[i] = 0.5F / (GLfloat) GL_SQRT(m[i]);
       }
-
-      STRIDE_F(norm, normal->stride);
    }
 }
 
@@ -332,6 +321,10 @@ static void texgen_sphere_map( GLcontext *ctx,
    GLuint i;
    GLfloat (*f)[3] = store->tmp_f;
    GLfloat *m = store->tmp_m;
+
+/*     fprintf(stderr, "%s normstride %d eyestride %d\n",  */
+/*  	   __FUNCTION__, VB->NormalPtr->stride, */
+/*  	   VB->EyePtr->stride); */
 
    (build_m_tab[VB->EyePtr->size])( store->tmp_f,
 				    store->tmp_m,
@@ -619,9 +612,7 @@ static void check_texgen( GLcontext *ctx, struct gl_pipeline_stage *stage )
 	    /* Need the original input in case it contains a Q coord:
 	     * (sigh)
 	     */
-/*  	    if ((ctx->Texture.Unit[i]._ReallyEnabled|Q_BIT) & */
-/*  		~ctx->Texture.Unit[i].TexGenEnabled) */
-	       inputs |= VERT_TEX(i);
+	    inputs |= VERT_TEX(i);
 
 	    /* Something for Feedback? */
 	 }

@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.12 2001/04/09 14:47:34 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.13 2001/04/26 14:53:48 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,7 +76,6 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
    TNLvertexcassette *node;
    GLuint new_beginstate;
 
-
    _tnl_compute_orflag( IM );
 
    IM->CopyStart = IM->Start;
@@ -104,6 +103,9 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
     */
    IM->PrimitiveLength[IM->LastPrimitive] = IM->Count - IM->LastPrimitive;
    ASSERT(IM->Primitive[IM->LastPrimitive] & PRIM_LAST);
+
+   
+/*     _tnl_print_cassette( IM ); */
 
 
    node = (TNLvertexcassette *)
@@ -292,6 +294,8 @@ _tnl_EndList( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct immediate *IM = TNL_CURRENT_IM(ctx);
+
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    ctx->swtnl_im = 0;
    IM->ref_count--;

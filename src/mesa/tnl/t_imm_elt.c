@@ -1,4 +1,4 @@
-/* $Id: t_imm_elt.c,v 1.6 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_imm_elt.c,v 1.7 2001/04/26 14:53:48 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -138,7 +138,6 @@ static trans_elt_4f_func  _tnl_trans_elt_4f_tab[5][MAX_TYPES];
                GLuint start, GLuint n
 #define SRC_START  0
 #define DST_START  start
-#undef	CHECK
 #define CHECK  if ((flags[i]&match) == VERT_ELT)
 #define NEXT_F  (void)1
 #define NEXT_F2 f = first + elts[i] * stride;

@@ -1,4 +1,4 @@
-/* $Id: t_vb_light.c,v 1.12 2001/03/12 00:48:44 gareth Exp $ */
+/* $Id: t_vb_light.c,v 1.13 2001/04/26 14:53:48 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -123,6 +123,8 @@ static GLboolean run_lighting( GLcontext *ctx, struct gl_pipeline_stage *stage )
    struct vertex_buffer *VB = &tnl->vb;
    GLvector4f *input = ctx->_NeedEyeCoords ? VB->EyePtr : VB->ObjPtr;
    GLuint ind;
+
+/*     _tnl_print_vert_flags( __FUNCTION__, stage->changed_inputs ); */
 
    /* Make sure we can talk about elements 0..2 in the vector we are
     * lighting.

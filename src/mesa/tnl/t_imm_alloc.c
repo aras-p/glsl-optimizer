@@ -1,4 +1,4 @@
-/* $Id: t_imm_alloc.c,v 1.5 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_imm_alloc.c,v 1.6 2001/04/26 14:53:48 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -43,6 +43,8 @@ struct immediate *_tnl_alloc_immediate( GLcontext *ctx )
 
    if (!IM)
       return 0;
+
+/*     memset(IM, 0, sizeof(*IM)); */
 
    IM->id = id++;
    IM->ref_count = 0;

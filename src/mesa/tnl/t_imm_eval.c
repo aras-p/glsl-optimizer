@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.6 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_imm_eval.c,v 1.7 2001/04/26 14:53:48 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,6 +38,7 @@
 #include "t_imm_eval.h"
 #include "t_imm_exec.h"
 #include "t_imm_fixup.h"
+#include "t_imm_alloc.h"
 
 
 static void eval_points1( GLfloat outcoord[][4],
@@ -400,7 +401,7 @@ void _tnl_eval_vb( GLcontext *ctx,
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_arrays *tmp = &tnl->imm_inputs;
-   struct tnl_eval_store *store = &tnl->eval;
+   struct immediate *store = tnl->eval.im;
    GLuint *flags = tnl->vb.Flag;
    GLuint count = tnl->vb.Count;
    GLuint any_eval1 = orflag & (VERT_EVAL_C1|VERT_EVAL_P1);
@@ -408,6 +409,12 @@ void _tnl_eval_vb( GLcontext *ctx,
    GLuint all_eval = andflag & VERT_EVAL_ANY; /* may have false negatives */
    GLuint req = 0;
    GLuint purge_flags = 0;
+
+/*     if (input->writable) */
+/*        store = input; */
+
+   if (!store)
+      store = tnl->eval.im = _tnl_alloc_immediate( ctx );
 
    if (tnl->eval.EvalNewState & _NEW_EVAL)
       update_eval( ctx );
@@ -427,27 +434,27 @@ void _tnl_eval_vb( GLcontext *ctx,
       req |= tnl->pipeline.inputs & tnl->eval.EvalMap2Flags;
 
 
-   /* Translate points into coords.  Use store->Coord to hold the
+   /* Translate points into coords.  Use store->Obj to hold the
     * new data.
     */
    if (any_eval1 && (orflag & VERT_EVAL_P1))
    {
-      eval_points1( store->Coord, coord, flags,
+      eval_points1( store->Obj, coord, flags,
 		    ctx->Eval.MapGrid1du,
 		    ctx->Eval.MapGrid1u1);
 
-      coord = store->Coord;
+      coord = store->Obj;
    }
 
    if (any_eval2 && (orflag & VERT_EVAL_P2))
    {
-      eval_points2( store->Coord, coord, flags,
+      eval_points2( store->Obj, coord, flags,
 		    ctx->Eval.MapGrid2du,
 		    ctx->Eval.MapGrid2u1,
 		    ctx->Eval.MapGrid2dv,
 		    ctx->Eval.MapGrid2v1 );
 
-      coord = store->Coord;
+      coord = store->Obj;
    }
 
 
@@ -455,62 +462,99 @@ void _tnl_eval_vb( GLcontext *ctx,
     */
    if (req & VERT_INDEX)
    {
+      GLuint generated = 0;
+
       if (!all_eval)
 	 copy_1ui( store->Index, tmp->Index.data, count );
 
       tmp->Index.data = store->Index;
       tmp->Index.start = store->Index;
 
-      if (ctx->Eval.Map1Index && any_eval1)
+      if (ctx->Eval.Map1Index && any_eval1) {
 	 eval1_1ui( &tmp->Index, coord, flags, &ctx->EvalMap.Map1Index );
+	 generated |= VERT_EVAL_C1|VERT_EVAL_P1;
+      }
 
-      if (ctx->Eval.Map2Index && any_eval2)
+      if (ctx->Eval.Map2Index && any_eval2) {
 	 eval2_1ui( &tmp->Index, coord, flags, &ctx->EvalMap.Map2Index );
+	 generated |= VERT_EVAL_C2|VERT_EVAL_P2;
+      }
 
+      /* Propogate values to generate correct vertices when vertex
+       * maps are disabled.
+       */
+      if (purge_flags & generated)
+	 _tnl_fixup_1ui( store->Index, flags, 0, 
+			 VERT_INDEX|
+			 VERT_OBJ|
+			 generated|
+			 (VERT_EVAL_ANY&~purge_flags) );
    }
 
    if (req & VERT_RGBA)
    {
+      GLuint generated = 0;
+
       if (!all_eval)
 	 copy_4chan( store->Color, tmp->Color.data, count );
 
       tmp->Color.data = store->Color;
       tmp->Color.start = (GLchan *) store->Color;
 
-      if (ctx->Eval.Map1Color4 && any_eval1)
+      if (ctx->Eval.Map1Color4 && any_eval1) {
 	 eval1_color( &tmp->Color, coord, flags, &ctx->EvalMap.Map1Color4 );
+	 generated |= VERT_EVAL_C1|VERT_EVAL_P1;
+      }
 
-      if (ctx->Eval.Map2Color4 && any_eval2)
+      if (ctx->Eval.Map2Color4 && any_eval2) {
 	 eval2_color( &tmp->Color, coord, flags, &ctx->EvalMap.Map2Color4 );
+	 generated |= VERT_EVAL_C2|VERT_EVAL_P2;
+      }
+
+      /* Propogate values to generate correct vertices when vertex
+       * maps are disabled.
+       */
+      if (purge_flags & generated)
+	 _tnl_fixup_4chan( store->Color, flags, 0, 
+			   VERT_RGBA|
+			   VERT_OBJ|
+			   generated|
+			   (VERT_EVAL_ANY&~purge_flags) );
    }
 
 
    if (req & VERT_TEX(0))
    {
+      GLuint generated = 0;
+
       if (!all_eval)
-	 copy_4f( store->TexCoord, tmp->TexCoord[0].data, count );
+	 copy_4f( store->TexCoord[0], tmp->TexCoord[0].data, count );
       else
 	 tmp->TexCoord[0].size = 0;
 
-      tmp->TexCoord[0].data = store->TexCoord;
-      tmp->TexCoord[0].start = (GLfloat *)store->TexCoord;
+      tmp->TexCoord[0].data = store->TexCoord[0];
+      tmp->TexCoord[0].start = (GLfloat *)store->TexCoord[0];
 
       if (any_eval1) {
 	 if (ctx->Eval.Map1TextureCoord4) {
 	    eval1_4f( &tmp->TexCoord[0], coord, flags, 4,
 		      &ctx->EvalMap.Map1Texture4 );
+	    generated |= VERT_EVAL_C1|VERT_EVAL_P1;
 	 }
 	 else if (ctx->Eval.Map1TextureCoord3) {
 	    eval1_4f( &tmp->TexCoord[0], coord, flags, 3,
 		      &ctx->EvalMap.Map1Texture3 );
+	    generated |= VERT_EVAL_C1|VERT_EVAL_P1;
 	 }
 	 else if (ctx->Eval.Map1TextureCoord2) {
 	    eval1_4f( &tmp->TexCoord[0], coord, flags, 2,
 		      &ctx->EvalMap.Map1Texture2 );
+	    generated |= VERT_EVAL_C1|VERT_EVAL_P1;
 	 }
 	 else if (ctx->Eval.Map1TextureCoord1) {
 	    eval1_4f( &tmp->TexCoord[0], coord, flags, 1,
 		      &ctx->EvalMap.Map1Texture1 );
+	    generated |= VERT_EVAL_C1|VERT_EVAL_P1;
 	 }
       }
 
@@ -518,38 +562,68 @@ void _tnl_eval_vb( GLcontext *ctx,
 	 if (ctx->Eval.Map2TextureCoord4) {
 	    eval2_4f( &tmp->TexCoord[0], coord, flags, 4,
 		      &ctx->EvalMap.Map2Texture4 );
+	    generated |= VERT_EVAL_C2|VERT_EVAL_P2;
 	 }
 	 else if (ctx->Eval.Map2TextureCoord3) {
 	    eval2_4f( &tmp->TexCoord[0], coord, flags, 3,
 		      &ctx->EvalMap.Map2Texture3 );
+	    generated |= VERT_EVAL_C2|VERT_EVAL_P2;
 	 }
 	 else if (ctx->Eval.Map2TextureCoord2) {
 	    eval2_4f( &tmp->TexCoord[0], coord, flags, 2,
 		      &ctx->EvalMap.Map2Texture2 );
+	    generated |= VERT_EVAL_C2|VERT_EVAL_P2;
 	 }
 	 else if (ctx->Eval.Map2TextureCoord1) {
 	    eval2_4f( &tmp->TexCoord[0], coord, flags, 1,
 		      &ctx->EvalMap.Map2Texture1 );
+	    generated |= VERT_EVAL_C2|VERT_EVAL_P2;
 	 }
       }
+
+      /* Propogate values to generate correct vertices when vertex
+       * maps are disabled.
+       */
+      if (purge_flags & generated)
+	 _tnl_fixup_4f( store->TexCoord[0], flags, 0, 
+			VERT_TEX0|
+			VERT_OBJ|
+			generated|
+			(VERT_EVAL_ANY&~purge_flags) );
    }
 
 
    if (req & VERT_NORM)
    {
+      GLuint generated = 0;
+
       if (!all_eval)
 	 copy_3f( store->Normal, tmp->Normal.data, count );
 
       tmp->Normal.data = store->Normal;
       tmp->Normal.start = (GLfloat *)store->Normal;
 
-      if (ctx->Eval.Map1Normal && any_eval1)
+      if (ctx->Eval.Map1Normal && any_eval1) {
 	 eval1_norm( &tmp->Normal, coord, flags,
 		     &ctx->EvalMap.Map1Normal );
+	 generated |= VERT_EVAL_C1|VERT_EVAL_P1;
+      }
 
-      if (ctx->Eval.Map2Normal && any_eval2)
+      if (ctx->Eval.Map2Normal && any_eval2) {
 	 eval2_norm( &tmp->Normal, coord, flags,
 		     &ctx->EvalMap.Map2Normal );
+	 generated |= VERT_EVAL_C2|VERT_EVAL_P2;
+      }
+
+      /* Propogate values to generate correct vertices when vertex
+       * maps are disabled.
+       */
+      if (purge_flags & generated)
+	 _tnl_fixup_3f( store->Normal, flags, 0, 
+			VERT_NORM|
+			VERT_OBJ|
+			generated|
+			(VERT_EVAL_ANY&~purge_flags) );
    }
 
 
@@ -601,16 +675,42 @@ void _tnl_eval_vb( GLcontext *ctx,
    }
 
 
+   /* Calculate new IM->Elts, IM->Primitive, IM->PrimitiveLength for
+    * the case where vertex maps are not enabled for some received eval
+    * coordinates.
+    */
+   if (purge_flags) {
+      GLuint vertex = VERT_OBJ|(VERT_EVAL_ANY & ~purge_flags);
+      GLuint last_new_prim = 0;
+      GLuint new_prim_length = 0;
+      GLuint next_old_prim = 0;
+      GLuint i,j;
+      struct vertex_buffer *VB = &tnl->vb;
+
+      for (i = 0, j = 0 ; i < tnl->vb.Count ; i++) {
+	 if (flags[i] & vertex) {
+	    store->Elt[j++] = i;
+	    new_prim_length++;
+	 }
+	 if (i == next_old_prim) {
+	    next_old_prim += VB->PrimitiveLength[i];
+	    VB->PrimitiveLength[last_new_prim] = new_prim_length;
+	    VB->Primitive[j] = VB->Primitive[i];
+	    last_new_prim = j;
+	 }
+      }
+      
+      VB->Elts = store->Elt;
+
+      _tnl_fixup_purged_eval( ctx, store );
+   }
+
+   /* Produce new flags array:
+    */
    {
       GLuint i;
       copy_1ui( store->Flag, flags, count );
       tnl->vb.Flag = store->Flag;
-
-      /* This is overkill, but correct as fixup will have copied the
-       * values to all vertices in the VB - we may be falsely stating
-       * that some repeated values are new, but doing so is fairly
-       * harmless.
-       */
       for (i = 0 ; i < count ; i++)
 	 store->Flag[i] |= req;
    }
