@@ -32,6 +32,8 @@ extern "C" {
 #endif
 
 
+#define GL_GLEXT_VERSION_EXT 1
+
 
 /*
  * 1. GL_EXT_abgr
