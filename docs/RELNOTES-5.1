@@ -152,6 +152,10 @@ Old files:
 New files:
 	program.[ch]              - generic ARB/NV program code
 	arbprogram.[ch]           - ARB program API functions
+	arbfragparse.[ch]         - ARB fragment program parsing
+	arbvertparse.[ch]         - ARB vertex program parsing
+	arbparse.[ch]             - ARB vertex/fragment parsing
+	arbparse_syn.h            - vertex/fragment program syntax
 	nvprogram.[ch]            - NV program API functions
 	nvvertprog.h              - NV vertex program definitions
 	nvfragprog.h              - NV fragment program definitions
@@ -160,12 +164,32 @@ New files:
 	nvvertexec.[ch]           - NV vertex program execution
 	swrast/s_nvfragprog.[ch]  - NV fragment program execution
 
-Removed files:
-	swrast/s_histogram.[ch] - moved into src/histogram.c
+The files related to per-vertex handling have changed.
+Old files:
+	tnl/t_eval_api.c          - old per-vertex code
+	tnl/t_imm_alloc.c         - old per-vertex code
+	tnl/t_imm_api.c           - old per-vertex code
+	tnl/t_imm_debug.c         - old per-vertex code
+	tnl/t_imm_dlist.c         - old per-vertex code
+	tnl/t_imm_elt.c           - old per-vertex code
+	tnl/t_imm_eval.c          - old per-vertex code
+	tnl/t_imm_exec.c          - old per-vertex code
+	tnl/t_imm_fixup.c         - old per-vertex code
+	tnl/t_vtx_sse.c           - old per-vertex code
+	tnl/t_vtx_x86.c           - old per-vertex code
+New files:
+	tnl/t_save_api.c          - new per-vertex code
+	tnl/t_save_loopback.c     - new per-vertex code
+	tnl/t_save_playback.c     - new per-vertex code
+	tnl/t_vtx_eval.c          - old per-vertex code
 
-Other New files:
+Other new files:
 	bufferobj.[ch]		- GL_ARB_vertex_buffer_object functions
 	version.h		- defines the Mesa version info
+
+Other removed files:
+	swrast/s_histogram.[ch]   - moved into src/histogram.c
+
 
 
 Other Changes
