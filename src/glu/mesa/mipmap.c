@@ -1,4 +1,4 @@
-/* $Id: mipmap.c,v 1.3 1999/11/09 06:16:59 brianp Exp $ */
+/* $Id: mipmap.c,v 1.4 1999/12/12 17:24:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: mipmap.c,v $
+ * Revision 1.4  1999/12/12 17:24:18  brianp
+ * removed unneeded code in gluBuild1DMipmaps()
+ *
  * Revision 1.3  1999/11/09 06:16:59  brianp
  * replace GLint with GLsizei in a gluScaleImage, gluBuild1/2DMipmaps()
  *
@@ -701,12 +704,6 @@ GLint GLAPIENTRY gluBuild1DMipmaps( GLenum target, GLint components,
    }
 
    free( texture );
-
-   /* make sure remaining mipmap levels are removed */
-   for (l=levels;l<max_levels;l++) {
-      glTexImage1D( GL_TEXTURE_1D, l, components, 0, 0,
-		    format, GL_UNSIGNED_BYTE, NULL );
-   }
 
    return 0;
 }
