@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -119,7 +119,9 @@ _mesa_DepthMask( GLboolean flag )
 
 
 
-/* GL_EXT_depth_bounds_test */
+/**
+ * Specified by the GL_EXT_depth_bounds_test extension.
+ */
 void GLAPIENTRY
 _mesa_DepthBoundsEXT( GLclampd zmin, GLclampd zmax )
 {
@@ -147,6 +149,10 @@ _mesa_DepthBoundsEXT( GLclampd zmin, GLclampd zmax )
 /*****                      Initialization                        *****/
 /**********************************************************************/
 
+
+/**
+ * Initialize the depth buffer attribute group in the given context.
+ */
 void _mesa_init_depth( GLcontext * ctx )
 {
    /* Depth buffer group */
