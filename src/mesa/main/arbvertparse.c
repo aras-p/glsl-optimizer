@@ -22,6 +22,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/**
+ * \file arbvertparse.c
+ * ARB_vertex_program parser.
+ * \author Karl Rasche
+ */
+
 #include "glheader.h"
 #include "context.h"
 #include "hash.h"
@@ -271,7 +277,7 @@ typedef struct st_prod_table
 {
    GLint lhs;
    GLint rhs[4];
-   GLubyte *key[4];
+   char *key[4];
 }
 prod_table;
 
@@ -295,7 +301,7 @@ typedef struct st_look_ahead_table
 {
    GLint lhs;
    GLint la;
-   GLubyte *la_kw;
+   char *la_kw;
    GLint prod_idx;
 }
 look_ahead_table;
@@ -305,7 +311,7 @@ look_ahead_table;
  */
 typedef struct st_parse_state
 {
-   GLubyte *str;
+   char *str;
    GLint len;
 
    /* lex stuff ------ */
@@ -326,11 +332,11 @@ typedef struct st_parse_state
 parse_state;
 
 /* local prototypes */
-static GLint float_table_add(float_table * tab, GLubyte * str, GLint start,
+static GLint float_table_add(float_table * tab, const char *str, GLint start,
 			     GLint end);
-static GLint int_table_add(int_table * tab, GLubyte * str, GLint start,
+static GLint int_table_add(int_table * tab, const char *str, GLint start,
 			   GLint end);
-static GLint id_table_add(id_table * tab, GLubyte * str, GLint start,
+static GLint id_table_add(id_table * tab, const char *str, GLint start,
 			  GLint end);
 static void parse_tree_free_children(parse_tree_node * ptn);
 
@@ -3251,14 +3257,14 @@ get_next_token(parse_state * s, GLint * token, GLint * token_attr)
 	    ADV_TO_STATE(STATE_N3);
 	 }
 	 else {
-	    //ADV_AND_FINISH(PERIOD_TOKEN);                                 
+	    /*ADV_AND_FINISH(PERIOD_TOKEN);                                 */
 	    FINISH(PERIOD_TOKEN);
 	 }
 	 break;
 
       case STATE_N2:
 #if 1
-	 //ADV_AND_FINISH(DOTDOT_TOKEN);
+	 /*ADV_AND_FINISH(DOTDOT_TOKEN);*/
 	 FINISH(DOTDOT_TOKEN);
 #else
 	 FINISH(PERIOD_TOKEN);
@@ -3282,7 +3288,7 @@ get_next_token(parse_state * s, GLint * token, GLint * token_attr)
 	 else {
 	    *token_attr =
 	       float_table_add(&s->floats, s->str, s->start_pos, s->curr_pos);
-	    //ADV_AND_FINISH(FLOAT_TOKEN);
+	    /*ADV_AND_FINISH(FLOAT_TOKEN);*/
 	    FINISH(FLOAT_TOKEN);
 	 }
 	 break;
@@ -3300,7 +3306,7 @@ get_next_token(parse_state * s, GLint * token, GLint * token_attr)
 	 else {
 	    *token_attr =
 	       int_table_add(&s->ints, s->str, s->start_pos, s->curr_pos);
-	    //ADV_AND_FINISH(INTEGER_TOKEN);
+	    /*ADV_AND_FINISH(INTEGER_TOKEN);*/
 	    FINISH(INTEGER_TOKEN);
 	 }
 	 break;
@@ -3324,7 +3330,7 @@ get_next_token(parse_state * s, GLint * token, GLint * token_attr)
 	 else {
 	    *token_attr =
 	       float_table_add(&s->floats, s->str, s->start_pos, s->curr_pos);
-	    //ADV_AND_FINISH(FLOAT_TOKEN);
+	    /*ADV_AND_FINISH(FLOAT_TOKEN);*/
 	    FINISH(FLOAT_TOKEN);
 	 }
 	 break;
@@ -3592,7 +3598,7 @@ parse_state_init(GLubyte * str, GLint len)
 {
    parse_state *s = (parse_state *) _mesa_malloc(sizeof(parse_state));
 
-   s->str = _mesa_strdup(str);
+   s->str = _mesa_strdup((char *) str);
    s->len = len;
    s->curr_pos = 0;
    s->start_pos = 0;
@@ -3967,7 +3973,7 @@ binding_table_add(binding_table * tab, GLint type, GLint offset, GLint row,
 
    tab->type[key] = type;
    tab->offset[key] = offset;
-   tab->row[key] = row;		//key;
+   tab->row[key] = row;		/*key;*/
    tab->num_rows[key] = nrows;
    tab->reg_num[key] = 0;
    _mesa_memcpy(tab->consts[key], values, 4 * sizeof(GLfloat));
@@ -3991,7 +3997,7 @@ binding_table_add(binding_table * tab, GLint type, GLint offset, GLint row,
  * \return        The index of the float, after we insert it, in the float table
  */
 static GLint
-float_table_add(float_table * tab, GLubyte * str, GLint start, GLint end)
+float_table_add(float_table *tab, const char *str, GLint start, GLint end)
 {
    GLint key, a;
    GLubyte *newstr;
@@ -4004,7 +4010,7 @@ float_table_add(float_table * tab, GLubyte * str, GLint start, GLint end)
 
    /* test for existance */
    for (a = 0; a < tab->len; a++) {
-      if (tab->data[a] == atof(newstr)) {
+      if (tab->data[a] == atof((char *) newstr)) {
 	 _mesa_free(newstr);
 	 return a;
       }
@@ -4019,7 +4025,7 @@ float_table_add(float_table * tab, GLubyte * str, GLint start, GLint end)
 				    (tab->len + 1) * sizeof(GLdouble));
    }
 
-   tab->data[key] = atof(newstr);
+   tab->data[key] = atof((char *) newstr);
    tab->len++;
 
    _mesa_free(newstr);
@@ -4041,14 +4047,14 @@ float_table_add(float_table * tab, GLubyte * str, GLint start, GLint end)
  * \return        The index of the int, after we insert it, in the int table
  */
 static GLint
-int_table_add(int_table * tab, GLubyte * str, GLint start, GLint end)
+int_table_add(int_table * tab, const char *str, GLint start, GLint end)
 {
    GLint key, a;
-   GLubyte *newstr;
+   char *newstr;
 
    key = tab->len;
 
-   newstr = (GLubyte *) _mesa_malloc(end - start + 2);
+   newstr = (char *) _mesa_malloc(end - start + 2);
    _mesa_memset(newstr, 0, end - start + 2);
    _mesa_memcpy(newstr, str + start, end - start);
 
@@ -4096,7 +4102,7 @@ int_table_add(int_table * tab, GLubyte * str, GLint start, GLint end)
  *                     in the table, and it has been initialized to type ALIAS
  */
 static GLint
-id_table_add(id_table * tab, GLubyte * str, GLint start, GLint end)
+id_table_add(id_table * tab, const char * str, GLint start, GLint end)
 {
    GLint key, a;
    GLubyte *newstr;
@@ -4120,7 +4126,7 @@ id_table_add(id_table * tab, GLubyte * str, GLint start, GLint end)
 				 (tab->len + 1) * sizeof(GLint));
    }
 
-   //tab->type[key] = TYPE_NONE;
+   /*tab->type[key] = TYPE_NONE;*/
 
    newstr = (GLubyte *) _mesa_malloc((end - start + 2) * sizeof(GLubyte));
    _mesa_memset(newstr, 0, end - start + 2);
@@ -4128,7 +4134,7 @@ id_table_add(id_table * tab, GLubyte * str, GLint start, GLint end)
 
    for (a = 0; a < tab->len; a++) {
       /* aha! we found it in the table */
-      if (!_mesa_strcmp(tab->data[a], newstr)) {
+      if (!_mesa_strcmp((char *) tab->data[a], (char *) newstr)) {
 	 _mesa_free(newstr);
 
 	 key = a;
@@ -4151,7 +4157,7 @@ id_table_add(id_table * tab, GLubyte * str, GLint start, GLint end)
    return key;
 }
 
-//#define SHOW_STEPS 1
+/*#define SHOW_STEPS 1*/
 
 
 /**
@@ -4173,7 +4179,7 @@ apply_production(parse_state * s, int num)
    parse_tree_node *ptn;
    parse_tree_node *pt_ptr_new[4];
 
-   _stack_pop(s, &stack_tok, &stack_tok_attr, &ptn);
+   (void) _stack_pop(s, &stack_tok, &stack_tok_attr, &ptn);
    /*printf("apply prod %d\n", num); */
 
    ptn->prod_applied = num;
@@ -4188,19 +4194,16 @@ apply_production(parse_state * s, int num)
        * in the production table into an entry in the approprate symbol table
        */
       if (tok == ID_TOKEN) {
-	 str_key =
-	    id_table_add(&s->idents, ptab[num].key[a], 0,
-			 strlen(ptab[num].key[a]));
+	 str_key = id_table_add(&s->idents, ptab[num].key[a], 0,
+			 _mesa_strlen(ptab[num].key[a]));
       }
       else if (tok == INTEGER_TOKEN) {
-	 str_key =
-	    int_table_add(&s->ints, ptab[num].key[a], 0,
-			  strlen(ptab[num].key[a]));
+	 str_key = int_table_add(&s->ints, ptab[num].key[a], 0,
+			  _mesa_strlen(ptab[num].key[a]));
       }
       else if (tok == FLOAT_TOKEN) {
-	 str_key =
-	    float_table_add(&s->floats, ptab[num].key[a], 0,
-			    strlen(ptab[num].key[a]));
+	 str_key = float_table_add(&s->floats, ptab[num].key[a], 0,
+			    _mesa_strlen(ptab[num].key[a]));
       }
 
       /* "-1" is a wildcard flag, accept any id/float/int */
@@ -4434,8 +4437,8 @@ parse(parse_state * s)
 	 else if (input_tok == PERIOD_TOKEN) {
 	    ret = peek_next_token(s, &peek_tok, &peek_tok_attr, 1);
 	    if ((peek_tok == ID_TOKEN) &&
-		((!_mesa_strcmp(s->idents.data[peek_tok_attr], "back")) ||
-		 (!_mesa_strcmp(s->idents.data[peek_tok_attr], "front")))) {
+		((!_mesa_strcmp((char *) s->idents.data[peek_tok_attr], "back")) ||
+		 (!_mesa_strcmp((char *) s->idents.data[peek_tok_attr], "front")))) {
 	       apply_production(s, 297);
 	    }
 	    else {
@@ -4455,8 +4458,8 @@ parse(parse_state * s)
 	 else if (input_tok == PERIOD_TOKEN) {
 	    ret = peek_next_token(s, &peek_tok, &peek_tok_attr, 1);
 	    if ((ret == ARB_VP_SUCESS) && (peek_tok == ID_TOKEN) &&
-		((!_mesa_strcmp(s->idents.data[peek_tok_attr], "primary")) ||
-		 (!_mesa_strcmp(s->idents.data[peek_tok_attr], "secondary"))))
+		((!_mesa_strcmp((char *) s->idents.data[peek_tok_attr], "primary")) ||
+		 (!_mesa_strcmp((char *) s->idents.data[peek_tok_attr], "secondary"))))
 	    {
 	       apply_production(s, 301);
 	    }
@@ -4477,8 +4480,8 @@ parse(parse_state * s)
 	 else if (input_tok == PERIOD_TOKEN) {
 	    ret = peek_next_token(s, &peek_tok, &peek_tok_attr, 1);
 	    if ((ret == ARB_VP_SUCESS) && (peek_tok == ID_TOKEN) &&
-		((!_mesa_strcmp(s->idents.data[peek_tok_attr], "primary")) ||
-		 (!_mesa_strcmp(s->idents.data[peek_tok_attr], "secondary"))))
+		((!_mesa_strcmp((char *) s->idents.data[peek_tok_attr], "primary")) ||
+		 (!_mesa_strcmp((char *) s->idents.data[peek_tok_attr], "secondary"))))
 	    {
 	       apply_production(s, 306);
 	    }
@@ -4546,10 +4549,10 @@ parse(parse_state * s)
 
 	 /* productions 318-9 */
       case NT_SWIZZLE_SUFFIX2_TOKEN:
-	 if (strlen(s->idents.data[input_tok_attr]) == 1) {
+	 if (_mesa_strlen((char *) s->idents.data[input_tok_attr]) == 1) {
 	    apply_production(s, 318);
 	 }
-	 else if (strlen(s->idents.data[input_tok_attr]) == 4) {
+	 else if (_mesa_strlen((char *) s->idents.data[input_tok_attr]) == 4) {
 	    apply_production(s, 319);
 	 }
 	 else {
@@ -4566,7 +4569,7 @@ parse(parse_state * s)
 	    if (IS_SWZ_CMP(str[0]) && IS_SWZ_CMP(str[1]) && IS_SWZ_CMP(str[2])
 		&& IS_SWZ_CMP(str[3])) {
 	       _stack_pop(s, &stack_tok, &stack_tok_attr, &ptn);
-//                                              _stack_push(s, input_tok, input_tok_attr, NULL);
+               /*                                              _stack_push(s, input_tok, input_tok_attr, NULL);*/
 
 	       ptn2 = parse_tree_node_init();
 	       ptn2->tok = input_tok;
@@ -4594,7 +4597,7 @@ parse(parse_state * s)
 	    if (input_tok == ID_TOKEN) {
 	       str_key =
 		  id_table_add(&s->idents, latab[la].la_kw, 0,
-			       strlen(latab[la].la_kw));
+			       _mesa_strlen(latab[la].la_kw));
 	       if ((str_key != input_tok_attr)
 		   && (_mesa_strcmp(latab[la].la_kw, "-1")))
 		  continue;
@@ -6527,13 +6530,12 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
    GLubyte *our_string;
    parse_state *state;
 
-   printf("len: %d\n", len);
-
    /* XXX: How do I handle these errors? */
-   if (len < 10)
+   if (len < 10 || _mesa_strncmp((const char *) string, "!!ARBvp1.0", 10)) {
+      ctx->Program.ErrorPos = 0;
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glProgramStringARB(bad header)");
       return;
-   if (_mesa_strncmp(string, "!!ARBvp1.0", 10))
-      return;
+   }
 
    /* Make a null-terminated copy of the program string */
    our_string = (GLubyte *) MALLOC(len + 1);
@@ -6544,7 +6546,7 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
    MEMCPY(our_string, string, len);
    our_string[len] = 0;
 
-   state = parse_state_init(our_string + 10, strlen(our_string) - 10);
+   state = parse_state_init(our_string + 10, _mesa_strlen((char *) our_string) - 10);
 
    if (parse(state) == ARB_VP_SUCESS) {
       printf("parse sucess!\n");
