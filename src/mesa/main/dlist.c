@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: dlist.c,v 1.2 1999/08/26 14:50:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2454,6 +2454,10 @@ static void execute_list( GLcontext *ctx, GLuint list )
          case OPCODE_VERTEX_CASSETTE:
 	    if (ctx->NewState)
 	       gl_update_state(ctx);
+	    if (ctx->CompileCVAFlag) {
+	       ctx->CompileCVAFlag = 0;
+	       ctx->CVA.elt.pipeline_valid = 0;
+	    }
 	    if (!ctx->CVA.elt.pipeline_valid)
 	       gl_build_immediate_pipeline( ctx );
 	    gl_fixup_cassette( ctx, (struct immediate *) n[1].data ); 

@@ -420,6 +420,11 @@ struct tfxMesaContext {
 
   render_func **RenderVBTables;
 
+  render_func *RenderVBClippedTab;
+  render_func *RenderVBCulledTab;
+  render_func *RenderVBRawTab;
+
+
   tfxStats stats;
 
   void *state;
@@ -570,7 +575,10 @@ extern void fxDDShadeModel(GLcontext *ctx, GLenum mode);
 extern void fxDDCullFace(GLcontext *ctx, GLenum mode);
 extern void fxDDFrontFace(GLcontext *ctx, GLenum mode);
 
+extern void fxPrintRenderState( const char *msg, GLuint state );
+extern void fxPrintHintState( const char *msg, GLuint state );
 
+extern void fxDDDoRenderVB( struct vertex_buffer *VB );
 
 
 #endif

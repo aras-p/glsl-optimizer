@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: context.c,v 1.2 1999/08/26 14:50:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -764,7 +764,7 @@ static void initialize_context( GLcontext *ctx )
       /* Extensions */
       gl_extensions_ctr( ctx );
 
-      ctx->AllowVertexCull = 0;
+      ctx->AllowVertexCull = CLIP_CULLED_BIT;
 
       /* Lighting group */
       for (i=0;i<MAX_LIGHTS;i++) {
@@ -1919,6 +1919,8 @@ static void update_pixel_masking( GLcontext *ctx )
 
 static void update_fog_mode( GLcontext *ctx )
 {
+   int old_mode = ctx->FogMode;
+
    if (ctx->Fog.Enabled) {
       if (ctx->Texture.Enabled)
          ctx->FogMode = FOG_FRAGMENT;
@@ -1934,6 +1936,9 @@ static void update_fog_mode( GLcontext *ctx )
    else {
       ctx->FogMode = FOG_NONE;
    }
+   
+   if (old_mode != ctx->FogMode)
+      ctx->NewState |= NEW_FOG;
 }
 
 
@@ -2121,7 +2126,9 @@ void gl_update_state( GLcontext *ctx )
       ctx->NeedNormals = (ctx->Light.Enabled || ctx->Texture.NeedNormals);
    }
 
-   if (ctx->NewState & (NEW_RASTER_OPS | NEW_LIGHTING)) {
+   if (ctx->NewState & (NEW_RASTER_OPS | NEW_LIGHTING | NEW_FOG)) {
+
+
       if (ctx->NewState & NEW_RASTER_OPS) {
 	 update_pixel_logic(ctx);
 	 update_pixel_masking(ctx);
@@ -2192,10 +2199,10 @@ void gl_update_state( GLcontext *ctx )
       }
 
       if (ctx->NewState & NEW_LIGHTING) {
-	 ctx->TriangleCaps &= ~(DD_TRI_LIGHT_TWOSIDE|DD_EARLY_CULL);
+	 ctx->TriangleCaps &= ~(DD_TRI_LIGHT_TWOSIDE|DD_LIGHTING_CULL);
 	 if (ctx->Light.Enabled) {
 	    if (ctx->Light.Model.TwoSide)
-	       ctx->TriangleCaps |= (DD_TRI_LIGHT_TWOSIDE|DD_EARLY_CULL);
+	       ctx->TriangleCaps |= (DD_TRI_LIGHT_TWOSIDE|DD_LIGHTING_CULL);
 	    gl_update_lighting(ctx);
 	 }
       }
@@ -2207,21 +2214,29 @@ void gl_update_state( GLcontext *ctx )
       if (ctx->NewState & NEW_POLYGON) {
 	 /* Setup CullBits bitmask */
 	 if (ctx->Polygon.CullFlag) {
+	    ctx->backface_sign = 1;
 	    switch(ctx->Polygon.CullFaceMode) {
-	    case GL_FRONT:
-	       ctx->Polygon.CullBits = 2;
-	       break;
 	    case GL_BACK:
+	       if(ctx->Polygon.FrontFace==GL_CCW)
+		  ctx->backface_sign = -1;
 	       ctx->Polygon.CullBits = 1;
+	       break;
+	    case GL_FRONT:
+	       if(ctx->Polygon.FrontFace!=GL_CCW)
+		  ctx->backface_sign = -1;
+	       ctx->Polygon.CullBits = 2;
 	       break;
 	    default:
 	    case GL_FRONT_AND_BACK:
+	       ctx->backface_sign = 0;
 	       ctx->Polygon.CullBits = 3;
 	       break;
 	    }
 	 }
-	 else
+	 else {
 	    ctx->Polygon.CullBits = 3;
+	    ctx->backface_sign = 0;
+	 }
 
 	 /* Any Polygon offsets enabled? */
 	 ctx->TriangleCaps &= ~DD_TRI_OFFSET;
@@ -2257,6 +2272,9 @@ void gl_update_state( GLcontext *ctx )
       ctx->IndirectTriangles = ctx->TriangleCaps & ~ctx->Driver.TriangleCaps;
       ctx->IndirectTriangles |= DD_SW_RASTERIZE;
 
+      if (MESA_VERBOSE&VERBOSE_CULL)
+	 gl_print_tri_caps("initial indirect tris", ctx->IndirectTriangles);
+
       ctx->Driver.PointsFunc = NULL;
       ctx->Driver.LineFunc = NULL;
       ctx->Driver.TriangleFunc = NULL;
@@ -2272,6 +2290,9 @@ void gl_update_state( GLcontext *ctx )
        */
       ctx->Driver.UpdateState(ctx);
 
+      if (MESA_VERBOSE&VERBOSE_CULL)
+	 gl_print_tri_caps("indirect tris", ctx->IndirectTriangles);
+
       /*
        * In case the driver didn't hook in an optimized point, line or
        * triangle function we'll now select "core/fallback" point, line
@@ -2282,7 +2303,15 @@ void gl_update_state( GLcontext *ctx )
 	 gl_set_line_function(ctx);
 	 gl_set_triangle_function(ctx);
 	 gl_set_quad_function(ctx);
+
+	 if ((ctx->IndirectTriangles & 
+	      (DD_TRI_SW_RASTERIZE|DD_QUAD_SW_RASTERIZE|DD_TRI_CULL)) ==
+	     (DD_TRI_SW_RASTERIZE|DD_QUAD_SW_RASTERIZE|DD_TRI_CULL)) 
+	    ctx->IndirectTriangles &= ~DD_TRI_CULL;
       }
+
+      if (MESA_VERBOSE&VERBOSE_CULL)
+	 gl_print_tri_caps("indirect tris 2", ctx->IndirectTriangles);
 
       gl_set_render_vb_function(ctx);
    }
@@ -2311,9 +2340,10 @@ void gl_update_state( GLcontext *ctx )
    /* Figure out whether we can light in object space or not.  If we
     * can, find the current positions of the lights in object space
     */
-   if ((ctx->Enabled & (ENABLE_POINT_ATTEN | ENABLE_LIGHT | 
+   if ((ctx->Enabled & (ENABLE_POINT_ATTEN | ENABLE_LIGHT | ENABLE_FOG |
 			ENABLE_TEXGEN0 | ENABLE_TEXGEN1)) &&
        (ctx->NewState & (NEW_LIGHTING | 
+                         NEW_FOG |
 			 NEW_MODELVIEW | 
 			 NEW_PROJECTION |
 			 NEW_TEXTURING |

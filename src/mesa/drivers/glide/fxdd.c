@@ -513,6 +513,10 @@ static void fxDDUpdateDDPointers(GLcontext *ctx)
     if(new_state & INTERESTED) {
       fxDDChooseRenderState( ctx );
       fxMesa->RenderVBTables=fxDDChooseRenderVBTables(ctx);
+      fxMesa->RenderVBClippedTab=fxMesa->RenderVBTables[0];
+      fxMesa->RenderVBCulledTab=fxMesa->RenderVBTables[1];
+      fxMesa->RenderVBRawTab=fxMesa->RenderVBTables[2];
+
       ctx->Driver.RasterSetup=fxDDChooseSetupFunction(ctx);
     }
       
@@ -520,10 +524,6 @@ static void fxDDUpdateDDPointers(GLcontext *ctx)
     ctx->Driver.LineFunc=fxMesa->LineFunc;
     ctx->Driver.TriangleFunc=fxMesa->TriangleFunc;
     ctx->Driver.QuadFunc=fxMesa->QuadFunc;
-    ctx->Driver.RenderVBClippedTab=fxMesa->RenderVBTables[0];
-    ctx->Driver.RenderVBCulledTab=fxMesa->RenderVBTables[1];
-    ctx->Driver.RenderVBRawTab=fxMesa->RenderVBTables[2];
-
   }
 
   ctx->Driver.AllocDepthBuffer=fxAllocDepthBuffer;

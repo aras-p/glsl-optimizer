@@ -948,6 +948,7 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,GrScreenResolution_t res
     fxMesa->haveTwoTMUs=GL_FALSE;
 
   if (getenv("FX_EMULATE_SINGLE_TMU")) {
+     fprint(stderr, "stadnnadna;lskdjf");
      if (MESA_VERBOSE&VERBOSE_DRIVER) 
        fprintf(stderr, "\n\nEmulating single tmu\n\n");
      fxMesa->haveTwoTMUs = GL_FALSE;

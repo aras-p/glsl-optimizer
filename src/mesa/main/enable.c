@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.2 1999/08/19 13:24:27 brianp Exp $ */
+/* $Id: enable.c,v 1.3 1999/08/26 14:50:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,7 +56,7 @@ void gl_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx, "gl_enable/disable" );
 
    if (MESA_VERBOSE & VERBOSE_API) 
-      fprintf(stderr, "%s %s (%x)\n", 
+      fprintf(stderr, "%s %s (newstate is %x)\n", 
 	      state ? "glEnable" : "glDisable",
 	      gl_lookup_enum_by_nr(cap),
 	      ctx->NewState);
@@ -153,7 +153,7 @@ void gl_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 if (ctx->Fog.Enabled!=state) {
             ctx->Fog.Enabled = state;
 	    ctx->Enabled ^= ENABLE_FOG;
-            ctx->NewState |= NEW_FOG;
+            ctx->NewState |= NEW_FOG|NEW_RASTER_OPS;
          }
 	 break;
       case GL_LIGHT0:

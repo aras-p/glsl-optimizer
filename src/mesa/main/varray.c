@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: varray.c,v 1.2 1999/08/26 14:50:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -407,7 +407,7 @@ void gl_exec_array_elements( GLcontext *ctx, struct immediate *IM )
    if (translate & VERT_OBJ_ANY) 
       (ctx->Array.VertexEltFunc)( IM->Obj, 
 				  &ctx->Array.Vertex, 
-				  flags, elts, VERT_ELT,
+				  flags, elts, (VERT_ELT|VERT_OBJ_ANY),
 				  start, count);
    
    if (translate & VERT_NORM) 
@@ -830,11 +830,10 @@ static void FUNC( GLcontext *ctx, GLenum mode,		\
       GLuint nr = MIN2( VB_MAX, count - j + VB_START );	\
       struct immediate *IM = ctx->input;		\
       GLuint sf = IM->Flag[VB_START];			\
-      GLuint flags = IM->ArrayOrFlags;			\
 							\
       for (i = VB_START ; i < nr ; i++) {		\
 	 IM->Elt[i] = (GLuint) *indices++;		\
-	 IM->Flag[i] = flags;				\
+	 IM->Flag[i] = VERT_ELT;			\
       }							\
 							\
       if (j == 0) IM->Flag[VB_START] |= sf;		\
@@ -1251,8 +1250,6 @@ void gl_update_client_state( GLcontext *ctx )
    /* Not really important any more:
     */
    ctx->Array.Summary = ctx->Array.Flags & VERT_DATA;
-
-   ctx->input->ArrayOrFlags = (ctx->Array.Flags & VERT_OBJ_234) | VERT_ELT;
    ctx->input->ArrayAndFlags = ~ctx->Array.Flags;
    ctx->input->ArrayEltFlush = !(ctx->CompileCVAFlag);
 }

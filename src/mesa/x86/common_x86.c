@@ -32,6 +32,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include "common_x86asm.h"
 
 int gl_x86_cpu_features = 0;
@@ -43,7 +44,7 @@ void gl_init_all_x86_asm (void)
    gl_x86_cpu_features = gl_identify_x86_cpu_features ();
 
    if (gl_x86_cpu_features & GL_CPU_GenuineIntel) {
-      printf ("GenuineIntel cpu detected.\n");
+      fprintf (stderr, "GenuineIntel cpu detected.\n");
    }
    gl_init_x86_asm_transforms ();
 
@@ -52,7 +53,7 @@ void gl_init_all_x86_asm (void)
    if (gl_x86_cpu_features & GL_CPU_MMX) {
       char *s = getenv( "MESA_NO_MMX" );
       if (s == NULL) { 
-         printf ("MMX cpu detected.\n");
+         fprintf (stderr, "MMX cpu detected.\n");
       } else {
          gl_x86_cpu_features &= (!GL_CPU_MMX); 
       }
@@ -64,7 +65,7 @@ void gl_init_all_x86_asm (void)
    if (gl_x86_cpu_features & GL_CPU_3Dnow) {
       char *s = getenv( "MESA_NO_3DNOW" );
       if (s == NULL) {
-         printf ("3Dnow cpu detected.\n");
+         fprintf (stderr, "3Dnow cpu detected.\n");
          gl_init_3dnow_asm_transforms ();
       } else {
          gl_x86_cpu_features &= (!GL_CPU_3Dnow); 

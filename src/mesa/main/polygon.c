@@ -1,4 +1,4 @@
-/* $Id: polygon.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: polygon.c,v 1.2 1999/08/26 14:50:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -118,9 +118,6 @@ void gl_PolygonMode( GLcontext *ctx, GLenum face, GLenum mode )
    if (ctx->Polygon.FrontMode!=GL_FILL || ctx->Polygon.BackMode!=GL_FILL) {
       ctx->Polygon.Unfilled = GL_TRUE;
       ctx->TriangleCaps |= DD_TRI_UNFILLED;
-   }
-   else {
-      ctx->Polygon.Unfilled = GL_FALSE;
    }
 
    ctx->NewState |= (NEW_POLYGON | NEW_RASTER_OPS);
