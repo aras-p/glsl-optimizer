@@ -1,10 +1,10 @@
-/* $Id: s_texture.h,v 1.13 2002/05/02 00:59:20 brianp Exp $ */
+/* $Id: s_texture.h,v 1.14 2003/01/26 14:37:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,10 @@
 #include "mtypes.h"
 #include "swrast.h"
 
+
+extern void
+_swrast_texture_table_lookup( const struct gl_color_table *table,
+                              GLuint n, GLchan rgba[][4] );
 
 extern void
 _swrast_choose_texture_sample_func( GLcontext *ctx,

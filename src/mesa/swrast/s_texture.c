@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.77 2003/01/21 21:47:53 brianp Exp $ */
+/* $Id: s_texture.c,v 1.78 2003/01/26 14:37:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -296,117 +296,130 @@
 #define K1BIT  32
 
 
-static void texture_table_lookup(const struct gl_color_table *table,
-                                 GLuint n, GLchan rgba[][4])
+/*
+ * Do the lookup for GL_SGI_texture_color_table.
+ */
+void
+_swrast_texture_table_lookup(const struct gl_color_table *table,
+                             GLuint n, GLchan rgba[][4])
 {
-   ASSERT(table->FloatTable);
    if (!table->Table || table->Size == 0)
       return;
 
    switch (table->Format) {
       case GL_INTENSITY:
          /* replace RGBA with I */
-         if (!table->FloatTable) {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLchan *lut = (const GLchan *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint j = CHAN_TO_FLOAT(rgba[i][RCOMP])*scale;
-               GLchan c = lut[CLAMP(j, 0, 1)];
-               rgba[i][RCOMP] = rgba[i][GCOMP] =
-                  rgba[i][BCOMP] = rgba[i][ACOMP] = c;
-            }
-
-         }
-         else {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
+         if (table->FloatTable) {
+            const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint j = CHAN_TO_FLOAT(rgba[i][RCOMP])*scale;
+               GLint j = IROUND((GLfloat) rgba[i][RCOMP] * scale);
                GLchan c;
                CLAMPED_FLOAT_TO_CHAN(c, lut[j]);
                rgba[i][RCOMP] = rgba[i][GCOMP] =
                   rgba[i][BCOMP] = rgba[i][ACOMP] = c;
+            }
+         }
+         else {
+            if (CHAN_TYPE == GL_UNSIGNED_BYTE && table->Size == 256) {
+               /* common case */
+               const GLchan *lut = (const GLchan *) table->Table;
+               GLuint i;
+               for (i = 0; i < n; i++) {
+                  const GLchan c = lut[rgba[i][RCOMP]];
+                  rgba[i][RCOMP] = rgba[i][GCOMP] =
+                     rgba[i][BCOMP] = rgba[i][ACOMP] = c;
+               }
+            }
+            else {
+               const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
+               const GLchan *lut = (const GLchan *) table->Table;
+               GLuint i;
+               for (i = 0; i < n; i++) {
+                  GLint j = IROUND((GLfloat) rgba[i][RCOMP] * scale);
+                  rgba[i][RCOMP] = rgba[i][GCOMP] =
+                     rgba[i][BCOMP] = rgba[i][ACOMP] = lut[j];
+               }
             }
          }
          break;
       case GL_LUMINANCE:
          /* replace RGB with L */
-         if (!table->FloatTable) {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLchan *lut = (const GLchan *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint j = CHAN_TO_FLOAT(rgba[i][RCOMP])*scale;
-               GLchan c = lut[j];
-               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = c;
-            }
-         }
-         else {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
+         if (table->FloatTable) {
+            const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint j = CHAN_TO_FLOAT(rgba[i][RCOMP])*scale;
+               GLint j = IROUND((GLfloat) rgba[i][RCOMP] * scale);
                GLchan c;
                CLAMPED_FLOAT_TO_CHAN(c, lut[j]);
                rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = c;
             }
          }
+         else {
+            if (CHAN_TYPE == GL_UNSIGNED_BYTE && table->Size == 256) {
+               /* common case */
+               const GLchan *lut = (const GLchan *) table->Table;
+               GLuint i;
+               for (i = 0; i < n; i++) {
+                  const GLchan c = lut[rgba[i][RCOMP]];
+                  rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = c;
+               }
+            }
+            else {
+               const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
+               const GLchan *lut = (const GLchan *) table->Table;
+               GLuint i;
+               for (i = 0; i < n; i++) {
+                  GLint j = IROUND((GLfloat) rgba[i][RCOMP] * scale);
+                  rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = lut[j];
+               }
+            }
+         }
          break;
       case GL_ALPHA:
          /* replace A with A */
-         if (!table->FloatTable) {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLchan *lut = (const GLchan *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint j = CHAN_TO_FLOAT(rgba[i][ACOMP])*scale;
-               rgba[i][ACOMP] = lut[j];
-            }
-         }
-         else  {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
+         if (table->FloatTable) {
+            const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint j = CHAN_TO_FLOAT(rgba[i][ACOMP])*scale;
-               CLAMPED_FLOAT_TO_CHAN(rgba[i][ACOMP], lut[j]);
+               GLint j = IROUND((GLfloat) rgba[i][ACOMP] * scale);
+               GLchan c;
+               CLAMPED_FLOAT_TO_CHAN(c, lut[j]);
+               rgba[i][ACOMP] = c;
+            }
+         }
+         else {
+            if (CHAN_TYPE == GL_UNSIGNED_BYTE && table->Size == 256) {
+               /* common case */
+               const GLchan *lut = (const GLchan *) table->Table;
+               GLuint i;
+               for (i = 0; i < n; i++) {
+                  rgba[i][ACOMP] = lut[rgba[i][ACOMP]];
+               }
+            }
+            else {
+               const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
+               const GLchan *lut = (const GLchan *) table->Table;
+               GLuint i;
+               for (i = 0; i < n; i++) {
+                  GLint j = IROUND((GLfloat) rgba[i][ACOMP] * scale);
+                  rgba[i][ACOMP] = lut[j];
+               }
             }
          }
          break;
       case GL_LUMINANCE_ALPHA:
          /* replace RGBA with LLLA */
-         if (!table->FloatTable) {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLchan *lut = (const GLchan *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint jL = CHAN_TO_FLOAT(rgba[i][RCOMP])*scale;
-               GLint jA = CHAN_TO_FLOAT(rgba[i][ACOMP])*scale;
-               GLchan luminance, alpha;
-               luminance = lut[jL * 2 + 0];
-               alpha     = lut[jA * 2 + 1];
-               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = luminance;
-               rgba[i][ACOMP] = alpha;;
-            }
-         }
-         else {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
+         if (table->FloatTable) {
+            const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint jL = CHAN_TO_FLOAT(rgba[i][RCOMP])*scale;
-               GLint jA = CHAN_TO_FLOAT(rgba[i][ACOMP])*scale;
+               GLint jL = IROUND((GLfloat) rgba[i][RCOMP] * scale);
+               GLint jA = IROUND((GLfloat) rgba[i][ACOMP] * scale);
                GLchan luminance, alpha;
                CLAMPED_FLOAT_TO_CHAN(luminance, lut[jL * 2 + 0]);
                CLAMPED_FLOAT_TO_CHAN(alpha, lut[jA * 2 + 1]);
@@ -414,50 +427,85 @@ static void texture_table_lookup(const struct gl_color_table *table,
                rgba[i][ACOMP] = alpha;;
             }
          }
+         else {
+            if (CHAN_TYPE == GL_UNSIGNED_BYTE && table->Size == 256) {
+               /* common case */
+               const GLchan *lut = (const GLchan *) table->Table;
+               GLuint i;
+               for (i = 0; i < n; i++) {
+                  GLchan l = lut[rgba[i][RCOMP] * 2 + 0];
+                  GLchan a = lut[rgba[i][ACOMP] * 2 + 1];;
+                  rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = l;
+                  rgba[i][ACOMP] = a;
+               }
+            }
+            else {
+               const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
+               const GLchan *lut = (const GLchan *) table->Table;
+               GLuint i;
+               for (i = 0; i < n; i++) {
+                  GLint jL = IROUND((GLfloat) rgba[i][RCOMP] * scale);
+                  GLint jA = IROUND((GLfloat) rgba[i][ACOMP] * scale);
+                  GLchan luminance = lut[jL * 2 + 0];
+                  GLchan alpha     = lut[jA * 2 + 1];
+                  rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = luminance;
+                  rgba[i][ACOMP] = alpha;
+               }
+            }
+         }
          break;
       case GL_RGB:
          /* replace RGB with RGB */
-         if (!table->FloatTable) {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLchan *lut = (const GLchan *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint jR = CHAN_TO_FLOAT(rgba[i][RCOMP])*scale;
-               GLint jG = CHAN_TO_FLOAT(rgba[i][GCOMP])*scale;
-               GLint jB = CHAN_TO_FLOAT(rgba[i][BCOMP])*scale;
-               rgba[i][RCOMP] = lut[jR * 3 + 0];
-               rgba[i][GCOMP] = lut[jG * 3 + 1];
-               rgba[i][BCOMP] = lut[jB * 3 + 2];
-            }
-         }
-         else {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
+         if (table->FloatTable) {
+            const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint jR = CHAN_TO_FLOAT(rgba[i][RCOMP])*scale;
-               GLint jG = CHAN_TO_FLOAT(rgba[i][GCOMP])*scale;
-               GLint jB = CHAN_TO_FLOAT(rgba[i][BCOMP])*scale;
+               GLint jR = IROUND((GLfloat) rgba[i][RCOMP] * scale);
+               GLint jG = IROUND((GLfloat) rgba[i][GCOMP] * scale);
+               GLint jB = IROUND((GLfloat) rgba[i][BCOMP] * scale);
                CLAMPED_FLOAT_TO_CHAN(rgba[i][RCOMP], lut[jR * 3 + 0]);
                CLAMPED_FLOAT_TO_CHAN(rgba[i][GCOMP], lut[jG * 3 + 1]);
                CLAMPED_FLOAT_TO_CHAN(rgba[i][BCOMP], lut[jB * 3 + 2]);
+            }
+         }
+         else {
+            if (CHAN_TYPE == GL_UNSIGNED_BYTE && table->Size == 256) {
+               /* common case */
+               const GLchan *lut = (const GLchan *) table->Table;
+               GLuint i;
+               for (i = 0; i < n; i++) {
+                  rgba[i][RCOMP] = lut[rgba[i][RCOMP] * 3 + 0];
+                  rgba[i][GCOMP] = lut[rgba[i][GCOMP] * 3 + 1];
+                  rgba[i][BCOMP] = lut[rgba[i][BCOMP] * 3 + 2];
+               }
+            }
+            else {
+               const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
+               const GLchan *lut = (const GLchan *) table->Table;
+               GLuint i;
+               for (i = 0; i < n; i++) {
+                  GLint jR = IROUND((GLfloat) rgba[i][RCOMP] * scale);
+                  GLint jG = IROUND((GLfloat) rgba[i][GCOMP] * scale);
+                  GLint jB = IROUND((GLfloat) rgba[i][BCOMP] * scale);
+                  rgba[i][RCOMP] = lut[jR * 3 + 0];
+                  rgba[i][GCOMP] = lut[jG * 3 + 1];
+                  rgba[i][BCOMP] = lut[jB * 3 + 2];
+               }
             }
          }
          break;
       case GL_RGBA:
          /* replace RGBA with RGBA */
          if (!table->FloatTable) {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
+            const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
             const GLchan *lut = (const GLchan *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
-               GLint jR = CHAN_TO_FLOAT(rgba[i][RCOMP])*scale;
-               GLint jG = CHAN_TO_FLOAT(rgba[i][GCOMP])*scale;
-               GLint jB = CHAN_TO_FLOAT(rgba[i][BCOMP])*scale;
-               GLint jA = CHAN_TO_FLOAT(rgba[i][ACOMP])*scale;
+               GLint jR = IROUND((GLfloat) rgba[i][RCOMP] * scale);
+               GLint jG = IROUND((GLfloat) rgba[i][GCOMP] * scale);
+               GLint jB = IROUND((GLfloat) rgba[i][BCOMP] * scale);
+               GLint jA = IROUND((GLfloat) rgba[i][ACOMP] * scale);
                rgba[i][RCOMP] = lut[jR * 4 + 0];
                rgba[i][GCOMP] = lut[jG * 4 + 1];
                rgba[i][BCOMP] = lut[jB * 4 + 2];
@@ -465,24 +513,36 @@ static void texture_table_lookup(const struct gl_color_table *table,
             }
          }
          else {
-            const GLint max = table->Size - 1;
-            const GLfloat scale = (GLfloat) max;
-            const GLfloat *lut = (const GLfloat *) table->Table;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               GLint jR = CHAN_TO_FLOAT(rgba[i][RCOMP])*scale;
-               GLint jG = CHAN_TO_FLOAT(rgba[i][GCOMP])*scale;
-               GLint jB = CHAN_TO_FLOAT(rgba[i][BCOMP])*scale;
-               GLint jA = CHAN_TO_FLOAT(rgba[i][ACOMP])*scale;
-               CLAMPED_FLOAT_TO_CHAN(rgba[i][RCOMP], lut[jR * 4 + 0]);
-               CLAMPED_FLOAT_TO_CHAN(rgba[i][GCOMP], lut[jG * 4 + 1]);
-               CLAMPED_FLOAT_TO_CHAN(rgba[i][BCOMP], lut[jB * 4 + 2]);
-               CLAMPED_FLOAT_TO_CHAN(rgba[i][ACOMP], lut[jA * 4 + 3]);
+            if (CHAN_TYPE == GL_UNSIGNED_BYTE && table->Size == 256) {
+               /* common case */
+               const GLchan *lut = (const GLchan *) table->Table;
+               GLuint i;
+               for (i = 0; i < n; i++) {
+                  rgba[i][RCOMP] = lut[rgba[i][RCOMP] * 4 + 0];
+                  rgba[i][GCOMP] = lut[rgba[i][GCOMP] * 4 + 1];
+                  rgba[i][BCOMP] = lut[rgba[i][BCOMP] * 4 + 2];
+                  rgba[i][ACOMP] = lut[rgba[i][ACOMP] * 4 + 3];
+               }
+            }
+            else {
+               const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
+               const GLfloat *lut = (const GLfloat *) table->Table;
+               GLuint i;
+               for (i = 0; i < n; i++) {
+                  GLint jR = IROUND((GLfloat) rgba[i][RCOMP] * scale);
+                  GLint jG = IROUND((GLfloat) rgba[i][GCOMP] * scale);
+                  GLint jB = IROUND((GLfloat) rgba[i][BCOMP] * scale);
+                  GLint jA = IROUND((GLfloat) rgba[i][ACOMP] * scale);
+                  CLAMPED_FLOAT_TO_CHAN(rgba[i][RCOMP], lut[jR * 4 + 0]);
+                  CLAMPED_FLOAT_TO_CHAN(rgba[i][GCOMP], lut[jG * 4 + 1]);
+                  CLAMPED_FLOAT_TO_CHAN(rgba[i][BCOMP], lut[jB * 4 + 2]);
+                  CLAMPED_FLOAT_TO_CHAN(rgba[i][ACOMP], lut[jA * 4 + 3]);
+               }
             }
          }
          break;
       default:
-         _mesa_problem(NULL, "Bad format in _mesa_lookup_rgba");
+         _mesa_problem(NULL, "Bad format in _swrast_texture_table_lookup");
          return;
    }
 }
@@ -864,10 +924,6 @@ sample_nearest_1d( GLcontext *ctx, GLuint texUnit,
    for (i=0;i<n;i++) {
       sample_1d_nearest(ctx, tObj, image, texcoords[i], rgba[i]);
    }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
-   }
-   
 }
 
 
@@ -883,9 +939,6 @@ sample_linear_1d( GLcontext *ctx, GLuint texUnit,
    (void) lambda;
    for (i=0;i<n;i++) {
       sample_1d_linear(ctx, tObj, image, texcoords[i], rgba[i]);
-   }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
    }
 }
 
@@ -962,9 +1015,6 @@ sample_lambda_1d( GLcontext *ctx, GLuint texUnit,
          _mesa_problem(ctx, "Bad mag filter in sample_1d_texture");
          return;
       }
-   }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
    }
 }
 
@@ -1347,9 +1397,6 @@ sample_nearest_2d( GLcontext *ctx, GLuint texUnit,
    for (i=0;i<n;i++) {
       sample_2d_nearest(ctx, tObj, image, texcoords[i], rgba[i]);
    }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
-   }
 }
 
 
@@ -1365,9 +1412,6 @@ sample_linear_2d( GLcontext *ctx, GLuint texUnit,
    (void) lambda;
    for (i=0;i<n;i++) {
       sample_2d_linear(ctx, tObj, image, texcoords[i], rgba[i]);
-   }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
    }
 }
 
@@ -1559,9 +1603,6 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
       default:
          _mesa_problem(ctx, "Bad mag filter in sample_lambda_2d");
       }
-   }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
    }
 }
 
@@ -1901,9 +1942,6 @@ sample_nearest_3d(GLcontext *ctx, GLuint texUnit,
    for (i=0;i<n;i++) {
       sample_3d_nearest(ctx, tObj, image, texcoords[i], rgba[i]);
    }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
-   }
 }
 
 
@@ -1919,9 +1957,6 @@ sample_linear_3d( GLcontext *ctx, GLuint texUnit,
    (void) lambda;
    for (i=0;i<n;i++) {
       sample_3d_linear(ctx, tObj, image, texcoords[i], rgba[i]);
-   }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
    }
 }
 
@@ -1997,9 +2032,6 @@ sample_lambda_3d( GLcontext *ctx, GLuint texUnit,
          _mesa_problem(ctx, "Bad mag filter in sample_3d_texture");
          return;
       }
-   }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
    }
 }
 
@@ -2099,9 +2131,6 @@ sample_nearest_cube(GLcontext *ctx, GLuint texUnit,
       sample_2d_nearest(ctx, tObj, images[tObj->BaseLevel],
                         newCoord, rgba[i]);
    }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
-   }
 }
 
 
@@ -2120,14 +2149,11 @@ sample_linear_cube(GLcontext *ctx, GLuint texUnit,
       sample_2d_linear(ctx, tObj, images[tObj->BaseLevel],
                        newCoord, rgba[i]);
    }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
-   }
 }
 
 
 static void
-sample_cube_nearest_mipmap_nearest(GLcontext *ctx,
+sample_cube_nearest_mipmap_nearest(GLcontext *ctx, GLuint texUnit,
                                    const struct gl_texture_object *tObj,
                                    GLuint n, GLfloat texcoord[][4],
                                    const GLfloat lambda[], GLchan rgba[][4])
@@ -2142,14 +2168,11 @@ sample_cube_nearest_mipmap_nearest(GLcontext *ctx,
       images = choose_cube_face(tObj, texcoord[i], newCoord);
       sample_2d_nearest(ctx, tObj, images[level], newCoord, rgba[i]);
    }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
-   }
 }
 
 
 static void
-sample_cube_linear_mipmap_nearest(GLcontext *ctx,
+sample_cube_linear_mipmap_nearest(GLcontext *ctx, GLuint texUnit,
                                   const struct gl_texture_object *tObj,
                                   GLuint n, GLfloat texcoord[][4],
                                   const GLfloat lambda[], GLchan rgba[][4])
@@ -2164,14 +2187,11 @@ sample_cube_linear_mipmap_nearest(GLcontext *ctx,
       images = choose_cube_face(tObj, texcoord[i], newCoord);
       sample_2d_linear(ctx, tObj, images[level], newCoord, rgba[i]);
    }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
-   }
 }
 
 
 static void
-sample_cube_nearest_mipmap_linear(GLcontext *ctx,
+sample_cube_nearest_mipmap_linear(GLcontext *ctx, GLuint texUnit,
                                   const struct gl_texture_object *tObj,
                                   GLuint n, GLfloat texcoord[][4],
                                   const GLfloat lambda[], GLchan rgba[][4])
@@ -2199,14 +2219,11 @@ sample_cube_nearest_mipmap_linear(GLcontext *ctx,
          rgba[i][ACOMP] = CHAN_CAST ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
       }
    }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
-   }
 }
 
 
 static void
-sample_cube_linear_mipmap_linear(GLcontext *ctx,
+sample_cube_linear_mipmap_linear(GLcontext *ctx, GLuint texUnit,
                                  const struct gl_texture_object *tObj,
                                  GLuint n, GLfloat texcoord[][4],
                                  const GLfloat lambda[], GLchan rgba[][4])
@@ -2233,9 +2250,6 @@ sample_cube_linear_mipmap_linear(GLcontext *ctx,
          rgba[i][BCOMP] = CHAN_CAST ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
          rgba[i][ACOMP] = CHAN_CAST ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
       }
-   }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
    }
 }
 
@@ -2266,19 +2280,23 @@ sample_lambda_cube( GLcontext *ctx, GLuint texUnit,
                             lambda + minStart, rgba + minStart);
          break;
       case GL_NEAREST_MIPMAP_NEAREST:
-         sample_cube_nearest_mipmap_nearest(ctx, tObj, m, texcoords + minStart,
+         sample_cube_nearest_mipmap_nearest(ctx, texUnit, tObj, m,
+                                            texcoords + minStart,
                                            lambda + minStart, rgba + minStart);
          break;
       case GL_LINEAR_MIPMAP_NEAREST:
-         sample_cube_linear_mipmap_nearest(ctx, tObj, m, texcoords + minStart,
+         sample_cube_linear_mipmap_nearest(ctx, texUnit, tObj, m,
+                                           texcoords + minStart,
                                            lambda + minStart, rgba + minStart);
          break;
       case GL_NEAREST_MIPMAP_LINEAR:
-         sample_cube_nearest_mipmap_linear(ctx, tObj, m, texcoords + minStart,
+         sample_cube_nearest_mipmap_linear(ctx, texUnit, tObj, m,
+                                           texcoords + minStart,
                                            lambda + minStart, rgba + minStart);
          break;
       case GL_LINEAR_MIPMAP_LINEAR:
-         sample_cube_linear_mipmap_linear(ctx, tObj, m, texcoords + minStart,
+         sample_cube_linear_mipmap_linear(ctx, texUnit, tObj, m,
+                                          texcoords + minStart,
                                           lambda + minStart, rgba + minStart);
          break;
       default:
@@ -2301,9 +2319,6 @@ sample_lambda_cube( GLcontext *ctx, GLuint texUnit,
       default:
          _mesa_problem(ctx, "Bad mag filter in sample_lambda_cube");
       }
-   }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
    }
 }
 
@@ -2363,9 +2378,6 @@ sample_nearest_rect(GLcontext *ctx, GLuint texUnit,
       row = CLAMP(row, 0, height_minus_1);
 
       (*img->FetchTexel)(img, col, row, 0, (GLvoid *) rgba[i]);
-   }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
    }
 }
 
@@ -2455,9 +2467,6 @@ sample_linear_rect(GLcontext *ctx, GLuint texUnit,
       rgba[i][3] = 
 	  (GLchan) (w00 * t00[3] + w10 * t10[3] + w01 * t01[3] + w11 * t11[3]);
    }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
-   }
 }
 
 
@@ -2494,9 +2503,6 @@ sample_lambda_rect( GLcontext *ctx, GLuint texUnit,
          sample_linear_rect( ctx, texUnit, tObj, magEnd - magStart,
                              texcoords + magStart, NULL, rgba + magStart);
       }
-   }
-   if (ctx->Texture.ColorTableEnabled) {
-      texture_table_lookup(&ctx->TextureColorTable, n, rgba);
    }
 }
 
@@ -4167,6 +4173,10 @@ _swrast_texture_span( GLcontext *ctx, struct sw_span *span )
          swrast->TextureSample[unit]( ctx, unit, texUnit->_Current,
                                       span->end, span->array->texcoords[unit],
                                       lambda, texels );
+         /* GL_SGI_texture_color_table */
+         if (texUnit->ColorTableEnabled) {
+            _swrast_texture_table_lookup(&texUnit->ColorTable, span->end, texels);
+         }
       }
    }
 

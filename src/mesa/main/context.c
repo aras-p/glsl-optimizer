@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.192 2003/01/21 21:47:45 brianp Exp $ */
+/* $Id: context.c,v 1.193 2003/01/26 14:37:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -863,6 +863,11 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
    texUnit->Current3D = ctx->Shared->Default3D;
    texUnit->CurrentCubeMap = ctx->Shared->DefaultCubeMap;
    texUnit->CurrentRect = ctx->Shared->DefaultRect;
+
+   /* GL_SGI_texture_color_table */
+   texUnit->ColorTableEnabled = GL_FALSE;
+   _mesa_init_colortable(&texUnit->ColorTable);
+   _mesa_init_colortable(&texUnit->ProxyColorTable);
 }
 
 
@@ -1253,6 +1258,9 @@ init_attrib_groups( GLcontext *ctx )
    }
    ASSIGN_4V(ctx->Pixel.PostConvolutionScale, 1.0, 1.0, 1.0, 1.0);
    ASSIGN_4V(ctx->Pixel.PostConvolutionBias, 0.0, 0.0, 0.0, 0.0);
+   /* GL_SGI_texture_color_table */
+   ASSIGN_4V(ctx->Pixel.TextureColorTableScale, 1.0, 1.0, 1.0, 1.0);
+   ASSIGN_4V(ctx->Pixel.TextureColorTableBias, 0.0, 0.0, 0.0, 0.0);
 
    /* Point group */
    ctx->Point.SmoothFlag = GL_FALSE;
@@ -1323,9 +1331,6 @@ init_attrib_groups( GLcontext *ctx )
       init_texture_unit( ctx, i );
    ctx->Texture.SharedPalette = GL_FALSE;
    _mesa_init_colortable(&ctx->Texture.Palette);
-   ASSIGN_4V(ctx->Texture.ColorTableScale, 1.0, 1.0, 1.0, 1.0);
-   ASSIGN_4V(ctx->Texture.ColorTableBias, 0.0, 0.0, 0.0, 0.0);
-   ctx->Texture.ColorTableEnabled = GL_FALSE;
 
    /* Transformation group */
    ctx->Transform.MatrixMode = GL_MODELVIEW;
@@ -1465,8 +1470,6 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_colortable(&ctx->ProxyPostConvolutionColorTable);
    _mesa_init_colortable(&ctx->PostColorMatrixColorTable);
    _mesa_init_colortable(&ctx->ProxyPostColorMatrixColorTable);
-   _mesa_init_colortable(&ctx->TextureColorTable);
-   _mesa_init_colortable(&ctx->ProxyTextureColorTable);
 
    /* Vertex/fragment programs */
    ctx->Program.ErrorPos = -1;
@@ -1993,6 +1996,9 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_texture_object( NULL, ctx->Texture.ProxyCubeMap );
    _mesa_free_texture_object( NULL, ctx->Texture.ProxyRect );
 
+   for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
+      _mesa_free_colortable_data( &ctx->Texture.Unit[i].ColorTable );
+
    /* Free evaluator data */
    if (ctx->EvalMap.Map1Vertex3.Points)
       FREE( ctx->EvalMap.Map1Vertex3.Points );
@@ -2040,7 +2046,6 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_colortable_data( &ctx->PostConvolutionColorTable );
    _mesa_free_colortable_data( &ctx->PostColorMatrixColorTable );
    _mesa_free_colortable_data( &ctx->Texture.Palette );
-   _mesa_free_colortable_data( &ctx->TextureColorTable );
 
    _math_matrix_dtr(&ctx->Viewport._WindowMap);
 

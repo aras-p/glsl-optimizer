@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.101 2003/01/22 17:58:52 brianp Exp $ */
+/* $Id: mtypes.h,v 1.102 2003/01/26 14:37:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -438,11 +438,14 @@ struct gl_enable_attrib {
    GLboolean RasterPositionUnclipped; /* GL_IBM_rasterpos_clip */
    GLuint Texture[MAX_TEXTURE_IMAGE_UNITS];
    GLuint TexGen[MAX_TEXTURE_COORD_UNITS];
-   GLboolean TextureColorTable;       /* SGI_texture_color_table */
-   GLboolean VertexProgram;           /* GL_NV_vertex_program */
-   GLboolean VertexProgramPointSize;  /* GL_NV_vertex_program */
-   GLboolean VertexProgramTwoSide;    /* GL_NV_vertex_program */
-   GLboolean PointSprite;             /* GL_NV_point_sprite */
+   /* SGI_texture_color_table */
+   GLboolean TextureColorTable[MAX_TEXTURE_IMAGE_UNITS];
+   /* GL_NV_vertex_program */
+   GLboolean VertexProgram;
+   GLboolean VertexProgramPointSize;
+   GLboolean VertexProgramTwoSide;
+   /* GL_NV_point_sprite */
+   GLboolean PointSprite;
 };
 
 
@@ -661,6 +664,9 @@ struct gl_pixel_attrib {
    GLfloat PCMCTscale[4];
    GLfloat PCMCTbias[4];
    GLboolean PostColorMatrixColorTableEnabled;
+   /* GL_SGI_texture_color_table */
+   GLfloat TextureColorTableScale[4];
+   GLfloat TextureColorTableBias[4];
    /* Convolution */
    GLboolean Convolution1DEnabled;
    GLboolean Convolution2DEnabled;
@@ -955,16 +961,21 @@ struct gl_texture_unit {
    struct gl_texture_object Saved3D;
    struct gl_texture_object SavedCubeMap;
    struct gl_texture_object SavedRect;
+
+   /* GL_SGI_texture_color_table */
+   struct gl_color_table ColorTable;
+   struct gl_color_table ProxyColorTable;
+   GLboolean ColorTableEnabled;
 };
 
 
 /* The texture attribute group */
 struct gl_texture_attrib {
    /* multitexture */
-   GLuint CurrentUnit;	          /* Active texture unit */
+   GLuint CurrentUnit;	        /* Active texture unit */
 
    GLuint _EnabledUnits;        /* one bit set for each really-enabled unit */
-   GLuint _GenFlags;  /* for texgen */
+   GLuint _GenFlags;            /* for texgen */
    GLuint _TexGenEnabled;	
    GLuint _TexMatEnabled;
 
@@ -979,10 +990,6 @@ struct gl_texture_attrib {
    /* GL_EXT_shared_texture_palette */
    GLboolean SharedPalette;
    struct gl_color_table Palette;
-   /* GL_SGI_texture_color_table */
-   GLfloat ColorTableScale[4];
-   GLfloat ColorTableBias[4];
-   GLboolean ColorTableEnabled;
 };
 
 
@@ -1724,8 +1731,6 @@ struct __GLcontextRec {
    struct gl_color_table ProxyPostConvolutionColorTable;
    struct gl_color_table PostColorMatrixColorTable;
    struct gl_color_table ProxyPostColorMatrixColorTable;
-   struct gl_color_table TextureColorTable;
-   struct gl_color_table ProxyTextureColorTable;
 
    struct program_state Program;             /* for vertex or fragment progs */
    struct vertex_program_state VertexProgram;      /* GL_NV_vertex_program */

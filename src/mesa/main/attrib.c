@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.76 2003/01/22 17:58:52 brianp Exp $ */
+/* $Id: attrib.c,v 1.77 2003/01/26 14:37:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -199,8 +199,8 @@ _mesa_PushAttrib(GLbitfield mask)
       for (i=0; i<MAX_TEXTURE_UNITS; i++) {
          attr->Texture[i] = ctx->Texture.Unit[i].Enabled;
          attr->TexGen[i] = ctx->Texture.Unit[i].TexGenEnabled;
+         attr->TextureColorTable[i] = ctx->Texture.Unit[i].ColorTableEnabled;
       }
-      attr->TextureColorTable = ctx->Texture.ColorTableEnabled;
       /* GL_NV_vertex_program */
       attr->VertexProgram = ctx->VertexProgram.Enabled;
       attr->VertexProgramPointSize = ctx->VertexProgram.PointSizeEnabled;
@@ -534,8 +534,6 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
    TEST_AND_UPDATE(ctx->Multisample.SampleCoverageInvert,
                    enable->SampleCoverageInvert,
                    GL_SAMPLE_COVERAGE_INVERT_ARB);
-   TEST_AND_UPDATE(ctx->Texture.ColorTableEnabled, enable->TextureColorTable,
-                   GL_TEXTURE_COLOR_TABLE_SGI);
    /* GL_NV_vertex_program */
    TEST_AND_UPDATE(ctx->VertexProgram.Enabled,
                    enable->VertexProgram,
@@ -596,6 +594,9 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
                (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_Q, GL_FALSE);
          }
       }
+
+      /* GL_SGI_texture_color_table */
+      ctx->Texture.Unit[i].ColorTableEnabled = enable->TextureColorTable[i];
    }
 
    if (ctx->Driver.ActiveTexture) {
@@ -630,13 +631,7 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
       }
       if (ctx->Extensions.SGI_texture_color_table) {
          _mesa_set_enable(ctx, GL_TEXTURE_COLOR_TABLE_SGI,
-                          texAttrib->ColorTableEnabled);
-         _mesa_ColorTableParameterfv(GL_TEXTURE_COLOR_TABLE_SGI,
-                                     GL_COLOR_TABLE_SCALE_SGI,
-                                     texAttrib->ColorTableScale);
-         _mesa_ColorTableParameterfv(GL_TEXTURE_COLOR_TABLE_SGI,
-                                     GL_COLOR_TABLE_BIAS_SGI,
-                                     texAttrib->ColorTableBias);
+                          texAttrib->Unit[i].ColorTableEnabled);
       }
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, unit->EnvMode);
       _mesa_TexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, unit->EnvColor);

@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.104 2003/01/22 00:42:45 brianp Exp $ */
+/* $Id: get.c,v 1.105 2003/01/26 14:37:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1232,7 +1232,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       /* GL_SGI_texture_color_table */
       case GL_TEXTURE_COLOR_TABLE_SGI:
          CHECK_EXTENSION_B(SGI_texture_color_table, pname);
-         *params = ctx->Texture.ColorTableEnabled;
+         *params = textureUnit->ColorTableEnabled;
          break;
 
       /* GL_EXT_secondary_color */
@@ -2631,7 +2631,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       /* GL_SGI_texture_color_table */
       case GL_TEXTURE_COLOR_TABLE_SGI:
          CHECK_EXTENSION_D(SGI_texture_color_table, pname);
-         *params = (GLdouble) ctx->Texture.ColorTableEnabled;
+         *params = (GLdouble) textureUnit->ColorTableEnabled;
          break;
 
       /* GL_EXT_secondary_color */
@@ -4004,7 +4004,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       /* GL_SGI_texture_color_table */
       case GL_TEXTURE_COLOR_TABLE_SGI:
          CHECK_EXTENSION_F(SGI_texture_color_table, pname);
-         *params = (GLfloat) ctx->Texture.ColorTableEnabled;
+         *params = (GLfloat) textureUnit->ColorTableEnabled;
          break;
 
       /* GL_EXT_secondary_color */
@@ -5415,7 +5415,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       /* GL_SGI_texture_color_table */
       case GL_TEXTURE_COLOR_TABLE_SGI:
          CHECK_EXTENSION_I(SGI_texture_color_table, pname);
-         *params = (GLint) ctx->Texture.ColorTableEnabled;
+         *params = (GLint) textureUnit->ColorTableEnabled;
          break;
 
       /* GL_EXT_secondary_color */
