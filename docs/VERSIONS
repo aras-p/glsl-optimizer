@@ -610,7 +610,7 @@ Mesa Version History
 	- removed GL_EXT_multitexture extension
 
 
-3.1 beta 2  February ??, 1999
+3.1 beta 2  March ??, 1999
     New:
 	- multi-textured points and lines (mjk@nvidia.com)
 	- optimized 24bpp X rendering (bernd.paysan@gmx.de)
@@ -631,6 +631,7 @@ Mesa Version History
 	- fixed texture segfault seen in Lament screensaver
 	- fixed miscellaneous low-memory bugs
 	- glClear(GL_COLOR_BUFFER_BIT) with RGBA or CI masking was broken
+	- GL_LINEAR sampling of 3D textures was broken
     Changes:
 	- some device driver changes (see src/dd.h)
 	- new copyright on core Mesa code
