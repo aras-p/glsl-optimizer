@@ -736,15 +736,16 @@ static void viaChooseVertexState( GLcontext *ctx )
 	 EMIT_PAD( 1 );
    }
 
-   if (index & _TNL_BIT_TEX(0)) {
-      if (vmesa->ptexHack)
+   /* If Texture unit 1 is enabled, we need to enable the first as well. */
+   if (index & (_TNL_BIT_TEX(0) | _TNL_BIT_TEX(1))) {
+      if (vmesa->ptexHack && (index & _TNL_BIT_TEX(0)))
 	 EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_3F_XYW, VIA_EMIT_PTEX0, (HC_HVPMSK_S | HC_HVPMSK_T) );
       else 
 	 EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_2F, VIA_EMIT_TEX0, (HC_HVPMSK_S | HC_HVPMSK_T) );
    }
 
    if (index & _TNL_BIT_TEX(1)) {
-      EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, VIA_EMIT_TEX1, 0 );	/* how does the hardware find out about this? */
+	 EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, VIA_EMIT_TEX1, 0 );        /* how does the hardware find out about this? */
    }
 
    if (setupIndex != vmesa->setupIndex) {
