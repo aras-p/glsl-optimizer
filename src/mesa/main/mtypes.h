@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.60 2002/01/06 20:39:19 brianp Exp $ */
+/* $Id: mtypes.h,v 1.61 2002/01/11 17:25:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1034,7 +1034,7 @@ struct gl_client_array {
    GLsizei StrideB;		/* actual stride in bytes */
    void *Ptr;
    GLuint Flags;
-   GLboolean Enabled;
+   GLuint Enabled;		/* one of the _NEW_ARRAY_ bits */
 };
 
 
