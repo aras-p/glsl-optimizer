@@ -1,8 +1,8 @@
-/* $Id: polygon.c,v 1.11 2000/03/13 18:32:37 brianp Exp $ */
+/* $Id: polygon.c,v 1.12 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -187,5 +187,5 @@ _mesa_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPolygonOffsetEXT");
-   _mesa_PolygonOffset(factor, bias * ctx->Visual->DepthMaxF );
+   _mesa_PolygonOffset(factor, bias * ctx->Visual.DepthMaxF );
 }

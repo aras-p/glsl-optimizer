@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.5 2000/03/31 01:07:14 brianp Exp $ */
+/* $Id: svgamesa.c,v 1.6 2000/09/26 20:54:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -369,7 +369,6 @@ SVGAMesaContext SVGAMesaCreateContext( GLboolean doubleBuffer )
 #ifndef DEV
    GLboolean rgb_flag;
    GLfloat redscale, greenscale, bluescale, alphascale;
-   GLboolean alpha_flag = GL_FALSE;
    GLint index_bits;
    GLint redbits, greenbits, bluebits, alphabits;
    /* determine if we're in RGB or color index mode */
@@ -408,26 +407,27 @@ SVGAMesaContext SVGAMesaCreateContext( GLboolean doubleBuffer )
       return NULL;
    }
 
-   ctx->gl_vis = gl_create_visual( rgb_flag,
-                                   alpha_flag,
-                                   doubleBuffer,
-                                   GL_FALSE,  /* stereo */
-                                   16,   /* depth_size */
-                                   8,    /* stencil_size */
-                                   16,   /* accum_size */
-                                   index_bits,
-                                   redbits, greenbits,
-                                   bluebits, alphabits );
+   ctx->gl_vis = _mesa_create_visual( rgb_flag,
+                                      doubleBuffer,
+                                      GL_FALSE,  /* stereo */
+                                      redbits, greenbits,
+                                      bluebits, alphabits,
+                                      index_bits,
+                                      16,   /* depth_size */
+                                      8,    /* stencil_size */
+                                      16, 16, 16, 16,   /* accum_size */
+                                      1     /* samples */
+                                      );
 
-   ctx->gl_ctx = gl_create_context( ctx->gl_vis,
-                                    NULL,  /* share list context */
-                                    (void *) ctx, GL_TRUE );
+   ctx->gl_ctx = _mesa_create_context( ctx->gl_vis,
+                                       NULL,  /* share list context */
+                                       (void *) ctx, GL_TRUE );
 
-   ctx->gl_buffer = gl_create_framebuffer( ctx->gl_vis,
-                                           ctx->gl_vis->DepthBits > 0,
-                                           ctx->gl_vis->StencilBits > 0,
-                                           ctx->gl_vis->AccumRedBits > 0,
-                                           ctx->gl_vis->AlphaBits > 0 );
+   ctx->gl_buffer = _mesa_create_framebuffer( ctx->gl_vis,
+                                              ctx->gl_vis->DepthBits > 0,
+                                              ctx->gl_vis->StencilBits > 0,
+                                              ctx->gl_vis->AccumRedBits > 0,
+                                              ctx->gl_vis->AlphaBits > 0 );
 
    ctx->index = 1;
    ctx->red = ctx->green = ctx->blue = 255;
@@ -444,9 +444,9 @@ void SVGAMesaDestroyContext( SVGAMesaContext ctx )
 {
 #ifndef DEV
    if (ctx) {
-      gl_destroy_visual( ctx->gl_vis );
-      gl_destroy_context( ctx->gl_ctx );
-      gl_destroy_framebuffer( ctx->gl_buffer );
+      _mesa_destroy_visual( ctx->gl_vis );
+      _mesa_destroy_context( ctx->gl_ctx );
+      _mesa_destroy_framebuffer( ctx->gl_buffer );
       free( ctx );
       if (ctx==SVGAMesa) {
          SVGAMesa = NULL;
@@ -463,7 +463,7 @@ void SVGAMesaMakeCurrent( SVGAMesaContext ctx )
 #ifndef DEV
    SVGAMesa = ctx;
    svgamesa_update_state( ctx->gl_ctx );
-   gl_make_current( ctx->gl_ctx, ctx->gl_buffer );
+   _mesa_make_current( ctx->gl_ctx, ctx->gl_buffer );
 
    if (ctx->width==0 || ctx->height==0) {
       /* setup initial viewport */

@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.26 2000/08/21 14:22:24 brianp Exp $ */
+/* $Id: attrib.c,v 1.27 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -445,7 +445,7 @@ _mesa_PopAttrib(void)
 		   ctx->Driver.LogicOpcode) {
 		  ctx->Driver.LogicOpcode( ctx, ctx->Color.LogicOp );
                }
-               if (ctx->Visual->RGBAflag) {
+               if (ctx->Visual.RGBAflag) {
                   GLubyte r = (GLint) (ctx->Color.ClearColor[0] * 255.0F);
                   GLubyte g = (GLint) (ctx->Color.ClearColor[1] * 255.0F);
                   GLubyte b = (GLint) (ctx->Color.ClearColor[2] * 255.0F);

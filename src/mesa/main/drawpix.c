@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.34 2000/09/12 21:09:24 brianp Exp $ */
+/* $Id: drawpix.c,v 1.35 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -202,7 +202,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
       }
       else {
          /* setup array of fragment Z value to pass to zoom function */
-         GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->Visual->DepthMaxF);
+         GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->Visual.DepthMaxF);
          GLint i;
          ASSERT(drawWidth < MAX_WIDTH);
          for (i=0; i<drawWidth; i++)
@@ -222,7 +222,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
        */
 
       if (format==GL_RGBA && type==GL_UNSIGNED_BYTE) {
-         if (ctx->Visual->RGBAflag) {
+         if (ctx->Visual.RGBAflag) {
             GLubyte *src = (GLubyte *) pixels
                + (skipRows * rowLength + skipPixels) * 4;
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
@@ -259,7 +259,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          return GL_TRUE;
       }
       else if (format==GL_RGB && type==GL_UNSIGNED_BYTE) {
-         if (ctx->Visual->RGBAflag) {
+         if (ctx->Visual.RGBAflag) {
             GLubyte *src = (GLubyte *) pixels
                + (skipRows * rowLength + skipPixels) * 3;
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
@@ -295,7 +295,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          return GL_TRUE;
       }
       else if (format==GL_LUMINANCE && type==GL_UNSIGNED_BYTE) {
-         if (ctx->Visual->RGBAflag) {
+         if (ctx->Visual.RGBAflag) {
             GLubyte *src = (GLubyte *) pixels
                + (skipRows * rowLength + skipPixels);
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
@@ -353,7 +353,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          return GL_TRUE;
       }
       else if (format==GL_LUMINANCE_ALPHA && type==GL_UNSIGNED_BYTE) {
-         if (ctx->Visual->RGBAflag) {
+         if (ctx->Visual.RGBAflag) {
             GLubyte *src = (GLubyte *) pixels
                + (skipRows * rowLength + skipPixels)*2;
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
@@ -418,7 +418,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
       }
       else if (format==GL_COLOR_INDEX && type==GL_UNSIGNED_BYTE) {
          GLubyte *src = (GLubyte *) pixels + skipRows * rowLength + skipPixels;
-         if (ctx->Visual->RGBAflag) {
+         if (ctx->Visual.RGBAflag) {
             /* convert CI data to RGBA */
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
                /* no zooming */
@@ -510,7 +510,7 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
 
    /* Fragment depth values */
    if (ctx->Depth.Test || ctx->Fog.Enabled) {
-      GLdepth zval = (GLdepth) (ctx->Current.RasterPos[2] * ctx->Visual->DepthMaxF);
+      GLdepth zval = (GLdepth) (ctx->Current.RasterPos[2] * ctx->Visual.DepthMaxF);
       GLint i;
       for (i = 0; i < drawWidth; i++) {
 	 zspan[i] = zval;
@@ -620,7 +620,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    }
 
    /* Colors or indexes */
-   if (ctx->Visual->RGBAflag) {
+   if (ctx->Visual.RGBAflag) {
       GLint r = (GLint) (ctx->Current.RasterColor[0] * 255.0F);
       GLint g = (GLint) (ctx->Current.RasterColor[1] * 255.0F);
       GLint b = (GLint) (ctx->Current.RasterColor[2] * 255.0F);
@@ -641,7 +641,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    }
 
    if (type==GL_UNSIGNED_SHORT && sizeof(GLdepth)==sizeof(GLushort)
-       && !bias_or_scale && !zoom && ctx->Visual->RGBAflag) {
+       && !bias_or_scale && !zoom && ctx->Visual.RGBAflag) {
       /* Special case: directly write 16-bit depth values */
       GLint row;
       for (row = 0; row < height; row++, y++) {
@@ -654,8 +654,8 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          gl_write_rgba_span( ctx, width, x, y, zspan, rgba, GL_BITMAP );
       }
    }
-   else if (type==GL_UNSIGNED_INT && ctx->Visual->DepthBits == 32
-       && !bias_or_scale && !zoom && ctx->Visual->RGBAflag) {
+   else if (type==GL_UNSIGNED_INT && ctx->Visual.DepthBits == 32
+       && !bias_or_scale && !zoom && ctx->Visual.RGBAflag) {
       /* Special case: directly write 32-bit depth values */
       GLint row;
       for (row = 0; row < height; row++, y++) {
@@ -673,7 +673,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
                 pixels, width, height, GL_DEPTH_COMPONENT, type, 0, row, 0);
          _mesa_unpack_depth_span( ctx, drawWidth, zspan, type, src,
                                   &ctx->Unpack, ctx->ImageTransferState );
-         if (ctx->Visual->RGBAflag) {
+         if (ctx->Visual.RGBAflag) {
             if (zoom) {
                gl_write_zoomed_rgba_span(ctx, width, x, y, zspan,
                                          (const GLubyte (*)[4])rgba, desty);
@@ -725,7 +725,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    /* Fragment depth values */
    if (ctx->Depth.Test || ctx->Fog.Enabled) {
       /* fill in array of z values */
-      GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->Visual->DepthMaxF);
+      GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->Visual.DepthMaxF);
       GLint i;
       for (i=0;i<width;i++) {
 	 zspan[i] = z;
@@ -892,7 +892,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
 	    draw_depth_pixels( ctx, x, y, width, height, type, pixels );
 	    break;
 	 case GL_COLOR_INDEX:
-            if (ctx->Visual->RGBAflag)
+            if (ctx->Visual.RGBAflag)
                draw_rgba_pixels(ctx, x,y, width, height, format, type, pixels);
             else
                draw_index_pixels(ctx, x, y, width, height, type, pixels);

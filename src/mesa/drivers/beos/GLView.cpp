@@ -1,10 +1,10 @@
-/* $Id: GLView.cpp,v 1.2 2000/03/19 01:13:13 brianp Exp $ */
+/* $Id: GLView.cpp,v 1.3 2000/09/26 20:54:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.5
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,13 @@
 
 /*
  * $Log: GLView.cpp,v $
+ * Revision 1.3  2000/09/26 20:54:09  brianp
+ * First batch of OpenGL SI related changes:
+ * Renamed struct gl_context to struct __GLcontextRec.
+ * Include glcore.h, setup GL imports/exports.
+ * Replaced gl_ prefix with _mesa_ prefix in context.[ch] functions.
+ * GLcontext's Visual field is no longer a pointer.
+ *
  * Revision 1.2  2000/03/19 01:13:13  brianp
  * updated for Mesa 3.3
  *
@@ -242,9 +249,9 @@ AuxInfo::AuxInfo()
 AuxInfo::~AuxInfo()
 {
 
-   gl_destroy_visual(mVisual);
-   gl_destroy_framebuffer(mBuffer);
-   gl_destroy_context(mContext);
+   _mesa_destroy_visual(mVisual);
+   _mesa_destroy_framebuffer(mBuffer);
+   _mesa_destroy_context(mContext);
 }
 
 
@@ -260,7 +267,7 @@ void AuxInfo::Init(BGLView *bglView, GLcontext *c, GLvisual *v, GLframebuffer *b
 void AuxInfo::MakeCurrent()
 {
    UpdateState(mContext);
-   gl_make_current(mContext, mBuffer);
+   _mesa_make_current(mContext, mBuffer);
 }
 
 
@@ -1008,13 +1015,19 @@ BGLView::BGLView(BRect rect, char *name,
    AuxInfo *aux = new AuxInfo;
 
    // examine option flags and create gl_context struct
-   GLvisual *visual = gl_create_visual( rgbFlag, alphaFlag,
-                                        dblFlag, stereoFlag,
-                                        depth, stencil, accum, index,
-                                        red, green, blue, alpha);
+   GLvisual *visual = _mesa__create_visual( rgbFlag,
+                                            dblFlag,
+                                            stereoFlag,
+                                            red, green, blue, alpha,
+                                            index,
+                                            depth,
+                                            stencil,
+                                            accum, accum, accum, accum,
+                                            1
+                                            );
 
    // create core framebuffer
-   GLframebuffer *buffer = gl_create_framebuffer(visual,
+   GLframebuffer *buffer = _mesa_create_framebuffer(visual,
                                               depth > 0 ? GL_TRUE : GL_FALSE,
                                               stencil > 0 ? GL_TRUE: GL_FALSE,
                                               accum > 0 ? GL_TRUE : GL_FALSE,
@@ -1023,7 +1036,7 @@ BGLView::BGLView(BRect rect, char *name,
 
    // create core context
    const GLboolean direct = GL_TRUE;
-   GLcontext *ctx = gl_create_context( visual, NULL, aux, direct );
+   GLcontext *ctx = _mesa_create_context( visual, NULL, aux, direct );
 
    aux->Init(this, ctx, visual, buffer );
 
@@ -1051,7 +1064,7 @@ void BGLView::UnlockGL()
 {
    AuxInfo *aux = (AuxInfo *) m_gc;
    assert(aux);
-   // Could call gl_make_current(NULL, NULL) but it would just
+   // Could call _mesa_make_current(NULL, NULL) but it would just
    // hinder performance
 }
 

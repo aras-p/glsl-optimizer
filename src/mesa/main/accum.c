@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.25 2000/09/08 21:28:04 brianp Exp $ */
+/* $Id: accum.c,v 1.26 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -146,13 +146,13 @@ _mesa_Accum( GLenum op, GLfloat value )
    
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glAccum");
 
-   if (ctx->Visual->AccumRedBits == 0 || ctx->DrawBuffer != ctx->ReadBuffer) {
+   if (ctx->Visual.AccumRedBits == 0 || ctx->DrawBuffer != ctx->ReadBuffer) {
       gl_error(ctx, GL_INVALID_OPERATION, "glAccum");
       return;
    }
 
    if (!ctx->DrawBuffer->Accum) {
-      gl_warning(ctx, "Calling glAccum() without an accumulation buffer (low memory?)");
+      _mesa_warning(ctx, "Calling glAccum() without an accumulation buffer (low memory?)");
       return;
    }
 
@@ -430,7 +430,7 @@ _mesa_clear_accum_buffer( GLcontext *ctx )
    GLuint buffersize;
    GLfloat acc_scale;
 
-   if (ctx->Visual->AccumRedBits==0) {
+   if (ctx->Visual.AccumRedBits==0) {
       /* No accumulation buffer! */
       return;
    }

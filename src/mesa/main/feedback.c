@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.10 2000/05/09 23:54:09 brianp Exp $ */
+/* $Id: feedback.c,v 1.11 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -80,18 +80,18 @@ _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
 	 break;
       case GL_3D_COLOR:
 	 ctx->Feedback.Mask = FB_3D
-                           | (ctx->Visual->RGBAflag ? FB_COLOR : FB_INDEX);
+                           | (ctx->Visual.RGBAflag ? FB_COLOR : FB_INDEX);
          ctx->Feedback.Type = type;
 	 break;
       case GL_3D_COLOR_TEXTURE:
 	 ctx->Feedback.Mask = FB_3D
-                           | (ctx->Visual->RGBAflag ? FB_COLOR : FB_INDEX)
+                           | (ctx->Visual.RGBAflag ? FB_COLOR : FB_INDEX)
 	                   | FB_TEXTURE;
          ctx->Feedback.Type = type;
 	 break;
       case GL_4D_COLOR_TEXTURE:
 	 ctx->Feedback.Mask = FB_3D | FB_4D
-                           | (ctx->Visual->RGBAflag ? FB_COLOR : FB_INDEX)
+                           | (ctx->Visual.RGBAflag ? FB_COLOR : FB_INDEX)
 	                   | FB_TEXTURE;
          ctx->Feedback.Type = type;
 	 break;
@@ -168,7 +168,7 @@ static void feedback_vertex( GLcontext *ctx, GLuint v, GLuint pv )
 
    win[0] = VB->Win.data[v][0];
    win[1] = VB->Win.data[v][1];
-   win[2] = VB->Win.data[v][2] / ctx->Visual->DepthMaxF;
+   win[2] = VB->Win.data[v][2] / ctx->Visual.DepthMaxF;
    win[3] = 1.0 / VB->Win.data[v][3];
 
    if (ctx->Light.ShadeModel == GL_SMOOTH)
@@ -302,7 +302,7 @@ void gl_select_triangle( GLcontext *ctx,
    const struct vertex_buffer *VB = ctx->VB;
 
    if (gl_cull_triangle( ctx, v0, v1, v2, 0 )) {
-      const GLfloat zs = 1.0F / ctx->Visual->DepthMaxF;
+      const GLfloat zs = 1.0F / ctx->Visual.DepthMaxF;
       gl_update_hitflag( ctx, VB->Win.data[v0][2] * zs );
       gl_update_hitflag( ctx, VB->Win.data[v1][2] * zs );
       gl_update_hitflag( ctx, VB->Win.data[v2][2] * zs );
@@ -314,7 +314,7 @@ void gl_select_line( GLcontext *ctx,
 		     GLuint v0, GLuint v1, GLuint pv )
 {
    const struct vertex_buffer *VB = ctx->VB;
-   const GLfloat zs = 1.0F / ctx->Visual->DepthMaxF;
+   const GLfloat zs = 1.0F / ctx->Visual.DepthMaxF;
    gl_update_hitflag( ctx, VB->Win.data[v0][2] * zs );
    gl_update_hitflag( ctx, VB->Win.data[v1][2] * zs );
 }
@@ -323,7 +323,7 @@ void gl_select_line( GLcontext *ctx,
 void gl_select_points( GLcontext *ctx, GLuint first, GLuint last )
 {
    struct vertex_buffer *VB = ctx->VB;
-   const GLfloat zs = 1.0F / ctx->Visual->DepthMaxF;
+   const GLfloat zs = 1.0F / ctx->Visual.DepthMaxF;
    GLuint i;
 
    for (i=first;i<=last;i++) {
@@ -479,7 +479,7 @@ _mesa_RenderMode( GLenum mode )
 	 if (ctx->Select.BufferCount > ctx->Select.BufferSize) {
 	    /* overflow */
 #ifdef DEBUG
-            gl_warning(ctx, "Feedback buffer overflow");
+            _mesa_warning(ctx, "Feedback buffer overflow");
 #endif
 	    result = -1;
 	 }

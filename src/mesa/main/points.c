@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.12 2000/08/16 17:26:06 brianp Exp $ */
+/* $Id: points.c,v 1.13 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1332,7 +1332,7 @@ _mesa_print_points_function(GLcontext *ctx)
  */
 void gl_set_point_function( GLcontext *ctx )
 {
-   GLboolean rgbmode = ctx->Visual->RGBAflag;
+   GLboolean rgbmode = ctx->Visual.RGBAflag;
 
    if (ctx->RenderMode==GL_RENDER) {
       if (ctx->NoRaster) {

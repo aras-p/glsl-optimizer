@@ -317,7 +317,7 @@ GGIMesaContext GGIMesaCreateContext(void)
 	ctx->viewport_init = GL_FALSE;	
 	ctx->gl_vis->DBflag = GL_FALSE;
 
-	ctx->gl_ctx = gl_create_context(ctx->gl_vis, NULL, (void *)ctx, GL_TRUE);
+	ctx->gl_ctx = _mesa_create_context(ctx->gl_vis, NULL, (void *)ctx, GL_TRUE);
 	if (!ctx->gl_ctx) 
 	  return NULL;
 	
@@ -328,9 +328,9 @@ void GGIMesaDestroyContext(GGIMesaContext ctx)
 {
 	if (ctx) 
 	{
-		gl_destroy_visual(ctx->gl_vis);
-		gl_destroy_context(ctx->gl_ctx);
-		gl_destroy_framebuffer(ctx->gl_buffer);
+		_mesa_destroy_visual(ctx->gl_vis);
+		_mesa_destroy_context(ctx->gl_ctx);
+		_mesa_destroy_framebuffer(ctx->gl_buffer);
 		if (ctx == GGIMesa) 
 		  GGIMesa = NULL;
 		if (ctx->ggi_vis) 
@@ -367,7 +367,7 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 	  changed(vis, GGI_CHG_APILIST);
 	
 	if (ctx->gl_vis)
-	  gl_destroy_visual(ctx->gl_vis);
+	  _mesa_destroy_visual(ctx->gl_vis);
 
 	if (ctx->gl_buffer)
 	  gl_destroy_framebuffer(ctx->gl_buffer);
@@ -394,23 +394,26 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 	if (err) 
 	  return -1;
 
-	ctx->gl_vis = gl_create_visual(info.rgb_flag,
-				       info.alpha_flag,
-				       info.db_flag,
-				       GL_FALSE,
-				       info.depth_bits, 
-				       info.stencil_bits,
-				       info.accum_bits,
-				       info.index_bits,
-				       info.red_bits, info.green_bits,
-				       info.blue_bits, info.alpha_bits);
+	ctx->gl_vis = _mesa_create_visual(info.rgb_flag,
+                                          info.db_flag,
+                                          GL_FALSE, /*stereo*/
+                                          info.red_bits, info.green_bits,
+                                          info.blue_bits, info.alpha_bits,
+                                          info.index_bits,
+                                          info.depth_bits, 
+                                          info.stencil_bits,
+                                          info.accum_bits,
+                                          info.accum_bits,
+                                          info.accum_bits,
+                                          info.accum_bits,
+                                          1);
 	if (!ctx->gl_vis) 
 	{
 		fprintf(stderr, "Can't create gl_visual!\n");
 		return -1;
 	}
 
-	ctx->gl_buffer = gl_create_framebuffer(ctx->gl_vis,
+	ctx->gl_buffer = _mesa_create_framebuffer(ctx->gl_vis,
 					       ctx->gl_vis->DepthBits > 0,
 					       ctx->gl_vis->StencilBits > 0,
 					       ctx->gl_vis->AccumRedBits > 0,
@@ -461,7 +464,7 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 	ctx->gl_ctx->Color.DrawBuffer = (db_flag) ? GL_BACK : GL_FRONT;
 
 	if (GGIMesa == ctx)
-	  gl_make_current(ctx->gl_ctx, ctx->gl_buffer);
+	  _mesa_make_current(ctx->gl_ctx, ctx->gl_buffer);
 
 	if (rgb_flag && mode.graphtype==GT_8BIT)
 	{
@@ -485,7 +488,7 @@ void GGIMesaMakeCurrent(GGIMesaContext ctx)
 	  return;
 	
 	GGIMesa = ctx;
-	gl_make_current(ctx->gl_ctx, ctx->gl_buffer);
+	_mesa_make_current(ctx->gl_ctx, ctx->gl_buffer);
 	
 	if (!ctx->viewport_init)
 	{

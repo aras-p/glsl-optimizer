@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.45 2000/08/23 14:33:04 brianp Exp $ */
+/* $Id: dlist.c,v 1.46 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2552,7 +2552,7 @@ static void save_PolygonOffset( GLfloat factor, GLfloat units )
 static void save_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
 {
    GET_CURRENT_CONTEXT(ctx);
-   save_PolygonOffset(factor, ctx->Visual->DepthMaxF * bias);
+   save_PolygonOffset(factor, ctx->Visual.DepthMaxF * bias);
 }
 
 

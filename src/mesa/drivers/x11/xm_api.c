@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.1 2000/09/07 15:40:30 brianp Exp $ */
+/* $Id: xm_api.c,v 1.2 2000/09/26 20:54:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1629,7 +1629,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       return NULL;
    }
 
-   c->gl_ctx = gl_create_context( v->gl_visual,
+   c->gl_ctx = _mesa_create_context( v->gl_visual,
                       share_list ? share_list->gl_ctx : (GLcontext *) NULL,
                       (void *) c, direct );
    if (!c->gl_ctx) {
@@ -1660,7 +1660,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 #endif
 
    /* Run the config file */
-   gl_context_initialize( c->gl_ctx );
+   _mesa_context_initialize( c->gl_ctx );
 
    return c;
 }
@@ -1675,7 +1675,7 @@ void XMesaDestroyContext( XMesaContext c )
       fxMesaDestroyContext(c->xm_buffer->FXctx);
 #endif
    if (c->gl_ctx)
-      gl_destroy_context( c->gl_ctx );
+      _mesa_destroy_context( c->gl_ctx );
 
    /* Disassociate old buffer with this context */
    if (c->xm_buffer)
@@ -1787,11 +1787,11 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
       b->db_state = 0;
    }
 
-   b->gl_buffer = gl_create_framebuffer( v->gl_visual,
-                                         v->gl_visual->DepthBits > 0,
-                                         v->gl_visual->StencilBits > 0,
-                                         v->gl_visual->AccumRedBits > 0,
-                                         v->gl_visual->AlphaBits > 0 );
+   b->gl_buffer = _mesa_create_framebuffer( v->gl_visual,
+                                            v->gl_visual->DepthBits > 0,
+                                            v->gl_visual->StencilBits > 0,
+                                            v->gl_visual->AccumRedBits > 0,
+                                            v->gl_visual->AlphaBits > 0 );
    if (!b->gl_buffer) {
       free_xmesa_buffer(client, b);
       return NULL;
@@ -1799,7 +1799,7 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
 
    if (!initialize_visual_and_buffer( client, v, b, v->gl_visual->RGBAflag,
                                       (XMesaDrawable)w, b->cmap )) {
-      gl_destroy_framebuffer( b->gl_buffer );
+      _mesa_destroy_framebuffer( b->gl_buffer );
       free_xmesa_buffer(client, b);
       return NULL;
    }
@@ -1929,13 +1929,13 @@ XMesaBuffer XMesaCreatePixmapBuffer( XMesaVisual v,
       b->db_state = 0;
    }
 
-   b->gl_buffer = gl_create_framebuffer( v->gl_visual,
-                                         v->gl_visual->DepthBits > 0,
-                                         v->gl_visual->StencilBits > 0,
-                                         v->gl_visual->AccumRedBits +
-                                         v->gl_visual->AccumGreenBits +
-                                         v->gl_visual->AccumBlueBits > 0,
-                                         v->gl_visual->AlphaBits > 0 );
+   b->gl_buffer = _mesa_create_framebuffer( v->gl_visual,
+                                            v->gl_visual->DepthBits > 0,
+                                            v->gl_visual->StencilBits > 0,
+                                            v->gl_visual->AccumRedBits +
+                                            v->gl_visual->AccumGreenBits +
+                                            v->gl_visual->AccumBlueBits > 0,
+                                            v->gl_visual->AlphaBits > 0 );
    if (!b->gl_buffer) {
       free_xmesa_buffer(client, b);
       return NULL;
@@ -1943,7 +1943,7 @@ XMesaBuffer XMesaCreatePixmapBuffer( XMesaVisual v,
 
    if (!initialize_visual_and_buffer(client, v, b, v->gl_visual->RGBAflag,
 				     (XMesaDrawable)p, cmap)) {
-      gl_destroy_framebuffer( b->gl_buffer );
+      _mesa_destroy_framebuffer( b->gl_buffer );
       free_xmesa_buffer(client, b);
       return NULL;
    }
@@ -2001,7 +2001,7 @@ void XMesaDestroyBuffer( XMesaBuffer b )
    if (b->xm_context)
        b->xm_context->xm_buffer = NULL;
 
-   gl_destroy_framebuffer( b->gl_buffer );
+   _mesa_destroy_framebuffer( b->gl_buffer );
    free_xmesa_buffer(client, b);
 }
 
@@ -2044,7 +2044,7 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
          return GL_TRUE;
       }
 #endif
-      if (c->gl_ctx == gl_get_current_context()
+      if (c->gl_ctx == _mesa_get_current_context()
           && c->xm_buffer == drawBuffer
           && c->xm_read_buffer == readBuffer
           && c->xm_buffer->wasCurrent) {
@@ -2061,7 +2061,7 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
       c->xm_read_buffer = readBuffer;
       c->use_read_buffer = (drawBuffer != readBuffer);
 
-      gl_make_current2(c->gl_ctx, drawBuffer->gl_buffer, readBuffer->gl_buffer);
+      _mesa_make_current2(c->gl_ctx, drawBuffer->gl_buffer, readBuffer->gl_buffer);
 
       if (c->gl_ctx->Viewport.Width == 0) {
 	 /* initialize viewport to window size */
@@ -2092,7 +2092,7 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
    }
    else {
       /* Detach */
-      gl_make_current2( NULL, NULL, NULL );
+      _mesa_make_current2( NULL, NULL, NULL );
    }
    return GL_TRUE;
 }
@@ -2151,12 +2151,12 @@ XMesaBuffer XMesaGetCurrentReadBuffer( void )
 GLboolean XMesaForceCurrent(XMesaContext c)
 {
    if (c) {
-      if (c->gl_ctx != gl_get_current_context()) {
-	 gl_make_current(c->gl_ctx, c->xm_buffer->gl_buffer);
+      if (c->gl_ctx != _mesa_get_current_context()) {
+	 _mesa_make_current(c->gl_ctx, c->xm_buffer->gl_buffer);
       }
    }
    else {
-      gl_make_current(NULL, NULL);
+      _mesa_make_current(NULL, NULL);
    }
    return GL_TRUE;
 }
@@ -2165,7 +2165,7 @@ GLboolean XMesaForceCurrent(XMesaContext c)
 GLboolean XMesaLoseCurrent(XMesaContext c)
 {
    (void) c;
-   gl_make_current(NULL, NULL);
+   _mesa_make_current(NULL, NULL);
    return GL_TRUE;
 }
 

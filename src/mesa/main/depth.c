@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.18 2000/09/08 21:28:04 brianp Exp $ */
+/* $Id: depth.c,v 1.19 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -134,7 +134,7 @@ _mesa_DepthMask( GLboolean flag )
 GLvoid *
 _mesa_zbuffer_address(GLcontext *ctx, GLint x, GLint y)
 {
-   if (ctx->Visual->DepthBits <= 16)
+   if (ctx->Visual.DepthBits <= 16)
       return (GLushort *) ctx->DrawBuffer->DepthBuffer + ctx->DrawBuffer->Width * y + x;
    else
       return (GLuint *) ctx->DrawBuffer->DepthBuffer + ctx->DrawBuffer->Width * y + x;
@@ -641,7 +641,7 @@ _mesa_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
    }
    else {
       /* software depth buffer */
-      if (ctx->Visual->DepthBits <= 16) {
+      if (ctx->Visual.DepthBits <= 16) {
          GLushort *zptr = (GLushort *) Z_ADDRESS16(ctx, x, y);
          GLuint passed = depth_test_span16(ctx, n, x, y, zptr, z, mask);
          return passed;
@@ -1401,7 +1401,7 @@ _mesa_depth_test_pixels( GLcontext *ctx,
    }
    else {
       /* software depth testing */
-      if (ctx->Visual->DepthBits <= 16)
+      if (ctx->Visual.DepthBits <= 16)
          software_depth_test_pixels16(ctx, n, x, y, z, mask);
       else
          software_depth_test_pixels32(ctx, n, x, y, z, mask);
@@ -1456,7 +1456,7 @@ _mesa_read_depth_span( GLcontext *ctx,
 
    if (ctx->DrawBuffer->DepthBuffer) {
       /* read from software depth buffer */
-      if (ctx->Visual->DepthBits <= 16) {
+      if (ctx->Visual.DepthBits <= 16) {
          const GLushort *zptr = Z_ADDRESS16( ctx, x, y );
          GLuint i;
          for (i = 0; i < n; i++) {
@@ -1496,7 +1496,7 @@ void
 _mesa_read_depth_span_float( GLcontext *ctx,
                              GLint n, GLint x, GLint y, GLfloat depth[] )
 {
-   const GLfloat scale = 1.0F / ctx->Visual->DepthMaxF;
+   const GLfloat scale = 1.0F / ctx->Visual.DepthMaxF;
 
    if (y < 0 || y >= ctx->DrawBuffer->Height ||
        x + (GLint) n <= 0 || x >= ctx->DrawBuffer->Width) {
@@ -1528,7 +1528,7 @@ _mesa_read_depth_span_float( GLcontext *ctx,
 
    if (ctx->DrawBuffer->DepthBuffer) {
       /* read from software depth buffer */
-      if (ctx->Visual->DepthBits <= 16) {
+      if (ctx->Visual.DepthBits <= 16) {
          const GLushort *zptr = Z_ADDRESS16( ctx, x, y );
          GLuint i;
          for (i = 0; i < n; i++) {
@@ -1585,7 +1585,7 @@ _mesa_alloc_depth_buffer( GLcontext *ctx )
       }
 
       /* allocate new depth buffer, but don't initialize it */
-      if (ctx->Visual->DepthBits <= 16)
+      if (ctx->Visual.DepthBits <= 16)
          bytesPerValue = sizeof(GLushort);
       else
          bytesPerValue = sizeof(GLuint);
@@ -1614,7 +1614,7 @@ _mesa_alloc_depth_buffer( GLcontext *ctx )
 void
 _mesa_clear_depth_buffer( GLcontext *ctx )
 {
-   if (ctx->Visual->DepthBits == 0
+   if (ctx->Visual.DepthBits == 0
        || !ctx->DrawBuffer->DepthBuffer
        || !ctx->Depth.Mask) {
       /* no depth buffer, or writing to it is disabled */
@@ -1627,8 +1627,8 @@ _mesa_clear_depth_buffer( GLcontext *ctx )
 
    if (ctx->Scissor.Enabled) {
       /* only clear scissor region */
-      if (ctx->Visual->DepthBits <= 16) {
-         const GLushort clearValue = (GLushort) (ctx->Depth.Clear * ctx->Visual->DepthMax);
+      if (ctx->Visual.DepthBits <= 16) {
+         const GLushort clearValue = (GLushort) (ctx->Depth.Clear * ctx->Visual.DepthMax);
          const GLint rows = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin;
          const GLint width = ctx->DrawBuffer->Width;
          GLushort *dRow = (GLushort *) ctx->DrawBuffer->DepthBuffer
@@ -1642,7 +1642,7 @@ _mesa_clear_depth_buffer( GLcontext *ctx )
          }
       }
       else {
-         const GLuint clearValue = (GLuint) (ctx->Depth.Clear * ctx->Visual->DepthMax);
+         const GLuint clearValue = (GLuint) (ctx->Depth.Clear * ctx->Visual.DepthMax);
          const GLint rows = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin;
          const GLint width = ctx->DrawBuffer->Width;
          GLuint *dRow = (GLuint *) ctx->DrawBuffer->DepthBuffer
@@ -1658,8 +1658,8 @@ _mesa_clear_depth_buffer( GLcontext *ctx )
    }
    else {
       /* clear whole buffer */
-      if (ctx->Visual->DepthBits <= 16) {
-         const GLushort clearValue = (GLushort) (ctx->Depth.Clear * ctx->Visual->DepthMax);
+      if (ctx->Visual.DepthBits <= 16) {
+         const GLushort clearValue = (GLushort) (ctx->Depth.Clear * ctx->Visual.DepthMax);
          if ((clearValue & 0xff) == (clearValue >> 8)) {
             if (clearValue == 0) {
                BZERO(ctx->DrawBuffer->DepthBuffer,
@@ -1694,7 +1694,7 @@ _mesa_clear_depth_buffer( GLcontext *ctx )
       }
       else {
          /* >16 bit depth buffer */
-         const GLuint clearValue = (GLuint) (ctx->Depth.Clear * ctx->Visual->DepthMax);
+         const GLuint clearValue = (GLuint) (ctx->Depth.Clear * ctx->Visual.DepthMax);
          if (clearValue == 0) {
             BZERO(ctx->DrawBuffer->DepthBuffer,
                 ctx->DrawBuffer->Width*ctx->DrawBuffer->Height*sizeof(GLuint));

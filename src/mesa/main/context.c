@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.89 2000/09/26 15:27:22 brianp Exp $ */
+/* $Id: context.c,v 1.90 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,23 +29,21 @@
 #include "all.h"
 #else
 #include "glheader.h"
-#include "accum.h"
-#include "alphabuf.h"
+#include "buffers.h"
 #include "clip.h"
 #include "colortab.h"
 #include "context.h"
 #include "cva.h"
-#include "depth.h"
 #include "dlist.h"
 #include "eval.h"
 #include "enums.h"
 #include "extensions.h"
 #include "fog.h"
 #include "get.h"
-#include "glapi.h"
 #include "glapinoop.h"
 #include "glthread.h"
 #include "hash.h"
+#include "imports.h"
 #include "light.h"
 #include "macros.h"
 #include "matrix.h"
@@ -55,29 +53,92 @@
 #include "pipeline.h"
 #include "shade.h"
 #include "simple_list.h"
-#include "stencil.h"
 #include "stages.h"
 #include "state.h"
 #include "translate.h"
 #include "teximage.h"
 #include "texobj.h"
-#include "texstate.h"
 #include "texture.h"
 #include "types.h"
 #include "varray.h"
 #include "vb.h"
-#include "vbcull.h"
 #include "vbrender.h"
 #include "vbxform.h"
 #include "vertices.h"
 #include "xform.h"
 #endif
 
-
 #if defined(MESA_TRACE)
 #include "Trace/tr_context.h"
 #include "Trace/tr_wrapper.h"
 #endif
+
+
+
+/**********************************************************************/
+/*****       OpenGL SI-style interface (new in Mesa 3.5)          *****/
+/**********************************************************************/
+
+static GLboolean
+_mesa_DestroyContext(__GLcontext *gc)
+{
+   if (gc) {
+      _mesa_free_context_data(gc);
+      (*gc->imports.free)(gc, gc);
+   }
+   return GL_TRUE;
+}
+
+
+/* exported OpenGL SI interface */
+__GLcontext *
+__glCoreCreateContext(__GLimports *imports, __GLcontextModes *modes)
+{
+    GLcontext *ctx;
+
+    ctx = (GLcontext *) (*imports->calloc)(0, 1, sizeof(GLcontext));
+    if (ctx == NULL) {
+	return NULL;
+    }
+    ctx->imports = *imports;
+
+    _mesa_initialize_visual(&ctx->Visual,
+                            modes->rgbMode,
+                            modes->doubleBufferMode,
+                            modes->stereoMode,
+                            modes->redBits,
+                            modes->greenBits,
+                            modes->blueBits,
+                            modes->alphaBits,
+                            modes->indexBits,
+                            modes->depthBits,
+                            modes->stencilBits,
+                            modes->accumRedBits,
+                            modes->accumGreenBits,
+                            modes->accumBlueBits,
+                            modes->accumAlphaBits,
+                            0);
+
+    _mesa_initialize_context(ctx, &ctx->Visual, NULL, imports->wscx, GL_FALSE);
+
+    ctx->exports.destroyContext = _mesa_DestroyContext;
+
+    return ctx;
+}
+
+
+/* exported OpenGL SI interface */
+void
+__glCoreNopDispatch(void)
+{
+#if 0
+   /* SI */
+   __gl_dispatch = __glNopDispatchState;
+#else
+   /* Mesa */
+   _glapi_set_dispatch(NULL);
+#endif
+}
 
 
 /**********************************************************************/
@@ -138,7 +199,7 @@ _mesa_create_visual( GLboolean rgbFlag,
                                    indexBits, depthBits, stencilBits,
                                    accumRedBits, accumGreenBits,
                                    accumBlueBits, accumAlphaBits,
-                                   numSamples )) {
+                                   numSamples)) {
          FREE(vis);
          return NULL;
       }
@@ -238,43 +299,11 @@ _mesa_initialize_visual( GLvisual *vis,
 }
 
 
-/* This function should no longer be used. Use _mesa_create_visual() instead */
-GLvisual *
-gl_create_visual( GLboolean rgbFlag,
-                  GLboolean alphaFlag,
-                  GLboolean dbFlag,
-                  GLboolean stereoFlag,
-                  GLint depthBits,
-                  GLint stencilBits,
-                  GLint accumBits,
-                  GLint indexBits,
-                  GLint redBits,
-                  GLint greenBits,
-                  GLint blueBits,
-                  GLint alphaBits )
-{
-   (void) alphaFlag;
-   return _mesa_create_visual(rgbFlag, dbFlag, stereoFlag,
-                              redBits, greenBits, blueBits, alphaBits,
-                              indexBits, depthBits, stencilBits,
-                              accumBits, accumBits, accumBits, accumBits, 0);
-}
-
-
 void
 _mesa_destroy_visual( GLvisual *vis )
 {
    FREE(vis);
 }
-
-
-/* obsolete */
-void
-gl_destroy_visual( GLvisual *vis )
-{
-   _mesa_destroy_visual(vis);
-}
-
 
 
 /**********************************************************************/
@@ -295,11 +324,11 @@ gl_destroy_visual( GLvisual *vis )
  * Return:  pointer to new GLframebuffer struct or NULL if error.
  */
 GLframebuffer *
-gl_create_framebuffer( GLvisual *visual,
-                       GLboolean softwareDepth,
-                       GLboolean softwareStencil,
-                       GLboolean softwareAccum,
-                       GLboolean softwareAlpha )
+_mesa_create_framebuffer( GLvisual *visual,
+                          GLboolean softwareDepth,
+                          GLboolean softwareStencil,
+                          GLboolean softwareAccum,
+                          GLboolean softwareAlpha )
 {
    GLframebuffer *buffer = CALLOC_STRUCT(gl_frame_buffer);
    assert(visual);
@@ -314,7 +343,7 @@ gl_create_framebuffer( GLvisual *visual,
 
 /*
  * Initialize a GLframebuffer object.
- * Input:  See gl_create_framebuffer() above.
+ * Input:  See _mesa_create_framebuffer() above.
  */
 void
 _mesa_initialize_framebuffer( GLframebuffer *buffer,
@@ -357,7 +386,7 @@ _mesa_initialize_framebuffer( GLframebuffer *buffer,
  * Free a framebuffer struct and its buffers.
  */
 void
-gl_destroy_framebuffer( GLframebuffer *buffer )
+_mesa_destroy_framebuffer( GLframebuffer *buffer )
 {
    if (buffer) {
       if (buffer->DepthBuffer) {
@@ -969,8 +998,6 @@ init_attrib_groups( GLcontext *ctx )
    ctx->MinMax.Min[BCOMP] = 1000;    ctx->MinMax.Max[BCOMP] = -1000;
    ctx->MinMax.Min[ACOMP] = 1000;    ctx->MinMax.Max[ACOMP] = -1000;
 
-
-
    /* Pipeline */
    gl_pipeline_init( ctx );
    gl_cva_init( ctx );
@@ -1179,8 +1206,8 @@ init_attrib_groups( GLcontext *ctx )
 
 #define Sz 10
 #define Tz 14
-   ctx->Viewport.WindowMap.m[Sz] = 0.5 * ctx->Visual->DepthMaxF;
-   ctx->Viewport.WindowMap.m[Tz] = 0.5 * ctx->Visual->DepthMaxF;
+   ctx->Viewport.WindowMap.m[Sz] = 0.5 * ctx->Visual.DepthMaxF;
+   ctx->Viewport.WindowMap.m[Tz] = 0.5 * ctx->Visual.DepthMaxF;
 #undef Sz
 #undef Tz
 
@@ -1379,7 +1406,6 @@ alloc_proxy_textures( GLcontext *ctx )
 }
 
 
-
 /*
  * Initialize a GLcontext struct.  This includes allocating all the
  * other structs and arrays which hang off of the context by pointers.
@@ -1398,8 +1424,16 @@ _mesa_initialize_context( GLcontext *ctx,
    /* misc one-time initializations */
    one_time_init();
 
+   /**
+    ** OpenGL SI stuff
+    **/
+   if (!ctx->imports.malloc) {
+      _mesa_InitDefaultImports(&ctx->imports, driver_ctx, NULL);
+   }
+   /* exports are setup by the device driver */
+
    ctx->DriverCtx = driver_ctx;
-   ctx->Visual = visual;
+   ctx->Visual = *visual;
    ctx->DrawBuffer = NULL;
    ctx->ReadBuffer = NULL;
 
@@ -1533,13 +1567,13 @@ _mesa_initialize_context( GLcontext *ctx,
  * Input:  visual - a GLvisual pointer
  *         sharelist - another context to share display lists with or NULL
  *         driver_ctx - pointer to device driver's context state struct
- * Return:  pointer to a new gl_context struct or NULL if error.
+ * Return:  pointer to a new __GLcontextRec or NULL if error.
  */
 GLcontext *
-gl_create_context( GLvisual *visual,
-                   GLcontext *share_list,
-                   void *driver_ctx,
-                   GLboolean direct )
+_mesa_create_context( GLvisual *visual,
+                      GLcontext *share_list,
+                      void *driver_ctx,
+                      GLboolean direct )
 {
    GLcontext *ctx = (GLcontext *) CALLOC( sizeof(GLcontext) );
    if (!ctx) {
@@ -1562,14 +1596,14 @@ gl_create_context( GLvisual *visual,
  * But don't free() the GLcontext struct itself!
  */
 void
-gl_free_context_data( GLcontext *ctx )
+_mesa_free_context_data( GLcontext *ctx )
 {
    struct gl_shine_tab *s, *tmps;
    GLuint i, j;
 
    /* if we're destroying the current context, unbind it first */
-   if (ctx == gl_get_current_context()) {
-      gl_make_current(NULL, NULL);
+   if (ctx == _mesa_get_current_context()) {
+      _mesa_make_current(NULL, NULL);
    }
 
    gl_matrix_dtr( &ctx->ModelView );
@@ -1675,10 +1709,10 @@ gl_free_context_data( GLcontext *ctx )
  * Destroy a GLcontext structure.
  */
 void
-gl_destroy_context( GLcontext *ctx )
+_mesa_destroy_context( GLcontext *ctx )
 {
    if (ctx) {
-      gl_free_context_data(ctx);
+      _mesa_free_context_data(ctx);
       FREE( (void *) ctx );
    }
 }
@@ -1690,7 +1724,7 @@ gl_destroy_context( GLcontext *ctx )
  * initialized.  Currently just reads the config file.
  */
 void
-gl_context_initialize( GLcontext *ctx )
+_mesa_context_initialize( GLcontext *ctx )
 {
    gl_read_config_file( ctx );
 }
@@ -1704,7 +1738,7 @@ gl_context_initialize( GLcontext *ctx )
  *         mask - bitwise OR of GL_*_BIT flags
  */
 void
-gl_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
+_mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
 {
    if (mask & GL_ACCUM_BUFFER_BIT) {
       MEMCPY( &dst->Accum, &src->Accum, sizeof(struct gl_accum_attrib) );
@@ -1779,9 +1813,10 @@ gl_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
 /*
  * Set the current context, binding the given frame buffer to the context.
  */
-void gl_make_current( GLcontext *newCtx, GLframebuffer *buffer )
+void
+_mesa_make_current( GLcontext *newCtx, GLframebuffer *buffer )
 {
-   gl_make_current2( newCtx, buffer, buffer );
+   _mesa_make_current2( newCtx, buffer, buffer );
 }
 
 
@@ -1789,8 +1824,9 @@ void gl_make_current( GLcontext *newCtx, GLframebuffer *buffer )
  * Bind the given context to the given draw-buffer and read-buffer
  * and make it the current context for this thread.
  */
-void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
-                       GLframebuffer *readBuffer )
+void
+_mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
+                     GLframebuffer *readBuffer )
 {
 #if 0
    GLcontext *oldCtx = gl_get_context();
@@ -1798,7 +1834,7 @@ void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
    /* Flush the old context
     */
    if (oldCtx) {
-      ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(oldCtx, "gl_make_current");
+      ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(oldCtx, "_mesa_make_current");
 
       /* unbind frame buffers from context */
       if (oldCtx->DrawBuffer) {
@@ -1816,7 +1852,7 @@ void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
    _glapi_check_multithread();
 
    _glapi_set_context((void *) newCtx);
-   ASSERT(gl_get_current_context() == newCtx);
+   ASSERT(_mesa_get_current_context() == newCtx);
    if (newCtx) {
       SET_IMMEDIATE(newCtx, newCtx->input);
       _glapi_set_dispatch(newCtx->CurrentDispatch);
@@ -1825,7 +1861,7 @@ void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
       _glapi_set_dispatch(NULL);  /* none current */
    }
 
-   if (MESA_VERBOSE) fprintf(stderr, "gl_make_current()\n");
+   if (MESA_VERBOSE) fprintf(stderr, "_mesa_make_current()\n");
 
    if (newCtx && drawBuffer && readBuffer) {
       /* TODO: check if newCtx and buffer's visual match??? */
@@ -1868,7 +1904,8 @@ void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
  * This isn't the fastest way to get the current context.
  * If you need speed, see the GET_CURRENT_CONTEXT() macro in context.h
  */
-GLcontext *gl_get_current_context( void )
+GLcontext *
+_mesa_get_current_context( void )
 {
    return (GLcontext *) _glapi_get_context();
 }
@@ -1923,23 +1960,10 @@ void gl_problem( const GLcontext *ctx, const char *s )
  * something illogical or if there's likely a bug in their program
  * (like enabled depth testing without a depth buffer).
  */
-void gl_warning( const GLcontext *ctx, const char *s )
+void
+_mesa_warning( const GLcontext *ctx, const char *s )
 {
-   GLboolean debug;
-#ifdef DEBUG
-   debug = GL_TRUE;
-#else
-   if (getenv("MESA_DEBUG")) {
-      debug = GL_TRUE;
-   }
-   else {
-      debug = GL_FALSE;
-   }
-#endif
-   if (debug) {
-      fprintf( stderr, "Mesa warning: %s\n", s );
-   }
-   (void) ctx;
+   (*ctx->imports.warning)((__GLcontext *) ctx, (char *) s);
 }
 
 
@@ -1947,7 +1971,8 @@ void gl_warning( const GLcontext *ctx, const char *s )
 /*
  * Compile an error into current display list.
  */
-void gl_compile_error( GLcontext *ctx, GLenum error, const char *s )
+void
+_mesa_compile_error( GLcontext *ctx, GLenum error, const char *s )
 {
    if (ctx->CompileFlag)
       gl_save_error( ctx, error, s );

@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.2 2000/09/12 17:03:59 brianp Exp $ */
+/* $Id: xm_tri.c,v 1.3 2000/09/26 20:54:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1548,7 +1548,7 @@ triangle_func xmesa_get_triangle_func( GLcontext *ctx )
           && ctx->RasterMask==DEPTH_BIT
           && ctx->Depth.Func==GL_LESS
           && ctx->Depth.Mask==GL_TRUE
-          && ctx->Visual->DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS
+          && ctx->Visual.DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS
           && ctx->Polygon.StippleFlag==GL_FALSE) {
          switch (xmesa->pixelformat) {
             case PF_TRUECOLOR:
@@ -1580,7 +1580,7 @@ triangle_func xmesa_get_triangle_func( GLcontext *ctx )
           && ctx->RasterMask==DEPTH_BIT
           && ctx->Depth.Func==GL_LESS
           && ctx->Depth.Mask==GL_TRUE
-          && ctx->Visual->DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS
+          && ctx->Visual.DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS
           && ctx->Polygon.StippleFlag==GL_FALSE) {
          switch (xmesa->pixelformat) {
             case PF_TRUECOLOR:

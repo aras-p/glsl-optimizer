@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.16 2000/07/18 16:55:56 brianp Exp $ */
+/* $Id: light.c,v 1.17 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1268,7 +1268,7 @@ gl_update_lighting( GLcontext *ctx )
 
    /* Precompute some shading values.
     */
-   if (ctx->Visual->RGBAflag) {
+   if (ctx->Visual.RGBAflag) {
       GLuint sides = ((ctx->TriangleCaps & DD_TRI_LIGHT_TWOSIDE) ? 2 : 1);
       GLuint side;
       for (side=0; side < sides; side++) {

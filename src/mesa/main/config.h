@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.16 2000/08/21 14:24:53 brianp Exp $ */
+/* $Id: config.h,v 1.17 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -140,7 +140,7 @@
 
 /*
  * Bits per depth buffer value:  16 or 32 (GLushort or GLuint)
- * gl_create_visual() can select any depth in [0, 32].
+ * _mesa_create_visual() can specify any depth in [0, 32].
  */
 #define DEFAULT_SOFTWARE_DEPTH_BITS 16
 #define DEFAULT_SOFTWARE_DEPTH_TYPE GLushort
@@ -194,13 +194,13 @@
 #define VB_SIZE  (VB_MAX + VB_MAX_CLIPPED_VERTS)
 
 
-
-typedef struct gl_context GLcontext;
+typedef struct __GLcontextRec GLcontext;
 
 extern void
-gl_read_config_file( struct gl_context *ctx );
+gl_read_config_file(GLcontext *ctx);
 
 extern void
 gl_register_config_var(const char *name, void (*notify)( const char *, int ));
+
 
 #endif

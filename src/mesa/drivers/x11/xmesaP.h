@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.12 2000/09/07 15:42:38 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.13 2000/09/26 20:54:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -127,7 +127,7 @@ struct xmesa_visual {
 
 
 /*
- * "Derived" from gl_context.  Basically corresponds to a GLXContext.
+ * "Derived" from __GLcontextRec.  Basically corresponds to a GLXContext.
  */
 struct xmesa_context {
    GLcontext *gl_ctx;		/* the core library context */

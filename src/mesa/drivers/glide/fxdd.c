@@ -863,7 +863,7 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
 	 fxMesa->glCtx->NrPipelineStages);
 
    /* Run the config file */
-   gl_context_initialize( fxMesa->glCtx );
+   _mesa_context_initialize( fxMesa->glCtx );
 
    return 1;
 }

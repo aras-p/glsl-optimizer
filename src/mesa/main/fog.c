@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.19 2000/07/07 15:10:35 keithw Exp $ */
+/* $Id: fog.c,v 1.20 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -183,7 +183,7 @@ _mesa_fog_vertices( struct vertex_buffer *VB )
    GLcontext *ctx = VB->ctx;
    GLuint i = VB->CullMode & 1;
 
-   if (ctx->Visual->RGBAflag) {
+   if (ctx->Visual.RGBAflag) {
       /* Fog RGB colors */
       if (ctx->TriangleCaps & DD_TRI_LIGHT_TWOSIDE) {
 	 fog_rgba_tab[i]( VB, 0, VERT_FACE_FRONT );

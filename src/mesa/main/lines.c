@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.12 2000/07/14 14:04:07 brianp Exp $ */
+/* $Id: lines.c,v 1.13 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1070,7 +1070,7 @@ _mesa_print_line_function(GLcontext *ctx)
  */
 void gl_set_line_function( GLcontext *ctx )
 {
-   GLboolean rgbmode = ctx->Visual->RGBAflag;
+   GLboolean rgbmode = ctx->Visual.RGBAflag;
    /* TODO: antialiased lines */
 
    if (ctx->RenderMode==GL_RENDER) {

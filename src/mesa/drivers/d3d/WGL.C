@@ -147,15 +147,15 @@ static BOOL  InitOpenGL( HINSTANCE hInst )
   /*========================================================================*/
   /* Do all core Mesa stuff.                                                */
   /*========================================================================*/
-  pD3DDefault->gl_visual = gl_create_visual( TRUE,
-									GL_FALSE,   /* software alpha */
-									FALSE,      /* db_flag */
-									GL_FALSE,   /* stereo */
-									16,         /* depth_bits */
-									8,          /* stencil_bits */
-									8,          /* accum_bits */
-									0,          /* index bits */
-									8,8,8,8 );  /* r, g, b, a bits */
+  pD3DDefault->gl_visual = _mesa_create_visual( TRUE,
+						FALSE,      /* db_flag */
+						GL_FALSE,   /* stereo */
+						8,8,8,8,    /* r, g, b, a bits */
+						0,          /* index bits */
+						16,         /* depth_bits */
+						8,          /* stencil_bits */
+						8,8,8,8,    /* accum_bits */
+                                                1 );
 
   if ( pD3DDefault->gl_visual == NULL)  
   {
@@ -164,25 +164,25 @@ static BOOL  InitOpenGL( HINSTANCE hInst )
   }
 
   /* Allocate a new Mesa context */
-  pD3DDefault->gl_ctx = gl_create_context( pD3DDefault->gl_visual, NULL, pD3DDefault, GL_TRUE );
+  pD3DDefault->gl_ctx = _mesa_create_context( pD3DDefault->gl_visual, NULL, pD3DDefault, GL_TRUE );
   if ( pD3DDefault->gl_ctx == NULL ) 
   {
-    gl_destroy_visual( pD3DDefault->gl_visual );
+    _mesa_destroy_visual( pD3DDefault->gl_visual );
     FREE( pD3DDefault );
     return FALSE;
   }
 
   /* Allocate a new Mesa frame buffer */
-  pD3DDefault->gl_buffer = gl_create_framebuffer( pD3DDefault->gl_visual );
+  pD3DDefault->gl_buffer = _mesa_create_framebuffer( pD3DDefault->gl_visual );
   if ( pD3DDefault->gl_buffer == NULL )
   {
-    gl_destroy_visual( pD3DDefault->gl_visual );
-    gl_destroy_context( pD3DDefault->gl_ctx );
+    _mesa_destroy_visual( pD3DDefault->gl_visual );
+    _mesa_destroy_context( pD3DDefault->gl_ctx );
     FREE( pD3DDefault );
     return FALSE;
   }
   SetupDDPointers( pD3DDefault->gl_ctx );
-  gl_make_current( pD3DDefault->gl_ctx, pD3DDefault->gl_buffer );
+  _mesa_make_current( pD3DDefault->gl_ctx, pD3DDefault->gl_buffer );
 
   return TRUE;
 }
@@ -214,15 +214,15 @@ HGLRC APIENTRY wglCreateContext( HDC hdc )
   /*========================================================================*/
 
   /* TODO: support more then one visual. */
-  pNewContext->gl_visual = gl_create_visual( TRUE,
-									GL_TRUE,   /* software alpha */
-									TRUE,       /* db_flag */
-									GL_FALSE,   /* stereo */
-									16,         /* depth_bits */
-									8,          /* stencil_bits */
-									8,          /* accum_bits */
-									0,          /* index bits */
-									8,8,8,8 );  /* r, g, b, a bits */
+  pNewContext->gl_visual = _mesa_create_visual( TRUE,
+                                                TRUE,       /* db_flag */
+                                                GL_FALSE,   /* stereo */
+                                                8,8,8,8,    /* r, g, b, a bits */
+                                                0,          /* index bits */
+                                                16,         /* depth_bits */
+                                                8,          /* stencil_bits */
+                                                16,16,16,16,/* accum_bits */
+                                                1 );
   if ( pNewContext->gl_visual == NULL) 
   {
     FREE( pNewContext );
@@ -231,21 +231,21 @@ HGLRC APIENTRY wglCreateContext( HDC hdc )
   }
 
   /* Allocate a new Mesa context */
-  pNewContext->gl_ctx = gl_create_context( pNewContext->gl_visual, NULL, pNewContext, GL_TRUE );
+  pNewContext->gl_ctx = _mesa_create_context( pNewContext->gl_visual, NULL, pNewContext, GL_TRUE );
   if ( pNewContext->gl_ctx == NULL ) 
   {
-    gl_destroy_visual( pNewContext->gl_visual );
+    _mesa_destroy_visual( pNewContext->gl_visual );
     FREE( pNewContext );
     SetLastError( 0 );
     return (HGLRC)NULL;
   }
 
   /* Allocate a new Mesa frame buffer */
-  pNewContext->gl_buffer = gl_create_framebuffer( pNewContext->gl_visual );
+  pNewContext->gl_buffer = _mesa_create_framebuffer( pNewContext->gl_visual );
   if ( pNewContext->gl_buffer == NULL )
   {
-    gl_destroy_visual( pNewContext->gl_visual );
-    gl_destroy_context( pNewContext->gl_ctx );
+    _mesa_destroy_visual( pNewContext->gl_visual );
+    _mesa_destroy_context( pNewContext->gl_ctx );
     FREE( pNewContext );
     SetLastError( 0 );
     return (HGLRC)NULL;
@@ -314,7 +314,7 @@ static BOOL MakeCurrent( D3DMESACONTEXT *pContext )
    /* Let Mesa-3.0 we have a new context. */
    /*=====================================*/
    SetupDDPointers( pContext->gl_ctx );
-   gl_make_current( pContext->gl_ctx, pContext->gl_buffer );
+   _mesa_make_current( pContext->gl_ctx, pContext->gl_buffer );
 
    /*  We are done so set the internal current context. */
    if ( pContext != pD3DDefault )
@@ -409,7 +409,7 @@ static BOOL ResizeContext( GLcontext *ctx )
 
     /* Update Mesa as we might have changed from SW <-> HW. */
     SetupDDPointers( pContext->gl_ctx );
-    gl_make_current( pContext->gl_ctx, pContext->gl_buffer );
+    _mesa_make_current( pContext->gl_ctx, pContext->gl_buffer );
 
     /*  If we are in HW we need to load the current texture if there is one already. */
     //    if ( (ctx->Texture.Set[ctx->Texture.CurrentSet].Current != NULL) &&
@@ -1076,17 +1076,17 @@ static void DestroyContext( D3DMESACONTEXT *pContext )
    /* Free the Mesa stuff. */
    if ( pContext->gl_visual ) 
    {
-      gl_destroy_visual( pContext->gl_visual );
+      _mesa_destroy_visual( pContext->gl_visual );
       pContext->gl_visual = NULL;
    }
    if ( pContext->gl_buffer ) 
    {
-      gl_destroy_framebuffer( pContext->gl_buffer );
+      _mesa_destroy_framebuffer( pContext->gl_buffer );
       pContext->gl_buffer = NULL;
    }
    if ( pContext->gl_ctx )    
    {
-      gl_destroy_context( pContext->gl_ctx );
+      _mesa_destroy_context( pContext->gl_ctx );
       pContext->gl_ctx = NULL;
    }
 

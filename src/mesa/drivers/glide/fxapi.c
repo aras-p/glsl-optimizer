@@ -1061,25 +1061,25 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
       fprintf(stderr,"Voodoo Glide screen size: %dx%d\n",
               (int)FX_grSstScreenWidth(),(int)FX_grSstScreenHeight());
 
-   fxMesa->glVis=gl_create_visual(GL_TRUE,     /* RGB mode */
-				  alphaBuffer,
-				  doubleBuffer,
-				  GL_FALSE,    /* stereo */
-				  depthSize,   /* depth_size */
-				  stencilSize, /* stencil_size */
-				  accumSize,   /* accum_size */
-				  0,           /* index bits */
-				  5,6,5,0);    /* RGBA bits */
+   fxMesa->glVis=_mesa_create_visual(GL_TRUE,     /* RGB mode */
+                                     doubleBuffer,
+                                     GL_FALSE,    /* stereo */
+                                     5,6,5,0,     /* RGBA bits */
+                                     0,           /* index bits */
+                                     depthSize,   /* depth_size */
+                                     stencilSize, /* stencil_size */
+                                     accumSize, accumSize, accumSize, accumSize,
+                                     1 );
    if (!fxMesa->glVis) {
-      errorstr = "gl_create_visual";
+      errorstr = "_mesa_create_visual";
       goto errorhandler;
    }
 
-   ctx = fxMesa->glCtx=gl_create_context(fxMesa->glVis,
+   ctx = fxMesa->glCtx=_mesa_create_context(fxMesa->glVis,
 					 shareCtx,  /* share list context */
 					 (void *) fxMesa, GL_TRUE);
    if (!ctx) {
-      errorstr = "gl_create_context";
+      errorstr = "_mesa_create_context";
       goto errorhandler;
    }
 
@@ -1090,13 +1090,13 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
    }
 
 
-   fxMesa->glBuffer=gl_create_framebuffer(fxMesa->glVis,
+   fxMesa->glBuffer=_mesa_create_framebuffer(fxMesa->glVis,
                                           GL_FALSE,  /* no software depth */
                                           fxMesa->glVis->StencilBits > 0,
                                           fxMesa->glVis->AccumRedBits > 0,
                                           fxMesa->glVis->AlphaBits > 0 );
    if (!fxMesa->glBuffer) {
-      errorstr = "gl_create_framebuffer";
+      errorstr = "_mesa_create_framebuffer";
       goto errorhandler;
    }
   
@@ -1134,11 +1134,11 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
       if (fxMesa->fogTable)
 	 free(fxMesa->fogTable);
       if (fxMesa->glBuffer)
-	 gl_destroy_framebuffer(fxMesa->glBuffer);
+	 _mesa_destroy_framebuffer(fxMesa->glBuffer);
       if (fxMesa->glVis)
-	 gl_destroy_visual(fxMesa->glVis);
+	 _mesa_destroy_visual(fxMesa->glVis);
       if (fxMesa->glCtx)
-	 gl_destroy_context(fxMesa->glCtx);
+	 _mesa_destroy_context(fxMesa->glCtx);
       free(fxMesa);
    }
    
@@ -1169,9 +1169,9 @@ void GLAPIENTRY fxMesaDestroyContext(fxMesaContext fxMesa)
   }
 
   if(fxMesa) {
-    gl_destroy_visual(fxMesa->glVis);
-    gl_destroy_context(fxMesa->glCtx);
-    gl_destroy_framebuffer(fxMesa->glBuffer);
+    _mesa_destroy_visual(fxMesa->glVis);
+    _mesa_destroy_context(fxMesa->glCtx);
+    _mesa_destroy_framebuffer(fxMesa->glBuffer);
 
     glbTotNumCtx--;
 
@@ -1226,7 +1226,7 @@ void GLAPIENTRY fxMesaMakeCurrent(fxMesaContext fxMesa)
   }
 
   if(!fxMesa) {
-    gl_make_current(NULL,NULL);
+    _mesa_make_current(NULL,NULL);
     fxMesaCurrentCtx=NULL;
 
     if (MESA_VERBOSE&VERBOSE_DRIVER) {
@@ -1238,7 +1238,7 @@ void GLAPIENTRY fxMesaMakeCurrent(fxMesaContext fxMesa)
 
   /* if this context is already the current one, we can return early */
   if (fxMesaCurrentCtx == fxMesa
-      && fxMesaCurrentCtx->glCtx == gl_get_current_context()) {
+      && fxMesaCurrentCtx->glCtx == _mesa_get_current_context()) {
      if (MESA_VERBOSE&VERBOSE_DRIVER) {
         fprintf(stderr,"fxmesa: fxMesaMakeCurrent(fxMesaCurrentCtx==fxMesa) End\n");
     }
@@ -1254,7 +1254,7 @@ void GLAPIENTRY fxMesaMakeCurrent(fxMesaContext fxMesa)
   grSstSelect(fxMesa->board);
   grGlideSetState((GrState*)fxMesa->state);
 
-  gl_make_current(fxMesa->glCtx,fxMesa->glBuffer);
+  _mesa_make_current(fxMesa->glCtx,fxMesa->glBuffer);
 
   fxSetupDDPointers(fxMesa->glCtx);
 

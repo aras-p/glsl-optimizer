@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.23 2000/08/30 18:21:06 brianp Exp $ */
+/* $Id: enable.c,v 1.24 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -128,8 +128,8 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          }
 	 break;
       case GL_DEPTH_TEST:
-         if (state && ctx->Visual->DepthBits==0) {
-            gl_warning(ctx,"glEnable(GL_DEPTH_TEST) but no depth buffer");
+         if (state && ctx->Visual.DepthBits==0) {
+            _mesa_warning(ctx,"glEnable(GL_DEPTH_TEST) but no depth buffer");
             return;
          }
 	 if (ctx->Depth.Test!=state) {
@@ -342,8 +342,8 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          ctx->Texture.SharedPalette = state;
          break;
       case GL_STENCIL_TEST:
-	 if (state && ctx->Visual->StencilBits==0) {
-            gl_warning(ctx, "glEnable(GL_STENCIL_TEST) but no stencil buffer");
+	 if (state && ctx->Visual.StencilBits==0) {
+            _mesa_warning(ctx, "glEnable(GL_STENCIL_TEST) but no stencil buffer");
             return;
 	 }
 	 if (ctx->Stencil.Enabled!=state) {
@@ -353,7 +353,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          }
 	 break;
       case GL_TEXTURE_1D:
-         if (ctx->Visual->RGBAflag) {
+         if (ctx->Visual.RGBAflag) {
 	    const GLuint curr = ctx->Texture.CurrentUnit;
 	    const GLuint flag = TEXTURE0_1D << (curr * 4);
             struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
@@ -369,7 +369,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          }
          break;
       case GL_TEXTURE_2D:
-         if (ctx->Visual->RGBAflag) {
+         if (ctx->Visual.RGBAflag) {
 	    const GLuint curr = ctx->Texture.CurrentUnit;
 	    const GLuint flag = TEXTURE0_2D << (curr * 4);
             struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
@@ -385,7 +385,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          }
 	 break;
       case GL_TEXTURE_3D:
-         if (ctx->Visual->RGBAflag) {
+         if (ctx->Visual.RGBAflag) {
 	    const GLuint curr = ctx->Texture.CurrentUnit;
 	    const GLuint flag = TEXTURE0_3D << (curr * 4);
             struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
@@ -524,7 +524,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
          if (ctx->Extensions.HaveTextureCubeMap) {
-            if (ctx->Visual->RGBAflag) {
+            if (ctx->Visual.RGBAflag) {
                const GLuint curr = ctx->Texture.CurrentUnit;
                const GLuint flag = TEXTURE0_CUBE << (curr * 4);
                struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];

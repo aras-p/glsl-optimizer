@@ -1,4 +1,4 @@
-/* $Id: clip.c,v 1.8 2000/04/17 18:18:00 keithw Exp $ */
+/* $Id: clip.c,v 1.9 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -375,7 +375,7 @@ void gl_update_clipmask( GLcontext *ctx )
 {
    GLuint mask = 0;
 
-   if (ctx->Visual->RGBAflag) 
+   if (ctx->Visual.RGBAflag) 
    {
       mask |= CLIP_RGBA0;
       

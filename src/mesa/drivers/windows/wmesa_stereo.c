@@ -1181,32 +1181,33 @@ WMesaContext /*APIENTRY*/ WMesaCreateContext( HWND hWnd, HPALETTE Pal,
 
 
 
-  c->gl_visual = gl_create_visual(rgb_flag,
-								  GL_FALSE,	/* software alpha */
-                                  db_flag,	/* db_flag */
-                                  16,		/* depth_bits */
-                                  8,		/* stencil_bits */
-                                  8,		/* accum_bits */
-                                  8,
-                                  255.0, 255.0, 255.0, 255.0 );
+  c->gl_visual = _mesa_create_visual(rgb_flag,
+                                     db_flag,	/* db_flag */
+                                     GL_TRUE,   /* stereo */
+                                     8, 8, 8, 8,/* rgba bits */
+                                     0,         /* index bits */
+                                     16,	/* depth_bits */
+                                     8,		/* stencil_bits */
+                                     16,16,16,16,/* accum_bits */
+                                     1 );
 
 	if (!c->gl_visual) {
          return NULL;
       }
 
   /* allocate a new Mesa context */
-  c->gl_ctx = gl_create_context( c->gl_visual, NULL,c);
+  c->gl_ctx = _mesa_create_context( c->gl_visual, NULL,c);
 
   if (!c->gl_ctx) {
-         gl_destroy_visual( c->gl_visual );
+         _mesa_destroy_visual( c->gl_visual );
          free(c);
          return NULL;
       }
 
-      c->gl_buffer = gl_create_framebuffer( c->gl_visual );
+      c->gl_buffer = _mesa_create_framebuffer( c->gl_visual );
       if (!c->gl_buffer) {
-         gl_destroy_visual( c->gl_visual );
-         gl_destroy_context( c->gl_ctx );
+         _mesa_destroy_visual( c->gl_visual );
+         _mesa_destroy_context( c->gl_ctx );
          free(c);
          return NULL;
       }
@@ -1223,9 +1224,9 @@ void /*APIENTRY*/ WMesaDestroyContext( void )
 	ReleaseDC(c->Window,c->hDC);
 	WC = c;
 
-    gl_destroy_visual( c->gl_visual );
-    gl_destroy_framebuffer( c->gl_buffer );
-	gl_destroy_context( c->gl_ctx );
+    _mesa_destroy_visual( c->gl_visual );
+    _mesa_destroy_framebuffer( c->gl_buffer );
+    _mesa_destroy_context( c->gl_ctx );
 
 	if (c->db_flag){
 		wmDeleteBackingStore(c);
@@ -1267,7 +1268,7 @@ void /*APIENTRY*/ WMesaMakeCurrent( WMesaContext c )
 		return;
 
 	//gl_set_context( c->gl_ctx );
-	gl_make_current(c->gl_ctx, c->gl_buffer);
+	_mesa_make_current(c->gl_ctx, c->gl_buffer);
 	Current = c;
 	setup_DD_pointers(c->gl_ctx);
 	if (Current->gl_ctx->Viewport.Width==0) {

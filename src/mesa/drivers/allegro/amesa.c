@@ -248,15 +248,18 @@ AMesaVisual AMesaCreateVisual(GLboolean dbFlag, GLint depth,
 
     visual->DBFlag   = dbFlag;
     visual->Depth    = depth;
-    visual->GLVisual = gl_create_visual(GL_TRUE,    /* rgb mode       */
-                                        GL_TRUE,    /* software alpha */
-                                        dbFlag,     /* db_flag        */
-                                        GL_FALSE,   /* stereo         */
-                                        depthSize,  /* depth bits     */
-                                        stencilSize,/* stencil bits   */
-                                        accumSize,  /* accum bits     */
-                                        0,          /* index bits     */
-                                        redBits, greenBits, blueBits, 0);
+    visual->GLVisual = _mesa_create_visual(GL_TRUE,    /* rgb mode       */
+                                           dbFlag,     /* db_flag        */
+                                           GL_FALSE,   /* stereo         */
+                                           redBits, greenBits, blueBits, 8,
+                                           0,          /* index bits     */
+                                           depthSize,  /* depth bits     */
+                                           stencilSize,/* stencil bits   */
+                                           accumSize,  /* accum bits     */
+                                           accumSize,  /* accum bits     */
+                                           accumSize,  /* accum bits     */
+                                           accumSize,  /* accum bits     */
+                                           1 );
     if (!visual->GLVisual)
         {
         free(visual);
@@ -269,8 +272,8 @@ AMesaVisual AMesaCreateVisual(GLboolean dbFlag, GLint depth,
 
 void AMesaDestroyVisual(AMesaVisual visual)
 	{
-    gl_destroy_visual(visual->GLVisual);
-   	free(visual);
+           _mesa_destroy_visual(visual->GLVisual);
+           free(visual);
 	}
 
 
@@ -299,7 +302,7 @@ AMesaBuffer AMesaCreateBuffer(AMesaVisual visual,
 			}
 		}
 
-    buffer->GLBuffer = gl_create_framebuffer(visual->GLVisual);
+    buffer->GLBuffer = _mesa_create_framebuffer(visual->GLVisual);
     if (!buffer->GLBuffer)
         {
         if (buffer->Background) destroy_bitmap(buffer->Background);
@@ -312,12 +315,12 @@ AMesaBuffer AMesaCreateBuffer(AMesaVisual visual,
 
 
 void AMesaDestroyBuffer(AMesaBuffer buffer)
-	{
-    if (buffer->Screen)     destroy_bitmap(buffer->Screen);
-	if (buffer->Background) destroy_bitmap(buffer->Background);
-    gl_destroy_framebuffer(buffer->GLBuffer);
-   	free(buffer);
-	}
+{
+   if (buffer->Screen)     destroy_bitmap(buffer->Screen);
+   if (buffer->Background) destroy_bitmap(buffer->Background);
+   _mesa_destroy_framebuffer(buffer->GLBuffer);
+   free(buffer);
+}
 
 
 AMesaContext AMesaCreateContext(AMesaVisual visual,
@@ -334,7 +337,7 @@ AMesaContext AMesaCreateContext(AMesaVisual visual,
 	context->Buffer		  = NULL;
 	context->ClearColor   = 0;
 	context->CurrentColor = 0;
-    context->GLContext    = gl_create_context(visual->GLVisual,
+    context->GLContext    = _mesa_create_context(visual->GLVisual,
                                               share ? share->GLContext : NULL,
                                   		      (void*)context,
                                               direct);
@@ -349,47 +352,44 @@ AMesaContext AMesaCreateContext(AMesaVisual visual,
 
 
 void AMesaDestroyContext(AMesaContext context)
-	{
-    gl_destroy_context(context->GLContext);
-   	free(context);
-	}
+{
+   _mesa_destroy_context(context->GLContext);
+   free(context);
+}
 
 
 GLboolean AMesaMakeCurrent(AMesaContext context, AMesaBuffer buffer)
-	{
-   	if (context && buffer)
-   		{
-      	set_color_depth(context->Visual->Depth);
-        if (set_gfx_mode(GFX_AUTODETECT, buffer->Width, buffer->Height, 0, 0) != 0)
-            return GL_FALSE;
+{
+   if (context && buffer) {
+      set_color_depth(context->Visual->Depth);
+      if (set_gfx_mode(GFX_AUTODETECT, buffer->Width, buffer->Height, 0, 0) != 0)
+         return GL_FALSE;
 
-		context->Buffer = buffer;
-        buffer->Screen  = screen;
-        buffer->Active  = buffer->Background ? buffer->Background : screen;
+      context->Buffer = buffer;
+      buffer->Screen  = screen;
+      buffer->Active  = buffer->Background ? buffer->Background : screen;
         
-        setup_dd_pointers(context->GLContext);
-        gl_make_current(context->GLContext, buffer->GLBuffer);
-        gl_Viewport(context->GLContext, 0, 0, buffer->Width, buffer->Height);
-     	}
-  	else
-  		{
-        destroy_bitmap(context->Buffer->Screen);
-        context->Buffer->Screen = NULL;
-        context->Buffer->Active = NULL;
-        context->Buffer         = NULL;
-     	gl_make_current(NULL, NULL);
-   		}
+      setup_dd_pointers(context->GLContext);
+      _mesa_make_current(context->GLContext, buffer->GLBuffer);
+      gl_Viewport(context->GLContext, 0, 0, buffer->Width, buffer->Height);
+   }
+   else {
+      destroy_bitmap(context->Buffer->Screen);
+      context->Buffer->Screen = NULL;
+      context->Buffer->Active = NULL;
+      context->Buffer         = NULL;
+      _mesa_make_current(NULL, NULL);
+   }
 
-    return GL_TRUE;
-	}
+   return GL_TRUE;
+}
 
 
 void AMesaSwapBuffers(AMesaBuffer buffer)
-	{
-	if (buffer->Background)
-		{
-		blit(buffer->Background, buffer->Screen,
-             0, 0, 0, 0,
-             buffer->Width, buffer->Height);
-		}
-	}
+{
+   if (buffer->Background) {
+      blit(buffer->Background, buffer->Screen,
+           0, 0, 0, 0,
+           buffer->Width, buffer->Height);
+   }
+}

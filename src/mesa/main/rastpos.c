@@ -1,8 +1,8 @@
-/* $Id: rastpos.c,v 1.6 2000/03/03 17:47:39 brianp Exp $ */
+/* $Id: rastpos.c,v 1.7 2000/09/26 20:53:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -90,7 +90,7 @@ static void raster_pos4f( GLcontext *ctx,
    }
    else {
       /* use current color or index */
-      if (ctx->Visual->RGBAflag) {
+      if (ctx->Visual.RGBAflag) {
 	 UBYTE_RGBA_TO_FLOAT_RGBA(ctx->Current.RasterColor, 
 				  ctx->Current.ByteColor);
       }
@@ -132,7 +132,7 @@ static void raster_pos4f( GLcontext *ctx,
    ctx->Current.RasterPos[1] = (ndc[1] * ctx->Viewport.WindowMap.m[MAT_SY] + 
 				ctx->Viewport.WindowMap.m[MAT_TY]);
    ctx->Current.RasterPos[2] = (ndc[2] * ctx->Viewport.WindowMap.m[MAT_SZ] + 
-				ctx->Viewport.WindowMap.m[MAT_TZ]) / ctx->Visual->DepthMaxF;
+				ctx->Viewport.WindowMap.m[MAT_TZ]) / ctx->Visual.DepthMaxF;
    ctx->Current.RasterPos[3] = clip[3];
    ctx->Current.RasterPosValid = GL_TRUE;
 

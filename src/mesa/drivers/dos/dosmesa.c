@@ -1,4 +1,4 @@
-/* $Id: dosmesa.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: dosmesa.c,v 1.2 2000/09/26 20:54:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,8 +23,15 @@
 
 /*
  * $Log: dosmesa.c,v $
- * Revision 1.1  1999/08/19 00:55:41  jtg
- * Initial revision
+ * Revision 1.2  2000/09/26 20:54:10  brianp
+ * First batch of OpenGL SI related changes:
+ * Renamed struct gl_context to struct __GLcontextRec.
+ * Include glcore.h, setup GL imports/exports.
+ * Replaced gl_ prefix with _mesa_ prefix in context.[ch] functions.
+ * GLcontext's Visual field is no longer a pointer.
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:41  jtg
+ * Imported sources
  *
  * Revision 1.2  1999/03/28 21:11:57  brianp
  * updated SetBuffer driver function
@@ -1406,26 +1413,25 @@ DOSMesaContext DOSMesaCreateContext( void )
       return NULL;
    }
 
-   ctx->gl_vis = gl_create_visual( rgb_flag,
-                                   alpha_flag,
-                                   db_flag,
-                                   16,   /* depth_size */
-                                   8,    /* stencil_size */
-                                   16,   /* accum_size */
-                                   index_bits,
-                                   redscale,
-                                   greenscale,
-                                   bluescale,
-                                   alphascale,
-                                   redbits, greenbits,
-                                   bluebits, alphabits);
+   ctx->gl_vis = _mesa_create_visual( rgb_flag,
+                                      db_flag,
+                                      GL_FALSE, /* stereo */
+                                      redbits,
+                                      greenbits,
+                                      bluebits,
+                                      alphabits,
+                                      index_bits,
+                                      16,   /* depth_size */
+                                      8,    /* stencil_size */
+                                      16, 16, 16, 16,  /* accum_size */
+                                      1 );
 
-   ctx->gl_ctx = gl_create_context( ctx->gl_vis,
+   ctx->gl_ctx = _mesa_create_context( ctx->gl_vis,
                                     NULL,  /* share list context */
                                     (void *) ctx
                                   );
 
-   ctx->gl_buffer = gl_create_framebuffer( ctx->gl_vis );
+   ctx->gl_buffer = _mesa_create_framebuffer( ctx->gl_vis );
 
    ctx->index = 1;
    ctx->red = ctx->green = ctx->blue = 255;
@@ -1441,9 +1447,9 @@ DOSMesaContext DOSMesaCreateContext( void )
 void DOSMesaDestroyContext( DOSMesaContext ctx )
 {
    if (ctx) {
-      gl_destroy_visual( ctx->gl_vis );
-      gl_destroy_context( ctx->gl_ctx );
-      gl_destroy_framebuffer( ctx->gl_buffer );
+      _mesa_destroy_visual( ctx->gl_vis );
+      _mesa_destroy_context( ctx->gl_ctx );
+      _mesa_destroy_framebuffer( ctx->gl_buffer );
       free( ctx );
       if (ctx==DOSMesa) {
          DOSMesa = NULL;
@@ -1459,7 +1465,7 @@ void DOSMesaDestroyContext( DOSMesaContext ctx )
 void DOSMesaMakeCurrent( DOSMesaContext ctx )
 {
    DOSMesa = ctx;
-   gl_make_current( ctx->gl_ctx, ctx->gl_buffer );
+   _mesa_make_current( ctx->gl_ctx, ctx->gl_buffer );
    DOSmesa_setup_DD_pointers( ctx->gl_ctx );
 
    if (ctx->width==0 || ctx->height==0) {
