@@ -799,15 +799,15 @@ openbsd:
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
-	"CC = cc" \
+	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O2 -fPIC -I/usr/X11R6/include -DUSE_XSHM -DHZ=100" \
 	"CXXFLAGS = -O2 -fPIC -I/usr/X11R6/include -DUSE_XSHM -DHZ=100" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXi -lm" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm" \
 	"OSMESA_LIB_DEPS = -lm" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL" \
-	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL" \
-	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXi -lm"
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lm" \
+	"APP_LIB_DEPS = -L/usr/X11R6/lib -lglut -lGLU -lGL -lm"
 
 openstep:	
 	$(MAKE)	$(MFLAGS) -f Makefile.X11 targets \
