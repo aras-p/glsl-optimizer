@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.43 2003/01/14 04:55:45 brianp Exp $ */
+/* $Id: config.h,v 1.44 2003/02/25 19:30:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -164,7 +164,7 @@
 #define MAX_NV_FRAGMENT_PROGRAM_TEMPS         96
 #define MAX_NV_FRAGMENT_PROGRAM_PARAMS        64
 #define MAX_NV_FRAGMENT_PROGRAM_INPUTS        12
-#define MAX_NV_FRAGMENT_PROGRAM_OUTPUTS        7
+#define MAX_NV_FRAGMENT_PROGRAM_OUTPUTS        3
 #define MAX_NV_FRAGMENT_PROGRAM_WRITE_ONLYS    2
 
 
