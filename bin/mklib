@@ -143,11 +143,11 @@ case $ARCH in
 	    # link for C++
 	    if [ "x${CXX}" = "xg++" ] ; then
 		LINK="g++"
+	    elif [ "x${CXX}" = "xCC" ] ; then
+		LINK="CC"
 	    elif [ `which c++` ] ; then
 		LINK="c++"
-	    elif [ `which CC` ] ; then
-		LINK="CC"
-	    elif [ `which g++` ] ; then
+	    elif [ `type g++` ] ; then
 		LINK="g++"
 	    else
 		echo "mklib: warning: can't find C++ comiler, trying CC."
@@ -160,6 +160,7 @@ case $ARCH in
 	    # use native Sun linker
 	    LINK="ld"
 	fi
+	echo "mklib: linker is " ${LINK}
 	rm -f ${LIBNAME}
 	${LINK} ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
 	FINAL_LIBS=${LIBNAME}
