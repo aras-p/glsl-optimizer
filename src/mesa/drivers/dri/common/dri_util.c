@@ -43,6 +43,10 @@
 
 /*#define DRI_NEW_INTERFACE_ONLY*/
 
+#ifndef GLX_OML_sync_control
+typedef Bool ( * PFNGLXGETMSCRATEOMLPROC) (Display *dpy, GLXDrawable drawable, int32_t *numerator, int32_t *denominator);
+#endif
+
 /**
  * This is used in a couple of places that call \c driCreateNewDrawable.
  */
