@@ -291,6 +291,11 @@ static GLboolean run_init_lighting( GLcontext *ctx,
    _mesa_vector4f_alloc( &store->LitIndex[0], 0, size, 32 );
    _mesa_vector4f_alloc( &store->LitIndex[1], 0, size, 32 );
 
+   store->LitColor[0].size = 4;
+   store->LitColor[1].size = 4;
+   store->LitSecondary[0].size = 3;
+   store->LitSecondary[1].size = 3;
+
    store->LitIndex[0].size = 1;
    store->LitIndex[0].stride = sizeof(GLfloat);
    store->LitIndex[1].size = 1;

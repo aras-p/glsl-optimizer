@@ -51,15 +51,13 @@ enum tnl_attr_format {
    EMIT_4UB_4F_BGRA,		/* for color */
    EMIT_4UB_4F_RGBA,		/* for color */
    EMIT_4CHAN_4F_RGBA,		/* for swrast color */
-   EMIT_1F_PAD_4F,		/* for swrast texcoords */
-   EMIT_2F_PAD_4F,		/* for swrast texcoords */
-   EMIT_3F_PAD_4F,		/* for swrast texcoords */
    EMIT_MAX
 };
 
 struct tnl_attr_map {
    GLuint attrib;			/* _TNL_ATTRIB_ enum */
    enum tnl_attr_format format;
+   GLuint offset;
 };
    
 
@@ -90,7 +88,9 @@ extern void *_tnl_get_vertex( GLcontext *ctx, GLuint nr );
  */
 extern GLuint _tnl_install_attrs( GLcontext *ctx,
 				  const struct tnl_attr_map *map,
-				  GLuint nr, const GLfloat *vp );
+				  GLuint nr, const GLfloat *vp,
+				  GLuint unpacked_size );
+
 
 
 

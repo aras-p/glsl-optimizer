@@ -88,6 +88,13 @@
  * in mtypes.h.  However, the tnl module has additional attributes
  * for materials, color indexes, edge flags, etc.
  */
+/* Note: These are currently being used to define both inputs and
+ * outputs from the tnl pipeline.  A better solution (which would also
+ * releive the congestion to slightly prolong the life of the bitmask
+ * below) is to have the fixed function pipeline populate a set of
+ * arrays named after those produced by the vertex program stage, and
+ * have the rest the mesa backend work on those.
+ */
 enum {
 	_TNL_ATTRIB_POS = 0,
 	_TNL_ATTRIB_WEIGHT = 1,
@@ -119,7 +126,8 @@ enum {
 	_TNL_ATTRIB_MAT_BACK_INDEXES = 27, 
 	_TNL_ATTRIB_INDEX = 28,        
 	_TNL_ATTRIB_EDGEFLAG = 29,     
-	_TNL_ATTRIB_MAX = 30
+	_TNL_ATTRIB_POINTSIZE = 30,
+	_TNL_ATTRIB_MAX = 31
 } ;
 
 /* Will probably have to revise this scheme fairly shortly, eg. by
@@ -156,6 +164,7 @@ enum {
 #define _TNL_BIT_MAT_BACK_INDEXES    (1<<27)
 #define _TNL_BIT_INDEX               (1<<28)
 #define _TNL_BIT_EDGEFLAG            (1<<29)
+#define _TNL_BIT_POINTSIZE           (1<<30)
 
 #define _TNL_BIT_TEX(u)  (1 << (_TNL_ATTRIB_TEX0 + (u)))
 
@@ -495,20 +504,24 @@ struct tnl_pipeline {
    GLuint nr_stages;
 };
 
+struct tnl_clipspace_attr;
+
+typedef void (*extract_func)( const struct tnl_clipspace_attr *a, GLfloat *out, 
+			      const GLubyte *v );
+
+typedef void (*insert_func)( const struct tnl_clipspace_attr *a, GLubyte *v, 
+			     const GLfloat *in );
+
 
 struct tnl_clipspace_attr {
    int attrib;
    int vertoffset;
    int vertattrsize;
-   GLfloat *inputptr;
+   GLubyte *inputptr;
    int inputstride;
-
-   void (*insert)( const struct tnl_clipspace_attr *a, 
-		   char *v, const GLfloat *input );
-
-   void (*extract)( const struct tnl_clipspace_attr *a, 
-		    GLfloat *output, const char *v );
-
+   insert_func *insert;
+   insert_func emit;
+   extract_func extract;
    const GLfloat *vp;
 };
 

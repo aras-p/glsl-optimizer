@@ -65,6 +65,7 @@ static GLboolean run_point_stage( GLcontext *ctx,
    }
 
    VB->PointSizePtr = &store->PointSize;
+   VB->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &store->PointSize;
 
    return GL_TRUE;
 }

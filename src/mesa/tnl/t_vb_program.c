@@ -174,6 +174,7 @@ static GLboolean run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    VB->AttribPtr[VERT_ATTRIB_COLOR0] = VB->ColorPtr[0];
    VB->AttribPtr[VERT_ATTRIB_COLOR1] = VB->SecondaryColorPtr[0];
    VB->AttribPtr[VERT_ATTRIB_FOG] = VB->FogCoordPtr;
+   VB->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &store->attribs[VERT_RESULT_PSIZ];
 
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
       VB->AttribPtr[VERT_ATTRIB_TEX0+i] = VB->TexCoordPtr[i] = 

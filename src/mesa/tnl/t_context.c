@@ -161,7 +161,7 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
    if (ctx->Visual.rgbMode) {
       tnl->render_inputs = (_TNL_BIT_POS|
 			    _TNL_BIT_COLOR0|
-			    (ctx->Texture._EnabledUnits << _TNL_ATTRIB_TEX0));
+			    (ctx->Texture._EnabledCoordUnits << _TNL_ATTRIB_TEX0));
 
       if (NEED_SECONDARY_COLOR(ctx))
 	 tnl->render_inputs |= _TNL_BIT_COLOR1;
@@ -179,6 +179,10 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
 
    if (ctx->RenderMode == GL_FEEDBACK)
       tnl->render_inputs |= _TNL_BIT_TEX0;
+
+   if (ctx->Point._Attenuated ||
+       (ctx->VertexProgram.Enabled && ctx->VertexProgram.PointSizeEnabled))
+      tnl->render_inputs |= _TNL_BIT_POINTSIZE;
 }
 
 

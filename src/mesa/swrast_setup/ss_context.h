@@ -35,14 +35,9 @@
 
 typedef struct {
    GLuint NewState;
-   SWvertex *verts;
    GLenum render_prim;
-   GLuint SetupIndex;
-
-   /* Temporaries for translating away float colors:
-    */
-   struct gl_client_array ChanColor;
-   struct gl_client_array ChanSecondaryColor;
+   GLuint last_index;
+   SWvertex *verts;
 } SScontext;
 
 #define SWSETUP_CONTEXT(ctx) ((SScontext *)ctx->swsetup_context)

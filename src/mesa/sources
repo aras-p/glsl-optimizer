@@ -110,8 +110,7 @@ SWRAST_SOURCES = \
 
 SWRAST_SETUP_SOURCES = \
 	swrast_setup/ss_context.c \
-	swrast_setup/ss_triangle.c \
-	swrast_setup/ss_vb.c
+	swrast_setup/ss_triangle.c 
 
 TNL_SOURCES = \
 	tnl/t_array_api.c \
