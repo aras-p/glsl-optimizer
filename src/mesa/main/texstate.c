@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.46 2001/04/20 19:21:41 brianp Exp $ */
+/* $Id: texstate.c,v 1.47 2001/04/24 16:11:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1124,6 +1124,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    const struct gl_texture_image *img = NULL;
    GLuint dimensions;
    GLboolean isProxy;
+   GLenum baseIntFormat;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (level < 0 || level >= ctx->Const.MaxTextureLevels) {
@@ -1147,6 +1148,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       return;
    }
 
+   baseIntFormat = _mesa_base_tex_format(ctx, img->IntFormat);
+
    isProxy = (target == GL_PROXY_TEXTURE_1D) ||
              (target == GL_PROXY_TEXTURE_2D) ||
              (target == GL_PROXY_TEXTURE_3D) ||
@@ -1169,25 +1172,56 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          *params = img->Border;
          return;
       case GL_TEXTURE_RED_SIZE:
-         *params = img->TexFormat->RedBits;
+         if (baseIntFormat == GL_RGB ||
+             baseIntFormat == GL_RGBA)
+            *params = img->TexFormat->RedBits;
+         else
+            *params = 0;
          return;
       case GL_TEXTURE_GREEN_SIZE:
-         *params = img->TexFormat->GreenBits;
+         if (baseIntFormat == GL_RGB ||
+             baseIntFormat == GL_RGBA)
+            *params = img->TexFormat->GreenBits;
+         else
+            *params = 0;
          return;
       case GL_TEXTURE_BLUE_SIZE:
-         *params = img->TexFormat->BlueBits;
+         if (baseIntFormat == GL_RGB ||
+             baseIntFormat == GL_RGBA)
+            *params = img->TexFormat->BlueBits;
+         else
+            *params = 0;
          return;
       case GL_TEXTURE_ALPHA_SIZE:
-         *params = img->TexFormat->AlphaBits;
+         if (baseIntFormat == GL_ALPHA ||
+             baseIntFormat == GL_LUMINANCE_ALPHA ||
+             baseIntFormat == GL_RGBA)
+            *params = img->TexFormat->AlphaBits;
+         else
+            *params = 0;
          return;
       case GL_TEXTURE_INTENSITY_SIZE:
-         *params = img->TexFormat->IntensityBits;
+         if (baseIntFormat != GL_INTENSITY)
+            *params = 0;
+         else if (img->TexFormat->IntensityBits > 0)
+            *params = img->TexFormat->IntensityBits;
+         else /* intensity probably stored as rgb texture */
+            *params = MIN2(img->TexFormat->RedBits, img->TexFormat->GreenBits);
          return;
       case GL_TEXTURE_LUMINANCE_SIZE:
-         *params = img->TexFormat->LuminanceBits;
+         if (baseIntFormat != GL_LUMINANCE &&
+             baseIntFormat != GL_LUMINANCE_ALPHA)
+            *params = 0;
+         else if (img->TexFormat->LuminanceBits > 0)
+            *params = img->TexFormat->LuminanceBits;
+         else /* luminance probably stored as rgb texture */
+            *params = MIN2(img->TexFormat->RedBits, img->TexFormat->GreenBits);
          return;
       case GL_TEXTURE_INDEX_SIZE_EXT:
-         *params = img->TexFormat->IndexBits;
+         if (baseIntFormat == GL_COLOR_INDEX)
+            *params = img->TexFormat->IndexBits;
+         else
+            *params = 0;
          return;
       case GL_DEPTH_BITS:
          /* XXX this isn't in the GL_SGIX_depth_texture spec
