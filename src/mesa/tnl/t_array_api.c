@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.18 2001/08/13 22:15:54 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.19 2001/09/14 17:00:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,10 +48,9 @@
 static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
 				 GLsizei count )
 {
-   if (_tnl_hard_begin( ctx, mode ))
-   {
-      GLuint i;
-      for (i=start;i<count;i++) {
+   if (_tnl_hard_begin( ctx, mode )) {
+      GLint i;
+      for (i = start; i < count; i++) {
 	 _tnl_array_element( ctx, i );
       }
       _tnl_end( ctx );
@@ -65,7 +64,7 @@ static void fallback_drawelements( GLcontext *ctx, GLenum mode, GLsizei count,
    /* Simple version of the above code.
     */
    if (_tnl_hard_begin(ctx, mode)) {
-      GLuint i;
+      GLint i;
       for (i = 0 ; i < count ; i++)
 	 _tnl_array_element( ctx, indices[i] );
       _tnl_end( ctx );
