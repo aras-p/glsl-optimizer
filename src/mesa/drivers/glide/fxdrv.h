@@ -272,11 +272,11 @@ typedef struct MemRange_t {
 } MemRange;
 
 typedef struct {
-  GLsizei width, height;
-  GLint glideFormat;
-
-  unsigned short *data;
-  GLboolean translated, used;
+  GLsizei width, height;              /* image size */
+  GrTextureFormat_t glideFormat;      /* Glide image format */
+  unsigned short *data;         /* Glide-formated texture image */
+  GLboolean translated;         /* True if data points to a reformated image */
+  GLboolean used;               /* True if we've given the image to Glide */
 } tfxMipMapLevel;
 
 typedef struct tfxTexInfo_t {
@@ -568,17 +568,30 @@ extern void fxUpdateDDSpanPointers(GLcontext *);
 extern void fxSetupDDSpanPointers(GLcontext *);
 
 extern void fxPrintTextureData(tfxTexInfo *ti);
-extern void fxDDTexEnv(GLcontext *, GLenum, GLenum, const GLfloat *);
 extern void fxDDTexImg(GLcontext *, GLenum, struct gl_texture_object *,
 		       GLint, GLint, const struct gl_texture_image *);
+extern void fxDDTexSubImg(GLcontext *, GLenum, struct gl_texture_object *,
+                          GLint, GLint, GLint, GLint, GLint, GLint,
+                          const struct gl_texture_image *);
+extern GLboolean fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
+                              GLenum format, GLenum type, const GLvoid *pixels,
+                              const struct gl_pixelstore_attrib *packing,
+                              struct gl_texture_object *texObj,
+                              struct gl_texture_image *texImage,
+                              GLboolean *retainInternalCopy);
+extern GLboolean fxDDTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
+                              GLint xoffset, GLint yoffset,
+                              GLsizei width, GLsizei height,
+                              GLenum format, GLenum type, const GLvoid *pixels,
+                              const struct gl_pixelstore_attrib *packing,
+                              struct gl_texture_object *texObj,
+                              struct gl_texture_image *texImage);
+extern void fxDDTexEnv(GLcontext *, GLenum, GLenum, const GLfloat *);
 extern void fxDDTexParam(GLcontext *, GLenum, struct gl_texture_object *,
 			 GLenum, const GLfloat *);
 extern void fxDDTexBind(GLcontext *, GLenum, struct gl_texture_object *);
 extern void fxDDTexDel(GLcontext *, struct gl_texture_object *);
 extern void fxDDTexPalette(GLcontext *, struct gl_texture_object *);
-extern void fxDDTexuseGlbPalette(GLcontext *, GLboolean);
-extern void fxDDTexSubImg(GLcontext *, GLenum, struct gl_texture_object *, GLint,
-			  GLint, GLint, GLint, GLint, GLint, const struct gl_texture_image *);
 extern void fxDDTexUseGlbPalette(GLcontext *, GLboolean);
 
 extern void fxDDEnable(GLcontext *, GLenum, GLboolean);
