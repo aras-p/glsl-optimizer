@@ -2652,17 +2652,24 @@ grammar_get_last_error (GLubyte * text, GLint size, GLint *pos)
    const GLubyte *p = error_message;
 
    *text = '\0';
-#define APPEND_CHARACTER(x) if (dots_made == 0) {\
-   if (len < size - 1) {\
-      text[len++] = (x); text[len] = '\0';\
-   } else {\
-      GLint i;\
-      for (i = 0; i < 3; i++)\
-         if (--len >= 0)\
-      text[len] = '.';\
-      dots_made = 1;\
-   }\
-}
+#define APPEND_CHARACTER(x) \
+   do { \
+      if (dots_made == 0) { \
+         if (len < size - 1) { \
+            text[len++] = (x); \
+            text[len] = '\0'; \
+         } \
+         else { \
+            GLint i; \
+            for (i = 0; i < 3; i++) { \
+               if (--len >= 0) { \
+                  text[len] = '.'; \
+               } \
+            } \
+            dots_made = 1; \
+         } \
+      } \
+   } while (0)
 
    if (p) {
       while (*p) {
@@ -2670,15 +2677,15 @@ grammar_get_last_error (GLubyte * text, GLint size, GLint *pos)
             const GLubyte *r = error_param;
 
             while (*r) {
-               APPEND_CHARACTER (*r)
-                  r++;
+               APPEND_CHARACTER (*r);
+               r++;
             }
 
             p++;
          }
          else {
-            APPEND_CHARACTER (*p)
-               p++;
+            APPEND_CHARACTER (*p);
+            p++;
          }
       }
    }
@@ -5925,7 +5932,7 @@ parse_arb_program (GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
  * \param str - The program string
  * \param len - The program string length
  * \param Program - The arb_program struct to return all the parsed info in
- * \return 0 on sucess, 1 on error
+ * \return 0 on success, 1 on error
  */
 GLuint
 _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
@@ -5937,6 +5944,21 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    struct var_cache *vc_head;
    dict *dt;
    GLubyte *parsed, *inst;
+   GLubyte *strCopy;
+
+   /* init to zero in case of parse error */
+   _mesa_bzero(program, sizeof(*program));
+
+   /* Need a null-terminated string for parsing */
+   strCopy = (GLubyte *) _mesa_malloc(len + 1);
+   if (!strCopy) {
+      _mesa_error (ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
+      return 1;
+   }
+   _mesa_memcpy(strCopy, str, len);
+   strCopy[len] = 0;
+   str = strCopy;
+
 
 #if DEBUG_PARSING
    fprintf (stderr, "Loading grammar text!\n");
@@ -5947,6 +5969,7 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
       _mesa_set_program_error (ctx, error_pos, error_msg);
       _mesa_error (ctx, GL_INVALID_OPERATION,
                    "Error loading grammer rule set");
+      _mesa_free(strCopy);
       return 1;
    }
 
@@ -5963,6 +5986,7 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
       _mesa_error (ctx, GL_INVALID_OPERATION, "Parse Error");
 
       dict_destroy (&dt);
+      _mesa_free(strCopy);
       return 1;
    }
 
@@ -6028,8 +6052,10 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    var_cache_destroy (&vc_head);
 
    _mesa_free (parsed);
+   _mesa_free(strCopy);
 #if DEBUG_PARSING
    printf ("_mesa_parse_arb_program() done\n");
 #endif
+
    return err;
 }
