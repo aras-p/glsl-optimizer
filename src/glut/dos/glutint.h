@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.4 for Mesa
+ * DOS/DJGPP glut driver v1.5 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@users.sourceforge.net
@@ -145,6 +145,8 @@ extern void *__glutFont(void *font);
 
 
 #define MAX_WINDOWS 2
+
+#define MAX_SSHOT_CB 10
 
 #define RESERVED_COLORS 0
 

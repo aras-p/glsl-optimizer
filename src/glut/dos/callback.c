@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.3 for Mesa
+ * DOS/DJGPP glut driver v1.4 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -31,7 +31,30 @@
 
 
 
+typedef struct {
+        void (*func) (int); /* function to call */
+        int value;          /* value to pass to callback */
+        int ttl;            /* time to live (blank shots) */
+        int fid;            /* func-id as returned from PCHW */
+} GLUTSShotCB;
+
+static GLboolean g_sscb_semaphore;
+
 GLUTidleCB g_idle_func = NULL;
+
+
+
+static void g_single_shot_callback (void *opaque)
+{
+ GLUTSShotCB *cb = (GLUTSShotCB *)opaque;
+ while (g_sscb_semaphore) {
+ }
+ if (!--cb->ttl) {
+    cb->func(cb->value);
+    pc_remove_int(cb->fid);
+    cb->func = NULL;
+ }
+} ENDOFUNC(g_single_shot_callback)
 
 
 
@@ -106,6 +129,45 @@ void APIENTRY glutIdleFunc (GLUTidleCB func)
 
 void APIENTRY glutTimerFunc (unsigned int millis, GLUTtimerCB func, int value)
 {
+ static GLUTSShotCB g_sscb[MAX_SSHOT_CB];
+ static int virgin = GL_TRUE;
+
+ int i;
+ int ttl;
+ unsigned int freq;
+
+ if (virgin) {
+    virgin = GL_FALSE;
+    LOCKDATA(g_sscb);
+    LOCKDATA(g_sscb_semaphore);
+    LOCKFUNC(g_single_shot_callback);
+    /* we should lock the callee also... */
+ }
+
+ if (millis > 0) {
+    if (millis > 50) {
+       /* don't go beyond 20Hz */
+       freq = 200;
+       ttl = millis * freq / 1000;
+    } else {
+       freq = 1000 / millis;
+       ttl = 1;
+    }
+    g_sscb_semaphore++;
+    for (i = 0; i < MAX_SSHOT_CB; i++) {
+        if (g_sscb[i].func == NULL) {
+           int fid = pc_install_int((PFUNC)func, &g_sscb[i], freq);
+           if (fid >= 0) {
+              g_sscb[i].func = func;
+              g_sscb[i].value = value;
+              g_sscb[i].ttl = ttl;
+              g_sscb[i].fid = fid;
+           }
+           break;
+        }
+    }
+    g_sscb_semaphore--;
+ }
 }
 
 
