@@ -500,6 +500,12 @@ struct r300_depthbuffer_state {
 	GLfloat scale;
 };
 
+struct r300_stencilbuffer_state {
+	GLuint clear;
+	GLboolean hw_stencil;
+
+};
+
 struct r300_vap_reg_state {
 	   /* input register assigments */
 	   int i_coords;
@@ -678,7 +684,9 @@ struct r300_state {
 	struct {
 		int transform_offset;  /* Transform matrix offset, -1 if none */
 		} vap_param;  /* vertex processor parameter allocation - tells where to write parameters */
-	int hw_stencil;
+	
+	struct r300_stencilbuffer_state stencil;
+	
 };
 
 

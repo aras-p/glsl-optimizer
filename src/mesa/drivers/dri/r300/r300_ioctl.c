@@ -58,6 +58,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define CLEARBUFFER_COLOR	0x1
 #define CLEARBUFFER_DEPTH	0x2
+#define CLEARBUFFER_STENCIL	0x4
 
 static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 {
@@ -205,8 +206,10 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 
 	R300_STATECHANGE(r300, zs);
 	if (flags & CLEARBUFFER_DEPTH) {
-		r300->hw.zs.cmd[R300_ZS_CNTL_0] = 0x6; // test and write
-		r300->hw.zs.cmd[R300_ZS_CNTL_1] = (R300_ZS_ALWAYS<<R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
+		r300->hw.zs.cmd[R300_ZS_CNTL_0] &= R300_RB3D_STENCIL_ENABLE;
+		r300->hw.zs.cmd[R300_ZS_CNTL_0] |= 0x6; // test and write
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] &= ~(R300_ZS_MASK << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= (R300_ZS_ALWAYS<<R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
 /*
 		R300_STATECHANGE(r300, zb);
 		r300->hw.zb.cmd[R300_ZB_OFFSET] =
@@ -217,8 +220,27 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 			r300->radeon.radeonScreen->depthPitch;
 */
 	} else {
-		r300->hw.zs.cmd[R300_ZS_CNTL_0] = 0; // disable
-		r300->hw.zs.cmd[R300_ZS_CNTL_1] = 0;
+		r300->hw.zs.cmd[R300_ZS_CNTL_0] &= R300_RB3D_STENCIL_ENABLE;
+		r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_RB3D_Z_DISABLED_1; // disable
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] &= ~(R300_ZS_MASK << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
+	}
+	
+	R300_STATECHANGE(r300, zs);
+	if (flags & CLEARBUFFER_STENCIL) {
+		r300->hw.zs.cmd[R300_ZS_CNTL_0] &= ~R300_RB3D_STENCIL_ENABLE;
+		r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_RB3D_STENCIL_ENABLE;
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] &= 
+		    ~((R300_ZS_MASK << R300_RB3D_ZS1_FRONT_FUNC_SHIFT) | (R300_ZS_MASK << R300_RB3D_ZS1_BACK_FUNC_SHIFT));
+		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= 
+		    (R300_ZS_ALWAYS<<R300_RB3D_ZS1_FRONT_FUNC_SHIFT) | 
+		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_FRONT_FAIL_OP_SHIFT) |
+		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT) |
+		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_FRONT_ZFAIL_OP_SHIFT) |
+		    (R300_ZS_ALWAYS<<R300_RB3D_ZS1_BACK_FUNC_SHIFT) |
+		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT) |
+		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT) |
+		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT) ;
+		r300->hw.zs.cmd[R300_ZS_CNTL_2] = r300->state.stencil.clear;
 	}
 			
 	/* Make sure we have enough space */
@@ -313,6 +335,11 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	if (mask & DD_DEPTH_BIT) {
 		bits |= CLEARBUFFER_DEPTH;
 		mask &= ~DD_DEPTH_BIT;
+	}
+	
+	if ( (mask & DD_STENCIL_BIT) && r300->state.stencil.hw_stencil) {
+		bits |= CLEARBUFFER_STENCIL;
+		mask &= ~DD_STENCIL_BIT;
 	}
 
 	if (mask) {

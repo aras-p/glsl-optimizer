@@ -1109,7 +1109,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_RB3D_Z_TEST                  0x00000012
 #       define R300_RB3D_Z_TEST_AND_WRITE        0x00000016
 #       define R300_RB3D_Z_WRITE_ONLY        	 0x00000006
-#	define R300_RB3D_STENCIL_ENABLE		 (0<<1)  /* UNKNOWN yet.. */
+#	define R300_RB3D_STENCIL_ENABLE		 0x00000001
 
 #define R300_RB3D_ZSTENCIL_CNTL_1                   0x4F04
 		/* functions */
@@ -1148,6 +1148,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 
 #define R300_RB3D_ZSTENCIL_CNTL_2                   0x4F08
 #	define R300_RB3D_ZS2_STENCIL_REF_SHIFT		0
+#	define R300_RB3D_ZS2_STENCIL_MASK		0xFF
 #	define R300_RB3D_ZS2_STENCIL_MASK_SHIFT	        8
 #	define R300_RB3D_ZS2_STENCIL_WRITE_MASK_SHIFT	16
 
