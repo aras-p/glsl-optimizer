@@ -1,10 +1,25 @@
 
-                     3Dfx Glide device driver for Mesa 3.3
-				(see below for FAQ)
+                            3Dfx Glide device driver
 
 
-Warning: this document is rather out of date, but most of the information
-should still apply.
+
+Info for Mesa 4.1
+-----------------
+
+The 3dfx Glide driver in Mesa is disabled by default.  Not too many people
+use this driver anymore and at some point down the road it will be dropped.
+
+To use/enable the Glide driver either do this:
+
+'./configure --with-glide=DIR'    Where DIR is the location of Glide, like
+                                  /usr/ or /usr/local
+
+OR
+
+'make linux-x86-glide'     If using the old-style Makefile system.
+
+The rest of this file hasn't changed since Mesa 3.3.  Some of it's out of
+date, but some is still valid.
 
 
 
@@ -17,8 +32,6 @@ What do you need ?
 	  under Linux (more information in the "Useful Glide Environment
 	  Variables");
 
-	- Mesa 3.1;
-
 	- The 3Dfx Glide library 2.3 or later for your OS (the 2.4 works fine).
 	  The Voodoo2 requires the Glide library 2.51. The Glide 3.1 is not
 	  compatible with the Glide 2.x so it doesn't work with the current
@@ -26,8 +39,6 @@ What do you need ?
 
 	- A compiler supported by the Glide library (Micro$oft VC++ (tested),
 	  Watcom (tested), GCC for Linux (tested), etc.);
-
-	- A lot of patience, this is an alpha release.
 
 	- It's nice to have two monitors - one for your normal graphics
 	  card and one for your 3Dfx card. If something goes wrong with
