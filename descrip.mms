@@ -13,7 +13,9 @@ all :
 	if f$search("lib.dir") .eqs. "" then create/directory [.lib]
 	set default [.src]
 	$(MMS)$(MMSQUALIFIERS)
-	set default [-.progs.demos]
+	set default [-.progs.util]
+	$(MMS)$(MMSQUALIFIERS)
+	set default [-.demos]
 	$(MMS)$(MMSQUALIFIERS)
 	set default [-.xdemos]
 	$(MMS)$(MMSQUALIFIERS)

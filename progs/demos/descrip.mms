@@ -44,24 +44,30 @@ realclean :
 
 bounce.exe; : bounce.obj $(LIB_DEP)
 clearspd.exe; : clearspd.obj $(LIB_DEP)
-drawpix.exe; : drawpix.obj $(LIB_DEP)
+drawpix.exe; : drawpix.obj $(LIB_DEP) [-.util]readtex.obj
+	cxxlink $(MMS$TARGET_NAME),[-.util]readtex.obj,$(GL_LIBS)
 gamma.exe; : gamma.obj $(LIB_DEP)
 gears.exe; : gears.obj $(LIB_DEP)
 glinfo.exe; : glinfo.obj $(LIB_DEP)
 glutfx.exe; : glutfx.obj $(LIB_DEP)
-isosurf.exe; : isosurf.obj $(LIB_DEP)
+isosurf.exe; : isosurf.obj $(LIB_DEP) [-.util]readtex.obj
+	cxxlink $(MMS$TARGET_NAME),[-.util]readtex.obj,$(GL_LIBS)
 morph3d.exe; : morph3d.obj $(LIB_DEP)
 osdemo.exe; : osdemo.obj $(LIB_DEP)
 paltex.exe; : paltex.obj $(LIB_DEP)
 pointblast.exe; : pointblast.obj $(LIB_DEP)
-reflect.exe; : reflect.obj $(LIB_DEP)
+reflect.exe; : reflect.obj [-.util]readtex.obj [-.util]showbuffer.obj\
+	$(LIB_DEP)
+	cxxlink $(MMS$TARGET_NAME),[-.util]readtex,showbuffer,$(GL_LIBS)
 spectex.exe; : spectex.obj $(LIB_DEP)
 stex3d.exe; : stex3d.obj $(LIB_DEP)
 tessdemo.exe; : tessdemo.obj $(LIB_DEP)
-texcyl.exe; : texcyl.obj $(LIB_DEP)
+texcyl.exe; : texcyl.obj [-.util]readtex.obj $(LIB_DEP)
+	cxxlink $(MMS$TARGET_NAME),[-.util]readtex.obj,$(GL_LIBS)
 texobj.exe; : texobj.obj $(LIB_DEP)
 trispd.exe; : trispd.obj $(LIB_DEP)
-winpos.exe; : winpos.obj $(LIB_DEP)
+winpos.exe; : winpos.obj [-.util]readtex.obj $(LIB_DEP)
+	cxxlink $(MMS$TARGET_NAME),[-.util]readtex.obj,$(GL_LIBS)
 
 
 bounce.obj : bounce.c
