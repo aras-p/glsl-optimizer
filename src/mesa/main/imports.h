@@ -391,9 +391,9 @@ static INLINE int iround(float f)
    return r;
 }
 #define IROUND(x)  iround(x)
-#elif defined(USE_X86_ASM) && defined(__WATCOMC__)
+#elif defined(__WATCOMC__) && defined(__386__)
 long iround(float f);
-#pragma aux iround =                        \
+#pragma aux iround =                    \
 	"push   eax"                        \
 	"fistp  dword ptr [esp]"            \
 	"pop    eax"                        \
@@ -401,16 +401,6 @@ long iround(float f);
 	value [eax]                         \
 	modify exact [eax];
 #define IROUND(x)  iround(x)
-#elif defined(__OS2__)
-#ifndef FIST_MAGIC
-#define FIST_MAGIC ((((65536.0 * 65536.0 * 16)+(65536.0 * 0.5))* 65536.0))
-#endif
-static INLINE int iround(float x)
-{
-   double dtemp = FIST_MAGIC + x;
-   return ((*(int *)&dtemp) - 0x80000000);
-}
-#define IROUND(f)  iround((float)f)
 #else
 #define IROUND(f)  ((int) (((f) >= 0.0F) ? ((f) + 0.5F) : ((f) - 0.5F)))
 #endif
