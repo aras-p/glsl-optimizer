@@ -1,4 +1,4 @@
-/* $Id: osmesa.h,v 1.2 1999/11/24 18:43:19 brianp Exp $ */
+/* $Id: osmesa.h,v 1.3 2000/01/15 06:12:18 rjfrank Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -97,6 +97,13 @@ extern "C" {
 #define OSMESA_HEIGHT		0x21
 #define OSMESA_FORMAT		0x22
 #define OSMESA_TYPE		0x23
+
+/*
+ * Accepted by OSMesaGetBooleanv:
+ * New in version 3.3
+ */
+/* This is based on the HP proposed extension */
+#define OSMESA_OCCLUSION_TEST_RESULT_HP	0x30
 
 
 
@@ -204,7 +211,13 @@ GLAPI void GLAPIENTRY OSMesaPixelStore( GLint pname, GLint value );
  */
 GLAPI void GLAPIENTRY OSMesaGetIntegerv( GLint pname, GLint *value );
 
-
+/*
+ * Return context info.  This is like glGetBooleanv.
+ * Input:  pname -
+ *                 OSMESA_OCCLUSION_TEST_RESULT_HP  return current test result
+ *         value - pointer to boolean in which to return result.
+ */
+GLAPI void GLAPIENTRY OSMesaGetBooleanv( GLint pname, GLboolean *value );
 
 /*
  * Return the depth buffer associated with an OSMesa context.
