@@ -1,8 +1,8 @@
-/* $Id: s_lines.c,v 1.31 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_lines.c,v 1.32 2002/10/30 19:59:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -750,33 +750,33 @@ _mesa_print_line_function(GLcontext *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   printf("Line Func == ");
+   _mesa_printf("Line Func == ");
    if (swrast->Line == flat_ci_line)
-      printf("flat_ci_line\n");
+      _mesa_printf("flat_ci_line\n");
    else if (swrast->Line == flat_rgba_line)
-      printf("flat_rgba_line\n");
+      _mesa_printf("flat_rgba_line\n");
    else if (swrast->Line == smooth_ci_line)
-      printf("smooth_ci_line\n");
+      _mesa_printf("smooth_ci_line\n");
    else if (swrast->Line == smooth_rgba_line)
-      printf("smooth_rgba_line\n");
+      _mesa_printf("smooth_rgba_line\n");
    else if (swrast->Line == general_smooth_ci_line)
-      printf("general_smooth_ci_line\n");
+      _mesa_printf("general_smooth_ci_line\n");
    else if (swrast->Line == general_flat_ci_line)
-      printf("general_flat_ci_line\n");
+      _mesa_printf("general_flat_ci_line\n");
    else if (swrast->Line == general_smooth_rgba_line)
-      printf("general_smooth_rgba_line\n");
+      _mesa_printf("general_smooth_rgba_line\n");
    else if (swrast->Line == general_flat_rgba_line)
-      printf("general_flat_rgba_line\n");
+      _mesa_printf("general_flat_rgba_line\n");
    else if (swrast->Line == flat_textured_line)
-      printf("flat_textured_line\n");
+      _mesa_printf("flat_textured_line\n");
    else if (swrast->Line == smooth_textured_line)
-      printf("smooth_textured_line\n");
+      _mesa_printf("smooth_textured_line\n");
    else if (swrast->Line == smooth_multitextured_line)
-      printf("smooth_multitextured_line\n");
+      _mesa_printf("smooth_multitextured_line\n");
    else if (swrast->Line == flat_multitextured_line)
-      printf("flat_multitextured_line\n");
+      _mesa_printf("flat_multitextured_line\n");
    else
-      printf("Driver func %p\n", (void *) swrast->Line);
+      _mesa_printf("Driver func %p\n", (void *) swrast->Line);
 }
 #endif
 
@@ -790,7 +790,7 @@ static const char *lineFuncName = NULL;
 #define USE(lineFunc)                   \
 do {                                    \
     lineFuncName = #lineFunc;           \
-    /*printf("%s\n", lineFuncName);*/   \
+    /*_mesa_printf("%s\n", lineFuncName);*/   \
     swrast->Line = lineFunc;            \
 } while (0)
 
