@@ -1929,7 +1929,7 @@ struct matrix_stack
 #define _NEW_ARRAY_TEXCOORD_5       VERT_BIT_TEX5
 #define _NEW_ARRAY_TEXCOORD_6       VERT_BIT_TEX6
 #define _NEW_ARRAY_TEXCOORD_7       VERT_BIT_TEX7
-#define _NEW_ARRAY_ATTRIB_0         0x1  /* alias conventional arrays */
+#define _NEW_ARRAY_ATTRIB_0         0x10000  /* start at bit 16 */
 #define _NEW_ARRAY_ALL              0xffffffff
 
 

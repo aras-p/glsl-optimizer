@@ -49,7 +49,7 @@ static void reset_texcoord( GLcontext *ctx, GLuint unit )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
-   if (ctx->Array._Enabled & _NEW_ARRAY_TEXCOORD(unit)) {
+   if (ctx->Array.TexCoord[unit].Enabled) {
       ac->Raw.TexCoord[unit] = ctx->Array.TexCoord[unit];
       STRIDE_ARRAY(ac->Raw.TexCoord[unit], ac->start);
    }
@@ -84,7 +84,7 @@ static void reset_normal( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
-   if (ctx->Array._Enabled & _NEW_ARRAY_NORMAL) {
+   if (ctx->Array.Normal.Enabled) {
       ac->Raw.Normal = ctx->Array.Normal;
       STRIDE_ARRAY(ac->Raw.Normal, ac->start);
    }
@@ -102,7 +102,7 @@ static void reset_color( GLcontext *ctx )
    ACcontext *ac = AC_CONTEXT(ctx);
 
 
-   if (ctx->Array._Enabled & _NEW_ARRAY_COLOR0) {
+   if (ctx->Array.Color.Enabled) {
       ac->Raw.Color = ctx->Array.Color;
       STRIDE_ARRAY(ac->Raw.Color, ac->start);
    }
@@ -118,7 +118,7 @@ static void reset_secondarycolor( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
-   if (ctx->Array._Enabled & _NEW_ARRAY_COLOR1) {
+   if (ctx->Array.SecondaryColor.Enabled & _NEW_ARRAY_COLOR1) {
       ac->Raw.SecondaryColor = ctx->Array.SecondaryColor;
       STRIDE_ARRAY(ac->Raw.SecondaryColor, ac->start);
    }
@@ -134,7 +134,7 @@ static void reset_index( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
-   if (ctx->Array._Enabled & _NEW_ARRAY_INDEX) {
+   if (ctx->Array.Index.Enabled & _NEW_ARRAY_INDEX) {
       ac->Raw.Index = ctx->Array.Index;
       STRIDE_ARRAY(ac->Raw.Index, ac->start);
    }
@@ -150,7 +150,7 @@ static void reset_fogcoord( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
-   if (ctx->Array._Enabled & _NEW_ARRAY_FOGCOORD) {
+   if (ctx->Array.FogCoord.Enabled & _NEW_ARRAY_FOGCOORD) {
       ac->Raw.FogCoord = ctx->Array.FogCoord;
       STRIDE_ARRAY(ac->Raw.FogCoord, ac->start);
    }
@@ -166,7 +166,7 @@ static void reset_edgeflag( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
-   if (ctx->Array._Enabled & _NEW_ARRAY_EDGEFLAG) {
+   if (ctx->Array.EdgeFlag.Enabled & _NEW_ARRAY_EDGEFLAG) {
       ac->Raw.EdgeFlag = ctx->Array.EdgeFlag;
       STRIDE_ARRAY(ac->Raw.EdgeFlag, ac->start);
    }

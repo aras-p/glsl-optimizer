@@ -79,6 +79,7 @@ static void _tnl_import_normal( GLcontext *ctx,
    inputs->Normal.data = (GLfloat (*)[4]) data;
    inputs->Normal.start = (GLfloat *) data;
    inputs->Normal.stride = tmp->StrideB;
+   inputs->Normal.size = 3; /* XXX is this right? */
 }
 
 
@@ -246,7 +247,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
    struct vertex_buffer *VB = &tnl->vb;
    GLuint inputs = tnl->pipeline.inputs;
    struct tnl_vertex_arrays *tmp = &tnl->array_inputs;
-   GLuint i;
+   GLuint i, index;
 
    VB->Count = count - start;
    VB->Elts = NULL;
@@ -262,72 +263,76 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
     * attribute arrays have priority over the conventional attributes.
     * Try to use them now.
     */
-   if (ctx->VertexProgram.Enabled) {
-      GLuint index;
-      for (index = 0; index < VERT_ATTRIB_MAX; index++) {
-         /* XXX check program->InputsRead to reduce work here */
+   for (index = 0; index < VERT_ATTRIB_MAX; index++) {
+      /* When vertex program mode is enabled, the generic vertex attribute
+       * arrays have priority over the conventional vertex arrays.
+       */
+      if (ctx->VertexProgram.Enabled
+          && ctx->Array.VertexAttrib[index].Enabled) {
+         /* Use generic attribute array */
          _tnl_import_attrib( ctx, index, GL_FALSE, GL_TRUE );
          VB->AttribPtr[index] = &tmp->Attribs[index];
       }
-   }
-   else {
-
-      /*
-       * Conventional attributes
-       */
-      if (inputs & _TNL_BIT_POS) {
-	 _tnl_import_vertex( ctx, 0, 0 );
-	 tmp->Obj.count = VB->Count;
-	 VB->AttribPtr[_TNL_ATTRIB_POS] = &tmp->Obj;
+      /* use conventional arrays... */
+      else if (index == VERT_ATTRIB_POS) {
+         if (inputs & _TNL_BIT_POS) {
+            _tnl_import_vertex( ctx, 0, 0 );
+            tmp->Obj.count = VB->Count;
+            VB->AttribPtr[_TNL_ATTRIB_POS] = &tmp->Obj;
+         }
       }
-
-      if (inputs & _TNL_BIT_NORMAL) {
-	 _tnl_import_normal( ctx, 0, 0 );
-	 tmp->Normal.count = VB->Count;
-	 VB->AttribPtr[_TNL_ATTRIB_NORMAL] = &tmp->Normal;
+      else if (index == VERT_ATTRIB_NORMAL) {
+         if (inputs & _TNL_BIT_NORMAL) {
+            _tnl_import_normal( ctx, 0, 0 );
+            tmp->Normal.count = VB->Count;
+            VB->AttribPtr[_TNL_ATTRIB_NORMAL] = &tmp->Normal;
+         }
       }
-
-      if (inputs & _TNL_BIT_COLOR0) {
-	 _tnl_import_color( ctx, 0, 0 );
-	 tmp->Color.count = VB->Count;
-	 VB->AttribPtr[_TNL_ATTRIB_COLOR0] = &tmp->Color;
+      else if (index == VERT_ATTRIB_COLOR0) {
+         if (inputs & _TNL_BIT_COLOR0) {
+            _tnl_import_color( ctx, 0, 0 );
+            tmp->Color.count = VB->Count;
+            VB->AttribPtr[_TNL_ATTRIB_COLOR0] = &tmp->Color;
+         }
       }
-
-      if (inputs & _TNL_BIT_INDEX) {
-	 _tnl_import_index( ctx, 0, 0 );
-	 tmp->Index.count = VB->Count;
-	 VB->AttribPtr[_TNL_ATTRIB_INDEX] = &tmp->Index;
+      else if (index == VERT_ATTRIB_COLOR1) {
+         if (inputs & _TNL_BIT_COLOR1) {
+            _tnl_import_secondarycolor( ctx, 0, 0 );
+            tmp->SecondaryColor.count = VB->Count;
+            VB->AttribPtr[_TNL_ATTRIB_COLOR1] = &tmp->SecondaryColor;
+         }
       }
-
-      if (inputs & _TNL_BIT_FOG) {
-	 _tnl_import_fogcoord( ctx, 0, 0 );
-	 tmp->FogCoord.count = VB->Count;
-	 VB->AttribPtr[_TNL_ATTRIB_FOG] = &tmp->FogCoord;
+      else if (index == VERT_ATTRIB_FOG) {
+         if (inputs & _TNL_BIT_FOG) {
+            _tnl_import_fogcoord( ctx, 0, 0 );
+            tmp->FogCoord.count = VB->Count;
+            VB->AttribPtr[_TNL_ATTRIB_FOG] = &tmp->FogCoord;
+         }
       }
-
-      if (inputs & _TNL_BIT_EDGEFLAG) {
-	 _tnl_import_edgeflag( ctx, GL_TRUE, sizeof(GLboolean) );
-	 VB->EdgeFlag = (GLboolean *) tmp->EdgeFlag;
-      }
-
-      if (inputs & _TNL_BIT_COLOR1) {
-	 _tnl_import_secondarycolor( ctx, 0, 0 );
-	 tmp->SecondaryColor.count = VB->Count;
-	 VB->AttribPtr[_TNL_ATTRIB_COLOR1] = &tmp->SecondaryColor;
-      }
-
-
-      if (inputs & _TNL_BITS_TEX_ANY) {
-	 for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-	    if (inputs & _TNL_BIT_TEX(i)) {
-	       _tnl_import_texcoord( ctx, i, GL_FALSE, GL_FALSE );
-	       tmp->TexCoord[i].count = VB->Count;
-	       VB->AttribPtr[_TNL_ATTRIB_TEX0 + i] = &tmp->TexCoord[i];
-	    }
-	 }
+      else if (index >= VERT_ATTRIB_TEX0 && index <= VERT_ATTRIB_TEX7) {
+         if (inputs & _TNL_BITS_TEX_ANY) {
+            for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+               if (inputs & _TNL_BIT_TEX(i)) {
+                  _tnl_import_texcoord( ctx, i, GL_FALSE, GL_FALSE );
+                  tmp->TexCoord[i].count = VB->Count;
+                  VB->AttribPtr[_TNL_ATTRIB_TEX0 + i] = &tmp->TexCoord[i];
+               }
+            }
+         }
       }
    }
 
+   /* odd-ball vertex attributes */
+   if (inputs & _TNL_BIT_INDEX) {
+      _tnl_import_index( ctx, 0, 0 );
+      tmp->Index.count = VB->Count;
+      VB->AttribPtr[_TNL_ATTRIB_INDEX] = &tmp->Index;
+   }
+
+   if (inputs & _TNL_BIT_EDGEFLAG) {
+      _tnl_import_edgeflag( ctx, GL_TRUE, sizeof(GLboolean) );
+      VB->EdgeFlag = (GLboolean *) tmp->EdgeFlag;
+   }
 
    /* These are constant & can be precalculated:
     */

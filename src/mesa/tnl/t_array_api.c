@@ -107,11 +107,16 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
    if (ctx->Array.LockCount)
       tnl->Driver.RunPipeline( ctx );
    else {
+      /* The lower 16 bits represent the conventional arrays while the
+       * upper 16 bits represent the generic arrays.  OR those bits
+       * together to indicate which vertex attribs are in effect.
+       */
+      GLuint enabledArrays = ctx->Array._Enabled | (ctx->Array._Enabled >> 16);
       /* Note that arrays may have changed before/after execution.
        */
-      tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
+      tnl->pipeline.run_input_changes |= enabledArrays;
       tnl->Driver.RunPipeline( ctx );
-      tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
+      tnl->pipeline.run_input_changes |= enabledArrays;
    }
 
    if (start)
@@ -130,6 +135,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
    GET_CURRENT_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint thresh = (ctx->Driver.NeedFlush & FLUSH_STORED_VERTICES) ? 30 : 10;
+   GLuint enabledArrays;
    
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(NULL, "_tnl_DrawArrays %d %d\n", start, count); 
@@ -267,9 +273,16 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 tnl->vb.Primitive[0].count = nr + minimum;
 	 tnl->vb.PrimitiveCount = 1;
 
-	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
+         /* The lower 16 bits represent the conventional arrays while the
+          * upper 16 bits represent the generic arrays.  OR those bits
+          * together to indicate which vertex attribs are in effect.
+          */
+         enabledArrays = ctx->Array._Enabled | (ctx->Array._Enabled >> 16);
+         /* Note that arrays may have changed before/after execution.
+          */
+	 tnl->pipeline.run_input_changes |= enabledArrays;
 	 tnl->Driver.RunPipeline( ctx );
-	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
+	 tnl->pipeline.run_input_changes |= enabledArrays;
       }
    }
 }
