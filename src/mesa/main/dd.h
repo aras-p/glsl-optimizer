@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.22 2000/03/21 16:10:22 brianp Exp $ */
+/* $Id: dd.h,v 1.23 2000/03/23 16:22:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -501,11 +501,6 @@ struct dd_function_table {
     *** Texture mapping functions:
     ***/
 
-   void (*TexEnv)( GLcontext *ctx, GLenum target, GLenum pname,
-                   const GLfloat *param );
-   /* Called whenever glTexEnv*() is called.
-    */
-
    void (*TexImage)( GLcontext *ctx, GLenum target,
                      struct gl_texture_object *tObj, GLint level,
                      GLint internalFormat,
@@ -645,21 +640,25 @@ struct dd_function_table {
     * Core Mesa will perform any image format/type conversions that are needed.
     */
 
+   void (*TexEnv)( GLcontext *ctx, GLenum target, GLenum pname,
+                   const GLfloat *param );
+   /* Called by glTexEnv*().
+    */
+
    void (*TexParameter)( GLcontext *ctx, GLenum target,
-                         struct gl_texture_object *tObj,
+                         struct gl_texture_object *texObj,
                          GLenum pname, const GLfloat *params );
-   /* Called whenever glTexParameter*() is called.
-    *    target is GL_TEXTURE_1D or GL_TEXTURE_2D
-    *    texObject is the texture object to modify
-    *    pname is one of GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER,
-    *       GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, or GL_TEXTURE_BORDER_COLOR.
-    *    params is dependant on pname.  See man glTexParameter.
+   /* Called by glTexParameter*().
+    *    <target> is user specified
+    *    <texObj> the texture object to modify
+    *    <pname> is one of GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER,
+    *       GL_TEXTURE_WRAP_[STR], or GL_TEXTURE_BORDER_COLOR.
+    *    <params> is user specified.
     */
 
    void (*BindTexture)( GLcontext *ctx, GLenum target,
                         struct gl_texture_object *tObj );
-   /* Called whenever glBindTexture() is called.  This specifies which
-    * texture is to be the current one.  No dirty flags will be set.
+   /* Called by glBindTexture().
     */
 
    void (*DeleteTexture)( GLcontext *ctx, struct gl_texture_object *tObj );
@@ -667,28 +666,27 @@ struct dd_function_table {
     * should free anything attached to the DriverData pointers.
     */
 
-   void (*UpdateTexturePalette)( GLcontext *ctx,
-                                 struct gl_texture_object *tObj );
-   /* Called when the texture's color lookup table is changed.
-    * If tObj is NULL then the shared texture palette ctx->Texture.Palette
-    * was changed.
+   GLboolean (*IsTextureResident)( GLcontext *ctx, 
+                                   struct gl_texture_object *t );
+   /* Called by glAreTextureResident().
+    */
+
+   void (*PrioritizeTexture)( GLcontext *ctx,  struct gl_texture_object *t,
+                              GLclampf priority );
+   /* Called by glPrioritizeTextures().
     */
 
    void (*ActiveTexture)( GLcontext *ctx, GLuint texUnitNumber );
    /* Called by glActiveTextureARB to set current texture unit.
     */
 
-
-   GLboolean (*IsTextureResident)( GLcontext *ctx, 
-                                   struct gl_texture_object *t );
-   /* Allows the driver to implement the AreTexturesResident tests without
-    * knowing about Mesa's internal hash tables for textures.
+   void (*UpdateTexturePalette)( GLcontext *ctx,
+                                 struct gl_texture_object *tObj );
+   /* Called when the texture's color lookup table is changed.
+    * If tObj is NULL then the shared texture palette ctx->Texture.Palette
+    * is to be updated.
     */
 
-   void (*PrioritizeTexture)( GLcontext *ctx,  struct gl_texture_object *t,
-                              GLclampf priority );
-   /* Notify driver of priority change for a texture.
-    */
 
 
    /***
