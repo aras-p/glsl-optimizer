@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.16 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: dlist.c,v 1.17 1999/11/11 17:50:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -945,9 +945,9 @@ static void save_ColorMaterial( GLenum face, GLenum mode )
 }
 
 
-static void save_ColorTable( GLenum target, GLenum internalFormat,
-                             GLsizei width, GLenum format, GLenum type,
-                             const GLvoid *table )
+static void save_ColorTableEXT( GLenum target, GLenum internalFormat,
+                                GLsizei width, GLenum format, GLenum type,
+                                const GLvoid *table )
 {
    GET_CURRENT_CONTEXT(ctx);
    if (target == GL_PROXY_TEXTURE_1D ||
@@ -982,9 +982,9 @@ static void save_ColorTable( GLenum target, GLenum internalFormat,
 }
 
 
-static void save_ColorSubTable( GLenum target, GLsizei start, GLsizei count,
-                                GLenum format, GLenum type,
-                                const GLvoid *table)
+static void save_ColorSubTableEXT( GLenum target, GLsizei start, GLsizei count,
+                                   GLenum format, GLenum type,
+                                   const GLvoid *table)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLvoid *image = _mesa_unpack_image(count, 1, 1, format, type, table,
@@ -4381,11 +4381,11 @@ _mesa_init_dlist_table( struct _glapi_table *table )
 #endif
 
 #ifdef _GLAPI_EXT_color_table
-   table->ColorTableEXT = save_ColorTable;
-   table->ColorSubTableEXT = save_ColorSubTable;
-   table->GetColorTableEXT = _mesa_GetColorTable;
-   table->GetColorTableParameterfvEXT = _mesa_GetColorTableParameterfv;
-   table->GetColorTableParameterivEXT = _mesa_GetColorTableParameteriv;
+   table->ColorTableEXT = save_ColorTableEXT;
+   table->ColorSubTableEXT = save_ColorSubTableEXT;
+   table->GetColorTableEXT = _mesa_GetColorTableEXT;
+   table->GetColorTableParameterfvEXT = _mesa_GetColorTableParameterfvEXT;
+   table->GetColorTableParameterivEXT = _mesa_GetColorTableParameterivEXT;
 #endif
 
 #ifdef _GLAPI_EXT_compiled_vertex_array

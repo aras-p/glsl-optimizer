@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.1 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: dispatch.c,v 1.2 1999/11/11 17:50:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -465,11 +465,11 @@ _mesa_init_exec_table(struct _glapi_table *exec)
 #endif
 
 #ifdef _GLAPI_EXT_color_table
-   exec->ColorTableEXT = _mesa_ColorTable;
-   exec->ColorSubTableEXT = _mesa_ColorSubTable;
-   exec->GetColorTableEXT = _mesa_GetColorTable;
-   exec->GetColorTableParameterfvEXT = _mesa_GetColorTableParameterfv;
-   exec->GetColorTableParameterivEXT = _mesa_GetColorTableParameteriv;
+   exec->ColorTableEXT = _mesa_ColorTableEXT;
+   exec->ColorSubTableEXT = _mesa_ColorSubTableEXT;
+   exec->GetColorTableEXT = _mesa_GetColorTableEXT;
+   exec->GetColorTableParameterfvEXT = _mesa_GetColorTableParameterfvEXT;
+   exec->GetColorTableParameterivEXT = _mesa_GetColorTableParameterivEXT;
 #endif
 
 #ifdef _GLAPI_EXT_compiled_vertex_array

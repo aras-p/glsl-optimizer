@@ -1,8 +1,8 @@
-/* $Id: colortab.c,v 1.4 1999/11/11 01:22:25 brianp Exp $ */
+/* $Id: colortab.c,v 1.5 1999/11/11 17:50:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -112,9 +112,9 @@ decode_internal_format( GLint format )
 
 
 void 
-_mesa_ColorTable( GLenum target, GLenum internalFormat,
-                  GLsizei width, GLenum format, GLenum type,
-                  const GLvoid *table )
+_mesa_ColorTableEXT( GLenum target, GLenum internalFormat,
+                     GLsizei width, GLenum format, GLenum type,
+                     const GLvoid *table )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -122,7 +122,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
    struct gl_palette *palette;
    GLboolean proxy = GL_FALSE;
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glColorTable");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glColorTableEXT");
 
    switch (target) {
       case GL_TEXTURE_1D:
@@ -157,24 +157,24 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          palette = &ctx->Texture.Palette;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glColorTable(target)");
+         gl_error(ctx, GL_INVALID_ENUM, "glColorTableEXT(target)");
          return;
    }
 
    assert(palette);
 
    if (!gl_is_legal_format_and_type(format, type)) {
-      gl_error(ctx, GL_INVALID_ENUM, "glColorTable(format or type)");
+      gl_error(ctx, GL_INVALID_ENUM, "glColorTableEXT(format or type)");
       return;
    }
 
    if (decode_internal_format(internalFormat) < 0) {
-      gl_error( ctx, GL_INVALID_ENUM, "glColorTable(internalFormat)" );
+      gl_error( ctx, GL_INVALID_ENUM, "glColorTableEXT(internalFormat)" );
       return;
    }
 
    if (width < 1 || width > MAX_TEXTURE_PALETTE_SIZE || !power_of_two(width)) {
-      gl_error(ctx, GL_INVALID_VALUE, "glColorTable(width)");
+      gl_error(ctx, GL_INVALID_VALUE, "glColorTableEXT(width)");
       if (proxy) {
          palette->Size = 0;
          palette->IntFormat = (GLenum) 0;
@@ -209,9 +209,9 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
 
 
 void
-_mesa_ColorSubTable( GLenum target, GLsizei start,
-                     GLsizei count, GLenum format, GLenum type,
-                     const GLvoid *table )
+_mesa_ColorSubTableEXT( GLenum target, GLsizei start,
+                        GLsizei count, GLenum format, GLenum type,
+                        const GLvoid *table )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -240,19 +240,19 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
          palette = &ctx->Texture.Palette;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glColorSubTable(target)");
+         gl_error(ctx, GL_INVALID_ENUM, "glColorSubTableEXT(target)");
          return;
    }
 
    assert(palette);
 
    if (!gl_is_legal_format_and_type(format, type)) {
-      gl_error(ctx, GL_INVALID_ENUM, "glColorSubTable(format or type)");
+      gl_error(ctx, GL_INVALID_ENUM, "glColorSubTableEXT(format or type)");
       return;
    }
 
    if (count < 1) {
-      gl_error(ctx, GL_INVALID_VALUE, "glColorSubTable(count)");
+      gl_error(ctx, GL_INVALID_VALUE, "glColorSubTableEXT(count)");
       return;
    }
 
@@ -260,7 +260,7 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
    assert(comps > 0);  /* error should be caught sooner */
 
    if (start + count > palette->Size) {
-      gl_error(ctx, GL_INVALID_VALUE, "glColorSubTable(count)");
+      gl_error(ctx, GL_INVALID_VALUE, "glColorSubTableEXT(count)");
       return;
    }
    dest = palette->Table + start * comps * sizeof(GLubyte);
@@ -285,8 +285,8 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
 
 
 void
-_mesa_GetColorTable( GLenum target, GLenum format,
-                     GLenum type, GLvoid *table )
+_mesa_GetColorTableEXT( GLenum target, GLenum format,
+                        GLenum type, GLvoid *table )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -294,7 +294,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
    GLubyte rgba[MAX_TEXTURE_PALETTE_SIZE][4];
    GLint i;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetBooleanv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetColorTableEXT");
 
    switch (target) {
       case GL_TEXTURE_1D:
@@ -310,7 +310,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
          palette = &ctx->Texture.Palette;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTable(target)");
+         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTableEXT(target)");
          return;
    }
 
@@ -366,14 +366,13 @@ _mesa_GetColorTable( GLenum target, GLenum format,
          }
          break;
       default:
-         gl_problem(ctx, "bad palette format in glGetColorTable");
+         gl_problem(ctx, "bad palette format in glGetColorTableEXT");
          return;
    }
 
    gl_pack_rgba_span(ctx, palette->Size, (const GLubyte (*)[]) rgba,
                      format, type, table, &ctx->Pack, GL_FALSE);
 
-   gl_problem(ctx, "glGetColorTable not implemented!");
    (void) format;
    (void) type;
    (void) table;
@@ -382,23 +381,23 @@ _mesa_GetColorTable( GLenum target, GLenum format,
 
 
 void
-_mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
+_mesa_GetColorTableParameterfvEXT( GLenum target, GLenum pname, GLfloat *params )
 {
    GLint iparams[10];
-   _mesa_GetColorTableParameteriv( target, pname, iparams );
+   _mesa_GetColorTableParameterivEXT( target, pname, iparams );
    *params = (GLfloat) iparams[0];
 }
 
 
 
 void
-_mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
+_mesa_GetColorTableParameterivEXT( GLenum target, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_palette *palette;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetColorTableParameter");
+   ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetColorTableParameterEXT");
 
    switch (target) {
       case GL_TEXTURE_1D:
@@ -414,7 +413,7 @@ _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
          palette = &ctx->Texture.Palette;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameter(target)");
+         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameterEXT(target)");
          return;
    }
 
@@ -444,7 +443,7 @@ _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
          *params = 8;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameter" );
+         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameterEXT" );
          return;
    }
 }
