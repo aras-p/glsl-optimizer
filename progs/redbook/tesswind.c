@@ -178,7 +178,7 @@ void CALLBACK errorCallback(GLenum errorCode)
    const GLubyte *estring;
 
    estring = gluErrorString(errorCode);
-   fprintf(stderr, "Tessellation Error: %s\n", estring);
+   fprintf(stderr, "Tessellation Error: %s\n", (char *) estring);
    exit(0);
 }
 

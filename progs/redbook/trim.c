@@ -80,7 +80,7 @@ void nurbsError(GLenum errorCode)
    const GLubyte *estring;
 
    estring = gluErrorString(errorCode);
-   fprintf (stderr, "Nurbs Error: %s\n", estring);
+   fprintf (stderr, "Nurbs Error: %s\n", (char *) estring);
    exit (0);
 }
 			
