@@ -61,8 +61,8 @@ static void savage_BCI_clear(GLcontext *ctx, drm_savage_clear_t *pclear)
 	for (i = 0 ; i < nbox ; i++, pbox++) {
 		unsigned int x = pbox->x1;
 		unsigned int y = pbox->y1;
-		unsigned int width = pbox->x2 - x+1;
-		unsigned int height = pbox->y2 - y+1;
+		unsigned int width = pbox->x2 - x;
+		unsigned int height = pbox->y2 - y;
  		unsigned int *bciptr;		
 
 		if (pbox->x1 > pbox->x2 ||
