@@ -61,7 +61,6 @@ _mesa_init_program(GLcontext *ctx)
    ctx->VertexProgram.Enabled = GL_FALSE;
    ctx->VertexProgram.PointSizeEnabled = GL_FALSE;
    ctx->VertexProgram.TwoSideEnabled = GL_FALSE;
-   ctx->VertexProgram.Current = NULL;
    ctx->VertexProgram.Current = (struct vertex_program *) ctx->Shared->DefaultVertexProgram;
    assert(ctx->VertexProgram.Current);
    ctx->VertexProgram.Current->Base.RefCount++;
