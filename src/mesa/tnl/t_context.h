@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.42 2002/06/23 02:32:39 brianp Exp $ */
+/* $Id: t_context.h,v 1.43 2002/10/09 19:45:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -91,40 +91,6 @@
 #define VERT_BIT_POINT_SIZE  (1 << 27)  /* vb only, could reuse a bit */
 #define VERT_BIT_EYE         VERT_BIT_BEGIN /* vb only, reuse imm bit */
 #define VERT_BIT_CLIP        VERT_BIT_END   /* vb only, reuse imm bit*/
-
-
-/*
- * XXXX these are temporary - for backward compatibility w/ DRI drivers
- */
-#define VERT_OBJ             VERT_BIT_POS
-#define VERT_RGBA            VERT_BIT_COLOR0
-#define VERT_NORM            VERT_BIT_NORMAL
-#define VERT_INDEX           VERT_BIT_INDEX
-#define VERT_EDGE            VERT_BIT_SEVEN
-#define VERT_SPEC_RGB        VERT_BIT_COLOR1
-#define VERT_FOG_COORD       VERT_BIT_FOG
-#define VERT_TEX0            VERT_BIT_TEX0
-#define VERT_TEX1            VERT_BIT_TEX1
-#define VERT_TEX2            VERT_BIT_TEX2
-#define VERT_TEX3            VERT_BIT_TEX3
-#define VERT_TEX4            VERT_BIT_TEX4
-#define VERT_TEX5            VERT_BIT_TEX5
-#define VERT_TEX6            VERT_BIT_TEX6
-#define VERT_TEX7            VERT_BIT_TEX7
-#define VERT_EVAL_C1         VERT_BIT_EVAL_C1
-#define VERT_EVAL_C2         VERT_BIT_EVAL_C2
-#define VERT_EVAL_P1         VERT_BIT_EVAL_P1
-#define VERT_EVAL_P2         VERT_BIT_EVAL_P2
-#define VERT_OBJ_3           VERT_BIT_OBJ_3
-#define VERT_OBJ_4           VERT_BIT_OBJ_4
-#define VERT_MATERIAL        VERT_BIT_MATERIAL
-#define VERT_ELT             VERT_BIT_ELT
-#define VERT_BEGIN           VERT_BIT_BEGIN
-#define VERT_END             VERT_BIT_END
-#define VERT_END_VB          VERT_BIT_END_VB
-#define VERT_POINT_SIZE      VERT_BIT_POINT_SIZE
-#define VERT_EYE             VERT_BIT_EYE
-#define VERT_CLIP            VERT_BIT_CLIP
 
 
 /* Flags for IM->TexCoordSize.  Enough flags for 16 units.
