@@ -11,8 +11,13 @@ GL_MINOR = 5
 GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 
+.SUFFIXES : .cc
+
 .c.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+
+.cc.o:
+	$(CXX) -c $(INCLUDE_DIRS) $(CXXFLAGS) $< -o $@
 
 .S.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
