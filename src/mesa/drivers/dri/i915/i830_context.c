@@ -45,6 +45,7 @@
  */
 static const GLubyte *i830GetString( GLcontext *ctx, GLenum name )
 {
+#if 0
    if (name == GL_EXTENSIONS)
       return 
 	 "GL_ARB_multitexture "
@@ -82,7 +83,7 @@ static const GLubyte *i830GetString( GLcontext *ctx, GLenum name )
 	 "GL_MESA_window_pos "
 	 "GL_NV_texgen_reflection "
 	 "GL_SGIS_generate_mipmap ";
- 
+#endif 
    return intelGetString( ctx, name );
 }
 

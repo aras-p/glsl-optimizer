@@ -122,6 +122,12 @@ static void i915SetTexImages( i915ContextPtr i915,
       ss2 |= SS2_COLORSPACE_CONVERSION;
       break;
 
+   case MESA_FORMAT_RGB_FXT1:
+   case MESA_FORMAT_RGBA_FXT1:
+     t->intel.texelBytes = 2;
+     textureFormat = (MAPSURF_COMPRESSED | MT_COMPRESS_FXT1);
+     break;
+
    default:
       fprintf(stderr, "%s: bad image format\n", __FUNCTION__);
       abort();

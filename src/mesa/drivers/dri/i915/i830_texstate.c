@@ -106,6 +106,12 @@ static GLboolean i830SetTexImages( i830ContextPtr i830,
 		       TM0S1_COLORSPACE_CONVERSION);
       break;
 
+   case MESA_FORMAT_RGB_FXT1:
+   case MESA_FORMAT_RGBA_FXT1:
+     t->intel.texelBytes = 2;
+     textureFormat = MAPSURF_COMPRESSED | MT_COMPRESS_FXT1;
+     break;
+
    default:
       fprintf(stderr, "%s: bad image format\n", __FUNCTION__);
       abort();

@@ -179,6 +179,8 @@ static const char * const card_extensions[] =
    "GL_SGIS_generate_mipmap",
    "GL_SGIS_texture_border_clamp",
    "GL_SGIS_texture_edge_clamp",
+   "GL_3DFX_texture_compression_FXT1",
+
    NULL
 };
 
