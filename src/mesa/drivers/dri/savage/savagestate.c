@@ -1445,8 +1445,16 @@ static void savageEmitChangedRegChunk (savageContextPtr imesa,
 }
 static void savageUpdateRegister_s4(savageContextPtr imesa)
 {
-    /* the savage4 uses the contiguous range of BCI registers 0x1e-0x39
-     * 0x1e-0x27 are local, no need to check them for global changes */
+    /* In case the texture image was changed without changing the
+     * texture address as well, we need to force emitting the texture
+     * address in order to flush texture cashes. */
+    if ((imesa->dirty & SAVAGE_UPLOAD_TEX0) &&
+	imesa->oldRegs.s4.texAddr[0].ui == imesa->regs.s4.texAddr[0].ui)
+	imesa->oldRegs.s4.texAddr[0].ui = 0xffffffff;
+    if ((imesa->dirty & SAVAGE_UPLOAD_TEX1) &&
+	imesa->oldRegs.s4.texAddr[1].ui == imesa->regs.s4.texAddr[1].ui)
+	imesa->oldRegs.s4.texAddr[1].ui = 0xffffffff;
+
     savageEmitChangedRegs (imesa, 0x1e, 0x39);
 
     imesa->dirty=0;
