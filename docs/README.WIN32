@@ -1,6 +1,6 @@
 File: docs/README.WIN32
 
-Last updated: Nov 1, 2001 - Karl Schultz - kschultz@users.sourceforge.net
+Last updated: Nov 29, 2001 - Karl Schultz - kschultz@users.sourceforge.net
 
 Quick Start
 
@@ -52,10 +52,7 @@ Details and Notes
   difficult to modify the makefiles to generate them.
 
 - The si-glu sources are used to build the GLU libs.  This was done
-  mainly to get the better tessellator code.  However the C++ NURBS
-  code is not built.  If you need NURBS, consider modifying the
-  makefiles to build the C++ code or try to build the older GLU
-  code in src-glu.
+  mainly to get the better tessellator code.
 
 - The osmesa driver builds and should work on Windows as well as
   any other platform.
