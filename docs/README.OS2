@@ -7,14 +7,14 @@
                            1) Binary release
                            2) Building from sources
                            3) History
-                           4) Mesa Home Page
+                           4) Todo
+                           5) Mesa Home Page
 
 
 1) Binary release
 
-   Though Mesa 3.0 should build in a quite reasonable time on
-   a 585 class machine (or better) a binary relase is available
-   (check item 4) for an URL)
+   Though the Mesa sources should build in a quite reasonable time even on
+   a 585 class machine a binary relase is available (check topic 4) for an URL)
    This package includes:
 
      - lib/MesaGL.dll,  MesaGL.a
@@ -32,7 +32,7 @@
     them in a straightforward way (see below).
 
     The testing of these libraries was limited to the supplied
-    demos/examples and very few small third-party apps.
+    demos/examples and a quite small number of third-party apps.
     No warranty ... as usual ...  ;-)
 
 
@@ -49,12 +49,7 @@
     (if you want to have them) is handled in "mklib-emx.cmd",
     a small REXX script. Perhaps not the best idea, but this
     way it fits best in the scheme used to build libraries
-    on all platforms in Mesa 3.0.
-    By now binary compatiblity is ensured by using the function names
-    as entry points instead of ordinals. This might cost performance and
-    is subject to change in future. We might consider this release
-    therefore as a "demo release" to get them feedback about 
-    remaining bugs.
+    on all platforms in Mesa 3.x.
 
     To actually build the libraries and demos, check mklib-emx.cmd
     and modify it as desired. Then type
@@ -81,13 +76,19 @@
     Also some libs (MesaTK, MesaAUX) are withdrawn from the Mesa distribution,
     and accordingly from the OS/2 port.
 
+4) Todo
 
-4)  Mesa Home Page
+    By now binary compatiblity is ensured by using the function names
+    as entry points instead of ordinals. This might cost performance and
+    is subject to change in future. In addition the supplied X86 assembler
+    source is not used yet.
+
+5)  Mesa Home Page
 
     You can get the source code and more information about Mesa from
        http://www.mesa3d.org/
 
-    The OS/2 ports should in future be found on
+    The OS/2 ports should be available from
        http://r350.ee.ntu.edu.tw/~hcchu/os2/ports 
 
 --
