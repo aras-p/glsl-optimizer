@@ -1079,7 +1079,7 @@ _mesa_PopAttrib(void)
                                   stencil->ZFailFunc[face],
                                   stencil->ZPassFunc[face]);
                   face ^= 1;
-               } while (face != stencil->ActiveFace ^ 1);
+               } while (face != (stencil->ActiveFace ^ 1));
             }
             break;
          case GL_TRANSFORM_BIT:
