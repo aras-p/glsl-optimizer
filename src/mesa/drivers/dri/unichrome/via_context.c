@@ -211,11 +211,11 @@ calculate_buffer_parameters( viaContextPtr vmesa )
 #define ALLOW_EXPERIMENTAL_PAGEFLIP 0
 #if ALLOW_EXPERIMENTAL_PAGEFLIP
       vmesa->doPageFlip = GL_TRUE;
+      /* vmesa->currentPage = 0; */
+      assert(vmesa->back.pitch == vmesa->front.pitch);
 #else
       vmesa->doPageFlip = GL_FALSE;
 #endif
-      /* vmesa->currentPage = 0; */
-      assert(vmesa->back.pitch == vmesa->front.pitch);
    }
    else
       vmesa->doPageFlip = GL_FALSE;
