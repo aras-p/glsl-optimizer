@@ -472,7 +472,7 @@ set_tex_image(struct gl_texture_object *tObj,
          tObj->Image[level] = texImage;
          return;
       case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-         tObj->PosX[level] = texImage;
+         tObj->Image[level] = texImage;
          return;
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
          tObj->NegX[level] = texImage;
@@ -630,7 +630,7 @@ _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
          return ctx->Texture.Proxy3D->Image[level];
       case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
          if (ctx->Extensions.HaveTextureCubeMap)
-            return texUnit->CurrentCubeMap->PosX[level];
+            return texUnit->CurrentCubeMap->Image[level];
          else
             return NULL;
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
@@ -660,7 +660,7 @@ _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
             return NULL;
       case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
          if (ctx->Extensions.HaveTextureCubeMap)
-            return ctx->Texture.ProxyCubeMap->PosX[level];
+            return ctx->Texture.ProxyCubeMap->Image[level];
          else
             return NULL;
       default:
@@ -903,7 +903,10 @@ texture_error_check( GLcontext *ctx, GLenum target,
    }
    else if (dimensions == 2) {
       isProxy = (GLboolean) (target == GL_PROXY_TEXTURE_2D);
-      if (target != GL_TEXTURE_2D && !isProxy) {
+      if (target != GL_TEXTURE_2D && !isProxy &&
+          !(ctx->Extensions.HaveTextureCubeMap &&
+            target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
+            target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)) {
           gl_error( ctx, GL_INVALID_ENUM, "glTexImage2D(target)" );
           return GL_TRUE;
       }

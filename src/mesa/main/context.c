@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.69 2000/05/24 15:04:45 brianp Exp $ */
+/* $Id: context.c,v 1.70 2000/05/26 14:44:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -467,6 +467,14 @@ alloc_shared_state( void )
       ss->DefaultD[d]->RefCount++; /* don't free if not in use */
    }
 
+   ss->DefaultCubeMap = gl_alloc_texture_object(ss, 0, 6);
+   if (!ss->DefaultCubeMap) {
+      outOfMemory = GL_TRUE;
+   }
+   else {
+      ss->DefaultCubeMap->RefCount++;
+   }
+
    if (!ss->DisplayList || !ss->TexObjects || outOfMemory) {
       /* Ran out of memory at some point.  Free everything and return NULL */
       if (ss->DisplayList)
@@ -479,6 +487,8 @@ alloc_shared_state( void )
          gl_free_texture_object(ss, ss->DefaultD[2]);
       if (ss->DefaultD[3])
          gl_free_texture_object(ss, ss->DefaultD[3]);
+      if (ss->DefaultCubeMap)
+         gl_free_texture_object(ss, ss->DefaultCubeMap);
       FREE(ss);
       return NULL;
    }
@@ -603,6 +613,7 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
    texUnit->CurrentD[1] = ctx->Shared->DefaultD[1];
    texUnit->CurrentD[2] = ctx->Shared->DefaultD[2];
    texUnit->CurrentD[3] = ctx->Shared->DefaultD[3];
+   texUnit->CurrentCubeMap = ctx->Shared->DefaultCubeMap;
 }
 
 
@@ -1835,7 +1846,7 @@ _mesa_get_dispatch(GLcontext *ctx)
 void gl_problem( const GLcontext *ctx, const char *s )
 {
    fprintf( stderr, "Mesa implementation error: %s\n", s );
-   fprintf( stderr, "Report to mesa-bugs@mesa3d.org\n" );
+   fprintf( stderr, "Report to Mesa bug database at www.mesa3d.org\n" );
    (void) ctx;
 }
 

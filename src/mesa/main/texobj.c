@@ -307,6 +307,10 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
             }
          }
       }
+      else if (t->Dimensions == 6) {  /* cube map */
+
+
+      }
       else {
          /* Dimensions = ??? */
          gl_problem(NULL, "Bug in gl_test_texture_object_completeness\n");

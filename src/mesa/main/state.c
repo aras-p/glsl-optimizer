@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.14 2000/05/24 15:04:45 brianp Exp $ */
+/* $Id: state.c,v 1.15 2000/05/26 14:44:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -931,8 +931,7 @@ void gl_update_state( GLcontext *ctx )
       ctx->Enabled &= ~(ENABLE_TEXMAT0|ENABLE_TEXMAT1);
 
       for (i=0; i < MAX_TEXTURE_UNITS; i++) {
-	 if (ctx->TextureMatrix[i].flags & MAT_DIRTY_ALL_OVER)
-	 {
+	 if (ctx->TextureMatrix[i].flags & MAT_DIRTY_ALL_OVER) {
 	    gl_matrix_analyze( &ctx->TextureMatrix[i] );
 	    ctx->TextureMatrix[i].flags &= ~MAT_DIRTY_DEPENDENTS;
 
@@ -946,7 +945,7 @@ void gl_update_state( GLcontext *ctx )
    if (ctx->NewState & (NEW_TEXTURING | NEW_TEXTURE_ENABLE)) {
       ctx->Texture.NeedNormals = GL_FALSE;
       gl_update_dirty_texobjs(ctx);
-      ctx->Enabled &= ~(ENABLE_TEXGEN0|ENABLE_TEXGEN1);
+      ctx->Enabled &= ~(ENABLE_TEXGEN0 | ENABLE_TEXGEN1);
       ctx->Texture.ReallyEnabled = 0;
 
       for (i=0; i < MAX_TEXTURE_UNITS; i++) {
@@ -954,19 +953,17 @@ void gl_update_state( GLcontext *ctx )
 	    gl_update_texture_unit( ctx, &ctx->Texture.Unit[i] );
 
 	    ctx->Texture.ReallyEnabled |=
-	       ctx->Texture.Unit[i].ReallyEnabled<<(i*4);
+	       ctx->Texture.Unit[i].ReallyEnabled << (i * 4);
 
 	    if (ctx->Texture.Unit[i].GenFlags != 0) {
 	       ctx->Enabled |= ENABLE_TEXGEN0 << i;
 
-	       if (ctx->Texture.Unit[i].GenFlags & TEXGEN_NEED_NORMALS)
-	       {
+	       if (ctx->Texture.Unit[i].GenFlags & TEXGEN_NEED_NORMALS) {
 		  ctx->Texture.NeedNormals = GL_TRUE;
 		  ctx->Texture.NeedEyeCoords = GL_TRUE;
 	       }
 
-	       if (ctx->Texture.Unit[i].GenFlags & TEXGEN_NEED_EYE_COORD)
-	       {
+	       if (ctx->Texture.Unit[i].GenFlags & TEXGEN_NEED_EYE_COORD) {
 		  ctx->Texture.NeedEyeCoords = GL_TRUE;
 	       }
 	    }
