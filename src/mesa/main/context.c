@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.160 2002/04/09 16:56:50 keithw Exp $ */
+/* $Id: context.c,v 1.161 2002/04/19 00:23:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -477,7 +477,7 @@ init_matrix_stack( struct matrix_stack *stack,
    stack->MaxDepth = maxDepth;
    stack->DirtyFlag = dirtyFlag;
    /* The stack */
-   stack->Stack = CALLOC(maxDepth * sizeof(GLmatrix));
+   stack->Stack = (GLmatrix *) CALLOC(maxDepth * sizeof(GLmatrix));
    for (i = 0; i < maxDepth; i++) {
       _math_matrix_ctr(&stack->Stack[i]);
       _math_matrix_alloc_inv(&stack->Stack[i]);

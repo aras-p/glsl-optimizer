@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.67 2002/04/12 21:17:28 brianp Exp $ */
+/* $Id: texstate.c,v 1.68 2002/04/19 00:23:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1110,7 +1110,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             const GLenum mode = (GLenum) params[0];
             if (mode == GL_NONE || mode == GL_COMPARE_R_TO_TEXTURE_ARB) {
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-               texObj->CompareMode = params[0];
+               texObj->CompareMode = mode;
             }
             else {
                _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1129,7 +1129,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             const GLenum func = (GLenum) params[0];
             if (func == GL_LEQUAL || func == GL_GEQUAL) {
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-               texObj->CompareFunc = params[0];
+               texObj->CompareFunc = func;
             }
             else if (ctx->Extensions.EXT_shadow_funcs &&
                      (func == GL_EQUAL ||
@@ -1139,7 +1139,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
                       func == GL_ALWAYS ||
                       func == GL_NEVER)) {
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-               texObj->CompareFunc = params[0];
+               texObj->CompareFunc = func;
             }
             else {
                _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1159,7 +1159,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             if (result == GL_LUMINANCE || result == GL_INTENSITY
                 || result == GL_ALPHA) {
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-               texObj->DepthMode = params[0];
+               texObj->DepthMode = result;
             }
             else {
                _mesa_error(ctx, GL_INVALID_ENUM,

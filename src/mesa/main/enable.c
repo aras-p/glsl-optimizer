@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.59 2002/03/29 17:27:59 brianp Exp $ */
+/* $Id: enable.c,v 1.60 2002/04/19 00:23:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -209,7 +209,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          {
             const GLuint p = cap - GL_CLIP_PLANE0;
 
-            if ((ctx->Transform.ClipPlanesEnabled & (1 << p)) == (state << p))
+            if ((ctx->Transform.ClipPlanesEnabled & (1 << p)) == ((GLuint) state << p))
                return;
 
             FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
