@@ -35,8 +35,8 @@
 /*
  * mystdio.h
  *
- * $Date: 2001/03/18 15:40:45 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/Attic/mystdio.h,v 1.1 2001/03/18 15:40:45 pesco Exp $
+ * $Date: 2001/03/19 17:52:02 $ $Revision: 1.3 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/mystdio.h,v 1.3 2001/03/19 17:52:02 pesco Exp $
  */
 
 #ifndef __glumystdio_h_
