@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -2709,29 +2709,6 @@ Fake_glXGetAGPOffsetMESA( const GLvoid *pointer )
 }
 
 
-/*** GLX_ARB_render_texture ***/
-
-static Bool
-Fake_glXBindTexImageARB( Display *dpy, GLXPbuffer pbuffer, int buffer )
-{
-   return False;
-}
-
-
-static Bool
-Fake_glXReleaseTexImageARB(Display *dpy, GLXPbuffer pbuffer, int buffer )
-{
-   return False;
-}
-
-
-static Bool
-Fake_glXDrawableAttribARB( Display *dpy, GLXDrawable draw, const int *attribList )
-{
-   return False;
-}
-
-
 /* silence warning */
 extern struct _glxapi_table *_mesa_GetGLXDispatchTable(void);
 
@@ -2886,11 +2863,6 @@ _mesa_GetGLXDispatchTable(void)
 
    /*** GLX_MESA_agp_offset ***/
    glx.GetAGPOffsetMESA = Fake_glXGetAGPOffsetMESA;
-
-   /*** GLX_ARB_render_texture ***/
-   glx.BindTexImageARB = Fake_glXBindTexImageARB;
-   glx.ReleaseTexImageARB = Fake_glXReleaseTexImageARB;
-   glx.DrawableAttribARB = Fake_glXDrawableAttribARB;
 
    return &glx;
 }

@@ -1242,6 +1242,8 @@ void xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->TestProxyTexImage = test_proxy_teximage;
 #if SWTC
    driver->ChooseTextureFormat = choose_tex_format;
+#else
+   (void) choose_tex_format;
 #endif
 }
 
