@@ -45,44 +45,58 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
    GLint c0, c1, skipCol;
    GLint i, j;
    const GLuint maxWidth = MIN2( ctx->DrawBuffer->Width, MAX_WIDTH );
-   GLchan rgbaSave[MAX_WIDTH][4];
-   GLuint indexSave[MAX_WIDTH];
-   const GLchan (*rgba)[4] = (const GLchan (*)[4]) src;
-   const GLchan (*rgb)[3] = (const GLchan (*)[3]) src;
-   const GLuint *indexes = (const GLuint *) src;
    struct sw_span zoomed;
    struct span_arrays zoomed_arrays;  /* this is big! */
 
-   /* no pixel arrays! */
+   /* no pixel arrays! must be horizontal spans. */
    ASSERT((span->arrayMask & SPAN_XY) == 0);
    ASSERT(span->primitive == GL_BITMAP);
 
    INIT_SPAN(zoomed, GL_BITMAP, 0, 0, 0);
    zoomed.array = &zoomed_arrays;
 
-   zoomed.z = span->z;
-   zoomed.zStep = span->zStep;  /* span->zStep == 0 */
+   /* copy fog interp info */
    zoomed.fog = span->fog;
    zoomed.fogStep = span->fogStep;
+   /* XXX copy texcoord info? */
+
    if (format == GL_RGBA || format == GL_RGB) {
+      /* copy Z info */
+      zoomed.z = span->z;
+      zoomed.zStep = span->zStep;
+      /* we'll generate an array of colorss */
       zoomed.interpMask = span->interpMask & ~SPAN_RGBA;
       zoomed.arrayMask |= SPAN_RGBA;
    }
    else if (format == GL_COLOR_INDEX) {
+      /* copy Z info */
+      zoomed.z = span->z;
+      zoomed.zStep = span->zStep;
+      /* we'll generate an array of color indexes */
       zoomed.interpMask = span->interpMask & ~SPAN_INDEX;
       zoomed.arrayMask |= SPAN_INDEX;
+   }
+   else {
+      assert(format == GL_DEPTH_COMPONENT);
+      /* Copy color info */
+      zoomed.red = span->red;
+      zoomed.green = span->green;
+      zoomed.blue = span->blue;
+      zoomed.alpha = span->alpha;
+      zoomed.redStep = span->redStep;
+      zoomed.greenStep = span->greenStep;
+      zoomed.blueStep = span->blueStep;
+      zoomed.alphaStep = span->alphaStep;
+      /* we'll generate an array of depth values */
+      zoomed.interpMask = span->interpMask & ~SPAN_Z;
+      zoomed.arrayMask |= SPAN_Z;
    }
 
    /*
     * Compute which columns to draw: [c0, c1)
     */
-#if 0
-   c0 = (GLint) span->x;
-   c1 = (GLint) (span->x + span->end * ctx->Pixel.ZoomX);
-#else
    c0 = (GLint) (span->x + skipPixels * ctx->Pixel.ZoomX);
    c1 = (GLint) (span->x + (skipPixels + span->end) * ctx->Pixel.ZoomX);
-#endif
    if (c0 == c1) {
       return;
    }
@@ -140,6 +154,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
 
    /* zoom the span horizontally */
    if (format == GL_RGBA) {
+      const GLchan (*rgba)[4] = (const GLchan (*)[4]) src;
       if (ctx->Pixel.ZoomX == -1.0F) {
          /* common case */
          for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
@@ -163,6 +178,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
       }
    }
    else if (format == GL_RGB) {
+      const GLchan (*rgb)[3] = (const GLchan (*)[3]) src;
       if (ctx->Pixel.ZoomX == -1.0F) {
          /* common case */
          for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
@@ -192,6 +208,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
       }
    }
    else if (format == GL_COLOR_INDEX) {
+      const GLuint *indexes = (const GLuint *) src;
       if (ctx->Pixel.ZoomX == -1.0F) {
          /* common case */
          for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
@@ -214,6 +231,37 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
          }
       }
    }
+   else {
+      const GLdepth *zValues = (const GLuint *) src;
+      assert(format == GL_DEPTH_COMPONENT);
+      if (ctx->Pixel.ZoomX == -1.0F) {
+         /* common case */
+         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
+            i = span->end - (j + skipCol) - 1;
+            zoomed.array->z[j] = zValues[i];
+         }
+      }
+      else {
+         /* general solution */
+         const GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
+         for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
+            i = (GLint) ((j + skipCol) * xscale);
+            if (ctx->Pixel.ZoomX < 0.0) {
+               ASSERT(i <= 0);
+               i = span->end + i - 1;
+            }
+            ASSERT(i >= 0);
+            ASSERT(i < (GLint) span->end);
+            zoomed.array->z[j] = zValues[i];
+         }
+      }
+      /* Now, fall into either the RGB or COLOR_INDEX path below */
+      if (ctx->Visual.rgbMode)
+         format = GL_RGBA;
+      else
+         format = GL_COLOR_INDEX;
+   }
+
 
    /* write the span in rows [r0, r1) */
    if (format == GL_RGBA || format == GL_RGB) {
@@ -221,6 +269,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
        * going to call _swrast_write_zoomed_span() more than once.
        * Also, clipping may change the span end value, so store it as well.
        */
+      GLchan rgbaSave[MAX_WIDTH][4];
       const GLint end = zoomed.end; /* save */
       if (r1 - r0 > 1) {
          MEMCPY(rgbaSave, zoomed.array->rgba, zoomed.end * 4 * sizeof(GLchan));
@@ -235,6 +284,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
       }
    }
    else if (format == GL_COLOR_INDEX) {
+      GLuint indexSave[MAX_WIDTH];
       const GLint end = zoomed.end; /* save */
       if (r1 - r0 > 1) {
          MEMCPY(indexSave, zoomed.array->index, zoomed.end * sizeof(GLuint));
@@ -273,8 +323,17 @@ void
 _swrast_write_zoomed_index_span( GLcontext *ctx, const struct sw_span *span,
                                GLint y0, GLint skipPixels )
 {
-  zoom_span(ctx, span, (const GLvoid *) span->array->index, y0,
-            GL_COLOR_INDEX, skipPixels);
+   zoom_span(ctx, span, (const GLvoid *) span->array->index, y0,
+             GL_COLOR_INDEX, skipPixels);
+}
+
+
+void
+_swrast_write_zoomed_depth_span( GLcontext *ctx, const struct sw_span *span,
+                                 GLint y0, GLint skipPixels )
+{
+   zoom_span(ctx, span, (const GLvoid *) span->array->z, y0,
+             GL_DEPTH_COMPONENT, skipPixels);
 }
 
 

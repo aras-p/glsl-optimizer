@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,21 +30,25 @@
 
 extern void
 _swrast_write_zoomed_rgba_span( GLcontext *ctx, const struct sw_span *span,
-                              CONST GLchan rgb[][4], GLint y0,
-                              GLint skipPixels );
+                                CONST GLchan rgb[][4], GLint y0,
+                                GLint skipPixels );
 
 extern void
 _swrast_write_zoomed_rgb_span( GLcontext *ctx, const struct sw_span *span,
-                             CONST GLchan rgb[][3], GLint y0,
-                             GLint skipPixels );
+                               CONST GLchan rgb[][3], GLint y0,
+                               GLint skipPixels );
 
 extern void
 _swrast_write_zoomed_index_span( GLcontext *ctx, const struct sw_span *span,
-                               GLint y0, GLint skipPixels );
+                                 GLint y0, GLint skipPixels );
+
+extern void
+_swrast_write_zoomed_depth_span( GLcontext *ctx, const struct sw_span *span,
+                                 GLint y0, GLint skipPixels );
 
 extern void
 _swrast_write_zoomed_stencil_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                                 const GLstencil stencil[], GLint y0,
-                                 GLint skipPixels );
+                                   const GLstencil stencil[], GLint y0,
+                                   GLint skipPixels );
 
 #endif

@@ -627,7 +627,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
                    GLenum type, const GLvoid *pixels )
 {
    const GLboolean bias_or_scale = ctx->Pixel.DepthBias!=0.0 || ctx->Pixel.DepthScale!=1.0;
-   const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
+   const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
    const GLint desty = y;
    struct sw_span span;
 
@@ -720,19 +720,13 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
                   span.array->z[i] = (GLdepth) (floatSpan[i] * zs + 0.5F);
                }
             }
-            if (ctx->Visual.rgbMode) {
-               if (zoom) {
-                  _swrast_write_zoomed_rgba_span(ctx, &span,
-                                     (const GLchan (*)[4]) span.array->rgba,
-                                     desty, skipPixels);
-               }
-               else
-                  _swrast_write_rgba_span(ctx, &span);
+            if (zoom) {
+               _swrast_write_zoomed_depth_span(ctx, &span, desty, skipPixels);
+            }
+            else if (ctx->Visual.rgbMode) {
+               _swrast_write_rgba_span(ctx, &span);
             }
             else {
-               if (zoom)
-                  _swrast_write_zoomed_index_span(ctx, &span, desty, 0);
-               else
                   _swrast_write_index_span(ctx, &span);
             }
          }
