@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.3 1999/10/08 09:27:11 keithw Exp $ */
+/* $Id: points.c,v 1.4 1999/10/21 12:45:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,8 +24,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 /* $XFree86: xc/lib/GL/mesa/src/points.c,v 1.4 1999/04/04 00:20:29 dawes Exp $ */
-
-
 
 
 
@@ -133,7 +131,7 @@ void gl_PointParameterfvEXT( GLcontext *ctx, GLenum pname,
 /*
  * CI points with size == 1.0
  */
-void size1_ci_points( GLcontext *ctx, GLuint first, GLuint last )
+static void size1_ci_points( GLcontext *ctx, GLuint first, GLuint last )
 {
    struct vertex_buffer *VB = ctx->VB;
    struct pixel_buffer *PB = ctx->PB;
@@ -366,10 +364,11 @@ static void textured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
 	    t = 0.0;
 	    u = 0.0;
 	    break;
+         default:
+            /* should never get here */
+            s = t = u = 0.0;
+            gl_problem(ctx, "unexpected texcoord size in textured_rgba_points()");
 	 }
-
-
-
 
 /*    don't think this is needed
          PB_SET_COLOR( red, green, blue, alpha );
@@ -457,6 +456,10 @@ static void multitextured_rgba_points( GLcontext *ctx, GLuint first, GLuint last
 	    t = 0.0;
 	    u = 0.0;
 	    break;
+         default:
+            /* should never get here */
+            s = t = u = 0.0;
+            gl_problem(ctx, "unexpected texcoord size in multitextured_rgba_points()");
 	 }
 
 	 switch (VB->TexCoordPtr[1]->size) {
@@ -480,6 +483,10 @@ static void multitextured_rgba_points( GLcontext *ctx, GLuint first, GLuint last
 	    t1 = 0.0;
 	    u1 = 0.0;
 	    break;
+         default:
+            /* should never get here */
+            s1 = t1 = u1 = 0.0;
+            gl_problem(ctx, "unexpected texcoord size in multitextured_rgba_points()");
 	 }
 
          for (iy=y0;iy<=y1;iy++) {
@@ -556,6 +563,10 @@ static void antialiased_rgba_points( GLcontext *ctx,
 	       t = 0.0;
 	       u = 0.0;
 	       break;
+            default:
+               /* should never get here */
+               s = t = u = 0.0;
+               gl_problem(ctx, "unexpected texcoord size in antialiased_rgba_points()");
 	    }
 
 	    if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D) {
@@ -585,6 +596,10 @@ static void antialiased_rgba_points( GLcontext *ctx,
 		  t1 = 0.0;
 		  u1 = 0.0;
 		  break;
+               default:
+                  /* should never get here */
+                  s1 = t1 = u1 = 0.0;
+                  gl_problem(ctx, "unexpected texcoord size in antialiased_rgba_points()");
 	       }
 	    }
 
@@ -976,6 +991,10 @@ static void dist_atten_textured_rgba_points( GLcontext *ctx, GLuint first,
 	    t = 0.0;
 	    u = 0.0;
 	    break;
+         default:
+            /* should never get here */
+            s = t = u = 0.0;
+            gl_problem(ctx, "unexpected texcoord size in dist_atten_textured_rgba_points()");
 	 }
 
 	 if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D) {
@@ -1005,6 +1024,10 @@ static void dist_atten_textured_rgba_points( GLcontext *ctx, GLuint first,
 	       t1 = 0.0;
 	       u1 = 0.0;
 	       break;
+            default:
+               /* should never get here */
+               s1 = t1 = u1 = 0.0;
+               gl_problem(ctx, "unexpected texcoord size in dist_atten_textured_rgba_points()");
 	    }
 	 }
 
@@ -1103,6 +1126,10 @@ static void dist_atten_antialiased_rgba_points( GLcontext *ctx,
 	       t = 0.0;
 	       u = 0.0;
 	       break;
+            default:
+               /* should never get here */
+               s = t = u = 0.0;
+               gl_problem(ctx, "unexpected texcoord size in dist_atten_antialiased_rgba_points()");
 	    }
 
 	    if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D) {
@@ -1132,6 +1159,10 @@ static void dist_atten_antialiased_rgba_points( GLcontext *ctx,
 		  t1 = 0.0;
 		  u1 = 0.0;
 		  break;
+               default:
+                  /* should never get here */
+                  s = t = u = 0.0;
+                  gl_problem(ctx, "unexpected texcoord size in dist_atten_antialiased_rgba_points()");
 	       }
 	    }
 
