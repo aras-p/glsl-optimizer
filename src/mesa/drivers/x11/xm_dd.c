@@ -1021,6 +1021,7 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.BindBuffer = NULL;
    ctx->Driver.BufferData = _mesa_buffer_data;
    ctx->Driver.BufferSubData = _mesa_buffer_subdata;
+   ctx->Driver.GetBufferSubData = _mesa_buffer_get_subdata;
    ctx->Driver.MapBuffer = _mesa_buffer_map;
    ctx->Driver.UnmapBuffer = NULL;
 #endif
