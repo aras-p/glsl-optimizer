@@ -1,4 +1,4 @@
-$Id: KNOWN_BUGS,v 1.2 2000/02/06 17:04:56 brianp Exp $
+$Id: KNOWN_BUGS,v 1.3 2000/07/19 15:08:55 brianp Exp $
 
 
 Performance issues with EXT_point_parameters & quake2
@@ -12,17 +12,6 @@ same causes poor performance on 3Dfx.
 
 Broken drivers: some of the Mesa device drivers (such as BeOS, D3D,
 etc) haven't been updated for Mesa 3.3's device driver changes.
-
-
-
-Separate specular color interpolation isn't implemented for points and
-lines.  Also, will have to add specular color add to pb.c (pixel buffer
-code).
-
-
-
-Joe Bronkema reported a bug when drawing a series of long GL_LINE_STRIP
-primitives.  Putting a glFlush() between the primitives is a work-around.
 
 
 
