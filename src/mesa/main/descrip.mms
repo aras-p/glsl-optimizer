@@ -68,6 +68,7 @@ CORE_SOURCES =accum.c \
 	vtxfmt.c \
 	vpstate.c \
 	vpexec.c \
+	vsnprintf.c \
 	vtparse.c \
 	[.x86]x86.c
 
@@ -210,6 +211,7 @@ vtxfmt.obj,\
 vpstate.obj,\
 vpexec.obj,\
 vpparse.obj,\
+vsnprintf.obj,\
 [.x86]x86.obj
 
 OBJECTS4=[.x]glxapi.obj,[.x]fakeglx.obj,[.x]xfonts.obj,\
