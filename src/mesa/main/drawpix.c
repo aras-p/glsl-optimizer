@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.12 2000/02/08 23:42:14 brianp Exp $ */
+/* $Id: drawpix.c,v 1.13 2000/03/03 15:39:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -115,13 +115,6 @@ simple_DrawPixels( GLcontext *ctx, GLint x, GLint y,
 
    if (ctx->NewState) {
       gl_update_state(ctx);
-   }
-
-   /* see if device driver can do the drawpix */
-   if (ctx->Driver.DrawPixels
-       && (*ctx->Driver.DrawPixels)(ctx, x, y, width, height, format, type,
-                                    unpack, pixels)) {
-      return GL_TRUE;
    }
 
    if ((ctx->RasterMask&(~(SCISSOR_BIT|WINCLIP_BIT)))==0
@@ -693,6 +686,13 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
 
       x = (GLint) (ctx->Current.RasterPos[0] + 0.5F);
       y = (GLint) (ctx->Current.RasterPos[1] + 0.5F);
+
+      /* see if device driver can do the drawpix */
+      if (ctx->Driver.DrawPixels
+          && (*ctx->Driver.DrawPixels)(ctx, x, y, width, height, format, type,
+                                       &ctx->Unpack, pixels)) {
+         return;
+      }
 
       switch (format) {
 	 case GL_STENCIL_INDEX:
