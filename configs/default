@@ -46,7 +46,7 @@ GLW_SOURCES = GLwDrawA.c GLwMDrawA.c
 # Directories
 LIB_DIR = $(TOP)/lib
 INSTALL_PREFIX = /usr/local
-SRC_DIRS = mesa glu glut/glx
+SRC_DIRS = mesa glu glut/glx glw
 GLU_DIRS = sgi
 DRIVER_DIRS = x11 osmesa
 PROGRAM_DIRS = demos redbook samples xdemos
