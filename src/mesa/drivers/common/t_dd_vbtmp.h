@@ -1,4 +1,4 @@
-/* $Id: t_dd_vbtmp.h,v 1.9 2001/03/17 17:31:42 keithw Exp $ */
+/* $Id: t_dd_vbtmp.h,v 1.10 2001/04/09 10:16:01 alanh Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -341,9 +341,9 @@ static void TAG(emit)( GLcontext *ctx,
 	    v->v.specular.alpha = fog[i] * 255.0;
 	 }
 	 if (DO_TEX0) {
+	    v->v.u0 = tc0[i][0];
+	    v->v.v0 = tc0[i][1];
 	    if (DO_PTEX) {
-	       v->pv.u0 = tc0[i][0];
-	       v->pv.v0 = tc0[i][1];
 	       if (HAVE_PTEX_VERTICES) {
 		  if (tc0_size == 4) 
 		     v->pv.q0 = tc0[i][3];
@@ -359,10 +359,6 @@ static void TAG(emit)( GLcontext *ctx,
 		  v->v.v0 *= rhw;
 	       } 
 	    } 
-	    else {
-	       v->v.u0 = tc0[i][0];
-	       v->v.v0 = tc0[i][1];
-	    }
 	 }
 	 if (DO_TEX1) {
 	    if (DO_PTEX) {
