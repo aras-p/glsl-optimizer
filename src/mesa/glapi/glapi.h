@@ -1,4 +1,4 @@
-/* $Id: glapi.h,v 1.9 1999/12/16 17:31:59 brianp Exp $ */
+/* $Id: glapi.h,v 1.10 1999/12/16 17:33:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,6 @@
 
 
 #include "GL/gl.h"
-/*#include "glapitable.h"*/
 
 struct _glapi_table;
 

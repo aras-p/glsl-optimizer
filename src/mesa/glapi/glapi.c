@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.15 1999/12/16 17:31:59 brianp Exp $ */
+/* $Id: glapi.c,v 1.16 1999/12/16 17:33:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -103,18 +103,6 @@ _glapi_check_multithread(void)
    }
 #endif
 }
-
-
-
-/*
- * Enable thread safe mode.  Once enabled, can't be disabled.
- */
-void
-_glapi_enable_thread_safety(void)
-{
-   ThreadSafe = GL_TRUE;
-}
-
 
 
 
