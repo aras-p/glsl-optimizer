@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.7 1999/09/17 00:54:27 brianp Exp $
+# $Id: Makefile.X11,v 1.8 1999/09/17 18:08:32 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.1
@@ -361,6 +361,8 @@ LIB_FILES =	\
 	$(DIRECTORY)/Names.win			\
 	$(DIRECTORY)/win32-openstep.sh		\
 	$(DIRECTORY)/*.dja			\
+	$(DIRECTORY)/include/GL/Makefile.in	\
+	$(DIRECTORY)/include/GL/Makefile.am	\
 	$(DIRECTORY)/include/GL/dosmesa.h	\
 	$(DIRECTORY)/include/GL/foomesa.h	\
 	$(DIRECTORY)/include/GL/fxmesa.h	\
@@ -379,6 +381,8 @@ LIB_FILES =	\
 	$(DIRECTORY)/include/GL/xmesa_x.h	\
 	$(DIRECTORY)/include/GL/xmesa_xf86.h	\
 	$(DIRECTORY)/include/GLView.h		\
+	$(DIRECTORY)/include/Makefile.in	\
+	$(DIRECTORY)/include/Makefile.am	\
 	$(DIRECTORY)/src/Makefile*		\
 	$(DIRECTORY)/src/descrip.mms		\
 	$(DIRECTORY)/src/mms_depend		\
@@ -398,28 +402,53 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/D3D/*DEF		\
 	$(DIRECTORY)/src/DOS/DEPEND.DOS		\
 	$(DIRECTORY)/src/DOS/*.c		\
+	$(DIRECTORY)/src/FX/Makefile.am		\
+	$(DIRECTORY)/src/FX/Makefile.in		\
 	$(DIRECTORY)/src/FX/*.[ch]		\
 	$(DIRECTORY)/src/FX/*.def		\
-	$(DIRECTORY)/src/GGI/*.[ch]		\
-	$(DIRECTORY)/src/GGI/ggimesa.conf	\
-	$(DIRECTORY)/src/GGI/default/*.c	\
-	$(DIRECTORY)/src/GGI/default/Makefile	\
-	$(DIRECTORY)/src/GGI/display/*.c	\
-	$(DIRECTORY)/src/GGI/display/Makefile	\
+	$(DIRECTORY)/src/FX/X86/Makefile.am	\
+	$(DIRECTORY)/src/FX/X86/Makefile.in	\
+	$(DIRECTORY)/src/FX/X86/*.[Shc]		\
+	$(DIRECTORY)/src/GGI/Makefile.am			\
+	$(DIRECTORY)/src/GGI/Makefile.in			\
+	$(DIRECTORY)/src/GGI/*.[ch]				\
+	$(DIRECTORY)/src/GGI/ggimesa.conf.in			\
+	$(DIRECTORY)/src/GGI/default/*.c			\
+	$(DIRECTORY)/src/GGI/default/Makefile.am		\
+	$(DIRECTORY)/src/GGI/default/Makefile.in		\
+	$(DIRECTORY)/src/GGI/default/genkgi.conf.in		\
+	$(DIRECTORY)/src/GGI/display/*.c			\
+	$(DIRECTORY)/src/GGI/display/Makefile.am		\
+	$(DIRECTORY)/src/GGI/display/Makefile.in		\
+	$(DIRECTORY)/src/GGI/display/fbdev.conf.in		\
+	$(DIRECTORY)/src/GGI/include/Makefile.am		\
+	$(DIRECTORY)/src/GGI/include/Makefile.in		\
+	$(DIRECTORY)/src/GGI/include/ggi/Makefile.am		\
+	$(DIRECTORY)/src/GGI/include/ggi/Makefile.in		\
+	$(DIRECTORY)/src/GGI/include/ggi/mesa/Makefile.am	\
+	$(DIRECTORY)/src/GGI/include/ggi/mesa/Makefile.in	\
+	$(DIRECTORY)/src/GGI/include/ggi/mesa/*.h		\
 	$(DIRECTORY)/src/KNOWN_BUGS		\
 	$(DIRECTORY)/src/MGL/*.[ch]		\
 	$(DIRECTORY)/src/MGL/*.txt		\
+	$(DIRECTORY)/src/OSmesa/Makefile.am	\
+	$(DIRECTORY)/src/OSmesa/Makefile.in	\
 	$(DIRECTORY)/src/OSmesa/*.[ch]		\
 	$(DIRECTORY)/src/S3/*.[ch]		\
 	$(DIRECTORY)/src/S3/*.def		\
 	$(DIRECTORY)/src/S3/*.mak		\
 	$(DIRECTORY)/src/S3/*.rc		\
+	$(DIRECTORY)/src/SVGA/Makefile.am	\
+	$(DIRECTORY)/src/SVGA/Makefile.in	\
 	$(DIRECTORY)/src/SVGA/*.[ch]		\
 	$(DIRECTORY)/src/Windows/*.[ch]		\
 	$(DIRECTORY)/src/Windows/*.def		\
+	$(DIRECTORY)/src/X/Makefile.am		\
+	$(DIRECTORY)/src/X/Makefile.in		\
 	$(DIRECTORY)/src/X/*.[ch]		\
 	$(DIRECTORY)/src/X86/*.[ch]		\
-	$(DIRECTORY)/src/X86/Makefile		\
+	$(DIRECTORY)/src/X86/Makefile.am	\
+	$(DIRECTORY)/src/X86/Makefile.in	\
 	$(DIRECTORY)/src/X86/*.m4		\
 	$(DIRECTORY)/src/X86/*.S		\
 	$(DIRECTORY)/src/*.dja			\
@@ -434,6 +463,8 @@ LIB_FILES =	\
 	$(DIRECTORY)/widgets-mesa		\
 	$(DIRECTORY)/widgets-sgi		\
 	$(DIRECTORY)/util/README		\
+	$(DIRECTORY)/util/Makefile.am		\
+	$(DIRECTORY)/util/Makefile.in		\
 	$(DIRECTORY)/util/*.[ch]		\
 	$(DIRECTORY)/util/sampleMakefile	\
 	$(DIRECTORY)/BeOS/Makefile		\
