@@ -132,6 +132,7 @@ static const char * const card_extensions[] =
     "GL_EXT_blend_logic_op",
     "GL_EXT_blend_subtract",
     "GL_EXT_secondary_color",
+    "GL_EXT_stencil_wrap",
     "GL_EXT_texture_edge_clamp",
     "GL_EXT_texture_env_combine",
     "GL_EXT_texture_env_dot3",

@@ -312,6 +312,8 @@ radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RADEON_QE:
    case PCI_CHIP_RADEON_QF:
    case PCI_CHIP_RADEON_QG:
+      /* all original radeons (7200) presumably have a stencil op bug */
+      screen->chipset |= RADEON_CHIPSET_BROKEN_STENCIL;
    case PCI_CHIP_RV200_QW:
    case PCI_CHIP_RV200_QX:
    case PCI_CHIP_RADEON_LW:

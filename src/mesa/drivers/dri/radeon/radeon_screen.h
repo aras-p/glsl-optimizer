@@ -58,6 +58,7 @@ typedef struct {
 
 /* chipset features */
 #define RADEON_CHIPSET_TCL	(1 << 0)
+#define RADEON_CHIPSET_BROKEN_STENCIL (1 << 1)
 
 typedef struct {
 

@@ -1332,6 +1332,34 @@ static void radeonStencilOp( GLcontext *ctx, GLenum fail,
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 
+   /* radeon 7200 have stencil bug, DEC and INC_WRAP will actually both do DEC_WRAP,
+      and DEC_WRAP (and INVERT) will do INVERT. No way to get correct INC_WRAP and DEC,
+      but DEC_WRAP can be fixed by using DEC and INC_WRAP at least use INC. */
+   
+   GLuint tempRADEON_STENCIL_FAIL_DEC_WRAP;
+   GLuint tempRADEON_STENCIL_FAIL_INC_WRAP;
+   GLuint tempRADEON_STENCIL_ZFAIL_DEC_WRAP;
+   GLuint tempRADEON_STENCIL_ZFAIL_INC_WRAP;
+   GLuint tempRADEON_STENCIL_ZPASS_DEC_WRAP;
+   GLuint tempRADEON_STENCIL_ZPASS_INC_WRAP;
+   
+   if (rmesa->radeonScreen->chipset & RADEON_CHIPSET_BROKEN_STENCIL) {
+      tempRADEON_STENCIL_FAIL_DEC_WRAP = RADEON_STENCIL_FAIL_DEC;
+      tempRADEON_STENCIL_FAIL_INC_WRAP = RADEON_STENCIL_FAIL_INC;
+      tempRADEON_STENCIL_ZFAIL_DEC_WRAP = RADEON_STENCIL_ZFAIL_DEC;
+      tempRADEON_STENCIL_ZFAIL_INC_WRAP = RADEON_STENCIL_ZFAIL_INC;
+      tempRADEON_STENCIL_ZPASS_DEC_WRAP = RADEON_STENCIL_ZPASS_DEC;
+      tempRADEON_STENCIL_ZPASS_INC_WRAP = RADEON_STENCIL_ZPASS_INC;
+   }
+   else {
+      tempRADEON_STENCIL_FAIL_DEC_WRAP = RADEON_STENCIL_FAIL_DEC_WRAP;
+      tempRADEON_STENCIL_FAIL_INC_WRAP = RADEON_STENCIL_FAIL_INC_WRAP;
+      tempRADEON_STENCIL_ZFAIL_DEC_WRAP = RADEON_STENCIL_ZFAIL_DEC_WRAP;
+      tempRADEON_STENCIL_ZFAIL_INC_WRAP = RADEON_STENCIL_ZFAIL_INC_WRAP;
+      tempRADEON_STENCIL_ZPASS_DEC_WRAP = RADEON_STENCIL_ZPASS_DEC_WRAP;
+      tempRADEON_STENCIL_ZPASS_INC_WRAP = RADEON_STENCIL_ZPASS_INC_WRAP;
+   }
+   
    RADEON_STATECHANGE( rmesa, ctx );
    rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] &= ~(RADEON_STENCIL_FAIL_MASK |
 					       RADEON_STENCIL_ZFAIL_MASK |
@@ -1352,6 +1380,12 @@ static void radeonStencilOp( GLcontext *ctx, GLenum fail,
       break;
    case GL_DECR:
       rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_STENCIL_FAIL_DEC;
+      break;
+   case GL_INCR_WRAP:
+      rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= tempRADEON_STENCIL_FAIL_INC_WRAP;
+      break;
+   case GL_DECR_WRAP:
+      rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= tempRADEON_STENCIL_FAIL_DEC_WRAP;
       break;
    case GL_INVERT:
       rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_STENCIL_FAIL_INVERT;
@@ -1374,6 +1408,12 @@ static void radeonStencilOp( GLcontext *ctx, GLenum fail,
    case GL_DECR:
       rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_STENCIL_ZFAIL_DEC;
       break;
+   case GL_INCR_WRAP:
+      rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= tempRADEON_STENCIL_ZFAIL_INC_WRAP;
+      break;
+   case GL_DECR_WRAP:
+      rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= tempRADEON_STENCIL_ZFAIL_DEC_WRAP;
+      break;
    case GL_INVERT:
       rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_STENCIL_ZFAIL_INVERT;
       break;
@@ -1394,6 +1434,12 @@ static void radeonStencilOp( GLcontext *ctx, GLenum fail,
       break;
    case GL_DECR:
       rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_STENCIL_ZPASS_DEC;
+      break;
+   case GL_INCR_WRAP:
+      rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= tempRADEON_STENCIL_ZPASS_INC_WRAP;
+      break;
+   case GL_DECR_WRAP:
+      rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= tempRADEON_STENCIL_ZPASS_DEC_WRAP;
       break;
    case GL_INVERT:
       rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_STENCIL_ZPASS_INVERT;
