@@ -1,4 +1,4 @@
-/* $Id: isosurf.c,v 1.13 2001/10/04 19:14:26 kschultz Exp $ */
+/* $Id: isosurf.c,v 1.14 2002/01/04 09:47:17 gareth Exp $ */
 
 /*
  * Display an isosurface of 3-D wind speed volume.
@@ -39,34 +39,36 @@
 #include "readtex.c"   /* I know, this is a hack.  KW: me too. */
 #define TEXTURE_FILE "../images/reflect.rgb"
 
-#define LIT		0x1
-#define UNLIT		0x2
-#define REFLECT		0x10
-#define POINT_FILTER	0x40
-#define LINEAR_FILTER	0x80
-#define GLVERTEX	0x100
-#define DRAW_ELTS	0x4 
-#define DRAW_ARRAYS	0x200 
-#define ARRAY_ELT	0x400
-#define LOCKED	        0x800
-#define UNLOCKED	0x8 
-#define IMMEDIATE	0x1000
-#define DISPLAYLIST	0x2000000
-#define SHADE_SMOOTH	0x2000
-#define SHADE_FLAT	0x4000
-#define TRIANGLES	0x8000
-#define STRIPS		0x10000
-#define POINTS		0x20000
-#define USER_CLIP	0x40000
-#define NO_USER_CLIP	0x80000
-#define MATERIALS	0x100000
-#define NO_MATERIALS	0x200000
-#define FOG		0x400000
-#define NO_FOG		0x800000
-#define QUIT		0x1000000
-#define GLINFO		0x4000000
-#define STIPPLE		0x8000000
-#define NO_STIPPLE	0x20
+#define LIT		0x00000001
+#define UNLIT		0x00000002
+#define REFLECT		0x00000004
+#define POINT_FILTER	0x00000008
+#define LINEAR_FILTER	0x00000010
+#define GLVERTEX	0x00000020
+#define DRAW_ELTS	0x00000040 
+#define DRAW_ARRAYS	0x00000080 
+#define ARRAY_ELT	0x00000100
+#define LOCKED	        0x00000200
+#define UNLOCKED	0x00000400 
+#define IMMEDIATE	0x00000800
+#define DISPLAYLIST	0x00001000
+#define SHADE_SMOOTH	0x00002000
+#define SHADE_FLAT	0x00004000
+#define TRIANGLES	0x00008000
+#define STRIPS		0x00010000
+#define POINTS		0x00020000
+#define USER_CLIP	0x00040000
+#define NO_USER_CLIP	0x00080000
+#define MATERIALS	0x00100000
+#define NO_MATERIALS	0x00200000
+#define FOG		0x00400000
+#define NO_FOG		0x00800000
+#define QUIT		0x01000000
+#define GLINFO		0x02000000
+#define STIPPLE		0x04000000
+#define NO_STIPPLE	0x08000000
+#define POLYGON_FILL	0x10000000
+#define POLYGON_LINE	0x20000000
 
 #define LIGHT_MASK		(LIT|UNLIT|REFLECT)
 #define FILTER_MASK		(POINT_FILTER|LINEAR_FILTER)
@@ -79,6 +81,7 @@
 #define SHADE_MASK		(SHADE_SMOOTH|SHADE_FLAT)
 #define FOG_MASK		(FOG|NO_FOG)
 #define STIPPLE_MASK		(STIPPLE|NO_STIPPLE)
+#define POLYGON_MASK		(POLYGON_FILL|POLYGON_LINE)
 
 #define MAXVERTS 10000
 static GLuint maxverts = MAXVERTS;
@@ -144,7 +147,7 @@ static void read_surface( char *filename )
 static void print_flags( const char *msg, GLuint flags ) 
 {
    fprintf(stderr, 
-	   "%s (0x%x): %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+	   "%s (0x%x): %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   msg, flags,
 	   (flags & GLVERTEX) ? "glVertex, " : "",
 	   (flags & DRAW_ARRAYS) ? "glDrawArrays, " : "",
@@ -162,7 +165,8 @@ static void print_flags( const char *msg, GLuint flags )
 	   (flags & USER_CLIP) ? "user_clip, " : "",
 	   (flags & MATERIALS) ? "materials, " : "",
 	   (flags & FOG) ? "fog, " : "",
-	   (flags & STIPPLE) ? "stipple, " : "");
+	   (flags & STIPPLE) ? "stipple, " : "",
+	   (flags & POLYGON_LINE) ? "polygon mode line, " : "");
 }
 
 
@@ -684,25 +688,31 @@ static void ModeMenu(int m)
 
    if (CHANGED(state, m, FOG_MASK)) {
       UPDATE(state, m, FOG_MASK);
-      if (m & FOG)
-      {
+      if (m & FOG) {
 	 glEnable(GL_FOG);
       }
-      else
-      {
+      else {
 	 glDisable(GL_FOG);
       }
    }
 
    if (CHANGED(state, m, STIPPLE_MASK)) {
       UPDATE(state, m, STIPPLE_MASK);
-      if (m & STIPPLE)
-      {
+      if (m & STIPPLE) {
 	 glEnable(GL_POLYGON_STIPPLE);
       }
-      else
-      {
+      else {
 	 glDisable(GL_POLYGON_STIPPLE);
+      }
+   }
+
+   if (CHANGED(state, m, POLYGON_MASK)) {
+      UPDATE(state, m, POLYGON_MASK);
+      if (m & POLYGON_FILL) {
+	 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      }
+      else {
+	 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
       }
    }
 
@@ -1076,6 +1086,9 @@ int main(int argc, char **argv)
    glutAddMenuEntry("", 0);
    glutAddMenuEntry("Stipple",               STIPPLE);
    glutAddMenuEntry("No Stipple",            NO_STIPPLE);
+   glutAddMenuEntry("", 0);
+   glutAddMenuEntry("Polygon Mode Fill",     POLYGON_FILL);
+   glutAddMenuEntry("Polygon Mode Line",     POLYGON_LINE);
    glutAddMenuEntry("", 0);
    glutAddMenuEntry("Point Filtered",        POINT_FILTER);
    glutAddMenuEntry("Linear Filtered",       LINEAR_FILTER);
