@@ -902,6 +902,12 @@ choose_x_overlay_visual( Display *dpy, int scr, GLboolean rgbFlag,
 /**********************************************************************/
 
 
+/**
+ * Helper used by glXChooseVisual and glXChooseFBConfig.
+ * The fbConfig parameter must be GL_FALSE for the former and GL_TRUE for
+ * the later.
+ * In either case, the attribute list is terminated with the value 'None'.
+ */
 static XMesaVisual
 choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
 {
@@ -1521,7 +1527,8 @@ Fake_glXSwapBuffers( Display *dpy, GLXDrawable drawable )
       XMesaSwapBuffers(buffer);
    }
    else if (_mesa_getenv("MESA_DEBUG")) {
-      _mesa_warning(NULL, "Mesa: glXSwapBuffers: invalid drawable\n");
+      _mesa_warning(NULL, "glXSwapBuffers: invalid drawable 0x%x\n",
+                    (int) drawable);
    }
 }
 
@@ -1765,7 +1772,7 @@ Fake_glXGetConfig( Display *dpy, XVisualInfo *visinfo,
                    int attrib, int *value )
 {
    XMesaVisual xmvis;
-
+   int k;
    if (!dpy || !visinfo)
       return GLX_BAD_ATTRIBUTE;
 
@@ -1785,7 +1792,8 @@ Fake_glXGetConfig( Display *dpy, XVisualInfo *visinfo,
       }
    }
 
-   return get_config(xmvis, attrib, value, GL_FALSE);
+   k = get_config(xmvis, attrib, value, GL_FALSE);
+   return k;
 }
 
 
