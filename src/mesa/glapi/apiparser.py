@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: apiparser.py,v 1.1 2001/11/18 22:42:57 brianp Exp $
+# $Id: apiparser.py,v 1.2 2003/08/19 01:06:24 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -71,6 +71,8 @@ def PrintRecord(name, returnType, argTypeList, argNameList, alias, offset):
 #
 def ProcessSpecFile(specFile, userFunc):
 
+	NO_OFFSET = -2
+	
 	# init some vars
 	prevCategory = ''
 	funcName = ''
@@ -94,7 +96,7 @@ def ProcessSpecFile(specFile, userFunc):
 				if funcName != '':
 					# Verify entry has offset or alias
 					pnts = 0
-					if offset == -2:
+					if offset == NO_OFFSET:
 						pnts = pnts + 1
 					if offset >= 0:
 						pnts = pnts + 1
@@ -115,27 +117,18 @@ def ProcessSpecFile(specFile, userFunc):
 				funcName = tokens[1]
 
 			elif tokens[0] == 'return':
-				returnType = tokens[1]
-				if len(tokens) > 2:
-					returnType = returnType + ' ' + tokens[2]
-				if len(tokens) > 3:
-					returnType = returnType + ' ' + tokens[3]
+				returnType = string.join(tokens[1:], ' ')
 			
 			elif tokens[0] == 'param':
 				argNameList.append(tokens[1])
-				type = tokens[2]
-				if len(tokens) > 3:
-						type = type + ' ' + tokens[3]
-				if len(tokens) > 4:
-						type = type + ' ' + tokens[4]
-				argTypeList.append(type)
+				argTypeList.append(string.join(tokens[2:], ' '))
 
 			elif tokens[0] == 'category':
 				category = tokens[1]
 
 			elif tokens[0] == 'offset':
 				if tokens[1] == '?':
-					offset = -2
+					offset = NO_OFFSET
 				else:
 					offset = int(tokens[1])
 					if offset > maxOffset:
