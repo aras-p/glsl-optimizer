@@ -1,4 +1,4 @@
-/* $Id: s_aalinetemp.h,v 1.17 2002/02/02 21:40:33 brianp Exp $ */
+/* $Id: s_aalinetemp.h,v 1.18 2002/03/28 16:24:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -107,6 +107,7 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
 #else
       _mesa_write_index_span(ctx, &line->span, GL_LINE);
 #endif
+      line->span.end = 0; /* reset counter */
    }
 }
 
