@@ -150,7 +150,6 @@ gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
    da = 2.0 * M_PI / teeth / 4.0;
 
    glShadeModel(GL_FLAT);
-   glPolygonMode( GL_FRONT, GL_LINE );
 
    glNormal3f(0.0, 0.0, 1.0);
 
