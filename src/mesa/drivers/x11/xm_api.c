@@ -1,8 +1,8 @@
-/* $Id: xm_api.c,v 1.10 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: xm_api.c,v 1.11 2000/12/08 17:37:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
@@ -2404,7 +2404,7 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
       _mesa_swapbuffers(ctx);
 
    if (b->db_state) {
-      int yTop = b->bottom - y - height;
+      int yTop = b->height - y - height;
 #ifdef FX
       if (b->FXctx) {
          fxMesaSwapBuffers();
