@@ -88,7 +88,7 @@ typedef int (* PFNGLXGETINTERNALVERSIONPROC) ( void );
  *
  * \sa __glXWindowExists, glXGetProcAddress
  */
-typedef Bool (* PFNGLXWINDOWEXISTSPROC) (__DRInativeDisplay *dpy, __DRIid draw);
+typedef GLboolean (* PFNGLXWINDOWEXISTSPROC) (__DRInativeDisplay *dpy, __DRIid draw);
 
 /**
  * Type of a pointer to \c __glXGetUST, as returned by \c glXGetProcAddress.
@@ -142,20 +142,20 @@ typedef void (* PFNGLXSCRENABLEEXTENSIONPROC) ( void *psc, const char * name );
  * 
  * \sa __glXGetDrawableInfo, glXGetProcAddress
  */
-typedef Bool (* PFNGLXGETDRAWABLEINFOPROC) ( __DRInativeDisplay *dpy, int scrn,
+typedef GLboolean (* PFNGLXGETDRAWABLEINFOPROC) ( __DRInativeDisplay *dpy, int scrn,
     __DRIid draw, unsigned int * index, unsigned int * stamp,
     int * x, int * y, int * width, int * height,
     int * numClipRects, drm_clip_rect_t ** pClipRects,
     int * backX, int * backY,
     int * numBackClipRects, drm_clip_rect_t ** pBackClipRects );
 
-extern Bool XF86DRIDestroyContext( __DRInativeDisplay *dpy, int screen,
+extern GLboolean XF86DRIDestroyContext( __DRInativeDisplay *dpy, int screen,
     __DRIid context_id );
 
-extern Bool XF86DRICreateDrawable( __DRInativeDisplay *dpy, int screen,
+extern GLboolean XF86DRICreateDrawable( __DRInativeDisplay *dpy, int screen,
     __DRIid drawable, drm_drawable_t *hHWDrawable );
 
-extern Bool XF86DRIDestroyDrawable( __DRInativeDisplay *dpy, int screen, 
+extern GLboolean XF86DRIDestroyDrawable( __DRInativeDisplay *dpy, int screen, 
     __DRIid drawable);
 /*@}*/
 
@@ -407,7 +407,7 @@ struct __DRIcontextRec {
      *
      * \since Internal API version 20040415.
      */
-    Bool (*bindContext3)(__DRInativeDisplay *dpy, int scrn, __DRIid draw,
+    GLboolean (*bindContext3)(__DRInativeDisplay *dpy, int scrn, __DRIid draw,
 			 __DRIid read, __DRIcontext *ctx);
 
     /**
@@ -415,7 +415,7 @@ struct __DRIcontextRec {
      *
      * \since Internal API version 20040415.
      */
-    Bool (*unbindContext3)(__DRInativeDisplay *dpy, int scrn, __DRIid draw,
+    GLboolean (*unbindContext3)(__DRInativeDisplay *dpy, int scrn, __DRIid draw,
 			   __DRIid read, __DRIcontext *ctx);
 };
 
@@ -489,7 +489,7 @@ struct __DRIdrawableRec {
      * 
      * \since Internal API version 20030317.
      */
-    int (*frameTracking)(__DRInativeDisplay *dpy, void *drawablePrivate, Bool enable);
+    int (*frameTracking)(__DRInativeDisplay *dpy, void *drawablePrivate, GLboolean enable);
 
     /**
      * Retrieve frame usage information.
