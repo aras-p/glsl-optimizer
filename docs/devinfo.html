@@ -124,82 +124,39 @@ These are the instructions for making a new Mesa release.
 </p>
 
 <p>
-Prerequisites (later versions may work):
-</p>
-<ul>
-<li>	autoconf 2.50
-<li>	automake 1.4-p2
-<li>	libtool 1.4
-</ul>
-
-<p>
 Be sure to do a "cvs update -d ." in the Mesa directory to
 get all the latest files.
 </p>
 
 <p>
-Update the version definitions in src/version.h
+Update the version definitions in src/mesa/main/version.h
 </p>
 
 <p>
 Create/edit the docs/RELNOTES-X.Y file to document what's new in the release.
-Edit the docs/VERSIONS file too.
+Update the docs/VERSIONS file too.
 </p>
 
 <p>
-Edit Make-config and change the MESA_MAJOR and/or MESA_MINOR versions.
+Edit configs/default and change the MESA_MAJOR, MESA_MINOR and MESA_TINY
+version numbers.
 </p>
 
 <p>
-Edit the GNU configure stuff to change versions numbers as needed:
-Update the version string (second argument) in the line
-"AM_INIT_AUTOMAKE(Mesa, 3.3)" in the configure.in file.
+Edit the top-level Makefile and verify that DIRECTORY, LIB_NAME and
+DEMO_NAME are correct.
 </p>
 
 <p>
-Remove the leading `dnl' from the line "dnl AM_MAINTAINER_MODE".
-</p>
-
-<p>
-Verify the version numbers near the top of configure.in
-</p>
-
-<p>
-Run "fixam -f" to disable automatic dependency tracking.
-</p>
-
-<p>
-Run the bootstrap script to generate the configure script.
-</p>
-
-<p>
-Edit Makefile.X11 and verify DIRECTORY is set correctly.  The Mesa
-sources must be in that directory (or there must be a symbolic link).
-</p>
-
-<p>
-Edit Makefile.X11 and verify that LIB_NAME and DEMO_NAME are correct.
-If it's a beta release, be sure the bump up the beta release number.
-</p>
-
-<p>
-cp Makefile.X11 to Makefile so that the old-style Mesa makefiles
-still work.  ./configure will overwrite it if that's what the user runs.
-</p>
-
-<p>
-Make a symbolic link from $(DIRECTORY) to Mesa.  For example,
-ln -s Mesa Mesa-3.3    This is needed in order to make a correct
+Make a symbolic link from $(DIRECTORY) to 'Mesa'.  For example,
+ln -s Mesa Mesa-6.3    This is needed in order to make a correct
 tar file in the next step.
 </p>
 
 <p>
 Make the distribution files.  From inside the Mesa directory:
 <pre>
-	make -f Makefile.X11 lib_tar
-	make -f Makefile.X11 demo_tar
-	make -f Makefile.X11 lib_zip
-	make -f Makefile.X11 demo_zip
+	make tarballs
 </pre>
 
 <p>
@@ -223,17 +180,6 @@ and
 <em>m</em><em>e</em><em>s</em><em>a</em><em>3</em><em>d</em><em>-</em><em>a</em><em>n</em><em>n</em><em>o</em><em>u</em><em>n</em><em>c</em><em>e</em><em>@</em><em>l</em><em>i</em><em>s</em><em>t</em><em>s</em><em>.</em><em>s</em><em>f</em><em>.</em><em>n</em><em>e</em><em>t</em>
 </p>
 
-
-<H2>Autoconf info</H2>
-
-<p>
-In order to run the bootstrap script you'll need:
-<p>
-<pre>
-autoconf 2.50
-automake 1.4-p5
-libtool 1.4
-</pre>
 
 
 </body>

@@ -1295,3 +1295,12 @@ Mesa Version History
 	- spriteblast demo didn't handle window size changes correctly
 	- glTexSubImage didn't handle pixels=NULL correctly for PBOs
 	- fixed color index mode glDrawPixels bug (Karl Schultz)
+
+
+6.3  Month day, 2004
+    New:
+	-
+    Changes:
+	- 
+    Bug fixes:
+	- 
