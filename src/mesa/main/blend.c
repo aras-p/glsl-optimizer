@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.16 2000/06/29 22:06:22 brianp Exp $ */
+/* $Id: blend.c,v 1.17 2000/08/30 18:21:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -266,11 +266,26 @@ _mesa_BlendEquation( GLenum mode )
    switch (mode) {
       case GL_MIN_EXT:
       case GL_MAX_EXT:
-      case GL_LOGIC_OP:
       case GL_FUNC_ADD_EXT:
+         if (ctx->Extensions.HaveBlendMinmax) {
+            ctx->Color.BlendEquation = mode;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
+            return;
+         }
+      case GL_LOGIC_OP:
+         ctx->Color.BlendEquation = mode;
+         break;
       case GL_FUNC_SUBTRACT_EXT:
       case GL_FUNC_REVERSE_SUBTRACT_EXT:
-         ctx->Color.BlendEquation = mode;
+         if (ctx->Extensions.HaveBlendSubtract) {
+            ctx->Color.BlendEquation = mode;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
+            return;
+         }
          break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glBlendEquation" );

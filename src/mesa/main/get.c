@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.31 2000/08/08 16:15:14 brianp Exp $ */
+/* $Id: get.c,v 1.32 2000/08/30 18:21:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -355,7 +355,13 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = FLOAT_TO_BOOL(ctx->Pixel.GreenScale);
 	 break;
       case GL_HISTOGRAM:
-         *params = ctx->Pixel.HistogramEnabled;
+         if (ctx->Extensions.HaveHistogram) {
+            *params = ctx->Pixel.HistogramEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
 	 break;
       case GL_INDEX_BITS:
          *params = INT_TO_BOOL( ctx->Visual->IndexBits );
@@ -1504,7 +1510,13 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Pixel.GreenScale;
          break;
       case GL_HISTOGRAM:
-         *params = (GLdouble) ctx->Pixel.HistogramEnabled;
+         if (ctx->Extensions.HaveHistogram) {
+            *params = (GLdouble) ctx->Pixel.HistogramEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
 	 break;
       case GL_INDEX_BITS:
          *params = (GLdouble) ctx->Visual->IndexBits;
@@ -2650,7 +2662,13 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) ctx->Pixel.GreenScale;
          break;
       case GL_HISTOGRAM:
-         *params = (GLfloat) ctx->Pixel.HistogramEnabled;
+         if (ctx->Extensions.HaveHistogram) {
+            *params = (GLfloat) ctx->Pixel.HistogramEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            return;
+         }
 	 break;
       case GL_INDEX_BITS:
          *params = (GLfloat) ctx->Visual->IndexBits;
@@ -3775,7 +3793,13 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Pixel.GreenScale;
          break;
       case GL_HISTOGRAM:
-         *params = (GLint) ctx->Pixel.HistogramEnabled;
+         if (ctx->Extensions.HaveHistogram) {
+            *params = (GLint) ctx->Pixel.HistogramEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            return;
+         }
 	 break;
       case GL_INDEX_BITS:
          *params = (GLint) ctx->Visual->IndexBits;

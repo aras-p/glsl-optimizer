@@ -1,4 +1,4 @@
-/* $Id: stencil.c,v 1.16 2000/04/11 21:26:57 brianp Exp $ */
+/* $Id: stencil.c,v 1.17 2000/08/30 18:23:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -105,7 +105,7 @@ _mesa_StencilMask( GLuint mask )
 
 
 void
-_mesa_StencilOp( GLenum fail, GLenum zfail, GLenum zpass )
+_mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glStencilOp");
@@ -116,12 +116,17 @@ _mesa_StencilOp( GLenum fail, GLenum zfail, GLenum zpass )
       case GL_INCR:
       case GL_DECR:
       case GL_INVERT:
-      case GL_INCR_WRAP_EXT:
-      case GL_DECR_WRAP_EXT:
          ctx->Stencil.FailFunc = fail;
          break;
+      case GL_INCR_WRAP_EXT:
+      case GL_DECR_WRAP_EXT:
+         if (ctx->Extensions.HaveStencilWrap) {
+            ctx->Stencil.FailFunc = fail;
+            break;
+         }
+         /* FALL-THROUGH */
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glStencilOp" );
+         gl_error(ctx, GL_INVALID_ENUM, "glStencilOp");
          return;
    }
    switch (zfail) {
@@ -131,12 +136,17 @@ _mesa_StencilOp( GLenum fail, GLenum zfail, GLenum zpass )
       case GL_INCR:
       case GL_DECR:
       case GL_INVERT:
-      case GL_INCR_WRAP_EXT:
-      case GL_DECR_WRAP_EXT:
          ctx->Stencil.ZFailFunc = zfail;
          break;
+      case GL_INCR_WRAP_EXT:
+      case GL_DECR_WRAP_EXT:
+         if (ctx->Extensions.HaveStencilWrap) {
+            ctx->Stencil.ZFailFunc = zfail;
+            break;
+         }
+         /* FALL-THROUGH */
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glStencilOp" );
+         gl_error(ctx, GL_INVALID_ENUM, "glStencilOp");
          return;
    }
    switch (zpass) {
@@ -146,17 +156,22 @@ _mesa_StencilOp( GLenum fail, GLenum zfail, GLenum zpass )
       case GL_INCR:
       case GL_DECR:
       case GL_INVERT:
-      case GL_INCR_WRAP_EXT:
-      case GL_DECR_WRAP_EXT:
          ctx->Stencil.ZPassFunc = zpass;
          break;
+      case GL_INCR_WRAP_EXT:
+      case GL_DECR_WRAP_EXT:
+         if (ctx->Extensions.HaveStencilWrap) {
+            ctx->Stencil.ZPassFunc = zpass;
+            break;
+         }
+         /* FALL-THROUGH */
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glStencilOp" );
+         gl_error(ctx, GL_INVALID_ENUM, "glStencilOp");
          return;
    }
 
    if (ctx->Driver.StencilOp) {
-      (*ctx->Driver.StencilOp)( ctx, fail, zfail, zpass );
+      (*ctx->Driver.StencilOp)(ctx, fail, zfail, zpass);
    }
 }
 

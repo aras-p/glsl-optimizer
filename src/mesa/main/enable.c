@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.22 2000/08/21 14:22:24 brianp Exp $ */
+/* $Id: enable.c,v 1.23 2000/08/30 18:21:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -155,7 +155,13 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          }
 	 break;
       case GL_HISTOGRAM:
-         ctx->Pixel.HistogramEnabled = state;
+         if (ctx->Extensions.HaveHistogram) {
+            ctx->Pixel.HistogramEnabled = state;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, state ? "glEnable": "glDisable" );
+            return;
+         }
          break;
       case GL_LIGHT0:
       case GL_LIGHT1:
@@ -165,8 +171,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_LIGHT5:
       case GL_LIGHT6:
       case GL_LIGHT7:
-	 if (ctx->Light.Light[cap-GL_LIGHT0].Enabled != state) 
-	 {
+	 if (ctx->Light.Light[cap-GL_LIGHT0].Enabled != state) {
 	    ctx->Light.Light[cap-GL_LIGHT0].Enabled = state;
 
 	    if (state) {
@@ -608,7 +613,13 @@ _mesa_IsEnabled( GLenum cap )
       case GL_FOG:
 	 return ctx->Fog.Enabled;
       case GL_HISTOGRAM:
-         return ctx->Pixel.HistogramEnabled;
+         if (ctx->Extensions.HaveHistogram) {
+            return ctx->Pixel.HistogramEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glIsEnabled");
+            return GL_FALSE;
+         }
       case GL_LIGHTING:
          return ctx->Light.Enabled;
       case GL_LIGHT0:
