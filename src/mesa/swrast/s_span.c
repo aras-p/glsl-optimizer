@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.35 2002/02/17 01:49:31 brianp Exp $ */
+/* $Id: s_span.c,v 1.36 2002/02/17 17:30:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -235,8 +235,8 @@ interpolate_specular(GLcontext *ctx, struct sw_span *span)
 
 
 /* Fill in the span.zArray array from the interpolation values */
-static void
-interpolate_z(GLcontext *ctx, struct sw_span *span)
+void
+_mesa_span_interpolate_z( const GLcontext *ctx, struct sw_span *span )
 {
    const GLuint n = span->end;
    GLuint i;
@@ -784,7 +784,7 @@ _mesa_write_index_span( GLcontext *ctx, struct sw_span *span,
    /* Depth test and stencil */
    if (ctx->Depth.Test || ctx->Stencil.Enabled) {
       if (span->interpMask & SPAN_Z)
-         interpolate_z(ctx, span);
+         _mesa_span_interpolate_z(ctx, span);
 
       if (ctx->Stencil.Enabled) {
          if (!_mesa_stencil_and_ztest_span(ctx, span)) {
@@ -819,15 +819,8 @@ _mesa_write_index_span( GLcontext *ctx, struct sw_span *span,
    }
 
    /* Fog */
-   /* XXX try to simplify the fog code! */
    if (ctx->Fog.Enabled) {
-      if ((span->arrayMask & SPAN_FOG) && !swrast->_PreferPixelFog)
-         _mesa_fog_ci_pixels_with_array( ctx, span, span->fogArray,
-                                         span->color.index);
-      else if ((span->interpMask & SPAN_FOG) && !swrast->_PreferPixelFog)
-         _mesa_fog_ci_pixels( ctx, span, span->color.index);
-      else
-         _mesa_depth_fog_ci_pixels( ctx, span, span->color.index);
+      _mesa_fog_ci_span(ctx, span);
    }
 
    /* Antialias coverage application */
@@ -972,7 +965,7 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
    /* Stencil and Z testing */
    if (ctx->Stencil.Enabled || ctx->Depth.Test) {
       if (span->interpMask & SPAN_Z)
-         interpolate_z(ctx, span);
+         _mesa_span_interpolate_z(ctx, span);
 
       if (ctx->Stencil.Enabled) {
          if (!_mesa_stencil_and_ztest_span(ctx, span)) {
@@ -1011,20 +1004,8 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
    }
 
    /* Fog */
-   /* XXX try to simplify the fog code! */
    if (ctx->Fog.Enabled) {
-      if ((span->arrayMask & SPAN_FOG) && !swrast->_PreferPixelFog) {
-	 _mesa_fog_rgba_pixels_with_array(ctx, span, span->fogArray,
-                                          span->color.rgba);
-      }
-      else if ((span->interpMask & SPAN_FOG) && !swrast->_PreferPixelFog) {
-         _mesa_fog_rgba_pixels(ctx, span, span->color.rgba);
-      }
-      else {
-         if ((span->interpMask & SPAN_Z) && (span->arrayMask & SPAN_Z) == 0)
-            interpolate_z(ctx, span);
-         _mesa_depth_fog_rgba_pixels(ctx, span, span->color.rgba);
-      }
+      _mesa_fog_rgba_span(ctx, span);
       monoColor = GL_FALSE;
    }
 
@@ -1213,7 +1194,7 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
    /* Stencil and Z testing */
    if (ctx->Stencil.Enabled || ctx->Depth.Test) {
       if (span->interpMask & SPAN_Z)
-         interpolate_z(ctx, span);
+         _mesa_span_interpolate_z(ctx, span);
 
       if (ctx->Stencil.Enabled) {
          if (!_mesa_stencil_and_ztest_span(ctx, span)) {
@@ -1267,20 +1248,8 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
    }
 
    /* Fog */
-   /* XXX try to simplify the fog code! */
    if (ctx->Fog.Enabled) {
-      if ((span->arrayMask & SPAN_FOG) && !swrast->_PreferPixelFog) {
-	 _mesa_fog_rgba_pixels_with_array( ctx, span, span->fogArray,
-                                           span->color.rgba);
-      }
-      else if ((span->interpMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog) {
-	 _mesa_fog_rgba_pixels( ctx, span, span->color.rgba );
-      }
-      else {
-         if ((span->interpMask & SPAN_Z) && (span->arrayMask & SPAN_Z) == 0)
-            interpolate_z(ctx, span);
-	 _mesa_depth_fog_rgba_pixels(ctx, span, span->color.rgba);
-      }
+      _mesa_fog_rgba_span(ctx, span);
    }
 
    /* Antialias coverage application */

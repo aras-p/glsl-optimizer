@@ -1,4 +1,4 @@
-/* $Id: s_span.h,v 1.14 2002/01/28 03:42:28 brianp Exp $ */
+/* $Id: s_span.h,v 1.15 2002/02/17 17:30:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,9 @@
 
 extern void
 _mesa_span_default_z( GLcontext *ctx, struct sw_span *span );
+
+extern void
+_mesa_span_interpolate_z( const GLcontext *ctx, struct sw_span *span );
 
 extern void
 _mesa_span_default_fog( GLcontext *ctx, struct sw_span *span );

@@ -1,10 +1,10 @@
-/* $Id: s_fog.h,v 1.8 2002/02/02 21:40:33 brianp Exp $ */
+/* $Id: s_fog.h,v 1.9 2002/02/17 17:30:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,34 +36,11 @@
 extern GLfloat
 _mesa_z_to_fogfactor(GLcontext *ctx, GLfloat z);
 
+extern void
+_mesa_fog_rgba_span( const GLcontext *ctx, struct sw_span *span );
 
 extern void
-_mesa_fog_rgba_pixels( const GLcontext *ctx, struct sw_span *span,
-		       GLchan rgba[][4]);
-extern void
-_mesa_fog_rgba_pixels_with_array( const GLcontext *ctx, struct sw_span *span,
-				  const GLfloat fog[], GLchan rgba[][4] );
+_mesa_fog_ci_span( const GLcontext *ctx, struct sw_span *span );
 
-
-extern void
-_mesa_fog_ci_pixels( const GLcontext *ctx, struct sw_span *span,
-		     GLuint indx[]);
-extern void
-_mesa_fog_ci_pixels_with_array( const GLcontext *ctx, struct sw_span *span,
-				const GLfloat fog[], GLuint index[] );
-
-extern void
-_mesa_win_fog_coords_from_z( const GLcontext *ctx,
-			     GLuint n,
-			     const GLdepth z[],
-			     GLfloat fogcoord[] );
-
-extern void
-_mesa_depth_fog_rgba_pixels( const GLcontext *ctx, struct sw_span *span,
-			     GLchan rgba[][4] );
-
-extern void
-_mesa_depth_fog_ci_pixels( const GLcontext *ctx, struct sw_span *span,
-			   GLuint index[] );
 
 #endif
