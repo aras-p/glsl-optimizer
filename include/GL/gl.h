@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.52 2001/03/21 16:00:17 brianp Exp $ */
+/* $Id: gl.h,v 1.53 2001/03/22 04:56:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -745,7 +745,7 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 
 
 /*
- * OpenGL 1.2 imaging subset (NOT IMPLEMENTED BY MESA)
+ * OpenGL 1.2 imaging subset
  */
 /* GL_EXT_color_table */
 #define GL_COLOR_TABLE				0x80D0
