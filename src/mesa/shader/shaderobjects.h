@@ -28,14 +28,7 @@
 
 #include "mtypes.h"
 
-extern void 
-_mesa_delete_object( GLcontext *ctx, union gl_object_p obj);
-
-extern GLboolean
-_mesa_use_program_object( GLcontext *ctx, struct gl_program_object *pobj );
-
 #if _HAVE_FULL_GL
-
 
 extern void GLAPIENTRY
 _mesa_DeleteObjectARB(GLhandleARB obj);
