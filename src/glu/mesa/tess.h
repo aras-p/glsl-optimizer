@@ -1,4 +1,4 @@
-/* $Id: tess.h,v 1.12 1999/10/13 19:01:56 gareth Exp $ */
+/* $Id: tess.h,v 1.13 1999/10/13 19:12:47 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,41 +24,9 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/*
- * $Log: tess.h,v $
- * Revision 1.12  1999/10/13 19:01:56  gareth
- * Added edge flag callback support.
- *
- * Revision 1.11  1999/10/11 17:49:22  gareth
- * Correctly initialized GLUtesselator user data pointer.
- *
- * Revision 1.10  1999/10/11 17:28:05  gareth
- * Allow debugging output capture under Win32.  This seems really
- * broken to me, but that's Windows for you...
- *
- * Revision 1.9  1999/10/03 00:56:07  gareth
- * Added tessellation winding rule support.  Misc bug fixes.
- *
- * Revision 1.8  1999/09/17 06:31:02  gareth
- * Winding rule updates.
- *
- * Revision 1.7  1999/09/16 06:42:01  gareth
- * Misc winding rule bug fixes.
- *
- * Revision 1.6  1999/09/15 02:12:16  gareth
- * Added debugging pragma message.
- *
- * Revision 1.5  1999/09/14 22:46:02  gareth
- * Added debugging output.
- *
- * Revision 1.4  1999/09/13 22:20:13  gareth
- * Fixed file headers.  Tracking down macro bugs.
- *
- */
-
 /*****************************************************************************
  *
- * GLU 1.3 Polygon Tessellation by Gareth Hughes <garethh@lucent.com>
+ * GLU 1.3 Polygon Tessellation by Gareth Hughes <garethh@bell-labs.com>
  *
  *****************************************************************************/
 

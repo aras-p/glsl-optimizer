@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.16 1999/10/13 19:02:20 gareth Exp $ */
+/* $Id: tess.c,v 1.17 1999/10/13 19:12:25 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,54 +24,9 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/*
- * $Log: tess.c,v $
- * Revision 1.16  1999/10/13 19:02:20  gareth
- * Added edge flag callback support.
- *
- * Revision 1.15  1999/10/12 21:26:06  gareth
- * Fixed delete_all_contours memory deallocation.
- *
- * Revision 1.14  1999/10/12 18:49:28  gareth
- * Updated memory allocation to allow new macros to be used.
- *
- * Revision 1.13  1999/10/11 17:53:09  gareth
- * Renamed GLUtesselator user data pointer to avoid confusion.
- *
- * Revision 1.12  1999/10/11 17:48:53  gareth
- * Correctly initialized GLUtesselator user data pointer.
- *
- * Revision 1.11  1999/10/11 17:26:48  gareth
- * Updated debugging output.  I'm going to change it all to something
- * much more like the GLX project.  This was a set of macros left over
- * from a research project I'd done, and I like the GLX logging more.
- *
- * Revision 1.10  1999/10/03 00:56:07  gareth
- * Added tessellation winding rule support.  Misc bug fixes.
- *
- * Revision 1.9  1999/09/17 06:34:46  gareth
- * Winding rule updates.
- *
- * Revision 1.8  1999/09/17 03:07:28  tjump
- * Win32 build req't updates
- *
- * Revision 1.7  1999/09/16 06:41:42  gareth
- * Misc winding rule bug fixes.
- *
- * Revision 1.6  1999/09/15 02:11:10  gareth
- * Fixed vector macro calls, specifically COPY_3V params.
- *
- * Revision 1.5  1999/09/14 05:37:58  gareth
- * Fixed legacy gluNextContour impact on gluTessEndContour.
- *
- * Revision 1.4  1999/09/13 22:20:13  gareth
- * Fixed file headers.  Tracking down macro bugs.
- *
- */
-
 /*****************************************************************************
  *
- * GLU 1.3 Polygon Tessellation by Gareth Hughes <garethh@lucent.com>
+ * GLU 1.3 Polygon Tessellation by Gareth Hughes <garethh@bell-labs.com>
  *
  *****************************************************************************/
 
