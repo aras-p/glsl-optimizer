@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.12 1999/10/27 09:50:10 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.13 1999/11/11 01:29:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,16 +45,7 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "conf.h"
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include "GL/gl.h"
+#include "glxheader.h"
 #include "GL/xmesa.h"
 #include "context.h"
 #include "config.h"
@@ -1056,6 +1047,7 @@ Bool Fake_glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
 {
    if (ctx && drawable) {
       XMesaBuffer buffer;
+      XMesaContext xmctx = (XMesaContext) ctx;
 
       if (drawable==MakeCurrent_PrevDrawable && ctx==MakeCurrent_PrevContext) {
          buffer = MakeCurrent_PrevBuffer;
@@ -1065,7 +1057,7 @@ Bool Fake_glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
       }
       if (!buffer) {
          /* drawable must be a new window! */
-         buffer = XMesaCreateWindowBuffer2( ctx->xm_visual, drawable, ctx );
+         buffer = XMesaCreateWindowBuffer2( xmctx->xm_visual, drawable, ctx );
          if (!buffer) {
             /* Out of memory, or context/drawable depth mismatch */
             return False;

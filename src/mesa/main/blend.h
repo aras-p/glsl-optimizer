@@ -1,4 +1,4 @@
-/* $Id: blend.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: blend.h,v 1.2 1999/11/11 01:22:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,9 +25,6 @@
  */
 
 
-
-
-
 #ifndef BLEND_H
 #define BLEND_H
 
@@ -48,21 +45,20 @@ gl_blend_pixels( GLcontext *ctx,
 
 
 extern void
-gl_BlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor );
+_mesa_BlendFunc( GLenum sfactor, GLenum dfactor );
 
 
 extern void
-gl_BlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB, GLenum dfactorRGB,
-                      GLenum sfactorA, GLenum dfactorA );
+_mesa_BlendFuncSeparateINGR( GLenum sfactorRGB, GLenum dfactorRGB,
+                             GLenum sfactorA, GLenum dfactorA );
 
 
 extern void
-gl_BlendEquation( GLcontext *ctx, GLenum mode );
+_mesa_BlendEquationEXT( GLenum mode );
 
 
 extern void
-gl_BlendColor( GLcontext *ctx, GLclampf red, GLclampf green,
-               GLclampf blue, GLclampf alpha );
+_mesa_BlendColorEXT(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 
 
 #endif

@@ -1,8 +1,8 @@
-/* $Id: teximage.c,v 1.11 1999/11/08 07:36:44 brianp Exp $ */
+/* $Id: teximage.c,v 1.12 1999/11/11 01:22:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -28,17 +28,10 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#ifndef XFree86Server
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#else
-#include "GL/xf86glx.h"
-#endif
+#include "glheader.h"
 #include "context.h"
 #include "image.h"
-#include "macros.h"
+#include "mem.h"
 #include "mmath.h"
 #include "span.h"
 #include "teximage.h"
@@ -58,25 +51,13 @@
 
 
 
-static struct gl_pixelstore_attrib defaultPacking = {
-   1,            /* Alignment */
-   0,            /* RowLength */
-   0,            /* SkipPixels */
-   0,            /* SkipRows */
-   0,            /* ImageHeight */
-   0,            /* SkipImages */
-   GL_FALSE,     /* SwapBytes */
-   GL_FALSE      /* LsbFirst */
-};
-
-
-
 /*
  * Compute log base 2 of n.
  * If n isn't an exact power of two return -1.
  * If n<0 return -1.
  */
-static int logbase2( int n )
+static int
+logbase2( int n )
 {
    GLint i = 1;
    GLint log2 = 0;
@@ -105,7 +86,8 @@ static int logbase2( int n )
  * GL_LUMANCE_ALPHA, GL_INTENSITY, GL_RGB, or GL_RGBA.
  * Return -1 if invalid enum.
  */
-static GLint decode_internal_format( GLint format )
+static GLint
+decode_internal_format( GLint format )
 {
    switch (format) {
       case GL_ALPHA:
@@ -177,7 +159,8 @@ static GLint decode_internal_format( GLint format )
  * GL_LUMANCE_ALPHA, GL_INTENSITY, GL_RGB, or GL_RGBA.  Return the
  * number of components for the format.  Return -1 if invalid enum.
  */
-static GLint components_in_intformat( GLint format )
+static GLint
+components_in_intformat( GLint format )
 {
    switch (format) {
       case GL_ALPHA:
@@ -243,14 +226,16 @@ static GLint components_in_intformat( GLint format )
 
 
 
-struct gl_texture_image *gl_alloc_texture_image( void )
+struct gl_texture_image *
+gl_alloc_texture_image( void )
 {
    return CALLOC_STRUCT(gl_texture_image);
 }
 
 
 
-void gl_free_texture_image( struct gl_texture_image *teximage )
+void
+gl_free_texture_image( struct gl_texture_image *teximage )
 {
    if (teximage->Data) {
       FREE( teximage->Data );
@@ -267,7 +252,8 @@ void gl_free_texture_image( struct gl_texture_image *teximage )
  * These fields are set only here by core Mesa but device drivers may
  * overwritting these fields to indicate true texel resolution.
  */
-static void set_teximage_component_sizes( struct gl_texture_image *texImage )
+static void
+set_teximage_component_sizes( struct gl_texture_image *texImage )
 {
    switch (texImage->Format) {
       case GL_ALPHA:
@@ -762,7 +748,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
  * Return:  GL_TRUE = an error was detected, GL_FALSE = no errors
  */
 static GLboolean
-subtexture_error_check( GLcontext *ctx, GLint dimensions,
+subtexture_error_check( GLcontext *ctx, GLuint dimensions,
                         GLenum target, GLint level,
                         GLint xoffset, GLint yoffset, GLint zoffset,
                         GLint width, GLint height, GLint depth,
@@ -870,7 +856,7 @@ subtexture_error_check( GLcontext *ctx, GLint dimensions,
  * Return:  GL_TRUE = an error was detected, GL_FALSE = no errors
  */
 static GLboolean
-copytexture_error_check( GLcontext *ctx, GLint dimensions,
+copytexture_error_check( GLcontext *ctx, GLuint dimensions,
                          GLenum target, GLint level, GLint internalFormat,
                          GLint width, GLint height, GLint border )
 {
@@ -940,7 +926,7 @@ copytexture_error_check( GLcontext *ctx, GLint dimensions,
 
 
 static GLboolean
-copytexsubimage_error_check( GLcontext *ctx, GLint dimensions,
+copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
                              GLenum target, GLint level,
                              GLint xoffset, GLint yoffset, GLint zoffset,
                              GLsizei width, GLsizei height )
@@ -981,7 +967,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLint dimensions,
       return GL_TRUE;
    }
 
-   teximage = texUnit->CurrentD[dimensions]->Image[level];
+   teximage = texUnit->CurrentD[3]->Image[level];
    if (!teximage) {
       char message[100];
       sprintf(message, "glCopyTexSubImage%dD(undefined texture)", dimensions);
@@ -1042,11 +1028,12 @@ copytexsubimage_error_check( GLcontext *ctx, GLint dimensions,
 /*
  * Called from the API.  Note that width includes the border.
  */
-void gl_TexImage1D( GLcontext *ctx, GLenum target, GLint level,
-                    GLint internalformat,
-                    GLsizei width, GLint border, GLenum format,
-                    GLenum type, const GLvoid *pixels )
+void
+_mesa_TexImage1D( GLenum target, GLint level, GLint internalformat,
+                  GLsizei width, GLint border, GLenum format,
+                  GLenum type, const GLvoid *pixels )
 {
+   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexImage1D");
 
@@ -1111,12 +1098,13 @@ void gl_TexImage1D( GLcontext *ctx, GLenum target, GLint level,
 }
 
 
-void gl_TexImage2D( GLcontext *ctx, GLenum target, GLint level,
-                    GLint internalformat,
-                    GLsizei width, GLsizei height, GLint border,
-                    GLenum format, GLenum type,
-                    const GLvoid *pixels )
+void
+_mesa_TexImage2D( GLenum target, GLint level, GLint internalformat,
+                  GLsizei width, GLsizei height, GLint border,
+                  GLenum format, GLenum type,
+                  const GLvoid *pixels )
 {
+   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexImage2D");
 
@@ -1186,16 +1174,17 @@ void gl_TexImage2D( GLcontext *ctx, GLenum target, GLint level,
  * Called by the API or display list executor.
  * Note that width and height include the border.
  */
-void gl_TexImage3D( GLcontext *ctx, GLenum target, GLint level,
-                    GLint internalformat,
-                    GLsizei width, GLsizei height, GLsizei depth,
-                    GLint border, GLenum format, GLenum type,
-                    const GLvoid *pixels )
+void
+_mesa_TexImage3D( GLenum target, GLint level, GLint internalformat,
+                  GLsizei width, GLsizei height, GLsizei depth,
+                  GLint border, GLenum format, GLenum type,
+                  const GLvoid *pixels )
 {
+   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexImage3D");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexImage3DEXT");
 
-   if (target==GL_TEXTURE_3D) {
+   if (target==GL_TEXTURE_3D_EXT) {
       struct gl_texture_image *teximage;
       if (texture_error_check( ctx, target, level, internalformat,
                                format, type, 3, width, height, depth,
@@ -1259,9 +1248,11 @@ void gl_TexImage3D( GLcontext *ctx, GLenum target, GLint level,
 
 
 
-void gl_GetTexImage( GLcontext *ctx, GLenum target, GLint level, GLenum format,
-                     GLenum type, GLvoid *pixels )
+void
+_mesa_GetTexImage( GLenum target, GLint level, GLenum format,
+                   GLenum type, GLvoid *pixels )
 {
+   GET_CURRENT_CONTEXT(ctx);
    const struct gl_texture_object *texObj;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexImage");
@@ -1387,11 +1378,13 @@ void gl_GetTexImage( GLcontext *ctx, GLenum target, GLint level, GLenum format,
 
 
 
-void gl_TexSubImage1D( GLcontext *ctx, GLenum target, GLint level,
-                       GLint xoffset, GLsizei width,
-                       GLenum format, GLenum type,
-                       const GLvoid *pixels )
+void
+_mesa_TexSubImage1D( GLenum target, GLint level,
+                     GLint xoffset, GLsizei width,
+                     GLenum format, GLenum type,
+                     const GLvoid *pixels )
 {
+   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_texture_image *destTex;
 
@@ -1454,12 +1447,14 @@ void gl_TexSubImage1D( GLcontext *ctx, GLenum target, GLint level,
 }
 
 
-void gl_TexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
-                       GLint xoffset, GLint yoffset,
-                       GLsizei width, GLsizei height,
-                       GLenum format, GLenum type,
-                       const GLvoid *pixels )
+void
+_mesa_TexSubImage2D( GLenum target, GLint level,
+                     GLint xoffset, GLint yoffset,
+                     GLsizei width, GLsizei height,
+                     GLenum format, GLenum type,
+                     const GLvoid *pixels )
 {
+   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_texture_image *destTex;
 
@@ -1535,12 +1530,14 @@ void gl_TexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
 
 
 
-void gl_TexSubImage3D( GLcontext *ctx, GLenum target, GLint level,
-                       GLint xoffset, GLint yoffset, GLint zoffset,
-                       GLsizei width, GLsizei height, GLsizei depth,
-                       GLenum format, GLenum type,
-                       const GLvoid *pixels )
+void
+_mesa_TexSubImage3D( GLenum target, GLint level,
+                     GLint xoffset, GLint yoffset, GLint zoffset,
+                     GLsizei width, GLsizei height, GLsizei depth,
+                     GLenum format, GLenum type,
+                     const GLvoid *pixels )
 {
+   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_texture_image *destTex;
 
@@ -1647,11 +1644,13 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
 
 
 
-void gl_CopyTexImage1D( GLcontext *ctx, GLenum target, GLint level,
-                        GLenum internalFormat,
-                        GLint x, GLint y,
-                        GLsizei width, GLint border )
+void
+_mesa_CopyTexImage1D( GLenum target, GLint level,
+                      GLenum internalFormat,
+                      GLint x, GLint y,
+                      GLsizei width, GLint border )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexImage1D");
 
    if (!copytexture_error_check(ctx, 1, target, level, internalFormat,
@@ -1661,19 +1660,20 @@ void gl_CopyTexImage1D( GLcontext *ctx, GLenum target, GLint level,
          gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D" );
          return;
       }
-      (*ctx->Exec.TexImage1D)( ctx, target, level, internalFormat, width,
-                               border, GL_RGBA, GL_UNSIGNED_BYTE, image );
+      (*ctx->Exec.TexImage1D)( target, level, internalFormat, width,
+                     border, GL_RGBA, GL_UNSIGNED_BYTE, image );
       FREE(image);
    }
 }
 
 
 
-void gl_CopyTexImage2D( GLcontext *ctx, GLenum target, GLint level,
-                        GLenum internalFormat,
-                        GLint x, GLint y, GLsizei width, GLsizei height,
-                        GLint border )
+void
+_mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
+                      GLint x, GLint y, GLsizei width, GLsizei height,
+                      GLint border )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexImage2D");
 
    if (!copytexture_error_check(ctx, 2, target, level, internalFormat,
@@ -1683,13 +1683,8 @@ void gl_CopyTexImage2D( GLcontext *ctx, GLenum target, GLint level,
          gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D" );
          return;
       }
-      {
-         struct gl_pixelstore_attrib save = ctx->Unpack;
-         ctx->Unpack = defaultPacking;
-         (ctx->Exec.TexImage2D)( ctx, target, level, internalFormat, width,
+      (ctx->Exec.TexImage2D)( target, level, internalFormat, width,
                          height, border, GL_RGBA, GL_UNSIGNED_BYTE, image );
-         ctx->Unpack = save;  /* restore */
-      }
       FREE(image);
    }
 }
@@ -1751,9 +1746,11 @@ copy_tex_sub_image( GLcontext *ctx, struct gl_texture_image *dest,
 
 
 
-void gl_CopyTexSubImage1D( GLcontext *ctx, GLenum target, GLint level,
-                           GLint xoffset, GLint x, GLint y, GLsizei width )
+void
+_mesa_CopyTexSubImage1D( GLenum target, GLint level,
+                         GLint xoffset, GLint x, GLint y, GLsizei width )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexSubImage1D");
 
    if (!copytexsubimage_error_check(ctx, 1, target, level,
@@ -1777,10 +1774,12 @@ void gl_CopyTexSubImage1D( GLcontext *ctx, GLenum target, GLint level,
 
 
 
-void gl_CopyTexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
-                           GLint xoffset, GLint yoffset,
-                           GLint x, GLint y, GLsizei width, GLsizei height )
+void
+_mesa_CopyTexSubImage2D( GLenum target, GLint level,
+                         GLint xoffset, GLint yoffset,
+                         GLint x, GLint y, GLsizei width, GLsizei height )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexSubImage2D");
 
    if (!copytexsubimage_error_check(ctx, 2, target, level,
@@ -1805,10 +1804,12 @@ void gl_CopyTexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
 
 
 
-void gl_CopyTexSubImage3D( GLcontext *ctx, GLenum target, GLint level,
-                           GLint xoffset, GLint yoffset, GLint zoffset,
-                           GLint x, GLint y, GLsizei width, GLsizei height )
+void
+_mesa_CopyTexSubImage3D( GLenum target, GLint level,
+                         GLint xoffset, GLint yoffset, GLint zoffset,
+                         GLint x, GLint y, GLsizei width, GLsizei height )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexSubImage3D");
 
    if (!copytexsubimage_error_check(ctx, 3, target, level,

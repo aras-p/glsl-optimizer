@@ -1,8 +1,8 @@
-/* $Id: pixel.c,v 1.4 1999/11/08 07:36:44 brianp Exp $ */
+/* $Id: pixel.c,v 1.5 1999/11/11 01:22:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,9 +25,6 @@
  */
 
 
-
-
-
 /*
  * glPixelStore, glPixelTransfer, glPixelMap, glPixelZoom, etc.
  */
@@ -36,15 +33,10 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#ifndef XFree86Server
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#else
-#include "GL/xf86glx.h"
-#endif
+#include "glheader.h"
 #include "context.h"
 #include "macros.h"
+#include "mem.h"
 #include "pixel.h"
 #include "types.h"
 #endif
@@ -57,8 +49,10 @@
 
 
 
-void gl_PixelZoom( GLcontext *ctx, GLfloat xfactor, GLfloat yfactor )
+void
+_mesa_PixelZoom( GLfloat xfactor, GLfloat yfactor )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPixelZoom");
 
    ctx->Pixel.ZoomX = xfactor;
@@ -72,12 +66,12 @@ void gl_PixelZoom( GLcontext *ctx, GLfloat xfactor, GLfloat yfactor )
 /**********************************************************************/
 
 
-void gl_PixelStorei( GLcontext *ctx, GLenum pname, GLint param )
+void
+_mesa_PixelStorei( GLenum pname, GLint param )
 {
    /* NOTE: this call can't be compiled into the display list */
-
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPixelStore");
-
 
    switch (pname) {
       case GL_PACK_SWAP_BYTES:
@@ -174,6 +168,11 @@ void gl_PixelStorei( GLcontext *ctx, GLenum pname, GLint param )
 }
 
 
+void
+_mesa_PixelStoref( GLenum pname, GLfloat param )
+{
+   _mesa_PixelStorei( pname, (GLint) param );
+}
 
 
 
@@ -183,11 +182,11 @@ void gl_PixelStorei( GLcontext *ctx, GLenum pname, GLint param )
 
 
 
-void gl_PixelMapfv( GLcontext *ctx,
-                    GLenum map, GLint mapsize, const GLfloat *values )
+void
+_mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
 {
    GLint i;
-
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPixelMapfv");
 
 
@@ -288,10 +287,50 @@ void gl_PixelMapfv( GLcontext *ctx,
 
 
 
-
-
-void gl_GetPixelMapfv( GLcontext *ctx, GLenum map, GLfloat *values )
+void
+_mesa_PixelMapuiv(GLenum map, GLint mapsize, const GLuint *values )
 {
+   GLfloat fvalues[MAX_PIXEL_MAP_TABLE];
+   GLint i;
+   if (map==GL_PIXEL_MAP_I_TO_I || map==GL_PIXEL_MAP_S_TO_S) {
+      for (i=0;i<mapsize;i++) {
+         fvalues[i] = (GLfloat) values[i];
+      }
+   }
+   else {
+      for (i=0;i<mapsize;i++) {
+         fvalues[i] = UINT_TO_FLOAT( values[i] );
+      }
+   }
+   _mesa_PixelMapfv(map, mapsize, fvalues);
+}
+
+
+
+void
+_mesa_PixelMapusv(GLenum map, GLint mapsize, const GLushort *values )
+{
+   GLfloat fvalues[MAX_PIXEL_MAP_TABLE];
+   GLint i;
+   if (map==GL_PIXEL_MAP_I_TO_I || map==GL_PIXEL_MAP_S_TO_S) {
+      for (i=0;i<mapsize;i++) {
+         fvalues[i] = (GLfloat) values[i];
+      }
+   }
+   else {
+      for (i=0;i<mapsize;i++) {
+         fvalues[i] = USHORT_TO_FLOAT( values[i] );
+      }
+   }
+   _mesa_PixelMapfv(map, mapsize, fvalues);
+}
+
+
+
+void
+_mesa_GetPixelMapfv( GLenum map, GLfloat *values )
+{
+   GET_CURRENT_CONTEXT(ctx);
    GLint i;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetPixelMapfv");
@@ -337,8 +376,10 @@ void gl_GetPixelMapfv( GLcontext *ctx, GLenum map, GLfloat *values )
 }
 
 
-void gl_GetPixelMapuiv( GLcontext *ctx, GLenum map, GLuint *values )
+void
+_mesa_GetPixelMapuiv( GLenum map, GLuint *values )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLint i;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetPixelMapfv");
@@ -396,8 +437,10 @@ void gl_GetPixelMapuiv( GLcontext *ctx, GLenum map, GLuint *values )
 }
 
 
-void gl_GetPixelMapusv( GLcontext *ctx, GLenum map, GLushort *values )
+void
+_mesa_GetPixelMapusv( GLenum map, GLushort *values )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLint i;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetPixelMapfv");
@@ -469,8 +512,10 @@ void gl_GetPixelMapusv( GLcontext *ctx, GLenum map, GLushort *values )
  * Implements glPixelTransfer[fi] whether called immediately or from a
  * display list.
  */
-void gl_PixelTransferf( GLcontext *ctx, GLenum pname, GLfloat param )
+void
+_mesa_PixelTransferf( GLenum pname, GLfloat param )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPixelTransfer");
 
 
@@ -531,6 +576,13 @@ void gl_PixelTransferf( GLcontext *ctx, GLenum pname, GLfloat param )
    else {
       ctx->Pixel.ScaleOrBiasRGBA = GL_FALSE;
    }
+}
+
+
+void
+_mesa_PixelTransferi( GLenum pname, GLint param )
+{
+   _mesa_PixelTransferf( pname, (GLfloat) param );
 }
 
 

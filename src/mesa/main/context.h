@@ -1,8 +1,8 @@
-/* $Id: context.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: context.h,v 1.2 1999/11/11 01:22:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,9 +25,6 @@
  */
 
 
-
-
-
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
@@ -35,18 +32,35 @@
 #include "types.h"
 
 
-
 #ifdef THREADS
    /*
     * A seperate GLcontext for each thread
     */
    extern GLcontext *gl_get_thread_context( void );
+
+#define GET_IMMEDIATE struct immediate *IM = (gl_get_thread_context())->input;
+#define SET_IMMEDIATE(ctx, im)		\
+do {					\
+   ctx->input = im;			\
+} while (0)
+
+
 #else
    /*
     * All threads use same pointer to current context.
     */
-   extern GLcontext *CC;
+   extern GLcontext *_mesa_current_context;
    extern struct immediate *CURRENT_INPUT;
+   #define GET_CURRENT_CONTEXT(C)  GLcontext *C = _mesa_current_context
+
+#define GET_IMMEDIATE struct immediate *IM = CURRENT_INPUT
+#define SET_IMMEDIATE(ctx, im)		\
+do {					\
+   ctx->input = im;			\
+   CURRENT_INPUT = im;			\
+} while (0)
+
+
 #endif
 
 
@@ -124,14 +138,18 @@ extern GLcontext *gl_get_current_context(void);
 
 extern void gl_copy_context(const GLcontext *src, GLcontext *dst, GLuint mask);
 
-extern void gl_set_api_table( GLcontext *ctx, const struct gl_api_table *api );
+extern void
+_mesa_swapbuffers(GLcontext *ctx);
+
+extern struct _glapi_table *
+_mesa_get_dispatch(GLcontext *ctx);
 
 
 
 /*
  * GL_MESA_resize_buffers extension
  */
-extern void gl_ResizeBuffersMESA( GLcontext *ctx );
+extern void _mesa_ResizeBuffersMESA( void );
 
 
 
@@ -145,8 +163,6 @@ extern void gl_warning( const GLcontext *ctx, const char *s );
 
 extern void gl_error( GLcontext *ctx, GLenum error, const char *s );
 extern void gl_compile_error( GLcontext *ctx, GLenum error, const char *s );
-
-extern GLenum gl_GetError( GLcontext *ctx );
 
 
 extern void gl_update_state( GLcontext *ctx );

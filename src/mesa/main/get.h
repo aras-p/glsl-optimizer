@@ -1,8 +1,8 @@
-/* $Id: get.h,v 1.2 1999/09/09 23:47:09 brianp Exp $ */
+/* $Id: get.h,v 1.3 1999/11/11 01:22:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,9 +25,6 @@
  */
 
 
-
-
-
 #ifndef GET_H
 #define GET_H
 
@@ -35,17 +32,27 @@
 #include "types.h"
 
 
-extern void gl_GetBooleanv( GLcontext *ctx, GLenum pname, GLboolean *params );
+extern void
+_mesa_GetBooleanv( GLenum pname, GLboolean *params );
 
-extern void gl_GetDoublev( GLcontext *ctx, GLenum pname, GLdouble *params );
+extern void
+_mesa_GetDoublev( GLenum pname, GLdouble *params );
 
-extern void gl_GetFloatv( GLcontext *ctx, GLenum pname, GLfloat *params );
+extern void
+_mesa_GetFloatv( GLenum pname, GLfloat *params );
 
-extern void gl_GetIntegerv( GLcontext *ctx, GLenum pname, GLint *params );
+extern void
+_mesa_GetIntegerv( GLenum pname, GLint *params );
 
-extern void gl_GetPointerv( GLcontext *ctx, GLenum pname, GLvoid **params );
+extern void
+_mesa_GetPointerv( GLenum pname, GLvoid **params );
 
-extern const GLubyte *gl_GetString( GLcontext *ctx, GLenum name );
+extern const GLubyte *
+_mesa_GetString( GLenum name );
+
+extern GLenum
+_mesa_GetError( void );
+
 
 
 #endif

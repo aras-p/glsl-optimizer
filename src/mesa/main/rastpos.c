@@ -1,8 +1,8 @@
-/* $Id: rastpos.c,v 1.3 1999/11/08 15:28:08 brianp Exp $ */
+/* $Id: rastpos.c,v 1.4 1999/11/11 01:22:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,18 +25,10 @@
  */
 
 
-
-
-
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#ifndef XFree86Server
-#include <assert.h>
-#include <math.h>
-#else
-#include "GL/xf86glx.h"
-#endif
+#include "glheader.h"
 #include "clip.h"
 #include "context.h"
 #include "feedback.h"
@@ -54,8 +46,8 @@
 /*
  * Caller:  context->API.RasterPos4f
  */
-void gl_RasterPos4f( GLcontext *ctx,
-                     GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+static void raster_pos4f( GLcontext *ctx,
+                          GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
    GLfloat v[4], eye[4], clip[4], ndc[3], d;
 
@@ -161,69 +153,147 @@ void gl_RasterPos4f( GLcontext *ctx,
 
 
 
-/*
- * This is a MESA extension function.  Pretty much just like glRasterPos
- * except we don't apply the modelview or projection matrices; specify a
- * window coordinate directly.
- * Caller:  context->API.WindowPos4fMESA pointer.
- */
-void gl_windowpos( GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+void
+_mesa_RasterPos2d(GLdouble x, GLdouble y)
 {
-   /* KW: Assume that like rasterpos, this must be outside begin/end.
-    */
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx, "glWindowPosMESA" );
+   _mesa_RasterPos4f(x, y, 0.0F, 1.0F);
+}
 
-   /* set raster position */
-   ctx->Current.RasterPos[0] = x;
-   ctx->Current.RasterPos[1] = y;
-   ctx->Current.RasterPos[2] = CLAMP( z, 0.0F, 1.0F );
-   ctx->Current.RasterPos[3] = w;
+void
+_mesa_RasterPos2f(GLfloat x, GLfloat y)
+{
+   _mesa_RasterPos4f(x, y, 0.0F, 1.0F);
+}
 
-   ctx->Current.RasterPosValid = GL_TRUE;
+void
+_mesa_RasterPos2i(GLint x, GLint y)
+{
+   _mesa_RasterPos4f(x, y, 0.0F, 1.0F);
+}
 
-   /* raster color */
-   if (0 && ctx->Light.Enabled) {
+void
+_mesa_RasterPos2s(GLshort x, GLshort y)
+{
+   _mesa_RasterPos4f(x, y, 0.0F, 1.0F);
+}
 
-      /* KW: I don't see how this can work - would have to take the
-       *     inverse of the projection matrix or the combined
-       *     modelProjection matrix, transform point and normal, and
-       *     do the lighting.  Those inverses are not used for
-       *     anything else.  This is not an object-space lighting
-       *     issue - what this is trying to do is something like
-       *     clip-space or window-space lighting...
-       *
-       *     Anyway, since the implementation was never correct, I'm
-       *     not fixing it now - just use the unlit color. 
-       */
+void
+_mesa_RasterPos3d(GLdouble x, GLdouble y, GLdouble z)
+{
+   _mesa_RasterPos4f(x, y, z, 1.0F);
+}
 
-      /* KW:  As a reprise, we now *do* keep the inverse of the projection
-       *      matrix, so it is not infeasible to try to swim up stream
-       *      in this manner.  I still don't want to implement it,
-       *      however.
-       */
-   }
-   else {
-      /* use current color or index */
-      if (ctx->Visual->RGBAflag) {
-	 UBYTE_RGBA_TO_FLOAT_RGBA(ctx->Current.RasterColor, 
-				  ctx->Current.ByteColor);
-      }
-      else {
-	 ctx->Current.RasterIndex = ctx->Current.Index;
-      }
-   }
+void
+_mesa_RasterPos3f(GLfloat x, GLfloat y, GLfloat z)
+{
+   _mesa_RasterPos4f(x, y, z, 1.0F);
+}
 
-   ctx->Current.RasterDistance = 0.0;
+void
+_mesa_RasterPos3i(GLint x, GLint y, GLint z)
+{
+   _mesa_RasterPos4f(x, y, z, 1.0F);
+}
 
-   {
-      GLuint texSet;
-      for (texSet=0; texSet<MAX_TEXTURE_UNITS; texSet++) {
-         COPY_4FV( ctx->Current.RasterMultiTexCoord[texSet],
-                  ctx->Current.Texcoord[texSet] );
-      }
-   }
+void
+_mesa_RasterPos3s(GLshort x, GLshort y, GLshort z)
+{
+   _mesa_RasterPos4f(x, y, z, 1.0F);
+}
 
-   if (ctx->RenderMode==GL_SELECT) {
-      gl_update_hitflag( ctx, ctx->Current.RasterPos[2] );
-   }
+void
+_mesa_RasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+{
+   _mesa_RasterPos4f(x, y, z, w);
+}
+
+void
+_mesa_RasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   raster_pos4f(ctx, x, y, z, w);
+}
+
+void
+_mesa_RasterPos4i(GLint x, GLint y, GLint z, GLint w)
+{
+   _mesa_RasterPos4f(x, y, z, w);
+}
+
+void
+_mesa_RasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
+{
+   _mesa_RasterPos4f(x, y, z, w);
+}
+
+void
+_mesa_RasterPos2dv(const GLdouble *v)
+{
+   _mesa_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
+}
+
+void
+_mesa_RasterPos2fv(const GLfloat *v)
+{
+   _mesa_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
+}
+
+void
+_mesa_RasterPos2iv(const GLint *v)
+{
+   _mesa_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
+}
+
+void
+_mesa_RasterPos2sv(const GLshort *v)
+{
+   _mesa_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
+}
+
+void
+_mesa_RasterPos3dv(const GLdouble *v)
+{
+   _mesa_RasterPos4f(v[0], v[1], v[2], 1.0F);
+}
+
+void
+_mesa_RasterPos3fv(const GLfloat *v)
+{
+   _mesa_RasterPos4f(v[0], v[1], v[2], 1.0F);
+}
+
+void
+_mesa_RasterPos3iv(const GLint *v)
+{
+   _mesa_RasterPos4f(v[0], v[1], v[2], 1.0F);
+}
+
+void
+_mesa_RasterPos3sv(const GLshort *v)
+{
+   _mesa_RasterPos4f(v[0], v[1], v[2], 1.0F);
+}
+
+void
+_mesa_RasterPos4dv(const GLdouble *v)
+{
+   _mesa_RasterPos4f(v[0], v[1], v[2], v[3]);
+}
+
+void
+_mesa_RasterPos4fv(const GLfloat *v)
+{
+   _mesa_RasterPos4f(v[0], v[1], v[2], v[3]);
+}
+
+void
+_mesa_RasterPos4iv(const GLint *v)
+{
+   _mesa_RasterPos4f(v[0], v[1], v[2], v[3]);
+}
+
+void
+_mesa_RasterPos4sv(const GLshort *v)
+{
+   _mesa_RasterPos4f(v[0], v[1], v[2], v[3]);
 }

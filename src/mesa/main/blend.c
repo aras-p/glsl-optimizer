@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.7 1999/11/08 15:28:08 brianp Exp $ */
+/* $Id: blend.c,v 1.8 1999/11/11 01:22:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,13 +29,7 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#ifndef XFree86Server
-#include <stdio.h>
-#include <assert.h>
-#include <stdlib.h>
-#else
-#include "GL/xf86glx.h"
-#endif
+#include "glheader.h"
 #include "alphabuf.h"
 #include "blend.h"
 #include "context.h"
@@ -47,8 +41,9 @@
 #endif
 
 
-void gl_BlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
+void _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glBlendFunc");
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
@@ -108,9 +103,10 @@ void gl_BlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
 
 /* GL_INGR_blend_func_separate */
 void
-gl_BlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB, GLenum dfactorRGB,
-                      GLenum sfactorA, GLenum dfactorA )
+_mesa_BlendFuncSeparateINGR( GLenum sfactorRGB, GLenum dfactorRGB,
+                             GLenum sfactorA, GLenum dfactorA )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glBlendFuncSeparate");
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
@@ -214,8 +210,10 @@ gl_BlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB, GLenum dfactorRGB,
 
 
 /* This is really an extension function! */
-void gl_BlendEquation( GLcontext *ctx, GLenum mode )
+void
+_mesa_BlendEquationEXT( GLenum mode )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glBlendEquation");
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
@@ -256,9 +254,10 @@ void gl_BlendEquation( GLcontext *ctx, GLenum mode )
 
 
 
-void gl_BlendColor( GLcontext *ctx, GLclampf red, GLclampf green,
-		    GLclampf blue, GLclampf alpha )
+void
+_mesa_BlendColorEXT( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ctx->Color.BlendColor[0] = CLAMP( red,   0.0F, 1.0F );
    ctx->Color.BlendColor[1] = CLAMP( green, 0.0F, 1.0F );
    ctx->Color.BlendColor[2] = CLAMP( blue,  0.0F, 1.0F );

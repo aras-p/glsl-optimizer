@@ -1,8 +1,8 @@
-/* $Id: stencil.c,v 1.8 1999/11/08 15:28:08 brianp Exp $ */
+/* $Id: stencil.c,v 1.9 1999/11/11 01:22:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,19 +25,12 @@
  */
 
 
-/* $XFree86: xc/lib/GL/mesa/src/stencil.c,v 1.3 1999/04/04 00:20:32 dawes Exp $ */
-
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#ifndef XFree86Server
-#include <stdlib.h>
-#include <string.h>
-#else
-#include "GL/xf86glx.h"
-#endif
+#include "glheader.h"
 #include "context.h"
-#include "macros.h"
+#include "mem.h"
 #include "pb.h"
 #include "stencil.h"
 #include "types.h"
@@ -61,8 +54,10 @@
 #define STENCIL_ADDRESS(X,Y)  (ctx->Buffer->Stencil + ctx->Buffer->Width * (Y) + (X))
 
 
-void gl_ClearStencil( GLcontext *ctx, GLint s )
+void
+_mesa_ClearStencil( GLint s )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glClearStencil");
    ctx->Stencil.Clear = (GLstencil) s;
 
@@ -73,8 +68,10 @@ void gl_ClearStencil( GLcontext *ctx, GLint s )
 
 
 
-void gl_StencilFunc( GLcontext *ctx, GLenum func, GLint ref, GLuint mask )
+void
+_mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLint maxref;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glStencilFunc");
@@ -106,8 +103,10 @@ void gl_StencilFunc( GLcontext *ctx, GLenum func, GLint ref, GLuint mask )
 
 
 
-void gl_StencilMask( GLcontext *ctx, GLuint mask )
+void
+_mesa_StencilMask( GLuint mask )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glStencilMask");
    ctx->Stencil.WriteMask = (GLstencil) mask;
 
@@ -118,8 +117,10 @@ void gl_StencilMask( GLcontext *ctx, GLuint mask )
 
 
 
-void gl_StencilOp( GLcontext *ctx, GLenum fail, GLenum zfail, GLenum zpass )
+void
+_mesa_StencilOp( GLenum fail, GLenum zfail, GLenum zpass )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glStencilOp");
    switch (fail) {
       case GL_KEEP:
@@ -1061,7 +1062,7 @@ void gl_alloc_stencil_buffer( GLcontext *ctx )
    ctx->Buffer->Stencil = (GLstencil *) MALLOC(buffersize * sizeof(GLstencil));
    if (!ctx->Buffer->Stencil) {
       /* out of memory */
-      gl_set_enable( ctx, GL_STENCIL_TEST, GL_FALSE );
+      _mesa_set_enable( ctx, GL_STENCIL_TEST, GL_FALSE );
       gl_error( ctx, GL_OUT_OF_MEMORY, "gl_alloc_stencil_buffer" );
    }
 }

@@ -1,8 +1,8 @@
-/* $Id: attrib.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: attrib.h,v 1.2 1999/11/11 01:22:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,9 +25,6 @@
  */
 
 
-
-
-
 #ifndef ATTRIB_H
 #define ATTRIB_h
 
@@ -42,6 +39,19 @@ extern void gl_PopAttrib( GLcontext* ctx );
 extern void gl_PushClientAttrib( GLcontext *ctx, GLbitfield mask );
 
 extern void gl_PopClientAttrib( GLcontext *ctx );
+
+
+extern void
+_mesa_PushAttrib( GLbitfield mask );
+
+extern void
+_mesa_PopAttrib( void );
+
+extern void
+_mesa_PushClientAttrib( GLbitfield mask );
+
+extern void
+_mesa_PopClientAttrib( void );
 
 
 #endif

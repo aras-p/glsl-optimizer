@@ -1,4 +1,4 @@
-/* $Id: image.h,v 1.2 1999/11/03 17:27:05 brianp Exp $ */
+/* $Id: image.h,v 1.3 1999/11/11 01:22:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,14 +25,14 @@
  */
 
 
-
-
-
 #ifndef IMAGE_H
 #define IMAGE_H
 
 
 #include "types.h"
+
+
+extern struct gl_pixelstore_attrib _mesa_native_packing;
 
 
 extern void gl_flip_bytes( GLubyte *p, GLuint n );
@@ -61,33 +61,16 @@ gl_pixel_addr_in_image( const struct gl_pixelstore_attrib *packing,
                         GLint img, GLint row, GLint column );
 
 
-extern struct gl_image *
-gl_unpack_bitmap( GLcontext *ctx, GLsizei width, GLsizei height,
-                  const GLubyte *bitmap,
-                  const struct gl_pixelstore_attrib *packing );
+extern void
+gl_unpack_polygon_stipple( const GLcontext *ctx,
+                           const GLubyte *pattern,
+                           GLuint dest[32] );
 
 
-extern void gl_unpack_polygon_stipple( const GLcontext *ctx,
-                                       const GLubyte *pattern,
-                                       GLuint dest[32] );
-
-
-extern void gl_pack_polygon_stipple( const GLcontext *ctx,
-                                     const GLuint pattern[32],
-                                     GLubyte *dest );
-
-
-extern struct gl_image *
-gl_unpack_image( GLcontext *ctx, GLint width, GLint height,
-                 GLenum srcFormat, GLenum srcType, const GLvoid *pixels,
-                 const struct gl_pixelstore_attrib *packing );
-
-
-
-struct gl_image *
-gl_unpack_image3D( GLcontext *ctx, GLint width, GLint height,GLint depth,
-                   GLenum srcFormat, GLenum srcType, const GLvoid *pixels,
-                   const struct gl_pixelstore_attrib *packing );
+extern void
+gl_pack_polygon_stipple( const GLcontext *ctx,
+                         const GLuint pattern[32],
+                         GLubyte *dest );
 
 
 extern void
@@ -96,19 +79,6 @@ gl_pack_rgba_span( const GLcontext *ctx,
                    GLenum format, GLenum type, GLvoid *dest,
                    const struct gl_pixelstore_attrib *packing,
                    GLboolean applyTransferOps );
-
-
-extern void gl_free_image( struct gl_image *image );
-
-
-extern GLboolean gl_image_error_test( GLcontext *ctx,
-                                      const struct gl_image *image,
-                                      const char *msg );
-
-
-/*
- * New (3.3) functions
- */
 
 
 extern void
@@ -127,10 +97,31 @@ _mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
                          const struct gl_pixelstore_attrib *unpacking,
                          GLboolean applyTransferOps );
 
+
+extern void
+_mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
+                           GLenum dstType, GLvoid *dest,
+                           GLenum srcType, const GLvoid *source,
+                           const struct gl_pixelstore_attrib *unpacking,
+                           GLboolean applyTransferOps );
+
+
+extern void
+_mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
+                         GLenum srcType, const GLvoid *source,
+                         const struct gl_pixelstore_attrib *unpacking,
+                         GLboolean applyTransferOps );
+
+
 extern void *
 _mesa_unpack_image( GLsizei width, GLsizei height, GLsizei depth,
                     GLenum format, GLenum type, const GLvoid *pixels,
                     const struct gl_pixelstore_attrib *unpack );
+
+
+extern GLvoid *
+_mesa_unpack_bitmap( GLint width, GLint height, const GLubyte *pixels,
+                     const struct gl_pixelstore_attrib *packing );
 
 
 #endif

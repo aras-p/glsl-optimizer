@@ -1,8 +1,8 @@
-/* $Id: enable.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: enable.h,v 1.2 1999/11/11 01:22:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,9 +25,6 @@
  */
 
 
-
-
-
 #ifndef ENABLE_H
 #define ENABLE_H
 
@@ -35,17 +32,23 @@
 #include "types.h"
 
 
-extern void gl_set_enable( GLcontext* ctx, GLenum cap, GLboolean state );
+extern void
+_mesa_set_enable( GLcontext* ctx, GLenum cap, GLboolean state );
 
-extern void gl_Disable( GLcontext* ctx, GLenum cap );
+extern void
+_mesa_Disable( GLenum cap );
 
-extern void gl_Enable( GLcontext* ctx, GLenum cap );
+extern void
+_mesa_Enable( GLenum cap );
 
-extern GLboolean gl_IsEnabled( GLcontext* ctx, GLenum cap );
+extern GLboolean
+_mesa_IsEnabled( GLenum cap );
 
-extern void gl_EnableClientState( GLcontext *ctx, GLenum cap );
+extern void
+_mesa_EnableClientState( GLenum cap );
 
-extern void gl_DisableClientState( GLcontext *ctx, GLenum cap );
+extern void
+_mesa_DisableClientState( GLenum cap );
 
 
 #endif

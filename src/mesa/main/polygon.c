@@ -1,8 +1,8 @@
-/* $Id: polygon.c,v 1.6 1999/11/08 15:28:08 brianp Exp $ */
+/* $Id: polygon.c,v 1.7 1999/11/11 01:22:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,31 +25,25 @@
  */
 
 
-/* $XFree86: xc/lib/GL/mesa/src/polygon.c,v 1.3 1999/04/04 00:20:29 dawes Exp $ */
-
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#ifndef XFree86Server
-#include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#else
-#include "GL/xf86glx.h"
-#endif
+#include "glheader.h"
 #include "context.h"
 #include "image.h"
 #include "enums.h"
 #include "macros.h"
+#include "mem.h"
 #include "polygon.h"
 #include "types.h"
 #endif
 
 
 
-void gl_CullFace( GLcontext *ctx, GLenum mode )
+void
+_mesa_CullFace( GLenum mode )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCullFace");
 
    if (MESA_VERBOSE&VERBOSE_API)
@@ -69,8 +63,10 @@ void gl_CullFace( GLcontext *ctx, GLenum mode )
 
 
 
-void gl_FrontFace( GLcontext *ctx, GLenum mode )
+void
+_mesa_FrontFace( GLenum mode )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glFrontFace");
 
    if (MESA_VERBOSE&VERBOSE_API)
@@ -91,8 +87,10 @@ void gl_FrontFace( GLcontext *ctx, GLenum mode )
 
 
 
-void gl_PolygonMode( GLcontext *ctx, GLenum face, GLenum mode )
+void
+_mesa_PolygonMode( GLenum face, GLenum mode )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPolygonMode");
 
    if (MESA_VERBOSE&VERBOSE_API)
@@ -137,8 +135,11 @@ void gl_PolygonMode( GLcontext *ctx, GLenum face, GLenum mode )
 /*
  * NOTE:  stipple pattern has already been unpacked.
  */
-void gl_PolygonStipple( GLcontext *ctx, const GLuint pattern[32] )
+void
+_mesa_PolygonStipple( const GLubyte *mask )
 {
+   GET_CURRENT_CONTEXT(ctx);
+   GLuint *pattern = (GLuint *) mask;  /* XXX verify */
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPolygonStipple");
 
    if (MESA_VERBOSE&VERBOSE_API)
@@ -153,8 +154,10 @@ void gl_PolygonStipple( GLcontext *ctx, const GLuint pattern[32] )
 
 
 
-void gl_GetPolygonStipple( GLcontext *ctx, GLubyte *dest )
+void
+_mesa_GetPolygonStipple( GLubyte *dest )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPolygonOffset");
 
    if (MESA_VERBOSE&VERBOSE_API)
@@ -165,9 +168,10 @@ void gl_GetPolygonStipple( GLcontext *ctx, GLubyte *dest )
 
 
 
-void gl_PolygonOffset( GLcontext *ctx,
-                       GLfloat factor, GLfloat units )
+void
+_mesa_PolygonOffset( GLfloat factor, GLfloat units )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPolygonOffset");
 
    if (MESA_VERBOSE&VERBOSE_API)
@@ -175,5 +179,12 @@ void gl_PolygonOffset( GLcontext *ctx,
 
    ctx->Polygon.OffsetFactor = factor;
    ctx->Polygon.OffsetUnits = units;
+}
+
+
+void
+_mesa_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
+{
+   _mesa_PolygonOffset(factor, bias * DEPTH_SCALE );
 }
 

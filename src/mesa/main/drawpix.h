@@ -1,8 +1,8 @@
-/* $Id: drawpix.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: drawpix.h,v 1.2 1999/11/11 01:22:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,9 +25,6 @@
  */
 
 
-
-
-
 #ifndef DRAWPIXELS_H
 #define DRAWPIXELS_H
 
@@ -35,20 +32,9 @@
 #include "types.h"
 
 
-extern GLboolean
-gl_direct_DrawPixels( GLcontext *ctx, 
-                      const struct gl_pixelstore_attrib *unpack,
-                      GLsizei width, GLsizei height,
-                      GLenum format, GLenum type, const GLvoid *pixels );
-
-
-#if 000
-extern void gl_DrawPixels( GLcontext *ctx, GLsizei width, GLsizei height,
-                           GLenum format, GLenum type, const GLvoid *pixels );
-#endif
-
-
-extern void gl_DrawPixels( GLcontext *ctx, struct gl_image *image );
+extern void
+_mesa_DrawPixels( GLsizei width, GLsizei height,
+                  GLenum format, GLenum type, const GLvoid *pixels );
 
 
 #endif

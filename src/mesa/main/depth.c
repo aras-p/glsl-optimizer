@@ -1,8 +1,8 @@
-/* $Id: depth.c,v 1.8 1999/11/08 07:36:43 brianp Exp $ */
+/* $Id: depth.c,v 1.9 1999/11/11 01:22:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -24,28 +24,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-/* $XFree86: xc/lib/GL/mesa/src/depth.c,v 1.3 1999/04/04 00:20:22 dawes Exp $ */
-
-/*
- * Depth buffer functions
- */
-
-#include <stdlib.h>
-
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#ifndef XFree86Server
-#include <stdio.h>
-#include <string.h>
-#else
-#include "GL/xf86glx.h"
-#endif
+#include "glheader.h"
 #include "context.h"
 #include "enums.h"
 #include "depth.h"
-#include "macros.h"
+#include "mem.h"
 #include "types.h"
 #endif
 
@@ -57,8 +43,10 @@
 
 
 
-void gl_ClearDepth( GLcontext* ctx, GLclampd depth )
+void
+_mesa_ClearDepth( GLclampd depth )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glClearDepth");
    ctx->Depth.Clear = (GLfloat) CLAMP( depth, 0.0, 1.0 );
    if (ctx->Driver.ClearDepth)
@@ -67,8 +55,10 @@ void gl_ClearDepth( GLcontext* ctx, GLclampd depth )
 
 
 
-void gl_DepthFunc( GLcontext* ctx, GLenum func )
+void
+_mesa_DepthFunc( GLenum func )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glDepthFunc");
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
@@ -108,8 +98,10 @@ void gl_DepthFunc( GLcontext* ctx, GLenum func )
 
 
 
-void gl_DepthMask( GLcontext* ctx, GLboolean flag )
+void
+_mesa_DepthMask( GLboolean flag )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glDepthMask");
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))

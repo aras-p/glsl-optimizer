@@ -1,8 +1,8 @@
-/* $Id: light.c,v 1.8 1999/11/10 06:29:44 keithw Exp $ */
+/* $Id: light.c,v 1.9 1999/11/11 01:22:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,27 +25,16 @@
  */
 
 
-
-
-
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#include <float.h>
-#ifndef XFree86Server
-#include <assert.h>
-#include <float.h>
-#include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-#else
-#include "GL/xf86glx.h"
-#endif
+#include "glheader.h"
 #include "context.h"
 #include "enums.h"
 #include "light.h"
 #include "macros.h"
 #include "matrix.h"
+#include "mem.h"
 #include "mmath.h"
 #include "simple_list.h"
 #include "types.h"
@@ -55,46 +44,50 @@
 
 
 
-void gl_ShadeModel( GLcontext *ctx, GLenum mode )
+void
+_mesa_ShadeModel( GLenum mode )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glShadeModel");
 
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glShadeModel %s\n", gl_lookup_enum_by_nr(mode));
 
-
-   switch (mode) {
-   case GL_FLAT:
-   case GL_SMOOTH:
+   if (mode == GL_FLAT || mode == GL_SMOOTH) {
       if (ctx->Light.ShadeModel!=mode) {
-	 ctx->Light.ShadeModel = mode;
-	 ctx->TriangleCaps ^= DD_FLATSHADE;
-	 ctx->NewState |= NEW_RASTER_OPS;
+         ctx->Light.ShadeModel = mode;
+         ctx->TriangleCaps ^= DD_FLATSHADE;
+         ctx->NewState |= NEW_RASTER_OPS;
+         if (ctx->Driver.ShadeModel) 
+            (*ctx->Driver.ShadeModel)( ctx, mode );
       }
-      break;
-   default:
+   }
+   else {
       gl_error( ctx, GL_INVALID_ENUM, "glShadeModel" );
    }
-
-   if (ctx->Driver.ShadeModel) 
-      (*ctx->Driver.ShadeModel)( ctx, mode );
 }
 
 
 
-void gl_Lightfv( GLcontext *ctx,
-                 GLenum light, GLenum pname, const GLfloat *params,
-                 GLint nparams )
+void
+_mesa_Lightf( GLenum light, GLenum pname, GLfloat param )
 {
-   GLint l;
+   _mesa_Lightfv( light, pname, &param );
+}
 
-   (void) nparams;
+
+void
+_mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLint l;
+   GLint nParams;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glLight");
 
    l = (GLint) (light - GL_LIGHT0);
 
-   if (l<0 || l>=MAX_LIGHTS) {
+   if (l < 0 || l >= MAX_LIGHTS) {
       gl_error( ctx, GL_INVALID_ENUM, "glLight" );
       return;
    }
@@ -102,18 +95,22 @@ void gl_Lightfv( GLcontext *ctx,
    switch (pname) {
       case GL_AMBIENT:
          COPY_4V( ctx->Light.Light[l].Ambient, params );
+         nParams = 4;
          break;
       case GL_DIFFUSE:
          COPY_4V( ctx->Light.Light[l].Diffuse, params );
+         nParams = 4;
          break;
       case GL_SPECULAR:
          COPY_4V( ctx->Light.Light[l].Specular, params );
+         nParams = 4;
          break;
       case GL_POSITION:
 	 /* transform position by ModelView matrix */
 	 TRANSFORM_POINT( ctx->Light.Light[l].EyePosition, 
 			  ctx->ModelView.m,
                           params );
+         nParams = 4;
          break;
       case GL_SPOT_DIRECTION:
 	 /* transform direction by inverse modelview */
@@ -123,6 +120,7 @@ void gl_Lightfv( GLcontext *ctx,
 	 TRANSFORM_NORMAL( ctx->Light.Light[l].EyeDirection,
 			   params,
 			   ctx->ModelView.inv );
+         nParams = 3;
          break;
       case GL_SPOT_EXPONENT:
          if (params[0]<0.0 || params[0]>128.0) {
@@ -133,6 +131,7 @@ void gl_Lightfv( GLcontext *ctx,
             ctx->Light.Light[l].SpotExponent = params[0];
             gl_compute_spot_exp_table( &ctx->Light.Light[l] );
          }
+         nParams = 1;
          break;
       case GL_SPOT_CUTOFF:
          if ((params[0]<0.0 || params[0]>90.0) && params[0]!=180.0) {
@@ -143,6 +142,7 @@ void gl_Lightfv( GLcontext *ctx,
          ctx->Light.Light[l].CosCutoff = cos(params[0]*DEG2RAD);
          if (ctx->Light.Light[l].CosCutoff < 0) 
 	    ctx->Light.Light[l].CosCutoff = 0;
+         nParams = 1;
          break;
       case GL_CONSTANT_ATTENUATION:
          if (params[0]<0.0) {
@@ -150,6 +150,7 @@ void gl_Lightfv( GLcontext *ctx,
             return;
          }
          ctx->Light.Light[l].ConstantAttenuation = params[0];
+         nParams = 1;
          break;
       case GL_LINEAR_ATTENUATION:
          if (params[0]<0.0) {
@@ -157,6 +158,7 @@ void gl_Lightfv( GLcontext *ctx,
             return;
          }
          ctx->Light.Light[l].LinearAttenuation = params[0];
+         nParams = 1;
          break;
       case GL_QUADRATIC_ATTENUATION:
          if (params[0]<0.0) {
@@ -164,23 +166,73 @@ void gl_Lightfv( GLcontext *ctx,
             return;
          }
          ctx->Light.Light[l].QuadraticAttenuation = params[0];
+         nParams = 1;
          break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glLight" );
-         break;
+         return;
    }
 
    if (ctx->Driver.Lightfv)
-      ctx->Driver.Lightfv( ctx, light, pname, params, nparams );
+      ctx->Driver.Lightfv( ctx, light, pname, params, nParams );
 
    ctx->NewState |= NEW_LIGHTING;
 }
 
 
-
-void gl_GetLightfv( GLcontext *ctx,
-                    GLenum light, GLenum pname, GLfloat *params )
+void
+_mesa_Lighti( GLenum light, GLenum pname, GLint param )
 {
+   _mesa_Lightiv( light, pname, &param );
+}
+
+
+void
+_mesa_Lightiv( GLenum light, GLenum pname, const GLint *params )
+{
+   GLfloat fparam[4];
+
+   switch (pname) {
+      case GL_AMBIENT:
+      case GL_DIFFUSE:
+      case GL_SPECULAR:
+         fparam[0] = INT_TO_FLOAT( params[0] );
+         fparam[1] = INT_TO_FLOAT( params[1] );
+         fparam[2] = INT_TO_FLOAT( params[2] );
+         fparam[3] = INT_TO_FLOAT( params[3] );
+         break;
+      case GL_POSITION:
+         fparam[0] = (GLfloat) params[0];
+         fparam[1] = (GLfloat) params[1];
+         fparam[2] = (GLfloat) params[2];
+         fparam[3] = (GLfloat) params[3];
+         break;
+      case GL_SPOT_DIRECTION:
+         fparam[0] = (GLfloat) params[0];
+         fparam[1] = (GLfloat) params[1];
+         fparam[2] = (GLfloat) params[2];
+         break;
+      case GL_SPOT_EXPONENT:
+      case GL_SPOT_CUTOFF:
+      case GL_CONSTANT_ATTENUATION:
+      case GL_LINEAR_ATTENUATION:
+      case GL_QUADRATIC_ATTENUATION:
+         fparam[0] = (GLfloat) params[0];
+         break;
+      default:
+         /* error will be caught later in gl_Lightfv */
+         ;
+   }
+
+   _mesa_Lightfv( light, pname, fparam );
+}
+
+
+
+void
+_mesa_GetLightfv( GLenum light, GLenum pname, GLfloat *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
    GLint l = (GLint) (light - GL_LIGHT0);
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetLight");
@@ -229,8 +281,10 @@ void gl_GetLightfv( GLcontext *ctx,
 
 
 
-void gl_GetLightiv( GLcontext *ctx, GLenum light, GLenum pname, GLint *params )
+void
+_mesa_GetLightiv( GLenum light, GLenum pname, GLint *params )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLint l = (GLint) (light - GL_LIGHT0);
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetLight");
@@ -298,9 +352,11 @@ void gl_GetLightiv( GLcontext *ctx, GLenum light, GLenum pname, GLint *params )
 /**********************************************************************/
 
 
-void gl_LightModelfv( GLcontext *ctx, GLenum pname, const GLfloat *params )
+void
+_mesa_LightModelfv( GLenum pname, const GLfloat *params )
 {
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glLightModel");
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glLightModelfv");
 
    switch (pname) {
       case GL_LIGHT_MODEL_AMBIENT:
@@ -343,6 +399,46 @@ void gl_LightModelfv( GLcontext *ctx, GLenum pname, const GLfloat *params )
    ctx->NewState |= NEW_LIGHTING;
 }
 
+
+void
+_mesa_LightModeliv( GLenum pname, const GLint *params )
+{
+   GLfloat fparam[4];
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glLightModeliv");
+
+   switch (pname) {
+      case GL_LIGHT_MODEL_AMBIENT:
+         fparam[0] = INT_TO_FLOAT( params[0] );
+         fparam[1] = INT_TO_FLOAT( params[1] );
+         fparam[2] = INT_TO_FLOAT( params[2] );
+         fparam[3] = INT_TO_FLOAT( params[3] );
+         break;
+      case GL_LIGHT_MODEL_LOCAL_VIEWER:
+      case GL_LIGHT_MODEL_TWO_SIDE:
+      case GL_LIGHT_MODEL_COLOR_CONTROL:
+         fparam[0] = (GLfloat) params[0];
+         break;
+      default:
+         /* Error will be caught later in gl_LightModelfv */
+         ;
+   }
+   _mesa_LightModelfv( pname, fparam );
+}
+
+
+void
+_mesa_LightModeli( GLenum pname, GLint param )
+{
+   _mesa_LightModeliv( pname, &param );
+}
+
+
+void
+_mesa_LightModelf( GLenum pname, GLfloat param )
+{
+   _mesa_LightModelfv( pname, &param );
+}
 
 
 
@@ -569,11 +665,11 @@ void gl_update_color_material( GLcontext *ctx,
    GLfloat tmp[4], color[4];
 
    UBYTE_RGBA_TO_FLOAT_RGBA( color, rgba );
-
+   
    if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
       fprintf(stderr, "gl_update_color_material, mask %x\n", bitmask);
 
-   
+
    if (bitmask & FRONT_AMBIENT_BIT) {
       struct gl_material *mat = &ctx->Light.Material[0];
       SUB_3V( tmp, color, mat->Ambient );
@@ -676,8 +772,10 @@ void gl_update_color_material( GLcontext *ctx,
 
 
 
-void gl_ColorMaterial( GLcontext *ctx, GLenum face, GLenum mode )
+void
+_mesa_ColorMaterial( GLenum face, GLenum mode )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLuint bitmask;
    GLuint legal = (FRONT_EMISSION_BIT | BACK_EMISSION_BIT |
 		   FRONT_SPECULAR_BIT | BACK_SPECULAR_BIT |
@@ -705,12 +803,21 @@ void gl_ColorMaterial( GLcontext *ctx, GLenum face, GLenum mode )
 
 
 
+
+void
+_mesa_Materialf( GLenum face, GLenum pname, GLfloat param )
+{
+   _mesa_Materialfv( face, pname, &param );
+}
+
+
 /* KW:  This is now called directly (ie by name) from the glMaterial* 
  *      API functions.
  */
-void gl_Materialfv( GLcontext *ctx,
-                    GLenum face, GLenum pname, const GLfloat *params )
+void
+_mesa_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
 {
+   GET_CURRENT_CONTEXT(ctx);
    struct immediate *IM;
    struct gl_material *mat;
    GLuint bitmask;
@@ -735,6 +842,7 @@ void gl_Materialfv( GLcontext *ctx,
       IM->Flag[count] |= VERT_MATERIAL;
       IM->MaterialMask[count] = 0;      
    }
+
 
    IM->MaterialMask[count] |= bitmask;
    mat = IM->Material[count];
@@ -784,11 +892,48 @@ void gl_Materialfv( GLcontext *ctx,
 }
 
 
-
-
-void gl_GetMaterialfv( GLcontext *ctx,
-                       GLenum face, GLenum pname, GLfloat *params )
+void
+_mesa_Materiali(GLenum face, GLenum pname, GLint param )
 {
+   _mesa_Materialiv(face, pname, &param);
+}
+
+
+void
+_mesa_Materialiv(GLenum face, GLenum pname, const GLint *params )
+{
+   GLfloat fparam[4];
+   switch (pname) {
+      case GL_AMBIENT:
+      case GL_DIFFUSE:
+      case GL_SPECULAR:
+      case GL_EMISSION:
+      case GL_AMBIENT_AND_DIFFUSE:
+         fparam[0] = INT_TO_FLOAT( params[0] );
+         fparam[1] = INT_TO_FLOAT( params[1] );
+         fparam[2] = INT_TO_FLOAT( params[2] );
+         fparam[3] = INT_TO_FLOAT( params[3] );
+         break;
+      case GL_SHININESS:
+         fparam[0] = (GLfloat) params[0];
+         break;
+      case GL_COLOR_INDEXES:
+         fparam[0] = (GLfloat) params[0];
+         fparam[1] = (GLfloat) params[1];
+         fparam[2] = (GLfloat) params[2];
+         break;
+      default:
+         /* Error will be caught later in gl_Materialfv */
+         ;
+   }
+   _mesa_Materialfv(face, pname, fparam);
+}
+
+
+void
+_mesa_GetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
    GLuint f;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetMaterialfv");
@@ -831,9 +976,10 @@ void gl_GetMaterialfv( GLcontext *ctx,
 
 
 
-void gl_GetMaterialiv( GLcontext *ctx,
-                       GLenum face, GLenum pname, GLint *params )
+void
+_mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLuint f;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetMaterialiv");

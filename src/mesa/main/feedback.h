@@ -1,8 +1,8 @@
-/* $Id: feedback.h,v 1.2 1999/09/18 20:41:23 keithw Exp $ */
+/* $Id: feedback.h,v 1.3 1999/11/11 01:22:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -23,9 +23,6 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
-
-
 
 
 #ifndef FEEDBACK_H
@@ -52,22 +49,30 @@ extern void gl_feedback_vertex( GLcontext *ctx,
 extern void gl_update_hitflag( GLcontext *ctx, GLfloat z );
 
 
-extern void gl_PassThrough( GLcontext *ctx, GLfloat token );
+extern void
+_mesa_PassThrough( GLfloat token );
 
-extern void gl_FeedbackBuffer( GLcontext *ctx, GLsizei size,
-                               GLenum type, GLfloat *buffer );
+extern void
+_mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer );
 
-extern void gl_SelectBuffer( GLcontext *ctx, GLsizei size, GLuint *buffer );
+extern void
+_mesa_SelectBuffer( GLsizei size, GLuint *buffer );
 
-extern void gl_InitNames( GLcontext *ctx );
+extern void
+_mesa_InitNames( void );
 
-extern void gl_LoadName( GLcontext *ctx, GLuint name );
+extern void
+_mesa_LoadName( GLuint name );
 
-extern void gl_PushName( GLcontext *ctx, GLuint name );
+extern void
+_mesa_PushName( GLuint name );
 
-extern void gl_PopName( GLcontext *ctx );
+extern void
+_mesa_PopName( void );
 
-extern GLint gl_RenderMode( GLcontext *ctx, GLenum mode );
+extern GLint
+_mesa_RenderMode( GLenum mode );
+
 
 extern void gl_feedback_points( GLcontext *ctx, GLuint first, GLuint last );
 extern void gl_feedback_line( GLcontext *ctx, GLuint v1, GLuint v2, GLuint pv );

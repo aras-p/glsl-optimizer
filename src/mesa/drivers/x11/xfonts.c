@@ -1,8 +1,8 @@
-/* $Id: xfonts.c,v 1.2 1999/10/13 18:49:47 brianp Exp $ */
+/* $Id: xfonts.c,v 1.3 1999/11/11 01:29:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  *
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  *
@@ -44,7 +44,7 @@
 #include "GL/xmesa.h"
 #include "context.h"
 #include "fakeglx.h"
-#include "macros.h"
+#include "mem.h"
 #include "xmesaP.h"
 
 /* Some debugging info.  */

@@ -1,8 +1,8 @@
-/* $Id: stencil.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: stencil.h,v 1.2 1999/11/11 01:22:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,9 +25,6 @@
  */
 
 
-
-
-
 #ifndef STENCIL_H
 #define STENCIL_H
 
@@ -35,18 +32,20 @@
 #include "types.h"
 
 
-extern void gl_ClearStencil( GLcontext *ctx, GLint s );
+extern void
+_mesa_ClearStencil( GLint s );
 
 
-extern void gl_StencilFunc( GLcontext *ctx, GLenum func,
-                            GLint ref, GLuint mask );
+extern void
+_mesa_StencilFunc( GLenum func, GLint ref, GLuint mask );
 
 
-extern void gl_StencilMask( GLcontext *ctx, GLuint mask );
+extern void
+_mesa_StencilMask( GLuint mask );
 
 
-extern void gl_StencilOp( GLcontext *ctx, GLenum fail,
-                          GLenum zfail, GLenum zpass );
+extern void
+_mesa_StencilOp( GLenum fail, GLenum zfail, GLenum zpass );
 
 
 

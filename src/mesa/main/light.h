@@ -1,8 +1,8 @@
-/* $Id: light.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: light.h,v 1.2 1999/11/11 01:22:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,9 +25,6 @@
  */
 
 
-
-
-
 #ifndef LIGHT_H
 #define LIGHT_H
 
@@ -42,16 +39,60 @@ struct gl_shine_tab {
 };
 
 
-extern void gl_ShadeModel( GLcontext *ctx, GLenum mode );
+extern void
+_mesa_ShadeModel( GLenum mode );
 
-extern void gl_ColorMaterial( GLcontext *ctx, GLenum face, GLenum mode );
+extern void
+_mesa_ColorMaterial( GLenum face, GLenum mode );
 
-extern void gl_Lightfv( GLcontext *ctx,
-                        GLenum light, GLenum pname, const GLfloat *params,
-                        GLint nparams );
+extern void
+_mesa_Lightf( GLenum light, GLenum pname, GLfloat param );
 
-extern void gl_LightModelfv( GLcontext *ctx,
-                             GLenum pname, const GLfloat *params );
+extern void
+_mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params );
+
+extern void
+_mesa_Lightiv( GLenum light, GLenum pname, const GLint *params );
+
+extern void
+_mesa_Lighti( GLenum light, GLenum pname, GLint param );
+
+extern void
+_mesa_LightModelf( GLenum pname, GLfloat param );
+
+extern void
+_mesa_LightModelfv( GLenum pname, const GLfloat *params );
+
+extern void
+_mesa_LightModeli( GLenum pname, GLint param );
+
+extern void
+_mesa_LightModeliv( GLenum pname, const GLint *params );
+
+extern void
+_mesa_Materialf( GLenum face, GLenum pname, GLfloat param );
+
+extern void
+_mesa_Materialfv( GLenum face, GLenum pname, const GLfloat *params );
+
+extern void
+_mesa_Materiali( GLenum face, GLenum pname, GLint param );
+
+extern void
+_mesa_Materialiv( GLenum face, GLenum pname, const GLint *params );
+
+extern void
+_mesa_GetLightfv( GLenum light, GLenum pname, GLfloat *params );
+
+extern void
+_mesa_GetLightiv( GLenum light, GLenum pname, GLint *params );
+
+extern void
+_mesa_GetMaterialfv( GLenum face, GLenum pname, GLfloat *params );
+
+extern void
+_mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params );
+
 
 
 extern GLuint gl_material_bitmask( GLcontext *ctx, 
@@ -61,25 +102,6 @@ extern GLuint gl_material_bitmask( GLcontext *ctx,
 
 extern void gl_set_material( GLcontext *ctx, GLuint bitmask,
                              const GLfloat *params);
-
-extern void gl_Materialfv( GLcontext *ctx,
-                           GLenum face, GLenum pname, const GLfloat *params );
-
-
-
-extern void gl_GetLightfv( GLcontext *ctx,
-                           GLenum light, GLenum pname, GLfloat *params );
-
-extern void gl_GetLightiv( GLcontext *ctx,
-                           GLenum light, GLenum pname, GLint *params );
-
-
-extern void gl_GetMaterialfv( GLcontext *ctx,
-                              GLenum face, GLenum pname, GLfloat *params );
-
-extern void gl_GetMaterialiv( GLcontext *ctx,
-                              GLenum face, GLenum pname, GLint *params );
-
 
 extern void gl_compute_spot_exp_table( struct gl_light *l );
 

@@ -1,4 +1,4 @@
-/* $Id: clip.h,v 1.2 1999/09/18 20:41:22 keithw Exp $ */
+/* $Id: clip.h,v 1.3 1999/11/11 01:22:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,11 +63,9 @@ extern GLuint gl_userclip_point( GLcontext* ctx, const GLfloat v[] );
 extern void gl_user_cliptest( struct vertex_buffer *VB );
 
 
-extern void gl_ClipPlane( GLcontext* ctx,
-                          GLenum plane, const GLfloat *equation );
+extern void _mesa_ClipPlane( GLenum plane, const GLdouble *equation );
 
-extern void gl_GetClipPlane( GLcontext* ctx,
-                             GLenum plane, GLdouble *equation );
+extern void _mesa_GetClipPlane( GLenum plane, GLdouble *equation );
 
 
 /*

@@ -1,8 +1,8 @@
-/* $Id: eval.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: eval.h,v 1.2 1999/11/11 01:22:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -35,6 +35,9 @@
 extern void gl_init_eval( void );
 
 
+extern GLuint _mesa_evaluator_components( GLenum target );
+
+
 extern void gl_free_control_points( GLcontext *ctx,
                                     GLenum target, GLfloat *data );
 
@@ -58,38 +61,86 @@ extern GLfloat *gl_copy_map_points2d(GLenum target,
                                      const GLdouble *points );
 
 
-extern void gl_Map1f( GLcontext* ctx,
-                      GLenum target, GLfloat u1, GLfloat u2, GLint stride,
-                      GLint order, const GLfloat *points, GLboolean retain );
-
-extern void gl_Map2f( GLcontext* ctx, GLenum target,
-                      GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
-                      GLfloat v1, GLfloat v2, GLint vstride, GLint vorder,
-                      const GLfloat *points, GLboolean retain );
-
-
-
-extern void gl_MapGrid1f( GLcontext* ctx, GLint un, GLfloat u1, GLfloat u2 );
-
-extern void gl_MapGrid2f( GLcontext* ctx,
-                          GLint un, GLfloat u1, GLfloat u2,
-                          GLint vn, GLfloat v1, GLfloat v2 );
-
-extern void gl_GetMapdv( GLcontext* ctx,
-                         GLenum target, GLenum query, GLdouble *v );
-
-extern void gl_GetMapfv( GLcontext* ctx,
-                         GLenum target, GLenum query, GLfloat *v );
-
-extern void gl_GetMapiv( GLcontext* ctx,
-                         GLenum target, GLenum query, GLint *v );
-
-extern void gl_EvalMesh1( GLcontext* ctx, GLenum mode, GLint i1, GLint i2 );
-
-extern void gl_EvalMesh2( GLcontext* ctx, GLenum mode,
-                          GLint i1, GLint i2, GLint j1, GLint j2 );
-
 extern void gl_eval_vb( struct vertex_buffer *VB );
 
+
+extern void
+_mesa_Map1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride,
+             GLint order, const GLfloat *points );
+
+extern void
+_mesa_Map2f( GLenum target,
+             GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
+             GLfloat v1, GLfloat v2, GLint vstride, GLint vorder,
+             const GLfloat *points );
+
+extern void
+_mesa_Map1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
+             GLint order, const GLdouble *points );
+
+extern void
+_mesa_Map2d( GLenum target,
+             GLdouble u1, GLdouble u2, GLint ustride, GLint uorder,
+             GLdouble v1, GLdouble v2, GLint vstride, GLint vorder,
+             const GLdouble *points );
+
+extern void
+_mesa_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 );
+
+extern void
+_mesa_MapGrid1d( GLint un, GLdouble u1, GLdouble u2 );
+
+extern void
+_mesa_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
+                 GLint vn, GLfloat v1, GLfloat v2 );
+
+extern void
+_mesa_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
+                 GLint vn, GLdouble v1, GLdouble v2 );
+
+extern void
+_mesa_GetMapdv( GLenum target, GLenum query, GLdouble *v );
+
+extern void
+_mesa_GetMapfv( GLenum target, GLenum query, GLfloat *v );
+
+extern void
+_mesa_GetMapiv( GLenum target, GLenum query, GLint *v );
+
+extern void
+_mesa_EvalMesh1( GLenum mode, GLint i1, GLint i2 );
+
+extern void
+_mesa_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 );
+
+extern void
+_mesa_EvalCoord1d( GLdouble u );
+
+extern void
+_mesa_EvalCoord1f( GLfloat u );
+
+extern void
+_mesa_EvalCoord1dv( const GLdouble *u );
+
+extern void
+_mesa_EvalCoord1fv( const GLfloat *u );
+
+extern void
+_mesa_EvalCoord2d( GLdouble u, GLdouble v );
+
+extern void
+_mesa_EvalCoord2f( GLfloat u, GLfloat v );
+
+extern void
+_mesa_EvalCoord2dv( const GLdouble *u );
+
+extern void
+_mesa_EvalCoord2fv( const GLfloat *u );
+
+extern void
+_mesa_EvalPoint1( GLint i );
+
+extern void
+_mesa_EvalPoint2( GLint i, GLint j );
 
 #endif

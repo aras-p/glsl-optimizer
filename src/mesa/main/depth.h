@@ -1,9 +1,8 @@
-
-/* $Id: depth.h,v 1.2 1999/10/08 09:27:10 keithw Exp $ */
+/* $Id: depth.h,v 1.3 1999/11/11 01:22:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -24,9 +23,6 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
-
-
 
 
 #ifndef DEPTH_H
@@ -90,10 +86,16 @@ extern void gl_alloc_depth_buffer( GLcontext* ctx );
 extern void gl_clear_depth_buffer( GLcontext* ctx );
 
 
-extern void gl_ClearDepth( GLcontext* ctx, GLclampd depth );
 
-extern void gl_DepthFunc( GLcontext* ctx, GLenum func );
+extern void
+_mesa_ClearDepth( GLclampd depth );
 
-extern void gl_DepthMask( GLcontext* ctx, GLboolean flag );
+extern void
+_mesa_DepthFunc( GLenum func );
+
+
+extern void
+_mesa_DepthMask( GLboolean flag );
+
 
 #endif

@@ -1,8 +1,8 @@
-/* $Id: get.c,v 1.5 1999/10/17 22:36:35 brianp Exp $ */
+/* $Id: get.c,v 1.6 1999/11/11 01:22:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,18 +25,10 @@
  */
 
 
-/* $XFree86: xc/lib/GL/mesa/src/get.c,v 1.3 1999/04/04 00:20:25 dawes Exp $ */
-
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#ifndef XFree86Server
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-#else
-#include "GL/xf86glx.h"
-#endif
+#include "glheader.h"
 #include "context.h"
 #include "enable.h"
 #include "enums.h"
@@ -66,8 +58,10 @@
 
 
 
-void gl_GetBooleanv( GLcontext *ctx, GLenum pname, GLboolean *params )
+void
+_mesa_GetBooleanv( GLenum pname, GLboolean *params )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLuint i;
    GLuint texUnit = ctx->Texture.CurrentUnit;
    GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
@@ -748,13 +742,13 @@ void gl_GetBooleanv( GLcontext *ctx, GLenum pname, GLboolean *params )
 	 *params = INT_TO_BOOL(0);  /* TODO */
 	 break;
       case GL_TEXTURE_1D:
-         *params = gl_IsEnabled( ctx, GL_TEXTURE_1D );
+         *params = _mesa_IsEnabled(GL_TEXTURE_1D );
 	 break;
       case GL_TEXTURE_2D:
-         *params = gl_IsEnabled( ctx, GL_TEXTURE_2D );
+         *params = _mesa_IsEnabled(GL_TEXTURE_2D );
 	 break;
       case GL_TEXTURE_3D:
-         *params = gl_IsEnabled( ctx, GL_TEXTURE_3D );
+         *params = _mesa_IsEnabled(GL_TEXTURE_3D );
 	 break;
       case GL_TEXTURE_BINDING_1D:
          *params = INT_TO_BOOL(textureUnit->CurrentD[1]->Name);
@@ -978,8 +972,10 @@ void gl_GetBooleanv( GLcontext *ctx, GLenum pname, GLboolean *params )
 
 
 
-void gl_GetDoublev( GLcontext *ctx, GLenum pname, GLdouble *params )
+void
+_mesa_GetDoublev( GLenum pname, GLdouble *params )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLuint i;
    GLuint texUnit = ctx->Texture.CurrentUnit;
    GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
@@ -1660,13 +1656,13 @@ void gl_GetDoublev( GLcontext *ctx, GLenum pname, GLdouble *params )
 	 *params = 0.0;   /* TODO */
 	 break;
       case GL_TEXTURE_1D:
-         *params = gl_IsEnabled(ctx, GL_TEXTURE_1D) ? 1.0 : 0.0;
+         *params = _mesa_IsEnabled(GL_TEXTURE_1D) ? 1.0 : 0.0;
 	 break;
       case GL_TEXTURE_2D:
-         *params = gl_IsEnabled(ctx, GL_TEXTURE_2D) ? 1.0 : 0.0;
+         *params = _mesa_IsEnabled(GL_TEXTURE_2D) ? 1.0 : 0.0;
 	 break;
       case GL_TEXTURE_3D:
-         *params = gl_IsEnabled(ctx, GL_TEXTURE_3D) ? 1.0 : 0.0;
+         *params = _mesa_IsEnabled(GL_TEXTURE_3D) ? 1.0 : 0.0;
 	 break;
       case GL_TEXTURE_BINDING_1D:
          *params = (GLdouble) textureUnit->CurrentD[1]->Name;
@@ -1893,8 +1889,10 @@ void gl_GetDoublev( GLcontext *ctx, GLenum pname, GLdouble *params )
 
 
 
-void gl_GetFloatv( GLcontext *ctx, GLenum pname, GLfloat *params )
+void
+_mesa_GetFloatv( GLenum pname, GLfloat *params )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLuint i;
    GLuint texUnit = ctx->Texture.CurrentUnit;
    GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
@@ -2572,13 +2570,13 @@ void gl_GetFloatv( GLcontext *ctx, GLenum pname, GLfloat *params )
 	 *params = 0.0F;  /* TODO */
 	 break;
       case GL_TEXTURE_1D:
-         *params = gl_IsEnabled(ctx, GL_TEXTURE_1D) ? 1.0 : 0.0;
+         *params = _mesa_IsEnabled(GL_TEXTURE_1D) ? 1.0 : 0.0;
 	 break;
       case GL_TEXTURE_2D:
-         *params = gl_IsEnabled(ctx, GL_TEXTURE_2D) ? 1.0 : 0.0;
+         *params = _mesa_IsEnabled(GL_TEXTURE_2D) ? 1.0 : 0.0;
 	 break;
       case GL_TEXTURE_3D:
-         *params = gl_IsEnabled(ctx, GL_TEXTURE_3D) ? 1.0 : 0.0;
+         *params = _mesa_IsEnabled(GL_TEXTURE_3D) ? 1.0 : 0.0;
 	 break;
       case GL_TEXTURE_BINDING_1D:
          *params = (GLfloat) textureUnit->CurrentD[1]->Name;
@@ -2802,8 +2800,10 @@ void gl_GetFloatv( GLcontext *ctx, GLenum pname, GLfloat *params )
 
 
 
-void gl_GetIntegerv( GLcontext *ctx, GLenum pname, GLint *params )
+void
+_mesa_GetIntegerv( GLenum pname, GLint *params )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLuint i;
    GLuint texUnit = ctx->Texture.CurrentUnit;
    GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
@@ -3485,13 +3485,13 @@ void gl_GetIntegerv( GLcontext *ctx, GLenum pname, GLint *params )
 	 *params = 0;  /* TODO */
 	 break;
       case GL_TEXTURE_1D:
-         *params = gl_IsEnabled(ctx, GL_TEXTURE_1D) ? 1 : 0;
+         *params = _mesa_IsEnabled(GL_TEXTURE_1D) ? 1 : 0;
 	 break;
       case GL_TEXTURE_2D:
-         *params = gl_IsEnabled(ctx, GL_TEXTURE_2D) ? 1 : 0;
+         *params = _mesa_IsEnabled(GL_TEXTURE_2D) ? 1 : 0;
 	 break;
       case GL_TEXTURE_3D:
-         *params = gl_IsEnabled(ctx, GL_TEXTURE_3D) ? 1 : 0;
+         *params = _mesa_IsEnabled(GL_TEXTURE_3D) ? 1 : 0;
 	 break;
       case GL_TEXTURE_BINDING_1D:
          *params = textureUnit->CurrentD[1]->Name;
@@ -3725,8 +3725,10 @@ void gl_GetIntegerv( GLcontext *ctx, GLenum pname, GLint *params )
 
 
 
-void gl_GetPointerv( GLcontext *ctx, GLenum pname, GLvoid **params )
+void
+_mesa_GetPointerv( GLenum pname, GLvoid **params )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLuint texUnit = ctx->Texture.CurrentUnit;
    /*GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;*/
 
@@ -3766,11 +3768,13 @@ void gl_GetPointerv( GLcontext *ctx, GLenum pname, GLvoid **params )
 
 
 
-const GLubyte *gl_GetString( GLcontext *ctx, GLenum name )
+const GLubyte *
+_mesa_GetString( GLenum name )
 {
+   GET_CURRENT_CONTEXT(ctx);
    static char result[1000];
    static char *vendor = "Brian Paul";
-   static char *version = "1.2 Mesa 3.1 beta";
+   static char *version = "1.2 Mesa 3.3 beta";
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, "glGetString", 0);
 
@@ -3811,3 +3815,24 @@ const GLubyte *gl_GetString( GLcontext *ctx, GLenum name )
          return NULL;
    }
 }
+
+
+/*
+ * Execute a glGetError command
+ */
+GLenum
+_mesa_GetError( void )
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   GLenum e = ctx->ErrorValue;
+
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL( ctx, "glGetError", (GLenum) 0);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      fprintf(stderr, "glGetError <-- %s\n", gl_lookup_enum_by_nr(e));
+
+   ctx->ErrorValue = (GLenum) GL_NO_ERROR;
+   return e;
+}
+

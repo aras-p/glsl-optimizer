@@ -1,8 +1,8 @@
-/* $Id: extensions.c,v 1.10 1999/11/08 07:36:44 brianp Exp $ */
+/* $Id: extensions.c,v 1.11 1999/11/11 01:22:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,15 +25,16 @@
  */
 
 
-#ifndef XFree86Server
-#include <stdlib.h>
+#ifdef PC_HEADER
+#include "all.h"
 #else
-#include "GL/xf86glx.h"
-#endif
+#include "glheader.h"
 #include "context.h"
 #include "extensions.h"
+#include "mem.h"
 #include "simple_list.h"
 #include "types.h"
+#endif
 
 
 #define MAX_EXT_NAMELEN 80

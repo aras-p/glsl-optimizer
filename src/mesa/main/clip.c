@@ -1,8 +1,8 @@
-/* $Id: clip.c,v 1.4 1999/11/08 07:36:43 brianp Exp $ */
+/* $Id: clip.c,v 1.5 1999/11/11 01:22:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,18 +25,10 @@
  */
 
 
-
-
-
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#ifndef XFree86Server
-#include <string.h>
-#include <stdlib.h>
-#else
-#include "GL/xf86glx.h"
-#endif
+#include "glheader.h"
 #include "clip.h"
 #include "context.h"
 #include "macros.h"
@@ -130,9 +122,17 @@ static clip_interp_func clip_interp_tab[0x40];
 
 
 
-void gl_ClipPlane( GLcontext* ctx, GLenum plane, const GLfloat *equation )
+void
+_mesa_ClipPlane( GLenum plane, const GLdouble *eq )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLint p;
+   GLfloat equation[4];
+
+   equation[0] = eq[0];
+   equation[1] = eq[1];
+   equation[2] = eq[2];
+   equation[3] = eq[3];
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glClipPlane");
 
@@ -183,8 +183,10 @@ void gl_update_userclip( GLcontext *ctx )
    }
 }
 
-void gl_GetClipPlane( GLcontext* ctx, GLenum plane, GLdouble *equation )
+void
+_mesa_GetClipPlane( GLenum plane, GLdouble *equation )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLint p;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetClipPlane");

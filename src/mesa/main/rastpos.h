@@ -1,8 +1,8 @@
-/* $Id: rastpos.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: rastpos.h,v 1.2 1999/11/11 01:22:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,23 +25,84 @@
  */
 
 
-
-
-
 #ifndef RASTPOS_H
 #define RASTPOS_H
 
 
-#include "types.h"
+#include "glheader.h"
 
 
-extern void gl_RasterPos4f( GLcontext *ctx,
-                            GLfloat x, GLfloat y, GLfloat z, GLfloat w );
+extern void
+_mesa_RasterPos2d(GLdouble x, GLdouble y);
 
+extern void
+_mesa_RasterPos2f(GLfloat x, GLfloat y);
 
-extern void gl_windowpos( GLcontext *ctx,
-                          GLfloat x, GLfloat y, GLfloat z, GLfloat w );
+extern void
+_mesa_RasterPos2i(GLint x, GLint y);
 
+extern void
+_mesa_RasterPos2s(GLshort x, GLshort y);
+
+extern void
+_mesa_RasterPos3d(GLdouble x, GLdouble y, GLdouble z);
+
+extern void
+_mesa_RasterPos3f(GLfloat x, GLfloat y, GLfloat z);
+
+extern void
+_mesa_RasterPos3i(GLint x, GLint y, GLint z);
+
+extern void
+_mesa_RasterPos3s(GLshort x, GLshort y, GLshort z);
+
+extern void
+_mesa_RasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+
+extern void
+_mesa_RasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+
+extern void
+_mesa_RasterPos4i(GLint x, GLint y, GLint z, GLint w);
+
+extern void
+_mesa_RasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w);
+
+extern void
+_mesa_RasterPos2dv(const GLdouble *v);
+
+extern void
+_mesa_RasterPos2fv(const GLfloat *v);
+
+extern void
+_mesa_RasterPos2iv(const GLint *v);
+
+extern void
+_mesa_RasterPos2sv(const GLshort *v);
+
+extern void
+_mesa_RasterPos3dv(const GLdouble *v);
+
+extern void
+_mesa_RasterPos3fv(const GLfloat *v);
+
+extern void
+_mesa_RasterPos3iv(const GLint *v);
+
+extern void
+_mesa_RasterPos3sv(const GLshort *v);
+
+extern void
+_mesa_RasterPos4dv(const GLdouble *v);
+
+extern void
+_mesa_RasterPos4fv(const GLfloat *v);
+
+extern void
+_mesa_RasterPos4iv(const GLint *v);
+
+extern void
+_mesa_RasterPos4sv(const GLshort *v);
 
 
 #endif

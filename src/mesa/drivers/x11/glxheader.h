@@ -1,4 +1,4 @@
-/* $Id: fog.h,v 1.2 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: glxheader.h,v 1.1 1999/11/11 01:29:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,40 +25,47 @@
  */
 
 
-#ifndef FOG_H
-#define FOG_H
+#ifndef GLX_HEADER_H
+#define GLX_HEADER_H
 
 
-#include "types.h"
+#ifdef HAVE_CONFIG_H
+#include "conf.h"
+#endif
 
 
-extern void
-_mesa_Fogf(GLenum pname, GLfloat param);
+#include "glheader.h"
 
 
-extern void
-_mesa_Fogi(GLenum pname, GLint param );
+#ifdef XFree86Server
 
+# include "resource.h"
+# include "windowstr.h"
+# include "gcstruct.h"
+# include "GL/xf86glx.h"
+# include "xf86glx_util.h"
 
-extern void
-_mesa_Fogfv(GLenum pname, const GLfloat *params );
+#else
 
-
-extern void
-_mesa_Fogiv(GLenum pname, const GLint *params );
-
-
-
-extern void gl_fog_vertices( struct vertex_buffer *VB );
-
-extern void gl_fog_rgba_pixels( const GLcontext *ctx,
-                                GLuint n, const GLdepth z[],
-                                GLubyte rgba[][4] );
-
-extern void gl_fog_ci_pixels( const GLcontext *ctx,
-                              GLuint n, const GLdepth z[], GLuint indx[] );
-
-
-extern void gl_init_fog( void );
+# ifdef GLX_DIRECT_RENDERING
+#  include "dri_mesaint.h"
+# endif
+# include <X11/Xlib.h>
+# include <X11/Xutil.h>
+# ifdef USE_XSHM  /* was SHM */
+#  include <sys/ipc.h>
+#  include <sys/shm.h>
+#  include <X11/extensions/XShm.h>
+# endif
 
 #endif
+
+
+
+/* this silences a compiler warning on several systems */
+struct timespec;
+struct itimerspec;
+
+
+
+#endif /*GLX_HEADER*/

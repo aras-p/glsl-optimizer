@@ -1,8 +1,8 @@
-/* $Id: macros.h,v 1.6 1999/11/08 15:29:43 brianp Exp $ */
+/* $Id: macros.h,v 1.7 1999/11/11 01:22:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,9 +25,6 @@
  */
 
 
-
-
-
 /*
  * A collection of useful macros.
  */
@@ -36,13 +33,8 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-#ifndef XFree86Server
-#include <assert.h>
-#include <math.h>
-#include <string.h>
-#else
-#include <GL/glx_ansic.h>
-#endif
+
+#include "glheader.h"
 
 
 #ifdef DEBUG
@@ -165,26 +157,26 @@ do {						\
 
 #define ACC_4V( DST, SRC )			\
 do {						\
-      (DST)[0] += (SRC)[0];				\
-      (DST)[1] += (SRC)[1];				\
-      (DST)[2] += (SRC)[2];				\
-      (DST)[3] += (SRC)[3];				\
+      (DST)[0] += (SRC)[0];			\
+      (DST)[1] += (SRC)[1];			\
+      (DST)[2] += (SRC)[2];			\
+      (DST)[3] += (SRC)[3];			\
 } while (0)
 
 #define ACC_SCALE_4V( DST, SRCA, SRCB )		\
 do {						\
-      (DST)[0] += (SRCA)[0] * (SRCB)[0];		\
-      (DST)[1] += (SRCA)[1] * (SRCB)[1];		\
-      (DST)[2] += (SRCA)[2] * (SRCB)[2];		\
-      (DST)[3] += (SRCA)[3] * (SRCB)[3];		\
+      (DST)[0] += (SRCA)[0] * (SRCB)[0];	\
+      (DST)[1] += (SRCA)[1] * (SRCB)[1];	\
+      (DST)[2] += (SRCA)[2] * (SRCB)[2];	\
+      (DST)[3] += (SRCA)[3] * (SRCB)[3];	\
 } while (0)
 
 #define ACC_SCALE_SCALAR_4V( DST, S, SRCB )	\
 do {						\
-      (DST)[0] += S * (SRCB)[0];			\
-      (DST)[1] += S * (SRCB)[1];			\
-      (DST)[2] += S * (SRCB)[2];			\
-      (DST)[3] += S * (SRCB)[3];			\
+      (DST)[0] += S * (SRCB)[0];		\
+      (DST)[1] += S * (SRCB)[1];		\
+      (DST)[2] += S * (SRCB)[2];		\
+      (DST)[3] += S * (SRCB)[3];		\
 } while (0)
 
 #define SCALE_SCALAR_4V( DST, S, SRCB )		\
@@ -478,69 +470,6 @@ do {						\
 /* a close approximation: */
 #define FLOAT_TO_INT(X)		( (GLint) (2147483647.0 * (X)) )
 
-
-
-/*
- * Memory allocation
- * XXX these should probably go into a new glmemory.h file.
- */
-#ifdef DEBUG
-extern void *gl_malloc(size_t bytes);
-extern void *gl_calloc(size_t bytes);
-extern void gl_free(void *ptr);
-#define MALLOC(BYTES)      gl_malloc(BYTES)
-#define CALLOC(BYTES)      gl_calloc(BYTES)
-#define MALLOC_STRUCT(T)   (struct T *) gl_malloc(sizeof(struct T))
-#define CALLOC_STRUCT(T)   (struct T *) gl_calloc(sizeof(struct T))
-#define FREE(PTR)          gl_free(PTR)
-#else
-#define MALLOC(BYTES)      (void *) malloc(BYTES)
-#define CALLOC(BYTES)      (void *) calloc(1, BYTES)
-#define MALLOC_STRUCT(T)   (struct T *) malloc(sizeof(struct T))
-#define CALLOC_STRUCT(T)   (struct T *) calloc(1,sizeof(struct T))
-#define FREE(PTR)          free(PTR)
-#endif
-
-
-/* Memory copy: */
-#ifdef SUNOS4
-#define MEMCPY( DST, SRC, BYTES) \
-	memcpy( (char *) (DST), (char *) (SRC), (int) (BYTES) )
-#else
-#define MEMCPY( DST, SRC, BYTES) \
-	memcpy( (void *) (DST), (void *) (SRC), (size_t) (BYTES) )
-#endif
-
-
-/* Memory set: */
-#ifdef SUNOS4
-#define MEMSET( DST, VAL, N ) \
-	memset( (char *) (DST), (int) (VAL), (int) (N) )
-#else
-#define MEMSET( DST, VAL, N ) \
-	memset( (void *) (DST), (int) (VAL), (size_t) (N) )
-#endif
-
-
-/* MACs and BeOS don't support static larger than 32kb, so... */
-#if defined(macintosh) && !defined(__MRC__)
-  extern char *AGLAlloc(int size);
-  extern void AGLFree(char* ptr);
-#  define DEFARRAY(TYPE,NAME,SIZE)  			TYPE *NAME = (TYPE*)AGLAlloc(sizeof(TYPE)*(SIZE))
-#  define DEFMARRAY(TYPE,NAME,SIZE1,SIZE2)		TYPE (*NAME)[SIZE2] = (TYPE(*)[SIZE2])AGLAlloc(sizeof(TYPE)*(SIZE1)*(SIZE2))
-#  define CHECKARRAY(NAME,CMD)				do {if (!(NAME)) {CMD;}} while (0) 
-#  define UNDEFARRAY(NAME)          			do {if ((NAME)) {AGLFree((char*)NAME);}  }while (0)
-#elif defined(__BEOS__)
-#  define DEFARRAY(TYPE,NAME,SIZE)  			TYPE *NAME = (TYPE*)malloc(sizeof(TYPE)*(SIZE))
-#  define DEFMARRAY(TYPE,NAME,SIZE1,SIZE2)  		TYPE (*NAME)[SIZE2] = (TYPE(*)[SIZE2])malloc(sizeof(TYPE)*(SIZE1)*(SIZE2))
-#  define CHECKARRAY(NAME,CMD)				do {if (!(NAME)) {CMD;}} while (0)
-#  define UNDEFARRAY(NAME)          			do {if ((NAME)) {free((char*)NAME);}  }while (0)
-#else
-#  define DEFARRAY(TYPE,NAME,SIZE)  			TYPE NAME[SIZE]
-#  define DEFMARRAY(TYPE,NAME,SIZE1,SIZE2)		TYPE NAME[SIZE1][SIZE2]
-#  define CHECKARRAY(NAME,CMD)				do {} while(0)
-#  define UNDEFARRAY(NAME)
-#endif
 
 
 /* Some compilers don't like some of Mesa's const usage */

@@ -1,8 +1,8 @@
-/* $Id: config.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: config.h,v 1.2 1999/11/11 01:22:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,10 +25,6 @@
  */
 
 
-
-
-
-
 /*
  * Tunable configuration parameters.
  */
@@ -42,12 +38,10 @@
 #include "conf.h"
 #endif
 
-/*
- *
- * OpenGL implementation limits
- *
- */
 
+/*
+ * OpenGL implementation limits
+ */
 
 /* Maximum modelview matrix stack depth: */
 #define MAX_MODELVIEW_STACK_DEPTH 32
@@ -116,10 +110,9 @@
 #define MAX_ARRAY_LOCK_SIZE 3000
 
 
+
 /*
- *
  * Mesa-specific parameters
- *
  */
 
 
@@ -129,6 +122,9 @@
 #define ACCUM_BITS 16
 
 
+/*
+ * Bits per depth buffer value:  16 or 32
+ */
 #ifdef MESAD3D
    /* Mesa / Direct3D driver only */
    extern float g_DepthScale, g_MaxDepth;
@@ -136,9 +132,6 @@
 #  define DEPTH_SCALE 	g_DepthScale
 #  define MAX_DEPTH 	g_MaxDepth
 #else
-   /*
-    * Bits per depth buffer value:  16 or 32
-    */
 #  define DEPTH_BITS 16
 #  if DEPTH_BITS==16
 #     define MAX_DEPTH 0xffff
@@ -199,19 +192,6 @@
  */
 #define VB_MAX_CLIPPED_VERTS (2 * (6 + MAX_CLIP_PLANES))
 #define VB_SIZE  (VB_MAX + VB_MAX_CLIPPED_VERTS)
-
-
-/*
- *
- * For X11 driver only:
- *
- */
-
-/*
- * When defined, use 6x6x6 dithering instead of 5x9x5.
- * 5x9x5 better for general colors, 6x6x6 better for grayscale.
- */
-/*#define DITHER666*/
 
 
 

@@ -1,8 +1,8 @@
-/* $Id: glx.h,v 1.5 1999/10/27 09:46:07 brianp Exp $ */
+/* $Id: glx.h,v 1.6 1999/11/11 01:27:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -50,38 +50,41 @@ extern "C" {
 
 #define GLX_VERSION_1_1		1
 
+#define GLX_EXTENSION_NAME   "GLX"
+
+
 
 /*
  * Tokens for glXChooseVisual and glXGetConfig:
  */
-enum _GLX_CONFIGS {
-	GLX_USE_GL		= 1,
-	GLX_BUFFER_SIZE		= 2,
-	GLX_LEVEL		= 3,
-	GLX_RGBA		= 4,
-	GLX_DOUBLEBUFFER	= 5, 
-	GLX_STEREO		= 6,
-	GLX_AUX_BUFFERS		= 7,
-	GLX_RED_SIZE		= 8,
-	GLX_GREEN_SIZE		= 9,
-	GLX_BLUE_SIZE		= 10,
-	GLX_ALPHA_SIZE		= 11,
-	GLX_DEPTH_SIZE		= 12,
-	GLX_STENCIL_SIZE	= 13,
-	GLX_ACCUM_RED_SIZE	= 14,
-	GLX_ACCUM_GREEN_SIZE	= 15,
-	GLX_ACCUM_BLUE_SIZE	= 16,
-	GLX_ACCUM_ALPHA_SIZE	= 17,
+#define GLX_USE_GL		1
+#define GLX_BUFFER_SIZE		2
+#define GLX_LEVEL		3
+#define GLX_RGBA		4
+#define GLX_DOUBLEBUFFER	5
+#define GLX_STEREO		6
+#define GLX_AUX_BUFFERS		7
+#define GLX_RED_SIZE		8
+#define GLX_GREEN_SIZE		9
+#define GLX_BLUE_SIZE		10
+#define GLX_ALPHA_SIZE		11
+#define GLX_DEPTH_SIZE		12
+#define GLX_STENCIL_SIZE	13
+#define GLX_ACCUM_RED_SIZE	14
+#define GLX_ACCUM_GREEN_SIZE	15
+#define GLX_ACCUM_BLUE_SIZE	16
+#define GLX_ACCUM_ALPHA_SIZE	17
 
-	/* GLX_EXT_visual_info extension */
-	GLX_X_VISUAL_TYPE_EXT		= 0x22,
-	GLX_TRANSPARENT_TYPE_EXT	= 0x23,
-	GLX_TRANSPARENT_INDEX_VALUE_EXT	= 0x24,
-	GLX_TRANSPARENT_RED_VALUE_EXT	= 0x25,
-	GLX_TRANSPARENT_GREEN_VALUE_EXT	= 0x26,
-	GLX_TRANSPARENT_BLUE_VALUE_EXT	= 0x27,
-	GLX_TRANSPARENT_ALPHA_VALUE_EXT	= 0x28
-};
+
+/* GLX_EXT_visual_info extension */
+#define GLX_X_VISUAL_TYPE_EXT		0x22
+#define GLX_TRANSPARENT_TYPE_EXT	0x23
+#define GLX_TRANSPARENT_INDEX_VALUE_EXT	0x24
+#define GLX_TRANSPARENT_RED_VALUE_EXT	0x25
+#define GLX_TRANSPARENT_GREEN_VALUE_EXT	0x26
+#define GLX_TRANSPARENT_BLUE_VALUE_EXT	0x27
+#define GLX_TRANSPARENT_ALPHA_VALUE_EXT	0x28
+
 
 
 /*

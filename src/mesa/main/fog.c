@@ -1,8 +1,8 @@
-/* $Id: fog.c,v 1.3 1999/11/08 07:36:44 brianp Exp $ */
+/* $Id: fog.c,v 1.4 1999/11/11 01:22:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,17 +25,10 @@
  */
 
 
-/* $XFree86: xc/lib/GL/mesa/src/fog.c,v 1.4 1999/04/04 00:20:24 dawes Exp $ */
-
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#ifndef XFree86Server
-#include <math.h>
-#include <stdlib.h>
-#else
-#include "GL/xf86glx.h"
-#endif
+#include "glheader.h"
 #include "context.h"
 #include "fog.h"
 #include "macros.h"
@@ -45,8 +38,51 @@
 
 
 
-void gl_Fogfv( GLcontext *ctx, GLenum pname, const GLfloat *params )
+void
+_mesa_Fogf(GLenum pname, GLfloat param)
 {
+   _mesa_Fogfv(pname, &param);
+}
+
+
+void
+_mesa_Fogi(GLenum pname, GLint param )
+{
+   GLfloat fparam = (GLfloat) param;
+   _mesa_Fogfv(pname, &fparam);
+}
+
+
+void
+_mesa_Fogiv(GLenum pname, const GLint *params )
+{
+   GLfloat p[4];
+   switch (pname) {
+      case GL_FOG_MODE:
+      case GL_FOG_DENSITY:
+      case GL_FOG_START:
+      case GL_FOG_END:
+      case GL_FOG_INDEX:
+	 p[0] = (GLfloat) *params;
+	 break;
+      case GL_FOG_COLOR:
+	 p[0] = INT_TO_FLOAT( params[0] );
+	 p[1] = INT_TO_FLOAT( params[1] );
+	 p[2] = INT_TO_FLOAT( params[2] );
+	 p[3] = INT_TO_FLOAT( params[3] );
+	 break;
+      default:
+         /* Error will be caught later in gl_Fogfv */
+         ;
+   }
+   _mesa_Fogfv(pname, p);
+}
+
+
+void 
+_mesa_Fogfv( GLenum pname, const GLfloat *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
    GLenum m;
 
    switch (pname) {

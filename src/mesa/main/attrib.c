@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.10 1999/11/08 15:28:08 brianp Exp $ */
+/* $Id: attrib.c,v 1.11 1999/11/11 01:22:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,23 +25,16 @@
  */
 
 
-
-#include <stdlib.h>
-
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#ifndef XFree86Server
-#include <stdio.h>
-#else
-#include "GL/xf86glx.h"
-#endif
+#include "glheader.h"
 #include "attrib.h"
 #include "context.h"
 #include "glmisc.h"
 #include "enable.h"
 #include "enums.h"
-#include "macros.h"
+#include "mem.h"
 #include "simple_list.h"
 #include "texstate.h"
 #include "types.h"
@@ -92,11 +85,7 @@ static void copy_texobj_state( struct gl_texture_object *dest,
    dest->P = src->P;
    dest->M = src->M;
    dest->MinMagThresh = src->MinMagThresh;
-   memcpy( dest->Palette, src->Palette,
-           sizeof(GLubyte) * MAX_TEXTURE_PALETTE_SIZE * 4 );
-   dest->PaletteSize = src->PaletteSize;
-   dest->PaletteIntFormat = src->PaletteIntFormat;
-   dest->PaletteFormat = src->PaletteFormat;
+   dest->Palette = src->Palette;
    dest->Complete = src->Complete;
    dest->SampleFunc = src->SampleFunc;
 }
@@ -431,7 +420,7 @@ void gl_PopAttrib( GLcontext* ctx )
                MEMCPY( &ctx->Color, attr->data,
                        sizeof(struct gl_colorbuffer_attrib) );
                if (ctx->Color.DrawBuffer != oldDrawBuffer) {
-                  gl_DrawBuffer(ctx, ctx->Color.DrawBuffer);
+                  _mesa_DrawBuffer( ctx->Color.DrawBuffer);
                }
                if ((ctx->Color.AlphaFunc != oldAlphaFunc ||
                     ctx->Color.AlphaRef != oldAlphaRef) &&
@@ -471,7 +460,7 @@ void gl_PopAttrib( GLcontext* ctx )
 
 #define TEST_AND_UPDATE(VALUE, NEWVALUE, ENUM)		\
 	if ((VALUE) != (NEWVALUE)) {			\
-	   gl_set_enable( ctx, ENUM, (NEWVALUE) );	\
+	   _mesa_set_enable( ctx, ENUM, (NEWVALUE) );	\
 	}
 
                TEST_AND_UPDATE(ctx->Color.AlphaEnabled, enable->AlphaTest, GL_ALPHA_TEST);
@@ -481,7 +470,7 @@ void gl_PopAttrib( GLcontext* ctx )
                   GLuint i;
                   for (i=0;i<MAX_CLIP_PLANES;i++) {
                      if (ctx->Transform.ClipEnabled[i] != enable->ClipPlane[i])
-                        gl_set_enable( ctx, (GLenum) (GL_CLIP_PLANE0 + i), enable->ClipPlane[i] );
+                        _mesa_set_enable( ctx, (GLenum) (GL_CLIP_PLANE0 + i), enable->ClipPlane[i] );
                   }
                }
                TEST_AND_UPDATE(ctx->Light.ColorMaterialEnabled, enable->ColorMaterial, GL_COLOR_MATERIAL);
@@ -742,8 +731,8 @@ void gl_PopAttrib( GLcontext* ctx )
 	    struct gl_viewport_attrib *v = 
 	       (struct gl_viewport_attrib *)attr->data;
 	    
-	    gl_Viewport( ctx, v->X, v->Y, v->Width, v->Height );
-	    gl_DepthRange( ctx, v->Near, v->Far );
+	    _mesa_Viewport( v->X, v->Y, v->Width, v->Height );
+	    _mesa_DepthRange( v->Near, v->Far );
 	    break;
 	 }
          default:
@@ -856,4 +845,38 @@ void gl_PopClientAttrib( GLcontext *ctx )
 
    ctx->NewState = NEW_ALL;
 }
+
+
+
+void
+_mesa_PushAttrib( GLbitfield mask )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   gl_PushAttrib(ctx, mask);
+}
+
+
+void
+_mesa_PopAttrib( void )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   gl_PopAttrib(ctx);
+}
+
+
+void
+_mesa_PushClientAttrib( GLbitfield mask )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   gl_PushClientAttrib(ctx, mask);
+}
+
+
+void
+_mesa_PopClientAttrib( void )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   gl_PopClientAttrib(ctx);
+}
+
 

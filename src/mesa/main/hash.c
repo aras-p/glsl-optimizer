@@ -1,8 +1,8 @@
-/* $Id: hash.c,v 1.3 1999/10/13 18:42:50 brianp Exp $ */
+/* $Id: hash.c,v 1.4 1999/11/11 01:22:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -25,24 +25,17 @@
  */
 
 
-
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#ifndef XFree86Server
-#include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
-#else
-#include "GL/xf86glx.h"
-#endif
+#include "glheader.h"
 #include "hash.h"
-#include "macros.h"
+#include "mem.h"
 #endif
 
 
 /*
- * Generic hash table.  Only dependency is the GLuint datatype.
+ * Generic hash table.
  *
  * This is used to implement display list and texture object lookup.
  * NOTE: key=0 is illegal.

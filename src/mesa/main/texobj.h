@@ -1,8 +1,8 @@
-/* $Id: texobj.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: texobj.h,v 1.2 1999/11/11 01:22:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -23,9 +23,6 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
-
-
 
 
 #ifndef TEXTOBJ_H
@@ -59,27 +56,30 @@ extern void gl_test_texture_object_completeness( const GLcontext *ctx, struct gl
  * API functions
  */
 
-extern void gl_GenTextures( GLcontext *ctx, GLsizei n, GLuint *textures );
+extern void
+_mesa_GenTextures( GLsizei n, GLuint *textures );
 
 
-extern void gl_DeleteTextures( GLcontext *ctx,
-                               GLsizei n, const GLuint *textures);
+extern void
+_mesa_DeleteTextures( GLsizei n, const GLuint *textures );
 
 
-extern void gl_BindTexture( GLcontext *ctx, GLenum target, GLuint texture );
+extern void
+_mesa_BindTexture( GLenum target, GLuint texture );
 
 
-extern void gl_PrioritizeTextures( GLcontext *ctx,
-                                   GLsizei n, const GLuint *textures,
-                                   const GLclampf *priorities );
+extern void
+_mesa_PrioritizeTextures( GLsizei n, const GLuint *textures,
+                          const GLclampf *priorities );
 
 
-extern GLboolean gl_AreTexturesResident( GLcontext *ctx, GLsizei n,
-                                         const GLuint *textures,
-                                         GLboolean *residences );
+extern GLboolean
+_mesa_AreTexturesResident( GLsizei n, const GLuint *textures,
+                           GLboolean *residences );
 
 
-extern GLboolean gl_IsTexture( GLcontext *ctx, GLuint texture );
+extern GLboolean
+_mesa_IsTexture( GLuint texture );
 
 
 #endif

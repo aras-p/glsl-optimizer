@@ -1,4 +1,4 @@
-/* $Id: texstate.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: texstate.h,v 1.2 1999/11/11 01:22:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,46 +37,80 @@
 
 /*** Called from API ***/
 
-extern void gl_GetTexEnvfv( GLcontext *ctx,
-                            GLenum target, GLenum pname, GLfloat *params );
+extern void
+_mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params );
 
-extern void gl_GetTexEnviv( GLcontext *ctx,
-                            GLenum target, GLenum pname, GLint *params );
+extern void
+_mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params );
 
-extern void gl_GetTexGendv( GLcontext *ctx,
-                            GLenum coord, GLenum pname, GLdouble *params );
+extern void
+_mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params );
 
-extern void gl_GetTexGenfv( GLcontext *ctx,
-                            GLenum coord, GLenum pname, GLfloat *params );
+extern void
+_mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params );
 
-extern void gl_GetTexGeniv( GLcontext *ctx,
-                            GLenum coord, GLenum pname, GLint *params );
+extern void
+_mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params );
 
-extern void gl_GetTexLevelParameterfv( GLcontext *ctx,
-                                       GLenum target, GLint level,
-                                       GLenum pname, GLfloat *params );
+extern void
+_mesa_GetTexLevelParameterfv( GLenum target, GLint level,
+                              GLenum pname, GLfloat *params );
 
-extern void gl_GetTexLevelParameteriv( GLcontext *ctx,
-                                       GLenum target, GLint level,
-                                       GLenum pname, GLint *params );
+extern void
+_mesa_GetTexLevelParameteriv( GLenum target, GLint level,
+                              GLenum pname, GLint *params );
 
-extern void gl_GetTexParameterfv( GLcontext *ctx, GLenum target,
-                                  GLenum pname, GLfloat *params );
+extern void
+_mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params );
 
-extern void gl_GetTexParameteriv( GLcontext *ctx,
-                                  GLenum target, GLenum pname, GLint *params );
-
-
-extern void gl_TexEnvfv( GLcontext *ctx,
-                         GLenum target, GLenum pname, const GLfloat *param );
+extern void
+_mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params );
 
 
-extern void gl_TexParameterfv( GLcontext *ctx, GLenum target, GLenum pname,
-                               const GLfloat *params );
+extern void
+_mesa_TexEnvf( GLenum target, GLenum pname, GLfloat param );
+
+extern void
+_mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param );
+
+extern void
+_mesa_TexEnvi( GLenum target, GLenum pname, GLint param );
+
+extern void
+_mesa_TexEnviv( GLenum target, GLenum pname, const GLint *param );
 
 
-extern void gl_TexGenfv( GLcontext *ctx,
-                         GLenum coord, GLenum pname, const GLfloat *params );
+extern void
+_mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params );
+
+extern void
+_mesa_TexParameterf( GLenum target, GLenum pname, GLfloat param );
+
+
+extern void
+_mesa_TexParameteri( GLenum target, GLenum pname, GLint param );
+
+extern void
+_mesa_TexParameteriv( GLenum target, GLenum pname, const GLint *params );
+
+
+extern void
+_mesa_TexGend( GLenum coord, GLenum pname, GLdouble param );
+
+extern void
+_mesa_TexGendv( GLenum coord, GLenum pname, const GLdouble *params );
+
+extern void
+_mesa_TexGenf( GLenum coord, GLenum pname, GLfloat param );
+
+extern void
+_mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params );
+
+extern void
+_mesa_TexGeni( GLenum coord, GLenum pname, GLint param );
+
+extern void
+_mesa_TexGeniv( GLenum coord, GLenum pname, const GLint *params );
 
 
 
@@ -86,9 +120,11 @@ extern void gl_SelectTextureTransform( GLcontext *ctx, GLenum target );
 /*
  * GL_ARB_multitexture
  */
-extern void gl_ActiveTexture( GLcontext *ctx, GLenum target );
+extern void
+_mesa_ActiveTextureARB( GLenum target );
 
-extern void gl_ClientActiveTexture( GLcontext *ctx, GLenum target );
+extern void
+_mesa_ClientActiveTextureARB( GLenum target );
 
 
 

@@ -1,8 +1,9 @@
-/* $Id: glu.h,v 1.14 1999/11/09 06:17:08 brianp Exp $ */
+/* $Id: glu.h,v 1.15 1999/11/11 01:27:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
+ *
  * Copyright (C) 1995-1999  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
@@ -70,151 +71,149 @@ extern "C" {
 #endif
 
 
-#define GLU_VERSION_1_1		1
-#define GLU_VERSION_1_2		1
+#define GLU_VERSION_1_1			1
+#define GLU_VERSION_1_2			1
 
 
-#define GLU_TRUE   GL_TRUE
-#define GLU_FALSE  GL_FALSE
+#define GLU_TRUE			1
+#define GLU_FALSE			0
 
 
-enum {
-	/* Normal vectors */
-	GLU_SMOOTH	= 100000,
-	GLU_FLAT	= 100001,
-	GLU_NONE	= 100002,
+/* Normal vectors */
+#define GLU_SMOOTH			100000
+#define GLU_FLAT			100001
+#define GLU_NONE			100002
 
-	/* Quadric draw styles */
-	GLU_POINT	= 100010,
-	GLU_LINE	= 100011,
-	GLU_FILL	= 100012,
-	GLU_SILHOUETTE	= 100013,
+/* Quadric draw styles */
+#define GLU_POINT			100010
+#define GLU_LINE			100011
+#define GLU_FILL			100012
+#define GLU_SILHOUETTE			100013
 
-	/* Quadric orientation */
-	GLU_OUTSIDE	= 100020,
-	GLU_INSIDE	= 100021,
+/* Quadric orientation */
+#define GLU_OUTSIDE			100020
+#define GLU_INSIDE			100021
 
-	/* Tessellator */
-	GLU_TESS_BEGIN		= 100100,
-	GLU_TESS_VERTEX		= 100101,
-	GLU_TESS_END		= 100102,
-	GLU_TESS_ERROR		= 100103,
-	GLU_TESS_EDGE_FLAG	= 100104,
-	GLU_TESS_COMBINE	= 100105,
+/* Tessellator */
+#define GLU_TESS_BEGIN			100100
+#define GLU_TESS_VERTEX			100101
+#define GLU_TESS_END			100102
+#define GLU_TESS_ERROR			100103
+#define GLU_TESS_EDGE_FLAG		100104
+#define GLU_TESS_COMBINE		100105
 
-	GLU_TESS_BEGIN_DATA	= 100106,
-	GLU_TESS_VERTEX_DATA	= 100107,
-	GLU_TESS_END_DATA	= 100108,
-	GLU_TESS_ERROR_DATA	= 100109,
-	GLU_TESS_EDGE_FLAG_DATA	= 100110,
-	GLU_TESS_COMBINE_DATA	= 100111,
+#define GLU_TESS_BEGIN_DATA		100106
+#define GLU_TESS_VERTEX_DATA		100107
+#define GLU_TESS_END_DATA		100108
+#define GLU_TESS_ERROR_DATA		100109
+#define GLU_TESS_EDGE_FLAG_DATA		100110
+#define GLU_TESS_COMBINE_DATA		100111
 
-	/* Winding rules */
-	GLU_TESS_WINDING_ODD		= 100130,
-	GLU_TESS_WINDING_NONZERO	= 100131,
-	GLU_TESS_WINDING_POSITIVE	= 100132,
-	GLU_TESS_WINDING_NEGATIVE	= 100133,
-	GLU_TESS_WINDING_ABS_GEQ_TWO	= 100134,
+/* Winding rules */
+#define GLU_TESS_WINDING_ODD		100130
+#define GLU_TESS_WINDING_NONZERO	100131
+#define GLU_TESS_WINDING_POSITIVE	100132
+#define GLU_TESS_WINDING_NEGATIVE	100133
+#define GLU_TESS_WINDING_ABS_GEQ_TWO	100134
 
-	/* Tessellation properties */
-	GLU_TESS_WINDING_RULE	= 100140,
-	GLU_TESS_BOUNDARY_ONLY	= 100141,
-	GLU_TESS_TOLERANCE	= 100142,
+/* Tessellation properties */
+#define GLU_TESS_WINDING_RULE		100140
+#define GLU_TESS_BOUNDARY_ONLY		100141
+#define GLU_TESS_TOLERANCE		100142
 
-	/* Tessellation errors */
-	GLU_TESS_ERROR1	= 100151,  /* Missing gluBeginPolygon */
-	GLU_TESS_ERROR2 = 100152,  /* Missing gluBeginContour */
-	GLU_TESS_ERROR3 = 100153,  /* Missing gluEndPolygon */
-	GLU_TESS_ERROR4 = 100154,  /* Missing gluEndContour */
-	GLU_TESS_ERROR5 = 100155,  /* */
-	GLU_TESS_ERROR6 = 100156,  /* */
-	GLU_TESS_ERROR7 = 100157,  /* */
-	GLU_TESS_ERROR8 = 100158,  /* */
+/* Tessellation errors */
+#define GLU_TESS_ERROR1			100151  /* Missing gluBeginPolygon */
+#define GLU_TESS_ERROR2			100152  /* Missing gluBeginContour */
+#define GLU_TESS_ERROR3			100153  /* Missing gluEndPolygon */
+#define GLU_TESS_ERROR4			100154  /* Missing gluEndContour */
+#define GLU_TESS_ERROR5			100155  /* */
+#define GLU_TESS_ERROR6			100156  /* */
+#define GLU_TESS_ERROR7			100157  /* */
+#define GLU_TESS_ERROR8			100158  /* */
 
-	/* NURBS */
-	GLU_AUTO_LOAD_MATRIX	= 100200,
-	GLU_CULLING		= 100201,
-	GLU_PARAMETRIC_TOLERANCE= 100202,
-	GLU_SAMPLING_TOLERANCE	= 100203,
-	GLU_DISPLAY_MODE	= 100204,
-	GLU_SAMPLING_METHOD	= 100205,
-	GLU_U_STEP		= 100206,
-	GLU_V_STEP		= 100207,
+/* NURBS */
+#define GLU_AUTO_LOAD_MATRIX		100200
+#define GLU_CULLING			100201
+#define GLU_PARAMETRIC_TOLERANC		100202
+#define GLU_SAMPLING_TOLERANCE		100203
+#define GLU_DISPLAY_MODE		100204
+#define GLU_SAMPLING_METHOD		100205
+#define GLU_U_STEP			100206
+#define GLU_V_STEP			100207
 
-	GLU_PATH_LENGTH		= 100215,
-	GLU_PARAMETRIC_ERROR	= 100216,
-	GLU_DOMAIN_DISTANCE	= 100217,
+#define GLU_PATH_LENGTH			100215
+#define GLU_PARAMETRIC_ERROR		100216
+#define GLU_DOMAIN_DISTANCE		100217
 
-	GLU_MAP1_TRIM_2		= 100210,
-	GLU_MAP1_TRIM_3		= 100211,
+#define GLU_MAP1_TRIM_2			100210
+#define GLU_MAP1_TRIM_3			100211
 
-	GLU_OUTLINE_POLYGON	= 100240,
-	GLU_OUTLINE_PATCH	= 100241,
+#define GLU_OUTLINE_POLYGON		100240
+#define GLU_OUTLINE_PATCH		100241
 
-	GLU_NURBS_ERROR1  = 100251,   /* spline order un-supported */
-	GLU_NURBS_ERROR2  = 100252,   /* too few knots */
-	GLU_NURBS_ERROR3  = 100253,   /* valid knot range is empty */
-	GLU_NURBS_ERROR4  = 100254,   /* decreasing knot sequence */
-	GLU_NURBS_ERROR5  = 100255,   /* knot multiplicity > spline order */
-	GLU_NURBS_ERROR6  = 100256,   /* endcurve() must follow bgncurve() */
-	GLU_NURBS_ERROR7  = 100257,   /* bgncurve() must precede endcurve() */
-	GLU_NURBS_ERROR8  = 100258,   /* ctrlarray or knot vector is NULL */
-	GLU_NURBS_ERROR9  = 100259,   /* can't draw pwlcurves */
-	GLU_NURBS_ERROR10 = 100260,   /* missing gluNurbsCurve() */
-	GLU_NURBS_ERROR11 = 100261,   /* missing gluNurbsSurface() */
-	GLU_NURBS_ERROR12 = 100262,   /* endtrim() must precede endsurface() */
-	GLU_NURBS_ERROR13 = 100263,   /* bgnsurface() must precede endsurface() */
-	GLU_NURBS_ERROR14 = 100264,   /* curve of improper type passed as trim curve */
-	GLU_NURBS_ERROR15 = 100265,   /* bgnsurface() must precede bgntrim() */
-	GLU_NURBS_ERROR16 = 100266,   /* endtrim() must follow bgntrim() */
-	GLU_NURBS_ERROR17 = 100267,   /* bgntrim() must precede endtrim()*/
-	GLU_NURBS_ERROR18 = 100268,   /* invalid or missing trim curve*/
-	GLU_NURBS_ERROR19 = 100269,   /* bgntrim() must precede pwlcurve() */
-	GLU_NURBS_ERROR20 = 100270,   /* pwlcurve referenced twice*/
-	GLU_NURBS_ERROR21 = 100271,   /* pwlcurve and nurbscurve mixed */
-	GLU_NURBS_ERROR22 = 100272,   /* improper usage of trim data type */
-	GLU_NURBS_ERROR23 = 100273,   /* nurbscurve referenced twice */
-	GLU_NURBS_ERROR24 = 100274,   /* nurbscurve and pwlcurve mixed */
-	GLU_NURBS_ERROR25 = 100275,   /* nurbssurface referenced twice */
-	GLU_NURBS_ERROR26 = 100276,   /* invalid property */
-	GLU_NURBS_ERROR27 = 100277,   /* endsurface() must follow bgnsurface() */
-	GLU_NURBS_ERROR28 = 100278,   /* intersecting or misoriented trim curves */
-	GLU_NURBS_ERROR29 = 100279,   /* intersecting trim curves */
-	GLU_NURBS_ERROR30 = 100280,   /* UNUSED */
-	GLU_NURBS_ERROR31 = 100281,   /* unconnected trim curves */
-	GLU_NURBS_ERROR32 = 100282,   /* unknown knot error */
-	GLU_NURBS_ERROR33 = 100283,   /* negative vertex count encountered */
-	GLU_NURBS_ERROR34 = 100284,   /* negative byte-stride */
-	GLU_NURBS_ERROR35 = 100285,   /* unknown type descriptor */
-	GLU_NURBS_ERROR36 = 100286,   /* null control point reference */
-	GLU_NURBS_ERROR37 = 100287,   /* duplicate point on pwlcurve */
+#define GLU_NURBS_ERROR1	100251   /* spline order un-supported */
+#define GLU_NURBS_ERROR2	100252   /* too few knots */
+#define GLU_NURBS_ERROR3	100253   /* valid knot range is empty */
+#define GLU_NURBS_ERROR4	100254   /* decreasing knot sequence */
+#define GLU_NURBS_ERROR5	100255   /* knot multiplicity > spline order */
+#define GLU_NURBS_ERROR6	100256   /* endcurve() must follow bgncurve() */
+#define GLU_NURBS_ERROR7	100257   /* bgncurve() must precede endcurve() */
+#define GLU_NURBS_ERROR8	100258   /* ctrlarray or knot vector is NULL */
+#define GLU_NURBS_ERROR9 	100259   /* can't draw pwlcurves */
+#define GLU_NURBS_ERROR10	100260   /* missing gluNurbsCurve() */
+#define GLU_NURBS_ERROR11	100261   /* missing gluNurbsSurface() */
+#define GLU_NURBS_ERROR12	100262   /* endtrim() must precede endsurface() */
+#define GLU_NURBS_ERROR13	100263   /* bgnsurface() must precede endsurface() */
+#define GLU_NURBS_ERROR14	100264   /* curve of improper type passed as trim curve */
+#define GLU_NURBS_ERROR15	100265   /* bgnsurface() must precede bgntrim() */
+#define GLU_NURBS_ERROR16	100266   /* endtrim() must follow bgntrim() */
+#define GLU_NURBS_ERROR17	100267   /* bgntrim() must precede endtrim()*/
+#define GLU_NURBS_ERROR18	100268   /* invalid or missing trim curve*/
+#define GLU_NURBS_ERROR19	100269   /* bgntrim() must precede pwlcurve() */
+#define GLU_NURBS_ERROR20	100270   /* pwlcurve referenced twice*/
+#define GLU_NURBS_ERROR21	100271   /* pwlcurve and nurbscurve mixed */
+#define GLU_NURBS_ERROR22	100272   /* improper usage of trim data type */
+#define GLU_NURBS_ERROR23	100273   /* nurbscurve referenced twice */
+#define GLU_NURBS_ERROR24	100274   /* nurbscurve and pwlcurve mixed */
+#define GLU_NURBS_ERROR25	100275   /* nurbssurface referenced twice */
+#define GLU_NURBS_ERROR26	100276   /* invalid property */
+#define GLU_NURBS_ERROR27	100277   /* endsurface() must follow bgnsurface() */
+#define GLU_NURBS_ERROR28	100278   /* intersecting or misoriented trim curves */
+#define GLU_NURBS_ERROR29	100279   /* intersecting trim curves */
+#define GLU_NURBS_ERROR30	100280   /* UNUSED */
+#define GLU_NURBS_ERROR31	100281   /* unconnected trim curves */
+#define GLU_NURBS_ERROR32	100282   /* unknown knot error */
+#define GLU_NURBS_ERROR33	100283   /* negative vertex count encountered */
+#define GLU_NURBS_ERROR34	100284   /* negative byte-stride */
+#define GLU_NURBS_ERROR35	100285   /* unknown type descriptor */
+#define GLU_NURBS_ERROR36	100286   /* null control point reference */
+#define GLU_NURBS_ERROR37	100287   /* duplicate point on pwlcurve */
 
-	/* Errors */
-	GLU_INVALID_ENUM		= 100900,
-	GLU_INVALID_VALUE		= 100901,
-	GLU_OUT_OF_MEMORY		= 100902,
-	GLU_INCOMPATIBLE_GL_VERSION	= 100903,
+/* Errors */
+#define GLU_INVALID_ENUM		100900
+#define GLU_INVALID_VALUE		100901
+#define GLU_OUT_OF_MEMORY		100902
+#define GLU_INCOMPATIBLE_GL_VERSION	100903
 
-	/* New in GLU 1.1 */
-	GLU_VERSION	= 100800,
-	GLU_EXTENSIONS	= 100801,
+/* New in GLU 1.1 */
+#define GLU_VERSION			100800
+#define GLU_EXTENSIONS			100801
 
-	/*** GLU 1.0 tessellation - obsolete! ***/
+/*** GLU 1.0 tessellation - obsolete! ***/
 
-	/* Contour types */
-	GLU_CW		= 100120,
-	GLU_CCW		= 100121,
-	GLU_INTERIOR	= 100122,
-	GLU_EXTERIOR	= 100123,
-	GLU_UNKNOWN	= 100124,
+/* Contour types */
+#define GLU_CW				100120
+#define GLU_CCW				100121
+#define GLU_INTERIOR			100122
+#define GLU_EXTERIOR			100123
+#define GLU_UNKNOWN			100124
 
-	/* Tessellator */
-	GLU_BEGIN	= GLU_TESS_BEGIN,
-	GLU_VERTEX	= GLU_TESS_VERTEX,
-	GLU_END		= GLU_TESS_END,
-	GLU_ERROR	= GLU_TESS_ERROR,
-	GLU_EDGE_FLAG	= GLU_TESS_EDGE_FLAG
-};
+/* Tessellator */
+#define GLU_BEGIN			GLU_TESS_BEGIN
+#define GLU_VERTEX			GLU_TESS_VERTEX
+#define GLU_END				GLU_TESS_END
+#define GLU_ERROR			GLU_TESS_ERROR
+#define GLU_EDGE_FLAG			GLU_TESS_EDGE_FLAG
 
 
 /*
@@ -247,37 +246,37 @@ enum {
  */
 
 GLUAPI void GLAPIENTRY gluLookAt( GLdouble eyex, GLdouble eyey, GLdouble eyez,
-                                GLdouble centerx, GLdouble centery,
-                                GLdouble centerz,
-                                GLdouble upx, GLdouble upy, GLdouble upz );
+                                  GLdouble centerx, GLdouble centery,
+                                  GLdouble centerz,
+                                  GLdouble upx, GLdouble upy, GLdouble upz );
 
 
 GLUAPI void GLAPIENTRY gluOrtho2D( GLdouble left, GLdouble right,
-                                 GLdouble bottom, GLdouble top );
+                                   GLdouble bottom, GLdouble top );
 
 
 GLUAPI void GLAPIENTRY gluPerspective( GLdouble fovy, GLdouble aspect,
-                                     GLdouble zNear, GLdouble zFar );
+                                       GLdouble zNear, GLdouble zFar );
 
 
 GLUAPI void GLAPIENTRY gluPickMatrix( GLdouble x, GLdouble y,
-                                    GLdouble width, GLdouble height,
-                                    const GLint viewport[4] );
+                                      GLdouble width, GLdouble height,
+                                      const GLint viewport[4] );
 
 GLUAPI GLint GLAPIENTRY gluProject( GLdouble objx, GLdouble objy, GLdouble objz,
-                                  const GLdouble modelMatrix[16],
-                                  const GLdouble projMatrix[16],
-                                  const GLint viewport[4],
-                                  GLdouble *winx, GLdouble *winy,
-                                  GLdouble *winz );
-
-GLUAPI GLint GLAPIENTRY gluUnProject( GLdouble winx, GLdouble winy,
-                                    GLdouble winz,
                                     const GLdouble modelMatrix[16],
                                     const GLdouble projMatrix[16],
                                     const GLint viewport[4],
-                                    GLdouble *objx, GLdouble *objy,
-                                    GLdouble *objz );
+                                    GLdouble *winx, GLdouble *winy,
+                                    GLdouble *winz );
+
+GLUAPI GLint GLAPIENTRY gluUnProject( GLdouble winx, GLdouble winy,
+                                      GLdouble winz,
+                                      const GLdouble modelMatrix[16],
+                                      const GLdouble projMatrix[16],
+                                      const GLint viewport[4],
+                                      GLdouble *objx, GLdouble *objy,
+                                      GLdouble *objz );
 
 GLUAPI const GLubyte* GLAPIENTRY gluErrorString( GLenum errorCode );
 
@@ -290,19 +289,19 @@ GLUAPI const GLubyte* GLAPIENTRY gluErrorString( GLenum errorCode );
  */
 
 GLUAPI GLint GLAPIENTRY gluScaleImage( GLenum format,
-                                     GLsizei widthin, GLsizei heightin,
-                                     GLenum typein, const void *datain,
-                                     GLsizei widthout, GLsizei heightout,
-                                     GLenum typeout, void *dataout );
+                                       GLint widthin, GLint heightin,
+                                       GLenum typein, const void *datain,
+                                       GLint widthout, GLint heightout,
+                                       GLenum typeout, void *dataout );
 
 GLUAPI GLint GLAPIENTRY gluBuild1DMipmaps( GLenum target, GLint components,
-                                         GLsizei width, GLenum format,
-                                         GLenum type, const void *data );
+                                           GLint width, GLenum format,
+                                           GLenum type, const void *data );
 
 GLUAPI GLint GLAPIENTRY gluBuild2DMipmaps( GLenum target, GLint components,
-                                         GLsizei width, GLsizei height,
-                                         GLenum format,
-                                         GLenum type, const void *data );
+                                           GLint width, GLint height,
+                                           GLenum format,
+                                           GLenum type, const void *data );
 
 
 
@@ -317,37 +316,39 @@ GLUAPI GLUquadricObj* GLAPIENTRY gluNewQuadric( void );
 GLUAPI void GLAPIENTRY gluDeleteQuadric( GLUquadricObj *state );
 
 GLUAPI void GLAPIENTRY gluQuadricDrawStyle( GLUquadricObj *quadObject,
-                                          GLenum drawStyle );
+                                            GLenum drawStyle );
 
 GLUAPI void GLAPIENTRY gluQuadricOrientation( GLUquadricObj *quadObject,
-                                            GLenum orientation );
+                                              GLenum orientation );
 
 GLUAPI void GLAPIENTRY gluQuadricNormals( GLUquadricObj *quadObject,
-                                        GLenum normals );
+                                          GLenum normals );
 
 GLUAPI void GLAPIENTRY gluQuadricTexture( GLUquadricObj *quadObject,
-                                        GLboolean textureCoords );
+                                          GLboolean textureCoords );
 
 GLUAPI void GLAPIENTRY gluQuadricCallback( GLUquadricObj *qobj,
-                                         GLenum which, void (GLCALLBACK *fn)() );
+                                           GLenum which,
+                                           void (GLCALLBACK *fn)() );
 
 GLUAPI void GLAPIENTRY gluCylinder( GLUquadricObj *qobj,
-                                  GLdouble baseRadius,
-                                  GLdouble topRadius,
-                                  GLdouble height,
-                                  GLint slices, GLint stacks );
+                                    GLdouble baseRadius,
+                                    GLdouble topRadius,
+                                    GLdouble height,
+                                    GLint slices, GLint stacks );
 
 GLUAPI void GLAPIENTRY gluSphere( GLUquadricObj *qobj,
-                                GLdouble radius, GLint slices, GLint stacks );
+                                  GLdouble radius, GLint slices,
+                                  GLint stacks );
 
 GLUAPI void GLAPIENTRY gluDisk( GLUquadricObj *qobj,
-                              GLdouble innerRadius, GLdouble outerRadius,
-                              GLint slices, GLint loops );
+                                GLdouble innerRadius, GLdouble outerRadius,
+                                GLint slices, GLint loops );
 
 GLUAPI void GLAPIENTRY gluPartialDisk( GLUquadricObj *qobj, GLdouble innerRadius,
-                                     GLdouble outerRadius, GLint slices,
-                                     GLint loops, GLdouble startAngle,
-                                     GLdouble sweepAngle );
+                                       GLdouble outerRadius, GLint slices,
+                                       GLint loops, GLdouble startAngle,
+                                       GLdouble sweepAngle );
 
 
 
@@ -362,46 +363,47 @@ GLUAPI GLUnurbsObj* GLAPIENTRY gluNewNurbsRenderer( void );
 GLUAPI void GLAPIENTRY gluDeleteNurbsRenderer( GLUnurbsObj *nobj );
 
 GLUAPI void GLAPIENTRY gluLoadSamplingMatrices( GLUnurbsObj *nobj,
-                                              const GLfloat modelMatrix[16],
-                                              const GLfloat projMatrix[16],
-                                              const GLint viewport[4] );
+                                                const GLfloat modelMatrix[16],
+                                                const GLfloat projMatrix[16],
+                                                const GLint viewport[4] );
 
 GLUAPI void GLAPIENTRY gluNurbsProperty( GLUnurbsObj *nobj, GLenum property,
-                                       GLfloat value );
+                                         GLfloat value );
 
 GLUAPI void GLAPIENTRY gluGetNurbsProperty( GLUnurbsObj *nobj, GLenum property,
-                                          GLfloat *value );
+                                            GLfloat *value );
 
 GLUAPI void GLAPIENTRY gluBeginCurve( GLUnurbsObj *nobj );
 
 GLUAPI void GLAPIENTRY gluEndCurve( GLUnurbsObj * nobj );
 
 GLUAPI void GLAPIENTRY gluNurbsCurve( GLUnurbsObj *nobj, GLint nknots,
-                                    GLfloat *knot, GLint stride,
-                                    GLfloat *ctlarray, GLint order,
-                                    GLenum type );
+                                      GLfloat *knot, GLint stride,
+                                      GLfloat *ctlarray, GLint order,
+                                      GLenum type );
 
 GLUAPI void GLAPIENTRY gluBeginSurface( GLUnurbsObj *nobj );
 
 GLUAPI void GLAPIENTRY gluEndSurface( GLUnurbsObj * nobj );
 
 GLUAPI void GLAPIENTRY gluNurbsSurface( GLUnurbsObj *nobj,
-                                      GLint sknot_count, GLfloat *sknot,
-                                      GLint tknot_count, GLfloat *tknot,
-                                      GLint s_stride, GLint t_stride,
-                                      GLfloat *ctlarray,
-                                      GLint sorder, GLint torder,
-                                      GLenum type );
+                                        GLint sknot_count, GLfloat *sknot,
+                                        GLint tknot_count, GLfloat *tknot,
+                                        GLint s_stride, GLint t_stride,
+                                        GLfloat *ctlarray,
+                                        GLint sorder, GLint torder,
+                                        GLenum type );
 
 GLUAPI void GLAPIENTRY gluBeginTrim( GLUnurbsObj *nobj );
 
 GLUAPI void GLAPIENTRY gluEndTrim( GLUnurbsObj *nobj );
 
 GLUAPI void GLAPIENTRY gluPwlCurve( GLUnurbsObj *nobj, GLint count,
-                                  GLfloat *array, GLint stride, GLenum type );
+                                    GLfloat *array, GLint stride,
+                                    GLenum type );
 
 GLUAPI void GLAPIENTRY gluNurbsCallback( GLUnurbsObj *nobj, GLenum which,
-                                       void (GLCALLBACK *fn)() );
+                                         void (GLCALLBACK *fn)() );
 
 
 

@@ -1,8 +1,8 @@
-/* $Id: eval.c,v 1.6 1999/11/08 15:30:05 brianp Exp $ */
+/* $Id: eval.c,v 1.7 1999/11/11 01:22:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -41,16 +41,11 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#ifndef XFree86Server
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
-#else
-#include "GL/xf86glx.h"
-#endif
+#include "glheader.h"
 #include "context.h"
 #include "eval.h"
 #include "macros.h"
+#include "mem.h"
 #include "mmath.h"
 #include "types.h"
 #include "vbcull.h"
@@ -528,9 +523,9 @@ de_casteljau_surf(GLfloat *cn, GLfloat *out, GLfloat *du, GLfloat *dv,
 /*
  * Return the number of components per control point for any type of
  * evaluator.  Return 0 if bad target.
+ * See table 5.1 in the OpenGL 1.2 spec.
  */
-
-static GLint components( GLenum target )
+GLuint _mesa_evaluator_components( GLenum target )
 {
    switch (target) {
       case GL_MAP1_VERTEX_3:		return 3;
@@ -568,12 +563,11 @@ static GLint components( GLenum target )
  * Return:  pointer to buffer of contiguous control points or NULL if out
  *          of memory.
  */
-GLfloat *gl_copy_map_points1f( GLenum target,
-                               GLint ustride, GLint uorder,
+GLfloat *gl_copy_map_points1f( GLenum target, GLint ustride, GLint uorder,
                                const GLfloat *points )
 {
    GLfloat *buffer, *p;
-   GLint i, k, size = components(target);
+   GLint i, k, size = _mesa_evaluator_components(target);
 
    if (!points || size==0) {
       return NULL;
@@ -594,12 +588,11 @@ GLfloat *gl_copy_map_points1f( GLenum target,
 /*
  * Same as above but convert doubles to floats.
  */
-GLfloat *gl_copy_map_points1d( GLenum target,
-			        GLint ustride, GLint uorder,
-			        const GLdouble *points )
+GLfloat *gl_copy_map_points1d( GLenum target, GLint ustride, GLint uorder,
+                               const GLdouble *points )
 {
    GLfloat *buffer, *p;
-   GLint i, k, size = components(target);
+   GLint i, k, size = _mesa_evaluator_components(target);
 
    if (!points || size==0) {
       return NULL;
@@ -628,15 +621,15 @@ GLfloat *gl_copy_map_points1d( GLenum target,
  *          of memory.
  */
 GLfloat *gl_copy_map_points2f( GLenum target,
-			        GLint ustride, GLint uorder,
-			        GLint vstride, GLint vorder,
-			        const GLfloat *points )
+                               GLint ustride, GLint uorder,
+                               GLint vstride, GLint vorder,
+                               const GLfloat *points )
 {
    GLfloat *buffer, *p;
    GLint i, j, k, size, dsize, hsize;
    GLint uinc;
 
-   size = components(target);
+   size = _mesa_evaluator_components(target);
 
    if (!points || size==0) {
       return NULL;
@@ -679,7 +672,7 @@ GLfloat *gl_copy_map_points2d(GLenum target,
    GLint i, j, k, size, hsize, dsize;
    GLint uinc;
 
-   size = components(target);
+   size = _mesa_evaluator_components(target);
 
    if (!points || size==0) {
       return NULL;
@@ -709,6 +702,7 @@ GLfloat *gl_copy_map_points2d(GLenum target,
 }
 
 
+#if 00
 /*
  * This function is called by the display list deallocator function to
  * specify that a given set of control points are no longer needed.
@@ -804,6 +798,7 @@ void gl_free_control_points( GLcontext* ctx, GLenum target, GLfloat *data )
    }
 
 }
+#endif
 
 
 
@@ -813,154 +808,130 @@ void gl_free_control_points( GLcontext* ctx, GLenum target, GLfloat *data )
 
 
 /*
- * Note that the array of control points must be 'unpacked' at this time.
- * Input:  retain - if TRUE, this control point data is also in a display
- *                  list and can't be freed until the list is freed.
+ * This does the work of glMap1[fd].
  */
-void gl_Map1f( GLcontext* ctx, GLenum target,
-               GLfloat u1, GLfloat u2, GLint stride,
-               GLint order, const GLfloat *points, GLboolean retain )
+static void
+map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
+     GLint uorder, const GLvoid *points, GLenum type )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLint k;
-
-   if (!points) {
-      gl_error( ctx, GL_OUT_OF_MEMORY, "glMap1f" );
-      return;
-   }
-
-   /* may be a new stride after copying control points */
-   stride = components( target );
+   GLfloat *pnts;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glMap1");
 
-   if (u1==u2) {
+   assert(type == GL_FLOAT || type == GL_DOUBLE);
+
+   if (u1 == u2) {
       gl_error( ctx, GL_INVALID_VALUE, "glMap1(u1,u2)" );
       return;
    }
-
-   if (order<1 || order>MAX_EVAL_ORDER) {
+   if (uorder < 1 || uorder > MAX_EVAL_ORDER) {
       gl_error( ctx, GL_INVALID_VALUE, "glMap1(order)" );
       return;
    }
+   if (!points) {
+      gl_error( ctx, GL_INVALID_VALUE, "glMap1(points)" );
+      return;
+   }
 
-   k = components( target );
-   if (k==0) {
+   k = _mesa_evaluator_components( target );
+   if (k == 0) {
       gl_error( ctx, GL_INVALID_ENUM, "glMap1(target)" );
    }
 
-   if (stride < k) {
+   if (ustride < k) {
       gl_error( ctx, GL_INVALID_VALUE, "glMap1(stride)" );
       return;
    }
 
+   /* make copy of the control points */
+   if (type == GL_FLOAT)
+      pnts = gl_copy_map_points1f(target, ustride, uorder, (GLfloat*) points);
+   else
+      pnts = gl_copy_map_points1d(target, ustride, uorder, (GLdouble*) points);
+
    switch (target) {
       case GL_MAP1_VERTEX_3:
-         ctx->EvalMap.Map1Vertex3.Order = order;
+         ctx->EvalMap.Map1Vertex3.Order = uorder;
 	 ctx->EvalMap.Map1Vertex3.u1 = u1;
 	 ctx->EvalMap.Map1Vertex3.u2 = u2;
 	 ctx->EvalMap.Map1Vertex3.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Vertex3.Points
-             && !ctx->EvalMap.Map1Vertex3.Retain) {
+	 if (ctx->EvalMap.Map1Vertex3.Points)
 	    FREE( ctx->EvalMap.Map1Vertex3.Points );
-	 }
-	 ctx->EvalMap.Map1Vertex3.Points = (GLfloat *) points;
-         ctx->EvalMap.Map1Vertex3.Retain = retain;
+	 ctx->EvalMap.Map1Vertex3.Points = pnts;
 	 break;
       case GL_MAP1_VERTEX_4:
-         ctx->EvalMap.Map1Vertex4.Order = order;
+         ctx->EvalMap.Map1Vertex4.Order = uorder;
 	 ctx->EvalMap.Map1Vertex4.u1 = u1;
 	 ctx->EvalMap.Map1Vertex4.u2 = u2;
 	 ctx->EvalMap.Map1Vertex4.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Vertex4.Points
-             && !ctx->EvalMap.Map1Vertex4.Retain) {
+	 if (ctx->EvalMap.Map1Vertex4.Points)
 	    FREE( ctx->EvalMap.Map1Vertex4.Points );
-	 }
-	 ctx->EvalMap.Map1Vertex4.Points = (GLfloat *) points;
-	 ctx->EvalMap.Map1Vertex4.Retain = retain;
+	 ctx->EvalMap.Map1Vertex4.Points = pnts;
 	 break;
       case GL_MAP1_INDEX:
-         ctx->EvalMap.Map1Index.Order = order;
+         ctx->EvalMap.Map1Index.Order = uorder;
 	 ctx->EvalMap.Map1Index.u1 = u1;
 	 ctx->EvalMap.Map1Index.u2 = u2;
 	 ctx->EvalMap.Map1Index.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Index.Points
-             && !ctx->EvalMap.Map1Index.Retain) {
+	 if (ctx->EvalMap.Map1Index.Points)
 	    FREE( ctx->EvalMap.Map1Index.Points );
-	 }
-	 ctx->EvalMap.Map1Index.Points = (GLfloat *) points;
-	 ctx->EvalMap.Map1Index.Retain = retain;
+	 ctx->EvalMap.Map1Index.Points = pnts;
 	 break;
       case GL_MAP1_COLOR_4:
-         ctx->EvalMap.Map1Color4.Order = order;
+         ctx->EvalMap.Map1Color4.Order = uorder;
 	 ctx->EvalMap.Map1Color4.u1 = u1;
 	 ctx->EvalMap.Map1Color4.u2 = u2;
 	 ctx->EvalMap.Map1Color4.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Color4.Points
-             && !ctx->EvalMap.Map1Color4.Retain) {
+	 if (ctx->EvalMap.Map1Color4.Points)
 	    FREE( ctx->EvalMap.Map1Color4.Points );
-	 }
-	 ctx->EvalMap.Map1Color4.Points = (GLfloat *) points;
-	 ctx->EvalMap.Map1Color4.Retain = retain;
+	 ctx->EvalMap.Map1Color4.Points = pnts;
 	 break;
       case GL_MAP1_NORMAL:
-         ctx->EvalMap.Map1Normal.Order = order;
+         ctx->EvalMap.Map1Normal.Order = uorder;
 	 ctx->EvalMap.Map1Normal.u1 = u1;
 	 ctx->EvalMap.Map1Normal.u2 = u2;
 	 ctx->EvalMap.Map1Normal.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Normal.Points
-             && !ctx->EvalMap.Map1Normal.Retain) {
+	 if (ctx->EvalMap.Map1Normal.Points)
 	    FREE( ctx->EvalMap.Map1Normal.Points );
-	 }
-	 ctx->EvalMap.Map1Normal.Points = (GLfloat *) points;
-	 ctx->EvalMap.Map1Normal.Retain = retain;
+	 ctx->EvalMap.Map1Normal.Points = pnts;
 	 break;
       case GL_MAP1_TEXTURE_COORD_1:
-         ctx->EvalMap.Map1Texture1.Order = order;
+         ctx->EvalMap.Map1Texture1.Order = uorder;
 	 ctx->EvalMap.Map1Texture1.u1 = u1;
 	 ctx->EvalMap.Map1Texture1.u2 = u2;
 	 ctx->EvalMap.Map1Texture1.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Texture1.Points
-             && !ctx->EvalMap.Map1Texture1.Retain) {
+	 if (ctx->EvalMap.Map1Texture1.Points)
 	    FREE( ctx->EvalMap.Map1Texture1.Points );
-	 }
-	 ctx->EvalMap.Map1Texture1.Points = (GLfloat *) points;
-	 ctx->EvalMap.Map1Texture1.Retain = retain;
+	 ctx->EvalMap.Map1Texture1.Points = pnts;
 	 break;
       case GL_MAP1_TEXTURE_COORD_2:
-         ctx->EvalMap.Map1Texture2.Order = order;
+         ctx->EvalMap.Map1Texture2.Order = uorder;
 	 ctx->EvalMap.Map1Texture2.u1 = u1;
 	 ctx->EvalMap.Map1Texture2.u2 = u2;
 	 ctx->EvalMap.Map1Texture2.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Texture2.Points
-             && !ctx->EvalMap.Map1Texture2.Retain) {
+	 if (ctx->EvalMap.Map1Texture2.Points)
 	    FREE( ctx->EvalMap.Map1Texture2.Points );
-	 }
-	 ctx->EvalMap.Map1Texture2.Points = (GLfloat *) points;
-	 ctx->EvalMap.Map1Texture2.Retain = retain;
+	 ctx->EvalMap.Map1Texture2.Points = pnts;
 	 break;
       case GL_MAP1_TEXTURE_COORD_3:
-         ctx->EvalMap.Map1Texture3.Order = order;
+         ctx->EvalMap.Map1Texture3.Order = uorder;
 	 ctx->EvalMap.Map1Texture3.u1 = u1;
 	 ctx->EvalMap.Map1Texture3.u2 = u2;
 	 ctx->EvalMap.Map1Texture3.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Texture3.Points
-             && !ctx->EvalMap.Map1Texture3.Retain) {
+	 if (ctx->EvalMap.Map1Texture3.Points)
 	    FREE( ctx->EvalMap.Map1Texture3.Points );
-	 }
-	 ctx->EvalMap.Map1Texture3.Points = (GLfloat *) points;
-	 ctx->EvalMap.Map1Texture3.Retain = retain;
+	 ctx->EvalMap.Map1Texture3.Points = pnts;
 	 break;
       case GL_MAP1_TEXTURE_COORD_4:
-         ctx->EvalMap.Map1Texture4.Order = order;
+         ctx->EvalMap.Map1Texture4.Order = uorder;
 	 ctx->EvalMap.Map1Texture4.u1 = u1;
 	 ctx->EvalMap.Map1Texture4.u2 = u2;
 	 ctx->EvalMap.Map1Texture4.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Texture4.Points
-             && !ctx->EvalMap.Map1Texture4.Retain) {
+	 if (ctx->EvalMap.Map1Texture4.Points)
 	    FREE( ctx->EvalMap.Map1Texture4.Points );
-	 }
-	 ctx->EvalMap.Map1Texture4.Points = (GLfloat *) points;
-	 ctx->EvalMap.Map1Texture4.Retain = retain;
+	 ctx->EvalMap.Map1Texture4.Points = pnts;
 	 break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glMap1(target)" );
@@ -969,18 +940,30 @@ void gl_Map1f( GLcontext* ctx, GLenum target,
 
 
 
-
-/*
- * Note that the array of control points must be 'unpacked' at this time.
- * Input:  retain - if TRUE, this control point data is also in a display
- *                  list and can't be freed until the list is freed.
- */
-void gl_Map2f( GLcontext* ctx, GLenum target,
-	      GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
-	      GLfloat v1, GLfloat v2, GLint vstride, GLint vorder,
-	      const GLfloat *points, GLboolean retain )
+void
+_mesa_Map1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride,
+             GLint order, const GLfloat *points )
 {
+   map1(target, u1, u2, stride, order, points, GL_FLOAT);
+}
+
+
+void
+_mesa_Map1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
+             GLint order, const GLdouble *points )
+{
+   map1(target, u1, u2, stride, order, points, GL_DOUBLE);
+}
+
+
+static void
+map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
+      GLfloat v1, GLfloat v2, GLint vstride, GLint vorder,
+      const GLvoid *points, GLenum type )
+{
+   GET_CURRENT_CONTEXT(ctx);
    GLint k;
+   GLfloat *pnts;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glMap2");
 
@@ -1004,7 +987,7 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
       return;
    }
 
-   k = components( target );
+   k = _mesa_evaluator_components( target );
    if (k==0) {
       gl_error( ctx, GL_INVALID_ENUM, "glMap2(target)" );
    }
@@ -1018,6 +1001,14 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
       return;
    }
 
+   /* make copy of the control points */
+   if (type == GL_FLOAT)
+      pnts = gl_copy_map_points2f(target, ustride, uorder,
+                                  vstride, vorder, (GLfloat*) points);
+   else
+      pnts = gl_copy_map_points2d(target, ustride, uorder,
+                                  vstride, vorder, (GLdouble*) points);
+
    switch (target) {
       case GL_MAP2_VERTEX_3:
          ctx->EvalMap.Map2Vertex3.Uorder = uorder;
@@ -1028,12 +1019,9 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Vertex3.v1 = v1;
 	 ctx->EvalMap.Map2Vertex3.v2 = v2;
 	 ctx->EvalMap.Map2Vertex3.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Vertex3.Points
-             && !ctx->EvalMap.Map2Vertex3.Retain) {
+	 if (ctx->EvalMap.Map2Vertex3.Points)
 	    FREE( ctx->EvalMap.Map2Vertex3.Points );
-	 }
-	 ctx->EvalMap.Map2Vertex3.Retain = retain;
-	 ctx->EvalMap.Map2Vertex3.Points = (GLfloat *) points;
+	 ctx->EvalMap.Map2Vertex3.Points = pnts;
 	 break;
       case GL_MAP2_VERTEX_4:
          ctx->EvalMap.Map2Vertex4.Uorder = uorder;
@@ -1044,12 +1032,9 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Vertex4.v1 = v1;
 	 ctx->EvalMap.Map2Vertex4.v2 = v2;
 	 ctx->EvalMap.Map2Vertex4.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Vertex4.Points
-             && !ctx->EvalMap.Map2Vertex4.Retain) {
+	 if (ctx->EvalMap.Map2Vertex4.Points)
 	    FREE( ctx->EvalMap.Map2Vertex4.Points );
-	 }
-	 ctx->EvalMap.Map2Vertex4.Points = (GLfloat *) points;
-	 ctx->EvalMap.Map2Vertex4.Retain = retain;
+	 ctx->EvalMap.Map2Vertex4.Points = pnts;
 	 break;
       case GL_MAP2_INDEX:
          ctx->EvalMap.Map2Index.Uorder = uorder;
@@ -1060,12 +1045,9 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Index.v1 = v1;
 	 ctx->EvalMap.Map2Index.v2 = v2;
 	 ctx->EvalMap.Map2Index.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Index.Points
-             && !ctx->EvalMap.Map2Index.Retain) {
+	 if (ctx->EvalMap.Map2Index.Points)
 	    FREE( ctx->EvalMap.Map2Index.Points );
-	 }
-	 ctx->EvalMap.Map2Index.Retain = retain;
-	 ctx->EvalMap.Map2Index.Points = (GLfloat *) points;
+	 ctx->EvalMap.Map2Index.Points = pnts;
 	 break;
       case GL_MAP2_COLOR_4:
          ctx->EvalMap.Map2Color4.Uorder = uorder;
@@ -1076,12 +1058,9 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Color4.v1 = v1;
 	 ctx->EvalMap.Map2Color4.v2 = v2;
 	 ctx->EvalMap.Map2Color4.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Color4.Points
-             && !ctx->EvalMap.Map2Color4.Retain) {
+	 if (ctx->EvalMap.Map2Color4.Points)
 	    FREE( ctx->EvalMap.Map2Color4.Points );
-	 }
-	 ctx->EvalMap.Map2Color4.Retain = retain;
-	 ctx->EvalMap.Map2Color4.Points = (GLfloat *) points;
+	 ctx->EvalMap.Map2Color4.Points = pnts;
 	 break;
       case GL_MAP2_NORMAL:
          ctx->EvalMap.Map2Normal.Uorder = uorder;
@@ -1092,12 +1071,9 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Normal.v1 = v1;
 	 ctx->EvalMap.Map2Normal.v2 = v2;
 	 ctx->EvalMap.Map2Normal.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Normal.Points
-             && !ctx->EvalMap.Map2Normal.Retain) {
+	 if (ctx->EvalMap.Map2Normal.Points)
 	    FREE( ctx->EvalMap.Map2Normal.Points );
-	 }
-	 ctx->EvalMap.Map2Normal.Retain = retain;
-	 ctx->EvalMap.Map2Normal.Points = (GLfloat *) points;
+	 ctx->EvalMap.Map2Normal.Points = pnts;
 	 break;
       case GL_MAP2_TEXTURE_COORD_1:
          ctx->EvalMap.Map2Texture1.Uorder = uorder;
@@ -1108,12 +1084,9 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Texture1.v1 = v1;
 	 ctx->EvalMap.Map2Texture1.v2 = v2;
 	 ctx->EvalMap.Map2Texture1.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Texture1.Points
-             && !ctx->EvalMap.Map2Texture1.Retain) {
+	 if (ctx->EvalMap.Map2Texture1.Points)
 	    FREE( ctx->EvalMap.Map2Texture1.Points );
-	 }
-	 ctx->EvalMap.Map2Texture1.Retain = retain;
-	 ctx->EvalMap.Map2Texture1.Points = (GLfloat *) points;
+	 ctx->EvalMap.Map2Texture1.Points = pnts;
 	 break;
       case GL_MAP2_TEXTURE_COORD_2:
          ctx->EvalMap.Map2Texture2.Uorder = uorder;
@@ -1124,12 +1097,9 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Texture2.v1 = v1;
 	 ctx->EvalMap.Map2Texture2.v2 = v2;
 	 ctx->EvalMap.Map2Texture2.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Texture2.Points
-             && !ctx->EvalMap.Map2Texture2.Retain) {
+	 if (ctx->EvalMap.Map2Texture2.Points)
 	    FREE( ctx->EvalMap.Map2Texture2.Points );
-	 }
-	 ctx->EvalMap.Map2Texture2.Retain = retain;
-	 ctx->EvalMap.Map2Texture2.Points = (GLfloat *) points;
+	 ctx->EvalMap.Map2Texture2.Points = pnts;
 	 break;
       case GL_MAP2_TEXTURE_COORD_3:
          ctx->EvalMap.Map2Texture3.Uorder = uorder;
@@ -1140,12 +1110,9 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Texture3.v1 = v1;
 	 ctx->EvalMap.Map2Texture3.v2 = v2;
 	 ctx->EvalMap.Map2Texture3.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Texture3.Points
-             && !ctx->EvalMap.Map2Texture3.Retain) {
+	 if (ctx->EvalMap.Map2Texture3.Points)
 	    FREE( ctx->EvalMap.Map2Texture3.Points );
-	 }
-	 ctx->EvalMap.Map2Texture3.Retain = retain;
-	 ctx->EvalMap.Map2Texture3.Points = (GLfloat *) points;
+	 ctx->EvalMap.Map2Texture3.Points = pnts;
 	 break;
       case GL_MAP2_TEXTURE_COORD_4:
          ctx->EvalMap.Map2Texture4.Uorder = uorder;
@@ -1156,12 +1123,9 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 	 ctx->EvalMap.Map2Texture4.v1 = v1;
 	 ctx->EvalMap.Map2Texture4.v2 = v2;
 	 ctx->EvalMap.Map2Texture4.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Texture4.Points
-             && !ctx->EvalMap.Map2Texture4.Retain) {
+	 if (ctx->EvalMap.Map2Texture4.Points)
 	    FREE( ctx->EvalMap.Map2Texture4.Points );
-	 }
-	 ctx->EvalMap.Map2Texture4.Retain = retain;
-	 ctx->EvalMap.Map2Texture4.Points = (GLfloat *) points;
+	 ctx->EvalMap.Map2Texture4.Points = pnts;
 	 break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glMap2(target)" );
@@ -1169,11 +1133,33 @@ void gl_Map2f( GLcontext* ctx, GLenum target,
 }
 
 
-   
-
-
-void gl_GetMapdv( GLcontext* ctx, GLenum target, GLenum query, GLdouble *v )
+void
+_mesa_Map2f( GLenum target,
+             GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
+             GLfloat v1, GLfloat v2, GLint vstride, GLint vorder,
+             const GLfloat *points)
 {
+   map2(target, u1, u2, ustride, uorder, v1, v2, vstride, vorder,
+        points, GL_FLOAT);
+}
+
+
+void
+_mesa_Map2d( GLenum target,
+             GLdouble u1, GLdouble u2, GLint ustride, GLint uorder,
+             GLdouble v1, GLdouble v2, GLint vstride, GLint vorder,
+             const GLdouble *points )
+{
+   map2(target, u1, u2, ustride, uorder, v1, v2, vstride, vorder,
+        points, GL_DOUBLE);
+}
+
+
+   
+void
+_mesa_GetMapdv( GLenum target, GLenum query, GLdouble *v )
+{
+   GET_CURRENT_CONTEXT(ctx);
    GLint i, n;
    GLfloat *data;
 
@@ -1443,8 +1429,10 @@ void gl_GetMapdv( GLcontext* ctx, GLenum target, GLenum query, GLdouble *v )
 }
 
 
-void gl_GetMapfv( GLcontext* ctx, GLenum target, GLenum query, GLfloat *v )
+void
+_mesa_GetMapfv( GLenum target, GLenum query, GLfloat *v )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLint i, n;
    GLfloat *data;
 
@@ -1714,8 +1702,10 @@ void gl_GetMapfv( GLcontext* ctx, GLenum target, GLenum query, GLfloat *v )
 }
 
 
-void gl_GetMapiv( GLcontext* ctx, GLenum target, GLenum query, GLint *v )
+void
+_mesa_GetMapiv( GLenum target, GLenum query, GLint *v )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLuint i, n;
    GLfloat *data;
 
@@ -2613,8 +2603,10 @@ void gl_eval_vb( struct vertex_buffer *VB )
 }
 
 
-void gl_MapGrid1f( GLcontext* ctx, GLint un, GLfloat u1, GLfloat u2 )
+void
+_mesa_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
 {
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glMapGrid1f");
 
    if (un<1) {
@@ -2628,9 +2620,18 @@ void gl_MapGrid1f( GLcontext* ctx, GLint un, GLfloat u1, GLfloat u2 )
 }
 
 
-void gl_MapGrid2f( GLcontext* ctx, GLint un, GLfloat u1, GLfloat u2,
-		  GLint vn, GLfloat v1, GLfloat v2 )
+void
+_mesa_MapGrid1d( GLint un, GLdouble u1, GLdouble u2 )
 {
+   _mesa_MapGrid1f( un, u1, u2 );
+}
+
+
+void
+_mesa_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
+                 GLint vn, GLfloat v1, GLfloat v2 )
+{
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glMapGrid2f");
    if (un<1) {
       gl_error( ctx, GL_INVALID_VALUE, "glMapGrid2f(un)" );
@@ -2651,9 +2652,185 @@ void gl_MapGrid2f( GLcontext* ctx, GLint un, GLfloat u1, GLfloat u2,
 }
 
 
-
-void gl_EvalMesh1( GLcontext* ctx, GLenum mode, GLint i1, GLint i2 )
+void
+_mesa_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
+                 GLint vn, GLdouble v1, GLdouble v2 )
 {
+   _mesa_MapGrid2f( un, u1, u2, vn, v1, v2 );
+}
+
+
+
+
+/* KW: If are compiling, we don't know whether eval will produce a
+ *     vertex when it is run in the future.  If this is pure immediate
+ *     mode, eval is a noop if neither vertex map is enabled.
+ *
+ *     Thus we need to have a check in the display list code or
+ *     elsewhere for eval(1,2) vertices in the case where
+ *     map(1,2)_vertex is disabled, and to purge those vertices from
+ *     the vb.  This is currently done
+ *     via  modifications to the cull_vb and render_vb operations, and
+ *     by using the existing cullmask mechanism for all other operations.  
+ */
+
+
+/* KW: Because the eval values don't become 'current', fixup will flow
+ *     through these vertices, and then evaluation will write on top
+ *     of the fixup results.  
+ *
+ *     This is a little inefficient, but at least it is correct.  This
+ *     could be short-circuited in the case where all vertices are
+ *     eval-vertices, or more generally by a cullmask in fixup.
+ *
+ *     Note: using Obj to hold eval coord data.  This data is actually
+ *     transformed if eval is disabled.  But disabling eval & sending
+ *     eval coords is stupid, right?
+ */
+
+
+#define EVALCOORD1(IM, x)				\
+{							\
+   GLuint count = IM->Count++;				\
+   IM->Flag[count] |= VERT_EVAL_C1;			\
+   ASSIGN_4V(IM->Obj[count], x, 0, 0, 1);		\
+   if (count == VB_MAX-1)				\
+      IM->maybe_transform_vb( IM );			\
+}
+
+#define EVALCOORD2(IM, x, y)				\
+{							\
+   GLuint count = IM->Count++;				\
+   IM->Flag[count] |= VERT_EVAL_C2;			\
+   ASSIGN_4V(IM->Obj[count], x, y, 0, 1);		\
+   if (count == VB_MAX-1)				\
+      IM->maybe_transform_vb( IM );			\
+}
+
+#define EVALPOINT1(IM, x)				\
+{							\
+   GLuint count = IM->Count++;				\
+   IM->Flag[count] |= VERT_EVAL_P1;			\
+   ASSIGN_4V(IM->Obj[count], x, 0, 0, 1);		\
+   if (count == VB_MAX-1)				\
+      IM->maybe_transform_vb( IM );			\
+}
+ 
+#define EVALPOINT2(IM, x, y)				\
+{							\
+   GLuint count = IM->Count++;				\
+   IM->Flag[count] |= VERT_EVAL_P2;			\
+   ASSIGN_4V(IM->Obj[count], x, y, 0, 1);		\
+   if (count == VB_MAX-1)				\
+      IM->maybe_transform_vb( IM );			\
+}
+
+
+/* Lame internal function:
+ */
+void gl_EvalCoord1f( GLcontext *CC, GLfloat u )
+{
+   struct immediate *i = CC->input;
+   EVALCOORD1( i, u );
+}
+
+
+void
+_mesa_EvalCoord1d( GLdouble u )
+{
+   GET_IMMEDIATE;
+   EVALCOORD1( IM, (GLfloat) u );
+}
+
+
+void
+_mesa_EvalCoord1f( GLfloat u )
+{
+   GET_IMMEDIATE;
+   EVALCOORD1( IM, u );
+}
+
+
+void
+_mesa_EvalCoord1dv( const GLdouble *u )
+{
+   GET_IMMEDIATE;
+   EVALCOORD1( IM, (GLfloat) *u );
+}
+
+
+void
+_mesa_EvalCoord1fv( const GLfloat *u )
+{
+   GET_IMMEDIATE;
+   EVALCOORD1( IM, (GLfloat) *u );
+}
+
+
+void
+_mesa_EvalCoord2d( GLdouble u, GLdouble v )
+{
+   GET_IMMEDIATE;
+   EVALCOORD2( IM, (GLfloat) u, (GLfloat) v );
+}
+
+
+void
+_mesa_EvalCoord2f( GLfloat u, GLfloat v )
+{
+   GET_IMMEDIATE;
+   EVALCOORD2( IM, u, v );
+}
+
+
+/* Lame internal function:
+ */
+void gl_EvalCoord2f( GLcontext *CC, GLfloat u, GLfloat v )
+{
+   struct immediate *i = CC->input;
+   EVALCOORD2( i, u, v );
+}
+
+
+void
+_mesa_EvalCoord2dv( const GLdouble *u )
+{
+   GET_IMMEDIATE;
+   EVALCOORD2( IM, (GLfloat) u[0], (GLfloat) u[1] );
+}
+
+
+void
+_mesa_EvalCoord2fv( const GLfloat *u )
+{
+   GET_IMMEDIATE;
+   EVALCOORD2( IM, u[0], u[1] );
+}
+
+
+void
+_mesa_EvalPoint1( GLint i )
+{
+   GET_IMMEDIATE;
+   EVALPOINT1( IM, i );
+}
+
+
+void
+_mesa_EvalPoint2( GLint i, GLint j )
+{
+   GET_IMMEDIATE;
+   EVALPOINT2( IM, i, j );
+}
+
+
+
+
+
+void
+_mesa_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
+{
+   GET_CURRENT_CONTEXT(ctx);
    GLint i;
    GLfloat u, du;
    GLenum prim;
@@ -2693,11 +2870,10 @@ void gl_EvalMesh1( GLcontext* ctx, GLenum mode, GLint i1, GLint i2 )
 
 
 
-void gl_EvalMesh2( GLcontext* ctx, 
-		   GLenum mode, 
-		   GLint i1, GLint i2, 
-		   GLint j1, GLint j2 )
+void
+_mesa_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLint i, j;
    GLfloat u, du, v, dv, v1, u1;
 
@@ -2758,3 +2934,6 @@ void gl_EvalMesh2( GLcontext* ctx,
       return;
    }
 }
+
+
+
