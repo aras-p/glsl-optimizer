@@ -821,9 +821,18 @@ extern FxU32 FX_grTexTextureMemRequired(FxU32 evenOdd, GrTexInfo *info);
 
 #define FX_grGlideShutdown()		\
   do {					\
-    BEGIN_CLIP_LOOP();			\
+    BEGIN_BOARD_LOCK();			\
     grGlideShutdown();			\
-    END_CLIP_LOOP();			\
+    END_BOARD_LOCK();			\
+  } while (0)
+
+#define FX_grTexLodBiasValue_NoLock(t, v) grTexLodBiasValue(t, v)
+
+#define FX_grTexLodBiasValue(t, v)	\
+  do {					\
+    BEGIN_BOARD_LOCK();			\
+    grTexLodBiasValue(t, v);	\
+    END_BOARD_LOCK();			\
   } while (0)
 
 #define FX_grGlideInit_NoLock grGlideInit

@@ -176,10 +176,10 @@ void fxDDTexEnv(GLcontext *ctx, GLenum target, GLenum pname, const GLfloat *para
 
    /* apply any lod biasing right now */
    if (pname==GL_TEXTURE_LOD_BIAS_EXT) {
-     grTexLodBiasValue(GR_TMU0,*param);
+     FX_grTexLodBiasValue(GR_TMU0,*param);
 
      if(fxMesa->haveTwoTMUs) {
-       grTexLodBiasValue(GR_TMU1,*param);
+       FX_grTexLodBiasValue(GR_TMU1,*param);
      }
 
    }
