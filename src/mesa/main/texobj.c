@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.11 2000/01/24 16:19:55 brianp Exp $ */
+/* $Id: texobj.c,v 1.12 2000/01/24 20:53:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -444,7 +444,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
       newTexObj = ctx->Shared->DefaultD[dim];
    else {
       struct _mesa_HashTable *hash = ctx->Shared->TexObjects;
-      newTexObj = (struct gl_texture_object *) HashLookup(hash, texName);
+      newTexObj = (struct gl_texture_object *) _mesa_HashLookup(hash, texName);
 
       if (!newTexObj)
 	 newTexObj = gl_alloc_texture_object(ctx->Shared, texName, dim);
