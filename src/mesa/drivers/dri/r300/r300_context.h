@@ -56,13 +56,17 @@ typedef struct r300_context *r300ContextPtr;
 
 /* Checkpoint.. for convenience */
 #define CPT	{ fprintf(stderr, "%s:%s line %d\n", __FILE__, __FUNCTION__, __LINE__); }
-#define WARN_ONCE(a)	{ \
+/* From http://gcc.gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .
+   I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble 
+   with other compilers ... GLUE!
+*/
+#define WARN_ONCE(a, ...)	{ \
 	static int warn##__LINE__=1; \
 	if(warn##__LINE__){ \
 		fprintf(stderr, "*********************************WARN_ONCE*********************************\n"); \
 		fprintf(stderr, "File %s function %s line %d\n", \
 			__FILE__, __FUNCTION__, __LINE__); \
-		fprintf(stderr,  a);\
+		fprintf(stderr,  a, ## __VA_ARGS__);\
 		fprintf(stderr, "***************************************************************************\n"); \
 		warn##__LINE__=0;\
 		} \

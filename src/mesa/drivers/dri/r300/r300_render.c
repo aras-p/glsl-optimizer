@@ -123,70 +123,43 @@ static void update_zbias(GLcontext * ctx, int prim)
 * rasterization hardware for rendering.
 **********************************************************************/
 
-static int r300_get_primitive_type(r300ContextPtr rmesa, 
-	GLcontext *ctx,
-	int start,
-	int end,
-	int prim)
+static int r300_get_primitive_type(r300ContextPtr rmesa, GLcontext *ctx, int prim)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
-   int type=-1, min_vertices=0;
-   char *name="UNKNOWN";
-   
-   if(end<=start)return -1; /* do we need to watch for this ? */
+   int type=-1;
    
 	switch (prim & PRIM_MODE_MASK) {
 	case GL_POINTS:
-   		name="P";
 	        type=R300_VAP_VF_CNTL__PRIM_POINTS;
-		min_vertices=1;
       		break;		
 	case GL_LINES:
-   		name="L";
 	        type=R300_VAP_VF_CNTL__PRIM_LINES;
-		min_vertices=2;
       		break;		
 	case GL_LINE_STRIP:
-   		name="LS";
 	        type=R300_VAP_VF_CNTL__PRIM_LINE_STRIP;
-		min_vertices=2;
       		break;
 	case GL_LINE_LOOP:
-   		name="LL";
-		min_vertices=2;
-		return -1;
+		type=R300_VAP_VF_CNTL__PRIM_LINE_LOOP;
       		break;
     	case GL_TRIANGLES:
-   		name="T";
 	        type=R300_VAP_VF_CNTL__PRIM_TRIANGLES;
-		min_vertices=3;
       		break;
    	case GL_TRIANGLE_STRIP:
-   		name="TS";
 	        type=R300_VAP_VF_CNTL__PRIM_TRIANGLE_STRIP;
-		min_vertices=3;
       		break;
    	case GL_TRIANGLE_FAN:
-   		name="TF";
 	        type=R300_VAP_VF_CNTL__PRIM_TRIANGLE_FAN;
-		min_vertices=3;
       		break;
 	case GL_QUADS:
-   		name="Q";
 	        type=R300_VAP_VF_CNTL__PRIM_QUADS;
-		min_vertices=4;
       		break;
 	case GL_QUAD_STRIP:
-   		name="QS";
 	        type=R300_VAP_VF_CNTL__PRIM_QUAD_STRIP;
-		min_vertices=4;
       		break;
 	case GL_POLYGON:
-		name="P";
-			type=R300_VAP_VF_CNTL__PRIM_POLYGON;
-		min_vertices=3;
+		type=R300_VAP_VF_CNTL__PRIM_POLYGON;
 		break;
    	default:
  		fprintf(stderr, "%s:%s Do not know how to handle primitive %02x - help me !\n",
@@ -195,20 +168,85 @@ static int r300_get_primitive_type(r300ContextPtr rmesa,
 		return -1;
          	break;
    	}
-   #if 0
-   fprintf(stderr, "[%d-%d]%s ", start, end, name);
-   #endif
-   if(start+min_vertices>end){
-	static int warn_once=1;
-	if(warn_once){
-		fprintf(stderr, "%s:%s ***WARN_ONCE*** Not enough vertices to draw primitive %02x - help me !\n",
-				__FILE__, __FUNCTION__,
-				prim & PRIM_MODE_MASK);
-			warn_once=0;
-			}
-	return -1;
-   	}
    return type;
+}
+
+static int r300_get_num_verts(r300ContextPtr rmesa, 
+	GLcontext *ctx,
+	int num_verts,
+	int prim)
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   GLuint i;
+   int type=-1, verts_off=0;
+   char *name="UNKNOWN";
+   
+	switch (prim & PRIM_MODE_MASK) {
+	case GL_POINTS:
+   		name="P";
+		verts_off = 0;
+      		break;		
+	case GL_LINES:
+   		name="L";
+		verts_off = num_verts % 2;
+      		break;		
+	case GL_LINE_STRIP:
+   		name="LS";
+		verts_off = num_verts % 2;
+      		break;
+	case GL_LINE_LOOP:
+   		name="LL";
+		verts_off = num_verts % 2;
+      		break;
+    	case GL_TRIANGLES:
+   		name="T";
+		verts_off = num_verts % 3;
+      		break;
+   	case GL_TRIANGLE_STRIP:
+   		name="TS";
+		if(num_verts < 3)
+			verts_off = num_verts;
+      		break;
+   	case GL_TRIANGLE_FAN:
+   		name="TF";
+		if(num_verts < 3)
+			verts_off = num_verts;
+      		break;
+	case GL_QUADS:
+   		name="Q";
+		verts_off = num_verts % 4;
+      		break;
+	case GL_QUAD_STRIP:
+   		name="QS";
+		if(num_verts < 4)
+			verts_off = num_verts;
+		else
+			verts_off = num_verts % 2;
+      		break;
+	case GL_POLYGON:
+		name="P";
+		if(num_verts < 3)
+			verts_off = num_verts;
+		break;
+   	default:
+ 		fprintf(stderr, "%s:%s Do not know how to handle primitive %02x - help me !\n",
+			__FILE__, __FUNCTION__,
+			prim & PRIM_MODE_MASK);
+		return -1;
+         	break;
+   	}
+	
+	if(num_verts - verts_off == 0){
+		WARN_ONCE("user error: Need more than %d vertices to draw primitive %s !\n", num_verts, name);
+		return 0;
+	}
+	
+	if(verts_off > 0){
+		WARN_ONCE("user error: %d is not a valid number of vertices for primitive %s !\n", num_verts, name);
+	}
+	
+	return num_verts - verts_off;
 }
 
 /* This function compiles GL context into state registers that 
@@ -249,11 +287,12 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i, render_inputs;
-   int k, type;
+   int k, type, num_verts;
    LOCAL_VARS
 		   
-   type=r300_get_primitive_type(rmesa, ctx, start, end, prim);
-		
+   type=r300_get_primitive_type(rmesa, ctx, prim);
+   num_verts=r300_get_num_verts(rmesa, ctx, end-start, prim);
+   
    		#if 0
 		fprintf(stderr,"ObjPtr: size=%d stride=%d\n", 
 			VB->ObjPtr->size, VB->ObjPtr->stride);
@@ -263,14 +302,14 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
 			VB->TexCoordPtr[0]->size, VB->TexCoordPtr[0]->stride);
 		#endif
    
-   if(type<0)return;
+   if(type<0 || num_verts <= 0)return;
 
    if(!VB->ObjPtr){
    	WARN_ONCE("FIXME: Don't know how to handle GL_ARB_vertex_buffer_object correctly\n");
    	return;
    }
    /* A packet cannot have more than 16383 data words.. */
-   if(((end-start)*4*rmesa->state.aos_count)>16380){
+   if((num_verts*4*rmesa->state.aos_count)>16380){
    	WARN_ONCE("Too many vertices to paint. Fix me !\n");
 	return;   	
 	}
@@ -289,9 +328,9 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
 	return;
    	}
 	
-   start_immediate_packet(end-start, type, 4*rmesa->state.aos_count);
+   start_immediate_packet(num_verts, type, 4*rmesa->state.aos_count);
 
-	for(i=start;i<end;i++){
+	for(i=start;i<start+num_verts;i++){
 		#if 0
 		fprintf(stderr, "* (%f %f %f %f) (%f %f %f %f)\n", 
 			VEC_ELT(VB->ObjPtr, GLfloat, i)[0],
@@ -526,15 +565,16 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 	int end,
 	int prim)
 {
-   int type;
+   int type, num_verts;
    LOCAL_VARS
-       	
-   if(end<=start)return; /* do we need to watch for this ? */
    
-   type=r300_get_primitive_type(rmesa, ctx, start, end, prim);
-   if(type<0)return;
-
-   fire_AOS(PASS_PREFIX end-start, type);
+   type=r300_get_primitive_type(rmesa, ctx, prim);
+   num_verts=r300_get_num_verts(rmesa, ctx, end-start, prim);
+   
+   if(type<0 || num_verts <= 0)return;
+   
+   
+   fire_AOS(PASS_PREFIX num_verts, type);
 }
 
 static GLboolean r300_run_vb_render(GLcontext *ctx,
@@ -612,7 +652,7 @@ static GLboolean r300_run_render(GLcontext *ctx,
 	
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
-
+	
 
    #if 1
 	
