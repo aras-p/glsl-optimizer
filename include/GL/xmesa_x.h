@@ -30,6 +30,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Authors:
  *   Kevin E. Martin <kevin@precisioninsight.com>
  *
+ * When we're building the XMesa driver for stand-alone Mesa we
+ * include this file when building the xm_*.c files.
+ * We need to define some types and macros differently when building
+ * in the Xserver vs. stand-alone Mesa.
  */
 
 #ifndef _XMESA_X_H_
@@ -55,19 +59,14 @@ typedef XColor       XMesaColor;
 #define XMesaSetBackground     XSetBackground
 #define XMesaSetPlaneMask      XSetPlaneMask
 #define XMesaSetFunction       XSetFunction
-#define XMesaSetDashes         XSetDashes
-#define XMesaSetLineAttributes XSetLineAttributes
 #define XMesaSetFillStyle      XSetFillStyle
 #define XMesaSetTile           XSetTile
-#define XMesaSetStipple        XSetStipple
 
 #define XMesaDrawPoint         XDrawPoint
 #define XMesaDrawPoints        XDrawPoints
-#define XMesaDrawLine          XDrawLine
 #define XMesaFillRectangle     XFillRectangle
 #define XMesaPutImage          XPutImage
 #define XMesaCopyArea          XCopyArea
-#define XMesaFillPolygon       XFillPolygon
 
 #define XMesaCreatePixmap      XCreatePixmap
 #define XMesaFreePixmap        XFreePixmap
