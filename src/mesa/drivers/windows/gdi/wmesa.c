@@ -979,8 +979,8 @@ static void read_ci32_span( const GLcontext* ctx, GLuint n, GLint x, GLint y,
                             GLuint index[])
 {
   GLuint i;
-  (void) ctx;
   BYTE *Mem=Current->ScreenMem+FLIP(y)*Current->ScanWidth+x;
+  (void) ctx;
   assert(Current->rgb_flag==GL_FALSE);
   for (i=0; i<n; i++)
     index[i]=Mem[i];
