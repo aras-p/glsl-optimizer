@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.10 2001/03/12 00:48:44 gareth Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.11 2001/04/19 12:22:09 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,7 +36,7 @@
 #  define CHECK_MATERIAL(x)  (flags[x] & VERT_MATERIAL)
 #  define CHECK_END_VB(x)    (flags[x] & VERT_END_VB)
 #  if (IDX & LIGHT_COLORMATERIAL)
-#    define CMSTRIDE STRIDE_4CHAN(CMcolor, (4 * sizeof(GLchan)))
+#    define CMSTRIDE STRIDE_CHAN(CMcolor, (4 * sizeof(GLchan)))
 #    define CHECK_COLOR_MATERIAL(x) (flags[x] & VERT_RGBA)
 #    define CHECK_VALIDATE(x) (flags[x] & (VERT_RGBA|VERT_MATERIAL))
 #    define DO_ANOTHER_NORMAL(x) \
@@ -44,7 +44,7 @@
 #    define REUSE_LIGHT_RESULTS(x) \
      ((flags[x] & (VERT_RGBA|VERT_NORM|VERT_END_VB|VERT_MATERIAL)) == 0)
 #  else
-#    define CMSTRIDE 0
+#    define CMSTRIDE (void)0
 #    define CHECK_COLOR_MATERIAL(x) 0
 #    define CHECK_VALIDATE(x) (flags[x] & (VERT_MATERIAL))
 #    define DO_ANOTHER_NORMAL(x) \
@@ -58,12 +58,12 @@
 #  define CHECK_MATERIAL(x)   0	           /* no materials on array paths */
 #  define CHECK_END_VB(XX)     (XX >= nr)
 #  if (IDX & LIGHT_COLORMATERIAL)
-#     define CMSTRIDE STRIDE_4CHAN(CMcolor, CMstride)
+#     define CMSTRIDE STRIDE_CHAN(CMcolor, CMstride)
 #     define CHECK_COLOR_MATERIAL(x) (x < nr) /* always have colormaterial */
 #     define CHECK_VALIDATE(x) (x < nr)
 #     define DO_ANOTHER_NORMAL(x) 0        /* always stop to recalc colormat */
 #  else
-#     define CMSTRIDE 0
+#     define CMSTRIDE (void)0
 #     define CHECK_COLOR_MATERIAL(x) 0        /* no colormaterial */
 #     define CHECK_VALIDATE(x) (0)
 #     define DO_ANOTHER_NORMAL(XX) (XX < nr) /* keep going to end of vb */
@@ -97,7 +97,7 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
    GLuint  nstride = VB->NormalPtr->stride;
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
 
-   GLchan (*CMcolor)[4];
+   GLchan *CMcolor;
    GLuint CMstride;
 
    GLchan (*Fcolor)[4] = (GLchan (*)[4]) store->LitColor[0].data;
@@ -114,10 +114,10 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
    (void) nstride;
    (void) vstride;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__ ); */
+/*     fprintf(stderr, "%s\n", __FUNCTION__ );  */
 
    if (IDX & LIGHT_COLORMATERIAL) {
-      CMcolor = (GLchan (*)[4]) VB->ColorPtr[0]->data;
+      CMcolor = (GLchan *) VB->ColorPtr[0]->data;
       CMstride = VB->ColorPtr[0]->stride;
    }
 
@@ -142,7 +142,7 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
       struct gl_light *light;
 
       if ( CHECK_COLOR_MATERIAL(j) )
-	 _mesa_update_color_material( ctx, CMcolor[j] );
+	 _mesa_update_color_material( ctx, CMcolor );
 
       if ( CHECK_MATERIAL(j) )
 	 _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
@@ -300,7 +300,7 @@ static void TAG(light_rgba)( GLcontext *ctx,
    GLuint  nstride = VB->NormalPtr->stride;
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
 
-   GLchan (*CMcolor)[4];
+   GLchan *CMcolor;
    GLuint CMstride;
 
    GLchan (*Fcolor)[4] = (GLchan (*)[4]) store->LitColor[0].data;
@@ -311,13 +311,13 @@ static void TAG(light_rgba)( GLcontext *ctx,
    GLuint *new_material_mask = VB->MaterialMask;
    GLuint nr = VB->Count;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__ ); */
+/*     fprintf(stderr, "%s\n", __FUNCTION__ );  */
    (void) flags;
    (void) nstride;
    (void) vstride;
 
    if (IDX & LIGHT_COLORMATERIAL) {
-      CMcolor = VB->ColorPtr[0]->data;
+      CMcolor = (GLchan *)VB->ColorPtr[0]->data;
       CMstride = VB->ColorPtr[0]->stride;
    }
 
@@ -336,7 +336,7 @@ static void TAG(light_rgba)( GLcontext *ctx,
       struct gl_light *light;
 
       if ( CHECK_COLOR_MATERIAL(j) )
-	 _mesa_update_color_material( ctx, (GLchan *)CMcolor[j] );
+	 _mesa_update_color_material( ctx, CMcolor );
 
       if ( CHECK_MATERIAL(j) )
 	 _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
@@ -493,7 +493,7 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
    GLuint  nstride = VB->NormalPtr->stride;
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
-   GLchan (*CMcolor)[4];
+   GLchan *CMcolor;
    GLuint CMstride;
    GLchan (*Fcolor)[4] = (GLchan (*)[4]) store->LitColor[0].data;
    GLchan (*Bcolor)[4] = (GLchan (*)[4]) store->LitColor[1].data;
@@ -506,14 +506,14 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
    GLfloat base[2][3];
    GLuint nr = VB->Count;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__ ); */
+/*     fprintf(stderr, "%s\n", __FUNCTION__ );  */
    (void) input;		/* doesn't refer to Eye or Obj */
    (void) flags;
    (void) nr;
    (void) nstride;
 
    if (IDX & LIGHT_COLORMATERIAL) {
-      CMcolor = VB->ColorPtr[0]->data;
+      CMcolor = (GLchan *)VB->ColorPtr[0]->data;
       CMstride = VB->ColorPtr[0]->stride;
    }
 
@@ -525,9 +525,9 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
       return;
 
    do {
-
+      
       if ( CHECK_COLOR_MATERIAL(j) )
-	 _mesa_update_color_material( ctx, (GLchan *)CMcolor[j] );
+	 _mesa_update_color_material( ctx, CMcolor );
 
       if ( CHECK_MATERIAL(j) )
 	 _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
@@ -586,11 +586,12 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
 	 }
 
 	 j++;
+	 CMSTRIDE;
 	 STRIDE_F(normal, NSTRIDE);
       } while (DO_ANOTHER_NORMAL(j));
 
 
-      for ( ; REUSE_LIGHT_RESULTS(j) ; j++ ) {
+      for ( ; REUSE_LIGHT_RESULTS(j) ; j++, CMSTRIDE ) {
 	 COPY_CHAN4(Fcolor[j], Fcolor[j-1]);
 	 if (IDX & LIGHT_TWOSIDE)
 	    COPY_CHAN4(Bcolor[j], Bcolor[j-1]);
@@ -612,7 +613,7 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
    const GLchan *sumA = ctx->Light._BaseAlpha;
    GLuint  nstride = VB->NormalPtr->stride;
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
-   GLchan (*CMcolor)[4];
+   GLchan *CMcolor;
    GLuint CMstride;
    GLchan (*Fcolor)[4] = (GLchan (*)[4]) store->LitColor[0].data;
    GLchan (*Bcolor)[4] = (GLchan (*)[4]) store->LitColor[1].data;
@@ -623,14 +624,14 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
    GLuint nr = VB->Count;
    struct gl_light *light;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__ ); */
+/*     fprintf(stderr, "%s\n", __FUNCTION__ );  */
    (void) flags;
    (void) input;
    (void) nr;
    (void) nstride;
 
    if (IDX & LIGHT_COLORMATERIAL) {
-      CMcolor = VB->ColorPtr[0]->data;
+      CMcolor = (GLchan *)VB->ColorPtr[0]->data;
       CMstride = VB->ColorPtr[0]->stride;
    }
 
@@ -646,7 +647,7 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
 	 GLfloat sum[2][3];
 
 	 if ( CHECK_COLOR_MATERIAL(j) )
-	    _mesa_update_color_material( ctx, CMcolor[j] );
+	    _mesa_update_color_material( ctx, CMcolor );
 
 	 if ( CHECK_MATERIAL(j) )
 	    _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
@@ -699,13 +700,14 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
 	 }
 
 	 j++;
+	 CMSTRIDE;
 	 STRIDE_F(normal, NSTRIDE);
       } while (DO_ANOTHER_NORMAL(j));
 
       /* Reuse the shading results while there is no change to
        * normal or material values.
        */
-      for ( ; REUSE_LIGHT_RESULTS(j) ; j++ ) {
+      for ( ; REUSE_LIGHT_RESULTS(j) ; j++, CMSTRIDE ) {
 	 COPY_CHAN4(Fcolor[j], Fcolor[j-1]);
 	 if (IDX & LIGHT_TWOSIDE)
 	    COPY_CHAN4(Bcolor[j], Bcolor[j-1]);
@@ -739,7 +741,7 @@ static void TAG(light_ci)( GLcontext *ctx,
    const GLfloat *vertex = (GLfloat *) input->data;
    GLuint nstride = VB->NormalPtr->stride;
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
-   GLchan (*CMcolor)[4];
+   GLchan *CMcolor;
    GLuint CMstride;
    GLuint *flags = VB->Flag;
    GLuint *indexResult[2];
@@ -747,7 +749,7 @@ static void TAG(light_ci)( GLcontext *ctx,
    GLuint *new_material_mask = VB->MaterialMask;
    GLuint nr = VB->Count;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__ ); */
+/*     fprintf(stderr, "%s\n", __FUNCTION__ );  */
    (void) flags;
    (void) nstride;
    (void) vstride;
@@ -764,7 +766,7 @@ static void TAG(light_ci)( GLcontext *ctx,
       indexResult[1] = VB->IndexPtr[1]->data;
 
    if (IDX & LIGHT_COLORMATERIAL) {
-      CMcolor = VB->ColorPtr[0]->data;
+      CMcolor = (GLchan *)VB->ColorPtr[0]->data;
       CMstride = VB->ColorPtr[0]->stride;
    }
 
@@ -778,7 +780,7 @@ static void TAG(light_ci)( GLcontext *ctx,
       struct gl_light *light;
 
       if ( CHECK_COLOR_MATERIAL(j) )
-	 _mesa_update_color_material( ctx, (GLchan *)CMcolor[j] );
+	 _mesa_update_color_material( ctx, CMcolor );
 
       if ( CHECK_MATERIAL(j) )
 	 _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
