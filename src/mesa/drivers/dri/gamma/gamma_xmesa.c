@@ -243,19 +243,6 @@ gammaUnbindContext( __DRIcontextPrivate *driContextPriv )
    return GL_TRUE;
 }
 
-static GLboolean
-gammaOpenFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-    return GL_TRUE;
-}
-
-static GLboolean
-gammaCloseFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-    return GL_TRUE;
-}
-
-
 static struct __DriverAPIRec gammaAPI = {
    gammaInitDriver,
    gammaDestroyScreen,
@@ -265,9 +252,7 @@ static struct __DriverAPIRec gammaAPI = {
    gammaDestroyBuffer,
    gammaSwapBuffers,
    gammaMakeCurrent,
-   gammaUnbindContext,
-   gammaOpenFullScreen,
-   gammaCloseFullScreen
+   gammaUnbindContext
 };
 
 

@@ -262,13 +262,6 @@ tdfxSwapBuffers( __DRIdrawablePrivate *driDrawPriv )
 }
 
 
-static GLboolean
-tdfxOpenCloseFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-    return GL_TRUE;
-}
-
-
 static const struct __DriverAPIRec tdfxAPI = {
    .InitDriver      = tdfxInitDriver,
    .DestroyScreen   = tdfxDestroyScreen,
@@ -279,8 +272,6 @@ static const struct __DriverAPIRec tdfxAPI = {
    .SwapBuffers     = tdfxSwapBuffers,
    .MakeCurrent     = tdfxMakeCurrent,
    .UnbindContext   = tdfxUnbindContext,
-   .OpenFullScreen  = tdfxOpenCloseFullScreen,
-   .CloseFullScreen = tdfxOpenCloseFullScreen,
    .GetSwapInfo     = NULL,
    .GetMSC          = NULL,
    .WaitForMSC      = NULL,

@@ -315,7 +315,6 @@ struct sis_context
   GLint GlobalFlag;
 
   /* Stereo */
-  GLboolean isFullScreen;
   GLboolean useStereo;
   GLboolean stereoEnabled;
   int stereo_drawIndex;

@@ -557,12 +557,6 @@ fbUnbindContext( __DRIcontextPrivate *driContextPriv )
    return GL_TRUE;
 }
 
-static GLboolean
-fbOpenCloseFullScreen( __DRIcontextPrivate *driContextPriv )
-{
-   return GL_TRUE;
-}
-
 static struct __DriverAPIRec fbAPI = {
    fbInitDriver,
    fbDestroyScreen,
@@ -572,10 +566,14 @@ static struct __DriverAPIRec fbAPI = {
    fbDestroyBuffer,
    fbSwapBuffers,
    fbMakeCurrent,
-   fbUnbindContext,
-   fbOpenCloseFullScreen,
-   fbOpenCloseFullScreen
+   fbUnbindContext
 };
+
+
+void
+__driRegisterExtensions( void )
+{
+}
 
 
 /*

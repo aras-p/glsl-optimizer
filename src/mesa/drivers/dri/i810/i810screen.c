@@ -360,12 +360,6 @@ i810DestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 }
 
 
-static GLboolean
-i810OpenCloseFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-    return GL_TRUE;
-}
-
 static const struct __DriverAPIRec i810API = {
    .InitDriver      = i810InitDriver,
    .DestroyScreen   = i810DestroyScreen,
@@ -376,8 +370,6 @@ static const struct __DriverAPIRec i810API = {
    .SwapBuffers     = i810SwapBuffers,
    .MakeCurrent     = i810MakeCurrent,
    .UnbindContext   = i810UnbindContext,
-   .OpenFullScreen  = i810OpenCloseFullScreen,
-   .CloseFullScreen = i810OpenCloseFullScreen,
    .GetSwapInfo     = NULL,
    .GetMSC          = NULL,
    .WaitForMSC      = NULL,

@@ -169,36 +169,6 @@ struct __DriverAPIRec {
     GLboolean (*UnbindContext)(__DRIcontextPrivate *driContextPriv);
   
     /**
-     * Full screen mode opening callback.
-     * 
-     * \deprecated
-     * Full screen functionality is no longer used by DRI.  Drivers should
-     * simply install a function returning \c GL_TRUE for backwards
-     * compatability.
-     *
-     * \todo
-     * Nothing calls this function anymore.  Since this data structure is only
-     * accessed with in the driver (i.e., libGL never sees it), we need to
-     * remove the other cases that set this field and remove the field.
-     */
-    GLboolean (*OpenFullScreen)(__DRIcontextPrivate *driContextPriv);
-
-    /**
-     * Full screen mode closing callback.
-     *
-     * \deprecated
-     * Full screen functionality is no longer used by DRI.  Drivers should
-     * simply install a function returning \c GL_TRUE for backwards
-     * compatability.
-     *
-     * \todo
-     * Nothing calls this function anymore.  Since this data structure is only
-     * accessed with in the driver (i.e., libGL never sees it), we need to
-     * remove the other cases that set this field and remove the field.
-     */
-    GLboolean (*CloseFullScreen)(__DRIcontextPrivate *driContextPriv);
-
-    /**
      * Retrieves statistics about buffer swap operations.  Required if
      * GLX_OML_sync_control or GLX_MESA_swap_frame_usage is supported.
      */

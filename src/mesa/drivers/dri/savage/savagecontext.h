@@ -214,7 +214,7 @@ struct savage_context_t {
     /*  use this bit to support single/double buffer */
     GLuint IsDouble;
     /*  use this to indicate Fullscreen mode */   
-    GLuint IsFullScreen;
+    GLuint IsFullScreen; /* FIXME - open/close fullscreen is gone, is this needed? */
     GLuint backup_frontOffset;
     GLuint backup_backOffset;
     GLuint backup_frontBitmapDesc;

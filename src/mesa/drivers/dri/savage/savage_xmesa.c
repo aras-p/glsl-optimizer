@@ -640,6 +640,7 @@ savageUnbindContext(__DRIcontextPrivate *driContextPriv)
    return GL_TRUE;
 }
 
+#if 0
 static GLboolean
 savageOpenFullScreen(__DRIcontextPrivate *driContextPriv)
 {
@@ -673,7 +674,7 @@ savageCloseFullScreen(__DRIcontextPrivate *driContextPriv)
    }
     return GL_TRUE;
 }
-
+#endif
 
 static GLboolean
 savageMakeCurrent(__DRIcontextPrivate *driContextPriv,
@@ -807,9 +808,7 @@ static const struct __DriverAPIRec savageAPI = {
    savageDestroyBuffer,
    savageSwapBuffers,
    savageMakeCurrent,
-   savageUnbindContext,
-   savageOpenFullScreen,
-   savageCloseFullScreen
+   savageUnbindContext
 };
 
 

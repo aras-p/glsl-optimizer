@@ -251,14 +251,6 @@ sisInitDriver( __DRIscreenPrivate *sPriv )
    return GL_TRUE;
 }
 
-/* Fullscreen mode change stub
- */
-static GLboolean
-sisOpenCloseFullScreen( __DRIcontextPrivate *driContextPriv )
-{
-   return GL_TRUE;
-}
-
 static struct __DriverAPIRec sisAPI = {
    .InitDriver      = sisInitDriver,
    .DestroyScreen   = sisDestroyScreen,
@@ -269,8 +261,6 @@ static struct __DriverAPIRec sisAPI = {
    .SwapBuffers     = sisSwapBuffers,
    .MakeCurrent     = sisMakeCurrent,
    .UnbindContext   = sisUnbindContext,
-   .OpenFullScreen  = sisOpenCloseFullScreen,
-   .CloseFullScreen = sisOpenCloseFullScreen,
    .GetSwapInfo     = NULL,
    .GetMSC          = NULL,
    .WaitForMSC      = NULL,

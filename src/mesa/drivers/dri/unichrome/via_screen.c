@@ -265,21 +265,6 @@ XMesaCloseFullScreen(__DRIcontextPrivate *driContextPriv)
     vmesa->Setup[VIA_DESTREG_DI0] = vmesa->driScreen->front_offset;
     return GL_TRUE;
 }
-
-#else
-
-static GLboolean
-viaOpenFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-    return GL_TRUE;
-}
-
-static GLboolean
-viaCloseFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-    return GL_TRUE;
-}
-
 #endif
 
 
@@ -292,9 +277,7 @@ static struct __DriverAPIRec viaAPI = {
     viaDestroyBuffer,
     viaSwapBuffers,
     viaMakeCurrent,
-    viaUnbindContext,
-    viaOpenFullScreen,
-    viaCloseFullScreen
+    viaUnbindContext
 };
 
 

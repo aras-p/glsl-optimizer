@@ -541,18 +541,6 @@ ffbUnbindContext(__DRIcontextPrivate *driContextPriv)
 	return GL_TRUE;
 }
 
-static GLboolean
-ffbOpenFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-    return GL_TRUE;
-}
-
-static GLboolean
-ffbCloseFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-    return GL_TRUE;
-}
-
 void ffbXMesaUpdateState(ffbContextPtr fmesa)
 {
 	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
@@ -581,9 +569,7 @@ static struct __DriverAPIRec ffbAPI = {
    ffbDestroyBuffer,
    ffbSwapBuffers,
    ffbMakeCurrent,
-   ffbUnbindContext,
-   ffbOpenFullScreen,
-   ffbCloseFullScreen
+   ffbUnbindContext
 };
 
 

@@ -526,9 +526,6 @@ radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
    _mesa_destroy_framebuffer((GLframebuffer *) (driDrawPriv->driverPrivate));
 }
 
-
-
-
 static struct __DriverAPIRec radeonAPI = {
    .InitDriver      = radeonInitDriver,
    .DestroyScreen   = radeonDestroyScreen,
@@ -539,15 +536,12 @@ static struct __DriverAPIRec radeonAPI = {
    .SwapBuffers     = radeonSwapBuffers,
    .MakeCurrent     = radeonMakeCurrent,
    .UnbindContext   = radeonUnbindContext,
-   .OpenFullScreen  = NULL,
-   .CloseFullScreen = NULL,
    .GetSwapInfo     = getSwapInfo,
    .GetMSC          = driGetMSC32,
    .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL
 };
-
 
 
 /*

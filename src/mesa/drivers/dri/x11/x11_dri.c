@@ -430,12 +430,6 @@ x11UnbindContext(__DRIcontextPrivate *driContextPriv)
    return GL_TRUE;
 }
 
-static GLboolean
-x11OpenCloseFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-   return GL_TRUE;
-}
-
 static struct __DriverAPIRec x11API = {
    x11InitDriver,
    x11DestroyScreen,
@@ -445,10 +439,13 @@ static struct __DriverAPIRec x11API = {
    x11DestroyBuffer,
    x11SwapBuffers,
    x11MakeCurrent,
-   x11UnbindContext,
-   x11OpenCloseFullScreen,
-   x11OpenCloseFullScreen
+   x11UnbindContext
 };
+
+void
+__driRegisterExtensions(void)
+{
+}
 
 /*
  * This is the bootstrap function for the driver.

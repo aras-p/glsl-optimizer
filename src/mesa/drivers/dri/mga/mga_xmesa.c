@@ -814,13 +814,6 @@ mgaUnbindContext(__DRIcontextPrivate *driContextPriv)
    return GL_TRUE;
 }
 
-static GLboolean
-mgaOpenCloseFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-    return GL_TRUE;
-}
-
-
 /* This looks buggy to me - the 'b' variable isn't used anywhere...
  * Hmm - It seems that the drawable is already hooked in to
  * driDrawablePriv.
@@ -906,8 +899,6 @@ static const struct __DriverAPIRec mgaAPI = {
    .SwapBuffers     = mgaSwapBuffers,
    .MakeCurrent     = mgaMakeCurrent,
    .UnbindContext   = mgaUnbindContext,
-   .OpenFullScreen  = mgaOpenCloseFullScreen,
-   .CloseFullScreen = mgaOpenCloseFullScreen,
    .GetSwapInfo     = getSwapInfo,
    .GetMSC          = driGetMSC32,
    .WaitForMSC      = driWaitForMSC32,
