@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.26 2001/08/28 22:46:22 brianp Exp $ */
+/* $Id: xm_api.c,v 1.27 2001/08/31 04:30:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2032,6 +2032,10 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
       if (drawBuffer->FXctx) {
          fxMesaMakeCurrent(drawBuffer->FXctx);
 
+         /* Disassociate drawBuffer's current context from drawBuffer */
+         if (drawBuffer->xm_context)
+            drawBuffer->xm_context->xm_buffer = NULL;
+
          /* Disassociate old buffer from this context */
          if (c->xm_buffer)
             c->xm_buffer->xm_context = NULL;
@@ -2054,9 +2058,14 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
          return GL_TRUE;
       }
 
+      /* Disassociate drawBuffer's current context from drawBuffer */
+      if (drawBuffer->xm_context)
+         drawBuffer->xm_context->xm_buffer = NULL;
+ 
       /* Disassociate old buffer with this context */
       if (c->xm_buffer)
 	  c->xm_buffer->xm_context = NULL;
+
       drawBuffer->xm_context = c; /* Associate the context with this buffer */
 
       c->xm_buffer = drawBuffer;

@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.70 2001/08/28 23:12:37 brianp Exp $
+$Id: VERSIONS,v 1.71 2001/08/31 04:30:14 brianp Exp $
 
 
 Mesa Version History
@@ -891,3 +891,4 @@ Mesa Version History
 	- fixed glDrawRangeElements() bug
 	- fixed a glPush/PopAttrib() bug related to texture binding
 	- flat-shaded, textured lines were broken
+	- fixed a dangling pointer problem in the XMesa code (Chris Burghart)
