@@ -331,6 +331,9 @@ static GLboolean
 is_color_format(GLenum format)
 {
    switch (format) {
+      case GL_RED:
+      case GL_GREEN:
+      case GL_BLUE:
       case GL_ALPHA:
       case GL_ALPHA4:
       case GL_ALPHA8:
