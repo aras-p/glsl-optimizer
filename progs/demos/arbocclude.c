@@ -32,6 +32,7 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glut.h>
 
+#define TEST_DISPLAY_LISTS 0
 
 static GLboolean Anim = GL_TRUE;
 static GLfloat Xpos = 0;
@@ -114,7 +115,14 @@ static void Display( void )
    glScalef(0.3, 0.3, 1.0);
    glRotatef(-90.0 * Xpos, 0, 0, 1);
 
+#if TEST_DISPLAY_LISTS
+   glNewList(10, GL_COMPILE);
    glBeginQueryARB(GL_SAMPLES_PASSED_ARB, OccQuery);
+   glEndList();
+   glCallList(10);
+#else
+   glBeginQueryARB(GL_SAMPLES_PASSED_ARB, OccQuery);
+#endif
 
    glColorMask(0, 0, 0, 0);
    glDepthMask(GL_FALSE);
@@ -126,7 +134,14 @@ static void Display( void )
    glVertex3f(-1,  1, 0);
    glEnd();
 
+#if TEST_DISPLAY_LISTS
+   glNewList(11, GL_COMPILE);
    glEndQueryARB(GL_SAMPLES_PASSED_ARB);
+   glEndList();
+   glCallList(11);
+#else
+   glEndQueryARB(GL_SAMPLES_PASSED_ARB);
+#endif
 
    do {
       /* do useful work here, if any */
@@ -229,8 +244,11 @@ static void Init( void )
       exit(-1);
    }
 
+   glGetIntegerv(GL_DEPTH_BITS, &bits);
+   printf("Depthbits: %d\n", bits);
+
    glGenQueriesARB(1, &OccQuery);
-   assert( glIsQueryARB(OccQuery) );
+   assert(OccQuery > 0);
 
    glEnable(GL_DEPTH_TEST);
 }
