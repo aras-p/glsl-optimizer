@@ -48,7 +48,6 @@ CORE_SOURCES =accum.c \
 	light.c \
 	lines.c \
 	matrix.c \
-	mmath.c \
 	nvprogram.c \
 	nvfragparse.c \
 	nvvertexec.c \
@@ -191,8 +190,7 @@ light.obj,\
 lines.obj,\
 matrix.obj
 
-OBJECTS3=mmath.obj,\
-nvprogram.obj,\
+OBJECTS3=nvprogram.obj,\
 nvfragparse.obj,\
 nvvertexec.obj,\
 nvvertparse.obj,\
