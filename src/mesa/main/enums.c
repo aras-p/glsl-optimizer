@@ -1,4 +1,4 @@
-/* $Id: enums.c,v 1.16 2001/03/26 19:42:40 brianp Exp $ */
+/* $Id: enums.c,v 1.17 2001/04/16 21:07:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -902,6 +902,8 @@ int _mesa_lookup_enum_by_name( const char *symbol )
 }
 
 
+static char token_tmp[20];
+
 const char *_mesa_lookup_enum_by_nr( int nr )
 {
    enum_elt tmp, *e, **f;
@@ -915,5 +917,12 @@ const char *_mesa_lookup_enum_by_nr( int nr )
    f = (enum_elt **)bsearch( &e, index1, Elements(all_enums),
 			     sizeof(*index1), (cfunc) compar_nr );
 
-   return f ? (*f)->c : "(unknown)";
+   if (f) {
+      return (*f)->c;
+   }
+   else {
+      /* this isn't re-entrant safe, no big deal here */
+      sprintf(token_tmp, "0x%x\n", nr);
+      return token_tmp;
+   }
 }
