@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.32 2000/10/20 19:54:49 brianp Exp $ */
+/* $Id: state.c,v 1.33 2000/10/21 01:29:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -883,8 +883,11 @@ void gl_update_state( GLcontext *ctx )
                ctx->Texture.MultiTextureEnabled = GL_TRUE;
             }
 	 }
+         else {
+            ctx->Texture.Unit[i].ReallyEnabled = 0;
+         }
       }
-
+      ctx->Enabled = (ctx->Enabled & ~ENABLE_TEX_ANY) | ctx->Texture.ReallyEnabled;
       ctx->NeedNormals = (ctx->Light.Enabled || ctx->Texture.NeedNormals);
    }
 
