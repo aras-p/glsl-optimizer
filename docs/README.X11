@@ -1,28 +1,35 @@
 
-                         Mesa 3.0 Unix/X11 Information
+                         Mesa 3.3 Unix/X11 Information
 
 
 
 Installation
 ============
 
-To compile the library, first type 'make' alone to see the list of system
-configurations currently supported.  If you see your configuration on the
-list, type 'make <config>'.  Most popular Unix/X workstations are currently
-supported.
+There are two ways to compile Mesa on Unix/X11 systems:
+
+1. The old way:
+    First type 'make' alone to see the list of system
+    configurations currently supported.  If you see your configuration on the
+    list, type 'make <config>'.  Most popular Unix/X workstations are currently
+    supported.
+
+    If your system configuration is not listed by 'make', you'll have to modify
+    the top-level Makefile and Make-config files.  There are instructions in
+    each file.
+
+
+2. The new way:
+    Type './configure' and then 'make'.  This uses GNU autoconfig.
+    See docs/INSTALL for more details.
+
 
 The top-level makefile will execute the makefiles in a number of sub-
-directories.  When finished, the Mesa libraries will be in the Mesa-2.6/lib/
+directories.  When finished, the Mesa libraries will be in the Mesa-3.3/lib/
 directory.  A few GLUT demos in the demos/ directory should be ready to run.
 
 If you also downloaded and unpacked the demos there should be executables
 in the "xdemos/", "samples/", and "book/" directories for you to try out.
-If you only want to compile the contents of one subdirectory you can 'cd'
-to that directory and type 'make <config>' there.
-
-If your system configuration is not listed by 'make', you'll have to modify
-the top-level Makefile and Make-config files.  There are instructions in
-each file.
 
 If you have compilation problems you should try to fix them and return the
 patches to the author.
@@ -134,7 +141,7 @@ Xt/Motif Widgets:
 
 Togl:
    Togl is an OpenGL/Mesa widget for Tcl/Tk.
-   See http://www.ssec.wisc.edu/~brianp/Togl.html for more information.
+   See http://togl.sourceforge.net for more information.
 
 
 
@@ -253,6 +260,7 @@ Extensions:
    The following OpenGL GLX extensions are currently implemented:
 
       GLX_EXT_visual_info - GLX visual and transparent pixel extension
+      GLX_EXT_visual_rating - GLX visual caveats
 
    For detailed information about the extensions see www.opengl.org
 
@@ -315,4 +323,4 @@ Summary of X-related environment variables:
 
 
 ----------------------------------------------------------------------
-$Id: README.X11,v 3.4 2000/01/25 17:18:52 brianp Exp $
+$Id: README.X11,v 3.5 2000/04/04 15:14:48 brianp Exp $
