@@ -1,4 +1,4 @@
-/* $Id: m_vector.c,v 1.8 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: m_vector.c,v 1.9 2002/12/04 14:24:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -368,36 +368,36 @@ void _mesa_vector4f_print( GLvector4f *v, GLubyte *cullmask, GLboolean culling )
    GLfloat *d = (GLfloat *)v->data;
    GLuint j, i = 0, count;
 
-   _mesa_printf(NULL, "data-start\n");
+   _mesa_printf("data-start\n");
    for ( ; d != v->start ; STRIDE_F(d, v->stride), i++)
-      _mesa_printf(NULL, t, i, d[0], d[1], d[2], d[3]);
+      _mesa_printf(t, i, d[0], d[1], d[2], d[3]);
 
-   _mesa_printf(NULL, "start-count(%u)\n", v->count);
+   _mesa_printf("start-count(%u)\n", v->count);
    count = i + v->count;
 
    if (culling) {
       for ( ; i < count ; STRIDE_F(d, v->stride), i++)
 	 if (cullmask[i])
-	    _mesa_printf(NULL, t, i, d[0], d[1], d[2], d[3]);
+	    _mesa_printf(t, i, d[0], d[1], d[2], d[3]);
    }
    else {
       for ( ; i < count ; STRIDE_F(d, v->stride), i++)
-	 _mesa_printf(NULL, t, i, d[0], d[1], d[2], d[3]);
+	 _mesa_printf(t, i, d[0], d[1], d[2], d[3]);
    }
 
    for (j = v->size ; j < 4; j++) {
       if ((v->flags & (1<<j)) == 0) {
 
-	 _mesa_printf(NULL, "checking col %u is clean as advertised ", j);
+	 _mesa_printf("checking col %u is clean as advertised ", j);
 
 	 for (i = 0, d = (GLfloat *) v->data ;
 	      i < count && d[j] == c[j] ;
 	      i++, STRIDE_F(d, v->stride)) {};
 
 	 if (i == count)
-	    _mesa_printf(NULL, " --> ok\n");
+	    _mesa_printf(" --> ok\n");
 	 else
-	    _mesa_printf(NULL, " --> Failed at %u ******\n", i);
+	    _mesa_printf(" --> Failed at %u ******\n", i);
       }
    }
 }
@@ -411,20 +411,20 @@ void _mesa_vector3f_print( GLvector3f *v, GLubyte *cullmask, GLboolean culling )
    GLfloat *d = (GLfloat *)v->data;
    GLuint i = 0, count;
 
-   _mesa_printf(NULL, "data-start\n");
+   _mesa_printf("data-start\n");
    for ( ; d != v->start ; STRIDE_F(d,v->stride), i++)
-      _mesa_printf(NULL,  "%u:\t%f, %f, %f\n", i, d[0], d[1], d[2]);
+      _mesa_printf( "%u:\t%f, %f, %f\n", i, d[0], d[1], d[2]);
 
-   _mesa_printf(NULL, "start-count(%u)\n", v->count);
+   _mesa_printf("start-count(%u)\n", v->count);
    count = i + v->count;
 
    if (culling) {
       for ( ; i < count ; STRIDE_F(d,v->stride), i++)
 	 if (cullmask[i])
-	    _mesa_printf(NULL, "%u:\t%f, %f, %f\n", i, d[0], d[1], d[2]);
+	    _mesa_printf("%u:\t%f, %f, %f\n", i, d[0], d[1], d[2]);
    }
    else {
       for ( ; i < count ; STRIDE_F(d,v->stride), i++)
-	 _mesa_printf(NULL, "%u:\t%f, %f, %f\n", i, d[0], d[1], d[2]);
+	 _mesa_printf("%u:\t%f, %f, %f\n", i, d[0], d[1], d[2]);
    }
 }
