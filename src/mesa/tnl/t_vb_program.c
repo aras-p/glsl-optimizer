@@ -201,9 +201,9 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
                                             &store->andmask );
    }
    else {
-      VB->NdcPtr = 0;
+      VB->NdcPtr = NULL;
       _mesa_clip_np_tab[VB->ClipPtr->size]( VB->ClipPtr,
-                                            0,
+                                            NULL,
                                             store->clipmask,
                                             &store->ormask,
                                             &store->andmask );
@@ -345,7 +345,7 @@ static void dtr( struct tnl_pipeline_stage *stage )
       ALIGN_FREE( store->clipmask );
 
       FREE( store );
-      stage->privatePtr = 0;
+      stage->privatePtr = NULL;
    }
 }
 

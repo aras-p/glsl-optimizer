@@ -103,7 +103,7 @@ static void free_point_data( struct tnl_pipeline_stage *stage )
    if (store) {
       _mesa_vector4f_free( &store->PointSize );
       FREE( store );
-      stage->privatePtr = 0;
+      stage->privatePtr = NULL;
    }
 }
 

@@ -248,7 +248,7 @@ static void _save_compile_vertex_list( GLcontext *ctx )
    node->prim_count = tnl->save.prim_count;
    node->vertex_store = tnl->save.vertex_store;
    node->prim_store = tnl->save.prim_store;
-   node->normal_lengths = 0;
+   node->normal_lengths = NULL;
 
    node->vertex_store->refcount++;
    node->prim_store->refcount++;
@@ -457,7 +457,7 @@ static void _save_upgrade_vertex( GLcontext *ctx,
 	 tmp += tnl->save.attrsz[i];
       }
       else 
-	 tnl->save.attrptr[i] = 0; /* will not be dereferenced. */
+	 tnl->save.attrptr[i] = NULL; /* will not be dereferenced. */
    }
 
    /* Copy from current to repopulate the vertex with correct values.
@@ -481,7 +481,7 @@ static void _save_upgrade_vertex( GLcontext *ctx,
       if (tnl->save.currentsz[attr][0] == 0) {
 	 assert(oldsz == 0);
 	 tnl->save.dangling_attr_ref = GL_TRUE;
-	 _mesa_debug(0, "_save_upgrade_vertex: dangling reference attr %d\n", 
+	 _mesa_debug(NULL, "_save_upgrade_vertex: dangling reference attr %d\n", 
                      attr); 
 
 #if 0
@@ -1616,14 +1616,14 @@ static void _tnl_print_vertex_list( GLcontext *ctx, void *data )
    GLuint i;
    (void) ctx;
 
-   _mesa_debug(0, "TNL-VERTEX-LIST, %u vertices %d primitives, %d vertsize\n",
+   _mesa_debug(NULL, "TNL-VERTEX-LIST, %u vertices %d primitives, %d vertsize\n",
                node->count,
 	       node->prim_count,
 	       node->vertex_size);
 
    for (i = 0 ; i < node->prim_count ; i++) {
       struct tnl_prim *prim = &node->prim[i];
-      _mesa_debug(0, "   prim %d: %s %d..%d %s %s\n",
+      _mesa_debug(NULL, "   prim %d: %s %d..%d %s %s\n",
 		  i, 
 		  _mesa_lookup_enum_by_nr(prim->mode & PRIM_MODE_MASK),
 		  prim->start, 
@@ -1669,7 +1669,7 @@ void _tnl_save_init( GLcontext *ctx )
 
 
    for (i = 0; i < _TNL_ATTRIB_MAX; i++)
-      _mesa_vector4f_init( &tmp->Attribs[i], 0, 0);
+      _mesa_vector4f_init( &tmp->Attribs[i], 0, NULL);
 
    tnl->save.opcode_vertex_list =
       _mesa_alloc_opcode( ctx,

@@ -234,7 +234,7 @@ static GLboolean print_attr_footer( struct tnl_clipspace_codegen *p )
 static tnl_emit_func print_store_func( struct tnl_clipspace_codegen *p ) 
 {
    fprintf(stderr, "print_store_func: emitted:\n%s\n", p->buf);
-   return 0;
+   return NULL;
 }
 
 void _tnl_init_c_codegen( struct tnl_clipspace_codegen *p ) 
@@ -262,6 +262,6 @@ void _tnl_free_c_codegen( struct tnl_clipspace_codegen *p )
 {
    if (p->buf) {
       FREE(p->buf);
-      p->buf = 0;
+      p->buf = NULL;
    }
 }

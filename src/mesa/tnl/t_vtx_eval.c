@@ -35,12 +35,12 @@
 
 static void clear_active_eval1( TNLcontext *tnl, GLuint attr ) 
 {
-   tnl->vtx.eval.map1[attr].map = 0;
+   tnl->vtx.eval.map1[attr].map = NULL;
 }
 
 static void clear_active_eval2( TNLcontext *tnl, GLuint attr ) 
 {
-   tnl->vtx.eval.map2[attr].map = 0;
+   tnl->vtx.eval.map2[attr].map = NULL;
 }
 
 static void set_active_eval1( TNLcontext *tnl, GLuint attr, GLuint dim, 

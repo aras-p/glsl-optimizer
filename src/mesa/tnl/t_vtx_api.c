@@ -255,7 +255,7 @@ static void _tnl_wrap_upgrade_vertex( GLcontext *ctx,
 	 tmp += tnl->vtx.attrsz[i];
       }
       else 
-	 tnl->vtx.attrptr[i] = 0; /* will not be dereferenced */
+	 tnl->vtx.attrptr[i] = NULL; /* will not be dereferenced */
    }
 
    /* Copy from current to repopulate the vertex with correct values.
@@ -358,14 +358,14 @@ static struct _tnl_dynfn *lookup( struct _tnl_dynfn *l, GLuint key )
 	 return f;
    }
 
-   return 0;
+   return NULL;
 }
 
 
 static tnl_attrfv_func do_codegen( GLcontext *ctx, GLuint attr, GLuint sz )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx); 
-   struct _tnl_dynfn *dfn = 0;
+   struct _tnl_dynfn *dfn = NULL;
 
    if (attr == 0) {
       GLuint key = tnl->vtx.vertex_size;
@@ -387,7 +387,7 @@ static tnl_attrfv_func do_codegen( GLcontext *ctx, GLuint attr, GLuint sz )
    if (dfn) 
       return *(tnl_attrfv_func *) &dfn->code;
    else
-      return 0;
+      return NULL;
 }
 
 #endif /* USE_X86_ASM */
@@ -422,7 +422,7 @@ static tnl_attrfv_func do_choose( GLuint attr, GLuint sz )
       tnl->vtx.tabfv[attr][sz-1] = do_codegen( ctx, attr, sz );
    else
 #endif
-      tnl->vtx.tabfv[attr][sz-1] = 0;
+      tnl->vtx.tabfv[attr][sz-1] = NULL;
 
    /* Else use generic version:
     */
@@ -867,7 +867,7 @@ static void _tnl_current_init( GLcontext *ctx )
 static struct _tnl_dynfn *no_codegen( GLcontext *ctx, int key )
 {
    (void) ctx; (void) key;
-   return 0;
+   return NULL;
 }
 
 void _tnl_vtx_init( GLcontext *ctx )
@@ -912,7 +912,7 @@ void _tnl_vtx_init( GLcontext *ctx )
    }
 
    for (i = 0; i < _TNL_ATTRIB_INDEX; i++)
-      _mesa_vector4f_init( &tmp->Attribs[i], 0, 0);
+      _mesa_vector4f_init( &tmp->Attribs[i], 0, NULL);
 
    for (i = 0; i < 4; i++) {
       make_empty_list( &tnl->vtx.cache.Vertex[i] );

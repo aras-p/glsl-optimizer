@@ -212,5 +212,5 @@ const struct tnl_pipeline_stage *_tnl_default_pipeline[] = {
    &_tnl_vertex_program_stage,
 #endif
    &_tnl_render_stage,
-   0
+   NULL 
 };

@@ -422,13 +422,13 @@ void _tnl_array_init( GLcontext *ctx )
 
    /* Setup vector pointers that will be used to bind arrays to VB's.
     */
-   _mesa_vector4f_init( &tmp->Obj, 0, 0 );
-   _mesa_vector4f_init( &tmp->Normal, 0, 0 );   
-   _mesa_vector4f_init( &tmp->FogCoord, 0, 0 );
-   _mesa_vector4f_init( &tmp->Index, 0, 0 );
+   _mesa_vector4f_init( &tmp->Obj, 0, NULL);
+   _mesa_vector4f_init( &tmp->Normal, 0, NULL);   
+   _mesa_vector4f_init( &tmp->FogCoord, 0, NULL);
+   _mesa_vector4f_init( &tmp->Index, 0, NULL);
 
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
-      _mesa_vector4f_init( &tmp->TexCoord[i], 0, 0);
+      _mesa_vector4f_init( &tmp->TexCoord[i], 0, NULL);
 }
 
 

@@ -344,7 +344,7 @@ static void dtr( struct tnl_pipeline_stage *stage )
       _mesa_vector4f_free( &store->LitIndex[0] );
       _mesa_vector4f_free( &store->LitIndex[1] );
       FREE( store );
-      stage->privatePtr = 0;
+      stage->privatePtr = NULL;
    }
 }
 

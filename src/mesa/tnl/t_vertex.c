@@ -831,8 +831,8 @@ const static struct {
      4 * sizeof(GLchan) },
 
    { "pad",
-     0,
-     { 0, 0, 0, 0 },
+     NULL,
+     { NULL, NULL, NULL, NULL },
      0 }
 
 };
@@ -1105,7 +1105,7 @@ static void choose_emit_func( GLcontext *ctx, GLuint count, GLubyte *dest)
    struct tnl_clipspace_attr *a = vtx->attr;
    const GLuint attr_count = vtx->attr_count;
    
-   vtx->emit = 0;
+   vtx->emit = NULL;
    
    if (0) 
       vtx->emit = _tnl_codegen_emit(ctx);
@@ -1421,7 +1421,7 @@ void _tnl_init_vertices( GLcontext *ctx,
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);  
 
-   _tnl_install_attrs( ctx, 0, 0, 0, 0 );
+   _tnl_install_attrs( ctx, NULL, 0, NULL, 0 );
 
    vtx->need_extras = GL_TRUE;
    if (max_vertex_size > vtx->max_vertex_size) {
@@ -1440,7 +1440,7 @@ void _tnl_free_vertices( GLcontext *ctx )
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    if (vtx->vertex_buf) {
       ALIGN_FREE(vtx->vertex_buf);
-      vtx->vertex_buf = 0;
+      vtx->vertex_buf = NULL;
    }
    
    _tnl_free_c_codegen( &vtx->codegen );

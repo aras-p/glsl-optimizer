@@ -128,7 +128,7 @@ static void free_texmat_data( struct tnl_pipeline_stage *stage )
 	 if (store->texcoord[i].data)
 	    _mesa_vector4f_free( &store->texcoord[i] );
       FREE( store );
-      stage->privatePtr = 0;
+      stage->privatePtr = NULL;
    }
 }
 

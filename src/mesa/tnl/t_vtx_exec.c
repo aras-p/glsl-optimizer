@@ -49,7 +49,7 @@ static void _tnl_print_vtx( GLcontext *ctx )
 
    for (i = 0 ; i < tnl->vtx.prim_count ; i++) {
       struct tnl_prim *prim = &tnl->vtx.prim[i];
-      _mesa_debug(0, "   prim %d: %s %d..%d %s %s\n",
+      _mesa_debug(NULL, "   prim %d: %s %d..%d %s %s\n",
 		  i, 
 		  _mesa_lookup_enum_by_nr(prim->mode & PRIM_MODE_MASK),
 		  prim->start, 
@@ -166,11 +166,11 @@ static void _tnl_vb_bind_vtx( GLcontext *ctx )
    VB->ObjPtr = VB->AttribPtr[_TNL_ATTRIB_POS];
    VB->NormalPtr = VB->AttribPtr[_TNL_ATTRIB_NORMAL];
    VB->ColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR0];
-   VB->ColorPtr[1] = 0;
+   VB->ColorPtr[1] = NULL;
    VB->IndexPtr[0] = VB->AttribPtr[_TNL_ATTRIB_INDEX];
-   VB->IndexPtr[1] = 0;
+   VB->IndexPtr[1] = NULL;
    VB->SecondaryColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR1];
-   VB->SecondaryColorPtr[1] = 0;
+   VB->SecondaryColorPtr[1] = NULL;
    VB->FogCoordPtr = VB->AttribPtr[_TNL_ATTRIB_FOG];
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {

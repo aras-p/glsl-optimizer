@@ -188,7 +188,7 @@ static void mat_attr4fv( GLcontext *ctx, GLint target, const GLfloat *v )
 
 static attr_func mat_attrfunc[4] = {
    mat_attr1fv,
-   0,
+   NULL,
    mat_attr3fv,
    mat_attr4fv
 };

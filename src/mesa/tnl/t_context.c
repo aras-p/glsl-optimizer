@@ -141,7 +141,7 @@ _tnl_DestroyContext( GLcontext *ctx )
    _ae_destroy_context( ctx );
 
    FREE(tnl);
-   ctx->swtnl_context = 0;
+   ctx->swtnl_context = NULL;
 }
 
 

@@ -436,7 +436,7 @@ static struct {
        emit_4chan_4f_rgba_4 } },
 
    { "pad", 0, 0,
-     { 0, 0, 0, 0 } }
+     { NULL, NULL, NULL, NULL } }
 
 };
      
@@ -497,7 +497,7 @@ tnl_emit_func _tnl_codegen_emit( GLcontext *ctx )
 
       if (!emit_info[a[j].format].emit[sz]( p )) {
 	 fprintf(stderr, "codegen failed\n");
-	 return 0;
+	 return NULL;
       }
 
       p->emit_attr_footer( p );

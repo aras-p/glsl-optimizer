@@ -105,11 +105,11 @@ static void _tnl_bind_vertex_list( GLcontext *ctx,
    VB->ObjPtr = VB->AttribPtr[_TNL_ATTRIB_POS];
    VB->NormalPtr = VB->AttribPtr[_TNL_ATTRIB_NORMAL];
    VB->ColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR0];
-   VB->ColorPtr[1] = 0;
+   VB->ColorPtr[1] = NULL;
    VB->IndexPtr[0] = VB->AttribPtr[_TNL_ATTRIB_INDEX];
-   VB->IndexPtr[1] = 0;
+   VB->IndexPtr[1] = NULL;
    VB->SecondaryColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR1];
-   VB->SecondaryColorPtr[1] = 0;
+   VB->SecondaryColorPtr[1] = NULL;
    VB->FogCoordPtr = VB->AttribPtr[_TNL_ATTRIB_FOG];
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {

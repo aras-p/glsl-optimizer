@@ -85,7 +85,7 @@ static GLboolean run_normal_stage( GLcontext *ctx,
    VB->NormalPtr = &store->normal;
    VB->AttribPtr[_TNL_ATTRIB_NORMAL] = VB->NormalPtr;
 
-   VB->NormalLengthPtr = 0;	/* no longer valid */
+   VB->NormalLengthPtr = NULL;	/* no longer valid */
    return GL_TRUE;
 }
 
@@ -126,7 +126,7 @@ static GLboolean run_validate_normal_stage( GLcontext *ctx,
 	 store->NormalTransform = _mesa_normal_tab[NORM_RESCALE];
       }
       else {
-	 store->NormalTransform = 0;
+	 store->NormalTransform = NULL;
       }
    }
 

@@ -238,7 +238,7 @@ alloc_fog_data(GLcontext *ctx, struct tnl_pipeline_stage *stage)
       return GL_FALSE;
 
    _mesa_vector4f_alloc( &store->fogcoord, 0, tnl->vb.Size, 32 );
-   _mesa_vector4f_init( &store->input, 0, 0 );
+   _mesa_vector4f_init( &store->input, 0, NULL );
 
    if (!inited)
       init_static_data();

@@ -161,8 +161,8 @@ typedef void (*build_m_func)( GLfloat f[][3],
 
 
 static build_m_func build_m_tab[5] = {
-   0,
-   0,
+   NULL,
+   NULL,
    build_m2,
    build_m3,
    build_m3
@@ -238,8 +238,8 @@ typedef void (*build_f_func)( GLfloat *f,
 /* Just treat 4-vectors as 3-vectors.
  */
 static build_f_func build_f_tab[5] = {
-   0,
-   0,
+   NULL,
+   NULL,
    build_f2,
    build_f3,
    build_f3

@@ -118,8 +118,8 @@ static void (*(usercliptab[5]))( GLcontext *,
 				 GLvector4f *, GLubyte *,
 				 GLubyte *, GLubyte * ) =
 {
-   0,
-   0,
+   NULL,
+   NULL,
    userclip2,
    userclip3,
    userclip4
@@ -209,9 +209,9 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
                                                &store->andmask );
       }
       else {
-	 VB->NdcPtr = 0;
+	 VB->NdcPtr = NULL;
 	 _mesa_clip_np_tab[VB->ClipPtr->size]( VB->ClipPtr,
-                                               0,
+                                               NULL,
                                                store->clipmask,
                                                &store->ormask,
                                                &store->andmask );
