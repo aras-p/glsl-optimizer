@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.16 2000/02/25 03:55:39 keithw Exp $ */
+/* $Id: attrib.c,v 1.17 2000/02/27 20:38:15 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -104,7 +104,7 @@ _mesa_PushAttrib(GLbitfield mask)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPushAttrib");
 
    if (MESA_VERBOSE&VERBOSE_API)
-      fprintf(stderr, "glPushAttrib %x\n", mask);
+      fprintf(stderr, "glPushAttrib %x\n", (int)mask);
 
    if (ctx->AttribStackDepth>=MAX_ATTRIB_STACK_DEPTH) {
       gl_error( ctx, GL_STACK_OVERFLOW, "glPushAttrib" );
@@ -675,6 +675,8 @@ _mesa_PopAttrib(void)
             break;
 	 case GL_POLYGON_STIPPLE_BIT:
 	    MEMCPY( ctx->PolygonStipple, attr->data, 32*sizeof(GLuint) );
+	    if (ctx->Driver.PolygonStipple) 
+	       ctx->Driver.PolygonStipple( ctx, attr->data );
 	    break;
          case GL_SCISSOR_BIT:
             MEMCPY( &ctx->Scissor, attr->data,

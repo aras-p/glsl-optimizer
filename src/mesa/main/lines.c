@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.7 2000/02/25 03:55:40 keithw Exp $ */
+/* $Id: lines.c,v 1.8 2000/02/27 20:38:15 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,6 +71,9 @@ _mesa_LineStipple( GLint factor, GLushort pattern )
    ctx->Line.StippleFactor = CLAMP( factor, 1, 256 );
    ctx->Line.StipplePattern = pattern;
    ctx->NewState |= NEW_RASTER_OPS;
+
+   if (ctx->Driver.LineStipple)
+      ctx->Driver.LineStipple( ctx, factor, pattern );
 }
 
 

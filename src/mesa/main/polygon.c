@@ -1,4 +1,4 @@
-/* $Id: polygon.c,v 1.7 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: polygon.c,v 1.8 2000/02/27 20:38:15 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -150,6 +150,9 @@ _mesa_PolygonStipple( const GLubyte *mask )
    if (ctx->Polygon.StippleFlag) {
       ctx->NewState |= NEW_RASTER_OPS;
    }
+   
+   if (ctx->Driver.PolygonStipple)
+      ctx->Driver.PolygonStipple( ctx, mask );
 }
 
 
