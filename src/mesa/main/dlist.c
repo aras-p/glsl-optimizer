@@ -1,11 +1,6 @@
-/**
- * \file dlist.c
- * Display lists management functions.
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  6.0
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -27,6 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+
+/**
+ * \file dlist.c
+ * Display lists management functions.
+ */
 
 #include "glheader.h"
 #include "imports.h"
@@ -3239,10 +3239,16 @@ static void GLAPIENTRY save_TexEnvfv( GLenum target, GLenum pname, const GLfloat
    if (n) {
       n[1].e = target;
       n[2].e = pname;
-      n[3].f = params[0];
-      n[4].f = params[1];
-      n[5].f = params[2];
-      n[6].f = params[3];
+      if (pname == GL_TEXTURE_ENV_COLOR) {
+         n[3].f = params[0];
+         n[4].f = params[1];
+         n[5].f = params[2];
+         n[6].f = params[3];
+      }
+      else {
+         n[3].f = params[0];
+         n[4].f = n[5].f = n[6].f = 0.0F;
+      }
    }
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->TexEnvfv)( target, pname, params );
@@ -3268,10 +3274,16 @@ static void GLAPIENTRY save_TexEnvi( GLenum target, GLenum pname, GLint param )
 static void GLAPIENTRY save_TexEnviv( GLenum target, GLenum pname, const GLint *param )
 {
    GLfloat p[4];
-   p[0] = INT_TO_FLOAT( param[0] );
-   p[1] = INT_TO_FLOAT( param[1] );
-   p[2] = INT_TO_FLOAT( param[2] );
-   p[3] = INT_TO_FLOAT( param[3] );
+   if (pname == GL_TEXTURE_ENV_COLOR) {
+      p[0] = INT_TO_FLOAT( param[0] );
+      p[1] = INT_TO_FLOAT( param[1] );
+      p[2] = INT_TO_FLOAT( param[2] );
+      p[3] = INT_TO_FLOAT( param[3] );
+   }
+   else {
+      p[0] = (GLfloat) param[0];
+      p[1] = p[2] = p[3] = 0.0F;
+   }
    save_TexEnvfv( target, pname, p );
 }
 
