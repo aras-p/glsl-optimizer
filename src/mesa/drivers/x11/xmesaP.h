@@ -1,10 +1,10 @@
-/* $Id: xmesaP.h,v 1.5 2000/01/06 09:28:58 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.6 2000/01/07 07:24:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -83,6 +83,7 @@ struct xmesa_visual {
    XVisualInfo *vishandle;	/* The pointer returned by glXChooseVisual */
 #endif
    XMesaVisualInfo visinfo;	/* X's visual info */
+   GLint BitsPerPixel;		/* True bits per pixel for XImages */
 
    GLint level;			/* 0=normal, 1=overlay, etc */
 
