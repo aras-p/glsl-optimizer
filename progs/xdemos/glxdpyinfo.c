@@ -54,6 +54,7 @@ in this Software without prior written authorization from The Open Group.
 #endif
 #include <X11/Xos.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifdef HAVE_GLX
 # include <GL/gl.h>
@@ -70,6 +71,10 @@ static int StrCmp(a, b)
 {
     return strcmp(*a, *b);
 }
+
+
+static int print_event_mask (char *buf, int lastcol, int indent, long mask);
+
 
 
 #ifdef HAVE_GLX  /* Added by jwz, 11-Nov-99 */
@@ -310,7 +315,7 @@ print_overlay_visual_info (vip)
         if (ov->transparency == 1)
           printf ("transparent pixel %lu\n", (unsigned long) ov->value);
         else if (ov->transparency == 2)
-          printf ("transparent mask 0x%x\n", (unsigned long) ov->value);
+          printf ("transparent mask 0x%x\n", (unsigned) ov->value);
         else
           printf ("opaque\n");
       }
@@ -318,7 +323,7 @@ print_overlay_visual_info (vip)
 #endif /* HAVE_OVERLAY */
 
 
-void
+static void
 print_extension_info (dpy)
     Display *dpy;
 {
@@ -350,7 +355,7 @@ print_extension_info (dpy)
     }
 }
 
-void
+static void
 print_display_info (dpy)
     Display *dpy;
 {
@@ -376,7 +381,7 @@ print_display_info (dpy)
     req_size = XExtendedMaxRequestSize (dpy);
     if (!req_size) req_size = XMaxRequestSize (dpy);
     printf ("maximum request size:  %ld bytes\n", req_size * 4);
-    printf ("motion buffer size:  %d\n", XDisplayMotionBufferSize (dpy));
+    printf ("motion buffer size:  %d\n", (int) XDisplayMotionBufferSize(dpy));
 
     switch (BitmapBitOrder (dpy)) {
       case LSBFirst:    cp = "LSBFirst"; break;
@@ -453,7 +458,7 @@ print_display_info (dpy)
     printf ("number of screens:    %d\n", ScreenCount (dpy));
 }
 
-void
+static void
 print_visual_info (vip)
     XVisualInfo *vip;
 {
@@ -490,7 +495,7 @@ print_visual_info (vip)
 	    vip->bits_per_rgb);
 }
 
-void
+static void
 print_screen_info (dpy, scr)
     Display *dpy;
     int scr;
@@ -548,7 +553,7 @@ print_screen_info (dpy, scr)
     printf ("  default colormap:    0x%lx\n", DefaultColormap (dpy, scr));
     printf ("  default number of colormap cells:    %d\n",
 	    DisplayCells (dpy, scr));
-    printf ("  preallocated pixels:    black %d, white %d\n",
+    printf ("  preallocated pixels:    black %ld, white %ld\n",
 	    BlackPixel (dpy, scr), WhitePixel (dpy, scr));
     printf ("  options:    backing-store %s, save-unders %s\n",
 	    (DoesBackingStore (s) == NotUseful) ? no :
@@ -620,11 +625,7 @@ static struct _event_table {
     { "OwnerGrabButtonMask      ", OwnerGrabButtonMask },
     { NULL, 0 }};
 
-int print_event_mask (buf, lastcol, indent, mask)
-    char *buf;				/* string to write into */
-    int lastcol;			/* strlen(buf)+1 */
-    int indent;				/* amount by which to indent */
-    long mask;				/* event mask */
+static int print_event_mask (char *buf, int lastcol, int indent, long mask)
 {
     struct _event_table *etp;
     int len;
@@ -656,7 +657,7 @@ int print_event_mask (buf, lastcol, indent, mask)
     return (bitsfound);
 }
 
-void
+static void
 print_standard_extension_info(dpy, extname, majorrev, minorrev)
     Display *dpy;
     char *extname;
@@ -675,7 +676,7 @@ print_standard_extension_info(dpy, extname, majorrev, minorrev)
     printf("\n");
 }
 
-int
+static int
 print_multibuf_info(dpy, extname)
     Display *dpy;
     char *extname;
@@ -805,7 +806,7 @@ print_xtest_info(dpy, extname)
 }
 #endif /* HAVE_XTEST */
 
-int
+static int
 print_sync_info(dpy, extname)
     Display *dpy;
     char *extname;
@@ -823,15 +824,15 @@ print_sync_info(dpy, extname)
     for (i = 0; i < ncounters; i++)
     {
 	printf("    %s  id: 0x%08x  resolution_lo: %d  resolution_hi: %d\n",
-	       syscounters[i].name, syscounters[i].counter,
-	       XSyncValueLow32(syscounters[i].resolution),
-	       XSyncValueHigh32(syscounters[i].resolution));
+	       syscounters[i].name, (int) syscounters[i].counter,
+	       (int) XSyncValueLow32(syscounters[i].resolution),
+               (int) XSyncValueHigh32(syscounters[i].resolution));
     }
     XSyncFreeSystemCounterList(syscounters);
     return 1;
 }
 
-int
+static int
 print_shape_info(dpy, extname)
     Display *dpy;
     char *extname;
@@ -845,7 +846,7 @@ print_shape_info(dpy, extname)
 }
 
 #ifdef MITSHM
-int
+static int
 print_mitshm_info(dpy, extname)
     Display *dpy;
     char *extname;
@@ -870,7 +871,7 @@ print_mitshm_info(dpy, extname)
 }
 #endif /* MITSHM */
 
-int
+static int
 print_dbe_info(dpy, extname)
     Display *dpy;
     char *extname;
@@ -901,7 +902,7 @@ print_dbe_info(dpy, extname)
 }
 
 #ifdef HAVE_XRECORD
-int
+static int
 print_record_info(dpy, extname)
     Display *dpy;
     char *extname;
@@ -954,7 +955,7 @@ ExtensionPrintInfo known_extensions[] =
 
 int num_known_extensions = sizeof known_extensions / sizeof known_extensions[0];
 
-void
+static void
 print_known_extensions(f)
     FILE *f;
 {
@@ -965,7 +966,7 @@ print_known_extensions(f)
     }
 }
 
-void
+static void
 mark_extension_for_printing(extname)
     char *extname;
 {
@@ -990,7 +991,7 @@ mark_extension_for_printing(extname)
     }
 }
 
-void
+static void
 print_marked_extensions(dpy)
     Display *dpy;
 {
@@ -1029,7 +1030,6 @@ int main (argc, argv)
     Display *dpy;			/* X connection */
     char *displayname = NULL;		/* server to contact */
     int i;				/* temp variable:  iterator */
-    Bool multibuf = False;
 
     ProgramName = argv[0];
 
