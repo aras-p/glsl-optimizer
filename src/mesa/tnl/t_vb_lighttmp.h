@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.14 2001/07/28 19:28:49 keithw Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.15 2001/08/01 05:10:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -117,7 +117,7 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
 
 
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__ );  */
+/*     fprintf(stderr, "%s\n", __FUNCTION__ );   */
 
    spec[0] = Fspec;
    spec[1] = Bspec;
@@ -588,7 +588,6 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
       do {
 	 GLfloat n_dot_VP = DOT3(normal, light->_VP_inf_norm);
 
-
 	 if (n_dot_VP < 0.0F) {
 	    if (IDX & LIGHT_TWOSIDE) {
 	       GLfloat n_dot_h = -DOT3(normal, light->_h_inf_norm);
@@ -698,6 +697,7 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
 	       UNCLAMPED_FLOAT_TO_CHAN(sumA[1], 
 				       ctx->Light.Material[1].Diffuse[3]);
 	 }
+
 
 	 COPY_3V(sum[0], ctx->Light._BaseColor[0]);
 	 if (IDX & LIGHT_TWOSIDE)

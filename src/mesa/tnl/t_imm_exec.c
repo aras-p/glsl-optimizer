@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.27 2001/06/28 17:34:14 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.28 2001/08/01 05:10:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -199,6 +199,7 @@ void _tnl_compute_orflag( struct immediate *IM, GLuint start )
    IM->Flag[IM->LastData+1] |= VERT_END_VB;
    IM->CopyAndFlag = IM->AndFlag = andflag;
    IM->CopyOrFlag = IM->OrFlag = orflag;
+   IM->Evaluated = 0;
 }
 
 

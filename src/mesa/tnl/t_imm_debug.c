@@ -1,4 +1,4 @@
-/* $Id: t_imm_debug.c,v 1.3 2001/04/28 08:39:18 keithw Exp $ */
+/* $Id: t_imm_debug.c,v 1.4 2001/08/01 05:10:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -66,7 +66,7 @@ void _tnl_print_cassette( struct immediate *IM )
    GLuint i;
    GLuint *flags = IM->Flag;
    GLuint andflag = IM->CopyAndFlag;
-   GLuint orflag = IM->CopyOrFlag;
+   GLuint orflag = (IM->CopyOrFlag|IM->Evaluated);
    GLuint state = IM->BeginState;
    GLuint req = ~0;
 

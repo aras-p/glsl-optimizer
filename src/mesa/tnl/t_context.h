@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.30 2001/07/12 22:09:22 keithw Exp $ */
+/* $Id: t_context.h,v 1.31 2001/08/01 05:10:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -189,6 +189,7 @@ struct immediate
    GLuint CopyOrFlag;
    GLuint CopyAndFlag;
    GLuint CopyTexSize;
+   GLuint Evaluated;
 
 
    /* allocate storage for these on demand:
