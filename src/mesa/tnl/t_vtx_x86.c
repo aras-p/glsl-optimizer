@@ -40,6 +40,61 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #if defined(USE_X86_ASM)
 
+
+struct dynfn *tnl_makeX86Vertex2f( TNLcontext *tnl, int key )
+{
+   struct dynfn *dfn = MALLOC_STRUCT( dynfn );
+
+   if (RADEON_DEBUG & DEBUG_CODEGEN)
+      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+
+   switch (tnl->vertex_size) {
+   default: {
+      /* Repz convenient as it's possible to emit code for any size
+       * vertex with little tweaking.  Might as well read vertsize
+       * though, and have only one of these.
+       */
+      static  char temp[] = {
+	 0x57,                     	/* push   %edi */
+	 0x56,                     	/* push   %esi */
+	 0xbe, 0, 0, 0, 0,         	/* mov    $VERTEX+2,%esi */
+	 0x8b, 0x3d, 0, 0, 0, 0,    	/* mov    DMAPTR,%edi */
+	 0x8b, 0x44, 0x24, 0x0c,        /* mov    0x0c(%esp,1),%eax */
+	 0x8b, 0x54, 0x24, 0x10,        /* mov    0x10(%esp,1),%edx */
+	 0x89, 0x07,                	/* mov    %eax,(%edi) */
+	 0x89, 0x57, 0x04,             	/* mov    %edx,0x4(%edi) */
+	 0x83, 0xc7, 0x08,             	/* add    $0x8,%edi */
+	 0xb9, 0, 0, 0, 0,         	/* mov    $VERTSIZE-2,%ecx */
+	 0xf3, 0xa5,                	/* repz movsl %ds:(%esi),%es:(%edi)*/
+	 0xa1, 0, 0, 0, 0,         	/* mov    COUNTER,%eax */
+	 0x89, 0x3d, 0, 0, 0, 0,    	/* mov    %edi,DMAPTR */
+	 0x48,                     	/* dec    %eax */
+	 0xa3, 0, 0, 0, 0,          	/* mov    %eax,COUNTER */
+	 0x5e,                     	/* pop    %esi */
+	 0x5f,                     	/* pop    %edi */
+	 0x74, 0x01,                	/* je     +1 */
+	 0xc3,                     	/* ret     */
+	 0xff, 0x25, 0, 0, 0, 0    	/* jmp    NOTIFY */
+      };
+
+      dfn->code = ALIGN_MALLOC( sizeof(temp), 16 );
+      memcpy (dfn->code, temp, sizeof(temp));
+      FIXUP(dfn->code, 3, 0x0, (int)&tnl->vertex[2]);
+      FIXUP(dfn->code, 9, 0x0, (int)&tnl->dmaptr);
+      FIXUP(dfn->code, 37, 0x0, tnl->vertex_size-2);
+      FIXUP(dfn->code, 44, 0x0, (int)&tnl->counter);
+      FIXUP(dfn->code, 50, 0x0, (int)&tnl->dmaptr);
+      FIXUP(dfn->code, 56, 0x0, (int)&tnl->counter);
+      FIXUP(dfn->code, 67, 0x0, (int)&tnl->notify);
+   break;
+   }
+   }
+
+   insert_at_head( &tnl->dfn_cache.Vertex3f, dfn );
+   dfn->key = key;
+   return dfn;
+}
+
 /* Build specialized versions of the immediate calls on the fly for
  * the current state.  Generic x86 versions.
  */
@@ -317,7 +372,65 @@ struct dynfn *tnl_makeX86Vertex3fv( TNLcontext *tnl, int key )
 }
 
 
-struct dynfn *tnl_makeX86Normal3fv( TNLcontext *tnl, int key )
+struct dynfn *tnl_makeX86Attr4fv( TNLcontext *tnl, int key )
+{
+   static  char temp[] = {
+      0x8b, 0x44, 0x24, 0x04,          	/* mov    0x4(%esp,1),%eax */
+      0xba, 0, 0, 0, 0,         	/* mov    $DEST,%edx */
+      0x8b, 0x08,                	/* mov    (%eax),%ecx */
+      0x89, 0x0a,                	/* mov    %ecx,(%edx) */
+      0x8b, 0x48, 0x04,             	/* mov    0x4(%eax),%ecx */
+      0x89, 0x4a, 0x04,             	/* mov    %ecx,0x4(%edx) */
+      0x8b, 0x48, 0x08,             	/* mov    0x8(%eax),%ecx */
+      0x89, 0x4a, 0x08,             	/* mov    %ecx,0x8(%edx) */
+      0x8b, 0x48, 0x0a,             	/* mov    0xa(%eax),%ecx */
+      0x89, 0x4a, 0x0a,             	/* mov    %ecx,0xa(%edx) */
+      0xc3,                     	/* ret    */
+   };
+
+   struct dynfn *dfn = MALLOC_STRUCT( dynfn );
+
+   if (TNL_DEBUG & DEBUG_CODEGEN)
+      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+
+   insert_at_head( &tnl->dfn_cache.Normal3fv, dfn );
+   dfn->key = key;
+   dfn->code = ALIGN_MALLOC( sizeof(temp), 16 );
+   memcpy (dfn->code, temp, sizeof(temp));
+   FIXUP(dfn->code, 5, 0x0, (int)tnl->normalptr); 
+   return dfn;
+}
+
+struct dynfn *tnl_makeX86Attr4f( TNLcontext *tnl, int key )
+{
+   static  char temp[] = {
+      0xba, 0x78, 0x56, 0x34, 0x12,    	/*  mov    $DEST,%edx */
+      0x8b, 0x44, 0x24, 0x04,          	/*  mov    0x4(%esp,1),%eax */
+      0x89, 0x02,                	/*  mov    %eax,(%edx) */
+      0x8b, 0x44, 0x24, 0x08,          	/*  mov    0x8(%esp,1),%eax */
+      0x89, 0x42, 0x04,             	/*  mov    %eax,0x4(%edx) */
+      0x8b, 0x44, 0x24, 0x0c,          	/*  mov    0xc(%esp,1),%eax */
+      0x89, 0x42, 0x08,             	/*  mov    %eax,0x8(%edx) */
+      0x8b, 0x44, 0x24, 0x10,          	/*  mov    0x10(%esp,1),%eax */
+      0x89, 0x42, 0x0a,             	/*  mov    %eax,0xa(%edx) */
+      0xc3,                     	/*  ret     */
+   };
+
+   struct dynfn *dfn = MALLOC_STRUCT( dynfn );
+
+   if (TNL_DEBUG & DEBUG_CODEGEN)
+      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+
+   insert_at_head( &tnl->dfn_cache.Normal3f, dfn );
+   dfn->key = key;
+   dfn->code = ALIGN_MALLOC( sizeof(temp), 16 );
+   memcpy (dfn->code, temp, sizeof(temp));
+   FIXUP(dfn->code, 1, 0x12345678, (int)tnl->normalptr); 
+   return dfn;
+}
+
+
+struct dynfn *tnl_makeX86Attr3fv( TNLcontext *tnl, int key )
 {
    static  char temp[] = {
       0x8b, 0x44, 0x24, 0x04,          	/* mov    0x4(%esp,1),%eax */
@@ -344,7 +457,7 @@ struct dynfn *tnl_makeX86Normal3fv( TNLcontext *tnl, int key )
    return dfn;
 }
 
-struct dynfn *tnl_makeX86Normal3f( TNLcontext *tnl, int key )
+struct dynfn *tnl_makeX86Attr3f( TNLcontext *tnl, int key )
 {
    static  char temp[] = {
       0xba, 0x78, 0x56, 0x34, 0x12,    	/*  mov    $DEST,%edx */
@@ -370,7 +483,7 @@ struct dynfn *tnl_makeX86Normal3f( TNLcontext *tnl, int key )
    return dfn;
 }
 
-struct dynfn *tnl_makeX86Color4ubv( TNLcontext *tnl, int key )
+struct dynfn *tnl_makeX86Attr4ubv( TNLcontext *tnl, int key )
 {
    struct dynfn *dfn = MALLOC_STRUCT( dynfn );
    insert_at_head( &tnl->dfn_cache.Color4ubv, dfn );
@@ -431,7 +544,7 @@ struct dynfn *tnl_makeX86Color4ubv( TNLcontext *tnl, int key )
    }
 }
 
-struct dynfn *tnl_makeX86Color4ub( TNLcontext *tnl, int key )
+struct dynfn *tnl_makeX86Attr4ub( TNLcontext *tnl, int key )
 {
    if (TNL_DEBUG & DEBUG_CODEGEN)
       fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
@@ -469,72 +582,8 @@ struct dynfn *tnl_makeX86Color4ub( TNLcontext *tnl, int key )
 }
 
 
-struct dynfn *tnl_makeX86Color3fv( TNLcontext *tnl, int key )
-{
-   if (key & (TNL_CP_VC_FRMT_PKCOLOR|TNL_CP_VC_FRMT_FPALPHA))
-      return 0;
-   else
-   {
-      static  char temp[] = {
-	 0x8b, 0x44, 0x24, 0x04,          	/* mov    0x4(%esp,1),%eax */
-	 0xba, 0, 0, 0, 0,         	/* mov    $DEST,%edx */
-	 0x8b, 0x08,                	/* mov    (%eax),%ecx */
-	 0x89, 0x0a,                	/* mov    %ecx,(%edx) */
-	 0x8b, 0x48, 0x04,             	/* mov    0x4(%eax),%ecx */
-	 0x89, 0x4a, 0x04,             	/* mov    %ecx,0x4(%edx) */
-	 0x8b, 0x48, 0x08,             	/* mov    0x8(%eax),%ecx */
-	 0x89, 0x4a, 0x08,             	/* mov    %ecx,0x8(%edx) */
-	 0xc3,                     	/* ret    */
-      };
 
-      struct dynfn *dfn = MALLOC_STRUCT( dynfn );
-
-      if (TNL_DEBUG & DEBUG_CODEGEN)
-	 fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
-
-      insert_at_head( &tnl->dfn_cache.Color3fv, dfn );
-      dfn->key = key;
-      dfn->code = ALIGN_MALLOC( sizeof(temp), 16 );
-      memcpy (dfn->code, temp, sizeof(temp));
-      FIXUP(dfn->code, 5, 0x0, (int)tnl->floatcolorptr); 
-      return dfn;
-   }
-}
-
-struct dynfn *tnl_makeX86Color3f( TNLcontext *tnl, int key )
-{
-   if (key & (TNL_CP_VC_FRMT_PKCOLOR|TNL_CP_VC_FRMT_FPALPHA))
-      return 0;
-   else
-   {
-      static  char temp[] = {
-	 0xba, 0x78, 0x56, 0x34, 0x12,    	/*  mov    $DEST,%edx */
-	 0x8b, 0x44, 0x24, 0x04,          	/*  mov    0x4(%esp,1),%eax */
-	 0x89, 0x02,                	/*  mov    %eax,(%edx) */
-	 0x8b, 0x44, 0x24, 0x08,          	/*  mov    0x8(%esp,1),%eax */
-	 0x89, 0x42, 0x04,             	/*  mov    %eax,0x4(%edx) */
-	 0x8b, 0x44, 0x24, 0x0c,          	/*  mov    0xc(%esp,1),%eax */
-	 0x89, 0x42, 0x08,             	/*  mov    %eax,0x8(%edx) */
-	 0xc3,                     	/*  ret     */
-      };
-
-      struct dynfn *dfn = MALLOC_STRUCT( dynfn );
-
-      if (TNL_DEBUG & DEBUG_CODEGEN)
-	 fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
-
-      insert_at_head( &tnl->dfn_cache.Color3f, dfn );
-      dfn->key = key;
-      dfn->code = ALIGN_MALLOC( sizeof(temp), 16 );
-      memcpy (dfn->code, temp, sizeof(temp));
-      FIXUP(dfn->code, 1, 0x12345678, (int)tnl->floatcolorptr); 
-      return dfn;
-   }
-}
-
-
-
-struct dynfn *tnl_makeX86TexCoord2fv( TNLcontext *tnl, int key )
+struct dynfn *tnl_makeX86Attr2fv( TNLcontext *tnl, int key )
 {
    static  char temp[] = {
       0x8b, 0x44, 0x24, 0x04,          	/* mov    0x4(%esp,1),%eax */
@@ -559,7 +608,7 @@ struct dynfn *tnl_makeX86TexCoord2fv( TNLcontext *tnl, int key )
    return dfn;
 }
 
-struct dynfn *tnl_makeX86TexCoord2f( TNLcontext *tnl, int key )
+struct dynfn *tnl_makeX86Attr2f( TNLcontext *tnl, int key )
 {
    static  char temp[] = {
       0xba, 0x78, 0x56, 0x34, 0x12,    	/* mov    $DEST,%edx */
@@ -583,31 +632,36 @@ struct dynfn *tnl_makeX86TexCoord2f( TNLcontext *tnl, int key )
    return dfn;
 }
 
-struct dynfn *tnl_makeX86MultiTexCoord2fvARB( TNLcontext *tnl, int key )
+
+struct dynfn *tnl_makeX86Attr1fv( TNLcontext *tnl, int key )
 {
    static  char temp[] = {
       0x8b, 0x44, 0x24, 0x04,          	/* mov    0x4(%esp,1),%eax */
-      0x8b, 0x4c, 0x24, 0x08,          	/* mov    0x8(%esp,1),%ecx */
-      0x2d, 0xc0, 0x84, 0x00, 0x00,    	/* sub    $0x84c0,%eax */
-      0x83, 0xe0, 0x01,             	/* and    $0x1,%eax */
-      0x8b, 0x11,                	/* mov    (%ecx),%edx */
-      0xc1, 0xe0, 0x03,             	/* shl    $0x3,%eax */
-      0x8b, 0x49, 0x04,             	/* mov    0x4(%ecx),%ecx */
-      0x89, 0x90, 0, 0, 0, 0,/* mov    %edx,DEST(%eax) */
-      0x89, 0x88, 0, 0, 0, 0,/* mov    %ecx,DEST+8(%eax) */
+      0xba, 0x78, 0x56, 0x34, 0x12,     /* mov    $DEST,%edx */
+      0x8b, 0x08,                	/* mov    (%eax),%ecx */
+      0x89, 0x0a,                	/* mov    %ecx,(%edx) */
       0xc3,                     	/* ret     */
    };
 
-   static char temp2[] = {
+   struct dynfn *dfn = MALLOC_STRUCT( dynfn );
+
+   if (TNL_DEBUG & DEBUG_CODEGEN)
+      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+
+   insert_at_head( &tnl->dfn_cache.TexCoord2fv, dfn );
+   dfn->key = key;
+   dfn->code = ALIGN_MALLOC( sizeof(temp), 16 );
+   memcpy (dfn->code, temp, sizeof(temp));
+   FIXUP(dfn->code, 5, 0x12345678, (int)tnl->texcoordptr[0]); 
+   return dfn;
+}
+
+struct dynfn *tnl_makeX86Attr1f( TNLcontext *tnl, int key )
+{
+   static  char temp[] = {
+      0xba, 0x78, 0x56, 0x34, 0x12,    	/* mov    $DEST,%edx */
       0x8b, 0x44, 0x24, 0x04,          	/* mov    0x4(%esp,1),%eax */
-      0x8b, 0x4c, 0x24, 0x08,          	/* mov    0x8(%esp,1),%ecx */
-      0x2d, 0xc0, 0x84, 0x00, 0x00,    	/* sub    $0x84c0,%eax */
-      0x83, 0xe0, 0x01,             	/* and    $0x1,%eax */
-      0x8b, 0x14, 0x85, 0, 0, 0, 0, /* mov    DEST(,%eax,4),%edx */
-      0x8b, 0x01,                	/* mov    (%ecx),%eax */
       0x89, 0x02,                	/* mov    %eax,(%edx) */
-      0x8b, 0x41, 0x04,             	/* mov    0x4(%ecx),%eax */
-      0x89, 0x42, 0x04,             	/* mov    %eax,0x4(%edx) */
       0xc3,                     	/* ret     */
    };
 
@@ -616,104 +670,30 @@ struct dynfn *tnl_makeX86MultiTexCoord2fvARB( TNLcontext *tnl, int key )
    if (TNL_DEBUG & DEBUG_CODEGEN)
       fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
 
-   insert_at_head( &tnl->dfn_cache.MultiTexCoord2fvARB, dfn );
+   insert_at_head( &tnl->dfn_cache.TexCoord2f, dfn );
    dfn->key = key;
-
-   if ((key & (TNL_CP_VC_FRMT_ST0|TNL_CP_VC_FRMT_ST1)) ==
-      (TNL_CP_VC_FRMT_ST0|TNL_CP_VC_FRMT_ST1)) {
-      dfn->code = ALIGN_MALLOC( sizeof(temp), 16 );
-      memcpy (dfn->code, temp, sizeof(temp));
-      FIXUP(dfn->code, 26, 0x0, (int)tnl->texcoordptr[0]);	
-      FIXUP(dfn->code, 32, 0x0, (int)tnl->texcoordptr[0]+4);
-   } else {
-      dfn->code = ALIGN_MALLOC( sizeof(temp2), 16 );
-      memcpy (dfn->code, temp2, sizeof(temp2));
-      FIXUP(dfn->code, 19, 0x0, (int)tnl->texcoordptr);
-   }
+   dfn->code = ALIGN_MALLOC( sizeof(temp), 16 );
+   memcpy (dfn->code, temp, sizeof(temp));
+   FIXUP(dfn->code, 1, 0x12345678, (int)tnl->texcoordptr[0]); 
    return dfn;
 }
 
-struct dynfn *tnl_makeX86MultiTexCoord2fARB( TNLcontext *tnl, 
-						int key )
-{
-   static  char temp[] = {
-      0x8b, 0x44, 0x24, 0x04,          	/* mov    0x4(%esp,1),%eax */
-      0x8b, 0x54, 0x24, 0x08,          	/* mov    0x8(%esp,1),%edx */
-      0x2d, 0xc0, 0x84, 0x00, 0x00,    	/* sub    $0x84c0,%eax */
-      0x8b, 0x4c, 0x24, 0x0c,          	/* mov    0xc(%esp,1),%ecx */
-      0x83, 0xe0, 0x01,             	/* and    $0x1,%eax */
-      0xc1, 0xe0, 0x03,             	/* shl    $0x3,%eax */
-      0x89, 0x90, 0, 0, 0, 0,	/* mov    %edx,DEST(%eax) */
-      0x89, 0x88, 0, 0, 0, 0,	/* mov    %ecx,DEST+8(%eax) */
-      0xc3,                     	/* ret     */
-   };
-
-   static char temp2[] = {
-      0x8b, 0x44, 0x24, 0x04,          	/* mov    0x4(%esp,1),%eax */
-      0x8b, 0x54, 0x24, 0x08,          	/* mov    0x8(%esp,1),%edx */
-      0x2d, 0xc0, 0x84, 0x00, 0x00,    	/* sub    $0x84c0,%eax */
-      0x8b, 0x4c, 0x24, 0x0c,          	/* mov    0xc(%esp,1),%ecx */
-      0x83, 0xe0, 0x01,             	/* and    $0x1,%eax */
-      0x8b, 0x04, 0x85, 0, 0, 0, 0,     /* mov    DEST(,%eax,4),%eax */
-      0x89, 0x10,                	/* mov    %edx,(%eax) */
-      0x89, 0x48, 0x04,             	/* mov    %ecx,0x4(%eax) */
-      0xc3,                   	        /* ret     */
-   };
-
-   struct dynfn *dfn = MALLOC_STRUCT( dynfn );
-
-   if (TNL_DEBUG & DEBUG_CODEGEN)
-      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
-
-   insert_at_head( &tnl->dfn_cache.MultiTexCoord2fARB, dfn );
-   dfn->key = key;
-
-   if ((key & (TNL_CP_VC_FRMT_ST0|TNL_CP_VC_FRMT_ST1)) ==
-       (TNL_CP_VC_FRMT_ST0|TNL_CP_VC_FRMT_ST1)) {
-      dfn->code = ALIGN_MALLOC( sizeof(temp), 16 );
-      memcpy (dfn->code, temp, sizeof(temp));
-      FIXUP(dfn->code, 25, 0x0, (int)tnl->texcoordptr[0]); 
-      FIXUP(dfn->code, 31, 0x0, (int)tnl->texcoordptr[0]+4); 
-   }
-   else {
-      /* Note: this might get generated multiple times, even though the
-       * actual emitted code is the same.
-       */
-      dfn->code = ALIGN_MALLOC( sizeof(temp2), 16 );
-      memcpy (dfn->code, temp2, sizeof(temp2));
-      FIXUP(dfn->code, 23, 0x0, (int)tnl->texcoordptr); 
-   }      
-   return dfn;
-}
 
 
 void _tnl_InitX86Codegen( struct dfn_generators *gen )
 {
+   gen->Attr1f = tnl_makeX86Attr1f;
+   gen->Attr1fv = tnl_makeX86Attr1fv;
+   gen->Attr2f = tnl_makeX86Attr2f;
+   gen->Attr2fv = tnl_makeX86Attr2fv;
+   gen->Attr3f = tnl_makeX86Attr3f;
+   gen->Attr3fv = tnl_makeX86Attr3fv;
+   gen->Attr4f = tnl_makeX86Attr4f;
+   gen->Attr4fv = tnl_makeX86Attr4fv;
+   gen->Attr4ub = tnl_makeX86Attr4ub; 
+   gen->Attr4ubv = tnl_makeX86Attr4ubv;
    gen->Vertex3f = tnl_makeX86Vertex3f;
    gen->Vertex3fv = tnl_makeX86Vertex3fv;
-   gen->Color4ub = tnl_makeX86Color4ub; /* PKCOLOR only */
-   gen->Color4ubv = tnl_makeX86Color4ubv; /* PKCOLOR only */
-   gen->Normal3f = tnl_makeX86Normal3f;
-   gen->Normal3fv = tnl_makeX86Normal3fv;
-   gen->TexCoord2f = tnl_makeX86TexCoord2f;
-   gen->TexCoord2fv = tnl_makeX86TexCoord2fv;
-   gen->MultiTexCoord2fARB = tnl_makeX86MultiTexCoord2fARB;
-   gen->MultiTexCoord2fvARB = tnl_makeX86MultiTexCoord2fvARB;
-   gen->Color3f = tnl_makeX86Color3f;
-   gen->Color3fv = tnl_makeX86Color3fv;
-
-   /* Not done:
-    */
-/*     gen->Vertex2f = tnl_makeX86Vertex2f; */
-/*     gen->Vertex2fv = tnl_makeX86Vertex2fv; */
-/*     gen->Color3ub = tnl_makeX86Color3ub; */
-/*     gen->Color3ubv = tnl_makeX86Color3ubv; */
-/*     gen->Color4f = tnl_makeX86Color4f; */
-/*     gen->Color4fv = tnl_makeX86Color4fv; */
-/*     gen->TexCoord1f = tnl_makeX86TexCoord1f; */
-/*     gen->TexCoord1fv = tnl_makeX86TexCoord1fv; */
-/*     gen->MultiTexCoord1fARB = tnl_makeX86MultiTexCoord1fARB; */
-/*     gen->MultiTexCoord1fvARB = tnl_makeX86MultiTexCoord1fvARB; */
 }
 
 

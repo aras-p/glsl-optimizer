@@ -184,10 +184,6 @@ static void copy_vertex( TNLcontext *tnl, GLuint n, GLfloat *dst )
    }
 }
 
-/* NOTE: This actually reads the copied vertices back from uncached
- * memory.  Could also use the counter/notify mechanism to populate
- * tmp on the fly as vertices are generated.  
- */
 static GLuint copy_wrapped_verts( TNLcontext *tnl, GLfloat (*tmp)[15] )
 {
    GLuint ovf, i;
