@@ -103,6 +103,7 @@ class glXPixelFunctionUtility(glX_XML.glXFunction):
 		self.can_be_large = func.can_be_large
 		self.count_parameter_list = func.count_parameter_list
 		self.counter = func.counter
+		self.img_reset = None
 		return
 
 
@@ -164,6 +165,48 @@ read_reply( Display *dpy, size_t size, void * dest, GLboolean reply_is_always_ar
     }
 
     return reply.retval;
+}
+
+static NOINLINE void
+read_pixel_reply( Display *dpy, __GLXcontext * gc, unsigned max_dim,
+    GLint width, GLint height, GLint depth, GLenum format, GLenum type,
+    void * dest, GLboolean dimensions_in_reply )
+{
+    xGLXSingleReply reply;
+    GLint size;
+    
+    (void) _XReply(dpy, (xReply *) & reply, 0, False);
+
+    if ( dimensions_in_reply ) {
+        width  = reply.pad3;
+        height = reply.pad4;
+        depth  = reply.pad5;
+	
+	if ((height == 0) || (max_dim < 2)) { height = 1; }
+	if ((depth  == 0) || (max_dim < 3)) { depth  = 1; }
+    }
+
+    size = reply.length * 4;
+    if (size != 0) {
+        void * buf = Xmalloc( size );
+
+        if ( buf == NULL ) {
+            _XEatData(dpy, size);
+            __glXSetError(gc, GL_OUT_OF_MEMORY);
+        }
+        else {
+            const GLint extra = 4 - (size & 3);
+
+            _XRead(dpy, buf, size);
+            if ( extra < 4 ) {
+                _XEatData(dpy, extra);
+            }
+
+            __glEmptyImage(gc, 3, width, height, depth, format, type,
+                           buf, dest);
+            Xfree(buf);
+        }
+    }
 }
 
 #define X_GLXSingle 0
@@ -265,8 +308,9 @@ generic_%u_byte( GLint rop, const void * ptr )
 			r = 2
 
 		for p in f.parameterIterator(1, r):
-			self.common_emit_one_arg(p, offset, pc, indent, adjust)
-			offset += p.size()
+			if p.name != f.img_reset:
+				self.common_emit_one_arg(p, offset, pc, indent, adjust)
+				offset += p.size()
 
 		return offset
 
@@ -328,6 +372,9 @@ generic_%u_byte( GLint rop, const void * ptr )
 		# parameter.
 
 		if not f.glx_rop:
+			if f.image and f.image.is_output:
+				print '    const __GLXattribute * const state = gc->client_state_private;'
+
 			print '    Display * const dpy = gc->currentDpy;'
 			skip_condition = "dpy != NULL"
 		elif f.can_be_large:
@@ -383,26 +430,43 @@ generic_%u_byte( GLint rop, const void * ptr )
 			print '        %s setup_single_request(gc, %s, cmdlen);' % (pc_decl, f.opcode_name())
 
 		self.common_emit_args(f, "pc", "    ", 0, 0)
+		if f.image and f.image.is_output:
+			o = f.command_fixed_length() - 4
+			print '        *(int32_t *)(pc + %u) = 0;' % (o)
+			if f.image.img_format != "GL_COLOR_INDEX" or f.image.img_type != "GL_BITMAP":
+				print '        * (int8_t *)(pc + %u) = state->storePack.swapEndian;' % (o)
+
+				if f.img_reset:
+					print '        * (int8_t *)(pc + %u) = %s;' % (o + 1, f.img_reset)
+
 
 		if f.needs_reply():
-			if f.output != None:
-				output_size = f.output.p_type.size
-				output_str = f.output.name
+			if f.image and f.image.is_output:
+				[dim, w, h, d, junk] = f.dimensions()
+				if f.dimensions_in_reply:
+					print "        read_pixel_reply(dpy, gc, %u, 0, 0, 0, %s, %s, %s, GL_TRUE);" % (dim, f.image.img_format, f.image.img_type, f.image.name)
+				else:
+					print "        read_pixel_reply(dpy, gc, %u, %s, %s, %s, %s, %s, %s, GL_FALSE);" % (dim, w, h, d, f.image.img_format, f.image.img_type, f.image.name)
 			else:
-				output_size = 0
-				output_str = "NULL"
+				if f.output != None:
+					output_size = f.output.p_type.size
+					output_str = f.output.name
+				else:
+					output_size = 0
+					output_str = "NULL"
 
-			if f.fn_return_type != 'void':
-				return_str = " retval = (%s)" % (f.fn_return_type)
-			else:
-				return_str = " (void)"
+				if f.fn_return_type != 'void':
+					return_str = " retval = (%s)" % (f.fn_return_type)
+				else:
+					return_str = " (void)"
 
-			if f.reply_always_array:
-				aa = "GL_TRUE"
-			else:
-				aa = "GL_FALSE"
+				if f.reply_always_array:
+					aa = "GL_TRUE"
+				else:
+					aa = "GL_FALSE"
 
-			print "       %s read_reply(dpy, %s, %s, %s);" % (return_str, output_size, output_str, aa)
+				print "       %s read_reply(dpy, %s, %s, %s);" % (return_str, output_size, output_str, aa)
+
 		elif self.debug:
 			# Only emit the extra glFinish call for functions
 			# that don't already require a reply from the server.

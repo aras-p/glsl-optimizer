@@ -304,6 +304,8 @@ class glXFunction(gl_XML.glFunction):
 		self.output = None
 		self.can_be_large = 0
 		self.reply_always_array = 0
+		self.dimensions_in_reply = 0
+		self.img_reset = None
 
 		self.server_handcode = 0
 		self.client_handcode = 0
@@ -324,6 +326,7 @@ class glXFunction(gl_XML.glFunction):
 			self.glx_rop = int(attrs.get('rop', "0"))
 			self.glx_sop = int(attrs.get('sop', "0"))
 			self.glx_vendorpriv = int(attrs.get('vendorpriv', "0"))
+			self.img_reset = attrs.get('img_reset', None)
 
 			# The 'handcode' attribute can be one of 'true',
 			# 'false', 'client', or 'server'.
@@ -365,6 +368,10 @@ class glXFunction(gl_XML.glFunction):
 			else:
 				self.reply_always_array = 0
 
+			if attrs.get('dimensions_in_reply', "false") == "true":
+				self.dimensions_in_reply = 1
+			else:
+				self.dimensions_in_reply = 0
 		else:
 			gl_XML.glFunction.startElement(self, name, attrs)
 
@@ -433,7 +440,7 @@ class glXFunction(gl_XML.glFunction):
 		pixel commends is zero.  The offset for pixel commands depends
 		on the number of dimensions of the pixel data."""
 
-		if self.image:
+		if self.image and not self.image.is_output:
 			[dim, junk, junk, junk, junk] = self.dimensions()
 
 			# The base size is the size of the pixel pack info
@@ -457,12 +464,12 @@ class glXFunction(gl_XML.glFunction):
 		size = self.offset_of_first_parameter()
 
 		for p in gl_XML.glFunction.parameterIterator(self):
-			if not p.is_output:
+			if not p.is_output and p.name != self.img_reset:
 				size += p.size()
 				if self.pad_after(p):
 					size += 4
 
-		if self.image and self.image.img_null_flag:
+		if self.image and (self.image.img_null_flag or self.image.is_output):
 			size += 4
 
 		return size

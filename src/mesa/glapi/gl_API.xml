@@ -53,6 +53,8 @@
                    doubles_in_order CDATA #IMPLIED
                    always_array CDATA #IMPLIED
                    handcode CDATA #IMPLIED
+                   img_reset CDATA #IMPLIED
+                   dimensions_in_reply CDATA #IMPLIED
                    ignore   CDATA #IMPLIED>
 ]>
 
@@ -2349,8 +2351,8 @@ glx:
         <param name="height" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="pixels" type="GLvoid *" output="true"/>
-        <glx sop="111" handcode="true"/>
+        <param name="pixels" type="GLvoid *" output="true"  img_width="width" img_height="height" img_format="format" img_type="type" img_target="0"/>
+        <glx sop="111"/>
     </function>
 
     <function name="DrawPixels" offset="257">
@@ -2465,8 +2467,8 @@ glx:
     </function>
 
     <function name="GetPolygonStipple" offset="274">
-        <param name="mask" type="GLubyte *" output="true"/>
-        <glx sop="128" handcode="true"/>
+        <param name="mask" type="GLubyte *" output="true" img_width="32" img_height="32" img_format="GL_COLOR_INDEX" img_type="GL_BITMAP"/>
+        <glx sop="128"/>
     </function>
 
     <function name="GetString" offset="275">
@@ -2515,8 +2517,8 @@ glx:
         <param name="level" type="GLint"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="pixels" type="GLvoid *" output="true"/>
-        <glx sop="135" handcode="true"/>
+        <param name="pixels" type="GLvoid *" output="true" img_width="width" img_height="height" img_depth="depth" img_format="format" img_type="type"/>
+        <glx sop="135" dimensions_in_reply="true"/>
     </function>
 
     <function name="GetTexParameterfv" offset="282">
@@ -3322,8 +3324,8 @@ glx:
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="table" type="GLvoid *" output="true"/>
-        <glx sop="147" handcode="true"/>
+        <param name="table" type="GLvoid *" output="true" img_width="width" img_format="format" img_type="type"/>
+        <glx sop="147" dimensions_in_reply="true"/>
     </function>
 
     <function name="GetColorTableParameterfv" offset="344">
@@ -3431,8 +3433,8 @@ glx:
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="image" type="GLvoid *" output="true"/>
-        <glx sop="150" handcode="true"/>
+        <param name="image" type="GLvoid *" output="true" img_width="width" img_height="height" img_format="format" img_type="type"/>
+        <glx sop="150" dimensions_in_reply="true"/>
     </function>
 
     <function name="GetConvolutionParameterfv" offset="357">
@@ -3476,8 +3478,8 @@ glx:
         <param name="reset" type="GLboolean"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="values" type="GLvoid *" output="true"/>
-        <glx sop="154" handcode="true"/>
+        <param name="values" type="GLvoid *" output="true" img_width="width" img_format="format" img_type="type"/>
+        <glx sop="154" dimensions_in_reply="true" img_reset="reset"/>
     </function>
 
     <function name="GetHistogramParameterfv" offset="362">
@@ -3499,8 +3501,8 @@ glx:
         <param name="reset" type="GLboolean"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="values" type="GLvoid *" output="true"/>
-        <glx sop="157" handcode="true"/>
+        <param name="values" type="GLvoid *" output="true" img_width="2" img_format="format" img_type="type"/>
+        <glx sop="157" img_reset="reset"/>
     </function>
 
     <function name="GetMinmaxParameterfv" offset="365">

@@ -82,6 +82,48 @@ read_reply( Display *dpy, size_t size, void * dest, GLboolean reply_is_always_ar
     return reply.retval;
 }
 
+static NOINLINE void
+read_pixel_reply( Display *dpy, __GLXcontext * gc, unsigned max_dim,
+    GLint width, GLint height, GLint depth, GLenum format, GLenum type,
+    void * dest, GLboolean dimensions_in_reply )
+{
+    xGLXSingleReply reply;
+    GLint size;
+    
+    (void) _XReply(dpy, (xReply *) & reply, 0, False);
+
+    if ( dimensions_in_reply ) {
+        width  = reply.pad3;
+        height = reply.pad4;
+        depth  = reply.pad5;
+	
+	if ((height == 0) || (max_dim < 2)) { height = 1; }
+	if ((depth  == 0) || (max_dim < 3)) { depth  = 1; }
+    }
+
+    size = reply.length * 4;
+    if (size != 0) {
+        void * buf = Xmalloc( size );
+
+        if ( buf == NULL ) {
+            _XEatData(dpy, size);
+            __glXSetError(gc, GL_OUT_OF_MEMORY);
+        }
+        else {
+            const GLint extra = 4 - (size & 3);
+
+            _XRead(dpy, buf, size);
+            if ( extra < 4 ) {
+                _XEatData(dpy, extra);
+            }
+
+            __glEmptyImage(gc, 3, width, height, depth, format, type,
+                           buf, dest);
+            Xfree(buf);
+        }
+    }
+}
+
 #define X_GLXSingle 0
 
 static NOINLINE FASTCALL GLubyte *
@@ -3229,6 +3271,30 @@ __indirect_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum 
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
+#define X_GLsop_ReadPixels 111
+void
+__indirect_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid * pixels)
+{
+    __GLXcontext * const gc = __glXGetCurrentContext();
+    const __GLXattribute * const state = gc->client_state_private;
+    Display * const dpy = gc->currentDpy;
+    const GLuint cmdlen = 28;
+    if (__builtin_expect(dpy != NULL, 1)) {
+        GLubyte const * pc = setup_single_request(gc, X_GLsop_ReadPixels, cmdlen);
+        (void) memcpy((void *)(pc + 0), (void *)(&x), 4);
+        (void) memcpy((void *)(pc + 4), (void *)(&y), 4);
+        (void) memcpy((void *)(pc + 8), (void *)(&width), 4);
+        (void) memcpy((void *)(pc + 12), (void *)(&height), 4);
+        (void) memcpy((void *)(pc + 16), (void *)(&format), 4);
+        (void) memcpy((void *)(pc + 20), (void *)(&type), 4);
+        *(int32_t *)(pc + 24) = 0;
+        * (int8_t *)(pc + 24) = state->storePack.swapEndian;
+        read_pixel_reply(dpy, gc, 2, width, height, 1, format, type, pixels, GL_FALSE);
+        UnlockDisplay(dpy); SyncHandle();
+    }
+    return;
+}
+
 #define X_GLrop_DrawPixels 173
 void
 __indirect_glDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * pixels)
@@ -3453,6 +3519,23 @@ __indirect_glGetPixelMapusv(GLenum map, GLushort * values)
     return;
 }
 
+#define X_GLsop_GetPolygonStipple 128
+void
+__indirect_glGetPolygonStipple(GLubyte * mask)
+{
+    __GLXcontext * const gc = __glXGetCurrentContext();
+    const __GLXattribute * const state = gc->client_state_private;
+    Display * const dpy = gc->currentDpy;
+    const GLuint cmdlen = 4;
+    if (__builtin_expect(dpy != NULL, 1)) {
+        GLubyte const * pc = setup_single_request(gc, X_GLsop_GetPolygonStipple, cmdlen);
+        *(int32_t *)(pc + 0) = 0;
+        read_pixel_reply(dpy, gc, 2, 32, 32, 1, GL_COLOR_INDEX, GL_BITMAP, mask, GL_FALSE);
+        UnlockDisplay(dpy); SyncHandle();
+    }
+    return;
+}
+
 #define X_GLsop_GetTexEnvfv 130
 void
 __indirect_glGetTexEnvfv(GLenum target, GLenum pname, GLfloat * params)
@@ -3533,6 +3616,28 @@ __indirect_glGetTexGeniv(GLenum coord, GLenum pname, GLint * params)
         (void) memcpy((void *)(pc + 0), (void *)(&coord), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) read_reply(dpy, 4, params, GL_FALSE);
+        UnlockDisplay(dpy); SyncHandle();
+    }
+    return;
+}
+
+#define X_GLsop_GetTexImage 135
+void
+__indirect_glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type, GLvoid * pixels)
+{
+    __GLXcontext * const gc = __glXGetCurrentContext();
+    const __GLXattribute * const state = gc->client_state_private;
+    Display * const dpy = gc->currentDpy;
+    const GLuint cmdlen = 20;
+    if (__builtin_expect(dpy != NULL, 1)) {
+        GLubyte const * pc = setup_single_request(gc, X_GLsop_GetTexImage, cmdlen);
+        (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
+        (void) memcpy((void *)(pc + 4), (void *)(&level), 4);
+        (void) memcpy((void *)(pc + 8), (void *)(&format), 4);
+        (void) memcpy((void *)(pc + 12), (void *)(&type), 4);
+        *(int32_t *)(pc + 16) = 0;
+        * (int8_t *)(pc + 16) = state->storePack.swapEndian;
+        read_pixel_reply(dpy, gc, 3, 0, 0, 0, format, type, pixels, GL_TRUE);
         UnlockDisplay(dpy); SyncHandle();
     }
     return;
@@ -4252,6 +4357,27 @@ __indirect_glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
+#define X_GLsop_GetColorTable 147
+void
+__indirect_glGetColorTable(GLenum target, GLenum format, GLenum type, GLvoid * table)
+{
+    __GLXcontext * const gc = __glXGetCurrentContext();
+    const __GLXattribute * const state = gc->client_state_private;
+    Display * const dpy = gc->currentDpy;
+    const GLuint cmdlen = 16;
+    if (__builtin_expect(dpy != NULL, 1)) {
+        GLubyte const * pc = setup_single_request(gc, X_GLsop_GetColorTable, cmdlen);
+        (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
+        (void) memcpy((void *)(pc + 4), (void *)(&format), 4);
+        (void) memcpy((void *)(pc + 8), (void *)(&type), 4);
+        *(int32_t *)(pc + 12) = 0;
+        * (int8_t *)(pc + 12) = state->storePack.swapEndian;
+        read_pixel_reply(dpy, gc, 1, 0, 0, 0, format, type, table, GL_TRUE);
+        UnlockDisplay(dpy); SyncHandle();
+    }
+    return;
+}
+
 #define X_GLsop_GetColorTableParameterfv 148
 void
 __indirect_glGetColorTableParameterfv(GLenum target, GLenum pname, GLfloat * params)
@@ -4494,6 +4620,27 @@ __indirect_glCopyConvolutionFilter2D(GLenum target, GLenum internalformat, GLint
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
+#define X_GLsop_GetConvolutionFilter 150
+void
+__indirect_glGetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid * image)
+{
+    __GLXcontext * const gc = __glXGetCurrentContext();
+    const __GLXattribute * const state = gc->client_state_private;
+    Display * const dpy = gc->currentDpy;
+    const GLuint cmdlen = 16;
+    if (__builtin_expect(dpy != NULL, 1)) {
+        GLubyte const * pc = setup_single_request(gc, X_GLsop_GetConvolutionFilter, cmdlen);
+        (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
+        (void) memcpy((void *)(pc + 4), (void *)(&format), 4);
+        (void) memcpy((void *)(pc + 8), (void *)(&type), 4);
+        *(int32_t *)(pc + 12) = 0;
+        * (int8_t *)(pc + 12) = state->storePack.swapEndian;
+        read_pixel_reply(dpy, gc, 2, 0, 0, 0, format, type, image, GL_TRUE);
+        UnlockDisplay(dpy); SyncHandle();
+    }
+    return;
+}
+
 #define X_GLsop_GetConvolutionParameterfv 151
 void
 __indirect_glGetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat * params)
@@ -4528,6 +4675,28 @@ __indirect_glGetConvolutionParameteriv(GLenum target, GLenum pname, GLint * para
     return;
 }
 
+#define X_GLsop_GetHistogram 154
+void
+__indirect_glGetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid * values)
+{
+    __GLXcontext * const gc = __glXGetCurrentContext();
+    const __GLXattribute * const state = gc->client_state_private;
+    Display * const dpy = gc->currentDpy;
+    const GLuint cmdlen = 16;
+    if (__builtin_expect(dpy != NULL, 1)) {
+        GLubyte const * pc = setup_single_request(gc, X_GLsop_GetHistogram, cmdlen);
+        (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
+        (void) memcpy((void *)(pc + 4), (void *)(&format), 4);
+        (void) memcpy((void *)(pc + 8), (void *)(&type), 4);
+        *(int32_t *)(pc + 12) = 0;
+        * (int8_t *)(pc + 12) = state->storePack.swapEndian;
+        * (int8_t *)(pc + 13) = reset;
+        read_pixel_reply(dpy, gc, 1, 0, 0, 0, format, type, values, GL_TRUE);
+        UnlockDisplay(dpy); SyncHandle();
+    }
+    return;
+}
+
 #define X_GLsop_GetHistogramParameterfv 155
 void
 __indirect_glGetHistogramParameterfv(GLenum target, GLenum pname, GLfloat * params)
@@ -4557,6 +4726,28 @@ __indirect_glGetHistogramParameteriv(GLenum target, GLenum pname, GLint * params
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) read_reply(dpy, 4, params, GL_FALSE);
+        UnlockDisplay(dpy); SyncHandle();
+    }
+    return;
+}
+
+#define X_GLsop_GetMinmax 157
+void
+__indirect_glGetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid * values)
+{
+    __GLXcontext * const gc = __glXGetCurrentContext();
+    const __GLXattribute * const state = gc->client_state_private;
+    Display * const dpy = gc->currentDpy;
+    const GLuint cmdlen = 16;
+    if (__builtin_expect(dpy != NULL, 1)) {
+        GLubyte const * pc = setup_single_request(gc, X_GLsop_GetMinmax, cmdlen);
+        (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
+        (void) memcpy((void *)(pc + 4), (void *)(&format), 4);
+        (void) memcpy((void *)(pc + 8), (void *)(&type), 4);
+        *(int32_t *)(pc + 12) = 0;
+        * (int8_t *)(pc + 12) = state->storePack.swapEndian;
+        * (int8_t *)(pc + 13) = reset;
+        read_pixel_reply(dpy, gc, 1, 2, 1, 1, format, type, values, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
     }
     return;
