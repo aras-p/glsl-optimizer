@@ -51,6 +51,7 @@
 #include "fxdrv.h"
 #include "image.h"
 #include "teximage.h"
+#include "texformat.h"
 #include "texstore.h"
 #include "texutil.h"
 
@@ -1036,7 +1037,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    GrTextureFormat_t gldformat;
    tfxTexInfo *ti;
    tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
-   MesaIntTexFormat mesaFormat;
+   const struct gl_texture_format *mesaTexFormat;
    GLint texelSize;
    GLboolean success;
 
@@ -1071,7 +1072,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       texImage->Format = GL_INTENSITY;
       texImage->FetchTexel = fetch_intensity8;
       texelSize = 1;
-      mesaFormat = MESA_I8;
+      mesaTexFormat = &_mesa_texformat_i8;
       break;
    case 1:
    case GL_LUMINANCE:
@@ -1082,7 +1083,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       texImage->Format = GL_LUMINANCE;
       texImage->FetchTexel = fetch_luminance8;
       texelSize = 1;
-      mesaFormat = MESA_L8;
+      mesaTexFormat = &_mesa_texformat_l8;
       break;
    case GL_ALPHA:
    case GL_ALPHA4:
@@ -1092,7 +1093,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       texImage->Format = GL_ALPHA;
       texImage->FetchTexel = fetch_alpha8;
       texelSize = 1;
-      mesaFormat = MESA_A8;
+      mesaTexFormat = &_mesa_texformat_a8;
       break;
    case GL_COLOR_INDEX:
    case GL_COLOR_INDEX1_EXT:
@@ -1104,7 +1105,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       texImage->Format = GL_COLOR_INDEX;
       texImage->FetchTexel = fetch_index8;
       texelSize = 1;
-      mesaFormat = MESA_C8;
+      mesaTexFormat = &_mesa_texformat_ci8;
       break;
    case 2:
    case GL_LUMINANCE_ALPHA:
@@ -1117,7 +1118,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       texImage->Format = GL_LUMINANCE_ALPHA;
       texImage->FetchTexel = fetch_luminance8_alpha8;
       texelSize = 2;
-      mesaFormat = MESA_A8_L8;
+      mesaTexFormat = &_mesa_texformat_al88;
       break;
    case 3:
    case GL_RGB:
@@ -1131,7 +1132,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       texImage->Format = GL_RGB;
       texImage->FetchTexel = fetch_r5g6b5;
       texelSize = 2;
-      mesaFormat = MESA_R5_G6_B5;
+      mesaTexFormat = &_mesa_texformat_rgb565;
       break;
    case 4:
    case GL_RGBA:
@@ -1144,20 +1145,20 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       texImage->Format = GL_RGBA;
       texImage->FetchTexel = fetch_r4g4b4a4;
       texelSize = 2;
-      mesaFormat = MESA_A4_R4_G4_B4;
+      mesaTexFormat = &_mesa_texformat_argb4444;
       break;
    case GL_RGB5_A1:
       texImage->Format = GL_RGBA;
       texImage->FetchTexel = fetch_r5g5b5a1;
       texelSize = 2;
-      mesaFormat = MESA_A1_R5_G5_B5;
+      mesaTexFormat = &_mesa_texformat_argb1555;
       break;
    default:
       _mesa_problem(NULL, "tdfx driver: texbuildimagemap() bad format");
       return;
    }
 
-   _mesa_set_teximage_component_sizes(mesaFormat, texImage);
+   texImage->TexFormat = mesaTexFormat;
    texImage->Type = 0;		/* indicates a driver-specific format */
 
    /* allocate storage for texture image */
@@ -1169,14 +1170,18 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    fxTexInvalidate(ctx, texObj);
 
    /* store the texture image */
+   /* XXX check for image rescale */
    if (ctx->_ImageTransferState) {
-      success = GL_FALSE;
+      success = GL_FALSE;  /* Can't do image transfer ops here */
    }
    else {
-      success = _mesa_convert_teximage(mesaFormat, mml->width, mml->height,
-				       texImage->Data, mml->width * texelSize,
-				       width, height,
-				       format, type, pixels, packing);
+      success = _mesa_convert_texsubimage2d(mesaTexFormat->IntFormat,
+                                            0, 0, /* xoffset, yoffset */
+                                            mml->width, mml->height,
+                                            mml->width, /* destImageWidth */
+                                            format, type, /* user fmt/type */
+                                            packing, /* user packing params */
+                                            pixels, texImage->Data);
    }
 
    if (!success) {
@@ -1203,11 +1208,14 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 			      format, type, pixels, packing /* src info */ );
 
       /* this conversion better work! */
-      success = _mesa_convert_teximage(mesaFormat, mml->width, mml->height,
-				       texImage->Data, mml->width * texelSize,
-				       width, height,
-				       simpleFormat, CHAN_TYPE, tempImage,
-				       &_mesa_native_packing);
+      success = _mesa_convert_texsubimage2d(mesaTexFormat->IntFormat,
+                                            0, 0, /* xoffset, yoffset */
+                                            mml->width, mml->height,
+                                            mml->width,   /* destImageWidth */
+                                            simpleFormat, /* source format */
+                                            CHAN_TYPE,    /* source type */
+                                            &_mesa_native_packing,
+                                            tempImage, texImage->Data);
       assert(success);
       FREE(tempImage);
    }
@@ -1234,10 +1242,8 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
 {
    fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
    tfxTexInfo *ti;
-   GLint texelSize;
    tfxMipMapLevel *mml;
    GLboolean success;
-   MesaIntTexFormat mesaFormat;
 
    if (!texObj->DriverData) {
       _mesa_problem(ctx, "problem in fxDDTexSubImage2D");
@@ -1250,52 +1256,19 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    assert(mml);
 
    assert(texImage->Data);	/* must have an existing texture image! */
+   assert(texImage->Format);
 
-   switch (mml->glideFormat) {
-   case GR_TEXFMT_INTENSITY_8:
-      texelSize = 1;
-      mesaFormat = MESA_I8;
-      break;
-   case GR_TEXFMT_ALPHA_8:
-      texelSize = 1;
-      mesaFormat = MESA_A8;
-      break;
-   case GR_TEXFMT_P_8:
-      texelSize = 1;
-      mesaFormat = MESA_C8;
-      break;
-   case GR_TEXFMT_ALPHA_INTENSITY_88:
-      texelSize = 2;
-      mesaFormat = MESA_A8_L8;
-      break;
-   case GR_TEXFMT_RGB_565:
-      texelSize = 2;
-      mesaFormat = MESA_R5_G6_B5;
-      break;
-   case GR_TEXFMT_ARGB_4444:
-      texelSize = 2;
-      mesaFormat = MESA_A4_R4_G4_B4;
-      break;
-   case GR_TEXFMT_ARGB_1555:
-      texelSize = 2;
-      mesaFormat = MESA_A1_R5_G5_B5;
-      break;
-   default:
-      _mesa_problem(NULL, "tdfx driver: fxTexBuildSubImageMap() bad format");
-      return;
-   }
-
+   /* XXX check for image rescale */
    if (ctx->_ImageTransferState) {
       success = GL_FALSE;
    }
    else {
-      success = _mesa_convert_texsubimage(mesaFormat, xoffset, yoffset,
-					  mml->width, mml->height,
-					  texImage->Data,
-					  mml->width * texelSize,
-					  width, height,
-					  texImage->Width, texImage->Height,
-					  format, type, pixels, packing);
+      success = _mesa_convert_texsubimage2d(texImage->TexFormat->IntFormat,
+                                            xoffset, yoffset,
+                                            width, height,
+                                            mml->width,
+                                            format, type, packing,
+                                            pixels, texImage->Data);
    }
 
    if (!success) {
@@ -1324,14 +1297,13 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
 			      format, type, pixels, packing /* src info */ );
 
       /* this conversion better work! */
-      success = _mesa_convert_texsubimage(mesaFormat, xoffset, yoffset,
-					  mml->width, mml->height,
-					  texImage->Data, mml->width * texelSize,	/* dstRowStride */
-					  width * mml->wScale,
-					  height * mml->hScale,
-					  width, height,
-					  simpleFormat, CHAN_TYPE, tempImage,
-					  &_mesa_native_packing);
+      success = _mesa_convert_texsubimage2d(texImage->TexFormat->IntFormat,
+                                            xoffset, yoffset,
+                                            width, height,
+                                            mml->width,
+                                            simpleFormat, CHAN_TYPE,
+                                            &_mesa_native_packing,
+                                            tempImage, texImage->Data);
       assert(success);
       FREE(tempImage);
    }
