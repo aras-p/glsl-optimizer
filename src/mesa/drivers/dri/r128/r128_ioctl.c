@@ -106,7 +106,7 @@ drmBufPtr r128GetBufferLocked( r128ContextPtr rmesa )
 
 void r128FlushVerticesLocked( r128ContextPtr rmesa )
 {
-   XF86DRIClipRectPtr pbox = rmesa->pClipRects;
+   drm_clip_rect_t *pbox = rmesa->pClipRects;
    int nbox = rmesa->numClipRects;
    drmBufPtr buffer = rmesa->vert_buf;
    int count = rmesa->num_verts;
@@ -148,7 +148,7 @@ void r128FlushVerticesLocked( r128ContextPtr rmesa )
    {
       for ( i = 0 ; i < nbox ; ) {
 	 int nr = MIN2( i + R128_NR_SAREA_CLIPRECTS, nbox );
-	 XF86DRIClipRectPtr b = rmesa->sarea->boxes;
+	 drm_clip_rect_t *b = rmesa->sarea->boxes;
 	 int discard = 0;
 
 	 rmesa->sarea->nbox = nr - i;
@@ -291,12 +291,12 @@ void r128CopyBuffer( const __DRIdrawablePrivate *dPriv )
 
    for ( i = 0 ; i < nbox ; ) {
       GLint nr = MIN2( i + R128_NR_SAREA_CLIPRECTS , nbox );
-      XF86DRIClipRectPtr box = dPriv->pClipRects;
-      XF86DRIClipRectPtr b = rmesa->sarea->boxes;
+      drm_clip_rect_t *box = dPriv->pClipRects;
+      drm_clip_rect_t *b = rmesa->sarea->boxes;
       GLint n = 0;
 
       for ( ; i < nr ; i++ ) {
-	 *b++ = *(XF86DRIClipRectRec *)&box[i];
+	 *b++ = box[i];
 	 n++;
       }
       rmesa->sarea->nbox = n;
@@ -470,8 +470,8 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 
       for ( i = 0 ; i < rmesa->numClipRects ; ) {
 	 GLint nr = MIN2( i + R128_NR_SAREA_CLIPRECTS , rmesa->numClipRects );
-	 XF86DRIClipRectPtr box = rmesa->pClipRects;
-	 XF86DRIClipRectPtr b = rmesa->sarea->boxes;
+	 drm_clip_rect_t *box = rmesa->pClipRects;
+	 drm_clip_rect_t *b = rmesa->sarea->boxes;
 	 GLint n = 0;
 
 	 if ( !all ) {
@@ -497,7 +497,7 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	    }
 	 } else {
 	    for ( ; i < nr ; i++ ) {
-	       *b++ = *(XF86DRIClipRectPtr)&box[i];
+	       *b++ = box[i];
 	       n++;
 	    }
 	 }
@@ -548,7 +548,7 @@ void r128WriteDepthSpanLocked( r128ContextPtr rmesa,
 			       const GLdepth depth[],
 			       const GLubyte mask[] )
 {
-   XF86DRIClipRectPtr pbox = rmesa->pClipRects;
+   drm_clip_rect_t *pbox = rmesa->pClipRects;
    drmR128Depth d;
    int nbox = rmesa->numClipRects;
    int fd = rmesa->driScreen->fd;
@@ -583,7 +583,7 @@ void r128WriteDepthSpanLocked( r128ContextPtr rmesa,
    {
       for (i = 0 ; i < nbox ; ) {
 	 int nr = MIN2( i + R128_NR_SAREA_CLIPRECTS, nbox );
-	 XF86DRIClipRectPtr b = rmesa->sarea->boxes;
+	 drm_clip_rect_t *b = rmesa->sarea->boxes;
 
 	 rmesa->sarea->nbox = nr - i;
 	 for ( ; i < nr ; i++) {
@@ -611,7 +611,7 @@ void r128WriteDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 				 const GLdepth depth[],
 				 const GLubyte mask[] )
 {
-   XF86DRIClipRectPtr pbox = rmesa->pClipRects;
+   drm_clip_rect_t *pbox = rmesa->pClipRects;
    drmR128Depth d;
    int nbox = rmesa->numClipRects;
    int fd = rmesa->driScreen->fd;
@@ -645,7 +645,7 @@ void r128WriteDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
    {
       for (i = 0 ; i < nbox ; ) {
 	 int nr = MIN2( i + R128_NR_SAREA_CLIPRECTS, nbox );
-	 XF86DRIClipRectPtr b = rmesa->sarea->boxes;
+	 drm_clip_rect_t *b = rmesa->sarea->boxes;
 
 	 rmesa->sarea->nbox = nr - i;
 	 for ( ; i < nr ; i++) {
@@ -671,7 +671,7 @@ void r128WriteDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 void r128ReadDepthSpanLocked( r128ContextPtr rmesa,
 			      GLuint n, GLint x, GLint y )
 {
-   XF86DRIClipRectPtr pbox = rmesa->pClipRects;
+   drm_clip_rect_t *pbox = rmesa->pClipRects;
    drmR128Depth d;
    int nbox = rmesa->numClipRects;
    int fd = rmesa->driScreen->fd;
@@ -705,7 +705,7 @@ void r128ReadDepthSpanLocked( r128ContextPtr rmesa,
    {
       for (i = 0 ; i < nbox ; ) {
 	 int nr = MIN2( i + R128_NR_SAREA_CLIPRECTS, nbox );
-	 XF86DRIClipRectPtr b = rmesa->sarea->boxes;
+	 drm_clip_rect_t *b = rmesa->sarea->boxes;
 
 	 rmesa->sarea->nbox = nr - i;
 	 for ( ; i < nr ; i++) {
@@ -731,7 +731,7 @@ void r128ReadDepthSpanLocked( r128ContextPtr rmesa,
 void r128ReadDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 				const GLint x[], const GLint y[] )
 {
-   XF86DRIClipRectPtr pbox = rmesa->pClipRects;
+   drm_clip_rect_t *pbox = rmesa->pClipRects;
    drmR128Depth d;
    int nbox = rmesa->numClipRects;
    int fd = rmesa->driScreen->fd;
@@ -765,7 +765,7 @@ void r128ReadDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
    {
       for (i = 0 ; i < nbox ; ) {
 	 int nr = MIN2( i + R128_NR_SAREA_CLIPRECTS, nbox );
-	 XF86DRIClipRectPtr b = rmesa->sarea->boxes;
+	 drm_clip_rect_t *b = rmesa->sarea->boxes;
 
 	 rmesa->sarea->nbox = nr - i;
 	 for ( ; i < nr ; i++) {

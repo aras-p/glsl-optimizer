@@ -21,8 +21,7 @@
 #include "radeon_dri.h"
 #include "radeon_macros.h"
 #include "radeon_reg.h"
-#include "radeon_sarea.h"
-#include "sarea.h"
+#include "drm_sarea.h"
 
 
 /* HACK - for now, put this here... */
@@ -243,14 +242,14 @@ static int RADEONEngineRestore( const DRIDriverContext *ctx )
  */
 static int RADEONEngineShutdown( const DRIDriverContext *ctx )
 {
-   drmRadeonCPStop  stop;
+   drm_radeon_cp_stop_t  stop;
    int              ret, i;
 
    stop.flush = 1;
    stop.idle  = 1;
 
    ret = drmCommandWrite(ctx->drmFD, DRM_RADEON_CP_STOP, &stop, 
-			 sizeof(drmRadeonCPStop));
+			 sizeof(drm_radeon_cp_stop_t));
 
    if (ret == 0) {
       return 0;
@@ -263,7 +262,7 @@ static int RADEONEngineShutdown( const DRIDriverContext *ctx )
    i = 0;
    do {
       ret = drmCommandWrite(ctx->drmFD, DRM_RADEON_CP_STOP, &stop, 
-			    sizeof(drmRadeonCPStop));
+			    sizeof(drm_radeon_cp_stop_t));
    } while (ret && errno == EBUSY && i++ < 10);
 
    if (ret == 0) {
@@ -275,7 +274,7 @@ static int RADEONEngineShutdown( const DRIDriverContext *ctx )
    stop.idle = 0;
 
    if (drmCommandWrite(ctx->drmFD, DRM_RADEON_CP_STOP,
-		       &stop, sizeof(drmRadeonCPStop))) {
+		       &stop, sizeof(drm_radeon_cp_stop_t))) {
       return -errno;
    } else {
       return 0;
@@ -441,27 +440,27 @@ static int RADEONDRIAgpInit( const DRIDriverContext *ctx, RADEONInfoPtr info)
  * \return non-zero on success, or zero on failure.
  *
  * This function is a wrapper around the DRM_RADEON_CP_INIT command, passing
- * all the parameters in a drmRadeonInit structure.
+ * all the parameters in a drm_radeon_init_t structure.
  */
 static int RADEONDRIKernelInit( const DRIDriverContext *ctx,
 			       RADEONInfoPtr info)
 {
    int cpp = ctx->bpp / 8;
-   drmRadeonInit  drmInfo;
+   drm_radeon_init_t  drmInfo;
    int ret;
 
-   memset(&drmInfo, 0, sizeof(drmRadeonInit));
+   memset(&drmInfo, 0, sizeof(drm_radeon_init_t));
 
    if ( (info->ChipFamily == CHIP_FAMILY_R200) ||
 	(info->ChipFamily == CHIP_FAMILY_RV250) ||
 	(info->ChipFamily == CHIP_FAMILY_M9) ||
 	(info->ChipFamily == CHIP_FAMILY_RV280) )
-      drmInfo.func             = DRM_RADEON_INIT_R200_CP;
+      drmInfo.func             = RADEON_INIT_R200_CP;
    else
-      drmInfo.func             = DRM_RADEON_INIT_CP;
+      drmInfo.func             = RADEON_INIT_CP;
 
    /* This is the struct passed to the kernel module for its initialization */
-   drmInfo.sarea_priv_offset   = sizeof(XF86DRISAREARec);
+   drmInfo.sarea_priv_offset   = sizeof(drm_sarea_t);
    drmInfo.is_pci              = 0;
    drmInfo.cp_mode             = RADEON_DEFAULT_CP_BM_MODE;
    drmInfo.gart_size            = info->gartSize*1024*1024;
@@ -483,7 +482,7 @@ static int RADEONDRIKernelInit( const DRIDriverContext *ctx,
    drmInfo.gart_textures_offset = info->gartTexHandle;
 
    ret = drmCommandWrite(ctx->drmFD, DRM_RADEON_CP_INIT, &drmInfo, 
-			 sizeof(drmRadeonInit));
+			 sizeof(drm_radeon_init_t));
 
    return ret >= 0;
 }
@@ -501,7 +500,7 @@ static int RADEONDRIKernelInit( const DRIDriverContext *ctx,
 static void RADEONDRIAgpHeapInit(const DRIDriverContext *ctx,
 				 RADEONInfoPtr info)
 {
-   drmRadeonMemInitHeap drmHeap;
+   drm_radeon_mem_init_heap_t drmHeap;
 
    /* Start up the simple memory manager for gart space */
    drmHeap.region = RADEON_MEM_REGION_GART;
@@ -889,11 +888,11 @@ static int RADEONScreenInit( DRIDriverContext *ctx, RADEONInfoPtr info )
 
    /* Initialize the SAREA private data structure */
    {
-      RADEONSAREAPrivPtr pSAREAPriv;
-      pSAREAPriv = (RADEONSAREAPrivPtr)(((char*)ctx->pSAREA) + 
-					sizeof(XF86DRISAREARec));
+      drm_radeon_sarea_t *pSAREAPriv;
+      pSAREAPriv = (drm_radeon_sarea_t *)(((char*)ctx->pSAREA) + 
+					sizeof(drm_sarea_t));
       memset(pSAREAPriv, 0, sizeof(*pSAREAPriv));
-      pSAREAPriv->pfAllowPageFlip = 1;
+      pSAREAPriv->pfState = 1;
    }
 
 
@@ -938,7 +937,7 @@ static int RADEONScreenInit( DRIDriverContext *ctx, RADEONInfoPtr info )
    pRADEONDRI->gartTexMapSize     = info->gartTexMapSize;
    pRADEONDRI->log2GARTTexGran    = info->log2GARTTexGran;
    pRADEONDRI->gartTexOffset      = info->gartTexStart;
-   pRADEONDRI->sarea_priv_offset = sizeof(XF86DRISAREARec);
+   pRADEONDRI->sarea_priv_offset = sizeof(drm_sarea_t);
 
    /* Don't release the lock now - let the VT switch handler do it. */
 

@@ -26,7 +26,7 @@
  * Authors:
  *	Gareth Hughes <gareth@valinux.com>
  *	Leif Delgass <ldelgass@retinalburn.net>
- *	José Fonseca <j_r_fonseca@yahoo.co.uk>
+ *	Josï¿½Fonseca <j_r_fonseca@yahoo.co.uk>
  */
 
 #include "glheader.h"
@@ -144,7 +144,7 @@ GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
                         mach64Screen->driScreen->myNum, "mach64");
 
    mmesa->sarea = (ATISAREAPrivPtr)((char *)driScreen->pSAREA +
-				    sizeof(XF86DRISAREARec));
+				    sizeof(drm_sarea_t));
 
    mmesa->CurrentTexObj[0] = NULL;
    mmesa->CurrentTexObj[1] = NULL;

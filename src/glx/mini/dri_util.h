@@ -50,7 +50,9 @@
 
 #include <inttypes.h>
 #include "dri.h"		/* public entry points */
-#include "sarea.h"		/* for XF86DRISAREAPtr */
+#include "xf86drm.h"
+#include "drm.h"
+#include "drm_sarea.h"
 
 #define _SOLO
 
@@ -290,7 +292,7 @@ struct __DRIdrawablePrivateRec {
     int w;
     int h;
     int numClipRects;
-    XF86DRIClipRectPtr pClipRects;
+    drm_clip_rect_t *pClipRects;
     /*@}*/
 
     /**
@@ -302,7 +304,7 @@ struct __DRIdrawablePrivateRec {
     int backY;
     int backClipRectType;
     int numBackClipRects;
-    XF86DRIClipRectPtr pBackClipRects;
+    drm_clip_rect_t *pBackClipRects;
     /*@}*/
 
     /**
@@ -431,7 +433,7 @@ struct __DRIscreenPrivateRec {
      *   - the device lock
      *   - the device-independent per-drawable and per-context(?) information
      */
-    XF86DRISAREAPtr pSAREA;
+    drm_sarea_t *pSAREA;
 
     /**
      * \name Direct frame buffer access information 

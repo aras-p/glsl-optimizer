@@ -181,10 +181,10 @@ struct r128_context {
    GLint readOffset, readPitch;
 
    GLuint numClipRects;			/* Cliprects for the draw buffer */
-   XF86DRIClipRectPtr pClipRects;
+   drm_clip_rect_t *pClipRects;
 
    GLuint scissor;
-   XF86DRIClipRectRec ScissorRect;	/* Current software scissor */
+   drm_clip_rect_t ScissorRect;	/* Current software scissor */
 
    /* Mirrors of some DRI state
     */
@@ -195,7 +195,7 @@ struct r128_context {
    unsigned int lastStamp;	        /* mirror driDrawable->lastStamp */
 
    drmContext hHWContext;
-   drmLock *driHwLock;
+   drm_hw_lock_t *driHwLock;
    int driFd;
 
    r128ScreenPtr r128Screen;		/* Screen private DRI data */

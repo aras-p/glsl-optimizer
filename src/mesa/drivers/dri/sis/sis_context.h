@@ -354,7 +354,7 @@ struct sis_context
   unsigned int lastStamp;	        /* mirror driDrawable->lastStamp */
 
   drmContext hHWContext;
-  drmLock *driHwLock;
+  drm_hw_lock_t *driHwLock;
 
   sisScreenPtr sisScreen;		/* Screen private DRI data */
   SISSAREAPrivPtr sarea;		/* Private SAREA data */

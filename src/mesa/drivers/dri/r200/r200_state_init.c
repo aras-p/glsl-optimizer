@@ -74,7 +74,7 @@ void r200PrintDirty( r200ContextPtr rmesa, const char *msg )
 
 static int cmdpkt( int id ) 
 {
-   drmRadeonCmdHeader h;
+   drm_radeon_cmd_header_t h;
    h.i = 0;
    h.packet.cmd_type = RADEON_CMD_PACKET;
    h.packet.packet_id = id;
@@ -83,7 +83,7 @@ static int cmdpkt( int id )
 
 static int cmdvec( int offset, int stride, int count ) 
 {
-   drmRadeonCmdHeader h;
+   drm_radeon_cmd_header_t h;
    h.i = 0;
    h.vectors.cmd_type = RADEON_CMD_VECTORS;
    h.vectors.offset = offset;
@@ -94,7 +94,7 @@ static int cmdvec( int offset, int stride, int count )
 
 static int cmdscl( int offset, int stride, int count ) 
 {
-   drmRadeonCmdHeader h;
+   drm_radeon_cmd_header_t h;
    h.i = 0;
    h.scalars.cmd_type = RADEON_CMD_SCALARS;
    h.scalars.offset = offset;
@@ -105,7 +105,7 @@ static int cmdscl( int offset, int stride, int count )
 
 static int cmdscl2( int offset, int stride, int count ) 
 {
-   drmRadeonCmdHeader h;
+   drm_radeon_cmd_header_t h;
    h.i = 0;
    h.scalars.cmd_type = RADEON_CMD_SCALARS2;
    h.scalars.offset = offset - 0x100;
@@ -503,7 +503,7 @@ void r200InitState( r200ContextPtr rmesa )
           (2 << R200_TXFORMAT_WIDTH_SHIFT) |
           (2 << R200_TXFORMAT_HEIGHT_SHIFT));
       rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET] =
-	  rmesa->r200Screen->texOffset[RADEON_CARD_HEAP];
+	  rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.tex[i].cmd[TEX_PP_BORDER_COLOR] = 0;
       rmesa->hw.tex[i].cmd[TEX_PP_TXFORMAT_X] =
          (/* R200_TEXCOORD_PROJ | */
@@ -511,15 +511,15 @@ void r200InitState( r200ContextPtr rmesa )
 
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_FACES] = 0;
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F1] =
-         rmesa->r200Screen->texOffset[RADEON_CARD_HEAP];
+         rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F2] =
-         rmesa->r200Screen->texOffset[RADEON_CARD_HEAP];
+         rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F3] =
-         rmesa->r200Screen->texOffset[RADEON_CARD_HEAP];
+         rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F4] =
-         rmesa->r200Screen->texOffset[RADEON_CARD_HEAP];
+         rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F5] =
-         rmesa->r200Screen->texOffset[RADEON_CARD_HEAP];
+         rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
    }
 
    rmesa->hw.pix[0].cmd[PIX_PP_TXCBLEND] =  

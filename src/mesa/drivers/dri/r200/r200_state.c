@@ -411,9 +411,9 @@ static void r200Fogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
  */
 
 
-static GLboolean intersect_rect( XF86DRIClipRectPtr out,
-				 XF86DRIClipRectPtr a,
-				 XF86DRIClipRectPtr b )
+static GLboolean intersect_rect( drm_clip_rect_t *out,
+				 drm_clip_rect_t *a,
+				 drm_clip_rect_t *b )
 {
    *out = *a;
    if ( b->x1 > out->x1 ) out->x1 = b->x1;
@@ -428,7 +428,7 @@ static GLboolean intersect_rect( XF86DRIClipRectPtr out,
 
 void r200RecalcScissorRects( r200ContextPtr rmesa )
 {
-   XF86DRIClipRectPtr out;
+   drm_clip_rect_t *out;
    int i;
 
    /* Grow cliprect store?
@@ -444,7 +444,7 @@ void r200RecalcScissorRects( r200ContextPtr rmesa )
 
       rmesa->state.scissor.pClipRects = 
 	 MALLOC( rmesa->state.scissor.numAllocedClipRects * 
-		 sizeof(XF86DRIClipRectRec) );
+		 sizeof(drm_clip_rect_t) );
 
       if ( rmesa->state.scissor.pClipRects == NULL ) {
 	 rmesa->state.scissor.numAllocedClipRects = 0;
@@ -658,7 +658,7 @@ static void r200PolygonStipple( GLcontext *ctx, const GLubyte *mask )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint i;
-   drmRadeonStipple stipple;
+   drm_radeon_stipple_t stipple;
 
    /* Must flip pattern upside down.
     */
@@ -675,7 +675,7 @@ static void r200PolygonStipple( GLcontext *ctx, const GLubyte *mask )
     */
    stipple.mask = rmesa->state.stipple.mask;
    drmCommandWrite( rmesa->dri.fd, DRM_RADEON_STIPPLE, 
-                    &stipple, sizeof(drmRadeonStipple) );
+                    &stipple, sizeof(stipple) );
    UNLOCK_HARDWARE( rmesa );
 }
 
@@ -1636,18 +1636,18 @@ void r200SetCliprects( r200ContextPtr rmesa, GLenum mode )
    switch ( mode ) {
    case GL_FRONT_LEFT:
       rmesa->numClipRects = dPriv->numClipRects;
-      rmesa->pClipRects = (XF86DRIClipRectPtr)dPriv->pClipRects;
+      rmesa->pClipRects = dPriv->pClipRects;
       break;
    case GL_BACK_LEFT:
       /* Can't ignore 2d windows if we are page flipping.
        */
       if ( dPriv->numBackClipRects == 0 || rmesa->doPageFlip ) {
 	 rmesa->numClipRects = dPriv->numClipRects;
-	 rmesa->pClipRects = (XF86DRIClipRectPtr)dPriv->pClipRects;
+	 rmesa->pClipRects = dPriv->pClipRects;
       }
       else {
 	 rmesa->numClipRects = dPriv->numBackClipRects;
-	 rmesa->pClipRects = (XF86DRIClipRectPtr)dPriv->pBackClipRects;
+	 rmesa->pClipRects = dPriv->pBackClipRects;
       }
       break;
    default:

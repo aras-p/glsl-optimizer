@@ -68,7 +68,7 @@ void radeonPrintDirty( radeonContextPtr rmesa, const char *msg )
 
 static int cmdpkt( int id ) 
 {
-   drmRadeonCmdHeader h;
+   drm_radeon_cmd_header_t h;
    h.i = 0;
    h.packet.cmd_type = RADEON_CMD_PACKET;
    h.packet.packet_id = id;
@@ -77,7 +77,7 @@ static int cmdpkt( int id )
 
 static int cmdvec( int offset, int stride, int count ) 
 {
-   drmRadeonCmdHeader h;
+   drm_radeon_cmd_header_t h;
    h.i = 0;
    h.vectors.cmd_type = RADEON_CMD_VECTORS;
    h.vectors.offset = offset;
@@ -88,7 +88,7 @@ static int cmdvec( int offset, int stride, int count )
 
 static int cmdscl( int offset, int stride, int count ) 
 {
-   drmRadeonCmdHeader h;
+   drm_radeon_cmd_header_t h;
    h.i = 0;
    h.scalars.cmd_type = RADEON_CMD_SCALARS;
    h.scalars.offset = offset;
@@ -443,7 +443,7 @@ void radeonInitState( radeonContextPtr rmesa )
 
       /* Initialize the texture offset to the start of the card texture heap */
       rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET] =
-	  rmesa->radeonScreen->texOffset[RADEON_CARD_HEAP];
+	  rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
 
       rmesa->hw.tex[i].cmd[TEX_PP_BORDER_COLOR] = 0;
       rmesa->hw.tex[i].cmd[TEX_PP_TXCBLEND] =  

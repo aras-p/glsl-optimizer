@@ -220,7 +220,7 @@ r200TryReadPixels( GLcontext *ctx,
       int src_pitch = rmesa->state.color.drawPitch * rmesa->r200Screen->cpp;
       int dst_offset = r200GartOffsetFromVirtual( rmesa, pixels );
       int dst_pitch = pitch * rmesa->r200Screen->cpp;
-      XF86DRIClipRectRec *box = dPriv->pClipRects;
+      drm_clip_rect_t *box = dPriv->pClipRects;
       int i;
 
       r200EmitWait( rmesa, RADEON_WAIT_3D ); 
@@ -293,7 +293,7 @@ static void do_draw_pix( GLcontext *ctx,
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
-   XF86DRIClipRectPtr box = dPriv->pClipRects;
+   drm_clip_rect_t *box = dPriv->pClipRects;
    int nbox = dPriv->numClipRects;
    int i;
    int blit_format;

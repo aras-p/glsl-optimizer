@@ -735,8 +735,8 @@ static void dump_state( void )
 
 
 static int radeon_emit_packets( 
-   drmRadeonCmdHeader header,
-   drmRadeonCmdBuffer *cmdbuf )
+   drm_radeon_cmd_header_t header,
+   drm_radeon_cmd_buffer_t *cmdbuf )
 {
    int id = (int)header.packet.packet_id;
    int sz = packet[id].len;
@@ -771,8 +771,8 @@ static int radeon_emit_packets(
 
 
 static int radeon_emit_scalars( 
-   drmRadeonCmdHeader header,
-   drmRadeonCmdBuffer *cmdbuf )
+   drm_radeon_cmd_header_t header,
+   drm_radeon_cmd_buffer_t *cmdbuf )
 {
    int sz = header.scalars.count;
    int *data = (int *)cmdbuf->buf;
@@ -799,8 +799,8 @@ static int radeon_emit_scalars(
 
 
 static int radeon_emit_scalars2( 
-   drmRadeonCmdHeader header,
-   drmRadeonCmdBuffer *cmdbuf )
+   drm_radeon_cmd_header_t header,
+   drm_radeon_cmd_buffer_t *cmdbuf )
 {
    int sz = header.scalars.count;
    int *data = (int *)cmdbuf->buf;
@@ -833,8 +833,8 @@ static int radeon_emit_scalars2(
  * Check: table start, end, nr, etc.
  */
 static int radeon_emit_vectors( 
-   drmRadeonCmdHeader header,
-   drmRadeonCmdBuffer *cmdbuf )
+   drm_radeon_cmd_header_t header,
+   drm_radeon_cmd_buffer_t *cmdbuf )
 {
    int sz = header.vectors.count;
    int *data = (int *)cmdbuf->buf;
@@ -1009,7 +1009,7 @@ static int print_prim_and_flags( int prim )
 
 /* build in knowledge about each packet type
  */
-static int radeon_emit_packet3( drmRadeonCmdBuffer *cmdbuf )
+static int radeon_emit_packet3( drm_radeon_cmd_buffer_t *cmdbuf )
 {
    int cmdsz;
    int *cmd = (int *)cmdbuf->buf;
@@ -1188,9 +1188,9 @@ static int radeon_emit_packet3( drmRadeonCmdBuffer *cmdbuf )
 
 /* Check cliprects for bounds, then pass on to above:
  */
-static int radeon_emit_packet3_cliprect( drmRadeonCmdBuffer *cmdbuf )
+static int radeon_emit_packet3_cliprect( drm_radeon_cmd_buffer_t *cmdbuf )
 {   
-   XF86DRIClipRectRec *boxes = (XF86DRIClipRectRec *)cmdbuf->boxes;
+   drm_clip_rect_t *boxes = (drm_clip_rect_t *)cmdbuf->boxes;
    int i = 0;
 
    if (VERBOSE && total_changed) {
@@ -1217,11 +1217,11 @@ static int radeon_emit_packet3_cliprect( drmRadeonCmdBuffer *cmdbuf )
 
 int r200SanityCmdBuffer( r200ContextPtr rmesa,
 			   int nbox,
-			   XF86DRIClipRectRec *boxes )
+			   drm_clip_rect_t *boxes )
 {
    int idx;
-   drmRadeonCmdBuffer cmdbuf;
-   drmRadeonCmdHeader header;
+   drm_radeon_cmd_buffer_t cmdbuf;
+   drm_radeon_cmd_header_t header;
    static int inited = 0;
 
    if (!inited) {
@@ -1232,7 +1232,7 @@ int r200SanityCmdBuffer( r200ContextPtr rmesa,
 
    cmdbuf.buf = rmesa->store.cmd_buf;
    cmdbuf.bufsz = rmesa->store.cmd_used;
-   cmdbuf.boxes = (drmClipRect *)boxes;
+   cmdbuf.boxes = (drm_clip_rect_t *)boxes;
    cmdbuf.nbox = nbox;
 
    while ( cmdbuf.bufsz >= sizeof(header) ) {

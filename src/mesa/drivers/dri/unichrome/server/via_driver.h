@@ -77,7 +77,6 @@
 #else
 #include "via_regs.h"
 
-#include "sarea.h"
 #include "dri.h"
 #include "via_dri.h"
 #endif

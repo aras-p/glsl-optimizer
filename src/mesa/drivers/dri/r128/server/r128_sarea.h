@@ -159,7 +159,7 @@ typedef struct {
 #if defined(XF86DRI) | defined(_SOLO)
     /* The current cliprects, or a subset thereof.
      */
-    XF86DRIClipRectRec boxes[R128_NR_SAREA_CLIPRECTS];
+    drm_clip_rect_t boxes[R128_NR_SAREA_CLIPRECTS];
     unsigned int nbox;
 #endif
 

@@ -121,7 +121,7 @@
 #define HW_READ_CLIPLOOP()						\
       do {								\
          const __DRIdrawablePrivate *dPriv = fxMesa->driDrawable;	\
-         XF86DRIClipRectPtr rect = dPriv->pClipRects;			\
+         drm_clip_rect_t *rect = dPriv->pClipRects;			\
          int _nc = dPriv->numClipRects;					\
          while (_nc--) {						\
             const int minx = rect->x1 - fxMesa->x_offset;		\
@@ -284,7 +284,7 @@ generate_vismask(const tdfxContextPtr fxMesa, GLint x, GLint y, GLint n,
 
    /* turn on flags for all visible pixels */
    for (i = 0; i < fxMesa->numClipRects; i++) {
-      const XF86DRIClipRectPtr rect = &fxMesa->pClipRects[i];
+      const drm_clip_rect_t *rect = &fxMesa->pClipRects[i];
 
       if (y >= rect->y1 && y < rect->y2) {
 	 if (x >= rect->x1 && x + n <= rect->x2) {
@@ -324,7 +324,7 @@ visible_pixel(const tdfxContextPtr fxMesa, int scrX, int scrY)
 {
    int i;
    for (i = 0; i < fxMesa->numClipRects; i++) {
-      const XF86DRIClipRectPtr rect = &fxMesa->pClipRects[i];
+      const drm_clip_rect_t *rect = &fxMesa->pClipRects[i];
       if (scrX >= rect->x1 &&
 	  scrX < rect->x2 &&
 	  scrY >= rect->y1 && scrY < rect->y2) return GL_TRUE;

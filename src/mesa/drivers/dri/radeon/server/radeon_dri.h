@@ -40,7 +40,8 @@
 #define _RADEON_DRI_
 
 #include "xf86drm.h"
-#include "radeon_common.h"
+#include "drm.h"
+#include "radeon_drm.h"
 
 /* DRI Driver defaults */
 #define RADEON_DEFAULT_CP_PIO_MODE    RADEON_CSQ_PRIPIO_INDPIO

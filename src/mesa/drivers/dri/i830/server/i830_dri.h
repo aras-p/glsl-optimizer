@@ -82,7 +82,7 @@ typedef struct _I830SAREA {
    unsigned int dirty;
 
    unsigned int nbox;
-   XF86DRIClipRectRec boxes[I830_NR_SAREA_CLIPRECTS];
+   drm_clip_rect_t boxes[I830_NR_SAREA_CLIPRECTS];
 
    /* Maintain an LRU of contiguous regions of texture space.  If
     * you think you own a region of texture memory, and it has an

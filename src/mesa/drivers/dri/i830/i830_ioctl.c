@@ -480,7 +480,7 @@ static void i830Clear(GLcontext *ctx, GLbitfield mask, GLboolean all,
       for (i = 0 ; i < imesa->numClipRects ; ) 
       { 	 
 	 int nr = MIN2(i + I830_NR_SAREA_CLIPRECTS, imesa->numClipRects);
-	 XF86DRIClipRectRec *box = imesa->pClipRects;	 
+	 drm_clip_rect_t *box = imesa->pClipRects;	 
 	 drm_clip_rect_t *b = (drm_clip_rect_t *)imesa->sarea->boxes;
 	 int n = 0;
 
@@ -533,7 +533,7 @@ static void i830Clear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 void i830CopyBuffer( const __DRIdrawablePrivate *dPriv ) 
 {
    i830ContextPtr imesa;
-   XF86DRIClipRectPtr pbox;
+   drm_clip_rect_t *pbox;
    int nbox, i, tmp;
 
    assert(dPriv);
@@ -554,7 +554,7 @@ void i830CopyBuffer( const __DRIdrawablePrivate *dPriv )
    for (i = 0 ; i < nbox ; )
    {
       int nr = MIN2(i + I830_NR_SAREA_CLIPRECTS, dPriv->numClipRects);
-      XF86DRIClipRectRec *b = (XF86DRIClipRectRec *)imesa->sarea->boxes;
+      drm_clip_rect_t *b = (drm_clip_rect_t *)imesa->sarea->boxes;
 
       imesa->sarea->nbox = nr - i;
 
@@ -600,7 +600,7 @@ void i830PageFlip( const __DRIdrawablePrivate *dPriv )
    imesa->perf_boxes = 0;
 
    if (dPriv->pClipRects) {
-      *(XF86DRIClipRectRec *)imesa->sarea->boxes = dPriv->pClipRects[0];
+      *(drm_clip_rect_t *)imesa->sarea->boxes = dPriv->pClipRects[0];
       imesa->sarea->nbox = 1;
    }
 
@@ -702,7 +702,7 @@ static void age_imesa( i830ContextPtr imesa, int age )
 
 void i830FlushPrimsLocked( i830ContextPtr imesa )
 {
-   XF86DRIClipRectPtr pbox = (XF86DRIClipRectPtr)imesa->pClipRects;
+   drm_clip_rect_t *pbox = imesa->pClipRects;
    int nbox = imesa->numClipRects;
    drmBufPtr buffer = imesa->vertex_buffer;
    I830SAREAPtr sarea = imesa->sarea;
@@ -750,7 +750,7 @@ void i830FlushPrimsLocked( i830ContextPtr imesa )
    }
 
    for (i = 0 ; i < nbox ; i = nr ) {
-      XF86DRIClipRectPtr b = sarea->boxes;
+      drm_clip_rect_t *b = sarea->boxes;
       int j;
 
       nr = MIN2(i + I830_NR_SAREA_CLIPRECTS, nbox);

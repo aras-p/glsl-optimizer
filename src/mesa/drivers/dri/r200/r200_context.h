@@ -39,8 +39,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifdef GLX_DIRECT_RENDERING
 
 #include <inttypes.h>
+#include "drm.h"
+#include "radeon_drm.h"
 #include "dri_util.h"
-#include "radeon_common.h"
 #include "texmem.h"
 
 #include "macros.h"
@@ -109,12 +110,12 @@ struct r200_pixel_state {
 };
 
 struct r200_scissor_state {
-   XF86DRIClipRectRec rect;
+   drm_clip_rect_t rect;
    GLboolean enabled;
 
    GLuint numClipRects;			/* Cliprects active */
    GLuint numAllocedClipRects;		/* Cliprects available */
-   XF86DRIClipRectPtr pClipRects;
+   drm_clip_rect_t *pClipRects;
 };
 
 struct r200_stencilbuffer_state {
@@ -149,7 +150,7 @@ struct r200_tex_obj {
 					   brought into the
 					   texunit. */
 
-   drmRadeonTexImage image[6][RADEON_MAX_TEXTURE_LEVELS];
+   drm_radeon_tex_image_t image[6][RADEON_MAX_TEXTURE_LEVELS];
 					/* Six, for the cube faces */
 
    GLuint pp_txfilter;		        /* hardware register values */
@@ -568,7 +569,7 @@ struct r200_dri_mirror {
    __DRIdrawablePrivate	*drawable;	/* DRI drawable bound to this ctx */
 
    drmContext hwContext;
-   drmLock *hwLock;
+   drm_hw_lock_t *hwLock;
    int fd;
    int drmMinor;
 };
@@ -804,7 +805,7 @@ struct r200_context {
    GLuint do_usleeps;
    GLuint do_irqs;
    GLuint irqsEmitted;
-   drmRadeonIrqWait iw;
+   drm_radeon_irq_wait_t iw;
 
    /* Clientdata textures;
     */
@@ -813,11 +814,11 @@ struct r200_context {
    /* Drawable, cliprect and scissor information
     */
    GLuint numClipRects;			/* Cliprects for the draw buffer */
-   XF86DRIClipRectPtr pClipRects;
+   drm_clip_rect_t *pClipRects;
    unsigned int lastStamp;
    GLboolean lost_context;
    r200ScreenPtr r200Screen;	/* Screen private DRI data */
-   RADEONSAREAPrivPtr sarea;		/* Private SAREA data */
+   drm_radeon_sarea_t *sarea;		/* Private SAREA data */
 
    /* TCL stuff
     */

@@ -48,7 +48,6 @@
 #endif
 
 #include "dri_util.h"
-#include "sarea.h"
 
 #include "via_context.h"
 #include "via_dri.h"
@@ -190,9 +189,9 @@ static int VIADRIScreenInit(DRIDriverContext * ctx)
     int err;
 
 #if 0
-    ctx->shared.SAREASize = ((sizeof(XF86DRISAREARec) + 0xfff) & 0x1000);
+    ctx->shared.SAREASize = ((sizeof(drm_sarea_t) + 0xfff) & 0x1000);
 #else
-    if (sizeof(XF86DRISAREARec)+sizeof(VIASAREAPriv) > SAREA_MAX) {
+    if (sizeof(drm_sarea_t)+sizeof(VIASAREAPriv) > SAREA_MAX) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 			"Data does not fit in SAREA\n");
 	return FALSE;
@@ -356,7 +355,7 @@ VIADRIFinishScreenInit(DRIDriverContext * ctx)
 	VIASAREAPriv *saPriv;
 
 	saPriv=(VIASAREAPriv*)(((char*)ctx->pSAREA) +
-                               sizeof(XF86DRISAREARec));
+                               sizeof(drm_sarea_t));
 	assert(saPriv);
 	memset(saPriv, 0, sizeof(*saPriv));
 	saPriv->CtxOwner = -1;
@@ -367,7 +366,7 @@ VIADRIFinishScreenInit(DRIDriverContext * ctx)
     pVIADRI->height=ctx->shared.virtualHeight;
     pVIADRI->mem=ctx->shared.fbSize;
     pVIADRI->bytesPerPixel= (ctx->bpp+7) / 8; 
-    pVIADRI->sarea_priv_offset = sizeof(XF86DRISAREARec);
+    pVIADRI->sarea_priv_offset = sizeof(drm_sarea_t);
     /* TODO */
     pVIADRI->scrnX=pVIADRI->width;
     pVIADRI->scrnY=pVIADRI->height;
@@ -380,7 +379,7 @@ static int VIADRIKernelInit(DRIDriverContext * ctx, VIAPtr pVia)
 {
     drmVIAInit drmInfo;
     memset(&drmInfo, 0, sizeof(drmVIAInit));
-    drmInfo.sarea_priv_offset   = sizeof(XF86DRISAREARec);
+    drmInfo.sarea_priv_offset   = sizeof(drm_sarea_t);
     drmInfo.fb_offset           = pVia->FrameBufferBase;
     drmInfo.mmio_offset         = pVia->registerHandle;
     if (pVia->IsPCI)

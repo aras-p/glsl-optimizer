@@ -26,7 +26,7 @@
  * Authors:
  *	Gareth Hughes <gareth@valinux.com>
  *	Leif Delgass <ldelgass@retinalburn.net>
- *	José Fonseca <j_r_fonseca@yahoo.co.uk>
+ *	Josï¿½Fonseca <j_r_fonseca@yahoo.co.uk>
  */
 #include <errno.h>
 
@@ -98,7 +98,7 @@ drmBufPtr mach64GetBufferLocked( mach64ContextPtr mmesa )
 
 void mach64FlushVerticesLocked( mach64ContextPtr mmesa )
 {
-   XF86DRIClipRectPtr pbox = mmesa->pClipRects;
+   drm_clip_rect_t *pbox = mmesa->pClipRects;
    int nbox = mmesa->numClipRects;
    void *buffer = mmesa->vert_buf;
    int count = mmesa->vert_used;
@@ -144,7 +144,7 @@ void mach64FlushVerticesLocked( mach64ContextPtr mmesa )
 
       for ( i = 0 ; i < nbox ; ) {
 	 int nr = MIN2( i + MACH64_NR_SAREA_CLIPRECTS, nbox );
-	 XF86DRIClipRectPtr b = mmesa->sarea->boxes;
+	 drm_clip_rect_t *b = mmesa->sarea->boxes;
 	 int discard = 0;
 
 	 mmesa->sarea->nbox = nr - i;
@@ -269,7 +269,7 @@ void mach64CopyBuffer( const __DRIdrawablePrivate *dPriv )
 {
    mach64ContextPtr mmesa;
    GLint nbox, i, ret;
-   XF86DRIClipRectPtr pbox;
+   drm_clip_rect_t *pbox;
    GLboolean missed_target;
 
    assert(dPriv);
@@ -315,7 +315,7 @@ void mach64CopyBuffer( const __DRIdrawablePrivate *dPriv )
 
    for ( i = 0 ; i < nbox ; ) {
       GLint nr = MIN2( i + MACH64_NR_SAREA_CLIPRECTS , nbox );
-      XF86DRIClipRectPtr b = mmesa->sarea->boxes;
+      drm_clip_rect_t *b = mmesa->sarea->boxes;
       GLint n = 0;
 
       for ( ; i < nr ; i++ ) {
@@ -393,7 +393,7 @@ void mach64PerformanceBoxesLocked( mach64ContextPtr mmesa )
    GLuint color;
    GLint nbox;
    GLint x1, y1, x2, y2;
-   XF86DRIClipRectPtr b = mmesa->sarea->boxes;
+   drm_clip_rect_t *b = mmesa->sarea->boxes;
 
    /* save cliprects */
    nbox = mmesa->sarea->nbox;
@@ -719,8 +719,8 @@ static void mach64DDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 
    for ( i = 0 ; i < mmesa->numClipRects ; ) {
       int nr = MIN2( i + MACH64_NR_SAREA_CLIPRECTS, mmesa->numClipRects );
-      XF86DRIClipRectPtr box = mmesa->pClipRects;
-      XF86DRIClipRectPtr b = mmesa->sarea->boxes;
+      drm_clip_rect_t *box = mmesa->pClipRects;
+      drm_clip_rect_t *b = mmesa->sarea->boxes;
       GLint n = 0;
 
       if ( !all ) {

@@ -52,15 +52,8 @@
 #include "GL/gl.h"
 #include "GL/internal/glcore.h"
 
-/**
- * \brief Clip rectangle definition.
- */
-typedef struct _XF86DRIClipRect {
-    unsigned short	x1; /**< \brief Upper: inclusive */
-    unsigned short	y1; /**< \brief Left: inclusive */
-    unsigned short	x2; /**< \brief Lower: exclusive */
-    unsigned short	y2; /**< \brief Right: exclusive */
-} XF86DRIClipRectRec, *XF86DRIClipRectPtr;
+#include "drm.h"
+#include "drm_sarea.h"
 
 /**
  * \brief DRIDriverContext type.
@@ -105,7 +98,7 @@ typedef struct DRIDriverContextRec {
     */
    /*@{*/
    int drmFD;  /**< \brief DRM device file descriptor */
-   struct _XF86DRISAREA *pSAREA;
+   drm_sarea_t *pSAREA;
    unsigned int serverContext;	/**< \brief DRM context only active on server */
    /*@}*/
    

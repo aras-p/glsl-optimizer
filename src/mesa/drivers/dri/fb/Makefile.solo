@@ -5,7 +5,7 @@
 
 TOP = ../../../../..
 
-SHARED_INCLUDES = $(INCLUDE_DIRS) -I. -I../common -Iserver
+SHARED_INCLUDES = $(INCLUDE_DIRS) -I. -I../common -Iserver -I../drm/shared
 MINIGLX_INCLUDES = -I$(TOP)/src/glx/mini
 
 MESA_MODULES = $(TOP)/src/mesa/mesa.a

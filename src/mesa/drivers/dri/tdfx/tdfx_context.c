@@ -116,7 +116,7 @@ GLboolean tdfxCreateContext( const __GLcontextModes *mesaVis,
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    tdfxScreenPrivate *fxScreen = (tdfxScreenPrivate *) sPriv->private;
    TDFXSAREAPriv *saPriv = (TDFXSAREAPriv *) ((char *) sPriv->pSAREA +
-					      sizeof(XF86DRISAREARec));
+					      sizeof(drm_sarea_t));
    struct dd_function_table functions;
 
    /* Allocate tdfx context */

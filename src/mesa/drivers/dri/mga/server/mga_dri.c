@@ -43,9 +43,6 @@
 #include "mga_dri.h"
 #include "mga_sarea.h"
 
-#include "sarea.h"
-
-
 
 /* Quiescence, locking
  */
@@ -367,7 +364,7 @@ static int MGADRIKernelInit( struct DRIDriverContextRec *ctx, MGAPtr pMga )
    memset( &init, 0, sizeof(drmMGAInit) );
 
    init.func = MGA_INIT_DMA;
-   init.sarea_priv_offset = sizeof(XF86DRISAREARec);
+   init.sarea_priv_offset = sizeof(drm_sarea_t);
 
    switch ( pMga->Chipset ) {
    case PCI_CHIP_MGAG550:
@@ -624,7 +621,7 @@ static void print_client_msg( MGADRIPtr pMGADRI )
    pMGADRI->primary.size	= pMga->primary.size;
    pMGADRI->buffers.handle	= pMga->buffers.handle;
    pMGADRI->buffers.size	= pMga->buffers.size;
-   pMGADRI->sarea_priv_offset = sizeof(XF86DRISAREARec);
+   pMGADRI->sarea_priv_offset = sizeof(drm_sarea_t);
 #endif
 }
 
@@ -801,7 +798,7 @@ static int MGAScreenInit( struct DRIDriverContextRec *ctx, MGAPtr pMga )
    {
       MGASAREAPrivPtr pSAREAPriv;
       pSAREAPriv = (MGASAREAPrivPtr)(((char*)ctx->pSAREA) + 
-					sizeof(XF86DRISAREARec));
+					sizeof(drm_sarea_t));
       memset(pSAREAPriv, 0, sizeof(*pSAREAPriv));
    }
 
@@ -872,7 +869,7 @@ static int MGAScreenInit( struct DRIDriverContextRec *ctx, MGAPtr pMga )
    pMGADRI->primary.size	= pMga->primary.size;
    pMGADRI->buffers.handle	= pMga->buffers.handle;
    pMGADRI->buffers.size	= pMga->buffers.size;
-   pMGADRI->sarea_priv_offset = sizeof(XF86DRISAREARec);
+   pMGADRI->sarea_priv_offset = sizeof(drm_sarea_t);
 
    print_client_msg( pMGADRI );
 

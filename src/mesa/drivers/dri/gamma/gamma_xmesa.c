@@ -127,7 +127,7 @@ gammaSwapBuffers( __DRIdrawablePrivate *dPriv )
 	int src, dst, x0, y0, x1, h;
 	int i;
 	int nRect = dPriv->numClipRects;
-	XF86DRIClipRectPtr pRect = dPriv->pClipRects;
+	drm_clip_rect_t *pRect = dPriv->pClipRects;
 	__DRIscreenPrivate *driScrnPriv = gmesa->driScreen;
    	GLINTDRIPtr gDRIPriv = (GLINTDRIPtr)driScrnPriv->pDevPriv;
 

@@ -16,7 +16,7 @@ typedef struct ffb_dri_state {
 } ffb_dri_state_t;
 
 #define FFB_DRISHARE(SAREA)	\
-	((ffb_dri_state_t *) (((char *)(SAREA)) + sizeof(XF86DRISAREARec)))
+	((ffb_dri_state_t *) (((char *)(SAREA)) + sizeof(drm_sarea_t)))
 
 typedef struct {
 	drmHandle	hFbcRegs;

@@ -54,7 +54,7 @@ radeonUpdatePageFlipping( radeonContextPtr rmesa )
    int use_back;
 
 
-   rmesa->doPageFlip = rmesa->sarea->pfAllowPageFlip;
+   rmesa->doPageFlip = rmesa->sarea->pfState;
 
    use_back = (rmesa->glCtx->Color._DrawDestMask == BACK_LEFT_BIT);
    use_back ^= (rmesa->sarea->pfCurrentPage == 1);
@@ -92,7 +92,7 @@ void radeonGetLock( radeonContextPtr rmesa, GLuint flags )
 {
    __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
    __DRIscreenPrivate *sPriv = rmesa->dri.screen;
-   RADEONSAREAPrivPtr sarea = rmesa->sarea;
+   drm_radeon_sarea_t *sarea = rmesa->sarea;
 
    drmGetLock( rmesa->dri.fd, rmesa->dri.hwContext, flags );
 
@@ -116,9 +116,9 @@ void radeonGetLock( radeonContextPtr rmesa, GLuint flags )
       rmesa->lastStamp = dPriv->lastStamp;
    }
 
-   if ( sarea->ctxOwner != rmesa->dri.hwContext ) {
+   if ( sarea->ctx_owner != rmesa->dri.hwContext ) {
       int i;
-      sarea->ctxOwner = rmesa->dri.hwContext;
+      sarea->ctx_owner = rmesa->dri.hwContext;
 
       for ( i = 0 ; i < rmesa->nr_heaps ; i++ ) {
 	 DRI_AGE_TEXTURES( rmesa->texture_heaps[ i ] );

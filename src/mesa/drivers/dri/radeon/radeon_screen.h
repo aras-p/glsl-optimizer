@@ -44,10 +44,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * definitions that we need.
  */
 #include "dri_util.h"
-#include "radeon_common.h"
 #include "radeon_dri.h"
 #include "radeon_reg.h"
-#include "radeon_sarea.h"
+#include "drm_sarea.h"
 #include "xmlconfig.h"
 
 

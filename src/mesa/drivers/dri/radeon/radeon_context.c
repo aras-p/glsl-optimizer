@@ -274,7 +274,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    rmesa->dri.drmMinor = sPriv->drmMinor;
 
    rmesa->radeonScreen = screen;
-   rmesa->sarea = (RADEONSAREAPrivPtr)((GLubyte *)sPriv->pSAREA +
+   rmesa->sarea = (drm_radeon_sarea_t *)((GLubyte *)sPriv->pSAREA +
 				       screen->sarea_priv_offset);
 
 
@@ -289,8 +289,8 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 	    screen->texSize[i],
 	    12,
 	    RADEON_NR_TEX_REGIONS,
-	    rmesa->sarea->texList[i],
-	    & rmesa->sarea->texAge[i],
+	    (drmTextureRegionPtr)rmesa->sarea->tex_list[i],
+	    & rmesa->sarea->tex_age[i],
 	    & rmesa->swapped,
 	    sizeof( radeonTexObj ),
 	    (destroy_texture_object_t *) radeonDestroyTexObj );

@@ -200,7 +200,7 @@ sis_3D_Clear( GLcontext * ctx, GLbitfield mask,
    GLint dirtyflags = GFLAG_ENABLESETTING | GFLAG_ENABLESETTING2 |
       GFLAG_CLIPPING | GFLAG_DESTSETTING;
    int count;
-   XF86DRIClipRectPtr pExtents;
+   drm_clip_rect_t *pExtents;
 
    bClrColor = (mask & (DD_BACK_LEFT_BIT | DD_FRONT_LEFT_BIT)) != 0;
    bClrDepth = (mask & DD_DEPTH_BIT) != 0;
@@ -358,7 +358,7 @@ sis_clear_color_buffer( GLcontext *ctx, GLenum mask, GLint x, GLint y,
 
    int count;
    GLuint depth = smesa->bytesPerPixel;
-   XF86DRIClipRectPtr pExtents = NULL;
+   drm_clip_rect_t *pExtents = NULL;
    GLint xx, yy;
    GLint x0, y0, width0, height0;
 

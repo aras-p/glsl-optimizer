@@ -104,7 +104,7 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
         
 	if (vmesa->numClipRects) {
             int nr = MIN2(i + VIA_NR_SAREA_CLIPRECTS, vmesa->numClipRects);
-            XF86DRIClipRectRec *box = vmesa->pClipRects;
+            drm_clip_rect_t *box = vmesa->pClipRects;
             drm_clip_rect_t *b = vmesa->sarea->boxes;
             int n = 0;
 	    
@@ -281,7 +281,7 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
 {
     viaContextPtr vmesa;
-    XF86DRIClipRectPtr pbox;
+    drm_clip_rect_t *pbox;
     int nbox, i;
     GLuint scrn = 0, side = 0;
 #ifdef DEBUG    
@@ -321,7 +321,7 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
 	if (!vmesa->saam) {
 	    for (i = 0; i < nbox; ) {
     		int nr = MIN2(i + VIA_NR_SAREA_CLIPRECTS, dPriv->numClipRects);
-    		XF86DRIClipRectRec *b = (XF86DRIClipRectRec *)vmesa->sarea->boxes;
+    		drm_clip_rect_t *b = (drm_clip_rect_t *)vmesa->sarea->boxes;
 
     		vmesa->sarea->nbox = nr - i;
 
@@ -336,7 +336,7 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
 	else if (scrn == S0 || scrn == S1) {
 	    for (i = 0; i < nbox; ) {
 		int nr = MIN2(i + VIA_NR_SAREA_CLIPRECTS, vmesa->numClipRects);
-    		XF86DRIClipRectRec *b = (XF86DRIClipRectRec *)vmesa->sarea->boxes;
+    		drm_clip_rect_t *b = (drm_clip_rect_t *)vmesa->sarea->boxes;
 
     		vmesa->sarea->nbox = nr - i;
 		
@@ -350,7 +350,7 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
 	else {
 	    for (i = 0; i < nbox; ) {
     		int nr = MIN2(i + VIA_NR_SAREA_CLIPRECTS, dPriv->numClipRects);
-    		XF86DRIClipRectRec *b = (XF86DRIClipRectRec *)vmesa->sarea->boxes;
+    		drm_clip_rect_t *b = (drm_clip_rect_t *)vmesa->sarea->boxes;
 
     		vmesa->sarea->nbox = nr - i;
 
@@ -364,7 +364,7 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
 
 	    for (i = 0; i < nbox; ) {
     		int nr = MIN2(i + VIA_NR_SAREA_CLIPRECTS, vmesa->numSaamRects);
-    		XF86DRIClipRectRec *b = (XF86DRIClipRectRec *)vmesa->sarea->boxes;
+    		drm_clip_rect_t *b = (drm_clip_rect_t *)vmesa->sarea->boxes;
 
     		vmesa->sarea->nbox = nr - i;
 

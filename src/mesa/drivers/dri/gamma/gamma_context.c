@@ -76,7 +76,7 @@ GLboolean gammaCreateContext( const __GLcontextModes *glVisual,
    gammaContextPtr gmesa;
    gammaScreenPtr gammascrn;
    GLINTSAREADRIPtr saPriv=(GLINTSAREADRIPtr)(((char*)sPriv->pSAREA)+
-						 sizeof(XF86DRISAREARec));
+						 sizeof(drm_sarea_t));
    struct dd_function_table functions;
 
    gmesa = (gammaContextPtr) CALLOC( sizeof(*gmesa) );

@@ -278,12 +278,12 @@ struct mga_context_t {
    int drawX, drawY;		/* origin of drawable in draw buffer */
    int lastX, lastY;		/* detect DSTORG bug */
    GLuint numClipRects;		/* cliprects for the draw buffer */
-   XF86DRIClipRectPtr pClipRects;
-   XF86DRIClipRectRec draw_rect;
-   XF86DRIClipRectRec scissor_rect;
+   drm_clip_rect_t *pClipRects;
+   drm_clip_rect_t draw_rect;
+   drm_clip_rect_t scissor_rect;
    int scissor;
 
-   XF86DRIClipRectRec tmp_boxes[2][MGA_NR_SAREA_CLIPRECTS];
+   drm_clip_rect_t tmp_boxes[2][MGA_NR_SAREA_CLIPRECTS];
 
 
    /* Texture aging and DMA based aging.
@@ -296,7 +296,7 @@ struct mga_context_t {
    /* Mirrors of some DRI state.
     */
    drmContext hHWContext;
-   drmLock *driHwLock;
+   drm_hw_lock_t *driHwLock;
    int driFd;
    __DRIdrawablePrivate *driDrawable;
    __DRIdrawablePrivate *driReadable;

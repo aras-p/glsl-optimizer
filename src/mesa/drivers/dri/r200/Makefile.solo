@@ -7,7 +7,7 @@ TOP = ../../../../..
 
 default: linux-solo
 
-SHARED_INCLUDES = $(INCLUDE_DIRS) -I. -I../common -Iserver
+SHARED_INCLUDES = $(INCLUDE_DIRS) -I. -I../common -Iserver -I../drm/shared
 MINIGLX_INCLUDES = -I$(TOP)/src/glx/mini
 
 DEFINES += \
@@ -73,13 +73,13 @@ OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(ASM_SOURCES:.S=.o) 
 
 SYMLINKS = \
-	server/radeon_common.h \
 	server/radeon_dri.c \
 	server/radeon_dri.h \
 	server/radeon.h \
 	server/radeon_macros.h \
-	server/radeon_reg.h \
-	server/radeon_sarea.h \
+	server/radeon_reg.h
+#	server/radeon_sarea.h \
+#	server/radeon_common.h \
 
 
 $(SYMLINKS):

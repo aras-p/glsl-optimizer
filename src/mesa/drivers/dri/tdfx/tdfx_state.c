@@ -576,9 +576,9 @@ static void tdfxDDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
  * Clipping
  */
 
-static int intersect_rect( XF86DRIClipRectPtr out,
-			   const XF86DRIClipRectPtr a,
-			   const XF86DRIClipRectPtr b)
+static int intersect_rect( drm_clip_rect_t *out,
+			   const drm_clip_rect_t *a,
+			   const drm_clip_rect_t *b)
 {
    *out = *a;
    if (b->x1 > out->x1) out->x1 = b->x1;
@@ -627,7 +627,7 @@ void tdfxUpdateClipping( GLcontext *ctx )
       /* intersect OpenGL scissor box with all cliprects to make a new
        * list of cliprects.
        */
-      XF86DRIClipRectRec scissor;
+      drm_clip_rect_t scissor;
       int x1 = ctx->Scissor.X + fxMesa->x_offset;
       int y1 = fxMesa->screen_height - fxMesa->y_delta
              - ctx->Scissor.Y - ctx->Scissor.Height;
@@ -642,7 +642,7 @@ void tdfxUpdateClipping( GLcontext *ctx )
       assert(scissor.y2 >= scissor.y1);
 
       fxMesa->pClipRects = malloc(dPriv->numClipRects
-                                  * sizeof(XF86DRIClipRectRec));
+                                  * sizeof(drm_clip_rect_t));
       if (fxMesa->pClipRects) {
          int i;
          fxMesa->numClipRects = 0;

@@ -26,7 +26,7 @@
  * Authors:
  *	Gareth Hughes <gareth@valinux.com>
  *	Leif Delgass <ldelgass@retinalburn.net>
- *	José Fonseca <j_r_fonseca@yahoo.co.uk>
+ *	Josï¿½Fonseca <j_r_fonseca@yahoo.co.uk>
  */
 
 #include "mach64_context.h"
@@ -694,19 +694,19 @@ void mach64SetCliprects( GLcontext *ctx, GLenum mode )
    switch ( mode ) {
    case GL_FRONT_LEFT:
       mmesa->numClipRects = dPriv->numClipRects;
-      mmesa->pClipRects = (XF86DRIClipRectPtr)dPriv->pClipRects;
+      mmesa->pClipRects = dPriv->pClipRects;
       mmesa->drawX = dPriv->x;
       mmesa->drawY = dPriv->y;
       break;
    case GL_BACK_LEFT:
       if ( dPriv->numBackClipRects == 0 ) {
 	 mmesa->numClipRects = dPriv->numClipRects;
-	 mmesa->pClipRects = (XF86DRIClipRectPtr)dPriv->pClipRects;
+	 mmesa->pClipRects = dPriv->pClipRects;
 	 mmesa->drawX = dPriv->x;
 	 mmesa->drawY = dPriv->y;
       } else {
 	 mmesa->numClipRects = dPriv->numBackClipRects;
-	 mmesa->pClipRects = (XF86DRIClipRectPtr)dPriv->pBackClipRects;
+	 mmesa->pClipRects = dPriv->pBackClipRects;
 	 mmesa->drawX = dPriv->backX;
 	 mmesa->drawY = dPriv->backY;
       }

@@ -746,7 +746,7 @@ static void mgaXMesaSetFrontClipRects( mgaContextPtr mmesa )
    __DRIdrawablePrivate *driDrawable = mmesa->driDrawable;
 
    if (driDrawable->numClipRects == 0) {
-       static XF86DRIClipRectRec zeroareacliprect = {0,0,0,0};
+       static drm_clip_rect_t zeroareacliprect = {0,0,0,0};
        mmesa->numClipRects = 1;
        mmesa->pClipRects = &zeroareacliprect;
    } else {
@@ -768,7 +768,7 @@ static void mgaXMesaSetBackClipRects( mgaContextPtr mmesa )
    if (driDrawable->numBackClipRects == 0)
    {
       if (driDrawable->numClipRects == 0) {
-	  static XF86DRIClipRectRec zeroareacliprect = {0,0,0,0};
+	  static drm_clip_rect_t zeroareacliprect = {0,0,0,0};
 	  mmesa->numClipRects = 1;
 	  mmesa->pClipRects = &zeroareacliprect;
       } else {

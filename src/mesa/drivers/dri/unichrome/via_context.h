@@ -268,7 +268,7 @@ struct via_context_t {
     XineramaScreenInfo *xsi;
 #endif
     int drawXoffSaam;
-    XF86DRIClipRectPtr pSaamRects;
+    drm_clip_rect_t *pSaamRects;
     int drawXSaam;
     int drawYSaam;
     GLuint numSaamRects;
@@ -277,7 +277,7 @@ struct via_context_t {
     int readPitch;
     int drawXoff;
     GLuint numClipRects;         /* cliprects for that buffer */
-    XF86DRIClipRectPtr pClipRects;
+    drm_clip_rect_t *pClipRects;
 
     int lastSwap;
     int texAge;
@@ -289,7 +289,7 @@ struct via_context_t {
     drm_clip_rect_t scissorRect;
 
     drmContext hHWContext;
-    drmLock *driHwLock;
+    drm_hw_lock_t *driHwLock;
     int driFd;
 #ifndef _SOLO
     Display *display;

@@ -77,7 +77,7 @@ sisCreateScreen( __DRIscreenPrivate *sPriv )
    sisScreen->deviceID = sisDRIPriv->deviceID;
    sisScreen->AGPCmdBufOffset = sisDRIPriv->AGPCmdBufOffset;
    sisScreen->AGPCmdBufSize = sisDRIPriv->AGPCmdBufSize;
-   sisScreen->sarea_priv_offset = sizeof(XF86DRISAREARec);
+   sisScreen->sarea_priv_offset = sizeof(drm_sarea_t);
 
    sisScreen->mmio.handle = sisDRIPriv->regs.handle;
    sisScreen->mmio.size   = sisDRIPriv->regs.size;
@@ -199,7 +199,7 @@ static void sisCopyBuffer( __DRIdrawablePrivate *dPriv )
    stEngPacket.stdwCmd.cCmd1 = CMD1_DIR_X_INC | CMD1_DIR_Y_INC;
 
    for (i = 0; i < dPriv->numClipRects; i++) {
-      XF86DRIClipRectPtr box = &dPriv->pClipRects[i];
+      drm_clip_rect_t *box = &dPriv->pClipRects[i];
       stEngPacket.stdwSrcPos.wY = box->y1 - dPriv->y;
       stEngPacket.stdwSrcPos.wX = box->x1 - dPriv->x;
       stEngPacket.stdwDestPos.wY = box->y1;

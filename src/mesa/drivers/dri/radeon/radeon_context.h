@@ -42,7 +42,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <inttypes.h>
 #include "dri_util.h"
-#include "radeon_common.h"
 #include "texmem.h"
 
 #include "macros.h"
@@ -111,12 +110,12 @@ struct radeon_pixel_state {
 };
 
 struct radeon_scissor_state {
-   XF86DRIClipRectRec rect;
+   drm_clip_rect_t rect;
    GLboolean enabled;
 
    GLuint numClipRects;			/* Cliprects active */
    GLuint numAllocedClipRects;		/* Cliprects available */
-   XF86DRIClipRectPtr pClipRects;
+   drm_clip_rect_t *pClipRects;
 };
 
 struct radeon_stencilbuffer_state {
@@ -151,7 +150,7 @@ struct radeon_tex_obj {
 					   brought into the
 					   texunit. */
 
-   drmRadeonTexImage image[6][RADEON_MAX_TEXTURE_LEVELS];
+   drm_radeon_tex_image_t image[6][RADEON_MAX_TEXTURE_LEVELS];
 					/* Six, for the cube faces */
 
    GLuint pp_txfilter;		        /* hardware register values */
@@ -483,7 +482,7 @@ struct radeon_dri_mirror {
    __DRIdrawablePrivate	*drawable;	/* DRI drawable bound to this ctx */
 
    drmContext hwContext;
-   drmLock *hwLock;
+   drm_hw_lock_t *hwLock;
    int fd;
    int drmMinor;
 };
@@ -723,16 +722,16 @@ struct radeon_context {
    GLuint do_usleeps;
    GLuint do_irqs;
    GLuint irqsEmitted;
-   drmRadeonIrqWait iw;
+   drm_radeon_irq_wait_t iw;
 
    /* Drawable, cliprect and scissor information
     */
    GLuint numClipRects;			/* Cliprects for the draw buffer */
-   XF86DRIClipRectPtr pClipRects;
+   drm_clip_rect_t *pClipRects;
    unsigned int lastStamp;
    GLboolean lost_context;
    radeonScreenPtr radeonScreen;	/* Screen private DRI data */
-   RADEONSAREAPrivPtr sarea;		/* Private SAREA data */
+   drm_radeon_sarea_t *sarea;		/* Private SAREA data */
 
    /* TCL stuff
     */

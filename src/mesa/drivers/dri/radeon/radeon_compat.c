@@ -73,15 +73,15 @@ static struct {
 static void radeonCompatEmitPacket( radeonContextPtr rmesa, 
 				    struct radeon_state_atom *state )
 {
-   RADEONSAREAPrivPtr sarea = rmesa->sarea;
-   radeon_context_regs_t *ctx = &sarea->ContextState;
-   radeon_texture_regs_t *tex0 = &sarea->TexState[0];
-   radeon_texture_regs_t *tex1 = &sarea->TexState[1];
+   drm_radeon_sarea_t *sarea = rmesa->sarea;
+   drm_radeon_context_regs_t *ctx = &sarea->context_state;
+   drm_radeon_texture_regs_t *tex0 = &sarea->tex_state[0];
+   drm_radeon_texture_regs_t *tex1 = &sarea->tex_state[1];
    int i;
    int *buf = state->cmd;
 
    for ( i = 0 ; i < state->cmd_size ; ) {
-      drmRadeonCmdHeader *header = (drmRadeonCmdHeader *)&buf[i++];
+      drm_radeon_cmd_header_t *header = (drm_radeon_cmd_header_t *)&buf[i++];
 
       if (RADEON_DEBUG & DEBUG_STATE)
 	 fprintf(stderr, "%s %d: %s\n", __FUNCTION__, header->packet.packet_id,
@@ -229,15 +229,15 @@ static void radeonCompatEmitStateLocked( radeonContextPtr rmesa )
 static void radeonCompatEmitPrimitiveLocked( radeonContextPtr rmesa,
 					     GLuint hw_primitive,
 					     GLuint nverts,
-					     XF86DRIClipRectPtr pbox,
+					     drm_clip_rect_t *pbox,
 					     GLuint nbox )
 {
    int i;
 
    for ( i = 0 ; i < nbox ; ) {
       int nr = MIN2( i + RADEON_NR_SAREA_CLIPRECTS, nbox );
-      XF86DRIClipRectPtr b = rmesa->sarea->boxes;
-      drmRadeonVertex vtx;
+      drm_clip_rect_t *b = rmesa->sarea->boxes;
+      drm_radeon_vertex_t vtx;
       
       rmesa->sarea->dirty |= RADEON_UPLOAD_CLIPRECTS;
       rmesa->sarea->nbox = nr - i;

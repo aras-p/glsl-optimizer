@@ -242,11 +242,11 @@ struct gamma_context {
    	/* Mirrors of some DRI state
     	 */
    	drmContext hHWContext;
-   	drmLock *driHwLock;
+   	drm_hw_lock_t *driHwLock;
    	int driFd;
 
    	GLuint numClipRects;		   /* Cliprects for the draw buffer */
-   	XF86DRIClipRectPtr pClipRects;
+   	drm_clip_rect_t *pClipRects;
 
     	dmaBuf              buf;           /* DMA buffer for regular cmds */
     	int                 bufIndex;

@@ -578,7 +578,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
 #endif
     }
     
-    vmesa->pSaamRects = (XF86DRIClipRectPtr) malloc(sizeof(XF86DRIClipRectRec));    
+    vmesa->pSaamRects = (drm_clip_rect_t *) malloc(sizeof(drm_clip_rect_t));    
     return GL_TRUE;
 }
 

@@ -286,8 +286,8 @@ static void uploadSubImage( r200ContextPtr rmesa, r200TexObjPtr t,
    GLuint offset;
    GLint imageWidth, imageHeight;
    GLint ret;
-   drmRadeonTexture tex;
-   drmRadeonTexImage tmp;
+   drm_radeon_texture_t tex;
+   drm_radeon_tex_image_t tmp;
    const int level = hwlevel + t->base.firstLevel;
 
    if ( R200_DEBUG & DEBUG_TEXTURE ) {
@@ -361,7 +361,7 @@ static void uploadSubImage( r200ContextPtr rmesa, r200TexObjPtr t,
 
    t->image[face][hwlevel].data = texImage->Data;
 
-   /* Init the DRM_RADEON_TEXTURE command / drmRadeonTexture struct.
+   /* Init the DRM_RADEON_TEXTURE command / drm_radeon_texture_t struct.
     * NOTE: we're always use a 1KB-wide blit and I8 texture format.
     * We used to use 1, 2 and 4-byte texels and used to use the texture
     * width to dictate the blit width - but that won't work for compressed
@@ -383,12 +383,12 @@ static void uploadSubImage( r200ContextPtr rmesa, r200TexObjPtr t,
    tex.image = &tmp;
 
    /* copy (x,y,width,height,data) */
-   memcpy( &tmp, &t->image[face][hwlevel], sizeof(drmRadeonTexImage) );
+   memcpy( &tmp, &t->image[face][hwlevel], sizeof(tmp) );
 
    LOCK_HARDWARE( rmesa );
    do {
       ret = drmCommandWriteRead( rmesa->dri.fd, DRM_RADEON_TEXTURE,
-                                 &tex, sizeof(drmRadeonTexture) );
+                                 &tex, sizeof(drm_radeon_texture_t) );
       if (ret) {
 	 if (R200_DEBUG & DEBUG_IOCTL)
 	    fprintf(stderr, "DRM_RADEON_TEXTURE:  again!\n");

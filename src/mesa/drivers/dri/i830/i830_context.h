@@ -195,7 +195,7 @@ struct i830_context_t
    int drawX;			/* origin of drawable in draw buffer */
    int drawY;
    GLuint numClipRects;		/* cliprects for that buffer */
-   XF86DRIClipRectPtr pClipRects;
+   drm_clip_rect_t *pClipRects;
 
    int lastSwap;
    int texAge;
@@ -206,11 +206,11 @@ struct i830_context_t
    int do_irqs;
    
    GLboolean scissor;
-   XF86DRIClipRectRec draw_rect;
-   XF86DRIClipRectRec scissor_rect;
+   drm_clip_rect_t draw_rect;
+   drm_clip_rect_t scissor_rect;
 
    drmContext hHWContext;
-   drmLock *driHwLock;
+   drm_hw_lock_t *driHwLock;
    int driFd;
 
    __DRIdrawablePrivate *driDrawable;

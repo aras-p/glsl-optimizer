@@ -218,8 +218,8 @@ mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       for (i = 0 ; i < mmesa->numClipRects ; )
       {
 	 int nr = MIN2(i + MGA_NR_SAREA_CLIPRECTS, mmesa->numClipRects);
-	 XF86DRIClipRectPtr box = mmesa->pClipRects;
-	 XF86DRIClipRectPtr b = mmesa->sarea->boxes;
+	 drm_clip_rect_t *box = mmesa->pClipRects;
+	 drm_clip_rect_t *b = mmesa->sarea->boxes;
 	 int n = 0;
 
 	 if (!all) {
@@ -245,7 +245,7 @@ mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	    }
 	 } else {
 	    for ( ; i < nr ; i++) {
-	       *b++ = *(XF86DRIClipRectPtr)&box[i];
+	       *b++ = box[i];
 	       n++;
 	    }
 	 }
@@ -325,7 +325,7 @@ static void mgaWaitForFrameCompletion( mgaContextPtr mmesa )
 void mgaCopyBuffer( const __DRIdrawablePrivate *dPriv )
 {
    mgaContextPtr mmesa;
-   XF86DRIClipRectPtr pbox;
+   drm_clip_rect_t *pbox;
    GLint nbox;
    GLint ret;
    GLint i;
@@ -363,7 +363,7 @@ void mgaCopyBuffer( const __DRIdrawablePrivate *dPriv )
    for (i = 0 ; i < nbox ; )
    {
       int nr = MIN2(i + MGA_NR_SAREA_CLIPRECTS, dPriv->numClipRects);
-      XF86DRIClipRectPtr b = mmesa->sarea->boxes;
+      drm_clip_rect_t *b = mmesa->sarea->boxes;
 
       mmesa->sarea->nbox = nr - i;
 
@@ -428,9 +428,9 @@ void mgaWaitAge( mgaContextPtr mmesa, int age  )
 }
 
 
-static GLboolean intersect_rect( XF86DRIClipRectPtr out,
-				 const XF86DRIClipRectPtr a,
-				 const XF86DRIClipRectPtr b )
+static GLboolean intersect_rect( drm_clip_rect_t *out,
+				 const drm_clip_rect_t *a,
+				 const drm_clip_rect_t *b )
 {
    *out = *a;
    if (b->x1 > out->x1) out->x1 = b->x1;
@@ -456,7 +456,7 @@ static int __break_vertex = 0;
 
 void mgaFlushVerticesLocked( mgaContextPtr mmesa )
 {
-   XF86DRIClipRectPtr pbox = mmesa->pClipRects;
+   drm_clip_rect_t *pbox = mmesa->pClipRects;
    int nbox = mmesa->numClipRects;
    drmBufPtr buffer = mmesa->vertex_dma_buffer;
    drmMGAVertex vertex;
@@ -508,7 +508,7 @@ void mgaFlushVerticesLocked( mgaContextPtr mmesa )
       for (i = 0 ; i < nbox ; )
       {
 	 int nr = MIN2(i + MGA_NR_SAREA_CLIPRECTS, nbox);
-	 XF86DRIClipRectPtr b = mmesa->sarea->boxes;
+	 drm_clip_rect_t *b = mmesa->sarea->boxes;
 	 int discard = 0;
 
 	 if (mmesa->scissor) {

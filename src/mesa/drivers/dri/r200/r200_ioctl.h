@@ -43,7 +43,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_lock.h"
 
 #include "xf86drm.h"
-#include "radeon_common.h"
+#include "drm.h"
+#include "radeon_drm.h"
 
 extern void r200EmitState( r200ContextPtr rmesa );
 extern void r200EmitVertexAOS( r200ContextPtr rmesa,

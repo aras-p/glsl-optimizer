@@ -90,8 +90,8 @@ static void i810Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       for (i = 0 ; i < imesa->numClipRects ; ) 
       { 	 
 	 int nr = MIN2(i + I810_NR_SAREA_CLIPRECTS, imesa->numClipRects);
-	 XF86DRIClipRectPtr box = imesa->pClipRects;	 
-	 XF86DRIClipRectPtr b = imesa->sarea->boxes;
+	 drm_clip_rect_t *box = imesa->pClipRects;	 
+	 drm_clip_rect_t *b = imesa->sarea->boxes;
 	 int n = 0;
 
 	 if (!all) {
@@ -117,7 +117,7 @@ static void i810Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	    }
 	 } else {
 	    for ( ; i < nr ; i++) {
-	       *b++ = *(XF86DRIClipRectPtr)&box[i];
+	       *b++ = box[i];
 	       n++;
 	    }
 	 }
@@ -144,7 +144,7 @@ static void i810Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 void i810CopyBuffer( const __DRIdrawablePrivate *dPriv ) 
 {
    i810ContextPtr imesa;
-   XF86DRIClipRectPtr pbox;
+   drm_clip_rect_t *pbox;
    int nbox, i, tmp;
 
    assert(dPriv);
@@ -162,7 +162,7 @@ void i810CopyBuffer( const __DRIdrawablePrivate *dPriv )
    for (i = 0 ; i < nbox ; )
    {
       int nr = MIN2(i + I810_NR_SAREA_CLIPRECTS, dPriv->numClipRects);
-      XF86DRIClipRectRec *b = (XF86DRIClipRectRec *)imesa->sarea->boxes;
+      drm_clip_rect_t *b = imesa->sarea->boxes;
 
       imesa->sarea->nbox = nr - i;
 
@@ -204,7 +204,7 @@ void i810PageFlip( const __DRIdrawablePrivate *dPriv )
   LOCK_HARDWARE( imesa );
   
   if (dPriv->pClipRects) {
-    *(XF86DRIClipRectRec *)imesa->sarea->boxes = dPriv->pClipRects[0];
+    *imesa->sarea->boxes = dPriv->pClipRects[0];
     imesa->sarea->nbox = 1;
   }
   ret = drmCommandNone(imesa->driFd, DRM_I810_FLIP);
@@ -293,9 +293,9 @@ void i810WaitAge( i810ContextPtr imesa, int age  )
 
 
 
-static int intersect_rect( XF86DRIClipRectPtr out,
-                           XF86DRIClipRectPtr a,
-                           XF86DRIClipRectPtr b )
+static int intersect_rect( drm_clip_rect_t *out,
+                           drm_clip_rect_t *a,
+                           drm_clip_rect_t *b )
 {
    *out = *a;
    if (b->x1 > out->x1) out->x1 = b->x1;
@@ -361,7 +361,7 @@ static void age_imesa( i810ContextPtr imesa, int age )
 
 void i810FlushPrimsLocked( i810ContextPtr imesa )
 {
-   XF86DRIClipRectPtr pbox = (XF86DRIClipRectPtr)imesa->pClipRects;
+   drm_clip_rect_t *pbox = imesa->pClipRects;
    int nbox = imesa->numClipRects;
    drmBufPtr buffer = imesa->vertex_buffer;
    I810SAREAPtr sarea = imesa->sarea;
@@ -403,7 +403,7 @@ void i810FlushPrimsLocked( i810ContextPtr imesa )
       for (i = 0 ; i < nbox ; )
       {
 	 int nr = MIN2(i + I810_NR_SAREA_CLIPRECTS, nbox);
-	 XF86DRIClipRectPtr b = sarea->boxes;
+	 drm_clip_rect_t *b = sarea->boxes;
 
 	 if (imesa->scissor) {
 	    sarea->nbox = 0;

@@ -129,7 +129,7 @@ ffb_do_clear(ffbContextPtr fmesa, __DRIdrawablePrivate *dPriv,
 {
 	FFBDRIPtr gDRIPriv = (FFBDRIPtr) fmesa->driScreen->pDevPriv;
 	ffb_fbcPtr ffb = fmesa->regs;
-	XF86DRIClipRectPtr box = dPriv->pClipRects;
+	drm_clip_rect_t *box = dPriv->pClipRects;
 	int nc = dPriv->numClipRects;
 
 	cy  = dPriv->h - cy - cheight;

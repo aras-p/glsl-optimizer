@@ -26,7 +26,7 @@
  * Authors:
  *	Gareth Hughes <gareth@valinux.com>
  *	Leif Delgass <ldelgass@retinalburn.net>
- *	José Fonseca <j_r_fonseca@yahoo.co.uk>
+ *	Josï¿½Fonseca <j_r_fonseca@yahoo.co.uk>
  */
 
 #ifndef __MACH64_CONTEXT_H__
@@ -158,7 +158,7 @@ typedef void (*mach64_line_func)( mach64ContextPtr,
 typedef void (*mach64_point_func)( mach64ContextPtr,
 				     mach64Vertex * );
 
-#if TEXMEM
+#ifdef TEXMEM
 struct mach64_texture_object {
    driTextureObject   base;
 
@@ -253,7 +253,7 @@ struct mach64_context {
    /* Texture object bookkeeping
     */
    mach64TexObjPtr CurrentTexObj[2];
-#if TEXMEM
+#ifdef TEXMEM
    unsigned nr_heaps;
    driTexHeap * texture_heaps[ R128_NR_TEX_HEAPS ];
    driTextureObject swapped;
@@ -290,10 +290,10 @@ struct mach64_context {
    GLint readOffset, readPitch;
 
    GLuint numClipRects;			/* Cliprects for the draw buffer */
-   XF86DRIClipRectPtr pClipRects;
+   drm_clip_rect_t *pClipRects;
 
    GLint scissor;
-   XF86DRIClipRectRec ScissorRect;	/* Current software scissor */
+   drm_clip_rect_t ScissorRect;	/* Current software scissor */
 
    /* Mirrors of some DRI state
     */
@@ -304,7 +304,7 @@ struct mach64_context {
    unsigned int lastStamp;		/* mirror driDrawable->lastStamp */
 
    drmContext hHWContext;
-   drmLock *driHwLock;
+   drm_hw_lock_t *driHwLock;
    int driFd;
 
    mach64ScreenPtr mach64Screen;	/* Screen private DRI data */

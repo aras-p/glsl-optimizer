@@ -3,6 +3,6 @@
 
 extern int radeonSanityCmdBuffer( radeonContextPtr rmesa,
 				  int nbox,
-				  XF86DRIClipRectRec *boxes );
+				  drm_clip_rect_t *boxes );
 
 #endif

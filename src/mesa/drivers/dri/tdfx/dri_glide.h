@@ -53,7 +53,7 @@ extern void grDRIOpen( char *pFB, char *pRegs, int deviceID,
 		       int textureOffset, int textureSize,
 		       volatile int *fifoPtr, volatile int *fifoRead );
 extern void grDRIPosition( int x, int y, int w, int h,
-			   int numClip, XF86DRIClipRectPtr pClip );
+			   int numClip, drm_clip_rect_t *pClip );
 extern void grDRILostContext( void );
 extern void grDRIImportFifo( int fifoPtr, int fifoRead );
 extern void grDRIInvalidateAll( void );

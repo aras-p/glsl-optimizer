@@ -3,6 +3,6 @@
 
 extern int r200SanityCmdBuffer( r200ContextPtr rmesa,
 				int nbox,
-				XF86DRIClipRectRec *boxes );
+				drm_clip_rect_t *boxes );
 
 #endif
