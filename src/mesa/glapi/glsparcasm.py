@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: glsparcasm.py,v 1.2 2001/06/05 23:54:00 davem69 Exp $
+# $Id: glsparcasm.py,v 1.3 2001/06/06 22:55:28 davem69 Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -51,10 +51,20 @@ def PrintHead():
 	print ' * sethi/or instruction sequences below at library init time.'
 	print ' */'
 	print ''
+	print ''
+	print '.text'
+	print '.align 32'
+	print '.globl __glapi_sparc_icache_flush'
+	print '__glapi_sparc_icache_flush: /* %o0 = insn_addr */'
+	print '\tflush\t%o0'
+	print '\tretl'
+	print '\t nop'
+	print ''
 	print '.data'
 	print '.align 64'
 	print ''
 	print '.globl _mesa_sparc_glapi_begin'
+	print '.type _mesa_sparc_glapi_begin,@function'
 	print '_mesa_sparc_glapi_begin:'
 	print ''
 	return
@@ -64,6 +74,7 @@ def PrintTail():
 	print '\t nop'
 	print ''
 	print '.globl _mesa_sparc_glapi_end'
+	print '.type _mesa_sparc_glapi_end,@function'
 	print '_mesa_sparc_glapi_end:'
 	print ''
 #endif

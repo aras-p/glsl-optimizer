@@ -8,10 +8,20 @@
  * sethi/or instruction sequences below at library init time.
  */
 
+
+.text
+.align 32
+.globl __glapi_sparc_icache_flush
+__glapi_sparc_icache_flush: /* %o0 = insn_addr */
+	flush	%o0
+	retl
+	 nop
+
 .data
 .align 64
 
 .globl _mesa_sparc_glapi_begin
+.type _mesa_sparc_glapi_begin,@function
 _mesa_sparc_glapi_begin:
 
 GLOBL_FN(GL_PREFIX(NewList))
@@ -11758,5 +11768,6 @@ GL_PREFIX(SamplePatternSGIS):
 	 nop
 
 .globl _mesa_sparc_glapi_end
+.type _mesa_sparc_glapi_end,@function
 _mesa_sparc_glapi_end:
 

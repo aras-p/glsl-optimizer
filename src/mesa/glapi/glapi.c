@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.55 2001/06/05 23:54:00 davem69 Exp $ */
+/* $Id: glapi.c,v 1.56 2001/06/06 22:55:28 davem69 Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,10 +51,6 @@
 #include "glapioffsets.h"
 #include "glapitable.h"
 #include "glthread.h"
-
-#ifdef USE_SPARC_ASM
-#include "SPARC/sparc.h"
-#endif
 
 /***** BEGIN NO-OP DISPATCH *****/
 
@@ -1709,7 +1705,9 @@ get_static_proc_address(const char *funcName)
 static struct name_address_offset ExtEntryTable[MAX_EXTENSION_FUNCS];
 static GLuint NumExtEntryPoints = 0;
 
-
+#ifdef USE_SPARC_ASM
+extern void __glapi_sparc_icache_flush(unsigned int *);
+#endif
 
 /*
  * Generate a dispatch function (entrypoint) which jumps through
@@ -1789,19 +1787,19 @@ generate_entrypoint(GLuint functionOffset)
 #ifdef __sparc_v9__
       code[0] |= (glapi_addr >> (32 + 10));
       code[1] |= ((glapi_addr & 0xffffffff) >> 10);
-      _mesa_sparc_icache_flush(&code[0]);
+      __glapi_sparc_icache_flush(&code[0]);
       code[2] |= ((glapi_addr >> 32) & ((1 << 10) - 1));
       code[3] |= (glapi_addr & ((1 << 10) - 1));
-      _mesa_sparc_icache_flush(&code[2]);
+      __glapi_sparc_icache_flush(&code[2]);
       code[6] |= ((functionOffset * 8) >> 10);
       code[7] |= ((functionOffset * 8) & ((1 << 10) - 1));
-      _mesa_sparc_icache_flush(&code[6]);
+      __glapi_sparc_icache_flush(&code[6]);
 #else
       code[0] |= (glapi_addr >> 10);
       code[1] |= (glapi_addr & ((1 << 10) - 1));
-      _mesa_sparc_icache_flush(&code[0]);
+      __glapi_sparc_icache_flush(&code[0]);
       code[2] |= (functionOffset * 4);
-      _mesa_sparc_icache_flush(&code[2]);
+      __glapi_sparc_icache_flush(&code[2]);
 #endif
    }
    return code;

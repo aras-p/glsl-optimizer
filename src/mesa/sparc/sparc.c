@@ -1,4 +1,4 @@
-/* $Id: sparc.c,v 1.4 2001/06/06 11:46:04 davem69 Exp $ */
+/* $Id: sparc.c,v 1.5 2001/06/06 22:55:28 davem69 Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -143,6 +143,7 @@ void _mesa_init_all_sparc_transform_asm(void)
 
 extern unsigned int _mesa_sparc_glapi_begin;
 extern unsigned int _mesa_sparc_glapi_end;
+extern void __glapi_sparc_icache_flush(unsigned int *);
 
 void _mesa_init_sparc_glapi_relocs(void)
 {
@@ -157,15 +158,15 @@ void _mesa_init_sparc_glapi_relocs(void)
 #ifdef __sparc_v9__
 		insn_ptr[0] |= (disp_addr >> (32 + 10));
 		insn_ptr[1] |= ((disp_addr & 0xffffffff) >> 10);
-		_mesa_sparc_icache_flush(&insn_ptr[0]);
+		__glapi_sparc_icache_flush(&insn_ptr[0]);
 		insn_ptr[2] |= ((disp_addr >> 32) & ((1 << 10) - 1));
 		insn_ptr[3] |= (disp_addr & ((1 << 10) - 1));
-		_mesa_sparc_icache_flush(&insn_ptr[2]);
+		__glapi_sparc_icache_flush(&insn_ptr[2]);
 		insn_ptr += 10;
 #else
 		insn_ptr[0] |= (disp_addr >> 10);
 		insn_ptr[1] |= (disp_addr & ((1 << 10) - 1));
-		_mesa_sparc_icache_flush(&insn_ptr[0]);
+		__glapi_sparc_icache_flush(&insn_ptr[0]);
 		insn_ptr += 4;
 #endif
 	}
