@@ -310,6 +310,11 @@ void radeonFlushElts( radeonContextPtr rmesa )
    cmd[1] |= (dwords - 3) << 16;
    cmd[3] |= nr << RADEON_CP_VC_CNTL_NUM_SHIFT;
 #endif
+
+   if (RADEON_DEBUG & DEBUG_SYNC) {
+      fprintf(stderr, "%s: Syncing\n", __FUNCTION__);
+      radeonFinish( rmesa->glCtx );
+   }
 }
 
 
@@ -579,6 +584,11 @@ static int radeonFlushCmdBufLocked( radeonContextPtr rmesa,
 
    if (ret)
       fprintf(stderr, "drmCommandWrite: %d\n", ret);
+
+   if (RADEON_DEBUG & DEBUG_SYNC) {
+      fprintf(stderr, "\nSyncing in %s\n\n", __FUNCTION__);
+      radeonWaitForIdleLocked( rmesa );
+   }
 
  out:
    rmesa->store.primnr = 0;

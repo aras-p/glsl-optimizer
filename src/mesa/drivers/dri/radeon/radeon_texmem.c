@@ -322,6 +322,11 @@ int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t, GLuint fac
    if ( !t || t->base.totalSize == 0 )
       return 0;
 
+   if (RADEON_DEBUG & DEBUG_SYNC) {
+      fprintf(stderr, "%s: Syncing\n", __FUNCTION__ );
+      radeonFinish( rmesa->glCtx );
+   }
+
    LOCK_HARDWARE( rmesa );
 
    if ( t->base.memBlock == NULL ) {
@@ -362,6 +367,11 @@ int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t, GLuint fac
          }
       }
       t->base.dirty_images[face] = 0;
+   }
+
+   if (RADEON_DEBUG & DEBUG_SYNC) {
+      fprintf(stderr, "%s: Syncing\n", __FUNCTION__ );
+      radeonFinish( rmesa->glCtx );
    }
 
    return 0;

@@ -201,6 +201,7 @@ static const struct dri_debug_control debug_control[] =
     { "dri",   DEBUG_DRI },
     { "dma",   DEBUG_DMA },
     { "san",   DEBUG_SANITY },
+    { "sync",  DEBUG_SYNC },
     { NULL,    0 }
 };
 

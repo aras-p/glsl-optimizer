@@ -848,6 +848,7 @@ extern int RADEON_DEBUG;
 #define DEBUG_DRI       0x200
 #define DEBUG_DMA       0x400
 #define DEBUG_SANITY    0x800
+#define DEBUG_SYNC     0x1000
 
 #endif
 #endif /* __RADEON_CONTEXT_H__ */
