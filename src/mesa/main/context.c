@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.45 2000/03/06 17:03:03 brianp Exp $ */
+/* $Id: context.c,v 1.46 2000/03/11 23:23:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -864,6 +864,7 @@ static void init_attrib_groups( GLcontext *ctx )
    ctx->Depth.Clear = 1.0;
    ctx->Depth.Func = GL_LESS;
    ctx->Depth.Mask = GL_TRUE;
+   ctx->Depth.OcclusionTest = GL_FALSE;
 
    /* Evaluators group */
    ctx->Eval.Map1Color4 = GL_FALSE;
@@ -1227,6 +1228,7 @@ static void init_attrib_groups( GLcontext *ctx )
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
 
    ctx->CatchSignals = GL_TRUE;
+   ctx->OcclusionResult = GL_FALSE;
 
    /* For debug/development only */
    ctx->NoRaster = getenv("MESA_NO_RASTER") ? GL_TRUE : GL_FALSE;

@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.19 2000/03/07 17:54:58 brianp Exp $ */
+/* $Id: extensions.c,v 1.20 2000/03/11 23:23:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,7 +77,8 @@ static struct { int enabled; const char *name; } default_extensions[] = {
    { ALWAYS_ENABLED, "GL_ARB_tranpose_matrix" },
    { DEFAULT_OFF,    "GL_EXT_vertex_array_set" },
    { DEFAULT_OFF,    "GL_EXT_texture_env" },
-   { DEFAULT_ON,     "GL_EXT_texture_lod_bias" }
+   { DEFAULT_ON,     "GL_EXT_texture_lod_bias" },
+   { DEFAULT_OFF,    "GL_HP_occlusion_test" }
 };
 
 
@@ -90,6 +91,7 @@ update_extension_flags( GLcontext *ctx )
    /* Update flags */
    ctx->Extensions.HaveTextureEnvAdd = gl_extension_is_enabled(ctx, "GL_EXT_texture_env_add");
    ctx->Extensions.HaveTextureLodBias = gl_extension_is_enabled(ctx, "GL_EXT_texture_lod_bias");
+   ctx->Extensions.HaveHpOcclusionTest = gl_extension_is_enabled(ctx, "GL_HP_occlusion_test");
 }
 
 

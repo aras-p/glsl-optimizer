@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.14 2000/02/24 22:04:03 brianp Exp $ */
+/* $Id: get.c,v 1.15 2000/03/11 23:23:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1012,8 +1012,26 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          }
          break;
 
+      /* GL_HP_occlusion_test */
+      case GL_OCCLUSION_TEST_HP:
+         if (ctx->Extensions.HaveHpOcclusionTest) {
+            *params = ctx->Depth.OcclusionTest;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
+         }
+         return;
+      case GL_OCCLUSION_TEST_RESULT_HP:
+         if (ctx->Extensions.HaveHpOcclusionTest) {
+            *params = ctx->OcclusionResult;
+            ctx->OcclusionResult = GL_FALSE; /* reset now */
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
+         }
+         return;
+
       default:
-	 printf("invalid enum: %x\n", pname);
          gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
    }
 }
@@ -1975,8 +1993,26 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          }
          break;
 
+      /* GL_HP_occlusion_test */
+      case GL_OCCLUSION_TEST_HP:
+         if (ctx->Extensions.HaveHpOcclusionTest) {
+            *params = (GLdouble) ctx->Depth.OcclusionTest;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
+         }
+         return;
+      case GL_OCCLUSION_TEST_RESULT_HP:
+         if (ctx->Extensions.HaveHpOcclusionTest) {
+            *params = (GLdouble) ctx->OcclusionResult;
+            ctx->OcclusionResult = GL_FALSE; /* reset now */
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
+         }
+         return;
+
       default:
-	 printf("invalid enum: %x\n", pname);
          gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
    }
 }
@@ -2915,8 +2951,26 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          gl_matrix_transposef(params, ctx->TextureMatrix[texTransformUnit].m);
          break;
 
+      /* GL_HP_occlusion_test */
+      case GL_OCCLUSION_TEST_HP:
+         if (ctx->Extensions.HaveHpOcclusionTest) {
+            *params = (GLfloat) ctx->Depth.OcclusionTest;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+         }
+         return;
+      case GL_OCCLUSION_TEST_RESULT_HP:
+         if (ctx->Extensions.HaveHpOcclusionTest) {
+            *params = (GLfloat) ctx->OcclusionResult;
+            ctx->OcclusionResult = GL_FALSE; /* reset now */
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+         }
+         return;
+
       default:
-	 printf("invalid enum: %x\n", pname);
          gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
    }
 }
@@ -3878,8 +3932,26 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          }
          break;
 
+      /* GL_HP_occlusion_test */
+      case GL_OCCLUSION_TEST_HP:
+         if (ctx->Extensions.HaveHpOcclusionTest) {
+            *params = (GLint) ctx->Depth.OcclusionTest;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+         }
+         return;
+      case GL_OCCLUSION_TEST_RESULT_HP:
+         if (ctx->Extensions.HaveHpOcclusionTest) {
+            *params = (GLint) ctx->OcclusionResult;
+            ctx->OcclusionResult = GL_FALSE; /* reset now */
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+         }
+         return;
+
       default:
-	 printf("invalid enum: %x\n", pname);
          gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
    }
 }

@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.11 2000/03/07 18:24:49 brianp Exp $ */
+/* $Id: enable.c,v 1.12 2000/03/11 23:23:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -451,6 +451,18 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          ctx->Array.EdgeFlag.Enabled = state;
          break;
 
+      /* GL_HP_occlusion_test */
+      case GL_OCCLUSION_TEST_HP:
+         if (ctx->Extensions.HaveHpOcclusionTest) {
+            ctx->Depth.OcclusionTest = state;
+            ctx->NewState |= NEW_RASTER_OPS;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, state ? "glEnable": "glDisable" );
+            return;
+         }
+         break;
+
       default:
 	 if (state) {
 	    gl_error( ctx, GL_INVALID_ENUM, "glEnable" );
@@ -644,6 +656,17 @@ _mesa_IsEnabled( GLenum cap )
          return ctx->Array.TexCoord[ctx->Array.ActiveTexture].Enabled;
       case GL_EDGE_FLAG_ARRAY:
          return ctx->Array.EdgeFlag.Enabled;
+
+      /* GL_HP_occlusion_test */
+      case GL_OCCLUSION_TEST_HP:
+         if (ctx->Extensions.HaveHpOcclusionTest) {
+            return ctx->Depth.OcclusionTest;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glIsEnabled" );
+            return GL_FALSE;
+         }
+
       default:
 	 gl_error( ctx, GL_INVALID_ENUM, "glIsEnabled" );
 	 return GL_FALSE;
