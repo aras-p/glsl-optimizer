@@ -1,8 +1,8 @@
-/* $Id: texstate.c,v 1.86 2002/11/01 17:42:03 brianp Exp $ */
+/* $Id: texstate.c,v 1.87 2002/11/05 20:58:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -1046,7 +1046,6 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          /* A small optimization */
          if (texObj->MinFilter == eparam)
             return;
-
          if (eparam==GL_NEAREST || eparam==GL_LINEAR) {
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texObj->MinFilter = eparam;
@@ -1362,12 +1361,21 @@ _mesa_TexParameteri( GLenum target, GLenum pname, GLint param )
    _mesa_TexParameterfv(target, pname, fparam);
 }
 
+
 void
 _mesa_TexParameteriv( GLenum target, GLenum pname, const GLint *params )
 {
    GLfloat fparam[4];
-   fparam[0] = (GLfloat) params[0];
-   fparam[1] = fparam[2] = fparam[3] = 0.0;
+   if (pname == GL_TEXTURE_BORDER_COLOR) {
+      fparam[0] = INT_TO_FLOAT(params[0]);
+      fparam[1] = INT_TO_FLOAT(params[1]);
+      fparam[2] = INT_TO_FLOAT(params[2]);
+      fparam[3] = INT_TO_FLOAT(params[3]);
+   }
+   else {
+      fparam[0] = (GLfloat) params[0];
+      fparam[1] = fparam[2] = fparam[3] = 0.0F;
+   }
    _mesa_TexParameterfv(target, pname, fparam);
 }
 
