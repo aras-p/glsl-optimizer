@@ -4,9 +4,8 @@
 #include <ggi/internal/internal.h>
 #include "ggimesa.h"
 
-#define GGI_SYMNAME_PREFIX  "MesaGGIdl_"
 
-extern ggi_extid ggiMesaID;
+extern ggi_extid _ggiMesaID;
 
 ggifunc_setmode GGIMesa_setmode;
 ggifunc_getapi GGIMesa_getapi;
@@ -39,7 +38,7 @@ typedef struct ggi_mesa_ext
 	void *private;
 } ggi_mesa_ext_t;
 
-#define LIBGGI_MESAEXT(vis) ((ggi_mesa_ext_t *)LIBGGI_EXT(vis,ggiMesaID))
+#define LIBGGI_MESAEXT(vis) ((ggi_mesa_ext_t *)LIBGGI_EXT(vis,_ggiMesaID))
 #define GGIMESA_PRIV(vis) ((LIBGGI_MESAEXT(vis)->priv))
 
 #endif /* _GGI_MISC_INT_H */

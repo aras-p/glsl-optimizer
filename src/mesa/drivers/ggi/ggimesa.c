@@ -43,25 +43,203 @@
 #include "texformat.h"
 #include "texstore.h"
 
-ggi_extid ggiMesaID = -1;
+/* We use LibGG to manage config files */
+#include <ggi/gg.h>
+
+
+/* XXX: Those #defines should be provided via 
+ * config.h
+ */
+#define GGIMESAPATHTAG	"pAtHTAg"
+#define GGIMESACONFDIR	"pAtHTAg/usr/local/etc/ggi"
+#define GGIMESATAGLEN	7
+#define GGIMESACONFFILE	"ggimesa.conf"
+
+
+/* Static variables
+ */
 static int _ggimesaLibIsUp = 0;
 static void *_ggimesaConfigHandle;
-
-static char ggimesaconffile[] = GGIMESACONFFILE;
+static char _ggimesaconfstub[512] = GGIMESACONFDIR;
+static char *_ggimesaconfdir = _ggimesaconfstub+GGIMESATAGLEN;
 
 int _ggimesaDebugSync = 0;
 uint32 _ggimesaDebugState = 0;
 
-static void gl_ggiUpdateState(GLcontext *ctx, GLuint new_state);
-static int changed(ggi_visual_t vis, int whatchanged);
 
 
+/* Extension ID. Defaulting to -1 should make segfault on abuse more likely...
+ */
+ggi_extid _ggiMesaID = -1;
+
+
+#define SUBLIB_PREFIX	"MesaGGIdl_"
+
+
+/*
+ * Returns the directory where global config files are kept
+ */
+ 
+const char *ggiMesaGetConfDir(void)
+{
+#ifdef __WIN32__
+	/* On Win32 we allow overriding of the compiled in path. */
+	const char *envdir = getenv("GGI_CONFDIR");
+	if (envdir) return envdir;
+#endif
+	return _ggimesaconfdir;
+}
+
+
+/* Dummy function which returns -1
+   We use this to reset the function pointers */
 static int _ggi_error(void)
 {
 	GGIMESADPRINT_CORE("_ggi_error() called\n");
 	
 	return -1;
 }
+
+
+static int changed(ggi_visual_t vis, int whatchanged)
+{
+	GLcontext *ctx;
+	ctx = _mesa_get_current_context();
+
+	GGIMESADPRINT_CORE("changed() called\n");
+		
+	switch (whatchanged) {
+	case GGI_CHG_APILIST:
+	{
+		char api[GGI_MAX_APILEN];
+		char args[GGI_MAX_APILEN];
+		int i;
+		const char *fname;
+		ggi_dlhandle *lib;
+
+		GLvisual *gl_vis = &(LIBGGI_MESAEXT(vis)->mesa_visual.gl_visual);
+		GLframebuffer *gl_fb = &(LIBGGI_MESAEXT(vis)->mesa_buffer);
+		
+		/* Initialize the framebuffer to provide all necessary
+		   buffers in software. The target libraries that are loaded
+		   next are free to modify this according to their
+		   capabilities. 
+		 */
+		 /* FIXME: if the target changes capabilities we'll leak 
+		    swrast's memory !!! Need to deallocate first */
+		_mesa_initialize_framebuffer(gl_fb, gl_vis,
+					 gl_vis->depthBits > 0,
+					 gl_vis->stencilBits > 0,
+					 gl_vis->accumRedBits > 0,
+					 gl_vis->alphaBits > 0);
+
+		for (i = 0; ggiGetAPI(vis, i, api, args) == 0; i++) {
+			strcat(api, "-mesa");
+			GGIMESADPRINT_CORE("GGIMesa: looking for"
+					"a sublib named %s\n", api);
+			fname = ggMatchConfig(_ggimesaConfigHandle, api, NULL);
+			if (fname == NULL) {
+				/* No special implementation for this sublib */
+				continue;
+			}
+			lib = ggiExtensionLoadDL(vis, fname, args, NULL,
+						 SUBLIB_PREFIX);
+		}
+
+		/* The targets have cleared everything they can do from 
+		   the framebuffer structure so we provide the rest in sw
+		 */
+		_swrast_alloc_buffers(gl_fb);
+		
+		break;
+	} 
+	}
+	return 0;
+}
+
+
+int ggiMesaInit()
+{
+	int err;
+	char *str;
+	char *conffile;
+	
+	GGIMESADPRINT_CORE("ggiMesaInit() called\n");
+	
+	_ggimesaLibIsUp++;
+	if (_ggimesaLibIsUp > 1) return 0; /* Initialize only at first call */
+	
+	str = getenv("GGIMESA_DEBUGSYNC");
+	if (str != NULL) {
+		_ggimesaDebugSync = 1;
+	}
+	
+	str = getenv("GGIMESA_DEBUG");
+	if (str != NULL) {
+		_ggimesaDebugState = atoi(str);
+		GGIMESADPRINT_CORE("%s Debugging=%d\n",
+			_ggimesaDebugSync ? "sync" : "async",
+			_ggimesaDebugState);
+	}
+	
+
+	conffile = malloc(strlen(ggiMesaGetConfDir()) + 1
+			  + strlen(GGIMESACONFFILE) +1);
+	if (conffile == NULL) {
+		fprintf(stderr, "GGIMesa: unable to allocate memory for config filename.\n");
+		return GGI_ENOMEM;
+	}
+	sprintf(conffile, "%s%c%s",
+		ggiMesaGetConfDir(), '/', GGIMESACONFFILE);
+	err = ggLoadConfig(conffile, &_ggimesaConfigHandle);
+	if (err != GGI_OK) {
+		fprintf(stderr, "GGIMesa: Couldn't open %s\n",
+			conffile);
+		free(conffile);
+		_ggimesaLibIsUp--;
+		return err;
+	}
+	free(conffile);
+	
+	_ggiMesaID = ggiExtensionRegister("GGIMesa",
+					 sizeof(struct ggi_mesa_ext), changed);
+	if (_ggiMesaID < 0) {
+		fprintf(stderr, "GGIMesa: failed to register as extension\n");
+		_ggimesaLibIsUp--;
+		ggFreeConfig(_ggimesaConfigHandle);
+		return _ggiMesaID;
+	}
+	
+	return 0;
+}
+
+int ggiMesaExit(void)
+{
+	int rc;
+
+	GGIMESADPRINT_CORE("ggiMesaExit() called\n");
+
+	if (!_ggimesaLibIsUp) return -1;
+
+	if (_ggimesaLibIsUp > 1) {
+		/* Exit only at last call */
+		_ggimesaLibIsUp--;
+		return 0;
+	}
+	
+	rc = ggiExtensionUnregister(_ggiMesaID);
+	ggFreeConfig(_ggimesaConfigHandle);
+
+	_ggimesaLibIsUp = 0;
+
+	return rc;
+}
+
+
+
+
+static void gl_ggiUpdateState(GLcontext *ctx, GLuint new_state);
+
 
 static void gl_ggiGetSize(GLframebuffer *fb, GLuint *width, GLuint *height)
 {
@@ -307,78 +485,6 @@ static void get_mode_info(ggi_visual_t vis, int *r, int *g, int *b,
 	printf("rgb (%d, %d, %d) db %d, rgb %d ci %d\n",*r,*g,*b,*db,*rgb,*ci);
 }
 	
-int ggiMesaInit()
-{
-	int err;
-	char *str;
-	
-	GGIMESADPRINT_CORE("ggiMesaInit() called\n");
-	
-	str = getenv("GGIMESA_DEBUGSYNC");
-	if (str != NULL) {
-		_ggimesaDebugSync = 1;
-	}
-	
-	str = getenv("GGIMESA_DEBUG");
-	if (str != NULL) {
-		_ggimesaDebugState = atoi(str);
-		GGIMESADPRINT_CORE("%s Debugging=%d\n",
-			_ggimesaDebugSync ? "sync" : "async",
-			_ggimesaDebugState);
-	}
-	
-	GGIMESADPRINT_CORE("ggiMesaInit()\n");
-	
-	_ggimesaLibIsUp++;
-	if (_ggimesaLibIsUp > 1)
-		return 0; /* Initialize only at first call */
-	
-	err = ggLoadConfig(ggimesaconffile, &_ggimesaConfigHandle);
-	if (err != GGI_OK)
-	{
-		GGIMESADPRINT_CORE("GGIMesa: Couldn't open %s\n",
-				   ggimesaconffile);
-		_ggimesaLibIsUp--;
-		return err;
-	}
-	
-	ggiMesaID = ggiExtensionRegister("GGIMesa",
-					 sizeof(struct ggi_mesa_ext), changed);
-	
-	if (ggiMesaID < 0)
-	{
-		GGIMESADPRINT_CORE("GGIMesa: failed to register as extension\n");
-		_ggimesaLibIsUp--;
-		ggFreeConfig(_ggimesaConfigHandle);
-		return ggiMesaID;
-	}
-	
-	return 0;
-}
-
-int ggiMesaExit(void)
-{
-	int rc;
-
-	GGIMESADPRINT_CORE("ggiMesaExit() called\n");
-
-	if (!_ggimesaLibIsUp)
-		return -1;
-
-	if (_ggimesaLibIsUp > 1)
-	{
-		/* Exit only at last call */
-		_ggimesaLibIsUp--;
-		return 0;
-	}
-	
-	rc = ggiExtensionUnregister(ggiMesaID);
-	ggFreeConfig(_ggimesaConfigHandle);
-
-	_ggimesaLibIsUp = 0;
-
-	return rc;
-}
 
 int ggiMesaAttach(ggi_visual_t vis)
 {
@@ -386,7 +492,7 @@ int ggiMesaAttach(ggi_visual_t vis)
 
 	GGIMESADPRINT_CORE("ggiMesaAttach() called\n");
 
-	rc = ggiExtensionAttach(vis, ggiMesaID);
+	rc = ggiExtensionAttach(vis, _ggiMesaID);
 	if (rc == 0)
 	{
 		int r, g, b, ci;
@@ -418,7 +524,7 @@ int ggiMesaDetach(ggi_visual_t vis)
 {
 	GGIMESADPRINT_CORE("ggiMesaDetach() called\n");
 	
-	return ggiExtensionDetach(vis, ggiMesaID);
+	return ggiExtensionDetach(vis, _ggiMesaID);
 }
  
 int ggiMesaExtendVisual(ggi_visual_t vis, GLboolean alpha_flag,
@@ -586,60 +692,5 @@ static void gl_ggiUpdateState(GLcontext *ctx, GLuint new_state)
 	}
 
 	LIBGGI_MESAEXT(ggi_ctx->ggi_visual)->update_state(ggi_ctx);
-}
-
-static int changed(ggi_visual_t vis, int whatchanged)
-{
-	GLcontext *ctx;
-	ctx = _mesa_get_current_context();
-
-	GGIMESADPRINT_CORE("changed() called\n");
-		
-	switch (whatchanged) {
-	case GGI_CHG_APILIST:
-	{
-		char api[GGI_API_MAXLEN];
-		char args[GGI_API_MAXLEN];
-		int i;
-		const char *fname;
-		ggi_dlhandle *lib;
-		GLvisual *gl_vis=&(LIBGGI_MESAEXT(vis)->mesa_visual.gl_visual);
-		GLframebuffer *gl_fb = &(LIBGGI_MESAEXT(vis)->mesa_buffer);
-		
-		/* Initialize the framebuffer to provide all necessary
-		   buffers in software. The target libraries that are loaded
-		   next are free to modify this according to their
-		   capabilities. 
-		 */
-		 /* FIXME: if the target changes capabilities we'll leak 
-		    swrast's memory !!! Need to deallocate first */
-		_mesa_initialize_framebuffer(gl_fb, gl_vis,
-					 gl_vis->depthBits > 0,
-					 gl_vis->stencilBits > 0,
-					 gl_vis->accumRedBits > 0,
-					 gl_vis->alphaBits > 0);
-
-		for (i = 0; ggiGetAPI(vis, i, api, args) == 0; i++)
-		{
-			strcat(api, "-mesa");
-			fname = ggMatchConfig(_ggimesaConfigHandle, api, NULL);
-			if (fname == NULL)
-			{
-				/* No special implementation for this sublib */
-				continue;
-			}
-			lib = ggiExtensionLoadDL(vis, fname, args, NULL,
-						 GGI_SYMNAME_PREFIX);
-		}
-
-		/* The targets have cleared everything they can do from 
-		   the framebuffer structure so we provide the rest in sw
-		 */
-		_swrast_alloc_buffers(gl_fb);
-		
-		break;
-	} 
-	}
-	return 0;
 }
 

@@ -75,15 +75,16 @@ static int do_setmode(ggi_visual *vis)
 
 	_ggiZapMode(vis, ~GGI_DL_OPDISPLAY);
 	priv->have_accel = 0;
-	for (id = 1; GGIMesa_fbdev_getapi(vis, id, libname, libargs) == 0; id++) 
-	{
+
+	for (id = 1; GGIMesa_fbdev_getapi(vis, id, libname, libargs) == 0; id++) {
 		if (_ggiOpenDL(vis, libname, libargs, NULL) == 0) {
-			fprintf(stderr, "display-fbdev-mesa: Error opening the "
+			GGIMESADPRINT_LIBS(stderr, "display-fbdev-mesa: Error opening the "
 				"%s (%s) library.\n", libname, libargs);
 			return GGI_EFATAL;
 		}
 
-		GGIMESADPRINT_CORE("Success in loading %s (%s)\n", libname, libargs);
+		GGIMESADPRINT_CORE("Success in loading %s (%s)\n",
+			libname, libargs);
 	}
 
 	if (priv->oldpriv->accel &&
@@ -93,7 +94,7 @@ static int do_setmode(ggi_visual *vis)
 		priv->have_accel = 0;
 	}
 	vis->accelactive = 0;
-	
+
 	ggiIndicateChange(vis, GGI_CHG_APILIST);
 
 	GGIMESADPRINT_CORE("display-fbdev-mesa: do_setmode SUCCESS\n");

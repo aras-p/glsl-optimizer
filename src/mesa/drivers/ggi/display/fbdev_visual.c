@@ -38,7 +38,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#define GGI_SYMNAME_PREFIX  "MesaGGIdl_"
 
 #ifdef HAVE_SYS_VT_H
 #include <sys/vt.h>
@@ -68,65 +67,28 @@ static accel_info accel_strings[] = {
 
 #define NUM_ACCELS	(sizeof(accel_strings)/sizeof(accel_info))
 
-/* FIXME: These should really be defined in the make system */
-#define CONF_FILE "/usr/local/etc/ggi/mesa/targets/fbdev.conf"
-void *_configHandle;
-char confstub[512] = CONF_FILE;
-char *conffile = confstub;
-
-static int changed(ggi_visual_t vis, int whatchanged)
-{
-	switch (whatchanged) {
-	case GGI_CHG_APILIST: {
-		char api[GGI_API_MAXLEN], args[GGI_API_MAXLEN];
-		int i;
-		const char *fname;
-		ggi_dlhandle *lib;
-			
-		for (i = 0; ggiGetAPI(vis, i, api, args) == 0; i++) {
-			strcat(api, "-mesa");
-			fname = ggMatchConfig(_configHandle, api, NULL);
-			if (fname == NULL) {
-				/* No special implementation for this sublib */
-				continue;
-			}
-				
-			lib = ggiExtensionLoadDL(vis, fname, args, NULL, GGI_SYMNAME_PREFIX);
-		}
-	}
-	break;
-	}
-	return 0;
-}
 
 
 static int GGIopen(ggi_visual *vis, struct ggi_dlhandle *dlh,
                    const char *args, void *argptr, uint32 *dlret)
 {
-	struct fbdev_priv_mesa *priv;
 	int err;
+	struct fbdev_priv_mesa *priv;
 	ggifunc_getapi *oldgetapi;
+
+
+	priv->oldpriv = LIBGGI_PRIVATE(vis);  /* Hook back */
 
 	GGIMESA_PRIV(vis) = priv = malloc(sizeof(struct fbdev_priv_mesa));
 	if (priv == NULL) {
-		fprintf(stderr, "Failed to allocate fbdev private data\n");
+		fprintf(stderr, "GGIMesa: Failed to allocate fbdev private data\n");
 		return GGI_ENOMEM;
 	}
-	
-	priv->oldpriv = LIBGGI_PRIVATE(vis);  /* Hook back */
-	
-	err = ggLoadConfig(conffile, &_configHandle);
-	if (err != GGI_OK) {
-		GGIMESADPRINT_CORE("display-fbdev: Couldn't open %s\n", conffile);
-		return err;
-	}
-	
-	LIBGGI_MESAEXT(vis)->update_state = NULL;
-	LIBGGI_MESAEXT(vis)->setup_driver = NULL;
 	
 	oldgetapi = vis->opdisplay->getapi;
 	vis->opdisplay->getapi = GGIMesa_fbdev_getapi;
 	changed(vis, GGI_CHG_APILIST);	
+
 	/* If the accel sublibs didn't sucessfuly hook a driver,
 	 * back up and keep looking */
 	if ((LIBGGI_MESAEXT(vis)->update_state == NULL) ||
@@ -142,6 +104,13 @@ static int GGIopen(ggi_visual *vis, struct ggi_dlhandle *dlh,
 
 static int GGIclose(ggi_visual *vis, struct ggi_dlhandle *dlh)
 {
+	struct fbdev_priv_mesa *priv = GGIMESA_PRIV(vis);
+
+	if (priv) {
+		LIBGGI_PRIVATE(vis) = priv->oldpriv;
+		free(priv);
+	}
+
 	return 0;
 }
 
