@@ -25,6 +25,7 @@
 
 #include "glheader.h"
 #include "imports.h"
+#include "bufferobj.h"
 #include "context.h"
 #include "enable.h"
 #include "enums.h"
@@ -59,6 +60,7 @@ update_array(GLcontext *ctx, struct gl_client_array *array,
 #if FEATURE_ARB_vertex_buffer_object
    array->BufferObj->RefCount--;
    if (array->BufferObj->RefCount <= 0) {
+      _mesa_remove_buffer_object( ctx, array->BufferObj );
       (*ctx->Driver.DeleteBuffer)( ctx, array->BufferObj );
    }
    array->BufferObj = ctx->Array.ArrayBufferObj;
