@@ -1,4 +1,4 @@
-/* $Id: t_context.c,v 1.13 2001/03/11 18:49:11 gareth Exp $ */
+/* $Id: t_context.c,v 1.14 2001/03/11 23:49:20 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -174,7 +174,7 @@ _tnl_wakeup_exec( GLcontext *ctx )
 
    /* Hook our functions into exec and compile dispatch tables.
     */
-   _mesa_restore_exec_vtxfmt( ctx, &tnl->vtxfmt );
+   _mesa_install_exec_vtxfmt( ctx, &tnl->vtxfmt );
 
    /* Call all appropriate driver callbacks to revive state.
     */

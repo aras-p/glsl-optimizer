@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.126 2001/03/11 18:49:11 gareth Exp $ */
+/* $Id: context.c,v 1.127 2001/03/11 23:49:20 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1436,6 +1436,7 @@ _mesa_initialize_context( GLcontext *ctx,
    ctx->SavePrefersFloat = GL_FALSE;
 
    /* Neutral tnl module stuff */
+   _mesa_init_exec_vtxfmt( ctx );
    ctx->TnlModule.Current = NULL;
    ctx->TnlModule.SwapCount = 0;
 

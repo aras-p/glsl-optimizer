@@ -1,4 +1,4 @@
-/* $Id: vtxfmt.c,v 1.2 2001/03/11 18:49:11 gareth Exp $ */
+/* $Id: vtxfmt.c,v 1.3 2001/03/11 23:49:20 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -149,27 +149,32 @@ static void install_vtxfmt( struct _glapi_table *tab, GLvertexformat *vfmt )
 }
 
 
+void _mesa_init_exec_vtxfmt( GLcontext *ctx )
+{
+   install_vtxfmt( ctx->Exec, &neutral_vtxfmt );
+}
+
 void _mesa_install_exec_vtxfmt( GLcontext *ctx, GLvertexformat *vfmt )
 {
-   ctx->TnlModule.Current = vfmt;
-   install_vtxfmt( ctx->Exec, &neutral_vtxfmt );
-   if (ctx->ExecPrefersFloat != vfmt->prefer_float_colors)
+   struct gl_tnl_module *tnl = &(ctx->TnlModule);
+
+   tnl->Current = vfmt;
+   _mesa_restore_exec_vtxfmt( ctx );
+   if ( ctx->ExecPrefersFloat != vfmt->prefer_float_colors )
       _mesa_loopback_prefer_float( ctx->Exec, vfmt->prefer_float_colors );
 }
 
 void _mesa_install_save_vtxfmt( GLcontext *ctx, GLvertexformat *vfmt )
 {
    install_vtxfmt( ctx->Save, vfmt );
-   if (ctx->SavePrefersFloat != vfmt->prefer_float_colors)
+   if ( ctx->SavePrefersFloat != vfmt->prefer_float_colors )
       _mesa_loopback_prefer_float( ctx->Save, vfmt->prefer_float_colors );
 }
 
-void _mesa_restore_exec_vtxfmt( GLcontext *ctx, GLvertexformat *vfmt )
+void _mesa_restore_exec_vtxfmt( GLcontext *ctx )
 {
    struct gl_tnl_module *tnl = &(ctx->TnlModule);
    GLuint i;
-
-   tnl->Current = vfmt;
 
    /* Restore the neutral tnl module wrapper.
     */

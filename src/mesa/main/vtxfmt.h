@@ -1,4 +1,4 @@
-/* $Id: vtxfmt.h,v 1.2 2001/03/11 18:49:11 gareth Exp $ */
+/* $Id: vtxfmt.h,v 1.3 2001/03/11 23:49:20 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,9 +31,11 @@
 #ifndef _VTXFMT_H_
 #define _VTXFMT_H_
 
+extern void _mesa_init_exec_vtxfmt( GLcontext *ctx );
+
 extern void _mesa_install_exec_vtxfmt( GLcontext *ctx, GLvertexformat *vfmt );
 extern void _mesa_install_save_vtxfmt( GLcontext *ctx, GLvertexformat *vfmt );
 
-extern void _mesa_restore_exec_vtxfmt( GLcontext *ctx, GLvertexformat *vfmt );
+extern void _mesa_restore_exec_vtxfmt( GLcontext *ctx );
 
 #endif
