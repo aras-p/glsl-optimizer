@@ -115,7 +115,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define SIS_MAX_TEXTURE_LEVELS		11
 
 typedef struct {
-   GLbyte *Data;		/* Pointer to texture in offscreen */
+   GLubyte *Data;		/* Pointer to texture in offscreen */
    GLuint memType;		/* VIDEO_TYPE or AGP_TYPE */
    void *handle;		/* Handle for sisFree*() */
    GLuint pitch;
