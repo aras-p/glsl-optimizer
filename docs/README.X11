@@ -28,6 +28,20 @@ If you have compilation problems you should try to fix them and return the
 patches to the author.
 
 
+Notes on assembly language optimizations:
+
+   When using the old-style Makefiles, you can specify a configuration
+   that uses X86 assembly language optimizations (linux-3dnow for example).
+
+   The detection of MMX, 3DNow!, PIII/SSE, etc capability is done at
+   runtime.  That means you can compile Mesa for 3DNow! optimizations
+   even if you don't have an AMD CPU.
+
+   However, your Linux binutils and assembler must understand the
+   special instructions in order to compile them.  If you have
+   compilation problems, try upgrading your binutils.
+
+
 Header and library files:
    After you've compiled Mesa and tried the demos I recommend the following
    procedure for "installing" Mesa.
@@ -301,4 +315,4 @@ Summary of X-related environment variables:
 
 
 ----------------------------------------------------------------------
-$Id: README.X11,v 3.3 1999/09/15 16:39:01 brianp Exp $
+$Id: README.X11,v 3.4 2000/01/25 17:18:52 brianp Exp $
