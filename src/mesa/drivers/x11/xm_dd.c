@@ -843,10 +843,27 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
       int srcY = unpack->SkipRows;
       int rowLength = unpack->RowLength ? unpack->RowLength : width;
 
-      pixels = _swrast_validate_pbo_access(unpack, width, height, 1,
-                                           format, type, (GLvoid *) pixels);
-      if (!pixels)
-         return;
+      if (unpack->BufferObj->Name) {
+         /* unpack from PBO */
+         GLubyte *buf;
+         if (!_mesa_validate_pbo_access(unpack, width, height, 1,
+                                        format, type, pixels)) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glDrawPixels(invalid PBO access)");
+            return;
+         }
+         buf = (GLubyte *) ctx->Driver.MapBuffer(ctx,
+                                                 GL_PIXEL_UNPACK_BUFFER_EXT,
+                                                 GL_READ_ONLY_ARB,
+                                                 unpack->BufferObj);
+         if (!buf) {
+            /* buffer is already mapped - that's an error */
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glDrawPixels(PBO is mapped)");
+            return;
+         }
+         pixels = ADD_POINTERS(buf, pixels);
+      }
 
       if (_swrast_clip_pixelrect(ctx, &dstX, &dstY, &w, &h, &srcX, &srcY)) {
          /* This is a little tricky since all coordinates up to now have
@@ -871,6 +888,11 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
          /* flip Y axis for dest position */
          dstY = FLIP(xmesa->xm_draw_buffer, dstY) - h + 1;
          XPutImage(dpy, buffer, gc, &ximage, 0, 0, dstX, dstY, w, h);
+      }
+
+      if (unpack->BufferObj->Name) {
+         ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
+                                 unpack->BufferObj);
       }
    }
    else {
@@ -924,10 +946,27 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
       int srcY = unpack->SkipRows;
       int rowLength = unpack->RowLength ? unpack->RowLength : width;
 
-      pixels = _swrast_validate_pbo_access(unpack, width, height, 1,
-                                           format, type, (GLvoid *) pixels);
-      if (!pixels)
-         return;
+      if (unpack->BufferObj->Name) {
+         /* unpack from PBO */
+         GLubyte *buf;
+         if (!_mesa_validate_pbo_access(unpack, width, height, 1,
+                                        format, type, pixels)) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glDrawPixels(invalid PBO access)");
+            return;
+         }
+         buf = (GLubyte *) ctx->Driver.MapBuffer(ctx,
+                                                 GL_PIXEL_UNPACK_BUFFER_EXT,
+                                                 GL_READ_ONLY_ARB,
+                                                 unpack->BufferObj);
+         if (!buf) {
+            /* buffer is already mapped - that's an error */
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glDrawPixels(PBO is mapped)");
+            return;
+         }
+         pixels = ADD_POINTERS(buf, pixels);
+      }
 
       if (_swrast_clip_pixelrect(ctx, &dstX, &dstY, &w, &h, &srcX, &srcY)) {
          /* This is a little tricky since all coordinates up to now have
@@ -952,6 +991,11 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
          /* flip Y axis for dest position */
          dstY = FLIP(xmesa->xm_draw_buffer, dstY) - h + 1;
          XPutImage(dpy, buffer, gc, &ximage, 0, 0, dstX, dstY, w, h);
+      }
+
+      if (unpack->BufferObj->Name) {
+         ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
+                                 unpack->BufferObj);
       }
    }
    else {

@@ -771,25 +771,3 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
       _mesa_debug(ctx, "\n");
    }
 }
-
-
-/**
- * Validate access to a PBO to be sure we're not going to read/write
- * out of buffer bounds.
- */
-GLvoid *
-_swrast_validate_pbo_access(const struct gl_pixelstore_attrib *pack,
-                            GLsizei width, GLsizei height, GLsizei depth,
-                            GLenum format, GLenum type, GLvoid *ptr)
-{
-   if (pack->BufferObj->Name == 0) {
-      /* no PBO */
-      return ptr;
-   }
-   else if (_mesa_validate_pbo_access(pack, width, height, depth, format,
-                                      type, ptr)) {
-      return ADD_POINTERS(pack->BufferObj->Data, ptr);
-   }
-   /* bad access! */
-   return NULL;
-}

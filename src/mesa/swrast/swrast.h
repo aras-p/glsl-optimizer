@@ -201,11 +201,6 @@ extern void
 _swrast_print_vertex( GLcontext *ctx, const SWvertex *v );
 
 
-extern GLvoid *
-_swrast_validate_pbo_access(const struct gl_pixelstore_attrib *pack,
-                            GLsizei width, GLsizei height, GLsizei depth,
-                            GLenum format, GLenum type, GLvoid *ptr);
-
 /*
  * Imaging fallbacks (a better solution should be found, perhaps
  * moving all the imaging fallback code to a new module) 
