@@ -44,9 +44,6 @@
 /* TODO:
  *    Fragment Program Stuff:
  *    -----------------------------------------------------
- *    - How does negating on SWZ work?? If any of the components have a -,
- *      negate?
- *    - how does thing like 'foo[N]' work in src registers?
  *
  *    - things from Michal's email
  *       + overflow on atoi
@@ -60,11 +57,27 @@
  *
  *    Vertex Program Stuff:
  *    -----------------------------------------------------
- *    - throw an error if we mess with position and have  are position invar
+ *    - Optimize param array usage and count limits correctly, see spec,
+ *         section 2.14.3.7        
+ *       + Record if an array is reference absolutly or relatively (or both)
+ *       + For absolute arrays, store a bitmap of accesses
+ *       + For single parameters, store an access flag
+ *       + After parsing, make a parameter cleanup and merging pass, where
+ *           relative arrays are layed out first, followed by abs arrays, and
+ *           finally single state.
+ *       + Remap offsets for param src and dst registers
+ *       + Now we can properly count parameter usage
+ *                                                                         
+ *    - Multiple state binding errors in param arrays (see spec, just before
+ *         section 2.14.3.3)
  *    - grep for XXX
  *    
  *    Mesa Stuff
  *    -----------------------------------------------------
+ *    - User clipping planes vs. PositionInvariant 
+ *    - Is it sufficient to just multiply by the mvp to transform in the
+ *        PositionInvariant case? Or do we need something more involved?
+ *                    
  *    - vp_src swizzle is GLubyte, fp_src swizzle is GLuint
  *    - fetch state listed in program_parameters list
  *       + WTF should this go???
@@ -4399,6 +4412,10 @@ parse_declaration (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
 /**
  * Handle the parsing out of a masked destination register
  *
+ * If we are a vertex program, make sure we don't write to
+ * result.position of we have specified that the program is
+ * position invariant
+ * 
  * \param File      - The register file we write to
  * \param Index     - The register index we write to
  * \param WriteMask - The mask controlling which components we write (1->write)
@@ -4468,6 +4485,16 @@ parse_masked_dst_reg (GLcontext * ctx, GLubyte ** inst,
          return 1;
    }
 
+
+   /* Position invariance test */	
+   if ((Program->HintPositionInvariant) && (*File == PROGRAM_OUTPUT) &&
+      (*Index == 0))   {
+      _mesa_set_program_error (ctx, Program->Position,
+                  "Vertex program specified position invariance and wrote vertex position");
+      _mesa_error (ctx, GL_INVALID_OPERATION,
+                  "Vertex program specified position invariance and wrote vertex position");
+   }
+	
    /* And then the mask.
     *  w,a -> bit 0
     *  z,b -> bit 1
@@ -5785,7 +5812,8 @@ parse_arb_program (GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
                   break;
 
                case ARB_POSITION_INVARIANT:
-                  Program->HintPositionInvariant = 1;
+                  if (Program->type == GL_VERTEX_PROGRAM_ARB)						
+                     Program->HintPositionInvariant = 1;
                   break;
             }
             break;
@@ -5794,6 +5822,17 @@ parse_arb_program (GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
             Program->Position = parse_position (&inst);
 
             if (Program->type == GL_FRAGMENT_PROGRAM_ARB) {
+
+               /* Check the instruction count 
+                * XXX: Does END count as an instruction?
+                */						  
+               if (Program->Base.NumInstructions+1 == MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS) {
+                  _mesa_set_program_error (ctx, Program->Position, 
+                      "Max instruction count exceeded!");
+                  _mesa_error (ctx, GL_INVALID_OPERATION,
+                      "Max instruction count exceeded!");
+               }
+					
                /* Realloc Program->FPInstructions */
                Program->FPInstructions =
                   (struct fp_instruction *) _mesa_realloc (Program->FPInstructions,
@@ -5806,6 +5845,16 @@ parse_arb_program (GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
                                                                     
             }
             else {
+               /* Check the instruction count 
+                * XXX: Does END count as an instruction?
+                */						  
+               if (Program->Base.NumInstructions+1 == MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS) {
+                  _mesa_set_program_error (ctx, Program->Position, 
+                      "Max instruction count exceeded!");
+                  _mesa_error (ctx, GL_INVALID_OPERATION,
+                      "Max instruction count exceeded!");
+               }
+
                /* Realloc Program->VPInstructions */
                Program->VPInstructions =
                   (struct vp_instruction *) _mesa_realloc (Program->VPInstructions,
