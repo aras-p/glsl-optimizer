@@ -109,70 +109,31 @@
 
 
 
-
-/* 16 bit, 565 rgb color spanline and pixel functions
- */
 #define Y_FLIP(_y) (height - _y - 1)
 
-#undef INIT_MONO_PIXEL
-#define INIT_MONO_PIXEL(p, color) \
-  p = PACK_COLOR_565( color[0], color[1], color[2] )
-
-
-#define WRITE_RGBA( _x, _y, r, g, b, a )				\
-   *(GLushort *)(buf + _x*2 + _y*pitch)  = ( (((int)r & 0xf8) << 8) |	\
-		                             (((int)g & 0xfc) << 3) |	\
-		                             (((int)b & 0xf8) >> 3))
-
-#define WRITE_PIXEL( _x, _y, p )  \
-   *(GLushort *)(buf + _x*2 + _y*pitch) = p
-
-#define READ_RGBA( rgba, _x, _y )				\
-do {								\
-   GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);	\
-   rgba[0] = (((p >> 11) & 0x1f) * 255) / 31;			\
-   rgba[1] = (((p >>  5) & 0x3f) * 255) / 63;			\
-   rgba[2] = (((p >>  0) & 0x1f) * 255) / 31;			\
-   rgba[3] = 255;						\
-} while(0)
-
-#define TAG(x) mga##x##_565
-#include "spantmp.h"
-
-
-
-
-
-/* 32 bit, 8888 argb color spanline and pixel functions
+/* 16 bit, RGB565 color spanline and pixel functions
  */
 
-#undef INIT_MONO_PIXEL
-#define INIT_MONO_PIXEL(p, color) \
-  p = PACK_COLOR_8888( color[3], color[0], color[1], color[2] )
+#define GET_SRC_PTR(_x, _y) (read_buf + _x * 2 + _y * pitch)
+#define GET_DST_PTR(_x, _y) (     buf + _x * 2 + _y * pitch)
+#define SPANTMP_PIXEL_FMT GL_RGB
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
 
+#define TAG(x)    mga##x##_565
+#define TAG2(x,y) mga##x##_565##y
+#include "spantmp2.h"
 
-#define WRITE_RGBA(_x, _y, r, g, b, a)			\
-    *(GLuint *)(buf + _x*4 + _y*pitch) = ((r << 16) |	\
-					  (g << 8)  |	\
-					  (b << 0)  |	\
-					  (a << 24) )
+/* 32 bit, ARGB8888 color spanline and pixel functions
+ */
 
-#define WRITE_PIXEL(_x, _y, p)			\
-    *(GLuint *)(buf + _x*4 + _y*pitch) = p
+#define GET_SRC_PTR(_x, _y) (read_buf + _x * 4 + _y * pitch)
+#define GET_DST_PTR(_x, _y) (     buf + _x * 4 + _y * pitch)
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
 
-#define READ_RGBA(rgba, _x, _y)					\
-    do {							\
-	GLuint p = *(GLuint *)(read_buf + _x*4 + _y*pitch);	\
-	rgba[0] = (p >> 16) & 0xff;				\
-	rgba[1] = (p >> 8)  & 0xff;				\
-	rgba[2] = (p >> 0)  & 0xff;				\
-	rgba[3] = 0xff;						\
-    } while (0)
-
-#define TAG(x) mga##x##_8888
-#include "spantmp.h"
-
-
+#define TAG(x)    mga##x##_8888
+#define TAG2(x,y) mga##x##_8888##y
+#include "spantmp2.h"
 
 
 /* 16 bit depthbuffer functions.
@@ -260,6 +221,14 @@ static void mgaDDSetBuffer(GLcontext *ctx, GLframebuffer *buffer,
        ? mmesa->driDrawable : mmesa->driReadable;
 }
 
+/**
+ * Initialize the driver callbacks for the read / write span functions.
+ *
+ * \bug
+ * To really support RGB888 and RGBA8888 visuals, we need separate read and
+ * write routines for 888 and 8888.  We also need to determine whether or not
+ * the visual has destination alpha.
+ */
 void mgaDDInitSpanFuncs( GLcontext *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
@@ -269,13 +238,7 @@ void mgaDDInitSpanFuncs( GLcontext *ctx )
 
    switch (mmesa->mgaScreen->cpp) {
    case 2:
-      swdd->WriteRGBASpan = mgaWriteRGBASpan_565;
-      swdd->WriteRGBSpan = mgaWriteRGBSpan_565;
-      swdd->WriteMonoRGBASpan = mgaWriteMonoRGBASpan_565;
-      swdd->WriteRGBAPixels = mgaWriteRGBAPixels_565;
-      swdd->WriteMonoRGBAPixels = mgaWriteMonoRGBAPixels_565;
-      swdd->ReadRGBASpan = mgaReadRGBASpan_565;
-      swdd->ReadRGBAPixels = mgaReadRGBAPixels_565;
+      mgaInitPointers_565( swdd );
 
       swdd->ReadDepthSpan = mgaReadDepthSpan_16;
       swdd->WriteDepthSpan = mgaWriteDepthSpan_16;
@@ -284,13 +247,7 @@ void mgaDDInitSpanFuncs( GLcontext *ctx )
       break;
 
    case 4:
-      swdd->WriteRGBASpan = mgaWriteRGBASpan_8888;
-      swdd->WriteRGBSpan = mgaWriteRGBSpan_8888;
-      swdd->WriteMonoRGBASpan = mgaWriteMonoRGBASpan_8888;
-      swdd->WriteRGBAPixels = mgaWriteRGBAPixels_8888;
-      swdd->WriteMonoRGBAPixels = mgaWriteMonoRGBAPixels_8888;
-      swdd->ReadRGBASpan = mgaReadRGBASpan_8888;
-      swdd->ReadRGBAPixels = mgaReadRGBAPixels_8888;
+      mgaInitPointers_8888( swdd );
       
       if (!mmesa->hw_stencil) {
 	 swdd->ReadDepthSpan = mgaReadDepthSpan_32;
