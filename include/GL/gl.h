@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.56 2001/05/29 15:44:06 brianp Exp $ */
+/* $Id: gl.h,v 1.57 2001/06/14 21:37:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -852,7 +852,7 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 #define GL_CLIENT_PIXEL_STORE_BIT		0x00000001
 #define GL_CLIENT_VERTEX_ARRAY_BIT		0x00000002
 #define GL_ALL_CLIENT_ATTRIB_BITS 		0xFFFFFFFF
-
+#define GL_CLIENT_ALL_ATTRIB_BITS 		0xFFFFFFFF
 
 
 
