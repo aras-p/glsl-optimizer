@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  6.3
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -194,7 +193,7 @@ typedef CRITICAL_SECTION _glthread_Mutex;
  * We wrap it again for GL.
  */
 #ifdef XTHREADS
-#include "Xthreads.h"
+#include <X11/Xthreads.h>
 
 typedef struct {
    xthread_key_t key;
