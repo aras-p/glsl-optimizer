@@ -108,7 +108,9 @@ typedef int GLfixed;
 /*
  * Fixed point arithmetic macros
  */
+#ifndef FIXED_FRAC_BITS
 #define FIXED_FRAC_BITS 11
+#endif
 
 #define FIXED_SHIFT     FIXED_FRAC_BITS
 #define FIXED_ONE       (1 << FIXED_SHIFT)
@@ -117,7 +119,9 @@ typedef int GLfixed;
 #define FIXED_INT_MASK  (~FIXED_FRAC_MASK)
 #define FIXED_EPSILON   1
 #define FIXED_SCALE     ((float) FIXED_ONE)
+#define FIXED_DBL_SCALE ((double) FIXED_ONE)
 #define FloatToFixed(X) (IROUND((X) * FIXED_SCALE))
+#define FixedToDouble(X) ((X) * (1.0 / FIXED_DBL_SCALE))
 #define IntToFixed(I)   ((I) << FIXED_SHIFT)
 #define FixedToInt(X)   ((X) >> FIXED_SHIFT)
 #define FixedToUns(X)   (((unsigned int)(X)) >> FIXED_SHIFT)
