@@ -354,11 +354,11 @@ void _mesa_init_all_x86_transform_asm( void )
       check_os_sse_support();
    }
    if ( cpu_has_xmm ) {
-      if ( getenv( "MESA_NO_SSE" ) == 0 ) {
+      if ( 0 && getenv( "MESA_NO_SSE" ) == 0 ) {
          message( "SSE cpu detected.\n" );
          _mesa_init_sse_transform_asm();
       } else {
-         message( "SSE cpu detected, but switched off by user.\n" );
+/*          message( "SSE cpu detected, but switched off by user.\n" ); */
          _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
       }
    }
