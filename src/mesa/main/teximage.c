@@ -1954,7 +1954,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                for (col = 0; col < width; col++) {
                   (*texImage->FetchTexelc)(texImage, col, row, img, rgba[col]);
                }
-               _mesa_pack_rgba_span(ctx, width, (const GLchan (*)[4])rgba,
+               _mesa_pack_rgba_span_chan(ctx, width, (const GLchan (*)[4])rgba,
                                     format, type, dest, &ctx->Pack,
                                     0 /* no image transfer */);
             } /* format */

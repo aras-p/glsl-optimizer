@@ -802,7 +802,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       for (row = 0; row < height; row++) {
          const GLvoid *source = _mesa_image_address(unpack,
                   pixels, width, height, format, type, 0, row, 0);
-         _mesa_unpack_float_color_span(ctx, width, GL_RGBA, (GLfloat *) dest,
+         _mesa_unpack_color_span_float(ctx, width, GL_RGBA, (GLfloat *) dest,
                                       format, type, source, unpack,
                                       transferOps & IMAGE_PRE_CONVOLUTION_BITS,
                                       GL_FALSE);
@@ -856,7 +856,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
             span.arrayMask = arrayMask;
             span.interpMask = interpMask;
 
-            _mesa_unpack_chan_color_span(ctx, span.end, GL_RGBA,
+            _mesa_unpack_color_span_chan(ctx, span.end, GL_RGBA,
                                          (GLchan *) span.array->rgba,
                                          format, type, source, unpack,
                                          transferOps);

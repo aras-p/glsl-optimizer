@@ -198,7 +198,7 @@ store_colortable_entries(GLcontext *ctx, struct gl_color_table *table,
       GLfloat *tableF;
       GLint i;
 
-      _mesa_unpack_float_color_span(ctx,
+      _mesa_unpack_color_span_float(ctx,
 				    count,          /* number of pixels */
 				    table->Format,  /* dest format */
                                     tempTab,        /* dest address */
@@ -261,7 +261,7 @@ store_colortable_entries(GLcontext *ctx, struct gl_color_table *table,
       /* non-float (GLchan) */
       const GLint comps = _mesa_components_in_format(table->Format);
       GLchan *dest = (GLchan *) table->Table + start * comps;
-      _mesa_unpack_chan_color_span(ctx, count,         /* number of entries */
+      _mesa_unpack_color_span_chan(ctx, count,         /* number of entries */
 				   table->Format,      /* dest format */
 				   dest,               /* dest address */
                                    format, type, data, /* src data */
@@ -862,7 +862,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
          return;
    }
 
-   _mesa_pack_rgba_span(ctx, table->Size, (const GLchan (*)[4]) rgba,
+   _mesa_pack_rgba_span_chan(ctx, table->Size, (const GLchan (*)[4]) rgba,
                         format, type, data, &ctx->Pack, GL_FALSE);
 }
 

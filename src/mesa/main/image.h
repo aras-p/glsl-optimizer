@@ -97,7 +97,7 @@ _mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
 
 
 extern void
-_mesa_pack_float_rgba_span( GLcontext *ctx,
+_mesa_pack_rgba_span_float( GLcontext *ctx,
                             GLuint n, CONST GLfloat rgba[][4],
                             GLenum dstFormat, GLenum dstType, GLvoid *dstAddr,
                             const struct gl_pixelstore_attrib *dstPacking,
@@ -105,7 +105,7 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
 
 
 extern void
-_mesa_pack_rgba_span( GLcontext *ctx,
+_mesa_pack_rgba_span_chan( GLcontext *ctx,
                       GLuint n, CONST GLchan rgba[][4],
                       GLenum dstFormat, GLenum dstType, GLvoid *dstAddr,
                       const struct gl_pixelstore_attrib *dstPacking,
@@ -113,7 +113,7 @@ _mesa_pack_rgba_span( GLcontext *ctx,
 
 
 extern void
-_mesa_unpack_chan_color_span( GLcontext *ctx,
+_mesa_unpack_color_span_chan( GLcontext *ctx,
                               GLuint n, GLenum dstFormat, GLchan dest[],
                               GLenum srcFormat, GLenum srcType,
                               const GLvoid *source,
@@ -122,7 +122,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
 
 
 extern void
-_mesa_unpack_float_color_span( GLcontext *ctx,
+_mesa_unpack_color_span_float( GLcontext *ctx,
                                GLuint n, GLenum dstFormat, GLfloat dest[],
                                GLenum srcFormat, GLenum srcType,
                                const GLvoid *source,

@@ -917,7 +917,7 @@ _mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
  * glGetConvolutionFilter(), etc.
  */
 void
-_mesa_pack_float_rgba_span( GLcontext *ctx,
+_mesa_pack_rgba_span_float( GLcontext *ctx,
                             GLuint n, CONST GLfloat rgbaIn[][4],
                             GLenum dstFormat, GLenum dstType,
                             GLvoid *dstAddr,
@@ -1897,7 +1897,7 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
          }
          break;
       default:
-         _mesa_problem(ctx, "bad type in _mesa_pack_float_rgba_span");
+         _mesa_problem(ctx, "bad type in _mesa_pack_rgba_span_float");
    }
 }
 
@@ -1918,7 +1918,7 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
  *         transferOps - bitmask of IMAGE_*_BIT operations to apply
  */
 void
-_mesa_pack_rgba_span( GLcontext *ctx,
+_mesa_pack_rgba_span_chan( GLcontext *ctx,
                       GLuint n, CONST GLchan srcRgba[][4],
                       GLenum dstFormat, GLenum dstType,
                       GLvoid *dstAddr,
@@ -1969,7 +1969,7 @@ _mesa_pack_rgba_span( GLcontext *ctx,
          rgba[i][BCOMP] = CHAN_TO_FLOAT(srcRgba[i][BCOMP]);
          rgba[i][ACOMP] = CHAN_TO_FLOAT(srcRgba[i][ACOMP]);
       }
-      _mesa_pack_float_rgba_span(ctx, n, (const GLfloat (*)[4]) rgba,
+      _mesa_pack_rgba_span_float(ctx, n, (const GLfloat (*)[4]) rgba,
                                  dstFormat, dstType, dstAddr,
                                  dstPacking, transferOps);
       UNDEFARRAY(rgba);  /* mac 32k limitation */
@@ -2701,7 +2701,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
  * XXX perhaps expand this to process whole images someday.
  */
 void
-_mesa_unpack_chan_color_span( GLcontext *ctx,
+_mesa_unpack_color_span_chan( GLcontext *ctx,
                               GLuint n, GLenum dstFormat, GLchan dest[],
                               GLenum srcFormat, GLenum srcType,
                               const GLvoid *source,
@@ -3095,7 +3095,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
 
 
 void
-_mesa_unpack_float_color_span( GLcontext *ctx,
+_mesa_unpack_color_span_float( GLcontext *ctx,
                                GLuint n, GLenum dstFormat, GLfloat dest[],
                                GLenum srcFormat, GLenum srcType,
                                const GLvoid *source,
@@ -3302,7 +3302,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
             dstLuminanceIndex = dstIntensityIndex = -1;
             break;
          default:
-            _mesa_problem(ctx, "bad dstFormat in _mesa_unpack_float_color_span()");
+            _mesa_problem(ctx, "bad dstFormat in _mesa_unpack_color_span_float()");
             UNDEFARRAY(rgba);  /* mac 32k limitation */
             return;
       }

@@ -409,7 +409,7 @@ read_rgba_pixels( GLcontext *ctx,
             }
             _mesa_map_ci_to_rgba_chan(ctx, readWidth, index, rgba);
          }
-         _mesa_pack_rgba_span(ctx, readWidth, (const GLchan (*)[4]) rgba,
+         _mesa_pack_rgba_span_chan(ctx, readWidth, (const GLchan (*)[4]) rgba,
                               GL_RGBA, GL_FLOAT, dest, &_mesa_native_packing,
                               transferOps & IMAGE_PRE_CONVOLUTION_BITS);
          dest += width * 4;
@@ -431,7 +431,7 @@ read_rgba_pixels( GLcontext *ctx,
          GLvoid *dest;
          dest = _mesa_image_address(packing, pixels, readWidth, height,
                                     format, type, 0, row, 0);
-         _mesa_pack_float_rgba_span(ctx, readWidth,
+         _mesa_pack_rgba_span_float(ctx, readWidth,
                                     (const GLfloat (*)[4]) src,
                                     format, type, dest, packing,
                                     transferOps & IMAGE_POST_CONVOLUTION_BITS);
@@ -468,7 +468,7 @@ read_rgba_pixels( GLcontext *ctx,
             CHECKARRAY(rgbaf, return);  /* mac 32k limitation */
             _mesa_chan_to_float_span(ctx, readWidth,
                                      (CONST GLchan (*)[4]) rgba, rgbaf);
-            _mesa_pack_float_rgba_span(ctx, readWidth,
+            _mesa_pack_rgba_span_float(ctx, readWidth,
                                        (CONST GLfloat (*)[4]) rgbaf,
                                        format, type, dst, packing,
                                        ctx->_ImageTransferState);
@@ -476,7 +476,7 @@ read_rgba_pixels( GLcontext *ctx,
          }
          else {
             /* GLubytes are fine */
-            _mesa_pack_rgba_span(ctx, readWidth, (CONST GLchan (*)[4]) rgba,
+            _mesa_pack_rgba_span_chan(ctx, readWidth, (CONST GLchan (*)[4]) rgba,
                                  format, type, dst, packing,
                                  ctx->_ImageTransferState);
          }

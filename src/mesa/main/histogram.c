@@ -719,7 +719,7 @@ _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvo
       minmax[1][GCOMP] = CLAMP(ctx->MinMax.Max[GCOMP], 0.0F, 1.0F);
       minmax[1][BCOMP] = CLAMP(ctx->MinMax.Max[BCOMP], 0.0F, 1.0F);
       minmax[1][ACOMP] = CLAMP(ctx->MinMax.Max[ACOMP], 0.0F, 1.0F);
-      _mesa_pack_float_rgba_span(ctx, 2, (CONST GLfloat (*)[4]) minmax,
+      _mesa_pack_rgba_span_float(ctx, 2, (CONST GLfloat (*)[4]) minmax,
                                  format, type, values, &ctx->Pack, 0);
    }
 

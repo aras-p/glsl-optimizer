@@ -359,7 +359,7 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
                const GLvoid *src = _mesa_image_address(srcPacking,
                                               srcAddr, srcWidth, srcHeight,
                                               srcFormat, srcType, img, row, 0);
-               _mesa_unpack_float_color_span(ctx, srcWidth, GL_RGBA, dstf,
+               _mesa_unpack_color_span_float(ctx, srcWidth, GL_RGBA, dstf,
                          srcFormat, srcType, src, srcPacking,
                          transferOps & IMAGE_PRE_CONVOLUTION_BITS,
                          GL_TRUE);
@@ -389,7 +389,7 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
                  + (dstZoffset + img) * (dstImageStride / sizeof(GLchan))
                  + dstYoffset * (dstRowStride / sizeof(GLchan));
             for (row = 0; row < convHeight; row++) {
-               _mesa_pack_float_rgba_span(ctx, convWidth,
+               _mesa_pack_rgba_span_float(ctx, convWidth,
                                           (const GLfloat (*)[4]) srcf,
                                           texDestFormat, CHAN_TYPE,
                                           dest, &_mesa_native_packing,
@@ -418,7 +418,7 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
                const GLvoid *srcRow = _mesa_image_address(srcPacking,
                                               srcAddr, srcWidth, srcHeight,
                                               srcFormat, srcType, img, row, 0);
-               _mesa_unpack_chan_color_span(ctx, srcWidth, texDestFormat,
+               _mesa_unpack_color_span_chan(ctx, srcWidth, texDestFormat,
                                        destRow, srcFormat, srcType, srcRow,
                                        srcPacking, transferOps);
                destRow += (dstRowStride / sizeof(GLchan));
