@@ -252,6 +252,14 @@ static void Init( void )
    printf("LOD bias range: [%g, %g]\n", -maxBias, maxBias);
    BiasMin = -100 * maxBias;
    BiasMax =  100 * maxBias;
+
+   /* Since we have (about) 8 mipmap levels, no need to bias beyond
+    * the range [-1, +8].
+    */
+   if (BiasMin < -100)
+      BiasMin = -100;
+   if (BiasMax > 800)
+      BiasMax = 800;
 }
 
 
