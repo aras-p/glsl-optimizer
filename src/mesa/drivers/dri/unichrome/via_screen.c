@@ -216,20 +216,14 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
                 const __GLcontextModes *mesaVis,
                 GLboolean isPixmap)
 {
-    viaContextPtr vmesa = 0;
-    GET_CURRENT_CONTEXT(ctx);
     GLboolean swStencil = (mesaVis->stencilBits > 0 && 
 			   mesaVis->depthBits != 24);
 
-    if (ctx)
-       vmesa = VIA_CONTEXT(ctx);
-    
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-
-    /* KW: removed bogus depth recalculations.
-     */
 
     if (isPixmap) {
+       /* KW: This needs work, disabled for now:
+	*/
+#if 0
 	driDrawPriv->driverPrivate = (void *)
             _mesa_create_framebuffer(mesaVis,
                                      GL_FALSE,	/* software depth buffer? */
@@ -237,9 +231,10 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
                                      mesaVis->accumRedBits > 0,
                                      GL_FALSE 	/* s/w alpha planes */);
 
-	if (vmesa) vmesa->drawType = GLX_PBUFFER_BIT;
         if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);				     
         return (driDrawPriv->driverPrivate != NULL);
+#endif
+	return GL_FALSE;
     }
     else {
         driDrawPriv->driverPrivate = (void *)
@@ -249,8 +244,6 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
                                      mesaVis->accumRedBits > 0,
                                      GL_FALSE 	/* s/w alpha planes */);
 	
-	if (vmesa) vmesa->drawType = GLX_WINDOW_BIT;
-        if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);				     
         return (driDrawPriv->driverPrivate != NULL);
    }
 }
@@ -259,9 +252,7 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 static void
 viaDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
     _mesa_destroy_framebuffer((GLframebuffer *)(driDrawPriv->driverPrivate));
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
 }
 
 
@@ -335,7 +326,7 @@ viaFillInModes( unsigned pixel_bits, GLboolean have_back_buffer )
         fb_type = GL_UNSIGNED_SHORT_5_6_5;
     }
     else {
-        fb_format = GL_BGR;
+        fb_format = GL_BGRA;
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
@@ -413,6 +404,7 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
       }
    }
 
+   fprintf(stderr, "%s - succeeded\n", __FUNCTION__);
    return (void *) psp;
 }
 #endif /* USE_NEW_INTERFACE */

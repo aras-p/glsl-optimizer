@@ -469,6 +469,12 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     vmesa->renderIndex = ~0;
     vmesa->setupIndex = ~0;
 
+    /* KW: Hardwire this.  Was previously set bogusly in
+     * viaCreateBuffer.  Needs work before PBUFFER can be used:
+     */
+    vmesa->drawType = GLX_WINDOW_BIT;
+
+
     make_empty_list(&vmesa->TexObjList);
     make_empty_list(&vmesa->SwappedOut);
 
