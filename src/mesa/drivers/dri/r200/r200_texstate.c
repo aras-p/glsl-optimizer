@@ -478,7 +478,7 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
        * Extract the color and alpha combine function arguments.
        */
       for ( i = 0 ; i < numColorArgs ; i++ ) {
-	 const GLuint op = texUnit->_CurrentCombine->OperandRGB[i] - GL_SRC_COLOR;
+	 const GLint op = texUnit->_CurrentCombine->OperandRGB[i] - GL_SRC_COLOR;
 	 assert(op >= 0);
 	 assert(op <= 3);
 	 switch ( texUnit->_CurrentCombine->SourceRGB[i] ) {
@@ -509,7 +509,7 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
       }
 
       for ( i = 0 ; i < numAlphaArgs ; i++ ) {
-	 const GLuint op = texUnit->_CurrentCombine->OperandA[i] - GL_SRC_ALPHA;
+	 const GLint op = texUnit->_CurrentCombine->OperandA[i] - GL_SRC_ALPHA;
 	 assert(op >= 0);
 	 assert(op <= 1);
 	 switch ( texUnit->_CurrentCombine->SourceA[i] ) {
