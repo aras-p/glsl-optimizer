@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.99 2002/10/18 13:28:55 brianp Exp $
+$Id: VERSIONS,v 1.100 2002/10/21 15:53:06 brianp Exp $
 
 
 Mesa Version History
@@ -1028,6 +1028,7 @@ Mesa Version History
 	- GL_EXT_multi_draw_arrays extension
 	- GL_EXT_stencil_two_side extension
 	- GLX_SGIX_fbconfig and GLX_SGIX_pbuffer extensions
+	- GL_ATI_texture_mirror_once extension (Ian Romanick)
 	- massive overhaul/simplification of software rasterizer module,
 	  many contributions from Klaus Niederkrueger
 	- faster software texturing in some cases (i.e. trilinear filtering)
