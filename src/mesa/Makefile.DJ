@@ -154,6 +154,8 @@ clean:
 	-$(call UNLINK,glapi/*.o)
 	-$(call UNLINK,main/*.o)
 	-$(call UNLINK,math/*.o)
+	-$(call UNLINK,shader/*.o)
+	-$(call UNLINK,sparc/*.o)
 	-$(call UNLINK,swrast/*.o)
 	-$(call UNLINK,swrast_setup/*.o)
 	-$(call UNLINK,tnl/*.o)
