@@ -150,6 +150,28 @@ static GLuint src_reg_file( GLuint file )
    }
 }
 
+static void emit( struct fragment_program *p,
+		  const char *fmt,
+		  ... )
+{
+   va_list ap;
+   va_start( ap, fmt );  
+
+   p->c_strlen += vsnprintf( p->c_str + p->c_strlen, 
+			     sizeof(p->c_str) - p->c_strlen,
+			     fmt, ap );
+   
+   va_end( ap );
+}
+
+static INLINE void emit_char( struct fragment_program *p, char c )
+{
+   if (p->c_strlen < sizeof(p->c_str))
+       p->c_str[p->c_strlen] = c;
+   
+   p->c_strlen++;
+}
+
 
 /**
  * Retrieve a ureg for the given source register.  Will emit
@@ -175,19 +197,20 @@ static GLuint src_vector( const struct fp_src_register *source )
    return src;
 }
 
-static void print_header( void )
+
+static void print_header( struct fragment_program *p )
 {
-   printf("\n\n\n");
+   emit(p, "\n\n\n");
 
    /* Texture samplers, not written yet:
     */
-   printf("extern void TEX( void *ctx, const float *txc, int unit, float *rslt );\n"
+   emit(p, "extern void TEX( void *ctx, const float *txc, int unit, float *rslt );\n"
 	  "extern void TXB( void *ctx, const float *txc, int unit, float *rslt );\n"
 	  "extern void TXP( void *ctx, const float *txc, int unit, float *rslt );\n");
 
    /* Resort to the standard math library (float versions):
     */
-   printf("extern float fabsf( float );\n"
+   emit(p, "extern float fabsf( float );\n"
 	  "extern float cosf( float );\n"
 	  "extern float sinf( float );\n"
 	  "extern float expf( float );\n"
@@ -196,17 +219,17 @@ static void print_header( void )
 
    /* These ones we have fast code in Mesa for:
     */
-   printf("extern float LOG2( float );\n"
+   emit(p, "extern float LOG2( float );\n"
 	  "extern float _mesa_inv_sqrtf( float );\n");
 
    /* The usual macros, not really needed, but handy:
     */
-   printf("#define MIN2(x,y) ((x)<(y)?(x):(y))\n"
+   emit(p, "#define MIN2(x,y) ((x)<(y)?(x):(y))\n"
 	  "#define MAX2(x,y) ((x)<(y)?(x):(y))\n");
 
    /* Our function!
     */
-   printf("void run_program( void *ctx, \n"
+   emit(p, "void run_program( void *ctx, \n"
 	  "                  const float (*local_param)[4], \n"
 	  "                  const float (*env_param)[4], \n"
 	  "                  const float (*state_param)[4], \n"
@@ -217,80 +240,83 @@ static void print_header( void )
       );
 }
 
-static void print_footer( void )
+static void print_footer( struct fragment_program *p )
 {
-   printf("}\n");
+   emit(p, "}\n");
 }
 
-static void print_dest_reg( const struct fp_instruction *inst )
+static void print_dest_reg( struct fragment_program *p, 
+			    const struct fp_instruction *inst )
 {
    switch (inst->DstReg.File) {
    case PROGRAM_OUTPUT:
-      printf("outputs[%d]", inst->DstReg.Index);
+      emit(p, "outputs[%d]", inst->DstReg.Index);
       break;
    case PROGRAM_TEMPORARY:
-      printf("temp[%d]", inst->DstReg.Index);
+      emit(p, "temp[%d]", inst->DstReg.Index);
       break;
    default:
       break;
    }
 }
 
-static void print_dest( const struct fp_instruction *inst,
+static void print_dest( struct fragment_program *p,
+			const struct fp_instruction *inst,
 			GLuint idx )
 {
-   print_dest_reg(inst);
-   printf("[%d]", idx);
+   print_dest_reg(p, inst);
+   emit(p, "[%d]", idx);
 }
 
 
 #define UREG_SRC0(reg) (((reg)>>UREG_CHANNEL_X_SHIFT) & 0x7)
 
-static void print_reg( GLuint arg )
+static void print_reg( struct fragment_program *p,
+		       GLuint arg )
 {
    switch (GET_UREG_TYPE(arg)) {
-   case UREG_TYPE_TEMP: printf("temp"); break;
-   case UREG_TYPE_INTERP: printf("interp"); break;
-   case UREG_TYPE_LOCAL_CONST: printf("local_const"); break;
-   case UREG_TYPE_ENV_CONST: printf("env_const"); break;
-   case UREG_TYPE_STATE_CONST: printf("state_const"); break;
-   case UREG_TYPE_PARAM: printf("param"); break;
+   case UREG_TYPE_TEMP: emit(p, "temp"); break;
+   case UREG_TYPE_INTERP: emit(p, "interp"); break;
+   case UREG_TYPE_LOCAL_CONST: emit(p, "local_const"); break;
+   case UREG_TYPE_ENV_CONST: emit(p, "env_const"); break;
+   case UREG_TYPE_STATE_CONST: emit(p, "state_const"); break;
+   case UREG_TYPE_PARAM: emit(p, "param"); break;
    };
    
-   printf("[%d]", GET_UREG_NR(arg));
+   emit(p, "[%d]", GET_UREG_NR(arg));
 }
 
 
-static void print_arg( const struct fragment_program *p,
+static void print_arg( struct fragment_program *p,
 		       GLuint arg )
 {
    GLuint src = UREG_SRC0(arg);
 
    if (src == _ZERO) {
-      printf("0");
+      emit(p, "0");
       return;
    }
 
    if (arg & (1<<UREG_CHANNEL_X_NEGATE_SHIFT))
-      printf("-");
+      emit(p, "-");
 
    if (src == _ONE) {
-      printf("1");
+      emit(p, "1");
       return;
    }
 
    if (GET_UREG_TYPE(arg) == UREG_TYPE_STATE_CONST) {
-      printf("%g", p->Parameters->Parameters[GET_UREG_NR(arg)].Values[src]);
+      emit(p, "%g", p->Parameters->Parameters[GET_UREG_NR(arg)].Values[src]);
       return;
    }
 
-   print_reg( arg );
+   print_reg( p, arg );
 
    switch (src){
-   case _X: printf("[0]"); break;
-   case _Y: printf("[1]"); break;
-   case _Z: printf("[2]"); break;
-   case _W: printf("[3]"); break;
+   case _X: emit(p, "[0]"); break;
+   case _Y: emit(p, "[1]"); break;
+   case _Z: emit(p, "[2]"); break;
+   case _W: emit(p, "[3]"); break;
    }   
 }
 
@@ -298,7 +324,7 @@ static void print_arg( const struct fragment_program *p,
 /* This is where the handling of expressions breaks down into string
  * processing:
  */
-static void print_expression( const struct fragment_program *p,
+static void print_expression( struct fragment_program *p,
 			      GLuint i,
 			      const char *fmt,
 			      va_list ap )
@@ -313,27 +339,27 @@ static void print_expression( const struct fragment_program *p,
 	 fmt += 2;
       }
       else { 
-	 putchar(*fmt); 
+	 emit_char(p, *fmt); 
 	 fmt++;
       }
    }
 
-   printf(";\n");
+   emit(p, ";\n");
 }
 
-static void do_tex_simple( const struct fragment_program *p,
+static void do_tex_simple( struct fragment_program *p,
 			   const struct fp_instruction *inst,
 			   const char *fn, GLuint texunit, GLuint arg )
 {
-   printf("   %s( ctx, ", fn);
-   print_reg(arg);
-   printf(", %d, ", texunit );
-   print_dest_reg(inst);
-   printf(");\n");
+   emit(p, "   %s( ctx, ", fn);
+   print_reg( p, arg );
+   emit(p, ", %d, ", texunit );
+   print_dest_reg(p, inst);
+   emit(p, ");\n");
 }
 
 
-static void do_tex( const struct fragment_program *p,
+static void do_tex( struct fragment_program *p,
 		    const struct fp_instruction *inst,
 		    const char *fn, GLuint texunit, GLuint arg )
 {
@@ -352,31 +378,43 @@ static void do_tex( const struct fragment_program *p,
       return;
    }
 
-   printf("   {\n");
-   printf("       float texcoord[4];\n");
-   printf("       float result[4];\n");
+   emit(p, "   {\n");
+   emit(p, "       float texcoord[4];\n");
+   emit(p, "       float result[4];\n");
 
    for (i = 0; i < 4; i++) {
-      printf("      texcoord[%d] = ", i);
+      emit(p, "      texcoord[%d] = ", i);
       print_arg( p, deref(arg, i) );
-      printf(";\n");
+      emit(p, ";\n");
    }
 
-   printf("       %s( ctx, texcoord, %d, result);\n", fn, texunit );
+   emit(p, "       %s( ctx, texcoord, %d, result);\n", fn, texunit );
 
    for (i = 0; i < 4; i++) {
       if (inst->DstReg.WriteMask[i]) {
-	 printf("      ");
-	 print_dest(inst, i);
-	 printf(" = result[%d];\n", i);
+	 emit(p, "      ");
+	 print_dest(p, inst, i);
+	 emit(p, " = result[%d];\n", i);
       }
    }
 
-   printf("   }\n");
+   emit(p, "   }\n");
+}
+
+
+static void saturate( struct fragment_program *p,
+		      const struct fp_instruction *inst,
+		      GLuint i )
+{
+   emit(p, "   ");
+   print_dest(p, inst, i);
+   emit(p, " = CLAMPF( ");
+   print_dest(p, inst, i);
+   emit(p, ", 0.0, 1.0);\n");
 }
 		     
 static void assign_single( GLuint i,
-			   const struct fragment_program *p,
+			   struct fragment_program *p,
 			   const struct fp_instruction *inst,
 			   const char *fmt,
 			   ... )
@@ -385,16 +423,18 @@ static void assign_single( GLuint i,
    va_start( ap, fmt );  
 
    if (inst->DstReg.WriteMask[i]) {
-      printf("   ");
-      print_dest(inst, i);
-      printf(" = ");
+      emit(p, "   ");
+      print_dest(p, inst, i);
+      emit(p, " = ");
       print_expression( p, i, fmt, ap);
+      if (inst->Saturate)
+	 saturate(p, inst, i);
    }
 
    va_end( ap );
 }
 
-static void assign4( const struct fragment_program *p,
+static void assign4( struct fragment_program *p,
 		     const struct fp_instruction *inst,
 		     const char *fmt,
 		     ... )
@@ -405,47 +445,56 @@ static void assign4( const struct fragment_program *p,
 
    for (i = 0; i < 4; i++)
       if (inst->DstReg.WriteMask[i]) {
-	 printf("   ");
-	 print_dest(inst, i);
-	 printf(" = ");
+	 emit(p, "   ");
+	 print_dest(p, inst, i);
+	 emit(p, " = ");
 	 print_expression( p, i, fmt, ap);
+	 if (inst->Saturate)
+	    saturate(p, inst, i);
       }
 
    va_end( ap );
 }
 
-static void assign4_replicate( const struct fragment_program *p,
+static void assign4_replicate( struct fragment_program *p,
 			       const struct fp_instruction *inst,
 			       const char *fmt,
 			       ... )
 {
-   GLuint i;
+   GLuint i, first = 0;
    GLboolean ok = 0;
    va_list ap;
 
    for (i = 0; i < 4; i++)
-      if (inst->DstReg.WriteMask[i]) 
+      if (inst->DstReg.WriteMask[i]) {
 	 ok = 1;
+	 first = i;
+	 break;
+      }
 
    if (!ok) return;
 
    va_start( ap, fmt );  
 
-   printf("   ");
+   emit(p, "   ");
 
-   for (i = 0; i < 4; i++)
-      if (inst->DstReg.WriteMask[i]) {
-	 print_dest(inst, i);
-	 printf(" = ");
-      }
-
+   print_dest(p, inst, first);
+   emit(p, " = ");
    print_expression( p, 0, fmt, ap);
-
+   if (inst->Saturate)
+      saturate(p, inst, first);
    va_end( ap );
+
+   for (i = first+1; i < 4; i++)
+      if (inst->DstReg.WriteMask[i]) {
+	 emit(p, "   ");
+	 print_dest(p, inst, i);
+	 emit(p, " = ");
+	 print_dest(p, inst, first);
+	 emit(p, ";\n");
+      }
 }
-
-		    
-
+	 
 
 
 
@@ -491,7 +540,7 @@ static GLuint nr_args( GLuint opcode )
 
 
 
-static void print_program( const struct fragment_program *p )
+static void translate_program( struct fragment_program *p )
 {
    const struct fp_instruction *inst = p->Instructions;
 
@@ -507,12 +556,12 @@ static void print_program( const struct fragment_program *p )
       if (p->Base.String)
       {
          const char *s = (const char *) p->Base.String + inst->StringPos;
-         printf("   /* ");
+         emit(p, "   /* ");
          while (*s != ';') {
-            putchar(*s);
+            emit_char(p, *s);
             s++;
          }
-         printf("; */\n");
+         emit(p, "; */\n");
       }
 
       switch (inst->Opcode) {
@@ -689,7 +738,7 @@ static void print_program( const struct fragment_program *p )
 	 do_tex(p, inst, "TXP", inst->TexSrcUnit, src[0]);
 	 break;
 
-      case FP_OPCODE_X2D:
+      case FP_OPCODE_XPD:
 	 /* Cross product:
 	  *      result.x = src[0].y * src[1].z - src[0].z * src[1].y;
 	  *      result.y = src[0].z * src[1].x - src[0].x * src[1].z;
@@ -705,6 +754,7 @@ static void print_program( const struct fragment_program *p )
 	 break;
 
       default:
+	 emit(p, "BOGUS OPCODE\n");
 	 return;
       }
    }
@@ -716,10 +766,18 @@ static void print_program( const struct fragment_program *p )
 
 void _swrast_translate_program( GLcontext *ctx )
 {
-   if (ctx->FragmentProgram.Current) {
-      print_header();
-      print_program( ctx->FragmentProgram.Current );
-      print_footer();
+   struct fragment_program *p = ctx->FragmentProgram.Current;
+
+   if (p) {
+      p->c_strlen = 0;
+
+      print_header( p );
+      translate_program( p );
+      print_footer( p );
+      emit_char(p, 0);
+      
+      printf("C program length: %d/%d chars\n", p->c_strlen, strlen(p->c_str));
+      printf(p->c_str);
    }
 }
 
