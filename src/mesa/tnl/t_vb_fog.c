@@ -91,6 +91,7 @@ init_static_data( void )
  * evaluating the GL_LINEAR, GL_EXP or GL_EXP2 fog function.
  * Fog coordinates are distances from the eye (typically between the
  * near and far clip plane distances).
+ * Note the fog (eye Z) coords may be negative so we use ABS(z) below.
  * Fog blend factors are in the range [0,1].
  */
 static void
@@ -113,7 +114,7 @@ compute_fog_blend_factors(GLcontext *ctx, GLvector4f *out, const GLvector4f *in)
       else
          d = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
       for ( i = 0 ; i < n ; i++, STRIDE_F(v, stride)) {
-         const GLfloat z = *v;
+         const GLfloat z = FABSF(*v);
          GLfloat f = (end - z) * d;
 	 data[i][0] = CLAMP(f, 0.0F, 1.0F);
       }
@@ -121,14 +122,14 @@ compute_fog_blend_factors(GLcontext *ctx, GLvector4f *out, const GLvector4f *in)
    case GL_EXP:
       d = ctx->Fog.Density;
       for ( i = 0 ; i < n ; i++, STRIDE_F(v,stride)) {
-         const GLfloat z = *v;
+         const GLfloat z = FABSF(*v);
          NEG_EXP( data[i][0], d * z );
       }
       break;
    case GL_EXP2:
       d = ctx->Fog.Density*ctx->Fog.Density;
       for ( i = 0 ; i < n ; i++, STRIDE_F(v, stride)) {
-         const GLfloat z = *v;
+         const GLfloat z = FABSF(*v);
          NEG_EXP( data[i][0], d * z * z );
       }
       break;
@@ -170,7 +171,6 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	 plane[1] = -m[6];
 	 plane[2] = -m[10];
 	 plane[3] = -m[14];
-
 	 /* Full eye coords weren't required, just calculate the
 	  * eye Z values.
 	  */
