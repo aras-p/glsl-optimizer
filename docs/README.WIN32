@@ -1,65 +1,52 @@
 File: docs/README.WIN32
 
-Last updated: Nov 08, 2002 - Karl Schultz - kschultz@users.sourceforge.net
+Last updated: Sep 18, 2003 - Karl Schultz - kschultz@users.sourceforge.net
 
 Quick Start
 
 Unzip both ZIP files (MesaLib and MesaDemos) into the same directory.
-This is important because the current makefiles in MesaLib assume that
-the directories in MesaDemos are present.
+The libs and demos build separately, so if you do not care about the
+demos, you do not have to unzip that zip file.  But if you do, it does
+need to be unzipped into the same directory as the lib zip file because
+the demos depend on the libs.
 
-If you have Microsoft Visual C++ 6.0 installed, simply go to the top directory
-of the Mesa distribution and type 'nmake -f Makefile.win NODEBUG=1' for
-an optimized build.  Note that you may have to run ...VC98/BIN/VCVARS32.BAT
-to set up the appropriate compiler environment variables.
+The build system has been changed to use Microsoft Visual Studio project
+workspaces and projects.  Makefiles are no longer shipped or supported, but
+can be generated from the projects using Visual Studio.
 
 Details and Notes
 
-- Building Mesa as noted above should visit and build the following:
-  src/mesa        MesaGL.dll, MesaGL.lib, osmesa.dll, osmesa.lib
-  src/glu         MesaGLU.dll, MesaGLU.lib
-  src/glut        glut32.dll, glut32.lib
-  progs/demos     a handful of demo executables.
-  progs/redbook   examples from the OpenGL Programming Guide
-  progs/samples   more examples from SGI
+- To build the Mesa libraries, open the Mesa.dsw workspace file
+  in the top directory.  You can build each project one-by-one,
+  or build the glut project to build everything except osmesa,
+  which needs to be built separately.  The build process will
+  create a lib directory in the top directory and will put the
+  following files there:
+	OPENGL32.LIB, GLU32.LIB, GLUT32.LIB, OSMESA32.LIB
+	OPENGL32.DLL, GLU32.DLL, GLUT32.DLL, OSMESA32.DLL
 
 - After building, you can copy the above DLL files to a place in your PATH
   such as $SystemRoot/SYSTEM32.  If you don't like putting things in a
   system directory, place them in the same directory as the executable(s).
-  For example, you can copy the DLL files to the demos directory if you
-  just want to run the demos. The build process places the DLL and LIB files
-  in the ./lib directory.  The makefile creates this directory if it does 
-  not already exist.
+  Be careful about accidentially overwriting files of the same name in
+  the SYSTEM32 directory.
 
-- The make targets 'clean' and 'clobber' will remove objects and libraries.
-  But the files in ./lib are never cleaned.
+- Build the demos by opening the appropriate *.dsw file in the
+  progs directory tree.  For example, to build the demos, use
+  progs/demos/Windows/demos.dsw.  The Windows directory contains
+  the workspace and all the projects for each demo program.  Each
+  project places the executable in the same directory as its source
+  code, which is required for some demos.
 
-- The make target 'install' will take its best shot at copying DLL files,
-  LIB files, and headers to the right places.  I strongly suggest that
-  you examine the makefiles to make sure that 'install' doesn't do anything
-  that you can't live with.
-
-- The makefiles are designed to work with Microsoft's NMAKE, and do,
-  unfortunately, have some Microsoft-specific things in them.  If you
-  would like to use gcc or some other build tools like the Cygnus tools,
-  then you will have to hack the makefiles to make them work with your
-  tools.  I'm sorry about this; I wasn't motivated to make this any
-  different, but if you end up modifying the makefiles for your tools,
-  you can send me the changes and I can apply the changes to the 
-  source tree.
-
-- There are no Microsoft Visual Studio project files.  However, these
-  should be very easy to create.  One can use the compiler and linker
-  options found in the makefiles to make quick progress in creating
-  projects.
+- The demo projects also copy the Mesa library DLL files from the lib
+  directory into the same directory as the demo executables, so that
+  the demos use the Mesa libs you just built.
 
 - The DLL files are built so that the external entry points use the
   stdcall calling convention.
 
 - Static LIB files are not built.  The LIB files that are built with
-  the current makefiles are the linker import files associated with
-  the DLL files.  If static LIB's are desired, it should not be too
-  difficult to modify the makefiles to generate them.
+  are the linker import files associated with the DLL files.  
 
 - The si-glu sources are used to build the GLU libs.  This was done
   mainly to get the better tessellator code.
@@ -77,9 +64,9 @@ Details and Notes
 
 - There is DirectDraw support in the Windows driver, updated by
   Daniel Slater.  You'll need to uncomment the #define DDRAW line
-  in src/Windows/wmesadef.h and add ddraw.lib to the list of libraries
-  in src/Makefile.win.  On some systems, you will acheive significantly
-  higher framerates with DirectDraw.
+  in src/Windows/wmesadef.h and add ddraw.lib to the list of libraries.
+  On some systems, you will acheive significantly higher framerates 
+  with DirectDraw.
 
 - Some of the more specialized code like FX drivers, stereo, and
   parallel support isn't compiled or tested.  I left much of this
