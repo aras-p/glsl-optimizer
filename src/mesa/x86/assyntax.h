@@ -1,4 +1,4 @@
-/* $Id: assyntax.h,v 1.22 2003/10/02 17:36:45 brianp Exp $ */
+/* $Id: assyntax.h,v 1.23 2003/10/21 08:33:10 dborca Exp $ */
 
 #ifndef __ASSYNTAX_H__
 #define __ASSYNTAX_H__
@@ -1074,7 +1074,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define B_REGDB(d, b)		BYTE_PTR [b + d]
 
 /* Variable indirect: */
-#define VARINDIRECT(var)	var
+#define VARINDIRECT(var)	[var]
 
 /* Use register contents as jump/call target: */
 #define CODEPTR(reg)		P_(reg)
@@ -1086,6 +1086,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define P_(a)			P_ ## a
 #define X_(a)			X_ ## a
 #define D_(a)			D_ ## a
+#define SR_(a)			W_ ## a
 #define S_(a)			L_ ## a
 #define L_(a)			L_ ## a
 #define W_(a)			W_ ## a
@@ -1227,7 +1228,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define LOOPNZ(a)		loopnz a
 #define LSL(a, b)		lsl b, a
 #define LTR(a)			ltr a
-#define MOV_SR(a, b)		mov S_(b), S_(a)
+#define MOV_SR(a, b)		mov SR_(b), SR_(a)
 #define MOV_L(a, b)		mov L_(b), L_(a)
 #define MOV_W(a, b)		mov W_(b), W_(a)
 #define MOV_B(a, b)		mov B_(b), B_(a)
@@ -1262,14 +1263,14 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define OUTS_L			outsd
 #define OUTS_W			outsw
 #define OUTS_B			outsb
-#define POP_SR(a)		pop S_(a)
+#define POP_SR(a)		pop SR_(a)
 #define POP_L(a)		pop L_(a)
 #define POP_W(a)		pop W_(a)
 #define POPA_L			popad
 #define POPA_W			popa
 #define POPF_L			popfd
 #define POPF_W			popf
-#define PUSH_SR(a)		push S_(a)
+#define PUSH_SR(a)		push SR_(a)
 #define PUSH_L(a)		push L_(a)
 #define PUSH_W(a)		push W_(a)
 #define PUSH_B(a)		push B_(a)
@@ -1341,15 +1342,15 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define SETZ(a)			setz a
 #define SGDT(a)			sgdt a
 #define SIDT(a)			sidt a
-#define SHL_L(a, b)		shl L_(b), L_(a)
-#define SHL_W(a, b)		shl W_(b), W_(a)
+#define SHL_L(a, b)		shl L_(b), B_(a)
+#define SHL_W(a, b)		shl W_(b), B_(a)
 #define SHL_B(a, b)		shl B_(b), B_(a)
 #define SHLD_L(a,b,c)		shld
 #define SHLD2_L(a,b)		shld L_(b), L_(a)
 #define SHLD_W(a,b,c)		shld
 #define SHLD2_W(a,b)		shld W_(b), W_(a)
-#define SHR_L(a, b)		shr L_(b), L_(a)
-#define SHR_W(a, b)		shr W_(b), W_(a)
+#define SHR_L(a, b)		shr L_(b), B_(a)
+#define SHR_W(a, b)		shr W_(b), B_(a)
 #define SHR_B(a, b)		shr B_(b), B_(a)
 #define SHRD_L(a,b,c)		shrd
 #define SHRD2_L(a,b)		shrd L_(b), L_(a)
@@ -1360,9 +1361,9 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define STC			stc
 #define STD			std
 #define STI			sti
-#define STOS_L			stos
-#define STOS_W			stos
-#define STOS_B			stos
+#define STOS_L			stosd
+#define STOS_W			stosw
+#define STOS_B			stosb
 #define STR(a)			str a
 #define SUB_L(a, b)		sub L_(b), L_(a)
 #define SUB_W(a, b)		sub W_(b), W_(a)
@@ -1693,5 +1694,18 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define LLBL(a)		a
 #endif
 
+/* Segment overrides */
+#define SEGCS		D_BYTE	46
+#define SEGDS		D_BYTE	62
+#define SEGES		D_BYTE	38
+#define SEGFS		D_BYTE	100
+#define SEGGS		D_BYTE	101
+
+/* Temporary labels: valid until next non-local label */
+#ifdef NASM_ASSEMBLER
+#define TLBL(a)		CONCAT(.,a)
+#else
+#define TLBL(a)		CONCAT(a,$)
+#endif
 
 #endif /* __ASSYNTAX_H__ */
