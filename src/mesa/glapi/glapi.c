@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.1 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: glapi.c,v 1.2 1999/11/11 14:11:16 sio Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1790,42 +1790,42 @@ void GLAPIENTRY glColorTableParameteriv(GLenum target, GLenum pname, const GLint
    DISPATCH(ColorTableParameteriv)(target, pname, params);
 }
 
-void glConvolutionFilter1D(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *image)
+void GLAPIENTRY glConvolutionFilter1D(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *image)
 {
    DISPATCH(ConvolutionFilter1D)(target, internalformat, width, format, type, image);
 }
 
-void glConvolutionFilter2D(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *image)
+void GLAPIENTRY glConvolutionFilter2D(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *image)
 {
    DISPATCH(ConvolutionFilter2D)(target, internalformat, width, height, format, type, image);
 }
 
-void glConvolutionParameterf(GLenum target, GLenum pname, GLfloat params)
+void GLAPIENTRY glConvolutionParameterf(GLenum target, GLenum pname, GLfloat params)
 {
    DISPATCH(ConvolutionParameterf)(target, pname, params);
 }
 
-void glConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
+void GLAPIENTRY glConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
    DISPATCH(ConvolutionParameterfv)(target, pname, params);
 }
 
-void glConvolutionParameteri(GLenum target, GLenum pname, GLint params)
+void GLAPIENTRY glConvolutionParameteri(GLenum target, GLenum pname, GLint params)
 {
    DISPATCH(ConvolutionParameteri)(target, pname, params);
 }
 
-void glConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
+void GLAPIENTRY glConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
    DISPATCH(ConvolutionParameteriv)(target, pname, params);
 }
 
-void glCopyColorSubTable(GLenum target, GLsizei start, GLint x, GLint y, GLsizei width)
+void GLAPIENTRY glCopyColorSubTable(GLenum target, GLsizei start, GLint x, GLint y, GLsizei width)
 {
    DISPATCH(CopyColorSubTable)(target, start, x, y, width);
 }
 
-void glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width)
+void GLAPIENTRY glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width)
 {
    DISPATCH(CopyColorTable)(target, internalformat, x, y, width);
 }
