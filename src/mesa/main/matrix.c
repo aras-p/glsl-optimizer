@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.15 2000/02/21 23:00:51 brianp Exp $ */
+/* $Id: matrix.c,v 1.16 2000/03/03 17:47:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1460,8 +1460,8 @@ gl_Viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height )
    ctx->Viewport.WindowMap.m[MAT_TX] = ctx->Viewport.WindowMap.m[MAT_SX] + x;
    ctx->Viewport.WindowMap.m[MAT_SY] = (GLfloat) height / 2.0F;
    ctx->Viewport.WindowMap.m[MAT_TY] = ctx->Viewport.WindowMap.m[MAT_SY] + y;
-   ctx->Viewport.WindowMap.m[MAT_SZ] = 0.5 * DEPTH_SCALE;
-   ctx->Viewport.WindowMap.m[MAT_TZ] = 0.5 * DEPTH_SCALE;
+   ctx->Viewport.WindowMap.m[MAT_SZ] = 0.5 * ctx->Visual->DepthMaxF;
+   ctx->Viewport.WindowMap.m[MAT_TZ] = 0.5 * ctx->Visual->DepthMaxF;
 
    ctx->Viewport.WindowMap.flags = MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION;
    ctx->Viewport.WindowMap.type = MATRIX_3D_NO_ROT;
@@ -1518,8 +1518,8 @@ _mesa_DepthRange( GLclampd nearval, GLclampd farval )
 
    ctx->Viewport.Near = n;
    ctx->Viewport.Far = f;
-   ctx->Viewport.WindowMap.m[MAT_SZ] = DEPTH_SCALE * ((f - n) / 2.0);
-   ctx->Viewport.WindowMap.m[MAT_TZ] = DEPTH_SCALE * ((f - n) / 2.0 + n);
+   ctx->Viewport.WindowMap.m[MAT_SZ] = ctx->Visual->DepthMaxF * ((f - n) / 2.0);
+   ctx->Viewport.WindowMap.m[MAT_TZ] = ctx->Visual->DepthMaxF * ((f - n) / 2.0 + n);
 
    ctx->ModelProjectWinMatrixUptodate = GL_FALSE;
 

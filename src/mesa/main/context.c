@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.43 2000/02/12 17:26:15 brianp Exp $ */
+/* $Id: context.c,v 1.44 2000/03/03 17:47:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -255,12 +255,15 @@ static void print_timings( GLcontext *ctx )
  *         alphaFlag - alloc software alpha buffers?
  *         dbFlag - double buffering?
  *         stereoFlag - stereo buffer?
- *         depthFits - requested minimum bits per depth buffer value
- *         stencilFits - requested minimum bits per stencil buffer value
- *         accumFits - requested minimum bits per accum buffer component
- *         indexFits - number of bits per pixel if rgbFlag==GL_FALSE
- *         red/green/blue/alphaFits - number of bits per color component
- *                                     in frame buffer for RGB(A) mode.
+ *         depthBits - requested bits per depth buffer value
+ *                     Any value in [0, 32] is acceptable but the actual
+ *                     depth type will be GLushort or GLuint as needed.
+ *         stencilBits - requested minimum bits per stencil buffer value
+ *         accumBits - requested minimum bits per accum buffer component
+ *         indexBits - number of bits per pixel if rgbFlag==GL_FALSE
+ *         red/green/blue/alphaBits - number of bits per color component
+ *                                    in frame buffer for RGB(A) mode.
+ *                                    We always use 8 in core Mesa though.
  * Return:  pointer to new GLvisual or NULL if requested parameters can't
  *          be met.
  */
@@ -279,16 +282,19 @@ GLvisual *gl_create_visual( GLboolean rgbFlag,
 {
    GLvisual *vis;
 
-   if (depthBits > (GLint) (8*sizeof(GLdepth))) {
-      /* can't meet depth buffer requirements */
+   /* This is to catch bad values from device drivers not updated for
+    * Mesa 3.3.  Some device drivers just passed 1.  That's a REALLY
+    * bad value now (a 1-bit depth buffer!?!).
+    */
+   assert(depthBits == 0 || depthBits > 1);
+
+   if (depthBits < 0 || depthBits > 32) {
       return NULL;
    }
-   if (stencilBits > (GLint) (8*sizeof(GLstencil))) {
-      /* can't meet stencil buffer requirements */
+   if (stencilBits < 0 || stencilBits > (GLint) (8 * sizeof(GLstencil))) {
       return NULL;
    }
-   if (accumBits > (GLint) (8*sizeof(GLaccum))) {
-      /* can't meet accum buffer requirements */
+   if (accumBits < 0 || accumBits > (GLint) (8 * sizeof(GLaccum))) {
       return NULL;
    }
 
@@ -303,14 +309,26 @@ GLvisual *gl_create_visual( GLboolean rgbFlag,
    vis->RedBits    = redBits;
    vis->GreenBits  = greenBits;
    vis->BlueBits   = blueBits;
-   vis->AlphaBits  = alphaFlag ? 8*sizeof(GLubyte) : alphaBits;
+   vis->AlphaBits  = alphaFlag ? (8 * sizeof(GLubyte)) : alphaBits;
 
    vis->IndexBits   = indexBits;
-   vis->DepthBits   = (depthBits>0) ? 8*sizeof(GLdepth) : 0;
-   vis->AccumBits   = (accumBits>0) ? 8*sizeof(GLaccum) : 0;
-   vis->StencilBits = (stencilBits>0) ? 8*sizeof(GLstencil) : 0;
+   vis->DepthBits   = depthBits;
+   vis->AccumBits   = (accumBits > 0) ? (8 * sizeof(GLaccum)) : 0;
+   vis->StencilBits = (stencilBits > 0) ? (8 * sizeof(GLstencil)) : 0;
 
    vis->SoftwareAlpha = alphaFlag;
+
+   if (depthBits == 0) {
+      /* Special case.  Even if we don't have a depth buffer we need
+       * good values for DepthMax for Z vertex transformation purposes.
+       */
+      vis->DepthMax = 1;
+      vis->DepthMaxF = 1.0F;
+   }
+   else {
+      vis->DepthMax = (1 << depthBits) - 1;
+      vis->DepthMaxF = (GLfloat) vis->DepthMax;
+   }
 
    return vis;
 }
@@ -1101,8 +1119,8 @@ static void init_attrib_groups( GLcontext *ctx )
 
 #define Sz 10
 #define Tz 14
-   ctx->Viewport.WindowMap.m[Sz] = 0.5 * DEPTH_SCALE;
-   ctx->Viewport.WindowMap.m[Tz] = 0.5 * DEPTH_SCALE;
+   ctx->Viewport.WindowMap.m[Sz] = 0.5 * ctx->Visual->DepthMaxF;
+   ctx->Viewport.WindowMap.m[Tz] = 0.5 * ctx->Visual->DepthMaxF;
 #undef Sz
 #undef Tz
 

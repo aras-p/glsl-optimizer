@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.13 2000/03/03 15:38:57 brianp Exp $ */
+/* $Id: dd.h,v 1.14 2000/03/03 17:54:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -391,6 +391,8 @@ struct dd_function_table {
    /***
     *** For supporting hardware Z buffers:
     *** Either ALL or NONE of these functions must be implemented!
+    *** NOTE that Each depth value is a 32-bit GLuint.  If the depth
+    *** buffer is less than 32 bits deep then the extra upperbits are zero.
     ***/
 
    void (*WriteDepthSpan)( GLcontext *ctx, GLuint n, GLint x, GLint y,

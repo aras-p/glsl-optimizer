@@ -396,7 +396,7 @@ static void fxDDReadRGBAPixels(const GLcontext *ctx,
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   GLuint i;
-  GLint bottom=fxMesa->y_delta-1;
+  GLint bottom=fxMesa->height+fxMesa->y_offset-1;
 
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
      fprintf(stderr,"fxmesa: fxDDReadRGBAPixels(...)\n");
@@ -423,11 +423,11 @@ void fxDDWriteDepthSpan(GLcontext *ctx,
                         GLuint n, GLint x, GLint y, const GLdepth depth[],
                         const GLubyte mask[])
 {
-  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
-  GLint bottom=fxMesa->height+fxMesa->y_offset-1;
+  fxMesaContext fxMesa = (fxMesaContext)ctx->DriverCtx;
+  GLint bottom = fxMesa->height + fxMesa->y_offset - 1;
 
-  if (MESA_VERBOSE&VERBOSE_DRIVER) {
-     fprintf(stderr,"fxmesa: fxDDReadDepthSpanInt(...)\n");
+  if (MESA_VERBOSE & VERBOSE_DRIVER) {
+     fprintf(stderr, "fxmesa: fxDDWriteDepthSpan(...)\n");
   }
 
   x += fxMesa->x_offset;
@@ -436,14 +436,20 @@ void fxDDWriteDepthSpan(GLcontext *ctx,
     GLint i;
     for (i = 0; i < n; i++) {
       if (mask[i]) {
-        writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, x + i, bottom-y,
-                           GR_LFB_SRC_FMT_ZA16, 1, 1, 0, (void *) &depth[i]);
+        GLshort d = depth[i];
+        writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, x + i, bottom - y,
+                           GR_LFB_SRC_FMT_ZA16, 1, 1, 0, (void *) &d);
       }
     }
   }
   else {
-    writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, x, bottom-y,
-                       GR_LFB_SRC_FMT_ZA16, n, 1, 0, (void *) depth);
+    GLushort depth16[MAX_WIDTH];
+    GLint i;
+    for (i = 0; i < n; i++) {
+      depth16[i] = depth[i];
+    }
+    writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, x, bottom - y,
+                       GR_LFB_SRC_FMT_ZA16, n, 1, 0, (void *) depth16);
   }
 }
 
@@ -451,15 +457,20 @@ void fxDDWriteDepthSpan(GLcontext *ctx,
 void fxDDReadDepthSpan(GLcontext *ctx,
                        GLuint n, GLint x, GLint y, GLdepth depth[])
 {
-  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
-  GLint bottom=fxMesa->height+fxMesa->y_offset-1;
+  fxMesaContext fxMesa = (fxMesaContext)ctx->DriverCtx;
+  GLint bottom = fxMesa->height + fxMesa->y_offset - 1;
+  GLushort depth16[MAX_WIDTH];
+  GLuint i;
 
-  if (MESA_VERBOSE&VERBOSE_DRIVER) {
-     fprintf(stderr,"fxmesa: fxDDReadDepthSpanInt(...)\n");
+  if (MESA_VERBOSE & VERBOSE_DRIVER) {
+     fprintf(stderr, "fxmesa: fxDDReadDepthSpan(...)\n");
   }
 
-  x+=fxMesa->x_offset;
-  FX_grLfbReadRegion(GR_BUFFER_AUXBUFFER,x,bottom-y,n,1,0,depth);
+  x += fxMesa->x_offset;
+  FX_grLfbReadRegion(GR_BUFFER_AUXBUFFER, x, bottom - y, n, 1, 0, depth16);
+  for (i = 0; i < n; i++) {
+    depth[i] = depth16[i];
+  }
 }
 
 
@@ -468,20 +479,21 @@ void fxDDWriteDepthPixels(GLcontext *ctx,
                           GLuint n, const GLint x[], const GLint y[],
                           const GLdepth depth[], const GLubyte mask[])
 {
-  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
-  GLint bottom=fxMesa->height+fxMesa->y_offset-1;
+  fxMesaContext fxMesa = (fxMesaContext)ctx->DriverCtx;
+  GLint bottom = fxMesa->height + fxMesa->y_offset - 1;
   GLuint i;
 
-  if (MESA_VERBOSE&VERBOSE_DRIVER) {
-     fprintf(stderr,"fxmesa: fxDDReadDepthSpanInt(...)\n");
+  if (MESA_VERBOSE & VERBOSE_DRIVER) {
+    fprintf(stderr, "fxmesa: fxDDWriteDepthPixels(...)\n");
   }
 
   for (i = 0; i < n; i++) {
     if (mask[i]) {
       int xpos = x[i] + fxMesa->x_offset;
       int ypos = bottom - y[i];
+      GLushort d = depth[i];
       writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, xpos, ypos,
-                         GR_LFB_SRC_FMT_ZA16, 1, 1, 0, (void *) &depth[i]);
+                         GR_LFB_SRC_FMT_ZA16, 1, 1, 0, (void *) &d);
     }
   }
 }
@@ -490,19 +502,20 @@ void fxDDWriteDepthPixels(GLcontext *ctx,
 void fxDDReadDepthPixels(GLcontext *ctx, GLuint n,
                          const GLint x[], const GLint y[], GLdepth depth[])
 {
-  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
-  GLint bottom=fxMesa->height+fxMesa->y_offset-1;
+  fxMesaContext fxMesa = (fxMesaContext)ctx->DriverCtx;
+  GLint bottom = fxMesa->height + fxMesa->y_offset - 1;
   GLuint i;
 
-  if (MESA_VERBOSE&VERBOSE_DRIVER) {
-     fprintf(stderr,"fxmesa: fxDDReadDepthSpanInt(...)\n");
+  if (MESA_VERBOSE & VERBOSE_DRIVER) {
+    fprintf(stderr, "fxmesa: fxDDReadDepthPixels(...)\n");
   }
-
 
   for (i = 0; i < n; i++) {
     int xpos = x[i] + fxMesa->x_offset;
     int ypos = bottom - y[i];
-    FX_grLfbReadRegion(GR_BUFFER_AUXBUFFER,xpos,ypos,1,1,0,&depth[i]);
+    GLushort d;
+    FX_grLfbReadRegion(GR_BUFFER_AUXBUFFER, xpos, ypos, 1, 1, 0, &d);
+    depth[i] = d;
   }
 }
 

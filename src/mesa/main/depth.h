@@ -1,10 +1,10 @@
-/* $Id: depth.h,v 1.6 2000/02/02 22:16:04 brianp Exp $ */
+/* $Id: depth.h,v 1.7 2000/03/03 17:47:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,14 +49,12 @@ _mesa_DepthMask( GLboolean flag );
 
 
 
-
 /*
- * Return the address of the Z-buffer value for window coordinate (x,y):
+ * Internal functions
  */
-#define Z_ADDRESS( CTX, X, Y )  \
-            ((CTX)->DrawBuffer->Depth + (CTX)->DrawBuffer->Width * (Y) + (X))
 
-
+extern GLvoid *
+_mesa_zbuffer_address(GLcontext *ctx, GLint x, GLint y);
 
 
 extern GLuint

@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.24 2000/02/27 18:26:54 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.25 2000/03/03 17:50:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -300,6 +300,11 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
 
 /*
  * Create a GLX visual from a regular XVisualInfo.
+ * This is called when Fake GLX is given an XVisualInfo which wasn't
+ * returned by glXChooseVisual.  Since this is the first time we're
+ * considering this visual we'll take a guess at reasonable values
+ * for depth buffer size, stencil size, accum size, etc.
+ * This is the best we can do with a client-side emulation of GLX.
  */
 static XMesaVisual
 create_glx_visual( Display *dpy, XVisualInfo *visinfo )
@@ -329,9 +334,9 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
                               GL_FALSE,  /* alpha */
                               GL_TRUE,   /* double */
                               GL_FALSE,  /* stereo */
-                              8*sizeof(GLdepth),
-                              8*sizeof(GLstencil),
-                              8*sizeof(GLaccum),
+                              DEFAULT_SOFTWARE_DEPTH_BITS,
+                              8 * sizeof(GLstencil),
+                              8 * sizeof(GLaccum),
                               0          /* level */
                             );
    }
@@ -1014,6 +1019,22 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
    }
 
    if (vis) {
+      /* Note: we're not exactly obeying the glXChooseVisual rules here.
+       * When GLX_DEPTH_SIZE = 1 is specified we're supposed to choose the
+       * largest depth buffer size, which is 32bits/value.  However, we
+       * return 16 to maintain performance with earlier versions of Mesa.
+       */
+      if (depth_size == 1)
+         depth_size = DEFAULT_SOFTWARE_DEPTH_BITS;
+      else if (depth_size > 24)
+         depth_size = 31;
+      else if (depth_size > 16)
+         depth_size = 24;
+      /* we only support one size of stencil and accum buffers. */
+      if (stencil_size > 0)
+         stencil_size = STENCIL_BITS;
+      if (accum_size > 0)
+         accum_size = ACCUM_BITS;
       if (!save_glx_visual( dpy, vis, rgb_flag, alpha_flag, double_flag,
                             stereo_flag,
                             depth_size, stencil_size, accum_size, level ))

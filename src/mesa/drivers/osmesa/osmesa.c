@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.9 2000/01/15 06:13:26 rjfrank Exp $ */
+/* $Id: osmesa.c,v 1.10 2000/03/03 17:50:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -206,7 +206,7 @@ OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
                                             swalpha,    /* software alpha */
                                             GL_FALSE,	/* double buffer */
                                             GL_FALSE,	/* stereo */
-                                            DEPTH_BITS,
+                                            DEFAULT_SOFTWARE_DEPTH_BITS,
                                             STENCIL_BITS,
                                             rgbmode ? ACCUM_BITS : 0,
                                             indexBits,
@@ -397,7 +397,6 @@ OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
 
    return GL_TRUE;
 }
-
 
 
 
@@ -1220,6 +1219,7 @@ static void flat_rgba_z_line( GLcontext *ctx,
 
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define CLIP_HACK 1
 #define PLOT(X,Y)				\
 	if (Z < *zPtr) {			\
@@ -1272,6 +1272,7 @@ static void flat_blend_rgba_line( GLcontext *ctx,
 #endif
 }
 
+
 /*
  * Draw a flat-shaded, Z-less, alpha-blended, RGB line into an osmesa buffer.
  */
@@ -1292,16 +1293,16 @@ static void flat_blend_rgba_z_line( GLcontext *ctx,
 
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define CLIP_HACK 1
-#define PLOT(X,Y)				\
-	if (Z < *zPtr) {			\
-   { GLuint *ptr4 = PIXELADDR4(X,Y); \
-     GLuint  pixel = 0; \
-     pixel |=((((((*ptr4) >> rshift) & 0xff)*msavalue+rvalue)>>8) << rshift);\
-     pixel |=((((((*ptr4) >> gshift) & 0xff)*msavalue+gvalue)>>8) << gshift);\
-     pixel |=((((((*ptr4) >> bshift) & 0xff)*msavalue+bvalue)>>8) << bshift);\
-     *ptr4 = pixel; \
-   } \
+#define PLOT(X,Y)									\
+	if (Z < *zPtr) {								\
+	   GLuint *ptr4 = PIXELADDR4(X,Y);						\
+	   GLuint  pixel = 0;								\
+	   pixel |=((((((*ptr4) >> rshift) & 0xff)*msavalue+rvalue)>>8) << rshift);	\
+	   pixel |=((((((*ptr4) >> gshift) & 0xff)*msavalue+gvalue)>>8) << gshift);	\
+	   pixel |=((((((*ptr4) >> bshift) & 0xff)*msavalue+bvalue)>>8) << bshift);	\
+	   *ptr4 = pixel; 								\
 	}
 
 #ifdef WIN32
@@ -1310,6 +1311,7 @@ static void flat_blend_rgba_z_line( GLcontext *ctx,
 #include "linetemp.h"
 #endif
 }
+
 
 /*
  * Draw a flat-shaded, Z-less, alpha-blended, RGB line into an osmesa buffer.
@@ -1331,17 +1333,17 @@ static void flat_blend_rgba_z_line_write( GLcontext *ctx,
 
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define CLIP_HACK 1
-#define PLOT(X,Y)				\
-	if (Z < *zPtr) {			\
-   { GLuint *ptr4 = PIXELADDR4(X,Y); \
-     GLuint  pixel = 0; \
-     pixel |=((((((*ptr4) >> rshift) & 0xff)*msavalue+rvalue)>>8) << rshift);\
-     pixel |=((((((*ptr4) >> gshift) & 0xff)*msavalue+gvalue)>>8) << gshift);\
-     pixel |=((((((*ptr4) >> bshift) & 0xff)*msavalue+bvalue)>>8) << bshift);\
-     *ptr4 = pixel; \
-   } \
-	   *zPtr = Z;				\
+#define PLOT(X,Y)									\
+	if (Z < *zPtr) {								\
+	   GLuint *ptr4 = PIXELADDR4(X,Y);						\
+	   GLuint  pixel = 0;								\
+	   pixel |=((((((*ptr4) >> rshift) & 0xff)*msavalue+rvalue)>>8) << rshift);	\
+	   pixel |=((((((*ptr4) >> gshift) & 0xff)*msavalue+gvalue)>>8) << gshift);	\
+	   pixel |=((((((*ptr4) >> bshift) & 0xff)*msavalue+bvalue)>>8) << bshift);	\
+	   *ptr4 = pixel;								\
+	   *zPtr = Z;									\
 	}
 
 #ifdef WIN32
@@ -1369,7 +1371,8 @@ static line_func choose_line_function( GLcontext *ctx )
 
        if (ctx->RasterMask==DEPTH_BIT
            && ctx->Depth.Func==GL_LESS
-           && ctx->Depth.Mask==GL_TRUE) {
+           && ctx->Depth.Mask==GL_TRUE
+           && ctx->Visual->DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS) {
            switch(osmesa->format) {
        		case OSMESA_RGBA:
        		case OSMESA_BGRA:
@@ -1394,6 +1397,7 @@ static line_func choose_line_function( GLcontext *ctx )
        if (ctx->RasterMask==(DEPTH_BIT|BLEND_BIT)
            && ctx->Depth.Func==GL_LESS
            && ctx->Depth.Mask==GL_TRUE
+           && ctx->Visual->DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS
            && ctx->Color.BlendSrcRGB==GL_SRC_ALPHA
            && ctx->Color.BlendDstRGB==GL_ONE_MINUS_SRC_ALPHA
            && ctx->Color.BlendSrcA==GL_SRC_ALPHA
@@ -1412,6 +1416,7 @@ static line_func choose_line_function( GLcontext *ctx )
        if (ctx->RasterMask==(DEPTH_BIT|BLEND_BIT)
            && ctx->Depth.Func==GL_LESS
            && ctx->Depth.Mask==GL_FALSE
+           && ctx->Visual->DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS
            && ctx->Color.BlendSrcRGB==GL_SRC_ALPHA
            && ctx->Color.BlendDstRGB==GL_ONE_MINUS_SRC_ALPHA
            && ctx->Color.BlendSrcA==GL_SRC_ALPHA
@@ -1467,6 +1472,7 @@ static void smooth_rgba_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
    (void) pv;
    osmesa->bVisible = GL_TRUE; /* if here, the occlusion test is misused  */
 #define INTERP_Z 1
+#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
 #define INNER_LOOP( LEFT, RIGHT, Y )				\
@@ -1502,6 +1508,7 @@ static void flat_rgba_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
 #define INTERP_Z 1
+#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define SETUP_CODE			\
    GLubyte r = VB->ColorPtr->data[pv][0];	\
    GLubyte g = VB->ColorPtr->data[pv][1];	\
@@ -1547,6 +1554,7 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
    if (ctx->RasterMask==DEPTH_BIT
        && ctx->Depth.Func==GL_LESS
        && ctx->Depth.Mask==GL_TRUE
+       && ctx->Visual->DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS
        && osmesa->format!=OSMESA_COLOR_INDEX) {
       if (ctx->Light.ShadeModel==GL_SMOOTH) {
          return smooth_rgba_z_triangle;
@@ -1557,6 +1565,8 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
    }
    return NULL;
 }
+
+
 
 /**********************************************************************/
 /*****                 Occlusion rendering routines               *****/
@@ -1576,87 +1586,113 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
    } \
    return;
 
-/*****                 Color Index                                *****/
+/**
+*** Color Index
+**/
+
 static void write_index32_span_occ( const GLcontext *ctx,
-                                GLuint n, GLint x, GLint y,
-                                const GLuint index[], const GLubyte mask[] )
+                                    GLuint n, GLint x, GLint y,
+                                    const GLuint index[], const GLubyte mask[] )
 {
-	OCC_STD_MASK_TEST
+   OCC_STD_MASK_TEST
 }
+
+
 static void write_index8_span_occ( const GLcontext *ctx,
-                               GLuint n, GLint x, GLint y,
-                               const GLubyte index[], const GLubyte mask[] )
+                                   GLuint n, GLint x, GLint y,
+                                   const GLubyte index[], const GLubyte mask[] )
 {
-	OCC_STD_MASK_TEST
+   OCC_STD_MASK_TEST
 }
+
+
 static void write_monoindex_span_occ( const GLcontext *ctx,
-                                  GLuint n, GLint x, GLint y,
-                                  const GLubyte mask[] )
+                                      GLuint n, GLint x, GLint y,
+                                      const GLubyte mask[] )
 {
-	OCC_STD_MASK_TEST
+   OCC_STD_MASK_TEST
 }
+
+
 static void write_index_pixels_occ( const GLcontext *ctx,
-                                GLuint n, const GLint x[], const GLint y[],
-                                const GLuint index[], const GLubyte mask[] )
+                                    GLuint n, const GLint x[], const GLint y[],
+                                    const GLuint index[], const GLubyte mask[] )
 {
-	OCC_STD_MASK_TEST
+   OCC_STD_MASK_TEST
 }
+
+
 static void write_monoindex_pixels_occ( const GLcontext *ctx,
-                                    GLuint n, const GLint x[], const GLint y[],
-                                    const GLubyte mask[] )
+                                        GLuint n, const GLint x[], const GLint y[],
+                                        const GLubyte mask[] )
 {
-	OCC_STD_MASK_TEST
+   OCC_STD_MASK_TEST
 }
 
-/*****                 RGB/RGBA                                   *****/
+/**
+*** RGB/RGBA
+**/
 static void write_rgba_span_occ( const GLcontext *ctx,
-                             GLuint n, GLint x, GLint y,
-                             CONST GLubyte rgba[][4], const GLubyte mask[] )
+                                 GLuint n, GLint x, GLint y,
+                                 CONST GLubyte rgba[][4], const GLubyte mask[] )
 {
-	OCC_STD_MASK_TEST
-}
-static void write_rgb_span_occ( const GLcontext *ctx,
-                                  GLuint n, GLint x, GLint y,
-                                  CONST GLubyte rgb[][3],
-                                  const GLubyte mask[] )
-{
-	OCC_STD_MASK_TEST
-}
-static void write_rgba_pixels_occ( const GLcontext *ctx,
-                               GLuint n, const GLint x[], const GLint y[],
-                               CONST GLubyte rgba[][4], const GLubyte mask[] )
-{
-	OCC_STD_MASK_TEST
-}
-static void write_monocolor_span_occ( const GLcontext *ctx,
-                                  GLuint n, GLint x, GLint y,
-                                  const GLubyte mask[] )
-{
-	OCC_STD_MASK_TEST
-}
-static void write_monocolor_pixels_occ( const GLcontext *ctx,
-                                    GLuint n, const GLint x[], const GLint y[],
-                                    const GLubyte mask[] )
-{
-	OCC_STD_MASK_TEST
+   OCC_STD_MASK_TEST
 }
 
-/*****                 Line Drawing                               *****/
+
+static void write_rgb_span_occ( const GLcontext *ctx,
+                                GLuint n, GLint x, GLint y,
+                                CONST GLubyte rgb[][3],
+                                const GLubyte mask[] )
+{
+   OCC_STD_MASK_TEST
+}
+
+
+static void write_rgba_pixels_occ( const GLcontext *ctx,
+                                   GLuint n, const GLint x[], const GLint y[],
+                                   CONST GLubyte rgba[][4], const GLubyte mask[] )
+{
+   OCC_STD_MASK_TEST
+}
+
+
+static void write_monocolor_span_occ( const GLcontext *ctx,
+                                      GLuint n, GLint x, GLint y,
+                                      const GLubyte mask[] )
+{
+   OCC_STD_MASK_TEST
+}
+
+
+static void write_monocolor_pixels_occ( const GLcontext *ctx,
+                                        GLuint n, const GLint x[], const GLint y[],
+                                        const GLubyte mask[] )
+{
+   OCC_STD_MASK_TEST
+}
+
+
+/**
+*** Line Drawing
+**/
 static void line_occ( GLcontext *ctx,
-                            GLuint vert0, GLuint vert1, GLuint pvert )
+                      GLuint vert0, GLuint vert1, GLuint pvert )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx->DriverCtx; 
    osmesa->bVisible = GL_TRUE; 
 }
 
+
 static void line_z_occ( GLcontext *ctx,
-                            GLuint vert0, GLuint vert1, GLuint pvert )
+                        GLuint vert0, GLuint vert1, GLuint pvert )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx->DriverCtx; 
    if (osmesa->bVisible) return; 
 
 #define INTERP_XY 1
 #define INTERP_Z 1
+#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define CLIP_HACK 1
 #define PLOT(X,Y)                               \
         if (Z < *zPtr) {                        \
@@ -1671,19 +1707,25 @@ static void line_z_occ( GLcontext *ctx,
 #endif
 }
 
-/*****                 Triangle Drawing                           *****/
+
+/**
+*** Triangle Drawing
+**/
 static void triangle_occ( GLcontext *ctx, GLuint v0, GLuint v1,
-                                    GLuint v2, GLuint pv )
+                          GLuint v2, GLuint pv )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx->DriverCtx; 
    osmesa->bVisible = GL_TRUE; 
 }
+
+
 static void triangle_z_occ( GLcontext *ctx, GLuint v0, GLuint v1,
-                                    GLuint v2, GLuint pv )
+                            GLuint v2, GLuint pv )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx->DriverCtx; 
    if (osmesa->bVisible) return; 
 #define INTERP_Z 1
+#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INNER_LOOP( LEFT, RIGHT, Y )    \
 {                                       \
    GLint i, len = RIGHT-LEFT;           \
@@ -1702,6 +1744,7 @@ static void triangle_z_occ( GLcontext *ctx, GLuint v0, GLuint v1,
 #include "tritemp.h"
 #endif
 }
+
 
 static const GLubyte *get_string( GLcontext *ctx, GLenum name )
 {

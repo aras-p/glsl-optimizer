@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.13 2000/03/03 15:39:13 brianp Exp $ */
+/* $Id: drawpix.c,v 1.14 2000/03/03 17:54:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +34,7 @@
 #include "feedback.h"
 #include "image.h"
 #include "macros.h"
+#include "mem.h"
 #include "mmath.h"
 #include "pixel.h"
 #include "span.h"
@@ -174,7 +175,7 @@ simple_DrawPixels( GLcontext *ctx, GLint x, GLint y,
       }
       else {
          /* setup array of fragment Z value to pass to zoom function */
-         GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * DEPTH_SCALE);
+         GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->Visual->DepthMaxF);
          GLint i;
          assert(drawWidth < MAX_WIDTH);
          for (i=0; i<drawWidth; i++)
@@ -412,7 +413,7 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
 
    /* Fragment depth values */
    if (ctx->Depth.Test || ctx->Fog.Enabled) {
-      GLdepth zval = (GLdepth) (ctx->Current.RasterPos[2] * DEPTH_SCALE);
+      GLdepth zval = (GLdepth) (ctx->Current.RasterPos[2] * ctx->Visual->DepthMaxF);
       GLint i;
       for (i = 0; i < drawWidth; i++) {
 	 zspan[i] = zval;
@@ -539,30 +540,23 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
       /* Special case: directly write 16-bit depth values */
       GLint row;
       for (row = 0; row < height; row++, y++) {
-         const GLdepth *zptr = gl_pixel_addr_in_image(&ctx->Unpack,
+         GLdepth zspan[MAX_WIDTH];
+         const GLushort *zptr = gl_pixel_addr_in_image(&ctx->Unpack,
                 pixels, width, height, GL_DEPTH_COMPONENT, type, 0, row, 0);
-         gl_write_rgba_span( ctx, width, x, y, zptr, rgba, GL_BITMAP );
+         GLint i;
+         for (i = 0; i < width; i++)
+            zspan[i] = zptr[i];
+         gl_write_rgba_span( ctx, width, x, y, zspan, rgba, GL_BITMAP );
       }
    }
-   else if (type==GL_UNSIGNED_INT && sizeof(GLdepth)==sizeof(GLuint)
+   else if (type==GL_UNSIGNED_INT && ctx->Visual->DepthBits == 32
        && !bias_or_scale && !zoom && ctx->Visual->RGBAflag) {
       /* Special case: directly write 32-bit depth values */
-      GLint i, row;
-      /* Compute shift value to scale 32-bit uints down to depth values. */
-      GLuint shift = 0;
-      GLuint max = MAX_DEPTH;
-      while ((max & 0x80000000) == 0) {
-         max = max << 1;
-         shift++;
-      }
+      GLint row;
       for (row = 0; row < height; row++, y++) {
-         GLdepth zspan[MAX_WIDTH];
-         const GLdepth *zptr = gl_pixel_addr_in_image(&ctx->Unpack,
+         const GLuint *zptr = gl_pixel_addr_in_image(&ctx->Unpack,
                 pixels, width, height, GL_DEPTH_COMPONENT, type, 0, row, 0);
-         for (i=0;i<width;i++) {
-            zspan[i] = zptr[i] >> shift;
-         }
-         gl_write_rgba_span( ctx, width, x, y, zspan, rgba, GL_BITMAP );
+         gl_write_rgba_span( ctx, width, x, y, zptr, rgba, GL_BITMAP );
       }
    }
    else {
@@ -619,7 +613,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    /* Fragment depth values */
    if (ctx->Depth.Test || ctx->Fog.Enabled) {
       /* fill in array of z values */
-      GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * DEPTH_SCALE);
+      GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->Visual->DepthMaxF);
       GLint i;
       for (i=0;i<width;i++) {
 	 zspan[i] = z;

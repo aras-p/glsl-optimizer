@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.17 2000/02/21 16:33:20 brianp Exp $ */
+/* $Id: image.c,v 1.18 2000/03/03 17:47:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2644,9 +2644,10 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
 
    /* clamp depth values to [0,1] and convert from floats to integers */
    {
+      const GLfloat zs = ctx->Visual->DepthMaxF;
       GLuint i;
       for (i = 0; i < n; i++) {
-         dest[i] = (GLdepth) (CLAMP(depth[i], 0.0F, 1.0F) * DEPTH_SCALE);
+         dest[i] = (GLdepth) (CLAMP(depth[i], 0.0F, 1.0F) * zs);
       }
    }
 

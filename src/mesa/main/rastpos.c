@@ -1,10 +1,10 @@
-/* $Id: rastpos.c,v 1.5 2000/02/02 19:17:57 brianp Exp $ */
+/* $Id: rastpos.c,v 1.6 2000/03/03 17:47:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -132,7 +132,7 @@ static void raster_pos4f( GLcontext *ctx,
    ctx->Current.RasterPos[1] = (ndc[1] * ctx->Viewport.WindowMap.m[MAT_SY] + 
 				ctx->Viewport.WindowMap.m[MAT_TY]);
    ctx->Current.RasterPos[2] = (ndc[2] * ctx->Viewport.WindowMap.m[MAT_SZ] + 
-				ctx->Viewport.WindowMap.m[MAT_TZ]) / DEPTH_SCALE;
+				ctx->Viewport.WindowMap.m[MAT_TZ]) / ctx->Visual->DepthMaxF;
    ctx->Current.RasterPos[3] = clip[3];
    ctx->Current.RasterPosValid = GL_TRUE;
 

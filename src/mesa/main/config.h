@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.6 2000/02/21 14:46:28 brianp Exp $ */
+/* $Id: config.h,v 1.7 2000/03/03 17:47:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -126,26 +126,12 @@
 
 
 /*
- * Bits per depth buffer value:  16 or 32
+ * Bits per depth buffer value:  16 or 32 (GLushort or GLuint)
+ * gl_create_visual() can select any depth in [0, 32].
  */
-#ifdef MESAD3D
-   /* Mesa / Direct3D driver only */
-   extern float g_DepthScale, g_MaxDepth;
-#  define DEPTH_BITS 	32
-#  define DEPTH_SCALE 	g_DepthScale
-#  define MAX_DEPTH 	g_MaxDepth
-#else
-#  define DEPTH_BITS 16
-#  if DEPTH_BITS==16
-#     define MAX_DEPTH 0xffff
-#     define DEPTH_SCALE 65535.0F
-#  elif DEPTH_BITS==32
-#     define MAX_DEPTH 0x3fffffff
-#     define DEPTH_SCALE ((GLfloat) MAX_DEPTH)
-#  else
-#     error "illegal number of depth bits"
-#  endif
-#endif
+#define DEFAULT_SOFTWARE_DEPTH_BITS 16
+#define DEFAULT_SOFTWARE_DEPTH_TYPE GLushort
+
 
 
 /*
