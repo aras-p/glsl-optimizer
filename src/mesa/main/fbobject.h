@@ -27,6 +27,38 @@
 #define FBOBJECT_H
 
 
+struct gl_render_buffer_object
+{
+   GLint RefCount;
+   GLuint Name;
+   GLuint Width, Height;
+};
+
+
+struct gl_render_buffer_attachment
+{
+   GLenum Type;  /* GL_NONE or GL_TEXTURE or GL_RENDERBUFFER_EXT */
+   /* IF Type == GL_RENDERBUFFER_EXT: */
+   struct gl_render_buffer_object *Renderbuffer;
+   /* IF Type == GL_TEXTURE: */
+   struct gl_texture_object *Texture;
+   GLuint TextureLevel;
+   GLuint CubeMapFace;  /* 0 .. 5, for Cube map textures */
+   GLuint Zoffset;      /* for 3D textures */
+};
+
+
+struct gl_frame_buffer_object
+{
+   GLint RefCount;
+   GLuint Name;
+
+   struct gl_render_buffer_attachment ColorAttachment[MAX_COLOR_ATTACHMENTS];
+   struct gl_render_buffer_attachment DepthAttachment;
+   struct gl_render_buffer_attachment StencilAttachment;
+};
+
+
 extern GLboolean
 _mesa_IsRenderbufferEXT(GLuint renderbuffer);
 

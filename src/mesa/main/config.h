@@ -208,6 +208,12 @@
 /*@}*/
 
 
+/** For GL_EXT_framebuffer_object */
+/*@{*/
+#define MAX_COLOR_ATTACHMENTS 4
+/*@}*/
+
+
 
 /**
  * \name Mesa-specific parameters

@@ -951,6 +951,19 @@ StateVars = [
 	( "GL_STENCIL_BACK_PASS_DEPTH_FAIL", GLenum, ["ctx->Stencil.ZFailFunc[1]"], "", None ),
 	( "GL_STENCIL_BACK_PASS_DEPTH_PASS", GLenum, ["ctx->Stencil.ZPassFunc[1]"], "", None ),
 
+	# GL_EXT_framebuffer_object
+	( "GL_FRAMEBUFFER_BINDING_EXT", GLint,
+	  ["ctx->CurrentFramebuffer ? ctx->CurrentFramebuffer->Name : 0"], "",
+	  "EXT_framebuffer_object" ),
+	( "GL_RENDERBUFFER_BINDING_EXT", GLint,
+	  ["ctx->CurrentRenderbuffer ? ctx->CurrentRenderbuffer->Name : 0"], "",
+	  "EXT_framebuffer_object" ),
+	( "GL_MAX_COLOR_ATTACHMENTS_EXT", GLint,
+	  ["ctx->Const.MaxColorAttachments"], "",
+	  "EXT_framebuffer_object" ),
+	( "GL_MAX_RENDERBUFFER_SIZE_EXT", GLint,
+	  ["ctx->Const.MaxRenderbufferSize"], "",
+	  "EXT_framebuffer_object" )
 ]
 
 
@@ -1042,6 +1055,7 @@ def EmitHeader():
 #include "context.h"
 #include "enable.h"
 #include "extensions.h"
+#include "fbobject.h"
 #include "get.h"
 #include "macros.h"
 #include "mtypes.h"

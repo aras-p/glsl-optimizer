@@ -1751,11 +1751,11 @@ struct fragment_program
 
 struct ati_fragment_shader
 {
-  struct program Base;
-  struct atifs_instruction *Instructions;
-  GLfloat Constants[8][4];
-  GLint NumPasses;
-  GLint cur_pass;
+   struct program Base;
+   struct atifs_instruction *Instructions;
+   GLfloat Constants[8][4];
+   GLint NumPasses;
+   GLint cur_pass;
 };
 
 /**
@@ -1823,11 +1823,11 @@ struct gl_fragment_program_state
  */
 struct gl_ati_fragment_shader_state
 {
-  GLboolean Enabled;
-  GLboolean _Enabled;
-  GLboolean Compiling;
-  struct atifs_machine Machine;            /* machine state */
-  struct ati_fragment_shader *Current;
+   GLboolean Enabled;
+   GLboolean _Enabled;
+   GLboolean Compiling;
+   struct atifs_machine Machine;            /* machine state */
+   struct ati_fragment_shader *Current;
 };
 
 /*
@@ -1847,80 +1847,80 @@ struct gl_occlusion_state
  */
 enum gl2_uiid
 {
-	UIID_UNKNOWN,							/* supported by all objects */
-	UIID_GENERIC,							/* generic object */
-	UIID_CONTAINER,							/* contains generic objects */
-	UIID_SHADER,							/* shader object */
-	UIID_FRAGMENT_SHADER,					/* fragment shader */
-	UIID_VERTEX_SHADER,						/* vertex shader */
-	UIID_PROGRAM,							/* program object */
-	UIID_3DLABS_SHHANDLE					/* encapsulates 3dlabs' ShHandle */
+   UIID_UNKNOWN,		/* supported by all objects */
+   UIID_GENERIC,		/* generic object */
+   UIID_CONTAINER,		/* contains generic objects */
+   UIID_SHADER,			/* shader object */
+   UIID_FRAGMENT_SHADER,	/* fragment shader */
+   UIID_VERTEX_SHADER,		/* vertex shader */
+   UIID_PROGRAM,		/* program object */
+   UIID_3DLABS_SHHANDLE		/* encapsulates 3dlabs' ShHandle */
 };
 
 struct gl2_unknown_intf
 {
-	GLvoid (* AddRef) (struct gl2_unknown_intf **);
-	GLvoid (* Release) (struct gl2_unknown_intf **);
-	struct gl2_unknown_intf **(* QueryInterface) (struct gl2_unknown_intf **, enum gl2_uiid uiid);
+   GLvoid (* AddRef) (struct gl2_unknown_intf **);
+   GLvoid (* Release) (struct gl2_unknown_intf **);
+   struct gl2_unknown_intf **(* QueryInterface) (struct gl2_unknown_intf **, enum gl2_uiid uiid);
 };
 
 struct gl2_generic_intf
 {
-	struct gl2_unknown_intf _unknown;
-	GLvoid (* Delete) (struct gl2_generic_intf **);
-	GLenum (* GetType) (struct gl2_generic_intf **);
-	GLhandleARB (* GetName) (struct gl2_generic_intf **);
-	GLboolean (* GetDeleteStatus) (struct gl2_generic_intf **);
-	const GLcharARB *(* GetInfoLog) (struct gl2_generic_intf **);
+   struct gl2_unknown_intf _unknown;
+   GLvoid (* Delete) (struct gl2_generic_intf **);
+   GLenum (* GetType) (struct gl2_generic_intf **);
+   GLhandleARB (* GetName) (struct gl2_generic_intf **);
+   GLboolean (* GetDeleteStatus) (struct gl2_generic_intf **);
+   const GLcharARB *(* GetInfoLog) (struct gl2_generic_intf **);
 };
 
 struct gl2_container_intf
 {
-	struct gl2_generic_intf _generic;
-	GLboolean (* Attach) (struct gl2_container_intf **, struct gl2_generic_intf **);
-	GLboolean (* Detach) (struct gl2_container_intf **, struct gl2_generic_intf **);
-	GLsizei (* GetAttachedCount) (struct gl2_container_intf **);
-	struct gl2_generic_intf **(* GetAttached) (struct gl2_container_intf **, GLuint);
+   struct gl2_generic_intf _generic;
+   GLboolean (* Attach) (struct gl2_container_intf **, struct gl2_generic_intf **);
+   GLboolean (* Detach) (struct gl2_container_intf **, struct gl2_generic_intf **);
+   GLsizei (* GetAttachedCount) (struct gl2_container_intf **);
+   struct gl2_generic_intf **(* GetAttached) (struct gl2_container_intf **, GLuint);
 };
 
 struct gl2_shader_intf
 {
-	struct gl2_generic_intf _generic;
-	GLenum (* GetSubType) (struct gl2_shader_intf **);
-	GLboolean (* GetCompileStatus) (struct gl2_shader_intf **);
-	GLvoid (* SetSource) (struct gl2_shader_intf **, GLcharARB *, GLint *, GLsizei);
-	const GLcharARB *(* GetSource) (struct gl2_shader_intf **);
-	GLvoid (* Compile) (struct gl2_shader_intf **);
+   struct gl2_generic_intf _generic;
+   GLenum (* GetSubType) (struct gl2_shader_intf **);
+   GLboolean (* GetCompileStatus) (struct gl2_shader_intf **);
+   GLvoid (* SetSource) (struct gl2_shader_intf **, GLcharARB *, GLint *, GLsizei);
+   const GLcharARB *(* GetSource) (struct gl2_shader_intf **);
+   GLvoid (* Compile) (struct gl2_shader_intf **);
 };
 
 struct gl2_program_intf
 {
-	struct gl2_container_intf _container;
-	GLboolean (* GetLinkStatus) (struct gl2_program_intf **);
-	GLboolean (* GetValidateStatus) (struct gl2_program_intf **);
-	GLvoid (* Link) (struct gl2_program_intf **);
-	GLvoid (* Validate) (struct gl2_program_intf **);
+   struct gl2_container_intf _container;
+   GLboolean (* GetLinkStatus) (struct gl2_program_intf **);
+   GLboolean (* GetValidateStatus) (struct gl2_program_intf **);
+   GLvoid (* Link) (struct gl2_program_intf **);
+   GLvoid (* Validate) (struct gl2_program_intf **);
 };
 
 struct gl2_fragment_shader_intf
 {
-	struct gl2_shader_intf _shader;
+   struct gl2_shader_intf _shader;
 };
 
 struct gl2_vertex_shader_intf
 {
-	struct gl2_shader_intf _shader;
+   struct gl2_shader_intf _shader;
 };
 
 struct gl2_3dlabs_shhandle_intf
 {
-	struct gl2_unknown_intf _unknown;
-	GLvoid *(* GetShHandle) (struct gl2_3dlabs_shhandle_intf **);
+   struct gl2_unknown_intf _unknown;
+   GLvoid *(* GetShHandle) (struct gl2_3dlabs_shhandle_intf **);
 };
 
 struct gl_shader_objects_state
 {
-	struct gl2_program_intf **current_program;
+   struct gl2_program_intf **current_program;
 };
 
 
@@ -1946,7 +1946,7 @@ struct gl_shared_state
    /*@}*/
 
    /**
-    * \name GL_NV_vertex/_program 
+    * \name Vertex/fragment programs
     */
    /*@{*/
    struct _mesa_HashTable *Programs;
@@ -1961,7 +1961,7 @@ struct gl_shared_state
 #endif
    /*@}*/
 
-#if FEATURE_ARB_vertex_buffer_object
+#if FEATURE_ARB_vertex_buffer_object || FEATURE_ARB_pixel_buffer_object
    struct _mesa_HashTable *BufferObjects;
 #endif
 
@@ -2095,6 +2095,9 @@ struct gl_constants
    /* GL_OES_read_format */
    GLenum ColorReadFormat;
    GLenum ColorReadType;
+   /* GL_EXT_framebuffer_object */
+   GLuint MaxColorAttachments;
+   GLuint MaxRenderbufferSize;
 };
 
 
@@ -2152,6 +2155,7 @@ struct gl_extensions
    GLboolean EXT_copy_texture;
    GLboolean EXT_depth_bounds_test;
    GLboolean EXT_draw_range_elements;
+   GLboolean EXT_framebuffer_object;
    GLboolean EXT_fog_coord;
    GLboolean EXT_histogram;
    GLboolean EXT_multi_draw_arrays;
@@ -2625,6 +2629,11 @@ struct __GLcontextRec
 
    struct gl_shader_objects_state ShaderObjects;	/* GL_ARB_shader_objects */
    /*@}*/
+
+#if FEATURE_EXT_framebuffer_object
+   struct gl_frame_buffer_object *CurrentFramebuffer;
+   struct gl_render_buffer_object *CurrentRenderbuffer;
+#endif
 
    GLenum ErrorValue;        /**< Last error code */
    GLenum RenderMode;        /**< either GL_RENDER, GL_SELECT, GL_FEEDBACK */

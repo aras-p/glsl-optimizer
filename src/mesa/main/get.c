@@ -7,6 +7,7 @@
 #include "context.h"
 #include "enable.h"
 #include "extensions.h"
+#include "fbobject.h"
 #include "get.h"
 #include "macros.h"
 #include "mtypes.h"
@@ -1873,6 +1874,22 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_STENCIL_BACK_PASS_DEPTH_PASS:
          params[0] = ENUM_TO_BOOLEAN(ctx->Stencil.ZPassFunc[1]);
          break;
+      case GL_FRAMEBUFFER_BINDING_EXT:
+         CHECK_EXTENSION_B(EXT_framebuffer_object, pname);
+         params[0] = INT_TO_BOOLEAN(ctx->CurrentFramebuffer ? ctx->CurrentFramebuffer->Name : 0);
+         break;
+      case GL_RENDERBUFFER_BINDING_EXT:
+         CHECK_EXTENSION_B(EXT_framebuffer_object, pname);
+         params[0] = INT_TO_BOOLEAN(ctx->CurrentRenderbuffer ? ctx->CurrentRenderbuffer->Name : 0);
+         break;
+      case GL_MAX_COLOR_ATTACHMENTS_EXT:
+         CHECK_EXTENSION_B(EXT_framebuffer_object, pname);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxColorAttachments);
+         break;
+      case GL_MAX_RENDERBUFFER_SIZE_EXT:
+         CHECK_EXTENSION_B(EXT_framebuffer_object, pname);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxRenderbufferSize);
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
    }
@@ -3676,6 +3693,22 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_STENCIL_BACK_PASS_DEPTH_PASS:
          params[0] = ENUM_TO_FLOAT(ctx->Stencil.ZPassFunc[1]);
          break;
+      case GL_FRAMEBUFFER_BINDING_EXT:
+         CHECK_EXTENSION_F(EXT_framebuffer_object, pname);
+         params[0] = (GLfloat)(ctx->CurrentFramebuffer ? ctx->CurrentFramebuffer->Name : 0);
+         break;
+      case GL_RENDERBUFFER_BINDING_EXT:
+         CHECK_EXTENSION_F(EXT_framebuffer_object, pname);
+         params[0] = (GLfloat)(ctx->CurrentRenderbuffer ? ctx->CurrentRenderbuffer->Name : 0);
+         break;
+      case GL_MAX_COLOR_ATTACHMENTS_EXT:
+         CHECK_EXTENSION_F(EXT_framebuffer_object, pname);
+         params[0] = (GLfloat)(ctx->Const.MaxColorAttachments);
+         break;
+      case GL_MAX_RENDERBUFFER_SIZE_EXT:
+         CHECK_EXTENSION_F(EXT_framebuffer_object, pname);
+         params[0] = (GLfloat)(ctx->Const.MaxRenderbufferSize);
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(pname=0x%x)", pname);
    }
@@ -5478,6 +5511,22 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_STENCIL_BACK_PASS_DEPTH_PASS:
          params[0] = ENUM_TO_INT(ctx->Stencil.ZPassFunc[1]);
+         break;
+      case GL_FRAMEBUFFER_BINDING_EXT:
+         CHECK_EXTENSION_I(EXT_framebuffer_object, pname);
+         params[0] = ctx->CurrentFramebuffer ? ctx->CurrentFramebuffer->Name : 0;
+         break;
+      case GL_RENDERBUFFER_BINDING_EXT:
+         CHECK_EXTENSION_I(EXT_framebuffer_object, pname);
+         params[0] = ctx->CurrentRenderbuffer ? ctx->CurrentRenderbuffer->Name : 0;
+         break;
+      case GL_MAX_COLOR_ATTACHMENTS_EXT:
+         CHECK_EXTENSION_I(EXT_framebuffer_object, pname);
+         params[0] = ctx->Const.MaxColorAttachments;
+         break;
+      case GL_MAX_RENDERBUFFER_SIZE_EXT:
+         CHECK_EXTENSION_I(EXT_framebuffer_object, pname);
+         params[0] = ctx->Const.MaxRenderbufferSize;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);
