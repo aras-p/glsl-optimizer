@@ -1341,6 +1341,8 @@ static GLboolean initialize_visual_and_buffer( int client,
                                   32,                   /*bitmap_pad*/
                                   0                     /*bytes_per_line*/ );
 #endif
+      if (!b->rowimage)
+         return GL_FALSE;
    }
 
    return GL_TRUE;
