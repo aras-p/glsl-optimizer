@@ -23,17 +23,7 @@
 #include "radeon_reg.h"
 #include "drm_sarea.h"
 
-
-/* HACK - for now, put this here... */
-/* Alpha - this may need to be a variable to handle UP1x00 vs TITAN */
-#if defined(__alpha__)
-# define DRM_PAGE_SIZE 8192
-#elif defined(__ia64__)
-# define DRM_PAGE_SIZE getpagesize()
-#else
-# define DRM_PAGE_SIZE 4096
-#endif
-
+static size_t radeon_drm_page_size;
 
 /**
  * \brief Wait for free FIFO entries.
@@ -368,10 +358,10 @@ static int RADEONDRIAgpInit( const DRIDriverContext *ctx, RADEONInfoPtr info)
 
    /* Initialize the CP ring buffer data */
    info->ringStart       = info->gartOffset;
-   info->ringMapSize     = info->ringSize*1024*1024 + DRM_PAGE_SIZE;
+   info->ringMapSize     = info->ringSize*1024*1024 + radeon_drm_page_size;
 
    info->ringReadOffset  = info->ringStart + info->ringMapSize;
-   info->ringReadMapSize = DRM_PAGE_SIZE;
+   info->ringReadMapSize = radeon_drm_page_size;
 
    /* Reserve space for vertex/indirect buffers */
    info->bufStart        = info->ringReadOffset + info->ringReadMapSize;
@@ -765,6 +755,8 @@ static int RADEONScreenInit( DRIDriverContext *ctx, RADEONInfoPtr info )
 	      "Radeon 9700 and newer cards\n");
       return 0;
    }
+   
+   radeon_drm_page_size = getpagesize();   
 
    info->registerSize = ctx->MMIOSize;
    ctx->shared.SAREASize = SAREA_MAX;
