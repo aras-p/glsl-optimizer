@@ -80,5 +80,7 @@
 #define gluBuild3DMipmaps mgluBuild3DMipmaps
 #define gluCheckExtension mgluCheckExtension
 #define gluUnProject4 mgluUnProject4
+#define gluNurbsCallbackData mgluNurbsCallbackData
+#define gluNurbsCallbackDataEXT mgluNurbsCallbackDataEXT
 
 #endif
