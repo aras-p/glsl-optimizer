@@ -664,7 +664,8 @@ GLUTAPI int GLUTAPIENTRY glutGetModifiers(void);
 GLUTAPI int GLUTAPIENTRY glutLayerGet(GLenum type);
 #endif
 #if (GLUT_API_VERSION >= 5)
-GLUTAPI void * GLUTAPIENTRY glutGetProcAddress(const char *procName);
+typedef void (*GLUTproc)();
+GLUTAPI GLUTproc GLUTAPIENTRY glutGetProcAddress(const char *procName);
 #endif
 
 /* GLUT font sub-API */
