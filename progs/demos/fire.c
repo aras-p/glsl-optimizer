@@ -716,12 +716,12 @@ main(int ac, char **av)
    /* Default settings */
 
    np = 800;
-   eject_r = -0.35;
+   eject_r = -0.65;
    dt = 0.015;
    eject_vy = 4;
    eject_vl = 1;
    shadows = 1;
-   ridtri = 0.5;
+   ridtri = 0.25;
 
    maxage = 1.0 / dt;
 
