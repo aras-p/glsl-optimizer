@@ -1,4 +1,4 @@
-/* $Id: t_vb_program.c,v 1.8 2002/01/06 20:39:20 brianp Exp $ */
+/* $Id: t_vb_program.c,v 1.9 2002/01/12 02:57:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -123,8 +123,8 @@ struct vp_stage_data {
    GLvector4f attribs[15];
 
    /* These point to the attribs[VERT_RESULT_COL0, COL1, BFC0, BFC1] arrays */
-   struct gl_client_array color0[2];  /* front and back */
-   struct gl_client_array color1[2];  /* front and back */
+   struct gl_client_array color0[2];  /* diffuse front and back */
+   struct gl_client_array color1[2];  /* specular front and back */
 
    GLvector4f ndcCoords;              /* normalized device coords */
    GLubyte *clipmask;                 /* clip flags */
@@ -185,7 +185,6 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
       /* execute the program */
       ASSERT(program);
       _mesa_exec_program(ctx, program);
-
 #if 0
       printf("Output %d: %f, %f, %f, %f\n", i,
              machine->Registers[VP_OUT_HPOS][0],
@@ -375,6 +374,7 @@ static void check_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    stage->active = ctx->VertexProgram.Enabled;
 
    if (stage->active) {
+      /* XXX what do we need here??? */
 #if 000
       if (stage->privatePtr)
 	 stage->run = run_validate_program;
@@ -420,8 +420,8 @@ const struct gl_pipeline_stage _tnl_vertex_program_stage =
 				 * otherwise not captured by inputs
 				 * (which may be VERT_OBJ_BIT) */
    GL_FALSE,			/* active */
-   0,				/* inputs */
-   VERT_CLIP | VERT_COLOR0_BIT,			/* outputs */
+   0/*VERT_OBJ_BIT*/,				/* inputs  XXX OK? */
+   VERT_CLIP | VERT_COLOR0_BIT,			/* outputs XXX OK? */
    0,				/* changed_inputs */
    NULL,			/* private_data */
    dtr,				/* destroy */
