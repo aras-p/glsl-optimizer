@@ -44,16 +44,9 @@
 # include <sys/ioctl.h>
 # include <sys/mman.h>
 # include <sys/time.h>
-# ifdef DRM_USE_MALLOC
-#  define _DRM_MALLOC malloc
-#  define _DRM_FREE   free
-extern int xf86InstallSIGIOHandler(int fd, void (*f)(int, void *), void *);
-extern int xf86RemoveSIGIOHandler(int fd);
-# else
-#  include <X11/Xlibint.h>
-#  define _DRM_MALLOC Xmalloc
-#  define _DRM_FREE   Xfree
-# endif
+#include "imports.h"
+#define _DRM_MALLOC MALLOC
+#define _DRM_FREE   FREE
 #endif
 
 /* Not all systems have MAP_FAILED defined */
