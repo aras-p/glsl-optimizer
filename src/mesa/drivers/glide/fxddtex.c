@@ -49,6 +49,56 @@
 
 
 void
+_mesa_halve2x2_teximage2d ( GLuint bytesPerPixel,
+			    GLint srcWidth, GLint srcHeight,
+			    const GLvoid *srcImage, GLvoid *dstImage )
+{
+   GLint i, j, k;
+   const GLint dstWidth = srcWidth / 2;
+   const GLint dstHeight = srcHeight / 2;
+   const GLint srcRowStride = srcWidth * bytesPerPixel;
+   const GLubyte *src = srcImage;
+   GLubyte *dst = dstImage;
+
+   /* no borders! can't halve 1x1! (stride > width * comp) not allowed */
+   if (srcHeight == 1) {
+      for (i = 0; i < dstWidth; i++) {
+         for (k = 0; k < bytesPerPixel; k++) {
+            dst[0] = (src[0] + src[bytesPerPixel] + 1) / 2;
+            src++;
+            dst++;
+         }
+         src += bytesPerPixel;
+      }
+   } else if (srcWidth == 1) {
+      for (j = 0; j < dstHeight; j++) {
+         for (k = 0; k < bytesPerPixel; k++) {
+            dst[0] = (src[0] + src[srcRowStride] + 1) / 2;
+            src++;
+            dst++;
+         }
+         src += srcRowStride;
+      }
+   } else {
+      for (j = 0; j < dstHeight; j++) {
+         for (i = 0; i < dstWidth; i++) {
+            for (k = 0; k < bytesPerPixel; k++) {
+               dst[0] = (src[0] +
+                         src[bytesPerPixel] +
+                         src[srcRowStride] +
+                         src[srcRowStride + bytesPerPixel] + 2) / 4;
+               src++;
+               dst++;
+            }
+            src += bytesPerPixel;
+         }
+         src += srcRowStride;
+      }
+   }
+}
+
+
+void
 fxPrintTextureData(tfxTexInfo * ti)
 {
    fprintf(stderr, "Texture Data:\n");
@@ -1339,78 +1389,108 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       return;
    }
 
-   if (mml->wScale != 1 || mml->hScale != 1) {
-      /* rescale image to overcome 1:8 aspect limitation */
-      if (!adjust2DRatio(ctx,
-			 0, 0,
-			 width, height,
-			 format, type, pixels,
-			 packing,
-			 mml,
-			 texImage,
-			 texelBytes,
-			 dstRowStride)
-         ) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
-         return;
-      }
-   }
-   else {
-      /* no rescaling needed */
-      /* unpack image, apply transfer ops and store in texImage->Data */
-      texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
-                                      texImage->TexFormat, texImage->Data,
-                                      0, 0, 0, /* dstX/Y/Zoffset */
-                                      dstRowStride,
-                                      0, /* dstImageStride */
-                                      width, height, 1,
-                                      format, type, pixels, packing);
-   }
-#if FX_TC_NCC
-   if (fxMesa->HaveTexus2) {
-      GLenum texNCC = 0;
-      GLuint texSize = mml->width * mml->height;
-      if (internalFormat == GL_COMPRESSED_RGB) {
-         texNCC = GR_TEXFMT_YIQ_422;
-      } else if (internalFormat == GL_COMPRESSED_RGBA) {
-         texNCC = GR_TEXFMT_AYIQ_8422;
-         texSize <<= 1;
-      }
-      if (texNCC) {
-         TxMip txMip, pxMip;
-         GLubyte *tempImage = MESA_PBUFFER_ALLOC(texSize);
-         if (!tempImage) {
+   if (pixels != NULL) {
+      if (mml->wScale != 1 || mml->hScale != 1) {
+         /* rescale image to overcome 1:8 aspect limitation */
+         if (!adjust2DRatio(ctx,
+			    0, 0,
+			    width, height,
+			    format, type, pixels,
+			    packing,
+			    mml,
+			    texImage,
+			    texelBytes,
+			    dstRowStride)
+            ) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
             return;
          }
-         txMip.width = mml->width;
-         txMip.height = mml->height;
-         txMip.depth = 1;
-         txMip.data[0] = texImage->Data;
-         pxMip.data[0] = tempImage;
-         fxMesa->Glide.txMipQuantize(&pxMip, &txMip, texNCC, TX_DITHER_ERR, TX_COMPRESSION_HEURISTIC);
-         if (level == 0) {
-            fxMesa->Glide.txPalToNcc((GuNccTable *)(&(ti->palette)), pxMip.pal);
+      }
+      else {
+         /* no rescaling needed */
+         /* unpack image, apply transfer ops and store in texImage->Data */
+         texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+                                         texImage->TexFormat, texImage->Data,
+                                         0, 0, 0, /* dstX/Y/Zoffset */
+                                         dstRowStride,
+                                         0, /* dstImageStride */
+                                         width, height, 1,
+                                         format, type, pixels, packing);
+      }
+#if FX_TC_NCC
+      if (fxMesa->HaveTexus2) {
+         GLenum texNCC = 0;
+         GLuint texSize = mml->width * mml->height;
+         if (internalFormat == GL_COMPRESSED_RGB) {
+            texNCC = GR_TEXFMT_YIQ_422;
+         } else if (internalFormat == GL_COMPRESSED_RGBA) {
+            texNCC = GR_TEXFMT_AYIQ_8422;
+            texSize <<= 1;
          }
-         MESA_PBUFFER_FREE(texImage->Data);
-         texImage->Data = tempImage;
-         mml->glideFormat = texNCC;
+         if (texNCC) {
+            TxMip txMip, pxMip;
+            GLubyte *tempImage = MESA_PBUFFER_ALLOC(texSize);
+            if (!tempImage) {
+               _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+               return;
+            }
+            txMip.width = mml->width;
+            txMip.height = mml->height;
+            txMip.depth = 1;
+            txMip.data[0] = texImage->Data;
+            pxMip.data[0] = tempImage;
+            fxMesa->Glide.txMipQuantize(&pxMip, &txMip, texNCC, TX_DITHER_ERR, TX_COMPRESSION_HEURISTIC);
+            if (level == 0) {
+               fxMesa->Glide.txPalToNcc((GuNccTable *)(&(ti->palette)), pxMip.pal);
+            }
+            MESA_PBUFFER_FREE(texImage->Data);
+            texImage->Data = tempImage;
+            mml->glideFormat = texNCC;
+         }
+      }
+#endif
+   
+      /* GL_SGIS_generate_mipmap */
+      if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+         GLint mipWidth, mipHeight;
+         tfxMipMapLevel *mip;
+         struct gl_texture_image *mipImage;
+         const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+         const GLint maxLevels = _mesa_max_texture_levels(ctx, texObj->Target);
+   
+         assert(!texImage->IsCompressed);
+   
+         while (level < texObj->MaxLevel && level < maxLevels - 1) {
+            mipWidth = width / 2;
+            if (!mipWidth) {
+               mipWidth = 1;
+            }
+            mipHeight = height / 2;
+            if (!mipHeight) {
+               mipHeight = 1;
+            }
+            if ((mipWidth == width) && (mipHeight == height)) {
+               break;
+            }
+            _mesa_TexImage2D(target, ++level, internalFormat,
+                             mipWidth, mipHeight, border,
+                             format, type,
+                             NULL);
+            mipImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+            mip = FX_MIPMAP_DATA(mipImage);
+            _mesa_halve2x2_teximage2d(texelBytes,
+                                      mml->width, mml->height,
+                                      texImage->Data, mipImage->Data);
+            texImage = mipImage;
+            mml = mip;
+            width = mipWidth;
+            height = mipHeight;
+         }
       }
    }
-#endif
 
    ti->info.format = mml->glideFormat;
    texImage->FetchTexelc = fxFetchFunction(texImage->TexFormat->MesaFormat);
-
-   /* [dBorca] take care of aspectratio */
-#if 0
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, target,
-                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                            texObj);
-   }
-#endif
 
    /* [dBorca]
     * Hack alert: unsure...
@@ -1495,10 +1575,44 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
                                       format, type, pixels, packing);
    }
 
-   /* [dBorca]
-    * Hack alert: unsure...
-    */
-   if (0 && ti->validated && ti->isInTM)
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      GLint mipWidth, mipHeight;
+      tfxMipMapLevel *mip;
+      struct gl_texture_image *mipImage;
+      const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+      const GLint maxLevels = _mesa_max_texture_levels(ctx, texObj->Target);
+
+      assert(!texImage->IsCompressed);
+
+      width = texImage->Width;
+      height = texImage->Height;
+      while (level < texObj->MaxLevel && level < maxLevels - 1) {
+         mipWidth = width / 2;
+         if (!mipWidth) {
+            mipWidth = 1;
+         }
+         mipHeight = height / 2;
+         if (!mipHeight) {
+            mipHeight = 1;
+         }
+         if ((mipWidth == width) && (mipHeight == height)) {
+            break;
+         }
+         ++level;
+         mipImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+         mip = FX_MIPMAP_DATA(mipImage);
+         _mesa_halve2x2_teximage2d(texelBytes,
+                                   mml->width, mml->height,
+                                   texImage->Data, mipImage->Data);
+         texImage = mipImage;
+         mml = mip;
+         width = mipWidth;
+         height = mipHeight;
+      }
+   }
+
+   if (ti->validated && ti->isInTM && !texObj->GenerateMipmap)
       fxTMReloadMipMapLevel(fxMesa, texObj, level);
    else
       fxTexInvalidate(ctx, texObj);
@@ -1613,15 +1727,10 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
    ti->info.format = mml->glideFormat;
    texImage->FetchTexelc = fxFetchFunction(texImage->TexFormat->MesaFormat);
 
-   /* [dBorca] take care of aspectratio */
-#if 0
    /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, target,
-                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                            texObj);
+      assert(!texImage->IsCompressed);
    }
-#endif
 
    /* [dBorca]
     * Hack alert: unsure...
@@ -1693,10 +1802,12 @@ fxDDCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
                                texImage->Data);
    }
 
-   /* [dBorca]
-    * Hack alert: unsure...
-    */
-   if (0 && ti->validated && ti->isInTM)
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      assert(!texImage->IsCompressed);
+   }
+
+   if (ti->validated && ti->isInTM)
       fxTMReloadMipMapLevel(fxMesa, texObj, level);
    else
       fxTexInvalidate(ctx, texObj);
