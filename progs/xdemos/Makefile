@@ -24,7 +24,8 @@ PROGS = glthreads \
 	wincopy \
 	xdemo \
 	xfont \
-	xrotfontdemo
+	xrotfontdemo \
+	yuvrect_client
 
 
 
