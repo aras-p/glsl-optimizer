@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.94 2003/10/20 16:28:00 kschultz Exp $
+# $Id: Makefile.X11,v 1.95 2003/10/20 16:48:14 kschultz Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -430,6 +430,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/glu/sgi/Makefile.X11				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.win				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.DJ				\
+	$(DIRECTORY)/src/glu/sgi/cc*.txt				\
 	$(DIRECTORY)/src/glu/sgi/glu.def				\
 	$(DIRECTORY)/src/glu/sgi/glu.dsp				\
 	$(DIRECTORY)/src/glu/sgi/dummy.cc				\
@@ -505,7 +506,6 @@ SI_GLU_FILES = \
 	$(DIRECTORY)/bin/mklib*					\
 	$(DIRECTORY)/include/GL/glu.h				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.X11			\
-	$(DIRECTORY)/src/glu/sgi/cc*.txt			\
 	$(DIRECTORY)/src/glu/sgi/include/gluos.h		\
 	$(DIRECTORY)/src/glu/sgi/libnurbs/interface/*.h		\
 	$(DIRECTORY)/src/glu/sgi/libnurbs/interface/*.cc	\
