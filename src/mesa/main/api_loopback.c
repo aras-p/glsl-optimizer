@@ -1,10 +1,8 @@
-/* $Id: api_loopback.c,v 1.18 2003/04/05 07:29:23 keithw Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1634,6 +1632,76 @@ loopback_VertexAttribs4ubvNV(GLuint index, GLsizei n, const GLubyte *v)
 }
 
 
+/*
+ * GL_ARB_vertex_program
+ */
+
+static void
+loopback_VertexAttrib4bvARB(GLuint index, const GLbyte * v)
+{
+   ATTRIB(index, v[0], v[1], v[2], v[3]);
+}
+
+static void
+loopback_VertexAttrib4ivARB(GLuint index, const GLint * v)
+{
+   ATTRIB(index, v[0], v[1], v[2], v[3]);
+}
+
+static void
+loopback_VertexAttrib4ubvARB(GLuint index, const GLubyte * v)
+{
+   ATTRIB(index, v[0], v[1], v[2], v[3]);
+}
+
+static void
+loopback_VertexAttrib4usvARB(GLuint index, const GLushort * v)
+{
+   ATTRIB(index, v[0], v[1], v[2], v[3]);
+}
+
+static void
+loopback_VertexAttrib4uivARB(GLuint index, const GLuint * v)
+{
+   ATTRIB(index, v[0], v[1], v[2], v[3]);
+}
+
+static void
+loopback_VertexAttrib4NbvARB(GLuint index, const GLbyte * v)
+{
+   ATTRIB(index, BYTE_TO_FLOAT(v[0]), BYTE_TO_FLOAT(v[1]),
+          BYTE_TO_FLOAT(v[2]), BYTE_TO_FLOAT(v[3]));
+}
+
+static void
+loopback_VertexAttrib4NsvARB(GLuint index, const GLshort * v)
+{
+   ATTRIB(index, SHORT_TO_FLOAT(v[0]), SHORT_TO_FLOAT(v[1]),
+          SHORT_TO_FLOAT(v[2]), SHORT_TO_FLOAT(v[3]));
+}
+
+static void
+loopback_VertexAttrib4NivARB(GLuint index, const GLint * v)
+{
+   ATTRIB(index, INT_TO_FLOAT(v[0]), INT_TO_FLOAT(v[1]),
+          INT_TO_FLOAT(v[2]), INT_TO_FLOAT(v[3]));
+}
+
+static void
+loopback_VertexAttrib4NusvARB(GLuint index, const GLushort * v)
+{
+   ATTRIB(index, USHORT_TO_FLOAT(v[0]), USHORT_TO_FLOAT(v[1]),
+          USHORT_TO_FLOAT(v[2]), USHORT_TO_FLOAT(v[3]));
+}
+
+static void
+loopback_VertexAttrib4NuivARB(GLuint index, const GLuint * v)
+{
+   ATTRIB(index, UINT_TO_FLOAT(v[0]), UINT_TO_FLOAT(v[1]),
+          UINT_TO_FLOAT(v[2]), UINT_TO_FLOAT(v[3]));
+}
+
+
 
 void
 _mesa_loopback_prefer_float( struct _glapi_table *dest,
@@ -1873,4 +1941,14 @@ _mesa_loopback_init_api_table( struct _glapi_table *dest,
    dest->VertexAttribs4dvNV = loopback_VertexAttribs4dvNV;
    dest->VertexAttribs4ubvNV = loopback_VertexAttribs4ubvNV;
 
+   dest->VertexAttrib4bvARB = loopback_VertexAttrib4bvARB;
+   dest->VertexAttrib4ivARB = loopback_VertexAttrib4ivARB;
+   dest->VertexAttrib4ubvARB = loopback_VertexAttrib4ubvARB;
+   dest->VertexAttrib4usvARB = loopback_VertexAttrib4usvARB;
+   dest->VertexAttrib4uivARB = loopback_VertexAttrib4uivARB;
+   dest->VertexAttrib4NbvARB = loopback_VertexAttrib4NbvARB;
+   dest->VertexAttrib4NsvARB = loopback_VertexAttrib4NsvARB;
+   dest->VertexAttrib4NivARB = loopback_VertexAttrib4NivARB;
+   dest->VertexAttrib4NusvARB = loopback_VertexAttrib4NusvARB;
+   dest->VertexAttrib4NuivARB = loopback_VertexAttrib4NuivARB;
 }
