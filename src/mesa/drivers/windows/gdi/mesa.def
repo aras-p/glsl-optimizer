@@ -976,7 +976,6 @@ EXPORTS
 	_ac_InvalidateState
 	_glapi_get_context
 	_glapi_get_proc_address
-	_mesa_base_compressed_texformat
 	_mesa_buffer_data
 	_mesa_buffer_map
 	_mesa_buffer_subdata

@@ -613,6 +613,13 @@ extern void fxDDTexImage1D(GLcontext * ctx, GLenum target, GLint level,
 			   const struct gl_pixelstore_attrib *packing,
 			   struct gl_texture_object *texObj,
 			   struct gl_texture_image *texImage);
+extern void fxDDTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
+			      GLint xoffset, GLint width,
+			      GLenum format, GLenum type,
+			      const GLvoid * pixels,
+			      const struct gl_pixelstore_attrib *packing,
+			      struct gl_texture_object *texObj,
+			      struct gl_texture_image *texImage);
 extern GLboolean fxDDTestProxyTexImage (GLcontext *ctx, GLenum target,
                                         GLint level, GLint internalFormat,
                                         GLenum format, GLenum type,

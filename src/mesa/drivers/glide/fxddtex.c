@@ -170,10 +170,13 @@ fxDDTexEnv(GLcontext * ctx, GLenum target, GLenum pname,
 
    /* apply any lod biasing right now */
    if (pname == GL_TEXTURE_LOD_BIAS_EXT) {
-      grTexLodBiasValue(GR_TMU0, *param);
+      GLfloat bias = *param;
+      CLAMP_SELF(bias, -8.0, 7.75);
+      
+      grTexLodBiasValue(GR_TMU0, bias);
 
       if (fxMesa->haveTwoTMUs) {
-	 grTexLodBiasValue(GR_TMU1, *param);
+	 grTexLodBiasValue(GR_TMU1, bias);
       }
 
    }
@@ -923,7 +926,6 @@ GLuint fxDDCompressedTextureSize (GLcontext *ctx,
                                   GLsizei width, GLsizei height, GLsizei depth,
                                   GLenum format)
 {
- GLuint size;
  int wScale, hScale;
 
  ASSERT(depth == 1);
@@ -937,43 +939,9 @@ GLuint fxDDCompressedTextureSize (GLcontext *ctx,
               NULL, NULL, /* sscale, tscale     */
               &wScale, &hScale);
 
- width *= wScale;
- height *= hScale;
-
-#if FX_TC_NAPALM || FX_TC_NCC
- switch (format) {
- case GL_COMPRESSED_RGB:
-#if FX_TC_NAPALM
-    {
-     fxMesaContext fxMesa = FX_CONTEXT(ctx);
-     if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
-        format = GL_COMPRESSED_RGB_FXT1_3DFX;
-        break;
-     }
-    }
-#endif
-#if FX_TC_NCC
-    return (width * height * 8 >> 3) + 12 * 4;
-#endif
- case GL_COMPRESSED_RGBA:
-#if FX_TC_NAPALM
-    {
-     fxMesaContext fxMesa = FX_CONTEXT(ctx);
-     if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
-        format = GL_COMPRESSED_RGBA_FXT1_3DFX;
-        break;
-     }
-    }
-#endif
-#if FX_TC_NCC
-    return (width * height * 16 >> 3) + 12 * 4;
-#endif
- }
-#endif
-
  return _mesa_compressed_texture_size(ctx,
-                                      width,
-                                      height,
+                                      width * wScale,
+                                      height * hScale,
                                       depth,
                                       format);
 }
@@ -992,12 +960,10 @@ fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 
    switch (internalFormat) {
    case GL_COMPRESSED_RGB:
-#if 0 && FX_TC_NAPALM /* [koolsmoky] */
-     if (ctx->Extensions.TDFX_texture_compression_FXT1) {
-       return &_mesa_texformat_rgb_fxt1;
-     } else if (ctx->Extensions.EXT_texture_compression_s3tc) {
-       return &_mesa_texformat_rgb_dxt1;
-     }
+#if FX_TC_NCC
+      if (fxMesa->HaveTexus2) {
+         return &_mesa_texformat_argb8888;
+      }
 #endif
      /* intentional fall through */
    case 3:
@@ -1016,12 +982,10 @@ fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGBA4:
       return &_mesa_texformat_argb4444;
    case GL_COMPRESSED_RGBA:
-#if 0 && FX_TC_NAPALM /* [koolsmoky] */
-     if (ctx->Extensions.TDFX_texture_compression_FXT1) {
-       return &_mesa_texformat_rgba_fxt1;
-     } else if (ctx->Extensions.EXT_texture_compression_s3tc) {
-       return &_mesa_texformat_rgba_dxt3;
-     }
+#if FX_TC_NCC
+      if (fxMesa->HaveTexus2) {
+         return &_mesa_texformat_argb8888;
+      }
 #endif
      /* intentional fall through */
    case 4:
@@ -1195,6 +1159,87 @@ fxFetchFunction(GLint mesaFormat)
    }
 }
 
+
+static GLboolean
+adjust2DRatio (GLcontext *ctx,
+	       GLint xoffset, GLint yoffset,
+	       GLint width, GLint height,
+	       GLenum format, GLenum type, const GLvoid *pixels,
+	       const struct gl_pixelstore_attrib *packing,
+	       tfxMipMapLevel *mml,
+	       struct gl_texture_image *texImage,
+	       GLint texelBytes,
+	       GLint dstRowStride)
+{
+   const GLint newWidth = width * mml->wScale;
+   const GLint newHeight = height * mml->hScale;
+   GLvoid *tempImage;
+
+   if (!texImage->IsCompressed) {
+      GLubyte *destAddr;
+      tempImage = MALLOC(width * height * texelBytes);
+      if (!tempImage) {
+         return GL_FALSE;
+      }
+
+      texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+                                      texImage->TexFormat, tempImage,
+                                      0, 0, 0, /* dstX/Y/Zoffset */
+                                      width * texelBytes, /* dstRowStride */
+                                      0, /* dstImageStride */
+                                      width, height, 1,
+                                      format, type, pixels, packing);
+
+      /* now rescale */
+      /* compute address of dest subimage within the overal tex image */
+      destAddr = (GLubyte *) texImage->Data
+         + (yoffset * mml->hScale * mml->width
+            + xoffset * mml->wScale) * texelBytes;
+
+      _mesa_rescale_teximage2d(texelBytes,
+                               dstRowStride, /* dst stride */
+                               width, height,
+                               newWidth, newHeight,
+                               tempImage, destAddr);
+   } else {
+      const GLint rawBytes = 4;
+      GLvoid *rawImage = MALLOC(width * height * rawBytes);
+      if (!rawImage) {
+         return GL_FALSE;
+      }
+      tempImage = MALLOC(newWidth * newHeight * rawBytes);
+      if (!tempImage) {
+         return GL_FALSE;
+      }
+      /* unpack image, apply transfer ops and store in rawImage */
+      _mesa_texstore_argb8888(ctx, 2, GL_RGBA,
+                              &_mesa_texformat_argb8888, rawImage,
+                              0, 0, 0, /* dstX/Y/Zoffset */
+                              width * rawBytes, /* dstRowStride */
+                              0, /* dstImageStride */
+                              width, height, 1,
+                              format, type, pixels, packing);
+      _mesa_rescale_teximage2d(rawBytes,
+                               newWidth * rawBytes, /* dst stride */
+                               width, height, /* src */
+                               newWidth, newHeight, /* dst */
+                               rawImage /*src*/, tempImage /*dst*/ );
+      texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+                                      texImage->TexFormat, texImage->Data,
+                                      xoffset * mml->wScale, yoffset * mml->hScale, 0, /* dstX/Y/Zoffset */
+                                      dstRowStride,
+                                      0, /* dstImageStride */
+                                      newWidth, newHeight, 1,
+                                      GL_BGRA, CHAN_TYPE, tempImage, &ctx->DefaultPacking);
+      FREE(rawImage);
+   }
+
+   FREE(tempImage);
+
+   return GL_TRUE;
+}
+
+
 void
 fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 	       GLint internalFormat, GLint width, GLint height, GLint border,
@@ -1258,14 +1303,34 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
      case GL_RGB4_S3TC:
        internalFormat = GL_COMPRESSED_RGB_FXT1_3DFX;
        break;
-     case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
      case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
      case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
      case GL_RGBA_S3TC:
      case GL_RGBA4_S3TC:
+       texImage->CompressedSize /= 2;
+     case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
        internalFormat = GL_COMPRESSED_RGBA_FXT1_3DFX;
-       texImage->CompressedSize *= 2;
      }
+     texImage->IntFormat = internalFormat;
+   }
+#endif
+#if FX_TC_NAPALM
+   if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
+      GLenum texNapalm = 0;
+      if (internalFormat == GL_COMPRESSED_RGB) {
+         texNapalm = GL_COMPRESSED_RGB_FXT1_3DFX;
+      } else if (internalFormat == GL_COMPRESSED_RGBA) {
+         texNapalm = GL_COMPRESSED_RGBA_FXT1_3DFX;
+      }
+      if (texNapalm) {
+         texImage->IntFormat = internalFormat = texNapalm;
+         texImage->IsCompressed = GL_TRUE;
+         texImage->CompressedSize = _mesa_compressed_texture_size(ctx,
+                                                                  mml->width,
+                                                                  mml->height,
+                                                                  1,
+                                                                  texNapalm);
+      }
    }
 #endif
 
@@ -1278,9 +1343,6 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    /*if (!fxMesa->HaveTexFmt) assert(texelBytes == 1 || texelBytes == 2);*/
 
    mml->glideFormat = fxGlideFormat(texImage->TexFormat->MesaFormat);
-   /* [dBorca] ZYX: how do we handle FX_TC_NCC/FX_TC_NAPALM? */
-   /* [dBorca] ZYX: how do we handle S3TC outside MESA?!?!?! */
-   /* [dBorca] ZYX: how do we handle aspectratio adjustemnt? */
 
    /* allocate mipmap buffer */
    assert(!texImage->Data);
@@ -1298,73 +1360,19 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 
    if (mml->wScale != 1 || mml->hScale != 1) {
       /* rescale image to overcome 1:8 aspect limitation */
-      GLvoid *tempImage;
-      if (texImage->IsCompressed) {
-         /* [dBorca] worst case:
-          * we have to rescale a compressed texture
-          * first, we unpack the image to RGBA, doing transfer ops
-          * next, we rescale the image
-          * last, we compress
-          * hint: too heavy-handed; also may unpack/transferop twice
-          */
-         const GLint rgbaBytes = 4;
-         GLvoid *rgbaImage = MALLOC(width * height * rgbaBytes);
-         if (!rgbaImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
-            return;
-         }
-         tempImage = MALLOC(mml->width * mml->height * rgbaBytes);
-         if (!tempImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
-            return;
-         }
-         /* unpack image, apply transfer ops and store in rgbaImage */
-         _mesa_texstore_argb8888(ctx, 2, texImage->Format,
-                                 &_mesa_texformat_argb8888, rgbaImage,
-                                 0, 0, 0, /* dstX/Y/Zoffset */
-                                 width * rgbaBytes, /* dstRowStride */
-                                 0, /* dstImageStride */
-                                 width, height, 1,
-                                 format, type, pixels, packing);
-         _mesa_rescale_teximage2d(rgbaBytes,
-                                  mml->width * rgbaBytes, /* dst stride */
-                                  width, height, /* src */
-                                  mml->width, mml->height, /* dst */
-                                  rgbaImage /*src*/, tempImage /*dst*/ );
-         texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
-                                         texImage->TexFormat, texImage->Data,
-                                         0, 0, 0, /* dstX/Y/Zoffset */
-                                         dstRowStride,
-                                         0, /* dstImageStride */
-                                         mml->width, mml->height, 1,
-                                         GL_BGRA, CHAN_TYPE, tempImage, &ctx->DefaultPacking);
-         FREE(rgbaImage);
-      } else {
-         /* [dBorca] mild case:
-          * we have to rescale a texture
-          * first, we unpack the image, doing transfer ops
-          * last, we rescale the image
-          */
-         tempImage = MALLOC(width * height * texelBytes);
-         if (!tempImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
-            return;
-         }
-         /* unpack image, apply transfer ops and store in tempImage */
-         texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
-                                         texImage->TexFormat, tempImage,
-                                         0, 0, 0, /* dstX/Y/Zoffset */
-                                         width * texelBytes, /* dstRowStride */
-                                         0, /* dstImageStride */
-                                         width, height, 1,
-                                         format, type, pixels, packing);
-         _mesa_rescale_teximage2d(texelBytes,
-                                  mml->width * texelBytes, /* dst stride */
-                                  width, height, /* src */
-                                  mml->width, mml->height, /* dst */
-                                  tempImage /*src*/, texImage->Data /*dst*/ );
+      if (!adjust2DRatio(ctx,
+			 0, 0,
+			 width, height,
+			 format, type, pixels,
+			 packing,
+			 mml,
+			 texImage,
+			 texelBytes,
+			 dstRowStride)
+         ) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+         return;
       }
-      FREE(tempImage);
    }
    else {
       /* no rescaling needed */
@@ -1377,9 +1385,51 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
                                       width, height, 1,
                                       format, type, pixels, packing);
    }
+#if FX_TC_NCC
+   if (fxMesa->HaveTexus2) {
+      GLenum texNCC = 0;
+      GLuint texSize = mml->width * mml->height;
+      if (internalFormat == GL_COMPRESSED_RGB) {
+         texNCC = GR_TEXFMT_YIQ_422;
+      } else if (internalFormat == GL_COMPRESSED_RGBA) {
+         texNCC = GR_TEXFMT_AYIQ_8422;
+         texSize <<= 1;
+      }
+      if (texNCC) {
+         TxMip txMip, pxMip;
+         GLubyte *tempImage = MESA_PBUFFER_ALLOC(texSize);
+         if (!tempImage) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+            return;
+         }
+         txMip.width = mml->width;
+         txMip.height = mml->height;
+         txMip.depth = 1;
+         txMip.data[0] = texImage->Data;
+         pxMip.data[0] = tempImage;
+         fxMesa->Glide.txMipQuantize(&pxMip, &txMip, texNCC, TX_DITHER_ERR, TX_COMPRESSION_HEURISTIC);
+         if (level == 0) {
+            fxMesa->Glide.txPalToNcc((GuNccTable *)(&(ti->palette)), pxMip.pal);
+         }
+         MESA_PBUFFER_FREE(texImage->Data);
+         texImage->Data = tempImage;
+         mml->glideFormat = texNCC;
+      }
+   }
+#endif
 
    ti->info.format = mml->glideFormat;
    texImage->FetchTexelc = fxFetchFunction(texImage->TexFormat->MesaFormat);
+
+   /* [dBorca] take care of aspectratio */
+#if 0
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, target,
+                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
+                            texObj);
+   }
+#endif
 
    /* [dBorca]
     * Hack alert: unsure...
@@ -1407,10 +1457,10 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxTexInfo *ti;
    tfxMipMapLevel *mml;
-   GLint texelBytes;
+   GLint texelBytes, dstRowStride;
 
    /* [dBorca] Hack alert:
-    * fix the goddamn texture compression here
+    * FX_TC_NCC not supported
     */
 
    if (TDFX_DEBUG & VERBOSE_TEXTURE) {
@@ -1431,47 +1481,34 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    assert(texImage->Format);
 
    texelBytes = texImage->TexFormat->TexelBytes;
+   if (texImage->IsCompressed) {
+      dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat, mml->width);
+   } else {
+      dstRowStride = mml->width * texelBytes;
+   }
 
    if (mml->wScale != 1 || mml->hScale != 1) {
       /* need to rescale subimage to match mipmap level's rescale factors */
-      const GLint newWidth = width * mml->wScale;
-      const GLint newHeight = height * mml->hScale;
-      GLvoid *tempImage;
-      GLubyte *destAddr;
-      tempImage = MALLOC(width * height * texelBytes);
-      if (!tempImage) {
+      if (!adjust2DRatio(ctx,
+			 xoffset, yoffset,
+			 width, height,
+			 format, type, pixels,
+			 packing,
+			 mml,
+			 texImage,
+			 texelBytes,
+			 dstRowStride)
+         ) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage2D");
          return;
       }
-
-      texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
-                                      texImage->TexFormat, tempImage,
-                                      0, 0, 0, /* dstX/Y/Zoffset */
-                                      width * texelBytes, /* dstRowStride */
-                                      0, /* dstImageStride */
-                                      width, height, 1,
-                                      format, type, pixels, packing);
-
-      /* now rescale */
-      /* compute address of dest subimage within the overal tex image */
-      destAddr = (GLubyte *) texImage->Data
-         + (yoffset * mml->hScale * mml->width
-            + xoffset * mml->wScale) * texelBytes;
-
-      _mesa_rescale_teximage2d(texelBytes,
-                               mml->width * texelBytes, /* dst stride */
-                               width, height,
-                               newWidth, newHeight,
-                               tempImage, destAddr);
-
-      FREE(tempImage);
    }
    else {
       /* no rescaling needed */
       texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
                                       texImage->TexFormat, (GLubyte *) texImage->Data,
                                       xoffset, yoffset, 0, /* dstX/Y/Zoffset */
-                                      mml->width * texelBytes, /* dstRowStride */
+                                      dstRowStride,
                                       0, /* dstImageStride */
                                       width, height, 1,
                                       format, type, pixels, packing);
@@ -1547,27 +1584,6 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
     * given the user's internal texture format hint.
     */
    mml->glideFormat = fxGlideFormat(texImage->TexFormat->MesaFormat);
-#if FX_TC_NCC || FX_TC_NAPALM
-   if (internalFormat == GL_COMPRESSED_RGB) {
-#if FX_TC_NCC
-      mml->glideFormat = GR_TEXFMT_YIQ_422;
-#endif
-#if FX_TC_NAPALM
-      if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
-         mml->glideFormat = GR_TEXFMT_ARGB_CMP_FXT1;
-      }
-#endif
-   } else if (internalFormat == GL_COMPRESSED_RGBA) {
-#if FX_TC_NCC
-      mml->glideFormat = GR_TEXFMT_AYIQ_8422;
-#endif
-#if FX_TC_NAPALM
-      if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
-         mml->glideFormat = GR_TEXFMT_ARGB_CMP_FXT1;
-      }
-#endif
-   }
-#endif
 
    /* allocate new storage for texture image, if needed */
    if (!texImage->Data) {
@@ -1580,19 +1596,26 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
 
    /* save the texture data */
    MEMCPY(texImage->Data, data, imageSize);
-#if FX_TC_NCC
-   if ((mml->glideFormat == GR_TEXFMT_AYIQ_8422) ||
-       (mml->glideFormat == GR_TEXFMT_YIQ_422)) {
-      MEMCPY(&(ti->palette.data[16]), (char *)data + imageSize - 12 * 4, 12 * 4);
-   }
-#endif
+   /* [dBorca] Hack alert:
+    * in order to account for apect ratio and other anomalies,
+    * we would need to decompress the image. Note, however that
+    * certain rescaling factors (x4, x8) can be treated simpler
+    * if they match the compressed texture microtile size.
+    * Cheeky idea: use textureBuffer to decompress in hardware!
+    */
 
    ti->info.format = mml->glideFormat;
    texImage->FetchTexelc = fxFetchFunction(texImage->TexFormat->MesaFormat);
 
-   /* [dBorca] Hack alert:
-    * what about different size/texel? other anomalies? SW rescaling?
-    */
+   /* [dBorca] take care of aspectratio */
+#if 0
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, target,
+                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
+                            texObj);
+   }
+#endif
 
    /* [dBorca]
     * Hack alert: unsure...
@@ -1620,6 +1643,9 @@ fxDDCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxTexInfo *ti;
    tfxMipMapLevel *mml;
+   GLint destRowStride, srcRowStride;
+   GLint i, rows;
+   GLubyte *dest;
 
    if (TDFX_DEBUG & VERBOSE_TEXTURE) {
        fprintf(stderr, "fxDDCompressedTexSubImage2D: id=%d\n", texObj->Name);
@@ -1630,25 +1656,26 @@ fxDDCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
    mml = FX_MIPMAP_DATA(texImage);
    assert(mml);
 
-   /*
-    * We punt if we are not replacing the entire image.  This
-    * is allowed by the spec.
-    *
-    * [dBorca] Hack alert:
-    * ohwell, we should NOT! Look into _mesa_store_compressed_texsubimage2d
-    * on how to calculate the sub-image.
-    */
-   if ((xoffset != 0) && (yoffset != 0)
-       && (width != texImage->Width)
-       && (height != texImage->Height)) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glCompressedTexSubImage2D(CHICKEN)");
-      return;
+   srcRowStride = _mesa_compressed_row_stride(texImage->IntFormat, width);
+
+   destRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
+                                               texImage->Width);
+   dest = _mesa_compressed_image_address(xoffset, yoffset, 0,
+                                         texImage->IntFormat,
+                                         texImage->Width,
+                              (GLubyte*) texImage->Data);
+
+   rows = height / 4; /* [dBorca] hardcoded 4, but works for FXT1/DXTC */
+
+   for (i = 0; i < rows; i++) {
+      MEMCPY(dest, data, srcRowStride);
+      dest += destRowStride;
+      data = (GLvoid *)((GLuint)data + (GLuint)srcRowStride);
    }
 
    /* [dBorca] Hack alert:
-    * what about different size/texel? other anomalies? SW rescaling?
+    * see fxDDCompressedTexImage2D for caveats
     */
-   MEMCPY(texImage->Data, data, imageSize);
 
    /* [dBorca]
     * Hack alert: unsure...
@@ -1674,6 +1701,24 @@ fxDDTexImage1D (GLcontext *ctx, GLenum target, GLint level,
 	        packing,
 	        texObj,
 	        texImage);
+}
+
+
+void
+fxDDTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
+		  GLint xoffset,
+		  GLsizei width,
+		  GLenum format, GLenum type, const GLvoid * pixels,
+		  const struct gl_pixelstore_attrib *packing,
+		  struct gl_texture_object *texObj,
+		  struct gl_texture_image *texImage)
+{
+ fxDDTexSubImage2D(ctx, target, level,
+		   xoffset, 0, width, 1,
+		   format, type, pixels,
+		   packing,
+		   texObj,
+		   texImage);
 }
 
 

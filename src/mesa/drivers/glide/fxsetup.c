@@ -1323,7 +1323,7 @@ fxDDBlendFuncSeparate(GLcontext * ctx, GLenum sfactor, GLenum dfactor, GLenum as
     * It indicates whether we really have HW alpha buffer...
     */
 
-/*
+/* Use the text below to implement GL_NV_blend_square!
 When the value A_COLOR is selected as the destination alpha blending factor,
 the source pixel color is used as the destination blending factor.  When the
 value A_COLOR is selected as the source alpha blending factor, the destination
