@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.0
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -182,7 +182,6 @@ _mesa_alloc_program(GLcontext *ctx, GLenum target, GLuint id)
 /**
  * Delete a program and remove it from the hash table, ignoring the
  * reference count.
- * \note Called from the GL API dispatcher.
  */
 void
 _mesa_delete_program(GLcontext *ctx, struct program *prog)
@@ -197,7 +196,8 @@ _mesa_delete_program(GLcontext *ctx, struct program *prog)
       if (vprog->Instructions)
          _mesa_free(vprog->Instructions);
    }
-   else if (prog->Target == GL_FRAGMENT_PROGRAM_NV) {
+   else if (prog->Target == GL_FRAGMENT_PROGRAM_NV ||
+            prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
       struct fragment_program *fprog = (struct fragment_program *) prog;
       if (fprog->Instructions)
          _mesa_free(fprog->Instructions);
@@ -919,7 +919,8 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
                   _mesa_BindProgram(prog->Target, 0);
                }
             }
-            else if (prog->Target == GL_FRAGMENT_PROGRAM_NV) {
+            else if (prog->Target == GL_FRAGMENT_PROGRAM_NV ||
+                     prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
                if (ctx->FragmentProgram.Current &&
                    ctx->FragmentProgram.Current->Base.Id == ids[i]) {
                   /* unbind this currently bound program */
