@@ -244,16 +244,11 @@ class glXEnum(gl_XML.glEnum):
 
 	def startElement(self, name, attrs):
 		if name == "size":
-			n = attrs.get('name', None)
+			[n, c] = self.process_attributes(attrs)
+
 			if not self.context.glx_enum_functions.has_key( n ):
 				f = glXEnumFunction( n )
 				self.context.glx_enum_functions[ f.name ] = f
-
-			temp = attrs.get('count', None)
-			try:
-				c = int(temp)
-			except Exception,e:
-				raise RuntimeError('Invalid count value "%s" for enum "%s" in function "%s" when an integer was expected.' % (temp, self.name, n))
 
 			self.context.glx_enum_functions[ n ].append( c, self.value, self.name )
 		else:

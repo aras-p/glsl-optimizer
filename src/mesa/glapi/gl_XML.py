@@ -86,18 +86,21 @@ class glEnum( glItem ):
 
 	def __init__(self, context, name, attrs):
 		self.value = int(attrs.get('value', "0x0000"), 0)
-		self.functions = {}
 
 		enum_name = "GL_" + attrs.get('name', None)
 		glItem.__init__(self, name, enum_name, context)
 
-	def startElement(self, name, attrs):
-		if name == "size":
-			name = attrs.get('name', None)
-			count = int(attrs.get('count', "0"), 0)
-			self.functions[name] = count
 
-		return
+	def process_attributes(self, attrs):
+		name = attrs.get('name', None)
+
+		temp = attrs.get('count', None)
+		try:
+			c = int(temp)
+		except Exception,e:
+			raise RuntimeError('Invalid count value "%s" for enum "%s" in function "%s" when an integer was expected.' % (temp, self.name, n))
+
+		return [name, c]
 
 
 class glType( glItem ):
