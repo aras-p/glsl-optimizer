@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.65 2002/11/13 16:51:01 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.66 2002/12/18 15:02:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1065,7 +1065,7 @@ _swrast_choose_triangle( GLcontext *ctx )
          magFilter = texObj2D ? texObj2D->MagFilter : (GLenum) 0;
          envMode = ctx->Texture.Unit[0].EnvMode;
 
-         /* First see if we can used an optimized 2-D texture function */
+         /* First see if we can use an optimized 2-D texture function */
          if (ctx->Texture._EnabledUnits == 1
              && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
              && texObj2D->WrapS==GL_REPEAT

@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.41 2002/12/05 04:48:53 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.42 2002/12/18 15:02:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -191,8 +191,8 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          /* setup array of fragment Z value to pass to zoom function */
          GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->DepthMaxF);
          GLint i;
-         if (drawWidth < MAX_WIDTH)
-            return GL_FALSE; /* take the general path solution */
+         if (drawWidth > MAX_WIDTH)
+            return GL_FALSE; /* fall back to general case path */
          for (i=0; i<drawWidth; i++)
             zSpan[i] = z;
 
