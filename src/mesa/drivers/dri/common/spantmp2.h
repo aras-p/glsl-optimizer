@@ -392,7 +392,7 @@ static void TAG2(ReadRGBASpan,_MMX)( const GLcontext *ctx,
    __asm__ __volatile__( "emms" );
 #endif
 
-   HW_LOCK()
+   HW_READ_LOCK()
      {
 	GLint x1,n1;
 	LOCAL_VARS;
@@ -418,7 +418,7 @@ static void TAG2(ReadRGBASpan,_MMX)( const GLcontext *ctx,
 	  }
 	HW_ENDCLIPLOOP();
      }
-   HW_UNLOCK();
+   HW_READ_UNLOCK();
 #ifndef USE_INNER_EMMS
    __asm__ __volatile__( "emms" );
 #endif
@@ -433,7 +433,7 @@ static void TAG2(ReadRGBASpan,_SSE2)( const GLcontext *ctx,
 			       GLuint n, GLint x, GLint y,
 			       GLubyte rgba[][4])
 {
-   HW_LOCK()
+   HW_READ_LOCK()
      {
 	GLint x1,n1;
 	LOCAL_VARS;
@@ -454,7 +454,7 @@ static void TAG2(ReadRGBASpan,_SSE2)( const GLcontext *ctx,
 	  }
 	HW_ENDCLIPLOOP();
      }
-   HW_UNLOCK();
+   HW_READ_UNLOCK();
 }
 #endif
 
@@ -472,7 +472,7 @@ static void TAG2(ReadRGBASpan,_SSE)( const GLcontext *ctx,
    __asm__ __volatile__( "emms" );
 #endif
 
-   HW_LOCK()
+   HW_READ_LOCK()
      {
 	GLint x1,n1;
 	LOCAL_VARS;
@@ -493,7 +493,7 @@ static void TAG2(ReadRGBASpan,_SSE)( const GLcontext *ctx,
 	  }
 	HW_ENDCLIPLOOP();
      }
-   HW_UNLOCK();
+   HW_READ_UNLOCK();
 #ifndef USE_INNER_EMMS
    __asm__ __volatile__( "emms" );
 #endif
