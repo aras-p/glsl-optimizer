@@ -340,8 +340,13 @@ static INLINE int IS_INF_OR_NAN( float x )
  *** IS_NEGATIVE: test if float is negative
  ***/
 #if defined(USE_IEEE)
-#define GET_FLOAT_BITS(x) ((fi_type *) &(x))->i
-#define IS_NEGATIVE(x) (GET_FLOAT_BITS(x) & (1<<31))
+static INLINE int GET_FLOAT_BITS( float x )
+{
+   fi_type fi;
+   fi.f = x;
+   return fi.i;
+}
+#define IS_NEGATIVE(x) (GET_FLOAT_BITS(x) < 0)
 #else
 #define IS_NEGATIVE(x) (x < 0.0F)
 #endif
@@ -567,14 +572,9 @@ static INLINE int iceil(float f)
 
 
 /***
- *** COPY_FLOAT: copy a float from src to dest, avoid slow FP regs if possible
+ *** COPY_FLOAT: copy a float from src to dest.
  ***/
-#if defined(USE_IEEE) && !defined(DEBUG)
-#define COPY_FLOAT( dst, src )					\
-	((fi_type *) &(dst))->i = ((fi_type *) (void *) &(src))->i
-#else
 #define COPY_FLOAT( dst, src )		(dst) = (src)
-#endif
 
 
 /***
