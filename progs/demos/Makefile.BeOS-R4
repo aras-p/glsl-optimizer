@@ -1,8 +1,8 @@
-# $Id: Makefile.BeOS-R4,v 1.13 2000/12/24 22:53:54 pesco Exp $
+# $Id: Makefile.BeOS-R4,v 1.14 2001/02/20 17:04:52 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  3.3
-# Copyright (C) 1995-2000  Brian Paul
+# Version:  3.5
+# Copyright (C) 1995-2001  Brian Paul
 
 
 # Makefile for GLUT-based demo programs for BeOS R4
@@ -43,6 +43,7 @@ PROGS = bounce \
 	readpix \
 	reflect \
 	renormal \
+	shadowtex \
 	spectex \
 	stex3d \
 	teapot \
