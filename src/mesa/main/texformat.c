@@ -222,6 +222,7 @@ const struct gl_texture_format _mesa_texformat_color_index = {
    fetch_texel_3d_f_color_index,	/* FetchTexel3Df */
 };
 
+/* XXX someday implement 16, 24 and 32-bit integer depth images */
 const struct gl_texture_format _mesa_texformat_depth_component = {
    MESA_FORMAT_DEPTH_COMPONENT,		/* MesaFormat */
    GL_DEPTH_COMPONENT,			/* BaseFormat */
@@ -241,6 +242,87 @@ const struct gl_texture_format _mesa_texformat_depth_component = {
    fetch_texel_2d_f_depth_component,	/* FetchTexel2Df */
    fetch_texel_3d_f_depth_component,	/* FetchTexel3Df */
 };
+
+const struct gl_texture_format _mesa_texformat_rgba_float32 = {
+   MESA_FORMAT_RGBA_FLOAT32,		/* MesaFormat */
+   GL_RGBA,				/* BaseFormat */
+   8 * sizeof(GLfloat),			/* RedBits */
+   8 * sizeof(GLfloat),			/* GreenBits */
+   8 * sizeof(GLfloat),			/* BlueBits */
+   8 * sizeof(GLfloat),			/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   4 * sizeof(GLfloat),			/* TexelBytes */
+   fetch_null_texel,			/* FetchTexel1D */
+   fetch_null_texel,			/* FetchTexel1D */
+   fetch_null_texel,			/* FetchTexel1D */
+   fetch_texel_1d_f_rgba_f32,		/* FetchTexel1Df */
+   fetch_texel_2d_f_rgba_f32,		/* FetchTexel2Df */
+   fetch_texel_3d_f_rgba_f32,		/* FetchTexel3Df */
+};
+
+const struct gl_texture_format _mesa_texformat_rgba_float16 = {
+   MESA_FORMAT_RGBA_FLOAT16,		/* MesaFormat */
+   GL_RGBA,				/* BaseFormat */
+   8 * sizeof(GLhalfNV),		/* RedBits */
+   8 * sizeof(GLhalfNV),		/* GreenBits */
+   8 * sizeof(GLhalfNV),		/* BlueBits */
+   8 * sizeof(GLhalfNV),		/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   4 * sizeof(GLhalfNV),			/* TexelBytes */
+   fetch_null_texel,			/* FetchTexel1D */
+   fetch_null_texel,			/* FetchTexel1D */
+   fetch_null_texel,			/* FetchTexel1D */
+   fetch_texel_1d_f_rgba_f16,		/* FetchTexel1Df */
+   fetch_texel_2d_f_rgba_f16,		/* FetchTexel2Df */
+   fetch_texel_3d_f_rgba_f16,		/* FetchTexel3Df */
+};
+
+const struct gl_texture_format _mesa_texformat_rgb_float32 = {
+   MESA_FORMAT_RGB_FLOAT32,		/* MesaFormat */
+   GL_RGB,				/* BaseFormat */
+   8 * sizeof(GLfloat),			/* RedBits */
+   8 * sizeof(GLfloat),			/* GreenBits */
+   8 * sizeof(GLfloat),			/* BlueBits */
+   0,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   4 * sizeof(GLfloat),			/* TexelBytes */
+   fetch_null_texel,			/* FetchTexel1D */
+   fetch_null_texel,			/* FetchTexel1D */
+   fetch_null_texel,			/* FetchTexel1D */
+   fetch_texel_1d_f_rgb_f32,		/* FetchTexel1Df */
+   fetch_texel_2d_f_rgb_f32,		/* FetchTexel2Df */
+   fetch_texel_3d_f_rgb_f32,		/* FetchTexel3Df */
+};
+
+const struct gl_texture_format _mesa_texformat_rgb_float16 = {
+   MESA_FORMAT_RGB_FLOAT16,		/* MesaFormat */
+   GL_RGB,				/* BaseFormat */
+   8 * sizeof(GLhalfNV),		/* RedBits */
+   8 * sizeof(GLhalfNV),		/* GreenBits */
+   8 * sizeof(GLhalfNV),		/* BlueBits */
+   0,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   4 * sizeof(GLhalfNV),			/* TexelBytes */
+   fetch_null_texel,			/* FetchTexel1D */
+   fetch_null_texel,			/* FetchTexel1D */
+   fetch_null_texel,			/* FetchTexel1D */
+   fetch_texel_1d_f_rgb_f16,		/* FetchTexel1Df */
+   fetch_texel_2d_f_rgb_f16,		/* FetchTexel2Df */
+   fetch_texel_3d_f_rgb_f16,		/* FetchTexel3Df */
+};
+
 
 /*@}*/
 
@@ -855,15 +937,16 @@ _mesa_is_hardware_tex_format( const struct gl_texture_format *format )
 
 
 /**
- * Choose an appropriate texture format.
+ * Choose an appropriate texture format given the format, type and
+ * internalFormat parameters passed to glTexImage().
  *
- * \param ctx GL context.
- * \param internalFormat internal texture format.
- * \param format pixel format.
- * \param type data type.
+ * \param ctx  the GL context.
+ * \param internalFormat  user's prefered internal texture format.
+ * \param format  incoming image pixel format.
+ * \param type  incoming image data type.
  *
- * \return a pointer to a gl_texture_format in which to store the texture on
- * success, or NULL on failure.
+ * \return a pointer to a gl_texture_format object which describes the
+ * choosen texture format, or NULL on failure.
  * 
  * This is called via dd_function_table::ChooseTextureFormat.  Hardware drivers
  * typically override this function with a specialized version.
@@ -1045,6 +1128,17 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
          return &_mesa_texformat_rgba_dxt3;
       else
          return NULL;
+
+   /* XXX prototype/example code */
+   /* GL_ATI_texture_float or GL_NV_float_buffer */
+   case GL_RGBA_FLOAT32_ATI:
+      return &_mesa_texformat_rgba_float32;
+   case GL_RGBA_FLOAT16_ATI:
+      return &_mesa_texformat_rgba_float16;
+   case GL_RGB_FLOAT32_ATI:
+      return &_mesa_texformat_rgb_float32;
+   case GL_RGB_FLOAT16_ATI:
+      return &_mesa_texformat_rgb_float16;
 
    default:
       _mesa_problem(ctx, "unexpected format in _mesa_choose_tex_format()");

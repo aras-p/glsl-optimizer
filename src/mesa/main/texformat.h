@@ -75,12 +75,17 @@ enum _format {
    MESA_FORMAT_YCBCR_REV,	/*                     UorV UorV YYYY YYYY */
    /*@}*/
 
+   /**
+    * \name Compressed texture formats.
+    */
+   /*@{*/
    MESA_FORMAT_RGB_FXT1,
    MESA_FORMAT_RGBA_FXT1,
    MESA_FORMAT_RGB_DXT1,
    MESA_FORMAT_RGBA_DXT1,
    MESA_FORMAT_RGBA_DXT3,
    MESA_FORMAT_RGBA_DXT5,
+   /*@}*/
 
 #if 0
    /** 
@@ -108,8 +113,8 @@ enum _format {
     * converted to one of these formats.  Components are arrays of GLchan
     * values, so there will be no big/little endian issues.
     *
-    * \note Because these are based on the GLchan data type, one cannot assume 8
-    * bits per channel with these formats.  If you require GLubyte channels,
+    * \note Because these are based on the GLchan data type, one cannot assume
+    * 8 bits per channel with these formats.  If you require GLubyte channels,
     * use one of the hardware formats above.
     */
    /*@{*/
@@ -120,7 +125,17 @@ enum _format {
    MESA_FORMAT_LUMINANCE_ALPHA,
    MESA_FORMAT_INTENSITY,
    MESA_FORMAT_COLOR_INDEX,
-   MESA_FORMAT_DEPTH_COMPONENT
+   /*@}*/
+
+   /**
+    * \name Floating point texture formats.
+    */
+   /*@{*/
+   MESA_FORMAT_DEPTH_COMPONENT,
+   MESA_FORMAT_RGBA_FLOAT32,
+   MESA_FORMAT_RGBA_FLOAT16,
+   MESA_FORMAT_RGB_FLOAT32,
+   MESA_FORMAT_RGB_FLOAT16
    /*@}*/
 };
 
@@ -145,7 +160,15 @@ extern const struct gl_texture_format _mesa_texformat_luminance;
 extern const struct gl_texture_format _mesa_texformat_luminance_alpha;
 extern const struct gl_texture_format _mesa_texformat_intensity;
 extern const struct gl_texture_format _mesa_texformat_color_index;
+/*@}*/
+
+/** Floating point texture formats */
+/*@{*/
 extern const struct gl_texture_format _mesa_texformat_depth_component;
+extern const struct gl_texture_format _mesa_texformat_rgba_float32;
+extern const struct gl_texture_format _mesa_texformat_rgba_float16;
+extern const struct gl_texture_format _mesa_texformat_rgb_float32;
+extern const struct gl_texture_format _mesa_texformat_rgb_float16;
 /*@}*/
 
 /** \name The hardware-friendly formats */
