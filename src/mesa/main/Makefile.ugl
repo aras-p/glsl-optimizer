@@ -35,8 +35,8 @@
 # already contain only one file.
 #
 ##### MACROS #####
-MESA_MAJOR=3
-MESA_MINOR=5
+MESA_MAJOR=4
+MESA_MINOR=1
 MESA_TINY=0
 VERSION=$(MESA_MAJOR).$(MESA_MINOR)
 
@@ -85,7 +85,6 @@ GL_SOURCES = \
 	light.c \
 	lines.c \
 	matrix.c \
-	mem.c \
 	mmath.c \
 	pixel.c \
 	points.c \

@@ -121,7 +121,6 @@ CORE_SOURCES = \
 	light.c \
 	lines.c \
 	matrix.c \
-	mem.c \
 	mmath.c \
 	pixel.c \
 	points.c \

@@ -1,4 +1,4 @@
-# $Id: Makefile.OSMesa16,v 1.8 2002/09/27 02:45:37 brianp Exp $
+# $Id: Makefile.OSMesa16,v 1.9 2002/10/25 13:50:48 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -55,7 +55,6 @@ CORE_SOURCES = \
 	light.c \
 	lines.c \
 	matrix.c \
-	mem.c \
 	mmath.c \
 	pixel.c \
 	points.c \
