@@ -1,0 +1,24 @@
+
+LynxOS Notes
+------------
+
+The LynxOS make instructions are really a copy of the Linux make with
+the addition of a -lbsd flag for the networking. Everything else seems
+to work fine. Just go to the root directory and type "make lynxos" and 
+the whole mess builds and works without any problems. 
+
+There is an important note though: Since we don't have shared C libraries yet, 
+this distribution of Mesa becomes quite fat. Around 7 megs of source becomes
+145 Megs of executable. Most of this is in the demo code, but you should 
+be aware of the total disk space being used. When we add shared C libraries, I
+will attempt to build this distribution with shared libraries to conserve 
+space.
+
+This build was done under LynxOS 2.5G (an internal release). It should build 
+under 2.4 and 2.5 final. If you have problems, please email me at vik@lynx.com
+
+Vik Sohal
+vik@lynx.com
+
+April 2nd, 1997
+
