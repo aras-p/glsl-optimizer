@@ -1,4 +1,4 @@
-/* $Id: quadric.c,v 1.8 2000/07/11 14:11:04 brianp Exp $ */
+/* $Id: quadric.c,v 1.9 2001/01/15 20:04:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -401,7 +401,6 @@ gluSphere(GLUquadricObj * qobj, GLdouble radius, GLint slices, GLint stacks)
 	 /* draw +Z end as a triangle fan */
 	 glBegin(GL_TRIANGLE_FAN);
 	 glNormal3f(0.0, 0.0, 1.0);
-	 TXTR_COORD(0.5, 1.0);
 	 glVertex3f(0.0, 0.0, nsign * radius);
 	 for (j = 0; j <= slices; j++) {
 	    theta = (j == slices) ? 0.0 : j * dtheta;
@@ -458,7 +457,6 @@ gluSphere(GLUquadricObj * qobj, GLdouble radius, GLint slices, GLint stacks)
 	 /* draw -Z end as a triangle fan */
 	 glBegin(GL_TRIANGLE_FAN);
 	 glNormal3f(0.0, 0.0, -1.0);
-	 TXTR_COORD(0.5, 0.0);
 	 glVertex3f(0.0, 0.0, -radius * nsign);
 	 rho = M_PI - drho;
 	 s = 1.0;
@@ -470,7 +468,6 @@ gluSphere(GLUquadricObj * qobj, GLdouble radius, GLint slices, GLint stacks)
 	    z = nsign * cos(rho);
 	    if (normals)
 	       glNormal3f(x * nsign, y * nsign, z * nsign);
-	    TXTR_COORD(s, t);
 	    s -= ds;
 	    glVertex3f(x * radius, y * radius, z * radius);
 	 }
