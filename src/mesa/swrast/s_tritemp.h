@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.32 2002/01/28 03:42:28 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.33 2002/01/28 04:25:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -602,10 +602,14 @@
       }
 #  ifdef INTERP_LAMBDA
       {
-         GLfloat dudx = span.texStep[0][0] * span.texWidth[0];
-         GLfloat dudy = dsdy * span.texWidth[0];
-         GLfloat dvdx = span.texStep[0][1] * span.texHeight[0];
-         GLfloat dvdy = dtdy * span.texHeight[0];
+         const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;
+         const struct gl_texture_image *texImage = obj->Image[obj->BaseLevel];
+         const GLfloat texWidth = (GLfloat) texImage->Width;
+         const GLfloat texHeight = (GLfloat) texImage->Height;
+         GLfloat dudx = span.texStep[0][0] * texWidth;
+         GLfloat dudy = dsdy * texWidth;
+         GLfloat dvdx = span.texStep[0][1] * texHeight;
+         GLfloat dvdy = dtdy * texHeight;
          GLfloat r1 = dudx * dudx + dudy * dudy;
          GLfloat r2 = dvdx * dvdx + dvdy * dvdy;
          span.rho[0] = r1 + r2; /* was rho2 = MAX2(r1,r2) */
@@ -662,10 +666,16 @@
                dvdy[u] = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
 #  ifdef INTERP_LAMBDA
                {
-                  GLfloat dudx = span.texStep[u][0] * span.texWidth[u];
-                  GLfloat dudy = dsdy[u] * span.texWidth[u];
-                  GLfloat dvdx = span.texStep[u][1] * span.texHeight[u];
-                  GLfloat dvdy = dtdy[u] * span.texHeight[u];
+                  const struct gl_texture_object *obj
+                     = ctx->Texture.Unit[u]._Current;
+                  const struct gl_texture_image *texImage
+                     = obj->Image[obj->BaseLevel];
+                  const GLfloat texWidth = (GLfloat) texImage->Width;
+                  const GLfloat texHeight = (GLfloat) texImage->Height;
+                  GLfloat dudx = span.texStep[u][0] * texWidth;
+                  GLfloat dudy = dsdy[u] * texWidth;
+                  GLfloat dvdx = span.texStep[u][1] * texHeight;
+                  GLfloat dvdy = dtdy[u] * texHeight;
                   GLfloat r1 = dudx * dudx + dudy * dudy;
                   GLfloat r2 = dvdx * dvdx + dvdy * dvdy;
                   span.rho[u] = r1 + r2; /* was rho2 = MAX2(r1,r2) */

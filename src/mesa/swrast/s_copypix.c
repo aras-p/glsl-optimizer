@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.30 2002/01/28 03:42:28 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.31 2002/01/28 04:25:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -299,8 +299,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLchan *tmpImage,*p;
    GLboolean quick_draw;
-   GLint sy, dy, stepy;
-   GLint i, j;
+   GLint sy, dy, stepy, j;
    GLboolean changeBuffer;
    GLchan *saveReadAlpha;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;

@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.47 2002/01/28 00:07:33 brianp Exp $ */
+/* $Id: s_texture.c,v 1.48 2002/01/28 04:25:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3031,7 +3031,7 @@ sample_depth_texture2(const GLcontext *ctx,
  * Apply a unit of texture mapping to the incoming fragments.
  */
 void
-_old_swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
+_swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
 			       GLfloat texcoords[][4], GLfloat lambda[],
 			       CONST GLchan primary_rgba[][4],
 			       GLchan rgba[][4] )
@@ -3085,69 +3085,6 @@ _old_swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
 
 
 /*
- * Apply a unit of texture mapping to the incoming fragments.
- */
-void
-_swrast_texture_fragments( GLcontext *ctx, GLuint texUnit,
-                           struct sw_span *span,
-                           GLchan rgbaOut[][4] )
-{
-   const GLuint mask = TEXTURE0_ANY << (texUnit * 4);
-
-   if (ctx->Texture._ReallyEnabled & mask) {
-      const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
-      GLfloat *lambda;
-      
-      lambda = (span->arrayMask & SPAN_LAMBDA) ? span->lambda[texUnit] : NULL;
-
-      if (textureUnit->_Current) {   /* XXX need this? */
-         const struct gl_texture_object *curObj = textureUnit->_Current;
-         GLchan texel[PB_SIZE][4];
-         
-	 if (textureUnit->LodBias != 0.0F) {
-	    /* apply LOD bias, but don't clamp yet */
-            GLuint i;
-	    for (i=0;i<span->end;i++) {
-	       lambda[i] += textureUnit->LodBias;
-	    }
-	 }
-         
-         if ((curObj->MinLod != -1000.0 || curObj->MaxLod != 1000.0)
-             && lambda) {
-            /* apply LOD clamping to lambda */
-            const GLfloat min = curObj->MinLod;
-            const GLfloat max = curObj->MaxLod;
-            GLuint i;
-            for (i=0;i<span->end;i++) {
-               GLfloat l = lambda[i];
-               lambda[i] = CLAMP(l, min, max);
-            }
-         }
-
-         /* Sample the texture. */
-         if (curObj->Image[curObj->BaseLevel]->Format == GL_DEPTH_COMPONENT) {
-            /* depth texture */
-            sample_depth_texture(ctx, textureUnit, span->end,
-                                 span->texcoords[texUnit], texel);
-         }
-         else {
-            /* color texture */
-            SWRAST_CONTEXT(ctx)->TextureSample[texUnit]( ctx, texUnit,
-                                                         textureUnit->_Current,
-                                                         span->end,
-                                                         span->texcoords[texUnit],
-                                                         lambda, texel );
-         }
-         apply_texture( ctx, textureUnit, span->end,
-                        (CONST GLchan (*)[4]) span->color.rgba,
-                        (CONST GLchan (*)[4]) texel,
-                        rgbaOut );
-      }
-   }
-}
-
-
-/*
  * Apply multiple texture stages (or just unit 0) to the span.
  * At some point in the future we'll probably modify this so that
  * texels from any texture unit are available in any combiner unit.
@@ -3170,7 +3107,7 @@ _swrast_multitexture_fragments( GLcontext *ctx, struct sw_span *span )
       /* loop over texture units, modifying the span->color.rgba values */
       for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
          if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-            _old_swrast_texture_fragments( ctx, unit, span->end,
+            _swrast_texture_fragments( ctx, unit, span->end,
                                            span->texcoords[unit],
                                            (span->arrayMask & SPAN_LAMBDA) ?
                                               span->lambda[unit] : NULL,
@@ -3183,7 +3120,7 @@ _swrast_multitexture_fragments( GLcontext *ctx, struct sw_span *span )
       /* Just unit 0 enabled */
       ASSERT(ctx->Texture._ReallyEnabled & TEXTURE0_ANY);
 
-      _old_swrast_texture_fragments( ctx, 0, span->end,
+      _swrast_texture_fragments( ctx, 0, span->end,
                                      span->texcoords[0],
                                      (span->arrayMask & SPAN_LAMBDA) ?
                                         span->lambda[0] : NULL,

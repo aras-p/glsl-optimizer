@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.51 2002/01/28 03:42:28 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.52 2002/01/28 04:25:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,8 +85,7 @@ static void flat_ci_triangle( GLcontext *ctx,
    span.index = IntToFixed(v2->index);			\
    span.indexStep = 0;
 
-#define RENDER_SPAN( span )				\
-   _mesa_write_index_span(ctx, &span, GL_POLYGON );
+#define RENDER_SPAN( span )  _mesa_write_index_span(ctx, &span, GL_POLYGON )
 
 #include "s_tritemp.h"
 }
@@ -105,8 +104,7 @@ static void smooth_ci_triangle( GLcontext *ctx,
 #define INTERP_FOG 1
 #define INTERP_INDEX 1
 
-#define RENDER_SPAN( span )						\
-   _mesa_write_index_span(ctx, &span, GL_POLYGON);
+#define RENDER_SPAN( span )  _mesa_write_index_span(ctx, &span, GL_POLYGON)
 
 #include "s_tritemp.h"
 }
@@ -138,8 +136,7 @@ static void flat_rgba_triangle( GLcontext *ctx,
    span.blueStep = 0;				\
    span.alphaStep = 0;
 
-#define RENDER_SPAN( span )				\
-   _mesa_write_rgba_span(ctx, &span, GL_POLYGON );
+#define RENDER_SPAN( span )  _mesa_write_rgba_span(ctx, &span, GL_POLYGON )
 
 #include "s_tritemp.h"
 }
@@ -161,8 +158,8 @@ static void smooth_rgba_triangle( GLcontext *ctx,
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
 
-#define RENDER_SPAN( span )					\
-   ASSERT(span.interpMask & SPAN_RGBA);				\
+#define RENDER_SPAN( span )				\
+   ASSERT(span.interpMask & SPAN_RGBA);			\
    _mesa_write_rgba_span(ctx, &span, GL_POLYGON);
 
 #include "s_tritemp.h"
@@ -926,13 +923,6 @@ static void general_textured_triangle( GLcontext *ctx,
 #define INTERP_ALPHA 1
 #define INTERP_TEX 1
 
-#define SETUP_CODE							\
-   const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;	\
-   const struct gl_texture_image *texImage = obj->Image[obj->BaseLevel];\
-   span.texWidth[0] = (GLfloat) texImage->Width;			\
-   span.texHeight[0] = (GLfloat) texImage->Height;			\
-   (void) fixedToDepthShift;
-
 #define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, &span, GL_POLYGON);
 
 #include "s_tritemp.h"
@@ -961,13 +951,6 @@ static void lambda_textured_triangle( GLcontext *ctx,
 #define INTERP_TEX 1
 #define INTERP_LAMBDA 1
 
-#define SETUP_CODE							\
-   const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;	\
-   const struct gl_texture_image *texImage = obj->Image[obj->BaseLevel];\
-   span.texWidth[0] = (GLfloat) texImage->Width;			\
-   span.texHeight[0] = (GLfloat) texImage->Height;			\
-   (void) fixedToDepthShift;
-
 #define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, &span, GL_POLYGON);
 
 #include "s_tritemp.h"
@@ -995,20 +978,6 @@ lambda_multitextured_triangle( GLcontext *ctx,
 #define INTERP_SPEC 1
 #define INTERP_MULTITEX 1
 #define INTERP_LAMBDA 1
-
-#define SETUP_CODE							\
-   GLuint u;								\
-   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {			\
-      if (ctx->Texture.Unit[u]._ReallyEnabled) {			\
-         const struct gl_texture_object *texObj;			\
-         const struct gl_texture_image *texImage;			\
-         texObj = ctx->Texture.Unit[u]._Current;			\
-         texImage = texObj->Image[texObj->BaseLevel];			\
-         span.texWidth[u] = (GLfloat) texImage->Width;			\
-         span.texHeight[u] = (GLfloat) texImage->Height;		\
-      }									\
-   }									\
-   (void) fixedToDepthShift;
 
 #define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, &span, GL_POLYGON);
 

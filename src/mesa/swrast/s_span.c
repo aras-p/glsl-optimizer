@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.26 2002/01/28 03:42:28 brianp Exp $ */
+/* $Id: s_span.c,v 1.27 2002/01/28 04:25:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -648,6 +648,7 @@ _mesa_write_index_span( GLcontext *ctx, struct sw_span *span,
    }
 
    /* Fog */
+   /* XXX try to simplify the fog code! */
    if (ctx->Fog.Enabled) {
       if ((span->arrayMask & SPAN_FOG) && !swrast->_PreferPixelFog)
          _mesa_fog_ci_pixels_with_array( ctx, span, span->fogArray,
@@ -798,7 +799,8 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
       return;
    }
 
-   /* Per-pixel fog */
+   /* Fog */
+   /* XXX try to simplify the fog code! */
    if (ctx->Fog.Enabled) {
       if ((span->arrayMask & SPAN_FOG) && !swrast->_PreferPixelFog)
 	 _mesa_fog_rgba_pixels_with_array(ctx, span, span->fogArray,
@@ -1026,12 +1028,9 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
       add_colors( span->end, span->color.rgba, span->specArray );
    }
 
-   /* Per-pixel fog */
+   /* Fog */
+   /* XXX try to simplify the fog code! */
    if (ctx->Fog.Enabled) {
-#if 0
-      if ((span->interpMask & SPAN_FOG) && (span->arrayMask & SPAN_FOG) == 0)
-         interpolate_fog(ctx, span);
-#endif
       if ((span->arrayMask & SPAN_FOG) && !swrast->_PreferPixelFog)
 	 _mesa_fog_rgba_pixels_with_array( ctx, span, span->fogArray,
                                            span->color.rgba);

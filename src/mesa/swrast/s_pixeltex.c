@@ -1,4 +1,4 @@
-/* $Id: s_pixeltex.c,v 1.5 2002/01/27 18:32:03 brianp Exp $ */
+/* $Id: s_pixeltex.c,v 1.6 2002/01/28 04:25:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -94,21 +94,23 @@ _swrast_pixel_texture(GLcontext *ctx, struct sw_span *span)
 {
    if (ctx->Texture._ReallyEnabled & ~TEXTURE0_ANY) {
       /* multitexture! */
-      GLchan rgbaOut[MAX_WIDTH][4];
+      GLchan primary_rgba[MAX_WIDTH][4];
       GLuint unit;
 
-      MEMCPY(rgbaOut, span->color.rgba, 4 * span->end * sizeof(GLchan));
+      MEMCPY(primary_rgba, span->color.rgba, 4 * span->end * sizeof(GLchan));
       
       for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
          if (ctx->Texture.Unit[unit]._ReallyEnabled) {
             pixeltexgen(ctx, span->end,
                         (const GLchan (*)[4]) span->color.rgba,
                         span->texcoords[unit]);
-            _swrast_texture_fragments(ctx, unit, span, rgbaOut);
+            _swrast_texture_fragments(ctx, unit, span->end,
+                                          span->texcoords[unit],
+                                          span->lambda[unit],
+                                          (CONST GLchan (*)[4]) primary_rgba,
+                                          span->color.rgba);
          }
       }
-
-      MEMCPY(span->color.rgba, rgbaOut, 4 * span->end * sizeof(GLchan));
    }
    else {
       /* single texture, unit 0 */
@@ -116,6 +118,9 @@ _swrast_pixel_texture(GLcontext *ctx, struct sw_span *span)
       pixeltexgen(ctx, span->end,
                   (const GLchan (*)[4]) span->color.rgba,
                   span->texcoords[0]);
-      _swrast_texture_fragments(ctx, 0, span, span->color.rgba);
+      _swrast_texture_fragments(ctx, 0, span->end,
+                                    span->texcoords[0], span->lambda[0],
+                                    (CONST GLchan (*)[4]) span->color.rgba,
+                                    (GLchan (*)[4]) span->color.rgba);
    }
 }

@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.18 2002/01/28 03:42:28 brianp Exp $ */
+/* $Id: swrast.h,v 1.19 2002/01/28 04:25:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -67,11 +67,14 @@ typedef struct {
 
 
 /*
- * The sw_span structure is used by the triangle template code in
- * s_tritemp.h.  It describes how colors, Z, texcoords, etc are to be
- * interpolated across each scanline of triangle.
- * With this structure it's easy to hand-off span rasterization to a
- * subroutine instead of doing it all inline like we used to do.
+ * The sw_span structure describes the colors, Z, fogcoord, texcoords,
+ * etc for a horizontal run of pixels.  We can either specify a base/step
+ * to indicate interpolated values, or fill in arrays of values.
+ * The interpMask and arrayMask bitfields indicate which are active.
+ *
+ * With this structure it's easy to hand-off span rasterization to
+ * subroutines instead of doing it all inline in the triangle functions
+ * like we used to do.
  * It also cleans up the local variable namespace a great deal.
  *
  * It would be interesting to experiment with multiprocessor rasterization
@@ -81,9 +84,7 @@ typedef struct {
  */
 
 
-/* When the sw_span struct is initialized, these flags indicates
- * which values are needed for rendering the triangle.
- */
+/* Values for interpMask and arrayMask */
 #define SPAN_RGBA         0x001
 #define SPAN_SPEC         0x002
 #define SPAN_INDEX        0x004
@@ -105,8 +106,9 @@ struct sw_span {
    /* This flag indicates that only a part of the span is visible */
    GLboolean writeAll;
 
-   /* This bitmask (bitwise-or of SPAN_* flags) indicates which of the
-    * x/xStep variables are relevant.
+   /**
+    * This bitmask (of SPAN_* flags) indicates which of the x/xStep
+    * variables are relevant.
     */
    GLuint interpMask;
 
@@ -132,18 +134,17 @@ struct sw_span {
    GLfloat fog, fogStep;
    GLfloat tex[MAX_TEXTURE_UNITS][4], texStep[MAX_TEXTURE_UNITS][4];
    GLfixed intTex[2], intTexStep[2];
-   /* Needed for texture lambda (LOD) computation */
-   GLfloat rho[MAX_TEXTURE_UNITS];
-   GLfloat texWidth[MAX_TEXTURE_UNITS], texHeight[MAX_TEXTURE_UNITS];
+   GLfloat rho[MAX_TEXTURE_UNITS]; /* for texture lambda/lod computation */
 
-   /* This bitmask (bitwise-or of SPAN_* flags) indicates which of the
-    * fragment arrays are relevant.
+   /**
+    * This bitmask (of SPAN_* flags) indicates which of the fragment arrays
+    * are relevant.
     */
    GLuint arrayMask;
 
    /**
     * Arrays of fragment values.  These will either be computed from the
-    * x/xStep values above or loadd from glDrawPixels, etc.
+    * x/xStep values above or filled in by glDraw/CopyPixels, etc.
     */
    union {
       GLchan rgb[MAX_WIDTH][3];
@@ -153,7 +154,6 @@ struct sw_span {
    GLchan  specArray[MAX_WIDTH][4];
    GLdepth zArray[MAX_WIDTH];
    GLfloat fogArray[MAX_WIDTH];
-   /* Texture (s,t,r).  4th component only used for pixel texture */
    GLfloat texcoords[MAX_TEXTURE_UNITS][MAX_WIDTH][4];
    GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH];
    GLfloat coverage[MAX_WIDTH];
@@ -282,19 +282,19 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v );
  * Imaging fallbacks (a better solution should be found, perhaps
  * moving all the imaging fallback code to a new module) 
  */
-void
+extern void
 _swrast_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target, 
 				GLenum internalFormat, 
 				GLint x, GLint y, GLsizei width, 
 				GLsizei height);
-void
+extern void
 _swrast_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target, 
 				GLenum internalFormat, 
 				GLint x, GLint y, GLsizei width);
-void
+extern void
 _swrast_CopyColorSubTable( GLcontext *ctx,GLenum target, GLsizei start,
 			   GLint x, GLint y, GLsizei width);
-void
+extern void
 _swrast_CopyColorTable( GLcontext *ctx, 
 			GLenum target, GLenum internalformat,
 			GLint x, GLint y, GLsizei width);
@@ -306,31 +306,31 @@ _swrast_CopyColorTable( GLcontext *ctx,
  */
 extern void
 _swrast_copy_teximage1d(GLcontext *ctx, GLenum target, GLint level,
-                      GLenum internalFormat,
-                      GLint x, GLint y, GLsizei width, GLint border);
+                        GLenum internalFormat,
+                        GLint x, GLint y, GLsizei width, GLint border);
 
 extern void
 _swrast_copy_teximage2d(GLcontext *ctx, GLenum target, GLint level,
-                      GLenum internalFormat,
-                      GLint x, GLint y, GLsizei width, GLsizei height,
-                      GLint border);
+                        GLenum internalFormat,
+                        GLint x, GLint y, GLsizei width, GLsizei height,
+                        GLint border);
 
 
 extern void
 _swrast_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
-                         GLint xoffset, GLint x, GLint y, GLsizei width);
+                           GLint xoffset, GLint x, GLint y, GLsizei width);
 
 extern void
 _swrast_copy_texsubimage2d(GLcontext *ctx,
-                         GLenum target, GLint level,
-                         GLint xoffset, GLint yoffset,
-                         GLint x, GLint y, GLsizei width, GLsizei height);
+                           GLenum target, GLint level,
+                           GLint xoffset, GLint yoffset,
+                           GLint x, GLint y, GLsizei width, GLsizei height);
 
 extern void
 _swrast_copy_texsubimage3d(GLcontext *ctx,
-                         GLenum target, GLint level,
-                         GLint xoffset, GLint yoffset, GLint zoffset,
-                         GLint x, GLint y, GLsizei width, GLsizei height);
+                           GLenum target, GLint level,
+                           GLint xoffset, GLint yoffset, GLint zoffset,
+                           GLint x, GLint y, GLsizei width, GLsizei height);
 
 
 
