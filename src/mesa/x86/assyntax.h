@@ -974,12 +974,12 @@
 #define B_REGIND(a) 	BYTE_PTR [a]
 
 /* Register b indirect plus displacement a */
-#define P_REGOFF(a, b) 	[a + b]
-#define X_REGOFF(a, b) 	TBYTE_PTR [a + b]
-#define D_REGOFF(a, b) 	QWORD_PTR [a + b]
-#define L_REGOFF(a, b) 	DWORD_PTR [a + b]
-#define W_REGOFF(a, b) 	WORD_PTR [a + b]
-#define B_REGOFF(a, b) 	BYTE_PTR [a + b]
+#define P_REGOFF(a, b) 	[b + a]
+#define X_REGOFF(a, b) 	TBYTE_PTR [b + a]
+#define D_REGOFF(a, b) 	QWORD_PTR [b + a]
+#define L_REGOFF(a, b) 	DWORD_PTR [b + a]
+#define W_REGOFF(a, b) 	WORD_PTR [b + a]
+#define B_REGOFF(a, b) 	BYTE_PTR [b + a]
 
 /* Reg indirect Base + Index + Displacement  - this is mainly for 16-bit mode
  * which has no scaling
