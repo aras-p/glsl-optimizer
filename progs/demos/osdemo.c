@@ -1,4 +1,4 @@
-/* $Id: osdemo.c,v 1.5 2000/09/08 16:42:06 brianp Exp $ */
+/* $Id: osdemo.c,v 1.6 2001/07/13 20:09:18 brianp Exp $ */
 
 /*
  * Demo of off-screen Mesa rendering
@@ -238,14 +238,18 @@ int main( int argc, char *argv[] )
    }
 
    /* Allocate the image buffer */
-   buffer = malloc( WIDTH * HEIGHT * 4 );
+   buffer = malloc( WIDTH * HEIGHT * 4 * sizeof(GLubyte) );
    if (!buffer) {
       printf("Alloc image buffer failed!\n");
       return 0;
    }
 
    /* Bind the buffer to the context and make it current */
-   OSMesaMakeCurrent( ctx, buffer, GL_UNSIGNED_BYTE, WIDTH, HEIGHT );
+   if (!OSMesaMakeCurrent( ctx, buffer, GL_UNSIGNED_BYTE, WIDTH, HEIGHT )) {
+      printf("OSMesaMakeCurrent failed!\n");
+      return 0;
+   }
+     
 
    {
       int z, s, a;
