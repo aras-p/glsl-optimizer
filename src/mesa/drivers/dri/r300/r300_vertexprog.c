@@ -72,6 +72,7 @@ static void r300ProgramStringNotify(GLcontext *ctx, GLenum target,
 	struct r300_vertex_program *vp=(void *)prog;
 	
 	fprintf(stderr, "r300ProgramStringNotify\n");
+	/* XXX: There is still something wrong as mesa doesnt call r300IsProgramNative at all */
 	r300IsProgramNative(ctx, target, prog);
 
 	switch(target) {
