@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.17 2000/01/27 21:20:59 brianp Exp $
+$Id: VERSIONS,v 1.18 2000/01/28 16:28:51 brianp Exp $
 
 
 Mesa Version History
@@ -686,6 +686,7 @@ Mesa Version History
 	- support for separate draw/read buffers (ie GL_SGI_make_current_read)
 	- better thread safety
 	- improved glxinfo program
+	- demos/texdown program to measure texture download performance
     Bug Fixes:
 	- 
     Changes:
