@@ -105,7 +105,7 @@ static void Init( void )
       "MUL   R0, R0, vertex.normal; \n"
       "MUL   R0, R0, program.local[64].z;  \n"
       "ADD   R1, vertex.position, -R0;       # perturb object space position\n"
-      "DP4   result.position.x, state.matrix.mvp.row[0], R1; \n"
+      "DP4   result.position.x, state.matrix.mvp.row[3], R1; \n"
       "DP4   result.position.y, state.matrix.mvp.row[1], R1; \n"
       "DP4   result.position.z, state.matrix.mvp.row[2], R1; \n"
       "DP4   result.position.w, state.matrix.mvp.row[3], R1; \n"
@@ -129,25 +129,22 @@ static void Init( void )
       "END\n";
    static const char *prog4 = 
       "!!ARBvp1.0\n"
-      "TEMP R2, R3\n"
-      "DP4   R2, R3, program.local[A0.x];\n"
-#if 0
-      "DP4   R2, R3, program.local[A0.x + 5];\n"
-      "DP4   result.position, R3, program.local[A0.x - 4];\n"
-#else
+      "TEMP R2, R3;\n"
+      "PARAM foo = {0., 0., 0., 1.};\n"
+      "PARAM blah[] = { program.local[0..8] };\n"
+      "ADDRESS A0;\n"		
+      "ARL   A0.x, foo.x;\n"   
+      "DP4   R2, R3, blah[A0.x].x;\n"
+      "DP4   R2, R3, blah[A0.x + 5];\n"
+      "DP4   result.position, R3, blah[A0.x - 4];\n"
       "END\n";
-#endif
 
    glGenProgramsNV(4, prognum);
 
    load_program(prog1, prognum[0]);   
    load_program(prog2, prognum[1]);   
    load_program(prog3, prognum[2]);   
-   
-   /*
-    * XXX: Don't have relative offsets working yet 
    load_program(prog4, prognum[3]);   
-   */
 }
 
 
