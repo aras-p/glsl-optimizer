@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.28 2003/03/01 01:50:27 brianp Exp $ */
+/* $Id: t_imm_eval.c,v 1.29 2003/03/31 18:19:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -453,6 +453,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
    GLuint req = 0;
    GLuint purge_flags = 0;
    GLfloat (*coord)[4] = IM->Attrib[VERT_ATTRIB_POS] + IM->CopyStart;
+   GLuint attr;
 
    if (IM->AndFlag & VERT_BITS_EVAL_ANY)
       copycount = IM->Start - IM->CopyStart; /* just copy copied vertices */
@@ -502,6 +503,18 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 	 coord = store->Attrib[VERT_ATTRIB_POS] + IM->CopyStart;
       }
    }
+
+   /* Allocate vertex attribute storage now */
+   for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
+      if ((req & (1 << attr)) && !store->Attrib[attr]) {
+         store->Attrib[attr] = _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
+         if (!store->Attrib[attr]) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "evaluator processing");
+            return;
+         }
+      }
+   }
+
 
    /* Perform the evaluations on active data elements.
     */

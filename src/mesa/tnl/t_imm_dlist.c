@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.47 2003/03/28 01:39:05 brianp Exp $ */
+/* $Id: t_imm_dlist.c,v 1.48 2003/03/31 18:19:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,6 +75,11 @@ build_normal_lengths( struct immediate *IM )
    GLfloat *dest = IM->NormalLengthPtr;
    GLuint *flags = IM->Flag + IM->Start;
    GLuint count = IM->Count - IM->Start;
+
+#if 0
+   if (!IM->Attrib[VERT_ATTRIB_NORMAL])
+      return;
+#endif
 
    if (!dest) {
       dest = IM->NormalLengthPtr = (GLfloat *) ALIGN_MALLOC( IMM_SIZE*sizeof(GLfloat), 32 );
@@ -174,7 +179,10 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
    node->MaterialOrMask = im->MaterialOrMask;
    node->MaterialAndMask = im->MaterialAndMask;
    
-   if (tnl->CalcDListNormalLengths) {
+   /*
+    * XXX always allocate VERT_ATTRIB_NORMAL array now???
+    */
+   if (tnl->CalcDListNormalLengths && IM->Attrib[VERT_ATTRIB_NORMAL]) {
       build_normal_lengths( im );
    }
 

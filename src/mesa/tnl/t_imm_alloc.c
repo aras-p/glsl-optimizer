@@ -1,4 +1,4 @@
-/* $Id: t_imm_alloc.c,v 1.19 2003/03/29 17:09:42 brianp Exp $ */
+/* $Id: t_imm_alloc.c,v 1.20 2003/03/31 18:19:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,6 +57,20 @@ real_alloc_immediate( GLcontext *ctx )
    immed->TexSize = 0;
    immed->NormalLengthPtr = 0;
 
+   /* Only allocate space for vertex positions right now.  Color, texcoord,
+    * etc storage will be allocated as needed.
+    */
+   immed->Attrib[VERT_ATTRIB_POS] = _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
+
+   /* Enable this to allocate all attribute arrays up front */
+   if (0)
+   {
+      int i;
+      for (i = 1; i < VERT_ATTRIB_MAX; i++) {
+         immed->Attrib[i] = _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
+      }
+   }
+
    immed->CopyTexSize = 0;
    immed->CopyStart = immed->Start;
 
@@ -68,6 +82,13 @@ static void
 real_free_immediate( struct immediate *immed )
 {
    static int freed = 0;
+   GLuint i;
+
+   for (i =0; i < VERT_ATTRIB_MAX; i++) {
+      if (immed->Attrib[i])
+         _mesa_free(immed->Attrib[i]);
+      immed->Attrib[i] = NULL;
+   }
 
    if (immed->Material) {
       FREE( immed->Material );

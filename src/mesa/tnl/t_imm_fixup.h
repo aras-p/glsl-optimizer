@@ -1,10 +1,10 @@
-/* $Id: t_imm_fixup.h,v 1.6 2001/06/04 16:09:28 keithw Exp $ */
+/* $Id: t_imm_fixup.h,v 1.7 2003/03/31 18:19:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,10 +40,10 @@ extern void _tnl_fixup_1f( GLfloat *data, GLuint flag[],
 extern void _tnl_fixup_1ui( GLuint *data, GLuint flag[],
 			    GLuint start, GLuint match );
 
-extern void _tnl_fixup_3f( float data[][3], GLuint flag[],
+extern void _tnl_fixup_3f( GLfloat data[][3], const GLuint flag[],
 			   GLuint start, GLuint match );
 
-extern void _tnl_fixup_4f( GLfloat data[][4], GLuint flag[],
+extern void _tnl_fixup_4f( GLfloat data[][4], const GLuint flag[],
 			   GLuint start, GLuint match );
 
 extern void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM );

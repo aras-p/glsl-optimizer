@@ -1,4 +1,4 @@
-/* $Id: t_imm_elt.c,v 1.21 2003/03/01 01:50:27 brianp Exp $ */
+/* $Id: t_imm_elt.c,v 1.22 2003/03/31 18:19:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -755,7 +755,7 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
    GLuint *flags = IM->Flag;
    GLuint *elts = IM->Elt;
    GLuint translate = ctx->Array._Enabled;
-   GLuint i;
+   GLuint i, attr;
 
    if (MESA_VERBOSE & VERBOSE_IMMEDIATE)
       _mesa_debug(ctx, "exec_array_elements %d .. %d\n", start, count);
@@ -770,6 +770,17 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
 	 translate |= VERT_BITS_OBJ_234;
       else if (ctx->Array.Vertex.Size == 3)
 	 translate |= VERT_BITS_OBJ_23;
+   }
+
+   /* Allocate destination attribute arrays if needed */
+   for (attr = 1; attr < VERT_ATTRIB_MAX; attr++) {
+      if ((translate & (1 << attr)) && !IM->Attrib[attr]) {
+         IM->Attrib[attr] = _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));
+         if (!IM->Attrib[attr]) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "vertex processing2");
+            return;
+         }
+      }
    }
 
 
