@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.0.1
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -32,6 +32,7 @@
 #include "state.h"
 #include "mtypes.h"
 
+
 #if _HAVE_FULL_GL
 
 /*
@@ -58,7 +59,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
 
    if (ctx->RenderMode==GL_RENDER) {
       GLint x, y;
-      if (!pixels || !ctx->Current.RasterPosValid) {
+      if (!ctx->Current.RasterPosValid) {
 	 return;
       }
 
@@ -92,6 +93,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       }
    }
 }
+
 
 void GLAPIENTRY
 _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
@@ -148,7 +150,7 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
    }
 }
 
-#endif
+#endif /* _HAVE_FULL_GL */
 
 
 
@@ -165,19 +167,12 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
       return;
    }
 
-   if (!pixels) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glReadPixels(pixels)" );
-      return;
-   }
-
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
    ctx->Driver.ReadPixels(ctx, x, y, width, height,
 			  format, type, &ctx->Pack, pixels);
 }
-
-
 
 
 
@@ -206,18 +201,16 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
    }
 
    if (ctx->RenderMode==GL_RENDER) {
-      if (bitmap) {
-         /* Truncate, to satisfy conformance tests (matches SGI's OpenGL). */
-         GLint x = IFLOOR(ctx->Current.RasterPos[0] - xorig);
-         GLint y = IFLOOR(ctx->Current.RasterPos[1] - yorig);
+      /* Truncate, to satisfy conformance tests (matches SGI's OpenGL). */
+      GLint x = IFLOOR(ctx->Current.RasterPos[0] - xorig);
+      GLint y = IFLOOR(ctx->Current.RasterPos[1] - yorig);
 
-         if (ctx->NewState) {
-            _mesa_update_state(ctx);
-         }
-
-         ctx->OcclusionResult = GL_TRUE;
-	 ctx->Driver.Bitmap( ctx, x, y, width, height, &ctx->Unpack, bitmap );
+      if (ctx->NewState) {
+         _mesa_update_state(ctx);
       }
+
+      ctx->OcclusionResult = GL_TRUE;
+      ctx->Driver.Bitmap( ctx, x, y, width, height, &ctx->Unpack, bitmap );
    }
 #if _HAVE_FULL_GL
    else if (ctx->RenderMode==GL_FEEDBACK) {

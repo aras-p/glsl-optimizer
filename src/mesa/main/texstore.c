@@ -52,6 +52,7 @@
 
 
 #include "glheader.h"
+#include "bufferobj.h"
 #include "colormac.h"
 #include "context.h"
 #include "convolve.h"
@@ -391,7 +392,7 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
                _mesa_pack_rgba_span_float(ctx, convWidth,
                                           (const GLfloat (*)[4]) srcf,
                                           texDestFormat, CHAN_TYPE,
-                                          dest, &_mesa_native_packing,
+                                          dest, &ctx->DefaultPacking,
                                           transferOps
                                           & IMAGE_POST_CONVOLUTION_BITS);
                srcf += convWidth * 4;
@@ -519,7 +520,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
       srcFormat = baseInternalFormat;
       srcType = CHAN_TYPE;
       srcAddr = tmpImage;
-      srcPacking = &_mesa_native_packing;
+      srcPacking = &ctx->DefaultPacking;
       freeSourceData = GL_TRUE;
       transferOps = 0;  /* image transfer ops were completed */
    }
@@ -611,7 +612,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
       srcFormat = tmpFormat;
       srcType = CHAN_TYPE;
       srcAddr = tmpImage;
-      srcPacking = &_mesa_native_packing;
+      srcPacking = &ctx->DefaultPacking;
       freeSourceData = GL_TRUE;
    }
 
@@ -740,6 +741,58 @@ transfer_compressed_teximage(GLcontext *ctx, GLuint dimensions,
 }
 
 
+/**
+ * Validate acces to a PBO for texture data.
+ *
+ * \todo If the PBO is really resident in VRAM, this won't work; the
+ * device driver should check for that and do the right thing.
+ */
+static const GLvoid *
+validate_pbo_teximage( GLsizei width, GLsizei height, GLsizei depth,
+                       GLenum format, GLenum type, const GLvoid *pixels,
+                       const struct gl_pixelstore_attrib *unpack )
+{
+   if (unpack->BufferObj->Name == 0) {
+      /* no PBO */
+      return pixels;
+   }
+   else if (_mesa_validate_pbo_access(unpack, width, height, depth, format,
+                                      type, pixels)) {
+      return ADD_POINTERS(unpack->BufferObj->Data, pixels);
+   }
+   /* bad access! */
+   return NULL;
+}
+
+
+/**
+ * Validate that unpacking compressed texture image data from a PBO
+ * won't go out of bounds.
+ *
+ * \todo If the PBO is really resident in VRAM, this won't work; the
+ * device driver should check for that and do the right thing.
+ */
+static const GLvoid *
+validate_pbo_compressed_teximage(GLsizei imageSize, const GLvoid *pixels,
+                               const struct gl_pixelstore_attrib *packing)
+{
+   if (packing->BufferObj->Name == 0) {
+      /* not using a PBO - return pointer unchanged */
+      return pixels;
+   }
+   else {
+      /* using a PBO */
+      if ((const GLubyte *) pixels + imageSize >
+          (const GLubyte *) packing->BufferObj->Size) {
+         /* out of bounds read! */
+         return NULL;
+      }
+      /* OK! */
+      return ADD_POINTERS(packing->BufferObj->Data, pixels);
+   }
+}
+
+
 
 /*
  * This is the software fallback for Driver.TexImage1D()
@@ -785,6 +838,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
+   pixels = validate_pbo_teximage(width, 1, 1, format, type, pixels, packing);
    if (!pixels)
       return;
 
@@ -862,6 +916,8 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
+   pixels = validate_pbo_teximage(width, height, 1,
+                                  format, type, pixels, packing);
    if (!pixels)
       return;
 
@@ -934,6 +990,8 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
+   pixels = validate_pbo_teximage(width, height, depth,
+                                  format, type, pixels, packing);
    if (!pixels)
       return;
 
@@ -980,6 +1038,11 @@ _mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage)
 {
+   pixels = validate_pbo_teximage(width, 1, 1,
+                                  format, type, pixels, packing);
+   if (!pixels)
+      return;
+
    if (texImage->IsCompressed) {
       GLint dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
                                                        texImage->Width);
@@ -1029,6 +1092,11 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage)
 {
+   pixels = validate_pbo_teximage(width, height, 1,
+                                  format, type, pixels, packing);
+   if (!pixels)
+      return;
+
    if (texImage->IsCompressed) {
       GLint dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
                                                        texImage->Width);
@@ -1113,8 +1181,6 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
 }
 
 
-
-
 /*
  * Fallback for Driver.CompressedTexImage1D()
  */
@@ -1166,6 +1232,10 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2DARB");
       return;
    }
+
+   data = validate_pbo_compressed_teximage(imageSize, data, &ctx->Unpack);
+   if (!data)
+      return;
 
    /* copy the data */
    ASSERT(texImage->CompressedSize == (GLuint) imageSize);
@@ -1230,6 +1300,10 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
    ASSERT((height & 3) == 0 || height == 2 || height == 1);
    ASSERT((xoffset & 3) == 0);
    ASSERT((yoffset & 3) == 0);
+
+   data = validate_pbo_compressed_teximage(imageSize, data, &ctx->Unpack);
+   if (!data)
+      return;
 
    srcRowStride = _mesa_compressed_row_stride(texImage->IntFormat, width);
    src = (const GLubyte *) data;

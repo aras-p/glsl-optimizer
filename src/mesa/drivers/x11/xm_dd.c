@@ -843,6 +843,12 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
       int srcX = unpack->SkipPixels;
       int srcY = unpack->SkipRows;
       int rowLength = unpack->RowLength ? unpack->RowLength : width;
+
+      pixels = _swrast_validate_pbo_access(unpack, width, height, 1,
+                                           format, type, (GLvoid *) pixels);
+      if (!pixels)
+         return;
+
       if (_swrast_clip_pixelrect(ctx, &dstX, &dstY, &w, &h, &srcX, &srcY)) {
          /* This is a little tricky since all coordinates up to now have
           * been in the OpenGL bottom-to-top orientation.  X is top-to-bottom
@@ -918,6 +924,12 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
       int srcX = unpack->SkipPixels;
       int srcY = unpack->SkipRows;
       int rowLength = unpack->RowLength ? unpack->RowLength : width;
+
+      pixels = _swrast_validate_pbo_access(unpack, width, height, 1,
+                                           format, type, (GLvoid *) pixels);
+      if (!pixels)
+         return;
+
       if (_swrast_clip_pixelrect(ctx, &dstX, &dstY, &w, &h, &srcX, &srcY)) {
          /* This is a little tricky since all coordinates up to now have
           * been in the OpenGL bottom-to-top orientation.  X is top-to-bottom

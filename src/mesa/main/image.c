@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,7 @@
 
 
 #include "glheader.h"
+#include "bufferobj.h"
 #include "colormac.h"
 #include "context.h"
 #include "image.h"
@@ -41,27 +42,6 @@
 
 /** Compute ceiling of integer quotient of A divided by B. */
 #define CEILING( A, B )  ( (A) % (B) == 0 ? (A)/(B) : (A)/(B)+1 )
-
-
-/**
- * Image packing parameters for Mesa's internal images.
- * 
- * _mesa_unpack_image() returns image data in this format.  When we execute
- * image commands (glDrawPixels(), glTexImage(), etc) from within display lists
- * we have to be sure to set the current unpacking parameters to these values!
- */
-const struct gl_pixelstore_attrib _mesa_native_packing = {
-   1,            /* Alignment */
-   0,            /* RowLength */
-   0,            /* SkipPixels */
-   0,            /* SkipRows */
-   0,            /* ImageHeight */
-   0,            /* SkipImages */
-   GL_FALSE,     /* SwapBytes */
-   GL_FALSE,     /* LsbFirst */
-   GL_FALSE,     /* ClientStorage */
-   GL_FALSE      /* Invert */
-};
 
 
 /**
@@ -3974,9 +3954,11 @@ _mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLvoid *dest,
 }
 
 
-/*
- * Unpack image data.  Apply byteswapping, byte flipping (bitmap).
- * Return all image data in a contiguous block.
+/**
+ * Unpack image data.  Apply byte swapping, byte flipping (bitmap).
+ * Return all image data in a contiguous block.  This is used when we
+ * compile glDrawPixels, glTexImage, etc into a display list.  We
+ * need a copy of the data in a standard format.
  */
 void *
 _mesa_unpack_image( GLsizei width, GLsizei height, GLsizei depth,

@@ -33,6 +33,7 @@
 #include "glheader.h"
 #include "hash.h"
 #include "imports.h"
+#include "image.h"
 #include "context.h"
 #include "bufferobj.h"
 
@@ -59,6 +60,12 @@ buffer_object_get_target( GLcontext *ctx, GLenum target, const char * str )
          break;
       case GL_ELEMENT_ARRAY_BUFFER_ARB:
          bufObj = ctx->Array.ElementArrayBufferObj;
+         break;
+      case GL_PIXEL_PACK_BUFFER_EXT:
+         bufObj = ctx->Pack.BufferObj;
+         break;
+      case GL_PIXEL_UNPACK_BUFFER_EXT:
+         bufObj = ctx->Unpack.BufferObj;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "gl%s(target)", str);
@@ -358,6 +365,59 @@ _mesa_init_buffer_objects( GLcontext *ctx )
 }
 
 
+/**
+ * When we're about to read pixel data out of a PBO (via glDrawPixels,
+ * glTexImage, etc) or write data into a PBO (via glReadPixels,
+ * glGetTexImage, etc) we call this function to check that we're not
+ * going to read out of bounds.
+ *
+ * \param ctx  the rendering context
+ * \param width  width of image to read/write
+ * \param height  height of image to read/write
+ * \param depth  depth of image to read/write
+ * \param format  format of image to read/write
+ * \param type  datatype of image to read/write
+ * \param ptr  the user-provided pointer/offset
+ * \return GL_TRUE if the PBO access is OK, GL_FALSE if the access would
+ *         go out of bounds.
+ */
+GLboolean
+_mesa_validate_pbo_access(const struct gl_pixelstore_attrib *pack,
+                          GLsizei width, GLsizei height, GLsizei depth,
+                          GLenum format, GLenum type, const GLvoid *ptr)
+{
+   GLvoid *start, *end;
+
+   ASSERT(pack->BufferObj->Name != 0);
+
+   if (pack->BufferObj->Size == 0)
+      /* no buffer! */
+      return GL_FALSE;
+
+   /* get address of first pixel we'll read */
+   start = _mesa_image_address(pack, ptr, width, height,
+                               format, type, 0, 0, 0);
+
+   /* get address just past the last pixel we'll read */
+   end =  _mesa_image_address(pack, ptr, width, height,
+                              format, type, depth-1, height-1, width);
+
+
+   if ((const GLubyte *) start > (const GLubyte *) pack->BufferObj->Size) {
+      /* This will catch negative values / wrap-around */
+      return GL_FALSE;
+   }
+   if ((const GLubyte *) end > (const GLubyte *) pack->BufferObj->Size) {
+      /* Image read goes beyond end of buffer */
+      return GL_FALSE;
+   }
+
+   /* OK! */
+   return GL_TRUE;
+}
+
+
+
 
 /**********************************************************************/
 /* API Functions                                                      */
@@ -407,6 +467,15 @@ _mesa_BindBufferARB(GLenum target, GLuint buffer)
       case GL_ELEMENT_ARRAY_BUFFER_ARB:
          ctx->Array.ElementArrayBufferObj = newBufObj;
          break;
+      case GL_PIXEL_PACK_BUFFER_EXT:
+         ctx->Pack.BufferObj = newBufObj;
+         break;
+      case GL_PIXEL_UNPACK_BUFFER_EXT:
+         ctx->Unpack.BufferObj = newBufObj;
+         break;
+      default:
+         _mesa_problem(ctx, "Bad target in _mesa_BindBufferARB");
+         return;
    }
 
    /* Pass BindBuffer call to device driver */
@@ -502,6 +571,13 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
             }
             if (ctx->Array.ElementArrayBufferObj == bufObj) {
                _mesa_BindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, 0 );
+            }
+
+            if (ctx->Pack.BufferObj == bufObj) {
+               _mesa_BindBufferARB( GL_PIXEL_PACK_BUFFER_EXT, 0 );
+            }
+            if (ctx->Unpack.BufferObj == bufObj) {
+               _mesa_BindBufferARB( GL_PIXEL_UNPACK_BUFFER_EXT, 0 );
             }
 
             /* decrement refcount and delete if <= 0 */

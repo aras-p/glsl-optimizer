@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -382,14 +382,14 @@ read_rgba_pixels( GLcontext *ctx,
       GLfloat *dest, *src, *tmpImage, *convImage;
       GLint row;
 
-      tmpImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
+      tmpImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
       if (!tmpImage) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
          return;
       }
-      convImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
+      convImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
       if (!convImage) {
-         FREE(tmpImage);
+         _mesa_free(tmpImage);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
          return;
       }
@@ -410,7 +410,7 @@ read_rgba_pixels( GLcontext *ctx,
             _mesa_map_ci_to_rgba_chan(ctx, readWidth, index, rgba);
          }
          _mesa_pack_rgba_span_chan(ctx, readWidth, (const GLchan (*)[4]) rgba,
-                              GL_RGBA, GL_FLOAT, dest, &_mesa_native_packing,
+                              GL_RGBA, GL_FLOAT, dest, &ctx->DefaultPacking,
                               transferOps & IMAGE_PRE_CONVOLUTION_BITS);
          dest += width * 4;
       }
@@ -423,7 +423,7 @@ read_rgba_pixels( GLcontext *ctx,
          ASSERT(ctx->Pixel.Separable2DEnabled);
          _mesa_convolve_sep_image(ctx, &readWidth, &height, tmpImage, convImage);
       }
-      FREE(tmpImage);
+      _mesa_free(tmpImage);
 
       /* finish transfer ops and pack the resulting image */
       src = convImage;
@@ -500,6 +500,14 @@ _swrast_ReadPixels( GLcontext *ctx,
 
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
+
+   pixels = _swrast_validate_pbo_access(pack, width, height, 1,
+                                        format, type, (GLvoid *) pixels);
+
+   if (!pixels) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glReadPixels(pixels)" );
+      return;
+   }
 
    RENDER_START(swrast,ctx);
 

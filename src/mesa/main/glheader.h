@@ -211,6 +211,14 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #include <GL/internal/glcore.h>
 
 
+/* XXX temporary hack */
+#ifndef GL_PIXEL_PACK_BUFFER_EXT
+#define GL_PIXEL_PACK_BUFFER_EXT                        0x88EB
+#define GL_PIXEL_UNPACK_BUFFER_EXT                      0x88EC
+#define GL_PIXEL_PACK_BUFFER_BINDING_EXT                0x88ED
+#define GL_PIXEL_UNPACK_BUFFER_BINDING_EXT              0x88EF
+#endif
+
 
 /* Disable unreachable code warnings for Watcom C++ */
 #ifdef	__WATCOMC__

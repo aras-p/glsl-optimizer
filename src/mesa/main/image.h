@@ -35,9 +35,6 @@
 #include "mtypes.h"
 
 
-extern const struct gl_pixelstore_attrib _mesa_native_packing;
-
-
 extern void
 _mesa_swap2( GLushort *p, GLuint n );
 

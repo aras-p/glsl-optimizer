@@ -28,6 +28,7 @@
 #include "attrib.h"
 #include "blend.h"
 #include "buffers.h"
+#include "bufferobj.h"
 #include "colormac.h"
 #include "colortab.h"
 #include "context.h"
@@ -1191,6 +1192,10 @@ _mesa_PushClientAttrib(GLbitfield mask)
 
    if (mask & GL_CLIENT_PIXEL_STORE_BIT) {
       struct gl_pixelstore_attrib *attr;
+#if FEATURE_EXT_pixel_buffer_object
+      ctx->Pack.BufferObj->RefCount++;
+      ctx->Unpack.BufferObj->RefCount++;
+#endif
       /* packing attribs */
       attr = MALLOC_STRUCT( gl_pixelstore_attrib );
       MEMCPY( attr, &ctx->Pack, sizeof(struct gl_pixelstore_attrib) );
@@ -1244,11 +1249,25 @@ _mesa_PopClientAttrib(void)
    while (attr) {
       switch (attr->kind) {
          case GL_CLIENT_PACK_BIT:
+#if FEATURE_EXT_pixel_buffer_object
+            ctx->Pack.BufferObj->RefCount--;
+            if (ctx->Pack.BufferObj->RefCount <= 0) {
+               _mesa_remove_buffer_object( ctx, ctx->Pack.BufferObj );
+               (*ctx->Driver.DeleteBuffer)( ctx, ctx->Pack.BufferObj );
+            }
+#endif
             MEMCPY( &ctx->Pack, attr->data,
                     sizeof(struct gl_pixelstore_attrib) );
 	    ctx->NewState |= _NEW_PACKUNPACK;
             break;
          case GL_CLIENT_UNPACK_BIT:
+#if FEATURE_EXT_pixel_buffer_object
+            ctx->Unpack.BufferObj->RefCount--;
+            if (ctx->Unpack.BufferObj->RefCount <= 0) {
+               _mesa_remove_buffer_object( ctx, ctx->Unpack.BufferObj );
+               (*ctx->Driver.DeleteBuffer)( ctx, ctx->Unpack.BufferObj );
+            }
+#endif
             MEMCPY( &ctx->Unpack, attr->data,
                     sizeof(struct gl_pixelstore_attrib) );
 	    ctx->NewState |= _NEW_PACKUNPACK;

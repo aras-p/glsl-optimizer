@@ -618,7 +618,11 @@ static GLuint translate_id( GLsizei n, GLenum type, const GLvoid *list )
 /*****                        Public                              *****/
 /**********************************************************************/
 
-void _mesa_init_lists( void )
+/**
+ * Do one-time initialiazations for display lists.
+ */
+void
+_mesa_init_lists( void )
 {
    static int init_flag = 0;
 
@@ -786,6 +790,32 @@ void _mesa_init_lists( void )
       InstSize[OPCODE_EVAL_P2] = 3;
    }
    init_flag = 1;
+}
+
+
+
+/**
+ * Wrapper for _mesa_unpack_image() that handles pixel buffer objects.
+ * \todo This won't suffice when the PBO is really in VRAM/GPU memory.
+ */
+static GLvoid *
+unpack_image( GLsizei width, GLsizei height, GLsizei depth,
+              GLenum format, GLenum type, const GLvoid *pixels,
+              const struct gl_pixelstore_attrib *unpack )
+{
+   if (unpack->BufferObj->Name == 0) {
+      /* no PBO */
+      return _mesa_unpack_image(width, height, depth, format, type,
+                                pixels, unpack);
+   }
+   else if (_mesa_validate_pbo_access(unpack, width, height, depth, format,
+                                      type, pixels)) {
+      const GLubyte *src = ADD_POINTERS(unpack->BufferObj->Data, pixels);
+      return _mesa_unpack_image(width, height, depth, format, type,
+                                src, unpack);
+   }
+   /* bad access! */
+   return NULL;
 }
 
 
@@ -1255,8 +1285,8 @@ static void GLAPIENTRY save_ColorTable( GLenum target, GLenum internalFormat,
                                 format, type, table );
    }
    else {
-      GLvoid *image = _mesa_unpack_image(width, 1, 1, format, type, table,
-                                         &ctx->Unpack);
+      GLvoid *image = unpack_image(width, 1, 1, format, type, table,
+                                   &ctx->Unpack);
       Node *n;
       ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       n = ALLOC_INSTRUCTION( ctx, OPCODE_COLOR_TABLE, 6 );
@@ -1344,8 +1374,8 @@ static void GLAPIENTRY save_ColorSubTable( GLenum target, GLsizei start, GLsizei
                                 const GLvoid *table)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLvoid *image = _mesa_unpack_image(count, 1, 1, format, type, table,
-                                      &ctx->Unpack);
+   GLvoid *image = unpack_image(count, 1, 1, format, type, table,
+                                &ctx->Unpack);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_COLOR_SUB_TABLE, 6 );
@@ -1415,8 +1445,8 @@ save_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width,
                          GLenum format, GLenum type, const GLvoid *filter)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLvoid *image = _mesa_unpack_image(width, 1, 1, format, type, filter,
-                                      &ctx->Unpack);
+   GLvoid *image = unpack_image(width, 1, 1, format, type, filter,
+                                &ctx->Unpack);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_FILTER_1D, 6 );
@@ -1444,8 +1474,8 @@ save_ConvolutionFilter2D(GLenum target, GLenum internalFormat,
                          GLenum type, const GLvoid *filter)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLvoid *image = _mesa_unpack_image(width, height, 1, format, type, filter,
-                                      &ctx->Unpack);
+   GLvoid *image = unpack_image(width, height, 1, format, type, filter,
+                                &ctx->Unpack);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_FILTER_2D, 7 );
@@ -1809,8 +1839,8 @@ static void GLAPIENTRY save_DrawPixels( GLsizei width, GLsizei height,
                              const GLvoid *pixels )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLvoid *image = _mesa_unpack_image(width, height, 1, format, type,
-                                      pixels, &ctx->Unpack);
+   GLvoid *image = unpack_image(width, height, 1, format, type,
+                                pixels, &ctx->Unpack);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_DRAW_PIXELS, 5 );
@@ -3365,8 +3395,8 @@ static void GLAPIENTRY save_TexImage1D( GLenum target,
                                border, format, type, pixels );
    }
    else {
-      GLvoid *image = _mesa_unpack_image(width, 1, 1, format, type,
-                                         pixels, &ctx->Unpack);
+      GLvoid *image = unpack_image(width, 1, 1, format, type,
+                                   pixels, &ctx->Unpack);
       Node *n;
       ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_IMAGE1D, 8 );
@@ -3404,8 +3434,8 @@ static void GLAPIENTRY save_TexImage2D( GLenum target,
                                height, border, format, type, pixels );
    }
    else {
-      GLvoid *image = _mesa_unpack_image(width, height, 1, format, type,
-                                         pixels, &ctx->Unpack);
+      GLvoid *image = unpack_image(width, height, 1, format, type,
+                                   pixels, &ctx->Unpack);
       Node *n;
       ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_IMAGE2D, 9 );
@@ -3446,8 +3476,8 @@ static void GLAPIENTRY save_TexImage3D( GLenum target,
    }
    else {
       Node *n;
-      GLvoid *image = _mesa_unpack_image(width, height, depth, format, type,
-                                         pixels, &ctx->Unpack);
+      GLvoid *image = unpack_image(width, height, depth, format, type,
+                                   pixels, &ctx->Unpack);
       ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_IMAGE3D, 10 );
       if (n) {
@@ -3479,8 +3509,8 @@ static void GLAPIENTRY save_TexSubImage1D( GLenum target, GLint level, GLint xof
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   GLvoid *image = _mesa_unpack_image(width, 1, 1, format, type,
-                                      pixels, &ctx->Unpack);
+   GLvoid *image = unpack_image(width, 1, 1, format, type,
+                                pixels, &ctx->Unpack);
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_SUB_IMAGE1D, 7 );
    if (n) {
@@ -3510,8 +3540,8 @@ static void GLAPIENTRY save_TexSubImage2D( GLenum target, GLint level,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   GLvoid *image = _mesa_unpack_image(width, height, 1, format, type,
-                                      pixels, &ctx->Unpack);
+   GLvoid *image = unpack_image(width, height, 1, format, type,
+                                pixels, &ctx->Unpack);
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_SUB_IMAGE2D, 9 );
    if (n) {
@@ -3543,8 +3573,8 @@ static void GLAPIENTRY save_TexSubImage3D( GLenum target, GLint level,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   GLvoid *image = _mesa_unpack_image(width, height, depth, format, type,
-                                      pixels, &ctx->Unpack);
+   GLvoid *image = unpack_image(width, height, depth, format, type,
+                                pixels, &ctx->Unpack);
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_SUB_IMAGE3D, 11 );
    if (n) {
@@ -5283,8 +5313,8 @@ execute_list( GLcontext *ctx, GLuint list )
             break;
 	 case OPCODE_BITMAP:
             {
-               struct gl_pixelstore_attrib save = ctx->Unpack;
-               ctx->Unpack = _mesa_native_packing;
+               const struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = ctx->DefaultPacking;
                (*ctx->Exec->Bitmap)( (GLsizei) n[1].i, (GLsizei) n[2].i,
                  n[3].f, n[4].f, n[5].f, n[6].f, (const GLubyte *) n[7].data );
                ctx->Unpack = save;  /* restore */
@@ -5354,8 +5384,8 @@ execute_list( GLcontext *ctx, GLuint list )
 	    break;
          case OPCODE_COLOR_TABLE:
             {
-               struct gl_pixelstore_attrib save = ctx->Unpack;
-               ctx->Unpack = _mesa_native_packing;
+               const struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = ctx->DefaultPacking;
                (*ctx->Exec->ColorTable)( n[1].e, n[2].e, n[3].i, n[4].e,
                                          n[5].e, n[6].data );
                ctx->Unpack = save;  /* restore */
@@ -5383,8 +5413,8 @@ execute_list( GLcontext *ctx, GLuint list )
             break;
          case OPCODE_COLOR_SUB_TABLE:
             {
-               struct gl_pixelstore_attrib save = ctx->Unpack;
-               ctx->Unpack = _mesa_native_packing;
+               const struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = ctx->DefaultPacking;
                (*ctx->Exec->ColorSubTable)( n[1].e, n[2].i, n[3].i,
                                             n[4].e, n[5].e, n[6].data );
                ctx->Unpack = save;  /* restore */
@@ -5392,8 +5422,8 @@ execute_list( GLcontext *ctx, GLuint list )
             break;
          case OPCODE_CONVOLUTION_FILTER_1D:
             {
-               struct gl_pixelstore_attrib save = ctx->Unpack;
-               ctx->Unpack = _mesa_native_packing;
+               const struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = ctx->DefaultPacking;
                (*ctx->Exec->ConvolutionFilter1D)( n[1].e, n[2].i, n[3].i,
                                                   n[4].e, n[5].e, n[6].data );
                ctx->Unpack = save;  /* restore */
@@ -5401,8 +5431,8 @@ execute_list( GLcontext *ctx, GLuint list )
             break;
          case OPCODE_CONVOLUTION_FILTER_2D:
             {
-               struct gl_pixelstore_attrib save = ctx->Unpack;
-               ctx->Unpack = _mesa_native_packing;
+               const struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = ctx->DefaultPacking;
                (*ctx->Exec->ConvolutionFilter2D)( n[1].e, n[2].i, n[3].i,
                                        n[4].i, n[5].e, n[6].e, n[7].data );
                ctx->Unpack = save;  /* restore */
@@ -5486,8 +5516,8 @@ execute_list( GLcontext *ctx, GLuint list )
 	    break;
 	 case OPCODE_DRAW_PIXELS:
             {
-               struct gl_pixelstore_attrib save = ctx->Unpack;
-               ctx->Unpack = _mesa_native_packing;
+               const struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = ctx->DefaultPacking;
                (*ctx->Exec->DrawPixels)( n[1].i, n[2].i, n[3].e, n[4].e,
                                         n[5].data );
                ctx->Unpack = save;  /* restore */
@@ -5755,8 +5785,8 @@ execute_list( GLcontext *ctx, GLuint list )
             break;
 	 case OPCODE_TEX_IMAGE1D:
             {
-               struct gl_pixelstore_attrib save = ctx->Unpack;
-               ctx->Unpack = _mesa_native_packing;
+               const struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = ctx->DefaultPacking;
                (*ctx->Exec->TexImage1D)(
                                         n[1].e, /* target */
                                         n[2].i, /* level */
@@ -5771,8 +5801,8 @@ execute_list( GLcontext *ctx, GLuint list )
 	    break;
 	 case OPCODE_TEX_IMAGE2D:
             {
-               struct gl_pixelstore_attrib save = ctx->Unpack;
-               ctx->Unpack = _mesa_native_packing;
+               const struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = ctx->DefaultPacking;
                (*ctx->Exec->TexImage2D)(
                                         n[1].e, /* target */
                                         n[2].i, /* level */
@@ -5788,8 +5818,8 @@ execute_list( GLcontext *ctx, GLuint list )
 	    break;
          case OPCODE_TEX_IMAGE3D:
             {
-               struct gl_pixelstore_attrib save = ctx->Unpack;
-               ctx->Unpack = _mesa_native_packing;
+               const struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = ctx->DefaultPacking;
                (*ctx->Exec->TexImage3D)(
                                         n[1].e, /* target */
                                         n[2].i, /* level */
@@ -5806,8 +5836,8 @@ execute_list( GLcontext *ctx, GLuint list )
             break;
          case OPCODE_TEX_SUB_IMAGE1D:
             {
-               struct gl_pixelstore_attrib save = ctx->Unpack;
-               ctx->Unpack = _mesa_native_packing;
+               const struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = ctx->DefaultPacking;
                (*ctx->Exec->TexSubImage1D)( n[1].e, n[2].i, n[3].i,
                                            n[4].i, n[5].e,
                                            n[6].e, n[7].data );
@@ -5816,8 +5846,8 @@ execute_list( GLcontext *ctx, GLuint list )
             break;
          case OPCODE_TEX_SUB_IMAGE2D:
             {
-               struct gl_pixelstore_attrib save = ctx->Unpack;
-               ctx->Unpack = _mesa_native_packing;
+               const struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = ctx->DefaultPacking;
                (*ctx->Exec->TexSubImage2D)( n[1].e, n[2].i, n[3].i,
                                            n[4].i, n[5].e,
                                            n[6].i, n[7].e, n[8].e, n[9].data );
@@ -5826,8 +5856,8 @@ execute_list( GLcontext *ctx, GLuint list )
             break;
          case OPCODE_TEX_SUB_IMAGE3D:
             {
-               struct gl_pixelstore_attrib save = ctx->Unpack;
-               ctx->Unpack = _mesa_native_packing;
+               const struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = ctx->DefaultPacking;
                (*ctx->Exec->TexSubImage3D)( n[1].e, n[2].i, n[3].i,
                                            n[4].i, n[5].i, n[6].i, n[7].i,
                                            n[8].i, n[9].e, n[10].e,

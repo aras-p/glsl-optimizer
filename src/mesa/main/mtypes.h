@@ -1319,17 +1319,18 @@ struct gl_attrib_node {
 
 
 /**
- * GL_ARB_vertex_buffer_object buffer object
+ * GL_ARB_vertex/pixel_buffer_object buffer object
  */
 struct gl_buffer_object {
    GLint RefCount;
    GLuint Name;
    GLenum Usage;
    GLenum Access;
-   GLvoid *Pointer;   /**< Only valid while buffer is mapped */
-   GLuint Size;       /**< Size of data array in bytes */
-   GLubyte *Data;     /**< The storage */
-   GLboolean DeletePending;  /**< Deleted by user? */
+   GLvoid *Pointer;          /**< Only valid while buffer is mapped */
+   GLuint Size;              /**< Size of storage in bytes */
+   GLubyte *Data;            /**< Location of storage either in RAM or VRAM. */
+   GLboolean OnCard;         /**< Is buffer in VRAM? (hardware drivers) */
+   GLboolean DeletePending;  /**< Deleted by user but RefCount > 0? */
 };
 
 
@@ -1348,6 +1349,7 @@ struct gl_pixelstore_attrib {
    GLboolean LsbFirst;
    GLboolean ClientStorage; /**< GL_APPLE_client_storage */
    GLboolean Invert;        /**< GL_MESA_pack_invert */
+   struct gl_buffer_object *BufferObj; /**< GL_ARB_pixel_buffer_object */
 };
 
 
@@ -1518,7 +1520,7 @@ enum register_file
    PROGRAM_NAMED_PARAM,
    PROGRAM_STATE_VAR,
    PROGRAM_WRITE_ONLY,
-	PROGRAM_ADDRESS
+   PROGRAM_ADDRESS
 };
 
 
@@ -1852,6 +1854,7 @@ struct gl_extensions
    GLboolean EXT_multi_draw_arrays;
    GLboolean EXT_paletted_texture;
    GLboolean EXT_packed_pixels;
+   GLboolean EXT_pixel_buffer_object;
    GLboolean EXT_point_parameters;
    GLboolean EXT_polygon_offset;
    GLboolean EXT_rescale_normal;
@@ -2264,6 +2267,7 @@ struct __GLcontextRec {
    struct gl_array_attrib	Array;	/**< Vertex arrays */
    struct gl_pixelstore_attrib	Pack;	/**< Pixel packing */
    struct gl_pixelstore_attrib	Unpack;	/**< Pixel unpacking */
+   struct gl_pixelstore_attrib	DefaultPacking;	/**< Default params */
 
    struct gl_evaluators EvalMap;   /**< All evaluators */
    struct gl_feedback   Feedback;  /**< Feedback */

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -785,14 +785,14 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       GLint row;
       GLfloat *dest, *tmpImage;
 
-      tmpImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
+      tmpImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
       if (!tmpImage) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
          return;
       }
-      convImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
+      convImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
       if (!convImage) {
-         FREE(tmpImage);
+         _mesa_free(tmpImage);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
          return;
       }
@@ -816,10 +816,10 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
          ASSERT(ctx->Pixel.Separable2DEnabled);
          _mesa_convolve_sep_image(ctx, &width, &height, tmpImage, convImage);
       }
-      FREE(tmpImage);
+      _mesa_free(tmpImage);
 
       /* continue transfer ops and draw the convolved image */
-      unpack = &_mesa_native_packing;
+      unpack = &ctx->DefaultPacking;
       pixels = convImage;
       format = GL_RGBA;
       type = GL_FLOAT;
@@ -887,7 +887,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    }
 
    if (convImage) {
-      FREE(convImage);
+      _mesa_free(convImage);
    }
 }
 
@@ -909,6 +909,11 @@ _swrast_DrawPixels( GLcontext *ctx,
 
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
+
+   pixels = _swrast_validate_pbo_access(unpack, width, height, 1,
+                                        format, type, (GLvoid *) pixels);
+   if (!pixels)
+      return;
 
    RENDER_START(swrast,ctx);
 
