@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.19 2001/09/14 17:00:42 brianp Exp $ */
+/* $Id: t_array_api.c,v 1.20 2001/11/22 09:23:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -133,8 +133,6 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
             start = ctx->Array.LockFirst;
 	 if (start + count > (GLint) ctx->Array.LockCount)
             count = ctx->Array.LockCount - start;
-	 if (start >= count)
-            return;
 
 	 /* Locked drawarrays.  Reuse any previously transformed data.
 	  */
