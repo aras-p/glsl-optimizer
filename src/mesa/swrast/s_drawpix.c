@@ -1,10 +1,10 @@
-/* $Id: s_drawpix.c,v 1.42 2002/12/18 15:02:19 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.43 2003/01/15 23:46:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -578,10 +578,10 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
    /* if width > MAX_WIDTH, have to process image in chunks */
    skipPixels = 0;
    while (skipPixels < width) {
-      GLint spanX = x;
+      const GLint spanX = x;
       GLint spanY = y;
-      GLint spanWidth = (width - skipPixels > MAX_WIDTH)
-                      ? MAX_WIDTH : (width - skipPixels);
+      const GLint spanWidth = (width - skipPixels > MAX_WIDTH)
+                            ? MAX_WIDTH : (width - skipPixels);
 
       for (row = 0; row < height; row++, spanY++) {
          GLstencil values[MAX_WIDTH];
@@ -688,17 +688,25 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
 
       /* in case width > MAX_WIDTH do the copy in chunks */
       while (skipPixels < width) {
-         span.x = x + (zoom ? 0 : skipPixels);
-         span.y = y;
-         span.end = (width - skipPixels > MAX_WIDTH)
-                  ? MAX_WIDTH : (width - skipPixels);
+         const GLint spanX = x + (zoom ? 0 : skipPixels);
+         GLint spanY = y;
+         const GLint spanEnd = (width - skipPixels > MAX_WIDTH)
+                             ? MAX_WIDTH : (width - skipPixels);
          ASSERT(span.end <= MAX_WIDTH);
-         for (row = 0; row < height; row++, span.y++) {
+         for (row = 0; row < height; row++, spanY++) {
             GLfloat floatSpan[MAX_WIDTH];
             const GLvoid *src = _mesa_image_address(&ctx->Unpack,
                                                     pixels, width, height,
                                                     GL_DEPTH_COMPONENT, type,
                                                     0, row, skipPixels);
+
+            /* Set these for each row since the _mesa_write_* function may
+             * change them while clipping.
+             */
+            span.x = spanX;
+            span.y = spanY;
+            span.end = spanEnd;
+
             _mesa_unpack_depth_span(ctx, span.end, floatSpan, type,
                                     src, &ctx->Unpack);
             /* clamp depth values to [0,1] and convert from floats to ints */
@@ -836,15 +844,22 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
 
       /* if the span is wider than MAX_WIDTH we have to do it in chunks */
       while (skipPixels < width) {
-         span.x = x + (zoom ? 0 : skipPixels);
-         span.y = y;
-         span.end = (width - skipPixels > MAX_WIDTH)
-                  ? MAX_WIDTH : (width - skipPixels);
+         const GLint spanX = x + (zoom ? 0 : skipPixels);
+         GLint spanY = y;
+         const GLint spanEnd = (width - skipPixels > MAX_WIDTH)
+                             ? MAX_WIDTH : (width - skipPixels);
          ASSERT(span.end <= MAX_WIDTH);
 
-         for (row = 0; row < height; row++, span.y++) {
+         for (row = 0; row < height; row++, spanY++) {
             const GLvoid *source = _mesa_image_address(unpack,
                      pixels, width, height, format, type, 0, row, skipPixels);
+
+            /* Set these for each row since the _mesa_write_* function may
+             * change them while clipping.
+             */
+            span.x = spanX;
+            span.y = spanY;
+            span.end = spanEnd;
 
             _mesa_unpack_chan_color_span(ctx, span.end, GL_RGBA,
                                          (GLchan *) span.array->rgba,
